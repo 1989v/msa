@@ -53,6 +53,25 @@ export class Page {
     if (!ok) throw new Error(`no element: ${selector}`);
   }
 
+  /**
+   * **신뢰 클릭** — `el.click()` 은 사용자 활성화(user activation)를 만들지 않아
+   * `requestFullscreen`·`play()` 같은 제스처 요구 API 가 조용히 거절된다.
+   * 전체화면을 재려면 반드시 이쪽을 쓴다 (터치는 tapElement).
+   */
+  async mouseClick(selector) {
+    const raw = await this.eval(`(() => { const el = document.querySelector(${JSON.stringify(selector)}); if (!el) return ''; el.scrollIntoView({ block: 'center', inline: 'center' });
+      const r = el.getBoundingClientRect(); return JSON.stringify({ x: r.left + r.width / 2, y: r.top + r.height / 2, vw: innerWidth, vh: innerHeight }); })()`);
+    if (!raw) throw new Error(`no element: ${selector}`);
+    await this.sleep(250);
+    const r = JSON.parse(raw);
+    if (r.x < 0 || r.y < 0 || r.x > r.vw || r.y > r.vh) throw new Error(`${selector} 가 화면 밖이다: ${raw}`);
+    const base = { x: r.x, y: r.y, button: 'left', clickCount: 1, buttons: 1 };
+    await this.send('Input.dispatchMouseEvent', { type: 'mousePressed', ...base });
+    await this.sleep(40);
+    await this.send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...base, buttons: 0 });
+    return r;
+  }
+
   async type(selector, text) {
     await this.eval(`(() => { const el = document.querySelector(${JSON.stringify(selector)}); el.value = ${JSON.stringify(text)}; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
   }

@@ -175,7 +175,10 @@ export class Match {
     fs.className = 'btn ghost fsbtn';
     fs.textContent = isFullscreen() ? '⤢ 전체화면 해제' : '⤢ 전체화면';
     fs.onclick = () => { void toggleFullscreen().then(() => { fs.textContent = isFullscreen() ? '⤢ 전체화면 해제' : '⤢ 전체화면'; }); };
-    document.addEventListener('fullscreenchange', () => { fs.textContent = isFullscreen() ? '⤢ 전체화면 해제' : '⤢ 전체화면'; });
+    const syncFs = () => { fs.textContent = isFullscreen() ? '⤢ 전체화면 해제' : '⤢ 전체화면'; };
+    document.addEventListener('fullscreenchange', syncFs);
+    // 부모(카탈로그)가 무대를 전체화면으로 올리거나 내리면 이 문서에는 이벤트가 안 온다 — 부모에서도 듣는다
+    try { if (window.parent !== window) window.parent.document.addEventListener('fullscreenchange', syncFs); } catch { /* 다른 오리진 */ }
     this.el.appendChild(fs);
     if (opts.chat) {
       const cb = document.createElement('button');

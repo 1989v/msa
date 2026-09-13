@@ -6,7 +6,15 @@ import { Page } from './cdp-page.mjs';
 const [port, url = 'https://game.1989v.com/games/arena/index.html', out = '.'] = process.argv.slice(2);
 const page = new Page(port);
 const checks = {};
-const WANT = { fighter: 'rocket', grappler: 'shield', speedster: 'pistols', heavy: 'greatsword', martial: 'spear' };
+// 직업당 전용 셋 (2026-09-13). 순서까지 본다 — 대기실은 [맨손, …전용] 순으로 그린다.
+const WANT = {
+  fighter: ['rocket', 'knuckle', 'chain'],
+  grappler: ['shield', 'claw', 'anchor'],
+  speedster: ['pistols', 'dagger', 'chakram'],
+  heavy: ['greatsword', 'hammer', 'cannon'],
+  martial: ['spear', 'staff', 'nunchaku'],
+};
+const ALL = Object.values(WANT).flat();
 try {
   await page.open(url, { width: 1000, height: 900 });
   await page.waitFor(`document.querySelector('.practice')`, { timeout: 20000 });
@@ -20,7 +28,7 @@ try {
     seen[st] = JSON.parse(await page.eval(`JSON.stringify([...document.querySelectorAll('.acc:not(.stylebtn)')].map((b) => b.dataset.acc))`));
   }
   console.log(`대기실 선택지 ${JSON.stringify(seen)}`);
-  checks.lobbyShowsOwnOnly = Object.entries(WANT).every(([st, acc]) => seen[st].length === 2 && seen[st][0] === 'none' && seen[st][1] === acc);
+  checks.lobbyShowsOwnOnly = Object.entries(WANT).every(([st, accs]) => seen[st].join(',') === ['none', ...accs].join(','));
 
   // ② 규칙: 판을 띄워 시뮬에 직접 물어본다 (권위가 쓰는 바로 그 함수의 산출물)
   await page.type('.nick', '전용실측');
@@ -28,7 +36,7 @@ try {
   await page.click('.practice');
   await page.waitFor(`window.__amp && window.__amp.source.world.phase === 'play'`, { timeout: 25000 });
   const rule = JSON.parse(await page.eval(`(() => { const w = window.__amp.source.world; const me = w.players[window.__amp.source.myId];
-    const styles = ${JSON.stringify(Object.keys(WANT))}, accs = ${JSON.stringify(Object.values(WANT))};
+    const styles = ${JSON.stringify(Object.keys(WANT))}, accs = ${JSON.stringify(ALL)};
     const out = {};
     for (const st of styles) {
       me.style = st;
@@ -42,7 +50,7 @@ try {
     w.items = [];
     return JSON.stringify(out); })()`));
   console.log(`시뮬이 실제로 줍는 것 ${JSON.stringify(rule)}`);
-  checks.pickupRespectsStyle = Object.entries(WANT).every(([st, acc]) => rule[st].length === 1 && rule[st][0] === acc);
+  checks.pickupRespectsStyle = Object.entries(WANT).every(([st, accs]) => rule[st].slice().sort().join(',') === accs.slice().sort().join(','));
 
   console.log(`bundle ${bundle}`);
   console.log(`checks ${JSON.stringify(checks)} · errors ${page.errors.length}`);
