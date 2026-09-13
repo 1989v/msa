@@ -43,8 +43,8 @@ export function objectBounds(object, at = object) {
   return { min: Object.fromEntries(axes.map(k => [k, position[k] - half[k]])), max: Object.fromEntries(axes.map(k => [k, position[k] + half[k]])) };
 }
 
-export function createManipulation({ objects, walls = [], reach = 4, lineOfSight = () => true }) {
-  if (!Array.isArray(objects) || !Array.isArray(walls) || !Number.isFinite(reach) || reach <= 0 || typeof lineOfSight !== 'function') throw new TypeError('Objects, walls, positive reach and LOS function required');
+export function createManipulation({ objects, walls = [], reach = 4, lineOfSight = () => true, resolvePlacement = (object, at) => ({ pose: at, reason: null }) }) {
+  if (!Array.isArray(objects) || !Array.isArray(walls) || !Number.isFinite(reach) || reach <= 0 || typeof lineOfSight !== 'function' || typeof resolvePlacement !== 'function') throw new TypeError('Objects, walls, positive reach and LOS function required');
   const ids = new Set();
   const originals = objects.map(o => {
     if (!o || typeof o.id !== 'string' || !o.id || ids.has(o.id) || !['stone', 'prism'].includes(o.kind)) throw new TypeError('Unique allowed stone/prism ID required');
@@ -62,6 +62,12 @@ export function createManipulation({ objects, walls = [], reach = 4, lineOfSight
     if (Math.hypot(...axes.map(k => at.position[k] - ctx.eye[k])) > reach + EPS) return 'range';
     if (ctx.walls.some(b => segmentHitsBox(ctx.eye, at.position, b)) || lineOfSight(freeze({ ...ctx.eye }), freeze({ ...at.position })) !== true) return 'occluded';
     return null;
+  }
+  // Optional pure adapter may snap a candidate or reject support before any mutation.
+  function resolve(object, at) {
+    const result = resolvePlacement(freeze(structuredClone(object)), freeze(structuredClone(at)));
+    if (!result || (result.reason !== null && typeof result.reason !== 'string')) throw new TypeError('Placement resolver requires pose and nullable reason');
+    return { pose: pose(result.pose), reason: result.reason };
   }
   function placement(object, at, ctx, from) {
     const reason = visible(at, ctx); if (reason) return reason;
@@ -99,15 +105,17 @@ export function createManipulation({ objects, walls = [], reach = 4, lineOfSight
     } else if (action.type === 'grab') {
       if (state.held) return reject('held');
       const object = state.objects.find(o => o.id === state.selected); if (!object) return reject('selection');
-      const reason = placement(object, object, ctx); if (reason) return reject(reason);
-      state = freeze({ ...state, held: { id: object.id, ...pose(object) }, preview: null });
+      const resolved = resolve(object, object);
+      const reason = resolved.reason || placement(object, resolved.pose, ctx); if (reason) return reject(reason);
+      state = freeze({ ...state, held: { id: object.id, ...resolved.pose }, preview: null });
     } else {
       if (!state.held) return reject('empty');
       const object = state.objects.find(o => o.id === state.held.id);
-      const at = action.type === 'move' ? pose({ position: action.position, yaw: state.held.yaw })
+      const candidate = action.type === 'move' ? pose({ position: action.position, yaw: state.held.yaw })
         : action.type === 'rotate' ? pose({ position: state.held.position, yaw: action.yaw })
           : pose(state.preview?.pose ?? state.held);
-      const reason = placement(object, at, ctx, state.held);
+      const resolved = resolve(object, candidate), at = resolved.pose;
+      const reason = resolved.reason || placement(object, at, ctx, state.held);
       if (action.type === 'drop') {
         if (reason) return reject(reason);
         state = freeze({ ...state, objects: state.objects.map(o => o.id === object.id ? { ...o, ...at } : o), held: null, selected: null, preview: null });

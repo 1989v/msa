@@ -1,21 +1,28 @@
 import { createManipulation, objectBounds, overlaps } from '../../../t04a/src/manipulation.mjs';
 
-export function carryTarget(terrain, position, yaw, pitch, size) {
+import { sampleGroundSupport } from './ground-support.mjs';
+
+export function carryTarget(terrain, position, yaw, pitch, size, objectYaw = 0) {
   const distance = Math.max(.5, Math.min(3, 1.05 / Math.tan(pitch)));
   const x = position.x - Math.sin(yaw) * distance, z = position.z - Math.cos(yaw) * distance;
   const floor = terrain.heightAt(x, z);
-  return Number.isFinite(floor) ? { x, y: floor + size.y / 2, z } : null;
+  if (!Number.isFinite(floor)) return null;
+  const result = sampleGroundSupport(terrain, { size }, { position: { x, y: floor + size.y / 2, z }, yaw: objectYaw });
+  return result.reason ? null : result.pose.position;
 }
 
 export function createManipulationView(THREE, col, terrain, surfaces = []) {
   const floor = terrain.heightAt(0, 33);
   if (!Number.isFinite(floor)) throw new Error('Prism needs actual meadow');
   const original = { id: 'meadow-prism', kind: 'prism', size: { x: 1.2, y: 1, z: .7 }, position: { x: 0, y: floor + .5, z: 33 }, yaw: 0 };
+  const initialSupport = sampleGroundSupport(terrain, original);
+  if (initialSupport.reason) throw new Error('Prism initial footprint lacks support');
+  original.position = initialSupport.pose.position;
   const ray = new THREE.Raycaster(), origin = new THREE.Vector3(), direction = new THREE.Vector3();
   const blockerFloor = terrain.heightAt(-1.5, 32);
   if (!Number.isFinite(blockerFloor)) throw new Error('Blocker needs meadow');
   const blockerBounds = { min: { x: -2, y: blockerFloor, z: 31.8 }, max: { x: -1, y: blockerFloor + 1.6, z: 32.2 } };
-  const controller = createManipulation({ objects: [original], walls: [blockerBounds], lineOfSight(from, to) {
+  const controller = createManipulation({ objects: [original], resolvePlacement: (object, at) => sampleGroundSupport(terrain, object, at), walls: [blockerBounds], lineOfSight(from, to) {
     origin.set(from.x, from.y, from.z); direction.set(to.x, to.y, to.z).sub(origin);
     const length = direction.length(); ray.set(origin, direction.normalize()); ray.near = .001; ray.far = Math.max(.001, length - .001);
     return ray.intersectObjects(surfaces, false).length === 0;
@@ -48,14 +55,14 @@ export function createManipulationView(THREE, col, terrain, surfaces = []) {
   }
   function snapshot() {
     const s = controller.snapshot();
-    return { ...s, ...(s.held && lastReason === 'terrain' ? { preview: { pose: { position: s.held.position, yaw: s.held.yaw }, valid: false, reason: 'terrain' } } : {}), targetId, lastReason };
+    return { ...s, ...(s.held && lastReason === 'terrain' && s.preview?.valid !== false ? { preview: { pose: { position: s.held.position, yaw: s.held.yaw }, valid: false, reason: 'terrain' } } : {}), targetId, lastReason };
   }
   function update(value) {
     frame = value;
     const s = controller.snapshot();
     if (s.paused !== frame.paused) controller.dispatch({ type: frame.paused ? 'pause' : 'resume' });
     if (s.held && !frame.paused) {
-      const target = carryTarget(terrain, frame.position, frame.yaw, frame.pitch, original.size);
+      const target = carryTarget(terrain, frame.position, frame.yaw, frame.pitch, original.size, s.held.yaw);
       if (target && (!lastTarget || ['x', 'y', 'z'].some(k => Math.abs(target[k] - lastTarget[k]) > 1e-8))) {
         const result = controller.dispatch({ type: 'move', position: target }, context()); lastReason = result.reason ?? null; lastTarget = target;
       }
