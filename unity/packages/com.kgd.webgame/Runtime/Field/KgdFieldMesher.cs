@@ -51,6 +51,96 @@ namespace Kgd.Field
         private static int[] _index;
         private static int _pw, _ph, _pd;
 
+        /// <summary>
+        /// 이 청크와 이웃 여덟의 배열을 붙들고 첨자 산술로 읽는다. 모서리마다 사전에서 청크를 찾으면
+        /// 청크 하나에 백만 번 찾게 되어 뜨는 데 20ms 가 걸렸다(실측) — 걷는 동안 그 값이 끊김이다.
+        /// </summary>
+        private struct Grid
+        {
+            private readonly byte[][] _dens, _mat, _sky, _blk, _skyTop;
+            private readonly KgdFieldKind[] _kinds;
+            private readonly int _cx0, _cz0, _h;
+            private readonly bool _liquid;
+
+            public Grid(KgdFieldWorld w, int cx, int cz, bool liquid)
+            {
+                _dens = new byte[9][]; _mat = new byte[9][]; _sky = new byte[9][]; _blk = new byte[9][]; _skyTop = new byte[9][];
+                _kinds = w.Kinds; _cx0 = cx - 1; _cz0 = cz - 1; _h = w.Height; _liquid = liquid;
+                for (int dz = 0; dz < 3; dz++)
+                    for (int dx = 0; dx < 3; dx++)
+                    {
+                        w.ChunkRef(cx - 1 + dx, cz - 1 + dz, out var d, out var m, out var sk, out var bl, out var st);
+                        int i = dz * 3 + dx;
+                        _dens[i] = d; _mat[i] = m; _sky[i] = sk; _blk[i] = bl; _skyTop[i] = st;
+                    }
+            }
+
+            private int Slot(int x, int z)
+            {
+                int dx = (x >> 4) - _cx0, dz = (z >> 4) - _cz0;
+                return (uint)dx < 3 && (uint)dz < 3 ? dz * 3 + dx : -1;
+            }
+
+            private static int At(int x, int y, int z) => (y * KgdFieldWorld.SZ + (z & 15)) * KgdFieldWorld.SX + (x & 15);
+
+            public float Phase(int x, int y, int z)
+            {
+                if (y < 0) return _liquid ? 0f : 255f;
+                if (y >= _h) return 0f;
+                int s = Slot(x, z);
+                if (s < 0 || _dens[s] == null) return 0f;
+                int i = At(x, y, z);
+                if (!_liquid) return _dens[s][i];
+                return _kinds[_mat[s][i]].Liquid ? 255f : 0f;
+            }
+
+            public byte Mat(int x, int y, int z)
+            {
+                if (y < 0 || y >= _h) return 0;
+                int s = Slot(x, z);
+                return s < 0 || _mat[s] == null ? (byte)0 : _mat[s][At(x, y, z)];
+            }
+
+            public int Sky(int x, int y, int z)
+            {
+                if (y >= _h) return 15;
+                if (y < 0) return 0;
+                int s = Slot(x, z);
+                if (s < 0 || _sky[s] == null) return 15;
+                if (y >= _skyTop[s][(z & 15) * KgdFieldWorld.SX + (x & 15)]) return 15;
+                return _sky[s][At(x, y, z)];
+            }
+
+            public int Blk(int x, int y, int z)
+            {
+                if (y < 0 || y >= _h) return 0;
+                int s = Slot(x, z);
+                return s < 0 || _blk[s] == null ? 0 : _blk[s][At(x, y, z)];
+            }
+
+            /// <summary><see cref="KgdFieldWorld.Sample"/> 와 같은 보간 — 같은 표면을 봐야 꼭짓점이 제자리에 선다.</summary>
+            public float Sample(Vector3 p)
+            {
+                int i = Mathf.FloorToInt(p.x), j = Mathf.FloorToInt(p.y), k = Mathf.FloorToInt(p.z);
+                float tx = p.x - i, ty = p.y - j, tz = p.z - k;
+                float c00 = Mathf.Lerp(Phase(i, j, k), Phase(i + 1, j, k), tx);
+                float c10 = Mathf.Lerp(Phase(i, j + 1, k), Phase(i + 1, j + 1, k), tx);
+                float c01 = Mathf.Lerp(Phase(i, j, k + 1), Phase(i + 1, j, k + 1), tx);
+                float c11 = Mathf.Lerp(Phase(i, j + 1, k + 1), Phase(i + 1, j + 1, k + 1), tx);
+                return Mathf.Lerp(Mathf.Lerp(c00, c10, ty), Mathf.Lerp(c01, c11, ty), tz) - KgdFieldWorld.Iso;
+            }
+
+            public Vector3 Normal(Vector3 p)
+            {
+                const float h = 0.6f;
+                var g = new Vector3(
+                    Sample(p + Vector3.right * h) - Sample(p - Vector3.right * h),
+                    Sample(p + Vector3.up * h) - Sample(p - Vector3.up * h),
+                    Sample(p + Vector3.forward * h) - Sample(p - Vector3.forward * h));
+                return g.sqrMagnitude < 1e-6f ? Vector3.up : -g.normalized;
+            }
+        }
+
         /// <param name="liquid">참이면 수면을 뜬다 — 땅은 빈 칸으로 본다. 거짓이면 땅을 뜨고 액체가 빈 칸이다.</param>
         /// <param name="yFrom">이 높이부터 (포함) <paramref name="yTo"/> 앞까지의 칸만 면을 낸다. 층을 나눠 뜨면
         /// 땅속 굴을 지상에서는 안 그릴 수 있다 — 정점의 6할이 안 보이는 굴 벽이었다(실측).</param>
@@ -71,6 +161,7 @@ namespace Kgd.Field
 
             int x0 = cx * KgdFieldWorld.SX, z0 = cz * KgdFieldWorld.SZ;
             var c8 = new float[8];
+            var g = new Grid(w, cx, cz, liquid);
 
             for (int k = 0; k < _pd; k++)
             {
@@ -86,7 +177,7 @@ namespace Kgd.Field
                         int inside = 0;
                         for (int n = 0; n < 8; n++)
                         {
-                            c8[n] = w.Phase(gx + Corner[n, 0], gy + Corner[n, 1], gz + Corner[n, 2], liquid)
+                            c8[n] = g.Phase(gx + Corner[n, 0], gy + Corner[n, 1], gz + Corner[n, 2])
                                   - KgdFieldWorld.Iso;
                             if (c8[n] > 0f) inside++;
                         }
@@ -124,18 +215,18 @@ namespace Kgd.Field
                         int gx = x0 + i - 1, gy = j - 1, gz = z0 + k - 1;
                         if (gy < 0 || gy >= h - 1) continue;
                         if (gy < yFrom || gy >= yTo) continue;
-                        float here = w.Phase(gx, gy, gz, liquid) - KgdFieldWorld.Iso;
-                        Quad(w, here, w.Phase(gx + 1, gy, gz, liquid) - KgdFieldWorld.Iso, i, j, k, 1, 0, 0);
-                        Quad(w, here, w.Phase(gx, gy + 1, gz, liquid) - KgdFieldWorld.Iso, i, j, k, 0, 1, 0);
-                        Quad(w, here, w.Phase(gx, gy, gz + 1, liquid) - KgdFieldWorld.Iso, i, j, k, 0, 0, 1);
+                        float here = g.Phase(gx, gy, gz) - KgdFieldWorld.Iso;
+                        Quad(w, here, g.Phase(gx + 1, gy, gz) - KgdFieldWorld.Iso, i, j, k, 1, 0, 0);
+                        Quad(w, here, g.Phase(gx, gy + 1, gz) - KgdFieldWorld.Iso, i, j, k, 0, 1, 0);
+                        Quad(w, here, g.Phase(gx, gy, gz + 1) - KgdFieldWorld.Iso, i, j, k, 0, 0, 1);
                     }
                 }
             }
 
             if (_t.Count == 0) return null;
 
-            Project(w, x0, z0, liquid);
-            Dress(w, x0, z0, liquid);
+            Project(g, x0, z0);
+            Dress(w, g, x0, z0);
 
             var mesh = new Mesh { name = $"field_{cx}_{cz}", indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
             mesh.SetVertices(_v);
@@ -190,7 +281,7 @@ namespace Kgd.Field
         ///
         /// 자기 칸 밖으로는 안 나간다 — 나가면 이웃 칸의 꼭짓점과 뒤바뀌어 면이 꼬인다.
         /// </summary>
-        private static void Project(KgdFieldWorld w, int x0, int z0, bool liquid)
+        private static void Project(Grid g, int x0, int z0)
         {
             for (int i = 0; i < _v.Count; i++)
             {
@@ -200,19 +291,19 @@ namespace Kgd.Field
                 for (int step = 0; step < Relax; step++)
                 {
                     var world = new Vector3(local.x + x0, local.y, local.z + z0);
-                    float d = w.Sample(world, liquid);
+                    float d = g.Sample(world);
                     if (Mathf.Abs(d) < 0.5f) break;
 
                     // 밀도는 칸당 최대 127 만큼 변하므로 그대로 나누면 한 번에 튄다 —
                     // 기울기 크기로 나눠 「표면까지 몇 칸인가」로 바꾼다
-                    var g = new Vector3(
-                        w.Sample(world + Vector3.right * 0.5f, liquid) - w.Sample(world - Vector3.right * 0.5f, liquid),
-                        w.Sample(world + Vector3.up * 0.5f, liquid) - w.Sample(world - Vector3.up * 0.5f, liquid),
-                        w.Sample(world + Vector3.forward * 0.5f, liquid) - w.Sample(world - Vector3.forward * 0.5f, liquid));
-                    float len = g.magnitude;
+                    var grad = new Vector3(
+                        g.Sample(world + Vector3.right * 0.5f) - g.Sample(world - Vector3.right * 0.5f),
+                        g.Sample(world + Vector3.up * 0.5f) - g.Sample(world - Vector3.up * 0.5f),
+                        g.Sample(world + Vector3.forward * 0.5f) - g.Sample(world - Vector3.forward * 0.5f));
+                    float len = grad.magnitude;
                     if (len < 1e-4f) break;
 
-                    local -= g / len * Mathf.Clamp(d / len, -0.5f, 0.5f);
+                    local -= grad / len * Mathf.Clamp(d / len, -0.5f, 0.5f);
                     local = new Vector3(
                         Mathf.Clamp(local.x, cell.x, cell.x + 1f),
                         Mathf.Clamp(local.y, cell.y, cell.y + 1f),
@@ -223,7 +314,7 @@ namespace Kgd.Field
         }
 
         /// <summary>법선·색·무늬 좌표. 밝기는 그 자리의 하늘빛·등불빛에서 나온다.</summary>
-        private static void Dress(KgdFieldWorld w, int x0, int z0, bool liquid)
+        private static void Dress(KgdFieldWorld w, Grid g, int x0, int z0)
         {
             _n.Clear(); _c.Clear(); _uv.Clear();
 
@@ -232,12 +323,12 @@ namespace Kgd.Field
                 var local = _v[i];
                 var world = new Vector3(local.x + x0, local.y, local.z + z0);
 
-                var face = w.Normal(world, liquid);
+                var face = g.Normal(world);
                 _n.Add(face);
 
                 // 재료는 표면 **안쪽** 칸에서 읽는다 — 바깥 칸은 비어 있어 재료가 없다
                 var inside = world - face * 0.6f;
-                byte mat = w.Mat(Mathf.FloorToInt(inside.x), Mathf.FloorToInt(inside.y), Mathf.FloorToInt(inside.z));
+                byte mat = g.Mat(Mathf.FloorToInt(inside.x), Mathf.FloorToInt(inside.y), Mathf.FloorToInt(inside.z));
                 var kind = w.Kinds[mat];
 
                 // 위를 보는 면은 그 재료의 윗면 색, 선 면은 옆면 색
@@ -247,8 +338,8 @@ namespace Kgd.Field
                 // 빛은 표면 **바깥** 칸에서 읽는다 — 안쪽은 막혀 있어 늘 캄캄하다
                 var outside = world + face * 0.6f;
                 int lx = Mathf.FloorToInt(outside.x), ly = Mathf.FloorToInt(outside.y), lz = Mathf.FloorToInt(outside.z);
-                float skyF = SkyCurve[Mathf.Clamp(w.SkyLight(lx, ly, lz), 0, 15)];
-                float litF = BlkCurve[Mathf.Clamp(w.BlockLight(lx, ly, lz), 0, 15)];
+                float skyF = SkyCurve[Mathf.Clamp(g.Sky(lx, ly, lz), 0, 15)];
+                float litF = BlkCurve[Mathf.Clamp(g.Blk(lx, ly, lz), 0, 15)];
 
                 // 위를 보는 면이 밝고 처마 밑이 어둡다 — 광원이 없어도 형태가 읽혀야 한다
                 float shade = Mathf.Lerp(0.62f, 1f, flat);

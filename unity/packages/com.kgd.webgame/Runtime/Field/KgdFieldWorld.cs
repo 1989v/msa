@@ -36,6 +36,17 @@ namespace Kgd.Field
         /// </summary>
         public Action<int, int, byte[], byte[]> Generate;
 
+        /// <summary>
+        /// 청크를 **여러 프레임에 나눠** 채우는 길. (cx, cz, 밀도, 재료, 단계) → 끝났나.
+        /// 걷는 동안 새 청크가 생기는데 한 청크가 수십 ms 라(실측 25ms, 웹은 그 두세 배) 한 프레임에
+        /// 통째로 만들면 그 프레임이 끊긴다. 주면 <see cref="Tick"/> 이 이것을 쓰고, 안 주면 <see cref="Generate"/> 를 한 번에 부른다.
+        /// <see cref="Prime"/> 은 언제나 한 번에 만든다 — 부팅은 기다리는 시간이다.
+        /// </summary>
+        public Func<int, int, byte[], byte[], int, bool> GenerateStep;
+
+        /// <summary>한 프레임에 밟는 생성 단계 수. 단계 하나가 5~10ms 쯤이다.</summary>
+        public int GenStepsPerTick = 1;
+
         public Transform Root;
         public Material Surface;
         public Material LiquidSurface;
@@ -75,6 +86,8 @@ namespace Kgd.Field
             public byte[] SkyTop;   // 열마다 「이 높이 위로는 전부 하늘」인 y
             public bool Lit;
             public bool MeshDirty;
+            /// <summary>어느 층이 바뀌었나. 한 입 팔 때마다 두 층을 다 뜨면 그것이 끊김이다 — 바뀐 층만 뜬다.</summary>
+            public bool DeepDirty, UpperDirty, LiquidDirty;
             public bool HasLiquid;  // 액체 칸이 하나라도 있나 — 있어야 액체 메시를 뜬다
             public GameObject Go, DeepGo, LiquidGo;
             public Mesh Mesh, DeepMesh, LiquidMesh;
@@ -246,6 +259,8 @@ namespace Kgd.Field
             c.Dens[i] = dens;
             c.Mat[i] = mat;
             if (Kinds[mat].Liquid) c.HasLiquid = true;
+            // 수면은 액체 칸이 바뀔 때만 다시 뜬다 — 물가에서 한 입 팔 때마다 바다를 다시 뜨면 그게 끊김이다
+            if (Kinds[wasM].Liquid || Kinds[mat].Liquid) c.LiquidDirty = true;
             _edits[EditKey(x, y, z)] = (ushort)((dens << 8) | mat);
 
             bool wasOpaque = wasD > Iso && Kinds[wasM].Opaque;
@@ -321,20 +336,30 @@ namespace Kgd.Field
         public void MarkDirty(int cx, int cz)
         {
             var c = Find(cx, cz);
-            if (c != null) c.MeshDirty = true;
+            if (c != null) { c.MeshDirty = true; c.DeepDirty = true; c.UpperDirty = true; }
+        }
+
+        /// <summary>이 높이의 칸이 바뀌었다 — 그 층만 다시 뜬다. 경계 줄(DeepBelow 앞뒤 한 칸)은 양쪽이다.</summary>
+        private void MarkDirty(int cx, int cz, int y)
+        {
+            var c = Find(cx, cz);
+            if (c == null) return;
+            c.MeshDirty = true;
+            if (y <= DeepBelow + 1) c.DeepDirty = true;
+            if (y >= DeepBelow - 2) c.UpperDirty = true;
         }
 
         private void TouchAround(int x, int y, int z)
         {
             int cx = ChunkOf(x), cz = ChunkOf(z);
-            MarkDirty(cx, cz);
+            MarkDirty(cx, cz, y);
             int lx = LocalOf(x), lz = LocalOf(z);
             // **한 칸이 아니라 두 칸을 본다.** 등치면은 이웃 칸까지 넘겨 보고 꼭짓점을 놓으므로,
             // 경계에서 한 칸만 알리면 옆 청크의 면이 안 따라와 이음매가 갈라진다.
-            if (lx <= 1) MarkDirty(cx - 1, cz);
-            if (lx >= SX - 2) MarkDirty(cx + 1, cz);
-            if (lz <= 1) MarkDirty(cx, cz - 1);
-            if (lz >= SZ - 2) MarkDirty(cx, cz + 1);
+            if (lx <= 1) MarkDirty(cx - 1, cz, y);
+            if (lx >= SX - 2) MarkDirty(cx + 1, cz, y);
+            if (lz <= 1) MarkDirty(cx, cz - 1, y);
+            if (lz >= SZ - 2) MarkDirty(cx, cz + 1, y);
         }
 
         // ── 스트리밍 ─────────────────────────────────────────────────────────────
@@ -350,6 +375,9 @@ namespace Kgd.Field
             int ccx = ChunkOf(Mathf.FloorToInt(center.x));
             int ccz = ChunkOf(Mathf.FloorToInt(center.z));
 
+            // 만드는 중인 청크를 몇 단계 민다 — 걷는 동안의 생성은 전부 여기서, 잘게
+            Advance(GenStepsPerTick);
+
             for (int r = 0; r <= radius; r++)
             {
                 for (int dz = -r; dz <= r; dz++)
@@ -357,12 +385,9 @@ namespace Kgd.Field
                     for (int dx = -r; dx <= r; dx++)
                     {
                         if (Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dz)) != r) continue;
-                        if (Find(ccx + dx, ccz + dz) == null)
-                        {
-                            if (made >= genBudget) continue;
-                            made++;
-                        }
-                        Ensure(ccx + dx, ccz + dz);
+                        if (Find(ccx + dx, ccz + dz) != null) continue;
+                        if (made >= genBudget) continue;
+                        if (Request(ccx + dx, ccz + dz)) made++;
                     }
                 }
 
@@ -373,7 +398,7 @@ namespace Kgd.Field
                     {
                         if (Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dz)) != r - 1) continue;
                         if (MeshedThisTick >= meshBudget) break;
-                        Refresh(ccx + dx, ccz + dz);
+                        Refresh(ccx + dx, ccz + dz, sync: false);
                     }
                 }
             }
@@ -395,28 +420,104 @@ namespace Kgd.Field
 
         private Chunk Find(int cx, int cz) => _chunks.TryGetValue(Key(cx, cz), out var c) ? c : null;
 
+        /// <summary>한 번에 만든다. 만드는 중이던 것이면 남은 단계를 마저 밟는다.</summary>
         private Chunk Ensure(int cx, int cz)
         {
             long k = Key(cx, cz);
             if (_chunks.TryGetValue(k, out var c)) return c;
 
+            if (_building != null && _building.Cx == cx && _building.Cz == cz)
+            {
+                while (!Step()) { }
+                return Find(cx, cz);
+            }
+
+            c = Blank(cx, cz);
+            Generate?.Invoke(cx, cz, c.Dens, c.Mat);
+            Finish(c);
+            return c;
+        }
+
+        private Chunk Blank(int cx, int cz)
+        {
             int n = SX * SZ * Height;
-            c = new Chunk
+            return new Chunk
             {
                 Cx = cx, Cz = cz,
                 Dens = new byte[n], Mat = new byte[n],
                 Sky = new byte[n], Blk = new byte[n],
                 SkyTop = new byte[SX * SZ],
-                MeshDirty = true,
+                MeshDirty = true, DeepDirty = true, UpperDirty = true,
             };
-            _chunks[k] = c;
+        }
 
-            Generate?.Invoke(cx, cz, c.Dens, c.Mat);
+        /// <summary>다 채운 청크를 세계에 넣는다. 그 전에는 <see cref="Find"/> 에 안 잡혀 아무도 반쯤 된 것을 못 본다.</summary>
+        private void Finish(Chunk c)
+        {
+            int n = c.Dens.Length;
             for (int i = 0; i < n && !c.HasLiquid; i++)
                 if (Kinds[c.Mat[i]].Liquid) c.HasLiquid = true;
             ApplyEdits(c);
             ScanSkyTop(c);
-            return c;
+            _chunks[Key(c.Cx, c.Cz)] = c;
+            // 이웃은 이 청크가 없는 채로 떠 있었다 — 경계 한 칸을 다시 보게 한다
+            for (int dz = -1; dz <= 1; dz++)
+                for (int dx = -1; dx <= 1; dx++)
+                    if (dx != 0 || dz != 0) MarkDirty(c.Cx + dx, c.Cz + dz);
+        }
+
+        // ── 나눠 만들기 ─────────────────────────────────────────────────────────
+
+        private Chunk _building;
+        private int _buildStep;
+        private readonly Queue<long> _wanted = new();
+        private readonly HashSet<long> _wantedSet = new();
+
+        /// <summary>이 청크를 만들어 달라고 줄에 세운다. 이미 있거나 줄에 있으면 거짓.</summary>
+        private bool Request(int cx, int cz)
+        {
+            long k = Key(cx, cz);
+            if (_chunks.ContainsKey(k) || _wantedSet.Contains(k)) return false;
+            if (_building != null && _building.Cx == cx && _building.Cz == cz) return false;
+            if (GenerateStep == null)
+            {
+                Ensure(cx, cz);   // 나눠 만드는 길이 없으면 한 번에
+                return true;
+            }
+            _wanted.Enqueue(k);
+            _wantedSet.Add(k);
+            return true;
+        }
+
+        /// <summary>줄에 선 청크를 몇 단계 만든다.</summary>
+        private void Advance(int steps)
+        {
+            for (int i = 0; i < steps; i++)
+            {
+                if (_building == null)
+                {
+                    if (_wanted.Count == 0) return;
+                    long k = _wanted.Dequeue();
+                    _wantedSet.Remove(k);
+                    if (_chunks.ContainsKey(k)) { i--; continue; }
+                    int cx = (int)(k >> 32), cz = (int)(k & 0xFFFFFFFF);
+                    _building = Blank(cx, cz);
+                    _buildStep = 0;
+                }
+                Step();
+            }
+        }
+
+        /// <summary>한 단계. 끝났으면 참 — 그때 청크가 세계에 들어간다.</summary>
+        private bool Step()
+        {
+            if (_building == null) return true;
+            bool done = GenerateStep == null || GenerateStep(_building.Cx, _building.Cz, _building.Dens, _building.Mat, _buildStep++);
+            if (!done) return false;
+            var c = _building;
+            _building = null;
+            Finish(c);
+            return true;
         }
 
         private void ScanSkyTop(Chunk c)
@@ -457,15 +558,22 @@ namespace Kgd.Field
             }
         }
 
-        private void Refresh(int cx, int cz)
+        /// <param name="sync">참이면 이웃을 그 자리에서 만든다(부팅). 거짓이면 이웃이 없을 때 줄에 세우고 다음 틱을 기다린다 —
+        /// 걷는 동안 이웃 여덟을 한 프레임에 만들면 그게 끊김이다.</param>
+        private void Refresh(int cx, int cz, bool sync = true)
         {
             var c = Find(cx, cz);
             if (c == null) return;
             if (c.Lit && !c.MeshDirty) return;
 
+            bool ready = true;
             for (int dz = -1; dz <= 1; dz++)
                 for (int dx = -1; dx <= 1; dx++)
-                    Ensure(cx + dx, cz + dz);
+                {
+                    if (sync) Ensure(cx + dx, cz + dz);
+                    else if (Find(cx + dx, cz + dz) == null) { Request(cx + dx, cz + dz); ready = false; }
+                }
+            if (!ready) return;
 
             if (!c.Lit) Light(c);
             if (c.MeshDirty) Mesh(c);
@@ -559,7 +667,7 @@ namespace Kgd.Field
             }
             Flow(sky: false);
 
-            c.MeshDirty = true;
+            c.MeshDirty = true; c.DeepDirty = true; c.UpperDirty = true;
         }
 
         private void Flow(bool sky)
@@ -609,7 +717,7 @@ namespace Kgd.Field
         private void Touch(int x, int z)
         {
             var c = Find(ChunkOf(x), ChunkOf(z));
-            if (c != null) c.MeshDirty = true;
+            if (c != null) { c.MeshDirty = true; c.DeepDirty = true; c.UpperDirty = true; }
         }
 
         /// <summary>
@@ -702,13 +810,22 @@ namespace Kgd.Field
 
         private void Mesh(Chunk c)
         {
-            c.Mesh = Swap(c, c.Mesh, KgdFieldMesher.Build(this, c.Cx, c.Cz, liquid: false, yFrom: DeepBelow), ref c.Go, Surface, "field");
-            c.DeepMesh = Swap(c, c.DeepMesh, KgdFieldMesher.Build(this, c.Cx, c.Cz, liquid: false, yTo: DeepBelow), ref c.DeepGo, Surface, "deep");
-            if (c.DeepGo != null && !_showDeep) c.DeepGo.SetActive(false);
+            // 처음이거나 통째로 표시됐으면 둘 다, 아니면 바뀐 층만
+            bool first = c.Mesh == null && c.DeepMesh == null;
+            if (first || c.UpperDirty)
+                c.Mesh = Swap(c, c.Mesh, KgdFieldMesher.Build(this, c.Cx, c.Cz, liquid: false, yFrom: DeepBelow), ref c.Go, Surface, "field");
+            if (first || c.DeepDirty)
+            {
+                c.DeepMesh = Swap(c, c.DeepMesh, KgdFieldMesher.Build(this, c.Cx, c.Cz, liquid: false, yTo: DeepBelow), ref c.DeepGo, Surface, "deep");
+                if (c.DeepGo != null && !_showDeep) c.DeepGo.SetActive(false);
+            }
+            c.DeepDirty = false; c.UpperDirty = false;
             // 수면은 따로 뜬다 — 땅과 한 면으로 뜨면 재료 하나로 색이 갈리는 것이 전부라 물이 땅처럼 보인다
-            c.LiquidMesh = c.HasLiquid
-                ? Swap(c, c.LiquidMesh, KgdFieldMesher.Build(this, c.Cx, c.Cz, liquid: true), ref c.LiquidGo, LiquidSurface, "sap")
-                : Swap(c, c.LiquidMesh, null, ref c.LiquidGo, LiquidSurface, "sap");
+            if (first || c.LiquidDirty)
+                c.LiquidMesh = c.HasLiquid
+                    ? Swap(c, c.LiquidMesh, KgdFieldMesher.Build(this, c.Cx, c.Cz, liquid: true), ref c.LiquidGo, LiquidSurface, "sap")
+                    : Swap(c, c.LiquidMesh, null, ref c.LiquidGo, LiquidSurface, "sap");
+            c.LiquidDirty = false;
 
             c.MeshDirty = false;
             MeshedThisTick++;
