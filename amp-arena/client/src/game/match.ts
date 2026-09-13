@@ -300,7 +300,7 @@ export class Match {
     this.hud.update({
       me: world.players[src.myId], players: world.players.filter((p): p is Player => !!p), myId: src.myId,
       phase: world.phase, phaseT: world.phaseT, timeLeft: world.timeLeft, score: world.score, teams: world.teams, plates, rtt: src.rtt,
-      modeId: world.mode.id, mapName: world.map.name, info: src.info ?? null,
+      modeId: world.mode.id, mapName: world.map.name, wave: world.wave, info: src.info ?? null,
     });
     this.renderer.render();
     if (src.ended && !this.resultShown) this.showResult(src.ended);

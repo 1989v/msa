@@ -19,13 +19,14 @@ describe('snapshot', () => {
     const a = busyWorld(9);
     const snap = encodeSnapshot(a);
     expect(snap.w).toBeDefined();
-    expect(snap.w!.length).toBe(2 + a.crateTimers.length + a.barrelTimers.length);
+    expect(snap.w!.length).toBe(3 + a.crateTimers.length + a.barrelTimers.length); // 다음 id 둘 + 물결 + 타이머
     const b = new World({ mapId: 'colosseum', modeId: 'ffa_dm', seconds: 120, seed: 1 });
     for (let i = 0; i < MAX_PLAYERS; i++) b.addPlayer(i, `p${i}`, 0, ACCESSORY_IDS[i % ACCESSORY_IDS.length], true, STYLE_IDS[i % STYLE_IDS.length]);
     applySnapshot(b, snap);
     expect(b.tick).toBe(a.tick);
     expect(b.nextProjId).toBe(a.nextProjId);
     expect(b.nextItemId).toBe(a.nextItemId);
+    expect(b.wave).toBe(a.wave); // 협동 물결도 승계된다
     expect(b.crateTimers).toEqual(a.crateTimers);
     expect(b.barrelTimers).toEqual(a.barrelTimers);
     expect(b.barrelTimers.length).toBe(MAPS.colosseum.barrels.length);

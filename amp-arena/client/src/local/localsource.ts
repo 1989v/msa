@@ -23,7 +23,8 @@ export class LocalSource implements MatchSource {
     const n = Math.max(1, Math.min(7, o.bots));
     for (let i = 1; i <= n; i++) {
       const { style, acc } = randomLoadout(this.world.rng); // 봇 직업·악세서리 무작위 (직업 규칙 안에서)
-      const team = this.world.teams ? i % 2 : 0;
+      // 협동은 사람이 레드·봇이 블루로 못 박힌다 (온라인 명단과 같은 규칙 — roster.ts)
+      const team = this.world.mode.waves ? 1 : this.world.teams ? i % 2 : 0;
       const p = this.world.addPlayer(i, BOT_NAMES[i - 1], team, acc, true, style);
       this.mems[i] = newBotMemory(this.world.rng);
       this.roster.push({ id: i, name: p.name, team: p.team, acc, style, bot: true });

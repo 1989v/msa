@@ -27,6 +27,7 @@ export type WorldEvent =
   | { t: 'ko'; a: number; v: number; cause: 'hit' | 'fall' | 'throw' }
   | { t: 'grab'; a: number; v: number }
   | { t: 'respawn'; id: number }
+  | { t: 'wave'; n: number; of: number }
   | { t: 'phase'; phase: 'countdown' | 'play' | 'ended' }
   | { t: 'shot'; id: number; x: number; y: number; z: number; move: MoveId }
   | { t: 'pickup'; id: number; item: number; kind: ItemKind }
@@ -47,6 +48,8 @@ export class World implements SimContext {
   phase: 'countdown' | 'play' | 'ended' = 'countdown';
   phaseT = 0;
   timeLeft: number;
+  /** 협동 시나리오의 지금 물결 (1부터). 다른 모드에서는 늘 1 */
+  wave = 1;
   map: MapDef;
   mode: ModeDef;
   teams: boolean;
@@ -91,7 +94,9 @@ export class World implements SimContext {
   addPlayer(id: number, name: string, team: number, acc: AccessoryId, bot: boolean, style: StyleId = 'fighter', statsDelta?: Partial<Stats>): Player {
     // 진행으로 분배한 스탯은 여기서 다시 검사한다 — 명단은 클라이언트가 만든 값이라 상한을 믿지 않는다
     const stats = applyStatDelta(statsForStyle(style), sanitizeStatDelta(statsDelta));
-    const p = createPlayer(id, name, this.teams ? team : 0, allowedAccessory(style, acc), bot, this.mode.lives, style, stats);
+    // 협동에서는 봇이 물결마다 한 번만 눕는다(목숨 1). 사람은 시나리오 전체에 걸쳐 mode.lives.
+    const lives = this.mode.waves && bot ? 1 : this.mode.lives;
+    const p = createPlayer(id, name, this.teams ? team : 0, allowedAccessory(style, acc), bot, lives, style, stats);
     const s = this.spawnFor(p);
     p.pos.x = s.x; p.pos.y = s.y; p.pos.z = s.z;
     p.yaw = yawFromDir(-s.x, -s.z);
@@ -149,6 +154,7 @@ export class World implements SimContext {
       this.stepItems();
     }
     this.handleDeaths();
+    if (this.phase === 'play' && this.mode.waves) this.stepWaves();
     if (this.phase === 'play') this.checkEnd();
     return this.events;
   }
@@ -692,9 +698,41 @@ export class World implements SimContext {
     }
   }
 
+  /**
+   * 협동 물결. 블루(봇)가 다 누우면 다음 물결이 더 세게 온다 — 물결마다 체력·공격 +1 (5까지).
+   * 사람이 목숨을 다 쓰면 checkEnd 가 끝낸다.
+   */
+  private stepWaves(): void {
+    const bots = this.players.filter((p): p is Player => !!p && p.bot);
+    if (!bots.length || bots.some((p) => p.alive)) return;
+    if (this.wave >= (this.mode.waves ?? 1)) {
+      this.score[0] = 1; this.score[1] = 0; // 사람 승
+      this.ranking = this.computeRanking();
+      this.setPhase('ended');
+      this.events.push({ t: 'end', ranking: this.ranking });
+      return;
+    }
+    this.wave++;
+    const boost = Math.min(5, this.wave - 1);
+    for (const b of bots) {
+      b.lives = 1; b.alive = true;
+      // 물결이 올라갈수록 세진다. maxHp 는 스탯에서 나오므로 같이 올리고 hp 를 꽉 채운다.
+      b.stats = applyStatDelta(b.stats, { hp: boost, atk: boost });
+      b.maxHp = C.hpFromStat(b.stats.hp);
+      const s = this.spawnFor(b);
+      respawn(b, s.x, s.y, s.z, yawFromDir(-s.x, -s.z));
+      b.hp = b.maxHp;
+    }
+    this.events.push({ t: 'wave', n: this.wave, of: this.mode.waves ?? 1 });
+  }
+
   private checkEnd(): void {
     let end = this.timeLeft <= 0;
-    if (!end && this.mode.lives > 0) {
+    // 협동은 「블루가 다 누웠다」로 끝나지 않는다 — 그건 물결 넘김이다. 사람이 다 나가면 끝.
+    if (!end && this.mode.waves) {
+      const humans = this.players.filter((p): p is Player => !!p && !p.bot);
+      if (humans.length && humans.every((p) => !p.alive)) { this.score[0] = 0; this.score[1] = 1; end = true; }
+    } else if (!end && this.mode.lives > 0) {
       const alive = this.alivePlayers;
       const total = this.players.filter((p) => !!p).length;
       if (total > 1) {

@@ -17,6 +17,7 @@ export interface HudView {
   info: string | null;
   modeId: ModeId;
   mapName: string;
+  wave?: number;   // 협동 시나리오의 지금 물결
 }
 
 const teamName = (t: number) => (t === 0 ? '레드' : '블루');
@@ -127,7 +128,8 @@ export class Hud {
       this.lastSec = sec;
       this.timerT.textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
       this.timerT.classList.toggle('urgent', sec <= 5);
-      this.modeChip.textContent = `${MODES[v.modeId].name} · ${v.mapName}`;
+      const waves = MODES[v.modeId].waves;
+      this.modeChip.textContent = waves ? `물결 ${v.wave ?? 1} / ${waves} · ${v.mapName}` : `${MODES[v.modeId].name} · ${v.mapName}`;
     }
     this.scoreL.textContent = String(v.score[0]); this.scoreR.textContent = String(v.score[1]);
     if (this.frame % 6 === 0) {

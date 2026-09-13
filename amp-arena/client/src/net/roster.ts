@@ -9,6 +9,7 @@ export interface SeatLike { name: string; pick: Pick | null }
 
 export function buildRoster(occ: number[], seats: (SeatLike | null | undefined)[], settings: RoomSettings, seed: number): { roster: RosterEntry[]; spectators: number[] } {
   const teams = MODES[settings.mode].teams;
+  const coop = !!MODES[settings.mode].waves; // 협동: 사람은 전부 레드(0), 봇은 전부 블루(1)
   // 방 규칙 (2026-09-13) — **여기서 못 박는다.** 명단은 방장이 만들어 cfg 로 나가므로
   // 게스트가 대기실에서 뭘 골랐든(악세서리·스탯) 이 판에서는 방 규칙이 이긴다.
   const noAcc = settings.accs === false;
@@ -20,7 +21,7 @@ export function buildRoster(occ: number[], seats: (SeatLike | null | undefined)[
     const s = seats[seat];
     const pick = s?.pick;
     if (pick?.spectate) { spectators.push(seat); continue; }
-    const team = teams ? (pick && pick.team >= 0 ? pick.team : (count[0] <= count[1] ? 0 : 1)) : 0;
+    const team = coop ? 0 : teams ? (pick && pick.team >= 0 ? pick.team : (count[0] <= count[1] ? 0 : 1)) : 0;
     count[team]++;
     roster.push({ id: seat, name: s?.name ?? `${seat + 1}번`, team, acc: noAcc ? 'none' : (pick?.acc ?? 'none'), style: pick?.style ?? 'fighter', bot: false, stats: noStats || !pick?.stats ? undefined : sanitizeStatDelta(pick.stats), skin: sanitizeSkin(pick?.skin), emblem: sanitizeEmblem(pick?.emblem) });
   }
@@ -31,7 +32,7 @@ export function buildRoster(occ: number[], seats: (SeatLike | null | undefined)[
     for (let i = 0; i < MAX_PLAYERS; i++) {
       if (occ.includes(i)) continue;
       if (picked && !picked.has(i)) continue;
-      const team = teams ? (count[0] <= count[1] ? 0 : 1) : 0;
+      const team = coop ? 1 : teams ? (count[0] <= count[1] ? 0 : 1) : 0;
       count[team]++;
       const { style, acc } = randomLoadout(rng);
       roster.push({ id: i, name: BOT_NAMES[i], team, acc: noAcc ? 'none' : acc, style, bot: true });
