@@ -13,7 +13,7 @@
 | 배포 산출물 | games 레포(`1989v/games`, msa 의 `portal-fe/public/games` 서브모듈) `arena/` + `thumbs/shots/arena.jpg` |
 | 카탈로그 행 | `game/feature/src/main/resources/gamedb/migration/V89__seed_arena.sql` (slug `arena`, BETA) + `V90__arena_score_boards.sql` (순위표 보드 online/practice, sdk_integrated=1) |
 | 운영 주소 | https://game.1989v.com/games/arena (카탈로그 상세 → IFRAME `/games/arena/index.html`) |
-| 운영 상태 (2026-09-13 밤) | main 5a656c7b · games a1282ba7 · 이미지 portal-fe:ec861e5 · 번들 `index-DhBH1iQC.js`. **Phase 2 완료 + 공중 공격 + 봇 자멸 수정**. 운영 실측: `tools/e2e-prod-{fullscreen,portrait,score,rules,air,bots}.mjs` + `e2e-online.mjs`(채팅·점수판) + `e2e-progress.mjs` + `e2e-emblem.mjs` 전부 통과 |
+| 운영 상태 (2026-09-13 밤) | main d5194ac7 · games 84707115 · 이미지 portal-fe:d5194ac · 번들 `index-BQlKC2Ko.js`. **Phase 2 완료 + 공중 공격 + 봇 자멸 수정 + 직업 전용 악세서리**. 운영 실측: `tools/e2e-prod-{fullscreen,portrait,score,rules,air,bots,accex}.mjs` + `e2e-online.mjs`(채팅·점수판) + `e2e-progress.mjs` + `e2e-emblem.mjs` 전부 통과 |
 
 ## 작업 위치
 
@@ -45,7 +45,7 @@
 - [x] 공중 공격 (2026-09-13 소감 「점프하면서도 공격」) — 공중 약공 = `airAttack`(점프 궤적 유지, 5/3/12·7 데미지, 한 번 뛰어 최대 두 번), 공중 강공 = 기존 급강하. 무브가 공중에서 끝나면 `fall` 로(전엔 `idle` 이라 공중 재점프가 될 뻔), 착지 경직은 쓴 무브의 후딜. **봇은 `ACTIONABLE`(idle/walk/run/land) 밖이라 공중 공격을 쓰지 않는다** — 봇 밸런스에 영향 없음. 테스트 `shared/test/airattack.test.ts`, 그림 `tools/shot-airattack.mjs`, 운영 실측 `tools/e2e-prod-air.mjs`(번들 `index-B3nwRH39.js` 에서 3/3)
 - [x] 밸런스 계측기 수정 (2026-09-13) — `balance.mjs` 가 **판 끝** 악세서리로 집계하던 것을 **시작 장비**로(KO 드랍 뒤로 판 끝 42% 가 달라진다). 60판은 노이즈(마셜 0.65↔0.92↔0.96) — **300판 이상에서만 판정**. 300판 실측으로 기획서 §7.3 의 「전부 ±30% 안」 기록을 사실로 정정(헤비·스피드스타·브레이커·더블탭이 밖). 원거리는 봇이 공정하게 못 재니 사람 데이터로 판정
 - [x] **봇이 스스로 떨어져 죽던 것** (2026-09-13, 밸런스를 재려다 찾음) — 판당 사망 34 중 크레딧 KO 는 10.5 뿐이고 36% 가 자멸이었다(스카이독은 82%). 원인 셋: 상대가 위에 있으면 틱당 8% 로 빈 곳에 점프 · 절벽 검사가 0.9m 앞만 보고 접근 경로에만 걸림 · 점프대를 밟고 장외로. `bot.ts` 에 `footing`(발밑·점프대)·`avoidEdge`(속도 비례 예측 + 옆으로 틀기, 공중은 착지점)·`landingSpot`(탄도 착지 예상, 통로 전체가 딛을 수 있어야 뛴다). 자멸 36%→6%, 스카이독 판당 사망 45.7→15.2, 크레딧 타격사 44%→64%. 게이트 `shared/test/botedge.test.ts`(고치기 전 스카이독 20.75 로 빨간불 확인), 운영 실측 `tools/e2e-prod-bots.mjs`(번들 `index-DhBH1iQC.js` 에서 자멸 43%<60%·봇 이동 58/59 표본)
-- [x] **악세서리를 직업 전용으로** (2026-09-13 소감 「직업별로 무관한 악세서리들이 있어보임」) — 무기 하나가 직업 하나에만 붙는다: 파이터 부스터 · 그래플러 월 · 스피드스타 더블탭 · 헤비 브레이커 · 마셜 스파이크. 고르는 것은 맨손 아니면 전용 하나. `styles.ts` 의 `accessories` 배열만 고치면 되도록 `allowedAccessory` 가 이미 전 경로(입장·줍기·봇·HUD·대기실)를 막고 있었다. 딸려온 것: KO 드랍은 같은 직업만 줍고, 바꿔 들기는 같은 무기끼리만 일어나며, 봇은 전용을 3에 2 확률로 든다(균등하면 절반이 맨손). 300판 재측정에서 직업·악세서리 전부 ±30% 안 유지. 게이트 `shared/test/accexclusive.test.ts`
+- [x] **악세서리를 직업 전용으로** (2026-09-13 소감 「직업별로 무관한 악세서리들이 있어보임」) — 무기 하나가 직업 하나에만 붙는다: 파이터 부스터 · 그래플러 월 · 스피드스타 더블탭 · 헤비 브레이커 · 마셜 스파이크. 고르는 것은 맨손 아니면 전용 하나. `styles.ts` 의 `accessories` 배열만 고치면 되도록 `allowedAccessory` 가 이미 전 경로(입장·줍기·봇·HUD·대기실)를 막고 있었다. 딸려온 것: KO 드랍은 같은 직업만 줍고, 바꿔 들기는 같은 무기끼리만 일어나며, 봇은 전용을 3에 2 확률로 든다(균등하면 절반이 맨손). 300판 재측정에서 직업·악세서리 전부 ±30% 안 유지. 게이트 `shared/test/accexclusive.test.ts`, 운영 실측 `tools/e2e-prod-accex.mjs`(번들 `index-BQlKC2Ko.js` 에서 대기실·줍기 둘 다 전용만)
 - [x] 밸런스 재판정 (2026-09-13) — 봇을 고치자 **직업·악세서리 전부 ±30% 안**(헤비 1.36→1.08, 스피드스타 0.62→0.97, 브레이커 1.50→1.10, 더블탭 0.41→1.04). 「범위 밖」 넷은 값이 아니라 자멸 결과였다. **수치는 하나도 안 바꿨다.** 기획서 §7.3 참조
 - [x] 가슴 그림 엠블럼 (2026-09-12) — 12×12 격자 페인터(`client/src/ui/emblemui.ts`), 144자 문자열을 명단에 실어 온라인 상대에게도 보임(`sanitizeEmblem`, cfg 봉투 크기 테스트), 리그 토르소 앞뒤 CanvasTexture(`rig.setEmblem`). Phase 2 완료. 테스트 `shared/test/emblem.test.ts`, 실측 `tools/e2e-emblem.mjs`·`tools/shot-emblem.mjs`
 
@@ -75,6 +75,7 @@ node tools/e2e-online.mjs $P https://game.1989v.com/games/arena/index.html <outD
 node tools/e2e-catalog.mjs $P https://game.1989v.com/games/arena <outDir>             # 카탈로그 상세 IFRAME 안에 타이틀이 뜨는지
 node tools/e2e-prod-air.mjs $P https://game.1989v.com/games/arena/index.html <outDir> # 공중 약공(궤적 유지)·강공(급강하)
 node tools/e2e-prod-bots.mjs $P https://game.1989v.com/games/arena/index.html <outDir> # 스카이독 봇 자멸 비율·얼어붙지 않음 (약 2분)
+node tools/e2e-prod-accex.mjs $P https://game.1989v.com/games/arena/index.html <outDir> # 악세서리가 직업 전용인지 — 대기실 선택지 + 시뮬 줍기
 ../scripts/cdp-chrome.sh stop amparena
 ```
 
