@@ -23,14 +23,17 @@ describe('sanitizeEmblem', () => {
 
 describe('cfg 크기', () => {
   it('8명 전원이 꽉 찬 엠블럼·스킨·스탯을 가져도 시작 메시지가 릴레이 상한 안', () => {
+    // **제일 긴 조합으로 잰다** — 악세서리가 16종이 되면서 id 길이가 제각각이라(none 4자 ~ greatsword 10자),
+    // 앞에서부터 8개를 쓰면 최악이 아니다. 이름도 닉네임 상한(10자)까지 채운다.
+    const longest = [...ACCESSORY_IDS].sort((a, b) => b.length - a.length);
     const roster = [];
     for (let i = 0; i < 8; i++) roster.push({
-      id: i, name: `플레이어${i}`, team: i % 2, acc: ACCESSORY_IDS[i % ACCESSORY_IDS.length], style: STYLE_IDS[i % STYLE_IDS.length], bot: false,
+      id: i, name: '가'.repeat(10), team: i % 2, acc: longest[i % longest.length], style: STYLE_IDS[i % STYLE_IDS.length], bot: false,
       stats: { hp: 5, atk: 5, def: 5, jmp: 5, spd: 5, tec: 4 }, skin: { shirt: 15, hair: 5, band: 3 }, emblem: full('7'),
     });
     const cfg: MatchConfig = { epoch: 1, host: 0, map: 'colosseum', mode: 'team_dm', seconds: 300, seed: 0x7fffffff, roster };
     const startLen = JSON.stringify({ t: 'move', d: { t: 'start', cfg } }).length;
-    expect(startLen).toBeLessThan(RELAY_MAX_CHARS);
+    expect(startLen, `시작 봉투 ${startLen}자 / 상한 ${RELAY_MAX_CHARS}`).toBeLessThan(RELAY_MAX_CHARS);
     expect(roster.every((r) => sanitizeEmblem(r.emblem) === r.emblem)).toBe(true);
   });
 });
