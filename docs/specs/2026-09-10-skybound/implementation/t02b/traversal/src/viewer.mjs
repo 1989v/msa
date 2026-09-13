@@ -58,7 +58,7 @@ async function main() {
   scene.add(platform.root);
   const destination = createPlatform(THREE, world.col, platform.terrain, { x: 14, z: 30, topY: platform.topY - 2 });
   destination.root.name = 'second aerial landing stone'; scene.add(destination.root);
-  const loaded = await new GLTFLoader().loadAsync(new URL('../character/assets/naru-lod0.glb', location.href).href);
+  const loaded = await new GLTFLoader().loadAsync(new URL(document.documentElement.dataset.characterSrc ?? '../character/assets/naru-lod0.glb', location.href).href);
   const character = loaded.scene;
   character.traverse(object => { if (object.isMesh) { object.castShadow = true; object.receiveShadow = true; } });
   scene.add(character);
@@ -113,7 +113,8 @@ async function main() {
     state.characterYaw = character.rotation.y;
     state.terrainHeight = terrain.heightAt(character.position.x, character.position.z);
     state.drawCalls = renderer.info.render.calls;
-    status.textContent = `${state.route?.complete ? '경로 완료 · 두 착지대에 도착했어요! · ' : ''}${state.paused ? '일시정지' : '이동 중'} · ${state.animation} · 기력 ${Math.round(state.snapshot.stamina)}`;
+    const motionLabel = document.documentElement.dataset.beta ? ({ idle: '쉬는 중', walk: '걷는 중', run: '달리는 중', jump: '뛰어오르는 중', fall: state.gliding ? '바람을 타는 중' : '내려오는 중', land: '착지' }[state.animation] ?? '') : state.animation;
+    status.textContent = `${state.route?.complete ? '경로 완료 · 두 착지대에 도착했어요! · ' : ''}${state.paused ? '일시정지' : '이동 중'} · ${motionLabel} · 기력 ${Math.round(state.snapshot.stamina)}`;
   }
   function publish(snapshot, elapsed) {
     updraft.update(snapshot.tick * MOVEMENT.step);

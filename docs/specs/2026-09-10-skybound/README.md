@@ -1,6 +1,8 @@
 # Skybound — 바람의 유적
 
-**현재: 기존 섬에서 키보드 이동·달리기·점프와 우클릭 시야 회전·휠 줌이 가능한 연결 프로토타입을 저장했습니다. 터치 이동·시야와 점프/달리기도 추가했습니다. 사물 충돌·전체 게임·최종 아트는 미완료입니다.**
+**현재: 섬 탐색·활공 경로·프리즘 받침 퍼즐을 연결했고 웹 베타 공개를 준비합니다. 전체 게임·최종 아트는 미완료입니다.**
+
+[웹 베타 공개 조건과 배포 준비](release/beta-readiness.md)
 
 [PC 이동 프로토타입 실행 안내](implementation/t02b/traversal/README.md) — 로컬 서버에서 `http://127.0.0.1:8768/implementation/t02b/traversal/index.html`.
 
@@ -19,7 +21,7 @@
 11. [T02B-2 텍스처 검증](implementation/t02b/texture-check/README.md): 1K PNG·UV·sRGB 왕복, 브라우저 12/12
 
 창작 구현은 기존 게임 소스를 읽지 않는 새 세션/에이전트에서 진행합니다.
-구현은 **9개 그룹 / 24개 실행 단위**로 나뉩니다. T02B는 한도에 맞춰 [4개 소단위](planning/t02b-small-steps.md)로 세분화했습니다. 다음은 **T04B-2: 첫 퍼즐 통합 플레이 점검**입니다.
+구현은 **9개 그룹 / 24개 실행 단위**로 나뉩니다. T02B는 한도에 맞춰 [4개 소단위](planning/t02b-small-steps.md)로 세분화했습니다. 다음은 **웹 베타 패키지 통합 플레이 점검**입니다.
 [주인공 모델 스튜디오](implementation/t02b/character/README.md)와 [최신 실제 캡처·검수](verifications/t02c-2.md)를 저장했습니다. 캐릭터 화면은 로컬 서버의 `implementation/t02b/character/index.html`에서 볼 수 있습니다. 장면은 로컬 서버에서
 `http://127.0.0.1:8768/implementation/t01b/index.html`로 볼 수 있습니다.
 원화 2장은 디자인 참고 이미지이며 리깅된 모델이나 동작하는 게임 화면이 아닙니다.
@@ -32,4 +34,4 @@
 
 [두 착지점 경로 완료 검증](verifications/t03b-2b.md) — 단위48/48, 브라우저14/14. 이동 진단 경로이며 게임 전체 완주는 아닙니다.
 
-[물체 조작 순수 규칙](implementation/t04a/README.md) — 7/7 통과. 데모 연결은 다음 단계입니다.
+[물체 조작 순수 규칙](implementation/t04a/README.md) — 데모 조작·지면 지지·받침 퍼즐까지 연결했습니다.
