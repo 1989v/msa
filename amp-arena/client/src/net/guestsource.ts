@@ -55,7 +55,7 @@ export class GuestSource implements MatchSource {
     this.spectator = !cfg.roster.some((r) => r.id === mySeat);
     this.epoch = cfg.epoch;
     this.hostSeat = cfg.host;
-    this.world = new World({ mapId: cfg.map, modeId: cfg.mode, seconds: cfg.seconds, seed: cfg.seed });
+    this.world = new World({ mapId: cfg.map, modeId: cfg.mode, seconds: cfg.seconds, seed: cfg.seed, items: cfg.items !== false });
     for (const r of cfg.roster) this.world.addPlayer(r.id, r.name, r.team, r.acc, r.bot, r.style, r.stats);
     this.off = channel.on((d) => this.onMsg(d));
     this.pingTimer = setInterval(() => this.channel.send({ t: 'p', at: performance.now() }), 2000);

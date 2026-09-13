@@ -44,6 +44,11 @@ export interface MatchConfig {
   roster: RosterEntry[];
   /** 관전 좌석 — 명단에 없고 스냅샷만 받는다 (2026-09-12) */
   spectators?: number[];
+  /**
+   * 노템전이면 false — 월드가 상자·드럼통을 아예 안 놓는다 (2026-09-13).
+   * 맨손전·스탯 끄기는 **명단에 이미 반영돼** 오므로 여기 없다 (acc 'none' · stats 없음).
+   */
+  items?: boolean;
 }
 
 /** 대기실에서 서로에게 알리는 내 선택. 방을 만들 때 정한 매치 설정은 방장 것만 의미가 있다. */
@@ -51,7 +56,13 @@ export interface Pick { name: string; acc: AccessoryId; style: StyleId; team: nu
 // spectate: 싸우지 않고 본다 — 명단에서 빠진다. ready: 대기실 준비 완료(방장은 늘 준비로 친다). stats·skin·emblem: 진행
 // botSeats: 방장이 **빈 슬롯을 눌러 봇으로 지정한** 좌석 번호들. `fillBots` 가 「빈 자리를 전부 봇으로」라면
 // 이쪽은 「고른 자리만」이다 — 8명을 다 채우지 않고 서넛만 붙이고 싶을 때 쓴다 (2026-09-13 소감).
-export interface RoomSettings { map: MapId; mode: ModeId; seconds: number; fillBots: boolean; botSeats?: number[] }
+export interface RoomSettings {
+  map: MapId; mode: ModeId; seconds: number; fillBots: boolean; botSeats?: number[];
+  // 방 규칙 (2026-09-13 소감) — **방장이 정하고 그 판 전원에게 강제된다.** 셋 다 없으면 켜진 것으로 친다.
+  items?: boolean;  // 상자·드럼통·하트·폭탄이 나오는가 (노템전이면 false)
+  accs?: boolean;   // 악세서리를 들 수 있는가 (맨손전이면 false)
+  stats?: boolean;  // 진행으로 올린 스탯을 쓰는가 — 오래 한 사람이 더 세지는 것을 끄는 스위치
+}
 
 /** 게스트 → 방장 (`to` 지정) 또는 방 전체 브로드캐스트 */
 export type GuestMsg =

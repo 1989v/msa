@@ -354,7 +354,7 @@ export class Online {
     const mine = this.state.seats[this.state.mySeat];
     const settings = mine?.settings ?? this.settings;
     const { roster, spectators } = buildRoster(occ, this.state.seats, settings, seed);
-    return { epoch, host: this.state.mySeat, map: settings.map in MAPS ? settings.map : 'colosseum', mode: settings.mode, seconds: settings.seconds, seed, roster, spectators };
+    return { epoch, host: this.state.mySeat, map: settings.map in MAPS ? settings.map : 'colosseum', mode: settings.mode, seconds: settings.seconds, seed, roster, spectators, items: settings.items !== false };
   }
 
   private applyConfig(cfg: MatchConfig): void {

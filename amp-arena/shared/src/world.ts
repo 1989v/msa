@@ -40,7 +40,7 @@ export type WorldEvent =
 
 export interface RankEntry { id: number; name: string; team: number; kos: number; deaths: number; dmg: number; alive: boolean; hp: number; rank: number; win: boolean }
 
-export interface WorldConfig { mapId: MapId; modeId: ModeId; seconds: number; seed: number }
+export interface WorldConfig { mapId: MapId; modeId: ModeId; seconds: number; seed: number; items?: boolean /* 기본 true. false 면 노템전 */ }
 
 export class World implements SimContext {
   tick = 0;
@@ -74,14 +74,18 @@ export class World implements SimContext {
     this.teams = this.mode.teams;
     this.timeLeft = Math.max(30, cfg.seconds) * C.TICK_RATE;
     this.rng = makeRng(cfg.seed);
-    this.map.crates.forEach((c, i) => {
-      this.items.push(createItem(this.nextItemId++, 'crate', c.x, c.y, c.z, i));
-      this.crateTimers[i] = 0;
-    });
-    this.map.barrels.forEach((c, i) => {
-      this.items.push(createItem(this.nextItemId++, 'barrel', c.x, c.y, c.z, i));
-      this.barrelTimers[i] = 0;
-    });
+    // 노템전이면 상자·드럼통을 놓지 않는다. 하트·폭탄은 상자에서만 나오므로 같이 사라진다.
+    // (KO 악세서리 드랍은 「악세전」 규칙 몫이라 여기서 막지 않는다)
+    if (cfg.items !== false) {
+      this.map.crates.forEach((c, i) => {
+        this.items.push(createItem(this.nextItemId++, 'crate', c.x, c.y, c.z, i));
+        this.crateTimers[i] = 0;
+      });
+      this.map.barrels.forEach((c, i) => {
+        this.items.push(createItem(this.nextItemId++, 'barrel', c.x, c.y, c.z, i));
+        this.barrelTimers[i] = 0;
+      });
+    }
   }
 
   addPlayer(id: number, name: string, team: number, acc: AccessoryId, bot: boolean, style: StyleId = 'fighter', statsDelta?: Partial<Stats>): Player {

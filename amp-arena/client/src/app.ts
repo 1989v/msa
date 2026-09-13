@@ -57,7 +57,7 @@ export class App {
   private acc: AccessoryId = 'none';
   private style: StyleId = 'fighter';
   private team = -1;
-  private settings: RoomSettings = { map: 'colosseum', mode: 'ffa_dm', seconds: 180, fillBots: true, botSeats: [] };
+  private settings: RoomSettings = { map: 'colosseum', mode: 'ffa_dm', seconds: 180, fillBots: true, botSeats: [], items: true, accs: true, stats: true };
   private ready = false;          // 대기실 준비 (방장은 늘 준비로 친다)
   private listed = true;          // 방 만들 때 공개로 낼까 (목록에 코드가 실린다)
   private startWarned = false;    // 「아직 안 준비한 사람이 있다」를 한 번 보여 준 뒤에야 강행
@@ -301,6 +301,9 @@ export class App {
       <div class="kv"><span class="muted">맵</span>${sel('rmap', MAP_IDS.map((m) => [m, MAPS[m].name]), s.map)}</div>
       <div class="kv"><span class="muted">시간</span>${sel('rsec', SECONDS_OPTS, String(s.seconds))}</div>
       <div class="kv"><span class="muted">빈 자리</span>${sel('rbots', [['1', '봇으로 채움'], ['0', '비워 둠']], s.fillBots ? '1' : '0')}</div>
+      <div class="kv"><span class="muted">아이템</span>${sel('ritems', [['1', '아이템전'], ['0', '노템전']], s.items === false ? '0' : '1')}</div>
+      <div class="kv"><span class="muted">악세서리</span>${sel('raccs', [['1', '악세전'], ['0', '맨손전']], s.accs === false ? '0' : '1')}</div>
+      <div class="kv"><span class="muted">스탯</span>${sel('rstats', [['1', '스탯 적용'], ['0', '스탯 없음']], s.stats === false ? '0' : '1')}</div>
     </div>`;
   }
 
@@ -311,6 +314,9 @@ export class App {
       seconds: Number((el.querySelector('.rsec') as HTMLSelectElement).value),
       fillBots: (el.querySelector('.rbots') as HTMLSelectElement).value === '1',
       botSeats: [...(this.settings.botSeats ?? [])],
+      items: (el.querySelector('.ritems') as HTMLSelectElement).value === '1',
+      accs: (el.querySelector('.raccs') as HTMLSelectElement).value === '1',
+      stats: (el.querySelector('.rstats') as HTMLSelectElement).value === '1',
     };
   }
 
@@ -359,7 +365,7 @@ export class App {
       </div>`);
     const online = this.online!;
     const applySettings = () => { this.settings = this.readSettings(el); online.setSettings(this.settings); };
-    for (const c of ['.rmode', '.rmap', '.rsec', '.rbots']) (el.querySelector(c) as HTMLSelectElement).onchange = applySettings;
+    for (const c of ['.rmode', '.rmap', '.rsec', '.rbots', '.ritems', '.raccs', '.rstats']) (el.querySelector(c) as HTMLSelectElement).onchange = applySettings;
     const busy = (b: HTMLButtonElement, on: boolean) => { b.disabled = on; };
     (el.querySelector('.spectate') as HTMLInputElement).onchange = (e) => { this.spectate = (e.target as HTMLInputElement).checked; online.setPick({ spectate: this.spectate }); };
     (el.querySelector('.quick') as HTMLButtonElement).onclick = async (ev) => {
@@ -506,7 +512,7 @@ export class App {
     };
     const copy = el.querySelector('.copy') as HTMLButtonElement | null;
     if (copy) copy.onclick = () => { void navigator.clipboard?.writeText(st.code).then(() => this.toast('코드를 복사했습니다'), () => this.toast(st.code)); };
-    if (isHost) for (const c of ['.rmode', '.rmap', '.rsec', '.rbots']) (el.querySelector(c) as HTMLSelectElement).onchange = () => { this.settings = this.readSettings(el); online.setSettings(this.settings); };
+    if (isHost) for (const c of ['.rmode', '.rmap', '.rsec', '.rbots', '.ritems', '.raccs', '.rstats']) (el.querySelector(c) as HTMLSelectElement).onchange = () => { this.settings = this.readSettings(el); online.setSettings(this.settings); };
     // 채팅
     const log = el.querySelector('.chat .log') as HTMLElement;
     log.innerHTML = st.chat.map((c) => `<div class="${c.system ? 'sys' : ''}"><b>${esc(c.from)}</b><span class="muted"> : </span>${esc(c.text)}</div>`).join('');

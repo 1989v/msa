@@ -41,7 +41,7 @@ export class Authority {
     this.cfg = init.cfg;
     this.epoch = init.cfg.epoch;
     const gone = new Set(init.gone);
-    const w = new World({ mapId: init.cfg.map, modeId: init.cfg.mode, seconds: init.cfg.seconds, seed: init.cfg.seed });
+    const w = new World({ mapId: init.cfg.map, modeId: init.cfg.mode, seconds: init.cfg.seconds, seed: init.cfg.seed, items: init.cfg.items !== false });
     this.world = w;
     for (const r of init.cfg.roster) {
       if (gone.has(r.id)) continue;
