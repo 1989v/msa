@@ -12,6 +12,7 @@ import { createUpdraft, insideUpdraft } from './updraft.mjs';
 import { createPlatform } from './platform.mjs';
 import { updateRoute, routeSnapshot } from './route.mjs';
 import { createManipulationView } from './manipulation-view.mjs';
+import { createReceiverView } from './receiver-view.mjs';
 import '../style.css';
 
 const state = window.__SKYBOUND_TRAVERSAL__ = { ready: false, error: null, paused: true, snapshot: null, animation: 'idle', characterPosition: null, terrainHeight: null, frames: 0 };
@@ -71,6 +72,7 @@ async function main() {
   const mixer = new THREE.AnimationMixer(character);
   const camera = new THREE.PerspectiveCamera(48, 1, .1, 1800);
   const manipulation = createManipulationView(THREE, world.col, terrain, surfaces); scene.add(manipulation.root);
+  const receiverView = createReceiverView(THREE, world.col, terrain, manipulation.snapshot().objects[0]); scene.add(receiverView.root);
   const manipulateButton = document.querySelector('#manipulate'), rotateButton = document.querySelector('#rotate-object'), cancelButton = document.querySelector('#cancel-object');
   const carryHint = document.querySelector('#carry-hint');
   const keys = new Set();
@@ -81,18 +83,22 @@ async function main() {
   function result() {
     return { snapshot: state.snapshot, animation: state.animation, animationTime: state.animationTime,
       characterPosition: state.characterPosition, characterYaw: state.characterYaw, terrainHeight: state.terrainHeight,
-      manipulation: state.manipulation, route: state.route, destination: state.destination, platform: state.platform, updraft: state.updraft, camera: state.camera, touch: state.touch, gliding: state.gliding, sailVisible: state.sailVisible, gripErrors: state.gripErrors, flightPoseActive: state.flightPoseActive, paused: state.paused, frames: state.frames };
+      puzzle: state.puzzle, manipulation: state.manipulation, route: state.route, destination: state.destination, platform: state.platform, updraft: state.updraft, camera: state.camera, touch: state.touch, gliding: state.gliding, sailVisible: state.sailVisible, gripErrors: state.gripErrors, flightPoseActive: state.flightPoseActive, paused: state.paused, frames: state.frames };
   }
   function draw() {
     const offset = cameraOffset(orbit), p = character.position;
     camera.position.set(p.x + offset.x, p.y + 1.05 + offset.y, p.z + offset.z);
     camera.lookAt(p.x, p.y + 1.05, p.z);
     state.manipulation = manipulation.update({ camera, position: p, grounded: state.snapshot?.grounded === true, paused: state.paused, yaw: orbit.yaw, pitch: orbit.pitch });
+    state.puzzle = receiverView.update(state.manipulation, state.paused);
+    manipulation.setLocked(state.puzzle.complete);
+    state.manipulation = manipulation.snapshot();
     const carrying = !!state.manipulation.held;
     manipulateButton.textContent = carrying ? '놓기 · E' : '집기 · E';
-    manipulateButton.disabled = state.paused; rotateButton.disabled = state.paused || !carrying; cancelButton.disabled = state.paused || !carrying;
+    manipulateButton.disabled = state.paused || state.puzzle.complete; rotateButton.disabled = state.paused || !carrying; cancelButton.disabled = state.paused || !carrying;
     const reasons = { overlap: '겹쳐서 놓을 수 없어요', sweep: '이동 경로가 막혀 있어요', occluded: '가려진 위치예요', range: '너무 멀어요', terrain: '지면 위에 놓아 주세요', aim: '화면 가운데로 프리즘을 겨눠 주세요', grounded: '땅에 선 뒤 집어 주세요' };
     carryHint.textContent = carrying ? `${state.manipulation.preview?.valid === false || state.manipulation.lastReason ? '× ' + (reasons[state.manipulation.lastReason] ?? '놓을 수 없어요') : '○ 놓을 수 있어요'} · 운반 중 이동·점프 잠금, 시야로 배치` : reasons[state.manipulation.lastReason] ?? (state.manipulation.targetId ? '프리즘 · 집기 가능' : '가운데 조준점으로 프리즘을 겨눠 보세요');
+    carryHint.textContent = state.puzzle.complete ? '돌고리 받침 완성 · 프리즘이 고정됐어요' : carryHint.textContent + ' · 오른쪽 받침의 긴 방향에 맞춰 놓아 주세요';
     state.touch = touch.snapshot();
     state.camera = { ...orbit, dragging: drag !== null || state.touch.lookId !== null };
     state.gliding = state.snapshot?.gliding === true; state.sailVisible = glider.root.visible;
@@ -181,7 +187,7 @@ async function main() {
   }
   function resetForTest() {
     pause(); flightPose.restore(); mixer.stopAllAction();
-    manipulation.reset();
+    manipulation.reset(); receiverView.reset();
     orbit = { ...CAMERA_DEFAULTS };
     simulation = createSimulation({ terrain: destination.terrain, checkpoint: { x: 0, z: 35 }, waterHeight, flight: { enabled: true, volumes: [updraft.volume] } });
     bridge = createAnimationBridge(durations); character.rotation.y = Math.PI;

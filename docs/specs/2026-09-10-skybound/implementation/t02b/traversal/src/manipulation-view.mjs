@@ -37,7 +37,7 @@ export function createManipulationView(THREE, col, terrain, surfaces = []) {
   outline.scale.setScalar(1.015); mesh.add(outline);
   const ghost = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color: col('ochre'), wireframe: true, depthTest: false }));
   ghost.visible = false; root.add(ghost);
-  let frame = null, targetId = null, lastReason = null, lastTarget = null;
+  let frame = null, targetId = null, lastReason = null, lastTarget = null, locked = false;
   function context() {
     const p = frame.position;
     return { eye: { x: p.x, y: p.y + 1.35, z: p.z }, player: {
@@ -55,7 +55,7 @@ export function createManipulationView(THREE, col, terrain, surfaces = []) {
   }
   function snapshot() {
     const s = controller.snapshot();
-    return { ...s, ...(s.held && lastReason === 'terrain' && s.preview?.valid !== false ? { preview: { pose: { position: s.held.position, yaw: s.held.yaw }, valid: false, reason: 'terrain' } } : {}), targetId, lastReason };
+    return { ...s, ...(s.held && lastReason === 'terrain' && s.preview?.valid !== false ? { preview: { pose: { position: s.held.position, yaw: s.held.yaw }, valid: false, reason: 'terrain' } } : {}), targetId, lastReason, locked };
   }
   function update(value) {
     frame = value;
@@ -77,6 +77,7 @@ export function createManipulationView(THREE, col, terrain, surfaces = []) {
   function action(type) {
     if (!frame || frame.paused) { lastReason = 'paused'; return snapshot(); }
     const s = controller.snapshot();
+    if (locked) { lastReason = 'complete'; return snapshot(); }
     if (!frame.grounded) { lastReason = 'grounded'; return snapshot(); }
     let result;
     if (type === 'toggle') {
@@ -95,7 +96,7 @@ export function createManipulationView(THREE, col, terrain, surfaces = []) {
     if (result) lastReason = result.reason ?? null;
     paint(); return snapshot();
   }
-  function reset() { controller.dispatch({ type: 'reset' }); targetId = null; lastReason = null; lastTarget = null; paint(); return snapshot(); }
+  function reset() { locked = false; controller.dispatch({ type: 'reset' }); targetId = null; lastReason = null; lastTarget = null; paint(); return snapshot(); }
   paint();
-  return { root, update, action, reset, snapshot };
+  return { root, update, action, reset, snapshot, setLocked(value) { locked = value === true; } };
 }
