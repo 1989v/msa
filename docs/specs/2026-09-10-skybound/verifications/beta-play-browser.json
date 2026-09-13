@@ -1,0 +1,46 @@
+{
+  "url": "http://127.0.0.1:8768/release/dist/index.html",
+  "checks": [
+    {
+      "name": "Standalone beta loads local character",
+      "passed": true
+    },
+    {
+      "name": "Held prism does not complete puzzle",
+      "passed": true
+    },
+    {
+      "name": "Pause preserves carried prism",
+      "passed": true
+    },
+    {
+      "name": "Keyboard and mouse solve first puzzle",
+      "passed": true
+    },
+    {
+      "name": "Completed prism cannot be grabbed",
+      "passed": true
+    },
+    {
+      "name": "Reset clears completion",
+      "passed": true
+    },
+    {
+      "name": "390px touch controls solve puzzle",
+      "passed": true
+    },
+    {
+      "name": "Mobile buttons have 44px targets and no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "Touch reset allows replay",
+      "passed": true
+    },
+    {
+      "name": "No browser errors",
+      "passed": true
+    }
+  ],
+  "errors": []
+}
