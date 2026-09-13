@@ -212,6 +212,30 @@ input, select { font-family: var(--font); }
 #app.short .accs .acc svg { width: 18px; height: 18px; }
 #app.short .stylebtn { padding: 5px 3px; font-size: 10px; }
 #app.short .btn { height: 38px; font-size: 13px; }
+/*
+ * 대기실 — 폭 미디어쿼리(`max-width: 900px`)도 회전 앞에서는 틀린다. 뷰포트는 390px 세로인데
+ * 앱은 844px 가로라, 「좁은 화면」 규칙이 걸려 슬롯 위에 설정이 쌓이고 스크롤해야 캐릭터를 골랐다.
+ * 짧은 화면에서는 다시 두 단으로 펴고 칸을 낮춰 8칸 + 설정이 한 화면에 들어오게 한다.
+ */
+#app.short .room { top: 52px; left: 10px; right: 10px; bottom: 10px; grid-template-rows: minmax(0, 1fr) 62px; gap: 8px; }
+#app.short .room .top { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 10px; overflow: hidden; align-items: stretch; }
+#app.short .room .side { overflow-y: auto; }
+/* 상단바가 844px 를 38px 넘겨 「나가기」가 잘렸다 — 짧은 화면에서는 로고·칩을 줄이고 가운데를 접는다 */
+#app.short .topbar { height: 44px; padding: 0 8px; gap: 8px; }
+#app.short .topbar .logo { font-size: 20px !important; }
+#app.short .topbar .row { gap: 6px !important; min-width: 0; }
+#app.short .topbar .chip { font-size: 10px; padding: 2px 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#app.short .topbar .btn { height: 28px !important; font-size: 11px !important; padding: 0 8px; }
+#app.short .slots { gap: 6px; max-height: none; }
+#app.short .slot { min-height: 0; padding: 4px 4px 6px; gap: 2px; font-size: 11px; }
+#app.short .slot svg { width: 42px !important; height: 42px !important; }
+#app.short .slot .tag { left: 5px; top: 3px; font-size: 9px; }
+#app.short .slot .chip { font-size: 9px !important; padding: 1px 5px; }
+#app.short .room .side { gap: 8px; }
+#app.short .room .side .panel { padding: 8px; }
+#app.short .room .bottom { grid-template-columns: minmax(0, 1fr) 104px 168px; gap: 8px; }
+#app.short .room .bottom .chat { display: none; }
+#app.short .bigbtn { height: 100%; font-size: 13px; }
 /* 연습 설정 네 칸(맵·모드·봇·시간)은 반 폭 단에서 한 줄에 안 들어간다 — 2×2 로 접는다 (오른쪽 「3분」이 잘렸다) */
 #app.short .practice-set { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 #app.short .practice-set .field { width: auto !important; flex: none; }
