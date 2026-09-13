@@ -26,7 +26,7 @@
  {"hold":["ArrowUp","KeyC"],"ms":80,"after":200},
  {"eval":"JSON.stringify({tal:dev.state().hero.tal,st:dev.state().hero.st})","name":"talisman(expect tal 2)"},
  {"eval":"dev.state().hero.soul=100; 'ok'"},
- {"key":"KeyZ","ms":60,"after":150},
+ {"key":"KeyV","ms":60,"after":150},
  {"eval":"JSON.stringify({soul:dev.state().hero.soul})","name":"wave(expect soul 50)"},
  {"eval":"dev.warp(262,180); 'ok'"},{"sleep":600},
  {"eval":"JSON.stringify({orbs:dev.state().hero.orbs})","name":"orb(expect 1)"},
@@ -38,7 +38,7 @@
  {"eval":"dev.warp(400,1380); 'ok'"},{"sleep":1500},
  {"eval":"JSON.stringify({hp:dev.state().hero.hp,x:dev.state().hero.x,y:dev.state().hero.y})","name":"pit(expect hp-1, respawn)"},
  {"eval":"dev.give(); dev.warp(990,1400); 'ok'"},{"sleep":3200},
- {"eval":"dev.state().scene","name":"clear-scene"},
+ {"eval":"dev.state().scene","name":"arena-scene(expect play + boss)"},
  {"shot":"/private/tmp/claude-501/-Users-gideok-kwon-IdeaProjects-msa/4feccdb4-d3e6-49be-b459-e91e40469ffc/scratchpad/shots/t2-clear.png"},
  {"key":"Enter","after":300},
  {"eval":"dev.state().scene","name":"back-title"}
