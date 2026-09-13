@@ -12,13 +12,13 @@ await send('Page.enable'); await send('Runtime.enable');
 await send('Emulation.setDeviceMetricsOverride', { width: 720, height: 960, deviceScaleFactor: 1, mobile: false });
 await send('Page.navigate', { url: 'http://127.0.0.1:8100/gwiyahaeng/index.html' }); await sleep(2200);
 await ev(`localStorage.clear(); window.__sfx=0; const _p=Sfx.play; Sfx.play=function(n){window.__sfx++; return _p.apply(this,arguments)}; 'ok'`);
-const VK = { ArrowLeft: 37, ArrowUp: 38, ArrowRight: 39, ArrowDown: 40, Escape: 27, Enter: 13, Space: 32, Backspace: 8, Tab: 9, Digit1: 49 };
-const keyOf = c => c.startsWith('Key') ? c.slice(3).toLowerCase() : c === 'Space' ? ' ' : c === 'Digit1' ? '1' : c;
+const VK = { ArrowLeft: 37, ArrowUp: 38, ArrowRight: 39, ArrowDown: 40, Escape: 27, Enter: 13, Space: 32, Backspace: 8, Tab: 9, Digit1: 49, Semicolon: 186 };
+const keyOf = c => c.startsWith('Key') ? c.slice(3).toLowerCase() : c === 'Space' ? ' ' : c === 'Digit1' ? '1' : c === 'Semicolon' ? ';' : c;
 const vk = c => VK[c] ?? (c.startsWith('Key') ? c.charCodeAt(3) : 0);
 const snap = () => ev(`(()=>{const s=dev.state();const h=s.hero;return JSON.stringify({sc:s.scene,x:Math.round(h.x*10),y:Math.round(h.y*10),st:h.st,atk:h.atk,tal:h.tal,aim:!!h.aimUp,mute:Sfx.isMuted(),sfx:window.__sfx,rope:!!h.rope,vy:Math.round(h.vy)})})()`);
 let midSnap = null; const press = async c => { await send('Input.dispatchKeyEvent', { type: 'keyDown', code: c, key: keyOf(c), windowsVirtualKeyCode: vk(c) }); await sleep(90); midSnap = await snap(); await send('Input.dispatchKeyEvent', { type: 'keyUp', code: c, key: keyOf(c), windowsVirtualKeyCode: vk(c) }); await sleep(120); };
-const KEYS = ['ArrowUp','ArrowDown','KeyW','KeyS'];
-const SCENES = ['play'];
+const KEYS = ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','KeyA','KeyD','KeyW','KeyS','KeyC','KeyJ','KeyX','KeyK','KeyZ','KeyL','KeyV','Semicolon','Escape','KeyP','Enter','Space','Backspace','KeyQ','KeyH','KeyM','Digit1','Tab','KeyF'];
+const SCENES = ['title','help','pause','play','gameover','clear'];
 const enter = async (sc) => { // 씬 진입 (실제 배선)
   if (sc === 'title') await ev(`dev.testScene('title')`);
   else if (sc === 'help') { await ev(`dev.testScene('title')`); await ev(`dev.testScene('help')`); }
@@ -31,7 +31,9 @@ const dead = [], rows = [];
 for (const sc of SCENES) for (const k of KEYS) {
   await enter(sc); const before = await snap(); const b = JSON.parse(before);
   if (b.sc !== sc) { rows.push([sc, k, 'ENTER-FAIL ' + b.sc]); continue; }
-  await press(k); const after = midSnap; const a = JSON.parse(after);
+  await press(k); const afterS = await snap(); const mid = JSON.parse(midSnap), a2 = JSON.parse(afterS);
+  const diff = (a) => a.sc !== b.sc || a.sfx !== b.sfx || a.x !== b.x || a.y !== b.y || a.st !== b.st || a.atk !== b.atk || a.tal !== b.tal || a.aim !== b.aim || a.mute !== b.mute || a.rope !== b.rope || a.vy !== b.vy;
+  const a = diff(mid) ? mid : a2;
   const changed = a.sc !== b.sc || a.sfx !== b.sfx || a.x !== b.x || a.y !== b.y || a.st !== b.st || a.atk !== b.atk || a.tal !== b.tal || a.aim !== b.aim || a.mute !== b.mute || a.rope !== b.rope || a.vy !== b.vy;
   rows.push([sc, k, changed ? 'ok' : 'DEAD', a.sc !== b.sc ? 'scene→' + a.sc : a.sfx !== b.sfx ? 'sfx' : 'state']);
   if (!changed) dead.push(sc + ':' + k);
