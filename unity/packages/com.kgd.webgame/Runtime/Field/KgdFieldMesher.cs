@@ -101,6 +101,8 @@ namespace Kgd.Field
                 return s < 0 || _mat[s] == null ? (byte)0 : _mat[s][At(x, y, z)];
             }
 
+            public bool Opaque(int x, int y, int z) => _kinds[Mat(x, y, z)].Opaque;
+
             public int Sky(int x, int y, int z)
             {
                 if (y >= _h) return 15;
@@ -130,9 +132,8 @@ namespace Kgd.Field
                 return Mathf.Lerp(Mathf.Lerp(c00, c10, ty), Mathf.Lerp(c01, c11, ty), tz) - KgdFieldWorld.Iso;
             }
 
-            public Vector3 Normal(Vector3 p)
+            public Vector3 Normal(Vector3 p, float h = 0.6f)
             {
-                const float h = 0.6f;
                 var g = new Vector3(
                     Sample(p + Vector3.right * h) - Sample(p - Vector3.right * h),
                     Sample(p + Vector3.up * h) - Sample(p - Vector3.up * h),
@@ -313,6 +314,42 @@ namespace Kgd.Field
             }
         }
 
+        private static void Light(Grid g, Vector3 at, ref int sky, ref int blk)
+        {
+            int cx = Mathf.FloorToInt(at.x), cy = Mathf.FloorToInt(at.y), cz = Mathf.FloorToInt(at.z);
+            for (int dz = -1; dz <= 1; dz++)
+                for (int dy = -1; dy <= 1; dy++)
+                    for (int dx = -1; dx <= 1; dx++)
+                    {
+                        int x = cx + dx, y = cy + dy, z = cz + dz;
+                        // 막힌 칸의 빛은 안 본다 — 0 이 「어둡다」가 아니라 「돌 속」이다
+                        if (g.Phase(x, y, z) > KgdFieldWorld.Iso && g.Opaque(x, y, z)) continue;
+                        sky = Mathf.Max(sky, g.Sky(x, y, z));
+                        blk = Mathf.Max(blk, g.Blk(x, y, z));
+                    }
+        }
+
+        private static byte SolidMat(Grid g, Vector3 inside, Vector3 world)
+        {
+            int x = Mathf.FloorToInt(inside.x), y = Mathf.FloorToInt(inside.y), z = Mathf.FloorToInt(inside.z);
+            byte m = g.Mat(x, y, z);
+            if (m != 0 && g.Phase(x, y, z) > KgdFieldWorld.Iso) return m;
+            int cx = Mathf.FloorToInt(world.x), cy = Mathf.FloorToInt(world.y), cz = Mathf.FloorToInt(world.z);
+            byte best = m != 0 ? m : (byte)0;
+            float bestD = float.MaxValue;
+            for (int dz = -1; dz <= 1; dz++)
+                for (int dy = -1; dy <= 1; dy++)
+                    for (int dx = -1; dx <= 1; dx++)
+                    {
+                        int px = cx + dx, py = cy + dy, pz = cz + dz;
+                        byte pm = g.Mat(px, py, pz);
+                        if (pm == 0 || g.Phase(px, py, pz) <= KgdFieldWorld.Iso) continue;
+                        float d = (new Vector3(px + 0.5f, py + 0.5f, pz + 0.5f) - inside).sqrMagnitude;
+                        if (d < bestD) { bestD = d; best = pm; }
+                    }
+            return best;
+        }
+
         /// <summary>법선·색·무늬 좌표. 밝기는 그 자리의 하늘빛·등불빛에서 나온다.</summary>
         private static void Dress(KgdFieldWorld w, Grid g, int x0, int z0)
         {
@@ -326,20 +363,38 @@ namespace Kgd.Field
                 var face = g.Normal(world);
                 _n.Add(face);
 
-                // 재료는 표면 **안쪽** 칸에서 읽는다 — 바깥 칸은 비어 있어 재료가 없다
+                // 재료는 표면 **안쪽** 칸에서 읽는다 — 바깥 칸은 비어 있어 재료가 없다.
+                // 잎·줄기·벼랑 끝처럼 얇은 데서는 안쪽 점이 빈 칸에 떨어진다 — 그러면 둘레에서 찬 칸을 찾는다.
+                // 못 찾은 채 두면 재료 0(공기)의 색, 곧 검정이 된다(실측: 나무 밑동에 검은 조각)
+                // **표면에 가장 가까운 찬 칸**을 읽는다 — 0.6 안쪽을 읽으면 한 칸 두께의 윗층(눈·풀밭)을
+                // 지나쳐 흙을 읽는 꼭짓점이 반쯤 생겨 눈밭이 흰·갈색 바둑판이 된다(실측)
+                byte mat = 0;
+                for (float depth = 0.2f; depth <= 1.0f && mat == 0; depth += 0.4f)
+                {
+                    var probe = world - face * depth;
+                    int px = Mathf.FloorToInt(probe.x), py = Mathf.FloorToInt(probe.y), pz = Mathf.FloorToInt(probe.z);
+                    if (g.Phase(px, py, pz) > KgdFieldWorld.Iso) mat = g.Mat(px, py, pz);
+                }
                 var inside = world - face * 0.6f;
-                byte mat = g.Mat(Mathf.FloorToInt(inside.x), Mathf.FloorToInt(inside.y), Mathf.FloorToInt(inside.z));
+                if (mat == 0) mat = SolidMat(g, inside, world);
                 var kind = w.Kinds[mat];
 
-                // 위를 보는 면은 그 재료의 윗면 색, 선 면은 옆면 색
-                float flat = Mathf.Clamp01(face.y);
-                var baseCol = Color.Lerp(kind.Side, kind.Top, Mathf.SmoothStep(0f, 1f, (flat - 0.45f) / 0.4f));
+                // 위를 보는 면은 그 재료의 윗면 색, 선 면은 옆면 색. **색을 가르는 기울기는 넓게 잰다** —
+                // 잔결이 만드는 잔물결을 꼭짓점마다 따르면 눈밭이 흰·갈색 바둑판이 된다(실측). 두 칸
+                // 폭의 기울기는 선반의 턱은 살리고 잔물결은 지운다. 45° 까지는 윗면이다
+                float flat = Mathf.Clamp01(g.Normal(world, 1.8f).y);
+                var baseCol = Color.Lerp(kind.Side, kind.Top, Mathf.SmoothStep(0f, 1f, (flat - 0.35f) / 0.35f));
 
-                // 빛은 표면 **바깥** 칸에서 읽는다 — 안쪽은 막혀 있어 늘 캄캄하다
-                var outside = world + face * 0.6f;
-                int lx = Mathf.FloorToInt(outside.x), ly = Mathf.FloorToInt(outside.y), lz = Mathf.FloorToInt(outside.z);
-                float skyF = SkyCurve[Mathf.Clamp(g.Sky(lx, ly, lz), 0, 15)];
-                float litF = BlkCurve[Mathf.Clamp(g.Blk(lx, ly, lz), 0, 15)];
+                // 빛은 표면 **바깥** 칸에서 읽는다 — 안쪽은 막혀 있어 늘 캄캄하다.
+                // **세 자리 중 가장 밝은 것**을 쓴다: 법선 쪽 한 칸·두 칸, 그리고 바로 위. 잔결로 울퉁불퉁한
+                // 땅에서는 법선 쪽 한 칸이 옆 둔덕 속에 떨어져 그 꼭짓점만 새까매지고, 그게 땅 위의
+                // 검은 조각으로 보였다(실측: 모래밭·초원에 검은 마름모가 흩어졌다)
+                // 바깥 점 둘레 3×3×3 에서 **막히지 않은 칸 중 가장 밝은 것**. 점 하나만 읽으면 줄기·덤불·
+                // 옆 둔덕 속에 떨어져 그 꼭짓점만 새까매진다(실측: 나무 밑동과 모래밭에 검은 마름모)
+                int sky = 0, blk = 0;
+                Light(g, world + face * 0.6f, ref sky, ref blk);
+                float skyF = SkyCurve[Mathf.Clamp(sky, 0, 15)];
+                float litF = BlkCurve[Mathf.Clamp(blk, 0, 15)];
 
                 // 위를 보는 면이 밝고 처마 밑이 어둡다 — 광원이 없어도 형태가 읽혀야 한다
                 float shade = Mathf.Lerp(0.62f, 1f, flat);
