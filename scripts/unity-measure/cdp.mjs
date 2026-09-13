@@ -104,6 +104,16 @@ async function main() {
   await shotAt('t1', 1200);
   await shotAt('t4', 2800);
   await shotAt('t12', 8000);
+  // KGD_TAP="0.35,0.52@600" — 캔버스 안 비율 좌표를 터치한다(유니티 UI 버튼 같은 것). 그때마다 한 장 찍는다
+  for (const spec of String(process.env.KGD_TAP || '').split(',').filter(Boolean).map((s, i, a) => (i % 2 === 0 ? [s, a[i + 1]] : null)).filter(Boolean)) {
+    const fx = Number(spec[0]); const [fyRaw, wait] = String(spec[1]).split('@');
+    const rect = JSON.parse(await evalJs(`(function(){var c=document.querySelector('canvas');var r=c.getBoundingClientRect();return JSON.stringify({x:r.x,y:r.y,w:r.width,h:r.height});})()`));
+    const x = rect.x + fx * rect.w, y = rect.y + Number(fyRaw) * rect.h;
+    await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+    await sleep(60);
+    await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await shotAt('tap-' + fx + '-' + fyRaw, Number(wait || 500));
+  }
   // KGD_PRESS="KeyA@1500,KeyS@600" — 터치 버튼(data-vt-code)을 차례로 누르고 그때마다 한 장 찍는다.
   // 키보드는 캔버스에 안 들어가므로 버튼 자리를 터치로 누른다
   for (const spec of String(process.env.KGD_PRESS || '').split(',').filter(Boolean)) {
