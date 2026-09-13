@@ -17,6 +17,7 @@ import com.kgd.blog.domain.model.BlogPost
 import com.kgd.blog.domain.model.PostStatus
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -30,7 +31,8 @@ import java.util.UUID
  * 권한 차이는 [BlogIdentity.isAdmin] 한 값으로만 표현된다.
  */
 @Service
-@Transactional("blogTransactionManager")
+@Transactional
+@Qualifier("blogTransactionManager")
 class BlogPostWriteService(
     private val postRepository: BlogPostRepositoryPort,
     private val categoryRepository: BlogCategoryRepositoryPort,

@@ -19,12 +19,14 @@ import com.kgd.game.domain.catalog.exception.GameNotFoundException
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import tools.jackson.core.type.TypeReference
 import tools.jackson.module.kotlin.jacksonObjectMapper
 
+@Qualifier("gameTransactionManager")
 data class HouseCreativeDto(val title: String?, val body: String?, val href: String?, val emoji: String?)
 
 
@@ -104,10 +106,10 @@ class RewardCommand(
     private val rewardRepository: RewardGrantRepositoryPort,
 ) {
 
-    @Transactional(transactionManager = "gameTransactionManager")
+    @Transactional
     fun issue(grant: RewardGrant): RewardGrant = rewardRepository.save(grant)
 
-    @Transactional(transactionManager = "gameTransactionManager")
+    @Transactional
     fun complete(rewardKey: String): RewardGrant {
         val grant = rewardRepository.findByIdempotencyKey(rewardKey) ?: throw RewardNotFoundException(rewardKey)
         grant.complete(Instant.now())

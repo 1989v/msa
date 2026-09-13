@@ -24,12 +24,14 @@ import com.kgd.game.application.catalog.usecase.UpdateGameCollectionUseCase
 import com.kgd.game.application.catalog.usecase.UpdateGameContentUseCase
 import com.kgd.game.application.catalog.usecase.UpdateGameMetadataUseCase
 import com.kgd.game.application.catalog.usecase.UpdateGameTagsUseCase
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 
 @Service
-@Transactional(transactionManager = "gameTransactionManager")
+@Transactional
+@Qualifier("gameTransactionManager")
 class GameAdminService(
     private val gameRepository: GameRepositoryPort,
     private val statsRepository: GameStatsRepositoryPort,

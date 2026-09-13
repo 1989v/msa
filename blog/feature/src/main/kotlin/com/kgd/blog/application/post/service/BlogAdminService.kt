@@ -29,6 +29,7 @@ import com.kgd.blog.domain.model.ProfileRole
 import com.kgd.blog.domain.model.ProfileStatus
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -39,7 +40,8 @@ import java.time.LocalDateTime
  * 인증은 게이트웨이의 admin 경로 ROLE_ADMIN 필터가 담당한다 (display·deal 어드민과 동일).
  */
 @Service
-@Transactional("blogTransactionManager", readOnly = true)
+@Transactional(readOnly = true)
+@Qualifier("blogTransactionManager")
 class BlogAdminService(
     private val categoryRepository: BlogCategoryRepositoryPort,
     private val profileRepository: BlogProfileRepositoryPort,
@@ -54,7 +56,7 @@ class BlogAdminService(
 
     // ─── 카테고리 ───────────────────────────────────────────────────────────
 
-    @Transactional("blogTransactionManager")
+    @Transactional
     override fun execute(request: BlogCategoryRequest): BlogCategoryNode {
         val parent = request.parentId?.let { categoryOrThrow(it) }
         val slug = request.slug.trim().lowercase()
@@ -76,7 +78,7 @@ class BlogAdminService(
      * 물질화 경로를 쓰는 대가가 여기 한 곳에 모여 있다. 빠뜨리면 하위 카테고리의 글이
      * 조회에서 통째로 사라지고, 원인은 화면 어디에도 드러나지 않는다.
      */
-    @Transactional("blogTransactionManager")
+    @Transactional
     override fun execute(command: UpdateBlogCategoryUseCase.Command): BlogCategoryNode {
         val (id, request) = command
         val category = categoryOrThrow(id)
@@ -120,7 +122,7 @@ class BlogAdminService(
     }
 
     /** 삭제는 비어 있을 때만. 글이나 하위가 남은 채 지우면 그 글들이 조회에서 사라진다 */
-    @Transactional("blogTransactionManager")
+    @Transactional
     override fun execute(command: DeleteBlogCategoryUseCase.Command) {
         val id = command.id
         categoryOrThrow(id)
@@ -138,7 +140,7 @@ class BlogAdminService(
     override fun execute(query: ListBlogProfilesAdminUseCase.Query): List<BlogProfileAdminResponse> =
         profileRepository.findAll(query.role, query.status).map(profileService::response)
 
-    @Transactional("blogTransactionManager")
+    @Transactional
     override fun execute(command: ChangeBlogProfileStatusUseCase.Command): BlogProfileAdminResponse {
         val (id, status, identity) = command
         val profile = profileRepository.findById(id)

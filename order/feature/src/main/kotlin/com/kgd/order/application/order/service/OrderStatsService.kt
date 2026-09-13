@@ -2,6 +2,7 @@ package com.kgd.order.application.order.service
 
 import com.kgd.order.application.order.port.OrderRepositoryPort
 import com.kgd.order.application.order.usecase.GetOrderStatsUseCase
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -13,7 +14,8 @@ import java.time.LocalDate
  * 빈 결과 / 에러 시 admin FE 가 graceful degrade (catch → 0/[]) 하므로 여기선 0 으로 접는다.
  */
 @Service
-@Transactional("orderTransactionManager", readOnly = true)
+@Transactional(readOnly = true)
+@Qualifier("orderTransactionManager")
 class OrderStatsService(
     private val orderRepository: OrderRepositoryPort,
 ) : GetOrderStatsUseCase {

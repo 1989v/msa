@@ -25,6 +25,7 @@ import com.kgd.blog.domain.model.Paging
 import com.kgd.blog.domain.model.PostStatus
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -32,7 +33,8 @@ import org.springframework.transaction.annotation.Transactional
  * 공개 조회. 쓰기가 없으므로 전부 read-only — replica 로 라우팅된다(RoutingDataSource).
  */
 @Service
-@Transactional("blogTransactionManager", readOnly = true)
+@Transactional(readOnly = true)
+@Qualifier("blogTransactionManager")
 class BlogQueryService(
     private val postRepository: BlogPostRepositoryPort,
     private val categoryRepository: BlogCategoryRepositoryPort,

@@ -3,11 +3,13 @@ package com.kgd.product.application.product.service
 import com.kgd.product.application.product.port.ProductRepositoryPort
 import com.kgd.product.application.product.usecase.SyncProductStockUseCase
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-@Transactional("productTransactionManager")
+@Transactional
+@Qualifier("productTransactionManager")
 class ProductStockSyncService(
     private val productRepository: ProductRepositoryPort,
 ) : SyncProductStockUseCase {

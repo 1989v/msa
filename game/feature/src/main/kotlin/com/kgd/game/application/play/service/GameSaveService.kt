@@ -5,6 +5,7 @@ import com.kgd.game.application.play.port.GameSaveRepositoryPort
 import com.kgd.game.application.play.port.SaveSnapshot
 import com.kgd.game.domain.catalog.exception.GameNotFoundException
 import com.kgd.game.domain.play.exception.SaveTooLargeException
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import com.kgd.game.application.play.usecase.LoadGameSaveUseCase
 import com.kgd.game.application.play.usecase.StoreGameSaveUseCase
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional
  * version 을 들고 서버가 앞서면 서버본을 받는 쪽으로 푼다 — 막는 대신 맞춘다.
  */
 @Service
+@Qualifier("gameTransactionManager")
 class GameSaveService(
     private val gameRepository: GameRepositoryPort,
     private val saveCommand: GameSaveCommand,
@@ -61,13 +63,13 @@ class GameSaveCommand(
     private val saveRepository: GameSaveRepositoryPort,
 ) {
 
-    @Transactional(transactionManager = "gameTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     fun find(gameId: Long, memberId: Long): SaveSnapshot? = saveRepository.find(gameId, memberId)
 
-    @Transactional(transactionManager = "gameTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     fun findByCode(gameId: Long, code: String): SaveSnapshot? = saveRepository.findByCode(gameId, code)
 
-    @Transactional(transactionManager = "gameTransactionManager")
+    @Transactional
     fun upsert(gameId: Long, memberId: Long?, code: String?, data: String, expectedVersion: Long): SaveSnapshot =
         saveRepository.upsert(gameId, memberId, code, data, expectedVersion)
 }

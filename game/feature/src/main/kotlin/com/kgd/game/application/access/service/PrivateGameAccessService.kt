@@ -8,13 +8,15 @@ import com.kgd.game.application.access.usecase.CheckPrivateGameAccessUseCase.Ver
 import com.kgd.game.application.access.usecase.ManagePrivateGameAccessUseCase
 import com.kgd.game.domain.access.model.PrivateGameAccess
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 private val log = KotlinLogging.logger {}
 
 @Service
-@Transactional(transactionManager = "gameTransactionManager", readOnly = true)
+@Transactional(readOnly = true)
+@Qualifier("gameTransactionManager")
 class PrivateGameAccessService(
     private val repository: PrivateGameAccessRepositoryPort,
     private val identity: TokenIdentityPort,
@@ -35,13 +37,13 @@ class PrivateGameAccessService(
     override fun list(gameSlug: String): List<PrivateGameAccessDto> =
         repository.findAll(gameSlug).map(PrivateGameAccessDto::from)
 
-    @Transactional(transactionManager = "gameTransactionManager")
+    @Transactional
     override fun grant(gameSlug: String, memberId: Long, note: String?): PrivateGameAccessDto =
         PrivateGameAccessDto.from(
             repository.save(PrivateGameAccess(gameSlug = gameSlug, memberId = memberId, note = note)),
         )
 
-    @Transactional(transactionManager = "gameTransactionManager")
+    @Transactional
     override fun revoke(gameSlug: String, memberId: Long): Boolean =
         repository.delete(gameSlug, memberId)
 }

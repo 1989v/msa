@@ -4,6 +4,7 @@ import com.kgd.ranking.application.gas.dto.GasStationBulkResult
 import com.kgd.ranking.application.gas.port.GasStationRepositoryPort
 import com.kgd.ranking.application.gas.usecase.SyncGasStationsUseCase
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
@@ -18,11 +19,12 @@ private val logger = KotlinLogging.logger {}
  * 유종별로 나눠 보내지 않고 **주유소 단위로 유종을 모아** 한 번에 보낸다.
  */
 @Service
+@Qualifier("rankingTransactionManager")
 class GasStationSyncService(
     private val stationRepository: GasStationRepositoryPort,
 ) : SyncGasStationsUseCase {
 
-    @Transactional("rankingTransactionManager")
+    @Transactional
     override fun execute(command: SyncGasStationsUseCase.Command): GasStationBulkResult {
         val items = command.stations
         if (items.isEmpty()) return GasStationBulkResult(0, 0, 0)

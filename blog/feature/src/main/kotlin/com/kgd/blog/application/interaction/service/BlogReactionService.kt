@@ -10,6 +10,7 @@ import com.kgd.blog.application.post.service.BlogQueryService
 import com.kgd.blog.domain.model.VoterKey
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -23,7 +24,8 @@ import org.springframework.transaction.annotation.Transactional
  * 배치해 서로 경합하지 않게 한다 — 데이터 모델은 둘을 독립으로 둔다.
  */
 @Service
-@Transactional("blogTransactionManager")
+@Transactional
+@Qualifier("blogTransactionManager")
 class BlogReactionService(
     private val postRepository: BlogPostRepositoryPort,
     private val reactionRepository: BlogReactionRepositoryPort,

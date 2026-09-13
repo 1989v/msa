@@ -16,13 +16,15 @@ import com.kgd.game.domain.catalog.model.CollectionType
 import com.kgd.game.domain.catalog.model.Game
 import com.kgd.game.domain.catalog.model.GameCollection
 import com.kgd.game.domain.catalog.model.Genre
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-@Transactional(transactionManager = "gameTransactionManager", readOnly = true)
+@Transactional(readOnly = true)
+@Qualifier("gameTransactionManager")
 class GameQueryService(
     private val gameRepository: GameRepositoryPort,
     private val statsRepository: GameStatsRepositoryPort,

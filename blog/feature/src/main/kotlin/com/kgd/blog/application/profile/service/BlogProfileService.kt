@@ -11,6 +11,7 @@ import com.kgd.blog.domain.model.ProfileRole
 import com.kgd.blog.domain.model.ProfileStatus
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -21,7 +22,8 @@ import org.springframework.transaction.annotation.Transactional
  * 직접 보기 시작하면 정지 처분이 한 경로에서만 먹는 상태가 만들어진다.
  */
 @Service
-@Transactional("blogTransactionManager", readOnly = true)
+@Transactional(readOnly = true)
+@Qualifier("blogTransactionManager")
 class BlogProfileService(
     private val profileRepository: BlogProfileRepositoryPort,
     private val postRepository: BlogPostRepositoryPort,
@@ -35,7 +37,7 @@ class BlogProfileService(
         identity.memberId ?: throw BusinessException(ErrorCode.UNAUTHORIZED, "로그인이 필요합니다")
 
     /** 글을 쓰려는 경로의 관문. 어드민은 프로필이 없으면 만들어 준다(글에 저자가 반드시 있어야 한다) */
-    @Transactional("blogTransactionManager")
+    @Transactional
     fun requireWritableProfile(identity: BlogIdentity): BlogProfile {
         val memberId = requireMemberId(identity)
         val existing = profileRepository.findByMemberId(memberId)
@@ -64,7 +66,7 @@ class BlogProfileService(
     }
 
     /** 댓글 경로의 관문. 첫 댓글이면 독자 프로필을 만든다 */
-    @Transactional("blogTransactionManager")
+    @Transactional
     fun requireInteractiveProfile(identity: BlogIdentity, displayName: String?): BlogProfile {
         val memberId = requireMemberId(identity)
         val existing = profileRepository.findByMemberId(memberId)
@@ -77,7 +79,7 @@ class BlogProfileService(
         return profileRepository.save(BlogProfile.newReader(memberId, name))
     }
 
-    @Transactional("blogTransactionManager")
+    @Transactional
     override fun execute(command: UpdateBlogProfileUseCase.Command): BlogProfileAdminResponse {
         val (identity, request) = command
         val profile = find(identity)
@@ -92,7 +94,7 @@ class BlogProfileService(
      * 저자 신청. 핸들은 승인 전에 선점한다 — 승인 시점에 남이 가져가 있으면
      * 승인 자체가 실패하고, 그 실패를 신청자가 알 방법이 없다.
      */
-    @Transactional("blogTransactionManager")
+    @Transactional
     override fun execute(command: ApplyAsBlogAuthorUseCase.Command): BlogProfileAdminResponse {
         val (identity, request) = command
         val memberId = requireMemberId(identity)

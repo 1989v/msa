@@ -17,6 +17,7 @@ import com.kgd.ranking.domain.model.BoardStatus
 import com.kgd.ranking.domain.model.RankingBoard
 import com.kgd.ranking.domain.model.RankingDomain
 import com.kgd.ranking.domain.model.RankingEntry
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
@@ -27,7 +28,8 @@ import java.time.Instant
  * 외부 호출이 없다 — 전부 우리 DB 읽기라 Tier 1 이다. 오피넷은 수집 CronJob 만 부른다.
  */
 @Service
-@Transactional("rankingTransactionManager", readOnly = true)
+@Transactional(readOnly = true)
+@Qualifier("rankingTransactionManager")
 class RankingQueryService(
     private val boardRepository: RankingBoardRepositoryPort,
     private val snapshotRepository: RankingSnapshotRepositoryPort,

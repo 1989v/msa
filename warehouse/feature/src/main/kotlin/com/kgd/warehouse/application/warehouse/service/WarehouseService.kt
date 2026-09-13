@@ -6,11 +6,13 @@ import com.kgd.warehouse.application.warehouse.usecase.GetWarehouseUseCase
 import com.kgd.warehouse.domain.warehouse.exception.NoActiveWarehouseException
 import com.kgd.warehouse.domain.warehouse.exception.WarehouseNotFoundException
 import com.kgd.warehouse.domain.warehouse.model.Warehouse
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-@Transactional("warehouseTransactionManager")
+@Transactional
+@Qualifier("warehouseTransactionManager")
 class WarehouseService(
     private val warehouseRepository: WarehouseRepositoryPort,
 ) : CreateWarehouseUseCase, GetWarehouseUseCase {
@@ -32,19 +34,19 @@ class WarehouseService(
         )
     }
 
-    @Transactional("warehouseTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     override fun findById(id: Long): GetWarehouseUseCase.Result {
         val warehouse = warehouseRepository.findById(id)
             ?: throw WarehouseNotFoundException(id)
         return warehouse.toResult()
     }
 
-    @Transactional("warehouseTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     override fun findAll(): List<GetWarehouseUseCase.Result> {
         return warehouseRepository.findAll().map { it.toResult() }
     }
 
-    @Transactional("warehouseTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     override fun findDefaultWarehouse(): GetWarehouseUseCase.Result {
         val warehouse = warehouseRepository.findFirstActiveWarehouse()
             ?: throw NoActiveWarehouseException()

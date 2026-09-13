@@ -12,6 +12,7 @@ import com.kgd.game.application.suggestion.usecase.ListGameSuggestionsAdminUseCa
 import com.kgd.game.domain.catalog.model.Game
 import com.kgd.game.domain.suggestion.model.GameSuggestion
 import com.kgd.game.domain.suggestion.model.SuggestionReply
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -26,14 +27,15 @@ import org.springframework.transaction.annotation.Transactional
  * (카탈로그 어드민 조회와 같은 판단).
  */
 @Service
-@Transactional(transactionManager = "gameTransactionManager")
+@Transactional
+@Qualifier("gameTransactionManager")
 class GameSuggestionAdminService(
     private val games: GameRepositoryPort,
     private val suggestions: GameSuggestionRepositoryPort,
     private val replies: SuggestionReplyRepositoryPort,
 ) : ListGameSuggestionsAdminUseCase, ChangeGameSuggestionStatusUseCase {
 
-    @Transactional(transactionManager = "gameTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     override fun execute(query: ListGameSuggestionsAdminUseCase.Query): Page<AdminGameSuggestionDto> {
         val pageable = PageRequest.of(
             query.page.coerceAtLeast(0),

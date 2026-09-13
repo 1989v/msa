@@ -9,6 +9,7 @@ import com.kgd.game.application.catalog.port.GameStatsRepositoryPort
 import com.kgd.game.domain.catalog.exception.GameNotFoundException
 import com.kgd.game.domain.catalog.model.GameStatus
 import com.kgd.game.domain.catalog.model.Genre
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import com.kgd.game.application.catalog.usecase.GetGameDetailAdminUseCase
@@ -21,7 +22,8 @@ import org.springframework.transaction.annotation.Transactional
  * 상태 변경/타이틀 수정을 SQL 마이그레이션 없이 운영하려면 DRAFT/REVIEW/SUSPENDED 도 보여야 한다.
  */
 @Service
-@Transactional(transactionManager = "gameTransactionManager", readOnly = true)
+@Transactional(readOnly = true)
+@Qualifier("gameTransactionManager")
 class GameAdminQueryService(
     private val adminQueryPort: GameAdminQueryPort,
     private val gameRepository: GameRepositoryPort,

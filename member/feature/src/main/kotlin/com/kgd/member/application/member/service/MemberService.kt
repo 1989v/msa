@@ -9,6 +9,7 @@ import com.kgd.member.application.member.usecase.UpdateMemberNameUseCase
 import com.kgd.member.application.member.usecase.WithdrawMemberUseCase
 import com.kgd.member.domain.exception.MemberNotFoundException
 import com.kgd.member.domain.model.Member
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -16,6 +17,7 @@ import java.time.LocalDate
 private val log = io.github.oshai.kotlinlogging.KotlinLogging.logger {}
 
 @Service
+@Qualifier("memberTransactionManager")
 class MemberService(
     private val memberRepositoryPort: MemberRepositoryPort,
     private val rosterPurgePort: RosterPurgePort
@@ -25,7 +27,7 @@ class MemberService(
     UpdateMemberNameUseCase,
     WithdrawMemberUseCase {
 
-    @Transactional("memberTransactionManager")
+    @Transactional
     override fun execute(command: GetOrCreateMemberUseCase.Command): GetOrCreateMemberUseCase.Result {
         val existing = memberRepositoryPort.findBySsoProviderAndSsoProviderId(
             command.ssoProvider, command.ssoProviderId
@@ -51,7 +53,7 @@ class MemberService(
         )
     }
 
-    @Transactional("memberTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     override fun execute(query: GetMemberProfileUseCase.Query): GetMemberProfileUseCase.Result {
         val member = memberRepositoryPort.findById(query.memberId)
             ?: throw MemberNotFoundException()
@@ -64,13 +66,13 @@ class MemberService(
         )
     }
 
-    @Transactional("memberTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     override fun execute(): GetMemberStatsUseCase.Result = GetMemberStatsUseCase.Result(
         newCount = memberRepositoryPort.countJoinedAfter(LocalDate.now().atStartOfDay()),
         totalCount = memberRepositoryPort.countAll(),
     )
 
-    @Transactional("memberTransactionManager")
+    @Transactional
     override fun execute(command: UpdateMemberNameUseCase.Command) {
         val member = memberRepositoryPort.findById(command.memberId)
             ?: throw MemberNotFoundException()
@@ -78,7 +80,7 @@ class MemberService(
         memberRepositoryPort.save(member)
     }
 
-    @Transactional("memberTransactionManager")
+    @Transactional
     override fun execute(command: WithdrawMemberUseCase.Command) {
         val member = memberRepositoryPort.findById(command.memberId)
             ?: throw MemberNotFoundException()

@@ -8,6 +8,7 @@ import com.kgd.game.application.suggestion.usecase.ListGameSuggestionsUseCase
 import com.kgd.game.domain.catalog.exception.GameNotFoundException
 import com.kgd.game.domain.catalog.model.Game
 import com.kgd.game.domain.suggestion.model.SuggestionReply
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -19,7 +20,8 @@ import org.springframework.transaction.annotation.Transactional
  * 로그인해서 보면 자기 글에만 `mine` 이 선다.
  */
 @Service
-@Transactional(transactionManager = "gameTransactionManager", readOnly = true)
+@Transactional(readOnly = true)
+@Qualifier("gameTransactionManager")
 class GameSuggestionQueryService(
     private val games: GameRepositoryPort,
     private val suggestions: GameSuggestionRepositoryPort,

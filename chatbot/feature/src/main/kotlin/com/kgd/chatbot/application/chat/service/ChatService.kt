@@ -13,10 +13,12 @@ import com.kgd.chatbot.domain.exception.ConversationNotFoundException
 import com.kgd.chatbot.domain.model.Conversation
 import com.kgd.chatbot.domain.model.Message
 import com.kgd.chatbot.domain.service.ConversationDomainService
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
+@Qualifier("chatbotTransactionManager")
 class ChatService(
     private val conversationRepository: ConversationRepositoryPort,
     private val aiModelPort: AiModelPort,
@@ -85,7 +87,7 @@ class ChatService(
             ?: throw ConversationNotFoundException(command.conversationId)
     }
 
-    @Transactional("chatbotTransactionManager")
+    @Transactional
     override fun execute(command: CloseConversationUseCase.Command) {
         val conversation = conversationRepository.findById(command.conversationId)
             ?: throw ConversationNotFoundException(command.conversationId)

@@ -1,5 +1,6 @@
 package com.kgd.fulfillment.application.fulfillment.service
 
+import org.springframework.beans.factory.annotation.Qualifier
 import tools.jackson.databind.ObjectMapper
 import com.kgd.common.messaging.outbox.OutboxPort
 import com.kgd.fulfillment.application.fulfillment.port.FulfillmentRepositoryPort
@@ -14,7 +15,8 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-@Transactional("fulfillmentTransactionManager") // ADR-0058: commerce 모놀리스에서 fulfillment 전용 TM
+@Transactional // ADR-0058: commerce 모놀리스에서 fulfillment 전용 TM
+@Qualifier("fulfillmentTransactionManager")
 class FulfillmentService(
     private val fulfillmentRepository: FulfillmentRepositoryPort,
     @org.springframework.beans.factory.annotation.Qualifier("fulfillmentOutboxPort")
@@ -90,14 +92,14 @@ class FulfillmentService(
         )
     }
 
-    @Transactional("fulfillmentTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     override fun findById(id: Long): GetFulfillmentUseCase.Result {
         val fulfillmentOrder = fulfillmentRepository.findById(id)
             ?: throw FulfillmentNotFoundException(id)
         return toResult(fulfillmentOrder)
     }
 
-    @Transactional("fulfillmentTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     override fun findByOrderId(orderId: Long): GetFulfillmentUseCase.Result {
         val fulfillments = fulfillmentRepository.findAllByOrderId(orderId)
         val fulfillmentOrder = fulfillments.firstOrNull()
@@ -105,7 +107,7 @@ class FulfillmentService(
         return toResult(fulfillmentOrder)
     }
 
-    @Transactional("fulfillmentTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     override fun findAllByOrderId(orderId: Long): List<GetFulfillmentUseCase.Result> {
         return fulfillmentRepository.findAllByOrderId(orderId).map { toResult(it) }
     }

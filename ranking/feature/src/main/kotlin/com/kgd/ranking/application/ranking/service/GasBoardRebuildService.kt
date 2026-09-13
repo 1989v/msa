@@ -15,6 +15,7 @@ import com.kgd.ranking.domain.model.RankingSnapshot
 import com.kgd.ranking.domain.model.ScoredSubject
 import com.kgd.ranking.domain.model.SortDirection
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -34,6 +35,7 @@ private val PRODUCT_NAMES = mapOf("B027" to "휘발유", "D047" to "경유")
  * 무기한 쌓으면 free tier 디스크가 먼저 찬다.
  */
 @Service
+@Qualifier("rankingTransactionManager")
 class GasBoardRebuildService(
     private val boardRepository: RankingBoardRepositoryPort,
     private val snapshotRepository: RankingSnapshotRepositoryPort,
@@ -52,7 +54,7 @@ class GasBoardRebuildService(
      * 중 하나여야 한다. 보드별로 쪼개면 일부만 어제 값인 화면이 생기고, 그 상태는 화면만
      * 봐서는 알 수 없다.
      */
-    @Transactional("rankingTransactionManager")
+    @Transactional
     override fun execute(command: RebuildGasBoardsUseCase.Command): RebuildGasBoardsUseCase.Result {
         val stations = stationRepository.findAll().filter { it.areaCode != null }
         if (stations.isEmpty()) {

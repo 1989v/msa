@@ -12,10 +12,12 @@ import com.kgd.wishlist.domain.model.WishlistItem
 import com.kgd.wishlist.domain.model.WishlistTargetType
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
+@Qualifier("wishlistTransactionManager")
 class WishlistService(
     private val wishlistRepositoryPort: WishlistRepositoryPort
 ) : AddWishlistItemUseCase,
@@ -26,7 +28,7 @@ class WishlistService(
     CountWishlistTargetUseCase {
 
     // PUT 멱등 — 이미 찜한 대상이면 그 행을 돌려준다. 더블탭·재시도가 에러가 되지 않는다 (ADR-0074 §2).
-    @Transactional("wishlistTransactionManager")
+    @Transactional
     override fun execute(command: AddWishlistItemUseCase.Command): AddWishlistItemUseCase.Result {
         val existing = wishlistRepositoryPort.findByMemberAndTarget(
             command.memberId, command.targetType, command.targetKey,
@@ -47,12 +49,12 @@ class WishlistService(
         )
     }
 
-    @Transactional("wishlistTransactionManager")
+    @Transactional
     override fun execute(command: RemoveWishlistItemUseCase.Command) {
         wishlistRepositoryPort.deleteByMemberAndTarget(command.memberId, command.targetType, command.targetKey)
     }
 
-    @Transactional("wishlistTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     override fun execute(query: GetWishlistUseCase.Query): GetWishlistUseCase.Result {
         val items = wishlistRepositoryPort.findByMember(
             query.memberId, query.targetType, query.collectionId, query.unclassifiedOnly, query.page, query.size,
@@ -75,7 +77,7 @@ class WishlistService(
         )
     }
 
-    @Transactional("wishlistTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     override fun execute(query: GetWishlistKeysUseCase.Query): GetWishlistKeysUseCase.Result {
         val keys = wishlistRepositoryPort.findKeysByMemberAndType(query.memberId, query.targetType)
         return GetWishlistKeysUseCase.Result(keys = keys)
@@ -83,13 +85,13 @@ class WishlistService(
 
     // ── 묶음 (ADR-0080) ───────────────────────────────────────────────────────
 
-    @Transactional("wishlistTransactionManager")
+    @Transactional
     override fun create(memberId: Long, name: String): ManageCollectionUseCase.Collection {
         val saved = wishlistRepositoryPort.saveCollection(WishlistCollection.create(memberId, name))
         return saved.toResult(itemCount = 0)
     }
 
-    @Transactional("wishlistTransactionManager")
+    @Transactional
     override fun rename(memberId: Long, collectionId: Long, name: String): ManageCollectionUseCase.Collection {
         val collection = ownedCollection(memberId, collectionId)
         collection.rename(name)
@@ -97,20 +99,20 @@ class WishlistService(
         return saved.toResult(itemCount = wishlistRepositoryPort.countByCollection(memberId)[collectionId] ?: 0)
     }
 
-    @Transactional("wishlistTransactionManager")
+    @Transactional
     override fun delete(memberId: Long, collectionId: Long) {
         // 없어도 조용히 끝낸다 — 삭제는 멱등이어야 재시도가 에러가 되지 않는다
         wishlistRepositoryPort.deleteCollection(collectionId, memberId)
     }
 
-    @Transactional("wishlistTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     override fun list(memberId: Long): List<ManageCollectionUseCase.Collection> {
         val counts = wishlistRepositoryPort.countByCollection(memberId)
         return wishlistRepositoryPort.findCollections(memberId)
             .map { it.toResult(itemCount = counts[it.id] ?: 0) }
     }
 
-    @Transactional("wishlistTransactionManager")
+    @Transactional
     override fun move(
         memberId: Long,
         targetType: WishlistTargetType,

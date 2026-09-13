@@ -11,6 +11,7 @@ import com.kgd.game.application.roster.usecase.SaveFriendGroupUseCase
 import com.kgd.game.application.roster.usecase.SetRosterOptInUseCase
 import com.kgd.game.domain.roster.model.FriendGroup
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -24,7 +25,8 @@ private val log = KotlinLogging.logger {}
  * 관측을 위해 찍는 순간 그것이 원장이 된다. 수와 회원 id 만 남긴다.
  */
 @Service
-@Transactional(transactionManager = "gameTransactionManager")
+@Transactional
+@Qualifier("gameTransactionManager")
 class RosterService(
     private val groups: FriendGroupRepositoryPort,
     private val optIn: RosterOptInPort,
@@ -34,7 +36,7 @@ class RosterService(
     SetRosterOptInUseCase,
     PurgeRostersUseCase {
 
-    @Transactional(transactionManager = "gameTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     override fun execute(query: ListFriendGroupsUseCase.Query): ListFriendGroupsUseCase.Result {
         val memberId = query.memberId
         if (!optIn.isEnabled(memberId)) return ListFriendGroupsUseCase.Result(false, emptyList())

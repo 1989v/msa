@@ -13,6 +13,7 @@ import com.kgd.game.application.suggestion.usecase.ReplyToGameSuggestionUseCase
 import com.kgd.game.domain.catalog.exception.GameNotFoundException
 import com.kgd.game.domain.catalog.model.Game
 import com.kgd.game.domain.suggestion.model.GameSuggestion
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -24,7 +25,8 @@ import org.springframework.transaction.annotation.Transactional
  * 한쪽만 고쳐도 다른 쪽이 통과시킨다.
  */
 @Service
-@Transactional(transactionManager = "gameTransactionManager")
+@Transactional
+@Qualifier("gameTransactionManager")
 class GameSuggestionService(
     private val games: GameRepositoryPort,
     private val suggestions: GameSuggestionRepositoryPort,

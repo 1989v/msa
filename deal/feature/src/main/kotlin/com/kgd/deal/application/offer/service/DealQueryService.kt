@@ -14,13 +14,15 @@ import com.kgd.deal.application.offer.usecase.SearchDealOffersUseCase
 import com.kgd.deal.domain.model.DealCategory
 import com.kgd.deal.domain.model.DisplayStatus
 import com.kgd.deal.domain.model.Offer
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 /** 공개 조회 (ADR-0069). 만료·비전시 판정은 전부 저장소에서 끝난다. */
 @Service
-@Transactional("dealTransactionManager", readOnly = true)
+@Transactional(readOnly = true)
+@Qualifier("dealTransactionManager")
 class DealQueryService(
     private val categoryRepository: DealCategoryRepositoryPort,
     private val offerRepository: DealOfferRepositoryPort,

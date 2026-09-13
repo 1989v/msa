@@ -3,11 +3,13 @@ package com.kgd.game.application.catalog.service
 import com.kgd.game.application.catalog.dto.ReleaseNoteDto
 import com.kgd.game.application.catalog.port.ReleaseNotePort
 import com.kgd.game.application.catalog.usecase.GetGameReleaseNotesUseCase
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-@Transactional(transactionManager = "gameTransactionManager", readOnly = true)
+@Transactional(readOnly = true)
+@Qualifier("gameTransactionManager")
 class ReleaseNoteQueryService(
     private val releaseNotes: ReleaseNotePort,
 ) : GetGameReleaseNotesUseCase {

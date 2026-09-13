@@ -14,12 +14,14 @@ import com.kgd.game.domain.play.model.ScoreTrack
 import com.kgd.game.application.play.usecase.GetActiveLeaderboardsUseCase
 import com.kgd.game.application.play.usecase.GetGameLeaderboardUseCase
 import com.kgd.game.application.play.usecase.SubmitGameScoreUseCase
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 
 /** 게임별 랭킹 — 닉네임당 최고 기록. 게스트 제출 허용 (닉네임이 곧 신원) */
 @Service
+@Qualifier("gameTransactionManager")
 class GameScoreService(
     private val gameRepository: GameRepositoryPort,
     private val scoreRepository: GameScoreRepositoryPort,
@@ -54,7 +56,7 @@ class GameScoreService(
      * 날짜는 서버가 정한다(`GameDay`). 클라이언트가 실어 보내게 하면 기기 시계와 타임존만큼
      * 보드가 갈라지고, 게임 57종이 쓰는 공용 제출 코드(`lib/rank.js`)를 전부 고쳐야 한다.
      */
-    @Transactional(transactionManager = "gameTransactionManager")
+    @Transactional
     override fun execute(command: SubmitGameScoreUseCase.Command): Pair<Boolean, Int> {
         // 위치 분해를 쓰지 않는다 — Command 에 필드를 하나 끼워 넣는 순간 값이 조용히 밀린다
         val gameId = resolveGameId(command.slug)
@@ -75,7 +77,7 @@ class GameScoreService(
      * 보드 조회. `period` 를 생략하면 역대 보드 — 기존 호출자(게임 안 `lib/rank.js` 포함)의
      * 계약이 그대로 유지된다. `date` 는 DAILY 에서만 뜻이 있고, 생략하면 KST 기준 오늘이다.
      */
-    @Transactional(transactionManager = "gameTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     override fun execute(query: GetGameLeaderboardUseCase.Query): List<ScoreEntry> {
         val (slug, track, limit, board, period, date) = query
         val gameId = resolveGameId(slug)
@@ -100,7 +102,7 @@ class GameScoreService(
      * 보드마다 오늘 기록을 함께 실어 보낸다 — 레일이 "오늘의 1위"를 보여주려고 요청을 한 번 더
      * 하지 않게. 오늘 아무도 안 논 보드는 그 칸이 비고, 레일은 역대 기록으로 그린다.
      */
-    @Transactional(transactionManager = "gameTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     override fun execute(query: GetActiveLeaderboardsUseCase.Query): List<LeaderboardBoardDto> {
         val boards = query.boardLimit.coerceIn(1, MAX_ACTIVE_BOARDS)
         val entries = query.entryLimit.coerceIn(1, MAX_ACTIVE_ENTRIES)

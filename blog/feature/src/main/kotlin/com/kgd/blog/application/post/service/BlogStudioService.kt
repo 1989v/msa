@@ -13,6 +13,7 @@ import com.kgd.blog.application.profile.service.BlogProfileService
 import com.kgd.blog.domain.model.Paged
 import com.kgd.blog.domain.model.Paging
 import com.kgd.blog.domain.model.PostStatus
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -23,7 +24,8 @@ import org.springframework.transaction.annotation.Transactional
  * 화면이 거르는 게 아니다 — 화면에서 거르면 페이지네이션이 어긋나고 언젠가 남의 글이 샌다.
  */
 @Service
-@Transactional("blogTransactionManager", readOnly = true)
+@Transactional(readOnly = true)
+@Qualifier("blogTransactionManager")
 class BlogStudioService(
     private val postRepository: BlogPostRepositoryPort,
     private val profileService: BlogProfileService,

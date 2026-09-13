@@ -7,6 +7,7 @@ import com.kgd.order.domain.order.exception.OrderNotFoundException
 import com.kgd.order.domain.order.model.Money
 import com.kgd.order.domain.order.model.Order
 import com.kgd.order.domain.order.model.OrderItem
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -19,12 +20,13 @@ import org.springframework.transaction.annotation.Transactional
  * 발생하도록 publish 호출을 본 서비스로 이동했다. 외부 IO 가 아닌 DB INSERT 만 하므로 ADR-0020 호환.
  */
 @Service
+@Qualifier("orderTransactionManager")
 class OrderTransactionalService(
     private val repositoryPort: OrderRepositoryPort,
     private val eventPort: OrderEventPort,
 ) {
 
-    @Transactional("orderTransactionManager")
+    @Transactional
     fun savePendingOrder(command: PlaceOrderUseCase.Command): Order {
         val items = command.items.map {
             OrderItem.of(it.productId, it.quantity, Money(it.unitPrice))
@@ -33,7 +35,7 @@ class OrderTransactionalService(
         return repositoryPort.save(order)
     }
 
-    @Transactional("orderTransactionManager")
+    @Transactional
     fun completeOrder(orderId: Long): Order {
         val order = repositoryPort.findById(orderId)
             ?: throw OrderNotFoundException(orderId)
@@ -43,7 +45,7 @@ class OrderTransactionalService(
         return saved
     }
 
-    @Transactional("orderTransactionManager")
+    @Transactional
     fun cancelOrder(orderId: Long): Order {
         val order = repositoryPort.findById(orderId)
             ?: throw OrderNotFoundException(orderId)
@@ -53,9 +55,9 @@ class OrderTransactionalService(
         return saved
     }
 
-    @Transactional("orderTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     fun findById(id: Long): Order? = repositoryPort.findById(id)
 
-    @Transactional("orderTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     fun findAllByUserId(userId: String): List<Order> = repositoryPort.findAllByUserId(userId)
 }

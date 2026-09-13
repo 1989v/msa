@@ -14,6 +14,7 @@ import com.kgd.blog.domain.model.BlogComment
 import com.kgd.blog.domain.model.CommentStatus
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -25,7 +26,8 @@ import org.springframework.transaction.annotation.Transactional
  * 스팸이 익명에서만 오지는 않는다.
  */
 @Service
-@Transactional("blogTransactionManager")
+@Transactional
+@Qualifier("blogTransactionManager")
 class BlogCommentService(
     private val commentRepository: BlogCommentRepositoryPort,
     private val postRepository: BlogPostRepositoryPort,

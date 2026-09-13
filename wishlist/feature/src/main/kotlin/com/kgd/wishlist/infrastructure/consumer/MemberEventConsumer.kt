@@ -1,5 +1,6 @@
 package com.kgd.wishlist.infrastructure.consumer
 
+import org.springframework.beans.factory.annotation.Qualifier
 import tools.jackson.databind.ObjectMapper
 import com.kgd.wishlist.application.wishlist.port.WishlistRepositoryPort
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 @Component
+@Qualifier("wishlistTransactionManager")
 class MemberEventConsumer(
     private val wishlistRepositoryPort: WishlistRepositoryPort,
     private val objectMapper: ObjectMapper
@@ -20,7 +22,7 @@ class MemberEventConsumer(
         groupId = "wishlist-member-cleanup",
         containerFactory = "wishlistKafkaListenerContainerFactory",
     )
-    @Transactional("wishlistTransactionManager")
+    @Transactional
     fun onMemberWithdrawn(record: ConsumerRecord<String, String>) {
         log.info { "Received member.withdrawn event: key=${record.key()}" }
 

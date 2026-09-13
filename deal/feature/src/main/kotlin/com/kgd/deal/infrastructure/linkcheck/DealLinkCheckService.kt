@@ -3,11 +3,13 @@ package com.kgd.deal.infrastructure.linkcheck
 import com.kgd.deal.domain.model.DisplayStatus
 import com.kgd.deal.infrastructure.persistence.repository.DealOfferClickJpaRepository
 import com.kgd.deal.infrastructure.persistence.repository.DealOfferJpaRepository
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 /** 점검 대상 한 건 — 트랜잭션 밖으로 들고 나가는 값이라 엔티티가 아니다 */
+@Qualifier("dealTransactionManager")
 data class LinkCheckTarget(val offerId: Long, val slug: String, val targetUrl: String)
 
 /**
@@ -24,13 +26,13 @@ class DealLinkCheckService(
 ) {
 
     /** HOLD 는 화면에 안 나가므로 점검하지 않는다 — 남의 서버를 괜히 두드릴 이유가 없다 */
-    @Transactional("dealTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     fun loadTargets(): List<LinkCheckTarget> =
         offerRepository.findAll()
             .filter { it.status != DisplayStatus.HOLD }
             .map { LinkCheckTarget(requireNotNull(it.id), it.slug, it.targetUrl) }
 
-    @Transactional("dealTransactionManager")
+    @Transactional
     fun applyResults(results: Map<Long, ProbeResult>) {
         if (results.isEmpty()) return
         val checkedAt = LocalDateTime.now()
@@ -40,7 +42,7 @@ class DealLinkCheckService(
     }
 
     /** 보존기간 초과 클릭 로그 정리 — 배치 하나를 위해 배치를 또 만들지 않는다 */
-    @Transactional("dealTransactionManager")
+    @Transactional
     fun purgeOldClicks(retentionDays: Long): Int =
         clickRepository.deleteOlderThan(LocalDateTime.now().minusDays(retentionDays))
 }

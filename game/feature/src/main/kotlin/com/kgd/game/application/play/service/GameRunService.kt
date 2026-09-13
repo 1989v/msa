@@ -8,6 +8,7 @@ import com.kgd.game.domain.play.model.GameRun
 import com.kgd.game.application.play.usecase.ConsumeGameRunUseCase
 import com.kgd.game.application.play.usecase.GetGameRunUseCase
 import com.kgd.game.application.play.usecase.StartGameRunUseCase
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.security.SecureRandom
@@ -19,7 +20,8 @@ import java.util.UUID
  * 같은 runKey 재로드는 항상 같은 시드다 (세이브스커밍 무의미화). 사망/클리어 시 consume.
  */
 @Service
-@Transactional(transactionManager = "gameTransactionManager")
+@Transactional
+@Qualifier("gameTransactionManager")
 class GameRunService(
     private val gameRepository: GameRepositoryPort,
     private val runRepository: GameRunRepositoryPort,
@@ -39,7 +41,7 @@ class GameRunService(
         )
     }
 
-    @Transactional(transactionManager = "gameTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     override fun execute(query: GetGameRunUseCase.Query): GameRun = findRunOf(query.slug, query.runKey)
 
     override fun execute(command: ConsumeGameRunUseCase.Command): GameRun {
