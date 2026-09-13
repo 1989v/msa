@@ -502,6 +502,7 @@ val searchIndexContracts = listOf(
     )),
     Triple("unified", "search/batch/src/main/resources/opensearch/unified-index.json", listOf(
         "search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/UnifiedIndexDocument.kt" to "write",
+        "search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/UnifiedSearchDocument.kt" to "read",
     )),
     Triple("products", "search/batch/src/main/resources/opensearch/products-index.json", listOf(
         "search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/ProductIndexDocument.kt" to "write",
@@ -512,6 +513,9 @@ val searchIndexContracts = listOf(
 
 // 읽기 클래스가 의도적으로 안 읽는 필드 — 항목마다 "왜" 를 적는다
 val searchReadOmitted = mapOf(
+    "unified" to mapOf(
+        "body" to "검색 전용 평문 — 질의가 _source.excludes 로 빼므로 응답에 오지 않는다 (ADR-0090 D6)",
+    ),
     "attractions" to mapOf(
         "idSort" to "정렬 전용 색인 필드 — 응답에 쓰지 않는다",
         "titleJamo" to "자모 분해 검색 전용 — 응답에 쓰지 않는다",
