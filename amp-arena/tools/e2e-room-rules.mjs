@@ -8,10 +8,11 @@ process.on('exit', () => relay.kill());
 await new Promise((r) => setTimeout(r, 700));
 
 const [port, base = 'http://127.0.0.1:5180', out = '.'] = process.argv.slice(2);
+// 운영을 재려면 base 에 https://game.1989v.com/games/arena/index.html 을 준다 (릴레이는 그쪽 것을 쓴다)
 const A = new Page(port), B = new Page(port);
 const checks = {};
 const enter = async (p, nick) => {
-  await p.open(base + '/', { width: 1280, height: 900 });
+  await p.open(base.endsWith('.html') ? base : base + '/', { width: 1280, height: 900 });
   await p.waitFor(`document.querySelector('.practice')`, { timeout: 20000 });
   await p.type('.nick', nick);
   await p.click('.go-lobby');

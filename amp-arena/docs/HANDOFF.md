@@ -13,7 +13,7 @@
 | 배포 산출물 | games 레포(`1989v/games`, msa 의 `portal-fe/public/games` 서브모듈) `arena/` + `thumbs/shots/arena.jpg` |
 | 카탈로그 행 | `game/feature/src/main/resources/gamedb/migration/V89__seed_arena.sql` (slug `arena`, BETA) + `V90__arena_score_boards.sql` (순위표 보드 online/practice, sdk_integrated=1) |
 | 운영 주소 | https://game.1989v.com/games/arena (카탈로그 상세 → IFRAME `/games/arena/index.html`) |
-| 운영 상태 (2026-09-13) | main 41082756 · games 8c5502b3 · 이미지 portal-fe:4108275 / content:d8db405 · 번들 `index-BEnSdpeA.js`. **Phase 2 + 공중 공격 + 봇 자멸 수정 + 악세서리 16종 + 더블탭 개편 + 카탈로그 전체화면 + 모바일 한 화면 + 온라인 준비·방 목록·슬롯 봇**. 운영 실측: `tools/e2e-prod-{fullscreen,portrait,score,rules,air,bots,accex,rooms}.mjs` + `e2e-online.mjs` 전부 통과 |
+| 운영 상태 (2026-09-13) | main c9221915 · games 648992d3 · 이미지 portal-fe:c922191 / content:d8db405 · 번들 `index-CjJOLYZk.js`. **Phase 2 + 공중 공격 + 봇 자멸 수정 + 악세서리 16종 + 더블탭 개편 + 전체화면 + 모바일 한 화면 + 온라인 준비·방 목록·슬롯 봇 + 방 규칙 셋 + 협동 시나리오**. 운영 실측: `tools/e2e-prod-{fullscreen,portrait,score,rules,air,bots,accex,rooms,coop}.mjs` + `e2e-online.mjs` + `e2e-room-rules.mjs` 전부 통과 |
 
 ## 작업 위치
 
@@ -89,6 +89,7 @@ node tools/e2e-online-room.mjs $P http://127.0.0.1:5180 <outDir>  # 준비/해�
 node tools/e2e-prod-rooms.mjs                                     # 운영 릴레이에 직접 — 공개 방만 목록에 뜨는지 (브라우저 없음)
 node tools/e2e-room-rules.mjs $P http://127.0.0.1:5180 <outDir>   # 방 규칙(노템·맨손·스탯 없음)이 판에서 강제되는지 (릴레이 자체 기동)
 node tools/e2e-coop.mjs $P http://127.0.0.1:5180 <outDir>         # 협동 물결 — 팀 배치·목숨·물결 넘김·봇 강화
+node tools/e2e-prod-coop.mjs $P https://game.1989v.com/games/arena/index.html <outDir> # 운영 번들의 협동 (모드 노출·팀·물결)
 ../scripts/cdp-chrome.sh stop amparena
 ```
 
