@@ -54,6 +54,9 @@ const table = (title, a) => {
 table('직업', byStyle);
 table('악세서리', byAcc);
 console.log(`\n${matches}판 · ${seconds}초 · ${ticks} 틱 · ${((performance.now() - t0) / 1000).toFixed(1)}s`);
+// 2026-09-13 악세서리가 직업 전용이 된 뒤로 **두 표는 같은 사람을 두 번 센다** — 헤비는 무장하면 반드시 브레이커다.
+// 그래서 「직업 1.12 · 브레이커 1.07」 을 두 축의 독립된 증거로 읽으면 안 된다. 무기 몫만 보려면 같은 직업 안에서 맨손과 비교한다.
+console.log('\n두 표는 독립이 아니다 — 악세서리는 직업 전용이라 무장한 직업과 그 무기가 같이 움직인다. 무기 몫은 같은 직업의 맨손과 비교해서 본다.');
 const deaths = cause.hit + cause.koFall + cause.selfFall;
 const selfPct = (cause.selfFall / deaths) * 100;
 console.log(`\n사망 ${deaths} (판당 ${(deaths / matches).toFixed(1)}) — 타격사 ${((cause.hit / deaths) * 100).toFixed(0)}% · 밀려서 낙사 ${((cause.koFall / deaths) * 100).toFixed(0)}% · **자멸 ${selfPct.toFixed(0)}%**`);

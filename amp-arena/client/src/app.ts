@@ -183,7 +183,7 @@ export class App {
   private renderStylePicker(container: HTMLElement, desc: HTMLElement, onPick: (s: StyleId, acc: AccessoryId) => void, enabled = true): void {
     const draw = () => {
       container.innerHTML = STYLE_IDS.map((st) => `<button class="acc stylebtn ${st === this.style ? 'on' : ''}" data-style="${st}" ${enabled ? '' : 'disabled'}><span class="swatch" style="background:${STYLES[st].look.hairColor}"></span><span>${STYLES[st].name}</span></button>`).join('');
-      desc.textContent = `${STYLES[this.style].desc} 악세서리: ${STYLES[this.style].accessories.filter((a) => a !== 'none').map((a) => ACCESSORIES[a].name).join('·')}`;
+      desc.textContent = `${STYLES[this.style].desc} 전용 악세서리: ${STYLES[this.style].accessories.filter((a) => a !== 'none').map((a) => ACCESSORIES[a].name).join('·')}`;
       container.querySelectorAll<HTMLButtonElement>('.stylebtn').forEach((b) => {
         b.onclick = () => {
           this.style = b.dataset.style as StyleId;

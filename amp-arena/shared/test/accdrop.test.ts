@@ -12,7 +12,7 @@ import type { StyleId } from '../src/styles.ts';
 import type { AccessoryId } from '../src/accessories.ts';
 
 const inp = (mx = 0, mz = 0, btn = 0): Input => ({ seq: 0, mx, mz, btn });
-function setup(aStyle: StyleId = 'fighter', aAcc: AccessoryId = 'none', bStyle: StyleId = 'fighter', bAcc: AccessoryId = 'pistols') {
+function setup(aStyle: StyleId = 'fighter', aAcc: AccessoryId = 'none', bStyle: StyleId = 'speedster', bAcc: AccessoryId = 'pistols') {
   const w = new World({ mapId: 'colosseum', modeId: 'ffa_dm', seconds: 180, seed: 5 });
   const a = w.addPlayer(0, 'A', 0, aAcc, false, aStyle);
   const b = w.addPlayer(1, 'B', 1, bAcc, false, bStyle);
@@ -33,7 +33,7 @@ function koByHit(w: World, a: ReturnType<World['addPlayer']>, b: ReturnType<Worl
 
 describe('KO 시 악세서리 드랍', () => {
   it('맞아서 KO 되면 들고 있던 악세서리가 그 자리에 떨어지고 본인은 맨손이 된다', () => {
-    const { w, a, b } = setup('fighter', 'none', 'fighter', 'pistols');
+    const { w, a, b } = setup('fighter', 'none', 'speedster', 'pistols'); // 더블탭은 스피드스타 전용
     const ev = koByHit(w, a, b);
     expect(b.state).toBe('dead');
     expect(b.acc).toBe('none');
@@ -46,7 +46,7 @@ describe('KO 시 악세서리 드랍', () => {
 
   it('낙사하면 악세서리도 같이 없어진다', () => {
     const w = new World({ mapId: 'skydock', modeId: 'ffa_dm', seconds: 180, seed: 5 });
-    const a = w.addPlayer(0, 'A', 0, 'spear', false, 'speedster');
+    const a = w.addPlayer(0, 'A', 0, 'spear', false, 'martial');
     w.addPlayer(1, 'B', 1, 'none', false);
     for (let i = 0; i < C.COUNTDOWN_TICKS; i++) w.step([]);
     w.items = [];
@@ -57,7 +57,7 @@ describe('KO 시 악세서리 드랍', () => {
   });
 
   it('맨손인 사람이 F 로 주우면 장착된다 — 탄창이 차고 아이템은 없어진다', () => {
-    const { w, a } = setup('fighter', 'none');
+    const { w, a } = setup('speedster', 'none');
     const it = createItem(w.nextItemId++, 'acc', 0, 0, 0.8); it.acc = 'pistols'; w.items.push(it);
     const ev = steps(w, inp(0, 0, BTN_PICKUP), inp(), 1);
     expect(a.acc).toBe('pistols');
@@ -76,12 +76,16 @@ describe('KO 시 악세서리 드랍', () => {
   });
 
   it('이미 든 것이 있으면 바꿔 든다 — 전 것이 그 자리에 떨어진다', () => {
-    const { w, a } = setup('fighter', 'shield');
+    // 직업 전용이 된 뒤로 **같은 무기끼리만** 바뀐다 (파이터끼리 부스터를 주고받는 상황).
+    // 남의 전용은 tryPickup 이 아예 거르므로 여기 오지 않는다.
+    const { w, a } = setup('fighter', 'rocket');
     const it = createItem(w.nextItemId++, 'acc', 0, 0, 0.8); it.acc = 'rocket'; w.items.push(it);
     steps(w, inp(0, 0, BTN_PICKUP), inp(), 1);
     expect(a.acc).toBe('rocket');
+    expect(w.items.find((i) => i.id === it.id)).toBeUndefined(); // 주운 것은 없어지고
     const old = w.items.find((i) => i.kind === 'acc');
-    expect(old?.acc).toBe('shield');
+    expect(old?.acc).toBe('rocket'); // 들고 있던 것이 그 자리에 떨어져 있다
+    expect(old?.id).not.toBe(it.id);
   });
 
   it('25초 안에 안 주우면 사라진다', () => {
@@ -94,12 +98,12 @@ describe('KO 시 악세서리 드랍', () => {
   });
 
   it('스냅샷이 플레이어의 바뀐 악세서리와 떨어진 악세서리를 싣는다', () => {
-    const { w, a, b } = setup('fighter', 'none', 'fighter', 'pistols');
+    const { w, a, b } = setup('fighter', 'none', 'speedster', 'pistols');
     koByHit(w, a, b);
     const snap = encodeSnapshot(w);
     const w2 = new World({ mapId: 'colosseum', modeId: 'ffa_dm', seconds: 180, seed: 5 });
     w2.addPlayer(0, 'A', 0, 'none', false, 'fighter');
-    w2.addPlayer(1, 'B', 1, 'pistols', false, 'fighter'); // 명단은 시작 때 것 — 스냅샷이 덮어야 한다
+    w2.addPlayer(1, 'B', 1, 'pistols', false, 'speedster'); // 명단은 시작 때 것 — 스냅샷이 덮어야 한다
     applySnapshot(w2, snap);
     expect(w2.players[1]!.acc).toBe('none');
     expect(w2.items.find((i) => i.kind === 'acc')?.acc).toBe('pistols');

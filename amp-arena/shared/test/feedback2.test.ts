@@ -37,7 +37,7 @@ describe('2차 소감', () => {
     for (const id of STYLE_IDS) expect(STYLES[id].accessories[0]).toBe('none');
     const w = new World({ mapId: 'colosseum', modeId: 'ffa_dm', seconds: 60, seed: 1 });
     expect(w.addPlayer(0, 'H', 0, 'pistols', false, 'heavy').acc).toBe('none');
-    expect(w.addPlayer(1, 'S', 0, 'spear', false, 'speedster').acc).toBe('spear');
+    expect(w.addPlayer(1, 'M', 0, 'spear', false, 'martial').acc).toBe('spear'); // 스파이크는 마셜 전용
   });
 
   it('상자는 통과할 수 없고 위에 올라설 수 있다', () => {
