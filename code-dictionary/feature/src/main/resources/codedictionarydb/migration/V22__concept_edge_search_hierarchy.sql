@@ -1,0 +1,180 @@
+-- 개념 사이의 **방향 있는** 간선. `concept_relation` 은 방향도 뜻도 없어 층을 못 만든다.
+--   CONTAINS  상위 → 하위 (층을 만드는 유일한 간선)
+--   FLOWS_TO  앞 단계 → 뒤 단계 (같은 층 안 순서)
+--   SAME_AS   표기만 다른 것
+-- 한 개념이 두 부모를 가질 수 있어 트리가 아니라 DAG 다 — 임베딩 모델은 문서 임베딩과
+-- 쿼리 임베딩 양쪽 아래에 있고, HNSW 는 벡터 필드와 ANN 양쪽 아래에 있다.
+--
+-- concept_id 에 FK 를 걸지 않는 것은 tech_domain_concept(V19) 와 같은 이유다 — 개념 행은
+-- reindex 가 통째로 다시 심으므로, FK 를 걸면 재색인이 간선을 지우거나 막는다.
+
+CREATE TABLE concept_edge (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    from_concept_id VARCHAR(100) NOT NULL,
+    to_concept_id VARCHAR(100) NOT NULL,
+    kind VARCHAR(16) NOT NULL,
+    ordinal INT NOT NULL DEFAULT 0,
+    UNIQUE KEY uk_concept_edge (from_concept_id, to_concept_id, kind),
+    INDEX idx_concept_edge_to (to_concept_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ===== 검색 시스템 계층의 개념 (bulk-indexing · alias-swap · inverse-index 는 기존 행을 쓴다) =====
+INSERT INTO concept (concept_id, name, category, level, description) VALUES
+('search-system', '검색 시스템', 'ARCHITECTURE', 'INTERMEDIATE', '색인을 만드는 인제스트, 색인을 읽는 쿼리, 둘의 결과를 재는 평가 — 세 진입점으로 읽는 검색 아키텍처'),
+
+('search-ingest', '검색 인제스트', 'ARCHITECTURE', 'INTERMEDIATE', '원천에서 색인까지. 문서 임베딩은 이 축에서 오프라인으로 일어난다'),
+('search-query', '검색어 파이프라인', 'ARCHITECTURE', 'INTERMEDIATE', '검색어가 결과가 되기까지 — 쿼리 언더스탠딩 · 후보 생성 · 융합 · 후처리'),
+('search-evaluation', '검색 평가', 'TESTING', 'INTERMEDIATE', '오프라인은 판정 세트가, 온라인은 트래픽이 필요하다'),
+
+('source-collection', '원천 수집', 'DATA', 'BEGINNER', '외부 원천을 전량 또는 증분으로 받는다. 호출은 일일 한도 자원이다'),
+('normalization-derivation', '정규화 · 파생', 'DATA', 'INTERMEDIATE', '원본은 그대로 두고 화면용 그루핑은 파생 컬럼으로 만든다'),
+('document-embedding', '문서 임베딩', 'DATA', 'ADVANCED', '문서를 벡터로 바꿔 색인에 싣는다. 오프라인 배치로 미리 계산한다'),
+('index-contract', '색인 계약', 'DATA', 'INTERMEDIATE', '매핑 · 분석기 · 벡터 필드 — 색인이 무엇을 받아들이는지의 정의'),
+('full-scan', '풀스캔', 'DATA', 'BEGINNER', '원천 전량을 다시 받는다'),
+('incremental-backfill', '증분 · 백필', 'DATA', 'INTERMEDIATE', '안 받은 것만 이어 받는다. 일일 한도 안에서 며칠에 걸쳐 채운다'),
+('api-quota', '호출 한도', 'INFRASTRUCTURE', 'BEGINNER', '원천이 정한 상한. 화면 표기와 실제 한도가 다를 수 있다'),
+('raw-preservation', '원본 보존', 'DATA', 'BEGINNER', '원천 값을 가공 없이 저장한다. 다시 받으려면 한도를 또 쓴다'),
+('derived-column', '파생 컬럼', 'DATA', 'BEGINNER', '가공 값은 원본을 덮지 않고 별도 컬럼으로 둔다'),
+('taxonomy-tagging', '분류 코드 · 태깅', 'DATA', 'INTERMEDIATE', '필터 축이 되는 분류 코드와 태그'),
+('embedding-text-rule', '임베딩 텍스트 규칙', 'DATA', 'INTERMEDIATE', '무엇을 이어 붙여 인코딩하나 — 제목 · 분류 · 주소 · 개요'),
+('model-stamp', '모델 스탬프', 'DATA', 'INTERMEDIATE', '벡터 공간 식별자. 모델이나 차원이 바뀌면 옛 벡터와 섞이지 않게 한다'),
+('offline-batch', '오프라인 배치', 'INFRASTRUCTURE', 'BEGINNER', '실시간 경로 밖에서 미리 계산한다'),
+('index-mapping', '매핑 · 필드 타입', 'DATA', 'BEGINNER', '필드마다 keyword · text · knn_vector 같은 타입을 정한다'),
+('analyzer-tokenizer', '분석기 · 토크나이저', 'DATA', 'INTERMEDIATE', '텍스트를 토큰으로 가르는 규칙. 한국어는 형태소 분석기(nori)를 쓴다'),
+('vector-field', '벡터 필드', 'DATA', 'ADVANCED', '벡터를 담는 필드와 그 근사 탐색 구조'),
+('index-rebuild', '새 인덱스 생성', 'DATA', 'INTERMEDIATE', '기존 색인을 고치지 않고 새 색인을 만든 뒤 별칭을 옮긴다'),
+
+('query-understanding', '쿼리 언더스탠딩', 'ALGORITHM', 'INTERMEDIATE', '검색어에서 뜻을 읽어 필터와 잔여 검색어로 가른다'),
+('search-lexicon', '검색 사전', 'DATA', 'INTERMEDIATE', '동의어 · 사용자 사전 · 스톱워드. 원천 코드표에서 유도하면 손으로 안 쓴다'),
+('query-embedding', '쿼리 임베딩', 'ALGORITHM', 'ADVANCED', '검색어를 실시간으로 벡터화한다. 같은 검색어는 다시 만들지 않는다'),
+('candidate-generation', '후보 생성', 'ALGORITHM', 'INTERMEDIATE', '스파스와 덴스, 두 레그가 각자 상위 후보를 낸다'),
+('rank-fusion', '융합', 'ALGORITHM', 'INTERMEDIATE', '점수 스케일이 다른 두 후보 목록을 순위로 합친다'),
+('post-ranking', '후처리', 'ALGORITHM', 'ADVANCED', '융합된 상위를 다시 채점하거나 다양성 · 비즈니스 규칙을 건다'),
+('query-normalization', '정규화', 'ALGORITHM', 'BEGINNER', '대소문자 · 공백 · 기호를 통일한다'),
+('morphological-analysis', '형태소 분석', 'ALGORITHM', 'INTERMEDIATE', '조사 · 어미를 떼고 어간을 남긴다. 「아이와」가 「아이」+「와」로 갈리는 노이즈도 여기서 난다'),
+('keyword-type-classification', '키워드 유형 분류', 'ALGORITHM', 'INTERMEDIATE', '검색어를 유형 · 분류 · 대상 · 스톱워드로 가른다'),
+('intent-to-filter', '의도 → 필터 승격', 'ALGORITHM', 'ADVANCED', '뜻을 검색어에서 빼 필터로 옮긴다. BM25 레그에만 걸고 벡터 레그는 원문을 받는다'),
+('synonym-dictionary', '동의어 사전', 'DATA', 'BEGINNER', '다른 말을 같은 것으로 묶는다'),
+('user-dictionary', '사용자 사전', 'DATA', 'INTERMEDIATE', '분석기가 모르는 고유명사 · 복합어를 한 토큰으로 지정한다'),
+('stopword', '스톱워드', 'DATA', 'BEGINNER', '검색에 뜻이 없는 말을 뺀다'),
+('lexicon-from-source-codes', '원천 코드표 유도', 'DATA', 'INTERMEDIATE', '원천의 분류 코드표(한 · 영 이름 쌍)에서 사전을 만든다'),
+('live-encoding', '라이브 인코딩', 'INFRASTRUCTURE', 'ADVANCED', '요청 경로에서 임베딩 모델을 부른다. 지연 예산의 대부분을 먹는다'),
+('query-vector-ledger', '벡터 캐시 · 원장', 'DATA', 'INTERMEDIATE', '만든 쿼리 벡터를 저장해 같은 검색어를 다시 인코딩하지 않는다'),
+('bm25', '스파스 · BM25', 'ALGORITHM', 'INTERMEDIATE', '글자가 맞는 것을 찾는다. 고유명사 · 정확 일치에 강하다'),
+('ann-search', '덴스 · ANN', 'ALGORITHM', 'ADVANCED', '뜻이 가까운 것을 벡터 근사 최근접 탐색으로 찾는다'),
+('rrf', 'RRF', 'ALGORITHM', 'INTERMEDIATE', 'Reciprocal Rank Fusion — 각 목록의 순위 역수를 더해 합친다'),
+('reranking', '리랭킹', 'ALGORITHM', 'ADVANCED', '상위 후보만 무거운 모델로 다시 채점한다. GPU 없이는 성립하지 않는다'),
+('diversity-business-rules', '다양성 · 비즈니스 규칙', 'ALGORITHM', 'INTERMEDIATE', '같은 것만 몰리지 않게 하고 운영 규칙(가중치 · 제외)을 건다'),
+('embedding-model', '임베딩 모델', 'ALGORITHM', 'ADVANCED', '문서와 검색어를 같은 벡터 공간으로 보내는 모델. 양쪽이 같은 모델이어야 한다'),
+('hnsw', 'HNSW', 'DATA_STRUCTURE', 'ADVANCED', '계층 그래프로 벡터 근사 최근접을 찾는 자료구조'),
+
+('judgment-set', '판정 세트', 'TESTING', 'INTERMEDIATE', '쿼리마다 어떤 문서가 얼마나 맞는지 적은 정답지'),
+('offline-metrics', '오프라인 지표', 'TESTING', 'INTERMEDIATE', '판정 세트로 계산하는 순위 품질 지표'),
+('online-evaluation', '온라인 평가', 'TESTING', 'ADVANCED', '실제 트래픽으로 두 시스템을 비교한다'),
+('search-ops-metrics', '운영 지표', 'INFRASTRUCTURE', 'INTERMEDIATE', '지연 · 폴백률 · 캐시 적중률 — 검색이 살아 있는지의 지표'),
+('pooling', '풀링', 'TESTING', 'ADVANCED', '여러 시스템의 상위를 모아 판정한다. 만든 시스템에만 공정한 편향을 줄인다'),
+('judgment-coverage', '커버리지', 'TESTING', 'INTERMEDIATE', '결과 중 판정된 비율. 낮으면 비교가 거짓이다'),
+('graded-relevance', '등급 척도', 'TESTING', 'INTERMEDIATE', '0–3 등급으로 매긴다. 이진 척도와 교차 확인한다'),
+('ndcg', 'nDCG', 'TESTING', 'INTERMEDIATE', '순위 위치를 할인해 더한 이득을 이상적 순위로 나눈 값'),
+('recall-precision', '재현율 · 정밀도', 'TESTING', 'BEGINNER', '찾아야 할 것 중 찾은 비율과 찾은 것 중 맞는 비율'),
+('interleaving', '인터리빙', 'TESTING', 'ADVANCED', '두 시스템의 결과를 섞어 보여주고 클릭으로 가른다. A/B 보다 적은 트래픽으로 판정한다'),
+('ab-test', 'A/B 테스트', 'TESTING', 'INTERMEDIATE', '사용자를 나눠 두 시스템에 보내고 지표를 비교한다'),
+('latency-percentile', '지연 · P99', 'INFRASTRUCTURE', 'INTERMEDIATE', '상위 백분위 지연. 평균은 꼬리를 숨긴다'),
+('fallback-rate', '폴백률', 'INFRASTRUCTURE', 'INTERMEDIATE', '벡터 레그가 꺼져 BM25 만 돈 비율'),
+('cache-hit-rate', '캐시 적중률', 'INFRASTRUCTURE', 'BEGINNER', '캐시에서 답한 요청의 비율');
+
+INSERT INTO concept_synonym (concept_id, synonym) VALUES
+((SELECT id FROM concept WHERE concept_id = 'query-understanding'), 'query understanding'),
+((SELECT id FROM concept WHERE concept_id = 'bm25'), 'BM25'),
+((SELECT id FROM concept WHERE concept_id = 'bm25'), 'sparse retrieval'),
+((SELECT id FROM concept WHERE concept_id = 'ann-search'), 'approximate nearest neighbor'),
+((SELECT id FROM concept WHERE concept_id = 'ann-search'), 'dense retrieval'),
+((SELECT id FROM concept WHERE concept_id = 'ann-search'), 'kNN'),
+((SELECT id FROM concept WHERE concept_id = 'rrf'), 'Reciprocal Rank Fusion'),
+((SELECT id FROM concept WHERE concept_id = 'hnsw'), 'Hierarchical Navigable Small World'),
+((SELECT id FROM concept WHERE concept_id = 'ndcg'), 'Normalized Discounted Cumulative Gain'),
+((SELECT id FROM concept WHERE concept_id = 'reranking'), 'reranker'),
+((SELECT id FROM concept WHERE concept_id = 'stopword'), '불용어'),
+((SELECT id FROM concept WHERE concept_id = 'search-system'), 'hybrid search'),
+((SELECT id FROM concept WHERE concept_id = 'search-system'), '하이브리드 검색');
+
+-- ===== 층 (CONTAINS) — ordinal 은 형제 순서 =====
+INSERT INTO concept_edge (from_concept_id, to_concept_id, kind, ordinal) VALUES
+('search-system', 'search-ingest', 'CONTAINS', 1),
+('search-system', 'search-query', 'CONTAINS', 2),
+('search-system', 'search-evaluation', 'CONTAINS', 3),
+
+('search-ingest', 'source-collection', 'CONTAINS', 1),
+('search-ingest', 'normalization-derivation', 'CONTAINS', 2),
+('search-ingest', 'document-embedding', 'CONTAINS', 3),
+('search-ingest', 'index-contract', 'CONTAINS', 4),
+('search-ingest', 'bulk-indexing', 'CONTAINS', 5),
+('source-collection', 'full-scan', 'CONTAINS', 1),
+('source-collection', 'incremental-backfill', 'CONTAINS', 2),
+('source-collection', 'api-quota', 'CONTAINS', 3),
+('normalization-derivation', 'raw-preservation', 'CONTAINS', 1),
+('normalization-derivation', 'derived-column', 'CONTAINS', 2),
+('normalization-derivation', 'taxonomy-tagging', 'CONTAINS', 3),
+('document-embedding', 'embedding-text-rule', 'CONTAINS', 1),
+('document-embedding', 'embedding-model', 'CONTAINS', 2),
+('document-embedding', 'model-stamp', 'CONTAINS', 3),
+('document-embedding', 'offline-batch', 'CONTAINS', 4),
+('index-contract', 'index-mapping', 'CONTAINS', 1),
+('index-contract', 'analyzer-tokenizer', 'CONTAINS', 2),
+('index-contract', 'inverse-index', 'CONTAINS', 3),
+('index-contract', 'vector-field', 'CONTAINS', 4),
+('vector-field', 'hnsw', 'CONTAINS', 1),
+('bulk-indexing', 'index-rebuild', 'CONTAINS', 1),
+('bulk-indexing', 'alias-swap', 'CONTAINS', 2),
+
+('search-query', 'query-understanding', 'CONTAINS', 1),
+('search-query', 'search-lexicon', 'CONTAINS', 2),
+('search-query', 'query-embedding', 'CONTAINS', 3),
+('search-query', 'candidate-generation', 'CONTAINS', 4),
+('search-query', 'rank-fusion', 'CONTAINS', 5),
+('search-query', 'post-ranking', 'CONTAINS', 6),
+('query-understanding', 'query-normalization', 'CONTAINS', 1),
+('query-understanding', 'morphological-analysis', 'CONTAINS', 2),
+('query-understanding', 'keyword-type-classification', 'CONTAINS', 3),
+('query-understanding', 'intent-to-filter', 'CONTAINS', 4),
+('search-lexicon', 'synonym-dictionary', 'CONTAINS', 1),
+('search-lexicon', 'user-dictionary', 'CONTAINS', 2),
+('search-lexicon', 'stopword', 'CONTAINS', 3),
+('search-lexicon', 'lexicon-from-source-codes', 'CONTAINS', 4),
+('query-embedding', 'live-encoding', 'CONTAINS', 1),
+('query-embedding', 'embedding-model', 'CONTAINS', 2),
+('query-embedding', 'query-vector-ledger', 'CONTAINS', 3),
+('candidate-generation', 'bm25', 'CONTAINS', 1),
+('candidate-generation', 'ann-search', 'CONTAINS', 2),
+('ann-search', 'hnsw', 'CONTAINS', 1),
+('rank-fusion', 'rrf', 'CONTAINS', 1),
+('post-ranking', 'reranking', 'CONTAINS', 1),
+('post-ranking', 'diversity-business-rules', 'CONTAINS', 2),
+
+('search-evaluation', 'judgment-set', 'CONTAINS', 1),
+('search-evaluation', 'offline-metrics', 'CONTAINS', 2),
+('search-evaluation', 'online-evaluation', 'CONTAINS', 3),
+('search-evaluation', 'search-ops-metrics', 'CONTAINS', 4),
+('judgment-set', 'pooling', 'CONTAINS', 1),
+('judgment-set', 'judgment-coverage', 'CONTAINS', 2),
+('judgment-set', 'graded-relevance', 'CONTAINS', 3),
+('offline-metrics', 'ndcg', 'CONTAINS', 1),
+('offline-metrics', 'recall-precision', 'CONTAINS', 2),
+('online-evaluation', 'interleaving', 'CONTAINS', 1),
+('online-evaluation', 'ab-test', 'CONTAINS', 2),
+('search-ops-metrics', 'latency-percentile', 'CONTAINS', 1),
+('search-ops-metrics', 'fallback-rate', 'CONTAINS', 2),
+('search-ops-metrics', 'cache-hit-rate', 'CONTAINS', 3);
+
+-- ===== 같은 층 안 흐름 (FLOWS_TO) =====
+INSERT INTO concept_edge (from_concept_id, to_concept_id, kind, ordinal) VALUES
+('source-collection', 'normalization-derivation', 'FLOWS_TO', 1),
+('normalization-derivation', 'document-embedding', 'FLOWS_TO', 2),
+('document-embedding', 'bulk-indexing', 'FLOWS_TO', 3),
+('index-rebuild', 'alias-swap', 'FLOWS_TO', 1),
+('query-understanding', 'candidate-generation', 'FLOWS_TO', 1),
+('query-embedding', 'candidate-generation', 'FLOWS_TO', 2),
+('candidate-generation', 'rank-fusion', 'FLOWS_TO', 3),
+('rank-fusion', 'post-ranking', 'FLOWS_TO', 4),
+('judgment-set', 'offline-metrics', 'FLOWS_TO', 1),
+('offline-metrics', 'online-evaluation', 'FLOWS_TO', 2);

@@ -46,7 +46,7 @@ export const searchConcepts = async (
   return res.data.data;
 };
 
-import type { GraphData, SuggestItem, ConceptDetail } from '../types/graph';
+import type { GraphData, SuggestItem, ConceptDetail, ConceptHierarchy } from '../types/graph';
 
 export const suggestConcepts = async (
   query: string,
@@ -59,6 +59,13 @@ export const suggestConcepts = async (
 
 export const fetchGraphData = async (): Promise<GraphData> => {
   const res = await api.get<ApiResponse<GraphData>>('/api/v1/concepts/graph');
+  return res.data.data;
+};
+
+/** root 를 주면 그 아래만, 없으면 진입점 전부 */
+export const fetchConceptHierarchy = async (root?: string): Promise<ConceptHierarchy> => {
+  const query = root ? `?${new URLSearchParams({ root })}` : '';
+  const res = await api.get<ApiResponse<ConceptHierarchy>>(`/api/v1/concepts/graph/hierarchy${query}`);
   return res.data.data;
 };
 

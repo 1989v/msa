@@ -243,13 +243,16 @@ concept_edge(id, from_concept_id, to_concept_id, kind, ordinal)
 
 ### 3.4 단계
 
-| 단계 | 내용 | 산출물 |
-|---|---|---|
-| G1 | `concept_edge` 표 + 도메인·포트·어댑터 | Flyway · `ConceptEdge` |
-| G2 | 검색 개념 시드 — 이 문서 §1 의 키워드를 `CONTAINS`/`FLOWS_TO` 로 | seed SQL 또는 어드민 |
-| G3 | `GET /api/v1/concepts/graph?mode=hierarchy&root=` | `GraphController` |
-| G4 | FE 계층 모드 — 접기·펼치기, 층 색 | `portal-fe` `/tech` |
-| G5 | 다른 주제로 확장 (배포·관측 등) | — |
+| 단계 | 내용 | 산출물 | 상태 |
+|---|---|---|---|
+| G1 | `concept_edge` 표 + 도메인·포트·어댑터 | `V22__concept_edge_search_hierarchy.sql` · `ConceptEdge` · `ConceptHierarchy`(층 계산, 도메인) · `ConceptEdgeRepositoryPort` | 완료 2026-09-13 |
+| G2 | 검색 개념 시드 — 이 문서 §1 의 키워드를 `CONTAINS`/`FLOWS_TO` 로 | 같은 V22 — 개념 58 + 기존 3(bulk-indexing·alias-swap·inverse-index) · CONTAINS 62 · FLOWS_TO 10 | 완료 2026-09-13 |
+| G3 | `GET /api/v1/concepts/graph/hierarchy?root=` — 응답 모양이 관계 그래프와 달라 `mode=` 대신 별도 경로 | `GraphController.getHierarchy` · `ConceptHierarchyDto` | 완료 2026-09-13 |
+| G4 | FE 계층 모드 — 접기·펼치기, 층 색 | `/tech` 「계층」 탭 · `components/hierarchy/` (순수 모델 `hierarchyModel.ts` + 패널) | 완료 2026-09-13 |
+| G5 | 다른 주제로 확장 (배포·관측 등) | — | 미착수 |
+
+두 부모를 가진 개념은 `embedding-model`(문서 임베딩·쿼리 임베딩)과 `hnsw`(벡터 필드·ANN) 둘이다.
+화면은 양쪽 아래에 행을 내되 id 가 같아 선택·강조가 두 행에 같이 걸린다.
 
 **G2 가 이 작업의 값이다.** 표와 그래프는 그릇이고, 담을 것이 §1 의 키워드 계층이다.
 

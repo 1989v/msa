@@ -38,7 +38,7 @@ FE 는 별도 앱이 아니라 **portal-fe 단일 SPA 의 메인 콘텐츠**로 
 
 | 도메인 | 설명 |
 |---|---|
-| concept | IT 개념 + 코드 참조 색인. `reindex` 스킬이 추출한 개념을 `/api/v1/index` 로 적재 |
+| concept | IT 개념 + 코드 참조 색인. `reindex` 스킬이 추출한 개념을 `/api/v1/index` 로 적재. **층은 `concept_edge`(CONTAINS·FLOWS_TO·SAME_AS, V22)가 만든다** — `concept_relation` 은 무방향이라 층이 안 나온다. 간선은 concept_id 를 값으로 들어(FK 없음) 재색인이 지우지 못한다 |
 | portfolio | 포트폴리오 카드 (PUBLIC/PRIVATE, impact 1~10). 스펙: `docs/specs/2026-06-10-portfolio-card/` |
 | resume | 이력서 사이트(resume.1989v.com) 문서·공유토큰·열람기록. 본문은 마크다운 TEXT. ADR-0064 |
 | display | 1989v.com 메인에 전시하는 서비스 (OPEN/PREOPEN/HOLD). ADR-0066 |
@@ -48,6 +48,7 @@ FE 는 별도 앱이 아니라 **portal-fe 단일 SPA 의 메인 콘텐츠**로 
 | Prefix | 설명 |
 |--------|------|
 | `GET /api/v1/concepts` (+graph, treemap stats, CRUD) | 개념 조회/관리, 그래프/트리맵 데이터 |
+| `GET /api/v1/concepts/graph/hierarchy?root=` | `CONTAINS` 로 층을 센 DAG (root 없으면 진입점 전부). `/tech` 「계층」 탭이 읽는다 |
 | `GET /api/v1/search`, `/api/v1/search/suggest` | 개념 검색 + 자동완성 |
 | `POST /api/v1/index`, `/api/v1/index/sync` | 색인 적재/동기화 (job 상태 조회 포함) |
 | `GET /api/v1/services` | 서비스 카탈로그 |

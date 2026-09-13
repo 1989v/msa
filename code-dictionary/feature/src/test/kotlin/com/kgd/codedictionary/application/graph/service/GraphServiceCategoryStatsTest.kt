@@ -1,5 +1,6 @@
 package com.kgd.codedictionary.application.graph.service
 
+import com.kgd.codedictionary.application.concept.port.ConceptEdgeRepositoryPort
 import com.kgd.codedictionary.application.concept.port.ConceptRepositoryPort
 import com.kgd.codedictionary.application.graph.dto.CategoryStatsFilter
 import com.kgd.codedictionary.application.index.port.ConceptIndexRepositoryPort
@@ -26,7 +27,7 @@ class GraphServiceCategoryStatsTest : BehaviorSpec({
 
     val conceptRepository = mockk<ConceptRepositoryPort>()
     val indexRepository = mockk<ConceptIndexRepositoryPort>()
-    val service = GraphService(conceptRepository, indexRepository)
+    val service = GraphService(conceptRepository, indexRepository, mockk<ConceptEdgeRepositoryPort>())
 
     beforeEach { clearMocks(conceptRepository, indexRepository) }
 

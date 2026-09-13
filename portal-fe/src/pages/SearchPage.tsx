@@ -6,6 +6,7 @@ import HeatmapPanel from '../components/panels/HeatmapPanel';
 import StatsDashboard from '../components/panels/StatsDashboard';
 import TreemapPanel from '../components/panels/TreemapPanel';
 import TreemapSection from '../components/graph/TreemapSection';
+import HierarchyPanel from '../components/hierarchy/HierarchyPanel';
 import DomainMap from '../components/domainmap/DomainMap';
 import {
   INITIAL_DRILLDOWN,
@@ -40,6 +41,7 @@ import './SearchPage.css';
 /** 보조 뷰 — 도메인 맵이 기본, 기존 시각화는 명시적 전환 뒤에 둔다 */
 const VIEWS = [
   { key: 'map', label: '도메인 맵' },
+  { key: 'hierarchy', label: '계층' },
   { key: 'treemap', label: '트리맵' },
   { key: 'graph3d', label: '3D 그래프' },
   { key: 'concept-treemap', label: '개념 트리맵' },
@@ -229,6 +231,15 @@ export default function SearchPage() {
     [model],
   );
 
+  // 계층 뷰의 개념 선택 — 뷰 전환 없이 그 자리에서 상세만 연다 (3D 그래프와 같은 규칙)
+  const handleHierarchySelect = useCallback(
+    (conceptId: string) => {
+      if (!model) return;
+      setDrill((prev) => selectConcept(prev, model, conceptId));
+    },
+    [model],
+  );
+
   const highlightedSet = useMemo(() => new Set(drill.highlighted), [drill.highlighted]);
 
   const handleSearchFocus = useCallback(() => {
@@ -316,6 +327,9 @@ export default function SearchPage() {
                 onNodeClick={handleMapNodeClick}
                 onBackgroundClick={handleClearEmphasis}
               />
+            )}
+            {view === 'hierarchy' && (
+              <HierarchyPanel selectedId={drill.selected} onSelectConcept={handleHierarchySelect} />
             )}
             {view === 'treemap' && <TreemapSection onTileClick={handleSelectConcept} />}
             {view === 'graph3d' && stageSize.width > 0 && (

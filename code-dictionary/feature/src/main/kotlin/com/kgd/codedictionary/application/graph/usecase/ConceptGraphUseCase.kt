@@ -1,6 +1,7 @@
 package com.kgd.codedictionary.application.graph.usecase
 
 import com.kgd.codedictionary.application.graph.dto.CategoryStatsFilter
+import com.kgd.codedictionary.application.graph.dto.ConceptHierarchyDto
 import com.kgd.codedictionary.application.graph.dto.GraphDataDto
 import com.kgd.codedictionary.application.graph.dto.TreemapDataDto
 
@@ -8,4 +9,7 @@ import com.kgd.codedictionary.application.graph.dto.TreemapDataDto
 interface ConceptGraphUseCase {
     fun getGraphData(): GraphDataDto
     fun getCategoryStats(filter: CategoryStatsFilter): TreemapDataDto
+
+    /** `CONTAINS` 간선으로 층을 센 계층. [root] 가 null 이면 부모 없는 개념 전부가 진입점이다 */
+    fun getHierarchy(root: String?): ConceptHierarchyDto
 }

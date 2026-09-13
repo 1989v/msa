@@ -36,6 +36,32 @@ export interface GraphData {
   stats: GraphStats;
 }
 
+/** `GET /api/v1/concepts/graph/hierarchy` — CONTAINS 로 층을 센 DAG */
+export interface HierarchyNode {
+  id: string;
+  name: string;
+  category: Category;
+  level: Level;
+  /** 진입점이 0. 두 부모를 가지면 짧은 쪽 */
+  depth: number;
+  description?: string | null;
+}
+
+export type HierarchyEdgeKind = 'CONTAINS' | 'FLOWS_TO' | 'SAME_AS';
+
+export interface HierarchyEdge {
+  from: string;
+  to: string;
+  kind: HierarchyEdgeKind;
+  ordinal: number;
+}
+
+export interface ConceptHierarchy {
+  roots: string[];
+  nodes: HierarchyNode[];
+  edges: HierarchyEdge[];
+}
+
 export interface SuggestItem {
   conceptId: string;
   name: string;
