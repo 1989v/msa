@@ -1,0 +1,67 @@
+<!-- @dsCard group="사태 — 캐릭터" viewport="1280x900" name="03 · 축소 검증" subtitle="36px / 72px · 화산재와 한지" -->
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><title>03 · 축소 검증</title>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#F9F8F2;font-family:'Nanum Myeongjo',serif;color:#1D1D1F}
+.paper{position:relative;min-height:100vh;padding:48px 56px}
+.head{display:flex;align-items:baseline;gap:18px;border-bottom:2px solid #1D1D1F;padding-bottom:14px}
+h1{font-size:32px;font-weight:800;margin:0}
+.sub{font-size:15px;color:#8A6A50}
+.meta{margin-left:auto;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#8A6A50}
+.band{margin-top:26px;border:2px solid #1D1D1F}
+.band h2{margin:0;font-size:13px;font-family:ui-monospace,Menlo,monospace;letter-spacing:.1em;padding:8px 14px;border-bottom:2px solid #1D1D1F}
+.strip{display:flex;align-items:flex-end;gap:64px;padding:34px 44px 22px}
+.ash{background:#4A4A4C;color:#F9F8F2}.ash h2{border-color:#F9F8F2}
+.hanji{background:#F9F8F2}
+.hanji .strip{background:repeating-linear-gradient(0deg,rgba(29,29,31,.05) 0 1px,transparent 1px 5px)}
+.u{display:flex;flex-direction:column;align-items:center;gap:10px}
+.u span{font-size:12px;letter-spacing:.14em;opacity:.85}
+.art{display:flex;align-items:flex-end;justify-content:center}
+.h36 .art{height:58px}.h72 .art{height:116px}
+.note{margin-top:24px;font-size:14px;color:#8A6A50;line-height:1.75;max-width:900px}
+.note b{color:#1D1D1F;font-weight:800}
+</style></head>
+<body><div class="paper">
+<div class="head"><h1>축소 검증 — 실루엣만으로 갈리는가</h1><span class="sub">인게임 36px(화면 높이 1/20) · 확인용 72px</span>
+<span class="meta">FAIL 이면 시트를 고친다</span></div>
+
+<div class="band ash"><h2>36 PX · 화산재 #4A4A4C</h2><div class="strip h36">
+<div class="u"><div class="art" data-unit="archer" data-h="36"></div><span>궁수</span></div>
+<div class="u"><div class="art" data-unit="gunner" data-h="36"></div><span>포수</span></div>
+<div class="u"><div class="art" data-unit="sword" data-h="36"></div><span>검사</span></div>
+<div class="u"><div class="art" data-unit="spear" data-h="36"></div><span>창병</span></div>
+<div class="u"><div class="art" data-unit="shield" data-h="36"></div><span>방패병</span></div>
+<div class="u"><div class="art" data-unit="archer" data-h="36" data-team="blue"></div><span>청팀 궁수</span></div>
+</div></div>
+
+<div class="band hanji"><h2>36 PX · 한지 #F9F8F2</h2><div class="strip h36">
+<div class="u"><div class="art" data-unit="archer" data-h="36"></div><span>궁수</span></div>
+<div class="u"><div class="art" data-unit="gunner" data-h="36"></div><span>포수</span></div>
+<div class="u"><div class="art" data-unit="sword" data-h="36"></div><span>검사</span></div>
+<div class="u"><div class="art" data-unit="spear" data-h="36"></div><span>창병</span></div>
+<div class="u"><div class="art" data-unit="shield" data-h="36"></div><span>방패병</span></div>
+<div class="u"><div class="art" data-unit="archer" data-h="36" data-team="blue"></div><span>청팀 궁수</span></div>
+</div></div>
+
+<div class="band ash"><h2>72 PX · 화산재</h2><div class="strip h72">
+<div class="u"><div class="art" data-unit="archer" data-h="72"></div><span>궁수</span></div>
+<div class="u"><div class="art" data-unit="gunner" data-h="72"></div><span>포수</span></div>
+<div class="u"><div class="art" data-unit="sword" data-h="72"></div><span>검사</span></div>
+<div class="u"><div class="art" data-unit="spear" data-h="72"></div><span>창병</span></div>
+<div class="u"><div class="art" data-unit="shield" data-h="72"></div><span>방패병</span></div>
+</div></div>
+
+<div class="band hanji"><h2>72 PX · 한지</h2><div class="strip h72">
+<div class="u"><div class="art" data-unit="archer" data-h="72"></div><span>궁수</span></div>
+<div class="u"><div class="art" data-unit="gunner" data-h="72"></div><span>포수</span></div>
+<div class="u"><div class="art" data-unit="sword" data-h="72"></div><span>검사</span></div>
+<div class="u"><div class="art" data-unit="spear" data-h="72"></div><span>창병</span></div>
+<div class="u"><div class="art" data-unit="shield" data-h="72"></div><span>방패병</span></div>
+</div></div>
+
+<p class="note">판정 기준 — 36px 에서 <b>궁수</b>는 오른쪽으로 부푼 활의 C 곡선, <b>포수</b>는 무릎 높이를 지나는 굵은 사선 덩어리, <b>검사</b>는 머리 위 얇은 사선, <b>창병</b>은 상자를 뚫고 올라가는 수직선, <b>방패병</b>은 몸통을 덮는 원. 다섯의 무게 중심이 각각 오른쪽·아래·위·위아래 전체·가운데로 흩어져 겹치지 않는다.</p>
+</div>
+<script src="characters.js"></script>
+</body></html>
