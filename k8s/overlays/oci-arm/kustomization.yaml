@@ -368,7 +368,7 @@ images:
     newTag: d0f28c7
   - name: commerce/content
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/content
-    newTag: d0f28c7
+    newTag: d8db405
   - name: commerce/engagement
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/engagement
     newTag: d0f28c7
@@ -383,7 +383,7 @@ images:
     newTag: 6ca573c
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: 39cf14c
+    newTag: d8db405
   - name: commerce/quant-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant-fe
     newTag: cb23a78
