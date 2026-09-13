@@ -82,6 +82,7 @@ class SearchAttractionService(
                 contentTypeId = understood?.contentTypeId,
                 lclsCode = understood?.lclsCode,
                 lclsDepth = understood?.lclsDepth,
+                commerceIntent = understood?.commerceIntent ?: false,
                 geo = geo,
                 embedding = embedding,
             ),

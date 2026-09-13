@@ -185,6 +185,31 @@ class AttractionSearchAdapterRankingTest : BehaviorSpec({
             }
         }
     }
+
+    given("질의 이해가 상업 의도로 판정한 검색") {
+        // 「야시장」의 정답은 전부 shopping 인데 0.35 하향이 그것을 잡음 아래로 내렸다 (실측 nDCG 0.681 → 0.030)
+        `when`("commerceIntent 로 검색하면") {
+            then("가중치가 켜져 있어도 function_score 를 감싸지 않는다") {
+                val (adapter, captured) = adapterWith(AttractionRankingProperties())
+
+                adapter.search(
+                    AttractionSearchPort.SearchQuery(keyword = "야시장", lang = "ko", commerceIntent = true),
+                    PageRequest.of(0, 10),
+                )
+
+                captured.captured.query()?.isBool shouldBe true
+            }
+        }
+        `when`("자동완성이면") {
+            then("질의 이해를 안 거치므로 하향은 그대로 건다") {
+                val (adapter, captured) = adapterWith(AttractionRankingProperties())
+
+                adapter.suggest("야시", "ko", 5)
+
+                captured.captured.query()?.isFunctionScore shouldBe true
+            }
+        }
+    }
 })
 
 private const val MODEL_REF = "microsoft/harrier-oss-v1-270m@abc1234#d640"

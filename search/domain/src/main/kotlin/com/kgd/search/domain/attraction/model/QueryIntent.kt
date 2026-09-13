@@ -51,9 +51,21 @@ object QueryIntent {
      * 관광 맥락의 수식어로 쓰이는 말은 **어느 코드로 가든** 필터로 승격하지 않는다.
      */
     private val COMMERCE_WORDS: Set<String> = setOf(
-        "맛집", "음식", "음식점", "먹거리", "먹을거리", "시장", "쇼핑", "카페", "술집", "주점",
-        "food", "restaurant", "market", "shopping", "cafe",
+        "맛집", "음식", "음식점", "먹거리", "먹을거리", "시장", "쇼핑", "카페", "술집", "주점", "대여", "렌탈",
+        "food", "restaurant", "market", "markets", "shopping", "cafe", "rental", "rent",
     )
+
+    /** 「야시장」·「전통시장」·「night market」 — 어절 끝이 이것이면 상업 의도다. */
+    private val COMMERCE_SUFFIXES: Set<String> = setOf("시장", "market", "markets")
+
+    /**
+     * **산업관광(EX06) 소분류 이름은 동의어 나열이 아니라 산업 나열이다** —
+     * `전통/향토산업` · `자동차/조선/철강 등` · `Traditional / Local` · `Cosmetics / Alcohol / Food`.
+     * 조각을 별칭으로 만들면 「전통」·「조선」·「traditional」·「food」가 이 소분류로 필터된다.
+     * 실측: 「traditional market food」가 `EX060300` 으로 좁혀져 0건, 「traditional」 1건.
+     * 이 아래는 이름 전체로만 걸리게 둔다.
+     */
+    private val NO_ALIAS_SPLIT_PREFIXES = setOf("EX06")
 
     /**
      * 혼자서는 아무것도 가리키지 않는 말. 지우지 않으면 BM25 가 이것들로 문서를 고른다.
@@ -73,6 +85,14 @@ object QueryIntent {
         /** 분류체계 코드와 그 깊이 — 깊이가 어느 필드에 걸지 정한다(1→lclsSystm1). */
         val lclsCode: String? = null,
         val lclsDepth: Int? = null,
+        /**
+         * 질의가 상점·식당·시장을 **직접 가리킨다**. 필터로는 안 올리지만(위 COMMERCE 주석),
+         * 이때는 랭킹의 상업 하향(sight 3.0 / commerce 0.35)도 꺼야 한다 — 「야시장」의 정답은
+         * 전부 `shopping` 인데 하향이 그것을 잡음 아래로 내린다.
+         * 실측(2026-09-13): 「야시장」 nDCG 0.681 → 0.030, 「night market」 0.864 → 0.349,
+         * 「hanbok rental」 0.848 → 0.456 — 셋 다 정답이 `SH` 였다.
+         */
+        val commerceIntent: Boolean = false,
     ) {
         /** 검색어가 남지 않았다 = 순위를 정할 키워드 신호가 없다. */
         val residualIsEmpty: Boolean get() = residual.isNullOrBlank()
@@ -101,7 +121,8 @@ object QueryIntent {
             fun of(codes: List<Triple<String, Int, String>>): Lexicon {
                 val map = mutableMapOf<String, Pair<String, Int>>()
                 codes.forEach { (code, depth, name) ->
-                    aliasesOf(name).forEach { key ->
+                    val keys = if (NO_ALIAS_SPLIT_PREFIXES.any { code.startsWith(it) }) setOf(normalize(name)) else aliasesOf(name)
+                    keys.forEach { key ->
                         val existing = map[key]
                         if (existing == null || depth >= existing.second) map[key] = code to depth
                     }
@@ -159,6 +180,7 @@ object QueryIntent {
 
         var contentTypeId: String? = null
         var lcls: Pair<String, Int>? = null
+        var commerce = isCommerce(normalize(raw), lexicon)
         val kept = mutableListOf<String>()
 
         // 붙여 쓴 말("가볼만한곳")과 띄어 쓴 말("가볼만한 곳")을 함께 잡으려면 이어붙인 것도 봐야 한다.
@@ -166,6 +188,9 @@ object QueryIntent {
         while (i < words.size) {
             val two = if (i + 1 < words.size) normalize(words[i] + words[i + 1]) else null
             val one = normalize(words[i])
+
+            if (two != null && isCommerce(two, lexicon)) commerce = true
+            if (isCommerce(one, lexicon)) commerce = true
 
             val twoHit = two?.let { match(it, lexicon) }
             if (twoHit != null) {
@@ -190,8 +215,15 @@ object QueryIntent {
             contentTypeId = contentTypeId,
             lclsCode = lcls?.first,
             lclsDepth = lcls?.second,
+            commerceIntent = commerce,
         )
     }
+
+    /** 상업 의도어이거나(끝이 「시장」·「market」 포함), 사전이 음식·쇼핑·숙박 코드로 보내는 말. */
+    private fun isCommerce(normalized: String, lexicon: Lexicon): Boolean =
+        normalized in normalizedCommerceWords ||
+            COMMERCE_SUFFIXES.any { normalized.endsWith(it) } ||
+            lexicon.lookup(normalized)?.let { hit -> COMMERCE_PREFIXES.any { hit.first.startsWith(it) } } == true
 
     private val normalizedStopPhrases: Set<String> = STOP_PHRASES.map { normalize(it) }.toSet()
     private val normalizedCommerceWords: Set<String> = COMMERCE_WORDS.map { normalize(it) }.toSet()

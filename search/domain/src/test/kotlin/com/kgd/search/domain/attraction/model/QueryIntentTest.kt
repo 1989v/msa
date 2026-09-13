@@ -114,6 +114,58 @@ class QueryIntentTest : BehaviorSpec({
             Then("해수욕장은 필터가 된다") {
                 QueryIntent.analyze("해수욕장", commerce).lclsCode shouldBe "NA020900"
             }
+            Then("상업 의도가 아니다 — 랭킹 하향은 그대로 둔다") {
+                QueryIntent.analyze("해수욕장", commerce).commerceIntent shouldBe false
+            }
+        }
+
+        When("질의가 상점·시장을 직접 가리키면") {
+            // 「야시장」의 정답은 전부 shopping 인데 상업 하향(0.35)이 잡음 아래로 내린다 (실측 0.681 → 0.030).
+            Then("필터는 안 만들되 상업 의도를 표시한다") {
+                val r = QueryIntent.analyze("야시장", commerce)
+                r.hasFilter shouldBe false
+                r.residual shouldBe "야시장"
+                r.commerceIntent shouldBe true
+            }
+            Then("어절 끝이 market 이거나 대여·rental 이면 같다") {
+                QueryIntent.analyze("night market", commerce).commerceIntent shouldBe true
+                QueryIntent.analyze("hanbok rental", commerce).commerceIntent shouldBe true
+                QueryIntent.analyze("한복 대여", commerce).commerceIntent shouldBe true
+            }
+            Then("사전이 음식·쇼핑 코드로 보내는 말도 상업 의도다") {
+                QueryIntent.analyze("전통시장 먹거리", commerce).commerceIntent shouldBe true
+            }
+        }
+    }
+
+    Given("산업관광(EX06) 소분류 이름") {
+        // 실제 코드표 값이다. 동의어 나열이 아니라 산업 나열이라 조각이 일반어를 가로챈다 —
+        // 「traditional market food」가 EX060300 으로 좁혀져 0건 (실측).
+        val industrial = QueryIntent.Lexicon.of(
+            listOf(
+                Triple("EX060300", 3, "Traditional / Local"),
+                Triple("EX060600", 3, "자동차/조선/철강 등"),
+                Triple("EX050100", 3, "온천 / 사우나 / 스파"),
+            ),
+        )
+
+        When("조각으로 물으면") {
+            Then("필터가 안 걸리고 검색어로 남는다") {
+                val r = QueryIntent.analyze("traditional market food", industrial)
+                r.lclsCode shouldBe null
+                r.residual shouldBe "traditional market food"
+                QueryIntent.analyze("조선 궁궐", industrial).lclsCode shouldBe null
+            }
+        }
+        When("이름 전체로 물으면") {
+            Then("여전히 걸린다") {
+                QueryIntent.analyze("traditional / local", industrial).lclsCode shouldBe "EX060300"
+            }
+        }
+        When("산업관광 밖의 나열형 이름은") {
+            Then("조각도 별칭이다") {
+                QueryIntent.analyze("사우나", industrial).lclsCode shouldBe "EX050100"
+            }
         }
     }
 

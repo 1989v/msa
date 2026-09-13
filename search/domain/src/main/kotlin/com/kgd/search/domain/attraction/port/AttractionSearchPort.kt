@@ -41,6 +41,11 @@ interface AttractionSearchPort {
         val lclsCode: String? = null,
         /** 1/2/3 — 어느 lclsSystm 필드에 걸지 정한다. [lclsCode] 가 있으면 반드시 함께 온다. */
         val lclsDepth: Int? = null,
+        /**
+         * 질의가 상점·식당·시장을 직접 가리킨다 (질의 이해가 판정). true 면 어댑터는 분류 가중치
+         * (관광 3.0 / 상업 0.35)를 걸지 않는다 — 정답이 상업 분류인 질의에서 하향은 정답을 내린다.
+         */
+        val commerceIntent: Boolean = false,
         val geo: GeoFilter? = null,
         /**
          * 질의 벡터 (ADR-0090). **null 이면 BM25 만** — 사전 미적중·기능 꺼짐·거리순 정렬이 그 경우다.

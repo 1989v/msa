@@ -176,7 +176,8 @@ class AttractionSearchAdapter(
         }
         val request = SearchRequest.Builder()
             .index(INDEX)
-            .query(withCategoryWeights(matched))
+            // 자동완성은 질의 이해를 안 거친다 — 하향은 늘 건다
+            .query(withCategoryWeights(matched, commerceIntent = false))
             .size(size)
             .build()
         return client.search(request, AttractionSearchDocument::class.java).hits().hits().mapNotNull { hit ->
@@ -247,7 +248,7 @@ class AttractionSearchAdapter(
                 b
             }
         }
-        val keywordLeg = withCategoryWeights(matched)
+        val keywordLeg = withCategoryWeights(matched, query.commerceIntent)
         val embedding = query.embedding
 
         val builder = SearchRequest.Builder()
@@ -374,8 +375,9 @@ class AttractionSearchAdapter(
      * 적합도가 지배적으로 남는다. `missing = 1.0` 은 재색인 전 옛 인덱스(필드 없음)에서도
      * 중립(상수 배)으로 동작하게 한다.
      */
-    private fun withCategoryWeights(matched: Query): Query {
-        if (!ranking.enabled) return matched
+    private fun withCategoryWeights(matched: Query, commerceIntent: Boolean): Query {
+        // 질의가 상업 시설을 직접 찾으면 하향을 걸지 않는다 — 「야시장」의 정답은 전부 shopping 이다
+        if (!ranking.enabled || commerceIntent) return matched
         return Query.of { q ->
             q.functionScore { fs ->
                 fs.query(matched)
