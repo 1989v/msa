@@ -1,4 +1,4 @@
-package com.kgd.search.domain.attraction.model
+package com.kgd.search.domain.query.model
 
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -18,7 +18,7 @@ class QueryIntentTest : BehaviorSpec({
         When("「아이와 갈만한 관광지」") {
             val r = QueryIntent.analyze("아이와 갈만한 관광지", lexicon)
 
-            Then("「관광지」가 유형 필터가 된다") { r.contentTypeId shouldBe "12" }
+            Then("「관광지」가 유형 필터가 된다") { r.facets["contentTypeId"] shouldBe "12" }
             Then("「갈만한」은 지워진다") { r.residual shouldBe "아이와" }
             Then("검색어가 남아 있다 — 「아이와」는 지우지 않는다") { r.residualIsEmpty shouldBe false }
         }
@@ -27,7 +27,7 @@ class QueryIntentTest : BehaviorSpec({
             val r = QueryIntent.analyze("가볼만한 곳 추천", lexicon)
 
             Then("유형만 남고 검색어는 사라진다") {
-                r.contentTypeId shouldBe "12"
+                r.facets["contentTypeId"] shouldBe "12"
                 r.residualIsEmpty shouldBe true
             }
         }
@@ -38,8 +38,7 @@ class QueryIntentTest : BehaviorSpec({
             val r = QueryIntent.analyze("해수욕장", lexicon)
 
             Then("소분류 코드로 간다") {
-                r.lclsCode shouldBe "NA020100"
-                r.lclsDepth shouldBe 3
+                r.facets["lclsSystm3"] shouldBe "NA020100"
             }
             Then("검색어는 비고 필터만 남는다") { r.residualIsEmpty shouldBe true }
         }
@@ -47,7 +46,7 @@ class QueryIntentTest : BehaviorSpec({
         When("이름에 괄호·중점이 있어도") {
             val r = QueryIntent.analyze("자연경관(하천‧해양)", lexicon)
 
-            Then("정규화해서 맞춘다") { r.lclsCode shouldBe "NA02" }
+            Then("정규화해서 맞춘다") { r.facets["lclsSystm2"] shouldBe "NA02" }
         }
     }
 
@@ -56,7 +55,7 @@ class QueryIntentTest : BehaviorSpec({
             val r = QueryIntent.analyze("야경 명소", lexicon)
 
             Then("「명소」는 유형으로 가고 「야경」은 검색어로 남는다") {
-                r.contentTypeId shouldBe "12"
+                r.facets["contentTypeId"] shouldBe "12"
                 r.residual shouldBe "야경"
             }
         }
@@ -77,7 +76,7 @@ class QueryIntentTest : BehaviorSpec({
 
             Then("검색어로 남는다 — 사전이 없다고 질의를 잃지 않는다") {
                 r.residual shouldBe "해수욕장"
-                r.lclsCode shouldBe null
+                r.hasFilter shouldBe false
             }
         }
     }
@@ -106,13 +105,13 @@ class QueryIntentTest : BehaviorSpec({
 
         When("「맛집」처럼 유형을 뒤집는 말이면") {
             Then("유형 필터가 안 걸린다") {
-                QueryIntent.analyze("맛집", commerce).contentTypeId shouldBe null
+                QueryIntent.analyze("맛집", commerce).facets["contentTypeId"] shouldBe null
             }
         }
 
         When("관광 분류는 그대로 걸린다") {
             Then("해수욕장은 필터가 된다") {
-                QueryIntent.analyze("해수욕장", commerce).lclsCode shouldBe "NA020900"
+                QueryIntent.analyze("해수욕장", commerce).facets["lclsSystm3"] shouldBe "NA020900"
             }
             Then("상업 의도가 아니다 — 랭킹 하향은 그대로 둔다") {
                 QueryIntent.analyze("해수욕장", commerce).commerceIntent shouldBe false
@@ -156,19 +155,19 @@ class QueryIntentTest : BehaviorSpec({
         When("조각으로 물으면") {
             Then("필터가 안 걸리고 검색어로 남는다") {
                 val r = QueryIntent.analyze("traditional market food", industrial)
-                r.lclsCode shouldBe null
+                r.hasFilter shouldBe false
                 r.residual shouldBe "traditional market food"
-                QueryIntent.analyze("조선 궁궐", industrial).lclsCode shouldBe null
+                QueryIntent.analyze("조선 궁궐", industrial).hasFilter shouldBe false
             }
         }
         When("이름 전체로 물으면") {
             Then("여전히 걸린다") {
-                QueryIntent.analyze("traditional / local", industrial).lclsCode shouldBe "EX060300"
+                QueryIntent.analyze("traditional / local", industrial).facets["lclsSystm3"] shouldBe "EX060300"
             }
         }
         When("산업관광 밖의 나열형 이름은") {
             Then("조각도 별칭이다") {
-                QueryIntent.analyze("사우나", industrial).lclsCode shouldBe "EX050100"
+                QueryIntent.analyze("사우나", industrial).facets["lclsSystm3"] shouldBe "EX050100"
             }
         }
     }
@@ -186,22 +185,22 @@ class QueryIntentTest : BehaviorSpec({
 
         When("마침표로 이어 쓴 이름의 뒷말로 물으면") {
             Then("같은 코드로 간다 — 이름 전체로만 열쇠를 만들면 못 찾는다") {
-                QueryIntent.analyze("해수욕장", real).lclsCode shouldBe "NA020900"
-                QueryIntent.analyze("해변", real).lclsCode shouldBe "NA020900"
+                QueryIntent.analyze("해수욕장", real).facets["lclsSystm3"] shouldBe "NA020900"
+                QueryIntent.analyze("해변", real).facets["lclsSystm3"] shouldBe "NA020900"
             }
         }
 
         When("가운뎃점·빗금으로 이어 쓴 이름이면") {
             Then("각 조각이 모두 열쇠가 된다") {
-                QueryIntent.analyze("늪", real).lclsCode shouldBe "NA020400"
-                QueryIntent.analyze("포구", real).lclsCode shouldBe "NA020700"
+                QueryIntent.analyze("늪", real).facets["lclsSystm3"] shouldBe "NA020400"
+                QueryIntent.analyze("포구", real).facets["lclsSystm3"] shouldBe "NA020700"
             }
         }
 
         When("괄호 안에 구분자가 있으면") {
             Then("각 조각이 열쇠가 된다") {
-                QueryIntent.analyze("하천", real).lclsCode shouldBe "NA02"
-                QueryIntent.analyze("해양", real).lclsCode shouldBe "NA02"
+                QueryIntent.analyze("하천", real).facets["lclsSystm2"] shouldBe "NA02"
+                QueryIntent.analyze("해양", real).facets["lclsSystm2"] shouldBe "NA02"
             }
         }
 
@@ -213,17 +212,17 @@ class QueryIntentTest : BehaviorSpec({
             )
 
             Then("별칭으로 쓰지 않는다") {
-                QueryIntent.analyze("indoor", qualifier).lclsCode shouldBe null
-                QueryIntent.analyze("산", qualifier).lclsCode shouldBe null
+                QueryIntent.analyze("indoor", qualifier).hasFilter shouldBe false
+                QueryIntent.analyze("산", qualifier).hasFilter shouldBe false
             }
             Then("이름 전체로는 여전히 걸린다") {
-                QueryIntent.analyze("inline skating (indoor)", qualifier).lclsCode shouldBe "LS010100"
+                QueryIntent.analyze("inline skating (indoor)", qualifier).facets["lclsSystm3"] shouldBe "LS010100"
             }
         }
 
         When("이름 전체로 물어도") {
             Then("여전히 걸린다") {
-                QueryIntent.analyze("자연경관(하천‧해양)", real).lclsCode shouldBe "NA02"
+                QueryIntent.analyze("자연경관(하천‧해양)", real).facets["lclsSystm2"] shouldBe "NA02"
             }
         }
     }
@@ -239,13 +238,13 @@ class QueryIntentTest : BehaviorSpec({
 
         When("영문 이름으로 물어도") {
             Then("같은 코드로 간다 — 문서 언어와 무관하게 필터가 걸린다") {
-                QueryIntent.analyze("natural scenery (rivers/marine)", bilingual).lclsCode shouldBe "NA02"
+                QueryIntent.analyze("natural scenery (rivers/marine)", bilingual).facets["lclsSystm2"] shouldBe "NA02"
             }
         }
 
         When("한글 이름으로 물어도") {
             Then("같은 코드로 간다") {
-                QueryIntent.analyze("자연경관(하천‧해양)", bilingual).lclsCode shouldBe "NA02"
+                QueryIntent.analyze("자연경관(하천‧해양)", bilingual).facets["lclsSystm2"] shouldBe "NA02"
             }
         }
     }
@@ -255,7 +254,7 @@ class QueryIntentTest : BehaviorSpec({
 
         When("찾으면") {
             Then("나중에 넣은 것이 이긴다 — 호출자가 순서로 우선순위를 준다") {
-                ordered.lookup("체험") shouldBe ("BB01" to 2)
+                ordered.lookup("체험") shouldBe QueryIntent.Facet("lclsSystm2", "BB01")
             }
         }
     }
@@ -265,7 +264,46 @@ class QueryIntentTest : BehaviorSpec({
 
         When("찾으면") {
             Then("좁게 말하는 쪽(깊은 코드)이 이긴다") {
-                ambiguous.lookup("체험") shouldBe ("VE0101" to 2)
+                ambiguous.lookup("체험") shouldBe QueryIntent.Facet("lclsSystm2", "VE0101")
+            }
+        }
+    }
+
+    Given("타입 의도어 — 통합 검색의 대상 (searchTypes = true)") {
+        When("「블로그 하이브리드 검색」") {
+            val r = QueryIntent.analyze("블로그 하이브리드 검색", lexicon, searchTypes = true)
+            Then("대상은 블로그 글이고 검색어에서 빠진다") {
+                r.type shouldBe QueryIntent.Types.BLOG_POST
+                r.residual shouldBe "하이브리드 검색"
+                r.hasFilter shouldBe false
+            }
+        }
+        When("「관광지 야경」") {
+            val r = QueryIntent.analyze("관광지 야경", lexicon, searchTypes = true)
+            Then("대상은 관광지, 그 안의 유형 필터도 같이 걸린다") {
+                r.type shouldBe QueryIntent.Types.ATTRACTION
+                r.facets shouldBe mapOf("contentTypeId" to "12")
+                r.residual shouldBe "야경"
+            }
+        }
+        When("타입 의도어가 없으면") {
+            Then("대상은 null — 통합 검색은 전 타입을 본다") {
+                QueryIntent.analyze("해수욕장", lexicon, searchTypes = true).type shouldBe null
+            }
+        }
+        When("「game」 처럼 영어로 써도") {
+            Then("같은 타입이다") {
+                QueryIntent.analyze("puzzle game", lexicon, searchTypes = true).type shouldBe QueryIntent.Types.GAME
+            }
+        }
+        When("대상이 정해진 화면(관광지 검색)에서는") {
+            Then("「게임」을 대상 지시로 읽지 않는다 — 검색어로 남는다") {
+                val r = QueryIntent.analyze("보드 게임 카페", lexicon)
+                r.type shouldBe null
+                r.residual shouldBe "보드 게임 카페"
+            }
+            Then("「관광지」의 유형 필터는 그대로 걸린다") {
+                QueryIntent.analyze("관광지 야경", lexicon).facets shouldBe mapOf("contentTypeId" to "12")
             }
         }
     }

@@ -226,15 +226,9 @@ class AttractionSearchAdapter(
                             }
                         }
                     }
-                    // 질의 이해가 유도한 원천 분류 축 (ADR-0090 개정). 코드는 토큰이 아니라 값이라 term 이다.
-                    query.contentTypeId?.let { type ->
-                        b.filter { f -> f.term { it.field("contentTypeId").value(FieldValue.of(type)) } }
-                    }
-                    query.lclsCode?.let { code ->
-                        // 깊이는 코드와 짝으로만 들어온다(포트 계약). 없으면 어느 필드에 걸지 알 수 없어 거른다.
-                        query.lclsDepth?.let { depth ->
-                            b.filter { f -> f.term { it.field("lclsSystm$depth").value(FieldValue.of(code)) } }
-                        }
+                    // 쿼리 언더스탠딩이 유도한 원천 분류 축 (ADR-0090 개정). 코드는 토큰이 아니라 값이라 term 이다.
+                    query.facets.forEach { (field, value) ->
+                        b.filter { f -> f.term { it.field(field).value(FieldValue.of(value)) } }
                     }
                     query.geo?.let { geo ->
                         b.filter { f ->

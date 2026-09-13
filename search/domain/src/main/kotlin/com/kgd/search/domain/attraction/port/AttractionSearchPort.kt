@@ -34,13 +34,11 @@ interface AttractionSearchPort {
          */
         val categories: List<String> = emptyList(),
         /**
-         * 질의 이해가 만든 원천 분류 필터 (ADR-0090 개정). 사용자가 고른 [categories] 와 축이 달라
-         * 함께 걸릴 수 있다 — 이쪽은 질의에서 유도한 것이고 저쪽은 화면에서 고른 것이다.
+         * 쿼리 언더스탠딩이 만든 원천 분류 필터 — 인덱스 필드 → 값 (`contentTypeId` · `lclsSystm1~3`).
+         * 사용자가 고른 [categories] 와 축이 달라 함께 걸릴 수 있다 — 이쪽은 질의에서 유도한 것이고
+         * 저쪽은 화면에서 고른 것이다. 어댑터는 필드 이름을 해석하지 않고 그대로 term 필터로 건다.
          */
-        val contentTypeId: String? = null,
-        val lclsCode: String? = null,
-        /** 1/2/3 — 어느 lclsSystm 필드에 걸지 정한다. [lclsCode] 가 있으면 반드시 함께 온다. */
-        val lclsDepth: Int? = null,
+        val facets: Map<String, String> = emptyMap(),
         /**
          * 질의가 상점·식당·시장을 직접 가리킨다 (질의 이해가 판정). true 면 어댑터는 분류 가중치
          * (관광 3.0 / 상업 0.35)를 걸지 않는다 — 정답이 상업 분류인 질의에서 하향은 정답을 내린다.

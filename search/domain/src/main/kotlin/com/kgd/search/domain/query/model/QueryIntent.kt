@@ -1,7 +1,7 @@
-package com.kgd.search.domain.attraction.model
+package com.kgd.search.domain.query.model
 
 /**
- * 질의 이해 — 의도어를 **검색어에서 빼서 필터로 옮긴다** (ADR-0090 개정).
+ * 쿼리 언더스탠딩 — 의도어를 **검색어에서 빼서 필터로 옮긴다** (ADR-0090 개정).
  *
  * 왜 필요한가: 형태소 분석기는 「아이와 갈만한 관광지」를 `아이·와·갈만·하·ㄴ·관광·지` 로 쪼개고,
  * BM25 는 그 조각을 전부 내용어로 채점한다. 그래서 `아이`+`와` 가 「아이와즈」에 걸리고
@@ -10,12 +10,39 @@ package com.kgd.search.domain.attraction.model
  * **벡터 레그에는 적용하지 않는다.** 문장의 뜻이 그 레그의 전부라, 잘라내면 지금 잘 하는 것을 망친다.
  * 자르는 대상은 BM25 레그뿐이고, 이 클래스는 그 잔여 검색어와 필터를 만든다.
  *
- * 사전은 두 갈래다.
- * - **유형 의도**(`관광지`→`contentTypeId=12`)는 원천이 정한 뜻이라 코드에 둔다.
- * - **분류 의도**(`해수욕장`→`NA020100`)는 원천 코드표에서 온다 — 손으로 쓰면 원천이 분류를
- *   늘릴 때마다 배포해야 한다.
+ * 의도는 세 갈래로 나간다.
+ * - **타입 의도**(「블로그」·「게임」·「관광지」)는 검색 대상 [Understood.type] 이 된다 — 통합 검색이 쓴다.
+ * - **분류 의도**는 [Understood.facets] (인덱스 필드 → 값) 가 된다. 유형(`관광지`→`contentTypeId=12`)은 원천이
+ *   정한 뜻이라 코드에 두고, 분류(`해수욕장`→`lclsSystm3=NA020100`)는 원천 코드표에서 온다 — 손으로 쓰면
+ *   원천이 분류를 늘릴 때마다 배포해야 한다.
+ * - **상업 의도**는 필터가 아니라 랭킹 스위치다 ([Understood.commerceIntent]).
  */
 object QueryIntent {
+
+    /** 통합 검색의 문서 타입 — wishlist 의 대상 타입과 이름을 맞춘다. */
+    object Types {
+        const val ATTRACTION = "attraction"
+        const val BLOG_POST = "blog_post"
+        const val GAME = "game"
+        const val CONCEPT = "concept"
+        const val PRODUCT = "product"
+        const val DEAL_OFFER = "deal_offer"
+        const val SERVICE = "service"
+    }
+
+    /**
+     * 검색 대상을 고르는 말. 통합 검색에서 `type` 필터가 되고, 관광지 검색처럼 대상이 정해진 화면에서는 무시된다.
+     * 「관광지」는 여기서 대상(attraction)이고 아래 [TYPE_INTENTS] 에서는 그 안의 유형(`contentTypeId=12`)이다 — 둘 다 걸린다.
+     */
+    val SEARCH_TYPE_INTENTS: Map<String, String> = mapOf(
+        "관광지" to Types.ATTRACTION, "여행지" to Types.ATTRACTION, "명소" to Types.ATTRACTION, "attraction" to Types.ATTRACTION,
+        "블로그" to Types.BLOG_POST, "블로그글" to Types.BLOG_POST, "포스트" to Types.BLOG_POST, "blog" to Types.BLOG_POST, "post" to Types.BLOG_POST,
+        "게임" to Types.GAME, "game" to Types.GAME,
+        "개념" to Types.CONCEPT, "용어" to Types.CONCEPT, "concept" to Types.CONCEPT,
+        "상품" to Types.PRODUCT, "product" to Types.PRODUCT,
+        "혜택" to Types.DEAL_OFFER, "딜" to Types.DEAL_OFFER, "deal" to Types.DEAL_OFFER,
+        "서비스" to Types.SERVICE, "service" to Types.SERVICE,
+    )
 
     /**
      * 원천 관광 유형(`contenttypeid`). 값의 뜻은 TourAPI 가 고정한 것이라 코드에 둔다.
@@ -29,6 +56,12 @@ object QueryIntent {
         "레포츠" to "28", "체험" to "28",
         "숙박" to "32",
     )
+
+    /** 관광 유형 필터가 걸리는 인덱스 필드 */
+    const val CONTENT_TYPE_FIELD = "contentTypeId"
+
+    /** 분류체계 코드가 걸리는 필드 — 깊이(1·2·3)가 어느 필드인지 정한다 */
+    fun lclsField(depth: Int): String = "lclsSystm$depth"
 
     /**
      * **음식·쇼핑으로 유형을 뒤집지 않는다.**
@@ -82,14 +115,17 @@ object QueryIntent {
         "인기", "유명한", "유명", "베스트", "best",
     )
 
-    /** 분석 결과. 넷 다 「없음」일 수 있고, 그때는 아무것도 바꾸지 않은 것과 같다. */
+    /** 인덱스 필드 하나에 거는 값. 분류 사전의 항목이자 [Understood.facets] 의 원소다. */
+    data class Facet(val field: String, val value: String)
+
+    /** 분석 결과. 전부 「없음」일 수 있고, 그때는 아무것도 바꾸지 않은 것과 같다. */
     data class Understood(
         /** BM25 레그에 넘길 검색어. 의도어만으로 이루어진 질의면 null 이다. */
         val residual: String?,
-        val contentTypeId: String? = null,
-        /** 분류체계 코드와 그 깊이 — 깊이가 어느 필드에 걸지 정한다(1→lclsSystm1). */
-        val lclsCode: String? = null,
-        val lclsDepth: Int? = null,
+        /** 검색 대상 타입 ([Types]). 타입 의도어가 없으면 null — 통합 검색은 전 타입을 본다. */
+        val type: String? = null,
+        /** 인덱스 필드 → 값. 관광지는 `contentTypeId` · `lclsSystm1~3`. */
+        val facets: Map<String, String> = emptyMap(),
         /**
          * 질의가 **상점·시장을 직접 가리킨다** (음식은 아니다). 필터로는 안 올리지만(위 COMMERCE 주석),
          * 이때는 랭킹의 상업 하향(sight 3.0 / commerce 0.35)도 꺼야 한다 — 「야시장」의 정답은
@@ -105,20 +141,20 @@ object QueryIntent {
         /** 검색어가 남지 않았다 = 순위를 정할 키워드 신호가 없다. */
         val residualIsEmpty: Boolean get() = residual.isNullOrBlank()
 
-        val hasFilter: Boolean get() = contentTypeId != null || lclsCode != null
+        val hasFilter: Boolean get() = facets.isNotEmpty()
     }
 
     /**
-     * 분류 이름 사전. `place` 의 `attraction_category_codes` 에서 만든다.
+     * 분류 이름 사전 — 이름(정규화) → [Facet]. 관광지는 `place` 의 `attraction_category_codes` 에서 만든다.
      *
      * 이름이 겹칠 때 **깊은 쪽이 이긴다** — 좁게 말하는 쪽이 사용자의 뜻에 가깝다.
      * 깊이가 같으면 **나중에 넣은 것이 이긴다** — 호출자가 순서로 우선순위를 준다
      * (한영 이름을 한 사전에 넣을 때 요청 언어를 뒤에 깔면 그쪽이 이긴다).
      */
-    class Lexicon(entries: Map<String, Pair<String, Int>> = emptyMap()) {
-        private val byName: Map<String, Pair<String, Int>> = entries
+    class Lexicon(entries: Map<String, Pair<Facet, Int>> = emptyMap()) {
+        private val byName: Map<String, Pair<Facet, Int>> = entries
 
-        fun lookup(phrase: String): Pair<String, Int>? = byName[phrase]
+        fun lookup(phrase: String): Facet? = byName[phrase]?.first
 
         /** 가장 긴 이름부터 맞춰야 「자연경관」이 「자연」에 먼저 먹히지 않는다. */
         val phrasesLongestFirst: List<String> = byName.keys.sortedByDescending { it.length }
@@ -126,13 +162,15 @@ object QueryIntent {
         companion object {
             val EMPTY = Lexicon()
 
+            /** 관광지 분류 코드표 — (코드, 깊이, 이름). 깊이가 걸릴 필드를 정한다. */
             fun of(codes: List<Triple<String, Int, String>>): Lexicon {
-                val map = mutableMapOf<String, Pair<String, Int>>()
+                val map = mutableMapOf<String, Pair<Facet, Int>>()
                 codes.forEach { (code, depth, name) ->
                     val keys = if (NO_ALIAS_SPLIT_PREFIXES.any { code.startsWith(it) }) setOf(normalize(name)) else aliasesOf(name)
+                    val facet = Facet(lclsField(depth), code)
                     keys.forEach { key ->
                         val existing = map[key]
-                        if (existing == null || depth >= existing.second) map[key] = code to depth
+                        if (existing == null || depth >= existing.second) map[key] = facet to depth
                     }
                 }
                 return Lexicon(map)
@@ -174,22 +212,25 @@ object QueryIntent {
      *
      * 어절 단위로 자르고, **긴 것부터** 맞춘다. 형태소로 쪼개지 않는 이유는 그 쪼갬이 애초에
      * 이 문제를 만들었기 때문이다 — 「아이와」를 `아이`+`와` 로 나누면 다시 「아이와즈」에 걸린다.
+     *
+     * @param searchTypes 타입 의도어([SEARCH_TYPE_INTENTS])를 읽을지. **대상이 정해진 화면(관광지 검색)은 false** —
+     *   거기서 「게임」·「상품」을 대상 지시로 읽어 검색어에서 빼면 그 말로 찾던 문서를 놓친다.
      */
-    fun analyze(raw: String, lexicon: Lexicon = Lexicon.EMPTY): Understood {
+    fun analyze(raw: String, lexicon: Lexicon = Lexicon.EMPTY, searchTypes: Boolean = false): Understood {
         val words = raw.trim().split(Regex("""\s+""")).filter { it.isNotBlank() }
         if (words.isEmpty()) return Understood(residual = null)
 
         // **질의 전체를 한 구절로 먼저 맞춘다.** 아래 어절 창은 최대 두 어절이라
         // 「Natural Scenery (Rivers/Marine)」 처럼 긴 이름을 영영 못 잡는다.
-        match(normalize(raw), lexicon)?.let { whole ->
-            return Understood(residual = null, contentTypeId = whole.first,
-                              lclsCode = whole.second?.first, lclsDepth = whole.second?.second)
+        val wholeNormalized = normalize(raw)
+        match(wholeNormalized, lexicon, searchTypes)?.let { whole ->
+            return Understood(residual = null, type = whole.type, facets = whole.facets)
         }
 
-        var contentTypeId: String? = null
-        var lcls: Pair<String, Int>? = null
-        var shop = isShop(normalize(raw), lexicon)
-        var food = isFood(normalize(raw), lexicon)
+        var type: String? = null
+        val facets = linkedMapOf<String, String>()
+        var shop = isShop(wholeNormalized, lexicon)
+        var food = isFood(wholeNormalized, lexicon)
         val kept = mutableListOf<String>()
 
         // 붙여 쓴 말("가볼만한곳")과 띄어 쓴 말("가볼만한 곳")을 함께 잡으려면 이어붙인 것도 봐야 한다.
@@ -203,17 +244,17 @@ object QueryIntent {
             if (two != null && isFood(two, lexicon)) food = true
             if (isFood(one, lexicon)) food = true
 
-            val twoHit = two?.let { match(it, lexicon) }
+            val twoHit = two?.let { match(it, lexicon, searchTypes) }
             if (twoHit != null) {
-                contentTypeId = contentTypeId ?: twoHit.first
-                lcls = lcls ?: twoHit.second
+                type = type ?: twoHit.type
+                twoHit.facets.forEach { (field, value) -> facets.putIfAbsent(field, value) }
                 i += 2
                 continue
             }
-            val oneHit = match(one, lexicon)
+            val oneHit = match(one, lexicon, searchTypes)
             if (oneHit != null) {
-                contentTypeId = contentTypeId ?: oneHit.first
-                lcls = lcls ?: oneHit.second
+                type = type ?: oneHit.type
+                oneHit.facets.forEach { (field, value) -> facets.putIfAbsent(field, value) }
                 i += 1
                 continue
             }
@@ -223,9 +264,8 @@ object QueryIntent {
 
         return Understood(
             residual = kept.joinToString(" ").ifBlank { null },
-            contentTypeId = contentTypeId,
-            lclsCode = lcls?.first,
-            lclsDepth = lcls?.second,
+            type = type,
+            facets = facets,
             // 음식어가 하나라도 있으면 상점 의도로 치지 않는다 — 「전통시장 먹거리」는 먹거리가 머리다
             commerceIntent = shop && !food,
         )
@@ -235,12 +275,14 @@ object QueryIntent {
     private fun isShop(normalized: String, lexicon: Lexicon): Boolean =
         normalized in normalizedShopWords ||
             SHOP_SUFFIXES.any { normalized.endsWith(it) } ||
-            lexicon.lookup(normalized)?.first?.let { it.startsWith("SH") || it.startsWith("AC") } == true
+            lexicon.lookup(normalized)?.let { it.isLcls && (it.value.startsWith("SH") || it.value.startsWith("AC")) } == true
 
     /** 음식 의도어이거나 사전이 음식(FD) 코드로 보내는 말. */
     private fun isFood(normalized: String, lexicon: Lexicon): Boolean =
         normalized in normalizedFoodWords ||
-            lexicon.lookup(normalized)?.first?.startsWith("FD") == true
+            lexicon.lookup(normalized)?.let { it.isLcls && it.value.startsWith("FD") } == true
+
+    private val Facet.isLcls: Boolean get() = field.startsWith("lclsSystm")
 
     private val normalizedStopPhrases: Set<String> = STOP_PHRASES.map { normalize(it) }.toSet()
     private val normalizedCommerceWords: Set<String> = COMMERCE_WORDS.map { normalize(it) }.toSet()
@@ -248,15 +290,22 @@ object QueryIntent {
     private val normalizedFoodWords: Set<String> = FOOD_WORDS.map { normalize(it) }.toSet()
     private val normalizedTypeIntents: Map<String, String> =
         TYPE_INTENTS.entries.associate { normalize(it.key) to it.value }
+    private val normalizedSearchTypes: Map<String, String> =
+        SEARCH_TYPE_INTENTS.entries.associate { normalize(it.key) to it.value }
 
-    /** 유형 의도가 먼저다 — 「관광지」는 분류가 아니라 유형을 가리킨다. */
-    private fun match(normalized: String, lexicon: Lexicon): Pair<String?, Pair<String, Int>?>? {
+    /** 어절 하나(또는 둘)가 뜻하는 것 — 타입과 필터. 둘 다 없으면 match 는 null 이다. */
+    private data class Hit(val type: String?, val facets: Map<String, String>)
+
+    /** 타입·유형 의도가 먼저다 — 「관광지」는 분류가 아니라 대상과 유형을 가리킨다. */
+    private fun match(normalized: String, lexicon: Lexicon, searchTypes: Boolean): Hit? {
         if (normalized in normalizedCommerceWords) return null
-        normalizedTypeIntents[normalized]?.let { return it to null }
-        lexicon.lookup(normalized)?.let { hit ->
+        val type = if (searchTypes) normalizedSearchTypes[normalized] else null
+        normalizedTypeIntents[normalized]?.let { return Hit(type, mapOf(CONTENT_TYPE_FIELD to it)) }
+        if (type != null) return Hit(type, emptyMap())
+        lexicon.lookup(normalized)?.let { facet ->
             // 같은 이유로 분류 의도도 음식(FD)·쇼핑(SH)·숙박(AC) 으로는 필터를 만들지 않는다.
-            if (COMMERCE_PREFIXES.any { hit.first.startsWith(it) }) return null
-            return null to hit
+            if (facet.isLcls && COMMERCE_PREFIXES.any { facet.value.startsWith(it) }) return null
+            return Hit(null, mapOf(facet.field to facet.value))
         }
         return null
     }

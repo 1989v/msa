@@ -1,7 +1,7 @@
 package com.kgd.search.infrastructure.client
 
 import com.kgd.search.application.attraction.port.CategoryLexiconPort
-import com.kgd.search.domain.attraction.model.QueryIntent
+import com.kgd.search.domain.query.model.QueryIntent
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled

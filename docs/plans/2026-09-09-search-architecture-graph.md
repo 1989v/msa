@@ -198,12 +198,30 @@ P2(통합 인덱스)로 바로 가지 않는다. **통합 인덱스는 타입이
 - 「gyeongbok」 → 「경복궁」 (로마자 — 지금 `titleJamo` 는 한글 자모만)
 - 「해수욕」 → 분류 제안 (코드표 이름이 곧 후보)
 
-### S4 — 통합 인덱스 (기존 P2)
+### S4 — 통합 인덱스 (기존 P2) — **S1 을 첫 단계로 묶는다** (2026-09-13 결정)
 
-플랜 `2026-09-05-unified-search-hybrid-embedding.md` §3 P2 를 그대로 따르되 **둘을 더한다.**
+플랜 `2026-09-05-unified-search-hybrid-embedding.md` §3 P2 의 목표(모든 타입을 한 검색으로)는 그대로 두되, 그 뒤 바뀐 셋을 반영한다 —
+질의 인코딩은 사전이 아니라 사이드카가 하고, 호스트가 ADR-0093 으로 재편됐고, 관광지 하이브리드가 이미 라이브다.
 
-- 타입별 분류 축을 `facets` JSON 한 필드로 (타입마다 컬럼을 늘리지 않는다 — ranking `payload` 와 같은 이유)
-- 쿼리 언더스탠딩 사전을 타입별로 합성
+**설계에서 P2 와 달라지는 것**
+
+| P2 (09-05) | 지금 | 이유 |
+|---|---|---|
+| `unified` 한 인덱스에 관광지 6만 건도 벡터째 다시 싣는다 | **관광지는 기존 `attractions` 인덱스를 그대로 쓰고, `unified` 에는 나머지 타입만** 싣는다. 통합 API 가 둘을 부르고 타입별로 묶어 낸다 | 6만 벡터를 두 번 실으면 k-NN 메모리가 두 배(실측 60k×1024 = 1.12GiB) — 무료 티어 한도 밖. 관광지 쪽 장치(쿼리 언더스탠딩·가중치·하이브리드·평가)도 그대로 산다 |
+| 비관광지 문서 벡터 `content_embedding` | **보류** — BM25 + 동의어만 | 코퍼스가 상품 24 · 개념 162 · 글 6 · 게임 73 · 혜택 9 · 서비스 8. 정확 일치가 대부분이라 벡터의 이득이 재기 전엔 없다 |
+| 타입별 필터 컬럼 | `facets` JSON 한 필드(`{"category":..,"tags":[..]}`) + `type` | 타입마다 컬럼을 늘리지 않는다 — ranking `payload` 와 같은 이유 |
+| 쿼리 언더스탠딩이 관광지 필드에 고정 | **`Understood(type, facets, residual, commerceIntent)`** — 타입 의도(「블로그」·「게임」·「관광지」)와 타입별 사전 | S1. 관광지 어댑터가 `facets` 를 일반 term 필터로 소비하므로 지금도 소비자가 있다 |
+
+**단계** — 단계마다 커밋·배포·검증, 상태는 이 표에 적는다.
+
+| 단계 | 내용 | 산출물 | 상태 |
+|---|---|---|---|
+| U1 (=S1) | `QueryIntent` 일반화 — `TYPE_INTENTS` 를 통합 타입 의도로 올리고, 관광지 필터는 `facets`(필드→값)로. 사전은 타입별 공급자(`LexiconSupplier`)에서 합성 | `search:domain` `QueryIntent` · `SearchQuery.facets` · `AttractionSearchAdapter` 일반 term 필터 | 진행 |
+| U2 | `unified` 인덱스 계약 + 배치 — 공개 API 풀스캔 클라이언트 6종(concept·blog_post·game·deal_offer·service·product) + `UnifiedReindexTasklet` + CronJob | `search/batch` `unified-index.json` · `k8s/base/search-batch/cronjob-unified-reindex.yaml` | 미착수 |
+| U3 | 통합 API — `GET /api/search/unified?q&type&lang` : 관광지는 기존 어댑터(하이브리드 그대로), 나머지는 `unified` BM25, 타입별로 묶어 응답. 타입 의도가 있으면 그 타입만 | `search/app` `application/unified/*` · `UnifiedSearchAdapter` | 미착수 |
+| U4 | FE — 모든 호스트의 GNB 검색 → `/search?q=` (호스트 기본 타입), 결과는 타입별 묶음, 링크는 `serviceHref.ts` 로 조립. noindex · sitemap 제외 | `portal-fe/src/pages/search/` · `GNB.tsx` · `copy.mjs` | 미착수 |
+| U5 | `/tech` 개념 검색(운영 500)을 통합 API `type=concept` 로 | `portal-fe/src/api/searchApi.ts` | 미착수 |
+| U6 | 평가 — 타입 질의 20개를 판정 세트에 더하고 「대표 질의가 그 타입을 1위로」 검사를 `live-eval` 에 | `docs/specs/2026-09-05-unified-search/judgments.yml` | 미착수 |
 
 ---
 

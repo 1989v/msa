@@ -1,6 +1,6 @@
 package com.kgd.search.application.attraction.port
 
-import com.kgd.search.domain.attraction.model.QueryIntent
+import com.kgd.search.domain.query.model.QueryIntent
 
 /**
  * 질의 이해가 쓰는 분류 이름 사전의 공급원 (ADR-0090 개정).

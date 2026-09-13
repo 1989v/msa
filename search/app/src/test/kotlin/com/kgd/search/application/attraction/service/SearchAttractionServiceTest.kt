@@ -6,7 +6,7 @@ import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.application.queryvector.usecase.ResolveQueryVectorUseCase
 import com.kgd.search.domain.attraction.model.AttractionDocument
-import com.kgd.search.domain.attraction.model.QueryIntent
+import com.kgd.search.domain.query.model.QueryIntent
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -214,7 +214,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
                 serviceWith(lexicon = lexicon)
                     .execute(SearchAttractionUseCase.Query(keyword = "아이와 갈만한 관광지"))
 
-                captured.captured.contentTypeId shouldBe "12"
+                captured.captured.facets shouldBe mapOf("contentTypeId" to "12")
                 captured.captured.keyword shouldBe "아이와"
             }
         }
@@ -227,8 +227,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
                 serviceWith(lexicon = lexicon)
                     .execute(SearchAttractionUseCase.Query(keyword = "해수욕장"))
 
-                captured.captured.lclsCode shouldBe "NA020100"
-                captured.captured.lclsDepth shouldBe 3
+                captured.captured.facets shouldBe mapOf("lclsSystm3" to "NA020100")
                 captured.captured.keyword shouldBe null
             }
         }
