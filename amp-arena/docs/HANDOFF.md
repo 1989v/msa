@@ -13,7 +13,7 @@
 | 배포 산출물 | games 레포(`1989v/games`, msa 의 `portal-fe/public/games` 서브모듈) `arena/` + `thumbs/shots/arena.jpg` |
 | 카탈로그 행 | `game/feature/src/main/resources/gamedb/migration/V89__seed_arena.sql` (slug `arena`, BETA) + `V90__arena_score_boards.sql` (순위표 보드 online/practice, sdk_integrated=1) |
 | 운영 주소 | https://game.1989v.com/games/arena (카탈로그 상세 → IFRAME `/games/arena/index.html`) |
-| 운영 상태 (2026-09-13 밤) | main d5194ac7 · games 84707115 · 이미지 portal-fe:d5194ac · 번들 `index-BQlKC2Ko.js`. **Phase 2 완료 + 공중 공격 + 봇 자멸 수정 + 직업 전용 악세서리**. 운영 실측: `tools/e2e-prod-{fullscreen,portrait,score,rules,air,bots,accex}.mjs` + `e2e-online.mjs`(채팅·점수판) + `e2e-progress.mjs` + `e2e-emblem.mjs` 전부 통과 |
+| 운영 상태 (2026-09-13) | main 6066f6b0 · games 5b6f930a · 이미지 portal-fe:6066f6b · 번들 `index-DP0nKUpo.js`. **Phase 2 완료 + 공중 공격 + 봇 자멸 수정 + 악세서리 16종(직업당 전용 3) + 카탈로그 전체화면**. 운영 실측: `tools/e2e-prod-{fullscreen,portrait,score,rules,air,bots,accex}.mjs` + `e2e-online.mjs` 전부 통과 |
 
 ## 작업 위치
 
@@ -107,5 +107,7 @@ cd .. && git update-index --cacheinfo 160000,<sha>,portal-fe/public/games  # 서
 - `dist-games/` 의 파일명 해시가 매번 바뀐다 — 게시는 항상 `--prune` 으로 해서 `arena/` 아래 옛 번들을 같이 지운다.
 - Node 22.22 는 `.ts` 를 그대로 실행한다(타입 제거). `enum`·파라미터 프로퍼티처럼 지워지지 않는 문법은 쓰지 않는다 (`erasableSyntaxOnly`).
 - 입력은 rAF 폴링이라 **짧은 탭(40ms)은 느린 헤드리스 GL 에서 프레임 사이로 빠진다**. E2E 는 키를 150ms 넘게 누른다(`Page.hold`).
+- **`el.click()` 은 사용자 활성화를 만들지 않는다** — `requestFullscreen` 이 조용히 거절돼 「배포가 안 됐다」로 오진하기 쉽다(실제로 그랬다: 배포된 CSS·판정 함수는 멀쩡했다). 전체화면을 재려면 `Page.mouseClick`(신뢰 마우스) 또는 `Page.tapElement`(신뢰 터치)를 쓴다.
+- **대기실 선택은 `localStorage('amp.acc')` 에 남아 헤드리스 프로필을 타고 다음 실행으로 넘어온다.** 장비에 의존하는 검사는 재기 직전에 시뮬에서 직접 고정한다(`e2e-prod-rules.mjs` 강공 사슬).
 - **시간이 지나면 변하는 값으로 무브를 판정하지 않는다.** 공중 약공 뒤 `vel.y` 가 −3.6 이라 급강하로 오독했는데, 실제로는 표본을 220ms 뒤에 떠서 중력(18 m/s²)이 깎은 값이었다.
   판별자는 시뮬이 고정하는 것이어야 한다 — 급강하는 수평 6 m/s 를 주고 공중 약공은 속도를 아예 안 건드리므로 `hypot(vx, vz)` 로 가른다. 낙하 상태 확인도 착지 전에 떠야 해서 높이 8m 에서 시작한다.

@@ -34,6 +34,9 @@ try {
   await page.eval(`(() => { const d = ${FRAME}.contentDocument; const n = d.querySelector('.nick'); n.value = '전체화면'; n.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
   const before = JSON.parse(await page.eval(FS));
   console.log(`before: ${JSON.stringify(before)}`);
+  // 2026-09-13: 카탈로그가 **플레이를 누른 순간** 무대(section)를 전체화면으로 올린다 —
+  // 그 전에는 1150×521 이라 대기실 659px 가 잘렸다. 그래서 매치 시작 전에 이미 전체화면이어야 한다.
+  checks.stageFullOnPlay = before.top === 'SECTION' && before.frameSize[1] === before.viewport[1];
   // 「연습 · 봇과 대전」을 실제 클릭 — 이 제스처 안에서 enterFullscreen() 이 불린다
   const practice = await center('.practice', true);
   console.log(`practice button at ${JSON.stringify(practice)}`);
@@ -42,7 +45,10 @@ try {
   const after = JSON.parse(await page.eval(FS));
   const inner = await page.eval(`(() => { const d = ${FRAME}.contentDocument; return JSON.stringify({ toast: d.querySelector('.toast')?.textContent ?? null, match: !!d.querySelector('.match'), amp: !!${FRAME}.contentWindow.__amp }); })()`);
   console.log(`after practice click: ${JSON.stringify(after)} inner ${inner}`);
-  checks.enteredOnStart = after.top === 'IFRAME' && after.frame === 'HTML' && after.frameSize[0] === after.viewport[0] && after.frameSize[1] === after.viewport[1];
+  // 매치에 들어간 뒤에도 전체화면이어야 한다. **누가 잡고 있는지는 묻지 않는다** —
+  // 카탈로그가 무대를 이미 올려 뒀으면 게임은 겹쳐 올리지 않는다(SECTION), 아니면 자기 문서를 올린다(IFRAME).
+  checks.fullOnMatch = (after.top === 'SECTION' || after.top === 'IFRAME')
+    && after.frameSize[0] === after.viewport[0] && after.frameSize[1] === after.viewport[1];
   await page.waitFor(`(() => { const f = ${FRAME}; return !!f.contentDocument.querySelector('.match canvas'); })()`, { timeout: 20000 });
   await page.shot(`${out}/prod-fullscreen.png`);
   // 매치 안 토글 버튼: 해제 → 다시 진입
