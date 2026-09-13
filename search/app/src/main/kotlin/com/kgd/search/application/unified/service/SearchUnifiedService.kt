@@ -43,7 +43,7 @@ class SearchUnifiedService(
                 null
             }
         }.filter { it.total > 0 }
-            .sortedWith(compareByDescending<SearchUnifiedUseCase.Group> { it.type == understood.type }.thenByDescending { it.total })
+            .sortedWith(groupOrder(intentType = understood.type, query = q))
 
         return SearchUnifiedUseCase.Result(
             query = q,
@@ -86,6 +86,25 @@ class SearchUnifiedService(
                 )
             },
         )
+    }
+
+    /**
+     * 묶음 순서 — 타입 간 점수는 비교하지 않으므로 신호 셋으로 정한다.
+     * ① 타입 의도의 타입 ② **첫 결과 제목이 검색어를 통째로 담은** 묶음(「AMP ARENA」→ 게임, 「신라면」→ 상품)
+     * ③ 고정 타입 순서. 건수로 정하면 관광지(6만 건, 벡터 레그가 늘 무언가를 낸다)가 항상 맨 위라
+     * 정확히 맞은 글·게임·상품이 아래로 밀린다(2026-09-13 실측).
+     */
+    private fun groupOrder(intentType: String?, query: String): Comparator<SearchUnifiedUseCase.Group> {
+        val needle = QueryIntent.normalize(query)
+        fun titleMatches(group: SearchUnifiedUseCase.Group) =
+            needle.isNotBlank() && group.hits.firstOrNull()?.let { QueryIntent.normalize(it.title).contains(needle) } == true
+        return compareBy<SearchUnifiedUseCase.Group> {
+            when {
+                it.type == intentType -> 0
+                titleMatches(it) -> 1
+                else -> 2
+            }
+        }.thenBy { ALL_TYPES.indexOf(it.type) }
     }
 
     companion object {

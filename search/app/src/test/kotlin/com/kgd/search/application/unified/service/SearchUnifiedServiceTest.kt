@@ -123,6 +123,26 @@ class SearchUnifiedServiceTest : BehaviorSpec({
         }
     }
 
+    given("「AMP ARENA」 — 관광지도 벡터 레그로 무언가를 내지만 게임 제목이 정확히 맞을 때") {
+        val (service, attraction, port) = fixture()
+        every { attraction.execute(any()) } returns attractionResult("KSPO Dome", "올림픽공원")
+        every { port.search(any()) } answers {
+            when (firstArg<UnifiedSearchPort.Query>().type) {
+                "game" -> unifiedPage("game", "AMP ARENA")
+                "blog_post" -> unifiedPage("blog_post", "아레나 개발기")
+                else -> UnifiedSearchPort.Page(emptyList(), 0)
+            }
+        }
+
+        `when`("전 타입 검색하면") {
+            val result = service.execute(SearchUnifiedUseCase.Query(q = "AMP ARENA"))
+
+            then("제목이 검색어를 담은 게임 묶음이 먼저고, 나머지는 고정 순서(관광지 → 글)다") {
+                result.groups.map { it.type } shouldContainExactly listOf("game", "attraction", "blog_post")
+            }
+        }
+    }
+
     given("빈 검색어") {
         val (service, attraction, port) = fixture()
         then("아무것도 묻지 않고 빈 결과다") {

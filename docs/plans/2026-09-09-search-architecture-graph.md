@@ -216,12 +216,14 @@ P2(통합 인덱스)로 바로 가지 않는다. **통합 인덱스는 타입이
 
 | 단계 | 내용 | 산출물 | 상태 |
 |---|---|---|---|
-| U1 (=S1) | `QueryIntent` 일반화 — `TYPE_INTENTS` 를 통합 타입 의도로 올리고, 관광지 필터는 `facets`(필드→값)로. 사전은 타입별 공급자(`LexiconSupplier`)에서 합성 | `search:domain` `QueryIntent` · `SearchQuery.facets` · `AttractionSearchAdapter` 일반 term 필터 | 진행 |
-| U2 | `unified` 인덱스 계약 + 배치 — 공개 API 풀스캔 클라이언트 6종(concept·blog_post·game·deal_offer·service·product) + `UnifiedReindexTasklet` + CronJob | `search/batch` `unified-index.json` · `k8s/base/search-batch/cronjob-unified-reindex.yaml` | 미착수 |
-| U3 | 통합 API — `GET /api/search/unified?q&type&lang` : 관광지는 기존 어댑터(하이브리드 그대로), 나머지는 `unified` BM25, 타입별로 묶어 응답. 타입 의도가 있으면 그 타입만 | `search/app` `application/unified/*` · `UnifiedSearchAdapter` | 미착수 |
-| U4 | FE — 모든 호스트의 GNB 검색 → `/search?q=` (호스트 기본 타입), 결과는 타입별 묶음, 링크는 `serviceHref.ts` 로 조립. noindex · sitemap 제외 | `portal-fe/src/pages/search/` · `GNB.tsx` · `copy.mjs` | 미착수 |
-| U5 | `/tech` 개념 검색(운영 500)을 통합 API `type=concept` 로 | `portal-fe/src/api/searchApi.ts` | 미착수 |
-| U6 | 평가 — 타입 질의 20개를 판정 세트에 더하고 「대표 질의가 그 타입을 1위로」 검사를 `live-eval` 에 | `docs/specs/2026-09-05-unified-search/judgments.yml` | 미착수 |
+| U1 (=S1) | `QueryIntent` 를 `domain/query` 로 올리고 관광지 필터를 `facets`(필드→값)로. 타입 의도(`Understood.type`)는 `searchTypes=true` 일 때만 읽는다 — 대상이 정해진 관광지 검색에서 「게임」을 빼면 그 말로 찾던 문서를 놓친다. 타입별 사전 공급자는 두 번째 사전이 생길 때(Rule of Three) | `search:domain` `query/model/QueryIntent` · `SearchQuery.facets` · 어댑터 일반 term 필터 | 완료 2026-09-13 |
+| U2 | `unified` 인덱스 + `UnifiedReindexTasklet`(공개 API 6종 풀스캔, 한 타입이라도 실패하면 alias 안 바꿈) + CronJob 04:45 KST + NP `allow-search-batch-to-atlas` | `search/batch` `unified-index.json` · `UnifiedSourceApiClient` · `cronjob-unified-reindex.yaml` | 완료 — 첫 채움 346건(글 7 · 게임 77 · 개념 220 · 서비스 9 · 혜택 9 · 상품 24), 5.8초 |
+| U3 | `GET /api/search/unified?q&type&lang&size` — 관광지는 기존 유스케이스, 나머지는 `unified` BM25(+ln1p 인기도). 묶음 순서는 ① 의도 타입 ② 첫 결과 제목이 검색어를 담은 묶음 ③ 고정 순서 — 건수로 하면 관광지가 늘 맨 위 | `search/app` `application/unified/*` · `UnifiedSearchAdapter` · `UnifiedSearchController` | 완료 — `scripts/unified-search-check.py` 13/13 |
+| U4 | `/search?q=` (apex 하나가 정규 주소, 서비스 탐색 오버레이의 검색창이 여기로) — 타입별 묶음 · 칩 · 「더 보기」. 링크는 `unifiedHitHref(type, slug)`. noindex + robots Disallow | `portal-fe/src/pages/search/` · `ServiceExplorer.tsx` · `serviceHref.ts` · `copy.mjs` | 완료 — CDP 4조합+모바일 2 |
+| U5 | `/tech` 개념 검색·자동완성을 통합 API `type=concept` 로 (옛 `/api/v1/search` 는 운영 500) | `portal-fe/src/api/searchApi.ts` · 용어집 행 `id={conceptId}` | 완료 2026-09-13 |
+| U6 | 타입 대표 질의 13개 라이브 검사 — 이해된 타입 · 묶음 존재 · 첫 묶음 | `scripts/unified-search-check.py` | 완료 — 판정 세트(nDCG) 확장은 노출·클릭 로그가 생긴 뒤 |
+
+**보류(측정 뒤 결정)**: 비관광지 문서 벡터, 타입별 사전(게임 장르·개념 분류 이름 → `facets` 필터), 관광지 묶음이 벡터 레그로 늘 무언가를 내는 것(「신라면」→ 호족반 청담) — 통합 화면에서 관광지 레그의 하한 점수.
 
 ---
 
