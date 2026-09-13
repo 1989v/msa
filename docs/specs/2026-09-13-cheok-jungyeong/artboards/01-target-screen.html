@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><title>귀야행 척준경 — 목표 화면</title>
+<link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;background:#0b0d10;display:flex;align-items:center;justify-content:center;min-height:100vh}
+#stage{width:1080px;height:1440px;image-rendering:pixelated;-ms-interpolation-mode:nearest-neighbor;display:block}
+</style></head>
+<body>
+<canvas id="stage" width="360" height="480"></canvas>
+<script>
+const W=360,H=480,HUD=56,GY=320; // GY = 지면 상단 (화면 아래 1/3)
+const c=document.getElementById('stage'),x=c.getContext('2d');
+x.imageSmoothingEnabled=false;
+const P={
+ night0:'#0a121a',night1:'#122232',night2:'#1b3347',night3:'#2b4b63',night4:'#3d6079',
+ hanji:'#f9f8f2',hanji2:'#d8d9cf',hanji3:'#a9ada4',hanji4:'#7d8380',
+ pine0:'#0c1f16',pine1:'#12301f',pine2:'#1a472a',pine3:'#276238',pine4:'#3c7d47',
+ tile0:'#0b0b0c',tile1:'#1d1d1f',tile2:'#2b2b2e',tile3:'#3c3d41',
+ earth0:'#2b201a',earth1:'#4a3527',earth2:'#6f5038',earth3:'#8a6a50',earth4:'#b38b6d',
+ yeonji0:'#5c1310',yeonji1:'#a2231d',yeonji2:'#c8402f',
+ gold0:'#8a6321',gold1:'#D9A441',gold2:'#f2d488',
+ steel0:'#3c5060',steel1:'#5b7384',steel2:'#8fa3b0',steel3:'#cfd8de',
+ soul:'#5fa8d3',soul2:'#8ecae6'
+};
+const O=P.tile0;
+const R=(a,b,w,h,col)=>{x.fillStyle=col;x.fillRect(a|0,b|0,w|0,h|0)};
+function dith(a,b,w,h,col,mode){x.fillStyle=col;a|=0;b|=0;for(let j=0;j<h;j++)for(let i=0;i<w;i++){const s=(i+a+j+b)&1,q=((i+a)+((j+b)*2))%4;const on=mode===2?s===0:mode===3?q===0:((i+a)%2===0&&(j+b)%2===0);if(on)x.fillRect(a+i,b+j,1,1)}}
+let seed=20260913;const rnd=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff};
+// 세로 폭 배열로 유기적 실루엣을 만든다
+function silh(cx,y0,ws,fill,lit,shade,cap){
+ for(let j=0;j<ws.length;j++){const w=ws[j];if(w<=0)continue;const px=cx-(w>>1);
+  R(px,y0+j,w,1,fill);
+  if(shade)R(px+w-3,y0+j,3,1,shade);
+  if(lit&&j<2)R(px,y0+j,w,1,lit);
+  R(px-1,y0+j,1,1,O);R(px+w,y0+j,1,1,O);
+ }
+ if(cap!==false){const w0=ws[0],wl=ws[ws.length-1];R(cx-(w0>>1),y0-1,w0,1,O);R(cx-(wl>>1),y0+ws.length,wl,1,O)}
+}
+const off=document.createElement('canvas'),ox=off.getContext('2d');
+function ptext(str,px,py,size,col,align){
+ off.width=Math.max(8,str.length*size*1.8|0);off.height=size*2.2|0;
+ ox.clearRect(0,0,off.width,off.height);ox.fillStyle='#fff';
+ ox.font=size+'px "Do Hyeon", monospace';ox.textBaseline='top';ox.fillText(str,1,1);
+ const d=ox.getImageData(0,0,off.width,off.height).data;
+ let mnX=1e9,mxX=-1,mnY=1e9,mxY=-1;
+ for(let j=0;j<off.height;j++)for(let i=0;i<off.width;i++){if(d[(j*off.width+i)*4+3]>=128){if(i<mnX)mnX=i;if(i>mxX)mxX=i;if(j<mnY)mnY=j;if(j>mxY)mxY=j}}
+ if(mxX<0)return 0;const w=mxX-mnX+1,sx=align==='right'?px-w:align==='center'?px-(w>>1):px;
+ x.fillStyle=col;
+ for(let j=mnY;j<=mxY;j++)for(let i=mnX;i<=mxX;i++){if(d[(j*off.width+i)*4+3]>=128)x.fillRect(sx+i-mnX,py+j-mnY,1,1)}
+ return w;
+}
+function arcBand(cx,cy,r0,r1,a0,a1,core,edge,inner){
+ for(let j=-r1;j<=r1;j++)for(let i=-r1;i<=r1;i++){
+  const r=Math.sqrt(i*i+j*j);if(r<r0||r>r1)continue;
+  let ang=Math.atan2(-j,i)*180/Math.PI;if(ang<a0||ang>a1)continue;
+  const t=(r-r0)/(r1-r0);let col=core;
+  if(t>0.7){if(((i+cx+j+cy)&1)!==0)continue;col=edge}else if(t<0.2)col=inner;
+  R(cx+i,cy+j,1,1,col);
+ }
+}
+function limb(ax,ay,bx,by,th,col,edge){ // 굵은 픽셀 선 (팔/다리/자루)
+ const n=Math.max(Math.abs(bx-ax),Math.abs(by-ay));
+ for(let k=0;k<=n;k++){const px=ax+(bx-ax)*k/n,py=ay+(by-ay)*k/n;
+  R(px-(th>>1),py-(th>>1),th,th,col);if(edge)R(px-(th>>1)-1,py-(th>>1),1,th,edge)}
+}
+// ================= 하늘 =================
+function sky(){
+ const a=HUD,h=GY-HUD;
+ R(0,a,W,h*0.24,P.night0);R(0,a+h*0.24,W,h*0.24,P.night1);R(0,a+h*0.48,W,h*0.26,P.night2);R(0,a+h*0.74,W,h*0.3,P.night3);
+ dith(0,a+h*0.24-5,W,10,P.night1,1);dith(0,a+h*0.48-6,W,12,P.night2,1);dith(0,a+h*0.74-6,W,12,P.night3,1);
+ for(let i=0;i<110;i++){const px=rnd()*W|0,py=a+rnd()*(h*0.8)|0;R(px,py,1,1,rnd()>.62?P.hanji:P.hanji3)}
+ for(let i=0;i<8;i++){const px=rnd()*W|0,py=a+rnd()*(h*0.65)|0;R(px,py,2,1,P.hanji);R(px,py-1,1,1,P.hanji2);R(px+1,py+1,1,1,P.hanji2)}
+ const mx=272,my=a+50,r=25;
+ for(let k=3;k>=1;k--){const rr=r+5*k;for(let j=-rr;j<=rr;j++)for(let i=-rr;i<=rr;i++){const d2=i*i+j*j;if(d2<=rr*rr&&d2>r*r&&((i+j+k)&1)===0&&((i*j+k)%3===0))R(mx+i,my+j,1,1,k===1?P.night3:P.night2)}}
+ for(let j=-r;j<=r;j++)for(let i=-r;i<=r;i++){const d2=i*i+j*j;if(d2<=r*r)R(mx+i,my+j,1,1,d2>r*r-44?P.hanji2:P.hanji)}
+ R(mx-10,my-8,7,5,P.hanji2);R(mx+3,my+2,9,6,P.hanji2);R(mx-5,my+11,6,4,P.hanji2);R(mx+10,my-14,4,3,P.hanji2);R(mx-13,my+4,4,3,P.hanji2);
+ // 기러기 한 줄
+ const bx=104,by=a+38;[[0,0],[7,4],[14,8],[-7,5],[-14,9]].forEach(([dx2,dy2])=>{R(bx+dx2,by+dy2,1,1,P.tile1);R(bx+dx2+1,by+dy2-1,1,1,P.tile1);R(bx+dx2+2,by+dy2,1,1,P.tile1)});
+ // 구름 띠
+ for(let k=0;k<4;k++){const cy=a+26+k*40,len=110+rnd()*150,sxp=rnd()*W-40;
+  for(let i=0;i<len;i++){const hh=3+2.4*Math.sin(i/15+k);dith(sxp+i,cy-hh,1,hh*2,k%2?P.night2:P.night1,1)}}
+ // 산 세 겹
+ for(let i=0;i<W;i++){const hh=52+24*Math.sin(i/61)+13*Math.sin(i/23+2)+6*Math.sin(i/9);R(i,GY-46-hh,1,hh+46,P.night2)}
+ dith(0,GY-100,W,20,P.night3,1);
+ for(let i=0;i<W;i++){const hh=30+16*Math.sin(i/37+1)+8*Math.sin(i/13+4);R(i,GY-34-hh,1,hh+34,P.night1)}
+}
+function pine(px,py,hgt,c1,c2){
+ const tw=Math.max(2,hgt/10|0);R(px-(tw>>1),py-hgt*0.45,tw,hgt*0.45,c2);
+ const w=hgt*0.5;
+ for(let t=0;t<4;t++){const tierH=hgt*0.22,ww=w*(0.45+t*0.2),ty=py-hgt+t*hgt*0.18;
+  for(let j=0;j<tierH;j++){const ww2=(ww*(j/tierH))|0;R(px-ww2,ty+j,ww2*2+1,1,t%2?c1:c2)}}
+}
+function wall(){
+ const top=GY-54,bot=GY-6;
+ for(let i=0;i<13;i++){const px=4+i*29+((rnd()*8)|0),hg=34+rnd()*26|0;pine(px,top+8,hg,P.pine1,P.pine0)}
+ for(let i=0;i<4;i++){const px=30+i*94,hg=50+rnd()*18|0;pine(px,top+10,hg,P.pine2,P.pine1)}
+ dith(0,top-10,W,16,P.night3,3);
+ R(0,top,W,bot-top,P.tile2);
+ for(let j=0;j<(bot-top)/9+1;j++){const oy=top+4+j*9;R(0,oy,W,1,P.tile1);
+  for(let i=0;i<W/18+1;i++){const o=i*18+(j%2?9:0);R(o,oy,1,9,P.tile1);R(o+1,oy+1,16,3,P.tile3);R(o+1,oy+5,16,3,P.tile2)}}
+ R(0,top-5,W,5,P.tile1);for(let i=0;i<W;i+=6){R(i,top-6,4,2,P.tile3);R(i+4,top-6,2,2,P.tile0)}
+ for(let i=0;i<W;i+=26){R(i,top-13,15,8,P.tile2);R(i,top-13,15,1,P.tile3);R(i+15,top-9,11,4,P.tile1)}
+ dith(0,bot-7,W,8,P.earth1,2);
+}
+function tiledRoof(rx,ry,rw){
+ for(let j=0;j<10;j++){const w=rw-j*3|0;R(rx+(rw-w)/2,ry+j,w,1,j<2?P.tile3:(j<5?P.tile2:P.tile1))}
+ R(rx-5,ry+10,rw+10,4,P.tile1);R(rx-5,ry+10,rw+10,1,P.tile3);
+ for(let i=0;i<rw+10;i+=5)R(rx-5+i,ry+10,2,4,P.tile2);
+ R(rx-7,ry+7,5,4,P.tile3);R(rx+rw+2,ry+7,5,4,P.tile3);
+}
+function gate(){ // 목표: 봉인 부적이 찢어진 성문
+ const gx=282,gy=GY-142,gw=74,gh=154;
+ tiledRoof(gx-2,gy,gw+4);
+ R(gx,gy+14,gw,gh-14,P.tile2);
+ for(let j=0;j<gh-14;j+=9){R(gx,gy+14+j,gw,1,P.tile1);for(let i=0;i<gw;i+=18)R(gx+i+((j/9)%2?9:0),gy+14+j,1,9,P.tile1)}
+ R(gx-3,gy+14,3,gh-14,P.tile1);R(gx+gw,gy+14,3,gh-14,P.tile0);
+ const ax=gx+16,aw=44,atop=gy+48,abot=gy+gh-6;
+ const ins=j=>{const t=(j-atop)/26;return t<1?Math.round((1-Math.sqrt(1-(1-t)*(1-t)))*22):0};
+ for(let j=atop;j<abot;j++){const n=ins(j);R(ax+n,j,aw-n*2,1,P.night0)}
+ for(let j=abot-1;j>atop+6;j--){const t=(abot-j)/(abot-atop-6),n=ins(j);
+  if(((j+(t*9|0))&1)===0)R(ax+n+2,j,aw-n*2-4,1,t>.62?P.yeonji1:(t>.3?P.yeonji0:P.night0))}
+ dith(ax+10,abot-46,26,42,P.yeonji2,1);
+ for(let j=atop;j<abot;j++){const n=ins(j);R(ax+n-3,j,3,1,P.tile3);R(ax+aw-n,j,3,1,P.tile1)}
+ R(ax-6,atop-4,aw+12,4,P.tile3);R(ax-6,atop-4,aw+12,1,P.earth3);
+ R(gx+19,gy+26,36,14,P.tile1);R(gx+19,gy+26,36,1,P.gold0);R(gx+19,gy+39,36,1,P.gold0);
+ ptext('鬼門',gx+37,gy+28,12,P.gold1,'center');
+ // 찢어진 봉인 부적
+ const py=gy+80;
+ R(ax+1,py,17,12,P.gold1);R(ax+1,py,17,1,P.gold2);R(ax+1,py+12,17,1,P.gold0);
+ R(ax+3,py+2,3,8,P.yeonji1);R(ax+8,py+2,2,8,P.yeonji1);R(ax+12,py+3,4,4,P.yeonji1);
+ R(ax+18,py+1,3,3,P.gold0);R(ax+20,py+4,2,4,P.gold0);R(ax+18,py+9,2,3,P.gold0);
+ R(ax+26,py+3,18,12,P.gold1);R(ax+26,py+3,18,1,P.gold2);R(ax+26,py+15,18,1,P.gold0);
+ R(ax+30,py+5,3,8,P.yeonji1);R(ax+35,py+5,2,8,P.yeonji1);R(ax+39,py+6,4,4,P.yeonji1);
+ R(ax+23,py+4,3,3,P.gold0);R(ax+22,py+9,2,3,P.gold0);
+ R(ax+4,py+13,2,6,P.gold0);R(ax+34,py+16,2,6,P.gold0);
+ R(ax+12,py-4,2,4,P.gold0);R(ax+31,py+1,2,3,P.gold0);
+ lantern(gx-14,gy+66);lantern(gx+gw+15,gy+58);
+}
+function lantern(lx,ly){
+ R(lx,ly-11,1,11,P.tile1);R(lx-3,ly-12,7,2,P.tile3);
+ for(let k=3;k>=1;k--){const rr=6+5*k;for(let j=-rr;j<=rr;j++)for(let i=-rr;i<=rr;i++){const d2=i*i+j*j;if(d2<=rr*rr&&d2>(rr-5)*(rr-5)&&((i+j)&1)===0&&((i*j+k)%3===0))R(lx+i,ly+6+j,1,1,k===1?P.gold0:P.earth1)}}
+ R(lx-4,ly,9,12,P.yeonji1);R(lx-4,ly,9,1,P.tile1);R(lx-4,ly+12,9,1,P.tile1);R(lx+3,ly+1,1,11,P.yeonji0);
+ R(lx-2,ly+2,5,8,P.gold1);R(lx-1,ly+3,3,6,P.gold2);R(lx,ly+13,1,3,P.gold0);
+}
+function ground(){
+ R(0,GY,W,H-GY,P.earth1);
+ R(0,GY,W,3,P.pine1);for(let i=0;i<W;i+=3)R(i,GY+2,2,1+((rnd()*2)|0),P.pine0);
+ R(0,GY+3,W,10,P.earth2);R(0,GY+13,W,34,P.earth1);R(0,GY+47,W,H,P.earth0);
+ R(0,GY+72,W,30,P.earth2);dith(0,GY+68,W,8,P.earth2,2);
+ dith(0,GY+43,W,8,P.earth0,2);dith(0,GY+11,W,8,P.earth3,1);
+ for(let i=0;i<260;i++){const px=rnd()*W|0,py=GY+6+rnd()*(H-GY-10)|0;R(px,py,1+(rnd()>.78?1:0),1,rnd()>.5?P.earth0:P.earth3)}
+ for(let i=0;i<20;i++){const px=rnd()*W|0,py=GY+20+rnd()*90|0;R(px,py,3,2,P.earth3);R(px,py+2,3,1,P.earth0)}
+ dith(0,GY-16,W,20,P.hanji4,1);dith(0,GY-6,W,12,P.hanji3,3);
+ dith(294,GY+96,62,18,P.gold0,3);
+ for(let i=0;i<W;i+=2){const h=5+((rnd()*10)|0);R(i,H-h,2,h,P.tile0)}
+ for(let i=0;i<W;i+=13){R(i,H-24,2,24,P.tile0);R(i+5,H-17,2,17,P.tile0);R(i-4,H-14,2,14,P.tile0)}
+ // 전경 소나무 가지 (좌우 하단 깊이)
+ for(let k=0;k<3;k++){const yy=H-34+k*9;R(0,yy,26+k*10,3,P.tile0);for(let i=0;i<26+k*10;i+=4)R(i,yy-3,2,4,P.tile0)}
+ for(let k=0;k<2;k++){const yy=H-26+k*10;R(W-30-k*12,yy,30+k*12,3,P.tile0);for(let i=0;i<30+k*12;i+=4)R(W-30-k*12+i,yy-3,2,4,P.tile0)}
+}
+function jangseung(jx,base,hgt,red){
+ const w=15;
+ R(jx,base-hgt,w,hgt,P.earth2);R(jx,base-hgt,3,hgt,P.earth3);R(jx+w-4,base-hgt,4,hgt,P.earth1);
+ R(jx-1,base-hgt,1,hgt,O);R(jx+w,base-hgt,1,hgt,O);
+ R(jx-4,base-hgt-6,w+8,6,P.earth1);R(jx-4,base-hgt-6,w+8,1,P.earth3);R(jx-4,base-hgt-7,w+8,1,O);R(jx-4,base-hgt,w+8,1,O);
+ const fy=base-hgt+12;
+ R(jx+2,fy,4,4,P.tile0);R(jx+9,fy,4,4,P.tile0);R(jx+2,fy,4,1,P.hanji3);R(jx+9,fy,4,1,P.hanji3);
+ R(jx+1,fy-4,5,2,P.tile1);R(jx+9,fy-4,5,2,P.tile1);
+ R(jx+6,fy+5,3,7,P.earth1);R(jx+5,fy+10,5,2,P.earth0);
+ R(jx+2,fy+14,11,5,P.tile0);for(let i=0;i<11;i+=2)R(jx+2+i,fy+14,1,5,P.hanji2);
+ for(let j=0;j<hgt-36;j+=8)R(jx+1,fy+26+j,w-2,1,P.earth1);
+ if(red)R(jx+3,fy+22,9,2,P.yeonji0);
+ dith(jx-3,base-2,w+6,3,P.earth0,2);
+}
+// ================= 척준경 =================
+function hero(hx,fy){
+ const t=fy-48,cx=hx+16;
+ // 다리 (오른쪽으로 크게 내딛은 자세)
+ limb(cx-7,t+40,cx-9,fy-5,6,P.steel0,O);
+ R(cx-13,fy-5,9,4,P.tile1);R(cx-13,fy-5,9,1,P.steel0);R(cx-14,fy-1,10,1,O);
+ limb(cx+5,t+40,cx+11,t+43,6,P.steel0,null);limb(cx+11,t+43,cx+14,fy-5,6,P.steel0,null);
+ R(cx+11,fy-5,10,4,P.tile1);R(cx+11,fy-5,10,1,P.steel0);R(cx+10,fy-1,11,1,O);R(cx+21,fy-8,2,4,O);
+ // 치마형 찰갑
+ silh(cx,t+31,[19,20,21,21,22,22,23,23,22,21],P.steel1,null,P.steel0);
+ for(let i=-10;i<=10;i+=4)R(cx+i,t+35,2,6,P.steel0);
+ R(cx-10,t+40,21,1,P.tile1);
+ // 허리끈 (연지)
+ R(cx-10,t+28,21,3,P.yeonji1);R(cx-10,t+28,21,1,P.yeonji2);R(cx-11,t+28,1,3,O);R(cx+11,t+28,1,3,O);R(cx-10,t+31,21,1,P.tile1);
+ // 몸통 찰갑
+ silh(cx,t+18,[17,19,20,21,21,21,20,20,19,19],P.steel1,null,P.steel0,false);
+ for(let j=t+18;j<t+28;j+=2)for(let i=cx-9;i<cx+9;i+=3){R(i,j,2,1,P.steel0);R(i+1,j+1,1,1,P.night1)}
+ R(cx-4,t+20,9,5,P.gold0);R(cx-3,t+21,7,3,P.gold1);R(cx-1,t+22,3,1,P.yeonji1);
+ // 어깨 덮개
+ silh(cx-11,t+17,[9,10,10,9,8,6],P.steel2,P.steel3,P.steel1);
+ silh(cx+11,t+16,[10,11,11,10,9,7],P.steel2,P.steel3,P.steel1);
+ // 등에 멘 갈고리 밧줄
+ for(let j=0;j<16;j++)R(cx-13-((j%4===0)?1:0),t+16+j,2,1,P.earth4);
+ R(cx-16,t+30,4,2,P.earth3);R(cx-17,t+28,2,3,P.steel2);R(cx-18,t+31,3,1,P.steel2);R(cx-18,t+27,1,2,P.steel2);
+ // 양팔 — 양손으로 쥔 장검
+ const hnd=[cx+20,t+16];
+ limb(cx-6,t+21,cx+12,t+18,6,P.steel1,null);limb(cx+12,t+18,hnd[0]-2,hnd[1]+3,6,P.steel1,O);
+ limb(cx+11,t+19,hnd[0]-1,hnd[1]+1,7,P.steel2,null);
+ R(hnd[0]-5,hnd[1]+1,9,6,P.earth4);R(hnd[0]-5,hnd[1]+1,9,1,P.earth3);R(hnd[0]-5,hnd[1]+7,9,1,P.tile1);R(hnd[0]-6,hnd[1]+1,1,6,O);
+ // 투구 (둥근 투구 + 붉은 술)
+ silh(cx,t+3,[7,11,14,16,17,18,18,18],P.steel1,null,P.steel2);
+ R(cx-10,t+11,21,2,P.steel0);R(cx-11,t+11,1,2,O);R(cx+11,t+11,1,2,O);R(cx-10,t+11,21,1,P.gold1);R(cx-10,t+13,21,1,O);
+ R(cx-1,t-3,3,6,P.yeonji1);R(cx,t-4,2,2,P.yeonji2);R(cx-3,t+1,6,2,P.yeonji2);R(cx-2,t+2,4,1,P.gold1);
+ // 얼굴
+ silh(cx,t+13,[12,12,12,12,12,11,9],P.earth4,null,P.earth3,false);
+ R(cx-3,t+15,2,2,P.tile0);R(cx+1,t+15,2,2,P.tile0);R(cx-4,t+14,3,1,P.tile1);R(cx+1,t+14,3,1,P.tile1);
+ R(cx+3,t+17,3,1,P.earth3);R(cx-3,t+18,6,2,P.tile1);R(cx-2,t+18,4,1,P.earth3);R(cx-4,t+20,9,1,O);
+ R(cx-9,t+13,3,8,P.steel0);R(cx+6,t+13,3,8,P.steel0);R(cx-10,t+13,1,8,O);R(cx+9,t+13,1,8,O);R(cx-9,t+21,3,1,O);R(cx+6,t+21,3,1,O);
+ R(cx-7,t+21,14,2,P.steel0);R(cx-7,t+23,14,1,P.tile1); // 목가리개
+ // 장검 — 오른쪽 위로 베어 올린 순간
+ for(let k=0;k<28;k++){const bx=hnd[0]+5+k,by=hnd[1]-1-(k*0.8|0);
+  R(bx,by,2,4,P.steel3);R(bx,by+4,2,1,P.steel1);R(bx,by-1,2,1,P.steel2);R(bx+2,by,1,1,P.hanji)}
+ R(hnd[0]+1,hnd[1]-3,5,10,P.tile1);R(hnd[0]+2,hnd[1]-2,3,8,P.gold1);R(hnd[0]+2,hnd[1]+1,3,2,P.gold2);
+ R(hnd[0]+33,hnd[1]-24,4,4,P.hanji);R(hnd[0]+34,hnd[1]-26,2,2,P.hanji);
+ // 검기
+ arcBand(hnd[0]+8,hnd[1]+2,20,29,-58,36,P.gold1,P.gold0,P.gold2);
+ arcBand(hnd[0]+8,hnd[1]+2,31,35,-50,26,P.gold0,P.earth1,P.gold0);
+ dith(cx-16,fy-2,34,4,P.earth3,2);
+}
+// ================= 적 =================
+function dokkaebi(dx,by,pose){ // 외뿔 · 털가죽 바지 · 못 박힌 방망이 (키 52)
+ const t=by-52,cx=dx,lean=pose===2?4:0;
+ // 털가죽 바지
+ silh(cx,t+34,[21,22,22,21,21,20,19,18,17,16],P.earth1,P.earth2,P.earth0);
+ for(let i=-11;i<=11;i+=2)R(cx+i,t+33,1,3,P.earth3);
+ for(let i=-9;i<=9;i+=4)R(cx+i,t+40,2,4,P.earth0);
+ R(cx-1,t+38,2,8,P.earth1);
+ R(cx-10,t+44,10,5,P.tile1);R(cx+1,t+44,10,5,P.tile1);R(cx-11,t+49,23,1,O);
+ for(let i=0;i<3;i++){R(cx-9+i*3,t+48,2,2,P.hanji3);R(cx+3+i*3,t+48,2,2,P.hanji3)}
+ // 몸통
+ silh(cx+lean,t+16,[15,19,22,24,25,26,26,26,25,25,24,23,22,21,20,19,18,17],P.pine2,P.pine3,P.pine1);
+ R(cx+lean-7,t+26,15,7,P.pine1);R(cx+lean-6,t+27,13,1,P.pine0);
+ R(cx+lean-10,t+19,4,4,P.pine3);
+ // 머리
+ const hcx=cx+lean+1;
+ silh(hcx,t,[9,13,16,18,19,20,20,20,20,19,18,16,14,11,8,6],P.pine2,P.pine3,P.pine1);
+ silh(hcx+2,t-10,[2,2,3,3,4,4,5,6,7,8],P.hanji2,null,P.hanji3); // 외뿔
+ R(hcx+1,t-1,7,2,P.pine1);
+ R(hcx-7,t+6,5,4,P.tile0);R(hcx+3,t+6,5,4,P.tile0);
+ R(hcx-6,t+7,3,3,P.yeonji2);R(hcx+4,t+7,3,3,P.yeonji2);R(hcx-6,t+7,3,1,P.gold1);R(hcx+4,t+7,3,1,P.gold1);
+ R(hcx-6,t+12,13,4,P.tile0);for(let i=0;i<13;i+=4)R(hcx-5+i,t+12,2,2,P.hanji2);
+ R(hcx-4,t+15,3,3,P.hanji2);R(hcx+3,t+15,3,3,P.hanji2);
+ R(hcx-9,t+4,2,5,P.pine1);R(hcx+8,t+4,2,5,P.pine1); // 귀
+ // 팔 + 못 박힌 방망이
+ if(pose===0){ // 방망이 머리 위로 치켜든 공격 준비
+  limb(cx+lean+11,t+21,cx+lean+19,t+6,6,P.pine2,O);
+  R(cx+lean+15,t+1,9,8,P.earth3);R(cx+lean+15,t+1,9,2,P.earth4);R(cx+lean+15,t+9,9,1,O);R(cx+lean+14,t+1,1,8,O);
+  limb(cx+lean+20,t+4,cx+lean+29,t-12,5,P.earth1,O);
+  club(cx+lean+31,t-22,1);
+  limb(cx+lean-12,t+21,cx+lean-16,t+34,6,P.pine2,O);
+  R(cx+lean-19,t+33,7,6,P.pine3);
+ }else{ // 방망이 앞으로 내민 자세
+  limb(cx+lean-11,t+21,cx+lean-20,t+16,6,P.pine2,O);
+  R(cx+lean-25,t+12,9,8,P.earth3);R(cx+lean-25,t+12,9,2,P.earth4);R(cx+lean-25,t+20,9,1,O);R(cx+lean-16,t+12,1,8,O);
+  limb(cx+lean-22,t+16,cx+lean-30,t+6,5,P.earth1,O);
+  club(cx+lean-32,t-2,-1);
+  limb(cx+lean+11,t+22,cx+lean+16,t+34,6,P.pine2,O);
+  R(cx+lean+13,t+33,7,6,P.pine3);
+ }
+ dith(cx-11,by-2,24,3,P.tile0,2);
+}
+function club(kx,ky,dir){ // 못 박힌 방망이 머리
+ silh(kx,ky,[9,11,12,13,13,13,13,12,12,11,10,9,8],P.earth2,P.earth3,P.earth1);
+ for(let j=0;j<4;j++){R(kx-8,ky+2+j*4,3,2,P.steel2);R(kx+6,ky+4+j*4,3,2,P.steel2);R(kx-8,ky+4+j*4,3,1,P.steel0)}
+ R(kx-2,ky+3,3,7,P.earth1);
+}
+function wonghwi(gx2,gy2){ // 흰 소복 · 얼굴 가린 긴 머리 · 발 없이 떠 있음 · 반투명
+ const h=46,ws=[];
+ for(let j=0;j<h;j++)ws.push(9+((j/h)*17|0));
+ for(let j=0;j<h;j++){const w=ws[j],px=gx2-(w>>1);
+  const tt=j/h;
+  for(let i=0;i<w;i++){
+   const fade=tt>0.62?(((i+px+j)&1)===0):true;
+   if(tt>0.9&&((i+px+j)%3!==0))continue;
+   if(fade)R(px+i,gy2+j,1,1,tt<0.42?P.hanji:(tt<0.7?P.hanji2:P.hanji3));
+  }
+  if(tt<0.75){R(px-1,gy2+j,1,1,P.hanji4);R(px+w,gy2+j,1,1,P.hanji4)}
+ }
+ R(gx2-2,gy2+14,2,20,P.hanji3);R(gx2+2,gy2+18,1,14,P.hanji3);
+ // 늘어진 소매
+ silh(gx2-13,gy2+13,[8,9,9,8,8,7,6,6,5,4],P.hanji2,P.hanji,P.hanji3,false);
+ silh(gx2+13,gy2+12,[8,9,9,8,8,7,7,6,5,4],P.hanji2,P.hanji,P.hanji3,false);
+ // 얼굴을 가린 긴 머리
+ R(gx2-8,gy2-6,17,7,P.tile0);R(gx2-6,gy2-7,13,1,P.tile0);
+ for(let i=-9;i<=9;i++){const len=11+((i*i*2)%5);R(gx2+i,gy2-2,1,len,(i<-7||i>7)?P.tile1:P.tile0)}
+ R(gx2-7,gy2+1,2,16,P.tile1);R(gx2+6,gy2+1,2,14,P.tile1);
+ R(gx2-4,gy2+6,2,2,P.yeonji2);R(gx2+3,gy2+6,2,2,P.yeonji2);
+ R(gx2-4,gy2+8,1,5,P.yeonji0);R(gx2+4,gy2+8,1,4,P.yeonji0);
+ dith(gx2-14,gy2+h-8,29,16,P.hanji4,1);
+}
+function hitSpark(sx,sy){
+ for(let a=0;a<360;a+=45){const rad=a*Math.PI/180;for(let rr=4;rr<13;rr++)R(sx+Math.cos(rad)*rr,sy+Math.sin(rad)*rr,1,1,rr<8?P.hanji:(rr<11?P.gold2:P.gold1))}
+ for(let j=-3;j<=3;j++)for(let i=-3;i<=3;i++)if(i*i+j*j<=10)R(sx+i,sy+j,1,1,P.hanji);
+ for(let k=0;k<9;k++){const a=rnd()*6.28,rr=14+rnd()*9;R(sx+Math.cos(a)*rr,sy+Math.sin(a)*rr,2,2,rnd()>.5?P.gold1:P.hanji2)}
+ R(sx+9,sy-9,13,2,P.gold2);R(sx+12,sy-3,10,2,P.gold1);R(sx+8,sy+8,12,2,P.gold1);
+}
+// ================= HUD =================
+function hud(){
+ R(0,0,W,HUD,P.tile1);R(0,0,W,1,P.tile3);R(0,HUD-2,W,1,P.tile0);R(0,HUD-1,W,1,P.gold0);
+ dith(0,1,W,HUD-3,P.tile2,1);
+ R(4,4,120,28,P.tile0);R(4,4,120,1,P.gold0);R(4,31,120,1,P.gold0);R(4,4,1,28,P.gold0);R(123,4,1,28,P.gold0);
+ ptext('귀야행 척준경',9,8,19,P.gold1);
+ ptext('찢어진 봉인을 다시 봉하라',6,36,11,P.hanji3);
+ ptext('「스테이지 1」',356,36,13,P.hanji2,'right');
+ ptext('체력',130,5,11,P.hanji3);
+ for(let i=0;i<10;i++){const bx=154+i*9;R(bx,5,8,10,P.tile0);
+  if(i<7){R(bx+1,6,6,8,P.yeonji1);R(bx+1,6,6,2,P.yeonji2);R(bx+1,12,6,2,P.yeonji0)}else R(bx+1,6,6,8,P.tile2)}
+ ptext('기력',130,19,11,P.hanji3);
+ R(154,19,90,10,P.tile0);
+ for(let i=0;i<57;i++)R(155+i,20,1,8,P.night3);
+ R(155,20,57,2,P.soul);R(155,26,57,2,P.night2);
+ for(let i=9;i<90;i+=9)R(154+i,19,1,10,P.tile1);
+ ptext('魂',248,18,12,P.soul2);
+ const fx=268;R(fx,5,9,12,P.gold1);R(fx,5,9,1,P.gold2);R(fx,16,9,1,P.gold0);R(fx+1,7,2,8,P.yeonji1);R(fx+5,7,2,6,P.yeonji1);R(fx+2,14,5,1,P.yeonji1);
+ ptext('×3',280,5,13,P.hanji2);
+ for(let k=0;k<2;k++){const vx=192+k*15,vy=37;
+  R(vx+3,vy-3,2,3,P.yeonji2);R(vx,vy,9,4,P.steel1);R(vx,vy,9,1,P.steel2);R(vx-1,vy+4,11,2,P.steel0);R(vx-1,vy+6,11,1,P.tile0)}
+ ptext('×2',222,36,12,P.hanji2);
+ ptext('점수',306,4,10,P.hanji3);
+ ptext('018420',356,15,15,P.hanji,'right');
+}
+// ================= 조립 =================
+function draw(){
+ sky();wall();gate();ground();
+ jangseung(12,GY+104,86,false);jangseung(42,GY+94,70,true);
+ wonghwi(180,GY+34);wonghwi(330,GY+24);
+ dokkaebi(248,GY+128,1);
+ dokkaebi(296,GY+110,0);
+ dokkaebi(206,GY+120,0);
+ dokkaebi(164,GY+130,2);
+ hero(86,GY+130);
+ hitSpark(152,GY+98);
+ hud();
+}
+(document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(()=>{seed=20260913;draw()});
+</script>
+</body></html>
