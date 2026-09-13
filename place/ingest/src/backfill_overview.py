@@ -14,8 +14,10 @@ place SSOT 에서 개요가 빈 레코드를 읽어 채운 뒤 bulk upsert 로 �
 """
 from __future__ import annotations
 
+import os
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 
 from src import place_client
@@ -74,10 +76,14 @@ FLUSH_EVERY = 500
 #: 한도 거부가 이만큼 연속이면 그 회차를 끝낸다. 한 건짜리 튐과 한도 소진을 가르는 값이다.
 QUOTA_STREAK_STOP = 20
 
-#: 건당 간격. 원천 한도(오퍼레이션당 10만/일)가 아니라 **Job 의 실행 시간**이 상한이다 —
-#: 무료 단일 노드라 activeDeadlineSeconds 안에 끝나야 하고, 그 안에서 몇 건을 받느냐를
-#: 이 값이 정한다. 건당 요청 시간이 약 0.14초라 0.05 면 초당 5건 남짓이다.
-REQUEST_GAP_SEC = 0.05
+#: 워커 하나가 다음 요청까지 쉬는 시간. 초당 호출 수는 WORKERS / (요청시간 + 이 값) 이다.
+REQUEST_GAP_SEC = float(os.environ.get("REQUEST_GAP_SEC", "0.05"))
+
+#: 동시 요청 수. **여기가 실제 상한을 정한다.**
+#: 요청 1건은 약 0.14초인데 예전에는 한 번에 하나씩 불러 초당 7건이 천장이었다 — 원천 한도
+#: (오퍼레이션당 10만/일)를 다 쓰기 한참 전에 activeDeadlineSeconds 에 먼저 걸렸다.
+#: 대기 시간이지 계산이 아니라서 무료 단일 노드에서도 동시에 띄우는 값이 싸다.
+WORKERS = int(os.environ.get("WORKERS", "6"))
 
 #: 한도 소진을 알리는 신호. 원천이 HTTP 429 로 줄 때도 있고, 200 안에 결과코드로 줄 때도 있다.
 _QUOTA_SIGNS = ("429", "LIMITED_NUMBER_OF_SERVICE_REQUESTS", "SERVICE_ACCESS_DENIED")
@@ -89,61 +95,76 @@ def is_quota_error(exc: BaseException) -> bool:
     return any(sign in str(exc) for sign in _QUOTA_SIGNS)
 
 
-def collect(api_key: str, targets: list[dict]) -> tuple[int, list[dict]]:
-    """(적재한 건수, 원천이 빈 개요를 준 항목).
+def run_collect(targets: list[dict], fetch, label: str = "") -> tuple[int, list]:
+    """동시에 훑어 **받는 대로 적재**한다. (적재 건수, 부수 기록)
 
-    **모아 뒀다 한 번에 쓰지 않는다** — 예산을 올리면 실행이 길어져
-    `activeDeadlineSeconds` 에 잘릴 수 있고, 그때 마지막에 한 번 쓰는 구조면
-    그날 받은 것이 통째로 사라진다. 자세한 이유는 backfill_intro.collect 와 같다.
+    `fetch(row)` 는 `(적재할 레코드 | None, 부수 기록 | None)` 을 돌려준다.
+    예외를 던지면 그 레코드는 건너뛰고 다음 회차가 다시 시도한다.
+
+    셋이 지키는 것:
+      - FLUSH_EVERY 마다 적재한다. 시간 제한에 잘려도 거기까지는 남는다.
+      - 한도 거부가 한 묶음 안에서 QUOTA_STREAK_STOP 을 넘으면 그 회차를 끝낸다.
+        한도는 회차 안에서 회복되지 않아 계속 두드려 봐야 시간만 버린다.
+      - 네트워크 오류는 한도로 세지 않는다 — 그쪽은 다음 건에서 회복된다.
     """
     loaded = 0
-    batch: list[dict] = []
-    empty: list[dict] = []
-    quota_streak = 0
+    side: list = []
+    done = 0
 
-    def flush() -> None:
-        nonlocal batch, loaded
-        if not batch:
-            return
-        place_client.bulk_upsert(batch)
-        loaded += len(batch)
-        batch = []
+    for start in range(0, len(targets), FLUSH_EVERY):
+        chunk = targets[start:start + FLUSH_EVERY]
+        batch: list[dict] = []
+        quota_hits = 0
 
-    for i, row in enumerate(targets, 1):
+        with ThreadPoolExecutor(max_workers=WORKERS) as pool:
+            futures = {pool.submit(fetch, row): row for row in chunk}
+            for future in as_completed(futures):
+                row = futures[future]
+                try:
+                    rec, extra = future.result()
+                except Exception as e:                      # noqa: BLE001 — 건별 격리
+                    log(f"  {row['contentId']} 스킵: {e}")
+                    if is_quota_error(e):
+                        quota_hits += 1
+                    continue
+                if rec is not None:
+                    batch.append(rec)
+                if extra is not None:
+                    side.append(extra)
+
+        if batch:
+            place_client.bulk_upsert(batch)
+            loaded += len(batch)
+        done += len(chunk)
+        log(f"  {done}/{len(targets)}{label} (적재 {loaded})")
+
+        if quota_hits >= QUOTA_STREAK_STOP:
+            log(f"  한도 도달로 중단 — 이번 묶음에서 거부 {quota_hits}회 ({done}/{len(targets)})")
+            break
+
+    return loaded, side
+
+
+def collect(api_key: str, targets: list[dict]) -> tuple[int, list[dict]]:
+    """(적재한 건수, 원천이 빈 개요를 준 항목)."""
+
+    def fetch(row: dict) -> tuple[dict | None, dict | None]:
         service, _ = SERVICES["kor" if row["lang"] == "ko" else "eng"]
-        try:
-            body = tour_get(api_key, service, "detailCommon2", {"contentId": row["contentId"]})
-            item = (body.get("items") or {}).get("item")
-            if isinstance(item, list):
-                item = item[0] if item else None
-            overview = ((item or {}).get("overview") or "").strip()
-        except Exception as e:
-            # 일시적 실패(네트워크)는 negative cache 에 넣지 않는다 —
-            # 넣으면 그 레코드는 영영 다시 시도되지 않는다.
-            log(f"  {row['contentId']} 스킵: {e}")
-            if is_quota_error(e):
-                quota_streak += 1
-                if quota_streak >= QUOTA_STREAK_STOP:
-                    log(f"  한도 도달로 중단 — 연속 거부 {quota_streak}회 ({i}/{len(targets)})")
-                    break
-            else:
-                quota_streak = 0
-            continue
-        quota_streak = 0
+        body = tour_get(api_key, service, "detailCommon2", {"contentId": row["contentId"]})
+        item = (body.get("items") or {}).get("item")
+        if isinstance(item, list):
+            item = item[0] if item else None
+        overview = ((item or {}).get("overview") or "").strip()
+        time.sleep(REQUEST_GAP_SEC)
         if not overview:
-            # 원천이 빈 값을 준 것 — 다시 불러도 결과가 같다.
-            empty.append({"contentId": row["contentId"], "lang": row["lang"]})
-            continue
+            # 원천이 빈 값을 준 것 — 다시 불러도 결과가 같다. 일시적 실패와 달리
+            # negative cache 에 넣어야 다음 회차가 이 레코드를 또 부르지 않는다.
+            return None, {"contentId": row["contentId"], "lang": row["lang"]}
         rec = {k: row.get(k) for k in UPSERT_FIELDS if row.get(k) is not None}
         rec["overview"] = overview
-        batch.append(rec)
-        if len(batch) >= FLUSH_EVERY:
-            flush()
-        if i % 100 == 0:
-            log(f"  {i}/{len(targets)} (적재 {loaded})")
-        time.sleep(REQUEST_GAP_SEC)
-    flush()
-    return loaded, empty
+        return rec, None
+
+    return run_collect(targets, fetch)
 
 
 def run(api_key: str, budget: int, langs: tuple[str, ...] = ("ko", "en")) -> bool:

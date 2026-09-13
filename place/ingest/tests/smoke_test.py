@@ -522,9 +522,9 @@ def _google_place_enrichment() -> None:
 def _intro_flush_before_end() -> None:
     """예산을 올리면 실행이 길어져 시간 제한에 잘릴 수 있다. 그때 마지막에 한 번 쓰는
     구조면 그날 받은 것이 통째로 사라진다 — **끝나기 전에 이미 쓰여 있어야** 한다."""
-    from src import backfill_intro, place_client
+    from src import backfill_intro, backfill_overview, place_client
 
-    n = backfill_intro.FLUSH_EVERY * 2 + 7
+    n = backfill_overview.FLUSH_EVERY * 2 + 7
     targets = [{"contentId": str(i), "lang": "ko", "contentTypeId": "12"} for i in range(n)]
     events: list[tuple[str, int]] = []
 
@@ -555,16 +555,22 @@ def _intro_flush_before_end() -> None:
 
 def _intro_stops_on_quota() -> None:
     """한도는 그 회차 안에서 회복되지 않는다. 만난 뒤에도 남은 예산만큼 두드리면
-    그 시간이 통째로 버려진다 — 연속 거부가 이어지면 멈춰야 한다."""
-    from src import backfill_intro, place_client
+    그 시간이 통째로 버려진다 — 한 묶음에서 거부가 몰리면 거기서 끝나야 한다.
 
-    budget = 3000
+    동시에 부르므로 「연속 몇 회」로는 셀 수 없다. 묶음 단위로 센다.
+    """
+    from src import backfill_intro, backfill_overview, place_client
+
+    budget = backfill_overview.FLUSH_EVERY * 6
     targets = [{"contentId": str(i), "lang": "ko", "contentTypeId": "12"} for i in range(budget)]
     attempts = []
+    lock = __import__("threading").Lock()
 
     def fake_get(_key, _svc, _op, params):
-        attempts.append(params["contentId"])
-        if len(attempts) > 10:
+        with lock:
+            attempts.append(params["contentId"])
+            n = len(attempts)
+        if n > 10:
             raise RuntimeError("HTTP Error 429: Too Many Requests")
         return {"items": {"item": {"contentid": params["contentId"],
                                    "contenttypeid": "12", "usetime": "09:00"}}}
@@ -578,14 +584,16 @@ def _intro_stops_on_quota() -> None:
     finally:
         backfill_intro.tour_get, place_client.bulk_upsert, backfill_intro.time.sleep = orig
 
-    assert len(attempts) == 10 + backfill_intro.QUOTA_STREAK_STOP, len(attempts)
+    # 첫 묶음에서 멈춰야 한다 — 예산 전체를 훑으면 안 된다
+    assert len(attempts) == backfill_overview.FLUSH_EVERY, len(attempts)
+    assert len(attempts) < budget, "한도를 만나고도 예산 전체를 두드렸다"
     assert loaded == 10, loaded          # 한도 전에 받은 것은 남는다
 
 
 def _quota_error_is_not_network() -> None:
     """네트워크는 다음 건에서 회복되지만 한도는 아니다. 둘을 섞으면 일시적 오류에
     회차를 접거나, 한도에 도달하고도 계속 두드린다."""
-    from src.backfill_intro import is_quota_error
+    from src.backfill_overview import is_quota_error
 
     assert is_quota_error(RuntimeError("HTTP Error 429: Too Many Requests"))
     assert is_quota_error(RuntimeError("LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR"))

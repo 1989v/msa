@@ -17,8 +17,7 @@ import time
 from datetime import datetime
 
 from src import place_client
-from src.backfill_overview import (FLUSH_EVERY, QUOTA_STREAK_STOP, REQUEST_GAP_SEC,
-                                   UPSERT_FIELDS, is_quota_error, log)
+from src.backfill_overview import REQUEST_GAP_SEC, UPSERT_FIELDS, log, run_collect
 from src.sync_tour import SERVICES, tour_get
 
 #: 한 레코드가 가질 수 있는 최대 건수. 기본값(10)으로 부르면 17장짜리가 10장으로 잘린다.
@@ -47,43 +46,21 @@ def _items(body: dict) -> list[dict]:
 
 
 def collect(api_key: str, targets: list[dict]) -> int:
-    """받는 대로 적재한다. 적재한 건수를 돌려준다. (구조는 backfill_intro.collect 와 같다)"""
-    loaded = 0
-    batch: list[dict] = []
-    quota_streak = 0
+    """받는 대로 적재한다. 적재한 건수를 돌려준다."""
 
-    def flush() -> None:
-        nonlocal batch, loaded
-        if not batch:
-            return
-        place_client.bulk_upsert(batch)
-        loaded += len(batch)
-        batch = []
-
-    for i, row in enumerate(targets, 1):
+    def fetch(row: dict) -> tuple[dict | None, None]:
         service, _ = SERVICES["kor" if row["lang"] == "ko" else "eng"]
-        try:
-            # detailImage2 는 contentTypeId 를 받지 않는다 — 넣으면 INVALID_REQUEST_PARAMETER_ERROR.
-            images = _items(tour_get(api_key, service, "detailImage2", {
-                "contentId": row["contentId"], "imageYN": "Y", "numOfRows": PAGE_ROWS,
-            }))
-            # 반대로 detailInfo2 는 contentTypeId 가 필수다. 없는 레코드는 사진만 받는다.
-            content_type = (row.get("contentTypeId") or "").strip()
-            info = _items(tour_get(api_key, service, "detailInfo2", {
-                "contentId": row["contentId"], "contentTypeId": content_type,
-                "numOfRows": PAGE_ROWS,
-            })) if content_type else []
-        except Exception as e:
-            log(f"  {row['contentId']} 스킵: {e}")
-            if is_quota_error(e):
-                quota_streak += 1
-                if quota_streak >= QUOTA_STREAK_STOP:
-                    log(f"  한도 도달로 중단 — 연속 거부 {quota_streak}회 ({i}/{len(targets)})")
-                    break
-            else:
-                quota_streak = 0
-            continue
-        quota_streak = 0
+        # detailImage2 는 contentTypeId 를 받지 않는다 — 넣으면 INVALID_REQUEST_PARAMETER_ERROR.
+        images = _items(tour_get(api_key, service, "detailImage2", {
+            "contentId": row["contentId"], "imageYN": "Y", "numOfRows": PAGE_ROWS,
+        }))
+        # 반대로 detailInfo2 는 contentTypeId 가 필수다. 없는 레코드는 사진만 받는다.
+        content_type = (row.get("contentTypeId") or "").strip()
+        info = _items(tour_get(api_key, service, "detailInfo2", {
+            "contentId": row["contentId"], "contentTypeId": content_type,
+            "numOfRows": PAGE_ROWS,
+        })) if content_type else []
+        time.sleep(REQUEST_GAP_SEC)
 
         rec = {k: row.get(k) for k in UPSERT_FIELDS if row.get(k) is not None}
         # 원천이 빈 응답을 줘도 **받았다는 사실**은 남긴다 — 안 남기면 영원히 재시도한다.
@@ -92,14 +69,9 @@ def collect(api_key: str, targets: list[dict]) -> int:
             rec["imagesRaw"] = json.dumps(images, ensure_ascii=False, separators=(",", ":"))
         if info:
             rec["infoRaw"] = json.dumps(info, ensure_ascii=False, separators=(",", ":"))
-        batch.append(rec)
-        if len(batch) >= FLUSH_EVERY:
-            flush()
-        if i % 100 == 0:
-            log(f"  {i}/{len(targets)} (적재 {loaded})")
-        time.sleep(REQUEST_GAP_SEC)
+        return rec, None
 
-    flush()
+    loaded, _ = run_collect(targets, fetch)
     return loaded
 
 

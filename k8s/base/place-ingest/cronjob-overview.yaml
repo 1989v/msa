@@ -53,8 +53,14 @@ spec:
                 # ADR-0082 — JVM 과 같은 제공자 단위 쿼터 장부
                 - name: REDIS_HOST
                   value: "redis"
+                # ADR-0070 — 동시 호출 수. 요청 1건이 약 0.14초라 하나씩 부르면 초당 5건이
+                # 천장이고, 오퍼레이션당 10만/일 한도를 다 쓰기 전에 실행 시간에 먼저 걸린다.
+                # 실측(2026-09-14): 1→4.9건/초, 6→32.3건/초, 12→35.1건/초 (429·타임아웃 0).
+                # 12 는 6 대비 9% 밖에 못 벌어 원천이 그 근처에서 포화한다 — 6 으로 둔다.
+                - name: WORKERS
+                  value: "6"
                 - name: BUDGET
-                  value: "6000"
+                  value: "20000"
                 - name: TOUR_API_KEY
                   valueFrom:
                     secretKeyRef:

@@ -16,9 +16,7 @@ import time
 from datetime import datetime
 
 from src import place_client
-from src.backfill_overview import (FLUSH_EVERY, QUOTA_STREAK_STOP,
-                                   REQUEST_GAP_SEC, UPSERT_FIELDS,
-                                   is_quota_error, log)
+from src.backfill_overview import REQUEST_GAP_SEC, UPSERT_FIELDS, log, run_collect
 from src.sync_tour import SERVICES, tour_get
 
 # 파생 컬럼 ← 원천 키 후보. 유형별 접미사(culture/leports/…)가 붙은 것을 한 자리로 모은다.
@@ -75,64 +73,27 @@ def pick(rows: list[dict], lang: str, budget: int) -> list[dict]:
 
 
 def collect(api_key: str, targets: list[dict]) -> int:
-    """받는 대로 적재한다. 적재한 건수를 돌려준다.
+    """받는 대로 적재한다. 적재한 건수를 돌려준다."""
 
-    **모아 뒀다 한 번에 쓰지 않는다.** 예산이 작을 때는 차이가 없었지만, 예산을 올리면
-    실행이 길어져 `activeDeadlineSeconds` 에 잘릴 수 있다. 그때 마지막에 한 번 쓰는 구조면
-    **그날 받은 것이 통째로 사라진다** — 호출은 이미 썼는데 남는 게 없다.
-
-    일시적 실패(네트워크)는 담지 않아 다음 회차가 다시 시도한다.
-    """
-    loaded = 0
-    batch: list[dict] = []
-    quota_streak = 0
-
-    def flush() -> None:
-        nonlocal batch, loaded
-        if not batch:
-            return
-        place_client.bulk_upsert(batch)
-        loaded += len(batch)
-        batch = []
-
-    for i, row in enumerate(targets, 1):
+    def fetch(row: dict) -> tuple[dict | None, None]:
         service, _ = SERVICES["kor" if row["lang"] == "ko" else "eng"]
-        try:
-            body = tour_get(api_key, service, "detailIntro2", {
-                "contentId": row["contentId"],
-                "contentTypeId": row.get("contentTypeId") or "",
-            })
-            item = (body.get("items") or {}).get("item")
-            if isinstance(item, list):
-                item = item[0] if item else None
-        except Exception as e:
-            log(f"  {row['contentId']} 스킵: {e}")
-            # 한도를 만난 뒤에도 남은 예산만큼 계속 두드리면 그 시간이 통째로 버려진다.
-            # 한도는 회차 안에서 회복되지 않으니 연속으로 거부당하면 그 자리에서 멈춘다.
-            if is_quota_error(e):
-                quota_streak += 1
-                if quota_streak >= QUOTA_STREAK_STOP:
-                    log(f"  한도 도달로 중단 — 연속 거부 {quota_streak}회 ({i}/{len(targets)})")
-                    break
-            else:
-                quota_streak = 0
-            continue
-        quota_streak = 0
-
+        body = tour_get(api_key, service, "detailIntro2", {
+            "contentId": row["contentId"],
+            "contentTypeId": row.get("contentTypeId") or "",
+        })
+        item = (body.get("items") or {}).get("item")
+        if isinstance(item, list):
+            item = item[0] if item else None
+        time.sleep(REQUEST_GAP_SEC)
         rec = {k: row.get(k) for k in UPSERT_FIELDS if row.get(k) is not None}
         # 원천이 빈 응답을 줘도 **받았다는 사실**은 남긴다 — 안 남기면 영원히 재시도한다.
         rec["introSyncedAt"] = datetime.now().replace(microsecond=0).isoformat()
         if item and has_payload(item):
             rec["introRaw"] = json.dumps(item, ensure_ascii=False, separators=(",", ":"))
             rec.update(derive(item))
-        batch.append(rec)
-        if len(batch) >= FLUSH_EVERY:
-            flush()
-        if i % 100 == 0:
-            log(f"  {i}/{len(targets)} (적재 {loaded})")
-        time.sleep(REQUEST_GAP_SEC)
+        return rec, None
 
-    flush()
+    loaded, _ = run_collect(targets, fetch)
     return loaded
 
 
