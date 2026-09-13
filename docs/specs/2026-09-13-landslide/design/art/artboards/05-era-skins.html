@@ -1,0 +1,51 @@
+<!-- @dsCard group="사태 — 캐릭터" viewport="1280x900" name="05 · 시대 스킨" subtitle="궁수 × 고구려·신라·고려·조선" -->
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><title>05 · 시대 스킨</title>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#F9F8F2;font-family:'Nanum Myeongjo',serif;color:#1D1D1F}
+.paper{position:relative;min-height:100vh;padding:48px 56px}
+.head{display:flex;align-items:baseline;gap:18px;border-bottom:2px solid #1D1D1F;padding-bottom:14px}
+h1{font-size:32px;font-weight:800;margin:0}
+.sub{font-size:15px;color:#8A6A50}
+.meta{margin-left:auto;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#8A6A50}
+.row{display:flex;align-items:flex-end;justify-content:space-between;gap:32px;padding:44px 30px 10px;background:repeating-linear-gradient(0deg,rgba(29,29,31,.05) 0 1px,transparent 1px 5px);border-bottom:2px solid #1D1D1F}
+.u{display:flex;flex-direction:column;align-items:center;gap:14px;flex:1}
+.art{display:flex;align-items:flex-end;justify-content:center;height:330px}
+.nm{font-size:20px;font-weight:800}
+.tag{font-size:12.5px;color:#8A6A50;letter-spacing:.04em;text-align:center;line-height:1.6}
+.band{margin-top:30px;border:2px solid #1D1D1F;background:#4A4A4C;color:#F9F8F2}
+.band h2{margin:0;font-size:13px;font-family:ui-monospace,Menlo,monospace;letter-spacing:.1em;padding:8px 14px;border-bottom:2px solid #F9F8F2}
+.strip{display:flex;align-items:flex-end;gap:72px;padding:36px 44px 24px}
+.strip .u{flex:0 0 auto;gap:10px}
+.strip .art{height:60px}
+.strip span{font-size:12px;letter-spacing:.14em;opacity:.85}
+.note{margin-top:24px;font-size:14px;color:#8A6A50;line-height:1.75;max-width:960px}
+.note b{color:#1D1D1F;font-weight:800}
+</style></head>
+<body><div class="paper">
+<div class="head"><h1>시대 스킨 — 투구와 갑옷 윤곽만</h1><span class="sub">능력치 없는 외형 옵션 · 활·포즈·크기·깃발은 1차와 동일</span>
+<span class="meta">render(unit, {skin})</span></div>
+
+<div class="row">
+<div class="u"><div class="art" data-unit="archer" data-h="300" data-skin="goguryeo"></div><div class="nm">고구려 개마무사</div><div class="tag">세로 철판 높은 투구 + 깃 · 찰갑·목가리개</div></div>
+<div class="u"><div class="art" data-unit="archer" data-h="300" data-skin="silla"></div><div class="nm">신라 화랑</div><div class="tag">조우관(새 깃 둘) · 가벼운 포 + 가슴 띠</div></div>
+<div class="u"><div class="art" data-unit="archer" data-h="300" data-skin="goryeo"></div><div class="nm">고려 무반</div><div class="tag">넓은 챙 투구 + 붉은 상모 · 두정갑</div></div>
+<div class="u"><div class="art" data-unit="archer" data-h="300" data-skin="joseon"></div><div class="nm">조선 갑사</div><div class="tag">갓(흑립) · 포형 두정갑 — 기본값</div></div>
+</div>
+
+<div class="band"><h2>36 PX · 화산재 #4A4A4C · 인게임 크기</h2><div class="strip">
+<div class="u"><div class="art" data-unit="archer" data-h="36" data-skin="goguryeo"></div><span>고구려</span></div>
+<div class="u"><div class="art" data-unit="archer" data-h="36" data-skin="silla"></div><span>신라</span></div>
+<div class="u"><div class="art" data-unit="archer" data-h="36" data-skin="goryeo"></div><span>고려</span></div>
+<div class="u"><div class="art" data-unit="archer" data-h="36" data-skin="joseon"></div><span>조선</span></div>
+<div class="u"><div class="art" data-unit="archer" data-h="36" data-skin="silla" data-team="blue"></div><span>신라 · 청팀</span></div>
+<div class="u"><div class="art" data-unit="spear" data-h="36" data-skin="goguryeo"></div><span>고구려 창병</span></div>
+<div class="u"><div class="art" data-unit="shield" data-h="36" data-skin="goryeo"></div><span>고려 방패병</span></div>
+</div></div>
+
+<p class="note">판정 — 넷 모두 오른쪽으로 부푼 <b>활의 C 곡선</b>을 유지하므로 36px 에서 전부 궁수로 읽힌다. 서로는 머리 위 윤곽으로 갈린다: 고구려는 <b>위로 솟은 좁은 봉우리 + 깃</b>, 신라는 <b>양쪽으로 벌어진 뿔 둘</b>, 고려는 <b>넓고 납작한 챙 + 점 하나</b>, 조선은 <b>수평으로 긴 갓 챙</b>. 갑옷은 고구려 각진 통형 · 신라 밝은 한지색 포 · 고려 아래가 벌어진 종형 · 조선 긴 자락으로 명도까지 갈라 둔다. 스킨은 다섯 병과 어디에나 씌울 수 있다(줄 끝 두 칸).</p>
+</div>
+<script src="characters.js"></script>
+</body></html>
