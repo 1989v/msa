@@ -17,4 +17,4 @@ python3 -m http.server 8770 --bind 127.0.0.1 --directory docs/specs/2026-09-10-s
 
 `http://127.0.0.1:8770/` 접속. `file://`로 열지 않는다. 정적 호스팅에는 dist의 내용 전체를 함께 올리며, 하위 경로는 마지막 `/`로 끝나도록 서버에서 정규화한다. 빌드 명령은 자기 생성물인 dist를 새 결과로 교체한다.
 
-현재는 배포 준비본이며 공개 URL이 없다. [공개 조건](beta-readiness.md)의 통합 플레이 점검과 공개 주소 확정이 남았다. 게임 저장은 없으며 새로고침/출발점 reset은 진행을 초기화한다.
+운영 공개: https://game.1989v.com/games/skybound/index.html . [배포 기록](deployment.md). 사용자 요청으로 잔여 게임 점검은 배포 후 개선으로 이관했다. 게임 저장은 없으며 새로고침/출발점 reset은 진행을 초기화한다.

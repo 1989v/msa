@@ -1,8 +1,8 @@
 # Skybound — 바람의 유적
 
-**현재: 섬 탐색·활공 경로·프리즘 받침 퍼즐을 연결했고 웹 베타 공개를 준비합니다. 전체 게임·최종 아트는 미완료입니다.**
+**현재: 섬 탐색·활공 경로·프리즘 받침 퍼즐을 연결했고 웹 베타를 공개했습니다. 전체 게임·최종 아트는 미완료입니다.**
 
-[웹 베타 공개 조건과 배포 준비](release/beta-readiness.md)
+[웹 베타 플레이](https://game.1989v.com/games/skybound/index.html) · [배포 기록](release/deployment.md)
 
 [PC 이동 프로토타입 실행 안내](implementation/t02b/traversal/README.md) — 로컬 서버에서 `http://127.0.0.1:8768/implementation/t02b/traversal/index.html`.
 
