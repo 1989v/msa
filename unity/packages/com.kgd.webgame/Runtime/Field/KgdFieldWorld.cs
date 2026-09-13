@@ -267,6 +267,8 @@ namespace Kgd.Field
             byte wasD = c.Dens[i], wasM = c.Mat[i];
             if (wasD == dens && wasM == mat) return false;
 
+            // 하늘 맨 위 줄 위의 칸은 하늘빛을 저장하지 않으므로, 이 칸이 막히기 전에 무슨 빛이었는지는 지금만 알 수 있다
+            int oldSky = SkyLight(x, y, z);
             c.Dens[i] = dens;
             c.Mat[i] = mat;
             if (Kinds[mat].Liquid) c.HasLiquid = true;
@@ -278,9 +280,27 @@ namespace Kgd.Field
             bool nowOpaque = dens > Iso && Kinds[mat].Opaque;
             byte wasGlow = wasD > Iso ? Kinds[wasM].Glow : (byte)0;
             byte nowGlow = dens > Iso ? Kinds[mat].Glow : (byte)0;
-            if (wasOpaque != nowOpaque || wasGlow != nowGlow) Relight(x, y, z, nowGlow, c);
+            if (wasOpaque != nowOpaque || wasGlow != nowGlow) Relight(x, y, z, nowGlow, c, nowOpaque ? oldSky : 0);
 
             TouchAround(x, y, z);
+            return true;
+        }
+
+        /// <summary>
+        /// **표식만 적는다** — 칸을 바꾸되 빛도 메시도 건드리지 않는다. 공기 칸(하늘 맨 위 줄)에 소품의 자리·상태를
+        /// 적는 데 쓴다: 대장에는 남아 저장·전송되지만, 자라는 작물이 한 눈금 오를 때마다 청크를 다시 뜨지는 않는다.
+        /// 찬 칸에 쓰면 그려지지 않은 채로 남으므로 <see cref="Set"/> 을 쓴다.
+        /// </summary>
+        public bool Mark(int x, int y, int z, byte dens, byte mat)
+        {
+            if (y < 0 || y >= Height) return false;
+            var c = Find(ChunkOf(x), ChunkOf(z));
+            if (c == null) return false;
+            int i = Index(LocalOf(x), y, LocalOf(z));
+            if (c.Dens[i] == dens && c.Mat[i] == mat) return false;
+            c.Dens[i] = dens;
+            c.Mat[i] = mat;
+            _edits[EditKey(x, y, z)] = (ushort)((dens << 8) | mat);
             return true;
         }
 
@@ -763,9 +783,14 @@ namespace Kgd.Field
         /// 한 칸이 문턱을 넘나든 자리의 빛만 고친다. 어두워지는 쪽이 먼저다 —
         /// 지우지 않고 새로 흘리면 **없어진 등불의 빛이 남는다.**
         /// </summary>
-        private void Relight(int x, int y, int z, byte glow, Chunk c)
+        /// <param name="coveredSky">이 칸이 막히기 전에 갖던 하늘빛(막힌 것이 아니면 0). 열린 하늘 아래 칸들은 하늘빛을 저장하지
+        /// 않고 맨 위 줄 규칙으로 15 를 돌려주므로, 그대로 빼면 **지붕을 덮어도 그 밑이 밝은 채 남는다**(실측: 17×17 지붕 밑이 14 —
+        /// 옆 열이 열려 있을 때 흘러든 값이 저장돼 있었다). 막힌 칸부터 옛 맨 위 줄까지의 열을 15 로 되살려 놓고 빼야, 그 열이
+        /// 옆으로 흘려 보냈던 빛까지 따라 빠진다.</param>
+        private void Relight(int x, int y, int z, byte glow, Chunk c, int coveredSky = 0)
         {
             int lx = LocalOf(x), lz = LocalOf(z);
+            int oldTop = c.SkyTop[lz * SX + lx];
             int top = 0;
             for (int yy = Height - 1; yy >= 0; yy--)
             {
@@ -780,6 +805,8 @@ namespace Kgd.Field
             if (glow > 0) { SetBlk(x, y, z, glow); _seeds.Add(new Vector3Int(x, y, z)); }
             Flow(sky: false);
 
+            if (coveredSky > 0)
+                for (int yy = Mathf.Max(0, oldTop); yy <= y; yy++) SetSky(x, yy, z, coveredSky);
             Drain(x, y, z, sky: true);
             SeedSkyNear(x, y, z);
             Flow(sky: true);
