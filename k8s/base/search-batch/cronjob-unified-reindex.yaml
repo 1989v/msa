@@ -1,0 +1,53 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: unified-reindex
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: search-batch
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: reindex
+spec:
+  # ADR-0090 D6 — 관광지를 뺀 타입(글·게임·개념·혜택·서비스·상품)의 통합 인덱스 재색인 (alias swap).
+  # 원천은 각 호스트의 공개 API 풀스캔이고 합쳐야 수백 건이라 매일 한 번이면 된다.
+  # 관광지 재색인(04:30 KST) 뒤에 둔다 — 같은 OpenSearch 에 bulk 를 겹치지 않게.
+  #   kubectl -n commerce create job --from=cronjob/unified-reindex unified-reindex-manual
+  schedule: "45 19 * * *"   # 04:45 KST
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      # ImagePullBackOff 는 실패로 안 잡혀 Job 이 Running 인 채로 남고 Forbid 가 그 뒤 실행을 막는다.
+      activeDeadlineSeconds: 1200
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: search-batch
+            # part-of 누락 시 default-deny 에서 egress 미허용 → opensearch/호스트 접근 불가
+            app.kubernetes.io/part-of: commerce-platform
+            app.kubernetes.io/component: reindex
+        spec:
+          restartPolicy: OnFailure
+          enableServiceLinks: false
+          containers:
+            - name: reindex
+              image: commerce/search-batch:latest
+              imagePullPolicy: IfNotPresent
+              args:
+                - "--spring.batch.job.enabled=true"
+                - "--spring.batch.job.name=unifiedReindexJob"
+              env:
+                - name: OPENSEARCH_URIS
+                  value: "http://opensearch:9200"
+                # 글·게임은 content, 개념·전시 서비스는 atlas, 혜택·상품은 commerce (ADR-0093 배분)
+                - name: PLACE_SERVICE_URL
+                  value: "http://content:8097"
+                - name: ATLAS_SERVICE_URL
+                  value: "http://atlas:8089"
+                - name: PRODUCT_SERVICE_URL
+                  value: "http://commerce:8085"
+              resources:
+                requests: { cpu: 100m, memory: 512Mi }
+                limits:   { memory: 1Gi }

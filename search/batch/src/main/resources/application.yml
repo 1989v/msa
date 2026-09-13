@@ -25,6 +25,10 @@ place:
   service:
     url: ${PLACE_SERVICE_URL:http://localhost:8096}
 
+atlas:
+  service:
+    url: ${ATLAS_SERVICE_URL:http://localhost:8089}
+
 search:
   index:
     alias: products

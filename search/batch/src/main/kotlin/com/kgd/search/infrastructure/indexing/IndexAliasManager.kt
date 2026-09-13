@@ -34,6 +34,9 @@ class IndexAliasManager(private val osClient: OpenSearchClient) {
 
         /** 행정 지역 인덱스 정의 (ADR-0065 통합 자동완성) — nameKo nori + population. */
         const val REGIONS_INDEX_DEFINITION = "/opensearch/regions-index.json"
+
+        /** ADR-0090 D6 — 관광지를 뺀 타입들의 통합 인덱스 */
+        const val UNIFIED_INDEX_DEFINITION = "/opensearch/unified-index.json"
     }
 
     /** 새 타임스탬프 색인명 생성: products_20260309120000 */

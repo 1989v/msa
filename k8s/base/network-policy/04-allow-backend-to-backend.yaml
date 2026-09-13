@@ -98,6 +98,33 @@ spec:
       ports:
         - { port: http, protocol: TCP }
 ---
+# search-batch → atlas : unifiedReindexJob 이 개념 사전·전시 서비스를 공개 API 로 풀스캔 (ADR-0090 D6).
+#   글·게임은 위 content 규칙이, 혜택·상품은 commerce 규칙이 이미 연다. 여기만 없었다.
+#   kgd.io/host-of 로 「codedictionary 패키지를 담은 파드」를 가리킨다 — 폴드가 옮겨 가면 게이트가 잡는다.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-search-batch-to-atlas
+  namespace: commerce
+  annotations:
+    kgd.io/host-of: codedictionary
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: atlas
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: search-batch
+      ports:
+        - { port: http, protocol: TCP }
+---
 # ranking-ingest → content : 주유소 적재와 보드 스냅샷 생성이 `/internal` 을 부른다 (ADR-0081).
 # ADR-0093 ②b — ranking 이 content 파드로 옮겨가 대상 라벨이 바뀌었다.
 #   빠뜨리면 k3s netpol 이 REJECT 라 CronJob 이 "Connection refused" 로 죽는다.

@@ -8,3 +8,4 @@ resources:
   - cronjob-reindex.yaml
   - cronjob-attraction-reindex.yaml
   - cronjob-region-reindex.yaml
+  - cronjob-unified-reindex.yaml

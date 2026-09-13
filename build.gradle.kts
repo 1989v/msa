@@ -500,6 +500,9 @@ val searchIndexContracts = listOf(
         "search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/AttractionIndexDocument.kt" to "write",
         "search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchDocument.kt" to "read",
     )),
+    Triple("unified", "search/batch/src/main/resources/opensearch/unified-index.json", listOf(
+        "search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/UnifiedIndexDocument.kt" to "write",
+    )),
     Triple("products", "search/batch/src/main/resources/opensearch/products-index.json", listOf(
         "search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/ProductIndexDocument.kt" to "write",
         "search/consumer/src/main/kotlin/com/kgd/search/infrastructure/indexing/ProductIndexDocument.kt" to "write",

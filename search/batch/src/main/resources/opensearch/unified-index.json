@@ -1,0 +1,53 @@
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "nori_analyzer": {
+          "type": "custom",
+          "tokenizer": "nori_tokenizer"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "id": { "type": "keyword" },
+      "type": { "type": "keyword" },
+      "sourceId": { "type": "keyword" },
+      "slug": { "type": "keyword" },
+      "lang": { "type": "keyword" },
+      "title": {
+        "type": "text",
+        "analyzer": "nori_analyzer",
+        "fields": {
+          "en": { "type": "text", "analyzer": "english" },
+          "keyword": { "type": "keyword", "ignore_above": 256 }
+        }
+      },
+      "titleEn": {
+        "type": "text",
+        "analyzer": "english"
+      },
+      "summary": {
+        "type": "text",
+        "analyzer": "nori_analyzer",
+        "fields": {
+          "en": { "type": "text", "analyzer": "english" }
+        }
+      },
+      "body": {
+        "type": "text",
+        "analyzer": "nori_analyzer",
+        "fields": {
+          "en": { "type": "text", "analyzer": "english" }
+        }
+      },
+      "category": { "type": "keyword" },
+      "tags": { "type": "keyword" },
+      "facets": { "type": "flat_object" },
+      "popularity": { "type": "float" },
+      "publishedAt": { "type": "date" },
+      "thumbnailUrl": { "type": "keyword", "index": false }
+    }
+  }
+}

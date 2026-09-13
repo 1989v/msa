@@ -14,6 +14,9 @@ class WebClientConfig {
     @Value("\${place.service.url:http://localhost:8096}")
     private lateinit var placeServiceUrl: String
 
+    @Value("\${atlas.service.url:http://localhost:8089}")
+    private lateinit var atlasServiceUrl: String
+
     @Bean("productWebClient")
     fun productWebClient(builder: WebClient.Builder): WebClient =
         builder.baseUrl(productServiceUrl).build()
@@ -32,6 +35,11 @@ class WebClientConfig {
         builder.baseUrl(placeServiceUrl)
             .codecs { it.defaultCodecs().maxInMemorySize(LOOKUP_BUFFER_BYTES) }
             .build()
+
+    /** atlas(개념 사전 · 전시 서비스) — 통합 인덱스 원천. 응답이 작아 기본 버퍼면 된다 */
+    @Bean("atlasWebClient")
+    fun atlasWebClient(builder: WebClient.Builder): WebClient =
+        builder.baseUrl(atlasServiceUrl).build()
 
     companion object {
         /** 검사가 이 값을 그대로 본다 — 코드와 검사가 각자 사본을 갖지 않게. */
