@@ -51,6 +51,9 @@ class GameRelayRegistry(
     private val log = KotlinLogging.logger {}
 
     private companion object {
+        /** 한 번에 실어 보내는 공개 방 수 — 봉투가 커지면 릴레이가 끊는다 */
+        const val ROOMS_LIMIT = 20
+
         const val MAX_ROOMS = 200
         const val MAX_MESSAGE_CHARS = 4096
 
@@ -93,6 +96,12 @@ class GameRelayRegistry(
          * **옵션이지 규칙이 아니다** — 릴레이는 여전히 게임을 모르고 좌석·메시지 종류·시각만 안다.
          */
         val manualStart: Boolean = false,
+        /**
+         * 공개 방 — `rooms` 조회에 코드가 실린다. 코드를 아는 사람만 들어오던 파티 방에
+         * 「남이 만든 방에 그냥 들어가기」를 붙이기 위한 것이고, **기본은 false** 라
+         * 이 값을 안 보내는 게임·옛 클라이언트는 예전처럼 코드로만 들어온다.
+         */
+        var listed: Boolean = false,
     ) {
         val seats = arrayOfNulls<Peer>(capacity)
         var seed: Int = 0
@@ -203,6 +212,7 @@ class GameRelayRegistry(
             "move" -> move(peer, node)
             "start" -> startCommand(peer, node)
             "done" -> roundDone(peer)
+            "rooms" -> listRooms(peer)
             "leave" -> synchronized(matchLock) { leaveRoom(peer) }
             "ping" -> send(peer, message("pong"))
             else -> send(peer, error("BAD_MESSAGE"))
@@ -278,6 +288,7 @@ class GameRelayRegistry(
         val party = node.path("private").asBoolean(false)
         val manualStart = node.path("manualStart").asBoolean(false)
         val spectate = node.path("spectate").asBoolean(false)
+        val listed = node.path("listed").asBoolean(false)
 
         synchronized(matchLock) {
             if (peer.room != null) {
@@ -291,7 +302,7 @@ class GameRelayRegistry(
                     ?: run { send(peer, error("ROOM_NOT_FOUND")); return }
                 // 파티 + 코드 없음 → 「방 만들기」. 대기열을 우회한다 — 대기열은 슬러그당 한 칸이라
                 // 파티는 슬러그가 하나뿐이어서 두 번째 방장이 첫 방장 방에 앉는다.
-                party -> newRoom(peer.gameSlug, seats, nowMs, manualStart)
+                party -> newRoom(peer.gameSlug, seats, nowMs, manualStart, listed)
                 requested != null -> roomByCode(peer.gameSlug, requested, seats, nowMs)
                 else -> autoMatchRoom(peer.gameSlug, seats, nowMs)
             }
@@ -553,12 +564,12 @@ class GameRelayRegistry(
         return room
     }
 
-    private fun newRoom(gameSlug: String, seats: Int, nowMs: Long, manualStart: Boolean = false): Room? {
+    private fun newRoom(gameSlug: String, seats: Int, nowMs: Long, manualStart: Boolean = false, listed: Boolean = false): Room? {
         if (rooms.size >= MAX_ROOMS) return null
         repeat(16) {
             val code = randomCode()
             val key = "$gameSlug:$code"
-            val room = Room(key, gameSlug, code, seats, nowMs, manualStart)
+            val room = Room(key, gameSlug, code, seats, nowMs, manualStart, listed)
             if (rooms.putIfAbsent(key, room) == null) return room
         }
         return null
@@ -599,6 +610,34 @@ class GameRelayRegistry(
         raw.filter { !it.isISOControl() }.trim().take(MAX_NICK_LENGTH).ifBlank { "Player" }
 
     // ── 메시지 ──────────────────────────────────────────────────────────────
+
+    /**
+     * 공개 파티 방 목록 (2026-09-13). 「남이 만든 방에 직접 들어가기」 —
+     * 코드를 주고받지 않아도 로비에서 골라 들어간다.
+     *
+     * **공개로 표시한 방만** 실린다. 코드 방은 원래 아는 사람만 들어오는 자리라
+     * 전부 노출하면 그 약속이 깨진다. 시작했거나 꽉 찬 방, 빈 방은 뺀다 —
+     * 들어갈 수 없는 줄을 보여 주면 눌러 보고 실패한다.
+     */
+    private fun listRooms(peer: Peer) {
+        val arr = objectMapper.createArrayNode()
+        synchronized(matchLock) {
+            for (room in rooms.values) {
+                if (room.gameSlug != peer.gameSlug || !room.manualStart || !room.listed || room.started) continue
+                val occupants = room.seats.filterNotNull()
+                if (occupants.isEmpty() || occupants.size >= room.capacity) continue
+                arr.add(
+                    objectMapper.createObjectNode()
+                        .put("code", room.code)
+                        .put("n", occupants.size)
+                        .put("cap", room.capacity)
+                        .put("host", occupants.first().nick),
+                )
+                if (arr.size() >= ROOMS_LIMIT) break
+            }
+        }
+        send(peer, message("rooms").also { it.set("rooms", arr) })
+    }
 
     private fun message(type: String): ObjectNode = objectMapper.createObjectNode().put("t", type)
 

@@ -19,9 +19,22 @@ const error = (code) => ({ t: 'error', code });
 const occupants = (room) => room.seats.filter(Boolean);
 const hostOf = (room) => occupants(room).reduce((h, p) => (h === null || p.seat < h.seat ? p : h), null);
 
-function newRoom(slug, seats, manualStart, priv) {
+/** 공개 방 목록 — JVM 릴레이의 listRooms 와 같은 규칙(공개·수동 시작·미시작·한 명 이상·안 참) */
+function listRooms(peer) {
+  const out = [];
+  for (const room of rooms.values()) {
+    if (room.slug !== peer.slug || !room.manualStart || !room.listed || room.started) continue;
+    const occ = room.seats.filter(Boolean);
+    if (!occ.length || occ.length >= room.seats.length) continue;
+    out.push({ code: room.code, n: occ.length, cap: room.seats.length, host: occ[0].nick ?? '' });
+    if (out.length >= 20) break;
+  }
+  send(peer, { t: 'rooms', rooms: out });
+}
+
+function newRoom(slug, seats, manualStart, priv, listed = false) {
   const code = code6();
-  const room = { key: `${slug}:${code}`, slug, code, seats: new Array(seats).fill(null), manualStart, private: priv, started: false, roundNo: 0, done: new Set(), createdMs: Date.now(), spectators: new Set() };
+  const room = { key: `${slug}:${code}`, slug, code, seats: new Array(seats).fill(null), manualStart, private: priv, listed, started: false, roundNo: 0, done: new Set(), createdMs: Date.now(), spectators: new Set() };
   rooms.set(room.key, room);
   return room;
 }
@@ -60,10 +73,10 @@ function join(peer, node) {
   const requested = typeof node.room === 'string' && node.room ? node.room.toUpperCase() : null;
   peer.nick = String(node.nick ?? '').replace(/[\x00-\x1f<>]/g, '').trim().slice(0, 16) || `손님${peer.id}`;
   const seats = Math.min(MAX_SEATS, Math.max(MIN_SEATS, Number(node.seats) || MIN_SEATS));
-  const priv = !!node.private, manualStart = !!node.manualStart, spectate = !!node.spectate;
+  const priv = !!node.private, manualStart = !!node.manualStart, spectate = !!node.spectate, listed = !!node.listed;
   let room;
   if (priv && requested) { room = rooms.get(`${peer.slug}:${requested}`); if (!room) return send(peer, error('ROOM_NOT_FOUND')); }
-  else if (priv) room = newRoom(peer.slug, seats, manualStart, true);
+  else if (priv) room = newRoom(peer.slug, seats, manualStart, true, listed);
   else if (requested) room = rooms.get(`${peer.slug}:${requested}`) ?? newRoom(peer.slug, seats, false, false);
   else {
     room = [...rooms.values()].find((r) => r.slug === peer.slug && !r.private && !r.started && r.seats.some((s) => !s)) ?? newRoom(peer.slug, seats, false, false);
@@ -136,6 +149,7 @@ wss.on('connection', (ws, req) => {
     switch (node?.t) {
       case 'join': join(peer, node); break;
       case 'move': move(peer, node); break;
+      case 'rooms': listRooms(peer); break; // 공개 방 목록 — JVM 릴레이(GameRelayRegistry.listRooms)와 같은 규칙
       case 'start': startCommand(peer, node); break;
       case 'done': roundDone(peer); break;
       case 'leave': leaveRoom(peer); break;

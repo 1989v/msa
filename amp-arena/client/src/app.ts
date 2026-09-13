@@ -57,7 +57,10 @@ export class App {
   private acc: AccessoryId = 'none';
   private style: StyleId = 'fighter';
   private team = -1;
-  private settings: RoomSettings = { map: 'colosseum', mode: 'ffa_dm', seconds: 180, fillBots: true };
+  private settings: RoomSettings = { map: 'colosseum', mode: 'ffa_dm', seconds: 180, fillBots: true, botSeats: [] };
+  private ready = false;          // 대기실 준비 (방장은 늘 준비로 친다)
+  private listed = true;          // 방 만들 때 공개로 낼까 (목록에 코드가 실린다)
+  private startWarned = false;    // 「아직 안 준비한 사람이 있다」를 한 번 보여 준 뒤에야 강행
   private online: Online | null = null;
   private match: Match | null = null;
   private screen: HTMLElement | null = null;
@@ -131,7 +134,10 @@ export class App {
       <div class="col" style="position:relative;align-items:center;gap:14px;width:100%">
         ${boltLogo(96).replace('font-size:96px', 'font-size:clamp(56px, 9vw, 120px)')}
         <div class="tagline">8인 실시간 대전 액션 · 브라우저에서 바로</div>
-        <div class="panel title-form col">
+        <div class="panel title-form">
+          <!-- 두 묶음으로 나눠 둔다: 세로가 짧은 폰 가로(390px)에서 CSS 가 옆으로 편다.
+               한 줄로 쌓으면 850px 가 되어 390px 화면에서 460px 가 잘렸다 — 버튼까지 드래그해야 했다. -->
+          <div class="tf-a col">
           <span class="label">닉네임</span>
           <input class="field nick" maxlength="10" placeholder="2~10자, 이 세션에서만 사용" value="${esc(this.nick)}">
           <span class="label">스타일</span>
@@ -140,10 +146,12 @@ export class App {
           <span class="label">악세서리</span>
           <div class="accs"></div>
           <div class="acc-desc muted" style="font-size:12px;min-height:34px"></div>
+          </div>
+          <div class="tf-b col">
           <span class="label">진행 · 레벨마다 스탯 포인트, 골드로 색 조합</span>
           <div class="progress-host"></div>
           <span class="label">연습 설정</span>
-          <div class="row">
+          <div class="row practice-set">
             <select class="field map" style="flex:1;height:38px">${MAP_IDS.map((m) => `<option value="${m}">${MAPS[m].name}</option>`).join('')}</select>
             <select class="field mode" style="flex:1;height:38px">${MODE_IDS.map((m) => `<option value="${m}" ${m === 'ffa_dm' ? 'selected' : ''}>${MODES[m].name}</option>`).join('')}</select>
             <select class="field bots" style="width:100px;height:38px"><option value="3">봇 3</option><option value="5">봇 5</option><option value="7" selected>봇 7</option></select>
@@ -152,6 +160,7 @@ export class App {
           <div class="row">
             <button class="btn primary practice" style="flex:1">연습 · 봇과 대전</button>
             <button class="btn go-lobby" style="flex:1">온라인 대전</button>
+          </div>
           </div>
         </div>
       </div>
@@ -301,6 +310,7 @@ export class App {
       map: (el.querySelector('.rmap') as HTMLSelectElement).value as MapId,
       seconds: Number((el.querySelector('.rsec') as HTMLSelectElement).value),
       fillBots: (el.querySelector('.rbots') as HTMLSelectElement).value === '1',
+      botSeats: [...(this.settings.botSeats ?? [])],
     };
   }
 
@@ -335,6 +345,14 @@ export class App {
               <input class="field code-in" maxlength="6" placeholder="방 코드 6자리" style="flex:1;min-width:160px;height:42px;text-transform:uppercase;letter-spacing:3px;font-weight:800">
               <button class="btn join-code" style="height:42px">코드로 입장</button>
             </div>
+            <label class="row" style="gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" class="listed" ${this.listed ? 'checked' : ''}> 공개 방으로 — 코드를 몰라도 아래 목록에서 들어올 수 있습니다</label>
+          </div>
+          <div class="panel col" style="gap:10px">
+            <div class="row" style="justify-content:space-between;align-items:center">
+              <span class="display" style="font-size:20px">열려 있는 방</span>
+              <button class="btn ghost refresh-rooms" style="height:32px;font-size:12px">${icon('refresh', 16)}새로고침</button>
+            </div>
+            <div class="roomlist col" style="gap:6px"><span class="muted" style="font-size:13px">불러오는 중…</span></div>
           </div>
           <div class="panel muted" style="font-size:12px;line-height:1.6">방장(가장 먼저 들어온 사람)의 화면이 판정을 맡고, 방장이 나가면 다음 사람이 이어받습니다. 방장의 입력에도 게스트 평균만큼 지연을 넣어 조건을 맞춥니다.</div>
         </div>
@@ -349,11 +367,28 @@ export class App {
       const ok = await online.quick(); busy(b, false);
       if (ok) this.showRoom();
     };
+    (el.querySelector('.listed') as HTMLInputElement).onchange = (e) => { this.listed = (e.target as HTMLInputElement).checked; };
     (el.querySelector('.create') as HTMLButtonElement).onclick = async (ev) => {
       const b = ev.currentTarget as HTMLButtonElement; busy(b, true); applySettings();
-      const ok = await online.create(); busy(b, false);
+      const ok = await online.create(this.listed); busy(b, false);
       if (ok) this.showRoom();
     };
+    // 열려 있는 방 — 코드를 몰라도 눌러서 들어간다 (2026-09-13 소감)
+    const listHost = el.querySelector('.roomlist') as HTMLElement;
+    const drawRooms = async () => {
+      listHost.innerHTML = `<span class="muted" style="font-size:13px">불러오는 중…</span>`;
+      const rooms = await online.listRooms();
+      if (this.view !== 'lobby') return;
+      listHost.innerHTML = rooms.length === 0
+        ? `<span class="muted" style="font-size:13px">지금 열려 있는 공개 방이 없습니다. 방을 만들면 여기 뜹니다.</span>`
+        : rooms.map((r) => `<button class="btn roomrow" data-code="${esc(r.code)}" style="justify-content:space-between;height:40px;font-size:13px">
+            <span>${esc(r.host)} 님의 방</span><span class="chip">${r.n} / ${r.cap}</span><span class="chip amp" style="letter-spacing:2px">${esc(r.code)}</span></button>`).join('');
+      for (const b of listHost.querySelectorAll<HTMLButtonElement>('.roomrow')) {
+        b.onclick = async () => { applySettings(); const ok = await online.joinCode(b.dataset.code ?? ''); if (ok) this.showRoom(); };
+      }
+    };
+    (el.querySelector('.refresh-rooms') as HTMLButtonElement).onclick = () => { void drawRooms(); };
+    void drawRooms();
     const codeIn = el.querySelector('.code-in') as HTMLInputElement;
     const joinCode = async () => {
       const code = codeIn.value.trim().toUpperCase();
@@ -378,11 +413,22 @@ export class App {
     const isHost = online.isHost;
     const chatInput = (this.screen?.querySelector('.chat-in') as HTMLInputElement | null)?.value ?? '';
     const slots = st.seats.map((s, i) => {
-      if (!s) return `<div class="slot empty">${icon('plus', 26, 'var(--dim)')}<span style="font-size:12px;font-weight:700">빈 자리${hostSettings.fillBots ? ' · 봇으로 채움' : ''}</span></div>`;
+      if (!s) {
+        // 방장은 빈 슬롯을 눌러 그 자리만 봇으로 만든다. 「빈 자리 전부 봇」이 켜져 있으면 고를 것이 없다.
+        const isBot = (hostSettings.botSeats ?? []).includes(i);
+        const label = hostSettings.fillBots ? '봇으로 채움' : isBot ? '봇' : '빈 자리';
+        const hint = isHost && !hostSettings.fillBots ? `<span class="muted" style="font-size:10px">${isBot ? '눌러서 비우기' : '눌러서 봇 넣기'}</span>` : '';
+        return `<div class="slot empty${isBot || hostSettings.fillBots ? ' bot' : ''}${isHost && !hostSettings.fillBots ? ' pick' : ''}" data-seat="${i}">
+          ${icon(isBot || hostSettings.fillBots ? 'gamepad' : 'plus', 26, isBot || hostSettings.fillBots ? 'var(--amp)' : 'var(--dim)')}
+          <span style="font-size:12px;font-weight:700">${label}</span>${hint}</div>`;
+      }
       const me = i === st.mySeat;
       const pick = s.pick;
       const team = teams ? (pick && pick.team >= 0 ? pick.team : -1) : -1;
-      const status = (i === host ? '<span class="chip amp">방장</span>' : '') + (pick?.spectate ? '<span class="chip">관전</span>' : i === host ? '' : '<span class="chip green">참가</span>');
+      const status = (i === host ? '<span class="chip amp">방장</span>' : '')
+        + (pick?.spectate ? '<span class="chip">관전</span>'
+          : i === host ? ''
+          : pick?.ready ? '<span class="chip green">준비 완료</span>' : '<span class="chip">준비 중</span>');
       return `<div class="slot ${team === 0 ? 'red' : team === 1 ? 'blue' : ''}">
         <span class="tag" style="color:${team === 0 ? 'var(--red)' : team === 1 ? 'var(--blue)' : 'var(--dim)'}">${team === 0 ? '레드' : team === 1 ? '블루' : teams ? '자동' : '슬롯'} ${i + 1}</span>
         ${i === host ? `<span class="crown">${icon('crown', 18, 'var(--amp)', 2.4)}</span>` : ''}
@@ -392,6 +438,12 @@ export class App {
       </div>`;
     }).join('');
     const count = st.seats.filter((s) => s).length;
+    // 준비 집계 — 방장과 관전자는 세지 않는다 (방장은 시작 버튼을 누르는 사람이고 관전자는 안 싸운다)
+    const needSeats = st.seats.map((s, i) => ({ s, i })).filter(({ s, i }) => s && i !== host && !s.pick?.spectate);
+    const needReady = needSeats.length;
+    const readyCount = needSeats.filter(({ s }) => s!.pick?.ready).length;
+    const waiting = needReady > 0 && readyCount < needReady;
+    const botCount = hostSettings.fillBots ? Math.max(0, 8 - count) : (hostSettings.botSeats ?? []).filter((n) => !st.seats[n]).length;
     const head = st.party
       ? `<span style="font-size:16px;font-weight:800">코드 방</span><span class="chip amp code" style="letter-spacing:3px;font-size:15px">${esc(st.code)}</span><button class="btn ghost copy" style="height:30px;font-size:12px">코드 복사</button>`
       : `<span style="font-size:16px;font-weight:800">빠른 대전</span><span class="chip countdown">${st.started ? '시작 중' : `${lobbyCloseSec(st.joinedAt)}초 뒤 자동 시작`}</span>`;
@@ -418,10 +470,11 @@ export class App {
         <div class="bottom">
           <div class="panel chat"><div class="log"></div><div class="row"><input class="field chat-in" style="flex:1;height:36px;font-size:13px" maxlength="120" placeholder="대기실 대화 · Enter" value="${esc(chatInput)}"><button class="btn chat-send" style="height:36px;font-size:13px">보내기</button></div></div>
           <button class="btn team" ${teams ? '' : 'disabled'}>${icon('refresh', 18)}팀 바꾸기</button>
+          ${!isHost && !this.spectate ? `<button class="btn ${this.ready ? 'primary' : ''} readybtn" ${st.started ? 'disabled' : ''}>${this.ready ? '준비 해제' : '준비'}</button>` : ''}
           ${st.party
             ? (isHost
-              ? `<button class="btn primary bigbtn start" ${st.started ? 'disabled' : ''}>${icon('bolt', 22, '#1a1f3a', 2.4)}게임 시작 · ${count}명${hostSettings.fillBots && count < 8 ? ' + 봇' : ''}</button>`
-              : `<button class="btn bigbtn" disabled>방장이 시작하면 들어갑니다</button>`)
+              ? `<button class="btn primary bigbtn start" ${st.started ? 'disabled' : ''}>${icon('bolt', 22, '#1a1f3a', 2.4)}게임 시작 · ${count}명${botCount ? ` + 봇 ${botCount}` : ''}${waiting ? ` · 준비 ${readyCount}/${needReady}` : ''}</button>`
+              : `<button class="btn bigbtn" disabled>${this.ready ? '방장이 시작하면 들어갑니다' : '준비를 누르세요'}</button>`)
             : `<button class="btn bigbtn" disabled>${st.started ? '매치 준비 중' : '자동 시작 대기'}</button>`}
         </div>
       </div>`);
@@ -429,8 +482,28 @@ export class App {
     this.renderStylePicker(el.querySelector('.styles') as HTMLElement, el.querySelector('.style-desc') as HTMLElement, (s, acc) => { localStorage.setItem('amp.style', s); localStorage.setItem('amp.acc', acc); online.setPick({ style: s, acc }); }, !st.started);
     (el.querySelector('.leave') as HTMLButtonElement).onclick = () => { online.leave(); this.showLobby(); };
     (el.querySelector('.team') as HTMLButtonElement).onclick = () => { this.team = this.team === 0 ? 1 : 0; online.setPick({ team: this.team }); };
+    const readyBtn = el.querySelector('.readybtn') as HTMLButtonElement | null;
+    if (readyBtn) readyBtn.onclick = () => { this.ready = !this.ready; online.setPick({ ready: this.ready }); this.showRoom(); };
+    // 방장이 빈 슬롯을 눌러 봇을 넣거나 뺀다
+    if (isHost && !hostSettings.fillBots) {
+      for (const cell of el.querySelectorAll<HTMLElement>('.slot.empty.pick')) {
+        cell.onclick = () => {
+          const seat = Number(cell.dataset.seat);
+          const cur = new Set(this.settings.botSeats ?? []);
+          if (cur.has(seat)) cur.delete(seat); else cur.add(seat);
+          this.settings = { ...this.readSettings(el), botSeats: [...cur].sort((a, b) => a - b) };
+          online.setSettings(this.settings);
+          this.showRoom();
+        };
+      }
+    }
     const start = el.querySelector('.start') as HTMLButtonElement | null;
-    if (start) start.onclick = () => { this.settings = this.readSettings(el); online.setSettings(this.settings); online.start(); };
+    if (start) start.onclick = () => {
+      // 준비 안 한 사람이 있으면 한 번은 막고 알린다 — 그래도 누르면 시작한다(AFK 로 방이 잠기면 안 된다)
+      if (waiting && !this.startWarned) { this.startWarned = true; this.toast(`아직 준비 안 한 사람 ${needReady - readyCount}명. 한 번 더 누르면 시작합니다`); return; }
+      this.startWarned = false;
+      this.settings = this.readSettings(el); online.setSettings(this.settings); online.start();
+    };
     const copy = el.querySelector('.copy') as HTMLButtonElement | null;
     if (copy) copy.onclick = () => { void navigator.clipboard?.writeText(st.code).then(() => this.toast('코드를 복사했습니다'), () => this.toast(st.code)); };
     if (isHost) for (const c of ['.rmode', '.rmap', '.rsec', '.rbots']) (el.querySelector(c) as HTMLSelectElement).onchange = () => { this.settings = this.readSettings(el); online.setSettings(this.settings); };

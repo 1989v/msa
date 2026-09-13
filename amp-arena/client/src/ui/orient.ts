@@ -6,6 +6,15 @@ let root: HTMLElement | null = null;
 
 export const isRotated = (): boolean => rotated;
 
+/**
+ * 화면에서 **실제로 쓸 수 있는 높이**. 회전 중에는 뿌리를 눕혀 놨으므로 innerWidth 가 높이다.
+ * `@media (max-height: …)` 로는 이걸 못 잡는다 — 세로 폰을 CSS 로 돌려도 뷰포트는 그대로 844px 세로라
+ * 「짧은 화면」 규칙이 통째로 안 걸렸다(타이틀이 390px 안에 826px 로 그려져 436px 가 잘렸다).
+ */
+export const usableHeight = (): number => (rotated ? window.innerWidth : window.innerHeight);
+
+const SHORT_PX = 520; // 폰 가로(390~430) 는 짧고, 노트북 창(600+) 은 아니다
+
 function portraitTouch(): boolean {
   const touch = (navigator.maxTouchPoints ?? 0) > 0 && matchMedia('(pointer: coarse)').matches;
   const forced = new URLSearchParams(location.search).get('rotate') === '1';
@@ -15,11 +24,17 @@ function portraitTouch(): boolean {
 function apply(): void {
   if (!root) return;
   const want = portraitTouch();
-  if (want === rotated) { if (rotated) size(); return; }
+  if (want === rotated) { if (rotated) size(); markShort(); return; }
   rotated = want;
   root.classList.toggle('rotated', rotated);
   if (rotated) size(); else { root.style.width = ''; root.style.height = ''; }
+  markShort();
   window.dispatchEvent(new Event('resize')); // 렌더러가 캔버스 크기를 다시 잰다
+}
+
+/** 짧은 화면 표시 — CSS 는 이 클래스로만 판단한다 (회전 때문에 미디어쿼리를 못 믿는다) */
+function markShort(): void {
+  root?.classList.toggle('short', usableHeight() <= SHORT_PX);
 }
 
 /** 회전한 뿌리의 크기 = 화면을 눕힌 크기 (가로 = innerHeight, 세로 = innerWidth) */

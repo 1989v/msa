@@ -20,10 +20,13 @@ export function buildRoster(occ: number[], seats: (SeatLike | null | undefined)[
     count[team]++;
     roster.push({ id: seat, name: s?.name ?? `${seat + 1}번`, team, acc: pick?.acc ?? 'none', style: pick?.style ?? 'fighter', bot: false, stats: pick?.stats ? sanitizeStatDelta(pick.stats) : undefined, skin: sanitizeSkin(pick?.skin), emblem: sanitizeEmblem(pick?.emblem) });
   }
-  if (settings.fillBots) {
+  // 봇을 넣을 빈 좌석: 「전부 채움」이면 남은 자리 전부, 아니면 방장이 고른 자리만 (2026-09-13)
+  const picked = settings.fillBots ? null : new Set((settings.botSeats ?? []).filter((n) => Number.isInteger(n) && n >= 0 && n < MAX_PLAYERS));
+  if (settings.fillBots || (picked && picked.size > 0)) {
     const rng = makeRng(seed ^ 0x5bd1e995); // 봇 장비는 매치 시드로 무작위 — 게스트도 cfg 로 같은 값을 받는다
     for (let i = 0; i < MAX_PLAYERS; i++) {
       if (occ.includes(i)) continue;
+      if (picked && !picked.has(i)) continue;
       const team = teams ? (count[0] <= count[1] ? 0 : 1) : 0;
       count[team]++;
       const { style, acc } = randomLoadout(rng);

@@ -47,8 +47,11 @@ export interface MatchConfig {
 }
 
 /** 대기실에서 서로에게 알리는 내 선택. 방을 만들 때 정한 매치 설정은 방장 것만 의미가 있다. */
-export interface Pick { name: string; acc: AccessoryId; style: StyleId; team: number; spectate?: boolean; stats?: Partial<Stats>; skin?: Skin; emblem?: string } // spectate: 싸우지 않고 본다 — 명단에서 빠진다. stats·skin·emblem: 진행
-export interface RoomSettings { map: MapId; mode: ModeId; seconds: number; fillBots: boolean }
+export interface Pick { name: string; acc: AccessoryId; style: StyleId; team: number; spectate?: boolean; ready?: boolean; stats?: Partial<Stats>; skin?: Skin; emblem?: string }
+// spectate: 싸우지 않고 본다 — 명단에서 빠진다. ready: 대기실 준비 완료(방장은 늘 준비로 친다). stats·skin·emblem: 진행
+// botSeats: 방장이 **빈 슬롯을 눌러 봇으로 지정한** 좌석 번호들. `fillBots` 가 「빈 자리를 전부 봇으로」라면
+// 이쪽은 「고른 자리만」이다 — 8명을 다 채우지 않고 서넛만 붙이고 싶을 때 쓴다 (2026-09-13 소감).
+export interface RoomSettings { map: MapId; mode: ModeId; seconds: number; fillBots: boolean; botSeats?: number[] }
 
 /** 게스트 → 방장 (`to` 지정) 또는 방 전체 브로드캐스트 */
 export type GuestMsg =

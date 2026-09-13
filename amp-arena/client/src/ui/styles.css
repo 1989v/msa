@@ -52,7 +52,8 @@ input, select { font-family: var(--font); }
 .logo .bolt { width: 0.9em; height: 0.9em; }
 .logo .amp, .logo .arena { text-shadow: 0.045em 0.045em 0 var(--outline), -2px -2px 0 var(--outline), 2px -2px 0 var(--outline), -2px 2px 0 var(--outline), 2px 2px 0 var(--outline); }
 .tagline { font-size: 18px; font-weight: 700; color: var(--muted); letter-spacing: 0.08em; }
-.title-form { width: min(520px, 92vw); }
+.title-form { width: min(520px, 92%); display: flex; flex-direction: column; gap: 8px; } /* vw 금지 — 회전 중에는 돌리기 전 뷰포트를 가리킨다 */
+.title-form .tf-a, .title-form .tf-b { gap: 8px; min-width: 0; }
 .version { position: absolute; left: 20px; bottom: 16px; }
 .hints { position: absolute; right: 20px; bottom: 16px; display: flex; gap: 14px; color: var(--muted); font-size: 13px; }
 
@@ -152,7 +153,7 @@ input, select { font-family: var(--font); }
 .result { position: absolute; inset: 0; background: rgba(12, 17, 36, 0.86); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; pointer-events: auto; }
 .result .headline { font-size: 44px; }
 .result .headline.red { color: var(--red); } .result .headline.blue { color: var(--blue); }
-.result table { border-collapse: collapse; width: min(760px, 92vw); }
+.result table { border-collapse: collapse; width: min(760px, 92%); }
 .result th { text-align: left; font-size: 11px; color: var(--dim); padding: 6px 10px; border-bottom: 2px solid var(--line); }
 .result td { padding: 8px 10px; border-bottom: 1px solid var(--line); font-size: 14px; }
 .result tr.me td { background: var(--panel3); }
@@ -191,6 +192,35 @@ input, select { font-family: var(--font); }
   .accs .acc svg { width: 20px; height: 20px; }
 }
 
+/*
+ * 짧은 화면 (`#app.short`) — **스크롤 없이 다 보여야 한다**.
+ * 판단은 orient.ts 가 한다: 세로 폰을 CSS 로 돌리면 뷰포트는 그대로 844px 세로라
+ * `@media (max-height: …)` 가 안 걸린다. 그래서 「실제로 쓸 수 있는 높이」를 JS 가 재서 클래스로 준다.
+ * 한 줄로 쌓으면 826px 라 390px 화면에서 436px 가 잘렸고, 시작 버튼까지 드래그해야 했다 (2026-09-13 소감).
+ */
+#app.short .screen { justify-content: center; padding: 8px 12px; gap: 6px; overflow-y: auto; }
+#app.short .screen > .col { gap: 6px !important; margin: auto 0; }
+#app.short .logo { font-size: 30px !important; }
+#app.short .tagline, #app.short .version, #app.short .hints { display: none; }
+#app.short .panel { padding: 10px 12px; }
+#app.short .title-form { width: min(880px, 97%); flex-direction: row; align-items: flex-start; gap: 12px; }
+#app.short .title-form .tf-a, #app.short .title-form .tf-b { flex: 1 1 0; gap: 5px; }
+#app.short .style-desc, #app.short .acc-desc { min-height: 0 !important; font-size: 11px; line-height: 1.35; }
+#app.short .label { font-size: 11px; }
+#app.short .field { height: 32px !important; }
+#app.short .accs .acc { padding: 4px 3px; font-size: 10px; }
+#app.short .accs .acc svg { width: 18px; height: 18px; }
+#app.short .stylebtn { padding: 5px 3px; font-size: 10px; }
+#app.short .btn { height: 38px; font-size: 13px; }
+/* 연습 설정 네 칸(맵·모드·봇·시간)은 반 폭 단에서 한 줄에 안 들어간다 — 2×2 로 접는다 (오른쪽 「3분」이 잘렸다) */
+#app.short .practice-set { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+#app.short .practice-set .field { width: auto !important; flex: none; }
+
+/* 대기실 빈 슬롯 — 방장은 눌러서 그 자리만 봇으로 만든다 (2026-09-13) */
+.slot.empty.pick { cursor: pointer; }
+.slot.empty.pick:hover { border-color: var(--amp); }
+.slot.empty.bot { border-color: var(--amp2); background: rgba(255, 176, 32, 0.08); }
+
 /* 발밑 안내 (줍기·던지기) — 조작 힌트 바로 위 */
 .hud .prompt { position: absolute; left: 50%; bottom: 64px; transform: translateX(-50%); padding: 6px 14px; border-radius: 999px; background: rgba(12, 17, 36, 0.78); border: 2px solid var(--amp); color: var(--amp); font-weight: 800; font-size: 14px; pointer-events: none; }
 .match.touch .hud .prompt { bottom: 150px; }
@@ -202,7 +232,7 @@ input, select { font-family: var(--font); }
 .match.spectator .hud .plate, .match.spectator .hud .skill { display: none; }
 /* 진행: 스탯 분배·상점 모달 (2026-09-12) */
 .modal { position: absolute; inset: 0; background: rgba(10, 13, 30, 0.72); display: flex; align-items: center; justify-content: center; z-index: 30; padding: 16px; }
-.modal-box { width: min(640px, 96vw); max-height: 92%; overflow-y: auto; }
+.modal-box { width: min(640px, 96%); max-height: 92%; overflow-y: auto; }
 .stats-table { border-collapse: collapse; width: 100%; }
 .stats-table th, .stats-table td { padding: 6px 8px; border-bottom: 1px solid var(--line2); text-align: left; font-size: 13px; }
 .stats-table .num { text-align: center; font-variant-numeric: tabular-nums; }

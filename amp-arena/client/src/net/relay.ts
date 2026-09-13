@@ -10,11 +10,12 @@ export type RelayIn =
   | { t: 'left'; seat: number }
   | { t: 'opponentLeft' }
   | { t: 'roundEnded'; round: number }
+  | { t: 'rooms'; rooms: { code: string; n: number; cap: number; host: string }[] }
   | { t: 'error'; code: string }
   | { t: 'ping' }
   | { t: 'pong' };
 
-export interface JoinOptions { room: string | null; nick: string; seats: number; private?: boolean; manualStart?: boolean }
+export interface JoinOptions { room: string | null; nick: string; seats: number; private?: boolean; manualStart?: boolean; listed?: boolean }
 
 export function relayUrl(): string {
   const override = new URLSearchParams(location.search).get('relay');
@@ -95,8 +96,12 @@ export class RelayClient {
     const msg: Record<string, unknown> = { t: 'join', room: o.room, nick: o.nick, seats: o.seats };
     if (o.private) msg.private = true;
     if (o.manualStart) msg.manualStart = true;
+    if (o.listed) msg.listed = true; // 공개 방 — 로비 목록에 코드가 실린다
     this.raw(msg);
   }
+
+  /** 공개 방 목록을 물어본다. 응답은 `rooms` 로 온다 (릴레이가 요청한 사람에게만 보낸다) */
+  askRooms(): void { this.raw({ t: 'rooms' }); }
 
   leave(): void { this.raw({ t: 'leave' }); }
 

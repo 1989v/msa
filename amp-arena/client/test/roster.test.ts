@@ -36,3 +36,40 @@ describe('buildRoster', () => {
     expect(new Set(a).size).toBeGreaterThan(1);
   });
 });
+
+
+// 2026-09-13 소감: 「봇 추가를 꼭 8명 다 하지 않더라도 방장이 대기 슬롯 클릭해서 봇으로」
+describe('고른 자리에만 봇', () => {
+  const only = (o: Partial<RoomSettings>): RoomSettings => settings({ fillBots: false, ...o });
+  const empty8: (ReturnType<typeof seat> | null)[] = [seat('나', null), null, null, null, null, null, null, null];
+
+  it('빈 자리 전부 채움을 끄고 두 자리만 고르면 봇도 둘뿐이다', () => {
+    const { roster } = buildRoster([0], empty8, only({ botSeats: [2, 5] }), 7);
+    expect(roster.filter((r) => r.bot).map((r) => r.id)).toEqual([2, 5]);
+    expect(roster).toHaveLength(3); // 사람 1 + 봇 2
+  });
+
+  it('아무 자리도 안 고르면 봇이 없다 — 1대1 도 된다', () => {
+    const two = [seat('나', null), seat('너', null), null, null, null, null, null, null];
+    const { roster } = buildRoster([0, 1], two, only({ botSeats: [] }), 7);
+    expect(roster.filter((r) => r.bot)).toHaveLength(0);
+    expect(roster).toHaveLength(2);
+  });
+
+  it('사람이 앉은 자리를 골라 뒀어도 봇을 겹쳐 넣지 않는다', () => {
+    const s = [seat('나', null), null, null, seat('너', null), null, null, null, null];
+    const { roster } = buildRoster([0, 3], s, only({ botSeats: [3, 4] }), 7);
+    expect(roster.filter((r) => r.bot).map((r) => r.id)).toEqual([4]);
+    expect(roster.find((r) => r.id === 3)!.bot).toBe(false);
+  });
+
+  it('빈 자리 전부 채움이 켜져 있으면 고른 목록과 상관없이 다 채운다', () => {
+    const { roster } = buildRoster([0], empty8, settings({ fillBots: true, botSeats: [2] }), 7);
+    expect(roster).toHaveLength(MAX_PLAYERS);
+  });
+
+  it('범위 밖·정수 아닌 좌석 번호는 무시한다 — 남이 보낸 설정을 그대로 믿지 않는다', () => {
+    const { roster } = buildRoster([0], empty8, only({ botSeats: [-1, 99, 3, 1.5] }), 7);
+    expect(roster.filter((r) => r.bot).map((r) => r.id)).toEqual([3]);
+  });
+});

@@ -128,14 +128,28 @@ export class Online {
   /** 빠른 대전: 같은 슬러그 대기열 자동 매칭. 릴레이가 만석 또는 30초 뒤에 시작시킨다. */
   quick(): Promise<boolean> { return this.join({ room: null, private: false }); }
   /** 코드 방 만들기: 방장이 시작 버튼을 누를 때까지 기다린다 */
-  create(): Promise<boolean> { return this.join({ room: null, private: true }); }
+  create(listed = true): Promise<boolean> { return this.join({ room: null, private: true, listed }); }
+
+  /**
+   * 공개 방 목록 (2026-09-13 소감 「다른 사람이 만든 방에 직접 참여」).
+   * 코드를 주고받지 않고 로비에서 골라 들어간다 — 공개로 만든 방만 실린다.
+   */
+  listRooms(): Promise<{ code: string; n: number; cap: number; host: string }[]> {
+    if (!this.relay.connected) return Promise.resolve([]);
+    return new Promise((resolve) => {
+      this.roomsResolve = resolve;
+      this.relay.askRooms();
+      setTimeout(() => { if (this.roomsResolve === resolve) { this.roomsResolve = null; resolve([]); } }, 3000);
+    });
+  }
+  private roomsResolve: ((r: { code: string; n: number; cap: number; host: string }[]) => void) | null = null;
   joinCode(code: string): Promise<boolean> { return this.join({ room: code.trim().toUpperCase(), private: true }); }
 
-  private join(o: { room: string | null; private: boolean }): Promise<boolean> {
+  private join(o: { room: string | null; private: boolean; listed?: boolean }): Promise<boolean> {
     if (this.inRoom) return Promise.resolve(false);
     this.resetRoom();
     this.state.party = o.private;
-    this.relay.join({ room: o.room, nick: this.nick, seats: MAX_PLAYERS, private: o.private, manualStart: o.private });
+    this.relay.join({ room: o.room, nick: this.nick, seats: MAX_PLAYERS, private: o.private, manualStart: o.private, listed: o.listed });
     return new Promise((resolve) => {
       this.joinResolve = resolve;
       setTimeout(() => { if (this.joinResolve === resolve) { this.joinResolve = null; resolve(false); } }, 8000);
@@ -269,6 +283,9 @@ export class Online {
         this.hooks.onToast(text);
         break;
       }
+      case 'rooms':
+        if (this.roomsResolve) { this.roomsResolve(Array.isArray(m.rooms) ? m.rooms : []); this.roomsResolve = null; }
+        break;
       case 'pong': break;
       case 'ping': break;
     }

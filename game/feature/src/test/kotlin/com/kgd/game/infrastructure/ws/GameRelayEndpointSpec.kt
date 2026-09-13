@@ -88,6 +88,52 @@ class GameRelayEndpointSpec(
             }
         }
     }
+
+    /**
+     * 공개 방 목록 (2026-09-13) — 코드를 주고받지 않고 남이 만든 방에 들어가기 위한 것.
+     * **공개로 표시한 방만** 실려야 한다: 코드 방은 원래 아는 사람만 들어오는 자리다.
+     */
+    Given("파티 방을 여는 /ws/games/room-list") {
+        val open = connect("room-list")
+        val secret = connect("room-list")
+        val looker = connect("room-list")
+
+        When("하나는 공개로, 하나는 비공개로 방을 만들고 다른 사람이 목록을 물으면") {
+            open.send("""{"t":"join","room":null,"nick":"open-host","seats":8,"private":true,"manualStart":true,"listed":true}""")
+            open.await(objectMapper)
+            secret.send("""{"t":"join","room":null,"nick":"secret-host","seats":8,"private":true,"manualStart":true}""")
+            secret.await(objectMapper)
+            looker.send("""{"t":"join","room":null,"nick":"looker","seats":8,"private":true,"manualStart":true}""")
+            looker.await(objectMapper)
+            looker.send("""{"t":"rooms"}""")
+            val listed = looker.await(objectMapper)
+
+            Then("공개 방 하나만 코드·인원과 함께 온다") {
+                listed.path("t").asText() shouldBe "rooms"
+                // 비공개 방과 조회한 사람 자신의 방은 빠지고 공개 방 하나만 남는다
+                listed.path("rooms").size() shouldBe 1
+                val row = listed.path("rooms").first()
+                row.path("host").asText() shouldBe "open-host"
+                row.path("n").asInt() shouldBe 1
+                row.path("cap").asInt() shouldBe 8
+                row.path("code").asText().length shouldBe 6
+            }
+
+            Then("목록으로 받은 코드로 그 방에 들어갈 수 있다") {
+                val code = listed.path("rooms").first().path("code").asText()
+                val joiner = connect("room-list")
+                joiner.send("""{"t":"join","room":"$code","nick":"joiner","seats":8,"private":true,"manualStart":true}""")
+                val j = joiner.await(objectMapper)
+                j.path("t").asText() shouldBe "joined"
+                j.path("seat").asInt() shouldBe 1 // 이미 한 명 있는 방 = 목록이 준 그 방
+                joiner.close()
+            }
+
+            Then("정리") {
+                open.close(); secret.close(); looker.close()
+            }
+        }
+    }
 }) {
     override fun extensions() = listOf(SpringExtension)
 
