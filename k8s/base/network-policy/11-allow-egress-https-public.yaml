@@ -12,6 +12,8 @@
 #                     CronJob (ADR-0070, data-sources.md §7).
 #                     상시 파드인 place 에는 열지 않는다 — deal 과 같은 이유.
 #   - ranking-ingest  오피넷 주유소·가격 수집 CronJob (ADR-0081).
+#   - db-backup       OCI Object Storage 로 덤프 오프노드 사본 업로드 (PAR, 쓰기 전용).
+#                     백업 PVC 는 local-path 라 데이터와 같은 물리 디스크에 있다.
 # (charting 은 ADR-0036 P2-T20 에서 Hard remove 되어 제외됨, 2026-05-02.)
 # 다른 서비스는 외부 :443 차단된 상태 (default-deny + DNS only).
 #
@@ -28,7 +30,7 @@ metadata:
 spec:
   podSelector:
     matchExpressions:
-      - { key: app.kubernetes.io/name, operator: In, values: [auth, sideapp, quant-ingest, deal-linkcheck, place-ingest, ranking-ingest] }
+      - { key: app.kubernetes.io/name, operator: In, values: [auth, sideapp, quant-ingest, deal-linkcheck, place-ingest, ranking-ingest, db-backup] }
   policyTypes:
     - Egress
   egress:

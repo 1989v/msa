@@ -41,6 +41,9 @@ spec:
                       key: MYSQL_ROOT_PASSWORD
                 - name: RETENTION_DAYS
                   value: "7"
+                # PAR 만료 2027-09-13. 만료되면 업로드가 404 로 죽는다 — Job 을 실패시켜 드러낸다.
+                - name: PAR_EXPIRES
+                  value: "2027-09-13"
               command: ["/bin/bash", "-eo", "pipefail", "-c"]
               args:
                 - |
@@ -61,9 +64,35 @@ spec:
 
                   echo "backup ok $(basename "$target") $(stat -c%s "$target") bytes"
                   ls -la /backup
+
+                  # 오프노드 사본. local-path 가 유일한 StorageClass 라 백업 PVC 가 데이터와
+                  # 같은 물리 디스크에 놓인다 — 여기까지만 하면 노드 손실에 둘 다 잃는다.
+                  #
+                  # PAR 은 쓰기 전용이라 올린 것을 되읽어 대조할 수 없다. 대신 Content-MD5 를
+                  # 실으면 오라클이 받은 바이트를 대조해 틀리면 400 UnmatchedContentMD5 로
+                  # 거부한다 — 읽기 권한 없이 종단 간 무결성이 확인된다.
+                  par=$(tr -d '\r\n' < /par/url)
+                  md5=$(openssl dgst -md5 -binary "$target" | base64)
+
+                  # -T 는 스트리밍 업로드다. --data-binary 는 파일 전체를 메모리에 올려
+                  # 182 MiB 덤프가 512Mi 한도를 밀어낸다.
+                  code=$(curl -sS -o /tmp/upload.err -w '%{http_code}' \
+                    -T "$target" -H "Content-MD5: ${md5}" \
+                    --retry 3 --retry-delay 10 --max-time 900 \
+                    "${par}$(basename "$target")")
+
+                  if [ "$code" != "200" ]; then
+                    echo "오프노드 업로드 실패 HTTP ${code} — PAR 만료(${PAR_EXPIRES})·권한·egress 순으로 본다" >&2
+                    cat /tmp/upload.err >&2
+                    exit 1
+                  fi
+                  echo "upload ok $(basename "$target") md5=${md5}"
               volumeMounts:
                 - name: backup
                   mountPath: /backup
+                - name: par
+                  mountPath: /par
+                  readOnly: true
               resources:
                 requests:
                   cpu: 50m
@@ -74,3 +103,8 @@ spec:
             - name: backup
               persistentVolumeClaim:
                 claimName: db-backup
+            # PAR URL 자체가 자격증명이라 레포에 두지 않는다. 수동 생성:
+            #   kubectl -n commerce create secret generic db-backup-par --from-file=url=<파일>
+            - name: par
+              secret:
+                secretName: db-backup-par

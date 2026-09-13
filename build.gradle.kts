@@ -779,8 +779,16 @@ val verifyPodTopology by tasks.registering {
             ?.filter { it.isFile && it.extension == "yaml" }
             ?.sortedBy { it.name }
             ?.forEach { policy ->
-                Regex("app\\.kubernetes\\.io/name:\\s*(\\S+)").findAll(policy.readText())
+                val text = policy.readText()
+                // 두 표기를 모두 본다. `matchExpressions` 의 values 목록은 폴드 때 이름을
+                // 고쳐야 했던 자리인데(11-allow-egress-https-public 의 quant·gifticon → sideapp)
+                // 앞의 정규식은 콜론을 요구해 그 목록을 지나쳤다.
+                val direct = Regex("app\\.kubernetes\\.io/name:\\s*([^\\s,}]+)").findAll(text)
                     .map { it.groupValues[1] }
+                val inList = Regex("key:\\s*app\\.kubernetes\\.io/name\\s*,[^\\n]*values:\\s*\\[([^\\]]*)\\]")
+                    .findAll(text)
+                    .flatMap { m -> m.groupValues[1].split(",").map { it.trim() }.filter { it.isNotEmpty() }.asSequence() }
+                (direct + inList)
                     .toSet()
                     .filterNot { it in labeledPodNames }
                     .sorted()
