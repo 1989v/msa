@@ -121,6 +121,14 @@ Gradle 모듈과 충돌) · `curation`(deal·game 을 가리키는 기존 용어
 삭제 전에 `k8s/base/db-backup` 의 최신 덤프가 그날짜인지 확인한다 — 삭제가 논리 손실이므로
 그 백업이 유일한 되돌림 수단이다.
 
+**실행: 2026-09-13 — 예정보다 12일 앞당겼다.** 2주가 답하려던 질문(「옛 테이블을 읽는 경로가
+남았나」)을 기다림 대신 측정으로 답할 수 있었다. ⓐ 살아 있는 datasource 중 `code_dictionary_db`
+를 가리키는 것은 atlas 자기 도메인뿐, ⓑ 정적 테이블은 행 수가 전부 일치하고 원장 둘은 새 스키마가
+앞서 있었다(`deal_offer_click` 40→46 · `blog_post_view` 51→59 — 옛것은 멈추고 새것은 자란다),
+ⓒ 오프노드 백업이 생겨 되돌림 수단이 로컬 한 부에서 둘로 늘었다. 덤프에 옛 테이블 15개가 실제로
+들어 있는 것을 확인한 뒤 지웠고, 직후 라이브 경로 7개가 삭제 전과 **바이트 단위로 같았다**
+(파드 재시작 0, SQL 오류 0). 삭제 절차 스크립트는 일회성이 끝나 함께 지웠다.
+
 **결과: 상주 백엔드 JVM 11개** — gateway · auth · search · search-consumer · analytics ·
 commerce · account · engagement · sideapp · content · atlas. 재편 전 15에서 줄었다.
 
