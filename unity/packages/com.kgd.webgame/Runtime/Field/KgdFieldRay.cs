@@ -16,13 +16,34 @@ namespace Kgd.Field
             /// <summary>표면 안쪽 칸 — 재료는 여기서 읽는다.</summary>
             public int X, Y, Z;
             public byte Mat;
+            /// <summary>지형이 아니라 기둥(소품)에 맞았으면 그 번호. 아니면 -1.</summary>
+            public int Obstacle;
         }
 
         public static Hit Cast(KgdFieldWorld w, Vector3 from, Vector3 dir, float reach, float step = 0.12f)
         {
-            var hit = new Hit();
+            var hit = new Hit { Obstacle = -1 };
             if (dir.sqrMagnitude < 1e-8f) return hit;
             dir.Normalize();
+
+            // 기둥이 지형보다 앞에 서 있으면 기둥이 맞는다 — 줄기 뒤의 땅이 파이면 안 된다
+            if (w.Obstacles != null && w.Obstacles.Raycast(from, dir, reach, out float ot, out int oid, out var on))
+            {
+                var land = CastField(w, from, dir, ot, step);
+                if (land.Any) return land;
+                hit.Any = true;
+                hit.Distance = ot;
+                hit.At = from + dir * ot;
+                hit.Normal = on;
+                hit.Obstacle = oid;
+                return hit;
+            }
+            return CastField(w, from, dir, reach, step);
+        }
+
+        private static Hit CastField(KgdFieldWorld w, Vector3 from, Vector3 dir, float reach, float step)
+        {
+            var hit = new Hit { Obstacle = -1 };
 
             float prevT = 0f;
             float prevV = w.Sample(from);

@@ -52,6 +52,15 @@ namespace Kgd.Field
         public Material LiquidSurface;
 
         /// <summary>
+        /// 장에 없는 기둥들 — 나무 줄기처럼 **지형이 아니라 소품**인 것. 몸이 밀려나고 겨눔이 먼저 맞는다.
+        /// 장에 구우면 밑동을 파도 위가 떠 있고, 쓰러지지도 못한다.
+        /// </summary>
+        public Kgd.Motion.KgdObstacles Obstacles;
+
+        /// <summary>청크가 다 만들어져 세계에 들어갔다 / 세계에서 빠진다. 소품 층이 이걸 보고 자기 것을 세우고 걷는다.</summary>
+        public Action<int, int> OnChunkReady, OnChunkUnload;
+
+        /// <summary>
         /// 이 높이 아래는 **깊은 층**으로 따로 뜬다. 지상에 있을 때는 그 층을 안 그린다 — 정점의 6할이
         /// 지상에서 보이지도 않는 굴 벽이었다(실측 26.7K 중 16.2K). 게임이 사람의 높이로 <see cref="ShowDeep"/> 을 켠다.
         /// </summary>
@@ -464,6 +473,7 @@ namespace Kgd.Field
             for (int dz = -1; dz <= 1; dz++)
                 for (int dx = -1; dx <= 1; dx++)
                     if (dx != 0 || dz != 0) MarkDirty(c.Cx + dx, c.Cz + dz);
+            OnChunkReady?.Invoke(c.Cx, c.Cz);
         }
 
         // ── 나눠 만들기 ─────────────────────────────────────────────────────────
@@ -591,6 +601,7 @@ namespace Kgd.Field
             foreach (long k in _drop)
             {
                 var c = _chunks[k];
+                OnChunkUnload?.Invoke(c.Cx, c.Cz);
                 if (c.Go != null) UnityEngine.Object.Destroy(c.Go);
                 if (c.Mesh != null) UnityEngine.Object.Destroy(c.Mesh);
                 if (c.DeepGo != null) UnityEngine.Object.Destroy(c.DeepGo);

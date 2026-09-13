@@ -127,6 +127,8 @@ namespace Kgd.Field
                 }
                 if (!moved) break;
             }
+            // 기둥(나무 줄기 같은 소품)은 장에 없다 — 따로 밀어낸다. 옆으로만, 땅이 아니다
+            if (w.Obstacles != null && w.Obstacles.Push(ref pos, Radius, Height)) hit.Wall = true;
             return pos;
         }
 

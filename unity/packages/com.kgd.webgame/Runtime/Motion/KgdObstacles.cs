@@ -122,6 +122,82 @@ namespace Kgd.Motion
             return best < float.MaxValue;
         }
 
+        /// <summary>
+        /// 밀도 세계의 몸을 기둥 밖으로 민다 — 옆으로만. 발 자리 <paramref name="foot"/> 와 몸의 반지름·키를
+        /// 받아, 높이가 겹치는 살아 있는 기둥마다 겹친 만큼 밀어낸다. 밀었으면 참.
+        /// </summary>
+        public bool Push(ref Vector3 foot, float bodyRadius, float bodyHeight)
+        {
+            bool pushed = false;
+            int cx = Mathf.FloorToInt(foot.x / _cell), cz = Mathf.FloorToInt(foot.z / _cell);
+            for (int dx = -1; dx <= 1; dx++)
+            for (int dz = -1; dz <= 1; dz++)
+            {
+                if (!_grid.TryGetValue(Key(cx + dx, cz + dz), out var bucket)) continue;
+                foreach (int i in bucket)
+                {
+                    var (at, r, t, alive) = _items[i];
+                    if (!alive) continue;
+                    if (foot.y + bodyHeight <= at.y || foot.y >= t) continue;   // 높이가 안 겹친다
+                    float ddx = foot.x - at.x, ddz = foot.z - at.z;
+                    float d = Mathf.Sqrt(ddx * ddx + ddz * ddz);
+                    float want = r + bodyRadius;
+                    if (d >= want) continue;
+                    var outDir = d < 1e-4f ? Vector3.right : new Vector3(ddx / d, 0f, ddz / d);
+                    foot += outDir * (want - d);
+                    pushed = true;
+                }
+            }
+            return pushed;
+        }
+
+        /// <summary>
+        /// 광선이 살아 있는 기둥에 닿는 첫 자리. 겨눔이 지형보다 먼저 이걸 본다 — 기둥이 지형 앞에 서 있으면
+        /// 기둥이 맞아야 한다. 닿으면 참이고 <paramref name="t"/> 가 거리, <paramref name="id"/> 가 기둥이다.
+        /// </summary>
+        public bool Raycast(Vector3 from, Vector3 dir, float maxT, out float t, out int id, out Vector3 normal)
+        {
+            t = maxT; id = -1; normal = Vector3.up;
+            // 광선이 지나는 격자 칸을 다 보는 대신 반경 안의 칸을 훑는다 — 사거리가 몇 칸이라 이웃 셋이면 충분하다
+            int c0x = Mathf.FloorToInt((from.x - maxT) / _cell), c1x = Mathf.FloorToInt((from.x + maxT) / _cell);
+            int c0z = Mathf.FloorToInt((from.z - maxT) / _cell), c1z = Mathf.FloorToInt((from.z + maxT) / _cell);
+            for (int cx = c0x; cx <= c1x; cx++)
+            for (int cz = c0z; cz <= c1z; cz++)
+            {
+                if (!_grid.TryGetValue(Key(cx, cz), out var bucket)) continue;
+                foreach (int i in bucket)
+                {
+                    var (at, r, top, alive) = _items[i];
+                    if (!alive) continue;
+                    // 수직 기둥: xz 평면의 원과 광선의 교차
+                    float ox = from.x - at.x, oz = from.z - at.z;
+                    float a = dir.x * dir.x + dir.z * dir.z;
+                    if (a < 1e-6f) continue;
+                    float b = 2f * (ox * dir.x + oz * dir.z);
+                    float c = ox * ox + oz * oz - r * r;
+                    float disc = b * b - 4f * a * c;
+                    if (disc < 0f) continue;
+                    float hit = (-b - Mathf.Sqrt(disc)) / (2f * a);
+                    if (hit < 0f || hit >= t) continue;
+                    float y = from.y + dir.y * hit;
+                    if (y < at.y || y > top) continue;
+                    t = hit; id = i;
+                    var p = from + dir * hit;
+                    normal = new Vector3(p.x - at.x, 0f, p.z - at.z).normalized;
+                }
+            }
+            return id >= 0;
+        }
+
+        /// <summary>기둥의 자리·반지름·윗면.</summary>
+        public bool Get(int id, out Vector3 at, out float radius, out float top)
+        {
+            if (id < 0 || id >= _items.Count) { at = Vector3.zero; radius = 0f; top = 0f; return false; }
+            var it = _items[id];
+            at = it.at; radius = it.radius; top = it.top;
+            return it.alive;
+        }
+
         private static int Key(int x, int z) => (x + 4096) * 8192 + (z + 4096);
     }
 }
