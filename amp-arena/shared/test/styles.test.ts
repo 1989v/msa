@@ -110,6 +110,6 @@ describe('스타일', () => {
     run(w, inp(0, 1), inp(), 60);
     expect(a.pos.z).toBeGreaterThan(C.WALK_SPEED * 1.1); // 이동 +15% 는 악세서리를 들어도 남는다
     run(w, inp(0, 0, BTN_ATTACK), inp(), 1);
-    expect(a.move).toBe('gunShot'); // 공격은 악세서리 것
+    expect(a.move).toBe('gunWhip'); // 공격은 악세서리 것 (더블탭 약공은 총열 후려치기)
   });
 });

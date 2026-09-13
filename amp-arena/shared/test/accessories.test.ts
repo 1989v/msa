@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { World } from '../src/world.ts';
 import * as C from '../src/constants.ts';
-import { BTN_ATTACK, BTN_GUARD, BTN_SPECIAL, BTN_JUMP, type Input } from '../src/input.ts';
+import { BTN_ATTACK, BTN_HEAVY, BTN_GUARD, BTN_SPECIAL, BTN_JUMP, type Input } from '../src/input.ts';
 import { MOVES } from '../src/moves.ts';
 import type { AccessoryId } from '../src/accessories.ts';
 import { STYLES, STYLE_IDS, type StyleId } from '../src/styles.ts';
@@ -63,18 +63,34 @@ describe('악세서리', () => {
     expect(b.hp).toBe(b.maxHp - 14);
     expect(c.hp).toBe(c.maxHp - 14);
   });
-  it('더블탭: 탄환은 투사체로 8m 밖 상대를 맞히고 탄창이 준다', () => {
-    const { w, a, b } = setup('pistols', 'none', 8);
-    const ev = run(w, inp(0, 0, BTN_ATTACK), inp(), 40);
-    expect(ev.some((e) => e.t === 'shot')).toBe(true);
-    expect(b.hp).toBe(b.maxHp - 3); // 밸런스 2차: 탄 4 → 3
-    expect(a.ammo).toBe(11);
+  // 2026-09-13 소감: 멀리서 쪼기만 해서 셌다 → 약공은 근접 후려치기, 강공만 두 줄 5m
+  it('더블탭 약공: 총열로 후려치는 근접이다 — 탄을 안 쓰고 멀면 안 닿는다', () => {
+    const near = setup('pistols', 'none', 1.2);
+    run(near.w, inp(0, 0, BTN_ATTACK), inp(), 14);
+    expect(near.a.move).toBe('gunWhip');
+    expect(near.b.hp).toBe(near.b.maxHp - MOVES.gunWhip.damage);
+    expect(near.a.ammo).toBe(12); // 탄을 안 쓴다
+
+    const far = setup('pistols', 'none', 8);
+    const ev = run(far.w, inp(0, 0, BTN_ATTACK), inp(), 30);
+    expect(ev.some((e) => e.t === 'shot')).toBe(false); // 총알이 안 나간다
+    expect(far.b.hp).toBe(far.b.maxHp); // 8m 는 안 닿는다
   });
-  it('더블탭: 탄창이 비면 재장전 1.5초 뒤 12발로 돌아온다', () => {
-    const { w, a } = setup('pistols', 'none', 8);
-    a.ammo = 1;
-    run(w, inp(0, 0, BTN_ATTACK), inp(), 6);
-    expect(a.ammo).toBe(0);
+  it('더블탭 강공: 두 줄로 나가고 사거리가 5m 라 그 밖은 못 맞힌다', () => {
+    const near = setup('pistols', 'none', 4);
+    const ev = run(near.w, inp(0, 0, BTN_HEAVY), inp(), 40);
+    expect(ev.filter((e) => e.t === 'shot').length).toBe(1); // 한 번에 두 줄
+    expect(near.b.hp).toBeLessThan(near.b.maxHp);
+    expect(near.a.ammo).toBe(10); // 두 발 먹는다
+
+    const far = setup('pistols', 'none', 8);
+    run(far.w, inp(0, 0, BTN_HEAVY), inp(), 60);
+    expect(far.b.hp).toBe(far.b.maxHp); // 5m 밖
+  });
+  it('더블탭: 탄이 모자라면 못 쏘고 재장전 1.5초 뒤 12발로 돌아온다', () => {
+    const { w, a } = setup('pistols', 'none', 4);
+    a.ammo = 1; // 강공은 두 발이라 못 쏜다
+    run(w, inp(0, 0, BTN_HEAVY), inp(), 6);
     expect(a.reload).toBeGreaterThan(0);
     run(w, inp(), inp(), 95);
     expect(a.ammo).toBe(12);

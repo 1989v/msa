@@ -90,7 +90,7 @@ export const MOVES = {
   gsSweep: def({ id: 'gsSweep', startup: 10, active: 4, recovery: 18, damage: 10, reach: 1.85, radius: 0.8, effect: 'hitstun', hitstun: 20, push: 3, arcDeg: 150 }),
   gsOverhead: def({ id: 'gsOverhead', startup: 16, active: 5, recovery: 30, damage: 17, reach: 1.9, radius: 0.9, effect: 'launch', launchH: 5, launchV: 9, arcDeg: 90 }),
   spSweep: def({ id: 'spSweep', startup: 12, active: 5, recovery: 24, damage: 13, reach: 1.9, radius: 0.8, effect: 'launch', launchH: 7, launchV: 6, arcDeg: 170 }),
-  gunBurst: def({ id: 'gunBurst', startup: 5, active: 1, recovery: 20, damage: 3, reach: 0, radius: 0, effect: 'hitstun', hitstun: 8, push: 1 }),
+  gunBurst: def({ id: 'gunBurst', startup: 6, active: 1, recovery: 22, damage: 4, reach: 0, radius: 0, effect: 'hitstun', hitstun: 3, push: 1 }),
   shieldJab: def({ id: 'shieldJab', startup: 6, active: 3, recovery: 12, damage: 7, reach: 1.2, radius: 0.55, effect: 'hitstun', hitstun: 14, push: 2 }),
   shieldSlam: def({ id: 'shieldSlam', startup: 13, active: 4, recovery: 24, damage: 14, reach: 1.3, radius: 0.7, effect: 'launch', launchH: 7, launchV: 6 }),
   rkHeavy: def({ id: 'rkHeavy', startup: 14, active: 5, recovery: 26, damage: 14, reach: 2.0, radius: 0.7, effect: 'launch', launchH: 7, launchV: 7 }),
@@ -173,6 +173,11 @@ export const MOVES = {
   nc3: def({ id: 'nc3', startup: 7, active: 3, recovery: 14, damage: 8, reach: 1.45, radius: 0.55, effect: 'hitstun', hitstun: 15, push: 2 }),
   ncFinish: def({ id: 'ncFinish', startup: 12, active: 4, recovery: 22, damage: 14, reach: 1.5, radius: 0.65, effect: 'launch', launchH: 6, launchV: 7 }),
   ncStorm: def({ id: 'ncStorm', startup: 8, active: 26, recovery: 22, damage: 6, reach: 1.6, radius: 0.75, effect: 'hitstun', hitstun: 11, push: 1.5, arcDeg: 200, multiHit: 5 }),
+
+  // 더블탭 약공 (2026-09-13 소감 「약공은 총을 휘둘러 때리는 거로」) — 총열로 후려치는 근접 2단.
+  // 이걸로 더블탭은 「멀리서 쪼는 무기」에서 「붙어서 싸우다 두 발 박는 무기」가 됐다.
+  gunWhip: def({ id: 'gunWhip', startup: 6, active: 3, recovery: 13, damage: 7, reach: 1.45, radius: 0.55, effect: 'hitstun', hitstun: 14, push: 1.5 }),
+  gunWhip2: def({ id: 'gunWhip2', startup: 7, active: 3, recovery: 15, damage: 9, reach: 1.5, radius: 0.55, effect: 'hitstun', hitstun: 16, push: 2 }),
 } as const;
 
 export type MoveId = keyof typeof MOVES;
@@ -182,7 +187,7 @@ export const MOVE_IDS = Object.keys(MOVES) as MoveId[];
 export interface ProjectileSpec { speed: number; range: number; radius: number; fanCount: number; fanDeg: number; every: number }
 export const PROJECTILE_MOVES: Partial<Record<MoveId, ProjectileSpec>> = {
   gunShot: { speed: 22, range: 14, radius: 0.3, fanCount: 1, fanDeg: 0, every: 0 },
-  gunBurst: { speed: 22, range: 13, radius: 0.3, fanCount: 3, fanDeg: 14, every: 0 },
+  gunBurst: { speed: 20, range: 5, radius: 0.3, fanCount: 2, fanDeg: 6, every: 0 }, // 두 줄 · 5m — 붙어서 쏘는 무기가 됐다
   gunRoll: { speed: 22, range: 12, radius: 0.3, fanCount: 6, fanDeg: 60, every: 0 },
   rocketPunch: { speed: 14, range: 10, radius: 0.5, fanCount: 1, fanDeg: 0, every: 0 },
   // 차크람: 더블탭보다 느리게 날지만 반경이 크다

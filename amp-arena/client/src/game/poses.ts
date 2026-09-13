@@ -106,6 +106,7 @@ export const MOVE_POSES: Record<MoveId, [PoseId, PoseId]> = {
   an1: ['swingWind', 'swing'], an2: ['swing2Wind', 'swing2'], anCrush: ['slamWind', 'slam'], anQuake: ['slamWind', 'slam'], anDrop: ['slamWind', 'slam'],
   dg1: ['jabWind', 'jab'], dg2: ['straightWind', 'straight'], dg3: ['jabWind', 'jab'], dgFinish: ['hookWind', 'hook'], dgBlink: ['thrust', 'thrust'],
   ckThrow: ['throw', 'throw'], ckHeavy: ['throw', 'throw'], ckSpin: ['roll', 'throw'],
+  gunWhip: ['hookWind', 'hook'], gunWhip2: ['swingWind', 'swing'], // 총열로 후려친다
   hm1: ['swingWind', 'swing'], hm2: ['swing2Wind', 'swing2'], hmDrop: ['slamWind', 'slam'], hmQuake: ['slamWind', 'slam'], hmShock: ['slamWind', 'slam'],
   cn1: ['shoot', 'shoot'], cnHeavy: ['shoot', 'shoot'], cnBarrage: ['shoot', 'shoot'],
   st1: ['thrustWind', 'thrust'], st2: ['swingWind', 'swing'], st3: ['thrustWind', 'thrust'], stSweep: ['swing2Wind', 'swing2'], stVault: ['roundWind', 'kickHigh'],

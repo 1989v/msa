@@ -292,25 +292,24 @@ export function stepPlayer(ctx: SimContext, p: Player, input: Input): void {
       }
       if (guardHeld && p.grounded) { setState(p, 'guard'); stopXZ(p); break; }
       if (hvy) {
-        // 강공 사슬 시작. 원거리는 3발 연사(탄 3 이상)
-        if (acc.ranged) {
-          if (p.ammo >= 3 || acc.ammo === 0) { p.chain = 1; p.comboIdx = 0; startMove(ctx, p, heavyChain[0], 'attack', mx, mz, moving); }
-          else if (p.reload === 0) p.reload = acc.reloadTicks;
-          break;
-        }
+        // 강공 사슬 시작. **투사체 무브면 그 발수만큼 탄이 있어야 쏜다** — 「악세서리가 원거리인가」로 가르면
+        // 더블탭처럼 약공만 근접인 무기를 못 담는다 (2026-09-13).
+        const hShot = PROJECTILE_MOVES[heavyChain[0]];
+        if (hShot && acc.ammo > 0 && p.ammo < hShot.fanCount) { if (p.reload === 0) p.reload = acc.reloadTicks; break; }
         p.chain = 1; p.comboIdx = 0;
         startMove(ctx, p, heavyChain[0], 'attack', mx, mz, moving);
         break;
       }
       if (atk) {
-        if (acc.ranged) {
-          if (p.ammo > 0 || acc.ammo === 0) { p.chain = 0; startMove(ctx, p, acc.combo[0], 'attack', mx, mz, moving); p.comboIdx = 0; }
+        const aShot = PROJECTILE_MOVES[acc.combo[0]];
+        if (aShot) {
+          if (acc.ammo === 0 || p.ammo >= aShot.fanCount) { p.chain = 0; startMove(ctx, p, acc.combo[0], 'attack', mx, mz, moving); p.comboIdx = 0; }
           else if (p.reload === 0) p.reload = acc.reloadTicks;
           break;
         }
         const g = acc.canGrab ? findGrabTarget(ctx, p) : null;
         if (g) { p.grabTarget = g.id; startMove(ctx, p, 'grab', 'grabTry', mx, mz, false); p.yaw = yawFromDir(g.pos.x - p.pos.x, g.pos.z - p.pos.z); break; }
-        if (p.state === 'run' && p.acc !== 'pistols') { startMove(ctx, p, 'tackle', 'dashAttack', mx, mz, moving); break; }
+        if (p.state === 'run' && p.acc !== 'pistols') { startMove(ctx, p, 'tackle', 'dashAttack', mx, mz, moving); break; } // 더블탭은 대시 공격 없음 — 총열 후려치기가 대시까지 갖지는 않는다
         p.chain = 0; p.comboIdx = 0;
         startMove(ctx, p, combo[0], 'attack', mx, mz, moving);
         break;
@@ -376,11 +375,12 @@ export function stepPlayer(ctx: SimContext, p: Player, input: Input): void {
       // 투사체 발사 시점
       const ps = PROJECTILE_MOVES[p.move ?? 'jab'];
       if (ps) {
-        if (ps.fanCount === 1 && p.t === m.startup && !p.shotFired) {
+        // **발수만큼 탄을 먹는다.** 전에는 fanCount 1 만 탄을 깎아 3발 연사·백롤 6발이 공짜였다 —
+        // 더블탭이 세던 이유의 하나다 (2026-09-13).
+        const fireAt = ps.fanCount === 1 ? m.startup : m.startup + 2;
+        if (p.t === fireAt && !p.shotFired) {
           p.shotFired = true;
-          if (acc.ammo > 0) { p.ammo = Math.max(0, p.ammo - 1); if (p.ammo === 0) p.reload = acc.reloadTicks; }
-          ctx.onProjectile(p, p.move!);
-        } else if (ps.fanCount > 1 && p.t === m.startup + 2) {
+          if (acc.ammo > 0) { p.ammo = Math.max(0, p.ammo - ps.fanCount); if (p.ammo === 0) p.reload = acc.reloadTicks; }
           ctx.onProjectile(p, p.move!);
         }
       }
