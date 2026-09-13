@@ -68,10 +68,47 @@ def pick(rows: list[dict], lang: str, budget: int, known_empty: set[str]) -> lis
     return missing[:budget]
 
 
-def collect(api_key: str, targets: list[dict]) -> tuple[list[dict], list[dict]]:
-    """(적재할 전체 레코드, 원천이 빈 개요를 준 항목). 일시적 실패는 어느 쪽에도 담기지 않는다."""
-    records: list[dict] = []
+#: 이만큼 모이면 적재한다. 실행이 중간에 끊겨도 여기까지는 남는다.
+FLUSH_EVERY = 500
+
+#: 한도 거부가 이만큼 연속이면 그 회차를 끝낸다. 한 건짜리 튐과 한도 소진을 가르는 값이다.
+QUOTA_STREAK_STOP = 20
+
+#: 건당 간격. 원천 한도(오퍼레이션당 10만/일)가 아니라 **Job 의 실행 시간**이 상한이다 —
+#: 무료 단일 노드라 activeDeadlineSeconds 안에 끝나야 하고, 그 안에서 몇 건을 받느냐를
+#: 이 값이 정한다. 건당 요청 시간이 약 0.14초라 0.05 면 초당 5건 남짓이다.
+REQUEST_GAP_SEC = 0.05
+
+#: 한도 소진을 알리는 신호. 원천이 HTTP 429 로 줄 때도 있고, 200 안에 결과코드로 줄 때도 있다.
+_QUOTA_SIGNS = ("429", "LIMITED_NUMBER_OF_SERVICE_REQUESTS", "SERVICE_ACCESS_DENIED")
+
+
+def is_quota_error(exc: BaseException) -> bool:
+    """한도 때문에 거부당했나. 네트워크 오류와 갈라야 한다 —
+    네트워크는 다음 건에서 회복되지만 한도는 그 회차 안에서 회복되지 않는다."""
+    return any(sign in str(exc) for sign in _QUOTA_SIGNS)
+
+
+def collect(api_key: str, targets: list[dict]) -> tuple[int, list[dict]]:
+    """(적재한 건수, 원천이 빈 개요를 준 항목).
+
+    **모아 뒀다 한 번에 쓰지 않는다** — 예산을 올리면 실행이 길어져
+    `activeDeadlineSeconds` 에 잘릴 수 있고, 그때 마지막에 한 번 쓰는 구조면
+    그날 받은 것이 통째로 사라진다. 자세한 이유는 backfill_intro.collect 와 같다.
+    """
+    loaded = 0
+    batch: list[dict] = []
     empty: list[dict] = []
+    quota_streak = 0
+
+    def flush() -> None:
+        nonlocal batch, loaded
+        if not batch:
+            return
+        place_client.bulk_upsert(batch)
+        loaded += len(batch)
+        batch = []
+
     for i, row in enumerate(targets, 1):
         service, _ = SERVICES["kor" if row["lang"] == "ko" else "eng"]
         try:
@@ -81,21 +118,32 @@ def collect(api_key: str, targets: list[dict]) -> tuple[list[dict], list[dict]]:
                 item = item[0] if item else None
             overview = ((item or {}).get("overview") or "").strip()
         except Exception as e:
-            # 일시적 실패(429/네트워크)는 negative cache 에 넣지 않는다 —
+            # 일시적 실패(네트워크)는 negative cache 에 넣지 않는다 —
             # 넣으면 그 레코드는 영영 다시 시도되지 않는다.
             log(f"  {row['contentId']} 스킵: {e}")
+            if is_quota_error(e):
+                quota_streak += 1
+                if quota_streak >= QUOTA_STREAK_STOP:
+                    log(f"  한도 도달로 중단 — 연속 거부 {quota_streak}회 ({i}/{len(targets)})")
+                    break
+            else:
+                quota_streak = 0
             continue
+        quota_streak = 0
         if not overview:
             # 원천이 빈 값을 준 것 — 다시 불러도 결과가 같다.
             empty.append({"contentId": row["contentId"], "lang": row["lang"]})
             continue
         rec = {k: row.get(k) for k in UPSERT_FIELDS if row.get(k) is not None}
         rec["overview"] = overview
-        records.append(rec)
+        batch.append(rec)
+        if len(batch) >= FLUSH_EVERY:
+            flush()
         if i % 100 == 0:
-            log(f"  {i}/{len(targets)} (채움 {len(records)})")
-        time.sleep(0.15)
-    return records, empty
+            log(f"  {i}/{len(targets)} (적재 {loaded})")
+        time.sleep(REQUEST_GAP_SEC)
+    flush()
+    return loaded, empty
 
 
 def run(api_key: str, budget: int, langs: tuple[str, ...] = ("ko", "en")) -> bool:
@@ -112,10 +160,9 @@ def run(api_key: str, budget: int, langs: tuple[str, ...] = ("ko", "en")) -> boo
             log(f"[{lang}] 채울 대상이 없습니다")
             continue
         log(f"[{lang}] 수집 시작 (예산 {budget}, 대상 {len(targets):,})")
-        records, empty = collect(api_key, targets)
-        if records:
-            created, updated = place_client.bulk_upsert(records)
-            log(f"[{lang}] 적재 {len(records)}건 (신규 {created} · 갱신 {updated})")
+        got, empty = collect(api_key, targets)
+        if got:
+            log(f"[{lang}] 적재 {got}건")
             loaded = True
         if empty:
             log(f"[{lang}] 원천 개요없음 {place_client.record_probes(empty)}건 기록")

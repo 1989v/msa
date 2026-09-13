@@ -94,17 +94,17 @@ def main() -> int:
         {"contentId": "B", "lang": "ko", "title": "나", "latitude": 1.0, "longitude": 2.0},
         {"contentId": "C", "lang": "ko", "title": "다", "latitude": 1.0, "longitude": 2.0},
     ]
-    records, empty = bo.collect("key", targets)
+    loaded, empty = bo.collect("key", targets)
 
     assert calls == ["A", "B", "C"], calls
-    assert [r["contentId"] for r in records] == ["A"], records
-    assert records[0]["overview"] == "내용", records[0]
+    assert loaded == 1, loaded
     # 핵심: 429 인 C 는 negative cache 에 들어가지 않는다 (들어가면 영영 재시도 안 됨)
     assert [e["contentId"] for e in empty] == ["B"], empty
 
-    place_client.bulk_upsert(records)
-    place_client.record_probes(empty)
+    # collect 가 끝나기 전에 이미 적재한다 — 밖에서 또 부르지 않는다.
     assert len(POSTED["bulk"]) == 1 and POSTED["bulk"][0]["contentId"] == "A", POSTED["bulk"]
+    assert POSTED["bulk"][0]["overview"] == "내용", POSTED["bulk"][0]
+    place_client.record_probes(empty)
     assert POSTED["probes"] == [{"contentId": "B", "lang": "ko"}], POSTED["probes"]
 
     _youtube_matcher()
@@ -114,7 +114,7 @@ def main() -> int:
     _google_place_enrichment()
 
     print("SMOKE OK — 제외목록 · 429 분리 · 전체 레코드 적재 · 매칭 필터 · 제목 분리 "
-          "· 유튜브 카테고리/좌표/보충 · 법정동 파서 · 영문명 추출 · 구글 place_id 보강")
+          "· 유튜브 카테고리/좌표/보충 · 법정동 파서 · 영문명 추출 · 구글 place_id 보강 · 흘려 쓰기 · 한도 중단")
     return 0
 
 
@@ -247,6 +247,9 @@ def _admin_region_parser() -> None:
     _categorize_rules()
     _intro_derive()
     _tour_error_is_catchable()
+    _intro_flush_before_end()
+    _intro_stops_on_quota()
+    _quota_error_is_not_network()
 
 
 def _english_from_address() -> None:
@@ -511,6 +514,80 @@ def _google_place_enrichment() -> None:
     # ── 왕복 계약: bulk 는 전체 동기화라 UPSERT_FIELDS 에 없는 보강 필드는 매일 지워진다 (§0 ③)
     from src.backfill_overview import UPSERT_FIELDS
     assert "googlePlaceId" in UPSERT_FIELDS
+
+
+def _intro_flush_before_end() -> None:
+    """예산을 올리면 실행이 길어져 시간 제한에 잘릴 수 있다. 그때 마지막에 한 번 쓰는
+    구조면 그날 받은 것이 통째로 사라진다 — **끝나기 전에 이미 쓰여 있어야** 한다."""
+    from src import backfill_intro, place_client
+
+    n = backfill_intro.FLUSH_EVERY * 2 + 7
+    targets = [{"contentId": str(i), "lang": "ko", "contentTypeId": "12"} for i in range(n)]
+    events: list[tuple[str, int]] = []
+
+    def fake_get(_key, _svc, _op, params):
+        events.append(("fetch", int(params["contentId"])))
+        return {"items": {"item": {"contentid": params["contentId"],
+                                  "contenttypeid": "12", "usetime": "09:00~18:00"}}}
+
+    def fake_upsert(records):
+        events.append(("flush", len(records)))
+        return len(records), 0
+
+    orig = (backfill_intro.tour_get, place_client.bulk_upsert, backfill_intro.time.sleep)
+    backfill_intro.tour_get = fake_get
+    place_client.bulk_upsert = fake_upsert
+    backfill_intro.time.sleep = lambda _s: None
+    try:
+        loaded = backfill_intro.collect("k", targets)
+    finally:
+        backfill_intro.tour_get, place_client.bulk_upsert, backfill_intro.time.sleep = orig
+
+    assert loaded == n, loaded
+    last_fetch = max(i for i, (kind, _) in enumerate(events) if kind == "fetch")
+    first_flush = min(i for i, (kind, _) in enumerate(events) if kind == "flush")
+    assert first_flush < last_fetch, "마지막 호출 전에 이미 적재돼 있어야 한다"
+    assert sum(v for k, v in events if k == "flush") == n
+
+
+def _intro_stops_on_quota() -> None:
+    """한도는 그 회차 안에서 회복되지 않는다. 만난 뒤에도 남은 예산만큼 두드리면
+    그 시간이 통째로 버려진다 — 연속 거부가 이어지면 멈춰야 한다."""
+    from src import backfill_intro, place_client
+
+    budget = 3000
+    targets = [{"contentId": str(i), "lang": "ko", "contentTypeId": "12"} for i in range(budget)]
+    attempts = []
+
+    def fake_get(_key, _svc, _op, params):
+        attempts.append(params["contentId"])
+        if len(attempts) > 10:
+            raise RuntimeError("HTTP Error 429: Too Many Requests")
+        return {"items": {"item": {"contentid": params["contentId"],
+                                   "contenttypeid": "12", "usetime": "09:00"}}}
+
+    orig = (backfill_intro.tour_get, place_client.bulk_upsert, backfill_intro.time.sleep)
+    backfill_intro.tour_get = fake_get
+    place_client.bulk_upsert = lambda records: (len(records), 0)
+    backfill_intro.time.sleep = lambda _s: None
+    try:
+        loaded = backfill_intro.collect("k", targets)
+    finally:
+        backfill_intro.tour_get, place_client.bulk_upsert, backfill_intro.time.sleep = orig
+
+    assert len(attempts) == 10 + backfill_intro.QUOTA_STREAK_STOP, len(attempts)
+    assert loaded == 10, loaded          # 한도 전에 받은 것은 남는다
+
+
+def _quota_error_is_not_network() -> None:
+    """네트워크는 다음 건에서 회복되지만 한도는 아니다. 둘을 섞으면 일시적 오류에
+    회차를 접거나, 한도에 도달하고도 계속 두드린다."""
+    from src.backfill_intro import is_quota_error
+
+    assert is_quota_error(RuntimeError("HTTP Error 429: Too Many Requests"))
+    assert is_quota_error(RuntimeError("LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR"))
+    assert not is_quota_error(RuntimeError("<urlopen error handshake operation timed out>"))
+    assert not is_quota_error(RuntimeError("NO_MANDATORY_REQUEST_PARAMETERS_ERROR2(contentTypeId)"))
 
 
 if __name__ == "__main__":

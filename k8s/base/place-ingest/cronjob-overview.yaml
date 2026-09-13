@@ -54,7 +54,7 @@ spec:
                 - name: REDIS_HOST
                   value: "redis"
                 - name: BUDGET
-                  value: "1000"
+                  value: "6000"
                 - name: TOUR_API_KEY
                   valueFrom:
                     secretKeyRef:
