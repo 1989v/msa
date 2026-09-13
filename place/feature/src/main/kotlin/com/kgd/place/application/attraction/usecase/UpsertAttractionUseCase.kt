@@ -43,6 +43,9 @@ interface UpsertAttractionUseCase {
         val petAcmpyType: String? = null,
         val petRaw: String? = null,
         val petSyncedAt: LocalDateTime? = null,
+        val imagesRaw: String? = null,
+        val infoRaw: String? = null,
+        val extraSyncedAt: LocalDateTime? = null,
         val googlePlaceId: String? = null,
         val sourceModifiedAt: LocalDateTime? = null,
     )

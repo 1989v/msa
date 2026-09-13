@@ -70,6 +70,8 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | 관광지 이용정보 | TourAPI `detailIntro2` | 필요 | 〃 | `place/ingest --job=intro` (매일) |
 | 관광지 분류 코드표 | TourAPI `lclsSystmCode2` | 필요 | 〃 | `place/ingest --job=lcls-codes` (월 1회) |
 | 관광지 반려동물 동반 | TourAPI `detailPetTour2` | 필요 | 〃 | `place/ingest --job=pet-tour` (주 1회) |
+| 관광지 부가 사진 | TourAPI `detailImage2` | 필요 | 〃 | `place/ingest --job=media` (매일) |
+| 관광지 반복정보 | TourAPI `detailInfo2` | 필요 | 〃 | `place/ingest --job=media` (매일) |
 | **행정구역(법정동)** | 행정안전부 행정표준코드관리시스템 | **불필요** | 공공누리 제1유형 | `place/ingest --job=admin-regions` |
 | 세계 지명 계층 | GeoNames | 불필요 | **CC BY 4.0** | `tools/seed/place/normalize_regions.py` |
 | POI(상가) | 소상공인시장진흥공단 상가(상권)정보 | 필요 | 이용허락범위 제한없음 | `tools/seed/place/normalize_pois.py` |
@@ -112,11 +114,16 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 **일일 한도는 (서비스 × 오퍼레이션)별로 따로다** — `KorService2`가 429여도 `EngService2`는
 살아 있고, `areaBasedList2`도 `detailCommon2`와 별도 한도다.
 
-**포털 화면의 일일 트래픽(상세기능별 100,000)을 그대로 믿으면 안 된다.** 이 키가 실제로 받는 것은
-**하루 약 1,000건**이다 — `detailIntro2` 예산을 5,000 으로 올려 봤더니 999건 뒤로 전부
-`429 Too Many Requests` 였다(2026-09-08 실측). 화면 값과 실제가 달라 어느 쪽도 상수로 박을 수 없고,
-`place/ingest/src/quota.py` 가 `DATA_GO_KR` 을 관측만 하는 이유가 그것이다.
-그래서 이용정보·개요 전량 수집에 걸리는 수십 일은 **줄일 수 있는 시간이 아니다.**
+**한도는 계정 등급이 정한다 — 포털 화면의 숫자가 아니라.** 개발계정일 때는 상세기능별
+100,000 이라 적혀 있어도 실제로는 하루 약 1,000건이었다(`detailIntro2` 예산을 5,000 으로 올리니
+999건 뒤로 전부 `429`, 2026-09-08 실측). **운영계정 승인(2026-09-11) 뒤로는 그 벽이 없다** —
+하루 2,198콜을 429 없이 넘겼다(2026-09-13 실측, 국문). 화면 값과 실제가 등급에 따라 갈리므로
+어느 쪽도 상수로 박을 수 없고, `place/ingest/src/quota.py` 가 `DATA_GO_KR` 을 관측만 하는 이유가
+그것이다.
+
+**이제 수집 속도를 정하는 것은 원천 한도가 아니라 Job 의 실행 시간이다.** 무료 단일 노드라
+`activeDeadlineSeconds`(1시간) 안에 끝나야 하고, 건당 소요(요청 약 0.14초 + `REQUEST_GAP_SEC`)가
+한 회차 분량을 정한다. 예산을 더 올리려면 시간 제한부터 같이 올려야 한다.
 
 **분류 코드표는 이름을 준다.** `attractions` 는 `lclsSystm1~3` 을 코드로만 갖고 있어
 필터 이름도, 질의의 「자연」이 어느 코드인지도 이을 수 없다. `lclsSystmCode2` 가 그 이름을 주고,

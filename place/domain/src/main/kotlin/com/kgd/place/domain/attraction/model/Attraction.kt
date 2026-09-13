@@ -47,6 +47,17 @@ class Attraction private constructor(
     var petAcmpyType: String? = null,
     var petRaw: String? = null,
     var petSyncedAt: LocalDateTime? = null,
+    /**
+     * 부가 사진·반복정보 (TourAPI detailImage2 / detailInfo2).
+     *
+     * **원문을 그대로 남긴다.** 둘 다 레코드당 여러 건이고 유형마다 키가 다르다
+     * (반복정보는 관광지의 「내국인예약안내」와 레포츠의 「코스안내」가 같은 자리에 온다).
+     * 화면이 무엇을 쓸지 정해지면 그때 파생 컬럼을 늘린다 — 원천 재호출 없이 다시 계산할
+     * 수 있다 (data-sources.md §0 ②).
+     */
+    var imagesRaw: String? = null,
+    var infoRaw: String? = null,
+    var extraSyncedAt: LocalDateTime? = null,
     var googlePlaceId: String? = null,
     var sourceModifiedAt: LocalDateTime? = null,
     var status: String = "ACTIVE",
@@ -112,6 +123,9 @@ class Attraction private constructor(
             petAcmpyType: String? = null,
             petRaw: String? = null,
             petSyncedAt: LocalDateTime? = null,
+            imagesRaw: String? = null,
+            infoRaw: String? = null,
+            extraSyncedAt: LocalDateTime? = null,
             googlePlaceId: String? = null,
             sourceModifiedAt: LocalDateTime? = null,
         ): Attraction {
@@ -158,6 +172,9 @@ class Attraction private constructor(
                 petAcmpyType = petAcmpyType?.takeIf { it.isNotBlank() },
                 petRaw = petRaw?.takeIf { it.isNotBlank() },
                 petSyncedAt = petSyncedAt,
+                imagesRaw = imagesRaw?.takeIf { it.isNotBlank() },
+                infoRaw = infoRaw?.takeIf { it.isNotBlank() },
+                extraSyncedAt = extraSyncedAt,
                 googlePlaceId = googlePlaceId?.takeIf { it.isNotBlank() },
                 sourceModifiedAt = sourceModifiedAt,
                 status = "ACTIVE",
@@ -204,6 +221,9 @@ class Attraction private constructor(
             petAcmpyType: String?,
             petRaw: String?,
             petSyncedAt: LocalDateTime?,
+            imagesRaw: String?,
+            infoRaw: String?,
+            extraSyncedAt: LocalDateTime?,
             googlePlaceId: String?,
             sourceModifiedAt: LocalDateTime?,
             status: String,
@@ -247,6 +267,9 @@ class Attraction private constructor(
             petAcmpyType = petAcmpyType,
             petRaw = petRaw,
             petSyncedAt = petSyncedAt,
+            imagesRaw = imagesRaw,
+            infoRaw = infoRaw,
+            extraSyncedAt = extraSyncedAt,
             googlePlaceId = googlePlaceId,
             sourceModifiedAt = sourceModifiedAt,
             status = status,
@@ -325,6 +348,10 @@ class Attraction private constructor(
         petAcmpyType = source.petAcmpyType ?: petAcmpyType
         petRaw = source.petRaw ?: petRaw
         petSyncedAt = source.petSyncedAt ?: petSyncedAt
+        /* 부가 사진·반복정보도 같은 보강 필드다 — 목록 동기화에는 없고 별도 오퍼레이션으로만 온다. */
+        imagesRaw = source.imagesRaw ?: imagesRaw
+        infoRaw = source.infoRaw ?: infoRaw
+        extraSyncedAt = source.extraSyncedAt ?: extraSyncedAt
         sourceModifiedAt = source.sourceModifiedAt
         status = source.status
     }

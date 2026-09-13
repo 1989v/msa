@@ -138,6 +138,15 @@ class AttractionJpaEntity(
     @Column(name = "pet_synced_at")
     val petSyncedAt: java.time.LocalDateTime? = null,
 
+    @Column(name = "images_raw", columnDefinition = "JSON")
+    val imagesRaw: String? = null,
+
+    @Column(name = "info_raw", columnDefinition = "JSON")
+    val infoRaw: String? = null,
+
+    @Column(name = "extra_synced_at")
+    val extraSyncedAt: java.time.LocalDateTime? = null,
+
 
     // Places Text Search 로 채우는 보강 필드 — id 외에는 저장하지 않는다 (data-sources.md §7)
     @Column(name = "google_place_id", length = 128)
@@ -190,6 +199,9 @@ class AttractionJpaEntity(
         petAcmpyType = petAcmpyType,
         petRaw = petRaw,
         petSyncedAt = petSyncedAt,
+        imagesRaw = imagesRaw,
+        infoRaw = infoRaw,
+        extraSyncedAt = extraSyncedAt,
         googlePlaceId = googlePlaceId,
         sourceModifiedAt = sourceModifiedAt,
         status = status,
@@ -237,6 +249,9 @@ class AttractionJpaEntity(
             petAcmpyType = attraction.petAcmpyType,
             petRaw = attraction.petRaw,
             petSyncedAt = attraction.petSyncedAt,
+            imagesRaw = attraction.imagesRaw,
+            infoRaw = attraction.infoRaw,
+            extraSyncedAt = attraction.extraSyncedAt,
             introSyncedAt = attraction.introSyncedAt,
             googlePlaceId = attraction.googlePlaceId,
             sourceModifiedAt = attraction.sourceModifiedAt,

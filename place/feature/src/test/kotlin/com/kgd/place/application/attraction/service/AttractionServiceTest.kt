@@ -70,6 +70,9 @@ class AttractionServiceTest : BehaviorSpec({
                     introSyncedAt = java.time.LocalDateTime.of(2026, 9, 5, 4, 0),
                     petAcmpyType = "전구역 동반가능", petRaw = null,
                     petSyncedAt = java.time.LocalDateTime.of(2026, 9, 8, 4, 0),
+                    imagesRaw = """[{"originimgurl":"https://tong.visitkorea.or.kr/a.jpg"}]""",
+                    infoRaw = """[{"infoname":"내국인예약안내","infotext":"가능"}]""",
+                    extraSyncedAt = java.time.LocalDateTime.of(2026, 9, 13, 4, 0),
                     googlePlaceId = "ChIJod7tSseifDUR9hXHLFNGMIs",
                     sourceModifiedAt = null, status = "ACTIVE",
                     createdAt = java.time.LocalDateTime.now(),
@@ -81,6 +84,10 @@ class AttractionServiceTest : BehaviorSpec({
                 view.lang shouldBe "ko"
                 // 보강 필드도 조회로 되읽혀야 한다 — 못 읽으면 개요 배치 왕복이 지운다 (§0 ③)
                 view.googlePlaceId shouldBe "ChIJod7tSseifDUR9hXHLFNGMIs"
+                // 부가 사진·반복정보도 되읽혀야 한다 — 안 읽히면 수집 배치가 매일 지운다
+                view.imagesRaw shouldBe """[{"originimgurl":"https://tong.visitkorea.or.kr/a.jpg"}]"""
+                view.infoRaw shouldBe """[{"infoname":"내국인예약안내","infotext":"가능"}]"""
+                view.extraSyncedAt shouldBe java.time.LocalDateTime.of(2026, 9, 13, 4, 0)
                 // detailIntro2 보강도 마찬가지 — 원문(introRaw)까지 되읽혀야 파생 규칙을
                 // 바꿀 때 원천을 다시 부르지 않는다
                 view.useTime shouldBe "09:00~18:00"

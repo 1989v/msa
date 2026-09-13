@@ -114,7 +114,7 @@ def main() -> int:
     _google_place_enrichment()
 
     print("SMOKE OK — 제외목록 · 429 분리 · 전체 레코드 적재 · 매칭 필터 · 제목 분리 "
-          "· 유튜브 카테고리/좌표/보충 · 법정동 파서 · 영문명 추출 · 구글 place_id 보강 · 흘려 쓰기 · 한도 중단")
+          "· 유튜브 카테고리/좌표/보충 · 법정동 파서 · 영문명 추출 · 구글 place_id 보강 · 흘려 쓰기 · 한도 중단 · 부가 사진/반복정보")
     return 0
 
 
@@ -250,6 +250,9 @@ def _admin_region_parser() -> None:
     _intro_flush_before_end()
     _intro_stops_on_quota()
     _quota_error_is_not_network()
+    _media_param_contract()
+    _media_marks_even_when_source_is_empty()
+    _media_without_content_type_still_gets_images()
 
 
 def _english_from_address() -> None:
@@ -588,6 +591,98 @@ def _quota_error_is_not_network() -> None:
     assert is_quota_error(RuntimeError("LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR"))
     assert not is_quota_error(RuntimeError("<urlopen error handshake operation timed out>"))
     assert not is_quota_error(RuntimeError("NO_MANDATORY_REQUEST_PARAMETERS_ERROR2(contentTypeId)"))
+
+
+def _media_param_contract() -> None:
+    """두 오퍼레이션은 받는 파라미터가 **반대다**.
+
+    detailImage2 에 contentTypeId 를 넣으면 INVALID_REQUEST_PARAMETER_ERROR 로 거부되고,
+    detailInfo2 에 빼면 NO_MANDATORY_REQUEST_PARAMETERS_ERROR2 로 거부된다. 한쪽만 맞춰 두면
+    사진이든 반복정보든 한 축이 통째로 안 모이는데, 스킵 로그만 쌓여 조용히 지나간다.
+    """
+    from src import backfill_media, place_client
+
+    seen: list[tuple[str, dict]] = []
+
+    def fake_get(_key, _svc, op, params):
+        seen.append((op, params))
+        if op == "detailImage2":
+            return {"items": {"item": [{"originimgurl": "https://x/1.jpg"}]}}
+        return {"items": {"item": {"infoname": "내국인예약안내", "infotext": "가능"}}}
+
+    posted: list[dict] = []
+    orig = (backfill_media.tour_get, place_client.bulk_upsert, backfill_media.time.sleep)
+    backfill_media.tour_get = fake_get
+    place_client.bulk_upsert = lambda recs: (posted.extend(recs), (len(recs), 0))[1]
+    backfill_media.time.sleep = lambda _s: None
+    try:
+        backfill_media.collect("k", [{"contentId": "1", "lang": "ko", "contentTypeId": "12"}])
+    finally:
+        backfill_media.tour_get, place_client.bulk_upsert, backfill_media.time.sleep = orig
+
+    ops = {op: params for op, params in seen}
+    assert "contentTypeId" not in ops["detailImage2"], ops["detailImage2"]
+    assert ops["detailInfo2"]["contentTypeId"] == "12", ops["detailInfo2"]
+    # 기본값(10건)으로 부르면 17장짜리가 잘린다 — 둘 다 넉넉히 요청해야 한다
+    assert ops["detailImage2"]["numOfRows"] == backfill_media.PAGE_ROWS
+    assert ops["detailInfo2"]["numOfRows"] == backfill_media.PAGE_ROWS
+
+    rec = posted[0]
+    assert "originimgurl" in rec["imagesRaw"], rec
+    assert "내국인예약안내" in rec["infoRaw"], rec       # dict 한 건도 목록으로 받아야 한다
+    print("  부가 사진·반복정보 파라미터 계약 OK (이미지는 타입 빼고 · 정보는 타입 넣고)")
+
+
+def _media_marks_even_when_source_is_empty() -> None:
+    """원천이 0건을 줘도 **받았다는 사실**은 남겨야 한다. 안 남기면 그 레코드가
+    매일 후보 앞줄에 다시 서서 호출만 쓰고 영영 안 끝난다."""
+    from src import backfill_media, place_client
+
+    posted: list[dict] = []
+    orig = (backfill_media.tour_get, place_client.bulk_upsert, backfill_media.time.sleep)
+    backfill_media.tour_get = lambda *a, **k: {"items": ""}      # 원천이 0건일 때의 모양
+    place_client.bulk_upsert = lambda recs: (posted.extend(recs), (len(recs), 0))[1]
+    backfill_media.time.sleep = lambda _s: None
+    try:
+        backfill_media.collect("k", [{"contentId": "9", "lang": "ko", "contentTypeId": "12"}])
+    finally:
+        backfill_media.tour_get, place_client.bulk_upsert, backfill_media.time.sleep = orig
+
+    assert len(posted) == 1, posted
+    assert posted[0].get("extraSyncedAt"), posted[0]
+    assert "imagesRaw" not in posted[0], "빈 응답을 내용처럼 저장하면 안 된다"
+
+    # 시각이 찍힌 레코드는 다음 회차 후보에서 빠져야 한다
+    rows = [{"contentId": "9", "lang": "ko", "extraSyncedAt": "2026-09-13T05:00:00"},
+            {"contentId": "8", "lang": "ko"}]
+    assert [r["contentId"] for r in backfill_media.pick(rows, "ko", 10)] == ["8"]
+    print("  빈 응답도 수집 시각을 남긴다 OK (재시도 무한루프 방지)")
+
+
+def _media_without_content_type_still_gets_images() -> None:
+    """contentTypeId 가 없는 레코드(국문 43·영문 14)는 detailInfo2 를 부를 수 없다.
+    그렇다고 사진까지 포기하면 그 레코드는 영영 아무것도 못 받는다."""
+    from src import backfill_media, place_client
+
+    called: list[str] = []
+
+    def fake_get(_key, _svc, op, _params):
+        called.append(op)
+        return {"items": {"item": [{"originimgurl": "https://x/1.jpg"}]}}
+
+    posted: list[dict] = []
+    orig = (backfill_media.tour_get, place_client.bulk_upsert, backfill_media.time.sleep)
+    backfill_media.tour_get = fake_get
+    place_client.bulk_upsert = lambda recs: (posted.extend(recs), (len(recs), 0))[1]
+    backfill_media.time.sleep = lambda _s: None
+    try:
+        backfill_media.collect("k", [{"contentId": "7", "lang": "ko", "contentTypeId": None}])
+    finally:
+        backfill_media.tour_get, place_client.bulk_upsert, backfill_media.time.sleep = orig
+
+    assert called == ["detailImage2"], called
+    assert posted and "imagesRaw" in posted[0], posted
+    print("  타입 없는 레코드도 사진은 받는다 OK")
 
 
 if __name__ == "__main__":

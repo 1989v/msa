@@ -1,0 +1,64 @@
+# ADR-0070 — TourAPI 부가 사진(detailImage2)·반복정보(detailInfo2) 하루치 수집 CronJob.
+#
+# 대표사진은 목록이 주는 1장뿐인데 원천은 더 갖고 있다(오대호 아트팩토리 17장). 반복정보는
+# 관광지의 「내국인예약안내」·레포츠의 「코스안내」처럼 유형마다 다른 것이 같은 자리에 온다
+# (문화시설·쇼핑·음식점은 0건이라 편차가 크다).
+#
+# **레코드당 두 콜이라 BUDGET 은 호출 수가 아니라 레코드 수다.** 건당 약 0.33초
+# (요청 0.14 × 2 + 간격 0.05)라 ko+en 6,000레코드 = 12,000콜이 약 33분이고,
+# 1시간 제한에 여유가 남는다. 개요·이용정보(각 6,000)보다 예산이 작은 이유가 이것이다 —
+# 원천 한도가 아니라 무료 단일 노드의 실행 시간이 상한이다.
+#
+# 두 오퍼레이션이 수집 시각(extra_synced_at)을 공유하는 것은 한 레코드를 한 번에 훑기 때문이다.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: place-ingest-media
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: place-ingest
+    app.kubernetes.io/part-of: commerce-platform
+    place.kgd.io/job: "media"
+spec:
+  # 매일 UTC 21:00 = KST 06:00 — 개요(04:00)·이용정보(05:00) 뒤에 둔다.
+  # 같은 시각에 돌리면 4 OCPU 노드에서 서로를 굶긴다.
+  schedule: "0 21 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 3600
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: place-ingest
+            app.kubernetes.io/part-of: commerce-platform
+            place.kgd.io/job: "media"
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: ingest
+              image: commerce/place-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--job=media"]
+              env:
+                - name: PLACE_API
+                  value: "http://content:8097"
+                # ADR-0082 — JVM 과 같은 제공자 단위 쿼터 장부
+                - name: REDIS_HOST
+                  value: "redis"
+                - name: BUDGET
+                  value: "3000"
+                - name: TOUR_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: place-ingest-secrets
+                      key: tour-api-key
+                      optional: true
+              resources:
+                # 전량(약 6만 행) 페이지 스캔을 메모리에 올린다 — 파이썬 dict 기준 ~100Mi.
+                requests: { cpu: 100m, memory: 256Mi }
+                limits:   { memory: 768Mi }

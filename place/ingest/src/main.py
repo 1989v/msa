@@ -4,6 +4,7 @@
 K8s CronJob 이 본 모듈을 --job 으로 분기해 호출한다:
     python -m src.main --job=overview --budget=1000
     python -m src.main --job=intro --budget=1000   # 이용시간·휴무·요금·주차 (ko·en 병행)
+    python -m src.main --job=media --budget=1000   # 부가 사진·반복정보 (레코드당 2콜)
     python -m src.main --job=stats            # 잔량만 (TourAPI 호출 0)
     python -m src.main --job=sync --content-type=attraction
     python -m src.main --job=admin-regions --file 법정동코드_전체자료.txt
@@ -25,7 +26,8 @@ import sys
 from pathlib import Path
 
 from src import (admin_region, backfill_intro, backfill_overview, google_place, naver, place_client,
-                 quota, sync_lcls_codes, sync_pet_tour, sync_tour, youtube)
+                 backfill_media, quota, sync_lcls_codes, sync_pet_tour, sync_tour,
+                 youtube)
 
 
 def _api_key() -> str:
@@ -67,6 +69,13 @@ def _job_pet_tour(langs: tuple[str, ...]) -> int:
     """반려동물 동반. 목록형이라 건당 1콜이 아니고 약 100콜이면 전량이라 예산이 없다."""
     loaded = sync_pet_tour.run(_api_key(), langs)
     sync_pet_tour.log("적재 없음 — 재색인 불필요" if not loaded else "전량 반영")
+    return 0
+
+
+def _job_media(budget: int, langs: tuple[str, ...]) -> int:
+    """부가 사진·반복정보 하루치. 레코드당 **두 콜**이라 budget 은 레코드 수다."""
+    loaded = backfill_media.run(_api_key(), budget, langs)
+    backfill_overview.log("적재 없음 — 재색인 불필요" if not loaded else "하루치 완료")
     return 0
 
 
@@ -227,8 +236,8 @@ def _print_english_names(regions: list[dict]) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--job", required=True,
-                    choices=["overview", "intro", "stats", "sync", "links", "admin-regions",
-                             "google-places", "lcls-codes", "pet-tour"])
+                    choices=["overview", "intro", "media", "stats", "sync", "links",
+                             "admin-regions", "google-places", "lcls-codes", "pet-tour"])
     ap.add_argument("--budget", type=int, default=int(os.environ.get("BUDGET", "1000")),
                     help="개요 수집 일일 예산 (언어별, detailCommon2 호출 상한)")
     ap.add_argument("--lang", choices=["ko", "en"], help="미지정 시 ko·en 둘 다")
@@ -249,6 +258,8 @@ def main() -> int:
         return _job_overview(args.budget, langs)
     if args.job == "intro":
         return _job_intro(args.budget, langs)
+    if args.job == "media":
+        return _job_media(args.budget, langs)
     if args.job == "links":
         return _job_links(args.link_limit)
     if args.job == "google-places":
