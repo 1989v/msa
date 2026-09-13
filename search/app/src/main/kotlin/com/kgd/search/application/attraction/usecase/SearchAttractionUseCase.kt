@@ -59,6 +59,8 @@ interface SearchAttractionUseCase {
         val parkingFee: String? = null,
         val infoCenter: String? = null,
         val introRaw: String? = null,
+        val imagesRaw: String? = null,
+        val infoRaw: String? = null,
         val googlePlaceId: String? = null,
         val distanceKm: Double? = null,
         val position: Int = 0,

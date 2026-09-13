@@ -56,6 +56,13 @@ export interface Attraction {
    */
   introRaw?: string | null;
   /**
+   * 부가 사진 원문 (TourAPI detailImage2). 대표사진 말고 원천이 더 갖고 있는 것들 —
+   * 많으면 24장이다. 유형마다 키가 달라 원문 그대로 오고 화면이 풀어 쓴다.
+   */
+  imagesRaw?: string | null;
+  /** 반복정보 원문 (detailInfo2). 관광지는 예약안내, 레포츠는 코스안내가 이 자리에 온다. */
+  infoRaw?: string | null;
+  /**
    * Google Places place_id — 구글맵 딥링크(`query_place_id=`)가 장소 카드에 착지하게 한다.
    * 점진 보강이라 없을 수 있다 — 없으면 주소/좌표 검색 링크로 폴백 (googleMapsSearchUrl).
    */

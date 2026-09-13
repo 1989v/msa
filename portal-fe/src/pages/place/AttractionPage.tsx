@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -30,11 +30,13 @@ import { googleMapsSearchUrl, loadGoogleMaps, mapsApiKey } from './googleMaps';
 import Footer from '../../components/Footer';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
 import {
+  galleryImages,
   groupByCategory,
   introRows,
   isNotFoundError,
   isPlottable,
   overviewText,
+  repeatInfoRows,
   sourceText,
   titleParts,
   type IntroRow,
@@ -44,8 +46,8 @@ import AdSlot from '../../components/ads/AdSlot';
 import { ADSENSE_SLOTS } from '../../seo/copy.mjs';
 
 const UI = {
-  ko: { back: '← 관광지 탐색', nearby: '주변 명소', amenities: '주변 편의시설', info: '이용 안내', mapAria: '위치 지도', mapBadCoords: '원천 좌표가 정확하지 않아 지도를 표시하지 않습니다', mapKeyMissing: '지도 키가 설정되지 않아 위치 링크만 표시합니다', useTime: '이용시간', restDate: '쉬는날', useFee: '이용요금', parking: '주차', parkingFee: '주차요금', infoCenter: '문의', map: '구글 지도에서 보기', notFound: '관광지를 찾을 수 없습니다.', failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', loading: '불러오는 중…' },
-  en: { back: '← Explore Korea', nearby: 'Nearby places', amenities: 'Nearby amenities', info: 'Visitor info', mapAria: 'Location map', mapBadCoords: 'Source coordinates look wrong, so the map is hidden.', mapKeyMissing: 'Map key is not configured — showing the link only.', useTime: 'Hours', restDate: 'Closed', useFee: 'Admission', parking: 'Parking', parkingFee: 'Parking fee', infoCenter: 'Contact', map: 'Open in Google Maps', notFound: 'Attraction not found.', failed: 'Could not load this page. Please try again in a moment.', loading: 'Loading…' },
+  ko: { back: '← 관광지 탐색', nearby: '주변 명소', amenities: '주변 편의시설', info: '이용 안내', photos: '사진', mapAria: '위치 지도', mapBadCoords: '원천 좌표가 정확하지 않아 지도를 표시하지 않습니다', mapKeyMissing: '지도 키가 설정되지 않아 위치 링크만 표시합니다', useTime: '이용시간', restDate: '쉬는날', useFee: '이용요금', parking: '주차', parkingFee: '주차요금', infoCenter: '문의', map: '구글 지도에서 보기', notFound: '관광지를 찾을 수 없습니다.', failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', loading: '불러오는 중…' },
+  en: { back: '← Explore Korea', nearby: 'Nearby places', amenities: 'Nearby amenities', info: 'Visitor info', photos: 'Photos', mapAria: 'Location map', mapBadCoords: 'Source coordinates look wrong, so the map is hidden.', mapKeyMissing: 'Map key is not configured — showing the link only.', useTime: 'Hours', restDate: 'Closed', useFee: 'Admission', parking: 'Parking', parkingFee: 'Parking fee', infoCenter: 'Contact', map: 'Open in Google Maps', notFound: 'Attraction not found.', failed: 'Could not load this page. Please try again in a moment.', loading: 'Loading…' },
 } as const;
 
 /** 주변 검색 반경 — 명소 목록과 편의시설 캐로셀이 같은 값을 쓴다. */
@@ -174,6 +176,20 @@ export default function AttractionPage() {
    * 관광지 하나만 보여주므로 클러스터러가 필요 없다. 좌표는 상세 응답에 이미 있어
    * 지도 때문에 API 를 더 부르지 않는다.
    */
+  /*
+   * 갤러리. 대표사진 + 부가 사진(detailImage2). 고른 장을 **번호**로 들고 있어야
+   * 관광지를 옮겨 다닐 때 남은 URL 이 새 관광지에 잘못 걸리지 않는다.
+   */
+  const gallery = useMemo(
+    () => galleryImages(attraction?.imagesRaw, attraction?.imageUrl),
+    [attraction?.imagesRaw, attraction?.imageUrl],
+  );
+  const [shownIndex, setShownIndex] = useState(0);
+  // 다른 관광지로 넘어가면 첫 장으로 되돌린다 — 안 하면 3번째 장을 보던 상태가
+  // 사진이 1장뿐인 관광지로 넘어가 아무것도 안 보이게 된다.
+  useEffect(() => setShownIndex(0), [attraction?.contentId]);
+  const shown = gallery[shownIndex] ?? gallery[0];
+
   const mapDivRef = useRef<HTMLDivElement | null>(null);
   const [mapFailed, setMapFailed] = useState(false);
   const hasMapKey = mapsApiKey() !== '';
@@ -240,17 +256,37 @@ export default function AttractionPage() {
             {/* 원천 사진은 폭 940px · 대부분 3:2 다(표본 16장 중 15장이 1.4~1.8).
                 꽉 채워 자르면 위아래가 날아가고 1360px 로 늘리면 흐려진다. 비율 그대로
                 두고 높이만 고정하며, 남는 옆 공간은 같은 사진을 흐리게 깔아 메운다. */}
-            {attraction.imageUrl && (
-              <div
-                className="place-detail-hero"
-                style={{ backgroundImage: `url(${JSON.stringify(attraction.imageUrl).slice(1, -1)})` }}
-              >
-                <img
-                  className="place-detail-img"
-                  src={attraction.imageUrl}
-                  alt={`${attraction.title}${lang === 'en' ? ' photo' : ' 사진'}`}
-                />
-              </div>
+            {shown && (
+              <>
+                <div
+                  className="place-detail-hero"
+                  style={{ backgroundImage: `url(${JSON.stringify(shown.url).slice(1, -1)})` }}
+                >
+                  <img
+                    className="place-detail-img"
+                    src={shown.url}
+                    alt={shown.name || `${attraction.title}${lang === 'en' ? ' photo' : ' 사진'}`}
+                  />
+                </div>
+                {/* 썸네일 줄 — 사진이 하나뿐이면 고를 것이 없으니 그리지 않는다.
+                    원천이 24장까지 주는 곳이 있어 가로 스크롤로 둔다. */}
+                {gallery.length > 1 && (
+                  <div className="place-gallery" role="group" aria-label={L.photos}>
+                    {gallery.map((img, i) => (
+                      <button
+                        type="button"
+                        key={img.url}
+                        className="place-gallery-thumb"
+                        aria-current={i === shownIndex}
+                        aria-label={img.name || `${L.photos} ${i + 1}`}
+                        onClick={() => setShownIndex(i)}
+                      >
+                        <img src={img.url} alt="" loading="lazy" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
             <h1 className="place-detail-title">{attraction.title}</h1>
             {/* 원어 병기명은 별도 요소다 — 제목에 괄호로 다시 붙이지 않는다 (t2 백엔드 계약) */}
@@ -290,7 +326,12 @@ export default function AttractionPage() {
                   { key: 'infoCenter', label: L.infoCenter, value: attraction.infoCenter ?? '' },
                 ];
                 // 이용정보에도 <br>·엔티티가 섞여 온다 — 개요와 같은 정리를 거친다
-                const rows = [...derived, ...introRows(attraction.introRaw, lang)]
+                // 반복정보(detailInfo2)는 라벨을 원천이 준다 — 예약안내·코스안내 등
+                const rows = [
+                  ...derived,
+                  ...introRows(attraction.introRaw, lang),
+                  ...repeatInfoRows(attraction.infoRaw),
+                ]
                   .map((r) => ({ ...r, value: sourceText(r.value) }))
                   .filter((r) => r.value.trim().length > 0);
                 if (rows.length === 0) return null;

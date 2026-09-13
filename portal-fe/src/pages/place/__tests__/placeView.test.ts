@@ -1,15 +1,17 @@
 import type { Attraction } from '../../../api/placeApi';
 import { describe, expect, it } from 'vitest';
 import {
-  groupByCategory,
   INTRO_DERIVED_CONCEPTS,
   INTRO_LABELS,
+  galleryImages,
+  groupByCategory,
   introBaseKey,
   introRows,
   isPlottable,
   mergePages,
   nextPage,
   overviewText,
+  repeatInfoRows,
   sourceText,
   titleParts,
 } from '../placeView';
@@ -271,5 +273,78 @@ describe('sourceText — 이용정보에도 같은 정리가 필요하다', () =
 
   it('이용시간의 엔티티도 푼다', () => {
     expect(sourceText('09:00&ndash;18:00')).toBe('09:00–18:00');
+  });
+});
+
+describe('galleryImages — 부가 사진', () => {
+  const raw = JSON.stringify([
+    { originimgurl: 'https://t/1.jpg', smallimageurl: 'https://t/1s.jpg', imgname: '정문' },
+    { originimgurl: 'http://t/2.JPG', imgname: '' },
+    { smallimageurl: 'https://t/3.jpg', imgname: '뒤뜰' },   // 원본이 없으면 작은 것을 쓴다
+  ]);
+
+  it('대표사진이 맨 앞에 오고 원문이 뒤따른다', () => {
+    const got = galleryImages(raw, 'https://t/main.jpg');
+    expect(got.map((g) => g.url)).toEqual([
+      'https://t/main.jpg', 'https://t/1.jpg', 'http://t/2.JPG', 'https://t/3.jpg',
+    ]);
+    expect(got[1].name).toBe('정문');
+  });
+
+  it('대표사진이 원문에도 있으면 한 번만 나온다', () => {
+    const got = galleryImages(raw, 'https://t/1.jpg');
+    expect(got.filter((g) => g.url.endsWith('/1.jpg'))).toHaveLength(1);
+    expect(got[0].url).toBe('https://t/1.jpg');
+  });
+
+  it('프로토콜만 다른 같은 사진도 중복으로 본다', () => {
+    // 원천이 http/https 를 섞어 준다 — 프로토콜로 갈리면 같은 사진이 두 번 걸린다
+    const got = galleryImages(raw, 'https://t/2.JPG');
+    expect(got.filter((g) => g.url.toLowerCase().endsWith('/2.jpg'))).toHaveLength(1);
+  });
+
+  it('원문이 깨져 있어도 대표사진은 남는다', () => {
+    expect(galleryImages('{not json', 'https://t/main.jpg')).toEqual([
+      { url: 'https://t/main.jpg', name: '' },
+    ]);
+  });
+
+  it('사진이 하나도 없으면 빈 배열', () => {
+    expect(galleryImages(null, null)).toEqual([]);
+  });
+});
+
+describe('repeatInfoRows — 반복정보', () => {
+  it('라벨은 원천의 infoname 을 그대로 쓴다', () => {
+    // 번역표를 두면 원천이 항목을 늘릴 때마다 화면에서 조용히 사라진다
+    const rows = repeatInfoRows(JSON.stringify([
+      { infoname: '내국인예약안내', infotext: '가능', serialnum: '10' },
+      { infoname: '코스안내', infotext: '북지장사 가는 길', serialnum: '0' },
+    ]));
+    expect(rows.map((r) => r.label)).toEqual(['코스안내', '내국인예약안내']);   // serialnum 순
+    expect(rows[0].value).toBe('북지장사 가는 길');
+  });
+
+  it('이름이나 내용이 비면 줄을 만들지 않는다', () => {
+    expect(repeatInfoRows(JSON.stringify([
+      { infoname: '', infotext: '가능', serialnum: '1' },
+      { infoname: '안내', infotext: '   ', serialnum: '2' },
+    ]))).toEqual([]);
+  });
+
+  it('같은 이름이 여러 번 와도 각각 남는다', () => {
+    // 코스 구간처럼 같은 라벨이 반복되는 유형이 있다 — 합치면 정보가 준다
+    const rows = repeatInfoRows(JSON.stringify([
+      { infoname: '코스안내', infotext: '1구간', serialnum: '0' },
+      { infoname: '코스안내', infotext: '2구간', serialnum: '1' },
+    ]));
+    expect(rows).toHaveLength(2);
+    expect(new Set(rows.map((r) => r.key)).size).toBe(2);   // key 가 겹치면 React 가 하나를 버린다
+  });
+
+  it('원문이 깨졌거나 배열이 아니면 빈 배열', () => {
+    expect(repeatInfoRows('{not json')).toEqual([]);
+    expect(repeatInfoRows(JSON.stringify({ infoname: 'x', infotext: 'y' }))).toEqual([]);
+    expect(repeatInfoRows(null)).toEqual([]);
   });
 });

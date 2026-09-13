@@ -201,6 +201,13 @@
         "type": "text",
         "index": false
       },
+      "imagesRaw": {
+        "type": "text",
+        "index": false
+      },
+      "infoRaw": {
+        "type": "text",
+        "index": false},
       "googlePlaceId": {
         "type": "keyword",
         "index": false

@@ -49,6 +49,9 @@ data class AttractionDocument(
     val parkingFee: String? = null,
     val infoCenter: String? = null,
     val introRaw: String? = null,
+    /** 부가 사진·반복정보 원문 (TourAPI detailImage2/detailInfo2). 화면 표시용 — 색인하지 않는다. */
+    val imagesRaw: String? = null,
+    val infoRaw: String? = null,
     val googlePlaceId: String? = null,
     /**
      * 완결성 기반 정렬 신호 — 위 필드들에서 파생한다 ([AttractionPopularity]).

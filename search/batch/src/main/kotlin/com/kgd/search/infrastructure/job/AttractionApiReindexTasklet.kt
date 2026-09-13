@@ -116,6 +116,8 @@ class AttractionApiReindexTasklet(
                             parkingFee = attraction.parkingFee,
                             infoCenter = attraction.infoCenter,
                             introRaw = attraction.introRaw,
+                            imagesRaw = attraction.imagesRaw,
+                            infoRaw = attraction.infoRaw,
                             googlePlaceId = attraction.googlePlaceId,
                             modifiedAt = attraction.sourceModifiedAt,
                         ),

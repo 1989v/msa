@@ -200,3 +200,79 @@ export { sourceText } from '../../seo/copy.mjs';
 
 /** 개요 전용 별칭 — 호출부의 뜻이 드러나게 남긴다. */
 export { sourceText as overviewText } from '../../seo/copy.mjs';
+
+
+/** 갤러리 한 장. `name` 은 원천이 준 캡션인데 비어 있거나 엉뚱할 때가 있다. */
+export interface GalleryImage {
+  url: string;
+  name: string;
+}
+
+/**
+ * 부가 사진 목록 (detailImage2 원문 → 화면용).
+ *
+ * 대표사진을 **맨 앞에 두고** 원문의 나머지를 잇는다 — 대표가 원문에도 들어 있으면
+ * 중복되므로 URL 로 걸러낸다. 원천이 http/https 를 섞어 주므로 프로토콜은 비교에서 뺀다.
+ */
+export function galleryImages(
+  raw: string | null | undefined,
+  primaryUrl?: string | null,
+): GalleryImage[] {
+  const out: GalleryImage[] = [];
+  const seen = new Set<string>();
+  const keyOf = (url: string) => url.replace(/^https?:/, '');
+
+  const push = (url: unknown, name: unknown) => {
+    const u = String(url ?? '').trim();
+    if (!u || seen.has(keyOf(u))) return;
+    seen.add(keyOf(u));
+    out.push({ url: u, name: String(name ?? '').trim() });
+  };
+
+  push(primaryUrl, '');
+  if (!raw) return out;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return out;   // 원문이 깨져 있어도 화면은 살아야 한다
+  }
+  if (!Array.isArray(parsed)) return out;
+  for (const item of parsed) {
+    if (!item || typeof item !== 'object') continue;
+    const row = item as Record<string, unknown>;
+    push(row.originimgurl ?? row.smallimageurl, row.imgname);
+  }
+  return out;
+}
+
+/**
+ * 반복정보 (detailInfo2 원문 → 이용 안내 줄).
+ *
+ * **라벨을 우리가 만들지 않는다** — 원천이 `infoname` 으로 준다(「내국인예약안내」·「코스안내」).
+ * 유형마다 항목이 달라 번역표를 두면 원천이 늘 때마다 화면에서 사라진다.
+ * 표시 순서도 원천의 `serialnum` 을 따른다.
+ */
+export function repeatInfoRows(raw: string | null | undefined): IntroRow[] {
+  if (!raw) return [];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(parsed)) return [];
+
+  const rows: { row: IntroRow; order: number }[] = [];
+  parsed.forEach((item, i) => {
+    if (!item || typeof item !== 'object') return;
+    const r = item as Record<string, unknown>;
+    const label = String(r.infoname ?? '').trim();
+    const value = String(r.infotext ?? '').trim();
+    if (!label || !value) return;
+    const serial = Number(r.serialnum);
+    rows.push({ row: { key: `info:${serial}:${label}`, label, value }, order: Number.isFinite(serial) ? serial : i });
+  });
+  rows.sort((a, b) => a.order - b.order);
+  return rows.map((r) => r.row);
+}
