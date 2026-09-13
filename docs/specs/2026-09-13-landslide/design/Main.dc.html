@@ -1,0 +1,311 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&amp;family=Nanum+Myeongjo:wght@700;800&amp;display=swap">
+  <style>
+    body { margin: 0; background: #0A0A0A; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; color: #F9F8F2; }
+    a { color: #A2231D; } a:hover { color: #bd2b23; }
+    .mono { font-family: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace; letter-spacing: 0.05em; font-variant-numeric: tabular-nums; }
+    .label { font-family: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #B38B6D; }
+    .display { font-family: 'Nanum Myeongjo', 'Apple SD Gothic Neo', serif; font-weight: 800; letter-spacing: -0.02em; }
+    .slab { background: #1D1D1F; border: 1px solid rgba(179,139,109,0.28); border-radius: 0 8px 0 8px; color: #F9F8F2; }
+    .chip { display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 14px; border: 1px solid rgba(179,139,109,0.4); border-radius: 4px; color: #F9F8F2; font-size: 13px; gap: 8px; background: rgba(29,29,31,0.92); }
+    .chip.on { background: #A2231D; border-color: #A2231D; }
+    .chip .cost { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #B38B6D; }
+    .chip.on .cost { color: #F9F8F2; }
+    .bar { height: 4px; background: rgba(249,248,242,0.14); border-radius: 2px; overflow: hidden; }
+    .bar > div { height: 100%; }
+  </style>
+</helmet>
+<div style="position: relative; width: 1280px; height: 720px; overflow: hidden; background: #0A0A0A;">
+
+  <!-- 전장 — 화산 바이옴, 수묵담채 -->
+  <svg viewBox="0 0 1280 720" width="1280" height="720" style="position: absolute; inset: 0;" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#F9F8F2"></stop>
+        <stop offset="0.72" stop-color="#ECEAE2"></stop>
+        <stop offset="1" stop-color="#DAD7CC"></stop>
+      </linearGradient>
+      <linearGradient id="lava" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#E0562A"></stop>
+        <stop offset="1" stop-color="#A2231D"></stop>
+      </linearGradient>
+      <linearGradient id="aim" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#A2231D" stop-opacity="1"></stop>
+        <stop offset="0.34" stop-color="#A2231D" stop-opacity="0.9"></stop>
+        <stop offset="0.42" stop-color="#A2231D" stop-opacity="0"></stop>
+      </linearGradient>
+      <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0" stop-color="#E0562A" stop-opacity="0.55"></stop>
+        <stop offset="1" stop-color="#E0562A" stop-opacity="0"></stop>
+      </radialGradient>
+      <radialGradient id="giglow" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0" stop-color="#F9F8F2" stop-opacity="0.9"></stop>
+        <stop offset="1" stop-color="#F9F8F2" stop-opacity="0"></stop>
+      </radialGradient>
+      <pattern id="ash" width="7" height="7" patternUnits="userSpaceOnUse">
+        <circle cx="2" cy="2" r="1.1" fill="#5C5C5E"></circle>
+        <circle cx="5.5" cy="5" r="0.9" fill="#3C3C3E"></circle>
+      </pattern>
+      <pattern id="soil" width="9" height="9" patternUnits="userSpaceOnUse">
+        <circle cx="3" cy="3" r="1" fill="#7E5A3F"></circle>
+        <circle cx="7" cy="7" r="0.8" fill="#5A3E2C"></circle>
+      </pattern>
+      <filter id="blur6"><feGaussianBlur stdDeviation="6"></feGaussianBlur></filter>
+      <filter id="blur14"><feGaussianBlur stdDeviation="14"></feGaussianBlur></filter>
+
+      <!-- 무장 실루엣 — 24×36 상자, 화면 높이의 1/20 -->
+      <g id="body">
+        <circle cx="12" cy="6.5" r="3.6"></circle>
+        <path d="M6.5 5.2 L17.5 5.2 L17 3.6 L7 3.6 Z"></path>
+        <path d="M8.2 10.5 L15.8 10.5 L17 21.5 L7 21.5 Z"></path>
+        <path d="M7 21.5 L17 21.5 L18.2 28 L5.8 28 Z"></path>
+        <rect x="7.6" y="28" width="3.4" height="8"></rect>
+        <rect x="13" y="28" width="3.4" height="8"></rect>
+      </g>
+      <g id="u-archer">
+        <use href="#body"></use>
+        <path d="M18 4 Q27 18 18 32" fill="none" stroke="#1D1D1F" stroke-width="1.6"></path>
+        <line x1="18" y1="4" x2="18" y2="32" stroke="#1D1D1F" stroke-width="0.8"></line>
+        <line x1="11" y1="17" x2="24" y2="17" stroke="#1D1D1F" stroke-width="1.2"></line>
+      </g>
+      <g id="u-gunner">
+        <use href="#body"></use>
+        <path d="M16 22 L34 6" stroke="#1D1D1F" stroke-width="5" stroke-linecap="butt"></path>
+        <path d="M22 30 L28 16 L34 30" fill="none" stroke="#1D1D1F" stroke-width="1.6"></path>
+      </g>
+      <g id="u-sword">
+        <use href="#body"></use>
+        <path d="M16 18 L28 3" stroke="#1D1D1F" stroke-width="2.2" stroke-linecap="round"></path>
+        <path d="M14 20 L18 16" stroke="#1D1D1F" stroke-width="3"></path>
+      </g>
+      <g id="u-spear">
+        <use href="#body"></use>
+        <path d="M17 36 L25 -4" stroke="#1D1D1F" stroke-width="1.8"></path>
+        <path d="M24 -1 L27 -6 L25.5 -9 L23 -5 Z"></path>
+      </g>
+      <g id="u-shield">
+        <use href="#body"></use>
+        <circle cx="21" cy="17" r="8.5"></circle>
+        <circle cx="21" cy="17" r="5.5" fill="none" stroke="#F9F8F2" stroke-width="0.9"></circle>
+        <circle cx="21" cy="17" r="1.6" fill="#F9F8F2"></circle>
+      </g>
+    </defs>
+
+    <!-- 하늘 -->
+    <rect x="0" y="0" width="1280" height="720" fill="url(#sky)"></rect>
+    <!-- 먼 화산 — 먹 안개 -->
+    <path d="M-60 540 L280 170 C300 150 350 150 372 170 L720 540 Z" fill="#3A3A3C" opacity="0.16"></path>
+    <path d="M-60 540 L250 250 C270 236 300 236 320 250 L520 540 Z" fill="#3A3A3C" opacity="0.10"></path>
+    <ellipse cx="330" cy="150" rx="60" ry="22" fill="#3A3A3C" opacity="0.14" filter="url(#blur14)"></ellipse>
+    <ellipse cx="380" cy="110" rx="90" ry="26" fill="#3A3A3C" opacity="0.10" filter="url(#blur14)"></ellipse>
+
+    <!-- 기류 — 기본 바람(왼→오) 유선 -->
+    <g fill="none" stroke="#2B4B63" stroke-width="1" opacity="0.28">
+      <path d="M0 120 C200 100 300 150 520 130 S 900 90 1280 120"></path>
+      <path d="M0 200 C220 180 320 230 540 210 S 920 170 1280 200"></path>
+      <path d="M0 280 C240 260 340 310 560 290 S 940 250 1280 280"></path>
+      <path d="M0 360 C260 340 360 380 580 360 S 960 330 1280 350"></path>
+      <path d="M700 440 C860 420 980 460 1280 430"></path>
+    </g>
+    <!-- 기류 — 용암 위 상승 -->
+    <g fill="none" stroke="#A2231D" stroke-width="1.2" opacity="0.42">
+      <path d="M600 548 C588 508 642 494 626 452 C612 418 660 398 646 356 C636 326 672 300 660 268"></path>
+      <path d="M640 552 C630 512 684 498 668 456 C654 422 702 402 688 360"></path>
+      <path d="M572 546 C560 512 606 500 594 462"></path>
+    </g>
+
+    <!-- 지층 — 화산재(가루) / 흙 / 현무암 -->
+    <path d="M0 480 C80 470 140 420 200 380 C260 340 300 320 340 330 C400 345 430 420 470 470 C510 520 560 560 620 565 C680 570 720 540 760 500 C800 460 840 420 900 400 C960 380 1020 385 1060 400 C1100 420 1120 470 1140 470 C1200 470 1240 450 1280 430 L1280 720 L0 720 Z" fill="#4A4A4C"></path>
+    <path d="M0 480 C80 470 140 420 200 380 C260 340 300 320 340 330 C400 345 430 420 470 470 C510 520 560 560 620 565 C680 570 720 540 760 500 C800 460 840 420 900 400 C960 380 1020 385 1060 400 C1100 420 1120 470 1140 470 C1200 470 1240 450 1280 430 L1280 720 L0 720 Z" fill="url(#ash)"></path>
+    <path d="M0 560 C80 550 140 500 200 460 C260 420 300 400 340 410 C400 425 430 500 470 550 C510 600 560 640 620 645 C680 650 720 620 760 580 C800 540 840 500 900 480 C960 460 1020 465 1060 480 C1100 500 1120 550 1140 550 C1200 550 1240 530 1280 510 L1280 720 L0 720 Z" fill="#6E4E36"></path>
+    <path d="M0 560 C80 550 140 500 200 460 C260 420 300 400 340 410 C400 425 430 500 470 550 C510 600 560 640 620 645 C680 650 720 620 760 580 C800 540 840 500 900 480 C960 460 1020 465 1060 480 C1100 500 1120 550 1140 550 C1200 550 1240 530 1280 510 L1280 720 L0 720 Z" fill="url(#soil)"></path>
+    <path d="M0 640 C80 630 140 590 200 560 C260 530 300 520 340 530 C400 545 430 600 470 640 C510 680 560 700 620 705 C680 710 720 700 760 670 C800 640 840 600 900 580 C960 560 1020 565 1060 580 C1100 600 1120 640 1140 640 C1200 640 1240 620 1280 600 L1280 720 L0 720 Z" fill="#1D1D1F"></path>
+
+    <!-- 용암 웅덩이 — 골짜기 -->
+    <ellipse cx="626" cy="560" rx="110" ry="40" fill="url(#glow)" filter="url(#blur6)"></ellipse>
+    <path d="M556 556 C570 584 680 588 696 556 C670 548 590 548 556 556 Z" fill="url(#lava)"></path>
+    <path d="M572 560 C600 570 650 572 684 560" fill="none" stroke="#F0A070" stroke-width="1" opacity="0.7"></path>
+
+    <!-- 창병 터널 — 오른쪽 고원을 관통 -->
+    <path d="M868 436 L1004 436 A8 8 0 0 1 1004 452 L868 452 A8 8 0 0 1 868 436 Z" fill="#1D1D1F"></path>
+    <path d="M870 438 L1002 438" stroke="#6E4E36" stroke-width="1" opacity="0.6"></path>
+    <text x="936" y="470" font-size="9" text-anchor="middle" fill="#A2231D" font-family="JetBrains Mono, monospace">관통 터널</text>
+
+    <!-- 검기 절단선 + 흘러내린 화산재 -->
+    <path d="M262 318 L418 432" stroke="#A2231D" stroke-width="1.4" opacity="0.8" stroke-dasharray="6 4"></path>
+    <g fill="#5C5C5E">
+      <circle cx="300" cy="352" r="3"></circle><circle cx="322" cy="372" r="2.6"></circle><circle cx="346" cy="394" r="3.4"></circle>
+      <circle cx="372" cy="418" r="2.8"></circle><circle cx="398" cy="446" r="3.6"></circle><circle cx="426" cy="472" r="3"></circle>
+      <circle cx="452" cy="500" r="4"></circle><circle cx="480" cy="524" r="3.2"></circle><circle cx="506" cy="546" r="4.4"></circle>
+      <circle cx="534" cy="558" r="3.6"></circle>
+    </g>
+    <g stroke="#5C5C5E" stroke-width="1.2" opacity="0.7">
+      <line x1="310" y1="356" x2="332" y2="378"></line><line x1="360" y1="404" x2="386" y2="430"></line><line x1="412" y1="456" x2="440" y2="484"></line><line x1="470" y1="512" x2="498" y2="538"></line>
+    </g>
+
+    <!-- 소나무 — 먼 능선 -->
+    <g fill="#1A472A" opacity="0.75">
+      <path d="M1160 470 L1172 430 L1184 470 Z"></path><path d="M1150 476 L1160 444 L1170 476 Z"></path><path d="M1196 462 L1206 428 L1216 462 Z"></path>
+      <path d="M40 486 L50 452 L60 486 Z"></path><path d="M62 482 L74 440 L86 482 Z"></path>
+    </g>
+
+    <!-- 뭉친 기 — 골짜기 왼쪽 턱 -->
+    <ellipse cx="522" cy="506" rx="26" ry="20" fill="url(#giglow)"></ellipse>
+    <circle cx="522" cy="506" r="8" fill="#F9F8F2" stroke="#1D1D1F" stroke-width="1"></circle>
+    <path d="M517 506 C519 500 526 500 526 505 C526 510 519 511 518 507" fill="none" stroke="#1D1D1F" stroke-width="1.2"></path>
+
+    <!-- 조준 궤적 — 첫 1/3 만 -->
+    <path d="M222 370 C400 150 720 150 900 392" fill="none" stroke="url(#aim)" stroke-width="2" stroke-dasharray="7 5"></path>
+
+    <!-- 무장 8 — 홍(연지) / 청(청자). 깃발이 팀색 -->
+    <!-- 홍 A1 궁수 · 활성 -->
+    <g transform="translate(200 372)">
+      <ellipse cx="12" cy="37" rx="14" ry="3" fill="#A2231D" opacity="0.55"></ellipse>
+      <use href="#u-archer" fill="#1D1D1F"></use>
+      <path d="M8 10 L8 -6 L15 -3 L8 0 Z" fill="#A2231D"></path>
+      <rect x="-4" y="-14" width="32" height="3" fill="rgba(29,29,31,0.25)"></rect><rect x="-4" y="-14" width="23" height="3" fill="#A2231D"></rect>
+      <text x="12" y="-18" font-size="9" text-anchor="middle" fill="#1D1D1F" font-family="JetBrains Mono, monospace">A1 궁수 72</text>
+    </g>
+    <!-- 홍 A2 포수 -->
+    <g transform="translate(98 462)">
+      <use href="#u-gunner" fill="#1D1D1F"></use>
+      <path d="M8 10 L8 -6 L15 -3 L8 0 Z" fill="#A2231D"></path>
+      <rect x="-4" y="-14" width="32" height="3" fill="rgba(29,29,31,0.25)"></rect><rect x="-4" y="-14" width="30" height="3" fill="#A2231D"></rect>
+      <text x="12" y="-18" font-size="9" text-anchor="middle" fill="#1D1D1F" font-family="JetBrains Mono, monospace">A2 포수 94</text>
+    </g>
+    <!-- 홍 A3 검사 — 절단선 옆 -->
+    <g transform="translate(444 452)">
+      <use href="#u-sword" fill="#1D1D1F"></use>
+      <path d="M8 10 L8 -6 L15 -3 L8 0 Z" fill="#A2231D"></path>
+      <rect x="-4" y="-14" width="32" height="3" fill="rgba(29,29,31,0.25)"></rect><rect x="-4" y="-14" width="18" height="3" fill="#A2231D"></rect>
+      <text x="12" y="-18" font-size="9" text-anchor="middle" fill="#1D1D1F" font-family="JetBrains Mono, monospace">A3 검사 55</text>
+    </g>
+    <!-- 홍 A4 창병 — 터널 입구 -->
+    <g transform="translate(1012 380)">
+      <use href="#u-spear" fill="#1D1D1F"></use>
+      <path d="M8 10 L8 -6 L15 -3 L8 0 Z" fill="#A2231D"></path>
+      <rect x="-4" y="-14" width="32" height="3" fill="rgba(29,29,31,0.25)"></rect><rect x="-4" y="-14" width="26" height="3" fill="#A2231D"></rect>
+      <text x="12" y="-18" font-size="9" text-anchor="middle" fill="#1D1D1F" font-family="JetBrains Mono, monospace">A4 창병 81</text>
+    </g>
+    <!-- 청 B1 방패병 — 방패를 들었다, 방향은 비공개 -->
+    <g transform="translate(884 396)">
+      <use href="#u-shield" fill="#1D1D1F"></use>
+      <path d="M8 10 L8 -6 L15 -3 L8 0 Z" fill="#2B4B63"></path>
+      <rect x="-4" y="-14" width="32" height="3" fill="rgba(29,29,31,0.25)"></rect><rect x="-4" y="-14" width="28" height="3" fill="#2B4B63"></rect>
+      <text x="12" y="-18" font-size="9" text-anchor="middle" fill="#1D1D1F" font-family="JetBrains Mono, monospace">B1 방패 88</text>
+      <text x="36" y="10" font-size="9" fill="#2B4B63" font-family="JetBrains Mono, monospace">방패 ↑ ?</text>
+    </g>
+    <!-- 청 B2 궁수 -->
+    <g transform="translate(1206 426)">
+      <use href="#u-archer" fill="#1D1D1F" transform="translate(24 0) scale(-1 1)"></use>
+      <path d="M16 10 L16 -6 L9 -3 L16 0 Z" fill="#2B4B63"></path>
+      <rect x="-4" y="-14" width="32" height="3" fill="rgba(29,29,31,0.25)"></rect><rect x="-4" y="-14" width="32" height="3" fill="#2B4B63"></rect>
+      <text x="12" y="-18" font-size="9" text-anchor="middle" fill="#1D1D1F" font-family="JetBrains Mono, monospace">B2 궁수 100</text>
+    </g>
+    <!-- 청 B3 포수 -->
+    <g transform="translate(748 494)">
+      <use href="#u-gunner" fill="#1D1D1F" transform="translate(24 0) scale(-1 1)"></use>
+      <path d="M16 10 L16 -6 L9 -3 L16 0 Z" fill="#2B4B63"></path>
+      <rect x="-4" y="-14" width="32" height="3" fill="rgba(29,29,31,0.25)"></rect><rect x="-4" y="-14" width="12" height="3" fill="#2B4B63"></rect>
+      <text x="12" y="-18" font-size="9" text-anchor="middle" fill="#1D1D1F" font-family="JetBrains Mono, monospace">B3 포수 38</text>
+    </g>
+    <!-- 청 B4 창병 — 화산재에 매몰 -->
+    <g transform="translate(700 528)">
+      <use href="#u-spear" fill="#1D1D1F"></use>
+      <path d="M-8 22 C0 18 30 18 40 22 L40 40 L-8 40 Z" fill="#4A4A4C"></path>
+      <path d="M-8 22 C0 18 30 18 40 22 L40 40 L-8 40 Z" fill="url(#ash)"></path>
+      <path d="M8 10 L8 -6 L15 -3 L8 0 Z" fill="#2B4B63"></path>
+      <rect x="-4" y="-14" width="32" height="3" fill="rgba(29,29,31,0.25)"></rect><rect x="-4" y="-14" width="14" height="3" fill="#2B4B63"></rect>
+      <text x="12" y="-18" font-size="9" text-anchor="middle" fill="#A2231D" font-family="JetBrains Mono, monospace">B4 창병 44 매몰</text>
+    </g>
+  </svg>
+
+  <!-- HUD — 아케이드 스코프: 송연 판, 황토 구조, 연지 액션 -->
+  <!-- 턴 순서 + 타이머 -->
+  <div style="position: absolute; left: 16px; top: 14px; display: flex; align-items: center; gap: 10px;">
+    <div class="slab" style="display: flex; align-items: center; gap: 0; padding: 6px 8px;">
+      <div style="display: flex; flex-direction: column; align-items: center; width: 44px; height: 44px; justify-content: center; border-bottom: 2px solid #A2231D;"><span class="mono" style="font-size: 12px; font-weight: 600;">A1</span><span style="font-size: 9px; color: #B38B6D;">궁</span></div>
+      <div style="display: flex; flex-direction: column; align-items: center; width: 44px; height: 44px; justify-content: center; opacity: 0.85;"><span class="mono" style="font-size: 12px; color: #6f9fc4;">B1</span><span style="font-size: 9px; color: #B38B6D;">방</span></div>
+      <div style="display: flex; flex-direction: column; align-items: center; width: 44px; height: 44px; justify-content: center; opacity: 0.7;"><span class="mono" style="font-size: 12px; color: #d46b64;">A2</span><span style="font-size: 9px; color: #B38B6D;">포</span></div>
+      <div style="display: flex; flex-direction: column; align-items: center; width: 44px; height: 44px; justify-content: center; opacity: 0.7;"><span class="mono" style="font-size: 12px; color: #6f9fc4;">B2</span><span style="font-size: 9px; color: #B38B6D;">궁</span></div>
+      <div style="display: flex; flex-direction: column; align-items: center; width: 44px; height: 44px; justify-content: center; opacity: 0.55;"><span class="mono" style="font-size: 12px; color: #d46b64;">A3</span><span style="font-size: 9px; color: #B38B6D;">검</span></div>
+      <div style="display: flex; flex-direction: column; align-items: center; width: 44px; height: 44px; justify-content: center; opacity: 0.55;"><span class="mono" style="font-size: 12px; color: #6f9fc4;">B3</span><span style="font-size: 9px; color: #B38B6D;">포</span></div>
+      <div style="display: flex; flex-direction: column; align-items: center; width: 44px; height: 44px; justify-content: center; opacity: 0.4;"><span class="mono" style="font-size: 12px; color: #d46b64;">A4</span><span style="font-size: 9px; color: #B38B6D;">창</span></div>
+      <div style="display: flex; flex-direction: column; align-items: center; width: 44px; height: 44px; justify-content: center; opacity: 0.4;"><span class="mono" style="font-size: 12px; color: #6f9fc4;">B4</span><span style="font-size: 9px; color: #B38B6D;">창</span></div>
+    </div>
+    <div class="slab" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 64px; height: 58px;">
+      <span class="mono" style="font-size: 22px; font-weight: 600; line-height: 1;">17</span>
+      <span class="label">turn 12</span>
+    </div>
+  </div>
+
+  <!-- 바람 -->
+  <div class="slab" style="position: absolute; left: 50%; top: 14px; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 8px 14px; height: 58px; box-sizing: border-box;">
+    <span class="label">바람</span>
+    <svg width="72" height="16" viewBox="0 0 72 16" xmlns="http://www.w3.org/2000/svg"><path d="M2 8 H60 M50 2 L62 8 L50 14" fill="none" stroke="#F9F8F2" stroke-width="2"></path></svg>
+    <span class="mono" style="font-size: 14px; font-weight: 600;">2</span>
+    <div style="width: 1px; height: 28px; background: rgba(179,139,109,0.28);"></div>
+    <span class="label">기류</span>
+    <span style="font-size: 12px; color: rgba(249,248,242,0.7);">용암 위 상승</span>
+  </div>
+
+  <!-- 뭉친 기 게이지 -->
+  <div class="slab" style="position: absolute; right: 16px; top: 14px; display: flex; flex-direction: column; gap: 8px; padding: 10px 14px; width: 176px; box-sizing: border-box; height: 58px; justify-content: center;">
+    <div style="display: flex; justify-content: space-between; align-items: baseline;"><span class="label">기(氣)</span><span class="mono" style="font-size: 12px;">18 / 30</span></div>
+    <div class="bar"><div style="width: 60%; background: #F9F8F2;"></div></div>
+  </div>
+
+  <!-- 내 무장 -->
+  <div class="slab" style="position: absolute; left: 16px; bottom: 16px; display: flex; gap: 14px; padding: 12px 14px; width: 292px; box-sizing: border-box;">
+    <div style="display: flex; flex-direction: column; gap: 6px; flex-grow: 1;">
+      <div style="display: flex; align-items: baseline; gap: 8px;"><span class="display" style="font-size: 20px;">궁수</span><span style="font-size: 11px; color: rgba(249,248,242,0.62);">신라 화랑</span></div>
+      <div style="display: flex; justify-content: space-between; align-items: baseline;"><span class="label">체력</span><span class="mono" style="font-size: 12px;">72</span></div>
+      <div class="bar"><div style="width: 72%; background: #A2231D;"></div></div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+        <span class="label">에너지</span>
+        <div style="display: flex; gap: 4px;">
+          <div style="width: 14px; height: 10px; background: #F9F8F2; border-radius: 1px;"></div><div style="width: 14px; height: 10px; background: #F9F8F2; border-radius: 1px;"></div><div style="width: 14px; height: 10px; background: #F9F8F2; border-radius: 1px;"></div><div style="width: 14px; height: 10px; background: #F9F8F2; border-radius: 1px;"></div>
+          <div style="width: 14px; height: 10px; border: 1px solid rgba(249,248,242,0.35); box-sizing: border-box; border-radius: 1px;"></div><div style="width: 14px; height: 10px; border: 1px solid rgba(249,248,242,0.35); box-sizing: border-box; border-radius: 1px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 무기 -->
+  <div style="position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); display: flex; gap: 8px;">
+    <div class="chip on"><span>각궁</span><span class="cost">기본</span></div>
+    <div class="chip"><span>편전</span><span class="cost">1</span></div>
+    <div class="chip"><span>불화살</span><span class="cost">2</span></div>
+    <div class="chip"><span>신기전</span><span class="cost">3</span></div>
+  </div>
+
+  <!-- 조준 · 이동 -->
+  <div class="slab" style="position: absolute; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; width: 232px; box-sizing: border-box;">
+    <div style="display: flex; justify-content: space-between; align-items: baseline;"><span class="label">각도 · 파워</span><span class="mono" style="font-size: 14px; font-weight: 600;">52.0° · 640</span></div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline;"><span class="label">이동</span><span class="mono" style="font-size: 12px;">84 / 120</span></div>
+    <div class="bar"><div style="width: 70%; background: #B38B6D;"></div></div>
+    <div style="display: flex; gap: 8px; margin-top: 4px;">
+      <div class="chip" style="flex-grow: 1; background: none;">파내기</div>
+      <div class="chip on" style="flex-grow: 1;">발사</div>
+    </div>
+  </div>
+
+  <!-- 줌 3단 -->
+  <div class="slab" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; padding: 4px;">
+    <div style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;" class="mono">+</div>
+    <div style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-top: 1px solid rgba(179,139,109,0.28); border-bottom: 1px solid rgba(179,139,109,0.28);" class="mono">2</div>
+    <div style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;" class="mono">−</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

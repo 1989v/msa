@@ -1,0 +1,140 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&amp;family=Nanum+Myeongjo:wght@700;800&amp;display=swap">
+  <style>
+    body { margin: 0; background: #F9F8F2; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; color: #1D1D1F; }
+    a { color: #1A472A; } a:hover { color: #A2231D; }
+    .mono { font-family: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace; letter-spacing: 0.05em; font-variant-numeric: tabular-nums; }
+    .label { font-family: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #8A6346; }
+    .display { font-family: 'Nanum Myeongjo', 'Apple SD Gothic Neo', serif; font-weight: 800; letter-spacing: -0.02em; }
+    .panel { display: flex; flex-direction: column; gap: 10px; }
+    .frame { border: 1px solid rgba(29,29,31,0.24); border-radius: 0 8px 0 8px; overflow: hidden; }
+    .sw { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid rgba(29,29,31,0.18); border-radius: 4px; }
+    .sw .box { width: 28px; height: 28px; border-radius: 2px; flex-shrink: 0; }
+  </style>
+</helmet>
+<div style="width: 1240px; box-sizing: border-box; padding: 40px 44px 36px; background: #F9F8F2; display: flex; flex-direction: column; gap: 24px;">
+
+  <div style="display: flex; align-items: baseline; gap: 16px; border-bottom: 1px solid #1D1D1F; padding-bottom: 12px;">
+    <span class="mono" style="font-size: 12px; color: #8A6346;">02_</span>
+    <span class="display" style="font-size: 30px;">바이옴 셋 — 재질표 하나로 그린다</span>
+    <span style="font-size: 13px; color: rgba(29,29,31,0.62); margin-left: auto;">한지 위 수묵담채 · 재질 색은 브랜드 토큰에서</span>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px;">
+
+    <!-- 화산 -->
+    <div class="panel">
+      <div class="frame">
+        <svg viewBox="0 0 370 260" width="100%" height="260" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="sky1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F9F8F2"></stop><stop offset="1" stop-color="#DAD7CC"></stop></linearGradient>
+            <linearGradient id="lava1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E0562A"></stop><stop offset="1" stop-color="#A2231D"></stop></linearGradient>
+            <pattern id="ash1" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="#5C5C5E"></circle><circle cx="4.5" cy="4.5" r="0.8" fill="#3C3C3E"></circle></pattern>
+            <radialGradient id="glow1" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#E0562A" stop-opacity="0.5"></stop><stop offset="1" stop-color="#E0562A" stop-opacity="0"></stop></radialGradient>
+          </defs>
+          <rect width="370" height="260" fill="url(#sky1)"></rect>
+          <path d="M-20 200 L110 40 C118 32 132 32 140 40 L280 200 Z" fill="#3A3A3C" opacity="0.16"></path>
+          <ellipse cx="128" cy="36" rx="34" ry="10" fill="#3A3A3C" opacity="0.12"></ellipse>
+          <g fill="none" stroke="#A2231D" stroke-width="1" opacity="0.45"><path d="M232 196 C224 176 250 168 242 148 C236 132 258 122 250 102"></path><path d="M252 198 C246 180 268 170 262 150"></path></g>
+          <g fill="none" stroke="#2B4B63" stroke-width="0.8" opacity="0.3"><path d="M0 70 C80 60 120 90 200 76 S 320 50 370 70"></path><path d="M0 110 C90 100 130 130 210 116 S 330 90 370 110"></path></g>
+          <path d="M0 180 C40 170 70 130 100 120 C130 110 150 140 180 180 C200 206 230 214 250 200 C280 180 300 150 340 150 C356 150 364 156 370 160 L370 260 L0 260 Z" fill="#4A4A4C"></path>
+          <path d="M0 180 C40 170 70 130 100 120 C130 110 150 140 180 180 C200 206 230 214 250 200 C280 180 300 150 340 150 C356 150 364 156 370 160 L370 260 L0 260 Z" fill="url(#ash1)"></path>
+          <path d="M0 214 C40 204 70 170 100 160 C130 150 150 180 180 214 C200 236 230 244 250 232 C280 214 300 186 340 186 C356 186 364 190 370 194 L370 260 L0 260 Z" fill="#6E4E36"></path>
+          <path d="M0 240 C40 234 70 210 100 204 C130 198 150 220 180 240 C200 252 230 256 250 250 C280 240 300 222 340 222 L370 226 L370 260 L0 260 Z" fill="#1D1D1F"></path>
+          <ellipse cx="240" cy="204" rx="46" ry="16" fill="url(#glow1)"></ellipse>
+          <path d="M212 202 C220 214 262 216 270 202 C256 198 226 198 212 202 Z" fill="url(#lava1)"></path>
+          <g fill="#5C5C5E"><circle cx="118" cy="140" r="1.8"></circle><circle cx="134" cy="156" r="2"></circle><circle cx="150" cy="172" r="1.6"></circle><circle cx="166" cy="190" r="2.2"></circle></g>
+        </svg>
+      </div>
+      <div style="display: flex; align-items: baseline; gap: 8px;"><span class="display" style="font-size: 22px;">화산</span><span class="label">한라 · 백두</span></div>
+      <div style="font-size: 13px; line-height: 1.5; color: rgba(29,29,31,0.8);">화산재는 흐르고 용암은 굳는다. 뜨거운 지면 위로 기류가 솟아 화살이 떠오른다.</div>
+      <div style="display: flex; gap: 6px; flex-wrap: wrap;"><span class="mono" style="font-size: 11px; color: #8A6346;">화산재 · 용암 · 현무암 · 흙</span></div>
+    </div>
+
+    <!-- 사구 -->
+    <div class="panel">
+      <div class="frame">
+        <svg viewBox="0 0 370 260" width="100%" height="260" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F9F8F2"></stop><stop offset="1" stop-color="#EDE6D3"></stop></linearGradient>
+            <pattern id="sand2" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="0.9" fill="#C9AE7E"></circle><circle cx="4.5" cy="4.5" r="0.7" fill="#E6D4AE"></circle></pattern>
+          </defs>
+          <rect width="370" height="260" fill="url(#sky2)"></rect>
+          <rect x="0" y="118" width="370" height="26" fill="#2B4B63" opacity="0.28"></rect>
+          <g fill="none" stroke="#2B4B63" stroke-width="1.2" opacity="0.45">
+            <path d="M0 40 C60 30 100 56 170 44 S 300 20 370 40"></path><path d="M0 74 C70 64 110 90 180 78 S 310 54 370 74"></path><path d="M0 104 C80 94 120 116 190 106"></path>
+            <path d="M330 34 L344 40 L330 46" ></path><path d="M340 68 L354 74 L340 80"></path>
+          </g>
+          <path d="M0 200 C60 160 110 150 150 168 C180 182 200 200 240 196 C280 190 300 150 340 146 C352 145 362 148 370 152 L370 260 L0 260 Z" fill="#D9C39B"></path>
+          <path d="M0 200 C60 160 110 150 150 168 C180 182 200 200 240 196 C280 190 300 150 340 146 C352 145 362 148 370 152 L370 260 L0 260 Z" fill="url(#sand2)"></path>
+          <path d="M150 168 C180 182 200 200 240 196 L240 210 C200 214 176 196 150 176 Z" fill="#C9AE7E" opacity="0.7"></path>
+          <path d="M40 176 C50 160 70 156 84 162 L88 178 L44 184 Z" fill="#1D1D1F"></path>
+          <path d="M280 188 C288 172 306 170 316 178 L318 192 L282 196 Z" fill="#1D1D1F"></path>
+          <path d="M0 236 C60 220 120 214 180 226 C240 238 300 224 370 216 L370 260 L0 260 Z" fill="#1D1D1F"></path>
+          <g fill="#C9AE7E"><circle cx="252" cy="176" r="1.6"></circle><circle cx="262" cy="170" r="1.4"></circle><circle cx="272" cy="163" r="1.8"></circle><circle cx="283" cy="158" r="1.5"></circle></g>
+        </svg>
+      </div>
+      <div style="display: flex; align-items: baseline; gap: 8px;"><span class="display" style="font-size: 22px;">사구</span><span class="label">서해안</span></div>
+      <div style="font-size: 13px; line-height: 1.5; color: rgba(29,29,31,0.8);">모래는 가장 낮은 문턱으로 흐른다. 기본 바람이 세고 방향이 자주 바뀐다 — 조준 실력의 맵.</div>
+      <div style="display: flex; gap: 6px; flex-wrap: wrap;"><span class="mono" style="font-size: 11px; color: #8A6346;">모래 · 바위 · 물(먼바다)</span></div>
+    </div>
+
+    <!-- 설원 -->
+    <div class="panel">
+      <div class="frame">
+        <svg viewBox="0 0 370 260" width="100%" height="260" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="sky3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E9ECEE"></stop><stop offset="1" stop-color="#CBD3DA"></stop></linearGradient>
+            <linearGradient id="ice3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9FBFD3"></stop><stop offset="1" stop-color="#2B4B63"></stop></linearGradient>
+            <pattern id="snow3" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="0.9" fill="#E4E2DA"></circle><circle cx="5" cy="5" r="0.7" fill="#FFFFFF"></circle></pattern>
+          </defs>
+          <rect width="370" height="260" fill="url(#sky3)"></rect>
+          <path d="M-20 190 L80 70 L150 150 L220 60 L330 190 Z" fill="#3A3A3C" opacity="0.14"></path>
+          <g fill="none" stroke="#2B4B63" stroke-width="1" opacity="0.45"><path d="M60 40 C70 70 50 90 62 120 C70 140 54 156 60 176"></path><path d="M110 30 C120 60 100 80 112 110"></path><path d="M0 60 C60 54 100 70 170 62 S 300 44 370 60"></path></g>
+          <path d="M0 170 C40 160 80 140 120 150 C150 158 170 190 200 186 C230 182 240 150 280 140 C310 132 340 150 370 150 L370 260 L0 260 Z" fill="#F9F8F2"></path>
+          <path d="M0 170 C40 160 80 140 120 150 C150 158 170 190 200 186 C230 182 240 150 280 140 C310 132 340 150 370 150 L370 260 L0 260 Z" fill="url(#snow3)"></path>
+          <path d="M120 150 C150 158 170 190 200 186 L200 200 C170 204 148 174 120 164 Z" fill="#E4E2DA"></path>
+          <path d="M280 140 L296 120 L330 122 L338 150 L300 152 Z" fill="url(#ice3)"></path>
+          <path d="M300 128 L320 146" stroke="#F9F8F2" stroke-width="0.8" opacity="0.6"></path>
+          <path d="M150 214 C190 206 240 206 290 212 L290 230 C240 224 190 224 150 232 Z" fill="#2B4B63" opacity="0.7"></path>
+          <path d="M170 220 L200 216 M230 214 L262 218" stroke="#9FBFD3" stroke-width="0.8"></path>
+          <path d="M0 236 C60 226 120 220 180 232 C240 244 300 232 370 224 L370 260 L0 260 Z" fill="#1D1D1F"></path>
+          <g fill="#1A472A" opacity="0.8"><path d="M22 168 L30 140 L38 168 Z"></path><path d="M40 164 L50 128 L60 164 Z"></path><path d="M350 150 L358 122 L366 150 Z"></path></g>
+        </svg>
+      </div>
+      <div style="display: flex; align-items: baseline; gap: 8px;"><span class="display" style="font-size: 22px;">설원</span><span class="label">개마고원</span></div>
+      <div style="font-size: 13px; line-height: 1.5; color: rgba(29,29,31,0.8);">눈은 높이 쌓이고 늦게 흐른다. 얼음은 단단하되 불화살에 녹아 물이 된다. 찬 지면 위로 기류가 가라앉는다.</div>
+      <div style="display: flex; gap: 6px; flex-wrap: wrap;"><span class="mono" style="font-size: 11px; color: #8A6346;">눈 · 얼음 · 물 · 바위</span></div>
+    </div>
+  </div>
+
+  <!-- 재질표 → 색 -->
+  <div style="display: flex; flex-direction: column; gap: 10px;">
+    <span class="label">재질표 — 색은 브랜드 토큰에서 온다</span>
+    <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px;">
+      <div class="sw"><div class="box" style="background: #1D1D1F;"></div><div style="display: flex; flex-direction: column;"><span style="font-size: 13px;">현무암 · 바위</span><span class="mono" style="font-size: 10px; color: #8A6346;">기와 · 고체</span></div></div>
+      <div class="sw"><div class="box" style="background: #6E4E36;"></div><div style="display: flex; flex-direction: column;"><span style="font-size: 13px;">흙</span><span class="mono" style="font-size: 10px; color: #8A6346;">황토 짙게 · 부서짐</span></div></div>
+      <div class="sw"><div class="box" style="background: #4A4A4C;"></div><div style="display: flex; flex-direction: column;"><span style="font-size: 13px;">화산재</span><span class="mono" style="font-size: 10px; color: #8A6346;">먹 · 가루 문턱 2</span></div></div>
+      <div class="sw"><div class="box" style="background: #D9C39B;"></div><div style="display: flex; flex-direction: column;"><span style="font-size: 13px;">모래</span><span class="mono" style="font-size: 10px; color: #8A6346;">황토 밝게 · 가루 문턱 1</span></div></div>
+      <div class="sw"><div class="box" style="background: #F9F8F2; border: 1px solid rgba(29,29,31,0.24); box-sizing: border-box;"></div><div style="display: flex; flex-direction: column;"><span style="font-size: 13px;">눈</span><span class="mono" style="font-size: 10px; color: #8A6346;">한지 · 가루 문턱 3 · 찬</span></div></div>
+      <div class="sw"><div class="box" style="background: linear-gradient(180deg, #E0562A, #A2231D);"></div><div style="display: flex; flex-direction: column;"><span style="font-size: 13px;">용암</span><span class="mono" style="font-size: 10px; color: #8A6346;">연지 · 액체 · 뜨거움 · 3턴</span></div></div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px;">
+      <div class="sw"><div class="box" style="background: #2B4B63;"></div><div style="display: flex; flex-direction: column;"><span style="font-size: 13px;">물</span><span class="mono" style="font-size: 10px; color: #8A6346;">청자 · 액체 · 중립</span></div></div>
+      <div class="sw"><div class="box" style="background: linear-gradient(180deg, #9FBFD3, #2B4B63);"></div><div style="display: flex; flex-direction: column;"><span style="font-size: 13px;">얼음</span><span class="mono" style="font-size: 10px; color: #8A6346;">청자 밝게 · 고체 · 찬</span></div></div>
+      <div class="sw"><div class="box" style="background: #1A472A;"></div><div style="display: flex; flex-direction: column;"><span style="font-size: 13px;">소나무</span><span class="mono" style="font-size: 10px; color: #8A6346;">장식 · 물리 없음</span></div></div>
+      <div class="sw" style="grid-column: span 3; border-style: dashed;"><div style="display: flex; flex-direction: column;"><span style="font-size: 13px;">혼합 맵 = 프로파일 둘을 섞는다</span><span class="mono" style="font-size: 10px; color: #8A6346;">얼음 위 화산 · 눈 덮인 사구 — 코드 추가 없음</span></div></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

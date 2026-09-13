@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&amp;family=Nanum+Myeongjo:wght@700;800&amp;display=swap">
+  <style>
+    body { margin: 0; background: #F9F8F2; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; color: #1D1D1F; }
+    a { color: #1A472A; } a:hover { color: #A2231D; }
+    .display { font-family: 'Nanum Myeongjo', 'Apple SD Gothic Neo', serif; font-weight: 800; letter-spacing: -0.02em; }
+    .mono { font-family: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace; letter-spacing: 0.05em; }
+  </style>
+</helmet>
+<div style="width: 600px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; padding: 16px; background: #F9F8F2;">
+  <div style="display: flex; align-items: baseline; gap: 10px;"><span class="mono" style="font-size: 11px; color: #8A6346;">C</span><span class="display" style="font-size: 18px;">목판화</span><span style="font-size: 12px; color: rgba(29,29,31,0.62);">먹 한 색 + 연지 한 점 · 빗금 질감 · 저해상 스케치</span></div>
+  <svg viewBox="0 0 568 260" width="568" height="260" xmlns="http://www.w3.org/2000/svg" style="border: 1px solid #1D1D1F;">
+    <defs>
+      <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><line x1="0" y1="0" x2="0" y2="6" stroke="#1D1D1F" stroke-width="1.6"></line></pattern>
+      <pattern id="hatch2" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-50)"><line x1="0" y1="0" x2="0" y2="4" stroke="#1D1D1F" stroke-width="1.8"></line></pattern>
+      <pattern id="dots" width="5" height="5" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" fill="#1D1D1F"></circle></pattern>
+    </defs>
+    <rect width="568" height="260" fill="#F9F8F2"></rect>
+    <path d="M-10 200 L120 70 L180 130 L250 60 L360 200 Z" fill="url(#hatch)"></path>
+    <path d="M-10 200 L120 70 L180 130 L250 60 L360 200 Z" fill="none" stroke="#1D1D1F" stroke-width="2.5"></path>
+    <g fill="none" stroke="#1D1D1F" stroke-width="1.2"><path d="M40 40 C120 20 160 70 250 50 S 420 20 540 44"></path><path d="M60 80 C140 60 180 110 270 90 S 440 60 560 84"></path></g>
+    <path d="M0 190 C60 170 100 140 160 150 C220 160 250 210 320 200 C380 192 400 150 460 148 C510 146 540 160 568 156 L568 260 L0 260 Z" fill="url(#dots)"></path>
+    <path d="M0 190 C60 170 100 140 160 150 C220 160 250 210 320 200 C380 192 400 150 460 148 C510 146 540 160 568 156" fill="none" stroke="#1D1D1F" stroke-width="3"></path>
+    <path d="M0 228 C80 220 160 220 240 230 C320 240 420 226 568 218 L568 260 L0 260 Z" fill="url(#hatch2)"></path>
+    <path d="M280 206 C300 224 356 226 372 206 C350 198 302 198 280 206 Z" fill="#A2231D"></path>
+    <g fill="#1D1D1F"><rect x="84" y="112" width="20" height="30"></rect><circle cx="94" cy="104" r="9"></circle><rect x="412" y="116" width="20" height="30"></rect><circle cx="422" cy="108" r="9"></circle><circle cx="440" cy="128" r="12"></circle></g>
+    <path d="M104 112 Q126 126 104 140" fill="none" stroke="#1D1D1F" stroke-width="2.5"></path>
+    <circle cx="440" cy="128" r="6" fill="none" stroke="#F9F8F2" stroke-width="1.2"></circle>
+    <path d="M108 118 C200 20 320 30 418 128" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-dasharray="8 6"></path>
+    <path d="M84 104 L84 88 L98 96 Z" fill="#A2231D"></path>
+    <path d="M412 108 L412 92 L426 100 Z" fill="#1D1D1F"></path>
+  </svg>
+  <div style="font-size: 12px; line-height: 1.5; color: rgba(29,29,31,0.8);">장점: 가장 브랜드적이고 인쇄물 같은 품격. 단점: 재질 여섯을 먹 한 색의 질감만으로 갈라야 해 흐르는 지형·용암·얼음이 한눈에 안 읽히고, 팀색 둘을 둘 자리가 좁다.</div>
+</div>
+</x-dc>
+</body>
+</html>
