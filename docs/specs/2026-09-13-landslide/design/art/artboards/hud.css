@@ -1,0 +1,22 @@
+/* 사태 — HUD 아케이드 토큰 (README §8.2) · 모서리 8px, 둥글고 친근한 결 */
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Gowun+Dodum&display=swap');
+:root{--ink:#1D1D1F;--hanji:#F9F8F2;--ochre:#B38B6D;--red:#A2231D;--blue:#2B4B63;--pine:#1A472A;--wave:#9FBFD3}
+.hud{position:absolute;inset:0;pointer-events:none;font-family:'Gowun Dodum',system-ui,sans-serif;color:var(--hanji)}
+.hud *{box-sizing:border-box}
+.pan{position:absolute;background:rgba(29,29,31,.92);border:3px solid var(--ink);border-radius:8px;padding:10px 12px;box-shadow:0 0 0 2px rgba(249,248,242,.16) inset}
+.lbl{color:var(--ochre);font-size:12px;letter-spacing:.14em}
+.num{font-family:ui-monospace,Menlo,monospace;font-weight:700;font-variant-numeric:tabular-nums}
+.btn{min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;border:3px solid var(--ink);border-radius:8px;background:var(--ochre);color:var(--ink);font-weight:700;font-size:15px;padding:0 14px}
+.btn.go{background:var(--red);color:var(--hanji)}
+.bar{height:12px;border:3px solid var(--ink);border-radius:8px;background:#3A3A3D;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:4px}
+.seats{display:flex;gap:6px;align-items:center}
+.seat{width:30px;height:30px;border:3px solid var(--ink);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--hanji)}
+.seat.now{outline:3px solid var(--hanji);outline-offset:2px}
+.chip{min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px 14px;border:3px solid var(--ink);border-radius:8px;background:rgba(249,248,242,.9);color:var(--ink);font-size:13px;font-weight:700}
+.chip.on{background:var(--red);color:var(--hanji)}
+.chip b{font-size:13px}
+.chip .cost{font-family:ui-monospace,Menlo,monospace;font-size:11px;opacity:.8}
+.pips{display:flex;gap:4px}
+.pips i{width:12px;height:16px;border:2px solid var(--ink);border-radius:4px;background:#3A3A3D}
+.pips i.on{background:var(--wave)}

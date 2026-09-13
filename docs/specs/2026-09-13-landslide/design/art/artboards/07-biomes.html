@@ -1,0 +1,75 @@
+<!-- @dsCard group="사태 — 세계·HUD" viewport="1280x820" name="07 · 바이옴" subtitle="화산·사구·설원 + 재질 스와치" -->
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><title>07 · 바이옴</title>
+<link rel="stylesheet" href="hud.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#F9F8F2;font-family:'Gowun Dodum',system-ui,sans-serif;color:#1D1D1F;padding:44px 52px}
+.head{display:flex;align-items:baseline;gap:16px;border-bottom:2px solid #1D1D1F;padding-bottom:14px;font-family:'Nanum Myeongjo',serif}
+h1{margin:0;font-size:30px;font-weight:800}.sub{font-size:14px;color:#8A6A50}
+.meta{margin-left:auto;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#8A6A50}
+.row{display:flex;gap:28px;margin-top:30px;flex-wrap:wrap}
+.cell{width:370px}
+.frame{position:relative;width:370px;height:260px;border:4px solid #1D1D1F;border-radius:12px;overflow:hidden}
+.frame svg{position:absolute;inset:0;width:100%;height:100%}
+.nm{margin-top:12px;font-family:'Nanum Myeongjo',serif;font-size:19px;font-weight:800}
+.tag{font-size:13px;color:#8A6A50;line-height:1.6}
+h2{margin:40px 0 14px;font-size:13px;font-family:ui-monospace,Menlo,monospace;letter-spacing:.12em;color:#8A6A50}
+.sw{display:flex;gap:14px;flex-wrap:wrap}
+.s{width:132px;border:3px solid #1D1D1F;border-radius:10px;overflow:hidden}
+.s .box{height:74px;position:relative}
+.s .box svg{position:absolute;inset:0;width:100%;height:100%}
+.s .cap{padding:7px 9px;border-top:3px solid #1D1D1F;background:#F9F8F2}
+.s b{display:block;font-size:13px}
+.s span{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:#8A6A50}
+.note{margin-top:26px;font-family:'Nanum Myeongjo',serif;font-size:14px;color:#8A6A50;line-height:1.75;max-width:1000px}
+.note b{color:#1D1D1F}
+</style></head>
+<body>
+<div class="head"><h1>바이옴 셋 — 가루·덩어리·물결</h1><span class="sub">질감으로 재질을 가른다 · 기류는 항상 보인다</span><span class="meta">370 × 260</span></div>
+
+<div class="row">
+  <div class="cell"><div class="frame"><svg viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid slice" data-biome="volcano"></svg></div>
+    <div class="nm">화산</div><div class="tag">화산재 가루 지표 · 현무암 덩어리 · 용암 물결 + 연지 상승 기류</div></div>
+  <div class="cell"><div class="frame"><svg viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid slice" data-biome="dune"></svg></div>
+    <div class="nm">사구</div><div class="tag">모래 가루 지표 · 흙 덩어리 바위 · 오아시스 물결</div></div>
+  <div class="cell"><div class="frame"><svg viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid slice" data-biome="snow"></svg></div>
+    <div class="nm">설원</div><div class="tag">눈 가루 지표 · 얼음 덩어리 + 하이라이트 한 줄 · 소나무</div></div>
+</div>
+
+<h2>재질 스와치 — §8.1 hex 고정</h2>
+<div class="sw" id="sw"></div>
+
+<p class="note">규칙 — <b>가루</b>(화산재·모래·눈)는 바탕색 위에 한 단 진한 <b>점 알갱이</b>, <b>고체</b>(현무암·흙·얼음)는 먹선 두른 <b>둥근 덩어리</b>, <b>액체</b>(용암·물)는 세 줄 <b>물결</b>. 세 바이옴이 같은 지형 코드에 색·질감만 갈아 끼운 것이라 캐릭터는 어느 바이옴에서도 같은 무게로 뜬다.</p>
+
+<script src="world.js"></script>
+<script>
+const W = Sata.World;
+document.querySelectorAll('[data-biome]').forEach(s => { s.innerHTML = W.scene(s.dataset.biome); });
+
+const grain = (bg, dot) => `<rect width="100" height="100" fill="${bg}"/>` +
+  [[16,22],[44,34],[74,20],[28,58],[58,68],[84,52],[38,86],[70,90]].map(([x,y]) => `<circle cx="${x}" cy="${y}" r="5" fill="${dot}"/>`).join('');
+const chunk = (fill, hl) => `<rect width="100" height="100" fill="#F9F8F2"/>
+  <path d="M14 78 Q4 34 30 22 Q58 6 80 26 Q98 44 88 78 Z" fill="${fill}" stroke="#1D1D1F" stroke-width="7" stroke-linejoin="round"/>` +
+  (hl ? `<path d="M30 40 Q48 26 68 36" fill="none" stroke="#F9F8F2" stroke-width="6" stroke-linecap="round"/>` : '');
+const flow = (fill, wave) => `<rect width="100" height="100" fill="${fill}"/>` +
+  [26,50,74].map(y => `<path d="M6 ${y} q12 -9 24 0 q12 9 24 0 q12 -9 24 0" fill="none" stroke="${wave}" stroke-width="6" stroke-linecap="round"/>`).join('');
+
+const items = [
+  ['현무암·바위', '#1D1D1F', chunk('#1D1D1F'), '덩어리'],
+  ['흙', '#8A6A50', chunk('#8A6A50'), '덩어리'],
+  ['화산재', '#4A4A4C · #5C5C5E', grain('#4A4A4C', '#5C5C5E'), '가루'],
+  ['모래', '#D9C39B · #C9AE7E', grain('#D9C39B', '#C9AE7E'), '가루'],
+  ['눈', '#F9F8F2 · #E4E2DA', grain('#F9F8F2', '#E4E2DA'), '가루'],
+  ['용암', '#E0562A · #A2231D', flow('#E0562A', '#A2231D'), '액체'],
+  ['물', '#2B4B63 · #9FBFD3', flow('#2B4B63', '#9FBFD3'), '액체'],
+  ['얼음', '#9FBFD3 · #2B4B63', chunk('#9FBFD3', 1), '덩어리'],
+  ['하늘', '#F9F8F2 → #CFE0EA', `<rect width="100" height="100" fill="#CFE0EA"/><rect width="100" height="34" fill="#F9F8F2"/>` + W.cloud(52, 72, .5), '구름'],
+  ['소나무', '#1A472A', `<rect width="100" height="100" fill="#F9F8F2"/>` + W.pine(50, 96, .55), '덩어리 셋'],
+  ['기류', '#9FBFD3 / #A2231D', `<rect width="100" height="100" fill="#CFE0EA"/>` + W.airflow([[10,34,80,'side'],[10,66,80,'side']]) + W.airflow([[16,86,70,'heat']]), '유선 항상 보임']
+];
+document.getElementById('sw').innerHTML = items.map(([n, hex, art, kind]) =>
+  `<div class="s"><div class="box"><svg viewBox="0 0 100 100" preserveAspectRatio="none">${art}</svg></div>
+   <div class="cap"><b>${n}</b><span>${hex}</span><span>${kind}</span></div></div>`).join('');
+</script>
+</body></html>

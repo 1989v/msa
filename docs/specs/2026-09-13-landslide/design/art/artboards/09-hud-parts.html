@@ -1,0 +1,144 @@
+<!-- @dsCard group="사태 — 세계·HUD" viewport="1280x980" name="09 · HUD 부품" subtitle="조준·방패 각도·던지기·무기 시트·순위·로비" -->
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><title>09 · HUD 부품</title>
+<link rel="stylesheet" href="hud.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#F9F8F2;font-family:'Gowun Dodum',system-ui,sans-serif;color:#1D1D1F;padding:44px 52px}
+.head{display:flex;align-items:baseline;gap:16px;border-bottom:2px solid #1D1D1F;padding-bottom:14px;font-family:'Nanum Myeongjo',serif}
+h1{margin:0;font-size:30px;font-weight:800}.sub{font-size:14px;color:#8A6A50}
+.meta{margin-left:auto;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#8A6A50}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:26px;margin-top:30px}
+.card{display:flex;flex-direction:column;gap:10px}
+.stageish{position:relative;height:300px;border:4px solid #1D1D1F;border-radius:12px;overflow:hidden;background:#CFE0EA}
+.stageish svg.bg{position:absolute;inset:0;width:100%;height:100%}
+.nm{font-family:'Nanum Myeongjo',serif;font-size:18px;font-weight:800}
+.tag{font-size:13px;color:#8A6A50;line-height:1.6}
+.stageish .pan{color:#F9F8F2}
+.mid{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:rgba(29,29,31,.92);border-top:4px solid #1D1D1F;border-radius:14px 14px 0 0;padding:14px;display:flex;flex-direction:column;gap:10px}
+.sheet .grab{width:56px;height:6px;border-radius:6px;background:#B38B6D;margin:0 auto}
+.wrow{display:flex;align-items:center;gap:10px;background:rgba(249,248,242,.92);border:3px solid #1D1D1F;border-radius:8px;padding:7px 10px;min-height:44px}
+.wrow b{font-size:14px}.wrow .cost{margin-left:auto;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#8A6A50}
+.wrow.on{background:#A2231D;color:#F9F8F2}.wrow.on .cost{color:#F9F8F2}
+.rank{position:absolute;inset:0;background:rgba(29,29,31,.92);padding:16px;display:flex;flex-direction:column;gap:8px}
+.rk{display:flex;align-items:center;gap:10px;border:3px solid #1D1D1F;border-radius:8px;background:rgba(249,248,242,.92);padding:6px 10px;min-height:44px}
+.rk .pos{width:28px;height:28px;border:3px solid #1D1D1F;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+.rk .who{font-size:14px;font-weight:700}
+.rk .sc{margin-left:auto;font-family:ui-monospace,Menlo,monospace;font-weight:700}
+.lobby{position:absolute;inset:0;background:#F9F8F2;padding:14px;display:flex;flex-direction:column;gap:10px}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.slot{border:3px solid #1D1D1F;border-radius:10px;background:#F9F8F2;height:88px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;padding-bottom:4px;position:relative}
+.slot span{font-size:11px;color:#8A6A50}
+.slot.empty{background:repeating-linear-gradient(45deg,#EFECE2 0 6px,#F9F8F2 6px 12px);color:#8A6A50;justify-content:center;font-size:12px}
+.note{margin-top:28px;font-family:'Nanum Myeongjo',serif;font-size:14px;color:#8A6A50;line-height:1.75;max-width:1000px}
+.note b{color:#1D1D1F}
+</style></head>
+<body>
+<div class="head"><h1>HUD 부품 — 손이 닿는 곳</h1><span class="sub">판 #1D1D1F 92% · 구조 황토 · 액션 연지 · 모서리 8px · 44px</span><span class="meta">artboards/09</span></div>
+
+<div class="grid">
+  <div class="card"><div class="stageish" id="aim"></div><div class="nm">조준 드래그</div><div class="tag">유닛에서 당기는 방향으로 각도·세기. 궤적은 <b>첫 1/3</b> 만, 끝에 연지 점.</div></div>
+  <div class="card"><div class="stageish" id="dialMine"></div><div class="nm">방패 각도 — 내 화면</div><div class="tag">막을 방향을 다이얼로 고른다. 채운 부채꼴이 방어각.</div></div>
+  <div class="card"><div class="stageish" id="dialFoe"></div><div class="nm">방패 각도 — 상대 화면</div><div class="tag">같은 부품이 <b>?</b> 로 가려진다. 각도는 맞고 나서야 드러난다.</div></div>
+
+  <div class="card"><div class="stageish" id="throw"></div><div class="nm">던지기</div><div class="tag">붙잡은 적을 포물선으로 던진다. 착지점만 표시.</div></div>
+
+  <div class="card"><div class="stageish">
+    <svg class="bg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid slice" data-biome="volcano"></svg>
+    <div class="sheet"><div class="grab"></div>
+      <div class="wrow on"><b>일반 사격</b><span class="cost">기 0</span></div>
+      <div class="wrow"><b>불화살</b><span class="cost">기 4</span></div>
+      <div class="wrow"><b>편전 삼연</b><span class="cost">기 8</span></div>
+      <div class="wrow"><b>사태 유발</b><span class="cost">기 14</span></div>
+    </div></div><div class="nm">무기 바텀시트</div><div class="tag">칩 넷을 넘으면 시트로. 줄 높이 44px, 비용은 모노.</div></div>
+
+  <div class="card"><div class="stageish">
+    <svg class="bg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid slice" data-biome="snow"></svg>
+    <div class="rank">
+      <div class="lbl">판 결과 · 8인</div>
+      <div class="rk"><div class="pos" style="background:#A2231D;color:#F9F8F2">1</div><div class="who">홍 · 창병</div><div class="sc">1,240</div></div>
+      <div class="rk"><div class="pos" style="background:#2B4B63;color:#F9F8F2">2</div><div class="who">청 · 궁수</div><div class="sc">1,090</div></div>
+      <div class="rk"><div class="pos" style="background:#B38B6D">3</div><div class="who">홍 · 포수</div><div class="sc">880</div></div>
+      <div class="rk"><div class="pos" style="background:#B38B6D">4</div><div class="who">청 · 방패병</div><div class="sc">640</div></div>
+      <div style="display:flex;gap:10px;margin-top:auto"><div class="btn" style="flex:1">다시</div><div class="btn go" style="flex:1">로비로</div></div>
+    </div></div><div class="nm">결과 순위</div><div class="tag">좌석 색으로 팀, 점수는 모노. 아래 두 버튼만 액션.</div></div>
+</div>
+
+<div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr)">
+  <div class="card"><div class="stageish" style="height:330px">
+    <div class="lobby">
+      <div style="display:flex;align-items:baseline;gap:10px"><b style="font-family:'Nanum Myeongjo',serif;font-size:20px">사태 — 방 만들기</b><span class="tag">4 대 4 · 화산</span>
+        <span class="num" style="margin-left:auto;font-size:13px;color:#8A6A50">코드 8821</span></div>
+      <div class="slots" id="slots"></div>
+      <div style="display:flex;gap:10px;margin-top:auto">
+        <div class="btn" style="flex:1">바이옴 · 화산</div><div class="btn" style="flex:1">스킨 고르기</div><div class="btn go" style="flex:1.2">시작</div></div>
+    </div></div><div class="nm">로비</div><div class="tag">좌석 8칸에 유닛이 그대로 서고, 팀은 칸 테두리 색으로만 구분한다.</div></div>
+
+  <div class="card"><div class="stageish" style="height:330px;background:#F9F8F2">
+    <div style="position:absolute;inset:0;padding:16px;display:flex;flex-direction:column;gap:12px">
+      <div class="lbl" style="color:#8A6A50">토큰</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span style="width:52px;height:30px;border:3px solid #1D1D1F;border-radius:8px;background:#1D1D1F"></span>
+        <span style="width:52px;height:30px;border:3px solid #1D1D1F;border-radius:8px;background:#B38B6D"></span>
+        <span style="width:52px;height:30px;border:3px solid #1D1D1F;border-radius:8px;background:#A2231D"></span>
+        <span style="width:52px;height:30px;border:3px solid #1D1D1F;border-radius:8px;background:#2B4B63"></span>
+        <span style="width:52px;height:30px;border:3px solid #1D1D1F;border-radius:8px;background:#F9F8F2"></span>
+      </div>
+      <div class="tag" style="line-height:1.9">판 <b>#1D1D1F 92%</b> · 구조·라벨 <b>#B38B6D</b> · 액션 <b>#A2231D</b> · 글 <b>#F9F8F2</b><br>모서리 <b>8px</b> · 테두리 <b>3px</b> 먹선 · 누름 <b>44px</b><br>숫자는 모노, 이름은 명조, 본문은 둥근 고딕</div>
+      <div style="display:flex;gap:10px;margin-top:auto"><div class="btn">보조</div><div class="btn go">주 액션</div><div class="chip on">선택 칩</div></div>
+    </div></div><div class="nm">토큰 요약</div><div class="tag">여섯 부품 전부 이 다섯 색과 한 반지름만 쓴다.</div></div>
+</div>
+
+<p class="note">공통 — 모든 판은 같은 <b>먹선 3px + 8px 모서리</b>를 쓰고, 정보는 라벨(황토) → 값(모노 한지) → 액션(연지) 순으로 읽힌다. 상대 화면에서 가려지는 정보는 늘 <b>황토 바탕의 ?</b> 한 가지 표현만 쓴다.</p>
+
+<script src="characters.js"></script>
+<script src="world.js"></script>
+<script>
+const W = Sata.World;
+document.querySelectorAll('[data-biome]').forEach(s => { s.innerHTML = W.scene(s.dataset.biome); });
+
+function stage(id, biome, over) {
+  const el = document.getElementById(id);
+  el.innerHTML = `<svg class="bg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid slice">${W.scene(biome)}</svg>` + over;
+}
+const unit = (u, o) => Sata.render(u, Object.assign({ h: 56 }, o));
+
+stage('aim', 'volcano', `<div style="position:absolute;left:24px;bottom:64px">${unit('archer', { team: 'red' })}</div>
+  <svg viewBox="0 0 380 300" style="position:absolute;inset:0;width:100%;height:100%">
+    <path d="M60 216 Q120 150 190 138" fill="none" stroke="#1D1D1F" stroke-width="6" stroke-linecap="round" stroke-dasharray="2 16"/>
+    <circle cx="190" cy="138" r="8" fill="#A2231D" stroke="#1D1D1F" stroke-width="4"/>
+    <path d="M60 216 L22 252" stroke="#B38B6D" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="22" cy="252" r="16" fill="rgba(249,248,242,.9)" stroke="#1D1D1F" stroke-width="5"/>
+  </svg>
+  <div class="pan" style="position:absolute;right:12px;top:12px;display:flex;gap:10px;white-space:nowrap"><span class="num" style="font-size:16px">52.0°</span><span class="num" style="font-size:16px;color:#B38B6D">640</span></div>`);
+
+const dial = (hidden) => `<svg viewBox="0 0 380 300" style="position:absolute;inset:0;width:100%;height:100%">
+  <circle cx="200" cy="124" r="68" fill="rgba(29,29,31,.92)" stroke="#1D1D1F" stroke-width="6"/>
+  <circle cx="200" cy="124" r="48" fill="none" stroke="#B38B6D" stroke-width="5" stroke-dasharray="6 12"/>
+  ${hidden ? '' : `<path d="M200 124 L262 94 A68 68 0 0 1 262 154 Z" fill="#A2231D" stroke="#1D1D1F" stroke-width="5" stroke-linejoin="round"/>`}
+  ${hidden ? `<text x="200" y="152" text-anchor="middle" font-size="64" font-family="'Nanum Myeongjo',serif" font-weight="800" fill="#B38B6D">?</text>` : ''}
+  <circle cx="200" cy="124" r="13" fill="#F9F8F2" stroke="#1D1D1F" stroke-width="5"/>
+</svg>
+<div style="position:absolute;left:50%;bottom:12px;transform:translateX(-50%);white-space:nowrap" class="pan">${hidden ? '<span class="lbl">상대 방어각 · 비공개</span>' : '<span class="num" style="font-size:14px">방어 36° 우측</span>'}</div>`;
+stage('dialMine', 'snow', `<div style="position:absolute;left:16px;bottom:58px">${unit('shield', { team: 'red' })}</div>` + dial(false));
+stage('dialFoe', 'snow', `<div style="position:absolute;left:16px;bottom:58px">${unit('shield', { team: 'blue' })}</div>` + dial(true));
+
+stage('throw', 'dune', `<div style="position:absolute;left:22px;bottom:60px">${unit('sword', { team: 'red', skin: 'goryeo' })}</div>
+  <div style="position:absolute;left:150px;top:26px;transform:rotate(28deg)">${unit('spear', { h: 44, team: 'blue', skin: 'silla', expr: 'hit' })}</div>
+  <svg viewBox="0 0 380 300" style="position:absolute;inset:0;width:100%;height:100%">
+    <path d="M86 196 Q190 44 300 186" fill="none" stroke="#1D1D1F" stroke-width="6" stroke-linecap="round" stroke-dasharray="2 16"/>
+    <ellipse cx="302" cy="196" rx="34" ry="13" fill="none" stroke="#A2231D" stroke-width="6"/>
+    <ellipse cx="302" cy="196" rx="14" ry="6" fill="#A2231D"/>
+  </svg>
+  <div class="pan" style="position:absolute;left:12px;top:12px"><span class="lbl">붙잡음 · 던지기</span></div>`);
+
+document.getElementById('slots').innerHTML = [
+  ['archer', 'red', '홍 · 궁수'], ['gunner', 'red', '홍 · 포수'], ['sword', 'blue', '청 · 검사'], ['shield', 'blue', '청 · 방패병'],
+  ['spear', 'red', '홍 · 창병'], null, ['archer', 'blue', '청 · 궁수'], null
+].map(s => s
+  ? `<div class="slot" style="border-color:${s[1] === 'red' ? '#A2231D' : '#2B4B63'}">${Sata.render(s[0], { h: 52, team: s[1], skin: 'joseon' })}<span>${s[2]}</span></div>`
+  : `<div class="slot empty">빈 자리</div>`
+).join('');
+</script>
+</body></html>

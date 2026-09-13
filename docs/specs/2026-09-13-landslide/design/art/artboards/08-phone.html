@@ -1,0 +1,105 @@
+<!-- @dsCard group="사태 — 세계·HUD" viewport="1000x620" name="08 · 폰 가로" subtitle="844×390 · 44px 터치 검증" -->
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><title>08 · 폰 가로</title>
+<link rel="stylesheet" href="hud.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#E7E4DA;font-family:'Gowun Dodum',system-ui,sans-serif;color:#1D1D1F;padding:32px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.cap{width:884px;display:flex;align-items:baseline;gap:14px;font-family:'Nanum Myeongjo',serif}
+.cap h1{margin:0;font-size:24px;font-weight:800}.cap span{font-size:13px;color:#8A6A50}
+.cap .meta{margin-left:auto;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#8A6A50}
+.phone{position:relative;width:884px;height:430px;background:#1D1D1F;border-radius:44px;padding:20px}
+.screen{position:relative;width:844px;height:390px;border-radius:26px;overflow:hidden;background:#F9F8F2}
+.screen>svg{position:absolute;inset:0;width:100%;height:100%}
+.notch{position:absolute;left:6px;top:50%;transform:translateY(-50%);width:8px;height:110px;background:#3A3A3D;border-radius:8px}
+.unit{position:absolute}
+.hud .pan{padding:8px 10px}
+.hud .seat{width:26px;height:26px;font-size:11px}
+.legend{width:884px;font-family:'Nanum Myeongjo',serif;font-size:13.5px;color:#8A6A50;line-height:1.75}
+.legend b{color:#1D1D1F}
+</style></head>
+<body>
+<div class="cap"><h1>폰 가로 — 844 × 390</h1><span>HUD 부품 전부 · 모든 누름 대상 44px 이상</span><span class="meta">safe-area 좌우 20px</span></div>
+
+<div class="phone"><div class="notch"></div><div class="screen" id="screen">
+<svg id="world" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid slice"></svg>
+<svg id="fx" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%"></svg>
+<div id="units"></div>
+<div class="hud">
+  <div class="pan" style="left:12px;top:10px;display:flex;align-items:center;gap:8px">
+    <div class="seats">
+      <div class="seat now" style="background:#A2231D">1</div><div class="seat" style="background:#2B4B63">2</div>
+      <div class="seat" style="background:#A2231D">3</div><div class="seat" style="background:#2B4B63">4</div>
+      <div class="seat" style="background:#A2231D;opacity:.35">5</div><div class="seat" style="background:#2B4B63;opacity:.35">6</div>
+    </div><span class="num" style="font-size:13px">12초</span>
+  </div>
+  <div class="pan" style="left:50%;top:10px;transform:translateX(-50%);display:flex;align-items:center;gap:8px">
+    <svg width="22" height="22" viewBox="0 0 34 34"><path d="M6 17h18" stroke="#9FBFD3" stroke-width="6" stroke-linecap="round"/><path d="M18 9l9 8-9 8" fill="none" stroke="#9FBFD3" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span class="num" style="font-size:16px">7</span><span class="lbl">동풍 · 용암 상승</span>
+  </div>
+  <div class="pan" style="right:12px;top:10px;width:140px;display:flex;flex-direction:column;gap:5px">
+    <div style="display:flex;justify-content:space-between"><span class="lbl">기(氣)</span><span class="num" style="font-size:12px">18/30</span></div>
+    <div class="bar" style="height:10px"><i style="width:60%;background:#9FBFD3"></i></div>
+  </div>
+
+  <div class="pan" style="left:12px;bottom:10px;width:186px;display:flex;flex-direction:column;gap:6px">
+    <div style="display:flex;align-items:baseline;gap:6px"><b style="font-size:14px">궁수</b><span class="lbl" style="font-size:11px">조선</span><span class="num" style="margin-left:auto;font-size:12px">72/90</span></div>
+    <div class="bar" style="height:10px"><i style="width:80%;background:#A2231D"></i></div>
+    <div class="pips"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+  </div>
+
+  <div style="position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;gap:8px">
+    <div class="chip on" style="padding:4px 10px"><b style="font-size:12px">일반</b><span class="cost">0</span></div>
+    <div class="chip" style="padding:4px 10px"><b style="font-size:12px">불화살</b><span class="cost">4</span></div>
+    <div class="chip" style="padding:4px 10px"><b style="font-size:12px">편전</b><span class="cost">8</span></div>
+    <div class="chip" style="padding:4px 10px"><b style="font-size:12px">사태</b><span class="cost">14</span></div>
+  </div>
+
+  <div class="pan" style="right:12px;bottom:10px;width:200px;display:flex;flex-direction:column;gap:7px">
+    <div style="display:flex;align-items:baseline;gap:8px"><span class="num" style="font-size:18px">52.0°</span><span class="num" style="font-size:18px;color:#B38B6D">640</span></div>
+    <div class="bar" style="height:10px"><i style="width:45%;background:#B38B6D"></i></div>
+    <div style="display:flex;gap:8px"><div class="btn" style="flex:1;font-size:13px;padding:0 8px">파내기</div><div class="btn go" style="flex:1;font-size:13px;padding:0 8px">발사</div></div>
+  </div>
+
+  <div class="pan" style="left:12px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px">
+    <div class="btn" style="width:44px;padding:0">＋</div><span class="num" style="font-size:11px">1.0×</span><div class="btn" style="width:44px;padding:0">−</div>
+  </div>
+</div>
+</div></div>
+
+<p class="legend">검증 — 좌우 패널이 세로 가운데를 비워 두므로 지형과 유닛이 가려지지 않는다. <b>발사·파내기·줌·무기 칩</b>은 모두 높이 44px 이상이고, 엄지가 닿는 아래 두 모서리에 발사와 무장 정보를 둔다. 무기 칩은 넷까지 한 줄, 다섯 이상이면 <b>09 의 바텀시트</b>로 넘긴다.</p>
+
+<script src="characters.js"></script>
+<script src="world.js"></script>
+<script>
+const W = Sata.World, B = 'volcano';
+document.getElementById('world').innerHTML = W.scene(B);
+const fx = [
+  W.airflow([[180,240,240,'side'],[820,280,240,'side']]),
+  W.airflow([[600,596,190,'heat'],[680,606,190,'heat']]),
+  `<path d="M250 452 Q356 356 470 344" fill="none" stroke="#1D1D1F" stroke-width="8" stroke-linecap="round" stroke-dasharray="2 22"/>
+   <circle cx="470" cy="344" r="10" fill="#A2231D" stroke="#1D1D1F" stroke-width="5"/>`
+].join('');
+document.getElementById('fx').innerHTML = fx;
+
+/* slice 스케일: 화면이 viewBox 보다 넓어 y 가 잘린다 — 스케일과 오프셋을 맞춰 발을 지면에 둔다 */
+const SW_ = 844, SH_ = 390, k = Math.max(SW_ / 1280, SH_ / 720), ox = (SW_ - 1280 * k) / 2, oy = (SH_ - 720 * k) / 2;
+const H = 36, sw = H * 320 / 300, sh = H * 480 / 300, FOOT = sh * 470 / 480, LEFT = sw * 180 / 320;
+const cast = [
+  {x:210, unit:'archer', team:'red', skin:'joseon'},
+  {x:430, unit:'gunner', team:'red', skin:'goryeo'},
+  {x:880, unit:'shield', team:'blue', skin:'joseon'},
+  {x:1130, unit:'sword', team:'blue', skin:'silla'}
+];
+const box = document.getElementById('units');
+cast.forEach(c => {
+  const px = ox + c.x * k, py = oy + (W.groundY(B, c.x) - 14) * k;
+  const d = document.createElement('div');
+  d.className = 'unit';
+  d.style.left = (px - LEFT) + 'px';
+  d.style.top = (py - FOOT) + 'px';
+  d.innerHTML = Sata.render(c.unit, { h: H, team: c.team, skin: c.skin });
+  box.appendChild(d);
+});
+</script>
+</body></html>

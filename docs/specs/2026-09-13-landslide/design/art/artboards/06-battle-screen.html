@@ -1,0 +1,145 @@
+<!-- @dsCard group="사태 — 세계·HUD" viewport="1340x820" name="06 · 전투 화면" subtitle="1280×720 · 화산 바이옴 4v4" -->
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><title>06 · 전투 화면</title>
+<link rel="stylesheet" href="hud.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#E7E4DA;font-family:'Gowun Dodum',system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;gap:14px;padding:24px}
+.cap{width:1280px;display:flex;align-items:baseline;gap:14px;font-family:'Nanum Myeongjo',serif}
+.cap h1{margin:0;font-size:26px;font-weight:800;color:#1D1D1F}
+.cap span{font-size:14px;color:#8A6A50}
+.cap .meta{margin-left:auto;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#8A6A50}
+.stage{position:relative;width:1280px;height:720px;border:4px solid #1D1D1F;border-radius:12px;overflow:hidden;background:#F9F8F2}
+.stage>svg{position:absolute;inset:0;width:100%;height:100%}
+.unit{position:absolute}
+.tag{position:absolute;transform:translate(-50%,-100%);background:#1D1D1F;color:#F9F8F2;border:3px solid #1D1D1F;border-radius:8px;padding:2px 8px;font-size:12px;font-weight:700;white-space:nowrap}
+.tag.q{background:#B38B6D;color:#1D1D1F}
+.hp{position:absolute;transform:translate(-50%,-100%);width:44px}
+.hp .bar{height:8px}
+</style></head>
+<body>
+<div class="cap"><h1>전투 화면 — 화산 바이옴</h1><span>4 대 4 · 홍팀 차례 · 유닛은 characters.js render() 36px</span><span class="meta">1280 × 720</span></div>
+
+<div class="stage" id="stage">
+<svg id="world" viewBox="0 0 1280 720" preserveAspectRatio="none"></svg>
+<svg id="fx" viewBox="0 0 1280 720" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%"></svg>
+<div id="units"></div>
+
+<div class="hud">
+  <div class="pan" style="left:20px;top:20px;display:flex;flex-direction:column;gap:8px">
+    <div style="display:flex;align-items:center;gap:10px"><span class="lbl">순서</span><span class="num" style="font-size:13px;color:#F9F8F2">남은 <b>12</b>초</span></div>
+    <div class="seats">
+      <div class="seat now" style="background:#A2231D">1</div><div class="seat" style="background:#2B4B63">2</div>
+      <div class="seat" style="background:#A2231D">3</div><div class="seat" style="background:#2B4B63">4</div>
+      <div class="seat" style="background:#A2231D">5</div><div class="seat" style="background:#2B4B63">6</div>
+      <div class="seat" style="background:#A2231D;opacity:.35">7</div><div class="seat" style="background:#2B4B63;opacity:.35">8</div>
+    </div>
+  </div>
+
+  <div class="pan" style="left:50%;top:20px;transform:translateX(-50%);display:flex;align-items:center;gap:14px">
+    <svg width="34" height="34" viewBox="0 0 34 34"><path d="M6 17h18" stroke="#9FBFD3" stroke-width="5" stroke-linecap="round"/><path d="M18 9l9 8-9 8" fill="none" stroke="#9FBFD3" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span class="num" style="font-size:22px">7</span><span class="lbl">동풍</span>
+    <span style="width:2px;height:26px;background:#B38B6D;opacity:.5"></span>
+    <span style="font-size:13px;color:#F9F8F2">용암 위 <b style="background:#A2231D;color:#F9F8F2;border-radius:6px;padding:1px 7px">상승</b> 기류</span>
+  </div>
+
+  <div class="pan" style="right:20px;top:20px;width:210px;display:flex;flex-direction:column;gap:8px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="lbl">뭉친 기(氣)</span><span class="num" style="font-size:15px">18/30</span></div>
+    <div class="bar"><i style="width:60%;background:#9FBFD3"></i></div>
+  </div>
+
+  <div class="pan" style="left:20px;bottom:20px;width:280px;display:flex;flex-direction:column;gap:8px">
+    <div style="display:flex;align-items:baseline;gap:8px"><b style="font-size:17px">궁수</b><span class="lbl">조선 갑사</span><span class="num" style="margin-left:auto;font-size:14px">72/90</span></div>
+    <div class="bar"><i style="width:80%;background:#A2231D"></i></div>
+    <div style="display:flex;align-items:center;gap:10px"><span class="lbl">기력</span><div class="pips"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div></div>
+  </div>
+
+  <div style="position:absolute;left:50%;bottom:20px;transform:translateX(-50%);display:flex;gap:10px">
+    <div class="chip on"><b>일반 사격</b><span class="cost">기 0</span></div>
+    <div class="chip"><b>불화살</b><span class="cost">기 4</span></div>
+    <div class="chip"><b>편전 삼연</b><span class="cost">기 8</span></div>
+    <div class="chip"><b>사태 유발</b><span class="cost">기 14</span></div>
+  </div>
+
+  <div class="pan" style="right:20px;bottom:20px;width:290px;display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span class="num" style="font-size:26px">52.0°</span><span class="num" style="font-size:26px;color:#B38B6D">640</span></div>
+    <div style="display:flex;align-items:center;gap:8px"><span class="lbl">이동</span><div class="bar" style="flex:1"><i style="width:45%;background:#B38B6D"></i></div></div>
+    <div style="display:flex;gap:10px"><div class="btn" style="flex:1">파내기</div><div class="btn go" style="flex:1">발사</div></div>
+  </div>
+
+  <div class="pan" style="left:20px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px">
+    <div class="btn" style="width:44px;padding:0">＋</div><span class="num" style="font-size:13px">1.0×</span><div class="btn" style="width:44px;padding:0">−</div>
+  </div>
+</div>
+</div>
+
+<p style="width:1280px;margin:2px 0 0;font-family:'Nanum Myeongjo',serif;font-size:14px;color:#8A6A50;line-height:1.75">장면 — 왼쪽 비탈에서 <b style="color:#1D1D1F">산사태</b>가 화산재 알갱이로 흘러내리고, 그 아래 청팀 창병이 가슴까지 <b style="color:#1D1D1F">매몰</b>됐다. 가운데 능선에는 검사가 낸 <b style="color:#1D1D1F">검기 절단선</b>과 창병이 뚫은 <b style="color:#1D1D1F">관통 터널</b>. 용암 못 위로 연지 <b style="color:#1D1D1F">상승 기류</b>, 하늘에는 청자 유선이 항상 보인다. 오른쪽 청팀 방패병은 상대 화면이라 각도가 <b style="color:#1D1D1F">?</b> 로 가려지고, 조준 궤적은 <b style="color:#1D1D1F">첫 1/3</b> 만 점선으로 보인다.</p>
+
+<script src="characters.js"></script>
+<script src="world.js"></script>
+<script>
+const W = Sata.World, B = 'volcano';
+document.getElementById('world').innerHTML = W.scene(B);
+
+/* 지형 위 사건들 */
+const gy = (x) => W.groundY(B, x);
+const fx = [];
+/* 산사태 — 왼쪽 비탈을 흘러내리는 가루 덩어리 + 알갱이 */
+fx.push(`<g><path d="M414 470 Q470 498 512 534 Q560 574 636 592 L646 634 Q548 630 482 584 Q424 542 396 498 Z" fill="#5C5C5E" stroke="#1D1D1F" stroke-width="6" stroke-linejoin="round"/>
+  <g fill="#4A4A4C">${[[440,502],[478,530],[516,560],[560,584],[604,600],[462,556],[512,590],[566,612]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="6.5"/>`).join('')}</g>
+  <g fill="none" stroke="#F9F8F2" stroke-width="5" stroke-linecap="round" opacity=".7"><path d="M432 486 Q482 524 532 552"/><path d="M462 474 Q516 512 572 544"/></g></g>`);
+/* 검기 절단선 — 능선을 가르는 틈 */
+fx.push(`<g><path d="M994 524 L1028 614" stroke="#1D1D1F" stroke-width="16" stroke-linecap="round"/>
+  <path d="M994 524 L1028 614" stroke="#F9F8F2" stroke-width="6" stroke-linecap="round" opacity=".8"/>
+  <path d="M980 512 L1016 486 M1002 518 L1044 500" stroke="#F9F8F2" stroke-width="5" stroke-linecap="round" opacity=".8"/></g>`);
+/* 창병 관통 터널 */
+fx.push(`<g><ellipse cx="906" cy="666" rx="42" ry="31" fill="#1D1D1F"/><ellipse cx="906" cy="662" rx="31" ry="22" fill="#3A3A3D"/>
+  <path d="M864 666 L790 656" stroke="#1D1D1F" stroke-width="10" stroke-linecap="round" opacity=".5"/></g>`);
+/* 기류 — 하늘 유선 + 용암 상승 */
+fx.push(W.airflow([[120,250,240,'side'],[420,196,220,'side'],[860,268,260,'side'],[1000,150,200,'side']]));
+fx.push(W.airflow([[604,566,180,'heat'],[660,580,190,'heat'],[716,570,160,'heat']]));
+/* 뭉친 기 — 떠 있는 구슬 */
+fx.push([[500,392],[548,352],[452,348]].map(([x,y],i)=>`<g><circle cx="${x}" cy="${y}" r="${16-i*2}" fill="#9FBFD3" stroke="#1D1D1F" stroke-width="5"/><circle cx="${x-4}" cy="${y-4}" r="4" fill="#F9F8F2"/></g>`).join(''));
+/* 조준 궤적 — 첫 1/3 만 */
+fx.push(`<g><path d="M196 436 Q296 330 418 318" fill="none" stroke="#1D1D1F" stroke-width="7" stroke-linecap="round" stroke-dasharray="2 20"/>
+  <circle cx="418" cy="318" r="9" fill="#A2231D" stroke="#1D1D1F" stroke-width="5"/></g>`);
+document.getElementById('fx').innerHTML = fx.join('');
+
+/* 유닛 — characters.js 그대로 */
+const H = 36, SW = H*320/300, SH = H*480/300, FOOT = SH*470/480, LEFT = SW*80/320 + SW*100/320;
+const cast = [
+  {x:150, unit:'archer', team:'red', skin:'joseon', tag:'내 차례'},
+  {x:832, unit:'spear', team:'blue', skin:'goguryeo', expr:'buried', dy:2},
+  {x:206, unit:'gunner', team:'red', skin:'goryeo'},
+  {x:352, unit:'sword', team:'red', skin:'silla'},
+  {x:838, unit:'shield', team:'blue', skin:'joseon', tag:'?'},
+  {x:952, unit:'archer', team:'blue', skin:'silla'},
+  {x:1104, unit:'sword', team:'blue', skin:'goryeo'},
+  {x:1216, unit:'gunner', team:'red', skin:'goguryeo'}
+];
+const box = document.getElementById('units'), W0 = 1280, H0 = 720;
+cast.forEach((c) => {
+  const foot = gy(c.x) - 14 + (c.dy || 0);
+  const d = document.createElement('div');
+  d.className = 'unit';
+  d.style.left = (c.x - LEFT) / W0 * 100 + '%';
+  d.style.top = (foot - FOOT) / H0 * 100 + '%';
+  d.innerHTML = Sata.render(c.unit, { h: H, team: c.team, skin: c.skin, expr: c.expr });
+  box.appendChild(d);
+  if (c.tag) {
+    const t = document.createElement('div');
+    t.className = 'tag' + (c.tag === '?' ? ' q' : '');
+    t.style.left = c.x / W0 * 100 + '%';
+    t.style.top = (foot - 52) / H0 * 100 + '%';
+    t.textContent = c.tag;
+    document.querySelector('.stage').appendChild(t);
+  }
+  const hp = document.createElement('div');
+  hp.className = 'hp';
+  hp.style.left = c.x / W0 * 100 + '%';
+  hp.style.top = (foot - 40) / H0 * 100 + '%';
+  hp.innerHTML = '<div class="bar"><i style="width:' + (c.expr === 'buried' ? 34 : 60 + (c.x % 5) * 8) + '%;background:' + (c.team === 'blue' ? '#2B4B63' : '#A2231D') + '"></i></div>';
+  document.querySelector('.stage').appendChild(hp);
+});
+</script>
+</body></html>
