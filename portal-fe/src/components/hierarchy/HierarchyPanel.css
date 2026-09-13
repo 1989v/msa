@@ -1,9 +1,13 @@
-/* 계층 뷰 — 층마다 왼쪽 띠 색이 다르다 (진입 먹 · 단계 청자 · 장치 소나무 · 구현 황토) */
+/*
+ * 계층 뷰 — 층마다 왼쪽 띠 색이 다르다 (진입 · 단계 · 장치 · 구현).
+ * /tech 는 브랜드 면이 아니라 dark-trading 팔레트 고정이고(useHeritageSurface) `--kh-*` 토큰이 없다 —
+ * 그 토큰을 쓰면 띠가 currentColor 로 떨어져 전부 흰색이 된다 (2026-09-13 실측). `--ko-*` 만 쓴다.
+ */
 .hier-panel {
-  --hier-c0: var(--kh-ink);
-  --hier-c1: var(--kh-celadon);
-  --hier-c2: var(--kh-pine);
-  --hier-c3: var(--kh-ocher);
+  --hier-c0: var(--ko-text-secondary);
+  --hier-c1: var(--ko-accent-primary);
+  --hier-c2: var(--ko-accent-secondary);
+  --hier-c3: var(--ko-status-warning);
   height: 100%;
   overflow: auto;
   padding: var(--ko-space-3) var(--ko-space-4) var(--ko-space-5);
@@ -102,7 +106,7 @@
 }
 
 .hier-name:hover {
-  color: var(--ko-accent-text);
+  color: var(--ko-accent-primary-hover);
   text-decoration: underline;
 }
 
@@ -142,7 +146,7 @@
 }
 
 .hier-flow:hover {
-  color: var(--ko-accent-text);
+  color: var(--ko-accent-primary-hover);
   border-color: var(--ko-accent-primary);
 }
 
