@@ -106,6 +106,8 @@ namespace Kgd.Field
 
         /// <summary>바꾼 칸 — 값은 (밀도 &lt;&lt; 8) | 재료. 두 값이 한 칸을 이루므로 같이 남긴다.</summary>
         private readonly Dictionary<long, ushort> _edits = new();
+        /// <summary>칸을 채우지 않고 빛만 내는 자리 — 소품(말뚝의 등갓)이 켠다. 대장에 남지 않는다.</summary>
+        private readonly Dictionary<long, byte> _emitters = new();
 
         private readonly List<long> _drop = new();
         private readonly Queue<long> _unlightQueue = new();
@@ -291,6 +293,24 @@ namespace Kgd.Field
             if (y < 0 || y >= Height) return;
             _edits[EditKey(x, y, z)] = (ushort)((dens << 8) | mat);
             Set(x, y, z, dens, mat);
+        }
+
+        /// <summary>
+        /// 칸을 채우지 않고 빛만 내는 자리를 켜거나(<paramref name="glow"/> 1~15) 끈다(0).
+        /// 말뚝의 등갓처럼 **소품이 내는 빛**이다 — 칸을 채우면 그 자리에 땅이 그려지고 몸이 막힌다.
+        /// 대장에 남지 않으므로 소품 층이 소품을 다시 세울 때 다시 켠다. 청크가 아직 안 켜졌으면
+        /// 켜질 때 함께 흘린다.
+        /// </summary>
+        public void Emit(int x, int y, int z, byte glow)
+        {
+            if (y < 0 || y >= Height) return;
+            long k = EditKey(x, y, z);
+            if (glow == 0) _emitters.Remove(k); else _emitters[k] = glow;
+            var c = Find(ChunkOf(x), ChunkOf(z));
+            if (c == null || !c.Lit) return;
+            Drain(x, y, z, sky: false);
+            if (glow > 0) { SetBlk(x, y, z, glow); _seeds.Add(new Vector3Int(x, y, z)); }
+            Flow(sky: false);
         }
 
         /// <summary>
@@ -675,6 +695,14 @@ namespace Kgd.Field
                         _seeds.Add(new Vector3Int(x0 + lx, y, z0 + lz));
                     }
                 }
+            }
+            // 소품이 켠 빛 — 칸이 비어 있어 위 고리가 지나친다
+            foreach (var kv in _emitters)
+            {
+                Unpack2(kv.Key, out int ex, out int ey, out int ez);
+                if (ChunkOf(ex) != c.Cx || ChunkOf(ez) != c.Cz) continue;
+                SetBlk(ex, ey, ez, kv.Value);
+                _seeds.Add(new Vector3Int(ex, ey, ez));
             }
             Flow(sky: false);
 
