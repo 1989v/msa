@@ -29,7 +29,7 @@ namespace Kgd.Field
         public readonly int Height;
 
         /// <summary>재료표. 인덱스가 곧 재료 id 이고 0 은 없는 것이다.</summary>
-        public readonly Kgd.Voxel.KgdVoxelKind[] Kinds;
+        public readonly KgdFieldKind[] Kinds;
 
         /// <summary>
         /// 청크 하나를 채운다 — (청크 x, 청크 z, 밀도 배열, 재료 배열). 둘 다 길이가 SX*SZ*Height 다.
@@ -39,6 +39,24 @@ namespace Kgd.Field
         public Transform Root;
         public Material Surface;
         public Material LiquidSurface;
+
+        /// <summary>
+        /// 이 높이 아래는 **깊은 층**으로 따로 뜬다. 지상에 있을 때는 그 층을 안 그린다 — 정점의 6할이
+        /// 지상에서 보이지도 않는 굴 벽이었다(실측 26.7K 중 16.2K). 게임이 사람의 높이로 <see cref="ShowDeep"/> 을 켠다.
+        /// </summary>
+        public int DeepBelow = 32;
+
+        private bool _showDeep = true;
+        public bool ShowDeep
+        {
+            get => _showDeep;
+            set
+            {
+                if (_showDeep == value) return;
+                _showDeep = value;
+                foreach (var kv in _chunks) if (kv.Value.DeepGo != null && kv.Value.DeepMesh != null) kv.Value.DeepGo.SetActive(value);
+            }
+        }
 
         public int LoadedChunks => _chunks.Count;
         public int EditCount => _edits.Count;
@@ -57,8 +75,9 @@ namespace Kgd.Field
             public byte[] SkyTop;   // 열마다 「이 높이 위로는 전부 하늘」인 y
             public bool Lit;
             public bool MeshDirty;
-            public GameObject Go;
-            public Mesh Mesh;
+            public bool HasLiquid;  // 액체 칸이 하나라도 있나 — 있어야 액체 메시를 뜬다
+            public GameObject Go, DeepGo, LiquidGo;
+            public Mesh Mesh, DeepMesh, LiquidMesh;
         }
 
         private readonly Dictionary<long, Chunk> _chunks = new();
@@ -69,7 +88,7 @@ namespace Kgd.Field
         private readonly List<long> _drop = new();
         private readonly Queue<long> _unlightQueue = new();
 
-        public KgdFieldWorld(int height, Kgd.Voxel.KgdVoxelKind[] kinds)
+        public KgdFieldWorld(int height, KgdFieldKind[] kinds)
         {
             Height = height;
             Kinds = kinds;
@@ -107,9 +126,20 @@ namespace Kgd.Field
         public bool Solid(int x, int y, int z) => Dens(x, y, z) > Iso;
 
         /// <summary>
-        /// 빛이 막히나. **찬 칸이면서 재료가 불투명해야** 막는다 — 갓처럼 성긴 것은 차 있어도
-        /// 빛을 지난다(막으면 자실체 밑이 새까매져 숲이 검은 덩어리가 된다).
+        /// **상(相)을 가려 읽는다.** 땅을 뜨고 부딪힐 때는 밀도 그대로다 — 수액 칸도 **그 자리 땅의
+        /// 밀도**를 갖고 있어(생성기가 그렇게 넣는다) 물속 바닥이 등치면으로 선다. 수면을 뜰 때는
+        /// 재료가 액체인 칸만 가득 찬 것으로, 나머지는 빈 것으로 본다 — 그래서 수면이 칸 한가운데
+        /// 높이에 평평하게 선다.
         /// </summary>
+        public byte Phase(int x, int y, int z, bool liquid)
+        {
+            if (!liquid) return Dens(x, y, z);
+            if (y < 0 || y >= Height) return 0;
+            var c = Find(ChunkOf(x), ChunkOf(z));
+            if (c == null) return 0;
+            return Kinds[c.Mat[Index(LocalOf(x), y, LocalOf(z))]].Liquid ? (byte)255 : (byte)0;
+        }
+
         public bool IsOpaque(int x, int y, int z)
         {
             if (y < 0 || y >= Height) return false;
@@ -119,7 +149,8 @@ namespace Kgd.Field
             return c.Dens[i] > Iso && Kinds[c.Mat[i]].Opaque;
         }
 
-        public bool IsLiquid(int x, int y, int z) => Kinds[Mat(x, y, z)].Liquid && Solid(x, y, z);
+        /// <summary>액체 칸인가. 밀도는 안 본다 — 수액 칸의 밀도는 땅의 것이라 표면 아래일 수 있다.</summary>
+        public bool IsLiquid(int x, int y, int z) => Kinds[Mat(x, y, z)].Liquid;
 
         /// <summary>하늘빛 0~15. 아직 안 만든 곳은 하늘로 친다 — 안 그러면 세계 가장자리가 새까맣다.</summary>
         public int SkyLight(int x, int y, int z)
@@ -147,27 +178,44 @@ namespace Kgd.Field
         /// 칸 사이를 보간해 읽는다. **충돌과 조준이 이것을 본다** — 칸 단위로만 읽으면
         /// 표면이 다시 칸 경계에 있는 것처럼 굴어, 매끈하게 그려 놓고 네모에 부딪히게 된다.
         /// </summary>
-        public float Sample(Vector3 p)
+        public float Sample(Vector3 p, bool liquid = false)
         {
             int i = Mathf.FloorToInt(p.x), j = Mathf.FloorToInt(p.y), k = Mathf.FloorToInt(p.z);
             float tx = p.x - i, ty = p.y - j, tz = p.z - k;
 
-            float c00 = Mathf.Lerp(Dens(i, j, k), Dens(i + 1, j, k), tx);
-            float c10 = Mathf.Lerp(Dens(i, j + 1, k), Dens(i + 1, j + 1, k), tx);
-            float c01 = Mathf.Lerp(Dens(i, j, k + 1), Dens(i + 1, j, k + 1), tx);
-            float c11 = Mathf.Lerp(Dens(i, j + 1, k + 1), Dens(i + 1, j + 1, k + 1), tx);
+            float c00 = Mathf.Lerp(Phase(i, j, k, liquid), Phase(i + 1, j, k, liquid), tx);
+            float c10 = Mathf.Lerp(Phase(i, j + 1, k, liquid), Phase(i + 1, j + 1, k, liquid), tx);
+            float c01 = Mathf.Lerp(Phase(i, j, k + 1, liquid), Phase(i + 1, j, k + 1, liquid), tx);
+            float c11 = Mathf.Lerp(Phase(i, j + 1, k + 1, liquid), Phase(i + 1, j + 1, k + 1, liquid), tx);
             return Mathf.Lerp(Mathf.Lerp(c00, c10, ty), Mathf.Lerp(c01, c11, ty), tz) - Iso;
         }
 
         /// <summary>표면이 어느 쪽을 보나. 밀도의 기울기가 곧 법선이다.</summary>
-        public Vector3 Normal(Vector3 p)
+        public Vector3 Normal(Vector3 p, bool liquid = false)
         {
             const float h = 0.6f;
             var g = new Vector3(
-                Sample(p + Vector3.right * h) - Sample(p - Vector3.right * h),
-                Sample(p + Vector3.up * h) - Sample(p - Vector3.up * h),
-                Sample(p + Vector3.forward * h) - Sample(p - Vector3.forward * h));
+                Sample(p + Vector3.right * h, liquid) - Sample(p - Vector3.right * h, liquid),
+                Sample(p + Vector3.up * h, liquid) - Sample(p - Vector3.up * h, liquid),
+                Sample(p + Vector3.forward * h, liquid) - Sample(p - Vector3.forward * h, liquid));
             return g.sqrMagnitude < 1e-6f ? Vector3.up : -g.normalized;
+        }
+
+        /// <summary>
+        /// 표면까지의 거리(칸) 어림 — 밀도를 기울기로 나눈다. 양수면 속, 음수면 바깥.
+        /// 장이 거리장은 아니지만 표면 가까이에선 충분히 맞고, 몸을 밀어내는 데는 그거면 된다.
+        /// </summary>
+        public float Depth(Vector3 p, out Vector3 outward, bool liquid = false)
+        {
+            const float h = 0.6f;
+            var g = new Vector3(
+                Sample(p + Vector3.right * h, liquid) - Sample(p - Vector3.right * h, liquid),
+                Sample(p + Vector3.up * h, liquid) - Sample(p - Vector3.up * h, liquid),
+                Sample(p + Vector3.forward * h, liquid) - Sample(p - Vector3.forward * h, liquid)) / (2f * h);
+            float slope = g.magnitude;
+            if (slope < 1e-4f) { outward = Vector3.up; return Sample(p, liquid) > 0f ? 1f : -1f; }
+            outward = -g / slope;
+            return Sample(p, liquid) / slope;
         }
 
         internal void ChunkRef(int cx, int cz, out byte[] dens, out byte[] mat,
@@ -197,6 +245,7 @@ namespace Kgd.Field
 
             c.Dens[i] = dens;
             c.Mat[i] = mat;
+            if (Kinds[mat].Liquid) c.HasLiquid = true;
             _edits[EditKey(x, y, z)] = (ushort)((dens << 8) | mat);
 
             bool wasOpaque = wasD > Iso && Kinds[wasM].Opaque;
@@ -226,8 +275,9 @@ namespace Kgd.Field
         /// </summary>
         /// <param name="amount">한 번에 미는 양(0~255 기준). 음수면 깎고 양수면 붙인다.</param>
         /// <param name="mat">붙일 때 쓰는 재료. 깎을 때는 안 본다.</param>
+        /// <param name="flipped">표면을 넘어간 칸마다 (재료, 차게 됐나). 캔 양·쓴 양이 여기서 나온다.</param>
         /// <returns>실제로 바뀐 칸 수.</returns>
-        public int Carve(Vector3 at, float radius, float amount, byte mat)
+        public int Carve(Vector3 at, float radius, float amount, byte mat, Action<byte, bool> flipped = null)
         {
             int r = Mathf.CeilToInt(radius) + 1;
             int cx = Mathf.RoundToInt(at.x), cy = Mathf.RoundToInt(at.y), cz = Mathf.RoundToInt(at.z);
@@ -250,11 +300,18 @@ namespace Kgd.Field
                         if (next == now) continue;
 
                         byte material = Mat(x, y, z);
+                        // 액체는 깎이지 않는다 — 수액을 파면 물이 빠지는 것이 아니라 그냥 사라진다.
+                        // 단단함이 음수인 것(심핵)도 — 그게 세계의 바닥이다
+                        if (push < 0f && now > Iso && (Kinds[material].Liquid || Kinds[material].Hardness < 0f)) continue;
                         // 붙일 때는 재료를 같이 정한다. 깎을 때는 남은 것의 재료를 그대로 둔다.
-                        if (push > 0f && (material == 0 || next > Iso && now <= Iso)) material = mat;
-                        if (next <= Iso && now > Iso) { /* 비었다 — 재료는 남겨 둬도 안 보인다 */ }
+                        if (push > 0f && (material == 0 || Kinds[material].Liquid || next > Iso && now <= Iso)) material = mat;
 
-                        if (Set(x, y, z, (byte)next, material)) touched++;
+                        bool wasIn = now > Iso, nowIn = next > Iso;
+                        if (Set(x, y, z, (byte)next, material))
+                        {
+                            touched++;
+                            if (wasIn != nowIn) flipped?.Invoke(nowIn ? material : Mat(x, y, z), nowIn);
+                        }
                     }
                 }
             }
@@ -355,6 +412,8 @@ namespace Kgd.Field
             _chunks[k] = c;
 
             Generate?.Invoke(cx, cz, c.Dens, c.Mat);
+            for (int i = 0; i < n && !c.HasLiquid; i++)
+                if (Kinds[c.Mat[i]].Liquid) c.HasLiquid = true;
             ApplyEdits(c);
             ScanSkyTop(c);
             return c;
@@ -426,6 +485,10 @@ namespace Kgd.Field
                 var c = _chunks[k];
                 if (c.Go != null) UnityEngine.Object.Destroy(c.Go);
                 if (c.Mesh != null) UnityEngine.Object.Destroy(c.Mesh);
+                if (c.DeepGo != null) UnityEngine.Object.Destroy(c.DeepGo);
+                if (c.DeepMesh != null) UnityEngine.Object.Destroy(c.DeepMesh);
+                if (c.LiquidGo != null) UnityEngine.Object.Destroy(c.LiquidGo);
+                if (c.LiquidMesh != null) UnityEngine.Object.Destroy(c.LiquidMesh);
                 _chunks.Remove(k);
             }
         }
@@ -639,33 +702,47 @@ namespace Kgd.Field
 
         private void Mesh(Chunk c)
         {
-            var built = KgdFieldMesher.Build(this, c.Cx, c.Cz);
-
-            if (c.Mesh != null) UnityEngine.Object.Destroy(c.Mesh);
-            c.Mesh = built;
-
-            if (built == null)
-            {
-                if (c.Go != null) c.Go.SetActive(false);
-            }
-            else if (c.Go == null)
-            {
-                // 그림자를 끈다 — 밝기는 이미 정점에 구워 넣었고, 그림자 맵을 청크 수만큼
-                // 다시 그리면 폰에서 그것만으로 예산을 넘긴다 (가드레일 G7).
-                c.Go = Kgd.Art.KgdMat.Object($"field_{c.Cx}_{c.Cz}", built, Root, shadows: false);
-                c.Go.transform.localPosition = new Vector3(c.Cx * SX, 0f, c.Cz * SZ);
-                if (Surface != null) c.Go.GetComponent<MeshRenderer>().sharedMaterial = Surface;
-            }
-            else
-            {
-                c.Go.SetActive(true);
-                c.Go.GetComponent<MeshFilter>().sharedMesh = built;
-            }
+            c.Mesh = Swap(c, c.Mesh, KgdFieldMesher.Build(this, c.Cx, c.Cz, liquid: false, yFrom: DeepBelow), ref c.Go, Surface, "field");
+            c.DeepMesh = Swap(c, c.DeepMesh, KgdFieldMesher.Build(this, c.Cx, c.Cz, liquid: false, yTo: DeepBelow), ref c.DeepGo, Surface, "deep");
+            if (c.DeepGo != null && !_showDeep) c.DeepGo.SetActive(false);
+            // 수면은 따로 뜬다 — 땅과 한 면으로 뜨면 재료 하나로 색이 갈리는 것이 전부라 물이 땅처럼 보인다
+            c.LiquidMesh = c.HasLiquid
+                ? Swap(c, c.LiquidMesh, KgdFieldMesher.Build(this, c.Cx, c.Cz, liquid: true), ref c.LiquidGo, LiquidSurface, "sap")
+                : Swap(c, c.LiquidMesh, null, ref c.LiquidGo, LiquidSurface, "sap");
 
             c.MeshDirty = false;
             MeshedThisTick++;
             VertexCount = 0;
-            foreach (var kv in _chunks) if (kv.Value.Mesh != null) VertexCount += kv.Value.Mesh.vertexCount;
+            foreach (var kv in _chunks)
+            {
+                if (kv.Value.Mesh != null) VertexCount += kv.Value.Mesh.vertexCount;
+                if (_showDeep && kv.Value.DeepMesh != null) VertexCount += kv.Value.DeepMesh.vertexCount;
+                if (kv.Value.LiquidMesh != null) VertexCount += kv.Value.LiquidMesh.vertexCount;
+            }
+        }
+
+        private Mesh Swap(Chunk c, Mesh old, Mesh built, ref GameObject go, Material material, string tag)
+        {
+            if (old != null) UnityEngine.Object.Destroy(old);
+
+            if (built == null)
+            {
+                if (go != null) go.SetActive(false);
+            }
+            else if (go == null)
+            {
+                // 그림자를 끈다 — 밝기는 이미 정점에 구워 넣었고, 그림자 맵을 청크 수만큼
+                // 다시 그리면 폰에서 그것만으로 예산을 넘긴다 (가드레일 G7).
+                go = Kgd.Art.KgdMat.Object($"{tag}_{c.Cx}_{c.Cz}", built, Root, shadows: false);
+                go.transform.localPosition = new Vector3(c.Cx * SX, 0f, c.Cz * SZ);
+                if (material != null) go.GetComponent<MeshRenderer>().sharedMaterial = material;
+            }
+            else
+            {
+                go.SetActive(true);
+                go.GetComponent<MeshFilter>().sharedMesh = built;
+            }
+            return built;
         }
 
         // ── 저장 ────────────────────────────────────────────────────────────────

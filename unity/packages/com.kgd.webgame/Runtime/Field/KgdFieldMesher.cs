@@ -51,9 +51,13 @@ namespace Kgd.Field
         private static int[] _index;
         private static int _pw, _ph, _pd;
 
-        public static Mesh Build(KgdFieldWorld w, int cx, int cz)
+        /// <param name="liquid">참이면 수면을 뜬다 — 땅은 빈 칸으로 본다. 거짓이면 땅을 뜨고 액체가 빈 칸이다.</param>
+        /// <param name="yFrom">이 높이부터 (포함) <paramref name="yTo"/> 앞까지의 칸만 면을 낸다. 층을 나눠 뜨면
+        /// 땅속 굴을 지상에서는 안 그릴 수 있다 — 정점의 6할이 안 보이는 굴 벽이었다(실측).</param>
+        public static Mesh Build(KgdFieldWorld w, int cx, int cz, bool liquid = false, int yFrom = 0, int yTo = int.MaxValue)
         {
             int h = w.Height;
+            yTo = Mathf.Min(yTo, h - 1);
             // 한 칸 앞뒤로 넘겨 본다 — 경계 이음매와 법선이 이웃을 봐야 맞는다
             _pw = KgdFieldWorld.SX + 3;
             _pd = KgdFieldWorld.SZ + 3;
@@ -76,11 +80,13 @@ namespace Kgd.Field
                     {
                         int gx = x0 + i - 1, gy = j - 1, gz = z0 + k - 1;
                         if (gy < 0 || gy >= h - 1) continue;
+                        // 경계 줄은 양쪽이 다 갖는다 — 아래 층의 위쪽 면이 이 줄의 꼭짓점을 쓴다
+                        if (gy < yFrom - 1 || gy > yTo) continue;
 
                         int inside = 0;
                         for (int n = 0; n < 8; n++)
                         {
-                            c8[n] = w.Dens(gx + Corner[n, 0], gy + Corner[n, 1], gz + Corner[n, 2])
+                            c8[n] = w.Phase(gx + Corner[n, 0], gy + Corner[n, 1], gz + Corner[n, 2], liquid)
                                   - KgdFieldWorld.Iso;
                             if (c8[n] > 0f) inside++;
                         }
@@ -117,18 +123,19 @@ namespace Kgd.Field
                     {
                         int gx = x0 + i - 1, gy = j - 1, gz = z0 + k - 1;
                         if (gy < 0 || gy >= h - 1) continue;
-                        float here = w.Dens(gx, gy, gz) - KgdFieldWorld.Iso;
-                        Quad(w, here, w.Dens(gx + 1, gy, gz) - KgdFieldWorld.Iso, i, j, k, 1, 0, 0);
-                        Quad(w, here, w.Dens(gx, gy + 1, gz) - KgdFieldWorld.Iso, i, j, k, 0, 1, 0);
-                        Quad(w, here, w.Dens(gx, gy, gz + 1) - KgdFieldWorld.Iso, i, j, k, 0, 0, 1);
+                        if (gy < yFrom || gy >= yTo) continue;
+                        float here = w.Phase(gx, gy, gz, liquid) - KgdFieldWorld.Iso;
+                        Quad(w, here, w.Phase(gx + 1, gy, gz, liquid) - KgdFieldWorld.Iso, i, j, k, 1, 0, 0);
+                        Quad(w, here, w.Phase(gx, gy + 1, gz, liquid) - KgdFieldWorld.Iso, i, j, k, 0, 1, 0);
+                        Quad(w, here, w.Phase(gx, gy, gz + 1, liquid) - KgdFieldWorld.Iso, i, j, k, 0, 0, 1);
                     }
                 }
             }
 
             if (_t.Count == 0) return null;
 
-            Project(w, x0, z0);
-            Dress(w, x0, z0);
+            Project(w, x0, z0, liquid);
+            Dress(w, x0, z0, liquid);
 
             var mesh = new Mesh { name = $"field_{cx}_{cz}", indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
             mesh.SetVertices(_v);
@@ -183,7 +190,7 @@ namespace Kgd.Field
         ///
         /// 자기 칸 밖으로는 안 나간다 — 나가면 이웃 칸의 꼭짓점과 뒤바뀌어 면이 꼬인다.
         /// </summary>
-        private static void Project(KgdFieldWorld w, int x0, int z0)
+        private static void Project(KgdFieldWorld w, int x0, int z0, bool liquid)
         {
             for (int i = 0; i < _v.Count; i++)
             {
@@ -193,15 +200,15 @@ namespace Kgd.Field
                 for (int step = 0; step < Relax; step++)
                 {
                     var world = new Vector3(local.x + x0, local.y, local.z + z0);
-                    float d = w.Sample(world);
+                    float d = w.Sample(world, liquid);
                     if (Mathf.Abs(d) < 0.5f) break;
 
                     // 밀도는 칸당 최대 127 만큼 변하므로 그대로 나누면 한 번에 튄다 —
                     // 기울기 크기로 나눠 「표면까지 몇 칸인가」로 바꾼다
                     var g = new Vector3(
-                        w.Sample(world + Vector3.right * 0.5f) - w.Sample(world - Vector3.right * 0.5f),
-                        w.Sample(world + Vector3.up * 0.5f) - w.Sample(world - Vector3.up * 0.5f),
-                        w.Sample(world + Vector3.forward * 0.5f) - w.Sample(world - Vector3.forward * 0.5f));
+                        w.Sample(world + Vector3.right * 0.5f, liquid) - w.Sample(world - Vector3.right * 0.5f, liquid),
+                        w.Sample(world + Vector3.up * 0.5f, liquid) - w.Sample(world - Vector3.up * 0.5f, liquid),
+                        w.Sample(world + Vector3.forward * 0.5f, liquid) - w.Sample(world - Vector3.forward * 0.5f, liquid));
                     float len = g.magnitude;
                     if (len < 1e-4f) break;
 
@@ -216,7 +223,7 @@ namespace Kgd.Field
         }
 
         /// <summary>법선·색·무늬 좌표. 밝기는 그 자리의 하늘빛·등불빛에서 나온다.</summary>
-        private static void Dress(KgdFieldWorld w, int x0, int z0)
+        private static void Dress(KgdFieldWorld w, int x0, int z0, bool liquid)
         {
             _n.Clear(); _c.Clear(); _uv.Clear();
 
@@ -225,7 +232,7 @@ namespace Kgd.Field
                 var local = _v[i];
                 var world = new Vector3(local.x + x0, local.y, local.z + z0);
 
-                var face = w.Normal(world);
+                var face = w.Normal(world, liquid);
                 _n.Add(face);
 
                 // 재료는 표면 **안쪽** 칸에서 읽는다 — 바깥 칸은 비어 있어 재료가 없다
