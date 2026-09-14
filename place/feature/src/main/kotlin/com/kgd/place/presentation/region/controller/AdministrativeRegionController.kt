@@ -1,12 +1,12 @@
 package com.kgd.place.presentation.region.controller
 
 import com.kgd.common.response.ApiResponse
-import com.kgd.place.application.region.usecase.AdminRegionUseCase
-import com.kgd.place.domain.region.model.AdminRegionLevel
-import com.kgd.place.presentation.region.dto.AdminRegionListResponse
-import com.kgd.place.presentation.region.dto.AdminRegionResponse
-import com.kgd.place.presentation.region.dto.BulkUpsertAdminRegionRequest
-import com.kgd.place.presentation.region.dto.BulkUpsertAdminRegionResponse
+import com.kgd.place.application.region.usecase.AdministrativeRegionUseCase
+import com.kgd.place.domain.region.model.AdministrativeRegionLevel
+import com.kgd.place.presentation.region.dto.AdministrativeRegionListResponse
+import com.kgd.place.presentation.region.dto.AdministrativeRegionResponse
+import com.kgd.place.presentation.region.dto.BulkUpsertAdministrativeRegionRequest
+import com.kgd.place.presentation.region.dto.BulkUpsertAdministrativeRegionResponse
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
@@ -23,18 +23,18 @@ import org.springframework.web.bind.annotation.RestController
  * (KDoc 안에 `places/`+`**` 를 쓰면 Kotlin 이 중첩 블록 주석 시작으로 읽어 파일이 안 닫힌다.)
  */
 @RestController
-@RequestMapping("/api/places/admin-regions")
-class AdminRegionController(
-    private val adminRegionUseCase: AdminRegionUseCase,
+@RequestMapping("/api/places/administrative-regions")
+class AdministrativeRegionController(
+    private val administrativeRegionUseCase: AdministrativeRegionUseCase,
 ) {
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/bulk")
     fun upsertBulk(
-        @Valid @RequestBody request: BulkUpsertAdminRegionRequest,
-    ): ApiResponse<BulkUpsertAdminRegionResponse> {
-        val result = adminRegionUseCase.upsertAll(request.regions.map { it.toCommand() })
-        return ApiResponse.success(BulkUpsertAdminRegionResponse(result.created, result.updated))
+        @Valid @RequestBody request: BulkUpsertAdministrativeRegionRequest,
+    ): ApiResponse<BulkUpsertAdministrativeRegionResponse> {
+        val result = administrativeRegionUseCase.upsertAll(request.regions.map { it.toCommand() })
+        return ApiResponse.success(BulkUpsertAdministrativeRegionResponse(result.created, result.updated))
     }
 
     /**
@@ -44,14 +44,14 @@ class AdminRegionController(
      */
     @GetMapping
     fun find(
-        @RequestParam(defaultValue = "SIDO") level: AdminRegionLevel,
+        @RequestParam(defaultValue = "SIDO") level: AdministrativeRegionLevel,
         @RequestParam(required = false) parent: String?,
         @RequestParam(required = false) lang: String?,
-    ): ApiResponse<AdminRegionListResponse> =
+    ): ApiResponse<AdministrativeRegionListResponse> =
         ApiResponse.success(
-            AdminRegionListResponse(
-                adminRegionUseCase.find(level, parent, lang?.takeIf { it.isNotBlank() })
-                    .map { AdminRegionResponse.from(it) },
+            AdministrativeRegionListResponse(
+                administrativeRegionUseCase.find(level, parent, lang?.takeIf { it.isNotBlank() })
+                    .map { AdministrativeRegionResponse.from(it) },
             ),
         )
 }

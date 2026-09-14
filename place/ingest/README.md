@@ -26,7 +26,7 @@ TourAPI(KorService2/EngService2)
 | `stats` | 잔량만 출력 (TourAPI 호출 0) | 수동 |
 | `sync` | 목록 전량 재동기화 → 적재 | 수동 (원천 스키마가 바뀔 때) |
 | `links` | 유튜브·네이버 블로그 수집 → 적재 (우선순위 큐에서 N건) | `place-ingest-links` 매시 17분 |
-| `admin-regions` | 법정동코드 자료 → 행정구역 적재 (+시군구 좌표 계산) | 수동 (자료가 갱신될 때) |
+| `administrative-regions` | 법정동코드 자료 → 행정구역 적재 (+시군구 좌표 계산) | 수동 (자료가 갱신될 때) |
 | `google-places` | 구글 place_id 보강 — Places Text Search **ID-only(무과금)**, 일 `GOOGLE_PLACES_DAILY_BUDGET`(기본 1,000)건. 키(`GOOGLE_PLACES_API_KEY`) 없으면 건너뜀 | `place-ingest-google-places` 매일 KST 03:20 (04:30 재색인 앞) |
 
 재색인은 이 이미지가 트리거하지 않는다 — Job 생성 RBAC 을 얻는 대신 `attraction-reindex`
@@ -117,7 +117,7 @@ KorService2 가 429 여도 EngService2 는 살아 있고, `areaBasedList2` 도 �
 ## 행정구역 적재 (ADR-0071)
 
 ```bash
-python3 -m src.main --job=admin-regions --file ~/Downloads/법정동코드_전체자료.txt
+python3 -m src.main --job=administrative-regions --file ~/Downloads/법정동코드_전체자료.txt
 ```
 
 ### 자료 내려받기 (한 번)
@@ -209,7 +209,7 @@ chmod 600 ~/.config/1989v/tour.env
 로컬 env 파일은 **지우지 않는다** — 클러스터를 재구축하면 Secret 이 사라지고, 그때 재등록할
 원본이 이 파일이다. 레포 밖 + `chmod 600` 이라 노출 경로가 없다.
 
-> `--job=admin-regions` 만 예외로 로컬이 편하다 — 법정동 자료 **파일**이 있어야 해서다.
+> `--job=administrative-regions` 만 예외로 로컬이 편하다 — 법정동 자료 **파일**이 있어야 해서다.
 
 ## 배포 전 확인
 

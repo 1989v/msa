@@ -5,7 +5,7 @@ import com.kgd.place.infrastructure.persistence.attraction.repository.Attraction
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionLinkJpaRepository
 import com.kgd.place.infrastructure.persistence.poi.repository.PoiJpaRepository
-import com.kgd.place.infrastructure.persistence.region.repository.AdminRegionJpaRepository
+import com.kgd.place.infrastructure.persistence.region.repository.AdministrativeRegionJpaRepository
 import com.kgd.place.infrastructure.persistence.region.repository.RegionJpaRepository
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
@@ -50,7 +50,7 @@ fun isPlaceDockerAvailable(): Boolean = dockerAvailable
 )
 class PlaceSchemaIntegrationSpec(
     @Autowired private val r0: RegionJpaRepository,
-    @Autowired private val r1: AdminRegionJpaRepository,
+    @Autowired private val r1: AdministrativeRegionJpaRepository,
     @Autowired private val r2: PoiJpaRepository,
     @Autowired private val r3: AttractionJpaRepository,
     @Autowired private val r4: AttractionCategoryCodeJpaRepository,

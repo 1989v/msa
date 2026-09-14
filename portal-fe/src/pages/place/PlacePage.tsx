@@ -3,13 +3,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
-  fetchAdminRegions,
+  fetchAdministrativeRegions,
   fetchAttraction,
   OVERLAY_CATEGORIES,
   searchAttractions,
   SIGHT_CATEGORIES,
   suggestPlaces,
-  type AdminRegion,
+  type AdministrativeRegion,
   type Attraction,
   type AttractionQuery,
   type AttractionSearchResult,
@@ -321,8 +321,8 @@ export default function PlacePage() {
   }, [isMobile, hasIO, isLoading, page, totalPages, baseKey]);
 
   const { data: sidoRegions } = useQuery({
-    queryKey: ['admin-regions', 'SIDO', lang],
-    queryFn: () => fetchAdminRegions({ level: 'SIDO', lang }),
+    queryKey: ['administrative-regions', 'SIDO', lang],
+    queryFn: () => fetchAdministrativeRegions({ level: 'SIDO', lang }),
     staleTime: 30 * 60_000,
   });
   // 자료가 들어오면 드릴다운으로, 아직이면 이전 광역 선택으로. 두 축을 동시에 노출하지 않는다.
@@ -330,12 +330,12 @@ export default function PlacePage() {
 
   // 모바일 지역 트리거 라벨("서울 · 강남구")용 시군구 이름 — RegionSheet 와 같은 캐시를 쓴다
   const { data: sigunguRegions } = useQuery({
-    queryKey: ['admin-regions', 'SIGUNGU', sidoCode, lang],
-    queryFn: () => fetchAdminRegions({ level: 'SIGUNGU', parent: sidoCode!, lang }),
+    queryKey: ['administrative-regions', 'SIGUNGU', sidoCode, lang],
+    queryFn: () => fetchAdministrativeRegions({ level: 'SIGUNGU', parent: sidoCode!, lang }),
     enabled: isMobile && sidoCode != null,
     staleTime: 30 * 60_000,
   });
-  const regionName = (r?: AdminRegion | null) => (r ? (lang === 'en' && r.nameEn) || r.name : null);
+  const regionName = (r?: AdministrativeRegion | null) => (r ? (lang === 'en' && r.nameEn) || r.name : null);
   const selectedSidoName = regionName((sidoRegions ?? []).find((r) => r.code === sidoCode));
   const selectedSigunguName = sigunguCode
     ? regionName((sigunguRegions ?? []).find((r) => r.code.slice(2) === sigunguCode))
@@ -356,7 +356,7 @@ export default function PlacePage() {
 
   /** 지역 선택 — 드릴다운 칩과 지도의 시도 마커가 같은 경로를 쓴다. */
   const selectRegion = useCallback(
-    (next: { sidoCode: string | null; sigunguCode: string | null; region?: AdminRegion } | AdminRegion) => {
+    (next: { sidoCode: string | null; sigunguCode: string | null; region?: AdministrativeRegion } | AdministrativeRegion) => {
       const region = 'level' in next ? next : next.region;
       const nextSido = 'level' in next ? next.code : next.sidoCode;
       const nextSigungu = 'level' in next ? null : next.sigunguCode;
@@ -391,7 +391,7 @@ export default function PlacePage() {
     if (regions.length === 0) return;
     autoPickedRef.current = true;
 
-    const pick = (region?: AdminRegion | null) => {
+    const pick = (region?: AdministrativeRegion | null) => {
       const target = region ?? regions.find((r) => r.code === DEFAULT_SIDO_CODE) ?? regions[0];
       if (target) selectRegion(target);
     };

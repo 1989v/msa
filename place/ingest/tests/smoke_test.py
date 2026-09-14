@@ -220,7 +220,7 @@ def _youtube_search_shape() -> None:
 
 def _admin_region_parser() -> None:
     """법정동코드 자료에서 시도·시군구만 뽑는다 — 읍면동과 폐지 코드는 버린다."""
-    from src.admin_region import parse
+    from src.administrative_region import parse
 
     rows = parse([
         "법정동코드\t법정동명\t폐지여부",
@@ -260,7 +260,7 @@ def _english_from_address() -> None:
 
     어느 칸을 볼지는 법정동 한글명의 단어 수가 정한다.
     """
-    from src.admin_region import SIDO_EN, _english_sigungu
+    from src.administrative_region import SIDO_EN, _english_sigungu
 
     # 1단어 이름 → 뒤에서 두 번째
     assert _english_sigungu("종로구", "161 Sajik-ro, Jongno-gu, Seoul") == "Jongno-gu"
@@ -415,7 +415,7 @@ def _ldong_normalization() -> None:
 
     assert _ldong({"lDongRegnCd": "11", "lDongSignguCd": "110"}) == {
         "ldongRegnCd": "11", "ldongSignguCd": "110"}
-    # 세종: 36110 → 36 / 110 (admin_regions 의 36 + 36110 과 맞는다)
+    # 세종: 36110 → 36 / 110 (administrative_regions 의 36 + 36110 과 맞는다)
     assert _ldong({"lDongRegnCd": "36110", "lDongSignguCd": "36110"}) == {
         "ldongRegnCd": "36", "ldongSignguCd": "110"}
     assert _ldong({}) == {"ldongRegnCd": None, "ldongSignguCd": None}
@@ -426,7 +426,7 @@ def _sejong_has_a_sido() -> None:
 
     실제 자료에 `3600000000` 이 없고 `3611000000 세종특별자치시` 만 있다.
     """
-    from src.admin_region import parse
+    from src.administrative_region import parse
 
     rows = parse([
         "1100000000\t서울특별시\t존재",

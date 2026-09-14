@@ -9,9 +9,9 @@
 
 ## R1 — 행정구역 데이터 — **코드 완료 (2026-08-20), 자료 파일 대기**
 
-- [x] 법정동코드 파서 (`place/ingest/src/admin_region.py`) — 읍면동·폐지 제외, 시도 접두 제거
-- [ ] **자료 파일 확보(사용자)** → `--job=admin-regions --file <경로>` 실행
-- [x] `admin_regions` 테이블 + 도메인 + `GET/POST /api/places/admin-regions`
+- [x] 법정동코드 파서 (`place/ingest/src/administrative_region.py`) — 읍면동·폐지 제외, 시도 접두 제거
+- [ ] **자료 파일 확보(사용자)** → `--job=administrative-regions --file <경로>` 실행
+- [x] `administrative_regions` 테이블 + 도메인 + `GET/POST /api/places/administrative-regions`
 - [x] 시군구 중심 좌표 — 관광지 좌표 평균. 관광지가 없으면 좌표 없이 둔다
 - [x] `attractions.ldong_regn_cd` / `ldong_signgu_cd` + `sync_tour.py` 가 원천 값 그대로 저장
 - [ ] 목록 재동기화 → **미매칭 건수 집계** (OQ-1)
@@ -23,7 +23,7 @@
 
 ## R2 — 드릴다운 API + 검색 필터 — **완료 (2026-08-20), 자료 들어오면 화면에 뜬다**
 
-- [x] `GET /api/places/admin-regions?level=&parent=&lang=` — 관광 분류만 세는 카운트
+- [x] `GET /api/places/administrative-regions?level=&parent=&lang=` — 관광 분류만 세는 카운트
       **search 가 아니라 place 에 뒀다** — place 가 행정구역과 관광지를 둘 다 갖고 있어
       교차 서비스 호출도 색인 변경도 필요 없다. 시도 건수는 시군구 합으로 한 번에 낸다.
 - [x] 검색에 `sidoCode`/`sigunguCode` 필터 + `ldongRegnCd`/`ldongSignguCd` 색인

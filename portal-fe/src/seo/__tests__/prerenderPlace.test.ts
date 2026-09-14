@@ -39,7 +39,7 @@ describe('열거 샤드 — 법정동 시도코드', () => {
     expect(SIDO_CODES).toHaveLength(17);
     expect(new Set(SIDO_CODES).size).toBe(17);
     for (const code of SIDO_CODES) expect(code).toMatch(/^\d{2}$/);
-    // 특별자치도 승격 후 코드 — admin_regions 와 어긋나면 지역 링크가 전부 죽는다
+    // 특별자치도 승격 후 코드 — administrative_regions 와 어긋나면 지역 링크가 전부 죽는다
     expect(SIDO_CODES).toContain('51'); // 강원
     expect(SIDO_CODES).toContain('52'); // 전북
     expect(SIDO_CODES).toContain('50'); // 제주

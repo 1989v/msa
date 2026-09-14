@@ -1,7 +1,7 @@
 package com.kgd.place.infrastructure.persistence.region.entity
 
-import com.kgd.place.domain.region.model.AdminRegion
-import com.kgd.place.domain.region.model.AdminRegionLevel
+import com.kgd.place.domain.region.model.AdministrativeRegion
+import com.kgd.place.domain.region.model.AdministrativeRegionLevel
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -10,8 +10,8 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 
 @Entity
-@Table(name = "admin_regions")
-class AdminRegionJpaEntity(
+@Table(name = "administrative_regions")
+class AdministrativeRegionJpaEntity(
     @Id
     @Column(length = 5)
     val code: String,
@@ -21,7 +21,7 @@ class AdminRegionJpaEntity(
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
-    val level: AdminRegionLevel,
+    val level: AdministrativeRegionLevel,
 
     @Column(nullable = false, length = 60)
     val name: String,
@@ -33,7 +33,7 @@ class AdminRegionJpaEntity(
 
     val longitude: Double? = null,
 ) {
-    fun toDomain(): AdminRegion = AdminRegion.restore(
+    fun toDomain(): AdministrativeRegion = AdministrativeRegion.restore(
         code = code,
         parentCode = parentCode,
         level = level,
@@ -44,7 +44,7 @@ class AdminRegionJpaEntity(
     )
 
     companion object {
-        fun fromDomain(region: AdminRegion) = AdminRegionJpaEntity(
+        fun fromDomain(region: AdministrativeRegion) = AdministrativeRegionJpaEntity(
             code = region.code,
             parentCode = region.parentCode,
             level = region.level,

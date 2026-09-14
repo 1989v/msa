@@ -1,7 +1,7 @@
 package com.kgd.place.domain.region.model
 
 /** 행정구역 레벨 — 법정동 코드 체계의 두 단계만 쓴다. 읍면동은 탐색 단위가 아니다. */
-enum class AdminRegionLevel { SIDO, SIGUNGU }
+enum class AdministrativeRegionLevel { SIDO, SIGUNGU }
 
 /**
  * 한국 행정구역 (ADR-0071). 출처: 행정안전부 법정동코드 전체자료.
@@ -9,10 +9,10 @@ enum class AdminRegionLevel { SIDO, SIGUNGU }
  * `Region`(GeoNames 지명 계층)과 **다른 것**이다. 세계 지명과 한국 행정구역을 한 모델에 담으면
  * 두 체계가 섞여 필터 결과가 경로에 따라 달라진다 — `attractions.sigungu_code` 가 그렇게 됐다.
  */
-class AdminRegion private constructor(
+class AdministrativeRegion private constructor(
     val code: String,
     val parentCode: String?,
-    val level: AdminRegionLevel,
+    val level: AdministrativeRegionLevel,
     var name: String,
     var nameEn: String? = null,
     var latitude: Double? = null,
@@ -21,42 +21,42 @@ class AdminRegion private constructor(
     companion object {
         fun create(
             code: String,
-            level: AdminRegionLevel,
+            level: AdministrativeRegionLevel,
             name: String,
             parentCode: String? = null,
             nameEn: String? = null,
             latitude: Double? = null,
             longitude: Double? = null,
-        ): AdminRegion {
+        ): AdministrativeRegion {
             require(name.isNotBlank()) { "행정구역명은 비어있을 수 없습니다" }
-            val expected = if (level == AdminRegionLevel.SIDO) 2 else 5
+            val expected = if (level == AdministrativeRegionLevel.SIDO) 2 else 5
             require(code.length == expected && code.all { it.isDigit() }) {
                 "$level 코드는 숫자 ${expected}자리여야 합니다: $code"
             }
-            if (level == AdminRegionLevel.SIGUNGU) {
+            if (level == AdministrativeRegionLevel.SIGUNGU) {
                 require(parentCode == code.take(2)) {
                     "시군구의 상위 코드는 앞 2자리여야 합니다: $code / $parentCode"
                 }
             } else {
                 require(parentCode == null) { "시도는 상위 코드를 갖지 않습니다: $parentCode" }
             }
-            return AdminRegion(code, parentCode, level, name, nameEn?.takeIf { it.isNotBlank() },
+            return AdministrativeRegion(code, parentCode, level, name, nameEn?.takeIf { it.isNotBlank() },
                 latitude, longitude)
         }
 
         fun restore(
             code: String,
             parentCode: String?,
-            level: AdminRegionLevel,
+            level: AdministrativeRegionLevel,
             name: String,
             nameEn: String?,
             latitude: Double?,
             longitude: Double?,
-        ) = AdminRegion(code, parentCode, level, name, nameEn, latitude, longitude)
+        ) = AdministrativeRegion(code, parentCode, level, name, nameEn, latitude, longitude)
     }
 
     /** 재적재 시 이름·영문명을 갱신한다 — 코드와 계층은 자연키다. */
-    fun syncFrom(source: AdminRegion) {
+    fun syncFrom(source: AdministrativeRegion) {
         require(source.code == code) { "다른 행정구역으로 동기화할 수 없습니다: ${source.code} → $code" }
         name = source.name
         nameEn = source.nameEn ?: nameEn

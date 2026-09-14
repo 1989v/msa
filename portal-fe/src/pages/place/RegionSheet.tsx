@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchAdminRegions, type AdminRegion, type PlaceLang } from '../../api/placeApi';
+import { fetchAdministrativeRegions, type AdministrativeRegion, type PlaceLang } from '../../api/placeApi';
 import KhSheet from '../../components/shell/KhSheet';
 
 /**
@@ -16,7 +16,7 @@ const UI = {
   en: { label: 'Choose a region', all: 'All regions', allIn: 'All', back: '‹ Provinces', loading: 'Loading regions…' },
 } as const;
 
-function label(region: AdminRegion, lang: PlaceLang): string {
+function label(region: AdministrativeRegion, lang: PlaceLang): string {
   return (lang === 'en' && region.nameEn) || region.name;
 }
 
@@ -30,7 +30,7 @@ export default function RegionSheet({
   lang: PlaceLang;
   sidoCode: string | null;
   sigunguCode: string | null;
-  onChange: (next: { sidoCode: string | null; sigunguCode: string | null; region?: AdminRegion }) => void;
+  onChange: (next: { sidoCode: string | null; sigunguCode: string | null; region?: AdministrativeRegion }) => void;
   onClose: () => void;
 }) {
   const L = UI[lang];
@@ -38,19 +38,19 @@ export default function RegionSheet({
   const [browseSido, setBrowseSido] = useState<string | null>(sidoCode);
 
   const { data: sidos, isLoading } = useQuery({
-    queryKey: ['admin-regions', 'SIDO', lang],
-    queryFn: () => fetchAdminRegions({ level: 'SIDO', lang }),
+    queryKey: ['administrative-regions', 'SIDO', lang],
+    queryFn: () => fetchAdministrativeRegions({ level: 'SIDO', lang }),
     staleTime: 30 * 60_000,
   });
 
   const { data: sigungus } = useQuery({
-    queryKey: ['admin-regions', 'SIGUNGU', browseSido, lang],
-    queryFn: () => fetchAdminRegions({ level: 'SIGUNGU', parent: browseSido!, lang }),
+    queryKey: ['administrative-regions', 'SIGUNGU', browseSido, lang],
+    queryFn: () => fetchAdministrativeRegions({ level: 'SIGUNGU', parent: browseSido!, lang }),
     enabled: browseSido != null,
     staleTime: 30 * 60_000,
   });
 
-  const pick = (next: { sidoCode: string | null; sigunguCode: string | null; region?: AdminRegion }) => {
+  const pick = (next: { sidoCode: string | null; sigunguCode: string | null; region?: AdministrativeRegion }) => {
     onChange(next);
     onClose();
   };

@@ -3,7 +3,7 @@ import { Link, useParams, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   AMENITY_CATEGORIES,
-  fetchAdminRegions,
+  fetchAdministrativeRegions,
   fetchAttraction,
   searchAttractions,
   SIGHT_CATEGORIES,
@@ -127,8 +127,8 @@ export default function AttractionPage() {
   // breadcrumb 의 지역 단계용. 허브·지역 시트와 같은 캐시 키를 써서 대부분 이미 받아 둔 것을
   // 재사용한다 — 이 화면 때문에 API 를 더 부르는 경우는 상세로 바로 들어온 첫 방문뿐이다.
   const { data: sidoRegions } = useQuery({
-    queryKey: ['admin-regions', 'SIDO', docLang],
-    queryFn: () => fetchAdminRegions({ level: 'SIDO', lang: docLang }),
+    queryKey: ['administrative-regions', 'SIDO', docLang],
+    queryFn: () => fetchAdministrativeRegions({ level: 'SIDO', lang: docLang }),
     staleTime: 30 * 60_000,
   });
   const sido = (sidoRegions ?? []).find((r) => r.code === attraction?.sidoCode) ?? null;

@@ -72,7 +72,7 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | 관광지 반려동물 동반 | TourAPI `detailPetTour2` | 필요 | 〃 | `place/ingest --job=pet-tour` (주 1회) |
 | 관광지 부가 사진 | TourAPI `detailImage2` | 필요 | 〃 | `place/ingest --job=media` (매일) |
 | 관광지 반복정보 | TourAPI `detailInfo2` | 필요 | 〃 | `place/ingest --job=media` (매일) |
-| **행정구역(법정동)** | 행정안전부 행정표준코드관리시스템 | **불필요** | 공공누리 제1유형 | `place/ingest --job=admin-regions` |
+| **행정구역(법정동)** | 행정안전부 행정표준코드관리시스템 | **불필요** | 공공누리 제1유형 | `place/ingest --job=administrative-regions` |
 | 세계 지명 계층 | GeoNames | 불필요 | **CC BY 4.0** | `tools/seed/place/normalize_regions.py` |
 | POI(상가) | 소상공인시장진흥공단 상가(상권)정보 | 필요 | 이용허락범위 제한없음 | `tools/seed/place/normalize_pois.py` |
 | 상품·영양 | 식약처 / 한국소비자원 참가격 | 필요 | 제한없음 / KOGL 제1유형 | `tools/seed/products/normalize.py` |
@@ -174,7 +174,7 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 > **낯선 행정구역명을 원천 오류로 단정하지 말 것.** 이 작업에서 두 번 그렇게 판단했고 두 번 다
 > 틀렸다(`Jeonnam-Gwangju…`, `Seohae-gu`). **판정 기준은 기억이 아니라 이 자료다.**
 
-**영문명이 없다.** 시도는 `admin_region.SIDO_EN` 상수, 시군구는 **영문 관광지 주소의 최빈값**으로
+**영문명이 없다.** 시도는 `administrative_region.SIDO_EN` 상수, 시군구는 **영문 관광지 주소의 최빈값**으로
 채운다(`161 Sajik-ro, Jongno-gu, Seoul` → `Jongno-gu`). 어느 칸을 볼지는 법정동 한글명의
 단어 수가 정한다 — `전주시 완산구`(2단어)는 한 칸 더 앞을 함께 본다.
 
@@ -190,7 +190,7 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 
 **한국 행정구역으로 쓰지 않는다.** GeoNames 의 KR 자료는 행정구역 체계가 아니라 지명
 데이터셋이다 — CITY 296행에 흥해읍·왜관읍이 섞여 있고 `admin2_code` 가 전부 NULL 이다.
-한국 행정구역은 §3 의 법정동 코드로 따로 세운다(`admin_regions`).
+한국 행정구역은 §3 의 법정동 코드로 따로 세운다(`administrative_regions`).
 
 > OSM/Nominatim/Geofabrik(ODbL share-alike)·SimpleMaps(유료)는 재배포 viral 리스크로 회피했다.
 

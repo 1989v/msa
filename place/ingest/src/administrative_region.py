@@ -4,7 +4,7 @@
 자료는 브라우저로 한 번 내려받아 파일로 넘긴다. 다운로드가 세션·폼 파라미터에 묶여 있어
 스크립트로 긁으면 정부 포털의 내부 폼을 역공학하는 셈이 된다.
 
-    python3 -m src.main --job=admin-regions --file ~/Downloads/법정동코드_전체자료.txt
+    python3 -m src.main --job=administrative-regions --file ~/Downloads/법정동코드_전체자료.txt
 
 파일 형식 (탭 구분, CP949 또는 UTF-8):
 
@@ -197,7 +197,7 @@ def enrich(regions: list[dict]) -> list[dict]:
             if not english:
                 # 행정구역이 개편됐다는 신호다. 조용히 비우면 영문 화면에서만 한글이 튄다.
                 print(f"[!] 시도 {region['code']} {region['name']} 의 영문명이 SIDO_EN 에 없다 "
-                      f"— admin_region.py 를 갱신할 것", flush=True)
+                      f"— administrative_region.py 를 갱신할 것", flush=True)
         else:
             bucket = names.get(region["code"])
             english = max(bucket, key=bucket.get) if bucket else None
@@ -210,7 +210,7 @@ def upsert(regions: list[dict]) -> tuple[int, int]:
     created = updated = 0
     for i in range(0, len(regions), CHUNK):
         data = place_client._request(
-            "POST", "/api/places/admin-regions/bulk",
+            "POST", "/api/places/administrative-regions/bulk",
             {"regions": regions[i:i + CHUNK]}, timeout=300,
         )["data"]
         created += int(data.get("created") or 0)

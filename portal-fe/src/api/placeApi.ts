@@ -83,7 +83,7 @@ export interface AttractionSearchResult {
  * 한국 행정구역 (ADR-0071). GeoNames 지명 계층(`/api/places/regions`)과 다른 축이다 —
  * 그쪽은 흥해읍·왜관읍이 CITY 로 섞인 지명 데이터셋이라 시군구로 쓸 수 없다.
  */
-export interface AdminRegion {
+export interface AdministrativeRegion {
   code: string;
   parentCode: string | null;
   level: 'SIDO' | 'SIGUNGU';
@@ -95,15 +95,15 @@ export interface AdminRegion {
   attractionCount: number | null;
 }
 
-export const fetchAdminRegions = async (
+export const fetchAdministrativeRegions = async (
   params: { level?: 'SIDO' | 'SIGUNGU'; parent?: string; lang?: PlaceLang },
-): Promise<AdminRegion[]> => {
+): Promise<AdministrativeRegion[]> => {
   const qs = new URLSearchParams();
   if (params.level) qs.set('level', params.level);
   if (params.parent) qs.set('parent', params.parent);
   if (params.lang) qs.set('lang', params.lang);
-  const res = await api.get<ApiResponse<{ regions: AdminRegion[] }>>(
-    `/api/places/admin-regions?${qs}`,
+  const res = await api.get<ApiResponse<{ regions: AdministrativeRegion[] }>>(
+    `/api/places/administrative-regions?${qs}`,
   );
   return res.data.data.regions;
 };

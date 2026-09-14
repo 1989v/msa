@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchAdminRegions, type AdminRegion, type PlaceLang } from '../../api/placeApi';
+import { fetchAdministrativeRegions, type AdministrativeRegion, type PlaceLang } from '../../api/placeApi';
 import { nearestRegion } from './googleMaps';
 
 /**
@@ -16,7 +16,7 @@ const UI = {
   en: { all: 'All', sido: 'Choose a region', loading: 'Loading regions…', near: 'Near you' },
 } as const;
 
-function label(region: AdminRegion, lang: PlaceLang): string {
+function label(region: AdministrativeRegion, lang: PlaceLang): string {
   return (lang === 'en' && region.nameEn) || region.name;
 }
 
@@ -31,19 +31,19 @@ export default function RegionDrilldown({
   sidoCode: string | null;
   sigunguCode: string | null;
   origin?: { lat: number; lng: number } | null;
-  onChange: (next: { sidoCode: string | null; sigunguCode: string | null; region?: AdminRegion }) => void;
+  onChange: (next: { sidoCode: string | null; sigunguCode: string | null; region?: AdministrativeRegion }) => void;
 }) {
   const L = UI[lang];
 
   const { data: sidos, isLoading } = useQuery({
-    queryKey: ['admin-regions', 'SIDO', lang],
-    queryFn: () => fetchAdminRegions({ level: 'SIDO', lang }),
+    queryKey: ['administrative-regions', 'SIDO', lang],
+    queryFn: () => fetchAdministrativeRegions({ level: 'SIDO', lang }),
     staleTime: 30 * 60_000,
   });
 
   const { data: sigungus } = useQuery({
-    queryKey: ['admin-regions', 'SIGUNGU', sidoCode, lang],
-    queryFn: () => fetchAdminRegions({ level: 'SIGUNGU', parent: sidoCode!, lang }),
+    queryKey: ['administrative-regions', 'SIGUNGU', sidoCode, lang],
+    queryFn: () => fetchAdministrativeRegions({ level: 'SIGUNGU', parent: sidoCode!, lang }),
     enabled: sidoCode != null,
     staleTime: 30 * 60_000,
   });

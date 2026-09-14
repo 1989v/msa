@@ -1,23 +1,23 @@
 package com.kgd.place.application.region.service
 
 import com.kgd.place.application.attraction.port.AttractionRepositoryPort
-import com.kgd.place.application.region.port.AdminRegionRepositoryPort
-import com.kgd.place.application.region.usecase.AdminRegionUseCase
+import com.kgd.place.application.region.port.AdministrativeRegionRepositoryPort
+import com.kgd.place.application.region.usecase.AdministrativeRegionUseCase
 import com.kgd.place.domain.attraction.model.Attraction
-import com.kgd.place.domain.region.model.AdminRegion
-import com.kgd.place.domain.region.model.AdminRegionLevel
+import com.kgd.place.domain.region.model.AdministrativeRegion
+import com.kgd.place.domain.region.model.AdministrativeRegionLevel
 import org.springframework.stereotype.Service
 
 @Service
-class AdminRegionService(
-    private val adminRegionRepository: AdminRegionRepositoryPort,
+class AdministrativeRegionService(
+    private val administrativeRegionRepository: AdministrativeRegionRepositoryPort,
     private val attractionRepository: AttractionRepositoryPort,
-) : AdminRegionUseCase {
+) : AdministrativeRegionUseCase {
 
-    override fun upsertAll(commands: List<AdminRegionUseCase.Command>): AdminRegionUseCase.Result {
-        val summary = adminRegionRepository.upsertAll(
+    override fun upsertAll(commands: List<AdministrativeRegionUseCase.Command>): AdministrativeRegionUseCase.Result {
+        val summary = administrativeRegionRepository.upsertAll(
             commands.map {
-                AdminRegion.create(
+                AdministrativeRegion.create(
                     code = it.code,
                     level = it.level,
                     name = it.name,
@@ -28,17 +28,17 @@ class AdminRegionService(
                 )
             },
         )
-        return AdminRegionUseCase.Result(summary.created, summary.updated)
+        return AdministrativeRegionUseCase.Result(summary.created, summary.updated)
     }
 
     override fun find(
-        level: AdminRegionLevel,
+        level: AdministrativeRegionLevel,
         parentCode: String?,
         countLang: String?,
-    ): List<AdminRegionUseCase.View> {
+    ): List<AdministrativeRegionUseCase.View> {
         val regions = when {
-            parentCode != null -> adminRegionRepository.findChildren(parentCode)
-            else -> adminRegionRepository.findByLevel(level)
+            parentCode != null -> administrativeRegionRepository.findChildren(parentCode)
+            else -> administrativeRegionRepository.findByLevel(level)
         }
         if (countLang == null) return regions.map { it.toView() }
 
@@ -52,14 +52,14 @@ class AdminRegionService(
 
         return regions.map { region ->
             val total = when (region.level) {
-                AdminRegionLevel.SIDO -> bySido[region.code] ?: 0
-                AdminRegionLevel.SIGUNGU -> bySigungu[region.code] ?: 0
+                AdministrativeRegionLevel.SIDO -> bySido[region.code] ?: 0
+                AdministrativeRegionLevel.SIGUNGU -> bySigungu[region.code] ?: 0
             }
             region.toView().copy(attractionCount = total)
         }
     }
 
-    private fun AdminRegion.toView() = AdminRegionUseCase.View(
+    private fun AdministrativeRegion.toView() = AdministrativeRegionUseCase.View(
         code = code,
         parentCode = parentCode,
         level = level,

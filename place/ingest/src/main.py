@@ -7,7 +7,7 @@ K8s CronJob 이 본 모듈을 --job 으로 분기해 호출한다:
     python -m src.main --job=media --budget=1000   # 부가 사진·반복정보 (레코드당 2콜)
     python -m src.main --job=stats            # 잔량만 (TourAPI 호출 0)
     python -m src.main --job=sync --content-type=attraction
-    python -m src.main --job=admin-regions --file 법정동코드_전체자료.txt
+    python -m src.main --job=administrative-regions --file 법정동코드_전체자료.txt
     python -m src.main --job=lcls-codes            # 분류체계 코드→이름 (호출 400회 미만)
     python -m src.main --job=pet-tour              # 반려동물 동반 (목록형, 약 100회)
 
@@ -25,7 +25,7 @@ import sys
 
 from pathlib import Path
 
-from src import (admin_region, backfill_intro, backfill_overview, google_place, naver, place_client,
+from src import (administrative_region, backfill_intro, backfill_overview, google_place, naver, place_client,
                  backfill_media, quota, sync_lcls_codes, sync_pet_tour, sync_tour,
                  youtube)
 
@@ -191,7 +191,7 @@ def _job_google_places(budget: int) -> int:
     return 0
 
 
-def _job_admin_regions(file: str | None) -> int:
+def _job_administrative_regions(file: str | None) -> int:
     """행정안전부 법정동코드 자료를 적재한다 (ADR-0071).
 
     자료 확보는 사용자 작업이다 — 다운로드가 세션·폼 파라미터에 묶여 있어 스크립트로 긁으면
@@ -199,11 +199,11 @@ def _job_admin_regions(file: str | None) -> int:
     """
     if not file:
         raise SystemExit("--file 로 법정동코드 전체자료 경로를 주세요")
-    regions = admin_region.run(Path(file).expanduser())
+    regions = administrative_region.run(Path(file).expanduser())
     sido = sum(1 for r in regions if r["level"] == "SIDO")
     located = sum(1 for r in regions if r.get("latitude") is not None)
     named = sum(1 for r in regions if r.get("nameEn"))
-    created, updated = admin_region.upsert(regions)
+    created, updated = administrative_region.upsert(regions)
     backfill_overview.log(f"행정구역 {len(regions):,}건 (시도 {sido} · 시군구 {len(regions) - sido:,}) "
                           f"— 신규 {created} · 갱신 {updated}")
     # 못 채운 쪽을 같이 찍는다. 그 시군구는 영문 화면에서 한글명이 그대로 나온다.
@@ -237,13 +237,13 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--job", required=True,
                     choices=["overview", "intro", "media", "stats", "sync", "links",
-                             "admin-regions", "google-places", "lcls-codes", "pet-tour"])
+                             "administrative-regions", "google-places", "lcls-codes", "pet-tour"])
     ap.add_argument("--budget", type=int, default=int(os.environ.get("BUDGET", "1000")),
                     help="개요 수집 일일 예산 (언어별, detailCommon2 호출 상한)")
     ap.add_argument("--lang", choices=["ko", "en"], help="미지정 시 ko·en 둘 다")
     ap.add_argument("--content-type", default="attraction", choices=list(sync_tour.CONTENT_TYPES))
     ap.add_argument("--limit", type=int, default=200000, help="목록 동기화 상한 (사실상 무제한)")
-    ap.add_argument("--file", help="법정동코드 전체자료 경로 (--job=admin-regions)")
+    ap.add_argument("--file", help="법정동코드 전체자료 경로 (--job=administrative-regions)")
     ap.add_argument("--link-limit", type=int, default=int(os.environ.get("LINK_LIMIT", "10")),
                     help="한 실행에서 훑을 관광지 수 (일일 예산은 place 가 따로 센다)")
     ap.add_argument("--google-places-budget", type=int,
@@ -264,8 +264,8 @@ def main() -> int:
         return _job_links(args.link_limit)
     if args.job == "google-places":
         return _job_google_places(args.google_places_budget)
-    if args.job == "admin-regions":
-        return _job_admin_regions(args.file)
+    if args.job == "administrative-regions":
+        return _job_administrative_regions(args.file)
     if args.job == "lcls-codes":
         return _job_lcls_codes(langs)
     if args.job == "pet-tour":

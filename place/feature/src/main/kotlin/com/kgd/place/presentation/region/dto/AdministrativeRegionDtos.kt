@@ -1,13 +1,13 @@
 package com.kgd.place.presentation.region.dto
 
-import com.kgd.place.application.region.usecase.AdminRegionUseCase
-import com.kgd.place.domain.region.model.AdminRegionLevel
+import com.kgd.place.application.region.usecase.AdministrativeRegionUseCase
+import com.kgd.place.domain.region.model.AdministrativeRegionLevel
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.Size
 
-data class BulkUpsertAdminRegionRequest(
+data class BulkUpsertAdministrativeRegionRequest(
     @field:NotEmpty(message = "행정구역 목록은 비어있을 수 없습니다")
     @field:Size(max = 2000, message = "한 번에 최대 2000건까지 적재할 수 있습니다")
     @field:Valid
@@ -15,14 +15,14 @@ data class BulkUpsertAdminRegionRequest(
 ) {
     data class Item(
         @field:NotBlank val code: String,
-        val level: AdminRegionLevel,
+        val level: AdministrativeRegionLevel,
         @field:NotBlank val name: String,
         val parentCode: String? = null,
         val nameEn: String? = null,
         val latitude: Double? = null,
         val longitude: Double? = null,
     ) {
-        fun toCommand() = AdminRegionUseCase.Command(
+        fun toCommand() = AdministrativeRegionUseCase.Command(
             code = code,
             level = level,
             name = name,
@@ -34,7 +34,7 @@ data class BulkUpsertAdminRegionRequest(
     }
 }
 
-data class AdminRegionResponse(
+data class AdministrativeRegionResponse(
     val code: String,
     val parentCode: String?,
     val level: String,
@@ -46,7 +46,7 @@ data class AdminRegionResponse(
     val attractionCount: Long?,
 ) {
     companion object {
-        fun from(view: AdminRegionUseCase.View) = AdminRegionResponse(
+        fun from(view: AdministrativeRegionUseCase.View) = AdministrativeRegionResponse(
             code = view.code,
             parentCode = view.parentCode,
             level = view.level.name,
@@ -59,6 +59,6 @@ data class AdminRegionResponse(
     }
 }
 
-data class AdminRegionListResponse(val regions: List<AdminRegionResponse>)
+data class AdministrativeRegionListResponse(val regions: List<AdministrativeRegionResponse>)
 
-data class BulkUpsertAdminRegionResponse(val created: Int, val updated: Int)
+data class BulkUpsertAdministrativeRegionResponse(val created: Int, val updated: Int)

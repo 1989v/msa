@@ -99,7 +99,7 @@ describe('radiusFromBounds', () => {
 });
 
 describe('nearestRegion', () => {
-  // 실좌표 — 시도 중심점 (admin_regions 가 관광지 좌표 평균으로 채우는 값과 같은 성격)
+  // 실좌표 — 시도 중심점 (administrative_regions 가 관광지 좌표 평균으로 채우는 값과 같은 성격)
   const SIDOS = [
     { code: '11', latitude: 37.5665, longitude: 126.978 },   // 서울
     { code: '26', latitude: 35.1796, longitude: 129.0756 },  // 부산

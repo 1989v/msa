@@ -36,7 +36,7 @@ attractions.sigungu_code (ko 44,904건)
 
 ### 해결
 
-1. **`admin_regions`** 신설 — 행정안전부 법정동코드 전체자료(공공누리 제1유형).
+1. **`administrative_regions`** 신설 — 행정안전부 법정동코드 전체자료(공공누리 제1유형).
    **실측(2026-08-20): 시도 15 + 세종(합성) · 시군구 269.** 전체 53,388줄 중 폐지가 32,827줄이다.
    세종은 시도 행이 없어(`3600000000` 부재) 자식 이름으로 만들어 붙인다.
 2. **`attractions.ldong_regn_cd` / `ldong_signgu_cd`** 추가 — TourAPI 신체계가 주는 값 그대로.
@@ -44,7 +44,7 @@ attractions.sigungu_code (ko 44,904건)
 4. 화면·API 의 지역 축은 법정동 코드로 통일. `area_code`/`sigungu_code` 는 남기되 쓰지 않는다.
 
 ```
-admin_regions
+administrative_regions
   code        VARCHAR(5) PK    -- 시도 2자리(11) / 시군구 5자리(11110)
   parent_code VARCHAR(5) NULL  -- 시군구 → 시도
   level       VARCHAR(10)      -- SIDO / SIGUNGU
@@ -85,8 +85,8 @@ admin_regions
 ## 2. 지역 드릴다운
 
 ```
-GET /api/places/admin-regions?level=SIDO&lang=ko
-GET /api/places/admin-regions?level=SIGUNGU&parent=11&lang=ko
+GET /api/places/administrative-regions?level=SIDO&lang=ko
+GET /api/places/administrative-regions?level=SIGUNGU&parent=11&lang=ko
     → { regions: [ { code, parentCode, level, name, nameEn, latitude, longitude, attractionCount } ] }
 ```
 
@@ -100,7 +100,7 @@ GET /api/places/admin-regions?level=SIGUNGU&parent=11&lang=ko
   기대와 어긋난다.
 - 현재 위치가 있으면 그 좌표가 속한 시도를 **상단에 올린다**. 자동 선택하지 않는다 —
   위치가 곧 목적지는 아니다.
-- 위치→시도 판정은 경계 폴리곤 없이 `admin_regions` 중심 좌표 최근접으로 한다. 경계가 필요할
+- 위치→시도 판정은 경계 폴리곤 없이 `administrative_regions` 중심 좌표 최근접으로 한다. 경계가 필요할
   만큼 정밀한 판단이 아니다.
 
 ### 줌 프리셋

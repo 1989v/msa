@@ -177,7 +177,7 @@ def _ldong(item: dict) -> dict:
     원천이 대부분 2/3자리를 주지만 **세종은 두 필드 모두 5자리(`36110`)** 로 온다 —
     시도 행이 없는 단층제라 시군구 코드를 그대로 얹어 보내는 것으로 보인다(200건 표본에서 1건).
     그대로 저장하면 시도 코드 `36` 과 조인이 안 돼 세종이 드릴다운에서 사라진다.
-    5자리면 앞 2 / 뒤 3 으로 쪼갠다 — `admin_regions` 의 `36` + `36110` 과 정확히 맞는다.
+    5자리면 앞 2 / 뒤 3 으로 쪼갠다 — `administrative_regions` 의 `36` + `36110` 과 정확히 맞는다.
     """
     regn = str(item.get("lDongRegnCd") or "").strip()
     signgu = str(item.get("lDongSignguCd") or "").strip()

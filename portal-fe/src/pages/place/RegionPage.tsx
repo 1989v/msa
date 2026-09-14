@@ -1,10 +1,10 @@
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
-  fetchAdminRegions,
+  fetchAdministrativeRegions,
   searchAttractions,
   SIGHT_CATEGORIES,
-  type AdminRegion,
+  type AdministrativeRegion,
   type PlaceLang,
 } from '../../api/placeApi';
 import {
@@ -70,25 +70,25 @@ export default function RegionPage() {
 
   // 지역 메타는 부모 목록에서 찾는다 — 단건 조회 API 를 만들 만큼 목록이 크지 않다(시도 16·시군구 최대 55)
   const { data: siblings, isLoading, isError } = useQuery({
-    queryKey: ['admin-regions', isSido ? 'SIDO' : 'SIGUNGU', parentCode, lang],
+    queryKey: ['administrative-regions', isSido ? 'SIDO' : 'SIGUNGU', parentCode, lang],
     queryFn: () =>
       isSido
-        ? fetchAdminRegions({ level: 'SIDO', lang })
-        : fetchAdminRegions({ level: 'SIGUNGU', parent: parentCode!, lang }),
+        ? fetchAdministrativeRegions({ level: 'SIDO', lang })
+        : fetchAdministrativeRegions({ level: 'SIGUNGU', parent: parentCode!, lang }),
     staleTime: 30 * 60_000,
   });
   const region = siblings?.find((r) => r.code === code) ?? null;
 
   const { data: children } = useQuery({
-    queryKey: ['admin-regions', 'SIGUNGU', code, lang],
-    queryFn: () => fetchAdminRegions({ level: 'SIGUNGU', parent: code, lang }),
+    queryKey: ['administrative-regions', 'SIGUNGU', code, lang],
+    queryFn: () => fetchAdministrativeRegions({ level: 'SIGUNGU', parent: code, lang }),
     enabled: isSido,
     staleTime: 30 * 60_000,
   });
 
   const { data: parentRegions } = useQuery({
-    queryKey: ['admin-regions', 'SIDO', null, lang],
-    queryFn: () => fetchAdminRegions({ level: 'SIDO', lang }),
+    queryKey: ['administrative-regions', 'SIDO', null, lang],
+    queryFn: () => fetchAdministrativeRegions({ level: 'SIDO', lang }),
     enabled: !isSido,
     staleTime: 30 * 60_000,
   });
@@ -175,7 +175,7 @@ export default function RegionPage() {
               <section aria-label={L.districts}>
                 <h2 className="place-subtitle">{L.districts}</h2>
                 <div className="place-region-list">
-                  {childRegions.map((child: AdminRegion) => (
+                  {childRegions.map((child: AdministrativeRegion) => (
                     <Link key={child.code} className="place-chip" to={regionPath(lang, child.code)}>
                       {regionDisplayName(lang, child)}
                       <span className="place-region-count">
