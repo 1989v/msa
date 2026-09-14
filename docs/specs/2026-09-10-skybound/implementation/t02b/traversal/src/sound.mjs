@@ -16,14 +16,14 @@ export function createSoundEffects(createContext) {
     stop,
     play(kind) {
       if (!volume || !context || context.state !== 'running') return false;
-      const cues = { swing: [170, 65, .12], hit: [260, 95, .16], hurt: [100, 48, .24], complete: [420, 670, .3], ending: [510, 820, .55] };
+      const cues = { step: [95, 42, .065], swing: [170, 65, .12], hit: [260, 95, .16], hurt: [100, 48, .24], complete: [420, 670, .3], ending: [510, 820, .55] };
       const cue = cues[kind]; if (!cue || voices.size >= 6) return false;
       try {
         const [from, to, duration] = cue, now = context.currentTime;
         const oscillator = context.createOscillator(), gain = context.createGain();
         oscillator.type = kind === 'hit' || kind === 'hurt' ? 'triangle' : 'sine';
         oscillator.frequency.setValueAtTime(from, now); oscillator.frequency.exponentialRampToValueAtTime(to, now + duration);
-        gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(volume * .12, now + .012); gain.gain.exponentialRampToValueAtTime(.0001, now + duration);
+        gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(volume * (kind === 'step' ? .045 : .12), now + .012); gain.gain.exponentialRampToValueAtTime(.0001, now + duration);
         oscillator.connect(gain); gain.connect(context.destination); voices.add(oscillator);
         oscillator.onended = () => { voices.delete(oscillator); oscillator.disconnect(); gain.disconnect(); };
         oscillator.start(now); oscillator.stop(now + duration + .02); return true;
