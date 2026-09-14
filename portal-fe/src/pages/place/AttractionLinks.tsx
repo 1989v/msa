@@ -1,10 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
 import {
-  fetchAttractionLinks,
   type AttractionDeepLink,
   type CollectedLink,
   type PlaceLang,
 } from '../../api/placeApi';
+import { parseLinks } from './placeView';
 
 /**
  * 관광지 상세의 "더 찾아보기" (ADR-0070). 검색 패널과 상세 페이지가 같은 컴포넌트를 쓴다.
@@ -119,18 +118,15 @@ function VideoCard({ link, lang }: { link: CollectedLink; lang: PlaceLang }) {
   );
 }
 
-export default function AttractionLinks({ id, lang }: { id: string; lang: PlaceLang }) {
+export default function AttractionLinks({ links, lang }: { links: string | null | undefined; lang: PlaceLang }) {
   const L = UI[lang];
-  const { data, isLoading } = useQuery({
-    queryKey: ['attraction-links', id],
-    queryFn: () => fetchAttractionLinks(id),
-    enabled: id !== '',
-    staleTime: 10 * 60_000,
-  });
+  /*
+   * 링크는 색인이 들고 온다 (ADR-0095). 예전에는 상세마다 place DB 를 쳤고, 그 호출에는
+   * 수집 큐에 행을 올리는 **쓰기 부수효과**까지 있었다.
+   */
+  const data = parseLinks(links);
+  const isLoading = false;
 
-  // 자리표시는 **요청이 나가 있는 동안만**이다. 응답의 `pending`(수집 대기)은 일 배치가
-  // 돌 때까지 — 최대 하루 — true 로 남으므로, 그걸 스켈레톤 근거로 삼으면
-  // 사용자가 하루 종일 빈 껍데기 캐로셀을 본다.
   if (isLoading) {
     return (
       <section className="place-links" aria-label={L.heading} aria-busy="true">

@@ -13,6 +13,12 @@ import com.kgd.place.domain.attraction.model.AttractionLink
 interface GetAttractionLinksUseCase {
     fun findByAttractionId(id: Long): Links
 
+    /**
+     * 색인용 벌크 조회 (ADR-0095). **큐에 올리지 않는다** — 재색인이 6만 곳을 훑는데
+     * 그때마다 수집 요청이 생기면 인기와 무관하게 큐가 가득 찬다.
+     */
+    fun findByAttractionIds(ids: List<Long>): Map<Long, Links>
+
     data class Links(
         val collected: List<AttractionLink>,
         val deepLinks: List<AttractionDeepLink>,

@@ -62,6 +62,10 @@ export interface Attraction {
   imagesRaw?: string | null;
   /** 반복정보 원문 (detailInfo2). 관광지는 예약안내, 레포츠는 코스안내가 이 자리에 온다. */
   infoRaw?: string | null;
+  /** 시도 이름. 색인이 들고 있어 화면이 285행 목록을 받지 않는다 (ADR-0095). */
+  sidoName?: string | null;
+  /** 외부 링크 원문 JSON — `{ collected, deepLinks }`. 상세에서 DB 를 부르지 않는다. */
+  links?: string | null;
   /**
    * Google Places place_id — 구글맵 딥링크(`query_place_id=`)가 장소 카드에 착지하게 한다.
    * 점진 보강이라 없을 수 있다 — 없으면 주소/좌표 검색 링크로 폴백 (googleMapsSearchUrl).

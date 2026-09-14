@@ -52,6 +52,10 @@ data class AttractionDocument(
     /** 부가 사진·반복정보 원문 (TourAPI detailImage2/detailInfo2). 화면 표시용 — 색인하지 않는다. */
     val imagesRaw: String? = null,
     val infoRaw: String? = null,
+    /** 시도 이름. 화면이 285행 목록을 받아 코드→이름을 바꾸던 것을 없앤다 (ADR-0095). */
+    val sidoName: String? = null,
+    /** 외부 링크(수집분 + 조립 딥링크) 원문 JSON. 상세에서 DB 를 안 부르게 한다. */
+    val links: String? = null,
     val googlePlaceId: String? = null,
     /**
      * 완결성 기반 정렬 신호 — 위 필드들에서 파생한다 ([AttractionPopularity]).

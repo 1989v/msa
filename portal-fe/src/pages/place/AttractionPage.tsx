@@ -3,7 +3,6 @@ import { Link, useParams, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   AMENITY_CATEGORIES,
-  fetchAdministrativeRegions,
   fetchAttraction,
   searchAttractions,
   SIGHT_CATEGORIES,
@@ -134,14 +133,14 @@ export default function AttractionPage() {
   // 같은 어긋난 주소가 들어올 수 있고, 그때 canonical 이 올바른 쪽을 가리켜야 한다.
   const docLang: PlaceLang = attraction?.lang ?? lang;
 
-  // breadcrumb 의 지역 단계용. 허브·지역 시트와 같은 캐시 키를 써서 대부분 이미 받아 둔 것을
-  // 재사용한다 — 이 화면 때문에 API 를 더 부르는 경우는 상세로 바로 들어온 첫 방문뿐이다.
-  const { data: sidoRegions } = useQuery({
-    queryKey: ['administrative-regions', 'SIDO', docLang],
-    queryFn: () => fetchAdministrativeRegions({ level: 'SIDO', lang: docLang }),
-    staleTime: 30 * 60_000,
-  });
-  const sido = (sidoRegions ?? []).find((r) => r.code === attraction?.sidoCode) ?? null;
+  /*
+   * breadcrumb 의 지역 단계. 예전에는 시도 285행 목록을 받아 코드 하나를 이름으로 바꿨다 —
+   * 검색에서 상세로 바로 들어오는 방문마다 DB 를 한 번 쳤다. 이제 색인이 이름을 들고 있다
+   * (ADR-0095).
+   */
+  const sido = attraction?.sidoName
+    ? { code: attraction.sidoCode ?? '', name: attraction.sidoName }
+    : null;
   const meta = attraction ? attractionMeta(docLang, attraction) : null;
   useSeo(
     attraction && meta
@@ -396,7 +395,7 @@ export default function AttractionPage() {
             >
               {L.map}
             </a>
-            <AttractionLinks id={attraction.id} lang={lang} />
+            <AttractionLinks links={attraction.links} lang={lang} />
           </article>
         )}
 

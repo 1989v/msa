@@ -208,6 +208,12 @@
       "infoRaw": {
         "type": "text",
         "index": false},
+      "sidoName": {
+        "type": "keyword",
+        "index": false},
+      "links": {
+        "type": "text",
+        "index": false},
       "googlePlaceId": {
         "type": "keyword",
         "index": false

@@ -2,6 +2,7 @@ package com.kgd.place.presentation.attraction.controller
 
 import com.kgd.common.response.ApiResponse
 import com.kgd.place.application.attraction.usecase.CollectAttractionLinksUseCase
+import com.kgd.place.application.attraction.usecase.GetAttractionLinksUseCase
 import com.kgd.place.domain.attraction.model.AttractionLinkSource
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotEmpty
@@ -24,6 +25,7 @@ import java.time.LocalDateTime
 @RequestMapping("/internal/attractions/links")
 class AttractionLinkInternalController(
     private val collectAttractionLinksUseCase: CollectAttractionLinksUseCase,
+    private val getAttractionLinksUseCase: GetAttractionLinksUseCase,
 ) {
 
     /** 일일 예산이 남은 만큼만 나온다. 빈 목록은 실패가 아니라 "오늘 몫을 다 썼다"는 뜻이다. */
@@ -46,6 +48,29 @@ class AttractionLinkInternalController(
      * 수집 대상 큐 등록 (ADR-0095). 수집기가 **인기순으로 고른 관광지**를 올린다.
      * 예전에는 사용자가 상세를 열 때 올라갔는데, 그 경로는 링크가 색인으로 가면서 사라진다.
      */
+    /**
+     * 색인용 벌크 조회 (ADR-0095). 재색인이 페이지마다 부른다 — **큐를 건드리지 않는다.**
+     */
+    @PostMapping("/lookup")
+    fun lookup(@Valid @RequestBody request: LookupLinksRequest): ApiResponse<LookupLinksResponse> {
+        val found = getAttractionLinksUseCase.findByAttractionIds(request.ids)
+        return ApiResponse.success(
+            LookupLinksResponse(
+                items = found.map { (id, links) ->
+                    LookupLinksItem(
+                        attractionId = id,
+                        collected = links.collected.map {
+                            LookupLink(it.source.name, it.title, it.url, it.thumbnailUrl, it.author)
+                        },
+                        deepLinks = links.deepLinks.map {
+                            LookupDeepLink(it.provider, it.kind.name, it.url, it.revenueType.name)
+                        },
+                    )
+                },
+            ),
+        )
+    }
+
     @PostMapping("/enqueue")
     fun enqueue(@Valid @RequestBody request: EnqueueLinksRequest): ApiResponse<EnqueueLinksResponse> =
         ApiResponse.success(EnqueueLinksResponse(collectAttractionLinksUseCase.enqueue(request.attractionIds)))
@@ -63,6 +88,27 @@ class AttractionLinkInternalController(
         )
     }
 }
+
+data class LookupLinksRequest(
+    @field:NotEmpty val ids: List<Long> = emptyList(),
+)
+
+data class LookupLinksResponse(val items: List<LookupLinksItem>)
+
+data class LookupLinksItem(
+    val attractionId: Long,
+    val collected: List<LookupLink>,
+    val deepLinks: List<LookupDeepLink>,
+)
+
+data class LookupLink(
+    val source: String, val title: String, val url: String,
+    val thumbnailUrl: String?, val author: String?,
+)
+
+data class LookupDeepLink(
+    val provider: String, val kind: String, val url: String, val revenueType: String,
+)
 
 data class EnqueueLinksRequest(
     @field:NotEmpty val attractionIds: List<Long> = emptyList(),

@@ -11,6 +11,7 @@ import {
   mergePages,
   nextPage,
   overviewText,
+  parseLinks,
   repeatInfoRows,
   sourceText,
   titleParts,
@@ -346,5 +347,36 @@ describe('repeatInfoRows — 반복정보', () => {
     expect(repeatInfoRows('{not json')).toEqual([]);
     expect(repeatInfoRows(JSON.stringify({ infoname: 'x', infotext: 'y' }))).toEqual([]);
     expect(repeatInfoRows(null)).toEqual([]);
+  });
+});
+
+describe('parseLinks — 색인이 실어 온 링크', () => {
+  it('수집분과 딥링크를 갈라서 준다', () => {
+    const raw = JSON.stringify({
+      collected: [{ source: 'YOUTUBE', title: '영상', url: 'https://y/1' }],
+      deepLinks: [{ provider: 'INSTAGRAM', kind: 'SOCIAL', url: 'https://i/t' }],
+    });
+    const got = parseLinks(raw);
+    expect(got?.collected).toHaveLength(1);
+    expect(got?.deepLinks).toHaveLength(1);
+  });
+
+  it('대기 상태를 참으로 만들지 않는다', () => {
+    // 색인 시점에는 수집 대기 여부를 알 수 없다. true 로 두면 화면이 하루 종일
+    // 빈 껍데기 스켈레톤을 그린다.
+    expect(parseLinks(JSON.stringify({ collected: [], deepLinks: [] }))?.pending).toBe(false);
+  });
+
+  it('한쪽이 없어도 다른 쪽은 그린다', () => {
+    // 관광지 95%는 수집분이 없고 딥링크만 있다
+    const got = parseLinks(JSON.stringify({ deepLinks: [{ provider: 'YOUTUBE', kind: 'SOCIAL', url: 'u' }] }));
+    expect(got?.collected).toEqual([]);
+    expect(got?.deepLinks).toHaveLength(1);
+  });
+
+  it('원문이 깨졌거나 없으면 null', () => {
+    expect(parseLinks('{not json')).toBeNull();
+    expect(parseLinks(null)).toBeNull();
+    expect(parseLinks(undefined)).toBeNull();
   });
 });

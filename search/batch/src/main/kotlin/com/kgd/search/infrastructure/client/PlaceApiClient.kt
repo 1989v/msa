@@ -1,5 +1,6 @@
 package com.kgd.search.infrastructure.client
 
+import tools.jackson.databind.ObjectMapper
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.beans.factory.annotation.Qualifier
@@ -11,7 +12,8 @@ import java.time.LocalDateTime
 
 @Component
 class PlaceApiClient(
-    @Qualifier("placeWebClient") private val webClient: WebClient
+    @Qualifier("placeWebClient") private val webClient: WebClient,
+    private val objectMapper: ObjectMapper
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -184,6 +186,53 @@ class PlaceApiClient(
      *
      * 한 번에 500건까지(서버 상한). 벡터가 없는 id 는 응답에 **오지 않는다** — 그 문서는 BM25 로만 찾힌다.
      */
+    /**
+     * 시도 코드 → 이름 (ADR-0095). 285행짜리 표라 **한 번 받아 메모리에 든다** —
+     * 화면이 이걸 받아 코드 하나를 이름으로 바꾸던 호출을 없애려는 것이므로,
+     * 색인 쪽에서 관광지마다 부르면 본말전도다.
+     */
+    suspend fun fetchSidoNames(lang: String): Map<String, String> {
+        val response = webClient.get()
+            .uri("/api/places/administrative-regions?level=SIDO&lang=$lang")
+            .retrieve()
+            .bodyToMono(object : ParameterizedTypeReference<Map<String, Any>>() {})
+            .awaitSingle()
+
+        @Suppress("UNCHECKED_CAST")
+        val items = (response["data"] as? Map<String, Any>)?.get("regions") as? List<Map<String, Any>>
+            ?: return emptyMap()
+        return items.mapNotNull { r ->
+            val code = r["code"] as? String ?: return@mapNotNull null
+            val name = (r["name"] as? String)?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+            code to name
+        }.toMap()
+    }
+
+    /**
+     * 관광지 외부 링크 벌크 조회 (ADR-0095). **큐를 건드리지 않는 경로**를 쓴다 —
+     * 화면용 `/links` 는 조회할 때 수집 큐에 올리므로 재색인이 부르면 큐가 가득 찬다.
+     */
+    suspend fun lookupLinks(ids: List<Long>): Map<Long, String> {
+        if (ids.isEmpty()) return emptyMap()
+        val response = webClient.post()
+            .uri("/internal/attractions/links/lookup")
+            .bodyValue(mapOf("ids" to ids))
+            .retrieve()
+            .bodyToMono(object : ParameterizedTypeReference<Map<String, Any>>() {})
+            .awaitSingle()
+
+        @Suppress("UNCHECKED_CAST")
+        val items = (response["data"] as? Map<String, Any>)?.get("items") as? List<Map<String, Any>>
+            ?: return emptyMap()
+        return items.mapNotNull { item ->
+            val id = (item["attractionId"] as? Number)?.toLong() ?: return@mapNotNull null
+            // 원문을 그대로 싣는다 — 화면이 쓰는 모양을 색인이 고쳐 쓰면 둘이 갈린다.
+            id to objectMapper.writeValueAsString(
+                mapOf("collected" to item["collected"], "deepLinks" to item["deepLinks"]),
+            )
+        }.toMap()
+    }
+
     suspend fun lookupEmbeddings(modelRef: String, ids: List<Long>): Map<Long, EmbeddingDto> {
         if (ids.isEmpty()) return emptyMap()
         require(ids.size <= LOOKUP_MAX_BATCH) { "한 번에 ${LOOKUP_MAX_BATCH}건까지입니다: ${ids.size}" }

@@ -7,7 +7,7 @@ import com.kgd.search.application.queryvector.usecase.ResolveQueryVectorUseCase
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 import com.kgd.search.application.attraction.usecase.SuggestAttractionUseCase
 import com.kgd.search.domain.attraction.model.AttractionDocument
-import com.kgd.search.domain.query.model.QueryIntent
+import com.kgd.search.domain.attraction.model.QueryIntent
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
 import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.data.domain.PageRequest
@@ -79,8 +79,9 @@ class SearchAttractionService(
                 sidoCode = query.sidoCode?.takeIf { it.isNotBlank() },
                 sigunguCode = query.sigunguCode?.takeIf { it.isNotBlank() },
                 categories = categories,
-                facets = understood?.facets.orEmpty(),
-                commerceIntent = understood?.commerceIntent ?: false,
+                contentTypeId = understood?.contentTypeId,
+                lclsCode = understood?.lclsCode,
+                lclsDepth = understood?.lclsDepth,
                 geo = geo,
                 embedding = embedding,
             ),
@@ -160,6 +161,8 @@ class SearchAttractionService(
         introRaw = introRaw,
         imagesRaw = imagesRaw,
         infoRaw = infoRaw,
+        sidoName = sidoName,
+        links = links,
         googlePlaceId = googlePlaceId,
         distanceKm = distanceKm,
         position = position,

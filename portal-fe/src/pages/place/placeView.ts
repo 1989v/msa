@@ -1,4 +1,9 @@
-import type { Attraction } from '../../api/placeApi';
+import type {
+  Attraction,
+  AttractionDeepLink,
+  AttractionLinks,
+  CollectedLink,
+} from '../../api/placeApi';
 
 /**
  * PlacePage 의 화면 로직 중 DOM/지도 없이 검증 가능한 순수 함수.
@@ -275,4 +280,30 @@ export function repeatInfoRows(raw: string | null | undefined): IntroRow[] {
   });
   rows.sort((a, b) => a.order - b.order);
   return rows.map((r) => r.row);
+}
+
+
+/**
+ * 색인에 실린 링크 원문(`{ collected, deepLinks }`)을 화면 모양으로 푼다 (ADR-0095).
+ *
+ * 예전에는 상세를 열 때마다 `/api/places/attractions/{id}/links` 를 불렀는데, 그 호출은
+ * **읽기가 아니라 쓰기**였다 — 수집 큐에 행을 올리는 부수효과가 있었다. 이제 링크는 색인이
+ * 들고 있고, 큐는 인기 집계를 아는 수집기가 채운다.
+ */
+export function parseLinks(raw: string | null | undefined): AttractionLinks | null {
+  if (!raw) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;   // 원문이 깨져 있어도 화면은 살아야 한다
+  }
+  if (!parsed || typeof parsed !== 'object') return null;
+  const row = parsed as Record<string, unknown>;
+  return {
+    collected: Array.isArray(row.collected) ? (row.collected as CollectedLink[]) : [],
+    deepLinks: Array.isArray(row.deepLinks) ? (row.deepLinks as AttractionDeepLink[]) : [],
+    // 색인 시점에는 대기 여부를 알 수 없다 — 화면은 이 값으로 스켈레톤을 그리지 않는다.
+    pending: false,
+  };
 }

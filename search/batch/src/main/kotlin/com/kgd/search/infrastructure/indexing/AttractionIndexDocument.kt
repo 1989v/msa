@@ -56,6 +56,8 @@ data class AttractionIndexDocument(
     val introRaw: String? = null,
     val imagesRaw: String? = null,
     val infoRaw: String? = null,
+    val sidoName: String? = null,
+    val links: String? = null,
     /** 구글맵 딥링크용 place_id — 표시 전용이라 색인하지 않는다 (mapping: index=false). */
     val googlePlaceId: String? = null,
     /** 완결성 기반 브라우즈 정렬 신호 — 도메인이 계산한다 (AttractionPopularity). */
@@ -115,6 +117,8 @@ data class AttractionIndexDocument(
             introRaw = doc.introRaw,
             imagesRaw = doc.imagesRaw,
             infoRaw = doc.infoRaw,
+            sidoName = doc.sidoName,
+            links = doc.links,
             googlePlaceId = doc.googlePlaceId,
             popularityScore = doc.popularityScore,
             embedding = embedding?.vector,

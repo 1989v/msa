@@ -41,6 +41,17 @@ class AttractionLinkService(
         )
     }
 
+    override fun findByAttractionIds(ids: List<Long>): Map<Long, GetAttractionLinksUseCase.Links> =
+        attractionRepository.findAllByIds(ids).mapNotNull { attraction ->
+            val id = attraction.id ?: return@mapNotNull null
+            id to GetAttractionLinksUseCase.Links(
+                collected = linkRepository.findLinks(id),
+                deepLinks = AttractionDeepLinks.of(attraction.titleDisplay),
+                // 색인 시점에는 대기 여부가 의미 없다 — 화면이 그 상태를 그리지 않는다.
+                pending = false,
+            )
+        }.toMap()
+
     override fun enqueue(attractionIds: List<Long>): Int =
         attractionIds.count { id -> COLLECTED_SOURCES.count { enqueueIfDue(id, it) } > 0 }
 

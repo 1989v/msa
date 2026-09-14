@@ -1131,7 +1131,7 @@ export default function PlacePage() {
 
           {/* 캐로셀은 정보 패널의 부속이 아니라 장소에 딸린 것이다 — 데스크톱은 지도 하단.
               모바일은 상세 시트 안이다: 시트가 화면을 덮는 동안 지도 아래 캐로셀은 보이지 않는다. */}
-          {selectedId && !isMobile && <AttractionLinks id={selectedId} lang={lang} />}
+          {selected && !isMobile && <AttractionLinks links={selected.links} lang={lang} />}
         </section>
 
         {selected && !isMobile && (
@@ -1150,7 +1150,7 @@ export default function PlacePage() {
         <KhSheet label={L.attractionLabel} onClose={() => setSelectedId(null)}>
           <div className="place-detail place-detail-sheet" aria-label={selected.title}>
             <AttractionDetailBody attraction={selected} lang={lang} />
-            <AttractionLinks id={selected.id} lang={lang} />
+            <AttractionLinks links={selected.links} lang={lang} />
           </div>
         </KhSheet>
       )}

@@ -38,6 +38,8 @@ data class AttractionSearchDocument(
     val introRaw: String? = null,
     val imagesRaw: String? = null,
     val infoRaw: String? = null,
+    val sidoName: String? = null,
+    val links: String? = null,
     val googlePlaceId: String? = null,
     /** 재색인 전 옛 인덱스 문서에는 없다 — 기본값 1.0(공식의 base)으로 중립 처리. */
     val popularityScore: Double = 1.0,
@@ -73,6 +75,8 @@ data class AttractionSearchDocument(
         introRaw = introRaw,
         imagesRaw = imagesRaw,
         infoRaw = infoRaw,
+        sidoName = sidoName,
+        links = links,
         googlePlaceId = googlePlaceId,
         popularityScore = popularityScore,
         modifiedAt = modifiedAt,

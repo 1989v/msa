@@ -1,5 +1,6 @@
 package com.kgd.search.client
 
+import tools.jackson.databind.ObjectMapper
 import com.kgd.search.infrastructure.client.PlaceApiClient
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -30,7 +31,7 @@ class PlaceApiClientTest : BehaviorSpec({
                 )
             }
             .build()
-        return PlaceApiClient(webClient)
+        return PlaceApiClient(webClient, ObjectMapper())
     }
 
     Given("place API 가 관광지 한 건을 돌려줄 때") {

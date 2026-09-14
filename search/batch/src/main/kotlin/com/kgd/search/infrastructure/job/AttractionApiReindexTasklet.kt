@@ -54,6 +54,15 @@ class AttractionApiReindexTasklet(
                 log.info { "search.embedding.model-ref 가 비어 벡터 없이 색인한다 (BM25 전용)" }
             }
 
+            /*
+             * 시도 이름표 — 285행이라 **회차당 한 번** 받아 든다 (ADR-0095).
+             * 화면이 이걸 받아 코드 하나를 이름으로 바꾸던 호출을 없애려는 것이므로,
+             * 색인 쪽에서 관광지마다 부르면 본말전도다.
+             */
+            val sidoNames = listOf("ko", "en").associateWith { lang ->
+                runCatching { placeApiClient.fetchSidoNames(lang) }.getOrElse { emptyMap() }
+            }
+
             var page = 0
             var totalPages: Int
             var totalIndexed = 0L
@@ -73,6 +82,12 @@ class AttractionApiReindexTasklet(
                             acc + placeApiClient.lookupEmbeddings(modelRef, ids)
                         }
                 }
+
+                // 링크도 페이지 단위로 한 번에 받는다 — 관광지마다 부르면 6만 번이다.
+                val links = active.map { it.id }.chunked(PlaceApiClient.LOOKUP_MAX_BATCH)
+                    .fold(emptyMap<Long, String>()) { acc, ids ->
+                        acc + runCatching { placeApiClient.lookupLinks(ids) }.getOrElse { emptyMap() }
+                    }
 
                 active.forEach { attraction ->
                     val embedding = embeddings[attraction.id]?.let {
@@ -118,6 +133,10 @@ class AttractionApiReindexTasklet(
                             introRaw = attraction.introRaw,
                             imagesRaw = attraction.imagesRaw,
                             infoRaw = attraction.infoRaw,
+                            // 행정구역 시도 코드는 법정동 2자리다 (ADR-0071).
+                            sidoName = attraction.ldongRegnCd
+                                ?.let { sidoNames[attraction.lang]?.get(it) },
+                            links = links[attraction.id],
                             googlePlaceId = attraction.googlePlaceId,
                             modifiedAt = attraction.sourceModifiedAt,
                         ),
