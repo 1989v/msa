@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createProgressSave } from '../src/save.mjs';
 
 const key = 'skybound.progress.v1';
-const flags = { watchRuinActive: true, firstAerialLanding: true, secondAerialLanding: true };
+const flags = { watchRuinActive: true, firstAerialLanding: true, secondAerialLanding: true, stoneRuinActive: true };
 const envelope = progress => ({ version: 1, worldVersion: 1, progress });
 function storage(initial = null) {
   const data = new Map(initial === null ? [] : [[key, initial]]);
@@ -23,7 +23,34 @@ test('round trip keeps completed flags and excludes transient objects and coordi
   assert.deepEqual(JSON.parse(target.getItem(key)), envelope(flags));
   assert.deepEqual(save.load(), { ok: true, progress: flags });
   assert.deepEqual(save.save({ watchRuinActive: true }), { ok: true });
-  assert.deepEqual(save.load().progress, { watchRuinActive: true, firstAerialLanding: false, secondAerialLanding: false });
+  assert.deepEqual(save.load().progress, { watchRuinActive: true, firstAerialLanding: false, secondAerialLanding: false, stoneRuinActive: false });
+});
+
+test('old v1 saves preserve original flags and default only the missing stone ruin flag', () => {
+  const { stoneRuinActive, ...originalFlags } = flags;
+  const target = storage(JSON.stringify(envelope(originalFlags)));
+  assert.deepEqual(createProgressSave(() => target).load(), {
+    ok: true, progress: { ...originalFlags, stoneRuinActive: false },
+  });
+  for (const missing of Object.keys(originalFlags)) {
+    const incomplete = { ...flags };
+    delete incomplete[missing];
+    assert.deepEqual(createProgressSave(() => storage(JSON.stringify(envelope(incomplete)))).load(), {
+      ok: false, reason: 'invalid', progress: {},
+    });
+  }
+});
+
+test('present malformed stone ruin flags are rejected on load and save', () => {
+  for (const stoneRuinActive of [null, 0, 1, 'true', [], {}]) {
+    const progress = { ...flags, stoneRuinActive };
+    const save = createProgressSave(() => storage(JSON.stringify(envelope(progress))));
+    assert.deepEqual(save.load(), { ok: false, reason: 'invalid', progress: {} });
+    assert.deepEqual(save.save(progress), { ok: false, reason: 'invalid' });
+  }
+  assert.deepEqual(createProgressSave(() => storage()).save({ stoneRuinActive: undefined }), {
+    ok: false, reason: 'invalid',
+  });
 });
 
 test('unsupported, corrupt, oversized, and invalid progress saves are rejected without modifying storage', () => {
