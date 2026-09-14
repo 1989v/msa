@@ -41,6 +41,9 @@ class AttractionLinkService(
         )
     }
 
+    override fun enqueue(attractionIds: List<Long>): Int =
+        attractionIds.count { id -> COLLECTED_SOURCES.count { enqueueIfDue(id, it) } > 0 }
+
     override fun findDue(
         source: AttractionLinkSource,
         limit: Int,

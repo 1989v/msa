@@ -42,6 +42,14 @@ class AttractionLinkInternalController(
         )
     }
 
+    /**
+     * 수집 대상 큐 등록 (ADR-0095). 수집기가 **인기순으로 고른 관광지**를 올린다.
+     * 예전에는 사용자가 상세를 열 때 올라갔는데, 그 경로는 링크가 색인으로 가면서 사라진다.
+     */
+    @PostMapping("/enqueue")
+    fun enqueue(@Valid @RequestBody request: EnqueueLinksRequest): ApiResponse<EnqueueLinksResponse> =
+        ApiResponse.success(EnqueueLinksResponse(collectAttractionLinksUseCase.enqueue(request.attractionIds)))
+
     @PostMapping("/bulk")
     fun applyResults(
         @Valid @RequestBody request: ApplyLinkResultsRequest,
@@ -55,6 +63,12 @@ class AttractionLinkInternalController(
         )
     }
 }
+
+data class EnqueueLinksRequest(
+    @field:NotEmpty val attractionIds: List<Long> = emptyList(),
+)
+
+data class EnqueueLinksResponse(val enqueued: Int)
 
 data class PendingLinksResponse(val items: List<PendingLinkItem>)
 

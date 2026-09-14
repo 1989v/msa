@@ -11,6 +11,17 @@ interface CollectAttractionLinksUseCase {
     /** 일일 예산이 남은 만큼만 돌려준다. 소진되면 빈 목록 — 실패가 아니라 정상이다. */
     fun findDue(source: AttractionLinkSource, limit: Int): List<DueItem>
 
+    /**
+     * 수집 대상을 큐에 올린다 (ADR-0095).
+     *
+     * 예전에는 **사용자가 상세를 열 때** 큐에 올렸다(`findByAttractionId` 의 부수효과).
+     * 링크를 색인에서 서빙하면 그 호출이 사라지므로, 인기 집계를 아는 수집기가 직접 올린다.
+     * 사용자 요청 경로에서 DB 쓰기가 없어지는 것은 덤이다.
+     *
+     * @return 새로 올라간 관광지 수
+     */
+    fun enqueue(attractionIds: List<Long>): Int
+
     fun apply(source: AttractionLinkSource, results: List<Result>): Applied
 
     data class DueItem(

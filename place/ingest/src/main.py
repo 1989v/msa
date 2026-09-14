@@ -26,7 +26,8 @@ import sys
 from pathlib import Path
 
 from src import (administrative_region, backfill_intro, backfill_overview, google_place, naver, place_client,
-                 backfill_media, quota, sync_lcls_codes, sync_pet_tour, sync_tour,
+                 backfill_media, popularity, quota, sync_lcls_codes, sync_pet_tour,
+                 sync_tour,
                  youtube)
 
 
@@ -95,6 +96,11 @@ def _job_sync(content_type: str, limit: int) -> int:
     return 0
 
 
+#: 인기순으로 큐에 올릴 여유분. 이미 받은 곳·재시도 대기 중인 곳이 섞여 있어
+#: 한 회차 예산보다 넉넉히 올려야 실제로 쓸 대상이 그만큼 나온다.
+QUEUE_HEADROOM = 10
+
+
 def _job_links(limit: int) -> int:
     """수집 대상만큼 외부 소스를 훑어 place 에 돌려준다. 일일 예산 관리는 place 가 한다."""
     youtube_key = os.environ.get("YOUTUBE_API_KEY")
@@ -112,6 +118,12 @@ def _job_links(limit: int) -> int:
             naver_id, naver_secret, item["title"], item.get("lang") or "ko")))
     if not sources:
         raise SystemExit("YOUTUBE_API_KEY 또는 NAVER_CLIENT_ID/SECRET 중 하나는 필요합니다")
+
+    # 예산을 어디에 쓸지 먼저 정한다 (ADR-0095). 집계가 없으면 빈 목록이라 기존 순서로 간다.
+    popular = popularity.top_attraction_ids(limit * QUEUE_HEADROOM)
+    if popular:
+        enqueued = place_client.enqueue_links(popular)
+        backfill_overview.log(f"[links] 인기순 {len(popular)}곳 중 {enqueued}곳 큐 등록")
 
     for source, fetch in sources:
         _collect_source(source, fetch, limit)

@@ -114,7 +114,7 @@ def main() -> int:
     _google_place_enrichment()
 
     print("SMOKE OK — 제외목록 · 429 분리 · 전체 레코드 적재 · 매칭 필터 · 제목 분리 "
-          "· 유튜브 카테고리/좌표/보충 · 법정동 파서 · 영문명 추출 · 구글 place_id 보강 · 흘려 쓰기 · 한도 중단 · 부가 사진/반복정보")
+          "· 유튜브 카테고리/좌표/보충 · 법정동 파서 · 영문명 추출 · 구글 place_id 보강 · 흘려 쓰기 · 한도 중단 · 부가 사진/반복정보 · 인기순 예산")
     return 0
 
 
@@ -253,6 +253,7 @@ def _admin_region_parser() -> None:
     _media_param_contract()
     _media_marks_even_when_source_is_empty()
     _media_without_content_type_still_gets_images()
+    _popularity_drives_link_budget()
 
 
 def _english_from_address() -> None:
@@ -691,6 +692,50 @@ def _media_without_content_type_still_gets_images() -> None:
     assert called == ["detailImage2"], called
     assert posted and "imagesRaw" in posted[0], posted
     print("  타입 없는 레코드도 사진은 받는다 OK")
+
+
+def _popularity_drives_link_budget() -> None:
+    """한정된 예산(YouTube 하루 100건)을 **인기순**으로 쓴다 (ADR-0095).
+
+    전량에 1.6년이 걸리므로 순서가 곧 커버리지다. 그리고 집계가 없을 때
+    (첫 배포·ClickHouse 부재) 수집이 멈추면 안 된다 — 기존 순서로 계속 가야 한다.
+    """
+    from src import popularity
+
+    # ① 클릭이 노출보다 앞선다 — 본 사람 중 실제로 들어간 곳이 강한 신호다
+    captured = {}
+
+    def fake_urlopen(url, timeout=None):
+        captured["url"] = url
+
+        class R:
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+            def read(self): return b"11299\n17592\n\n2733967\n"
+        return R()
+
+    orig = popularity.urllib.request.urlopen
+    popularity.urllib.request.urlopen = fake_urlopen
+    try:
+        ids = popularity.top_attraction_ids(5)
+    finally:
+        popularity.urllib.request.urlopen = orig
+    assert ids == [11299, 17592, 2733967], ids
+    q = captured["url"]
+    assert "clicks" in q and "impressions" in q, q
+    assert "attraction_popularity_daily" in q, "전용 표만 읽어야 한다 — 공용 원장이 아니다"
+    assert "analytics.events" not in q, "공용 원장에 직접 붙으면 스키마 변경에 조용히 깨진다"
+
+    # ② 조회가 실패해도 빈 목록일 뿐 — 예외가 수집을 멈추면 그날 치가 통째로 날아간다
+    def boom(url, timeout=None):
+        raise OSError("clickhouse down")
+
+    popularity.urllib.request.urlopen = boom
+    try:
+        assert popularity.top_attraction_ids(5) == []
+    finally:
+        popularity.urllib.request.urlopen = orig
+    print("  인기순 예산 배분 OK (전용 표 · 실패해도 수집 계속)")
 
 
 if __name__ == "__main__":

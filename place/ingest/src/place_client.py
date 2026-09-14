@@ -117,6 +117,18 @@ def record_probes(items: list[dict]) -> int:
     return recorded
 
 
+def enqueue_links(attraction_ids: list[int]) -> int:
+    """수집 대상을 큐에 올린다 (ADR-0095).
+
+    예전에는 사용자가 상세를 열 때 올라갔다. 링크가 색인에서 서빙되면 그 호출이 사라지므로
+    **인기 집계를 아는 수집기가 직접 올린다.**
+    """
+    if not attraction_ids:
+        return 0
+    return int(_request("POST", "/internal/attractions/links/enqueue",
+                        {"attractionIds": attraction_ids})["data"]["enqueued"])
+
+
 def fetch_pending_links(source: str, limit: int) -> list[dict]:
     """수집 대상. **빈 목록은 실패가 아니라 "오늘 몫을 다 썼다"** 는 뜻이다 — 예산은 place 가 센다."""
     qs = urllib.parse.urlencode({"source": source, "limit": limit})

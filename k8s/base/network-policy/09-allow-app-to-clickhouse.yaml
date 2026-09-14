@@ -7,6 +7,8 @@
 #   - sideapp        OHLCV 차트 read (ChartController) — ADR-0093 폴드 전 이름은 quant
 #   - quant-ingest   OHLCV write (yfinance/FDR sidecar)
 #   - recommendation ADR-0045 Phase 1 — analytics DB 의 recommendation_events MV read + raw insert
+#   - place-ingest   ADR-0095 — links 잡이 attraction_popularity_daily 를 읽어 예산을 인기순으로 쓴다.
+#                    전용 집계 표만 읽는다(공용 원장 아님). HTTP 8123 만 쓰므로 드라이버가 없다.
 # 다른 서비스가 추가로 필요해지면 ingress.from.podSelector matchExpressions 에 추가.
 #
 # 라벨 선택 근거:
@@ -35,7 +37,7 @@ spec:
     - from:
         - podSelector:
             matchExpressions:
-              - { key: app.kubernetes.io/name, operator: In, values: [analytics, sideapp, quant-ingest, engagement, recommendation-ml, search-batch] }
+              - { key: app.kubernetes.io/name, operator: In, values: [analytics, sideapp, quant-ingest, engagement, recommendation-ml, search-batch, place-ingest] }
       ports:
         - { port: 8123, protocol: TCP }   # HTTP — recommendation 등이 사용
         - { port: 9000, protocol: TCP }   # Native TCP — recommendation-ml (clickhouse_driver) 가 사용
