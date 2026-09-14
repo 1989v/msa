@@ -43,6 +43,9 @@ import {
 } from './placeView';
 import './PlacePage.css';
 import AdSlot from '../../components/ads/AdSlot';
+import TrackedLink from '../../analytics/TrackedLink';
+import { newViewId } from '../../analytics/identity';
+import { installFlushOnLeave } from '../../analytics/tracker';
 import { ADSENSE_SLOTS } from '../../seo/copy.mjs';
 
 const UI = {
@@ -51,6 +54,13 @@ const UI = {
 } as const;
 
 /** 주변 검색 반경 — 명소 목록과 편의시설 캐로셀이 같은 값을 쓴다. */
+/*
+ * 화면 안 섹션 순서 (ADR-0095). 배치를 바꾸면 여기도 같이 바꾼다 — 이 값이 원장에 남아
+ * 나중에 「그때 몇 번째였나」를 복원하는 근거가 된다.
+ */
+const NEARBY_SECTION_INDEX = 0;
+const AMENITY_SECTION_INDEX = 1;
+
 const NEARBY_RADIUS_KM = 5;
 /**
  * 상세 지도의 줌. 허브에서 관광지를 고를 때와 같은 상한이다 (ADR-0071 §4) —
@@ -189,6 +199,15 @@ export default function AttractionPage() {
   // 사진이 1장뿐인 관광지로 넘어가 아무것도 안 보이게 된다.
   useEffect(() => setShownIndex(0), [attraction?.contentId]);
   const shown = gallery[shownIndex] ?? gallery[0];
+
+  /*
+   * 노출 기록용 화면 식별자 (ADR-0095). 관광지가 바뀌면 새 한 벌이다 —
+   * 같은 값을 이어 쓰면 다른 관광지에서 본 카드가 같은 노출로 묶인다.
+   */
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- contentId 가 바뀔 때만 새 한 벌이다
+  const viewId = useMemo(() => newViewId(), [attraction?.contentId]);
+  // 화면을 떠날 때 아직 안 보낸 노출을 흘린다 — 그 순간의 fetch 는 취소된다.
+  useEffect(installFlushOnLeave, []);
 
   const mapDivRef = useRef<HTMLDivElement | null>(null);
   const [mapFailed, setMapFailed] = useState(false);
@@ -384,8 +403,22 @@ export default function AttractionPage() {
         {others.length > 0 && (
           <section className="place-list" aria-label={L.nearby}>
             <h2 className="place-subtitle">{L.nearby}</h2>
-            {others.map((a) => (
-              <Link key={a.id} className="place-card" to={attractionPath(lang, a.id)}>
+            {others.map((a, i) => (
+              <TrackedLink
+                key={a.id}
+                className="place-card"
+                to={attractionPath(lang, a.id)}
+                viewId={viewId}
+                item={{
+                  entityType: 'ATTRACTION',
+                  entityId: a.id,
+                  screenType: 'ATTRACTION_DETAIL',
+                  screenRef: id,
+                  sectionId: 'NEARBY_ATTRACTIONS',
+                  sectionIndex: NEARBY_SECTION_INDEX,
+                  itemIndex: i,
+                }}
+              >
                 {a.imageUrl ? (
                   <img className="place-card-img" src={a.imageUrl} alt="" loading="lazy" />
                 ) : (
@@ -396,7 +429,7 @@ export default function AttractionPage() {
                   {titleParts(a).secondary && <p className="place-card-local">{titleParts(a).secondary}</p>}
                   {a.address && <p className="place-card-addr">{a.address}</p>}
                 </div>
-              </Link>
+              </TrackedLink>
             ))}
           </section>
         )}
@@ -407,9 +440,24 @@ export default function AttractionPage() {
             {/* 카드는 위 "주변 명소" 와 같은 .place-card 를 쓴다 — 같은 화면에서 크기가 다르면
                 아래쪽이 덤처럼 보인다. 다른 것은 가로로 이어진다는 점뿐이다. */}
             <ul className="place-amenity-row">
-              {amenities.map((a) => (
+              {amenities.map((a, i) => (
                 <li key={a.id} className="place-amenity-slide">
-                  <Link className="place-card" to={attractionPath(lang, a.id)}>
+                  {/* 캐로셀 안 순서(itemIndex)를 섹션 순서(sectionIndex)와 따로 남긴다 —
+                      한 칸으로 누르면 「캐로셀 3번째」와 「3번째 섹션」이 구분되지 않는다 */}
+                  <TrackedLink
+                    className="place-card"
+                    to={attractionPath(lang, a.id)}
+                    viewId={viewId}
+                    item={{
+                      entityType: 'ATTRACTION',
+                      entityId: a.id,
+                      screenType: 'ATTRACTION_DETAIL',
+                      screenRef: id,
+                      sectionId: 'AMENITY_CAROUSEL',
+                      sectionIndex: AMENITY_SECTION_INDEX,
+                      itemIndex: i,
+                    }}
+                  >
                     {a.imageUrl ? (
                       <img className="place-card-img" src={a.imageUrl} alt="" loading="lazy" />
                     ) : (
@@ -424,7 +472,7 @@ export default function AttractionPage() {
                       <h3 className="place-card-title">{titleParts(a).primary}</h3>
                       {a.address && <p className="place-card-addr">{a.address}</p>}
                     </div>
-                  </Link>
+                  </TrackedLink>
                 </li>
               ))}
             </ul>
