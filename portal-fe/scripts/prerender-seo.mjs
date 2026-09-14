@@ -886,10 +886,10 @@ async function fetchRegionIndex() {
   const result = {};
   for (const lang of LANGS) {
     const regions = [];
-    const sidos = (await getJson(`/api/places/admin-regions?level=SIDO&lang=${lang}`)).regions ?? [];
+    const sidos = (await getJson(`/api/places/administrative-regions?level=SIDO&lang=${lang}`)).regions ?? [];
     for (const sido of sidos) {
       if ((sido.attractionCount ?? 0) > 0) regions.push(sido);
-      const children = (await getJson(`/api/places/admin-regions?level=SIGUNGU&parent=${sido.code}&lang=${lang}`)).regions ?? [];
+      const children = (await getJson(`/api/places/administrative-regions?level=SIGUNGU&parent=${sido.code}&lang=${lang}`)).regions ?? [];
       regions.push(...children.filter((c) => (c.attractionCount ?? 0) > 0));
     }
     result[lang] = regions;
