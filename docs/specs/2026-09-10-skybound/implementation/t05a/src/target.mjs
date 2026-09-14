@@ -39,6 +39,6 @@ export function createTarget({ position, lineOfSight = () => true }) {
       swing=next;return snapshot();
     },
     cancelSwing() { swing=null;return snapshot(); },
-    reset() { hp=3;swing=null;sequence=0;lastReason=null;hitAge=1;return snapshot(); },
+    reset({ defeated = false } = {}) { hp=defeated === true ? 0 : 3;swing=null;sequence=0;lastReason=null;hitAge=1;return snapshot(); },
   });
 }
