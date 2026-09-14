@@ -1,6 +1,6 @@
 const SAVE_KEY = 'skybound.progress.v1';
 const MAX_SAVE_LENGTH = 4096;
-const FLAGS = ['watchRuinActive', 'firstAerialLanding', 'secondAerialLanding', 'stoneRuinActive', 'windRuinActive'];
+const FLAGS = ['watchRuinActive', 'firstAerialLanding', 'secondAerialLanding', 'stoneRuinActive', 'windRuinActive', 'journeyComplete'];
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 
 function validateProgress(value, allowMissing = false) {
@@ -8,12 +8,13 @@ function validateProgress(value, allowMissing = false) {
   const progress = {};
   for (const key of FLAGS) {
     // Older v1 saves predate stone/wind ruins; original flags stay required on load.
-    const flag = (allowMissing || key === 'stoneRuinActive' || key === 'windRuinActive') && !Object.hasOwn(value, key) ? false : value[key];
+    const flag = (allowMissing || key === 'stoneRuinActive' || key === 'windRuinActive' || key === 'journeyComplete') && !Object.hasOwn(value, key) ? false : value[key];
     if (typeof flag !== 'boolean') return null;
     progress[key] = flag;
   }
   if (progress.secondAerialLanding && !progress.firstAerialLanding) return null;
   if (progress.windRuinActive && (!progress.firstAerialLanding || !progress.secondAerialLanding)) return null;
+  if (progress.journeyComplete && (!progress.stoneRuinActive || !progress.watchRuinActive || !progress.windRuinActive)) return null;
   return progress;
 }
 

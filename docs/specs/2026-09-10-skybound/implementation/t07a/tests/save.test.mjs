@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createProgressSave } from '../src/save.mjs';
 
 const key = 'skybound.progress.v1';
-const flags = { watchRuinActive: true, firstAerialLanding: true, secondAerialLanding: true, stoneRuinActive: true, windRuinActive: true };
+const flags = { watchRuinActive: true, firstAerialLanding: true, secondAerialLanding: true, stoneRuinActive: true, windRuinActive: true, journeyComplete: true };
 const envelope = progress => ({ version: 1, worldVersion: 1, progress });
 function storage(initial = null) {
   const data = new Map(initial === null ? [] : [[key, initial]]);
@@ -23,18 +23,18 @@ test('round trip keeps completed flags and excludes transient objects and coordi
   assert.deepEqual(JSON.parse(target.getItem(key)), envelope(flags));
   assert.deepEqual(save.load(), { ok: true, progress: flags });
   assert.deepEqual(save.save({ watchRuinActive: true }), { ok: true });
-  assert.deepEqual(save.load().progress, { watchRuinActive: true, firstAerialLanding: false, secondAerialLanding: false, stoneRuinActive: false, windRuinActive: false });
+  assert.deepEqual(save.load().progress, { watchRuinActive: true, firstAerialLanding: false, secondAerialLanding: false, stoneRuinActive: false, windRuinActive: false, journeyComplete: false });
 });
 
 test('old v1 saves preserve original flags and default missing stone and wind ruin flags', () => {
-  const { stoneRuinActive, windRuinActive, ...originalFlags } = flags;
+  const { stoneRuinActive, windRuinActive, journeyComplete, ...originalFlags } = flags;
   const target = storage(JSON.stringify(envelope(originalFlags)));
   assert.deepEqual(createProgressSave(() => target).load(), {
-    ok: true, progress: { ...originalFlags, stoneRuinActive: false, windRuinActive: false },
+    ok: true, progress: { ...originalFlags, stoneRuinActive: false, windRuinActive: false, journeyComplete: false },
   });
   const stoneSave = { ...originalFlags, stoneRuinActive: true };
   assert.deepEqual(createProgressSave(() => storage(JSON.stringify(envelope(stoneSave)))).load(), {
-    ok: true, progress: { ...stoneSave, windRuinActive: false },
+    ok: true, progress: { ...stoneSave, windRuinActive: false, journeyComplete: false },
   });
   for (const missing of Object.keys(originalFlags)) {
     const incomplete = { ...flags };
@@ -46,7 +46,7 @@ test('old v1 saves preserve original flags and default missing stone and wind ru
 });
 
 test('present malformed optional ruin flags are rejected on load and save', () => {
-  for (const key of ['stoneRuinActive', 'windRuinActive']) {
+  for (const key of ['stoneRuinActive', 'windRuinActive', 'journeyComplete']) {
     for (const value of [null, 0, 1, 'true', [], {}]) {
       const progress = { ...flags, [key]: value };
       const save = createProgressSave(() => storage(JSON.stringify(envelope(progress))));
