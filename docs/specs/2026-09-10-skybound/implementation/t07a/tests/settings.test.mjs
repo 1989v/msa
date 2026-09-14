@@ -6,7 +6,7 @@ test('settings persist separately; invalid writes and unsupported saves use safe
   const store = createSettingsStore(() => ({ getItem: () => raw, setItem: (key, value) => { assert.equal(key, 'skybound.settings.v1'); raw = value; } }));
   assert.deepEqual(store.load(), DEFAULT_SETTINGS);
   assert.equal(store.save({ sensitivity: .5, quality: 'light' }), true);
-  assert.deepEqual(store.load(), { sensitivity: .5, quality: 'light', reducedMotion: false });
+  assert.deepEqual(store.load(), { sensitivity: .5, quality: 'light', reducedMotion: false, volume: 0 });
   const before = raw;
   for (const value of [{ sensitivity: '1', quality: 'light' }, { sensitivity: Infinity, quality: 'standard' }, { sensitivity: 3, quality: 'standard' }, { sensitivity: 1.2, quality: 'standard' }, { sensitivity: 1, quality: 'ultra' }]) assert.equal(store.save(value), false);
   assert.equal(raw, before);
@@ -31,4 +31,13 @@ test('motion preference follows OS default for old saves and preserves explicit 
   assert.equal(store.save({ ...DEFAULT_SETTINGS, reducedMotion: false }), true);
   assert.equal(store.load(true).reducedMotion, false);
   assert.equal(store.save({ ...DEFAULT_SETTINGS, reducedMotion: 'false' }), false);
+});
+
+test('sound stays muted in old saves and volume uses bounded choices', () => {
+  let raw = JSON.stringify({ version: 1, sensitivity: 1, quality: 'standard' });
+  const store = createSettingsStore(() => ({ getItem: () => raw, setItem: (key, value) => { raw = value; } }));
+  assert.equal(store.load().volume, 0);
+  assert.equal(store.save({ ...DEFAULT_SETTINGS, volume: .25 }), true);
+  assert.equal(store.load().volume, .25);
+  assert.equal(store.save({ ...DEFAULT_SETTINGS, volume: 2 }), false);
 });
