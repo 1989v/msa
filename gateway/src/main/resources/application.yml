@@ -37,7 +37,8 @@ spring:
             - id: analytics-service
               uri: http://analytics:8090
               predicates:
-                - Path=/api/v1/scores/**, /api/v1/analytics/**, /api/v1/search/judgments/**
+                # /api/v1/events — 화면 노출·클릭 수집 (ADR-0095). 익명 허용.
+                - Path=/api/v1/scores/**, /api/v1/analytics/**, /api/v1/search/judgments/**, /api/v1/events
             - id: experiment-service
               uri: http://engagement:8091 # ADR-0093: engagement 폴드
               predicates:

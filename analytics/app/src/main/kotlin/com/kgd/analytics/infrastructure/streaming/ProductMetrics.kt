@@ -1,7 +1,8 @@
 package com.kgd.analytics.infrastructure.streaming
 
 import com.kgd.common.analytics.AnalyticsEvent
-import com.kgd.common.analytics.EventType
+import com.kgd.common.analytics.EntityType
+import com.kgd.common.analytics.EventAction
 
 data class ProductMetrics(
     var impressions: Long = 0,
@@ -10,10 +11,12 @@ data class ProductMetrics(
     var gmv: Double = 0.0
 ) {
     fun add(event: AnalyticsEvent): ProductMetrics {
-        when (event.eventType) {
-            EventType.PRODUCT_VIEW -> impressions++
-            EventType.PRODUCT_CLICK -> clicks++
-            EventType.ORDER_COMPLETE -> {
+        // 상품 축만 센다 — 관광지·블로그 노출이 섞이면 상품 CTR 이 틀어진다 (ADR-0095)
+        if (event.entityType != EntityType.PRODUCT) return this
+        when (event.action) {
+            EventAction.IMPRESSION -> impressions++
+            EventAction.CLICK -> clicks++
+            EventAction.ORDER_COMPLETE -> {
                 orders++
                 gmv += extractAmount(event)
             }

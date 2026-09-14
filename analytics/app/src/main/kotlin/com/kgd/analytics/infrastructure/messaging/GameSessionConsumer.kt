@@ -3,7 +3,8 @@ package com.kgd.analytics.infrastructure.messaging
 import tools.jackson.databind.ObjectMapper
 import com.kgd.analytics.application.event.port.EventRepositoryPort
 import com.kgd.common.analytics.AnalyticsEvent
-import com.kgd.common.analytics.EventType
+import com.kgd.common.analytics.EntityType
+import com.kgd.common.analytics.EventAction
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Component
@@ -25,16 +26,16 @@ class GameSessionConsumer(
         groupId = "analytics-game-session",
         containerFactory = "stringKafkaListenerContainerFactory",
     )
-    fun consumeStarted(message: String) = ingest(message, EventType.GAME_SESSION_START)
+    fun consumeStarted(message: String) = ingest(message, EventAction.SESSION_START)
 
     @KafkaListener(
         topics = ["game.session.ended"],
         groupId = "analytics-game-session",
         containerFactory = "stringKafkaListenerContainerFactory",
     )
-    fun consumeEnded(message: String) = ingest(message, EventType.GAME_SESSION_END)
+    fun consumeEnded(message: String) = ingest(message, EventAction.SESSION_END)
 
-    private fun ingest(message: String, type: EventType) {
+    private fun ingest(message: String, action: EventAction) {
         val payload = runCatching { objectMapper.readValue(message, GameSessionPayload::class.java) }
             .onFailure { log.warn { "Bad game session payload: ${it.message}" } }
             .getOrNull() ?: return
@@ -42,8 +43,10 @@ class GameSessionConsumer(
         eventRepository.saveEvents(
             listOf(
                 AnalyticsEvent(
-                    eventId = "${type.name.lowercase()}:${payload.sessionKey}",
-                    eventType = type,
+                    eventId = "${action.name.lowercase()}:${payload.sessionKey}",
+                    entityType = EntityType.GAME,
+                    entityId = payload.gameId.toString(),
+                    action = action,
                     userId = payload.memberId,
                     visitorId = payload.sessionKey,
                     sessionId = payload.sessionKey,

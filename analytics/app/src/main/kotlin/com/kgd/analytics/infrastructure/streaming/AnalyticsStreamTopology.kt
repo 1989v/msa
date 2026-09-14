@@ -8,7 +8,8 @@ import com.kgd.analytics.application.score.port.ProductScoreRepositoryPort
 import com.kgd.analytics.application.score.port.ScoreCachePort
 import com.kgd.analytics.infrastructure.messaging.ScoreUpdateEvent
 import com.kgd.common.analytics.AnalyticsEvent
-import com.kgd.common.analytics.EventType
+import com.kgd.common.analytics.EntityType
+import com.kgd.common.analytics.EventAction
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
@@ -54,13 +55,13 @@ class AnalyticsStreamTopology(
             Consumed.with(Serdes.String(), eventSerde)
         )
 
-        // Branch 1: Product metrics (PRODUCT_VIEW, PRODUCT_CLICK, ORDER_COMPLETE)
+        // Branch 1: 상품 지표 — 상품 축의 노출·클릭·주문 (ADR-0095 두 축)
         events
             .filter { _, event ->
-                event.eventType in listOf(
-                    EventType.PRODUCT_VIEW,
-                    EventType.PRODUCT_CLICK,
-                    EventType.ORDER_COMPLETE
+                event.entityType == EntityType.PRODUCT && event.action in listOf(
+                    EventAction.IMPRESSION,
+                    EventAction.CLICK,
+                    EventAction.ORDER_COMPLETE,
                 )
             }
             .selectKey { _, event -> event.payload["productId"]?.toString() ?: "unknown" }
@@ -119,11 +120,13 @@ class AnalyticsStreamTopology(
                 }
             }
 
-        // Branch 2: Keyword metrics (SEARCH_KEYWORD, PRODUCT_CLICK with keyword)
+        // Branch 2: 키워드 지표 — 검색, 그리고 키워드를 달고 온 상품 클릭
         events
             .filter { _, event ->
-                event.eventType == EventType.SEARCH_KEYWORD ||
-                    (event.eventType == EventType.PRODUCT_CLICK && event.payload.containsKey("keyword"))
+                event.action == EventAction.SEARCH ||
+                    (event.entityType == EntityType.PRODUCT &&
+                        event.action == EventAction.CLICK &&
+                        event.payload.containsKey("keyword"))
             }
             .selectKey { _, event -> event.payload["keyword"]?.toString() ?: "unknown" }
             .groupByKey(Grouped.with(Serdes.String(), eventSerde))

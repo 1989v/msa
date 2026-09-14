@@ -7,50 +7,62 @@ import java.time.Instant
 import java.util.UUID
 
 class AnalyticsEventTest : BehaviorSpec({
-    Given("AnalyticsEvent 생성") {
-        When("모든 필수 필드를 제공하면") {
+
+    Given("이벤트 생성") {
+        When("관광지가 목록에 보였을 때") {
             val event = AnalyticsEvent(
                 eventId = UUID.randomUUID().toString(),
-                eventType = EventType.PRODUCT_VIEW,
-                userId = 1L,
-                visitorId = "visitor-123",
-                sessionId = "session-456",
-                timestamp = Instant.now(),
-                experimentAssignments = mapOf(1L to "control"),
-                payload = mapOf("productId" to 100L)
-            )
-
-            Then("이벤트가 정상 생성된다") {
-                event.eventId shouldNotBe null
-                event.eventType shouldBe EventType.PRODUCT_VIEW
-                event.userId shouldBe 1L
-                event.visitorId shouldBe "visitor-123"
-            }
-        }
-
-        When("비로그인 사용자 (userId null)") {
-            val event = AnalyticsEvent(
-                eventId = UUID.randomUUID().toString(),
-                eventType = EventType.PAGE_VIEW,
+                entityType = EntityType.ATTRACTION,
+                entityId = "11299",
+                action = EventAction.IMPRESSION,
+                placement = Placement(
+                    screenType = "ATTRACTION_DETAIL",
+                    screenRef = "17592",
+                    sectionId = "NEARBY_ATTRACTIONS",
+                    sectionIndex = 2,
+                    itemIndex = 4,
+                ),
+                viewId = "v-1",
                 userId = null,
                 visitorId = "anon-visitor",
-                sessionId = "session-789",
+                sessionId = "s-1",
                 timestamp = Instant.now(),
                 experimentAssignments = null,
-                payload = mapOf("pageType" to "home")
+                payload = emptyMap(),
             )
 
-            Then("userId가 null이어도 생성된다") {
-                event.userId shouldBe null
-                event.visitorId shouldBe "anon-visitor"
+            Then("대상과 동작이 각각 선다") {
+                event.entityType shouldBe EntityType.ATTRACTION
+                event.action shouldBe EventAction.IMPRESSION
+                event.entityId shouldBe "11299"
+                event.userId shouldBe null      // 비로그인도 기록한다
+                event.eventId shouldNotBe null
+            }
+
+            Then("어느 화면 · 어느 섹션 · 그 안 몇 번째인지가 따로 남는다") {
+                // 한 축(position)으로 누르면 「캐로셀 3번째」와 「3번째 섹션」이 구분되지 않는다
+                val p = event.placement!!
+                p.screenType shouldBe "ATTRACTION_DETAIL"
+                p.screenRef shouldBe "17592"     // 어느 관광지 상세에서 보였나
+                p.sectionIndex shouldBe 2
+                p.itemIndex shouldBe 4
             }
         }
     }
 
-    Given("EventType") {
-        When("모든 이벤트 유형을 확인하면") {
-            Then("8가지 유형이 존재한다") {
-                EventType.entries.size shouldBe 8
+    Given("두 축") {
+        When("대상과 동작을 세면") {
+            Then("각자 독립적으로 늘어난다 — 곱해지지 않는다") {
+                // 한 축이던 시절 8종(PRODUCT_VIEW·PRODUCT_CLICK…)은 대상 × 동작이었다.
+                // 이제 대상이 늘어도 동작은 그대로다.
+                EntityType.entries.size shouldBe 6
+                EventAction.entries.size shouldBe 7
+            }
+            Then("노출과 클릭이 대상과 무관하게 지정된다") {
+                // 「전 서비스 노출」이 action 하나로 걸러진다 — IN(…) 목록 유지가 필요 없다
+                EventAction.entries.map { it.name } shouldNotBe emptyList<String>()
+                EventAction.IMPRESSION.name shouldBe "IMPRESSION"
+                EventAction.CLICK.name shouldBe "CLICK"
             }
         }
     }

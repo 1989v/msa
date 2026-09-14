@@ -1,7 +1,8 @@
 package com.kgd.recommendation.infrastructure.kafka
 
 import com.kgd.common.analytics.AnalyticsEvent
-import com.kgd.common.analytics.EventType
+import com.kgd.common.analytics.EntityType
+import com.kgd.common.analytics.EventAction
 import com.kgd.recommendation.infrastructure.persistence.ClickHouseEventWriter
 import com.kgd.recommendation.infrastructure.persistence.RecommendationEventRow
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -43,7 +44,9 @@ class RecommendationEventConsumer(
     }
 
     private fun toRow(event: AnalyticsEvent): RecommendationEventRow? {
-        val actionType = mapAction(event.eventType) ?: return null
+        // 상품 축이 아닌 신호는 상품 추천에 쓰지 않는다 (ADR-0095 두 축)
+        if (event.entityType != EntityType.PRODUCT) return null
+        val actionType = mapAction(event.action) ?: return null
         val itemId = (event.payload["productId"] as? Number)?.toLong() ?: return null
         val userId = event.userId ?: 0L  // 비로그인 사용자 = 0
         val cityId = (event.payload["cityId"] as? Number)?.toLong() ?: 0L
@@ -59,12 +62,12 @@ class RecommendationEventConsumer(
         )
     }
 
-    private fun mapAction(eventType: EventType): String? = when (eventType) {
-        EventType.PRODUCT_VIEW -> "pageview"
-        EventType.PRODUCT_CLICK -> "click"
-        EventType.ADD_TO_CART -> "addwish"
-        EventType.ORDER_COMPLETE -> "reservation"
-        EventType.SEARCH_KEYWORD, EventType.PAGE_VIEW -> null  // item-aware 신호 아님
-        EventType.GAME_SESSION_START, EventType.GAME_SESSION_END -> null  // 게임 세션은 상품 추천 신호 아님
+    private fun mapAction(action: EventAction): String? = when (action) {
+        EventAction.IMPRESSION -> "pageview"
+        EventAction.CLICK -> "click"
+        EventAction.ADD_TO_CART -> "addwish"
+        EventAction.ORDER_COMPLETE -> "reservation"
+        EventAction.SEARCH -> null                                   // item-aware 신호 아님
+        EventAction.SESSION_START, EventAction.SESSION_END -> null    // 세션은 상품 추천 신호 아님
     }
 }

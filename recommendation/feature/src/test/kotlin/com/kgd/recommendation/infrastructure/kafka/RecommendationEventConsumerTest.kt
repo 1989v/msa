@@ -1,7 +1,8 @@
 package com.kgd.recommendation.infrastructure.kafka
 
 import com.kgd.common.analytics.AnalyticsEvent
-import com.kgd.common.analytics.EventType
+import com.kgd.common.analytics.EntityType
+import com.kgd.common.analytics.EventAction
 import com.kgd.recommendation.infrastructure.persistence.ClickHouseEventWriter
 import com.kgd.recommendation.infrastructure.persistence.RecommendationEventRow
 import io.kotest.core.spec.style.BehaviorSpec
@@ -20,7 +21,9 @@ class RecommendationEventConsumerTest : BehaviorSpec({
     given("PRODUCT_VIEW 이벤트 (productId, cityId, categoryId 모두 있음)") {
         val event = AnalyticsEvent(
             eventId = "evt-1",
-            eventType = EventType.PRODUCT_VIEW,
+            entityType = EntityType.PRODUCT,
+            entityId = "0",
+            action = EventAction.IMPRESSION,
             userId = 100L,
             visitorId = "v-1",
             sessionId = "s-1",
@@ -49,7 +52,9 @@ class RecommendationEventConsumerTest : BehaviorSpec({
         val consumer2 = RecommendationEventConsumer(writer2)
         val event = AnalyticsEvent(
             eventId = "evt-2",
-            eventType = EventType.ORDER_COMPLETE,
+            entityType = EntityType.PRODUCT,
+            entityId = "0",
+            action = EventAction.ORDER_COMPLETE,
             userId = 200L,
             visitorId = "v-2",
             sessionId = "s-2",
@@ -72,7 +77,9 @@ class RecommendationEventConsumerTest : BehaviorSpec({
         val consumer3 = RecommendationEventConsumer(writer3)
         val event = AnalyticsEvent(
             eventId = "evt-3",
-            eventType = EventType.SEARCH_KEYWORD,
+            entityType = EntityType.SEARCH,
+            entityId = "0",
+            action = EventAction.SEARCH,
             userId = 100L,
             visitorId = "v-3",
             sessionId = "s-3",
@@ -93,7 +100,9 @@ class RecommendationEventConsumerTest : BehaviorSpec({
         val consumer4 = RecommendationEventConsumer(writer4)
         val event = AnalyticsEvent(
             eventId = "evt-4",
-            eventType = EventType.PRODUCT_VIEW,
+            entityType = EntityType.PRODUCT,
+            entityId = "0",
+            action = EventAction.IMPRESSION,
             userId = 100L,
             visitorId = "v-4",
             sessionId = "s-4",
@@ -114,7 +123,9 @@ class RecommendationEventConsumerTest : BehaviorSpec({
         val consumer5 = RecommendationEventConsumer(writer5)
         val event = AnalyticsEvent(
             eventId = "evt-5",
-            eventType = EventType.PRODUCT_VIEW,
+            entityType = EntityType.PRODUCT,
+            entityId = "0",
+            action = EventAction.IMPRESSION,
             userId = null,
             visitorId = "v-5",
             sessionId = "s-5",
@@ -133,20 +144,22 @@ class RecommendationEventConsumerTest : BehaviorSpec({
         }
     }
 
-    given("EventType 모든 케이스") {
-        `when`("매핑 확인") {
-            then("PRODUCT_VIEW → pageview, PRODUCT_CLICK → click, ADD_TO_CART → addwish, ORDER_COMPLETE → reservation, 그 외 null") {
+    given("동작 매핑") {
+        `when`("상품 축의 동작들을 넣으면") {
+            then("IMPRESSION→pageview · CLICK→click · ADD_TO_CART→addwish · ORDER_COMPLETE→reservation") {
                 listOf(
-                    EventType.PRODUCT_VIEW to "pageview",
-                    EventType.PRODUCT_CLICK to "click",
-                    EventType.ADD_TO_CART to "addwish",
-                    EventType.ORDER_COMPLETE to "reservation",
-                ).forEach { (eventType, expectedAction) ->
+                    EventAction.IMPRESSION to "pageview",
+                    EventAction.CLICK to "click",
+                    EventAction.ADD_TO_CART to "addwish",
+                    EventAction.ORDER_COMPLETE to "reservation",
+                ).forEach { (action, expectedAction) ->
                     val w = mockk<ClickHouseEventWriter>(relaxed = true)
                     val c = RecommendationEventConsumer(w)
                     c.handle(AnalyticsEvent(
-                        eventId = "evt-$eventType",
-                        eventType = eventType,
+                        eventId = "evt-$action",
+                        entityType = EntityType.PRODUCT,
+                        entityId = "1",
+                        action = action,
                         userId = 1L,
                         visitorId = "v",
                         sessionId = "s",
@@ -158,6 +171,28 @@ class RecommendationEventConsumerTest : BehaviorSpec({
                     verify { w.insertBatch(capture(captured)) }
                     captured.captured[0].actionType shouldBe expectedAction
                 }
+            }
+        }
+
+        `when`("상품이 아닌 대상이 같은 동작으로 오면") {
+            then("추천 신호로 쓰지 않는다 — 두 축이라 action 이름이 겹친다") {
+                // 관광지 클릭과 상품 클릭은 같은 CLICK 이다. 대상을 안 보면
+                // 관광지 조회가 상품 추천 학습 데이터에 섞인다.
+                val w = mockk<ClickHouseEventWriter>(relaxed = true)
+                val c = RecommendationEventConsumer(w)
+                c.handle(AnalyticsEvent(
+                    eventId = "evt-attraction",
+                    entityType = EntityType.ATTRACTION,
+                    entityId = "11299",
+                    action = EventAction.CLICK,
+                    userId = 1L,
+                    visitorId = "v",
+                    sessionId = "s",
+                    timestamp = Instant.now(),
+                    experimentAssignments = null,
+                    payload = mapOf("productId" to 1),
+                ))
+                verify(exactly = 0) { w.insertBatch(any()) }
             }
         }
     }

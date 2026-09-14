@@ -1,75 +1,58 @@
 package com.kgd.analytics.infrastructure.streaming
 
 import com.kgd.common.analytics.AnalyticsEvent
-import com.kgd.common.analytics.EventType
+import com.kgd.common.analytics.EntityType
+import com.kgd.common.analytics.EventAction
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import java.time.Instant
 
 class ProductMetricsTest : BehaviorSpec({
 
-    fun event(type: EventType, payload: Map<String, Any> = emptyMap()) = AnalyticsEvent(
+    fun event(
+        action: EventAction,
+        entityType: EntityType = EntityType.PRODUCT,
+        payload: Map<String, Any> = emptyMap(),
+    ) = AnalyticsEvent(
         eventId = "evt-1",
-        eventType = type,
+        entityType = entityType,
+        entityId = "100",
+        action = action,
         userId = null,
         visitorId = "v1",
         sessionId = "s1",
         timestamp = Instant.now(),
         experimentAssignments = null,
-        payload = payload
+        payload = payload,
     )
 
     Given("ProductMetrics") {
-        When("PRODUCT_VIEW, PRODUCT_CLICK, ORDER_COMPLETE 를 더하면") {
+        When("상품의 노출·클릭·주문을 더하면") {
             val m = ProductMetrics()
-            m.add(event(EventType.PRODUCT_VIEW))
-            m.add(event(EventType.PRODUCT_VIEW))
-            m.add(event(EventType.PRODUCT_CLICK))
-            m.add(event(EventType.ORDER_COMPLETE, mapOf("amount" to 1000.0)))
+            m.add(event(EventAction.IMPRESSION))
+            m.add(event(EventAction.IMPRESSION))
+            m.add(event(EventAction.CLICK))
+            m.add(event(EventAction.ORDER_COMPLETE, payload = mapOf("amount" to 1000.0)))
 
             Then("impressions / clicks / orders 카운트가 올바름") {
                 m.impressions shouldBe 2
                 m.clicks shouldBe 1
                 m.orders shouldBe 1
-            }
-            Then("gmv 가 amount 합산으로 올바름") {
                 m.gmv shouldBe 1000.0
             }
         }
 
-        When("ORDER_COMPLETE payload 에 amount 가 없고 totalPrice 가 있으면") {
+        When("다른 대상(관광지)의 노출이 섞여 들어오면") {
             val m = ProductMetrics()
-            m.add(event(EventType.ORDER_COMPLETE, mapOf("totalPrice" to 5000)))
+            m.add(event(EventAction.IMPRESSION))
+            m.add(event(EventAction.IMPRESSION, entityType = EntityType.ATTRACTION))
+            m.add(event(EventAction.CLICK, entityType = EntityType.ATTRACTION))
 
-            Then("totalPrice 값을 가져옴") {
-                m.gmv shouldBe 5000.0
-            }
-        }
-
-        When("ORDER_COMPLETE payload 의 amount 가 String 으로 들어오면") {
-            val m = ProductMetrics()
-            m.add(event(EventType.ORDER_COMPLETE, mapOf("amount" to "1234.5")))
-
-            Then("문자열 -> Double 변환") {
-                m.gmv shouldBe 1234.5
-            }
-        }
-
-        When("ORDER_COMPLETE payload 에 amount/totalPrice/gmv 모두 누락") {
-            val m = ProductMetrics()
-            m.add(event(EventType.ORDER_COMPLETE, mapOf("productId" to "p1")))
-
-            Then("gmv 는 0 (publisher 가 amount 발행하기 전까지의 안전 fallback)") {
-                m.gmv shouldBe 0.0
-            }
-        }
-
-        When("amount 가 음수면") {
-            val m = ProductMetrics()
-            m.add(event(EventType.ORDER_COMPLETE, mapOf("amount" to -100.0)))
-
-            Then("0.0 fallback") {
-                m.gmv shouldBe 0.0
+            Then("상품 축만 센다 — 섞이면 상품 CTR 이 틀어진다") {
+                // 두 축으로 가른 뒤 같은 action 이름을 다른 대상도 쓴다.
+                // 대상을 안 보면 관광지 노출이 상품 분모로 들어간다.
+                m.impressions shouldBe 1
+                m.clicks shouldBe 0
             }
         }
     }

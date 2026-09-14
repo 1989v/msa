@@ -22,34 +22,38 @@ class EventRepositoryAdapter(
             conn.prepareStatement(
                 """
                 INSERT INTO analytics.events
-                (event_id, event_type, user_id, visitor_id, session_id, timestamp, payload,
-                 product_id, keyword, source, position, experiment_ids, experiment_variants)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (event_id, entity_type, entity_id, action,
+                 screen_type, screen_ref, section_id, section_index, item_index,
+                 view_id, visitor_id, session_id, user_id, timestamp, payload,
+                 experiment_ids, experiment_variants)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """.trimIndent()
             ).use { ps ->
                 events.forEach { event ->
+                    val p = event.placement
                     ps.setString(1, event.eventId)
-                    ps.setString(2, event.eventType.name)
+                    ps.setString(2, event.entityType.name)
+                    ps.setString(3, event.entityId)
+                    ps.setString(4, event.action.name)
+                    // 위치는 계층 그대로 넣는다 — 한 칸으로 누르면 섹션 순서와 항목 순서가 섞인다
+                    ps.setString(5, p?.screenType ?: "")
+                    ps.setString(6, p?.screenRef ?: "")
+                    ps.setString(7, p?.sectionId ?: "")
+                    val sectionIndex = p?.sectionIndex
+                    if (sectionIndex != null) ps.setInt(8, sectionIndex) else ps.setNull(8, Types.INTEGER)
+                    val itemIndex = p?.itemIndex
+                    if (itemIndex != null) ps.setInt(9, itemIndex) else ps.setNull(9, Types.INTEGER)
+                    ps.setString(10, event.viewId)
+                    ps.setString(11, event.visitorId)
+                    ps.setString(12, event.sessionId)
                     val userId = event.userId
-                    if (userId != null) ps.setLong(3, userId) else ps.setNull(3, Types.BIGINT)
-                    ps.setString(4, event.visitorId)
-                    ps.setString(5, event.sessionId)
-                    ps.setTimestamp(6, Timestamp.from(event.timestamp))
-                    ps.setString(7, objectMapper.writeValueAsString(event.payload))
-                    // Extract common fields from payload
-                    val productId = event.payload["productId"]?.let { (it as? Number)?.toLong() }
-                    val keyword = event.payload["keyword"]?.toString()
-                    val source = event.payload["source"]?.toString()
-                    val position = event.payload["position"]?.let { (it as? Number)?.toInt() }
-                    if (productId != null) ps.setLong(8, productId) else ps.setNull(8, Types.BIGINT)
-                    if (keyword != null) ps.setString(9, keyword) else ps.setNull(9, Types.VARCHAR)
-                    if (source != null) ps.setString(10, source) else ps.setNull(10, Types.VARCHAR)
-                    if (position != null) ps.setInt(11, position) else ps.setNull(11, Types.INTEGER)
-                    // Experiment assignments
+                    if (userId != null) ps.setLong(13, userId) else ps.setNull(13, Types.BIGINT)
+                    ps.setTimestamp(14, Timestamp.from(event.timestamp))
+                    ps.setString(15, objectMapper.writeValueAsString(event.payload))
                     val expIds = event.experimentAssignments?.keys?.toList() ?: emptyList()
                     val expVariants = event.experimentAssignments?.values?.toList() ?: emptyList()
-                    ps.setObject(12, expIds.toLongArray())
-                    ps.setObject(13, expVariants.toTypedArray())
+                    ps.setObject(16, expIds.toLongArray())
+                    ps.setObject(17, expVariants.toTypedArray())
                     ps.addBatch()
                 }
                 ps.executeBatch()
