@@ -356,7 +356,7 @@ images:
     newTag: fc0c9d3
   - name: commerce/analytics
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/analytics
-    newTag: 4cea249
+    newTag: 83afdbc
   - name: commerce/atlas
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/atlas
     newTag: c98a927
