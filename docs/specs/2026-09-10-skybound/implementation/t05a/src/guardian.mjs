@@ -24,19 +24,32 @@ export function createGuardian({position,lineOfSight=()=>true}) {
   return Object.freeze({snapshot,restorePlayer,
     setPosition(value){if(!validPoint(value))throw new TypeError('Finite guardian required');center=Object.freeze({...value});},
     reset(){health.restore();phase='idle';remaining=0;locked=null;strikes=0;respawnRequested=false;return snapshot();},
-    advance(dt,player,{paused=false,defeated=false,respawned=false,invulnerableAt=()=>false}={}) {
+    advance(dt,player,{paused=false,defeated=false,respawned=false,invulnerableAt=()=>false,extraHits=[]}={}) {
+      if(!Array.isArray(extraHits)||extraHits.some(offset=>!Number.isFinite(offset)||offset<0||offset>dt))throw new TypeError('Damage offsets must belong to this frame');
       delta(dt);if(!validPoint(player)||![paused,defeated,respawned].every(v=>typeof v==='boolean')||typeof invulnerableAt!=='function')throw new TypeError('Guardian frame invalid');
+      const external=[...extraHits].sort((a,b)=>a-b);let cursor=0,index=0;
+      function advanceHealth(amount){
+        const end=cursor+amount;
+        while(index<external.length&&external[index]<=end+1e-10){
+          const at=Math.max(cursor,Math.min(end,external[index++]));
+          health.advance(at-cursor);cursor=at;
+          if(!invulnerableAt(at))health.hit();
+          if(health.snapshot().hp===0)respawnRequested=true;
+        }
+        health.advance(Math.max(0,end-cursor));cursor=end;
+      }
       if(respawned)return restorePlayer();
       if(paused||dt===0)return snapshot();
-      if(defeated){phase='defeated';remaining=0;locked=null;health.advance(dt);return snapshot();}
+      if(defeated){phase='defeated';remaining=0;locked=null;advanceHealth(dt);return snapshot();}
       if(respawnRequested)return snapshot();
       let budget=dt;
       while(budget>1e-10) {
         if(phase==='idle') {
-          if(!reachable(player)){health.advance(budget);break;}
+          if(!reachable(player)){advanceHealth(budget);break;}
           phase='windup';remaining=.8;locked=Object.freeze({...player});
         }
-        const step=Math.min(budget,remaining);health.advance(step);remaining=Math.max(0,remaining-step);budget-=step;
+        const step=Math.min(budget,remaining);advanceHealth(step);remaining=Math.max(0,remaining-step);budget-=step;
+        if(respawnRequested)break;
         if(remaining>1e-10)break;
         if(phase==='windup') {
           strikes++;

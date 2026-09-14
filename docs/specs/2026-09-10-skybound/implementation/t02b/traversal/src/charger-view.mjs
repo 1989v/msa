@@ -1,0 +1,48 @@
+import { createCharger } from '../../../t05b/src/charger.mjs';
+import { createTarget } from '../../../t05a/src/target.mjs';
+import { segmentHitsBox } from '../../../t04a/src/manipulation.mjs';
+
+export function createChargerView(THREE, col, terrain, lineOfSight, blockingMeshes) {
+  const home = { x: -4.5, y: terrain.heightAt(-4.5, 25), z: 25 };
+  if (!Number.isFinite(home.y)) throw new Error('Charger needs meadow');
+  const root = new THREE.Group(); root.name = 'slow ridge charger';
+  const material = new THREE.MeshStandardMaterial({ color: col('slate'), roughness: 1 });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.1, 1), material); body.position.y = .55; body.castShadow = true; root.add(body);
+  const crest = new THREE.Mesh(new THREE.BoxGeometry(.8, .12, .08), new THREE.MeshStandardMaterial({ color: col('ochre'), roughness: .8 }));
+  crest.position.set(0, .12, .54); body.add(crest);
+  const warningGeometry = new THREE.BufferGeometry(); warningGeometry.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(21 * 3), 3));
+  const warning = new THREE.Line(warningGeometry, new THREE.LineBasicMaterial({ color: col('ochre') }));
+  warning.frustumCulled = false; root.add(warning);
+  const box = new THREE.Box3();
+  const controller = createCharger({ home, terrain, lineOfSight: (from, to) => lineOfSight({ ...from, y: from.y + .7 }, { ...to, y: to.y + 1.2 }), canMove(from, to) {
+    for (const mesh of blockingMeshes()) {
+      if (mesh.name === 'continuous meadow' || mesh.name.startsWith('walkable-looking')) continue;
+      mesh.updateWorldMatrix(true, false); box.setFromObject(mesh);
+      const bounds = { min: { x: box.min.x - .6, y: box.min.y - .55, z: box.min.z - .6 }, max: { x: box.max.x + .6, y: box.max.y + .55, z: box.max.z + .6 } };
+      if (segmentHitsBox({ ...from, y: from.y + .55 }, { ...to, y: to.y + .55 }, bounds)) return false;
+    }
+    return true;
+  } });
+  const combat = createTarget({ position: { ...home, y: home.y + .65 }, lineOfSight });
+  function move(state) {
+    root.position.copy(state.position); body.rotation.y = Math.atan2(state.direction.x, state.direction.z);
+    combat.setPosition({ ...state.position, y: state.position.y + .65 });
+  }
+  function paint(state) {
+    const defeated = combat.snapshot().defeated;
+    body.scale.y = defeated ? .4 : 1; body.position.y = .55 * body.scale.y;
+    body.rotation.x = state.phase === 'windup' ? -.15 * (1 - state.remaining / 1.1) : 0;
+    material.color.copy(col(defeated ? 'chalkShade' : combat.snapshot().hitAge < .2 ? 'ochre' : 'slate'));
+    warning.visible = !defeated && state.phase === 'windup';
+    if (warning.visible) {
+      for (let i = 0; i <= 20; i++) {
+        const x = state.position.x + state.direction.x * i / 5, z = state.position.z + state.direction.z * i / 5;
+        warningGeometry.attributes.position.setXYZ(i, x - state.position.x, (terrain.heightAt(x, z) ?? state.position.y) + .05 - state.position.y, z - state.position.z);
+      }
+      warningGeometry.attributes.position.needsUpdate = true;
+    }
+  }
+  function resetMotion() { const state = controller.reset(); move(state); paint(state); combat.cancelSwing(); return state; }
+  resetMotion();
+  return { root, controller, combat, move, paint, resetMotion, reset() { combat.reset(); return resetMotion(); } };
+}
