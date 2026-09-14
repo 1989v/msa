@@ -356,7 +356,7 @@ images:
     newTag: fc0c9d3
   - name: commerce/analytics
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/analytics
-    newTag: 5302b89
+    newTag: 4cea249
   - name: commerce/atlas
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/atlas
     newTag: c98a927
@@ -368,7 +368,7 @@ images:
     newTag: c98a927
   - name: commerce/content
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/content
-    newTag: 386fa36
+    newTag: 4cea249
   - name: commerce/engagement
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/engagement
     newTag: c98a927
@@ -380,7 +380,7 @@ images:
     newTag: 6a1889c
   - name: commerce/place-ingest
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/place-ingest
-    newTag: c2145e1
+    newTag: 4cea249
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
     newTag: 386fa36
