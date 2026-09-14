@@ -785,7 +785,9 @@ await send('Emulation.setEmitTouchEventsForMouse', { enabled: true, configuratio
 - 레포의 게임 관련 문서(`docs/`)·백엔드 모듈(`game/`)도 열람 금지
 - **예외는 이 파이프라인 문서 셋뿐**이다 — `game-cleanroom-pipeline.md`,
   `game-cleanroom-presets.md`, `game-cleanroom-pitfalls.md`.
-  셋은 한 문서를 나눈 것이라 하나만 예외로 두면 나머지를 못 읽는다
+  셋은 한 문서를 나눈 것이라 하나만 예외로 두면 나머지를 못 읽는다.
+  **온라인 대전 게임은 넷째로 `docs/standards/online-versus-lobby.md`** 를 읽는다 — 방·대기실·공유·릴레이 프로토콜의
+  단일 원본이고, 아레나 폴더 대신 이 문서를 본다 (2026-09-15)
 - 유일한 레포 접근 = 자기 산출물 폴더 쓰기
 
 ## 검증 프로토콜 (필수)
