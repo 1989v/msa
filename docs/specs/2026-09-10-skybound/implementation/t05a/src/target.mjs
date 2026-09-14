@@ -12,11 +12,12 @@ export function hitEligibility(attacker, target, lineOfSight = () => true) {
 
 export function createTarget({ position, lineOfSight = () => true }) {
   if(!finitePosition(position) || typeof lineOfSight!=='function') throw new TypeError('Finite target and LOS callback required');
-  const target=Object.freeze({...position});
+  let target=Object.freeze({...position});
   let hp=3, swing=null, sequence=0, lastReason=null, hitAge=1;
   const snapshot=()=>Object.freeze({hp,maxHp:3,defeated:hp===0,target,sequence,swing:swing?Object.freeze({...swing}):null,lastReason,hitAge});
   return Object.freeze({
     snapshot,
+    setPosition(value){if(!finitePosition(value))throw new TypeError('Finite target required');target=Object.freeze({...value});},
     beginSwing() {
       if(swing && swing.time<.86) return false;
       swing={id:++sequence,time:0,consumed:false};lastReason=null;return true;

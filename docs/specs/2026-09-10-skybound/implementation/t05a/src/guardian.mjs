@@ -12,7 +12,7 @@ export function createPlayerHealth() {
 
 export function createGuardian({position,lineOfSight=()=>true}) {
   if(!validPoint(position)||typeof lineOfSight!=='function')throw new TypeError('Guardian position/LOS required');
-  const center=Object.freeze({...position}),health=createPlayerHealth();
+  let center=Object.freeze({...position});const health=createPlayerHealth();
   let phase='idle',remaining=0,locked=null,strikes=0,respawnRequested=false;
   const snapshot=()=>Object.freeze({phase,remaining,locked,position:center,strikes,player:health.snapshot(),respawnRequested});
   function reachable(player) {
@@ -22,6 +22,7 @@ export function createGuardian({position,lineOfSight=()=>true}) {
   }
   function restorePlayer(){health.restore();phase='recovery';remaining=1.2;locked=null;respawnRequested=false;return snapshot();}
   return Object.freeze({snapshot,restorePlayer,
+    setPosition(value){if(!validPoint(value))throw new TypeError('Finite guardian required');center=Object.freeze({...value});},
     reset(){health.restore();phase='idle';remaining=0;locked=null;strikes=0;respawnRequested=false;return snapshot();},
     advance(dt,player,{paused=false,defeated=false,respawned=false,invulnerableAt=()=>false}={}) {
       delta(dt);if(!validPoint(player)||![paused,defeated,respawned].every(v=>typeof v==='boolean')||typeof invulnerableAt!=='function')throw new TypeError('Guardian frame invalid');

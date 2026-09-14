@@ -1,3 +1,5 @@
+import { createPatrol } from '../../../t05b/src/patrol.mjs';
+import { segmentHitsBox } from '../../../t04a/src/manipulation.mjs';
 import { createTarget } from '../../../t05a/src/target.mjs';
 
 export function createTargetView(THREE,col,terrain,blockingMeshes=()=>[]) {
@@ -14,6 +16,17 @@ export function createTargetView(THREE,col,terrain,blockingMeshes=()=>[]) {
     const meshes=blockingMeshes();for(const mesh of meshes) mesh.updateWorldMatrix(true,false);
     return ray.intersectObjects(meshes,false).length===0;
   }
+  const bounds=new THREE.Box3();
+  const navigation=createPatrol({home:{x:3.8,y:floor,z:32},terrain,canMove(from,to){
+    for(const mesh of blockingMeshes()){
+      if(mesh.name==='continuous meadow'||mesh.name.startsWith('walkable-looking'))continue;
+      mesh.updateWorldMatrix(true,false);bounds.setFromObject(mesh);
+      const box={min:{x:bounds.min.x-.5,y:bounds.min.y-.65,z:bounds.min.z-.5},max:{x:bounds.max.x+.5,y:bounds.max.y+.65,z:bounds.max.z+.5}};
+      if(segmentHitsBox({...from,y:from.y+.65},{...to,y:to.y+.65},box))return false;
+    }
+    return true;
+  }});
+  function moveTo(state){root.position.copy(state.position);body.rotation.y=state.yaw;combat.setPosition({...state.position,y:state.position.y+.8});return combat.snapshot().target;}
   const combat=createTarget({position:{x:3.8,y:floor+.8,z:32},lineOfSight});
   const warning=new THREE.Mesh(new THREE.RingGeometry(.72,.8,32),new THREE.MeshBasicMaterial({color:col('ochre'),side:THREE.DoubleSide,transparent:true,opacity:.8}));
   warning.rotation.x=-Math.PI/2;warning.visible=false;root.add(warning);
@@ -27,5 +40,5 @@ export function createTargetView(THREE,col,terrain,blockingMeshes=()=>[]) {
     body.rotation.x=state.defeated?.35:recoil;body.scale.y=state.defeated?.45:1;body.position.y=.65*body.scale.y;
     material.color.copy(col(state.defeated?'slate':state.hitAge<.2?'ochre':'chalkShade'));return state;
   }
-  paint();return {root,combat,paint,paintGuardian,lineOfSight};
+  paint();return {root,combat,paint,paintGuardian,lineOfSight,navigation,moveTo};
 }
