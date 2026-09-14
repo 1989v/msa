@@ -1,3 +1,4 @@
+import { DISCOVERY_IDS } from '../../t06a/src/exploration.mjs';
 const SAVE_KEY = 'skybound.progress.v1';
 const MAX_SAVE_LENGTH = 4096;
 const FLAGS = ['watchRuinActive', 'firstAerialLanding', 'secondAerialLanding', 'stoneRuinActive', 'windRuinActive', 'journeyComplete'];
@@ -15,6 +16,11 @@ function validateProgress(value, allowMissing = false) {
   if (progress.secondAerialLanding && !progress.firstAerialLanding) return null;
   if (progress.windRuinActive && (!progress.firstAerialLanding || !progress.secondAerialLanding)) return null;
   if (progress.journeyComplete && (!progress.stoneRuinActive || !progress.watchRuinActive || !progress.windRuinActive)) return null;
+  if (Object.hasOwn(value, 'discoveries')) {
+    const ids = value.discoveries;
+    if (!Array.isArray(ids) || ids.length > DISCOVERY_IDS.length || ids.some(id => !DISCOVERY_IDS.includes(id)) || new Set(ids).size !== ids.length) return null;
+    progress.discoveries = [...ids];
+  }
   return progress;
 }
 
