@@ -71,8 +71,17 @@ const HUB_SUB = window.location.hostname.split('.')[0] === 'game' ? '' : '/games
 export default function GameDetailPage() {
   useHeritageSurface();
   const { slug = '' } = useParams();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const lang: GameLang = pathname.startsWith('/en/') ? 'en' : 'ko';
+  /* 온라인 대전 초대 링크(`?room=CODE`)를 게임 iframe 으로 넘긴다 — 링크를 받은 사람이
+     코드를 옮겨 적지 않고 바로 그 대기실로 들어간다 (docs/standards/online-versus-lobby.md §4).
+     방 코드는 공유하라고 있는 값이라 쿼리로 넘긴다 — 이름을 넘기는 파티 인계(party.ts)와 다르다.
+     릴레이 코드 문법(대문자·숫자 4~8)만 통과시켜 임의 문자열이 iframe 주소로 새지 않게 한다. */
+  const roomCode = (() => {
+    const raw = new URLSearchParams(search).get('room');
+    const code = raw?.trim().toUpperCase() ?? '';
+    return /^[A-Z0-9]{4,8}$/.test(code) ? code : null;
+  })();
   const [game, setGame] = useState<GameDetail | null>(null);
   const [similar, setSimilar] = useState<GameSummary[]>([]);
   const [playing, setPlaying] = useState(false);
@@ -431,7 +440,7 @@ export default function GameDetailPage() {
           <iframe
             ref={stageFit.ref}
             className="game-stage-frame"
-            src={game.entryUrl}
+            src={roomCode ? `${game.entryUrl}${game.entryUrl.includes('?') ? '&' : '?'}room=${roomCode}` : game.entryUrl}
             title={game.title}
             allow="autoplay; fullscreen; gamepad; pointer-lock"
             sandbox="allow-scripts allow-same-origin allow-pointer-lock"
