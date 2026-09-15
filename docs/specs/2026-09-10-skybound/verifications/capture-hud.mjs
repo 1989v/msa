@@ -60,10 +60,10 @@ try {
   for(const [label,width,height] of [['portrait',390,844],['landscape',667,375]]) {
     await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:true});
     await evaluate(`document.querySelector('#viewer').scrollIntoView({block:'center'});new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
-    const check=await evaluate(`(()=>{const a=document.querySelector('.player-vitals').getBoundingClientRect(),b=document.querySelector('.carry-controls').getBoundingClientRect(),fill=document.querySelector('#player-stamina span'),st=document.querySelector('#player-stamina');return {noOverlap:a.bottom<=b.top,overflow:document.documentElement.scrollWidth>innerWidth,fill:getComputedStyle(fill).backgroundColor,shown:Number(st.getAttribute('aria-valuenow')),expected:Math.round(window.__SKYBOUND_TRAVERSAL__.snapshot.stamina)};})()`);
+    const check=await evaluate(`(()=>{const a=document.querySelector('.player-vitals').getBoundingClientRect(),b=document.querySelector('.carry-controls').getBoundingClientRect(),fill=document.querySelector('#player-stamina span'),st=document.querySelector('#player-stamina');return {noOverlap:a.bottom<=b.top,overflow:document.documentElement.scrollWidth>innerWidth,prismHidden:document.querySelector('#manipulate').hidden&&document.querySelector('#carry-hint').hidden,fill:getComputedStyle(fill).backgroundColor,shown:Number(st.getAttribute('aria-valuenow')),expected:Math.round(window.__SKYBOUND_TRAVERSAL__.snapshot.stamina)};})()`);
     checks.push({label,...check});
     const shot=await send('Page.captureScreenshot',{format:'png'});await writeFile(new URL(`./hud-${label}.png`,import.meta.url),Buffer.from(shot.data,'base64'));
-    if(!check.noOverlap||check.overflow||check.fill==='rgba(0, 0, 0, 0)'||check.shown!==check.expected)throw new Error('HUD check failed');
+    if(!check.noOverlap||check.overflow||!check.prismHidden||check.fill==='rgba(0, 0, 0, 0)'||check.shown!==check.expected)throw new Error('HUD check failed');
   }
   if(errors.length)throw new Error('Browser error');
   console.log(JSON.stringify({checks,errors:errors.length}));
