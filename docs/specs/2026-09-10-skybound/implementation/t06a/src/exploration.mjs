@@ -1,4 +1,4 @@
-export const DISCOVERY_IDS = Object.freeze(['camp', 'stone', 'watch', 'wind', 'gate', 'overlook', 'ridge']);
+export const DISCOVERY_IDS = Object.freeze(['camp', 'stone', 'watch', 'wind', 'gate', 'overlook', 'ridge', 'west-survey', 'east-survey', 'north-survey']);
 
 export function discoverLocations(progress, position, locations) {
   if (![position?.x, position?.y, position?.z].every(Number.isFinite)) throw new TypeError('Finite explorer position required');
