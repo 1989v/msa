@@ -1,0 +1,22 @@
+{
+  "_": "완성의 하한. 목표가 아니다 — BRIEF.md 의 벤치마크가 더 크면 그만큼 간다. 값을 낮추면 forge/seal.mjs 로 사유를 남겨야 Stop 훅이 받는다.",
+  "console_errors_max": 0,
+  "fps_avg_min_desktop": 55,
+  "fps_low1_min_desktop": 30,
+  "fps_avg_min_mobile": 30,
+  "stages_min": 5,
+  "stage_distinct_diff_min": 10,
+  "enemy_types_min": 6,
+  "bosses_min": 1,
+  "boss_phases_min": 2,
+  "skills_min": 4,
+  "sfx_min": 8,
+  "music_min": 1,
+  "idle_damage_within_sec": 15,
+  "idle_dead_within_sec": 45,
+  "mash_no_clear_sec": 90,
+  "player_css_px_min_mobile": 40,
+  "hitstop_ms_min": 40,
+  "shake_px_min": 2,
+  "telegraph_ms_min": 200
+}

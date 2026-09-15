@@ -160,6 +160,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 |------|------|
 | 배포 (K8s · GitOps) | `k8s/CLAUDE.md` — 실제로 터진 배포 함정 집약 |
 | 게임 제작 (캔버스) | `docs/standards/game-cleanroom-pipeline.md` — 가드레일·프리셋·게이트 |
+| 게임 제작 (클린룸 키트) | `docs/standards/game-forge/` — **레포 밖 빈 폴더**에서 프롬프트 한 번으로 상한 없이. `new.sh` 가 폴더·프롬프트를 만들고, Stop 훅이 17축 게이트 미통과면 세션을 안 끝낸다. 위 파이프라인과 독립(참조 0) |
 | 게임 제작 (유니티) | `docs/standards/unity-game-pipeline.md` — **「웹게임 유니티 베이스 OO 구축」은 §8**: 프레임워크 `unity/packages/com.kgd.webgame` 위에, 견본 `_src/nine-bells` 를 베껴서. **골격 무리 + 큰 3D 맵이 둘 다 필요할 때만** |
 | Architecture docs | `docs/architecture/` |
 | ADRs (플랫폼) | `docs/adr/` |

@@ -1,0 +1,23 @@
+{
+  "_": "게임 전체에서 고정하는 것. 캐릭터마다 바꾸는 것은 generate_asset.py 의 --prompt 로 준다.",
+  "checkpoint": "sd_xl_base_1.0.safetensors",
+  "width": 512,
+  "height": 512,
+  "steps": 25,
+  "cfg": 7.0,
+  "sampler": "dpmpp_2m",
+  "scheduler": "karras",
+  "GLOBAL_STYLE": "polished 2D game art, 90s arcade video game aesthetic, stylized character design, bold clean shapes, strong readable silhouette, strong saturated colors, clear separation of body parts",
+  "QUALITY": "game-ready asset, high quality, sharp",
+  "CAMERA": "full body, centered composition, symmetrical composition, isolated character",
+  "BACKGROUND": "isolated on plain flat background, no scenery",
+  "ASSET_TYPE": {
+    "character": "full body 2D game character, facing forward, standing pose",
+    "enemy": "full body 2D game enemy character, facing forward, standing pose, menacing",
+    "item": "single 2D game item icon, centered, isolated",
+    "vehicle": "single 2D game vehicle, side view, isolated",
+    "background": "2D game background layer, wide, no characters",
+    "ui": "2D game UI element, flat, clean edges"
+  },
+  "NEGATIVE": "photorealistic, realistic photograph, 3d render, background, scenery, landscape, multiple characters, multiple objects, cropped, cut off, out of frame, extra arms, extra legs, extra fingers, deformed hands, bad anatomy, malformed body, duplicate limbs, duplicate body parts, blurry, low resolution, messy details, text, letters, numbers, logo, watermark, signature"
+}

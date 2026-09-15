@@ -1,0 +1,29 @@
+{
+  "_": "에셋 원장. 프로바이더가 무엇이든 여기 한 줄씩. 코드 드로잉은 source 에 함수 위치, 생성 이미지는 seed·프롬프트까지 남겨 재현 가능하게.",
+  "style": "assets/STYLE.md",
+  "provider": "procedural",
+  "assets": [
+    {
+      "name": "hero_idle",
+      "type": "character",
+      "provider": "procedural",
+      "source": "src/sprites.js#drawHero",
+      "frames": 4,
+      "size": [64, 96],
+      "created_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "name": "example_generated_enemy",
+      "type": "enemy",
+      "provider": "comfyui",
+      "source": "assets/generated/processed/example_generated_enemy.png",
+      "model": "sdxl_base_1.0.safetensors",
+      "seed": 12345,
+      "width": 512,
+      "height": 512,
+      "prompt": "…",
+      "negative_prompt": "…",
+      "created_at": "2026-01-01T00:00:00Z"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+# 증거 중 그림·로그·훅 상태는 커밋하지 않는다 (리포트·리뷰·봉인 이력은 남긴다)
+verifications/*.png
+verifications/console.log
+verifications/.stop-state.json
+assets/generated/raw/
+.DS_Store
