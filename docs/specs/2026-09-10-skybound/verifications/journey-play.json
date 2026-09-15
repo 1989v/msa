@@ -1,0 +1,38 @@
+{
+  "url": "http://127.0.0.1:8769/release/dist/index.html",
+  "checks": [
+    {
+      "name": "stone ruin solved through original controls",
+      "passed": true
+    },
+    {
+      "name": "avoid warnings and defeat sentinel through attack actions",
+      "passed": true
+    },
+    {
+      "name": "watch device activates after combat",
+      "passed": true
+    },
+    {
+      "name": "flight visits both landing pads and activates wind altar",
+      "passed": true
+    },
+    {
+      "name": "gate flight reaches ending without setting quest flags",
+      "passed": true
+    },
+    {
+      "name": "ending continues exploration with an undiscovered destination",
+      "passed": true
+    },
+    {
+      "name": "completed journey reloads safely with saved progress",
+      "passed": true
+    },
+    {
+      "name": "no browser errors",
+      "passed": true
+    }
+  ],
+  "errors": []
+}
