@@ -1,10 +1,12 @@
 import { createPatrol } from '../../../t05b/src/patrol.mjs';
 import { segmentHitsBox } from '../../../t04a/src/manipulation.mjs';
 import { createTarget } from '../../../t05a/src/target.mjs';
+import { createEnemyHealthView } from './enemy-health-view.mjs';
 
 export function createTargetView(THREE,col,terrain,blockingMeshes=()=>[]) {
   const floor=terrain.heightAt(3.8,32);if(!Number.isFinite(floor)) throw new Error('Training target needs meadow');
   const root=new THREE.Group();root.name='stone training target';root.position.set(3.8,floor,32);
+  const healthView = createEnemyHealthView(THREE, col, 1.65); root.add(healthView.root);
   const material=new THREE.MeshStandardMaterial({color:col('chalkShade'),roughness:1});
   const body=new THREE.Mesh(new THREE.CylinderGeometry(.42,.5,1.3,6),material);body.position.y=.65;body.castShadow=true;body.receiveShadow=true;root.add(body);
   const mark=new THREE.Mesh(new THREE.TorusGeometry(.22,.035,6,16),new THREE.MeshStandardMaterial({color:col('brass'),roughness:.6}));
@@ -36,9 +38,10 @@ export function createTargetView(THREE,col,terrain,blockingMeshes=()=>[]) {
     mark.material.color.copy(col(warning.visible?'ochre':'brass'));
   }
   function paint(state=combat.snapshot()) {
+    healthView.update(state.hp);
     const recoil=state.hitAge<.2?Math.sin(state.hitAge/.2*Math.PI)*.12:0;
     body.rotation.x=state.defeated?.35:recoil;body.scale.y=state.defeated?.45:1;body.position.y=.65*body.scale.y;
     material.color.copy(col(state.defeated?'slate':state.hitAge<.2?'ochre':'chalkShade'));return state;
   }
-  paint();return {root,combat,paint,paintGuardian,lineOfSight,navigation,moveTo};
+  paint();return {root,combat,paint,paintGuardian,lineOfSight,navigation,moveTo,healthView};
 }

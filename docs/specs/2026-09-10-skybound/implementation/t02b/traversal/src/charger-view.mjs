@@ -1,11 +1,13 @@
 import { CHARGE, createCharger } from '../../../t05b/src/charger.mjs';
 import { createTarget } from '../../../t05a/src/target.mjs';
 import { segmentHitsBox } from '../../../t04a/src/manipulation.mjs';
+import { createEnemyHealthView } from './enemy-health-view.mjs';
 
 export function createChargerView(THREE, col, terrain, lineOfSight, blockingMeshes) {
   const home = { x: -4.5, y: terrain.heightAt(-4.5, 25), z: 25 };
   if (!Number.isFinite(home.y)) throw new Error('Charger needs meadow');
   const root = new THREE.Group(); root.name = 'slow ridge charger';
+  const healthView = createEnemyHealthView(THREE, col, 1.5); root.add(healthView.root);
   const material = new THREE.MeshStandardMaterial({ color: col('slate'), roughness: 1 });
   const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.1, 1), material); body.position.y = .55; body.castShadow = true; root.add(body);
   const crest = new THREE.Mesh(new THREE.BoxGeometry(.8, .12, .08), new THREE.MeshStandardMaterial({ color: col('ochre'), roughness: .8 }));
@@ -33,6 +35,7 @@ export function createChargerView(THREE, col, terrain, lineOfSight, blockingMesh
     combat.setPosition({ ...state.position, y: state.position.y + .65 });
   }
   function paint(state) {
+    healthView.update(combat.snapshot().hp);
     const defeated = combat.snapshot().defeated;
     const preparation = state.phase === 'windup' ? Math.max(0, Math.min(1, 1 - state.remaining / CHARGE.windup)) : 0;
     body.scale.y = defeated ? .4 : state.phase === 'recovery' ? .82 : 1 - preparation * .18; body.position.y = .55 * body.scale.y;
@@ -66,5 +69,5 @@ export function createChargerView(THREE, col, terrain, lineOfSight, blockingMesh
   }
   function resetMotion() { const state = controller.reset(); move(state); paint(state); combat.cancelSwing(); return state; }
   resetMotion();
-  return { root, controller, combat, move, paint, resetMotion, reset() { combat.reset(); return resetMotion(); } };
+  return { root, controller, combat, move, paint, resetMotion, healthView, reset() { combat.reset(); return resetMotion(); } };
 }
