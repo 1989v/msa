@@ -62,6 +62,12 @@ try {
   const shot=await send('Page.captureScreenshot',{format:'png'});
   await writeFile(new URL('./combat-readability.png',import.meta.url),Buffer.from(shot.data,'base64'));
   await writeFile(new URL('./combat-readability.json',import.meta.url),JSON.stringify({result,errors,scope:'Local desktop deterministic combat view capture; no full combat playthrough'},null,2)+'\n');
-  console.log(JSON.stringify({phase:result.charger.phase,errors:errors.length}));
+  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+  await evaluate(`document.querySelector('#viewer').scrollIntoView({block:'center'})`);
+  await evaluate(`new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
+  const hud=await evaluate(`(()=>{const a=document.querySelector('.player-vitals').getBoundingClientRect(),b=document.querySelector('.carry-controls').getBoundingClientRect();return {noOverlap:a.bottom<=b.top,health:document.querySelector('#player-health').textContent,stamina:document.querySelector('#player-stamina').getAttribute('aria-valuenow'),expected:Math.round(window.__SKYBOUND_TRAVERSAL__.snapshot.stamina),overflow:document.documentElement.scrollWidth>innerWidth};})()`);
+  const mobile=await send('Page.captureScreenshot',{format:'png'});await writeFile(new URL('./combat-mobile.png',import.meta.url),Buffer.from(mobile.data,'base64'));
+  console.log(JSON.stringify({phase:result.charger.phase,errors:errors.length,hud}));
+  if(!hud.noOverlap||hud.overflow||Number(hud.stamina)!==hud.expected)throw new Error('HUD layout/state mismatch');
   if(errors.length)throw new Error('Browser errors');
 } finally {socket.close();}

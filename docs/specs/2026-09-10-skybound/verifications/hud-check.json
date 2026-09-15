@@ -1,0 +1,22 @@
+{
+  "url": "http://127.0.0.1:8769/release/dist/index.html",
+  "checks": [
+    {
+      "label": "portrait",
+      "noOverlap": true,
+      "overflow": false,
+      "fill": "oklch(0.68 0.16 245)",
+      "shown": 76,
+      "expected": 76
+    },
+    {
+      "label": "landscape",
+      "noOverlap": true,
+      "overflow": false,
+      "fill": "oklch(0.68 0.16 245)",
+      "shown": 76,
+      "expected": 76
+    }
+  ],
+  "errors": []
+}
