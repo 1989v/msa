@@ -1,8 +1,9 @@
 // Original synthesized cues. No audio assets, network requests, or autoplay.
 export function createSoundEffects(createContext) {
-  let context = null, volume = 0;
+  let context = null, volume = 0, wind = null, windUnavailable = false;
   const voices = new Set();
   const stop = () => {
+    if (wind) { try { wind.source.stop(); } catch {} wind.source.disconnect(); wind.filter.disconnect(); wind.gain.disconnect(); wind = null; }
     for (const voice of [...voices]) { try { voice.stop(); } catch {} voice.disconnect(); }
     voices.clear();
   };
@@ -14,6 +15,28 @@ export function createSoundEffects(createContext) {
       catch { return false; }
     },
     stop,
+    setGliding(active) {
+      if (!volume || !context || context.state !== 'running' || windUnavailable) return;
+      if (!active && !wind) return;
+      try {
+        if (!wind) {
+          const source = context.createBufferSource(), filter = context.createBiquadFilter(), gain = context.createGain();
+          // Repeating two-second, deterministic noise bed; no borrowed recording.
+          const buffer = context.createBuffer(1, context.sampleRate * 2, context.sampleRate);
+          const samples = buffer.getChannelData(0);
+          let seed = 7103;
+          for (let i = 0; i < samples.length; i++) { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; samples[i] = seed / 2147483648 - 1; }
+          source.buffer = buffer; source.loop = true; filter.type = 'lowpass'; filter.frequency.value = 650;
+          gain.gain.setValueAtTime(0, context.currentTime);
+          source.connect(filter); filter.connect(gain); gain.connect(context.destination);
+          wind = { source, filter, gain, active: null, volume: null }; source.start();
+        }
+        if (wind.active !== active || wind.volume !== volume) {
+          wind.gain.gain.setTargetAtTime(active ? volume * .09 : 0, context.currentTime, .18);
+          wind.active = active; wind.volume = volume;
+        }
+      } catch { windUnavailable = true; stop(); }
+    },
     play(kind) {
       if (!volume || !context || context.state !== 'running') return false;
       const cues = { step: [95, 42, .065], swing: [170, 65, .12], hit: [260, 95, .16], hurt: [100, 48, .24], complete: [420, 670, .3], ending: [510, 820, .55] };

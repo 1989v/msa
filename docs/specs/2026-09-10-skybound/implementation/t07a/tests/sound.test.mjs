@@ -9,6 +9,24 @@ test('muted game never acquires an audio context and denied audio stays nonfatal
   assert.equal(await sound.enable(.5), false); assert.equal(attempts, 1);
   assert.equal(sound.play('hit'), false); sound.stop();
 });
+test('gliding wind reuses one loop, fades on landing, and releases it on pause', async () => {
+  let created = 0, stopped = 0, disconnected = 0;
+  const levels = [];
+  const sound = createSoundEffects(() => ({ state: 'running', currentTime: 0, sampleRate: 8000, destination: {}, async resume() {},
+    createBuffer: (_channels, size) => ({ getChannelData: () => new Float32Array(size) }),
+    createBufferSource: () => { created++; return { connect() {}, disconnect() { disconnected++; }, start() {}, stop() { stopped++; } }; },
+    createBiquadFilter: () => ({ frequency: {}, connect() {}, disconnect() { disconnected++; } }),
+    createGain: () => ({ gain: { setValueAtTime() {}, setTargetAtTime(value) { levels.push(value); } }, connect() {}, disconnect() { disconnected++; } }),
+  }));
+  sound.setGliding(true); assert.equal(created, 0);
+  await sound.enable(.5); sound.setGliding(false); assert.equal(created, 0);
+  sound.setGliding(true); sound.setGliding(true); sound.setGliding(false);
+  assert.equal(created, 1); assert.deepEqual(levels, [.045, 0]);
+  sound.stop(); assert.equal(stopped, 1); assert.equal(disconnected, 3);
+  sound.setGliding(true); assert.equal(created, 2);
+  await sound.enable(0); assert.equal(stopped, 2);
+  sound.setGliding(true); assert.equal(created, 2);
+});
 test('pause cancels active cues, mute prevents new cues, and voice count is bounded', async () => {
   let stopped = 0;
   const param = { setValueAtTime() {}, exponentialRampToValueAtTime() {}, linearRampToValueAtTime() {} };
