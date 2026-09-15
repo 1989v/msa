@@ -60,11 +60,17 @@ try {
   for(const [label,width,height] of [['portrait',390,844],['landscape',667,375]]) {
     await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:true});
     await evaluate(`document.querySelector('#viewer').scrollIntoView({block:'center'});new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
-    const check=await evaluate(`(()=>{const a=document.querySelector('.player-vitals').getBoundingClientRect(),b=document.querySelector('.carry-controls').getBoundingClientRect(),fill=document.querySelector('#player-stamina span'),st=document.querySelector('#player-stamina');return {noOverlap:a.bottom<=b.top,overflow:document.documentElement.scrollWidth>innerWidth,prismHidden:document.querySelector('#manipulate').hidden&&document.querySelector('#carry-hint').hidden,fill:getComputedStyle(fill).backgroundColor,shown:Number(st.getAttribute('aria-valuenow')),expected:Math.round(window.__SKYBOUND_TRAVERSAL__.snapshot.stamina)};})()`);
+    const check=await evaluate(`(()=>{const a=document.querySelector('.player-vitals').getBoundingClientRect(),b=document.querySelector('.carry-controls').getBoundingClientRect(),fill=document.querySelector('#player-stamina span'),st=document.querySelector('#player-stamina');return {noOverlap:a.bottom<=b.top,overflow:document.documentElement.scrollWidth>innerWidth,prismHidden:document.querySelector('#manipulate').hidden&&document.querySelector('#carry-hint').hidden,fill:getComputedStyle(fill).backgroundColor,shown:Number(st.getAttribute('aria-valuenow')),expected:Math.round(window.__SKYBOUND_TRAVERSAL__.snapshot.stamina),cameraValid:window.__SKYBOUND_TRAVERSAL__.camera.actualDistance>0&&window.__SKYBOUND_TRAVERSAL__.camera.actualDistance<=window.__SKYBOUND_TRAVERSAL__.camera.distance+1e-6,compassVisible:document.querySelector('#compass-destination').textContent.includes(window.__SKYBOUND_TRAVERSAL__.navigation.label)};})()`);
     checks.push({label,...check});
     const shot=await send('Page.captureScreenshot',{format:'png'});await writeFile(new URL(`./hud-${label}.png`,import.meta.url),Buffer.from(shot.data,'base64'));
-    if(!check.noOverlap||check.overflow||!check.prismHidden||check.fill==='rgba(0, 0, 0, 0)'||check.shown!==check.expected)throw new Error('HUD check failed');
+    if(!check.noOverlap||check.overflow||!check.prismHidden||!check.cameraValid||!check.compassVisible||check.fill==='rgba(0, 0, 0, 0)'||check.shown!==check.expected)throw new Error('HUD check failed');
   }
+  await send('Emulation.setDeviceMetricsOverride',{width:1280,height:900,deviceScaleFactor:1,mobile:false});
+  await evaluate(`document.querySelector('#open-map').click();new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
+  const journal=await evaluate(`(()=>{const s=window.__SKYBOUND_TRAVERSAL__;return {notes:document.querySelectorAll('.journal-note').length,discovered:s.snapshot.progress.discoveries.length,nonempty:[...document.querySelectorAll('.journal-note')].every(p=>p.textContent.length>10)};})()`);
+  checks.push({label:'journal',...journal});
+  if(journal.notes!==journal.discovered||!journal.nonempty)throw new Error('Journal discovery mismatch');
+  const mapShot=await send('Page.captureScreenshot',{format:'png'});await writeFile(new URL('./journal-map.png',import.meta.url),Buffer.from(mapShot.data,'base64'));
   if(errors.length)throw new Error('Browser error');
   console.log(JSON.stringify({checks,errors:errors.length}));
 } finally {await writeFile(new URL('./hud-check.json',import.meta.url),JSON.stringify({url,checks,errors},null,2)+'\n');socket.close();}
