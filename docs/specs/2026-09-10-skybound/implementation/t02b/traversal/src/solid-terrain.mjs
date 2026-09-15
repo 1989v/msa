@@ -12,6 +12,7 @@ export function createSolidTerrain(base, getSolids) {
       return floor;
     },
     canMove(from, to) {
+      if (base.canMove && !base.canMove(from, to)) return false;
       return getSolids().every(box => !segmentHitsBox(from, to, {
         min: { x: box.min.x - .3, y: box.min.y - 1.68, z: box.min.z - .3 },
         max: { x: box.max.x + .3, y: box.max.y, z: box.max.z + .3 },
