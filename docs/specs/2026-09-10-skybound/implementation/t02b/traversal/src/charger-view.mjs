@@ -9,9 +9,24 @@ export function createChargerView(THREE, col, terrain, lineOfSight, blockingMesh
   const root = new THREE.Group(); root.name = 'slow ridge charger';
   const healthView = createEnemyHealthView(THREE, col, 1.5); root.add(healthView.root);
   const material = new THREE.MeshStandardMaterial({ color: col('slate'), roughness: 1 });
-  const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.1, 1), material); body.position.y = .55; body.castShadow = true; root.add(body);
-  const crest = new THREE.Mesh(new THREE.BoxGeometry(.8, .12, .08), new THREE.MeshStandardMaterial({ color: col('ochre'), roughness: .8 }));
-  crest.position.set(0, .12, .54); body.add(crest);
+  const profile = new THREE.Shape();
+  profile.moveTo(-.52, -.47); profile.lineTo(.52, -.47); profile.lineTo(.52, .47); profile.lineTo(-.52, .47); profile.closePath();
+  const shell = new THREE.ExtrudeGeometry(profile, { depth: .84, steps: 1, bevelEnabled: true, bevelThickness: .08, bevelSize: .08, bevelSegments: 1 });
+  shell.translate(0, 0, -.42);
+  const body = new THREE.Mesh(shell, material); body.position.y = .55; body.castShadow = true; root.add(body);
+  const trim = new THREE.MeshStandardMaterial({ color: col('chalkShade'), roughness: .95 });
+  for (const side of [-1, 1]) {
+    const brace = new THREE.Mesh(new THREE.BoxGeometry(.12, .58, .75), trim); brace.position.set(side * .55, -.05, 0); brace.castShadow = true; body.add(brace);
+    const runner = new THREE.Mesh(new THREE.BoxGeometry(.14, .12, 1.05), trim); runner.position.set(side * .4, -.48, 0); body.add(runner);
+  }
+  const rotor = new THREE.Group(); rotor.position.set(0, .12, .545); body.add(rotor);
+  const brass = new THREE.MeshStandardMaterial({ color: col('brass'), roughness: .7 });
+  rotor.add(new THREE.Mesh(new THREE.TorusGeometry(.2, .035, 6, 16), brass));
+  for (let i = 0; i < 3; i++) {
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(.055, .19, .04), brass);
+    const angle = i * Math.PI * 2 / 3; blade.position.set(Math.sin(angle) * .085, Math.cos(angle) * .085, 0); blade.rotation.z = -angle; rotor.add(blade);
+    const vent = new THREE.Mesh(new THREE.BoxGeometry(.08, .12, .045), trim); vent.position.set((i - 1) * .18, -.27, .52); body.add(vent);
+  }
   const warningGeometry = new THREE.BufferGeometry(); warningGeometry.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(21 * 3), 3));
   const warning = new THREE.Line(warningGeometry, new THREE.LineBasicMaterial({ color: col('ochre') }));
   warning.frustumCulled = false; root.add(warning);
@@ -40,6 +55,9 @@ export function createChargerView(THREE, col, terrain, lineOfSight, blockingMesh
     const preparation = state.phase === 'windup' ? Math.max(0, Math.min(1, 1 - state.remaining / CHARGE.windup)) : 0;
     body.scale.y = defeated ? .4 : state.phase === 'recovery' ? .82 : 1 - preparation * .18; body.position.y = .55 * body.scale.y;
     body.rotation.x = defeated ? 0 : state.phase === 'charge' ? .2 : -.18 * preparation;
+    rotor.rotation.z = state.phase === 'windup' ? preparation * Math.PI / 3
+      : state.phase === 'charge' ? Math.PI / 3 + (1 - state.remaining / CHARGE.duration) * Math.PI * 2
+      : state.phase === 'recovery' ? state.remaining / CHARGE.recovery * Math.PI / 3 : 0;
     material.color.copy(col(defeated ? 'chalkShade' : combat.snapshot().hitAge < .2 ? 'ochre' : 'slate'));
     warning.visible = !defeated && state.phase === 'windup';
     lane.visible = warning.visible;
