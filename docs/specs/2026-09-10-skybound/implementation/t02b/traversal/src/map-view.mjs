@@ -18,7 +18,7 @@ export function createMapView(canvas, terrain, col, locations, platforms) {
     }
     prepared = true;
   }
-  function draw(position, yaw, discoveries, target) {
+  function draw(position, yaw, discoveries, target, threats = []) {
     if (!prepared) prepare();
     ctx.drawImage(background, 0, 0);
     ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center';
@@ -28,6 +28,11 @@ export function createMapView(canvas, terrain, col, locations, platforms) {
       ctx.fillStyle = col('slate').getStyle(); ctx.beginPath(); ctx.arc(p.x, p.y, 11, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = col('cloud').getStyle(); ctx.fillText(String(index + 1), p.x, p.y + 5);
     });
+    for (const threat of threats) {
+      const p = mapPoint(threat.position);
+      ctx.fillStyle = col('ochre').getStyle(); ctx.strokeStyle = col('slate').getStyle(); ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(p.x, p.y - 8); ctx.lineTo(p.x + 7, p.y); ctx.lineTo(p.x, p.y + 8); ctx.lineTo(p.x - 7, p.y); ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
     const goal = mapPoint(target), player = mapPoint(position);
     ctx.strokeStyle = col('brass').getStyle(); ctx.lineWidth = 3;
     ctx.beginPath(); ctx.arc(goal.x, goal.y, 16, 0, Math.PI * 2); ctx.stroke();
