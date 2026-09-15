@@ -298,7 +298,7 @@ async function main() {
   for (const f of fs.readdirSync(VER)) if (/\.png$/.test(f)) fs.unlinkSync(path.join(VER, f)); // 옛 그림이 새 판정에 섞이지 않게
   if (!fs.existsSync(path.join(ROOT, 'index.html'))) { axis('BOOT', { status: 'FAIL', note: 'index.html 이 없다' }); return finish(); }
   const { url, server } = await serveDir(ROOT); report.url = url;
-  const chrome = await launchChrome();
+  const chrome = await launchChrome({ key: ROOT });
   const pages = [];
   try {
     pages.push(await runDesktop(chrome.browser));

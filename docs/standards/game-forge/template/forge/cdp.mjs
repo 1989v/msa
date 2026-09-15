@@ -40,7 +40,14 @@ export function keyInfo(code) {
   return { key: t[0], vk: t[1] };
 }
 
-export function serveDir(dir) {
+// 포트는 게임 폴더 경로에서 결정한다 — 같은 폴더는 항상 같은 포트, 다른 폴더는 다른 포트.
+// 매번 임의 포트를 쓰면 실행 50번에 포트 100개가 열렸다 닫혀 포트 감시 UI(cmux 등)에 전부 남는다(2026-09-16 실측).
+export function portFor(base, span, key) { let h = 2166136261; for (const c of key) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; } return base + (h % span); }
+function canListen(port) { return new Promise((res) => { const s = http.createServer(); s.once('error', () => res(false)); s.listen(port, '127.0.0.1', () => s.close(() => res(true))); }); }
+export async function freePort(start, span) { for (let p = start; p < start + span; p++) if (await canListen(p)) return p; throw new Error(`빈 포트 없음: ${start}~${start + span}`); }
+
+export async function serveDir(dir) {
+  const port = await freePort(portFor(8600, 300, dir), 20);
   return new Promise((resolve) => {
     const server = http.createServer((req, res) => {
       const urlPath = decodeURIComponent(new URL(req.url, 'http://x').pathname);
@@ -52,7 +59,7 @@ export function serveDir(dir) {
       res.writeHead(200, { 'Content-Type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream', 'Cache-Control': 'no-store' });
       fs.createReadStream(file).pipe(res);
     });
-    server.listen(0, '127.0.0.1', () => resolve({ server, port: server.address().port, url: `http://127.0.0.1:${server.address().port}/` }));
+    server.listen(port, '127.0.0.1', () => resolve({ server, port, url: `http://127.0.0.1:${port}/` }));
   });
 }
 
@@ -62,11 +69,11 @@ function httpGet(url) {
   });
 }
 
-export async function launchChrome({ width = 1280, height = 720 } = {}) {
+export async function launchChrome({ width = 1280, height = 720, key = process.cwd() } = {}) {
   const bin = CHROME_CANDIDATES.find((p) => fs.existsSync(p));
   if (!bin) throw new Error('크롬을 찾지 못했다. FORGE_CHROME=<경로> 로 지정');
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'forge-chrome-'));
-  const port = 9300 + Math.floor(Math.random() * 600);
+  const port = await freePort(portFor(9300, 600, key), 20); // CDP 포트도 폴더에서 결정
   const args = [
     '--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${userDataDir}`,
     '--no-first-run', '--no-default-browser-check', '--disable-extensions', '--disable-background-timer-throttling',

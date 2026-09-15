@@ -27,7 +27,7 @@ const out = arg('--out', null);
 if (!cmd || !['shot', 'keys', 'touch', 'fps', 'eval'].includes(cmd)) { console.error('사용법은 파일 머리 주석'); process.exit(2); }
 
 const { url, server } = await serveDir(ROOT);
-const chrome = await launchChrome({ width: vw, height: vh });
+const chrome = await launchChrome({ width: vw, height: vh, key: ROOT });
 const page = await Page.open(chrome.browser, { width: vw, height: vh, mobile, dpr: mobile ? 2 : 1 });
 const result = { viewport: `${vw}x${vh}`, shots: [] };
 const shot = async (name) => { const f = path.resolve(ROOT, name); await page.screenshot(f); result.shots.push(path.relative(ROOT, f)); };
