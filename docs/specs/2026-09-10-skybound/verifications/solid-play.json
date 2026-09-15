@@ -1,0 +1,24 @@
+{
+  "url": "http://127.0.0.1:8769/release/dist/index.html",
+  "checks": [
+    {
+      "name": "walk/dodge blocked by actual prism; can retreat",
+      "passed": true,
+      "stopped": 33.66666666666681,
+      "dodged": 33.66666666666681,
+      "away": 34.36000000000007
+    },
+    {
+      "name": "safe return explains preserved progress",
+      "passed": true,
+      "visible": true,
+      "text": "탐험 기록을 간직한 채 야영지로 돌아왔어요.",
+      "position": {
+        "x": 0,
+        "y": 9.06338310868186,
+        "z": 35
+      }
+    }
+  ],
+  "errors": []
+}
