@@ -1,4 +1,4 @@
-import { createCharger } from '../../../t05b/src/charger.mjs';
+import { CHARGE, createCharger } from '../../../t05b/src/charger.mjs';
 import { createTarget } from '../../../t05a/src/target.mjs';
 import { segmentHitsBox } from '../../../t04a/src/manipulation.mjs';
 
@@ -13,6 +13,10 @@ export function createChargerView(THREE, col, terrain, lineOfSight, blockingMesh
   const warningGeometry = new THREE.BufferGeometry(); warningGeometry.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(21 * 3), 3));
   const warning = new THREE.Line(warningGeometry, new THREE.LineBasicMaterial({ color: col('ochre') }));
   warning.frustumCulled = false; root.add(warning);
+  const laneGeometry = new THREE.BufferGeometry();
+  laneGeometry.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(84 * 3), 3));
+  const lane = new THREE.LineSegments(laneGeometry, warning.material);
+  lane.name = 'charger danger lane'; lane.frustumCulled = false; root.add(lane);
   const box = new THREE.Box3();
   const controller = createCharger({ home, terrain, lineOfSight: (from, to) => lineOfSight({ ...from, y: from.y + .7 }, { ...to, y: to.y + 1.2 }), canMove(from, to) {
     for (const mesh of blockingMeshes()) {
@@ -30,15 +34,33 @@ export function createChargerView(THREE, col, terrain, lineOfSight, blockingMesh
   }
   function paint(state) {
     const defeated = combat.snapshot().defeated;
-    body.scale.y = defeated ? .4 : 1; body.position.y = .55 * body.scale.y;
-    body.rotation.x = state.phase === 'windup' ? -.15 * (1 - state.remaining / 1.1) : 0;
+    const preparation = state.phase === 'windup' ? Math.max(0, Math.min(1, 1 - state.remaining / CHARGE.windup)) : 0;
+    body.scale.y = defeated ? .4 : state.phase === 'recovery' ? .82 : 1 - preparation * .18; body.position.y = .55 * body.scale.y;
+    body.rotation.x = defeated ? 0 : state.phase === 'charge' ? .2 : -.18 * preparation;
     material.color.copy(col(defeated ? 'chalkShade' : combat.snapshot().hitAge < .2 ? 'ochre' : 'slate'));
     warning.visible = !defeated && state.phase === 'windup';
+    lane.visible = warning.visible;
     if (warning.visible) {
+      const length = CHARGE.speed * CHARGE.duration;
+      const pointAt = (attribute, index, forward, side = 0) => {
+        const x = state.position.x + state.direction.x * forward + state.direction.z * side;
+        const z = state.position.z + state.direction.z * forward - state.direction.x * side;
+        const floor = terrain.heightAt(x, z);
+        attribute.setXYZ(index, x - state.position.x, (Number.isFinite(floor) ? floor : state.position.y) + .05 - state.position.y, z - state.position.z);
+      };
       for (let i = 0; i <= 20; i++) {
-        const x = state.position.x + state.direction.x * i / 5, z = state.position.z + state.direction.z * i / 5;
-        warningGeometry.attributes.position.setXYZ(i, x - state.position.x, (terrain.heightAt(x, z) ?? state.position.y) + .05 - state.position.y, z - state.position.z);
+        pointAt(warningGeometry.attributes.position, i, length * i / 20);
       }
+      let vertex = 0;
+      for (const side of [-.75, .75]) for (let i = 0; i < 20; i++) {
+        pointAt(laneGeometry.attributes.position, vertex++, length * i / 20, side);
+        pointAt(laneGeometry.attributes.position, vertex++, length * (i + 1) / 20, side);
+      }
+      for (const side of [-.5, .5]) {
+        pointAt(laneGeometry.attributes.position, vertex++, length - .6, side);
+        pointAt(laneGeometry.attributes.position, vertex++, length);
+      }
+      laneGeometry.attributes.position.needsUpdate = true;
       warningGeometry.attributes.position.needsUpdate = true;
     }
   }
