@@ -16,8 +16,8 @@ export function createChargerView(THREE, col, terrain, lineOfSight, blockingMesh
   const warning = new THREE.Line(warningGeometry, new THREE.LineBasicMaterial({ color: col('ochre') }));
   warning.frustumCulled = false; root.add(warning);
   const laneGeometry = new THREE.BufferGeometry();
-  laneGeometry.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(84 * 3), 3));
-  const lane = new THREE.LineSegments(laneGeometry, warning.material);
+  laneGeometry.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(243 * 3), 3));
+  const lane = new THREE.Mesh(laneGeometry, new THREE.MeshBasicMaterial({ color: col('ochre'), side: THREE.DoubleSide }));
   lane.name = 'charger danger lane'; lane.frustumCulled = false; root.add(lane);
   const box = new THREE.Box3();
   const controller = createCharger({ home, terrain, lineOfSight: (from, to) => lineOfSight({ ...from, y: from.y + .7 }, { ...to, y: to.y + 1.2 }), canMove(from, to) {
@@ -56,13 +56,14 @@ export function createChargerView(THREE, col, terrain, lineOfSight, blockingMesh
       }
       let vertex = 0;
       for (const side of [-.75, .75]) for (let i = 0; i < 20; i++) {
-        pointAt(laneGeometry.attributes.position, vertex++, length * i / 20, side);
-        pointAt(laneGeometry.attributes.position, vertex++, length * (i + 1) / 20, side);
+        const from = length * i / 20, to = length * (i + 1) / 20;
+        for (const [forward, across] of [[from, side - .035], [to, side - .035], [to, side + .035], [from, side - .035], [to, side + .035], [from, side + .035]]) {
+          pointAt(laneGeometry.attributes.position, vertex++, forward, across);
+        }
       }
-      for (const side of [-.5, .5]) {
-        pointAt(laneGeometry.attributes.position, vertex++, length - .6, side);
-        pointAt(laneGeometry.attributes.position, vertex++, length);
-      }
+      pointAt(laneGeometry.attributes.position, vertex++, length - .6, -.4);
+      pointAt(laneGeometry.attributes.position, vertex++, length);
+      pointAt(laneGeometry.attributes.position, vertex++, length - .6, .4);
       laneGeometry.attributes.position.needsUpdate = true;
       warningGeometry.attributes.position.needsUpdate = true;
     }

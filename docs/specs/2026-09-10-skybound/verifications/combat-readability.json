@@ -1,0 +1,51 @@
+{
+  "result": {
+    "position": {
+      "x": -3.200000000000005,
+      "y": 9.23286638318574,
+      "z": 29.40000000000027
+    },
+    "charger": {
+      "position": {
+        "x": -4.5,
+        "y": 9.909125748933695,
+        "z": 25
+      },
+      "phase": "windup",
+      "remaining": 0.3000000000000016,
+      "direction": {
+        "x": 0.24253562503631948,
+        "z": 0.9701425001453353
+      },
+      "locked": {
+        "x": -3.200000000000005,
+        "y": 9.147032729818822,
+        "z": 30.200000000000287
+      },
+      "sequence": 1,
+      "blocked": false,
+      "hits": [],
+      "combat": {
+        "hp": 3,
+        "maxHp": 3,
+        "defeated": false,
+        "target": {
+          "x": -4.5,
+          "y": 10.559125748933695,
+          "z": 25
+        },
+        "sequence": 0,
+        "swing": null,
+        "lastReason": null,
+        "hitAge": 1
+      }
+    },
+    "health": {
+      "hp": 3,
+      "maxHp": 3,
+      "invulnerable": 0
+    }
+  },
+  "errors": [],
+  "scope": "Local desktop deterministic combat view capture; no full combat playthrough"
+}
