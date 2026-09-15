@@ -1,0 +1,32 @@
+{
+  "url": "http://127.0.0.1:8769/release/dist/index.html",
+  "checks": [
+    {
+      "name": "two real touch pointers zoom without rotating camera",
+      "passed": true,
+      "camera": {
+        "yaw": 0,
+        "pitch": 0.29,
+        "distance": 4.357894269295402,
+        "actualDistance": 4.3578942692954,
+        "dragging": true
+      }
+    },
+    {
+      "name": "pinch release frees both pointers",
+      "passed": true,
+      "owners": {
+        "x": 0,
+        "z": 0,
+        "sprint": false,
+        "moveId": null,
+        "lookId": null,
+        "pinchId": null,
+        "sprintId": null,
+        "jumpId": null,
+        "jumpPending": false
+      }
+    }
+  ],
+  "errors": []
+}
