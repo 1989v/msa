@@ -1,0 +1,28 @@
+{
+  "url": "http://127.0.0.1:8771/release/dist/index.html",
+  "checks": [
+    {
+      "name": "loss pauses and prevents accidental resume",
+      "paused": true,
+      "tick": 0,
+      "passed": true
+    },
+    {
+      "name": "GPU restore preserves place and progress without autoplay",
+      "error": null,
+      "paused": true,
+      "position": {
+        "x": 0,
+        "y": 9.06338310868186,
+        "z": 35
+      },
+      "passed": true
+    },
+    {
+      "name": "deliberate resume advances restored renderer",
+      "passed": true,
+      "tick": 33
+    }
+  ],
+  "errors": []
+}
