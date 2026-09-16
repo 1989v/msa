@@ -39,7 +39,7 @@ export function createSoundEffects(createContext) {
     },
     play(kind) {
       if (!volume || !context || context.state !== 'running') return false;
-      const cues = { step: [95, 42, .065], swing: [170, 65, .12], hit: [260, 95, .16], hurt: [100, 48, .24], complete: [420, 670, .3], ending: [510, 820, .55] };
+      const cues = { dial: [210, 280, .09], observation1: [330, 440, .22], observation2: [440, 550, .24], observation3: [550, 770, .3], step: [95, 42, .065], swing: [170, 65, .12], hit: [260, 95, .16], hurt: [100, 48, .24], complete: [420, 670, .3], ending: [510, 820, .55] };
       const cue = cues[kind]; if (!cue || voices.size >= 6) return false;
       try {
         const [from, to, duration] = cue, now = context.currentTime;

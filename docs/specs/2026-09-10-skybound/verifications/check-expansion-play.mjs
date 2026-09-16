@@ -67,9 +67,13 @@ try {
   await check('western flight leg '+(leg+1),`(()=>{const s=window.__SKYBOUND_TRAVERSAL__,target={...s.navigation.target},source={...s.snapshot.position};for(let i=0;i<40;i++)s.advanceForTest(.1,{});s.advanceForTest(.15,{jumpPressed:true});s.advanceForTest(.01,{jumpPressed:true});for(let i=0;i<160&&s.snapshot.position.y<source.y+25;i++)s.advanceForTest(.05,{});for(let i=0;i<220;i++){const p=s.snapshot.position,dx=target.x-p.x,dz=target.z-p.z,d=Math.hypot(dx,dz);if(d<.25)break;s.advanceForTest(.05,{x:dx/d,z:dz/d,yaw:0});}const reserve=s.snapshot.stamina;if(s.snapshot.gliding)s.advanceForTest(.01,{jumpPressed:true});for(let i=0;i<220&&!s.snapshot.grounded;i++)s.advanceForTest(.05,{});const p=s.snapshot.position;return{target,position:p,reserve,grounded:s.snapshot.grounded,respawns:s.snapshot.respawns,passed:s.snapshot.grounded&&reserve>0&&Math.hypot(p.x-target.x,p.z-target.z)<.4&&Math.abs(p.y-target.y)<.6&&s.snapshot.respawns===0};})()`);
   if(leg===3){
    for(let station=0;station<3;station++)await check('harbor station '+(station+1),`(()=>{const s=window.__SKYBOUND_TRAVERSAL__;window.walkTo({x:${-75+station*3},z:-71.7});for(let i=0;i<${station+1};i++){s.resume();document.querySelector('#activate-ruin').click();s.pause();}return{harbor:s.harbor,passed:s.harbor.aligned===${station+1}};})()`);
+   await evaluate(`window.__SKYBOUND_TRAVERSAL__.setCameraForTest({yaw:0,pitch:.5,distance:8});document.querySelector('#viewer').scrollIntoView({block:'start'})`);
+   const harborShot=await send('Page.captureScreenshot',{format:'png'});await writeFile(new URL('./western-harbor.png',import.meta.url),Buffer.from(harborShot.data,'base64'));
    await evaluate(`window.walkTo({x:-65,z:-67})`);
   }
  }
+ await evaluate(`window.__SKYBOUND_TRAVERSAL__.setCameraForTest({yaw:0,pitch:.12,distance:8});document.querySelector('#viewer').scrollIntoView({block:'start'})`);
+ const archiveShot=await send('Page.captureScreenshot',{format:'png'});await writeFile(new URL('./western-archive.png',import.meta.url),Buffer.from(archiveShot.data,'base64'));
  await evaluate(`(()=>{const s=window.__SKYBOUND_TRAVERSAL__;window.flyTo=(target)=>{for(let i=0;i<120;i++){const p=s.snapshot.position,dx=target.x-p.x,dz=target.z-p.z,d=Math.hypot(dx,dz);if(d<.2)return;s.advanceForTest(.05,{x:dx/d,z:dz/d,yaw:0});}throw new Error('Flight blocked');};s.advanceForTest(.15,{jumpPressed:true});s.advanceForTest(.01,{jumpPressed:true});})()`);
  for(let index=0;index<3;index++){
   const ring=[{x:-44,y:27,z:-126},{x:-51,y:31,z:-123},{x:-48,y:35,z:-130}][index];
