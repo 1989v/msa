@@ -15,3 +15,13 @@ test('distance, altitude, menus, airborne and busy actions cannot turn an observ
  assert.deepEqual(puzzle.snapshot().turns,[0,0,0]);
  const copy=puzzle.snapshot();copy.turns[0]=1;assert.equal(puzzle.snapshot().turns[0],0);
 });
+
+test('harbor completion requires first ending in saves and legacy payloads remain unchanged',async()=>{
+ const {createProgressSave}=await import('../../t07a/src/save.mjs');let raw;
+ const store=createProgressSave(()=>({getItem:()=>raw,setItem:(_,v)=>{raw=v;}}));
+ const flags={watchRuinActive:true,stoneRuinActive:true,windRuinActive:true,firstAerialLanding:true,secondAerialLanding:true,journeyComplete:true};
+ store.save(flags);assert.deepEqual(store.load().progress,flags);
+ assert.equal(store.save({...flags,harborAligned:true}).ok,true);assert.equal(store.load().progress.harborAligned,true);
+ for(const harborAligned of [1,null,'true'])assert.equal(store.save({...flags,harborAligned}).ok,false);
+ assert.equal(store.save({harborAligned:true}).ok,false);
+});

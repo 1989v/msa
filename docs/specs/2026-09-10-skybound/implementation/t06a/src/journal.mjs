@@ -21,7 +21,7 @@ export function discoveryNote(id, progress) {
     case 'north-survey': return '섬 끝의 표석은 먼 곳 대신 야영지를 가리킨다. 처음 지도를 만든 사람도 돌아갈 길부터 기억해 두었던 모양이다.';
     case 'north-launch': return '첫 지도의 바람이 여기까지 이어졌다. 서쪽으로 낮아지는 쉼터를 짚어 가면 바다 건너 정박지에 닿는다. 출항 전에 기류에서 충분히 높이 올라 기력을 채우자.';
     case 'relay-one': case 'relay-two': case 'relay-three': case 'relay-four': case 'relay-five': return '먼 항로의 바람쉼터. 두 발로 착지해 숨을 고르고, 가운데 기류에서 다시 고도를 얻는다. 다음 쉼터를 눈으로 확인하고 출항하자. 쉼터 바로 위에서는 돛을 접어 착지한다.';
-    case 'west-harbor': return '물에 닳은 정박지에 배 대신 바람의 눈금이 남았다. 북쪽의 두 쉼터 너머 높은 기록섬이 보인다. 돌아갈 때도 같은 쉼터에서 충분히 상승해야 한다.';
+    case 'west-harbor': return progress.harborAligned ? '세 바늘이 오래된 눈금을 다시 읽기 시작했다. 북쪽 두 쉼터 너머 기록섬에서 이 바람의 높이를 관측할 수 있다.' : '출항대 왼쪽 안쪽에 관측대 세 개가 남았다. 각 원판 곁의 고정된 짙은 화살표와 황동 바늘 방향을 맞추자. 가까이 서서 활성화(G)를 누르면 바늘이 한 칸 돌아간다.';
     case 'high-archive': return '높은 기록섬의 돌들은 먼 바람에도 자리를 지킨다. 첫 지도 바깥에도 길은 이어져 있었다. 서부 항로와 귀환 지점을 새 여백에 그려 둔다.';
     default: return '';
   }

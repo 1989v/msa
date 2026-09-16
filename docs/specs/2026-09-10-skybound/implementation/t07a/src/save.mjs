@@ -16,6 +16,10 @@ function validateProgress(value, allowMissing = false) {
   if (progress.secondAerialLanding && !progress.firstAerialLanding) return null;
   if (progress.windRuinActive && (!progress.firstAerialLanding || !progress.secondAerialLanding)) return null;
   if (progress.journeyComplete && (!progress.stoneRuinActive || !progress.watchRuinActive || !progress.windRuinActive)) return null;
+  if (Object.hasOwn(value, 'harborAligned')) {
+    if (typeof value.harborAligned !== 'boolean' || (value.harborAligned && !progress.journeyComplete)) return null;
+    progress.harborAligned = value.harborAligned;
+  }
   if (Object.hasOwn(value, 'discoveries')) {
     const ids = value.discoveries;
     if (!Array.isArray(ids) || ids.length > DISCOVERY_IDS.length || ids.some(id => !DISCOVERY_IDS.includes(id)) || new Set(ids).size !== ids.length) return null;
