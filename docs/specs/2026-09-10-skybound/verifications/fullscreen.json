@@ -1,0 +1,26 @@
+{
+  "url": "http://127.0.0.1:8771/release/dist/index.html",
+  "checks": [
+    {
+      "name": "enter fullscreen pauses without hiding game controls",
+      "paused": true,
+      "passed": true
+    },
+    {
+      "name": "map in fullscreen preserves pause and close focus",
+      "passed": true
+    },
+    {
+      "name": "exit fullscreen restores button and remains paused",
+      "pressed": "false",
+      "disabled": false,
+      "paused": true,
+      "passed": true
+    },
+    {
+      "name": "denied fullscreen remains recoverable",
+      "passed": true
+    }
+  ],
+  "errors": []
+}
