@@ -30,3 +30,23 @@ test('instanced rocks use individual transformed geometry; leaves stay permeable
   assert.equal(terrain.supportHeightAt(-2,0,3),2);
   assert.equal(terrain.supportHeightAt(0,0,3),0);
 });
+
+test('jump and rising wind stop below rendered ruin undersides then allow retreat',()=>{
+  const root=new T.Group();root.add(mesh(new T.BoxGeometry(4,.4,4),'jointed wind meridian',0,2.4,0));
+  const scenery=createSceneryTerrain(T,{heightAt:()=>0},root);
+  const terrain=createSolidTerrain(scenery.terrain,()=>[]);
+  for(const wind of [false,true]){
+    const sim=createSimulation({terrain,checkpoint:{x:0,z:0},flight:wind?{enabled:true,volumes:[{x:0,z:0,radius:4,minY:0,maxY:8,speed:6}]}:null});
+    sim.advance(.15,{jumpPressed:true});if(wind)sim.advance(.01,{jumpPressed:true});
+    for(let i=0;i<60;i++){const state=sim.advance(.05,{});assert.ok(state.position.y+1.68<=2.201,`head penetrated ruin: ${state.position.y+1.68}`);}
+    for(let i=0;i<30;i++)sim.advance(.05,{x:1});
+    assert.ok(sim.snapshot().position.x>2.5,'ceiling contact must not trap sideways movement');
+  }
+});
+test('committed box undersides block jumps, removed boxes immediately release them',()=>{
+  const box={min:{x:-2,y:2.2,z:-2},max:{x:2,y:2.6,z:2}};let solids=[box];
+  const terrain=createSolidTerrain({heightAt:()=>0},()=>solids);
+  const sim=createSimulation({terrain,checkpoint:{x:0,z:0}});
+  sim.advance(.15,{jumpPressed:true});for(let i=0;i<20;i++)assert.ok(sim.advance(.05,{}).position.y+1.68<=2.201);
+  solids=[];sim.advance(.25,{});sim.advance(.25,{jumpPressed:true});assert.ok(sim.snapshot().position.y>.6);
+});

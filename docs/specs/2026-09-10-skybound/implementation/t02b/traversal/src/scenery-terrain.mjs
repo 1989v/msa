@@ -36,7 +36,7 @@ export function createSceneryTerrain(T, base, worldRoot) {
     }
     return [...found];
   }
-  const ray = new T.Raycaster(), origin = new T.Vector3(), down = new T.Vector3(0,-1,0), direction = new T.Vector3();
+  const ray = new T.Raycaster(), origin = new T.Vector3(), down = new T.Vector3(0,-1,0), up = new T.Vector3(0,1,0), direction = new T.Vector3();
   const normal = new T.Vector3(), normalMatrix = new T.Matrix3();
   const terrain = {
     heightAt: (x,z) => base.heightAt(x,z),
@@ -51,6 +51,20 @@ export function createSceneryTerrain(T, base, worldRoot) {
         if (normal.y >= .55) floor = Math.max(floor ?? -Infinity,hit.point.y);
       }
       return floor;
+    },
+    ceilingHeightAt(x,z,headY,rise) {
+      let ceiling = base.ceilingHeightAt?.(x,z,headY,rise) ?? null;
+      const entries = nearby(x,z,.22).filter(({box})=>box.max.y >= headY && box.min.y <= headY + rise);
+      if (!entries.length) return ceiling;
+      ray.near=0; ray.far=rise+.001;
+      for (const [dx,dz] of [[0,0],[-.22,0],[.22,0],[0,-.22],[0,.22]]) {
+        origin.set(x+dx,headY-.001,z+dz);ray.set(origin,up);
+        for (const {mesh} of entries) {
+          const hit=ray.intersectObject(mesh,false)[0];
+          if (hit && hit.point.y >= headY - 1e-6) ceiling=Math.min(ceiling ?? Infinity,hit.point.y);
+        }
+      }
+      return ceiling;
     },
     canMove(from,to) {
       if (base.canMove && !base.canMove(from,to)) return false;

@@ -11,6 +11,13 @@ export function createSolidTerrain(base, getSolids) {
       }
       return floor;
     },
+    ceilingHeightAt(x, z, headY, rise) {
+      let ceiling = base.ceilingHeightAt?.(x, z, headY, rise) ?? null;
+      for (const box of getSolids()) {
+        if (box.min.y >= headY - 1e-6 && box.min.y <= headY + rise && x >= box.min.x - .22 && x <= box.max.x + .22 && z >= box.min.z - .22 && z <= box.max.z + .22) ceiling = Math.min(ceiling ?? Infinity, box.min.y);
+      }
+      return ceiling;
+    },
     canMove(from, to) {
       if (base.canMove && !base.canMove(from, to)) return false;
       return getSolids().every(box => !segmentHitsBox(from, to, {
