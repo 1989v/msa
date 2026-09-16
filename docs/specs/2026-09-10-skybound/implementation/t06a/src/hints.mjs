@@ -4,6 +4,9 @@ export function explorationHint(destination, progress = {}, defeated = false) {
   if (['west-harbor', 'high-archive'].includes(destination) && progress.journeyComplete && !progress.harborAligned) {
     phase += ':alignment'; title = '정박지의 세 바늘';
     steps = ['북단 출항대에서 쉼터를 따라 서부 정박지로 건너가세요. 출항대 왼쪽 안쪽에 세 관측대가 있습니다.', '원판 곁의 짙은 화살표는 고정된 눈금입니다. 황동 바늘을 같은 방향으로 맞추세요.', '각 관측대 가까이 지면에 서서 활성화(G)를 누르면 90도 회전합니다. 세 바늘이 모두 바닥 화살표를 가리키면 기록섬의 관측 준비가 됩니다.'];
+  } else if (destination === 'high-archive' && progress.harborAligned && !progress.archiveComplete) {
+    phase += ':altitude'; title = '세 높이의 관측 고리';
+    steps = ['기록섬 중앙 기류 곁에 서로 다른 높이의 고리가 있습니다. 길잡이가 가리키는 고리부터 차례로 통과하세요.', '중앙 기류에서 돛을 펴고 고리보다 조금 높이 올라간 뒤 옆으로 벗어나세요. 너무 높다면 고리 바로 위에서 돛을 편 채 천천히 내려옵니다. 다음 고도는 중앙 기류로 돌아와 얻으세요.', '점프 → 공중에서 다시 점프로 돛 펼치기 → 길잡이의 고리 중심을 활공으로 통과하기를 세 번 반복하세요. 모두 관측하면 중앙에서 돛을 접어 착지한 뒤 G 또는 관측 기록하기 버튼으로 두 번째 지도를 완성합니다.'];
   } else if (['west-harbor', 'high-archive', 'north-launch'].includes(destination) || destination.startsWith('relay-')) {
     phase += progress.journeyComplete ? ':open' : ':sealed'; title = '서부 관측 항로';
     steps = progress.journeyComplete ? ['북단 출항대에서 서쪽 바다의 바람쉼터를 찾아보세요. 정박지 뒤로 높은 기록섬이 이어집니다.', '각 출항점의 가운데 기류에서 기력을 채우고 위쪽 경계 가까이 올라가세요. 한 번에 한 쉼터씩 건넙니다.', '점프 후 다시 점프 버튼으로 돛을 펴고 충분히 상승 → 길잡이의 다음 쉼터로 이동 → 쉼터 바로 위에서 점프 버튼으로 돛을 접어 착지하세요. 쉬어 기력을 채운 뒤 다음 기류에서 출항합니다.'] : ['첫 지도의 바람을 복원하면 북단 출항대가 깨어납니다.', '먼저 세 유적을 활성화하고 중앙 바람문에서 전망섬으로 건너가세요.', '길잡이를 ‘다음 목표 자동’으로 바꾸어 첫 결말까지 도달한 뒤, 서부 정박지나 높은 기록섬을 선택하세요.'];

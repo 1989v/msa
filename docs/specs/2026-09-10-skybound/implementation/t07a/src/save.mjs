@@ -20,6 +20,10 @@ function validateProgress(value, allowMissing = false) {
     if (typeof value.harborAligned !== 'boolean' || (value.harborAligned && !progress.journeyComplete)) return null;
     progress.harborAligned = value.harborAligned;
   }
+  if (Object.hasOwn(value, 'archiveComplete')) {
+    if (typeof value.archiveComplete !== 'boolean' || (value.archiveComplete && !progress.harborAligned)) return null;
+    progress.archiveComplete = value.archiveComplete;
+  }
   if (Object.hasOwn(value, 'discoveries')) {
     const ids = value.discoveries;
     if (!Array.isArray(ids) || ids.length > DISCOVERY_IDS.length || ids.some(id => !DISCOVERY_IDS.includes(id)) || new Set(ids).size !== ids.length) return null;

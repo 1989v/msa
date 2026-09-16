@@ -1,0 +1,297 @@
+{
+  "url": "http://127.0.0.1:8771/release/dist/index.html",
+  "checks": [
+    {
+      "name": "western flight leg 1",
+      "target": {
+        "x": -20,
+        "y": 25,
+        "z": -46
+      },
+      "position": {
+        "x": -19.836411230893226,
+        "y": 25,
+        "z": -45.96209531221864
+      },
+      "reserve": 52.05000000000171,
+      "grounded": true,
+      "respawns": 0,
+      "passed": true
+    },
+    {
+      "name": "western flight leg 2",
+      "target": {
+        "x": -40,
+        "y": 20,
+        "z": -54
+      },
+      "position": {
+        "x": -39.900940595586455,
+        "y": 20,
+        "z": -53.96051149127158
+      },
+      "reserve": 37.05000000000149,
+      "grounded": true,
+      "respawns": 0,
+      "passed": true
+    },
+    {
+      "name": "western flight leg 3",
+      "target": {
+        "x": -58,
+        "y": 15,
+        "z": -62
+      },
+      "position": {
+        "x": -57.88642507630326,
+        "y": 15,
+        "z": -61.949550732248724
+      },
+      "reserve": 43.80000000000159,
+      "grounded": true,
+      "respawns": 0,
+      "passed": true
+    },
+    {
+      "name": "western flight leg 4",
+      "target": {
+        "x": -65,
+        "y": 5.128460607288788,
+        "z": -67
+      },
+      "position": {
+        "x": -64.80095947164419,
+        "y": 5.127820032966,
+        "z": -66.85868651114671
+      },
+      "reserve": 73.90000000000148,
+      "grounded": true,
+      "respawns": 0,
+      "passed": true
+    },
+    {
+      "name": "harbor station 1",
+      "harbor": {
+        "turns": [
+          1,
+          0,
+          0
+        ],
+        "aligned": 1,
+        "complete": false
+      },
+      "passed": true
+    },
+    {
+      "name": "harbor station 2",
+      "harbor": {
+        "turns": [
+          1,
+          2,
+          0
+        ],
+        "aligned": 2,
+        "complete": false
+      },
+      "passed": true
+    },
+    {
+      "name": "harbor station 3",
+      "harbor": {
+        "turns": [
+          1,
+          2,
+          3
+        ],
+        "aligned": 3,
+        "complete": true
+      },
+      "passed": true
+    },
+    {
+      "name": "western flight leg 5",
+      "target": {
+        "x": -64,
+        "y": 18,
+        "z": -85
+      },
+      "position": {
+        "x": -64.01251978821581,
+        "y": 18,
+        "z": -84.78541235527939
+      },
+      "reserve": 49.65000000000168,
+      "grounded": true,
+      "respawns": 0,
+      "passed": true
+    },
+    {
+      "name": "western flight leg 6",
+      "target": {
+        "x": -59,
+        "y": 24,
+        "z": -105
+      },
+      "position": {
+        "x": -59.04495440546248,
+        "y": 24,
+        "z": -104.81870699615519
+      },
+      "reserve": 40.00000000000154,
+      "grounded": true,
+      "respawns": 0,
+      "passed": true
+    },
+    {
+      "name": "western flight leg 7",
+      "target": {
+        "x": -48,
+        "y": 21,
+        "z": -126
+      },
+      "position": {
+        "x": -48.09618754134139,
+        "y": 21.4,
+        "z": -125.81553780833502
+      },
+      "reserve": 28.25000000000138,
+      "grounded": true,
+      "respawns": 0,
+      "passed": true
+    },
+    {
+      "name": "archive altitude 1",
+      "archive": {
+        "count": 1,
+        "total": 3,
+        "complete": false
+      },
+      "stamina": 29.316666666667494,
+      "position": {
+        "x": -44.18242465787807,
+        "y": 26.985416666666975,
+        "z": -125.9980682808968
+      },
+      "passed": true
+    },
+    {
+      "name": "archive altitude 2",
+      "archive": {
+        "count": 2,
+        "total": 3,
+        "complete": false
+      },
+      "stamina": 28.61666666666671,
+      "position": {
+        "x": -50.86920259337356,
+        "y": 30.927083333333464,
+        "z": -123.12505932537269
+      },
+      "passed": true
+    },
+    {
+      "name": "archive altitude 3",
+      "archive": {
+        "count": 3,
+        "total": 3,
+        "complete": false
+      },
+      "stamina": 27.8666666666659,
+      "position": {
+        "x": -48.000473602824556,
+        "y": 34.98958333333282,
+        "z": -129.95607796211215
+      },
+      "passed": true
+    },
+    {
+      "name": "record second ending and save",
+      "archive": {
+        "count": 3,
+        "total": 3,
+        "complete": true
+      },
+      "saved": {
+        "watchRuinActive": true,
+        "firstAerialLanding": true,
+        "secondAerialLanding": true,
+        "stoneRuinActive": true,
+        "windRuinActive": true,
+        "journeyComplete": true,
+        "harborAligned": true,
+        "archiveComplete": true,
+        "discoveries": [
+          "camp",
+          "stone",
+          "watch",
+          "gate",
+          "ridge",
+          "north-survey",
+          "north-launch",
+          "relay-one",
+          "relay-two",
+          "relay-three",
+          "west-harbor",
+          "relay-four",
+          "relay-five",
+          "high-archive"
+        ]
+      },
+      "passed": true
+    },
+    {
+      "name": "continue expansion exploration",
+      "passed": true
+    },
+    {
+      "name": "reload completed expansion at safe origin",
+      "progress": {
+        "watchRuinActive": true,
+        "firstAerialLanding": true,
+        "secondAerialLanding": true,
+        "stoneRuinActive": true,
+        "windRuinActive": true,
+        "journeyComplete": true,
+        "harborAligned": true,
+        "archiveComplete": true,
+        "discoveries": [
+          "camp",
+          "stone",
+          "watch",
+          "gate",
+          "ridge",
+          "north-survey",
+          "north-launch",
+          "relay-one",
+          "relay-two",
+          "relay-three",
+          "west-harbor",
+          "relay-four",
+          "relay-five",
+          "high-archive"
+        ]
+      },
+      "harbor": {
+        "turns": [
+          1,
+          2,
+          3
+        ],
+        "aligned": 3,
+        "complete": true
+      },
+      "archive": {
+        "count": 3,
+        "total": 3,
+        "complete": true
+      },
+      "position": {
+        "x": 0,
+        "y": 9.06338310868186,
+        "z": 35
+      },
+      "passed": true
+    }
+  ],
+  "errors": []
+}
