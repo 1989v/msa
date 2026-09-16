@@ -1,7 +1,10 @@
 // Opt-in clues reveal observation, ability, then exact controls. Never mutate progress.
 export function explorationHint(destination, progress = {}, defeated = false) {
   let phase = destination, title, steps;
-  if (destination === 'stone' && !progress.stoneRuinActive) {
+  if (['west-harbor', 'high-archive', 'north-launch'].includes(destination) || destination.startsWith('relay-')) {
+    phase += progress.journeyComplete ? ':open' : ':sealed'; title = '서부 관측 항로';
+    steps = progress.journeyComplete ? ['북단 출항대에서 서쪽 바다의 바람쉼터를 찾아보세요. 정박지 뒤로 높은 기록섬이 이어집니다.', '각 출항점의 가운데 기류에서 기력을 채우고 위쪽 경계 가까이 올라가세요. 한 번에 한 쉼터씩 건넙니다.', '점프 후 다시 점프 버튼으로 돛을 펴고 충분히 상승 → 길잡이의 다음 쉼터로 이동 → 쉼터 바로 위에서 점프 버튼으로 돛을 접어 착지하세요. 쉬어 기력을 채운 뒤 다음 기류에서 출항합니다.'] : ['첫 지도의 바람을 복원하면 북단 출항대가 깨어납니다.', '먼저 세 유적을 활성화하고 중앙 바람문에서 전망섬으로 건너가세요.', '길잡이를 ‘다음 목표 자동’으로 바꾸어 첫 결말까지 도달한 뒤, 서부 정박지나 높은 기록섬을 선택하세요.'];
+  } else if (destination === 'stone' && !progress.stoneRuinActive) {
     title = '돌고리의 긴 홈';
     steps = ['밝은 프리즘 옆 받침을 살펴보세요. 서로 긴 모서리의 방향을 비교해 보세요.', '고리 도구로 프리즘을 들고 회전할 수 있습니다. 받침 위 지면에 안정되게 놓아야 합니다.', '프리즘을 조준해 집기(E) → 회전(R) 한 번 → 오른쪽 받침으로 시야를 돌려 배치 안내가 허용될 때 놓기(E). 운반 중 시야를 아래로 내리면 가까이에 놓습니다.'];
   } else if (destination === 'watch' && !progress.watchRuinActive) {

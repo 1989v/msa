@@ -33,7 +33,7 @@ test('survey stones stand on real terrain, block movement, and discover without 
   assert.equal(survey.locations.length, 3);
 });
 
-test('legacy seven discoveries and all ten discoveries round-trip through version 1 saves', () => {
+test('legacy seven discoveries and the expanded discovery list round-trip through version 1 saves', () => {
   let raw;
   const store = createProgressSave(() => ({ getItem: () => raw, setItem: (_, value) => { raw = value; } }));
   for (const discoveries of [DISCOVERY_IDS.slice(0, 7), [...DISCOVERY_IDS]]) {
