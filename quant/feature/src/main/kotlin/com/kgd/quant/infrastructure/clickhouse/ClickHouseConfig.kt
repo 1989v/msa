@@ -3,6 +3,7 @@ package com.kgd.quant.infrastructure.clickhouse
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import jakarta.annotation.PreDestroy
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
@@ -57,6 +58,12 @@ class ClickHouseConfig {
         }).also { managedDataSource = it }
         return JdbcTemplate(ds)
     }
+
+    /** 템플릿과 같은 조건으로만 등록된다 — 템플릿 없이 초기화기만 뜨는 조합이 없다. */
+    @Bean
+    fun quantSchemaInitializer(
+        @Qualifier("quantClickHouseJdbcTemplate") jdbc: JdbcTemplate,
+    ): QuantSchemaInitializer = QuantSchemaInitializer(jdbc)
 
     @PreDestroy
     fun close() {
