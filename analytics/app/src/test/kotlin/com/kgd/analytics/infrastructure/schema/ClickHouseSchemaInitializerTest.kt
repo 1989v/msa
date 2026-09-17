@@ -82,3 +82,71 @@ class ClickHouseSchemaInitializerTest : BehaviorSpec({
         }
     }
 })
+
+class ClickHouseSchemaInitializerRunOnceTest : io.kotest.core.spec.style.BehaviorSpec({
+
+    /** 실행된 SQL 을 전부 받아 두는 가짜 JDBC. `SELECT version` 에는 미리 적용된 목록을 돌려준다. */
+    class FakeDb(alreadyApplied: List<String>) {
+        val executed = mutableListOf<String>()
+        val dataSource: javax.sql.DataSource = io.mockk.mockk()
+
+        init {
+            val conn: java.sql.Connection = io.mockk.mockk(relaxed = true)
+            val st: java.sql.Statement = io.mockk.mockk(relaxed = true)
+            val rs: java.sql.ResultSet = io.mockk.mockk()
+            val queue = java.util.ArrayDeque(alreadyApplied)
+            io.mockk.every { rs.next() } answers { queue.isNotEmpty() }
+            io.mockk.every { rs.getString(1) } answers { queue.poll() }
+            io.mockk.every { rs.close() } returns Unit
+            io.mockk.every { dataSource.connection } returns conn
+            io.mockk.every { conn.createStatement() } returns st
+            io.mockk.every { st.execute(any()) } answers { executed += firstArg<String>(); true }
+            io.mockk.every { st.executeQuery(any()) } answers { executed += firstArg<String>(); rs }
+        }
+    }
+
+    Given("아직 아무것도 적용되지 않은 환경") {
+        val db = FakeDb(alreadyApplied = emptyList())
+        ClickHouseSchemaInitializer(db.dataSource).apply()
+
+        Then("스크립트를 전부 돌리고 각각 이력에 남긴다") {
+            val inserts = db.executed.filter { it.startsWith("INSERT INTO analytics.schema_migrations") }
+            inserts.size shouldBe 6
+            inserts.any { "V005__events_two_axis.sql" in it } shouldBe true
+        }
+        Then("V005 의 DROP 이 실행된다 — 옛 표를 새 표로 바꾸는 일회성 작업이다") {
+            db.executed.any { it.startsWith("DROP TABLE IF EXISTS analytics.events") } shouldBe true
+        }
+    }
+
+    Given("전부 적용된 환경 (운영이 재시작할 때)") {
+        val db = FakeDb(alreadyApplied = listOf(
+            "V001__product_scores.sql", "V002__product_scores_smoothing_gmv.sql",
+            "V003__search_judgments_and_eval.sql", "V004__events.sql",
+            "V005__events_two_axis.sql", "V006__attraction_popularity_daily.sql",
+        ))
+        ClickHouseSchemaInitializer(db.dataSource).apply()
+
+        Then("DROP 을 다시 돌리지 않는다 — 돌리면 재시작마다 원장이 사라진다") {
+            // 실제로 배포 세 번에 노출 64,165건이 세 번 지워졌다 (2026-09-17)
+            db.executed.none { it.startsWith("DROP TABLE") } shouldBe true
+        }
+        Then("이력에 다시 쓰지도 않는다") {
+            db.executed.none { it.startsWith("INSERT INTO analytics.schema_migrations") } shouldBe true
+        }
+    }
+
+    Given("일부만 적용된 환경") {
+        val db = FakeDb(alreadyApplied = listOf(
+            "V001__product_scores.sql", "V002__product_scores_smoothing_gmv.sql",
+            "V003__search_judgments_and_eval.sql", "V004__events.sql",
+        ))
+        ClickHouseSchemaInitializer(db.dataSource).apply()
+
+        Then("안 된 것만 돌린다") {
+            val inserts = db.executed.filter { it.startsWith("INSERT INTO analytics.schema_migrations") }
+            inserts.map { Regex("V\\d+__[a-z_]+\\.sql").find(it)!!.value } shouldBe
+                listOf("V005__events_two_axis.sql", "V006__attraction_popularity_daily.sql")
+        }
+    }
+})
