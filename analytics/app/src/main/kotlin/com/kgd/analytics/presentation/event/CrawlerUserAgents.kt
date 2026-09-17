@@ -24,6 +24,11 @@ object CrawlerUserAgents {
         "ccbot", "bytespider", "amazonbot", "perplexitybot", "cohere-ai",
         "headlesschrome", "phantomjs", "lighthouse", "chrome-lighthouse",
         "bot/", "crawler", "spider",
+        // 「UA 없음」의 실제 모양. 이 서비스는 게이트웨이(Spring Cloud Gateway) 뒤에 있고,
+        // Reactor Netty 는 들어온 요청에 UA 가 없으면 자기 이름을 기본값으로 붙여 넘긴다.
+        // 그래서 아래 isNullOrBlank 분기는 여기서는 사실상 닿지 않고, 이 마커가 그 자리를 맡는다.
+        // 운영에서 확인: ingress 는 `-` 로 받았는데 서버는 크롤러로 안 봤다 (2026-09-17).
+        "reactornetty",
     )
 
     /**

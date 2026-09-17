@@ -37,6 +37,12 @@ class CrawlerUserAgentsTest : BehaviorSpec({
         }
     }
 
+    Given("게이트웨이가 UA 없는 요청에 붙이는 기본값") {
+        Then("크롤러로 본다 — 사람 브라우저는 UA 를 반드시 보내므로 이 값은 UA 없음의 서명이다") {
+            CrawlerUserAgents.isCrawler("ReactorNetty/1.2.3") shouldBe true
+        }
+    }
+
     Given("UA 가 없을 때") {
         Then("크롤러로 본다 — 브라우저는 항상 UA 를 보낸다") {
             CrawlerUserAgents.isCrawler(null) shouldBe true
