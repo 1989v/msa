@@ -726,7 +726,30 @@ def _popularity_drives_link_budget() -> None:
     assert "attraction_popularity_daily" in q, "전용 표만 읽어야 한다 — 공용 원장이 아니다"
     assert "analytics.events" not in q, "공용 원장에 직접 붙으면 스키마 변경에 조용히 깨진다"
 
-    # ② 조회가 실패해도 빈 목록일 뿐 — 예외가 수집을 멈추면 그날 치가 통째로 날아간다
+    # ② 연결 거부는 **재시도**한다 — 새 파드의 정책 등록 지연은 몇 초면 풀린다.
+    #    재시도 없이 빈 목록으로 가면 매 회차가 인기순 없이 돌면서 로그 한 줄만 남는다.
+    calls = {"n": 0}
+
+    def refused_then_ok(url, timeout=None):
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise ConnectionRefusedError(111, "Connection refused")
+
+        class R:
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+            def read(self): return b"42\n"
+        return R()
+
+    popularity.urllib.request.urlopen = refused_then_ok
+    popularity.time.sleep = lambda _s: None
+    try:
+        assert popularity.top_attraction_ids(5) == [42], "거부 뒤 재시도로 받아야 한다"
+        assert calls["n"] == 3, calls
+    finally:
+        popularity.urllib.request.urlopen = orig
+
+    # ③ 끝까지 안 되면 빈 목록일 뿐 — 예외가 수집을 멈추면 그날 치가 통째로 날아간다
     def boom(url, timeout=None):
         raise OSError("clickhouse down")
 
@@ -735,7 +758,22 @@ def _popularity_drives_link_budget() -> None:
         assert popularity.top_attraction_ids(5) == []
     finally:
         popularity.urllib.request.urlopen = orig
-    print("  인기순 예산 배분 OK (전용 표 · 실패해도 수집 계속)")
+
+    # ④ 서버가 답한 오류(HTTP)는 재시도하지 않는다 — 질의 문제라 다시 해도 같다
+    import urllib.error
+    calls["n"] = 0
+
+    def http_500(url, timeout=None):
+        calls["n"] += 1
+        raise urllib.error.HTTPError(url, 500, "boom", {}, None)
+
+    popularity.urllib.request.urlopen = http_500
+    try:
+        assert popularity.top_attraction_ids(5) == []
+        assert calls["n"] == 1, "HTTP 오류는 한 번만 — 재시도해도 같다"
+    finally:
+        popularity.urllib.request.urlopen = orig
+    print("  인기순 예산 배분 OK (전용 표 · 거부는 재시도 · HTTP 오류는 즉시 포기 · 실패해도 수집 계속)")
 
 
 if __name__ == "__main__":

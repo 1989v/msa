@@ -1,5 +1,6 @@
 package com.kgd.analytics.presentation.event.controller
 
+import com.kgd.analytics.presentation.event.CrawlerUserAgents
 import com.kgd.analytics.presentation.event.dto.CollectEventsRequest
 import com.kgd.analytics.presentation.event.dto.CollectEventsResponse
 import com.kgd.analytics.application.event.usecase.CollectEventsUseCase
@@ -39,6 +40,11 @@ class EventCollectController(
         @RequestHeader(name = SESSION_HEADER, required = false) sessionHeader: String?,
         servletRequest: HttpServletRequest,
     ): ApiResponse<CollectEventsResponse> {
+        // 크롤러는 202 만 돌려주고 버린다 — 화면은 응답을 기다리지 않으니 거절할 이유가 없고,
+        // 원장에 들어간 뒤 거르면 인기 집계가 「봇이 크롤한 순서」가 된다.
+        if (CrawlerUserAgents.isCrawler(servletRequest.getHeader("User-Agent"))) {
+            return ApiResponse.success(CollectEventsResponse(accepted = 0))
+        }
         val visitorId = visitorHeader?.takeIf { it.isNotBlank() } ?: ANONYMOUS
         val sessionId = sessionHeader?.takeIf { it.isNotBlank() } ?: visitorId
         val userId = servletRequest.getHeader(USER_HEADER)?.toLongOrNull()
