@@ -32,7 +32,9 @@ class ClickHouseSchemaSmokeSpec : BehaviorSpec({
             Then("첫 번째는 V001~V012 전부를 만들고 두 번째는 아무것도 다시 돌리지 않는다")
                 .config(enabledIf = { dockerAvailable }) {
                     val c = container!!
-                    DriverManager.getConnection(c.jdbcUrl, c.username, c.password).use { conn ->
+                    // 운영과 같은 모양: 풀 URL 은 아직 없는 /quant 를 가리키고, 부트스트랩이 system 으로 우회한다
+                    val poolUrl = QuantSchemaInitializer.bootstrapUrl(c.jdbcUrl).replace("/system", "/quant")
+                    DriverManager.getConnection(QuantSchemaInitializer.bootstrapUrl(poolUrl), c.username, c.password).use { conn ->
                         val bootstrapper = SchemaBootstrapper()
                         val first = bootstrapper.applyTo(conn)
                         val second = bootstrapper.applyTo(conn)

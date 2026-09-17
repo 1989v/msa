@@ -3,12 +3,12 @@ package com.kgd.quant.infrastructure.clickhouse
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import jakarta.annotation.PreDestroy
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.jdbc.core.JdbcTemplate
+import java.sql.DriverManager
 import javax.sql.DataSource
 
 /**
@@ -59,11 +59,11 @@ class ClickHouseConfig {
         return JdbcTemplate(ds)
     }
 
-    /** 템플릿과 같은 조건으로만 등록된다 — 템플릿 없이 초기화기만 뜨는 조합이 없다. */
+    /** 템플릿과 같은 설정으로만 등록된다. 풀이 아니라 별도 접속인 이유는 [QuantSchemaInitializer] 참조. */
     @Bean
-    fun quantSchemaInitializer(
-        @Qualifier("quantClickHouseJdbcTemplate") jdbc: JdbcTemplate,
-    ): QuantSchemaInitializer = QuantSchemaInitializer(jdbc)
+    fun quantSchemaInitializer(): QuantSchemaInitializer = QuantSchemaInitializer {
+        DriverManager.getConnection(QuantSchemaInitializer.bootstrapUrl(url), username, password)
+    }
 
     @PreDestroy
     fun close() {
