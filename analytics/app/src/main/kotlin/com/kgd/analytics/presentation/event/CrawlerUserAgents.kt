@@ -18,13 +18,24 @@ object CrawlerUserAgents {
         "googlebot", "bingbot", "yeti", "duckduckbot", "applebot", "yandexbot",
         "baiduspider", "slurp", "facebookexternalhit", "twitterbot", "linkedinbot",
         "petalbot", "semrushbot", "ahrefsbot", "mj12bot", "dotbot",
+        // AI 크롤러 — 관광지 상세 노출의 95% 가 meta-externalagent 였다 (2026-09-17 ingress 로그)
+        "meta-externalagent", "meta-webindexer", "facebookbot",
+        "gptbot", "chatgpt-user", "oai-searchbot", "claudebot", "claude-web", "anthropic-ai",
+        "ccbot", "bytespider", "amazonbot", "perplexitybot", "cohere-ai",
         "headlesschrome", "phantomjs", "lighthouse", "chrome-lighthouse",
         "bot/", "crawler", "spider",
     )
 
+    /**
+     * 브라우저 UA 뒤에 `(compatible; <이름>/<버전> …)` 를 붙이는 관행. 메타·구글이 이 형태다.
+     * 이름을 몰라도 이 모양이면 크롤러로 본다 — 목록에 없는 새 봇을 그때그때 쫓지 않기 위해서다.
+     * 사람 브라우저는 `compatible;` 을 쓰지 않는다 (옛 IE 는 `compatible; MSIE` 였고 이제 없다).
+     */
+    private val compatibleBot = Regex("""\(compatible;\s*[a-z][a-z0-9_-]*""", RegexOption.IGNORE_CASE)
+
     fun isCrawler(userAgent: String?): Boolean {
         if (userAgent.isNullOrBlank()) return true          // UA 없음 — 브라우저는 항상 보낸다
         val ua = userAgent.lowercase()
-        return markers.any { it in ua }
+        return markers.any { it in ua } || compatibleBot.containsMatchIn(ua)
     }
 }

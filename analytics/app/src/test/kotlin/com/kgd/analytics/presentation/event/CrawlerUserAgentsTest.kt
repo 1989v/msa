@@ -12,6 +12,12 @@ class CrawlerUserAgentsTest : BehaviorSpec({
             "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)",
             "Mozilla/5.0 (compatible; Yeti/1.1; +http://naver.me/spd)",
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/120.0 Safari/537.36",
+            // 실제 운영 로그에서 뽑은 것 — 노출 64,165건의 95% 가 이것이었다
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36 (compatible; meta-externalagent/1.1 (+https://developers.facebook.com/docs/sharing/webmasters/crawler))",
+            "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; GPTBot/1.2; +https://openai.com/gptbot)",
+            // 목록에 없는 이름이고 bot·crawler·spider 어느 단어도 없다 — (compatible; 이름/버전) 모양만으로 잡혀야 한다.
+            // 이 케이스가 없으면 위 둘은 URL 속 "crawler"·이름 속 "bot/" 로 우연히 잡혀, 모양 규칙이 죽어도 초록불이 난다.
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (compatible; Acme/1.0; +https://example.test/about)",
         ).forEach { ua ->
             When("「${ua.take(40)}…」") {
                 Then("크롤러로 본다") { CrawlerUserAgents.isCrawler(ua) shouldBe true }
