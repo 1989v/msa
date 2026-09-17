@@ -5,6 +5,11 @@
 -- 한 번 더 곱해져 quadrillion 단위의 비현실 값 ($2,954T) 발생.
 --
 -- 주식 (STOCK_KR/STOCK_US) 의 volume 은 주식수이므로 그대로 close 곱하기 유지.
+--
+-- 분기는 `CASE x WHEN` 이 아니라 if() 로 쓴다. ClickHouse 24.8 은 단순 CASE 를 transform() 으로
+-- 바꾸는데 transform 은 Decimal(38,16)(= sum(volume * close)) 을 받지 못해 뷰 생성이 죽는다.
+-- 두 가지의 스케일도 다르므로(8 vs 16) Float64 로 맞춘다 — 읽는 쪽(ClickHouseRankingAdapter)이
+-- 어차피 toFloat64 로 받는다.
 
 DROP VIEW IF EXISTS quant.discover_daily_ranking;
 
@@ -16,10 +21,10 @@ SELECT
     toDate(ts) AS trade_date,
     argMax(close, ts) AS last_close,
     argMin(close, ts) AS first_close,
-    CASE asset_class
-        WHEN 'CRYPTO' THEN sum(volume)         -- yfinance USD turnover 자체
-        ELSE sum(volume * close)               -- 주식: shares × price
-    END AS turnover,
+    if(asset_class = 'CRYPTO',
+        toFloat64(sum(volume)),                -- yfinance USD turnover 자체
+        toFloat64(sum(volume * close))         -- 주식: shares × price
+    ) AS turnover,
     sum(volume) AS volume_total
 FROM quant.ohlcv
 WHERE interval = '1d'

@@ -18,11 +18,13 @@ private val dockerAvailable: Boolean =
     runCatching { DockerClientFactory.instance().isDockerAvailable }.getOrDefault(false)
 
 class ClickHouseSchemaSmokeSpec : BehaviorSpec({
-    // 24.x 이미지는 default 사용자 인증 정책이 강화되어 Testcontainers 기본 plain 접근이 거부됨.
-    // 23.8 LTS 로 고정 (운영 사용은 24.x — 본 spec 은 schema bootstrap 검증 용도라 버전 무관).
-    val image = DockerImageName.parse("clickhouse/clickhouse-server:23.8")
+    // 운영과 같은 24.8 로 돈다. 23.8 로 고정돼 있던 동안 V010 의 `CASE x WHEN` 이 24.8 에서
+    // transform() 으로 바뀌며 Decimal 을 못 받는 것을 검사가 못 잡았고, 운영 첫 부트스트랩이 거기서 죽었다.
+    val image = DockerImageName.parse("clickhouse/clickhouse-server:24.8")
         .asCompatibleSubstituteFor("clickhouse/clickhouse-server")
-    val container: ClickHouseContainer? = if (dockerAvailable) ClickHouseContainer(image) else null
+    // 24.x 이미지는 비밀번호 없는 default 사용자를 거부한다 — 운영처럼 계정을 만들어 들어간다.
+    val container: ClickHouseContainer? =
+        if (dockerAvailable) ClickHouseContainer(image).withUsername("test").withPassword("test") else null
 
     beforeSpec { container?.start() }
     afterSpec { container?.stop() }
