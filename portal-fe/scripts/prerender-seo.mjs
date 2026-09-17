@@ -720,8 +720,7 @@ async function writeRobotsAndSitemaps(
   await writePlaceSitemaps([...placeHubEntries, ...regionEntries], placeDetailEntries);
 
   await emit(`seo/${GAME_HOST}/robots.txt`, robotsTxt(GAME_ORIGIN));
-  // 통합 검색 결과(/search?q=)는 색인 대상이 아니다 — noindex 에 더해 크롤도 막는다
-  await emit(`seo/${PORTAL_HOST}/robots.txt`, robotsTxt(PORTAL_ORIGIN, ['/search']));
+  await emit(`seo/${PORTAL_HOST}/robots.txt`, robotsTxt(PORTAL_ORIGIN));
   await emit(`seo/${PLACE_HOST}/robots.txt`, robotsTxt(PLACE_ORIGIN));
   // 이력서는 색인 대상이 아니다 (ADR-0064). sitemap·llms.txt 도 두지 않는다.
   await emit(`seo/${RESUME_HOST}/robots.txt`, 'User-agent: *\nDisallow: /\n');
@@ -821,7 +820,7 @@ function sitemapIndexXml(locs) {
   ].join('\n');
 }
 
-function robotsTxt(origin, extraDisallow = []) {
+export function robotsTxt(origin, extraDisallow = []) {
   return `User-agent: *
 Allow: /
 Disallow: /api/
@@ -864,6 +863,18 @@ Allow: /
 
 User-agent: Applebot-Extended
 Allow: /
+
+# 메타의 AI 학습 크롤러 — 위 AEO 목록에 없던 것인데 부하의 대부분이었다.
+# 2026-09-16~17 ingress 로그: 관광지 상세 요청 1,465건 중 1,395건(95%)이 이 봇이었고
+# Googlebot 은 68건, 사람은 2건. 프리렌더 밖 페이지에서 JS 를 렌더해 API 를 3번씩 불러
+# 무료 단일 노드에서 사람 트래픽의 수백 배를 썼다. 답변형 검색이 아니라 학습용이라
+# 인용으로 돌아오는 것도 없다. facebookexternalhit(링크 미리보기)는 별개라 그대로 둔다.
+# robots 의 User-agent 매칭은 대소문자를 가리지 않는다(RFC 9309) — 한 벌이면 된다.
+User-agent: meta-externalagent
+Disallow: /
+
+User-agent: meta-externalfetcher
+Disallow: /
 
 Sitemap: ${origin}/sitemap.xml
 `;

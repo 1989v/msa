@@ -7,6 +7,7 @@ import {
   pickPrerenderDetails,
   renderAttractionDetail,
   renderRegionDetail,
+  robotsTxt,
 } from '../../../scripts/prerender-seo.mjs';
 
 const SHELL = [
@@ -197,5 +198,30 @@ describe('이용 안내와 원천 마크업 정리', () => {
   it('이용 안내가 하나도 없으면 절 자체를 만들지 않는다', () => {
     const html = renderAttractionDetail(SHELL, 'ko', doc, { region: seoul });
     expect(html).not.toContain('이용 안내');
+  });
+});
+
+describe('robots — 크롤러 정책', () => {
+  it('메타 AI 학습 크롤러는 막는다 — 부하의 95% 였고 답변형 검색이 아니다', () => {
+    // 2026-09-16~17 ingress 로그: 관광지 상세 1,465건 중 meta-externalagent 1,395건
+    const robots = robotsTxt('https://place.1989v.com');
+    const block = robots.split('\n\n').find((b) => /User-agent: meta-externalagent/i.test(b));
+    expect(block).toBeDefined();
+    expect(block).toContain('Disallow: /');
+    expect(block).not.toContain('Allow: /');
+  });
+
+  it('답변형 검색 크롤러는 그대로 연다 — 인용되는 쪽이 이득이다 (ADR-0062)', () => {
+    const robots = robotsTxt('https://place.1989v.com');
+    for (const ua of ['GPTBot', 'ClaudeBot', 'PerplexityBot']) {
+      const block = robots.split('\n\n').find((b) => b.includes(`User-agent: ${ua}`));
+      expect(block, ua).toContain('Allow: /');
+      expect(block, ua).not.toContain('Disallow: /\n');
+    }
+  });
+
+  it('링크 미리보기(facebookexternalhit)는 막지 않는다 — 공유 카드가 깨진다', () => {
+    const robots = robotsTxt('https://place.1989v.com');
+    expect(robots).not.toMatch(/User-agent: facebookexternalhit\s+Disallow/i);
   });
 });
