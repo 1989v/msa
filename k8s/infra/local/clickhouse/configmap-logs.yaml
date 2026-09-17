@@ -19,26 +19,26 @@ data:
   # 그리고 이 파일만 고치면 파드가 안 바뀐다. subPath 마운트라 ConfigMap 이 갱신돼도
   # 컨테이너 안 파일은 그대로고, StatefulSet 스펙이 안 바뀌니 Argo 도 재기동을 시키지 않는다.
   # kubectl delete pod clickhouse-0 으로 직접 돌린다.
+  #
+  # 서버 지표 테이블(metric_log 등)은 TTL 로도 부족했다. metric_log 는 컬럼이 1,000개가 넘어
+  # 파트 36개 병합이 메모리 한도(1.35GiB)를 넘고, 실패하면 0.4초 뒤 처음부터 다시 돌았다 —
+  # 원장에 3건뿐인 인스턴스가 이 병합 루프로 1.4코어(노드의 36%)를 12시간 내내 썼다
+  # (2026-09-17, MEMORY_LIMIT_EXCEEDED 120만 회). 우리 코드가 읽는 곳이 없으니 테이블을
+  # 아예 만들지 않는다. 남기는 것은 query_log·part_log·error_log 셋 — 진단에 실제로 쓴다.
   logs.xml: |
     <clickhouse>
         <!-- 서버 내부 로그 본문. 파일 로그로 충분하고 테이블로 쌓을 이유가 없다 -->
         <text_log remove="1"/>
 
-        <metric_log>
-            <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
-        </metric_log>
-        <asynchronous_metric_log>
-            <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
-        </asynchronous_metric_log>
+        <!-- 서버 지표: 초당 ProfileEvents/CurrentMetrics 전부. 위 병합 루프의 원인 -->
+        <metric_log remove="1"/>
+        <asynchronous_metric_log remove="1"/>
+        <trace_log remove="1"/>
+        <processors_profile_log remove="1"/>
+
         <query_log>
             <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
         </query_log>
-        <trace_log>
-            <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
-        </trace_log>
-        <processors_profile_log>
-            <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
-        </processors_profile_log>
         <part_log>
             <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
         </part_log>
