@@ -76,4 +76,35 @@ class IndexAliasManagerTest : BehaviorSpec({
             }
         }
     }
+
+    // 운영은 OpenSearch 단일 노드다. 선언이 없으면 서버 기본값(레플리카 1)이 들어가 복제본을
+    // 둘 곳이 없어 클러스터가 상시 yellow 가 되고, 진짜 장애 신호와 구분이 안 된다.
+    // 프라이머리 1 은 단일 노드에서 fan-out 이 없는 유일한 값이다 (샤드당 270MB, 권장 20~50GB).
+    given("색인 정의 4종의 샤드 설정") {
+        listOf(
+            IndexAliasManager.PRODUCTS_INDEX_DEFINITION,
+            IndexAliasManager.ATTRACTIONS_INDEX_DEFINITION,
+            IndexAliasManager.REGIONS_INDEX_DEFINITION,
+            IndexAliasManager.UNIFIED_INDEX_DEFINITION,
+        ).forEach { definition ->
+            `when`("$definition 으로 createIndex 하면") {
+                then("프라이머리 1 · 레플리카 0 이 요청에 명시되어야 한다") {
+                    val transport = mockk<OpenSearchTransport>()
+                    every { osClient._transport() } returns transport
+                    every { transport.jsonpMapper() } returns JacksonJsonpMapper()
+                    val indices = mockk<OpenSearchIndicesClient>()
+                    every { osClient.indices() } returns indices
+                    val requestSlot = slot<CreateIndexRequest>()
+                    every { indices.create(capture(requestSlot)) } returns mockk(relaxed = true)
+
+                    manager.createIndex("contract_test", definition)
+
+                    // 정의 JSON 은 settings.index.* 중첩형이라 typed 로는 settings().index() 에 실린다
+                    val index = requestSlot.captured.settings().shouldNotBeNull().index().shouldNotBeNull()
+                    index.numberOfShards() shouldBe 1
+                    index.numberOfReplicas() shouldBe 0
+                }
+            }
+        }
+    }
 })
