@@ -389,7 +389,7 @@ images:
     newTag: cb23a78
   - name: commerce/quant-ingest
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant-ingest
-    newTag: af83d34
+    newTag: 9a6adac
   - name: commerce/ranking-ingest
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/ranking-ingest
     newTag: 512b040
