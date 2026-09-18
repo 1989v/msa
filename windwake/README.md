@@ -4,6 +4,8 @@
 
 ## 실행
 
+공개 주소: **https://game.1989v.com/games/windwake/index.html**
+
 저장소 루트에서:
 
 ```sh
@@ -92,3 +94,17 @@ node windwake/tests/browser.mjs input routes optional
 자체 테스트 프로필만 실행하고 종료합니다. 키보드·마우스·멀티터치, 점프·전투·콤보·카메라, 일시정지, 각 성소를 첫 목적지로 해결하기, 세 봉인부터 보스까지의 경로, 엔딩 후 자유 탐험과 새로고침 저장 복원을 검증합니다.
 
 상세 결과와 반복 개선 기록: [검증 보고서](../docs/specs/2026-09-18-windwake/verifications/final-verification.md). 성능 측정은 Chrome SwiftShader 소프트웨어 WebGL 환경이며 실제 GPU/모바일 기기의 속도를 보장하지 않습니다. 터치는 Chrome 에뮬레이션으로 검증했습니다.
+
+## 배포
+
+`windwake/`가 원본입니다. `node windwake/publish.mjs`는 실행 파일 8개와 SHA-256 릴리스 메타데이터만 `portal-fe/public/games/windwake/`에 복사합니다. 테스트·문서는 배포하지 않으며 변환이나 번들 빌드는 없습니다.
+
+games 서브모듈 커밋을 먼저 push하고, 부모 저장소에서 해당 포인터와 서버 설정을 커밋하여 main에 push합니다. 기존 `images` 워크플로가 `portal-fe` 이미지만 빌드하고 OCI 매니페스트를 갱신하면 Argo CD가 반영합니다. Nginx는 `.mjs`를 `text/javascript`로 서빙하며 없는 모듈은 404를 반환합니다.
+
+배포 후 검증:
+
+```sh
+node windwake/tests/deployed.mjs https://game.1989v.com/games/windwake/index.html
+```
+
+실제 응답의 파일 해시·MIME·404, Chrome 시작·키보드 이동·점프·정상 입력 경로의 보스 엔딩·콘솔 오류를 확인합니다. 자동 경로 스크립트는 검증 클라이언트가 주입하며 공개 서버에 테스트 코드를 올리지 않습니다.

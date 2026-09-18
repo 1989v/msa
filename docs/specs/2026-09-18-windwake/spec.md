@@ -44,13 +44,13 @@ A complete, original, freely explorable third-person browser action adventure, b
 Painterly low-poly islands and hills: muted jade landscape, warm limestone ruins, amber signal fires and pale teal wind. A small caped wanderer with visible sword is always legible. The scene fills the screen; restrained parchment/ink HUD shows health, stamina, sigils and current discovery. UI typography/spacing derives from root DESIGN.md; named local palette tokens are documented in windwake/DESIGN.md. No external fonts/images.
 
 ## Existing Code to Leverage
-No existing game source or assets. Only repository conventions and existing browser verification tools are used. Standalone directory `windwake/`; no catalog, backend, deployment or database change.
+No existing game source or assets. Only repository conventions and existing browser verification tools are used. Standalone source directory `windwake/`; no catalog, backend or database change. The user's subsequent deployment request authorizes publishing runtime copies through the existing games submodule and portal-fe image.
 
 ## Out of Scope
-Multiplayer, accounts, publishing/deployment, external models/assets, infinite terrain, cinematic voice acting, a AAA content volume. Scope decisions preserve all requested core play loops.
+Multiplayer, accounts, external models/assets, infinite terrain, cinematic voice acting, a AAA content volume. Scope decisions preserve all requested core play loops.
 
 ## Open Questions
-None. The user authorized autonomous design, implementation, playtesting and improvement. Deployment would require separate authorization.
+None. The user authorized autonomous design, implementation, playtesting and improvement, then explicitly requested deployment on 2026-09-19.
 
 ## Local Gameplay Terms
 Sanctuary: a region's physical challenge. Sigil: unique durable proof of solving that sanctuary. Resonance: the Q pulse that damages enemies and moves the quarry stone. Sail/glider: the same first-sigil aerial ability. Checkpoint: discovered camp used for rest and respawn. Crystal: collectible currency for permanent camp upgrades.

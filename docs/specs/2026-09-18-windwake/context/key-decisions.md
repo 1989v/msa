@@ -30,3 +30,9 @@ The comprehensive user request explicitly authorizes game design and implementat
 - The initial boss could be defeated by repeated pulse stagger without using defense. Increased health to740 and require3 pulse impacts for stagger; parry keeps its immediate opening. Full route now includes successful parries.
 - Third sigil increases resonance damage by12; source data and saves derive glider/stamina from unique sigils.
 - Browser verification uses an owned temporary Chrome profile via the repository script. macOS CDP must omit nativeVirtualKeyCode; Windows values in that field stalled input, not the game loop.
+
+## 2026-09-19 — Authorized public deployment
+- User instruction: “배포까지”. Publish through the existing game.1989v.com → portal-fe → OCI GitOps path.
+- Use a separate checkout of current origin/main and cherry-pick only WINDWAKE; the working main contains many unrelated unpublished commits and dirty files.
+- Copy the eight unchanged runtime files plus hash metadata into the existing games submodule. No runtime engine/build dependency or database/catalog change.
+- Explicit nginx module MIME and missing-file 404 prevent browser module rejection and SPA fallback. Validate nginx locally, compare released hashes, run trusted Chrome input and a full player-input journey on the public URL.
