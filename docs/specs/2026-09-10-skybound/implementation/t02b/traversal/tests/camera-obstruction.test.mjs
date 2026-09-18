@@ -25,3 +25,14 @@ test('side rays protect the camera edge and geometry beyond requested zoom is ig
   pillar.position.z = 9; camera.resolve(target, desired, result); assert.equal(result.z, 7.2);
   camera.resolve(target, target, result); assert.deepEqual(result.toArray(), target.toArray());
 });
+
+test('wall contact is immediate, recovery eases without overshoot, zoom and teleport stay deliberate',()=>{
+ const wall=new THREE.Mesh(new THREE.BoxGeometry(4,4,.5),new THREE.MeshBasicMaterial());wall.position.set(0,1,3);
+ const camera=createCameraObstruction(THREE,()=>[wall]),target=new THREE.Vector3(0,1,0),desired=new THREE.Vector3(0,1,7.2),out=new THREE.Vector3();
+ camera.resolve(target,desired,out,0);assert.ok(out.z<3);
+ wall.visible=false;camera.resolve(target,desired,out,1/60);assert.ok(out.z>2.55&&out.z<4);
+ for(let i=0;i<60;i++)camera.resolve(target,desired,out,1/60);assert.ok(out.z>7.19&&out.z<=7.2);
+ wall.visible=true;camera.resolve(target,desired,out,1/60);assert.ok(out.z<3,'new obstruction must snap inward');
+ wall.visible=false;desired.z=8;camera.resolve(target,desired,out,0);assert.equal(out.z,8,'explicit zoom does not inherit collision lag');
+ wall.visible=true;desired.z=7.2;camera.resolve(target,desired,out,0);target.x=10;desired.x=10;camera.resolve(target,desired,out,0);assert.equal(out.z,7.2);
+});

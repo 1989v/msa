@@ -1,3 +1,4 @@
+import { validCheckpoint } from '../../t10a/src/checkpoints.mjs';
 import { DISCOVERY_IDS } from '../../t06a/src/exploration.mjs';
 const SAVE_KEY = 'skybound.progress.v1';
 const MAX_SAVE_LENGTH = 4096;
@@ -28,6 +29,10 @@ function validateProgress(value, allowMissing = false) {
     const ids = value.discoveries;
     if (!Array.isArray(ids) || ids.length > DISCOVERY_IDS.length || ids.some(id => !DISCOVERY_IDS.includes(id)) || new Set(ids).size !== ids.length) return null;
     progress.discoveries = [...ids];
+  }
+  if (Object.hasOwn(value, 'checkpointId')) {
+    if (typeof value.checkpointId !== 'string' || !validCheckpoint(value.checkpointId, progress)) return null;
+    progress.checkpointId = value.checkpointId;
   }
   return progress;
 }

@@ -1,5 +1,7 @@
 export function suggestedDestination(progress) {
-  if (progress.journeyComplete) return 'camp';
+  if (progress.archiveComplete) return 'camp';
+  if (progress.harborAligned) return 'high-archive';
+  if (progress.journeyComplete) return 'west-harbor';
   if (!progress.stoneRuinActive) return 'stone';
   if (!progress.watchRuinActive) return 'watch';
   if (!progress.windRuinActive) return 'wind';

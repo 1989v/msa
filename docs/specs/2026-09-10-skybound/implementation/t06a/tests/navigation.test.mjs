@@ -14,10 +14,12 @@ test('vertical separation never treats an airborne altar as a reached destinatio
   assert.equal(destinationBearing(p, { ...p, y: -8 }, 0).elevation, '아래쪽');
   assert.throws(() => destinationBearing(p, { ...p, x: NaN }, 0));
 });
-test('suggestions skip completed ruins and return to camp after ending', () => {
+test('suggestions continue through both maps before returning to camp', () => {
   const progress = {};
   for (const [expected, flag] of [['stone', 'stoneRuinActive'], ['watch', 'watchRuinActive'], ['wind', 'windRuinActive'], ['gate', 'journeyComplete']]) {
     assert.equal(suggestedDestination(progress), expected); progress[flag] = true;
   }
-  assert.equal(suggestedDestination(progress), 'camp');
+  assert.equal(suggestedDestination(progress), 'west-harbor');
+  progress.harborAligned=true;assert.equal(suggestedDestination(progress), 'high-archive');
+  progress.archiveComplete=true;assert.equal(suggestedDestination(progress), 'camp');
 });

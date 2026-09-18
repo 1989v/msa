@@ -235,7 +235,8 @@
           "relay-four",
           "relay-five",
           "high-archive"
-        ]
+        ],
+        "checkpointId": "high-archive"
       },
       "passed": true
     },
@@ -244,7 +245,7 @@
       "passed": true
     },
     {
-      "name": "reload completed expansion at safe origin",
+      "name": "reload completed expansion at archive checkpoint",
       "progress": {
         "watchRuinActive": true,
         "firstAerialLanding": true,
@@ -269,7 +270,8 @@
           "relay-four",
           "relay-five",
           "high-archive"
-        ]
+        ],
+        "checkpointId": "high-archive"
       },
       "harbor": {
         "turns": [
@@ -286,10 +288,14 @@
         "complete": true
       },
       "position": {
-        "x": 0,
-        "y": 9.06338310868186,
-        "z": 35
+        "x": -48,
+        "y": 21.55144082479028,
+        "z": -124.4
       },
+      "passed": true
+    },
+    {
+      "name": "manual camp return updates the next safe start",
       "passed": true
     }
   ],
