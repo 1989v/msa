@@ -61,10 +61,12 @@ DEFAULT_TARGETS = [
 def load_targets() -> List[Tuple[str, str, str]]:
     """quant 백엔드의 자산 카탈로그 fetch.
 
-    `QUANT_API_URL` 미지정 시 in-cluster DNS `http://quant:8094` 사용.
+    `QUANT_API_URL` 미지정 시 in-cluster DNS `http://sideapp:8095` 사용 — quant 는 ADR-0093 으로
+    sideapp 파드에 폴드됐다. 옛 이름 `quant:8094` 를 물고 있는 동안 카탈로그를 한 번도 못 받고
+    매 회차 DEFAULT_TARGETS 로만 돌았다 (2026-09-17 확인).
     실패 시 DEFAULT_TARGETS 로 fallback (오프라인 / DB 미부트 케이스 보호).
     """
-    base = os.environ.get("QUANT_API_URL", "http://quant:8094")
+    base = os.environ.get("QUANT_API_URL", "http://sideapp:8095")
     url = f"{base}/api/v1/quant/assets?activeOnly=true"
     try:
         r = requests.get(url, timeout=5)
