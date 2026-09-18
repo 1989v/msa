@@ -50,6 +50,7 @@ export const isProd1989vHost =
 /** 서비스 탐색 오버레이가 걸 주소 — 어느 프로덕션 호스트에서든 정규 주소로 보낸다 */
 export function resolveExplorerHref(code: string, href: string): string {
   if (!isProd1989vHost) return href; // 로컬/k3d — 상대 경로 그대로 (타일과 같은 이유)
+  if (/^https?:\/\//.test(href)) return href; // 바깥 사이트(클로드 아티팩트 등) — apex 를 앞에 붙이면 주소가 깨진다
   const origin = SUBDOMAIN_ORIGIN[code];
   return origin ? `${origin}/` : `${PORTAL_ORIGIN}${href}`;
 }

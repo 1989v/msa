@@ -68,6 +68,14 @@ describe('resolveExplorerHref', () => {
     expect(resolveExplorerHref('place', '/place')).toBe('/place');
     expect(resolveExplorerHref('tech', '/tech')).toBe('/tech');
   });
+
+  it('바깥 사이트의 절대 URL 은 어느 호스트에서든 그대로 — apex 를 앞에 붙이면 주소가 깨진다', async () => {
+    const external = 'https://claude.ai/artifact/3NH3XJx6mtgASoPn1N7JQx';
+    expect((await loadWithHost('game.1989v.com')).resolveExplorerHref('artifacts', external)).toBe(external);
+    expect((await loadWithHost('1989v.com')).resolveExplorerHref('artifacts', external)).toBe(external);
+    expect((await loadWithHost('1989v.com')).resolveServiceHref('artifacts', external)).toBe(external);
+    expect((await loadWithHost('localhost')).resolveExplorerHref('artifacts', external)).toBe(external);
+  });
 });
 
 describe('portalHomeHref', () => {
