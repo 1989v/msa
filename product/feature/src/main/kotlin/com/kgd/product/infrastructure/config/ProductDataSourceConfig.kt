@@ -17,6 +17,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy
 import org.springframework.orm.jpa.JpaTransactionManager
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
+import org.springframework.orm.jpa.SharedEntityManagerCreator
 import org.springframework.transaction.PlatformTransactionManager
 import javax.sql.DataSource
 
@@ -117,9 +118,15 @@ class ProductDataSourceConfig {
      * 총칭 `jpaQueryFactory` 로 두면 호스트의 기본 EMF(inventory)에 바인딩돼, 컴파일은 되는데
      * **product 쿼리가 inventory_db 로 나간다.** code-dictionary 폴드가 같은 이유로
      * `gameJpaQueryFactory` 를 쓴다.
+     *
+     * **`emf.createEntityManager()` 를 넘기지 않는다.** 그 EntityManager 는 앱과 수명이 같고
+     * 트랜잭션 밖이라 JDBC 커넥션 하나를 영영 쥔다 — MySQL `wait_timeout`(8h) 이 그 커넥션을
+     * 끊자 Hibernate 가 닫힌 풀 프록시를 계속 물었고, 상품 API 전부가 `Connection is closed`
+     * 로 3일간 500 이었다(2026-09-14~17). 공유 EntityManager 는 호출마다 현재 트랜잭션의
+     * EM 에 위임하므로 커넥션이 트랜잭션과 함께 풀로 돌아간다. `@PersistenceContext` 가 주는 것과 같다.
      */
     @Bean
     fun productJpaQueryFactory(
         @Qualifier("productEntityManagerFactory") emf: EntityManagerFactory,
-    ): JPAQueryFactory = JPAQueryFactory(emf.createEntityManager())
+    ): JPAQueryFactory = JPAQueryFactory(SharedEntityManagerCreator.createSharedEntityManager(emf))
 }

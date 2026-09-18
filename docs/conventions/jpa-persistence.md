@@ -146,6 +146,8 @@ Pessimistic lock 은 트랜잭션 안에서만 의미가 있고 범위를 최소
 
 단순 CRUD·derived query 는 `JpaRepository` 가, 동적 조건·조인·집계·페이지네이션은 `{Entity}QueryRepository` 가 맡는다. Repository interface 에 `@Query`/JPQL/native query 를 쓰지 않고, 무거운 조회는 QueryRepository 로 옮긴다. `JPAQueryFactory` 는 생성자 주입한다.
 
+폴드 호스트처럼 EMF 가 여럿이라 `JPAQueryFactory` 빈을 직접 만들 때는 **`SharedEntityManagerCreator.createSharedEntityManager(emf)`** 를 넘긴다. `emf.createEntityManager()` 는 앱 수명의 EntityManager 라 JDBC 커넥션 하나를 트랜잭션 밖에서 영영 쥔다 — MySQL `wait_timeout`(8h) 이 그 커넥션을 끊으면 그 뒤로는 모든 조회가 `Connection is closed` 다. 상품 API 가 그렇게 3일간 500 이었다 (2026-09-14~17). 견본은 `game/feature` 의 `gameJpaQueryFactory`.
+
 페이지네이션은 content / count 쿼리를 분리한다. count 쿼리에는 불필요한 join·order by 를 넣지 않고, raw `page`/`size` 대신 `Pageable` 을 받는다.
 
 ```kotlin
