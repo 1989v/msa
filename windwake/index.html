@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="hsl(204 25% 13%)">
+  <title>WINDWAKE — 바람의 잔향</title>
+  <meta name="description" content="멈춘 바람을 깨우는 작은 여행. 탐험, 검과 울림, 공중 유적이 있는 독자적인 오픈월드 액션 어드벤처.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='hsl(164,40%25,67%25)' d='M16 1 30 16 16 31 2 16z'/%3E%3Cpath fill='hsl(204,25%25,13%25)' d='m16 6 6 13-6-3-6 3z'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <canvas id="world" aria-label="바람의 잔향 3차원 게임 세계" tabindex="0"></canvas>
+  <div id="shade" aria-hidden="true"></div>
+  <div id="hud" hidden>
+    <div class="vitals">
+      <div class="vital-title"><span class="wanderer-mark">◇</span><span>바람을 잇는 자</span><span id="health-text">100 / 100</span></div>
+      <div class="meter health"><i id="health-fill"></i></div>
+      <div class="submeters"><span>기력</span><div class="meter stamina"><i id="stamina-fill"></i></div><span>울림</span><div class="meter energy"><i id="energy-fill"></i></div></div>
+      <div class="inventory"><span>◈ <b id="crystals">0</b> 결정</span><span><kbd>H</kbd> 회복약 <b id="flasks">3</b></span><span id="sail-tag" hidden>바람돛</span></div>
+    </div>
+    <div id="compass"><span>W</span><span id="heading">N</span><span>E</span></div>
+    <div class="quest"><div class="eyebrow">멈춘 바람의 노래</div><p id="quest-text">세 성소의 봉인을 해방하세요</p><div id="sigils"><span data-sigil="quarry">◇ 돌</span><span data-sigil="forest">◇ 숲</span><span data-sigil="ruins">◇ 하늘</span></div></div>
+    <div class="top-actions"><button id="map-button" title="지도와 여정 (M)">지도 <kbd>M</kbd></button><button id="sound-button" title="소리 켜기/끄기" aria-pressed="false">소리 켜짐</button><button id="pause-button" title="일시정지 (Esc)">Ⅱ</button></div>
+    <div class="local-map"><canvas id="minimap" width="170" height="170" aria-label="주변 지형과 성소 방향"></canvas><div id="region-name">바람결 초원</div><small id="altitude">높이 0 m</small></div>
+    <div id="boss-bar" hidden><span>고요의 수호자</span><div class="meter health"><i id="boss-fill"></i></div><small id="boss-phase">봉인된 하늘의 파수꾼</small></div>
+    <div id="enemy-labels" aria-hidden="true"></div>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <div id="interaction" hidden><kbd>E</kbd><div><strong id="interact-title"></strong><small id="interact-description"></small></div></div>
+    <div id="skill-feedback"></div>
+    <div class="controls-strip"><span><kbd>WASD</kbd> 이동</span><span><kbd>Space</kbd> 점프 · 돛</span><span><kbd>J</kbd> / 클릭 공격</span><span><kbd>K</kbd> 회피</span><span><kbd>Q</kbd> 울림</span><span><kbd>F</kbd> 패링</span><span>우클릭 드래그 · 시점</span></div>
+    <div id="touch-controls"><div id="joystick" aria-label="이동 조이스틱"><div></div></div><div class="touch-actions"><button data-action="interact">사용</button><button data-action="skill">울림</button><button data-action="parry">패링</button><button data-action="dodge">회피</button><button data-action="attack" class="attack-button">공격</button><button data-action="jump">점프</button><button data-action="heal">회복</button></div><span class="touch-look">화면 오른쪽을 쓸어 시점 회전</span></div>
+  </div>
+  <main id="start-screen" class="screen title-screen">
+    <div class="title-content">
+      <div class="eyebrow">AN ORIGINAL OPEN-WORLD ADVENTURE</div>
+      <h1>WIND<br>WAKE<span>바람의 잔향</span></h1>
+      <div class="title-rule"></div>
+      <p>세상은 바람을 잊었다.<br>당신의 발걸음이, 다시 하늘을 깨운다.</p>
+      <button id="continue-button" class="primary" hidden>여정 이어가기 <span>→</span></button>
+      <button id="start-button" class="primary">여정 시작하기 <span>→</span></button>
+      <div class="title-hint">자유로운 탐험 · 검과 울림 · 하늘을 향한 여정</div>
+    </div>
+    <div class="title-footer"><span>01 / THE SLEEPING WIND</span><span>HEADPHONES RECOMMENDED</span></div>
+  </main>
+  <section id="panel" class="screen panel-screen" hidden aria-modal="true" role="dialog" aria-labelledby="panel-title">
+    <div class="panel-body"><div class="panel-header"><div><div class="eyebrow" id="panel-kicker">WINDWAKE</div><h2 id="panel-title">여정</h2></div><button id="close-panel" aria-label="게임으로 돌아가기">닫기 ×</button></div><div id="panel-content"></div></div>
+  </section>
+  <div id="fatal" class="screen" hidden><h1>바람을 불러오지 못했습니다</h1><p id="fatal-text"></p><button onclick="location.reload()">다시 시도</button></div>
+  <script type="module" src="./main.mjs"></script>
+</body>
+</html>

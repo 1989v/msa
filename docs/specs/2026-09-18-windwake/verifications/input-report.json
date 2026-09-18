@@ -1,0 +1,111 @@
+{
+  "combat": {
+    "frame": 442,
+    "metrics": {
+      "jumps": 1,
+      "landings": 1,
+      "hits": 1,
+      "kills": 0,
+      "parries": 0,
+      "dodges": 1,
+      "combos": 1,
+      "damageTaken": 13,
+      "distance": 31.74012763752837,
+      "falls": 0,
+      "secrets": 0
+    },
+    "events": [
+      "jump",
+      "land",
+      "enemy-attack",
+      "hurt",
+      "attack1",
+      "attack2",
+      "attack3",
+      "pulse",
+      "hit",
+      "dodge",
+      "guard"
+    ],
+    "hp": 87
+  },
+  "cameraBefore": {
+    "yaw": 0,
+    "pitch": 0.35,
+    "distance": 9,
+    "shake": 0,
+    "reducedMotion": false
+  },
+  "cameraAfter": {
+    "yaw": 0.9,
+    "pitch": 0.43,
+    "distance": 9,
+    "shake": 0,
+    "reducedMotion": false
+  },
+  "paused": {
+    "ui": {
+      "started": true,
+      "manual": false,
+      "panel": "map",
+      "storageAvailable": true,
+      "audio": "running",
+      "muted": false
+    },
+    "frame": 443
+  },
+  "backgroundState": {
+    "hidden": true,
+    "focused": true,
+    "ui": {
+      "started": true,
+      "manual": false,
+      "panel": "pause",
+      "storageAvailable": true,
+      "audio": "running",
+      "muted": false
+    },
+    "input": {
+      "held": [],
+      "pending": [],
+      "keys": [],
+      "axes": {
+        "x": 0,
+        "z": 0
+      }
+    },
+    "frame": 479
+  },
+  "touchMovement": 2.9577777777776646,
+  "performance": {
+    "frames": 344,
+    "samples": 344,
+    "fps": 57.33620014334051,
+    "frameP95": 16.80000000000291,
+    "frameP99": 33.400000000001455,
+    "renderAverage": 0.29970929650373235,
+    "droppedTime": 0,
+    "renderer": {
+      "drawCalls": 34,
+      "triangles": 19002,
+      "staticTriangles": 34300,
+      "dynamicTriangles": 2909,
+      "frameMs": 0.2999999523162842,
+      "width": 922,
+      "height": 576,
+      "pixelRatio": 0.72
+    },
+    "audioVoices": 0
+  },
+  "errors": [],
+  "requests": [
+    "http://127.0.0.1:8787/",
+    "http://127.0.0.1:8787/style.css",
+    "http://127.0.0.1:8787/main.mjs",
+    "http://127.0.0.1:8787/world.mjs",
+    "http://127.0.0.1:8787/sim.mjs",
+    "http://127.0.0.1:8787/render.mjs",
+    "http://127.0.0.1:8787/audio.mjs",
+    "http://127.0.0.1:8787/input.mjs"
+  ]
+}

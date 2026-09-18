@@ -1,0 +1,10 @@
+{
+  "windwake/index.html": "b86d44f4a657a84b1e09025b885fc9a05ca195946ced12bc90dda84e41b0d8b3",
+  "windwake/style.css": "3c0eabc6c407453e4c49973b12d751d9cc32ca11b616f646f418c5adf6e028e0",
+  "windwake/world.mjs": "f03ed8a5bac30e42c202dc82be0c10ec50b5d107ebf720fb8029c176c48a6cf8",
+  "windwake/sim.mjs": "6864eec96977cc692c398bf9f2bb33e1858114637bd74becbab2380df17c438b",
+  "windwake/render.mjs": "1c657c17af203a28b07b9b160a7f971ef1f43814f7a4b88a7d8d9bff7fc3121e",
+  "windwake/audio.mjs": "224241f9e1600a34f8de0f328c452aa91013f92439c320c4bf6b94a95e7edfc7",
+  "windwake/input.mjs": "bc8594d3b3da9cc4f03e45de71584f4c46880665eac445b232766afc4c4d29d4",
+  "windwake/main.mjs": "704220514416d41ef42126761bf4ec3f5fc6e7883bccbc250dc8202be58cf0db"
+}

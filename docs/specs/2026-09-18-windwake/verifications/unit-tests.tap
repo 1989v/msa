@@ -1,0 +1,220 @@
+TAP version 13
+# Subtest: a quick press/release survives render frames with zero simulation ticks
+ok 1 - a quick press/release survives render frames with zero simulation ticks
+  ---
+  duration_ms: 1.438208
+  type: 'test'
+  ...
+# Subtest: held buttons fire once across multiple RAF simulation substeps
+ok 2 - held buttons fire once across multiple RAF simulation substeps
+  ---
+  duration_ms: 3.57675
+  type: 'test'
+  ...
+# Subtest: clearing pause input discards held controls, axes and pending taps
+ok 3 - clearing pause input discards held controls, axes and pending taps
+  ---
+  duration_ms: 0.346875
+  type: 'test'
+  ...
+# Subtest: same seed and inputs replay the entire state deterministically
+ok 4 - same seed and inputs replay the entire state deterministically
+  ---
+  duration_ms: 33.314084
+  type: 'test'
+  ...
+# Subtest: snapshots are independent copies and continue with held-input history
+ok 5 - snapshots are independent copies and continue with held-input history
+  ---
+  duration_ms: 2.30175
+  type: 'test'
+  ...
+# Subtest: a real jump ascends, reaches an apex, falls and lands only once
+ok 6 - a real jump ascends, reaches an apex, falls and lands only once
+  ---
+  duration_ms: 0.829125
+  type: 'test'
+  ...
+# Subtest: movement is camera-relative and diagonal input is normalized
+ok 7 - movement is camera-relative and diagonal input is normalized
+  ---
+  duration_ms: 1.626625
+  type: 'test'
+  ...
+# Subtest: solid walls block lateral motion instead of lifting the player through them
+ok 8 - solid walls block lateral motion instead of lifting the player through them
+  ---
+  duration_ms: 1.121084
+  type: 'test'
+  ...
+# Subtest: falling lands on an elevated platform, then leaving its edge causes a fall
+ok 9 - falling lands on an elevated platform, then leaving its edge causes a fall
+  ---
+  duration_ms: 1.499542
+  type: 'test'
+  ...
+# Subtest: coyote jump works shortly after an edge and buffered jump fires after landing
+ok 10 - coyote jump works shortly after an edge and buffered jump fires after landing
+  ---
+  duration_ms: 0.145667
+  type: 'test'
+  ...
+# Subtest: gliding requires a sigil, slows descent and ends when stamina is exhausted
+ok 11 - gliding requires a sigil, slows descent and ends when stamina is exhausted
+  ---
+  duration_ms: 0.222208
+  type: 'test'
+  ...
+# Subtest: sword damages a forward target but not targets behind or on a higher floor
+ok 12 - sword damages a forward target but not targets behind or on a higher floor
+  ---
+  duration_ms: 0.637
+  type: 'test'
+  ...
+# Subtest: sword, pulse and enemy melee cannot damage through the solid quarry wall
+ok 13 - sword, pulse and enemy melee cannot damage through the solid quarry wall
+  ---
+  duration_ms: 0.467708
+  type: 'test'
+  ...
+# Subtest: held attack fires once; separate buffered presses produce a three-hit combo
+ok 14 - held attack fires once; separate buffered presses produce a three-hit combo
+  ---
+  duration_ms: 1.19725
+  type: 'test'
+  ...
+# Subtest: pulse spends energy, staggers a shielded charger, and cannot ignore its cooldown
+ok 15 - pulse spends energy, staggers a shielded charger, and cannot ignore its cooldown
+  ---
+  duration_ms: 0.11225
+  type: 'test'
+  ...
+# Subtest: dodge costs stamina and protects against a timed attack for a finite window
+ok 16 - dodge costs stamina and protects against a timed attack for a finite window
+  ---
+  duration_ms: 0.640041
+  type: 'test'
+  ...
+# Subtest: parry blocks a facing attack, stuns the attacker, and does not protect the back
+ok 17 - parry blocks a facing attack, stuns the attacker, and does not protect the back
+  ---
+  duration_ms: 0.163667
+  type: 'test'
+  ...
+# Subtest: melee AI provides a visible telegraph, deals one hit, then recovers
+ok 18 - melee AI provides a visible telegraph, deals one hit, then recovers
+  ---
+  duration_ms: 0.555083
+  type: 'test'
+  ...
+# Subtest: ranger telegraphs and launches a projectile that can hit the player
+ok 19 - ranger telegraphs and launches a projectile that can hit the player
+  ---
+  duration_ms: 1.053208
+  type: 'test'
+  ...
+# Subtest: projectiles disappear on solid geometry instead of crossing a wall
+ok 20 - projectiles disappear on solid geometry instead of crossing a wall
+  ---
+  duration_ms: 0.449667
+  type: 'test'
+  ...
+# Subtest: charger frontal armor reduces sword damage while flanking bypasses it
+ok 21 - charger frontal armor reduces sword damage while flanking bypasses it
+  ---
+  duration_ms: 0.419417
+  type: 'test'
+  ...
+# Subtest: solid cover blocks both aerial landing shockwaves and charger contact damage
+ok 22 - solid cover blocks both aerial landing shockwaves and charger contact damage
+  ---
+  duration_ms: 1.460667
+  type: 'test'
+  ...
+# Subtest: boss stays inactive before three sigils and phase two includes all attack patterns
+ok 23 - boss stays inactive before three sigils and phase two includes all attack patterns
+  ---
+  duration_ms: 5.39
+  type: 'test'
+  ...
+# Subtest: jumping over a boss ring avoids damage while staying grounded does not
+ok 24 - jumping over a boss ring avoids damage while staying grounded does not
+  ---
+  duration_ms: 0.166791
+  type: 'test'
+  ...
+# Subtest: guardian resists isolated pulses but three resonance impacts open a stagger window
+ok 25 - guardian resists isolated pulses but three resonance impacts open a stagger window
+  ---
+  duration_ms: 1.278917
+  type: 'test'
+  ...
+# Subtest: quarry first-sigil scenario solves by two physical pulses and walking, without reward helpers
+ok 26 - quarry first-sigil scenario solves by two physical pulses and walking, without reward helpers
+  ---
+  duration_ms: 4.313292
+  type: 'test'
+  ...
+# Subtest: a lost quarry stone can be recovered at the plinth without paying a resource
+ok 27 - a lost quarry stone can be recovered at the plinth without paying a resource
+  ---
+  duration_ms: 0.24225
+  type: 'test'
+  ...
+# Subtest: forest first-sigil scenario retries a wrong rune then accepts the clue order
+ok 28 - forest first-sigil scenario retries a wrong rune then accepts the clue order
+  ---
+  duration_ms: 0.07975
+  type: 'test'
+  ...
+# Subtest: ruins first-sigil platform route has no rise beyond the measured starting jump
+ok 29 - ruins first-sigil platform route has no rise beyond the measured starting jump
+  ---
+  duration_ms: 0.769417
+  type: 'test'
+  ...
+# Subtest: sigil rewards are unique and the final sigil improves resonance damage
+ok 30 - sigil rewards are unique and the final sigil improves resonance damage
+  ---
+  duration_ms: 0.166834
+  type: 'test'
+  ...
+# Subtest: caches grant rewards once and camp upgrades spend only available crystals
+ok 31 - caches grant rewards once and camp upgrades spend only available crystals
+  ---
+  duration_ms: 0.17875
+  type: 'test'
+  ...
+# Subtest: save loading rejects bad envelopes and normalizes contradictory progression safely
+ok 32 - save loading rejects bad envelopes and normalizes contradictory progression safely
+  ---
+  duration_ms: 0.2445
+  type: 'test'
+  ...
+# Subtest: lethal water fall offers death and respawn preserves progress while clearing transient state
+ok 33 - lethal water fall offers death and respawn preserves progress while clearing transient state
+  ---
+  duration_ms: 0.120083
+  type: 'test'
+  ...
+# Subtest: boss defeat rewards once and completed saves resume free roam with the boss defeated
+ok 34 - boss defeat rewards once and completed saves resume free roam with the boss defeated
+  ---
+  duration_ms: 0.188875
+  type: 'test'
+  ...
+# Subtest: fast travel requires a discovered camp and is unavailable during nearby combat
+ok 35 - fast travel requires a discovered camp and is unavailable during nearby combat
+  ---
+  duration_ms: 0.088667
+  type: 'test'
+  ...
+1..35
+# tests 35
+# suites 0
+# pass 35
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 117.963916

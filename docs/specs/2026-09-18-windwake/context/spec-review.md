@@ -1,0 +1,2 @@
+# Specification review
+Three independent reviewers covered six dimensions in parallel: architecture/implementation, domain/usecase, security/test strategy. Architecture/security shipped initially; actionable findings for input edges, progression invariants, first-shrine access, retry transitions and touch tests were upheld by a separate arbiter. Local glossary satisfied terminology without changing platform glossary. All clauses and test obligations were added. Independent final re-read: **SHIP**, no important findings remaining.
