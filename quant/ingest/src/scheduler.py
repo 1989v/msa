@@ -84,6 +84,21 @@ def load_targets() -> List[Tuple[str, str, str]]:
         return DEFAULT_TARGETS
 
 
+def exit_code(ok: int, failed: int) -> int:
+    """자산 하나가 실패해도 나머지는 계속 간다. 그러나 하나도 성공 못 했는데 실패가 있으면
+    원인은 자산이 아니라 저장소·네트워크 쪽이다 — 그때는 잡을 실패로 끝내 CronJob 이 보이게 한다.
+    quant DB 가 없던 123일 동안 매 회차 total_rows=0 으로 Complete 가 찍혔다 (2026-09-17)."""
+    return 1 if failed > 0 and ok == 0 else 0
+
+
+def _finish(label: str, ok: int, failed: int, rows: int) -> None:
+    log.info("quant-ingest %s done total_rows=%d ok=%d failed=%d", label, rows, ok, failed)
+    code = exit_code(ok, failed)
+    if code:
+        log.error("quant-ingest %s: 성공 0 · 실패 %d — 저장소/네트워크 문제로 보고 실패로 끝낸다", label, failed)
+        raise SystemExit(code)
+
+
 @click.command()
 @click.option(
     "--job",
@@ -120,9 +135,11 @@ def _run_fundamentals() -> None:
     log.info("quant-ingest fundamentals start")
     targets = load_targets()
     rows = []
+    ok = failed = 0
     for asset_code, asset_class, _source in targets:
         try:
             row = fetch_yfinance_fundamentals(asset_code, asset_class)
+            ok += 1
             if row is not None:
                 rows.append(row)
                 log.info(
@@ -132,9 +149,10 @@ def _run_fundamentals() -> None:
             else:
                 log.info("fundamentals empty asset=%s", asset_code)
         except Exception as exc:
+            failed += 1
             log.exception("fundamentals fetch failed asset=%s: %s", asset_code, exc)
     n = insert_fundamentals(rows)
-    log.info("quant-ingest fundamentals done rows=%d", n)
+    _finish("fundamentals", ok, failed, n)
 
 
 def _run_dart_corp_codes() -> None:
@@ -145,12 +163,14 @@ def _run_dart_corp_codes() -> None:
         log.info("quant-ingest dart-corp-codes done rows=%d", n)
     except Exception as exc:
         log.exception("dart-corp-codes ingest failed: %s", exc)
+        raise SystemExit(1)
 
 
 def _run_investor_flows(lookback_days: int) -> None:
     log.info("quant-ingest investor-flows start lookback_days=%d", lookback_days)
     targets = load_targets()
     total = 0
+    ok = failed = 0
     for asset_code, asset_class, _source in targets:
         if asset_class != "STOCK_KR":
             continue  # KR 주식 전용
@@ -158,10 +178,12 @@ def _run_investor_flows(lookback_days: int) -> None:
             flows = list(fetch_investor_flows(asset_code, lookback_days))
             n = insert_investor_flows(flows)
             total += n
+            ok += 1
             log.info("ingested investor-flows asset=%s rows=%d", asset_code, n)
         except Exception as exc:
+            failed += 1
             log.exception("investor-flows ingest failed asset=%s: %s", asset_code, exc)
-    log.info("quant-ingest investor-flows done total_rows=%d", total)
+    _finish("investor-flows", ok, failed, total)
 
 
 def _run_ohlcv(mode: str, interval: str, lookback_days: int) -> None:
@@ -178,6 +200,7 @@ def _run_ohlcv(mode: str, interval: str, lookback_days: int) -> None:
     )
     targets = load_targets()
     total = 0
+    ok = failed = 0
     for asset_code, asset_class, source in targets:
         try:
             if source == "yfinance":
@@ -202,11 +225,13 @@ def _run_ohlcv(mode: str, interval: str, lookback_days: int) -> None:
                 continue
             n = insert_bars(bars)
             total += n
+            ok += 1
             log.info("ingested asset=%s rows=%d", asset_code, n)
         except Exception as exc:
+            failed += 1
             log.exception("ingest failed asset=%s: %s", asset_code, exc)
             # 한 자산 실패가 전체 중단으로 이어지지 않게 — Prometheus 메트릭은 후속 task
-    log.info("quant-ingest done total_rows=%d", total)
+    _finish("ohlcv", ok, failed, total)
 
 
 if __name__ == "__main__":
