@@ -11,5 +11,6 @@ Implementation and repeated Chrome verification complete. Original standalone ga
 | Browser controls and routes | PASS | `node windwake/tests/browser.mjs input routes optional`: BROWSER INPUT PASS / BROWSER ROUTES PASS / BROWSER OPTIONAL PASS |
 | Review | SHIP | Independent geometry findings fixed and regressed; no important unresolved findings |
 | Performance | MEASURED | Software WebGL57.34fps average, P95=16.8ms; physical devices not benchmarked |
+| Public deployment | PASS | portal-fe:742eafc, 1/1 ready; public Chrome trusted input and full ending, 8 source hashes match, 0 captured errors |
 
-Detailed evidence: [final verification](verifications/final-verification.md). JVM/portal builds are not applicable: no source or configuration in those applications changed.
+Detailed evidence: [initial implementation verification](verifications/final-verification.md) and [authorized public deployment](verifications/deployment.md). The deployment phase changes portal nginx configuration and the games distribution pointer; the image build and frontend gate passed. No JVM source changed.

@@ -1,5 +1,7 @@
 # WINDWAKE verification — 2026-09-19
 
+This report covers the initial implementation. The subsequently authorized release is documented in [public deployment verification](deployment.md).
+
 Result: **playable complete adventure; core and optional routes verified in Chrome**. The final runtime is self-contained vanilla JavaScript/CSS/WebGL/Web Audio, with no engine, build step or external runtime asset request.
 
 ## Executed evidence

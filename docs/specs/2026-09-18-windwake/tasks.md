@@ -26,5 +26,10 @@ Dependencies: groups 1–3. Phase: verification. Required skills: hns:verify.
 - [x] Fix upheld findings, rerun checks, document run controls and limitations.
 - [x] Verify: Node full game tests + browser verification script, scoped git diff checks; commit only owned files.
 
+## Group 5 — Authorized public deployment
+- [x] Isolate from unrelated unpublished work; copy only original runtime files into the existing games distribution.
+- [x] Configure native module MIME/404, verify real nginx and Chrome, push game distribution before parent pointer.
+- [x] Verify image workflow, OCI rollout, public source hashes and actual Chrome input/full ending; record evidence.
+
 ## Standards
 Root AGENTS.md, DESIGN.md, docs/standards/agent-behavior.md, docs/conventions/frontend-design.md. The game creates no platform/backend schema or service dependency changes.
