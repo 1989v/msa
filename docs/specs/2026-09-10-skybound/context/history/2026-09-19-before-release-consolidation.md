@@ -112,4 +112,4 @@
 
 ## 상세 기록
 
-[9/15 보관 기록](history/2026-09-15-progress-before-consolidation.md) · [이전 보관 기록](history/2026-09-14-progress-before-consolidation.md) · [결정](key-decisions.md) · [배포](../release/deployment.md)
+[9/15 보관 기록](2026-09-15-progress-before-consolidation.md) · [이전 보관 기록](2026-09-14-progress-before-consolidation.md) · [결정](../key-decisions.md) · [배포](../../release/deployment.md)
