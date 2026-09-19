@@ -84,3 +84,8 @@ Raid shape: `{status:'idle'|'queued'|'active'|'won'|'lost',day:0,wave:0,waves:2,
 - Win only after last active wave resolves with all persisted/live survivors defeated. Atomically set status=won/rewarded=true then grant wood12, stone8, food4, XP60 and reputation6. A won/rewarded raid cannot grant again after restore. `failRaid(s)` is idempotent, marks lost, removes raid actors, never grants rewards.
 
 Implementation may add helper exports; these agreed names/semantics remain stable and deviations are coordinated first.
+
+## Verified implementation additions
+- `village.builtTypes` prevents repeated build reputation; well rest grants5flasks, granary adds2food perharvest.
+- `raid.defeated` tracks current-wave stable deaths; `raidTarget` persists each raider’s windup target. Root captures even distant paused encounters before pruning dead actors.
+- Raid hooks accept `lineClear(a,b)` using actor-feet coordinates(+.95internally) and `solidQuery` covering static AND village solids. Elevatedtower origin passesfeetY at muzzle-.95. Movement validates bothsidesteps; playerstrikes respectheight,cover andlockedwindup.

@@ -1,4 +1,8 @@
-<!-- source: windwake/world.mjs, windwake/render.mjs, windwake/sim.mjs, windwake/progression.mjs, windwake/village.mjs -->
+<!-- source: windwake/world.mjs -->
+<!-- source: windwake/render.mjs -->
+<!-- source: windwake/sim.mjs -->
+<!-- source: windwake/progression.mjs -->
+<!-- source: windwake/village.mjs -->
 # ADR-0096 — WINDWAKE streamed world and pure life/progression modules
 
 Status: Accepted for implementation (2026-09-19; user-authorized expansion).

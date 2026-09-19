@@ -1,4 +1,9 @@
-<!-- source: windwake/world.mjs, windwake/render.mjs, windwake/sim.mjs, windwake/main.mjs, windwake/progression.mjs, windwake/village.mjs -->
+<!-- source: windwake/world.mjs -->
+<!-- source: windwake/render.mjs -->
+<!-- source: windwake/sim.mjs -->
+<!-- source: windwake/main.mjs -->
+<!-- source: windwake/progression.mjs -->
+<!-- source: windwake/village.mjs -->
 # WINDWAKE: Frontiers / 바람이 머무는 마을
 
 ## Goal

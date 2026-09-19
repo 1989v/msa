@@ -34,6 +34,6 @@ Dependencies:1–4. Phase: verification. Required skills: hns:verify,hns:validat
 - [x] Gate: same-seed chunk output equals after reversed query order and eviction/rebuild; cross-boundary solid returned once from either side. Three multi-region out/return render circuits assert CPU≤96/GPU≤64/enemies≤64 at every sample.
 - [x] Gate: v1 fixture preserves all sigils/chests/upgrades/currency/guardian completion; v2 active-wave reload preserves survivor IDs/HP and reward marker, post-victory reload cannot pay again; death has same invariant. Queued raid allows home travel; active blocks it.
 - [x] Fresh-context implementation review, fix findings, rerun impacted checks, sync docs.
-- [ ] Scoped commit, isolated deployment, public source/hash/Chrome verification.
+- [x] Scoped commit, isolated deployment, public source/hash/Chrome verification.
 
-Local implementation and verification complete. Public deployment remains in progress and is not claimed by these local task checkmarks; see verifications/deployment.md after rollout.
+Local and public verification complete. See verifications/deployment.md for observed rollout and actual publicChrome evidence.

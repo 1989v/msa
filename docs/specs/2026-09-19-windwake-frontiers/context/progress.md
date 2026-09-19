@@ -9,3 +9,5 @@ Next: paired-dimension reviewers (three available parallel slots), resolve findi
 2026-09-19: Independent six-dimension spec adjudication SHIP. All12 findings addressed; implementation underway in world/render, life, combat, and root integration ownership groups.
 
 2026-09-19: Runtime complete,120unit/integration tests pass; independent implementation review SHIP after3major fixes. ActualChrome all8trails/all8bosses and continuousfarm→defense→village3→capstone pass. Preparing isolatedsameURLdeployment; notyetpublic.
+
+2026-09-19: DEPLOYED publicsameURL. Imageworkflow35446566436success,mainCI35446566418success,runningportal-fe:a14ef9bready1/1. Public12filehashes,originaljourneyand53,502tickcontinuousfrontierjourney,reload and0errors verified. No remaininggame work.

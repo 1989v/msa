@@ -1,7 +1,10 @@
-<!-- source: windwake/tests/frontier-browser.mjs, windwake/tests/frontier-routes.mjs, windwake/tests/frontier-sim.test.mjs, windwake/tests/frontier-regressions.test.mjs -->
+<!-- source: windwake/tests/frontier-browser.mjs -->
+<!-- source: windwake/tests/frontier-routes.mjs -->
+<!-- source: windwake/tests/frontier-sim.test.mjs -->
+<!-- source: windwake/tests/frontier-regressions.test.mjs -->
 # Frontiers verification — 2026-09-19
 
-Local implementation: **PASS**. Public rollout verification is recorded separately in deployment.md once completed.
+Local implementation: **PASS**. Public rollout and both fulljourneys: **PASS**. See [deployment](deployment.md) for matching12filehashes,actualChromeplay andready1/1rollout evidence.
 
 ## Delivered scope
 
