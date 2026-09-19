@@ -1,0 +1,4 @@
+status: shaped
+ambiguity_threshold: 0.2
+interview_rounds: 0
+reason: User explicitly delegated implementation decisions and identified all five expansion axes.

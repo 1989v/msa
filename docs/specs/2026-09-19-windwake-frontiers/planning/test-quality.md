@@ -1,0 +1,11 @@
+# Verification strategy
+
+Critical path: new/old save → village introduction → gather → build plot → sow/water/harvest → spend crop reward → unlock/equip/use skill → visit distant region → activate waypoint → defeat regional boss → return home → construct defenses → survive night raid → save/reload.
+
+- Pure tests: deterministic generation and exact64× area, bounded chunk and entity residency, spatial-query collision equivalence, skill prerequisites and costs, XP/level limits, crops/game clock, legal placement and materials, defense victory/failure/retry, unique boss rewards, v1 migration/v2 roundtrip and malformed saves.
+- Input-driven routes: central regression, travel to multiple outer waypoints without position/reward injection, village economic loop, skill combat, boss and defense paths. Controlled stress fixtures remain explicitly distinct from ordinary player routes.
+- Chrome: trusted keyboard/mouse/touch, streamed traversal, menus/skill tree/building/crops, distinct day/night and enemies, actual battle reactions, save reload, screenshots and captured console exceptions/errors.
+- Measure: frame samples and chunk/buffer/entity counts across many regions and returns, no monotonic residency growth. Desktop target60fps, report measured value; touch layout tested without claiming physical-phone performance.
+- Regression: existing 35 tests remain, except explicitly documented early-guardian progression change requiring expectation update without weakening physics/combat checks.
+- Integration: same-seed geometry after different query orders and eviction/recreation; three far-region out/return circuits while rendering with CPU≤96/GPU≤64/enemies≤64; v1 migration preserving all old rewards; active-wave and post-victory save/reload proving no duplicate reward and no empty-wave victory.
+- Adjudicated matrix: all8 base-character lane approaches; queued/active/between-wave/won/lost reload and death; malformed IDs/numbers/oversized collections/overlapping placements; atlas-open renderer stress; per-frame build≤2 after9-chunk preload and resident-byte/triangle/disposal observations. Verify new runtime allowlists and public hashes. First successful harvest precedes eligibility for the first raid.
