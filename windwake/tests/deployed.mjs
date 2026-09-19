@@ -17,7 +17,7 @@ const metadataResponse = await fetch(new URL('build-metadata.json', base));
 assert.equal(metadataResponse.status, 200);
 const metadata = await metadataResponse.json();
 assert.equal(metadata.game, 'windwake');
-assert.deepEqual(Object.keys(metadata.files).sort(), ['index.html','style.css','main.mjs','world.mjs','sim.mjs','render.mjs','audio.mjs','input.mjs'].sort());
+assert.deepEqual(Object.keys(metadata.files).sort(), ['index.html','style.css','main.mjs','world.mjs','sim.mjs','render.mjs','audio.mjs','input.mjs','combat.mjs','progression.mjs','village.mjs','frontier-ui.mjs'].sort());
 const assets = [];
 for (const [name, hash] of Object.entries(metadata.files)) {
   const localHash = createHash('sha256').update(await readFile(new URL('../'+name, import.meta.url))).digest('hex');

@@ -1,7 +1,11 @@
-import {WORLD,LANDMARKS,RUNES,REGIONS,PLATE,heightAt,terrainColor,regionAt,distance,clamp} from './world.mjs';
-import {DT,createGame,stepGame,snapshot,restoreSnapshot,spawnEnemy,awardSigil,interaction,upgrade,respawn,fastTravel,exportSave,loadSave} from './sim.mjs';
+import {WORLD,LANDMARKS,RUNES,REGIONS,PLATE,VILLAGE,WAYPOINTS,worldStats,heightAt,terrainColor,regionAt,distance,clamp} from './world.mjs';
+import {DT,createGame,stepGame,snapshot,restoreSnapshot,spawnEnemy,awardSigil,interaction,upgrade,respawn,fastTravel,exportSave,loadSave,useAbility} from './sim.mjs';
 import {Renderer} from './render.mjs';
 import {AudioSystem} from './audio.mjs';
+import {SKILLS,ACTIVE_SKILLS,learnSkill,equipSkill,awardXP} from './progression.mjs';
+import {villageAction,villageObjective} from './village.mjs';
+import {ENEMY_NAMES} from './combat.mjs';
+import {skillsPanel,villagePanel,frontierJournal} from './frontier-ui.mjs';
 import {InputBuffer} from './input.mjs';
 
 const $=id=>document.getElementById(id);
@@ -26,17 +30,20 @@ function clearInput(){keys.clear();input.clear();state.previousInput={};joystick
 function start(continuing=false){
   audio.unlock();state=continuing&&saved?loadSave(saved):createGame();manual=false;started=true;panel=null;accumulator=0;lastMode='playing';
   $('start-screen').hidden=true;$('panel').hidden=true;$('hud').hidden=false;clearInput();camera.yaw=0;camera.pitch=.35;camera.distance=9;
-  state.toast=continuing?'모닥불로 돌아왔습니다. 지도 M에서 여정을 확인하세요.':'WASD로 이동 · Space로 점프. 앞의 적에게 J 공격, Q 울림을 써보세요.';state.toastTime=7;save();canvas.focus();draw(0);
+  state.toast=continuing?'여정으로 돌아왔습니다. 지도 M에서 마을과 발견한 길을 확인하세요.':'WASD 이동 · Space 점프. T에서 기술을 익히고 M에서 바람뜰 마을과 먼 지역을 찾아보세요.';state.toastTime=7;save();canvas.focus();draw(0);
 }
 $('start-button').addEventListener('click',()=>{if(saved)openPanel('new-game');else start();});
 $('continue-button').addEventListener('click',()=>start(true));
 $('sound-button').addEventListener('click',()=>{audio.unlock();audio.setMuted(!audio.muted);$('sound-button').textContent=audio.muted?'소리 꺼짐':'소리 켜짐';$('sound-button').setAttribute('aria-pressed',String(audio.muted));});
 $('pause-button').addEventListener('click',()=>openPanel('pause'));
+$('skills-button').addEventListener('click',()=>openPanel('skills'));
+$('village-button').addEventListener('click',()=>openPanel('village'));
 $('map-button').addEventListener('click',()=>openPanel('map'));
 $('minimap').addEventListener('click',()=>openPanel('map'));
 $('close-panel').addEventListener('click',closePanel);
 
 function closePanel(){
+  delete state.buildPreview;
   if(state.mode==='dead'){respawn(state);save();}
   if(state.mode==='won'){state.mode='playing';save();}
   panel=null;$('panel').hidden=true;clearInput();accumulator=0;if(started)canvas.focus();
@@ -44,12 +51,19 @@ function closePanel(){
 function formatTime(t){return `${Math.floor(t/60)}분 ${Math.floor(t%60)}초`;}
 function openPanel(kind){
   if(!started&&kind!=='new-game')return;
-  clearInput();panel=kind;accumulator=0;save();$('panel').hidden=false;
+  clearInput();if(kind!=='village')delete state.buildPreview;panel=kind;accumulator=0;save();$('panel').hidden=false;
   const title=$('panel-title'),content=$('panel-content');$('close-panel').textContent='돌아가기 ×';
-  if(kind==='map'){
+  const changed=result=>{if(result?.ok){audio.play('reward');save();}else if(result?.reason){state.toast=result.reason;state.toastTime=4;}updateHUD();};
+  if(kind==='skills'){
+    title.textContent='세 갈래의 길';$('panel-kicker').textContent='SKILLS / GROWTH';skillsPanel(content,state,changed);
+  }else if(kind==='village'){
+    title.textContent='내가 가꾸는 바람뜰';$('panel-kicker').textContent='HOME / FARM / DEFEND';villagePanel(content,state,changed);
+  }else if(kind==='map'){
     title.textContent='바람을 따라 남긴 기록';$('panel-kicker').textContent='ATLAS / JOURNAL';
-    content.innerHTML=`<div class="map-layout"><div><canvas id="atlas" width="520" height="520" aria-label="북쪽이 위인 전체 세계 지도"></canvas><p class="save-status">◇ 미해방 성소 · ◆ 해방한 성소 · △ 모닥불 · ● 현재 위치<br>동쪽 천문대는 남서쪽의 낮은 계단부터 올라갑니다.</p></div><div id="journal"></div></div>`;
+    content.innerHTML=`<div class="map-layout"><div><canvas id="atlas" width="520" height="520" aria-label="북쪽이 위인 전체 세계 지도"></canvas><p class="save-status">◎ 웨이포인트 · ⌂ 내 마을 · ♜ 수호자 · ▲ 현재 위치<br>중앙의 작은 섬 밖으로 8개의 길이 이어집니다. 총 1.92 × 1.92 km.</p></div><div id="journal"></div></div>`;
     const journal=$('journal');
+    frontierJournal(journal,state,id=>{if(fastTravel(state,id)){save();closePanel();}else {const reason=document.createElement('p');reason.className='action-feedback';reason.textContent=state.toast;journal.prepend(reason);}});
+
     for(const id of ['quarry','forest','ruins']){
       const l=LANDMARKS.find(l=>l.id===id),done=state.progress.sigils.includes(id),row=document.createElement('div');row.className=`journal-item ${done?'done':''}`;
       const h=document.createElement('h3');h.textContent=`${done?'◆':'◇'} ${l.name}`;const p=document.createElement('p');p.textContent=done?'봉인을 해방했습니다. 바람이 다시 흐릅니다.':l.description;row.append(h,p);journal.append(row);
@@ -59,7 +73,7 @@ function openPanel(kind){
     for(const l of LANDMARKS.filter(l=>l.kind==='camp')){
       const b=document.createElement('button');b.textContent=l.name;b.disabled=!state.progress.discovered.includes(l.id);b.style.margin='.25rem';b.onclick=()=>{if(fastTravel(state,l.id)){save();closePanel();}else{b.textContent='전투 중에는 이동할 수 없습니다';}};journal.append(b);
     }
-    const progress=document.createElement('p');progress.className='save-status';progress.textContent=`발견 ${state.progress.discovered.filter(id=>REGIONS.some(r=>r.id===id)).length}/7 지역 · 보물 ${state.progress.chests.length}/5 · ${formatTime(state.time)}`;journal.append(progress);
+    const progress=document.createElement('p');progress.className='save-status';progress.textContent=`발견 ${state.progress.discovered.filter(id=>REGIONS.some(r=>r.id===id)).length}/${REGIONS.length} 지역 · 보물 ${state.progress.chests.length}/${LANDMARKS.filter(l=>l.kind==='chest').length} · ${formatTime(state.time)}`;journal.append(progress);
     drawMap($('atlas'),false);
   }else if(kind==='camp'){
     title.textContent='불씨 곁에서';$('panel-kicker').textContent='REST / PREPARE';
@@ -69,8 +83,8 @@ function openPanel(kind){
       for(const kind of ['health','power']){const lv=state.progress.upgrades[kind],cost=(kind==='health'?5:7)+lv*3,b=$(`upgrade-${kind}`);b.textContent=lv===3?`${kind==='health'?'체력':'검'} 최대 강화`:`${kind==='health'?'체력 +25':'검 공격력 +5'} · ${cost} 결정 (${lv}/3)`;b.disabled=lv>=3||state.player.crystals<cost;b.onclick=()=>{if(upgrade(state,kind)){audio.play('reward');save();campButtons();updateHUD();}};}
     }campButtons();$('camp-leave').onclick=closePanel;
   }else if(kind==='dead'||kind==='won'){
-    const won=kind==='won';title.textContent=won?'바람은 당신을 기억합니다':'잠시 쉬어 가도 괜찮습니다';$('panel-kicker').textContent=won?'THE WIND RETURNS':'A NEW BREATH';$('close-panel').textContent=won?'세계로 돌아가기':'모닥불에서 일어나기';
-    content.innerHTML=`<p>${won?'고요의 수호자가 눈을 감자, 오래 멈춰 있던 바람이 섬과 숲 사이를 흐릅니다.<br>당신이 되찾은 길은 이제 누군가의 새로운 여정이 됩니다.':'불씨는 아직 남아 있습니다. 획득한 봉인, 보물과 강화는 사라지지 않습니다.'}</p><div class="stats-grid"><div><strong>${formatTime(state.time)}</strong><span>여행 시간</span></div><div><strong>${state.metrics.kills}</strong><span>물리친 적</span></div><div><strong>${state.progress.chests.length} / 5</strong><span>찾아낸 보물</span></div><div><strong>${state.metrics.parries}</strong><span>완벽한 패링</span></div></div><div class="button-row"><button id="return-game" class="primary">${won?'남은 세계 탐험하기 →':'모닥불에서 다시 시작 →'}</button></div>`;
+    const won=kind==='won',final=state.adventure.finalDefeated;title.textContent=won?(final?'우리의 마을, 다시 열린 세계':'바람은 당신을 기억합니다'):'잠시 쉬어 가도 괜찮습니다';$('panel-kicker').textContent=won?'THE WIND RETURNS':'A NEW BREATH';$('close-panel').textContent=won?'세계로 돌아가기':'모닥불에서 일어나기';
+    content.innerHTML=`<p>${won?(final?'먼 땅의 수호자들과 마지막 고요를 넘어, 당신은 돌아올 마을을 세웠습니다.<br>남은 지역의 발견과 새로운 수확, 마을의 다음 밤으로 모험을 이어가세요.':'고요의 수호자가 눈을 감자, 오래 멈춰 있던 바람이 섬과 숲 사이를 흐릅니다.<br>당신이 되찾은 길은 이제 누군가의 새로운 여정이 됩니다.'):'불씨는 아직 남아 있습니다. 획득한 봉인, 보물과 강화는 사라지지 않습니다.'}</p><div class="stats-grid"><div><strong>${formatTime(state.time)}</strong><span>여행 시간</span></div><div><strong>${state.metrics.kills}</strong><span>물리친 적</span></div><div><strong>${state.progress.chests.length} / ${LANDMARKS.filter(l=>l.kind==='chest').length}</strong><span>찾아낸 보물</span></div><div><strong>${state.metrics.parries}</strong><span>완벽한 패링</span></div></div><div class="button-row"><button id="return-game" class="primary">${won?'남은 세계 탐험하기 →':'모닥불에서 다시 시작 →'}</button></div>`;
     $('return-game').onclick=closePanel;
   }else if(kind==='new-game'){
     title.textContent='새로운 바람을 따라';$('panel-kicker').textContent='NEW JOURNEY';
@@ -78,7 +92,7 @@ function openPanel(kind){
     $('confirm-new').onclick=()=>start(false);$('cancel-new').onclick=closePanel;
   }else{
     title.textContent='잠시 바람을 기다리며';$('panel-kicker').textContent='PAUSED';
-    content.innerHTML=`<p>세 봉인을 찾아 멈춘 상승기류를 깨우고, 하늘섬의 수호자에게 도전하세요.<br>순서는 자유입니다. 보물과 모닥불은 긴 여정을 도와줍니다.</p><div class="control-grid"><div>이동 / 달리기 <kbd>WASD / Shift</kbd></div><div>점프 / 공중에서 바람돛 <kbd>Space</kbd></div><div>3연격 / 공중 내려찍기 <kbd>클릭 또는 J</kbd></div><div>회피 / 짧은 무적 <kbd>K</kbd></div><div>울림 / 돌 밀기 / 방패 깨기 <kbd>Q</kbd></div><div>타이밍 패링 <kbd>F</kbd></div><div>상호작용 / 회복약 <kbd>E / H</kbd></div><div>시점 / 줌 <kbd>우클릭 드래그 / 휠</kbd></div><div>키보드 시점 / 지도 <kbd>방향키 / M</kbd></div></div><label class="setting"><input id="reduce-motion" type="checkbox" ${camera.reducedMotion?'checked':''}> 화면 흔들림 줄이기</label><div class="button-row"><button class="primary" id="resume-game">여정 계속하기 →</button><button id="open-atlas">지도와 기록</button><button id="restart-game">새 여정</button></div><p class="save-status">${storageAvailable?'진행 상황은 이 브라우저에 자동 저장됩니다.':'브라우저 저장소를 사용할 수 없어 이번 여정은 저장되지 않습니다.'} · ${formatTime(state.time)}</p>`;
+    content.innerHTML=`<p>중앙의 세 성소, 여덟 외곽 지역과 내 마을. 어떤 여정부터 시작해도 좋습니다.<br>수호자를 물리치고 기술을 익히며 마을의 다음 밤을 준비하세요.</p><div class="control-grid"><div>이동 / 달리기 <kbd>WASD / Shift</kbd></div><div>점프 / 공중에서 바람돛 <kbd>Space</kbd></div><div>3연격 / 공중 내려찍기 <kbd>클릭 또는 J</kbd></div><div>회피 / 짧은 무적 <kbd>K</kbd></div><div>울림 / 돌 밀기 / 방패 깨기 <kbd>Q</kbd></div><div>타이밍 패링 <kbd>F</kbd></div><div>상호작용 / 회복약 <kbd>E / H</kbd></div><div>시점 / 줌 <kbd>우클릭 드래그 / 휠</kbd></div><div>키보드 시점 / 지도 <kbd>방향키 / M</kbd></div><div>장착 기술 <kbd>1 / 2</kbd></div><div>스킬트리 / 내 마을 <kbd>T / B</kbd></div></div><label class="setting"><input id="reduce-motion" type="checkbox" ${camera.reducedMotion?'checked':''}> 화면 흔들림 줄이기</label><div class="button-row"><button class="primary" id="resume-game">여정 계속하기 →</button><button id="open-atlas">지도와 기록</button><button id="restart-game">새 여정</button></div><p class="save-status">${storageAvailable?'진행 상황은 이 브라우저에 자동 저장됩니다.':'브라우저 저장소를 사용할 수 없어 이번 여정은 저장되지 않습니다.'} · ${formatTime(state.time)}</p>`;
     const qualityLabel=document.createElement('label');qualityLabel.className='setting';
     const qualityCheck=document.createElement('input');qualityCheck.type='checkbox';qualityCheck.checked=!autoQuality;qualityCheck.onchange=()=>{autoQuality=!qualityCheck.checked;qualityWindow.length=0;renderer.setResolutionScale(1);};qualityLabel.append(qualityCheck,document.createTextNode('화면 선명도 우선 · 자동 성능 조절 끄기'));content.querySelector('.setting').after(qualityLabel);
     $('reduce-motion').onchange=e=>camera.reducedMotion=e.target.checked;$('resume-game').onclick=closePanel;$('open-atlas').onclick=()=>openPanel('map');$('restart-game').onclick=()=>openPanel('new-game');
@@ -86,10 +100,11 @@ function openPanel(kind){
   $('close-panel').focus();updateHUD();
 }
 
-const mappings={Space:'jump',KeyJ:'attack',KeyK:'dodge',KeyF:'parry',KeyQ:'skill',KeyE:'interact',KeyH:'heal',ShiftLeft:'sprint',ShiftRight:'sprint'};
+const mappings={Space:'jump',KeyJ:'attack',KeyK:'dodge',KeyF:'parry',KeyQ:'skill',KeyE:'interact',KeyH:'heal',Digit1:'skill1',Digit2:'skill2',ShiftLeft:'sprint',ShiftRight:'sprint'};
 document.addEventListener('keydown',e=>{
   if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Tab'].includes(e.code)&&started&&!panel)e.preventDefault();
   if(e.code==='Escape'){e.preventDefault();if(panel)closePanel();else if(started)openPanel('pause');return;}
+  if(['KeyT','KeyB'].includes(e.code)&&started&&!e.repeat){const kind=e.code==='KeyT'?'skills':'village';if(panel===kind)closePanel();else openPanel(kind);return;}
   if(e.code==='KeyM'&&started&&!e.repeat){if(panel==='map')closePanel();else openPanel('map');return;}
   if(panel||!started)return;
   keys.add(e.code);if(mappings[e.code]&&!e.repeat)input.press(mappings[e.code]);
@@ -130,10 +145,12 @@ function readInput(dt){
 function processEvents(){
   for(const e of state.events){
     audio.play(e);eventHistory.push({...e,frame:state.frame});if(eventHistory.length>150)eventHistory.shift();
+    if(e.text&&['build','plant','water','harvest','gather','trade','repair','notice','travel'].includes(e.type)){state.toast=e.text;state.toastTime=4;}
     if(e.type==='hit'){hitStop=.035;camera.shake=camera.reducedMotion?0:.13;}
     if(e.type==='hurt')camera.shake=camera.reducedMotion?0:.24;
-    if(['solve','reward','rest','win'].includes(e.type))save();
-    if(e.type==='rest'&&!manual)openPanel('camp');
+    if(['solve','reward','rest','win','harvest','build','raid-win','skill-learned'].includes(e.type))save();
+    if(e.type==='village-open'&&!manual)openPanel('village');
+    if(e.type==='rest'&&!manual)openPanel(distance(state.player,VILLAGE)<10?'village':'camp');
   }
   if(state.mode!==lastMode){lastMode=state.mode;if(!manual&&(state.mode==='dead'||state.mode==='won'))openPanel(state.mode);}
 }
@@ -142,30 +159,39 @@ for(let i=0;i<12;i++){const el=document.createElement('div');el.className='enemy
 function updateLabels(){
   if(!renderer)return;
   const visible=state.enemies.filter(e=>e.hp>0&&e.type!=='boss'&&distance(e,state.player)<24).slice(0,12);
-  labelPool.forEach((el,i)=>{const e=visible[i];if(!e){el.hidden=true;return;}const p=renderer.project(e.x,e.y+2.35,e.z);el.hidden=!p?.visible;if(el.hidden)return;el.style.left=`${p.x}px`;el.style.top=`${p.y}px`;el.firstElementChild.textContent={stalker:'갈퀴 망령',ranger:'파편술사',charger:'돌갑옷'}[e.type];el.querySelector('i').style.transform=`scaleX(${e.hp/e.maxHp})`;el.lastElementChild.textContent=e.state==='telegraph'?'! 공격 준비':e.state==='hit'?'빈틈':e.state==='recover'?'공격 기회':'';});
+  labelPool.forEach((el,i)=>{const e=visible[i];if(!e){el.hidden=true;return;}const p=renderer.project(e.x,e.y+2.35,e.z);el.hidden=!p?.visible;if(el.hidden)return;el.style.left=`${p.x}px`;el.style.top=`${p.y}px`;el.firstElementChild.textContent=e.name||ENEMY_NAMES[e.type]||'방랑자';el.querySelector('i').style.transform=`scaleX(${e.hp/e.maxHp})`;el.lastElementChild.textContent=e.state==='telegraph'?'! 공격 준비':e.state==='hit'?'빈틈':e.state==='recover'?'공격 기회':'';});
 }
-let mapBackground;
+let mapBackground,localMapBackground,localMapCell='';
 function mapBase(){
   if(mapBackground)return mapBackground;
-  const off=document.createElement('canvas');off.width=240;off.height=240;const ctx=off.getContext('2d'),pixels=ctx.createImageData(240,240);
-  for(let z=0;z<240;z++)for(let x=0;x<240;x++){const wx=x-120,wz=120-z,c=heightAt(wx,wz)<WORLD.waterLevel?[.20,.38,.41]:terrainColor(wx,wz);const i=(z*240+x)*4;pixels.data[i]=c[0]*160;pixels.data[i+1]=c[1]*160;pixels.data[i+2]=c[2]*160;pixels.data[i+3]=255;}ctx.putImageData(pixels,0,0);mapBackground=off;return off;
+  const size=384,off=document.createElement('canvas');off.width=size;off.height=size;const ctx=off.getContext('2d'),pixels=ctx.createImageData(size,size);
+  for(let z=0;z<size;z++)for(let x=0;x<size;x++){const wx=(x/size*2-1)*WORLD.size,wz=(1-z/size*2)*WORLD.size,c=heightAt(wx,wz)<WORLD.waterLevel?[.20,.38,.41]:terrainColor(wx,wz);const i=(z*size+x)*4;pixels.data[i]=c[0]*185;pixels.data[i+1]=c[1]*185;pixels.data[i+2]=c[2]*185;pixels.data[i+3]=255;}ctx.putImageData(pixels,0,0);mapBackground=off;return off;
+}
+function localMapBase(p){
+  const cx=Math.round(p.x/10)*10,cz=Math.round(p.z/10)*10,key=`${cx}:${cz}`;
+  if(localMapCell!==key){
+    localMapCell=key;const off=document.createElement('canvas');off.width=96;off.height=96;const ctx=off.getContext('2d'),pixels=ctx.createImageData(96,96);
+    for(let z=0;z<96;z++)for(let x=0;x<96;x++){const wx=cx+x-48,wz=cz+48-z,c=heightAt(wx,wz)<WORLD.waterLevel?[.20,.38,.41]:terrainColor(wx,wz),i=(z*96+x)*4;pixels.data[i]=c[0]*185;pixels.data[i+1]=c[1]*185;pixels.data[i+2]=c[2]*185;pixels.data[i+3]=255;}ctx.putImageData(pixels,0,0);localMapBackground={image:off,cx,cz};
+  }return localMapBackground;
 }
 function drawMap(target,mini=true){
   if(!target)return;const ctx=target.getContext('2d'),w=target.width,h=target.height,p=state.player;
-  ctx.clearRect(0,0,w,h);ctx.save();
-  if(mini){ctx.beginPath();ctx.arc(w/2,h/2,w/2,0,Math.PI*2);ctx.clip();}
-  const scale=mini?2.6:w/240,cx=mini?p.x:0,cz=mini?p.z:0;
+  ctx.clearRect(0,0,w,h);ctx.save();if(mini){ctx.beginPath();ctx.arc(w/2,h/2,w/2,0,Math.PI*2);ctx.clip();}
+  const scale=mini?2.2:w/(WORLD.size*2),cx=mini?p.x:0,cz=mini?p.z:0;
   const at=(x,z)=>({x:w/2+(x-cx)*scale,y:h/2-(z-cz)*scale});
-  const top=at(-120,120);ctx.drawImage(mapBase(),top.x,top.y,240*scale,240*scale);
-  ctx.strokeStyle=COLORS.line;ctx.globalAlpha=.5;ctx.lineWidth=1;
-  if(!mini)for(let x=-100;x<=100;x+=20){const a=at(x,120),b=at(x,-120);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();const c=at(-120,x),d=at(120,x);ctx.beginPath();ctx.moveTo(c.x,c.y);ctx.lineTo(d.x,d.y);ctx.stroke();}ctx.globalAlpha=1;
+  if(mini){const base=localMapBase(p),top=at(base.cx-48,base.cz+48);ctx.drawImage(base.image,top.x,top.y,96*scale,96*scale);}
+  else{const top=at(-WORLD.size,WORLD.size);ctx.drawImage(mapBase(),top.x,top.y,WORLD.size*2*scale,WORLD.size*2*scale);}
   ctx.textAlign='center';
   for(const l of LANDMARKS){
+    if(mini&&distance(l,p)>55)continue;
+    if(['resource','trial'].includes(l.kind)&&!mini)continue;
     if(l.kind==='chest'&&!state.progress.chests.includes(l.id))continue;
-    const pos=at(l.x,l.z);ctx.fillStyle=l.kind==='shrine'?(state.progress.sigils.includes(l.id)?COLORS.wind:COLORS.amber):l.kind==='wind'?COLORS.wind:COLORS.paper;
-    ctx.font=`${mini?13:18}px system-ui`;ctx.fillText(l.kind==='camp'?'△':l.kind==='wind'?'◎':l.kind==='chest'?'·':state.progress.sigils.includes(l.id)?'◆':'◇',pos.x,pos.y+4);
-    if(!mini){ctx.font='12px system-ui';ctx.fillText(l.name,pos.x,pos.y+20);}
+    if(!mini&&Math.hypot(l.x,l.z)<130&&!['village','wind'].includes(l.kind))continue;
+    const pos=at(l.x,l.z);ctx.fillStyle=l.kind==='boss'?COLORS.danger:l.kind==='waypoint'?(state.adventure.waypoints.includes(l.id)?COLORS.wind:COLORS.muted):l.kind==='shrine'?(state.progress.sigils.includes(l.id)?COLORS.wind:COLORS.amber):COLORS.paper;
+    ctx.font=`${mini?13:16}px system-ui`;const symbol={camp:'△',wind:'◎',chest:'·',waypoint:'◎',boss:'♜',resource:'✦',trial:'◇',village:'⌂'}[l.kind]||(state.progress.sigils.includes(l.id)?'◆':'◇');ctx.fillText(symbol,pos.x,pos.y+4);
+    if(!mini&&['waypoint','village'].includes(l.kind)){ctx.font='10px system-ui';ctx.fillText(l.name,pos.x,pos.y+17);}
   }
+  if(!mini){ctx.font='11px system-ui';ctx.fillStyle=COLORS.amber;const c=at(0,0);ctx.fillText('바람의 첫 섬',c.x,c.y+20);}
   const pos=at(p.x,p.z);ctx.translate(pos.x,pos.y);ctx.rotate(p.yaw);ctx.fillStyle=COLORS.paper;ctx.beginPath();ctx.moveTo(0,-7);ctx.lineTo(5,6);ctx.lineTo(0,3);ctx.lineTo(-5,6);ctx.closePath();ctx.fill();ctx.restore();
   ctx.fillStyle=COLORS.amber;ctx.font=`${mini?11:14}px system-ui`;ctx.textAlign='center';ctx.fillText('N',w/2,mini?15:22);
 }
@@ -177,12 +203,15 @@ function updateHUD(){
   $('region-name').textContent=regionAt(p.x,p.y,p.z).name;$('altitude').textContent=`높이 ${Math.round(p.y)} m · ${p.gliding?'활강 중':p.grounded?'지상':'공중'}`;
   $('heading').textContent=['N','NE','E','SE','S','SW','W','NW'][((Math.round(camera.yaw/(Math.PI/4))%8)+8)%8];
   for(const el of document.querySelectorAll('[data-sigil]')){const done=state.progress.sigils.includes(el.dataset.sigil);el.classList.toggle('earned',done);el.textContent=`${done?'◆':'◇'} ${{quarry:'돌',forest:'숲',ruins:'하늘'}[el.dataset.sigil]}`;}
-  $('quest-text').textContent=state.progress.bossDefeated?'돌아온 바람 · 남은 세계를 탐험하세요':state.progress.sigils.length===3?'상승기류를 타고 하늘섬으로':`세 성소의 봉인을 해방하세요 (${state.progress.sigils.length}/3)`;
+  $('quest-text').textContent=state.village.raid.status==='active'?`마을 방어 · ${state.village.raid.wave}/2차 침공`:state.village.raid.status==='queued'?'마을에 침공이 다가옵니다 · 지도 M으로 귀환':distance(p,VILLAGE)<45?villageObjective(state):Math.hypot(p.x,p.z)>160?`외곽 수호자 ${state.adventure.bosses.filter(id=>id!=='boss-frontier').length}/8 · 웨이포인트를 찾아 점화하세요`:state.progress.bossDefeated?'길 너머의 8개 지역과 마을이 기다립니다':state.progress.sigils.length===3?'상승기류를 타고 하늘섬으로':`세 성소 (${state.progress.sigils.length}/3) · 또는 지도 M에서 마을로`;
+  $('world-clock').textContent=`${state.village.day}일 · ${state.village.clock>=450?'달밤':state.village.clock>=420?'해질녘':'햇살'} · Lv.${state.adventure.level} · 기술 ${state.adventure.points}P`;
+  for(let i=0;i<2;i++){const id=state.adventure.equipped[i],cool=id?p.abilityCooldowns[id]||0:0;$(`active-${i+1}`).textContent=id?`${i+1} ${ACTIVE_SKILLS[id].name}${cool>0?` · ${cool.toFixed(1)}초`:''}`:`${i+1} 기술 장착 · T`;}
+
   const near=interaction(state);$('interaction').hidden=!near||!!panel;if(near){$('interact-title').textContent=near.kind==='rune'?`${near.name}의 돌`:near.name;$('interact-description').textContent=near.description;}
   if(state.toast!==lastToast){lastToast=state.toast;$('toast').textContent=state.toast;}$('toast').classList.toggle('visible',!!state.toast&&!panel);
   $('skill-feedback').textContent=p.skillCooldown>0?`울림 재충전 ${p.skillCooldown.toFixed(1)}초`:p.energy<35?'울림이 모이는 중…':p.gliding?'Space 돛 접기 · WASD 활강 방향':'Q 울림 준비';
-  const boss=state.enemies.find(e=>e.type==='boss'),show=boss&&boss.hp>0&&p.y>22&&distance(p,boss)<45;$('boss-bar').hidden=!show;
-  if(show){$('boss-fill').style.transform=`scaleX(${boss.hp/boss.maxHp})`;$('boss-phase').textContent=boss.state==='telegraph'?(boss.pattern==='ring'?'원형 파동 — 점프!':boss.pattern==='bolt'?'파편 발사 — 옆으로 회피!':'내려찍기 — 거리 벌리기!'):boss.state==='recover'?'지금이 공격할 기회':boss.phase===2?'격노 · 두 번째 울림':'고요의 수호자';}
+  const boss=state.enemies.filter(e=>e.type==='boss'&&e.hp>0&&distance(p,e)<45&&(e.bossId||p.y>22)).sort((a,b)=>distance(p,a)-distance(p,b))[0],show=!!boss;$('boss-bar').hidden=!show;
+  if(show){$('boss-bar').firstElementChild.textContent=boss.name||'고요의 수호자';$('boss-fill').style.transform=`scaleX(${boss.hp/boss.maxHp})`;$('boss-phase').textContent=boss.state==='telegraph'?(boss.pattern==='ring'?'원형 파동 — 점프!':boss.pattern==='bolt'?'파편 발사 — 옆으로 회피!':'내려찍기 — 거리 벌리기!'):boss.state==='recover'?'지금이 공격할 기회':boss.phase===2?'격노 · 두 번째 울림':'고요의 수호자';}
   drawMap($('minimap'));
 }
 function draw(dt){if(!renderer)return;renderer.render(state,camera,dt);updateLabels();updateHUD();}
@@ -219,7 +248,7 @@ function frame(now){
 }
 function reset(seed=WORLD.seed){state=createGame(seed);started=true;manual=true;panel=null;lastMode='playing';accumulator=0;hitStop=0;eventHistory.length=0;clearInput();$('start-screen').hidden=true;$('panel').hidden=true;$('hud').hidden=false;camera.yaw=0;camera.pitch=.35;camera.distance=9;draw(0);return snapshot(state);}
 window.WINDWAKE={
-  version:'1.0.0',reset,
+  version:'2.0.0',reset,
   step(frames=1,held={},options={}){manual=true;for(let i=0;i<clamp(Math.floor(frames),0,36000);i++){stepGame(state,held);processEvents();}if(options.render!==false)draw(0);return snapshot(state);},
   render(){draw(0);},
   state:()=>snapshot(state),snapshot:()=>snapshot(state),
@@ -228,10 +257,12 @@ window.WINDWAKE={
   teleport(x,y,z){const p=state.player;Object.assign(p,{x,y:y??heightAt(x,z),z,vx:0,vy:0,vz:0,grounded:false,gliding:false});draw(0);return snapshot(state);},
   spawnEnemy(type,x,z,y){return structuredClone(spawnEnemy(state,type,x,z,y));},
   defeatEnemy(id){const e=state.enemies.find(e=>e.id===id);if(e){e.hp=1;const p=state.player;const old={x:p.x,y:p.y,z:p.z,yaw:p.yaw};p.x=e.x;p.z=e.z-2;p.y=e.y;p.yaw=0;stepGame(state,{attack:true});for(let i=0;i<15;i++)stepGame(state,{});Object.assign(p,old);}draw(0);},
-  grant(kind,value){if(kind==='sigil')awardSigil(state,value);else if(kind==='crystals')state.player.crystals+=clamp(Number(value)||0,0,999);else if(kind==='flasks')state.player.flasks=clamp(Number(value)||0,0,6);draw(0);},
+  grant(kind,value){if(kind==='sigil')awardSigil(state,value);else if(kind==='xp')awardXP(state,clamp(Number(value)||0,0,100000));else if(kind==='crystals')state.player.crystals+=clamp(Number(value)||0,0,999);else if(kind==='flasks')state.player.flasks=clamp(Number(value)||0,0,6);draw(0);},
+  learn(id){const result=learnSkill(state,id);draw(0);return result;},equip(id,slot){const result=equipSkill(state,id,slot);draw(0);return result;},
+  village(action,payload={}){const result=villageAction(state,action,payload);draw(0);return result;},travel(id){const result=fastTravel(state,id);draw(0);return result;},ability(slot){const result=useAbility(state,slot);draw(0);return result;},
   respawn(){respawn(state);lastMode='playing';draw(0);},
   save:()=>exportSave(state),load(data){state=loadSave(data);lastMode='playing';draw(0);return snapshot(state);},
-  metrics(){const a=[...performanceData.samples].sort((a,b)=>a-b),r=performanceData.renderMs;return {frames:performanceData.frames,samples:a.length,fps:a.length?1000/(a.reduce((x,y)=>x+y,0)/a.length):0,frameP95:a[Math.floor(a.length*.95)]||0,frameP99:a[Math.floor(a.length*.99)]||0,renderAverage:r.length?r.reduce((x,y)=>x+y,0)/r.length:0,droppedTime:performanceData.droppedTime,renderer:renderer?.stats,audioVoices:audio.voices.size};},
+  metrics(){const a=[...performanceData.samples].sort((a,b)=>a-b),r=performanceData.renderMs;return {frames:performanceData.frames,samples:a.length,fps:a.length?1000/(a.reduce((x,y)=>x+y,0)/a.length):0,frameP95:a[Math.floor(a.length*.95)]||0,frameP99:a[Math.floor(a.length*.99)]||0,renderAverage:r.length?r.reduce((x,y)=>x+y,0)/r.length:0,droppedTime:performanceData.droppedTime,renderer:renderer?.stats,world:worldStats(),actors:state.enemies.length,audioVoices:audio.voices.size};},
   camera(){return {...camera};},setCamera(values){for(const k of ['yaw','pitch','distance'])if(Number.isFinite(values[k]))camera[k]=values[k];draw(0);},
   resetMetrics(){performanceData.frames=0;performanceData.samples.length=0;performanceData.renderMs.length=0;performanceData.droppedTime=0;},
   events:()=>structuredClone(eventHistory),input:()=>({held:[...input.held],pending:[...input.pending],keys:[...keys],axes:{...input.axes}}),

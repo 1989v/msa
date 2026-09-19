@@ -1,4 +1,4 @@
-import { WORLD, LANDMARKS, PLATFORMS, OBSTACLES, PROPS, RUNES, PLATE, heightAt, terrainColor } from './world.mjs';
+import { WORLD, VILLAGE, LANDMARKS, RUNES, PLATE, heightAt, terrainColor, getChunk, querySolids } from './world.mjs';
 
 // Original procedural geometry. Colors extend the local wind-worn DESIGN.md palette.
 export const PALETTE = Object.freeze({
@@ -11,6 +11,8 @@ export const PALETTE = Object.freeze({
   cape: [0.74, 0.34, 0.24], capeLight: [0.88, 0.47, 0.29], leather: [0.26, 0.25, 0.22],
   skin: [0.82, 0.66, 0.48], steel: [0.81, 0.87, 0.84], ranger: [0.43, 0.37, 0.51],
   armor: [0.28, 0.33, 0.33], crystal: [0.53, 0.88, 0.82], shadow: [0.11, 0.22, 0.19],
+  dune:[.79,.69,.46], autumn:[.75,.39,.20], alpine:[.63,.73,.72], lavender:[.58,.49,.72],
+  nightSky:[.19,.29,.39], cropLeaf:[.34,.57,.29], cropRipe:[.94,.69,.28], soil:[.40,.31,.22],
 });
 
 const TAU = Math.PI * 2;
@@ -20,6 +22,15 @@ const mix = (a, b, t) => a + (b - a) * t;
 const noise = (x, z) => { const n = Math.sin(x * 127.1 + z * 311.7) * 43758.5453; return n - Math.floor(n); };
 const tint = (c, n) => [c[0] * n, c[1] * n, c[2] * n];
 const SQRT3 = Math.sqrt(3);
+export function daylightAt(clock) {
+  if (!Number.isFinite(clock)) return 1;
+  const t = ((clock % 600) + 600) % 600;
+  if (t < 420) return 1;
+  if (t < 480) return mix(1, .55, (t - 420) / 60);
+  if (t < 540) return .55;
+  return mix(.55, 1, (t - 540) / 60);
+}
+const STRUCTURE_SIZE={cottage:[3.2,3.2,3.8],well:[1.8,1.8,1.2],granary:[3.2,3.2,3],tower:[1.8,1.8,4.6],fence:[3.6,.6,1.6]};
 
 /** Reused CPU vertex batch. One interleaved upload draws every moving actor. */
 class Mesh {
@@ -148,6 +159,7 @@ varying float vMaterial;
 uniform vec3 uEye;
 uniform vec3 uFog;
 uniform float uTime;
+uniform float uDaylight;
 void main() {
   vec3 normal = normalize(vNormal);
   vec3 sun = normalize(vec3(-0.48, 0.82, -0.30));
@@ -164,6 +176,7 @@ void main() {
   }
   float fog = smoothstep(52.0, 155.0, length(uEye - vWorld));
   if (vMaterial > 0.5 && vMaterial < 1.5) fog *= 0.68;
+  if (vMaterial < 0.5 || vMaterial > 1.5) color *= uDaylight;
   color = mix(color, uFog, fog);
   gl_FragColor = vec4(color, vColor.a);
 }`;
@@ -179,6 +192,7 @@ uniform vec2 uYawPitch;
 uniform float uAspect;
 uniform float uTime;
 uniform vec3 uFog;
+uniform float uDaylight;
 void main() {
   float yaw = uYawPitch.x, pitch = uYawPitch.y;
   vec3 forward = vec3(sin(yaw) * cos(pitch), -sin(pitch), cos(yaw) * cos(pitch));
@@ -197,6 +211,7 @@ void main() {
     float bands = smoothstep(0.46, 0.86, cloud) * (1.0 - smoothstep(0.48, 0.9, ray.y));
     color = mix(color, vec3(0.88, 0.89, 0.80), bands * 0.55);
   }
+  color = mix(color * vec3(0.43, 0.56, 0.78), color, (uDaylight - 0.55) / 0.45);
   gl_FragColor = vec4(color, 1.0);
 }`;
 
@@ -245,8 +260,8 @@ export class Renderer {
     const gl = this.gl;
     this.program = program(gl, VERTEX, FRAGMENT); this.skyProgram = program(gl, SKY_VERTEX, SKY_FRAGMENT);
     this.attributes = ['aPosition', 'aNormal', 'aColor', 'aMaterial'].map(n => gl.getAttribLocation(this.program, n));
-    this.uniforms = Object.fromEntries(['uViewProjection', 'uEye', 'uFog', 'uTime'].map(n => [n, gl.getUniformLocation(this.program, n)]));
-    this.skyUniforms = Object.fromEntries(['uYawPitch', 'uAspect', 'uTime', 'uFog'].map(n => [n, gl.getUniformLocation(this.skyProgram, n)]));
+    this.uniforms = Object.fromEntries(['uViewProjection', 'uEye', 'uFog', 'uTime', 'uDaylight'].map(n => [n, gl.getUniformLocation(this.program, n)]));
+    this.skyUniforms = Object.fromEntries(['uYawPitch', 'uAspect', 'uTime', 'uFog', 'uDaylight'].map(n => [n, gl.getUniformLocation(this.skyProgram, n)]));
     this.skyPosition = gl.getAttribLocation(this.skyProgram, 'aPosition');
     this.skyBuffer = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, this.skyBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
@@ -256,9 +271,9 @@ export class Renderer {
     this.frustum = new Float32Array(24);
     this.eye = new Float32Array(3); this.target = new Float32Array(3);
     this.eyeInitialized = false; this.time = 0; this.lastFrame = -1; this.hitStopRemaining = 0; this.lastImpact = '';
-    this.stats = { drawCalls: 0, triangles: 0, staticTriangles: 0, dynamicTriangles: 0, frameMs: 0, width: 0, height: 0, pixelRatio: 1 };
+    this.stats = { drawCalls: 0, triangles: 0, staticTriangles: 0, dynamicTriangles: 0, frameMs: 0, width: 0, height: 0, pixelRatio: 1, residentChunks:0, maxResidentChunks:64, residentBytes:0, chunkBuilds:0, chunkEvictions:0, disposedChunks:0 };
     this.resolutionScale = 1;
-    this.chunkSize = 30; this.chunks = new Map(); this.buildWorld(); this.resize();
+    this.chunkSize = WORLD.chunkSize; this.chunks = new Map(); this.buildWorld(); this.streamWorld(WORLD.spawn.x, WORLD.spawn.z, 9, 1); this.resize();
     gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.disable(gl.CULL_FACE);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     this.onContextLost = e => { e.preventDefault(); this.contextLost = true; };
@@ -285,78 +300,65 @@ export class Renderer {
     this.resize();
   }
 
-  chunk(x, z) {
-    const ix = Math.floor(x / this.chunkSize), iz = Math.floor(z / this.chunkSize), key = `${ix},${iz}`;
-    if (!this.chunks.has(key)) this.chunks.set(key, { x: (ix + 0.5) * this.chunkSize, z: (iz + 0.5) * this.chunkSize, mesh: new Mesh() });
-    return this.chunks.get(key).mesh;
-  }
+  chunk() { return this.buildingMesh; }
   upload(mesh) {
     const gl = this.gl, buffer = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, mesh.data.subarray(0, mesh.length), gl.STATIC_DRAW);
-    return { buffer, count: mesh.vertices };
+    return { buffer, count: mesh.vertices, bytes: mesh.length * 4 };
   }
   buildWorld() {
-    const size = WORLD.size || 120, step = 2.5;
-    for (let x = -size; x < size; x += step) for (let z = -size; z < size; z += step) {
-      const x2 = Math.min(size, x + step), z2 = Math.min(size, z + step);
-      const a = heightAt(x, z), b = heightAt(x2, z), c = heightAt(x2, z2), d = heightAt(x, z2);
-      // Average the world's small color jitter so the ground reads as broad terrain,
-      // while preserving the original path and region boundaries in world.mjs.
-      const sampleX = x + step / 2, sampleZ = z + step / 2;
-      const color = terrainColor(sampleX, sampleZ) || PALETTE.grass;
-      const nearby = terrainColor(sampleX + 0.6, sampleZ - 0.3) || color;
-      const col = color.map((v, i) => (v * 0.6 + nearby[i] * 0.4) * (0.99 + noise(x, z) * 0.02)), m = this.chunk(x, z);
-      if ((Math.floor(x / step) + Math.floor(z / step)) % 2) {
-        m.tri(x, a, z, x, d, z2, x2, b, z, col);
-        m.tri(x2, b, z, x, d, z2, x2, c, z2, tint(col, 0.995));
-      } else {
-        m.tri(x, a, z, x, d, z2, x2, c, z2, col);
-        m.tri(x, a, z, x2, c, z2, x2, b, z, tint(col, 1.005));
-      }
-    }
-    for (const block of [...OBSTACLES, ...PLATFORMS]) this.staticBlock(block);
-    for (const prop of PROPS) this.staticProp(prop);
-    for (const landmark of LANDMARKS) this.staticLandmark(landmark);
-    for (const rune of RUNES) {
-      const m = this.chunk(rune.x, rune.z);
-      m.cone(rune.x, rune.y, rune.z, 0.66, 1.45, PALETTE.stone, 6, 0.5);
-      m.box(rune.x, rune.y + 0.5, rune.z - 0.47, 0.70, 0.65, 0.08, PALETTE.stoneDark);
-    }
-    const plate = this.chunk(PLATE.x, PLATE.z);
-    for (let i = 0; i < 32; i++) {
-      const a = i / 32 * TAU, b = (i + 1) / 32 * TAU;
-      const ax = PLATE.x + Math.sin(a) * PLATE.radius, az = PLATE.z + Math.cos(a) * PLATE.radius;
-      const bx = PLATE.x + Math.sin(b) * PLATE.radius, bz = PLATE.z + Math.cos(b) * PLATE.radius;
-      plate.tri(PLATE.x, PLATE.y + 0.035, PLATE.z, ax, heightAt(ax, az) + 0.035, az, bx, heightAt(bx, bz) + 0.035, bz, PALETTE.stoneDark);
-    }
-    for (const chunk of this.chunks.values()) {
-      const data = chunk.mesh.data;
-      let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
-      for (let i = 0; i < chunk.mesh.length; i += STRIDE) {
-        minX = Math.min(minX, data[i]); maxX = Math.max(maxX, data[i]);
-        minY = Math.min(minY, data[i + 1]); maxY = Math.max(maxY, data[i + 1]);
-        minZ = Math.min(minZ, data[i + 2]); maxZ = Math.max(maxZ, data[i + 2]);
-      }
-      chunk.centerX = (minX + maxX) / 2; chunk.centerY = (minY + maxY) / 2; chunk.centerZ = (minZ + maxZ) / 2;
-      chunk.radius = Math.hypot(maxX - minX, maxY - minY, maxZ - minZ) / 2;
-      Object.assign(chunk, this.upload(chunk.mesh)); this.stats.staticTriangles += chunk.count / 3; delete chunk.mesh;
-    }
-    const water = new Mesh(1000), waterY = WORLD.waterLevel ?? -3;
-    water.quad(-size * 2, waterY, -size * 2, -size * 2, waterY, size * 2,
-      size * 2, waterY, size * 2, size * 2, waterY, -size * 2, PALETTE.water, 0.94, 2);
+    const size = WORLD.size, water = new Mesh(16), waterY = WORLD.waterLevel;
+    water.quad(-size, waterY, -size, -size, waterY, size, size, waterY, size, size, waterY, -size, PALETTE.water, .94, 2);
     this.water = this.upload(water);
     const backdrop = new Mesh(1000);
-    // A distant serrated horizon is decorative; none of these peaks hide a traversable route.
     for (let i = 0; i < 40; i++) {
       const a = i / 40 * TAU, r = size + 65 + noise(i, 9) * 28;
-      const x = Math.sin(a) * r, z = Math.cos(a) * r;
-      backdrop.cone(x, -13, z, 25 + noise(i, 3) * 24, 22 + noise(i, 12) * 35, PALETTE.stoneDark, 5, 0, a);
+      backdrop.cone(Math.sin(a) * r, -13, Math.cos(a) * r, 25 + noise(i, 3) * 24, 22 + noise(i, 12) * 35, PALETTE.stoneDark, 5, 0, a);
     }
     this.backdrop = this.upload(backdrop);
   }
+  buildChunk(cx, cz) {
+    const chunk = getChunk(cx, cz), mesh = new Mesh(4000), step = 3, minX = cx * this.chunkSize, minZ = cz * this.chunkSize;
+    this.buildingMesh = mesh;
+    for (let x = minX; x < minX + this.chunkSize; x += step) for (let z = minZ; z < minZ + this.chunkSize; z += step) {
+      const x2 = x + step, z2 = z + step, a = heightAt(x,z), b = heightAt(x2,z), c = heightAt(x2,z2), d = heightAt(x,z2);
+      const col = terrainColor(x + step / 2, z + step / 2);
+      mesh.tri(x,a,z,x,d,z2,x2,c,z2,col); mesh.tri(x,a,z,x2,c,z2,x2,b,z,tint(col,1.005));
+    }
+    for (const box of chunk.solids) this.staticBlock(box);
+    for (const prop of chunk.props) this.staticProp(prop);
+    const owns = p => Math.floor(p.x / this.chunkSize) === cx && Math.floor(p.z / this.chunkSize) === cz;
+    for (const landmark of LANDMARKS) if (owns(landmark)) this.staticLandmark(landmark);
+    for (const rune of RUNES) if (owns(rune)) {
+      mesh.cone(rune.x,rune.y,rune.z,.66,1.45,PALETTE.stone,6,.5);
+      mesh.box(rune.x,rune.y+.5,rune.z-.47,.70,.65,.08,PALETTE.stoneDark);
+    }
+    if (owns(PLATE)) for (let i=0;i<32;i++) {
+      const a=i/32*TAU,b=(i+1)/32*TAU,ax=PLATE.x+Math.sin(a)*PLATE.radius,az=PLATE.z+Math.cos(a)*PLATE.radius,bx=PLATE.x+Math.sin(b)*PLATE.radius,bz=PLATE.z+Math.cos(b)*PLATE.radius;
+      mesh.tri(PLATE.x,PLATE.y+.035,PLATE.z,ax,heightAt(ax,az)+.035,az,bx,heightAt(bx,bz)+.035,bz,PALETTE.stoneDark);
+    }
+    const data=mesh.data;let lowX=Infinity,lowY=Infinity,lowZ=Infinity,highX=-Infinity,highY=-Infinity,highZ=-Infinity;
+    for(let i=0;i<mesh.length;i+=STRIDE){lowX=Math.min(lowX,data[i]);highX=Math.max(highX,data[i]);lowY=Math.min(lowY,data[i+1]);highY=Math.max(highY,data[i+1]);lowZ=Math.min(lowZ,data[i+2]);highZ=Math.max(highZ,data[i+2]);}
+    const result={id:chunk.id,cx,cz,centerX:(lowX+highX)/2,centerY:(lowY+highY)/2,centerZ:(lowZ+highZ)/2,radius:Math.hypot(highX-lowX,highY-lowY,highZ-lowZ)/2,...this.upload(mesh)};
+    this.buildingMesh=null;this.stats.chunkBuilds++;
+    return result;
+  }
+  streamWorld(x,z,budget=2,radius=3) {
+    const cx=Math.floor(clamp(x,-WORLD.size,WORLD.size-.01)/this.chunkSize),cz=Math.floor(clamp(z,-WORLD.size,WORLD.size-.01)/this.chunkSize);
+    const desired=[];
+    for(let dx=-radius;dx<=radius;dx++)for(let dz=-radius;dz<=radius;dz++)if(cx+dx>=-16&&cx+dx<16&&cz+dz>=-16&&cz+dz<16)desired.push({cx:cx+dx,cz:cz+dz,id:`${cx+dx},${cz+dz}`,distance:dx*dx+dz*dz});
+    const keep=new Set(desired.map(c=>c.id));
+    for(const [id,chunk]of this.chunks)if(!keep.has(id)){this.gl.deleteBuffer(chunk.buffer);this.chunks.delete(id);this.stats.chunkEvictions++;this.stats.disposedChunks++;}
+    desired.sort((a,b)=>a.distance-b.distance||a.cx-b.cx||a.cz-b.cz);
+    let built=0;
+    for(const c of desired){if(this.chunks.has(c.id))continue;if(built>=budget||this.chunks.size>=64)break;this.chunks.set(c.id,this.buildChunk(c.cx,c.cz));built++;}
+    this.stats.residentChunks=this.chunks.size;this.stats.residentBytes=0;this.stats.staticTriangles=0;
+    for(const chunk of this.chunks.values()){this.stats.residentBytes+=chunk.bytes;this.stats.staticTriangles+=chunk.count/3;}
+    this.stats.chunkBuildsThisFrame=built;
+  }
 
   staticBlock(block) {
-    if (block.kind === 'trunk') return; // Its corresponding procedural tree owns the visible trunk.
+    if (block.kind === 'trunk' || block.id?.startsWith('solid-prop-')) return; // Its corresponding procedural tree owns the visible trunk.
     const m = this.chunk(block.x, block.z), kind = block.kind || '';
     const col = kind.includes('wood') || kind.includes('bridge') ? PALETTE.trunk : PALETTE.stone;
     m.origin(block.x, block.y, block.z, block.yaw || 0);
@@ -387,16 +389,18 @@ export class Renderer {
     m.origin(x, y, z, prop.yaw || noise(x, z) * TAU, s);
     if (type.includes('tree') || type.includes('pine')) {
       const pine = type.includes('pine'), h = pine ? 5.8 : 4.5;
+      const foliage=type.includes('autumn')?PALETTE.autumn:prop.biomeId==='alpine'?PALETTE.alpine:PALETTE.leaf;
+      const light=type.includes('autumn')?PALETTE.amber:PALETTE.leafLight;
       m.cone(0, 0, 0, 0.24, h * 0.8, PALETTE.trunk, 6, 0.11);
       m.beam(0, 1.8, 0, 1.0, 3.0, 0.25, 0.15, 0.14, PALETTE.trunk);
       if (pine) {
         m.cone(0, 1.6, 0, 1.6, 2.9, PALETTE.pine, 7);
-        m.cone(0, 3.0, 0, 1.25, 2.4, PALETTE.leaf, 7);
+        m.cone(0, 3.0, 0, 1.25, 2.4, foliage, 7);
         m.cone(0, 4.3, 0, 0.8, 1.6, PALETTE.leafLight, 7);
       } else {
-        m.jewel(0, 3.6, 0, 1.8, 2.4, PALETTE.leaf, 0.3);
-        m.jewel(1.0, 3.0, 0.25, 1.15, 1.6, PALETTE.leafLight, 0.8);
-        m.jewel(-0.8, 3.3, 0.5, 1.35, 1.8, PALETTE.leafLight, 0.2);
+        m.jewel(0, 3.6, 0, 1.8, 2.4, foliage, 0.3);
+        m.jewel(1.0, 3.0, 0.25, 1.15, 1.6, light, 0.8);
+        m.jewel(-0.8, 3.3, 0.5, 1.35, 1.8, light, 0.2);
       }
     } else if (type.includes('grass') || type.includes('reed')) {
       for (let i = 0; i < 3; i++) {
@@ -406,7 +410,7 @@ export class Renderer {
       }
     } else if (type.includes('flower')) {
       m.beam(0, 0, 0, 0.04, 0.43, 0, 0.025, 0.025, PALETTE.leaf);
-      m.jewel(0.04, 0.43, 0, 0.13, 0.13, PALETTE.paper);
+      m.jewel(0.04, 0.43, 0, 0.13, 0.13, prop.biomeId==='lavender'?PALETTE.lavender:PALETTE.paper);
       m.jewel(-0.15, 0.29, 0.05, 0.09, 0.11, PALETTE.amber);
     } else if (type.includes('banner') || type.includes('flag')) {
       m.cone(0, 0, 0, 0.07, 3.4, PALETTE.trunk, 5, 0.045);
@@ -434,7 +438,24 @@ export class Renderer {
   staticLandmark(l) {
     const y = l.y ?? heightAt(l.x, l.z), m = this.chunk(l.x, l.z), kind = l.kind || '';
     m.origin(l.x, y, l.z);
-    if (kind === 'camp' || kind === 'checkpoint') {
+    if (kind === 'waypoint') {
+      m.cone(0,0,0,2.5,.12,PALETTE.stoneDark,12,2.5);
+      m.ring(0,.14,0,2.1,.12,PALETTE.amber,.9);
+      for(const side of [-1,1]) {m.cone(side*1.45,.1,0,.30,4.1,PALETTE.stone,5,.18);m.box(side*1.45,4.15,0,.7,.25,.7,PALETTE.amber);}
+      m.beam(-1.45,3.3,0,1.45,3.3,0,.18,.18,PALETTE.stone);
+      if(l.id==='home'){
+        m.box(3,.1,1.8,.16,1.8,.16,PALETTE.trunk);m.box(3,1.35,1.8,1.8,.65,.16,PALETTE.trunk);
+        m.box(3,1.6,1.70,.9,.06,.035,PALETTE.paper,0,1,1);
+      }
+    } else if(kind==='resource') {
+      if(l.material==='wood'){m.cone(0,0,0,.85,.9,PALETTE.trunk,7,.62);m.cone(0,.91,0,.60,.02,PALETTE.dune,7,.60);m.beam(-1,.2,.5,1.2,.2,.6,.45,.45,PALETTE.trunk);}
+      else if(l.material==='stone'){m.cone(0,0,0,1.1,1.25,PALETTE.rock,6,.3);m.cone(.8,0,.5,.6,.6,PALETTE.stone,5,.1);}
+      else{m.jewel(0,.7,0,1.0,1.2,PALETTE.leaf);for(let i=0;i<5;i++)m.jewel(Math.sin(i*2)*.7,1+Math.cos(i)*.2,Math.cos(i*2)*.7,.12,.2,PALETTE.danger);}
+    } else if(kind==='trial') {
+      m.ring(0,.06,0,2.5,.25,PALETTE.stone,.9);
+      for(let i=0;i<3;i++){const angle=i/3*TAU;m.cone(Math.sin(angle)*3.1,0,Math.cos(angle)*3.1,.45,3.5+i*.7,PALETTE.stone,5,.25);}
+      m.box(0,0,0,1.1,.8,.8,PALETTE.stoneDark);m.box(0,.8,0,.9,.10,.65,PALETTE.wind);
+    } else if (kind === 'camp' || kind === 'checkpoint') {
       m.cone(0, 0, 0, 0.76, 0.12, PALETTE.stoneDark, 8, 0.7);
       for (let i = 0; i < 5; i++) { const a = i / 5 * TAU; m.box(Math.sin(a) * 0.6, 0.07, Math.cos(a) * 0.6, 0.3, 0.23, 0.28, PALETTE.rock, a); }
       m.beam(-0.45, 0.22, -0.24, 0.5, 0.23, 0.23, 0.15, 0.17, PALETTE.trunk);
@@ -450,7 +471,8 @@ export class Renderer {
     } else if (kind.includes('rune')) {
       m.cone(0, 0, 0, 0.65, 1.25, PALETTE.stone, 5, 0.45);
     } else if (kind === 'boss' || kind === 'summit') {
-      m.ring(0, 0.05, 0, 5.5, 0.14, PALETTE.amber, 1, 0, TAU, 0, 40);
+      m.ring(0, .05, 0, l.biomeId?13:5.5, .14, PALETTE.amber, 1, 0, TAU, 0, 40);
+      if(l.biomeId)for(let i=0;i<6;i++){const a=i/6*TAU;m.cone(Math.sin(a)*15,0,Math.cos(a)*15,.55,4+i%3,PALETTE.stone,6,.3);}
     } else {
       m.cone(0, 0, 0, 1.0, 0.35, PALETTE.stoneDark, 6, 0.82);
       m.cone(0, 0.35, 0, 0.55, 1.1, PALETTE.stone, 6, 0.4);
@@ -472,15 +494,18 @@ export class Renderer {
     this.target[2] = mix(this.target[2], targetZ, smoothing);
     const dx = -Math.sin(yaw) * Math.cos(pitch), dy = Math.sin(pitch), dz = -Math.cos(yaw) * Math.cos(pitch);
     let safeDistance = distance;
+    const solids=querySolids(targetX,targetZ,distance+2);
+    for(const structure of state.village?.structures||[]){
+      const size=STRUCTURE_SIZE[structure.type];if(!size||structure.hp<=0)continue;
+      const rotated=Math.abs(Math.sin(structure.facing||0))>.5;
+      solids.push({x:structure.x,y:structure.y,z:structure.z,w:size[rotated?1:0],d:size[rotated?0:1],h:size[2]});
+    }
     for (let r = 0.5; r <= distance; r += 0.25) {
       const x = this.target[0] + dx * r, y = this.target[1] + dy * r, z = this.target[2] + dz * r;
       if (y < heightAt(x, z) + 0.28) { safeDistance = Math.max(0.8, r - 0.3); break; }
       let blocked = false;
-      for (const b of OBSTACLES) {
-        if (Math.abs(x - b.x) < b.w / 2 + 0.18 && Math.abs(z - b.z) < b.d / 2 + 0.18 && y > b.y - 0.18 && y < b.y + b.h + 0.18) { blocked = true; break; }
-      }
-      if (!blocked) for (const b of PLATFORMS) {
-        if (Math.abs(x - b.x) < b.w / 2 + 0.14 && Math.abs(z - b.z) < b.d / 2 + 0.14 && y > b.y - 0.14 && y < b.y + b.h + 0.14) { blocked = true; break; }
+      for (const b of solids) {
+        if (Math.abs(x-b.x)<b.w/2+.18&&Math.abs(z-b.z)<b.d/2+.18&&y>b.y-.18&&y<b.y+b.h+.18){blocked=true;break;}
       }
       if (blocked) { safeDistance = Math.max(0.8, r - 0.3); break; }
     }
@@ -572,10 +597,31 @@ export class Renderer {
     if (e.state === 'dead' || e.hp <= 0) return;
     if (Math.hypot(e.x - player.x, e.z - player.z) > 85) return;
     const m = this.dynamic, boss = e.type === 'boss', charger = e.type === 'charger', ranger = e.type === 'ranger';
-    const scale = boss ? 2.5 : charger ? 1.35 : 1.0;
+    const scale = boss ? 2.5 : charger || e.type==='sentinel' ? 1.35 : 1.0;
     const gait = e.state === 'chase' || e.state === 'attack' ? Math.sin(time * (charger ? 10 : 8)) * 0.28 : Math.sin(time * 1.7) * 0.015;
     const color = e.hitFlash > 0 ? PALETTE.paper : boss || charger ? PALETTE.armor : ranger ? PALETTE.ranger : PALETTE.cape;
     m.origin(e.x, e.y, e.z, e.yaw || 0, scale);
+    if (['slime','wolf','boar','wisp','burrower'].includes(e.type)) {
+      const type=e.type,bob=Math.sin(time*4)*.06;
+      if(type==='slime'){
+        m.cone(0,.12,0,.77,1.05+bob,PALETTE.wind,9,.22);m.cone(0,.12,0,.78,-.1,PALETTE.crystal,9,.7);
+        for(const side of [-1,1])m.box(side*.20,.66,.54,.12,.16,.04,PALETTE.ink);
+      } else if(type==='wisp') {
+        m.jewel(0,.7+bob,0,.4,1.1,PALETTE.crystal,time);
+        for(const side of [-1,1]){m.tri(side*.2,.8,0,side*1.15,1.2+Math.sin(time*8)*.2,-.1,side*.6,.4,.2,PALETTE.wind,.85,1);}
+        m.ring(0,.75,0,.7,.04,PALETTE.paper,.8,time,4.5);
+      } else if(type==='burrower'){
+        m.cone(0,e.burrowed?-.5:.05,0,.85,.85,PALETTE.dune,7,.25);
+        for(const side of [-1,1]){m.beam(side*.5,.2,.2,side*.95,.05,.7,.2,.2,PALETTE.steel);m.jewel(side*.18,.4,.62,.08,.14,PALETTE.danger);}
+        for(let i=0;i<3;i++)m.cone(0,.65,-.3+i*.3,.15,.5,PALETTE.rock,4);
+      } else {
+        const boar=type==='boar',coat=boar?PALETTE.trunk:PALETTE.alpine;
+        m.box(0,.45,0,boar?1.0:.7,.65,1.45,coat);m.box(0,.7,.75,boar?.7:.5,.48,.55,coat);
+        for(const side of [-1,1])for(const fore of [-1,1])m.beam(side*.30,.48,fore*.5,side*.30,.03,fore*.5+Math.sin(time*9+fore+side)*.15,.16,.18,PALETTE.leather);
+        for(const side of [-1,1]){m.cone(side*.2,1.13,.66,.14,.32,coat,4);m.jewel(side*.16,.94,1.04,.07,.10,PALETTE.amber);if(boar)m.cone(side*.3,.65,1.03,.12,.38,PALETTE.paper,4);}
+        m.beam(0,.84,-.6,0,1.0,-1.2,.14,.17,coat);
+      }
+    } else {
     for (let side = -1; side <= 1; side += 2) {
       m.beam(side * 0.23, 0.9, 0, side * 0.24, 0.16, side * gait, 0.23, 0.25, PALETTE.armor);
       m.box(side * 0.24, 0.02, side * gait + 0.05, 0.3, 0.23, 0.4, PALETTE.leather);
@@ -613,39 +659,61 @@ export class Renderer {
       m.quad(-0.28, 1.4, -0.22, 0.28, 1.4, -0.22, 0.38, 0.6, -0.34, -0.38, 0.6, -0.34, PALETTE.capeLight);
       m.beam(0.55, 0.97, reach, 0.7, 1.2, reach + 0.9, 0.13, 0.065, PALETTE.steel);
     }
+    }
+    if(e.type==='shaman'){
+      m.cone(0,.15,0,.58,1.35,PALETTE.lavender,7,.29);m.beam(-.7,.05,.2,-.7,2.4,.2,.09,.09,PALETTE.trunk);m.jewel(-.7,2.55,.2,.24,.55,PALETTE.wind,time,1);
+    }else if(e.type==='bomber'){
+      m.jewel(0,1,-.6,.55,1.0,PALETTE.danger);m.beam(0,1.4,-.5,.25,2,-.55,.05,.05,PALETTE.trunk);m.jewel(.25,2,-.55,.1,.15,PALETTE.amber,time,1);
+    }else if(e.type==='sentinel'){
+      m.box(-.48,.4,.4,.8,1.3,.22,PALETTE.stone);m.box(-.48,.9,.53,.6,.12,.035,PALETTE.amber);m.beam(.55,1,.15,.6,.8,1.8,.18,.12,PALETTE.steel);
+    }else if(e.type==='frostling'){
+      m.cone(0,1.72,0,.35,.60,PALETTE.alpine,5);for(const side of [-1,1])m.jewel(side*.4,1.4,.1,.24,.65,PALETTE.crystal);
+    }
+    if(boss&&e.family==='tempest')for(const side of [-1,1])m.tri(side*.4,1.5,-.1,side*1.7,2.25,-.25,side*1.1,.7,-.5,PALETTE.lavender);
+    if(boss&&e.family==='thorn')for(const side of [-1,1]){m.beam(side*.4,1.6,0,side*.95,2.5,0,.12,.12,PALETTE.trunk);m.cone(side*.9,2.3,0,.15,.6,PALETTE.leaf,4);}
+    if(boss&&e.family==='tide'){m.ring(0,1.8,0,.65,.08,PALETTE.crystal,.9);m.beam(.7,.1,.2,.7,2.6,.2,.10,.10,PALETTE.steel);m.jewel(.7,2.65,.2,.25,.5,PALETTE.wind,time,1);}
     m.origin(0, 0, 0);
     this.shadow(e.x, Math.max(heightAt(e.x, e.z), e.y - 0.08), e.z, 0.65 * scale);
     if (e.state === 'telegraph') {
-      const a = this.transparent, y = e.y + 0.075, yaw = e.yaw || 0;
+      const targeted=['eruption','slow'].includes(e.pattern);
+      const tx=targeted&&Number.isFinite(e.targetX)?e.targetX:e.x,tz=targeted&&Number.isFinite(e.targetZ)?e.targetZ:e.z;
+      const a = this.transparent, y = (targeted&&Number.isFinite(e.targetY)?e.targetY:e.y) + .075, yaw = e.yaw || 0;
       const pattern = e.pattern || (charger ? 'charge' : ranger ? 'bolt' : 'slam');
       const pulse = 0.62 + Math.sin(time * 14) * 0.16;
       if (pattern === 'bolt') {
         // Thin arrow-shaped lanes communicate the ranged volley, distinct from an area slam.
         for (let i = 0; i < (boss ? 3 : 1); i++) {
           const heading = yaw + (i - (boss ? 1 : 0)) * 0.18;
-          a.tri(e.x, y, e.z, e.x + Math.sin(heading - 0.025) * 12, y, e.z + Math.cos(heading - 0.025) * 12,
-            e.x + Math.sin(heading + 0.025) * 12, y, e.z + Math.cos(heading + 0.025) * 12, PALETTE.danger, pulse * 0.6, 1);
+          a.tri(tx, y, tz, tx + Math.sin(heading - 0.025) * 12, y, tz + Math.cos(heading - 0.025) * 12,
+            tx + Math.sin(heading + 0.025) * 12, y, tz + Math.cos(heading + 0.025) * 12, PALETTE.danger, pulse * 0.6, 1);
         }
-      } else if (pattern === 'charge') {
-        a.origin(e.x, y, e.z, yaw);
+      } else if (pattern === 'charge' || pattern === 'leap') {
+        a.origin(tx, y, tz, yaw);
         a.quad(-0.7, 0, 0, 0.7, 0, 0, 0.7, 0, 8.25, -0.7, 0, 8.25, PALETTE.danger, 0.17, 1);
         a.beam(-0.7, 0.02, 0, -0.7, 0.02, 8.25, 0.05, 0.04, PALETTE.danger, pulse, 1);
         a.beam(0.7, 0.02, 0, 0.7, 0.02, 8.25, 0.05, 0.04, PALETTE.danger, pulse, 1);
         a.tri(-0.5, 0.03, 6.8, 0.5, 0.03, 6.8, 0, 0.03, 8.0, PALETTE.paper, 0.65, 1);
         a.origin(0, 0, 0);
-      } else if (boss && pattern === 'ring') {
-        a.ring(e.x, y, e.z, 9, 0.17, PALETTE.amber, pulse, 0, TAU, 1, 48);
-        a.ring(e.x, y + 0.05, e.z, 8.7, 0.04, PALETTE.paper, 0.7, 0, TAU, 1, 48);
+      } else if (['summon','slow','eruption','burst'].includes(pattern)) {
+        const radius=e.telegraphRadius|| (boss?5.5:3.5),col=pattern==='slow'?PALETTE.alpine:pattern==='summon'?PALETTE.lavender:PALETTE.danger;
+        a.ring(tx,y,tz,radius,.16,col,pulse);a.ring(tx,y+.02,tz,radius,radius,col,.10);
+        for(let i=0;i<6;i++){const heading=i/6*TAU+time*.2,px=tx+Math.sin(heading)*radius*.72,pz=tz+Math.cos(heading)*radius*.72;
+          if(pattern==='eruption'||pattern==='burst')a.cone(px,y,pz,.28,.45+Math.sin(time*12)*.2,col,4,0,0,.65,1);
+          else a.beam(tx,y+.04,tz,px,y+.04,pz,.05,.04,col,pulse,1);
+        }
+      } else if (pattern === 'ring') {
+        a.ring(tx, y, tz, e.telegraphRadius||9, 0.17, PALETTE.amber, pulse, 0, TAU, 1, 48);
+        a.ring(tx, y + 0.05, tz, (e.telegraphRadius||9)-.3, 0.04, PALETTE.paper, 0.7, 0, TAU, 1, 48);
         // Low concentric arcs advertise the jumpable wave.
-        a.ring(e.x, y + 0.3, e.z, 1.8 + (time * 2 % 1) * 4, 0.06, PALETTE.amber, 0.5);
+        a.ring(tx, y + 0.3, tz, 1.8 + (time * 2 % 1) * 4, 0.06, PALETTE.amber, 0.5);
       } else {
-        const radius = boss ? 5.1 : 2.9, start = boss ? 0 : yaw - 1.3, span = boss ? TAU : 2.6;
-        a.ring(e.x, y, e.z, radius, 0.13, PALETTE.danger, pulse, start, span);
-        a.ring(e.x, y + 0.01, e.z, radius, radius, PALETTE.danger, 0.09, start, span);
+        const radius = e.telegraphRadius || (boss ? 5.1 : 2.9), start = boss && pattern!=='sweep' ? 0 : yaw - 1.3, span = boss && pattern!=='sweep' ? TAU : 2.6;
+        a.ring(tx, y, tz, radius, 0.13, PALETTE.danger, pulse, start, span);
+        a.ring(tx, y + 0.01, tz, radius, radius, PALETTE.danger, 0.09, start, span);
         if (boss) for (let i = 0; i < 8; i++) {
           const angle = i / 8 * TAU;
-          a.beam(e.x + Math.sin(angle) * 3.7, y + 0.02, e.z + Math.cos(angle) * 3.7,
-            e.x + Math.sin(angle) * 5.0, y + 0.02, e.z + Math.cos(angle) * 5.0, 0.07, 0.035, PALETTE.danger, pulse, 1);
+          a.beam(tx + Math.sin(angle) * 3.7, y + 0.02, tz + Math.cos(angle) * 3.7,
+            tx + Math.sin(angle) * 5.0, y + 0.02, tz + Math.cos(angle) * 5.0, 0.07, 0.035, PALETTE.danger, pulse, 1);
         }
       }
     }
@@ -665,7 +733,19 @@ export class Renderer {
       const y = l.y ?? heightAt(l.x, l.z), kind = l.kind || '';
       if (Math.hypot(l.x - state.player.x, l.z - state.player.z) > (kind === 'shrine' ? 180 : 90)) continue;
       const solved = (progress.sigils || []).includes(l.sigil || l.id) || (l.id === 'forest' && (progress.sigils || []).includes('forest'));
-      if (kind === 'camp' || kind === 'checkpoint') {
+      if(kind==='waypoint'){
+        const active=(state.adventure?.waypoints||['home']).includes(l.id),col=active?PALETTE.wind:PALETTE.amber;
+        m.jewel(l.x,y+2.4+Math.sin(time*1.7)*.1,l.z,.4,1.0,col,time*.35,1);
+        a.ring(l.x,y+.18,l.z,2.05,.07,col,.8);
+        m.beam(l.x,y+4.4,l.z,l.x,y+12,l.z,.09,.09,col,1,1);m.jewel(l.x,y+12.2,l.z,.4,.8,col,time*.2,1);
+      }else if(kind==='resource'){
+        const gathered=state.village?.gathered||{};
+        const ready=!Object.hasOwn(gathered,l.id)||(state.village?.elapsed||0)-gathered[l.id]>=(l.cooldown||90);
+        if(ready)m.jewel(l.x,y+2,l.z,.14,.32,PALETTE.amber,time*.5,1);
+      }else if(kind==='trial'){
+        const done=(state.adventure?.completedTasks||[]).includes(l.id),col=done?PALETTE.wind:PALETTE.amber;
+        a.ring(l.x,y+.9,l.z,1.1,.06,col,.8,time,4.8);m.jewel(l.x,y+1.7,l.z,.23,.6,col,time*.3,1);
+      }else if (kind === 'camp' || kind === 'checkpoint') {
         m.cone(l.x, y + 0.2, l.z, 0.31, 0.75 + Math.sin(time * 13 + l.x) * 0.13, PALETTE.amber, 5, 0, time, 1, 1);
         m.cone(l.x + 0.10, y + 0.21, l.z - 0.08, 0.18, 0.47 + Math.sin(time * 17) * 0.08, PALETTE.paper, 4, 0, 0, 1, 1);
         for (let i = 0; i < 3; i++) {
@@ -729,6 +809,88 @@ export class Renderer {
     }
   }
 
+  village(state) {
+    const village=state.village,p=state.player,m=this.dynamic,a=this.transparent,time=state.time||0;
+    if(village&&Math.hypot(p.x-VILLAGE.x,p.z-VILLAGE.z)<125){
+      for(const b of (village.structures||[]).slice(0,32)){
+        if(Math.hypot(b.x-p.x,b.z-p.z)>95)continue;
+        m.origin(b.x,b.y??heightAt(b.x,b.z),b.z,b.facing||0);
+        const type=b.type,ruined=b.hp<=0;
+        if(ruined){m.box(0,0,0,2.7,.18,2.7,PALETTE.stoneDark);for(let i=0;i<3;i++)m.cone(Math.sin(i*2)*.9,.15,Math.cos(i*2)*.8,.45,.45,PALETTE.rock,5,.2);}
+        else if(type==='plot'){
+          m.box(0,0,0,3,.12,3,PALETTE.soil);
+          for(const side of [-1,1]){m.box(side*1.45,.02,0,.1,.18,3,PALETTE.trunk);m.box(0,.02,side*1.45,3,.18,.1,PALETTE.trunk);}
+        }else if(type==='cottage'||type==='granary'){
+          const granary=type==='granary',base=granary?.6:0,h=granary?1.8:2.3;
+          if(granary)for(const x of [-1.1,1.1])for(const z of [-1.1,1.1])m.box(x,0,z,.2,.7,.2,PALETTE.trunk);
+          m.box(0,base,0,3.1,h,3.1,granary?PALETTE.trunk:PALETTE.paper);
+          for(const x of [-1.5,1.5])m.box(x,base,1.56,.12,h,.09,PALETTE.trunk);
+          m.box(0,base,1.57,.65,1.55,.035,PALETTE.trunk);
+          for(const x of [-.96,.96]){m.box(x,base+.9,1.58,.55,.64,.045,PALETTE.cloth);m.box(x,base+1.17,1.61,.59,.05,.05,PALETTE.amber);}
+          const roof=granary?PALETTE.dune:PALETTE.cape;
+          m.quad(-1.8,base+h,-1.8,0,base+h+1.2,-1.8,0,base+h+1.2,1.8,-1.8,base+h,1.8,roof);
+          m.quad(0,base+h+1.2,-1.8,1.8,base+h,-1.8,1.8,base+h,1.8,0,base+h+1.2,1.8,PALETTE.capeLight);
+          m.tri(-1.8,base+h,1.8,1.8,base+h,1.8,0,base+h+1.2,1.8,roof);
+          m.tri(-1.8,base+h,-1.8,0,base+h+1.2,-1.8,1.8,base+h,-1.8,roof);
+          if(!granary)m.box(.9,base+h+.6,-.8,.4,.7,.4,PALETTE.stone);
+        }else if(type==='well'){
+          m.cone(0,0,0,.9,.85,PALETTE.stone,10,.9);m.cone(0,.86,0,.63,.01,PALETTE.water,10,.63);
+          for(const side of [-1,1])m.box(side*.8,0,0,.12,1.7,.12,PALETTE.trunk);
+          m.beam(-.9,1.5,0,.9,1.5,0,.15,.15,PALETTE.trunk);m.beam(0,1.5,0,0,.55,0,.025,.025,PALETTE.paper);
+        }else if(type==='tower'){
+          for(const x of [-.65,.65])for(const z of [-.65,.65])m.box(x,0,z,.20,3.3,.20,PALETTE.trunk);
+          for(const side of [-1,1])m.beam(side*.65,.2,-.65,side*.65,2.8,.65,.1,.1,PALETTE.trunk);
+          m.box(0,3.0,0,2.0,.22,2.0,PALETTE.stone);
+          for(const side of [-1,1]){m.box(side*.91,3.2,0,.18,.55,2,PALETTE.trunk);m.box(0,3.2,side*.91,2,.55,.18,PALETTE.trunk);}
+          m.cone(0,3.24,0,.38,.75,PALETTE.cloth,6,.25);m.jewel(0,4.08,0,.2,.45,PALETTE.amber,time*.4,1);
+          m.beam(-.65,3.6,.2,.65,3.6,.2,.12,.12,PALETTE.steel);
+        }else if(type==='fence'){
+          for(const x of [-1.6,0,1.6])m.box(x,0,0,.16,1.6,.18,PALETTE.trunk);
+          for(const y of [.55,1.18])m.box(0,y,0,3.6,.16,.16,PALETTE.dune);
+        }else if(type==='flowers'){
+          for(let i=0;i<7;i++){const x=Math.sin(i*2)*.7,z=Math.cos(i*2)*.7;m.beam(x,0,z,x,.3+i%3*.1,z,.03,.03,PALETTE.cropLeaf);m.jewel(x,.4+i%3*.1,z,.17,.18,i%2?PALETTE.lavender:PALETTE.paper);}
+        }else if(type==='lantern'){
+          m.box(0,0,0,.14,2.1,.14,PALETTE.trunk);m.beam(0,2,0,.45,2,0,.1,.1,PALETTE.trunk);m.box(.4,1.62,0,.32,.4,.32,PALETTE.amber,0,1,1);m.cone(.4,2.03,0,.26,.18,PALETTE.stoneDark,4);
+        }
+        m.origin(0,0,0);
+        if(!ruined&&b.hp<b.maxHp){a.ring(b.x,(b.y??0)+.2,b.z,1.9,.08,PALETTE.danger,.7,0,TAU*clamp(b.hp/b.maxHp,0,1));}
+      }
+      for(const plot of (village.plots||[]).slice(0,16)){
+        if(!plot.crop||Math.hypot(plot.x-p.x,plot.z-p.z)>85)continue;
+        const stage={seed:.12,sprout:.30,growing:.65,ripe:1}[plot.stage]||.12,ripe=plot.stage==='ripe';
+        m.origin(plot.x,(plot.y??heightAt(plot.x,plot.z))+.14,plot.z);
+        if(plot.watered)m.box(0,0,0,2.65,.02,2.65,tint(PALETTE.soil,.78));
+        for(let i=0;i<9;i++){
+          const x=(i%3-1)*.8,z=(Math.floor(i/3)-1)*.8,h=.15+stage*.60;
+          if(plot.crop==='wheat'){
+            for(const d of [-.11,.11]){m.beam(x+d,0,z,x+d,h,z,.035,.035,PALETTE.cropLeaf);m.cone(x+d,h*.65,z,.07,h*.5,ripe?PALETTE.cropRipe:PALETTE.cropLeaf,5,.02);}
+          }else if(plot.crop==='pumpkin'){
+            m.tri(x-.28*stage,.1,z,x,.22*stage,z+.23,x+.28*stage,.1,z,PALETTE.cropLeaf);
+            if(stage>.4){m.jewel(x,h*.26,z,.30*stage,.52*stage,ripe?PALETTE.cropRipe:PALETTE.cropLeaf);m.beam(x,h*.45,z,x+.04,h*.68,z,.06,.06,PALETTE.trunk);}
+          }else if(plot.crop==='moonflower'){
+            m.beam(x,0,z,x,h,z,.04,.04,PALETTE.cropLeaf);m.jewel(x,h,z,.17*stage,.25*stage,ripe?PALETTE.paper:PALETTE.lavender,time*.1,ripe?1:0);
+          }else{
+            if(ripe)m.jewel(x,.12,z,.17,.28,PALETTE.paper);
+            m.tri(x-.2*stage,.1,z,x,h,z,x+.2*stage,.1,z,PALETTE.cropLeaf);
+            m.tri(x,.1,z-.18*stage,x,h*.8,z,x,.1,z+.18*stage,PALETTE.leafLight);
+          }
+        }
+        m.origin(0,0,0);
+        if(ripe)a.ring(plot.x,(plot.y??0)+.2,plot.z,1.5,.04,PALETTE.cropRipe,.65);
+      }
+      if((village.beaconHp??180)<(village.maxBeaconHp??180))a.ring(VILLAGE.x,heightAt(VILLAGE.x,VILLAGE.z)+.22,VILLAGE.z,3.5,.18,PALETTE.danger,.85,0,TAU*clamp(village.beaconHp/(village.maxBeaconHp||180),0,1));
+      if(daylightAt(village.clock)>.75)for(let i=0;i<3;i++){
+        const x=VILLAGE.x+Math.sin(time*.2+i*2)*18,z=VILLAGE.z+Math.cos(time*.2+i*2)*18,y=heightAt(x,z)+5+i*.5,wing=Math.sin(time*9+i)*.18;
+        m.tri(x,y,z,x-.5,y+wing,z-.12,x,y+.05,z+.15,PALETTE.paper);m.tri(x,y,z,x+.5,y+wing,z-.12,x,y+.05,z+.15,PALETTE.paper);
+      }
+    }
+    const preview=state.buildPreview;
+    if(preview&&Number.isFinite(preview.x)&&Number.isFinite(preview.z)){
+      const y=heightAt(preview.x,preview.z)+.12,col=preview.valid===false?PALETTE.danger:PALETTE.wind;
+      a.origin(preview.x,y,preview.z,preview.facing||0);a.box(0,0,0,3.7,.08,3.7,col,0,.30,1);a.ring(0,.1,0,2.2,.06,col,.8);a.origin(0,0,0);
+    }
+  }
+
   effects(state) {
     const a = this.transparent, m = this.dynamic, time = state.time || 0;
     const effects = state.effects || [];
@@ -736,9 +898,19 @@ export class Renderer {
       const e = effects[index], life = Math.max(0.01, e.life || 0.6), age = e.age || 0;
       const t = clamp(age / life, 0, 1), fade = 1 - t, power = e.power || 1;
       const type = e.type || '', x = e.x || 0, y = e.y || 0, z = e.z || 0;
-      if (type.includes('pulse') || type.includes('shock') || type.includes('ring') || type.includes('slam')) {
+      if(type.includes('bloom')||type.includes('healing')){
+        a.ring(x,y+.08,z,1+t*4,.12,PALETTE.wind,fade*.8);
+        for(let i=0;i<8;i++){const angle=i/8*TAU+time*.3;m.jewel(x+Math.sin(angle)*t*3,y+.3+Math.sin(t*Math.PI),z+Math.cos(angle)*t*3,.14*fade,.3*fade,PALETTE.paper,angle,1);}
+      }else if(type.includes('winddash')){
+        a.origin(x,y+.6,z,e.yaw||0);for(let i=0;i<3;i++)a.ring(0,-.4+i*.25,-t*2-i*.6,.6+t,.07,PALETTE.wind,fade*.6,0,TAU);a.origin(0,0,0);
+      }else if(type.includes('quake')){
+        a.ring(x,y+.10,z,t*(e.power||6),.24,PALETTE.amber,fade*.8);
+        for(let i=0;i<8;i++){const angle=i/8*TAU;m.cone(x+Math.sin(angle)*t*4,y,z+Math.cos(angle)*t*4,.2*fade,Math.sin(t*Math.PI)*.7,PALETTE.rock,4);}
+      }else if(type.includes('tower')&&Number.isFinite(e.targetX)){
+        m.beam(x,y+3.7,z,e.targetX,e.targetY??y+1,e.targetZ,.06,.06,PALETTE.amber,fade,1);
+      }else if (type.includes('pulse') || type.includes('shock') || type.includes('ring') || type.includes('slam')) {
         const radius = (e.power || (type.includes('pulse') ? 7 : 3.5)) * Math.max(0.04, t);
-        const color = e.pattern ? e.pattern === 'ring' ? PALETTE.amber : PALETTE.danger : PALETTE.wind;
+        const color = e.pattern ? e.pattern === 'ring' ? PALETTE.amber : e.pattern === 'slow' ? PALETTE.alpine : PALETTE.danger : PALETTE.wind;
         a.ring(x, y + 0.11, z, radius, 0.09 + fade * 0.16, color, fade * 0.85);
         a.ring(x, y + 0.18 + t * 0.7, z, radius * 0.88, 0.04, PALETTE.paper, fade * 0.45);
       } else if (type.includes('slash') || type.includes('attack')) {
@@ -754,7 +926,7 @@ export class Renderer {
       }
     }
     for (const p of state.projectiles || []) {
-      const hostile = p.hostile !== false && p.owner !== 'player', col = hostile ? PALETTE.danger : PALETTE.wind;
+      const hostile = p.hostile !== false && p.owner !== 'player', col = p.type==='sunbolt'?PALETTE.amber:p.kind==='frost'||p.type==='frost'?PALETTE.alpine:hostile?PALETTE.danger:PALETTE.wind;
       m.jewel(p.x, p.y, p.z, p.radius || 0.14, 0.32, col, time * 5, 1);
       const vx = p.vx || 0, vy = p.vy || 0, vz = p.vz || 0, len = Math.hypot(vx, vy, vz) || 1;
       m.beam(p.x, p.y, p.z, p.x - vx / len * 0.65, p.y - vy / len * 0.65, p.z - vz / len * 0.65, 0.035, 0.035, col, 1, 1);
@@ -778,7 +950,7 @@ export class Renderer {
         m.box(item.x, y + 0.53 + bob, item.z, 0.13, 0.07, 0.13, PALETTE.amber);
       } else m.jewel(item.x, y + 0.4 + bob, item.z, 0.16, 0.4, PALETTE.crystal, state.time || 0, 1);
     }
-    this.dynamicLandmarks(state); this.effects(state);
+    this.dynamicLandmarks(state); this.village(state); this.effects(state);
   }
 
   bind(buffer) {
@@ -831,19 +1003,21 @@ export class Renderer {
     const start = performance.now(), gl = this.gl;
     if (Math.abs(this.canvas.clientWidth - this.cssWidth) > 1 || Math.abs(this.canvas.clientHeight - this.cssHeight) > 1) this.resize();
     this.time += Math.min(dt || 1 / 60, 0.1); this.stats.drawCalls = 0; this.stats.triangles = 0;
+    this.streamWorld(state.player.x,state.player.z);
     this.updateCamera(state, camera, dt);
-    gl.clearColor(...PALETTE.sky, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    const daylight=daylightAt(state.village?.clock), fog=PALETTE.sky.map((v,i)=>mix(PALETTE.nightSky[i],v,(daylight-.55)/.45));
+    gl.clearColor(...fog, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.disable(gl.DEPTH_TEST); gl.disable(gl.BLEND); gl.depthMask(false);
     gl.useProgram(this.skyProgram); gl.bindBuffer(gl.ARRAY_BUFFER, this.skyBuffer);
     for (const attribute of this.attributes) gl.disableVertexAttribArray(attribute);
     gl.enableVertexAttribArray(this.skyPosition); gl.vertexAttribPointer(this.skyPosition, 2, gl.FLOAT, false, 0, 0);
     gl.uniform2f(this.skyUniforms.uYawPitch, this.cameraYaw, this.cameraPitch);
     gl.uniform1f(this.skyUniforms.uAspect, this.cssWidth / this.cssHeight); gl.uniform1f(this.skyUniforms.uTime, this.time);
-    gl.uniform3fv(this.skyUniforms.uFog, PALETTE.sky); gl.drawArrays(gl.TRIANGLES, 0, 3); this.stats.drawCalls++;
+    gl.uniform1f(this.skyUniforms.uDaylight, daylight); gl.uniform3fv(this.skyUniforms.uFog, fog); gl.drawArrays(gl.TRIANGLES, 0, 3); this.stats.drawCalls++;
     gl.disableVertexAttribArray(this.skyPosition);
     gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.useProgram(this.program);
     gl.uniformMatrix4fv(this.uniforms.uViewProjection, false, this.viewProjection);
-    gl.uniform3fv(this.uniforms.uEye, this.eye); gl.uniform3fv(this.uniforms.uFog, PALETTE.sky);
+    gl.uniform3fv(this.uniforms.uEye, this.eye); gl.uniform3fv(this.uniforms.uFog, fog); gl.uniform1f(this.uniforms.uDaylight, daylight);
     gl.uniform1f(this.uniforms.uTime, state.time || this.time);
     this.draw(this.backdrop.buffer, this.backdrop.count);
     this.updateFrustum();
@@ -880,8 +1054,9 @@ export class Renderer {
     const gl = this.gl;
     this.canvas.removeEventListener('webglcontextlost', this.onContextLost);
     this.canvas.removeEventListener('webglcontextrestored', this.onContextRestored);
-    for (const chunk of this.chunks.values()) gl.deleteBuffer(chunk.buffer);
+    for (const chunk of this.chunks.values()) { gl.deleteBuffer(chunk.buffer); this.stats.disposedChunks++; }
     for (const value of [this.skyBuffer, this.dynamicBuffer, this.transparentBuffer, this.water.buffer, this.backdrop.buffer]) gl.deleteBuffer(value);
     gl.deleteProgram(this.program); gl.deleteProgram(this.skyProgram); this.chunks.clear();
+    this.stats.residentChunks=0;this.stats.residentBytes=0;this.stats.staticTriangles=0;
   }
 }

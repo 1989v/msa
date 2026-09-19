@@ -1,6 +1,7 @@
 // All timbres are synthesized locally. Nothing is loaded or started until unlock().
 const MAX_VOICES = 28;
 const ALIASES = Object.freeze({
+  build:'interact',plant:'interact',water:'glide',harvest:'reward',gather:'reward',trade:'interact',repair:'solve',travel:'glide',
   attack: 'attack', slash: 'attack', sword: 'attack', combo: 'attack',
   attack1: 'attack1', attack2: 'attack2', attack3: 'attack3',
   hit: 'hit', 'enemy-hit': 'hit', enemyHit: 'hit', impact: 'hit',

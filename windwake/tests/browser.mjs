@@ -4,7 +4,7 @@ import {connect} from './cdp.mjs';
 import assert from 'node:assert/strict';
 const env={...process.env,CLAUDE_SCRATCHPAD:'/private/tmp/windwake-qa'};
 const root=new URL('../../',import.meta.url).pathname;
-const output=new URL('../../docs/specs/2026-09-18-windwake/verifications/',import.meta.url).pathname;
+const output=process.env.WINDWAKE_QA_OUTPUT||new URL('../../docs/specs/2026-09-18-windwake/verifications/',import.meta.url).pathname;
 await mkdir(output,{recursive:true});
 let cdp;
 try{

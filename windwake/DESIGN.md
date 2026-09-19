@@ -1,5 +1,5 @@
 ---
-version: 1.0.0
+version: 2.0.0
 archetype: wind-worn
 extends: ../DESIGN.md
 tokens:
@@ -12,6 +12,14 @@ tokens:
     danger: { css: 'hsl(8 75% 68%)', role: 'health, enemy attacks' }
     grass: { rgb: [0.29, 0.47, 0.35], role: 'meadow terrain' }
     rock: { rgb: [0.59, 0.59, 0.49], role: 'stone and platform' }
+    dune: { rgb: [0.79, 0.69, 0.46], role: 'warm sand' }
+    autumn: { rgb: [0.75, 0.39, 0.20], role: 'autumn canopy' }
+    alpine: { rgb: [0.63, 0.73, 0.72], role: 'snowy heights' }
+    lavender: { rgb: [0.58, 0.49, 0.72], role: 'flower meadow' }
+    nightSky: { rgb: [0.19, 0.29, 0.39], role: 'readable moonlit sky' }
+    cropLeaf: { rgb: [0.34, 0.57, 0.29], role: 'growing crops' }
+    cropRipe: { rgb: [0.94, 0.69, 0.28], role: 'harvest-ready crops' }
+    soil: { rgb: [0.40, 0.31, 0.22], role: 'cultivated plots' }
     sky: { rgb: [0.67, 0.80, 0.79], role: 'sky and distance fog' }
   typography:
     family: 'system-ui, sans-serif'
@@ -50,3 +58,6 @@ Buttons: paper/default, amber/hover, dark/active, amber outline/focus, muted/dis
 - Do not remove visible keyboard focus.
 - Do not shake the camera under reduced motion.
 - Do not use glowing glass cards or gradient lettering.
+
+## 9. Frontiers
+Eight warm, readable biomes surround the original island. Skill branches use prerequisite text and distinct learned/available states. The village grid represents4m cells around the player; construction is spatial and bounded, with costs visible before placement. Night retains at least55% terrain lighting.
