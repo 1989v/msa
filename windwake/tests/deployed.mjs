@@ -62,9 +62,22 @@ try {
   assert.equal(journey.mode, 'won'); assert.equal(journey.sigils.length, 3);
   await cdp.evaluate('WINDWAKE.setManual(false)'); await cdp.sleep(200);
   await cdp.screenshot(output+'/ending.png');
+  const frontierSource = await readFile(new URL('./frontier-routes.mjs', import.meta.url), 'utf8');
+  const frontierRoutes = frontierSource.slice(0,frontierSource.indexOf("if(typeof process!=='undefined'"))
+    .replace("import { WORLD, VILLAGE, TRAIL_ROUTES, WAYPOINTS, BOSS_SITES, RESOURCE_NODES } from '../world.mjs';",
+      `const { WORLD, VILLAGE, TRAIL_ROUTES, WAYPOINTS, BOSS_SITES, RESOURCE_NODES } = await import(${JSON.stringify(new URL('world.mjs', base).href)});`)
+    .replace(/^export /gm,'');
+  await cdp.evaluate(`(async()=>{${frontierRoutes}\nwindow.deployedFrontier={runFrontierAdventure,frontierCheckpoint};})()`);
+  const frontier = await cdp.evaluate('WINDWAKE.reset();deployedFrontier.runFrontierAdventure({state:()=>WINDWAKE.state(),step:(n,i)=>WINDWAKE.step(n,i,{render:false}),village:(a,p)=>WINDWAKE.village(a,p),learn:id=>WINDWAKE.learn(id),equip:(id,slot)=>WINDWAKE.equip(id,slot),travel:id=>WINDWAKE.travel(id)})');
+  assert.equal(frontier.finalDefeated,true);assert.equal(frontier.villageLevel,3);assert.equal(frontier.raid,'won');
+  await cdp.evaluate('WINDWAKE.setManual(false)');await cdp.sleep(250);await cdp.screenshot(output+'/frontier-ending.png');
+  await cdp.clickId('return-game');await cdp.tap('Escape');await cdp.send('Page.reload',{ignoreCache:true});
+  for(let i=0;i<100;i++){await cdp.sleep(100);if(await cdp.evaluate('!!window.WINDWAKE'))break;}
+  await cdp.clickId('continue-button');const resumed=await cdp.evaluate('({mode:WINDWAKE.state().mode,final:WINDWAKE.state().adventure.finalDefeated,level:WINDWAKE.state().village.level,raidRewarded:WINDWAKE.state().village.raid.rewarded})');
+  assert.deepEqual(resumed,{mode:'playing',final:true,level:3,raidRewarded:true});
   const errors = cdp.events.filter(e=>e.method==='Runtime.exceptionThrown'||e.method==='Runtime.consoleAPICalled'&&e.params.type==='error'||e.method==='Log.entryAdded'&&e.params.entry.level==='error');
   assert.equal(errors.length, 0, JSON.stringify(errors));
-  const report = {url:url.href, sourceCommit:metadata.sourceCommit, assets, trustedInput:after, journey, errors};
+  const report = {url:url.href, sourceCommit:metadata.sourceCommit, assets, trustedInput:after, journey, frontier, resumed, errors};
   await writeFile(output+'/report.json', JSON.stringify(report,null,2)+'\n');
   console.log('DEPLOYED CHROME PASS', JSON.stringify(report));
 } finally {

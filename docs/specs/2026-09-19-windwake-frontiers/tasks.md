@@ -19,7 +19,7 @@ Dependencies:1/2 contracts. Phase: simulation. Required skills: hns:implement-ta
 - [x]12 regular enemy behaviors, regional boss families, bounded active set and persistent defeats.
 - [x]4 abilities, regional rewards/waypoints, v1→v2 saves and late capstone.
 - [x] Replace SOLIDS consumers in horizontalMove,verticalMove,lineClear,updateBlocks,projectiles and player movement/knockback with querySolids; reconcile all encounter/raid actor paths within64 cap.
-- [x] Verify: `node --test windwake/tests/sim.test.mjs windwake/tests/combat.test.mjs windwake/tests/frontiers.test.mjs`.
+- [x] Verify: `node --test windwake/tests/sim.test.mjs windwake/tests/combat.test.mjs windwake/tests/frontier-sim.test.mjs`.
 
 ## Group4 — Playable interface
 Dependencies:1–3. Phase: interface. Required skills: hns:implement-tasks.
@@ -34,6 +34,6 @@ Dependencies:1–4. Phase: verification. Required skills: hns:verify,hns:validat
 - [x] Gate: same-seed chunk output equals after reversed query order and eviction/rebuild; cross-boundary solid returned once from either side. Three multi-region out/return render circuits assert CPU≤96/GPU≤64/enemies≤64 at every sample.
 - [x] Gate: v1 fixture preserves all sigils/chests/upgrades/currency/guardian completion; v2 active-wave reload preserves survivor IDs/HP and reward marker, post-victory reload cannot pay again; death has same invariant. Queued raid allows home travel; active blocks it.
 - [x] Fresh-context implementation review, fix findings, rerun impacted checks, sync docs.
-- [x] Scoped commit, isolated deployment, public source/hash/Chrome verification.
+- [ ] Scoped commit, isolated deployment, public source/hash/Chrome verification.
 
 Local implementation and verification complete. Public deployment remains in progress and is not claimed by these local task checkmarks; see verifications/deployment.md after rollout.
