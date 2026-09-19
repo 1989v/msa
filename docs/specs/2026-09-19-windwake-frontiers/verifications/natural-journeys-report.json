@@ -1,0 +1,1566 @@
+{
+  "records": [
+    {
+      "stage": "walked-route-sunfields",
+      "frame": 2806,
+      "seconds": 46.77,
+      "position": [
+        0,
+        13.89,
+        -464.72
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 392.72,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-sunfields"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "walked-route-dunes",
+      "frame": 4430,
+      "seconds": 73.83,
+      "position": [
+        397.91,
+        12.37,
+        -397.91
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 615,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-dunes"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "walked-route-coast",
+      "frame": 5628,
+      "seconds": 93.8,
+      "position": [
+        604.67,
+        11.6,
+        0
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 781.85,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-coast"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "walked-route-autumn",
+      "frame": 6694,
+      "seconds": 111.57,
+      "position": [
+        437.97,
+        21.62,
+        437.97
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 921.4,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-autumn"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "walked-route-alpine",
+      "frame": 7700,
+      "seconds": 128.33,
+      "position": [
+        0,
+        40.55,
+        634.68
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 1061.56,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-alpine"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "walked-route-mistwood",
+      "frame": 6694,
+      "seconds": 111.57,
+      "position": [
+        -437.97,
+        18.64,
+        437.97
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 921.4,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-mistwood"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "walked-route-canyon",
+      "frame": 5694,
+      "seconds": 94.9,
+      "position": [
+        -614.67,
+        21.58,
+        0
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 791.85,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-canyon"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "walked-route-lavender",
+      "frame": 4628,
+      "seconds": 77.13,
+      "position": [
+        -408.66,
+        6.18,
+        -427.24
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 643.54,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-lavender"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "natural-farm-complete",
+      "frame": 3560,
+      "seconds": 59.33,
+      "position": [
+        -34.28,
+        0.16,
+        -85.87
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 91.17,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home"
+      ],
+      "bosses": [],
+      "xp": 95,
+      "villageTasks": [
+        "gather",
+        "build",
+        "plant",
+        "water",
+        "harvest"
+      ]
+    },
+    {
+      "stage": "natural-boss-sunfields-complete",
+      "frame": 3829,
+      "seconds": 63.82,
+      "position": [
+        0,
+        10.49,
+        -567.86
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 495.86,
+      "falls": 0,
+      "kills": 1,
+      "parries": 1,
+      "waypoints": [
+        "home",
+        "waypoint-sunfields"
+      ],
+      "bosses": [
+        "boss-sunfields"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    },
+    {
+      "stage": "natural-boss-dunes-complete",
+      "frame": 5477,
+      "seconds": 91.28,
+      "position": [
+        470.61,
+        9.58,
+        -470.61
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 717.82,
+      "falls": 0,
+      "kills": 1,
+      "parries": 2,
+      "waypoints": [
+        "home",
+        "waypoint-dunes"
+      ],
+      "bosses": [
+        "boss-dunes"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    },
+    {
+      "stage": "natural-boss-coast-complete",
+      "frame": 6693,
+      "seconds": 111.55,
+      "position": [
+        707.69,
+        3.03,
+        0
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 884.87,
+      "falls": 0,
+      "kills": 1,
+      "parries": 1,
+      "waypoints": [
+        "home",
+        "waypoint-coast"
+      ],
+      "bosses": [
+        "boss-coast"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    },
+    {
+      "stage": "natural-boss-autumn-complete",
+      "frame": 7753,
+      "seconds": 129.22,
+      "position": [
+        510.93,
+        19.26,
+        510.93
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 1024.58,
+      "falls": 0,
+      "kills": 2,
+      "parries": 1,
+      "waypoints": [
+        "home",
+        "waypoint-autumn"
+      ],
+      "bosses": [
+        "boss-autumn"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    },
+    {
+      "stage": "natural-boss-alpine-complete",
+      "frame": 8780,
+      "seconds": 146.33,
+      "position": [
+        0,
+        38.72,
+        738.01
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 1164.9,
+      "falls": 0,
+      "kills": 1,
+      "parries": 2,
+      "waypoints": [
+        "home",
+        "waypoint-alpine"
+      ],
+      "bosses": [
+        "boss-alpine"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    },
+    {
+      "stage": "natural-boss-mistwood-complete",
+      "frame": 7894,
+      "seconds": 131.57,
+      "position": [
+        -510.14,
+        10.53,
+        511.45
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 1024.74,
+      "falls": 0,
+      "kills": 4,
+      "parries": 1,
+      "waypoints": [
+        "home",
+        "waypoint-mistwood"
+      ],
+      "bosses": [
+        "boss-mistwood"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    },
+    {
+      "stage": "natural-boss-canyon-complete",
+      "frame": 6810,
+      "seconds": 113.5,
+      "position": [
+        -719.48,
+        15.82,
+        0
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 896.66,
+      "falls": 0,
+      "kills": 1,
+      "parries": 2,
+      "waypoints": [
+        "home",
+        "waypoint-canyon"
+      ],
+      "bosses": [
+        "boss-canyon"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    },
+    {
+      "stage": "natural-boss-lavender-complete",
+      "frame": 5750,
+      "seconds": 95.83,
+      "position": [
+        -480.66,
+        10.73,
+        -502.5
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 747.7,
+      "falls": 0,
+      "kills": 1,
+      "parries": 2,
+      "waypoints": [
+        "home",
+        "waypoint-lavender"
+      ],
+      "bosses": [
+        "boss-lavender"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    }
+  ],
+  "checkpoints": [
+    {
+      "stage": "start-route-sunfields",
+      "frame": 0,
+      "seconds": 0,
+      "position": [
+        0,
+        0.32,
+        -72
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 0,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home"
+      ],
+      "bosses": [],
+      "xp": 0,
+      "villageTasks": []
+    },
+    {
+      "stage": "walked-route-sunfields",
+      "frame": 2806,
+      "seconds": 46.77,
+      "position": [
+        0,
+        13.89,
+        -464.72
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 392.72,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-sunfields"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "start-route-dunes",
+      "frame": 0,
+      "seconds": 0,
+      "position": [
+        0,
+        0.32,
+        -72
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 0,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home"
+      ],
+      "bosses": [],
+      "xp": 0,
+      "villageTasks": []
+    },
+    {
+      "stage": "walked-route-dunes",
+      "frame": 4430,
+      "seconds": 73.83,
+      "position": [
+        397.91,
+        12.37,
+        -397.91
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 615,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-dunes"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "start-route-coast",
+      "frame": 0,
+      "seconds": 0,
+      "position": [
+        0,
+        0.32,
+        -72
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 0,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home"
+      ],
+      "bosses": [],
+      "xp": 0,
+      "villageTasks": []
+    },
+    {
+      "stage": "walked-route-coast",
+      "frame": 5628,
+      "seconds": 93.8,
+      "position": [
+        604.67,
+        11.6,
+        0
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 781.85,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-coast"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "start-route-autumn",
+      "frame": 0,
+      "seconds": 0,
+      "position": [
+        0,
+        0.32,
+        -72
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 0,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home"
+      ],
+      "bosses": [],
+      "xp": 0,
+      "villageTasks": []
+    },
+    {
+      "stage": "walked-route-autumn",
+      "frame": 6694,
+      "seconds": 111.57,
+      "position": [
+        437.97,
+        21.62,
+        437.97
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 921.4,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-autumn"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "start-route-alpine",
+      "frame": 0,
+      "seconds": 0,
+      "position": [
+        0,
+        0.32,
+        -72
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 0,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home"
+      ],
+      "bosses": [],
+      "xp": 0,
+      "villageTasks": []
+    },
+    {
+      "stage": "walked-route-alpine",
+      "frame": 7700,
+      "seconds": 128.33,
+      "position": [
+        0,
+        40.55,
+        634.68
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 1061.56,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-alpine"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "start-route-mistwood",
+      "frame": 0,
+      "seconds": 0,
+      "position": [
+        0,
+        0.32,
+        -72
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 0,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home"
+      ],
+      "bosses": [],
+      "xp": 0,
+      "villageTasks": []
+    },
+    {
+      "stage": "walked-route-mistwood",
+      "frame": 6694,
+      "seconds": 111.57,
+      "position": [
+        -437.97,
+        18.64,
+        437.97
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 921.4,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-mistwood"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "start-route-canyon",
+      "frame": 0,
+      "seconds": 0,
+      "position": [
+        0,
+        0.32,
+        -72
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 0,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home"
+      ],
+      "bosses": [],
+      "xp": 0,
+      "villageTasks": []
+    },
+    {
+      "stage": "walked-route-canyon",
+      "frame": 5694,
+      "seconds": 94.9,
+      "position": [
+        -614.67,
+        21.58,
+        0
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 791.85,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-canyon"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "start-route-lavender",
+      "frame": 0,
+      "seconds": 0,
+      "position": [
+        0,
+        0.32,
+        -72
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 0,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home"
+      ],
+      "bosses": [],
+      "xp": 0,
+      "villageTasks": []
+    },
+    {
+      "stage": "walked-route-lavender",
+      "frame": 4628,
+      "seconds": 77.13,
+      "position": [
+        -408.66,
+        6.18,
+        -427.24
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 643.54,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-lavender"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "natural-farm-complete",
+      "frame": 3560,
+      "seconds": 59.33,
+      "position": [
+        -34.28,
+        0.16,
+        -85.87
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 91.17,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home"
+      ],
+      "bosses": [],
+      "xp": 95,
+      "villageTasks": [
+        "gather",
+        "build",
+        "plant",
+        "water",
+        "harvest"
+      ]
+    },
+    {
+      "stage": "start-route-sunfields",
+      "frame": 0,
+      "seconds": 0,
+      "position": [
+        0,
+        0.32,
+        -72
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 0,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home"
+      ],
+      "bosses": [],
+      "xp": 0,
+      "villageTasks": []
+    },
+    {
+      "stage": "walked-route-sunfields",
+      "frame": 2806,
+      "seconds": 46.77,
+      "position": [
+        0,
+        13.89,
+        -464.72
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 392.72,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-sunfields"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "defeated-boss-sunfields",
+      "frame": 3829,
+      "seconds": 63.82,
+      "position": [
+        0,
+        10.49,
+        -567.86
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 495.86,
+      "falls": 0,
+      "kills": 1,
+      "parries": 1,
+      "waypoints": [
+        "home",
+        "waypoint-sunfields"
+      ],
+      "bosses": [
+        "boss-sunfields"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    },
+    {
+      "stage": "natural-boss-sunfields-complete",
+      "frame": 3829,
+      "seconds": 63.82,
+      "position": [
+        0,
+        10.49,
+        -567.86
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 495.86,
+      "falls": 0,
+      "kills": 1,
+      "parries": 1,
+      "waypoints": [
+        "home",
+        "waypoint-sunfields"
+      ],
+      "bosses": [
+        "boss-sunfields"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    },
+    {
+      "stage": "start-route-dunes",
+      "frame": 0,
+      "seconds": 0,
+      "position": [
+        0,
+        0.32,
+        -72
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 0,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home"
+      ],
+      "bosses": [],
+      "xp": 0,
+      "villageTasks": []
+    },
+    {
+      "stage": "walked-route-dunes",
+      "frame": 4430,
+      "seconds": 73.83,
+      "position": [
+        397.91,
+        12.37,
+        -397.91
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 615,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-dunes"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "defeated-boss-dunes",
+      "frame": 5477,
+      "seconds": 91.28,
+      "position": [
+        470.61,
+        9.58,
+        -470.61
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 717.82,
+      "falls": 0,
+      "kills": 1,
+      "parries": 2,
+      "waypoints": [
+        "home",
+        "waypoint-dunes"
+      ],
+      "bosses": [
+        "boss-dunes"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    },
+    {
+      "stage": "natural-boss-dunes-complete",
+      "frame": 5477,
+      "seconds": 91.28,
+      "position": [
+        470.61,
+        9.58,
+        -470.61
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 717.82,
+      "falls": 0,
+      "kills": 1,
+      "parries": 2,
+      "waypoints": [
+        "home",
+        "waypoint-dunes"
+      ],
+      "bosses": [
+        "boss-dunes"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    },
+    {
+      "stage": "start-route-coast",
+      "frame": 0,
+      "seconds": 0,
+      "position": [
+        0,
+        0.32,
+        -72
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 0,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home"
+      ],
+      "bosses": [],
+      "xp": 0,
+      "villageTasks": []
+    },
+    {
+      "stage": "walked-route-coast",
+      "frame": 5628,
+      "seconds": 93.8,
+      "position": [
+        604.67,
+        11.6,
+        0
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 781.85,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-coast"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "defeated-boss-coast",
+      "frame": 6693,
+      "seconds": 111.55,
+      "position": [
+        707.69,
+        3.03,
+        0
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 884.87,
+      "falls": 0,
+      "kills": 1,
+      "parries": 1,
+      "waypoints": [
+        "home",
+        "waypoint-coast"
+      ],
+      "bosses": [
+        "boss-coast"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    },
+    {
+      "stage": "natural-boss-coast-complete",
+      "frame": 6693,
+      "seconds": 111.55,
+      "position": [
+        707.69,
+        3.03,
+        0
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 884.87,
+      "falls": 0,
+      "kills": 1,
+      "parries": 1,
+      "waypoints": [
+        "home",
+        "waypoint-coast"
+      ],
+      "bosses": [
+        "boss-coast"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    },
+    {
+      "stage": "start-route-autumn",
+      "frame": 0,
+      "seconds": 0,
+      "position": [
+        0,
+        0.32,
+        -72
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 0,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home"
+      ],
+      "bosses": [],
+      "xp": 0,
+      "villageTasks": []
+    },
+    {
+      "stage": "walked-route-autumn",
+      "frame": 6694,
+      "seconds": 111.57,
+      "position": [
+        437.97,
+        21.62,
+        437.97
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 921.4,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-autumn"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "defeated-boss-autumn",
+      "frame": 7753,
+      "seconds": 129.22,
+      "position": [
+        510.93,
+        19.26,
+        510.93
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 1024.58,
+      "falls": 0,
+      "kills": 2,
+      "parries": 1,
+      "waypoints": [
+        "home",
+        "waypoint-autumn"
+      ],
+      "bosses": [
+        "boss-autumn"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    },
+    {
+      "stage": "natural-boss-autumn-complete",
+      "frame": 7753,
+      "seconds": 129.22,
+      "position": [
+        510.93,
+        19.26,
+        510.93
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 1024.58,
+      "falls": 0,
+      "kills": 2,
+      "parries": 1,
+      "waypoints": [
+        "home",
+        "waypoint-autumn"
+      ],
+      "bosses": [
+        "boss-autumn"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    },
+    {
+      "stage": "start-route-alpine",
+      "frame": 0,
+      "seconds": 0,
+      "position": [
+        0,
+        0.32,
+        -72
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 0,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home"
+      ],
+      "bosses": [],
+      "xp": 0,
+      "villageTasks": []
+    },
+    {
+      "stage": "walked-route-alpine",
+      "frame": 7700,
+      "seconds": 128.33,
+      "position": [
+        0,
+        40.55,
+        634.68
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 1061.56,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-alpine"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "defeated-boss-alpine",
+      "frame": 8780,
+      "seconds": 146.33,
+      "position": [
+        0,
+        38.72,
+        738.01
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 1164.9,
+      "falls": 0,
+      "kills": 1,
+      "parries": 2,
+      "waypoints": [
+        "home",
+        "waypoint-alpine"
+      ],
+      "bosses": [
+        "boss-alpine"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    },
+    {
+      "stage": "natural-boss-alpine-complete",
+      "frame": 8780,
+      "seconds": 146.33,
+      "position": [
+        0,
+        38.72,
+        738.01
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 1164.9,
+      "falls": 0,
+      "kills": 1,
+      "parries": 2,
+      "waypoints": [
+        "home",
+        "waypoint-alpine"
+      ],
+      "bosses": [
+        "boss-alpine"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    },
+    {
+      "stage": "start-route-mistwood",
+      "frame": 0,
+      "seconds": 0,
+      "position": [
+        0,
+        0.32,
+        -72
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 0,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home"
+      ],
+      "bosses": [],
+      "xp": 0,
+      "villageTasks": []
+    },
+    {
+      "stage": "walked-route-mistwood",
+      "frame": 6694,
+      "seconds": 111.57,
+      "position": [
+        -437.97,
+        18.64,
+        437.97
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 921.4,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-mistwood"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "defeated-boss-mistwood",
+      "frame": 7894,
+      "seconds": 131.57,
+      "position": [
+        -510.14,
+        10.53,
+        511.45
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 1024.74,
+      "falls": 0,
+      "kills": 4,
+      "parries": 1,
+      "waypoints": [
+        "home",
+        "waypoint-mistwood"
+      ],
+      "bosses": [
+        "boss-mistwood"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    },
+    {
+      "stage": "natural-boss-mistwood-complete",
+      "frame": 7894,
+      "seconds": 131.57,
+      "position": [
+        -510.14,
+        10.53,
+        511.45
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 1024.74,
+      "falls": 0,
+      "kills": 4,
+      "parries": 1,
+      "waypoints": [
+        "home",
+        "waypoint-mistwood"
+      ],
+      "bosses": [
+        "boss-mistwood"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    },
+    {
+      "stage": "start-route-canyon",
+      "frame": 0,
+      "seconds": 0,
+      "position": [
+        0,
+        0.32,
+        -72
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 0,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home"
+      ],
+      "bosses": [],
+      "xp": 0,
+      "villageTasks": []
+    },
+    {
+      "stage": "walked-route-canyon",
+      "frame": 5694,
+      "seconds": 94.9,
+      "position": [
+        -614.67,
+        21.58,
+        0
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 791.85,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-canyon"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "defeated-boss-canyon",
+      "frame": 6810,
+      "seconds": 113.5,
+      "position": [
+        -719.48,
+        15.82,
+        0
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 896.66,
+      "falls": 0,
+      "kills": 1,
+      "parries": 2,
+      "waypoints": [
+        "home",
+        "waypoint-canyon"
+      ],
+      "bosses": [
+        "boss-canyon"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    },
+    {
+      "stage": "natural-boss-canyon-complete",
+      "frame": 6810,
+      "seconds": 113.5,
+      "position": [
+        -719.48,
+        15.82,
+        0
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 896.66,
+      "falls": 0,
+      "kills": 1,
+      "parries": 2,
+      "waypoints": [
+        "home",
+        "waypoint-canyon"
+      ],
+      "bosses": [
+        "boss-canyon"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    },
+    {
+      "stage": "start-route-lavender",
+      "frame": 0,
+      "seconds": 0,
+      "position": [
+        0,
+        0.32,
+        -72
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 0,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home"
+      ],
+      "bosses": [],
+      "xp": 0,
+      "villageTasks": []
+    },
+    {
+      "stage": "walked-route-lavender",
+      "frame": 4628,
+      "seconds": 77.13,
+      "position": [
+        -408.66,
+        6.18,
+        -427.24
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 643.54,
+      "falls": 0,
+      "kills": 0,
+      "parries": 0,
+      "waypoints": [
+        "home",
+        "waypoint-lavender"
+      ],
+      "bosses": [],
+      "xp": 70,
+      "villageTasks": []
+    },
+    {
+      "stage": "defeated-boss-lavender",
+      "frame": 5750,
+      "seconds": 95.83,
+      "position": [
+        -480.66,
+        10.73,
+        -502.5
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 747.7,
+      "falls": 0,
+      "kills": 1,
+      "parries": 2,
+      "waypoints": [
+        "home",
+        "waypoint-lavender"
+      ],
+      "bosses": [
+        "boss-lavender"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    },
+    {
+      "stage": "natural-boss-lavender-complete",
+      "frame": 5750,
+      "seconds": 95.83,
+      "position": [
+        -480.66,
+        10.73,
+        -502.5
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 747.7,
+      "falls": 0,
+      "kills": 1,
+      "parries": 2,
+      "waypoints": [
+        "home",
+        "waypoint-lavender"
+      ],
+      "bosses": [
+        "boss-lavender"
+      ],
+      "xp": 220,
+      "villageTasks": []
+    }
+  ]
+}

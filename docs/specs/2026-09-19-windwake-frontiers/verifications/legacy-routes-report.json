@@ -1,0 +1,92 @@
+{
+  "first": [
+    {
+      "stage": "browser-first-quarry",
+      "frame": 2473,
+      "position": [
+        -48.001,
+        2.913,
+        -7.163
+      ],
+      "hp": 100,
+      "sigils": [
+        "quarry"
+      ],
+      "crystals": 15,
+      "jumps": 0,
+      "kills": 4,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    },
+    {
+      "stage": "browser-first-forest",
+      "frame": 2231,
+      "position": [
+        -34.186,
+        4.174,
+        48.204
+      ],
+      "hp": 100,
+      "sigils": [
+        "forest"
+      ],
+      "crystals": 13,
+      "jumps": 0,
+      "kills": 4,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    },
+    {
+      "stage": "browser-first-ruins",
+      "frame": 1933,
+      "position": [
+        47.992,
+        14.1,
+        32.69
+      ],
+      "hp": 100,
+      "sigils": [
+        "ruins"
+      ],
+      "crystals": 13,
+      "jumps": 7,
+      "kills": 3,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    }
+  ],
+  "journey": {
+    "stage": "browser-journey-complete",
+    "frame": 7706,
+    "position": [
+      0.014,
+      28,
+      27.897
+    ],
+    "hp": 99,
+    "sigils": [
+      "quarry",
+      "forest",
+      "ruins"
+    ],
+    "crystals": 48,
+    "jumps": 7,
+    "kills": 8,
+    "parries": 2,
+    "falls": 0,
+    "mode": "won"
+  },
+  "restored": {
+    "sigils": [
+      "quarry",
+      "forest",
+      "ruins"
+    ],
+    "bossDefeated": true,
+    "mode": "playing"
+  },
+  "errors": []
+}

@@ -1,0 +1,131 @@
+{
+  "combat": {
+    "frame": 429,
+    "metrics": {
+      "jumps": 1,
+      "landings": 1,
+      "hits": 1,
+      "kills": 0,
+      "parries": 0,
+      "dodges": 1,
+      "combos": 1,
+      "damageTaken": 13,
+      "distance": 30.349730359709067,
+      "falls": 0,
+      "secrets": 0
+    },
+    "events": [
+      "jump",
+      "land",
+      "enemy-attack",
+      "hurt",
+      "attack1",
+      "attack2",
+      "attack3",
+      "pulse",
+      "hit",
+      "dodge",
+      "guard"
+    ],
+    "hp": 87
+  },
+  "cameraBefore": {
+    "yaw": 0,
+    "pitch": 0.35,
+    "distance": 9,
+    "shake": 0,
+    "reducedMotion": false
+  },
+  "cameraAfter": {
+    "yaw": 0.9,
+    "pitch": 0.43,
+    "distance": 9,
+    "shake": 0,
+    "reducedMotion": false
+  },
+  "paused": {
+    "ui": {
+      "started": true,
+      "manual": false,
+      "panel": "map",
+      "storageAvailable": true,
+      "audio": "running",
+      "muted": false
+    },
+    "frame": 430
+  },
+  "backgroundState": {
+    "hidden": true,
+    "focused": true,
+    "ui": {
+      "started": true,
+      "manual": false,
+      "panel": "pause",
+      "storageAvailable": true,
+      "audio": "running",
+      "muted": false
+    },
+    "input": {
+      "held": [],
+      "pending": [],
+      "keys": [],
+      "axes": {
+        "x": 0,
+        "z": 0
+      }
+    },
+    "frame": 466
+  },
+  "touchMovement": 3.3260317460316173,
+  "performance": {
+    "frames": 352,
+    "samples": 352,
+    "fps": 58.66960014667399,
+    "frameP95": 16.799999999999272,
+    "frameP99": 33.29999999999927,
+    "renderAverage": 0.3105113695968281,
+    "droppedTime": 0,
+    "renderer": {
+      "drawCalls": 17,
+      "triangles": 24302,
+      "staticTriangles": 83609,
+      "dynamicTriangles": 3265,
+      "frameMs": 0.2999999523162842,
+      "width": 1088,
+      "height": 680,
+      "pixelRatio": 0.85,
+      "residentChunks": 49,
+      "maxResidentChunks": 64,
+      "residentBytes": 11036388,
+      "chunkBuilds": 77,
+      "chunkEvictions": 28,
+      "disposedChunks": 28,
+      "chunkBuildsThisFrame": 0
+    },
+    "world": {
+      "cachedChunks": 63,
+      "maxCachedChunks": 96,
+      "generatedChunks": 63,
+      "evictedChunks": 0,
+      "lastQueryCells": 4,
+      "lastQueryCandidates": 54
+    },
+    "actors": 13,
+    "audioVoices": 0
+  },
+  "errors": [],
+  "requests": [
+    "http://127.0.0.1:8787/",
+    "http://127.0.0.1:8787/style.css",
+    "http://127.0.0.1:8787/main.mjs",
+    "http://127.0.0.1:8787/world.mjs",
+    "http://127.0.0.1:8787/sim.mjs",
+    "http://127.0.0.1:8787/render.mjs",
+    "http://127.0.0.1:8787/audio.mjs",
+    "http://127.0.0.1:8787/progression.mjs",
+    "http://127.0.0.1:8787/village.mjs",
+    "http://127.0.0.1:8787/combat.mjs",
+    "http://127.0.0.1:8787/frontier-ui.mjs",
+    "http://127.0.0.1:8787/input.mjs"
+  ]
+}

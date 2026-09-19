@@ -1,0 +1,730 @@
+TAP version 13
+# Subtest: original actors remain simulation-owned and retain their combat stats
+ok 1 - original actors remain simulation-owned and retain their combat stats
+  ---
+  duration_ms: 1.093833
+  type: 'test'
+  ...
+# Subtest: all nine added archetypes telegraph before dealing damage or firing
+ok 2 - all nine added archetypes telegraph before dealing damage or firing
+  ---
+  duration_ms: 1.069584
+  type: 'test'
+  ...
+# Subtest: slime hops physically while chasing and wolf pack pursuit is faster
+ok 3 - slime hops physically while chasing and wolf pack pursuit is faster
+  ---
+  duration_ms: 0.856667
+  type: 'test'
+  ...
+# Subtest: wolf leap direction locks at its tell and a sidestep avoids its strike
+ok 4 - wolf leap direction locks at its tell and a sidestep avoids its strike
+  ---
+  duration_ms: 0.508792
+  type: 'test'
+  ...
+# Subtest: boar charge damages once, respects dodge, and stops against a wall
+ok 5 - boar charge damages once, respects dodge, and stops against a wall
+  ---
+  duration_ms: 0.367375
+  type: 'test'
+  ...
+# Subtest: shaman heals an injured visible ally after a tell, then casts instead of healing each frame
+ok 6 - shaman heals an injured visible ally after a tell, then casts instead of healing each frame
+  ---
+  duration_ms: 0.379041
+  type: 'test'
+  ...
+# Subtest: shaman cannot heal through new cover and never resurrects a defeated ally
+ok 7 - shaman cannot heal through new cover and never resurrects a defeated ally
+  ---
+  duration_ms: 0.419417
+  type: 'test'
+  ...
+# Subtest: wisp hovers, fires a fan, and descends into sword range during recovery
+ok 8 - wisp hovers, fires a fan, and descends into sword range during recovery
+  ---
+  duration_ms: 0.180167
+  type: 'test'
+  ...
+# Subtest: bomber fuse can be interrupted, then an uninterrupted burst uses the shared kill path once
+ok 9 - bomber fuse can be interrupted, then an uninterrupted burst uses the shared kill path once
+  ---
+  duration_ms: 0.548458
+  type: 'test'
+  ...
+# Subtest: sentinel guards its approach but exposes its front throughout windup and recovery
+ok 10 - sentinel guards its approach but exposes its front throughout windup and recovery
+  ---
+  duration_ms: 0.38425
+  type: 'test'
+  ...
+# Subtest: burrow eruption marks a fixed ground location and gives a full sidestep window
+ok 11 - burrow eruption marks a fixed ground location and gives a full sidestep window
+  ---
+  duration_ms: 0.175083
+  type: 'test'
+  ...
+# Subtest: frostling creates a bounded slowing zone and a slow projectile after its ground tell
+ok 12 - frostling creates a bounded slowing zone and a slow projectile after its ground tell
+  ---
+  duration_ms: 0.329541
+  type: 'test'
+  ...
+# Subtest: melee, burst and targeted eruption respect cover and a different floor at resolution
+ok 13 - melee, burst and targeted eruption respect cover and a different floor at resolution
+  ---
+  duration_ms: 0.349375
+  type: 'test'
+  ...
+# Subtest: boss families execute different real attack sequences and phase changes once
+ok 14 - boss families execute different real attack sequences and phase changes once
+  ---
+  duration_ms: 4.88375
+  type: 'test'
+  ...
+# Subtest: boss ring is jumpable and physical cover still blocks it
+ok 15 - boss ring is jumpable and physical cover still blocks it
+  ---
+  duration_ms: 0.135583
+  type: 'test'
+  ...
+# Subtest: phase two introduces bulwark rings, thorn eruptions and tide charges with full tells
+ok 16 - phase two introduces bulwark rings, thorn eruptions and tide charges with full tells
+  ---
+  duration_ms: 0.280583
+  type: 'test'
+  ...
+# Subtest: a lingering slow zone respects cover and jump height on every tick
+ok 17 - a lingering slow zone respects cover and jump height on every tick
+  ---
+  duration_ms: 0.132625
+  type: 'test'
+  ...
+# Subtest: thorn summons never exceed three living adds and denied spawns are safe
+ok 18 - thorn summons never exceed three living adds and denied spawns are safe
+  ---
+  duration_ms: 0.387041
+  type: 'test'
+  ...
+# Subtest: regional boss keeps real terrain height and stays within its own 22m arena
+ok 19 - regional boss keeps real terrain height and stays within its own 22m arena
+  ---
+  duration_ms: 0.203042
+  type: 'test'
+  ...
+# Subtest: stagger interrupts a boss active attack without being overwritten by recovery
+ok 20 - stagger interrupts a boss active attack without being overwritten by recovery
+  ---
+  duration_ms: 0.0515
+  type: 'test'
+  ...
+# Subtest: expanded AI replay is deterministic and all state remains JSON serializable
+ok 21 - expanded AI replay is deterministic and all state remains JSON serializable
+  ---
+  duration_ms: 2.881542
+  type: 'test'
+  ...
+# Subtest: ten completed nights release defeated actor slots and continue admitting every wave
+ok 22 - ten completed nights release defeated actor slots and continue admitting every wave
+  ---
+  duration_ms: 173.229792
+  type: 'test'
+  ...
+# Subtest: an intact fence blocks a nearby raid strike aimed at a player behind it
+ok 23 - an intact fence blocks a nearby raid strike aimed at a player behind it
+  ---
+  duration_ms: 0.495666
+  type: 'test'
+  ...
+# Subtest: partial survival trial reload keeps stable defeated guardians and pays no repeated kill reward
+ok 24 - partial survival trial reload keeps stable defeated guardians and pays no repeated kill reward
+  ---
+  duration_ms: 5.943709
+  type: 'test'
+  ...
+# Subtest: a defeated frozen raider outside home range is captured before pruning and stays dead after load
+ok 25 - a defeated frozen raider outside home range is captured before pruning and stays dead after load
+  ---
+  duration_ms: 17.531083
+  type: 'test'
+  ...
+# Subtest: equipped sunbolt input creates a real projectile, damages a reachable target and cannot bypass cooldown
+ok 26 - equipped sunbolt input creates a real projectile, damages a reachable target and cannot bypass cooldown
+  ---
+  duration_ms: 9.377041
+  type: 'test'
+  ...
+# Subtest: sunbolt and quake respect the existing solid quarry wall and separate floors
+ok 27 - sunbolt and quake respect the existing solid quarry wall and separate floors
+  ---
+  duration_ms: 5.808375
+  type: 'test'
+  ...
+# Subtest: wind dash has real directional displacement and cannot tunnel through a wall
+ok 28 - wind dash has real directional displacement and cannot tunnel through a wall
+  ---
+  duration_ms: 2.472209
+  type: 'test'
+  ...
+# Subtest: bloom heals actual HP and quake strikes grounded nearby targets with energy/cooldown gates
+ok 29 - bloom heals actual HP and quake strikes grounded nearby targets with energy/cooldown gates
+  ---
+  duration_ms: 0.33275
+  type: 'test'
+  ...
+# Subtest: passive effects reach real movement, capacity and sword combat after save restore
+ok 30 - passive effects reach real movement, capacity and sword combat after save restore
+  ---
+  duration_ms: 5.016834
+  type: 'test'
+  ...
+# Subtest: waypoints require a physical interaction, persist, and reset travel motion on safe ground
+ok 31 - waypoints require a physical interaction, persist, and reset travel motion on safe ground
+  ---
+  duration_ms: 3.172542
+  type: 'test'
+  ...
+# Subtest: active raids block travel while a safe distant queued raid permits home return
+ok 32 - active raids block travel while a safe distant queued raid permits home return
+  ---
+  duration_ms: 0.157167
+  type: 'test'
+  ...
+# Subtest: regional first-clear pays once, survives reload and does not respawn after streaming away
+ok 33 - regional first-clear pays once, survives reload and does not respawn after streaming away
+  ---
+  duration_ms: 2.809125
+  type: 'test'
+  ...
+# Subtest: defeated streamed regular enemies stay defeated across unload, return and save reload
+ok 34 - defeated streamed regular enemies stay defeated across unload, return and save reload
+  ---
+  duration_ms: 3.0155
+  type: 'test'
+  ...
+# Subtest: three streamed out-and-return circuits keep simulation entity, effect and projectile budgets bounded
+ok 35 - three streamed out-and-return circuits keep simulation entity, effect and projectile budgets bounded
+  ---
+  duration_ms: 57.273083
+  type: 'test'
+  ...
+# Subtest: v1 migration retains completed original progress and initializes the new adventure safely
+ok 36 - v1 migration retains completed original progress and initializes the new adventure safely
+  ---
+  duration_ms: 6.676833
+  type: 'test'
+  ...
+# Subtest: v2 roundtrip preserves learned abilities, home placement and watered crop growth without offline ticks
+ok 37 - v2 roundtrip preserves learned abilities, home placement and watered crop growth without offline ticks
+  ---
+  duration_ms: 6.83925
+  type: 'test'
+  ...
+# Subtest: malformed v2 saves normalize nested values and remain playable after actual simulation steps
+ok 38 - malformed v2 saves normalize nested values and remain playable after actual simulation steps
+  ---
+  duration_ms: 2.560792
+  type: 'test'
+  ...
+# Subtest: active raid save and death-respawn retain exact survivor identities and HP without early rewards
+ok 39 - active raid save and death-respawn retain exact survivor identities and HP without early rewards
+  ---
+  duration_ms: 12.203708
+  type: 'test'
+  ...
+# Subtest: completed raid rewards cannot replay after full save reload and simulation advance
+ok 40 - completed raid rewards cannot replay after full save reload and simulation advance
+  ---
+  duration_ms: 15.76575
+  type: 'test'
+  ...
+# Subtest: final completion remains complete across reload and does not reinstantiate the capstone
+ok 41 - final completion remains complete across reload and does not reinstantiate the capstone
+  ---
+  duration_ms: 1.689833
+  type: 'test'
+  ...
+# Subtest: one fresh natural adventure earns farming, two defense waves, village3 and the capstone through public actions
+ok 42 - one fresh natural adventure earns farming, two defense waves, village3 and the capstone through public actions
+  ---
+  duration_ms: 2550.8065
+  type: 'test'
+  ...
+# Subtest: a quick press/release survives render frames with zero simulation ticks
+ok 43 - a quick press/release survives render frames with zero simulation ticks
+  ---
+  duration_ms: 5.608916
+  type: 'test'
+  ...
+# Subtest: held buttons fire once across multiple RAF simulation substeps
+ok 44 - held buttons fire once across multiple RAF simulation substeps
+  ---
+  duration_ms: 6.023333
+  type: 'test'
+  ...
+# Subtest: clearing pause input discards held controls, axes and pending taps
+ok 45 - clearing pause input discards held controls, axes and pending taps
+  ---
+  duration_ms: 0.407208
+  type: 'test'
+  ...
+# Subtest: three branches expose eighteen prerequisite nodes and four usable ability definitions
+ok 46 - three branches expose eighteen prerequisite nodes and four usable ability definitions
+  ---
+  duration_ms: 0.81525
+  type: 'test'
+  ...
+# Subtest: first skill build spends a finite budget, enforces prerequisites and autoequips
+ok 47 - first skill build spends a finite budget, enforces prerequisites and autoequips
+  ---
+  duration_ms: 0.220625
+  type: 'test'
+  ...
+# Subtest: XP crossing multiple thresholds preserves spent points and rejects nonfinite rewards
+ok 48 - XP crossing multiple thresholds preserves spent points and rejects nonfinite rewards
+  ---
+  duration_ms: 0.218916
+  type: 'test'
+  ...
+# Subtest: modifiers apply real flat bonuses, multipliers and additive capacities once
+ok 49 - modifiers apply real flat bonuses, multipliers and additive capacities once
+  ---
+  duration_ms: 0.1335
+  type: 'test'
+  ...
+# Subtest: adventure validation derives points, rejects unknown and unaffordable nodes, closes prerequisites
+ok 50 - adventure validation derives points, rejects unknown and unaffordable nodes, closes prerequisites
+  ---
+  duration_ms: 0.234791
+  type: 'test'
+  ...
+# Subtest: village starts with eight recipes, four crops and enough supplies for home, two plots and tower
+ok 51 - village starts with eight recipes, four crops and enough supplies for home, two plots and tower
+  ---
+  duration_ms: 0.478125
+  type: 'test'
+  ...
+# Subtest: placement failures are atomic for occupancy, distance, reserved pads, invalid and unaffordable inputs
+ok 52 - placement failures are atomic for occupancy, distance, reserved pads, invalid and unaffordable inputs
+  ---
+  duration_ms: 0.30175
+  type: 'test'
+  ...
+# Subtest: watered crop growth follows simulation only and harvest grants food and seed exactly once
+ok 53 - watered crop growth follows simulation only and harvest grants food and seed exactly once
+  ---
+  duration_ms: 2.05075
+  type: 'test'
+  ...
+# Subtest: crop save restores deterministic growth and does not apply offline time
+ok 54 - crop save restores deterministic growth and does not apply offline time
+  ---
+  duration_ms: 2.660333
+  type: 'test'
+  ...
+# Subtest: removing a planted plot refunds one seed and half materials without a harvest reward
+ok 55 - removing a planted plot refunds one seed and half materials without a harvest reward
+  ---
+  duration_ms: 0.425333
+  type: 'test'
+  ...
+# Subtest: renewable gathering checks real distance and cooldown without consuming failed actions
+ok 56 - renewable gathering checks real distance and cooldown without consuming failed actions
+  ---
+  duration_ms: 0.543625
+  type: 'test'
+  ...
+# Subtest: zero inventory has a free seed and beacon recovery path without repeatable grants
+ok 57 - zero inventory has a free seed and beacon recovery path without repeatable grants
+  ---
+  duration_ms: 0.105416
+  type: 'test'
+  ...
+# Subtest: home trade and upgrades validate proximity, resources and reputation
+ok 58 - home trade and upgrades validate proximity, resources and reputation
+  ---
+  duration_ms: 0.063542
+  type: 'test'
+  ...
+# Subtest: interaction returns an executable in-range payload and tutorial gives next actual action
+ok 59 - interaction returns an executable in-range payload and tutorial gives next actual action
+  ---
+  duration_ms: 0.351042
+  type: 'test'
+  ...
+# Subtest: intact solid structures expose collision cuboids and rotated fences change extents
+ok 60 - intact solid structures expose collision cuboids and rotated fences change extents
+  ---
+  duration_ms: 0.110917
+  type: 'test'
+  ...
+# Subtest: a planted crop alone never schedules the first raid before completed harvest
+ok 61 - a planted crop alone never schedules the first raid before completed harvest
+  ---
+  duration_ms: 0.736875
+  type: 'test'
+  ...
+# Subtest: queued raid pauses the day while away and saves its warning countdown
+ok 62 - queued raid pauses the day while away and saves its warning countdown
+  ---
+  duration_ms: 8.592375
+  type: 'test'
+  ...
+# Subtest: active raid survives repeated reload with exact remaining HP and no instant reward
+ok 63 - active raid survives repeated reload with exact remaining HP and no instant reward
+  ---
+  duration_ms: 2.8825
+  type: 'test'
+  ...
+# Subtest: missing/cap-blocked raid actors remain pending rather than counting as defeated
+ok 64 - missing/cap-blocked raid actors remain pending rather than counting as defeated
+  ---
+  duration_ms: 1.9835
+  type: 'test'
+  ...
+# Subtest: between-wave save restores countdown and full victory pays once across reload
+ok 65 - between-wave save restores countdown and full victory pays once across reload
+  ---
+  duration_ms: 4.106625
+  type: 'test'
+  ...
+# Subtest: raid loss preserves progression and repairable crops while free beacon recovery works
+ok 66 - raid loss preserves progression and repairable crops while free beacon recovery works
+  ---
+  duration_ms: 1.411583
+  type: 'test'
+  ...
+# Subtest: active raid freezes while distant and player death does not mutate its surviving wave
+ok 67 - active raid freezes while distant and player death does not mutate its surviving wave
+  ---
+  duration_ms: 1.776625
+  type: 'test'
+  ...
+# Subtest: towers really damage approaching raid actors and walls can absorb their attacks
+ok 68 - towers really damage approaching raid actors and walls can absorb their attacks
+  ---
+  duration_ms: 4.452625
+  type: 'test'
+  ...
+# Subtest: adverse village saves normalize duplicate cells, dangling plots, numbers and forged empty raid
+ok 69 - adverse village saves normalize duplicate cells, dangling plots, numbers and forged empty raid
+  ---
+  duration_ms: 1.864083
+  type: 'test'
+  ...
+# Subtest: malformed action inputs and paused modes never spend or throw
+ok 70 - malformed action inputs and paused modes never spend or throw
+  ---
+  duration_ms: 0.11775
+  type: 'test'
+  ...
+# Subtest: all crop kinds complete their distinct growth cycles and seed budgets remain renewable
+ok 71 - all crop kinds complete their distinct growth cycles and seed budgets remain renewable
+  ---
+  duration_ms: 4.359542
+  type: 'test'
+  ...
+# Subtest: rotated fences reject construction around the player using actual rotated extents
+ok 72 - rotated fences reject construction around the player using actual rotated extents
+  ---
+  duration_ms: 0.127333
+  type: 'test'
+  ...
+# Subtest: save validation enforces placement and plot caps while generated IDs never collide
+ok 73 - save validation enforces placement and plot caps while generated IDs never collide
+  ---
+  duration_ms: 0.375375
+  type: 'test'
+  ...
+# Subtest: nearby player is protected by an intact fence and the raider attacks that fence instead
+ok 74 - nearby player is protected by an intact fence and the raider attacks that fence instead
+  ---
+  duration_ms: 3.658041
+  type: 'test'
+  ...
+# Subtest: raid strikes recheck static cover and vertical separation at the end of windup
+ok 75 - raid strikes recheck static cover and vertical separation at the end of windup
+  ---
+  duration_ms: 3.451208
+  type: 'test'
+  ...
+# Subtest: raid windup keeps its facing so circling behind avoids an attack
+ok 76 - raid windup keeps its facing so circling behind avoids an attack
+  ---
+  duration_ms: 2.134042
+  type: 'test'
+  ...
+# Subtest: blocked raid sidesteps test collision on both sides before moving
+ok 77 - blocked raid sidesteps test collision on both sides before moving
+  ---
+  duration_ms: 1.64375
+  type: 'test'
+  ...
+# Subtest: tower shots respect tall cover while their elevated muzzle shoots over a low fence
+ok 78 - tower shots respect tall cover while their elevated muzzle shoots over a low fence
+  ---
+  duration_ms: 3.072417
+  type: 'test'
+  ...
+# Subtest: saving during a raid windup preserves its structure target and fixed facing
+ok 79 - saving during a raid windup preserves its structure target and fixed facing
+  ---
+  duration_ms: 3.078917
+  type: 'test'
+  ...
+# Subtest: raid attack respects an integration LOS hook even when its local cover query is empty
+ok 80 - raid attack respects an integration LOS hook even when its local cover query is empty
+  ---
+  duration_ms: 2.610041
+  type: 'test'
+  ...
+# Subtest: same seed and inputs replay the entire state deterministically
+ok 81 - same seed and inputs replay the entire state deterministically
+  ---
+  duration_ms: 40.92975
+  type: 'test'
+  ...
+# Subtest: snapshots are independent copies and continue with held-input history
+ok 82 - snapshots are independent copies and continue with held-input history
+  ---
+  duration_ms: 3.633791
+  type: 'test'
+  ...
+# Subtest: a real jump ascends, reaches an apex, falls and lands only once
+ok 83 - a real jump ascends, reaches an apex, falls and lands only once
+  ---
+  duration_ms: 1.886291
+  type: 'test'
+  ...
+# Subtest: movement is camera-relative and diagonal input is normalized
+ok 84 - movement is camera-relative and diagonal input is normalized
+  ---
+  duration_ms: 2.5645
+  type: 'test'
+  ...
+# Subtest: solid walls block lateral motion instead of lifting the player through them
+ok 85 - solid walls block lateral motion instead of lifting the player through them
+  ---
+  duration_ms: 2.159833
+  type: 'test'
+  ...
+# Subtest: falling lands on an elevated platform, then leaving its edge causes a fall
+ok 86 - falling lands on an elevated platform, then leaving its edge causes a fall
+  ---
+  duration_ms: 4.078792
+  type: 'test'
+  ...
+# Subtest: coyote jump works shortly after an edge and buffered jump fires after landing
+ok 87 - coyote jump works shortly after an edge and buffered jump fires after landing
+  ---
+  duration_ms: 0.373125
+  type: 'test'
+  ...
+# Subtest: gliding requires a sigil, slows descent and ends when stamina is exhausted
+ok 88 - gliding requires a sigil, slows descent and ends when stamina is exhausted
+  ---
+  duration_ms: 0.261375
+  type: 'test'
+  ...
+# Subtest: sword damages a forward target but not targets behind or on a higher floor
+ok 89 - sword damages a forward target but not targets behind or on a higher floor
+  ---
+  duration_ms: 0.525292
+  type: 'test'
+  ...
+# Subtest: sword, pulse and enemy melee cannot damage through the solid quarry wall
+ok 90 - sword, pulse and enemy melee cannot damage through the solid quarry wall
+  ---
+  duration_ms: 0.729542
+  type: 'test'
+  ...
+# Subtest: held attack fires once; separate buffered presses produce a three-hit combo
+ok 91 - held attack fires once; separate buffered presses produce a three-hit combo
+  ---
+  duration_ms: 3.882417
+  type: 'test'
+  ...
+# Subtest: pulse spends energy, staggers a shielded charger, and cannot ignore its cooldown
+ok 92 - pulse spends energy, staggers a shielded charger, and cannot ignore its cooldown
+  ---
+  duration_ms: 0.21225
+  type: 'test'
+  ...
+# Subtest: dodge costs stamina and protects against a timed attack for a finite window
+ok 93 - dodge costs stamina and protects against a timed attack for a finite window
+  ---
+  duration_ms: 1.26025
+  type: 'test'
+  ...
+# Subtest: parry blocks a facing attack, stuns the attacker, and does not protect the back
+ok 94 - parry blocks a facing attack, stuns the attacker, and does not protect the back
+  ---
+  duration_ms: 0.215125
+  type: 'test'
+  ...
+# Subtest: melee AI provides a visible telegraph, deals one hit, then recovers
+ok 95 - melee AI provides a visible telegraph, deals one hit, then recovers
+  ---
+  duration_ms: 0.999292
+  type: 'test'
+  ...
+# Subtest: ranger telegraphs and launches a projectile that can hit the player
+ok 96 - ranger telegraphs and launches a projectile that can hit the player
+  ---
+  duration_ms: 1.685333
+  type: 'test'
+  ...
+# Subtest: projectiles disappear on solid geometry instead of crossing a wall
+ok 97 - projectiles disappear on solid geometry instead of crossing a wall
+  ---
+  duration_ms: 0.628833
+  type: 'test'
+  ...
+# Subtest: charger frontal armor reduces sword damage while flanking bypasses it
+ok 98 - charger frontal armor reduces sword damage while flanking bypasses it
+  ---
+  duration_ms: 0.512625
+  type: 'test'
+  ...
+# Subtest: solid cover blocks both aerial landing shockwaves and charger contact damage
+ok 99 - solid cover blocks both aerial landing shockwaves and charger contact damage
+  ---
+  duration_ms: 1.93425
+  type: 'test'
+  ...
+# Subtest: boss stays inactive before three sigils and phase two includes all attack patterns
+ok 100 - boss stays inactive before three sigils and phase two includes all attack patterns
+  ---
+  duration_ms: 7.603292
+  type: 'test'
+  ...
+# Subtest: jumping over a boss ring avoids damage while staying grounded does not
+ok 101 - jumping over a boss ring avoids damage while staying grounded does not
+  ---
+  duration_ms: 0.316541
+  type: 'test'
+  ...
+# Subtest: guardian resists isolated pulses but three resonance impacts open a stagger window
+ok 102 - guardian resists isolated pulses but three resonance impacts open a stagger window
+  ---
+  duration_ms: 1.744334
+  type: 'test'
+  ...
+# Subtest: quarry first-sigil scenario solves by two physical pulses and walking, without reward helpers
+ok 103 - quarry first-sigil scenario solves by two physical pulses and walking, without reward helpers
+  ---
+  duration_ms: 2.805416
+  type: 'test'
+  ...
+# Subtest: a lost quarry stone can be recovered at the plinth without paying a resource
+ok 104 - a lost quarry stone can be recovered at the plinth without paying a resource
+  ---
+  duration_ms: 0.609084
+  type: 'test'
+  ...
+# Subtest: forest first-sigil scenario retries a wrong rune then accepts the clue order
+ok 105 - forest first-sigil scenario retries a wrong rune then accepts the clue order
+  ---
+  duration_ms: 0.205833
+  type: 'test'
+  ...
+# Subtest: ruins first-sigil platform route has no rise beyond the measured starting jump
+ok 106 - ruins first-sigil platform route has no rise beyond the measured starting jump
+  ---
+  duration_ms: 1.67775
+  type: 'test'
+  ...
+# Subtest: sigil rewards are unique and the final sigil improves resonance damage
+ok 107 - sigil rewards are unique and the final sigil improves resonance damage
+  ---
+  duration_ms: 0.212416
+  type: 'test'
+  ...
+# Subtest: caches grant rewards once and camp upgrades spend only available crystals
+ok 108 - caches grant rewards once and camp upgrades spend only available crystals
+  ---
+  duration_ms: 0.16275
+  type: 'test'
+  ...
+# Subtest: save loading rejects bad envelopes and normalizes contradictory progression safely
+ok 109 - save loading rejects bad envelopes and normalizes contradictory progression safely
+  ---
+  duration_ms: 0.690959
+  type: 'test'
+  ...
+# Subtest: lethal water fall offers death and respawn preserves progress while clearing transient state
+ok 110 - lethal water fall offers death and respawn preserves progress while clearing transient state
+  ---
+  duration_ms: 0.329
+  type: 'test'
+  ...
+# Subtest: boss defeat rewards once and completed saves resume free roam with the boss defeated
+ok 111 - boss defeat rewards once and completed saves resume free roam with the boss defeated
+  ---
+  duration_ms: 0.299083
+  type: 'test'
+  ...
+# Subtest: fast travel requires a discovered camp and is unavailable during nearby combat
+ok 112 - fast travel requires a discovered camp and is unavailable during nearby combat
+  ---
+  duration_ms: 5.588291
+  type: 'test'
+  ...
+# Subtest: 64× world keeps original puzzle IDs and finite authored destinations
+ok 113 - 64× world keeps original puzzle IDs and finite authored destinations
+  ---
+  duration_ms: 0.539167
+  type: 'test'
+  ...
+# Subtest: chunk seeds reproduce after reversed access order and eviction
+ok 114 - chunk seeds reproduce after reversed access order and eviction
+  ---
+  duration_ms: 84.693
+  type: 'test'
+  ...
+# Subtest: atlas sampling cannot materialize geometry or collision chunks
+ok 115 - atlas sampling cannot materialize geometry or collision chunks
+  ---
+  duration_ms: 8.672416
+  type: 'test'
+  ...
+# Subtest: local queries return crossing AABBs once and preserve elevated support
+ok 116 - local queries return crossing AABBs once and preserve elevated support
+  ---
+  duration_ms: 4.190666
+  type: 'test'
+  ...
+# Subtest: authored route geometry is connected, above water and clear at one metre samples
+ok 117 - authored route geometry is connected, above water and clear at one metre samples
+  ---
+  duration_ms: 19.790208
+  type: 'test'
+  ...
+# Subtest: home is flat and physical arrival/arena pads contain no collision obstacles
+ok 118 - home is flat and physical arrival/arena pads contain no collision obstacles
+  ---
+  duration_ms: 1.955792
+  type: 'test'
+  ...
+# Subtest: three world circuits bound residency/build work and delete every GPU buffer
+ok 119 - three world circuits bound residency/build work and delete every GPU buffer
+  ---
+  duration_ms: 927.29275
+  type: 'test'
+  ...
+# Subtest: new creature and village schemas produce finite dynamic geometry with legacy fallback
+ok 120 - new creature and village schemas produce finite dynamic geometry with legacy fallback
+  ---
+  duration_ms: 24.064042
+  type: 'test'
+  ...
+1..120
+# tests 120
+# suites 0
+# pass 120
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2740.616333

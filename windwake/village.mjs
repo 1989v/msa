@@ -20,6 +20,7 @@ export const BUILDINGS=Object.freeze({
   lantern:building('lantern','길잡이 등불','밤에도 마을 길을 환하게 비춥니다.',{wood:2,stone:2},65,1,.5,.5,2.5,false),
 });
 const MATERIALS=['wood','stone','food'];
+const DIRECTIONS={north:'북쪽',east:'동쪽',south:'남쪽',west:'서쪽'};
 const TASKS=['gather','build','plant','water','harvest','defend'];
 const RAID_TYPES=['stalker','wolf','charger','slime'];
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
@@ -203,7 +204,7 @@ export function villageInteraction(s){
 }
 export function villageObjective(s){
   const v=s.village;if(!v)return '남쪽 마을의 귀환 봉화를 찾아보세요.';
-  if(v.raid.status==='queued')return `${v.raid.direction} 방향 습격 예고 · 귀환하면 방어가 시작됩니다.`;
+  if(v.raid.status==='queued')return `${DIRECTIONS[v.raid.direction]} 습격 예고 · 귀환하면 방어가 시작됩니다.`;
   if(v.raid.status==='active')return `마을 방어 ${v.raid.wave}/${v.raid.waves} · 봉화 ${Math.ceil(v.beaconHp)} / ${v.maxBeaconHp}`;
   if(v.beaconHp<v.maxBeaconHp)return '중앙 봉화에서 무료로 복구하고 마을을 수리하세요.';
   if(!v.tasks.includes('gather'))return '마을 주변 나무·돌·열매 터에서 E로 채집하세요.';
@@ -368,7 +369,7 @@ export function tickVillage(s,dt,hooks={}){
     if(v.clock>=DAY_SECONDS){v.clock-=DAY_SECONDS;v.day++;}
     if(v.clock>=DUSK_SECONDS&&r.day<v.day&&v.beaconHp>0&&v.tasks.includes('harvest')&&v.structures.some(b=>b.type==='cottage'&&b.hp>0)){
       Object.assign(r,emptyRaid(),{status:'queued',day:v.day,timer:10,direction:['north','east','south','west'][(v.day-1)%4]});
-      notice(s,`해질녘 경보 · ${r.direction} 방향! 귀환하면 방어가 시작됩니다. 멀리 있을 때 마을은 안전합니다.`,hooks);
+      notice(s,`해질녘 경보 · ${DIRECTIONS[r.direction]}! 귀환하면 방어가 시작됩니다. 멀리 있을 때 마을은 안전합니다.`,hooks);
     }
   }
   if(r.status!=='queued'&&r.status!=='active')return;

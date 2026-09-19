@@ -1,0 +1,214 @@
+{
+  "result": {
+    "stage": "natural-frontier-adventure-complete",
+    "frame": 53502,
+    "seconds": 891.7,
+    "position": [
+      0,
+      18.11,
+      874.79
+    ],
+    "hp": 100,
+    "flasks": 3,
+    "distance": 3747.26,
+    "falls": 0,
+    "kills": 12,
+    "parries": 10,
+    "waypoints": [
+      "home",
+      "waypoint-sunfields",
+      "waypoint-dunes",
+      "waypoint-coast",
+      "waypoint-alpine"
+    ],
+    "bosses": [
+      "boss-sunfields",
+      "boss-dunes",
+      "boss-coast",
+      "boss-alpine",
+      "boss-frontier"
+    ],
+    "xp": 1270,
+    "villageTasks": [
+      "gather",
+      "build",
+      "plant",
+      "water",
+      "harvest",
+      "defend"
+    ],
+    "villageLevel": 3,
+    "reputation": 16,
+    "materials": {
+      "wood": 93,
+      "stone": 61,
+      "food": 6
+    },
+    "day": 2,
+    "clock": 359,
+    "raid": "won",
+    "raidWave": 2,
+    "beaconHp": 180,
+    "finalDefeated": true
+  },
+  "savedProgress": {
+    "adventure": {
+      "xp": 1270,
+      "level": 7,
+      "points": 12,
+      "learned": [
+        "edge",
+        "sunbolt"
+      ],
+      "equipped": [
+        "sunbolt",
+        null
+      ],
+      "bosses": [
+        "boss-sunfields",
+        "boss-dunes",
+        "boss-coast",
+        "boss-alpine",
+        "boss-frontier"
+      ],
+      "waypoints": [
+        "home",
+        "waypoint-sunfields",
+        "waypoint-dunes",
+        "waypoint-coast",
+        "waypoint-alpine"
+      ],
+      "completedTasks": [],
+      "worldDefeated": {
+        "boss-sunfields": true,
+        "boss-dunes": true,
+        "boss-coast": true,
+        "boss-alpine": true,
+        "boss-frontier": true
+      },
+      "chapter": 1,
+      "finalDefeated": true
+    },
+    "village": {
+      "clock": 358.99999999978905,
+      "day": 2,
+      "elapsed": 891.683333332851,
+      "materials": {
+        "wood": 93,
+        "stone": 61,
+        "food": 6
+      },
+      "seeds": {
+        "turnip": 5,
+        "wheat": 2,
+        "pumpkin": 1,
+        "moonflower": 1
+      },
+      "structures": [
+        {
+          "id": "building-1",
+          "type": "plot",
+          "x": -42,
+          "z": -82,
+          "y": 0.16314922545805566,
+          "facing": 0,
+          "hp": 60,
+          "maxHp": 60,
+          "cooldown": 0
+        },
+        {
+          "id": "building-2",
+          "type": "cottage",
+          "x": -26,
+          "z": -94,
+          "y": 0.16314922545805566,
+          "facing": 0,
+          "hp": 180,
+          "maxHp": 180,
+          "cooldown": 0
+        },
+        {
+          "id": "building-3",
+          "type": "tower",
+          "x": -42,
+          "z": -74,
+          "y": 0.16314922545805566,
+          "facing": 0,
+          "hp": 160,
+          "maxHp": 160,
+          "cooldown": 0.9
+        },
+        {
+          "id": "building-4",
+          "type": "fence",
+          "x": -26,
+          "z": -74,
+          "y": 0.16314922545805566,
+          "facing": 0,
+          "hp": 110,
+          "maxHp": 110,
+          "cooldown": 0
+        }
+      ],
+      "plots": [
+        {
+          "id": "building-1",
+          "x": -42,
+          "z": -82,
+          "y": 0.16314922545805566,
+          "crop": null,
+          "watered": false,
+          "growth": 0,
+          "stage": "empty"
+        }
+      ],
+      "level": 3,
+      "reputation": 16,
+      "nextId": 5,
+      "beaconHp": 180,
+      "maxBeaconHp": 180,
+      "gathered": {
+        "resource-home-wood": 437.633333333264,
+        "resource-home-stone": 444.19999999992467
+      },
+      "tasks": [
+        "gather",
+        "build",
+        "plant",
+        "water",
+        "harvest",
+        "defend"
+      ],
+      "builtTypes": [
+        "plot",
+        "cottage",
+        "tower",
+        "fence"
+      ],
+      "raid": {
+        "status": "won",
+        "day": 1,
+        "wave": 2,
+        "waves": 2,
+        "spawned": true,
+        "timer": 0,
+        "elapsed": 12.70000000000021,
+        "direction": "north",
+        "rewarded": true,
+        "enemies": [],
+        "defeated": [
+          "raid-1-2-2",
+          "raid-1-2-3",
+          "raid-1-2-1",
+          "raid-1-2-0"
+        ]
+      }
+    }
+  },
+  "reloaded": {
+    "finalDefeated": true,
+    "villageLevel": 3,
+    "raid": "won",
+    "mode": "playing"
+  }
+}

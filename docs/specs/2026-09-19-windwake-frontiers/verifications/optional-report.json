@@ -1,0 +1,470 @@
+{
+  "last": {
+    "stage": "browser-optional-complete",
+    "frame": 5955,
+    "position": [
+      60.283,
+      -1,
+      -45.996
+    ],
+    "hp": 85,
+    "sigils": [
+      "quarry"
+    ],
+    "crystals": 32,
+    "jumps": 8,
+    "kills": 5,
+    "parries": 0,
+    "falls": 1,
+    "mode": "playing"
+  },
+  "chests": [
+    "chest-meadow",
+    "chest-grotto",
+    "chest-lake"
+  ],
+  "checkpoints": [
+    {
+      "stage": "chest-meadow",
+      "frame": 272,
+      "position": [
+        -12.873,
+        0.647,
+        -53.184
+      ],
+      "hp": 100,
+      "sigils": [],
+      "crystals": 5,
+      "jumps": 0,
+      "kills": 0,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    },
+    {
+      "stage": "combat-clear",
+      "frame": 389,
+      "position": [
+        -6.046,
+        0.459,
+        -51.955
+      ],
+      "hp": 100,
+      "sigils": [],
+      "crystals": 7,
+      "jumps": 0,
+      "kills": 1,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    },
+    {
+      "stage": "combat-clear",
+      "frame": 578,
+      "position": [
+        -8.281,
+        0.204,
+        -39.134
+      ],
+      "hp": 100,
+      "sigils": [],
+      "crystals": 9,
+      "jumps": 0,
+      "kills": 2,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    },
+    {
+      "stage": "combat-clear",
+      "frame": 1073,
+      "position": [
+        -36.039,
+        1.758,
+        -18.287
+      ],
+      "hp": 100,
+      "sigils": [],
+      "crystals": 13,
+      "jumps": 0,
+      "kills": 3,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    },
+    {
+      "stage": "combat-clear",
+      "frame": 1244,
+      "position": [
+        -48.225,
+        2.202,
+        -18.505
+      ],
+      "hp": 100,
+      "sigils": [],
+      "crystals": 15,
+      "jumps": 0,
+      "kills": 4,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    },
+    {
+      "stage": "combat-clear",
+      "frame": 1499,
+      "position": [
+        -47.978,
+        2.766,
+        -11.298
+      ],
+      "hp": 100,
+      "sigils": [],
+      "crystals": 15,
+      "jumps": 0,
+      "kills": 4,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    },
+    {
+      "stage": "quarry-approach",
+      "frame": 1499,
+      "position": [
+        -47.978,
+        2.766,
+        -11.298
+      ],
+      "hp": 100,
+      "sigils": [],
+      "crystals": 15,
+      "jumps": 0,
+      "kills": 4,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    },
+    {
+      "stage": "quarry-solved",
+      "frame": 2469,
+      "position": [
+        -48.001,
+        2.913,
+        -7.163
+      ],
+      "hp": 100,
+      "sigils": [
+        "quarry"
+      ],
+      "crystals": 20,
+      "jumps": 0,
+      "kills": 4,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    },
+    {
+      "stage": "chest-grotto",
+      "frame": 3134,
+      "position": [
+        -68.994,
+        -2.389,
+        28.772
+      ],
+      "hp": 100,
+      "sigils": [
+        "quarry"
+      ],
+      "crystals": 25,
+      "jumps": 0,
+      "kills": 4,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    },
+    {
+      "stage": "grotto-exited",
+      "frame": 3542,
+      "position": [
+        -51.249,
+        2.026,
+        9.212
+      ],
+      "hp": 100,
+      "sigils": [
+        "quarry"
+      ],
+      "crystals": 25,
+      "jumps": 0,
+      "kills": 4,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    },
+    {
+      "stage": "combat-clear",
+      "frame": 4736,
+      "position": [
+        21.432,
+        -2.906,
+        -46.89
+      ],
+      "hp": 100,
+      "sigils": [
+        "quarry"
+      ],
+      "crystals": 27,
+      "jumps": 0,
+      "kills": 5,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    },
+    {
+      "stage": "lake-approach-0",
+      "frame": 4918,
+      "position": [
+        18.289,
+        -1.1,
+        -41.037
+      ],
+      "hp": 100,
+      "sigils": [
+        "quarry"
+      ],
+      "crystals": 27,
+      "jumps": 1,
+      "kills": 5,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    },
+    {
+      "stage": "lake-approach-1",
+      "frame": 5045,
+      "position": [
+        24.236,
+        -1.1,
+        -41.002
+      ],
+      "hp": 100,
+      "sigils": [
+        "quarry"
+      ],
+      "crystals": 27,
+      "jumps": 2,
+      "kills": 5,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    },
+    {
+      "stage": "lake-approach-2",
+      "frame": 5172,
+      "position": [
+        29.736,
+        -1.1,
+        -41
+      ],
+      "hp": 100,
+      "sigils": [
+        "quarry"
+      ],
+      "crystals": 27,
+      "jumps": 3,
+      "kills": 5,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    },
+    {
+      "stage": "lake-1",
+      "frame": 5299,
+      "position": [
+        35.637,
+        -1,
+        -41
+      ],
+      "hp": 100,
+      "sigils": [
+        "quarry"
+      ],
+      "crystals": 27,
+      "jumps": 4,
+      "kills": 5,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    },
+    {
+      "stage": "lake-2",
+      "frame": 5428,
+      "position": [
+        41.657,
+        -1.3,
+        -42.875
+      ],
+      "hp": 100,
+      "sigils": [
+        "quarry"
+      ],
+      "crystals": 27,
+      "jumps": 5,
+      "kills": 5,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    },
+    {
+      "stage": "lake-3",
+      "frame": 5555,
+      "position": [
+        47.638,
+        -1.2,
+        -42.992
+      ],
+      "hp": 100,
+      "sigils": [
+        "quarry"
+      ],
+      "crystals": 27,
+      "jumps": 6,
+      "kills": 5,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    },
+    {
+      "stage": "lake-4",
+      "frame": 5682,
+      "position": [
+        53.605,
+        -1.2,
+        -44.853
+      ],
+      "hp": 100,
+      "sigils": [
+        "quarry"
+      ],
+      "crystals": 27,
+      "jumps": 7,
+      "kills": 5,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    },
+    {
+      "stage": "lake-end",
+      "frame": 5808,
+      "position": [
+        59.604,
+        -1,
+        -45.915
+      ],
+      "hp": 100,
+      "sigils": [
+        "quarry"
+      ],
+      "crystals": 27,
+      "jumps": 8,
+      "kills": 5,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    },
+    {
+      "stage": "chest-lake",
+      "frame": 5831,
+      "position": [
+        59.763,
+        -1,
+        -45.95
+      ],
+      "hp": 100,
+      "sigils": [
+        "quarry"
+      ],
+      "crystals": 32,
+      "jumps": 8,
+      "kills": 5,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    },
+    {
+      "stage": "lake-cache-collected",
+      "frame": 5831,
+      "position": [
+        59.763,
+        -1,
+        -45.95
+      ],
+      "hp": 100,
+      "sigils": [
+        "quarry"
+      ],
+      "crystals": 32,
+      "jumps": 8,
+      "kills": 5,
+      "parries": 0,
+      "falls": 0,
+      "mode": "playing"
+    },
+    {
+      "stage": "lake-water-recovered",
+      "frame": 5955,
+      "position": [
+        60.283,
+        -1,
+        -45.996
+      ],
+      "hp": 85,
+      "sigils": [
+        "quarry"
+      ],
+      "crystals": 32,
+      "jumps": 8,
+      "kills": 5,
+      "parries": 0,
+      "falls": 1,
+      "mode": "playing"
+    },
+    {
+      "stage": "optional-exploration-complete",
+      "frame": 5955,
+      "position": [
+        60.283,
+        -1,
+        -45.996
+      ],
+      "hp": 85,
+      "sigils": [
+        "quarry"
+      ],
+      "crystals": 32,
+      "jumps": 8,
+      "kills": 5,
+      "parries": 0,
+      "falls": 1,
+      "mode": "playing"
+    },
+    {
+      "stage": "browser-optional-complete",
+      "frame": 5955,
+      "position": [
+        60.283,
+        -1,
+        -45.996
+      ],
+      "hp": 85,
+      "sigils": [
+        "quarry"
+      ],
+      "crystals": 32,
+      "jumps": 8,
+      "kills": 5,
+      "parries": 0,
+      "falls": 1,
+      "mode": "playing"
+    }
+  ]
+}
