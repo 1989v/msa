@@ -134,6 +134,8 @@ async function continuous(){
     const result=await c.evaluate(`qaRoutes.town.runSettlementAdventure(qaDriver,${JSON.stringify(id)},{freshStart:${index===0}})`);
     assert.equal(result.allies.length,index+1);assert.equal(result.relics.length,index+1);assert.equal(result.falls,0);
     records.push(result);await c.evaluate('WINDWAKE.render()');await screen(`continuous-${id}-alliance`);
+    const completedHint=await c.evaluate('document.getElementById("quest-text").textContent');
+    assert.ok(completedHint.includes('동맹 완료')&&!completedHint.includes('의뢰 받기'),'Allied town HUD guides the next activity, not a completed quest');
     console.log('CHROME CONTINUOUS TOWN PASS',id,JSON.stringify({frames:result.frame,distance:result.distance,allies:result.allies.length,relics:result.relics.length}));
   }
   const earned=await c.evaluate('WINDWAKE.save()'),checkpoints=await c.evaluate('qaCheckpoints');

@@ -247,7 +247,7 @@ function updateHUD(){
   if(dungeon)$('quest-text').textContent=dungeonObjective(state);
   else if(state.village.raid.status!=='active'&&state.village.raid.status!=='queued'){
     if(state.journey?.tracked)$('quest-text').textContent=journeyObjective(state);
-    else if(town)$('quest-text').textContent=`${town.name} · ! 안내인에게 E로 의뢰 받기 · 상인과 여관도 들러보세요`;
+    else if(town)$('quest-text').textContent=state.journey.allies.includes(town.id)?`${town.name} · 동맹 완료 · 교역과 휴식 · 내 마을로 돌아가 방어를 준비하세요`:`${town.name} · ! 안내인에게 E로 의뢰 받기 · 상인과 여관도 들러보세요`;
   }
   $('world-clock').textContent=`${state.village.day}일 · ${state.village.clock>=450?'달밤':state.village.clock>=420?'해질녘':'햇살'} · Lv.${state.adventure.level} · 기술 ${state.adventure.points}P`;
   if(dungeon)$('world-clock').textContent+= ' · 마을 시간 정지';
