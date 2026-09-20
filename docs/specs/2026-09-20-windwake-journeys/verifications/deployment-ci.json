@@ -1,0 +1,211 @@
+{
+  "conclusion": "success",
+  "headSha": "bbc34bfb10304f206b5c1f1a5b7995417cf3e95c",
+  "jobs": [
+    {
+      "completedAt": "2026-09-20T02:05:29Z",
+      "conclusion": "success",
+      "databaseId": 106003685847,
+      "name": "Build & push arm64 images to OCIR + update oci-arm manifest",
+      "startedAt": "2026-09-20T02:01:00Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-09-20T02:01:02Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-09-20T02:01:00Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-20T02:01:03Z",
+          "conclusion": "success",
+          "name": "Generate GitHub App token",
+          "number": 2,
+          "startedAt": "2026-09-20T02:01:02Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-20T02:01:07Z",
+          "conclusion": "success",
+          "name": "Checkout (root only)",
+          "number": 3,
+          "startedAt": "2026-09-20T02:01:03Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-20T02:01:26Z",
+          "conclusion": "success",
+          "name": "Init build-required submodules (auth, gifticon, games)",
+          "number": 4,
+          "startedAt": "2026-09-20T02:01:07Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-20T02:01:26Z",
+          "conclusion": "success",
+          "name": "Detect changed services",
+          "number": 5,
+          "startedAt": "2026-09-20T02:01:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-20T02:01:26Z",
+          "conclusion": "skipped",
+          "name": "\ubcc0\uacbd \uc5c6\uc73c\uba74 \uc870\uae30 \uc885\ub8cc",
+          "number": 6,
+          "startedAt": "2026-09-20T02:01:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-20T02:01:26Z",
+          "conclusion": "skipped",
+          "name": "Set up JDK 25",
+          "number": 7,
+          "startedAt": "2026-09-20T02:01:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-20T02:01:26Z",
+          "conclusion": "skipped",
+          "name": "Set up Gradle",
+          "number": 8,
+          "startedAt": "2026-09-20T02:01:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-20T02:01:31Z",
+          "conclusion": "success",
+          "name": "Set up Docker Buildx (native arm64)",
+          "number": 9,
+          "startedAt": "2026-09-20T02:01:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-20T02:01:31Z",
+          "conclusion": "success",
+          "name": "Resolve registry + tag",
+          "number": 10,
+          "startedAt": "2026-09-20T02:01:31Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-20T02:01:34Z",
+          "conclusion": "success",
+          "name": "Authenticate to OCIR",
+          "number": 11,
+          "startedAt": "2026-09-20T02:01:31Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-20T02:01:34Z",
+          "conclusion": "skipped",
+          "name": "./gradlew verifyArchitecture",
+          "number": 12,
+          "startedAt": "2026-09-20T02:01:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-20T02:01:34Z",
+          "conclusion": "skipped",
+          "name": "./gradlew test (\ubcc0\uacbd\ub41c JVM \uc11c\ube44\uc2a4\ub9cc)",
+          "number": 13,
+          "startedAt": "2026-09-20T02:01:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-20T02:01:34Z",
+          "conclusion": "skipped",
+          "name": "./gradlew jib (\ubcc0\uacbd\ub41c JVM \uc11c\ube44\uc2a4\ub9cc)",
+          "number": 14,
+          "startedAt": "2026-09-20T02:01:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-20T02:04:13Z",
+          "conclusion": "success",
+          "name": "Build & push \ubcc0\uacbd\ub41c Docker \uc774\ubbf8\uc9c0",
+          "number": 15,
+          "startedAt": "2026-09-20T02:01:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-20T02:04:13Z",
+          "conclusion": "success",
+          "name": "Update oci-arm manifest image tags (\ubd80\ubd84)",
+          "number": 16,
+          "startedAt": "2026-09-20T02:04:13Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-20T02:04:15Z",
+          "conclusion": "success",
+          "name": "Commit manifest update",
+          "number": 17,
+          "startedAt": "2026-09-20T02:04:13Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-20T02:04:15Z",
+          "conclusion": "success",
+          "name": "Summary",
+          "number": 18,
+          "startedAt": "2026-09-20T02:04:15Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-20T02:05:26Z",
+          "conclusion": "success",
+          "name": "Prune old OCIR image tags",
+          "number": 19,
+          "startedAt": "2026-09-20T02:04:15Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-20T02:05:26Z",
+          "conclusion": "success",
+          "name": "Post Authenticate to OCIR",
+          "number": 35,
+          "startedAt": "2026-09-20T02:05:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-20T02:05:27Z",
+          "conclusion": "success",
+          "name": "Post Set up Docker Buildx (native arm64)",
+          "number": 36,
+          "startedAt": "2026-09-20T02:05:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-20T02:05:28Z",
+          "conclusion": "success",
+          "name": "Post Checkout (root only)",
+          "number": 37,
+          "startedAt": "2026-09-20T02:05:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-20T02:05:28Z",
+          "conclusion": "success",
+          "name": "Post Generate GitHub App token",
+          "number": 38,
+          "startedAt": "2026-09-20T02:05:28Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-09-20T02:05:28Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 39,
+          "startedAt": "2026-09-20T02:05:28Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/1989v/msa/actions/runs/35482747680/job/106003685847"
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/1989v/msa/actions/runs/35482747680"
+}

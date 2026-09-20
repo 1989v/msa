@@ -12,4 +12,4 @@
 | Natural routes | PASS | Original5routes; frontier53502frames with farm/raid/finalboss;8settlement adventures; one continuous91845frame journey earns16quest claims/8relics/8alliances with0falls and survives save. |
 | Trusted Chrome UI | PASS | Keyboard movement/jump/NPC interaction, mouse quest acceptance/report, real gathering/return/dungeon entry, local map,390×844/844×390 menus and real reload; errors0. |
 | Browser full routes / performance | PASS |8natural town adventures + real reloads,10dungeon enter/exit cycles,0errors;1280×800 SwiftShader indoor59.75/outdoor60.00FPS,p95≈16.8ms. One-state all8Chrome run and final boss-title/telegraph assertions pass, with real reload. |
-| Deployment | PENDING | Same existing public game; isolated release checkout; public bytes and Chrome must be checked after rollout. |
+| Deployment | PASS | Images35483296629success; portal-fe:849ddb3 ready1/1; all16publichashes/MIME/404, trusted input, original/frontier/continuous8townplay and real reload pass; consoleerrors0. |

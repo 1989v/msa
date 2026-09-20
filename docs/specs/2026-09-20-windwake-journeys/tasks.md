@@ -10,4 +10,4 @@
 - [x] Integrate scene physics/combat/save and browser HUD/map/input.
 - [x] Run domain/regression tests, natural routes and real Chrome play; fix observations and repeat.
 - [x] Independent review, docs synchronization, scoped commits.
-- [ ] Deploy same public game and verify exact runtime + public gameplay.
+- [x] Deploy same public game and verify exact runtime + public gameplay.

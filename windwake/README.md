@@ -141,6 +141,7 @@ node windwake/tests/frontier-browser.mjs adventure
 node windwake/tests/frontier-browser.mjs stress
 node windwake/tests/journey-ui-browser.mjs
 node windwake/tests/journey-browser.mjs adventures
+node windwake/tests/journey-browser.mjs continuous
 node windwake/tests/journey-browser.mjs stress
 ```
 

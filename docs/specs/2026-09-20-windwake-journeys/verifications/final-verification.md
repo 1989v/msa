@@ -5,7 +5,7 @@
 
 # Journeys verification
 
-2026-09-20. Local implementation verified; full browser performance and public rollout results are being appended below. Previous Frontiers remains the public release until the deployment gate passes.
+2026-09-20. Complete. Implementation, independent review, repeated real-Chrome play/fixes and final public rollout verification passed.
 
 ## Scope measured honestly
 
@@ -31,6 +31,8 @@ The original240×240m world became1920×1920m in Frontiers:64× **area**. This u
 
 6. Dungeon boss HUD reused the old sky-guardian title and gave the same dodge hint for different patterns. It now uses the actual dungeon name and explicit instructions for charge, sweep, summon, eruption, slow and leap. The final continuous Chrome run checks the title and tell against each actual boss; all four captured telegraphs passed. [Corrected HUD and full rerun](continuous-hud-r2/continuous-report.json).
 
+7. Public visual inspection found the town HUD offering a new quest after both stages were claimed. Allied towns now point to trade, rest and preparing home defense; the continuous Chrome route asserts this for all8towns. [Retest](completed-hud-r3/continuous-report.json).
+
 Test-controller corrections are separate: coast boss approach now reaches the same16m physical approach as the proven boss route, rather than filtering the actor out from a high midpoint. Retained bounded CPU world cache is allowed indoors; the performance gate checks zero new world generation/query churn, not an unnecessarily empty cache.
 
 ## Browser performance and deployment
@@ -39,4 +41,14 @@ The reusable real-Chrome harness passed8independent settlement adventures, with2
 
 Steady1280×800 SwiftShader measurements after warmup: indoor59.75FPS and outdoor60.00FPS; frameP95≈16.8ms in both4second samples, no dropped simulation time. These are short software-WebGL samples at one location, not a guarantee across devices or the entire world. Trusted touch layouts were emulated, not run on physical phones.
 
-Public rollout verification remains pending. Tests/docs are excluded from the16-file runtime publication. All Chrome instances use isolated owned profiles.
+Public rollout verification is complete at [play WINDWAKE JOURNEYS](https://game.1989v.com/games/windwake/index.html).
+
+- Final runtime source:`60bdfc438480315e375f90d7c9574218d641cbd2`; private games:`ff395ab9`; deployment parent:`849ddb3a`.
+- [Images run35483296629](https://github.com/1989v/msa/actions/runs/35483296629):success. OCI portal image:`portal-fe:849ddb3`; ready/available1/1 and observed generation matches. [CI](deployment-final-ci.json), [deployment](deployment-final.json). This is the portal deployment status, not a claim that every unrelated cluster application is healthy.
+- Final public HTTP checks:all16SHA256 hashes match checked source and metadata; module MIME is JavaScript; missing module404. Actual Chrome keyboard movement/jump, original7730frameending, existing53502framefrontier adventure with farming/defense/finalboss and real reload:PASS,0errors. [Public report](public-final/report.json).
+- Final public continuous settlement journey:91845frames,11480.52m,0falls,25kills;16questclaims,8relics/alliances and4dungeons survive actual page reload. All4captured boss names/tells and all8completed-town hints pass. [Public journey report](public-journeys-final/continuous-report.json). Screenshots were visually inspected after the final run.
+- First public rollout reports remain inpublic/ andpublic-journeys/ for comparison; final reports above include the last completed-town guidance correction.
+
+Tests/docs are excluded from the16-file runtime publication. No external game engine/assets or Higgsfield were used. All Chrome profiles were isolated and removed by the owned profile stop routine. The shared user worktree and preexisting staged deletion were preserved; only game changes were transplanted into the release checkout, and previously published concurrent changes were retained.
+
+Repository-wide warn-only doctor still reports an existing unrelated draft link and uncited old documents in the shared checkout. Scoped new-document citations/links and diff checks pass; no unrelated files were changed to silence those warnings.

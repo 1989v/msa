@@ -1,0 +1,10 @@
+{
+  "observedAt": "2026-09-20T02:16:41.008763+00:00",
+  "name": "portal-fe",
+  "namespace": "commerce",
+  "image": "ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe:849ddb3",
+  "readyReplicas": 1,
+  "availableReplicas": 1,
+  "generation": 431,
+  "observedGeneration": 431
+}

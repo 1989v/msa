@@ -1,0 +1,171 @@
+{
+  "url": "https://game.1989v.com/games/windwake/index.html",
+  "sourceCommit": "60bdfc438480315e375f90d7c9574218d641cbd2",
+  "assets": [
+    {
+      "name": "index.html",
+      "sha256": "a916071c28077c470ac3c6cc99c15a62742664d5da6bc1c1aaf5062fbed6fa6b",
+      "contentType": "text/html"
+    },
+    {
+      "name": "style.css",
+      "sha256": "9be68e9dd0465679f4e4430dbb088d52c243dd421b6d822ef66ede3d101f731e",
+      "contentType": "text/css"
+    },
+    {
+      "name": "main.mjs",
+      "sha256": "b15118bbafa09ecb212d93203ab821cd027e90412acdba9ca167eaa9503369e5",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "world.mjs",
+      "sha256": "1a60aaf25a7f953cc49fef26ee140191c2a97d6863e7db3caa4440d681b87d45",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "sim.mjs",
+      "sha256": "7b2ab516d2c59a1e0943a27be4461a85abeda5bf36228352f50d64b806601c7c",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "render.mjs",
+      "sha256": "e1004ac5ab863c45e490b67d4699a32f349a537b19478c8bb7045301f6f530ca",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "audio.mjs",
+      "sha256": "8719500fef22a802602f969c870bd3182450743ecd57afb24f22aae677c656ae",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "input.mjs",
+      "sha256": "bc8594d3b3da9cc4f03e45de71584f4c46880665eac445b232766afc4c4d29d4",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "combat.mjs",
+      "sha256": "4177e1dd80766dd6d13cfee0c49c3c82b14d5382aec834c636a088e201209e01",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "progression.mjs",
+      "sha256": "d5985dde6109202a0b81ea64f325593a95b26061a29063b6f99419db55044808",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "village.mjs",
+      "sha256": "3bfa62d3ee3effafb10565a781aa491e35bc21a49f62b9dfa84ad8c0ca169de6",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "frontier-ui.mjs",
+      "sha256": "10eb8300740e85d10e7bd1f748b788b53ca2a651efa17a3780b6a564a4499c31",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "dungeons.mjs",
+      "sha256": "72b22a446f7c5e53686fde3f940f43ce98dddcfba3fbd5ae88456212a943e817",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "settlements.mjs",
+      "sha256": "75a3edd86da454054fb8c7db7c063f0f4ff970d90baaacd68421edba612dde75",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "relics.mjs",
+      "sha256": "114fa9274a220c5a61c3c1dc57ffb4202bca1e75b76bb69becca5a257c6629ff",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "journey-ui.mjs",
+      "sha256": "67e7177e558c200bee0f72a89aa641a1c249e04704f47263ba82d1d7c02ff03b",
+      "contentType": "text/javascript"
+    }
+  ],
+  "trustedInput": {
+    "z": -66.59500000000014,
+    "jumps": 1,
+    "grounded": false
+  },
+  "journey": {
+    "stage": "deployed-ending",
+    "frame": 7730,
+    "position": [
+      0.014,
+      28,
+      27.897
+    ],
+    "hp": 99,
+    "sigils": [
+      "quarry",
+      "forest",
+      "ruins"
+    ],
+    "crystals": 48,
+    "jumps": 7,
+    "kills": 8,
+    "parries": 2,
+    "falls": 0,
+    "mode": "won"
+  },
+  "frontier": {
+    "stage": "natural-frontier-adventure-complete",
+    "frame": 53502,
+    "seconds": 891.7,
+    "position": [
+      0,
+      18.11,
+      874.79
+    ],
+    "hp": 100,
+    "flasks": 3,
+    "distance": 3747.26,
+    "falls": 0,
+    "kills": 12,
+    "parries": 10,
+    "waypoints": [
+      "home",
+      "waypoint-sunfields",
+      "waypoint-dunes",
+      "waypoint-coast",
+      "waypoint-alpine"
+    ],
+    "bosses": [
+      "boss-sunfields",
+      "boss-dunes",
+      "boss-coast",
+      "boss-alpine",
+      "boss-frontier"
+    ],
+    "xp": 1270,
+    "villageTasks": [
+      "gather",
+      "build",
+      "plant",
+      "water",
+      "harvest",
+      "defend"
+    ],
+    "villageLevel": 3,
+    "reputation": 16,
+    "materials": {
+      "wood": 93,
+      "stone": 61,
+      "food": 6
+    },
+    "day": 2,
+    "clock": 359,
+    "raid": "won",
+    "raidWave": 2,
+    "beaconHp": 180,
+    "finalDefeated": true
+  },
+  "resumed": {
+    "mode": "playing",
+    "final": true,
+    "level": 3,
+    "raidRewarded": true
+  },
+  "errors": []
+}
