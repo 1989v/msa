@@ -40,7 +40,13 @@ data class CollectEventItem(
     val viewId: String? = null,
     /** 밀리초. 브라우저가 이탈 직전에 모아 보내므로 **발생 시각을 화면이 준다.** */
     val occurredAt: Long? = null,
-    val payload: Map<String, Any>? = null,
+    /**
+     * 대상별 부가 값. **값이 null 인 키를 받아 준다** — 화면은 「없음」을 null 로 적는 것이 자연스러운데
+     * `Map<String, Any>` 로 받으면 Jackson 이 본문을 통째로 거절하고(400 `요청 본문을 읽을 수 없습니다`)
+     * 계측은 조용히 사라진다. 실제로 통합 검색의 `understoodType: null` 이 그렇게 버려졌다(2026-09-20).
+     * 저장할 때 null 키는 버린다 — JSON 에서 「값이 null」과 「키가 없다」는 같은 뜻이다.
+     */
+    val payload: Map<String, Any?>? = null,
 ) {
     /**
      * `eventId` 를 서버가 만들지 않고 **(viewId, entityId, action) 으로 짓는 이유**:
@@ -71,7 +77,7 @@ data class CollectEventItem(
             sessionId = sessionId,
             timestamp = occurredAt?.let(Instant::ofEpochMilli) ?: Instant.now(),
             experimentAssignments = null,
-            payload = payload.orEmpty(),
+            payload = payload.orEmpty().filterValues { it != null }.mapValues { it.value!! },
         )
     }
 }

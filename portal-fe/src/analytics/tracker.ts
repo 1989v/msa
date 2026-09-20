@@ -70,10 +70,24 @@ export function flush(useBeacon = false): void {
       navigator.sendBeacon(ENDPOINT, new Blob([payload], { type: 'application/json' }));
       return;
     }
-    void fetch(ENDPOINT, { method: 'POST', headers, body, keepalive: true }).catch(() => {});
+    void fetch(ENDPOINT, { method: 'POST', headers, body, keepalive: true })
+      .then(warnIfRejected)
+      .catch(() => {});
   } catch {
     /* 계측은 실패해도 된다 */
   }
+}
+
+/**
+ * 거절당하면 **한 번은 알린다.** 계측 실패는 화면을 안 깨뜨리는 게 맞지만, 조용히 버리면
+ * 「재고 있다」고 믿으면서 한 줄도 안 쌓인다 — 실제로 payload 의 null 하나로 400 이 나
+ * 통합 검색 계측이 통째로 버려졌다(2026-09-20). 한 번만 알려 콘솔을 덮지 않는다.
+ */
+let warned = false;
+function warnIfRejected(res: Response): void {
+  if (res.ok || warned) return;
+  warned = true;
+  console.warn(`[analytics] 이벤트가 거절됐다 (HTTP ${res.status}) — 원장에 안 쌓인다`);
 }
 
 /** 화면을 떠날 때 남은 것을 흘린다. `pagehide` 는 모바일 사파리에서 유일하게 믿을 수 있다. */
