@@ -1,0 +1,330 @@
+[
+  {
+    "stage": "allied-town-sunfields",
+    "frame": 11138,
+    "seconds": 185.63,
+    "position": [
+      42.37,
+      13.9,
+      -465
+    ],
+    "hp": 100,
+    "distance": 1161.52,
+    "falls": 0,
+    "kills": 4,
+    "visited": [
+      "town-sunfields"
+    ],
+    "quests": {
+      "quest-sunfields-local": 2,
+      "quest-sunfields-regional": 2,
+      "quest-dunes-local": 0,
+      "quest-dunes-regional": 0,
+      "quest-coast-local": 0,
+      "quest-coast-regional": 0,
+      "quest-autumn-local": 0,
+      "quest-autumn-regional": 0,
+      "quest-alpine-local": 0,
+      "quest-alpine-regional": 0,
+      "quest-mistwood-local": 0,
+      "quest-mistwood-regional": 0,
+      "quest-canyon-local": 0,
+      "quest-canyon-regional": 0,
+      "quest-lavender-local": 0,
+      "quest-lavender-regional": 0
+    },
+    "relics": [
+      "relic-sunfields"
+    ],
+    "allies": [
+      "town-sunfields"
+    ]
+  },
+  {
+    "stage": "allied-town-dunes",
+    "frame": 9628,
+    "seconds": 160.47,
+    "position": [
+      428.08,
+      12.38,
+      -368.28
+    ],
+    "hp": 100,
+    "distance": 1220.35,
+    "falls": 0,
+    "kills": 1,
+    "visited": [
+      "town-dunes"
+    ],
+    "quests": {
+      "quest-sunfields-local": 0,
+      "quest-sunfields-regional": 0,
+      "quest-dunes-local": 2,
+      "quest-dunes-regional": 2,
+      "quest-coast-local": 0,
+      "quest-coast-regional": 0,
+      "quest-autumn-local": 0,
+      "quest-autumn-regional": 0,
+      "quest-alpine-local": 0,
+      "quest-alpine-regional": 0,
+      "quest-mistwood-local": 0,
+      "quest-mistwood-regional": 0,
+      "quest-canyon-local": 0,
+      "quest-canyon-regional": 0,
+      "quest-lavender-local": 0,
+      "quest-lavender-regional": 0
+    },
+    "relics": [
+      "relic-dunes"
+    ],
+    "allies": [
+      "town-dunes"
+    ]
+  },
+  {
+    "stage": "allied-town-coast",
+    "frame": 8978,
+    "seconds": 149.63,
+    "position": [
+      605,
+      11.6,
+      42.32
+    ],
+    "hp": 100,
+    "distance": 1157.31,
+    "falls": 0,
+    "kills": 1,
+    "visited": [
+      "town-coast"
+    ],
+    "quests": {
+      "quest-sunfields-local": 0,
+      "quest-sunfields-regional": 0,
+      "quest-dunes-local": 0,
+      "quest-dunes-regional": 0,
+      "quest-coast-local": 2,
+      "quest-coast-regional": 2,
+      "quest-autumn-local": 0,
+      "quest-autumn-regional": 0,
+      "quest-alpine-local": 0,
+      "quest-alpine-regional": 0,
+      "quest-mistwood-local": 0,
+      "quest-mistwood-regional": 0,
+      "quest-canyon-local": 0,
+      "quest-canyon-regional": 0,
+      "quest-lavender-local": 0,
+      "quest-lavender-regional": 0
+    },
+    "relics": [
+      "relic-coast"
+    ],
+    "allies": [
+      "town-coast"
+    ]
+  },
+  {
+    "stage": "allied-town-autumn",
+    "frame": 11967,
+    "seconds": 199.45,
+    "position": [
+      408.28,
+      21.63,
+      468.08
+    ],
+    "hp": 100,
+    "distance": 1534.35,
+    "falls": 0,
+    "kills": 2,
+    "visited": [
+      "town-autumn"
+    ],
+    "quests": {
+      "quest-sunfields-local": 0,
+      "quest-sunfields-regional": 0,
+      "quest-dunes-local": 0,
+      "quest-dunes-regional": 0,
+      "quest-coast-local": 0,
+      "quest-coast-regional": 0,
+      "quest-autumn-local": 2,
+      "quest-autumn-regional": 2,
+      "quest-alpine-local": 0,
+      "quest-alpine-regional": 0,
+      "quest-mistwood-local": 0,
+      "quest-mistwood-regional": 0,
+      "quest-canyon-local": 0,
+      "quest-canyon-regional": 0,
+      "quest-lavender-local": 0,
+      "quest-lavender-regional": 0
+    },
+    "relics": [
+      "relic-autumn"
+    ],
+    "allies": [
+      "town-autumn"
+    ]
+  },
+  {
+    "stage": "allied-town-alpine",
+    "frame": 16503,
+    "seconds": 275.05,
+    "position": [
+      -42.37,
+      40.57,
+      635
+    ],
+    "hp": 100,
+    "distance": 1881.88,
+    "falls": 0,
+    "kills": 4,
+    "visited": [
+      "town-alpine"
+    ],
+    "quests": {
+      "quest-sunfields-local": 0,
+      "quest-sunfields-regional": 0,
+      "quest-dunes-local": 0,
+      "quest-dunes-regional": 0,
+      "quest-coast-local": 0,
+      "quest-coast-regional": 0,
+      "quest-autumn-local": 0,
+      "quest-autumn-regional": 0,
+      "quest-alpine-local": 2,
+      "quest-alpine-regional": 2,
+      "quest-mistwood-local": 0,
+      "quest-mistwood-regional": 0,
+      "quest-canyon-local": 0,
+      "quest-canyon-regional": 0,
+      "quest-lavender-local": 0,
+      "quest-lavender-regional": 0
+    },
+    "relics": [
+      "relic-alpine"
+    ],
+    "allies": [
+      "town-alpine"
+    ]
+  },
+  {
+    "stage": "allied-town-mistwood",
+    "frame": 15645,
+    "seconds": 260.75,
+    "position": [
+      -468.11,
+      18.65,
+      408.25
+    ],
+    "hp": 89,
+    "distance": 1718,
+    "falls": 0,
+    "kills": 5,
+    "visited": [
+      "town-mistwood"
+    ],
+    "quests": {
+      "quest-sunfields-local": 0,
+      "quest-sunfields-regional": 0,
+      "quest-dunes-local": 0,
+      "quest-dunes-regional": 0,
+      "quest-coast-local": 0,
+      "quest-coast-regional": 0,
+      "quest-autumn-local": 0,
+      "quest-autumn-regional": 0,
+      "quest-alpine-local": 0,
+      "quest-alpine-regional": 0,
+      "quest-mistwood-local": 2,
+      "quest-mistwood-regional": 2,
+      "quest-canyon-local": 0,
+      "quest-canyon-regional": 0,
+      "quest-lavender-local": 0,
+      "quest-lavender-regional": 0
+    },
+    "relics": [
+      "relic-mistwood"
+    ],
+    "allies": [
+      "town-mistwood"
+    ]
+  },
+  {
+    "stage": "allied-town-canyon",
+    "frame": 13165,
+    "seconds": 219.42,
+    "position": [
+      -615,
+      21.59,
+      -42.28
+    ],
+    "hp": 100,
+    "distance": 1525.49,
+    "falls": 0,
+    "kills": 7,
+    "visited": [
+      "town-canyon"
+    ],
+    "quests": {
+      "quest-sunfields-local": 0,
+      "quest-sunfields-regional": 0,
+      "quest-dunes-local": 0,
+      "quest-dunes-regional": 0,
+      "quest-coast-local": 0,
+      "quest-coast-regional": 0,
+      "quest-autumn-local": 0,
+      "quest-autumn-regional": 0,
+      "quest-alpine-local": 0,
+      "quest-alpine-regional": 0,
+      "quest-mistwood-local": 0,
+      "quest-mistwood-regional": 0,
+      "quest-canyon-local": 2,
+      "quest-canyon-regional": 2,
+      "quest-lavender-local": 0,
+      "quest-lavender-regional": 0
+    },
+    "relics": [
+      "relic-canyon"
+    ],
+    "allies": [
+      "town-canyon"
+    ]
+  },
+  {
+    "stage": "allied-town-lavender",
+    "frame": 8035,
+    "seconds": 133.92,
+    "position": [
+      -378.34,
+      6.18,
+      -456.71
+    ],
+    "hp": 100,
+    "distance": 1020.59,
+    "falls": 0,
+    "kills": 1,
+    "visited": [
+      "town-lavender"
+    ],
+    "quests": {
+      "quest-sunfields-local": 0,
+      "quest-sunfields-regional": 0,
+      "quest-dunes-local": 0,
+      "quest-dunes-regional": 0,
+      "quest-coast-local": 0,
+      "quest-coast-regional": 0,
+      "quest-autumn-local": 0,
+      "quest-autumn-regional": 0,
+      "quest-alpine-local": 0,
+      "quest-alpine-regional": 0,
+      "quest-mistwood-local": 0,
+      "quest-mistwood-regional": 0,
+      "quest-canyon-local": 0,
+      "quest-canyon-regional": 0,
+      "quest-lavender-local": 2,
+      "quest-lavender-regional": 2
+    },
+    "relics": [
+      "relic-lavender"
+    ],
+    "allies": [
+      "town-lavender"
+    ]
+  }
+]

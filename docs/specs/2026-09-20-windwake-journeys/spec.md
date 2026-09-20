@@ -4,7 +4,7 @@
 
 # WINDWAKE JOURNEYS — settlements and dungeons
 
-Status: design review. Risk L3; user explicitly delegates game analysis, missing-content implementation and prior same-game deployment. No additional design interview or approval needed.
+Status: implemented and locally verified; public rollout pending. Risk L3; user explicitly delegates game analysis, missing-content implementation and prior same-game deployment. No additional design interview or approval needed.
 
 ## Problem and scope
 

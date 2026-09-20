@@ -1,7 +1,11 @@
+<!-- source: windwake/sim.mjs -->
+
 # Progress
 
-2026-09-20: current task is settlement/dungeon expansion; previous Frontiers expansion is complete/deployed. New spec drafted for review, no runtime edits yet. Baseline node --test windwake/tests/*.test.mjs: tests120 pass120 fail0 (frontier_verify).
+2026-09-20: implementation and local review complete.8towns/24residents/48buildings/16quests/4dungeons(27rooms)/8relics.169/169tests; original5routes and53502framefrontieradventure pass.8freshsettlementroutes and continuous91845frames/11480.52m/0falls/16claims/8relics+allies pass in Node AND real Chrome with actual reload. Trusted UI and390×844/844×390menus pass.10physicalsceneenter/exitcycles maintain boundedbuffers and generate0newworldchunksindoors; indoor59.75/outdoor60.00FPSat1280×800SwiftShader,p95≈16.8ms. All consoleerrors0.
 
-Worktree: /Users/gideok-kwon/IdeaProjects/msa (shared; many unrelated user changes including staged EventType.kt deletion). Release worktree /private/tmp/windwake-release-20260919 was used previously; check fresh state before reuse; never push shared local main. Public URL https://game.1989v.com/games/windwake/index.html.
+Independent reviews both SHIP after flasksave, movingstonecombatcover andcamera nearwall fixes. Root also correctedindoor map ceilings andportalvisibility. Latest minorbossHUDname/patternhintfix is beingrechecked in continuousChrome beforecommit/publish. Do not equatearea64×withcontent/playtime; houses have noindividualinteriors/NPCschedules.
 
-No external blocker. Built-in browser runtime previously returned no browsers; repository-owned Chrome CDP fallback is permitted by AGENTS/fe-visual-verification standard. Preserve old reports by using a new verification output directory. Publisher and deployed verifier both need new module allowlists. Source citations use one path per comment.
+Sharedrootcommits:1e1143d3design,c49cbf94runtime. Unrelated userdirty/stagedEventType.kt deletion preserved. Isolatedrelease /private/tmp/windwake-release-20260919 merged latestoriginbfa2704d andcherrypickedoursas66687527+8e648bb9. Privategamespreparedlocalcommit60e73225(NOTPUSHED); needsrepublishafterfinalHUDcommit. GHactivekwongd mustremainunchanged; use scoped1989vGH_TOKEN from gh auth token --user1989v withoutprinting/persistingtoken. Existingpublic https://game.1989v.com/games/windwake/index.html stilloldFrontiers.
+
+Remaining: finishHUDChrome recheck, source/test/doccommits, cherrypickowncommitsintorelease, publish16files, pushprivategamesbeforeparentpointer/main, watchportal-onlyimages/OCIArgo, public16hashes+original/frontier/newcontinuousplayverify, finaldocdeploymentrecordcommit. Neverpushsharedrootmain. Runtimepublisher/testallowlistsalready16. BrowserfallbackownedChrome via scripts/cdp-chrome.sh; noHiggsfield.

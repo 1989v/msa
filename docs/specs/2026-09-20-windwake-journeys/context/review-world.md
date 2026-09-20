@@ -1,3 +1,5 @@
+<!-- source: windwake/world.mjs -->
+<!-- source: windwake/render.mjs -->
 # Architecture and implementation review — world/render
 
 Verdict: **SHIP with the following recorded interface resolutions**. Read-only review completed before runtime changes. Existing area is exactly64×; eight functioning towns and four instances address the content-density gap rather than claiming another size increase.

@@ -1,0 +1,5943 @@
+{
+  "mode": "adventures",
+  "url": "http://127.0.0.1:8787/",
+  "startedAt": "2026-09-20T01:50:53.054Z",
+  "status": "passed",
+  "adventures": [
+    {
+      "id": "town-sunfields",
+      "result": {
+        "stage": "allied-town-sunfields",
+        "frame": 11138,
+        "seconds": 185.63,
+        "position": [
+          42.37,
+          13.9,
+          -465
+        ],
+        "hp": 100,
+        "distance": 1161.52,
+        "falls": 0,
+        "kills": 4,
+        "visited": [
+          "town-sunfields"
+        ],
+        "quests": {
+          "quest-sunfields-local": 2,
+          "quest-sunfields-regional": 2,
+          "quest-dunes-local": 0,
+          "quest-dunes-regional": 0,
+          "quest-coast-local": 0,
+          "quest-coast-regional": 0,
+          "quest-autumn-local": 0,
+          "quest-autumn-regional": 0,
+          "quest-alpine-local": 0,
+          "quest-alpine-regional": 0,
+          "quest-mistwood-local": 0,
+          "quest-mistwood-regional": 0,
+          "quest-canyon-local": 0,
+          "quest-canyon-regional": 0,
+          "quest-lavender-local": 0,
+          "quest-lavender-regional": 0
+        },
+        "relics": [
+          "relic-sunfields"
+        ],
+        "allies": [
+          "town-sunfields"
+        ]
+      },
+      "checkpoints": [
+        {
+          "stage": "start-route-sunfields",
+          "frame": 0,
+          "seconds": 0,
+          "position": [
+            0,
+            0.32,
+            -72
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 0,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "waypoints": [
+            "home"
+          ],
+          "bosses": [],
+          "xp": 0,
+          "villageTasks": [],
+          "villageLevel": 1,
+          "reputation": 0,
+          "materials": {
+            "wood": 48,
+            "stone": 30,
+            "food": 6
+          },
+          "day": 1,
+          "clock": 90,
+          "raid": "idle",
+          "raidWave": 0,
+          "beaconHp": 180,
+          "finalDefeated": false
+        },
+        {
+          "stage": "walked-route-sunfields",
+          "frame": 2806,
+          "seconds": 46.77,
+          "position": [
+            0,
+            13.89,
+            -464.72
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 392.72,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "waypoints": [
+            "home",
+            "waypoint-sunfields"
+          ],
+          "bosses": [],
+          "xp": 70,
+          "villageTasks": [],
+          "villageLevel": 1,
+          "reputation": 0,
+          "materials": {
+            "wood": 48,
+            "stone": 30,
+            "food": 6
+          },
+          "day": 1,
+          "clock": 136.77,
+          "raid": "idle",
+          "raidWave": 0,
+          "beaconHp": 180,
+          "finalDefeated": false
+        },
+        {
+          "stage": "visit-town-sunfields",
+          "frame": 3250,
+          "seconds": 54.17,
+          "position": [
+            42.31,
+            13.9,
+            -465
+          ],
+          "hp": 100,
+          "distance": 445.66,
+          "falls": 0,
+          "kills": 0,
+          "visited": [
+            "town-sunfields"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [],
+          "allies": []
+        },
+        {
+          "stage": "local-town-sunfields-complete",
+          "frame": 5428,
+          "seconds": 90.47,
+          "position": [
+            48,
+            13.9,
+            -465.32
+          ],
+          "hp": 100,
+          "distance": 699.13,
+          "falls": 0,
+          "kills": 0,
+          "visited": [
+            "town-sunfields"
+          ],
+          "quests": {
+            "quest-sunfields-local": 2,
+            "quest-sunfields-regional": 1,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [],
+          "allies": []
+        },
+        {
+          "stage": "dungeon-sunfields-entered",
+          "frame": 5858,
+          "seconds": 97.63,
+          "position": [
+            0,
+            0,
+            -4
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 756.8,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "dungeon": "dungeon-sunfields",
+          "room": "dungeon-sunfields:entry",
+          "progress": {
+            "killed": [],
+            "solved": [],
+            "opened": [],
+            "claimed": false
+          },
+          "openDoors": [],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-sunfields-entered-guard",
+          "frame": 6346,
+          "seconds": 105.77,
+          "position": [
+            -0.19,
+            0,
+            31.73
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 793.51,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 2,
+          "parries": 0,
+          "dungeon": "dungeon-sunfields",
+          "room": "dungeon-sunfields:guard",
+          "progress": {
+            "killed": [
+              "dungeon-sunfields:guard-1",
+              "dungeon-sunfields:guard-0"
+            ],
+            "solved": [],
+            "opened": [],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-sunfields:door-1"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-sunfields-entered-runes",
+          "frame": 6711,
+          "seconds": 111.85,
+          "position": [
+            31.68,
+            0,
+            32
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 825.38,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 2,
+          "parries": 0,
+          "dungeon": "dungeon-sunfields",
+          "room": "dungeon-sunfields:runes",
+          "progress": {
+            "killed": [
+              "dungeon-sunfields:guard-1",
+              "dungeon-sunfields:guard-0"
+            ],
+            "solved": [],
+            "opened": [],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-sunfields:door-1"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-sunfields-runes-clue",
+          "frame": 6819,
+          "seconds": 113.65,
+          "position": [
+            26.23,
+            0,
+            26.24
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 833.31,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 2,
+          "parries": 0,
+          "dungeon": "dungeon-sunfields",
+          "room": "dungeon-sunfields:runes",
+          "progress": {
+            "killed": [
+              "dungeon-sunfields:guard-1",
+              "dungeon-sunfields:guard-0"
+            ],
+            "solved": [],
+            "opened": [],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-sunfields:door-1"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-sunfields-runes-solved",
+          "frame": 7110,
+          "seconds": 118.5,
+          "position": [
+            37.69,
+            0,
+            35
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 853.44,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 2,
+          "parries": 0,
+          "dungeon": "dungeon-sunfields",
+          "room": "dungeon-sunfields:runes",
+          "progress": {
+            "killed": [
+              "dungeon-sunfields:guard-1",
+              "dungeon-sunfields:guard-0"
+            ],
+            "solved": [
+              "dungeon-sunfields:lights"
+            ],
+            "opened": [],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-sunfields:door-1",
+            "dungeon-sunfields:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-sunfields-entered-treasure",
+          "frame": 7562,
+          "seconds": 126.03,
+          "position": [
+            32.03,
+            0,
+            63.7
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 891.23,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-sunfields",
+          "room": "dungeon-sunfields:treasure",
+          "progress": {
+            "killed": [
+              "dungeon-sunfields:guard-1",
+              "dungeon-sunfields:guard-0",
+              "dungeon-sunfields:treasure-guard"
+            ],
+            "solved": [
+              "dungeon-sunfields:lights"
+            ],
+            "opened": [],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-sunfields:door-1",
+            "dungeon-sunfields:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-sunfields-optional-treasure",
+          "frame": 7646,
+          "seconds": 127.43,
+          "position": [
+            28.22,
+            0,
+            67.77
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 896.8,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-sunfields",
+          "room": "dungeon-sunfields:treasure",
+          "progress": {
+            "killed": [
+              "dungeon-sunfields:guard-1",
+              "dungeon-sunfields:guard-0",
+              "dungeon-sunfields:treasure-guard"
+            ],
+            "solved": [
+              "dungeon-sunfields:lights"
+            ],
+            "opened": [
+              "dungeon-sunfields:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-sunfields:door-1",
+            "dungeon-sunfields:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-sunfields-entered-runes",
+          "frame": 8083,
+          "seconds": 134.72,
+          "position": [
+            32,
+            0,
+            32.33
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 933.72,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-sunfields",
+          "room": "dungeon-sunfields:runes",
+          "progress": {
+            "killed": [
+              "dungeon-sunfields:guard-1",
+              "dungeon-sunfields:guard-0",
+              "dungeon-sunfields:treasure-guard"
+            ],
+            "solved": [
+              "dungeon-sunfields:lights"
+            ],
+            "opened": [
+              "dungeon-sunfields:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-sunfields:door-1",
+            "dungeon-sunfields:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-sunfields-entered-weights",
+          "frame": 8655,
+          "seconds": 144.25,
+          "position": [
+            63.99,
+            0,
+            31.67
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 978.44,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-sunfields",
+          "room": "dungeon-sunfields:weights",
+          "progress": {
+            "killed": [
+              "dungeon-sunfields:guard-1",
+              "dungeon-sunfields:guard-0",
+              "dungeon-sunfields:treasure-guard"
+            ],
+            "solved": [
+              "dungeon-sunfields:lights"
+            ],
+            "opened": [
+              "dungeon-sunfields:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-sunfields:door-1",
+            "dungeon-sunfields:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-sunfields-weights-clue",
+          "frame": 8763,
+          "seconds": 146.05,
+          "position": [
+            69.76,
+            0,
+            26.23
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 986.38,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-sunfields",
+          "room": "dungeon-sunfields:weights",
+          "progress": {
+            "killed": [
+              "dungeon-sunfields:guard-1",
+              "dungeon-sunfields:guard-0",
+              "dungeon-sunfields:treasure-guard"
+            ],
+            "solved": [
+              "dungeon-sunfields:lights"
+            ],
+            "opened": [
+              "dungeon-sunfields:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-sunfields:door-1",
+            "dungeon-sunfields:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-sunfields-weights-solved",
+          "frame": 9283,
+          "seconds": 154.72,
+          "position": [
+            57.7,
+            0,
+            31.91
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1006.25,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-sunfields",
+          "room": "dungeon-sunfields:weights",
+          "progress": {
+            "killed": [
+              "dungeon-sunfields:guard-1",
+              "dungeon-sunfields:guard-0",
+              "dungeon-sunfields:treasure-guard"
+            ],
+            "solved": [
+              "dungeon-sunfields:lights",
+              "dungeon-sunfields:weight-seal"
+            ],
+            "opened": [
+              "dungeon-sunfields:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-sunfields:door-1",
+            "dungeon-sunfields:door-2",
+            "dungeon-sunfields:door-3"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-sunfields-low-terrace",
+          "frame": 9937,
+          "seconds": 165.62,
+          "position": [
+            64,
+            1.4,
+            60.7
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1055.63,
+          "jumps": 1,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-sunfields",
+          "room": "dungeon-sunfields:ascent",
+          "progress": {
+            "killed": [
+              "dungeon-sunfields:guard-1",
+              "dungeon-sunfields:guard-0",
+              "dungeon-sunfields:treasure-guard"
+            ],
+            "solved": [
+              "dungeon-sunfields:lights",
+              "dungeon-sunfields:weight-seal"
+            ],
+            "opened": [
+              "dungeon-sunfields:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-sunfields:door-1",
+            "dungeon-sunfields:door-2",
+            "dungeon-sunfields:door-3"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-sunfields-high-terrace",
+          "frame": 10007,
+          "seconds": 166.78,
+          "position": [
+            64,
+            2.8,
+            64.7
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1059.63,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-sunfields",
+          "room": "dungeon-sunfields:ascent",
+          "progress": {
+            "killed": [
+              "dungeon-sunfields:guard-1",
+              "dungeon-sunfields:guard-0",
+              "dungeon-sunfields:treasure-guard"
+            ],
+            "solved": [
+              "dungeon-sunfields:lights",
+              "dungeon-sunfields:weight-seal"
+            ],
+            "opened": [
+              "dungeon-sunfields:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-sunfields:door-1",
+            "dungeon-sunfields:door-2",
+            "dungeon-sunfields:door-3"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-sunfields-entered-ascent",
+          "frame": 10101,
+          "seconds": 168.35,
+          "position": [
+            64,
+            0,
+            70.7
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1065.63,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-sunfields",
+          "room": "dungeon-sunfields:ascent",
+          "progress": {
+            "killed": [
+              "dungeon-sunfields:guard-1",
+              "dungeon-sunfields:guard-0",
+              "dungeon-sunfields:treasure-guard"
+            ],
+            "solved": [
+              "dungeon-sunfields:lights",
+              "dungeon-sunfields:weight-seal"
+            ],
+            "opened": [
+              "dungeon-sunfields:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-sunfields:door-1",
+            "dungeon-sunfields:door-2",
+            "dungeon-sunfields:door-3"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-sunfields-entered-boss",
+          "frame": 10522,
+          "seconds": 175.37,
+          "position": [
+            64,
+            0,
+            96.02
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1090.98,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 4,
+          "parries": 1,
+          "dungeon": "dungeon-sunfields",
+          "room": "dungeon-sunfields:boss",
+          "progress": {
+            "killed": [
+              "dungeon-sunfields:guard-1",
+              "dungeon-sunfields:guard-0",
+              "dungeon-sunfields:treasure-guard",
+              "dungeon-sunfields:boss-guardian"
+            ],
+            "solved": [
+              "dungeon-sunfields:lights",
+              "dungeon-sunfields:weight-seal"
+            ],
+            "opened": [
+              "dungeon-sunfields:optional-chest"
+            ],
+            "claimed": true
+          },
+          "openDoors": [
+            "dungeon-sunfields:door-1",
+            "dungeon-sunfields:door-2",
+            "dungeon-sunfields:door-3"
+          ],
+          "relics": [
+            "relic-sunfields"
+          ]
+        },
+        {
+          "stage": "dungeon-sunfields-cleared",
+          "frame": 10528,
+          "seconds": 175.47,
+          "position": [
+            64,
+            0,
+            96.02
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1090.98,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 4,
+          "parries": 1,
+          "dungeon": "dungeon-sunfields",
+          "room": "dungeon-sunfields:boss",
+          "progress": {
+            "killed": [
+              "dungeon-sunfields:guard-1",
+              "dungeon-sunfields:guard-0",
+              "dungeon-sunfields:treasure-guard",
+              "dungeon-sunfields:boss-guardian"
+            ],
+            "solved": [
+              "dungeon-sunfields:lights",
+              "dungeon-sunfields:weight-seal"
+            ],
+            "opened": [
+              "dungeon-sunfields:optional-chest"
+            ],
+            "claimed": true
+          },
+          "openDoors": [
+            "dungeon-sunfields:door-1",
+            "dungeon-sunfields:door-2",
+            "dungeon-sunfields:door-3"
+          ],
+          "relics": [
+            "relic-sunfields"
+          ]
+        },
+        {
+          "stage": "dungeon-sunfields-returned",
+          "frame": 10630,
+          "seconds": 177.17,
+          "position": [
+            106,
+            13.9,
+            -470
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1097.67,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 4,
+          "parries": 1,
+          "dungeon": null,
+          "room": null,
+          "progress": null,
+          "openDoors": [],
+          "relics": [
+            "relic-sunfields"
+          ]
+        },
+        {
+          "stage": "allied-town-sunfields",
+          "frame": 11138,
+          "seconds": 185.63,
+          "position": [
+            42.37,
+            13.9,
+            -465
+          ],
+          "hp": 100,
+          "distance": 1161.52,
+          "falls": 0,
+          "kills": 4,
+          "visited": [
+            "town-sunfields"
+          ],
+          "quests": {
+            "quest-sunfields-local": 2,
+            "quest-sunfields-regional": 2,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [
+            "relic-sunfields"
+          ],
+          "allies": [
+            "town-sunfields"
+          ]
+        }
+      ],
+      "visualReplays": [
+        {
+          "stage": "dungeon-sunfields-entered",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 5,
+            "frameP95": 200,
+            "frameP99": 200,
+            "renderAverage": 3.3000001907348633,
+            "droppedTime": 0.1,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 4427,
+              "staticTriangles": 2928,
+              "dynamicTriangles": 1499,
+              "frameMs": 0.39999985694885254,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 386496,
+              "chunkBuilds": 65,
+              "chunkEvictions": 65,
+              "disposedChunks": 65,
+              "activeScene": "dungeon-sunfields",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 386496,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 3
+            },
+            "world": {
+              "cachedChunks": 70,
+              "maxCachedChunks": 96,
+              "generatedChunks": 70,
+              "evictedChunks": 0,
+              "lastQueryCells": 1,
+              "lastQueryCandidates": 8
+            },
+            "actors": 0,
+            "audioVoices": 7
+          },
+          "visualReplay": true
+        },
+        {
+          "stage": "dungeon-sunfields-runes-clue",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 5,
+            "frameP95": 200,
+            "frameP99": 200,
+            "renderAverage": 3.3000001907348633,
+            "droppedTime": 0.1,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 4375,
+              "staticTriangles": 2928,
+              "dynamicTriangles": 1447,
+              "frameMs": 0.19999980926513672,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 386496,
+              "chunkBuilds": 65,
+              "chunkEvictions": 65,
+              "disposedChunks": 65,
+              "activeScene": "dungeon-sunfields",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 386496,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 2
+            },
+            "world": {
+              "cachedChunks": 70,
+              "maxCachedChunks": 96,
+              "generatedChunks": 70,
+              "evictedChunks": 0,
+              "lastQueryCells": 1,
+              "lastQueryCandidates": 8
+            },
+            "actors": 2,
+            "audioVoices": 3
+          },
+          "visualReplay": true
+        },
+        {
+          "stage": "dungeon-sunfields-optional-treasure",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 5,
+            "frameP95": 200,
+            "frameP99": 200,
+            "renderAverage": 3.3000001907348633,
+            "droppedTime": 0.1,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 4303,
+              "staticTriangles": 2928,
+              "dynamicTriangles": 1375,
+              "frameMs": 0.2999999523162842,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 386496,
+              "chunkBuilds": 65,
+              "chunkEvictions": 65,
+              "disposedChunks": 65,
+              "activeScene": "dungeon-sunfields",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 386496,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 1
+            },
+            "world": {
+              "cachedChunks": 70,
+              "maxCachedChunks": 96,
+              "generatedChunks": 70,
+              "evictedChunks": 0,
+              "lastQueryCells": 1,
+              "lastQueryCandidates": 8
+            },
+            "actors": 3,
+            "audioVoices": 0
+          },
+          "visualReplay": true
+        },
+        {
+          "stage": "dungeon-sunfields-weights-solved",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 5,
+            "frameP95": 200,
+            "frameP99": 200,
+            "renderAverage": 3.3000001907348633,
+            "droppedTime": 0.1,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 4251,
+              "staticTriangles": 2928,
+              "dynamicTriangles": 1323,
+              "frameMs": 0.09999990463256836,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 386496,
+              "chunkBuilds": 65,
+              "chunkEvictions": 65,
+              "disposedChunks": 65,
+              "activeScene": "dungeon-sunfields",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 386496,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 0
+            },
+            "world": {
+              "cachedChunks": 70,
+              "maxCachedChunks": 96,
+              "generatedChunks": 70,
+              "evictedChunks": 0,
+              "lastQueryCells": 1,
+              "lastQueryCandidates": 8
+            },
+            "actors": 3,
+            "audioVoices": 0
+          },
+          "visualReplay": true
+        },
+        {
+          "stage": "dungeon-sunfields-high-terrace",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 5,
+            "frameP95": 200,
+            "frameP99": 200,
+            "renderAverage": 3.3000001907348633,
+            "droppedTime": 0.1,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 4371,
+              "staticTriangles": 2928,
+              "dynamicTriangles": 1443,
+              "frameMs": 0.19999980926513672,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 386496,
+              "chunkBuilds": 65,
+              "chunkEvictions": 65,
+              "disposedChunks": 65,
+              "activeScene": "dungeon-sunfields",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 386496,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 0
+            },
+            "world": {
+              "cachedChunks": 70,
+              "maxCachedChunks": 96,
+              "generatedChunks": 70,
+              "evictedChunks": 0,
+              "lastQueryCells": 1,
+              "lastQueryCandidates": 8
+            },
+            "actors": 3,
+            "audioVoices": 2
+          },
+          "visualReplay": true
+        },
+        {
+          "stage": "dungeon-sunfields-boss-telegraph",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 5,
+            "frameP95": 200,
+            "frameP99": 200,
+            "renderAverage": 3.3000001907348633,
+            "droppedTime": 0.1,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 5387,
+              "staticTriangles": 2928,
+              "dynamicTriangles": 2459,
+              "frameMs": 0.2999999523162842,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 386496,
+              "chunkBuilds": 65,
+              "chunkEvictions": 65,
+              "disposedChunks": 65,
+              "activeScene": "dungeon-sunfields",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 386496,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 0
+            },
+            "world": {
+              "cachedChunks": 70,
+              "maxCachedChunks": 96,
+              "generatedChunks": 70,
+              "evictedChunks": 0,
+              "lastQueryCells": 1,
+              "lastQueryCandidates": 8
+            },
+            "actors": 4,
+            "audioVoices": 2
+          },
+          "visualReplay": true
+        },
+        {
+          "stage": "dungeon-sunfields-cleared",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 5,
+            "frameP95": 200,
+            "frameP99": 200,
+            "renderAverage": 3.3000001907348633,
+            "droppedTime": 0.1,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 4955,
+              "staticTriangles": 2928,
+              "dynamicTriangles": 2027,
+              "frameMs": 0.19999980926513672,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 386496,
+              "chunkBuilds": 65,
+              "chunkEvictions": 65,
+              "disposedChunks": 65,
+              "activeScene": "dungeon-sunfields",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 386496,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 0
+            },
+            "world": {
+              "cachedChunks": 70,
+              "maxCachedChunks": 96,
+              "generatedChunks": 70,
+              "evictedChunks": 0,
+              "lastQueryCells": 1,
+              "lastQueryCandidates": 8
+            },
+            "actors": 4,
+            "audioVoices": 2
+          },
+          "visualReplay": true
+        }
+      ],
+      "reloaded": {
+        "journey": {
+          "visited": [
+            "town-sunfields"
+          ],
+          "quests": {
+            "quest-sunfields-local": 2,
+            "quest-sunfields-regional": 2,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [
+            "relic-sunfields"
+          ],
+          "equipped": [
+            "relic-sunfields",
+            null
+          ],
+          "tracked": null,
+          "allies": [
+            "town-sunfields"
+          ]
+        },
+        "expedition": {
+          "active": null,
+          "progress": {
+            "dungeon-sunfields": {
+              "killed": [
+                "dungeon-sunfields:guard-1",
+                "dungeon-sunfields:guard-0",
+                "dungeon-sunfields:treasure-guard",
+                "dungeon-sunfields:boss-guardian"
+              ],
+              "solved": [
+                "dungeon-sunfields:lights",
+                "dungeon-sunfields:weight-seal"
+              ],
+              "opened": [
+                "dungeon-sunfields:optional-chest"
+              ],
+              "claimed": true
+            }
+          }
+        },
+        "mode": "playing"
+      }
+    },
+    {
+      "id": "town-dunes",
+      "result": {
+        "stage": "allied-town-dunes",
+        "frame": 9628,
+        "seconds": 160.47,
+        "position": [
+          428.08,
+          12.38,
+          -368.28
+        ],
+        "hp": 100,
+        "distance": 1220.35,
+        "falls": 0,
+        "kills": 1,
+        "visited": [
+          "town-dunes"
+        ],
+        "quests": {
+          "quest-sunfields-local": 0,
+          "quest-sunfields-regional": 0,
+          "quest-dunes-local": 2,
+          "quest-dunes-regional": 2,
+          "quest-coast-local": 0,
+          "quest-coast-regional": 0,
+          "quest-autumn-local": 0,
+          "quest-autumn-regional": 0,
+          "quest-alpine-local": 0,
+          "quest-alpine-regional": 0,
+          "quest-mistwood-local": 0,
+          "quest-mistwood-regional": 0,
+          "quest-canyon-local": 0,
+          "quest-canyon-regional": 0,
+          "quest-lavender-local": 0,
+          "quest-lavender-regional": 0
+        },
+        "relics": [
+          "relic-dunes"
+        ],
+        "allies": [
+          "town-dunes"
+        ]
+      },
+      "checkpoints": [
+        {
+          "stage": "start-route-dunes",
+          "frame": 0,
+          "seconds": 0,
+          "position": [
+            0,
+            0.32,
+            -72
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 0,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "waypoints": [
+            "home"
+          ],
+          "bosses": [],
+          "xp": 0,
+          "villageTasks": [],
+          "villageLevel": 1,
+          "reputation": 0,
+          "materials": {
+            "wood": 48,
+            "stone": 30,
+            "food": 6
+          },
+          "day": 1,
+          "clock": 90,
+          "raid": "idle",
+          "raidWave": 0,
+          "beaconHp": 180,
+          "finalDefeated": false
+        },
+        {
+          "stage": "walked-route-dunes",
+          "frame": 4430,
+          "seconds": 73.83,
+          "position": [
+            397.91,
+            12.37,
+            -397.91
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 615,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "waypoints": [
+            "home",
+            "waypoint-dunes"
+          ],
+          "bosses": [],
+          "xp": 70,
+          "villageTasks": [],
+          "villageLevel": 1,
+          "reputation": 0,
+          "materials": {
+            "wood": 48,
+            "stone": 30,
+            "food": 6
+          },
+          "day": 1,
+          "clock": 163.83,
+          "raid": "idle",
+          "raidWave": 0,
+          "beaconHp": 180,
+          "finalDefeated": false
+        },
+        {
+          "stage": "visit-town-dunes",
+          "frame": 4880,
+          "seconds": 81.33,
+          "position": [
+            428.08,
+            12.38,
+            -368.28
+          ],
+          "hp": 100,
+          "distance": 668.13,
+          "falls": 0,
+          "kills": 0,
+          "visited": [
+            "town-dunes"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [],
+          "allies": []
+        },
+        {
+          "stage": "local-town-dunes-complete",
+          "frame": 7004,
+          "seconds": 116.73,
+          "position": [
+            432.39,
+            12.38,
+            -364.51
+          ],
+          "hp": 100,
+          "distance": 914.87,
+          "falls": 0,
+          "kills": 0,
+          "visited": [
+            "town-dunes"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 2,
+            "quest-dunes-regional": 1,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [],
+          "allies": []
+        },
+        {
+          "stage": "defeated-boss-dunes",
+          "frame": 8408,
+          "seconds": 140.13,
+          "position": [
+            470.53,
+            9.58,
+            -470.53
+          ],
+          "hp": 100,
+          "flasks": 4,
+          "distance": 1065.22,
+          "falls": 0,
+          "kills": 1,
+          "parries": 1,
+          "waypoints": [
+            "home",
+            "waypoint-dunes"
+          ],
+          "bosses": [
+            "boss-dunes"
+          ],
+          "xp": 280,
+          "villageTasks": [],
+          "villageLevel": 1,
+          "reputation": 0,
+          "materials": {
+            "wood": 64,
+            "stone": 41,
+            "food": 8
+          },
+          "day": 1,
+          "clock": 230.13,
+          "raid": "idle",
+          "raidWave": 0,
+          "beaconHp": 180,
+          "finalDefeated": false
+        },
+        {
+          "stage": "allied-town-dunes",
+          "frame": 9628,
+          "seconds": 160.47,
+          "position": [
+            428.08,
+            12.38,
+            -368.28
+          ],
+          "hp": 100,
+          "distance": 1220.35,
+          "falls": 0,
+          "kills": 1,
+          "visited": [
+            "town-dunes"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 2,
+            "quest-dunes-regional": 2,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [
+            "relic-dunes"
+          ],
+          "allies": [
+            "town-dunes"
+          ]
+        }
+      ],
+      "visualReplays": [],
+      "reloaded": {
+        "journey": {
+          "visited": [
+            "town-dunes"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 2,
+            "quest-dunes-regional": 2,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [
+            "relic-dunes"
+          ],
+          "equipped": [
+            "relic-dunes",
+            null
+          ],
+          "tracked": null,
+          "allies": [
+            "town-dunes"
+          ]
+        },
+        "expedition": {
+          "active": null,
+          "progress": {}
+        },
+        "mode": "playing"
+      }
+    },
+    {
+      "id": "town-coast",
+      "result": {
+        "stage": "allied-town-coast",
+        "frame": 8978,
+        "seconds": 149.63,
+        "position": [
+          605,
+          11.6,
+          42.32
+        ],
+        "hp": 100,
+        "distance": 1157.31,
+        "falls": 0,
+        "kills": 1,
+        "visited": [
+          "town-coast"
+        ],
+        "quests": {
+          "quest-sunfields-local": 0,
+          "quest-sunfields-regional": 0,
+          "quest-dunes-local": 0,
+          "quest-dunes-regional": 0,
+          "quest-coast-local": 2,
+          "quest-coast-regional": 2,
+          "quest-autumn-local": 0,
+          "quest-autumn-regional": 0,
+          "quest-alpine-local": 0,
+          "quest-alpine-regional": 0,
+          "quest-mistwood-local": 0,
+          "quest-mistwood-regional": 0,
+          "quest-canyon-local": 0,
+          "quest-canyon-regional": 0,
+          "quest-lavender-local": 0,
+          "quest-lavender-regional": 0
+        },
+        "relics": [
+          "relic-coast"
+        ],
+        "allies": [
+          "town-coast"
+        ]
+      },
+      "checkpoints": [
+        {
+          "stage": "start-route-coast",
+          "frame": 0,
+          "seconds": 0,
+          "position": [
+            0,
+            0.32,
+            -72
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 0,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "waypoints": [
+            "home"
+          ],
+          "bosses": [],
+          "xp": 0,
+          "villageTasks": [],
+          "villageLevel": 1,
+          "reputation": 0,
+          "materials": {
+            "wood": 48,
+            "stone": 30,
+            "food": 6
+          },
+          "day": 1,
+          "clock": 90,
+          "raid": "idle",
+          "raidWave": 0,
+          "beaconHp": 180,
+          "finalDefeated": false
+        },
+        {
+          "stage": "walked-route-coast",
+          "frame": 5628,
+          "seconds": 93.8,
+          "position": [
+            604.67,
+            11.6,
+            0
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 781.85,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "waypoints": [
+            "home",
+            "waypoint-coast"
+          ],
+          "bosses": [],
+          "xp": 70,
+          "villageTasks": [],
+          "villageLevel": 1,
+          "reputation": 0,
+          "materials": {
+            "wood": 48,
+            "stone": 30,
+            "food": 6
+          },
+          "day": 1,
+          "clock": 183.8,
+          "raid": "idle",
+          "raidWave": 0,
+          "beaconHp": 180,
+          "finalDefeated": false
+        },
+        {
+          "stage": "visit-town-coast",
+          "frame": 6078,
+          "seconds": 101.3,
+          "position": [
+            605,
+            11.6,
+            42.32
+          ],
+          "hp": 100,
+          "distance": 834.97,
+          "falls": 0,
+          "kills": 0,
+          "visited": [
+            "town-coast"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [],
+          "allies": []
+        },
+        {
+          "stage": "local-town-coast-complete",
+          "frame": 6318,
+          "seconds": 105.3,
+          "position": [
+            605.32,
+            11.6,
+            48
+          ],
+          "hp": 100,
+          "distance": 851.39,
+          "falls": 0,
+          "kills": 0,
+          "visited": [
+            "town-coast"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 2,
+            "quest-coast-regional": 1,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [],
+          "allies": []
+        },
+        {
+          "stage": "defeated-boss-coast",
+          "frame": 7734,
+          "seconds": 128.9,
+          "position": [
+            707.72,
+            3.03,
+            0
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1001.8,
+          "falls": 0,
+          "kills": 1,
+          "parries": 1,
+          "waypoints": [
+            "home",
+            "waypoint-coast"
+          ],
+          "bosses": [
+            "boss-coast"
+          ],
+          "xp": 245,
+          "villageTasks": [],
+          "villageLevel": 1,
+          "reputation": 0,
+          "materials": {
+            "wood": 60,
+            "stone": 38,
+            "food": 8
+          },
+          "day": 1,
+          "clock": 218.9,
+          "raid": "idle",
+          "raidWave": 0,
+          "beaconHp": 180,
+          "finalDefeated": false
+        },
+        {
+          "stage": "allied-town-coast",
+          "frame": 8978,
+          "seconds": 149.63,
+          "position": [
+            605,
+            11.6,
+            42.32
+          ],
+          "hp": 100,
+          "distance": 1157.31,
+          "falls": 0,
+          "kills": 1,
+          "visited": [
+            "town-coast"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 2,
+            "quest-coast-regional": 2,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [
+            "relic-coast"
+          ],
+          "allies": [
+            "town-coast"
+          ]
+        }
+      ],
+      "visualReplays": [],
+      "reloaded": {
+        "journey": {
+          "visited": [
+            "town-coast"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 2,
+            "quest-coast-regional": 2,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [
+            "relic-coast"
+          ],
+          "equipped": [
+            "relic-coast",
+            null
+          ],
+          "tracked": null,
+          "allies": [
+            "town-coast"
+          ]
+        },
+        "expedition": {
+          "active": null,
+          "progress": {}
+        },
+        "mode": "playing"
+      }
+    },
+    {
+      "id": "town-autumn",
+      "result": {
+        "stage": "allied-town-autumn",
+        "frame": 11967,
+        "seconds": 199.45,
+        "position": [
+          408.28,
+          21.63,
+          468.08
+        ],
+        "hp": 100,
+        "distance": 1534.35,
+        "falls": 0,
+        "kills": 2,
+        "visited": [
+          "town-autumn"
+        ],
+        "quests": {
+          "quest-sunfields-local": 0,
+          "quest-sunfields-regional": 0,
+          "quest-dunes-local": 0,
+          "quest-dunes-regional": 0,
+          "quest-coast-local": 0,
+          "quest-coast-regional": 0,
+          "quest-autumn-local": 2,
+          "quest-autumn-regional": 2,
+          "quest-alpine-local": 0,
+          "quest-alpine-regional": 0,
+          "quest-mistwood-local": 0,
+          "quest-mistwood-regional": 0,
+          "quest-canyon-local": 0,
+          "quest-canyon-regional": 0,
+          "quest-lavender-local": 0,
+          "quest-lavender-regional": 0
+        },
+        "relics": [
+          "relic-autumn"
+        ],
+        "allies": [
+          "town-autumn"
+        ]
+      },
+      "checkpoints": [
+        {
+          "stage": "start-route-autumn",
+          "frame": 0,
+          "seconds": 0,
+          "position": [
+            0,
+            0.32,
+            -72
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 0,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "waypoints": [
+            "home"
+          ],
+          "bosses": [],
+          "xp": 0,
+          "villageTasks": [],
+          "villageLevel": 1,
+          "reputation": 0,
+          "materials": {
+            "wood": 48,
+            "stone": 30,
+            "food": 6
+          },
+          "day": 1,
+          "clock": 90,
+          "raid": "idle",
+          "raidWave": 0,
+          "beaconHp": 180,
+          "finalDefeated": false
+        },
+        {
+          "stage": "walked-route-autumn",
+          "frame": 6694,
+          "seconds": 111.57,
+          "position": [
+            437.97,
+            21.62,
+            437.97
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 921.4,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "waypoints": [
+            "home",
+            "waypoint-autumn"
+          ],
+          "bosses": [],
+          "xp": 70,
+          "villageTasks": [],
+          "villageLevel": 1,
+          "reputation": 0,
+          "materials": {
+            "wood": 48,
+            "stone": 30,
+            "food": 6
+          },
+          "day": 1,
+          "clock": 201.57,
+          "raid": "idle",
+          "raidWave": 0,
+          "beaconHp": 180,
+          "finalDefeated": false
+        },
+        {
+          "stage": "visit-town-autumn",
+          "frame": 7144,
+          "seconds": 119.07,
+          "position": [
+            408.28,
+            21.63,
+            468.08
+          ],
+          "hp": 100,
+          "distance": 974.56,
+          "falls": 0,
+          "kills": 0,
+          "visited": [
+            "town-autumn"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [],
+          "allies": []
+        },
+        {
+          "stage": "local-town-autumn-complete",
+          "frame": 9316,
+          "seconds": 155.27,
+          "position": [
+            404.51,
+            21.63,
+            472.39
+          ],
+          "hp": 100,
+          "distance": 1228.12,
+          "falls": 0,
+          "kills": 0,
+          "visited": [
+            "town-autumn"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 2,
+            "quest-autumn-regional": 1,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [],
+          "allies": []
+        },
+        {
+          "stage": "defeated-boss-autumn",
+          "frame": 10723,
+          "seconds": 178.72,
+          "position": [
+            510.91,
+            19.26,
+            510.91
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1378.69,
+          "falls": 0,
+          "kills": 2,
+          "parries": 1,
+          "waypoints": [
+            "home",
+            "waypoint-autumn"
+          ],
+          "bosses": [
+            "boss-autumn"
+          ],
+          "xp": 260,
+          "villageTasks": [
+            "gather"
+          ],
+          "villageLevel": 1,
+          "reputation": 0,
+          "materials": {
+            "wood": 60,
+            "stone": 42,
+            "food": 8
+          },
+          "day": 1,
+          "clock": 268.72,
+          "raid": "idle",
+          "raidWave": 0,
+          "beaconHp": 180,
+          "finalDefeated": false
+        },
+        {
+          "stage": "allied-town-autumn",
+          "frame": 11967,
+          "seconds": 199.45,
+          "position": [
+            408.28,
+            21.63,
+            468.08
+          ],
+          "hp": 100,
+          "distance": 1534.35,
+          "falls": 0,
+          "kills": 2,
+          "visited": [
+            "town-autumn"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 2,
+            "quest-autumn-regional": 2,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [
+            "relic-autumn"
+          ],
+          "allies": [
+            "town-autumn"
+          ]
+        }
+      ],
+      "visualReplays": [],
+      "reloaded": {
+        "journey": {
+          "visited": [
+            "town-autumn"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 2,
+            "quest-autumn-regional": 2,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [
+            "relic-autumn"
+          ],
+          "equipped": [
+            "relic-autumn",
+            null
+          ],
+          "tracked": null,
+          "allies": [
+            "town-autumn"
+          ]
+        },
+        "expedition": {
+          "active": null,
+          "progress": {}
+        },
+        "mode": "playing"
+      }
+    },
+    {
+      "id": "town-alpine",
+      "result": {
+        "stage": "allied-town-alpine",
+        "frame": 16503,
+        "seconds": 275.05,
+        "position": [
+          -42.37,
+          40.57,
+          635
+        ],
+        "hp": 100,
+        "distance": 1881.88,
+        "falls": 0,
+        "kills": 4,
+        "visited": [
+          "town-alpine"
+        ],
+        "quests": {
+          "quest-sunfields-local": 0,
+          "quest-sunfields-regional": 0,
+          "quest-dunes-local": 0,
+          "quest-dunes-regional": 0,
+          "quest-coast-local": 0,
+          "quest-coast-regional": 0,
+          "quest-autumn-local": 0,
+          "quest-autumn-regional": 0,
+          "quest-alpine-local": 2,
+          "quest-alpine-regional": 2,
+          "quest-mistwood-local": 0,
+          "quest-mistwood-regional": 0,
+          "quest-canyon-local": 0,
+          "quest-canyon-regional": 0,
+          "quest-lavender-local": 0,
+          "quest-lavender-regional": 0
+        },
+        "relics": [
+          "relic-alpine"
+        ],
+        "allies": [
+          "town-alpine"
+        ]
+      },
+      "checkpoints": [
+        {
+          "stage": "start-route-alpine",
+          "frame": 0,
+          "seconds": 0,
+          "position": [
+            0,
+            0.32,
+            -72
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 0,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "waypoints": [
+            "home"
+          ],
+          "bosses": [],
+          "xp": 0,
+          "villageTasks": [],
+          "villageLevel": 1,
+          "reputation": 0,
+          "materials": {
+            "wood": 48,
+            "stone": 30,
+            "food": 6
+          },
+          "day": 1,
+          "clock": 90,
+          "raid": "idle",
+          "raidWave": 0,
+          "beaconHp": 180,
+          "finalDefeated": false
+        },
+        {
+          "stage": "walked-route-alpine",
+          "frame": 7700,
+          "seconds": 128.33,
+          "position": [
+            0,
+            40.55,
+            634.68
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1061.56,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "waypoints": [
+            "home",
+            "waypoint-alpine"
+          ],
+          "bosses": [],
+          "xp": 70,
+          "villageTasks": [],
+          "villageLevel": 1,
+          "reputation": 0,
+          "materials": {
+            "wood": 48,
+            "stone": 30,
+            "food": 6
+          },
+          "day": 1,
+          "clock": 218.33,
+          "raid": "idle",
+          "raidWave": 0,
+          "beaconHp": 180,
+          "finalDefeated": false
+        },
+        {
+          "stage": "visit-town-alpine",
+          "frame": 8150,
+          "seconds": 135.83,
+          "position": [
+            -42.32,
+            40.57,
+            635
+          ],
+          "hp": 100,
+          "distance": 1114.67,
+          "falls": 0,
+          "kills": 0,
+          "visited": [
+            "town-alpine"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [],
+          "allies": []
+        },
+        {
+          "stage": "local-town-alpine-complete",
+          "frame": 10604,
+          "seconds": 176.73,
+          "position": [
+            -48,
+            40.57,
+            635.32
+          ],
+          "hp": 100,
+          "distance": 1408.37,
+          "falls": 0,
+          "kills": 0,
+          "visited": [
+            "town-alpine"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 2,
+            "quest-alpine-regional": 1,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [],
+          "allies": []
+        },
+        {
+          "stage": "dungeon-alpine-entered",
+          "frame": 11034,
+          "seconds": 183.9,
+          "position": [
+            0,
+            0,
+            -4
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1466.04,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "dungeon": "dungeon-alpine",
+          "room": "dungeon-alpine:entry",
+          "progress": {
+            "killed": [],
+            "solved": [],
+            "opened": [],
+            "claimed": false
+          },
+          "openDoors": [],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-alpine-entered-weights",
+          "frame": 11666,
+          "seconds": 194.43,
+          "position": [
+            31.99,
+            0,
+            -0.33
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1514.44,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "dungeon": "dungeon-alpine",
+          "room": "dungeon-alpine:weights",
+          "progress": {
+            "killed": [],
+            "solved": [],
+            "opened": [],
+            "claimed": false
+          },
+          "openDoors": [],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-alpine-weights-clue",
+          "frame": 11774,
+          "seconds": 196.23,
+          "position": [
+            37.76,
+            0,
+            -5.77
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1522.38,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "dungeon": "dungeon-alpine",
+          "room": "dungeon-alpine:weights",
+          "progress": {
+            "killed": [],
+            "solved": [],
+            "opened": [],
+            "claimed": false
+          },
+          "openDoors": [],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-alpine-weights-solved",
+          "frame": 12294,
+          "seconds": 204.9,
+          "position": [
+            25.7,
+            0,
+            -0.09
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1542.26,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "dungeon": "dungeon-alpine",
+          "room": "dungeon-alpine:weights",
+          "progress": {
+            "killed": [],
+            "solved": [
+              "dungeon-alpine:weight-seal"
+            ],
+            "opened": [],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-alpine:door-1"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-alpine-entered-guard",
+          "frame": 13226,
+          "seconds": 220.43,
+          "position": [
+            63.78,
+            0,
+            0.23
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1607.8,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 2,
+          "parries": 0,
+          "dungeon": "dungeon-alpine",
+          "room": "dungeon-alpine:guard",
+          "progress": {
+            "killed": [
+              "dungeon-alpine:guard-0",
+              "dungeon-alpine:guard-1"
+            ],
+            "solved": [
+              "dungeon-alpine:weight-seal"
+            ],
+            "opened": [],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-alpine:door-1",
+            "dungeon-alpine:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-alpine-entered-treasure",
+          "frame": 13594,
+          "seconds": 226.57,
+          "position": [
+            95.66,
+            0,
+            0
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1639.68,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-alpine",
+          "room": "dungeon-alpine:treasure",
+          "progress": {
+            "killed": [
+              "dungeon-alpine:guard-0",
+              "dungeon-alpine:guard-1",
+              "dungeon-alpine:treasure-guard"
+            ],
+            "solved": [
+              "dungeon-alpine:weight-seal"
+            ],
+            "opened": [],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-alpine:door-1",
+            "dungeon-alpine:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-alpine-optional-treasure",
+          "frame": 13672,
+          "seconds": 227.87,
+          "position": [
+            92.23,
+            0,
+            3.75
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1644.77,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-alpine",
+          "room": "dungeon-alpine:treasure",
+          "progress": {
+            "killed": [
+              "dungeon-alpine:guard-0",
+              "dungeon-alpine:guard-1",
+              "dungeon-alpine:treasure-guard"
+            ],
+            "solved": [
+              "dungeon-alpine:weight-seal"
+            ],
+            "opened": [
+              "dungeon-alpine:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-alpine:door-1",
+            "dungeon-alpine:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-alpine-entered-guard",
+          "frame": 14106,
+          "seconds": 235.1,
+          "position": [
+            64.3,
+            0,
+            0
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1681.24,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-alpine",
+          "room": "dungeon-alpine:guard",
+          "progress": {
+            "killed": [
+              "dungeon-alpine:guard-0",
+              "dungeon-alpine:guard-1",
+              "dungeon-alpine:treasure-guard"
+            ],
+            "solved": [
+              "dungeon-alpine:weight-seal"
+            ],
+            "opened": [
+              "dungeon-alpine:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-alpine:door-1",
+            "dungeon-alpine:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-alpine-low-terrace",
+          "frame": 14460,
+          "seconds": 241,
+          "position": [
+            64,
+            1.4,
+            28.7
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1709.94,
+          "jumps": 1,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-alpine",
+          "room": "dungeon-alpine:ascent",
+          "progress": {
+            "killed": [
+              "dungeon-alpine:guard-0",
+              "dungeon-alpine:guard-1",
+              "dungeon-alpine:treasure-guard"
+            ],
+            "solved": [
+              "dungeon-alpine:weight-seal"
+            ],
+            "opened": [
+              "dungeon-alpine:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-alpine:door-1",
+            "dungeon-alpine:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-alpine-high-terrace",
+          "frame": 14530,
+          "seconds": 242.17,
+          "position": [
+            64,
+            2.8,
+            32.7
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1713.94,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-alpine",
+          "room": "dungeon-alpine:ascent",
+          "progress": {
+            "killed": [
+              "dungeon-alpine:guard-0",
+              "dungeon-alpine:guard-1",
+              "dungeon-alpine:treasure-guard"
+            ],
+            "solved": [
+              "dungeon-alpine:weight-seal"
+            ],
+            "opened": [
+              "dungeon-alpine:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-alpine:door-1",
+            "dungeon-alpine:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-alpine-entered-ascent",
+          "frame": 14624,
+          "seconds": 243.73,
+          "position": [
+            64,
+            0,
+            38.7
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1719.94,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-alpine",
+          "room": "dungeon-alpine:ascent",
+          "progress": {
+            "killed": [
+              "dungeon-alpine:guard-0",
+              "dungeon-alpine:guard-1",
+              "dungeon-alpine:treasure-guard"
+            ],
+            "solved": [
+              "dungeon-alpine:weight-seal"
+            ],
+            "opened": [
+              "dungeon-alpine:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-alpine:door-1",
+            "dungeon-alpine:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-alpine-entered-runes",
+          "frame": 14913,
+          "seconds": 248.55,
+          "position": [
+            64,
+            0,
+            63.67
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1744.91,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-alpine",
+          "room": "dungeon-alpine:runes",
+          "progress": {
+            "killed": [
+              "dungeon-alpine:guard-0",
+              "dungeon-alpine:guard-1",
+              "dungeon-alpine:treasure-guard"
+            ],
+            "solved": [
+              "dungeon-alpine:weight-seal"
+            ],
+            "opened": [
+              "dungeon-alpine:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-alpine:door-1",
+            "dungeon-alpine:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-alpine-runes-clue",
+          "frame": 15021,
+          "seconds": 250.35,
+          "position": [
+            58.24,
+            0,
+            58.22
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1752.83,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-alpine",
+          "room": "dungeon-alpine:runes",
+          "progress": {
+            "killed": [
+              "dungeon-alpine:guard-0",
+              "dungeon-alpine:guard-1",
+              "dungeon-alpine:treasure-guard"
+            ],
+            "solved": [
+              "dungeon-alpine:weight-seal"
+            ],
+            "opened": [
+              "dungeon-alpine:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-alpine:door-1",
+            "dungeon-alpine:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-alpine-runes-solved",
+          "frame": 15282,
+          "seconds": 254.7,
+          "position": [
+            69.66,
+            0,
+            66.99
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1772.94,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-alpine",
+          "room": "dungeon-alpine:runes",
+          "progress": {
+            "killed": [
+              "dungeon-alpine:guard-0",
+              "dungeon-alpine:guard-1",
+              "dungeon-alpine:treasure-guard"
+            ],
+            "solved": [
+              "dungeon-alpine:weight-seal",
+              "dungeon-alpine:lights"
+            ],
+            "opened": [
+              "dungeon-alpine:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-alpine:door-1",
+            "dungeon-alpine:door-2",
+            "dungeon-alpine:door-4"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-alpine-entered-boss",
+          "frame": 15896,
+          "seconds": 264.93,
+          "position": [
+            32.15,
+            0,
+            64.26
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1811.61,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 4,
+          "parries": 1,
+          "dungeon": "dungeon-alpine",
+          "room": "dungeon-alpine:boss",
+          "progress": {
+            "killed": [
+              "dungeon-alpine:guard-0",
+              "dungeon-alpine:guard-1",
+              "dungeon-alpine:treasure-guard",
+              "dungeon-alpine:boss-guardian"
+            ],
+            "solved": [
+              "dungeon-alpine:weight-seal",
+              "dungeon-alpine:lights"
+            ],
+            "opened": [
+              "dungeon-alpine:optional-chest"
+            ],
+            "claimed": true
+          },
+          "openDoors": [
+            "dungeon-alpine:door-1",
+            "dungeon-alpine:door-2",
+            "dungeon-alpine:door-4"
+          ],
+          "relics": [
+            "relic-alpine"
+          ]
+        },
+        {
+          "stage": "dungeon-alpine-cleared",
+          "frame": 15902,
+          "seconds": 265.03,
+          "position": [
+            32.15,
+            0,
+            64.26
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1811.61,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 4,
+          "parries": 1,
+          "dungeon": "dungeon-alpine",
+          "room": "dungeon-alpine:boss",
+          "progress": {
+            "killed": [
+              "dungeon-alpine:guard-0",
+              "dungeon-alpine:guard-1",
+              "dungeon-alpine:treasure-guard",
+              "dungeon-alpine:boss-guardian"
+            ],
+            "solved": [
+              "dungeon-alpine:weight-seal",
+              "dungeon-alpine:lights"
+            ],
+            "opened": [
+              "dungeon-alpine:optional-chest"
+            ],
+            "claimed": true
+          },
+          "openDoors": [
+            "dungeon-alpine:door-1",
+            "dungeon-alpine:door-2",
+            "dungeon-alpine:door-4"
+          ],
+          "relics": [
+            "relic-alpine"
+          ]
+        },
+        {
+          "stage": "dungeon-alpine-returned",
+          "frame": 15995,
+          "seconds": 266.58,
+          "position": [
+            -106,
+            40.57,
+            630
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1818.02,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 4,
+          "parries": 1,
+          "dungeon": null,
+          "room": null,
+          "progress": null,
+          "openDoors": [],
+          "relics": [
+            "relic-alpine"
+          ]
+        },
+        {
+          "stage": "allied-town-alpine",
+          "frame": 16503,
+          "seconds": 275.05,
+          "position": [
+            -42.37,
+            40.57,
+            635
+          ],
+          "hp": 100,
+          "distance": 1881.88,
+          "falls": 0,
+          "kills": 4,
+          "visited": [
+            "town-alpine"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 2,
+            "quest-alpine-regional": 2,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [
+            "relic-alpine"
+          ],
+          "allies": [
+            "town-alpine"
+          ]
+        }
+      ],
+      "visualReplays": [
+        {
+          "stage": "dungeon-alpine-entered",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 59.88023952095802,
+            "frameP95": 16.700000000000017,
+            "frameP99": 16.700000000000017,
+            "renderAverage": 2.4000000953674316,
+            "droppedTime": 0,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 4391,
+              "staticTriangles": 2928,
+              "dynamicTriangles": 1463,
+              "frameMs": 0.2999999523162842,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 386496,
+              "chunkBuilds": 93,
+              "chunkEvictions": 93,
+              "disposedChunks": 93,
+              "activeScene": "dungeon-alpine",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 386496,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 3
+            },
+            "world": {
+              "cachedChunks": 96,
+              "maxCachedChunks": 96,
+              "generatedChunks": 151,
+              "evictedChunks": 55,
+              "lastQueryCells": 1,
+              "lastQueryCandidates": 11
+            },
+            "actors": 0,
+            "audioVoices": 8
+          },
+          "visualReplay": true
+        },
+        {
+          "stage": "dungeon-alpine-weights-solved",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 59.88023952095802,
+            "frameP95": 16.700000000000017,
+            "frameP99": 16.700000000000017,
+            "renderAverage": 2.4000000953674316,
+            "droppedTime": 0,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 4339,
+              "staticTriangles": 2928,
+              "dynamicTriangles": 1411,
+              "frameMs": 0.20000004768371582,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 386496,
+              "chunkBuilds": 93,
+              "chunkEvictions": 93,
+              "disposedChunks": 93,
+              "activeScene": "dungeon-alpine",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 386496,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 2
+            },
+            "world": {
+              "cachedChunks": 96,
+              "maxCachedChunks": 96,
+              "generatedChunks": 151,
+              "evictedChunks": 55,
+              "lastQueryCells": 1,
+              "lastQueryCandidates": 11
+            },
+            "actors": 0,
+            "audioVoices": 5
+          },
+          "visualReplay": true
+        },
+        {
+          "stage": "dungeon-alpine-optional-treasure",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 59.88023952095802,
+            "frameP95": 16.700000000000017,
+            "frameP99": 16.700000000000017,
+            "renderAverage": 2.4000000953674316,
+            "droppedTime": 0,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 4267,
+              "staticTriangles": 2928,
+              "dynamicTriangles": 1339,
+              "frameMs": 0.19999980926513672,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 386496,
+              "chunkBuilds": 93,
+              "chunkEvictions": 93,
+              "disposedChunks": 93,
+              "activeScene": "dungeon-alpine",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 386496,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 1
+            },
+            "world": {
+              "cachedChunks": 96,
+              "maxCachedChunks": 96,
+              "generatedChunks": 151,
+              "evictedChunks": 55,
+              "lastQueryCells": 1,
+              "lastQueryCandidates": 11
+            },
+            "actors": 3,
+            "audioVoices": 2
+          },
+          "visualReplay": true
+        },
+        {
+          "stage": "dungeon-alpine-high-terrace",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 59.88023952095802,
+            "frameP95": 16.700000000000017,
+            "frameP99": 16.700000000000017,
+            "renderAverage": 2.4000000953674316,
+            "droppedTime": 0,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 4387,
+              "staticTriangles": 2928,
+              "dynamicTriangles": 1459,
+              "frameMs": 0.2999999523162842,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 386496,
+              "chunkBuilds": 93,
+              "chunkEvictions": 93,
+              "disposedChunks": 93,
+              "activeScene": "dungeon-alpine",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 386496,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 1
+            },
+            "world": {
+              "cachedChunks": 96,
+              "maxCachedChunks": 96,
+              "generatedChunks": 151,
+              "evictedChunks": 55,
+              "lastQueryCells": 1,
+              "lastQueryCandidates": 11
+            },
+            "actors": 3,
+            "audioVoices": 2
+          },
+          "visualReplay": true
+        },
+        {
+          "stage": "dungeon-alpine-runes-clue",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 59.88023952095802,
+            "frameP95": 16.700000000000017,
+            "frameP99": 16.700000000000017,
+            "renderAverage": 2.4000000953674316,
+            "droppedTime": 0,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 4267,
+              "staticTriangles": 2928,
+              "dynamicTriangles": 1339,
+              "frameMs": 0.2999999523162842,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 386496,
+              "chunkBuilds": 93,
+              "chunkEvictions": 93,
+              "disposedChunks": 93,
+              "activeScene": "dungeon-alpine",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 386496,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 1
+            },
+            "world": {
+              "cachedChunks": 96,
+              "maxCachedChunks": 96,
+              "generatedChunks": 151,
+              "evictedChunks": 55,
+              "lastQueryCells": 1,
+              "lastQueryCandidates": 11
+            },
+            "actors": 3,
+            "audioVoices": 2
+          },
+          "visualReplay": true
+        },
+        {
+          "stage": "dungeon-alpine-boss-telegraph",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 59.88023952095802,
+            "frameP95": 16.700000000000017,
+            "frameP99": 16.700000000000017,
+            "renderAverage": 2.4000000953674316,
+            "droppedTime": 0,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 4935,
+              "staticTriangles": 2928,
+              "dynamicTriangles": 2007,
+              "frameMs": 0.20000004768371582,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 386496,
+              "chunkBuilds": 93,
+              "chunkEvictions": 93,
+              "disposedChunks": 93,
+              "activeScene": "dungeon-alpine",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 386496,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 0
+            },
+            "world": {
+              "cachedChunks": 96,
+              "maxCachedChunks": 96,
+              "generatedChunks": 151,
+              "evictedChunks": 55,
+              "lastQueryCells": 1,
+              "lastQueryCandidates": 11
+            },
+            "actors": 4,
+            "audioVoices": 2
+          },
+          "visualReplay": true
+        },
+        {
+          "stage": "dungeon-alpine-cleared",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 59.88023952095802,
+            "frameP95": 16.700000000000017,
+            "frameP99": 16.700000000000017,
+            "renderAverage": 2.4000000953674316,
+            "droppedTime": 0,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 4455,
+              "staticTriangles": 2928,
+              "dynamicTriangles": 1527,
+              "frameMs": 0.40000009536743164,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 386496,
+              "chunkBuilds": 93,
+              "chunkEvictions": 93,
+              "disposedChunks": 93,
+              "activeScene": "dungeon-alpine",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 386496,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 0
+            },
+            "world": {
+              "cachedChunks": 96,
+              "maxCachedChunks": 96,
+              "generatedChunks": 151,
+              "evictedChunks": 55,
+              "lastQueryCells": 1,
+              "lastQueryCandidates": 11
+            },
+            "actors": 4,
+            "audioVoices": 2
+          },
+          "visualReplay": true
+        }
+      ],
+      "reloaded": {
+        "journey": {
+          "visited": [
+            "town-alpine"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 2,
+            "quest-alpine-regional": 2,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [
+            "relic-alpine"
+          ],
+          "equipped": [
+            "relic-alpine",
+            null
+          ],
+          "tracked": null,
+          "allies": [
+            "town-alpine"
+          ]
+        },
+        "expedition": {
+          "active": null,
+          "progress": {
+            "dungeon-alpine": {
+              "killed": [
+                "dungeon-alpine:guard-0",
+                "dungeon-alpine:guard-1",
+                "dungeon-alpine:treasure-guard",
+                "dungeon-alpine:boss-guardian"
+              ],
+              "solved": [
+                "dungeon-alpine:weight-seal",
+                "dungeon-alpine:lights"
+              ],
+              "opened": [
+                "dungeon-alpine:optional-chest"
+              ],
+              "claimed": true
+            }
+          }
+        },
+        "mode": "playing"
+      }
+    },
+    {
+      "id": "town-mistwood",
+      "result": {
+        "stage": "allied-town-mistwood",
+        "frame": 15645,
+        "seconds": 260.75,
+        "position": [
+          -468.11,
+          18.65,
+          408.25
+        ],
+        "hp": 89,
+        "distance": 1718,
+        "falls": 0,
+        "kills": 5,
+        "visited": [
+          "town-mistwood"
+        ],
+        "quests": {
+          "quest-sunfields-local": 0,
+          "quest-sunfields-regional": 0,
+          "quest-dunes-local": 0,
+          "quest-dunes-regional": 0,
+          "quest-coast-local": 0,
+          "quest-coast-regional": 0,
+          "quest-autumn-local": 0,
+          "quest-autumn-regional": 0,
+          "quest-alpine-local": 0,
+          "quest-alpine-regional": 0,
+          "quest-mistwood-local": 2,
+          "quest-mistwood-regional": 2,
+          "quest-canyon-local": 0,
+          "quest-canyon-regional": 0,
+          "quest-lavender-local": 0,
+          "quest-lavender-regional": 0
+        },
+        "relics": [
+          "relic-mistwood"
+        ],
+        "allies": [
+          "town-mistwood"
+        ]
+      },
+      "checkpoints": [
+        {
+          "stage": "start-route-mistwood",
+          "frame": 0,
+          "seconds": 0,
+          "position": [
+            0,
+            0.32,
+            -72
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 0,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "waypoints": [
+            "home"
+          ],
+          "bosses": [],
+          "xp": 0,
+          "villageTasks": [],
+          "villageLevel": 1,
+          "reputation": 0,
+          "materials": {
+            "wood": 48,
+            "stone": 30,
+            "food": 6
+          },
+          "day": 1,
+          "clock": 90,
+          "raid": "idle",
+          "raidWave": 0,
+          "beaconHp": 180,
+          "finalDefeated": false
+        },
+        {
+          "stage": "walked-route-mistwood",
+          "frame": 6694,
+          "seconds": 111.57,
+          "position": [
+            -437.97,
+            18.64,
+            437.97
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 921.4,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "waypoints": [
+            "home",
+            "waypoint-mistwood"
+          ],
+          "bosses": [],
+          "xp": 70,
+          "villageTasks": [],
+          "villageLevel": 1,
+          "reputation": 0,
+          "materials": {
+            "wood": 48,
+            "stone": 30,
+            "food": 6
+          },
+          "day": 1,
+          "clock": 201.57,
+          "raid": "idle",
+          "raidWave": 0,
+          "beaconHp": 180,
+          "finalDefeated": false
+        },
+        {
+          "stage": "visit-town-mistwood",
+          "frame": 7144,
+          "seconds": 119.07,
+          "position": [
+            -468.08,
+            18.65,
+            408.28
+          ],
+          "hp": 100,
+          "distance": 974.56,
+          "falls": 0,
+          "kills": 0,
+          "visited": [
+            "town-mistwood"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [],
+          "allies": []
+        },
+        {
+          "stage": "local-town-mistwood-complete",
+          "frame": 9268,
+          "seconds": 154.47,
+          "position": [
+            -472.39,
+            18.65,
+            404.51
+          ],
+          "hp": 100,
+          "distance": 1221.31,
+          "falls": 0,
+          "kills": 0,
+          "visited": [
+            "town-mistwood"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 2,
+            "quest-mistwood-regional": 1,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [],
+          "allies": []
+        },
+        {
+          "stage": "dungeon-mistwood-entered",
+          "frame": 9698,
+          "seconds": 161.63,
+          "position": [
+            0,
+            0,
+            -4
+          ],
+          "hp": 100,
+          "flasks": 4,
+          "distance": 1279.01,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "dungeon": "dungeon-mistwood",
+          "room": "dungeon-mistwood:entry",
+          "progress": {
+            "killed": [],
+            "solved": [],
+            "opened": [],
+            "claimed": false
+          },
+          "openDoors": [],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-mistwood-entered-runes",
+          "frame": 10123,
+          "seconds": 168.72,
+          "position": [
+            0,
+            0,
+            31.66
+          ],
+          "hp": 100,
+          "flasks": 4,
+          "distance": 1314.67,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "dungeon": "dungeon-mistwood",
+          "room": "dungeon-mistwood:runes",
+          "progress": {
+            "killed": [],
+            "solved": [],
+            "opened": [],
+            "claimed": false
+          },
+          "openDoors": [],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-mistwood-runes-clue",
+          "frame": 10231,
+          "seconds": 170.52,
+          "position": [
+            -5.76,
+            0,
+            26.22
+          ],
+          "hp": 100,
+          "flasks": 4,
+          "distance": 1322.59,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "dungeon": "dungeon-mistwood",
+          "room": "dungeon-mistwood:runes",
+          "progress": {
+            "killed": [],
+            "solved": [],
+            "opened": [],
+            "claimed": false
+          },
+          "openDoors": [],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-mistwood-runes-solved",
+          "frame": 10636,
+          "seconds": 177.27,
+          "position": [
+            -0.3,
+            0,
+            35
+          ],
+          "hp": 100,
+          "flasks": 4,
+          "distance": 1353.78,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "dungeon": "dungeon-mistwood",
+          "room": "dungeon-mistwood:runes",
+          "progress": {
+            "killed": [],
+            "solved": [
+              "dungeon-mistwood:lights"
+            ],
+            "opened": [],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-mistwood:door-1"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-mistwood-entered-treasure",
+          "frame": 11049,
+          "seconds": 184.15,
+          "position": [
+            0.03,
+            0,
+            63.68
+          ],
+          "hp": 100,
+          "flasks": 4,
+          "distance": 1387.92,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 1,
+          "parries": 0,
+          "dungeon": "dungeon-mistwood",
+          "room": "dungeon-mistwood:treasure",
+          "progress": {
+            "killed": [
+              "dungeon-mistwood:treasure-guard"
+            ],
+            "solved": [
+              "dungeon-mistwood:lights"
+            ],
+            "opened": [],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-mistwood:door-1"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-mistwood-optional-treasure",
+          "frame": 11133,
+          "seconds": 185.55,
+          "position": [
+            -3.78,
+            0,
+            67.76
+          ],
+          "hp": 100,
+          "flasks": 4,
+          "distance": 1393.5,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 1,
+          "parries": 0,
+          "dungeon": "dungeon-mistwood",
+          "room": "dungeon-mistwood:treasure",
+          "progress": {
+            "killed": [
+              "dungeon-mistwood:treasure-guard"
+            ],
+            "solved": [
+              "dungeon-mistwood:lights"
+            ],
+            "opened": [
+              "dungeon-mistwood:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-mistwood:door-1"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-mistwood-entered-runes",
+          "frame": 11570,
+          "seconds": 192.83,
+          "position": [
+            0,
+            0,
+            32.33
+          ],
+          "hp": 100,
+          "flasks": 4,
+          "distance": 1430.41,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 1,
+          "parries": 0,
+          "dungeon": "dungeon-mistwood",
+          "room": "dungeon-mistwood:runes",
+          "progress": {
+            "killed": [
+              "dungeon-mistwood:treasure-guard"
+            ],
+            "solved": [
+              "dungeon-mistwood:lights"
+            ],
+            "opened": [
+              "dungeon-mistwood:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-mistwood:door-1"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-mistwood-entered-guard",
+          "frame": 12007,
+          "seconds": 200.12,
+          "position": [
+            32.21,
+            0,
+            32.25
+          ],
+          "hp": 89,
+          "flasks": 4,
+          "distance": 1466.07,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-mistwood",
+          "room": "dungeon-mistwood:guard",
+          "progress": {
+            "killed": [
+              "dungeon-mistwood:treasure-guard",
+              "dungeon-mistwood:guard-0",
+              "dungeon-mistwood:guard-1"
+            ],
+            "solved": [
+              "dungeon-mistwood:lights"
+            ],
+            "opened": [
+              "dungeon-mistwood:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-mistwood:door-1",
+            "dungeon-mistwood:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-mistwood-entered-weights",
+          "frame": 12579,
+          "seconds": 209.65,
+          "position": [
+            63.99,
+            0,
+            31.67
+          ],
+          "hp": 89,
+          "flasks": 4,
+          "distance": 1510.61,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-mistwood",
+          "room": "dungeon-mistwood:weights",
+          "progress": {
+            "killed": [
+              "dungeon-mistwood:treasure-guard",
+              "dungeon-mistwood:guard-0",
+              "dungeon-mistwood:guard-1"
+            ],
+            "solved": [
+              "dungeon-mistwood:lights"
+            ],
+            "opened": [
+              "dungeon-mistwood:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-mistwood:door-1",
+            "dungeon-mistwood:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-mistwood-weights-clue",
+          "frame": 12687,
+          "seconds": 211.45,
+          "position": [
+            69.76,
+            0,
+            26.23
+          ],
+          "hp": 89,
+          "flasks": 4,
+          "distance": 1518.55,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-mistwood",
+          "room": "dungeon-mistwood:weights",
+          "progress": {
+            "killed": [
+              "dungeon-mistwood:treasure-guard",
+              "dungeon-mistwood:guard-0",
+              "dungeon-mistwood:guard-1"
+            ],
+            "solved": [
+              "dungeon-mistwood:lights"
+            ],
+            "opened": [
+              "dungeon-mistwood:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-mistwood:door-1",
+            "dungeon-mistwood:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-mistwood-weights-solved",
+          "frame": 13481,
+          "seconds": 224.68,
+          "position": [
+            57.7,
+            0,
+            35.91
+          ],
+          "hp": 89,
+          "flasks": 4,
+          "distance": 1542.94,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-mistwood",
+          "room": "dungeon-mistwood:weights",
+          "progress": {
+            "killed": [
+              "dungeon-mistwood:treasure-guard",
+              "dungeon-mistwood:guard-0",
+              "dungeon-mistwood:guard-1"
+            ],
+            "solved": [
+              "dungeon-mistwood:lights",
+              "dungeon-mistwood:weight-seal"
+            ],
+            "opened": [
+              "dungeon-mistwood:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-mistwood:door-1",
+            "dungeon-mistwood:door-2",
+            "dungeon-mistwood:door-3"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-mistwood-low-terrace",
+          "frame": 14387,
+          "seconds": 239.78,
+          "position": [
+            92.7,
+            1.4,
+            32
+          ],
+          "hp": 89,
+          "flasks": 4,
+          "distance": 1608.35,
+          "jumps": 1,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-mistwood",
+          "room": "dungeon-mistwood:ascent",
+          "progress": {
+            "killed": [
+              "dungeon-mistwood:treasure-guard",
+              "dungeon-mistwood:guard-0",
+              "dungeon-mistwood:guard-1"
+            ],
+            "solved": [
+              "dungeon-mistwood:lights",
+              "dungeon-mistwood:weight-seal"
+            ],
+            "opened": [
+              "dungeon-mistwood:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-mistwood:door-1",
+            "dungeon-mistwood:door-2",
+            "dungeon-mistwood:door-3"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-mistwood-high-terrace",
+          "frame": 14457,
+          "seconds": 240.95,
+          "position": [
+            96.7,
+            2.8,
+            32
+          ],
+          "hp": 89,
+          "flasks": 4,
+          "distance": 1612.35,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-mistwood",
+          "room": "dungeon-mistwood:ascent",
+          "progress": {
+            "killed": [
+              "dungeon-mistwood:treasure-guard",
+              "dungeon-mistwood:guard-0",
+              "dungeon-mistwood:guard-1"
+            ],
+            "solved": [
+              "dungeon-mistwood:lights",
+              "dungeon-mistwood:weight-seal"
+            ],
+            "opened": [
+              "dungeon-mistwood:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-mistwood:door-1",
+            "dungeon-mistwood:door-2",
+            "dungeon-mistwood:door-3"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-mistwood-entered-ascent",
+          "frame": 14551,
+          "seconds": 242.52,
+          "position": [
+            102.7,
+            0,
+            32
+          ],
+          "hp": 89,
+          "flasks": 4,
+          "distance": 1618.35,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-mistwood",
+          "room": "dungeon-mistwood:ascent",
+          "progress": {
+            "killed": [
+              "dungeon-mistwood:treasure-guard",
+              "dungeon-mistwood:guard-0",
+              "dungeon-mistwood:guard-1"
+            ],
+            "solved": [
+              "dungeon-mistwood:lights",
+              "dungeon-mistwood:weight-seal"
+            ],
+            "opened": [
+              "dungeon-mistwood:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-mistwood:door-1",
+            "dungeon-mistwood:door-2",
+            "dungeon-mistwood:door-3"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-mistwood-entered-boss",
+          "frame": 15014,
+          "seconds": 250.23,
+          "position": [
+            127.97,
+            0,
+            32.29
+          ],
+          "hp": 89,
+          "flasks": 4,
+          "distance": 1644.31,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 5,
+          "parries": 1,
+          "dungeon": "dungeon-mistwood",
+          "room": "dungeon-mistwood:boss",
+          "progress": {
+            "killed": [
+              "dungeon-mistwood:treasure-guard",
+              "dungeon-mistwood:guard-0",
+              "dungeon-mistwood:guard-1",
+              "dungeon-mistwood:boss-guardian"
+            ],
+            "solved": [
+              "dungeon-mistwood:lights",
+              "dungeon-mistwood:weight-seal"
+            ],
+            "opened": [
+              "dungeon-mistwood:optional-chest"
+            ],
+            "claimed": true
+          },
+          "openDoors": [
+            "dungeon-mistwood:door-1",
+            "dungeon-mistwood:door-2",
+            "dungeon-mistwood:door-3"
+          ],
+          "relics": [
+            "relic-mistwood"
+          ]
+        },
+        {
+          "stage": "dungeon-mistwood-cleared",
+          "frame": 15020,
+          "seconds": 250.33,
+          "position": [
+            127.97,
+            0,
+            32.29
+          ],
+          "hp": 89,
+          "flasks": 4,
+          "distance": 1644.31,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 5,
+          "parries": 1,
+          "dungeon": "dungeon-mistwood",
+          "room": "dungeon-mistwood:boss",
+          "progress": {
+            "killed": [
+              "dungeon-mistwood:treasure-guard",
+              "dungeon-mistwood:guard-0",
+              "dungeon-mistwood:guard-1",
+              "dungeon-mistwood:boss-guardian"
+            ],
+            "solved": [
+              "dungeon-mistwood:lights",
+              "dungeon-mistwood:weight-seal"
+            ],
+            "opened": [
+              "dungeon-mistwood:optional-chest"
+            ],
+            "claimed": true
+          },
+          "openDoors": [
+            "dungeon-mistwood:door-1",
+            "dungeon-mistwood:door-2",
+            "dungeon-mistwood:door-3"
+          ],
+          "relics": [
+            "relic-mistwood"
+          ]
+        },
+        {
+          "stage": "dungeon-mistwood-returned",
+          "frame": 15113,
+          "seconds": 251.88,
+          "position": [
+            -513.13,
+            18.65,
+            358.23
+          ],
+          "hp": 89,
+          "flasks": 4,
+          "distance": 1650.69,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 5,
+          "parries": 1,
+          "dungeon": null,
+          "room": null,
+          "progress": null,
+          "openDoors": [],
+          "relics": [
+            "relic-mistwood"
+          ]
+        },
+        {
+          "stage": "allied-town-mistwood",
+          "frame": 15645,
+          "seconds": 260.75,
+          "position": [
+            -468.11,
+            18.65,
+            408.25
+          ],
+          "hp": 89,
+          "distance": 1718,
+          "falls": 0,
+          "kills": 5,
+          "visited": [
+            "town-mistwood"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 2,
+            "quest-mistwood-regional": 2,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [
+            "relic-mistwood"
+          ],
+          "allies": [
+            "town-mistwood"
+          ]
+        }
+      ],
+      "visualReplays": [
+        {
+          "stage": "dungeon-mistwood-entered",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 59.52380952380948,
+            "frameP95": 16.80000000000001,
+            "frameP99": 16.80000000000001,
+            "renderAverage": 2.9000000953674316,
+            "droppedTime": 0,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 4563,
+              "staticTriangles": 2928,
+              "dynamicTriangles": 1635,
+              "frameMs": 0.3000001907348633,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 386496,
+              "chunkBuilds": 91,
+              "chunkEvictions": 91,
+              "disposedChunks": 91,
+              "activeScene": "dungeon-mistwood",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 386496,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 3
+            },
+            "world": {
+              "cachedChunks": 96,
+              "maxCachedChunks": 96,
+              "generatedChunks": 144,
+              "evictedChunks": 48,
+              "lastQueryCells": 4,
+              "lastQueryCandidates": 44
+            },
+            "actors": 0,
+            "audioVoices": 7
+          },
+          "visualReplay": true
+        },
+        {
+          "stage": "dungeon-mistwood-runes-clue",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 59.52380952380948,
+            "frameP95": 16.80000000000001,
+            "frameP99": 16.80000000000001,
+            "renderAverage": 2.9000000953674316,
+            "droppedTime": 0,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 4563,
+              "staticTriangles": 2928,
+              "dynamicTriangles": 1635,
+              "frameMs": 0.20000004768371582,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 386496,
+              "chunkBuilds": 91,
+              "chunkEvictions": 91,
+              "disposedChunks": 91,
+              "activeScene": "dungeon-mistwood",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 386496,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 3
+            },
+            "world": {
+              "cachedChunks": 96,
+              "maxCachedChunks": 96,
+              "generatedChunks": 144,
+              "evictedChunks": 48,
+              "lastQueryCells": 4,
+              "lastQueryCandidates": 44
+            },
+            "actors": 0,
+            "audioVoices": 3
+          },
+          "visualReplay": true
+        },
+        {
+          "stage": "dungeon-mistwood-optional-treasure",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 59.52380952380948,
+            "frameP95": 16.80000000000001,
+            "frameP99": 16.80000000000001,
+            "renderAverage": 2.9000000953674316,
+            "droppedTime": 0,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 4491,
+              "staticTriangles": 2928,
+              "dynamicTriangles": 1563,
+              "frameMs": 0.3000001907348633,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 386496,
+              "chunkBuilds": 91,
+              "chunkEvictions": 91,
+              "disposedChunks": 91,
+              "activeScene": "dungeon-mistwood",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 386496,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 2
+            },
+            "world": {
+              "cachedChunks": 96,
+              "maxCachedChunks": 96,
+              "generatedChunks": 144,
+              "evictedChunks": 48,
+              "lastQueryCells": 4,
+              "lastQueryCandidates": 44
+            },
+            "actors": 1,
+            "audioVoices": 2
+          },
+          "visualReplay": true
+        },
+        {
+          "stage": "dungeon-mistwood-weights-solved",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 59.52380952380948,
+            "frameP95": 16.80000000000001,
+            "frameP99": 16.80000000000001,
+            "renderAverage": 2.9000000953674316,
+            "droppedTime": 0,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 4387,
+              "staticTriangles": 2928,
+              "dynamicTriangles": 1459,
+              "frameMs": 0.3000001907348633,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 386496,
+              "chunkBuilds": 91,
+              "chunkEvictions": 91,
+              "disposedChunks": 91,
+              "activeScene": "dungeon-mistwood",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 386496,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 0
+            },
+            "world": {
+              "cachedChunks": 96,
+              "maxCachedChunks": 96,
+              "generatedChunks": 144,
+              "evictedChunks": 48,
+              "lastQueryCells": 4,
+              "lastQueryCandidates": 44
+            },
+            "actors": 3,
+            "audioVoices": 2
+          },
+          "visualReplay": true
+        },
+        {
+          "stage": "dungeon-mistwood-high-terrace",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 59.52380952380948,
+            "frameP95": 16.80000000000001,
+            "frameP99": 16.80000000000001,
+            "renderAverage": 2.9000000953674316,
+            "droppedTime": 0,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 4507,
+              "staticTriangles": 2928,
+              "dynamicTriangles": 1579,
+              "frameMs": 0.20000004768371582,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 386496,
+              "chunkBuilds": 91,
+              "chunkEvictions": 91,
+              "disposedChunks": 91,
+              "activeScene": "dungeon-mistwood",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 386496,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 0
+            },
+            "world": {
+              "cachedChunks": 96,
+              "maxCachedChunks": 96,
+              "generatedChunks": 144,
+              "evictedChunks": 48,
+              "lastQueryCells": 4,
+              "lastQueryCandidates": 44
+            },
+            "actors": 3,
+            "audioVoices": 2
+          },
+          "visualReplay": true
+        },
+        {
+          "stage": "dungeon-mistwood-boss-telegraph",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 59.52380952380948,
+            "frameP95": 16.80000000000001,
+            "frameP99": 16.80000000000001,
+            "renderAverage": 2.9000000953674316,
+            "droppedTime": 0,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 5051,
+              "staticTriangles": 2928,
+              "dynamicTriangles": 2123,
+              "frameMs": 0.20000004768371582,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 386496,
+              "chunkBuilds": 91,
+              "chunkEvictions": 91,
+              "disposedChunks": 91,
+              "activeScene": "dungeon-mistwood",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 386496,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 0
+            },
+            "world": {
+              "cachedChunks": 96,
+              "maxCachedChunks": 96,
+              "generatedChunks": 144,
+              "evictedChunks": 48,
+              "lastQueryCells": 4,
+              "lastQueryCandidates": 44
+            },
+            "actors": 4,
+            "audioVoices": 2
+          },
+          "visualReplay": true
+        },
+        {
+          "stage": "dungeon-mistwood-cleared",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 59.52380952380948,
+            "frameP95": 16.80000000000001,
+            "frameP99": 16.80000000000001,
+            "renderAverage": 2.9000000953674316,
+            "droppedTime": 0,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 4627,
+              "staticTriangles": 2928,
+              "dynamicTriangles": 1699,
+              "frameMs": 0.20000004768371582,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 386496,
+              "chunkBuilds": 91,
+              "chunkEvictions": 91,
+              "disposedChunks": 91,
+              "activeScene": "dungeon-mistwood",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 386496,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 0
+            },
+            "world": {
+              "cachedChunks": 96,
+              "maxCachedChunks": 96,
+              "generatedChunks": 144,
+              "evictedChunks": 48,
+              "lastQueryCells": 4,
+              "lastQueryCandidates": 44
+            },
+            "actors": 5,
+            "audioVoices": 2
+          },
+          "visualReplay": true
+        }
+      ],
+      "reloaded": {
+        "journey": {
+          "visited": [
+            "town-mistwood"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 2,
+            "quest-mistwood-regional": 2,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [
+            "relic-mistwood"
+          ],
+          "equipped": [
+            "relic-mistwood",
+            null
+          ],
+          "tracked": null,
+          "allies": [
+            "town-mistwood"
+          ]
+        },
+        "expedition": {
+          "active": null,
+          "progress": {
+            "dungeon-mistwood": {
+              "killed": [
+                "dungeon-mistwood:treasure-guard",
+                "dungeon-mistwood:guard-0",
+                "dungeon-mistwood:guard-1",
+                "dungeon-mistwood:boss-guardian"
+              ],
+              "solved": [
+                "dungeon-mistwood:lights",
+                "dungeon-mistwood:weight-seal"
+              ],
+              "opened": [
+                "dungeon-mistwood:optional-chest"
+              ],
+              "claimed": true
+            }
+          }
+        },
+        "mode": "playing"
+      }
+    },
+    {
+      "id": "town-canyon",
+      "result": {
+        "stage": "allied-town-canyon",
+        "frame": 13165,
+        "seconds": 219.42,
+        "position": [
+          -615,
+          21.59,
+          -42.28
+        ],
+        "hp": 100,
+        "distance": 1525.49,
+        "falls": 0,
+        "kills": 7,
+        "visited": [
+          "town-canyon"
+        ],
+        "quests": {
+          "quest-sunfields-local": 0,
+          "quest-sunfields-regional": 0,
+          "quest-dunes-local": 0,
+          "quest-dunes-regional": 0,
+          "quest-coast-local": 0,
+          "quest-coast-regional": 0,
+          "quest-autumn-local": 0,
+          "quest-autumn-regional": 0,
+          "quest-alpine-local": 0,
+          "quest-alpine-regional": 0,
+          "quest-mistwood-local": 0,
+          "quest-mistwood-regional": 0,
+          "quest-canyon-local": 2,
+          "quest-canyon-regional": 2,
+          "quest-lavender-local": 0,
+          "quest-lavender-regional": 0
+        },
+        "relics": [
+          "relic-canyon"
+        ],
+        "allies": [
+          "town-canyon"
+        ]
+      },
+      "checkpoints": [
+        {
+          "stage": "start-route-canyon",
+          "frame": 0,
+          "seconds": 0,
+          "position": [
+            0,
+            0.32,
+            -72
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 0,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "waypoints": [
+            "home"
+          ],
+          "bosses": [],
+          "xp": 0,
+          "villageTasks": [],
+          "villageLevel": 1,
+          "reputation": 0,
+          "materials": {
+            "wood": 48,
+            "stone": 30,
+            "food": 6
+          },
+          "day": 1,
+          "clock": 90,
+          "raid": "idle",
+          "raidWave": 0,
+          "beaconHp": 180,
+          "finalDefeated": false
+        },
+        {
+          "stage": "walked-route-canyon",
+          "frame": 5694,
+          "seconds": 94.9,
+          "position": [
+            -614.67,
+            21.58,
+            0
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 791.85,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "waypoints": [
+            "home",
+            "waypoint-canyon"
+          ],
+          "bosses": [],
+          "xp": 70,
+          "villageTasks": [],
+          "villageLevel": 1,
+          "reputation": 0,
+          "materials": {
+            "wood": 48,
+            "stone": 30,
+            "food": 6
+          },
+          "day": 1,
+          "clock": 184.9,
+          "raid": "idle",
+          "raidWave": 0,
+          "beaconHp": 180,
+          "finalDefeated": false
+        },
+        {
+          "stage": "visit-town-canyon",
+          "frame": 6144,
+          "seconds": 102.4,
+          "position": [
+            -615,
+            21.59,
+            -42.32
+          ],
+          "hp": 100,
+          "distance": 844.95,
+          "falls": 0,
+          "kills": 0,
+          "visited": [
+            "town-canyon"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [],
+          "allies": []
+        },
+        {
+          "stage": "local-town-canyon-complete",
+          "frame": 9012,
+          "seconds": 150.2,
+          "position": [
+            -615.32,
+            21.59,
+            -48
+          ],
+          "hp": 100,
+          "distance": 1160.13,
+          "falls": 0,
+          "kills": 3,
+          "visited": [
+            "town-canyon"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 2,
+            "quest-canyon-regional": 1,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [],
+          "allies": []
+        },
+        {
+          "stage": "dungeon-canyon-entered",
+          "frame": 9442,
+          "seconds": 157.37,
+          "position": [
+            0,
+            0,
+            -4
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1217.8,
+          "jumps": 0,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-canyon",
+          "room": "dungeon-canyon:entry",
+          "progress": {
+            "killed": [],
+            "solved": [],
+            "opened": [],
+            "claimed": false
+          },
+          "openDoors": [],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-canyon-low-terrace",
+          "frame": 9856,
+          "seconds": 164.27,
+          "position": [
+            28.7,
+            1.4,
+            0
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1250.19,
+          "jumps": 1,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-canyon",
+          "room": "dungeon-canyon:ascent",
+          "progress": {
+            "killed": [],
+            "solved": [],
+            "opened": [],
+            "claimed": false
+          },
+          "openDoors": [],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-canyon-high-terrace",
+          "frame": 9926,
+          "seconds": 165.43,
+          "position": [
+            32.7,
+            2.8,
+            0
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1254.19,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-canyon",
+          "room": "dungeon-canyon:ascent",
+          "progress": {
+            "killed": [],
+            "solved": [],
+            "opened": [],
+            "claimed": false
+          },
+          "openDoors": [],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-canyon-entered-ascent",
+          "frame": 10020,
+          "seconds": 167,
+          "position": [
+            38.7,
+            0,
+            0
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1260.19,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 3,
+          "parries": 0,
+          "dungeon": "dungeon-canyon",
+          "room": "dungeon-canyon:ascent",
+          "progress": {
+            "killed": [],
+            "solved": [],
+            "opened": [],
+            "claimed": false
+          },
+          "openDoors": [],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-canyon-entered-guard",
+          "frame": 10342,
+          "seconds": 172.37,
+          "position": [
+            63.71,
+            0,
+            0.13
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1285.58,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 5,
+          "parries": 0,
+          "dungeon": "dungeon-canyon",
+          "room": "dungeon-canyon:guard",
+          "progress": {
+            "killed": [
+              "dungeon-canyon:guard-0",
+              "dungeon-canyon:guard-1"
+            ],
+            "solved": [],
+            "opened": [],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-canyon:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-canyon-entered-treasure",
+          "frame": 10713,
+          "seconds": 178.55,
+          "position": [
+            95.7,
+            0,
+            0
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1317.57,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 6,
+          "parries": 0,
+          "dungeon": "dungeon-canyon",
+          "room": "dungeon-canyon:treasure",
+          "progress": {
+            "killed": [
+              "dungeon-canyon:guard-0",
+              "dungeon-canyon:guard-1",
+              "dungeon-canyon:treasure-guard"
+            ],
+            "solved": [],
+            "opened": [],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-canyon:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-canyon-optional-treasure",
+          "frame": 10791,
+          "seconds": 179.85,
+          "position": [
+            92.23,
+            0,
+            3.75
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1322.67,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 6,
+          "parries": 0,
+          "dungeon": "dungeon-canyon",
+          "room": "dungeon-canyon:treasure",
+          "progress": {
+            "killed": [
+              "dungeon-canyon:guard-0",
+              "dungeon-canyon:guard-1",
+              "dungeon-canyon:treasure-guard"
+            ],
+            "solved": [],
+            "opened": [
+              "dungeon-canyon:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-canyon:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-canyon-entered-guard",
+          "frame": 11225,
+          "seconds": 187.08,
+          "position": [
+            64.3,
+            0,
+            0
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1359.14,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 6,
+          "parries": 0,
+          "dungeon": "dungeon-canyon",
+          "room": "dungeon-canyon:guard",
+          "progress": {
+            "killed": [
+              "dungeon-canyon:guard-0",
+              "dungeon-canyon:guard-1",
+              "dungeon-canyon:treasure-guard"
+            ],
+            "solved": [],
+            "opened": [
+              "dungeon-canyon:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-canyon:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-canyon-entered-runes",
+          "frame": 11587,
+          "seconds": 193.12,
+          "position": [
+            64,
+            0,
+            31.66
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1390.8,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 6,
+          "parries": 0,
+          "dungeon": "dungeon-canyon",
+          "room": "dungeon-canyon:runes",
+          "progress": {
+            "killed": [
+              "dungeon-canyon:guard-0",
+              "dungeon-canyon:guard-1",
+              "dungeon-canyon:treasure-guard"
+            ],
+            "solved": [],
+            "opened": [
+              "dungeon-canyon:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-canyon:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-canyon-runes-clue",
+          "frame": 11695,
+          "seconds": 194.92,
+          "position": [
+            58.24,
+            0,
+            26.22
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1398.73,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 6,
+          "parries": 0,
+          "dungeon": "dungeon-canyon",
+          "room": "dungeon-canyon:runes",
+          "progress": {
+            "killed": [
+              "dungeon-canyon:guard-0",
+              "dungeon-canyon:guard-1",
+              "dungeon-canyon:treasure-guard"
+            ],
+            "solved": [],
+            "opened": [
+              "dungeon-canyon:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-canyon:door-2"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-canyon-runes-solved",
+          "frame": 11902,
+          "seconds": 198.37,
+          "position": [
+            66.68,
+            0,
+            34.99
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1413.42,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 6,
+          "parries": 0,
+          "dungeon": "dungeon-canyon",
+          "room": "dungeon-canyon:runes",
+          "progress": {
+            "killed": [
+              "dungeon-canyon:guard-0",
+              "dungeon-canyon:guard-1",
+              "dungeon-canyon:treasure-guard"
+            ],
+            "solved": [
+              "dungeon-canyon:lights"
+            ],
+            "opened": [
+              "dungeon-canyon:optional-chest"
+            ],
+            "claimed": false
+          },
+          "openDoors": [
+            "dungeon-canyon:door-2",
+            "dungeon-canyon:door-3"
+          ],
+          "relics": []
+        },
+        {
+          "stage": "dungeon-canyon-entered-boss",
+          "frame": 12522,
+          "seconds": 208.7,
+          "position": [
+            31.93,
+            0,
+            32.29
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1450.38,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 7,
+          "parries": 1,
+          "dungeon": "dungeon-canyon",
+          "room": "dungeon-canyon:boss",
+          "progress": {
+            "killed": [
+              "dungeon-canyon:guard-0",
+              "dungeon-canyon:guard-1",
+              "dungeon-canyon:treasure-guard",
+              "dungeon-canyon:boss-guardian"
+            ],
+            "solved": [
+              "dungeon-canyon:lights"
+            ],
+            "opened": [
+              "dungeon-canyon:optional-chest"
+            ],
+            "claimed": true
+          },
+          "openDoors": [
+            "dungeon-canyon:door-2",
+            "dungeon-canyon:door-3"
+          ],
+          "relics": [
+            "relic-canyon"
+          ]
+        },
+        {
+          "stage": "dungeon-canyon-cleared",
+          "frame": 12528,
+          "seconds": 208.8,
+          "position": [
+            31.93,
+            0,
+            32.29
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1450.38,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 7,
+          "parries": 1,
+          "dungeon": "dungeon-canyon",
+          "room": "dungeon-canyon:boss",
+          "progress": {
+            "killed": [
+              "dungeon-canyon:guard-0",
+              "dungeon-canyon:guard-1",
+              "dungeon-canyon:treasure-guard",
+              "dungeon-canyon:boss-guardian"
+            ],
+            "solved": [
+              "dungeon-canyon:lights"
+            ],
+            "opened": [
+              "dungeon-canyon:optional-chest"
+            ],
+            "claimed": true
+          },
+          "openDoors": [
+            "dungeon-canyon:door-2",
+            "dungeon-canyon:door-3"
+          ],
+          "relics": [
+            "relic-canyon"
+          ]
+        },
+        {
+          "stage": "dungeon-canyon-returned",
+          "frame": 12621,
+          "seconds": 210.35,
+          "position": [
+            -615,
+            21.59,
+            -111
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 1456.77,
+          "jumps": 2,
+          "falls": 0,
+          "kills": 7,
+          "parries": 1,
+          "dungeon": null,
+          "room": null,
+          "progress": null,
+          "openDoors": [],
+          "relics": [
+            "relic-canyon"
+          ]
+        },
+        {
+          "stage": "allied-town-canyon",
+          "frame": 13165,
+          "seconds": 219.42,
+          "position": [
+            -615,
+            21.59,
+            -42.28
+          ],
+          "hp": 100,
+          "distance": 1525.49,
+          "falls": 0,
+          "kills": 7,
+          "visited": [
+            "town-canyon"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 2,
+            "quest-canyon-regional": 2,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [
+            "relic-canyon"
+          ],
+          "allies": [
+            "town-canyon"
+          ]
+        }
+      ],
+      "visualReplays": [
+        {
+          "stage": "dungeon-canyon-entered",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 59.88023952095813,
+            "frameP95": 16.69999999999999,
+            "frameP99": 16.69999999999999,
+            "renderAverage": 2.5,
+            "droppedTime": 0,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 3535,
+              "staticTriangles": 2520,
+              "dynamicTriangles": 1015,
+              "frameMs": 0.2999999523162842,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 332640,
+              "chunkBuilds": 93,
+              "chunkEvictions": 93,
+              "disposedChunks": 93,
+              "activeScene": "dungeon-canyon",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 332640,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 2
+            },
+            "world": {
+              "cachedChunks": 96,
+              "maxCachedChunks": 96,
+              "generatedChunks": 133,
+              "evictedChunks": 37,
+              "lastQueryCells": 1,
+              "lastQueryCandidates": 11
+            },
+            "actors": 0,
+            "audioVoices": 11
+          },
+          "visualReplay": true
+        },
+        {
+          "stage": "dungeon-canyon-high-terrace",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 59.88023952095813,
+            "frameP95": 16.69999999999999,
+            "frameP99": 16.69999999999999,
+            "renderAverage": 2.5,
+            "droppedTime": 0,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 3655,
+              "staticTriangles": 2520,
+              "dynamicTriangles": 1135,
+              "frameMs": 0.40000009536743164,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 332640,
+              "chunkBuilds": 93,
+              "chunkEvictions": 93,
+              "disposedChunks": 93,
+              "activeScene": "dungeon-canyon",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 332640,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 2
+            },
+            "world": {
+              "cachedChunks": 96,
+              "maxCachedChunks": 96,
+              "generatedChunks": 133,
+              "evictedChunks": 37,
+              "lastQueryCells": 1,
+              "lastQueryCandidates": 11
+            },
+            "actors": 0,
+            "audioVoices": 7
+          },
+          "visualReplay": true
+        },
+        {
+          "stage": "dungeon-canyon-optional-treasure",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 59.88023952095813,
+            "frameP95": 16.69999999999999,
+            "frameP99": 16.69999999999999,
+            "renderAverage": 2.5,
+            "droppedTime": 0,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 3463,
+              "staticTriangles": 2520,
+              "dynamicTriangles": 943,
+              "frameMs": 0.20000004768371582,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 332640,
+              "chunkBuilds": 93,
+              "chunkEvictions": 93,
+              "disposedChunks": 93,
+              "activeScene": "dungeon-canyon",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 332640,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 1
+            },
+            "world": {
+              "cachedChunks": 96,
+              "maxCachedChunks": 96,
+              "generatedChunks": 133,
+              "evictedChunks": 37,
+              "lastQueryCells": 1,
+              "lastQueryCandidates": 11
+            },
+            "actors": 3,
+            "audioVoices": 2
+          },
+          "visualReplay": true
+        },
+        {
+          "stage": "dungeon-canyon-runes-clue",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 59.88023952095813,
+            "frameP95": 16.69999999999999,
+            "frameP99": 16.69999999999999,
+            "renderAverage": 2.5,
+            "droppedTime": 0,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 3463,
+              "staticTriangles": 2520,
+              "dynamicTriangles": 943,
+              "frameMs": 0.09999990463256836,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 332640,
+              "chunkBuilds": 93,
+              "chunkEvictions": 93,
+              "disposedChunks": 93,
+              "activeScene": "dungeon-canyon",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 332640,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 1
+            },
+            "world": {
+              "cachedChunks": 96,
+              "maxCachedChunks": 96,
+              "generatedChunks": 133,
+              "evictedChunks": 37,
+              "lastQueryCells": 1,
+              "lastQueryCandidates": 11
+            },
+            "actors": 3,
+            "audioVoices": 2
+          },
+          "visualReplay": true
+        },
+        {
+          "stage": "dungeon-canyon-boss-telegraph",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 59.88023952095813,
+            "frameP95": 16.69999999999999,
+            "frameP99": 16.69999999999999,
+            "renderAverage": 2.5,
+            "droppedTime": 0,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 3840,
+              "staticTriangles": 2520,
+              "dynamicTriangles": 1320,
+              "frameMs": 0.2999999523162842,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 332640,
+              "chunkBuilds": 93,
+              "chunkEvictions": 93,
+              "disposedChunks": 93,
+              "activeScene": "dungeon-canyon",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 332640,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 0
+            },
+            "world": {
+              "cachedChunks": 96,
+              "maxCachedChunks": 96,
+              "generatedChunks": 133,
+              "evictedChunks": 37,
+              "lastQueryCells": 1,
+              "lastQueryCandidates": 11
+            },
+            "actors": 4,
+            "audioVoices": 2
+          },
+          "visualReplay": true
+        },
+        {
+          "stage": "dungeon-canyon-cleared",
+          "metrics": {
+            "frames": 1,
+            "samples": 1,
+            "fps": 59.88023952095813,
+            "frameP95": 16.69999999999999,
+            "frameP99": 16.69999999999999,
+            "renderAverage": 2.5,
+            "droppedTime": 0,
+            "renderer": {
+              "drawCalls": 3,
+              "triangles": 3651,
+              "staticTriangles": 2520,
+              "dynamicTriangles": 1131,
+              "frameMs": 0.20000004768371582,
+              "width": 1280,
+              "height": 800,
+              "pixelRatio": 1,
+              "residentChunks": 0,
+              "maxResidentChunks": 64,
+              "residentBytes": 332640,
+              "chunkBuilds": 93,
+              "chunkEvictions": 93,
+              "disposedChunks": 93,
+              "activeScene": "dungeon-canyon",
+              "dungeonBuffers": 1,
+              "dungeonBytes": 332640,
+              "sceneTransitions": 1,
+              "visibleNPCs": 0,
+              "chunkBuildsThisFrame": 0,
+              "closedDungeonDoors": 0
+            },
+            "world": {
+              "cachedChunks": 96,
+              "maxCachedChunks": 96,
+              "generatedChunks": 133,
+              "evictedChunks": 37,
+              "lastQueryCells": 1,
+              "lastQueryCandidates": 11
+            },
+            "actors": 4,
+            "audioVoices": 2
+          },
+          "visualReplay": true
+        }
+      ],
+      "reloaded": {
+        "journey": {
+          "visited": [
+            "town-canyon"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 2,
+            "quest-canyon-regional": 2,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [
+            "relic-canyon"
+          ],
+          "equipped": [
+            "relic-canyon",
+            null
+          ],
+          "tracked": null,
+          "allies": [
+            "town-canyon"
+          ]
+        },
+        "expedition": {
+          "active": null,
+          "progress": {
+            "dungeon-canyon": {
+              "killed": [
+                "dungeon-canyon:guard-0",
+                "dungeon-canyon:guard-1",
+                "dungeon-canyon:treasure-guard",
+                "dungeon-canyon:boss-guardian"
+              ],
+              "solved": [
+                "dungeon-canyon:lights"
+              ],
+              "opened": [
+                "dungeon-canyon:optional-chest"
+              ],
+              "claimed": true
+            }
+          }
+        },
+        "mode": "playing"
+      }
+    },
+    {
+      "id": "town-lavender",
+      "result": {
+        "stage": "allied-town-lavender",
+        "frame": 8035,
+        "seconds": 133.92,
+        "position": [
+          -378.34,
+          6.18,
+          -456.71
+        ],
+        "hp": 100,
+        "distance": 1020.59,
+        "falls": 0,
+        "kills": 1,
+        "visited": [
+          "town-lavender"
+        ],
+        "quests": {
+          "quest-sunfields-local": 0,
+          "quest-sunfields-regional": 0,
+          "quest-dunes-local": 0,
+          "quest-dunes-regional": 0,
+          "quest-coast-local": 0,
+          "quest-coast-regional": 0,
+          "quest-autumn-local": 0,
+          "quest-autumn-regional": 0,
+          "quest-alpine-local": 0,
+          "quest-alpine-regional": 0,
+          "quest-mistwood-local": 0,
+          "quest-mistwood-regional": 0,
+          "quest-canyon-local": 0,
+          "quest-canyon-regional": 0,
+          "quest-lavender-local": 2,
+          "quest-lavender-regional": 2
+        },
+        "relics": [
+          "relic-lavender"
+        ],
+        "allies": [
+          "town-lavender"
+        ]
+      },
+      "checkpoints": [
+        {
+          "stage": "start-route-lavender",
+          "frame": 0,
+          "seconds": 0,
+          "position": [
+            0,
+            0.32,
+            -72
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 0,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "waypoints": [
+            "home"
+          ],
+          "bosses": [],
+          "xp": 0,
+          "villageTasks": [],
+          "villageLevel": 1,
+          "reputation": 0,
+          "materials": {
+            "wood": 48,
+            "stone": 30,
+            "food": 6
+          },
+          "day": 1,
+          "clock": 90,
+          "raid": "idle",
+          "raidWave": 0,
+          "beaconHp": 180,
+          "finalDefeated": false
+        },
+        {
+          "stage": "walked-route-lavender",
+          "frame": 4628,
+          "seconds": 77.13,
+          "position": [
+            -408.66,
+            6.18,
+            -427.24
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 643.54,
+          "falls": 0,
+          "kills": 0,
+          "parries": 0,
+          "waypoints": [
+            "home",
+            "waypoint-lavender"
+          ],
+          "bosses": [],
+          "xp": 70,
+          "villageTasks": [],
+          "villageLevel": 1,
+          "reputation": 0,
+          "materials": {
+            "wood": 48,
+            "stone": 30,
+            "food": 6
+          },
+          "day": 1,
+          "clock": 167.13,
+          "raid": "idle",
+          "raidWave": 0,
+          "beaconHp": 180,
+          "finalDefeated": false
+        },
+        {
+          "stage": "visit-town-lavender",
+          "frame": 5078,
+          "seconds": 84.63,
+          "position": [
+            -378.34,
+            6.18,
+            -456.71
+          ],
+          "hp": 100,
+          "distance": 696.68,
+          "falls": 0,
+          "kills": 0,
+          "visited": [
+            "town-lavender"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 0,
+            "quest-lavender-regional": 0
+          },
+          "relics": [],
+          "allies": []
+        },
+        {
+          "stage": "local-town-lavender-complete",
+          "frame": 5312,
+          "seconds": 88.53,
+          "position": [
+            -374.47,
+            6.18,
+            -460.94
+          ],
+          "hp": 100,
+          "distance": 713.08,
+          "falls": 0,
+          "kills": 0,
+          "visited": [
+            "town-lavender"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 2,
+            "quest-lavender-regional": 1
+          },
+          "relics": [],
+          "allies": []
+        },
+        {
+          "stage": "defeated-boss-lavender",
+          "frame": 6779,
+          "seconds": 112.98,
+          "position": [
+            -480.44,
+            10.73,
+            -502.27
+          ],
+          "hp": 100,
+          "flasks": 3,
+          "distance": 864.29,
+          "falls": 0,
+          "kills": 1,
+          "parries": 2,
+          "waypoints": [
+            "home",
+            "waypoint-lavender"
+          ],
+          "bosses": [
+            "boss-lavender"
+          ],
+          "xp": 245,
+          "villageTasks": [],
+          "villageLevel": 1,
+          "reputation": 0,
+          "materials": {
+            "wood": 60,
+            "stone": 38,
+            "food": 8
+          },
+          "day": 1,
+          "clock": 202.98,
+          "raid": "idle",
+          "raidWave": 0,
+          "beaconHp": 180,
+          "finalDefeated": false
+        },
+        {
+          "stage": "allied-town-lavender",
+          "frame": 8035,
+          "seconds": 133.92,
+          "position": [
+            -378.34,
+            6.18,
+            -456.71
+          ],
+          "hp": 100,
+          "distance": 1020.59,
+          "falls": 0,
+          "kills": 1,
+          "visited": [
+            "town-lavender"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 2,
+            "quest-lavender-regional": 2
+          },
+          "relics": [
+            "relic-lavender"
+          ],
+          "allies": [
+            "town-lavender"
+          ]
+        }
+      ],
+      "visualReplays": [],
+      "reloaded": {
+        "journey": {
+          "visited": [
+            "town-lavender"
+          ],
+          "quests": {
+            "quest-sunfields-local": 0,
+            "quest-sunfields-regional": 0,
+            "quest-dunes-local": 0,
+            "quest-dunes-regional": 0,
+            "quest-coast-local": 0,
+            "quest-coast-regional": 0,
+            "quest-autumn-local": 0,
+            "quest-autumn-regional": 0,
+            "quest-alpine-local": 0,
+            "quest-alpine-regional": 0,
+            "quest-mistwood-local": 0,
+            "quest-mistwood-regional": 0,
+            "quest-canyon-local": 0,
+            "quest-canyon-regional": 0,
+            "quest-lavender-local": 2,
+            "quest-lavender-regional": 2
+          },
+          "relics": [
+            "relic-lavender"
+          ],
+          "equipped": [
+            "relic-lavender",
+            null
+          ],
+          "tracked": null,
+          "allies": [
+            "town-lavender"
+          ]
+        },
+        "expedition": {
+          "active": null,
+          "progress": {}
+        },
+        "mode": "playing"
+      }
+    }
+  ],
+  "continuous": null,
+  "stress": null,
+  "errors": [],
+  "cacheContract": "Retained CPU world cache <=96 is intentional reuse. Indoor generation delta must be zero; GPU world chunks must be zero and dungeon batch count one. Initial cache-empty assertion was corrected; initial-cache-assertion artifacts preserve that harness failure.",
+  "finishedAt": "2026-09-20T01:51:15.663Z"
+}

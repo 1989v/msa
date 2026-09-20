@@ -1,0 +1,93 @@
+{
+  "trustedInput": true,
+  "jumped": {
+    "player": {
+      "x": 0,
+      "z": -69.59166666666673,
+      "y": 1.4101755324491863,
+      "vx": 0,
+      "vy": 7.883333333333337,
+      "vz": 5.8,
+      "yaw": 0,
+      "hp": 100,
+      "maxHp": 100,
+      "stamina": 100,
+      "maxStamina": 100,
+      "energy": 100,
+      "maxEnergy": 100,
+      "grounded": false,
+      "airState": "ASCENDING",
+      "gliding": false,
+      "action": "idle",
+      "actionTime": 0,
+      "combo": 0,
+      "attackTimer": 0,
+      "attackElapsed": 0,
+      "attackHit": false,
+      "attackQueued": false,
+      "comboWindow": 0,
+      "dodgeTimer": 0,
+      "parryTimer": 0,
+      "parryCooldown": 0,
+      "invulnerable": 0,
+      "skillCooldown": 0,
+      "abilityCooldowns": {},
+      "dashTimer": 0,
+      "slowTimer": 0,
+      "crystals": 0,
+      "flasks": 3,
+      "checkpoint": "camp",
+      "coyote": 0,
+      "jumpBuffer": 0,
+      "plunge": false,
+      "safeX": 0,
+      "safeY": 0.34461997689363044,
+      "safeZ": -70.26833333333337,
+      "fallPeak": 1.4101755324491863
+    },
+    "metrics": {
+      "jumps": 1,
+      "landings": 0,
+      "hits": 0,
+      "kills": 0,
+      "parries": 0,
+      "dodges": 0,
+      "combos": 0,
+      "damageTaken": 0,
+      "distance": 2.4083333333332746,
+      "falls": 0,
+      "secrets": 0
+    }
+  },
+  "questStates": {
+    "quest-sunfields-local": 2,
+    "quest-sunfields-regional": 1,
+    "quest-dunes-local": 0,
+    "quest-dunes-regional": 0,
+    "quest-coast-local": 0,
+    "quest-coast-regional": 0,
+    "quest-autumn-local": 0,
+    "quest-autumn-regional": 0,
+    "quest-alpine-local": 0,
+    "quest-alpine-regional": 0,
+    "quest-mistwood-local": 0,
+    "quest-mistwood-regional": 0,
+    "quest-canyon-local": 0,
+    "quest-canyon-regional": 0,
+    "quest-lavender-local": 0,
+    "quest-lavender-regional": 0
+  },
+  "scene": "dungeon-sunfields",
+  "saveVersion": 3,
+  "mobile": [
+    [
+      390,
+      844
+    ],
+    [
+      844,
+      390
+    ]
+  ],
+  "errors": []
+}

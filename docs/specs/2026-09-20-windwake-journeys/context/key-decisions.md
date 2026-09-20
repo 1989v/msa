@@ -1,3 +1,5 @@
+<!-- source: windwake/sim.mjs -->
+
 # Integration contracts
 
 Primary owns sim.mjs, main.mjs, index.html/style.css, save orchestration, publishing and browser integration. World worker owns world.mjs/render.mjs and world tests. Life worker owns new settlements.mjs, journey-ui.mjs, relic data, progression/village modifier integration and domain tests. Dungeon worker owns new dungeons.mjs and dungeon domain/natural-route tests. Workers are not alone and must not revert others.

@@ -3,7 +3,7 @@
 
 # ADR-0097: WINDWAKE settlements and local dungeon scenes
 
-Date:2026-09-20. Status: proposed for implementation review. Supersedes no existing ADR; extends ADR-0096.
+Date:2026-09-20. Status: accepted. Supersedes no existing ADR; extends ADR-0096.
 
 ## Context
 The streamed64× outdoor area has sparse authored content. Genuine dungeons need independent floors, walls and progression; placing geometry below a single outdoor heightfield produces collision/camera/recovery bugs.

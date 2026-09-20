@@ -16,6 +16,7 @@ const canvas=$('world'),audio=new AudioSystem(),input=new InputBuffer();
 const STORE='windwake-save-v1';
 let state=createGame(),renderer,started=false,manual=false,panel=null,accumulator=0,lastTime=0,hitStop=0,hudClock=0,autosaveClock=0,lastToast='',lastMode='playing',storageAvailable=true;
 const keys=new Set(),camera={yaw:0,pitch:.35,distance:9,shake:0,reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches};
+const bossTells={ring:'원형 파동 — 점프!',bolt:'파편 발사 — 옆으로 회피!',slam:'내려찍기 — 거리 벌리기!',charge:'돌진 — 옆으로 회피!',sweep:'휩쓸기 — 뒤로 물러나기!',summon:'지원군 소환 — 작은 적부터 처치!',eruption:'지면 분출 — 표시된 원에서 벗어나기!',slow:'서리 지대 — 표시된 원에서 벗어나기!',leap:'도약 공격 — 착지 지점 피하기!'};
 const performanceData={frames:0,samples:[],renderMs:[],droppedTime:0};
 let autoQuality=true,qualityCooldown=0;const qualityWindow=[];
 const eventHistory=[];
@@ -256,7 +257,7 @@ function updateHUD(){
   if(state.toast!==lastToast){lastToast=state.toast;$('toast').textContent=state.toast;}$('toast').classList.toggle('visible',!!state.toast&&!panel);
   $('skill-feedback').textContent=p.skillCooldown>0?`울림 재충전 ${p.skillCooldown.toFixed(1)}초`:p.energy<35?'울림이 모이는 중…':p.gliding?'Space 돛 접기 · WASD 활강 방향':'Q 울림 준비';
   const boss=state.enemies.filter(e=>e.type==='boss'&&e.hp>0&&distance(p,e)<45&&(e.bossId||e.dungeonId||p.y>22)).sort((a,b)=>distance(p,a)-distance(p,b))[0],show=!!boss;$('boss-bar').hidden=!show;
-  if(show){$('boss-bar').firstElementChild.textContent=boss.name||'고요의 수호자';$('boss-fill').style.transform=`scaleX(${boss.hp/boss.maxHp})`;$('boss-phase').textContent=boss.state==='telegraph'?(boss.pattern==='ring'?'원형 파동 — 점프!':boss.pattern==='bolt'?'파편 발사 — 옆으로 회피!':'내려찍기 — 거리 벌리기!'):boss.state==='recover'?'지금이 공격할 기회':boss.phase===2?'격노 · 두 번째 울림':'고요의 수호자';}
+  if(show){$('boss-bar').firstElementChild.textContent=boss.name||(boss.dungeonId?`${DUNGEONS.find(d=>d.id===boss.dungeonId)?.name||'던전'} · 수호자`:'고요의 수호자');$('boss-fill').style.transform=`scaleX(${boss.hp/boss.maxHp})`;$('boss-phase').textContent=boss.state==='telegraph'?(bossTells[boss.pattern]||'공격 준비 — 거리를 살피세요'):boss.state==='recover'?'지금이 공격할 기회':boss.phase===2?'격노 · 두 번째 울림':'공격 예고를 살피세요';}
   drawMap($('minimap'));
 }
 function draw(dt){if(!renderer)return;renderer.render(state,camera,dt);updateLabels();updateHUD();}
