@@ -20,6 +20,7 @@ export const ENEMY_NAMES = Object.freeze(Object.fromEntries(
   Object.entries(ENEMY_STATS).map(([id, stats]) => [id, stats.name])));
 
 const ADDED = new Set(['slime','wolf','boar','shaman','wisp','bomber','sentinel','burrower','frostling']);
+const patternBoss=e=>e.type==='boss'&&!!(e.bossId||e.dungeonId);
 const SEQUENCES = {
   bulwark: [['slam','charge','sweep'], ['slam','charge','ring','sweep']],
   tempest: [['bolt','ring'], ['bolt','leap','ring','bolt']],
@@ -70,7 +71,7 @@ function moveToward(e,target,speed,dt,hooks) {
 }
 
 function chosenPattern(s,e,hooks) {
-  if(e.bossId){const family=SEQUENCES[e.family]||SEQUENCES.bulwark;
+  if(patternBoss(e)){const family=SEQUENCES[e.family]||SEQUENCES.bulwark;
     const sequence=family[e.phase-1];return sequence[e.attackCount%sequence.length];}
   if(e.type==='shaman'){
     const ally=e.specialCooldown<=0&&s.enemies.find(a=>a!==e&&!a.raid&&a.hp>0&&a.hp<a.maxHp&&
@@ -82,7 +83,7 @@ function chosenPattern(s,e,hooks) {
 }
 
 function settings(e,pattern) {
-  const boss=!!e.bossId;
+  const boss=patternBoss(e);
   const radius={slam:boss?5:2.7,ring:9,charge:2.3,bolt:0,sweep:boss?5.5:3.6,
     eruption:boss?3.6:2.8,summon:0,slow:boss?3.8:2.7,leap:boss?4.5:e.type==='wolf'?2.6:2.4,burst:4.7}[pattern];
   const range={slam:5,ring:8.4,charge:11,bolt:14,sweep:boss?5:3.3,
@@ -137,7 +138,7 @@ function updateZone(s,e,dt,hooks) {
 }
 
 function launch(s,e,hooks) {
-  const boss=!!e.bossId,pattern=e.pattern;
+  const boss=patternBoss(e),pattern=e.pattern;
   hooks.emit('enemy-attack',e);
   if(pattern==='charge'||pattern==='leap'){
     e.state='attack';e.attackDuration=pattern==='charge'?.65:boss?.72:.58;e.timer=e.attackDuration;
@@ -172,7 +173,7 @@ function launch(s,e,hooks) {
 
 function activeAttack(s,e,dt,hooks) {
   const before={x:e.x,z:e.z};
-  hooks.move(e,e.vx*dt,e.vz*dt,e.bossId?.85:.5);
+  hooks.move(e,e.vx*dt,e.vz*dt,patternBoss(e)?.85:.5);
   const blocked=Math.hypot(e.x-before.x,e.z-before.z)<Math.hypot(e.vx,e.vz)*dt*.15;
   const radius=e.pattern==='charge'?2:e.telegraphRadius;
   if(!e.didHit&&circleHit(s,e,hooks,{radius,angle:1.45})){e.didHit=true;}
@@ -182,7 +183,7 @@ function activeAttack(s,e,dt,hooks) {
     facing(e,s.player,1.45)&&hooks.lineClear(e,s.player))e.didHit=true;
   if((e.timer<=0||blocked)&&e.state!=='hit'){
     hooks.effect('shockwave',e,{life:.45,power:radius,pattern:e.pattern});
-    recover(e,e.bossId?1.55:1.25);
+    recover(e,patternBoss(e)?1.55:1.25);
   }
 }
 
@@ -192,12 +193,12 @@ function leash(e,dt,hooks) {
 }
 
 export function updateExpandedEnemy(s,e,dt,hooks) {
-  if(e.raid||(!ADDED.has(e.type)&&!(e.type==='boss'&&e.bossId)))return false;
+  if(e.raid||(!ADDED.has(e.type)&&!patternBoss(e)))return false;
   if(!Number.isFinite(dt)||dt<=0||dt>1)return true;
   initialize(e);e.timer-=dt;e.hitFlash=Math.max(0,e.hitFlash-dt);
   e.specialCooldown=Math.max(0,e.specialCooldown-dt);e.hopTimer=Math.max(0,e.hopTimer-dt);
   if(e.hp<=0){e.state='dead';e.guarding=false;e.burrowed=false;delete e.zone;return true;}
-  const boss=!!e.bossId,home={x:e.homeX,z:e.homeZ},p=s.player;
+  const boss=patternBoss(e),home={x:e.homeX,z:e.homeZ},p=s.player;
   if(boss&&e.hp<=e.maxHp*.5&&e.phase!==2){
     e.phase=2;e.attackCount=0;
     hooks.toast(`${e.name||ENEMY_NAMES.boss} · 두 번째 파동`);

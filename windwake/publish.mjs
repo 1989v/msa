@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 
 const source = new URL('./', import.meta.url);
 const target = new URL('../portal-fe/public/games/windwake/', source);
-const files = ['index.html', 'style.css', 'main.mjs', 'world.mjs', 'sim.mjs', 'render.mjs', 'audio.mjs', 'input.mjs', 'combat.mjs', 'progression.mjs', 'village.mjs', 'frontier-ui.mjs'];
+const files = ['index.html', 'style.css', 'main.mjs', 'world.mjs', 'sim.mjs', 'render.mjs', 'audio.mjs', 'input.mjs', 'combat.mjs', 'progression.mjs', 'village.mjs', 'frontier-ui.mjs', 'dungeons.mjs', 'settlements.mjs', 'relics.mjs', 'journey-ui.mjs'];
 const sourceCommit = execFileSync('git', ['log', '-1', '--format=%H', '--', ...files], {
   cwd: fileURLToPath(source), encoding: 'utf8',
 }).trim();

@@ -3,6 +3,8 @@ import {WORLD,LANDMARKS,RUNES,PLATE,BLOCK_SPAWN,ENEMY_SPAWNS,WAYPOINTS,BOSS_SITE
 import {ENEMY_STATS,updateExpandedEnemy} from './combat.mjs';
 import {initAdventure,awardXP,modifiers,validateAdventure,ACTIVE_SKILLS} from './progression.mjs';
 import {initVillage,tickVillage,villageAction,villageInteraction,villageSolids,captureRaid,restoreRaid,validateVillage} from './village.mjs';
+import {initJourney,validateJourney,townInteraction,townAction,grantRelic} from './settlements.mjs';
+import {DUNGEONS,initExpedition,validateExpedition,dungeonFloor,dungeonSolids,dungeonBounds,dungeonInteraction,dungeonAction,tickDungeon,enterDungeon,leaveDungeon,recordDungeonKill,dungeonObjective} from './dungeons.mjs';
 
 export const DT=1/60;
 const TAU=Math.PI*2;
@@ -16,7 +18,7 @@ function fx(s,type,at,extra={}){s.effects.push({type,x:at.x,y:at.y,z:at.z,age:0,
 export function spawnEnemy(s,type='stalker',x=s.player.x+6,z=s.player.z+6,y,extra={}) {
   if(!ENEMY_STATS[type] || s.enemies.length>=64)return null;
   const spec=ENEMY_STATS[type];
-  const e={id:`spawn-${s.nextId++}`,type,x,z,y:y??supportAt(x,z,heightAt(x,z)),yaw:0,hp:spec.hp,maxHp:spec.hp,state:'idle',timer:.4,hitFlash:0,homeX:x,homeZ:z,homeY:y??heightAt(x,z),vx:0,vz:0,vy:0,attackCount:0,pattern:'slam',phase:1,rewarded:false,poise:0,...extra};
+  const e={id:`spawn-${s.nextId++}`,type,x,z,y:y??supportFor(s,x,z,floorAt(s,x,z)),yaw:0,hp:spec.hp,maxHp:spec.hp,state:'idle',timer:.4,hitFlash:0,homeX:x,homeZ:z,homeY:y??floorAt(s,x,z),vx:0,vz:0,vy:0,attackCount:0,pattern:'slam',phase:1,rewarded:false,poise:0,...extra};
   s.enemies.push(e);return e;
 }
 export function createGame(seed=WORLD.seed) {
@@ -24,18 +26,28 @@ export function createGame(seed=WORLD.seed) {
   const p={x:WORLD.spawn.x,z:WORLD.spawn.z,y:heightAt(WORLD.spawn.x,WORLD.spawn.z),vx:0,vy:0,vz:0,yaw:0,hp:100,maxHp:100,stamina:100,maxStamina:100,energy:100,maxEnergy:100,grounded:true,airState:'GROUND',gliding:false,action:'idle',actionTime:0,combo:0,attackTimer:0,attackElapsed:0,attackHit:false,attackQueued:false,comboWindow:0,dodgeTimer:0,parryTimer:0,parryCooldown:0,invulnerable:0,skillCooldown:0,abilityCooldowns:{},dashTimer:0,slowTimer:0,crystals:0,flasks:3,checkpoint:'camp',coyote:.12,jumpBuffer:0,plunge:false,safeX:WORLD.spawn.x,safeY:heightAt(WORLD.spawn.x,WORLD.spawn.z),safeZ:WORLD.spawn.z,fallPeak:0};
   const s={version:2,frame:0,time:0,seed,rng:seed,mode:'playing',player:p,enemies:[],projectiles:[],items:[],blocks:[{...BLOCK_SPAWN}],adventure:initAdventure(),village:initVillage(),streamCell:null,trial:null,progress:{sigils:[],discovered:['meadow','camp'],chests:[],upgrades:{health:0,power:0},glider:false,bossDefeated:false},events:[],effects:[],metrics:{jumps:0,landings:0,hits:0,kills:0,parries:0,dodges:0,combos:0,damageTaken:0,distance:0,falls:0,secrets:0},puzzle:{runeStep:0,plateCharge:0},previousInput:{},nextId:1,region:'meadow',toast:'',toastTime:0};
   for(const spec of ENEMY_SPAWNS){const e=spawnEnemy(s,spec.type,spec.x,spec.z,spec.y);e.id=spec.id;}
+  s.version=3;s.expedition=initExpedition();s.journey=initJourney();
   return s;
 }
 export const snapshot=s=>structuredClone(s);
 export function restoreSnapshot(data){
-  if(!data||![1,2].includes(data.version)||!Number.isFinite(data.frame)||!data.player||!Number.isFinite(data.player.x))throw new Error('Invalid simulation snapshot');
-  const next=structuredClone(data);next.adventure??=initAdventure();next.village??=initVillage();next.player.abilityCooldowns??={};next.player.dashTimer??=0;next.player.slowTimer??=0;next.version=2;return next;
+  if(!data||![1,2,3].includes(data.version)||!Number.isFinite(data.frame)||!data.player||!Number.isFinite(data.player.x))throw new Error('Invalid simulation snapshot');
+  const next=structuredClone(data);next.adventure??=initAdventure();next.village??=initVillage();next.player.abilityCooldowns??={};next.player.dashTimer??=0;next.player.slowTimer??=0;next.expedition??=initExpedition();next.journey??=initJourney();next.version=3;if(next.expedition.active)next.blocks=next.expedition.active.blocks;return next;
 }
 function toast(s,text,type='notice'){s.toast=text;s.toastTime=4;emit(s,type,text);}
-function solidsFor(s,x,z,r=5){return [...querySolids(x,z,r),...(s?villageSolids(s):[])];}
+export function floorAt(s,x,z){return s?.expedition?.active?dungeonFloor(s,x,z):heightAt(x,z);}
+function solidsFor(s,x,z,r=5,excludeId=null){
+  const fixed=s?.expedition?.active?dungeonSolids(s,x,z,r):[...querySolids(x,z,r),...(s?villageSolids(s):[])];
+  return [...fixed,...(s?.blocks||[]).filter(b=>b.id!==excludeId&&Math.abs(b.x-x)<r+b.w/2&&Math.abs(b.z-z)<r+b.d/2)];
+}
+function supportFor(s,x,z,feet=Infinity,radius=.32,excludeId=null){
+  let floor=floorAt(s,x,z);
+  for(const b of solidsFor(s,x,z,radius,excludeId))if(overlaps(x,z,b,radius)&&b.y+b.h<=feet+.48)floor=Math.max(floor,b.y+b.h);
+  return floor;
+}
 function overlaps(x,z,b,r=.37){return Math.abs(x-b.x)<b.w/2+r-1e-6&&Math.abs(z-b.z)<b.d/2+r-1e-6;}
 function verticalOverlap(y,b,h=1.65){return y+ h>b.y+.06 && y < b.y+b.h-.12;}
-function horizontalMove(body,dx,dz,solids=querySolids(body.x,body.z,5),r=.37,h=1.65,step=.48) {
+function horizontalMove(body,dx,dz,solids=querySolids(body.x,body.z,5),r=.37,h=1.65,step=.48,s=null) {
   const oldX=body.x,oldZ=body.z;
   for(const axis of ['x','z']){
     if(Math.abs(axis==='x'?dx:dz)<1e-10)continue;
@@ -48,14 +60,15 @@ function horizontalMove(body,dx,dz,solids=querySolids(body.x,body.z,5),r=.37,h=1
       else body.z=oldZ<=b.z?b.z-b.d/2-r:b.z+b.d/2+r;
     }
   }
-  const ground=heightAt(body.x,body.z),oldGround=heightAt(oldX,oldZ);
+  const ground=floorAt(s,body.x,body.z),oldGround=floorAt(s,oldX,oldZ);
   if(ground-body.y>step && ground-oldGround>Math.hypot(dx,dz)*1.15){body.x=oldX;body.z=oldZ;}
-  body.x=clamp(body.x,-WORLD.size+2,WORLD.size-2);body.z=clamp(body.z,-WORLD.size+2,WORLD.size-2);
+  const bounds=s?.expedition?.active?dungeonBounds(s):{minX:-WORLD.size+2,maxX:WORLD.size-2,minZ:-WORLD.size+2,maxZ:WORLD.size-2};
+  body.x=clamp(body.x,bounds.minX,bounds.maxX);body.z=clamp(body.z,bounds.minZ,bounds.maxZ);
 }
-function verticalMove(body,dt,solids=querySolids(body.x,body.z,5)){
+function verticalMove(body,dt,solids=querySolids(body.x,body.z,5),s=null){
   const before=body.y,wasGrounded=body.grounded;
   body.y+=body.vy*dt;
-  let floor=heightAt(body.x,body.z);
+  let floor=floorAt(s,body.x,body.z);
   for(const b of solids){
     if(!overlaps(body.x,body.z,b,.31))continue;
     const top=b.y+b.h;
@@ -95,6 +108,7 @@ function startAttack(s){
 function dropReward(s,e){
   if(e.rewarded)return;e.rewarded=true;s.metrics.kills++;
   emit(s,'enemy-death',undefined,e);fx(s,'reward',e,{life:.8,power:e.type==='boss'?6:2});
+  if(e.dungeonId){recordDungeonKill(s,e,dungeonHooks(s));return;}
   if(e.raid||e.summonedBy)return;
   if(e.frontier&&!e.summonedBy)s.adventure.worldDefeated[e.id]=true;
   if(e.bossId){
@@ -157,9 +171,11 @@ export function awardSigil(s,id){
   fx(s,'reward',s.player,{life:1.5,power:5});return true;
 }
 export function interaction(s){
+  if(s.expedition?.active)return dungeonInteraction(s);
   const p=s.player,candidates=[];const home=villageInteraction(s);if(home)candidates.push({...home,d:distance(p,home)-.05});
+  const resident=townInteraction(s);if(resident)candidates.push({...resident,d:distance(p,resident)-.1});
   for(const l of LANDMARKS){
-    if(['resource','village'].includes(l.kind)||l.id==='home')continue;
+    if(['resource','village','town'].includes(l.kind)||l.id==='home')continue;
     if(l.kind==='trial'&&s.adventure.completedTasks.includes(l.id))continue;
     if(distance(p,l)>3.3||Math.abs(p.y-l.y)>2.5)continue;
     if(l.kind==='chest'&&s.progress.chests.includes(l.id))continue;
@@ -170,9 +186,15 @@ export function interaction(s){
   return candidates.sort((a,b)=>a.d-b.d)[0]||null;
 }
 export function interact(s){
+  if(s.mode!=='playing')return null;
   const near=interaction(s);if(!near)return null;const p=s.player;
   emit(s,'interact');
-  if(['village','resource','crop'].includes(near.kind)){
+  if(s.expedition?.active){const result=dungeonAction(s,'interact',{id:near.id},dungeonHooks(s));if(!result.ok)toast(s,result.reason);return near;}
+  if(near.kind==='npc'){
+    const result=townAction(s,'talk',{npcId:near.id});if(result.ok){s.activeTown=near.townId;emit(s,'town-open');}else toast(s,result.reason);
+  }else if(near.kind==='dungeon'){
+    const result=enterDungeon(s,near.id,dungeonHooks(s));if(!result.ok)toast(s,result.reason);
+  }else if(['village','resource','crop'].includes(near.kind)){
     if(near.kind==='village'){if(near.action!=='rest'){const result=villageAction(s,near.action,near.payload||{});if(!result.ok)toast(s,result.reason);}else emit(s,'village-open');}
     else {const result=villageAction(s,near.action,near.payload||{id:near.id});if(!result.ok)toast(s,result.reason);}
   }else if(near.kind==='waypoint'){
@@ -222,10 +244,10 @@ export function upgrade(s,kind){
 function updateBlocks(s){
   for(const b of s.blocks){
     b.vx*=.96;b.vz*=.96;b.grounded=true;
-    horizontalMove(b,b.vx*DT,b.vz*DT,solidsFor(s,b.x,b.z),.95,2,.5);b.y=supportAt(b.x,b.z,b.y+.5,.85);
-    if(distance(b,BLOCK_SPAWN)>24 || b.y<WORLD.waterLevel){Object.assign(b,BLOCK_SPAWN);toast(s,'멀어진 돌이 제자리로 돌아왔습니다.');}
+    horizontalMove(b,b.vx*DT,b.vz*DT,solidsFor(s,b.x,b.z,5,b.id),.95,2,.5,s);b.y=supportFor(s,b.x,b.z,b.y+.5,.85,b.id);
+    if(!s.expedition?.active&&(distance(b,BLOCK_SPAWN)>24 || b.y<WORLD.waterLevel)){Object.assign(b,BLOCK_SPAWN);toast(s,'멀어진 돌이 제자리로 돌아왔습니다.');}
   }
-  if(!s.progress.sigils.includes('quarry')){
+  if(!s.expedition?.active&&!s.progress.sigils.includes('quarry')){
     const b=s.blocks[0];if(distance(b,PLATE)<PLATE.radius && Math.hypot(b.vx,b.vz)<3){s.puzzle.plateCharge+=DT;if(s.puzzle.plateCharge>1.2)awardSigil(s,'quarry');}
     else s.puzzle.plateCharge=Math.max(0,s.puzzle.plateCharge-DT*.6);
   }
@@ -260,13 +282,13 @@ function updateEnemy(s,e){
   if(boss && (s.progress.sigils.length<3||p.y<23)){e.state='idle';return;}
   if(boss&&e.hp<e.maxHp*.5&&e.phase===1){e.phase=2;toast(s,'수호자 격노 · 원형 파동은 점프로, 내려찍기는 회피로!');fx(s,'pulse',e,{life:1,power:9});}
   if(e.state==='hit'){
-    horizontalMove(e,e.vx*DT,e.vz*DT,solidsFor(s,e.x,e.z),.55,1.7,.5);e.vx*=.84;e.vz*=.84;
+    horizontalMove(e,e.vx*DT,e.vz*DT,solidsFor(s,e.x,e.z),.55,1.7,.5,s);e.vx*=.84;e.vz*=.84;
     if(e.timer<=0){e.state='chase';e.timer=.2;}
   }else if(e.state==='telegraph'){
     if(e.timer>.28)e.yaw=Math.atan2(p.x-e.x,p.z-e.z);
     if(e.timer<=0)enemyAttack(s,e);
   }else if(e.state==='attack'){
-    horizontalMove(e,e.vx*DT,e.vz*DT,solidsFor(s,e.x,e.z),.6,1.8,.5);
+    horizontalMove(e,e.vx*DT,e.vz*DT,solidsFor(s,e.x,e.z),.6,1.8,.5,s);
     if(!e.didHit&&distance(e,p)<2.4&&dy<1.8&&lineClear(e,p,s)){e.didHit=true;playerDamage(s,ENEMY_STATS[e.type].damage,e);}
     if(e.timer<=0&&e.state!=='hit'){e.state='recover';e.timer=1.25;}
   }else if(e.state==='recover'){
@@ -282,22 +304,22 @@ function updateEnemy(s,e){
         e.timer=boss?(e.phase===2?.85:1.1):e.type==='charger'?.9:.7;
       }else{
         const speed=ENEMY_STATS[e.type].speed*(boss&&e.phase===2?1.3:1);
-        horizontalMove(e,Math.sin(e.yaw)*speed*DT,Math.cos(e.yaw)*speed*DT,solidsFor(s,e.x,e.z),.5,1.65,.4);
+        horizontalMove(e,Math.sin(e.yaw)*speed*DT,Math.cos(e.yaw)*speed*DT,solidsFor(s,e.x,e.z),.5,1.65,.4,s);
       }
     }else{
       e.state='idle';const homeD=Math.hypot(e.x-e.homeX,e.z-e.homeZ);
-      if(homeD>1){e.yaw=Math.atan2(e.homeX-e.x,e.homeZ-e.z);horizontalMove(e,Math.sin(e.yaw)*2*DT,Math.cos(e.yaw)*2*DT,solidsFor(s,e.x,e.z),.5,1.65,.4);}
+      if(homeD>1){e.yaw=Math.atan2(e.homeX-e.x,e.homeZ-e.z);horizontalMove(e,Math.sin(e.yaw)*2*DT,Math.cos(e.yaw)*2*DT,solidsFor(s,e.x,e.z),.5,1.65,.4,s);}
     }
   }
   // Enemies obey support surfaces as well; the boss cannot walk off its arena.
   if(boss){e.x=clamp(e.x,-12.8,12.8);e.z=clamp(e.z,17,41);e.y=28;}
-  else{e.vy-=25*DT;verticalMove(e,DT,solidsFor(s,e.x,e.z));if(e.y<WORLD.waterLevel){e.x=e.homeX;e.z=e.homeZ;e.y=e.homeY;e.vy=0;}}
+  else{e.vy-=25*DT;verticalMove(e,DT,solidsFor(s,e.x,e.z),s);if(e.y<(s.expedition?.active?-7:WORLD.waterLevel)){e.x=e.homeX;e.z=e.homeZ;e.y=e.homeY;e.vy=0;}}
 }
 function updateProjectiles(s){
   const p=s.player;
   for(const pr of s.projectiles){
     pr.x+=pr.vx*DT;pr.y+=pr.vy*DT;pr.z+=pr.vz*DT;pr.life-=DT;
-    if(pr.y<heightAt(pr.x,pr.z)||solidsFor(s,pr.x,pr.z,2).some(b=>overlaps(pr.x,pr.z,b,.1)&&pr.y>b.y&&pr.y<b.y+b.h)){pr.life=0;continue;}
+    if(pr.y<floorAt(s,pr.x,pr.z)||solidsFor(s,pr.x,pr.z,2).some(b=>overlaps(pr.x,pr.z,b,.1)&&pr.y>b.y&&pr.y<b.y+b.h)){pr.life=0;continue;}
     if(pr.team==='player'){
       const enemy=s.enemies.find(e=>e.hp>0&&distance(pr,e)<(e.type==='boss'?1.4:.8)&&pr.y>e.y-.2&&pr.y<e.y+2.4);
       if(enemy){hitEnemy(s,enemy,pr.damage,'sunbolt',5);pr.life=0;fx(s,'hit',pr,{power:20});}continue;
@@ -366,29 +388,30 @@ export function stepGame(s,raw={}){
   else if(p.gliding){p.stamina=Math.max(0,p.stamina-DT*8);if(!p.stamina)p.gliding=false;}
   else if(p.dodgeTimer<=0&&p.parryTimer<=0)p.stamina=Math.min(p.maxStamina,p.stamina+DT*(p.grounded?24:10));
   const px=p.x,pz=p.z;
-  horizontalMove(p,p.vx*DT,p.vz*DT,[...solidsFor(s,p.x,p.z),...s.blocks]);s.metrics.distance+=Math.hypot(p.x-px,p.z-pz);
+  horizontalMove(p,p.vx*DT,p.vz*DT,solidsFor(s,p.x,p.z),.37,1.65,.48,s);s.metrics.distance+=Math.hypot(p.x-px,p.z-pz);
   // Physical silhouettes remain distinct; a dodge can pass through an enemy.
   if(p.dodgeTimer<=0)for(const e of s.enemies){
     if(e.hp<=0||Math.abs(e.y-p.y)>1.5)continue;
     const d=distance(e,p),minimum=e.type==='boss'?1.55:1.02;
-    if(d>0.001&&d<minimum){const push=Math.min(.2,minimum-d);horizontalMove(p,(p.x-e.x)/d*push,(p.z-e.z)/d*push,[...solidsFor(s,p.x,p.z),...s.blocks]);}
+    if(d>0.001&&d<minimum){const push=Math.min(.2,minimum-d);horizontalMove(p,(p.x-e.x)/d*push,(p.z-e.z)/d*push,solidsFor(s,p.x,p.z),.37,1.65,.48,s);}
   }
   p.vy-=25*DT;
   if(p.gliding&&p.vy< -2.1)p.vy=-2.1;
-  if(s.progress.sigils.length===3&&Math.hypot(p.x,p.z-5)<4.2&&p.y<34){p.vy=13;p.gliding=false;p.grounded=false;fx(s,'wind',p,{life:.22,power:1});}
-  const fallSpeed=p.vy,landed=verticalMove(p,DT,[...solidsFor(s,p.x,p.z),...s.blocks]);p.fallPeak=Math.max(p.fallPeak,p.y);
+  if(!s.expedition?.active&&s.progress.sigils.length===3&&Math.hypot(p.x,p.z-5)<4.2&&p.y<34){p.vy=13;p.gliding=false;p.grounded=false;fx(s,'wind',p,{life:.22,power:1});}
+  const fallSpeed=p.vy,landed=verticalMove(p,DT,solidsFor(s,p.x,p.z),s);p.fallPeak=Math.max(p.fallPeak,p.y);
   if(landed){
     s.metrics.landings++;p.airState='LAND';p.gliding=false;emit(s,'land');fx(s,'land',p,{life:.4,power:Math.abs(fallSpeed)});
     if(p.plunge){for(const e of s.enemies)if(e.hp>0&&distance(e,p)<5&&Math.abs(e.y-p.y)<2&&lineClear(p,e,s))hitEnemy(s,e,35,'plunge',9);fx(s,'shockwave',p,{life:.65,power:5});p.plunge=false;}
     else if(fallSpeed < -24)playerDamage(s,Math.min(35,Math.floor((-fallSpeed-24)*2)),null,true);
     p.fallPeak=p.y;
   }else p.airState=p.grounded?'GROUND':p.gliding?'GLIDE':p.vy>1?'ASCENDING':p.vy>=-1?'APEX':'FALLING';
-  if(p.y<WORLD.waterLevel-.3||p.y< -20)recoverFall(s);
-  if(p.grounded&&p.y>WORLD.waterLevel+.8&&!s.blocks.some(b=>overlaps(p.x,p.z,b,.8))){p.safeX=p.x;p.safeY=p.y;p.safeZ=p.z;}
+  if(p.y<(s.expedition?.active?-7:WORLD.waterLevel-.3))recoverFall(s);
+  if(p.grounded&&p.y>(s.expedition?.active?-.1:WORLD.waterLevel+.8)&&!s.blocks.some(b=>overlaps(p.x,p.z,b,.8))){p.safeX=p.x;p.safeY=p.y;p.safeZ=p.z;}
   if(s.mode!=='playing')return s;
-  if(distance(p,WORLD.spawn)<180)updateBlocks(s);
+  if(!s.expedition?.active&&distance(p,WORLD.spawn)<180)updateBlocks(s);
   for(const e of s.enemies)if(distance(e,p)<130)updateEnemy(s,e);
   updateProjectiles(s);
+  if(s.expedition?.active){tickDungeon(s,DT,dungeonHooks(s));s.region=s.expedition.active?.roomId||'dungeon';return s;}
   tickVillage(s,DT,villageHooks(s));
   // Also capture distant kills: village AI can be paused while a projectile resolves.
   captureRaid(s);
@@ -403,9 +426,10 @@ export function stepGame(s,raw={}){
   return s;
 }
 export function respawn(s){
-  const save=exportSave(s),next=loadSave(save);Object.assign(s,next);s.mode='playing';s.metrics.falls++;toast(s,'모닥불에서 다시 시작합니다. 얻은 봉인과 보물은 그대로입니다.','rest');return s;
+  const save=exportSave(s),next=loadSave(save);Object.assign(s,next);s.player.flasks=Math.max(3,s.player.flasks);s.mode='playing';s.metrics.falls++;toast(s,s.expedition.active?'던전 입구에서 다시 일어납니다. 해결한 장치와 보물은 그대로입니다.':'모닥불에서 다시 시작합니다. 얻은 봉인과 보물은 그대로입니다.','rest');return s;
 }
 export function fastTravel(s,campId){
+  if(s.expedition?.active){toast(s,'던전 입구나 수호자 방의 귀환문으로 나가세요.');return false;}
   const queuedHome=campId==='home'&&s.village.raid.status==='queued';
   if(s.mode!=='playing'||s.village.raid.status==='active'){toast(s,'진행 중인 마을 방어를 먼저 마쳐야 합니다.');return false;}
   const camp=LANDMARKS.find(l=>l.id===campId&&['camp','waypoint','village'].includes(l.kind))||WAYPOINTS.find(l=>l.id===campId);
@@ -416,9 +440,13 @@ export function fastTravel(s,campId){
   Object.assign(p,{x,y,z,vx:0,vy:0,vz:0,gliding:false,grounded:true,checkpoint:campId,safeX:x,safeY:y,safeZ:z,attackTimer:0,dodgeTimer:0,dashTimer:0});p.hp=p.maxHp;
   streamEnemies(s,true);toast(s,`${camp.name}에 도착했습니다.`,'travel');return true;
 }
-export function exportSave(s){captureRaid(s);return {version:2,seed:s.seed,progress:structuredClone(s.progress),adventure:structuredClone(s.adventure),village:structuredClone(s.village),crystals:s.player.crystals,checkpoint:s.player.checkpoint,metrics:{...s.metrics},time:s.time};}
+export function exportSave(s){
+  if(s.expedition?.active){for(const e of s.enemies)if(e.hp<=0&&e.dungeonId)recordDungeonKill(s,e,dungeonHooks(s));}
+  else captureRaid(s);
+  return {version:3,seed:s.seed,progress:structuredClone(s.progress),adventure:structuredClone(s.adventure),village:structuredClone(s.village),journey:structuredClone(s.journey),expedition:structuredClone(s.expedition),crystals:s.player.crystals,flasks:s.player.flasks,checkpoint:s.player.checkpoint,metrics:{...s.metrics},time:s.time};
+}
 export function loadSave(data){
-  if(!data||![1,2].includes(data.version)||!data.progress||!Array.isArray(data.progress.sigils)||!Array.isArray(data.progress.discovered)||!Array.isArray(data.progress.chests)||(data.version===2&&(!data.adventure||!data.village)))throw new Error('올바른 WINDWAKE 저장 파일이 아닙니다.');
+  if(!data||![1,2,3].includes(data.version)||!data.progress||!Array.isArray(data.progress.sigils)||!Array.isArray(data.progress.discovered)||!Array.isArray(data.progress.chests)||(data.version>=2&&(!data.adventure||!data.village)))throw new Error('올바른 WINDWAKE 저장 파일이 아닙니다.');
   const s=createGame(data.seed),p=s.player,raw=data.progress;
   s.progress.sigils=[...new Set(raw.sigils.filter(v=>SIGILS.includes(v)))];
   s.progress.discovered=[...new Set(['meadow','camp',...raw.discovered.filter(v=>typeof v==='string'&&v.length<64)])].slice(0,256);
@@ -426,25 +454,66 @@ export function loadSave(data){
   const number=(v,max)=>Number.isFinite(v)?clamp(Math.floor(v),0,max):0;
   s.progress.upgrades={health:number(raw.upgrades?.health,3),power:number(raw.upgrades?.power,3)};
   s.progress.glider=s.progress.sigils.length>0;s.progress.bossDefeated=raw.bossDefeated===true&&s.progress.sigils.length===3;
-  if(data.version===2){s.adventure=validateAdventure(data.adventure);s.village=validateVillage(data.village);}
+  if(data.version>=2){s.adventure=validateAdventure(data.adventure);s.village=validateVillage(data.village);}
+  const expedition=data.version===3?validateExpedition(data.expedition):initExpedition();
+  s.journey=data.version===3?validateJourney(data.journey,{...s,expedition}):initJourney();
   if(s.village.level<3)s.adventure.finalDefeated=false;
   const mods=modifiers(s);
   p.crystals=number(data.crystals,9999);p.maxHp=100+s.progress.upgrades.health*25;p.hp=p.maxHp;p.maxStamina=100+Math.max(0,s.progress.sigils.length-1)*20+mods.stamina;p.stamina=p.maxStamina;p.maxEnergy=100+mods.energy;p.energy=p.maxEnergy;
+  p.flasks=data.version===3&&Number.isFinite(data.flasks)?number(data.flasks,6):3;
   if((LANDMARKS.some(l=>l.kind==='camp'&&l.id===data.checkpoint)&&s.progress.discovered.includes(data.checkpoint))||s.adventure.waypoints.includes(data.checkpoint))p.checkpoint=data.checkpoint;
   const camp=LANDMARKS.find(l=>l.id===p.checkpoint)||WAYPOINTS.find(l=>l.id===p.checkpoint)||LANDMARKS.find(l=>l.id==='camp');
   Object.assign(p,{x:camp.x,y:heightAt(camp.x,camp.z-2),z:camp.z-2,safeX:camp.x,safeY:heightAt(camp.x,camp.z-2),safeZ:camp.z-2});
   if(s.progress.bossDefeated){const boss=s.enemies.find(e=>e.type==='boss');boss.hp=0;boss.state='dead';boss.rewarded=true;}
   for(const key of Object.keys(s.metrics))s.metrics[key]=Number.isFinite(data.metrics?.[key])?clamp(data.metrics[key],0,1e8):0;
   s.frame=number(data.time?data.time*60:0,21600000);s.time=s.frame*DT;
-  restoreRaid(s,villageHooks(s));streamEnemies(s,true);return s;
+  restoreRaid(s,villageHooks(s));streamEnemies(s,true);
+  // Build the outdoor state first; entering an instance must park a real world.
+  s.expedition=expedition;
+  if(expedition.active){
+    const dungeon=DUNGEONS.find(d=>d.id===expedition.active.id);
+    if(dungeon){transitionScene(s,'enter',dungeon.entry);tickDungeon(s,DT,dungeonHooks(s));}
+  }
+  return s;
 }
+function resetMotion(p,spawn){
+  const {x,y,z}=spawn;
+  Object.assign(p,{x,y,z,safeX:x,safeY:y,safeZ:z,vx:0,vy:0,vz:0,grounded:true,airState:'GROUND',gliding:false,plunge:false,action:'idle',actionTime:0,attackTimer:0,attackElapsed:0,attackQueued:false,comboWindow:0,combo:0,dodgeTimer:0,dashTimer:0,parryTimer:0,coyote:.12,jumpBuffer:0,fallPeak:y,yaw:spawn.yaw||0});
+}
+function transitionScene(s,kind,spawn){
+  if(kind==='enter'){
+    captureRaid(s);
+    s.fieldState={enemies:s.enemies,blocks:s.blocks,items:s.items,trial:s.trial,streamCell:s.streamCell};
+    s.enemies=[];s.items=[];s.blocks=s.expedition.active.blocks;s.trial=null;s.streamCell=null;
+  }else{
+    const field=s.fieldState;
+    s.enemies=field?.enemies||[];s.blocks=field?.blocks||[{...BLOCK_SPAWN}];s.items=field?.items||[];s.trial=field?.trial||null;s.streamCell=null;
+    delete s.fieldState;spawn={...spawn,y:heightAt(spawn.x,spawn.z)};
+  }
+  s.projectiles=[];s.effects=[];delete s.buildPreview;delete s.activeTown;
+  resetMotion(s.player,spawn);s.previousInput={interact:true};
+  if(kind==='leave')streamEnemies(s,true);
+  emit(s,kind==='enter'?'dungeon-enter':'dungeon-leave');
+}
+function dungeonHooks(s){return {
+  transition:(kind,spawn)=>transitionScene(s,kind,spawn),
+  spawn:(type,x,z,extra)=>spawnEnemy(s,type,x,z,extra.y,extra),
+  move:(b,dx,dz,r=.8)=>horizontalMove(b,dx,dz,solidsFor(s,b.x,b.z,5,b.id),r,b.h||2,.48,s),
+  ground:(b,dt)=>{b.vy=(b.vy||0)-25*dt;verticalMove(b,dt,solidsFor(s,b.x,b.z,5,b.id),s);},
+  rewardXP:n=>awardXP(s,n),grantRelic:id=>grantRelic(s,id),
+  rewardMaterials:reward=>{for(const key of ['wood','stone','food'])s.village.materials[key]=Math.min(99999,s.village.materials[key]+(reward[key]||0));s.player.crystals=Math.min(9999,s.player.crystals+(reward.crystals||0));},
+  effect:(type,at,extra)=>fx(s,type,at,extra),toast:text=>toast(s,text,'reward'),
+};}
+export function enterExpedition(s,id){return enterDungeon(s,id,dungeonHooks(s));}
+export function exitExpedition(s){return leaveDungeon(s,dungeonHooks(s));}
+export function expeditionAction(s,action,payload={}){return dungeonAction(s,action,payload,dungeonHooks(s));}
 function payoutMaterials(s,n){s.village.materials.wood+=n;s.village.materials.stone+=Math.ceil(n*.65);}
 function completeTrial(s,id){if(s.adventure.completedTasks.includes(id))return;s.adventure.completedTasks.push(id);awardXP(s,65);payoutMaterials(s,6);s.player.crystals+=5;toast(s,'탐험의 시련 완료 · 기술 경험치 65, 결정 5, 마을 재료 획득','reward');fx(s,'reward',s.player,{life:1.3,power:5});}
 function combatHooks(s){return {
-  move:(e,dx,dz,r=.5)=>horizontalMove(e,dx,dz,solidsFor(s,e.x,e.z),r,1.65,.48),
-  ground:(e,dt)=>{e.vy=(e.vy||0)-25*dt;verticalMove(e,dt,solidsFor(s,e.x,e.z));if(e.y<WORLD.waterLevel){e.x=e.homeX;e.z=e.homeZ;e.y=e.homeY;e.vy=0;}},
+  move:(e,dx,dz,r=.5)=>horizontalMove(e,dx,dz,solidsFor(s,e.x,e.z),r,1.65,.48,s),
+  ground:(e,dt)=>{e.vy=(e.vy||0)-25*dt;verticalMove(e,dt,solidsFor(s,e.x,e.z),s);if(e.y<(s.expedition?.active?-7:WORLD.waterLevel)){e.x=e.homeX;e.z=e.homeZ;e.y=e.homeY;e.vy=0;}},
   lineClear:(a,b)=>lineClear(a,b,s),damagePlayer:(amount,e,u)=>playerDamage(s,amount,e,u),hitEnemy:(e,n,k,knock)=>hitEnemy(s,e,n,k,knock),
-  shoot:(e,n,options)=>shoot(s,e,n,options),spawn:(type,x,z,extra)=>spawnEnemy(s,type,x,z,undefined,{frontier:true,...extra}),
+  shoot:(e,n,options)=>shoot(s,e,n,options),spawn:(type,x,z,extra)=>spawnEnemy(s,type,x,z,undefined,{...(s.expedition?.active?{dungeonId:s.expedition.active.id}:{frontier:true}),...extra}),
   effect:(type,e,extra)=>fx(s,type,e,extra),emit:(type,e)=>emit(s,type,undefined,e),toast:text=>toast(s,text),random:()=>random(s),
 };}
 function villageHooks(s){return {
@@ -474,6 +543,7 @@ export function useAbility(s,slot){
   return true;
 }
 function streamEnemies(s,force=false){
+  if(s.expedition?.active)return;
   const p=s.player,cell=`${Math.floor(p.x/30)}:${Math.floor(p.z/30)}`;
   if(!force&&cell===s.streamCell&&s.frame%90!==0)return;s.streamCell=cell;
   s.enemies=s.enemies.filter(e=>!e.frontier||e.raid||e.trialId||distance(e,p)<145);

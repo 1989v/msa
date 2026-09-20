@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="hsl(204 25% 13%)">
-  <title>WINDWAKE FRONTIERS — 바람뜰의 모험</title>
-  <meta name="description" content="여덟 지역을 탐험하고 기술을 익히며 내 마을을 가꾸는 오픈월드 액션 어드벤처. 농사, 수호자 전투와 달밤의 마을 방어.">
+  <title>WINDWAKE JOURNEYS — 마을과 잊힌 회랑</title>
+  <meta name="description" content="여덟 마을의 주민을 만나고 잊힌 던전을 탐험하는 오픈월드 액션 어드벤처. 유물과 기술, 농사와 달밤의 마을 방어.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='hsl(164,40%25,67%25)' d='M16 1 30 16 16 31 2 16z'/%3E%3Cpath fill='hsl(204,25%25,13%25)' d='m16 6 6 13-6-3-6 3z'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./style.css">
 </head>
@@ -21,7 +21,7 @@
     </div>
     <div id="compass"><span>W</span><span id="heading">N</span><span>E</span></div>
     <div class="quest"><div class="eyebrow">멈춘 바람의 노래</div><p id="quest-text">세 성소의 봉인을 해방하세요</p><div id="sigils"><span data-sigil="quarry">◇ 돌</span><span data-sigil="forest">◇ 숲</span><span data-sigil="ruins">◇ 하늘</span></div></div>
-    <div class="top-actions"><button id="skills-button" title="스킬트리 (T)">기술 <kbd>T</kbd></button><button id="village-button" title="마을 (B)">마을 <kbd>B</kbd></button><button id="map-button" title="지도와 여정 (M)">지도 <kbd>M</kbd></button><button id="sound-button" title="소리 켜기/끄기" aria-pressed="false">소리 켜짐</button><button id="pause-button" title="일시정지 (Esc)">Ⅱ</button></div>
+    <div class="top-actions"><button id="skills-button" title="스킬트리 (T)">기술 <kbd>T</kbd></button><button id="relics-button" title="유물 장착 (I)">유물 <kbd>I</kbd></button><button id="village-button" title="마을 (B)">마을 <kbd>B</kbd></button><button id="map-button" title="지도와 여정 (M)">지도 <kbd>M</kbd></button><button id="sound-button" title="소리 켜기/끄기" aria-pressed="false">소리 켜짐</button><button id="pause-button" title="일시정지 (Esc)">Ⅱ</button></div>
     <div class="local-map"><canvas id="minimap" width="170" height="170" aria-label="주변 지형과 성소 방향"></canvas><div id="region-name">바람결 초원</div><small id="altitude">높이 0 m</small></div>
     <div id="boss-bar" hidden><span>고요의 수호자</span><div class="meter health"><i id="boss-fill"></i></div><small id="boss-phase">봉인된 하늘의 파수꾼</small></div>
     <div id="enemy-labels" aria-hidden="true"></div>
@@ -33,15 +33,15 @@
   </div>
   <main id="start-screen" class="screen title-screen">
     <div class="title-content">
-      <div class="eyebrow">FRONTIERS / AN OPEN-WORLD ADVENTURE</div>
+      <div class="eyebrow">JOURNEYS / AN OPEN-WORLD ADVENTURE</div>
       <h1>WIND<br>WAKE<span>바람뜰의 모험</span></h1>
       <div class="title-rule"></div>
-      <p>먼 길에서 나만의 힘을 찾고,<br>돌아올 작은 마을을 가꾸는 모험.</p>
+      <p>마을의 이야기가 길을 열고,<br>잊힌 회랑의 빛이 집으로 이어집니다.</p>
       <button id="continue-button" class="primary" hidden>여정 이어가기 <span>→</span></button>
       <button id="start-button" class="primary">여정 시작하기 <span>→</span></button>
-      <div class="title-hint">8개의 땅 · 세 갈래 기술 · 농사와 달밤의 마을 방어</div>
+      <div class="title-hint">8개의 지역 마을 · 4개의 던전 · 유물과 기술 · 농사와 마을 방어</div>
     </div>
-    <div class="title-footer"><span>02 / THE OPEN FRONTIERS</span><span>HEADPHONES RECOMMENDED</span></div>
+    <div class="title-footer"><span>03 / THE CONNECTED JOURNEYS</span><span>HEADPHONES RECOMMENDED</span></div>
   </main>
   <section id="panel" class="screen panel-screen" hidden aria-modal="true" role="dialog" aria-labelledby="panel-title">
     <div class="panel-body"><div class="panel-header"><div><div class="eyebrow" id="panel-kicker">WINDWAKE</div><h2 id="panel-title">여정</h2></div><button id="close-panel" aria-label="게임으로 돌아가기">닫기 ×</button></div><div id="panel-content"></div></div>

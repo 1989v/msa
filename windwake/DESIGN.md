@@ -1,5 +1,5 @@
 ---
-version: 2.0.0
+version: 3.0.0
 archetype: wind-worn
 extends: ../DESIGN.md
 tokens:
@@ -61,3 +61,6 @@ Buttons: paper/default, amber/hover, dark/active, amber outline/focus, muted/dis
 
 ## 9. Frontiers
 Eight warm, readable biomes surround the original island. Skill branches use prerequisite text and distinct learned/available states. The village grid represents4m cells around the player; construction is spatial and bounded, with costs visible before placement. Night retains at least55% terrain lighting.
+
+## 10. Journeys
+Eight regional settlements use the existing biome palette and readable resident roles. Amber gates, named rooms, explicit puzzle clues and the local map orient dungeon exploration. Relic cards state effects, source and two-slot equipment state; incomplete quests show a destination and return requirement. Indoor lighting stays bright, and ceilings share camera collision without painting over the floor map.

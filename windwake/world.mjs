@@ -45,6 +45,13 @@ const point=(x,z)=>({x,z});
 const ring=Array.from({length:16},(_,i)=>point(Math.sin(i/16*TAU)*160,-Math.cos(i/16*TAU)*160));
 const outward=b=>{const d=Math.hypot(b.x,b.z);return{x:b.x/d,z:b.z/d};};
 const waypointPositions=BIOMES.map(b=>{const u=outward(b);return{id:`waypoint-${b.id}`,biomeId:b.id,name:`${b.name} · 바람의 등대`,x:b.x-u.x*45,z:b.z-u.z*45};});
+const townNames=['밀바람 마을','유리샘 교역소','청옥항','단풍마루','서리별 산장','안개가지 마을','메아리 대장간','별꽃 관측촌'];
+const townServices=['mill','caravan','fishery','orchard','lodge','herbalist','forge','observatory'];
+const residentNames=[['보리','다온','해솔'],['사라','누리','가람'],['여울','파도','해루'],['단비','노을','가을'],['설아','은돌','산들'],['이슬','초록','나무'],['울림','강철','온돌'],['별하','달래','새별']];
+const townPositions=BIOMES.map((b,i)=>{const u=outward(b),side={x:-u.z,z:u.x},w=waypointPositions[i];return{id:`town-${b.id}`,biomeId:b.id,name:townNames[i],x:w.x+side.x*48,z:w.z+side.z*48,yaw:Math.atan2(side.x,side.z),radius:28,waypointId:w.id,service:townServices[i],style:townServices[i],floor:baseHeight(w.x,w.z),description:`${townNames[i]} · 안내인에게 의뢰를 받고 상인과 거래하거나 쉼터에서 쉬어 가세요.`};});
+const localPoint=(t,x,z)=>({x:t.x+x*Math.cos(t.yaw)+z*Math.sin(t.yaw),z:t.z+z*Math.cos(t.yaw)-x*Math.sin(t.yaw),y:t.floor});
+const dungeonNames={sunfields:'씨앗빛 지하수로',canyon:'메아리 채굴장',mistwood:'뿌리의 기억전당',alpine:'서리별 관측소'};
+const entrancePositions=townPositions.filter(t=>Object.hasOwn(dungeonNames,t.biomeId)).map(t=>({id:`dungeon-${t.biomeId}`,kind:'dungeon',biomeId:t.biomeId,townId:t.id,name:dungeonNames[t.biomeId],...localPoint(t,0,58),yaw:t.yaw,floor:t.floor,description:'E 던전 입장 · 연결된 방과 기믹을 통과해 유물을 찾아오세요.'}));
 const bossPositions=BIOMES.map((b,i)=>{const u=outward(b);return{id:`boss-${b.id}`,biomeId:b.id,name:b.bossName,x:b.x+u.x*60,z:b.z+u.z*60,type:'boss',family:b.family,level:1+Math.floor(i/2),reward:b.reward,final:false};});
 bossPositions.push({id:'boss-frontier',biomeId:'alpine',name:'먼 바람의 왕',x:0,z:870,type:'boss',family:'tempest',level:6,reward:'새로운 지평의 주인',final:true});
 const outerLocations=BIOMES.flatMap((b,i)=>{const u=outward(b),side={x:-u.z,z:u.x};return[
@@ -67,7 +74,13 @@ export const TRAIL_ROUTES=BIOMES.map((b,i)=>{
   return{id:`route-${b.id}`,waypointId:waypointPositions[i].id,bossId:bossPositions[i].id,points,bossPoints};
 });
 TRAILS.push({id:'frontier-climb',points:[point(bossPositions[4].x,bossPositions[4].z),point(0,870)]});
-const segments=TRAILS.flatMap(t=>t.points.slice(1).map((b,i)=>({a:t.points[i],b,ay:baseHeight(t.points[i].x,t.points[i].z),by:baseHeight(b.x,b.z)})));
+for(const t of townPositions){
+  const w=waypointPositions.find(w=>w.id===t.waypointId);
+  TRAILS.push({id:`town-approach-${t.biomeId}`,points:[{x:w.x,z:w.z,y:t.floor},localPoint(t,0,0)]});
+  const entrance=entrancePositions.find(e=>e.townId===t.id);
+  if(entrance)TRAILS.push({id:`dungeon-approach-${t.biomeId}`,points:[localPoint(t,0,0),{x:entrance.x,z:entrance.z,y:t.floor}]});
+}
+const segments=TRAILS.flatMap(t=>t.points.slice(1).map((b,i)=>({a:t.points[i],b,ay:t.points[i].y??baseHeight(t.points[i].x,t.points[i].z),by:b.y??baseHeight(b.x,b.z)})));
 // This finite authored spatial index is geometry-free; atlas sampling never touches the chunk cache.
 const trailCells=new Map(),trailCellSize=60;
 for(const s of segments)for(let x=Math.floor((Math.min(s.a.x,s.b.x)-18)/trailCellSize);x<=Math.floor((Math.max(s.a.x,s.b.x)+18)/trailCellSize);x++)for(let z=Math.floor((Math.min(s.a.z,s.b.z)-18)/trailCellSize);z<=Math.floor((Math.max(s.a.z,s.b.z)+18)/trailCellSize);z++){
@@ -84,6 +97,8 @@ function trailSample(x,z){
 export function heightAt(x,z){
   let h=baseHeight(x,z);const edge=Math.max(Math.abs(x),Math.abs(z));
   if(edge>120){const path=trailSample(x,z);if(path.distance<15)h=mix(h,path.y,(1-smooth((path.distance-4)/11))*smooth((edge-120)/25));}
+  for(const t of townPositions){const d=Math.hypot(x-t.x,z-t.z);if(d<39)h=mix(t.floor,h,smooth((d-28)/11));}
+  for(const e of entrancePositions){const d=Math.hypot(x-e.x,z-e.z);if(d<17)h=mix(e.floor,h,smooth((d-7)/10));}
   const homeDistance=Math.hypot(x-VILLAGE.x,z-VILLAGE.z);
   if(homeDistance<35)h=mix(legacyHeight(VILLAGE.x,VILLAGE.z),h,smooth((homeDistance-29)/6));
   return h;
@@ -98,6 +113,12 @@ export function terrainColor(x,z){
   return c.map(v=>v+m);
 }
 const ground=(x,z)=>heightAt(x,z);
+export const TOWNS=townPositions.map((t,i)=>({
+  ...t,kind:'town',y:ground(t.x,t.z),
+  npcs:['guide','merchant','keeper'].map((role,j)=>({id:`npc-${t.biomeId}-${role}`,townId:t.id,name:residentNames[i][j],role,...localPoint(t,...[[0,-6],[-6,0],[6,0]][j]),yaw:t.yaw})),
+  buildings:Array.from({length:6},(_,j)=>({id:`building-${t.biomeId}-${j}`,type:j===1?'service':'house',style:t.style,...localPoint(t,j<3?-13:13,[-15,0,15][j%3]),w:6,d:6,h:j===1&&['mill','observatory','forge'].includes(t.style)?8:5,yaw:t.yaw})),
+}));
+export const DUNGEON_ENTRANCES=entrancePositions.map(e=>({...e,y:ground(e.x,e.z)}));
 export const WAYPOINTS=[{id:'home',kind:'waypoint',name:'바람이 머무는 마을',x:VILLAGE.x,z:VILLAGE.z,description:'E 마을 · 집으로 돌아오는 등불'},...waypointPositions.map(w=>({...w,kind:'waypoint',description:'E 등대 활성화 · 활성화한 등대는 지도에서 이동할 수 있습니다.'}))].map(w=>({...w,y:ground(w.x,w.z)}));
 export const BOSS_SITES=bossPositions.map(b=>({...b,kind:'boss',y:ground(b.x,b.z),description:b.final?'네 변방의 승리와 마을3단계가 먼 바람의 왕을 깨웁니다.':`${b.name} · 첫 승리: ${b.reward}`}));
 export const RESOURCE_NODES=[
@@ -117,7 +138,7 @@ export const REGIONS = [
   {id:'summit',name:'고요한 하늘섬',x:0,z:27,radius:19,minY:22,description:'이곳에서 모든 바람이 멈췄다.'},
 ];
 export const LANDMARKS = [
-  ...WAYPOINTS, ...BOSS_SITES, ...RESOURCE_NODES, ...outerLocations.filter(l=>l.kind!=='resource').map(l=>({...l,y:ground(l.x,l.z)})),
+  ...TOWNS, ...DUNGEON_ENTRANCES, ...WAYPOINTS, ...BOSS_SITES, ...RESOURCE_NODES, ...outerLocations.filter(l=>l.kind!=='resource').map(l=>({...l,y:ground(l.x,l.z)})),
   {id:'camp',kind:'camp',name:'여행자의 모닥불',x:0,z:-69,y:ground(0,-69),description:'E 휴식 · 5 결정으로 체력 / 7 결정으로 검 강화'},
   {id:'quarry',kind:'shrine',name:'돌의 봉인',x:-49,z:-4,y:ground(-49,-4),description:'Q 울림으로 돌을 금빛 원 안에 밀어 넣으세요. 제단에서 E: 돌 되돌리기.'},
   {id:'forest',kind:'shrine',name:'숲의 봉인',x:-40,z:48,y:ground(-40,48),description:'“씨앗은 뿌리내리고, 줄기는 해를 향하며, 마침내 날개가 하늘로.” 세 돌의 이야기를 이어보세요. E로 울림을 새깁니다.'},
@@ -189,7 +210,8 @@ export const SOLIDS=[...PLATFORMS,...OBSTACLES];
 const MAX_CACHE=96,cache=new Map();let generatedChunks=0,evictedChunks=0,lastQueryCells=0,lastQueryCandidates=0;
 const authoredCells=new Map(),ownerCells=new Map();
 function cell(x,z){return`${Math.floor(x/WORLD.chunkSize)},${Math.floor(z/WORLD.chunkSize)}`;}
-for(const box of SOLIDS){
+const townSolids=TOWNS.flatMap(t=>t.buildings.map(b=>({id:`solid-${b.id}`,x:b.x,y:b.y,z:b.z,w:Math.abs(Math.cos(b.yaw))*b.w+Math.abs(Math.sin(b.yaw))*b.d,d:Math.abs(Math.sin(b.yaw))*b.w+Math.abs(Math.cos(b.yaw))*b.d,h:b.h,kind:'town-building'})));
+for(const box of [...SOLIDS,...townSolids]){
   const owner=cell(box.x,box.z);if(!ownerCells.has(owner))ownerCells.set(owner,[]);ownerCells.get(owner).push(box);
   for(let cx=Math.floor((box.x-box.w/2)/60);cx<=Math.floor((box.x+box.w/2)/60);cx++)for(let cz=Math.floor((box.z-box.d/2)/60);cz<=Math.floor((box.z+box.d/2)/60);cz++){
     const key=`${cx},${cz}`;if(!authoredCells.has(key))authoredCells.set(key,[]);authoredCells.get(key).push(box);
@@ -197,6 +219,7 @@ for(const box of SOLIDS){
 }
 function randomFor(cx,cz){let n=(WORLD.seed^Math.imul(cx,374761393)^Math.imul(cz,668265263))>>>0;return()=>{n=(Math.imul(n,1664525)+1013904223)>>>0;return n/4294967296;};}
 function reserved(x,z,padding=0){
+  if(TOWNS.some(t=>Math.hypot(x-t.x,z-t.z)<t.radius+7+padding))return true;
   if(Math.hypot(x-VILLAGE.x,z-VILLAGE.z)<VILLAGE.radius+6+padding)return true;
   if(trailSample(x,z).distance<4.5+padding)return true;
   return LANDMARKS.some(l=>Math.hypot(x-l.x,z-l.z)<(l.kind==='boss'?26:7)+padding);

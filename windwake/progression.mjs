@@ -1,4 +1,5 @@
 import { WAYPOINTS, BOSS_SITES } from './world.mjs';
+import {relicModifiers,allianceBenefits} from './relics.mjs';
 
 const node = (id, name, branch, cost, requires, description, effects = {}, active = false) =>
   Object.freeze({ id, name, branch, cost, requires, description, effects, active });
@@ -79,7 +80,11 @@ export function modifiers(s) {
     const effects=byId.get(id)?.effects||{};
     for(const key of Object.keys(result))result[key]+=effects[key]||0;
   }
-  result.armor=Math.min(.35,result.armor);return result;
+  const relics=relicModifiers(s);for(const key of Object.keys(result))result[key]+=relics[key];
+  result.towerDamage+=allianceBenefits(s).towerDamage;
+  const caps={bladeDamage:30,speed:1.4,stamina:100,energy:100,armor:.35,harvest:2.5,towerDamage:2.5};
+  for(const key of Object.keys(result))result[key]=Math.min(caps[key],result[key]);
+  return result;
 }
 export function validateAdventure(raw) {
   const a=initAdventure();if(!raw || typeof raw!=='object')return a;

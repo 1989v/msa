@@ -1,5 +1,6 @@
 import {VILLAGE,RESOURCE_NODES,heightAt,querySolids} from './world.mjs';
 import {awardXP,modifiers} from './progression.mjs';
+import {allianceBenefits} from './relics.mjs';
 
 export const DAY_SECONDS=600;
 export const DUSK_SECONDS=450;
@@ -74,6 +75,7 @@ export function villageSolids(s){
   });
 }
 export function villageAction(s,action,payload={}){
+  if(s?.expedition?.active)return fail('던전 밖으로 나온 뒤 마을을 돌볼 수 있습니다.');
   if(s?.mode!=='playing' || !s.village)return fail('모험 중에 마을을 돌볼 수 있습니다.');
   if(!payload || typeof payload!=='object')return fail('선택한 행동을 확인해 주세요.');
   const v=s.village,p=s.player;
@@ -116,7 +118,8 @@ export function villageAction(s,action,payload={}){
     if(action==='rest'){
       if(v.raid.status==='active' || (s.enemies||[]).some(e=>e.hp>0&&dist(e,p)<13&&e.state!=='idle'))return fail('적이 가까이 있습니다. 방어를 마친 뒤 쉬세요.');
       p.hp=p.maxHp;p.stamina=p.maxStamina;p.energy=p.maxEnergy;
-      p.flasks=Math.max(p.flasks||0,v.structures.some(b=>b.type==='well'&&b.hp>0)?5:3);
+      const baseFlasks=v.structures.some(b=>b.type==='well'&&b.hp>0)?5:3;
+      p.flasks=Math.min(6,Math.max(p.flasks||0,baseFlasks+allianceBenefits(s).flasks));
       if(v.raid.status!=='active')v.beaconHp=v.maxBeaconHp;
       event(s,'rest','귀환 봉화 · 체력과 회복약을 보충했습니다.');return {ok:true};
     }
@@ -183,6 +186,7 @@ export function villageAction(s,action,payload={}){
   event(s,'harvest',`${defCrop.name} 수확 · 식량 ${food}개와 씨앗 1개`,plot);return {ok:true,food,crop:defCrop.id};
 }
 export function villageInteraction(s){
+  if(s?.expedition?.active)return null;
   if(!s?.village || s.mode!=='playing')return null;
   const v=s.village,candidates=[];
   const add=(target,kind,name,description,action,payload,range=4.5)=>{
@@ -360,6 +364,7 @@ function towerCanSee(s,tower,target,hooks){
   return clearRaidSight(s,muzzle,target,hooks);
 }
 export function tickVillage(s,dt,hooks={}){
+  if(s?.expedition?.active)return;
   if(s?.mode!=='playing'||!s.village||!Number.isFinite(dt)||dt<=0||dt>1)return;
   const v=s.village,r=v.raid;v.elapsed=Math.min(1e9,v.elapsed+dt);
   for(const p of v.plots)if(p.crop&&p.watered){p.growth=Math.min(CROPS[p.crop].growthSeconds,p.growth+dt);p.stage=stage(p);}

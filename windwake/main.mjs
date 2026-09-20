@@ -1,5 +1,5 @@
-import {WORLD,LANDMARKS,RUNES,REGIONS,PLATE,VILLAGE,WAYPOINTS,worldStats,heightAt,terrainColor,regionAt,distance,clamp} from './world.mjs';
-import {DT,createGame,stepGame,snapshot,restoreSnapshot,spawnEnemy,awardSigil,interaction,upgrade,respawn,fastTravel,exportSave,loadSave,useAbility} from './sim.mjs';
+import {WORLD,LANDMARKS,RUNES,REGIONS,PLATE,VILLAGE,WAYPOINTS,TOWNS,DUNGEON_ENTRANCES,worldStats,heightAt,terrainColor,regionAt,distance,clamp} from './world.mjs';
+import {DT,createGame,stepGame,snapshot,restoreSnapshot,spawnEnemy,awardSigil,interaction,upgrade,respawn,fastTravel,exportSave,loadSave,useAbility,floorAt,enterExpedition,exitExpedition,expeditionAction} from './sim.mjs';
 import {Renderer} from './render.mjs';
 import {AudioSystem} from './audio.mjs';
 import {SKILLS,ACTIVE_SKILLS,learnSkill,equipSkill,awardXP} from './progression.mjs';
@@ -7,6 +7,9 @@ import {villageAction,villageObjective} from './village.mjs';
 import {ENEMY_NAMES} from './combat.mjs';
 import {skillsPanel,villagePanel,frontierJournal} from './frontier-ui.mjs';
 import {InputBuffer} from './input.mjs';
+import {townPanel,journeyJournal,relicPanel} from './journey-ui.mjs';
+import {townAction,journeyObjective,trackQuest,equipRelic} from './settlements.mjs';
+import {DUNGEONS,dungeonGeometry,dungeonObjective,dungeonCleared} from './dungeons.mjs';
 
 const $=id=>document.getElementById(id);
 const canvas=$('world'),audio=new AudioSystem(),input=new InputBuffer();
@@ -30,7 +33,7 @@ function clearInput(){keys.clear();input.clear();state.previousInput={};joystick
 function start(continuing=false){
   audio.unlock();state=continuing&&saved?loadSave(saved):createGame();manual=false;started=true;panel=null;accumulator=0;lastMode='playing';
   $('start-screen').hidden=true;$('panel').hidden=true;$('hud').hidden=false;clearInput();camera.yaw=0;camera.pitch=.35;camera.distance=9;
-  state.toast=continuing?'여정으로 돌아왔습니다. 지도 M에서 마을과 발견한 길을 확인하세요.':'WASD 이동 · Space 점프. T에서 기술을 익히고 M에서 바람뜰 마을과 먼 지역을 찾아보세요.';state.toastTime=7;save();canvas.focus();draw(0);
+  state.toast=continuing?'지도 M에서 주민 의뢰와 던전을, I에서 유물을 확인하세요.':'WASD 이동 · Space 점프. 남쪽 길은 밀바람 마을로 이어집니다. M 지도 · T 기술 · B 내 마을.';state.toastTime=7;save();canvas.focus();draw(0);
 }
 $('start-button').addEventListener('click',()=>{if(saved)openPanel('new-game');else start();});
 $('continue-button').addEventListener('click',()=>start(true));
@@ -39,11 +42,12 @@ $('pause-button').addEventListener('click',()=>openPanel('pause'));
 $('skills-button').addEventListener('click',()=>openPanel('skills'));
 $('village-button').addEventListener('click',()=>openPanel('village'));
 $('map-button').addEventListener('click',()=>openPanel('map'));
+$('relics-button').addEventListener('click',()=>openPanel('relics'));
 $('minimap').addEventListener('click',()=>openPanel('map'));
 $('close-panel').addEventListener('click',closePanel);
 
 function closePanel(){
-  delete state.buildPreview;
+  delete state.buildPreview;delete state.activeTown;
   if(state.mode==='dead'){respawn(state);save();}
   if(state.mode==='won'){state.mode='playing';save();}
   panel=null;$('panel').hidden=true;clearInput();accumulator=0;if(started)canvas.focus();
@@ -58,10 +62,17 @@ function openPanel(kind){
     title.textContent='세 갈래의 길';$('panel-kicker').textContent='SKILLS / GROWTH';skillsPanel(content,state,changed);
   }else if(kind==='village'){
     title.textContent='내가 가꾸는 바람뜰';$('panel-kicker').textContent='HOME / FARM / DEFEND';villagePanel(content,state,changed);
+  }else if(kind==='relics'){
+    title.textContent='길에서 만난 유물';$('panel-kicker').textContent='RELICS / TWO SLOTS';relicPanel(content,state,changed);
+  }else if(kind==='town'){
+    const town=TOWNS.find(t=>t.id===state.activeTown);
+    title.textContent=town?.name||'변경의 마을';$('panel-kicker').textContent='RESIDENTS / REQUESTS / SUPPLIES';townPanel(content,state,town?.id,changed);
   }else if(kind==='map'){
     title.textContent='바람을 따라 남긴 기록';$('panel-kicker').textContent='ATLAS / JOURNAL';
     content.innerHTML=`<div class="map-layout"><div><canvas id="atlas" width="520" height="520" aria-label="북쪽이 위인 전체 세계 지도"></canvas><p class="save-status">◎ 웨이포인트 · ⌂ 내 마을 · ♜ 수호자 · ▲ 현재 위치<br>중앙의 작은 섬 밖으로 8개의 길이 이어집니다. 총 1.92 × 1.92 km.</p></div><div id="journal"></div></div>`;
     const journal=$('journal');
+    journeyJournal(journal,state,{travel:id=>{if(fastTravel(state,id)){save();closePanel();}else{state.toastTime=5;updateHUD();}},track:id=>{trackQuest(state,id);save();updateHUD();},openRelics:()=>openPanel('relics')});
+    content.querySelector('.save-status').textContent=state.expedition?.active?'실내 지도 · 방과 복도를 직접 걸어서 탐험하세요. ▣ 잠긴 문 · ◇ 장치 · △ 귀환문.':'⌂ 지역 마을 · ◎ 웨이포인트 · ▣ 던전 · ♜ 수호자 · ▲ 내 위치. 1.92 × 1.92 km, 원래 맵의 면적 64배.';
     frontierJournal(journal,state,id=>{if(fastTravel(state,id)){save();closePanel();}else {const reason=document.createElement('p');reason.className='action-feedback';reason.textContent=state.toast;journal.prepend(reason);}});
 
     for(const id of ['quarry','forest','ruins']){
@@ -104,7 +115,7 @@ const mappings={Space:'jump',KeyJ:'attack',KeyK:'dodge',KeyF:'parry',KeyQ:'skill
 document.addEventListener('keydown',e=>{
   if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Tab'].includes(e.code)&&started&&!panel)e.preventDefault();
   if(e.code==='Escape'){e.preventDefault();if(panel)closePanel();else if(started)openPanel('pause');return;}
-  if(['KeyT','KeyB'].includes(e.code)&&started&&!e.repeat){const kind=e.code==='KeyT'?'skills':'village';if(panel===kind)closePanel();else openPanel(kind);return;}
+  if(['KeyT','KeyB','KeyI'].includes(e.code)&&started&&!e.repeat){const kind={KeyT:'skills',KeyB:'village',KeyI:'relics'}[e.code];if(panel===kind)closePanel();else openPanel(kind);return;}
   if(e.code==='KeyM'&&started&&!e.repeat){if(panel==='map')closePanel();else openPanel('map');return;}
   if(panel||!started)return;
   keys.add(e.code);if(mappings[e.code]&&!e.repeat)input.press(mappings[e.code]);
@@ -148,18 +159,23 @@ function processEvents(){
     if(e.text&&['build','plant','water','harvest','gather','trade','repair','notice','travel'].includes(e.type)){state.toast=e.text;state.toastTime=4;}
     if(e.type==='hit'){hitStop=.035;camera.shake=camera.reducedMotion?0:.13;}
     if(e.type==='hurt')camera.shake=camera.reducedMotion?0:.24;
-    if(['solve','reward','rest','win','harvest','build','raid-win','skill-learned'].includes(e.type))save();
+    if(['solve','reward','rest','win','harvest','build','raid-win','skill-learned','dungeon-enter','dungeon-leave','quest'].includes(e.type))save();
+    if(e.type==='town-open'&&!manual)openPanel('town');
+    if(['dungeon-enter','dungeon-leave'].includes(e.type)){camera.yaw=state.player.yaw||0;camera.pitch=.35;camera.shake=0;hitStop=0;}
     if(e.type==='village-open'&&!manual)openPanel('village');
-    if(e.type==='rest'&&!manual)openPanel(distance(state.player,VILLAGE)<10?'village':'camp');
+    if(e.type==='rest'&&!manual&&!state.activeTown&&!state.expedition?.active)openPanel(distance(state.player,VILLAGE)<10?'village':'camp');
   }
   if(state.mode!==lastMode){lastMode=state.mode;if(!manual&&(state.mode==='dead'||state.mode==='won'))openPanel(state.mode);}
 }
 const labelPool=[];
 for(let i=0;i<12;i++){const el=document.createElement('div');el.className='enemy-label';el.innerHTML='<span></span><div class="meter"><i></i></div><b></b>';el.hidden=true;$('enemy-labels').append(el);labelPool.push(el);}
+const residentLabels=Array.from({length:6},()=>{const el=document.createElement('div');el.className='resident-label';el.hidden=true;$('enemy-labels').append(el);return el;});
 function updateLabels(){
   if(!renderer)return;
   const visible=state.enemies.filter(e=>e.hp>0&&e.type!=='boss'&&distance(e,state.player)<24).slice(0,12);
   labelPool.forEach((el,i)=>{const e=visible[i];if(!e){el.hidden=true;return;}const p=renderer.project(e.x,e.y+2.35,e.z);el.hidden=!p?.visible;if(el.hidden)return;el.style.left=`${p.x}px`;el.style.top=`${p.y}px`;el.firstElementChild.textContent=e.name||ENEMY_NAMES[e.type]||'방랑자';el.querySelector('i').style.transform=`scaleX(${e.hp/e.maxHp})`;el.lastElementChild.textContent=e.state==='telegraph'?'! 공격 준비':e.state==='hit'?'빈틈':e.state==='recover'?'공격 기회':'';});
+  const residents=state.expedition?.active?[]:TOWNS.flatMap(t=>t.npcs).filter(n=>distance(n,state.player)<28).slice(0,6);
+  residentLabels.forEach((el,i)=>{const npc=residents[i];if(!npc){el.hidden=true;return;}const at=renderer.project(npc.x,npc.y+2.5,npc.z);el.hidden=!at.visible;if(el.hidden)return;el.style.left=`${at.x}px`;el.style.top=`${at.y}px`;el.textContent=`${{guide:'! 의뢰',merchant:'◇ 교역',keeper:'△ 휴식'}[npc.role]||'주민'} · ${npc.name}`;});
 }
 let mapBackground,localMapBackground,localMapCell='';
 function mapBase(){
@@ -176,6 +192,7 @@ function localMapBase(p){
 }
 function drawMap(target,mini=true){
   if(!target)return;const ctx=target.getContext('2d'),w=target.width,h=target.height,p=state.player;
+  if(state.expedition?.active){drawDungeonMap(ctx,w,h,mini);return;}
   ctx.clearRect(0,0,w,h);ctx.save();if(mini){ctx.beginPath();ctx.arc(w/2,h/2,w/2,0,Math.PI*2);ctx.clip();}
   const scale=mini?2.2:w/(WORLD.size*2),cx=mini?p.x:0,cz=mini?p.z:0;
   const at=(x,z)=>({x:w/2+(x-cx)*scale,y:h/2-(z-cz)*scale});
@@ -188,29 +205,57 @@ function drawMap(target,mini=true){
     if(l.kind==='chest'&&!state.progress.chests.includes(l.id))continue;
     if(!mini&&Math.hypot(l.x,l.z)<130&&!['village','wind'].includes(l.kind))continue;
     const pos=at(l.x,l.z);ctx.fillStyle=l.kind==='boss'?COLORS.danger:l.kind==='waypoint'?(state.adventure.waypoints.includes(l.id)?COLORS.wind:COLORS.muted):l.kind==='shrine'?(state.progress.sigils.includes(l.id)?COLORS.wind:COLORS.amber):COLORS.paper;
-    ctx.font=`${mini?13:16}px system-ui`;const symbol={camp:'△',wind:'◎',chest:'·',waypoint:'◎',boss:'♜',resource:'✦',trial:'◇',village:'⌂'}[l.kind]||(state.progress.sigils.includes(l.id)?'◆':'◇');ctx.fillText(symbol,pos.x,pos.y+4);
-    if(!mini&&['waypoint','village'].includes(l.kind)){ctx.font='10px system-ui';ctx.fillText(l.name,pos.x,pos.y+17);}
+    if(l.kind==='dungeon'&&dungeonCleared(state,l.id))ctx.fillStyle=COLORS.wind;
+    ctx.font=`${mini?13:16}px system-ui`;const symbol={camp:'△',wind:'◎',chest:'·',waypoint:'◎',boss:'♜',resource:'✦',trial:'◇',village:'⌂',town:'⌂',dungeon:'▣'}[l.kind]||(state.progress.sigils.includes(l.id)?'◆':'◇');ctx.fillText(symbol,pos.x,pos.y+4);
+    if(!mini&&['town','village'].includes(l.kind)){ctx.font='10px system-ui';ctx.fillText(l.name,pos.x,pos.y+17);}
   }
+  if(mini)for(const npc of TOWNS.flatMap(t=>t.npcs)){if(distance(npc,p)>45)continue;const pos=at(npc.x,npc.z);ctx.fillStyle=COLORS.wind;ctx.fillText(npc.role==='guide'?'!':'·',pos.x,pos.y);}
   if(!mini){ctx.font='11px system-ui';ctx.fillStyle=COLORS.amber;const c=at(0,0);ctx.fillText('바람의 첫 섬',c.x,c.y+20);}
   const pos=at(p.x,p.z);ctx.translate(pos.x,pos.y);ctx.rotate(p.yaw);ctx.fillStyle=COLORS.paper;ctx.beginPath();ctx.moveTo(0,-7);ctx.lineTo(5,6);ctx.lineTo(0,3);ctx.lineTo(-5,6);ctx.closePath();ctx.fill();ctx.restore();
   ctx.fillStyle=COLORS.amber;ctx.font=`${mini?11:14}px system-ui`;ctx.textAlign='center';ctx.fillText('N',w/2,mini?15:22);
+}
+function drawDungeonMap(ctx,w,h,mini){
+  const geometry=dungeonGeometry(state),dungeon=DUNGEONS.find(d=>d.id===geometry?.id),p=state.player;
+  if(!geometry||!dungeon)return;
+  const bounds=dungeon.bounds,scale=mini?2.1:Math.min((w-35)/(bounds.maxX-bounds.minX),(h-35)/(bounds.maxZ-bounds.minZ));
+  const cx=mini?p.x:(bounds.maxX+bounds.minX)/2,cz=mini?p.z:(bounds.maxZ+bounds.minZ)/2;
+  const at=(x,z)=>({x:w/2+(x-cx)*scale,y:h/2-(z-cz)*scale});
+  ctx.clearRect(0,0,w,h);ctx.save();if(mini){ctx.beginPath();ctx.arc(w/2,h/2,w/2,0,Math.PI*2);ctx.clip();}
+  ctx.fillStyle=COLORS.ink;ctx.fillRect(0,0,w,h);
+  const rect=(b,color)=>{const pos=at(b.x-b.w/2,b.z+b.d/2);ctx.fillStyle=color;ctx.fillRect(pos.x,pos.y,b.w*scale,b.d*scale);};
+  for(const floor of geometry.floors)rect(floor,COLORS.line);
+  for(const wall of geometry.walls)if(wall.kind!=='ceiling')rect(wall,COLORS.muted);
+  for(const door of geometry.doors)rect(door,door.open?COLORS.wind:COLORS.danger);
+  ctx.textAlign='center';ctx.font=`${mini?10:12}px system-ui`;
+  if(!mini)for(const room of geometry.rooms){const pos=at(room.x,room.z);ctx.fillStyle=COLORS.paper;ctx.fillText(room.name,pos.x,pos.y);}
+  for(const landmark of geometry.landmarks){if(mini&&distance(landmark,p)>43)continue;const pos=at(landmark.x,landmark.z);ctx.fillStyle=landmark.kind==='exit'?COLORS.wind:COLORS.amber;ctx.fillText({exit:'△',chest:'◆',rune:'◇',lever:'◇',plate:'○',reset:'↺',clue:'?'}[landmark.kind]||'·',pos.x,pos.y+3);}
+  const pos=at(p.x,p.z);ctx.translate(pos.x,pos.y);ctx.rotate(p.yaw);ctx.fillStyle=COLORS.paper;ctx.beginPath();ctx.moveTo(0,-7);ctx.lineTo(5,6);ctx.lineTo(-5,6);ctx.closePath();ctx.fill();ctx.restore();
+  ctx.fillStyle=COLORS.amber;ctx.textAlign='center';ctx.font='12px system-ui';ctx.fillText('N',w/2,15);
 }
 function updateHUD(){
   const p=state.player;
   $('health-text').textContent=`${Math.ceil(p.hp)} / ${p.maxHp}`;
   $('health-fill').style.transform=`scaleX(${p.hp/p.maxHp})`;$('stamina-fill').style.transform=`scaleX(${p.stamina/p.maxStamina})`;$('energy-fill').style.transform=`scaleX(${p.energy/p.maxEnergy})`;
   $('crystals').textContent=p.crystals;$('flasks').textContent=p.flasks;$('sail-tag').hidden=!state.progress.glider;
-  $('region-name').textContent=distance(p,VILLAGE)<VILLAGE.radius?'바람뜰 마을':regionAt(p.x,p.y,p.z).name;$('altitude').textContent=`높이 ${Math.round(p.y)} m · ${p.gliding?'활강 중':p.grounded?'지상':'공중'}`;
+  const dungeon=state.expedition?.active?DUNGEONS.find(d=>d.id===state.expedition.active.id):null;
+  const town=dungeon?null:TOWNS.find(t=>distance(t,p)<t.radius+5);
+  $('region-name').textContent=dungeon?.name||town?.name||(distance(p,VILLAGE)<VILLAGE.radius?'바람뜰 마을':regionAt(p.x,p.y,p.z).name);$('altitude').textContent=`높이 ${Math.round(p.y)} m · ${p.gliding?'활강 중':p.grounded?'지상':'공중'}`;
   $('heading').textContent=['N','NE','E','SE','S','SW','W','NW'][((Math.round(camera.yaw/(Math.PI/4))%8)+8)%8];
   for(const el of document.querySelectorAll('[data-sigil]')){const done=state.progress.sigils.includes(el.dataset.sigil);el.classList.toggle('earned',done);el.textContent=`${done?'◆':'◇'} ${{quarry:'돌',forest:'숲',ruins:'하늘'}[el.dataset.sigil]}`;}
   $('quest-text').textContent=state.village.raid.status==='active'?`마을 방어 · ${state.village.raid.wave}/2차 침공`:state.village.raid.status==='queued'?(distance(p,VILLAGE)<64?'곧 침공 · 방어탑과 울타리를 준비하세요':'마을에 침공이 다가옵니다 · 지도 M으로 귀환'):distance(p,VILLAGE)<45?villageObjective(state):Math.hypot(p.x,p.z)>160?`외곽 수호자 ${state.adventure.bosses.filter(id=>id!=='boss-frontier').length}/8 · 웨이포인트를 찾아 점화하세요`:state.progress.bossDefeated?'길 너머의 8개 지역과 마을이 기다립니다':state.progress.sigils.length===3?'상승기류를 타고 하늘섬으로':`세 성소 (${state.progress.sigils.length}/3) · 또는 지도 M에서 마을로`;
+  if(dungeon)$('quest-text').textContent=dungeonObjective(state);
+  else if(state.village.raid.status!=='active'&&state.village.raid.status!=='queued'){
+    if(state.journey?.tracked)$('quest-text').textContent=journeyObjective(state);
+    else if(town)$('quest-text').textContent=`${town.name} · ! 안내인에게 E로 의뢰 받기 · 상인과 여관도 들러보세요`;
+  }
   $('world-clock').textContent=`${state.village.day}일 · ${state.village.clock>=450?'달밤':state.village.clock>=420?'해질녘':'햇살'} · Lv.${state.adventure.level} · 기술 ${state.adventure.points}P`;
+  if(dungeon)$('world-clock').textContent+= ' · 마을 시간 정지';
   for(let i=0;i<2;i++){const id=state.adventure.equipped[i],cool=id?p.abilityCooldowns[id]||0:0;$(`active-${i+1}`).textContent=id?`${i+1} ${ACTIVE_SKILLS[id].name}${cool>0?` · ${cool.toFixed(1)}초`:''}`:`${i+1} 기술 장착 · T`;}
 
   const near=interaction(state);$('interaction').hidden=!near||!!panel;if(near){$('interact-title').textContent=near.kind==='rune'?`${near.name}의 돌`:near.name;$('interact-description').textContent=near.description;}
   if(state.toast!==lastToast){lastToast=state.toast;$('toast').textContent=state.toast;}$('toast').classList.toggle('visible',!!state.toast&&!panel);
   $('skill-feedback').textContent=p.skillCooldown>0?`울림 재충전 ${p.skillCooldown.toFixed(1)}초`:p.energy<35?'울림이 모이는 중…':p.gliding?'Space 돛 접기 · WASD 활강 방향':'Q 울림 준비';
-  const boss=state.enemies.filter(e=>e.type==='boss'&&e.hp>0&&distance(p,e)<45&&(e.bossId||p.y>22)).sort((a,b)=>distance(p,a)-distance(p,b))[0],show=!!boss;$('boss-bar').hidden=!show;
+  const boss=state.enemies.filter(e=>e.type==='boss'&&e.hp>0&&distance(p,e)<45&&(e.bossId||e.dungeonId||p.y>22)).sort((a,b)=>distance(p,a)-distance(p,b))[0],show=!!boss;$('boss-bar').hidden=!show;
   if(show){$('boss-bar').firstElementChild.textContent=boss.name||'고요의 수호자';$('boss-fill').style.transform=`scaleX(${boss.hp/boss.maxHp})`;$('boss-phase').textContent=boss.state==='telegraph'?(boss.pattern==='ring'?'원형 파동 — 점프!':boss.pattern==='bolt'?'파편 발사 — 옆으로 회피!':'내려찍기 — 거리 벌리기!'):boss.state==='recover'?'지금이 공격할 기회':boss.phase===2?'격노 · 두 번째 울림':'고요의 수호자';}
   drawMap($('minimap'));
 }
@@ -248,18 +293,22 @@ function frame(now){
 }
 function reset(seed=WORLD.seed){state=createGame(seed);started=true;manual=true;panel=null;lastMode='playing';accumulator=0;hitStop=0;eventHistory.length=0;clearInput();$('start-screen').hidden=true;$('panel').hidden=true;$('hud').hidden=false;camera.yaw=0;camera.pitch=.35;camera.distance=9;draw(0);return snapshot(state);}
 window.WINDWAKE={
-  version:'2.0.0',reset,
+  version:'3.0.0',reset,
   step(frames=1,held={},options={}){manual=true;for(let i=0;i<clamp(Math.floor(frames),0,36000);i++){stepGame(state,held);processEvents();}if(options.render!==false)draw(0);return snapshot(state);},
   render(){draw(0);},
   state:()=>snapshot(state),snapshot:()=>snapshot(state),
   restore(data){state=restoreSnapshot(data);manual=true;lastMode=state.mode;draw(0);return snapshot(state);},
   setManual(value=true){manual=!!value;accumulator=0;clearInput();if(!manual){panel=null;$('panel').hidden=true;if(state.mode==='dead'||state.mode==='won')openPanel(state.mode);else canvas.focus();}return manual;},
-  teleport(x,y,z){const p=state.player;Object.assign(p,{x,y:y??heightAt(x,z),z,vx:0,vy:0,vz:0,grounded:false,gliding:false});draw(0);return snapshot(state);},
+  teleport(x,y,z){const p=state.player;Object.assign(p,{x,y:y??floorAt(state,x,z),z,vx:0,vy:0,vz:0,grounded:false,gliding:false});draw(0);return snapshot(state);},
   spawnEnemy(type,x,z,y){return structuredClone(spawnEnemy(state,type,x,z,y));},
   defeatEnemy(id){const e=state.enemies.find(e=>e.id===id);if(e){e.hp=1;const p=state.player;const old={x:p.x,y:p.y,z:p.z,yaw:p.yaw};p.x=e.x;p.z=e.z-2;p.y=e.y;p.yaw=0;stepGame(state,{attack:true});for(let i=0;i<15;i++)stepGame(state,{});Object.assign(p,old);}draw(0);},
   grant(kind,value){if(kind==='sigil')awardSigil(state,value);else if(kind==='xp')awardXP(state,clamp(Number(value)||0,0,100000));else if(kind==='crystals')state.player.crystals+=clamp(Number(value)||0,0,999);else if(kind==='flasks')state.player.flasks=clamp(Number(value)||0,0,6);draw(0);},
   learn(id){const result=learnSkill(state,id);draw(0);return result;},equip(id,slot){const result=equipSkill(state,id,slot);draw(0);return result;},
   village(action,payload={}){const result=villageAction(state,action,payload);draw(0);return result;},travel(id){const result=fastTravel(state,id);draw(0);return result;},ability(slot){const result=useAbility(state,slot);draw(0);return result;},
+  town(action,payload={}){const result=townAction(state,action,payload);draw(0);return result;},
+  equipRelic(id,slot){const result=equipRelic(state,id,slot);draw(0);return result;},track(id){const result=trackQuest(state,id);draw(0);return result;},
+  enterDungeon(id){const result=enterExpedition(state,id);processEvents();draw(0);return result;},exitDungeon(){const result=exitExpedition(state);processEvents();draw(0);return result;},
+  dungeon(action,payload={}){const result=expeditionAction(state,action,payload);processEvents();draw(0);return result;},
   respawn(){respawn(state);lastMode='playing';draw(0);},
   save:()=>exportSave(state),load(data){state=loadSave(data);lastMode='playing';draw(0);return snapshot(state);},
   metrics(){const a=[...performanceData.samples].sort((a,b)=>a-b),r=performanceData.renderMs;return {frames:performanceData.frames,samples:a.length,fps:a.length?1000/(a.reduce((x,y)=>x+y,0)/a.length):0,frameP95:a[Math.floor(a.length*.95)]||0,frameP99:a[Math.floor(a.length*.99)]||0,renderAverage:r.length?r.reduce((x,y)=>x+y,0)/r.length:0,droppedTime:performanceData.droppedTime,renderer:renderer?.stats,world:worldStats(),actors:state.enemies.length,audioVoices:audio.voices.size};},

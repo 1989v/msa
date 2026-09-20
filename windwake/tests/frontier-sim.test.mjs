@@ -120,7 +120,7 @@ test('v1 migration retains completed original progress and initializes the new a
   const chests=LANDMARKS.filter(l=>l.kind==='chest'&&l.id.startsWith('chest-')).map(l=>l.id);
   const old={version:1,seed:1234,progress:{sigils:['quarry','forest','ruins'],discovered:['meadow','camp','camp-east','camp-forest'],
     chests,glider:true,bossDefeated:true,upgrades:{health:2,power:3}},crystals:87,checkpoint:'camp-east',metrics:{kills:22,parries:9},time:181.25};
-  const s=loadSave(old);assert.equal(s.version,2);assert.equal(s.mode,'playing');assert.deepEqual(s.progress,old.progress);
+  const s=loadSave(old);assert.equal(s.version,3);assert.equal(s.mode,'playing');assert.deepEqual(s.progress,old.progress);
   assert.equal(s.player.crystals,87);assert.equal(s.player.checkpoint,'camp-east');assert.equal(s.player.maxHp,150);
   assert.equal(s.metrics.kills,22);assert.equal(s.metrics.parries,9);assert.equal(s.time,181.25);
   assert.equal(s.enemies.find(e=>e.id==='boss').hp,0);assert.deepEqual(s.adventure.waypoints,['home']);assert.equal(s.village.level,1);

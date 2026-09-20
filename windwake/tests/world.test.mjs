@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { WORLD, VILLAGE, BIOMES, WAYPOINTS, BOSS_SITES, RESOURCE_NODES, LANDMARKS,
-  SOLIDS, TRAIL_ROUTES, heightAt, terrainColor, supportAt, getChunk, querySolids,
+  TOWNS, DUNGEON_ENTRANCES, TRAILS, SOLIDS, TRAIL_ROUTES, heightAt, terrainColor, supportAt, getChunk, querySolids,
   spawnsNear, worldStats } from '../world.mjs';
 import { Renderer, daylightAt } from '../render.mjs';
+import { DUNGEONS, dungeonGeometry, dungeonFloor } from '../dungeons.mjs';
 
 test('64× world keeps original puzzle IDs and finite authored destinations', () => {
   assert.equal((WORLD.size / 120) ** 2, 64);
@@ -151,4 +152,123 @@ test('new creature and village schemas produce finite dynamic geometry with lega
   assert.equal(daylightAt(90), 1);
   assert.equal(daylightAt(500), .55);
   renderer.dispose();
+});
+
+test('eight populated towns have physical services, clear residents and no ambient spawns', () => {
+  assert.equal(TOWNS.length, 8);
+  assert.equal(DUNGEON_ENTRANCES.length, 4);
+  assert.equal(new Set(TOWNS.map(t => t.name)).size, 8);
+  assert.equal(new Set(TOWNS.map(t => t.style)).size, 8);
+  for (const town of TOWNS) {
+    assert.equal(town.npcs.length, 3);
+    assert.ok(town.buildings.length >= 6);
+    assert.deepEqual(town.npcs.map(n => n.role).sort(), ['guide', 'keeper', 'merchant']);
+    assert.ok(town.service);
+    assert.equal(spawnsNear(town.x, town.z, town.radius).length, 0);
+    for (const npc of town.npcs) {
+      assert.equal(npc.townId, town.id);
+      assert.equal(querySolids(npc.x, npc.z, .45).length, 0, npc.id);
+      assert.equal(npc.y, heightAt(npc.x, npc.z));
+    }
+    for (const building of town.buildings) assert.ok(querySolids(building.x, building.z, .1).some(s => s.id === `solid-${building.id}`));
+  }
+});
+
+test('town streets and dungeon approaches preserve a clear three-metre base-character route', () => {
+  const approaches = TRAILS.filter(t => t.id.startsWith('town-approach') || t.id.startsWith('dungeon-approach'));
+  assert.equal(approaches.length, 12);
+  for (const trail of approaches) for (let i = 1; i < trail.points.length; i++) {
+    const a = trail.points[i - 1], b = trail.points[i], steps = Math.ceil(Math.hypot(b.x - a.x, b.z - a.z));
+    const dx = (b.x - a.x) / steps, dz = (b.z - a.z) / steps;
+    for (let j = 1; j <= steps; j++) {
+      const x = a.x + dx * j, z = a.z + dz * j, y = heightAt(x, z);
+      assert.ok(Math.abs(y - heightAt(x - dx, z - dz)) / Math.hypot(dx, dz) <= .8, trail.id);
+      assert.equal(querySolids(x, z, 3).filter(b => b.y + b.h > y + .48).length, 0, trail.id);
+    }
+  }
+});
+
+test('settlement residents and styles generate finite geometry within an independent NPC budget', () => {
+  const fixture = canvasFixture(), renderer = new Renderer(fixture.canvas);
+  for (const town of TOWNS) {
+    const player = { x: town.x, y: town.y, z: town.z, yaw: town.yaw, grounded: true, vx: 0, vz: 0 };
+    renderer.render({ frame: 1, time: 1, player, progress: {}, enemies: [], effects: [], blocks: [], items: [] });
+    assert.equal(renderer.stats.visibleNPCs, 3);
+    assert.ok(renderer.stats.visibleNPCs <= 12);
+    assert.ok([...renderer.dynamic.data.subarray(0, renderer.dynamic.length)].every(Number.isFinite));
+  }
+  renderer.dispose();
+  assert.equal(fixture.buffers.size, 0);
+});
+
+test('repeated instance transitions isolate geometry, camera floor and every static buffer', () => {
+  const fixture = canvasFixture(), renderer = new Renderer(fixture.canvas);
+  const state = { frame: 1, time: 1, player: { x: WORLD.spawn.x, y: heightAt(WORLD.spawn.x, WORLD.spawn.z), z: WORLD.spawn.z, grounded: true, vx: 0, vz: 0, yaw: 0 }, enemies: [], effects: [], items: [], blocks: [], progress: {}, expedition: { active: null, progress: {} } };
+  for (let cycle = 0; cycle < 3; cycle++) for (const dungeon of DUNGEONS) {
+    // Controlled render fixture only: real entry, encounters and puzzle actions
+    // are verified by dungeon domain and natural-route tests separately.
+    state.expedition.active = { id: dungeon.id, blocks: [], sequenceSteps: {} };
+    state.expedition.progress[dungeon.id] = { killed: [], solved: [], opened: [], claimed: false };
+    Object.assign(state.player, dungeon.entry);
+    const before = worldStats().generatedChunks;
+    for (let frame = 0; frame < 4; frame++) {
+      state.frame++;
+      renderer.render(state);
+      assert.equal(worldStats().generatedChunks, before, 'indoor render must not allocate world geometry');
+      assert.equal(renderer.stats.residentChunks, 0);
+      assert.equal(renderer.stats.chunkBuildsThisFrame, 0);
+      assert.equal(renderer.stats.dungeonBuffers, 1);
+      assert.equal(renderer.stats.residentBytes, renderer.stats.dungeonBytes);
+      assert.equal(renderer.stats.visibleNPCs, 0);
+      assert.equal(fixture.buffers.size, 4, 'three reusable renderer buffers and one active dungeon batch');
+      assert.equal(renderer.water, null);
+      assert.equal(renderer.backdrop, null);
+      assert.equal(renderer.floorAt(state.player.x, state.player.z), dungeonFloor(state, state.player.x, state.player.z));
+      assert.equal(renderer.stats.closedDungeonDoors, dungeonGeometry(state).doors.filter(d => !d.open).length);
+      assert.ok([...renderer.dynamic.data.subarray(0, renderer.dynamic.length)].every(Number.isFinite));
+    }
+    state.expedition.active = null;
+    Object.assign(state.player, { x: WORLD.spawn.x, y: heightAt(WORLD.spawn.x, WORLD.spawn.z), z: WORLD.spawn.z });
+    renderer.render(state);
+    assert.equal(renderer.stats.dungeonBuffers, 0);
+    assert.equal(renderer.stats.activeScene, 'world');
+    assert.ok(renderer.stats.residentChunks <= 64);
+    assert.ok(renderer.stats.chunkBuildsThisFrame <= 2);
+    assert.equal(fixture.buffers.size, renderer.stats.residentChunks + 5);
+  }
+  assert.equal(renderer.stats.sceneTransitions, DUNGEONS.length * 6);
+  renderer.dispose();
+  assert.equal(fixture.buffers.size, 0);
+});
+
+test('camera eye and near plane remain outside adjacent dungeon walls, closed doors and ceilings', () => {
+  const fixture=canvasFixture(),renderer=new Renderer(fixture.canvas),dungeon=DUNGEONS[0];
+  const state={frame:1,player:{...dungeon.entry,grounded:true},blocks:[],expedition:{active:{id:dungeon.id},progress:{[dungeon.id]:{killed:[],solved:[],opened:[],claimed:false}}}};
+  renderer.syncScene(state);
+  const geometry=dungeonGeometry(state),door=geometry.doors.find(d=>!d.open);
+  const cases=[
+    {x:8.9,y:0,z:0,yaw:-Math.PI/2,pitch:.35},
+    {x:8.9,y:0,z:-8.9,yaw:-Math.PI/4,pitch:.35},
+    {x:0,y:6.1,z:0,yaw:0,pitch:1.15},
+    door.w<door.d?{x:door.x-door.w/2-.4,y:0,z:door.z,yaw:-Math.PI/2,pitch:.35}
+      :{x:door.x,y:0,z:door.z-door.d/2-.4,yaw:Math.PI,pitch:.35},
+  ];
+  const solids=[...geometry.walls,...geometry.props,...geometry.doors.filter(d=>!d.open)];
+  for(const at of cases){
+    Object.assign(state.player,at);renderer.eyeInitialized=false;
+    for(let frame=0;frame<12;frame++){
+      state.frame++;renderer.time=frame*.09;
+      renderer.updateCamera(state,{yaw:at.yaw,pitch:at.pitch,distance:8,shake:1},1/60);
+      assert.ok([...renderer.eye,...renderer.viewProjection].every(Number.isFinite));
+      assert.ok(Math.hypot(...renderer.eye.map((v,i)=>v-renderer.target[i]))>.05,`camera collapsed at ${JSON.stringify(at)}: ${renderer.eye}`);
+      const points=[[...renderer.eye]],view=renderer.view,near=.12;
+      // Actual four near-plane corners, using the view basis and projection.
+      for(const u of [-1,1])for(const v of [-1,1])points.push([0,1,2].map(axis=>
+        renderer.eye[axis]-view[axis*4+2]*near+view[axis*4]*u*near/renderer.projection[0]+view[axis*4+1]*v*near/renderer.projection[5]));
+      for(const point of points)for(const b of solids)assert.equal(
+        Math.abs(point[0]-b.x)<b.w/2&&Math.abs(point[2]-b.z)<b.d/2&&point[1]>b.y&&point[1]<b.y+b.h,
+        false,`${JSON.stringify(at)} camera clips ${b.id} at ${point}`);
+    }
+  }
+  renderer.dispose();assert.equal(fixture.buffers.size,0);
 });
