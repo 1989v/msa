@@ -8,7 +8,8 @@ export const SLUG = 'arena';
 export type ScoreBoard = 'online' | 'practice';
 
 export interface ScoreRequest { nickname: string; score: number; detail: string; board: ScoreBoard }
-export interface ScoreResult { applied: boolean; rank: number }
+/** excluded: 운영자·자동화 제출 — 서버가 받되 기록하지 않았다. 그때만 rank 가 0 이다 */
+export interface ScoreResult { applied: boolean; rank: number; excluded?: boolean }
 
 /** 한 판의 점수: KO 100 · 준 데미지 1 · 승리 50. 닉네임당 최고 기록 한 줄이 남는다 */
 export function matchScore(me: RankEntry): number {
@@ -58,5 +59,6 @@ export async function submitScore(req: ScoreRequest): Promise<ScoreResult | null
 export function scoreNote(board: ScoreBoard, score: number, r: ScoreResult | null): string {
   const label = board === 'online' ? '온라인' : '연습';
   if (!r) return `${label} 기록 ${score}점 · 순위표에 못 올렸습니다`;
+  if (r.excluded) return `${label} 기록 ${score}점 · 운영·자동화 기록은 순위표에 오르지 않습니다`;
   return r.applied ? `${label} 순위표 ${r.rank}위 · ${score}점 (새 기록)` : `${label} 순위표 ${r.rank}위 · ${score}점 (최고 기록 유지)`;
 }

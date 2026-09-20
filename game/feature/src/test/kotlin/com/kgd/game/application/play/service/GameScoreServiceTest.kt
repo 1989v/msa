@@ -18,6 +18,8 @@ import com.kgd.game.domain.play.model.ScoreTrack
 import com.kgd.game.application.play.usecase.GetActiveLeaderboardsUseCase
 import com.kgd.game.application.play.usecase.GetGameLeaderboardUseCase
 import com.kgd.game.application.play.usecase.SubmitGameScoreUseCase
+import com.kgd.common.exception.BusinessException
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
@@ -304,9 +306,53 @@ class GameScoreServiceTest : BehaviorSpec({
                 } returns (true to 1)
 
                 GameScoreService(gameRepository, scoreRepository)
-                    .execute(SubmitGameScoreUseCase.Command("coin-corgi", ScoreTrack.BASE, default, "가나", 900, null)) shouldBe (true to 1)
+                    .execute(SubmitGameScoreUseCase.Command("coin-corgi", ScoreTrack.BASE, default, "가나", 900, null)) shouldBe
+                    SubmitGameScoreUseCase.Result(applied = true, rank = 1, excluded = false)
 
-                verify { scoreRepository.submit(1L, ScoreTrack.BASE, default, "가나", 900, null, GameDay.today()) }
+                verify(exactly = 1) { scoreRepository.submit(1L, ScoreTrack.BASE, default, "가나", 900, null, GameDay.today()) }
+            }
+        }
+
+        `when`("운영자(ROLE_ADMIN)가 제출하면") {
+            then("저장소를 부르지 않고 excluded 로 돌려보낸다 — 운영자 플레이는 기록이 아니다") {
+                val gameRepository = mockk<GameRepositoryPort>()
+                // submit 을 스텁하지 않는다 — 불리면 MockK 가 예외를 던지므로 verify 이전에 한 겹 더 막힌다
+                val scoreRepository = mockk<GameScoreRepositoryPort>()
+                every { gameRepository.findBySlug("coin-corgi") } returns game(1L, "coin-corgi")
+
+                GameScoreService(gameRepository, scoreRepository)
+                    .execute(SubmitGameScoreUseCase.Command("coin-corgi", ScoreTrack.BASE, default, "가나", 900, null, isOperator = true)) shouldBe
+                    SubmitGameScoreUseCase.Result(applied = false, rank = 0, excluded = true)
+
+                verify(exactly = 0) { scoreRepository.submit(any(), any(), any(), any(), any(), any(), any(), any()) }
+            }
+        }
+
+        `when`("자동화 UA(헤드리스·크롤러)로 제출하면") {
+            then("저장소를 부르지 않고 excluded 로 돌려보낸다 — 시험 스크립트의 기록이 보드에 쌓이지 않는다") {
+                val gameRepository = mockk<GameRepositoryPort>()
+                val scoreRepository = mockk<GameScoreRepositoryPort>()
+                every { gameRepository.findBySlug("coin-corgi") } returns game(1L, "coin-corgi")
+
+                GameScoreService(gameRepository, scoreRepository)
+                    .execute(SubmitGameScoreUseCase.Command("coin-corgi", ScoreTrack.BASE, default, "실측417930", 227, null, isAutomation = true)) shouldBe
+                    SubmitGameScoreUseCase.Result(applied = false, rank = 0, excluded = true)
+
+                verify(exactly = 0) { scoreRepository.submit(any(), any(), any(), any(), any(), any(), any(), any()) }
+            }
+        }
+
+        `when`("자동화 제출이라도 닉네임이 규격 밖이면") {
+            then("excluded 가 아니라 400 이다 — 검증이 제외보다 앞선다") {
+                val gameRepository = mockk<GameRepositoryPort>()
+                val scoreRepository = mockk<GameScoreRepositoryPort>()
+                every { gameRepository.findBySlug("coin-corgi") } returns game(1L, "coin-corgi")
+
+                shouldThrow<BusinessException> {
+                    GameScoreService(gameRepository, scoreRepository)
+                        .execute(SubmitGameScoreUseCase.Command("coin-corgi", ScoreTrack.BASE, default, "a", 900, null, isAutomation = true))
+                }
+                verify(exactly = 0) { scoreRepository.submit(any(), any(), any(), any(), any(), any(), any(), any()) }
             }
         }
 
@@ -322,7 +368,8 @@ class GameScoreServiceTest : BehaviorSpec({
                 } returns (true to 1)
 
                 GameScoreService(gameRepository, scoreRepository)
-                    .execute(SubmitGameScoreUseCase.Command("bee-guard", ScoreTrack.BASE, fresh, "가나", 900, null)) shouldBe (true to 1)
+                    .execute(SubmitGameScoreUseCase.Command("bee-guard", ScoreTrack.BASE, fresh, "가나", 900, null)) shouldBe
+                    SubmitGameScoreUseCase.Result(applied = true, rank = 1)
             }
         }
     }

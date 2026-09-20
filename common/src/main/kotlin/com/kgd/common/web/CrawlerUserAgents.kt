@@ -1,7 +1,10 @@
-package com.kgd.analytics.presentation.event
+package com.kgd.common.web
 
 /**
  * 크롤러 판별 (ADR-0095).
+ *
+ * analytics(노출·클릭 원장)와 game(랭킹 제출)이 같은 목록을 쓴다. 마커는 운영 관찰로 자라는 것이라
+ * 두 곳이 따로 들면 한쪽만 갱신되어 「원장은 거르는데 랭킹은 받는」 상태가 된다.
  *
  * **원장에 넣기 전에 거른다.** 관광지 상세 6만 URL 이 사이트맵에 있어 검색엔진이 JS 를
  * 렌더하며 IntersectionObserver 를 전부 켠다. 배포 사흘 만에 노출 64,165건이 쌓였는데

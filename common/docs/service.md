@@ -28,6 +28,7 @@
 | `redis` | `CommonRedisAutoConfiguration` | Redis 클러스터 auto-configuration (`kgd.common.redis.enabled`) |
 | `webclient` | `CommonWebClientAutoConfiguration` | WebClient auto-configuration (`kgd.common.web-client.enabled`) |
 | `webclient` | `WebClientBuilderFactory` | 공통 정책 builder를 clone하여 서비스별 client 생성 |
+| `web` | `CrawlerUserAgents` | 자기소개형 크롤러·헤드리스 UA 판별 — analytics 원장(ADR-0095)과 game 랭킹 제출(ADR-0084 개정)이 같은 목록을 쓴다 |
 | `messaging` | `IdempotentEventHandler` | Kafka consumer 멱등 헬퍼 — `(eventId, consumerGroup)` dedup + race 흡수 (ADR-0029) |
 | `messaging` | `ProcessedEventRepositoryPort` | `processed_event` 영속화 추상화 (각 서비스가 JPA 어댑터 구현) |
 | `messaging` | `ProcessedEventRecord` | DTO (JPA 의존성 0) — Port 시그니처용 |

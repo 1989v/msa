@@ -14,10 +14,13 @@ import com.kgd.game.domain.play.model.ScoreTrack
 import com.kgd.game.application.play.usecase.GetActiveLeaderboardsUseCase
 import com.kgd.game.application.play.usecase.GetGameLeaderboardUseCase
 import com.kgd.game.application.play.usecase.SubmitGameScoreUseCase
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
+
+private val log = KotlinLogging.logger {}
 
 /** 게임별 랭킹 — 닉네임당 최고 기록. 게스트 제출 허용 (닉네임이 곧 신원) */
 @Service
@@ -55,22 +58,31 @@ class GameScoreService(
      *
      * 날짜는 서버가 정한다(`GameDay`). 클라이언트가 실어 보내게 하면 기기 시계와 타임존만큼
      * 보드가 갈라지고, 게임 57종이 쓰는 공용 제출 코드(`lib/rank.js`)를 전부 고쳐야 한다.
+     *
+     * 운영자·자동화 제출은 검증 **뒤**, 저장소 **앞**에서 돌려보낸다 — 시험 스크립트도 규격 밖 입력은
+     * 400 으로 보고, 로그에 닿는 닉은 규격 안 문자열이다. 조회 경로는 손대지 않는다: 쓰지 않은 행은
+     * 걸러 낼 것도 없다.
      */
     @Transactional
-    override fun execute(command: SubmitGameScoreUseCase.Command): Pair<Boolean, Int> {
+    override fun execute(command: SubmitGameScoreUseCase.Command): SubmitGameScoreUseCase.Result {
         // 위치 분해를 쓰지 않는다 — Command 에 필드를 하나 끼워 넣는 순간 값이 조용히 밀린다
         val gameId = resolveGameId(command.slug)
         val nick = command.nickname.trim()
         val score = command.score
         if (!NICK_REGEX.matches(nick)) throw BusinessException(ErrorCode.INVALID_INPUT, "닉네임은 2~16자 (문자/숫자/공백/._-)")
         if (score !in 0..MAX_SCORE) throw BusinessException(ErrorCode.INVALID_INPUT, "점수 범위 오류")
+        if (command.isOperator || command.isAutomation) {
+            log.info { "score excluded slug=${command.slug} nick=$nick operator=${command.isOperator} automation=${command.isAutomation}" }
+            return SubmitGameScoreUseCase.Result(applied = false, rank = 0, excluded = true)
+        }
         // 보드 키는 카탈로그 선언과 대조하지 않는다 — 게임이 모드를 늘렸는데 시드가 아직
         // 안 따라온 순간에 기록을 버리게 된다. 선언은 사이트가 탭 이름을 짓는 데만 쓴다.
-        return scoreRepository.submit(
+        val (applied, rank) = scoreRepository.submit(
             gameId = gameId, track = command.track, board = command.board, nickname = nick,
             score = score, detail = command.detail?.take(64), playDate = GameDay.today(),
             memberId = command.memberId,
         )
+        return SubmitGameScoreUseCase.Result(applied = applied, rank = rank)
     }
 
     /**

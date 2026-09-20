@@ -83,7 +83,7 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
 | `GET /api/v1/games/{slug}`, `/{slug}/similar` | 상세(BETA 노출 허용) / 태그 교집합 유사 게임 |
 | `POST /api/v1/games/{slug}/sessions`, `PATCH .../{sessionKey}` | 세션 시작(게스트 OK)/종료 |
 | `PUT /api/v1/games/{slug}/rating` | 평점 upsert (X-User-Id 필수) |
-| `POST /api/v1/games/{slug}/scores`, `GET .../leaderboard?track=&board=&limit=&period=&date=` | 랭킹 제출/조회 (게스트 OK). `board` 는 게임이 나눈 모드 키이고 생략 시 기본 보드(V59). `period=ALL_TIME\|DAILY`, 생략 시 ALL_TIME — 게임 안 위젯(`lib/rank.js`)이 부르는 계약이 그것이다. `date` 는 DAILY 전용이고 생략 시 **KST 오늘** |
+| `POST /api/v1/games/{slug}/scores`, `GET .../leaderboard?track=&board=&limit=&period=&date=` | 랭킹 제출/조회 (게스트 OK). **운영자(ROLE_ADMIN)·자동화 UA 제출은 받되 기록하지 않고 `excluded=true` 로 답한다**(ADR-0084 개정 2026-09-20). `board` 는 게임이 나눈 모드 키이고 생략 시 기본 보드(V59). `period=ALL_TIME\|DAILY`, 생략 시 ALL_TIME — 게임 안 위젯(`lib/rank.js`)이 부르는 계약이 그것이다. `date` 는 DAILY 전용이고 생략 시 **KST 오늘** |
 | `GET /api/v1/games/leaderboards?boards=&entries=` | 허브 레일용 배치 — 기록 있는 보드의 TOP N + **오늘 기록(`todayEntries`)**을 한 응답에 |
 | `GET/PUT /api/v1/games/{slug}/save` | 서버 세이브 — **게스트 허용** (V9). 로그인 사용자는 `X-User-Id`, 게스트는 서버 발급 12자리 **이어하기 코드**(`?code=` / body `code`)로 식별. PUT 은 `{data, version, code?}` 낙관적 저장, 신규 시 코드 발급. 클라이언트는 로그인 중에도 코드를 함께 보내고, 서버는 계정 슬롯을 먼저 찾은 뒤 없을 때만 코드로 폴백한다. **동시 쓰기 방어는 `@Version` 하나뿐** — `X-Device-Id` 리스는 걷어냈다(아래 Key Rules) |
 | `POST /api/v1/games/{slug}/runs`, `GET .../{runKey}`, `POST .../{runKey}/consume` | 로그라이크 런 — 서버 시드 발급/조회/소모 (게스트 허용) |
@@ -183,6 +183,13 @@ kubectl -n commerce create secret generic game-hmac \
 ## Key Rules
 
 - 응답은 공통 `ApiResponse<T>` 포맷
+- **운영자·자동화 제출은 랭킹에 기록되지 않는다** (ADR-0084 개정 2026-09-20). 판별은 `X-User-Roles` 의
+  `ROLE_ADMIN` 과 `CrawlerUserAgents.isCrawler(User-Agent)` — 제출 경로에서만 보고 조회는 손대지 않는다.
+  그래서 **테스트는 로그인 상태로, 상세 페이지를 연 지 1시간 안에** 한다(토큰 만료 뒤 제출은 게스트로
+  기록된다 — 게임 안에는 재발급이 없다). e2e 는 UA 를 사람 것으로 씌우지 않는다(씌우면 행이 남는다).
+  양성 경로(`applied=true`)를 운영에서 재야 하면 사람 UA + 사후 삭제, 또는 로컬 k3d.
+  `lib/rank.js` 는 `GameAuth.token()` 이 있을 때만 Bearer 를 싣으므로 게임 페이지가 `lib/auth.js` 를
+  **rank.js 앞에** 실어야 운영자 판별이 닿는다(2026-09-20 에 22종을 맞췄다)
 - DRAFT/REVIEW/SUSPENDED 게임은 공개 API 에서 NOT_FOUND (존재 여부 은닉)
 - **세이브 슬롯은 게임당 하나인데 신원은 둘이다** — 회원은 `member_id`(유니크 `uk_save_game_member`),
   게스트는 이어하기 코드. 게스트로 놀던 사람이 로그인하면 **계정 슬롯이 비어 있을 때만** 그 행이

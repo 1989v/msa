@@ -8,6 +8,7 @@
 | 구분 | 기능 | 활성화 방식 |
 |------|------|----------|
 | 항상 로드 | `BusinessException`, `ErrorCode`, `ApiResponse`, `GlobalExceptionHandler` | `scanBasePackages`에 포함 |
+| 항상 사용 가능 | `CrawlerUserAgents` (`com.kgd.common.web`) — 자기소개형 크롤러·헤드리스 UA 판별 (ADR-0095, ADR-0084 개정) | 일반 `object` — import 만, 스캔 무관 |
 | 선택적 | Security (JWT, AES) | `kgd.common.security.enabled: true` |
 | 선택적 | Redis 클러스터 | `kgd.common.redis.enabled: true` |
 | 선택적 | WebClient | `kgd.common.web-client.enabled: true` |

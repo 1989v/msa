@@ -6,12 +6,14 @@ import com.kgd.game.domain.play.model.ScoreBoardKey
 import com.kgd.game.domain.play.model.ScorePeriod
 import com.kgd.game.domain.play.model.ScoreTrack
 import com.kgd.common.response.ApiResponse
+import com.kgd.common.web.CrawlerUserAgents
 import com.kgd.game.application.play.port.ScoreEntry
 import com.kgd.game.application.play.usecase.GetGameLeaderboardUseCase
 import com.kgd.game.application.play.usecase.SubmitGameScoreUseCase
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.PositiveOrZero
+import org.springframework.http.HttpHeaders
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -35,9 +37,16 @@ data class ScoreSubmitRequest(
     val board: String? = null,
 )
 
-data class ScoreSubmitResponse(val applied: Boolean, val rank: Int)
+/** `excluded` 는 운영자·자동화 제출 — 기록하지 않았다는 뜻이고 그때만 `rank = 0` 이다 */
+data class ScoreSubmitResponse(val applied: Boolean, val rank: Int, val excluded: Boolean = false)
 
-/** 게임별 랭킹 — 게스트 제출 허용. 닉네임당 최고 기록 1행 */
+/**
+ * 게임별 랭킹 — 게스트 제출 허용. 닉네임당 최고 기록 1행.
+ *
+ * 제출자 판별은 여기서 헤더를 읽어 Command 에 싣는다. `X-User-Roles` 는 게이트웨이가 서버 발행값으로만
+ * 넣는다(손으로 붙인 것은 지운다) — 운영자 판별은 위조할 수 없다. 반대로 「운영자인 척」해 기록을
+ * 안 남기게 하는 것은 이득이 없어 막지 않는다.
+ */
 @RestController
 @RequestMapping("/api/v1/games/{slug}")
 class GameScoreController(
@@ -48,9 +57,11 @@ class GameScoreController(
     fun submit(
         @PathVariable slug: String,
         @RequestHeader("X-User-Id", required = false) userId: String?,
+        @RequestHeader("X-User-Roles", required = false) roles: String?,
+        @RequestHeader(value = HttpHeaders.USER_AGENT, required = false) userAgent: String?,
         @Valid @RequestBody request: ScoreSubmitRequest,
     ): ApiResponse<ScoreSubmitResponse> {
-        val (applied, rank) =
+        val result =
             submitScore.execute(
                 SubmitGameScoreUseCase.Command(
                     slug = slug,
@@ -60,9 +71,13 @@ class GameScoreController(
                     memberId = userId?.toLongOrNull(),
                     score = request.score,
                     detail = request.detail,
+                    isOperator = isOperator(roles),
+                    isAutomation = CrawlerUserAgents.isCrawler(userAgent),
                 )
             )
-        return ApiResponse.success(ScoreSubmitResponse(applied = applied, rank = rank))
+        return ApiResponse.success(
+            ScoreSubmitResponse(applied = result.applied, rank = result.rank, excluded = result.excluded),
+        )
     }
 
     /**
@@ -93,10 +108,17 @@ class GameScoreController(
             ),
         )
 
+    private fun isOperator(roles: String?): Boolean =
+        roles?.split(",")?.any { it.trim() == ADMIN_ROLE } == true
+
     /** 못 읽는 날짜는 조용히 오늘로 넘기지 않는다 — 잘못된 날의 빈 보드는 "기록 없음"으로 위장된다 */
     private fun parseDate(raw: String?): LocalDate? =
         raw?.trim()?.takeIf { it.isNotEmpty() }?.let {
             runCatching { LocalDate.parse(it) }
                 .getOrElse { throw BusinessException(ErrorCode.INVALID_INPUT, "날짜 형식 오류 (YYYY-MM-DD)") }
         }
+
+    companion object {
+        private const val ADMIN_ROLE = "ROLE_ADMIN"
+    }
 }

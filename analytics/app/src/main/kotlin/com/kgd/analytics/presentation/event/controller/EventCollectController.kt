@@ -1,6 +1,6 @@
 package com.kgd.analytics.presentation.event.controller
 
-import com.kgd.analytics.presentation.event.CrawlerUserAgents
+import com.kgd.common.web.CrawlerUserAgents
 import com.kgd.analytics.presentation.event.dto.CollectEventsRequest
 import com.kgd.analytics.presentation.event.dto.CollectEventsResponse
 import com.kgd.analytics.application.event.usecase.CollectEventsUseCase
