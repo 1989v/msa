@@ -14,7 +14,7 @@
 | CI | ci success · images success (common 변경이라 JVM 13종 전부 rebuild) | run 35498755685 / 35498755719 → `82533b7d ci: bump 13 service image tag(s) to 15cfb43` |
 | 롤아웃 | content `15cfb43` 1/1 · portal-fe `15cfb43` 1/1 | 새 심볼: 헤드리스 UA curl POST → `{"applied":false,"rank":0,"excluded":true}` · 보드에 그 닉 없음 · 배포된 `lib/rank.js` 에 `Authorization`·`excluded` 문자열 |
 | V5 초록불 (배포 후) | PASS | 같은 스크립트 → 응답 `excluded:true`, `leaderboard success=true · mine null` → `checks {"noteScore":true,"excluded":true,"notOnLeaderboard":true}` exit 0. 결과 화면은 예고대로 「연습 순위표 0위 · 227점 (최고 기록 유지)」(옛 번들 `index-CjJOLYZk.js`). 파드 로그 `score excluded slug=arena nick=실측993129 operator=false automation=true` |
-| V7 운영자 끝-끝 | **OPEN — 사용자 플레이 필요** | 전제 확인: `auth_db.member_roles` member 1 = ROLE_ADMIN. 절차: 로그인한 일반 브라우저로 `auth.js`+`rank.js` 게임 한 판(예 archer-outbreak) → 위젯 「운영·자동화 기록 — 랭킹에 오르지 않음」 · 파드 로그 `operator=true` · 그 닉 행 수 무변화 |
+| V7 운영자 끝-끝 | **OPEN — 사용자 플레이 필요** | 전제 확인: `auth_db.member_roles` member 1 = ROLE_ADMIN. 절차: 로그인한 일반 브라우저로 `auth.js`+`autoPanel` 게임 한 판(예 cliff-climber) **처음 쓰는 닉으로** → 위젯 「운영·자동화 기록 — 랭킹에 오르지 않음」 · 파드 로그 `operator=true` · 그 닉의 행이 생기지 않음 |
 | R7 정리 | DONE | id 17 + 16 삭제, 패턴 잔여 0, 남은 20행 = `go` 14 · `스넥크` 4 · `가즈아` 2 → `verifications/purge.md` |
 
 ## 남은 것

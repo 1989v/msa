@@ -148,7 +148,7 @@ sketch-sleuth spud-arena stone-sage word-warden.
    `LIKE '실측%'` 에 실제 플레이어가 섞이지 않았는지 눈으로 본다.
 2. 쓰기 — `oci-mysql --write game_db "DELETE FROM game_score WHERE id IN (<1 의 id>)"`, `game_score_daily` 도 같게.
    미리보기(ROLLBACK) 행 수가 목록 길이와 같을 때만 확인한다.
-3. 순서 — V4 빨간불 실행(옛 서버)이 `실측` 행을 하나 더 만들고 V7 프로브가 `ROLE_USER` 행을 하나 만들 수 있으므로,
+3. 순서 — V5 빨간불 실행(옛 서버)이 `실측` 행을 하나 더 만들고 V7 프로브가 `ROLE_USER` 행을 하나 만들 수 있으므로,
    정리는 **배포·V4·V7 뒤** 마지막에 한다. 예상 삭제 행은 17 + 그 추가분이다.
 
 ### 문서 (R8)
@@ -161,7 +161,7 @@ sketch-sleuth spud-arena stone-sage word-warden.
 - `docs/architecture/common-features.md` 에 별도 행 「`CrawlerUserAgents` (`com.kgd.common.web`) — 일반 `object`,
   import 만, 스캔 무관」. `common/docs/service.md` Provided Components 표에
   `| web | CrawlerUserAgents | 자기소개형 크롤러·헤드리스 UA 판별 (ADR-0095) |`.
-- 배포 순서 메모: `rank.js`(portal-fe 이미지)와 백엔드(code-dictionary 이미지)는 따로 배포된다. 백엔드가 먼저면 옛
+- 배포 순서 메모: `rank.js`(portal-fe 이미지)와 백엔드(content 이미지 — game:feature 를 싣는 호스트)는 따로 배포된다. 백엔드가 먼저면 옛
   `rank.js` 가 「✅ 랭킹 등록 — 0위」를 띄우는 창이 있다 — 운영자·자동화만 보는 순간이라 조치 없음, V4 는 둘 다 Synced 뒤.
 - game BC 사전이 없다(`docs/context-map.md` 에 `game` 행 없음). 이 스펙 뒤에 `/hns:glossary` 를 game 에 한 번 —
   시드: 운영자 제출 · 자동화 제출 · 제외(excluded) · 적용(applied) · 기록(record).
@@ -176,7 +176,7 @@ sketch-sleuth spud-arena stone-sage word-warden.
 | V4 | 컴파일·테스트 | `./gradlew :common:test --tests '*CrawlerUserAgentsTest' :game:feature:test --tests '*GameScoreServiceTest' --tests '*GameScoreControllerTest' :analytics:app:compileKotlin` |
 | V5 | 운영 회귀 검사 (R1) | 배포 **전** 새 `e2e-prod-score.mjs` 를 옛 서버에 → 빨간불(`excluded` 필드 없음 · 닉이 보드에 있음). 배포 후(portal-fe·content 둘 다 Synced) 같은 스크립트 → 초록. 파드 로그 `score excluded … automation=true` |
 | V6 | 데이터 | 정리 뒤 `SELECT COUNT(*)` (같은 패턴) = 0, 남은 행 = 정리 전 총행 − 삭제 행 |
-| V7 | 운영 끝-끝 (R2·R4) — V5 는 UA 에서 먼저 걸려 운영자 배선을 못 잰다 | 전제: `member_roles` 에 운영자 계정의 `ROLE_ADMIN` 행 확인. 사용자가 `game.1989v.com` 에 로그인한 일반 브라우저로 `auth.js`+`rank.js` 게임 한 판(예 `archer-outbreak`) + 아레나 연습 한 판. 근거: ① 파드 로그 `score excluded … operator=true` ② 그 닉으로 `SELECT COUNT(*)` 변화 없음 ③ 위젯 문구(보조). 대조: `ROLE_USER` 토큰의 curl 제출은 `applied=true` 여야 한다(사람을 거르지 않는지) — 그 행은 정리 대상에 넣는다 |
+| V7 | 운영 끝-끝 (R2·R4) — V5 는 UA 에서 먼저 걸려 운영자 배선을 못 잰다 | 전제: `member_roles` 에 운영자 계정의 `ROLE_ADMIN` 행 확인. 사용자가 `game.1989v.com` 에 로그인한 일반 브라우저로 `auth.js`+`autoPanel` 게임 한 판(예 `cliff-climber` — `archer-outbreak` 은 platform.js 라 위젯 문구가 없다) + 아레나 연습 한 판, **처음 쓰는 닉으로**(보드는 닉당 1행 upsert 라 있던 닉은 기록돼도 행 수가 안 변한다). 근거: ① 파드 로그 `score excluded … operator=true` ② 그 닉의 행이 생기지 않음 ③ 위젯 문구(보조). 대조: `ROLE_USER` 토큰의 curl 제출은 `applied=true` 여야 한다(사람을 거르지 않는지) — 그 행은 정리 대상에 넣는다 |
 
 ## 열린 질문
 
