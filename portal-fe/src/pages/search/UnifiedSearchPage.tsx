@@ -1,13 +1,16 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import GNB from '../../components/GNB';
 import Footer from '../../components/Footer';
 import { fetchUnifiedSearch, type UnifiedGroup, type UnifiedResult, type UnifiedType } from '../../api/searchApi';
 import { unifiedHitHref } from '../../shell/serviceHref';
+import TrackedLink from '../../analytics/TrackedLink';
+import { newViewId } from '../../analytics/identity';
+import { installFlushOnLeave, track } from '../../analytics/tracker';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import { useSeo } from '../../seo/useSeo';
 import { portalTitle } from '../../seo/copy.mjs';
-import { TYPE_LABELS, TYPE_ORDER } from './unifiedTypes';
+import { TYPE_ENTITY, TYPE_LABELS, TYPE_ORDER } from './unifiedTypes';
 import './UnifiedSearchPage.css';
 
 /**
@@ -24,6 +27,9 @@ export default function UnifiedSearchPage() {
   const [failedFor, setFailedFor] = useState<string | null>(null);
   // 상태를 effect 안에서 동기로 바꾸지 않는다 — 「무엇을 기다리는지」는 q·type 과 마지막 결과로 유도한다
   const requestKey = `${q}\u0000${type}`;
+  // 한 질의 = 한 화면 한 벌. 질의나 대상이 바뀌면 다른 화면이다 (ADR-0095 viewId).
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- requestKey 가 바뀔 때만 새 한 벌이다
+  const viewId = useMemo(() => newViewId(), [requestKey]);
   const fresh = result !== null && result.query === q && result.requestKey === requestKey;
   const state: 'idle' | 'loading' | 'error' = !q ? 'idle' : failedFor === requestKey ? 'error' : fresh ? 'idle' : 'loading';
 
@@ -33,13 +39,36 @@ export default function UnifiedSearchPage() {
     noindex: true,
   });
 
+  // 화면을 떠날 때 아직 안 보낸 노출을 흘린다 — 그 순간의 fetch 는 취소된다.
+  useEffect(installFlushOnLeave, []);
+
   useEffect(() => {
     if (!q) return;
     let cancelled = false;
     const key = requestKey;
     fetchUnifiedSearch(q, type || undefined, undefined, type ? 20 : 5)
       .then((r) => {
-        if (!cancelled) setResult({ ...r, requestKey: key });
+        if (cancelled) return;
+        setResult({ ...r, requestKey: key });
+        // 질의 자체를 한 번 기록한다. **0건도 기록된다** — 노출이 한 건도 안 달린 질의가
+        // 곧 미스이고, 그 목록이 사전·벡터를 더할지 정하는 근거다 (ADR-0095).
+        track(
+          'SEARCH',
+          {
+            entityType: 'SEARCH',
+            entityId: q,
+            screenType: 'UNIFIED_SEARCH',
+            screenRef: type || r.understood.type || '',
+            sectionId: 'SEARCH_GROUP',
+            payload: {
+              understoodType: r.understood.type,
+              residual: r.understood.residual,
+              requestedType: type || null,
+              groups: Object.fromEntries(r.groups.map((g) => [g.type, g.total])),
+            },
+          },
+          viewId,
+        );
       })
       .catch(() => {
         if (!cancelled) setFailedFor(key);
@@ -47,7 +76,7 @@ export default function UnifiedSearchPage() {
     return () => {
       cancelled = true;
     };
-  }, [q, type, requestKey]);
+  }, [q, type, requestKey, viewId]);
 
   const submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -141,8 +170,16 @@ export default function UnifiedSearchPage() {
                   </>
                 )}
               </p>
-              {groups.map((g) => (
-                <GroupSection key={g.type} group={g} expanded={Boolean(type)} onMore={() => selectType(g.type)} />
+              {groups.map((g, groupIndex) => (
+                <GroupSection
+                  key={g.type}
+                  group={g}
+                  groupIndex={groupIndex}
+                  query={q}
+                  viewId={viewId}
+                  expanded={Boolean(type)}
+                  onMore={() => selectType(g.type)}
+                />
               ))}
             </>
           )}
@@ -153,7 +190,16 @@ export default function UnifiedSearchPage() {
   );
 }
 
-function GroupSection({ group, expanded, onMore }: { group: UnifiedGroup; expanded: boolean; onMore: () => void }) {
+function GroupSection({
+  group, groupIndex, query, viewId, expanded, onMore,
+}: {
+  group: UnifiedGroup;
+  groupIndex: number;
+  query: string;
+  viewId: string;
+  expanded: boolean;
+  onMore: () => void;
+}) {
   const label = TYPE_LABELS[group.type as UnifiedType] ?? group.type;
   const remaining = group.total - group.hits.length;
   return (
@@ -162,9 +208,22 @@ function GroupSection({ group, expanded, onMore }: { group: UnifiedGroup; expand
         {label} <span className="kh-mono usearch-group-count">{group.total.toLocaleString()}</span>
       </h2>
       <ul className="usearch-list">
-        {group.hits.map((hit) => (
+        {group.hits.map((hit, itemIndex) => (
           <li key={`${hit.type}:${hit.id}`}>
-            <a className="usearch-hit" href={unifiedHitHref(hit.type, hit.slug, hit.category)}>
+            <TrackedLink
+              className="usearch-hit"
+              href={unifiedHitHref(hit.type, hit.slug, hit.category)}
+              viewId={viewId}
+              item={{
+                entityType: TYPE_ENTITY[hit.type],
+                entityId: hit.id,
+                screenType: 'UNIFIED_SEARCH',
+                screenRef: query,
+                sectionId: 'SEARCH_GROUP',
+                sectionIndex: groupIndex,
+                itemIndex,
+              }}
+            >
               {hit.thumbnailUrl && <img className="usearch-thumb" src={hit.thumbnailUrl} alt="" loading="lazy" />}
               <span className="usearch-hit-body">
                 <span className="usearch-hit-title">{hit.title}</span>
@@ -173,7 +232,7 @@ function GroupSection({ group, expanded, onMore }: { group: UnifiedGroup; expand
                   {[hit.category, hit.facets.level, hit.facets.genre].filter(Boolean).join(' · ')}
                 </span>
               </span>
-            </a>
+            </TrackedLink>
           </li>
         ))}
       </ul>

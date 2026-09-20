@@ -54,8 +54,9 @@ class AnalyticsEventTest : BehaviorSpec({
         When("대상과 동작을 세면") {
             Then("각자 독립적으로 늘어난다 — 곱해지지 않는다") {
                 // 한 축이던 시절 8종(PRODUCT_VIEW·PRODUCT_CLICK…)은 대상 × 동작이었다.
-                // 이제 대상이 늘어도 동작은 그대로다.
-                EntityType.entries.size shouldBe 6
+                // 이제 **대상이 늘어도 동작은 그대로다** — 그게 두 축으로 가른 이유다.
+                // 대상 수는 고정값이 아니다(통합 검색이 CONCEPT·DEAL_OFFER·SERVICE 를 더했다).
+                (EntityType.entries.size >= 6) shouldBe true
                 EventAction.entries.size shouldBe 7
             }
             Then("노출과 클릭이 대상과 무관하게 지정된다") {

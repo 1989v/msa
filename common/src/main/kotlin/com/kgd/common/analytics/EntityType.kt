@@ -16,4 +16,13 @@ enum class EntityType {
     PAGE,
     /** 검색 질의 자체 (구 `SEARCH_KEYWORD`). entityId 는 질의어. */
     SEARCH,
+
+    /** 개념 사전 항목. entityId 는 `conceptId`. */
+    CONCEPT,
+
+    /** 혜택 오퍼. entityId 는 slug — 클릭은 `/go/` 리다이렉터도 따로 센다(ADR-0069). */
+    DEAL_OFFER,
+
+    /** 전시 서비스 타일. entityId 는 `display_service.code`. */
+    SERVICE,
 }
