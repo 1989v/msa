@@ -3,7 +3,9 @@ package com.kgd.search.infrastructure.job
 import com.kgd.search.infrastructure.client.UnifiedSourceApiClient
 import com.kgd.search.infrastructure.indexing.IndexAliasManager
 import com.kgd.search.infrastructure.indexing.OsBulkDocumentProcessor
+import com.kgd.search.infrastructure.indexing.UnifiedIndexDocument
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.springframework.batch.core.step.StepContribution
 import org.springframework.batch.core.scope.context.ChunkContext
@@ -40,8 +42,7 @@ class UnifiedReindexTasklet(
         val counts = linkedMapOf<String, Int>()
         val failed = linkedMapOf<String, String>()
         for (type in UnifiedSourceApiClient.TYPES) {
-            val docs = runCatching { sourceClient.fetch(type) }
-                .getOrElse { failed[type] = it.message ?: it.javaClass.simpleName; continue }
+            val docs = fetchWithRetry(type) ?: run { failed[type] = lastFailure.getValue(type); continue }
             docs.forEach { bulkProcessor.processDocument(newIndexName, it.id, it) }
             counts[type] = docs.size
             log.info { "unified: $type ${docs.size}건" }
@@ -54,5 +55,33 @@ class UnifiedReindexTasklet(
         aliasManager.updateAliasAndCleanup(indexAlias, newIndexName)
         log.info { "Unified reindex complete: ${counts.values.sum()} docs $counts, ${bulkProcessor.errorCount.get()} errors" }
         RepeatStatus.FINISHED
+    }
+
+    private val lastFailure = mutableMapOf<String, String>()
+
+    /**
+     * 한 타입을 [ATTEMPTS] 번까지 받아 본다. 원천은 같은 클러스터의 이웃 파드라 롤아웃·재기동 창에
+     * 걸리면 연결이 끊기는데, 그건 몇 초 뒤에 사라지는 상태다. 그때마다 밤 배치를 통째로 버리지 않는다.
+     *
+     * **실패는 예외까지 남긴다.** 메시지만 모아 두면 「무엇이 왜 끊겼는지」가 사라지고, 잡이 실패한 다음
+     * 날 아침에는 파드도 없다(2026-09-14~17 네 번 실패했는데 원인을 되짚을 로그가 남지 않았다).
+     */
+    private suspend fun fetchWithRetry(type: String): List<UnifiedIndexDocument>? {
+        repeat(ATTEMPTS) { attempt ->
+            try {
+                return sourceClient.fetch(type)
+            } catch (e: Exception) {
+                lastFailure[type] = "${e.javaClass.simpleName}: ${e.message}"
+                val last = attempt == ATTEMPTS - 1
+                log.error(e) { "unified: $type 수집 실패 (${attempt + 1}/$ATTEMPTS)${if (last) "" else " — 재시도"}" }
+                if (!last) delay(RETRY_DELAY_MS * (attempt + 1))
+            }
+        }
+        return null
+    }
+
+    companion object {
+        private const val ATTEMPTS = 3
+        private const val RETRY_DELAY_MS = 2_000L
     }
 }

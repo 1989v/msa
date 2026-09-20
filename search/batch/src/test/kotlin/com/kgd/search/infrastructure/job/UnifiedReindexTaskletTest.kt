@@ -54,6 +54,27 @@ class UnifiedReindexTaskletTest : BehaviorSpec({
         }
     }
 
+    given("게임 API 가 한 번 끊겼다가 살아나면") {
+        val client = mockk<UnifiedSourceApiClient>()
+        var gameCalls = 0
+        coEvery { client.fetch(any()) } answers { listOf(doc(firstArg(), "1")) }
+        coEvery { client.fetch(UnifiedSourceApiClient.GAME) } answers {
+            gameCalls++
+            if (gameCalls == 1) throw IllegalStateException("Connection reset") else listOf(doc(UnifiedSourceApiClient.GAME, "1"))
+        }
+        val alias = aliasManager(); val bulk = bulk()
+
+        `when`("재색인하면") {
+            val status = tasklet(client, alias, bulk).execute(mockk<StepContribution>(), mockk<ChunkContext>())
+
+            then("다시 받아 alias 까지 바꾼다 — 이웃 파드 롤아웃 창에 밤 배치를 버리지 않는다") {
+                status shouldBe RepeatStatus.FINISHED
+                gameCalls shouldBe 2
+                verify(exactly = 1) { alias.updateAliasAndCleanup("unified", "unified_20260913", any()) }
+            }
+        }
+    }
+
     given("게임 API 가 죽어 있으면") {
         val client = mockk<UnifiedSourceApiClient>()
         coEvery { client.fetch(any()) } answers { listOf(doc(firstArg(), "1")) }

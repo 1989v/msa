@@ -12,7 +12,10 @@ spec:
   # 원천은 각 호스트의 공개 API 풀스캔이고 합쳐야 수백 건이라 매일 한 번이면 된다.
   # 관광지 재색인(04:30 KST) 뒤에 둔다 — 같은 OpenSearch 에 bulk 를 겹치지 않게.
   #   kubectl -n commerce create job --from=cronjob/unified-reindex unified-reindex-manual
-  schedule: "45 19 * * *"   # 04:45 KST
+  #
+  # **관광지 재색인이 끝난 뒤에 돈다.** 그쪽은 04:30 에 시작해 6만 건을 싣느라 23분쯤 걸리는데,
+  # 04:45 는 그 한가운데였다 — 같은 단일 노드의 OpenSearch 와 원천 파드를 함께 누른다.
+  schedule: "10 20 * * *"   # 05:10 KST
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 5
@@ -29,7 +32,9 @@ spec:
             app.kubernetes.io/part-of: commerce-platform
             app.kubernetes.io/component: reindex
         spec:
-          restartPolicy: OnFailure
+          # 재시도마다 **새 파드**를 만든다. OnFailure 는 같은 파드에서 컨테이너만 다시 띄워
+          # 첫 시도의 로그가 덮이고, 파드가 사라지면 실패 원인이 통째로 사라진다.
+          restartPolicy: Never
           enableServiceLinks: false
           containers:
             - name: reindex
