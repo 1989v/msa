@@ -158,7 +158,7 @@ function processEvents(){
   for(const e of state.events){
     audio.play(e);eventHistory.push({...e,frame:state.frame});if(eventHistory.length>150)eventHistory.shift();
     if(e.text&&['build','plant','water','harvest','gather','trade','repair','notice','travel'].includes(e.type)){state.toast=e.text;state.toastTime=4;}
-    if(e.type==='hit'){hitStop=.035;camera.shake=camera.reducedMotion?0:.13;}
+    if(e.type==='hit'){if(e.hitStop!==false)hitStop=.035;camera.shake=camera.reducedMotion?0:.13;}
     if(e.type==='hurt')camera.shake=camera.reducedMotion?0:.24;
     if(['solve','reward','rest','win','harvest','build','raid-win','skill-learned','dungeon-enter','dungeon-leave','quest'].includes(e.type))save();
     if(e.type==='town-open'&&!manual)openPanel('town');
@@ -316,7 +316,7 @@ window.WINDWAKE={
   camera(){return {...camera};},setCamera(values){for(const k of ['yaw','pitch','distance'])if(Number.isFinite(values[k]))camera[k]=values[k];draw(0);},
   resetMetrics(){performanceData.frames=0;performanceData.samples.length=0;performanceData.renderMs.length=0;performanceData.droppedTime=0;},
   events:()=>structuredClone(eventHistory),input:()=>({held:[...input.held],pending:[...input.pending],keys:[...keys],axes:{...input.axes}}),
-  ui:()=>({started,manual,panel,storageAvailable,audio:audio.context?.state||'locked',muted:audio.muted}),
+  ui:()=>({started,manual,panel,storageAvailable,audio:audio.context?.state||'locked',muted:audio.muted,hitStop}),
 };
 
 try{renderer=new Renderer(canvas);renderer.resize();draw(0);requestAnimationFrame(frame);}

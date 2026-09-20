@@ -13,7 +13,7 @@ const SIGILS=['quarry','forest','ruins'];
 const BUTTONS=['jump','attack','dodge','parry','skill','interact','heal','skill1','skill2'];
 
 function random(s){s.rng=(Math.imul(s.rng,1664525)+1013904223)>>>0;return s.rng/4294967296;}
-function emit(s,type,text,at=s.player){s.events.push({type,text,x:at.x,y:at.y,z:at.z});}
+function emit(s,type,text,at=s.player,extra={}){s.events.push({type,text,x:at.x,y:at.y,z:at.z,...extra});}
 function fx(s,type,at,extra={}){s.effects.push({type,x:at.x,y:at.y,z:at.z,age:0,life:.45,yaw:at.yaw||0,...extra});if(s.effects.length>100)s.effects.splice(0,s.effects.length-100);}
 export function spawnEnemy(s,type='stalker',x=s.player.x+6,z=s.player.z+6,y,extra={}) {
   if(!ENEMY_STATS[type] || s.enemies.length>=64)return null;
@@ -127,19 +127,20 @@ function dropReward(s,e){
 }
 function hitEnemy(s,e,damage,kind='sword',knock=3){
   if(e.hp<=0)return;
-  const p=s.player;
+  const p=s.player,controlHit=kind!=='sword'&&kind!=='plunge';
   if((e.type==='charger'||(e.type==='sentinel'&&e.guarding))&&kind==='sword'&&e.state!=='hit'&&facing(e,p,1.25)){
     damage=Math.ceil(damage*.25);emit(s,'block',undefined,e);fx(s,'parry',e,{life:.24,power:.6});
   }
   e.hp=Math.max(0,e.hp-damage);e.hitFlash=.18;
-  const d=Math.max(.1,distance(e,p));e.vx=(e.x-p.x)/d*knock;e.vz=(e.z-p.z)/d*knock;
+  // Basic attacks deal damage without cancelling or redirecting enemy actions.
+  if(controlHit){const d=Math.max(.1,distance(e,p));e.vx=(e.x-p.x)/d*knock;e.vz=(e.z-p.z)/d*knock;}
   if(e.type==='boss'&&kind==='pulse')e.poise++;
   if(e.hp===0){e.state='dead';e.timer=1;dropReward(s,e);}
-  else if(e.type!=='boss'||kind==='parry'||e.poise>=3){
+  else if(controlHit&&(e.type!=='boss'||kind==='parry'||e.poise>=3)){
     e.state='hit';e.timer=kind==='parry'?1.6:kind==='pulse'?.95:.36;e.poise=0;
     if(e.type==='boss')toast(s,'수호자의 균열 · 지금 검을 이어 휘두르세요!');
   }
-  s.metrics.hits++;p.energy=Math.min(p.maxEnergy,p.energy+3);emit(s,'hit',undefined,e);fx(s,'hit',e,{power:damage,life:.45});
+  s.metrics.hits++;p.energy=Math.min(p.maxEnergy,p.energy+3);emit(s,'hit',undefined,e,{hitStop:controlHit});fx(s,'hit',e,{power:damage,life:.45});
 }
 function playerDamage(s,amount,source,unblockable=false){
   const p=s.player;if(s.mode!=='playing'||p.invulnerable>0)return false;
