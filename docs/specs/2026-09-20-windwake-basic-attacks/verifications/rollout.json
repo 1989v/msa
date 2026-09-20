@@ -1,0 +1,11 @@
+{
+  "observedAt": "2026-09-20T05:14:25.656821+00:00",
+  "deployment": "portal-fe",
+  "generation": 432,
+  "observedGeneration": 432,
+  "image": "ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe:d83e185",
+  "desired": 1,
+  "ready": 1,
+  "available": 1,
+  "updated": 1
+}
