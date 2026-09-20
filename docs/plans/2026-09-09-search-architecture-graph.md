@@ -222,8 +222,21 @@ P2(통합 인덱스)로 바로 가지 않는다. **통합 인덱스는 타입이
 | U4 | `/search?q=` (apex 하나가 정규 주소, 서비스 탐색 오버레이의 검색창이 여기로) — 타입별 묶음 · 칩 · 「더 보기」. 링크는 `unifiedHitHref(type, slug)`. noindex + robots Disallow | `portal-fe/src/pages/search/` · `ServiceExplorer.tsx` · `serviceHref.ts` · `copy.mjs` | 완료 — CDP 4조합+모바일 2 |
 | U5 | `/tech` 개념 검색·자동완성을 통합 API `type=concept` 로 (옛 `/api/v1/search` 는 운영 500) | `portal-fe/src/api/searchApi.ts` · 용어집 행 `id={conceptId}` | 완료 2026-09-13 |
 | U6 | 타입 대표 질의 13개 라이브 검사 — 이해된 타입 · 묶음 존재 · 첫 묶음 | `scripts/unified-search-check.py` | 완료 — 판정 세트(nDCG) 확장은 노출·클릭 로그가 생긴 뒤 |
+| U7 | **계측** — 질의당 SEARCH 한 행(0건 포함) + 결과마다 노출·클릭을 ADR-0095 원장으로. 리포트 다섯 표 | `portal-fe/src/pages/search/*` · `common` `EntityType` +3 · `scripts/unified-search-report.py` | 완료 2026-09-20 |
 
 **보류(측정 뒤 결정)**: 비관광지 문서 벡터, 타입별 사전(게임 장르·개념 분류 이름 → `facets` 필터), 관광지 묶음이 벡터 레그로 늘 무언가를 내는 것(「신라면」→ 호족반 청담) — 통합 화면에서 관광지 레그의 하한 점수.
+
+**무엇으로 정하나 (U7 이 깔아 둔 것)** — `python3 scripts/unified-search-report.py --days 14`
+
+| 보류 항목 | 읽을 표 | 움직일 조건 |
+|---|---|---|
+| 사전·동의어 | 미스 질의 | 노출 0건으로 끝난 질의가 반복해서 같은 말로 들어온다 |
+| 타입별 사전(facets) | 이해된 타입 | 타입 의도 비율이 낮은데 그 타입을 찾는 질의는 많다 |
+| 비관광지 벡터 | 묶음별 CTR + 미스 질의 | 글·개념 묶음이 노출은 되는데 안 눌리고, 미스가 뜻 기반 질의다 |
+| 관광지 레그 하한 | 묶음별 CTR · 묶음 순서 | 관광지 묶음 CTR 이 다른 타입보다 크게 낮다(= 잡음) |
+| 묶음당 5건 / 더 보기 | 클릭 위치 | 1위만 눌리면 줄이고, 뒤가 눌리면 늘린다 |
+
+**표본이 적으면 그대로 적고 기다린다** — 지금은 0행이다(계측 배포 당일).
 
 ---
 
