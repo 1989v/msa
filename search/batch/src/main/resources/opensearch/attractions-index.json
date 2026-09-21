@@ -232,7 +232,13 @@
           "engine": "lucene",
           "parameters": {
             "m": 16,
-            "ef_construction": 128
+            "ef_construction": 128,
+            "encoder": {
+              "name": "sq",
+              "parameters": {
+                "bits": 1
+              }
+            }
           }
         }
       },

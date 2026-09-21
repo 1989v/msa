@@ -324,6 +324,8 @@ class AttractionSearchAdapter(
                 .field(VECTOR_FIELD)
                 .vector(embedding)
                 .k(hybrid.k)
+                // 1-bit 양자화 색인의 근사 거리로 뽑은 후보를 원본 벡터로 재채점한다(없으면 근사 점수가 순위)
+                .rescore { r -> r.context { c -> c.oversampleFactor(hybrid.oversample) } }
                 .filter(
                     Query.of { f ->
                         f.bool { b ->

@@ -16,6 +16,11 @@ data class AttractionHybridProperties(
     val k: Int = 100,
     /** 융합 방식 — 파이프라인 이름의 접미가 된다. `rrf` 외의 값은 그 이름의 파이프라인이 있어야 한다. */
     val fusion: String = "rrf",
+    /**
+     * 벡터 레그 재채점 배수. 색인이 1-bit 양자화(Lucene `sq bits:1`, 3.6+)라 그래프 탐색은 근사 거리로 하고,
+     * 후보 k × 이 배수를 원본 float 벡터로 다시 채점해 k 개로 줄인다. 없으면 근사 점수가 그대로 순위가 된다.
+     */
+    val oversample: Float = 3.0f,
 ) {
     /** 검색 파이프라인 이름. 이 이름의 파이프라인이 없으면 OpenSearch 가 요청을 거부한다. */
     val pipeline: String get() = "attraction-hybrid-$fusion"

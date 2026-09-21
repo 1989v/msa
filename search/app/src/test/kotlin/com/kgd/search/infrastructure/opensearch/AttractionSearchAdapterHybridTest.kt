@@ -99,6 +99,8 @@ class AttractionSearchAdapterHybridTest : BehaviorSpec({
                 knn.field() shouldBe "embedding"
                 knn.vector() shouldBe vector
                 knn.k() shouldBe 100
+                // 1-bit 양자화 색인 — 근사 후보를 원본 벡터로 재채점하는 배수가 질의에 실려야 한다
+                knn.rescore()!!.context().oversampleFactor() shouldBe 3.0f
             }
         }
 
