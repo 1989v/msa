@@ -404,7 +404,7 @@ images:
     newTag: 15cfb43
   - name: commerce/search-batch
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-batch
-    newTag: 15cfb43
+    newTag: 26605ce
   - name: commerce/search-consumer
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-consumer
     newTag: 15cfb43
