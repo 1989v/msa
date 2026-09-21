@@ -53,8 +53,10 @@ spec:
               value: "true"
             - name: DISABLE_INSTALL_DEMO_CONFIG
               value: "true"
+            # 힙은 512 MB 로 고정. NMT 는 힙 밖(direct·metaspace·스레드·GC)을 쪼개 보려고 —
+            # 2026-09-21 실측 RssAnon 1.52 GB 중 힙이 512 뿐이라 나머지 1 GB 의 내역이 없었다. jcmd 1 VM.native_memory summary
             - name: OPENSEARCH_JAVA_OPTS
-              value: "-Xms512m -Xmx512m"
+              value: "-Xms512m -Xmx512m -XX:NativeMemoryTracking=summary"
             - name: cluster.name
               value: "commerce-local"
           readinessProbe:
@@ -69,12 +71,16 @@ spec:
               port: 9200
             initialDelaySeconds: 90
             periodSeconds: 30
+          # 한도 = 힙 512 + JVM 네이티브 ≈ 1,000 + 페이지 캐시. Lucene 은 색인을 힙이 아니라 mmap(페이지 캐시)으로
+          # 읽고 그 캐시는 이 cgroup 한도에 같이 잡힌다. 1536Mi 일 때 anon 이 1,480 MB 를 먹어 캐시가 4 MB 뿐이었고
+          # 관광지 벡터 파일(272 MB)이 매 질의마다 디스크에서 읽혀 kNN 이 112초, 09-13 엔 OOMKilled(137).
+          # 2560Mi 는 살아 있는 색인 한 벌 + 재색인 순간 겹치는 한 벌이 캐시에 남는 하한 근처다 (노드 available 10 GB).
           resources:
             requests:
               cpu: 200m
-              memory: 1Gi
-            limits:
               memory: 1536Mi
+            limits:
+              memory: 2560Mi
           volumeMounts:
             - name: data
               mountPath: /usr/share/opensearch/data

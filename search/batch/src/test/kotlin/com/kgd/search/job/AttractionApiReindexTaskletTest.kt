@@ -41,7 +41,7 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
     beforeContainer {
         every { aliasManager.createTimestampedIndexName("attractions") } returns "attractions_1"
         every { aliasManager.createIndex("attractions_1", IndexAliasManager.ATTRACTIONS_INDEX_DEFINITION) } just Runs
-        every { aliasManager.updateAliasAndCleanup("attractions", "attractions_1") } just Runs
+        every { aliasManager.updateAliasAndCleanup("attractions", "attractions_1", maxRetention = 1) } just Runs
         every { bulkProcessor.errorCount } returns AtomicLong(0)
     }
 
@@ -58,7 +58,8 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                 result shouldBe RepeatStatus.FINISHED
                 verify(exactly = 2) { bulkProcessor.processDocument("attractions_1", any<String>(), any<AttractionIndexDocument>()) }
                 verify { bulkProcessor.flush() }
-                verify { aliasManager.updateAliasAndCleanup("attractions", "attractions_1") }
+                // 보존은 한 벌 — 옛 벌이 페이지 캐시를 나눠 먹지 않게
+                verify { aliasManager.updateAliasAndCleanup("attractions", "attractions_1", maxRetention = 1) }
             }
         }
 

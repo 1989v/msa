@@ -152,7 +152,9 @@ class AttractionApiReindexTasklet(
 
             bulkProcessor.flush()
 
-            aliasManager.updateAliasAndCleanup(indexAlias, newIndexName)
+            // 관광지 색인은 한 벌 272 MB(벡터 153 MB 포함)라 두 벌을 두면 옛 벌이 페이지 캐시를 나눠 먹는다 —
+            // kNN 은 그래프·벡터 파일이 캐시에 다 있어야 빨라서(없으면 질의당 100초대) 살아 있는 한 벌만 남긴다.
+            aliasManager.updateAliasAndCleanup(indexAlias, newIndexName, maxRetention = 1)
             // 벡터 적재율이 v2 의 건강 지표다(ADR-0090 D7). 낮으면 도구가 안 돌았거나 스탬프가 어긋난 것이다.
             // stale 여부는 여기서 알 수 없다 — 그것은 place `/status` 가 attractions.updated_at 과 견줘 센다.
             log.info {
