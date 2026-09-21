@@ -418,4 +418,4 @@ images:
   # analysis-nori 베이크 이미지로 교체 (docker/opensearch/Dockerfile, 수동 빌드·푸시)
   - name: opensearchproject/opensearch
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/opensearch-nori
-    newTag: "3.3.0"
+    newTag: "3.8.0"

@@ -28,8 +28,8 @@ spec:
             runAsUser: 0
       containers:
         - name: opensearch
-          # ADR-0055 — ES 9.0.0 에서 전환. opensearch-java 3.8.0 클라이언트와 정렬.
-          image: opensearchproject/opensearch:3.3.0
+          # ADR-0055 — ES 9.0.0 에서 전환. 3.8.0 은 Lucene 1-bit 양자화(3.6+) 때문 — docker/opensearch/Dockerfile 참고.
+          image: opensearchproject/opensearch:3.8.0
           imagePullPolicy: IfNotPresent
           # Korean nori analyzer 플러그인 보장 — search(products) + code-dictionary 공용
           command:
