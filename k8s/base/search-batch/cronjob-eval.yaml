@@ -10,6 +10,11 @@ metadata:
 spec:
   # ADR-0050 Phase 4 — 매일 02:00 UTC (KST 11:00) 검색 ranking 오프라인 평가
   schedule: "0 2 * * *"
+  # 2026-09-22 중단. 이 잡은 상품 검색 기준선(products 인덱스 name match)이고 판정을 analytics.search_judgments
+  # 에서 읽는데 그 표가 0행이라 매일 "No judgments found — skipping eval" 로 COMPLETED 만 찍었다 — 재는 게 없는
+  # 초록불. 지금 검색 품질 근거는 관광지 판정 2,141건과 scripts/search-eval/ 이다. 이 잡을 되살리려면
+  # 실행기를 관광지 하이브리드(앱 API)로 바꾸고 판정을 ClickHouse 에 적재한 뒤 suspend 를 푼다.
+  suspend: true
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 5
