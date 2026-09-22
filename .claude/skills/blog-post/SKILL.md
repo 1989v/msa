@@ -74,7 +74,7 @@ open('/tmp/summary.hex','w').write(re.search(r'^summary: (.+)$', fm, re.M).group
 PY
 
 BODY=$(cat /tmp/body.hex); SUMM=$(cat /tmp/summary.hex)
-echo yes | ~/.local/bin/oci-mysql --write code_dictionary_db \
+echo yes | ~/.local/bin/oci-mysql --write blog_db \
   "UPDATE blog_post SET body=CONVERT(0x${BODY} USING utf8mb4),
    summary=CONVERT(0x${SUMM} USING utf8mb4) WHERE id=<id>"
 ```
@@ -82,7 +82,7 @@ echo yes | ~/.local/bin/oci-mysql --write code_dictionary_db \
 **반영 뒤 MD5 로 확인한다.** 이중 인코딩은 눈으로 안 보인다.
 
 ```bash
-~/.local/bin/oci-mysql code_dictionary_db "SELECT MD5(body) FROM blog_post WHERE id=<id>"
+~/.local/bin/oci-mysql blog_db "SELECT MD5(body) FROM blog_post WHERE id=<id>"
 ```
 
 로컬 값과 같아야 한다.
