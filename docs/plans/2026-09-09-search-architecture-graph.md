@@ -313,6 +313,7 @@ concept_edge(id, from_concept_id, to_concept_id, kind, ordinal)
 | G2 | 검색 개념 시드 — 이 문서 §1 의 키워드를 `CONTAINS`/`FLOWS_TO` 로 | 같은 V22 — 개념 58 + 기존 3(bulk-indexing·alias-swap·inverse-index) · CONTAINS 62 · FLOWS_TO 10 | 완료 2026-09-13 |
 | G3 | `GET /api/v1/concepts/graph/hierarchy?root=` — 응답 모양이 관계 그래프와 달라 `mode=` 대신 별도 경로 | `GraphController.getHierarchy` · `ConceptHierarchyDto` | 완료 2026-09-13 |
 | G4 | FE 계층 모드 — 접기·펼치기, 층 색 | `/tech` 「계층」 탭 · `components/hierarchy/` (순수 모델 `hierarchyModel.ts` + 패널) | 완료 2026-09-13 |
+| G2-학습 | 학습이 붙는 가지 — 분석기 커스텀 층(L1~L3) · LTR · 온라인 학습 장치(원장 → 성향 → 오프폴리시 → 밴딧) · 벡터 양자화 · 검색 노드 메모리 | `V23__concept_edge_search_learning.sql` — 개념 17 · CONTAINS 21 · FLOWS_TO 5. 근거는 플랜 `2026-09-22-search-learning-roadmap.md` §7 | 완료 2026-09-22 (배포는 다음 code-dictionary 이미지) |
 | G5 | 다른 주제로 확장 (배포·관측 등) | — | 미착수 |
 
 두 부모를 가진 개념은 `embedding-model`(문서 임베딩·쿼리 임베딩)과 `hnsw`(벡터 필드·ANN) 둘이다.
