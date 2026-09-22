@@ -38,7 +38,7 @@ FE 는 별도 앱이 아니라 **portal-fe 단일 SPA 의 메인 콘텐츠**로 
 
 | 도메인 | 설명 |
 |---|---|
-| concept | IT 개념 + 코드 참조 색인. `reindex` 스킬이 추출한 개념을 `/api/v1/index` 로 적재. **층은 `concept_edge`(CONTAINS·FLOWS_TO·SAME_AS, V22 검색 계층 · V23 학습 가지)가 만든다** — `concept_relation` 은 무방향이라 층이 안 나온다. 간선은 concept_id 를 값으로 들어(FK 없음) 재색인이 지우지 못한다 |
+| concept | IT 개념 + 코드 참조 색인. `reindex` 스킬이 추출한 개념을 `/api/v1/index` 로 적재. **층은 `concept_edge`(CONTAINS·FLOWS_TO·SAME_AS, V22 검색 계층 · V23 학습 가지 · V24 용어 사전 가지)가 만든다**. **도메인 루트마다 `<도메인>-glossary` 가지 하나** — 단계·장치가 아닌 말(CRF · 비터비 …)은 거기와 쓰이는 장치 아래 양쪽에 건다(플랜 09-09 §3.5) — `concept_relation` 은 무방향이라 층이 안 나온다. 간선은 concept_id 를 값으로 들어(FK 없음) 재색인이 지우지 못한다 |
 | portfolio | 포트폴리오 카드 (PUBLIC/PRIVATE, impact 1~10). 스펙: `docs/specs/2026-06-10-portfolio-card/` |
 | resume | 이력서 사이트(resume.1989v.com) 문서·공유토큰·열람기록. 본문은 마크다운 TEXT. ADR-0064 |
 | display | 1989v.com 메인에 전시하는 서비스 (OPEN/PREOPEN/HOLD). ADR-0066 |

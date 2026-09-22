@@ -247,6 +247,9 @@ FLOWS_TO — `user-dictionary → system-dictionary-entry → tokenizer-cost-ret
 마이그레이션은 `V23__concept_edge_search_learning.sql`(개념 17 + 동의어 17 + CONTAINS 21 + FLOWS_TO 5) — MySQL 8 에 V1~V23 을 순서대로 적용해 확인(CONTAINS 83 · FLOWS_TO 15 · 끊긴 간선 0). 기존 `reranking` 설명의 「GPU 없이는 성립하지 않는다」는
 크로스인코더 얘기라 그대로 두고, LTR 은 그 아래 「GPU 없이 되는 리랭킹」으로 둔다.
 
+**용어는 따로 사전 가지에 둔다(V24)** — CRF · 비터비 · 격자 · 단어/연접 비용 · 문맥 ID · 품사 태그 · mecab-ko-dic · 세종 말뭉치 · 코사인 · MRL · HNSW 파라미터 · 랭킹 손실 세 갈래 · 쿼리 단위 CV · 탐색/활용 · 베타-베르누이 켤레 · IPS/SNIPS · 팀 드래프트.
+장치 아래에도 같이 걸리므로 위 표의 장치를 펼치면 그 말이 나온다. 규칙은 플랜 09-09 §3.5.
+
 **「모델 가중치 양자화」와 「벡터 저장 양자화」는 다른 축이다** — 볼트 `quantization`(2026-07-16)이 앞엣것이고, 여기 `vector-quantization` 은 뒤엣것이다. 이름을 붙일 때 섞지 않는다.
 
 ---
