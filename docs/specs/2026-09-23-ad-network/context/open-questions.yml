@@ -7,9 +7,9 @@ questions:
     question: "ADR-0095(노출·클릭 원장)가 제안·미커밋 상태다. 광고 이벤트 사본의 합류(AC-17)는 그 파이프라인 착지 뒤에 붙인다 — 착지 전이면 해당 task group 을 보류하고 과금 경로만 먼저 간다."
     raised_by: shape-spec
     raised_at: 2026-09-23
-    status: open
-    resolution: null
-    resolved_at: null
+    status: resolved
+    resolution: "origin/main 에 ADR-0095 착지 확인(5302b893) — EntityType·EventAction·Placement·CrawlerUserAgents 존재. SR-16 발행은 R2 에 포함"
+    resolved_at: 2026-09-23
   - id: OQ-002
     category: impl-discovery
     question: "engagement 메모리 512Mi → 768Mi 가 노드 여유 안에 드는지 배포 전 kubectl top 으로 확인. 부족하면 증설이 아니라 동시성 축소(스레드풀·캐시 크기)로 맞춘다."

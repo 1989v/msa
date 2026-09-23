@@ -25,4 +25,10 @@ enum class EntityType {
 
     /** 전시 서비스 타일. entityId 는 `display_service.code`. */
     SERVICE,
+
+    /**
+     * 자체 광고 소재 (ADR-0098). entityId 는 소재 id. 과금 원천은 ads 의 카운터이고
+     * 이 원장에는 ads 가 받아들인 노출·클릭의 사본만 들어온다.
+     */
+    AD,
 }

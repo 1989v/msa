@@ -33,12 +33,15 @@ Total Task Groups: 13
 **Dependencies:** None
 **Phase:** R1
 **Required Skills:** kotlin, kafka
-- [ ] 1.0 Complete common 슬라이스
-  - [ ] 1.1 테스트 3개: `CrawlerUserAgentsTest`(common 으로 옮긴 뒤 기존 판정 표 그대로) · `EntityTypeTest`(AD 역직렬화) · recommendation 원장 소비자가 `entity_type=AD` 를 재시도 없이 건너뛰는 테스트
-  - [ ] 1.2 `CrawlerUserAgents` 를 `analytics/.../presentation/event/` → `common` 으로 이동, analytics·deal 이 import (deal `BOT_PATTERN` 은 동작 불변 — 표식용 분류를 common 판정으로 바꿀지 여부는 deal 행동을 바꾸므로 **이번엔 import 만, 판정 교체는 하지 않는다**)
-  - [ ] 1.3 `EntityType.AD` 추가 (ADR-0095 작업트리 상태 확인 — `EntityType.kt` 가 미커밋이면 OQ-001 로 멈추고 사용자에게 묻는다)
-  - [ ] 1.4 recommendation 소비자에서 AD 무시
-  - [ ] 1.5 Verify: `./gradlew :common:test --tests '*CrawlerUserAgents*' --tests '*EntityType*' :analytics:app:test --tests '*EventCollect*' :recommendation:feature:test --tests '*RecommendationEventConsumer*'`
+
+> 착수 시 확인(2026-09-23): `origin/main` 에 ADR-0095 가 이미 착지해 있었다(`5302b893`) — `CrawlerUserAgents` 는 `common/web` 에 있고 analytics·game 이 쓰며, recommendation 소비자는 `PRODUCT` 외 대상을 이미 건너뛴다(`RecommendationEventConsumer.kt:48`). 공유 워킹트리의 로컬 main 이 211 커밋 뒤처져 미커밋처럼 보였을 뿐이다. 남은 일은 `EntityType.AD` 하나. OQ-001 해소.
+
+- [x] 1.0 Complete common 슬라이스
+  - [x] 1.1 테스트: recommendation 소비자가 `entity_type=AD` 클릭(상품 payload 포함)을 추천 신호로 쓰지 않는다
+  - [x] 1.2 ~~`CrawlerUserAgents` 이동~~ — 이미 `common/web` 에 있음
+  - [x] 1.3 `EntityType.AD` 추가 (ClickHouse `entity_type` 은 `LowCardinality(String)` 이라 스키마 변경 불필요, 전 값을 다루는 `when` 없음)
+  - [x] 1.4 ~~recommendation 소비자에서 AD 무시~~ — 이미 `PRODUCT` 외 무시
+  - [x] 1.5 Verify: `./gradlew :common:test --tests '*AnalyticsEventTest*' :recommendation:feature:test --tests '*RecommendationEventConsumerTest*'` → 8/0 · 4/0
 **Acceptance Criteria:**
 - 전 JVM 이미지가 이 슬라이스로 재빌드되고 운영에서 analytics·recommendation 이 정상 (배포 후 확인)
 
@@ -147,8 +150,8 @@ Total Task Groups: 13
 - AC-9b(게이트웨이 단)·AC-18, 기존 게이트웨이 라우트 테스트 불변
 
 ### Task Group 9: analytics 원장 사본 발행
-**Dependencies:** Task Group 5, OQ-001(ADR-0095 착지)
-**Phase:** R2 (착지 전이면 보류하고 R3 이후로)
+**Dependencies:** Task Group 5 (OQ-001 해소 — ADR-0095 착지 확인)
+**Phase:** R2
 **Required Skills:** kafka
 - [ ] 9.0 Complete 사본 발행
   - [ ] 9.1 테스트 2개: I13 페이로드 필드(entity_type·action·view_id·visitorId·sessionId·section_id) · Kafka 실패 시 정산 정상
@@ -229,7 +232,7 @@ Total Task Groups: 13
 ## Execution Order
 1. Task Group 1 (R1 배포 → 운영 확인)
 2. Task Group 0 (수동 사전 조건 — 사용자 승인 포함)
-3. Task Group 2 → 3 → 4 → 5 → 6 → 7 → 8, 병행으로 12(인프라·CI) — 9 는 OQ-001 에 따라
+3. Task Group 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9, 병행으로 12(인프라·CI)
 4. R2 배포 → 운영 확인
 5. Task Group 10 → 11 (R3 배포 → 운영 확인)
 6. Task Group 13 (R4)

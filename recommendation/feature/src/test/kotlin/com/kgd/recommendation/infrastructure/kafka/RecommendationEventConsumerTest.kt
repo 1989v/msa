@@ -194,6 +194,23 @@ class RecommendationEventConsumerTest : BehaviorSpec({
                 ))
                 verify(exactly = 0) { w.insertBatch(any()) }
             }
+            then("광고 클릭도 쓰지 않는다 — 상품을 광고해도 광고 반응은 상품 선호가 아니다") {
+                val w = mockk<ClickHouseEventWriter>(relaxed = true)
+                val c = RecommendationEventConsumer(w)
+                c.handle(AnalyticsEvent(
+                    eventId = "evt-ad",
+                    entityType = EntityType.AD,
+                    entityId = "42",
+                    action = EventAction.CLICK,
+                    userId = 1L,
+                    visitorId = "v",
+                    sessionId = "s",
+                    timestamp = Instant.now(),
+                    experimentAssignments = null,
+                    payload = mapOf("productId" to 1),
+                ))
+                verify(exactly = 0) { w.insertBatch(any()) }
+            }
         }
     }
 })
