@@ -1,0 +1,36 @@
+# Open Questions Registry
+# Categories: pre-impl | impl-discovery | test-discovery | closure | waiver-revisit
+
+questions:
+  - id: OQ-001
+    category: impl-discovery
+    question: "ADR-0095(노출·클릭 원장)가 제안·미커밋 상태다. 광고 이벤트 사본의 합류(AC-17)는 그 파이프라인 착지 뒤에 붙인다 — 착지 전이면 해당 task group 을 보류하고 과금 경로만 먼저 간다."
+    raised_by: shape-spec
+    raised_at: 2026-09-23
+    status: open
+    resolution: null
+    resolved_at: null
+  - id: OQ-002
+    category: impl-discovery
+    question: "engagement 메모리 512Mi → 768Mi 가 노드 여유 안에 드는지 배포 전 kubectl top 으로 확인. 부족하면 증설이 아니라 동시성 축소(스레드풀·캐시 크기)로 맞춘다."
+    raised_by: shape-spec
+    raised_at: 2026-09-23
+    status: open
+    resolution: null
+    resolved_at: null
+  - id: OQ-003
+    category: impl-discovery
+    question: "ads_db 스키마·ads_user 계정·ADS_TOKEN_SECRET 셋 중 하나라도 없으면 engagement 가 못 뜨고 폴드된 recommendation·experiment 도 함께 멈춘다(2026-09-10 GAME_HMAC_SECRET 사고와 같은 모양). 운영 볼륨 1회 수동 SQL(place_db 선례 a599d857) · SealedSecret 을 먼저 반영하고 클러스터에서 셋을 확인한 뒤에만 이미지를 올린다."
+    raised_by: shape-spec
+    raised_at: 2026-09-23
+    status: open
+    resolution: null
+    resolved_at: null
+  - id: OQ-004
+    category: impl-discovery
+    question: "ci.yml 경로 매핑이 engagement 폴드를 못 따라간다(:experiment:app:test 를 부름, ci.yml:169,199). ads 와 무관한 기존 부채 — 보고만 하고 고칠지는 사용자에게 묻는다. ads/* 매핑 추가는 이 스펙 범위(SR-16)."
+    raised_by: spec-review(test-strategy R5)
+    raised_at: 2026-09-23
+    status: open
+    resolution: null
+    resolved_at: null

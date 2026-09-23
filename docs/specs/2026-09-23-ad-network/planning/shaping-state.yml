@@ -1,0 +1,14 @@
+rounds_completed: 1
+ambiguity: 0.16
+threshold: 0.2
+threshold_source: default
+status: PASSED
+type: brownfield
+topology:
+  active: [advertiser-console, decision-serving, measurement-ivt, ledger-settlement-report, admin-review-ops]
+  deferred:
+    - {name: external-publishers, reason: "확정 범위 — 우리 서브도메인 먼저", date: 2026-09-23}
+    - {name: native-ads, reason: "디스플레이 먼저", date: 2026-09-23}
+challenge_modes_used: []
+ontology_snapshot:
+  round_1: [Advertiser, Campaign, Creative, Placement, AdDecision, ServeToken, DeliveryHourly, Ledger, Publisher]
