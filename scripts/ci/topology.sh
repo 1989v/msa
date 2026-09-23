@@ -12,7 +12,7 @@ topology_pod_for_path() {
     auth/*) echo "auth" ;;
     commerce/*|deal/*|fulfillment/*|inventory/*|order/*|product/*|warehouse/*) echo "commerce" ;;
     blog/*|content/*|game/*|place/*|ranking/*) echo "content" ;;
-    engagement/*|experiment/*|recommendation/*) echo "engagement" ;;
+    ads/*|engagement/*|experiment/*|recommendation/*) echo "engagement" ;;
     search/*) echo "search" ;;
     chatbot/*|gifticon/*|quant/*|sideapp/*) echo "sideapp" ;;
   esac
@@ -27,7 +27,7 @@ topology_test_tasks() {
     auth) echo ":auth:app:test" ;;
     commerce) echo ":commerce:app:test :deal:domain:test :deal:feature:test :fulfillment:domain:test :fulfillment:feature:test :inventory:domain:test :inventory:feature:test :order:domain:test :order:feature:test :product:domain:test :product:feature:test :warehouse:domain:test :warehouse:feature:test" ;;
     content) echo ":content:app:test :blog:domain:test :blog:feature:test :game:domain:test :game:feature:test :place:domain:test :place:feature:test :ranking:domain:test :ranking:feature:test" ;;
-    engagement) echo ":engagement:app:test :experiment:domain:test :experiment:feature:test :recommendation:domain:test :recommendation:feature:test" ;;
+    engagement) echo ":engagement:app:test :ads:domain:test :ads:feature:test :experiment:domain:test :experiment:feature:test :recommendation:domain:test :recommendation:feature:test" ;;
     search) echo ":search:app:test" ;;
     sideapp) echo ":sideapp:app:test :chatbot:domain:test :chatbot:feature:test :gifticon:domain:test :gifticon:feature:test :quant:domain:test :quant:feature:test" ;;
   esac

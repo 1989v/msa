@@ -49,19 +49,20 @@ Total Task Groups: 13
 **Dependencies:** Task Group 1
 **Phase:** R2
 **Required Skills:** gradle, spring-boot, jpa, flyway, redis
-- [ ] 2.0 Complete 모듈·폴드
-  - [ ] 2.1 테스트 4개:
+- [x] 2.0 Complete 모듈·폴드
+  - [x] 2.1 테스트 4개:
     - `EngagementContextLoadSpec` 확장 — ads 컨트롤러 빈 등록 + **충전 진입점 호출 뒤 잔액 재조회 = 충전액** (C1, 값 판정)
     - 같은 스펙 — recommendation 이 주입받은 Redis 연결의 명령 타임아웃이 250ms 가 **아니다** [arch C-2 · impl N3-1]
     - 같은 스펙 — ads 스케줄 작업 빈이 등록돼 있다(`outbox.polling.enabled` 와 무관) [arch C-3 · impl N3-4 · test C-3]
     - `AdsSchemaIntegrationSpec` — Flyway 스키마 = 엔티티(`validate`) (C2) · 시크릿 없음/31바이트 → 기동 실패 (C3)
-  - [ ] 2.2 `settings.gradle.kts` 에 `:ads:domain`·`:ads:feature`, `engagement/app/build.gradle.kts` 의존, `EngagementApplication.scanBasePackages` 에 `com.kgd.ads`
-  - [ ] 2.3 `AdsDataSourceConfig` — `WishlistDataSourceConfig` 모양, prefix `spring.datasource.ads`, `adsTransactionManager`, `ScopedFlywayMigrator(classpath:adsdb/migration)`, EMF `ddl-auto=validate`
-  - [ ] 2.4 ads 전용 Redis 연결 — **스프링 빈으로 노출하지 않는다**(ads 내부 컴포넌트가 직접 생성·보유). 공용 `StringRedisTemplate` 자동 구성이 물러나지 않게 [arch C-2 · impl N3-1]
-  - [ ] 2.5 ads 설정에 `@EnableScheduling` 을 직접 선언(outbox 토글 의존 제거) + `ads.scheduling.enabled` 조건 + engagement `spring.task.scheduling.pool.size: 4` [arch C-3]
-  - [ ] 2.6 `adsdb/migration/V1__ads.sql` — 광고주(종류)·캠페인·소재·지면(**`paid_allowed` 속성**)·문맥 카테고리·매핑·시간별 집계 두 표·원장 계정·거래·분개·정산 기록. 시드: 지면 4개(`deal-hub-end` 없음), SYSTEM 광고주, HOUSE 캠페인·소재 3종(`V6__ads_house.sql:45` 의 game-list-banner 내용) [domain C1 · usecase C1]
-  - [ ] 2.7 `EngagementContextLoadSpec` 컨테이너 init 에 `ads_db` 별도 생성, 테스트 properties 에 `ADS_TOKEN_SECRET`·`spring.datasource.ads.*`·Redis 컨테이너(`GenericContainer("redis:7")`)
-  - [ ] 2.8 Verify: `./gradlew :engagement:app:test --tests '*EngagementContextLoadSpec*' --tests '*AdsSchemaIntegrationSpec*' :engagement:app:check`
+  - [x] 2.2 `settings.gradle.kts` 에 `:ads:domain`·`:ads:feature`, `engagement/app/build.gradle.kts` 의존, `EngagementApplication.scanBasePackages` 에 `com.kgd.ads`
+  - [x] 2.3 `AdsDataSourceConfig` — `WishlistDataSourceConfig` 모양, prefix `spring.datasource.ads`, `adsTransactionManager`, `ScopedFlywayMigrator(classpath:adsdb/migration)`, EMF `ddl-auto=validate`
+  - [x] 2.4 ads 전용 Redis 연결 — **스프링 빈으로 노출하지 않는다**(ads 내부 컴포넌트가 직접 생성·보유). 공용 `StringRedisTemplate` 자동 구성이 물러나지 않게 [arch C-2 · impl N3-1]
+  - [x] 2.5 ads 설정에 `@EnableScheduling` 을 직접 선언(outbox 토글 의존 제거) + `ads.scheduling.enabled` 조건 + engagement `spring.task.scheduling.pool.size: 4` [arch C-3]
+  - [x] 2.6 `adsdb/migration/V1__ads.sql` — 광고주(종류)·캠페인·소재·지면(**`paid_allowed` 속성**)·문맥 카테고리·매핑·시간별 집계 두 표·원장 계정·거래·분개·정산 기록. 시드: 지면 4개(`deal-hub-end` 없음), SYSTEM 광고주, HOUSE 캠페인·소재 3종(`V6__ads_house.sql:45` 의 game-list-banner 내용) [domain C1 · usecase C1]
+  - [x] 2.7 `EngagementContextLoadSpec` 컨테이너 init 에 `ads_db` 별도 생성, 테스트 properties 에 `ADS_TOKEN_SECRET`·`spring.datasource.ads.*`·Redis 컨테이너(`GenericContainer("redis:7")`)
+  - [x] 2.8 Verify: `./gradlew :engagement:app:test --tests '*EngagementContextLoadSpec*' --tests '*AdsSchemaIntegrationSpec*' :engagement:app:check`
+> 구현 기록(2026-09-23): 컨트롤러는 그룹 7 몫이라 C1 은 유스케이스 빈 3종으로 검사 · `LedgerPort.post` 는 `MANDATORY` 전파라 한정자 결함이 예외로 드러난다 · 스키마에 `ad_host_category`(호스트 기본 카테고리)·`ad_unregistered_placement`(미등록 지면 누적) 추가 · 지면 시드 값(비율 1.91:1, 최저가 100,000 마이크로)은 임시 — 어드민에서 조정 · 회귀 주입 6종 빨간불 확인
 **Acceptance Criteria:**
 - 폴드 게이트(`build.gradle.kts:701-731`, `:835`)·`verifyPodTopology` 통과, recommendation·experiment 컨텍스트 테스트 불변
 

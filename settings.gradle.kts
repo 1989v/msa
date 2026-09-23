@@ -43,6 +43,8 @@ include(
     "quant:feature",
     "recommendation:domain",
     "recommendation:feature",
+    "ads:domain",
+    "ads:feature", // ADR-0098: 광고 네트워크 라이브러리 (engagement:app 이 흡수, 비-bootable)
     // ADR-0093 — engagement: recommendation+experiment 폴드 호스트
     "engagement:app",
     // ADR-0093 — account: member+wishlist 폴드 호스트

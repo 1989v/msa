@@ -2,16 +2,24 @@ package com.kgd.engagement
 
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
+import com.kgd.ads.application.advertiser.usecase.RegisterAdvertiserUseCase
+import com.kgd.ads.application.ledger.usecase.GetWalletUseCase
+import com.kgd.ads.application.ledger.usecase.TopUpUseCase
+import com.kgd.ads.infrastructure.redis.AdsRedisConnection
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.ApplicationContext
+import org.springframework.scheduling.config.TaskManagementConfigUtils
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
+import org.springframework.data.redis.core.StringRedisTemplate
+import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.DockerClientFactory
-import org.testcontainers.containers.MySQLContainer
-import org.testcontainers.utility.DockerImageName
+import java.time.Duration
 import javax.sql.DataSource
 
 /**
@@ -25,8 +33,7 @@ import javax.sql.DataSource
  * 그 빈 하나로 back-off 하고, 그러면 MySQL 연결과 리포지토리가 조용히 사라진다.
  * `ExperimentDataSourceConfig` 가 명시로 만들기 때문에 뜨는 것이고, 그 설정을 지우면 이 검사가 죽는다.
  */
-private val dockerAvailable: Boolean =
-    runCatching { DockerClientFactory.instance().isDockerAvailable }.getOrDefault(false)
+private val dockerAvailable: Boolean = EngagementTestContainers.dockerAvailable
 
 @Suppress("unused")
 fun engagementDockerAvailable(): Boolean = dockerAvailable
@@ -39,8 +46,10 @@ fun engagementDockerAvailable(): Boolean = dockerAvailable
         "spring.jpa.hibernate.ddl-auto=create",
         "spring.flyway.enabled=false",
         "management.health.redis.enabled=false",
-        "spring.data.redis.host=localhost",
         "spring.kafka.bootstrap-servers=localhost:9092",
+        "ADS_TOKEN_SECRET=${EngagementTestContainers.TEST_TOKEN_SECRET}",
+        // 호스트 스케줄링을 켜던 outbox 토글을 끈다 — ads 가 스스로 스케줄링을 켜는지 보기 위해서다.
+        "outbox.polling.enabled=false",
         // ClickHouse 는 이 검사에 없다. ClickHouseConfig 가 initializationFailTimeout=-1 로
         // 기동 때 연결을 열지 않기 때문에 뜬다 — 그 설정을 되돌리면 이 검사가 죽는다.
         "recommendation.clickhouse.url=jdbc:clickhouse://localhost:8123/analytics",
@@ -54,6 +63,7 @@ class EngagementContextLoadSpec(
     @Autowired private val ctx: ApplicationContext,
     @Autowired @Qualifier("experimentDataSource") private val experimentDs: DataSource,
     @Autowired @Qualifier("clickHouseDataSource") private val clickHouseDs: DataSource,
+    @Autowired @Qualifier("adsDataSource") private val adsDs: DataSource,
 ) : BehaviorSpec({
 
     Given("engagement 모듈러 모놀리스 (recommendation + experiment 한 JVM)") {
@@ -84,30 +94,71 @@ class EngagementContextLoadSpec(
                 (repo.count() >= 0L) shouldBe true
             }
     }
+
+    Given("ads 폴드 (ADR-0098)") {
+        Then("ads 의 datasource·EMF·TM 과 유스케이스가 함께 로드된다")
+            .config(enabledIf = { dockerAvailable }) {
+                listOf("adsDataSource", "adsEntityManagerFactory", "adsTransactionManager", "adsFlyway")
+                    .forEach { ctx.containsBean(it).shouldBeTrue() }
+                ctx.getBeanNamesForType(RegisterAdvertiserUseCase::class.java).size shouldBe 1
+                ctx.getBeanNamesForType(TopUpUseCase::class.java).size shouldBe 1
+                ctx.getBeanNamesForType(GetWalletUseCase::class.java).size shouldBe 1
+            }
+
+        // 비-primary 도메인의 쓰기는 한정자가 어긋나면 예외 없이 사라진다. 빈 존재가 아니라
+        // 충전 뒤 **다시 읽은 잔액**으로 본다. 재조회는 JPA 가 아니라 JDBC 로 ads_db 를 직접 읽는다.
+        Then("충전하고 다시 읽은 잔액이 충전액과 같다")
+            .config(enabledIf = { dockerAvailable }) {
+                val memberId = 910_001L
+                val advertiserId = ctx.getBean(RegisterAdvertiserUseCase::class.java)
+                    .execute(RegisterAdvertiserUseCase.Command(memberId, "컨텍스트 검사 광고주")).advertiserId
+                val topUp = ctx.getBean(TopUpUseCase::class.java)
+                topUp.execute(TopUpUseCase.Command(memberId, 5_000_000L, "ctx-topup-1"))
+                topUp.execute(TopUpUseCase.Command(memberId, 2_500_000L, "ctx-topup-2"))
+
+                ctx.getBean(GetWalletUseCase::class.java).execute(memberId)?.balanceMicros shouldBe 7_500_000L
+                val jdbc = JdbcTemplate(adsDs)
+                jdbc.queryForObject(
+                    "SELECT balance_micros FROM ad_ledger_account WHERE advertiser_id = ?",
+                    Long::class.java,
+                    advertiserId,
+                ) shouldBe 7_500_000L
+                jdbc.queryForObject(
+                    "SELECT COALESCE(SUM(e.amount_micros), -1) FROM ad_ledger_entry e " +
+                        "JOIN ad_ledger_transaction t ON t.id = e.transaction_id " +
+                        "WHERE t.idempotency_key IN ('ctx-topup-1', 'ctx-topup-2')",
+                    Long::class.java,
+                ) shouldBe 0L
+            }
+
+        // ads 는 250ms 타임아웃 연결을 스스로 쥔다. 그것이 빈으로 새어 나가면 Boot 자동 구성이
+        // 물러나 recommendation 의 공용 템플릿까지 250ms 로 바뀐다.
+        Then("recommendation 이 쓰는 공용 Redis 연결은 ads 의 250ms 타임아웃을 갖지 않는다")
+            .config(enabledIf = { dockerAvailable }) {
+                val shared = ctx.getBean(StringRedisTemplate::class.java).connectionFactory as LettuceConnectionFactory
+                shared.clientConfiguration.commandTimeout shouldNotBe Duration.ofMillis(250)
+
+                val ads = ctx.getBean(AdsRedisConnection::class.java).template
+                (ads.connectionFactory as LettuceConnectionFactory).clientConfiguration.commandTimeout shouldBe
+                    Duration.ofMillis(250)
+                (ads.connectionFactory === shared) shouldBe false
+                ads.execute { it.ping() } shouldBe "PONG"
+            }
+
+        Then("outbox 토글을 꺼도 스케줄링이 켜져 있고 풀 크기는 4 다")
+            .config(enabledIf = { dockerAvailable }) {
+                ctx.containsBean("adsSchedulingConfig").shouldBeTrue()
+                ctx.containsBean(TaskManagementConfigUtils.SCHEDULED_ANNOTATION_PROCESSOR_BEAN_NAME).shouldBeTrue()
+                ctx.getBean(ThreadPoolTaskScheduler::class.java).scheduledThreadPoolExecutor.corePoolSize shouldBe 4
+            }
+    }
 }) {
 
     override fun extensions() = listOf(SpringExtension)
 
     companion object {
         @JvmStatic
-        private val mysql: MySQLContainer<*>? = if (dockerAvailable) {
-            MySQLContainer(DockerImageName.parse("mysql:8.0.33"))
-                .withDatabaseName("experiment_db")
-                .withUsername("root")
-                .withPassword("test")
-                .also { it.start() }
-        } else {
-            null
-        }
-
-        @JvmStatic
         @DynamicPropertySource
-        fun props(registry: DynamicPropertyRegistry) {
-            val c = mysql ?: return
-            registry.add("spring.datasource.url") { c.jdbcUrl }
-            registry.add("spring.datasource.username") { c.username }
-            registry.add("spring.datasource.password") { c.password }
-            registry.add("spring.datasource.driver-class-name") { "com.mysql.cj.jdbc.Driver" }
-        }
+        fun props(registry: DynamicPropertyRegistry) = EngagementTestContainers.register(registry)
     }
 }

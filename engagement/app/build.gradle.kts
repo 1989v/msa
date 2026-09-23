@@ -14,11 +14,13 @@ dependencies {
     implementation("tools.jackson.module:jackson-module-kotlin")
     implementation(project(":recommendation:feature"))
     implementation(project(":experiment:feature")) // co-deploy (engagement 모듈러 모놀리스)
+    implementation(project(":ads:feature")) // ADR-0098 — 광고 네트워크 폴드
     // 메인 클래스(@SpringBootApplication) 컴파일 + bootJar 구성용 최소 의존
     implementation(libs.spring.boot.starter.web)
 
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.spring.boot.starter.data.jpa) // 컨텍스트 로드 검사가 리포지토리 타입 참조
+    testImplementation(libs.spring.boot.starter.data.redis) // 컨텍스트 로드 검사가 Redis 연결 설정값을 읽는다
     testImplementation(libs.kotest.extensions.spring)
     // ADR-0058 검증 방법 — 폴드 결함은 실제 컨텍스트를 띄워야 드러난다
     testImplementation(libs.testcontainers.junit)

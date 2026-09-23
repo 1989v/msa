@@ -17,6 +17,15 @@ spring:
     username: ${MYSQL_USER:commerce}
     password: ${MYSQL_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    # ADR-0098 — ads 전용 스키마(ads_db). 비-primary 라 AdsDataSourceConfig 가 직접 배선한다.
+    ads:
+      url: jdbc:mysql://localhost:3348/ads_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
+      username: ${ADS_MYSQL_USER:ads_user}
+      password: ${ADS_MYSQL_PASSWORD:ads_password}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      hikari:
+        maximum-pool-size: 3
+        minimum-idle: 1
 
   jpa:
     hibernate:
@@ -32,6 +41,12 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
+
+  # 기본 1 이면 ads 정산이 도는 동안 후보 인덱스 갱신이 밀린다.
+  task:
+    scheduling:
+      pool:
+        size: 4
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
@@ -62,6 +77,16 @@ recommendation:
 analytics:
   service:
     url: http://localhost:8090
+
+# ADR-0098 — 광고 네트워크.
+ads:
+  token:
+    # 필수, 32바이트 이상 — 없으면 기동하지 않는다. 다른 서비스의 HMAC 키와 공유하지 않는다.
+    secret: ${ADS_TOKEN_SECRET:}
+    # 키 교체 중에만 이전 키를 넣는다.
+    secret-previous: ${ADS_TOKEN_SECRET_PREVIOUS:}
+  scheduling:
+    enabled: true
 
 kgd:
   common:

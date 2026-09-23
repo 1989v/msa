@@ -14,6 +14,7 @@ import org.springframework.boot.runApplication
     scanBasePackages = [
         "com.kgd.recommendation",
         "com.kgd.experiment",
+        "com.kgd.ads",
         "com.kgd.common.exception",
         "com.kgd.common.response",
     ],

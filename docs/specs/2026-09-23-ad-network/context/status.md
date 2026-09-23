@@ -3,3 +3,4 @@
 | 그룹 | 명령 | 결과 |
 |---|---|---|
 | 1 | `./gradlew :common:test --tests '*AnalyticsEventTest*' :recommendation:feature:test --tests '*RecommendationEventConsumerTest*'` | RecommendationEventConsumerTest tests=8 failures=0 · AnalyticsEventTest tests=4 failures=0 (2026-09-23) |
+| 2 | `./gradlew :engagement:app:test --tests '*EngagementContextLoadSpec*' --tests '*AdsSchemaIntegrationSpec*' :engagement:app:check verifyArchitecture :ads:domain:check :ads:feature:check` | EXIT=0 · EngagementContextLoadSpec tests=7 failures=0 · AdsSchemaIntegrationSpec tests=7 failures=0 (메인이 재실행, 2026-09-23) |

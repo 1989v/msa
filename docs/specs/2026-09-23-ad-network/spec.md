@@ -23,7 +23,7 @@
 - `engagement:app` 이 `:ads:feature` 에 의존하고 `scanBasePackages` 에 `com.kgd.ads` 추가. 새 `:app`·Deployment 없음. `generateTopology` 재실행
 - DataSource 는 비-primary 견본 `WishlistDataSourceConfig` — prefix `spring.datasource.ads`, `adsEntityManagerFactory`·`adsTransactionManager`, `ScopedFlywayMigrator(classpath:adsdb/migration)`, ads EMF 만 `ddl-auto=validate`. ads 의 모든 `@Transactional` 은 `adsTransactionManager` 한정자
 - recommendation·experiment 빈을 주입하지 않는다 (ADR-0058)
-- 스케줄링은 engagement 에 이미 켜져 있다(`KgdMessagingOutboxAutoConfiguration.kt:45`). ads 는 `@EnableScheduling` 을 더하지 않고, engagement 스케줄러 풀을 4 로 둔다(기본 1 — 정산이 인덱스 갱신을 막지 않게). ads 스케줄 작업은 `ads.scheduling.enabled`(기본 true)로 끌 수 있다 — 테스트는 끄고 작업을 직접 호출한다. replicas 1 전제, 모든 작업은 멱등
+- 스케줄링은 engagement 에서 outbox 자동 구성이 켜지만(`KgdMessagingOutboxAutoConfiguration.kt:45`) 그 토글에 기대지 않도록 ads 설정이 `@EnableScheduling` 을 직접 선언한다. engagement 스케줄러 풀은 4(기본 1 — 정산이 인덱스 갱신을 막지 않게). ads 스케줄 작업 빈은 각자 `ads.scheduling.enabled`(기본 true) 조건을 단다 — 테스트는 끄고 작업을 직접 호출한다. replicas 1 전제, 모든 작업은 멱등
 
 ### SR-2 인프라 변경 — 이것이 전부다
 - engagement 메모리: `kustomization.yaml:168-173` 의 Tier S 패치를 빼 Tier M(768Mi)
