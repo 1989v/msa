@@ -73,6 +73,25 @@ CONTAINS 가 **구성·변종·사전 등재·사용** 네 뜻을 겸하고, 원
 | `MEASURED_BY` | 대상 → 지표 | MEASURES | {STAGE, MECHANISM, PROBLEM}→METRIC | 무엇으로 재나 | 신규 — `candidate-generation`→`recall-precision`, `rank-fusion`→`ndcg` |
 | `ALTERNATIVE_TO` | 대칭 | — | 같은 kind 의 MECHANISM · TECHNOLOGY | 대신 쓸 수 있는 것 | 신규 — 스파스↔덴스, `interleaving`↔`ab-test` |
 
+유형 사이에 허용된 관계를 한 장으로 보면 아래와 같다. FLOWS_TO 와 SAME_AS 는 유형을 가리지 않아 뺐고, ALTERNATIVE_TO 는 같은 유형 안에서만 성립한다.
+
+```mermaid
+%% caption: 노드 유형 7종 사이에 허용된 관계. CONTAINS 만 층을 만들고 나머지는 층을 가로지른다
+flowchart LR
+  D[DOMAIN] -->|CONTAINS| S[STAGE]
+  D -->|CONTAINS| T[TERM]
+  S -->|CONTAINS| M[MECHANISM]
+  S -->|CONTAINS| X[METRIC]
+  S -->|CONTAINS| P[PROBLEM]
+  S -->|CONTAINS| G[TECHNOLOGY]
+  M -->|USES| T
+  G -->|IMPLEMENTS| M
+  M -->|AFFECTS| X
+  M -->|MEASURED_BY| X
+  M -->|CAUSES| P
+  M -->|MITIGATES| P
+```
+
 - `AFFECTS` 와 `CAUSES` 는 **range 로 가른다**: 지표(값)를 바꾸면 AFFECTS, 문제(상태)를 부르면 CAUSES. 방향(↑↓)은 `reason` 에 적는다 — 「재현율 ↓ · 상주 메모리 32× ↓」.
 - 대칭 관계는 **한 방향만 저장**하고 역방향 라벨은 코드(`ConceptEdgeKind.inverseLabel`)가 만든다. `relation_type` 표는 만들지 않는다 — range 검사가 코드에 있어야 하므로 표는 사본이 된다.
 - `concept_edge.reason VARCHAR(500) NULL` 을 더한다. 관계의 「왜」 한 줄. `confidence`·`scope` 는 넣지 않는다 — 손으로 큐레이션한 간선은 신뢰도가 상수고, 범위는 도메인 루트가 준다.
