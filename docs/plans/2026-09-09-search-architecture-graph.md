@@ -315,7 +315,7 @@ concept_edge(id, from_concept_id, to_concept_id, kind, ordinal)
 | G4 | FE 계층 모드 — 접기·펼치기, 층 색 | `/tech` 「계층」 탭 · `components/hierarchy/` (순수 모델 `hierarchyModel.ts` + 패널) | 완료 2026-09-13 |
 | G2-학습 | 학습이 붙는 가지 — 분석기 커스텀 층(L1~L3) · LTR · 온라인 학습 장치(원장 → 성향 → 오프폴리시 → 밴딧) · 벡터 양자화 · 검색 노드 메모리 | `V23__concept_edge_search_learning.sql` — 개념 17 · CONTAINS 21 · FLOWS_TO 5. 근거는 플랜 `2026-09-22-search-learning-roadmap.md` §7 | 완료 2026-09-22 (배포는 다음 code-dictionary 이미지) |
 | G2-용어 | **용어 사전 가지** — 단계·장치가 아니라 그것을 읽는 데 필요한 말(형태소 분석 11 · 벡터 3 · 학습/평가 6) | `V24__concept_edge_search_glossary.sql` — 개념 24 · CONTAINS 44(사전 쪽 24 + 장치 쪽 20) · FLOWS_TO 3. 규칙은 §3.5 | 완료 2026-09-22 |
-| G5 | 다른 주제로 확장 (배포·관측 등) | — | 미착수. **새 도메인 루트마다 §3.5 의 용어 사전 가지를 같이 만든다** |
+| G5 | 다른 주제로 확장 (배포·관측 등) | — | 미착수. **새 도메인 루트마다 §3.5 의 용어 사전 가지를 같이 만든다**. 확장 전에 노드 유형 7·관계 10·파일 원본으로 올린다 → `docs/specs/2026-09-23-concept-ontology/spec.md` |
 
 두 부모를 가진 개념은 `embedding-model`(문서 임베딩·쿼리 임베딩)과 `hnsw`(벡터 필드·ANN) 둘이다.
 화면은 양쪽 아래에 행을 내되 id 가 같아 선택·강조가 두 행에 같이 걸린다.
