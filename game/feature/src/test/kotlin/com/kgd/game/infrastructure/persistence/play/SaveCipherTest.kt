@@ -11,7 +11,8 @@ class SaveCipherTest : BehaviorSpec({
     val cipher = SaveCipher(key)
 
     Given("세이브 본문을 저장할 때") {
-        val plain = """{"medals":42,"up":{"hp":3,"dmg":1},"best":12}"""
+        // 값은 암호문(Base64)에 우연히 섞일 수 없을 만큼 긴 숫자로 둔다 — 두 글자 "42" 는 약 2% 확률로 섞여 테스트가 흔들렸다
+        val plain = """{"medals":424242,"up":{"hp":3,"dmg":1},"best":12}"""
 
         When("암호화하면") {
             val stored = cipher.encrypt(plain)
@@ -23,7 +24,7 @@ class SaveCipherTest : BehaviorSpec({
 
             Then("본문이 저장소에 드러나지 않는다") {
                 stored shouldNotContain "medals"
-                stored shouldNotContain "42"
+                stored shouldNotContain "424242"
             }
 
             Then("복호화하면 원본과 같다") {
