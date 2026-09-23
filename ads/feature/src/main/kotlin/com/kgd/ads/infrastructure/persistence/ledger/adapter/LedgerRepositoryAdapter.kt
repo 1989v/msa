@@ -1,8 +1,8 @@
 package com.kgd.ads.infrastructure.persistence.ledger.adapter
 
 import com.kgd.ads.application.ledger.port.LedgerPort
-import com.kgd.ads.application.ledger.port.LedgerPosting
 import com.kgd.ads.domain.ledger.model.LedgerAccountType
+import com.kgd.ads.domain.ledger.model.LedgerTransaction
 import com.kgd.ads.infrastructure.persistence.ledger.entity.LedgerAccountJpaEntity
 import com.kgd.ads.infrastructure.persistence.ledger.entity.LedgerEntryJpaEntity
 import com.kgd.ads.infrastructure.persistence.ledger.entity.LedgerTransactionJpaEntity
@@ -36,22 +36,24 @@ class LedgerRepositoryAdapter(
     // MANDATORY — ads 트랜잭션 밖에서 부르면 잠금이 곧바로 풀리고 잔액 갱신이 커밋되지 않는다.
     // 조용히 사라지게 두지 않고 여기서 거절한다.
     @Transactional("adsTransactionManager", propagation = Propagation.MANDATORY)
-    override fun post(posting: LedgerPosting): Long {
-        val locked = accounts.lockAllByIdOrdered(posting.lines.map { it.accountId }.distinct())
+    override fun post(transaction: LedgerTransaction): Long {
+        val at = transaction.createdAt
+        val locked = accounts.lockAllByIdOrdered(transaction.entries.map { it.accountId }.distinct())
             .associateBy { requireNotNull(it.id) }
         val tx = transactions.save(
             LedgerTransactionJpaEntity(
-                type = posting.type,
-                idempotencyKey = posting.idempotencyKey,
-                actorMemberId = posting.actorMemberId,
-                createdAt = posting.at,
+                type = transaction.type,
+                idempotencyKey = transaction.idempotencyKey,
+                reversedTransactionId = transaction.reversedTransactionId,
+                actorMemberId = transaction.actorMemberId,
+                createdAt = at,
             ),
         )
         val txId = requireNotNull(tx.id)
-        posting.lines.forEach { line ->
-            val account = locked[line.accountId] ?: error("원장 계정 없음: ${line.accountId}")
-            account.apply(line.amountMicros, posting.at)
-            entries.save(LedgerEntryJpaEntity(transactionId = txId, accountId = line.accountId, amountMicros = line.amountMicros, createdAt = posting.at))
+        transaction.entries.forEach { entry ->
+            val account = locked[entry.accountId] ?: error("원장 계정 없음: ${entry.accountId}")
+            account.apply(entry.amountMicros, at)
+            entries.save(LedgerEntryJpaEntity(transactionId = txId, accountId = entry.accountId, amountMicros = entry.amountMicros, createdAt = at))
         }
         return txId
     }

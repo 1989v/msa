@@ -1,5 +1,6 @@
 package com.kgd.ads.application.token.config
 
+import com.kgd.ads.domain.token.model.SigningKey
 import org.springframework.boot.context.properties.ConfigurationProperties
 
 /**
@@ -30,6 +31,6 @@ class AdsTokenProperties(
     override fun toString(): String = "AdsTokenProperties(currentKey=***, previousKey=${if (previousKey == null) "none" else "***"})"
 
     companion object {
-        const val MIN_KEY_BYTES = 32
+        const val MIN_KEY_BYTES = SigningKey.MIN_KEY_BYTES
     }
 }

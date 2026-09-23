@@ -70,14 +70,15 @@ Total Task Groups: 13
 **Dependencies:** Task Group 2
 **Phase:** R2
 **Required Skills:** kotlin, ddd
-- [ ] 3.0 Complete 도메인
-  - [ ] 3.1 테스트 8개(★ 위주): `LedgerTransactionTest`(U1) · `SettlementCalculatorTest`(U2) · `RevenueSplitTest`(U3) · `ChargeAmountTest`(U4 + **CPM 최저가 < 1000 마이크로 저장 거부** [test C-2]) · `AuctionTest`(U5·U6·U7) · `CampaignTest`(U9·U10 + HOUSE 는 SYSTEM 전용 팩토리로만, 입찰·예산 필드 없음 [domain C3]) · `ServeTokenTest`(U14) · `WalletHeadroomTest`(U17)
-  - [ ] 3.2 Advertiser(`MEMBER`·`SYSTEM`)·Campaign(파생 우선순위, 파생 게재 자격)·Creative(`revise()`)·AdPlacement(`paidAllowed`)·ContextCategory
-  - [ ] 3.3 원장: `LedgerTransaction` 팩토리(합 0 강제, 생성자 비공개)·`REVERSAL` 은 SETTLEMENT 전액만
-  - [ ] 3.4 경매·pCTR·페이싱(난수·Clock 주입)·1회 과금액·청구액 계산·수익 배분
-  - [ ] 3.5 토큰 서명/검증(HMAC-SHA256, `MessageDigest.isEqual`, 키 id, 32바이트 최소)
-  - [ ] 3.6 HOUSE 링크 검증 `^/(?![/\\])` + **제어 문자·공백 거부** [sec CO-3] · 랜딩 URL 검증
-  - [ ] 3.7 Verify: `./gradlew :ads:domain:test`
+- [x] 3.0 Complete 도메인
+  - [x] 3.1 테스트 8개(★ 위주): `LedgerTransactionTest`(U1) · `SettlementCalculatorTest`(U2) · `RevenueSplitTest`(U3) · `ChargeAmountTest`(U4 + **CPM 최저가 < 1000 마이크로 저장 거부** [test C-2]) · `AuctionTest`(U5·U6·U7) · `CampaignTest`(U9·U10 + HOUSE 는 SYSTEM 전용 팩토리로만, 입찰·예산 필드 없음 [domain C3]) · `ServeTokenTest`(U14) · `WalletHeadroomTest`(U17)
+  - [x] 3.2 Advertiser(`MEMBER`·`SYSTEM`)·Campaign(파생 우선순위, 파생 게재 자격)·Creative(`revise()`)·AdPlacement(`paidAllowed`)·ContextCategory
+  - [x] 3.3 원장: `LedgerTransaction` 팩토리(합 0 강제, 생성자 비공개)·`REVERSAL` 은 SETTLEMENT 전액만
+  - [x] 3.4 경매·pCTR·페이싱(난수·Clock 주입)·1회 과금액·청구액 계산·수익 배분
+  - [x] 3.5 토큰 서명/검증(HMAC-SHA256, `MessageDigest.isEqual`, 키 id, 32바이트 최소)
+  - [x] 3.6 HOUSE 링크 검증 `^/(?![/\\])` + **제어 문자·공백 거부** [sec CO-3] · 랜딩 URL 검증
+  - [x] 3.7 Verify: `./gradlew :ads:domain:test`
+> 구현 기록(2026-09-23): 9개 스펙 75건. 테스트 클래스는 ChargeAmountTest→`Bid`, ServeTokenTest→`ServeTokenSigner` 를 검사. 토큰 형식 `base64url(내용).base64url(서명)`, 키 id = 키 SHA-256 앞 4바이트 hex. 회귀 주입 U1·U3 빨간불 확인. 열린 질문 셋은 key-decisions 로 정리 — 반영은 그룹 4 에서
 **Acceptance Criteria:**
 - 도메인 모듈에 Spring/JPA 의존 0, 회귀 주입 U1·U3 빨간불 확인(그룹 12)
 

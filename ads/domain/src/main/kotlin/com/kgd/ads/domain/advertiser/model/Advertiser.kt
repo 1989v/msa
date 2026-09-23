@@ -11,6 +11,11 @@ class Advertiser private constructor(
     val displayName: String,
     val status: AdvertiserStatus,
 ) {
+    init {
+        // SYSTEM(「1989v 하우스」)은 회원도 지갑도 없다 — 회원 id 유무가 곧 종류다.
+        require((kind == AdvertiserKind.MEMBER) == (memberId != null)) { "MEMBER 광고주만 회원 id 를 갖습니다" }
+    }
+
     companion object {
         const val MAX_DISPLAY_NAME_LENGTH = 100
 

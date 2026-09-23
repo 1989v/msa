@@ -1,14 +1,12 @@
 package com.kgd.ads.application.ledger.service
 
 import com.kgd.ads.application.advertiser.port.AdvertiserPort
-import com.kgd.ads.application.ledger.port.LedgerLine
 import com.kgd.ads.application.ledger.port.LedgerPort
-import com.kgd.ads.application.ledger.port.LedgerPosting
 import com.kgd.ads.application.ledger.usecase.GetWalletUseCase
 import com.kgd.ads.application.ledger.usecase.TopUpUseCase
 import com.kgd.ads.domain.advertiser.model.AdvertiserStatus
 import com.kgd.ads.domain.ledger.model.LedgerAccountType
-import com.kgd.ads.domain.ledger.model.LedgerTransactionType
+import com.kgd.ads.domain.ledger.model.LedgerTransaction
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -41,11 +39,12 @@ class LedgerService(
         val source = ledgerPort.systemAccountId(LedgerAccountType.TOPUP_SOURCE)
 
         val transactionId = ledgerPort.post(
-            LedgerPosting(
-                type = LedgerTransactionType.TOPUP,
+            LedgerTransaction.topUp(
                 idempotencyKey = command.idempotencyKey,
+                sourceAccountId = source,
+                walletAccountId = wallet,
+                amountMicros = command.amountMicros,
                 actorMemberId = command.memberId,
-                lines = listOf(LedgerLine(source, -command.amountMicros), LedgerLine(wallet, command.amountMicros)),
                 at = LocalDateTime.now(clock),
             ),
         )
