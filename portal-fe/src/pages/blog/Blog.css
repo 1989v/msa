@@ -1111,11 +1111,16 @@
  *
  * 실측(표 14개 글, 1024px 이상): 표 높이합 5,443 → 4,211px, 셀 줄수 305 → 237.
  * 산문 열은 704px 그대로고 페이지 가로 넘침은 0 이다.
- * 좁은 화면에서는 여백 안쪽 = 본문 폭이라 지금과 같다(390px 에서 폭 변화 없음). */
-@media (min-width: 64rem) {
+ * 좁은 화면에서는 여백 안쪽 = 본문 폭이라 지금과 같다(390px 에서 폭 변화 없음).
+ *
+ * 문턱은 48rem, 상한은 72rem 이다(2026-09-23 조정). 문턱이 64rem 이던 동안
+ * 노트북·태블릿 폭(834~1023px)에서는 표가 본문 열에 갇혀 셀이 접혔다 — 그 구간에도
+ * 여백만큼의 여유가 있다. 실측(그림 8개·표 12개 글, 라이브에 규칙만 얹어 대조):
+ * 960px 접힌 셀 3 → 0, 834px 19 → 13, 1440px 표 폭 1024 → 1152px. 가로 넘침은 전 구간 0. */
+@media (min-width: 48rem) {
   .blog-body > table,
   .blog-body > pre {
-    --blog-wide-w: min(100vw - 2 * var(--blog-page-pad), 64rem);
+    --blog-wide-w: min(100vw - 2 * var(--blog-page-pad), 72rem);
     width: var(--blog-wide-w);
     margin-left: calc(50% - var(--blog-wide-w) / 2);
   }
