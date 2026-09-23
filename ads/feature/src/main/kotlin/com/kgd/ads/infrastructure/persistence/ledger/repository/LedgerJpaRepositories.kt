@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param
 
 interface LedgerAccountJpaRepository : JpaRepository<LedgerAccountJpaEntity, Long> {
     fun findByAdvertiserId(advertiserId: Long): LedgerAccountJpaEntity?
+    fun findAllByAdvertiserIdIn(advertiserIds: Collection<Long>): List<LedgerAccountJpaEntity>
     fun findFirstByTypeAndAdvertiserIdIsNull(type: LedgerAccountType): LedgerAccountJpaEntity?
 
     /** id 오름차순으로 잠근다 — 두 거래가 같은 계정 쌍을 반대 순서로 잠가 교착되지 않게. */

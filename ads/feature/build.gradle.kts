@@ -24,6 +24,9 @@ dependencies {
 
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)
+    // 결정·이벤트·정산 통합 스펙 — 돈과 차단 경로는 실제 MySQL·Redis 로 본다
+    testImplementation(libs.testcontainers.junit)
+    testImplementation(libs.testcontainers.mysql)
 }
 
 // 라이브러리 — 실행 가능 JAR 아님 (engagement:app 이 링크한다).

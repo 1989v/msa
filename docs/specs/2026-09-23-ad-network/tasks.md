@@ -86,13 +86,14 @@ Total Task Groups: 13
 **Dependencies:** Task Group 3
 **Phase:** R2
 **Required Skills:** spring, redis-lua
-- [ ] 4.0 Complete 결정
-  - [ ] 4.1 테스트 5개: ★I4(Redis 정지 → `redis_unavailable`, 1초 안) · ★I8(차단 경로 넷 + **빈도 N−1/N 경계** [test C-1]) · I9(인덱스 갱신 직접 호출 — 승인·정지·반려 반영) · I10(크롤러 → ads Redis 명령 0) · I11(미등록 키 누적) · C6(소유자 `X-User-Id` → 토큰 과금 여부 false)
-  - [ ] 4.2 인덱스 스냅샷: 활성 후보·지면·매핑·광고주별 잔액·「정산 완료 시각」·캠페인별 **청구 누계** — 1분 주기
-  - [ ] 4.3 `POST /api/v1/ads/decisions` — 자격 필터 → eCPM 상위 20 → Redis 읽기 1회(빈도·일/시간 지출·(광고주, 시각) 지출 합) → 경매·페이싱 → 토큰 → Redis 쓰기 1회(지면 요청·유료 채움) → HOUSE 목록. `paid_allowed=false` 지면은 유료 후보 없음 [domain C1]
-  - [ ] 4.4 미정산 6시간 초과 광고주 제외
-  - [ ] 4.5 메트릭(결정 지연·결과·인덱스 갱신 시각), 방문자 id 해시 로깅
-  - [ ] 4.6 Verify: `./gradlew :ads:feature:test --tests '*DecisionIntegrationSpec*' --tests '*CandidateIndexIntegrationSpec*'`
+- [x] 4.0 Complete 결정
+  - [x] 4.1 테스트 5개: ★I4(Redis 정지 → `redis_unavailable`, 1초 안) · ★I8(차단 경로 넷 + **빈도 N−1/N 경계** [test C-1]) · I9(인덱스 갱신 직접 호출 — 승인·정지·반려 반영) · I10(크롤러 → ads Redis 명령 0) · I11(미등록 키 누적) · C6(소유자 `X-User-Id` → 토큰 과금 여부 false)
+  - [x] 4.2 인덱스 스냅샷: 활성 후보·지면·매핑·광고주별 잔액·「정산 완료 시각」·캠페인별 **청구 누계** — 1분 주기
+  - [x] 4.3 `POST /api/v1/ads/decisions` — 자격 필터 → eCPM 상위 20 → Redis 읽기 1회(빈도·일/시간 지출·(광고주, 시각) 지출 합) → 경매·페이싱 → 토큰 → Redis 쓰기 1회(지면 요청·유료 채움) → HOUSE 목록. `paid_allowed=false` 지면은 유료 후보 없음 [domain C1]
+  - [x] 4.4 미정산 6시간 초과 광고주 제외
+  - [x] 4.5 메트릭(결정 지연·결과·인덱스 갱신 시각), 방문자 id 해시 로깅
+  - [x] 4.6 Verify: `./gradlew :ads:feature:test --tests '*DecisionIntegrationSpec*' --tests '*CandidateIndexIntegrationSpec*'`
+> 구현 기록(2026-09-23): 쓰기는 파이프라인 대신 Lua 1회(파이프라인이 결정마다 새 연결을 열었다) · 소재 비율은 이미지 가로·세로로 `AspectRatio.fits` 판정 — 그룹 7 업로드도 같은 함수 · 통합 스펙은 `:ads:feature` 전용 컨텍스트 · Redis 명령 수는 서버 `INFO commandstats`, DB 무접근은 MySQL `Com_*` 증감으로 판정(대조군 포함) · 회귀 주입 8건 빨간불
 **Acceptance Criteria:**
 - AC-5·AC-7·AC-9b(서비스 단)·AC-15, 결정 경로에 DB 호출 0 (테스트에서 JPA 호출 수 0 확인)
 
@@ -103,6 +104,7 @@ Total Task Groups: 13
 - [ ] 5.0 Complete 계측
   - [ ] 5.1 테스트 6개: ★I1(중복) · ★I7(토큰 몰아 제출 → `over_budget`) · I12(클릭 5경우 + 헤더) · I14(부분 수락) · I15(`PTTL` ≥ 남은 수명) · I23(에셋 헤더)
   - [ ] 5.2 수락 Lua 스크립트 1회: 일회성 표식·방문자 해시·일예산·시간당 상한·**총예산(인자로 넘긴 스냅샷의 「총예산 − 청구 누계」와 미정산 시각 키 목록)** [domain C2 · impl N3-3] → 카운터 증가(수락 시각 KST 키)
+  - [ ] 5.2b 미등록 지면 키 해시(`ads:unreg:{시각}`)에 시각당 필드 200개 상한 (결정 경로 스크립트)
   - [ ] 5.3 `POST /api/v1/ads/events` — 토큰 묶음 + analytics 신원 + 최종 채움 출처. **채움 출처는 허용 값 4종·지면 키는 등록부에 있는 것만 카운트, 요청당 개수 상한** [sec CO-1]
   - [ ] 5.4 `GET /api/v1/ads/click/{token}` — 목적지 DB 조회, 서명 불량·미승인 → `/`
   - [ ] 5.5 `GET /api/v1/ads/assets/{hash}` — Content-Type·`nosniff`·불변 캐시
@@ -120,6 +122,7 @@ Total Task Groups: 13
   - [ ] 6.2 5분 작업: ① **닫히지 않은 시각 중 TTL(48시간) 안 전부**를 절대값 UPSERT [arch C-1] ② 시각 끝+10분 이후 UPSERT 성공한 시각 close ③ 닫혔고 정산 안 된 시각 전부 정산 → 광고주별 정산 완료 시각 갱신
   - [ ] 6.3 원장 서비스 — 원장 계정 행 id 순 `FOR UPDATE`, 지갑 음수 불가, 모든 `@Transactional("adsTransactionManager")`
   - [ ] 6.4 셀프 충전 — 1회 상한·KST 하루 한도를 지갑 행 잠금 안에서 확인, 행위자 기록
+  - [ ] 6.4b 정산 작업 첫 실행 때 지출 0 인 광고주도 정산 완료 시각을 기록(결정의 미정산 6시간 창이 오래된 지출을 놓치지 않게)
   - [ ] 6.5 일일 원장 합 검사(ERROR·메트릭), 정산 지연 메트릭
   - [ ] 6.6 Verify: `./gradlew :ads:feature:test --tests '*SettlementIntegrationSpec*' --tests '*LedgerIntegrationSpec*' --tests '*AggregationIntegrationSpec*'`
 **Acceptance Criteria:**

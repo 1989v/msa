@@ -72,6 +72,15 @@ class AuctionTest : BehaviorSpec({
                     .single().winner.shouldBeNull()
             }
         }
+        `when`("CPC 의 eCPM 이 지면 최저가보다 낮으면") {
+            then("그 지면에서 제외, 최저가 이상이면 남는다") {
+                // 최저가 100,000 — CPC 5,000 × pCTR 0.01 × 1000 = 50,000 은 미달, CPC 10,000 이면 딱 100,000
+                val below = candidate(1, Bid(BidType.CPC, 5_000), predictedCtr = 0.01)
+                val atFloor = candidate(2, Bid(BidType.CPC, 10_000), predictedCtr = 0.01)
+                Auction.run(listOf(blog), mapOf(blog.key to listOf(below))).single().winner.shouldBeNull()
+                Auction.run(listOf(blog), mapOf(blog.key to listOf(below, atFloor))).single().winner shouldBe atFloor
+            }
+        }
         `when`("소재 비율이 지면 형식과 다르면") {
             then("그 지면에서 제외") {
                 val square = AdsDomainFixtures.placement("blog-post-end", aspectRatios = setOf(SQUARE))

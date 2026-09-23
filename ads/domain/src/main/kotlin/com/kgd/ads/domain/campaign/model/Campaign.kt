@@ -13,7 +13,7 @@ import java.time.LocalDateTime
  * 인자가 없어 HOUSE 가 예산을 갖는 조합을 만들 수 없다.
  *
  * 「기간 밖」·「예산 소진」은 상태로 두지 않는다. 상태를 바꾸면 기간이 늘거나 예산이 채워졌을 때
- * 누가 되돌릴지가 생기므로, [isRunningAt]·[hasBudgetFor]·[isUnderHourlyCap] 가 매번 파생한다.
+ * 누가 되돌릴지가 생기므로, [isRunningAt]·[hasBudgetFor]·[isUnderHourlyCap]·[isUnderFrequencyCap] 가 매번 파생한다.
  */
 class Campaign private constructor(
     val id: Long?,
@@ -80,10 +80,31 @@ class Campaign private constructor(
         return totalBudgetMicros == null || spentTotalMicros <= totalBudgetMicros - charge
     }
 
-    /** 이번 시각 지출이 시간당 상한(일예산의 25%)에 못 미치는지. 몰아 쓰기 손실의 상한이다. */
+    /**
+     * 시간당 지출 상한 = max(floor(일예산 × 25%), 1회 과금액). 몰아 쓰기 손실의 상한이다.
+     * 1회 과금액을 하한으로 두는 것은 일예산이 작을 때 상한이 과금 1회보다 작아 영영 게재되지 않는 것을 막기 위해서다.
+     * HOUSE 는 상한이 없어 null.
+     */
+    val hourlyCapMicros: Long?
+        get() {
+            val daily = dailyBudgetMicros ?: return null
+            return maxOf(daily * HOURLY_CAP_PERCENT / 100, requireNotNull(bid).chargeMicros)
+        }
+
+    /** 이번 시각 지출이 시간당 상한에 못 미치는지. */
     fun isUnderHourlyCap(spentThisHourMicros: Long): Boolean {
-        val daily = dailyBudgetMicros ?: return true
-        return spentThisHourMicros < daily * HOURLY_CAP_PERCENT / 100
+        val cap = hourlyCapMicros ?: return true
+        return spentThisHourMicros < cap
+    }
+
+    /** 지면 문맥 카테고리에 맞는지. 타기팅 카테고리가 비면 전체다. 문맥을 모르는(null) 지면에는 전체 타기팅만 맞는다. */
+    fun matchesCategory(categoryCode: String?): Boolean =
+        categoryCodes.isEmpty() || (categoryCode != null && categoryCode in categoryCodes)
+
+    /** 이 방문자가 오늘 이 캠페인을 본 횟수가 빈도 제한에 못 미치는지. HOUSE 는 빈도 제한이 없다. */
+    fun isUnderFrequencyCap(viewsToday: Long): Boolean {
+        val cap = frequencyCapPerDay ?: return true
+        return viewsToday < cap
     }
 
     private fun transition(to: CampaignStatus, from: Set<CampaignStatus>) {
@@ -100,7 +121,10 @@ class Campaign private constructor(
 
         /**
          * 회원 광고주의 유료 캠페인을 DRAFT 로 만든다.
-         * 입찰가는 타기팅한 **모든** 지면의 최저가 이상이어야 한다 — 저장 뒤 최저가가 오르면 결정이 그 지면을 뺀다.
+         *
+         * - CPM 입찰가는 타기팅한 **모든** 지면의 최저가 이상이어야 한다 — 저장 뒤 최저가가 오르면 결정이 그 지면을 뺀다.
+         *   CPC 는 클릭 단가라 노출 천 회 단위인 최저가와 단위가 달라 여기서 비교하지 않고, 결정 때 eCPM 으로 비교한다
+         * - 유료를 받지 않는 지면(HOUSE 전용)은 타기팅할 수 없다 — 경매에서만 빼면 광고주는 왜 안 나가는지 모른다
          */
         fun draftPaid(
             advertiser: Advertiser,
@@ -115,8 +139,13 @@ class Campaign private constructor(
             frequencyCapPerDay: Int = DEFAULT_FREQUENCY_CAP_PER_DAY,
         ): Campaign {
             if (advertiser.kind != AdvertiserKind.MEMBER) invalid("유료 캠페인은 회원 광고주만 만듭니다")
-            placements.firstOrNull { bid.micros < it.floorMicros }?.let {
-                invalid("입찰가가 지면 ${it.key} 의 최저가(${it.floorMicros})보다 낮습니다")
+            placements.firstOrNull { !it.paidAllowed }?.let {
+                invalid("지면 ${it.key} 는 유료 광고를 받지 않습니다")
+            }
+            if (bid.type == BidType.CPM) {
+                placements.firstOrNull { bid.micros < it.floorMicros }?.let {
+                    invalid("입찰가가 지면 ${it.key} 의 최저가(${it.floorMicros})보다 낮습니다")
+                }
             }
             return Campaign(
                 id = null,

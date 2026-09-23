@@ -36,9 +36,10 @@ object AdsDomainFixtures {
         totalBudgetMicros: Long? = null,
         placements: List<AdPlacement> = listOf(placement()),
         endAt: LocalDateTime? = null,
+        categoryCodes: Set<String> = emptySet(),
     ) = Campaign.draftPaid(
         advertiser = member(), name = "가을 캠페인", bid = bid, dailyBudgetMicros = dailyBudgetMicros,
         totalBudgetMicros = totalBudgetMicros, startAt = START, endAt = endAt,
-        placements = placements, categoryCodes = emptySet(),
+        placements = placements, categoryCodes = categoryCodes,
     )
 }

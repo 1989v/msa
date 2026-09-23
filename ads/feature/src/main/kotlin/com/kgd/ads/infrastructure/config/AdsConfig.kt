@@ -1,11 +1,15 @@
 package com.kgd.ads.infrastructure.config
 
 import com.kgd.ads.application.token.config.AdsTokenProperties
+import com.kgd.ads.domain.token.model.SigningKey
+import com.kgd.ads.domain.token.policy.ServeTokenSigner
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.time.Clock
 import java.time.ZoneId
+import kotlin.random.Random
 
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(AdsTokenProperties::class)
@@ -17,6 +21,20 @@ class AdsConfig {
      */
     @Bean
     fun adsClock(): Clock = Clock.system(KST)
+
+    /** 페이싱 난수. 테스트가 같은 이름의 빈으로 바꿔 통과 여부를 고정한다. */
+    @Bean
+    fun adsRandom(): Random = Random.Default
+
+    @Bean
+    fun serveTokenSigner(
+        properties: AdsTokenProperties,
+        @Qualifier("adsClock") clock: Clock,
+    ): ServeTokenSigner = ServeTokenSigner(
+        current = SigningKey.of(properties.currentKey),
+        previous = properties.previousKey?.let(SigningKey::of),
+        clock = clock,
+    )
 
     companion object {
         val KST: ZoneId = ZoneId.of("Asia/Seoul")
