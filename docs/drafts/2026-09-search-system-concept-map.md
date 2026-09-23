@@ -21,16 +21,69 @@ summary: 검색 엔진을 이루는 개념을 층으로 세운 지도다. 색인
 
 검색 설계의 거의 모든 선택은 「이 일을 색인 때 하나, 쿼리 때 하나」로 환원된다.
 
-```mermaid
-%% caption: 색인 타임이 만든 것을 쿼리 타임은 읽기만 한다
-flowchart TB
-  D[원천 문서] --> A[분석] --> I[(색인)]
-  Q[쿼리] --> U[쿼리 언더스탠딩] --> C[후보 추림]
-  C --> R[랭킹] --> O[결과]
-  I -. 읽는다 .-> C
-  O -. 로그 .-> E[평가]
-  E -. 되먹임 .-> R
-```
+<svg viewBox="0 0 700 290" role="img" aria-label="두 시간축 그림. 위 레인은 색인 타임으로 원천 문서가 분석을 거쳐 색인 자료구조가 되고 세그먼트에 쌓여 병합된다. 아래 레인은 쿼리 타임으로 검색어가 쿼리 언더스탠딩을 거쳐 후보를 뽑고 랭킹을 매겨 결과가 된다. 색인 자료구조는 쿼리 타임이 읽기만 한다. 결과에서 나온 로그와 사람의 판정이 평가로 모여 랭킹으로 되먹는다.">
+  <defs>
+    <marker id="d0-ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><polygon points="0,1 10,5 0,9" fill="currentColor"></polygon></marker>
+    <marker id="d0-arA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><polygon points="0,1 10,5 0,9" style="fill:var(--ko-accent-text)"></polygon></marker>
+  </defs>
+  <text x="8" y="16" font-size="10.5" style="fill:var(--ko-text-secondary)">색인 타임 — 한 번 계산해 여러 번 쓴다</text>
+  <rect x="8" y="24" width="104" height="44" rx="4" fill="none" stroke="currentColor"></rect>
+  <text x="60" y="42" text-anchor="middle" font-size="11" fill="currentColor">원천 문서</text>
+  <text x="60" y="58" text-anchor="middle" font-size="9.5" style="fill:var(--ko-text-secondary)">DB · API · 크롤</text>
+  <line x1="112" y1="46" x2="132" y2="46" stroke="currentColor" stroke-width="1.2" marker-end="url(#d0-ar)"></line>
+  <rect x="134" y="24" width="110" height="44" rx="4" fill="none" stroke="currentColor"></rect>
+  <text x="189" y="42" text-anchor="middle" font-size="11" fill="currentColor">분석</text>
+  <text x="189" y="58" text-anchor="middle" font-size="9.5" style="fill:var(--ko-text-secondary)">토큰화 · 정규화</text>
+  <line x1="244" y1="46" x2="264" y2="46" stroke="currentColor" stroke-width="1.2" marker-end="url(#d0-ar)"></line>
+  <rect x="266" y="18" width="152" height="56" rx="4" fill="none" style="stroke:var(--ko-accent-text)" stroke-width="1.5"></rect>
+  <text x="342" y="36" text-anchor="middle" font-size="11" style="fill:var(--ko-accent-text)">색인 자료구조</text>
+  <text x="342" y="51" text-anchor="middle" font-size="9.5" style="fill:var(--ko-accent-text)">역색인 · doc values</text>
+  <text x="342" y="65" text-anchor="middle" font-size="9.5" style="fill:var(--ko-accent-text)">벡터 · stored fields</text>
+  <line x1="418" y1="46" x2="438" y2="46" stroke="currentColor" stroke-width="1.2" marker-end="url(#d0-ar)"></line>
+  <rect x="440" y="24" width="104" height="44" rx="4" fill="none" stroke="currentColor"></rect>
+  <text x="492" y="42" text-anchor="middle" font-size="11" fill="currentColor">세그먼트</text>
+  <text x="492" y="58" text-anchor="middle" font-size="9.5" style="fill:var(--ko-text-secondary)">불변 · 추가만</text>
+  <line x1="544" y1="46" x2="564" y2="46" stroke="currentColor" stroke-width="1.2" marker-end="url(#d0-ar)"></line>
+  <rect x="566" y="24" width="126" height="44" rx="4" fill="none" stroke="currentColor"></rect>
+  <text x="629" y="42" text-anchor="middle" font-size="11" fill="currentColor">병합</text>
+  <text x="629" y="58" text-anchor="middle" font-size="9.5" style="fill:var(--ko-text-secondary)">삭제분 정리</text>
+  <line x1="8" y1="88" x2="692" y2="88" stroke="currentColor" stroke-width="1" stroke-dasharray="5 4"></line>
+  <text x="350" y="84" text-anchor="middle" font-size="9.5" style="fill:var(--ko-text-secondary)">쿼리 타임은 위에서 만든 것을 읽기만 한다</text>
+  <text x="8" y="110" font-size="10.5" style="fill:var(--ko-text-secondary)">쿼리 타임 — 매 요청이 값을 치른다</text>
+  <rect x="8" y="118" width="88" height="44" rx="4" fill="none" stroke="currentColor"></rect>
+  <text x="52" y="145" text-anchor="middle" font-size="11" fill="currentColor">검색어</text>
+  <line x1="96" y1="140" x2="116" y2="140" stroke="currentColor" stroke-width="1.2" marker-end="url(#d0-ar)"></line>
+  <rect x="118" y="112" width="136" height="56" rx="4" fill="none" style="stroke:var(--ko-accent-text)" stroke-width="1.5"></rect>
+  <text x="186" y="132" text-anchor="middle" font-size="11" style="fill:var(--ko-accent-text)">쿼리 언더스탠딩</text>
+  <text x="186" y="147" text-anchor="middle" font-size="9.5" style="fill:var(--ko-accent-text)">교정 · 의도 · 확장</text>
+  <text x="186" y="161" text-anchor="middle" font-size="9.5" style="fill:var(--ko-accent-text)">필터로 옮기기</text>
+  <line x1="254" y1="140" x2="274" y2="140" stroke="currentColor" stroke-width="1.2" marker-end="url(#d0-ar)"></line>
+  <rect x="276" y="118" width="112" height="44" rx="4" fill="none" stroke="currentColor"></rect>
+  <text x="332" y="136" text-anchor="middle" font-size="11" fill="currentColor">후보 추림</text>
+  <text x="332" y="152" text-anchor="middle" font-size="9.5" style="fill:var(--ko-text-secondary)">리트리벌 · 필터</text>
+  <line x1="388" y1="140" x2="408" y2="140" stroke="currentColor" stroke-width="1.2" marker-end="url(#d0-ar)"></line>
+  <rect x="410" y="118" width="112" height="44" rx="4" fill="none" stroke="currentColor"></rect>
+  <text x="466" y="136" text-anchor="middle" font-size="11" fill="currentColor">랭킹</text>
+  <text x="466" y="152" text-anchor="middle" font-size="9.5" style="fill:var(--ko-text-secondary)">점수 · 리랭킹 · 정책</text>
+  <line x1="522" y1="140" x2="542" y2="140" stroke="currentColor" stroke-width="1.2" marker-end="url(#d0-ar)"></line>
+  <rect x="544" y="118" width="148" height="44" rx="4" fill="none" stroke="currentColor"></rect>
+  <text x="618" y="145" text-anchor="middle" font-size="11" fill="currentColor">결과 · 하이라이팅</text>
+  <path d="M342 74 L342 100 L332 100 L332 114" fill="none" style="stroke:var(--ko-accent-text)" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#d0-arA)"></path>
+  <text x="352" y="104" font-size="9.5" style="fill:var(--ko-accent-text)">읽는다</text>
+  <path d="M618 162 L618 210 L520 210" fill="none" stroke="currentColor" stroke-width="1.2" marker-end="url(#d0-ar)"></path>
+  <rect x="368" y="188" width="150" height="44" rx="4" fill="none" stroke="currentColor"></rect>
+  <text x="443" y="206" text-anchor="middle" font-size="11" fill="currentColor">로그 · 클릭</text>
+  <text x="443" y="222" text-anchor="middle" font-size="9.5" style="fill:var(--ko-text-secondary)">노출 · 클릭 · 0건</text>
+  <line x1="368" y1="210" x2="348" y2="210" stroke="currentColor" stroke-width="1.2" marker-end="url(#d0-ar)"></line>
+  <rect x="172" y="188" width="174" height="44" rx="4" fill="none" style="stroke:var(--ko-accent-text)" stroke-width="1.5"></rect>
+  <text x="259" y="206" text-anchor="middle" font-size="11" style="fill:var(--ko-accent-text)">평가</text>
+  <text x="259" y="222" text-anchor="middle" font-size="9.5" style="fill:var(--ko-accent-text)">판정 세트 · 지표 · A/B</text>
+  <path d="M259 188 L259 176 L466 176 L466 166" fill="none" style="stroke:var(--ko-accent-text)" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#d0-arA)"></path>
+  <text x="476" y="180" font-size="9.5" style="fill:var(--ko-accent-text)">되먹임 — 랭킹을 고친다</text>
+  <text x="8" y="262" font-size="10.5" style="fill:var(--ko-text-secondary)">사람의 판정도 평가로 들어온다 — 로그만으로는 「보여 주지 않은 것」을 못 잰다</text>
+</svg>
+
+그림: 색인 타임이 만든 것을 쿼리 타임은 읽기만 한다. 결과에서 나온 로그와 사람의 판정이 평가로 모여 랭킹으로 되돌아온다.
 
 색인 때 하면 한 번 계산해 여러 번 쓰고, 쿼리 때 하면 최신이지만 매 요청이 값을 치른다.
 
@@ -235,6 +288,25 @@ HNSW 는 층을 내려가며 이웃을 따라간다. 방문한 노드마다 벡�
 그림: 상주량은 대략 1.1 × (차원 × 비트 ÷ 8 + 8 × m) × 문서 수다. 이 값이 페이지 캐시에 안 들어가면 탐색이 디스크 읽기로 바뀐다.
 
 양자화는 그 상주량을 줄이는 장치다. 압축본으로 후보를 뽑고 원본 벡터로 다시 채점하면 손실의 일부를 되찾는다.
+
+<svg viewBox="0 0 700 160" role="img" aria-label="양자화 압축 막대. float32 는 차원당 4바이트로 기준이고, 8비트 스칼라 양자화는 4배, 4비트는 8배, 1비트는 32배로 상주량이 줄어든다. 막대 길이가 상주량에 비례한다.">
+  <text x="8" y="16" font-size="10.5" style="fill:var(--ko-text-secondary)">막대 길이 = 메모리 상주량</text>
+  <rect x="8" y="24" width="560" height="26" rx="3" fill="none" stroke="currentColor"></rect>
+  <text x="18" y="41" font-size="11" fill="currentColor">float32 · 차원당 4바이트</text>
+  <text x="580" y="41" font-size="11" fill="currentColor">1×</text>
+  <rect x="8" y="58" width="140" height="26" rx="3" fill="none" stroke="currentColor"></rect>
+  <text x="18" y="75" font-size="11" fill="currentColor">8비트</text>
+  <text x="160" y="75" font-size="11" fill="currentColor">4×</text>
+  <rect x="8" y="92" width="70" height="26" rx="3" fill="none" stroke="currentColor"></rect>
+  <text x="18" y="109" font-size="11" fill="currentColor">4비트</text>
+  <text x="90" y="109" font-size="11" fill="currentColor">8×</text>
+  <rect x="8" y="126" width="18" height="26" rx="3" style="fill:var(--ko-surface-2);stroke:var(--ko-accent-text)" stroke-width="1.5"></rect>
+  <text x="36" y="143" font-size="11" style="fill:var(--ko-accent-text)">1비트 — 부호만 남긴다</text>
+  <text x="200" y="143" font-size="11" style="fill:var(--ko-accent-text)">32×</text>
+  <text x="240" y="143" font-size="10.5" style="fill:var(--ko-text-secondary)">재채점으로 정확도의 일부를 되찾는다</text>
+</svg>
+
+그림: 1비트는 벡터를 부호만 남겨 32배로 줄인다. 줄인 만큼 재현율이 깎이므로 상위 후보는 원본 벡터로 다시 채점한다.
 
 | 표현 | 차원당 | 압축 | 성질 |
 |---|---|---|---|
