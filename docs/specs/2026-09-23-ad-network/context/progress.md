@@ -7,8 +7,14 @@
 - Task Group 1 (R1): `EntityType.AD` + 추천 소비자 테스트. 나머지 R1 항목은 origin/main 에 이미 있었다. 푸시 04d3d06d — images 게이트가 game `SaveCipherTest` 의 확률적 실패로 막혀 재실행, 테스트 고정 커밋 cac80e31 은 재실행 성공 뒤 푸시
 - Task Group 2: ads 모듈 골격·폴드 배선 (로컬 커밋만 — **그룹 0 운영 사전 조건 전에는 푸시 금지**, engagement 가 ads_db·시크릿 없이는 못 뜬다)
 
+## R2 운영 반영 (2026-09-24)
+- 사전 조건: 운영 MySQL 1회 SQL(ads_db·ads_user) · 시크릿 `ads-token`(호스트에서 생성, 64자) — `ssh msa-oci` 로 직접
+- 이미지: 내 push run 이 뒤 push 에 밀려 취소 → 수동 dispatch 가 다른 세션의 대기 run 을 취소시켜, dispatch 를 취소하고 그 run(common 포함 → 전 JVM)을 재실행해 해소. 태그 `ace7837`
+- 확인: engagement·gateway 롤아웃 1/1 · 442Mi/768Mi · Flyway V1~V3 · `/decisions` 200(HOUSE 3종) · rt 404 · 옛 `/placements/game-list-banner` 200 · 집계 첫 실행 1시각 Redis 첫 연결 실패 → 다음 실행 재처리(`failed=0 closed=1`)
+- 보고만: engagement 로그의 `httpcore5 NoClassDefFoundError` 는 recommendation ClickHouse 클라이언트 WARN(대체 동작), ads 무관
+
 ## 다음
-- R1 운영 확인(analytics·recommendation) → Task Group 3(도메인). 그룹 0(운영 MySQL SQL·시크릿·DNS)은 R2 푸시 직전 사용자 승인
+- R3: 그룹 10(FE 지면·카드·HOUSE) → 11(콘솔·어드민·방침). 먼저 광고 카드·HOUSE 배너·콘솔 목표 이미지를 확인받는다. `ads.1989v.com` DNS(proxied)는 R3 전에
 
 ## 막힌 것
 - 없음
