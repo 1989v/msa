@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import ShopHeader from '../components/ShopHeader';
 import {
-  createOrder,
+  createOrderSheet,
+  fetchCart,
   fetchProduct,
   extractErrorMessage,
-  type OrderCreateResponse,
+  putCartItem,
   type ProductDetail,
 } from '../api/shopApi';
 import { isLoggedIn, buildLoginHref } from '../auth/auth';
@@ -16,9 +17,13 @@ import './Shop.css';
 import { useHeritageSurface } from '../hooks/useHeritageSurface';
 import FavoriteButton from '../components/favorite/FavoriteButton';
 
+/** 서버 장바구니 수량 상한(CartItem.MAX_QUANTITY) */
+const CART_MAX_QUANTITY = 999;
+
 export default function ShopProductDetailPage() {
   useHeritageSurface();
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,9 +35,9 @@ export default function ShopProductDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [quantity, setQuantity] = useState(1);
-  const [ordering, setOrdering] = useState(false);
+  const [pending, setPending] = useState<'cart' | 'buy' | null>(null);
   const [orderError, setOrderError] = useState<string | null>(null);
-  const [orderResult, setOrderResult] = useState<OrderCreateResponse | null>(null);
+  const [addedToCart, setAddedToCart] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -58,23 +63,42 @@ export default function ShopProductDetailPage() {
   const soldOut = stock <= 0;
   const unitPrice = product != null ? Number(product.price) : 0;
 
-  const handleOrder = async () => {
-    if (!product || soldOut) return;
-    if (!isLoggedIn()) {
-      window.location.href = buildLoginHref();
-      return;
+  /** 로그인해야 담고 살 수 있다 — 아니면 이 상품으로 돌아오는 로그인으로 보낸다 */
+  const requireLogin = () => {
+    if (isLoggedIn()) return true;
+    window.location.href = buildLoginHref();
+    return false;
+  };
+
+  /** 장바구니 수량은 「정하기」다 — 이미 담긴 수량에 더해 보낸다 */
+  const handleAddToCart = async () => {
+    if (!product || soldOut || !requireLogin()) return;
+    setPending('cart');
+    setOrderError(null);
+    setAddedToCart(false);
+    try {
+      const cart = await fetchCart();
+      const current = cart.items.find((i) => i.productId === product.id)?.quantity ?? 0;
+      await putCartItem(product.id, Math.min(CART_MAX_QUANTITY, current + quantity));
+      setAddedToCart(true);
+    } catch (e) {
+      setOrderError(extractErrorMessage(e, '장바구니에 담지 못했습니다. 잠시 후 다시 시도해주세요.'));
+    } finally {
+      setPending(null);
     }
-    setOrdering(true);
+  };
+
+  /** 이 상품 하나로 주문서를 만든다 — 가격은 서버가 정한다 */
+  const handleBuyNow = async () => {
+    if (!product || soldOut || !requireLogin()) return;
+    setPending('buy');
     setOrderError(null);
     try {
-      const result = await createOrder([
-        { productId: product.id, quantity, unitPrice },
-      ]);
-      setOrderResult(result);
+      const sheet = await createOrderSheet({ items: [{ productId: product.id, quantity }] });
+      navigate(`/shop/order-sheet/${sheet.id}`);
     } catch (e) {
-      setOrderError(extractErrorMessage(e, '주문에 실패했습니다. 잠시 후 다시 시도해주세요.'));
-    } finally {
-      setOrdering(false);
+      setOrderError(extractErrorMessage(e, '주문서를 만들지 못했습니다. 잠시 후 다시 시도해주세요.'));
+      setPending(null);
     }
   };
 
@@ -90,31 +114,7 @@ export default function ShopProductDetailPage() {
           </div>
         )}
 
-        {!loading && !error && product && orderResult && (
-          <section className="shop-order-result" aria-live="polite">
-            <h2 className="shop-order-result-title">주문이 완료되었습니다</h2>
-            <div className="shop-detail-row">
-              <span className="shop-detail-label">주문번호</span>
-              <span style={{ fontVariantNumeric: 'tabular-nums' }}>{orderResult.orderId}</span>
-            </div>
-            <div className="shop-detail-row">
-              <span className="shop-detail-label">총액</span>
-              <span className="shop-detail-total">{formatWon(orderResult.totalAmount)}</span>
-            </div>
-            <div className="shop-detail-row">
-              <span className="shop-detail-label">상태</span>
-              <span className="shop-badge shop-badge-pending">{orderResult.status}</span>
-            </div>
-            <Link to="/shop/orders" className="shop-btn-primary">
-              주문내역 보기
-            </Link>
-            <Link to="/shop" className="shop-btn-secondary" viewTransition>
-              계속 쇼핑하기
-            </Link>
-          </section>
-        )}
-
-        {!loading && !error && product && !orderResult && (
+        {!loading && !error && product && (
           <section className="shop-detail-card">
             <div className="shop-detail-head">
               <h1 className="shop-detail-name">{product.name}</h1>
@@ -169,14 +169,33 @@ export default function ShopProductDetailPage() {
               </div>
             )}
 
-            <button
-              type="button"
-              className="shop-btn-primary"
-              onClick={handleOrder}
-              disabled={soldOut || ordering}
-            >
-              {soldOut ? '품절' : ordering ? '주문 처리 중...' : '구매하기'}
-            </button>
+            {addedToCart && (
+              <p className="shop-detail-row" role="status">
+                <span className="shop-detail-label">장바구니에 담았습니다</span>
+                <Link to="/shop/cart" className="shop-btn-secondary">
+                  장바구니 보기
+                </Link>
+              </p>
+            )}
+
+            <div className="shop-detail-actions">
+              <button
+                type="button"
+                className="shop-btn-secondary"
+                onClick={handleAddToCart}
+                disabled={soldOut || pending != null}
+              >
+                {pending === 'cart' ? '담는 중...' : '장바구니 담기'}
+              </button>
+              <button
+                type="button"
+                className="shop-btn-primary"
+                onClick={handleBuyNow}
+                disabled={soldOut || pending != null}
+              >
+                {soldOut ? '품절' : pending === 'buy' ? '주문서 만드는 중...' : '바로 구매'}
+              </button>
+            </div>
           </section>
         )}
       </main>

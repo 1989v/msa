@@ -133,10 +133,10 @@ Total Task Groups: 16 · 단계 P0~P7 (단계 끝마다 커밋·푸시·배포·
 **Dependencies:** Task Group 8
 **Phase:** P3
 **Required Skills:** React, CDP 검증
-- [ ] 9.0 Complete cart/sheet FE
-  - [ ] 9.1 테스트: 주문서 금액 분해 렌더 · 만료 시 재생성 안내 (2, vitest)
-  - [ ] 9.2 portal-fe 장바구니 · 주문서(쿠폰 선택·포인트 입력·판매자별 배송비), admin-fe 쿠폰 관리
-  - [ ] 9.3 Verify: `(cd portal-fe && npx vitest run src/pages/shop && npx tsc --noEmit -p tsconfig.app.json)` + CDP 4조합
+- [x] 9.0 Complete cart/sheet FE
+  - [x] 9.1 테스트: 주문서 금액 분해 렌더 · 만료 시 재생성 안내 (2, vitest)
+  - [x] 9.2 portal-fe 장바구니 · 주문서(쿠폰 선택·포인트 입력·판매자별 배송비), admin-fe 쿠폰 관리
+  - [x] 9.3 Verify: `(cd portal-fe && npx vitest run src/pages/shop && npx tsc --noEmit -p tsconfig.app.json)` + CDP 4조합
 **Acceptance Criteria:** 운영에서 주문서 1건 생성
 
 **P3 배포:** `promotion_db` 생성 → 푸시 → 주문서 생성 확인

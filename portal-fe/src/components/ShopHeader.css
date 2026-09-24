@@ -67,3 +67,24 @@
 .shop-header-home {
   color: var(--ko-text-muted);
 }
+
+/* 링크가 여섯이 되면 390 폭에서 낱말이 꺾인다 — 낱말은 한 줄로 두고 좁은 화면에서만 간격을 줄인다 */
+.shop-header-link {
+  white-space: nowrap;
+}
+
+@media (max-width: 479px) {
+  .shop-header-inner {
+    gap: var(--ko-space-2);
+  }
+
+  .shop-header-nav {
+    gap: 0;
+    min-width: 0;
+    overflow-x: auto;
+  }
+
+  .shop-header-link {
+    padding: 0 var(--ko-space-2);
+  }
+}

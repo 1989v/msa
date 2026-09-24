@@ -383,6 +383,13 @@ button.shop-product-card {
   font-variant-numeric: tabular-nums;
 }
 
+/* 장바구니 담기 · 바로 구매 — 좁은 화면에서도 한 줄에 둘 */
+.shop-detail-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ko-space-2);
+}
+
 /* 수량 스테퍼 */
 .shop-stepper {
   display: inline-flex;

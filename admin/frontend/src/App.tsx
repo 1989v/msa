@@ -27,6 +27,7 @@ import { BlogPostsPage } from '@/pages/blog/BlogPostsPage';
 import { BlogCategoriesPage } from '@/pages/blog/BlogCategoriesPage';
 import { BlogAuthorsPage } from '@/pages/blog/BlogAuthorsPage';
 import { SellersPage } from '@/pages/SellersPage';
+import { PromotionsPage } from '@/pages/PromotionsPage';
 import { BlogCommentsPage } from '@/pages/blog/BlogCommentsPage';
 
 export default function App() {
@@ -43,6 +44,7 @@ export default function App() {
         <Route path="products" element={<ProductsPage />} />
         <Route path="orders" element={<OrdersPage />} />
         <Route path="sellers" element={<SellersPage />} />
+        <Route path="promotions" element={<PromotionsPage />} />
         <Route path="code-dictionary" element={<CodeDictionaryPage />} />
         <Route path="games" element={<GamesPage />} />
         <Route path="games/suggestions" element={<GameSuggestionsPage />} />

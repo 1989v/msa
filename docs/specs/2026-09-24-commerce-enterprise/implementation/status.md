@@ -71,3 +71,8 @@
   - OrderSheetIntegrationSpec 7/0 (실 MySQL, validate) · CommerceContextLoadSpec 7/0 · GatewayRouteAuthSpec 34/0 (skipped 0)
 - 회귀 주입 6종(잔차 첫 라인 · 동률 뒤 라인 · 판매자 상태 무시 · 옛 이벤트 거르기 제거 · 컬럼명 변경 · 백필 소수 검사 제거) 전부 빨간불
 - 배포 후 1회: 어드민 `POST /api/v1/admin/products/republish` → order_db.product_view = 24 확인
+
+## TG9 장바구니 · 주문서 화면 (2026-09-24)
+- portal-fe `npx vitest run src/pages/shop src/pages/seller src/pages/__tests__/privacyRetention.test.ts` → Test Files 4 passed · Tests 12 passed; tsc(tsconfig.app.json) portal 0 · admin 0
+- 회귀 주입: 결제 금액을 라인 합으로 · 재생성 요청에 unitPrice · 만료 무시 → 전부 빨간불
+- CDP 9회(`verifications/tg9/`): 가로 넘침 0, 라벨 대비 라이트 4.99~15.82 · 다크 6.04~14.42, 엇갈림 조합 값 일치. 헤더 "장바구/니" 줄바꿈 회귀를 발견·수정

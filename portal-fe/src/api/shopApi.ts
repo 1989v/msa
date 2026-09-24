@@ -85,20 +85,101 @@ export interface ClickRequest {
   position: number;
 }
 
-// ── Orders ────────────────────────────────────────────────────────
+// ── Cart · Order sheet ────────────────────────────────────────────
 
-export interface OrderItemRequest {
+/** 장바구니 한 줄 — 상품이 읽기 모델에 없으면 이름·가격·판매자가 비고 onSale 이 false 다 */
+export interface CartLine {
   productId: number;
   quantity: number;
-  unitPrice: number;
+  productName: string | null;
+  price: number | null;
+  sellerId: number | null;
+  onSale: boolean;
 }
 
-export interface OrderCreateResponse {
-  orderId: number;
-  userId: string;
-  totalAmount: number;
-  status: string;
+export interface Cart {
+  items: CartLine[];
 }
+
+/**
+ * 주문서 요청 — 가격·금액 필드를 두지 않는다. 금액은 서버가 읽기 모델로만 계산한다.
+ * `items` 와 `fromCart` 중 하나만 준다.
+ */
+export type OrderSheetRequest = (
+  | { items: { productId: number; quantity: number }[]; fromCart?: never }
+  | { fromCart: true; items?: never }
+) & {
+  userCouponId?: number | null;
+  pointAmount?: number;
+};
+
+export type OrderSheetStatus = 'ACTIVE' | 'USED';
+
+export interface OrderSheetLine {
+  lineNo: number;
+  productId: number;
+  productName: string;
+  sellerId: number;
+  unitPrice: number;
+  quantity: number;
+  amount: number;
+  couponDiscount: number;
+  couponBearer: 'PLATFORM' | 'SELLER' | null;
+  pointAmount: number;
+  payable: number;
+}
+
+/** 주문서 — 할인·포인트는 견적이다. 최종 판정은 주문 접수 뒤 혜택 예약이 한다 */
+export interface OrderSheet {
+  id: number;
+  status: OrderSheetStatus;
+  userCouponId: number | null;
+  itemsAmount: number;
+  couponDiscount: number;
+  pointAmount: number;
+  shippingAmount: number;
+  payableAmount: number;
+  expiresAt: string;
+  lines: OrderSheetLine[];
+  shippingLines: { sellerId: number; fee: number }[];
+}
+
+// ── Promotion ─────────────────────────────────────────────────────
+
+export type UserCouponStatus = 'AVAILABLE' | 'RESERVED' | 'USED' | 'RETURNED' | 'EXPIRED';
+
+export interface CouponDefinition {
+  id: number;
+  name: string;
+  type: 'FIXED' | 'RATE';
+  amount: number | null;
+  rateBp: number | null;
+  maxDiscount: number | null;
+  minOrderAmount: number;
+  validFrom: string;
+  validUntil: string;
+  issueLimit: number;
+  issuedCount: number;
+  bearer: 'PLATFORM' | 'SELLER';
+  sellerId: number | null;
+  status: 'ACTIVE' | 'INACTIVE';
+}
+
+/** 내 쿠폰 한 장 — usable 은 서버가 상태와 기간으로 판정한다 */
+export interface MyCoupon {
+  userCouponId: number;
+  status: UserCouponStatus;
+  usable: boolean;
+  issuedAt: string;
+  definition: CouponDefinition;
+}
+
+export interface MyPoints {
+  memberId: string;
+  balance: number;
+}
+
+// ── Orders ────────────────────────────────────────────────────────
 
 export type OrderStatus = 'PENDING' | 'COMPLETED' | 'CANCELLED';
 
@@ -259,8 +340,39 @@ export const postClick = async (body: ClickRequest): Promise<void> => {
   await api.post('/api/search/clicks', body);
 };
 
-export const createOrder = async (items: OrderItemRequest[]): Promise<OrderCreateResponse> => {
-  const res = await api.post<ApiResponse<OrderCreateResponse>>('/api/v1/orders', { items });
+export const fetchCart = async (): Promise<Cart> => {
+  const res = await api.get<ApiResponse<Cart>>('/api/v1/cart');
+  return res.data.data;
+};
+
+/** 수량을 그 값으로 **정한다**(더하지 않는다) */
+export const putCartItem = async (productId: number, quantity: number): Promise<Cart> => {
+  const res = await api.put<ApiResponse<Cart>>(`/api/v1/cart/items/${productId}`, { quantity });
+  return res.data.data;
+};
+
+export const removeCartItem = async (productId: number): Promise<Cart> => {
+  const res = await api.delete<ApiResponse<Cart>>(`/api/v1/cart/items/${productId}`);
+  return res.data.data;
+};
+
+export const createOrderSheet = async (body: OrderSheetRequest): Promise<OrderSheet> => {
+  const res = await api.post<ApiResponse<OrderSheet>>('/api/v1/order-sheets', body);
+  return res.data.data;
+};
+
+export const fetchOrderSheet = async (id: string | number): Promise<OrderSheet> => {
+  const res = await api.get<ApiResponse<OrderSheet>>(`/api/v1/order-sheets/${id}`);
+  return res.data.data;
+};
+
+export const fetchMyCoupons = async (): Promise<MyCoupon[]> => {
+  const res = await api.get<ApiResponse<MyCoupon[]>>('/api/v1/coupons/me');
+  return res.data.data;
+};
+
+export const fetchMyPoints = async (): Promise<MyPoints> => {
+  const res = await api.get<ApiResponse<MyPoints>>('/api/v1/points/me');
   return res.data.data;
 };
 

@@ -26,6 +26,8 @@ const DealPage = lazy(() => import('./pages/deal/DealPage'));
 // 판매자 화면은 판매자만 연다 — 스토어 번들에 싣지 않는다
 const SellerApplyPage = lazy(() => import('./pages/seller/SellerApplyPage'));
 const SellerProductsPage = lazy(() => import('./pages/seller/SellerProductsPage'));
+const CartPage = lazy(() => import('./pages/shop/CartPage'));
+const OrderSheetPage = lazy(() => import('./pages/shop/OrderSheetPage'));
 // ADR-0072 — 블로그 (blog.<domain>). 본문 렌더(marked/dompurify)가 들어가므로 lazy 로 분리한다.
 const BlogHomePage = lazy(() => import('./pages/blog/BlogHomePage'));
 const BlogPostPage = lazy(() => import('./pages/blog/BlogPostPage'));
@@ -211,6 +213,8 @@ function App() {
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/shop/products/:id" element={<ShopProductDetailPage />} />
           <Route path="/shop/orders" element={<MyOrdersPage />} />
+          <Route path="/shop/cart" element={<CartPage />} />
+          <Route path="/shop/order-sheet/:id" element={<OrderSheetPage />} />
           <Route path="/shop/seller/apply" element={<SellerApplyPage />} />
           <Route path="/shop/seller/products" element={<SellerProductsPage />} />
           <Route path="/oauth/callback" element={<ShopOAuthCallbackPage />} />
