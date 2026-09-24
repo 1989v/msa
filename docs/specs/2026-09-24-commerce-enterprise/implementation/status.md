@@ -122,3 +122,9 @@
   - ClaimRefundPlanTest 8/0 · ClaimTest 7/0 · PurchaseConfirmTest 5/0 · ClaimCoordinatorTest 15/0 · PurchaseConfirmServiceTest 4/0 · ClaimE2ETest 3/0 · OrderSagaE2ETest 14/0 · CommerceContextLoadSpec 8/0 · GatewayRouteAuthSpec 39/0
 - portal-fe vitest Test Files 7 · Tests 26 passed · tsc 0
 - 회귀 주입 8종 — 재입고 페이로드 키 변경은 단위 초록·E2E 만 빨강(배선은 E2E 만 지킨다)
+
+## 핫픽스 배포 + 운영 첫 주문 성공 (2026-09-24)
+- `c0714b09` images success(run 35993379277) → commerce `:c0714b0` · orders.status `varchar(20)` 확인
+- 운영 주문 id 1 (사용자 `ops-e2e-20260924`, 상품 81 × 1, 1,700원): 2초 CREATED → 4초 PAID → 8초 CONFIRMED → **10초 FULFILLING, 사가 COMPLETED**
+- 도메인 간 일치: payment `ORD-1-1` 1700 CAPTURED · inventory 81 available 5→4 reserved 0 · reservation CONFIRMED · fulfillment PENDING(창고 1) · order_status_history 5행 · order outbox PUBLISHED 8 · product 81 stock 4
+- 운영에 남긴 점검 데이터: 창고 id 1 `ops-check-warehouse` · 상품 81 재고 · 주문서 1·2 · 주문 1 (사용자 `ops-e2e-20260924`)
