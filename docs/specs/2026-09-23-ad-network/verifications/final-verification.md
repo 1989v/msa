@@ -144,3 +144,12 @@ None
 3. tasks.md 를 정리한다: 그룹 0 체크, 11.7 경로·`-p tsconfig.app.json`, 12.4 「부분」 문구. OQ-004 를 `resolved`(6e517556)로 바꾼다.
 4. R3 배포 뒤 E1·E2·E3·E5, 그리고 E4(P99 ≤ 30ms)를 사람 UA + 저장된 행 수로 확인한다.
 5. 첫 PR/푸시 CI 로그에서 `:ads:domain:test :ads:feature:test :engagement:app:test` 가 돌았고 건수가 0 이 아닌지 확인한다(Docker 건너뜀 대비).
+
+
+## 후속 조치 (2026-09-24, 메인 세션)
+
+- 리베이스: `admin/frontend/src/components/layout/Sidebar.tsx` import 충돌(다른 세션의 `Ticket` + 광고 메뉴 아이콘)을 둘 다 살려 해소. 리베이스 뒤 portal-fe 21 files 210/210 · tsc EXIT=0 · admin-fe 2/2 · tsc EXIT=0
+- R3 회귀 주입: F5·F1·F6 을 직접 주입해 빨간불 → 원복 초록 로그를 `regression-injection.md` 에 남겼다
+- tasks 11.7 경로·tsc 명령 정정, OQ-004 해소, 그룹 0 체크(DNS 0.4 만 사용자 몫)
+
+**판정 갱신: PASS** — 남은 것은 배포 뒤 운영 확인(E1·E2·E3·E5, AC-8 P99)과 그룹 13(R4)

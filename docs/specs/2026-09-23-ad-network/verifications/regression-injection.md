@@ -93,3 +93,46 @@ U12 폭탄 케이스가 1:1 이라 비율 검사가 먼저 거절해 가로·세
 | 주입 | 빨간불 | 되돌린 뒤 |
 |---|---|---|
 | `CreativeImageRules.kt` 가로·세로 검사 `if (false)` | 10건 중 2 실패 — 새 1.91:1 폭탄 `expected:<400> but was:<200>`, 가로 2001px | 10/0 |
+
+### R3 FE 회귀 주입 (2026-09-24, 메인 세션 직접 실행 — 리베이스 뒤)
+
+| 주입 | 빨간불 | 되돌린 뒤 |
+|---|---|---|
+| F5 `AdCard` 가 `useImpression` 을 우회해 즉시 보고 | 3 실패 — `expected [ 'imp-token' ] to deeply equal []` (50% 미만·1초 미만·정상 1회) | 5/5 |
+| F1 `AdSlot` 이 AdSense `unfilled` 뒤 HOUSE 로 가지 않음 | 2 실패 — `expected <ins …> to be null` | 16/16 |
+| F6 방침 문구 25→24시간 | 1 실패 — `to contain '최대 25시간'` | 6/6 |
+
+실행 로그 원문:
+```text
+== F5 즉시 보고(useImpression 우회) RED
+   × AdCard > 면적 50% 미만은 오래 보여도 노출이 아니다 8ms
+     → expected [ 'imp-token' ] to deeply equal []
+   × AdCard > 1초를 못 채우고 나가면 노출이 아니다 2ms
+     → expected [ 'imp-token' ] to deeply equal []
+   × AdCard > 면적 50% 이상으로 1초 보이면 노출 토큰을 한 번 보낸다 2ms
+     → expected [ 'imp-token' ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/components/ads/__tests__/AdCard.test.tsx > AdCard > 면적 50% 미만은 오래 보여도 노출이 아니다
+== F5 즉시 보고(useImpression 우회) restored GREEN
+      Tests  5 passed (5)
+== F1 unfilled 뒤 HOUSE 로 안 감 RED
+   × AdSlot — 채움 순서 > AdSense 가 unfilled 를 적으면 HOUSE 로 간다 6ms
+     → expected <ins …(6)></ins> to be null
+   × AdSlot — 채움 순서 > AdSense 도 HOUSE 도 없으면 자리를 숨기고 EMPTY 를 알린다 3ms
+     → expected <aside class="ad-slot" …(2)>…(2)</aside> to be null
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/components/ads/__tests__/AdSlot.test.tsx > AdSlot — 채움 순서 > AdSense 가 unfilled 를 적으면 HOUSE 로 간다
+AssertionError: expected <ins …(6)></ins> to be null
+ FAIL  src/components/ads/__tests__/AdSlot.test.tsx > AdSlot — 채움 순서 > AdSense 도 HOUSE 도 없으면 자리를 숨기고 EMPTY 를 알린다
+== F1 unfilled 뒤 HOUSE 로 안 감 restored GREEN
+      Tests  16 passed (16)
+== F6 방침 24시간 RED
+   × 광고 — 빈도 제한 식별자 보관 시간 > Redis 빈도 키 TTL 상수와 방침이 같은 시간을 말한다 4ms
+     → expected '광고 빈도 제한용 방문자 식별자</strong> — 같은 광고가 한…' to contain '최대 25시간'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/pages/__tests__/privacyRetention.test.ts > 광고 — 빈도 제한 식별자 보관 시간 > Redis 빈도 키 TTL 상수와 방침이 같은 시간을 말한다
+AssertionError: expected '광고 빈도 제한용 방문자 식별자</strong> — 같은 광고가 한…' to contain '최대 25시간'
+      Tests  1 failed | 5 passed (6)
+== F6 방침 24시간 restored GREEN
+      Tests  6 passed (6)
+```
