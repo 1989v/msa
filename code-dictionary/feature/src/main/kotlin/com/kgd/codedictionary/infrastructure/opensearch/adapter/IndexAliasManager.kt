@@ -71,10 +71,14 @@ class IndexAliasManager(
                                     TokenFilterDefinition.of { tfd ->
                                         tfd.noriPartOfSpeech(
                                             NoriPartOfSpeechTokenFilter.of { n ->
+                                                // Lucene 10(OpenSearch 3.8)은 묶음 태그 E·J 를 없애고 세분 태그만 받는다 —
+                                                // 옛 목록은 인덱스 생성이 `No enum constant POS.Tag.E` 로 400 이다
                                                 n.stoptags(
                                                     listOf(
-                                                        "E", "IC", "J", "MAG", "MAJ",
-                                                        "MM", "SP", "SSC", "SSO", "SC",
+                                                        "EP", "EF", "EC", "ETN", "ETM",
+                                                        "IC",
+                                                        "JKS", "JKC", "JKG", "JKO", "JKB", "JKV", "JKQ", "JX", "JC",
+                                                        "MAG", "MAJ", "MM", "SP", "SSC", "SSO", "SC",
                                                         "SE", "XPN", "XSA", "XSN", "XSV",
                                                         "UNA", "NA", "VSV"
                                                     )
