@@ -25,12 +25,12 @@ import java.time.LocalDateTime
  * 상품 쓰기 권한 — 게이트웨이가 ROLE_SELLER|ROLE_ADMIN 으로 좁힌 뒤 서비스가 한 번 더 본다.
  *
  * 컨트롤러부터 실제 [ProductService]·[ProductWriteAuthorizer] 까지 태운다 — 판정 근거는 응답 코드와
- * 저장 호출 여부다. 판매자 행이 생기기 전이라 판매자는 어떤 상품의 소유도 증명할 수 없어 403 이다.
+ * 저장 호출 여부다. 판매자 읽기 모델에 행이 없는 판매자는 어떤 상품의 소유도 증명할 수 없어 403 이다.
  */
 class ProductControllerAuthTest : BehaviorSpec({
     val transactionalService = mockk<ProductTransactionalService>()
     val eventPort = mockk<ProductEventPort>(relaxed = true)
-    val service = ProductService(transactionalService, eventPort, ProductWriteAuthorizer())
+    val service = ProductService(transactionalService, eventPort, ProductWriteAuthorizer(com.kgd.product.application.seller.InMemoryProductSellerRepository()))
     val controller = ProductController(service, service, service, service)
     val mockMvc = MockMvcBuilders.standaloneSetup(controller)
         .setControllerAdvice(ProductExceptionHandler())

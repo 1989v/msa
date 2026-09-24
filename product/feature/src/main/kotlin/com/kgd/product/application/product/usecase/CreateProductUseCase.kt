@@ -35,6 +35,7 @@ interface CreateProductUseCase {
         val price: BigDecimal,
         val stock: Int,
         val status: String,
+        val sellerId: Long,
         val brand: String? = null,
         val description: String? = null,
         val category: String? = null,

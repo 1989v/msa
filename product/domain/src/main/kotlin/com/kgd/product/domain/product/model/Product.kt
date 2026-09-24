@@ -8,6 +8,8 @@ class Product private constructor(
     var price: Money,
     var stock: Int,
     var status: ProductStatus,
+    /** 소유 판매자 — 등록 때 정해지고 바뀌지 않는다 */
+    val sellerId: Long,
     var brand: String? = null,
     var description: String? = null,
     var category: String? = null,
@@ -24,10 +26,14 @@ class Product private constructor(
     val createdAt: LocalDateTime = LocalDateTime.now()
 ) {
     companion object {
+        /** 판매자 없이 들어온 상품(일괄 적재·기존 행)의 소유자 — seller_db 의 플랫폼 기본 판매자 */
+        const val PLATFORM_SELLER_ID = 1L
+
         fun create(
             name: String,
             price: Money,
             stock: Int,
+            sellerId: Long,
             brand: String? = null,
             description: String? = null,
             category: String? = null,
@@ -43,6 +49,7 @@ class Product private constructor(
         ): Product {
             require(name.isNotBlank()) { "상품명은 비어있을 수 없습니다" }
             require(stock >= 0) { "재고는 0 이상이어야 합니다" }
+            require(sellerId > 0) { "판매자 id 는 0보다 커야 합니다" }
             requireNonNegative(energyKcal, "에너지(kcal)")
             requireNonNegative(carbohydrateG, "탄수화물(g)")
             requireNonNegative(proteinG, "단백질(g)")
@@ -54,6 +61,7 @@ class Product private constructor(
                 price = price,
                 stock = stock,
                 status = ProductStatus.ACTIVE,
+                sellerId = sellerId,
                 brand = brand?.takeIf { it.isNotBlank() },
                 description = description?.takeIf { it.isNotBlank() },
                 category = category?.takeIf { it.isNotBlank() },
@@ -76,6 +84,7 @@ class Product private constructor(
             stock: Int,
             status: ProductStatus,
             createdAt: LocalDateTime,
+            sellerId: Long = PLATFORM_SELLER_ID,
             brand: String? = null,
             description: String? = null,
             category: String? = null,
@@ -95,6 +104,7 @@ class Product private constructor(
                 price = price,
                 stock = stock,
                 status = status,
+                sellerId = sellerId,
                 brand = brand?.takeIf { it.isNotBlank() },
                 description = description?.takeIf { it.isNotBlank() },
                 category = category?.takeIf { it.isNotBlank() },

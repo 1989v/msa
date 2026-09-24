@@ -9,9 +9,11 @@ import com.kgd.common.exception.ErrorCode
  */
 data class ProductRequester(val userId: String, val roles: Set<String>) {
     val isAdmin: Boolean get() = ROLE_ADMIN in roles
+    val isSeller: Boolean get() = ROLE_SELLER in roles
 
     companion object {
         const val ROLE_ADMIN = "ROLE_ADMIN"
+        const val ROLE_SELLER = "ROLE_SELLER"
 
         /** 신원 헤더가 없으면 거부한다 — 익명으로 떨어뜨려 허용하지 않는다. */
         fun of(userId: String?, roles: String?): ProductRequester {

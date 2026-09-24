@@ -26,15 +26,16 @@ class ProductService(
 
     @Transactional(transactionManager = "productTransactionManager")
     override fun execute(command: CreateProductUseCase.Command, requester: ProductRequester): CreateProductUseCase.Result {
-        writeAuthorizer.authorizeCreate(requester)
-        val saved = transactionalService.save(command.toDomain())
+        val sellerId = writeAuthorizer.authorizeCreate(requester)
+        val saved = transactionalService.save(command.toDomain(sellerId))
         eventPort.publishProductCreated(saved)
         return saved.toCreateResult()
     }
 
     @Transactional(transactionManager = "productTransactionManager")
     override fun executeBulk(commands: List<CreateProductUseCase.Command>): List<CreateProductUseCase.Result> {
-        val saved = transactionalService.saveAll(commands.map { it.toDomain() })
+        // 배치 적재는 판매자 신원이 없다 — 플랫폼 기본 판매자 소유
+        val saved = transactionalService.saveAll(commands.map { it.toDomain(Product.PLATFORM_SELLER_ID) })
         saved.forEach { eventPort.publishProductCreated(it) }
         return saved.map { it.toCreateResult() }
     }
@@ -47,6 +48,7 @@ class ProductService(
             price = product.price.amount,
             stock = product.stock,
             status = product.status.name,
+            sellerId = product.sellerId,
             brand = product.brand,
             description = product.description,
             category = product.category,
@@ -90,6 +92,7 @@ class ProductService(
             price = saved.price.amount,
             stock = saved.stock,
             status = saved.status.name,
+            sellerId = saved.sellerId,
             brand = saved.brand,
             description = saved.description,
             category = saved.category,
@@ -117,6 +120,7 @@ class ProductService(
                     status = product.status.name,
                     stock = product.stock,
                     createdAt = product.createdAt,
+                    sellerId = product.sellerId,
                     brand = product.brand,
                     description = product.description,
                     category = product.category,
@@ -136,10 +140,11 @@ class ProductService(
         )
     }
 
-    private fun CreateProductUseCase.Command.toDomain(): Product = Product.create(
+    private fun CreateProductUseCase.Command.toDomain(sellerId: Long): Product = Product.create(
         name = name,
         price = Money(price),
         stock = stock,
+        sellerId = sellerId,
         brand = brand,
         description = description,
         category = category,
@@ -160,6 +165,7 @@ class ProductService(
         price = price.amount,
         stock = stock,
         status = status.name,
+        sellerId = sellerId,
         brand = brand,
         description = description,
         category = category,

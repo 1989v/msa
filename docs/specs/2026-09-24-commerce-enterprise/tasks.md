@@ -62,11 +62,11 @@ Total Task Groups: 16 · 단계 P0~P7 (단계 끝마다 커밋·푸시·배포·
 **Dependencies:** Task Group 3
 **Phase:** P1
 **Required Skills:** Kotlin, Kafka, private 서브모듈 운영
-- [ ] 4.0 Complete seller wiring
-  - [ ] 4.1 테스트: auth 컨슈머 approved→ROLE_SELLER 행 · suspended→회수 · 다른 역할 무시 · product 판매자 읽기 모델 SUSPENDED → 판매자 쓰기 403(토큰 유효) · 판매자 생성 상품 seller_id 는 본문 무시 (5)
-  - [ ] 4.2 auth(private 서브모듈): Kafka 컨슈머 의존 + `seller.seller.*` 리스너(ROLE_SELLER 고정, 멱등) — 서브모듈 먼저 푸시
-  - [ ] 4.3 product: `seller_id` 컬럼 + 기본 판매자 1 백필, 판매자 읽기 모델(seller 이벤트), 소유·ACTIVE 검사(TG2 의 ROLE_ADMIN 전용 제한 해제)
-  - [ ] 4.4 Verify: `$G :auth:app:test --tests '*SellerRole*' :product:feature:test --tests '*SellerOwnership*'`
+- [x] 4.0 Complete seller wiring
+  - [x] 4.1 테스트: auth 컨슈머 approved→ROLE_SELLER 행 · suspended→회수 · 다른 역할 무시 · product 판매자 읽기 모델 SUSPENDED → 판매자 쓰기 403(토큰 유효) · 판매자 생성 상품 seller_id 는 본문 무시 (5)
+  - [x] 4.2 auth(private 서브모듈): Kafka 컨슈머 의존 + `seller.seller.*` 리스너(ROLE_SELLER 고정, 멱등) — 서브모듈 먼저 푸시
+  - [x] 4.3 product: `seller_id` 컬럼 + 기본 판매자 1 백필, 판매자 읽기 모델(seller 이벤트), 소유·ACTIVE 검사(TG2 의 ROLE_ADMIN 전용 제한 해제)
+  - [x] 4.4 Verify: `$G :auth:app:test --tests '*SellerRole*' :product:feature:test --tests '*SellerOwnership*'`
 **Acceptance Criteria:** 정지 즉시 판매자 쓰기가 막힌다(토큰 재발급 없이)
 
 ### Task Group 5: 판매자 화면 · 방침

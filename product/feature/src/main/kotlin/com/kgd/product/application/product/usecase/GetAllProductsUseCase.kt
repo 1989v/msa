@@ -20,6 +20,7 @@ interface GetAllProductsUseCase {
             val status: String,
             val stock: Int,
             val createdAt: LocalDateTime,
+            val sellerId: Long,
             val brand: String? = null,
             val description: String? = null,
             val category: String? = null,

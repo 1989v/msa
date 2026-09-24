@@ -25,7 +25,7 @@ import org.springframework.data.domain.PageRequest
 class ProductServiceTest : BehaviorSpec({
     val transactionalService = mockk<ProductTransactionalService>()
     val eventPort = mockk<ProductEventPort>(relaxed = true)
-    val service = ProductService(transactionalService, eventPort, ProductWriteAuthorizer())
+    val service = ProductService(transactionalService, eventPort, ProductWriteAuthorizer(com.kgd.product.application.seller.InMemoryProductSellerRepository()))
     val admin = ProductRequester("1", setOf("ROLE_ADMIN"))
 
     beforeEach { clearMocks(transactionalService, eventPort) }

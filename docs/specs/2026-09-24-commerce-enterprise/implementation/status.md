@@ -25,3 +25,10 @@
   - SellerTest 27/0 · AccountNumberTest 3/0 · SellerAdminServiceTest 4/0 · SellerPrivacyServiceTest 2/0 · SellerServiceTest 4/0 · AesGcmAccountCipherTest 6/0 · SellerControllerTest 10/0
   - GatewayRouteAuthSpec 14/0 · OutboxRelayIntegrationSpec 5/0 · SellerAccountKeyStartupSpec 3/0 · CommerceContextLoadSpec 5/0 · CommerceDualDataSourceIntegrationSpec 2/0 (skipped 0)
 - 회귀 주입: 키 기본값 넣으면 기동 실패 테스트 FAILED · seller-admin 라우트 userConfig → 403 테스트 FAILED · TM 한정자 제거 → verifyTransactionQualifiers BUILD FAILED
+
+## TG4 역할 연동 · 상품 판매자 소유 (2026-09-24)
+- `./gradlew verifyArchitecture :auth:app:test --tests '*SellerRole*' :product:feature:test :product:domain:test :commerce:app:test --tests '*CommerceContextLoad*'` → exit 0
+  - SellerRoleEventConsumerIntegrationSpec 6/0 (Testcontainers) · SellerOwnershipReadModelTest 3/0 · ProductControllerSellerOwnershipTest 7/0 · ProductControllerAuthTest 8/0 · CommerceContextLoadSpec 5/0
+- auth 서브모듈 `fe0f5f6` (feat/seller-role) — ROLE_SELLER 만 grant/revoke, processed_event V2
+- `generateTopology` 로 seller 를 topology 에 등록(누락 시 CI 가 seller 변경에 commerce 이미지를 안 만든다)
+- 회귀 주입 5종(정지→부여 · 소유 검사 제거 · 판매자 id 1 고정 · ACTIVE 무시 · 옛 이벤트 거르기 제거) 전부 빨간불

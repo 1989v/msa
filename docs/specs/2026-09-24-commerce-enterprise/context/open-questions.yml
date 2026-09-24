@@ -33,3 +33,11 @@ questions:
     phase: post-impl
     status: open
     question: 반려 판매자 파기 시 상호(businessName)는 이력용으로 남김 — 개인사업자 상호의 개인정보 여부 확인
+  - id: Q9
+    phase: post-impl
+    status: open
+    question: auth 가 이벤트 시각을 저장하지 않아 재시도로 늦게 온 approved 가 suspended 뒤에 ROLE_SELLER 를 다시 붙일 수 있다 — 쓰기 권한은 product ACTIVE 행이 막으므로 토큰에 역할만 남음. 필요 시 회원별 마지막 반영 시각
+  - id: Q10
+    phase: post-impl
+    status: open
+    question: ACTIVE 판매자 행이 있는 어드민의 상품 등록은 그 판매자 소유 — 어드민은 항상 플랫폼 1 로 할지

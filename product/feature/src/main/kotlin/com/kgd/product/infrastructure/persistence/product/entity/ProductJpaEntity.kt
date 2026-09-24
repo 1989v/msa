@@ -17,6 +17,9 @@ class ProductJpaEntity(
     price: BigDecimal,
     stock: Int,
     status: ProductStatus,
+    /** 소유 판매자 — 등록 뒤 바뀌지 않는다. 기존 행은 플랫폼 기본 판매자(1)로 백필 */
+    @Column(name = "seller_id", nullable = false, updatable = false)
+    val sellerId: Long,
     brand: String? = null,
     description: String? = null,
     category: String? = null,
@@ -127,6 +130,7 @@ class ProductJpaEntity(
         stock = stock,
         status = status,
         createdAt = createdAt,
+        sellerId = sellerId,
         brand = brand,
         description = description,
         category = category,
@@ -148,6 +152,7 @@ class ProductJpaEntity(
             price = product.price.amount,
             stock = product.stock,
             status = product.status,
+            sellerId = product.sellerId,
             brand = product.brand,
             description = product.description,
             category = product.category,

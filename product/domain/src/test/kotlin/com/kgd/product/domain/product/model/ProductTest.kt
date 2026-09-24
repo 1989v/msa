@@ -11,7 +11,8 @@ class ProductTest : BehaviorSpec({
                 val product = Product.create(
                     name = "테스트 상품",
                     price = Money(10000.toBigDecimal()),
-                    stock = 100
+                    stock = 100,
+                    sellerId = 1L
                 )
                 product.status shouldBe ProductStatus.ACTIVE
                 product.name shouldBe "테스트 상품"
@@ -21,14 +22,14 @@ class ProductTest : BehaviorSpec({
         `when`("가격이 0 이하이면") {
             then("IllegalArgumentException이 발생해야 한다") {
                 shouldThrow<IllegalArgumentException> {
-                    Product.create("상품", Money(0.toBigDecimal()), 10)
+                    Product.create("상품", Money(0.toBigDecimal()), 10, sellerId = 1L)
                 }
             }
         }
         `when`("상품명이 비어있으면") {
             then("IllegalArgumentException이 발생해야 한다") {
                 shouldThrow<IllegalArgumentException> {
-                    Product.create("", Money(1000.toBigDecimal()), 10)
+                    Product.create("", Money(1000.toBigDecimal()), 10, sellerId = 1L)
                 }
             }
         }
@@ -36,7 +37,7 @@ class ProductTest : BehaviorSpec({
     given("상품 업데이트 시") {
         `when`("이름과 가격이 주어지면") {
             then("이름과 가격이 업데이트되어야 한다") {
-                val product = Product.create("기존상품", Money(1000.toBigDecimal()), 10)
+                val product = Product.create("기존상품", Money(1000.toBigDecimal()), 10, sellerId = 1L)
                 product.update("수정상품", Money(2000.toBigDecimal()))
                 product.name shouldBe "수정상품"
                 product.price shouldBe Money(2000.toBigDecimal())
@@ -46,14 +47,14 @@ class ProductTest : BehaviorSpec({
     given("상품 비활성화 시") {
         `when`("ACTIVE 상태이면") {
             then("INACTIVE로 전환되어야 한다") {
-                val product = Product.create("상품", Money(1000.toBigDecimal()), 10)
+                val product = Product.create("상품", Money(1000.toBigDecimal()), 10, sellerId = 1L)
                 product.deactivate()
                 product.status shouldBe ProductStatus.INACTIVE
             }
         }
         `when`("이미 INACTIVE 상태이면") {
             then("IllegalStateException이 발생해야 한다") {
-                val product = Product.create("상품", Money(1000.toBigDecimal()), 10)
+                val product = Product.create("상품", Money(1000.toBigDecimal()), 10, sellerId = 1L)
                 product.deactivate()
                 shouldThrow<IllegalStateException> {
                     product.deactivate()
@@ -64,21 +65,21 @@ class ProductTest : BehaviorSpec({
     given("재고 동기화 시") {
         `when`("유효한 가용 재고가 주어지면") {
             then("재고가 동기화되어야 한다") {
-                val product = Product.create("상품", Money(1000.toBigDecimal()), 10)
+                val product = Product.create("상품", Money(1000.toBigDecimal()), 10, sellerId = 1L)
                 product.syncStock(7)
                 product.stock shouldBe 7
             }
         }
         `when`("가용 재고가 0이면") {
             then("재고가 0으로 동기화되어야 한다") {
-                val product = Product.create("상품", Money(1000.toBigDecimal()), 10)
+                val product = Product.create("상품", Money(1000.toBigDecimal()), 10, sellerId = 1L)
                 product.syncStock(0)
                 product.stock shouldBe 0
             }
         }
         `when`("음수 재고가 주어지면") {
             then("IllegalArgumentException이 발생해야 한다") {
-                val product = Product.create("상품", Money(1000.toBigDecimal()), 10)
+                val product = Product.create("상품", Money(1000.toBigDecimal()), 10, sellerId = 1L)
                 shouldThrow<IllegalArgumentException> {
                     product.syncStock(-1)
                 }

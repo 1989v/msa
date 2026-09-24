@@ -29,7 +29,11 @@
   폴드는 코드만 옮긴다 — 프로파일은 손으로 따라가야 한다
 - Product 는 **카탈로그(이름/가격/카테고리/상태 + 영양·원재료·원산지, ADR-0060) 의 SSOT**. **재고(stock) 는 Inventory 서비스가 SSOT** — 재고 조회/변경은 Inventory 를 통해 (ADR-0013)
 - 영양 필드는 100g 기준·nullable — 오픈데이터(#15100066) 품목제조보고번호 조인, 미매칭 null (추정 채움 금지)
-- Kafka 발행 토픽: `product.item.created`, `product.item.updated`
+- **상품은 판매자 소유다** (`products.seller_id`, ADR-0099 §8). 쓰기는 어드민 또는 **ACTIVE 판매자 행**(`product_seller`,
+  `seller.seller.*` 이벤트로 채우는 읽기 모델, memberId == `X-User-Id`) + 토큰의 ROLE_SELLER. 판매자는 자기 상품만 고친다.
+  등록 시 `seller_id` 는 본문이 아니라 `ProductWriteAuthorizer.authorizeCreate` 가 돌려준 값이다 — 판매자 행이 없는 어드민과
+  `/internal` 일괄 적재는 플랫폼 기본 판매자(1). 기존 상품도 1 로 백필했다
+- Kafka 발행 토픽: `product.item.created`, `product.item.updated` (페이로드에 `sellerId`)
 - Search 서비스가 위 토픽을 소비하여 ES 인덱싱 — 토픽 스키마 변경 시 Search Consumer 영향 확인 필수
 
 ## Docs
