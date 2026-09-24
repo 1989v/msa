@@ -38,8 +38,11 @@ export interface PlacementDecision {
   house: HouseCreative[];
 }
 
-/** 결정을 기다리는 상한. 넘으면 유료 광고 없이 다음 순서(AdSense)로 간다. */
-export const DECISION_TIMEOUT_MS = 800;
+/**
+ * 결정을 기다리는 상한. 넘으면 유료 광고 없이 다음 순서(AdSense)로 간다.
+ * 서버 처리는 수 ms 지만 CF 엣지 → OCI 왕복이 0.3~2s 라 800ms 로는 첫 방문 결정이 자주 끊겼다.
+ */
+export const DECISION_TIMEOUT_MS = 1500;
 
 const DECISIONS_PATH = '/api/v1/ads/decisions';
 const EVENTS_PATH = '/api/v1/ads/events';
@@ -102,7 +105,7 @@ async function fetchDecisions(
 ): Promise<Map<string, PlacementDecision>> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    // axios timeout 은 요청을 끊고, 경쟁 타이머는 화면이 기다리는 상한을 어떤 전송 방식에서든 800ms 로 묶는다
+    // axios timeout 은 요청을 끊고, 경쟁 타이머는 화면이 기다리는 상한을 어떤 전송 방식에서든 DECISION_TIMEOUT_MS 로 묶는다
     const deadline = new Promise<never>((_, reject) => {
       timer = setTimeout(() => reject(new Error('ads decision timeout')), DECISION_TIMEOUT_MS);
     });

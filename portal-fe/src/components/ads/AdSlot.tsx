@@ -40,7 +40,7 @@ type Phase = 'waiting' | 'paid' | 'adsense' | 'house' | 'empty';
  * 광고 지면 — **자리를 코드가 정한다** (ADR-0076, ADR-0098).
  *
  * 채움 순서: 자체 유료 광고 → AdSense(그 지면 ID 가 있을 때) → 자체 홍보(HOUSE) → 자리 숨김.
- * 결정 호출이 실패하면(오류·800ms 초과·빈 응답·형식 불일치) 유료가 없는 것으로 보고 AdSense 로 간다.
+ * 결정 호출이 실패하면(오류·DECISION_TIMEOUT_MS 초과·빈 응답·형식 불일치) 유료가 없는 것으로 보고 AdSense 로 간다.
  * AdSense 가 `unfilled` 를 적거나 3초 안에 아무 상태도 안 적으면(차단기·로드 실패) HOUSE 로 간다.
  *
  * 자동 광고는 콘솔에서 끄고 이 컴포넌트만 쓴다 — 자동 광고는 DOM 을 훑어 임의로 끼워 넣어

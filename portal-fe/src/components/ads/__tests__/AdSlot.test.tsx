@@ -72,7 +72,7 @@ describe('AdSlot — 채움 순서', () => {
     expect(window.adsbygoogle).toHaveLength(1);
   });
 
-  it('결정이 800ms 안에 안 오면 유료 없음 — 그 전까지는 예약 높이만 비워 둔다', async () => {
+  it('결정이 제한 시간 안에 안 오면 유료 없음 — 그 전까지는 예약 높이만 비워 둔다', async () => {
     installDecisionAdapter(() => 'never');
     const { container } = renderSlot('blog-post-end');
     await advance(DECISION_TIMEOUT_MS - 1);
