@@ -934,6 +934,8 @@ fun renderTopologyShell(pods: List<Pod>): String {
     lines.append("topology_test_tasks() {\n  case \"\$1\" in\n")
     pods.sortedBy { it.name }.forEach { pod ->
         val tasks = StringBuilder(":${pod.name}:app:test")
+        // 폴드 호스트가 아닌 파드(search·auth·analytics)는 자기 :domain 을 갖는다 — 빼면 CI 가 안 돌린다
+        if (rootProject.file("${pod.name}/domain/build.gradle.kts").isFile) tasks.append(" :${pod.name}:domain:test")
         pod.domains.forEach { d ->
             if (rootProject.file("$d/domain").isDirectory) tasks.append(" :$d:domain:test")
             if (rootProject.file("$d/feature").isDirectory) tasks.append(" :$d:feature:test")

@@ -190,8 +190,6 @@ jobs:
               search-consumer)    TASKS+=" :search:consumer:test" ;;
               *)
                 TASKS+=" $(topology_test_tasks "$svc")"
-                # 생성물은 폴드된 도메인만 나열한다 — 파드 자신의 :domain 은 여기서 더한다
-                [ -f "$svc/domain/build.gradle.kts" ] && TASKS+=" :${svc}:domain:test"
                 ;;
             esac
           done

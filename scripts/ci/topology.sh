@@ -22,13 +22,13 @@ topology_pod_for_path() {
 topology_test_tasks() {
   case "$1" in
     account) echo ":account:app:test :member:domain:test :member:feature:test :wishlist:domain:test :wishlist:feature:test" ;;
-    analytics) echo ":analytics:app:test" ;;
+    analytics) echo ":analytics:app:test :analytics:domain:test" ;;
     atlas) echo ":atlas:app:test :code-dictionary:domain:test :code-dictionary:feature:test" ;;
-    auth) echo ":auth:app:test" ;;
+    auth) echo ":auth:app:test :auth:domain:test" ;;
     commerce) echo ":commerce:app:test :deal:domain:test :deal:feature:test :fulfillment:domain:test :fulfillment:feature:test :inventory:domain:test :inventory:feature:test :order:domain:test :order:feature:test :payment:domain:test :payment:feature:test :product:domain:test :product:feature:test :promotion:domain:test :promotion:feature:test :seller:domain:test :seller:feature:test :settlement:domain:test :settlement:feature:test :warehouse:domain:test :warehouse:feature:test" ;;
     content) echo ":content:app:test :blog:domain:test :blog:feature:test :game:domain:test :game:feature:test :place:domain:test :place:feature:test :ranking:domain:test :ranking:feature:test" ;;
     engagement) echo ":engagement:app:test :ads:domain:test :ads:feature:test :experiment:domain:test :experiment:feature:test :recommendation:domain:test :recommendation:feature:test" ;;
-    search) echo ":search:app:test" ;;
+    search) echo ":search:app:test :search:domain:test" ;;
     sideapp) echo ":sideapp:app:test :chatbot:domain:test :chatbot:feature:test :gifticon:domain:test :gifticon:feature:test :quant:domain:test :quant:feature:test" ;;
   esac
 }
