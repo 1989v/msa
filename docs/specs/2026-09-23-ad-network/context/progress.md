@@ -38,3 +38,9 @@
 - engagement 새 파드 기동(14:20 UTC) 뒤 `APACHE_HTTP_CLIENT`·`ClassicHttpRequest` WARN 0건 — httpclient5 수정 반영
 - 운영 콘솔 `ads.1989v.com`: 200 · `noindex, nofollow` · 미로그인 시 apex 로그인(`next=`)
 - **발견 — 결정 800ms 제한이 엣지 왕복보다 짧다**: 이 머신에서 TTFB 결정 0.32~1.58s, 게임 목록 API 0.31~2.19s, 정적 파일 0.26~0.82s(각 10·10·5회). 서버 P99 8.8ms 와 무관한 CF(HKG)→OCI 경로 지연. 새 크롬 첫 방문에서 결정 요청이 `ERR_ABORTED` 로 끊겨 HOUSE 배너가 비고, 두 번째 방문에서 그려졌다. 값 조정은 사용자 결정 대기
+
+## 후속 정리 (2026-09-25 KST 06:3x)
+- 결정 대기 800ms → 1500ms(`859ca86`): 새 크롬 첫 방문 `/games` 배너 5회 중 4회(결정 173~752ms), 1회는 1502ms 에서 끊김 — 남은 꼬리는 CF(HKG)→OCI 경로 지연
+- `Game.isMonetizable()` 삭제, prod-k8s 비밀번호 패치를 호스트 8개로 재배치(place_db·quant 는 init Job 에 키가 없어 미주입), recommendation clickhouse-jdbc 0.7.1, 토폴로지 생성물에 파드 자신의 `:domain:test`
+- `70a2c231` images 는 atlas 테스트(남의 변경) 실패로 막혀, 수정 커밋 뒤 `services="engagement content"` 수동 실행(36058382494) 성공 → 두 파드 `0079155` 1/1
+- 운영: engagement 파드(10.42.0.42)가 ClickHouse 에 0.7.1 로 쿼리 10건·오류 0(`system.query_log`, 21:26 UTC 이후), 게임 목록 API 200, 결정 API 200
