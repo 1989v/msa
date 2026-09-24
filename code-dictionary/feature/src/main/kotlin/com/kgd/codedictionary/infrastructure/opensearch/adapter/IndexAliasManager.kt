@@ -201,6 +201,11 @@ class IndexAliasManager(
             }
     }
 
+    override fun deleteIndex(indexName: String) {
+        openSearchClient.indices().delete { d -> d.index(indexName) }
+        log.info { "Deleted discarded index: $indexName" }
+    }
+
     private fun getIndicesForAlias(alias: String): List<String> =
         runCatching {
             // opensearch-java: GetAliasResponse 는 DictionaryResponse — aliases() 대신 result()

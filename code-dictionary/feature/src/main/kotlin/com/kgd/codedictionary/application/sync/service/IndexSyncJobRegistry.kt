@@ -13,9 +13,13 @@ class IndexSyncJobRegistry {
     private val jobs = ConcurrentHashMap<String, IndexSyncJob>()
 
     /** 진행 중인 잡이 있으면 그 잡을 반환 (중복 실행 방지). 없으면 새 잡을 만들어 PENDING 으로 등록. */
-    fun submit(): IndexSyncJob {
+    fun submit(): IndexSyncJob = submitOrExisting().first
+
+    /** 새로 만든 잡이면 second = true — 호출자는 그때만 실행을 건다 */
+    @Synchronized
+    fun submitOrExisting(): Pair<IndexSyncJob, Boolean> {
         val running = jobs.values.firstOrNull { it.status == IndexSyncStatus.PENDING || it.status == IndexSyncStatus.RUNNING }
-        if (running != null) return running
+        if (running != null) return running to false
 
         val job = IndexSyncJob(
             jobId = UUID.randomUUID().toString(),
@@ -23,7 +27,7 @@ class IndexSyncJobRegistry {
             startedAt = Instant.now()
         )
         jobs[job.jobId] = job
-        return job
+        return job to true
     }
 
     fun get(jobId: String): IndexSyncJob? = jobs[jobId]

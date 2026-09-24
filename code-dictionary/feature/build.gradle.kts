@@ -37,6 +37,8 @@ dependencies {
     // Treemap stats endpoint — Caffeine in-memory cache (spec.md §7)
     implementation("org.springframework.boot:spring-boot-starter-cache")
     implementation(libs.caffeine)
+    // 개념 온톨로지 원본(resources/ontology/*.yaml) 파싱 — 버전은 Boot BOM 이 관리한다 (ADR-0100)
+    implementation("org.yaml:snakeyaml")
     // kotlin-logging 람다 (logging convention)
     implementation(libs.kotlin.logging)
     testImplementation(libs.spring.boot.starter.test)
