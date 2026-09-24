@@ -26,6 +26,10 @@ export interface ProductSummary {
   status: string;
   stock: number;
   createdAt: string;
+  sellerId: number;
+  brand?: string | null;
+  description?: string | null;
+  category?: string | null;
 }
 
 export interface ProductListResponse {
@@ -110,6 +114,52 @@ export interface MyOrder {
   status: OrderStatus;
   createdAt: string;
   items: MyOrderItem[];
+}
+
+// ── Seller ────────────────────────────────────────────────────────
+
+export type SellerStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'REJECTED';
+export type SettlementCycle = 'WEEKLY' | 'MONTHLY';
+
+export interface ApplySellerRequest {
+  businessName: string;
+  businessRegistrationNo: string;
+  representativeName: string;
+  bankName: string;
+  accountNumber: string;
+  shippingFee: number;
+  settlementCycle: SettlementCycle;
+}
+
+/** 계좌는 마스킹 값만 온다 */
+export interface SellerProfile {
+  id: number;
+  memberId: string;
+  status: SellerStatus;
+  businessName: string;
+  businessRegistrationNo: string | null;
+  representativeName: string | null;
+  bankName: string | null;
+  accountMasked: string | null;
+  shippingFee: number;
+  settlementCycle: SettlementCycle;
+  commissionRateBp: number | null;
+  rejectReason: string | null;
+  appliedAt: string;
+  updatedAt: string;
+}
+
+/** 내 가장 최근 입점 신청 — 상태 무관. 정지 사유는 지금 정지 상태일 때만 온다 */
+export interface SellerApplication extends Omit<SellerProfile, 'memberId'> {
+  suspendReason: string | null;
+}
+
+export interface SellerProductRequest {
+  name: string;
+  price: number;
+  brand?: string | null;
+  description?: string | null;
+  category?: string | null;
 }
 
 // ── Auth ──────────────────────────────────────────────────────────
@@ -237,3 +287,67 @@ export const loginWithProvider = async (
 export const logoutApi = async (refreshToken: string): Promise<void> => {
   await api.post('/api/auth/logout', { refreshToken });
 };
+
+export const applySeller = async (body: ApplySellerRequest): Promise<SellerProfile> => {
+  const res = await api.post<ApiResponse<SellerProfile>>('/api/v1/sellers/apply', body);
+  return res.data.data;
+};
+
+/** 상태를 가리지 않고 가장 최근 신청을 준다(ROLE_USER). 신청한 적이 없으면 null */
+export const fetchMySellerApplication = async (): Promise<SellerApplication | null> => {
+  try {
+    const res = await api.get<ApiResponse<SellerApplication>>('/api/v1/sellers/me');
+    return res.data.data;
+  } catch (err) {
+    if (errorStatus(err) === 404) return null;
+    throw err;
+  }
+};
+
+/**
+ * 판매자 포털의 나 — ACTIVE 판매자만 200.
+ * 승인은 토큰 발급 뒤에 일어나므로 403 이면 한 번 재발급해 다시 묻는다 — 재발급이 역할을
+ * 새로 읽어 오므로 승인된 판매자가 다시 로그인하지 않아도 된다.
+ */
+export const fetchMySeller = async (): Promise<SellerProfile> => {
+  const get = () => api.get<ApiResponse<SellerProfile>>('/api/v1/seller/me');
+  try {
+    return (await get()).data.data;
+  } catch (err) {
+    if (errorStatus(err) !== 403 || !(await refreshAccessToken())) throw err;
+    return (await get()).data.data;
+  }
+};
+
+/** 그 판매자의 판매 중 상품 — 서버가 판매자로 거른다 */
+export const fetchSellerProducts = async (
+  sellerId: number,
+  page = 0,
+  size = 500,
+): Promise<ProductListResponse> => {
+  const res = await api.get<ApiResponse<ProductListResponse>>('/api/v1/products', {
+    params: { sellerId, page, size },
+  });
+  return res.data.data;
+};
+
+/** 재고는 등록 때만 받는다 — 수정 API 에는 재고 필드가 없다 */
+export const createSellerProduct = async (
+  body: SellerProductRequest & { stock: number },
+): Promise<ProductDetail> => {
+  const res = await api.post<ApiResponse<ProductDetail>>('/api/v1/products', body);
+  return res.data.data;
+};
+
+export const updateSellerProduct = async (
+  id: number,
+  body: SellerProductRequest,
+): Promise<ProductDetail> => {
+  const res = await api.put<ApiResponse<ProductDetail>>(`/api/v1/products/${id}`, body);
+  return res.data.data;
+};
+
+/** HTTP 상태 — 403(판매자 아님)·409(이미 신청) 분기용 */
+export function errorStatus(err: unknown): number | null {
+  return axios.isAxiosError(err) ? (err.response?.status ?? null) : null;
+}

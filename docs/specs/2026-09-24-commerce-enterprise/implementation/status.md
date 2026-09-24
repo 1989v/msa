@@ -32,3 +32,10 @@
 - auth 서브모듈 `fe0f5f6` (feat/seller-role) — ROLE_SELLER 만 grant/revoke, processed_event V2
 - `generateTopology` 로 seller 를 topology 에 등록(누락 시 CI 가 seller 변경에 commerce 이미지를 안 만든다)
 - 회귀 주입 5종(정지→부여 · 소유 검사 제거 · 판매자 id 1 고정 · ACTIVE 무시 · 옛 이벤트 거르기 제거) 전부 빨간불
+
+## TG5 판매자 화면 · 방침 (2026-09-24)
+- `./gradlew :seller:feature:test :product:feature:test :gateway:test --tests '*RouteAuth*' verifyArchitecture` → exit 0
+  - SellerControllerTest 15/0 · ProductControllerAuthTest 8/0 · ProductControllerSellerOwnershipTest 8/0 · GatewayRouteAuthSpec 16/0
+- portal-fe `npx vitest run src/pages/seller src/pages/__tests__/privacyRetention.test.ts` → Test Files 3 passed · Tests 9 passed; tsc(tsconfig.app.json) portal 0 · admin 0
+- 추가: `GET /api/v1/sellers/me`(ROLE_USER, 네 상태 + 사유) · 상품 목록 `sellerId` 필터
+- CDP: ACTIVE 인장 라이트 1.46:1 발견 → `--ko-accent-text` 로 8.24:1. 캡처 `verifications/tg5/`

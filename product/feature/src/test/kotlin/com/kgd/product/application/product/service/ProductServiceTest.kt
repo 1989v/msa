@@ -98,7 +98,7 @@ class ProductServiceTest : BehaviorSpec({
         `when`("유효한 페이지 파라미터가 주어지면") {
             then("페이지네이션된 상품 목록을 반환해야 한다") {
                 val product = Product.restore(1L, "테스트", Money(1000.toBigDecimal()), 10, ProductStatus.ACTIVE, java.time.LocalDateTime.now())
-                every { transactionalService.findAll(any()) } returns PageImpl(
+                every { transactionalService.findAll(any(), any()) } returns PageImpl(
                     listOf(product),
                     PageRequest.of(0, 100),
                     1L

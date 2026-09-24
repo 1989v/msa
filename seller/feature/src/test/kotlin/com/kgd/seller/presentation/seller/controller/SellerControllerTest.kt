@@ -5,13 +5,18 @@ import com.kgd.seller.application.seller.port.SellerAdminActionRepositoryPort
 import com.kgd.seller.application.seller.port.SellerEventPort
 import com.kgd.seller.application.seller.port.SellerRepositoryPort
 import com.kgd.seller.application.seller.service.SellerAdminService
+import com.kgd.seller.application.seller.service.SellerApplicationQueryService
 import com.kgd.seller.application.seller.service.SellerService
 import com.kgd.seller.domain.seller.model.EncryptedAccount
 import com.kgd.seller.domain.seller.model.Seller
+import com.kgd.seller.domain.seller.model.SellerAdminAction
+import com.kgd.seller.domain.seller.model.SellerAdminActionType
 import com.kgd.seller.domain.seller.model.SellerStatus
 import com.kgd.seller.domain.seller.model.SettlementCycle
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -37,14 +42,15 @@ class SellerControllerTest : BehaviorSpec({
     val clock = Clock.systemUTC()
     val service = SellerService(sellers, events, cipher, clock)
     val admin = SellerAdminService(sellers, actions, events, clock)
+    val applications = SellerApplicationQueryService(sellers, actions)
     val mockMvc = MockMvcBuilders
-        .standaloneSetup(SellerController(service, service), SellerAdminController(service, admin))
+        .standaloneSetup(SellerController(service, service, applications), SellerAdminController(service, admin))
         .setMessageConverters(JacksonJsonHttpMessageConverter(jacksonMapperBuilder().build()))
         .build()
 
-    fun row(status: SellerStatus) = Seller.restore(
-        10L, "7", "상호", "1234567890", "대표", "은행", EncryptedAccount("c", 1), "********6789", 3000L,
-        SettlementCycle.WEEKLY, 1000, status, null, null, null, Instant.EPOCH, Instant.EPOCH,
+    fun row(status: SellerStatus, id: Long = 10L, rejectReason: String? = null) = Seller.restore(
+        id, "7", "상호", "1234567890", "대표", "은행", EncryptedAccount("c", 1), "********6789", 3000L,
+        SettlementCycle.WEEKLY, 1000, status, rejectReason, null, null, Instant.EPOCH, Instant.EPOCH,
     )
 
     beforeEach {
@@ -52,6 +58,11 @@ class SellerControllerTest : BehaviorSpec({
         every { sellers.save(any()) } answers { firstArg() }
         every { cipher.encrypt(any()) } returns EncryptedAccount("c", 1)
     }
+
+    fun action(type: SellerAdminActionType, reason: String?, at: Instant) = SellerAdminAction(
+        sellerId = 10L, action = type, actorId = "1", reason = reason,
+        fromStatus = SellerStatus.ACTIVE, toStatus = SellerStatus.SUSPENDED, commissionRateBp = null, createdAt = at,
+    )
 
     fun MockHttpServletRequestBuilder.identity(userId: String?, roles: String?) = apply {
         userId?.let { header("X-User-Id", it) }
@@ -87,6 +98,48 @@ class SellerControllerTest : BehaviorSpec({
         }
         then("X-User-Id 가 없으면 401") {
             me(null) shouldBe 401
+        }
+    }
+
+    given("내 입점 신청 /api/v1/sellers/me — 상태 무관, 가장 최근 신청") {
+        fun myApplication(userId: String?) = mockMvc.perform(
+            MockMvcRequestBuilders.get("/api/v1/sellers/me").identity(userId, "ROLE_USER"),
+        ).andReturn().response
+
+        then("PENDING 은 200 과 그 상태") {
+            every { sellers.findAllByMemberId("7") } returns listOf(row(SellerStatus.PENDING))
+            val res = myApplication("7")
+            res.status shouldBe 200
+            res.contentAsString shouldContain "\"status\":\"PENDING\""
+        }
+        then("반려 이력 뒤 재신청이 반려되면 가장 최근 행과 그 반려 사유") {
+            every { sellers.findAllByMemberId("7") } returns listOf(
+                row(SellerStatus.REJECTED, id = 3L, rejectReason = "예전 사유"),
+                row(SellerStatus.REJECTED, id = 10L, rejectReason = "사업자번호 불일치"),
+            )
+            val res = myApplication("7")
+            res.status shouldBe 200
+            res.contentAsString shouldContain "사업자번호 불일치"
+            res.contentAsString shouldNotContain "예전 사유"
+        }
+        then("SUSPENDED 는 200 과 가장 최근 정지 사유") {
+            every { sellers.findAllByMemberId("7") } returns listOf(row(SellerStatus.SUSPENDED))
+            every { actions.findAllBySellerId(10L) } returns listOf(
+                action(SellerAdminActionType.SUSPEND, "첫 정지", Instant.parse("2026-09-01T00:00:00Z")),
+                action(SellerAdminActionType.REACTIVATE, null, Instant.parse("2026-09-02T00:00:00Z")),
+                action(SellerAdminActionType.SUSPEND, "허위 표시", Instant.parse("2026-09-03T00:00:00Z")),
+            )
+            val res = myApplication("7")
+            res.status shouldBe 200
+            res.contentAsString shouldContain "\"status\":\"SUSPENDED\""
+            res.contentAsString shouldContain "\"suspendReason\":\"허위 표시\""
+        }
+        then("신청 행이 없으면 404") {
+            every { sellers.findAllByMemberId("8") } returns emptyList()
+            myApplication("8").status shouldBe 404
+        }
+        then("X-User-Id 가 없으면 401") {
+            myApplication(null).status shouldBe 401
         }
     }
 

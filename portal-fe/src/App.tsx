@@ -23,6 +23,9 @@ const PartyPage = lazy(() => import('./pages/party/PartyPage'));
 const PlacePage = lazy(() => import('./pages/place/PlacePage'));
 // ADR-0069 — 혜택 링크 허브 (deal.<domain>). place/game 과 같은 host 인식 루트 라우팅.
 const DealPage = lazy(() => import('./pages/deal/DealPage'));
+// 판매자 화면은 판매자만 연다 — 스토어 번들에 싣지 않는다
+const SellerApplyPage = lazy(() => import('./pages/seller/SellerApplyPage'));
+const SellerProductsPage = lazy(() => import('./pages/seller/SellerProductsPage'));
 // ADR-0072 — 블로그 (blog.<domain>). 본문 렌더(marked/dompurify)가 들어가므로 lazy 로 분리한다.
 const BlogHomePage = lazy(() => import('./pages/blog/BlogHomePage'));
 const BlogPostPage = lazy(() => import('./pages/blog/BlogPostPage'));
@@ -208,6 +211,8 @@ function App() {
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/shop/products/:id" element={<ShopProductDetailPage />} />
           <Route path="/shop/orders" element={<MyOrdersPage />} />
+          <Route path="/shop/seller/apply" element={<SellerApplyPage />} />
+          <Route path="/shop/seller/products" element={<SellerProductsPage />} />
           <Route path="/oauth/callback" element={<ShopOAuthCallbackPage />} />
           {/* 게임 — 언어(/en)와 장르는 URL 로 승격해 검색엔진이 개별 색인할 수 있게 한다 */}
           <Route path="/place" element={placeRoute(<PlacePage />)} />

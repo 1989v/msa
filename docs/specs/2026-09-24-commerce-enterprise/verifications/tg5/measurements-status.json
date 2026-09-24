@@ -1,0 +1,100 @@
+[
+  {
+    "name": "apply-390-light-rejected",
+    "status": "REJECTED",
+    "reason": "사업자등록번호와 상호가 국세청 조회 결과와 다릅니다. 사업자등록증 사본의 상호로 다시 신청해 주세요.",
+    "reasonContrast": 15.27,
+    "badgeContrast": 7.29,
+    "badgeRaw": [
+      "rgb(70, 70, 74)",
+      "rgb(227, 227, 221)"
+    ],
+    "rows": 0,
+    "formShown": true,
+    "overflowX": false
+  },
+  {
+    "name": "apply-390-dark-pending",
+    "status": "PENDING",
+    "reason": null,
+    "reasonContrast": null,
+    "badgeContrast": 6.72,
+    "badgeRaw": [
+      "oklch(0.8 0.15 75)",
+      "oklch(0.32 0.08 75)"
+    ],
+    "rows": 0,
+    "formShown": false,
+    "overflowX": false
+  },
+  {
+    "name": "apply-390-light-pending",
+    "status": "PENDING",
+    "reason": null,
+    "reasonContrast": null,
+    "badgeContrast": 6.72,
+    "badgeRaw": [
+      "oklch(0.8 0.15 75)",
+      "oklch(0.32 0.08 75)"
+    ],
+    "rows": 0,
+    "formShown": false,
+    "overflowX": false
+  },
+  {
+    "name": "products-390-dark-rejected",
+    "status": "REJECTED",
+    "reason": "사업자등록번호와 상호가 국세청 조회 결과와 다릅니다. 사업자등록증 사본의 상호로 다시 신청해 주세요.",
+    "reasonContrast": 13.34,
+    "badgeContrast": 8.45,
+    "badgeRaw": [
+      "rgb(199, 198, 202)",
+      "rgb(42, 42, 42)"
+    ],
+    "rows": 0,
+    "formShown": false,
+    "overflowX": false
+  },
+  {
+    "name": "products-390-light-suspended",
+    "status": "SUSPENDED",
+    "reason": "상품 상세에 인증되지 않은 효능 표시가 있습니다.",
+    "reasonContrast": 15.27,
+    "badgeContrast": 13.06,
+    "badgeRaw": [
+      "rgb(29, 29, 31)",
+      "rgb(227, 227, 221)"
+    ],
+    "rows": 0,
+    "formShown": false,
+    "overflowX": false
+  },
+  {
+    "name": "products-1280-light-active",
+    "status": "ACTIVE",
+    "reason": null,
+    "reasonContrast": null,
+    "badgeContrast": 8.24,
+    "badgeRaw": [
+      "rgb(26, 71, 42)",
+      "rgb(227, 227, 221)"
+    ],
+    "rows": 3,
+    "formShown": false,
+    "overflowX": false
+  },
+  {
+    "name": "products-390-dark-active",
+    "status": "ACTIVE",
+    "reason": null,
+    "reasonContrast": null,
+    "badgeContrast": 5.08,
+    "badgeRaw": [
+      "rgb(111, 159, 196)",
+      "rgb(42, 42, 42)"
+    ],
+    "rows": 3,
+    "formShown": false,
+    "overflowX": false
+  }
+]

@@ -42,9 +42,10 @@ class ProductController(
     @GetMapping
     fun getProducts(
         @RequestParam(defaultValue = "0") @Min(0) page: Int,
-        @RequestParam(defaultValue = "100") @Min(1) @Max(500) size: Int
+        @RequestParam(defaultValue = "100") @Min(1) @Max(500) size: Int,
+        @RequestParam(required = false) sellerId: Long?,
     ): ApiResponse<ProductListResponse> {
-        val result = getAllProductsUseCase.execute(GetAllProductsUseCase.Query(page, size))
+        val result = getAllProductsUseCase.execute(GetAllProductsUseCase.Query(page, size, sellerId))
         return ApiResponse.success(ProductListResponse.from(result))
     }
 

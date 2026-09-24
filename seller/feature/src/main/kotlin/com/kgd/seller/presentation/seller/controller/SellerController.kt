@@ -3,8 +3,10 @@ package com.kgd.seller.presentation.seller.controller
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.response.ApiResponse
 import com.kgd.seller.application.seller.usecase.ApplySellerUseCase
+import com.kgd.seller.application.seller.usecase.GetMySellerApplicationUseCase
 import com.kgd.seller.application.seller.usecase.GetMySellerUseCase
 import com.kgd.seller.presentation.seller.dto.ApplySellerRequest
+import com.kgd.seller.presentation.seller.dto.MySellerApplicationResponse
 import com.kgd.seller.presentation.seller.dto.SellerResponse
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -18,13 +20,15 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * 입점 신청(`/api/v1/sellers/apply`, ROLE_USER)과 판매자 포털(`/api/v1/seller/` 하위, ROLE_SELLER).
+ * 입점 신청·내 신청 상태(`/api/v1/sellers/apply`·`/api/v1/sellers/me`, ROLE_USER)와
+ * 판매자 포털(`/api/v1/seller/` 하위, ROLE_SELLER).
  * 판매자 포털은 매 요청 X-User-Id 로 판매자 행을 찾아 ACTIVE 인지 본다.
  */
 @RestController
 class SellerController(
     private val applySellerUseCase: ApplySellerUseCase,
     private val getMySellerUseCase: GetMySellerUseCase,
+    private val getMySellerApplicationUseCase: GetMySellerApplicationUseCase,
 ) {
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/api/v1/sellers/apply")
@@ -35,6 +39,13 @@ class SellerController(
         val memberId = SellerRequestIdentity.requireUser(userId)
         return ApiResponse.success(SellerResponse.from(applySellerUseCase.execute(request.toCommand(memberId))))
     }
+
+    @GetMapping("/api/v1/sellers/me")
+    fun myApplication(
+        @RequestHeader(value = "X-User-Id", required = false) userId: String?,
+    ): ApiResponse<MySellerApplicationResponse> = ApiResponse.success(
+        MySellerApplicationResponse.from(getMySellerApplicationUseCase.execute(SellerRequestIdentity.requireUser(userId))),
+    )
 
     @GetMapping("/api/v1/seller/me")
     fun me(

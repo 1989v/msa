@@ -5,7 +5,7 @@ import { buildLoginHref } from '../auth/auth';
 
 /**
  * ShopHeader — 쇼핑 플로우 공용 헤더.
- * 로고(/shop) / 주문내역 / 로그인·로그아웃 / 포털 홈 복귀.
+ * 로고(/shop) / 주문내역 / 판매자(로그인 시) / 로그인·로그아웃 / 포털 홈 복귀.
  */
 export default function ShopHeader() {
   const { isLoggedIn, logout } = useAuth();
@@ -26,6 +26,12 @@ export default function ShopHeader() {
           <Link to="/shop/orders" className="shop-header-link">
             주문내역
           </Link>
+          {isLoggedIn && (
+            // 상품 화면이 판매자 여부를 가르고, 아니면 입점 신청으로 안내한다
+            <Link to="/shop/seller/products" className="shop-header-link">
+              판매자
+            </Link>
+          )}
           {isLoggedIn ? (
             <button type="button" className="shop-header-link" onClick={handleLogout}>
               로그아웃

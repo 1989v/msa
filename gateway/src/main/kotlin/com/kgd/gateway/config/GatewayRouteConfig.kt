@@ -168,9 +168,10 @@ class GatewayRouteConfig(
                     }
                     .uri(COMMERCE_URI)
             }
-            // 입점 신청 — 로그인 회원 누구나(1인 1판매자는 서비스가 본다)
+            // 입점 신청과 내 신청 상태 — 로그인 회원 누구나(1인 1판매자는 서비스가 본다).
+            // 상태 조회가 ROLE_SELLER 뒤에 있으면 심사 중·반려·정지 회원이 자기 상태를 못 본다
             .route("seller-apply") { r ->
-                r.path("/api/v1/sellers/apply")
+                r.path("/api/v1/sellers/apply", "/api/v1/sellers/me")
                     .filters { f ->
                         f.filter(authFilter.apply(userConfig()))
                             .stripPrefix(0)

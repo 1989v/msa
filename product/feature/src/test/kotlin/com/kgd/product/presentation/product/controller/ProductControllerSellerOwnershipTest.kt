@@ -17,6 +17,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import org.springframework.data.domain.PageImpl
 import org.springframework.http.MediaType
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
@@ -121,6 +122,20 @@ class ProductControllerSellerOwnershipTest : BehaviorSpec({
         then("403 — 역할과 행을 둘 다 본다") {
             seller(7L, "501", ProductSellerStatus.ACTIVE)
             create("501", "ROLE_USER").status shouldBe 403
+        }
+    }
+
+    given("목록 조회 ?sellerId=") {
+        then("판매자 필터가 저장소 질의까지 넘어가고, 없으면 거르지 않는다") {
+            every { transactionalService.findAll(any(), any()) } returns PageImpl(listOf(productOf(7L)))
+
+            mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/products").param("sellerId", "7"))
+                .andReturn().response.status shouldBe 200
+            verify(exactly = 1) { transactionalService.findAll(any(), 7L) }
+
+            mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/products"))
+                .andReturn().response.status shouldBe 200
+            verify(exactly = 1) { transactionalService.findAll(any(), null) }
         }
     }
 

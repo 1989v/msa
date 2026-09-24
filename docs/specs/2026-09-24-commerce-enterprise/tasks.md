@@ -73,11 +73,11 @@ Total Task Groups: 16 · 단계 P0~P7 (단계 끝마다 커밋·푸시·배포·
 **Dependencies:** Task Group 4
 **Phase:** P1
 **Required Skills:** React, DESIGN.md 토큰, CDP 검증
-- [ ] 5.0 Complete seller FE
-  - [ ] 5.1 테스트: 입점 신청 폼 검증 · 판매자 포털 상품 목록이 자기 것만 (2, vitest)
-  - [ ] 5.2 portal-fe `/shop/seller/apply` · `/shop/seller/products`(등록·수정), admin-fe 판매자 신청·정지·수수료율 화면
-  - [ ] 5.3 `PrivacyPage.tsx` 수집 항목(판매자 정보) · 보존기간(정산 기록 5년) — 상수와 문구 함께
-  - [ ] 5.4 Verify: `(cd portal-fe && npx vitest run src/pages/seller && npx tsc --noEmit -p tsconfig.app.json) && (cd admin/frontend && npx tsc --noEmit -p tsconfig.app.json)` + CDP 4조합 캡처
+- [x] 5.0 Complete seller FE
+  - [x] 5.1 테스트: 입점 신청 폼 검증 · 판매자 포털 상품 목록이 자기 것만 (2, vitest)
+  - [x] 5.2 portal-fe `/shop/seller/apply` · `/shop/seller/products`(등록·수정), admin-fe 판매자 신청·정지·수수료율 화면
+  - [x] 5.3 `PrivacyPage.tsx` 수집 항목(판매자 정보) · 보존기간(정산 기록 5년) — 상수와 문구 함께
+  - [x] 5.4 Verify: `(cd portal-fe && npx vitest run src/pages/seller && npx tsc --noEmit -p tsconfig.app.json) && (cd admin/frontend && npx tsc --noEmit -p tsconfig.app.json)` + CDP 4조합 캡처
 **Acceptance Criteria:** 운영에서 신청→승인→상품 등록 1회
 
 **P1 배포:** auth 서브모듈 → 본체 순 푸시, 신청·승인·역할 확인

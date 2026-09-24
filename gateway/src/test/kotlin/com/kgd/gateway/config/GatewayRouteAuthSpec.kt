@@ -4,6 +4,7 @@ import com.kgd.common.security.JwtUtil
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldNotBeIn
 import io.kotest.matchers.shouldBe
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -87,6 +88,16 @@ class GatewayRouteAuthSpec(
     Given("입점 신청 /api/v1/sellers/apply (ROLE_USER)") {
         Then("토큰이 없으면 401") {
             status(HttpMethod.POST, "/api/v1/sellers/apply") shouldBe 401
+        }
+    }
+
+    Given("내 입점 신청 /api/v1/sellers/me (ROLE_USER)") {
+        Then("토큰이 없으면 401") {
+            status(HttpMethod.GET, "/api/v1/sellers/me") shouldBe 401
+        }
+        Then("ROLE_SELLER 가 없는 회원도 게이트웨이를 지난다 — 심사 중·반려 회원이 자기 상태를 봐야 한다") {
+            // 백엔드 호스트를 해석할 수 없어 5xx 로 끝난다. 라우트가 없으면 404, 역할이 막으면 403 이다
+            status(HttpMethod.GET, "/api/v1/sellers/me", userToken) shouldNotBeIn listOf(401, 403, 404)
         }
     }
 

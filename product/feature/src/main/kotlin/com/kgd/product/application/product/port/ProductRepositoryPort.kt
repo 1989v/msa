@@ -8,5 +8,6 @@ interface ProductRepositoryPort {
     fun save(product: Product): Product
     fun saveAll(products: List<Product>): List<Product>
     fun findById(id: Long): Product?
-    fun findAll(pageable: Pageable): Page<Product>
+    /** 판매 중(ACTIVE) 상품. [sellerId] 가 있으면 그 판매자 것만 */
+    fun findAll(pageable: Pageable, sellerId: Long?): Page<Product>
 }

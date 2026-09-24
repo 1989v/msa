@@ -59,3 +59,20 @@ describe('보존기간 — 방침과 코드가 같은 숫자를 말한다', () =
     expect(privacyText()).toMatch(/이력서 열람 기록[\s\S]{0,140}1년/);
   });
 });
+
+describe('판매자 정보 — 반려 신청 파기 기한', () => {
+  it('도메인 상수(Seller.REJECTED_PII_RETENTION)와 방침이 같은 일수를 말한다', () => {
+    const src = readFileSync(
+      resolve(REPO, 'seller/domain/src/main/kotlin/com/kgd/seller/domain/seller/model/Seller.kt'),
+      'utf-8',
+    );
+    const m = src.match(/REJECTED_PII_RETENTION: Duration = Duration\.ofDays\((\d+)\)/);
+    expect(m, 'REJECTED_PII_RETENTION 을 못 찾았다 — 이름이나 모양이 바뀌면 이 검사도 고친다').not.toBeNull();
+    const days = Number(m![1]);
+
+    const text = privacyText();
+    const at = text.indexOf('<strong>판매자 정보</strong>');
+    expect(at, '방침 6항에 판매자 정보 항목이 없다').toBeGreaterThan(0);
+    expect(text.slice(at, at + 400)).toContain(`반려일로부터 ${days}일`);
+  });
+});

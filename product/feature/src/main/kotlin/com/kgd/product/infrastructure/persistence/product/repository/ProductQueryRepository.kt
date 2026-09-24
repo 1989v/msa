@@ -18,10 +18,12 @@ class ProductQueryRepository(
 
     private val product = QProductJpaEntity.productJpaEntity
 
-    fun findAllByStatus(status: ProductStatus, pageable: Pageable): Page<ProductJpaEntity> {
+    /** [sellerId] 가 null 이면 판매자로 거르지 않는다(Querydsl 은 null 조건을 건너뛴다) */
+    fun findAllByStatus(status: ProductStatus, sellerId: Long?, pageable: Pageable): Page<ProductJpaEntity> {
+        val bySeller = sellerId?.let { product.sellerId.eq(it) }
         val content = queryFactory
             .selectFrom(product)
-            .where(product.status.eq(status))
+            .where(product.status.eq(status), bySeller)
             .offset(pageable.offset)
             .limit(pageable.pageSize.toLong())
             .fetch()
@@ -29,7 +31,7 @@ class ProductQueryRepository(
         val total = queryFactory
             .select(product.count())
             .from(product)
-            .where(product.status.eq(status))
+            .where(product.status.eq(status), bySeller)
             .fetchOne() ?: 0L
 
         return PageImpl(content, pageable, total)

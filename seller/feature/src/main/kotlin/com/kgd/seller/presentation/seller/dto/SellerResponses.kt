@@ -1,5 +1,6 @@
 package com.kgd.seller.presentation.seller.dto
 
+import com.kgd.seller.application.seller.usecase.GetMySellerApplicationUseCase
 import com.kgd.seller.application.seller.usecase.QuerySellersUseCase
 import com.kgd.seller.application.seller.usecase.SellerView
 import java.time.Instant
@@ -50,5 +51,42 @@ data class SellerPageResponse(
     companion object {
         fun from(p: QuerySellersUseCase.Page) =
             SellerPageResponse(p.items.map(SellerResponse::from), p.totalElements, p.page, p.size)
+    }
+}
+
+/** 내 입점 신청 — [SellerResponse] 에 정지 사유를 더한 것. 정지 사유는 지금 정지 상태일 때만 채운다 */
+data class MySellerApplicationResponse(
+    val id: Long,
+    val status: String,
+    val businessName: String,
+    val businessRegistrationNo: String?,
+    val representativeName: String?,
+    val bankName: String?,
+    val accountMasked: String?,
+    val shippingFee: Long,
+    val settlementCycle: String,
+    val commissionRateBp: Int?,
+    val rejectReason: String?,
+    val suspendReason: String?,
+    val appliedAt: Instant,
+    val updatedAt: Instant,
+) {
+    companion object {
+        fun from(a: GetMySellerApplicationUseCase.MySellerApplication) = MySellerApplicationResponse(
+            id = a.seller.id,
+            status = a.seller.status.name,
+            businessName = a.seller.businessName,
+            businessRegistrationNo = a.seller.businessRegistrationNo,
+            representativeName = a.seller.representativeName,
+            bankName = a.seller.bankName,
+            accountMasked = a.seller.accountMasked,
+            shippingFee = a.seller.shippingFee,
+            settlementCycle = a.seller.settlementCycle.name,
+            commissionRateBp = a.seller.commissionRateBp,
+            rejectReason = a.seller.rejectReason,
+            suspendReason = a.suspendReason,
+            appliedAt = a.seller.appliedAt,
+            updatedAt = a.seller.updatedAt,
+        )
     }
 }

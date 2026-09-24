@@ -41,3 +41,11 @@ questions:
     phase: post-impl
     status: open
     question: ACTIVE 판매자 행이 있는 어드민의 상품 등록은 그 판매자 소유 — 어드민은 항상 플랫폼 1 로 할지
+  - id: Q11
+    phase: post-impl
+    status: open
+    question: 주문내역 `.shop-badge-completed` 도 헤리티지 라이트에서 --ko-accent-secondary 라 1.46:1 추정(기존) — P4 주문 상태 인장 개편 때 같이
+  - id: Q12
+    phase: post-impl
+    status: open
+    question: 상품 목록 API 는 ACTIVE 만 — 판매 중지된 내 상품이 판매자 화면에 안 보임. 판매자 전용 전체 상태 목록 필요 여부 · ProductQueryRepository 가 pageable 정렬 미적용(기존)

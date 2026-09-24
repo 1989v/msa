@@ -29,5 +29,5 @@ class ProductTransactionalService(
         ?: throw ProductNotFoundException(id)
 
     @Transactional(readOnly = true)
-    fun findAll(pageable: Pageable): Page<Product> = productRepository.findAll(pageable)
+    fun findAll(pageable: Pageable, sellerId: Long?): Page<Product> = productRepository.findAll(pageable, sellerId)
 }

@@ -110,7 +110,7 @@ class ProductService(
 
     override fun execute(query: GetAllProductsUseCase.Query): GetAllProductsUseCase.Result {
         val pageable = PageRequest.of(query.page, query.size, Sort.by("id").ascending())
-        val page = transactionalService.findAll(pageable)
+        val page = transactionalService.findAll(pageable, query.sellerId)
         return GetAllProductsUseCase.Result(
             products = page.content.map { product ->
                 GetAllProductsUseCase.Result.ProductResult(

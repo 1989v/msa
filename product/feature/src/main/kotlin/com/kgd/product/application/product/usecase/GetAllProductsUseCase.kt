@@ -6,7 +6,8 @@ import java.time.LocalDateTime
 interface GetAllProductsUseCase {
     fun execute(query: Query): Result
 
-    data class Query(val page: Int, val size: Int)
+    /** [sellerId] 가 있으면 그 판매자 상품만 — 판매자 포털의 내 상품 목록 */
+    data class Query(val page: Int, val size: Int, val sellerId: Long? = null)
 
     data class Result(
         val products: List<ProductResult>,
