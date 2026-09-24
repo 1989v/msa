@@ -100,6 +100,17 @@ class AtlasContextLoadSpec(
                     yamls.size
             }
 
+        Then("도메인 계층을 개념 수천 개 위에서 한 번에 낸다 — 개념마다 추가 쿼리를 내지 않는다")
+            .config(enabledIf = { dockerAvailable }) {
+                val graph = ctx.getBean(com.kgd.codedictionary.application.graph.usecase.ConceptGraphUseCase::class.java)
+                val started = System.nanoTime()
+                val hierarchy = graph.getHierarchy("search-system")
+                val elapsedMs = (System.nanoTime() - started) / 1_000_000
+                (hierarchy.nodes.size > 400) shouldBe true
+                // 옛 경로(동의어 · 관계 EAGER)는 운영에서 24~62초였다. 여유를 크게 두고 자릿수만 막는다
+                (elapsedMs < 5_000) shouldBe true
+            }
+
         Then("자기 도메인의 컨트롤러가 전부 빈으로 등록된다")
             .config(enabledIf = { dockerAvailable }) {
                 listOf(

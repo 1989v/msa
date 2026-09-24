@@ -3,6 +3,7 @@ package com.kgd.codedictionary.infrastructure.persistence.concept.adapter
 import com.kgd.codedictionary.application.concept.port.ConceptRepositoryPort
 import com.kgd.codedictionary.domain.concept.model.Concept
 import com.kgd.codedictionary.domain.concept.model.ConceptCategory
+import com.kgd.codedictionary.domain.concept.model.ConceptKind
 import com.kgd.codedictionary.domain.concept.model.ConceptLevel
 import com.kgd.codedictionary.infrastructure.persistence.concept.entity.ConceptJpaEntity
 import com.kgd.codedictionary.infrastructure.persistence.concept.repository.ConceptJpaRepository
@@ -57,4 +58,20 @@ class ConceptRepositoryAdapter(
 
     override fun findAllList(): List<Concept> =
         jpaRepository.findAll().map { it.toDomain() }
+
+    override fun findAllSummaries(): List<Concept> =
+        jpaRepository.findAllSummaryRows().map { r ->
+            Concept.restore(
+                id = r[0] as Long?,
+                conceptId = r[1] as String,
+                name = r[2] as String,
+                category = ConceptCategory.valueOf(r[3] as String),
+                level = ConceptLevel.valueOf(r[4] as String),
+                description = (r[5] as String?) ?: "",
+                synonyms = emptyList(),
+                relatedConceptIds = emptyList(),
+                kind = (r[6] as String?)?.let { k -> ConceptKind.entries.firstOrNull { it.name == k } },
+                managedBy = r[7] as String?,
+            )
+        }
 }

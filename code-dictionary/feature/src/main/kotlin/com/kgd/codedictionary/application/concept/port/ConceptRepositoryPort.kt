@@ -17,4 +17,10 @@ interface ConceptRepositoryPort {
     fun delete(id: Long)
     fun existsByConceptId(conceptId: String): Boolean
     fun findAllList(): List<Concept>
+
+    /**
+     * 계층 · 아틀라스용 — 동의어 · 옛 관계 없이 칸만 읽는다. 개념이 수천 개라 [findAllList] 의 EAGER 로드는
+     * 개념마다 추가 쿼리가 나가 수십 초가 걸린다.
+     */
+    fun findAllSummaries(): List<Concept>
 }

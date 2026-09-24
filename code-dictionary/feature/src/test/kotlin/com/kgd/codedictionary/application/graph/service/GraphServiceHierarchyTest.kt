@@ -43,7 +43,7 @@ class GraphServiceHierarchyTest : BehaviorSpec({
 
         `when`("root 없이 조회하면") {
             every { edgeRepository.findAll() } returns edges
-            every { conceptRepository.findAllList() } returns concepts
+            every { conceptRepository.findAllSummaries() } returns concepts
             val result = service.getHierarchy(null)
 
             then("층 안의 개념만 깊이와 함께 나오고 층 밖 개념은 빠진다") {
@@ -67,7 +67,7 @@ class GraphServiceHierarchyTest : BehaviorSpec({
 
         `when`("root 를 search-query 로 주면") {
             every { edgeRepository.findAll() } returns edges
-            every { conceptRepository.findAllList() } returns concepts
+            every { conceptRepository.findAllSummaries() } returns concepts
             val result = service.getHierarchy("search-query")
 
             then("그 아래만 깊이 0 부터 다시 센다") {
@@ -83,7 +83,7 @@ class GraphServiceHierarchyTest : BehaviorSpec({
         `when`("조회하면") {
             then("빈 계층이다") {
                 every { edgeRepository.findAll() } returns emptyList()
-                every { conceptRepository.findAllList() } returns emptyList()
+                every { conceptRepository.findAllSummaries() } returns emptyList()
                 val result = service.getHierarchy(null)
                 result.roots shouldBe emptyList()
                 result.nodes shouldBe emptyList()
@@ -99,7 +99,7 @@ class GraphServiceHierarchyTest : BehaviorSpec({
                     ConceptEdge(fromConceptId = "fusion", toConceptId = "ndcg", kind = ConceptEdgeKind.MEASURED_BY, reason = "상위 10", evidenceRef = "ADR-0090"),
                     edge("fusion", "ndcg"),
                 )
-                every { conceptRepository.findAllList() } returns listOf("sys", "fusion", "ndcg").mapIndexed { i, id ->
+                every { conceptRepository.findAllSummaries() } returns listOf("sys", "fusion", "ndcg").mapIndexed { i, id ->
                     com.kgd.codedictionary.domain.concept.model.Concept.restore(
                         id = i.toLong(), conceptId = id, name = id, category = com.kgd.codedictionary.domain.concept.model.ConceptCategory.BASICS,
                         level = com.kgd.codedictionary.domain.concept.model.ConceptLevel.BEGINNER, description = "d",

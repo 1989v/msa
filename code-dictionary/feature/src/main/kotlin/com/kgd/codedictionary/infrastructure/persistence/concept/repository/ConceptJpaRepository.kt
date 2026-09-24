@@ -10,4 +10,9 @@ interface ConceptJpaRepository : JpaRepository<ConceptJpaEntity, Long> {
     fun findByCategory(category: String, pageable: Pageable): Page<ConceptJpaEntity>
     fun findByLevel(level: String, pageable: Pageable): Page<ConceptJpaEntity>
     fun existsByConceptId(conceptId: String): Boolean
+
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT c.id, c.conceptId, c.name, c.category, c.level, c.description, c.kind, c.managedBy FROM ConceptJpaEntity c",
+    )
+    fun findAllSummaryRows(): List<Array<Any?>>
 }

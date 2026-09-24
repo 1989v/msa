@@ -174,7 +174,7 @@ class GraphService(
      */
     override fun getHierarchy(root: String?): ConceptHierarchyDto {
         val hierarchy = ConceptHierarchy.build(edgeRepository.findAll(), root)
-        val conceptsById = conceptRepository.findAllList()
+        val conceptsById = conceptRepository.findAllSummaries()
             .filter { it.conceptId in hierarchy.conceptIds }
             .associateBy { it.conceptId }
 
