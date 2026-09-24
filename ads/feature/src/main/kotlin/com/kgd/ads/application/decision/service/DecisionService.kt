@@ -200,7 +200,7 @@ class DecisionService(
         hour: LocalDateTime,
     ): CounterQuery {
         val advertiserOf = memoryEligible.values.flatten().filter { it.campaignId in campaignIds }.associate { it.campaignId to it.advertiserId }
-        val hoursOf = advertiserOf.values.toSet().associateWith { unsettledHours(snapshot.accounts.getValue(it).settledThroughHour, hour) }
+        val hoursOf = advertiserOf.values.toSet().associateWith { snapshot.accounts.getValue(it).unsettledHoursThrough(hour) }
         return CounterQuery(
             visitorHash = visitorHash,
             day = now.toLocalDate(),
@@ -208,16 +208,6 @@ class DecisionService(
             campaignHours = advertiserOf.mapValues { (_, advertiserId) -> hoursOf.getValue(advertiserId) },
             advertiserHours = hoursOf,
         )
-    }
-
-    /**
-     * 정산 완료 시각 다음 시각부터 지금 시각까지. 한 번도 정산되지 않은 광고주는 정산 지연 한도만큼 거슬러 본다 —
-     * 그보다 오래된 미정산 지출이 있으면 이미 [WalletHeadroom.StaleSettlement] 로 빠진 광고주다.
-     */
-    private fun unsettledHours(settledThroughHour: LocalDateTime?, hour: LocalDateTime): List<LocalDateTime> {
-        val oldest = hour.minus(WalletHeadroom.MAX_UNSETTLED)
-        val from = settledThroughHour?.plusHours(1)?.let { maxOf(it, oldest) } ?: oldest
-        return generateSequence(from) { it.plusHours(1) }.takeWhile { !it.isAfter(hour) }.toList()
     }
 
     private fun serve(

@@ -3,6 +3,7 @@ package com.kgd.ads.application.decision.dto
 import com.kgd.ads.domain.campaign.model.Campaign
 import com.kgd.ads.domain.creative.model.HouseCreativeContent
 import com.kgd.ads.domain.creative.model.PaidCreativeContent
+import com.kgd.ads.domain.decision.policy.WalletHeadroom
 import com.kgd.ads.domain.placement.model.AdPlacement
 import com.kgd.ads.domain.placement.model.AspectRatio
 import java.time.LocalDate
@@ -36,6 +37,12 @@ class CandidateSnapshot(
         if (today == chargedDay) chargedToday[campaignId] ?: 0 else 0
 
     fun chargedTotal(campaignId: Long): Long = chargedTotal[campaignId] ?: 0
+
+    private val paidCampaigns: Map<Long, Campaign> =
+        paidByPlacement.values.flatten().associate { it.campaignId to it.campaign }
+
+    /** 인덱스에 유료 후보로 올라 있는 캠페인. 정지·일시정지·승인 취소로 빠졌으면 null. */
+    fun paidCampaign(campaignId: Long): Campaign? = paidCampaigns[campaignId]
 }
 
 /** 한 지면의 유료 후보 (캠페인, 소재). [aspectRatio] 는 소재 이미지가 맞는 그 지면의 허용 비율. */
@@ -60,4 +67,15 @@ data class AdvertiserAccount(
     val displayName: String,
     val walletBalanceMicros: Long,
     val settledThroughHour: LocalDateTime?,
-)
+) {
+    /**
+     * 아직 정산되지 않은 시각들 — 정산 완료 시각 다음 시각부터 [hour] 까지. 한 번도 정산되지 않았으면 정산 지연 한도만큼
+     * 거슬러 본다. 그보다 오래된 미정산 지출이 있는 광고주는 이미 [WalletHeadroom.StaleSettlement] 로 후보에서 빠진다.
+     * 결정(예산 여유)과 이벤트 수락(예산 상한)이 같은 범위를 봐야 한쪽만 통과하는 지출이 생기지 않는다.
+     */
+    fun unsettledHoursThrough(hour: LocalDateTime): List<LocalDateTime> {
+        val oldest = hour.minus(WalletHeadroom.MAX_UNSETTLED)
+        val from = settledThroughHour?.plusHours(1)?.let { maxOf(it, oldest) } ?: oldest
+        return generateSequence(from) { it.plusHours(1) }.takeWhile { !it.isAfter(hour) }.toList()
+    }
+}

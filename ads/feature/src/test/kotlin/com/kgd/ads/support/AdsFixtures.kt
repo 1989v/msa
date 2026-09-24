@@ -22,7 +22,12 @@ class AdsFixtures(private val jdbc: JdbcTemplate) {
         )
     }
 
-    /** 회원 광고주 + 지갑. @return 광고주 id */
+    /**
+     * 회원 광고주 + 지갑. @return 광고주 id
+     *
+     * 통합 스펙들은 컨테이너 DB 하나를 같이 쓰고 회원 id 는 유일 키다. 스펙마다 대역을 나눠 쓴다 —
+     * 결정 5xxx · 후보 인덱스 6xxx · 클릭 7xxx · 에셋 8xxx · 이벤트 수락 9xxx.
+     */
     fun memberAdvertiser(memberId: Long, balanceMicros: Long = 100_000_000, name: String = "광고주$memberId"): Long {
         val id = insert(
             "INSERT INTO ad_advertiser (kind, member_id, display_name, status, created_at, updated_at) VALUES ('MEMBER', ?, ?, 'ACTIVE', ?, ?)",

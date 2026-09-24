@@ -205,6 +205,23 @@ class DecisionIntegrationSpec(
         }
     }
 
+    given("미등록 지면 키가 한 시각에 필드 상한(200)에 닿으면") {
+        then("새 키는 더 쌓지 않고, 이미 있는 키는 계속 센다") {
+            refreshIndex.refresh()
+            val key = AdsRedisKeys.unregisteredHour(thisHour)
+            redis.delete(key)
+            redis.opsForHash<String, String>().putAll(key, (1 until AdsRedisKeys.MAX_UNREGISTERED_FIELDS_PER_HOUR).associate { "seed-$it" to "1" })
+
+            client.decide(listOf("new-one", "new-two", "seed-1"))
+            val entries = redis.opsForHash<String, String>().entries(key)
+            entries.size shouldBe AdsRedisKeys.MAX_UNREGISTERED_FIELDS_PER_HOUR
+            entries["new-one"] shouldBe "1"
+            entries["new-two"] shouldBe null
+            entries["seed-1"] shouldBe "2"
+            redis.getExpire(key) shouldBeGreaterThan 0
+        }
+    }
+
     given("크롤러 UA") {
         then("광고·토큰 없이 답하고 ads Redis 에 명령을 한 번도 보내지 않는다 — 사람 UA 는 읽기 한 번(MGET)·쓰기 스크립트 한 번") {
             paidSetup("t-crawler", memberId = 5008)

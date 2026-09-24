@@ -16,4 +16,14 @@ data class ServedAd(
     val chargeMicros: Long,
     val billable: Boolean,
     val visitorHash: String,
-)
+) {
+    /**
+     * 이 종류의 이벤트 한 건이 청구하는 금액. CPM 은 가시 노출에서, CPC 는 클릭에서만 과금한다 —
+     * 반대쪽 이벤트는 수만 센다(0).
+     */
+    fun chargeFor(kind: TokenKind): Long = when {
+        kind == TokenKind.IMP && bidType == BidType.CPM -> chargeMicros
+        kind == TokenKind.CLK && bidType == BidType.CPC -> chargeMicros
+        else -> 0
+    }
+}

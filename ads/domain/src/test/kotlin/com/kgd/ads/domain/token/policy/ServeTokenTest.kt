@@ -120,6 +120,22 @@ class ServeTokenTest : BehaviorSpec({
         }
     }
 
+    given("이벤트 한 건의 청구액") {
+        `when`("CPM 광고면") {
+            then("가시 노출만 1회 과금액, 클릭은 0") {
+                ad.chargeFor(TokenKind.IMP) shouldBe 200
+                ad.chargeFor(TokenKind.CLK) shouldBe 0
+            }
+        }
+        `when`("CPC 광고면") {
+            then("클릭만 1회 과금액, 노출은 0") {
+                val cpc = ad.copy(bidType = BidType.CPC, chargeMicros = 150_000)
+                cpc.chargeFor(TokenKind.CLK) shouldBe 150_000
+                cpc.chargeFor(TokenKind.IMP) shouldBe 0
+            }
+        }
+    }
+
     given("서명 키 길이") {
         `when`("31바이트면") {
             then("만들 수 없다") { shouldThrow<IllegalArgumentException> { SigningKey.of(ByteArray(31) { 1 }) } }

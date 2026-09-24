@@ -49,7 +49,8 @@ class DecisionCounterRedisAdapter(
 
     override fun record(tally: ServeTally): Boolean {
         val keys = mutableListOf<String>()
-        val args = mutableListOf(Duration.ofHours(AdsRedisKeys.COUNTER_TTL_HOURS).seconds.toString())
+        val unregisteredKey = AdsRedisKeys.unregisteredHour(tally.hour)
+        val args = mutableListOf(Duration.ofHours(AdsRedisKeys.COUNTER_TTL_HOURS).seconds.toString(), "0", AdsRedisKeys.MAX_UNREGISTERED_FIELDS_PER_HOUR.toString())
         fun add(key: String, field: String, increment: Long) {
             val index = keys.indexOf(key).takeIf { it >= 0 } ?: keys.size.also { keys += key }
             args += listOf((index + 1).toString(), field, increment.toString())
@@ -59,8 +60,9 @@ class DecisionCounterRedisAdapter(
             tally.requests[placementKey]?.let { add(key, AdsRedisKeys.FIELD_REQUESTS, it) }
             tally.paidFilled[placementKey]?.let { add(key, AdsRedisKeys.FIELD_PAID_FILLED, it) }
         }
-        tally.unregistered.forEach { (placementKey, count) -> add(AdsRedisKeys.unregisteredHour(tally.hour), placementKey, count) }
+        tally.unregistered.forEach { (placementKey, count) -> add(unregisteredKey, placementKey, count) }
         if (keys.isEmpty()) return true
+        keys.indexOf(unregisteredKey).takeIf { it >= 0 }?.let { args[1] = (it + 1).toString() }
 
         return try {
             redis.template.execute(INCREMENT_WITH_TTL, keys, *args.toTypedArray())
@@ -79,14 +81,21 @@ class DecisionCounterRedisAdapter(
 
     private companion object {
         /**
-         * 해시 필드 증가 + 키마다 TTL. ARGV[1] = TTL(초), 이어서 (KEYS 번호, 필드, 증가량) 세 개씩.
+         * 해시 필드 증가 + 키마다 TTL. ARGV[1] = TTL(초), ARGV[2] = 필드 수 상한을 거는 키의 KEYS 번호(없으면 0),
+         * ARGV[3] = 그 상한, 이어서 (KEYS 번호, 필드, 증가량) 세 개씩. 상한 키는 이미 있는 필드만 늘리고 새 필드는 상한까지만 만든다.
          * TTL 을 증가와 같은 스크립트에서 걸어 TTL 없는 카운터가 남지 않는다.
          */
         val INCREMENT_WITH_TTL: RedisScript<Long> = RedisScript.of(
             """
             local ttl = tonumber(ARGV[1])
-            for i = 2, #ARGV, 3 do
-              redis.call('HINCRBY', KEYS[tonumber(ARGV[i])], ARGV[i + 1], tonumber(ARGV[i + 2]))
+            local capped = tonumber(ARGV[2])
+            local maxFields = tonumber(ARGV[3])
+            for i = 4, #ARGV, 3 do
+              local index = tonumber(ARGV[i])
+              local key = KEYS[index]
+              if index ~= capped or redis.call('HEXISTS', key, ARGV[i + 1]) == 1 or redis.call('HLEN', key) < maxFields then
+                redis.call('HINCRBY', key, ARGV[i + 1], tonumber(ARGV[i + 2]))
+              end
             end
             for i = 1, #KEYS do
               redis.call('EXPIRE', KEYS[i], ttl)

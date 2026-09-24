@@ -101,15 +101,16 @@ Total Task Groups: 13
 **Dependencies:** Task Group 4
 **Phase:** R2
 **Required Skills:** spring, redis-lua
-- [ ] 5.0 Complete 계측
-  - [ ] 5.1 테스트 6개: ★I1(중복) · ★I7(토큰 몰아 제출 → `over_budget`) · I12(클릭 5경우 + 헤더) · I14(부분 수락) · I15(`PTTL` ≥ 남은 수명) · I23(에셋 헤더)
-  - [ ] 5.2 수락 Lua 스크립트 1회: 일회성 표식·방문자 해시·일예산·시간당 상한·**총예산(인자로 넘긴 스냅샷의 「총예산 − 청구 누계」와 미정산 시각 키 목록)** [domain C2 · impl N3-3] → 카운터 증가(수락 시각 KST 키)
-  - [ ] 5.2b 미등록 지면 키 해시(`ads:unreg:{시각}`)에 시각당 필드 200개 상한 (결정 경로 스크립트)
-  - [ ] 5.3 `POST /api/v1/ads/events` — 토큰 묶음 + analytics 신원 + 최종 채움 출처. **채움 출처는 허용 값 4종·지면 키는 등록부에 있는 것만 카운트, 요청당 개수 상한** [sec CO-1]
-  - [ ] 5.4 `GET /api/v1/ads/click/{token}` — 목적지 DB 조회, 서명 불량·미승인 → `/`
-  - [ ] 5.5 `GET /api/v1/ads/assets/{hash}` — Content-Type·`nosniff`·불변 캐시
-  - [ ] 5.6 클릭 속도 제한, Redis 장애 시 수락 0
-  - [ ] 5.7 Verify: `./gradlew :ads:feature:test --tests '*EventAcceptanceIntegrationSpec*' --tests '*ClickRedirectIntegrationSpec*' --tests '*AssetIntegrationSpec*'`
+- [x] 5.0 Complete 계측
+  - [x] 5.1 테스트 6개: ★I1(중복) · ★I7(토큰 몰아 제출 → `over_budget`) · I12(클릭 5경우 + 헤더) · I14(부분 수락) · I15(`PTTL` ≥ 남은 수명) · I23(에셋 헤더)
+  - [x] 5.2 수락 Lua 스크립트 1회: 일회성 표식·방문자 해시·일예산·시간당 상한·**총예산(인자로 넘긴 스냅샷의 「총예산 − 청구 누계」와 미정산 시각 키 목록)** [domain C2 · impl N3-3] → 카운터 증가(수락 시각 KST 키)
+  - [x] 5.2b 미등록 지면 키 해시(`ads:unreg:{시각}`)에 시각당 필드 200개 상한 (결정 경로 스크립트)
+  - [x] 5.3 `POST /api/v1/ads/events` — 토큰 묶음 + analytics 신원 + 최종 채움 출처. **채움 출처는 허용 값 4종·지면 키는 등록부에 있는 것만 카운트, 요청당 개수 상한** [sec CO-1]
+  - [x] 5.4 `GET /api/v1/ads/click/{token}` — 목적지 DB 조회, 서명 불량·미승인 → `/`
+  - [x] 5.5 `GET /api/v1/ads/assets/{hash}` — Content-Type·`nosniff`·불변 캐시
+  - [x] 5.6 클릭 속도 제한, Redis 장애 시 수락 0
+  - [x] 5.7 Verify: `./gradlew :ads:feature:test --tests '*EventAcceptanceIntegrationSpec*' --tests '*ClickRedirectIntegrationSpec*' --tests '*AssetIntegrationSpec*'`
+> 구현 기록(2026-09-24): 서명·수명·방문자 해시·과금 여부는 도메인 `ServeTokenSigner.verify`, Lua 1회는 일회성·클릭 속도·상한 3종·카운터·채움 출처 · `over_budget` 도 일회성 표식을 남긴다(다음 시각 재제출 과금 방지) · 소재×지면 카운터는 시각 해시 `ads:cr:{시각}` · 회귀 주입 4건 빨간불 · **메인 재검증에서 스펙 간 회원 id 충돌(후보 인덱스·이벤트 모두 6001~)을 발견해 이벤트 스펙을 9xxx 대역으로 옮기고 대역 규칙을 `AdsFixtures` 에 적었다**
 **Acceptance Criteria:**
 - AC-9·AC-10, 모든 ads Redis 키에 TTL(테스트가 `TTL` > 0 확인)
 
@@ -136,6 +137,7 @@ Total Task Groups: 13
   - [ ] 7.1 테스트 6개: I17(남의 리소스 404, HOUSE·심사 필드 없음) · I18(광고주 등록 → 행 1개 + **ads 에 auth·member 쓰기 포트가 없다**는 구조 검사 [test C-5]) · I19(반려 사유 조회) · I20(리포트 = 집계·원장) · I22(옛 `/placements/{key}` 응답 모양) · U12 통합판(거대 PNG 는 디코더 호출 0)
   - [ ] 7.2 광고주 API `/api/v1/ads/advertiser/**` — 등록·대시보드·충전·캠페인·소재 업로드(헤더 먼저 → 크기 → 디코딩 → 재인코딩 → 해시)·카탈로그·리포트
   - [ ] 7.3 어드민 API `/api/v1/admin/ads/**` — 심사·광고주 정지·지면(`paid_allowed` 포함)·문맥 매핑·HOUSE·퍼블리셔 리포트·원장 검사 결과. 변경마다 행위자·시각
+  - [ ] 7.3b 공개 에셋 경로는 **승인된 소재 이미지만** — 심사 전·반려 이미지 미리보기는 광고주·어드민 인증 API 로(그룹 5 `CreativeAssetService` 에 승인 확인 추가)
   - [ ] 7.4 호환 `GET /api/v1/ads/placements/{key}` — game 의 옛 응답 모양(`AdPlacementDto`)
   - [ ] 7.5 Verify: `./gradlew :ads:feature:test --tests '*AdvertiserApiIntegrationSpec*' --tests '*AdminApiIntegrationSpec*' --tests '*ReportIntegrationSpec*' --tests '*LegacyPlacementIntegrationSpec*'`
 **Acceptance Criteria:**
