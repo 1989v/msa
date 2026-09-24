@@ -55,5 +55,6 @@ Total Task Groups: 6
   → OntologyFilesSpec 3 · SearchOntologyMigrationSpec 3(적용 전 간선 = 운영 145 · 적용 후 = 파일 163) · ConceptRelationsServiceTest 3 · GraphServiceHierarchyTest 6 · AtlasContextLoadSpec 4 · feature 전체 84/0 · portal-fe tsc(주입으로 검사 범위 확인) · vitest 41/0 · CDP 4조합+390px(대비 최저 4.52, 가로 넘침 0). 파일 게이트 회귀 주입(범위 위반·CAUSES 삭제) → 2 failed 후 원복
 
 ### Task Group 6: 로더 켜기 (R2, 별도 배포)
-- [ ] 6.1 R1 운영 확인(계층 API 200 · 새 칼럼 존재 · 409 동작)
-- [ ] 6.2 `ontology.loader.enabled=true` 커밋 → 배포 → 상태 행 revision 1 · 이관 diff 대조 · 두 번째 부팅 변경 0 · `derived_hash = content_hash`
+- [x] 6.1 R1 운영 확인 — atlas·portal-fe `1b866f4`: Flyway V25·V26 success · 상태 행 r0 · 간선 145 그대로 · 계층 API 200(`kind`·`reason` 필드) · relations API 200 · 운영 번들에 `rel-section`·`hier-uses`. 409 는 관리 개념이 R2 뒤에 생겨 단위·MockMvc 테스트로만 확인(운영 호출엔 어드민 토큰 필요)
+- [x] 6.2 로더 켜기 `eedc2ae6` → 상태 행 r1 · 관리 개념 108 · 운영 간선 163 = 파일(차집합 0/0) · 재기동 두 번째 부팅 `SKIPPED_SAME` 변경 0 · `derived_hash = content_hash`(b1fdb386…) — 단, 처음엔 수렴하지 않았다: 개념 색인의 nori 품사 필터가 Lucene 10(OpenSearch 3.8, 09-22)에서 사라진 `E`·`J` 를 써서 인덱스 생성이 400 이었고 운영에 concept-index 가 없었다(개념 검색 500). `628a1434` 로 고친 뒤 색인 269건 · 검색 200
+- [ ] 6.3 옛 `search-ops-metrics`·`offline-metrics` 행 어드민 삭제(관리 해제 상태 — 사용자 결정)
