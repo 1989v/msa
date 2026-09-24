@@ -19,7 +19,14 @@ data class OntologyConcept(
     val synonyms: List<String> = emptyList(),
     val evidence: List<OntologyEvidence> = emptyList(),
     val questions: List<String> = emptyList(),
+    val code: List<OntologyCodeRef> = emptyList(),
 )
+
+/**
+ * 이 개념을 구현한 레포 코드 — 줄 번호가 아니라 심볼로 가리킨다(코드가 움직여도 썩지 않게).
+ * 화면은 원본 파일에서 [symbol] 이 처음 나오는 줄부터 보여 준다.
+ */
+data class OntologyCodeRef(val path: String, val symbol: String, val note: String? = null)
 
 enum class EvidenceKind { ADR, POST, RECORD, MEASUREMENT }
 

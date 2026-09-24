@@ -8,6 +8,7 @@ import com.kgd.codedictionary.domain.concept.model.ConceptKind
 import com.kgd.codedictionary.domain.concept.model.ConceptLevel
 import com.kgd.codedictionary.domain.concept.ontology.ConceptOntology
 import com.kgd.codedictionary.domain.concept.ontology.EvidenceKind
+import com.kgd.codedictionary.domain.concept.ontology.OntologyCodeRef
 import com.kgd.codedictionary.domain.concept.ontology.OntologyConcept
 import com.kgd.codedictionary.domain.concept.ontology.OntologyDomain
 import com.kgd.codedictionary.domain.concept.ontology.OntologyEvidence
@@ -102,6 +103,12 @@ class YamlOntologyReader(
                         text(em["ref"], "$where $id.evidence.ref"), em["note"] as? String)
                 },
                 questions = strings(c["questions"], "$where $id.questions"),
+                code = list(c["code"], "$where $id.code").map { r ->
+                    @Suppress("UNCHECKED_CAST")
+                    val cm = r as? Map<String, Any?> ?: error("$where $id.code 항목이 맵이 아니다")
+                    unknownKeys("$where $id.code", cm.keys, setOf("path", "symbol", "note"))
+                    OntologyCodeRef(text(cm["path"], "$where $id.code.path"), text(cm["symbol"], "$where $id.code.symbol"), cm["note"] as? String)
+                },
             )
         }
         return OntologyDomain(
@@ -143,7 +150,7 @@ class YamlOntologyReader(
 
     private companion object {
         const val MANIFEST = "manifest.yaml"
-        val CONCEPT_KEYS = setOf("id", "kind", "name", "category", "level", "description", "synonyms", "evidence", "questions")
+        val CONCEPT_KEYS = setOf("id", "kind", "name", "category", "level", "description", "synonyms", "evidence", "questions", "code")
         val RELATION_KEYS: Map<String, ConceptEdgeKind> = ConceptEdgeKind.entries.associateBy { it.name.lowercase() }
     }
 }

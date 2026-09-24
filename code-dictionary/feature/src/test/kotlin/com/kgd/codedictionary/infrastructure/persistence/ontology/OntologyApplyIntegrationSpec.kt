@@ -67,6 +67,7 @@ class OntologyApplyIntegrationSpec : BehaviorSpec({
         id = id, kind = kind, name = name, category = ConceptCategory.BASICS, level = ConceptLevel.BEGINNER,
         description = "$id 설명", synonyms = synonyms,
         evidence = listOf(OntologyEvidence(EvidenceKind.POST, "post-$id")), questions = listOf("$id 는 왜 필요한가"),
+        code = listOf(com.kgd.codedictionary.domain.concept.ontology.OntologyCodeRef("x/$id.kt", "fun $id")),
     )
 
     fun loaded(revision: Int, hash: String, extra: List<OntologyConcept> = emptyList(), reason: String? = "상주 32× ↓", rename: String = "융합") =
@@ -124,6 +125,7 @@ class OntologyApplyIntegrationSpec : BehaviorSpec({
                 ) shouldContainExactlyInAnyOrder listOf("rank fusion")
                 jdbc.queryForObject("SELECT COUNT(*) FROM concept_evidence WHERE concept_id = 't-fusion'", Int::class.java) shouldBe 1
                 jdbc.queryForObject("SELECT COUNT(*) FROM concept_question WHERE concept_id = 't-fusion'", Int::class.java) shouldBe 1
+                store.codeOf("t-fusion").single().symbol shouldBe "fun t-fusion"
             }
         }
 
@@ -148,6 +150,7 @@ class OntologyApplyIntegrationSpec : BehaviorSpec({
                 kindOf("t-gone").shouldBeNull()
                 jdbc.queryForList("SELECT managed_by FROM concept WHERE concept_id = 't-gone'", String::class.java).first().shouldBeNull()
                 jdbc.queryForObject("SELECT COUNT(*) FROM concept_evidence WHERE concept_id = 't-gone'", Int::class.java) shouldBe 0
+                store.codeOf("t-gone") shouldBe emptyList()
                 edgeCount() shouldBe 4
             }
         }

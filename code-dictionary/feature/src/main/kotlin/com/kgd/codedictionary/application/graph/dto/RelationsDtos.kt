@@ -9,6 +9,8 @@ data class ConceptRelationsDto(
     val incoming: List<RelationEdgeDto>,
     val evidence: List<EvidenceDto>,
     val questions: List<String>,
+    /** 이 개념을 구현한 레포 코드 — 화면이 GitHub 원본에서 symbol 이 처음 나오는 줄부터 보여 준다 */
+    val code: List<CodeRefDto> = emptyList(),
 )
 
 data class RelationConceptDto(
@@ -34,3 +36,5 @@ data class RelationEdgeDto(
 )
 
 data class EvidenceDto(val kind: String, val ref: String, val note: String?)
+
+data class CodeRefDto(val path: String, val symbol: String, val note: String?)

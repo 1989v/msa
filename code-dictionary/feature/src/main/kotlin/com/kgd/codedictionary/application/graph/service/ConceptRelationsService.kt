@@ -45,6 +45,7 @@ class ConceptRelationsService(
             incoming = incoming,
             evidence = evidenceQuery.evidenceOf(conceptId),
             questions = evidenceQuery.questionsOf(conceptId),
+            code = evidenceQuery.codeOf(conceptId),
         )
     }
 }

@@ -1,5 +1,6 @@
 package com.kgd.codedictionary.infrastructure.persistence.ontology
 
+import com.kgd.codedictionary.application.graph.dto.CodeRefDto
 import com.kgd.codedictionary.application.graph.dto.EvidenceDto
 import com.kgd.codedictionary.application.graph.port.ConceptEvidenceQueryPort
 import com.kgd.codedictionary.application.ontology.dto.OntologyState
@@ -49,6 +50,7 @@ class JdbcOntologyStoreAdapter(dataSource: DataSource) : OntologyStorePort, Onto
             batch("UPDATE concept SET kind = NULL, managed_by = NULL WHERE concept_id = ?", releasedIds.map { arrayOf(it) })
             batch("DELETE FROM concept_evidence WHERE concept_id = ?", releasedIds.map { arrayOf(it) })
             batch("DELETE FROM concept_question WHERE concept_id = ?", releasedIds.map { arrayOf(it) })
+            batch("DELETE FROM concept_code_ref WHERE concept_id = ?", releasedIds.map { arrayOf(it) })
         }
 
         // 동의어·근거·질문 — 파일이 나열한 개념 단위로 전체 교체
@@ -69,6 +71,12 @@ class JdbcOntologyStoreAdapter(dataSource: DataSource) : OntologyStorePort, Onto
         batch(
             "INSERT INTO concept_question (concept_id, ordinal, question) VALUES (?, ?, ?)",
             concepts.flatMap { c -> c.questions.mapIndexed { i, q -> arrayOf(c.id, i + 1, q) } },
+        )
+
+        batch("DELETE FROM concept_code_ref WHERE concept_id = ?", ids.map { arrayOf(it) })
+        batch(
+            "INSERT INTO concept_code_ref (concept_id, ordinal, path, symbol, note) VALUES (?, ?, ?, ?, ?)",
+            concepts.flatMap { c -> c.code.mapIndexed { i, r -> arrayOf(c.id, i + 1, r.path, r.symbol, r.note) } },
         )
 
         // 간선은 표 전체를 파일이 소유한다 — 파일에서 빠진 개념의 나가는 간선이 남아 유령 루트가 되지 않게
@@ -119,6 +127,11 @@ class JdbcOntologyStoreAdapter(dataSource: DataSource) : OntologyStorePort, Onto
     override fun evidenceOf(conceptId: String): List<EvidenceDto> =
         jdbc.query("SELECT kind, ref, note FROM concept_evidence WHERE concept_id = ? ORDER BY ordinal", { rs, _ ->
             EvidenceDto(rs.getString("kind"), rs.getString("ref"), rs.getString("note"))
+        }, conceptId)
+
+    override fun codeOf(conceptId: String): List<CodeRefDto> =
+        jdbc.query("SELECT path, symbol, note FROM concept_code_ref WHERE concept_id = ? ORDER BY ordinal", { rs, _ ->
+            CodeRefDto(rs.getString("path"), rs.getString("symbol"), rs.getString("note"))
         }, conceptId)
 
     override fun questionsOf(conceptId: String): List<String> =

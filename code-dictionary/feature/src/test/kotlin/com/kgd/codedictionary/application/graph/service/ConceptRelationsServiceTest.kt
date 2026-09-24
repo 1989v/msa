@@ -39,6 +39,7 @@ class ConceptRelationsServiceTest : BehaviorSpec({
     every { edgeRepo.findAll() } returns edges
     every { evidence.evidenceOf("lattice-viterbi") } returns listOf(EvidenceDto("RECORD", "r", null))
     every { evidence.questionsOf("lattice-viterbi") } returns listOf("왜 최소 비용인가")
+    every { evidence.codeOf("lattice-viterbi") } returns listOf(com.kgd.codedictionary.application.graph.dto.CodeRefDto("a/B.kt", "fun viterbi", null))
 
     given("격자·비터비의 이웃") {
         val r = ConceptRelationsService(conceptRepo, edgeRepo, evidence).getRelations("lattice-viterbi")
@@ -53,6 +54,7 @@ class ConceptRelationsServiceTest : BehaviorSpec({
             r.concept.kind shouldBe "MECHANISM"
             r.evidence.single().ref shouldBe "r"
             r.questions shouldContainExactly listOf("왜 최소 비용인가")
+            r.code.single().symbol shouldBe "fun viterbi"
         }
     }
 })
