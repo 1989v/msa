@@ -1,5 +1,7 @@
 package com.kgd.common.messaging.outbox
 
+import tools.jackson.databind.ObjectMapper
+
 /**
  * Default [OutboxPort] implementation backed by JPA.
  *
@@ -9,15 +11,25 @@ package com.kgd.common.messaging.outbox
  */
 class OutboxJpaAdapter(
     private val repository: OutboxRepository,
+    private val objectMapper: ObjectMapper = ObjectMapper(),
 ) : OutboxPort {
 
-    override fun save(aggregateType: String, aggregateId: Long, eventType: String, payload: String) {
+    override fun save(
+        aggregateType: String,
+        aggregateId: Long,
+        eventType: String,
+        payload: String,
+        partitionKey: String?,
+        headers: Map<String, String>,
+    ) {
         repository.save(
             OutboxEntity(
                 aggregateType = aggregateType,
                 aggregateId = aggregateId,
                 eventType = eventType,
                 payload = payload,
+                partitionKey = partitionKey,
+                headers = headers.takeIf { it.isNotEmpty() }?.let(objectMapper::writeValueAsString),
             ),
         )
     }

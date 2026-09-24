@@ -6,15 +6,18 @@ import com.kgd.common.messaging.IdempotentMetrics
 import com.kgd.common.messaging.ProcessedEventRepositoryPort
 import com.kgd.common.messaging.idempotency.JpaProcessedEventRepositoryAdapter
 import com.kgd.common.messaging.outbox.OutboxJpaAdapter
+import com.kgd.common.messaging.outbox.OutboxKafka
 import com.kgd.common.messaging.outbox.OutboxMetrics
 import com.kgd.common.messaging.outbox.OutboxPollingPublisher
 import com.kgd.common.messaging.outbox.OutboxPort
 import com.kgd.fulfillment.infrastructure.idempotency.FulfillmentProcessedEventRepository
 import com.kgd.fulfillment.infrastructure.outbox.FulfillmentOutboxRepository
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.core.KafkaTemplate
+import org.springframework.kafka.core.ProducerFactory
 import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.support.TransactionTemplate
 
@@ -34,15 +37,29 @@ class FulfillmentMessagingConfig {
     fun fulfillmentOutboxPort(repository: FulfillmentOutboxRepository): OutboxPort =
         OutboxJpaAdapter(repository)
 
+    // 릴레이 전용 String 프로듀서 — 도메인 이벤트용 JSON 템플릿으로 보내면 payload 가 한 번 더 인용된다.
+    @Bean
+    fun fulfillmentOutboxProducerFactory(
+        @Value("\${spring.kafka.bootstrap-servers}") bootstrapServers: String,
+    ): ProducerFactory<String, String> = OutboxKafka.producerFactory(bootstrapServers)
+
+    @Bean
+    fun fulfillmentOutboxKafkaTemplate(
+        @Qualifier("fulfillmentOutboxProducerFactory") producerFactory: ProducerFactory<String, String>,
+    ): KafkaTemplate<String, String> = KafkaTemplate(producerFactory)
+
     @Bean
     fun fulfillmentOutboxPollingPublisher(
         repository: FulfillmentOutboxRepository,
-        @Qualifier("fulfillmentKafkaTemplate") kafkaTemplate: KafkaTemplate<String, Any>,
+        @Qualifier("fulfillmentOutboxKafkaTemplate") kafkaTemplate: KafkaTemplate<String, String>,
+        @Qualifier("fulfillmentTransactionManager") transactionManager: PlatformTransactionManager,
         objectMapper: ObjectMapper,
         outboxMetrics: OutboxMetrics?,
     ): OutboxPollingPublisher = OutboxPollingPublisher(
+        name = "fulfillment",
         outboxRepository = repository,
         kafkaTemplate = kafkaTemplate,
+        transactionManager = transactionManager,
         objectMapper = objectMapper,
         metrics = outboxMetrics ?: OutboxMetrics.NOOP,
     )

@@ -24,6 +24,10 @@ dependencies {
     testImplementation(libs.kotest.extensions.spring)
     testImplementation(libs.testcontainers.junit) // ADR-0058: dual-datasource context-load 검증
     testImplementation(libs.testcontainers.mysql)
+    // 아웃박스 릴레이 통합 검증 — 실제 브로커가 받은 바이트를 본다
+    testImplementation(libs.testcontainers.kafka)
+    testImplementation(project(":common"))
+    testImplementation(libs.spring.kafka)
 }
 
 tasks.bootJar {

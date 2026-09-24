@@ -157,6 +157,12 @@ spring:
     baseline-version: 1
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  # 도메인마다 아웃박스 릴레이·정리·예약 만료 등 @Scheduled 가 여럿이다. 기본 1스레드면 긴 배치 하나가
+  # 아웃박스 발행을 통째로 멈춘다.
+  task:
+    scheduling:
+      pool:
+        size: 4
   data:
     redis:
       host: ${REDIS_HOST:localhost}

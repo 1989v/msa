@@ -33,6 +33,27 @@ class OutboxJpaAdapterSpec : BehaviorSpec({
                 captor.captured.status shouldBe "PENDING"
                 captor.captured.publishedAt shouldBe null
                 captor.captured.eventId.length shouldBe 36 // UUID
+                captor.captured.partitionKey shouldBe null
+                captor.captured.headers shouldBe null
+            }
+        }
+
+        `when`("partitionKey 와 headers 를 넘기면") {
+            then("레코드 키와 헤더 JSON 이 행에 남는다") {
+                val captor = slot<OutboxEntity>()
+                every { repository.save(capture(captor)) } answers { captor.captured }
+
+                adapter.save(
+                    aggregateType = "Order",
+                    aggregateId = 7L,
+                    eventType = "order.order.completed",
+                    payload = """{"orderId":7}""",
+                    partitionKey = "order-7",
+                    headers = mapOf("traceparent" to "00-abc-def-01"),
+                )
+
+                captor.captured.partitionKey shouldBe "order-7"
+                captor.captured.headers shouldBe """{"traceparent":"00-abc-def-01"}"""
             }
         }
     }

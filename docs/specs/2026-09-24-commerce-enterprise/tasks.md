@@ -18,12 +18,12 @@ Total Task Groups: 16 · 단계 P0~P7 (단계 끝마다 커밋·푸시·배포·
 **Dependencies:** None
 **Phase:** P0
 **Required Skills:** Kotlin, Spring Kafka, JPA, Flyway, Testcontainers
-- [ ] 1.0 Complete outbox hardening
-  - [ ] 1.1 테스트: 원문 JSON(첫 글자 `{`) · 릴레이 2개 동시 → 1회 발행 · 리스 만료 재수집 · 10회 실패 FAILED · PUBLISHED 7일 정리 · `partition_key` 가 레코드 키 · `traceparent` 헤더 컬럼 보존 (7)
-  - [ ] 1.2 `outbox_event` 확장 컬럼(nullable): `partition_key`·`attempts`·`next_attempt_at`·`lease_until`·`headers` + 상태 `SENDING`·`FAILED` — order·inventory·fulfillment 스키마에 다음 번호 마이그레이션, product 스키마엔 테이블 신설
-  - [ ] 1.3 릴레이: 트랜잭션 A(`FOR UPDATE SKIP LOCKED` 100행 → SENDING+리스) → 트랜잭션 밖 동기 전송(10초) → 트랜잭션 B(PUBLISHED | attempts++/next_attempt_at | FAILED). String 직렬화기 전용 ProducerFactory
-  - [ ] 1.4 정리 스케줄러 + 적체 게이지, commerce `spring.task.scheduling.pool.size=4`
-  - [ ] 1.5 Verify: `$G :common:test --tests '*Outbox*' && $G :commerce:app:test --tests '*OutboxRelayIntegration*'`
+- [x] 1.0 Complete outbox hardening
+  - [x] 1.1 테스트: 원문 JSON(첫 글자 `{`) · 릴레이 2개 동시 → 1회 발행 · 리스 만료 재수집 · 10회 실패 FAILED · PUBLISHED 7일 정리 · `partition_key` 가 레코드 키 · `traceparent` 헤더 컬럼 보존 (7)
+  - [x] 1.2 `outbox_event` 확장 컬럼(nullable): `partition_key`·`attempts`·`next_attempt_at`·`lease_until`·`headers` + 상태 `SENDING`·`FAILED` — order·inventory·fulfillment 스키마에 다음 번호 마이그레이션, product 스키마엔 테이블 신설
+  - [x] 1.3 릴레이: 트랜잭션 A(`FOR UPDATE SKIP LOCKED` 100행 → SENDING+리스) → 트랜잭션 밖 동기 전송(10초) → 트랜잭션 B(PUBLISHED | attempts++/next_attempt_at | FAILED). String 직렬화기 전용 ProducerFactory
+  - [x] 1.4 정리 스케줄러 + 적체 게이지, commerce `spring.task.scheduling.pool.size=4`
+  - [x] 1.5 Verify: `$G :common:test --tests '*Outbox*' && $G :commerce:app:test --tests '*OutboxRelayIntegration*'`
 **Acceptance Criteria:** 1.1 일곱 테스트 통과, 직렬화 테스트는 JacksonJsonSerializer 로 되돌리면 빨간불(회귀 주입 기록)
 
 ### Task Group 2: 보안 선행 · 결함 제거

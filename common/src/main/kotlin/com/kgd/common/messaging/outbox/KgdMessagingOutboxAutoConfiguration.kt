@@ -2,6 +2,8 @@ package com.kgd.common.messaging.outbox
 
 import tools.jackson.databind.ObjectMapper
 import io.micrometer.core.instrument.MeterRegistry
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
@@ -13,6 +15,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.scheduling.annotation.EnableScheduling
+import org.springframework.transaction.PlatformTransactionManager
 
 /**
  * Auto-configuration for the common Transactional Outbox module.
@@ -23,7 +26,8 @@ import org.springframework.scheduling.annotation.EnableScheduling
  *
  * 등록 빈:
  * - [OutboxJpaAdapter] : [OutboxPort] 의 default 구현 (서비스 측이 자체 [OutboxPort] 빈을 등록하면 그쪽이 우선).
- * - [OutboxPollingPublisher] : `KafkaTemplate` 빈이 등록된 환경에서만 활성화. polling 토글 가능.
+ * - [OutboxPollingPublisher] : `outboxKafkaTemplate` 이름의 `KafkaTemplate<String, String>` 빈([OutboxKafka] 로 만든다)과
+ *   단일 `PlatformTransactionManager` 가 있을 때만. 도메인별 TM 을 쓰는 폴드(commerce)는 도메인 설정이 직접 등록한다.
  * - [OutboxMetrics] : `MeterRegistry` 빈이 있으면 실 metric, 없으면 NOOP.
  *
  * Entity / Repository scanning:
@@ -58,15 +62,19 @@ class KgdMessagingOutboxAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    @ConditionalOnBean(value = [KafkaTemplate::class, OutboxRepository::class])
+    @ConditionalOnBean(value = [OutboxRepository::class, PlatformTransactionManager::class], name = ["outboxKafkaTemplate"])
     fun outboxPollingPublisher(
         outboxRepository: OutboxRepository,
-        kafkaTemplate: KafkaTemplate<String, Any>,
+        @Qualifier("outboxKafkaTemplate") kafkaTemplate: KafkaTemplate<String, String>,
+        transactionManager: PlatformTransactionManager,
         objectMapper: ObjectMapper,
         outboxMetrics: OutboxMetrics?,
+        @Value("\${spring.application.name:app}") applicationName: String,
     ): OutboxPollingPublisher = OutboxPollingPublisher(
+        name = applicationName,
         outboxRepository = outboxRepository,
         kafkaTemplate = kafkaTemplate,
+        transactionManager = transactionManager,
         objectMapper = objectMapper,
         metrics = outboxMetrics ?: OutboxMetrics.NOOP,
     )
