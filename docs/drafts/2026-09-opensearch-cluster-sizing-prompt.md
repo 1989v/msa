@@ -42,7 +42,8 @@ summary: 검색 클러스터의 노드 수 · 인스턴스 · 인덱스별 샤�
 | 샤드 배치 | `_cat/shards?v&bytes=gb` | 핫 샤드 · 편중 |
 | alias | `_cat/aliases?v` | 서빙 인덱스와 리인덱스 사본 구분 |
 | 쿼리 | 대표 DSL 전문 + 트래픽 비중(%) | CPU · 메모리 · 디스크 중 어디가 무거운가 |
-| 시계열 | CloudWatch SearchRate · CPUUtilization · JVMMemoryPressure · ThreadpoolSearchQueue · SearchLatency | 피크 · 지속 시간 · 큐 적체 |
+| 클라이언트 RPS | 앱 · 로드밸런서의 인덱스별 요청 수, 평균 · P95 · 피크 · 지속 시간 | 용량 산정의 기준 부하 |
+| 시계열 | CloudWatch CPUUtilization · JVMMemoryPressure · ThreadpoolSearchQueue · ThreadpoolSearchRejected · SearchLatency | 노드별 피크 · 큐 적체 |
 | 검색 통계 | `_nodes/stats/indices/search` 의 `query_total` · `query_time_in_millis` 델타 | 샤드 쿼리 1건당 시간 |
 
 날짜 suffix 인덱스는 alias 가 가리키는 것만 서빙이다. 나머지는 검색 팬아웃에서 빼고 저장 피크 계산에만 넣는다.
@@ -92,15 +93,19 @@ summary: 검색 클러스터의 노드 수 · 인스턴스 · 인덱스별 샤�
 | master-eligible 짝수 | 투표 구성이 자동 조정되어 split-brain 없음. 6대는 5대와 같은 2대 장애 허용 | 「짝수는 split-brain」 |
 | dedicated master 의 근거 | 클러스터 상태 작업을 검색 CPU 에서 격리 | 「쿼럼 때문」 |
 | primary 수 변경 | `_split` · `_shrink` 에 read-only 블록과 routing shard 조건. 풀 리인덱스 구조면 새 인덱스 + alias 전환 | 「불가능」 |
+| CloudWatch `SearchRate` | 데이터 노드별 · 분당 · **샤드 단위** 검색 수. 클라이언트 요청 1건이 샤드 수만큼 센다 | 「초당 검색 요청 수」 |
 | 벤치마크 도구 | OpenSearch Benchmark | 「Rally」 |
 
 > [!IMPORTANT] Elasticsearch 7.x 이전 동작과 섞인다
 > `minimum_master_nodes` 시절의 짝수 금기, heap 튜닝, Rally 는 옛 Elasticsearch 지식이다. 프롬프트 원칙에 「7.x 와 최신 OpenSearch 를 혼동하지 않는다」를 명시해도 값을 적어 두는 쪽이 확실하다.
 
-## 출력은 열네 절이다
+## 출력은 0 절부터 14 절까지다
 
 절의 순서를 고정하면 답을 비교할 수 있다. 같은 프롬프트에 두 클러스터의 데이터를 넣으면 같은 절끼리 나란히 놓인다.
 
+입력 검증에 0 절을 따로 준다. 자리가 없으면 모델이 절을 스스로 끼워 넣어 번호가 밀린다.
+
+0. Input Validation — 인덱스 분류 · 입력 간 모순 · 추가로 필요한 데이터(우선순위순)
 1. Executive Summary — 가장 중요한 문제 3~5개
 2. Current Workload — 항목 × 현재값 · 피크 · 평가 표
 3. Node Architecture Candidates — 3 노드 · 6 노드 등 후보 비교 표
@@ -114,13 +119,26 @@ summary: 검색 클러스터의 노드 수 · 인스턴스 · 인덱스별 샤�
 11. Cost — 현재 · 후보별
 12. Migration Plan
 13. Benchmark Plan
-14. 추천을 뒤집는 조건 · 추가로 필요한 데이터
+14. 추천을 뒤집는 조건
+
+## 빈틈을 넣은 입력으로 확인한 동작
+
+합성 입력(3 AZ · 3 노드 · 인덱스 셋)에 빈틈 넷을 넣고 프롬프트를 새 세션에서 실행한 결과다. 2026-09-24 · Claude Opus 기준, 응답 약 29KB.
+
+| 입력의 빈틈 | 응답 |
+|---|---|
+| 목표 P99 없음 | 지연을 「판정 불가」로 두고 추가 데이터 2순위로 요청 |
+| `query_time` 델타 없음 | 필요 스레드를 `샤드 쿼리 수 × t` 로 남기고 t 를 「측정 필요」로 표시 |
+| 지표가 5분 해상도 | 「초 단위 스파이크는 측정 필요」, 큐 140 과 rejected 의 불일치를 그 근거로 지적 |
+| 노드 하나만 CPU 97% | 노드 증설 대신 요청 편중부터 의심. replica 2 × 3 노드면 모든 노드가 전 샤드를 가져 primary 위치로는 설명되지 않는다고 판단 |
+
+같은 실행에서 두 가지를 검증한다. 출력은 0~14 절을 번호 그대로 지킨다. 노드별 `SearchRate` 합계(분당 248,000)를 `클라이언트 RPS × 팬아웃 × 60` 과 대조해 입력의 정합성을 확인한다.
 
 ## 쓰는 법
 
 1. 아래 명령으로 데이터를 뽑는다. `_nodes/stats` 는 피크 전후 두 번 받아 델타를 만든다.
 2. 프롬프트 전문 뒤에 「입력 데이터」 블록 순서대로 붙인다.
-3. 첫 응답의 「추가로 필요한 데이터」를 우선순위순으로 채워 다시 넣는다.
+3. 첫 응답 0 절의 「추가로 필요한 데이터」를 우선순위순으로 채워 다시 넣는다.
 4. 결과의 숫자는 벤치마크 계획을 돌리기 전까지 가설로 다룬다.
 
 ```bash
@@ -177,8 +195,11 @@ Principal Search Engineer 겸 SRE 다.
 ## 쿼리
 - 대표 쿼리 DSL 전문 · 각 쿼리의 트래픽 비중(%) · 대상 인덱스
 
+## 부하
+- 클라이언트 RPS(앱 · 로드밸런서 기준, 인덱스별): 평균 · P95 · P99 · 피크 · 피크 지속 시간
+- CloudWatch SearchRate 는 노드별 · 분당 · 샤드 단위 검색 수다. RPS 로 쓰지 않는다
+
 ## 시계열 지표 (CloudWatch 또는 _nodes/stats 델타)
-- SearchRate: 시간대별 평균 · P95 · P99 · 피크 · 피크 지속 시간
 - 노드별 CPUUtilization 평균 · P95 · 피크
 - JVMMemoryPressure · ThreadpoolSearchQueue · ThreadpoolSearchRejected · SearchLatency
 - _nodes/stats/indices/search 의 query_total · query_time_in_millis 델타
@@ -306,8 +327,11 @@ ap-northeast-2 기준. 가격을 확인할 수 없으면 추정하지 말고
 
 # 출력 형식
 
-아래 순서와 제목 그대로 쓴다.
+아래 순서와 제목 그대로 쓴다. 절을 새로 만들지 않는다.
+분석 절차의 계산 과정은 그 결과가 들어가는 절(6 · 8 등) 안에 쓴다.
 
+0. Input Validation — 인덱스 분류(서빙 · 사본 · 백업) · 입력 간 모순 ·
+   추가로 필요한 데이터(우선순위순)
 1. Executive Summary — 가장 중요한 문제 3~5개
 2. Current Workload — 표: 항목(Node · CPU · RPS · JVM · Disk · Docs · Primary data)
    × 현재값 · Peak · 평가
@@ -332,7 +356,7 @@ ap-northeast-2 기준. 가격을 확인할 수 없으면 추정하지 말고
 11. Cost — 현재 · 후보별
 12. Migration Plan
 13. Benchmark Plan
-14. 추천을 뒤집는 조건 · 추가로 필요한 데이터(우선순위순)
+14. 추천을 뒤집는 조건
 
 # 원칙
 

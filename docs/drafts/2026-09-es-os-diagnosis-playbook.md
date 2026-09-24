@@ -206,6 +206,8 @@ GET _nodes/hot_threads?threads=5&interval=1s
 
 hot_threads 는 스택 트레이스를 그대로 돌려준다. Merge 는 대개 정상이고 곧 끝나며, GC 는 힙 압박의 결과지 원인이 아니다. 높은 카디널리티 `terms`, 문서마다 도는 script, 앞에 `*` 가 붙은 wildcard 질의가 자주 나오는 원인이다.
 
+노드가 상시 버티지 못하면 튜닝이 아니라 용량 문제다. 노드 수와 사양을 정하는 공식은 [클러스터 사이징](/posts/search-cluster-capacity-sizing)에 있다.
+
 ## 동의어 사전 하나가 샤드 할당을 멈춘다
 
 `synonym_graph` 는 규칙의 term 을 동의어 필터 앞단 분석기로 토크나이즈해 그래프를 만든다. Lucene 빌더는 position increment 가 1이 아닌 토큰을 거부하므로, 위치가 겹치는 토큰이 나오면 인덱스 생성이 통째로 실패한다.
