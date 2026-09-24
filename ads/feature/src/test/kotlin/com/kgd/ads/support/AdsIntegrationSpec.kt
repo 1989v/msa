@@ -21,6 +21,8 @@ import kotlin.reflect.KClass
         "ads.scheduling.enabled=false",
         "outbox.polling.enabled=false",
         "spring.jpa.open-in-view=false",
+        // 운영 Kafka 어댑터가 빈으로 뜨기 위한 값 — 발행은 가짜가 받아 이 주소로는 연결하지 않는다
+        "spring.kafka.bootstrap-servers=127.0.0.1:1",
     ],
 )
 abstract class AdsIntegrationSpec(body: BehaviorSpec.() -> Unit) : BehaviorSpec(body) {

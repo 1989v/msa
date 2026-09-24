@@ -15,6 +15,7 @@ import kotlin.random.Random
 
 /**
  * ads 만 올리는 통합 테스트 컨텍스트 — 호스트(engagement)의 recommendation·experiment·Kafka 없이.
+ * 사본 발행은 [RecordingAnalyticsCopy] 가 받는다.
  * 호스트 폴드 배선은 `EngagementContextLoadSpec` 이 따로 본다.
  *
  * 시계와 페이싱 난수는 운영 빈과 같은 한정자(`adsClock`·`adsRandom`)를 달고 `@Primary` 로 이긴다.
@@ -42,6 +43,11 @@ class AdsIntegrationTestApplication {
     @Bean
     @Primary
     fun countingImageTranscoder(real: ImageIoTranscoder): CountingImageTranscoder = CountingImageTranscoder(real)
+
+    /** analytics 사본 발행 — Kafka 대신 모아 두는 가짜. 운영 Kafka 어댑터는 빈으로 남지만 부르지 않는다. */
+    @Bean
+    @Primary
+    fun recordingAnalyticsCopy(): RecordingAnalyticsCopy = RecordingAnalyticsCopy()
 
     companion object {
         val KST: ZoneId = ZoneId.of("Asia/Seoul")

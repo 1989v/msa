@@ -9,6 +9,7 @@ import com.kgd.ads.support.AdsIntegrationSpec
 import com.kgd.ads.support.DockerAvailable
 import com.kgd.ads.support.items
 import io.kotest.core.annotation.EnabledIf
+import io.kotest.matchers.longs.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
@@ -28,6 +29,8 @@ import javax.sql.DataSource
  * - 01-05: 지출 50만 ≤ 일예산 100만 → 청구 = 지출
  * - 01-06: 지출 140만 > 일예산 → 청구 100만, 「예산 초과분 미청구」
  * - 01-07: 닫히지 않은(정산 전) 시각 → 청구액 비움
+ *
+ * 퍼블리셔 원장 총액 행은 따로 2027-02-10 의 광고주(12101)로 본다 — 지면 몫의 내림이 실제로 원장보다 작아지는 금액으로.
  */
 @EnabledIf(DockerAvailable::class)
 class ReportIntegrationSpec(
@@ -142,7 +145,7 @@ class ReportIntegrationSpec(
             "INSERT INTO ad_placement_hourly (placement_key, hour_kst, requests, paid_filled, updated_at) VALUES ('a-rep-1', ?, 2000, 300, ?)",
             hour(6, 10), hour(6, 11),
         )
-        val rows = api.get("/api/v1/admin/ads/reports/publisher?from=2027-01-05&to=2027-01-07", As(11_399, admin = true)).data.items()
+        val rows = api.get("/api/v1/admin/ads/reports/publisher?from=2027-01-05&to=2027-01-07", As(11_399, admin = true)).data["placements"].items()
             .associateBy { it["placementKey"].asString() to LocalDate.parse(it["date"].asString()).dayOfMonth }
 
         then("요청·유료 채움률은 서버 집계, 채움 출처 분포는 화면 보고치(참고)로 따로 준다") {
@@ -167,6 +170,42 @@ class ReportIntegrationSpec(
             rows.getValue("a-rep-1" to 6)["rpmMicros"].asLong() shouldBe expected1 * 1000 / 2000
             // 요청 행이 없는 날도 노출·몫이 있으면 나온다
             rows.getValue("a-rep-2" to 6)["requests"].asLong() shouldBe 0L
+        }
+    }
+
+    given("퍼블리셔 리포트의 원장 총액 행") {
+        fixtures.placement("a-led-1")
+        fixtures.placement("a-led-2")
+        fixtures.placement("a-led-3")
+        val ledgerAdvertiser = fixtures.memberAdvertiser(12_101)
+        val ledgerCampaign = fixtures.paidCampaign(ledgerAdvertiser, listOf("a-led-1", "a-led-2", "a-led-3"))
+        val ledgerCreative = fixtures.paidCreative(ledgerCampaign, ledgerAdvertiser)
+        val at = LocalDateTime.of(2027, 2, 10, 10, 0)
+        // 지출 100,001 × 3 → 청구 300,003 → 퍼블리셔 몫 floor(× 68%) = 204,002. 지면마다 셋으로 나누면 68,000.67 → 68,000 씩
+        listOf("a-led-1", "a-led-2", "a-led-3").forEach { key ->
+            jdbc.update(
+                "INSERT INTO ad_creative_hourly (creative_id, placement_key, hour_kst, campaign_id, advertiser_id, impressions, clicks, " +
+                    "spend_micros, closed_at, updated_at) VALUES (?, ?, ?, ?, ?, 10, 0, 100001, ?, ?)",
+                ledgerCreative, key, at, ledgerCampaign, ledgerAdvertiser, at.plusMinutes(70), at.plusMinutes(70),
+            )
+        }
+        settlement.settle(CampaignHourSpend(ledgerCampaign, ledgerAdvertiser, at, 300_003), at.plusMinutes(75))
+
+        val report = api.get("/api/v1/admin/ads/reports/publisher?from=2027-02-10&to=2027-02-10", As(11_399, admin = true)).data
+        val ledgerSum = jdbc.queryForObject(
+            "SELECT COALESCE(SUM(e.amount_micros), 0) FROM ad_settlement s JOIN ad_ledger_entry e ON e.transaction_id = s.transaction_id " +
+                "JOIN ad_ledger_account a ON a.id = e.account_id AND a.type = 'PUBLISHER_PAYABLE' " +
+                "WHERE s.hour_kst >= '2027-02-10 00:00:00' AND s.hour_kst < '2027-02-11 00:00:00'",
+            Long::class.java,
+        )!!
+        val allocated = report["placements"].items().sumOf { it["publisherRevenueMicros"].asLong() }
+
+        then("총액은 원장의 퍼블리셔 미지급 분개 합이고, 내림 배분한 지면 몫의 합보다 크거나 같다") {
+            ledgerSum shouldBe 204_002L
+            report["ledgerTotal"]["publisherPayableMicros"].asLong() shouldBe ledgerSum
+            report["ledgerTotal"]["allocatedMicros"].asLong() shouldBe allocated
+            allocated shouldBe 204_000L
+            ledgerSum shouldBeGreaterThanOrEqual allocated
         }
     }
 })

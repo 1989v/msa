@@ -8,6 +8,7 @@ import com.kgd.ads.application.event.dto.AcceptanceOutcome
 import com.kgd.ads.application.event.dto.BillableEvent
 import com.kgd.ads.application.event.dto.CampaignBudget
 import com.kgd.ads.application.event.dto.ClickRate
+import com.kgd.ads.application.event.port.AnalyticsCopyPort
 import com.kgd.ads.application.event.port.EventCounterPort
 import com.kgd.ads.application.event.port.EventMetricsPort
 import com.kgd.ads.application.event.usecase.AcceptAdEventsUseCase
@@ -20,6 +21,10 @@ import com.kgd.ads.domain.token.model.TokenKind
 import com.kgd.ads.domain.token.model.TokenVerification
 import com.kgd.ads.domain.token.policy.ServeTokenSigner
 import com.kgd.ads.domain.token.policy.VisitorHash
+import com.kgd.common.analytics.AnalyticsEvent
+import com.kgd.common.analytics.EntityType
+import com.kgd.common.analytics.EventAction
+import com.kgd.common.analytics.Placement
 import com.kgd.common.web.CrawlerUserAgents
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Qualifier
@@ -28,6 +33,7 @@ import org.springframework.stereotype.Service
 import java.time.Clock
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
+import java.util.UUID
 
 /**
  * 가시 노출 수락과 클릭 리다이렉트.
@@ -38,6 +44,9 @@ import java.time.temporal.ChronoUnit
  *
  * 예산 한도는 후보 인덱스 스냅샷(청구 누계·정산 완료 시각)에서 가져온다. 인덱스에서 빠진 캠페인(정지·일시정지·승인 취소)의
  * 토큰은 과금하지 않는다(`not_billable`). Redis 가 실패하면 아무것도 받지 않는다(`redis_unavailable`).
+ *
+ * 수락이 끝난 뒤 수락한 노출·클릭만 analytics 원장으로 사본을 보낸다. 사본 발행은 과금 결과를 바꾸지 않는다 —
+ * 실패해도 경고만 남긴다.
  */
 @Service
 class AdEventService(
@@ -45,6 +54,7 @@ class AdEventService(
     private val counterPort: EventCounterPort,
     private val metricsPort: EventMetricsPort,
     private val creativeReadPort: CreativeReadPort,
+    private val analyticsCopyPort: AnalyticsCopyPort,
     private val tokenSigner: ServeTokenSigner,
     @Qualifier("adsClock") private val clock: Clock,
     @Value("\${ads.click.max-per-visitor-per-window:5}") private val clickLimitPerWindow: Int,
@@ -90,6 +100,8 @@ class AdEventService(
         }
 
         tokens.indices.forEach { i -> metricsPort.recordEvent(TokenKind.IMP, outcomes[i]?.code ?: OUTCOME_ACCEPTED) }
+        val acceptedClaims = candidates.filter { (i, _) -> accepted[i] }.map { it.second }
+        publishCopies(acceptedClaims.map { copyOf(it, EventAction.IMPRESSION, snapshot, command.analyticsVisitorId, command.analyticsSessionId) })
         val rejected = outcomes.filterNotNull().groupingBy { it }.eachCount()
         log.debug {
             "광고 이벤트 수락: accepted=${accepted.count { it }} rejected=${rejected.mapKeys { it.key.code }} " +
@@ -125,6 +137,8 @@ class AdEventService(
             .getOrDefault(EventRejectReason.REDIS_UNAVAILABLE.code)
         metricsPort.recordEvent(TokenKind.CLK, outcome)
         metricsPort.recordClickDestination(DESTINATION_LANDING)
+        // 클릭 주소에는 화면 신원이 없다 — 방문자는 토큰의 방문자 해시, 세션은 비운다. 노출과는 view_id(결정 id)로 잇는다.
+        if (outcome == OUTCOME_ACCEPTED) publishCopies(listOf(copyOf(claims, EventAction.CLICK, candidateIndex.current(), null, null)))
         log.debug { "광고 클릭: decisionId=${claims.ad.decisionId} creative=${claims.ad.creativeId} outcome=$outcome" }
         return landingUrl
     }
@@ -190,6 +204,39 @@ class AdEventService(
             .distinctBy { it.first }
             .toMap()
 
+    private fun publishCopies(copies: List<AnalyticsEvent>) {
+        if (copies.isEmpty()) return
+        runCatching { analyticsCopyPort.publish(copies) }
+            .onFailure { log.warn(it) { "광고 이벤트 사본 발행 실패 — 과금에는 영향 없다: count=${copies.size}" } }
+    }
+
+    /**
+     * 수락한 이벤트의 analytics 사본. 방문자·세션은 화면 `identity.ts` 값이고, 없으면 방문자는 토큰의 방문자 해시(원본 쿠키 값이 아니다),
+     * 세션은 빈 문자열이다. 화면 종류는 지면의 호스트로 정한다.
+     */
+    private fun copyOf(claims: ServeClaims, action: EventAction, snapshot: CandidateSnapshot?, visitorId: String?, sessionId: String?): AnalyticsEvent {
+        val ad = claims.ad
+        val host = snapshot?.placements?.get(ad.placementKey)?.host
+        return AnalyticsEvent(
+            eventId = UUID.randomUUID().toString(),
+            entityType = EntityType.AD,
+            entityId = ad.creativeId.toString(),
+            action = action,
+            placement = Placement(
+                screenType = SCREEN_TYPE_BY_HOST[host] ?: SCREEN_TYPE_OTHER,
+                sectionId = "$SECTION_PREFIX${ad.placementKey}",
+                itemIndex = 0,
+            ),
+            viewId = ad.decisionId,
+            userId = null,
+            visitorId = visitorId?.takeIf { it.isNotBlank() } ?: ad.visitorHash,
+            sessionId = sessionId?.takeIf { it.isNotBlank() }.orEmpty(),
+            timestamp = clock.instant(),
+            experimentAssignments = null,
+            payload = emptyMap(),
+        )
+    }
+
     private fun reasonOf(outcome: AcceptanceOutcome): EventRejectReason? = when (outcome) {
         AcceptanceOutcome.ACCEPTED -> null
         AcceptanceOutcome.DUPLICATE -> EventRejectReason.DUPLICATE
@@ -214,6 +261,15 @@ class AdEventService(
         /** 클릭 속도 제한의 창(분). 고정 창이라 창 경계에서 최대 두 배까지 과금될 수 있다 — 손실 상한은 시간당 상한이 따로 막는다. */
         const val CLICK_WINDOW_MINUTES = 10L
         const val HOME = "/"
+
+        /** 지면 호스트 → analytics 화면 종류. 등록부에 없는 호스트는 [SCREEN_TYPE_OTHER]. */
+        val SCREEN_TYPE_BY_HOST: Map<String, String> = mapOf(
+            "blog.1989v.com" to "BLOG_POST",
+            "game.1989v.com" to "GAME_HUB",
+            "place.1989v.com" to "ATTRACTION_DETAIL",
+        )
+        const val SCREEN_TYPE_OTHER = "OTHER"
+        const val SECTION_PREFIX = "AD:"
         private const val OUTCOME_ACCEPTED = "accepted"
         private const val DESTINATION_LANDING = "landing"
         private const val DESTINATION_HOME = "home"

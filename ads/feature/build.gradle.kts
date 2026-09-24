@@ -17,6 +17,8 @@ dependencies {
     implementation(libs.spring.boot.starter.data.redis)
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.boot.starter.actuator)
+    // analytics 원장 사본 발행 (analytics.event.collected) — 과금 근거가 아니라 Outbox 없이 보낸다
+    implementation(libs.spring.kafka)
     // ScopedFlywayMigrator(adsdb/migration) — 폴드된 앱이라 Boot 자동설정 대신 직접 배선
     implementation("org.flywaydb:flyway-core")
     runtimeOnly("org.flywaydb:flyway-mysql")

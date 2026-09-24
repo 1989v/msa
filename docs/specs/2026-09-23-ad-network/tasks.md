@@ -142,7 +142,7 @@ Total Task Groups: 13
   - [x] 7.3b 공개 에셋 경로는 **승인된 소재 이미지만** — 심사 전·반려 이미지 미리보기는 광고주·어드민 인증 API 로(그룹 5 `CreativeAssetService` 에 승인 확인 추가)
   - [x] 7.4 호환 `GET /api/v1/ads/placements/{key}` — game 의 옛 응답 모양(`AdPlacementDto`)
   - [x] 7.5 Verify: `./gradlew :ads:feature:test --tests '*AdvertiserApiIntegrationSpec*' --tests '*AdminApiIntegrationSpec*' --tests '*ReportIntegrationSpec*' --tests '*LegacyPlacementIntegrationSpec*'`
-  - [ ] 7.6 (후속) 퍼블리셔 리포트에 원장 총액 행 — 지면별 내림 배분 합이 원장 PUBLISHER_PAYABLE 합보다 작을 수 있다
+  - [x] 7.6 (후속, 그룹 9 와 함께 구현) 퍼블리셔 리포트에 원장 총액 행 — 지면별 내림 배분 합이 원장 PUBLISHER_PAYABLE 합보다 작을 수 있다
 > 구현 기록(2026-09-24): `V3__ads_admin_action.sql`(운영자 변경 기록) · 이미지 규칙은 도메인 `CreativeImageRules`(매직 바이트 → PNG IHDR/JPEG SOF 헤더 크기 → 300KB → 비율, 디코딩 없음) · 폭탄 케이스 판정은 운영 디코더를 감싼 계측기의 호출 수(정상 업로드 +1 대조군) · 청구액은 캠페인×일 단위 · 호환 경로는 HOUSE 목록을 옛 모양으로 · 충전 키 `TOPUP:{memberId}:{clientKey}` · 회귀 주입 3건 빨간불
 **Acceptance Criteria:**
 - AC-1·AC-3·AC-4·AC-13·AC-14·AC-18
@@ -165,10 +165,11 @@ Total Task Groups: 13
 **Dependencies:** Task Group 5 (OQ-001 해소 — ADR-0095 착지 확인)
 **Phase:** R2
 **Required Skills:** kafka
-- [ ] 9.0 Complete 사본 발행
-  - [ ] 9.1 테스트 2개: I13 페이로드 필드(entity_type·action·view_id·visitorId·sessionId·section_id) · Kafka 실패 시 정산 정상
-  - [ ] 9.2 수락 이벤트만 `analytics.event.collected` 발행(Outbox 없음, 실패 경고)
-  - [ ] 9.3 Verify: `./gradlew :ads:feature:test --tests '*AnalyticsCopyIntegrationSpec*'`
+- [x] 9.0 Complete 사본 발행
+  - [x] 9.1 테스트 2개: I13 페이로드 필드(entity_type·action·view_id·visitorId·sessionId·section_id) · Kafka 실패 시 정산 정상
+  - [x] 9.2 수락 이벤트만 `analytics.event.collected` 발행(Outbox 없음, 실패 경고)
+  - [x] 9.3 Verify: `./gradlew :ads:feature:test --tests '*AnalyticsCopyIntegrationSpec*'`
+> 구현 기록(2026-09-24): 수락된 것만 발행, 실패는 삼키고 warn · Kafka 생산자는 어댑터 안에 두고 `max.block.ms=500`(기본 60초면 브로커 장애가 이벤트·클릭을 멈춘다) · screenType 은 호스트별 표(blog→BLOG_POST, game→GAME_HUB, place→ATTRACTION_DETAIL) · 클릭 사본 visitorId 는 토큰 방문자 해시, sessionId 빈 값 · 7.6 원장 총액 행 함께 · 회귀 주입 3건 빨간불
 **Acceptance Criteria:**
 - AC-17
 
@@ -182,6 +183,7 @@ Total Task Groups: 13
   - [ ] 10.3 `AdSlot` — 지면 키, 페이지 단위 결정 묶음(800ms), 채움 순서, `selfAds` prop, AdSense `data-ad-status` MutationObserver + 3초
   - [ ] 10.4 `ADSENSE_SLOTS` 키 kebab 로 통일, DealPage `selfAds={false}` [usecase C1]
   - [ ] 10.5 광고 카드 — DESIGN.md 토큰, 「광고」 라벨, 텍스트 노드만, 클릭 리다이렉터 링크, `useImpression`
+  - [ ] 10.5b 클릭 URL 에 analytics 신원(방문자·세션)을 붙여 클릭 사본의 visitorId 를 노출 사본과 맞춘다 — 지금은 클릭만 토큰 방문자 해시라 방문자 단위 집계가 갈린다
   - [ ] 10.6 이벤트 비콘 — 토큰 + `identity.ts` 신원 + 채움 출처
   - [ ] 10.7 HouseBanner → 결정 API HOUSE 목록
   - [ ] 10.8 숨김 시 자리 접힘은 받아들이되 `attraction-end` 처럼 기존에 없던 자리는 결정 응답 전까지 높이를 예약하지 않는다(새 밀림 방지) [usecase C3]

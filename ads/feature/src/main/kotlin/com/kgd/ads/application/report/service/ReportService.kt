@@ -3,13 +3,16 @@ package com.kgd.ads.application.report.service
 import com.kgd.ads.application.advertiser.service.AdvertiserAccess
 import com.kgd.ads.application.campaign.port.CampaignPort
 import com.kgd.ads.application.report.dto.CreativeHourRow
+import com.kgd.ads.application.report.dto.PublisherShareRow
 import com.kgd.ads.application.report.port.ReportPort
 import com.kgd.ads.application.report.usecase.GetAdvertiserReportUseCase
 import com.kgd.ads.application.report.usecase.GetAdvertiserReportUseCase.CampaignDay
 import com.kgd.ads.application.report.usecase.GetAdvertiserReportUseCase.CreativeDay
 import com.kgd.ads.application.report.usecase.GetPublisherReportUseCase
 import com.kgd.ads.application.report.usecase.GetPublisherReportUseCase.ClientReportedFill
+import com.kgd.ads.application.report.usecase.GetPublisherReportUseCase.LedgerTotal
 import com.kgd.ads.application.report.usecase.GetPublisherReportUseCase.PlacementDay
+import com.kgd.ads.application.report.usecase.GetPublisherReportUseCase.PublisherReport
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
 import org.springframework.stereotype.Service
@@ -54,15 +57,16 @@ class ReportService(
             .sortedWith(compareBy<CampaignDay> { it.date }.thenBy { it.campaignId })
     }
 
-    override fun execute(from: LocalDate, to: LocalDate): List<PlacementDay> {
+    override fun execute(from: LocalDate, to: LocalDate): PublisherReport {
         val (start, until) = range(from, to)
         val delivery = reportPort.paidCreativeHours(start, until)
-        val revenue = publisherRevenue(delivery, start, until)
+        val shares = reportPort.publisherShares(start, until)
+        val revenue = publisherRevenue(delivery, shares)
         val deliveryByDay = delivery.groupBy { it.placementKey to it.hourKst.toLocalDate() }
         val requestsByDay = reportPort.placementHours(start, until).groupBy { it.placementKey to it.hourKst.toLocalDate() }
 
         // 요청 행이 없어도 노출·몫이 있는 (지면, 날)은 빠뜨리지 않는다 — 두 집계 표는 따로 채워진다.
-        return (requestsByDay.keys + deliveryByDay.keys + revenue.keys)
+        val placements = (requestsByDay.keys + deliveryByDay.keys + revenue.keys)
             .map { key ->
                 val rows = requestsByDay[key].orEmpty()
                 val requests = rows.sumOf { it.requests }
@@ -88,13 +92,14 @@ class ReportService(
                 )
             }
             .sortedWith(compareBy<PlacementDay> { it.date }.thenBy { it.placementKey })
+        return PublisherReport(placements, LedgerTotal(shares.sumOf { it.publisherShareMicros }, revenue.values.sum()))
     }
 
     /** (지면, 날) → 퍼블리셔 몫. (캠페인, 시각)의 퍼블리셔 분개를 그 시각의 지면별 지출 비율로 나눈다(내림). */
-    private fun publisherRevenue(delivery: List<CreativeHourRow>, start: LocalDateTime, until: LocalDateTime): Map<Pair<String, LocalDate>, Long> {
+    private fun publisherRevenue(delivery: List<CreativeHourRow>, shares: List<PublisherShareRow>): Map<Pair<String, LocalDate>, Long> {
         val spendByCampaignHour = delivery.groupBy { it.campaignId to it.hourKst }
         val result = mutableMapOf<Pair<String, LocalDate>, Long>()
-        reportPort.publisherShares(start, until).forEach { share ->
+        shares.forEach { share ->
             val rows = spendByCampaignHour[share.campaignId to share.hourKst].orEmpty()
             val total = rows.sumOf { it.spendMicros }
             if (total <= 0) return@forEach

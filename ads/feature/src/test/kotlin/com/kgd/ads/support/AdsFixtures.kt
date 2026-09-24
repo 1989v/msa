@@ -27,11 +27,13 @@ class AdsFixtures(private val jdbc: JdbcTemplate) {
      *
      * 통합 스펙들은 컨테이너 DB 하나를 같이 쓰고 회원 id 는 유일 키다. 스펙마다 대역을 나눠 쓴다 —
      * 결정 5xxx · 후보 인덱스 6xxx · 클릭 7xxx · 에셋 8xxx · 이벤트 수락 9xxx ·
-     * 집계 100xx · 정산 101xx · 원장 102xx · 광고주 API 110xx · 소재 업로드 111xx · 어드민 API 112xx · 리포트 113xx.
+     * 집계 100xx · 정산 101xx · 원장 102xx · 광고주 API 110xx · 소재 업로드 111xx · 어드민 API 112xx · 리포트 113xx ·
+     * analytics 사본 120xx · 리포트 원장 총액 121xx.
      * 어드민 API 의 운영자(행위자)는 11299.
      *
      * 집계·정산 작업은 DB 전체의 닫힌 미정산 행을 훑는다. 광고주 API·리포트 스펙이 시간별 집계·정산 행을 직접 넣을 때는
      * 2027-01 을 쓴다 — 다른 스펙의 시계(2026-09~12)보다 뒤라 그 스펙들의 작업이 이 행을 닫거나 정산하지 않는다.
+     * analytics 사본(02-02)·리포트 원장 총액(02-10)은 2027-02 — 집계 작업은 부르지 않고 자기 (캠페인, 시각)만 정산한다.
      */
     fun memberAdvertiser(memberId: Long, balanceMicros: Long = 100_000_000, name: String = "광고주$memberId"): Long {
         val id = insert(

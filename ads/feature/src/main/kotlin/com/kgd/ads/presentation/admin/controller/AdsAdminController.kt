@@ -220,7 +220,7 @@ class AdsAdminController(
         @RequestHeader(ROLES, required = false) roles: String?,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) from: LocalDate,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) to: LocalDate,
-    ): ApiResponse<List<GetPublisherReportUseCase.PlacementDay>> {
+    ): ApiResponse<GetPublisherReportUseCase.PublisherReport> {
         RequestIdentity.admin(userId, roles)
         return ApiResponse.success(publisherReport.execute(from, to))
     }
