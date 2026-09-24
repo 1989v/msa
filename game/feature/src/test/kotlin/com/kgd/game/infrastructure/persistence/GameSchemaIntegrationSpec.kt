@@ -119,6 +119,7 @@ class GameSchemaIntegrationSpec(
     @Autowired private val dailyScoreRepository: GameScoreDailyJpaRepository,
     @Autowired private val suggestionAdapter: GameSuggestionRepositoryAdapter,
     @Autowired private val replyAdapter: SuggestionReplyRepositoryAdapter,
+    @Autowired @Qualifier("gameDataSource") private val gameDataSource: DataSource,
 ) : BehaviorSpec({
 
     val pageable = PageRequest.of(0, 10)
@@ -136,6 +137,20 @@ class GameSchemaIntegrationSpec(
                     gameRepository.findBySlug("snake")?.entryUrl shouldBe "/games/snake/index.html"
                     gameRepository.findBySlug("overworld-quest")?.loadType shouldBe LoadType.IFRAME
                     tagMapRepository.count().toInt() shouldBeGreaterThan 0
+                }
+        }
+
+        When("광고 표를 찾으면 (V94)") {
+            // 광고는 ads 서비스로 옮겨 갔다 — game 스키마에 옛 광고 표가 남아 있으면 안 된다
+            Then("ad_placement·ad_policy·reward_grant 가 없다")
+                .config(enabledIf = { dockerAvailable }) {
+                    val remaining = gameDataSource.connection.use { conn ->
+                        conn.prepareStatement(
+                            "SELECT table_name FROM information_schema.tables " +
+                                "WHERE table_schema = DATABASE() AND table_name IN ('ad_placement', 'ad_policy', 'reward_grant')",
+                        ).executeQuery().use { rs -> generateSequence { if (rs.next()) rs.getString(1) else null }.toList() }
+                    }
+                    remaining shouldBe emptyList()
                 }
         }
 
