@@ -73,7 +73,8 @@ class ConceptService(
 
     @CacheEvict(value = ["conceptCategoryStats"], allEntries = true)
     override fun delete(id: Long) {
-        conceptRepository.findById(id) ?: throw ConceptNotFoundException(id.toString())
+        val concept = conceptRepository.findById(id) ?: throw ConceptNotFoundException(id.toString())
+        concept.ensureEditable()
         conceptRepository.delete(id)
     }
 

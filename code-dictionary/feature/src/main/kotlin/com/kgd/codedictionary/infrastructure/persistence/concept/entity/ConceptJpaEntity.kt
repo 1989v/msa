@@ -2,6 +2,7 @@ package com.kgd.codedictionary.infrastructure.persistence.concept.entity
 
 import com.kgd.codedictionary.domain.concept.model.Concept
 import com.kgd.codedictionary.domain.concept.model.ConceptCategory
+import com.kgd.codedictionary.domain.concept.model.ConceptKind
 import com.kgd.codedictionary.domain.concept.model.ConceptLevel
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
@@ -49,6 +50,15 @@ class ConceptJpaEntity(
     var description: String? = description
         private set
 
+    /** 온톨로지 로더(JDBC)만 쓴다 — JPA 저장이 덮어쓰지 않도록 읽기 전용 */
+    @Column(insertable = false, updatable = false, length = 16)
+    var kind: String? = null
+        private set
+
+    @Column(name = "managed_by", insertable = false, updatable = false, length = 40)
+    var managedBy: String? = null
+        private set
+
     /**
      * 전체 동기화 — 도메인 모델 기준으로 영속 상태를 덮어쓴다 (entity-mutation.md).
      * 관계 대상 엔티티는 영속성 조회가 필요하므로 호출자(어댑터)가 resolve 해서 전달한다.
@@ -78,7 +88,9 @@ class ConceptJpaEntity(
         level = ConceptLevel.valueOf(level),
         description = description ?: "",
         synonyms = synonyms.map { it.synonym },
-        relatedConceptIds = relations.map { it.targetConcept.conceptId }
+        relatedConceptIds = relations.map { it.targetConcept.conceptId },
+        kind = kind?.let { k -> ConceptKind.entries.firstOrNull { it.name == k } },
+        managedBy = managedBy,
     )
 
     companion object {

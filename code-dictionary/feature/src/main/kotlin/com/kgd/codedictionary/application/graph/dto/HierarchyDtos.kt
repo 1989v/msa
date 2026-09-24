@@ -20,7 +20,7 @@ data class HierarchyNodeDto(
 data class HierarchyEdgeDto(
     val from: String,
     val to: String,
-    /** CONTAINS · FLOWS_TO · SAME_AS */
+    /** ConceptEdgeKind 이름 — CONTAINS · FLOWS_TO · USES · IMPLEMENTS · AFFECTS · CAUSES · MITIGATES · MEASURED_BY · ALTERNATIVE_TO */
     val kind: String,
     val ordinal: Int,
 )

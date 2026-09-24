@@ -10,5 +10,5 @@ class ConceptEdgeRepositoryAdapter(
     private val jpaRepository: ConceptEdgeJpaRepository,
 ) : ConceptEdgeRepositoryPort {
 
-    override fun findAll(): List<ConceptEdge> = jpaRepository.findAll().map { it.toDomain() }
+    override fun findAll(): List<ConceptEdge> = jpaRepository.findAll().mapNotNull { it.toDomain() }
 }
