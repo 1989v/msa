@@ -70,7 +70,7 @@ patches:
   - path: patches/db-password-gifticon.yaml
     target: { kind: Deployment, name: gifticon }
   - path: patches/db-password-experiment.yaml
-    target: { kind: Deployment, name: experiment }
+    target: { kind: Deployment, name: engagement }
   - path: patches/db-password-ads.yaml
     target: { kind: Deployment, name: engagement }
   - path: patches/db-password-code-dictionary.yaml
