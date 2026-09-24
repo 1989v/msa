@@ -37,7 +37,7 @@ summary: 검색 클러스터의 노드 수 · 인스턴스 · 인덱스별 샤�
 | 입력 | 뽑는 곳 | 이것이 정하는 것 |
 |---|---|---|
 | 목표 SLO | 서비스 요구사항 | 헤드룸 · replica 수 · 장애 허용 |
-| 노드 | `_cat/nodes?v&h=name,zone,node.role,cpu,heap.percent,ram.percent,disk.used_percent` | 총 vCPU · 스레드 · 파일캐시 |
+| 노드 | `_cat/nodes?v&h=name,node.role,cpu,heap.percent,ram.percent,disk.used_percent` + `_cat/nodeattrs?v`(AZ) | 총 vCPU · 스레드 · 파일캐시 · AZ 배치 |
 | 인덱스 | `_cat/indices?v&bytes=gb&h=index,pri,rep,docs.count,docs.deleted,pri.store.size,store.size` | 샤드 크기 · 삭제 비율 |
 | 샤드 배치 | `_cat/shards?v&bytes=gb` | 핫 샤드 · 편중 |
 | alias | `_cat/aliases?v` | 서빙 인덱스와 리인덱스 사본 구분 |
@@ -136,18 +136,39 @@ summary: 검색 클러스터의 노드 수 · 인스턴스 · 인덱스별 샤�
 
 ## 쓰는 법
 
-1. 아래 명령으로 데이터를 뽑는다. `_nodes/stats` 는 피크 전후 두 번 받아 델타를 만든다.
-2. 프롬프트 전문 뒤에 「입력 데이터」 블록 순서대로 붙인다.
-3. 첫 응답 0 절의 「추가로 필요한 데이터」를 우선순위순으로 채워 다시 넣는다.
-4. 결과의 숫자는 벤치마크 계획을 돌리기 전까지 가설로 다룬다.
+1. 피크 시간대에 수집 스크립트를 돌린다. 이름을 가린 「입력 데이터」 블록이 나온다.
+2. `<채울 것>` 을 채운다 — 목표 SLO · 인스턴스 타입 · 클라이언트 RPS · 쿼리 DSL · CloudWatch 지표.
+3. 프롬프트 전문 뒤에 그 블록을 붙인다.
+4. 첫 응답 0 절의 「추가로 필요한 데이터」를 우선순위순으로 채워 다시 넣는다.
+5. 결과의 숫자는 벤치마크 계획을 돌리기 전까지 가설로 다룬다.
 
 ```bash
-curl -s "$OS/_cat/nodes?v&h=name,zone,node.role,cpu,heap.percent,ram.percent,disk.used_percent"
+# github.com/1989v/msa — tools/opensearch-sizing/collect.py (표준 라이브러리만)
+python3 collect.py --url https://host:9200 --user admin:pass -o input.md
+python3 collect.py --url https://search-xxx.es.amazonaws.com --sigv4 ap-northeast-2 -o input.md
+```
+
+| 스크립트가 하는 일 | 값 |
+|---|---|
+| 수집 | `_cat/indices` · `_cat/shards` · `_cat/aliases` · `_nodes` · `_nodes/stats` 표본 N개(기본 60초 × 6 = 5분) |
+| 계산 | 노드별 샤드 쿼리/초 · 쿼리 ms/건 · 큐 최대 · rejected 증가 · old GC 증가 |
+| 구분 | alias 가 가리키면 서빙. 같은 계열은 suffix 로 새 세대(리인덱스 중) · 이전 세대를 가른다 |
+| 가림 | 인덱스 계열명 · alias → `idx-a`, 노드 → `node-1`, AZ → `az-1`. 날짜 suffix 는 남긴다 |
+| 게이트 | 받은 원래 이름이 출력에 하나라도 남으면 출력하지 않고 종료 코드 1 |
+
+스크립트 없이 뽑을 때의 명령이다. `_nodes/stats` 는 피크 전후 두 번 받아 델타를 만든다.
+
+```bash
+curl -s "$OS/_cat/nodes?v&h=name,node.role,cpu,heap.percent,ram.percent,disk.used_percent"
+curl -s "$OS/_cat/nodeattrs?v"
 curl -s "$OS/_cat/indices?v&bytes=gb&h=index,pri,rep,docs.count,docs.deleted,pri.store.size,store.size"
 curl -s "$OS/_cat/shards?v&bytes=gb"
 curl -s "$OS/_cat/aliases?v"
-curl -s "$OS/_nodes/stats/indices/search,thread_pool/search,jvm"   # 피크 전 · 후 두 번
+curl -s "$OS/_nodes/stats/indices,thread_pool,jvm"   # 피크 전 · 후 두 번
 ```
+
+> [!WARNING] `_nodes/stats` 의 두 번째 경로 조각은 indices 전용이다
+> `_nodes/stats/indices/search` 는 되지만 `indices/search,thread_pool/search` 는 400 이다. 여러 metric 을 받을 때는 metric 만 나열하고 `filter_path` 로 좁힌다. `_cat/nodes` 는 모르는 열(`zone`)을 오류 없이 빼고 돌려준다.
 
 > [!CAUTION] 외부 LLM 에 넣기 전에 가린다
 > 인덱스명 · 호스트 · 계정 ID · 비용은 마스킹한다. AZ 수 · 노드 수 · 풀 리인덱스 방식 같은 구조는 업계 표준 패턴이라 식별 정보가 아니다. 프롬프트에 실제 데이터를 넣고 받은 **답변**은 공개하지 않는다.
@@ -183,7 +204,8 @@ Principal Search Engineer 겸 SRE 다.
 - OpenSearch 버전 · 리전 · AZ 수 · zone awareness
 - 노드 수 · 인스턴스 타입 · vCPU · RAM · JVM heap · EBS 크기 · IOPS · 처리량
 - dedicated master 유무 · 노드 역할 · 클러스터 설정
-- 형식: _cat/nodes?v&h=name,zone,node.role,cpu,heap.percent,ram.percent,disk.used_percent
+- 형식: _cat/nodes?v&h=name,node.role,cpu,heap.percent,ram.percent,disk.used_percent
+        _cat/nodeattrs?v (AZ)
         _cluster/settings
 
 ## 인덱스
