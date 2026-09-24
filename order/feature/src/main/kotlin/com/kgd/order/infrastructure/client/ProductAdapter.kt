@@ -27,7 +27,7 @@ class ProductAdapter(
         return circuitBreaker.executeSuspendFunction {
             try {
                 val response = webClient.get()
-                    .uri("/api/products/{id}", productId)
+                    .uri("/api/v1/products/{id}", productId)
                     .retrieve()
                     .bodyToMono(ProductApiResponse::class.java)
                     .awaitSingle()

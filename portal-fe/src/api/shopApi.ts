@@ -167,14 +167,14 @@ export function extractErrorMessage(err: unknown, fallback: string): string {
 // ── Endpoint functions ────────────────────────────────────────────
 
 export const fetchProducts = async (page = 0, size = 20): Promise<ProductListResponse> => {
-  const res = await api.get<ApiResponse<ProductListResponse>>('/api/products', {
+  const res = await api.get<ApiResponse<ProductListResponse>>('/api/v1/products', {
     params: { page, size },
   });
   return res.data.data;
 };
 
 export const fetchProduct = async (id: string | number): Promise<ProductDetail> => {
-  const res = await api.get<ApiResponse<ProductDetail>>(`/api/products/${id}`);
+  const res = await api.get<ApiResponse<ProductDetail>>(`/api/v1/products/${id}`);
   return res.data.data;
 };
 
@@ -210,12 +210,12 @@ export const postClick = async (body: ClickRequest): Promise<void> => {
 };
 
 export const createOrder = async (items: OrderItemRequest[]): Promise<OrderCreateResponse> => {
-  const res = await api.post<ApiResponse<OrderCreateResponse>>('/api/orders', { items });
+  const res = await api.post<ApiResponse<OrderCreateResponse>>('/api/v1/orders', { items });
   return res.data.data;
 };
 
 export const fetchMyOrders = async (): Promise<MyOrder[]> => {
-  const res = await api.get<ApiResponse<MyOrder[]>>('/api/orders/my');
+  const res = await api.get<ApiResponse<MyOrder[]>>('/api/v1/orders/my');
   return res.data.data;
 };
 

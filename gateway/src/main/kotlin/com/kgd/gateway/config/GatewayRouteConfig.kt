@@ -120,30 +120,44 @@ class GatewayRouteConfig(
                     }
                     .uri("http://account:8093") // ADR-0093: account 폴드
             }
-            // Product Service — 상품 브라우징(GET)은 비로그인 공개 (커머스 표준: 탐색은 public, 주문은 인증)
+            // Product Service — 상품 브라우징(GET)은 비로그인 공개 (커머스 표준: 탐색은 public, 주문은 인증).
+            // 필터는 신원 헤더 위조를 벗기려고 건다(게스트 허용). `/internal/products/**` 는 라우트가 없다 —
+            // 일괄 적재는 search-batch 가 클러스터 안에서 직접 부른다.
             .route("product-service-read") { r ->
                 r.method(HttpMethod.GET)
-                    .and().path("/api/products/**")
-                    .filters { f -> f.stripPrefix(0) }
-                    .uri("http://commerce:8085") // ADR-0093: commerce 폴드
-            }
-            // Product Service 쓰기 (ROLE_SELLER+ 검증은 service level 의 X-User-Roles 로 처리)
-            .route("product-service-write") { r ->
-                r.path("/api/products/**")
+                    .and().path("/api/v1/products/**")
                     .filters { f ->
-                        f.filter(authFilter.apply(userConfig()))
+                        f.filter(authFilter.apply(optionalUserConfig()))
                             .stripPrefix(0)
                     }
-                    .uri("http://commerce:8085") // ADR-0093: commerce 폴드
+                    .uri(COMMERCE_URI) // ADR-0093: commerce 폴드
+            }
+            // Product Service 쓰기 — 판매자·어드민만. "자기 상품인가"는 서비스가 X-User-Roles 로 다시 판정한다.
+            .route("product-service-write") { r ->
+                r.path("/api/v1/products/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(sellerConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(COMMERCE_URI) // ADR-0093: commerce 폴드
+            }
+            // 주문 매출 통계 — 어드민 대시보드 전용 (서비스도 역할을 다시 본다)
+            .route("order-admin") { r ->
+                r.path("/api/v1/admin/orders/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(adminConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(COMMERCE_URI)
             }
             // Order Service (ROLE_USER+)
             .route("order-service") { r ->
-                r.path("/api/orders/**")
+                r.path("/api/v1/orders/**")
                     .filters { f ->
                         f.filter(authFilter.apply(userConfig()))
                             .stripPrefix(0)
                     }
-                    .uri("http://commerce:8085")
+                    .uri(COMMERCE_URI)
             }
             // Gifticon Service (ROLE_USER+)
             .route("gifticon-service") { r ->

@@ -18,6 +18,8 @@ class ProductExceptionHandler {
     fun handleBusinessException(e: BusinessException): ResponseEntity<ApiResponse<Nothing>> {
         val status = when (e.errorCode) {
             ErrorCode.NOT_FOUND -> HttpStatus.NOT_FOUND
+            ErrorCode.UNAUTHORIZED -> HttpStatus.UNAUTHORIZED
+            ErrorCode.FORBIDDEN -> HttpStatus.FORBIDDEN
             ErrorCode.INSUFFICIENT_STOCK -> HttpStatus.CONFLICT
             ErrorCode.INVALID_PRODUCT_STATUS -> HttpStatus.BAD_REQUEST
             else -> HttpStatus.INTERNAL_SERVER_ERROR

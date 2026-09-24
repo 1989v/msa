@@ -4,33 +4,37 @@ import com.kgd.product.application.product.port.ProductEventPort
 import com.kgd.product.application.product.usecase.CreateProductUseCase
 import com.kgd.product.application.product.usecase.GetAllProductsUseCase
 import com.kgd.product.application.product.usecase.GetProductUseCase
+import com.kgd.product.application.product.usecase.ProductRequester
 import com.kgd.product.application.product.usecase.UpdateProductUseCase
 import com.kgd.product.domain.product.model.Money
 import com.kgd.product.domain.product.model.Product
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
+/**
+ * 쓰기는 상품 저장과 이벤트(아웃박스 행)를 product_db 한 트랜잭션에 넣는다 — 저장만 되고 이벤트가
+ * 빠지거나, 롤백됐는데 이벤트가 나가는 일이 없다. Kafka 로 옮기는 것은 아웃박스 릴레이 몫이다.
+ */
 @Service
 class ProductService(
     private val transactionalService: ProductTransactionalService,
-    private val eventPort: ProductEventPort
+    private val eventPort: ProductEventPort,
+    private val writeAuthorizer: ProductWriteAuthorizer,
 ) : CreateProductUseCase, GetProductUseCase, UpdateProductUseCase, GetAllProductsUseCase {
 
-    override fun execute(command: CreateProductUseCase.Command): CreateProductUseCase.Result {
-        val product = command.toDomain()
-        // Transaction commits when save() returns
-        val saved = transactionalService.save(product)
-        // Publish event AFTER transaction committed
+    @Transactional(transactionManager = "productTransactionManager")
+    override fun execute(command: CreateProductUseCase.Command, requester: ProductRequester): CreateProductUseCase.Result {
+        writeAuthorizer.authorizeCreate(requester)
+        val saved = transactionalService.save(command.toDomain())
         eventPort.publishProductCreated(saved)
         return saved.toCreateResult()
     }
 
+    @Transactional(transactionManager = "productTransactionManager")
     override fun executeBulk(commands: List<CreateProductUseCase.Command>): List<CreateProductUseCase.Result> {
-        val products = commands.map { it.toDomain() }
-        // 청크 전체를 한 트랜잭션으로 저장; saveAll() 반환 시점에 커밋 완료
-        val saved = transactionalService.saveAll(products)
-        // 커밋 후 건별 이벤트 발행 (commit-after-publish 패턴 유지)
+        val saved = transactionalService.saveAll(commands.map { it.toDomain() })
         saved.forEach { eventPort.publishProductCreated(it) }
         return saved.map { it.toCreateResult() }
     }
@@ -58,8 +62,10 @@ class ProductService(
         )
     }
 
-    override fun execute(command: UpdateProductUseCase.Command): UpdateProductUseCase.Result {
+    @Transactional(transactionManager = "productTransactionManager")
+    override fun execute(command: UpdateProductUseCase.Command, requester: ProductRequester): UpdateProductUseCase.Result {
         val product = transactionalService.findById(command.id)
+        writeAuthorizer.authorizeUpdate(requester, product)
         product.update(
             name = command.name,
             price = command.price?.let { Money(it) },
@@ -76,9 +82,7 @@ class ProductService(
             originCountry = command.originCountry,
             itemReportNo = command.itemReportNo
         )
-        // Transaction commits when save() returns
         val saved = transactionalService.save(product)
-        // Publish event AFTER transaction committed
         eventPort.publishProductUpdated(saved)
         return UpdateProductUseCase.Result(
             id = requireNotNull(saved.id) { "저장된 상품에 ID가 없습니다" },

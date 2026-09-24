@@ -20,7 +20,7 @@ import kotlin.math.ln
  * | concept | atlas | `/api/v1/concepts` |
  * | service | atlas | `/api/v1/display/services` |
  * | deal_offer | commerce | `/api/v1/deal/sections` |
- * | product | commerce | `/api/products` |
+ * | product | commerce | `/api/v1/products` |
  *
  * 응답은 Map 으로 받아 손으로 꺼낸다 — 데이터 클래스에 필드만 더하고 매핑을 빼먹으면 기본값이
  * 조용히 이긴다(PlaceApiClient 와 같은 이유). 비공개·비공개 상태(DRAFT · HOLD · 비밀 게임)는
@@ -182,7 +182,7 @@ class UnifiedSourceApiClient(
         val docs = mutableListOf<UnifiedIndexDocument>()
         var page = 0
         do {
-            val data = commerceWebClient.getData("/api/products?page=$page&size=$PAGE")
+            val data = commerceWebClient.getData("/api/v1/products?page=$page&size=$PAGE")
             for (product in data.list("products")) {
                 val id = product.str("id") ?: continue
                 docs += UnifiedIndexDocument(

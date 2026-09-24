@@ -3,9 +3,12 @@ package com.kgd.product.application.product.usecase
 import java.math.BigDecimal
 
 interface CreateProductUseCase {
-    fun execute(command: Command): Result
+    fun execute(command: Command, requester: ProductRequester): Result
 
-    /** 대량 적재 — 한 트랜잭션에 N건 저장 후 건별 Kafka 이벤트 발행 (ETL 시드 경로) */
+    /**
+     * 대량 적재 — 한 트랜잭션에 N건 저장 + 건별 이벤트를 아웃박스에 (ETL 시드 경로).
+     * 요청자가 없다 — 클러스터 안 배치만 닿는 `/internal` 경로 전용이다.
+     */
     fun executeBulk(commands: List<Command>): List<Result>
 
     data class Command(

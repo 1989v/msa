@@ -19,16 +19,18 @@
 
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
-| POST | `/api/products` | 상품 생성 |
-| GET | `/api/products` | 상품 목록 (페이지네이션) |
-| GET | `/api/products/{id}` | 상품 단건 조회 |
-| PUT | `/api/products/{id}` | 상품 수정 |
+| POST | `/api/v1/products` | 상품 생성 (ROLE_SELLER·ROLE_ADMIN, 판매자 행이 생기기 전까지는 어드민만) |
+| GET | `/api/v1/products` | 상품 목록 (페이지네이션) |
+| GET | `/api/v1/products/{id}` | 상품 단건 조회 |
+| PUT | `/api/v1/products/{id}` | 상품 수정 (생성과 같은 권한) |
+| POST | `/internal/products/bulk` | 일괄 등록 — 클러스터 안 search-batch 전용, 게이트웨이 라우트 없음 |
 
 ### 상품 생성 예시
 
 ```bash
-curl -X POST http://localhost:8081/api/products \
+curl -X POST http://localhost:8081/api/v1/products \
   -H "Content-Type: application/json" \
+  -H "X-User-Id: 1" -H "X-User-Roles: ROLE_ADMIN" \
   -d '{"name": "테스트 상품", "price": 15000, "stock": 100}'
 ```
 
@@ -36,10 +38,10 @@ curl -X POST http://localhost:8081/api/products \
 
 ```bash
 # 기본 (0페이지, 100개)
-curl "http://localhost:8081/api/products"
+curl "http://localhost:8081/api/v1/products"
 
 # 페이지 지정
-curl "http://localhost:8081/api/products?page=0&size=50"
+curl "http://localhost:8081/api/v1/products?page=0&size=50"
 ```
 
 ## 로컬 실행

@@ -6,7 +6,7 @@
 ## 파이프라인
 
 ```
-오픈데이터  ──normalize.py──▶  products.jsonl  ──search:batch(seed job)──▶  POST /api/products/bulk
+오픈데이터  ──normalize.py──▶  products.jsonl  ──search:batch(seed job)──▶  POST /internal/products/bulk
 (식약처/참가격/영양표준)        (정규화 산출물)         ProductSeedIngestTasklet              │
                                                                                           ▼
                                                             product → Kafka(product.item.created)

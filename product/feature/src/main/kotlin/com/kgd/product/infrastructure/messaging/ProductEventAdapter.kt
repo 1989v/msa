@@ -1,22 +1,26 @@
 package com.kgd.product.infrastructure.messaging
 
+import com.kgd.common.messaging.outbox.OutboxPort
 import com.kgd.product.application.product.port.ProductEventPort
 import com.kgd.product.domain.product.model.Product
 import com.kgd.product.infrastructure.messaging.event.ProductCreatedEvent
 import com.kgd.product.infrastructure.messaging.event.ProductUpdatedEvent
-import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
+import tools.jackson.databind.ObjectMapper
 
+/**
+ * 상품 이벤트를 product_db 의 아웃박스에 적는다. 호출자의 트랜잭션(상품 저장)과 함께 커밋되고,
+ * Kafka 발행은 `productOutboxPollingPublisher` 가 한다. 키는 상품 id.
+ */
 @Component
 class ProductEventAdapter(
-    private val kafkaTemplate: KafkaTemplate<String, Any>,
+    @Qualifier("productOutboxPort") private val outboxPort: OutboxPort,
+    private val objectMapper: ObjectMapper,
     @Value("\${kafka.topics.product-created}") private val createdTopic: String,
     @Value("\${kafka.topics.product-updated}") private val updatedTopic: String
 ) : ProductEventPort {
-
-    private val log = KotlinLogging.logger {}
 
     override fun publishProductCreated(product: Product) {
         val event = ProductCreatedEvent(
@@ -37,11 +41,7 @@ class ProductEventAdapter(
             originCountry = product.originCountry,
             itemReportNo = product.itemReportNo
         )
-        kafkaTemplate.send(createdTopic, product.id.toString(), event)
-            .whenComplete { _, ex ->
-                if (ex != null) log.error(ex) { "Failed to publish ProductCreatedEvent: productId=${product.id}" }
-                else log.info { "Published ProductCreatedEvent: productId=${product.id}" }
-            }
+        outboxPort.save(AGGREGATE_TYPE, event.productId, createdTopic, objectMapper.writeValueAsString(event))
     }
 
     override fun publishProductUpdated(product: Product) {
@@ -63,10 +63,10 @@ class ProductEventAdapter(
             originCountry = product.originCountry,
             itemReportNo = product.itemReportNo
         )
-        kafkaTemplate.send(updatedTopic, product.id.toString(), event)
-            .whenComplete { _, ex ->
-                if (ex != null) log.error(ex) { "Failed to publish ProductUpdatedEvent: productId=${product.id}" }
-                else log.info { "Published ProductUpdatedEvent: productId=${product.id}" }
-            }
+        outboxPort.save(AGGREGATE_TYPE, event.productId, updatedTopic, objectMapper.writeValueAsString(event))
+    }
+
+    private companion object {
+        const val AGGREGATE_TYPE = "Product"
     }
 }

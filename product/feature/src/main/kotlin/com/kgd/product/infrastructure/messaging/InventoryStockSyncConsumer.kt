@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 /**
- * ADR-0029 PR-7 — inventory 의 stock 변경 이벤트(`inventory.stock.{reserved,released,received}`)를
+ * ADR-0029 PR-7 — inventory 의 stock 변경 이벤트(`inventory.stock.{reserved,released,received,confirmed,restocked}`)를
  * 구독해 product 의 read-only 재고 캐시(`products.stock`) 를 동기화한다.
  *
  * 이전에는 멱등 체크가 zero 였다 (Verification Follow-up §2). 본 PR 에서 common 의
@@ -44,6 +44,9 @@ class InventoryStockSyncConsumer(
             "inventory.stock.reserved",
             "inventory.stock.released",
             "inventory.stock.received",
+            // 확정은 가용 수량을 바꾸지 않지만 페이로드의 절대값으로 맞춰 둔다. restocked 는 클레임 재입고용이다.
+            "inventory.stock.confirmed",
+            "inventory.stock.restocked",
         ],
         groupId = CONSUMER_GROUP,
         containerFactory = "kafkaListenerContainerFactory",

@@ -13,7 +13,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/api/orders")
+@RequestMapping("/api/v1/orders")
 class OrderController(
     private val placeOrderUseCase: PlaceOrderUseCase,
     private val getOrderUseCase: GetOrderUseCase,

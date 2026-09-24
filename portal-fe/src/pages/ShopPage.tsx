@@ -25,7 +25,7 @@ import { escapeHtml } from 'card-dispenser';
 
 const PAGE_SIZE = 20;
 
-/** 브라우즈(/api/products)와 검색(/api/search/products) 결과를 카드 렌더용으로 통일 */
+/** 브라우즈(/api/v1/products)와 검색(/api/search/products) 결과를 카드 렌더용으로 통일 */
 interface DisplayProduct {
   key: string;
   productId: string;

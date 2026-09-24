@@ -30,14 +30,14 @@ Total Task Groups: 16 · 단계 P0~P7 (단계 끝마다 커밋·푸시·배포·
 **Dependencies:** Task Group 1
 **Phase:** P0
 **Required Skills:** Kotlin, Spring Security 헤더 규약, Spring Cloud Gateway, React
-- [ ] 2.0 Complete P0 defects
-  - [ ] 2.1 테스트: 상품 쓰기 비판매자·타인 403 / 어드민 200 · 헤더 없음 거부 · stats ROLE_USER 403 · 2라인 중 1라인 부족 → 예약 0행 + `reservation.failed` · 확정·만료·해제·입고 `inventory.stock.*` 4종 · 게이트웨이 무토큰 401/역할 403/`/internal` 라우트 없음 (7)
-  - [ ] 2.2 `/api/products`→`/api/v1/products`, `/api/orders`→`/api/v1/orders` (게이트웨이·portal-fe `shopApi.ts`·admin-fe 동시), bulk → `/internal/products/bulk` + search-batch `ProductApiClient` + NetworkPolicy
-  - [ ] 2.3 상품 쓰기 권한: 게이트웨이 ROLE_SELLER|ROLE_ADMIN, 서비스 소유 검사(P1 전까지는 ROLE_ADMIN 만 통과 — 판매자 행이 아직 없다)
-  - [ ] 2.4 stats → `/api/v1/admin/orders/stats/**`
-  - [ ] 2.5 product 이벤트를 아웃박스로(TG1 테이블)
-  - [ ] 2.6 inventory: 주문 단위 예약 한 트랜잭션, inventory id 오름차순 `FOR UPDATE`, 부족은 `inventory.reservation.failed`; 만료·확정·해제·입고 동기화 이벤트; product `InventoryStockSyncConsumer` 에 confirmed·restocked 구독
-  - [ ] 2.7 Verify: `$G :product:feature:test --tests '*ProductController*' :inventory:feature:test --tests '*Reservation*' :gateway:test --tests '*RouteAuth*' && (cd portal-fe && npx tsc --noEmit -p .)`
+- [x] 2.0 Complete P0 defects
+  - [x] 2.1 테스트: 상품 쓰기 비판매자·타인 403 / 어드민 200 · 헤더 없음 거부 · stats ROLE_USER 403 · 2라인 중 1라인 부족 → 예약 0행 + `reservation.failed` · 확정·만료·해제·입고 `inventory.stock.*` 4종 · 게이트웨이 무토큰 401/역할 403/`/internal` 라우트 없음 (7)
+  - [x] 2.2 `/api/products`→`/api/v1/products`, `/api/orders`→`/api/v1/orders` (게이트웨이·portal-fe `shopApi.ts`·admin-fe 동시), bulk → `/internal/products/bulk` + search-batch `ProductApiClient` + NetworkPolicy
+  - [x] 2.3 상품 쓰기 권한: 게이트웨이 ROLE_SELLER|ROLE_ADMIN, 서비스 소유 검사(P1 전까지는 ROLE_ADMIN 만 통과 — 판매자 행이 아직 없다)
+  - [x] 2.4 stats → `/api/v1/admin/orders/stats/**`
+  - [x] 2.5 product 이벤트를 아웃박스로(TG1 테이블)
+  - [x] 2.6 inventory: 주문 단위 예약 한 트랜잭션, inventory id 오름차순 `FOR UPDATE`, 부족은 `inventory.reservation.failed`; 만료·확정·해제·입고 동기화 이벤트; product `InventoryStockSyncConsumer` 에 confirmed·restocked 구독
+  - [x] 2.7 Verify: `$G :product:feature:test --tests '*ProductController*' :inventory:feature:test --tests '*Reservation*' :gateway:test --tests '*RouteAuth*' && (cd portal-fe && npx tsc --noEmit -p tsconfig.app.json)`
 **Acceptance Criteria:** 운영 배포 후 ROLE_USER 토큰으로 `PUT /api/v1/products/{id}` 403, 아웃박스 적체 0
 
 **P0 배포:** 커밋·푸시 → Argo Synced → 적체 게이지 0 · 403 확인 · commerce 메모리 기록
@@ -77,7 +77,7 @@ Total Task Groups: 16 · 단계 P0~P7 (단계 끝마다 커밋·푸시·배포·
   - [ ] 5.1 테스트: 입점 신청 폼 검증 · 판매자 포털 상품 목록이 자기 것만 (2, vitest)
   - [ ] 5.2 portal-fe `/shop/seller/apply` · `/shop/seller/products`(등록·수정), admin-fe 판매자 신청·정지·수수료율 화면
   - [ ] 5.3 `PrivacyPage.tsx` 수집 항목(판매자 정보) · 보존기간(정산 기록 5년) — 상수와 문구 함께
-  - [ ] 5.4 Verify: `(cd portal-fe && npx vitest run src/pages/seller && npx tsc --noEmit -p .) && (cd admin/frontend && npx tsc --noEmit -p .)` + CDP 4조합 캡처
+  - [ ] 5.4 Verify: `(cd portal-fe && npx vitest run src/pages/seller && npx tsc --noEmit -p tsconfig.app.json) && (cd admin/frontend && npx tsc --noEmit -p tsconfig.app.json)` + CDP 4조합 캡처
 **Acceptance Criteria:** 운영에서 신청→승인→상품 등록 1회
 
 **P1 배포:** auth 서브모듈 → 본체 순 푸시, 신청·승인·역할 확인
@@ -136,7 +136,7 @@ Total Task Groups: 16 · 단계 P0~P7 (단계 끝마다 커밋·푸시·배포·
 - [ ] 9.0 Complete cart/sheet FE
   - [ ] 9.1 테스트: 주문서 금액 분해 렌더 · 만료 시 재생성 안내 (2, vitest)
   - [ ] 9.2 portal-fe 장바구니 · 주문서(쿠폰 선택·포인트 입력·판매자별 배송비), admin-fe 쿠폰 관리
-  - [ ] 9.3 Verify: `(cd portal-fe && npx vitest run src/pages/shop && npx tsc --noEmit -p .)` + CDP 4조합
+  - [ ] 9.3 Verify: `(cd portal-fe && npx vitest run src/pages/shop && npx tsc --noEmit -p tsconfig.app.json)` + CDP 4조합
 **Acceptance Criteria:** 운영에서 주문서 1건 생성
 
 **P3 배포:** `promotion_db` 생성 → 푸시 → 주문서 생성 확인
@@ -176,7 +176,7 @@ Total Task Groups: 16 · 단계 P0~P7 (단계 끝마다 커밋·푸시·배포·
 - [ ] 12.0 Complete saga E2E
   - [ ] 12.1 E2E: 정상 · 결제 거절 · 재고 부족(PG 0회) · UNKNOWN 대기 → 승인 · UNKNOWN 결론 FAILED → 보상 · 보류 만료 (a) · 보류 만료 (b) · 피벗 뒤 재시도/STUCK · 0원 · 같은 키 중복 (10) — `CI=true` 에서 Docker 부재는 실패
   - [ ] 12.2 portal-fe 주문 접수 → 결제 대기(폴링) → 결과 화면, 주문 상세
-  - [ ] 12.3 Verify: `$G :commerce:app:test --tests '*SagaE2E*' && (cd portal-fe && npx tsc --noEmit -p .)`
+  - [ ] 12.3 Verify: `$G :commerce:app:test --tests '*SagaE2E*' && (cd portal-fe && npx tsc --noEmit -p tsconfig.app.json)`
 **Acceptance Criteria:** (b) 분기 회귀 주입 빨간불 기록, 운영 주문 1건 CONFIRMED + 이행 생성
 
 **P4 배포:** 확장 마이그레이션 → 코드 → 운영 주문 1건 사가 COMPLETED 확인 → 남은 ACTIVE 예약 0 확인

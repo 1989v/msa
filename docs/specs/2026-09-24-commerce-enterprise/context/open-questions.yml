@@ -9,3 +9,15 @@ questions:
     status: closed
     question: 새 도메인 4개(payment·seller·promotion·settlement)의 전용 DB 가 commerce 1200Mi 한도 안에 들어가나
     answer: Hikari 풀을 도메인당 max 3 로 두고, 단계마다 배포 후 컨테이너 메모리 실측. 넘으면 한도 조정이 아니라 풀·스레드 축소(무료 티어 제약)
+  - id: Q3
+    phase: post-impl
+    status: open
+    question: ProductExceptionHandler·OrderExceptionHandler 가 범위 없는 HIGHEST_PRECEDENCE 전역 advice — commerce 전 컨트롤러의 BusinessException 을 서로 가로챈다(기존 결함, TG2 는 양쪽에 401/403 매핑만)
+  - id: Q4
+    phase: post-impl
+    status: open
+    question: admin FE 가 부르는 DELETE /api/v1/products/{id} · PATCH /api/v1/orders/{id}/status 백엔드 부재(기존 결함)
+  - id: Q5
+    phase: post-impl
+    status: open
+    question: quant LiveOrderController 도 /api/v1/orders 사용 — 게이트웨이는 commerce 로만 보냄(이름 충돌)

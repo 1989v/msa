@@ -18,6 +18,8 @@ class OrderExceptionHandler {
     fun handleBusinessException(e: BusinessException): ResponseEntity<ApiResponse<Nothing>> {
         val status = when (e.errorCode) {
             ErrorCode.NOT_FOUND -> HttpStatus.NOT_FOUND
+            ErrorCode.UNAUTHORIZED -> HttpStatus.UNAUTHORIZED
+            ErrorCode.FORBIDDEN -> HttpStatus.FORBIDDEN
             ErrorCode.INVALID_ORDER_STATUS -> HttpStatus.BAD_REQUEST
             ErrorCode.EXTERNAL_API_ERROR -> HttpStatus.BAD_GATEWAY
             else -> HttpStatus.INTERNAL_SERVER_ERROR

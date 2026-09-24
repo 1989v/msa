@@ -13,11 +13,13 @@ import com.kgd.inventory.application.inventory.usecase.GetInventoryUseCase
 import com.kgd.inventory.application.inventory.usecase.ReceiveStockUseCase
 import com.kgd.inventory.application.inventory.usecase.ReleaseStockByOrderUseCase
 import com.kgd.inventory.application.inventory.usecase.ReleaseStockUseCase
+import com.kgd.inventory.application.inventory.usecase.ReserveOrderStockUseCase
 import com.kgd.inventory.application.inventory.usecase.ReserveStockUseCase
 import com.kgd.inventory.domain.inventory.event.InventoryEvent
 import com.kgd.inventory.domain.inventory.exception.InsufficientStockException
 import com.kgd.inventory.domain.inventory.model.Inventory
 import com.kgd.inventory.domain.inventory.service.WarehouseSelector
+import com.kgd.inventory.domain.reservation.event.ReservationEvent
 import com.kgd.inventory.domain.reservation.model.Reservation
 import com.kgd.inventory.domain.reservation.model.ReservationStatus
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -35,13 +37,14 @@ class InventoryService(
     @param:Autowired(required = false)
     private val cachePort: InventoryCachePort? = null,
 ) : ReserveStockUseCase, ReleaseStockUseCase, ConfirmStockUseCase, ReceiveStockUseCase, GetInventoryUseCase,
-    ConfirmStockByOrderUseCase, ReleaseStockByOrderUseCase {
+    ConfirmStockByOrderUseCase, ReleaseStockByOrderUseCase, ReserveOrderStockUseCase {
 
     private val log = KotlinLogging.logger {}
 
     companion object {
         private const val AGGREGATE_TYPE = "Inventory"
         private const val RESERVATION_TTL_MINUTES = 30L
+        private const val REASON_INSUFFICIENT_STOCK = "INSUFFICIENT_STOCK"
     }
 
     @Transactional
@@ -74,19 +77,92 @@ class InventoryService(
         }
 
         val inventory = resolveInventoryForReserve(command)
-        val warehouseId = inventory.warehouseId
+        val (reservationId, savedInventory) = reserveOn(inventory, command.orderId, command.qty)
 
-        inventory.reserve(command.qty)
+        return ReserveStockUseCase.Result(
+            reservationId = reservationId,
+            productId = command.productId,
+            availableQty = savedInventory.getAvailableQty(),
+            reservedQty = savedInventory.getReservedQty(),
+        )
+    }
+
+    /**
+     * 주문 단위 예약. 모든 라인의 재고 행을 id 오름차순으로 잠근 뒤 **전부 판정하고 나서** 쓴다 —
+     * 모자란 라인이 하나라도 있으면 아무것도 쓰지 않고 `inventory.reservation.failed` 만 남긴다.
+     * 잠금이 커밋까지 유지되므로 판정과 차감 사이에 다른 주문이 끼어들지 못한다.
+     */
+    @Transactional
+    override fun execute(command: ReserveOrderStockUseCase.Command): ReserveOrderStockUseCase.Result {
+        // 재배달 — 이미 이 주문의 예약이 있으면(전부 아니면 전무라 있으면 전부다) 그대로 돌려준다.
+        val existing = reservationRepository.findAllByOrderId(command.orderId)
+            .filter { it.getStatus() == ReservationStatus.ACTIVE }
+        if (existing.isNotEmpty()) {
+            log.info { "Order reservation already exists, returning it: orderId=${command.orderId}" }
+            return ReserveOrderStockUseCase.Result.Reserved(existing.map { it.toReservedLine() })
+        }
+
+        // 같은 상품이 여러 라인이면 합쳐서 한 창고에서 낸다 — 라인별로 고르면 합계가 한 창고를 넘을 수 있다.
+        val demand = linkedMapOf<Long, Int>()
+        command.lines.forEach { line ->
+            require(line.qty > 0) { "예약 수량은 0보다 커야 합니다: productId=${line.productId}, qty=${line.qty}" }
+            demand.merge(line.productId, line.qty, Int::plus)
+        }
+
+        val candidates = inventoryRepository.lockAllByProductIds(demand.keys).groupBy { it.productId }
+        val picks = demand.map { (productId, qty) ->
+            Triple(productId, qty, WarehouseSelector.select(candidates[productId].orEmpty(), qty))
+        }
+
+        val shortages = picks.filter { it.third == null }.map { (productId, qty, _) ->
+            ReserveOrderStockUseCase.Shortage(
+                productId = productId,
+                requestedQty = qty,
+                availableQty = candidates[productId].orEmpty().maxOfOrNull { it.getAvailableQty() } ?: 0,
+            )
+        }
+        if (shortages.isNotEmpty()) {
+            publishReservationFailed(command.orderId, shortages)
+            return ReserveOrderStockUseCase.Result.Failed(shortages)
+        }
+
+        val reserved = picks.map { (productId, qty, inventory) ->
+            val (reservationId, _) = reserveOn(requireNotNull(inventory), command.orderId, qty)
+            ReserveOrderStockUseCase.ReservedLine(reservationId, productId, inventory.warehouseId, qty)
+        }
+        return ReserveOrderStockUseCase.Result.Reserved(reserved)
+    }
+
+    private fun publishReservationFailed(orderId: Long, shortages: List<ReserveOrderStockUseCase.Shortage>) {
+        log.info { "Order reservation failed (insufficient stock): orderId=$orderId, shortages=$shortages" }
+        val event = ReservationEvent.Failed(
+            orderId = orderId,
+            reason = REASON_INSUFFICIENT_STOCK,
+            shortages = shortages.map { ReservationEvent.Failed.Shortage(it.productId, it.requestedQty, it.availableQty) },
+        )
+        outboxPort.save(
+            aggregateType = "Reservation",
+            aggregateId = orderId,
+            eventType = "inventory.reservation.failed",
+            payload = objectMapper.writeValueAsString(event),
+            partitionKey = orderId.toString(),
+            headers = emptyMap(),
+        )
+    }
+
+    /** 한 재고 행에서 차감하고 예약 행과 `inventory.stock.reserved` 를 남긴다. */
+    private fun reserveOn(inventory: Inventory, orderId: Long, qty: Int): Pair<Long, Inventory> {
+        inventory.reserve(qty)
         val savedInventory = inventoryRepository.save(inventory)
 
         // Redis 캐시 동기화 (DB 결과 기준)
-        syncCache(command.productId, warehouseId, savedInventory)
+        syncCache(inventory.productId, inventory.warehouseId, savedInventory)
 
         val reservation = Reservation.create(
-            orderId = command.orderId,
-            productId = command.productId,
-            warehouseId = warehouseId,
-            qty = command.qty,
+            orderId = orderId,
+            productId = inventory.productId,
+            warehouseId = inventory.warehouseId,
+            qty = qty,
             ttlMinutes = RESERVATION_TTL_MINUTES,
         )
         val savedReservation = reservationRepository.save(reservation)
@@ -97,21 +173,22 @@ class InventoryService(
             ?: throw IllegalStateException("저장된 예약의 ID가 null입니다")
 
         val event = InventoryEvent.StockReserved(
-            productId = command.productId,
-            warehouseId = warehouseId,
-            qty = command.qty,
-            orderId = command.orderId,
+            productId = inventory.productId,
+            warehouseId = inventory.warehouseId,
+            qty = qty,
+            orderId = orderId,
             availableQty = savedInventory.getAvailableQty(),
         )
         outboxPort.save(AGGREGATE_TYPE, inventoryId, "inventory.stock.reserved", objectMapper.writeValueAsString(event))
-
-        return ReserveStockUseCase.Result(
-            reservationId = reservationId,
-            productId = command.productId,
-            availableQty = savedInventory.getAvailableQty(),
-            reservedQty = savedInventory.getReservedQty(),
-        )
+        return reservationId to savedInventory
     }
+
+    private fun Reservation.toReservedLine() = ReserveOrderStockUseCase.ReservedLine(
+        reservationId = requireNotNull(id) { "저장된 예약의 ID가 null입니다" },
+        productId = productId,
+        warehouseId = warehouseId,
+        qty = qty,
+    )
 
     @Transactional
     override fun execute(command: ReleaseStockUseCase.Command): ReleaseStockUseCase.Result {

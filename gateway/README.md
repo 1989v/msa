@@ -17,8 +17,11 @@ JWT 인증/인가, 요청 라우팅, 로깅 필터를 담당한다.
 | 경로 | 대상 서비스 | 인증 |
 |------|------------|------|
 | `/api/auth/**` | auth-service | 불필요 |
-| `/api/products/**` | product-service | JWT 필요 |
-| `/api/orders/**` | order-service | JWT 필요 |
+| `/api/v1/products/**` (GET) | commerce | 불필요 |
+| `/api/v1/products/**` (쓰기) | commerce | ROLE_SELLER · ROLE_ADMIN |
+| `/api/v1/orders/**` | commerce | JWT 필요 |
+| `/api/v1/admin/orders/**` | commerce | ROLE_ADMIN |
+| `/internal/**` | — | 라우트 없음 (클러스터 안 전용) |
 | `/api/search/**` | search-service | JWT 필요 |
 
 ## JWT 인증 흐름

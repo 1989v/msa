@@ -83,8 +83,8 @@ class GatewayRoutingSpec(
             Then("/api/v1/wishlist 는 401") {
                 status("/api/v1/wishlist") shouldBe 401
             }
-            Then("/api/orders 는 401") {
-                status("/api/orders") shouldBe 401
+            Then("/api/v1/orders 는 401") {
+                status("/api/v1/orders") shouldBe 401
             }
             // 권한 부여 API 는 auth 서비스에 자체 검증이 없어 게이트웨이가 유일한 경계다.
             // 공개 라우트인 /api/auth/** 가 이 경로를 먼저 삼키면 안 된다.

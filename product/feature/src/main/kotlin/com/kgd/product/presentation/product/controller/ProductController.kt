@@ -4,9 +4,8 @@ import com.kgd.common.response.ApiResponse
 import com.kgd.product.application.product.usecase.CreateProductUseCase
 import com.kgd.product.application.product.usecase.GetAllProductsUseCase
 import com.kgd.product.application.product.usecase.GetProductUseCase
+import com.kgd.product.application.product.usecase.ProductRequester
 import com.kgd.product.application.product.usecase.UpdateProductUseCase
-import com.kgd.product.presentation.product.dto.BulkCreateProductRequest
-import com.kgd.product.presentation.product.dto.BulkCreateProductResponse
 import com.kgd.product.presentation.product.dto.CreateProductRequest
 import com.kgd.product.presentation.product.dto.ProductListResponse
 import com.kgd.product.presentation.product.dto.ProductResponse
@@ -17,8 +16,12 @@ import jakarta.validation.constraints.Min
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 
+/**
+ * 상품 공개 API. 조회는 공개, 쓰기는 게이트웨이(ROLE_SELLER|ROLE_ADMIN)와 서비스가 두 번 판정한다.
+ * 일괄 등록은 여기 없다 — 클러스터 안 배치 전용 [ProductInternalController] 에 있다.
+ */
 @RestController
-@RequestMapping("/api/products")
+@RequestMapping("/api/v1/products")
 class ProductController(
     private val createProductUseCase: CreateProductUseCase,
     private val getProductUseCase: GetProductUseCase,
@@ -27,17 +30,13 @@ class ProductController(
 ) {
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
-    fun createProduct(@Valid @RequestBody request: CreateProductRequest): ApiResponse<ProductResponse> {
-        val result = createProductUseCase.execute(request.toCommand())
+    fun createProduct(
+        @Valid @RequestBody request: CreateProductRequest,
+        @RequestHeader(value = "X-User-Id", required = false) userId: String?,
+        @RequestHeader(value = "X-User-Roles", required = false) roles: String?,
+    ): ApiResponse<ProductResponse> {
+        val result = createProductUseCase.execute(request.toCommand(), ProductRequester.of(userId, roles))
         return ApiResponse.success(ProductResponse.from(result))
-    }
-
-    /** 대량 적재 — ETL 시드 경로. 청크 단위 N건을 한 트랜잭션으로 저장 후 건별 이벤트 발행. */
-    @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping("/bulk")
-    fun createProductsBulk(@Valid @RequestBody request: BulkCreateProductRequest): ApiResponse<BulkCreateProductResponse> {
-        val results = createProductUseCase.executeBulk(request.products.map { it.toCommand() })
-        return ApiResponse.success(BulkCreateProductResponse.from(results))
     }
 
     @GetMapping
@@ -58,9 +57,11 @@ class ProductController(
     @PutMapping("/{id}")
     fun updateProduct(
         @PathVariable id: Long,
-        @Valid @RequestBody request: UpdateProductRequest
+        @Valid @RequestBody request: UpdateProductRequest,
+        @RequestHeader(value = "X-User-Id", required = false) userId: String?,
+        @RequestHeader(value = "X-User-Roles", required = false) roles: String?,
     ): ApiResponse<ProductResponse> {
-        val result = updateProductUseCase.execute(request.toCommand(id))
+        val result = updateProductUseCase.execute(request.toCommand(id), ProductRequester.of(userId, roles))
         return ApiResponse.success(ProductResponse.from(result))
     }
 }

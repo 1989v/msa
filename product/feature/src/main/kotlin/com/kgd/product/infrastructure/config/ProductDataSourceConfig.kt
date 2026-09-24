@@ -101,9 +101,9 @@ class ProductDataSourceConfig {
         @Qualifier("productDataSource") dataSource: DataSource,
     ): LocalContainerEntityManagerFactoryBean =
         builder.dataSource(dataSource)
-            // common 의 멱등 원장 엔티티도 이 EMF 가 관리해야 한다 — 폴드 도메인 공통 규약.
-            // 빼면 ProcessedEventEntity 가 "Not a managed type" 으로 컨텍스트가 깨진다.
-            .packages("com.kgd.product", "com.kgd.common.messaging.idempotency")
+            // common 의 멱등 원장·아웃박스 엔티티도 이 EMF 가 관리해야 한다 — 폴드 도메인 공통 규약.
+            // 빼면 ProcessedEventEntity·OutboxEntity 가 "Not a managed type" 으로 컨텍스트가 깨진다.
+            .packages("com.kgd.product", "com.kgd.common.messaging.outbox", "com.kgd.common.messaging.idempotency")
             .persistenceUnit("product")
             .build()
 

@@ -4,6 +4,7 @@ import com.kgd.product.application.product.port.ProductEventPort
 import com.kgd.product.application.product.usecase.CreateProductUseCase
 import com.kgd.product.application.product.usecase.GetAllProductsUseCase
 import com.kgd.product.application.product.usecase.GetProductUseCase
+import com.kgd.product.application.product.usecase.ProductRequester
 import com.kgd.product.application.product.usecase.UpdateProductUseCase
 import com.kgd.product.domain.product.exception.ProductNotFoundException
 import com.kgd.product.domain.product.model.Money
@@ -24,7 +25,8 @@ import org.springframework.data.domain.PageRequest
 class ProductServiceTest : BehaviorSpec({
     val transactionalService = mockk<ProductTransactionalService>()
     val eventPort = mockk<ProductEventPort>(relaxed = true)
-    val service = ProductService(transactionalService, eventPort)
+    val service = ProductService(transactionalService, eventPort, ProductWriteAuthorizer())
+    val admin = ProductRequester("1", setOf("ROLE_ADMIN"))
 
     beforeEach { clearMocks(transactionalService, eventPort) }
 
@@ -34,7 +36,7 @@ class ProductServiceTest : BehaviorSpec({
                 val savedProduct = Product.restore(1L, "테스트", Money(1000.toBigDecimal()), 10, ProductStatus.ACTIVE, java.time.LocalDateTime.now())
                 every { transactionalService.save(any()) } returns savedProduct
 
-                val result = service.execute(CreateProductUseCase.Command("테스트", 1000.toBigDecimal(), 10))
+                val result = service.execute(CreateProductUseCase.Command("테스트", 1000.toBigDecimal(), 10), admin)
 
                 result.id shouldBe 1L
                 result.name shouldBe "테스트"
@@ -75,7 +77,7 @@ class ProductServiceTest : BehaviorSpec({
                 every { transactionalService.findById(1L) } returns existingProduct
                 every { transactionalService.save(any()) } returns updatedProduct
 
-                val result = service.execute(UpdateProductUseCase.Command(1L, "수정상품", 2000.toBigDecimal()))
+                val result = service.execute(UpdateProductUseCase.Command(1L, "수정상품", 2000.toBigDecimal()), admin)
 
                 result.name shouldBe "수정상품"
                 result.price shouldBe 2000.toBigDecimal()
@@ -86,7 +88,7 @@ class ProductServiceTest : BehaviorSpec({
             then("ProductNotFoundException이 발생해야 한다") {
                 every { transactionalService.findById(999L) } throws ProductNotFoundException(999L)
                 shouldThrow<ProductNotFoundException> {
-                    service.execute(UpdateProductUseCase.Command(999L, "수정상품", null))
+                    service.execute(UpdateProductUseCase.Command(999L, "수정상품", null), admin)
                 }
             }
         }

@@ -79,6 +79,8 @@ class CommerceContextLoadSpec(
                 ctx.containsBean("inventoryOutboxPort").shouldBeTrue()
                 ctx.containsBean("inventoryOutboxPollingPublisher").shouldBeTrue()
                 ctx.containsBean("inventoryIdempotentEventHandler").shouldBeTrue()
+                ctx.containsBean("productOutboxPort").shouldBeTrue()
+                ctx.containsBean("productOutboxPollingPublisher").shouldBeTrue()
                 // 도메인별 retention cleanup 스케줄러 (common 단일 스케줄러의 다중-port 모호성 회피)
                 ctx.containsBean("inventoryIdempotentEventCleanupScheduler").shouldBeTrue()
                 ctx.containsBean("fulfillmentIdempotentEventCleanupScheduler").shouldBeTrue()
@@ -90,6 +92,71 @@ class CommerceContextLoadSpec(
                     "dealDataSource", "dealEntityManagerFactory",
                     "dealTransactionManager", "dealFlyway",
                 ).forEach { ctx.containsBean(it).shouldBeTrue() }
+            }
+
+        // 상품 이벤트는 직접 send 가 아니라 product_db 아웃박스 행이다 — 행이 실제로 늘었는지로 판정한다.
+        Then("상품 등록이 product_db 아웃박스에 product.item.created 행을 남긴다")
+            .config(enabledIf = { dockerAvailable }) {
+                val outbox = ctx.getBean(com.kgd.product.infrastructure.outbox.ProductOutboxRepository::class.java)
+                val before = outbox.findAll().count { it.eventType == "product.item.created" }
+
+                ctx.getBean(com.kgd.product.application.product.usecase.CreateProductUseCase::class.java).execute(
+                    com.kgd.product.application.product.usecase.CreateProductUseCase.Command(
+                        name = "outbox-probe", price = java.math.BigDecimal("1000"), stock = 0,
+                    ),
+                    com.kgd.product.application.product.usecase.ProductRequester("1", setOf("ROLE_ADMIN")),
+                )
+
+                outbox.findAll().count { it.eventType == "product.item.created" } shouldBe before + 1
+            }
+
+        // 주문 단위 예약을 실제 MySQL 로 — FOR UPDATE 잠금 쿼리가 돌고, 모자란 라인이 있으면 행이 하나도 안 남는다.
+        Then("주문 예약: 두 라인 중 한 라인이 모자라면 예약 0행 + inventory.reservation.failed 1행")
+            .config(enabledIf = { dockerAvailable }) {
+                // 도메인 모델은 이 모듈 테스트 클래스패스에 없어 JPA 저장소로 시드·조회한다.
+                val inventories = ctx.getBean(
+                    com.kgd.inventory.infrastructure.persistence.inventory.repository.InventoryJpaRepository::class.java,
+                )
+                val reservations = ctx.getBean(
+                    com.kgd.inventory.infrastructure.persistence.reservation.repository.ReservationJpaRepository::class.java,
+                )
+                val outbox = ctx.getBean(com.kgd.inventory.infrastructure.outbox.InventoryOutboxRepository::class.java)
+                val reserve = ctx.getBean(
+                    com.kgd.inventory.application.inventory.usecase.ReserveOrderStockUseCase::class.java,
+                )
+                fun seed(productId: Long, qty: Int) = inventories.save(
+                    com.kgd.inventory.infrastructure.persistence.inventory.entity.InventoryJpaEntity(
+                        productId = productId, warehouseId = 1L, availableQty = qty, reservedQty = 0,
+                    ),
+                )
+                seed(9001L, 10)
+                seed(9002L, 1)
+                fun available(productId: Long) = inventories.findByProductIdAndWarehouseId(productId, 1L)!!.availableQty
+                fun line(productId: Long, qty: Int) =
+                    com.kgd.inventory.application.inventory.usecase.ReserveOrderStockUseCase.Line(productId, qty)
+
+                val failed = reserve.execute(
+                    com.kgd.inventory.application.inventory.usecase.ReserveOrderStockUseCase.Command(
+                        orderId = 990001L, lines = listOf(line(9001L, 3), line(9002L, 5)),
+                    ),
+                )
+                (failed is com.kgd.inventory.application.inventory.usecase.ReserveOrderStockUseCase.Result.Failed)
+                    .shouldBeTrue()
+                reservations.findAllByOrderId(990001L).size shouldBe 0
+                available(9001L) shouldBe 10
+                outbox.findAll().count {
+                    it.eventType == "inventory.reservation.failed" && it.partitionKey == "990001"
+                } shouldBe 1
+
+                val reserved = reserve.execute(
+                    com.kgd.inventory.application.inventory.usecase.ReserveOrderStockUseCase.Command(
+                        orderId = 990002L, lines = listOf(line(9001L, 3)),
+                    ),
+                )
+                (reserved is com.kgd.inventory.application.inventory.usecase.ReserveOrderStockUseCase.Result.Reserved)
+                    .shouldBeTrue()
+                reservations.findAllByOrderId(990002L).size shouldBe 1
+                available(9001L) shouldBe 7
             }
 
         /**

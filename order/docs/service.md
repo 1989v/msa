@@ -60,8 +60,9 @@
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/api/orders` | 주문 생성 |
-| GET | `/api/orders/{id}` | 주문 단건 조회 |
+| POST | `/api/v1/orders` | 주문 생성 |
+| GET | `/api/v1/orders/{id}` | 주문 단건 조회 |
+| GET | `/api/v1/admin/orders/stats/**` | 매출 통계 (ROLE_ADMIN) |
 
 ## Port
 

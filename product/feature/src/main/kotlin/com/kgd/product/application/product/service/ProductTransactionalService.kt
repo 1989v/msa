@@ -10,9 +10,8 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * Handles transactional DB operations for product management.
- * Separated from ProductService to ensure Kafka events are only published
- * after the transaction commits, preventing phantom events on rollback.
+ * 상품 저장소 트랜잭션 경계. 쓰기는 [ProductService] 가 연 트랜잭션에 합류해
+ * 아웃박스 행과 함께 커밋된다.
  */
 @Service
 @Transactional
@@ -22,7 +21,7 @@ class ProductTransactionalService(
 ) {
     fun save(product: Product): Product = productRepository.save(product)
 
-    /** 대량 적재 — 청크 전체를 한 트랜잭션으로 저장 (커밋 후 호출부에서 이벤트 발행) */
+    /** 대량 적재 — 청크 전체를 한 트랜잭션으로 저장 */
     fun saveAll(products: List<Product>): List<Product> = productRepository.saveAll(products)
 
     @Transactional(readOnly = true)

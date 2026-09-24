@@ -5,7 +5,7 @@ import com.kgd.common.messaging.IdempotentEventHandler
 import com.kgd.common.messaging.IdempotentMetrics
 import com.kgd.inventory.application.inventory.usecase.ConfirmStockByOrderUseCase
 import com.kgd.inventory.application.inventory.usecase.ReleaseStockByOrderUseCase
-import com.kgd.inventory.application.inventory.usecase.ReserveStockUseCase
+import com.kgd.inventory.application.inventory.usecase.ReserveOrderStockUseCase
 import io.kotest.core.spec.style.BehaviorSpec
 import io.mockk.clearMocks
 import io.mockk.every
@@ -17,13 +17,12 @@ import java.util.UUID
 /**
  * ADR-0029 PR-8 / PR-8a (Phase 3) — 4 listeners 가 모두 common [IdempotentEventHandler] 로 이관됐다.
  *
- * - PR-8a: `onOrderCompleted` 도 [ReserveStockUseCase] 자연 멱등 보강(`InventoryService` pre-check)
- *   후 helper 로 이관.
+ * - `onOrderCompleted` 는 주문 단위 [ReserveOrderStockUseCase] 를 한 번 부른다(라인별 호출 아님).
  * - 헬퍼 mock 패턴: `process(eventId, consumerGroup)` 호출 시 lambda block 을 즉시 실행하도록 stub.
  *   멱등 skip 케이스는 block 미실행 stub 으로 표현.
  */
 class InventoryEventConsumerTest : BehaviorSpec({
-    val reserveStockUseCase = mockk<ReserveStockUseCase>()
+    val reserveOrderStockUseCase = mockk<ReserveOrderStockUseCase>()
     val confirmStockByOrderUseCase = mockk<ConfirmStockByOrderUseCase>()
     val releaseStockByOrderUseCase = mockk<ReleaseStockByOrderUseCase>()
     val objectMapper = jacksonMapperBuilder().build()
@@ -31,7 +30,7 @@ class InventoryEventConsumerTest : BehaviorSpec({
     val idempotentMetrics = mockk<IdempotentMetrics>(relaxed = true)
 
     val consumer = InventoryEventConsumer(
-        reserveStockUseCase = reserveStockUseCase,
+        reserveOrderStockUseCase = reserveOrderStockUseCase,
         confirmStockByOrderUseCase = confirmStockByOrderUseCase,
         releaseStockByOrderUseCase = releaseStockByOrderUseCase,
         objectMapper = objectMapper,
@@ -41,7 +40,7 @@ class InventoryEventConsumerTest : BehaviorSpec({
 
     beforeEach {
         clearMocks(
-            reserveStockUseCase,
+            reserveOrderStockUseCase,
             confirmStockByOrderUseCase,
             releaseStockByOrderUseCase,
             idempotentEventHandler,
@@ -82,12 +81,14 @@ class InventoryEventConsumerTest : BehaviorSpec({
                 val record = ConsumerRecord("order.order.completed", 0, 0, "1", payload)
 
                 stubProcessExecutes(orderCompletedEventId)
-                every { reserveStockUseCase.execute(any()) } returns ReserveStockUseCase.Result(1L, 100L, 8, 2)
+                every { reserveOrderStockUseCase.execute(any()) } returns ReserveOrderStockUseCase.Result.Reserved(emptyList())
 
                 consumer.onOrderCompleted(record)
 
                 verify(exactly = 1) {
-                    reserveStockUseCase.execute(match { it.orderId == 1L && it.productId == 100L && it.qty == 2 })
+                    reserveOrderStockUseCase.execute(
+                        ReserveOrderStockUseCase.Command(1L, listOf(ReserveOrderStockUseCase.Line(100L, 2))),
+                    )
                 }
                 verify(exactly = 1) {
                     idempotentEventHandler.process(eq(orderCompletedEventId), eq("inventory-service"), any())
@@ -103,7 +104,7 @@ class InventoryEventConsumerTest : BehaviorSpec({
 
                 consumer.onOrderCompleted(record)
 
-                verify(exactly = 0) { reserveStockUseCase.execute(any()) }
+                verify(exactly = 0) { reserveOrderStockUseCase.execute(any()) }
             }
         }
 
@@ -116,7 +117,7 @@ class InventoryEventConsumerTest : BehaviorSpec({
 
                 consumer.onOrderCompleted(record)
 
-                verify(exactly = 0) { reserveStockUseCase.execute(any()) }
+                verify(exactly = 0) { reserveOrderStockUseCase.execute(any()) }
                 verify(exactly = 1) {
                     idempotentEventHandler.process(eq(emptyItemsEventId), eq("inventory-service"), any())
                 }
@@ -128,11 +129,11 @@ class InventoryEventConsumerTest : BehaviorSpec({
                 val missingIdPayload = """{"orderId":3,"userId":"user1","totalAmount":10000,"status":"COMPLETED","items":[{"productId":100,"quantity":2,"unitPrice":5000}],"eventTime":"2026-04-07T10:00:00"}"""
                 val record = ConsumerRecord("order.order.completed", 0, 0, "3", missingIdPayload)
 
-                every { reserveStockUseCase.execute(any()) } returns ReserveStockUseCase.Result(1L, 100L, 8, 2)
+                every { reserveOrderStockUseCase.execute(any()) } returns ReserveOrderStockUseCase.Result.Reserved(emptyList())
 
                 consumer.onOrderCompleted(record)
 
-                verify(exactly = 1) { reserveStockUseCase.execute(match { it.orderId == 3L && it.productId == 100L }) }
+                verify(exactly = 1) { reserveOrderStockUseCase.execute(match { it.orderId == 3L && it.lines.single().productId == 100L }) }
                 verify(exactly = 1) { idempotentMetrics.missingId("inventory-service") }
                 verify(exactly = 0) { idempotentEventHandler.process(any(), any(), any()) }
             }

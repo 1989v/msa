@@ -3,7 +3,7 @@ package com.kgd.product.application.product.usecase
 import java.math.BigDecimal
 
 interface UpdateProductUseCase {
-    fun execute(command: Command): Result
+    fun execute(command: Command, requester: ProductRequester): Result
 
     data class Command(
         val id: Long,

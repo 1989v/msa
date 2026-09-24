@@ -56,10 +56,11 @@
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/api/products` | 상품 생성 |
-| GET | `/api/products/{id}` | 상품 단건 조회 |
-| GET | `/api/products` | 상품 목록 조회 |
-| PUT | `/api/products/{id}` | 상품 수정 |
+| POST | `/api/v1/products` | 상품 생성 (ROLE_SELLER·ROLE_ADMIN, 서비스가 다시 판정) |
+| GET | `/api/v1/products/{id}` | 상품 단건 조회 |
+| GET | `/api/v1/products` | 상품 목록 조회 |
+| PUT | `/api/v1/products/{id}` | 상품 수정 (생성과 같은 권한) |
+| POST | `/internal/products/bulk` | 일괄 등록 (클러스터 안 전용) |
 
 ## Port
 

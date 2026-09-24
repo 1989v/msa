@@ -6,6 +6,7 @@ import com.kgd.inventory.application.inventory.port.InventoryRepositoryPort
 import com.kgd.common.messaging.outbox.OutboxPort
 import com.kgd.inventory.application.inventory.port.ReservationRepositoryPort
 import com.kgd.inventory.application.reservation.usecase.ExpireReservationsUseCase
+import com.kgd.inventory.domain.inventory.event.InventoryEvent
 import com.kgd.inventory.domain.reservation.event.ReservationEvent
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Autowired
@@ -52,7 +53,22 @@ class ReservationExpiryService(
                 ) ?: continue
 
                 inventory.release(reservation.qty)
-                inventoryRepositoryPort.save(inventory)
+                val savedInventory = inventoryRepositoryPort.save(inventory)
+
+                // product 재고 캐시 동기화 — 해제와 같은 이벤트. 빠지면 만료 뒤로 product 재고가 적게 보인다.
+                val stockReleased = InventoryEvent.StockReleased(
+                    productId = reservation.productId,
+                    warehouseId = reservation.warehouseId,
+                    qty = reservation.qty,
+                    orderId = reservation.orderId,
+                    availableQty = savedInventory.getAvailableQty(),
+                )
+                outboxPort.save(
+                    "Inventory",
+                    requireNotNull(savedInventory.id) { "저장된 재고의 ID가 null입니다" },
+                    "inventory.stock.released",
+                    objectMapper.writeValueAsString(stockReleased),
+                )
 
                 // Publish event
                 val event = ReservationEvent.Expired(

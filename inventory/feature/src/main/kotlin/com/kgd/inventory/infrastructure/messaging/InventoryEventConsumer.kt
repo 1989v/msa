@@ -5,7 +5,7 @@ import com.kgd.common.messaging.IdempotentEventHandler
 import com.kgd.common.messaging.IdempotentMetrics
 import com.kgd.inventory.application.inventory.usecase.ConfirmStockByOrderUseCase
 import com.kgd.inventory.application.inventory.usecase.ReleaseStockByOrderUseCase
-import com.kgd.inventory.application.inventory.usecase.ReserveStockUseCase
+import com.kgd.inventory.application.inventory.usecase.ReserveOrderStockUseCase
 import com.kgd.inventory.infrastructure.messaging.event.FulfillmentCancelledEvent
 import com.kgd.inventory.infrastructure.messaging.event.FulfillmentShippedEvent
 import com.kgd.inventory.infrastructure.messaging.event.OrderCancelledEvent
@@ -26,15 +26,14 @@ import java.util.UUID
  * [IdempotentEventHandler] 로 위임된다.
  *
  * ## 적용 범위 (전 핸들러 helper 이관 완료)
- * - [onOrderCompleted] — PR-8a 에서 [ReserveStockUseCase] 자연 멱등 보강 후 helper 이관 완료.
- *   ([com.kgd.inventory.application.inventory.service.InventoryService.execute] (ReserveStockUseCase) 가
- *   `findActiveByOrderIdAndProductId` pre-check 로 idempotent return 보장.)
+ * - [onOrderCompleted] — 주문 단위 [ReserveOrderStockUseCase] 를 부른다. 이 주문의 ACTIVE 예약이 이미 있으면
+ *   새로 차감하지 않고 그대로 돌려준다(재배달 자연 멱등).
  * - [onFulfillmentShipped] / [onFulfillmentCancelled] / [onOrderCancelled] — `ConfirmStockByOrderUseCase` /
  *   `ReleaseStockByOrderUseCase` 모두 ACTIVE 상태 reservation 만 필터하여 처리 → 재배달 시 자연 no-op.
  */
 @Component
 class InventoryEventConsumer(
-    private val reserveStockUseCase: ReserveStockUseCase,
+    private val reserveOrderStockUseCase: ReserveOrderStockUseCase,
     private val confirmStockByOrderUseCase: ConfirmStockByOrderUseCase,
     private val releaseStockByOrderUseCase: ReleaseStockByOrderUseCase,
     private val objectMapper: ObjectMapper,
@@ -49,10 +48,8 @@ class InventoryEventConsumer(
     private val log = KotlinLogging.logger {}
 
     /**
-     * ADR-0029 PR-8a — `ReserveStockUseCase` 자연 멱등 보강 후 common helper 이관.
-     *
-     * `InventoryService.execute(ReserveStockUseCase.Command)` 가 같은 `(orderId, productId)` 의 ACTIVE
-     * Reservation 을 발견하면 신규 차감 없이 기존 결과를 반환한다 → helper race 흡수와 결합해 이중 차감을 차단.
+     * 주문 단위 예약. `InventoryService.execute(ReserveOrderStockUseCase.Command)` 가 이 주문의 ACTIVE
+     * 예약을 발견하면 신규 차감 없이 기존 결과를 반환한다 → helper race 흡수와 결합해 이중 차감을 차단.
      */
     @KafkaListener(
         topics = ["order.order.completed"],
@@ -82,17 +79,19 @@ class InventoryEventConsumer(
             return
         }
 
-        for (item in event.items) {
-            // warehouseId = null → WarehouseSelector 가 가용 재고 기준으로 창고 자동 선택
-            val result = reserveStockUseCase.execute(
-                ReserveStockUseCase.Command(
-                    orderId = event.orderId,
-                    productId = item.productId,
-                    warehouseId = null,
-                    qty = item.quantity,
-                )
+        // 주문 전체를 한 번에 예약한다 — 라인별로 부르면 앞 라인만 예약된 채 뒤 라인에서 실패할 수 있다.
+        // 창고는 WarehouseSelector 가 가용 재고 기준으로 고른다. 부족은 inventory.reservation.failed 로 끝난다.
+        val result = reserveOrderStockUseCase.execute(
+            ReserveOrderStockUseCase.Command(
+                orderId = event.orderId,
+                lines = event.items.map { ReserveOrderStockUseCase.Line(productId = it.productId, qty = it.quantity) },
             )
-            log.info { "Reserved stock: orderId=${event.orderId}, productId=${item.productId}, qty=${item.quantity}, reservationId=${result.reservationId}" }
+        )
+        when (result) {
+            is ReserveOrderStockUseCase.Result.Reserved ->
+                log.info { "Reserved stock: orderId=${event.orderId}, lines=${result.lines}" }
+            is ReserveOrderStockUseCase.Result.Failed ->
+                log.warn { "Stock reservation failed: orderId=${event.orderId}, shortages=${result.shortages}" }
         }
     }
 

@@ -62,14 +62,15 @@ class ProductApiClient(
     )
 
     /**
-     * 대량 적재 — POST /api/products/bulk. 한 청크(N건)를 product 서비스가 한 트랜잭션으로
+     * 대량 적재 — POST /internal/products/bulk (게이트웨이에 라우트가 없는 클러스터 안 경로).
+     * 한 청크(N건)를 product 서비스가 한 트랜잭션으로
      * 저장하고 건별 product.item.created 이벤트를 발행한다. 생성된 건수를 반환.
      * 배치 스레드에서 동기 호출(block)한다.
      */
     fun createBulk(products: List<SeedProduct>): Int {
         if (products.isEmpty()) return 0
         val response = webClient.post()
-            .uri("/api/products/bulk")
+            .uri("/internal/products/bulk")
             .bodyValue(mapOf("products" to products))
             .retrieve()
             .bodyToMono(object : ParameterizedTypeReference<Map<String, Any>>() {})
@@ -85,7 +86,7 @@ class ProductApiClient(
         log.debug { "Fetching products: page=$page, size=$size" }
 
         val response = webClient.get()
-            .uri("/api/products?page=$page&size=$size")
+            .uri("/api/v1/products?page=$page&size=$size")
             .retrieve()
             .bodyToMono(object : ParameterizedTypeReference<Map<String, Any>>() {})
             .awaitSingle()

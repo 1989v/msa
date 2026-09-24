@@ -3,6 +3,8 @@
 # 직접 백엔드-백엔드 호출은 의도적으로 마찰을 둔다 (Saga / 이벤트 기반 권장).
 # 현재 허용되는 페어:
 #   - search-batch → commerce (productApiReindexJob 페이지 스캔 + seed Job bulk 적재, ADR-0056/0058)
+#     일괄 적재 `/internal/products/bulk` 는 이 규칙으로만 닿는다 — gateway 에 `/internal` 라우트가 없고
+#     ingress 도 열지 않는다. NetworkPolicy 는 L4 라 경로를 가르지 못하므로, 경로 차단은 그 두 곳이 맡는다.
 #   - auth → commerce         (SSO 회원 조회/생성)
 #
 # ADR-0093: order → product 는 **규칙이 필요 없어졌다** — 둘 다 commerce 안이라 프로세스 내부
