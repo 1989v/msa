@@ -45,3 +45,8 @@ dependencies {
 tasks.bootJar {
     archiveBaseName.set("commerce")
 }
+
+// 사가 E2E 는 호스트 전체 컨텍스트에 리스너·릴레이·스케줄러를 전부 켠다 — 기본 512m 에서는 기동 중 GC 로 멈췄다
+tasks.test {
+    maxHeapSize = "1g"
+}

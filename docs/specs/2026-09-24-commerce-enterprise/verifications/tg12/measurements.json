@@ -1,0 +1,182 @@
+[
+  {
+    "name": "waiting-390-light-progress",
+    "width": 390,
+    "theme": "light",
+    "state": "progress",
+    "ready": true,
+    "surface": "rgba(0, 0, 0, 0)",
+    "h1": "주문을 처리하고 있습니다",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "overflowX": false,
+    "bundleHasWaitingPage": true,
+    "contrast": {
+      "title": 15.82,
+      "sectionLabel": 4.99,
+      "stepCurrent": 15.27,
+      "stepIdle": 8.53,
+      "stepDoneMark": 9.63,
+      "hint": 8.53,
+      "lineName": 15.27,
+      "total": 15.27
+    }
+  },
+  {
+    "name": "waiting-390-light-success",
+    "width": 390,
+    "theme": "light",
+    "state": "success",
+    "ready": true,
+    "surface": "rgba(0, 0, 0, 0)",
+    "h1": "주문이 확정되었습니다",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "overflowX": false,
+    "bundleHasWaitingPage": true,
+    "contrast": {
+      "title": 15.82,
+      "sectionLabel": 4.99,
+      "resultTitle": 15.82,
+      "resultBody": 15.82,
+      "resultButton": 15.82,
+      "resultGhost": 15.82,
+      "lineName": 15.27,
+      "total": 15.27
+    }
+  },
+  {
+    "name": "waiting-390-light-failure",
+    "width": 390,
+    "theme": "light",
+    "state": "failure",
+    "ready": true,
+    "surface": "rgba(0, 0, 0, 0)",
+    "h1": "주문이 끝나지 않았습니다",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "overflowX": false,
+    "bundleHasWaitingPage": true,
+    "contrast": {
+      "title": 15.82,
+      "sectionLabel": 4.99,
+      "resultTitle": 15.82,
+      "resultBody": 15.82,
+      "resultButton": 15.82,
+      "resultGhost": 15.82,
+      "lineName": 15.27,
+      "total": 15.27
+    }
+  },
+  {
+    "name": "orders-390-light",
+    "width": 390,
+    "theme": "light",
+    "state": null,
+    "ready": true,
+    "surface": "rgba(0, 0, 0, 0)",
+    "h1": "주문내역",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "overflowX": false,
+    "bundleHasWaitingPage": true,
+    "contrast": {
+      "title": 15.82,
+      "badgePending": 6.72,
+      "badgeCompleted": 8.24,
+      "badgeFailed": 13.06,
+      "badgeCancelled": 7.29,
+      "orderLink": 9.63
+    }
+  },
+  {
+    "name": "waiting-390-dark-progress",
+    "width": 390,
+    "theme": "dark",
+    "state": "progress",
+    "ready": true,
+    "surface": "rgba(0, 0, 0, 0)",
+    "h1": "주문을 처리하고 있습니다",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "overflowX": false,
+    "bundleHasWaitingPage": true,
+    "contrast": {
+      "title": 14.42,
+      "sectionLabel": 6.04,
+      "stepCurrent": 13.34,
+      "stepIdle": 10.11,
+      "stepDoneMark": 6.08,
+      "hint": 10.11,
+      "lineName": 13.34,
+      "total": 13.34
+    }
+  },
+  {
+    "name": "waiting-390-dark-success",
+    "width": 390,
+    "theme": "dark",
+    "state": "success",
+    "ready": true,
+    "surface": "rgba(0, 0, 0, 0)",
+    "h1": "주문이 확정되었습니다",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "overflowX": false,
+    "bundleHasWaitingPage": true,
+    "contrast": {
+      "title": 14.42,
+      "sectionLabel": 6.04,
+      "resultTitle": 14.42,
+      "resultBody": 14.42,
+      "resultButton": 8.62,
+      "resultGhost": 14.42,
+      "lineName": 13.34,
+      "total": 13.34
+    }
+  },
+  {
+    "name": "waiting-390-dark-failure",
+    "width": 390,
+    "theme": "dark",
+    "state": "failure",
+    "ready": true,
+    "surface": "rgba(0, 0, 0, 0)",
+    "h1": "주문이 끝나지 않았습니다",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "overflowX": false,
+    "bundleHasWaitingPage": true,
+    "contrast": {
+      "title": 14.42,
+      "sectionLabel": 6.04,
+      "resultTitle": 14.42,
+      "resultBody": 14.42,
+      "resultButton": 8.62,
+      "resultGhost": 14.42,
+      "lineName": 13.34,
+      "total": 13.34
+    }
+  },
+  {
+    "name": "orders-390-dark",
+    "width": 390,
+    "theme": "dark",
+    "state": null,
+    "ready": true,
+    "surface": "rgba(0, 0, 0, 0)",
+    "h1": "주문내역",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "overflowX": false,
+    "bundleHasWaitingPage": true,
+    "contrast": {
+      "title": 14.42,
+      "badgePending": 6.72,
+      "badgeCompleted": 5.08,
+      "badgeFailed": 11.14,
+      "badgeCancelled": 8.45,
+      "orderLink": 6.08
+    }
+  }
+]

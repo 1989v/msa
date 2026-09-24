@@ -283,16 +283,34 @@ button.shop-product-card {
   color: var(--ko-status-warning);
 }
 
+/* accent-secondary 는 헤리티지 라이트에서 한지 위 1.46:1 로 안 보인다 — 정경마다 정의된 accent-text 를 쓴다 */
 .shop-badge-completed {
-  /* secondary 토큰: positive 톤 (P/L 아님) */
   background: var(--ko-surface-3);
-  color: var(--ko-accent-secondary);
+  color: var(--ko-accent-text, var(--ko-accent-primary));
 }
 
 .shop-badge-cancelled {
-  /* muted 톤 */
   background: var(--ko-surface-3);
-  color: var(--ko-text-muted);
+  color: var(--ko-text-secondary);
+}
+
+.shop-badge-failed {
+  background: var(--ko-surface-3);
+  color: var(--ko-text-primary);
+  box-shadow: inset 0 0 0 1px var(--kh-yeonji, var(--ko-border-default));
+}
+
+.shop-order-link {
+  align-self: flex-start;
+  font-size: var(--ko-text-sm);
+  color: var(--ko-accent-text, var(--ko-accent-primary));
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.shop-order-link:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: 2px;
 }
 
 /* ── 상태 (로딩 / 빈 / 에러) ─────────────────────────── */

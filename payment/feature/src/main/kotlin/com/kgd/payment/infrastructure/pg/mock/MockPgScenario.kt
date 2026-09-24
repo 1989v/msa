@@ -2,13 +2,16 @@ package com.kgd.payment.infrastructure.pg.mock
 
 /**
  * 모의 PG 가 승인·조회에 어떻게 답할지. 운영은 [approve](항상 승인) 하나뿐이고,
- * 테스트가 이 타입의 빈을 등록하면 그것으로 바뀐다(거절 · 타임아웃 뒤 N번째 조회에서 승인 · 타임아웃 뒤 거절).
+ * 테스트가 이 타입의 빈을 등록하면 그것으로 바뀐다(거절 · 타임아웃 뒤 N번째 조회에서 승인 · 타임아웃 뒤 거절 · 매입 실패).
  */
 interface MockPgScenario {
     fun onAuthorize(orderNo: String, amount: Long): Outcome
 
     /** 타임아웃으로 남은 거래를 [inquiryCount] 번째로 조회할 때 */
     fun onInquire(orderNo: String, inquiryCount: Int): Outcome
+
+    /** 매입 호출 — APPROVE 가 아니면 응답 없음(재시도 가능한 호출 실패)으로 답한다. 운영은 항상 매입한다 */
+    fun onCapture(orderNo: String, amount: Long): Outcome = Outcome.APPROVE
 
     enum class Outcome {
         APPROVE,

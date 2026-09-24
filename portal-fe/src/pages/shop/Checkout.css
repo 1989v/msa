@@ -383,3 +383,93 @@ a.checkout-line-name:focus-visible {
     transition: none;
   }
 }
+
+/* ── 결제 대기 · 결과 ──────────────────────────────── */
+
+.order-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.order-step {
+  display: flex;
+  align-items: center;
+  gap: var(--ko-space-3);
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-secondary);
+}
+
+.order-step-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--kh-radius, var(--ko-radius-full));
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-secondary);
+}
+
+.order-step.is-done .order-step-mark,
+.order-step.is-skipped .order-step-mark {
+  border-color: var(--ko-accent-text, var(--ko-accent-primary));
+  color: var(--ko-accent-text, var(--ko-accent-primary));
+}
+
+/* 지금 단계는 색만이 아니라 굵기·채운 인장으로도 구분한다 */
+.order-step.is-current {
+  color: var(--ko-text-primary);
+  font-weight: var(--ko-weight-semibold);
+}
+
+.order-step.is-current .order-step-mark {
+  border-color: var(--ko-accent-text, var(--ko-accent-primary));
+  box-shadow: inset 0 0 0 2px var(--ko-accent-text, var(--ko-accent-primary));
+  color: var(--ko-text-primary);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .order-step.is-current .order-step-mark {
+    animation: order-step-pulse 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes order-step-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.order-step-note {
+  font-weight: var(--ko-weight-regular, 400);
+  color: var(--ko-text-secondary);
+}
+
+/* kh-status 기본색(muted)은 헤리티지 라이트에서 경계선이라 결과 문구는 본문급으로 */
+.order-result {
+  padding: var(--ko-space-5) 0 var(--ko-space-5) var(--ko-space-4);
+  color: var(--ko-text-primary);
+  line-height: 1.6;
+}
+
+.order-result .kh-status-title {
+  font-size: var(--ko-text-base);
+  color: var(--ko-text-primary);
+}
+
+.order-result.is-success {
+  border-left: 2px solid var(--ko-accent-text, var(--ko-accent-primary));
+}
+
+.order-result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-2);
+  margin-top: var(--ko-space-2);
+}

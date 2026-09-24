@@ -102,3 +102,10 @@
 - 옛 OrderService·PaymentAdapter·ProductAdapter·WebClientConfig·onReservationExpired·order.order.completed/cancelled 삭제
 - 통합 테스트가 잡은 결함 2(MySQL JSON 정규화로 무변경 재시도가 충돌 · 배송비 라인 순서) 수정
 - 회귀 주입 5종 — 첫 시도 초록불(가드 이중) 후 가드까지 제거해 빨간불 확인. 리스 가드는 실 MySQL 통합만 잡음
+
+## TG12 사가 E2E · 결제 대기 화면 (2026-09-24)
+- `./gradlew :commerce:app:test --tests '*E2E*'` → OrderSagaE2ETest tests=14 failures=0 skipped=0 (정상 · 같은 키 · 0원 · 거절 · 재고 부족 · UNKNOWN 두 갈래 · 보류 만료 (a)·(b) 두 갈래 · 매입 재시도 수렴 · STUCK)
+- P4 배포 전 전체: `verifyArchitecture` + common·gateway·order·product·promotion·payment·seller·inventory·fulfillment·search:batch·commerce:app 전 테스트 → exit 0
+- portal-fe vitest Test Files 5 · Tests 19 passed · tsc 0
+- 회귀 주입: 코디네이터 (b) VOID 건너뛰기 → 2 실패(`expected:<"COMPENSATING"> but was:<"RUNNING">`) · 결제 쪽 UNKNOWN 즉시 VOID → 1 실패
+- commerce 테스트 JVM `maxHeapSize = "1g"`(기본 512m 에서 E2E 기동 중 GC 정지 — 태스크 성립 조건이라 반영)

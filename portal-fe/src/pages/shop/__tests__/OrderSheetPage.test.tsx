@@ -12,6 +12,7 @@ vi.mock('../../../api/shopApi', async (importOriginal) => {
     createOrderSheet: vi.fn(),
     fetchMyCoupons: vi.fn(),
     fetchMyPoints: vi.fn(),
+    placeOrder: vi.fn(),
   };
 });
 vi.mock('../../../auth/auth', async (importOriginal) => {
@@ -19,7 +20,8 @@ vi.mock('../../../auth/auth', async (importOriginal) => {
   return { ...actual, isLoggedIn: () => true };
 });
 
-import { createOrderSheet, fetchMyCoupons, fetchMyPoints, fetchOrderSheet } from '../../../api/shopApi';
+import { AxiosError, AxiosHeaders } from 'axios';
+import { createOrderSheet, fetchMyCoupons, fetchMyPoints, fetchOrderSheet, placeOrder } from '../../../api/shopApi';
 
 const inMinutes = (m: number) => new Date(Date.now() + m * 60_000).toISOString();
 
@@ -67,6 +69,7 @@ const renderPage = (id = '41') =>
     <MemoryRouter initialEntries={[`/shop/order-sheet/${id}`]}>
       <Routes>
         <Route path="/shop/order-sheet/:id" element={<OrderSheetPage />} />
+        <Route path="/shop/orders/:id" element={<p>주문 진행 화면</p>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -88,6 +91,8 @@ describe('주문서 화면', () => {
   beforeEach(() => {
     vi.mocked(fetchOrderSheet).mockReset();
     vi.mocked(createOrderSheet).mockReset();
+    vi.mocked(placeOrder).mockReset();
+    window.sessionStorage.clear();
     vi.mocked(fetchMyCoupons).mockReset().mockResolvedValue([coupon]);
     vi.mocked(fetchMyPoints).mockReset().mockResolvedValue({ memberId: 'm-1', balance: 50_000 });
   });
@@ -107,9 +112,7 @@ describe('주문서 화면', () => {
     // 판매자별 묶음과 그 판매자 배송비
     expect(screen.getByRole('region', { name: '판매자 7' })).toHaveTextContent('배송비₩3,000');
     expect(screen.getByRole('region', { name: '판매자 8' })).toHaveTextContent('배송비무료');
-    // 결제는 다음 단계에서 열린다
-    expect(screen.getByRole('button', { name: '결제하기' })).toBeDisabled();
-    expect(screen.getByText('주문 접수는 다음 단계에서 열립니다')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '결제하기' })).toBeEnabled();
   });
 
   it('만료된 주문서는 변경을 막고 같은 상품·쿠폰·포인트로 다시 만들기를 안내한다', async () => {
@@ -150,5 +153,58 @@ describe('주문서 화면', () => {
     // 새 주문서의 서버 값으로 바뀐다
     const breakdown = screen.getByRole('group', { name: '결제 금액 분해' });
     await waitFor(() => expect(within(breakdown).getByText('₩26,500')).toBeInTheDocument());
+  });
+
+  it('결제하기 — 재시도와 새로고침 뒤에도 같은 Idempotency-Key 를 쓰고, 접수되면 진행 화면으로 간다', async () => {
+    vi.mocked(fetchOrderSheet).mockResolvedValue(sheet());
+    const inProgress = new AxiosError('conflict', '409', undefined, undefined, {
+      status: 409, statusText: 'Conflict', headers: {}, config: { headers: new AxiosHeaders() }, data: {},
+    });
+    vi.mocked(placeOrder)
+      .mockRejectedValueOnce(inProgress)
+      .mockResolvedValueOnce({ orderId: 501, status: 'CREATED', sagaStep: 'INVENTORY_RESERVE' });
+
+    const first = renderPage();
+    fireEvent.click(await screen.findByRole('button', { name: '결제하기' }));
+    expect(await screen.findByText(/주문을 접수하고 있습니다/)).toBeInTheDocument();
+    const firstKey = vi.mocked(placeOrder).mock.calls[0][1];
+    expect(vi.mocked(placeOrder).mock.calls[0][0]).toBe(41);
+    expect(firstKey).toMatch(/\S{8,}/);
+
+    // 새로고침 — 화면을 새로 띄워도 sessionStorage 의 키를 그대로 쓴다
+    first.unmount();
+    renderPage();
+    fireEvent.click(await screen.findByRole('button', { name: '결제하기' }));
+    await waitFor(() => expect(placeOrder).toHaveBeenCalledTimes(2));
+    expect(vi.mocked(placeOrder).mock.calls[1]).toEqual([41, firstKey]);
+    expect(await screen.findByText('주문 진행 화면')).toBeInTheDocument();
+  });
+
+  it('다른 주문서(재생성)는 새 키 — sessionStorage 를 못 써도 한 화면 안의 재시도는 같은 키', async () => {
+    vi.mocked(fetchOrderSheet).mockImplementation(async (id) => sheet({ id: Number(id) }));
+    vi.mocked(placeOrder).mockRejectedValue(new Error('network'));
+    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('denied');
+    });
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('denied');
+    });
+    try {
+      renderPage('77');
+      const pay = await screen.findByRole('button', { name: '결제하기' });
+      fireEvent.click(pay);
+      await waitFor(() => expect(placeOrder).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(pay).toBeEnabled());
+      fireEvent.click(pay);
+      await waitFor(() => expect(placeOrder).toHaveBeenCalledTimes(2));
+      const [a, b] = vi.mocked(placeOrder).mock.calls;
+      expect(b[1]).toBe(a[1]);
+    } finally {
+      getItem.mockRestore();
+      setItem.mockRestore();
+    }
+    // 다른 주문서는 다른 키
+    const { submitKeyFor } = await import('../orderProgress');
+    expect(submitKeyFor(78)).not.toBe(submitKeyFor(77));
   });
 });

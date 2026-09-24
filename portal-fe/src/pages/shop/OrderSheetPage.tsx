@@ -3,10 +3,12 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import ShopHeader from '../../components/ShopHeader';
 import {
   createOrderSheet,
+  errorStatus,
   extractErrorMessage,
   fetchMyCoupons,
   fetchMyPoints,
   fetchOrderSheet,
+  placeOrder,
   type MyCoupon,
   type OrderSheet,
 } from '../../api/shopApi';
@@ -24,6 +26,7 @@ import {
   sellerLabel,
   sheetItems,
 } from './checkoutModel';
+import { submitKeyFor } from './orderProgress';
 import '../Shop.css';
 import './Checkout.css';
 
@@ -47,6 +50,7 @@ export default function OrderSheetPage() {
   const [pointInput, setPointInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -109,6 +113,28 @@ export default function OrderSheetPage() {
     },
     [sheet, navigate],
   );
+
+  const submit = useCallback(async () => {
+    if (!sheet) return;
+    setBusy(true);
+    setSubmitError(null);
+    try {
+      // 주문서마다 한 키 — 다시 누르거나 새로고침 뒤 눌러도 서버가 주문을 하나만 만든다
+      const accepted = await placeOrder(sheet.id, submitKeyFor(sheet.id));
+      navigate(`/shop/orders/${accepted.orderId}`);
+    } catch (e) {
+      const status = errorStatus(e);
+      setSubmitError(
+        status === 409
+          ? '주문을 접수하고 있습니다. 잠시 뒤 다시 눌러 주세요 — 주문은 한 번만 만들어집니다.'
+          : status === 429
+            ? '결제를 기다리는 주문이 많습니다. 진행 중인 주문이 끝난 뒤 다시 시도해 주세요.'
+            : extractErrorMessage(e, '주문을 접수하지 못했습니다.'),
+      );
+    } finally {
+      setBusy(false);
+    }
+  }, [sheet, navigate]);
 
   if (loadError) {
     return (
@@ -326,10 +352,14 @@ export default function OrderSheetPage() {
             할인과 포인트는 견적입니다. 주문을 접수할 때 다시 확인하고, 그 사이 쓸 수 없게 되면 주문서를 다시 만들어야
             합니다.
           </p>
-          <button type="button" className="kh-button checkout-pay" disabled>
+          <button type="button" className="kh-button checkout-pay" disabled={locked} onClick={() => void submit()}>
             결제하기
           </button>
-          <p className="checkout-hint">주문 접수는 다음 단계에서 열립니다</p>
+          {submitError && (
+            <div className="kh-status-error checkout-error" role="alert">
+              {submitError}
+            </div>
+          )}
         </aside>
       </div>
     </Shell>

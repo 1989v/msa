@@ -173,10 +173,10 @@ Total Task Groups: 16 · 단계 P0~P7 (단계 끝마다 커밋·푸시·배포·
 **Dependencies:** Task Group 11
 **Phase:** P4
 **Required Skills:** Testcontainers(MySQL+Kafka), React
-- [ ] 12.0 Complete saga E2E
-  - [ ] 12.1 E2E: 정상 · 결제 거절 · 재고 부족(PG 0회) · UNKNOWN 대기 → 승인 · UNKNOWN 결론 FAILED → 보상 · 보류 만료 (a) · 보류 만료 (b) · 피벗 뒤 재시도/STUCK · 0원 · 같은 키 중복 (10) — `CI=true` 에서 Docker 부재는 실패
-  - [ ] 12.2 portal-fe 주문 접수 → 결제 대기(폴링) → 결과 화면, 주문 상세
-  - [ ] 12.3 Verify: `$G :commerce:app:test --tests '*SagaE2E*' && (cd portal-fe && npx tsc --noEmit -p tsconfig.app.json)`
+- [x] 12.0 Complete saga E2E
+  - [x] 12.1 E2E: 정상 · 결제 거절 · 재고 부족(PG 0회) · UNKNOWN 대기 → 승인 · UNKNOWN 결론 FAILED → 보상 · 보류 만료 (a) · 보류 만료 (b) · 피벗 뒤 재시도/STUCK · 0원 · 같은 키 중복 (10) — `CI=true` 에서 Docker 부재는 실패
+  - [x] 12.2 portal-fe 주문 접수 → 결제 대기(폴링) → 결과 화면, 주문 상세
+  - [x] 12.3 Verify: `$G :commerce:app:test --tests '*SagaE2E*' && (cd portal-fe && npx tsc --noEmit -p tsconfig.app.json)`
 **Acceptance Criteria:** (b) 분기 회귀 주입 빨간불 기록, 운영 주문 1건 CONFIRMED + 이행 생성
 
 **P4 배포:** 확장 마이그레이션 → 코드 → 운영 주문 1건 사가 COMPLETED 확인 → 남은 ACTIVE 예약 0 확인

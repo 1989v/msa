@@ -15,17 +15,27 @@ import './Shop.css';
 import { useHeritageSurface } from '../hooks/useHeritageSurface';
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
-  PENDING: '결제 대기',
-  COMPLETED: '주문 완료',
+  CREATED: '주문 접수',
+  PAYMENT_PENDING: '결제 확인 중',
+  PAID: '결제 완료',
+  CONFIRMED: '주문 확정',
+  FULFILLING: '배송 준비',
+  COMPLETED: '구매 확정',
   CANCELLED: '주문 취소',
+  FAILED: '주문 실패',
 };
 
-// 상태 톤: PENDING=warning / COMPLETED=secondary(positive) / CANCELLED=muted.
-// P/L(profit/loss) 색상은 전략 성과 전용이므로 미사용 (DESIGN.md §8).
+// 상태 톤: 진행 중=warning / 확정 이후=accent-text(positive) / 취소=muted / 실패=연지 테두리.
+// P/L(profit/loss) 색상은 전략 성과 전용이므로 미사용 (DESIGN.md §8). 색만으로 가르지 않도록 낱말이 함께 있다.
 const STATUS_BADGE_CLASS: Record<OrderStatus, string> = {
-  PENDING: 'shop-badge-pending',
+  CREATED: 'shop-badge-pending',
+  PAYMENT_PENDING: 'shop-badge-pending',
+  PAID: 'shop-badge-pending',
+  CONFIRMED: 'shop-badge-completed',
+  FULFILLING: 'shop-badge-completed',
   COMPLETED: 'shop-badge-completed',
   CANCELLED: 'shop-badge-cancelled',
+  FAILED: 'shop-badge-failed',
 };
 
 export default function MyOrdersPage() {
@@ -104,10 +114,13 @@ export default function MyOrdersPage() {
                     </time>
                     <span className={`shop-badge ${badgeClass}`}>{label}</span>
                   </div>
+                  <Link to={`/shop/orders/${order.orderId}`} className="shop-order-link">
+                    주문 {order.orderId} 상세
+                  </Link>
                   <div className="shop-order-items">
                     {order.items.map((item, idx) => (
                       <div key={idx} className="shop-order-item-row">
-                        <span>상품 #{item.productId}</span>
+                        <span>{item.productName || `상품 #${item.productId}`}</span>
                         <span>
                           {formatWon(item.unitPrice)} × {item.quantity}
                         </span>

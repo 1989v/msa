@@ -181,20 +181,100 @@ export interface MyPoints {
 
 // ── Orders ────────────────────────────────────────────────────────
 
-export type OrderStatus = 'PENDING' | 'COMPLETED' | 'CANCELLED';
+/**
+ * 주문 상태(서버 OrderStatus). CREATED·PAYMENT_PENDING·PAID 는 진행 중, CONFIRMED·FULFILLING·COMPLETED 는 성공
+ * (COMPLETED = 구매 확정), FAILED·CANCELLED 는 끝.
+ */
+export type OrderStatus =
+  | 'CREATED'
+  | 'PAYMENT_PENDING'
+  | 'PAID'
+  | 'CONFIRMED'
+  | 'FULFILLING'
+  | 'COMPLETED'
+  | 'CANCELLED'
+  | 'FAILED';
+
+/** FAILED(또는 구매자 취소)의 이유 — 서버 enum 이름이 계약이다 */
+export type OrderFailureReason =
+  | 'INSUFFICIENT_STOCK'
+  | 'BENEFIT_UNAVAILABLE'
+  | 'PAYMENT_DECLINED'
+  | 'HOLD_EXPIRED'
+  | 'TIMEOUT'
+  | 'BUYER_CANCELLED'
+  | 'LEGACY_ABANDONED';
+
+export type SagaStep =
+  | 'INVENTORY_RESERVE'
+  | 'PROMOTION_RESERVE'
+  | 'PAYMENT_AUTHORIZE'
+  | 'INVENTORY_CONFIRM'
+  | 'PROMOTION_CONFIRM'
+  | 'PAYMENT_CAPTURE'
+  | 'FULFILLMENT_CREATE'
+  | 'PAYMENT_VOID'
+  | 'PROMOTION_CANCEL'
+  | 'PROMOTION_RESTORE'
+  | 'INVENTORY_RELEASE'
+  | 'INVENTORY_RESTOCK';
+
+export type SagaStatus = 'RUNNING' | 'COMPENSATING' | 'COMPLETED' | 'FAILED' | 'STUCK';
 
 export interface MyOrderItem {
   productId: number;
+  productName: string;
   quantity: number;
   unitPrice: number;
+  status: string;
 }
 
 export interface MyOrder {
   orderId: number;
   totalAmount: number;
   status: OrderStatus;
+  failureReason: OrderFailureReason | null;
+  refundedAmount: number;
   createdAt: string;
   items: MyOrderItem[];
+}
+
+/** 202 본문 — 결과는 GET /api/v1/orders/{id} 폴링으로 본다 */
+export interface OrderAccepted {
+  orderId: number;
+  status: OrderStatus;
+  sagaStep: SagaStep;
+}
+
+export interface OrderLine {
+  orderItemId: number | null;
+  lineNo: number;
+  productId: number;
+  productName: string;
+  sellerId: number;
+  unitPrice: number;
+  quantity: number;
+  couponDiscount: number;
+  pointAmount: number;
+  payable: number;
+  status: string;
+}
+
+export interface OrderDetail {
+  orderId: number;
+  status: OrderStatus;
+  failureReason: OrderFailureReason | null;
+  sagaStep: SagaStep | null;
+  sagaStatus: SagaStatus | null;
+  itemsAmount: number;
+  couponDiscount: number;
+  pointAmount: number;
+  shippingAmount: number;
+  payableAmount: number;
+  refundedAmount: number;
+  createdAt: string;
+  lines: OrderLine[];
+  shippingLines: { sellerId: number; fee: number }[];
 }
 
 // ── Seller ────────────────────────────────────────────────────────
@@ -378,6 +458,27 @@ export const fetchMyPoints = async (): Promise<MyPoints> => {
 
 export const fetchMyOrders = async (): Promise<MyOrder[]> => {
   const res = await api.get<ApiResponse<MyOrder[]>>('/api/v1/orders/my');
+  return res.data.data;
+};
+
+/** 주문 접수 — 본문은 주문서 id 뿐(가격 없음). 같은 키로 다시 보내면 서버가 처음 응답을 돌려준다 */
+export const placeOrder = async (orderSheetId: number, idempotencyKey: string): Promise<OrderAccepted> => {
+  const res = await api.post<ApiResponse<OrderAccepted>>(
+    '/api/v1/orders',
+    { orderSheetId },
+    { headers: { 'Idempotency-Key': idempotencyKey } },
+  );
+  return res.data.data;
+};
+
+export const fetchOrder = async (id: string | number): Promise<OrderDetail> => {
+  const res = await api.get<ApiResponse<OrderDetail>>(`/api/v1/orders/${id}`);
+  return res.data.data;
+};
+
+/** 결제 전(CREATED)만 받는다 — 결제 확인 중·결제 뒤는 409 */
+export const cancelOrder = async (id: string | number): Promise<OrderDetail> => {
+  const res = await api.post<ApiResponse<OrderDetail>>(`/api/v1/orders/${id}/cancel`);
   return res.data.data;
 };
 

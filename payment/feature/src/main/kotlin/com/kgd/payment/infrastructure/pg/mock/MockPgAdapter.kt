@@ -78,6 +78,9 @@ class MockPgAdapter(
         recorder.record(MockPgCallRecorder.Op.CAPTURE, paymentKey)
         val tx = byKey(paymentKey)
         if (tx.status == MockPgTxStatus.CAPTURED) return
+        if (scenario.onCapture(tx.orderNo, amount) != MockPgScenario.Outcome.APPROVE) {
+            throw PgCallException("모의 PG: 매입 응답 없음", retryable = true)
+        }
         check(tx.status == MockPgTxStatus.APPROVED) { "모의 PG: 승인되지 않은 거래는 매입할 수 없다 (${tx.status})" }
         tx.capturedAmount = amount
         tx.capturedAt = clock.instant()
