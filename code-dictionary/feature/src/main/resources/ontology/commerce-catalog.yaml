@@ -182,7 +182,7 @@ concepts:
     description: "정가(소비자가)는 비교 기준, 판매가는 실제로 파는 값, 할인가는 즉시 할인까지 뺀 값이다. 주문 라인은 이 셋을 스냅샷한다"
     synonyms: ["list price", "sale price", "정가 · 판매가"]
     code:
-      - { path: product/domain/src/main/kotlin/com/kgd/product/domain/product/model/Money.kt, symbol: "fun toWon(): Long", note: "판매가 → 원 단위 정수" }
+      - { path: product/domain/src/main/kotlin/com/kgd/product/domain/product/model/Money.kt, symbol: "value class Money(val amount: Long)", note: "판매가 → 원 단위 정수" }
     uses: [cat-money-type]
   - id: cat-price-rule
     kind: MECHANISM
