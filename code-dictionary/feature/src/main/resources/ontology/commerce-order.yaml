@@ -1320,7 +1320,7 @@ concepts:
     description: "재시도가 끝난 메시지를 DLT 로 보내고 운영 이슈로 적재해 고친 뒤 재발행할 수 있게 한다. 재처리 경로가 없는 DLQ 는 쓰레기통이다"
     synonyms: ["DLQ + 재처리 도구", "DLT replay"]
     code:
-      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/config/OrderKafkaConfig.kt, symbol: "DeadLetterPublishingRecoverer(kafkaTemplate)", note: "재시도 후 DLT 발행" }
+      - { path: common/src/main/kotlin/com/kgd/common/ops/DltOpsIssues.kt, symbol: "fun deadLetterRecoverer(template: KafkaOperations<*, *>): DeadLetterPublishingRecoverer", note: "재시도 후 DLT 발행" }
     uses: [dist-dead-letter-queue, ord-ops-issue-queue]
     mitigates: [dist-poison-message]
   - id: ord-manual-resolution

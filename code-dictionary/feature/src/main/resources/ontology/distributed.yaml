@@ -1287,7 +1287,7 @@ concepts:
     description: "정해진 횟수만큼 재시도해도 처리하지 못한 메시지를 별도 토픽으로 옮겨 두고 다음 메시지로 넘어간다. 옮긴 메시지는 사람이 보거나 다시 흘린다"
     synonyms: ["dead letter queue", "DLT", "dead letter topic"]
     code:
-      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/config/OrderKafkaConfig.kt, symbol: "DeadLetterPublishingRecoverer(kafkaTemplate)", note: "3회 재시도 후 실패 레코드를 DLT 로 보낸다" }
+      - { path: common/src/main/kotlin/com/kgd/common/ops/DltOpsIssues.kt, symbol: "fun deadLetterRecoverer(template: KafkaOperations<*, *>): DeadLetterPublishingRecoverer", note: "3회 재시도 후 실패 레코드를 DLT 로 보낸다" }
     mitigates: [dist-poison-message]
   - id: dist-stream-processing
     kind: MECHANISM
