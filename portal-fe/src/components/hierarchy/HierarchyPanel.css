@@ -166,3 +166,38 @@
     margin-left: calc(var(--hier-indent, 0) * 0.75rem);
   }
 }
+
+/* ── 온톨로지: 노드 유형 글리프 · 쓰는 것 칩 ── */
+.hier-main {
+  min-width: 0;
+}
+
+.hier-glyph {
+  display: inline-block;
+  inline-size: 1em;
+  text-align: center;
+  color: var(--hier-color, currentColor);
+}
+
+.hier-uses {
+  padding: 0 var(--ko-space-2);
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--ko-radius-sm);
+  background: var(--ko-surface-2);
+  /* muted 는 surface-2 위에서 3.88:1 — 12px 본문 하한 4.5 미달이라 secondary */
+  color: var(--ko-text-secondary);
+  font: inherit;
+  font-size: var(--ko-text-xs);
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.hier-uses:hover {
+  color: var(--ko-accent-primary-hover);
+  border-color: var(--ko-accent-primary);
+}
+
+.hier-uses:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: 2px;
+}

@@ -45,15 +45,61 @@ export interface HierarchyNode {
   /** 진입점이 0. 두 부모를 가지면 짧은 쪽 */
   depth: number;
   description?: string | null;
+  /** 역할 축. 온톨로지 파일에 아직 놓이지 않은 개념은 null */
+  kind?: ConceptKind | null;
 }
 
-export type HierarchyEdgeKind = 'CONTAINS' | 'FLOWS_TO' | 'SAME_AS';
+/** 노드 유형 7종 — 판정은 개념 자체의 성격으로 (ADR-0100) */
+export type ConceptKind = 'DOMAIN' | 'STAGE' | 'MECHANISM' | 'TERM' | 'TECHNOLOGY' | 'PROBLEM' | 'METRIC';
+
+/** 관계 9종 */
+export type HierarchyEdgeKind =
+  | 'CONTAINS'
+  | 'FLOWS_TO'
+  | 'USES'
+  | 'IMPLEMENTS'
+  | 'AFFECTS'
+  | 'CAUSES'
+  | 'MITIGATES'
+  | 'MEASURED_BY'
+  | 'ALTERNATIVE_TO';
 
 export interface HierarchyEdge {
   from: string;
   to: string;
   kind: HierarchyEdgeKind;
   ordinal: number;
+  /** 관계의 「왜」와 적용 조건 */
+  reason?: string | null;
+  evidenceRef?: string | null;
+}
+
+/** `GET /api/v1/concepts/{conceptId}/relations` — 개념 하나의 이웃 전부(루트·도메인 무관) */
+export interface RelationEdge {
+  relation: HierarchyEdgeKind;
+  /** 읽는 방향의 이름 — 들어오는 간선은 역방향(PART_OF · USED_BY …) */
+  label: string;
+  conceptId: string;
+  name: string;
+  conceptKind?: ConceptKind | null;
+  reason?: string | null;
+  evidenceRef?: string | null;
+}
+
+export interface ConceptRelations {
+  concept: {
+    id: string;
+    name: string;
+    kind?: ConceptKind | null;
+    category: string;
+    level: string;
+    description?: string | null;
+    managedBy?: string | null;
+  };
+  outgoing: RelationEdge[];
+  incoming: RelationEdge[];
+  evidence: { kind: string; ref: string; note?: string | null }[];
+  questions: string[];
 }
 
 export interface ConceptHierarchy {

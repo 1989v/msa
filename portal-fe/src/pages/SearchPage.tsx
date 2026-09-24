@@ -378,7 +378,7 @@ export default function SearchPage() {
       <DetailSidePanel
         conceptId={drill.selected}
         onClose={handleClearEmphasis}
-        onNavigate={handleSelectConcept}
+        onNavigate={view === 'hierarchy' ? handleHierarchySelect : handleSelectConcept}
       />
     </div>
   );

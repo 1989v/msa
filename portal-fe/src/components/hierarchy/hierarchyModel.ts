@@ -16,6 +16,8 @@ export interface HierarchyModel {
   parentsOf: Map<string, string[]>;
   /** FLOWS_TO — 같은 층 안 다음 단계 */
   nextOf: Map<string, string[]>;
+  /** USES — 이 단계·장치가 쓰는 용어·장치·구체물. 트리 행이 아니라 칩으로 보인다 */
+  usesOf: Map<string, string[]>;
   maxDepth: number;
 }
 
@@ -29,6 +31,7 @@ export interface HierarchyRow {
   expanded: boolean;
   parentCount: number;
   nextIds: string[];
+  usesIds: string[];
 }
 
 function pushTo(map: Map<string, string[]>, key: string, value: string): void {
@@ -42,6 +45,7 @@ export function buildHierarchyModel(data: ConceptHierarchy): HierarchyModel {
   const childrenOf = new Map<string, string[]>();
   const parentsOf = new Map<string, string[]>();
   const nextOf = new Map<string, string[]>();
+  const usesOf = new Map<string, string[]>();
   const contains = data.edges.filter((e) => e.kind === 'CONTAINS').sort((a, b) => a.ordinal - b.ordinal);
   for (const e of contains) {
     if (!nodesById.has(e.from) || !nodesById.has(e.to)) continue;
@@ -49,8 +53,9 @@ export function buildHierarchyModel(data: ConceptHierarchy): HierarchyModel {
     pushTo(parentsOf, e.to, e.from);
   }
   for (const e of data.edges) {
-    if (e.kind !== 'FLOWS_TO' || !nodesById.has(e.from) || !nodesById.has(e.to)) continue;
-    pushTo(nextOf, e.from, e.to);
+    if (!nodesById.has(e.from) || !nodesById.has(e.to)) continue;
+    if (e.kind === 'FLOWS_TO') pushTo(nextOf, e.from, e.to);
+    else if (e.kind === 'USES') pushTo(usesOf, e.from, e.to);
   }
   const maxDepth = data.nodes.reduce((m, n) => Math.max(m, n.depth), 0);
   return {
@@ -59,6 +64,7 @@ export function buildHierarchyModel(data: ConceptHierarchy): HierarchyModel {
     childrenOf,
     parentsOf,
     nextOf,
+    usesOf,
     maxDepth,
   };
 }
@@ -96,6 +102,7 @@ export function visibleRows(model: HierarchyModel, expanded: ReadonlySet<string>
       expanded: isExpanded,
       parentCount: model.parentsOf.get(id)?.length ?? 0,
       nextIds: model.nextOf.get(id) ?? [],
+      usesIds: model.usesOf.get(id) ?? [],
     });
     if (!isExpanded) return;
     for (const child of children) {

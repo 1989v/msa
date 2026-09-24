@@ -4,6 +4,7 @@ import { fetchConceptDetail } from '../api/searchApi';
 import type { ConceptDetail } from '../types/graph';
 import { CATEGORY_COLORS, CATEGORY_LABELS } from '../types';
 import type { Category } from '../types';
+import RelationsPanel from './hierarchy/RelationsPanel';
 import './DetailSidePanel.css';
 
 const LEVEL_COLORS: Record<string, string> = {
@@ -118,6 +119,8 @@ export default function DetailSidePanel({ conceptId, onClose, onNavigate }: Deta
               <h3>Description</h3>
               <p className="detail-panel-description">{detail.description}</p>
             </div>
+
+            {conceptId && <RelationsPanel conceptId={conceptId} onSelectConcept={onNavigate} />}
 
             {detail.codeSnippets.length > 0 && (
               <div className="detail-panel-section">

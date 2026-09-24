@@ -104,7 +104,7 @@ export const searchConcepts = async (query: string, size = 20): Promise<SearchRe
   return { hits, totalHits: group?.total ?? 0, maxScore: hits[0]?.score ?? null };
 };
 
-import type { GraphData, SuggestItem, ConceptDetail, ConceptHierarchy } from '../types/graph';
+import type { GraphData, SuggestItem, ConceptDetail, ConceptHierarchy, ConceptRelations } from '../types/graph';
 
 /** 자동완성도 같은 이유로 통합 검색의 concept 묶음이다 — 접두사 매칭이 아니라 BM25 상위다 */
 export const suggestConcepts = async (query: string, size = 8): Promise<SuggestItem[]> => {
@@ -128,6 +128,12 @@ export const fetchGraphData = async (): Promise<GraphData> => {
 export const fetchConceptHierarchy = async (root?: string): Promise<ConceptHierarchy> => {
   const query = root ? `?${new URLSearchParams({ root })}` : '';
   const res = await api.get<ApiResponse<ConceptHierarchy>>(`/api/v1/concepts/graph/hierarchy${query}`);
+  return res.data.data;
+};
+
+/** 개념 하나의 이웃 — 계층 응답 밖(다른 루트)으로 가는 간선까지. 도메인 간 탐색은 이것으로 한 홉씩 */
+export const fetchConceptRelations = async (conceptId: string): Promise<ConceptRelations> => {
+  const res = await api.get<ApiResponse<ConceptRelations>>(`/api/v1/concepts/${encodeURIComponent(conceptId)}/relations`);
   return res.data.data;
 };
 

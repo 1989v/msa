@@ -89,4 +89,21 @@ describe('visibleRows', () => {
     const rows = visibleRows(cyclic, new Set(['a', 'b']));
     expect(rows.map((r) => r.node.id)).toEqual(['a', 'b']);
   });
+
+  it('USES 는 트리 행이 아니라 쓰는 쪽 행의 칩으로 간다 — 용어는 사전 아래 한 번만 나온다', () => {
+    const m = buildHierarchyModel({
+      roots: ['sys'],
+      nodes: [node('sys', 0), node('viterbi-stage', 1), node('glossary', 1), node('lattice', 2)],
+      edges: [
+        { from: 'sys', to: 'viterbi-stage', kind: 'CONTAINS', ordinal: 1 },
+        { from: 'sys', to: 'glossary', kind: 'CONTAINS', ordinal: 2 },
+        { from: 'glossary', to: 'lattice', kind: 'CONTAINS', ordinal: 1 },
+        { from: 'viterbi-stage', to: 'lattice', kind: 'USES', ordinal: 1 },
+      ],
+    });
+    const rows = visibleRows(m, new Set(['sys', 'viterbi-stage', 'glossary']));
+    expect(rows.filter((r) => r.node.id === 'lattice')).toHaveLength(1);
+    expect(rows.find((r) => r.node.id === 'viterbi-stage')?.usesIds).toEqual(['lattice']);
+    expect(rows.find((r) => r.node.id === 'viterbi-stage')?.hasChildren).toBe(false);
+  });
 });

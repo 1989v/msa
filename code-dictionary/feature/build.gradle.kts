@@ -52,6 +52,15 @@ dependencies {
 tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") { enabled = false }
 tasks.named<Jar>("jar") { enabled = true }
 
+// 온톨로지 파일 → mermaid (ADR-0100). 로더와 같은 리더를 쓰므로 테스트 클래스패스에서 돈다.
+tasks.register<JavaExec>("ontologyMermaid") {
+    group = "documentation"
+    description = "resources/ontology 에서 mermaid flowchart 를 뽑는다 (-PontoRoot= -PontoKinds= -PontoDepth=)"
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.kgd.codedictionary.tools.OntologyMermaidKt")
+    args = mapOf("root" to "ontoRoot", "kinds" to "ontoKinds", "depth" to "ontoDepth").mapNotNull { (k, p) -> project.findProperty(p)?.toString()?.let { "$k=$it" } }
+}
+
 // QueryDSL Q class generation path
 kotlin.sourceSets.main { kotlin.srcDir("build/generated/source/kapt/main") }
 
