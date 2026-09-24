@@ -37,7 +37,7 @@ class OrderRepositoryAdapter(
         jpaRepository.countByCreatedAtAfter(from)
 
     override fun sumRevenueCreatedAfter(from: LocalDateTime): BigDecimal =
-        jpaRepository.sumRevenueByCreatedAtAfter(from) ?: BigDecimal.ZERO
+        BigDecimal.valueOf(jpaRepository.sumRevenueByCreatedAtAfter(from) ?: 0L)
 
     // 네이티브 집계라 row 가 [java.sql.Date, count] 배열로 온다 — 포트 밖으로 나가기 전에 형을 준다
     override fun countDailyCreatedAfter(from: LocalDateTime): List<DailyOrderCount> =

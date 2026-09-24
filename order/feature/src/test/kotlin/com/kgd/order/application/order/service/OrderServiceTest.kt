@@ -36,30 +36,34 @@ class OrderServiceTest : BehaviorSpec({
                 runTest {
                     val pendingOrder = Order.restore(
                         1L, "user-1",
-                        listOf(OrderItem.of(1L, 2, Money(5000.toBigDecimal()))),
+                        listOf(OrderItem.of(1L, 2, Money(5000L))),
                         OrderStatus.PENDING, LocalDateTime.now()
                     )
                     val completedOrder = Order.restore(
                         1L, "user-1",
-                        listOf(OrderItem.of(1L, 2, Money(5000.toBigDecimal()))),
+                        listOf(OrderItem.of(1L, 2, Money(5000L))),
                         OrderStatus.COMPLETED, LocalDateTime.now()
                     )
                     coEvery { productPort.validateProduct(1L) } returns ProductInfo(
                         productId = 1L, name = "Test Product",
                         price = 5000.toBigDecimal(), status = "ACTIVE", stock = 100
                     )
-                    every { transactionalService.savePendingOrder(any()) } returns pendingOrder
+                    every { transactionalService.savePendingOrder(any(), any()) } returns pendingOrder
                     coEvery { paymentPort.requestPayment(any(), any()) } returns PaymentResult("pay-1", "SUCCESS", 10000.toBigDecimal())
                     every { transactionalService.completeOrder(1L) } returns completedOrder
 
                     val result = service.execute(PlaceOrderUseCase.Command(
                         userId = "user-1",
-                        items = listOf(PlaceOrderUseCase.OrderItemCommand(1L, 2, 5000.toBigDecimal()))
+                        items = listOf(PlaceOrderUseCase.OrderItemCommand(1L, 2))
                     ))
 
                     result.orderId shouldBe 1L
                     result.userId shouldBe "user-1"
                     result.status shouldBe "COMPLETED"
+                    // 단가는 요청이 아니라 상품 서비스 가격
+                    verify(exactly = 1) {
+                        transactionalService.savePendingOrder("user-1", listOf(OrderItem.of(1L, 2, Money(5000L))))
+                    }
                     // ADR-0032 PR-2: outbox INSERT 는 completeOrder TX 내부에서 처리되므로
                     // OrderService 가 직접 publish 호출하지 않는다.
                     verify(exactly = 1) { transactionalService.completeOrder(1L) }
@@ -71,24 +75,24 @@ class OrderServiceTest : BehaviorSpec({
             then("주문이 취소(cancelOrder)되어야 한다") {
                 runTest {
                     val pendingOrder = Order.restore(1L, "user-1",
-                        listOf(OrderItem.of(1L, 1, Money(1000.toBigDecimal()))),
+                        listOf(OrderItem.of(1L, 1, Money(1000L))),
                         OrderStatus.PENDING, LocalDateTime.now()
                     )
                     val cancelledOrder = Order.restore(1L, "user-1",
-                        listOf(OrderItem.of(1L, 1, Money(1000.toBigDecimal()))),
+                        listOf(OrderItem.of(1L, 1, Money(1000L))),
                         OrderStatus.CANCELLED, LocalDateTime.now()
                     )
                     coEvery { productPort.validateProduct(1L) } returns ProductInfo(
                         productId = 1L, name = "Test Product",
                         price = 1000.toBigDecimal(), status = "ACTIVE", stock = 100
                     )
-                    every { transactionalService.savePendingOrder(any()) } returns pendingOrder
+                    every { transactionalService.savePendingOrder(any(), any()) } returns pendingOrder
                     coEvery { paymentPort.requestPayment(any(), any()) } throws RuntimeException("Payment service down")
                     every { transactionalService.cancelOrder(1L) } returns cancelledOrder
 
                     shouldThrow<BusinessException> {
                         service.execute(PlaceOrderUseCase.Command(
-                            "user-1", listOf(PlaceOrderUseCase.OrderItemCommand(1L, 1, 1000.toBigDecimal()))
+                            "user-1", listOf(PlaceOrderUseCase.OrderItemCommand(1L, 1))
                         ))
                     }
                     // ADR-0032 PR-2: outbox INSERT 는 cancelOrder TX 내부에서 처리되므로
@@ -104,7 +108,7 @@ class OrderServiceTest : BehaviorSpec({
         `when`("존재하는 주문 ID이면") {
             then("주문 정보가 반환되어야 한다") {
                 val order = Order.restore(1L, "user-1",
-                    listOf(OrderItem.of(1L, 1, Money(1000.toBigDecimal()))),
+                    listOf(OrderItem.of(1L, 1, Money(1000L))),
                     OrderStatus.COMPLETED, LocalDateTime.now()
                 )
                 every { transactionalService.findById(1L) } returns order

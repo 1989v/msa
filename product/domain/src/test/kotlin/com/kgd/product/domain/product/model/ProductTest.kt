@@ -26,6 +26,17 @@ class ProductTest : BehaviorSpec({
                 }
             }
         }
+        `when`("가격에 소수 원이 있으면") {
+            then("원 단위(KRW)가 아니라 거부 — 1000.00 처럼 소수부 0 은 받는다") {
+                shouldThrow<IllegalArgumentException> {
+                    Product.create("상품", Money("1000.50".toBigDecimal()), 10, sellerId = 1L)
+                }
+                Product.create("상품", Money("1000.00".toBigDecimal()), 10, sellerId = 1L).price.toWon() shouldBe 1000L
+                shouldThrow<IllegalArgumentException> {
+                    Product.create("상품", Money(1000.toBigDecimal()), 10, sellerId = 1L).update(price = Money("99.9".toBigDecimal()))
+                }
+            }
+        }
         `when`("상품명이 비어있으면") {
             then("IllegalArgumentException이 발생해야 한다") {
                 shouldThrow<IllegalArgumentException> {

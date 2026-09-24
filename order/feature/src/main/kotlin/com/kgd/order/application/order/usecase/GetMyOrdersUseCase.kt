@@ -1,6 +1,5 @@
 package com.kgd.order.application.order.usecase
 
-import java.math.BigDecimal
 import java.time.LocalDateTime
 
 /**
@@ -11,7 +10,7 @@ interface GetMyOrdersUseCase {
 
     data class Result(
         val orderId: Long,
-        val totalAmount: BigDecimal,
+        val totalAmount: Long,
         val status: String,
         val createdAt: LocalDateTime,
         val items: List<Item>,
@@ -20,6 +19,6 @@ interface GetMyOrdersUseCase {
     data class Item(
         val productId: Long,
         val quantity: Int,
-        val unitPrice: BigDecimal,
+        val unitPrice: Long,
     )
 }

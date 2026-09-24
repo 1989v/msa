@@ -150,6 +150,15 @@ class GatewayRouteConfig(
                     }
                     .uri(COMMERCE_URI) // ADR-0093: commerce 폴드
             }
+            // 상품 어드민(이벤트 재발행) — 어드민 전용 (서비스도 역할을 다시 본다)
+            .route("product-admin") { r ->
+                r.path("/api/v1/admin/products/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(adminConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(COMMERCE_URI)
+            }
             // 주문 매출 통계 — 어드민 대시보드 전용 (서비스도 역할을 다시 본다)
             .route("order-admin") { r ->
                 r.path("/api/v1/admin/orders/**")
@@ -233,6 +242,29 @@ class GatewayRouteConfig(
             // 경로를 셋으로 좁혀 둔다 — /api/v1/coupons/** 로 열면 나중에 생기는 경로가 검토 없이 노출된다
             .route("promotion-user") { r ->
                 r.path("/api/v1/coupons/me", "/api/v1/points/me", "/api/v1/coupons/{definitionId}/claim")
+                    .filters { f ->
+                        f.filter(authFilter.apply(userConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(COMMERCE_URI)
+            }
+            // === ADR-0099 주문서 · 장바구니 (commerce 폴드) — ROLE_USER. 본인 것만은 서비스가 X-User-Id 로 본다 ===
+            // 주문서 생성은 읽기 모델 조회 여러 번 + 쓰기라 레이트 리밋을 건다 (SR-4)
+            .route("order-sheet") { r ->
+                r.path("/api/v1/order-sheets", "/api/v1/order-sheets/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(userConfig()))
+                            .requestRateLimiter { config ->
+                                config.setRateLimiter(redisRateLimiter)
+                                config.setKeyResolver(userKeyResolver)
+                                config.setDenyEmptyKey(false)
+                            }
+                            .stripPrefix(0)
+                    }
+                    .uri(COMMERCE_URI)
+            }
+            .route("cart") { r ->
+                r.path("/api/v1/cart", "/api/v1/cart/**")
                     .filters { f ->
                         f.filter(authFilter.apply(userConfig()))
                             .stripPrefix(0)

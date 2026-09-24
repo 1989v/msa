@@ -33,7 +33,9 @@
   `seller.seller.*` 이벤트로 채우는 읽기 모델, memberId == `X-User-Id`) + 토큰의 ROLE_SELLER. 판매자는 자기 상품만 고친다.
   등록 시 `seller_id` 는 본문이 아니라 `ProductWriteAuthorizer.authorizeCreate` 가 돌려준 값이다 — 판매자 행이 없는 어드민과
   `/internal` 일괄 적재는 플랫폼 기본 판매자(1). 기존 상품도 1 로 백필했다
-- Kafka 발행 토픽: `product.item.created`, `product.item.updated` (페이로드에 `sellerId`)
+- Kafka 발행 토픽: `product.item.created`, `product.item.updated` (페이로드에 `sellerId`, 원 단위 정수 `price`, `occurredAt`).
+  새 가격은 원 단위 정수만 받는다(`Money.isWholeWon`) — 컬럼 DECIMAL 은 확장-축소로 옮길 때까지 둔다.
+  전 상품 재발행은 어드민 `POST /api/v1/admin/products/republish` (order 읽기 모델 채우기, 배포 뒤 1회)
 - Search 서비스가 위 토픽을 소비하여 ES 인덱싱 — 토픽 스키마 변경 시 Search Consumer 영향 확인 필수
 
 ## Docs

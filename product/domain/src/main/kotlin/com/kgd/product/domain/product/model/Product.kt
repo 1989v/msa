@@ -48,6 +48,7 @@ class Product private constructor(
             itemReportNo: String? = null
         ): Product {
             require(name.isNotBlank()) { "상품명은 비어있을 수 없습니다" }
+            require(price.isWholeWon) { "가격은 원 단위 정수여야 합니다: ${price.amount}" }
             require(stock >= 0) { "재고는 0 이상이어야 합니다" }
             require(sellerId > 0) { "판매자 id 는 0보다 커야 합니다" }
             requireNonNegative(energyKcal, "에너지(kcal)")
@@ -155,7 +156,10 @@ class Product private constructor(
             require(it.isNotBlank()) { "상품명은 비어있을 수 없습니다" }
             this.name = it
         }
-        price?.let { this.price = it }
+        price?.let {
+            require(it.isWholeWon) { "가격은 원 단위 정수여야 합니다: ${it.amount}" }
+            this.price = it
+        }
         brand?.let { this.brand = it.takeIf { v -> v.isNotBlank() } }
         description?.let { this.description = it.takeIf { v -> v.isNotBlank() } }
         category?.let { this.category = it.takeIf { v -> v.isNotBlank() } }

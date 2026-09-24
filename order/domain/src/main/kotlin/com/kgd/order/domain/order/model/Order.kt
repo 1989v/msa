@@ -10,7 +10,7 @@ class Order private constructor(
     val createdAt: LocalDateTime = LocalDateTime.now()
 ) {
     val totalAmount: Money
-        get() = items.fold(Money(java.math.BigDecimal.ZERO)) { acc, item -> acc + item.subtotal }
+        get() = items.fold(Money.ZERO) { acc, item -> acc + item.subtotal }
 
     companion object {
         fun create(userId: String, items: List<OrderItem>): Order {

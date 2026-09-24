@@ -36,4 +36,7 @@ class ProductRepositoryAdapter(
 
     override fun findAll(pageable: Pageable, sellerId: Long?): Page<Product> =
         queryRepository.findAllByStatus(ProductStatus.ACTIVE, sellerId, pageable).map { it.toDomain() }
+
+    override fun findAllIncludingInactive(pageable: Pageable): Page<Product> =
+        jpaRepository.findAll(pageable).map { it.toDomain() }
 }

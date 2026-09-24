@@ -27,6 +27,15 @@
 - 결제는 외부 시스템 연동 (PaymentPort) — 장애 시 CircuitBreaker 적용 (ADR-0015)
 - Kafka 발행 토픽: `order.order.completed`, `order.order.cancelled`
 - 도메인의 OrderStatus 상태 전이 규칙을 반드시 준수
+- **금액은 원 단위 `Long`**(`Money.amount`). `order_items` 는 `unit_price_won` 을 읽고, 확장 단계라 옛 `unit_price` 에도 같은 값을 쓴다(삭제는 다음 단계)
+- **읽기 모델**(`product_view`·`seller_view`·`coupon_definition_view`·`user_coupon_view`·`point_balance_view`)은
+  `OrderReadModelConsumer`(그룹 `order-read-model`)가 이벤트로만 채운다. 늦게 온 옛 이벤트는 `occurred_at` 으로 거른다.
+  플랫폼 판매자 1 은 이벤트가 없어 마이그레이션이 시드한다
+- **배포 뒤 1회**: 상품 이벤트는 변경 때만 나가므로 기존 상품은 읽기 모델에 없다 —
+  어드민 토큰으로 `POST /api/v1/admin/products/republish` 를 한 번 부른다(여러 번 불러도 안전).
+  확인: `SELECT COUNT(*) FROM order_db.product_view` = `SELECT COUNT(*) FROM product_db.products`
+- 주문서 `POST /api/v1/order-sheets`·장바구니 `/api/v1/cart/**` 는 ROLE_USER, 본인 것만. 가격 필드를 받지 않는다.
+  판매 불가·쿠폰/포인트 불가는 422, 남의 주문서 조회는 없는 주문서와 같은 404
 
 ## Docs
 

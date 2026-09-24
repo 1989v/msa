@@ -10,6 +10,7 @@ import com.kgd.order.infrastructure.messaging.event.OrderItemEvent
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
+import java.math.BigDecimal
 
 /**
  * ADR-0032 PR-2 — `kafkaTemplate.send` 직접 호출을 outbox 패턴으로 교체.
@@ -33,13 +34,13 @@ class OrderEventAdapter(
         val event = OrderCompletedEvent(
             orderId = orderId,
             userId = order.userId,
-            totalAmount = order.totalAmount.amount,
+            totalAmount = BigDecimal.valueOf(order.totalAmount.amount),
             status = order.status.name,
             items = order.items.map { item ->
                 OrderItemEvent(
                     productId = item.productId,
                     quantity = item.quantity,
-                    unitPrice = item.unitPrice.amount,
+                    unitPrice = BigDecimal.valueOf(item.unitPrice.amount),
                 )
             },
         )

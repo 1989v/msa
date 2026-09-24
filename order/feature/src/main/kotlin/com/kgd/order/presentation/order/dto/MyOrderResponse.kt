@@ -1,12 +1,11 @@
 package com.kgd.order.presentation.order.dto
 
 import com.kgd.order.application.order.usecase.GetMyOrdersUseCase
-import java.math.BigDecimal
 import java.time.LocalDateTime
 
 data class MyOrderResponse(
     val orderId: Long,
-    val totalAmount: BigDecimal,
+    val totalAmount: Long,
     val status: String,
     val createdAt: LocalDateTime,
     val items: List<MyOrderItemResponse>,
@@ -25,5 +24,5 @@ data class MyOrderResponse(
 data class MyOrderItemResponse(
     val productId: Long,
     val quantity: Int,
-    val unitPrice: BigDecimal,
+    val unitPrice: Long,
 )

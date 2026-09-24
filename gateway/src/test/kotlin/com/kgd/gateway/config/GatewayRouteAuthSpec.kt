@@ -77,6 +77,52 @@ class GatewayRouteAuthSpec(
         }
     }
 
+    Given("주문서 /api/v1/order-sheets/** (ROLE_USER)") {
+        Then("토큰이 없으면 401") {
+            status(HttpMethod.POST, "/api/v1/order-sheets") shouldBe 401
+            status(HttpMethod.GET, "/api/v1/order-sheets/1") shouldBe 401
+        }
+        Then("ROLE_USER 는 게이트웨이를 지난다") {
+            // 백엔드 호스트를 해석할 수 없어 5xx 로 끝난다. 라우트가 없으면 404, 역할이 막으면 403 이다
+            status(HttpMethod.POST, "/api/v1/order-sheets", userToken) shouldNotBeIn listOf(401, 403, 404)
+            status(HttpMethod.GET, "/api/v1/order-sheets/1", userToken) shouldNotBeIn listOf(401, 403, 404)
+        }
+        Then("주문서 라우트는 레이트 리밋을 건다") {
+            val route = routeLocator.routes.collectList().block().orEmpty().single { it.id == "order-sheet" }
+            route.filters.joinToString(" ") { it.toString() } shouldContain "RequestRateLimiter"
+        }
+        Then("역할 헤더만 위조해서는 통과하지 못한다") {
+            client.post().uri("/api/v1/order-sheets")
+                .header("X-User-Id", "7")
+                .header("X-User-Roles", "ROLE_USER")
+                .exchange()
+                .expectStatus().isUnauthorized
+        }
+    }
+
+    Given("장바구니 /api/v1/cart/** (ROLE_USER)") {
+        Then("토큰이 없으면 401") {
+            status(HttpMethod.GET, "/api/v1/cart") shouldBe 401
+            status(HttpMethod.PUT, "/api/v1/cart/items/1") shouldBe 401
+            status(HttpMethod.DELETE, "/api/v1/cart/items/1") shouldBe 401
+            status(HttpMethod.DELETE, "/api/v1/cart") shouldBe 401
+        }
+        Then("ROLE_USER 는 게이트웨이를 지난다") {
+            status(HttpMethod.GET, "/api/v1/cart", userToken) shouldNotBeIn listOf(401, 403, 404)
+            status(HttpMethod.PUT, "/api/v1/cart/items/1", userToken) shouldNotBeIn listOf(401, 403, 404)
+        }
+    }
+
+    Given("상품 어드민 /api/v1/admin/products/** (ROLE_ADMIN)") {
+        Then("토큰이 없으면 401") {
+            status(HttpMethod.POST, "/api/v1/admin/products/republish") shouldBe 401
+        }
+        Then("ROLE_USER·ROLE_SELLER 는 403") {
+            status(HttpMethod.POST, "/api/v1/admin/products/republish", userToken) shouldBe 403
+            status(HttpMethod.POST, "/api/v1/admin/products/republish", sellerToken) shouldBe 403
+        }
+    }
+
     Given("주문 매출 통계 (ROLE_ADMIN)") {
         Then("토큰이 없으면 401") {
             status(HttpMethod.GET, "/api/v1/admin/orders/stats/today") shouldBe 401

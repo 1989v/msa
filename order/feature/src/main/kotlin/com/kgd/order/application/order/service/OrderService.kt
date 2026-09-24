@@ -8,8 +8,11 @@ import com.kgd.order.application.order.usecase.GetMyOrdersUseCase
 import com.kgd.order.application.order.usecase.GetOrderUseCase
 import com.kgd.order.application.order.usecase.PlaceOrderUseCase
 import com.kgd.order.domain.order.exception.OrderNotFoundException
+import com.kgd.order.domain.order.model.Money
+import com.kgd.order.domain.order.model.OrderItem
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
+import java.math.BigDecimal
 
 @Service
 class OrderService(
@@ -31,8 +34,8 @@ class OrderService(
      * This ensures no DB connection is held during the external payment HTTP call.
      */
     override suspend fun execute(command: PlaceOrderUseCase.Command): PlaceOrderUseCase.Result {
-        // Phase 0: Product 유효성 검증
-        for (item in command.items) {
+        // Phase 0: Product 유효성 검증 — 단가는 요청이 아니라 상품 서비스 가격이다
+        val items = command.items.map { item ->
             val productInfo = productPort.validateProduct(item.productId)
             if (productInfo.status != "ACTIVE") {
                 throw BusinessException(
@@ -40,19 +43,16 @@ class OrderService(
                     "비활성 상품은 주문할 수 없습니다: productId=${item.productId}"
                 )
             }
-            log.debug {
-                "상품 검증 완료: productId=${item.productId}, name=${productInfo.name}, " +
-                    "price=${productInfo.price}, clientPrice=${item.unitPrice}"
-            }
+            OrderItem.of(item.productId, item.quantity, Money(productInfo.price.longValueExact()))
         }
 
         // Phase 1: Save PENDING order (short transaction, immediately committed)
-        val pendingOrder = orderTransactionalService.savePendingOrder(command)
+        val pendingOrder = orderTransactionalService.savePendingOrder(command.userId, items)
         val orderId = requireNotNull(pendingOrder.id) { "저장된 주문에 ID가 없습니다" }
 
         // Phase 2: Call external payment service (no transaction held)
         val paymentResult = try {
-            paymentPort.requestPayment(orderId, pendingOrder.totalAmount.amount)
+            paymentPort.requestPayment(orderId, BigDecimal.valueOf(pendingOrder.totalAmount.amount))
         } catch (e: Exception) {
             log.error(e) { "Payment failed for orderId=$orderId, cancelling order" }
             orderTransactionalService.cancelOrder(orderId)

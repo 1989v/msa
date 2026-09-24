@@ -6,7 +6,7 @@ data class OrderItem private constructor(
     val quantity: Int,
     val unitPrice: Money
 ) {
-    val subtotal: Money get() = Money(unitPrice.amount * quantity.toBigDecimal())
+    val subtotal: Money get() = unitPrice * quantity
 
     companion object {
         fun of(productId: Long, quantity: Int, unitPrice: Money): OrderItem {

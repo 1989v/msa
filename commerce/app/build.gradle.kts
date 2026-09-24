@@ -36,6 +36,9 @@ dependencies {
     testImplementation(project(":payment:domain"))
     // 혜택 통합 spec 이 쿠폰 줄(도메인 값 객체)·상태 enum 을 직접 쓴다
     testImplementation(project(":promotion:domain"))
+    // 주문서 통합 spec 이 거부 사유(도메인 enum)를 값으로 판정하고, 금액 백필 마이그레이션을 버전 지정으로 돌린다
+    testImplementation(project(":order:domain"))
+    testImplementation("org.flywaydb:flyway-core")
     testImplementation(libs.spring.kafka)
 }
 

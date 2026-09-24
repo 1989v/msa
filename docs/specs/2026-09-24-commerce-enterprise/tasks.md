@@ -121,12 +121,12 @@ Total Task Groups: 16 · 단계 P0~P7 (단계 끝마다 커밋·푸시·배포·
 **Dependencies:** Task Group 4, 7
 **Phase:** P3
 **Required Skills:** Kotlin, 금액 계산, Flyway 확장-축소
-- [ ] 8.0 Complete order sheet
-  - [ ] 8.1 테스트: 안분 잔차 최대 라인(동률 앞)·합 보존 · 정률 내림·수수료 HALF_UP 경계 · 주문서 만료·재사용·타인 422 · 정지 판매자 상품 422 · 수수료율 스냅샷 유지 · 금액 백필(DECIMAL→BIGINT) (6)
-  - [ ] 8.2 order 읽기 모델(상품·판매자·쿠폰 정의·사용자 쿠폰·포인트 잔액) 컨슈머 — 멱등 핸들러
-  - [ ] 8.3 `Money` → 원 단위 Long, `unit_price_won` 확장 컬럼 + 백필, product `price` 동일
-  - [ ] 8.4 장바구니 API, 주문서 `POST /api/v1/order-sheets`(가격·가용성·쿠폰·포인트·판매자 배송비, 만료 15분, 라인 스냅샷)
-  - [ ] 8.5 Verify: `$G :order:domain:test --tests '*Allocation*' :order:feature:test --tests '*OrderSheet*'`
+- [x] 8.0 Complete order sheet
+  - [x] 8.1 테스트: 안분 잔차 최대 라인(동률 앞)·합 보존 · 정률 내림·수수료 HALF_UP 경계 · 주문서 만료·재사용·타인 422 · 정지 판매자 상품 422 · 수수료율 스냅샷 유지 · 금액 백필(DECIMAL→BIGINT) (6)
+  - [x] 8.2 order 읽기 모델(상품·판매자·쿠폰 정의·사용자 쿠폰·포인트 잔액) 컨슈머 — 멱등 핸들러
+  - [x] 8.3 `Money` → 원 단위 Long, `unit_price_won` 확장 컬럼 + 백필, product `price` 동일
+  - [x] 8.4 장바구니 API, 주문서 `POST /api/v1/order-sheets`(가격·가용성·쿠폰·포인트·판매자 배송비, 만료 15분, 라인 스냅샷)
+  - [x] 8.5 Verify: `$G :order:domain:test --tests '*Allocation*' :order:feature:test --tests '*OrderSheet*'`
 **Acceptance Criteria:** 요청 JSON 에 가격을 넣어도 금액 불변
 
 ### Task Group 9: 장바구니 · 주문서 화면

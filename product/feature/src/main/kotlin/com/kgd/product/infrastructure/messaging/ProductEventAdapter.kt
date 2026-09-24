@@ -26,7 +26,7 @@ class ProductEventAdapter(
         val event = ProductCreatedEvent(
             productId = product.id!!,
             name = product.name,
-            price = product.price.amount,
+            price = product.price.toWon(),
             status = product.status.name,
             sellerId = product.sellerId,
             brand = product.brand,
@@ -49,7 +49,7 @@ class ProductEventAdapter(
         val event = ProductUpdatedEvent(
             productId = product.id!!,
             name = product.name,
-            price = product.price.amount,
+            price = product.price.toWon(),
             status = product.status.name,
             sellerId = product.sellerId,
             brand = product.brand,

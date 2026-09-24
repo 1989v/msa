@@ -60,3 +60,14 @@
   - CouponDefinitionTest 16/0 · UserCouponTest 5/0 · PromotionHoldTest 9/0 · PointBalanceTest 3/0 · CouponClaimServiceTest 4/0 · PromotionHoldServiceTest 13/0 · PromotionCommandConsumerTest 2/0 · PromotionControllerTest 6/0
   - PromotionIntegrationSpec 5/0 (실 MySQL: 100명 동시 발급 → 정확히 30) · CommerceContextLoadSpec 7/0 · GatewayRouteAuthSpec 26/0 (skipped 0)
 - 회귀 주입: 발급 상한 조건 제거 · reserve 멱등 제거 · EXPIRED 경로 예외/무시 → 전부 빨간불
+
+## P2 배포 (2026-09-24)
+- push `043a9e87`(임시 워크트리에서 리베이스) → images success(run 35957305306) · bump `ea82c0fe`
+- 운영: commerce·gateway `:043a9e8` ready · payment_db Flyway V1 success=1 · POST /api/v1/payments/webhooks/toss 404(모의 PG) · /api/v1/admin/payments/ops-issues 401 · commerce ERROR 0
+
+## TG8 order 읽기 모델 · 장바구니 · 주문서 · 원 단위 금액 (2026-09-24)
+- `./gradlew :order:domain:test :order:feature:test :product:domain:test :product:feature:test :commerce:app:test :gateway:test --tests '*RouteAuth*' verifyArchitecture` → exit 0
+  - AllocationTest 10/0 · CommissionTest 3/0 · OrderSheetTest 21/0 · CouponDefinitionViewTest 13/0 · SellerViewTest 3/0 · OrderSheetControllerTest 9/0 · CartControllerTest 7/0 · OrderReadModelConsumerTest 7/0
+  - OrderSheetIntegrationSpec 7/0 (실 MySQL, validate) · CommerceContextLoadSpec 7/0 · GatewayRouteAuthSpec 34/0 (skipped 0)
+- 회귀 주입 6종(잔차 첫 라인 · 동률 뒤 라인 · 판매자 상태 무시 · 옛 이벤트 거르기 제거 · 컬럼명 변경 · 백필 소수 검사 제거) 전부 빨간불
+- 배포 후 1회: 어드민 `POST /api/v1/admin/products/republish` → order_db.product_view = 24 확인

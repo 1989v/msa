@@ -36,7 +36,7 @@ class OrderEventAdapterTest : BehaviorSpec({
             then("OutboxPort.save 가 Order aggregate + completed topic 으로 호출된다") {
                 val order = Order.restore(
                     42L, "user-9",
-                    listOf(OrderItem.of(1L, 2, Money(5000.toBigDecimal()))),
+                    listOf(OrderItem.of(1L, 2, Money(5000L))),
                     OrderStatus.COMPLETED, LocalDateTime.now(),
                 )
                 val aggregateType = slot<String>()
@@ -69,7 +69,7 @@ class OrderEventAdapterTest : BehaviorSpec({
             then("OutboxPort.save 가 Order aggregate + cancelled topic 으로 호출된다") {
                 val order = Order.restore(
                     7L, "user-9",
-                    listOf(OrderItem.of(1L, 1, Money(1000.toBigDecimal()))),
+                    listOf(OrderItem.of(1L, 1, Money(1000L))),
                     OrderStatus.CANCELLED, LocalDateTime.now(),
                 )
                 val eventType = slot<String>()

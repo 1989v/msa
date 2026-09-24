@@ -2,7 +2,6 @@ package com.kgd.order.application.order.service
 
 import com.kgd.order.application.order.port.OrderEventPort
 import com.kgd.order.application.order.port.OrderRepositoryPort
-import com.kgd.order.application.order.usecase.PlaceOrderUseCase
 import com.kgd.order.domain.order.exception.OrderNotFoundException
 import com.kgd.order.domain.order.model.Money
 import com.kgd.order.domain.order.model.Order
@@ -35,17 +34,12 @@ class OrderTransactionalServiceTest : BehaviorSpec({
             then("repositoryPort.save 만 호출되고 outbox 발행은 일어나지 않는다") {
                 val pending = Order.restore(
                     1L, "user-1",
-                    listOf(OrderItem.of(1L, 1, Money(1000.toBigDecimal()))),
+                    listOf(OrderItem.of(1L, 1, Money(1000L))),
                     OrderStatus.PENDING, LocalDateTime.now(),
                 )
                 every { repositoryPort.save(any()) } returns pending
 
-                val result = service.savePendingOrder(
-                    PlaceOrderUseCase.Command(
-                        "user-1",
-                        listOf(PlaceOrderUseCase.OrderItemCommand(1L, 1, 1000.toBigDecimal())),
-                    ),
-                )
+                val result = service.savePendingOrder("user-1", listOf(OrderItem.of(1L, 1, Money(1000L))))
 
                 result.id shouldBe 1L
                 verify(exactly = 1) { repositoryPort.save(any()) }
@@ -60,7 +54,7 @@ class OrderTransactionalServiceTest : BehaviorSpec({
             then("complete 후 publishOrderCompleted 가 같은 TX 안에서 호출된다") {
                 val pending = Order.restore(
                     1L, "user-1",
-                    listOf(OrderItem.of(1L, 1, Money(1000.toBigDecimal()))),
+                    listOf(OrderItem.of(1L, 1, Money(1000L))),
                     OrderStatus.PENDING, LocalDateTime.now(),
                 )
                 val savedSlot = slot<Order>()
@@ -89,7 +83,7 @@ class OrderTransactionalServiceTest : BehaviorSpec({
             then("cancel 후 publishOrderCancelled 가 같은 TX 안에서 호출된다") {
                 val pending = Order.restore(
                     2L, "user-1",
-                    listOf(OrderItem.of(1L, 1, Money(1000.toBigDecimal()))),
+                    listOf(OrderItem.of(1L, 1, Money(1000L))),
                     OrderStatus.PENDING, LocalDateTime.now(),
                 )
                 val savedSlot = slot<Order>()

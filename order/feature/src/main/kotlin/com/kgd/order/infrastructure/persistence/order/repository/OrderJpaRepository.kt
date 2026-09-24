@@ -4,7 +4,6 @@ import com.kgd.order.infrastructure.persistence.order.entity.OrderJpaEntity
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
-import java.math.BigDecimal
 import java.time.LocalDateTime
 
 interface OrderJpaRepository : JpaRepository<OrderJpaEntity, Long> {
@@ -20,12 +19,12 @@ interface OrderJpaRepository : JpaRepository<OrderJpaEntity, Long> {
 
     @Query(
         """
-        SELECT COALESCE(SUM(i.unitPrice * i.quantity), 0)
+        SELECT COALESCE(SUM(i.unitPriceWon * i.quantity), 0)
         FROM OrderJpaEntity o JOIN o.items i
         WHERE o.createdAt >= :from
         """
     )
-    fun sumRevenueByCreatedAtAfter(@Param("from") from: LocalDateTime): BigDecimal?
+    fun sumRevenueByCreatedAtAfter(@Param("from") from: LocalDateTime): Long?
 
     /** 일자별 주문 수 — 결과 row = [java.sql.Date, count(Long)]. */
     @Query(

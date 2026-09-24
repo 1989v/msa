@@ -2,9 +2,7 @@ package com.kgd.order.application.order.service
 
 import com.kgd.order.application.order.port.OrderEventPort
 import com.kgd.order.application.order.port.OrderRepositoryPort
-import com.kgd.order.application.order.usecase.PlaceOrderUseCase
 import com.kgd.order.domain.order.exception.OrderNotFoundException
-import com.kgd.order.domain.order.model.Money
 import com.kgd.order.domain.order.model.Order
 import com.kgd.order.domain.order.model.OrderItem
 import org.springframework.beans.factory.annotation.Qualifier
@@ -26,14 +24,10 @@ class OrderTransactionalService(
     private val eventPort: OrderEventPort,
 ) {
 
+    /** 단가는 호출자가 서버 가격으로 채운 [items] 에서만 온다 */
     @Transactional
-    fun savePendingOrder(command: PlaceOrderUseCase.Command): Order {
-        val items = command.items.map {
-            OrderItem.of(it.productId, it.quantity, Money(it.unitPrice))
-        }
-        val order = Order.create(userId = command.userId, items = items)
-        return repositoryPort.save(order)
-    }
+    fun savePendingOrder(userId: String, items: List<OrderItem>): Order =
+        repositoryPort.save(Order.create(userId = userId, items = items))
 
     @Transactional
     fun completeOrder(orderId: Long): Order {
