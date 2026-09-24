@@ -196,15 +196,14 @@ Inventory BC는 **재고의 SSOT** (ADR-0013) — Product BC는 카탈로그 SSO
 ## 11. Cross-Context Integration
 
 ### Emitted Events (외부가 본 BC를 소비)
-- `StockReserved` / `StockReleased` / `StockConfirmed` / `StockReceived`
-  - → **product BC** `InventoryStockSyncConsumer` 가 소비하여 Product 캐시 재고 동기화
-- `ReservationEvent.Expired`
-  - → **order BC** (TBD: order가 소비하는지, 또는 inventory 내부만 처리하는지 grilling)
+- `inventory.stock.{reserved,released,confirmed,received,restocked}`
+  - → **product BC** `InventoryStockSyncConsumer` 가 소비하여 Product 재고 사본 동기화
+- `inventory.reservation.{reserved,failed,confirmed,released,restocked,expired}` (키 = orderId)
+  - → **order BC** 사가 코디네이터·클레임 코디네이터가 받는 명령의 답 (ADR-0099)
 
 ### Consumed Events (본 BC가 외부 소비)
-- `order.order.completed` → ConfirmStock 트리거 (TBD: 직접 consumer인지, 또는 다른 경로)
-- `order.order.cancelled` → ReleaseStock 트리거 (TBD)
-- `fulfillment.*` (FulfillmentEvents 임포트 존재 — 본 BC가 fulfillment 이벤트 일부를 본다)
+- `inventory.command.{reserve,confirm,release,restock}` ← order BC 사가·클레임 (ADR-0099)
+- 옛 코레오그래피 구독(`order.order.completed`·`cancelled`, `fulfillment.order.shipped`·`cancelled`)은 은퇴했다
 
 ### Shared Terms (다른 BC에 등장하지만 의미 분리 필요)
 | 용어 | 본 BC 의미 | 다른 BC | 해결 |

@@ -42,6 +42,8 @@
   반려는 이벤트가 없다. 수신: order(읽기 모델) · auth(ROLE_SELLER) · product.
 - **개인정보 파기**: 반려 후 30일이 지나면 사업자번호·대표자·은행·계좌를 NULL 로 지운다(매일 04:20 KST).
   행·상태·상호·반려 사유는 이력으로 남는다.
+- **운영 이슈**: `seller_db.ops_issue` + `/api/v1/admin/sellers/ops-issues`(ROLE_ADMIN, 조회·재시도·종결). seller 는 구독하는
+  토픽이 없어 DLT 컨슈머가 없다 — 운영 큐가 여덟 도메인을 같은 모양으로 합치도록 테이블과 API 만 둔다.
 - **플랫폼 기본 판매자**: `seller.id = 1`(member `platform`, ACTIVE, 수수료 0) — V1 시드. 기존 상품의 백필 대상.
 
 ## 정산 계좌 암호화 키 `SELLER_ACCOUNT_ENC_KEY`
@@ -57,4 +59,4 @@
 ## 운영 DB
 
 `seller_db` 는 order 와 같은 MySQL 인스턴스(`mysql-order-master`)에 스키마만 분리해 둔다. 운영 MySQL 은 init 이 재실행되지
-않으므로 배포 전 `oci-mysql` 로 스키마·계정을 만든다(ADR-0099 SR-13).
+않으므로 배포 전 `oci-mysql` 로 스키마·계정을 만든다(ADR-0099).

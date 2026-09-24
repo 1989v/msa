@@ -7,7 +7,7 @@
 
 ## 1. Bounded Context Overview
 
-Fulfillment BC는 **주문 이행(picking → packing → shipping → delivery)** 단계 관리. Order BC가 `order.order.completed` 발행 시 FulfillmentOrder를 생성하고, 상태 전이는 명시적 그래프(canTransitionTo)로 강제한다. 이행 상태별 도메인 이벤트(sealed)를 emit하여 추적·알림에 활용. Warehouse BC와 연결.
+Fulfillment BC는 **주문 이행(picking → packing → shipping → delivery)** 단계 관리. order 사가 코디네이터의 `fulfillment.command.create` 로 창고별 FulfillmentOrder(+ 라인)를 생성하고(ADR-0099), 상태 전이는 명시적 그래프(canTransitionTo)로 강제한다. 이행 상태별 도메인 이벤트(sealed)를 emit하여 추적·알림에 활용. Warehouse BC와 연결.
 
 ---
 
@@ -119,10 +119,11 @@ CANCELLED → (no transition, terminal)
 ## 11. Cross-Context Integration
 
 ### Consumed Events
-- order BC `order.order.completed` → `FulfillmentEventConsumer` → CreateFulfillment
+- `fulfillment.command.create` · `fulfillment.command.cancel`(라인 지정 가능) ← order BC 사가·클레임 (키 = orderId, ADR-0099)
 
-### Emitted Events
-- `FulfillmentEvent.*` → 외부 알림·대시보드·배송업체 (구체 consumer 명시 필요 — TBD)
+### Emitted Events (아웃박스, 키 = orderId)
+- `fulfillment.order.{created,shipped,delivered,cancelled,cancel-rejected}` → order BC(사가 이행 완료 · 클레임 · 구매 확정 기준 시각)
+- `fulfillment.order.status-changed` → 수신자 없음(REST 수동 전이 추적용)
 
 ### Shared Terms
 | 용어 | 본 BC | 다른 BC | 해결 |

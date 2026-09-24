@@ -14,7 +14,7 @@ Settlement BC 는 **돈이 어디에 얼마 있는가의 권위**다. 주문(매
 | 분개 | 거래의 차변·대변 한 줄 | `JournalEntry` |
 | 역분개 | 원 거래의 차·대를 뒤집은 정정 거래 | `Journal.reverse` · `REVERSAL` |
 | 원천 키 | 원천의 자연 키 — 같은 원천은 원장에 한 번만 | `sourceKey` |
-| 분개 규칙 | 시점별 차·대 계정과 금액(스펙 SR-9 표) | `JournalRules` |
+| 분개 규칙 | 시점별 차·대 계정과 금액(`settlement/CLAUDE.md` 분개 규칙 표) | `JournalRules` |
 | PG 미수금 | PG 가 아직 보내지 않은 결제 대금 | `PG_RECEIVABLE` |
 | 판매자 미지급금 | 판매자에게 아직 지급하지 않은 판매 대금 | `SELLER_PAYABLE` |
 | 수수료 수익 | 플랫폼이 판매자 순매출에서 받는 수수료 | `COMMISSION_REVENUE` |

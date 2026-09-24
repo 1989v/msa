@@ -53,6 +53,9 @@ PG 호출은 트랜잭션 밖 — `PaymentCommandService`·`PaymentResolutionSer
   거래 키·총액(매입 − 환불)이 같으면 settled, 아니면 운영 이슈 `RECON_MISMATCH`. (정산일, 주문번호)는 한 번만 판정.
 - **운영 이슈** `/api/v1/admin/payments/ops-issues` (ROLE_ADMIN): 조회 · `POST /{id}/retry`(재조회를 처음부터 · 대사 다시) ·
   `POST /{id}/close`(사유 필수). 처리자가 남는다.
+- **DLT**: 명령 컨슈머가 1초 간격 3회 재시도 뒤 `<원 토픽>.DLT` 로 보낸 레코드를 `payment-dlt-ops` 그룹이 받아 운영 이슈 `DLT` 로
+  적재한다(원 컨슈머 그룹이 `payment-service` 인 것만). 이 이슈의 재시도는 원 토픽으로 재발행이다.
+- **지표**: 게이지 `commerce_payment_unknown`(지금 UNKNOWN 인 결제 수) · `commerce_reconciliation_mismatch`(MISMATCH 대사 행 수).
 
 ## PG 선택 · 키
 
@@ -65,11 +68,11 @@ PG 호출은 트랜잭션 밖 — `PaymentCommandService`·`PaymentResolutionSer
 - 토스 HTTP: 연결 3초·읽기 5초, 인증 Basic base64(`시크릿 키:`). 서킷은 4xx 를 실패로 세지 않는다.
 - **웹훅 검증**: 토스 결제 상태 웹훅에는 HMAC 서명이 없다. 공유 비밀 헤더 `X-Toss-Webhook-Secret`(상수 시간 비교, 틀리면 401) +
   **본문의 상태·금액은 무시하고 `data.orderId` 로 PG 를 재조회**해 그 결과로만 전이한다. 이미 결론 난 결제는 PG 를 부르지 않는다.
-- 운영(oci-arm)은 mock 이다 — commerce 상시 파드에 외부 egress 가 없다(ADR-0031/0070). 토스 운영 활성화는 스펙 Q1.
+- 운영(oci-arm)은 mock 이다 — commerce 상시 파드에 외부 egress 가 없다(ADR-0031/0070). 토스 운영 활성화는 egress 예외를 따로 결정해야 한다(ADR-0099 §3).
 - 토스 정산 조회 API 는 붙이지 않았다 — toss 에서는 대사 스케줄러가 없다.
 
 ## 운영 DB
 
 `payment_db` 는 order 와 같은 MySQL 인스턴스(`mysql-order-master`)에 스키마만 분리해 둔다. 운영 MySQL 은 init 이 재실행되지
-않으므로 배포 전 `oci-mysql` 로 스키마·계정을 만든다(ADR-0099 SR-13). `mock_pg_transaction` 은 모의 PG 쪽 원장이라
+않으므로 배포 전 `oci-mysql` 로 스키마·계정을 만든다(ADR-0099). `mock_pg_transaction` 은 모의 PG 쪽 원장이라
 결제 행과 따로 있다 — 파드 재시작 뒤에도 재조회·정산 파일이 이어진다.

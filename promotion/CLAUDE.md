@@ -63,8 +63,9 @@
 | `POST /api/v1/coupons/{definitionId}/claim` | ROLE_USER | 201 · 소진·이미 받음·기간 밖 409 |
 | `POST·GET /api/v1/admin/promotions/coupons` | ROLE_ADMIN | 정의 만들기(만든 사람 기록)·목록. 조건 위반 400 |
 | `POST /api/v1/admin/promotions/points/grants` | ROLE_ADMIN | 데모용 지급 — 지급자·사유가 원장에 남는다 |
+| `/api/v1/admin/promotions/ops-issues` | ROLE_ADMIN | 운영 이슈 조회·재시도·종결. DLT(`promotion-dlt-ops` 그룹이 `<원 토픽>.DLT` 에서 적재) 재시도 = 원 토픽 재발행 |
 
 ## 운영 DB
 
 `promotion_db` 는 order 와 같은 MySQL 인스턴스(`mysql-order-master`)에 스키마만 분리해 둔다. 운영 MySQL 은 init 이 재실행되지
-않으므로 배포 전 `oci-mysql` 로 스키마·계정을 만든다(ADR-0099 SR-13).
+않으므로 배포 전 `oci-mysql` 로 스키마·계정을 만든다(ADR-0099).

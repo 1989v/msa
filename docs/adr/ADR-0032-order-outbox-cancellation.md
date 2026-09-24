@@ -1,5 +1,7 @@
 # ADR-0032 Order Outbox 도입 + Cancellation 보상 트랜잭션
 
+> 대체: ADR-0099 (오케스트레이션 사가) — 사가 순서(결제 → 재고)와 「오케스트레이터 기각(Alt D)」, `order.order.completed`·`cancelled` 토픽이 대체됐다. 아웃박스·보상 설계의 근거는 아래에 그대로 둔다.
+
 ## Status
 
 Accepted (2026-05-02)

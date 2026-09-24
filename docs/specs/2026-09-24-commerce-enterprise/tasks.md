@@ -233,11 +233,11 @@ Total Task Groups: 16 · 단계 P0~P7 (단계 끝마다 커밋·푸시·배포·
 **Dependencies:** Task Group 15
 **Phase:** P7
 **Required Skills:** 문서, CI
-- [ ] 16.0 Complete docs
-  - [ ] 16.1 도메인 넷 `CLAUDE.md`·`glossary.md`, `docs/context-map.md`, 루트 서비스 표, `kafka-convention.md`·`kafka-topics.md`, `order`/`inventory`/`fulfillment` CLAUDE.md 갱신, ADR-0099 상태 → 채택, ADR-0032 에 대체 표시
-  - [ ] 16.2 `.github/workflows/ci.yml` PR 게이트에 새 4도메인 테스트
-  - [ ] 16.3 회귀 주입 일곱 건 기록 `verifications/regression-injection.md`
-  - [ ] 16.4 Verify: `python3 ai/plugins/hns/scripts/doc_map.py --check && $G :commerce:app:check`
+- [x] 16.0 Complete docs
+  - [x] 16.1 도메인 넷 `CLAUDE.md`·`glossary.md`, `docs/context-map.md`, 루트 서비스 표, `kafka-convention.md`·`kafka-topics.md`, `order`/`inventory`/`fulfillment` CLAUDE.md 갱신, ADR-0099 상태 → 채택, ADR-0032 에 대체 표시
+  - [x] 16.2 `.github/workflows/ci.yml` PR 게이트에 새 4도메인 테스트
+  - [x] 16.3 회귀 주입 일곱 건 기록 `verifications/regression-injection.md`
+  - [x] 16.4 Verify: `python3 ai/plugins/hns/scripts/doc_map.py --check && $G :commerce:app:check`
 **Acceptance Criteria:** doc lock drift 0, 컨텍스트 로드가 10도메인 행 쓰기·읽기
 
 ## Execution Order

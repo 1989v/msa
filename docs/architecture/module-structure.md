@@ -23,7 +23,6 @@
 
 | Gradle 경로 | 역할 |
 |------------|------|
-| `:product:domain` / `:product:app` | 카탈로그 SSOT (재고는 inventory 가 SSOT, ADR-0013) |
 | `:search:domain` / `:search:app` / `:search:consumer` / `:search:batch` | OpenSearch 읽기 모델 — API · Kafka 색인(Worker) · 전체 색인(CronJob) |
 | `:place:domain` / `:place:app` | 지리 계층 · POI · 관광지 SSOT (ADR-0056/0065) |
 | `:analytics:domain` / `:analytics:app` | Kafka Streams + ClickHouse 스코어 (Worker tier) |
@@ -33,8 +32,8 @@
 | `:quant:domain` / `:quant:app` | 트레이딩 플랫폼 (ADR-0033/0036/0037) |
 | `:gifticon:domain` / `:gifticon:app` | 기프티콘 — **서브모듈** `1989v/msa-gifticon` |
 | `:auth:domain` / `:auth:app` | OAuth · RBAC — **private 서브모듈** |
-| `:code-dictionary:domain` / `:code-dictionary:app` | 개념 사전 + **폴드 호스트** (game · deal · blog · ranking) |
-| `:commerce:app` | **폴드 호스트** 전용 부트스트랩 (자기 도메인 없음, ADR-0058) |
+| `:code-dictionary:domain` / `:code-dictionary:app` | 개념 사전 + **폴드 호스트** (game · blog · ranking) |
+| `:commerce:app` | **폴드 호스트** 전용 부트스트랩 (자기 도메인 없음, ADR-0058/0093/0099) — 열 도메인 |
 | `:agent-viewer:api` | 개발 도구 (플랫폼 서비스 아님) |
 | `:gateway` · `:common` | 단일 모듈 — 게이트웨이 · 공유 라이브러리 |
 
@@ -42,14 +41,19 @@
 
 | Gradle 경로 | 호스트 | 스키마 |
 |------------|------|------|
-| `:order:domain` / `:order:feature` | `commerce:app` | 전용 `order_db` |
+| `:order:domain` / `:order:feature` | `commerce:app` | 전용 `order_db` — 주문 사가 코디네이터 (ADR-0099) |
+| `:product:domain` / `:product:feature` | `commerce:app` (ADR-0093) | 전용 `product_db` — 카탈로그 SSOT (재고는 inventory, ADR-0013) |
 | `:inventory:domain` / `:inventory:feature` | `commerce:app` | 전용 `inventory_db` — **레이어 표준 견본** |
 | `:fulfillment:domain` / `:fulfillment:feature` | `commerce:app` | 전용 `fulfillment_db` |
 | `:warehouse:domain` / `:warehouse:feature` | `commerce:app` | 전용 `warehouse_db` |
-| `:member:domain` / `:member:feature` | `commerce:app` | 전용 `member_db` |
-| `:wishlist:domain` / `:wishlist:feature` | `commerce:app` | 전용 `wishlist_db` |
+| `:seller:domain` / `:seller:feature` | `commerce:app` (ADR-0099) | 전용 `seller_db` |
+| `:payment:domain` / `:payment:feature` | `commerce:app` (ADR-0099) | 전용 `payment_db` |
+| `:promotion:domain` / `:promotion:feature` | `commerce:app` (ADR-0099) | 전용 `promotion_db` |
+| `:settlement:domain` / `:settlement:feature` | `commerce:app` (ADR-0099) | 전용 `settlement_db` |
+| `:member:domain` / `:member:feature` | `account:app` (ADR-0093) | 전용 `member_db` |
+| `:wishlist:domain` / `:wishlist:feature` | `account:app` (ADR-0093) | 전용 `wishlist_db` |
 | `:game:domain` / `:game:feature` (+ `:game:sim` · `:game:web` KMP) | `code-dictionary:app` | 전용 `game_db` |
-| `:deal:domain` / `:deal:feature` | `code-dictionary:app` | 호스트 스키마 공유 |
+| `:deal:domain` / `:deal:feature` | `commerce:app` (ADR-0093 ②) | 전용 `deal_db` |
 | `:blog:domain` / `:blog:feature` | `code-dictionary:app` | 호스트 스키마 공유 |
 | `:ranking:domain` / `:ranking:feature` | `code-dictionary:app` | 호스트 스키마 공유 |
 | `:ads:domain` / `:ads:feature` | `engagement:app` (ADR-0098) | 전용 `ads_db` |

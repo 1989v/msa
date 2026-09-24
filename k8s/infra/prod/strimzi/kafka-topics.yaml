@@ -1,6 +1,13 @@
 # Topics matching docs/architecture/kafka-convention.md and the
 # publish/consume references in each service's application.yml.
 # Strimzi Topic Operator reconciles these into real Kafka topics.
+#
+# commerce 주문 흐름(ADR-0099): 사가 명령·답 · 읽기 모델 · 정산 원천. 키는 orderId(사가) 또는 엔티티 id.
+# order.order.completed / order.order.cancelled 는 은퇴해 선언하지 않는다(이름을 되살리면 옛 의미로 읽힌다).
+#
+# DLT: commerce 컨슈머가 처리에 실패한 레코드는 `<원 토픽>.DLT` 의 **같은 파티션 번호**로 간다
+# (common DltKafka.deadLetterRecoverer). 그래서 DLT 파티션 수는 원 토픽 이상이어야 한다 — 원 토픽과 같은 6.
+# `.DLT` 의 대문자는 Kubernetes 리소스 이름에 쓸 수 없어 metadata.name 은 `-dlt`, 실제 이름은 spec.topicName.
 ---
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
@@ -20,34 +27,6 @@ apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
   name: product.item.updated
-  namespace: commerce
-  labels:
-    strimzi.io/cluster: commerce
-spec:
-  partitions: 6
-  replicas: 3
-  config:
-    retention.ms: "604800000"
-    min.insync.replicas: "2"
----
-apiVersion: kafka.strimzi.io/v1beta2
-kind: KafkaTopic
-metadata:
-  name: order.order.completed
-  namespace: commerce
-  labels:
-    strimzi.io/cluster: commerce
-spec:
-  partitions: 6
-  replicas: 3
-  config:
-    retention.ms: "604800000"
-    min.insync.replicas: "2"
----
-apiVersion: kafka.strimzi.io/v1beta2
-kind: KafkaTopic
-metadata:
-  name: order.order.cancelled
   namespace: commerce
   labels:
     strimzi.io/cluster: commerce
@@ -169,3 +148,1502 @@ metadata:
 spec:
   partitions: 6
   replicas: 3
+
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.command.reserve
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.command.confirm
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.command.release
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.command.restock
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.reservation.reserved
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.reservation.failed
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.reservation.confirmed
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.reservation.released
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.reservation.restocked
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.stock.received
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.stock.restocked
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.command.reserve
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.command.confirm
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.command.cancel
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.command.restore
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.hold.reserved
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.hold.failed
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.hold.confirmed
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.hold.cancelled
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.hold.expired
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.hold.restored
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.coupon.defined
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.coupon.issued
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.point.changed
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: payment.command.authorize
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: payment.command.capture
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: payment.command.void
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: payment.command.refund
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: payment.payment.authorized
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: payment.payment.failed
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: payment.payment.unknown
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: payment.payment.captured
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: payment.payment.voided
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: payment.payment.refunded
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: payment.reconciliation.settled
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: fulfillment.command.create
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: fulfillment.command.cancel
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: fulfillment.order.cancel-rejected
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: fulfillment.order.status-changed
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: order.order.confirmed
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: order.claim.refunded
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: order.line.purchase-confirmed
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: seller.seller.applied
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: seller.seller.approved
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: seller.seller.suspended
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: seller.seller.reactivated
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: seller.seller.updated
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: product.item.created-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: product.item.created.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: product.item.updated-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: product.item.updated.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.command.reserve-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: inventory.command.reserve.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.command.confirm-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: inventory.command.confirm.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.command.release-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: inventory.command.release.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.command.restock-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: inventory.command.restock.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.reservation.reserved-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: inventory.reservation.reserved.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.reservation.failed-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: inventory.reservation.failed.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.reservation.confirmed-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: inventory.reservation.confirmed.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.reservation.released-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: inventory.reservation.released.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.reservation.restocked-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: inventory.reservation.restocked.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.reservation.expired-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: inventory.reservation.expired.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.stock.reserved-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: inventory.stock.reserved.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.stock.released-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: inventory.stock.released.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.stock.confirmed-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: inventory.stock.confirmed.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.stock.received-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: inventory.stock.received.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.stock.restocked-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: inventory.stock.restocked.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.command.reserve-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: promotion.command.reserve.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.command.confirm-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: promotion.command.confirm.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.command.cancel-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: promotion.command.cancel.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.command.restore-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: promotion.command.restore.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.hold.reserved-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: promotion.hold.reserved.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.hold.failed-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: promotion.hold.failed.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.hold.confirmed-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: promotion.hold.confirmed.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.hold.cancelled-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: promotion.hold.cancelled.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.hold.expired-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: promotion.hold.expired.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.hold.restored-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: promotion.hold.restored.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.coupon.defined-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: promotion.coupon.defined.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.coupon.issued-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: promotion.coupon.issued.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: promotion.point.changed-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: promotion.point.changed.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: payment.command.authorize-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: payment.command.authorize.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: payment.command.capture-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: payment.command.capture.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: payment.command.void-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: payment.command.void.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: payment.command.refund-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: payment.command.refund.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: payment.payment.authorized-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: payment.payment.authorized.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: payment.payment.failed-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: payment.payment.failed.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: payment.payment.unknown-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: payment.payment.unknown.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: payment.payment.captured-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: payment.payment.captured.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: payment.payment.voided-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: payment.payment.voided.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: payment.payment.refunded-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: payment.payment.refunded.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: payment.reconciliation.settled-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: payment.reconciliation.settled.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: fulfillment.command.create-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: fulfillment.command.create.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: fulfillment.command.cancel-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: fulfillment.command.cancel.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: fulfillment.order.created-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: fulfillment.order.created.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: fulfillment.order.shipped-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: fulfillment.order.shipped.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: fulfillment.order.delivered-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: fulfillment.order.delivered.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: fulfillment.order.cancelled-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: fulfillment.order.cancelled.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: fulfillment.order.cancel-rejected-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: fulfillment.order.cancel-rejected.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: order.order.confirmed-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: order.order.confirmed.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: order.claim.refunded-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: order.claim.refunded.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: order.line.purchase-confirmed-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: order.line.purchase-confirmed.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: seller.seller.applied-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: seller.seller.applied.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: seller.seller.approved-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: seller.seller.approved.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: seller.seller.suspended-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: seller.seller.suspended.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: seller.seller.reactivated-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: seller.seller.reactivated.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: seller.seller.updated-dlt
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  topicName: seller.seller.updated.DLT
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"

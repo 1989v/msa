@@ -1,6 +1,6 @@
 # ADR-0099 — commerce: 오케스트레이션 사가 + 결제·판매자·혜택·정산 폴드
 
-- 상태: 제안 (2026-09-24)
+- 상태: 채택 (2026-09-24)
 - 대체: ADR-0032 의 「오케스트레이터 기각(Alt D)」과 사가 순서(결제 → 재고). 아웃박스·보상 이벤트 설계는 유지
 - 관련: ADR-0011(재고·이행 코레오그래피), ADR-0012/0029(멱등 컨슈머), ADR-0015(장애 대비), ADR-0028(추적),
   ADR-0058/0093(폴드 호스트), ADR-0083(레이어 표준), ADR-0031/0070(egress), ADR-0082(외부 호출 쿼터)
@@ -82,3 +82,25 @@ seller 승인·정지 이벤트를 auth 가 받아 `ROLE_SELLER` 행만 추가·
 - `PRODUCT_SERVICE_URL`·`PAYMENT_SERVICE_URL` 의존이 사라진다. order 는 product 이벤트로 상품 스냅샷을 유지한다.
 - 운영 MySQL 은 이미 떠 있어 init 스크립트가 재실행되지 않는다. 새 스키마·계정은 배포 전 수동 생성하고 init 파일도 같이 고친다.
 - 한 이미지가 열 도메인을 올린다. 한 도메인 테스트 실패가 전체 배포를 막는 기존 성질이 더 커진다.
+
+### 구현 결과 (2026-09-24)
+
+P0~P6 을 단계마다 운영에 배포했다(P7 은 운영 큐·DLT·추적·문서 마감). 운영(oci-arm)에서 주문 1건이 10초에 FULFILLING·사가 COMPLETED 까지 가고,
+같은 주문의 전체 취소 클레임이 6초에 REFUNDED 로 끝났으며, settlement 가 두 건을 원장에 차 = 대로 남겼다.
+
+| 영역 | 들어간 것 |
+|---|---|
+| 사가 | order 코디네이터(`order_saga`, `@Version`) · 명령 토픽 넷(재고·혜택·결제·이행) · 피벗 전 보상 · 피벗 뒤 재시도·STUCK · 보류 만료 VOID · 0원 주문 · `Idempotency-Key` |
+| 옛 흐름 은퇴 | `order.order.completed`·`cancelled` 토픽과 그 구독, fulfillment ← `inventory.stock.reserved`, order 의 HTTP 자기 호출·`PaymentAdapter` 삭제 · 옛 ACTIVE 예약 기동 시 1회 확정 |
+| 새 도메인 넷 | seller(입점·승인·정지, ROLE_SELLER 연동, 계좌 AES-GCM) · payment(모의 PG·토스 어댑터·UNKNOWN 재조회·대사) · promotion(쿠폰·포인트·TCC 보류) · settlement(복식부기 원장·정산서·모의 지급) |
+| 금액·주문서 | 장바구니 · 주문서 스냅샷 · 안분 · 수수료 · 원 단위 `Long`(확장 단계, 옛 DECIMAL 컬럼 삭제는 다음 단계) |
+| 클레임 | 전체·부분 취소 · 이행 취소 → 판매자 결정 · 재입고 · 혜택 원복 · 부분 환불 · 구매 확정(수동·7일 자동) |
+| 운영 | 아웃박스 보강(`SKIP LOCKED`·리스·재시도 한도) · 도메인별 `ops_issue` + DLT 적재·재발행 · 운영 큐 화면 · traceparent 전파 · 사가·결제·정산 지표 |
+
+구현 중에 발견해 함께 고친 기존 결함: commerce 에 `@EnableKafka` 가 없어 모든 `@KafkaListener` 가 운영에서 등록된 적이 없었다 ·
+DLT 가 규약 `.DLT` 가 아니라 Spring Kafka 4 기본 `-dlt` 로 가고 있었다 · 운영 `orders.status` 가 Hibernate 가 만든 ENUM 이라 새 상태 INSERT 가 잘렸다 ·
+common 아웃박스 엔티티에 기본 생성자가 없어 옛 릴레이가 행을 못 읽었다.
+
+**남은 질문**은 스펙 `docs/specs/2026-09-24-commerce-enterprise/context/open-questions.yml` 의 post-impl 항목이다. 큰 것만:
+토스 운영 활성화(egress 예외), 재고·창고·이행 API 의 판매자 소유 검사 부재, 운영 스키마의 다른 Hibernate ENUM 컬럼,
+`@EnableKafka` 위치, 운영에 남은 `-dlt` 토픽 레코드.

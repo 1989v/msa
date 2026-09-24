@@ -62,11 +62,14 @@ order·payment·seller 이벤트를 받기만 하고 **발행하는 토픽이 �
 | `POST /api/v1/admin/settlements/statements/{id}/retry-payout` | ROLE_ADMIN | CONFIRMED 만, 그 밖 409 |
 | `POST /api/v1/admin/settlements/batch/run` | ROLE_ADMIN | 오늘 날짜로 배치 — 닫힌 기간만 |
 | `GET /api/v1/admin/settlements/ledger/trial-balance` | ROLE_ADMIN | 계정별 차·대·잔액 + 판매자별 미지급금, `net` = 0 이어야 한다 |
+| `/api/v1/admin/settlements/ops-issues` | ROLE_ADMIN | 운영 이슈 조회·재시도·종결. 수신 계약 위반(금액 불일치 등)은 `<원 토픽>.DLT` → `settlement-dlt-ops` 가 적재, 재시도 = 원 토픽 재발행 |
+
+지표: 게이지 `commerce_settlement_payout_won{status=PAID|CONFIRMED}` — 정산서 지급액 합(PAID = 지급 끝, CONFIRMED = 송금 대기).
 
 ## 운영 DB
 
 `settlement_db` 는 order 와 같은 MySQL 인스턴스(`mysql-order-master`)에 스키마만 분리한다. 운영 MySQL 은 init 이 재실행되지 않으므로
-배포 전 `oci-mysql` 로 스키마·계정을 만든다(ADR-0099 SR-13). 판매자 읽기 모델(`settlement_seller`)은 이벤트로만 채워지므로,
+배포 전 `oci-mysql` 로 스키마·계정을 만든다(ADR-0099). 판매자 읽기 모델(`settlement_seller`)은 이벤트로만 채워지므로,
 이 도메인보다 먼저 승인된 판매자는 Kafka 보존기간이 지났으면 한 번 옮겨 담아야 한다 — 두 스키마가 같은 인스턴스라 SQL 한 줄이다
 (`updated_at` 을 발생 시각으로 넣어, 뒤에 오는 실제 이벤트가 이긴다):
 

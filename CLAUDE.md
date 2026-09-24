@@ -172,8 +172,8 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 
 | 서비스 | CLAUDE.md | 비고 |
 |--------|-----------|------|
-| product | `product/CLAUDE.md` | SSOT, Kafka 발행. `:product:feature` 로 commerce:app 에 폴드 (ADR-0093) |
-| order | `order/CLAUDE.md` | 결제 연동, 상태 전이. `:order:feature` 로 commerce:app 에 폴드 (ADR-0058) |
+| product | `product/CLAUDE.md` | 카탈로그 SSOT, 상품은 판매자 소유(쓰기 = ACTIVE 판매자·어드민), 이벤트는 아웃박스. `:product:feature` 로 commerce:app 에 폴드 (ADR-0093/0099) |
+| order | `order/CLAUDE.md` | 장바구니·주문서(금액은 서버) + **주문 사가 코디네이터**(재고 → 혜택 → 결제 피벗 → 확정 → 이행, 명령 토픽 오케스트레이션) + 클레임·구매 확정. `:order:feature` 로 commerce:app 에 폴드 (ADR-0058/0099) |
 | search | `search/CLAUDE.md` | OpenSearch 인덱싱, 4개 모듈 |
 | gateway | `gateway/CLAUDE.md` | 인증 필터, Rate Limiting, K8s DNS 라우팅 |
 | common | `common/CLAUDE.md` | 공유 라이브러리 |
@@ -187,12 +187,16 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | code-dictionary | `code-dictionary/CLAUDE.md` | IT 개념 사전, OpenSearch 검색, 트리맵/그래프 시각화, 어드민 CRUD + 포트폴리오 카드. FE 는 portal-fe 단일 SPA 의 메인 콘텐츠로 통합 (2026-05-05, scroll anchor 기반). **game:feature 호스트** (ADR-0059) |
 | game | `game/CLAUDE.md` | 게임 플랫폼 — 카탈로그(태그/큐레이션/평점) + 플레이 세션 + **개선 제안**(상태 있는 공개 피드백, ADR-0087). 광고는 ads 가 흡수(ADR-0098). `:game:domain`+`:game:feature` 라이브러리로 code-dictionary:app 에 폴드, FE 는 portal-fe `/games/*` (ADR-0059) |
 | inventory | `inventory/CLAUDE.md` | 재고 예약/차감/복구 — **재고 SSOT** (ADR-0013). commerce:app 폴드. **레이어 표준 견본** (ADR-0083) |
-| fulfillment | `fulfillment/CLAUDE.md` | 출고 상태 머신 (FulfillmentOrder), Saga choreography 의 출고 단계. commerce:app 폴드 |
+| fulfillment | `fulfillment/CLAUDE.md` | 출고 상태 머신 (FulfillmentOrder), 주문 사가의 이행 참여자(`fulfillment.command.*`). commerce:app 폴드 |
 | warehouse | `warehouse/CLAUDE.md` | 창고 마스터. commerce:app 폴드. Kafka 없음 |
+| seller | `seller/CLAUDE.md` | 마켓플레이스 판매자 — 입점·승인·정지·수수료율·정산 계좌(AES-GCM, 키 `SELLER_ACCOUNT_ENC_KEY` 없으면 commerce 기동 실패). 판매자 권한은 JWT 가 아니라 **판매자 행 ACTIVE** 로 판정. commerce:app 폴드, `seller_db` (ADR-0099) |
+| payment | `payment/CLAUDE.md` | 결제 — 모의 PG(운영 기본)·토스 어댑터(`payment.pg=toss`), UNKNOWN 재조회, PG 대사. 카드 정보를 다루지 않는다. commerce:app 폴드, `payment_db` (ADR-0099) |
+| promotion | `promotion/CLAUDE.md` | 쿠폰·포인트 원장 + 주문별 혜택 보류(TCC, 30분). commerce:app 폴드, `promotion_db` (ADR-0099) |
+| settlement | `settlement/CLAUDE.md` | 복식부기 원장(추가만) + 판매자 정산서·모의 지급. 발행 토픽 없음. commerce:app 폴드, `settlement_db` (ADR-0099) |
 | chatbot | `chatbot/CLAUDE.md` | `:chatbot:feature` 로 sideapp:app 에 폴드 (ADR-0093). 대화형 AI — Anthropic SDK 직접 + 채널 추상화(WebSocket/Slack) + 문서 지식원 (ADR-0052) |
 | recommendation | `recommendation/CLAUDE.md` | 추천 — 룰 기반 CB · Item-Item CF · Thompson 밴딧 · ANN 사이드카 (ADR-0044~0049). analytics 의 ClickHouse 를 **읽기만**. `:recommendation:feature` 로 **engagement:app 에 폴드** (ADR-0093) — ANN 사이드카는 별도 파드 유지 |
 | ads | `ads/CLAUDE.md` | 광고 네트워크 — 회원 광고주가 가상 크레딧으로 집행하는 디스플레이 광고, 문맥 1차 경매 + 가시 노출·클릭 검증 + 복식부기 원장 정산. game ads 를 흡수한다. `:ads:feature` 로 **engagement:app 에 폴드**, 스키마 `ads_db`, 시크릿 `ads-token` 이 없으면 engagement 가 못 뜬다 (ADR-0098) |
-| commerce | `commerce/CLAUDE.md` | **폴드 호스트** — 자기 도메인 없이 order·inventory·fulfillment·warehouse·product 를 한 JVM 으로 (ADR-0058/0093). 도메인별 datasource/EMF/TM |
+| commerce | `commerce/CLAUDE.md` | **폴드 호스트** — 자기 도메인 없이 order·inventory·fulfillment·warehouse·product·deal·seller·payment·promotion·settlement 를 한 JVM 으로 (ADR-0058/0093/0099). 도메인별 datasource/EMF/TM |
 | account | — | **폴드 호스트** (ADR-0093) — member·wishlist. 사람에 관한 데이터 |
 | engagement | — | **폴드 호스트** (ADR-0093) — recommendation·experiment·ads |
 | sideapp | — | **폴드 호스트** (ADR-0093) — quant·chatbot·gifticon. 어느 축에도 안 붙는 사이드앱 |
@@ -200,7 +204,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | place | `place/CLAUDE.md` | 행정 지리 계층(대륙/국가/광역/도시) + POI + **관광지(Attraction) SSOT**, OpenSearch geo_distance 근처검색. 오픈데이터(GeoNames/상가정보/TourAPI) 적재 (ADR-0056/0065). 수집은 `place/ingest` CronJob 이 매일 자동 (ADR-0070) — 외부 :443 을 부르는 유일한 place 계열 파드. 운영 활성 (2026-08-09) |
 | blog | `blog/CLAUDE.md` | 블로그 플랫폼 — 계층 카테고리(3단) + 다중 저자(등록제) + 댓글·평점·좋아요·조회수 + 글 상세 서버 meta 주입. `:blog:domain`+`:blog:feature` 라이브러리로 code-dictionary:app 에 폴드(스키마 공유), FE 는 portal-fe `blog.1989v.com` (ADR-0072) |
 | ranking | `ranking/CLAUDE.md` | 랭킹 리더보드 — 무엇이든 줄세워 보여주는 곳. P1 은 주유소 유가(시군구 × 유종 최저가 TOP20, 오피넷) + 각 주유소 **구글맵 길찾기 링크**. `:ranking:domain`+`:ranking:feature` 라이브러리로 code-dictionary:app 에 폴드(스키마 공유), 수집은 `ranking/ingest` CronJob, FE 는 portal-fe `rank.1989v.com` (ADR-0081) |
-| deal | `deal/CLAUDE.md` | 혜택 링크 허브 — 카테고리별 제휴/일반 혜택 링크 큐레이션 + `/go/{slug}` 리다이렉터 + 클릭 계측. `:deal:domain`+`:deal:feature` 라이브러리로 code-dictionary:app 에 폴드(스키마 공유), FE 는 portal-fe `deal.1989v.com` (ADR-0069) |
+| deal | `deal/CLAUDE.md` | 혜택 링크 허브 — 카테고리별 제휴/일반 혜택 링크 큐레이션 + `/go/{slug}` 리다이렉터 + 클릭 계측. `:deal:domain`+`:deal:feature` 라이브러리로 commerce:app 에 폴드(전용 `deal_db`, ADR-0093 ②), FE 는 portal-fe `deal.1989v.com` (ADR-0069) |
 
 > charting 은 ADR-0036 P2-T20 에서 quant 로 통합 + Hard remove 완료 (2026-05-02). 서비스 특화 ADR 은 해당 서비스의 `docs/adr/`에 위치.
 

@@ -155,3 +155,16 @@
 - 발견·수정한 기존 결함: DLT 토픽이 규약 `.DLT` 가 아니라 Spring Kafka 4 기본 `-dlt` 로 가고 있었다 · order·inventory·fulfillment·product DLT 값 이중 인용
 - 회귀 주입 4종(DLT 리스너 제거 · 추적 헤더 제거 · 체류 중복 검사 제거 · 게이트웨이 라우트 제거) 전부 빨간불
 - admin-fe `tsc -b --force` 0 · vitest 4 passed
+
+## TG15 배포 시도 · auth 포인터 사고 (2026-09-24~25)
+- TG15 push `e93403f5` 의 images run 은 뒤 push 에 밀려 취소(재실행 attempt 2 도 취소) — commerce 는 `990d7a1` 에 머묾
+- 다른 세션 커밋 `24f656e6` 이 공유 트리의 낡은 auth 워킹트리(977cdce)를 담아 포인터를 되돌림 → P6 배포(`990d7a1`) auth 이미지에서 판매자 역할 컨슈머 소실
+- 복구 `8ce6d910`(포인터 fe0f5f6) → auth `:8ce6d91` 롤아웃, `auth-seller-role: partitions assigned: [seller.seller.approved-0, …]`, ERROR 0. 공유 트리 auth 워킹트리도 fe0f5f6 으로 맞춤
+- 실수: `e93403f5` 커밋 메시지는 포인터 복구를 적었지만 스테이지되지 않았다 — 실제 복구는 `8ce6d910`
+
+## TG16 문서 · CI · 회귀 주입 기록 (2026-09-25)
+- `python3 ai/plugins/hns/scripts/doc_map.py --check` → clean exit 0 (lock 은 이전부터 drift — 재생성)
+- `./gradlew verifyArchitecture :commerce:app:check` + 모듈 테스트 → BUILD SUCCESSFUL (JournalTest 5/0 · OrderControllerIdempotencyTest 11/0 · PaymentTest 69/0 · GatewayRouteAuthSpec 47/0 등)
+- strimzi YAML 115 문서 파싱 · 이름 중복 0 · 코드 토픽 − 선언 = 없음. ci.yml 은 생성물 topology.sh 가 새 4도메인 테스트를 이미 돌려 수정 안 함
+- `verifications/regression-injection.md` — 필수 일곱 중 여섯은 임시 사본에 재주입 빨간불, 아웃박스 직렬화·(b) 사가 쪽은 통합/E2E 라 TG1·TG12 기록이 근거
+- **사고**: 구현 에이전트가 `pkill -f "cat"` 으로 Docker Desktop 을 종료시켰다(23:43 KST). 로컬 Testcontainers 검증 불가 — CI 테스트 게이트(commerce:app:test 포함)가 대신한다
