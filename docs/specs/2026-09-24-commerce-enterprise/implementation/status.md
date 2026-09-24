@@ -174,3 +174,16 @@
 - product_db `V20260925_001__add_products_price_won`(소수부 가드 → price_won BIGINT 백필), 엔티티는 price_won 기준 + 옛 price 동시 기록, 요청의 소수 원은 400
 - 회귀 주입: 원 단위 검사 항상 참 · update 에서 옛 price 쓰기 제거 → 2 실패
 - 실 MySQL 마이그레이션 검증은 로컬 Docker 중단으로 CI 테스트 게이트에 맡김
+
+## P7 배포 · 최종 운영 확인 (2026-09-25)
+- 커밋 이미지가 다른 세션 push 에 계속 밀려 취소(e93403f5·0533f2e2 등) → 가격 Long 전환(79c46a57)이 commerce 테스트 컴파일·OntologyFilesSpec(Money.toWon 참조)을 깨뜨림 → 수정 0533f2e2(온톨로지 참조 + manifest revision 4) → CI 게이트에서 두 테스트(소수 문자열 toLong · SQL 직삽입 행 price_won NULL) 실패 → 수정 1dc1196d → **images run 36065276070 success**, commerce `:1dc1196` ready
+- product_db: 24 rows, price_won NULL 0
+- 운영 점검(클러스터 안 호출, 점검용 사용자·판매자):
+  - 판매자 신청(id 2 PENDING) → 어드민 승인(ACTIVE, 수수료 1000bp) → 그 판매자가 상품 97 등록(`sellerId:2`, 행 ACTIVE 판정)
+  - 두 판매자 주문 2(81 플랫폼 + 97 판매자2, 배송비 3,000, 결제 9,700) → 10초 FULFILLING · 사가 COMPLETED
+  - 라인 1 부분 취소 → 4초 REFUNDED, 주문 FULFILLING 유지, refundedAmount 1,700
+  - 남은 라인 구매 확정 → 주문 **COMPLETED**
+  - 시산표: PG 미수금 잔액 8,000(=9,700−1,700) · 판매자 미지급금 대 10,900(=1,700+1,700+7,500[5,000+3,000−500]) 차 3,400 · 수수료 수익 500 · 전체 합 0
+  - 운영 큐 8개 도메인 API 전부 응답, OPEN 0
+- 정산서: 판매자 2 는 WEEKLY — 기간이 닫히는 다음 주 배치(05:30 KST)에서 첫 정산서가 나온다(열린 기간은 설계상 정산하지 않음)
+- 점검 데이터: 창고 1 · 판매자 2(`ops-e2e-seller-20260925`) · 상품 97 · 주문 1·2 · 클레임 1·2

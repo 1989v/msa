@@ -85,7 +85,7 @@ seller 승인·정지 이벤트를 auth 가 받아 `ROLE_SELLER` 행만 추가·
 
 ### 구현 결과 (2026-09-24)
 
-P0~P6 을 단계마다 운영에 배포했다(P7 은 운영 큐·DLT·추적·문서 마감). 운영(oci-arm)에서 주문 1건이 10초에 FULFILLING·사가 COMPLETED 까지 가고,
+P0~P7 을 단계마다 운영에 배포했다(P7 은 운영 큐·DLT·추적·문서 마감). 운영(oci-arm)에서 주문 1건이 10초에 FULFILLING·사가 COMPLETED 까지 가고,
 같은 주문의 전체 취소 클레임이 6초에 REFUNDED 로 끝났으며, settlement 가 두 건을 원장에 차 = 대로 남겼다.
 
 | 영역 | 들어간 것 |

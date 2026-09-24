@@ -26,7 +26,7 @@
 | TG14 정산 | 완료 · P6 배포 990d7a1 |
 | TG15 운영 | 완료 (e93403f·8ce6d91 push, commerce 이미지는 TG16 push 로) |
 | TG16 문서·CI | 완료 |
-| 최종 검증 | 진행 중 |
+| 최종 검증 | PASS WITH ISSUES (verifications/final-verification.md) · P7 운영 확인 완료 1dc1196 |
 
 다음: TG1 → TG2 → P0 배포
 블로커: 없음
