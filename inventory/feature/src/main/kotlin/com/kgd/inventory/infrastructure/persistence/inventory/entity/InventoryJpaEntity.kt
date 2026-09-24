@@ -7,10 +7,14 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 import jakarta.persistence.Version
 
 @Entity
-@Table(name = "inventory")
+@Table(
+    name = "inventory",
+    uniqueConstraints = [UniqueConstraint(name = "uk_inventory_product_warehouse", columnNames = ["product_id", "warehouse_id"])],
+)
 class InventoryJpaEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,

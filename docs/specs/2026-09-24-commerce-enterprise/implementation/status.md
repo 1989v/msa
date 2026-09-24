@@ -52,7 +52,7 @@
 - 무토큰 POST /api/v1/sellers/apply 401 · GET /api/v1/sellers/me 401 · /api/v1/seller/me 401 · /api/v1/admin/sellers 401 · /shop/seller/apply 200 · GET /api/v1/products?sellerId=1 200(sellerId 필드)
 - seller_db: 플랫폼 판매자 1 ACTIVE · product_db product_seller 시드 1 · products 24 전부 seller_id=1 백필
 - auth 컨슈머 `auth-seller-role` 파티션 할당 확인, commerce·auth 최근 ERROR 0
-- 롤아웃 직후 몇 분간 옛 gateway 파드가 새 경로에 404 — 롤아웃 완료 후 401 로 일관
+- ~~롤아웃 직후 옛 gateway 파드가 404~~ **정정(P3 때 발견)**: 404 는 확인 루프의 오류였다 — zsh 는 `set -- $p` 를 단어 분리하지 않아 루프가 사이트 루트 `/` 를 불렀다(`url_effective=https://1989v.com/`). 라우트는 처음부터 정상
 - 미확인: 실제 로그인 사용자로 신청 → 승인 → ROLE_SELLER → 상품 등록 한 바퀴(OAuth 로그인 필요)
 
 ## TG7 promotion 도메인 (2026-09-24)
@@ -76,3 +76,15 @@
 - portal-fe `npx vitest run src/pages/shop src/pages/seller src/pages/__tests__/privacyRetention.test.ts` → Test Files 4 passed · Tests 12 passed; tsc(tsconfig.app.json) portal 0 · admin 0
 - 회귀 주입: 결제 금액을 라인 합으로 · 재생성 요청에 unitPrice · 만료 무시 → 전부 빨간불
 - CDP 9회(`verifications/tg9/`): 가로 넘침 0, 라벨 대비 라이트 4.99~15.82 · 다크 6.04~14.42, 엇갈림 조합 값 일치. 헤더 "장바구/니" 줄바꿈 회귀를 발견·수정
+
+## P3 배포 (2026-09-24)
+- push `64b0a51c` → images success(run 35960645374) · 운영 commerce·gateway·portal-fe·admin-fe `:64b0a51`
+- promotion_db V1 success · order_db 20260924.002 success
+- 무토큰 POST /api/v1/order-sheets · GET /api/v1/cart · /api/v1/coupons/me · /api/v1/points/me → 401 (게이트웨이 로그 Route{id='cart'} 매칭)
+- **order_db.product_view 0 · seller_view 1(시드)** — 원인은 TG10 에서 발견: commerce 에 `@EnableKafka` 가 없어 모든 `@KafkaListener` 가 등록된 적이 없다(읽기 모델·명령·재고 동기화 컨슈머 전부 운영 무동작)
+
+## TG10 명령 핸들러 · 옛 구독 은퇴 · ACTIVE 전환 (2026-09-24)
+- `./gradlew :inventory:domain:test :inventory:feature:test :fulfillment:domain:test :fulfillment:feature:test :commerce:app:test verifyArchitecture` → exit 0, 실패 0
+  - InventoryCommandServiceTest 10/0 · FulfillmentCommandServiceTest 5/0 · RetiredChoreographyCommandIntegrationSpec 4/0(실 MySQL·실 Kafka, 리스너 전부 켜짐) · CommerceContextLoadSpec 7/0 · OrderSheet 7/0 · Promotion 5/0 (skipped 0)
+- `@EnableKafka` 를 inventory `KafkaConfig` 에 추가(호스트 전체 리스너가 켜짐) — 제거 회귀 주입 시 통합 spec 컨텍스트 실패
+- 회귀 주입 12종 전부 빨간불

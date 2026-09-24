@@ -1,8 +1,6 @@
 package com.kgd.fulfillment.application.fulfillment.service
 
 import org.springframework.beans.factory.annotation.Qualifier
-import tools.jackson.databind.ObjectMapper
-import com.kgd.common.messaging.outbox.OutboxPort
 import com.kgd.fulfillment.application.fulfillment.port.FulfillmentRepositoryPort
 import com.kgd.fulfillment.application.fulfillment.usecase.CreateFulfillmentUseCase
 import com.kgd.fulfillment.application.fulfillment.usecase.GetFulfillmentUseCase
@@ -19,9 +17,7 @@ import org.springframework.transaction.annotation.Transactional
 @Qualifier("fulfillmentTransactionManager")
 class FulfillmentService(
     private val fulfillmentRepository: FulfillmentRepositoryPort,
-    @org.springframework.beans.factory.annotation.Qualifier("fulfillmentOutboxPort")
-    private val outboxPort: OutboxPort,
-    private val objectMapper: ObjectMapper
+    private val events: FulfillmentEventPublisher,
 ) : CreateFulfillmentUseCase, TransitionFulfillmentUseCase, GetFulfillmentUseCase {
 
     override fun execute(command: CreateFulfillmentUseCase.Command): CreateFulfillmentUseCase.Result {
@@ -41,18 +37,7 @@ class FulfillmentService(
         )
         val saved = fulfillmentRepository.save(fulfillmentOrder)
         val savedId = requireNotNull(saved.id) { "저장된 풀필먼트에 ID가 없습니다" }
-
-        val event = FulfillmentEvent.Created(
-            fulfillmentId = savedId,
-            orderId = saved.orderId,
-            warehouseId = saved.warehouseId
-        )
-        outboxPort.save(
-            aggregateType = "FulfillmentOrder",
-            aggregateId = savedId,
-            eventType = "fulfillment.order.created",
-            payload = objectMapper.writeValueAsString(event)
-        )
+        events.created(saved.orderId, listOf(saved))
 
         return CreateFulfillmentUseCase.Result(
             fulfillmentId = savedId,
@@ -68,21 +53,17 @@ class FulfillmentService(
         val fromStatus = fulfillmentOrder.getStatus()
         val targetStatus = FulfillmentStatus.valueOf(command.targetStatus)
         val event = fulfillmentOrder.transition(targetStatus)
-        fulfillmentRepository.save(fulfillmentOrder)
+        val saved = fulfillmentRepository.save(fulfillmentOrder)
 
         val fulfillmentId = requireNotNull(fulfillmentOrder.id)
-        val eventType = when (event) {
-            is FulfillmentEvent.Shipped -> "fulfillment.order.shipped"
-            is FulfillmentEvent.Delivered -> "fulfillment.order.delivered"
-            is FulfillmentEvent.Cancelled -> "fulfillment.order.cancelled"
-            else -> "fulfillment.order.status-changed"
+        when (event) {
+            is FulfillmentEvent.Shipped -> events.shipped(saved)
+            is FulfillmentEvent.Delivered -> events.delivered(saved)
+            // 수동 취소도 클레임 답과 같은 모양 — 이 이행의 라인 전부가 취소됐다
+            is FulfillmentEvent.Cancelled ->
+                events.cancelled(saved.orderId, saved.getLines().map { saved to it }, listOf(fulfillmentId))
+            else -> events.statusChanged(saved, fromStatus, targetStatus)
         }
-        outboxPort.save(
-            aggregateType = "FulfillmentOrder",
-            aggregateId = fulfillmentId,
-            eventType = eventType,
-            payload = objectMapper.writeValueAsString(event)
-        )
 
         return TransitionFulfillmentUseCase.Result(
             fulfillmentId = fulfillmentId,

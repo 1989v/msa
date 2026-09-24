@@ -64,6 +64,12 @@ class Inventory private constructor(
         availableQty += qty
     }
 
+    /** 확정으로 빠져나간 수량을 가용으로 되돌린다 — 입고와 수량 효과는 같고 원천이 주문이다 */
+    fun restock(qty: Int) {
+        require(qty > 0) { "재입고 수량은 0보다 커야 합니다" }
+        availableQty += qty
+    }
+
     fun getAvailableQty(): Int = availableQty
 
     fun getReservedQty(): Int = reservedQty

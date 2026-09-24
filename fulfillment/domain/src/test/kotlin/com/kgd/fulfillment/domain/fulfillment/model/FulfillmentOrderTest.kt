@@ -120,4 +120,32 @@ class FulfillmentOrderTest : BehaviorSpec({
             }
         }
     }
+    given("라인 취소 (클레임)") {
+        fun order() = FulfillmentOrder.create(orderId = 1L, warehouseId = 100L, lines = listOf(10L to 2, 20L to 1))
+
+        then("출고 전이면 지정한 라인만 취소되고, 마지막 라인까지 취소되면 이행 전체가 CANCELLED") {
+            val order = order()
+            order.transition(FulfillmentStatus.PICKING)
+
+            val first = order.cancelLines(setOf(10L))
+            (first as LineCancelResult.Cancelled).wholeCancelled shouldBe false
+            order.getStatus() shouldBe FulfillmentStatus.PICKING
+            order.getLines().map { it.productId to it.getStatus() }.toSet() shouldBe
+                setOf(10L to FulfillmentLineStatus.CANCELLED, 20L to FulfillmentLineStatus.ACTIVE)
+
+            val second = order.cancelLines(setOf(20L))
+            (second as LineCancelResult.Cancelled).wholeCancelled shouldBe true
+            order.getStatus() shouldBe FulfillmentStatus.CANCELLED
+        }
+
+        then("이미 출고됐으면 거절하고 라인은 그대로다") {
+            val order = order()
+            order.transition(FulfillmentStatus.PICKING)
+            order.transition(FulfillmentStatus.PACKING)
+            order.transition(FulfillmentStatus.SHIPPED)
+
+            order.cancelLines(setOf(10L)) shouldBe LineCancelResult.Rejected(FulfillmentStatus.SHIPPED)
+            order.getLines().map { it.getStatus() }.toSet() shouldBe setOf(FulfillmentLineStatus.ACTIVE)
+        }
+    }
 })

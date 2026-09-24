@@ -61,3 +61,11 @@ questions:
     phase: post-impl
     status: open
     question: 장바구니·주문서가 판매자를 "판매자 7" 로 표시 — 상호를 seller 이벤트·order 읽기 모델에 싣을지. 판매 불가 품목이 있으면 주문서 전체 422(부분 생성 안 함). 헤더 "포털 홈" 링크 라이트 4.23:1(기존)
+  - id: Q16
+    phase: post-impl
+    status: open
+    question: commerce 호스트 전체의 @EnableKafka 가 inventory KafkaConfig 에 있다(app 모듈 컴파일 클래스패스에 spring-kafka 없음). CommerceApplication 으로 옮길지 · 테스트의 spring.kafka.listener.auto-startup=false 가 커스텀 팩토리에 안 먹음
+  - id: Q17
+    phase: post-impl
+    status: open
+    question: 이행 라인은 productId 로 식별 — 같은 주문에 같은 상품 라인 둘이면 orderItemId 필요 · release 뒤 늦게 온 reserve 재발행은 새로 예약(30분 만료로 정리) · InventoryMetricsPort.recordOrderCancellationLatency 호출부 소멸

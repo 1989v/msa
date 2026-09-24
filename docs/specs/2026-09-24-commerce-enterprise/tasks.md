@@ -149,12 +149,12 @@ Total Task Groups: 16 · 단계 P0~P7 (단계 끝마다 커밋·푸시·배포·
 **Dependencies:** Task Group 6, 7, 8
 **Phase:** P4
 **Required Skills:** Kafka, 멱등 컨슈머
-- [ ] 10.0 Complete command handlers
-  - [ ] 10.1 테스트: `inventory.command.reserve/confirm/release/restock` 멱등 · 만료 예약 confirm → failed(EXPIRED), DLT 0 · `fulfillment.command.create/cancel` → created / cancelled / cancel-rejected · 은퇴 리스너 부재(옛 토픽 레코드 → 행 0) (5)
-  - [ ] 10.2 inventory 명령 컨슈머(키 orderId, `partition_key` 기록), 옛 `onOrderCompleted`·`onOrderCancelled`·`onFulfillmentShipped`·`onFulfillmentCancelled` 삭제
-  - [ ] 10.3 fulfillment 명령 컨슈머 + 라인 취소, 옛 `onStockReserved` 삭제
-  - [ ] 10.4 ACTIVE 예약 전환 작업(기동 1회·멱등: CONFIRMED + reserved_qty 차감 + stock.confirmed)
-  - [ ] 10.5 Verify: `$G :inventory:feature:test --tests '*Command*' :fulfillment:feature:test --tests '*Command*'`
+- [x] 10.0 Complete command handlers
+  - [x] 10.1 테스트: `inventory.command.reserve/confirm/release/restock` 멱등 · 만료 예약 confirm → failed(EXPIRED), DLT 0 · `fulfillment.command.create/cancel` → created / cancelled / cancel-rejected · 은퇴 리스너 부재(옛 토픽 레코드 → 행 0) (5)
+  - [x] 10.2 inventory 명령 컨슈머(키 orderId, `partition_key` 기록), 옛 `onOrderCompleted`·`onOrderCancelled`·`onFulfillmentShipped`·`onFulfillmentCancelled` 삭제
+  - [x] 10.3 fulfillment 명령 컨슈머 + 라인 취소, 옛 `onStockReserved` 삭제
+  - [x] 10.4 ACTIVE 예약 전환 작업(기동 1회·멱등: CONFIRMED + reserved_qty 차감 + stock.confirmed)
+  - [x] 10.5 Verify: `$G :inventory:feature:test --tests '*Command*' :fulfillment:feature:test --tests '*Command*'`
 **Acceptance Criteria:** 전환 작업 두 번 실행해도 수량 한 번만 변함
 
 ### Task Group 11: 사가 코디네이터 · 주문 상태 · 멱등 키

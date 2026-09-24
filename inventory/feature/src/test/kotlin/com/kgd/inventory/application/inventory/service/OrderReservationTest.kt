@@ -73,6 +73,7 @@ class OrderReservationTest : BehaviorSpec({
         override fun findActiveByOrderIdAndProductId(orderId: Long, productId: Long) =
             rows.firstOrNull { it.orderId == orderId && it.productId == productId && it.getStatus() == ReservationStatus.ACTIVE }
         override fun findAllExpired() = emptyList<Reservation>()
+        override fun findAllActive() = rows.filter { it.getStatus() == ReservationStatus.ACTIVE }
         override fun findAllByOrderId(orderId: Long) = rows.filter { it.orderId == orderId }
     }
 

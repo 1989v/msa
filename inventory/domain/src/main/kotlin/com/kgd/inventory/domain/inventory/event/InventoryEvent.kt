@@ -4,5 +4,6 @@ sealed class InventoryEvent {
     data class StockReserved(val productId: Long, val warehouseId: Long, val qty: Int, val orderId: Long, val availableQty: Int) : InventoryEvent()
     data class StockReleased(val productId: Long, val warehouseId: Long, val qty: Int, val orderId: Long, val availableQty: Int) : InventoryEvent()
     data class StockConfirmed(val productId: Long, val warehouseId: Long, val qty: Int, val orderId: Long, val availableQty: Int) : InventoryEvent()
+    data class StockRestocked(val productId: Long, val warehouseId: Long, val qty: Int, val orderId: Long, val availableQty: Int) : InventoryEvent()
     data class StockReceived(val productId: Long, val warehouseId: Long, val qty: Int, val availableQty: Int) : InventoryEvent()
 }

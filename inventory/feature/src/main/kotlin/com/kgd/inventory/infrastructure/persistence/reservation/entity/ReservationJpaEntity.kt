@@ -8,10 +8,16 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 import java.time.LocalDateTime
 
 @Entity
-@Table(name = "reservation")
+@Table(
+    name = "reservation",
+    uniqueConstraints = [
+        UniqueConstraint(name = "uk_reservation_order_product_warehouse", columnNames = ["order_id", "product_id", "warehouse_id"]),
+    ],
+)
 class ReservationJpaEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
@@ -35,9 +41,15 @@ class ReservationJpaEntity(
 
     @Column(nullable = false)
     val createdAt: LocalDateTime,
+
+    restockedQty: Int = 0,
 ) {
     @Column(nullable = false, length = 20)
     var status: String = status
+        private set
+
+    @Column(nullable = false)
+    var restockedQty: Int = restockedQty
         private set
 
 
@@ -50,6 +62,7 @@ class ReservationJpaEntity(
         status = ReservationStatus.valueOf(status),
         expiredAt = expiredAt,
         createdAt = createdAt,
+        restockedQty = restockedQty,
     )
 
     companion object {
@@ -62,6 +75,7 @@ class ReservationJpaEntity(
             status = reservation.getStatus().name,
             expiredAt = reservation.expiredAt,
             createdAt = reservation.createdAt,
+            restockedQty = reservation.getRestockedQty(),
         )
     }
 }

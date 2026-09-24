@@ -23,7 +23,7 @@ class FulfillmentServiceTest : BehaviorSpec({
     val fulfillmentRepository = mockk<FulfillmentRepositoryPort>()
     val outboxPort = mockk<OutboxPort>(relaxed = true)
     val objectMapper = ObjectMapper()
-    val service = FulfillmentService(fulfillmentRepository, outboxPort, objectMapper)
+    val service = FulfillmentService(fulfillmentRepository, FulfillmentEventPublisher(outboxPort, objectMapper))
 
     beforeEach { clearMocks(fulfillmentRepository, outboxPort) }
 
@@ -48,11 +48,14 @@ class FulfillmentServiceTest : BehaviorSpec({
 
                 verify(exactly = 1) { fulfillmentRepository.save(any()) }
                 verify(exactly = 1) {
+                    // 키는 orderId — 사가·클레임이 한 주문의 답을 한 파티션에서 받는다
                     outboxPort.save(
-                        aggregateType = "FulfillmentOrder",
-                        aggregateId = 1L,
+                        aggregateType = "FulfillmentOrderGroup",
+                        aggregateId = 100L,
                         eventType = "fulfillment.order.created",
-                        payload = any()
+                        payload = any(),
+                        partitionKey = "100",
+                        headers = emptyMap(),
                     )
                 }
             }
@@ -81,11 +84,14 @@ class FulfillmentServiceTest : BehaviorSpec({
                 result.toStatus shouldBe "PICKING"
 
                 verify(exactly = 1) {
+                    // 키는 orderId — 사가·클레임이 한 주문의 답을 한 파티션에서 받는다
                     outboxPort.save(
                         aggregateType = "FulfillmentOrder",
                         aggregateId = 1L,
                         eventType = "fulfillment.order.status-changed",
-                        payload = any()
+                        payload = any(),
+                        partitionKey = "100",
+                        headers = emptyMap(),
                     )
                 }
             }
@@ -111,11 +117,14 @@ class FulfillmentServiceTest : BehaviorSpec({
                 result.toStatus shouldBe "SHIPPED"
 
                 verify(exactly = 1) {
+                    // 키는 orderId — 사가·클레임이 한 주문의 답을 한 파티션에서 받는다
                     outboxPort.save(
                         aggregateType = "FulfillmentOrder",
                         aggregateId = 2L,
                         eventType = "fulfillment.order.shipped",
-                        payload = any()
+                        payload = any(),
+                        partitionKey = "200",
+                        headers = emptyMap(),
                     )
                 }
             }
@@ -174,11 +183,14 @@ class FulfillmentServiceTest : BehaviorSpec({
                 result.toStatus shouldBe "CANCELLED"
 
                 verify(exactly = 1) {
+                    // 키는 orderId — 사가·클레임이 한 주문의 답을 한 파티션에서 받는다
                     outboxPort.save(
-                        aggregateType = "FulfillmentOrder",
-                        aggregateId = 4L,
+                        aggregateType = "FulfillmentOrderGroup",
+                        aggregateId = 400L,
                         eventType = "fulfillment.order.cancelled",
-                        payload = any()
+                        payload = any(),
+                        partitionKey = "400",
+                        headers = emptyMap(),
                     )
                 }
             }

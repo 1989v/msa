@@ -25,6 +25,7 @@ import com.kgd.inventory.domain.reservation.model.ReservationStatus
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -36,6 +37,9 @@ class InventoryService(
     private val objectMapper: ObjectMapper,
     @param:Autowired(required = false)
     private val cachePort: InventoryCachePort? = null,
+    // 재고·혜택 예약이 같이 쓰는 보류 기한(스펙 SR-4) — promotion 과 같은 키
+    @param:Value("\${commerce.hold-minutes:30}")
+    private val holdMinutes: Long = 30L,
 ) : ReserveStockUseCase, ReleaseStockUseCase, ConfirmStockUseCase, ReceiveStockUseCase, GetInventoryUseCase,
     ConfirmStockByOrderUseCase, ReleaseStockByOrderUseCase, ReserveOrderStockUseCase {
 
@@ -43,8 +47,6 @@ class InventoryService(
 
     companion object {
         private const val AGGREGATE_TYPE = "Inventory"
-        private const val RESERVATION_TTL_MINUTES = 30L
-        private const val REASON_INSUFFICIENT_STOCK = "INSUFFICIENT_STOCK"
     }
 
     @Transactional
@@ -137,7 +139,7 @@ class InventoryService(
         log.info { "Order reservation failed (insufficient stock): orderId=$orderId, shortages=$shortages" }
         val event = ReservationEvent.Failed(
             orderId = orderId,
-            reason = REASON_INSUFFICIENT_STOCK,
+            reason = ReservationEvent.REASON_INSUFFICIENT_STOCK,
             shortages = shortages.map { ReservationEvent.Failed.Shortage(it.productId, it.requestedQty, it.availableQty) },
         )
         outboxPort.save(
@@ -163,7 +165,7 @@ class InventoryService(
             productId = inventory.productId,
             warehouseId = inventory.warehouseId,
             qty = qty,
-            ttlMinutes = RESERVATION_TTL_MINUTES,
+            ttlMinutes = holdMinutes,
         )
         val savedReservation = reservationRepository.save(reservation)
 

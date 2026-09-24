@@ -1,5 +1,6 @@
 package com.kgd.fulfillment.infrastructure.persistence.fulfillment.entity
 
+import com.kgd.fulfillment.domain.fulfillment.model.FulfillmentLine
 import com.kgd.fulfillment.domain.fulfillment.model.FulfillmentOrder
 import com.kgd.fulfillment.domain.fulfillment.model.FulfillmentStatus
 import jakarta.persistence.*
@@ -7,7 +8,10 @@ import org.hibernate.annotations.CreationTimestamp
 import java.time.LocalDateTime
 
 @Entity
-@Table(name = "fulfillment_order")
+@Table(
+    name = "fulfillment_order",
+    uniqueConstraints = [UniqueConstraint(name = "uk_fulfillment_order_warehouse", columnNames = ["order_id", "warehouse_id"])],
+)
 class FulfillmentOrderJpaEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
@@ -26,12 +30,13 @@ class FulfillmentOrderJpaEntity(
         private set
 
 
-    fun toDomain(): FulfillmentOrder = FulfillmentOrder.restore(
+    fun toDomain(lines: List<FulfillmentLine> = emptyList()): FulfillmentOrder = FulfillmentOrder.restore(
         id = id,
         orderId = orderId,
         warehouseId = warehouseId,
         status = status,
-        createdAt = createdAt
+        createdAt = createdAt,
+        lines = lines,
     )
 
     companion object {

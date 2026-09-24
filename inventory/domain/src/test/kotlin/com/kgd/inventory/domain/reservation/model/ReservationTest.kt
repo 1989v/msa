@@ -66,4 +66,21 @@ class ReservationTest : BehaviorSpec({
             }
         }
     }
+    given("확정된 예약의 재입고") {
+        fun confirmed(qty: Int) = Reservation.create(orderId = 1L, productId = 1L, warehouseId = 1L, qty = qty).also { it.confirm() }
+
+        then("나눠서 되돌릴 수 있고 되돌린 합은 예약 수량을 넘지 못한다") {
+            val reservation = confirmed(5)
+            reservation.restock(2)
+            reservation.restock(3)
+            reservation.getRestockedQty() shouldBe 5
+            reservation.restockableQty() shouldBe 0
+            shouldThrow<IllegalArgumentException> { reservation.restock(1) }
+        }
+
+        then("확정 전(ACTIVE) 예약은 재입고할 수 없다 — 아직 가용에서 빠진 적이 없다") {
+            val reservation = Reservation.create(orderId = 1L, productId = 1L, warehouseId = 1L, qty = 5)
+            shouldThrow<InvalidReservationStateException> { reservation.restock(1) }
+        }
+    }
 })
