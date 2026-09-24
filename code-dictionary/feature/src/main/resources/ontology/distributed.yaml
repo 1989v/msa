@@ -131,6 +131,7 @@ concepts:
     synonyms: ["saga", "saga pattern"]
     questions: ["보상 트랜잭션은 롤백과 무엇이 다른가", "코레오그래피와 오케스트레이션은 언제 고르나"]
     code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/application/saga/service/OrderSagaCoordinator.kt, symbol: "class OrderSagaCoordinator(", note: "주문 사가 오케스트레이터 — 재고 · 프로모션 · 결제 응답과 기한 만료를 받아 다음 명령이나 보상을 낸다" }
       - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/infrastructure/messaging/InventoryCommandConsumer.kt, symbol: "fun onRelease(", note: "주문 사가의 재고 예약 해제 명령 — 앞 단계 예약을 되돌리는 보상 단계" }
     uses: [dist-compensating-transaction, eventual-consistency]
     alternative_to:
@@ -317,7 +318,7 @@ concepts:
     synonyms: ["circuit breaker", "CB"]
     questions: ["closed·open·half-open 은 각각 언제 넘어가나"]
     code:
-      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/client/PaymentAdapter.kt, symbol: "circuitBreakerRegistry.circuitBreaker(\"payment-service\")", note: "주문 → 결제 호출을 서킷 브레이커로 감싼다" }
+      - { path: payment/feature/src/main/kotlin/com/kgd/payment/infrastructure/pg/toss/TossPgConfig.kt, symbol: "fun paymentTossCircuitBreaker(): CircuitBreaker", note: "결제 → PG(토스) 호출을 서킷 브레이커로 감싼다" }
       - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/resilience/CircuitBreakerConfiguration.kt, symbol: "class CircuitBreakerConfiguration", note: "거래소 REST·WS 재연결·텔레그램 호출별 브레이커 등록" }
     mitigates: [dist-cascading-failure, dist-retry-storm]
     measured_by: [dist-failure-rate]
@@ -388,7 +389,7 @@ concepts:
     level: INTERMEDIATE
     description: "JVM 장애 내성 라이브러리. 서킷 브레이커·재시도·벌크헤드·레이트 리미터를 모듈로 나눠 제공하고, 코틀린 suspend 함수도 감싼다. 이 레포는 서킷 브레이커를 쓴다"
     code:
-      - { path: order/feature/build.gradle.kts, symbol: "implementation(libs.resilience4j.circuitbreaker)", note: "주문 모듈의 서킷 브레이커 의존성" }
+      - { path: payment/feature/build.gradle.kts, symbol: "implementation(libs.resilience4j.circuitbreaker)", note: "결제 모듈의 서킷 브레이커 의존성" }
     implements:
       - { to: circuit-breaker, reason: "CircuitBreakerRegistry 로 의존별 브레이커를 만들고 executeSuspendFunction 으로 감싼다" }
       - { to: retry-pattern, reason: "Retry 모듈이 횟수·백오프를 설정으로 준다" }
