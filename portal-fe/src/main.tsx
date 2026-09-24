@@ -16,7 +16,7 @@ import { AuthProvider } from './shell/AuthContext';
 
 // 렌더 전에 톤을 정한다 — 훅은 effect 에서 돌아서, 여기서 칠하지 않으면
 // 라이트를 고른 사람도 다크가 한 번 번쩍인 뒤 바뀐다.
-bootstrapTheme(window.location.pathname);
+bootstrapTheme();
 
 // ADR-0058 R3 FE 통합 — 통합 셸 provider: QueryClient + Auth (흡수될 sub-app 공유).
 createRoot(document.getElementById('root')!).render(

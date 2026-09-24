@@ -245,7 +245,7 @@ flat 디자인 지향. 카드 사이에 그림자 남발 금지.
 | `/`, `/portfolio`, `resume.1989v.com` | `k-heritage` |
 | `/shop/**`, `place.1989v.com` | `k-heritage` |
 | `/games/**` · `game.1989v.com` | `k-heritage` + `.kh-arcade` (액션이 연지) |
-| `/tech` | `dark-trading` 유지 — 트리맵·그래프가 다크 전제 |
+| `/tech` (개념 아틀라스) | `k-heritage` — 2026-09-24 전환. 옛 트리맵·3D·히트맵 뷰는 걷어냈다 |
 | admin-fe, quant-fe, gifticon-fe | `dark-trading` 유지 |
 
 **구현 규칙**

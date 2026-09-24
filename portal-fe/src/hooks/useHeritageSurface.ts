@@ -92,19 +92,12 @@ function applyTheme(theme: HeritageTheme) {
   listeners.forEach((notify) => notify(theme));
 }
 
-/** 브랜드 면이 아닌 유일한 화면(`/tech`)은 dark-trading 팔레트를 전제로 그려진다. */
-const NON_HERITAGE_PATHS = new Set(['/tech']);
-
 /**
  * 첫 페인트부터 고른 톤으로 칠한다 — 훅은 effect 에서 돌기 때문에 그 전에 한 번
  * 칠해두지 않으면 라이트를 고른 사람도 매번 다크가 번쩍인 뒤 바뀐다.
  */
-export function bootstrapTheme(pathname: string) {
+export function bootstrapTheme() {
   const root = document.documentElement;
-  if (NON_HERITAGE_PATHS.has(pathname)) {
-    root.setAttribute('data-theme', 'dark');
-    return;
-  }
   root.setAttribute('data-surface', 'heritage');
   const theme = resolveTheme();
   // 쿠키 도입 전 선택은 이 오리진에만 있다. 다시 토글하지 않으면 서브도메인은 계속

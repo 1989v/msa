@@ -783,7 +783,7 @@ export const PORTAL_PAGES = {
   '/tech': {
     title: portalTitle('IT'),
     description:
-      '코드베이스에서 추출한 IT 개념을 트리맵·그래프로 탐색하는 개념 사전. 백엔드 아키텍처 포트폴리오와 MSA 서비스 카탈로그를 함께 제공합니다.',
+      '도메인 열한 개의 IT 개념을 그래프로 좁혀 가며 배우는 개념 아틀라스. 개념마다 이 레포의 코드와 그것을 다룬 글이 붙어 있습니다.',
   },
   '/portfolio': {
     title: portalTitle('포트폴리오'),

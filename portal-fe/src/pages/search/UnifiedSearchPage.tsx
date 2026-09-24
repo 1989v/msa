@@ -212,7 +212,7 @@ function GroupSection({
           <li key={`${hit.type}:${hit.id}`}>
             <TrackedLink
               className="usearch-hit"
-              href={unifiedHitHref(hit.type, hit.slug, hit.category)}
+              href={unifiedHitHref(hit.type, hit.slug)}
               viewId={viewId}
               item={{
                 entityType: TYPE_ENTITY[hit.type],

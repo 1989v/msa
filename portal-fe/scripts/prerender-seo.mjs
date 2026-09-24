@@ -1681,7 +1681,7 @@ function portalLlmsTxt() {
     `- [블로그](${BLOG_ORIGIN}/): 서버·검색·데이터를 직접 만들고 겪은 기록`,
     `- [랭킹 리더보드](${RANK_ORIGIN}/): 지역별 최저가 주유소 등 집계와 등락`,
     `- [혜택 링크 허브](${DEAL_ORIGIN}/): 카테고리별 혜택·제휴 링크 큐레이션`,
-    `- [IT 개념 사전](${PORTAL_ORIGIN}/tech): 코드베이스에서 추출한 개념을 트리맵·그래프로 탐색`,
+    `- [IT 개념 사전](${PORTAL_ORIGIN}/tech): 도메인별 개념을 그래프로 좁혀 가며 배우는 개념 아틀라스`,
     `- [포트폴리오](${PORTAL_ORIGIN}/portfolio): 검색·전시·커머스·인프라·AI 도메인에서 만든 것들`,
     `- [스토어 데모](${PORTAL_ORIGIN}/shop): MSA 커머스 플랫폼 데모 (검색·추천·주문)`,
     '',

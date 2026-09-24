@@ -137,6 +137,28 @@ export const fetchConceptRelations = async (conceptId: string): Promise<ConceptR
   return res.data.data;
 };
 
+/** `GET /api/v1/concepts/atlas` — 도메인(1차 노드) 목록과 도메인 사이 관계 수. 순서는 학습 순서 */
+export interface AtlasDomain {
+  domain: string;
+  rootId: string;
+  name: string;
+  description?: string | null;
+  conceptCount: number;
+  kindCounts: Record<string, number>;
+  codeRefCount: number;
+  conceptIds: string[];
+}
+
+export interface ConceptAtlas {
+  domains: AtlasDomain[];
+  links: { from: string; to: string; count: number }[];
+}
+
+export const fetchAtlas = async (): Promise<ConceptAtlas> => {
+  const res = await api.get<ApiResponse<ConceptAtlas>>('/api/v1/concepts/atlas');
+  return res.data.data;
+};
+
 export const fetchConceptDetail = async (conceptId: string): Promise<ConceptDetail> => {
   const res = await api.get<ApiResponse<ConceptDetail>>(`/api/v1/concepts/by-concept-id/${conceptId}`);
   return res.data.data;

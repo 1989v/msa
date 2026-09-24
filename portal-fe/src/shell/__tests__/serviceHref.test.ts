@@ -103,7 +103,7 @@ describe('unifiedHitHref — 통합 검색 결과의 주소 (인덱스는 URL �
     expect(unifiedHitHref('attraction', '12345')).toBe('https://place.1989v.com/attractions/12345');
     expect(unifiedHitHref('blog_post', 'my-post')).toBe('https://blog.1989v.com/posts/my-post');
     expect(unifiedHitHref('game', 'arena')).toBe('https://game.1989v.com/games/arena');
-    expect(unifiedHitHref('concept', 'saga-pattern', 'DESIGN_PATTERN')).toBe('https://1989v.com/tech/design-pattern#saga-pattern');
+    expect(unifiedHitHref('concept', 'saga-pattern')).toBe('https://1989v.com/tech/c/saga-pattern');
     // 혜택은 카드와 같은 문 — /go/ 를 거쳐야 클릭 계측이 남는다
     expect(unifiedHitHref('deal_offer', 'yeogi-event')).toBe('https://deal.1989v.com/go/yeogi-event');
     expect(unifiedHitHref('product', '73')).toBe('https://1989v.com/shop/products/73');
@@ -118,7 +118,7 @@ describe('unifiedHitHref — 통합 검색 결과의 주소 (인덱스는 URL �
     expect(unifiedHitHref('attraction', '12345')).toBe('/place/attractions/12345');
     expect(unifiedHitHref('blog_post', 'my-post')).toBe('/posts/my-post');
     expect(unifiedHitHref('game', 'arena')).toBe('/games/arena');
-    expect(unifiedHitHref('concept', 'saga-pattern', 'DESIGN_PATTERN')).toBe('/tech/design-pattern#saga-pattern');
+    expect(unifiedHitHref('concept', 'saga-pattern')).toBe('/tech/c/saga-pattern');
     expect(unifiedSearchHref('야경', 'game')).toBe('/search?q=%EC%95%BC%EA%B2%BD&type=game');
   });
 });

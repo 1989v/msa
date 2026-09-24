@@ -86,7 +86,7 @@ code:
 | SR-1 | 완료 — revision 2, 도메인 11 · 개념 531 · 관계 1022. 관리 밖은 옛 지표 묶음 둘뿐(이관 테스트가 고정). 에이전트 병렬 작성 중 생긴 중복 넷(API 게이트웨이 · 리버스 프록시 · 교착 · 캐시 적중률)은 기존 id 로 합쳤다 |
 | SR-2 | 완료 — V27, 코드 참조 187 |
 | SR-3 | 완료 — blog_db V2 매핑 · V3 시드(발행글 여덟 편, 운영 SELECT 로 36행 확인) · 편집기 고르기 · 글 끝 칩 · `?concept=` · 개념별 글 수 `GET /api/v1/blog/concepts` |
-| SR-4 | 백엔드 `GET /api/v1/concepts/atlas` 완료. 화면은 목표 시안(https://claude.ai/artifact/TgHFjPBy3QWN1FdKw5efFf) 확인 대기 |
+| SR-4 | 완료 — 시안 승인 뒤 구현. `pages/atlas/*`, `/tech` · `/tech/d/<domain>?at=&sel=` · `/tech/c/<id>`, 1024px 기준 모바일 · 데스크탑. 옛 시각화 42개 파일 제거. CDP 20조합(모바일 390 · 데스크탑 1440 × 기기 · 사이트 4) — 가로 넘침 0 · 콘솔 오류 0 · 글자 대비 최저 4.57 · SVG 글자 4.99 |
 
 ## 8. 하지 않는 것
 

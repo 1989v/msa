@@ -181,6 +181,10 @@ export const fetchPosts = (params: {
   concept?: string;
 }) => api.get<ApiResponse<BlogPage<BlogPostSummary>>>('/api/v1/blog/posts', { params }).then(unwrap);
 
+/** 개념별 발행글 수 — `/tech` 아틀라스가 도메인 · 노드에 글 수를 붙인다 */
+export const fetchConceptPostCounts = () =>
+  api.get<ApiResponse<{ conceptId: string; postCount: number }[]>>('/api/v1/blog/concepts').then(unwrap);
+
 export const fetchPost = (slug: string) =>
   api.get<ApiResponse<BlogPostDetail>>(`/api/v1/blog/posts/${slug}`).then(unwrap);
 
