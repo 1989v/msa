@@ -30,3 +30,11 @@
 ## 함정
 - 공유 트리에서 ADR-0095 파일이 untracked 로 보이는 것은 로컬 main 이 211 커밋 뒤처진 탓이다 — 파일 존재 판단은 origin/main 으로
 - ads 스케줄 작업 빈마다 `ads.scheduling.enabled` 조건을 달아야 한다 — 호스트 스케줄링은 outbox 토글로 따로 켜진다
+
+## R4 운영 확인 (2026-09-24 KST 23:2x)
+- 배포: images run 36006378197(재실행) 성공 → content·engagement·gateway·portal-fe `386eae4` 1/1
+- `game_db.flyway_schema_history` V94 success=1, 광고 표 셋 information_schema 에 없음
+- 옛 경로 `/api/v1/ads/placements/*` 404, `game-list-banner` 결정 200 + HOUSE 목록, `/games` 배너 렌더(두 번째 방문)
+- engagement 새 파드 기동(14:20 UTC) 뒤 `APACHE_HTTP_CLIENT`·`ClassicHttpRequest` WARN 0건 — httpclient5 수정 반영
+- 운영 콘솔 `ads.1989v.com`: 200 · `noindex, nofollow` · 미로그인 시 apex 로그인(`next=`)
+- **발견 — 결정 800ms 제한이 엣지 왕복보다 짧다**: 이 머신에서 TTFB 결정 0.32~1.58s, 게임 목록 API 0.31~2.19s, 정적 파일 0.26~0.82s(각 10·10·5회). 서버 P99 8.8ms 와 무관한 CF(HKG)→OCI 경로 지연. 새 크롬 첫 방문에서 결정 요청이 `ERR_ABORTED` 로 끊겨 HOUSE 배너가 비고, 두 번째 방문에서 그려졌다. 값 조정은 사용자 결정 대기
