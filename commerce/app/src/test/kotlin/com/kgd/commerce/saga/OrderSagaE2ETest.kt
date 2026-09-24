@@ -148,7 +148,7 @@ class OrderSagaE2ETest(
 
     /** 플랫폼(판매자 1, 배송비 0) 상품 + 창고 1 입고 — order 읽기 모델에 들어올 때까지 기다린다 */
     private fun product(name: String, price: Long, stock: Int, requester: ProductRequester = admin): Long {
-        val id = products.execute(CreateProductUseCase.Command(name = name, price = price.toBigDecimal(), stock = stock), requester).id
+        val id = products.execute(CreateProductUseCase.Command(name = name, price = price.toLong(), stock = stock), requester).id
         receiveStock.execute(ReceiveStockUseCase.Command(productId = id, warehouseId = 1L, qty = stock))
         awaitUntil("product_view $id") {
             orderJdbc.queryForList("SELECT price FROM product_view WHERE product_id = ?", Long::class.java, id).singleOrNull() == price

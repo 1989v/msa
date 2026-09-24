@@ -143,7 +143,7 @@ class SettlementE2ETest(
 
     private fun product(name: String, price: Long, stock: Int): Long {
         val id = ctx.getBean(CreateProductUseCase::class.java)
-            .execute(CreateProductUseCase.Command(name = name, price = price.toBigDecimal(), stock = stock), sellerRequester).id
+            .execute(CreateProductUseCase.Command(name = name, price = price.toLong(), stock = stock), sellerRequester).id
         ctx.getBean(ReceiveStockUseCase::class.java).execute(ReceiveStockUseCase.Command(productId = id, warehouseId = 1L, qty = stock))
         awaitUntil("product_view $id") {
             orderJdbc.queryForList("SELECT price FROM product_view WHERE product_id = ?", Long::class.java, id).singleOrNull() == price

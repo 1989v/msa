@@ -438,7 +438,7 @@ class CommerceContextLoadSpec(
 
                 ctx.getBean(com.kgd.product.application.product.usecase.CreateProductUseCase::class.java).execute(
                     com.kgd.product.application.product.usecase.CreateProductUseCase.Command(
-                        name = "outbox-probe", price = java.math.BigDecimal("1000"), stock = 0,
+                        name = "outbox-probe", price = 1000L, stock = 0,
                     ),
                     com.kgd.product.application.product.usecase.ProductRequester("1", setOf("ROLE_ADMIN")),
                 )
