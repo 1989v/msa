@@ -118,14 +118,15 @@ Total Task Groups: 13
 **Dependencies:** Task Group 5
 **Phase:** R2
 **Required Skills:** spring, jpa, transactions
-- [ ] 6.0 Complete 정산
-  - [ ] 6.1 테스트 5개: ★I2(정산 재실행) · ★I3(동시 정산 + 동시 충전 한도 경계) · ★I5(UPSERT 재실행) · ★I6(3시각 닫힘 → 1회에 모두 · **3시각 동안 작업 0회 뒤 1회로 모두 반영·정산** [arch C-1] · **UPSERT 실패한 실행에서 closed 안 됨** [test C-9]) · I21(원장 불균형 검사기)
-  - [ ] 6.2 5분 작업: ① **닫히지 않은 시각 중 TTL(48시간) 안 전부**를 절대값 UPSERT [arch C-1] ② 시각 끝+10분 이후 UPSERT 성공한 시각 close ③ 닫혔고 정산 안 된 시각 전부 정산 → 광고주별 정산 완료 시각 갱신
-  - [ ] 6.3 원장 서비스 — 원장 계정 행 id 순 `FOR UPDATE`, 지갑 음수 불가, 모든 `@Transactional("adsTransactionManager")`
-  - [ ] 6.4 셀프 충전 — 1회 상한·KST 하루 한도를 지갑 행 잠금 안에서 확인, 행위자 기록
-  - [ ] 6.4b 정산 작업 첫 실행 때 지출 0 인 광고주도 정산 완료 시각을 기록(결정의 미정산 6시간 창이 오래된 지출을 놓치지 않게)
-  - [ ] 6.5 일일 원장 합 검사(ERROR·메트릭), 정산 지연 메트릭
-  - [ ] 6.6 Verify: `./gradlew :ads:feature:test --tests '*SettlementIntegrationSpec*' --tests '*LedgerIntegrationSpec*' --tests '*AggregationIntegrationSpec*'`
+- [x] 6.0 Complete 정산
+  - [x] 6.1 테스트 5개: ★I2(정산 재실행) · ★I3(동시 정산 + 동시 충전 한도 경계) · ★I5(UPSERT 재실행) · ★I6(3시각 닫힘 → 1회에 모두 · **3시각 동안 작업 0회 뒤 1회로 모두 반영·정산** [arch C-1] · **UPSERT 실패한 실행에서 closed 안 됨** [test C-9]) · I21(원장 불균형 검사기)
+  - [x] 6.2 5분 작업: ① **닫히지 않은 시각 중 TTL(48시간) 안 전부**를 절대값 UPSERT [arch C-1] ② 시각 끝+10분 이후 UPSERT 성공한 시각 close ③ 닫혔고 정산 안 된 시각 전부 정산 → 광고주별 정산 완료 시각 갱신
+  - [x] 6.3 원장 서비스 — 원장 계정 행 id 순 `FOR UPDATE`, 지갑 음수 불가, 모든 `@Transactional("adsTransactionManager")`
+  - [x] 6.4 셀프 충전 — 1회 상한·KST 하루 한도를 지갑 행 잠금 안에서 확인, 행위자 기록
+  - [x] 6.4b 정산 작업 첫 실행 때 지출 0 인 광고주도 정산 완료 시각을 기록(결정의 미정산 6시간 창이 오래된 지출을 놓치지 않게)
+  - [x] 6.5 일일 원장 합 검사(ERROR·메트릭), 정산 지연 메트릭
+  - [x] 6.6 Verify: `./gradlew :ads:feature:test --tests '*SettlementIntegrationSpec*' --tests '*LedgerIntegrationSpec*' --tests '*AggregationIntegrationSpec*'`
+> 구현 기록(2026-09-24): `V2__ads_aggregation_hour.sql`(시각 닫힘 기록) 추가 · 충전·정산 트랜잭션 READ COMMITTED(REPEATABLE READ 면 잠금 뒤 합계가 앞 커밋을 못 봄 — 주입으로 확인) · 48시간 창 밖 미닫힘 행도 닫아 청구 · 멱등 키 중복은 기존 거래 반환 · 충전 한도 임시값 1회 100·하루 500 크레딧(`ads.top-up.*`) · 회귀 주입 5건 빨간불
 **Acceptance Criteria:**
 - AC-2·AC-11·AC-12·AC-20, 회귀 주입 I2·I5 빨간불(그룹 12)
 
@@ -136,6 +137,7 @@ Total Task Groups: 13
 - [ ] 7.0 Complete API
   - [ ] 7.1 테스트 6개: I17(남의 리소스 404, HOUSE·심사 필드 없음) · I18(광고주 등록 → 행 1개 + **ads 에 auth·member 쓰기 포트가 없다**는 구조 검사 [test C-5]) · I19(반려 사유 조회) · I20(리포트 = 집계·원장) · I22(옛 `/placements/{key}` 응답 모양) · U12 통합판(거대 PNG 는 디코더 호출 0)
   - [ ] 7.2 광고주 API `/api/v1/ads/advertiser/**` — 등록·대시보드·충전·캠페인·소재 업로드(헤더 먼저 → 크기 → 디코딩 → 재인코딩 → 해시)·카탈로그·리포트
+  - [ ] 7.2b 충전 멱등 키는 컨트롤러가 회원 id 로 이름공간을 붙인다(다른 회원이 같은 키로 남의 거래를 돌려받지 않게)
   - [ ] 7.3 어드민 API `/api/v1/admin/ads/**` — 심사·광고주 정지·지면(`paid_allowed` 포함)·문맥 매핑·HOUSE·퍼블리셔 리포트·원장 검사 결과. 변경마다 행위자·시각
   - [ ] 7.3b 공개 에셋 경로는 **승인된 소재 이미지만** — 심사 전·반려 이미지 미리보기는 광고주·어드민 인증 API 로(그룹 5 `CreativeAssetService` 에 승인 확인 추가)
   - [ ] 7.4 호환 `GET /api/v1/ads/placements/{key}` — game 의 옛 응답 모양(`AdPlacementDto`)

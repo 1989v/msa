@@ -44,7 +44,9 @@ class LedgerAccountJpaEntity(
         private set
 
     fun apply(amountMicros: Long, at: LocalDateTime) {
-        balanceMicros = Math.addExact(balanceMicros, amountMicros)
+        val next = Math.addExact(balanceMicros, amountMicros)
+        check(type != LedgerAccountType.ADVERTISER_WALLET || next >= 0) { "지갑 잔액은 음수가 될 수 없습니다: account=$id balance=$balanceMicros amount=$amountMicros" }
+        balanceMicros = next
         updatedAt = at
     }
 

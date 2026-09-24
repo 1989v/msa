@@ -85,6 +85,10 @@ ads:
     secret: ${ADS_TOKEN_SECRET:}
     # 키 교체 중에만 이전 키를 넣는다.
     secret-previous: ${ADS_TOKEN_SECRET_PREVIOUS:}
+  # 셀프 충전 한도(마이크로 크레딧). 1회 100 크레딧, 광고주당 KST 하루 500 크레딧.
+  top-up:
+    max-per-call-micros: 100000000
+    daily-limit-micros: 500000000
   scheduling:
     enabled: true
 

@@ -1,5 +1,6 @@
 package com.kgd.ads.infrastructure.config
 
+import com.kgd.ads.application.ledger.config.AdsTopUpProperties
 import com.kgd.ads.application.token.config.AdsTokenProperties
 import com.kgd.ads.domain.token.model.SigningKey
 import com.kgd.ads.domain.token.policy.ServeTokenSigner
@@ -12,7 +13,7 @@ import java.time.ZoneId
 import kotlin.random.Random
 
 @Configuration(proxyBeanMethods = false)
-@EnableConfigurationProperties(AdsTokenProperties::class)
+@EnableConfigurationProperties(AdsTokenProperties::class, AdsTopUpProperties::class)
 class AdsConfig {
 
     /**
