@@ -73,7 +73,8 @@ export default function DomainDesktop({ atlas, domain, tree, at, sel, owner, dom
   const y = (row: number) => TOP + row * ROW_H;
   const maxCol = Math.max(...laid.map((n) => n.column), ...ghosts.map((g) => g.column));
   const maxRow = Math.max(...laid.map((n) => n.row), ...ghosts.map((g) => g.row));
-  const width = x(maxCol) + NODE_W + 80;
+  // 같은 열 안에서 휘는 점선과 그 라벨이 오른쪽으로 한 칸 가까이 나간다
+  const width = x(maxCol) + NODE_W * 2 + 40;
   const height = y(maxRow) + NODE_H + 96;
   const pos = (id: string): { col: number; row: number } | undefined => {
     const n = byId.get(id);
@@ -193,11 +194,13 @@ export default function DomainDesktop({ atlas, domain, tree, at, sel, owner, dom
                 key={`g-${g.id}`}
                 to={`/tech/c/${encodeURIComponent(g.id)}`}
                 className="atlas-node is-ghost"
-                style={{ left: x(g.column), top: y(g.row), width: NODE_W, height: NODE_H - 4 }}
+                style={{ left: x(g.column), top: y(g.row) - 4, width: NODE_W, height: NODE_H + 8 }}
               >
                 <KindGlyph kind={g.kind} />
-                <span className="atlas-node__name">{g.name}</span>
-                {g.tag && <span className="kh-mono atlas-node__tag">{g.tag}</span>}
+                <span className="atlas-node__stack">
+                  <span className="atlas-node__name">{g.name}</span>
+                  {g.tag && <span className="kh-mono atlas-node__tag">{g.tag}</span>}
+                </span>
               </Link>
             ))}
           </div>

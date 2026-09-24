@@ -527,7 +527,9 @@
 .atlas-node__name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .atlas-node__more,
 .atlas-node__tag { font-size: 0.5625rem; color: var(--ko-text-secondary); white-space: nowrap; }
-.atlas-node__tag { color: var(--kh-ocher-text); }
+.atlas-node__tag { color: var(--kh-ocher-text); overflow: hidden; text-overflow: ellipsis; }
+/* 유령 노드 — 이름이 먼저, 어디 있는지(태그)는 아랫줄 */
+.atlas-node__stack { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; line-height: 1.2; }
 .atlas-node.is-path { border-color: var(--ko-accent-text); border-width: 1.5px; color: var(--ko-accent-text); font-weight: 600; }
 .atlas-node.is-root { background: var(--kh-slab); color: var(--kh-on-slab); border-color: var(--kh-slab-border); font-weight: 600; }
 .atlas-node.is-root .atlas-glyph--domain { border-color: var(--kh-on-slab); }
