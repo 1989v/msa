@@ -363,7 +363,7 @@ images:
     newTag: 990d7a1
   - name: commerce/auth
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/auth
-    newTag: 990d7a1
+    newTag: 8ce6d91
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
     newTag: 990d7a1
