@@ -47,6 +47,12 @@ server:
   port: 8089
   shutdown: graceful
 
+# 개념 온톨로지 로더 (ADR-0100) — 부팅 때 resources/ontology 를 manifest 단위로 적용한다.
+# 관계 kind 를 문자열로 읽는 코드(1b866f4)가 운영에 먼저 나간 뒤 켰다 — 롤백 하한은 그 이미지다.
+ontology:
+  loader:
+    enabled: ${ONTOLOGY_LOADER_ENABLED:true}
+
 opensearch:
   uris: ${OPENSEARCH_URIS:http://localhost:9200}
   index-name: concept-index

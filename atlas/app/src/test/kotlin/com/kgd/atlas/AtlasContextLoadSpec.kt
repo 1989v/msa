@@ -34,6 +34,9 @@ fun atlasDockerAvailable(): Boolean = dockerAvailable
     properties = [
         "spring.kafka.bootstrap-servers=localhost:9092",
         "opensearch.uris=http://localhost:9200",
+        // 로더는 켠 채로 둔다 — 실제 파일이 실제 호스트 컨텍스트에서 적용되는지 여기서 본다.
+        // 색인(OpenSearch)은 없으니 파생물 갱신은 재시도 없이 한 번 실패하고 끝나게 한다.
+        "ontology.sync.backoff-ms=",
     ],
 )
 @org.junit.jupiter.api.condition.EnabledIf(
@@ -83,6 +86,13 @@ class AtlasContextLoadSpec(
          * ADR-0093 ②③ 이후 이 호스트에 남은 것은 자기 도메인뿐이다(개념사전·포트폴리오·
          * 전시·이력서). 폴드된 넷(game·deal·ranking·blog)은 전부 떠났다.
          */
+        Then("부팅 로더가 온톨로지 파일 revision 을 상태 행에 적용했다")
+            .config(enabledIf = { dockerAvailable }) {
+                val jdbc = org.springframework.jdbc.core.JdbcTemplate(ctx.getBean("dataSource", javax.sql.DataSource::class.java))
+                jdbc.queryForObject("SELECT revision FROM ontology_state WHERE id = 1", Int::class.java).shouldNotBeNull() shouldBe 1
+                jdbc.queryForObject("SELECT COUNT(*) FROM concept WHERE managed_by = 'search' AND kind IS NOT NULL", Int::class.java) shouldBe 108
+            }
+
         Then("자기 도메인의 컨트롤러가 전부 빈으로 등록된다")
             .config(enabledIf = { dockerAvailable }) {
                 listOf(
