@@ -253,6 +253,74 @@ class CommerceContextLoadSpec(
                     }
             }
 
+        /**
+         * 혜택 쓰기·읽기를 promotion TM 으로 — 정의 → 받기 → 포인트 지급 → 보류 → 확정.
+         * 값으로 판정한다: promotion_db 행, 아웃박스 행의 토픽·키. (발행 상한 동시성·만료는 PromotionIntegrationSpec)
+         */
+        Then("혜택: 쿠폰 받기·포인트·보류·확정이 promotion_db 에 쓰이고 읽히며, 아웃박스 키가 계약대로다")
+            .config(enabledIf = { dockerAvailable }) {
+                (ctx.getBean("promotionMasterDataSource") as com.zaxxer.hikari.HikariDataSource).maximumPoolSize shouldBe 3
+                listOf(
+                    "promotionEntityManagerFactory", "promotionTransactionManager", "promotionFlyway",
+                    "promotionOutboxPort", "promotionOutboxPollingPublisher", "promotionIdempotentEventHandler",
+                    "promotionIdempotentEventCleanupScheduler", "promotionKafkaListenerContainerFactory",
+                ).forEach { ctx.containsBean(it).shouldBeTrue() }
+                // scanBasePackages 에서 com.kgd.promotion 이 빠지면 기동은 되고 혜택 API 만 조용히 404 다
+                listOf(
+                    com.kgd.promotion.presentation.coupon.controller.CouponController::class.java,
+                    com.kgd.promotion.presentation.coupon.controller.CouponAdminController::class.java,
+                    com.kgd.promotion.presentation.point.controller.PointController::class.java,
+                ).forEach { ctx.getBeansOfType(it).size shouldBe 1 }
+
+                val now = java.time.Instant.now()
+                val definition = ctx.getBean(com.kgd.promotion.application.coupon.usecase.ManageCouponDefinitionUseCase::class.java)
+                    .create(
+                        com.kgd.promotion.application.coupon.usecase.ManageCouponDefinitionUseCase.Create(
+                            name = "컨텍스트 쿠폰", type = com.kgd.promotion.domain.coupon.model.CouponType.FIXED, amount = 2_000L,
+                            rateBp = null, maxDiscount = null, minOrderAmount = 10_000L, validFrom = now.minusSeconds(3600),
+                            validUntil = now.plusSeconds(86_400), issueLimit = 5,
+                            bearer = com.kgd.promotion.domain.coupon.model.CouponBearer.PLATFORM, sellerId = null, actorId = "1",
+                        ),
+                    )
+                val coupon = ctx.getBean(com.kgd.promotion.application.coupon.usecase.ClaimCouponUseCase::class.java)
+                    .claim("ctx-member", definition.id)
+                ctx.getBean(com.kgd.promotion.application.point.usecase.GrantPointsUseCase::class.java).grant(
+                    com.kgd.promotion.application.point.usecase.GrantPointsUseCase.Grant("ctx-member", 5_000L, "1", "컨텍스트 검사"),
+                )
+                val commands = ctx.getBean(com.kgd.promotion.application.hold.usecase.ProcessPromotionCommandUseCase::class.java)
+                commands.reserve(
+                    com.kgd.promotion.application.hold.usecase.ProcessPromotionCommandUseCase.Reserve(
+                        orderId = 660001L, memberId = "ctx-member", userCouponId = coupon.userCouponId, couponDiscount = 2_000L,
+                        pointAmount = 1_500L, lines = listOf(com.kgd.promotion.domain.coupon.model.CouponLine(1L, 12_000L)),
+                    ),
+                ).type shouldBe com.kgd.promotion.application.hold.port.HoldEventType.RESERVED
+                commands.confirm(660001L).type shouldBe com.kgd.promotion.application.hold.port.HoldEventType.CONFIRMED
+
+                // 읽기 — 커밋된 행을 유스케이스로 다시 읽는다
+                ctx.getBean(com.kgd.promotion.application.coupon.usecase.GetMyCouponsUseCase::class.java).list("ctx-member")
+                    .single().status shouldBe com.kgd.promotion.domain.coupon.model.UserCouponStatus.USED
+                ctx.getBean(com.kgd.promotion.application.point.usecase.GetMyPointsUseCase::class.java).get("ctx-member")
+                    .balance shouldBe 3_500L
+
+                val jdbc = org.springframework.jdbc.core.JdbcTemplate(
+                    ctx.getBean("promotionMasterDataSource", javax.sql.DataSource::class.java),
+                )
+                jdbc.queryForMap("SELECT status, coupon_discount, point_amount FROM promotion_hold WHERE order_id = 660001").let {
+                    it["status"] shouldBe "CONFIRMED"
+                    it["coupon_discount"] shouldBe 2_000L
+                    it["point_amount"] shouldBe 1_500L
+                }
+                jdbc.queryForObject("SELECT issued_count FROM coupon_definition WHERE id = ?", Int::class.java, definition.id) shouldBe 1
+
+                val rows = ctx.getBean(com.kgd.promotion.infrastructure.outbox.PromotionOutboxRepository::class.java).findAll()
+                rows.single { it.eventType == "promotion.coupon.defined" }.partitionKey shouldBe definition.id.toString()
+                rows.single { it.eventType == "promotion.coupon.issued" }.partitionKey shouldBe "ctx-member"
+                rows.filter { it.eventType == "promotion.point.changed" }.map { it.partitionKey }.toSet() shouldBe setOf("ctx-member")
+                rows.filter { it.eventType.startsWith("promotion.hold.") }.map { it.eventType to it.partitionKey }.toSet() shouldBe setOf(
+                    "promotion.hold.reserved" to "660001", "promotion.hold.confirmed" to "660001",
+                )
+            }
+
         // 상품 이벤트는 직접 send 가 아니라 product_db 아웃박스 행이다 — 행이 실제로 늘었는지로 판정한다.
         Then("상품 등록이 product_db 아웃박스에 product.item.created 행을 남긴다")
             .config(enabledIf = { dockerAvailable }) {
@@ -380,6 +448,7 @@ class CommerceContextLoadSpec(
                             it.execute("CREATE DATABASE IF NOT EXISTS deal_db")
                             it.execute("CREATE DATABASE IF NOT EXISTS seller_db")
                             it.execute("CREATE DATABASE IF NOT EXISTS payment_db")
+                            it.execute("CREATE DATABASE IF NOT EXISTS promotion_db")
                         }
                     }
                 }
@@ -399,6 +468,7 @@ class CommerceContextLoadSpec(
             val deal = inv.replace("/inventory_db", "/deal_db")
             val seller = inv.replace("/inventory_db", "/seller_db")
             val payment = inv.replace("/inventory_db", "/payment_db")
+            val promotion = inv.replace("/inventory_db", "/promotion_db")
             // inventory (master/replica)
             for (role in listOf("master", "replica")) {
                 registry.add("spring.datasource.$role.jdbc-url") { inv }
@@ -429,6 +499,10 @@ class CommerceContextLoadSpec(
                 registry.add("spring.datasource.payment.$role.username") { mysql.username }
                 registry.add("spring.datasource.payment.$role.password") { mysql.password }
                 registry.add("spring.datasource.payment.$role.driver-class-name") { "com.mysql.cj.jdbc.Driver" }
+                registry.add("spring.datasource.promotion.$role.jdbc-url") { promotion }
+                registry.add("spring.datasource.promotion.$role.username") { mysql.username }
+                registry.add("spring.datasource.promotion.$role.password") { mysql.password }
+                registry.add("spring.datasource.promotion.$role.driver-class-name") { "com.mysql.cj.jdbc.Driver" }
             }
             // deal 은 master/replica 가 아니라 단일 url 이다 — 읽기 복제본이 없다.
             // 이 키가 있어야 DealDataSourceConfig(@ConditionalOnProperty)가 켜진다.

@@ -253,6 +253,8 @@ springdoc:
         url: /api/docs/specs/seller
       - name: payment
         url: /api/docs/specs/payment
+      - name: promotion
+        url: /api/docs/specs/promotion
       - name: recommendation
         url: /api/docs/specs/recommendation
       - name: member

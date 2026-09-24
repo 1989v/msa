@@ -109,12 +109,12 @@ Total Task Groups: 16 · 단계 P0~P7 (단계 끝마다 커밋·푸시·배포·
 **Dependencies:** Task Group 2
 **Phase:** P3
 **Required Skills:** 신규 도메인 폴드, TCC, 동시성
-- [ ] 7.0 Complete promotion domain
-  - [ ] 7.1 테스트: 발행 상한 동시 100 → 상한만큼 · 사용자 쿠폰 1회 · 포인트 잔액 음수 불가 · TCC 같은 orderId 두 번 = 한 번 · 보류 30분 만료 `promotion.hold.expired` · 만료 hold 에 confirm → failed(EXPIRED) (6)
-  - [ ] 7.2 `promotion:domain`/`promotion:feature`, `promotion_db`, 폴드 3곳
-  - [ ] 7.3 쿠폰 정의·발행(조건부 UPDATE)·사용자 쿠폰, 포인트 원장 + 잔액 `@Version`, TCC 명령 `promotion.command.*`, 읽기 모델용 `promotion.coupon.*`·`promotion.point.changed`
-  - [ ] 7.4 어드민 쿠폰 API, 사용자 `/api/v1/coupons/me`·`/api/v1/points/me`
-  - [ ] 7.5 Verify: `$G :promotion:domain:test :promotion:feature:test`
+- [x] 7.0 Complete promotion domain
+  - [x] 7.1 테스트: 발행 상한 동시 100 → 상한만큼 · 사용자 쿠폰 1회 · 포인트 잔액 음수 불가 · TCC 같은 orderId 두 번 = 한 번 · 보류 30분 만료 `promotion.hold.expired` · 만료 hold 에 confirm → failed(EXPIRED) (6)
+  - [x] 7.2 `promotion:domain`/`promotion:feature`, `promotion_db`, 폴드 3곳
+  - [x] 7.3 쿠폰 정의·발행(조건부 UPDATE)·사용자 쿠폰, 포인트 원장 + 잔액 `@Version`, TCC 명령 `promotion.command.*`, 읽기 모델용 `promotion.coupon.*`·`promotion.point.changed`
+  - [x] 7.4 어드민 쿠폰 API, 사용자 `/api/v1/coupons/me`·`/api/v1/points/me`
+  - [x] 7.5 Verify: `$G :promotion:domain:test :promotion:feature:test`
 **Acceptance Criteria:** 7.1 통과
 
 ### Task Group 8: order 읽기 모델 · 장바구니 · 주문서 · 금액

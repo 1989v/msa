@@ -66,5 +66,7 @@ include(
     "seller:domain",
     "seller:feature", // ADR-0099: 판매자(마켓플레이스) 라이브러리 (commerce:app 이 흡수, 전용 스키마 seller_db)
     "payment:domain",
-    "payment:feature" // ADR-0099: 결제(모의 PG·토스 어댑터) 라이브러리 (commerce:app 이 흡수, 전용 스키마 payment_db)
+    "payment:feature", // ADR-0099: 결제(모의 PG·토스 어댑터) 라이브러리 (commerce:app 이 흡수, 전용 스키마 payment_db)
+    "promotion:domain",
+    "promotion:feature" // ADR-0099: 혜택(쿠폰·포인트·TCC 보류) 라이브러리 (commerce:app 이 흡수, 전용 스키마 promotion_db)
 )

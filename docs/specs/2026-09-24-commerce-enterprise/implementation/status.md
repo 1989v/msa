@@ -54,3 +54,9 @@
 - auth 컨슈머 `auth-seller-role` 파티션 할당 확인, commerce·auth 최근 ERROR 0
 - 롤아웃 직후 몇 분간 옛 gateway 파드가 새 경로에 404 — 롤아웃 완료 후 401 로 일관
 - 미확인: 실제 로그인 사용자로 신청 → 승인 → ROLE_SELLER → 상품 등록 한 바퀴(OAuth 로그인 필요)
+
+## TG7 promotion 도메인 (2026-09-24)
+- `./gradlew :promotion:domain:test :promotion:feature:test :commerce:app:test :gateway:test --tests '*RouteAuth*' verifyArchitecture` → exit 0
+  - CouponDefinitionTest 16/0 · UserCouponTest 5/0 · PromotionHoldTest 9/0 · PointBalanceTest 3/0 · CouponClaimServiceTest 4/0 · PromotionHoldServiceTest 13/0 · PromotionCommandConsumerTest 2/0 · PromotionControllerTest 6/0
+  - PromotionIntegrationSpec 5/0 (실 MySQL: 100명 동시 발급 → 정확히 30) · CommerceContextLoadSpec 7/0 · GatewayRouteAuthSpec 26/0 (skipped 0)
+- 회귀 주입: 발급 상한 조건 제거 · reserve 멱등 제거 · EXPIRED 경로 예외/무시 → 전부 빨간불

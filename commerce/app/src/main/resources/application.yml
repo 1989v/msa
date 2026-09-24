@@ -121,6 +121,23 @@ spring:
         driver-class-name: com.mysql.cj.jdbc.Driver
         maximum-pool-size: 3
         minimum-idle: 1
+    # ADR-0099 — promotion 도메인 전용 datasource(promotion_db). payment 와 같이 order 인스턴스에 스키마만 분리한다.
+    # 풀 크기 키는 hikari. 하위가 아니라 여기 바로 둔다(컨텍스트 로드 spec 이 실제 값 3 을 확인).
+    promotion:
+      master:
+        jdbc-url: jdbc:mysql://${PROMOTION_DB_MASTER:localhost:3326}/promotion_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        username: ${PROMOTION_MYSQL_USER:promotion_user}
+        password: ${PROMOTION_MYSQL_PASSWORD:promotion_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        maximum-pool-size: 3
+        minimum-idle: 1
+      replica:
+        jdbc-url: jdbc:mysql://${PROMOTION_DB_REPLICA:localhost:3327}/promotion_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        username: ${PROMOTION_MYSQL_USER:promotion_user}
+        password: ${PROMOTION_MYSQL_PASSWORD:promotion_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        maximum-pool-size: 3
+        minimum-idle: 1
     # ADR-0093 — product 도메인 전용 datasource(카탈로그 SSOT, 스키마 격리).
     product:
       master:
@@ -238,6 +255,17 @@ payment:
     # **기본값을 두지 않는다.** pg=toss 일 때만 읽히고, 그때 없으면 기동하지 않는다(pg=mock 은 읽지 않는다).
     secret-key: ${TOSS_SECRET_KEY}
     webhook-secret: ${TOSS_WEBHOOK_SECRET}
+
+# ADR-0099 — 혜택(쿠폰·포인트·TCC 보류). 보류 만료 스케줄러 주기만 여기서 정한다.
+promotion:
+  flyway:
+    enabled: true
+  hold-expiry:
+    interval-ms: 30000
+
+# 재고·혜택 예약의 보류 기한(스펙 SR-4). 사가의 피벗 전 기한 10분 + 결과 미상 재조회 최대 10분보다 길어야 한다.
+commerce:
+  hold-minutes: 30
 
 outbox:
   polling:

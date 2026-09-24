@@ -13,7 +13,9 @@
 | TG4 역할 연동 | 완료 (auth fe0f5f6 미푸시) |
 | TG5 판매자 화면 | 완료 |
 | P1 배포 | 완료 (ace7837, 실제 로그인 흐름은 미확인) |
-| TG6 payment | 완료 |
+| TG6 payment | 완료 · P2 push 043a9e87 |
+| TG7 promotion | 완료 |
+| TG8 주문서 | 진행 중 |
 
 다음: TG1 → TG2 → P0 배포
 블로커: 없음

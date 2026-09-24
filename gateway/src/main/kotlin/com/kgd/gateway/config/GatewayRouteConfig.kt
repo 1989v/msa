@@ -69,6 +69,7 @@ class GatewayRouteConfig(
         "warehouse" to ("http://commerce:8085" to "/v3/api-docs/warehouse"),
         "seller" to ("http://commerce:8085" to "/v3/api-docs/seller"),
         "payment" to ("http://commerce:8085" to "/v3/api-docs/payment"),
+        "promotion" to ("http://commerce:8085" to "/v3/api-docs/promotion"),
         "gifticon" to ("http://sideapp:8095" to "/v3/api-docs/gifticon"),
         "recommendation" to ("http://engagement:8091" to "/v3/api-docs/recommendation"),
         "member" to ("http://account:8093" to "/v3/api-docs/member"),
@@ -214,6 +215,26 @@ class GatewayRouteConfig(
                                 config.setKeyResolver(userKeyResolver)
                                 config.setDenyEmptyKey(false)
                             }
+                            .stripPrefix(0)
+                    }
+                    .uri(COMMERCE_URI)
+            }
+            // === ADR-0099 혜택 (commerce 폴드) ===
+            // 쿠폰 정의·포인트 지급 — 어드민 전용
+            .route("promotion-admin") { r ->
+                r.path("/api/v1/admin/promotions", "/api/v1/admin/promotions/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(adminConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(COMMERCE_URI)
+            }
+            // 내 쿠폰·포인트, 쿠폰 받기 — 로그인 회원. 본인 것만은 서비스가 X-User-Id 로 본다.
+            // 경로를 셋으로 좁혀 둔다 — /api/v1/coupons/** 로 열면 나중에 생기는 경로가 검토 없이 노출된다
+            .route("promotion-user") { r ->
+                r.path("/api/v1/coupons/me", "/api/v1/points/me", "/api/v1/coupons/{definitionId}/claim")
+                    .filters { f ->
+                        f.filter(authFilter.apply(userConfig()))
                             .stripPrefix(0)
                     }
                     .uri(COMMERCE_URI)

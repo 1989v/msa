@@ -157,6 +157,35 @@ class GatewayRouteAuthSpec(
         }
     }
 
+    Given("혜택 어드민 /api/v1/admin/promotions/** (ROLE_ADMIN)") {
+        Then("토큰이 없으면 401") {
+            status(HttpMethod.GET, "/api/v1/admin/promotions/coupons") shouldBe 401
+            status(HttpMethod.POST, "/api/v1/admin/promotions/points/grants") shouldBe 401
+        }
+        Then("ROLE_USER·ROLE_SELLER 는 403") {
+            status(HttpMethod.POST, "/api/v1/admin/promotions/coupons", userToken) shouldBe 403
+            status(HttpMethod.POST, "/api/v1/admin/promotions/points/grants", sellerToken) shouldBe 403
+        }
+    }
+
+    Given("내 쿠폰·포인트 · 쿠폰 받기 (ROLE_USER)") {
+        Then("토큰이 없으면 401") {
+            status(HttpMethod.GET, "/api/v1/coupons/me") shouldBe 401
+            status(HttpMethod.GET, "/api/v1/points/me") shouldBe 401
+            status(HttpMethod.POST, "/api/v1/coupons/3/claim") shouldBe 401
+        }
+        Then("ROLE_USER 는 게이트웨이를 지난다") {
+            // 백엔드 호스트를 해석할 수 없어 5xx 로 끝난다. 라우트가 없으면 404, 역할이 막으면 403 이다
+            status(HttpMethod.GET, "/api/v1/coupons/me", userToken) shouldNotBeIn listOf(401, 403, 404)
+            status(HttpMethod.GET, "/api/v1/points/me", userToken) shouldNotBeIn listOf(401, 403, 404)
+            status(HttpMethod.POST, "/api/v1/coupons/3/claim", userToken) shouldNotBeIn listOf(401, 403, 404)
+        }
+        Then("열어 둔 세 경로 밖의 쿠폰 경로는 라우트가 없다") {
+            status(HttpMethod.GET, "/api/v1/coupons/3", userToken) shouldBe 404
+            status(HttpMethod.GET, "/api/v1/points/7", userToken) shouldBe 404
+        }
+    }
+
     Given("클러스터 안 전용 경로 /internal") {
         Then("어드민 토큰으로도 404 — 라우트가 없다") {
             status(HttpMethod.POST, "/internal/products/bulk", adminToken) shouldBe 404

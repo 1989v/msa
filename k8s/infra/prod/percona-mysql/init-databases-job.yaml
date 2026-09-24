@@ -19,6 +19,7 @@ data:
     CREATE DATABASE IF NOT EXISTS deal_db            CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS seller_db          CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS payment_db         CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS promotion_db       CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS ranking_db         CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS blog_db            CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS member_db          CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -42,6 +43,7 @@ data:
     deal_db:deal_user:DEAL_PASSWORD
     seller_db:seller_user:SELLER_PASSWORD
     payment_db:payment_user:PAYMENT_PASSWORD
+    promotion_db:promotion_user:PROMOTION_PASSWORD
     ranking_db:ranking_user:RANKING_PASSWORD
     blog_db:blog_user:BLOG_PASSWORD
     member_db:member_user:MEMBER_PASSWORD

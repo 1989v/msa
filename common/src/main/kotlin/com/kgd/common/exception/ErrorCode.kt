@@ -24,5 +24,8 @@ enum class ErrorCode(val message: String) {
     OCR_EXTRACTION_FAILED("OCR 텍스트 추출에 실패했습니다"),
     INVALID_SELLER_STATUS("유효하지 않은 판매자 상태입니다"),
     INVALID_PAYMENT_STATUS("유효하지 않은 결제 상태입니다"),
-    INVALID_OPS_ISSUE_STATUS("유효하지 않은 운영 이슈 상태입니다")
+    INVALID_OPS_ISSUE_STATUS("유효하지 않은 운영 이슈 상태입니다"),
+    INVALID_PROMOTION_STATUS("유효하지 않은 혜택 상태입니다"),
+    INSUFFICIENT_POINTS("포인트 잔액이 부족합니다"),
+    COUPON_SOLD_OUT("쿠폰 발행 수량이 소진됐습니다")
 }

@@ -9,3 +9,5 @@
 - 2026-09-24 운영 실측: orders 0 · outbox_event 0(order·inventory·fulfillment) · inventory 0 · products 24 — 주문이 한 번도 끝까지 간 적 없다. 전환 마이그레이션은 빈 데이터 대상
 - 2026-09-24 아웃박스: attempts 는 NOT NULL DEFAULT 0(옛 코드와 공존 무해), 10번째 실패에 FAILED, 릴레이 트랜잭션 READ COMMITTED(REPEATABLE READ 에서 갭 잠금 교착 재현)
 - 2026-09-24 기존 결함 발견: common OutboxEntity 에 no-arg 생성자가 없어 옛 릴레이가 행을 못 읽었다(행이 0이라 드러나지 않음)
+- 2026-09-24 사용자 쿠폰 상태는 별도 토픽 없이 `promotion.hold.*` 의 userCouponStatus 로 order 읽기 모델에 전달(토픽 추가 안 함)
+- 2026-09-24 promotion reserve 는 주문서 견적 couponDiscount 를 싣고, 재계산과 다르면 failed(DISCOUNT_MISMATCH) — 결제액 불일치 방지. 쿠폰 유효기간 [from, until), 판매자 쿠폰 최소금액은 그 판매자 라인 기준, 배송비는 쿠폰 대상 제외

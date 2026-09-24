@@ -10,7 +10,8 @@ import org.springframework.scheduling.annotation.EnableScheduling
 // 사가 참여자인데 혼자 밖에 있던 것을 안으로 들였다.
 // ADR-0093 ②: deal(혜택 링크 허브)도 커머스 성격이라 여기로. 전용 스키마 deal_db 를 갖는다.
 // ADR-0099: seller(마켓플레이스 판매자) — 전용 스키마 seller_db. payment(결제) — 전용 스키마 payment_db.
-@SpringBootApplication(scanBasePackages = ["com.kgd.inventory", "com.kgd.warehouse", "com.kgd.fulfillment", "com.kgd.order", "com.kgd.product", "com.kgd.deal", "com.kgd.seller", "com.kgd.payment", "com.kgd.common.exception", "com.kgd.common.response"])
+// promotion(쿠폰·포인트·TCC 보류) — 전용 스키마 promotion_db.
+@SpringBootApplication(scanBasePackages = ["com.kgd.inventory", "com.kgd.warehouse", "com.kgd.fulfillment", "com.kgd.order", "com.kgd.product", "com.kgd.deal", "com.kgd.seller", "com.kgd.payment", "com.kgd.promotion", "com.kgd.common.exception", "com.kgd.common.response"])
 @EnableScheduling
 class CommerceApplication
 
