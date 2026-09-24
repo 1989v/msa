@@ -162,7 +162,7 @@ class OrderSheetIntegrationSpec(
             val admin = ProductRequester("1", setOf("ROLE_ADMIN"))
             val products = ctx.getBean(CreateProductUseCase::class.java)
             fun product(name: String, price: String, requester: ProductRequester) = products.execute(
-                CreateProductUseCase.Command(name = name, price = price.toLong(), stock = 10),
+                CreateProductUseCase.Command(name = name, price = price.toBigDecimal().longValueExact(), stock = 10),
                 requester,
             ).id
 
