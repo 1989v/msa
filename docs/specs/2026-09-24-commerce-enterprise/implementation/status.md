@@ -140,3 +140,10 @@
 - push `3a08ca07` → 1차 images 실패(프리렌더 스크립트가 deal 카탈로그 조회 일시 실패 `Unexpected end of JSON input` 로 의도적으로 빌드 중단 — 코드 무관) → `gh run rerun` 성공 → commerce `:3a08ca0`
 - 운영 주문 1 전체 취소: 미리보기 refund 1700·fullCancel·판매자 승인 불필요 → 클레임 1 REQUESTED(FULFILLMENT_CANCEL) → 2초 APPROVED(INVENTORY_RESTOCK) → 4초 PAYMENT_REFUND → **6초 REFUNDED, 주문 CANCELLED, refunded_amount 1700**
 - 도메인 간 일치: payment `ORD-1-1` REFUNDED · refund `claim:1` 1700 · inventory 81 avail 5 reserved 0 · reservation restocked 1 · fulfillment CANCELLED · product 81 stock 5
+
+## P6 배포 (2026-09-24)
+- push `990d7a18`(Sidebar 충돌 — 다른 세션 아이콘과 합침, admin `tsc -b` 0) → images success · commerce `:990d7a1`
+- settlement_db Flyway V1 success. 새 컨슈머 그룹 `settlement-ledger` 가 기존 토픽을 처음부터 읽어 주문 1 의 원장을 만들었다:
+  - journal 2 `capture:order:1` — Dr PG_RECEIVABLE 1700 / Cr SELLER_PAYABLE 1700 (플랫폼 판매자 수수료 0)
+  - journal 1 `refund:claim:1` — Dr SELLER_PAYABLE 1700 / Cr PG_RECEIVABLE 1700
+  - 거래마다 차 = 대. 환불이 매입보다 먼저 기록됨(토픽 간 소비 순서) — 추가만 원장이라 순 결과 동일
