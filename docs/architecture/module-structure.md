@@ -52,6 +52,7 @@
 | `:deal:domain` / `:deal:feature` | `code-dictionary:app` | 호스트 스키마 공유 |
 | `:blog:domain` / `:blog:feature` | `code-dictionary:app` | 호스트 스키마 공유 |
 | `:ranking:domain` / `:ranking:feature` | `code-dictionary:app` | 호스트 스키마 공유 |
+| `:ads:domain` / `:ads:feature` | `engagement:app` (ADR-0098) | 전용 `ads_db` |
 
 - **domain 모듈 규칙**: Spring/JPA 어노테이션 사용 시 컴파일 에러 (의존성 없음). 예외는 `search:domain` 하나
 - **app/feature 모듈**: `implementation(project(":{service}:domain"))` 으로 domain 의존

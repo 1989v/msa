@@ -3,6 +3,7 @@
   "version": 1,
   "source_roots": [
     "admin",
+    "ads",
     "agent-viewer-api",
     "analytics",
     "auth",

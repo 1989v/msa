@@ -44,7 +44,7 @@ code-dictionary 파드 = code-dictionary 7,507 + game 10,718 + blog 4,629
 | `content` | game · place · blog · ranking | 22,346 | 노출 서브도메인 (game·place·blog·rank) |
 | `atlas` | 개념 사전 · 서비스 카탈로그 · 포트폴리오 · 전시 · **이력서** | — | apex 사이트 총람 |
 | `account` | member · wishlist | — | **회원(타인)**에 관한 데이터 |
-| `engagement` | recommendation · experiment | — | 실험·추천 (ADR-0058 계획 실행) |
+| `engagement` | recommendation · experiment · ads | — | 실험·추천 (ADR-0058 계획 실행). ads 는 ADR-0098 로 합류 |
 | `sideapp` | quant · chatbot · gifticon | — | 도메인 단절 사이드앱 |
 | 단독 6 | gateway · auth · search · search-consumer · analytics · recommendation-ann | — | 아래 근거 |
 

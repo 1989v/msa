@@ -165,6 +165,24 @@ spec:
   selector: { app.kubernetes.io/name: mysql }
   ports: [{ name: mysql, port: 3306, targetPort: 3306 }]
 ---
+# ads (ADR-0098) — engagement 에 폴드된 ads 의 ads_db. init 스크립트는 빈 볼륨에서만 돌므로
+# 이미 데이터가 있는 볼륨(oci-arm 운영)에는 1회 수동 SQL 이 필요하다:
+#   kubectl exec -i -n commerce mysql-0 -- sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' <<'SQL'
+#   CREATE DATABASE IF NOT EXISTS ads_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+#   CREATE USER IF NOT EXISTS 'ads_user'@'%' IDENTIFIED BY 'ads_password';
+#   GRANT ALL PRIVILEGES ON ads_db.* TO 'ads_user'@'%';
+#   FLUSH PRIVILEGES;
+#   SQL
+# 스키마·계정·시크릿(ads-token)이 없으면 engagement 가 못 뜨고 recommendation·experiment 도 함께 멈춘다.
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-ads-master
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: mysql }
+  ports: [{ name: mysql, port: 3306, targetPort: 3306 }]
+---
 apiVersion: v1
 kind: Service
 metadata:

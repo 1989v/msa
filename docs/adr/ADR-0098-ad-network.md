@@ -1,6 +1,6 @@
 # ADR-0098 — 광고 네트워크: engagement 에 폴드, 과금은 자기 카운터로, game ads 흡수
 
-- 상태: 제안 (2026-09-23)
+- 상태: 제안 (2026-09-23) — R2(ads + 게이트웨이) 운영 배포를 확인한 뒤 채택으로 바꾼다
 - 관련: ADR-0059 §3(game HOUSE 광고), ADR-0076(AdSense 지면), ADR-0093(파드 재편),
   ADR-0095(노출·클릭 원장), ADR-0083(레이어 표준), ADR-0072(프로필 행 권한),
   ADR-0069(규제 업권), ADR-0077(보존기간), ADR-0078(식별 최소화), ADR-0079(단일 로그인)
@@ -33,7 +33,7 @@ AdSense 같은 광고 네트워크를 둔다 — 광고주가 크레딧으로 �
 | content | game 이 있어 흡수는 쉽지만 이미 4도메인 22k줄. 한 시크릿이 네 도메인을 멈춘 사고(2026-09-10)의 반경이 더 커진다 |
 | 새 파드 | 상주 JVM +1. 무료 티어에서 이 규모에 맞지 않는다 |
 
-대가로 드는 인프라 변경은 넷이다 — engagement 메모리 등급 한 단계(512Mi → 768Mi), 공유 MySQL 의 `ads_db`·계정(기존 볼륨은 place_db 처럼 1회 수동 SQL), SealedSecret `ADS_TOKEN_SECRET`, ads 전용 Redis 연결(타임아웃 250ms — 공용 연결은 Lettuce 기본 60초라 결정 경로가 매달린다). 셋(스키마·계정·시크릿) 중 하나라도 없으면 engagement 가 못 뜨므로 이미지보다 먼저 넣는다.
+대가로 드는 인프라 변경은 넷이다 — engagement 메모리 등급 한 단계(512Mi → 768Mi), 공유 MySQL 의 `ads_db`·계정(기존 볼륨은 place_db 처럼 1회 수동 SQL), 시크릿 `ads-token`(`ADS_TOKEN_SECRET` — oci-arm 은 game-hmac·auth-subject-hash 처럼 `kubectl create secret` 으로 수동 생성, prod-k8s 는 SealedSecret), ads 전용 Redis 연결(타임아웃 250ms — 공용 연결은 Lettuce 기본 60초라 결정 경로가 매달린다). 셋(스키마·계정·시크릿) 중 하나라도 없으면 engagement 가 못 뜨므로 이미지보다 먼저 넣는다.
 
 ### 2) 1단계에는 별도 서빙 도메인을 두지 않는다
 

@@ -167,13 +167,11 @@ patches:
     target:
       kind: Deployment
       name: sideapp
+  # ─── Tier M (768Mi) — k3s-lite 글로벌 기본값으로 충분, 별도 패치 없음 ────
+  #     적용 대상: gateway, product, order, search, gifticon, fulfillment, engagement
+  #     (gifticon/fulfillment 는 k3s-lite 의 동일값 명시 패치 보유)
+  #     engagement 는 ads 폴드(ADR-0098)로 후보 인덱스·ads 전용 EMF 가 더해져 Tier S 에서 올렸다.
   # ─── Tier S (512Mi) — Kafka consumer + 경량 JPA ─────────────────────────
-  - path: patches/resources-s-512mi.yaml
-    # ─── Tier M (768Mi) — k3s-lite 글로벌 기본값으로 충분, 별도 패치 없음 ────
-    #     적용 대상: gateway, product, order, search, gifticon, fulfillment
-    #     (gifticon/fulfillment 는 k3s-lite 의 동일값 명시 패치 보유)
-
-    target: {kind: Deployment, name: engagement}
   # ADR-0058 — search-batch 는 CronJob(Deployment 아님). resource 패치 대상 제외.
   - path: patches/resources-s-512mi.yaml
     target: {kind: Deployment, name: search-consumer}

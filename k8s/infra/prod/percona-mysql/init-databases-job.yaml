@@ -29,6 +29,7 @@ data:
     CREATE DATABASE IF NOT EXISTS game_db            CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS search_db          CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS experiment_db      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS ads_db             CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
   # <database>:<user>:<password env var> — 사용자명은 각 서비스 application.yml 의
   # 기본값과 일치해야 한다(그래야 배포 측은 비밀번호만 주입하면 된다).
   users.txt: |
@@ -49,6 +50,7 @@ data:
     game_db:game_user:GAME_PASSWORD
     search_db:search_user:SEARCH_PASSWORD
     experiment_db:commerce:EXPERIMENT_PASSWORD
+    ads_db:ads_user:ADS_PASSWORD
 ---
 apiVersion: batch/v1
 kind: Job

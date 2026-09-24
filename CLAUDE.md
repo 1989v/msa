@@ -191,9 +191,10 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | warehouse | `warehouse/CLAUDE.md` | 창고 마스터. commerce:app 폴드. Kafka 없음 |
 | chatbot | `chatbot/CLAUDE.md` | `:chatbot:feature` 로 sideapp:app 에 폴드 (ADR-0093). 대화형 AI — Anthropic SDK 직접 + 채널 추상화(WebSocket/Slack) + 문서 지식원 (ADR-0052) |
 | recommendation | `recommendation/CLAUDE.md` | 추천 — 룰 기반 CB · Item-Item CF · Thompson 밴딧 · ANN 사이드카 (ADR-0044~0049). analytics 의 ClickHouse 를 **읽기만**. `:recommendation:feature` 로 **engagement:app 에 폴드** (ADR-0093) — ANN 사이드카는 별도 파드 유지 |
+| ads | `ads/CLAUDE.md` | 광고 네트워크 — 회원 광고주가 가상 크레딧으로 집행하는 디스플레이 광고, 문맥 1차 경매 + 가시 노출·클릭 검증 + 복식부기 원장 정산. game ads 를 흡수한다. `:ads:feature` 로 **engagement:app 에 폴드**, 스키마 `ads_db`, 시크릿 `ads-token` 이 없으면 engagement 가 못 뜬다 (ADR-0098) |
 | commerce | `commerce/CLAUDE.md` | **폴드 호스트** — 자기 도메인 없이 order·inventory·fulfillment·warehouse·product 를 한 JVM 으로 (ADR-0058/0093). 도메인별 datasource/EMF/TM |
 | account | — | **폴드 호스트** (ADR-0093) — member·wishlist. 사람에 관한 데이터 |
-| engagement | — | **폴드 호스트** (ADR-0093) — recommendation·experiment |
+| engagement | — | **폴드 호스트** (ADR-0093) — recommendation·experiment·ads |
 | sideapp | — | **폴드 호스트** (ADR-0093) — quant·chatbot·gifticon. 어느 축에도 안 붙는 사이드앱 |
 | admin | `admin/CLAUDE.md` | 백오피스 (**FE 전용** — 어드민 API 는 각 서비스가 `/api/v1/admin/**` 로 제공) |
 | place | `place/CLAUDE.md` | 행정 지리 계층(대륙/국가/광역/도시) + POI + **관광지(Attraction) SSOT**, OpenSearch geo_distance 근처검색. 오픈데이터(GeoNames/상가정보/TourAPI) 적재 (ADR-0056/0065). 수집은 `place/ingest` CronJob 이 매일 자동 (ADR-0070) — 외부 :443 을 부르는 유일한 place 계열 파드. 운영 활성 (2026-08-09) |

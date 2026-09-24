@@ -27,6 +27,7 @@
 | chatbot | `chatbot/` | `chatbot/glossary.md` | Conversation, Message, AccessDecision |
 | analytics | `analytics/` | `analytics/glossary.md` | KeywordScore, ProductScore, ScoreStats |
 | experiment | `experiment/` | `experiment/glossary.md` | Experiment, Variant, StatisticalSignificance |
+| ads | `ads/` | `ads/glossary.md` | Advertiser, Campaign, Creative, AdPlacement, ContextCategory, LedgerTransaction, LedgerEntry, ServeClaims |
 | wishlist | `wishlist/` | `wishlist/glossary.md` | WishlistItem |
 | quant | `quant/` | `quant/glossary.md` | Asset, Execution, Fundamentals, KillSwitch, HybridStrategy, OrderCommand, PriceTick, RiskLimit |
 | blog | `blog/` | `blog/glossary.md` | BlogProfile, BlogCategory, BlogPost, BlogComment, VoterKey |
@@ -39,6 +40,8 @@
 - **Money** — product, order 양쪽에서 등장 (현재는 동일 의미로 추정) → 정의 일치 여부 확인 필요
 - **Order** — order BC의 핵심 도메인, fulfillment의 `FulfillmentOrder`, quant의 `OrderCommand`와 명확히 구분 필요
 - **Reservation** — inventory BC의 핵심 도메인, mrt-package의 외부 `reservation`과 혼동 주의
+- **Placement** — common `Placement`(추천·검색 노출 위치)와 ads 의 **지면**(`AdPlacement`, 광고가 들어가는 자리)은 다른 개념. ads 안에서는 「지면」으로만 부른다
+- **Money** 와 **크레딧** — ads 의 크레딧은 가상 단위(정수 마이크로 크레딧)라 product·order 의 `Money` 로 부르지 않는다
 - **Role** — auth BC가 권한 모델로 정의. member BC의 `MemberRole`은 auth의 Role을 참조하는 외래 개념
 
 ## Excluded

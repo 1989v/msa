@@ -175,6 +175,8 @@ jobs:
                 place/ingest/*)                            ;;   # 파이썬 배치
                 place/*)                                   SVCS+=" place" ;;
                 quant/app/*|quant/domain/*)                SVCS+=" quant" ;;
+                # engagement:app 에 폴드된 ads (ADR-0098) — 기본 분기는 없는 :ads:app:test 를 부른다
+                ads/*|engagement/*)                        SVCS+=" engagement" ;;
                 recommendation/app/*|recommendation/domain/*) SVCS+=" recommendation" ;;
               esac
             done <<< "$CHANGED_FILES"
@@ -196,6 +198,8 @@ jobs:
               # ADR-0058: commerce 는 aggregator(:commerce:app)만 있고 :commerce:domain 없음 →
               # 폴드된 4 도메인/feature 테스트를 직접 지정 (default 의 :commerce:domain:test 는 미존재 → CI 실패).
               commerce)           TASKS+=" :commerce:app:test :inventory:domain:test :inventory:feature:test :warehouse:domain:test :warehouse:feature:test :fulfillment:domain:test :fulfillment:feature:test :order:domain:test :order:feature:test :member:domain:test :member:feature:test :wishlist:domain:test :wishlist:feature:test" ;;
+              # scripts/ci/topology.sh 의 engagement 태스크와 같다 — ads 세 태스크를 명시
+              engagement)         TASKS+=" :engagement:app:test :ads:domain:test :ads:feature:test :experiment:domain:test :experiment:feature:test :recommendation:domain:test :recommendation:feature:test" ;;
               *)                  TASKS+=" :${svc}:app:test :${svc}:domain:test" ;;
             esac
           done

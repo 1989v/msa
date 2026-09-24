@@ -45,6 +45,25 @@ spec:
               value: "analytics"
             - name: CLICKHOUSE_PASSWORD
               value: "analytics"
+            # ── ads (ADR-0098) ─────────────────────────────────────────────
+            # 노출·클릭 토큰 HMAC 키. 32바이트 이상, 다른 서비스의 HMAC 키와 공유하지 않는다.
+            # optional 을 안 붙인다 — 서명 키가 빈 값으로 뜨면 검사가 도는 채로 아무것도 막지
+            # 않는다. 없으면 컨테이너가 생성 단계에서 막힌다(recommendation·experiment 도 함께).
+            #
+            # 이 레포는 공개라 키를 매니페스트에 두지 않는다:
+            #   kubectl -n commerce create secret generic ads-token \
+            #     --from-literal=secret="$(openssl rand -hex 32)"
+            # prod-k8s 는 같은 명령에 `--dry-run=client -o yaml | kubeseal --format=yaml` 로 봉인한다
+            # (k8s/infra/prod/sealed-secrets/README.md).
+            - name: ADS_TOKEN_SECRET
+              valueFrom:
+                secretKeyRef: { name: ads-token, key: secret }
+            # 키 교체 중에만 `previous` 키를 넣는다 — 교체 전 발급 토큰을 수명 동안 받아 준다.
+            - name: ADS_TOKEN_SECRET_PREVIOUS
+              valueFrom:
+                secretKeyRef: { name: ads-token, key: previous, optional: true }
+            # ads_db 비밀번호는 blog 와 같이 application.yml 기본값을 쓴다(ADS_MYSQL_PASSWORD).
+            # prod-k8s 만 overlay 패치로 commerce-app-db-secrets 에서 주입한다.
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness

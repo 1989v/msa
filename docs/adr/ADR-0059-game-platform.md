@@ -58,6 +58,12 @@ ADR-0058 불변식 준수 — 재분리 가능성 보장:
   집행은 provider 위임)를 HOUSE 로 먼저 검증한다.
 - rewarded 보상은 `idempotency_key` 기반 1회 보장 (idempotent-consumer 패턴, ADR-0012/0029).
 
+**개정 2026-09-24 — game ads 는 ads 도메인이 흡수한다 (ADR-0098).** 지면·HOUSE 소재는 `ads_db` 로 옮기고
+(`game-list-banner` 소재 3종을 ads 시드로), `/api/v1/ads/**` 는 engagement 가 받는다. 옛
+`GET /api/v1/ads/placements/{key}` 는 전환 릴리스 동안 ads 가 옛 응답 모양으로 제공하고, 다음 릴리스에서
+game ads 코드·호환 경로를 지우고 game 의 광고 표 3종은 **새 마이그레이션**으로 내린다. 보상형(rewarded)은
+호출처가 0 이라 옮기지 않는다.
+
 ### 3-1) 인증 경계 — 게스트 허용 라우트
 
 게임은 비로그인 플레이가 기본이므로 gateway 라우트를 인증 수준별로 분리한다:

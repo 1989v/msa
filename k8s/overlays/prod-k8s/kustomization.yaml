@@ -71,6 +71,8 @@ patches:
     target: { kind: Deployment, name: gifticon }
   - path: patches/db-password-experiment.yaml
     target: { kind: Deployment, name: experiment }
+  - path: patches/db-password-ads.yaml
+    target: { kind: Deployment, name: engagement }
   - path: patches/db-password-code-dictionary.yaml
     target: { kind: Deployment, name: code-dictionary }
   - path: patches/db-password-commerce.yaml

@@ -28,7 +28,7 @@
 ### SR-2 인프라 변경 — 이것이 전부다
 - engagement 메모리: `kustomization.yaml:168-173` 의 Tier S 패치를 빼 Tier M(768Mi)
 - **`ads_db`·`ads_user`**: 공유 MySQL 에 둔다. `configmap-init.yaml` 추가 + 운영 볼륨 1회 수동 SQL(place_db 선례 `a599d857`) + `services.yaml` 별칭 Service `mysql-ads-master`. 비밀번호는 content 의 blog 와 같은 방식(`${ADS_MYSQL_PASSWORD:기본값}`)
-- **`ADS_TOKEN_SECRET`**(필수) · `ADS_TOKEN_SECRET_PREVIOUS`(교체 중에만): SealedSecret. 32바이트 미만이면 기동 거부(선례 `HmacPartySeatTokenService` 의 최소 길이). 다른 서비스의 HMAC 키와 공유하지 않는다
+- **`ADS_TOKEN_SECRET`**(필수) · `ADS_TOKEN_SECRET_PREVIOUS`(교체 중에만): 시크릿 `ads-token`. oci-arm·k3s-lite 는 sealed-secrets 컨트롤러가 없어 기존 game-hmac 처럼 `kubectl create secret` 으로 수동 생성, prod-k8s 는 SealedSecret. 32바이트 미만이면 기동 거부(선례 `HmacPartySeatTokenService` 의 최소 길이). 다른 서비스의 HMAC 키와 공유하지 않는다
 - 스키마·계정·시크릿이 클러스터에 있는 것을 확인한 뒤에만 이미지를 올린다 — 하나라도 없으면 recommendation·experiment 까지 함께 못 뜬다 (OQ-003)
 - **ads 전용 Redis 연결**: 같은 Redis 인스턴스, ads 만 명령 타임아웃 250ms·연결 타임아웃 500ms. engagement 공용 연결(recommendation 동기화의 `RENAME`·`delete`)은 건드리지 않는다
 - 새 파드·등록 도메인·Cloudflare 존·오브젝트 스토리지 없음. 콘솔 `ads.1989v.com` 은 와일드카드 인증서 안(ingress TLS hosts 추가·proxied DNS 는 수동 사전 조건)
@@ -158,7 +158,7 @@
 - 로그는 결정 id 로 결정→토큰→이벤트→정산을 잇고, 방문자 id 는 해시로만
 - 개인정보: ads MySQL 에 방문자·회원 단위 이벤트 행 없음. 방문자 id 는 Redis 빈도 키에 최대 25시간 — 이 값은 ads 설정 상수 한 곳에서 오고 `/privacy` §6 문구와 같아야 한다(ADR-0077). 사본 원장 90일(ADR-0095), 「행태 타기팅 없음」
 - 문서: ADR-0098 · `ads/CLAUDE.md` · `ads/glossary.md`(Avoid: 슬롯·구좌→지면, 크리에이티브→소재, 단독 「계정」→원장 계정, 크레딧을 `Money` 로) · `docs/context-map.md` · 루트 CLAUDE.md 서비스 표 · ADR-0093·`new-domain-checklist.md` engagement 행 · `kafka-convention.md` 발행자 · 지연 예산 Tier 1 · ADR-0059 §3·ADR-0076 개정 줄
-- CI: `ci.yml` 에 `ads/*) :ads:domain:test :ads:feature:test :engagement:app:test` 를 **명시**(기본 분기는 없는 `:ads:app:test` 를 부른다). 첫 PR 의 CI 로그에서 세 태스크가 돈 것을 확인
+- CI: `ci.yml` 경로 매핑에 `ads/*|engagement/*` → engagement 태스크 묶음(`topology.sh` 와 같은 목록)을 **명시**한다. 매핑이 없으면 기본 분기가 없어 ads 변경에서 테스트가 하나도 돌지 않는다. 첫 PR 의 CI 로그에서 태스크가 돈 것을 확인
 
 ## Visual Design
 

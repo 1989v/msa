@@ -18,7 +18,7 @@
   | `content:app` | 사람에게 보여 주는 것. 서브도메인으로 공개된다 | game · place · blog · ranking | game·place 전용, 나머지 과도기 공유 |
   | `atlas:app` | apex 사이트 자체의 총람 — 사전·카탈로그·포트폴리오·전시 | code-dictionary | 호스트 |
   | `account:app` | **사람에 관한** 데이터. 회원이 지우면 같이 지워지는 것 | member · wishlist · resume | 도메인별 전용 |
-  | `engagement:app` | 실험·추천 — 다른 도메인을 관찰해 순위를 매기는 것 | recommendation · experiment | 전용 + ClickHouse read |
+  | `engagement:app` | 실험·추천 — 다른 도메인을 관찰해 순위를 매기는 것 | recommendation · experiment · ads (ADR-0098) | 전용 + ClickHouse read |
   | `sideapp:app` | 위 어디에도 안 붙는 **도메인 단절 사이드앱** | quant · chatbot · gifticon | 도메인별 전용 |
 
   > `content`·`atlas` 는 ADR-0093 ②~④ 단계에서 `code-dictionary` 가 갈라져 생긴다. 그 전에

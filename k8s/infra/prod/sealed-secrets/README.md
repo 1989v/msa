@@ -56,8 +56,9 @@ kubectl -n kube-system delete secret -l sealedsecrets.bitnami.com/sealed-secrets
 | SealedSecret | 내용 | 없으면 |
 |---|---|---|
 | `commerce-mysql-secrets` | Percona operator 계정(root/xtrabackup/monitor/…) | operator 가 대기 상태로 정지 |
-| `commerce-app-db-secrets` | 서비스별 DB 비밀번호 13종 (`percona-mysql/README.md`) | init Job pod 가 `CreateContainerConfigError` 로 실패 |
+| `commerce-app-db-secrets` | 서비스별 DB 비밀번호 14종 (`percona-mysql/README.md`) | init Job pod 가 `CreateContainerConfigError` 로 실패 |
 | `backup-secret` | 백업 스토리지 자격증명 | 백업 CronJob 이 실패 |
+| `ads-token` | 광고 토큰 HMAC 키 `secret`(32바이트 이상), 교체 중에만 `previous` (ADR-0098) | engagement 컨테이너가 `CreateContainerConfigError` — recommendation·experiment 도 함께 멈춘다 |
 
 셋 다 평문 placeholder 를 두지 않는다 — 없으면 조용히 약한 값으로 뜨는
 대신 **명시적으로 실패**하는 쪽을 택했다.
