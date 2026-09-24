@@ -62,6 +62,9 @@ patches:
   # 본인 CA 로 교체해야 한다. 검증/롤백 → origin-lockdown/README.md
   - path: origin-lockdown/aop-patch.yaml
     target: {kind: Ingress, name: commerce-proxied}
+  # 광고 공개 라우트 Host 허용 목록 — AOP 가 걸린 proxied 호스트만 (rt 제외, 와일드카드 금지)
+  - path: patches/gateway-ads-hosts.yaml
+    target: {kind: Deployment, name: gateway}
   # 모든 Deployment — 무중단: 새 파드 Ready 후 교체 (서지 예산은 sync-wave 가 묶는다, ADR-0075)
   - path: patches/rolling-surge-first.yaml
     target:

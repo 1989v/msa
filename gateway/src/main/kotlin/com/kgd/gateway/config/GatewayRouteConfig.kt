@@ -1,6 +1,7 @@
 package com.kgd.gateway.config
 
 import com.kgd.gateway.filter.AuthenticationGatewayFilter
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver
 import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter
 import org.springframework.cloud.gateway.route.RouteLocator
@@ -14,6 +15,8 @@ class GatewayRouteConfig(
     private val authFilter: AuthenticationGatewayFilter,
     private val userKeyResolver: KeyResolver,
     private val redisRateLimiter: RedisRateLimiter,
+    @Qualifier("adsClientIpKeyResolver") private val adsClientIpKeyResolver: KeyResolver,
+    private val adsHostAllowlist: AdsHostAllowlist,
 ) {
     private companion object {
         // ADR-0059: game:feature 가 code-dictionary:app 에 폴드되어 같은 포트를 공유
@@ -27,6 +30,9 @@ class GatewayRouteConfig(
 
         /** ADR-0093 ② — deal(혜택 링크 허브)은 커머스 성격이라 commerce 로 옮겼다. */
         const val COMMERCE_URI = "http://commerce:8085"
+
+        /** ADR-0098 — 광고 네트워크(ads)는 engagement 에 폴드돼 있다. */
+        const val ENGAGEMENT_URI = "http://engagement:8091"
     }
 
     private fun userConfig() = AuthenticationGatewayFilter.Config(
@@ -380,14 +386,48 @@ class GatewayRouteConfig(
                     }
                     .uri(CONTENT_URI)
             }
-            // 광고 슬롯/보상 (HOUSE, ADR-0059 §3) — 게스트 허용, 로그인 시 X-User-Id 식별
-            .route("game-ads") { r ->
-                r.path("/api/v1/ads/**")
+            // === ADR-0098 광고 네트워크 (engagement 폴드) ===
+            // /api/v1/ads/** 캐치올을 두지 않는다 — 경로마다 인증 수준이 달라, 넓은 라우트가 있으면
+            // 목록에 없는 경로가 게스트 필터로 새어 나간다. 좁은 인증 순서(어드민 → 광고주 → 공개)로 선언한다.
+            .route("ads-admin") { r ->
+                r.path("/api/v1/admin/ads", "/api/v1/admin/ads/**")
                     .filters { f ->
-                        f.filter(authFilter.apply(optionalUserConfig()))
+                        f.filter(authFilter.apply(adminConfig()))
                             .stripPrefix(0)
                     }
-                    .uri(CONTENT_URI)
+                    .uri(ENGAGEMENT_URI)
+            }
+            // 광고주 콘솔 — 로그인까지만 엣지가 본다. 「내 캠페인인가」는 서비스가 판정한다.
+            .route("ads-advertiser") { r ->
+                r.path("/api/v1/ads/advertiser", "/api/v1/ads/advertiser/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(userConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(ENGAGEMENT_URI)
+            }
+            // 결정·이벤트·클릭·에셋·옛 지면 조회 — 게스트 허용. 필터는 위조 신원 헤더를 벗기고,
+            // 로그인 사용자면 X-User-Id 를 실어 결정 단계의 광고주 본인 판정이 쓰게 한다.
+            // Host 허용 목록 밖(rt 등)은 404 — 리미터 키 CF-Connecting-IP 를 믿을 수 있는 호스트만 받는다.
+            .route("ads-public") { r ->
+                r.path(
+                    "/api/v1/ads/decisions",
+                    "/api/v1/ads/events",
+                    "/api/v1/ads/click/**",
+                    "/api/v1/ads/assets/**",
+                    "/api/v1/ads/placements/**",
+                )
+                    .and().predicate { adsHostAllowlist.allows(it) }
+                    .filters { f ->
+                        f.filter(authFilter.apply(optionalUserConfig()))
+                            .requestRateLimiter { config ->
+                                config.setRateLimiter(redisRateLimiter)
+                                config.setKeyResolver(adsClientIpKeyResolver)
+                                config.setDenyEmptyKey(false)
+                            }
+                            .stripPrefix(0)
+                    }
+                    .uri(ENGAGEMENT_URI)
             }
             // 포트폴리오 (code-dictionary 소유) — 공개 조회 + 로그인 시 스니펫 게이트 해제.
             // YAML 무인증 라우트에서 이동: 필터 없이는 X-User-Id 가 주입되지 않아 로그인 해제가

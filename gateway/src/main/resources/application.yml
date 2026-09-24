@@ -210,6 +210,11 @@ kgd:
     security:
       enabled: true
       aes-enabled: false
+  gateway:
+    ads:
+      # 광고 공개 라우트가 받는 Host (쉼표 구분, 정확 일치). overlay 가 env 로 채운다.
+      # 비어 있으면 광고 공개 경로는 전부 404 — 설정이 빠진 배포가 열린 채로 뜨지 않게 한다.
+      allowed-hosts: ${KGD_GATEWAY_ADS_ALLOWED_HOSTS:}
 
 # Swagger UI 집계 — /api/docs 에서 서비스별 OpenAPI spec 드롭다운 탐색.
 # spec 은 GatewayRouteConfig 의 /api/docs/specs/{service} 프록시 라우트 경유.

@@ -57,6 +57,11 @@ patches:
     target:
       kind: Deployment
       name: gateway
+  # 광고 공개 라우트 Host 허용 목록 — 비어 있으면 광고 공개 경로가 404 로 닫힌다
+  - path: patches/gateway-ads-hosts.yaml
+    target:
+      kind: Deployment
+      name: gateway
   - path: patches/redis-standalone-commerce.yaml
     target:
       kind: Deployment

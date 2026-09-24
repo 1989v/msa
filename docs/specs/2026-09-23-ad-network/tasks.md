@@ -151,12 +151,13 @@ Total Task Groups: 13
 **Dependencies:** Task Group 7
 **Phase:** R2
 **Required Skills:** spring-cloud-gateway
-- [ ] 8.0 Complete 게이트웨이
-  - [ ] 8.1 테스트 3개: C4 라우트 전수 검사 — **`Host: rt.1989v.com` 요청이 404 인 동작으로 판정** [test C-4] · C5 필터(클라이언트 `X-User-Id` 제거, Bearer 주입, advertiser 무토큰 401) · 리미터 키(`CF-Connecting-IP` 있음/없음)
-  - [ ] 8.2 ads 라우트(좁은 경로 먼저) → `ENGAGEMENT_URI`, 옛 `game-ads` 캐치올 제거
-  - [ ] 8.3 Host 허용 목록을 **게이트웨이 프로퍼티**로, overlay 별 값(oci-arm: apex·blog·game·place·ads / k3s-lite: 로컬 호스트). 와일드카드 금지 [impl N3-2 · usecase C2 · sec CO-2]
-  - [ ] 8.4 ads 공개 라우트 리미터 키 `CF-Connecting-IP` → 없으면 `remoteAddress`
-  - [ ] 8.5 Verify: `./gradlew :gateway:test --tests '*GatewayRoute*' --tests '*AdsRoute*'`
+- [x] 8.0 Complete 게이트웨이
+  - [x] 8.1 테스트 3개: C4 라우트 전수 검사 — **`Host: rt.1989v.com` 요청이 404 인 동작으로 판정** [test C-4] · C5 필터(클라이언트 `X-User-Id` 제거, Bearer 주입, advertiser 무토큰 401) · 리미터 키(`CF-Connecting-IP` 있음/없음)
+  - [x] 8.2 ads 라우트(좁은 경로 먼저) → `ENGAGEMENT_URI`, 옛 `game-ads` 캐치올 제거
+  - [x] 8.3 Host 허용 목록을 **게이트웨이 프로퍼티**로, overlay 별 값(oci-arm: apex·blog·game·place·ads / k3s-lite: 로컬 호스트). 와일드카드 금지 [impl N3-2 · usecase C2 · sec CO-2]
+  - [x] 8.4 ads 공개 라우트 리미터 키 `CF-Connecting-IP` → 없으면 `remoteAddress`
+  - [x] 8.5 Verify: `./gradlew :gateway:test --tests '*GatewayRoute*' --tests '*AdsRoute*'`
+> 구현 기록(2026-09-24): 라우트 `ads-admin`·`ads-advertiser`·`ads-public`(Host 허용 목록 `kgd.gateway.ads.allowed-hosts`, 정확 일치·빈 값이면 닫힘) · oci-arm 5호스트, k3s-lite localhost · prod-k8s 는 값 없음(호스트 미정 — 쓰면 한 줄 추가) · `deal.1989v.com` 제외 · 회귀 주입 2건 빨간불 · **ads 에 공개 경로를 새로 만들면 `ads-public` path 목록에도 넣는다**
 **Acceptance Criteria:**
 - AC-9b(게이트웨이 단)·AC-18, 기존 게이트웨이 라우트 테스트 불변
 

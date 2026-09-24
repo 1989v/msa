@@ -1,0 +1,14 @@
+# 광고 공개 라우트가 받는 Host (kgd.gateway.ads.allowed-hosts).
+# k3s-lite 의 ingress 는 호스트 규칙이 없어 로컬 주소로만 들어온다.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          env:
+            - name: KGD_GATEWAY_ADS_ALLOWED_HOSTS
+              value: "localhost,127.0.0.1"

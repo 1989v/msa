@@ -30,6 +30,20 @@ class RateLimiterConfig {
     }
 
     /**
+     * 광고 공개 라우트 전용 — 방문자 IP 로 센다. 클러스터 안에서 remoteAddress 는 ingress 파드 IP
+     * 하나라 그대로 쓰면 모든 방문자가 한 통을 나눠 쓴다. `CF-Connecting-IP` 는 Cloudflare 가 넣는
+     * 값이고, 우회 호스트(rt)에서는 위조할 수 있으므로 광고 라우트는 Host 허용 목록과 함께 쓴다.
+     */
+    @Bean
+    fun adsClientIpKeyResolver(): KeyResolver = KeyResolver { exchange ->
+        Mono.just(
+            exchange.request.headers.getFirst("CF-Connecting-IP")?.takeIf { it.isNotBlank() }
+                ?: exchange.request.remoteAddress?.address?.hostAddress
+                ?: "unknown"
+        )
+    }
+
+    /**
      * Redis Token Bucket Rate Limiter.
      * replenishRate: 100 tokens/sec
      * burstCapacity: 200 tokens (allows short bursts)
