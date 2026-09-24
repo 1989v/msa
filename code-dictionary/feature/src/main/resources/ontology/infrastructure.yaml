@@ -290,7 +290,7 @@ concepts:
     description: "CI 가 새 이미지 태그를 매니페스트에 적어 Git 에 커밋하고, GitOps 컨트롤러가 그 커밋을 끌어간다. 여러 런이 겹치면 최신 main 위에 태그만 다시 적어야 서로 덮지 않는다"
     synonyms: ["image tag bump", "commit-back"]
     code:
-      - { path: k8s/overlays/oci-arm/kustomization.yaml, symbol: "newTag: 95d169d", note: "CI 가 커밋한 서비스별 이미지 태그" }
+      - { path: k8s/overlays/oci-arm/kustomization.yaml, symbol: "images:", note: "CI 가 커밋하는 서비스별 이미지 태그 목록(태그 값은 배포마다 바뀐다)" }
     alternative_to:
       - { to: infra-image-update-automation, reason: "클러스터 쪽 에이전트가 레지스트리를 감시하는 대신 CI 가 태그를 직접 커밋한다" }
   - id: infra-pipeline-concurrency-control

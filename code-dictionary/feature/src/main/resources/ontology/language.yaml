@@ -632,7 +632,7 @@ concepts:
     synonyms: ["jackson-module-kotlin", "KotlinModule", "jacksonObjectMapper()"]
     code:
       - { path: commerce/app/build.gradle.kts, symbol: "tools.jackson.module:jackson-module-kotlin", note: "폴드 호스트에 Kotlin 모듈을 싣는다" }
-      - { path: game/feature/src/main/kotlin/com/kgd/game/application/ads/service/AdService.kt, symbol: "jacksonObjectMapper()", note: "Kotlin 모듈을 등록한 매퍼를 만든다" }
+      - { path: search/batch/src/main/kotlin/com/kgd/search/infrastructure/job/ProductSeedIngestTasklet.kt, symbol: "jacksonObjectMapper()", note: "Kotlin 모듈을 등록한 매퍼를 만든다" }
     mitigates: [lang-missing-kotlin-module]
   - id: lang-shared-object-mapper
     kind: MECHANISM
@@ -1306,7 +1306,7 @@ concepts:
     synonyms: ["ObjectMapper", "jackson-module-kotlin"]
     code:
       - { path: commerce/app/build.gradle.kts, symbol: "tools.jackson.module:jackson-module-kotlin", note: "폴드 호스트에 Kotlin 모듈을 싣는다" }
-      - { path: game/feature/src/main/kotlin/com/kgd/game/application/ads/service/AdService.kt, symbol: "jacksonObjectMapper()", note: "Kotlin 모듈이 등록된 매퍼를 만든다" }
+      - { path: search/batch/src/main/kotlin/com/kgd/search/infrastructure/job/ProductSeedIngestTasklet.kt, symbol: "jacksonObjectMapper()", note: "Kotlin 모듈이 등록된 매퍼를 만든다" }
     implements:
       - { to: serialization, reason: "객체 ↔ JSON 변환을 한다" }
       - { to: reflection, reason: "생성자·프로퍼티를 리플렉션으로 찾아 값을 채운다" }

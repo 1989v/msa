@@ -1633,8 +1633,6 @@ concepts:
     category: ARCHITECTURE
     level: INTERMEDIATE
     description: "게임에 흩어져 있던 HOUSE 지면 · 소재를 ads 로 옮기고, 한 릴리스 동안 옛 경로를 옛 응답 모양으로 제공한 뒤 지운다"
-    code:
-      - { path: ads/feature/src/main/kotlin/com/kgd/ads/presentation/decision/controller/LegacyPlacementController.kt, symbol: "LegacyPlacementController", note: "전환 호환 GET /api/v1/ads/placements/{key}" }
     uses: [house-ad]
   - id: ads-console-single-login
     kind: MECHANISM
