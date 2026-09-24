@@ -366,7 +366,7 @@ images:
     newTag: 95d169d
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
-    newTag: 95d169d
+    newTag: c0714b0
   - name: commerce/content
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/content
     newTag: 95d169d
