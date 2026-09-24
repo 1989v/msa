@@ -48,9 +48,15 @@ class EventClient(private val port: Int) {
         return EventsResponse(response.statusCode(), json.readTree(response.body()))
     }
 
-    fun click(clickToken: String, visitorId: String? = "vid-human-1", userAgent: String = DecisionClient.HUMAN_UA): HttpResponse<String> =
+    /** @param query 클릭 주소 뒤에 붙는 쿼리(`?` 제외) — 화면이 붙이는 analytics 신원 `vid`·`sid` */
+    fun click(
+        clickToken: String,
+        visitorId: String? = "vid-human-1",
+        userAgent: String = DecisionClient.HUMAN_UA,
+        query: String? = null,
+    ): HttpResponse<String> =
         http.send(
-            HttpRequest.newBuilder(URI.create("http://localhost:$port/api/v1/ads/click/$clickToken"))
+            HttpRequest.newBuilder(URI.create("http://localhost:$port/api/v1/ads/click/$clickToken" + (query?.let { "?$it" } ?: "")))
                 .timeout(Duration.ofSeconds(5))
                 .header("User-Agent", userAgent)
                 .apply { visitorId?.let { header("X-Visitor-Id", it) } }

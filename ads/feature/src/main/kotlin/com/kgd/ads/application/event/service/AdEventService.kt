@@ -137,8 +137,11 @@ class AdEventService(
             .getOrDefault(EventRejectReason.REDIS_UNAVAILABLE.code)
         metricsPort.recordEvent(TokenKind.CLK, outcome)
         metricsPort.recordClickDestination(DESTINATION_LANDING)
-        // 클릭 주소에는 화면 신원이 없다 — 방문자는 토큰의 방문자 해시, 세션은 비운다. 노출과는 view_id(결정 id)로 잇는다.
-        if (outcome == OUTCOME_ACCEPTED) publishCopies(listOf(copyOf(claims, EventAction.CLICK, candidateIndex.current(), null, null)))
+        // 화면이 클릭 주소에 붙인 신원을 노출 사본과 같이 쓴다. 없으면 방문자는 토큰의 방문자 해시, 세션은 비운다.
+        if (outcome == OUTCOME_ACCEPTED) {
+            val copy = copyOf(claims, EventAction.CLICK, candidateIndex.current(), command.analyticsVisitorId, command.analyticsSessionId)
+            publishCopies(listOf(copy))
+        }
         log.debug { "광고 클릭: decisionId=${claims.ad.decisionId} creative=${claims.ad.creativeId} outcome=$outcome" }
         return landingUrl
     }

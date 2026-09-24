@@ -39,7 +39,6 @@ import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import GNB from '../../components/GNB';
 import Footer from '../../components/Footer';
 import AdSlot from '../../components/ads/AdSlot';
-import { ADSENSE_SLOTS } from '../../seo/copy.mjs';
 
 const UI = {
   ko: {
@@ -163,6 +162,8 @@ export default function GamesPage() {
   }, [activeTag, genre, games]);
 
   const seoSub = genre ? `/games/genre/${genreSlug(genre)}` : '';
+  // 광고 문맥 — 배너와 목록 끝 지면이 같은 값이라 결정 한 번으로 묶인다
+  const adContext = genre ? `game:${genreSlug(genre)}` : '';
   const meta = genre ? genreMeta(lang, genre, games) : hubMeta(lang, games.length);
   const canonical = gameUrl(lang, seoSub);
   useSeo({
@@ -246,7 +247,7 @@ export default function GamesPage() {
       {/* 기록이 있는 게임이 하나도 없으면 스스로 아무것도 그리지 않는다 */}
       <LeaderboardRail lang={lang} />
 
-      <HouseBanner placementKey="game-list-banner" />
+      <HouseBanner placementKey="game-list-banner" contextKey={adContext} />
 
       <div className="games-toolbar" role="toolbar" aria-label={L.filterLabel}>
         <div className="games-sorts">
@@ -364,7 +365,7 @@ export default function GamesPage() {
       </section>
 
       {/* 목록 끝. 게임 프레임(iframe) 안에는 두지 않는다 — 조작 방해이자 정책 위반 (ADR-0076) */}
-      <AdSlot slot={ADSENSE_SLOTS.gameHubEnd} shape="horizontal" minHeight={90} />
+      <AdSlot placement="game-hub-end" contextKey={adContext} shape="horizontal" minHeight={90} />
 
       <Footer />
       </div>

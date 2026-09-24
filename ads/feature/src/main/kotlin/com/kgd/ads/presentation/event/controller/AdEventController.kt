@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import tools.jackson.core.JacksonException
 import tools.jackson.databind.json.JsonMapper
@@ -48,13 +49,26 @@ class AdEventController(
         return ApiResponse.success(EventsResponse.from(acceptEvents.execute(request.toCommand(visitorId, userAgent))))
     }
 
+    /**
+     * `vid`·`sid` 는 화면 `identity.ts` 의 방문자·세션 id 다 — 클릭 사본을 노출 사본과 같은 방문자로 묶는 데만 쓰고 과금은 보지 않는다.
+     * 길이가 넘치는 값은 버린다(리다이렉트는 막지 않는다).
+     */
     @GetMapping("/click/{clickToken}")
     fun click(
         @PathVariable clickToken: String,
         @RequestHeader(VISITOR_HEADER, required = false) visitorId: String?,
         @RequestHeader(HttpHeaders.USER_AGENT, required = false) userAgent: String?,
+        @RequestParam("vid", required = false) analyticsVisitorId: String?,
+        @RequestParam("sid", required = false) analyticsSessionId: String?,
     ): ResponseEntity<Void> {
-        val location = redirectClick.execute(RedirectClickUseCase.Command(clickToken, visitorId, userAgent))
+        val command = RedirectClickUseCase.Command(
+            clickToken = clickToken,
+            visitorId = visitorId,
+            userAgent = userAgent,
+            analyticsVisitorId = analyticsVisitorId?.takeIf { it.length <= MAX_IDENTITY_LENGTH },
+            analyticsSessionId = analyticsSessionId?.takeIf { it.length <= MAX_IDENTITY_LENGTH },
+        )
+        val location = redirectClick.execute(command)
         return ResponseEntity.status(HttpStatus.FOUND)
             .location(URI.create(location))
             // 302 가 캐시되면 소재 랜딩을 바꾸거나 승인을 거둬도 옛 목적지로 계속 나가고, 클릭이 서버에 닿지 않는다.
@@ -80,5 +94,8 @@ class AdEventController(
     companion object {
         const val VISITOR_HEADER = "X-Visitor-Id"
         const val ROBOTS_HEADER = "X-Robots-Tag"
+
+        /** 이벤트 본문의 `visitorId`·`sessionId` 상한과 같다. */
+        const val MAX_IDENTITY_LENGTH = 128
     }
 }

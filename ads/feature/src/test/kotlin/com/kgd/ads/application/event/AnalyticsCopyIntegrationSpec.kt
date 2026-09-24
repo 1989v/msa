@@ -140,12 +140,22 @@ class AnalyticsCopyIntegrationSpec(
             copy.visitorId shouldBe VisitorHash.of("vid-ac-clk")
             copy.sessionId shouldBe ""
         }
+        then("화면이 클릭 주소에 신원(vid·sid)을 붙이면 사본의 방문자·세션이 노출 사본과 같은 값이다") {
+            val (decisionId, ad) = decide("ac-clk", "vid-ac-clk-id")
+            events.click(ad["clickUrl"].asString().substringAfterLast('/'), visitorId = "vid-ac-clk-id", query = "vid=identity-visitor&sid=identity-session")
+                .statusCode() shouldBe 302
+
+            val copy = copies.forCreative(s.creativeId).single { it.viewId == decisionId }
+            copy.shouldBeCopyOf(s, EventAction.CLICK, decisionId, "ac-clk", screenType = "BLOG_POST")
+            copy.visitorId shouldBe "identity-visitor"
+            copy.sessionId shouldBe "identity-session"
+        }
         then("크롤러의 클릭은 랜딩으로 보내되 사본을 내지 않는다") {
             val (_, ad) = decide("ac-clk", "vid-ac-clk-2")
             events.click(ad["clickUrl"].asString().substringAfterLast('/'), visitorId = "vid-ac-clk-2", userAgent = DecisionClient.CRAWLER_UA)
                 .statusCode() shouldBe 302
 
-            copies.forCreative(s.creativeId).size shouldBe 1
+            copies.forCreative(s.creativeId).size shouldBe 2
         }
     }
 

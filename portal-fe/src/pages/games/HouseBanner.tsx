@@ -1,41 +1,31 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { fetchAdPlacement, type AdPlacement } from '../../api/gameApi';
+import { reportFill, requestDecision, type HouseCreative } from '../../components/ads/adsApi';
+import HouseRotator from '../../components/ads/HouseRotator';
 
 /**
- * HOUSE 배너 슬롯 — frequency cap(서버 판정)에 걸리면 data=null 이라 아무것도 렌더하지 않는다.
- * 크리에이티브는 6초 간격 로테이션.
+ * 자체 홍보(HOUSE) 전용 지면 — 광고 결정 응답의 HOUSE 목록을 6초마다 돌린다.
+ * 같은 페이지의 다른 지면과 결정 한 번으로 묶이도록 같은 문맥 키를 받는다.
+ * 목록이 비었거나 결정이 실패하면 아무것도 그리지 않는다.
  */
-export default function HouseBanner({ placementKey }: { placementKey: string }) {
-  const [placement, setPlacement] = useState<AdPlacement | null>(null);
-  const [index, setIndex] = useState(0);
+export default function HouseBanner({ placementKey, contextKey = '' }: { placementKey: string; contextKey?: string }) {
+  const [house, setHouse] = useState<HouseCreative[]>([]);
 
   useEffect(() => {
-    fetchAdPlacement(placementKey)
-      .then(setPlacement)
-      .catch(() => setPlacement(null));
-  }, [placementKey]);
+    let live = true;
+    void requestDecision(placementKey, contextKey).then((decision) => {
+      if (!live) return;
+      setHouse(decision.house);
+      reportFill(placementKey, decision.house.length > 0 ? 'HOUSE' : 'EMPTY');
+    });
+    return () => {
+      live = false;
+    };
+  }, [placementKey, contextKey]);
 
-  useEffect(() => {
-    const count = placement?.creatives.length ?? 0;
-    if (count < 2) return;
-    const timer = setInterval(() => setIndex((i) => (i + 1) % count), 6000);
-    return () => clearInterval(timer);
-  }, [placement]);
-
-  if (!placement || placement.creatives.length === 0) return null;
-  const creative = placement.creatives[index % placement.creatives.length];
-
+  if (house.length === 0) return null;
   return (
-    <Link to={creative.href ?? '/'} className="house-banner" aria-label={`홍보: ${creative.title ?? ''}`}>
-      <span className="house-banner-emoji" aria-hidden>
-        {creative.emoji ?? '📣'}
-      </span>
-      <span className="house-banner-text">
-        <strong>{creative.title}</strong>
-        <span>{creative.body}</span>
-      </span>
-      <span className="house-banner-tag">AD</span>
-    </Link>
+    <aside className="house-banner" aria-label="홍보">
+      <HouseRotator creatives={house} />
+    </aside>
   );
 }

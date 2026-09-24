@@ -177,17 +177,18 @@ Total Task Groups: 13
 **Dependencies:** Task Group 8 (운영 배포 확인 후)
 **Phase:** R3
 **Required Skills:** react, typescript, design-tokens
-- [ ] 10.0 Complete FE 지면
-  - [ ] 10.1 **목표 이미지 먼저** — 광고 카드(크기군별)·HOUSE 배너 시안을 사용자에게 확인 (image-sample-before-code)
-  - [ ] 10.2 테스트 6개: F1(채움 순서 + 3초 무응답 + 대기 중 높이) · F2(`apiClient` 사용) · F3(HouseBanner 순환·SPA 링크) · F4(광고주 문자열 텍스트) · F5(`useImpression` 동작) · `selfAds={false}` 는 결정 호출 0
-  - [ ] 10.3 `AdSlot` — 지면 키, 페이지 단위 결정 묶음(800ms), 채움 순서, `selfAds` prop, AdSense `data-ad-status` MutationObserver + 3초
-  - [ ] 10.4 `ADSENSE_SLOTS` 키 kebab 로 통일, DealPage `selfAds={false}` [usecase C1]
-  - [ ] 10.5 광고 카드 — DESIGN.md 토큰, 「광고」 라벨, 텍스트 노드만, 클릭 리다이렉터 링크, `useImpression`
-  - [ ] 10.5b 클릭 URL 에 analytics 신원(방문자·세션)을 붙여 클릭 사본의 visitorId 를 노출 사본과 맞춘다 — 지금은 클릭만 토큰 방문자 해시라 방문자 단위 집계가 갈린다
-  - [ ] 10.6 이벤트 비콘 — 토큰 + `identity.ts` 신원 + 채움 출처
-  - [ ] 10.7 HouseBanner → 결정 API HOUSE 목록
-  - [ ] 10.8 숨김 시 자리 접힘은 받아들이되 `attraction-end` 처럼 기존에 없던 자리는 결정 응답 전까지 높이를 예약하지 않는다(새 밀림 방지) [usecase C3]
-  - [ ] 10.9 Verify: `cd portal-fe && npx vitest run src/components/ads src/pages/games/HouseBanner && npx tsc --noEmit -p .` + CDP 4조합 캡처(fe-visual-verification, 측정 후 즉시 브라우저 종료)
+- [x] 10.0 Complete FE 지면
+  - [x] 10.1 **목표 이미지 먼저** — 광고 카드(크기군별)·HOUSE 배너 시안을 사용자에게 확인 (image-sample-before-code)
+  - [x] 10.2 테스트 6개: F1(채움 순서 + 3초 무응답 + 대기 중 높이) · F2(`apiClient` 사용) · F3(HouseBanner 순환·SPA 링크) · F4(광고주 문자열 텍스트) · F5(`useImpression` 동작) · `selfAds={false}` 는 결정 호출 0
+  - [x] 10.3 `AdSlot` — 지면 키, 페이지 단위 결정 묶음(800ms), 채움 순서, `selfAds` prop, AdSense `data-ad-status` MutationObserver + 3초
+  - [x] 10.4 `ADSENSE_SLOTS` 키 kebab 로 통일, DealPage `selfAds={false}` [usecase C1]
+  - [x] 10.5 광고 카드 — DESIGN.md 토큰, 「광고」 라벨, 텍스트 노드만, 클릭 리다이렉터 링크, `useImpression`
+  - [x] 10.5b 클릭 URL 에 analytics 신원(방문자·세션)을 붙여 클릭 사본의 visitorId 를 노출 사본과 맞춘다 — 지금은 클릭만 토큰 방문자 해시라 방문자 단위 집계가 갈린다
+  - [x] 10.6 이벤트 비콘 — 토큰 + `identity.ts` 신원 + 채움 출처
+  - [x] 10.7 HouseBanner → 결정 API HOUSE 목록
+  - [x] 10.8 숨김 시 자리 접힘은 받아들이되 `attraction-end` 처럼 기존에 없던 자리는 결정 응답 전까지 높이를 예약하지 않는다(새 밀림 방지) [usecase C3]
+  - [x] 10.9 Verify: `cd portal-fe && npx vitest run src/components/ads src/pages/games/HouseBanner && npx tsc --noEmit -p tsconfig.app.json` + CDP 4조합 캡처(fe-visual-verification, 측정 후 즉시 브라우저 종료)
+> 구현 기록(2026-09-24): 시안 승인(아티팩트 Cy4gVXYtFVRMZmaLM3VsC9) 뒤 구현 · `tsc -p .` 는 tsconfig.json 이 `files: []` 라 0개 파일을 검사한다 — `-p tsconfig.app.json`(239개) · 광고주명·CTA 는 k-heritage 규칙대로 본문 서체(모노는 한글 자간이 벌어짐), 광고주명 색 muted→secondary(4.09→8.53:1) · 카드 링크 `rel="sponsored nofollow noopener"` · 블로그 문맥 키는 카테고리 경로 마지막 조각 · 결정은 마운트 때 한 번(AdSense 와 같음) · 클릭 URL 에 `vid`/`sid`(128자 제한), 클릭 사본만 사용 · CDP 4조합 대비 라이트 5.31+ / 다크 4.5+ · 회귀 주입 9건 + 백엔드 1건 빨간불
 **Acceptance Criteria:**
 - AC-6·AC-16·AC-19, 결정 실패 시 AdSense 수익 경로 불변
 
@@ -202,7 +203,7 @@ Total Task Groups: 13
   - [ ] 11.4 콘솔 화면 6종 + 「가상 크레딧 — 실제 결제 없음」
   - [ ] 11.5 admin-fe 메뉴 7종(`Sidebar.tsx`·`App.tsx`·`api/ads.ts`)
   - [ ] 11.6 `/privacy` §6 문구
-  - [ ] 11.7 Verify: `cd portal-fe && npx vitest run src/pages/ads src/seo/privacyRetention.test.ts && npx tsc --noEmit -p .` · `cd admin/frontend && npx vitest run src/pages/ads && npx tsc --noEmit -p .`
+  - [ ] 11.7 Verify: `cd portal-fe && npx vitest run src/pages/ads src/seo/privacyRetention.test.ts && npx tsc --noEmit -p tsconfig.app.json` · `cd admin/frontend && npx vitest run src/pages/ads && npx tsc --noEmit -p .`
 **Acceptance Criteria:**
 - 콘솔로 E1 흐름을 끝까지 수행 가능, 방침 숫자 = 상수
 

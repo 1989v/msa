@@ -14,9 +14,14 @@ export const VISIBLE_RATIO = 0.5;
 /** 이만큼 계속 보여야 노출로 친다 (ms). 스크롤로 지나간 것을 거른다. */
 export const DWELL_MS = 1_000;
 
+/**
+ * @param onVisible 가시 노출이 확정될 때 한 번 부른다 — 광고 카드처럼 analytics 원장이 아닌 곳에 노출을 알릴 때.
+ *   기준(면적·머무름)은 여기 하나를 쓴다.
+ */
 export function useImpression<T extends Element>(
   item: TrackedItem | null,
   viewId: string,
+  onVisible?: () => void,
 ): (node: T | null) => void {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -24,10 +29,12 @@ export function useImpression<T extends Element>(
   // 렌더 중에 ref 를 건드리지 않는다(React 규칙) — 커밋 뒤에 맞춘다.
   const itemRef = useRef(item);
   const viewIdRef = useRef(viewId);
+  const onVisibleRef = useRef(onVisible);
   useEffect(() => {
     itemRef.current = item;
     viewIdRef.current = viewId;
-  }, [item, viewId]);
+    onVisibleRef.current = onVisible;
+  }, [item, viewId, onVisible]);
 
   useEffect(() => () => {
     if (timerRef.current !== null) clearTimeout(timerRef.current);
@@ -53,6 +60,7 @@ export function useImpression<T extends Element>(
             timerRef.current = null;
             const current = itemRef.current;
             if (current) track('IMPRESSION', current, viewIdRef.current);
+            onVisibleRef.current?.();
             // 한 번 기록했으면 더 볼 필요가 없다 — 중복은 tracker 가 막지만 관찰도 멈춘다.
             observerRef.current?.disconnect();
           }, DWELL_MS);

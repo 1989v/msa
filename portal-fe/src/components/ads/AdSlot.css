@@ -21,3 +21,174 @@
   display: block;
   width: 100%;
 }
+
+/* ─── 자체 유료 광고 카드 ──────────────────────────────────────────────
+   면의 단차(surface-1 → surface-2)로만 떠 보이게 한다 — 그림자 없음. 이미지는 지면 비율 1.91:1. */
+.ad-card {
+  display: grid;
+  grid-template-columns: minmax(0, 210px) minmax(0, 1fr);
+  gap: var(--ko-space-4);
+  align-items: center;
+  padding: var(--ko-space-3);
+  background: var(--ko-surface-1);
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--kh-radius-asym);
+  color: inherit;
+  text-decoration: none;
+  transition: background var(--ko-duration-normal) var(--ko-ease-in-out);
+}
+
+.ad-card:hover {
+  background: var(--ko-surface-2);
+}
+
+.ad-card:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: 2px;
+}
+
+@media (max-width: 520px) {
+  .ad-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ad-card-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1.91 / 1;
+  object-fit: cover;
+  border-radius: var(--kh-radius);
+  background: var(--ko-surface-2);
+}
+
+.ad-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ad-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ko-space-2);
+}
+
+.ad-card-seal {
+  padding: 2px var(--ko-space-2);
+}
+
+/* 광고주명은 한글이 대부분이라 모노를 쓰지 않는다(자간만 벌어진다). 누가 광고하는지는 고지의 일부라
+   muted 대신 secondary — muted 는 이 면에서 작은 글자 대비 4.5:1 에 못 미친다. */
+.ad-card-advertiser {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-secondary);
+}
+
+.ad-card-title {
+  font-size: var(--ko-text-base);
+  font-weight: 700;
+  color: var(--ko-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.ad-card-copy {
+  font-size: var(--ko-text-sm);
+  line-height: var(--ko-leading-normal);
+  color: var(--ko-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.ad-card-cta {
+  font-size: var(--ko-text-xs);
+  font-weight: 600;
+  color: var(--ko-accent-text, var(--ko-accent-primary));
+}
+
+/* ─── 자체 홍보(HOUSE) — 판 위 순환 ─────────────────────────────────
+   아케이드 규칙: 페이지가 밝아도 판은 어둡고, 진행 표시만 연지. */
+.ad-house-card {
+  display: flex;
+  align-items: center;
+  gap: var(--ko-space-3);
+  padding: var(--ko-space-3) var(--ko-space-4);
+  text-decoration: none;
+  transition: background var(--ko-duration-normal) var(--ko-ease-in-out);
+}
+
+.ad-house-card:hover {
+  background: color-mix(in srgb, var(--kh-on-slab) 6%, var(--kh-slab));
+}
+
+.ad-house-card:focus-visible {
+  outline: 2px solid var(--kh-on-slab);
+  outline-offset: 2px;
+}
+
+.ad-house-emoji {
+  width: 40px;
+  height: 40px;
+  font-size: 1.25rem;
+  border-color: color-mix(in srgb, var(--kh-ocher) 35%, transparent);
+}
+
+.ad-house-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ad-house-text strong {
+  font-size: 0.9375rem;
+  color: var(--kh-on-slab);
+}
+
+.ad-house-text span {
+  font-size: 0.8125rem;
+  color: var(--kh-on-slab-muted);
+}
+
+.ad-house-tag {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border: 1px solid color-mix(in srgb, var(--kh-on-slab) 25%, transparent);
+  border-radius: var(--kh-radius);
+  font-family: var(--kh-font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--kh-on-slab-muted);
+}
+
+.ad-house-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.ad-house-dots span {
+  width: 18px;
+  height: 2px;
+  background: var(--ko-border-default);
+}
+
+.ad-house-dots span.on {
+  background: var(--kh-yeonji);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ad-card,
+  .ad-house-card {
+    transition: none;
+  }
+}

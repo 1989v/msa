@@ -1082,17 +1082,18 @@ export const ADSENSE_HOSTS = [PORTAL_ORIGIN, GAME_ORIGIN, PLACE_ORIGIN, DEAL_ORI
  * 광고 단위 ID (`data-ad-slot`) — 지면마다 하나씩.
  *
  * 값은 AdSense 콘솔에서 광고 단위를 만들어야 나온다. 승인 전에는 전부 빈 문자열이고,
- * 그때 AdSlot 은 아무것도 그리지 않는다. **자리는 코드에 이미 박혀 있고 ID 만 비어 있는**
+ * 그때 AdSlot 은 AdSense 단계를 건너뛴다(자체 광고·HOUSE 는 그대로). **자리는 코드에 이미 박혀 있고 ID 만 비어 있는**
  * 상태이므로, 승인 후 여기 네 줄을 채우면 그 순간 전부 켜진다.
  *
  * 이름은 '어디냐'로 짓는다 — 크기나 모양(가로배너/사각)으로 지으면 나중에 형태를 바꿀 때
- * 이름이 거짓이 된다.
+ * 이름이 거짓이 된다. 키는 자체 광고 지면 등록부(ads `AdPlacement`)의 지면 키와 같은 kebab 이다 —
+ * `AdSlot` 이 이 키 하나로 결정 요청과 AdSense 단위를 함께 찾는다.
  */
 export const ADSENSE_SLOTS = {
   /** 블로그 글 본문이 끝난 지점 — 다 읽은 뒤라 읽기를 방해하지 않는다 */
-  blogPostEnd: '8241492603',
+  'blog-post-end': '8241492603',
   /** 게임 목록 끝. **게임 프레임 안에는 절대 두지 않는다** — 조작 방해이자 정책 위반이다 */
-  gameHubEnd: '8768106211',
+  'game-hub-end': '8768106211',
   /**
    * 관광지 상세 끝 — 지도와 주변 목록을 다 본 뒤.
    *
@@ -1100,14 +1101,14 @@ export const ADSENSE_SLOTS = {
    * 복사한 화면"에 해당하고, 게시자 정책이 그런 화면의 광고를 금지한다. 이 페이지에
    * 고유한 서술이 얹히기 전까지는 켜지 않는다. 콘솔 ID: 7395314794
    */
-  attractionEnd: '',
+  'attraction-end': '',
   /**
    * 혜택 허브 끝 — 제휴 고지가 붙은 카드와 섞이지 않게 목록 바깥에 둔다.
    *
    * **비워 둔다.** 오퍼 목록이 곧 페이지 전부라 "게시자 콘텐츠보다 유료 홍보물이 많은
    * 화면"에 해당한다. 자체 서술이 늘기 전까지는 켜지 않는다. 콘솔 ID: 3236577931
    */
-  dealHubEnd: '',
+  'deal-hub-end': '',
 };
 
 export function adsTxt(client = ADSENSE_CLIENT) {
