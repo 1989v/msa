@@ -45,3 +45,12 @@
   - PaymentTest 69/0 · OpsIssueTest 3/0 · PaymentCommandServiceTest 5/0 · PaymentResolutionServiceTest 5/0 · ReconciliationServiceTest 2/0 · TossPgAdapterTest 6/0 · TossWebhookControllerTest 3/0 · PaymentOpsIssueAdminControllerTest 2/0
   - PaymentPgSelectionSpec 5/0 · CommerceContextLoadSpec 6/0 · OutboxRelayIntegrationSpec 5/0 · SellerAccountKeyStartupSpec 3/0 · DualDataSource 2/0 · GatewayRouteAuthSpec 21/0 (skipped 0)
 - 회귀 주입: orderNo 재승인 → 2곳 빨간불 · 보류 VOID (b-1) → 빨간불 · (b-2) → 도메인 테스트만 잡음(서비스 테스트는 requireNotNull 이 먼저 멈춤) · 웹훅 조건 제거 → 404 테스트 빨간불
+
+## P1 배포 (2026-09-24)
+- auth 서브모듈 `fe0f5f6` → msa-auth main, 본체 `ace78377` push → images success(run 35953658333) · 태그 bump `9020be2b`
+- 운영: commerce·gateway·auth·admin-fe·portal-fe `:ace7837` ready 1/1
+- 무토큰 POST /api/v1/sellers/apply 401 · GET /api/v1/sellers/me 401 · /api/v1/seller/me 401 · /api/v1/admin/sellers 401 · /shop/seller/apply 200 · GET /api/v1/products?sellerId=1 200(sellerId 필드)
+- seller_db: 플랫폼 판매자 1 ACTIVE · product_db product_seller 시드 1 · products 24 전부 seller_id=1 백필
+- auth 컨슈머 `auth-seller-role` 파티션 할당 확인, commerce·auth 최근 ERROR 0
+- 롤아웃 직후 몇 분간 옛 gateway 파드가 새 경로에 404 — 롤아웃 완료 후 401 로 일관
+- 미확인: 실제 로그인 사용자로 신청 → 승인 → ROLE_SELLER → 상품 등록 한 바퀴(OAuth 로그인 필요)
