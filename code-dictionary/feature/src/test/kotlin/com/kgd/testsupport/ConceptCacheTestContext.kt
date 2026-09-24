@@ -3,6 +3,7 @@ package com.kgd.testsupport
 import com.kgd.codedictionary.application.concept.port.ConceptEdgeRepositoryPort
 import com.kgd.codedictionary.application.concept.port.ConceptRepositoryPort
 import com.kgd.codedictionary.application.concept.service.ConceptService
+import com.kgd.codedictionary.application.graph.port.ConceptEvidenceQueryPort
 import com.kgd.codedictionary.application.graph.service.GraphService
 import com.kgd.codedictionary.application.index.port.ConceptIndexRepositoryPort
 import io.mockk.mockk
@@ -46,4 +47,8 @@ open class ConceptCacheTestContext {
     // GraphService 생성자 의존 — 이 테스트는 계층을 안 부르므로 호출되지 않는 mock 이면 된다
     @Bean
     open fun conceptEdgeRepositoryPort(): ConceptEdgeRepositoryPort = mockk(relaxed = false)
+
+    // 같은 패키지의 ConceptRelationsService 생성자 의존 — 이 테스트는 관계를 안 부른다
+    @Bean
+    open fun conceptEvidenceQueryPort(): ConceptEvidenceQueryPort = mockk(relaxed = false)
 }

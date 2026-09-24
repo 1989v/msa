@@ -38,7 +38,7 @@ FE 는 별도 앱이 아니라 **portal-fe 단일 SPA 의 메인 콘텐츠**로 
 
 | 도메인 | 설명 |
 |---|---|
-| concept | IT 개념 + 코드 참조 색인. `reindex` 스킬이 추출한 개념을 `/api/v1/index` 로 적재. **층은 `concept_edge`(CONTAINS·FLOWS_TO·SAME_AS, V22 검색 계층 · V23 학습 가지 · V24 용어 사전 가지)가 만든다**. **도메인 루트마다 `<도메인>-glossary` 가지 하나** — 단계·장치가 아닌 말(CRF · 비터비 …)은 거기와 쓰이는 장치 아래 양쪽에 건다(플랜 09-09 §3.5) — `concept_relation` 은 무방향이라 층이 안 나온다. 간선은 concept_id 를 값으로 들어(FK 없음) 재색인이 지우지 못한다 |
+| concept | IT 개념 + 코드 참조 색인. `reindex` 스킬이 추출한 개념을 `/api/v1/index` 로 적재. **온톨로지(ADR-0100)** — 노드 유형 7(`concept.kind`)·관계 9(`concept_edge`)의 원본은 `feature/src/main/resources/ontology/`(`manifest.yaml` + 도메인당 YAML)이고 부팅 로더가 manifest 단위로 적용한다. 간선을 **마이그레이션으로 심지 않는다**(V22~V24 는 역사). 파일을 바꾸면 `manifest.yaml` 의 revision 을 올린다 — 같은 revision 에 다른 내용이면 적용이 거부된다. `managed_by` 가 있는 개념은 어드민 PUT·DELETE 가 409. 용어(TERM)는 사전 가지에만 두고 장치가 쓰면 USES. 게이트는 `OntologyFilesSpec`. 도식은 `./gradlew :code-dictionary:feature:ontologyMermaid`. 로더 스위치 `ontology.loader.enabled` |
 | portfolio | 포트폴리오 카드 (PUBLIC/PRIVATE, impact 1~10). 스펙: `docs/specs/2026-06-10-portfolio-card/` |
 | resume | 이력서 사이트(resume.1989v.com) 문서·공유토큰·열람기록. 본문은 마크다운 TEXT. ADR-0064 |
 | display | 1989v.com 메인에 전시하는 서비스 (OPEN/PREOPEN/HOLD). ADR-0066 |
@@ -48,6 +48,7 @@ FE 는 별도 앱이 아니라 **portal-fe 단일 SPA 의 메인 콘텐츠**로 
 | Prefix | 설명 |
 |--------|------|
 | `GET /api/v1/concepts` (+graph, treemap stats, CRUD) | 개념 조회/관리, 그래프/트리맵 데이터 |
+| `GET /api/v1/concepts/{conceptId}/relations` | 개념 하나의 이웃 전부(나가는·들어오는 간선 + 역방향 라벨 · reason · 근거 · 질문) — 도메인 간 탐색은 이것으로 한 홉씩 |
 | `GET /api/v1/concepts/graph/hierarchy?root=` | `CONTAINS` 로 층을 센 DAG (root 없으면 진입점 전부). `/tech` 「계층」 탭이 읽는다 |
 | `GET /api/v1/search`, `/api/v1/search/suggest` | 개념 검색 + 자동완성 |
 | `POST /api/v1/index`, `/api/v1/index/sync` | 색인 적재/동기화 (job 상태 조회 포함) |
