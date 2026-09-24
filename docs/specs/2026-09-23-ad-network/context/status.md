@@ -12,3 +12,4 @@
 | 8 | `./gradlew :gateway:check --rerun-tasks` + overlay kustomize | EXIT=0 · AdsRouteSpec 14/0 · AdsRouteKeyResolverSpec 3/0 · GatewayRoutingSpec 17/0 · AuthFilter 7/0 · k3s-lite/oci-arm 허용 목록 배선 확인 (메인 재실행, 2026-09-24) |
 | 9 (+7.6) | `./gradlew :ads:domain:test :ads:feature:test --tests '*IntegrationSpec*' :engagement:app:test --tests '*EngagementContextLoadSpec*' --tests '*AdsSchemaIntegrationSpec*' verifyArchitecture --rerun-tasks` | EXIT=0 · 69s · 합계 209건 실패 0 (AnalyticsCopy 6/0 · Report 7/0) (메인 재실행, 2026-09-24) |
 | 12 | `./gradlew :engagement:app:check verifyArchitecture verifyPodTopology` + kustomize 3 overlay + ci.yml YAML | EXIT=0 · kustomize oci-arm/k3s-lite/prod-k8s exit 0 · engagement 768Mi/384Mi · ads-token 배선 · ci.yml YAML OK (메인 재실행, 2026-09-24) · 12.4 부분 |
+| 12.4 | 회귀 주입 9건 재실행(임시 사본) + U12 비율 폭탄 추가 | 9건 모두 RED→GREEN · U12 FINDING 해소(새 케이스 RED 10중2 → GREEN 10/0) (2026-09-24) |

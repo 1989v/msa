@@ -100,6 +100,11 @@ class CreativeUploadIntegrationSpec(
             bomb.size shouldBeLessThan 300 * 1024
             rejectedBeforeDecoding(FilePart("bomb.png", "image/png", bomb))
         }
+        then("지면 비율(1.91:1)에 맞는 20000×10471 PNG — 비율 검사를 통과하므로 가로·세로 검사만이 막는다") {
+            val bomb = TestImages.pngBomb(width = 20_000, height = 10_471)
+            bomb.size shouldBeLessThan 300 * 1024
+            rejectedBeforeDecoding(FilePart("wide-bomb.png", "image/png", bomb))
+        }
         then("가로 2001px") {
             rejectedBeforeDecoding(FilePart("wide.png", "image/png", TestImages.png(2001, 1048)))
         }

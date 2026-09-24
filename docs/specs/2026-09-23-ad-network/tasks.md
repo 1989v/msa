@@ -214,7 +214,7 @@ Total Task Groups: 13
   - [x] 12.1 `configmap-init.yaml`(ads_db·ads_user) · `services.yaml`(`mysql-ads-master`) · engagement 환경변수(`ADS_MYSQL_PASSWORD`·`ADS_TOKEN_SECRET`) · `kustomization.yaml:168-173` Tier S 패치 제거 · SealedSecret · **prod-k8s `init-databases-job.yaml` 줄과 비밀번호 패치** [arch C-4]
   - [x] 12.2 `ci.yml` — `ads/*) :ads:domain:test :ads:feature:test :engagement:app:test` · **`engagement/*` 매핑** [test C-7] · `generateTopology` 재실행
   - [x] 12.3 문서 — `ads/CLAUDE.md` · `ads/glossary.md`(`/hns:glossary`, requirements Ontology 입력) · `docs/context-map.md` · 루트 CLAUDE.md 서비스 표 · ADR-0093·`new-domain-checklist.md` engagement 행 · `kafka-convention.md` 발행자 · `latency-budget.md` Tier 1 · ADR-0059 §3·ADR-0076 개정 줄 · ADR-0098 상태 채택 · `data-sources.md` 해당 없음 확인 · `doc_map.py --check`
-  - [ ] 12.4 회귀 주입(임시 워크트리): U1·U3·U12·I1·I2·I5·I7·C1·C6·F5 각각 빨간불 확인 + **「미정산 지출 차감 제거」 주입** [test C-1] — 결과 표를 `verifications/regression-injection.md` 에
+  - [x] 12.4 회귀 주입(임시 워크트리): U1·U3·U12·I1·I2·I5·I7·C1·C6·F5 각각 빨간불 확인 + **「미정산 지출 차감 제거」 주입** [test C-1] — 결과 표를 `verifications/regression-injection.md` 에
   - [x] 12.5 Verify: `./gradlew :engagement:app:check verifyPodTopology` · `python3 scripts/doc_map.py --check` · `kubectl kustomize k8s/overlays/oci-arm | grep -c 'ads'` · 첫 PR CI 로그에서 ads 세 태스크 실행 확인
 > 구현 기록(2026-09-24): oci-arm 시크릿은 SealedSecret 이 아니라 수동 `kubectl create secret ads-token`(game-hmac 과 같은 방식) · `ADS_MYSQL_PASSWORD` 는 blog 처럼 yml 기본값, prod-k8s 만 패치 주입 · ci.yml 은 기본 분기가 없어 ads 변경 시 테스트가 0 이었다(스펙 전제 정정) · 12.4 는 부분 — 빨간불 로그가 남은 것은 U1 재주입뿐, 나머지는 재주입 필요 · 보고만: ci.yml test-gate 가 product·code-dictionary·place·quant·chatbot·gifticon 에서도 없는 `:{svc}:app:test` 를 부른다, prod-k8s `db-password-experiment.yaml` 이 폴드로 사라진 Deployment 를 가리킨다
 **Acceptance Criteria:**
