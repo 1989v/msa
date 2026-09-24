@@ -1,0 +1,5 @@
+threshold: 0.2
+rounds: 1
+ambiguity: 0.12
+note: 사용자 결정 4건을 한 번에 받음(글로벌 CLAUDE.md 의 묶어 묻기 규칙). 나머지는 분석 아티팩트와 코드가 답한다
+topology: [payment, seller, promotion, settlement, order(saga·order-sheet·claim), inventory/fulfillment 수정, portal-fe, admin-fe]

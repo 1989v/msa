@@ -1,0 +1,11 @@
+questions:
+  - id: Q1
+    phase: post-impl
+    status: open
+    question: 토스페이먼츠 어댑터를 oci-arm 운영에서 켤 것인가 — commerce 상시 파드 egress 금지(ADR-0031/0070)와 충돌. 켜려면 egress 예외 ADR + NetworkPolicy + ExternalApiProvider 쿼터
+    default: 어댑터·테스트(MockWebServer)만 두고 운영은 모의 PG
+  - id: Q2
+    phase: pre-impl
+    status: closed
+    question: 새 도메인 4개(payment·seller·promotion·settlement)의 전용 DB 가 commerce 1200Mi 한도 안에 들어가나
+    answer: Hikari 풀을 도메인당 max 3 로 두고, 단계마다 배포 후 컨테이너 메모리 실측. 넘으면 한도 조정이 아니라 풀·스레드 축소(무료 티어 제약)
