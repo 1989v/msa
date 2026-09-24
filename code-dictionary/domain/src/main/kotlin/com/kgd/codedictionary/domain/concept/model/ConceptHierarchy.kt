@@ -5,7 +5,7 @@ package com.kgd.codedictionary.domain.concept.model
  *
  * 트리가 아니라 DAG 다 — 한 개념이 두 부모를 가질 수 있고(임베딩은 인제스트와 검색어 양쪽에
  * 걸린다), 그때 깊이는 **가장 짧은 경로**로 잰다. 순환은 방문 표시로 끊는다.
- * `FLOWS_TO`·`SAME_AS` 는 양 끝이 모두 층 안에 있을 때만 남긴다.
+ * `CONTAINS` 가 아닌 간선은 양 끝이 모두 층 안에 있을 때만 남긴다.
  */
 class ConceptHierarchy private constructor(
     val roots: List<String>,

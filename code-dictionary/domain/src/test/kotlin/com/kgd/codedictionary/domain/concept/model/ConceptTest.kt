@@ -1,5 +1,6 @@
 package com.kgd.codedictionary.domain.concept.model
 
+import com.kgd.codedictionary.domain.concept.exception.ManagedConceptException
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -83,6 +84,31 @@ class ConceptTest : BehaviorSpec({
                 concept.updateDescription(newDescription)
 
                 concept.description shouldBe newDescription
+            }
+        }
+    }
+    given("온톨로지 파일이 관리하는 개념") {
+        val managed = Concept.restore(
+            id = 1L, conceptId = "bm25", name = "BM25", category = ConceptCategory.ALGORITHM,
+            level = ConceptLevel.INTERMEDIATE, description = "스파스", synonyms = emptyList(),
+            relatedConceptIds = emptyList(), kind = ConceptKind.MECHANISM, managedBy = "search",
+        )
+
+        `when`("이름·동의어·설명을 고치려 하면") {
+            then("셋 다 ManagedConceptException 으로 거부되고 값은 그대로다") {
+                shouldThrow<ManagedConceptException> { managed.update(name = "바뀐 이름") }
+                shouldThrow<ManagedConceptException> { managed.updateSynonyms(listOf("x")) }
+                shouldThrow<ManagedConceptException> { managed.updateDescription("바뀐 설명") }
+                managed.name shouldBe "BM25"
+                managed.description shouldBe "스파스"
+            }
+        }
+
+        `when`("관리 표시가 없는 개념이면") {
+            then("그대로 고칠 수 있다") {
+                val free = Concept.create("free", "자유", ConceptCategory.BASICS, ConceptLevel.BEGINNER, "설명")
+                free.update(name = "바뀜")
+                free.name shouldBe "바뀜"
             }
         }
     }
