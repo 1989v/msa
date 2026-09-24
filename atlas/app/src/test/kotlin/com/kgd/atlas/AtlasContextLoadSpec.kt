@@ -89,9 +89,11 @@ class AtlasContextLoadSpec(
         Then("부팅 로더가 온톨로지 파일 revision 을 상태 행에 적용했다")
             .config(enabledIf = { dockerAvailable }) {
                 val jdbc = org.springframework.jdbc.core.JdbcTemplate(ctx.getBean("dataSource", javax.sql.DataSource::class.java))
-                jdbc.queryForObject("SELECT revision FROM ontology_state WHERE id = 1", Int::class.java).shouldNotBeNull() shouldBe 3
-                // 기대값은 이미지에 실린 파일에서 — 개념을 더할 때마다 테스트 숫자를 고치지 않게
+                // 기대값은 이미지에 실린 파일에서 — revision 을 올리거나 개념을 더할 때마다 테스트 숫자를 고치지 않게
                 val resolver = org.springframework.core.io.support.PathMatchingResourcePatternResolver()
+                val revision = resolver.getResource("classpath:ontology/manifest.yaml").inputStream.bufferedReader()
+                    .readLines().first { it.startsWith("revision:") }.substringAfter(":").trim().toInt()
+                jdbc.queryForObject("SELECT revision FROM ontology_state WHERE id = 1", Int::class.java).shouldNotBeNull() shouldBe revision
                 val yamls = resolver.getResources("classpath:ontology/*.yaml").filter { it.filename != "manifest.yaml" }
                 val conceptLines = yamls.sumOf { r -> r.inputStream.bufferedReader().readLines().count { it.startsWith("  - id: ") } }
                 jdbc.queryForObject("SELECT COUNT(*) FROM concept WHERE managed_by IS NOT NULL AND kind IS NOT NULL", Int::class.java) shouldBe
