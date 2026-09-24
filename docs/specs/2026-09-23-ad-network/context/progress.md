@@ -13,8 +13,16 @@
 - 확인: engagement·gateway 롤아웃 1/1 · 442Mi/768Mi · Flyway V1~V3 · `/decisions` 200(HOUSE 3종) · rt 404 · 옛 `/placements/game-list-banner` 200 · 집계 첫 실행 1시각 Redis 첫 연결 실패 → 다음 실행 재처리(`failed=0 closed=1`)
 - 보고만: engagement 로그의 `httpcore5 NoClassDefFoundError` 는 recommendation ClickHouse 클라이언트 WARN(대체 동작), ads 무관
 
+## R3 운영 반영 (2026-09-24)
+- 푸시 56531f9d → images 성공(35994747505) → engagement·portal-fe·admin-fe `56531f9` 롤아웃
+- 확인: CDN 이 내주는 `AdSlot-*.js` 에 결정 호출 · `PrivacyPage-*.js` 에 광고 방침 문구 · 결정 API 200(유료 없음 → AdSense·HOUSE 경로) · 광고주 API 비로그인 401 · admin-fe 번들에 「광고 심사」
+- 함정: 광고 코드는 늦게 로드되는 청크라 메인 번들이 직접 참조하는 청크만 훑으면 「없다」로 오판한다 — 파드의 assets 를 직접 grep 해서 확인했다
+
 ## 다음
-- R3: 그룹 10(FE 지면·카드·HOUSE) → 11(콘솔·어드민·방침). 먼저 광고 카드·HOUSE 배너·콘솔 목표 이미지를 확인받는다. `ads.1989v.com` DNS(proxied)는 R3 전에
+- 사용자: Cloudflare `ads.1989v.com` proxied DNS → 콘솔 확인(E1 전 흐름: 등록·충전·캠페인·소재·승인·게재·클릭·정산)
+- R4(그룹 13): HOUSE 배너가 새 API 로 도는 것이 운영에서 확인됐으므로 game ads 코드·표·호환 경로 제거 가능
+- 운영 확인 남음: E2(대체 순서 화면)·E4(결정 P99)·E5(광고주 본인 청구 0)
+- 보고만 한 기존 부채: ci.yml 다른 서비스의 옛 `:{svc}:app:test` · prod-k8s `db-password-experiment.yaml` 대상 없음 · engagement 의 ClickHouse httpcore5 WARN
 
 ## 막힌 것
 - 없음

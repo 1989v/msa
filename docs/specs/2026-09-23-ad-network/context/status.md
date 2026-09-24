@@ -16,3 +16,4 @@
 | 10 | `npx vitest run src/components/ads src/pages/games/HouseBanner` · `npx tsc --noEmit -p tsconfig.app.json` · `./gradlew :ads:feature:test --tests '*ClickRedirectIntegrationSpec*' --tests '*AnalyticsCopyIntegrationSpec*'` | 25/25 · tsc EXIT=0(239 파일) · 7/0 · 7/0 · 스크린샷 3종 육안 확인, 카드 모서리 측정 0px 8px (메인 재실행, 2026-09-24) |
 | 11 | portal-fe vitest(ads·privacy·shell·seo·components/ads·deal) · tsc app · admin-fe vitest · tsc app · kustomize | 135/135 · EXIT=0(680) · 5/5 · EXIT=0(95) · ads.1989v.com 3곳 · 콘솔 스크린샷 2장 육안 확인 (메인 재실행, 2026-09-24) |
 | 11.8 | ads 통합 전부 + engagement + verifyArchitecture `--rerun-tasks` · portal-fe `vitest src/pages/ads` · tsc | EXIT=0 · domain 88/0 · feature 116/0 · engagement 15/0 · 13/13 · tsc EXIT=0 (메인 재실행, 2026-09-24) |
+| R3 운영 | CDN·파드 번들 grep + API | AdSlot 청크 결정 호출 · Privacy 청크 문구 · decisions 200 · advertiser 401 · admin 번들 「광고 심사」 (2026-09-24) |
