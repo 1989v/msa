@@ -3,6 +3,7 @@ package com.kgd.ads.domain.campaign.model
 import com.kgd.ads.domain.advertiser.model.Advertiser
 import com.kgd.ads.domain.advertiser.model.AdvertiserKind
 import com.kgd.ads.domain.campaign.exception.InvalidCampaignException
+import com.kgd.ads.domain.ledger.model.Credits
 import com.kgd.ads.domain.placement.model.AdPlacement
 import java.time.LocalDateTime
 
@@ -45,7 +46,7 @@ class Campaign private constructor(
                 if (bid == null || dailyBudgetMicros == null || frequencyCapPerDay == null) {
                     invalid("유료 캠페인은 입찰·일예산·빈도 제한이 있어야 합니다")
                 }
-                if (dailyBudgetMicros < bid.chargeMicros) invalid("일예산은 1회 과금액(${bid.chargeMicros}) 이상이어야 합니다")
+                if (dailyBudgetMicros < bid.chargeMicros) invalid("일예산은 1회 과금액(${Credits.format(bid.chargeMicros)}) 이상이어야 합니다")
                 if (totalBudgetMicros != null && totalBudgetMicros <= 0) invalid("총예산은 0 보다 커야 합니다")
                 if (frequencyCapPerDay <= 0) invalid("빈도 제한은 1 이상이어야 합니다")
             }
@@ -162,7 +163,7 @@ class Campaign private constructor(
             }
             if (bid.type == BidType.CPM) {
                 placements.firstOrNull { bid.micros < it.floorMicros }?.let {
-                    invalid("입찰가가 지면 ${it.key} 의 최저가(${it.floorMicros})보다 낮습니다")
+                    invalid("입찰가가 지면 ${it.key} 의 최저가(${Credits.format(it.floorMicros)})보다 낮습니다")
                 }
             }
         }

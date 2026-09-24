@@ -1,4 +1,4 @@
-import type { Campaign, CreativeStatus } from '../../api/adsConsoleApi';
+import type { AdvertiserDashboard, Campaign, CreativeStatus } from '../../api/adsConsoleApi';
 
 /** 콘솔 화면들이 함께 쓰는 판정 — 주소와 상태 표시. 그리는 조각은 consoleParts 에 있다. */
 
@@ -39,3 +39,8 @@ export const CREATIVE_STATE: Record<CreativeStatus, { tone: Tone; label: string 
   ARCHIVED: { tone: 'pause', label: '보관' },
 };
 
+
+/** 오늘(KST) 더 충전할 수 있는 금액 — 하루 한도에서 오늘 충전 합계를 뺀 값. */
+export function topUpHeadroomMicros(advertiser: AdvertiserDashboard): number {
+  return Math.max(0, advertiser.dailyTopUpLimitMicros - advertiser.todayTopUpMicros);
+}

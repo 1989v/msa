@@ -40,6 +40,10 @@ export interface AdvertiserDashboard {
   balanceMicros: number;
   todaySpendMicros: number;
   todayChargedMicros: number;
+  /** 오늘(KST) 충전 합계 — 서버가 하루 한도를 확인할 때와 같은 합계다 */
+  todayTopUpMicros: number;
+  dailyTopUpLimitMicros: number;
+  maxTopUpPerCallMicros: number;
 }
 
 export interface Campaign {
@@ -222,7 +226,16 @@ export function adsErrorMessage(err: unknown, fallback: string): string {
   return fallback;
 }
 
-/** 충전 시도마다 새로 만드는 멱등 키. 서버 형식은 `[A-Za-z0-9_-]{1,64}` 다. */
+/**
+ * 서버가 요청을 읽고 확정으로 거절했는지(4xx). 응답이 없거나(네트워크·시간 초과) 5xx 면 충전이 이미 기록됐을 수 있다.
+ */
+export function isDefinitiveRejection(err: unknown): boolean {
+  if (!axios.isAxiosError(err)) return false;
+  const status = err.response?.status;
+  return status != null && status >= 400 && status < 500;
+}
+
+/** 충전 멱등 키. 서버 형식은 `[A-Za-z0-9_-]{1,64}` 다. */
 export function newIdempotencyKey(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;

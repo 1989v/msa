@@ -5,15 +5,23 @@ import {
   adsErrorMessage,
   creditsToMicros,
   formatCredits,
+  isDefinitiveRejection,
   newIdempotencyKey,
   topUp,
   type AdvertiserDashboard,
 } from '../../api/adsConsoleApi';
 import { CreditNote } from './consoleParts';
-import { consoleHref } from './consoleView';
+import { consoleHref, topUpHeadroomMicros } from './consoleView';
+
+interface TopUpAttempt {
+  micros: number;
+  key: string;
+}
 
 /**
- * 셀프 충전. 제출마다 멱등 키를 새로 만든다 — 서버는 같은 키의 요청을 한 거래로 본다.
+ * 셀프 충전. 서버는 같은 멱등 키의 요청을 한 거래로 본다. 키는 성공이나 확정 거절(4xx)을 받을 때까지 유지한다 —
+ * 시간 초과·네트워크 오류는 서버에 기록됐을 수 있어서, 새 키로 다시 보내면 두 번 충전된다.
+ * 결과를 모르는 시도가 남아 있는 동안에는 금액을 잠근다. 같은 키에 다른 금액을 보내면 서버는 앞 거래를 돌려준다.
  * 1회 상한·하루 합계 한도는 서버가 지갑 잠금 안에서 확인하고, 넘으면 그 문구를 그대로 보여 준다.
  */
 export default function TopUpForm({ advertiser, readOnly }: { advertiser: AdvertiserDashboard; readOnly: boolean }) {
@@ -21,23 +29,36 @@ export default function TopUpForm({ advertiser, readOnly }: { advertiser: Advert
   const [amount, setAmount] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
+  // 결과를 모르는 충전 시도. 다시 누르면 같은 키·같은 금액으로 보낸다.
+  const [unconfirmed, setUnconfirmed] = useState<TopUpAttempt | null>(null);
 
   const mutation = useMutation({
-    mutationFn: ({ micros, key }: { micros: number; key: string }) => topUp(micros, key),
+    mutationFn: ({ micros, key }: TopUpAttempt) => topUp(micros, key),
     onSuccess: (result) => {
+      setUnconfirmed(null);
       setError(null);
       setDone(`충전했습니다. 잔액 ${formatCredits(result.balanceMicros)} 크레딧`);
       setAmount('');
       queryClient.invalidateQueries({ queryKey: ['ads', 'me'] });
     },
-    onError: (err) => {
+    onError: (err, attempt) => {
       setDone(null);
-      setError(adsErrorMessage(err, '충전하지 못했습니다.'));
+      if (isDefinitiveRejection(err)) {
+        setUnconfirmed(null);
+        setError(adsErrorMessage(err, '충전하지 못했습니다.'));
+      } else {
+        setUnconfirmed(attempt);
+        setError('충전 결과를 확인하지 못했습니다. 다시 누르면 같은 요청으로 보내 한 번만 충전됩니다.');
+      }
     },
   });
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
+    if (unconfirmed) {
+      mutation.mutate(unconfirmed);
+      return;
+    }
     const micros = creditsToMicros(amount);
     if (micros == null || micros <= 0) {
       setDone(null);
@@ -69,12 +90,15 @@ export default function TopUpForm({ advertiser, readOnly }: { advertiser: Advert
               inputMode="decimal"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
+              readOnly={unconfirmed != null}
               placeholder="예: 50"
               aria-describedby="adc-topup-hint"
             />
           </label>
           <p className="adc-hint" id="adc-topup-hint">
-            <CreditNote /> 1회 상한과 하루(KST) 합계 한도가 있습니다.
+            <CreditNote /> 오늘 충전 가능 {formatCredits(topUpHeadroomMicros(advertiser))} /{' '}
+            {formatCredits(advertiser.dailyTopUpLimitMicros)} 크레딧 · 1회 최대 {formatCredits(advertiser.maxTopUpPerCallMicros)}{' '}
+            크레딧. 하루는 KST 기준입니다.
           </p>
           {error && (
             <p className="adc-error" role="alert">

@@ -1,6 +1,8 @@
 package com.kgd.ads.application.advertiser
 
 import com.kgd.ads.application.advertiser.usecase.RegisterAdvertiserUseCase
+import com.kgd.ads.application.ledger.config.AdsTopUpProperties
+import com.kgd.ads.domain.ledger.model.Credits
 import com.kgd.ads.presentation.admin.dto.HouseCampaignRequest
 import com.kgd.ads.presentation.advertiser.dto.CampaignRequest
 import com.kgd.ads.presentation.advertiser.dto.RegisterAdvertiserRequest
@@ -42,6 +44,7 @@ class AdvertiserApiIntegrationSpec(
     @Autowired env: Environment,
     @Autowired @Qualifier("adsDataSource") adsDataSource: DataSource,
     @Autowired @Qualifier("adsClock") clock: Clock,
+    @Autowired topUpLimits: AdsTopUpProperties,
 ) : AdsIntegrationSpec({
 
     val jdbc = JdbcTemplate(adsDataSource)
@@ -256,6 +259,77 @@ class AdvertiserApiIntegrationSpec(
             me["balanceMicros"].asLong() shouldBe 1_000_000L
             me["todaySpendMicros"].asLong() shouldBe 0L
             me["status"].asString() shouldBe "ACTIVE"
+        }
+    }
+
+    given("거절 사유 — 광고주 경로는 도메인 문구를 응답에 싣는다") {
+        fixtures.placement("a-api-msg-floor", floorMicros = 300_000)
+        fixtures.placement("a-api-msg-house", paidAllowed = false)
+        register(13_001)
+        fun errorOf(response: AdsApiClient.Response) = response.body["error"]["message"].asString()
+
+        then("CPM 입찰가가 최저가보다 낮으면 400 — 어느 지면의 최저가가 얼마인지 크레딧으로 알려 준다") {
+            val response = api.post("/api/v1/ads/advertiser/campaigns", As(13_001), campaignRequest(listOf("a-api-msg-floor"), bidMicros = 200_000))
+            response.status shouldBe 400
+            response.body["error"]["code"].asString() shouldBe "INVALID_INPUT"
+            errorOf(response) shouldBe "입찰가가 지면 a-api-msg-floor 의 최저가(0.3 크레딧)보다 낮습니다"
+        }
+        then("일예산이 1회 과금액보다 작으면 그 과금액을 알려 준다") {
+            val response = api.post(
+                "/api/v1/ads/advertiser/campaigns", As(13_001),
+                campaignRequest(listOf("a-api-msg-floor"), bidMicros = 400_000, dailyBudgetMicros = 199),
+            )
+            response.status shouldBe 400
+            errorOf(response) shouldBe "일예산은 1회 과금액(0.0004 크레딧) 이상이어야 합니다"
+        }
+        then("유료를 받지 않는 지면을 고르면 그 지면 이름이 온다") {
+            val response = api.post("/api/v1/ads/advertiser/campaigns", As(13_001), campaignRequest(listOf("a-api-msg-house")))
+            response.status shouldBe 400
+            errorOf(response) shouldBe "지면 a-api-msg-house 는 유료 광고를 받지 않습니다"
+        }
+        then("1회 충전 상한을 넘으면 상한을 크레딧으로 알려 준다") {
+            val response = api.post("/api/v1/ads/advertiser/top-ups", As(13_001), TopUpRequest(topUpLimits.maxPerCallMicros + 1, "msg-over"))
+            response.status shouldBe 400
+            errorOf(response) shouldBe "1회 충전 한도(${Credits.format(topUpLimits.maxPerCallMicros)})를 넘었습니다"
+        }
+        then("입력 검증 실패는 필드 이름과 한국어 사유다 — 보낸 값은 싣지 않는다") {
+            val response = api.post("/api/v1/ads/advertiser/top-ups", As(13_001), TopUpRequest(1_000_000, "bad key!"))
+            response.status shouldBe 400
+            errorOf(response) shouldBe "idempotencyKey: 형식이 올바르지 않습니다"
+        }
+        then("신원이 없으면 상태 코드는 공용 판정 그대로 401 이다") {
+            api.get("/api/v1/ads/advertiser/me", null).status shouldBe 401
+        }
+    }
+
+    given("오늘 충전 여유 — 충전 한도 확인과 같은 KST 하루 합계") {
+        register(13_010)
+        fun topUp(micros: Long, key: String) = api.post("/api/v1/ads/advertiser/top-ups", As(13_010), TopUpRequest(micros, key))
+        fun me() = api.get("/api/v1/ads/advertiser/me", As(13_010)).data
+
+        then("대시보드의 오늘 충전 누계가 거절 문구의 누계와 같고, 자정(KST)이 지나면 0 이다") {
+            mutableClock.set(LocalDateTime.of(2027, 3, 10, 23, 50))
+            me()["todayTopUpMicros"].asLong() shouldBe 0L
+            me()["dailyTopUpLimitMicros"].asLong() shouldBe topUpLimits.dailyLimitMicros
+            me()["maxTopUpPerCallMicros"].asLong() shouldBe topUpLimits.maxPerCallMicros
+
+            // 한도 바로 아래까지 채운 뒤 상한 1회를 더 보내 거절시킨다.
+            val fills = (topUpLimits.dailyLimitMicros / topUpLimits.maxPerCallMicros - 1).toInt()
+            repeat(fills) { topUp(topUpLimits.maxPerCallMicros, "day-fill-$it").status shouldBe 200 }
+            topUp(3_000_000, "day-small").status shouldBe 200
+            val toppedUp = topUpLimits.maxPerCallMicros * fills + 3_000_000
+            me()["todayTopUpMicros"].asLong() shouldBe toppedUp
+
+            val rejected = topUp(topUpLimits.maxPerCallMicros, "day-over")
+            rejected.status shouldBe 400
+            rejected.body["error"]["message"].asString() shouldBe
+                "오늘 충전 한도(${Credits.format(topUpLimits.dailyLimitMicros)})를 넘습니다 — 오늘 충전 ${Credits.format(toppedUp)}"
+
+            mutableClock.set(LocalDateTime.of(2027, 3, 11, 0, 10))
+            me()["todayTopUpMicros"].asLong() shouldBe 0L
+            topUp(topUpLimits.maxPerCallMicros, "day-next").status shouldBe 200
+            me()["todayTopUpMicros"].asLong() shouldBe topUpLimits.maxPerCallMicros
+            mutableClock.set(NOON_HALF)
         }
     }
 

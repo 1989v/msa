@@ -6,6 +6,10 @@ import com.kgd.ads.application.advertiser.usecase.RegisterAdvertiserUseCase
 import com.kgd.ads.application.ledger.usecase.GetWalletUseCase
 import com.kgd.ads.application.ledger.usecase.TopUpUseCase
 import com.kgd.ads.infrastructure.redis.AdsRedisConnection
+import com.kgd.ads.presentation.advertiser.controller.AdvertiserController
+import com.kgd.ads.presentation.support.AdsExceptionHandler
+import com.kgd.experiment.presentation.controller.ExperimentController
+import com.kgd.recommendation.presentation.RecommendationController
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -19,6 +23,7 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
+import org.springframework.web.method.ControllerAdviceBean
 import java.time.Duration
 import javax.sql.DataSource
 
@@ -143,6 +148,22 @@ class EngagementContextLoadSpec(
                     Duration.ofMillis(250)
                 (ads.connectionFactory === shared) shouldBe false
                 ads.execute { it.ping() } shouldBe "PONG"
+            }
+
+        // MVC 가 예외 처리 advice 를 고를 때 쓰는 판정(ControllerAdviceBean)을 그대로 부른다.
+        // ads 의 문구 노출 advice 가 전역이 되면 recommendation·experiment 응답 문구까지 바뀐다.
+        Then("ads 의 거절 문구 advice 는 ads 컨트롤러에만 걸리고 공용 핸들러보다 먼저다")
+            .config(enabledIf = { dockerAvailable }) {
+                val advices = ControllerAdviceBean.findAnnotatedBeans(ctx)
+                val ads = advices.single { it.beanType == AdsExceptionHandler::class.java }
+                // 공용 핸들러는 common 에 있고 이 모듈의 테스트 클래스패스에 직접 오지 않아 이름으로 찾는다
+                val global = advices.single { it.beanType?.name == "com.kgd.common.exception.GlobalExceptionHandler" }
+
+                ads.isApplicableToBeanType(AdvertiserController::class.java) shouldBe true
+                ads.isApplicableToBeanType(ExperimentController::class.java) shouldBe false
+                ads.isApplicableToBeanType(RecommendationController::class.java) shouldBe false
+                global.isApplicableToBeanType(ExperimentController::class.java) shouldBe true
+                (advices.indexOf(ads) < advices.indexOf(global)) shouldBe true
             }
 
         Then("outbox 토글을 꺼도 스케줄링이 켜져 있고 풀 크기는 4 다")

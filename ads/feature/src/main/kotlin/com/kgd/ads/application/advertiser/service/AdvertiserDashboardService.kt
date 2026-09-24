@@ -1,6 +1,7 @@
 package com.kgd.ads.application.advertiser.service
 
 import com.kgd.ads.application.advertiser.usecase.GetAdvertiserDashboardUseCase
+import com.kgd.ads.application.ledger.config.AdsTopUpProperties
 import com.kgd.ads.application.ledger.port.LedgerPort
 import com.kgd.ads.application.report.port.ReportPort
 import org.springframework.beans.factory.annotation.Qualifier
@@ -13,6 +14,7 @@ class AdvertiserDashboardService(
     private val access: AdvertiserAccess,
     private val ledgerPort: LedgerPort,
     private val reportPort: ReportPort,
+    private val topUpProperties: AdsTopUpProperties,
     @Qualifier("adsClock") private val clock: Clock,
 ) : GetAdvertiserDashboardUseCase {
 
@@ -30,6 +32,10 @@ class AdvertiserDashboardService(
             balanceMicros = ledgerPort.balanceOf(wallet),
             todaySpendMicros = today.spendMicros,
             todayChargedMicros = today.chargedMicros,
+            // 충전이 한도를 확인할 때와 같은 합계·같은 하루(KST) 경계다.
+            todayTopUpMicros = ledgerPort.sumTopUps(wallet, dayStart, dayStart.plusDays(1)),
+            dailyTopUpLimitMicros = topUpProperties.dailyLimitMicros,
+            maxTopUpPerCallMicros = topUpProperties.maxPerCallMicros,
         )
     }
 }

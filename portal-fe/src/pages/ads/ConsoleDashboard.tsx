@@ -13,7 +13,7 @@ import {
   type CampaignDay,
 } from '../../api/adsConsoleApi';
 import { CreditNote, StatePill } from './consoleParts';
-import { CREATIVE_STATE, campaignState, consoleHref } from './consoleView';
+import { CREATIVE_STATE, campaignState, consoleHref, topUpHeadroomMicros } from './consoleView';
 
 /**
  * 대시보드 — 잔액·오늘 지출·오늘 청구액, 캠페인 목록, 소재 심사 상태.
@@ -47,6 +47,11 @@ export default function ConsoleDashboard({
             <small>크레딧</small>
           </span>
           <CreditNote />
+          {!readOnly && (
+            <span className="adc-kpi__sub">
+              오늘 충전 가능 {formatCredits(topUpHeadroomMicros(advertiser))} / {formatCredits(advertiser.dailyTopUpLimitMicros)} 크레딧
+            </span>
+          )}
           {!readOnly && (
             <Link className="adc-btn adc-kpi__action" to={consoleHref('/top-up')}>
               충전

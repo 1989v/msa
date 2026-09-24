@@ -6,6 +6,7 @@ import com.kgd.ads.application.ledger.port.LedgerPort
 import com.kgd.ads.application.ledger.usecase.GetWalletUseCase
 import com.kgd.ads.application.ledger.usecase.TopUpUseCase
 import com.kgd.ads.domain.advertiser.model.AdvertiserStatus
+import com.kgd.ads.domain.ledger.model.Credits
 import com.kgd.ads.domain.ledger.model.LedgerAccountType
 import com.kgd.ads.domain.ledger.model.LedgerTransaction
 import com.kgd.common.exception.BusinessException
@@ -37,7 +38,7 @@ class LedgerService(
     override fun execute(command: TopUpUseCase.Command): TopUpUseCase.Result {
         if (command.amountMicros <= 0) throw BusinessException(ErrorCode.INVALID_INPUT, "충전액은 0 보다 커야 합니다")
         if (command.amountMicros > topUpProperties.maxPerCallMicros) {
-            throw BusinessException(ErrorCode.INVALID_INPUT, "1회 충전 한도(${topUpProperties.maxPerCallMicros} 마이크로)를 넘었습니다")
+            throw BusinessException(ErrorCode.INVALID_INPUT, "1회 충전 한도(${Credits.format(topUpProperties.maxPerCallMicros)})를 넘었습니다")
         }
         val advertiser = advertiserPort.findByMemberId(command.memberId)
             ?: throw BusinessException(ErrorCode.NOT_FOUND, "광고주가 아닙니다")
@@ -58,7 +59,7 @@ class LedgerService(
         val toppedUpToday = ledgerPort.sumTopUps(wallet, dayStart, dayStart.plusDays(1))
         if (toppedUpToday + command.amountMicros > topUpProperties.dailyLimitMicros) {
             log.info { "충전 거절(하루 한도): advertiserId=$advertiserId today=$toppedUpToday amountMicros=${command.amountMicros}" }
-            throw BusinessException(ErrorCode.INVALID_INPUT, "오늘 충전 한도(${topUpProperties.dailyLimitMicros} 마이크로)를 넘습니다")
+            throw BusinessException(ErrorCode.INVALID_INPUT, "오늘 충전 한도(${Credits.format(topUpProperties.dailyLimitMicros)})를 넘습니다 — 오늘 충전 ${Credits.format(toppedUpToday)}")
         }
 
         val transactionId = ledgerPort.post(

@@ -204,7 +204,7 @@ Total Task Groups: 13
   - [x] 11.5 admin-fe 메뉴 7종(`Sidebar.tsx`·`App.tsx`·`api/ads.ts`)
   - [x] 11.6 `/privacy` §6 문구
   - [x] 11.7 Verify: `cd portal-fe && npx vitest run src/pages/ads src/seo/privacyRetention.test.ts && npx tsc --noEmit -p tsconfig.app.json` · `cd admin/frontend && npx vitest run src/pages/ads && npx tsc --noEmit -p .`
-  - [ ] 11.8 (후속) 저장 거절 사유를 콘솔에 — ads 전용 `@RestControllerAdvice` 가 도메인 문구를 내려준다(common 의 GlobalExceptionHandler 는 문구를 버린다) · 충전 멱등 키는 성공·확정 거절까지 유지 · 대시보드에 오늘 충전 누계와 한도
+  - [x] 11.8 (후속) 저장 거절 사유를 콘솔에 — ads 전용 `@RestControllerAdvice` 가 도메인 문구를 내려준다(common 의 GlobalExceptionHandler 는 문구를 버린다) · 충전 멱등 키는 성공·확정 거절까지 유지 · 대시보드에 오늘 충전 누계와 한도
 > 구현 기록(2026-09-24): 콘솔 경로 `/`·`/top-up`·`/campaigns/new`·`/campaigns/:id`·`/reports`, apex `/ads` 는 ads 호스트로 · noindex 는 메타 + nginx `X-Robots-Tag` + `robots.txt Disallow` + 프리렌더 메타 · ads 호스트는 탭바 숨김 · F6 상수는 `AdsRedisKeys.kt`(헬퍼가 `_HOURS`/`_DAYS` 로 단위를 붙인다) · CDP 4조합 대비 최저 4.82, 한글 모노 0 · 회귀 주입 4건 빨간불
 **Acceptance Criteria:**
 - 콘솔로 E1 흐름을 끝까지 수행 가능, 방침 숫자 = 상수
