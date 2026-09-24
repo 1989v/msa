@@ -68,7 +68,7 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
 
 | 도메인 | 설명 |
 |---|---|
-| catalog | Game(상태머신 DRAFT→REVIEW→BETA→PUBLISHED⇄SUSPENDED, `isMonetizable`=PUBLISHED+SDK, **genre 단일 대표 장르**), GameTag(+map), GameStats(1:1 프로젝션), GameCollection(MANUAL/TRENDING/NEW/TAG_BASED) |
+| catalog | Game(상태머신 DRAFT→REVIEW→BETA→PUBLISHED⇄SUSPENDED, **genre 단일 대표 장르**), GameTag(+map), GameStats(1:1 프로젝션), GameCollection(MANUAL/TRENDING/NEW/TAG_BASED) |
 | play | GamePlaySession(게스트 허용), GameRating(1인 1표, 1~10), **GameSaveData**(불투명 JSON + @Version 낙관적 락 + 64KB 상한), **GameRun**(서버 권위 시드 발급/소모 — 세이브스커밍 방어) |
 | battle | `game:sim` 의 결정적 1v1 턴제 배틀 코어(타입 상성/STAB/Mulberry32) — BattleRunner 리플레이 재실행으로 Tier B 검증 가능. 몬스터 수집 RPG 프로토타입 기반 |
 | suggestion | GameSuggestion(제안 — OPEN/REVIEWING/APPLIED/DECLINED, 로그인 필수, **쓴 사람만 수정**) + SuggestionReply(제안자·운영자 평면 스레드, `author_type` 은 서버가 결정). 표 둘을 전 게임이 공유 (ADR-0087) |
@@ -208,7 +208,7 @@ kubectl -n commerce create secret generic game-hmac \
   적이 없다.** 리스가 유일하게 잡던 것(두 기기가 각자 상태로 번갈아 저장해 서로를 덮는 핑퐁)은
   위의 version 비교가 **막는 대신 맞추는** 쪽으로 처리한다
 - **공개 목록은 플레이 가능한 상태(PUBLISHED·BETA)를 싣는다.** BETA 를 빼면 베타 게임을 아무도 못 찾아
-  피드백을 받을 수 없다. 수익화는 상태와 별개로 `Game.isMonetizable()`(PUBLISHED + SDK)이 막는다.
+  피드백을 받을 수 없다. 광고는 게임별이 아니라 목록 페이지 지면에만 있다(ads, ADR-0098).
   FE 는 `isBeta()`(status=BETA 또는 `beta` 태그)로 배지를 렌더한다 — 두 신호를 다 받는 이유는
   V35 가 PUBLISHED + 태그 방식으로 먼저 붙였기 때문이다
 - **랭킹 보드의 축은 셋이다 — 트랙(무강화/강화, V28) · 기간(전체/오늘, V49) · 보드(게임이 나눈 모드, V59).** 오늘 보드는

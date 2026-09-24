@@ -93,36 +93,4 @@ class GameTest : BehaviorSpec({
             }
         }
     }
-
-    given("수익화 판정 시") {
-        `when`("PUBLISHED이지만 SDK 미통합이면") {
-            then("isMonetizable은 false여야 한다") {
-                val game = newGame(sdkIntegrated = false)
-                game.submitForReview()
-                game.launchBeta(Instant.parse("2026-07-01T00:00:00Z"))
-                game.publish(Instant.parse("2026-07-06T00:00:00Z"))
-                game.isMonetizable() shouldBe false
-            }
-        }
-
-        `when`("PUBLISHED + SDK 통합이면") {
-            then("isMonetizable은 true여야 한다") {
-                val game = newGame(sdkIntegrated = true)
-                game.submitForReview()
-                game.launchBeta(Instant.parse("2026-07-01T00:00:00Z"))
-                game.publish(Instant.parse("2026-07-06T00:00:00Z"))
-                game.isMonetizable() shouldBe true
-            }
-        }
-
-        `when`("BETA 상태면") {
-            then("플레이는 가능하지만 수익화는 불가해야 한다") {
-                val game = newGame(sdkIntegrated = true)
-                game.submitForReview()
-                game.launchBeta(Instant.parse("2026-07-01T00:00:00Z"))
-                game.isPlayable() shouldBe true
-                game.isMonetizable() shouldBe false
-            }
-        }
-    }
 })

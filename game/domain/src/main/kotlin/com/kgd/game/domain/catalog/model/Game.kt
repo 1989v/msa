@@ -152,9 +152,6 @@ class Game private constructor(
     /** 플레이 가능 여부 — BETA(제한 노출) 또는 PUBLISHED */
     fun isPlayable(): Boolean = status == GameStatus.BETA || status == GameStatus.PUBLISHED
 
-    /** 광고/수익화 허용 여부 — PUBLISHED + SDK 통합 (ADR-0059 §3) */
-    fun isMonetizable(): Boolean = status == GameStatus.PUBLISHED && sdkIntegrated
-
     fun updateMetadata(
         title: String? = null,
         description: String? = null,

@@ -241,7 +241,7 @@ Total Task Groups: 13
 - 삭제 마이그레이션은 `V94__drop_ad_tables.sql`(`DROP TABLE IF EXISTS` 셋, 표 사이 외래 키 없음). 머지 전에 main 에 V94 가 먼저 생기면 번호를 올린다
 - `GameSchemaIntegrationSpec` 에 「광고 표 셋이 없다」 단언을 더했다 — 마이그레이션 없이 돌려 셋이 남은 빨간불을 본 뒤 V94 를 넣었다
 - 게이트웨이 `ads-public` 에서 `/api/v1/ads/placements/**` 를 뺐고, `AdsRouteSpec` 이 그 경로가 어떤 라우트에도 안 맞는 것을 본다
-- `Game.isMonetizable()` 은 보상형 광고 발급만 쓰던 게이트라 이제 호출처가 없다(테스트만 남음). 이번 범위 밖이라 두었다
+- `Game.isMonetizable()` 은 보상형 광고 발급만 쓰던 게이트라 호출처가 없어져 삭제했다 — 게임별 광고 지면이 없다(게임 쪽 지면은 목록 페이지 둘뿐)
 
 ---
 
