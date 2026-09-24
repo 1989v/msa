@@ -20,12 +20,13 @@ Total Task Groups: 13
 **Dependencies:** None
 **Phase:** R2-pre
 **Required Skills:** k8s, mysql, sealed-secrets
-- [ ] 0.0 Complete 운영 사전 조건
-  - [ ] 0.1 노드 여유 확인: `kubectl top node` · engagement 현재 사용량 — 768Mi 가 들어가는지 (OQ-002). 부족하면 증설이 아니라 동시성 축소안으로
-  - [ ] 0.2 운영 MySQL 에 1회 수동 SQL — `ads_db`·`ads_user`·GRANT (place_db 선례 `a599d857` 절차). 실행 전 대상 인스턴스·SQL 을 사용자에게 보여 주고 승인
-  - [ ] 0.3 SealedSecret `ADS_TOKEN_SECRET`(32바이트 이상 난수) 생성·커밋 준비
+- [x] 0.0 Complete 운영 사전 조건
+  - [x] 0.1 노드 여유 확인: `kubectl top node` · engagement 현재 사용량 — 768Mi 가 들어가는지 (OQ-002). 부족하면 증설이 아니라 동시성 축소안으로
+  - [x] 0.2 운영 MySQL 에 1회 수동 SQL — `ads_db`·`ads_user`·GRANT (place_db 선례 `a599d857` 절차). 실행 전 대상 인스턴스·SQL 을 사용자에게 보여 주고 승인
+  - [x] 0.3 SealedSecret `ADS_TOKEN_SECRET`(32바이트 이상 난수) 생성·커밋 준비
   - [ ] 0.4 Cloudflare DNS `ads.1989v.com` proxied 레코드 (사용자 수행)
-  - [ ] 0.5 Verify: `oci-mysql -e "SHOW DATABASES LIKE 'ads_db'; SHOW GRANTS FOR 'ads_user'@'%';"` · `kubectl get secret -n commerce ads-token -o jsonpath='{.data}' | jq 'keys'` · `dig +short ads.1989v.com`
+  - [x] 0.5 Verify: `oci-mysql -e "SHOW DATABASES LIKE 'ads_db'; SHOW GRANTS FOR 'ads_user'@'%';"` · `kubectl get secret -n commerce ads-token -o jsonpath='{.data}' | jq 'keys'` · `dig +short ads.1989v.com`
+> 수행 기록(2026-09-24): `ssh msa-oci` 로 운영 MySQL SQL·`ads-token` 생성·노드 여유 확인(57%) — DNS(0.4)는 콘솔 공개 전 사용자 몫으로 남음
 **Acceptance Criteria:**
 - 스키마·계정·시크릿 셋이 클러스터에 있다 (OQ-003) — 그룹 2 이미지 배포의 선행 조건
 
@@ -203,7 +204,7 @@ Total Task Groups: 13
   - [x] 11.4 콘솔 화면 6종 + 「가상 크레딧 — 실제 결제 없음」
   - [x] 11.5 admin-fe 메뉴 7종(`Sidebar.tsx`·`App.tsx`·`api/ads.ts`)
   - [x] 11.6 `/privacy` §6 문구
-  - [x] 11.7 Verify: `cd portal-fe && npx vitest run src/pages/ads src/seo/privacyRetention.test.ts && npx tsc --noEmit -p tsconfig.app.json` · `cd admin/frontend && npx vitest run src/pages/ads && npx tsc --noEmit -p .`
+  - [x] 11.7 Verify: `cd portal-fe && npx vitest run src/pages/ads src/pages/__tests__/privacyRetention.test.ts && npx tsc --noEmit -p tsconfig.app.json` · `cd admin/frontend && npx vitest run src/pages/ads && npx tsc --noEmit -p tsconfig.app.json`
   - [x] 11.8 (후속) 저장 거절 사유를 콘솔에 — ads 전용 `@RestControllerAdvice` 가 도메인 문구를 내려준다(common 의 GlobalExceptionHandler 는 문구를 버린다) · 충전 멱등 키는 성공·확정 거절까지 유지 · 대시보드에 오늘 충전 누계와 한도
 > 구현 기록(2026-09-24): 콘솔 경로 `/`·`/top-up`·`/campaigns/new`·`/campaigns/:id`·`/reports`, apex `/ads` 는 ads 호스트로 · noindex 는 메타 + nginx `X-Robots-Tag` + `robots.txt Disallow` + 프리렌더 메타 · ads 호스트는 탭바 숨김 · F6 상수는 `AdsRedisKeys.kt`(헬퍼가 `_HOURS`/`_DAYS` 로 단위를 붙인다) · CDP 4조합 대비 최저 4.82, 한글 모노 0 · 회귀 주입 4건 빨간불
 **Acceptance Criteria:**
