@@ -38,11 +38,16 @@ class Client:
         if user:
             self.headers["Authorization"] = "Basic " + base64.b64encode(user.encode()).decode()
         self.sigv4 = sigv4
+        self.creds = None
         if sigv4:
             try:
-                import botocore.session  # noqa: F401
+                import botocore.session
             except ImportError:
                 sys.exit("--sigv4 은 botocore 가 필요하다: pip install botocore")
+            # 환경변수 · ~/.aws · 인스턴스 역할 순으로 찾는 botocore 기본 체인
+            self.creds = botocore.session.get_session().get_credentials()
+            if self.creds is None:
+                sys.exit("--sigv4: AWS 자격증명을 찾지 못했다 (AWS_ACCESS_KEY_ID · AWS_PROFILE · 인스턴스 역할)")
 
     def get(self, path: str):
         url = f"{self.url}/{path.lstrip('/')}"
@@ -50,11 +55,9 @@ class Client:
         if self.sigv4:
             from botocore.auth import SigV4Auth
             from botocore.awsrequest import AWSRequest
-            import botocore.session
 
-            creds = botocore.session.get_session().get_credentials()
             req = AWSRequest(method="GET", url=url, headers=headers)
-            SigV4Auth(creds, "es", self.sigv4).add_auth(req)
+            SigV4Auth(self.creds.get_frozen_credentials(), "es", self.sigv4).add_auth(req)
             headers = dict(req.headers)
         req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, context=self.ctx, timeout=30) as r:
