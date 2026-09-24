@@ -724,7 +724,7 @@ concepts:
     description: "실패한 레코드를 그 자리에서 백오프를 두고 다시 처리하고, 다 실패하면 DLT 로 넘긴 뒤 다음 레코드로 간다. 순서는 지키지만 재시도하는 동안 그 파티션이 멈춘다"
     synonyms: ["DefaultErrorHandler", "in-place retry"]
     code:
-      - { path: search/consumer/src/main/kotlin/com/kgd/search/infrastructure/config/KafkaConsumerConfig.kt, symbol: "ExponentialBackOff(1000L, 2.0)", note: "색인 소비 실패를 1초부터 배로 늘려 최대 30초까지 제자리에서 다시 한다" }
+      - { path: search/consumer/src/main/kotlin/com/kgd/search/infrastructure/config/KafkaConsumerConfig.kt, symbol: "ExponentialBackOff(", note: "색인 소비 실패를 1초부터 배로 늘려 최대 30초까지 제자리에서 다시 한다" }
     uses: [dist-exponential-backoff, dist-dead-letter-queue]
     causes: [msg-head-of-line-blocking]
   - id: msg-retry-topic
@@ -1157,7 +1157,7 @@ concepts:
     description: "파티션 단위로 순서를 지키는 로그형 메시지 브로커. 이 레포는 로컬에서 KRaft 단일 노드로 띄우고(운영 설계안은 Strimzi 3 브로커), 서비스 간 이벤트·명령을 모두 여기로 주고받는다"
     synonyms: ["Apache Kafka"]
     code:
-      - { path: k8s/infra/local/kafka/statefulset.yaml, symbol: "image: bitnamilegacy/kafka:3.8", note: "KRaft 단일 노드 브로커 StatefulSet" }
+      - { path: k8s/infra/local/kafka/statefulset.yaml, symbol: "image: bitnamilegacy/kafka:", note: "KRaft 단일 노드 브로커 StatefulSet" }
     implements:
       - { to: fan-out, reason: "컨슈머 그룹마다 오프셋을 따로 가져 한 토픽을 여럿이 읽는다" }
       - { to: dist-messaging, reason: "이 레포 서비스 간 비동기 메시징의 브로커다" }

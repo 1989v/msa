@@ -311,7 +311,7 @@ concepts:
     description: "송수신 버퍼를 대역폭 × RTT(BDP) 이상으로 잡아 먼 거리 · 큰 전송에서 링크를 채운다. 버퍼가 작으면 처리량이 RTT 에 묶인다"
     synonyms: ["rmem", "wmem", "tcp_rmem", "SO_RCVBUF"]
     code:
-      - { path: k8s/overlays/oci-arm/sysctl-tuning/daemonset.yaml, symbol: "sysctl -w net.core.rmem_max=7500000", note: "cloudflared 의 QUIC 수신 버퍼 한도를 노드 커널에서 올린다" }
+      - { path: k8s/overlays/oci-arm/sysctl-tuning/daemonset.yaml, symbol: "net.core.rmem_max=", note: "cloudflared 의 QUIC 수신 버퍼 한도를 노드 커널에서 올린다" }
     uses: [net-term-bdp]
     affects: [net-bandwidth]
   - id: net-tcp-fast-open

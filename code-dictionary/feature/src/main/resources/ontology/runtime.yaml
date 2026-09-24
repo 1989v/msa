@@ -56,7 +56,7 @@ concepts:
     description: "클래스 구조·메서드 바이트코드·상수 풀 같은 클래스 메타데이터를 네이티브 메모리에 두는 영역(JDK 8+). 기본 상한이 없어 동적 클래스 생성이 새면 계속 자란다. MaxMetaspaceSize 로 막는다"
     synonyms: ["Metaspace", "MaxMetaspaceSize", "Compressed Class Space"]
     code:
-      - { path: gradle.properties, symbol: "-XX:MaxMetaspaceSize=1g", note: "Gradle 데몬의 Metaspace 상한을 1 GB 로 건다" }
+      - { path: gradle.properties, symbol: "-XX:MaxMetaspaceSize=", note: "Gradle 데몬의 Metaspace 상한을 1 GB 로 건다" }
     alternative_to:
       - { to: rt-permgen, reason: "고정 크기 힙 영역 대신 네이티브에서 필요한 만큼 늘어 'PermGen space' OOM 이 사라졌다" }
   - id: rt-permgen

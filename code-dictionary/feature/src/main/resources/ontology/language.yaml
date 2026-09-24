@@ -909,7 +909,7 @@ concepts:
     description: "컴파일 타임 상수. 원시 타입·String 만 되고 사용 지점에 값이 인라인되어 애너테이션 인자로 쓸 수 있다"
     synonyms: ["const", "compile-time constant"]
     code:
-      - { path: seller/feature/src/main/kotlin/com/kgd/seller/infrastructure/crypto/AesGcmAccountCipher.kt, symbol: "const val IV_BYTES = 12", note: "암호화 파라미터를 상수로 둔다" }
+      - { path: seller/feature/src/main/kotlin/com/kgd/seller/infrastructure/crypto/AesGcmAccountCipher.kt, symbol: "const val IV_BYTES", note: "암호화 파라미터를 상수로 둔다" }
   - id: lang-object-declaration
     kind: TERM
     name: "object 선언"

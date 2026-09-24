@@ -44,7 +44,7 @@ concepts:
     level: BEGINNER
     description: "이 레포의 관계형 저장소(8.0, InnoDB). 도메인마다 스키마를 따로 두고 서비스 간에 공유하지 않는다. InnoDB 는 B-트리 인덱스 · MVCC · redo 로그(WAL)로 트랜잭션을 보장한다"
     code:
-      - { path: k8s/infra/local/mysql/statefulset.yaml, symbol: "image: mysql:8.0", note: "로컬·운영 공통 단일 인스턴스 StatefulSet" }
+      - { path: k8s/infra/local/mysql/statefulset.yaml, symbol: "image: mysql:", note: "로컬·운영 공통 단일 인스턴스 StatefulSet" }
     implements:
       - { to: data-mvcc, reason: "InnoDB 가 undo 로그로 행의 옛 버전을 남겨 일관된 읽기를 준다" }
       - { to: write-ahead-log, reason: "InnoDB redo 로그가 커밋 전에 먼저 기록된다" }
@@ -2136,7 +2136,7 @@ concepts:
     description: "DB 연결을 미리 만들어 두고 빌려 쓰고 돌려준다. 요청마다 TCP · 인증 비용을 내지 않는다. 풀이 비면 요청은 연결이 돌아올 때까지 기다린다"
     synonyms: ["connection pool", "DB 커넥션 풀"]
     code:
-      - { path: commerce/app/src/main/resources/application.yml, symbol: "maximum-pool-size: 5", note: "폴드 도메인마다 작은 풀을 따로 둔다" }
+      - { path: commerce/app/src/main/resources/application.yml, symbol: "maximum-pool-size:", note: "폴드 도메인마다 작은 풀을 따로 둔다" }
     contains: [hikaricp, data-concurrent-bag]
     affects: [data-pool-wait-time, data-pool-utilization]
   - id: hikaricp

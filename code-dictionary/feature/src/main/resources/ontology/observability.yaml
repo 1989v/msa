@@ -275,7 +275,7 @@ concepts:
     description: "SLO 경계 가까이에 버킷을 촘촘히 둔다. 경계가 150ms 인데 버킷이 100 · 500 뿐이면 그 사이 어디서 느린지 알 수 없다"
     synonyms: ["bucket boundaries", "SLO buckets"]
     code:
-      - { path: search/app/src/main/resources/application.yml, symbol: "http.server.requests: 150ms,500ms", note: "지연 예산 경계에 버킷을 둔다" }
+      - { path: search/app/src/main/resources/application.yml, symbol: "http.server.requests:", note: "지연 예산 경계에 버킷을 둔다" }
     uses: [obs-slo]
     mitigates:
       - { to: obs-quantile-interpolation-error, reason: "판정 경계에 버킷 경계를 맞춘다" }

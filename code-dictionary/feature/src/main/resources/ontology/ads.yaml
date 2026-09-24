@@ -426,7 +426,7 @@ concepts:
     synonyms: ["responsive ad", "aspect ratio"]
     code:
       - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/placement/model/AspectRatio.kt, symbol: "value class AspectRatio private constructor", note: "지면이 받는 비율과 이미지 크기 대조" }
-      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/creative/policy/CreativeImageRules.kt, symbol: "const val MAX_DIMENSION = 2000", note: "헤더에서 크기를 먼저 읽어 디코딩 전에 거절" }
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/creative/policy/CreativeImageRules.kt, symbol: "const val MAX_DIMENSION", note: "헤더에서 크기를 먼저 읽어 디코딩 전에 거절" }
   - id: ads-creative-review
     kind: MECHANISM
     name: "소재 심사"
@@ -660,7 +660,7 @@ concepts:
     level: INTERMEDIATE
     description: "기존 AdSense 지면 컴포넌트에 자체 네트워크를 첫 수요처로 붙인다. 한 페이지의 지면을 결정 호출 한 번으로 묶는다"
     code:
-      - { path: portal-fe/src/components/ads/adsApi.ts, symbol: "export const DECISION_TIMEOUT_MS = 800", note: "결정 호출 800ms 제한 — Bearer 를 붙이는 apiClient 로" }
+      - { path: portal-fe/src/components/ads/adsApi.ts, symbol: "export const DECISION_TIMEOUT_MS", note: "결정 호출 800ms 제한 — Bearer 를 붙이는 apiClient 로" }
     uses: [ads-unfilled-handling, google-adsense]
   - id: google-adsense
     kind: TECHNOLOGY
@@ -880,7 +880,7 @@ concepts:
     synonyms: ["frequency cap", "freq cap"]
     code:
       - { path: ads/feature/src/main/kotlin/com/kgd/ads/infrastructure/redis/AdsRedisKeys.kt, symbol: "fun frequency(visitorHash: String, campaignId: Long, day: LocalDate)", note: "빈도 키" }
-      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/campaign/model/Campaign.kt, symbol: "const val DEFAULT_FREQUENCY_CAP_PER_DAY = 3", note: "방문자당 하루 기본 3회" }
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/campaign/model/Campaign.kt, symbol: "const val DEFAULT_FREQUENCY_CAP_PER_DAY", note: "방문자당 하루 기본 3회" }
     uses: [ads-identity-key, redis]
     mitigates: [ad-fatigue]
   - id: pacing
@@ -1019,7 +1019,7 @@ concepts:
     description: "과거 노출 · 클릭으로 이 소재가 이 지면에서 눌릴 확률을 추정한다. 데이터가 적을 때는 사전값을 섞는 베이지안 보정이 튀는 값을 막는다"
     synonyms: ["pCTR", "predicted CTR", "CTR prediction"]
     code:
-      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/decision/policy/PredictedCtr.kt, symbol: "private const val PRIOR_IMPRESSIONS = 100.0", note: "(클릭 + 1) ÷ (가시 노출 + 100) — 소재 × 지면 시간별 집계에서" }
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/decision/policy/PredictedCtr.kt, symbol: "private const val PRIOR_IMPRESSIONS", note: "(클릭 + 1) ÷ (가시 노출 + 100) — 소재 × 지면 시간별 집계에서" }
     uses: [bayesian-smoothing, rec-ctr-prediction]
     affects: [ecpm]
   - id: quality-score
@@ -1106,7 +1106,7 @@ concepts:
     description: "MRC 기준 — 디스플레이는 픽셀 50% 가 연속 1초, 동영상은 2초 보여야 센다. 브라우저에서는 IntersectionObserver 로 잰다. 1989v 는 가시 노출만 과금한다"
     synonyms: ["viewable impression", "MRC viewability", "vCPM"]
     code:
-      - { path: portal-fe/src/analytics/useImpression.ts, symbol: "export const VISIBLE_RATIO = 0.5", note: "면적 50% — 광고 카드도 같은 훅을 쓴다(사본 금지)" }
+      - { path: portal-fe/src/analytics/useImpression.ts, symbol: "export const VISIBLE_RATIO", note: "면적 50% — 광고 카드도 같은 훅을 쓴다(사본 금지)" }
     contains: [om-sdk]
     measured_by: [viewability-rate]
   - id: om-sdk
@@ -1151,7 +1151,7 @@ concepts:
     level: BEGINNER
     description: "노출 · 클릭 원장은 90일, 방문자 빈도 키는 25시간만 둔다. 개인정보처리방침에 적은 숫자와 상수가 같아야 한다"
     code:
-      - { path: ads/feature/src/main/kotlin/com/kgd/ads/infrastructure/redis/AdsRedisKeys.kt, symbol: "const val VISITOR_FREQUENCY_TTL_HOURS = 25L", note: "/privacy §6 문구와 같은 값" }
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/infrastructure/redis/AdsRedisKeys.kt, symbol: "const val VISITOR_FREQUENCY_TTL_HOURS", note: "/privacy §6 문구와 같은 값" }
     uses: [ads-privacy-notice-sync]
   - id: ctr
     kind: METRIC
@@ -1252,7 +1252,7 @@ concepts:
     level: BEGINNER
     description: "같은 방문자의 짧은 시간 반복 클릭은 과금하지 않는다(10분 창)"
     code:
-      - { path: ads/feature/src/main/kotlin/com/kgd/ads/application/event/service/AdEventService.kt, symbol: "const val CLICK_WINDOW_MINUTES = 10L", note: "창당 N 회 초과분 rate_limited" }
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/application/event/service/AdEventService.kt, symbol: "const val CLICK_WINDOW_MINUTES", note: "창당 N 회 초과분 rate_limited" }
     uses: [rate-limiting]
     mitigates: [invalid-traffic]
   - id: ads-signed-token

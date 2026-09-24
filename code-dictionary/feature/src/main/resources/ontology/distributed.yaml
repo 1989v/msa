@@ -1461,7 +1461,7 @@ concepts:
     description: "일시적 장애(타임아웃·연결 끊김)로 실패한 요청을 정해진 횟수·간격으로 다시 보낸다. 받는 쪽이 멱등이어야 안전하고, 업무 오류는 재시도하지 않는다"
     synonyms: ["retry"]
     code:
-      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/config/OrderKafkaConfig.kt, symbol: "FixedBackOff(1000L, 3L)", note: "소비 실패를 1초 간격 3회 재시도, 업무 예외는 재시도 제외" }
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/config/OrderKafkaConfig.kt, symbol: "FixedBackOff(", note: "소비 실패를 1초 간격 3회 재시도, 업무 예외는 재시도 제외" }
     contains: [dist-exponential-backoff, dist-retry-budget]
     uses: [idempotency]
     causes: [dist-retry-storm, dist-duplicate-delivery]

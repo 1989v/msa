@@ -1492,7 +1492,7 @@ concepts:
     description: "버킷에 초당 일정량(replenish)의 토큰을 채우고 요청마다 하나씩 꺼낸다. 버킷 크기(burst)만큼 순간 몰림을 받아 주면서 평균 속도를 제한한다"
     synonyms: ["token bucket"]
     code:
-      - { path: gateway/src/main/kotlin/com/kgd/gateway/config/RateLimiterConfig.kt, symbol: "RedisRateLimiter(100, 200, 1)", note: "초당 100 개 보충 · 버스트 200 · 요청당 1 개" }
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/config/RateLimiterConfig.kt, symbol: "RedisRateLimiter(", note: "초당 100 개 보충 · 버스트 200 · 요청당 1 개" }
   - id: sec-leaky-bucket
     kind: MECHANISM
     name: "리키 버킷"
