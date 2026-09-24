@@ -255,6 +255,8 @@ springdoc:
         url: /api/docs/specs/payment
       - name: promotion
         url: /api/docs/specs/promotion
+      - name: settlement
+        url: /api/docs/specs/settlement
       - name: recommendation
         url: /api/docs/specs/recommendation
       - name: member

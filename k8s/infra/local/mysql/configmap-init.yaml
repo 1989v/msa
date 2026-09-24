@@ -26,6 +26,7 @@ data:
     CREATE DATABASE IF NOT EXISTS seller_db          CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS payment_db         CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS promotion_db       CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS settlement_db      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS ranking_db         CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS blog_db            CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS game_db            CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -50,6 +51,7 @@ data:
     CREATE USER IF NOT EXISTS 'seller_user'@'%'          IDENTIFIED BY 'seller_password';
     CREATE USER IF NOT EXISTS 'payment_user'@'%'         IDENTIFIED BY 'payment_password';
     CREATE USER IF NOT EXISTS 'promotion_user'@'%'       IDENTIFIED BY 'promotion_password';
+    CREATE USER IF NOT EXISTS 'settlement_user'@'%'      IDENTIFIED BY 'settlement_password';
     CREATE USER IF NOT EXISTS 'ranking_user'@'%'         IDENTIFIED BY 'ranking_password';
     CREATE USER IF NOT EXISTS 'blog_user'@'%'            IDENTIFIED BY 'blog_password';
     CREATE USER IF NOT EXISTS 'game_user'@'%'             IDENTIFIED BY 'game_password';
@@ -74,6 +76,7 @@ data:
     GRANT ALL PRIVILEGES ON seller_db.*          TO 'seller_user'@'%';
     GRANT ALL PRIVILEGES ON payment_db.*         TO 'payment_user'@'%';
     GRANT ALL PRIVILEGES ON promotion_db.*       TO 'promotion_user'@'%';
+    GRANT ALL PRIVILEGES ON settlement_db.*      TO 'settlement_user'@'%';
     GRANT ALL PRIVILEGES ON ranking_db.*         TO 'ranking_user'@'%';
     GRANT ALL PRIVILEGES ON blog_db.*            TO 'blog_user'@'%';
     GRANT ALL PRIVILEGES ON game_db.*            TO 'game_user'@'%';

@@ -19,6 +19,7 @@ dependencies {
     implementation(project(":seller:feature")) // ADR-0099: 판매자(마켓플레이스) 폴드 (전용 스키마 seller_db)
     implementation(project(":payment:feature")) // ADR-0099: 결제(모의 PG·토스 어댑터) 폴드 (전용 스키마 payment_db)
     implementation(project(":promotion:feature")) // ADR-0099: 혜택(쿠폰·포인트·TCC 보류) 폴드 (전용 스키마 promotion_db)
+    implementation(project(":settlement:feature")) // ADR-0099: 원장·정산 폴드 (전용 스키마 settlement_db)
     // 메인 클래스(@SpringBootApplication) 컴파일 + bootJar 구성용 최소 의존
     implementation(libs.spring.boot.starter.web)
 
@@ -36,6 +37,8 @@ dependencies {
     testImplementation(project(":payment:domain"))
     // 혜택 통합 spec 이 쿠폰 줄(도메인 값 객체)·상태 enum 을 직접 쓴다
     testImplementation(project(":promotion:domain"))
+    // 정산 E2E 가 정산서 상태·계정(도메인 enum)을 값으로 판정한다
+    testImplementation(project(":settlement:domain"))
     // 주문서 통합 spec 이 거부 사유(도메인 enum)를 값으로 판정하고, 금액 백필 마이그레이션을 버전 지정으로 돌린다
     testImplementation(project(":order:domain"))
     testImplementation("org.flywaydb:flyway-core")

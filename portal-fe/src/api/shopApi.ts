@@ -576,6 +576,51 @@ export const rejectSellerClaim = async (claimId: number, reason: string): Promis
   return res.data.data;
 };
 
+export type SettlementStatus = 'DRAFT' | 'CONFIRMED' | 'PAID' | 'CARRIED_OVER';
+
+/** 정산서 한 줄 — 구매 확정 라인(LINE) 또는 배송비(SHIPPING). payout = 순매출 + 배송비 − 수수료 */
+export interface SettlementLine {
+  kind: 'LINE' | 'SHIPPING';
+  orderId: number;
+  orderItemId: number | null;
+  netSales: number;
+  commission: number;
+  shippingFee: number;
+  payout: number;
+  confirmedAt: string;
+}
+
+/** 판매자 정산서. periodEnd 는 마지막 날(포함), lines 는 상세에서만 온다 */
+export interface SettlementStatement {
+  id: number;
+  sellerId: number;
+  periodStart: string;
+  periodEnd: string;
+  status: SettlementStatus;
+  netSales: number;
+  shippingFee: number;
+  commission: number;
+  payout: number;
+  payoutReference: string | null;
+  lineCount: number;
+  createdAt: string;
+  confirmedAt: string | null;
+  paidAt: string | null;
+  carriedOverAt: string | null;
+  lines: SettlementLine[] | null;
+}
+
+/** 판매자 — 내 정산서(최근 기간부터). ACTIVE 판매자가 아니면 403 */
+export const fetchSellerSettlements = async (): Promise<SettlementStatement[]> => {
+  const res = await api.get<ApiResponse<SettlementStatement[]>>('/api/v1/seller/settlements');
+  return res.data.data;
+};
+
+export const fetchSellerSettlement = async (id: number): Promise<SettlementStatement> => {
+  const res = await api.get<ApiResponse<SettlementStatement>>(`/api/v1/seller/settlements/${id}`);
+  return res.data.data;
+};
+
 export const loginWithProvider = async (
   provider: OAuthProvider,
   authCode: string,

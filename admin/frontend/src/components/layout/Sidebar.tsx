@@ -35,6 +35,7 @@ import {
   Home,
   BarChart3,
   Scale,
+  Landmark,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -54,6 +55,7 @@ const navItems: NavItem[] = [
   { label: '주문 관리', icon: ClipboardList, to: '/orders', enabled: true },
   { label: '판매자', icon: Store, to: '/sellers', enabled: true },
   { label: '혜택', icon: Ticket, to: '/promotions', enabled: true },
+  { label: '정산', icon: Landmark, to: '/settlements', enabled: true },
   { label: '코드 사전', icon: BookOpen, to: '/code-dictionary', enabled: true },
   { label: '게임 카탈로그', icon: Gamepad2, to: '/games', enabled: true },
   { label: '퀀트 자산', icon: Coins, to: '/quant/assets', enabled: true },

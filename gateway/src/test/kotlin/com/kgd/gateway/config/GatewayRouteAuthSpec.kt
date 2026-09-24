@@ -240,6 +240,32 @@ class GatewayRouteAuthSpec(
         }
     }
 
+    Given("정산 어드민 /api/v1/admin/settlements/** (ROLE_ADMIN)") {
+        Then("토큰이 없으면 401") {
+            status(HttpMethod.GET, "/api/v1/admin/settlements/statements") shouldBe 401
+            status(HttpMethod.GET, "/api/v1/admin/settlements/ledger/trial-balance") shouldBe 401
+            status(HttpMethod.POST, "/api/v1/admin/settlements/statements/1/retry-payout") shouldBe 401
+        }
+        Then("ROLE_USER·ROLE_SELLER 는 403 — 판매자도 남의 정산·시산표를 못 본다") {
+            status(HttpMethod.GET, "/api/v1/admin/settlements/statements", userToken) shouldBe 403
+            status(HttpMethod.GET, "/api/v1/admin/settlements/ledger/trial-balance", sellerToken) shouldBe 403
+            status(HttpMethod.POST, "/api/v1/admin/settlements/batch/run", sellerToken) shouldBe 403
+        }
+        Then("ROLE_ADMIN 은 게이트웨이를 지난다") {
+            status(HttpMethod.GET, "/api/v1/admin/settlements/ledger/trial-balance", adminToken) shouldNotBeIn listOf(401, 403, 404)
+        }
+    }
+
+    Given("판매자 정산서 /api/v1/seller/settlements/** (ROLE_SELLER)") {
+        Then("토큰이 없으면 401, ROLE_USER 는 403") {
+            status(HttpMethod.GET, "/api/v1/seller/settlements") shouldBe 401
+            status(HttpMethod.GET, "/api/v1/seller/settlements/1", userToken) shouldBe 403
+        }
+        Then("ROLE_SELLER 는 게이트웨이를 지난다 — ACTIVE 판매자 행·본인 정산서는 서비스가 본다") {
+            status(HttpMethod.GET, "/api/v1/seller/settlements", sellerToken) shouldNotBeIn listOf(401, 403, 404)
+        }
+    }
+
     Given("내 쿠폰·포인트 · 쿠폰 받기 (ROLE_USER)") {
         Then("토큰이 없으면 401") {
             status(HttpMethod.GET, "/api/v1/coupons/me") shouldBe 401

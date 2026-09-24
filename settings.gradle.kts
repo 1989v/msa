@@ -68,5 +68,7 @@ include(
     "payment:domain",
     "payment:feature", // ADR-0099: 결제(모의 PG·토스 어댑터) 라이브러리 (commerce:app 이 흡수, 전용 스키마 payment_db)
     "promotion:domain",
-    "promotion:feature" // ADR-0099: 혜택(쿠폰·포인트·TCC 보류) 라이브러리 (commerce:app 이 흡수, 전용 스키마 promotion_db)
+    "promotion:feature", // ADR-0099: 혜택(쿠폰·포인트·TCC 보류) 라이브러리 (commerce:app 이 흡수, 전용 스키마 promotion_db)
+    "settlement:domain",
+    "settlement:feature" // ADR-0099: 원장·정산(분개·정산서·모의 지급) 라이브러리 (commerce:app 이 흡수, 전용 스키마 settlement_db)
 )

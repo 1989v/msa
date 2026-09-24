@@ -28,6 +28,7 @@ import { BlogCategoriesPage } from '@/pages/blog/BlogCategoriesPage';
 import { BlogAuthorsPage } from '@/pages/blog/BlogAuthorsPage';
 import { SellersPage } from '@/pages/SellersPage';
 import { PromotionsPage } from '@/pages/PromotionsPage';
+import { SettlementsPage } from '@/pages/SettlementsPage';
 import { BlogCommentsPage } from '@/pages/blog/BlogCommentsPage';
 // ADR-0098 — 광고 네트워크 운영(심사·광고주·지면·문맥·HOUSE·리포트·원장)
 import { AdsReviewPage } from '@/pages/ads/AdsReviewPage';
@@ -53,6 +54,7 @@ export default function App() {
         <Route path="orders" element={<OrdersPage />} />
         <Route path="sellers" element={<SellersPage />} />
         <Route path="promotions" element={<PromotionsPage />} />
+        <Route path="settlements" element={<SettlementsPage />} />
         <Route path="code-dictionary" element={<CodeDictionaryPage />} />
         <Route path="games" element={<GamesPage />} />
         <Route path="games/suggestions" element={<GameSuggestionsPage />} />

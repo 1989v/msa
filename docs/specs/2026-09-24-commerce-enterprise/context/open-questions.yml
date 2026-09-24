@@ -85,3 +85,7 @@ questions:
     phase: post-impl
     status: open
     question: 배송비 정산은 판매자 마지막 ACTIVE 라인 확정 시 — 경계에서 line:null(CLAIM_CLOSED) 이벤트가 생긴다. 「첫 확정 라인」으로 바꾸면 경계 건이 사라짐 · 클레임은 판매자당 1건, 주문당 진행 1건(나머지 QUEUED) · 클레임 STUCK 재개 API 없음(TG15)
+  - id: Q22
+    phase: post-impl
+    status: open
+    question: settlement 는 발행 토픽이 없어 outbox 없음(SR-10 문구) · 역분개 진입점 API 없음 · 플랫폼 판매자 1 에도 모의 지급 · PG 입금 뒤 환불은 PG 미수금 음수 · 정산서 기간 표기보다 앞선 이월·지각 항목 포함

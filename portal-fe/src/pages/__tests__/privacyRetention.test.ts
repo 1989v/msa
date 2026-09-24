@@ -106,3 +106,20 @@ describe('판매자 정보 — 반려 신청 파기 기한', () => {
     expect(text.slice(at, at + 400)).toContain(`반려일로부터 ${days}일`);
   });
 });
+
+describe('정산 기록 — 보존기간', () => {
+  it('도메인 상수(SettlementStatement.RECORD_RETENTION)와 방침 6항이 같은 햇수를 말한다', () => {
+    const src = readFileSync(
+      resolve(REPO, 'settlement/domain/src/main/kotlin/com/kgd/settlement/domain/statement/model/SettlementStatement.kt'),
+      'utf-8',
+    );
+    const m = src.match(/RECORD_RETENTION: Period = Period\.ofYears\((\d+)\)/);
+    expect(m, 'RECORD_RETENTION 을 못 찾았다 — 이름이나 모양이 바뀌면 이 검사도 고친다').not.toBeNull();
+    const years = Number(m![1]);
+
+    const text = privacyText();
+    const at = text.indexOf('<strong>정산 기록</strong>');
+    expect(at, '방침 6항에 정산 기록 항목이 없다').toBeGreaterThan(0);
+    expect(text.slice(at, at + 200)).toContain(`<strong>${years}년</strong>`);
+  });
+});

@@ -166,6 +166,9 @@ export default function SellerProductsPage() {
               <Link to="/shop/seller/claims" className="shop-header-link">
                 취소 요청
               </Link>
+              <Link to="/shop/seller/settlements" className="shop-header-link">
+                정산서
+              </Link>
               {notice && (
                 <span className="seller-hint" role="status">
                   {notice}

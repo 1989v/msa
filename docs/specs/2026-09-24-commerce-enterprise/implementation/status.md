@@ -128,3 +128,10 @@
 - 운영 주문 id 1 (사용자 `ops-e2e-20260924`, 상품 81 × 1, 1,700원): 2초 CREATED → 4초 PAID → 8초 CONFIRMED → **10초 FULFILLING, 사가 COMPLETED**
 - 도메인 간 일치: payment `ORD-1-1` 1700 CAPTURED · inventory 81 available 5→4 reserved 0 · reservation CONFIRMED · fulfillment PENDING(창고 1) · order_status_history 5행 · order outbox PUBLISHED 8 · product 81 stock 4
 - 운영에 남긴 점검 데이터: 창고 id 1 `ops-check-warehouse` · 상품 81 재고 · 주문서 1·2 · 주문 1 (사용자 `ops-e2e-20260924`)
+
+## TG14 settlement 도메인 (2026-09-24)
+- `./gradlew :settlement:domain:test :settlement:feature:test :commerce:app:test --tests '*Settlement*' --tests '*CommerceContextLoad*' --tests '*ClaimE2E*' --tests '*SagaE2E*' :gateway:test --tests '*RouteAuth*' verifyArchitecture` → exit 0
+  - JournalRulesTest 9/0 · JournalTest 5/0 · SettlementCycleTest 5/0 · SettlementStatementTest 9/0 · LedgerServiceTest 5/0 · SettlementBatchServiceTest 7/0 · SettlementEventConsumerTest 2/0 · SettlementControllerTest 3/0
+  - SettlementE2ETest 2/0 (주문 → 부분 취소 → 구매 확정 → 대사 → 배치 → PAID, 지급 24,600 이 정산서·지급 분개·미지급금 감소 세 곳 일치, 시산표 0) · ClaimE2E 3/0 · OrderSagaE2E 14/0 · CommerceContextLoadSpec 9/0 · GatewayRouteAuthSpec 44/0
+- portal-fe vitest Test Files 8 · Tests 31 passed · tsc portal 0 · admin 0
+- 회귀 주입: 차=대 검사 제거 · 환불 필터 제거 · 지급 금액 변경 · 보존 3년 → 전부 빨간불

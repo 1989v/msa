@@ -372,6 +372,65 @@ class CommerceContextLoadSpec(
             }
 
         // 상품 이벤트는 직접 send 가 아니라 product_db 아웃박스 행이다 — 행이 실제로 늘었는지로 판정한다.
+        /**
+         * 원장·정산 쓰기·읽기를 settlement TM 으로 — 판매자 → 매입 거래 → 구매 확정 항목 → 배치(PAID + 지급 거래) → 조회.
+         * 값으로 판정한다: settlement_db 행, 유스케이스가 다시 읽은 정산서·시산표. (실 Kafka 경로는 SettlementE2ETest)
+         */
+        Then("정산: 매입 거래·정산 항목·정산서·지급 거래가 settlement_db 에 쓰이고 읽히며, 시산표 합이 0 이다")
+            .config(enabledIf = { dockerAvailable }) {
+                (ctx.getBean("settlementMasterDataSource") as com.zaxxer.hikari.HikariDataSource).maximumPoolSize shouldBe 3
+                listOf(
+                    "settlementEntityManagerFactory", "settlementTransactionManager", "settlementFlyway",
+                    "settlementIdempotentEventHandler", "settlementIdempotentEventCleanupScheduler",
+                    "settlementKafkaListenerContainerFactory", "settlementDltKafkaTemplate",
+                ).forEach { ctx.containsBean(it).shouldBeTrue() }
+                // scanBasePackages 에서 com.kgd.settlement 가 빠지면 기동은 되고 정산 API 만 조용히 404 다
+                listOf(
+                    com.kgd.settlement.presentation.statement.controller.SellerSettlementController::class.java,
+                    com.kgd.settlement.presentation.statement.controller.SettlementAdminController::class.java,
+                    com.kgd.settlement.presentation.ledger.controller.LedgerAdminController::class.java,
+                ).forEach { ctx.getBeansOfType(it).size shouldBe 1 }
+
+                val confirmedAt = java.time.Instant.parse("2026-01-07T03:00:00Z") // 오래전 주 — 오늘 배치에서 이미 닫힌 기간
+                ctx.getBean(com.kgd.settlement.application.seller.usecase.SyncSettlementSellerUseCase::class.java).sync(
+                    com.kgd.settlement.domain.seller.model.SettlementSeller(
+                        880L, "ctx-settlement-member", "ACTIVE", com.kgd.settlement.domain.statement.model.SettlementCycle.WEEKLY, confirmedAt,
+                    ),
+                )
+                val line = com.kgd.settlement.domain.ledger.model.LineAmounts(88_001L, 880L, 10_000L, 1_000L, 0L, 0L)
+                val ledger = ctx.getBean(com.kgd.settlement.application.ledger.usecase.RecordLedgerUseCase::class.java)
+                val capture = com.kgd.settlement.application.ledger.usecase.RecordLedgerUseCase.Capture(
+                    880_001L, 10_000L, listOf(line), emptyList(), confirmedAt, java.util.UUID.randomUUID().toString(),
+                )
+                ledger.recordCapture(capture) shouldBe true
+                ledger.recordCapture(capture) shouldBe false
+                ctx.getBean(com.kgd.settlement.application.statement.usecase.RegisterSettlementItemUseCase::class.java).register(
+                    com.kgd.settlement.application.statement.usecase.RegisterSettlementItemUseCase.PurchaseConfirmed(880_001L, line, null, confirmedAt),
+                )
+                ctx.getBean(com.kgd.settlement.application.statement.usecase.RunSettlementBatchUseCase::class.java).run().paid shouldBe 1
+
+                // 읽기 — 커밋된 행을 유스케이스로 다시 읽는다
+                val statement = ctx.getBean(com.kgd.settlement.application.statement.usecase.GetStatementsUseCase::class.java)
+                    .forSeller("ctx-settlement-member").single()
+                statement.status shouldBe com.kgd.settlement.domain.statement.model.StatementStatus.PAID
+                statement.payout shouldBe 9_000L
+                statement.lines.single().key shouldBe "line:88001"
+                val tb = ctx.getBean(com.kgd.settlement.application.ledger.usecase.GetTrialBalanceUseCase::class.java).trialBalance()
+                tb.net shouldBe 0L
+                tb.sellerPayables.single { it.sellerId == 880L }.balance shouldBe 0L
+
+                val jdbc = org.springframework.jdbc.core.JdbcTemplate(
+                    ctx.getBean("settlementMasterDataSource", javax.sql.DataSource::class.java),
+                )
+                jdbc.queryForList("SELECT type FROM ledger_journal WHERE order_id = 880001 OR source_key LIKE 'payout:%' ORDER BY id", String::class.java) shouldBe
+                    listOf("CAPTURE", "PAYOUT")
+                jdbc.queryForMap("SELECT status, payout FROM settlement_statement WHERE seller_id = 880").let {
+                    it["status"] shouldBe "PAID"
+                    it["payout"] shouldBe 9_000L
+                }
+                jdbc.queryForObject("SELECT statement_id FROM settlement_item WHERE item_key = 'line:88001'", Long::class.java) shouldBe statement.id
+            }
+
         Then("상품 등록이 product_db 아웃박스에 product.item.created 행을 남긴다")
             .config(enabledIf = { dockerAvailable }) {
                 val outbox = ctx.getBean(com.kgd.product.infrastructure.outbox.ProductOutboxRepository::class.java)
@@ -499,6 +558,7 @@ class CommerceContextLoadSpec(
                             it.execute("CREATE DATABASE IF NOT EXISTS seller_db")
                             it.execute("CREATE DATABASE IF NOT EXISTS payment_db")
                             it.execute("CREATE DATABASE IF NOT EXISTS promotion_db")
+                            it.execute("CREATE DATABASE IF NOT EXISTS settlement_db")
                         }
                     }
                 }
@@ -519,6 +579,7 @@ class CommerceContextLoadSpec(
             val seller = inv.replace("/inventory_db", "/seller_db")
             val payment = inv.replace("/inventory_db", "/payment_db")
             val promotion = inv.replace("/inventory_db", "/promotion_db")
+            val settlement = inv.replace("/inventory_db", "/settlement_db")
             // inventory (master/replica)
             for (role in listOf("master", "replica")) {
                 registry.add("spring.datasource.$role.jdbc-url") { inv }
@@ -553,6 +614,10 @@ class CommerceContextLoadSpec(
                 registry.add("spring.datasource.promotion.$role.username") { mysql.username }
                 registry.add("spring.datasource.promotion.$role.password") { mysql.password }
                 registry.add("spring.datasource.promotion.$role.driver-class-name") { "com.mysql.cj.jdbc.Driver" }
+                registry.add("spring.datasource.settlement.$role.jdbc-url") { settlement }
+                registry.add("spring.datasource.settlement.$role.username") { mysql.username }
+                registry.add("spring.datasource.settlement.$role.password") { mysql.password }
+                registry.add("spring.datasource.settlement.$role.driver-class-name") { "com.mysql.cj.jdbc.Driver" }
             }
             // deal 은 master/replica 가 아니라 단일 url 이다 — 읽기 복제본이 없다.
             // 이 키가 있어야 DealDataSourceConfig(@ConditionalOnProperty)가 켜진다.

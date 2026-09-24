@@ -70,6 +70,7 @@ class GatewayRouteConfig(
         "seller" to ("http://commerce:8085" to "/v3/api-docs/seller"),
         "payment" to ("http://commerce:8085" to "/v3/api-docs/payment"),
         "promotion" to ("http://commerce:8085" to "/v3/api-docs/promotion"),
+        "settlement" to ("http://commerce:8085" to "/v3/api-docs/settlement"),
         "gifticon" to ("http://sideapp:8095" to "/v3/api-docs/gifticon"),
         "recommendation" to ("http://engagement:8091" to "/v3/api-docs/recommendation"),
         "member" to ("http://account:8093" to "/v3/api-docs/member"),
@@ -232,6 +233,16 @@ class GatewayRouteConfig(
             // 쿠폰 정의·포인트 지급 — 어드민 전용
             .route("promotion-admin") { r ->
                 r.path("/api/v1/admin/promotions", "/api/v1/admin/promotions/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(adminConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(COMMERCE_URI)
+            }
+            // === ADR-0099 원장·정산 (commerce 폴드) ===
+            // 정산서 목록·지급 재시도·배치 실행·시산표 — 어드민 전용. 판매자 정산서(/api/v1/seller/settlements)는 seller-portal 라우트가 받는다
+            .route("settlement-admin") { r ->
+                r.path("/api/v1/admin/settlements", "/api/v1/admin/settlements/**")
                     .filters { f ->
                         f.filter(authFilter.apply(adminConfig()))
                             .stripPrefix(0)

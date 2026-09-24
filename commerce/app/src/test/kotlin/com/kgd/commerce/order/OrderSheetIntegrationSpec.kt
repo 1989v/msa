@@ -306,7 +306,7 @@ class OrderSheetIntegrationSpec(
                         conn.createStatement().use { st ->
                             listOf(
                                 "warehouse_db", "fulfillment_db", "order_db", "product_db", "deal_db", "seller_db", "payment_db",
-                                "promotion_db", "order_backfill_ok", "order_backfill_fraction",
+                                "promotion_db", "settlement_db", "order_backfill_ok", "order_backfill_fraction",
                             ).forEach { st.execute("CREATE DATABASE IF NOT EXISTS $it") }
                         }
                     }
@@ -331,7 +331,7 @@ class OrderSheetIntegrationSpec(
             }
             for (role in listOf("master", "replica")) {
                 ds("spring.datasource.$role", inv)
-                for (domain in listOf("warehouse", "fulfillment", "order", "product", "seller", "payment", "promotion")) {
+                for (domain in listOf("warehouse", "fulfillment", "order", "product", "seller", "payment", "promotion", "settlement")) {
                     ds("spring.datasource.$domain.$role", inv.replace("/inventory_db", "/${domain}_db"))
                 }
             }

@@ -205,12 +205,12 @@ Total Task Groups: 16 · 단계 P0~P7 (단계 끝마다 커밋·푸시·배포·
 **Dependencies:** Task Group 13
 **Phase:** P6
 **Required Skills:** 복식부기, 배치, React
-- [ ] 14.0 Complete settlement
-  - [ ] 14.1 테스트: 거래 차·대 불일치 예외 · 역분개 · 이벤트 id 멱등 · 지급액 = Σ순매출 + Σ배송비 − Σ수수료 = 미지급금 감소분 · 환불 라인 정산서 제외 · ≤0 CARRIED_OVER · 정산서 전이표 (7)
-  - [ ] 14.2 `settlement:domain`/`settlement:feature`, `settlement_db`, 폴드 3곳
-  - [ ] 14.3 원장 기록 컨슈머(`order.order.confirmed`·`order.claim.refunded`·`payment.reconciliation.settled`), 정산 배치(판매자 주기), 모의 송금, 지급 거래
-  - [ ] 14.4 판매자 포털 정산서 · 어드민 정산 목록
-  - [ ] 14.5 Verify: `$G :settlement:domain:test :settlement:feature:test :commerce:app:test --tests '*SettlementE2E*'`
+- [x] 14.0 Complete settlement
+  - [x] 14.1 테스트: 거래 차·대 불일치 예외 · 역분개 · 이벤트 id 멱등 · 지급액 = Σ순매출 + Σ배송비 − Σ수수료 = 미지급금 감소분 · 환불 라인 정산서 제외 · ≤0 CARRIED_OVER · 정산서 전이표 (7)
+  - [x] 14.2 `settlement:domain`/`settlement:feature`, `settlement_db`, 폴드 3곳
+  - [x] 14.3 원장 기록 컨슈머(`order.order.confirmed`·`order.claim.refunded`·`payment.reconciliation.settled`), 정산 배치(판매자 주기), 모의 송금, 지급 거래
+  - [x] 14.4 판매자 포털 정산서 · 어드민 정산 목록
+  - [x] 14.5 Verify: `$G :settlement:domain:test :settlement:feature:test :commerce:app:test --tests '*SettlementE2E*'`
 **Acceptance Criteria:** 원장 불변식 회귀 주입 빨간불 기록, 운영 정산서 1건
 
 ---

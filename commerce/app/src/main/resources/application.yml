@@ -138,6 +138,22 @@ spring:
         driver-class-name: com.mysql.cj.jdbc.Driver
         maximum-pool-size: 3
         minimum-idle: 1
+    # ADR-0099 — settlement 도메인 전용 datasource(settlement_db, 원장·정산서). order 인스턴스에 스키마만 분리한다.
+    settlement:
+      master:
+        jdbc-url: jdbc:mysql://${SETTLEMENT_DB_MASTER:localhost:3326}/settlement_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        username: ${SETTLEMENT_MYSQL_USER:settlement_user}
+        password: ${SETTLEMENT_MYSQL_PASSWORD:settlement_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        maximum-pool-size: 3
+        minimum-idle: 1
+      replica:
+        jdbc-url: jdbc:mysql://${SETTLEMENT_DB_REPLICA:localhost:3327}/settlement_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        username: ${SETTLEMENT_MYSQL_USER:settlement_user}
+        password: ${SETTLEMENT_MYSQL_PASSWORD:settlement_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        maximum-pool-size: 3
+        minimum-idle: 1
     # ADR-0093 — product 도메인 전용 datasource(카탈로그 SSOT, 스키마 격리).
     product:
       master:
@@ -253,6 +269,13 @@ promotion:
     enabled: true
   hold-expiry:
     interval-ms: 30000
+
+# ADR-0099 — 원장·정산. 정산 배치는 매일 05:30 KST(PG 대사 05:10 뒤).
+settlement:
+  flyway:
+    enabled: true
+  batch:
+    cron: "0 30 5 * * *"
 
 # 재고·혜택 예약의 보류 기한(스펙 SR-4). 사가의 피벗 전 기한 10분 + 결과 미상 재조회 최대 10분보다 길어야 한다.
 commerce:
