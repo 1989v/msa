@@ -90,6 +90,7 @@ class AtlasContextLoadSpec(
                     com.kgd.codedictionary.presentation.portfolio.controller.PortfolioCardController::class.java,
                     com.kgd.codedictionary.presentation.concept.controller.ConceptController::class.java,
                     com.kgd.codedictionary.presentation.display.controller.DisplayServiceController::class.java,
+                    com.kgd.codedictionary.presentation.graph.controller.ConceptRelationsController::class.java,
                 ).forEach { ctx.getBeanNamesForType(it).size shouldBe 1 }
             }
 

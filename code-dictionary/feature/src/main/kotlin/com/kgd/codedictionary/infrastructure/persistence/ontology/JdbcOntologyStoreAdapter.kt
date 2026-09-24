@@ -1,5 +1,7 @@
 package com.kgd.codedictionary.infrastructure.persistence.ontology
 
+import com.kgd.codedictionary.application.graph.dto.EvidenceDto
+import com.kgd.codedictionary.application.graph.port.ConceptEvidenceQueryPort
 import com.kgd.codedictionary.application.ontology.dto.OntologyState
 import com.kgd.codedictionary.application.ontology.port.OntologyStorePort
 import com.kgd.codedictionary.application.ontology.port.OntologySyncStatePort
@@ -15,7 +17,7 @@ import javax.sql.DataSource
  * 트랜잭션은 호출자가 연다 — 같은 DataSource 라 JPA 트랜잭션 매니저가 연결을 공유한다.
  */
 @Component
-class JdbcOntologyStoreAdapter(dataSource: DataSource) : OntologyStorePort, OntologySyncStatePort {
+class JdbcOntologyStoreAdapter(dataSource: DataSource) : OntologyStorePort, OntologySyncStatePort, ConceptEvidenceQueryPort {
 
     private val jdbc = JdbcTemplate(dataSource)
 
@@ -113,6 +115,14 @@ class JdbcOntologyStoreAdapter(dataSource: DataSource) : OntologyStorePort, Onto
     override fun releaseLease(owner: String) {
         jdbc.update("UPDATE ontology_state SET sync_owner = NULL, sync_lease_until = NULL WHERE id = 1 AND sync_owner = ?", owner)
     }
+
+    override fun evidenceOf(conceptId: String): List<EvidenceDto> =
+        jdbc.query("SELECT kind, ref, note FROM concept_evidence WHERE concept_id = ? ORDER BY ordinal", { rs, _ ->
+            EvidenceDto(rs.getString("kind"), rs.getString("ref"), rs.getString("note"))
+        }, conceptId)
+
+    override fun questionsOf(conceptId: String): List<String> =
+        jdbc.queryForList("SELECT question FROM concept_question WHERE concept_id = ? ORDER BY ordinal", String::class.java, conceptId)
 
     /** 빈 목록이면 부르지 않는다 — 드라이버에 따라 빈 배치가 오류가 난다 */
     private fun batch(sql: String, args: List<Array<out Any?>>) {

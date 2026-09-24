@@ -187,12 +187,18 @@ class GraphService(
                     level = concept.level.name,
                     depth = depth,
                     description = concept.description,
+                    kind = concept.kind?.name,
                 )
             }
         }
         val edges = hierarchy.edges
             .filter { it.fromConceptId in conceptsById && it.toConceptId in conceptsById }
-            .map { HierarchyEdgeDto(from = it.fromConceptId, to = it.toConceptId, kind = it.kind.name, ordinal = it.ordinal) }
+            .map {
+                HierarchyEdgeDto(
+                    from = it.fromConceptId, to = it.toConceptId, kind = it.kind.name, ordinal = it.ordinal,
+                    reason = it.reason, evidenceRef = it.evidenceRef,
+                )
+            }
 
         return ConceptHierarchyDto(
             roots = hierarchy.roots.filter { it in conceptsById },

@@ -1,0 +1,806 @@
+# 검색 도메인 온톨로지 — 원본은 이 파일이다 (ADR-0100, docs/specs/2026-09-23-concept-ontology).
+# 바꾸면 manifest.yaml 의 revision 을 올린다. 간선은 from 개념에만 적는다.
+domain: search
+root: search-system
+concepts:
+  - id: search-system
+    kind: DOMAIN
+    name: "검색 시스템"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "색인을 만드는 인제스트, 색인을 읽는 쿼리, 둘의 결과를 재는 평가 — 세 진입점으로 읽는 검색 아키텍처"
+    synonyms: ["hybrid search", "하이브리드 검색"]
+    evidence:
+      - { kind: POST, ref: search-system-concept-map, note: "검색 도메인 일반을 도식으로 정리한 글" }
+    contains: [search-ingest, search-query, search-evaluation, search-glossary]
+  - id: search-ingest
+    kind: DOMAIN
+    name: "검색 인제스트"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "원천에서 색인까지. 문서 임베딩은 이 축에서 오프라인으로 일어난다"
+    contains: [source-collection, normalization-derivation, document-embedding, index-contract, bulk-indexing]
+  - id: source-collection
+    kind: STAGE
+    name: "원천 수집"
+    category: DATA
+    level: BEGINNER
+    description: "외부 원천을 전량 또는 증분으로 받는다. 호출은 일일 한도 자원이다"
+    contains: [full-scan, incremental-backfill, api-quota]
+    flows_to: [normalization-derivation]
+  - id: full-scan
+    kind: MECHANISM
+    name: "풀스캔"
+    category: DATA
+    level: BEGINNER
+    description: "원천 전량을 다시 받는다"
+  - id: incremental-backfill
+    kind: MECHANISM
+    name: "증분 · 백필"
+    category: DATA
+    level: INTERMEDIATE
+    description: "안 받은 것만 이어 받는다. 일일 한도 안에서 며칠에 걸쳐 채운다"
+  # 상한 자체가 아니라 그것을 넘기는 상태를 피하는 대상으로 본다 — 단계 아래에는 TERM 을 둘 수 없다
+  - id: api-quota
+    kind: PROBLEM
+    name: "호출 한도"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "원천이 정한 상한. 화면 표기와 실제 한도가 다를 수 있다"
+  - id: normalization-derivation
+    kind: STAGE
+    name: "정규화 · 파생"
+    category: DATA
+    level: INTERMEDIATE
+    description: "원본은 그대로 두고 화면용 그루핑은 파생 컬럼으로 만든다"
+    contains: [raw-preservation, derived-column, taxonomy-tagging]
+    flows_to: [document-embedding]
+  - id: raw-preservation
+    kind: MECHANISM
+    name: "원본 보존"
+    category: DATA
+    level: BEGINNER
+    description: "원천 값을 가공 없이 저장한다. 다시 받으려면 한도를 또 쓴다"
+  - id: derived-column
+    kind: MECHANISM
+    name: "파생 컬럼"
+    category: DATA
+    level: BEGINNER
+    description: "가공 값은 원본을 덮지 않고 별도 컬럼으로 둔다"
+  - id: taxonomy-tagging
+    kind: MECHANISM
+    name: "분류 코드 · 태깅"
+    category: DATA
+    level: INTERMEDIATE
+    description: "필터 축이 되는 분류 코드와 태그"
+  - id: document-embedding
+    kind: STAGE
+    name: "문서 임베딩"
+    category: DATA
+    level: ADVANCED
+    description: "문서를 벡터로 바꿔 색인에 싣는다. 오프라인 배치로 미리 계산한다"
+    contains: [embedding-text-rule, embedding-model, model-stamp, offline-batch]
+    flows_to: [bulk-indexing]
+  - id: embedding-text-rule
+    kind: MECHANISM
+    name: "임베딩 텍스트 규칙"
+    category: DATA
+    level: INTERMEDIATE
+    description: "무엇을 이어 붙여 인코딩하나 — 제목 · 분류 · 주소 · 개요"
+  - id: embedding-model
+    kind: MECHANISM
+    name: "임베딩 모델"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "문서와 검색어를 같은 벡터 공간으로 보내는 모델. 양쪽이 같은 모델이어야 한다"
+    contains: [matryoshka-embedding]
+  # 차원을 잘라 쓰도록 고르는 방식이라 MECHANISM
+  - id: matryoshka-embedding
+    kind: MECHANISM
+    name: "마트료시카 임베딩"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "앞쪽 차원만 잘라 써도 뜻이 보존되게 학습한 임베딩(MRL). 2560 차원 모델을 1024 로 잘라 저장하는 식으로 메모리와 정확도를 맞바꾼다"
+    synonyms: ["MRL", "Matryoshka Representation Learning"]
+  - id: model-stamp
+    kind: MECHANISM
+    name: "모델 스탬프"
+    category: DATA
+    level: INTERMEDIATE
+    description: "벡터 공간 식별자. 모델이나 차원이 바뀌면 옛 벡터와 섞이지 않게 한다"
+  - id: offline-batch
+    kind: MECHANISM
+    name: "오프라인 배치"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "실시간 경로 밖에서 미리 계산한다"
+  # 계약(산출물)이 아니라 색인이 무엇을 받아들일지 정하는 활동으로 본다
+  - id: index-contract
+    kind: STAGE
+    name: "색인 계약"
+    category: DATA
+    level: INTERMEDIATE
+    description: "매핑 · 분석기 · 벡터 필드 — 색인이 무엇을 받아들이는지의 정의"
+    contains: [index-mapping, analyzer-tokenizer, inverse-index, vector-field]
+  - id: index-mapping
+    kind: MECHANISM
+    name: "매핑 · 필드 타입"
+    category: DATA
+    level: BEGINNER
+    description: "필드마다 keyword · text · knn_vector 같은 타입을 정한다"
+  - id: analyzer-tokenizer
+    kind: MECHANISM
+    name: "분석기 · 토크나이저"
+    category: DATA
+    level: INTERMEDIATE
+    description: "텍스트를 토큰으로 가르는 규칙. 한국어는 형태소 분석기(nori)를 쓴다"
+    contains: [analyzer-customization-layers, nori]
+  - id: analyzer-customization-layers
+    kind: MECHANISM
+    name: "형태소 분석기 커스텀 층"
+    category: DATA
+    level: INTERMEDIATE
+    description: "분해 결과를 바꾸는 손잡이 셋 — 사용자 사전(L1) · 시스템 사전 항목(L2) · 비용 재학습(L3). 층이 깊을수록 플러그인 빌드와 라벨 코퍼스가 따라온다"
+    synonyms: ["nori 커스텀"]
+    contains: [lattice-viterbi, user-dictionary, decompound-mode, system-dictionary-entry, tokenizer-cost-retraining]
+  - id: lattice-viterbi
+    kind: MECHANISM
+    name: "격자 · 비터비 · 비용"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "글자 경계마다 노드를 두고 사전 후보를 간선으로 깐 격자에서, 단어 비용 + 연접 비용의 합이 가장 낮은 경로를 비터비로 고른다. 노리는 규칙이 아니라 이 비용으로 자른다"
+    synonyms: ["Viterbi"]
+    contains: [viterbi-algorithm]
+    uses: [lattice, word-cost, connection-cost, context-id]
+  # 분석기가 돌리는 알고리즘이라 MECHANISM — 용어 사전에서 빠지고 격자·비용 용어를 USES 로 쓴다
+  - id: viterbi-algorithm
+    kind: MECHANISM
+    name: "비터비 알고리즘"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "격자에서 총비용 최소 경로를 왼쪽에서 오른쪽으로 한 번 훑어 찾는 동적 계획법. 노드마다 「여기까지의 최소 비용과 직전 간선」만 남긴다"
+    synonyms: ["Viterbi"]
+  - id: user-dictionary
+    kind: MECHANISM
+    name: "사용자 사전"
+    category: DATA
+    level: INTERMEDIATE
+    description: "분석기가 모르는 고유명사 · 복합어를 한 토큰으로 지정한다"
+    flows_to: [system-dictionary-entry]
+    uses: [surface-form]
+  - id: decompound-mode
+    kind: MECHANISM
+    name: "복합어 분해 모드"
+    category: DATA
+    level: INTERMEDIATE
+    description: "복합어를 통째로(none) · 조각만(discard, 기본값) · 둘 다(mixed) 색인할지. 색인과 질의 양쪽이 같아야 통째 토큰이 매칭된다"
+  - id: system-dictionary-entry
+    kind: MECHANISM
+    name: "시스템 사전 항목"
+    category: DATA
+    level: ADVANCED
+    description: "사전 CSV 에 품사 · 비용 · 문맥 ID 를 직접 줘서 비터비 경쟁에 정상 참여시킨다. 기존 항목의 교정 · 삭제가 되는 유일한 층이고, 플러그인을 다시 굽는다"
+    synonyms: ["mecab-ko-dic"]
+    contains: [mecab-ko-dic]
+    flows_to: [tokenizer-cost-retraining]
+  - id: mecab-ko-dic
+    kind: TECHNOLOGY
+    name: "mecab-ko-dic"
+    category: DATA
+    level: INTERMEDIATE
+    description: "MeCab 형식의 한국어 사전. 세종 말뭉치로 학습한 비용이 붙은 품사별 CSV 와 연접 비용 행렬(matrix.def) · 학습 모델(model.def)로 이뤄지고, Lucene nori 가 이것을 바이너리로 구워 쓴다"
+    synonyms: ["MeCab"]
+  - id: tokenizer-cost-retraining
+    kind: MECHANISM
+    name: "분해 비용 재학습"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "정답 분해가 붙은 도메인 코퍼스로 비용표(CRF)를 다시 배운다. 형태소 분석기의 「지도학습」은 이 층을 가리킨다. 라벨 코퍼스가 없으면 착수가 아니다"
+    contains: [crf, sejong-corpus]
+  # 비용을 학습하는 모델이라 MECHANISM — 용어 사전에서 빠진다
+  - id: crf
+    kind: MECHANISM
+    name: "CRF"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "조건부 무작위장(Conditional Random Field). 문장 전체를 보고 각 위치의 라벨(형태소 경계·품사) 열을 확률로 매기는 판별 모델. MeCab 계열은 학습한 CRF 가중치를 단어 비용·연접 비용으로 바꿔 사전에 굽는다"
+    synonyms: ["Conditional Random Field", "조건부 무작위장"]
+  - id: sejong-corpus
+    kind: TECHNOLOGY
+    name: "세종 말뭉치"
+    category: DATA
+    level: BEGINNER
+    description: "21세기 세종계획 말뭉치. 형태소·품사가 사람 손으로 달린 대규모 한국어 코퍼스로, 범용 형태소 분석기 비용의 원천이다. 신문·소설 분포라 도메인 용어는 일반어 조각으로 갈린다"
+  - id: nori
+    kind: TECHNOLOGY
+    name: "nori"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "Lucene 한국어 형태소 분석기. mecab-ko-dic 을 바이너리 사전으로 구워 격자를 깔고 비터비로 최소 비용 분해를 고른다"
+    implements:
+      - { to: lattice-viterbi, reason: "nori 토크나이저가 mecab-ko-dic 비용으로 격자·비터비를 돈다" }
+      - { to: user-dictionary, reason: "user_dictionary_rules 로 사용자 사전 항목을 싣는다(비용 고정 −100000)" }
+  - id: inverse-index
+    kind: MECHANISM
+    name: "역인덱싱"
+    category: DATA
+    level: INTERMEDIATE
+    description: "단어→문서 매핑으로 전문 검색을 가능하게 하는 인덱스 구조"
+    synonyms: ["inverted index", "역색인"]
+  - id: vector-field
+    kind: MECHANISM
+    name: "벡터 필드"
+    category: DATA
+    level: ADVANCED
+    description: "벡터를 담는 필드와 그 근사 탐색 구조"
+    contains: [hnsw, vector-quantization]
+  - id: hnsw
+    kind: MECHANISM
+    name: "HNSW"
+    category: DATA_STRUCTURE
+    level: ADVANCED
+    description: "계층 그래프로 벡터 근사 최근접을 찾는 자료구조"
+    synonyms: ["Hierarchical Navigable Small World"]
+    contains: [vector-quantization, hnsw-parameters]
+  - id: vector-quantization
+    kind: MECHANISM
+    name: "벡터 양자화"
+    category: DATA
+    level: ADVANCED
+    description: "저장된 벡터를 1-bit · int8 로 눌러 상주 메모리를 줄인다(1-bit 는 32×). 모델 가중치 양자화와 다른 축이고, 정밀도 손실은 재채점으로 메운다"
+    synonyms: ["BBQ", "Better Binary Quantization", "1-bit quantization"]
+    evidence:
+      - { kind: RECORD, ref: msa-opensearch-memory-and-quantization-record, note: "관광지 색인 1-bit + rescore 적용 기록" }
+    contains: [rescore-oversample]
+    affects:
+      - { to: search-node-memory, reason: "1-bit(encoder sq, bits 1)면 벡터 상주 크기가 float32 대비 1/32 — 관광지 색인에 적용", evidence: msa-opensearch-memory-and-quantization-record }
+      - { to: recall-precision, reason: "↓ 폭은 rescore oversample 3.0 으로 되찾는다 — 관광지 판정 세트 nDCG 재측정 대기", evidence: msa-opensearch-memory-and-quantization-record }
+    mitigates:
+      - { to: page-cache-eviction, reason: "색인 한 벌이 작아져 페이지 캐시에 남는다 — kNN 112초 → 1.65초(콜드)는 한도 증설과 함께 잰 값", evidence: msa-opensearch-memory-and-quantization-record }
+  - id: rescore-oversample
+    kind: MECHANISM
+    name: "재채점 · 오버샘플"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "양자화 벡터로 k 의 몇 배를 뽑은 뒤 원본 벡터로 다시 채점해 상위 k 를 낸다. 배수를 올리면 정확도가 오르고 지연이 는다"
+    synonyms: ["oversample factor"]
+  # 고르는 파라미터 세트라 MECHANISM
+  - id: hnsw-parameters
+    kind: MECHANISM
+    name: "HNSW 파라미터"
+    category: DATA_STRUCTURE
+    level: ADVANCED
+    description: "m(노드당 이웃 수) · ef_construction(색인 때 탐색 폭) · ef_search(질의 때 탐색 폭). 올리면 재현율과 메모리·지연이 같이 오른다"
+    synonyms: ["ef_search"]
+    affects:
+      - { to: recall-precision, reason: "m·ef 를 올리면 재현율 ↑, 대신 메모리·지연 ↑" }
+  - id: bulk-indexing
+    kind: STAGE
+    name: "벌크 인덱싱"
+    category: DATA
+    level: INTERMEDIATE
+    description: "대량 데이터를 한 번에 색인하는 기법"
+    contains: [index-rebuild, alias-swap, reindex-count-gate, partial-index-live]
+  - id: index-rebuild
+    kind: MECHANISM
+    name: "새 인덱스 생성"
+    category: DATA
+    level: INTERMEDIATE
+    description: "기존 색인을 고치지 않고 새 색인을 만든 뒤 별칭을 옮긴다"
+    flows_to: [alias-swap]
+    causes:
+      - { to: partial-index-live, reason: "벌크가 도중에 죽어도 별칭을 넘기면 덜 찬 색인이 라이브 — 2026-09-22 45,535/59,735건", evidence: msa-opensearch-memory-and-quantization-record }
+  - id: alias-swap
+    kind: MECHANISM
+    name: "별칭 스왑"
+    category: DATA
+    level: INTERMEDIATE
+    description: "ES에서 새 인덱스를 미리 빌드하고 별칭을 전환하여 무중단 재색인하는 기법"
+  - id: reindex-count-gate
+    kind: MECHANISM
+    name: "재색인 건수 게이트"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "새 인덱스의 문서 수와 벌크 오류율이 하한을 넘을 때만 별칭을 옮긴다"
+    mitigates:
+      - { to: partial-index-live, reason: "문서 수·벌크 오류율 하한을 못 넘으면 별칭을 옮기지 않는다" }
+  - id: partial-index-live
+    kind: PROBLEM
+    name: "덜 찬 색인 라이브"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "재색인 벌크가 도중에 죽었는데 별칭이 새 인덱스로 넘어가 일부 문서만 든 색인이 서비스되는 상태"
+  - id: search-query
+    kind: DOMAIN
+    name: "검색어 파이프라인"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "검색어가 결과가 되기까지 — 쿼리 언더스탠딩 · 후보 생성 · 융합 · 후처리"
+    contains: [query-understanding, search-lexicon, query-embedding, candidate-generation, rank-fusion, post-ranking]
+  - id: query-understanding
+    kind: STAGE
+    name: "쿼리 언더스탠딩"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "검색어에서 뜻을 읽어 필터와 잔여 검색어로 가른다"
+    synonyms: ["query understanding"]
+    contains: [query-normalization, morphological-analysis, keyword-type-classification, intent-to-filter]
+    flows_to: [candidate-generation]
+  - id: query-normalization
+    kind: MECHANISM
+    name: "정규화"
+    category: ALGORITHM
+    level: BEGINNER
+    description: "대소문자 · 공백 · 기호를 통일한다"
+  - id: morphological-analysis
+    kind: STAGE
+    name: "형태소 분석"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "조사 · 어미를 떼고 어간을 남긴다. 「아이와」가 「아이」+「와」로 갈리는 노이즈도 여기서 난다"
+    contains: [analyzer-customization-layers]
+    uses: [morpheme, pos-tag]
+  - id: keyword-type-classification
+    kind: MECHANISM
+    name: "키워드 유형 분류"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "검색어를 유형 · 분류 · 대상 · 스톱워드로 가른다"
+  - id: intent-to-filter
+    kind: MECHANISM
+    name: "의도 → 필터 승격"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "뜻을 검색어에서 빼 필터로 옮긴다. BM25 레그에만 걸고 벡터 레그는 원문을 받는다"
+  # 산출물 이름이지만 사전을 만들고 고치는 활동으로 STAGE 에 둔다 — 도메인 바로 아래는 STAGE·TERM 만 허용
+  - id: search-lexicon
+    kind: STAGE
+    name: "검색 사전"
+    category: DATA
+    level: INTERMEDIATE
+    description: "동의어 · 사용자 사전 · 스톱워드. 원천 코드표에서 유도하면 손으로 안 쓴다"
+    contains: [synonym-dictionary, user-dictionary, stopword, lexicon-from-source-codes]
+  - id: synonym-dictionary
+    kind: MECHANISM
+    name: "동의어 사전"
+    category: DATA
+    level: BEGINNER
+    description: "다른 말을 같은 것으로 묶는다"
+  - id: stopword
+    kind: MECHANISM
+    name: "스톱워드"
+    category: DATA
+    level: BEGINNER
+    description: "검색에 뜻이 없는 말을 뺀다"
+    synonyms: ["불용어"]
+  - id: lexicon-from-source-codes
+    kind: MECHANISM
+    name: "원천 코드표 유도"
+    category: DATA
+    level: INTERMEDIATE
+    description: "원천의 분류 코드표(한 · 영 이름 쌍)에서 사전을 만든다"
+  - id: query-embedding
+    kind: STAGE
+    name: "쿼리 임베딩"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "검색어를 실시간으로 벡터화한다. 같은 검색어는 다시 만들지 않는다"
+    contains: [live-encoding, embedding-model, query-vector-ledger]
+    flows_to: [candidate-generation]
+  - id: live-encoding
+    kind: MECHANISM
+    name: "라이브 인코딩"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "요청 경로에서 임베딩 모델을 부른다. 지연 예산의 대부분을 먹는다"
+  - id: query-vector-ledger
+    kind: MECHANISM
+    name: "벡터 캐시 · 원장"
+    category: DATA
+    level: INTERMEDIATE
+    description: "만든 쿼리 벡터를 저장해 같은 검색어를 다시 인코딩하지 않는다"
+    measured_by:
+      - { to: cache-hit-rate, reason: "같은 질의를 다시 인코딩하지 않은 비율" }
+  - id: candidate-generation
+    kind: STAGE
+    name: "후보 생성"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "스파스와 덴스, 두 레그가 각자 상위 후보를 낸다"
+    contains: [bm25, ann-search, opensearch]
+    flows_to: [rank-fusion]
+    measured_by:
+      - { to: recall-precision, reason: "후보 단계는 놓친 정답(재현율)을 잰다" }
+      - { to: latency-percentile, reason: "레그별 P99 로 후보 생성이 지연 예산 안인지 본다" }
+  - id: bm25
+    kind: MECHANISM
+    name: "스파스 · BM25"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "글자가 맞는 것을 찾는다. 고유명사 · 정확 일치에 강하다"
+    synonyms: ["BM25", "sparse retrieval"]
+    alternative_to:
+      - { to: ann-search, reason: "글자가 맞는 것 대 뜻이 가까운 것 — 둘 다 쓰고 순위로 섞는다" }
+  - id: ann-search
+    kind: MECHANISM
+    name: "덴스 · ANN"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "뜻이 가까운 것을 벡터 근사 최근접 탐색으로 찾는다"
+    synonyms: ["approximate nearest neighbor", "dense retrieval", "kNN"]
+    contains: [hnsw]
+    uses: [cosine-similarity]
+    measured_by:
+      - { to: fallback-rate, reason: "인코더가 죽어 벡터 레그가 꺼지고 BM25 만 나간 비율" }
+  - id: opensearch
+    kind: TECHNOLOGY
+    name: "OpenSearch"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "검색 엔진. BM25 역인덱스와 HNSW 벡터 색인을 한 색인에 함께 든다"
+    implements:
+      - { to: bm25, reason: "text 필드의 기본 유사도가 BM25 다" }
+      - { to: ann-search, reason: "k-NN 플러그인이 knn_vector 필드를 HNSW 로 탐색한다" }
+  - id: rank-fusion
+    kind: STAGE
+    name: "융합"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "점수 스케일이 다른 두 후보 목록을 순위로 합친다"
+    contains: [rrf]
+    flows_to: [post-ranking]
+    measured_by:
+      - { to: ndcg, reason: "융합 결과 상위 10 을 등급 판정으로 잰다" }
+  - id: rrf
+    kind: MECHANISM
+    name: "RRF"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "Reciprocal Rank Fusion — 각 목록의 순위 역수를 더해 합친다"
+    synonyms: ["Reciprocal Rank Fusion"]
+  - id: post-ranking
+    kind: STAGE
+    name: "후처리"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "융합된 상위를 다시 채점하거나 다양성 · 비즈니스 규칙을 건다"
+    contains: [reranking, diversity-business-rules]
+  - id: reranking
+    kind: MECHANISM
+    name: "리랭킹"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "상위 후보만 무거운 모델로 다시 채점한다. GPU 없이는 성립하지 않는다"
+    synonyms: ["reranker"]
+    contains: [learning-to-rank]
+  - id: learning-to-rank
+    kind: MECHANISM
+    name: "Learning to Rank"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "(쿼리, 문서, 등급) 라벨로 재정렬 함수를 배운다. LambdaMART 같은 트리 모델은 GPU 없이 상위 N 을 몇 ms 에 다시 채점한다. 토큰이 어긋난 문서는 여기까지 오지 않는다"
+    synonyms: ["LTR", "LambdaMART"]
+    contains: [query-level-cross-validation]
+    uses: [ranking-features, ltr-loss-families]
+  - id: query-level-cross-validation
+    kind: MECHANISM
+    name: "쿼리 단위 교차검증"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "쿼리 단위로 fold 를 나누는 교차검증. 같은 쿼리의 문서가 학습·검증에 갈라지면 점수가 새어 과대평가된다"
+  - id: diversity-business-rules
+    kind: MECHANISM
+    name: "다양성 · 비즈니스 규칙"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "같은 것만 몰리지 않게 하고 운영 규칙(가중치 · 제외)을 건다"
+  - id: search-evaluation
+    kind: DOMAIN
+    name: "검색 평가"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "오프라인은 판정 세트가, 온라인은 트래픽이 필요하다"
+    contains: [judgment-set-building, offline-evaluation, online-evaluation, search-ops-monitoring]
+  - id: judgment-set-building
+    kind: STAGE
+    name: "판정 세트 구축"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "쿼리마다 후보를 모아 사람이 등급을 매겨 판정 세트를 만든다. 풀링으로 후보를 모으고 커버리지로 빈틈을 잰다"
+    contains: [pooling, judgment-coverage, click-weak-labels, position-bias]
+    flows_to: [offline-evaluation]
+    uses: [graded-relevance]
+  - id: pooling
+    kind: MECHANISM
+    name: "풀링"
+    category: TESTING
+    level: ADVANCED
+    description: "여러 시스템의 상위를 모아 판정한다. 만든 시스템에만 공정한 편향을 줄인다"
+  - id: judgment-coverage
+    kind: METRIC
+    name: "커버리지"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "결과 중 판정된 비율. 낮으면 비교가 거짓이다"
+  - id: click-weak-labels
+    kind: MECHANISM
+    name: "클릭 약지도 라벨"
+    category: DATA
+    level: INTERMEDIATE
+    description: "노출 · 클릭 원장에서 관련도 라벨을 만든다. 사람 판정보다 싸지만 위치 편향이 섞여 있어 그대로 쓰면 1위를 1위라서 배운다"
+    synonyms: ["weak supervision"]
+  - id: position-bias
+    kind: PROBLEM
+    name: "위치 편향"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "위에 있는 결과가 맞아서가 아니라 위에 있어서 눌린다. 클릭을 라벨이나 보상으로 쓰려면 노출 성향으로 나눠야 한다"
+    synonyms: ["position bias"]
+  # 옛 offline-metrics(지표 묶음)를 평가 활동으로 바꾼 새 개념 — 옛 행은 관리 해제 뒤 어드민 삭제
+  - id: offline-evaluation
+    kind: STAGE
+    name: "오프라인 평가"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "판정 세트로 순위를 채점한다 — nDCG·재현율을 트래픽 없이 잰다"
+    contains: [ndcg, recall-precision]
+    flows_to: [online-evaluation]
+    uses: [judgment-set]
+  - id: ndcg
+    kind: METRIC
+    name: "nDCG"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "순위 위치를 할인해 더한 이득을 이상적 순위로 나눈 값"
+    synonyms: ["Normalized Discounted Cumulative Gain"]
+  - id: recall-precision
+    kind: METRIC
+    name: "재현율 · 정밀도"
+    category: TESTING
+    level: BEGINNER
+    description: "찾아야 할 것 중 찾은 비율과 찾은 것 중 맞는 비율"
+  - id: online-evaluation
+    kind: STAGE
+    name: "온라인 평가"
+    category: TESTING
+    level: ADVANCED
+    description: "실제 트래픽으로 두 시스템을 비교한다"
+    contains: [interleaving, ab-test, impression-click-ledger, propensity-logging, off-policy-evaluation, bandit-exploration]
+  - id: interleaving
+    kind: MECHANISM
+    name: "인터리빙"
+    category: TESTING
+    level: ADVANCED
+    description: "두 시스템의 결과를 섞어 보여주고 클릭으로 가른다. A/B 보다 적은 트래픽으로 판정한다"
+    contains: [team-draft-interleaving]
+    alternative_to:
+      - { to: ab-test, reason: "인터리빙은 한 목록 안에서 비교해 A/B 보다 적은 트래픽으로 판정한다" }
+  - id: team-draft-interleaving
+    kind: MECHANISM
+    name: "팀 드래프트 인터리빙"
+    category: TESTING
+    level: ADVANCED
+    description: "두 랭커가 번갈아 상위 문서를 뽑아 한 목록으로 섞고, 클릭이 어느 팀 문서에 갔는지로 승자를 가른다. A/B 보다 적은 트래픽으로 판정한다"
+    synonyms: ["team draft"]
+  - id: ab-test
+    kind: MECHANISM
+    name: "A/B 테스트"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "사용자를 나눠 두 시스템에 보내고 지표를 비교한다"
+  - id: impression-click-ledger
+    kind: MECHANISM
+    name: "노출 · 클릭 원장"
+    category: DATA
+    level: INTERMEDIATE
+    description: "대상 × 동작 두 축(entity_type · action)과 계층 위치(screen · section · item_index)로 남긴 노출과 클릭. 온라인 학습과 CTR 지표의 유일한 원천"
+    flows_to: [propensity-logging]
+  - id: propensity-logging
+    kind: MECHANISM
+    name: "탐색 · 성향 로깅"
+    category: DATA
+    level: ADVANCED
+    description: "노출 순서를 정한 정책과 그 선택 확률을 원장에 같이 남긴다. 가끔(ε) 순서를 섞어야 다른 정책의 결과를 나중에 추정할 수 있다. 트래픽이 오기 전에 깔아야 한다"
+    synonyms: ["propensity"]
+    flows_to: [off-policy-evaluation]
+    mitigates:
+      - { to: position-bias, reason: "노출 확률을 함께 적어 두면 위치 때문에 받은 클릭을 역가중할 수 있다" }
+  - id: off-policy-evaluation
+    kind: MECHANISM
+    name: "오프폴리시 평가"
+    category: TESTING
+    level: ADVANCED
+    description: "로그를 남긴 정책과 다른 정책을 냈으면 지표가 얼마였을지 성향 역수 가중(IPS · SNIPS)으로 추정한다. 배포 없이 새 랭커를 온라인 지표로 잰다"
+    synonyms: ["IPS", "counterfactual evaluation"]
+    contains: [inverse-propensity-scoring]
+    flows_to: [bandit-exploration]
+  - id: inverse-propensity-scoring
+    kind: MECHANISM
+    name: "성향 역수 가중"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "로그 정책이 그 노출을 고를 확률(성향)의 역수로 가중해 다른 정책의 지표를 추정한다(IPS). SNIPS 는 가중치 합으로 나눠 분산을 줄인다"
+    synonyms: ["IPS", "SNIPS"]
+    mitigates:
+      - { to: position-bias, reason: "성향의 역수로 가중해 윗자리 클릭의 과대 몫을 되돌린다" }
+  - id: bandit-exploration
+    kind: MECHANISM
+    name: "밴딧 · 탐색"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "팔(노출 후보)마다 보상 분포를 갖고 Thompson Sampling 으로 고른다. 확실한 팔을 쓰면서 불확실한 팔을 시험한다. 보상이 즉시 오는 1단계 문제라 강화학습 본체는 쓰지 않는다"
+    synonyms: ["Thompson Sampling", "multi-armed bandit"]
+    contains: [contextual-bandit]
+    uses: [exploration-exploitation, beta-bernoulli-conjugate]
+  - id: contextual-bandit
+    kind: MECHANISM
+    name: "컨텍스추얼 밴딧"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "팔의 보상을 문맥(시간대 · 기기 · 이전 클릭)의 함수로 배운다(LinUCB). 팔당 노출이 수백 건은 쌓인 뒤의 일이다"
+    synonyms: ["LinUCB"]
+  # 옛 search-ops-metrics(지표 묶음)를 관측 활동으로 바꾼 새 개념 — 옛 행은 관리 해제 뒤 어드민 삭제
+  - id: search-ops-monitoring
+    kind: STAGE
+    name: "운영 관측"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "운영 중 검색이 느려지거나 벡터 레그가 꺼지는지, 노드 메모리가 한도에 닿는지 지표로 지켜본다"
+    contains: [latency-percentile, fallback-rate, cache-hit-rate, impression-click-ledger, search-node-memory, page-cache-eviction]
+  - id: latency-percentile
+    kind: METRIC
+    name: "지연 · P99"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "상위 백분위 지연. 평균은 꼬리를 숨긴다"
+  - id: fallback-rate
+    kind: METRIC
+    name: "폴백률"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "벡터 레그가 꺼져 BM25 만 돈 비율"
+  - id: cache-hit-rate
+    kind: METRIC
+    name: "캐시 적중률"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "캐시에서 답한 요청의 비율"
+  - id: search-node-memory
+    kind: METRIC
+    name: "검색 노드 메모리"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "한도 = JVM 힙 + 힙 밖 네이티브(~1 GB) + 색인 한 벌의 페이지 캐시. 캐시가 0 이 되면 벡터 파일이 질의마다 디스크에서 올라와 kNN 만 100초대가 된다"
+    evidence:
+      - { kind: RECORD, ref: msa-opensearch-memory-and-quantization-record, note: "한도 1536Mi → 2560Mi 전후 실측" }
+  - id: page-cache-eviction
+    kind: PROBLEM
+    name: "페이지 캐시 밀림"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "힙 밖 익명 메모리가 컨테이너 한도를 채워 색인 파일의 페이지 캐시가 밀리는 상태. 벡터 탐색이 매 질의 디스크를 읽어 수십 초로 느려진다"
+  - id: search-glossary
+    kind: TERM
+    name: "검색 용어 사전"
+    category: BASICS
+    level: BEGINNER
+    description: "검색 계층을 읽는 데 필요한 말. 단계·장치가 아니라 그것을 설명하는 용어를 모은다. 용어는 쓰이는 장치 아래에도 같이 걸린다"
+    synonyms: ["glossary", "용어집"]
+    contains: [glossary-morphology, glossary-vector, glossary-learning]
+  - id: glossary-morphology
+    kind: TERM
+    name: "형태소 분석 용어"
+    category: BASICS
+    level: BEGINNER
+    description: "한국어 형태소 분석기(nori · MeCab 계열)가 단어를 자르는 원리와 사전 형식의 말"
+    contains: [morpheme, surface-form, pos-tag, lattice, word-cost, connection-cost, context-id]
+  - id: morpheme
+    kind: TERM
+    name: "형태소"
+    category: BASICS
+    level: BEGINNER
+    description: "뜻을 가진 가장 작은 단위. 「먹었다」= 먹 + 었 + 다. 형태소 분석은 문장을 이 단위와 품사로 가른다"
+  - id: surface-form
+    kind: TERM
+    name: "표층형"
+    category: BASICS
+    level: BEGINNER
+    description: "문장에 실제로 나타난 글자열. 사전은 표층형으로 찾고, 활용형은 기본형과 다를 수 있다. 사용자 사전 항목은 표층형이 맞을 때만 걸린다"
+    synonyms: ["surface form"]
+  - id: pos-tag
+    kind: TERM
+    name: "품사 태그"
+    category: DATA
+    level: BEGINNER
+    description: "한국어 분석기는 세종 품사 체계를 쓴다 — NNG 일반명사 · NNP 고유명사 · NR 수사 · MAG 일반부사 · VV 동사 … 품사 필터와 동의어 규칙이 이 태그를 본다. 같은 글자도 문맥 비용에 따라 다른 태그를 받는다"
+    synonyms: ["POS tag", "세종 품사"]
+  - id: lattice
+    kind: TERM
+    name: "격자"
+    category: DATA_STRUCTURE
+    level: INTERMEDIATE
+    description: "글자 경계마다 노드를 두고 사전에 있는 후보 단어를 간선으로 깐 그래프. 형태소 분석의 탐색 공간이고, 사전에 없는 단어는 간선 자체가 없다"
+    synonyms: ["lattice"]
+    flows_to: [word-cost]
+  - id: word-cost
+    kind: TERM
+    name: "단어 비용"
+    category: DATA
+    level: INTERMEDIATE
+    description: "사전 항목마다 붙은 비용. 낮을수록 그 분해를 선호한다. 사용자 사전 항목은 −100000 으로 고정돼 경쟁 없이 이긴다"
+    flows_to: [connection-cost]
+  - id: connection-cost
+    kind: TERM
+    name: "연접 비용"
+    category: DATA
+    level: INTERMEDIATE
+    description: "앞 단어의 우 문맥 ID 와 뒤 단어의 좌 문맥 ID 로 행렬(matrix.def)에서 찾는 이음 비용. 「명사 뒤에 조사」 같은 품사 연쇄의 자연스러움을 값으로 갖는다"
+    synonyms: ["matrix.def"]
+  - id: context-id
+    kind: TERM
+    name: "문맥 ID"
+    category: DATA
+    level: INTERMEDIATE
+    description: "사전 항목의 좌·우 문맥 ID. 품사 계열과 받침 유무로 정해지며(left-id.def · right-id.def) 연접 비용표의 행·열 키다"
+    synonyms: ["left-id · right-id"]
+  - id: glossary-vector
+    kind: TERM
+    name: "벡터 검색 용어"
+    category: BASICS
+    level: BEGINNER
+    description: "임베딩과 근사 최근접 탐색의 말"
+    contains: [cosine-similarity]
+  - id: cosine-similarity
+    kind: TERM
+    name: "코사인 유사도"
+    category: ALGORITHM
+    level: BEGINNER
+    description: "두 벡터의 각도로 재는 유사도(내적 ÷ 크기의 곱). 정규화된 벡터에선 내적과 같다. 벡터 검색의 기본 거리"
+    synonyms: ["cosine"]
+  - id: glossary-learning
+    kind: TERM
+    name: "학습 · 평가 용어"
+    category: BASICS
+    level: BEGINNER
+    description: "랭킹 학습 · 온라인 학습 · 오프폴리시 평가의 말"
+    contains: [ltr-loss-families, exploration-exploitation, beta-bernoulli-conjugate, judgment-set, graded-relevance, ranking-features]
+  - id: ltr-loss-families
+    kind: TERM
+    name: "랭킹 손실 세 갈래"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "포인트와이즈(문서 하나의 점수) · 페어와이즈(두 문서의 순서) · 리스트와이즈(목록 전체 지표). LambdaMART 는 nDCG 변화량을 그래디언트에 넣는 리스트와이즈 계열"
+    synonyms: ["listwise", "pairwise"]
+  - id: exploration-exploitation
+    kind: TERM
+    name: "탐색 · 활용"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "확실히 좋은 팔을 쓰는 것(활용)과 불확실한 팔을 시험하는 것(탐색)의 균형. 탐색이 0 이면 새 후보는 영영 못 올라온다"
+    synonyms: ["explore-exploit"]
+  - id: beta-bernoulli-conjugate
+    kind: TERM
+    name: "베타-베르누이 켤레"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "클릭/노출 같은 성공·실패 관측에 베타 분포 사전을 두면 사후도 베타 분포다(α = 클릭 + α₀, β = 비클릭 + β₀). Thompson Sampling 이 팔마다 여기서 표본을 뽑아 순서를 정한다"
+    synonyms: ["Beta-Bernoulli"]
+  # 산출물(정답지)은 TERM, 만드는 활동은 judgment-set-building(STAGE)
+  - id: judgment-set
+    kind: TERM
+    name: "판정 세트"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "쿼리마다 어떤 문서가 얼마나 맞는지 적은 정답지"
+  - id: graded-relevance
+    kind: TERM
+    name: "등급 척도"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "0–3 등급으로 매긴다. 이진 척도와 교차 확인한다"
+  - id: ranking-features
+    kind: TERM
+    name: "랭킹 피처"
+    category: DATA
+    level: INTERMEDIATE
+    description: "리랭커가 보는 값 — 융합 점수 · 제목 일치 · 의도 일치 · 문서 완성도. 학습 피처와 서빙 피처가 같아야 한다. 서빙에서 못 얻는 값은 학습에서도 뺀다"
