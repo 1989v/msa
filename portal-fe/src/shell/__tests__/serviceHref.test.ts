@@ -25,6 +25,7 @@ describe('resolveServiceHref', () => {
     // ADR-0066 체크리스트 ④ — 이 줄이 빠지면 타일이 apex 경로를 걸고 hover·링크복사·
     // 새 탭·크롤러가 전부 apex 에 머문다
     expect(resolveServiceHref('blog', '/blog')).toBe('https://blog.1989v.com/');
+    expect(resolveServiceHref('ads', '/ads')).toBe('https://ads.1989v.com/');
   });
 
   it('로컬에서는 상대 경로 그대로 — 개발 중에 프로덕션으로 튀지 않는다', async () => {

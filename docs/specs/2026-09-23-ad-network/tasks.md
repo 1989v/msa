@@ -196,14 +196,16 @@ Total Task Groups: 13
 **Dependencies:** Task Group 10
 **Phase:** R3
 **Required Skills:** react, typescript, admin-fe
-- [ ] 11.0 Complete 콘솔·어드민
-  - [ ] 11.1 목표 이미지 — 콘솔 대시보드·캠페인 편집 시안 확인
-  - [ ] 11.2 테스트 3개: F6(`privacyRetention` 이 ads 상수 파일 `ads/feature/src/main/kotlin/com/kgd/ads/infrastructure/config/AdsRetention.kt` 의 `VISITOR_FREQUENCY_TTL_HOURS` 를 읽고 `RETENTION_RUNNERS` 에 추가 — 헬퍼가 시간 단위도 읽게) [test C-6] · F7(콘솔 `noindex`·첫 화면 3종) · 어드민 심사 큐 렌더(광고주 문자열 텍스트)
-  - [ ] 11.3 `ads.1989v.com` — ingress host+TLS hosts(`commerce-proxied` 안) · `App.tsx` 분기 · 프리렌더 `_hosts/$host` · `serviceHref.ts` · `noindex` · `ADSENSE_HOSTS` 제외
-  - [ ] 11.4 콘솔 화면 6종 + 「가상 크레딧 — 실제 결제 없음」
-  - [ ] 11.5 admin-fe 메뉴 7종(`Sidebar.tsx`·`App.tsx`·`api/ads.ts`)
-  - [ ] 11.6 `/privacy` §6 문구
-  - [ ] 11.7 Verify: `cd portal-fe && npx vitest run src/pages/ads src/seo/privacyRetention.test.ts && npx tsc --noEmit -p tsconfig.app.json` · `cd admin/frontend && npx vitest run src/pages/ads && npx tsc --noEmit -p .`
+- [x] 11.0 Complete 콘솔·어드민
+  - [x] 11.1 목표 이미지 — 콘솔 대시보드·캠페인 편집 시안 확인
+  - [x] 11.2 테스트 3개: F6(`privacyRetention` 이 ads 상수 파일 `ads/feature/src/main/kotlin/com/kgd/ads/infrastructure/config/AdsRetention.kt` 의 `VISITOR_FREQUENCY_TTL_HOURS` 를 읽고 `RETENTION_RUNNERS` 에 추가 — 헬퍼가 시간 단위도 읽게) [test C-6] · F7(콘솔 `noindex`·첫 화면 3종) · 어드민 심사 큐 렌더(광고주 문자열 텍스트)
+  - [x] 11.3 `ads.1989v.com` — ingress host+TLS hosts(`commerce-proxied` 안) · `App.tsx` 분기 · 프리렌더 `_hosts/$host` · `serviceHref.ts` · `noindex` · `ADSENSE_HOSTS` 제외
+  - [x] 11.4 콘솔 화면 6종 + 「가상 크레딧 — 실제 결제 없음」
+  - [x] 11.5 admin-fe 메뉴 7종(`Sidebar.tsx`·`App.tsx`·`api/ads.ts`)
+  - [x] 11.6 `/privacy` §6 문구
+  - [x] 11.7 Verify: `cd portal-fe && npx vitest run src/pages/ads src/seo/privacyRetention.test.ts && npx tsc --noEmit -p tsconfig.app.json` · `cd admin/frontend && npx vitest run src/pages/ads && npx tsc --noEmit -p .`
+  - [ ] 11.8 (후속) 저장 거절 사유를 콘솔에 — ads 전용 `@RestControllerAdvice` 가 도메인 문구를 내려준다(common 의 GlobalExceptionHandler 는 문구를 버린다) · 충전 멱등 키는 성공·확정 거절까지 유지 · 대시보드에 오늘 충전 누계와 한도
+> 구현 기록(2026-09-24): 콘솔 경로 `/`·`/top-up`·`/campaigns/new`·`/campaigns/:id`·`/reports`, apex `/ads` 는 ads 호스트로 · noindex 는 메타 + nginx `X-Robots-Tag` + `robots.txt Disallow` + 프리렌더 메타 · ads 호스트는 탭바 숨김 · F6 상수는 `AdsRedisKeys.kt`(헬퍼가 `_HOURS`/`_DAYS` 로 단위를 붙인다) · CDP 4조합 대비 최저 4.82, 한글 모노 0 · 회귀 주입 4건 빨간불
 **Acceptance Criteria:**
 - 콘솔로 E1 흐름을 끝까지 수행 가능, 방침 숫자 = 상수
 

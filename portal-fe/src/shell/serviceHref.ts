@@ -1,4 +1,5 @@
 import {
+  ADS_ORIGIN,
   BLOG_ORIGIN,
   DEAL_ORIGIN,
   GAME_ORIGIN,
@@ -25,6 +26,7 @@ export const isApexProd = window.location.hostname === '1989v.com';
  * App.tsx 의 호스트 리다이렉트는 주소를 직접 친 방문자를 위한 안전망으로 남는다.
  */
 const SUBDOMAIN_ORIGIN: Record<string, string> = {
+  ads: ADS_ORIGIN,
   blog: BLOG_ORIGIN,
   deal: DEAL_ORIGIN,
   place: PLACE_ORIGIN,

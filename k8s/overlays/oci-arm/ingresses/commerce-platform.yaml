@@ -63,6 +63,7 @@ spec:
         - deal.1989v.com
         - blog.1989v.com
         - rank.1989v.com
+        - ads.1989v.com
       secretName: cf-origin-ca-tls
   rules:
     # ─── portal-fe (root) ───
@@ -249,6 +250,18 @@ spec:
     # 적재 경로라, 밖에 열면 누구나 순위 원본을 밀어 넣을 수 있다.
     # WS/SSE 는 쓰지 않으므로 열지 않는다 (노출면을 필요한 만큼만).
     - host: rank.1989v.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: portal-fe, port: { name: http } } }
+    # ─── portal-fe (ads 호스트 — 광고주 콘솔, ADR-0098) ───
+    # 콘솔 화면과 광고주 API 만 있다. WS/SSE 는 쓰지 않으므로 열지 않는다.
+    # DNS 레코드는 proxied 로 수동 추가한다 — AOP 가 걸린 호스트여야 게이트웨이 ads Host 허용 목록이 뜻을 갖는다.
+    - host: ads.1989v.com
       http:
         paths:
           - path: /api

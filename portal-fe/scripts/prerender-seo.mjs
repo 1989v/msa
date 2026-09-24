@@ -26,6 +26,9 @@ import {
   GAME_ORIGIN,
   PORTAL_ORIGIN,
   RESUME_ORIGIN,
+  ADS_ORIGIN,
+  ADS_BRAND,
+  adsConsoleMeta,
   breadcrumbJsonLd,
   collectionPageJsonLd,
   descriptionOf,
@@ -126,6 +129,7 @@ const RESUME_HOST = new URL(RESUME_ORIGIN).host;
 const DEAL_HOST = new URL(DEAL_ORIGIN).host;
 const BLOG_HOST = new URL(BLOG_ORIGIN).host;
 const RANK_HOST = new URL(RANK_ORIGIN).host;
+const ADS_HOST = new URL(ADS_ORIGIN).host;
 
 /**
  * 일부 섹션만 조회에 실패했을 때 던진다 — **빌드를 세운다.**
@@ -248,6 +252,7 @@ async function main() {
   await renderPlaceDetails(shell, places, regions);
   await renderDealHub(shell, dealSections);
   await renderRankHub(shell, rankBoards);
+  await renderAdsConsoleShell(shell);
   await renderBlogHub(shell, blog);
 
   if (games.length === 0) {
@@ -724,6 +729,8 @@ async function writeRobotsAndSitemaps(
   await emit(`seo/${PLACE_HOST}/robots.txt`, robotsTxt(PLACE_ORIGIN));
   // 이력서는 색인 대상이 아니다 (ADR-0064). sitemap·llms.txt 도 두지 않는다.
   await emit(`seo/${RESUME_HOST}/robots.txt`, 'User-agent: *\nDisallow: /\n');
+  // 광고주 콘솔도 색인 대상이 아니다 (ADR-0098) — 이력서와 같은 방식으로 막는다.
+  await emit(`seo/${ADS_HOST}/robots.txt`, 'User-agent: *\nDisallow: /\n');
   // 혜택 허브는 색인 대상이다 (2026-08-24, ADR-0069 개정). robots 는 `/go/` 만 막는다.
   await emit(`seo/${DEAL_HOST}/robots.txt`, dealRobotsTxt());
   await emit(`seo/${DEAL_HOST}/sitemap.xml`, sitemapXml(dealSitemapEntries()));
@@ -1358,6 +1365,24 @@ async function renderRankHub(shell, boards = []) {
     ),
   });
   await emit(`prerender/_hosts/${RANK_HOST}.html`, html);
+}
+
+/**
+ * 광고주 콘솔 루트 셸 (ADR-0098). 본문은 로그인 뒤에 그려지므로 내용은 없고, `noindex` 를
+ * 첫 바이트부터 싣는 것이 목적이다 — 없으면 이 호스트의 `/` 가 SPA 셸의 기본 메타로 나간다.
+ */
+async function renderAdsConsoleShell(shell) {
+  const meta = adsConsoleMeta();
+  const html = compose(shell, {
+    lang: 'ko',
+    title: meta.title,
+    description: meta.description,
+    canonical: meta.canonical,
+    siteName: ADS_BRAND,
+    noindex: true,
+    body: '',
+  });
+  await emit(`prerender/_hosts/${ADS_HOST}.html`, html);
 }
 
 /**

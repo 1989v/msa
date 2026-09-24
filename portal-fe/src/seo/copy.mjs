@@ -903,6 +903,23 @@ export function rankBoardMeta(board) {
 }
 
 
+// ─── ads (광고주 콘솔) ─────────────────────────────────────────────────────────
+
+/** 광고주 콘솔 (ADR-0098). 로그인한 회원의 작업 화면이라 색인하지 않고 광고도 싣지 않는다(`ADSENSE_HOSTS` 밖). */
+export const ADS_ORIGIN = 'https://ads.1989v.com';
+export const ADS_BRAND = '1989v 광고';
+
+/** 콘솔의 모든 화면 — 색인 대상이 아니다 */
+export function adsConsoleMeta(title) {
+  return {
+    title: title ? `${title} | ${ADS_BRAND}` : ADS_BRAND,
+    description: '1989v 서비스 지면에 가상 크레딧으로 광고를 집행하는 광고주 콘솔입니다.',
+    canonical: `${ADS_ORIGIN}/`,
+    noindex: true,
+  };
+}
+
+
 // ─── blog (블로그 플랫폼) ─────────────────────────────────────────────────────
 
 export const BLOG_ORIGIN = 'https://blog.1989v.com';

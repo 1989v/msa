@@ -148,7 +148,8 @@ export function shellTabsFor(hostname: string, pathname: string): ShellTab[] | n
   if (pathname === '/login' || pathname === '/oauth/callback') return null;
 
   const sub = hostname.split('.')[0];
-  if (sub === 'resume' || sub === 'deal') return null;
+  // ads: 광고주 콘솔은 자기 탭(대시보드·캠페인·리포트)을 갖는 작업 화면이다.
+  if (sub === 'resume' || sub === 'deal' || sub === 'ads') return null;
   if (sub === 'place') return PLACE_TABS;
   if (sub === 'game') return GAME_TABS;
   if (sub === 'blog') return BLOG_TABS;

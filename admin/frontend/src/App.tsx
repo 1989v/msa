@@ -29,6 +29,14 @@ import { BlogAuthorsPage } from '@/pages/blog/BlogAuthorsPage';
 import { SellersPage } from '@/pages/SellersPage';
 import { PromotionsPage } from '@/pages/PromotionsPage';
 import { BlogCommentsPage } from '@/pages/blog/BlogCommentsPage';
+// ADR-0098 — 광고 네트워크 운영(심사·광고주·지면·문맥·HOUSE·리포트·원장)
+import { AdsReviewPage } from '@/pages/ads/AdsReviewPage';
+import { AdsAdvertisersPage } from '@/pages/ads/AdsAdvertisersPage';
+import { AdsPlacementsPage } from '@/pages/ads/AdsPlacementsPage';
+import { AdsContextMappingsPage } from '@/pages/ads/AdsContextMappingsPage';
+import { AdsHousePage } from '@/pages/ads/AdsHousePage';
+import { AdsPublisherReportPage } from '@/pages/ads/AdsPublisherReportPage';
+import { AdsLedgerCheckPage } from '@/pages/ads/AdsLedgerCheckPage';
 
 export default function App() {
   return (
@@ -59,6 +67,13 @@ export default function App() {
         <Route path="blog/categories" element={<BlogCategoriesPage />} />
         <Route path="blog/authors" element={<BlogAuthorsPage />} />
         <Route path="blog/comments" element={<BlogCommentsPage />} />
+        <Route path="ads/review" element={<AdsReviewPage />} />
+        <Route path="ads/advertisers" element={<AdsAdvertisersPage />} />
+        <Route path="ads/placements" element={<AdsPlacementsPage />} />
+        <Route path="ads/context-mappings" element={<AdsContextMappingsPage />} />
+        <Route path="ads/house" element={<AdsHousePage />} />
+        <Route path="ads/publisher-report" element={<AdsPublisherReportPage />} />
+        <Route path="ads/ledger" element={<AdsLedgerCheckPage />} />
         <Route path="search-debug" element={<SearchDebugPage />} />
         <Route path="search-debug/query-builder" element={<SearchQueryBuilderPage />} />
         <Route path="search-debug/judgments" element={<SearchJudgmentsPage />} />

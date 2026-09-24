@@ -40,6 +40,8 @@ const BlogEditorPage = lazy(() => import('./pages/blog/BlogEditorPage'));
 const RankPage = lazy(() => import('./pages/rank/RankPage'));
 const RankBoardPage = lazy(() => import('./pages/rank/RankBoardPage'));
 const AttractionPage = lazy(() => import('./pages/place/AttractionPage'));
+// ADR-0098 — 광고주 콘솔 (ads.<domain>). 광고주만 여는 작업 화면이라 공개 번들에 싣지 않는다.
+const AdsConsolePage = lazy(() => import('./pages/ads/AdsConsolePage'));
 // ADR-0071 — 지역 페이지. "제주 가볼 만한 곳" 류 질의의 착지점 (코드 세그먼트: 시도 2자리/시군구 5자리)
 const RegionPage = lazy(() => import('./pages/place/RegionPage'));
 // ADR-0066 — IT(개념 사전·3D 그래프·트리맵). 메인이 런처가 되면서 three.js 를 쓰지 않게 됐다.
@@ -71,6 +73,8 @@ const isDealHost = window.location.hostname.split('.')[0] === 'deal';
 const isBlogHost = window.location.hostname.split('.')[0] === 'blog';
 // rank.<domain> — 같은 번들을 서빙하되 루트가 랭킹 리더보드다 (ADR-0081)
 const isRankHost = window.location.hostname.split('.')[0] === 'rank';
+// ads.<domain> — 같은 번들을 서빙하되 루트가 광고주 콘솔이다 (ADR-0098)
+const isAdsHost = window.location.hostname.split('.')[0] === 'ads';
 // apex 의 /games 는 game 서브도메인으로 정리 — 게임 주소를 하나로 고정.
 // localhost/k3d 등 개발 환경은 서브도메인이 없으므로 apex 프로덕션에서만 보낸다.
 // `isApexProd` 는 전시 타일(TileGrid)과 공유한다 — 기준이 갈리면 타일이 거는 주소와
@@ -140,6 +144,25 @@ function rankRoute(element: ReactElement) {
   return isApexProd ? <RankHostRedirect /> : element;
 }
 
+function AdsHostRedirect() {
+  const { pathname, search, hash } = window.location;
+  // 콘솔(/ads)은 광고주 콘솔 호스트에서 루트가 정규 주소다 (ADR-0098)
+  const target = pathname.replace(/^\/ads/, '') || '/';
+  window.location.replace(`https://ads.1989v.com${target}${search}${hash}`);
+  return null;
+}
+
+/** 콘솔 라우트 — apex 프로덕션에서는 ads 호스트로 보내고, 그 외(로컬/개발)에는 그대로 렌더 */
+function adsRoute(element: ReactElement) {
+  return isApexProd ? <AdsHostRedirect /> : element;
+}
+
+/**
+ * 콘솔의 하위 주소(`/campaigns/*`·`/top-up`·`/reports`)는 ads 호스트의 것이다 — 블로그와 같은 이유로
+ * apex 프로덕션에는 열지 않고, 서브도메인이 없는 개발 환경에서만 예외로 연다.
+ */
+const adsRoutesEnabled = isAdsHost || !isApexProd;
+
 /**
  * 랭킹의 짧은 주소(`/boards/:slug`)는 rank 호스트의 것이다. apex 에 함께 열면
  * 같은 리더보드가 두 주소로 돌아다녀 canonical 이 갈린다 — 블로그와 같은 이유다.
@@ -189,6 +212,8 @@ function App() {
                 <BlogHomePage />
               ) : isRankHost ? (
                 <RankPage />
+              ) : isAdsHost ? (
+                <AdsConsolePage view="dashboard" />
               ) : (
                 <HomePage />
               )
@@ -228,6 +253,12 @@ function App() {
           {/* 랭킹 리더보드 — apex 는 서브도메인으로 넘긴다 (ADR-0081) */}
           <Route path="/rank" element={rankRoute(<RankPage />)} />
           {rankRoutesEnabled && <Route path="/boards/:slug" element={<RankBoardPage />} />}
+          {/* 광고주 콘솔 — apex 는 서브도메인으로 넘긴다 (ADR-0098) */}
+          <Route path="/ads" element={adsRoute(<AdsConsolePage view="dashboard" />)} />
+          {adsRoutesEnabled && <Route path="/top-up" element={<AdsConsolePage view="top-up" />} />}
+          {adsRoutesEnabled && <Route path="/campaigns/new" element={<AdsConsolePage view="campaign-new" />} />}
+          {adsRoutesEnabled && <Route path="/campaigns/:id" element={<AdsConsolePage view="campaign" />} />}
+          {adsRoutesEnabled && <Route path="/reports" element={<AdsConsolePage view="reports" />} />}
           {/* 블로그 — apex 는 서브도메인으로 넘긴다 (ADR-0072) */}
           <Route path="/blog" element={blogRoute(<BlogHomePage />)} />
           {blogRoutesEnabled && <Route path="/posts/:slug" element={<BlogPostPage />} />}

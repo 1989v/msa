@@ -1,0 +1,640 @@
+/* 광고주 콘솔 (ADR-0098) — DESIGN.md(--ko-* / --kh-*) 토큰만 쓴다, hex 직접 입력 금지.
+   깊이는 그림자가 아니라 면의 단차로 만든다. 한글에는 모노를 쓰지 않는다(자간만 벌어진다) —
+   모노는 호스트·지면 키 같은 라틴 식별자에만. */
+
+.adc-page {
+  min-height: 100vh;
+  background: var(--ko-surface-0);
+  color: var(--ko-text-primary);
+  font-family: var(--ko-font-family);
+}
+
+/* ─── 머리 — 라이트에서도 어두운 띠(판) ─── */
+
+.adc-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--ko-space-2) var(--ko-space-3);
+  padding: var(--ko-space-3) clamp(1rem, 4vw, 2.5rem);
+  background: var(--kh-slab);
+  color: var(--kh-on-slab);
+}
+
+.adc-top__brand {
+  color: var(--kh-on-slab);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.adc-top__brand:focus-visible,
+.adc-link:focus-visible,
+.adc-nav__item:focus-visible,
+.adc-btn:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: 2px;
+}
+
+.adc-top__host {
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-xs);
+  letter-spacing: var(--kh-tracking-mono);
+  color: var(--kh-on-slab-muted);
+}
+
+.adc-top__me {
+  margin-left: auto;
+  font-size: var(--ko-text-sm);
+  color: var(--kh-on-slab);
+  overflow-wrap: anywhere;
+}
+
+.adc-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--ko-space-3);
+  padding: var(--ko-space-2) clamp(1rem, 4vw, 2.5rem);
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+.adc-bar .kh-theme-toggle {
+  margin-left: auto;
+}
+
+.adc-nav {
+  display: flex;
+  gap: var(--ko-space-1);
+  overflow-x: auto;
+}
+
+.adc-nav__item {
+  padding: var(--ko-space-2) var(--ko-space-3);
+  border-bottom: 2px solid transparent;
+  color: var(--ko-text-secondary);
+  font-size: var(--ko-text-sm);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.adc-nav__item[aria-current='page'] {
+  color: var(--ko-text-primary);
+  border-bottom-color: var(--ko-accent-primary);
+  font-weight: 600;
+}
+
+.adc-main {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: var(--ko-space-6) clamp(1rem, 4vw, 2.5rem) var(--ko-space-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-6);
+}
+
+.adc-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-8);
+}
+
+/* ─── 첫 화면(로그인·등록)과 정지 안내 ─── */
+
+.adc-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ko-space-4);
+  max-width: 34rem;
+}
+
+.adc-entry__title {
+  margin: 0;
+  font-size: var(--kh-headline);
+  font-weight: 700;
+}
+
+.adc-entry__text {
+  margin: 0;
+  color: var(--ko-text-secondary);
+  line-height: var(--ko-leading-relaxed);
+}
+
+.adc-suspended {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-1) var(--ko-space-2);
+  padding: var(--ko-space-3) var(--ko-space-4);
+  border-left: 2px solid var(--kh-yeonji);
+  background: var(--ko-surface-1);
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-primary);
+}
+
+.adc-suspended__reason {
+  color: var(--ko-text-secondary);
+}
+
+/* ─── 금액 고지 ─── */
+
+.adc-credit-note {
+  display: inline-block;
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-secondary);
+}
+
+/* ─── 지표 ─── */
+
+.adc-kpis {
+  display: grid;
+  grid-template-columns: 1fr;
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--kh-radius-asym);
+  overflow: hidden;
+}
+
+.adc-kpi {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ko-space-1);
+  padding: var(--ko-space-4) var(--ko-space-5);
+  background: var(--ko-surface-1);
+  border-top: 1px solid var(--ko-border-subtle);
+}
+
+.adc-kpi:first-child {
+  border-top: 0;
+}
+
+@media (min-width: 640px) {
+  .adc-kpis {
+    grid-template-columns: 1.3fr 1fr 1fr;
+  }
+
+  .adc-kpi {
+    border-top: 0;
+    border-left: 1px solid var(--ko-border-subtle);
+  }
+
+  .adc-kpi:first-child {
+    border-left: 0;
+  }
+}
+
+.adc-kpi__k {
+  font-size: var(--ko-text-xs);
+  font-weight: 600;
+  color: var(--kh-ocher-text);
+}
+
+.adc-kpi__v {
+  font-size: var(--ko-text-3xl);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: var(--ko-leading-tight);
+}
+
+.adc-kpi__v small {
+  margin-left: var(--ko-space-1);
+  font-size: var(--ko-text-sm);
+  font-weight: 500;
+  color: var(--ko-text-secondary);
+}
+
+.adc-kpi__sub {
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.adc-kpi__action {
+  margin-top: var(--ko-space-2);
+}
+
+/* ─── 버튼 ─── */
+
+.adc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 var(--ko-space-4);
+  border: 1px solid var(--ko-accent-primary);
+  border-radius: var(--kh-radius);
+  background: var(--ko-accent-primary);
+  color: var(--kh-hanji);
+  font-family: inherit;
+  font-size: var(--ko-text-sm);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--ko-duration-normal) var(--ko-ease-out);
+}
+
+.adc-btn:hover {
+  background: var(--ko-accent-primary-hover);
+}
+
+.adc-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.adc-btn--ghost {
+  background: transparent;
+  border-color: var(--ko-border-strong);
+  color: var(--ko-accent-text);
+}
+
+.adc-btn--ghost:hover {
+  background: var(--ko-surface-2);
+}
+
+.adc-link {
+  color: var(--ko-accent-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ─── 구획 ─── */
+
+.adc-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-4);
+}
+
+.adc-section__head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--ko-space-3);
+  padding-bottom: var(--ko-space-3);
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+.adc-section__head h1,
+.adc-section__head h2 {
+  margin: 0;
+  font-size: var(--ko-text-lg);
+  font-weight: 700;
+}
+
+.adc-section__head > .adc-btn,
+.adc-section__head > .adc-link:last-child {
+  margin-left: auto;
+}
+
+.adc-subhead {
+  margin: 0;
+  font-size: var(--ko-text-base);
+  font-weight: 700;
+}
+
+.adc-narrow {
+  max-width: 36rem;
+}
+
+.adc-lede {
+  margin: 0;
+  color: var(--ko-text-secondary);
+}
+
+.adc-status {
+  margin: 0;
+  color: var(--ko-text-secondary);
+  font-size: var(--ko-text-sm);
+}
+
+.adc-status--error,
+.adc-error {
+  margin: 0;
+  padding-left: var(--ko-space-3);
+  border-left: 2px solid var(--kh-yeonji);
+  color: var(--ko-text-primary);
+  font-size: var(--ko-text-sm);
+}
+
+.adc-done {
+  margin: 0;
+  padding-left: var(--ko-space-3);
+  border-left: 2px solid var(--ko-accent-primary);
+  color: var(--ko-text-primary);
+  font-size: var(--ko-text-sm);
+}
+
+/* ─── 표 — kh-table 의 머리줄은 모노 대문자라 한글 머리에는 본문 서체로 바꾼다 ─── */
+
+.adc-table-wrap {
+  overflow-x: auto;
+}
+
+.adc-table {
+  min-width: 36rem;
+}
+
+.adc-table thead th {
+  font-family: inherit;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--kh-ocher-text);
+}
+
+.adc-table td {
+  vertical-align: middle;
+  /* 한글 이름이 음절 중간에서 꺾이지 않게 — 좁은 화면에서 「가\n을 모집」이 된다 */
+  word-break: keep-all;
+}
+
+.adc-table__caption {
+  caption-side: top;
+  padding-bottom: var(--ko-space-2);
+  text-align: left;
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-secondary);
+}
+
+.adc-subrow td {
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-secondary);
+}
+
+.adc-nowrap {
+  white-space: nowrap;
+}
+
+.adc-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.adc-bar-meter {
+  height: 4px;
+  min-width: 80px;
+  margin-top: var(--ko-space-1);
+  background: var(--ko-border-subtle);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.adc-bar-meter span {
+  display: block;
+  height: 100%;
+  background: var(--ko-accent-primary);
+}
+
+/* ─── 상태 — 색만으로 말하지 않는다: 점 + 테두리 + 글자 ─── */
+
+.adc-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px var(--ko-space-2);
+  border: 1px solid var(--ko-border-strong);
+  border-radius: var(--ko-radius-full);
+  font-size: var(--ko-text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--ko-text-secondary);
+}
+
+.adc-state i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.adc-state--run {
+  color: var(--ko-accent-text);
+  border-color: var(--ko-accent-text);
+}
+
+.adc-state--pend {
+  color: var(--kh-ocher-text);
+  border-color: var(--kh-ocher-text);
+}
+
+.adc-state--rej {
+  color: var(--kh-yeonji);
+  border-color: var(--kh-yeonji);
+}
+
+/* 어두운 바탕의 연지 글자는 대비가 모자란다 — 글자는 본문색, 연지는 점과 테두리가 맡는다 */
+:root[data-surface='heritage'][data-theme='dark'] .adc-state--rej {
+  color: var(--ko-text-primary);
+}
+
+.adc-state--rej i {
+  background: var(--kh-yeonji);
+}
+
+.adc-flag {
+  display: inline-block;
+  margin-left: var(--ko-space-2);
+  padding: 0 var(--ko-space-1);
+  border: 1px solid var(--kh-ocher-text);
+  border-radius: var(--kh-radius);
+  font-size: var(--ko-text-xs);
+  color: var(--kh-ocher-text);
+  white-space: nowrap;
+}
+
+.adc-reason {
+  display: block;
+  margin: var(--ko-space-1) 0 0;
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-secondary);
+}
+
+.adc-creative-title {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* ─── 폼 ─── */
+
+.adc-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ko-space-4);
+}
+
+.adc-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-4);
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.adc-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-1);
+  width: 100%;
+}
+
+.adc-field__label {
+  padding: 0;
+  font-size: var(--ko-text-xs);
+  font-weight: 600;
+  color: var(--ko-text-secondary);
+}
+
+.adc-hint {
+  margin: 0;
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-secondary);
+}
+
+.adc-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ko-space-4);
+}
+
+@media (min-width: 640px) {
+  .adc-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.adc-range {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-4);
+}
+
+.adc-range .adc-field {
+  width: auto;
+  min-width: 10rem;
+}
+
+.adc-choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-2) var(--ko-space-5);
+}
+
+.adc-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ko-space-2);
+  min-height: 40px;
+  font-size: var(--ko-text-sm);
+}
+
+.adc-picks {
+  gap: var(--ko-space-2);
+}
+
+.adc-pick {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ko-space-3);
+  padding: var(--ko-space-3);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius);
+  background: var(--ko-surface-1);
+}
+
+.adc-pick input {
+  margin-top: 4px;
+}
+
+.adc-pick__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.adc-pick__title {
+  font-size: var(--ko-text-sm);
+  font-weight: 600;
+}
+
+.adc-pick__meta {
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.adc-pick__meta code {
+  font-family: var(--kh-font-mono);
+}
+
+.adc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-2);
+}
+
+/* ─── 소재 ─── */
+
+.adc-creatives {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adc-creative {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ko-space-3);
+  padding: var(--ko-space-3);
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--kh-radius-asym);
+  background: var(--ko-surface-1);
+}
+
+@media (min-width: 640px) {
+  .adc-creative {
+    grid-template-columns: minmax(0, 200px) minmax(0, 1fr);
+  }
+}
+
+.adc-creative__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-1);
+  min-width: 0;
+}
+
+.adc-creative__copy {
+  margin: 0;
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.adc-creative__link {
+  margin: 0;
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.adc-preview {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1.91 / 1;
+  object-fit: cover;
+  border-radius: var(--kh-radius);
+  background: var(--ko-surface-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adc-btn {
+    transition: none;
+  }
+}

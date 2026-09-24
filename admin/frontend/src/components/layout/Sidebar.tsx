@@ -28,6 +28,13 @@ import {
   Lock,
   Store,
   Ticket,
+  ShieldCheck,
+  Building2,
+  LayoutTemplate,
+  Link2,
+  Home,
+  BarChart3,
+  Scale,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -66,6 +73,14 @@ const navItems: NavItem[] = [
   { label: '블로그 분류', icon: FolderTree, to: '/blog/categories', enabled: true },
   { label: '블로그 저자', icon: UserCheck, to: '/blog/authors', enabled: true },
   { label: '블로그 댓글', icon: MessageSquare, to: '/blog/comments', enabled: true },
+  // ADR-0098 — 광고 네트워크 (광고주 콘솔은 ads.1989v.com)
+  { label: '광고 심사', icon: ShieldCheck, to: '/ads/review', enabled: true },
+  { label: '광고주', icon: Building2, to: '/ads/advertisers', enabled: true },
+  { label: '광고 지면', icon: LayoutTemplate, to: '/ads/placements', enabled: true },
+  { label: '문맥 매핑', icon: Link2, to: '/ads/context-mappings', enabled: true },
+  { label: 'HOUSE 광고', icon: Home, to: '/ads/house', enabled: true },
+  { label: '퍼블리셔 리포트', icon: BarChart3, to: '/ads/publisher-report', enabled: true },
+  { label: '원장 검사', icon: Scale, to: '/ads/ledger', enabled: true },
   // ADR-0050 Phase 4 UI — 검색 디버그 + 쿼리 빌더
   { label: '검색 디버그', icon: Search, to: '/search-debug', enabled: true },
   { label: '검색 쿼리 빌더', icon: Sliders, to: '/search-debug/query-builder', enabled: true },

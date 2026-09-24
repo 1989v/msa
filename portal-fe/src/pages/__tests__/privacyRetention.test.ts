@@ -13,20 +13,29 @@ const REPO = resolve(__dirname, '../../../..');
 
 /**
  * 보존기간 상수는 도메인마다 자기 러너에 있다 (ADR-0093 폴드 정리 이후) — 한 파일이 아니라
- * 러너 목록을 훑는다. 새 원장이 생기면 여기에 그 러너를 더한다.
+ * 러너 목록을 훑는다. 새 원장이 생기면 여기에 그 러너를 더한다. 광고는 정리 작업 대신 Redis
+ * TTL 이 지우므로 그 상수가 있는 키 정의 파일을 둔다.
  */
 const RETENTION_RUNNERS = [
   'code-dictionary/feature/src/main/kotlin/com/kgd/codedictionary/infrastructure/retention/RetentionRunner.kt',
   'game/feature/src/main/kotlin/com/kgd/game/infrastructure/retention/GameRetentionRunner.kt',
+  'ads/feature/src/main/kotlin/com/kgd/ads/infrastructure/redis/AdsRedisKeys.kt',
 ];
 
-function retentionDaysFromCode(constName: string): number {
+/** 상수 값. 단위는 이름 끝(`_DAYS`·`_HOURS`)이 말한다 — [retentionUnit] 이 방침의 단위 낱말로 바꾼다. */
+function retentionFromCode(constName: string): number {
   for (const rel of RETENTION_RUNNERS) {
     const src = readFileSync(resolve(REPO, rel), 'utf-8');
     const m = src.match(new RegExp(`const val ${constName} = (\\d+)L`));
     if (m) return Number(m[1]);
   }
   throw new Error(`${constName} 를 못 찾았다 — 상수 이름이 바뀌었거나 러너가 옮겨졌으면 이 검사도 함께 고쳐야 한다`);
+}
+
+function retentionUnit(constName: string): string {
+  if (constName.endsWith('_DAYS')) return '일';
+  if (constName.endsWith('_HOURS')) return '시간';
+  throw new Error(`${constName} 의 단위를 모른다 — 이름이 _DAYS 나 _HOURS 로 끝나야 방침 문구와 맞춰 볼 수 있다`);
 }
 
 const privacyText = () => readFileSync(resolve(REPO, 'portal-fe/src/pages/PrivacyPage.tsx'), 'utf-8');
@@ -40,7 +49,7 @@ const friendGroupSection = () => {
 
 describe('보존기간 — 방침과 코드가 같은 숫자를 말한다', () => {
   it('친구 그룹: 코드 상수가 1년이고 방침도 1년이라고 적는다', () => {
-    expect(retentionDaysFromCode('FRIEND_GROUP_RETENTION_DAYS')).toBe(365);
+    expect(retentionFromCode('FRIEND_GROUP_RETENTION_DAYS')).toBe(365);
     const section = friendGroupSection();
     expect(section, '방침이 보존기간을 안 적는다').toMatch(/1년/);
     expect(section, '「마지막 사용」 기준임을 안 밝힌다').toMatch(/마지막으로 사용한 날/);
@@ -55,8 +64,29 @@ describe('보존기간 — 방침과 코드가 같은 숫자를 말한다', () =
   });
 
   it('이력서 열람 기록: 기존 값도 여전히 맞다 — 한 항목만 보는 검사가 아니다', () => {
-    expect(retentionDaysFromCode('RESUME_ACCESS_RETENTION_DAYS')).toBe(365);
+    expect(retentionFromCode('RESUME_ACCESS_RETENTION_DAYS')).toBe(365);
     expect(privacyText()).toMatch(/이력서 열람 기록[\s\S]{0,140}1년/);
+  });
+});
+
+describe('광고 — 빈도 제한 식별자 보관 시간', () => {
+  const section = () => {
+    const text = privacyText();
+    const at = text.indexOf('광고 빈도 제한용 방문자 식별자');
+    expect(at, '방침 6항에 광고 빈도 제한 항목이 없다').toBeGreaterThan(0);
+    return text.slice(at, at + 600);
+  };
+
+  it('Redis 빈도 키 TTL 상수와 방침이 같은 시간을 말한다', () => {
+    const constName = 'VISITOR_FREQUENCY_TTL_HOURS';
+    const value = retentionFromCode(constName);
+    expect(section()).toContain(`최대 ${value}${retentionUnit(constName)}`);
+  });
+
+  it('이벤트 원장 보관기간과 행태 타기팅 없음을 함께 밝힌다', () => {
+    const text = section();
+    expect(text, '광고 이벤트 원장 보관기간').toMatch(/이벤트 원장은[\s\S]{0,40}90일/);
+    expect(text, '행태 타기팅 없음').toMatch(/행태 타기팅은 하지 않습니다/);
   });
 });
 
