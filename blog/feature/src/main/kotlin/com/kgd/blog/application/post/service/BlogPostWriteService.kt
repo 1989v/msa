@@ -4,6 +4,7 @@ import com.kgd.blog.application.category.port.BlogCategoryRepositoryPort
 import com.kgd.blog.application.comment.port.BlogCommentRepositoryPort
 import com.kgd.blog.application.interaction.port.BlogReactionRepositoryPort
 import com.kgd.blog.application.post.dto.BlogPostSummary
+import com.kgd.blog.application.post.port.BlogPostConceptRepositoryPort
 import com.kgd.blog.application.post.port.BlogPostRepositoryPort
 import com.kgd.blog.application.post.usecase.ChangeBlogPostStatusUseCase
 import com.kgd.blog.application.post.usecase.CreateBlogPostUseCase
@@ -41,6 +42,7 @@ class BlogPostWriteService(
     private val reactionRepository: BlogReactionRepositoryPort,
     private val profileService: BlogProfileService,
     private val assembler: BlogAssembler,
+    private val conceptRepository: BlogPostConceptRepositoryPort,
 ) : CreateBlogPostUseCase, UpdateBlogPostUseCase, ChangeBlogPostStatusUseCase, DeleteBlogPostUseCase {
 
     override fun execute(command: CreateBlogPostUseCase.Command): BlogPostSummary {
@@ -62,13 +64,17 @@ class BlogPostWriteService(
             status = PostStatus.DRAFT,
             publishedAt = null,
         )
-        return assembler.summary(postRepository.save(domain), author, category)
+        val conceptIds = request.conceptIds?.let(BlogPost::normalizeConceptIds)
+        val saved = postRepository.save(domain)
+        conceptIds?.let { conceptRepository.replace(saved.id ?: 0, it) }
+        return assembler.summary(saved, author, category)
     }
 
     override fun execute(command: UpdateBlogPostUseCase.Command): BlogPostSummary {
         val (postId, request, identity) = command
         val post = editableOrThrow(postId, identity)
         val category = categoryOrThrow(request.categoryId)
+        val conceptIds = request.conceptIds?.let(BlogPost::normalizeConceptIds)
         // 슬러그는 바꾸지 않는다 — 발행 뒤 주소가 바뀌면 공유된 링크와 색인이 죽는다
         val updated = postRepository.save(
             post.copy(
@@ -79,6 +85,7 @@ class BlogPostWriteService(
                 coverImageUrl = request.coverImageUrl?.trim()?.takeIf { it.isNotEmpty() },
             ),
         )
+        conceptIds?.let { conceptRepository.replace(postId, it) }
         return assembler.summary(updated, profileRepository.findById(updated.authorProfileId), category)
     }
 
@@ -102,6 +109,7 @@ class BlogPostWriteService(
         editableOrThrow(postId, identity)
         commentRepository.deleteByPostId(postId)
         reactionRepository.deleteByPostId(postId)
+        conceptRepository.deleteByPostId(postId)
         postRepository.deleteById(postId)
     }
 

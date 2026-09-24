@@ -47,6 +47,9 @@ class BlogPostRepositoryAdapter(
         return page.toPaged()
     }
 
+    override fun findPublishedByConcept(conceptId: String, paging: Paging): Paged<BlogPost> =
+        jpaRepository.findPublishedByConcept(conceptId, paging.toPageable()).toPaged()
+
     override fun findAll(status: PostStatus?, paging: Paging): Paged<BlogPost> {
         val pageable = paging.toPageable()
         val page = if (status == null) {

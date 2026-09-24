@@ -1,6 +1,11 @@
 package com.kgd.blog.infrastructure.persistence
 
+import com.kgd.blog.domain.model.BlogPost
+import com.kgd.blog.domain.model.PostStatus
 import com.kgd.blog.infrastructure.config.BlogDataSourceConfig
+import com.kgd.blog.infrastructure.persistence.adapter.BlogPostConceptRepositoryAdapter
+import com.kgd.blog.infrastructure.persistence.entity.BlogPostJpaEntity
+import com.kgd.blog.infrastructure.persistence.repository.BlogPostConceptJpaRepository
 import com.kgd.blog.infrastructure.persistence.repository.BlogCategoryJpaRepository
 import com.kgd.blog.infrastructure.persistence.repository.BlogCommentJpaRepository
 import com.kgd.blog.infrastructure.persistence.repository.BlogPostJpaRepository
@@ -18,6 +23,10 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.Primary
+import org.springframework.data.domain.PageRequest
+import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.support.TransactionTemplate
+import java.time.LocalDateTime
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.DockerClientFactory
@@ -62,6 +71,8 @@ class BlogSchemaIntegrationSpec(
     @Autowired private val likes: BlogPostLikeJpaRepository,
     @Autowired private val ratings: BlogPostRatingJpaRepository,
     @Autowired private val comments: BlogCommentJpaRepository,
+    @Autowired private val concepts: BlogPostConceptJpaRepository,
+    @Autowired @Qualifier("blogTransactionManager") private val txManager: PlatformTransactionManager,
 ) : BehaviorSpec({
 
     Given("blog 전용 Flyway 가 적용된 blog_db") {
@@ -71,6 +82,42 @@ class BlogSchemaIntegrationSpec(
                 // validate 단계에서 컨텍스트가 아예 안 뜨고, 뜬 뒤에도 매핑이 틀리면 여기서 터진다.
                 listOf(profiles, categories, posts, views, likes, ratings, comments)
                     .map { it.count() } shouldBe List(7) { 0L }
+            }
+    }
+
+    Given("글 ↔ 개념 매핑") {
+        Then("교체는 같은 키를 다시 넣어도 부딪치지 않고, 개념 필터는 발행글만 발행일 순으로 낸다")
+            .config(enabledIf = { dockerAvailable }) {
+                val tx = TransactionTemplate(txManager)
+                val adapter = BlogPostConceptRepositoryAdapter(concepts)
+                fun post(slug: String, status: PostStatus, at: LocalDateTime?) = posts.save(
+                    BlogPostJpaEntity.fromDomain(
+                        BlogPost(
+                            id = null, authorProfileId = 1, categoryId = 1, slug = slug, title = slug,
+                            summary = null, body = "본문", coverImageUrl = null, status = status, publishedAt = at,
+                        ),
+                    ),
+                ).id!!
+                val older = post("concept-older", PostStatus.PUBLISHED, LocalDateTime.of(2026, 9, 1, 0, 0))
+                val newer = post("concept-newer", PostStatus.PUBLISHED, LocalDateTime.of(2026, 9, 20, 0, 0))
+                val draft = post("concept-draft", PostStatus.DRAFT, null)
+
+                tx.executeWithoutResult {
+                    adapter.replace(older, listOf("bm25", "inverted-index"))
+                    adapter.replace(newer, listOf("bm25"))
+                    adapter.replace(draft, listOf("bm25"))
+                }
+                // 같은 키(bm25)를 남긴 채 순서를 바꿔 다시 교체
+                tx.executeWithoutResult { adapter.replace(older, listOf("inverted-index", "bm25")) }
+
+                adapter.findConceptIds(older) shouldBe listOf("inverted-index", "bm25")
+                posts.findPublishedByConcept("bm25", PageRequest.of(0, 10)).content.map { it.slug } shouldBe
+                    listOf("concept-newer", "concept-older")
+                posts.findPublishedByConcept("bm25", PageRequest.of(0, 10)).totalElements shouldBe 2L
+                posts.findPublishedByConcept("nothing", PageRequest.of(0, 10)).totalElements shouldBe 0L
+
+                tx.executeWithoutResult { adapter.deleteByPostId(older) }
+                adapter.findConceptIds(older) shouldBe emptyList()
             }
     }
 }) {

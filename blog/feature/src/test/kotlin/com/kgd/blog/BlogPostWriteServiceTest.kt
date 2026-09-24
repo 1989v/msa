@@ -4,11 +4,13 @@ import com.kgd.blog.application.category.port.BlogCategoryRepositoryPort
 import com.kgd.blog.application.comment.port.BlogCommentRepositoryPort
 import com.kgd.blog.application.interaction.port.BlogReactionRepositoryPort
 import com.kgd.blog.application.post.dto.BlogPostRequest
+import com.kgd.blog.application.post.port.BlogPostConceptRepositoryPort
 import com.kgd.blog.application.post.port.BlogPostRepositoryPort
 import com.kgd.blog.application.post.service.BlogAssembler
 import com.kgd.blog.application.post.service.BlogPostWriteService
 import com.kgd.blog.application.post.usecase.CreateBlogPostUseCase
 import com.kgd.blog.application.post.usecase.DeleteBlogPostUseCase
+import com.kgd.blog.application.post.usecase.UpdateBlogPostUseCase
 import com.kgd.blog.application.profile.dto.BlogIdentity
 import com.kgd.blog.application.profile.port.BlogProfileRepositoryPort
 import com.kgd.blog.application.profile.service.BlogProfileService
@@ -43,6 +45,8 @@ class BlogPostWriteServiceTest : BehaviorSpec({
         status = PostStatus.PUBLISHED, publishedAt = LocalDateTime.now(),
     )
 
+    val conceptRepository = mockk<BlogPostConceptRepositoryPort>(relaxed = true)
+
     fun fixture(): Triple<BlogPostWriteService, BlogPostRepositoryPort, BlogProfileRepositoryPort> {
         val postRepository = mockk<BlogPostRepositoryPort>(relaxed = true)
         val categoryRepository = mockk<BlogCategoryRepositoryPort>(relaxed = true)
@@ -53,7 +57,7 @@ class BlogPostWriteServiceTest : BehaviorSpec({
         val assembler = BlogAssembler(profileRepository, categoryRepository)
         val service = BlogPostWriteService(
             postRepository, categoryRepository, profileRepository, commentRepository, reactionRepository,
-            profileService, assembler,
+            profileService, assembler, conceptRepository,
         )
         return Triple(service, postRepository, profileRepository)
     }
@@ -107,6 +111,43 @@ class BlogPostWriteServiceTest : BehaviorSpec({
 
         then("통과한다") {
             service.editableOrThrow(1L, BlogIdentity(memberId = 1L, isAdmin = true, visitorId = null)).id shouldBe 1L
+        }
+    }
+
+    given("글에 개념을 매핑할 때") {
+        val (service, postRepository, profileRepository) = fixture()
+        every { postRepository.findById(1L) } returns post(1, authorProfileId = 2)
+        every { profileRepository.findByMemberId(20L) } returns profile(2)
+        val me = BlogIdentity(memberId = 20L, isAdmin = false, visitorId = null)
+        fun request(conceptIds: List<String>?) = BlogPostRequest(
+            title = "제목", slug = null, categoryId = 1, summary = null, body = "본문", coverImageUrl = null,
+            conceptIds = conceptIds,
+        )
+
+        then("수정은 매핑을 고른 순서대로 통째로 바꾸고 중복·공백은 접는다") {
+            service.execute(UpdateBlogPostUseCase.Command(1L, request(listOf(" bm25 ", "inverted-index", "bm25")), me))
+            verify { conceptRepository.replace(1L, listOf("bm25", "inverted-index")) }
+        }
+
+        then("conceptIds 가 null 이면 기존 매핑을 건드리지 않는다") {
+            io.mockk.clearMocks(conceptRepository)
+            service.execute(UpdateBlogPostUseCase.Command(1L, request(null), me))
+            verify(exactly = 0) { conceptRepository.replace(any(), any()) }
+        }
+
+        then("형식이 틀린 id 는 글을 저장하기 전에 거절한다") {
+            // 앞 then 들이 남긴 호출 기록만 지운다 — 스텁은 남긴다
+            io.mockk.clearMocks(conceptRepository, postRepository, answers = false)
+            shouldThrow<BusinessException> {
+                service.execute(UpdateBlogPostUseCase.Command(1L, request(listOf("BM25!")), me))
+            }
+            verify(exactly = 0) { postRepository.save(any()) }
+            verify(exactly = 0) { conceptRepository.replace(any(), any()) }
+        }
+
+        then("글을 지우면 매핑도 지운다") {
+            service.execute(DeleteBlogPostUseCase.Command(1L, me))
+            verify { conceptRepository.deleteByPostId(1L) }
         }
     }
 

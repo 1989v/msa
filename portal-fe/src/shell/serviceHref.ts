@@ -62,6 +62,11 @@ export function portalHomeHref(): string {
   return isProd1989vHost ? `${PORTAL_ORIGIN}/` : '/';
 }
 
+/** 개념 하나의 학습 화면 — 블로그 글의 개념 칩이 건다. apex `/tech` 에만 있다 */
+export function conceptHref(conceptId: string): string {
+  return `${isProd1989vHost ? PORTAL_ORIGIN : ''}/tech/c/${encodeURIComponent(conceptId)}`;
+}
+
 /** 통합 검색 화면 — apex 하나에만 둔다(주소가 갈리지 않게). 로컬은 상대 경로 */
 export function unifiedSearchHref(q: string, type?: string): string {
   const params = new URLSearchParams({ q });

@@ -1682,3 +1682,69 @@ html[data-theme='dark'] .blog-body .kh-alert--caution {
   font-size: 0.7rem;
   white-space: nowrap;
 }
+
+/* ─── 글 ↔ 개념 칩 — 글 끝(읽은 뒤 다음 걸음)과 편집기. 기존 .blog-chip 을 그대로 쓴다 ─── */
+.blog-concepts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ko-space-2);
+  margin: var(--ko-space-6) 0 0;
+  padding: var(--ko-space-4) 0 0;
+  border-top: 1px solid var(--ko-border-subtle);
+  list-style: none;
+}
+
+.blog-concepts--edit {
+  margin: 0 0 var(--ko-space-2);
+  padding: 0;
+  border-top: 0;
+}
+
+.blog-concepts__label {
+  font-size: 0.75rem;
+  color: var(--kh-ocher-text, var(--ko-text-muted));
+  margin-right: var(--ko-space-1);
+}
+
+.blog-concept-suggest {
+  list-style: none;
+  margin: var(--ko-space-1) 0 0;
+  padding: 0;
+  border: 1px solid var(--ko-border-subtle);
+}
+
+.blog-concept-suggest button {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  gap: var(--ko-space-3);
+  padding: var(--ko-space-2) var(--ko-space-3);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--ko-border-subtle);
+  color: var(--ko-text-primary);
+  text-align: left;
+  cursor: pointer;
+  min-height: 44px;
+  align-items: center;
+}
+
+.blog-concept-suggest li:last-child button {
+  border-bottom: 0;
+}
+
+.blog-concept-suggest button:hover:not(:disabled),
+.blog-concept-suggest button:focus-visible {
+  background: var(--ko-surface-1);
+}
+
+.blog-concept-suggest button:disabled {
+  color: var(--ko-text-muted);
+  cursor: default;
+}
+
+.blog-concept-suggest .kh-mono {
+  font-size: 0.75rem;
+  color: var(--ko-text-secondary);
+}

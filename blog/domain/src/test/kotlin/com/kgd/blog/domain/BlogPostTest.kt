@@ -139,4 +139,16 @@ class BlogPostTest : BehaviorSpec({
             }
         }
     }
+    given("개념 id 목록") {
+        then("공백을 걷고 중복은 처음 자리만 남긴다") {
+            BlogPost.normalizeConceptIds(listOf(" bm25", "hnsw", "bm25", "")) shouldBe listOf("bm25", "hnsw")
+        }
+        then("형식이 틀리면 거절한다") {
+            shouldThrow<BusinessException> { BlogPost.normalizeConceptIds(listOf("BM 25")) }
+        }
+        then("열둘을 넘기면 거절한다") {
+            shouldThrow<BusinessException> { BlogPost.normalizeConceptIds((1..13).map { "c$it" }) }
+            BlogPost.normalizeConceptIds((1..12).map { "c$it" }).size shouldBe 12
+        }
+    }
 })

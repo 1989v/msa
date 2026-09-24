@@ -17,6 +17,8 @@ interface BlogPostRepositoryPort {
      * [categoryIds]·[authorId] 는 null 이면 조건 없음, 빈 컬렉션은 호출부가 먼저 거른다.
      */
     fun findPublished(categoryIds: Collection<Long>?, authorId: Long?, paging: Paging): Paged<BlogPost>
+    /** 개념 [conceptId] 에 매핑된 발행글, 발행일 내림차순 */
+    fun findPublishedByConcept(conceptId: String, paging: Paging): Paged<BlogPost>
     /** 어드민 목록 — [status] null 이면 전체 */
     fun findAll(status: PostStatus?, paging: Paging): Paged<BlogPost>
     /** 작성자 목록, id 내림차순 — [status] null 이면 전체 */

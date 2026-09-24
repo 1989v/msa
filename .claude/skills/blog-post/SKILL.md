@@ -87,6 +87,16 @@ echo yes | ~/.local/bin/oci-mysql --write blog_db \
 
 로컬 값과 같아야 한다.
 
+**다루는 개념을 매핑한다.** 글 끝의 개념 칩과 `/tech` 개념 화면의 「이 개념을 다룬 글」이 이 표를 읽는다.
+id 는 `code-dictionary/feature/src/main/resources/ontology/*.yaml` 에 있는 것만 쓴다(최대 12, 순서가 표시 순서).
+편집기에서 고르는 것과 같은 결과다 — 스튜디오로 저장하면 이 매핑을 통째로 바꾼다.
+
+```bash
+echo yes | ~/.local/bin/oci-mysql --write blog_db \
+  "DELETE FROM blog_post_concept WHERE post_id=<id>;
+   INSERT INTO blog_post_concept (post_id, concept_id, ordinal) VALUES (<id>,'bm25',1),(<id>,'inverted-index',2)"
+```
+
 ## 하지 않는 것
 
 - 발행 상태를 **묻지 않고** 바꾸지 않는다. `DRAFT` → `PUBLISHED` 는 사용자 승인 사항이다.

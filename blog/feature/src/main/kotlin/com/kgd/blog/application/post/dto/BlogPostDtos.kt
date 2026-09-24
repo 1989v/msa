@@ -43,6 +43,8 @@ data class BlogPostDetail(
     /** 요청자가 이미 누른 좋아요·매긴 평점. 비로그인도 방문자 키로 판정된다 */
     val liked: Boolean,
     val myScore: Int?,
+    /** 작성자가 고른 개념 id — `/tech/c/<id>` 로 잇는다 */
+    val conceptIds: List<String> = emptyList(),
 )
 
 data class BlogPage<T>(
@@ -71,6 +73,8 @@ data class BlogPostRequest(
     @field:Size(max = 300) val summary: String?,
     @field:NotBlank val body: String,
     @field:Size(max = 1000) val coverImageUrl: String?,
+    /** 매핑할 개념 id. null 이면 기존 매핑을 그대로 두고, 빈 목록이면 전부 뗀다 */
+    @field:Size(max = 12) val conceptIds: List<String>? = null,
 )
 
 data class BlogViewDaily(val date: LocalDate, val count: Long)

@@ -15,6 +15,7 @@ import { useAuth } from '../../auth/useAuth';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import { blogPrivateMeta } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
+import { ConceptPicker } from './BlogConcepts';
 import BlogShell from './BlogShell';
 import MarkdownBody from './MarkdownBody';
 import './Blog.css';
@@ -51,6 +52,7 @@ export default function BlogEditorPage() {
   const [summary, setSummary] = useState('');
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [body, setBody] = useState('');
+  const [conceptIds, setConceptIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -61,6 +63,7 @@ export default function BlogEditorPage() {
     setSummary(detail.post.summary);
     setCoverImageUrl(detail.post.coverImageUrl ?? '');
     setBody(detail.body);
+    setConceptIds(detail.conceptIds ?? []);
   }, [existing.data]);
 
   // 카테고리는 잎(하위가 없는 마디)만 고르게 한다 — 상위에 글을 붙이면 하위 분류가 비어
@@ -82,6 +85,7 @@ export default function BlogEditorPage() {
     summary: summary.trim() || null,
     body,
     coverImageUrl: coverImageUrl.trim() || null,
+    conceptIds,
   });
 
   const saveMutation = useMutation({
@@ -170,6 +174,8 @@ export default function BlogEditorPage() {
             onChange={(e) => setCoverImageUrl(e.target.value)}
           />
         </label>
+
+        <ConceptPicker value={conceptIds} onChange={setConceptIds} />
 
         <div className="blog-editor">
           <label className="blog-field">

@@ -96,6 +96,8 @@ export interface BlogPostDetail {
   breadcrumb: BlogCrumb[];
   liked: boolean;
   myScore: number | null;
+  /** 작성자가 고른 개념 id — 고른 순서 그대로 */
+  conceptIds?: string[];
 }
 
 export interface BlogPage<T> {
@@ -159,6 +161,8 @@ export interface BlogPostInput {
   summary: string | null;
   body: string;
   coverImageUrl: string | null;
+  /** null 이면 기존 매핑 유지, 빈 배열이면 전부 뗀다 */
+  conceptIds?: string[] | null;
 }
 
 // ── 공개 조회 ─────────────────────────────────────────────────────
@@ -173,6 +177,8 @@ export const fetchPosts = (params: {
   handle?: string;
   page?: number;
   size?: number;
+  /** 개념에 매핑된 발행글만 — 다른 필터와 겹쳐 쓰지 않는다 */
+  concept?: string;
 }) => api.get<ApiResponse<BlogPage<BlogPostSummary>>>('/api/v1/blog/posts', { params }).then(unwrap);
 
 export const fetchPost = (slug: string) =>

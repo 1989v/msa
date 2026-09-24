@@ -100,12 +100,29 @@ data class BlogPost(
         const val MAX_TITLE = 200
         const val MAX_SUMMARY = 300
         const val MAX_SLUG = 80
+        const val MAX_CONCEPTS = 12
 
         /** 한국어 기준 분당 읽는 글자 수. 정확한 값이 아니라 안정적인 값이 목적이다 */
         private const val CHARS_PER_MINUTE = 500
         private val SLUG_PATTERN = Regex("^[a-z0-9][a-z0-9-]{2,${MAX_SLUG - 1}}$")
         private val NON_SLUG = Regex("[^a-z0-9]+")
         private val DATE_PREFIX = DateTimeFormatter.ofPattern("yyyyMMdd")
+        private val CONCEPT_ID = Regex("^[a-z0-9-]{1,100}$")
+
+        /**
+         * 글에 매핑할 개념 id 목록 확정 — 앞뒤 공백을 걷고 중복은 처음 것만 남긴다(순서가 곧 표시 순서).
+         * 개념이 실제로 있는지는 여기서 모른다 — 개념은 다른 서비스가 갖고, 없는 id 는 화면이 건너뛴다.
+         */
+        fun normalizeConceptIds(ids: List<String>): List<String> {
+            val distinct = ids.map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+            distinct.firstOrNull { !CONCEPT_ID.matches(it) }?.let {
+                throw BusinessException(ErrorCode.INVALID_INPUT, "개념 id 는 영소문자·숫자·하이픈 1~100 자여야 합니다: $it")
+            }
+            if (distinct.size > MAX_CONCEPTS) {
+                throw BusinessException(ErrorCode.INVALID_INPUT, "개념은 글 하나에 $MAX_CONCEPTS 개까지 고를 수 있습니다")
+            }
+            return distinct
+        }
 
         fun readingMinutesOf(body: String): Int =
             maxOf(1, (body.length + CHARS_PER_MINUTE - 1) / CHARS_PER_MINUTE)

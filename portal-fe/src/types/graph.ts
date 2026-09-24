@@ -100,6 +100,8 @@ export interface ConceptRelations {
   incoming: RelationEdge[];
   evidence: { kind: string; ref: string; note?: string | null }[];
   questions: string[];
+  /** 이 레포에서 그 개념인 코드 — 줄 번호 없이 파일·심볼. 원본은 GitHub raw 로 받는다 */
+  code?: { path: string; symbol: string; note?: string | null }[];
 }
 
 export interface ConceptHierarchy {

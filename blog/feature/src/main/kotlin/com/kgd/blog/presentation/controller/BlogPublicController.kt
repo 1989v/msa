@@ -49,8 +49,9 @@ class BlogPublicController(
         @RequestParam(required = false) handle: String?,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "12") size: Int,
+        @RequestParam(required = false) concept: String?,
     ): ApiResponse<BlogPage<BlogPostSummary>> =
-        ApiResponse.success(getPosts.execute(GetBlogPostsUseCase.Query(categoryPath, handle, page, size)))
+        ApiResponse.success(getPosts.execute(GetBlogPostsUseCase.Query(categoryPath, handle, page, size, concept)))
 
     @GetMapping("/posts/{slug}")
     fun post(

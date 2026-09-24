@@ -20,6 +20,7 @@ import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import { blogBreadcrumbJsonLd, blogPostMeta, blogPostUrl, blogPostingJsonLd } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
+import { ConceptChips } from './BlogConcepts';
 import BlogShell from './BlogShell';
 import CommentThread from './CommentThread';
 import MarkdownBody from './MarkdownBody';
@@ -185,6 +186,9 @@ export default function BlogPostPage() {
 
         {/* canonical 을 넘기면 목차와 제목 앵커가 켜진다 — 복사되는 절 링크가 이 주소 기준이다 */}
         <MarkdownBody source={detail.body} permalink={canonical} />
+
+        {/* 본문을 다 읽은 뒤 다음 걸음 — 이 글이 다루는 개념을 그래프에서 이어 본다 */}
+        <ConceptChips ids={detail.conceptIds ?? []} />
 
         {reaction && (
           <ReactionBar

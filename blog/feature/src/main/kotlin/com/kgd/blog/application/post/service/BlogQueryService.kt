@@ -11,6 +11,7 @@ import com.kgd.blog.application.post.dto.BlogAuthorSpace
 import com.kgd.blog.application.post.dto.BlogPage
 import com.kgd.blog.application.post.dto.BlogPostDetail
 import com.kgd.blog.application.post.dto.BlogPostSummary
+import com.kgd.blog.application.post.port.BlogPostConceptRepositoryPort
 import com.kgd.blog.application.post.port.BlogPostRepositoryPort
 import com.kgd.blog.application.post.usecase.GetBlogAuthorSpaceUseCase
 import com.kgd.blog.application.post.usecase.GetBlogPostUseCase
@@ -42,6 +43,7 @@ class BlogQueryService(
     private val commentRepository: BlogCommentRepositoryPort,
     private val reactionRepository: BlogReactionRepositoryPort,
     private val assembler: BlogAssembler,
+    private val conceptRepository: BlogPostConceptRepositoryPort,
 ) : GetBlogCategoryTreeUseCase, GetBlogPostsUseCase, GetBlogPostUseCase, GetBlogAuthorSpaceUseCase, GetBlogCommentsUseCase {
 
     /** 목록·네비용 카테고리 트리. 숨김(HIDDEN)은 빠진다 */
@@ -79,8 +81,13 @@ class BlogQueryService(
      * `categoryPath` 는 서브트리를 통째로 받는다 — `/tech` 를 고르면 `/tech/server/search` 의
      * 글도 나온다. 상위를 골랐을 때 아무것도 안 나오는 화면은 카테고리를 쓸 이유를 없앤다.
      */
-    override fun execute(query: GetBlogPostsUseCase.Query): BlogPage<BlogPostSummary> =
-        BlogPage.of(posts(query.categoryPath, query.handle, Paging.of(query.page, query.size, MAX_PAGE_SIZE)))
+    override fun execute(query: GetBlogPostsUseCase.Query): BlogPage<BlogPostSummary> {
+        val paging = Paging.of(query.page, query.size, MAX_PAGE_SIZE)
+        val concept = query.concept?.trim()?.takeIf { it.isNotEmpty() }
+            ?: return BlogPage.of(posts(query.categoryPath, query.handle, paging))
+        val result = postRepository.findPublishedByConcept(concept, paging)
+        return BlogPage.of(Paged(assembler.summaries(result.items), result.page, result.size, result.totalElements, result.totalPages))
+    }
 
     /** 공개 상세. 미발행 슬러그는 존재를 드러내지 않고 404 */
     override fun execute(query: GetBlogPostUseCase.Query): BlogPostDetail =
@@ -162,6 +169,7 @@ class BlogQueryService(
             breadcrumb = assembler.breadcrumb(category),
             liked = voter != null && reactionRepository.hasLike(postId, voter),
             myScore = voter?.let { reactionRepository.findRating(postId, it) },
+            conceptIds = conceptRepository.findConceptIds(postId),
         )
     }
 

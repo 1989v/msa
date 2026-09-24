@@ -7,6 +7,8 @@ import com.kgd.blog.domain.model.ProfileStatus
 import com.kgd.blog.domain.model.VoterType
 import com.kgd.blog.infrastructure.persistence.entity.BlogCategoryJpaEntity
 import com.kgd.blog.infrastructure.persistence.entity.BlogCommentJpaEntity
+import com.kgd.blog.infrastructure.persistence.entity.BlogPostConceptJpaEntity
+import com.kgd.blog.infrastructure.persistence.entity.BlogPostConceptKey
 import com.kgd.blog.infrastructure.persistence.entity.BlogPostJpaEntity
 import com.kgd.blog.infrastructure.persistence.entity.BlogPostLikeJpaEntity
 import com.kgd.blog.infrastructure.persistence.entity.BlogPostRatingJpaEntity
@@ -93,6 +95,22 @@ interface BlogPostJpaRepository : JpaRepository<BlogPostJpaEntity, Long> {
         authorProfileId: Long,
         pageable: Pageable,
     ): Page<BlogPostJpaEntity>
+
+    /** 개념으로 거른 발행글 — 매핑은 `blog_post_concept` 가 갖는다 */
+    @Query(
+        value = """
+        SELECT p FROM BlogPostJpaEntity p
+        WHERE p.status = com.kgd.blog.domain.model.PostStatus.PUBLISHED
+          AND p.id IN (SELECT c.postId FROM BlogPostConceptJpaEntity c WHERE c.conceptId = :conceptId)
+        ORDER BY p.publishedAt DESC, p.id DESC
+        """,
+        countQuery = """
+        SELECT COUNT(p) FROM BlogPostJpaEntity p
+        WHERE p.status = com.kgd.blog.domain.model.PostStatus.PUBLISHED
+          AND p.id IN (SELECT c.postId FROM BlogPostConceptJpaEntity c WHERE c.conceptId = :conceptId)
+        """,
+    )
+    fun findPublishedByConcept(@Param("conceptId") conceptId: String, pageable: Pageable): Page<BlogPostJpaEntity>
 
     /** 사이트맵·프리렌더용 — 페이지네이션 없이 발행글 전체 (색인 대상만) */
     @Query(
@@ -211,4 +229,12 @@ interface BlogCommentJpaRepository : JpaRepository<BlogCommentJpaEntity, Long> {
     fun findAllByOrderByIdDesc(pageable: Pageable): Page<BlogCommentJpaEntity>
     fun countByPostIdAndStatus(postId: Long, status: CommentStatus): Long
     fun deleteByPostId(postId: Long)
+}
+
+interface BlogPostConceptJpaRepository : JpaRepository<BlogPostConceptJpaEntity, BlogPostConceptKey> {
+    fun findAllByPostIdOrderByOrdinalAsc(postId: Long): List<BlogPostConceptJpaEntity>
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("DELETE FROM BlogPostConceptJpaEntity c WHERE c.postId = :postId")
+    fun deleteAllOfPost(@Param("postId") postId: Long): Int
 }
