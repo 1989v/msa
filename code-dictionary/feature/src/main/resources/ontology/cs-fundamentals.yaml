@@ -627,8 +627,6 @@ concepts:
     description: "원소들을 서로소 집합으로 나누고, 두 원소가 같은 집합인지(find)와 두 집합 합치기(union)를 거의 O(1) 에 한다. 경로 압축과 크기 · 랭크 기준 합치기를 함께 써야 빨라진다"
     synonyms: ["union-find", "disjoint set union", "DSU", "path compression"]
     questions: ["경로 압축 없이 유니온 파인드를 쓰면 최악 비용은 얼마인가"]
-    code:
-      - { path: career/coding-test/kotlin-template.kt, symbol: "private class UnionFind(n: Int)", note: "경로 압축 · 크기 기준 합치기 템플릿" }
   - id: cs-strongly-connected-components
     kind: MECHANISM
     name: "강한 연결 요소"
@@ -1087,8 +1085,6 @@ concepts:
     level: INTERMEDIATE
     description: "지수를 이진수로 보고 제곱을 되풀이하며 필요한 비트에서만 곱해 aᵇ 를 O(log b) 번 곱셈으로 구한다. 모듈러와 함께 쓰면 큰 수에서도 넘치지 않는다. RSA · 행렬 거듭제곱의 바탕이다"
     synonyms: ["fast exponentiation", "exponentiation by squaring", "modpow"]
-    code:
-      - { path: career/coding-test/kotlin-template.kt, symbol: "private fun pow(base: Long, exp: Long, m: Long = MOD): Long", note: "모듈러 분할 거듭제곱 템플릿" }
     uses: [cs-modular-arithmetic]
   - id: cs-euclidean-gcd
     kind: MECHANISM
@@ -1097,8 +1093,6 @@ concepts:
     level: BEGINNER
     description: "gcd(a, b) = gcd(b, a mod b) 를 나머지가 0 이 될 때까지 되풀이해 최대공약수를 O(log min(a, b)) 에 구한다. 최소공배수는 a·b/gcd 다"
     synonyms: ["Euclidean algorithm", "GCD", "LCM", "extended Euclid"]
-    code:
-      - { path: career/coding-test/kotlin-template.kt, symbol: "private tailrec fun gcd(a: Long, b: Long): Long", note: "꼬리 재귀 최대공약수" }
   - id: cs-modular-arithmetic
     kind: MECHANISM
     name: "모듈러 연산"
