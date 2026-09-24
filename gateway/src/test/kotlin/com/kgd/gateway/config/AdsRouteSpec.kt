@@ -89,14 +89,16 @@ class AdsRouteSpec(
             routes.filter { it.id.startsWith("ads-") }.map { it.uri.toString() }.toSet() shouldBe
                 setOf("http://engagement:8091")
         }
-        Then("허용 호스트의 공개 경로 다섯은 ads-public 이 받는다") {
+        Then("허용 호스트의 공개 경로 넷은 ads-public 이 받는다") {
             listOf(
                 "/api/v1/ads/decisions",
                 "/api/v1/ads/events",
                 "/api/v1/ads/click/tok",
                 "/api/v1/ads/assets/abc",
-                "/api/v1/ads/placements/game-list-banner",
             ).forEach { firstMatch(it, "blog.1989v.com") shouldBe "ads-public" }
+        }
+        Then("옛 지면 조회 경로는 어떤 라우트에도 맞지 않는다 — 호환 경로는 제거됐다") {
+            firstMatch("/api/v1/ads/placements/game-list-banner", "blog.1989v.com") shouldBe null
         }
         Then("광고주 경로는 ads-advertiser, 어드민 경로는 ads-admin 이 받는다") {
             firstMatch("/api/v1/ads/advertiser/campaigns", "1989v.com") shouldBe "ads-advertiser"

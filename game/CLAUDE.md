@@ -1,6 +1,8 @@
 # Game Service (게임 플랫폼)
 
-대형 웹게임 포털 모델의 게임 플랫폼 — 게임 카탈로그(태그/큐레이션/평점) + 플레이 세션 + 광고(후속 페이즈).
+대형 웹게임 포털 모델의 게임 플랫폼 — 게임 카탈로그(태그/큐레이션/평점) + 플레이 세션.
+광고는 ads 서비스가 갖는다 — game 의 HOUSE 배너·보상형 광고 코드와 표(`ad_placement`·`ad_policy`·`reward_grant`)는
+그쪽으로 흡수된 뒤 제거됐다(V94, ADR-0098).
 신규 JVM 없이 **`code-dictionary:app` 에 폴드**된 모듈러 모놀리스 라이브러리다 (ADR-0059, ADR-0058 컨벤션).
 
 ## Modules
@@ -22,7 +24,7 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
 
 ## 구조 상태 (ADR-0083)
 
-표준 준수 (2026-08-26, P4 완료) — `application/{catalog,play,ads,arcade}/usecase` 인터페이스 31개, 서비스가 구현하고 컨트롤러는 인터페이스만 주입. Port 는 컨텍스트별 `*Ports.kt` 묶음 파일(허용), application → infrastructure import 0. 부채 없음.
+표준 준수 (2026-08-26, P4 완료) — `application/{catalog,play,arcade}/usecase` 인터페이스 31개, 서비스가 구현하고 컨트롤러는 인터페이스만 주입. Port 는 컨텍스트별 `*Ports.kt` 묶음 파일(허용), application → infrastructure import 0. 부채 없음.
 
 ## Commands
 
@@ -69,7 +71,6 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
 | catalog | Game(상태머신 DRAFT→REVIEW→BETA→PUBLISHED⇄SUSPENDED, `isMonetizable`=PUBLISHED+SDK, **genre 단일 대표 장르**), GameTag(+map), GameStats(1:1 프로젝션), GameCollection(MANUAL/TRENDING/NEW/TAG_BASED) |
 | play | GamePlaySession(게스트 허용), GameRating(1인 1표, 1~10), **GameSaveData**(불투명 JSON + @Version 낙관적 락 + 64KB 상한), **GameRun**(서버 권위 시드 발급/소모 — 세이브스커밍 방어) |
 | battle | `game:sim` 의 결정적 1v1 턴제 배틀 코어(타입 상성/STAB/Mulberry32) — BattleRunner 리플레이 재실행으로 Tier B 검증 가능. 몬스터 수집 RPG 프로토타입 기반 |
-| ads | AdPlacement(HOUSE 크리에이티브 JSON)/AdPolicy(frequency SSOT, 판정은 Redis TTL)/RewardGrant(멱등 보상 원장 — PENDING→COMPLETED, 중복 콜백 1회 보장). rewarded 발급은 `isMonetizable` 게이트. 외부 네트워크(AdSense/GAM)는 후속 |
 | suggestion | GameSuggestion(제안 — OPEN/REVIEWING/APPLIED/DECLINED, 로그인 필수, **쓴 사람만 수정**) + SuggestionReply(제안자·운영자 평면 스레드, `author_type` 은 서버가 결정). 표 둘을 전 게임이 공유 (ADR-0087) |
 | arcade | #23 흡수분 — 세션 구슬(HMAC) · 리플레이 제출 · **Tier A/B 검증**(서버가 결정적 sim 을 재실행해 점수 위조 거부) · Redis 리더보드/데일리 챌린지. API 는 `/api/v1/games/arcade/**` |
 
@@ -95,7 +96,6 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
 | `GET/POST/PUT/DELETE /api/v1/games/party/rosters[/{groupId}]`, `PUT .../opt-in` | 친구 그룹 — **로그인 전용**. 계정 저장을 켠 사람만 서버에 남고, 끄면 서버본을 응답으로 돌려준 뒤 지운다 (ADR-0092) |
 | `POST/GET /api/v1/games/party/rooms/{roomCode}/{votes,plays,rounds}` | 파티 판 진행 — 익명 투표 · 참여형 채점 · 결과 해시. **로그인이 아니라 좌석 토큰이 신원**이다(`X-Party-Seat`/`X-Party-Token`), 초대 링크로 들어온 게스트가 참가자이기 때문 |
 | `WS /ws/games/{slug}` | 온라인 대전 릴레이 (raw WebSocket, 게스트). 아래 "온라인 대전 릴레이" 참조. 파티 방은 슬러그 `party` 를 쓴다 |
-| `GET /api/v1/ads/placements/{key}?subject=`, `POST /api/v1/ads/rewards`(+`/{key}/complete`) | HOUSE 배너 슬롯(cap 시 data=null) / rewarded 보상 발급·완료(멱등) |
 
 게이트웨이 라우팅(`GatewayRouteConfig`)은 인증 수준별로 라우트가 나뉜다 — 좁은 경로가 먼저
 선언되어야 `games/**` 에 가려지지 않는다: `game-admin`(ADMIN) → `game-rating`(USER+) →
@@ -103,7 +103,7 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
 `game-my-record`(USER+) → `game-score-submit`(게스트 허용) →
 `game-suggestion-read`(GET 만, 게스트 허용) → `game-suggestion-write`(USER+ + Rate Limiter) →
 `game-party-roster`(USER+) → `game-party-room`(게스트 허용) →
-`game-catalog`(공개) → `game-relay-ws`(`/ws/games/**`, 게스트 허용) → `game-ads`(`/api/v1/ads/**`, 게스트 허용).
+`game-catalog`(공개) → `game-relay-ws`(`/ws/games/**`, 게스트 허용). `/api/v1/ads/**` 는 ads 라우트가 받는다(ADR-0098).
 
 **친구 그룹은 캐치올보다 먼저 잡아야 한다.** `/api/v1/games/party/rosters` 는 처음 붙었을 때
 전용 라우트가 없어 `game-catalog`(필터 없는 공개 경로)로 떨어졌고, 그 경로는 클라이언트가 붙인

@@ -542,7 +542,7 @@ class GatewayRouteConfig(
                     }
                     .uri(ENGAGEMENT_URI)
             }
-            // 결정·이벤트·클릭·에셋·옛 지면 조회 — 게스트 허용. 필터는 위조 신원 헤더를 벗기고,
+            // 결정·이벤트·클릭·에셋 — 게스트 허용. 필터는 위조 신원 헤더를 벗기고,
             // 로그인 사용자면 X-User-Id 를 실어 결정 단계의 광고주 본인 판정이 쓰게 한다.
             // Host 허용 목록 밖(rt 등)은 404 — 리미터 키 CF-Connecting-IP 를 믿을 수 있는 호스트만 받는다.
             .route("ads-public") { r ->
@@ -551,7 +551,6 @@ class GatewayRouteConfig(
                     "/api/v1/ads/events",
                     "/api/v1/ads/click/**",
                     "/api/v1/ads/assets/**",
-                    "/api/v1/ads/placements/**",
                 )
                     .and().predicate { adsHostAllowlist.allows(it) }
                     .filters { f ->

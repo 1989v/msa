@@ -79,7 +79,6 @@ recommendation·experiment 도 같은 파드라 **함께 멈춘다.** 이미지�
 | Prefix | 인증 | 설명 |
 |---|---|---|
 | `POST /api/v1/ads/decisions` · `POST /api/v1/ads/events` · `GET /api/v1/ads/click/{token}` · `GET /api/v1/ads/assets/{hash}` | 공개 (Host 허용 목록 + 리미터 `CF-Connecting-IP`) | 결정 · 노출/클릭 수락 · 클릭 리다이렉트 · 승인 소재 이미지 |
-| `GET /api/v1/ads/placements/{key}` | 공개 | 옛 game HOUSE 응답 모양 호환 — 다음 릴리스에서 제거 |
 | `/api/v1/ads/advertiser/**` | ROLE_USER+ | 등록 · 대시보드 · 충전 · 캠페인 · 소재 업로드 · 카탈로그 · 리포트 |
 | `/api/v1/admin/ads/**` | ROLE_ADMIN | 심사 · 광고주 정지 · 지면 · 문맥 매핑 · HOUSE · 퍼블리셔 리포트 · 원장 검사. 변경마다 행위자·시각 |
 
@@ -87,10 +86,11 @@ recommendation·experiment 도 같은 파드라 **함께 멈춘다.** 이미지�
 
 1. common 슬라이스(`EntityType.AD`) — 완료
 2. **ads 배포 + 게이트웨이 전환을 한 릴리스로** (Argo sync-wave 가 engagement 9 → gateway 20 순서를 보장).
-   이 릴리스 동안 ads 가 옛 `GET /api/v1/ads/placements/{key}` 를 옛 응답 모양으로 제공한다
-3. FE 가 결정 API 로 전환 (`AdSlot`·`HouseBanner`)
-4. 다음 릴리스: 호환 경로 제거 + game ads 코드 제거 + game 광고 표 삭제 **새 마이그레이션**(별도 커밋)
+   이 릴리스 동안 ads 가 옛 `GET /api/v1/ads/placements/{key}` 를 옛 응답 모양으로 제공했다 — 완료
+3. FE 가 결정 API 로 전환 (`AdSlot`·`HouseBanner`) — 완료
+4. 다음 릴리스: 호환 경로 제거 + game ads 코드 제거 + game 광고 표 삭제 **새 마이그레이션**(game V94, 별도 커밋) — 코드 반영 완료
 
 되돌리기:
 - 2 뒤·3 전 — 게이트웨이 라우트만 content 로 되돌린다
 - 3 뒤 — **FE 이미지와 게이트웨이를 함께** 되돌린다. 그 사이 발급된 클릭 토큰은 404 가 되고, 그 손실은 받아들인다
+- 4 뒤 — game 에 광고 코드도 표도 없어 content 로 되돌릴 곳이 없다. 광고 장애는 ads 안에서 고친다
