@@ -4,6 +4,7 @@ import com.kgd.common.messaging.IdempotentEventHandler
 import com.kgd.common.messaging.IdempotentMetrics
 import com.kgd.common.messaging.ProcessedEventRepositoryPort
 import com.kgd.common.messaging.idempotency.JpaProcessedEventRepositoryAdapter
+import com.kgd.common.messaging.outbox.OutboxHeaderSource
 import com.kgd.common.messaging.outbox.OutboxJpaAdapter
 import com.kgd.common.messaging.outbox.OutboxKafka
 import com.kgd.common.messaging.outbox.OutboxMetrics
@@ -11,6 +12,7 @@ import com.kgd.common.messaging.outbox.OutboxPollingPublisher
 import com.kgd.common.messaging.outbox.OutboxPort
 import com.kgd.seller.infrastructure.idempotency.SellerProcessedEventRepository
 import com.kgd.seller.infrastructure.outbox.SellerOutboxRepository
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -29,7 +31,10 @@ import tools.jackson.databind.ObjectMapper
 class SellerMessagingConfig {
 
     @Bean
-    fun sellerOutboxPort(repository: SellerOutboxRepository): OutboxPort = OutboxJpaAdapter(repository)
+    fun sellerOutboxPort(
+        repository: SellerOutboxRepository,
+        headerSource: ObjectProvider<OutboxHeaderSource>,
+    ): OutboxPort = OutboxJpaAdapter(repository, headerSource = headerSource.getIfAvailable { OutboxHeaderSource.NONE })
 
     // 릴레이 전용 String 프로듀서 — 도메인 이벤트용 JSON 템플릿으로 보내면 payload 가 한 번 더 인용된다.
     @Bean

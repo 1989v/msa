@@ -221,12 +221,12 @@ Total Task Groups: 16 · 단계 P0~P7 (단계 끝마다 커밋·푸시·배포·
 **Dependencies:** Task Group 14
 **Phase:** P7
 **Required Skills:** Kafka DLT, Micrometer Tracing, React
-- [ ] 15.0 Complete ops
-  - [ ] 15.1 테스트: DLT 레코드 → ops_issue → 재발행 API 로 원 토픽 재수신 · 체류 사가 10분 → ops_issue · traceparent 가 아웃박스 거쳐 컨슈머 MDC (3)
-  - [ ] 15.2 `ops_issue` 를 order·inventory·fulfillment·product 에도, 도메인별 DLT 컨슈머, `/api/v1/admin/{domain}/ops-issues`(조회·재시도·종결·사유)
-  - [ ] 15.3 Micrometer Tracing + Kafka 헤더 전파, 지표(사가 체류·보상·UNKNOWN·적체·대사 불일치·지급 합계)
-  - [ ] 15.4 admin-fe 운영 큐(8도메인 합침)
-  - [ ] 15.5 Verify: `$G :order:feature:test --tests '*OpsIssue*' :commerce:app:test --tests '*Tracing*'`
+- [x] 15.0 Complete ops
+  - [x] 15.1 테스트: DLT 레코드 → ops_issue → 재발행 API 로 원 토픽 재수신 · 체류 사가 10분 → ops_issue · traceparent 가 아웃박스 거쳐 컨슈머 MDC (3)
+  - [x] 15.2 `ops_issue` 를 order·inventory·fulfillment·product 에도, 도메인별 DLT 컨슈머, `/api/v1/admin/{domain}/ops-issues`(조회·재시도·종결·사유)
+  - [x] 15.3 Micrometer Tracing + Kafka 헤더 전파, 지표(사가 체류·보상·UNKNOWN·적체·대사 불일치·지급 합계)
+  - [x] 15.4 admin-fe 운영 큐(8도메인 합침)
+  - [x] 15.5 Verify: `$G :order:feature:test --tests '*OpsIssue*' :commerce:app:test --tests '*Tracing*'`
 **Acceptance Criteria:** 운영 큐 화면에서 DLT 1건 재발행
 
 ### Task Group 16: 문서 · CI · 최종 검증

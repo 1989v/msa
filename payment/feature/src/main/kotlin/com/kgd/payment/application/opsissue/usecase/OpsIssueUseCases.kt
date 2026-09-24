@@ -10,9 +10,10 @@ interface QueryOpsIssuesUseCase {
 /**
  * 어드민 조치 — 재시도·종결. 재시도는 종류별로 다르다:
  * PAYMENT_UNKNOWN 은 재조회를 처음부터 다시 잡고, RECON_MISMATCH 는 그 날짜·주문번호를 다시 대사한다.
+ * DLT 는 원 토픽으로 재발행한 뒤 RETRIED 로 둔다(재발행이 실패하면 상태를 바꾸지 않는다).
  */
 interface ManageOpsIssueUseCase {
-    fun retry(id: Long, actorId: String): OpsIssueView
+    fun retry(id: Long, actorId: String, reason: String? = null): OpsIssueView
     fun close(id: Long, actorId: String, reason: String): OpsIssueView
 }
 

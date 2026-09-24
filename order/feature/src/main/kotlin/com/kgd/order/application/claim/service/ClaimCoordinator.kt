@@ -9,6 +9,7 @@ import com.kgd.order.application.claim.usecase.DecideClaimUseCase
 import com.kgd.order.application.claim.usecase.HandleClaimEventUseCase
 import com.kgd.order.application.claim.usecase.ProcessClaimDeadlineUseCase
 import com.kgd.order.application.claim.usecase.RequestClaimUseCase
+import com.kgd.order.application.claim.usecase.ResumeClaimUseCase
 import com.kgd.order.application.order.port.OrderEventPort
 import com.kgd.order.application.order.port.OrderRepositoryPort
 import com.kgd.order.application.readmodel.port.SellerViewRepositoryPort
@@ -59,7 +60,7 @@ class ClaimCoordinator(
     @Qualifier("orderClock") private val clock: Clock,
     @Qualifier("orderSagaTiming") private val timing: SagaTiming,
     @Qualifier("orderTransactionManager") transactionManager: PlatformTransactionManager,
-) : RequestClaimUseCase, DecideClaimUseCase, HandleClaimEventUseCase, ProcessClaimDeadlineUseCase {
+) : RequestClaimUseCase, DecideClaimUseCase, HandleClaimEventUseCase, ProcessClaimDeadlineUseCase, ResumeClaimUseCase {
 
     private val log = KotlinLogging.logger {}
     private val tx = TransactionTemplate(transactionManager)
@@ -174,6 +175,19 @@ class ClaimCoordinator(
                 )
             }
         }
+        claims.save(claim)
+    }
+
+    override fun resume(claimId: Long) = inTx {
+        val claim = claims.findById(claimId) ?: throw ClaimNotFoundException(claimId)
+        if (!claim.stuck || !claim.status.open) {
+            log.info { "재개할 필요 없는 클레임: claimId=$claimId, status=${claim.status}, step=${claim.step}, stuck=${claim.stuck}" }
+            return@inTx
+        }
+        val order = orders.findById(claim.orderId) ?: error("클레임은 있는데 주문이 없다: orderId=${claim.orderId}")
+        claim.resume(clock.instant(), timing)
+        log.info { "클레임 재개: claimId=$claimId, step=${claim.step}" }
+        send(order, claim)
         claims.save(claim)
     }
 

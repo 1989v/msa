@@ -169,6 +169,17 @@ class GatewayRouteConfig(
                     }
                     .uri(COMMERCE_URI)
             }
+            // 재고·이행 운영 이슈(DLT 적재·재발행) — 어드민 전용. 나머지 커머스 도메인의 운영 이슈는
+            // 각 도메인 어드민 라우트(/api/v1/admin/{orders,products,sellers,payments,promotions,settlements}/**)가 받는다
+            .route("commerce-ops-admin") { r ->
+                r.path("/api/v1/admin/inventories/ops-issues", "/api/v1/admin/inventories/ops-issues/**",
+                    "/api/v1/admin/fulfillments/ops-issues", "/api/v1/admin/fulfillments/ops-issues/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(adminConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(COMMERCE_URI)
+            }
             // === ADR-0099 판매자 (commerce 폴드) ===
             // 게이트웨이는 역할까지만 본다. "ACTIVE 판매자 행인가"는 서비스가 매 요청 X-User-Id 로 다시 본다 —
             // 정지는 토큰 만료를 기다리지 않고 바로 막혀야 한다.

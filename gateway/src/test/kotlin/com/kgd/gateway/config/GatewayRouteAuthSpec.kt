@@ -205,6 +205,28 @@ class GatewayRouteAuthSpec(
         }
     }
 
+    Given("운영 이슈 /api/v1/admin/{domain}/ops-issues — 커머스 여덟 도메인 (ROLE_ADMIN)") {
+        val domains = listOf("orders", "inventories", "fulfillments", "products", "payments", "sellers", "promotions", "settlements")
+        Then("토큰이 없으면 401 — 조회·재시도·종결 모두") {
+            domains.forEach { d ->
+                status(HttpMethod.GET, "/api/v1/admin/$d/ops-issues") shouldBe 401
+                status(HttpMethod.POST, "/api/v1/admin/$d/ops-issues/1/retry") shouldBe 401
+                status(HttpMethod.POST, "/api/v1/admin/$d/ops-issues/1/close") shouldBe 401
+            }
+        }
+        Then("ROLE_USER·ROLE_SELLER 는 403") {
+            domains.forEach { d ->
+                status(HttpMethod.GET, "/api/v1/admin/$d/ops-issues", userToken) shouldBe 403
+                status(HttpMethod.POST, "/api/v1/admin/$d/ops-issues/1/retry", sellerToken) shouldBe 403
+            }
+        }
+        Then("ROLE_ADMIN 은 게이트웨이를 지난다 — 라우트가 없으면 404") {
+            domains.forEach { d ->
+                status(HttpMethod.GET, "/api/v1/admin/$d/ops-issues", adminToken) shouldNotBeIn listOf(401, 403, 404)
+            }
+        }
+    }
+
     Given("토스 웹훅 /api/v1/payments/webhooks/toss (공개 · 서명은 서비스가 본다)") {
         Then("토큰 없이 게이트웨이를 지난다 — 위조 신원 헤더를 붙여도 막히지 않고 벗겨진다") {
             // 백엔드 호스트를 해석할 수 없어 5xx 로 끝난다. 라우트가 없으면 404, 인증 필터가 막으면 401 이다

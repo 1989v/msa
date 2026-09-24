@@ -8,6 +8,7 @@ import com.kgd.order.application.saga.port.OrderOpsIssueRepositoryPort
 import com.kgd.order.application.saga.port.OrderSagaRepositoryPort
 import com.kgd.order.application.saga.port.SagaCommand
 import com.kgd.order.application.saga.port.SagaCommandPort
+import com.kgd.order.application.saga.usecase.DetectStalledSagasUseCase
 import com.kgd.order.application.saga.usecase.HandleSagaEventUseCase
 import com.kgd.order.application.saga.usecase.InventoryAnswer
 import com.kgd.order.application.saga.usecase.InventoryAnswerType
@@ -16,6 +17,7 @@ import com.kgd.order.application.saga.usecase.PaymentOutcomeType
 import com.kgd.order.application.saga.usecase.ProcessSagaDeadlineUseCase
 import com.kgd.order.application.saga.usecase.PromotionAnswer
 import com.kgd.order.application.saga.usecase.PromotionAnswerType
+import com.kgd.order.application.saga.usecase.ResumeSagaUseCase
 import com.kgd.order.domain.order.exception.OrderCancelNotAllowedException
 import com.kgd.order.domain.order.exception.OrderNotFoundException
 import com.kgd.order.domain.order.model.Order
@@ -60,7 +62,7 @@ class OrderSagaCoordinator(
     @Qualifier("orderClock") private val clock: Clock,
     @Qualifier("orderSagaTiming") private val timing: SagaTiming,
     @Qualifier("orderTransactionManager") transactionManager: PlatformTransactionManager,
-) : HandleSagaEventUseCase, ProcessSagaDeadlineUseCase, CancelOrderUseCase {
+) : HandleSagaEventUseCase, ProcessSagaDeadlineUseCase, CancelOrderUseCase, DetectStalledSagasUseCase, ResumeSagaUseCase {
 
     private val log = KotlinLogging.logger {}
     private val tx = TransactionTemplate(transactionManager)
@@ -211,6 +213,40 @@ class OrderSagaCoordinator(
         }
     }
 
+    override fun detectStalled(): Int {
+        val now = clock.instant()
+        val stalled = tx.execute { sagas.findStalledOrderIds(now.minus(STALL_THRESHOLD), STALL_BATCH) }.orEmpty()
+        return stalled.count { orderId ->
+            tx.execute {
+                if (opsIssues.hasOpen(OpsIssueType.SAGA_STUCK, orderId.toString())) return@execute false
+                val saga = sagas.findByOrderId(orderId) ?: return@execute false
+                log.warn { "사가 체류 — 단계 ${saga.step} 에 ${STALL_THRESHOLD.toMinutes()}분 넘게 진행이 없다: orderId=$orderId, status=${saga.status}" }
+                opsIssues.save(
+                    OpsIssue.open(
+                        OpsIssueType.SAGA_STUCK, orderId.toString(),
+                        "사가 단계 ${saga.step} 에 ${saga.stepEnteredAt} 부터 진행이 없다 (status=${saga.status}, attempts=${saga.attempts})", now,
+                    ),
+                )
+                true
+            } == true
+        }
+    }
+
+    override fun resume(orderId: Long) = withSaga(orderId) { order, saga, now ->
+        when (saga.status) {
+            SagaStatus.STUCK -> {
+                saga.resume(now, timing)
+                log.info { "사가 재개: orderId=$orderId, status=${saga.status}, step=${saga.step}" }
+                send(saga.step, order, saga)
+            }
+            SagaStatus.RUNNING, SagaStatus.COMPENSATING -> {
+                log.info { "진행 중 사가 — 지금 단계 명령만 다시 낸다: orderId=$orderId, step=${saga.step}" }
+                send(saga.step, order, saga)
+            }
+            else -> log.info { "끝난 사가 — 재개할 것이 없다: orderId=$orderId, status=${saga.status}" }
+        }
+    }
+
     override fun cancel(userId: String, orderId: Long): OrderDetail {
         inTx {
             val order = orders.findById(orderId)?.takeIf { it.userId == userId } ?: throw OrderNotFoundException(orderId)
@@ -351,6 +387,10 @@ class OrderSagaCoordinator(
 
     private companion object {
         const val MAX_CONFLICT_ATTEMPTS = 5
+
+        /** 한 단계에 이만큼 진행이 없으면 체류 — 기한 재발행(1분 × 10회)이 STUCK 에 닿기 직전이다 */
+        val STALL_THRESHOLD: java.time.Duration = java.time.Duration.ofMinutes(10)
+        const val STALL_BATCH = 100
         const val COMMAND_RESERVE = "RESERVE"
         const val COMMAND_CONFIRM = "CONFIRM"
         const val COMMAND_RELEASE = "RELEASE"

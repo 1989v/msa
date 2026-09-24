@@ -1,5 +1,7 @@
 package com.kgd.payment.application.opsissue.service
 
+import com.kgd.common.exception.NotFoundException
+import com.kgd.payment.application.opsissue.port.DltReplayPort
 import com.kgd.payment.application.opsissue.port.OpsIssueRepositoryPort
 import com.kgd.payment.application.opsissue.usecase.ManageOpsIssueUseCase
 import com.kgd.payment.application.opsissue.usecase.OpsIssuePageView
@@ -15,14 +17,20 @@ class OpsIssueService(
     private val opsIssues: OpsIssueRepositoryPort,
     private val tx: OpsIssueTransactionalService,
     private val reconcile: ReconcilePaymentsUseCase,
+    private val dltReplay: DltReplayPort,
 ) : QueryOpsIssuesUseCase, ManageOpsIssueUseCase {
 
     override fun list(status: OpsIssueStatus?, page: Int, size: Int): OpsIssuePageView =
         opsIssues.findPage(status, page, size).let { OpsIssuePageView(it.items.map(OpsIssueView::from), it.total) }
 
-    /** 대사 재시도는 정산 파일을 다시 읽는다(외부 IO) — 이슈 갱신 트랜잭션이 끝난 뒤에 돈다 */
-    override fun retry(id: Long, actorId: String): OpsIssueView {
-        val issue = tx.retry(id, actorId)
+    /**
+     * 대사 재시도는 정산 파일을 다시 읽는다(외부 IO) — 이슈 갱신 트랜잭션이 끝난 뒤에 돈다.
+     * DLT 재발행은 먼저 한다 — 보내지 못했으면 이슈를 RETRIED 로 바꾸지 않는다.
+     */
+    override fun retry(id: Long, actorId: String, reason: String?): OpsIssueView {
+        val current = opsIssues.findById(id) ?: throw NotFoundException("OpsIssue", id)
+        if (current.type == OpsIssueType.DLT && current.status != OpsIssueStatus.CLOSED) dltReplay.replay(id)
+        val issue = tx.retry(id, actorId, reason)
         if (issue.type == OpsIssueType.RECON_MISMATCH) reconcile.reconcile(requireNotNull(issue.businessDate))
         return OpsIssueView.from(issue)
     }

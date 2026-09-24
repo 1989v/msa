@@ -46,6 +46,9 @@ class OrderSagaRepositoryAdapter(
     override fun findDueOrderIds(now: Instant, limit: Int): List<Long> =
         jpa.findDueOrderIds(listOf(SagaStatus.RUNNING, SagaStatus.COMPENSATING), now, PageRequest.of(0, limit))
 
+    override fun findStalledOrderIds(enteredBefore: Instant, limit: Int): List<Long> =
+        jpa.findStalledOrderIds(listOf(SagaStatus.RUNNING, SagaStatus.COMPENSATING), enteredBefore, PageRequest.of(0, limit))
+
     /** 바뀐 것이 없으면 행을 건드리지 않는다 — 단계와 맞지 않아 무시한 답이 버전을 올려 동시 처리끼리 부딪치지 않게 */
     private fun copy(saga: OrderSaga, entity: OrderSagaJpaEntity) {
         val before = fingerprint(entity)
@@ -53,6 +56,7 @@ class OrderSagaRepositoryAdapter(
         entity.step = saga.step
         entity.attempts = saga.attempts
         entity.nextDeadlineAt = saga.nextDeadlineAt
+        entity.stepEnteredAt = saga.stepEnteredAt
         entity.pendingVoid = saga.pendingVoid
         entity.holdsExpired = saga.holdsExpired
         entity.paymentUnknown = saga.paymentUnknown
@@ -71,7 +75,7 @@ class OrderSagaRepositoryAdapter(
     private fun parse(json: String?): List<ReservedLine> = json?.let { objectMapper.readValue(it, RESERVED_LINES) }.orEmpty()
 
     private fun fingerprint(e: OrderSagaJpaEntity) = listOf(
-        e.status, e.step, e.attempts, e.nextDeadlineAt, e.pendingVoid, e.holdsExpired, e.paymentUnknown, e.inventoryConfirmed,
+        e.status, e.step, e.attempts, e.nextDeadlineAt, e.stepEnteredAt, e.pendingVoid, e.holdsExpired, e.paymentUnknown, e.inventoryConfirmed,
         e.promotionConfirmed, e.cancelRequested, e.compensationPlan, e.failureReason, e.reservedLines,
     )
 
@@ -95,6 +99,7 @@ class OrderSagaRepositoryAdapter(
         failureReason = failureReason,
         reservedLines = parse(reservedLines),
         version = version,
+        stepEnteredAt = stepEnteredAt,
     )
 
     private companion object {

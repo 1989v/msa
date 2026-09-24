@@ -46,6 +46,11 @@ interface ProcessClaimDeadlineUseCase {
     fun onDeadline(orderId: Long)
 }
 
+/** 운영자 재개(CLAIM_STUCK 재시도) — 멈춘 단계의 명령을 다시 내고 기한 점검에 돌려보낸다. 멈추지 않은 클레임이면 아무것도 하지 않는다 */
+interface ResumeClaimUseCase {
+    fun resume(claimId: Long)
+}
+
 data class ClaimView(
     val claimId: Long,
     val orderId: Long,

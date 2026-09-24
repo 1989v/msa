@@ -1,6 +1,7 @@
 package com.kgd.order.infrastructure.scheduler
 
 import com.kgd.order.application.order.usecase.CleanupIdempotencyKeysUseCase
+import com.kgd.order.application.saga.usecase.DetectStalledSagasUseCase
 import com.kgd.order.application.saga.usecase.ProcessSagaDeadlineUseCase
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
@@ -27,6 +28,23 @@ class OrderSagaDeadlineScheduler(
             runCatching { deadlines.onDeadline(orderId) }
                 .onFailure { log.error(it) { "사가 기한 처리 실패: orderId=$orderId" } }
         }
+    }
+}
+
+/** 사가 체류 감지 — 한 단계에 10분 넘게 진행이 없는 사가마다 운영 이슈 한 건 */
+@Component
+class OrderSagaStallScheduler(
+    private val detector: DetectStalledSagasUseCase,
+) {
+    private val log = KotlinLogging.logger {}
+
+    @Scheduled(
+        fixedDelayString = "\${order.saga.stall-check-interval-ms:60000}",
+        initialDelayString = "\${order.saga.stall-check-initial-delay-ms:60000}",
+    )
+    fun run() {
+        val opened = detector.detectStalled()
+        if (opened > 0) log.warn { "사가 체류 운영 이슈 $opened 건" }
     }
 }
 

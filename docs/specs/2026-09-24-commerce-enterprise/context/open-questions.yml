@@ -89,3 +89,7 @@ questions:
     phase: post-impl
     status: open
     question: settlement 는 발행 토픽이 없어 outbox 없음(SR-10 문구) · 역분개 진입점 API 없음 · 플랫폼 판매자 1 에도 모의 지급 · PG 입금 뒤 환불은 PG 미수금 음수 · 정산서 기간 표기보다 앞선 이월·지각 항목 포함
+  - id: Q23
+    phase: post-impl
+    status: open
+    question: 운영에 이미 쌓인 `-dlt` 토픽 레코드는 새 DLT 리스너가 안 본다 · Strimzi 에 `.DLT` 선언 여부(자동 생성 꺼진 환경 대비) · 이제 안 쓰는 JSON KafkaTemplate 4개 삭제 여부 · seller ops_issue 는 원천 없음 · 샘플링 0.1 에서 비샘플 traceId 전파 미검증 · 테스트 로그의 inventory_db 두 번째 Flyway ERROR 원인 미확인

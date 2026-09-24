@@ -22,6 +22,9 @@ dependencies {
     implementation(project(":settlement:feature")) // ADR-0099: 원장·정산 폴드 (전용 스키마 settlement_db)
     // 메인 클래스(@SpringBootApplication) 컴파일 + bootJar 구성용 최소 의존
     implementation(libs.spring.boot.starter.web)
+    // 추적 — HTTP·Kafka `traceparent` 전파와 로그 MDC 의 traceId. 내보내기(exporter)는 없다 — 전파와 로그 상관만 쓴다
+    implementation("org.springframework.boot:spring-boot-micrometer-tracing-brave")
+    implementation("io.micrometer:micrometer-tracing-bridge-brave")
 
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.spring.boot.starter.data.jpa) // dual-DS 테스트가 JpaRepository 타입 참조
@@ -43,6 +46,8 @@ dependencies {
     testImplementation(project(":order:domain"))
     testImplementation("org.flywaydb:flyway-core")
     testImplementation(libs.spring.kafka)
+    // 운영 지표 게이지를 값으로 판정한다
+    testImplementation("io.micrometer:micrometer-core")
 }
 
 tasks.bootJar {

@@ -24,10 +24,10 @@ class OpsIssueTransactionalService(
      * RECON_MISMATCH 는 그 판정을 지워 다음 대사가 다시 보게 한다.
      */
     @Transactional("paymentTransactionManager")
-    fun retry(id: Long, actorId: String): OpsIssue {
+    fun retry(id: Long, actorId: String, reason: String? = null): OpsIssue {
         val issue = load(id)
         val now = clock.instant()
-        issue.retry(actorId, now)
+        issue.retry(actorId, now, reason)
         when (issue.type) {
             OpsIssueType.PAYMENT_UNKNOWN ->
                 payments.findByOrderNo(issue.targetId)
@@ -35,6 +35,8 @@ class OpsIssueTransactionalService(
                     ?.let { it.retryInquiry(now); payments.save(it) }
             OpsIssueType.RECON_MISMATCH ->
                 reconciliations.delete(requireNotNull(issue.businessDate) { "대사 이슈에 정산일이 없다" }, issue.targetId)
+            // 재발행은 호출자([OpsIssueService])가 트랜잭션 밖에서 먼저 했다
+            OpsIssueType.DLT -> Unit
         }
         return opsIssues.save(issue)
     }

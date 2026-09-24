@@ -62,7 +62,7 @@ class FulfillmentCommandConsumer(
         const val CANCEL = "fulfillment.command.cancel"
 
         /** ADR-0029 §6.2.3 — fulfillment 컨슈머의 표준 group id */
-        private const val GROUP = "fulfillment-service"
+        const val GROUP = "fulfillment-service"
         private const val FACTORY = "fulfillmentKafkaListenerContainerFactory"
     }
 }

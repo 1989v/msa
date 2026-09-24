@@ -1,10 +1,12 @@
 package com.kgd.inventory.infrastructure.config
 
 import com.kgd.common.exception.BusinessException
+import com.kgd.common.ops.DltKafka
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -16,7 +18,6 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.core.ProducerFactory
 import org.springframework.kafka.listener.ContainerProperties
-import org.springframework.kafka.listener.DeadLetterPublishingRecoverer
 import org.springframework.kafka.listener.DefaultErrorHandler
 import org.springframework.kafka.support.serializer.JacksonJsonSerializer
 import org.springframework.util.backoff.FixedBackOff
@@ -66,14 +67,17 @@ class KafkaConfig {
     @Bean
     fun kafkaListenerContainerFactory(
         consumerFactory: ConsumerFactory<String, String>,
-        kafkaTemplate: KafkaTemplate<String, Any>,
+        // DLT 는 받은 원문(JSON 문자열)을 그대로 — JSON 직렬화 템플릿이면 한 번 더 인용돼 재발행한 값이 깨진다
+        @Qualifier("inventoryOutboxKafkaTemplate") kafkaTemplate: KafkaTemplate<String, *>,
     ): ConcurrentKafkaListenerContainerFactory<String, String> =
         ConcurrentKafkaListenerContainerFactory<String, String>().apply {
             setConsumerFactory(consumerFactory)
             containerProperties.ackMode = ContainerProperties.AckMode.RECORD
+            // 추적 — 레코드의 traceparent 로 span 을 이어 리스너 로그(MDC)에 같은 traceId 가 찍힌다
+            containerProperties.isObservationEnabled = true
             setCommonErrorHandler(
                 DefaultErrorHandler(
-                    DeadLetterPublishingRecoverer(kafkaTemplate),
+                    DltKafka.deadLetterRecoverer(kafkaTemplate),
                     FixedBackOff(1000L, 3L),
                 ).apply {
                     // ADR-0015 §2: 비즈니스 예외와 입력 검증 예외는 재시도 무의미 → 즉시 DLT.

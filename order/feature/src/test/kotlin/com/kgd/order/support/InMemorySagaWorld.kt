@@ -13,6 +13,8 @@ import com.kgd.order.domain.claim.model.Claim
 import com.kgd.order.domain.idempotency.model.IdempotencyKey
 import com.kgd.order.domain.idempotency.model.IdempotencyStatus
 import com.kgd.order.domain.opsissue.model.OpsIssue
+import com.kgd.order.domain.opsissue.model.OpsIssueStatus
+import com.kgd.order.domain.opsissue.model.OpsIssueType
 import com.kgd.order.domain.order.model.Order
 import com.kgd.order.domain.order.model.OrderItem
 import com.kgd.order.domain.order.model.PurchaseConfirmation
@@ -138,6 +140,9 @@ class InMemorySagaWorld {
         override fun findDueOrderIds(now: Instant, limit: Int) = sagaRows.values
             .filter { (it.status == SagaStatus.RUNNING || it.status == SagaStatus.COMPENSATING) && !it.nextDeadlineAt.isAfter(now) }
             .sortedBy { it.nextDeadlineAt }.take(limit).map { it.orderId }
+        override fun findStalledOrderIds(enteredBefore: Instant, limit: Int) = sagaRows.values
+            .filter { (it.status == SagaStatus.RUNNING || it.status == SagaStatus.COMPENSATING) && !it.stepEnteredAt.isAfter(enteredBefore) }
+            .sortedBy { it.stepEnteredAt }.take(limit).map { it.orderId }
     }
 
     val commandPort = object : SagaCommandPort {
@@ -160,6 +165,8 @@ class InMemorySagaWorld {
 
     val opsIssues = object : OrderOpsIssueRepositoryPort {
         override fun save(issue: OpsIssue) { issueRows += issue }
+        override fun hasOpen(type: OpsIssueType, targetId: String) =
+            issueRows.any { it.type == type && it.targetId == targetId && it.status == OpsIssueStatus.OPEN }
     }
 
     val keys = object : IdempotencyKeyRepositoryPort {
@@ -200,6 +207,6 @@ class InMemorySagaWorld {
     private fun copy(s: OrderSaga, version: Long) = OrderSaga.restore(
         s.orderId, s.orderNo, s.paymentRequired, s.status, s.step, s.attempts, s.nextDeadlineAt, s.startedAt,
         s.prePivotDeadlineAt, s.pendingVoid, s.holdsExpired, s.paymentUnknown, s.inventoryConfirmed, s.promotionConfirmed,
-        s.cancelRequested, s.compensationPlan, s.failureReason, s.reservedLines, version,
+        s.cancelRequested, s.compensationPlan, s.failureReason, s.reservedLines, version, s.stepEnteredAt,
     )
 }

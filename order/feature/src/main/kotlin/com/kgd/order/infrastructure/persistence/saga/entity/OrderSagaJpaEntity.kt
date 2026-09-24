@@ -35,6 +35,8 @@ class OrderSagaJpaEntity(
 
     @Column(nullable = false) var attempts: Int = 0
     @Column(name = "next_deadline_at", nullable = false) var nextDeadlineAt: Instant = startedAt
+    /** 컬럼 추가 전에 만든 행은 NULL — 도메인은 시작 시각으로 대신 본다 */
+    @Column(name = "step_entered_at") var stepEnteredAt: Instant? = null
     @Column(name = "pending_void", nullable = false) var pendingVoid: Boolean = false
     @Column(name = "holds_expired", nullable = false) var holdsExpired: Boolean = false
     @Column(name = "payment_unknown", nullable = false) var paymentUnknown: Boolean = false

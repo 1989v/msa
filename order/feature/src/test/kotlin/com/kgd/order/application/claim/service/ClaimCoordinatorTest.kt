@@ -21,6 +21,7 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -196,6 +197,16 @@ class ClaimCoordinatorTest : BehaviorSpec({
             f.clock.now = f.clock.now.plusSeconds(61)
             f.coordinator.onDeadline(f.orderId)
             f.world.issues.single().let { it.type shouldBe OpsIssueType.CLAIM_STUCK; it.targetId shouldBe claim.claimId.toString() }
+        }
+        Then("운영자 재개 — 멈춘 재입고를 다시 내고 기한 점검에 돌아온다. 답이 오면 이어서 진행한다") {
+            val before = f.claims.commands.size
+            f.coordinator.resume(claim.claimId)
+            f.claims.commands shouldHaveSize before + 1
+            f.lastCommand().shouldBeInstanceOf<ClaimCommand.RestockInventory>()
+            f.claims.claim(claim.claimId).let { it.stuck shouldBe false; it.attempts shouldBe 0 }
+
+            f.coordinator.onInventoryRestocked(f.orderId, "claim:${claim.claimId}")
+            f.lastCommand().shouldBeInstanceOf<ClaimCommand.RestorePromotion>()
         }
     }
 })

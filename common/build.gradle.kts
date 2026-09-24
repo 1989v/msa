@@ -30,7 +30,10 @@ dependencies {
     // (fulfillment, inventory, order 등)는 자체 build.gradle.kts 의 spring-boot-starter-data-jpa
     // 가 런타임 클래스패스를 책임진다.
     compileOnly(libs.spring.boot.starter.data.jpa)
+    // 아웃박스 행에 추적 문맥(traceparent)을 남긴다 — 추적을 켠 호스트(commerce)만 런타임에 갖는다
+    compileOnly("io.micrometer:micrometer-tracing")
     testImplementation(libs.spring.boot.starter.data.jpa)
+    testImplementation("io.micrometer:micrometer-tracing")
     testImplementation(libs.kotest.extensions.spring)
     testImplementation(libs.spring.boot.starter.test)
 }

@@ -56,5 +56,19 @@ class OutboxJpaAdapterSpec : BehaviorSpec({
                 captor.captured.headers shouldBe """{"traceparent":"00-abc-def-01"}"""
             }
         }
+
+        `when`("헤더 소스(현재 추적 문맥)가 있으면") {
+            then("행에 그 헤더가 남고, 호출자가 같은 이름을 넘기면 호출자 것이 이긴다") {
+                val traced = OutboxJpaAdapter(repository, headerSource = { mapOf("traceparent" to "00-trace-span-01", "baggage" to "k=v") })
+                val captor = slot<OutboxEntity>()
+                every { repository.save(capture(captor)) } answers { captor.captured }
+
+                traced.save("Order", 1L, "order.order.confirmed", """{"orderId":1}""")
+                captor.captured.headers shouldBe """{"traceparent":"00-trace-span-01","baggage":"k=v"}"""
+
+                traced.save("Order", 1L, "order.order.confirmed", """{"orderId":1}""", null, mapOf("traceparent" to "00-explicit-01"))
+                captor.captured.headers shouldBe """{"traceparent":"00-explicit-01","baggage":"k=v"}"""
+            }
+        }
     }
 })

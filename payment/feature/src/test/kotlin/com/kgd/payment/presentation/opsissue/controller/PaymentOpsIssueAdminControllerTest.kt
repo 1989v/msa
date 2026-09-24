@@ -1,5 +1,6 @@
 package com.kgd.payment.presentation.opsissue.controller
 
+import com.kgd.payment.application.opsissue.port.DltReplayPort
 import com.kgd.payment.application.opsissue.service.OpsIssueService
 import com.kgd.payment.application.opsissue.service.OpsIssueTransactionalService
 import com.kgd.payment.application.payment.port.PgInquiry
@@ -8,11 +9,14 @@ import com.kgd.payment.application.payment.service.InMemoryReconciliations
 import com.kgd.payment.application.payment.service.PaymentHarness
 import com.kgd.payment.application.payment.usecase.ProcessPaymentCommandUseCase
 import com.kgd.payment.application.payment.usecase.ReconcilePaymentsUseCase
+import com.kgd.payment.domain.opsissue.model.OpsIssue
 import com.kgd.payment.domain.opsissue.model.OpsIssueStatus
+import com.kgd.payment.domain.opsissue.model.OpsIssueType
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import org.springframework.http.MediaType
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
@@ -24,14 +28,14 @@ import tools.jackson.module.kotlin.jacksonMapperBuilder
 class PaymentOpsIssueAdminControllerTest : BehaviorSpec({
 
     /** 재조회 5회 소진 → PAYMENT_UNKNOWN 이슈 1건이 있는 상태 */
-    fun setup(): Pair<PaymentHarness, org.springframework.test.web.servlet.MockMvc> {
+    fun setup(replay: DltReplayPort = mockk()): Pair<PaymentHarness, org.springframework.test.web.servlet.MockMvc> {
         val h = PaymentHarness()
         every { h.pg.authorize(any(), any()) } returns PgResult.Unknown("TIMEOUT")
         every { h.pg.inquire(any()) } returns PgInquiry.Unavailable("PENDING")
         h.commands.authorize(ProcessPaymentCommandUseCase.Authorize(100L, "ORD-100-1", 10_000L))
         listOf(30L, 60L, 120L, 240L, 150L).forEach { h.clock.now = h.clock.now.plusSeconds(it); h.resolution.resolveDue() }
         val tx = OpsIssueTransactionalService(h.opsIssues, h.payments, InMemoryReconciliations(), h.clock)
-        val service = OpsIssueService(h.opsIssues, tx, mockk<ReconcilePaymentsUseCase>())
+        val service = OpsIssueService(h.opsIssues, tx, mockk<ReconcilePaymentsUseCase>(), replay)
         val mvc = MockMvcBuilders.standaloneSetup(PaymentOpsIssueAdminController(service, service))
             .setMessageConverters(JacksonJsonHttpMessageConverter(jacksonMapperBuilder().build()))
             .build()
@@ -80,6 +84,34 @@ class PaymentOpsIssueAdminControllerTest : BehaviorSpec({
             }
 
             mvc.status(MockMvcRequestBuilders.post("/api/v1/admin/payments/ops-issues/$id/retry").as_("1", "ROLE_ADMIN")) shouldBe 409
+        }
+    }
+
+    given("DLT 이슈 재시도") {
+        then("재발행한 뒤에 RETRIED(처리자·사유) — 재발행이 실패하면 OPEN 그대로") {
+            val replay = mockk<DltReplayPort>()
+            val (h, mvc) = setup(replay)
+            val dlt = h.opsIssues.save(
+                OpsIssue.open(OpsIssueType.DLT, "payment.command.authorize@0:5", "payment.command.authorize key=7", null, h.clock.now),
+            )
+            val id = requireNotNull(dlt.id)
+            fun retry() = mvc.perform(
+                MockMvcRequestBuilders.post("/api/v1/admin/payments/ops-issues/$id/retry").as_("1", "ROLE_ADMIN")
+                    .contentType(MediaType.APPLICATION_JSON).content("""{"reason":"스키마 수정 배포 후 재처리"}"""),
+            ).andReturn().response.status
+
+            every { replay.replay(id) } throws IllegalStateException("브로커 없음")
+            runCatching { retry() }
+            h.opsIssues.rows[id]!!.status shouldBe OpsIssueStatus.OPEN
+
+            every { replay.replay(id) } returns Unit
+            retry() shouldBe 200
+            verify(exactly = 2) { replay.replay(id) }
+            h.opsIssues.rows[id]!!.let {
+                it.status shouldBe OpsIssueStatus.RETRIED
+                it.actorId shouldBe "1"
+                it.reason shouldBe "스키마 수정 배포 후 재처리"
+            }
         }
     }
 })

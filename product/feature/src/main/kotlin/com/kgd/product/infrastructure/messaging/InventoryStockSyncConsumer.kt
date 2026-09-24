@@ -96,6 +96,6 @@ class InventoryStockSyncConsumer(
     }
 
     companion object {
-        private const val CONSUMER_GROUP = "product-stock-sync"
+        const val CONSUMER_GROUP = "product-stock-sync"
     }
 }

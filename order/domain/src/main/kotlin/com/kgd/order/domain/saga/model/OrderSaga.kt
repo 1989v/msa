@@ -30,6 +30,7 @@ class OrderSaga private constructor(
     failureReason: OrderFailureReason?,
     reservedLines: List<ReservedLine>,
     val version: Long,
+    stepEnteredAt: Instant,
 ) {
     var status: SagaStatus = status
         private set
@@ -38,6 +39,10 @@ class OrderSaga private constructor(
     var attempts: Int = attempts
         private set
     var nextDeadlineAt: Instant = nextDeadlineAt
+        private set
+
+    /** 지금 단계에 들어온 시각 — 기한 재발행은 바꾸지 않는다. 체류(진행 없음) 감지의 기준 */
+    var stepEnteredAt: Instant = stepEnteredAt
         private set
 
     /** 결제 결론 전에 VOID 를 요청했다(보류 만료 규칙 b · 결제 단계 기한 초과). 결제가 결론 시 실행한다 */
@@ -210,6 +215,7 @@ class OrderSaga private constructor(
         step = next
         attempts = 0
         nextDeadlineAt = now.plus(timing.stepTimeout)
+        stepEnteredAt = now
     }
 
     private fun requireStatus(expected: SagaStatus) {
@@ -228,7 +234,7 @@ class OrderSaga private constructor(
             startedAt = now, prePivotDeadlineAt = now.plus(timing.prePivotBudget), pendingVoid = false,
             holdsExpired = false, paymentUnknown = false, inventoryConfirmed = false, promotionConfirmed = false,
             cancelRequested = false, compensationPlan = emptyList(), failureReason = null, reservedLines = emptyList(),
-            version = 0L,
+            version = 0L, stepEnteredAt = now,
         )
 
         /** 가맹점 주문번호 — 주문당 결제 시도는 하나라 접미사는 1 */
@@ -254,10 +260,12 @@ class OrderSaga private constructor(
             failureReason: OrderFailureReason?,
             reservedLines: List<ReservedLine>,
             version: Long,
+            /** 컬럼이 생기기 전 행은 null — 시작 시각으로 대신한다 */
+            stepEnteredAt: Instant? = null,
         ) = OrderSaga(
             orderId, orderNo, paymentRequired, status, step, attempts, nextDeadlineAt, startedAt, prePivotDeadlineAt,
             pendingVoid, holdsExpired, paymentUnknown, inventoryConfirmed, promotionConfirmed, cancelRequested,
-            compensationPlan, failureReason, reservedLines, version,
+            compensationPlan, failureReason, reservedLines, version, stepEnteredAt ?: startedAt,
         )
     }
 }

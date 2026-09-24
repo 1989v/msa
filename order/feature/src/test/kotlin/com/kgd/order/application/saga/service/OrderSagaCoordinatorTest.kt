@@ -305,6 +305,69 @@ class OrderSagaCoordinatorTest : BehaviorSpec({
         }
     }
 
+    given("체류 감지 (한 단계에 10분 넘게 진행이 없다)") {
+        then("10분이 안 됐으면 이슈가 없고, 넘으면 SAGA_STUCK 한 건 — 다시 돌아도 OPEN 이 있으면 더 쌓지 않는다") {
+            val f = Fixture()
+            f.clock.now = t0.plus(Duration.ofMinutes(9))
+            f.coordinator.detectStalled() shouldBe 0
+            f.world.issues.shouldBeEmpty()
+
+            f.clock.now = t0.plus(Duration.ofMinutes(11))
+            f.coordinator.detectStalled() shouldBe 1
+            f.coordinator.detectStalled() shouldBe 0
+            f.world.issues.single().let { it.type shouldBe OpsIssueType.SAGA_STUCK; it.targetId shouldBe f.orderId.toString() }
+        }
+        then("기준은 시작 시각이 아니라 지금 단계에 들어온 시각 — 8분에 다음 단계로 갔으면 11분에는 체류가 아니다") {
+            val f = Fixture()
+            f.clock.now = t0.plus(Duration.ofMinutes(8))
+            f.inv(InventoryAnswerType.RESERVED, "RESERVE")
+            f.clock.now = t0.plus(Duration.ofMinutes(11))
+            f.coordinator.detectStalled() shouldBe 0
+            f.world.issues.shouldBeEmpty()
+        }
+        then("기한 재발행은 진행이 아니다 — 같은 단계를 다시 내기만 했으면 10분 뒤 체류로 잡힌다") {
+            val f = Fixture()
+            f.toPaid()
+            f.inv(InventoryAnswerType.CONFIRMED, "CONFIRM")
+            f.promo(PromotionAnswerType.CONFIRMED, "CONFIRM")
+            repeat(9) { f.deadline() }
+            f.saga().status shouldBe SagaStatus.RUNNING
+            f.clock.now = t0.plus(Duration.ofMinutes(11))
+            f.coordinator.detectStalled() shouldBe 1
+        }
+    }
+
+    given("운영자 재개") {
+        then("STUCK 사가는 멈춘 단계부터 다시 — RUNNING 으로 돌아가고 같은 명령을 한 번 더 낸다") {
+            val f = Fixture()
+            f.toPaid()
+            f.inv(InventoryAnswerType.CONFIRMED, "CONFIRM")
+            f.promo(PromotionAnswerType.CONFIRMED, "CONFIRM")
+            repeat(11) { f.deadline() }
+            f.saga().status shouldBe SagaStatus.STUCK
+            f.world.clearCommands()
+
+            f.coordinator.resume(f.orderId)
+
+            f.saga().status shouldBe SagaStatus.RUNNING
+            f.saga().attempts shouldBe 0
+            f.world.commands.single() shouldBe SagaCommand.CapturePayment(f.orderId, "ORD-${f.orderId}-1")
+        }
+        then("진행 중인 사가는 상태를 바꾸지 않고 지금 단계 명령만 다시 낸다 · 끝난 사가는 아무것도 하지 않는다") {
+            val f = Fixture()
+            f.world.clearCommands()
+            f.coordinator.resume(f.orderId)
+            f.saga().status shouldBe SagaStatus.RUNNING
+            f.world.commands.single().shouldBeInstanceOf<SagaCommand.ReserveInventory>()
+
+            f.inv(InventoryAnswerType.FAILED, "RESERVE", reason = "INSUFFICIENT_STOCK", lines = emptyList())
+            f.saga().status shouldBe SagaStatus.FAILED
+            f.world.clearCommands()
+            f.coordinator.resume(f.orderId)
+            f.world.commands.shouldBeEmpty()
+        }
+    }
+
     given("0원 주문") {
         then("결제 단계를 건너뛴다 — 혜택 예약 → 재고 확정 → 혜택 확정 → CREATED → CONFIRMED + 이행") {
             val f = Fixture(zeroWon = true)

@@ -5,6 +5,7 @@ import com.kgd.common.messaging.IdempotentEventHandler
 import com.kgd.common.messaging.IdempotentMetrics
 import com.kgd.common.messaging.ProcessedEventRepositoryPort
 import com.kgd.common.messaging.idempotency.JpaProcessedEventRepositoryAdapter
+import com.kgd.common.messaging.outbox.OutboxHeaderSource
 import com.kgd.common.messaging.outbox.OutboxJpaAdapter
 import com.kgd.common.messaging.outbox.OutboxKafka
 import com.kgd.common.messaging.outbox.OutboxMetrics
@@ -12,6 +13,7 @@ import com.kgd.common.messaging.outbox.OutboxPollingPublisher
 import com.kgd.common.messaging.outbox.OutboxPort
 import com.kgd.fulfillment.infrastructure.idempotency.FulfillmentProcessedEventRepository
 import com.kgd.fulfillment.infrastructure.outbox.FulfillmentOutboxRepository
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -34,8 +36,10 @@ class FulfillmentMessagingConfig {
 
     // ─── 전용 outbox ──────────────────────────────────────────────
     @Bean
-    fun fulfillmentOutboxPort(repository: FulfillmentOutboxRepository): OutboxPort =
-        OutboxJpaAdapter(repository)
+    fun fulfillmentOutboxPort(
+        repository: FulfillmentOutboxRepository,
+        headerSource: ObjectProvider<OutboxHeaderSource>,
+    ): OutboxPort = OutboxJpaAdapter(repository, headerSource = headerSource.getIfAvailable { OutboxHeaderSource.NONE })
 
     // 릴레이 전용 String 프로듀서 — 도메인 이벤트용 JSON 템플릿으로 보내면 payload 가 한 번 더 인용된다.
     @Bean

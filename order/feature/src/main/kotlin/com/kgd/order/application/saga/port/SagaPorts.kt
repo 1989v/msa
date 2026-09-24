@@ -1,6 +1,7 @@
 package com.kgd.order.application.saga.port
 
 import com.kgd.order.domain.opsissue.model.OpsIssue
+import com.kgd.order.domain.opsissue.model.OpsIssueType
 import com.kgd.order.domain.saga.model.OrderSaga
 import com.kgd.order.domain.saga.model.ReservedLine
 import java.time.Instant
@@ -14,11 +15,17 @@ interface OrderSagaRepositoryPort {
 
     /** 진행 중(RUNNING · COMPENSATING)이고 기한이 [now] 이하인 사가의 orderId — 기한 순 */
     fun findDueOrderIds(now: Instant, limit: Int): List<Long>
+
+    /** 진행 중이고 지금 단계에 [enteredBefore] 이전에 들어온(그 뒤로 진행이 없는) 사가의 orderId — 오래된 순 */
+    fun findStalledOrderIds(enteredBefore: Instant, limit: Int): List<Long>
 }
 
-/** order 스키마 `ops_issue` */
+/** order 스키마 `ops_issue` — 조회·재시도·종결은 운영 큐 어드민 API 가 같은 테이블을 본다 */
 interface OrderOpsIssueRepositoryPort {
     fun save(issue: OpsIssue)
+
+    /** 같은 종류·대상의 OPEN 이슈가 있는가 — 반복 감지가 이슈를 쌓지 않게 */
+    fun hasOpen(type: OpsIssueType, targetId: String): Boolean
 }
 
 /**

@@ -174,6 +174,13 @@ class Claim private constructor(
         return ClaimDeadlineDecision.REISSUE
     }
 
+    /** 운영자 재개 — 멈춘 단계부터 시도 수를 비우고 기한 점검에 돌려보낸다 */
+    fun resume(now: Instant, timing: SagaTiming) {
+        if (!stuck || !status.open) throw InvalidClaimTransitionException("멈추지 않은 클레임은 재개할 수 없다: $status/$step, stuck=$stuck, claimId=$id")
+        stuck = false
+        enter(step, now, timing)
+    }
+
     private fun proceedFrom(current: ClaimStep?, now: Instant, timing: SagaTiming): ClaimStep {
         val plan = refundSteps()
         val next = plan.getOrNull(if (current == null) 0 else plan.indexOf(current) + 1)

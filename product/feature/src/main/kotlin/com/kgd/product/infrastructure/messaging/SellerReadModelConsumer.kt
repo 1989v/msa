@@ -71,6 +71,6 @@ class SellerReadModelConsumer(
         }
 
     companion object {
-        private const val CONSUMER_GROUP = "product-seller-sync"
+        const val CONSUMER_GROUP = "product-seller-sync"
     }
 }

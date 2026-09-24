@@ -1,6 +1,7 @@
 package com.kgd.promotion.infrastructure.config
 
 import com.kgd.common.exception.BusinessException
+import com.kgd.common.ops.DltKafka
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.springframework.beans.factory.annotation.Qualifier
@@ -12,7 +13,6 @@ import org.springframework.kafka.core.ConsumerFactory
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.listener.ContainerProperties
-import org.springframework.kafka.listener.DeadLetterPublishingRecoverer
 import org.springframework.kafka.listener.DefaultErrorHandler
 import org.springframework.util.backoff.FixedBackOff
 
@@ -45,8 +45,10 @@ class PromotionKafkaConfig {
         ConcurrentKafkaListenerContainerFactory<String, String>().apply {
             setConsumerFactory(consumerFactory)
             containerProperties.ackMode = ContainerProperties.AckMode.RECORD
+            // 추적 — 레코드의 traceparent 로 span 을 이어 리스너 로그(MDC)에 같은 traceId 가 찍힌다
+            containerProperties.isObservationEnabled = true
             setCommonErrorHandler(
-                DefaultErrorHandler(DeadLetterPublishingRecoverer(kafkaTemplate), FixedBackOff(1000L, 3L)).apply {
+                DefaultErrorHandler(DltKafka.deadLetterRecoverer(kafkaTemplate), FixedBackOff(1000L, 3L)).apply {
                     // 상태 위반·입력 오류는 다시 보내도 같다 — 바로 DLT
                     addNotRetryableExceptions(BusinessException::class.java, IllegalArgumentException::class.java)
                 },

@@ -31,10 +31,11 @@ class OpsIssue private constructor(
     var updatedAt: Instant = updatedAt
         private set
 
-    fun retry(actorId: String, now: Instant) {
+    fun retry(actorId: String, now: Instant, reason: String? = null) {
         if (status == OpsIssueStatus.CLOSED) throw InvalidOpsIssueStateException(status, "RETRY")
         status = OpsIssueStatus.RETRIED
         this.actorId = actorId
+        if (reason != null) this.reason = reason
         updatedAt = now
     }
 
@@ -74,4 +75,7 @@ enum class OpsIssueType {
 
     /** PG 정산 파일과 결제 행이 어긋나거나 한쪽에만 있다 */
     RECON_MISMATCH,
+
+    /** 결제 컨슈머가 처리하지 못해 DLT 로 간 레코드 — 대상 id 는 원 토픽@파티션:오프셋, 재시도는 원 토픽 재발행 */
+    DLT,
 }

@@ -70,7 +70,7 @@ class InventoryCommandConsumer(
         const val RESTOCK = "inventory.command.restock"
 
         /** ADR-0029 §6.2.1 — inventory 컨슈머의 표준 group id */
-        private const val GROUP = "inventory-service"
+        const val GROUP = "inventory-service"
         private const val FACTORY = "kafkaListenerContainerFactory"
     }
 }

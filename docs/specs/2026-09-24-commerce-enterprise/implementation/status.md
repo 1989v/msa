@@ -147,3 +147,11 @@
   - journal 2 `capture:order:1` — Dr PG_RECEIVABLE 1700 / Cr SELLER_PAYABLE 1700 (플랫폼 판매자 수수료 0)
   - journal 1 `refund:claim:1` — Dr SELLER_PAYABLE 1700 / Cr PG_RECEIVABLE 1700
   - 거래마다 차 = 대. 환불이 매입보다 먼저 기록됨(토픽 간 소비 순서) — 추가만 원장이라 순 결과 동일
+
+## TG15 운영 이슈 · DLT · 추적 · 지표 · 운영 큐 (2026-09-24)
+- `./gradlew :commerce:app:test :order:feature:test :inventory:feature:test :fulfillment:feature:test :product:feature:test :seller:feature:test :promotion:feature:test :settlement:feature:test :payment:feature:test :common:test :gateway:test verifyArchitecture` → exit 0, 전 모듈 실패 0
+  - DltOpsIssueIntegrationSpec 4/0 · TracingPropagationIntegrationSpec 3/0 · ClaimE2E 3/0 · OrderSagaE2E 14/0 · SettlementE2E 2/0 · 그 외 commerce 스펙 전부 0 실패
+- 첫 보고는 E2E 를 안 돌렸고 부모 재검증에서 7건 실패 발견 → 원인: 패턴 구독 DLT 컨테이너가 E2E 「전 컨테이너 할당」 대기를 영원히 막음 + 토픽 선생성 경쟁 — E2E 대기 조건 수정(제품 코드 무변경)
+- 발견·수정한 기존 결함: DLT 토픽이 규약 `.DLT` 가 아니라 Spring Kafka 4 기본 `-dlt` 로 가고 있었다 · order·inventory·fulfillment·product DLT 값 이중 인용
+- 회귀 주입 4종(DLT 리스너 제거 · 추적 헤더 제거 · 체류 중복 검사 제거 · 게이트웨이 라우트 제거) 전부 빨간불
+- admin-fe `tsc -b --force` 0 · vitest 4 passed

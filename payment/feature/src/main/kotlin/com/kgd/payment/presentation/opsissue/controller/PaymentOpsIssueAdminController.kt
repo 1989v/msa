@@ -8,6 +8,7 @@ import com.kgd.payment.application.opsissue.usecase.OpsIssueView
 import com.kgd.payment.application.opsissue.usecase.QueryOpsIssuesUseCase
 import com.kgd.payment.domain.opsissue.model.OpsIssueStatus
 import com.kgd.payment.presentation.opsissue.dto.CloseOpsIssueRequest
+import com.kgd.payment.presentation.opsissue.dto.RetryOpsIssueRequest
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
@@ -22,7 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
-/** 결제 운영 이슈 (ROLE_ADMIN) — 결과 미상 소진 · 대사 불일치. 재시도·종결은 처리자를 남긴다. */
+/** 결제 운영 이슈 (ROLE_ADMIN) — 결과 미상 소진 · 대사 불일치 · DLT. 재시도·종결은 처리자·사유를 남긴다. */
 @RestController
 @RequestMapping("/api/v1/admin/payments/ops-issues")
 class PaymentOpsIssueAdminController(
@@ -44,11 +45,12 @@ class PaymentOpsIssueAdminController(
     @PostMapping("/{id}/retry")
     fun retry(
         @PathVariable id: Long,
+        @Valid @RequestBody(required = false) request: RetryOpsIssueRequest?,
         @RequestHeader(value = "X-User-Id", required = false) userId: String?,
         @RequestHeader(value = "X-User-Roles", required = false) roles: String?,
     ): ApiResponse<OpsIssueView> {
         val actor = PaymentRequestIdentity.requireAdmin(userId, roles)
-        return ApiResponse.success(manageOpsIssueUseCase.retry(id, actor))
+        return ApiResponse.success(manageOpsIssueUseCase.retry(id, actor, request?.reason?.takeIf { it.isNotBlank() }))
     }
 
     @PostMapping("/{id}/close")

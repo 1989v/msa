@@ -1,6 +1,7 @@
 package com.kgd.fulfillment.infrastructure.config
 
 import com.kgd.common.exception.BusinessException
+import com.kgd.common.ops.DltKafka
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -11,7 +12,6 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
 import org.springframework.kafka.core.*
 import org.springframework.kafka.listener.ContainerProperties
-import org.springframework.kafka.listener.DeadLetterPublishingRecoverer
 import org.springframework.kafka.listener.DefaultErrorHandler
 import org.springframework.kafka.support.serializer.JacksonJsonSerializer
 import org.springframework.util.backoff.FixedBackOff
@@ -63,15 +63,18 @@ class FulfillmentKafkaConfig {
     fun fulfillmentKafkaListenerContainerFactory(
         @org.springframework.beans.factory.annotation.Qualifier("fulfillmentConsumerFactory")
         consumerFactory: ConsumerFactory<String, String>,
-        @org.springframework.beans.factory.annotation.Qualifier("fulfillmentKafkaTemplate")
-        kafkaTemplate: KafkaTemplate<String, Any>,
+        // DLT 는 받은 원문(JSON 문자열)을 그대로 — JSON 직렬화 템플릿이면 한 번 더 인용돼 재발행한 값이 깨진다
+        @org.springframework.beans.factory.annotation.Qualifier("fulfillmentOutboxKafkaTemplate")
+        kafkaTemplate: KafkaTemplate<String, *>,
     ): ConcurrentKafkaListenerContainerFactory<String, String> =
         ConcurrentKafkaListenerContainerFactory<String, String>().apply {
             setConsumerFactory(consumerFactory)
             containerProperties.ackMode = ContainerProperties.AckMode.RECORD
+            // 추적 — 레코드의 traceparent 로 span 을 이어 리스너 로그(MDC)에 같은 traceId 가 찍힌다
+            containerProperties.isObservationEnabled = true
             setCommonErrorHandler(
                 DefaultErrorHandler(
-                    DeadLetterPublishingRecoverer(kafkaTemplate),
+                    DltKafka.deadLetterRecoverer(kafkaTemplate),
                     FixedBackOff(1000L, 3L),
                 ).apply {
                     addNotRetryableExceptions(

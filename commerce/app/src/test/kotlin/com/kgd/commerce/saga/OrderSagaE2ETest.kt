@@ -36,6 +36,7 @@ import io.kotest.matchers.string.shouldStartWith
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.admin.AdminClientConfig
 import org.apache.kafka.clients.admin.NewTopic
+import org.apache.kafka.common.errors.TopicExistsException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.ApplicationContext
@@ -208,7 +209,9 @@ class OrderSagaE2ETest(
                 val topics = registry.listenerContainers.flatMap { it.containerProperties.topics.orEmpty().toList() }.toSet()
                 createTopics(topics)
                 awaitUntil("리스너 할당", timeoutSeconds = 90) {
-                    registry.listenerContainers.filter { it.isRunning }.all { !it.assignedPartitions.isNullOrEmpty() }
+                    // DLT 컨테이너(패턴 구독)는 뺀다 — DLT 토픽은 첫 실패 때 생기므로 그 전에는 받을 파티션이 없다
+                    registry.listenerContainers.filter { it.isRunning && it.containerProperties.topicPattern == null }
+                        .all { !it.assignedPartitions.isNullOrEmpty() }
                 }
             }
             Then("판매자 신청 → 승인이 order·product 읽기 모델에 ACTIVE 로 들어오고, 그 판매자가 상품을 등록한다") {
@@ -601,8 +604,10 @@ class OrderSagaE2ETest(
         fun createTopics(topics: Collection<String>) {
             AdminClient.create(mapOf(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG to kafka.bootstrapServers)).use { admin ->
                 val missing = topics.toSet() - admin.listTopics().names().get()
-                if (missing.isNotEmpty()) {
-                    admin.createTopics(missing.map { NewTopic(it, 1, 1.toShort()) }).all().get(30, TimeUnit.SECONDS)
+                // 구독 중인 컨슈머가 메타데이터 요청으로 먼저 자동 생성할 수 있다 — 이미 있으면 그대로 쓴다
+                missing.forEach { topic ->
+                    runCatching { admin.createTopics(listOf(NewTopic(topic, 1, 1.toShort()))).all().get(30, TimeUnit.SECONDS) }
+                        .onFailure { if (it.cause !is TopicExistsException) throw it }
                 }
             }
         }

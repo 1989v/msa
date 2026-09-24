@@ -19,6 +19,20 @@ interface ProcessSagaDeadlineUseCase {
     fun onDeadline(orderId: Long)
 }
 
+/** 체류 감지 — 한 단계에 오래 머문 진행 중 사가마다 SAGA_STUCK 운영 이슈 한 건(OPEN 이 있으면 더 쌓지 않는다) */
+interface DetectStalledSagasUseCase {
+    /** 새로 연 이슈 수 */
+    fun detectStalled(): Int
+}
+
+/**
+ * 운영자 재개(운영 이슈 재시도). STUCK 이면 멈춘 단계부터 다시(시도 수를 비운다), 진행 중이면 지금 단계 명령만 다시 낸다.
+ * 끝난 사가(COMPLETED · FAILED)는 아무것도 하지 않는다 — 받는 쪽이 전부 orderId 로 멱등이라 다시 내도 효과는 한 번이다.
+ */
+interface ResumeSagaUseCase {
+    fun resume(orderId: Long)
+}
+
 enum class InventoryAnswerType { RESERVED, FAILED, CONFIRMED, RELEASED, RESTOCKED, EXPIRED }
 
 /** `inventory.reservation.*`. [command] 는 답을 부른 명령(RESERVE·CONFIRM·RELEASE·RESTOCK), 만료는 null */
