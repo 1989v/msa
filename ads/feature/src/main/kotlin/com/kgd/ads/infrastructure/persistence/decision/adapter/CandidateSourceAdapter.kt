@@ -8,20 +8,13 @@ import com.kgd.ads.domain.advertiser.model.Advertiser
 import com.kgd.ads.domain.advertiser.model.AdvertiserKind
 import com.kgd.ads.domain.campaign.model.Campaign
 import com.kgd.ads.domain.campaign.model.CampaignStatus
-import com.kgd.ads.domain.creative.model.Creative
-import com.kgd.ads.domain.creative.model.CreativeContent
 import com.kgd.ads.domain.creative.model.CreativeStatus
-import com.kgd.ads.domain.creative.model.HouseCreativeContent
-import com.kgd.ads.domain.creative.model.HouseLink
-import com.kgd.ads.domain.creative.model.LandingUrl
-import com.kgd.ads.domain.creative.model.PaidCreativeContent
 import com.kgd.ads.infrastructure.persistence.advertiser.repository.AdvertiserJpaRepository
 import com.kgd.ads.infrastructure.persistence.campaign.repository.CampaignCategoryJpaRepository
 import com.kgd.ads.infrastructure.persistence.campaign.repository.CampaignJpaRepository
 import com.kgd.ads.infrastructure.persistence.campaign.repository.CampaignPlacementJpaRepository
 import com.kgd.ads.infrastructure.persistence.category.repository.ContextMappingJpaRepository
 import com.kgd.ads.infrastructure.persistence.category.repository.HostCategoryJpaRepository
-import com.kgd.ads.infrastructure.persistence.creative.entity.CreativeJpaEntity
 import com.kgd.ads.infrastructure.persistence.creative.repository.CreativeAssetJpaRepository
 import com.kgd.ads.infrastructure.persistence.creative.repository.CreativeJpaRepository
 import com.kgd.ads.infrastructure.persistence.ledger.repository.LedgerAccountJpaRepository
@@ -107,14 +100,6 @@ class CandidateSourceAdapter(
             else creativeHourlyRepository.sumDelivery(creatives.mapNotNull { it.id })
                 .map { CreativeDelivery(it.creativeId, it.placementKey, it.impressions, it.clicks) },
         )
-    }
-
-    private fun CreativeJpaEntity.toDomain(kind: AdvertiserKind): Creative {
-        val content: CreativeContent = when (kind) {
-            AdvertiserKind.MEMBER -> PaidCreativeContent(title, body, LandingUrl.of(linkUrl), requireNotNull(imageHash) { "유료 소재에 이미지가 없습니다" })
-            AdvertiserKind.SYSTEM -> HouseCreativeContent(title, body, emoji, HouseLink.of(linkUrl), imageHash)
-        }
-        return Creative.restore(requireNotNull(id), campaignId, advertiserId, content, status, rejectReason, reviewedBy, reviewedAt)
     }
 
     private fun <T> skipInvalid(what: String, block: () -> T): T? =

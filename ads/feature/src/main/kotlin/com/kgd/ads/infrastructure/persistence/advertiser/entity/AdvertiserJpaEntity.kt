@@ -3,6 +3,7 @@ package com.kgd.ads.infrastructure.persistence.advertiser.entity
 import com.kgd.ads.domain.advertiser.model.Advertiser
 import com.kgd.ads.domain.advertiser.model.AdvertiserKind
 import com.kgd.ads.domain.advertiser.model.AdvertiserStatus
+import com.kgd.ads.domain.advertiser.model.AdvertiserSuspension
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -66,7 +67,21 @@ class AdvertiserJpaEntity(
         memberId = memberId,
         displayName = displayName,
         status = status,
+        suspension = if (status == AdvertiserStatus.SUSPENDED && suspendReason != null && suspendedBy != null && suspendedAt != null) {
+            AdvertiserSuspension(requireNotNull(suspendReason), requireNotNull(suspendedBy), requireNotNull(suspendedAt))
+        } else {
+            null
+        },
     )
+
+    /** 정지·해제 — 상태와 정지 사유·행위자·시각을 도메인 값으로 맞춘다. 해제하면 정지 흔적은 운영자 변경 기록에만 남는다. */
+    fun applyStatus(advertiser: Advertiser, now: LocalDateTime) {
+        status = advertiser.status
+        suspendReason = advertiser.suspension?.reason
+        suspendedBy = advertiser.suspension?.actorMemberId
+        suspendedAt = advertiser.suspension?.at
+        updatedAt = now
+    }
 
     companion object {
         fun newOf(advertiser: Advertiser, now: LocalDateTime): AdvertiserJpaEntity = AdvertiserJpaEntity(

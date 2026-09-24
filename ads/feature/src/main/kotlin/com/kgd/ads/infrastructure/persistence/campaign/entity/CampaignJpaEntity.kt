@@ -80,4 +80,23 @@ class CampaignJpaEntity(
             placementKeys = placementKeys,
             categoryCodes = categoryCodes,
         )
+
+    companion object {
+        /** 도메인 값 전부를 행으로(타기팅 제외) — 새 캠페인이면 id 가 null 이다. */
+        fun of(campaign: Campaign, createdAt: LocalDateTime, now: LocalDateTime) = CampaignJpaEntity(
+            id = campaign.id,
+            advertiserId = campaign.advertiserId,
+            name = campaign.name,
+            status = campaign.status,
+            bidType = campaign.bid?.type,
+            bidMicros = campaign.bid?.micros,
+            dailyBudgetMicros = campaign.dailyBudgetMicros,
+            totalBudgetMicros = campaign.totalBudgetMicros,
+            startAt = campaign.startAt,
+            endAt = campaign.endAt,
+            frequencyCapPerDay = campaign.frequencyCapPerDay,
+            createdAt = createdAt,
+            updatedAt = now,
+        )
+    }
 }

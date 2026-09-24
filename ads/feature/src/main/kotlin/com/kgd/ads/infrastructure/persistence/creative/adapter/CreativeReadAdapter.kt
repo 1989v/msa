@@ -3,6 +3,7 @@ package com.kgd.ads.infrastructure.persistence.creative.adapter
 import com.kgd.ads.application.creative.dto.CreativeAsset
 import com.kgd.ads.application.creative.dto.CreativeLanding
 import com.kgd.ads.application.creative.port.CreativeReadPort
+import com.kgd.ads.domain.creative.model.CreativeStatus
 import com.kgd.ads.domain.creative.model.LandingUrl
 import com.kgd.ads.infrastructure.persistence.creative.repository.CreativeAssetContentJpaRepository
 import com.kgd.ads.infrastructure.persistence.creative.repository.CreativeJpaRepository
@@ -29,4 +30,6 @@ class CreativeReadAdapter(
     @Transactional("adsTransactionManager", readOnly = true)
     override fun findAsset(hash: String): CreativeAsset? =
         assetContentRepository.findByIdOrNull(hash)?.let { CreativeAsset(it.contentType, it.bytes) }
+
+    override fun isApprovedImage(hash: String): Boolean = creativeRepository.existsByImageHashAndStatus(hash, CreativeStatus.APPROVED)
 }

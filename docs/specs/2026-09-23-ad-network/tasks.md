@@ -134,14 +134,16 @@ Total Task Groups: 13
 **Dependencies:** Task Group 6
 **Phase:** R2
 **Required Skills:** spring, multipart, image-io
-- [ ] 7.0 Complete API
-  - [ ] 7.1 테스트 6개: I17(남의 리소스 404, HOUSE·심사 필드 없음) · I18(광고주 등록 → 행 1개 + **ads 에 auth·member 쓰기 포트가 없다**는 구조 검사 [test C-5]) · I19(반려 사유 조회) · I20(리포트 = 집계·원장) · I22(옛 `/placements/{key}` 응답 모양) · U12 통합판(거대 PNG 는 디코더 호출 0)
-  - [ ] 7.2 광고주 API `/api/v1/ads/advertiser/**` — 등록·대시보드·충전·캠페인·소재 업로드(헤더 먼저 → 크기 → 디코딩 → 재인코딩 → 해시)·카탈로그·리포트
-  - [ ] 7.2b 충전 멱등 키는 컨트롤러가 회원 id 로 이름공간을 붙인다(다른 회원이 같은 키로 남의 거래를 돌려받지 않게)
-  - [ ] 7.3 어드민 API `/api/v1/admin/ads/**` — 심사·광고주 정지·지면(`paid_allowed` 포함)·문맥 매핑·HOUSE·퍼블리셔 리포트·원장 검사 결과. 변경마다 행위자·시각
-  - [ ] 7.3b 공개 에셋 경로는 **승인된 소재 이미지만** — 심사 전·반려 이미지 미리보기는 광고주·어드민 인증 API 로(그룹 5 `CreativeAssetService` 에 승인 확인 추가)
-  - [ ] 7.4 호환 `GET /api/v1/ads/placements/{key}` — game 의 옛 응답 모양(`AdPlacementDto`)
-  - [ ] 7.5 Verify: `./gradlew :ads:feature:test --tests '*AdvertiserApiIntegrationSpec*' --tests '*AdminApiIntegrationSpec*' --tests '*ReportIntegrationSpec*' --tests '*LegacyPlacementIntegrationSpec*'`
+- [x] 7.0 Complete API
+  - [x] 7.1 테스트 6개: I17(남의 리소스 404, HOUSE·심사 필드 없음) · I18(광고주 등록 → 행 1개 + **ads 에 auth·member 쓰기 포트가 없다**는 구조 검사 [test C-5]) · I19(반려 사유 조회) · I20(리포트 = 집계·원장) · I22(옛 `/placements/{key}` 응답 모양) · U12 통합판(거대 PNG 는 디코더 호출 0)
+  - [x] 7.2 광고주 API `/api/v1/ads/advertiser/**` — 등록·대시보드·충전·캠페인·소재 업로드(헤더 먼저 → 크기 → 디코딩 → 재인코딩 → 해시)·카탈로그·리포트
+  - [x] 7.2b 충전 멱등 키는 컨트롤러가 회원 id 로 이름공간을 붙인다(다른 회원이 같은 키로 남의 거래를 돌려받지 않게)
+  - [x] 7.3 어드민 API `/api/v1/admin/ads/**` — 심사·광고주 정지·지면(`paid_allowed` 포함)·문맥 매핑·HOUSE·퍼블리셔 리포트·원장 검사 결과. 변경마다 행위자·시각
+  - [x] 7.3b 공개 에셋 경로는 **승인된 소재 이미지만** — 심사 전·반려 이미지 미리보기는 광고주·어드민 인증 API 로(그룹 5 `CreativeAssetService` 에 승인 확인 추가)
+  - [x] 7.4 호환 `GET /api/v1/ads/placements/{key}` — game 의 옛 응답 모양(`AdPlacementDto`)
+  - [x] 7.5 Verify: `./gradlew :ads:feature:test --tests '*AdvertiserApiIntegrationSpec*' --tests '*AdminApiIntegrationSpec*' --tests '*ReportIntegrationSpec*' --tests '*LegacyPlacementIntegrationSpec*'`
+  - [ ] 7.6 (후속) 퍼블리셔 리포트에 원장 총액 행 — 지면별 내림 배분 합이 원장 PUBLISHER_PAYABLE 합보다 작을 수 있다
+> 구현 기록(2026-09-24): `V3__ads_admin_action.sql`(운영자 변경 기록) · 이미지 규칙은 도메인 `CreativeImageRules`(매직 바이트 → PNG IHDR/JPEG SOF 헤더 크기 → 300KB → 비율, 디코딩 없음) · 폭탄 케이스 판정은 운영 디코더를 감싼 계측기의 호출 수(정상 업로드 +1 대조군) · 청구액은 캠페인×일 단위 · 호환 경로는 HOUSE 목록을 옛 모양으로 · 충전 키 `TOPUP:{memberId}:{clientKey}` · 회귀 주입 3건 빨간불
 **Acceptance Criteria:**
 - AC-1·AC-3·AC-4·AC-13·AC-14·AC-18
 

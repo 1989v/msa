@@ -56,4 +56,20 @@ class PlacementJpaEntity(
         paidAllowed = paidAllowed,
         description = description,
     )
+
+    companion object {
+        /** 도메인 값 전부를 행으로 — 새 지면이면 [createdAt] = [now], 기존 지면이면 원래 생성 시각을 넘긴다. */
+        fun of(placement: AdPlacement, createdAt: LocalDateTime, now: LocalDateTime) = PlacementJpaEntity(
+            placementKey = placement.key,
+            host = placement.host,
+            format = placement.format,
+            aspectRatios = placement.aspectRatios.joinToString(",") { it.value },
+            floorMicros = placement.floorMicros,
+            active = placement.active,
+            paidAllowed = placement.paidAllowed,
+            description = placement.description,
+            createdAt = createdAt,
+            updatedAt = now,
+        )
+    }
 }

@@ -8,3 +8,9 @@ data class CreativeLanding(val status: CreativeStatus, val landingUrl: LandingUr
 
 /** 저장된 소재 이미지 한 장. */
 class CreativeAsset(val contentType: String, val bytes: ByteArray)
+
+/** 다시 인코딩한 이미지. 가로·세로는 디코딩한 픽셀에서 읽은 값이다. */
+class EncodedImage(val bytes: ByteArray, val width: Int, val height: Int)
+
+/** 저장할 소재 이미지 — [hash] 는 [bytes] 의 SHA-256 hex. */
+class StoredImage(val hash: String, val contentType: String, val bytes: ByteArray, val width: Int, val height: Int)

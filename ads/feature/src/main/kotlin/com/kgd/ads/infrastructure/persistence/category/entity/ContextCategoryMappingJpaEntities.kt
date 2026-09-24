@@ -41,3 +41,18 @@ class HostCategoryJpaEntity(
     @Column(name = "updated_at", nullable = false)
     val updatedAt: LocalDateTime,
 )
+
+/** 문맥 카테고리 고정 목록 — 시드가 채우고 코드가 바꾸지 않는다. */
+@Entity
+@Table(name = "ad_context_category")
+class ContextCategoryJpaEntity(
+    @Id
+    @Column(name = "code", nullable = false, length = 32)
+    val code: String,
+
+    @Column(name = "label", nullable = false, length = 64)
+    val label: String,
+
+    @Column(name = "sort_order", nullable = false)
+    val sortOrder: Int,
+)

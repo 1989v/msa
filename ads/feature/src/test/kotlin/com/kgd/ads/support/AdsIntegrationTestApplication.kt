@@ -1,5 +1,6 @@
 package com.kgd.ads.support
 
+import com.kgd.ads.infrastructure.image.ImageIoTranscoder
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.SpringBootConfiguration
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
@@ -36,6 +37,11 @@ class AdsIntegrationTestApplication {
         override fun nextBits(bitCount: Int): Int = 0
         override fun nextDouble(): Double = 0.0
     }
+
+    /** 업로드 스펙이 디코더 호출 수를 보도록 운영 디코더를 감싼다. 모든 스펙이 같은 빈을 써서 컨텍스트 캐시가 갈리지 않는다. */
+    @Bean
+    @Primary
+    fun countingImageTranscoder(real: ImageIoTranscoder): CountingImageTranscoder = CountingImageTranscoder(real)
 
     companion object {
         val KST: ZoneId = ZoneId.of("Asia/Seoul")

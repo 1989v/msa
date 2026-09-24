@@ -65,6 +65,43 @@ class Campaign private constructor(
 
     fun end() = transition(CampaignStatus.ENDED, from = setOf(CampaignStatus.DRAFT, CampaignStatus.ACTIVE, CampaignStatus.PAUSED))
 
+    /**
+     * 게재를 켜기 전(시작·재개) 저장 불변식을 지금의 지면 값으로 다시 확인한다 — 저장 뒤 최저가가 오르거나
+     * 지면이 HOUSE 전용으로 바뀌었으면 켜지 않는다. 멈추는 전이(일시정지·종료)는 확인하지 않는다: 멈추는 것은 항상 되어야 한다.
+     * [placements] 는 이 캠페인이 타기팅한 지면 전부여야 한다.
+     */
+    fun verifyTargeting(placements: List<AdPlacement>) {
+        if (placements.map { it.key }.toSet() != placementKeys) invalid("타기팅 지면 중 등록부에 없는 것이 있습니다")
+        if (priority == CampaignPriority.PAID) requirePaidTargeting(requireNotNull(bid), placements)
+    }
+
+    /**
+     * 유료 캠페인의 내용을 바꾼 새 값. 상태는 그대로이고, 저장 불변식은 [draftPaid] 와 같은 검사를 다시 거친다.
+     * 종료된 캠페인은 고칠 수 없다.
+     */
+    fun revisePaid(
+        advertiser: Advertiser,
+        name: String,
+        bid: Bid,
+        dailyBudgetMicros: Long,
+        totalBudgetMicros: Long?,
+        startAt: LocalDateTime,
+        endAt: LocalDateTime?,
+        placements: List<AdPlacement>,
+        categoryCodes: Set<String>,
+        frequencyCapPerDay: Int,
+    ): Campaign {
+        if (status == CampaignStatus.ENDED) invalid("종료된 캠페인은 고칠 수 없습니다")
+        if (advertiser.id != advertiserId) invalid("다른 광고주의 캠페인입니다")
+        val revised = draftPaid(
+            advertiser, name, bid, dailyBudgetMicros, totalBudgetMicros, startAt, endAt, placements, categoryCodes, frequencyCapPerDay,
+        )
+        return restore(
+            requireNotNull(id), advertiserId, advertiserKind, revised.name, status, revised.bid, revised.dailyBudgetMicros,
+            revised.totalBudgetMicros, revised.startAt, revised.endAt, revised.frequencyCapPerDay, revised.placementKeys, revised.categoryCodes,
+        )
+    }
+
     /** 상태가 ACTIVE 이고 `[startAt, endAt)` 안이면 게재 기간이다. */
     fun isRunningAt(now: LocalDateTime): Boolean =
         status == CampaignStatus.ACTIVE && !now.isBefore(startAt) && (endAt == null || now.isBefore(endAt))
@@ -119,6 +156,17 @@ class Campaign private constructor(
 
         private fun invalid(message: String): Nothing = throw InvalidCampaignException(message)
 
+        private fun requirePaidTargeting(bid: Bid, placements: List<AdPlacement>) {
+            placements.firstOrNull { !it.paidAllowed }?.let {
+                invalid("지면 ${it.key} 는 유료 광고를 받지 않습니다")
+            }
+            if (bid.type == BidType.CPM) {
+                placements.firstOrNull { bid.micros < it.floorMicros }?.let {
+                    invalid("입찰가가 지면 ${it.key} 의 최저가(${it.floorMicros})보다 낮습니다")
+                }
+            }
+        }
+
         /**
          * 회원 광고주의 유료 캠페인을 DRAFT 로 만든다.
          *
@@ -139,14 +187,7 @@ class Campaign private constructor(
             frequencyCapPerDay: Int = DEFAULT_FREQUENCY_CAP_PER_DAY,
         ): Campaign {
             if (advertiser.kind != AdvertiserKind.MEMBER) invalid("유료 캠페인은 회원 광고주만 만듭니다")
-            placements.firstOrNull { !it.paidAllowed }?.let {
-                invalid("지면 ${it.key} 는 유료 광고를 받지 않습니다")
-            }
-            if (bid.type == BidType.CPM) {
-                placements.firstOrNull { bid.micros < it.floorMicros }?.let {
-                    invalid("입찰가가 지면 ${it.key} 의 최저가(${it.floorMicros})보다 낮습니다")
-                }
-            }
+            requirePaidTargeting(bid, placements)
             return Campaign(
                 id = null,
                 advertiserId = requireNotNull(advertiser.id) { "저장되지 않은 광고주" },

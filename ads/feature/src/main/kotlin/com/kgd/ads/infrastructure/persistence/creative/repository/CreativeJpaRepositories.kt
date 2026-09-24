@@ -8,6 +8,10 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface CreativeJpaRepository : JpaRepository<CreativeJpaEntity, Long> {
     fun findAllByCampaignIdInAndStatus(campaignIds: Collection<Long>, status: CreativeStatus): List<CreativeJpaEntity>
+    fun findByIdAndAdvertiserId(id: Long, advertiserId: Long): CreativeJpaEntity?
+    fun findAllByCampaignId(campaignId: Long): List<CreativeJpaEntity>
+    fun findAllByStatus(status: CreativeStatus): List<CreativeJpaEntity>
+    fun existsByImageHashAndStatus(imageHash: String, status: CreativeStatus): Boolean
 }
 
 interface CreativeAssetJpaRepository : JpaRepository<CreativeAssetJpaEntity, String>
