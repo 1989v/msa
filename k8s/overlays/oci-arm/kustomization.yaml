@@ -360,7 +360,7 @@ images:
     newTag: 990d7a1
   - name: commerce/atlas
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/atlas
-    newTag: 49473f3
+    newTag: ec245c0
   - name: commerce/auth
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/auth
     newTag: 8ce6d91
