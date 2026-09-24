@@ -49,7 +49,7 @@ class SearchOntologyMigrationSpec : BehaviorSpec({
         then("간선이 운영에서 내보낸 145건과 같다 — 시드가 곧 운영 상태다") { edges() shouldBe exported }
     }
 
-    given("레포의 search.yaml 을 적용하면") {
+    given("레포의 온톨로지 파일 묶음을 적용하면") {
         val loaded = YamlOntologyReader("classpath:ontology/").load()
         val report = OntologyApplyService(YamlOntologyReader("classpath:ontology/"), JdbcOntologyStoreAdapter(ds),
             TransactionTemplate(DataSourceTransactionManager(ds)), "test").applyFromSource()
@@ -58,11 +58,15 @@ class SearchOntologyMigrationSpec : BehaviorSpec({
             edges() shouldBe loaded.ontology.relations.map { Triple(it.from, it.to, it.kind.name) }.toSet()
         }
         then("관리 대상 개념 전부에 kind 가 있고, 옛 지표 묶음 둘은 관리 밖이다") {
-            jdbc.queryForObject("SELECT COUNT(*) FROM concept WHERE managed_by = 'search' AND kind IS NOT NULL", Int::class.java) shouldBe
+            jdbc.queryForObject("SELECT COUNT(*) FROM concept WHERE managed_by IS NOT NULL AND kind IS NOT NULL", Int::class.java) shouldBe
                 loaded.ontology.concepts.size
             jdbc.queryForObject(
                 "SELECT COUNT(*) FROM concept WHERE concept_id IN ('search-ops-metrics','offline-metrics') AND managed_by IS NULL", Int::class.java,
             ) shouldBe 2
+        }
+        then("배치율 — 시드에 있던 개념 중 관리 밖은 옛 지표 묶음 둘뿐이다") {
+            jdbc.queryForList("SELECT concept_id FROM concept WHERE managed_by IS NULL", String::class.java).toSet() shouldBe
+                setOf("search-ops-metrics", "offline-metrics")
         }
     }
 })

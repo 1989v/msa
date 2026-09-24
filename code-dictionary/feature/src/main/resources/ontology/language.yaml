@@ -1,0 +1,427 @@
+# 언어 · Kotlin 온톨로지 — 원본은 이 파일이다 (ADR-0100, docs/specs/2026-09-24-concept-atlas).
+# 바꾸면 manifest.yaml 의 revision 을 올린다. 간선은 from 개념에만 적는다.
+domain: language
+root: lang-kotlin-language
+concepts:
+  - id: lang-kotlin-language
+    kind: DOMAIN
+    name: "언어 · Kotlin"
+    category: LANGUAGE_FEATURE
+    level: BEGINNER
+    description: "이 레포의 백엔드 언어 Kotlin 을 기준으로 타입 설계, 컴파일 타임 안전장치, 간결한 표현, 런타임 메타 정보 다루기를 익힌다. 언어 구성 요소 이름은 용어 사전에 모은다"
+    synonyms: ["programming language", "Kotlin"]
+    contains: [lang-type-modeling, lang-safety, lang-concise-expression, lang-metaprogramming, lang-glossary]
+
+  # ── 타입 설계 ─────────────────────────────────────────────
+  - id: lang-type-modeling
+    kind: STAGE
+    name: "타입 설계"
+    category: LANGUAGE_FEATURE
+    level: BEGINNER
+    description: "무엇을 숨기고, 무엇을 공통으로 묶고, 무엇을 바꿔 끼울지 정해 타입을 짠다. 객체지향의 네 원칙과 Kotlin 의 위임·불변이 여기서 쓰인다"
+    questions: ["상속 대신 위임을 고르는 기준은 무엇인가"]
+    contains: [encapsulation, abstraction, inheritance, polymorphism, delegation, immutability, lang-fragile-base-class]
+    flows_to: [lang-safety]
+  - id: encapsulation
+    kind: MECHANISM
+    name: "캡슐화"
+    category: BASICS
+    level: BEGINNER
+    description: "상태와 그 상태를 바꾸는 규칙을 한 타입에 묶고 상태를 바깥에서 직접 못 바꾸게 한다. 불변식을 지키는 코드가 한 곳에만 있게 된다"
+    synonyms: ["encapsulation", "정보 은닉"]
+    code:
+      - { path: inventory/domain/src/main/kotlin/com/kgd/inventory/domain/inventory/model/Inventory.kt, symbol: "private var availableQty: Int,", note: "수량 필드를 private 으로 두고 메서드로만 바꾼다" }
+    uses: [class]
+  - id: abstraction
+    kind: MECHANISM
+    name: "추상화"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "쓰는 쪽이 알아야 할 동작만 남기고 구현 세부를 감춘다. 인터페이스로 「무엇을 하나」만 드러내면 「어떻게 하나」를 바꿔도 호출부가 그대로다"
+    synonyms: ["abstraction"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/exchange/port/ExchangeAdapter.kt, symbol: "interface ExchangeAdapter {", note: "주문·취소·잔고 조회만 드러내고 거래소별 구현을 숨긴다" }
+    uses: [interface]
+  - id: inheritance
+    kind: MECHANISM
+    name: "상속"
+    category: BASICS
+    level: BEGINNER
+    description: "상위 타입의 상태와 동작을 하위 타입이 물려받아 확장한다. Kotlin 클래스는 기본이 final 이라 open 으로 연 것만 상속할 수 있다"
+    synonyms: ["inheritance", "extends"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/exception/BusinessException.kt, symbol: "open class BusinessException(", note: "도메인별 예외가 이 open 클래스를 상속한다" }
+    uses: [class, interface]
+    causes:
+      - { to: lang-fragile-base-class, reason: "하위 클래스가 상위 클래스의 내부 구현에 묶인다" }
+  - id: polymorphism
+    kind: MECHANISM
+    name: "다형성"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "같은 타입으로 부른 호출이 실제 객체에 따라 다른 구현으로 간다. 분기문 없이 구현을 늘릴 수 있게 한다"
+    synonyms: ["polymorphism", "dynamic dispatch"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/exception/GlobalExceptionHandler.kt, symbol: "@ExceptionHandler(BusinessException::class)", note: "하위 예외 전부를 상위 타입 하나로 받는다" }
+    uses: [interface]
+  - id: delegation
+    kind: MECHANISM
+    name: "위임"
+    category: LANGUAGE_FEATURE
+    level: INTERMEDIATE
+    description: "인터페이스 구현이나 프로퍼티 접근을 다른 객체에 넘긴다. Kotlin 은 by 키워드로 클래스 위임(: Port by store)과 프로퍼티 위임(by lazy)을 언어가 만들어 준다"
+    synonyms: ["delegation", "by"]
+    questions: ["클래스 위임과 상속은 결합의 모양이 어떻게 다른가"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/chart/PriceStreamRedisFanout.kt, symbol: ") : PriceStreamPort by store {", note: "포트 구현 대부분을 내부 객체에 위임한다" }
+      - { path: recommendation/feature/src/main/kotlin/com/kgd/recommendation/infrastructure/bandit/BanditPolicy.kt, symbol: "private val redisSampler: RedisThompsonSampler by lazy {", note: "처음 읽을 때 만드는 지연 프로퍼티 위임" }
+    uses: [interface]
+    alternative_to:
+      - { to: inheritance, reason: "재사용을 상속 대신 조합으로 얻는다" }
+    mitigates: [lang-fragile-base-class]
+  - id: immutability
+    kind: MECHANISM
+    name: "불변성"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "만든 뒤 상태를 바꾸지 않게 한다. Kotlin 은 val·읽기 전용 컬렉션·data class 의 copy 로 기본값을 불변 쪽에 둔다. 공유해도 경쟁 상태가 생기지 않는다"
+    synonyms: ["immutability", "immutable"]
+    code:
+      - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/application/inventory/usecase/ReserveStockUseCase.kt, symbol: "data class Command(val orderId: Long", note: "유스케이스 입력을 val 만 가진 data class 로 둔다" }
+    uses: [variable, data-class]
+    mitigates:
+      - { to: race-condition, reason: "공유 상태를 바꾸지 않으면 경쟁할 쓰기가 없다" }
+  - id: lang-fragile-base-class
+    kind: PROBLEM
+    name: "취약한 기반 클래스"
+    category: LANGUAGE_FEATURE
+    level: INTERMEDIATE
+    description: "상위 클래스의 내부 구현을 바꿨을 뿐인데 하위 클래스가 깨지는 상태. 하위 클래스가 상위의 호출 순서 같은 세부에 기대기 때문이다"
+    synonyms: ["fragile base class"]
+
+  # ── 컴파일 타임 안전장치 ───────────────────────────────────
+  - id: lang-safety
+    kind: STAGE
+    name: "안전장치 걸기"
+    category: LANGUAGE_FEATURE
+    level: INTERMEDIATE
+    description: "런타임에 터질 오류를 타입 시스템과 컴파일러로 미리 막고, 막지 못한 오류는 예외로 다룬다"
+    questions: ["null 을 허용하는 타입과 허용하지 않는 타입을 나누면 무엇이 컴파일 오류가 되나"]
+    contains: [null-safety, lang-exhaustive-when, exception-handling, kotlin, lang-null-pointer-exception, lang-missing-branch]
+    flows_to: [lang-concise-expression]
+  - id: null-safety
+    kind: MECHANISM
+    name: "널 안전성"
+    category: LANGUAGE_FEATURE
+    level: INTERMEDIATE
+    description: "타입에 null 가능 여부(String 과 String?)를 넣어 null 검사 없는 접근을 컴파일 오류로 만든다. ?. · ?: · let 으로 null 인 경우를 명시적으로 처리한다"
+    synonyms: ["null safety", "nullable type"]
+    code:
+      - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/application/reservation/service/InventoryCommandService.kt, symbol: "?.let { return it }", note: "이미 처리한 명령이면 그 결과를 돌려주고, null 이면 계속 진행한다" }
+    uses: [variable]
+    mitigates: [lang-null-pointer-exception]
+  - id: lang-exhaustive-when
+    kind: MECHANISM
+    name: "when 완전성 검사"
+    category: LANGUAGE_FEATURE
+    level: INTERMEDIATE
+    description: "봉인 클래스·열거형을 when 으로 가를 때 모든 경우를 다뤘는지 컴파일러가 확인한다. 하위 타입을 하나 더하면 빠진 분기가 컴파일 오류로 드러난다"
+    synonyms: ["exhaustive when"]
+    code:
+      - { path: quant/domain/src/main/kotlin/com/kgd/quant/domain/order/OrderStatus.kt, symbol: "val allowed = when (this) {", note: "주문 상태 전이 규칙을 else 없이 모든 상태에 대해 적는다" }
+    uses: [sealed-class, enum]
+    mitigates: [lang-missing-branch]
+  - id: exception-handling
+    kind: MECHANISM
+    name: "예외 처리"
+    category: BASICS
+    level: BEGINNER
+    description: "정상 흐름을 이어 갈 수 없는 상황을 예외로 던지고, 처리할 수 있는 곳에서 잡아 응답·재시도·기록으로 바꾼다. Kotlin 은 checked exception 이 없어 어디서 잡을지를 설계로 정해야 한다"
+    synonyms: ["exception handling", "try-catch"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/exception/GlobalExceptionHandler.kt, symbol: "class GlobalExceptionHandler {", note: "도메인 예외를 공통 응답 포맷으로 바꾸는 한 곳" }
+    uses: [class]
+  - id: lang-null-pointer-exception
+    kind: PROBLEM
+    name: "NullPointerException"
+    category: LANGUAGE_FEATURE
+    level: BEGINNER
+    description: "null 인 참조에 접근해 런타임에 터지는 오류. Kotlin 에서도 !! · 플랫폼 타입(Java 반환값) · lateinit 을 거치면 다시 생긴다"
+    synonyms: ["NPE", "null 참조 오류"]
+  - id: lang-missing-branch
+    kind: PROBLEM
+    name: "분기 누락"
+    category: LANGUAGE_FEATURE
+    level: INTERMEDIATE
+    description: "새 상태·하위 타입을 추가했는데 그것을 가르는 분기 하나를 고치지 않아 기본값(else)으로 조용히 흘러가는 상태"
+
+  # ── 간결한 표현 ───────────────────────────────────────────
+  - id: lang-concise-expression
+    kind: STAGE
+    name: "간결하게 표현하기"
+    category: LANGUAGE_FEATURE
+    level: INTERMEDIATE
+    description: "같은 뜻을 적은 코드로 쓴다. 컴파일러가 타입을 추론하고, 함수를 값으로 넘기고, 기존 타입에 함수를 붙이고, 그 조합으로 DSL 을 만든다"
+    contains: [type-inference, lang-higher-order-function, extension-function, recursion, dsl, kotlin]
+    flows_to: [lang-metaprogramming]
+  - id: type-inference
+    kind: MECHANISM
+    name: "타입 추론"
+    category: LANGUAGE_FEATURE
+    level: BEGINNER
+    description: "컴파일러가 초기값·반환식에서 타입을 정해 선언을 생략하게 한다. 정적 타입은 그대로이므로 타입 검사는 약해지지 않는다. 공개 API 반환 타입은 명시하는 편이 읽기 쉽다"
+    synonyms: ["type inference"]
+    uses: [variable, generic]
+  - id: lang-higher-order-function
+    kind: MECHANISM
+    name: "고차 함수"
+    category: LANGUAGE_FEATURE
+    level: INTERMEDIATE
+    description: "함수를 인자로 받거나 돌려주는 함수. 공통 절차(파싱·예외 처리)는 한 번 쓰고 달라지는 부분만 람다로 넘긴다"
+    synonyms: ["higher-order function"]
+    code:
+      - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/infrastructure/messaging/InventoryCommandConsumer.kt, symbol: "private fun handle(record: ConsumerRecord<String, String>, block: (InventoryCommandMessage) -> Unit)", note: "역직렬화·예외 처리는 handle 이 하고 명령별 동작만 람다로 받는다" }
+    uses: [lambda, function, closure]
+  - id: extension-function
+    kind: MECHANISM
+    name: "확장 함수"
+    category: LANGUAGE_FEATURE
+    level: INTERMEDIATE
+    description: "클래스를 고치거나 상속하지 않고 바깥에서 그 타입에 함수를 붙인다. 정적으로 결정되므로 오버라이드되지 않고, 변환 함수(toXxx)를 경계 가까이 두는 데 쓴다"
+    synonyms: ["extension function"]
+    code:
+      - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/infrastructure/messaging/InventoryCommandConsumer.kt, symbol: "private fun InventoryCommandLine.toLine()", note: "메시지 타입을 유스케이스 입력으로 바꾸는 변환을 파일 안에만 둔다" }
+    uses: [function]
+  - id: recursion
+    kind: MECHANISM
+    name: "재귀"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "함수가 더 작은 입력으로 자기 자신을 부른다. 트리처럼 자기 닮은 구조를 순회할 때 자연스럽고, 깊이가 깊으면 스택 오버플로를 조심한다(Kotlin 은 tailrec 으로 꼬리 재귀를 반복문으로 바꾼다)"
+    synonyms: ["recursion", "tailrec"]
+    code:
+      - { path: blog/feature/src/main/kotlin/com/kgd/blog/application/post/service/BlogQueryService.kt, symbol: "val children = build(category.id)", note: "카테고리 트리를 부모 id 로 재귀 조립한다" }
+    uses: [function]
+  - id: dsl
+    kind: MECHANISM
+    name: "DSL"
+    category: LANGUAGE_FEATURE
+    level: ADVANCED
+    description: "수신 객체 지정 람다와 확장 함수로 특정 목적의 문법을 Kotlin 코드 안에 만든다. Gradle Kotlin DSL 빌드 스크립트와 Kotest 의 given/when/then 이 그 예다"
+    synonyms: ["domain-specific language", "type-safe builder"]
+    code:
+      - { path: inventory/domain/src/test/kotlin/com/kgd/inventory/domain/inventory/model/InventoryTest.kt, symbol: "class InventoryTest : BehaviorSpec({", note: "Kotest BehaviorSpec 의 given/when/then 중첩 DSL" }
+      - { path: buildSrc/build.gradle.kts, symbol: "`kotlin-dsl`", note: "빌드 로직을 Kotlin DSL 로 쓰는 플러그인" }
+    uses: [lambda, scope-function, extension-function]
+
+  # ── 메타 정보 다루기 ──────────────────────────────────────
+  - id: lang-metaprogramming
+    kind: STAGE
+    name: "메타 정보 다루기"
+    category: LANGUAGE_FEATURE
+    level: ADVANCED
+    description: "런타임에 타입·애너테이션 정보를 읽어 동작을 정하고, 객체를 JSON 같은 바깥 형식으로 바꾼다. 프레임워크가 주로 하는 일이라 원리를 알아야 오류를 읽을 수 있다"
+    contains: [reflection, serialization, jackson]
+  - id: reflection
+    kind: MECHANISM
+    name: "리플렉션"
+    category: LANGUAGE_FEATURE
+    level: ADVANCED
+    description: "런타임에 클래스·메서드·애너테이션 정보를 조회하고 호출한다. Spring 의 빈 주입과 인자 해석이 이것으로 동작한다. 컴파일러 검사를 벗어나므로 느리고 이름 변경에 약하다"
+    synonyms: ["reflection", "kotlin-reflect"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/presentation/resolver/TenantIdHeaderArgumentResolver.kt, symbol: "parameter.hasParameterAnnotation(TenantHeader::class.java)", note: "파라미터에 붙은 애너테이션을 런타임에 읽어 인자 해석 여부를 정한다" }
+    uses: [annotation, class]
+  - id: serialization
+    kind: MECHANISM
+    name: "직렬화"
+    category: DATA
+    level: INTERMEDIATE
+    description: "객체를 JSON·바이트 같은 전송·저장 형식으로 바꾸고(직렬화) 되돌린다(역직렬화). Kotlin 의 non-null·기본값을 지키려면 Kotlin 모듈을 붙인 매퍼를 쓴다"
+    synonyms: ["serialization", "deserialization", "marshalling"]
+    code:
+      - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/infrastructure/messaging/InventoryCommandConsumer.kt, symbol: "objectMapper.readValue(record.value(), InventoryCommandMessage::class.java)", note: "Kafka 메시지 JSON 을 data class 로 역직렬화한다" }
+    uses: [data-class, reflection]
+
+  # ── 용어 사전 ─────────────────────────────────────────────
+  - id: lang-glossary
+    kind: TERM
+    name: "언어 용어 사전"
+    category: LANGUAGE_FEATURE
+    level: BEGINNER
+    description: "코드를 읽는 데 필요한 언어 구성 요소의 이름. 장치(하는 일)가 아니라 코드에 「있는 것」을 모은다"
+    synonyms: ["glossary", "용어집"]
+    contains: [lang-glossary-declaration, lang-glossary-type-form, lang-glossary-functional]
+  - id: lang-glossary-declaration
+    kind: TERM
+    name: "선언 요소"
+    category: LANGUAGE_FEATURE
+    level: BEGINNER
+    description: "변수·함수·클래스처럼 이름을 붙여 선언하는 기본 구성 요소"
+    contains: [variable, function, class, interface, enum, annotation, type-alias, companion-object]
+  - id: variable
+    kind: TERM
+    name: "변수"
+    category: BASICS
+    level: BEGINNER
+    description: "값에 붙인 이름. Kotlin 은 다시 대입할 수 없는 val 과 대입할 수 있는 var 를 나누고, val 을 기본으로 쓴다"
+    synonyms: ["variable", "val", "var"]
+  - id: function
+    kind: TERM
+    name: "함수"
+    category: BASICS
+    level: BEGINNER
+    description: "입력을 받아 결과를 돌려주는 이름 붙은 코드 블록. Kotlin 에서는 최상위·멤버·지역 함수로 둘 수 있고 값처럼 넘길 수도 있다"
+    synonyms: ["function", "fun"]
+  - id: class
+    kind: TERM
+    name: "클래스"
+    category: BASICS
+    level: BEGINNER
+    description: "상태(프로퍼티)와 동작(메서드)을 묶은 타입 정의. 객체는 클래스로 만든 인스턴스다"
+    synonyms: ["class"]
+  - id: interface
+    kind: TERM
+    name: "인터페이스"
+    category: BASICS
+    level: BEGINNER
+    description: "구현이 지켜야 할 메서드 시그니처를 정한 계약 타입. 여러 개를 동시에 구현할 수 있고, Kotlin 은 기본 구현을 둘 수 있다"
+    synonyms: ["interface"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/notification/port/NotificationSender.kt, symbol: "interface NotificationSender {", note: "알림 전송 계약 — 텔레그램 구현이 따로 있다" }
+  - id: enum
+    kind: TERM
+    name: "열거형"
+    category: BASICS
+    level: BEGINNER
+    description: "정해진 상수 몇 개만 값으로 갖는 타입. Kotlin enum class 는 프로퍼티·메서드를 가질 수 있어 상태 전이 규칙을 안에 둘 수 있다"
+    synonyms: ["enum", "enum class"]
+    code:
+      - { path: quant/domain/src/main/kotlin/com/kgd/quant/domain/order/OrderStatus.kt, symbol: "enum class OrderStatus {", note: "주문 상태와 전이 검사를 한 열거형에 둔다" }
+  - id: annotation
+    kind: TERM
+    name: "애너테이션"
+    category: LANGUAGE_FEATURE
+    level: INTERMEDIATE
+    description: "코드 요소에 붙이는 메타데이터. 그 자체로는 동작이 없고, 컴파일러·프레임워크가 리플렉션이나 코드 생성으로 읽어 동작을 붙인다"
+    synonyms: ["annotation", "어노테이션"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/presentation/resolver/TenantHeader.kt, symbol: "annotation class TenantHeader", note: "컨트롤러 파라미터에 붙이는 사용자 정의 애너테이션" }
+  - id: type-alias
+    kind: TERM
+    name: "타입 별칭"
+    category: LANGUAGE_FEATURE
+    level: BEGINNER
+    description: "긴 타입(특히 함수 타입·제네릭)에 새 이름을 붙인다. 새 타입이 아니라 같은 타입의 다른 이름이라 섞어 써도 컴파일러가 막지 않는다 — 구별이 필요하면 value class 를 쓴다"
+    synonyms: ["typealias"]
+    code:
+      - { path: place/feature/src/test/kotlin/com/kgd/place/infrastructure/opensearch/PoiIndexAdapterTest.kt, symbol: "private typealias ExistsFn", note: "긴 빌더 함수 타입에 짧은 이름을 붙인다" }
+  - id: companion-object
+    kind: TERM
+    name: "동반 객체"
+    category: LANGUAGE_FEATURE
+    level: INTERMEDIATE
+    description: "클래스 안에 하나만 있는 companion object. Java 의 static 자리를 대신해 팩토리 함수·상수를 둔다"
+    synonyms: ["companion object"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/response/ApiResponse.kt, symbol: "fun <T> success(data: T): ApiResponse<T> =", note: "응답 생성 함수를 동반 객체에 둔다" }
+  - id: lang-glossary-type-form
+    kind: TERM
+    name: "Kotlin 타입 형태"
+    category: LANGUAGE_FEATURE
+    level: INTERMEDIATE
+    description: "Kotlin 이 목적별로 따로 준 타입 선언 형태"
+    contains: [data-class, sealed-class, generic]
+  - id: data-class
+    kind: TERM
+    name: "데이터 클래스"
+    category: LANGUAGE_FEATURE
+    level: BEGINNER
+    description: "값을 담는 목적의 클래스. 주 생성자 프로퍼티로 equals·hashCode·toString·copy 를 자동으로 만든다. DTO·메시지·이벤트에 쓴다"
+    synonyms: ["data class"]
+    code:
+      - { path: inventory/domain/src/main/kotlin/com/kgd/inventory/domain/inventory/event/InventoryEvent.kt, symbol: "data class StockReserved(", note: "이벤트 하나를 값으로 정의한다" }
+  - id: sealed-class
+    kind: TERM
+    name: "봉인 클래스"
+    category: LANGUAGE_FEATURE
+    level: INTERMEDIATE
+    description: "하위 타입을 같은 모듈·패키지 안으로 제한한 클래스·인터페이스. 하위 타입 목록이 닫혀 있어 when 에서 else 없이 모든 경우를 다룰 수 있다"
+    synonyms: ["sealed class", "sealed interface"]
+    code:
+      - { path: quant/domain/src/main/kotlin/com/kgd/quant/domain/strategy/PriceCondition.kt, symbol: "sealed class PriceCondition {", note: "진입 조건을 Immediate·AtOrBelow 둘로 닫는다" }
+      - { path: quant/domain/src/main/kotlin/com/kgd/quant/domain/strategy/Strategy.kt, symbol: "sealed interface Strategy {", note: "전략 타입 세 가지를 봉인 인터페이스로 묶는다" }
+  - id: generic
+    kind: TERM
+    name: "제네릭"
+    category: LANGUAGE_FEATURE
+    level: INTERMEDIATE
+    description: "타입을 매개변수로 받는 클래스·함수. 한 번 짠 코드를 여러 타입에 쓰면서 캐스팅 없이 타입 검사를 받는다. JVM 에서는 런타임에 타입 인자가 지워진다"
+    synonyms: ["generics", "type parameter"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/response/ApiResponse.kt, symbol: "data class ApiResponse<T>(", note: "모든 API 응답을 감싸는 제네릭 봉투" }
+  - id: lang-glossary-functional
+    kind: TERM
+    name: "함수형 요소"
+    category: LANGUAGE_FEATURE
+    level: INTERMEDIATE
+    description: "함수를 값으로 다룰 때 나오는 구성 요소"
+    contains: [lambda, closure, scope-function]
+  - id: lambda
+    kind: TERM
+    name: "람다"
+    category: LANGUAGE_FEATURE
+    level: INTERMEDIATE
+    description: "이름 없이 값으로 쓰는 함수 식. 마지막 인자가 람다면 괄호 밖으로 빼서 쓸 수 있어 DSL 모양이 된다"
+    synonyms: ["lambda", "익명 함수"]
+    code:
+      - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/infrastructure/messaging/InventoryCommandConsumer.kt, symbol: "handle(record) { c -> commands.confirm(c.orderId) }", note: "명령별 동작을 괄호 밖 람다로 넘긴다" }
+  - id: closure
+    kind: TERM
+    name: "클로저"
+    category: LANGUAGE_FEATURE
+    level: INTERMEDIATE
+    description: "자신이 만들어진 바깥 스코프의 변수를 붙잡아 두고 나중에 쓰는 함수. 지역 함수·람다가 바깥 값을 읽으면 클로저가 된다"
+    synonyms: ["closure"]
+    code:
+      - { path: blog/feature/src/main/kotlin/com/kgd/blog/application/post/service/BlogQueryService.kt, symbol: "fun build(parentId: Long?): List<BlogCategoryNode> =", note: "지역 함수가 바깥의 byParent·counts 를 붙잡아 쓴다" }
+  - id: scope-function
+    kind: TERM
+    name: "스코프 함수"
+    category: LANGUAGE_FEATURE
+    level: BEGINNER
+    description: "let·run·with·apply·also — 객체를 람다 안의 it·this 로 잡아 코드를 묶는 표준 함수 다섯. 수신 객체(this/it)와 반환값(람다 결과/객체 자신)으로 고른다"
+    synonyms: ["let", "apply", "also", "run", "with"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/chart/PriceStreamRedisFanout.kt, symbol: "RedisMessageListenerContainer().apply {", note: "생성한 객체의 설정을 apply 블록에 모은다" }
+
+  # ── 구현체 ───────────────────────────────────────────────
+  - id: kotlin
+    kind: TECHNOLOGY
+    name: "Kotlin"
+    category: LANGUAGE_FEATURE
+    level: BEGINNER
+    description: "JVM 에서 도는 정적 타입 언어. 이 레포의 백엔드 전 서비스와 빌드 스크립트가 Kotlin 이다"
+    synonyms: ["코틀린"]
+    code:
+      - { path: gradle/libs.versions.toml, symbol: "kotlin = \"2.2.21\"", note: "레포 전체의 Kotlin 버전" }
+    implements:
+      - { to: null-safety, reason: "nullable 타입을 타입 시스템에 넣었다" }
+      - { to: lang-exhaustive-when, reason: "sealed·enum 에 대한 when 누락을 컴파일 오류로 낸다" }
+      - { to: type-inference, reason: "지역 변수·식 본문 함수의 타입을 추론한다" }
+      - { to: extension-function, reason: "확장 함수를 언어 문법으로 준다" }
+      - { to: delegation, reason: "by 키워드로 클래스·프로퍼티 위임 코드를 생성한다" }
+      - { to: dsl, reason: "수신 객체 지정 람다로 type-safe builder 를 만든다" }
+  - id: jackson
+    kind: TECHNOLOGY
+    name: "Jackson"
+    category: DATA
+    level: INTERMEDIATE
+    description: "JVM JSON 직렬화 라이브러리. jackson-module-kotlin 을 붙이면 주 생성자·기본값·non-null 을 이해해 data class 를 그대로 읽고 쓴다"
+    synonyms: ["ObjectMapper", "jackson-module-kotlin"]
+    code:
+      - { path: commerce/app/build.gradle.kts, symbol: "tools.jackson.module:jackson-module-kotlin", note: "폴드 호스트에 Kotlin 모듈을 싣는다" }
+      - { path: game/feature/src/main/kotlin/com/kgd/game/application/ads/service/AdService.kt, symbol: "jacksonObjectMapper()", note: "Kotlin 모듈이 등록된 매퍼를 만든다" }
+    implements:
+      - { to: serialization, reason: "객체 ↔ JSON 변환을 한다" }
+      - { to: reflection, reason: "생성자·프로퍼티를 리플렉션으로 찾아 값을 채운다" }

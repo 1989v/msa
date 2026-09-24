@@ -1,0 +1,290 @@
+# 테스트 온톨로지 — 원본은 이 파일이다 (ADR-0100, docs/specs/2026-09-24-concept-atlas).
+# 바꾸면 manifest.yaml 의 revision 을 올린다. 간선은 from 개념에만 적는다.
+domain: testing
+root: test-verification
+concepts:
+  - id: test-verification
+    kind: DOMAIN
+    name: "테스트"
+    category: TESTING
+    level: BEGINNER
+    description: "코드가 의도대로 동작하는지 실행해서 확인하는 일. 어떻게 쓸지 정하고, 어디까지 볼지 고르고, 의존을 떼어 내고, 그 검사가 실제로 무는지 증명하는 순서로 읽는다"
+    synonyms: ["testing", "software testing"]
+    contains: [test-design, test-scope, test-isolation, test-gating, test-glossary]
+
+  # ── 테스트 설계 ───────────────────────────────────────────
+  - id: test-design
+    kind: STAGE
+    name: "테스트 설계"
+    category: TESTING
+    level: BEGINNER
+    description: "테스트를 언제 쓰고 어떤 모양으로 적을지 정한다. 이 레포는 Kotest BehaviorSpec 으로 given · when · then 을 한국어 문장으로 적는다"
+    contains: [tdd, bdd, kotest]
+    flows_to: [test-scope]
+  - id: tdd
+    kind: MECHANISM
+    name: "TDD"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "실패하는 테스트를 먼저 쓰고(Red), 그것을 통과시킬 만큼만 구현하고(Green), 동작을 지킨 채 정리한다(Refactor). 테스트가 처음에 빨간불인 것을 봤으므로 그 테스트가 무는 것도 함께 확인된다"
+    synonyms: ["Test-Driven Development", "테스트 주도 개발", "Red-Green-Refactor"]
+    questions: ["TDD 에서 테스트를 먼저 실패시켜 보는 이유는 무엇인가"]
+  - id: bdd
+    kind: MECHANISM
+    name: "BDD"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "테스트를 구현 단위가 아니라 행동 명세로 적는다. 주어진 상황 · 행동 · 기대 결과를 사람이 읽는 문장으로 쓰고, 그 문장이 곧 테스트 이름이 된다"
+    synonyms: ["Behavior-Driven Development", "행동 주도 개발"]
+    questions: ["BDD 의 given · when · then 은 각각 무엇을 적나"]
+    code:
+      - { path: product/domain/src/test/kotlin/com/kgd/product/domain/product/model/ProductTest.kt, symbol: "class ProductTest : BehaviorSpec({", note: "도메인 규칙을 given · when · then 문장으로 적은 스펙" }
+    uses: [test-given-when-then]
+  - id: kotest
+    kind: TECHNOLOGY
+    name: "Kotest"
+    category: TESTING
+    level: BEGINNER
+    description: "Kotlin 테스트 프레임워크. 스펙 스타일 여러 가지와 풍부한 매처(shouldBe …)를 준다. 이 레포는 BehaviorSpec 을 표준으로 쓴다"
+    code:
+      - { path: gradle/libs.versions.toml, symbol: "kotest-runner-junit5", note: "JUnit5 플랫폼에서 Kotest 스펙을 돌리는 러너" }
+    implements:
+      - { to: bdd, reason: "BehaviorSpec 의 given · when · then 블록" }
+      - { to: dsl, reason: "given · when · then 을 Kotlin DSL 로 적는다" }
+
+  # ── 검증 범위 ─────────────────────────────────────────────
+  - id: test-scope
+    kind: STAGE
+    name: "검증 범위 선택"
+    category: TESTING
+    level: BEGINNER
+    description: "한 번의 테스트가 어디까지를 실제로 돌릴지 고른다. 범위가 좁을수록 빠르고 원인이 잘 보이고, 넓을수록 실제 결함을 더 잡는다"
+    synonyms: ["test pyramid", "테스트 피라미드"]
+    contains: [unit-test, integration-test, e2e-test, test-coverage]
+    flows_to: [test-isolation]
+  - id: unit-test
+    kind: MECHANISM
+    name: "단위 테스트"
+    category: TESTING
+    level: BEGINNER
+    description: "함수나 클래스 하나를 떼어 내 입력과 출력만 본다. 밀리초 단위로 돌아 가장 많이 쓴다. 이 레포의 도메인 테스트는 목 없이 순수 단위 테스트로 쓴다"
+    synonyms: ["unit test"]
+    questions: ["단위 테스트의 「단위」는 무엇으로 정하나", "도메인 테스트에서 목을 금지하는 이유는 무엇인가"]
+    code:
+      - { path: product/domain/src/test/kotlin/com/kgd/product/domain/product/model/ProductTest.kt, symbol: "class ProductTest : BehaviorSpec({", note: "프레임워크 없는 도메인 모델 단위 테스트" }
+    flows_to: [integration-test]
+    measured_by: [test-coverage]
+  - id: integration-test
+    kind: MECHANISM
+    name: "통합 테스트"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "실제 DB · 브로커 같은 의존과 함께 여러 컴포넌트를 돌려 경계에서의 동작을 본다. 직렬화 · 쿼리 · 잠금처럼 목으로는 잴 수 없는 것을 잡는다"
+    synonyms: ["integration test"]
+    questions: ["목으로 잴 수 없어 통합 테스트가 필요한 것은 무엇인가"]
+    code:
+      - { path: commerce/app/src/test/kotlin/com/kgd/commerce/outbox/OutboxRelayIntegrationSpec.kt, symbol: "class OutboxRelayIntegrationSpec(", note: "실제 MySQL + Kafka 로 아웃박스 릴레이를 돌려 브로커가 받은 레코드로 판정" }
+    flows_to: [e2e-test]
+    mitigates:
+      - { to: test-overmocking, reason: "의존을 실물로 돌려 목이 가린 동작을 드러낸다" }
+    measured_by: [test-coverage]
+    uses:
+      - { to: mysql, reason: "Testcontainers 로 진짜 MySQL 을 띄워 스키마 · 쿼리를 확인한다" }
+      - { to: kafka, reason: "Testcontainers 로 진짜 브로커를 띄워 발행 · 소비를 확인한다" }
+  - id: e2e-test
+    kind: MECHANISM
+    name: "E2E 테스트"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "사용자가 하는 조작을 처음부터 끝까지 실제 화면 · 서버로 재현한다. 가장 많이 잡지만 느리고 불안정해서 핵심 시나리오에만 쓴다"
+    synonyms: ["end-to-end test", "종단 간 테스트"]
+    questions: ["E2E 테스트를 적게 두는 이유는 무엇인가"]
+    code:
+      - { path: amp-arena/tools/e2e-online.mjs, symbol: "const A = new Page(port), B = new Page(port);", note: "탭 두 개로 방 만들기 · 코드 입장 · 매치 진입까지 재현" }
+  - id: test-coverage
+    kind: METRIC
+    name: "테스트 커버리지"
+    category: TESTING
+    level: BEGINNER
+    description: "테스트가 실행한 코드의 비율(줄 · 분기). 실행했다는 뜻이지 결과를 확인했다는 뜻은 아니어서, 높아도 단언이 없으면 결함을 못 잡는다"
+    synonyms: ["code coverage", "line coverage", "branch coverage"]
+    questions: ["커버리지 100% 인데 결함을 놓치는 경우는 언제인가"]
+
+  # ── 의존 격리 ─────────────────────────────────────────────
+  - id: test-isolation
+    kind: STAGE
+    name: "의존 격리"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "테스트 대상이 부르는 의존을 대역이나 일회용 실물로 바꿔, 결과가 대상 코드에만 달려 있게 한다"
+    contains: [test-double-substitution, test-disposable-dependency, mockk, testcontainers, test-overmocking]
+    flows_to: [test-gating]
+  - id: test-double-substitution
+    kind: MECHANISM
+    name: "테스트 더블 치환"
+    category: TESTING
+    level: BEGINNER
+    description: "진짜 의존 자리에 목 · 스텁 · 페이크 같은 대역을 넣는다. 이 레포는 애플리케이션 테스트에서 아웃바운드 포트만 MockK 로 바꾸고 도메인 테스트에선 쓰지 않는다"
+    synonyms: ["test double"]
+    questions: ["목 · 스텁 · 페이크는 각각 무엇을 대신하나"]
+    uses: [mock, stub, test-fake]
+    causes:
+      - { to: test-overmocking, reason: "대역이 많아질수록 테스트가 실제 의존의 동작 대신 대역 설정을 재게 된다" }
+    alternative_to:
+      - { to: test-disposable-dependency, reason: "실물 대신 대역을 넣어 빠르지만 경계의 동작은 못 잰다" }
+  - id: test-disposable-dependency
+    kind: MECHANISM
+    name: "일회용 실물 의존"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "테스트마다 진짜 DB · 브로커를 컨테이너로 띄우고 끝나면 버린다. 대역 대신 실물의 동작을 재면서도 환경 사이의 상태 누수가 없다"
+    synonyms: ["throwaway container"]
+    mitigates:
+      - { to: test-overmocking, reason: "직렬화기 · SKIP LOCKED 같은 실물 동작을 실물로 잰다" }
+  - id: mockk
+    kind: TECHNOLOGY
+    name: "MockK"
+    category: TESTING
+    level: BEGINNER
+    description: "Kotlin 용 목 라이브러리. final 클래스 · 코루틴(coEvery) · 확장 함수를 다룬다. 이 레포는 Mockito 대신 이것만 쓴다"
+    code:
+      - { path: product/feature/src/test/kotlin/com/kgd/product/application/product/service/ProductServiceTest.kt, symbol: "mockk<ProductTransactionalService>()", note: "애플리케이션 서비스 테스트에서 의존을 목으로 바꾼다" }
+    implements:
+      - { to: test-double-substitution, reason: "mockk · every · verify 로 목과 스텁을 만든다" }
+  - id: testcontainers
+    kind: TECHNOLOGY
+    name: "Testcontainers"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "테스트 코드에서 Docker 컨테이너(MySQL · Kafka …)를 띄우고 접속 정보를 넘겨주는 라이브러리"
+    code:
+      - { path: ads/feature/src/test/kotlin/com/kgd/ads/support/AdsTestContainers.kt, symbol: 'MySQLContainer(DockerImageName.parse("mysql:8.0.33"))', note: "광고 통합 스펙이 공유하는 MySQL 컨테이너" }
+    implements:
+      - { to: test-disposable-dependency, reason: "스펙이 시작할 때 컨테이너를 띄우고 끝나면 치운다" }
+      - { to: integration-test, reason: "통합 스펙의 실물 의존을 공급한다" }
+  - id: test-overmocking
+    kind: PROBLEM
+    name: "목 남용"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "대역이 너무 많아 테스트가 실제 동작이 아니라 목의 설정을 확인하는 상태. 구현을 바꾸면 깨지고, 실제 결함은 지나친다"
+    synonyms: ["over-mocking"]
+    causes:
+      - { to: test-false-green, reason: "목이 대답을 정해 두면 실물이 틀려도 초록불이다" }
+
+  # ── 게이트 증명 ───────────────────────────────────────────
+  - id: test-gating
+    kind: STAGE
+    name: "게이트 증명"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "테스트를 배포 경로의 게이트로 걸고, 그 게이트가 결함을 실제로 잡는지 확인한다. 통과만 보고는 검사가 무는지 알 수 없다"
+    contains: [test-changed-module-gate, regression-injection, test-fail-on-skip, test-false-green]
+  - id: test-changed-module-gate
+    kind: MECHANISM
+    name: "변경 모듈 테스트 게이트"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "바뀐 서비스의 테스트만 CI 에서 돌리고, 실패하면 그 커밋의 이미지를 만들지 않는다. 전체 스위트를 매번 돌리지 않아 빠르다"
+    code:
+      - { path: .github/workflows/images.yml, symbol: "./gradlew test (변경된 JVM 서비스만)", note: "이미지 빌드 전에 바뀐 JVM 서비스의 테스트를 돌린다" }
+    uses: [github-actions]
+  - id: regression-injection
+    kind: MECHANISM
+    name: "회귀 주입"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "지키려는 코드에 결함을 일부러 넣고 그 테스트가 빨간불을 내는지 본 뒤 되돌린다. 빨간불을 본 검사만 「켰다」고 한다. 결함은 내 구현과 다른 모양으로 넣어야 구멍이 보이고, 임시 사본에서 한다"
+    synonyms: ["mutation testing", "뮤테이션 테스트", "fault injection"]
+    questions: ["통과하는 테스트가 실제로 결함을 잡는지 어떻게 확인하나", "주입한 결함이 내 구현과 같은 모양이면 무엇을 놓치나"]
+    code:
+      - { path: docs/specs/2026-09-23-ad-network/verifications/regression-injection.md, symbol: "# 회귀 주입 기록", note: "대상별로 넣은 결함 · 빨간불 · 복원 뒤 결과를 남긴 기록" }
+    mitigates:
+      - { to: test-false-green, reason: "결함을 넣어도 초록인 검사를 찾아낸다" }
+  - id: test-fail-on-skip
+    kind: MECHANISM
+    name: "건너뜀 차단"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "환경이 없어 테스트를 건너뛰는 것을 로컬에서만 허용하고 CI 에선 실패로 만든다. 건너뜀이 통과로 집계되면 게이트가 비어도 초록이다"
+    code:
+      - { path: commerce/app/src/test/kotlin/com/kgd/commerce/outbox/OutboxRelayIntegrationSpec.kt, symbol: "class DockerOrCi : EnabledCondition", note: "Docker 가 없으면 로컬은 건너뛰고 CI=true 면 그대로 돌려 실패시킨다" }
+    mitigates:
+      - { to: test-false-green, reason: "CI 에서 건너뛴 스펙이 통과로 세지지 않는다" }
+  - id: test-false-green
+    kind: PROBLEM
+    name: "거짓 초록불"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "검사가 대상의 산출물이 아니라 자기가 만든 근거(이름 · 사본 · 목 설정)를 보거나 아예 돌지 않아, 기능을 지워도 통과하는 상태. 없는 검사보다 나쁘다 — 있다고 믿게 만든다"
+    synonyms: ["false positive test", "vacuous test"]
+
+  # ── 용어 ──────────────────────────────────────────────────
+  - id: test-glossary
+    kind: TERM
+    name: "테스트 용어 사전"
+    category: BASICS
+    level: BEGINNER
+    description: "테스트 코드를 읽는 데 필요한 말. 테스트 방식이 아니라 그 안에 등장하는 이름과 구성 요소를 모은다"
+    synonyms: ["glossary", "용어집"]
+    contains: [test-glossary-doubles, fixture, test-given-when-then, test-assertion]
+  - id: test-glossary-doubles
+    kind: TERM
+    name: "테스트 더블"
+    category: TESTING
+    level: BEGINNER
+    description: "테스트에서 진짜 의존 대신 넣는 대역을 부르는 말. 무엇을 대신하고 무엇을 확인하는지에 따라 이름이 갈린다"
+    synonyms: ["test double"]
+    contains: [mock, stub, test-fake]
+  - id: mock
+    kind: TERM
+    name: "목"
+    category: TESTING
+    level: BEGINNER
+    description: "호출됐는지 · 몇 번 · 어떤 인자로 불렸는지를 기록해 검증하는 대역. 상태가 아니라 상호작용을 확인한다"
+    synonyms: ["mock", "mock object"]
+    code:
+      - { path: product/feature/src/test/kotlin/com/kgd/product/application/product/service/ProductServiceTest.kt, symbol: "verify(exactly = 1) { eventPort.publishProductCreated(any()) }", note: "이벤트 포트가 한 번 불렸는지 검증" }
+    causes:
+      - { to: test-overmocking, reason: "상호작용 검증을 늘릴수록 테스트가 구현 순서에 묶인다" }
+  - id: stub
+    kind: TERM
+    name: "스텁"
+    category: TESTING
+    level: BEGINNER
+    description: "호출하면 미리 정해 둔 값을 돌려주거나 예외를 던지는 대역. 대상 코드를 원하는 분기로 보내는 데 쓰고, 호출 여부는 확인하지 않는다"
+    synonyms: ["stub"]
+    code:
+      - { path: product/feature/src/test/kotlin/com/kgd/product/application/product/service/ProductServiceTest.kt, symbol: "every { transactionalService.findById(999L) } throws ProductNotFoundException(999L)", note: "없는 상품 분기로 보내는 스텁" }
+  - id: test-fake
+    kind: TERM
+    name: "페이크"
+    category: TESTING
+    level: BEGINNER
+    description: "진짜처럼 동작하는 가벼운 구현. 메모리 맵으로 된 저장소처럼 규칙은 지키되 운영에 쓸 수 없는 지름길을 쓴다"
+    synonyms: ["fake", "in-memory fake"]
+    code:
+      - { path: product/feature/src/test/kotlin/com/kgd/product/application/seller/InMemoryProductSellerRepository.kt, symbol: "class InMemoryProductSellerRepository : ProductSellerRepositoryPort", note: "포트를 메모리로 구현한 페이크 저장소" }
+  - id: fixture
+    kind: TERM
+    name: "픽스처"
+    category: TESTING
+    level: BEGINNER
+    description: "테스트가 시작하기 전에 갖춰 두는 사전 조건 — 객체 · 데이터 행 · 설정. 여러 테스트가 같은 준비를 공유하도록 함수나 객체로 모은다"
+    synonyms: ["test fixture", "테스트 데이터"]
+    code:
+      - { path: quant/feature/src/test/kotlin/com/kgd/quant/application/backtest/BacktestFixtures.kt, symbol: "object BacktestFixtures", note: "백테스트 스펙이 공유하는 기본 설정 · 전략 생성 함수" }
+  - id: test-given-when-then
+    kind: TERM
+    name: "given · when · then"
+    category: TESTING
+    level: BEGINNER
+    description: "테스트 한 건을 준비(given) · 행동(when) · 기대 결과(then) 세 칸으로 나눠 적는 틀. Arrange-Act-Assert 와 같은 구조다"
+    synonyms: ["Given-When-Then", "Arrange-Act-Assert", "AAA"]
+  - id: test-assertion
+    kind: TERM
+    name: "단언"
+    category: TESTING
+    level: BEGINNER
+    description: "실제 값이 기대와 같은지 확인하고 아니면 테스트를 실패시키는 문장. 단언이 없는 테스트는 코드를 실행만 하고 아무것도 확인하지 않는다"
+    synonyms: ["assertion", "matcher", "shouldBe"]

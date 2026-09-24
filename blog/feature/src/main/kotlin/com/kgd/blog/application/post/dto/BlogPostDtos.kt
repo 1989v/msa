@@ -77,6 +77,9 @@ data class BlogPostRequest(
     @field:Size(max = 12) val conceptIds: List<String>? = null,
 )
 
+/** 개념 하나에 매핑된 발행글 수 */
+data class BlogConceptCount(val conceptId: String, val postCount: Long)
+
 data class BlogViewDaily(val date: LocalDate, val count: Long)
 
 /** 내 스튜디오 첫 화면 — 프로필 상태와 글 통계를 한 응답으로 묶는다 */

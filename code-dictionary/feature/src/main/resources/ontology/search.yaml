@@ -134,6 +134,10 @@ concepts:
     category: DATA
     level: INTERMEDIATE
     description: "텍스트를 토큰으로 가르는 규칙. 한국어는 형태소 분석기(nori)를 쓴다"
+    questions:
+      - "형태소 분석기가 쪼갠 조각이 순위에 끼어드는 경우는 언제인가"
+    code:
+      - { path: code-dictionary/feature/src/main/kotlin/com/kgd/codedictionary/infrastructure/opensearch/adapter/IndexAliasManager.kt, symbol: "stoptags", note: "nori 품사 필터가 버릴 품사 목록 — Lucene 10 의 세분 태그" }
     contains: [analyzer-customization-layers, nori]
   - id: analyzer-customization-layers
     kind: MECHANISM
@@ -160,6 +164,8 @@ concepts:
     level: INTERMEDIATE
     description: "격자에서 총비용 최소 경로를 왼쪽에서 오른쪽으로 한 번 훑어 찾는 동적 계획법. 노드마다 「여기까지의 최소 비용과 직전 간선」만 남긴다"
     synonyms: ["Viterbi"]
+    uses:
+      - { to: dynamic-programming, reason: "격자의 칸마다 최소 비용 경로 하나만 남기는 DP 다" }
   - id: user-dictionary
     kind: MECHANISM
     name: "사용자 사전"
@@ -241,7 +247,11 @@ concepts:
     level: ADVANCED
     description: "계층 그래프로 벡터 근사 최근접을 찾는 자료구조"
     synonyms: ["Hierarchical Navigable Small World"]
+    questions:
+      - "m 과 ef_search 를 키우면 무엇을 얻고 무엇을 잃나"
     contains: [vector-quantization, hnsw-parameters]
+    uses:
+      - { to: graph, reason: "층을 이룬 근접 그래프를 위층부터 따라 내려간다" }
   - id: vector-quantization
     kind: MECHANISM
     name: "벡터 양자화"
@@ -264,6 +274,8 @@ concepts:
     level: INTERMEDIATE
     description: "양자화 벡터로 k 의 몇 배를 뽑은 뒤 원본 벡터로 다시 채점해 상위 k 를 낸다. 배수를 올리면 정확도가 오르고 지연이 는다"
     synonyms: ["oversample factor"]
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt, symbol: "oversampleFactor(", note: "근사 거리로 뽑은 후보를 원본 벡터로 재채점" }
   # 고르는 파라미터 세트라 MECHANISM
   - id: hnsw-parameters
     kind: MECHANISM
@@ -287,6 +299,8 @@ concepts:
     category: DATA
     level: INTERMEDIATE
     description: "기존 색인을 고치지 않고 새 색인을 만든 뒤 별칭을 옮긴다"
+    code:
+      - { path: code-dictionary/feature/src/main/kotlin/com/kgd/codedictionary/infrastructure/opensearch/adapter/IndexAliasManager.kt, symbol: "override fun createTimestampedIndexName(", note: "시각을 붙인 새 색인 이름" }
     flows_to: [alias-swap]
     causes:
       - { to: partial-index-live, reason: "벌크가 도중에 죽어도 별칭을 넘기면 덜 찬 색인이 라이브 — 2026-09-22 45,535/59,735건", evidence: msa-opensearch-memory-and-quantization-record }
@@ -296,6 +310,10 @@ concepts:
     category: DATA
     level: INTERMEDIATE
     description: "ES에서 새 인덱스를 미리 빌드하고 별칭을 전환하여 무중단 재색인하는 기법"
+    questions:
+      - "별칭 교체가 막지 못하는 실패는 무엇인가"
+    code:
+      - { path: code-dictionary/feature/src/main/kotlin/com/kgd/codedictionary/infrastructure/opensearch/adapter/IndexAliasManager.kt, symbol: "override fun swapAlias(", note: "별칭을 새 색인으로 옮기고 옛 색인은 보관 수만 남긴다" }
   - id: reindex-count-gate
     kind: MECHANISM
     name: "재색인 건수 게이트"
@@ -407,6 +425,8 @@ concepts:
     category: ALGORITHM
     level: INTERMEDIATE
     description: "스파스와 덴스, 두 레그가 각자 상위 후보를 낸다"
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt, symbol: "private fun hybridQuery(", note: "키워드 레그와 벡터 레그를 한 하이브리드 질의로 묶는다" }
     contains: [bm25, ann-search, opensearch]
     flows_to: [rank-fusion]
     measured_by:
@@ -419,6 +439,9 @@ concepts:
     level: INTERMEDIATE
     description: "글자가 맞는 것을 찾는다. 고유명사 · 정확 일치에 강하다"
     synonyms: ["BM25", "sparse retrieval"]
+    questions:
+      - "BM25 가 문서 길이로 점수를 나누는 이유는 무엇인가"
+      - "동의어 사전 없이 BM25 만 쓰면 무엇을 놓치나"
     alternative_to:
       - { to: ann-search, reason: "글자가 맞는 것 대 뜻이 가까운 것 — 둘 다 쓰고 순위로 섞는다" }
   - id: ann-search
@@ -428,6 +451,12 @@ concepts:
     level: ADVANCED
     description: "뜻이 가까운 것을 벡터 근사 최근접 탐색으로 찾는다"
     synonyms: ["approximate nearest neighbor", "dense retrieval", "kNN"]
+    questions:
+      - "필터를 knn 바깥에 걸면 좁은 지역 검색에서 결과가 왜 줄어드나"
+      - "BM25 가 이미 있는데 벡터 레그를 함께 두는 이유는 무엇인가"
+      - "양자화 색인에서 재채점은 무엇을 되돌리나"
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt, symbol: "private fun vectorLeg(", note: "필터를 knn 안에 둔 HNSW 한 레그" }
     contains: [hnsw]
     uses: [cosine-similarity]
     measured_by:
@@ -458,6 +487,11 @@ concepts:
     level: INTERMEDIATE
     description: "Reciprocal Rank Fusion — 각 목록의 순위 역수를 더해 합친다"
     synonyms: ["Reciprocal Rank Fusion"]
+    questions:
+      - "점수가 아니라 순위로 합치는 이유는 무엇인가"
+      - "rank_constant 를 키우면 순위 분포가 어떻게 바뀌나"
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/HybridSearchPipelineInitializer.kt, symbol: "private const val RRF_PIPELINE", note: "rank_constant 60 인 RRF 검색 파이프라인" }
   - id: post-ranking
     kind: STAGE
     name: "후처리"
@@ -494,6 +528,8 @@ concepts:
     category: ALGORITHM
     level: INTERMEDIATE
     description: "같은 것만 몰리지 않게 하고 운영 규칙(가중치 · 제외)을 건다"
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt, symbol: "private fun withCategoryWeights(", note: "의도에 따라 분류별 가중을 얹는다" }
   - id: search-evaluation
     kind: DOMAIN
     name: "검색 평가"
@@ -664,7 +700,8 @@ concepts:
     name: "캐시 적중률"
     category: INFRASTRUCTURE
     level: BEGINNER
-    description: "캐시에서 답한 요청의 비율"
+    description: "캐시 조회 중 캐시에서 바로 답한 비율. 낮으면 캐시가 비용만 더한다"
+    synonyms: ["cache hit ratio", "hit rate"]
   - id: search-node-memory
     kind: METRIC
     name: "검색 노드 메모리"

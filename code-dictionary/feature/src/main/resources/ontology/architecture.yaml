@@ -1,0 +1,494 @@
+# 소프트웨어 아키텍처 온톨로지 — 원본은 이 파일이다 (ADR-0100, docs/specs/2026-09-24-concept-atlas).
+# 바꾸면 manifest.yaml 의 revision 을 올린다. 간선은 from 개념에만 적는다.
+domain: architecture
+root: arch-software-architecture
+concepts:
+  - id: arch-software-architecture
+    kind: DOMAIN
+    name: "소프트웨어 아키텍처"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "도메인 경계를 긋고, 배포 단위를 정하고, 서비스 안의 계층과 객체 협력을 설계하는 일. 바깥에서 안쪽으로 네 단계로 좁혀 읽는다"
+    synonyms: ["software architecture"]
+    contains: [arch-boundary-design, arch-system-decomposition, arch-layer-design, arch-object-design, arch-glossary]
+
+  # ── 경계 설계 ─────────────────────────────────────────────
+  - id: arch-boundary-design
+    kind: STAGE
+    name: "도메인 경계 설계"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "업무 언어가 바뀌는 곳을 찾아 모델의 경계를 긋는다. 경계가 틀리면 뒤의 서비스 분리와 계층 설계가 전부 그 오류를 물려받는다"
+    questions: ["같은 「상품」이라는 말이 주문과 재고에서 다른 뜻이면 모델을 어떻게 나누나"]
+    contains: [ddd, arch-rich-domain-model, arch-anemic-domain-model, arch-cohesion]
+    flows_to: [arch-system-decomposition]
+    measured_by: [arch-cohesion]
+  - id: ddd
+    kind: MECHANISM
+    name: "도메인 주도 설계"
+    category: ARCHITECTURE
+    level: ADVANCED
+    description: "업무 전문가와 같은 말(유비쿼터스 언어)로 모델을 만들고, 그 모델이 통하는 경계(바운디드 컨텍스트) 안에서 애그리거트·값 객체로 규칙을 담는 설계 방법론이다. 업무 규칙이 복잡할 때 값어치가 있다"
+    synonyms: ["DDD", "Domain-Driven Design"]
+    questions: ["바운디드 컨텍스트와 애그리거트는 각각 무엇의 경계인가", "DDD 가 단순 CRUD 서비스에 과한 이유는 무엇인가"]
+    uses: [bounded-context, aggregate, value-object, arch-entity, arch-domain-event, arch-ubiquitous-language]
+    mitigates:
+      - { to: arch-anemic-domain-model, reason: "규칙을 애그리거트 안에 두게 해 서비스 계층으로 새지 않게 한다" }
+  - id: arch-rich-domain-model
+    kind: MECHANISM
+    name: "풍부한 도메인 모델"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "상태를 바꾸는 규칙을 엔티티 메서드 안에 두고 상태 필드는 밖에서 직접 못 바꾸게 한다. 재고 예약처럼 불변식이 있는 모델에 쓴다"
+    synonyms: ["rich domain model"]
+    code:
+      - { path: inventory/domain/src/main/kotlin/com/kgd/inventory/domain/inventory/model/Inventory.kt, symbol: "fun reserve(qty: Int) {", note: "가용 수량 검사와 차감을 엔티티가 직접 한다" }
+    uses:
+      - encapsulation
+      - aggregate
+      - { to: optimistic-lock, reason: "애그리거트의 버전 필드가 동시 수정을 막는다" }
+    mitigates: [arch-anemic-domain-model]
+  - id: arch-anemic-domain-model
+    kind: PROBLEM
+    name: "빈약한 도메인 모델"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "엔티티가 getter·setter 만 갖고 규칙은 서비스 계층에 흩어진 상태. 같은 검사가 여러 서비스에 복제되고 하나를 빠뜨리면 불변식이 깨진다"
+    synonyms: ["anemic domain model"]
+
+  # ── 시스템 분해 ───────────────────────────────────────────
+  - id: arch-system-decomposition
+    kind: STAGE
+    name: "시스템 분해"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "도메인 경계를 몇 개의 배포 단위와 프로세스로 옮길지 정한다. 코드 경계와 배포 경계를 따로 고를 수 있다는 점이 핵심이다"
+    questions: ["모듈 경계를 지키면서 하나의 JVM 으로 배포하면 무엇을 얻고 무엇을 잃나"]
+    contains: [monolith, arch-modular-monolith, soa, msa, event-driven-architecture, arch-distributed-monolith, arch-coupling, spring-boot]
+    flows_to: [arch-layer-design]
+    measured_by: [arch-coupling]
+  - id: monolith
+    kind: MECHANISM
+    name: "모놀리스"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "모든 기능을 하나의 배포 단위로 묶는다. 호출이 함수 호출이라 빠르고 트랜잭션이 단순하지만, 한 부분의 변경도 전체 재배포가 된다"
+    synonyms: ["monolith", "monolithic architecture"]
+    alternative_to: [msa]
+  - id: arch-modular-monolith
+    kind: MECHANISM
+    name: "모듈러 모놀리스"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "도메인마다 모듈 경계와 스키마를 따로 두되 한 프로세스로 띄운다. 이 레포는 order·inventory 같은 도메인을 :feature 라이브러리로 만들어 commerce 호스트 하나에 접는다(ADR-0058·0093)"
+    synonyms: ["modular monolith", "폴드 호스트"]
+    code:
+      - { path: commerce/app/src/main/kotlin/com/kgd/commerce/CommerceApplication.kt, symbol: "@SpringBootApplication(scanBasePackages", note: "여러 도메인 패키지를 한 앱이 스캔해 한 JVM 에 접는다" }
+      - { path: build.gradle.kts, symbol: "val verifyPodTopology by tasks.registering {", note: "새 :app(파드)을 승인 목록 없이 못 만들게 막는 빌드 게이트" }
+    alternative_to:
+      - { to: msa, reason: "도메인 경계는 유지하고 파드 수와 네트워크 호출만 줄인다" }
+    affects: [arch-coupling]
+  - id: soa
+    kind: MECHANISM
+    name: "서비스 지향 아키텍처"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "재사용할 업무 기능을 서비스로 떼어 공용 버스(ESB) 같은 중앙 통합 계층으로 엮는다. 중앙 계층이 규칙을 갖게 되는 점이 MSA 와 갈린다"
+    synonyms: ["SOA", "Service-Oriented Architecture"]
+  - id: msa
+    kind: MECHANISM
+    name: "마이크로서비스"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "바운디드 컨텍스트마다 독립 배포 단위와 자기 DB 를 두고 API·이벤트로만 통신한다. 팀과 배포를 독립시키는 대신 네트워크 실패와 분산 트랜잭션을 떠안는다"
+    synonyms: ["MSA", "microservices"]
+    questions: ["서비스 간 DB 공유를 금지하는 이유는 무엇인가", "MSA 가 분산 모놀리스로 변하는 신호는 무엇인가"]
+    alternative_to: [soa]
+    causes:
+      - { to: arch-distributed-monolith, reason: "경계를 잘못 나누면 서비스가 동기 호출로 줄줄이 묶인다" }
+      - { to: dist-cascading-failure, reason: "호출이 네트워크를 건너면 한 서비스의 지연이 호출자로 번진다" }
+    affects: [arch-coupling]
+    uses:
+      - { to: api-gateway, reason: "바깥 요청이 들어오는 단일 진입점" }
+      - { to: service-discovery, reason: "서비스 주소를 이름으로 찾는다 — 여기서는 K8s DNS" }
+  - id: event-driven-architecture
+    kind: MECHANISM
+    name: "이벤트 기반 아키텍처"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "상태 변화를 이벤트로 발행하고 관심 있는 서비스가 구독해 반응한다. 발행자는 구독자를 모르므로 서비스를 늘려도 발행 쪽 코드가 바뀌지 않는다"
+    synonyms: ["EDA", "event-driven architecture"]
+    code:
+      - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/infrastructure/messaging/InventoryCommandConsumer.kt, symbol: "@KafkaListener(topics = [RESERVE]", note: "주문 쪽이 보낸 재고 명령을 토픽으로 받아 처리한다" }
+    uses:
+      - arch-domain-event
+      - observer-pattern
+      - { to: kafka, reason: "이 레포에서 도메인 이벤트를 나르는 브로커" }
+      - { to: outbox-pattern, reason: "DB 커밋과 이벤트 발행을 한 트랜잭션처럼 묶는다" }
+    mitigates:
+      - { to: arch-distributed-monolith, reason: "동기 호출 사슬을 비동기 이벤트로 끊는다" }
+    affects: [arch-coupling]
+  - id: arch-distributed-monolith
+    kind: PROBLEM
+    name: "분산 모놀리스"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "서비스는 나눠 배포하지만 서로의 동기 호출·공유 DB 에 묶여 함께 배포하고 함께 장애 나는 상태. 모놀리스의 결합과 분산의 비용을 둘 다 진다"
+    synonyms: ["distributed monolith"]
+    measured_by: [arch-coupling]
+
+  # ── 계층 설계 ─────────────────────────────────────────────
+  - id: arch-layer-design
+    kind: STAGE
+    name: "계층 설계"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "한 서비스 안에서 도메인·유스케이스·어댑터를 나누고 의존 방향을 정한다. 이 레포는 UseCase 인터페이스 + Outbound Port + Adapter 구조를 표준으로 둔다(ADR-0083)"
+    questions: ["application 계층이 infrastructure 를 import 하면 무엇이 깨지나"]
+    contains: [layered-architecture, clean-architecture, hexagonal-architecture, arch-layer-dependency-gate, arch-layer-violation, arch-framework-coupling]
+    flows_to: [arch-object-design]
+    measured_by: [arch-coupling]
+  - id: layered-architecture
+    kind: MECHANISM
+    name: "레이어드 아키텍처"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "표현 → 비즈니스 → 데이터 접근 순으로 계층을 쌓고 위에서 아래로만 호출한다. 단순하지만 비즈니스 계층이 데이터 접근 기술에 의존하게 된다"
+    synonyms: ["layered architecture", "n-tier"]
+    causes:
+      - { to: arch-framework-coupling, reason: "비즈니스 계층이 아래의 JPA 리포지토리에 직접 의존한다" }
+  - id: clean-architecture
+    kind: MECHANISM
+    name: "클린 아키텍처"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "엔티티·유스케이스를 가운데 두고 모든 의존이 안쪽으로만 향하게 한다. 안쪽 계층은 프레임워크를 모르므로 DB·웹 기술을 바꿔도 규칙 코드가 남는다"
+    synonyms: ["clean architecture"]
+    code:
+      - { path: inventory/domain/build.gradle.kts, symbol: "Pure domain module — no Spring/JPA annotations in source.", note: "도메인 모듈은 Spring·JPA 의존 없이 common 만 받는다" }
+    uses: [arch-dependency-rule, arch-usecase]
+    alternative_to: [layered-architecture]
+    mitigates: [arch-layer-violation, arch-framework-coupling]
+  - id: hexagonal-architecture
+    kind: MECHANISM
+    name: "헥사고날 아키텍처"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "애플리케이션 코어를 포트로 감싸고 웹·DB·메시징을 모두 바깥의 어댑터로 붙인다. 들어오는 쪽(inbound)과 나가는 쪽(outbound)을 대칭으로 다룬다"
+    synonyms: ["hexagonal architecture", "ports and adapters"]
+    code:
+      - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/application/inventory/usecase/ReserveStockUseCase.kt, symbol: "interface ReserveStockUseCase {", note: "inbound 포트 — 컨트롤러와 컨슈머가 이 인터페이스로 들어온다" }
+    contains: [port-adapter]
+    alternative_to: [layered-architecture]
+    mitigates: [arch-framework-coupling]
+  - id: port-adapter
+    kind: MECHANISM
+    name: "포트-어댑터"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "코어가 필요한 외부 기능을 인터페이스(포트)로 선언하고 infrastructure 가 그 구현(어댑터)을 제공한다. 코어는 포트만 알고 JPA·Redis 를 모른다"
+    synonyms: ["port and adapter"]
+    code:
+      - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/application/inventory/port/InventoryRepositoryPort.kt, symbol: "interface InventoryRepositoryPort {", note: "application 계층이 선언한 outbound 포트" }
+      - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/infrastructure/persistence/inventory/adapter/InventoryRepositoryAdapter.kt, symbol: ") : InventoryRepositoryPort {", note: "infrastructure 가 JPA 로 포트를 구현한다" }
+    uses: [adapter-pattern, interface, polymorphism]
+  - id: arch-layer-dependency-gate
+    kind: MECHANISM
+    name: "계층 의존 빌드 게이트"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "소스의 import 를 빌드 단계에서 검사해 application 이 infrastructure 를 참조하면 빌드를 실패시킨다. 리뷰에 기대지 않고 규칙을 기계로 지킨다"
+    code:
+      - { path: build.gradle.kts, symbol: "val verifyLayerDependencies by tasks.registering {", note: "check 에 물린 계층 의존 검사 태스크" }
+    uses: [arch-dependency-rule]
+    mitigates: [arch-layer-violation]
+  - id: arch-layer-violation
+    kind: PROBLEM
+    name: "계층 침범"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "안쪽 계층이 바깥 계층 타입을 직접 참조하는 상태. 서비스에 JpaRepository 를 바로 주입하는 식이며, 한 번 들어오면 테스트와 교체가 함께 어려워진다"
+    synonyms: ["layer violation"]
+  - id: arch-framework-coupling
+    kind: PROBLEM
+    name: "프레임워크 종속"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "업무 규칙이 ORM 엔티티·웹 애너테이션에 섞여 프레임워크 없이 테스트하거나 옮길 수 없는 상태"
+    synonyms: ["framework lock-in"]
+
+  # ── 객체 설계 ─────────────────────────────────────────────
+  - id: arch-object-design
+    kind: STAGE
+    name: "객체 설계"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "계층 안에서 객체를 어떻게 만들고, 어떻게 조합하고, 책임을 어떻게 나눌지 정한다. GoF 디자인 패턴은 이 세 질문에 대한 이름 붙은 답이다"
+    synonyms: ["GoF design patterns", "디자인 패턴"]
+    contains: [arch-creational-design, arch-structural-design, arch-behavioral-design]
+    measured_by: [arch-cohesion]
+  - id: arch-creational-design
+    kind: STAGE
+    name: "객체 생성 설계"
+    category: DESIGN_PATTERN
+    level: BEGINNER
+    description: "생성 규칙과 구체 타입 선택을 호출부에서 떼어 낸다. 생성자에 검증·기본값이 몰리거나 구현체를 바꿔 끼워야 할 때 쓴다"
+    contains: [factory-pattern, abstract-factory, builder-pattern, singleton-pattern]
+    flows_to: [arch-structural-design]
+  - id: factory-pattern
+    kind: MECHANISM
+    name: "팩토리 패턴"
+    category: DESIGN_PATTERN
+    level: BEGINNER
+    description: "객체 생성을 이름 있는 생성 함수나 팩토리 객체에 맡긴다. 생성자를 숨기고 create·restore 처럼 목적별 진입점을 두면 잘못된 초기 상태를 만들 수 없다"
+    synonyms: ["factory method", "정적 팩토리 메서드"]
+    code:
+      - { path: inventory/domain/src/main/kotlin/com/kgd/inventory/domain/inventory/model/Inventory.kt, symbol: "fun create(productId: Long, warehouseId: Long, initialQty: Int): Inventory {", note: "private 생성자 + 동반 객체의 생성 함수" }
+      - { path: common/src/main/kotlin/com/kgd/common/webclient/WebClientBuilderFactory.kt, symbol: "fun create(baseUrl: String): WebClient =", note: "공통 정책이 적용된 WebClient 를 찍어 내는 팩토리" }
+    uses: [companion-object]
+  - id: abstract-factory
+    kind: MECHANISM
+    name: "추상 팩토리"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "서로 어울려야 하는 객체 묶음(예: 같은 테마의 버튼·창)을 만드는 인터페이스를 두고, 구현 팩토리를 바꿔 묶음 전체를 교체한다"
+    synonyms: ["abstract factory"]
+    uses: [factory-pattern]
+  - id: builder-pattern
+    kind: MECHANISM
+    name: "빌더 패턴"
+    category: DESIGN_PATTERN
+    level: BEGINNER
+    description: "선택 인자가 많은 객체를 단계별 설정 후 build() 로 만든다. Kotlin 에서는 이름 있는 인자와 기본값이 많은 경우를 대신하고, 외부 라이브러리 빌더를 다룰 때 주로 만난다"
+    synonyms: ["builder"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/webclient/WebClientBuilderFactory.kt, symbol: "fun builder(baseUrl: String? = null): WebClient.Builder {", note: "원본 빌더를 복제해 서비스별 설정을 이어 붙인다" }
+    uses: [scope-function]
+  - id: singleton-pattern
+    kind: MECHANISM
+    name: "싱글톤 패턴"
+    category: DESIGN_PATTERN
+    level: BEGINNER
+    description: "인스턴스를 하나만 두고 전역에서 같은 것을 쓴다. Kotlin 은 object 선언으로 언어가 보장하고, Spring 빈도 기본 스코프가 싱글톤이다. 가변 상태를 두면 동시성 문제가 된다"
+    synonyms: ["singleton"]
+    code:
+      - { path: inventory/domain/src/main/kotlin/com/kgd/inventory/domain/inventory/service/WarehouseSelector.kt, symbol: "object WarehouseSelector {", note: "상태 없는 도메인 정책을 object 로 둔다" }
+  - id: arch-structural-design
+    kind: STAGE
+    name: "구조 조합 설계"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "이미 있는 객체를 감싸거나 이어 붙여 인터페이스를 맞추고 기능을 더한다. 원본을 고치지 않고 바깥에서 조합한다"
+    contains: [adapter-pattern, decorator-pattern, proxy-pattern]
+    flows_to: [arch-behavioral-design]
+  - id: adapter-pattern
+    kind: MECHANISM
+    name: "어댑터 패턴"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "호환되지 않는 인터페이스를 가운데서 변환해 함께 쓰게 한다. 포트-어댑터 구조의 어댑터가 이 패턴으로 JPA·외부 API 를 포트 모양에 맞춘다"
+    synonyms: ["adapter", "wrapper"]
+    code:
+      - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/infrastructure/persistence/inventory/adapter/InventoryRepositoryAdapter.kt, symbol: "class InventoryRepositoryAdapter(", note: "JPA 리포지토리를 도메인 포트 모양으로 바꾼다" }
+  - id: decorator-pattern
+    kind: MECHANISM
+    name: "데코레이터 패턴"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "같은 인터페이스를 구현하면서 원본을 안에 품고 앞뒤에 기능을 덧붙인다. 상속 없이 기능을 겹겹이 쌓을 수 있다"
+    synonyms: ["decorator", "wrapper"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/chart/PriceStreamRedisFanout.kt, symbol: ") : PriceStreamPort by store {", note: "인메모리 스트림을 감싸 Redis 팬아웃을 덧붙이고 나머지는 위임한다" }
+    uses: [delegation]
+    alternative_to: [proxy-pattern]
+  - id: proxy-pattern
+    kind: MECHANISM
+    name: "프록시 패턴"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "진짜 객체 앞에 같은 인터페이스의 대리 객체를 두고 접근을 가로챈다. Spring 의 @Transactional·@Cacheable 이 프록시로 동작해서 같은 클래스 안의 내부 호출에는 적용되지 않는다"
+    synonyms: ["proxy", "AOP proxy"]
+    questions: ["같은 빈 안에서 @Transactional 메서드를 호출하면 왜 트랜잭션이 안 걸리나"]
+    code:
+      - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/application/inventory/service/InventoryService.kt, symbol: "@Transactional", note: "스프링이 이 빈을 트랜잭션 프록시로 감싼다" }
+  - id: arch-behavioral-design
+    kind: STAGE
+    name: "행위 분배 설계"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "알고리즘과 요청 처리 책임을 객체 사이에 나누고, 무엇이 바뀔 수 있는지를 인터페이스 뒤로 숨긴다"
+    contains: [strategy-pattern, template-method, observer-pattern, command-pattern, chain-of-responsibility, mediator-pattern, specification-pattern]
+  - id: strategy-pattern
+    kind: MECHANISM
+    name: "전략 패턴"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "바뀌는 알고리즘을 인터페이스로 빼고 구현체를 주입해 런타임에 교체한다. 같은 매매 엔진이 백테스트·모의·실거래 거래소를 갈아 끼우는 식이다"
+    synonyms: ["strategy", "policy"]
+    questions: ["전략 패턴과 when 분기 중 무엇을 고를지 가르는 기준은 무엇인가"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/backtest/StrategyEngineLoop.kt, symbol: "private val exchange: ExchangeAdapter,", note: "엔진은 거래소 인터페이스만 알고 구현은 주입받는다" }
+    uses: [polymorphism, interface]
+  - id: template-method
+    kind: MECHANISM
+    name: "템플릿 메서드"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "상위 클래스가 처리 순서(골격)를 고정하고 바뀌는 단계만 하위 클래스가 재정의한다. 상속으로 묶이므로 단계가 많아지면 전략 패턴의 조합이 낫다"
+    synonyms: ["template method"]
+    code:
+      - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/infrastructure/admission/AdmissionControlFilter.kt, symbol: "override fun doFilterInternal(", note: "OncePerRequestFilter 가 골격을 갖고 이 단계만 재정의한다" }
+    uses: [inheritance]
+    alternative_to:
+      - { to: strategy-pattern, reason: "같은 변동점을 상속으로 푸느냐 조합으로 푸느냐의 차이" }
+  - id: observer-pattern
+    kind: MECHANISM
+    name: "옵저버 패턴"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "주체가 구독자 목록을 들고 상태가 바뀌면 전부에게 알린다. 주체는 구독자의 구체 타입을 모른다. 프로세스 밖으로 넓히면 pub/sub 가 된다"
+    synonyms: ["observer", "pub/sub", "listener"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/chart/InMemorySsePriceStreamAdapter.kt, symbol: "override fun subscribe(", note: "시세 구독자를 등록하고 publish 때 전부에게 보낸다" }
+    alternative_to: [mediator-pattern]
+  - id: command-pattern
+    kind: MECHANISM
+    name: "커맨드 패턴"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "요청을 값 객체로 만들어 보내고, 큐에 쌓고, 다시 실행할 수 있게 한다. 메시지로 보내는 「재고 예약」 명령이 그 예다"
+    synonyms: ["command"]
+    code:
+      - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/infrastructure/messaging/InventoryCommandConsumer.kt, symbol: "data class InventoryCommandMessage(", note: "재고 명령을 직렬화 가능한 객체로 주고받는다" }
+    uses: [data-class]
+  - id: chain-of-responsibility
+    kind: MECHANISM
+    name: "책임 연쇄"
+    category: DESIGN_PATTERN
+    level: ADVANCED
+    description: "처리기들을 사슬로 잇고 각자 처리하거나 다음으로 넘긴다. 서블릿 필터·게이트웨이 필터·인터셉터가 이 구조다"
+    synonyms: ["chain of responsibility", "filter chain"]
+    code:
+      - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/infrastructure/admission/AdmissionControlFilter.kt, symbol: "filterChain.doFilter(request, response)", note: "통과시킬 요청만 다음 필터로 넘긴다" }
+  - id: mediator-pattern
+    kind: MECHANISM
+    name: "중재자 패턴"
+    category: DESIGN_PATTERN
+    level: ADVANCED
+    description: "여러 객체가 서로 직접 부르지 않고 중재자 하나를 통해서만 소통하게 한다. 다대다 참조를 일대다로 줄이는 대신 중재자가 비대해지기 쉽다"
+    synonyms: ["mediator"]
+  - id: specification-pattern
+    kind: MECHANISM
+    name: "스펙 패턴"
+    category: DESIGN_PATTERN
+    level: ADVANCED
+    description: "「이 조건을 만족하나」라는 업무 규칙을 isSatisfiedBy 를 가진 객체로 만든다. 조건을 이름 붙여 재사용하고 and·or 로 조합할 수 있다"
+    synonyms: ["specification"]
+    code:
+      - { path: quant/domain/src/main/kotlin/com/kgd/quant/domain/strategy/PriceCondition.kt, symbol: "fun isSatisfiedBy(currentPrice: Price): Boolean", note: "진입 조건을 봉인 계층 객체로 표현한다" }
+    uses: [sealed-class]
+
+  # ── 지표 ─────────────────────────────────────────────────
+  - id: arch-coupling
+    kind: METRIC
+    name: "결합도"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "한 모듈을 바꿀 때 함께 바꿔야 하는 다른 모듈의 수와 강도. 낮을수록 독립 변경·배포가 쉽다"
+    synonyms: ["coupling"]
+  - id: arch-cohesion
+    kind: METRIC
+    name: "응집도"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "한 모듈 안의 요소가 같은 목적을 위해 모여 있는 정도. 높을수록 변경 이유가 하나로 모인다"
+    synonyms: ["cohesion"]
+
+  # ── 용어 사전 ─────────────────────────────────────────────
+  - id: arch-glossary
+    kind: TERM
+    name: "아키텍처 용어 사전"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "경계·계층 설계를 읽는 데 필요한 말. 단계·장치가 아니라 그것을 설명하는 용어를 모은다"
+    synonyms: ["glossary", "용어집"]
+    contains: [bounded-context, aggregate, arch-entity, value-object, arch-domain-event, arch-ubiquitous-language, arch-usecase, arch-dependency-rule]
+  - id: bounded-context
+    kind: TERM
+    name: "바운디드 컨텍스트"
+    category: ARCHITECTURE
+    level: ADVANCED
+    description: "하나의 도메인 모델과 그 용어가 같은 뜻으로 통하는 경계. 경계 밖에서는 같은 단어도 다른 모델이 되며, 서비스·모듈을 나누는 기준선이 된다"
+    synonyms: ["Bounded Context", "BC"]
+  - id: aggregate
+    kind: TERM
+    name: "애그리거트"
+    category: ARCHITECTURE
+    level: ADVANCED
+    description: "한 트랜잭션에서 함께 일관성을 지켜야 하는 엔티티·값 객체 묶음. 바깥에서는 루트 엔티티를 통해서만 바꾸고, 다른 애그리거트는 ID 로만 참조한다"
+    synonyms: ["Aggregate", "aggregate root"]
+    code:
+      - { path: inventory/domain/src/main/kotlin/com/kgd/inventory/domain/inventory/model/Inventory.kt, symbol: "class Inventory private constructor(", note: "수량 필드를 private 으로 두고 예약·해제·확정 메서드로만 바꾸는 루트" }
+  - id: arch-entity
+    kind: TERM
+    name: "엔티티"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "속성이 바뀌어도 식별자로 같은 것임이 유지되는 도메인 객체. 동등성을 ID 로 판단한다"
+    synonyms: ["Entity"]
+  - id: value-object
+    kind: TERM
+    name: "값 객체"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "식별자 없이 속성 값으로만 같음을 판단하는 불변 객체. 금액·ID 처럼 원시 타입에 의미와 검증을 입힐 때 쓴다"
+    synonyms: ["Value Object", "VO"]
+    code:
+      - { path: quant/domain/src/main/kotlin/com/kgd/quant/domain/common/StrategyId.kt, symbol: "value class StrategyId(val value: UUID) {", note: "UUID 를 감싼 값 클래스로 다른 ID 와 섞이지 않게 한다" }
+  - id: arch-domain-event
+    kind: TERM
+    name: "도메인 이벤트"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "도메인에서 일어난 의미 있는 사실을 과거형 이름의 객체로 남긴 것(StockReserved 등). 다른 애그리거트·서비스가 이것에 반응한다"
+    synonyms: ["Domain Event"]
+    code:
+      - { path: inventory/domain/src/main/kotlin/com/kgd/inventory/domain/inventory/event/InventoryEvent.kt, symbol: "sealed class InventoryEvent {", note: "재고 도메인 이벤트를 봉인 계층으로 묶는다" }
+  - id: arch-ubiquitous-language
+    kind: TERM
+    name: "유비쿼터스 언어"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "한 바운디드 컨텍스트 안에서 업무 전문가와 개발자가 코드·문서·대화에 똑같이 쓰는 말"
+    synonyms: ["Ubiquitous Language"]
+  - id: arch-usecase
+    kind: TERM
+    name: "유스케이스"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "사용자가 시스템으로 이루려는 한 가지 목적과 그 처리 흐름. 이 레포는 유스케이스마다 인터페이스를 두고 입력·출력을 안쪽 data class 로 정한다"
+    synonyms: ["Use Case", "interactor"]
+    code:
+      - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/application/inventory/usecase/ReserveStockUseCase.kt, symbol: "data class Command(val orderId: Long", note: "유스케이스 입력을 인터페이스 안의 Command 로 정한다" }
+  - id: arch-dependency-rule
+    kind: TERM
+    name: "의존성 규칙"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "소스 코드 의존은 항상 바깥에서 안쪽(도메인)으로만 향한다는 규칙. 안쪽이 바깥 기능이 필요하면 인터페이스를 안쪽에 두고 바깥이 구현한다(의존성 역전)"
+    synonyms: ["Dependency Rule", "의존성 역전"]
+
+  # ── 구현체 ───────────────────────────────────────────────
+  - id: spring-boot
+    kind: TECHNOLOGY
+    name: "Spring Boot"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "자동 구성과 내장 서버로 Spring 애플리케이션을 바로 띄우는 프레임워크. 이 레포의 모든 JVM 서비스와 폴드 호스트가 이것으로 기동한다"
+    synonyms: ["Spring", "스프링 부트"]
+    code:
+      - { path: commerce/app/src/main/kotlin/com/kgd/commerce/CommerceApplication.kt, symbol: "@SpringBootApplication", note: "commerce 폴드 호스트의 진입점" }
+    implements:
+      - { to: arch-modular-monolith, reason: "scanBasePackages 로 여러 도메인 :feature 를 한 컨텍스트에 싣는다" }
+      - { to: proxy-pattern, reason: "@Transactional 등 AOP 를 프록시 빈으로 건다" }
+      - { to: singleton-pattern, reason: "빈 기본 스코프가 싱글톤이다" }

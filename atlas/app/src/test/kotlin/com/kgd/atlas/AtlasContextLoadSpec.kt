@@ -89,8 +89,9 @@ class AtlasContextLoadSpec(
         Then("부팅 로더가 온톨로지 파일 revision 을 상태 행에 적용했다")
             .config(enabledIf = { dockerAvailable }) {
                 val jdbc = org.springframework.jdbc.core.JdbcTemplate(ctx.getBean("dataSource", javax.sql.DataSource::class.java))
-                jdbc.queryForObject("SELECT revision FROM ontology_state WHERE id = 1", Int::class.java).shouldNotBeNull() shouldBe 1
+                jdbc.queryForObject("SELECT revision FROM ontology_state WHERE id = 1", Int::class.java).shouldNotBeNull() shouldBe 2
                 jdbc.queryForObject("SELECT COUNT(*) FROM concept WHERE managed_by = 'search' AND kind IS NOT NULL", Int::class.java) shouldBe 108
+                jdbc.queryForObject("SELECT COUNT(DISTINCT managed_by) FROM concept WHERE managed_by IS NOT NULL", Int::class.java) shouldBe 11
             }
 
         Then("자기 도메인의 컨트롤러가 전부 빈으로 등록된다")

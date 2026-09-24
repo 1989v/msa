@@ -1,0 +1,362 @@
+# 보안 온톨로지 — 원본은 이 파일이다 (ADR-0100, docs/specs/2026-09-24-concept-atlas).
+# 바꾸면 manifest.yaml 의 revision 을 올린다. 간선은 from 개념에만 적는다.
+domain: security
+root: security
+concepts:
+  - id: security
+    kind: DOMAIN
+    name: "보안"
+    category: SECURITY
+    level: BEGINNER
+    description: "누가 요청했는지 확인하고(인증), 무엇을 해도 되는지 가르고(인가), 저장한 값을 지키고, 웹 공격과 남용을 막는 일. 단계마다 무엇을 막는 장치인지로 읽는다"
+    synonyms: ["application security", "애플리케이션 보안"]
+    contains: [sec-authentication, sec-authorization, sec-data-protection, sec-web-attack-defense, sec-abuse-control, security-glossary]
+
+  # ── 인증 ──
+  - id: sec-authentication
+    kind: STAGE
+    name: "인증"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "요청한 사람이 누구인지 확인하고 그 결과를 토큰으로 남긴다. 이후 요청은 토큰만 보고 신원을 믿는다"
+    synonyms: ["authentication", "AuthN"]
+    contains: [oauth, sec-single-login-origin, jwt, sec-token-revocation, sec-domain-cookie, spring-security]
+    flows_to: [sec-authorization]
+  - id: oauth
+    kind: MECHANISM
+    name: "OAuth"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "사용자가 제공자(Google · Kakao)에서 동의하면 우리 서버가 인가 코드를 받아 토큰으로 바꾸는 위임 인가 프레임워크. 로그인에 쓸 때는 OpenID Connect 의 openid 스코프로 제공자 식별값(sub)만 받는다"
+    synonyms: ["OAuth 2.0", "OpenID Connect", "OIDC"]
+    questions: ["인가 코드를 브라우저가 아니라 서버가 토큰으로 바꾸는 이유는 무엇인가", "state 파라미터는 무엇을 막나"]
+    code:
+      - { path: auth/app/src/main/kotlin/com/kgd/auth/infrastructure/client/GoogleOAuthClient.kt, symbol: "override suspend fun exchangeCodeForToken(authCode: String, redirectUri: String): OAuthTokenResult", note: "인가 코드를 제공자 토큰으로 교환" }
+      - { path: portal-fe/src/auth/auth.ts, symbol: "export function buildGoogleAuthUrl(): string", note: "scope=openid 만 요청하는 인가 요청 URL" }
+    uses:
+      - sec-term-authorization-code
+      - { to: sec-hmac, reason: "받은 제공자 식별값(sub)을 저장 전에 HMAC 으로 가명처리한다" }
+  - id: sec-single-login-origin
+    kind: MECHANISM
+    name: "단일 로그인 출처"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "여러 서브도메인이 있어도 로그인 화면과 OAuth 콜백을 한 호스트에만 둔다. 제공자 콘솔에 등록할 redirect_uri 가 하나로 고정돼 호스트가 늘어도 redirect_uri_mismatch 가 나지 않는다"
+    questions: ["서브도메인마다 로그인 화면을 두면 무엇이 깨지나"]
+    code:
+      - { path: portal-fe/src/auth/auth.ts, symbol: "export function getOAuthRedirectUri(): string", note: "어느 호스트에서 눌러도 apex 콜백 주소를 쓴다" }
+    uses: [sec-domain-cookie, sec-redirect-allowlist]
+  - id: jwt
+    kind: MECHANISM
+    name: "JWT"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "클레임을 서명해 담은 토큰으로, 받는 쪽이 저장소 조회 없이 서명만 검증해 신원을 믿는 무상태 인증 방식. 대신 발급한 토큰을 만료 전에 거둘 수 없어 폐기 장치를 따로 둔다"
+    synonyms: ["JSON Web Token"]
+    questions: ["JWT 는 암호화인가 서명인가", "JWT 를 만료 전에 무효화하려면 무엇이 필요한가"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/security/JwtUtil.kt, symbol: "fun generateAccessToken(userId: String, roles: List<String>): String", note: "사용자 id 와 역할을 클레임으로 담아 서명" }
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/security/JwtTokenValidator.kt, symbol: "fun validateAndExtract(token: String): Claims?", note: "게이트웨이가 서명을 검증하고 클레임을 꺼낸다" }
+    uses: [sec-term-claim, sec-term-access-token, sec-term-refresh-token]
+  - id: sec-token-revocation
+    kind: MECHANISM
+    name: "토큰 폐기 · 회전"
+    category: SECURITY
+    level: ADVANCED
+    description: "로그아웃한 토큰을 남은 수명 동안 블랙리스트에 올리고, 리프레시 토큰은 한 번 쓰면 폐기하고 새로 발급한다. 탈취된 토큰이 한 번 쓰이면 끝나게 한다"
+    synonyms: ["token blacklist", "refresh token rotation"]
+    questions: ["블랙리스트 보관 기간을 토큰 최대 수명으로 잡는 이유는 무엇인가", "블랙리스트 저장소가 죽으면 요청을 막아야 하나 통과시켜야 하나"]
+    code:
+      - { path: auth/app/src/main/kotlin/com/kgd/auth/infrastructure/persistence/token/adapter/RedisTokenStoreAdapter.kt, symbol: "override fun blacklist(token: String, ttl: Duration)", note: "폐기 토큰을 TTL 과 함께 Redis 에 올린다" }
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/filter/AuthenticationGatewayFilter.kt, symbol: "redisTemplate.hasKey(TokenKeys.blacklist(token))", note: "게이트웨이가 요청마다 블랙리스트를 확인(장애 시 통과)" }
+    uses: [jwt, hashing, redis, sec-term-refresh-token]
+  - id: sec-domain-cookie
+    kind: MECHANISM
+    name: "도메인 쿠키 세션 공유"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "토큰을 상위 도메인(.1989v.com) 쿠키에 담아 모든 서브도메인이 같은 로그인 상태를 읽게 한다. JS 가 읽는 쿠키라 XSS 방어가 함께 따라와야 한다"
+    questions: ["localStorage 대신 도메인 쿠키를 쓰면 무엇이 달라지나", "HttpOnly 가 없는 쿠키는 무엇에 약한가"]
+    code:
+      - { path: portal-fe/src/auth/auth.ts, symbol: "const COOKIE_DOMAIN = '.1989v.com';", note: "서브도메인이 함께 읽는 쿠키 도메인" }
+    uses: [sec-samesite-cookie]
+  - id: spring-security
+    kind: TECHNOLOGY
+    name: "Spring Security"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "스프링의 인증 · 인가 필터 체인 라이브러리. 이 레포에서는 무상태 세션과 CSRF 해제만 정하고, 실제 토큰 검사와 역할 검사는 게이트웨이 필터가 한다"
+    code:
+      - { path: auth/app/src/main/kotlin/com/kgd/auth/infrastructure/config/SecurityConfig.kt, symbol: ".sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }", note: "세션을 만들지 않는 무상태 설정" }
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/config/SecurityConfig.kt, symbol: "@EnableWebFluxSecurity", note: "게이트웨이 WebFlux 보안 체인" }
+    implements:
+      - { to: sec-authentication, reason: "무상태 세션 정책으로 요청마다 토큰으로 신원을 세운다" }
+
+  # ── 인가 ──
+  - id: sec-authorization
+    kind: STAGE
+    name: "인가"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "확인된 신원이 이 자원 · 이 동작을 해도 되는지 가른다. 신원을 위조할 틈이 없어야 판정이 의미를 갖는다"
+    synonyms: ["authorization", "AuthZ"]
+    contains: [rbac, sec-identity-header-stripping, sec-identity-spoofing]
+  - id: rbac
+    kind: MECHANISM
+    name: "RBAC"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "사용자에게 역할을 주고 역할마다 허용 범위를 정하는 접근 제어 모델. 역할은 회원-역할 행에 두고 토큰 클레임에 실어 게이트웨이가 라우트마다 필요한 역할과 대조한다"
+    synonyms: ["Role-Based Access Control", "역할 기반 접근 제어"]
+    questions: ["역할을 토큰에 실으면 역할을 뺏었을 때 언제 반영되나", "401 과 403 은 어떻게 다른가"]
+    code:
+      - { path: auth/domain/src/main/kotlin/com/kgd/auth/domain/role/model/Role.kt, symbol: "ROLE_USER, ROLE_SELLER, ROLE_ADMIN", note: "역할 세 가지" }
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/config/GatewayRouteConfig.kt, symbol: "requiredRoles = listOf(\"ROLE_ADMIN\")", note: "어드민 라우트가 요구하는 역할" }
+    uses: [jwt, sec-term-claim]
+  - id: sec-identity-header-stripping
+    kind: MECHANISM
+    name: "신원 헤더 제거"
+    category: SECURITY
+    level: ADVANCED
+    description: "게이트웨이가 검증한 신원만 내부 헤더(X-User-Id)로 넘기고, 클라이언트가 직접 붙인 같은 헤더는 벗긴다. 뒤쪽 서비스가 헤더를 믿는 구조의 전제 조건이다"
+    code:
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/filter/AuthenticationGatewayFilter.kt, symbol: "private fun asAnonymous(request: ServerHttpRequest): ServerHttpRequest", note: "익명 통과 시 X-User-Id · X-User-Roles 를 지운다" }
+    mitigates: [sec-identity-spoofing]
+  - id: sec-identity-spoofing
+    kind: PROBLEM
+    name: "신원 위조"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "요청자가 남의 신원이나 더 높은 역할을 주장해 통과하는 상태. 내부 헤더를 그대로 믿는 서비스에서 헤더 한 줄로 일어난다"
+    synonyms: ["spoofing", "권한 상승"]
+
+  # ── 데이터 보호 ──
+  - id: sec-data-protection
+    kind: STAGE
+    name: "데이터 보호"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "저장하거나 전송하는 값이 새도 읽히지 않게 한다. 되돌려 읽어야 하면 암호화, 대조만 하면 되면 해싱을 고른다"
+    contains: [encryption, hashing, sec-dictionary-attack]
+  - id: encryption
+    kind: MECHANISM
+    name: "암호화"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "키로 데이터를 읽을 수 없게 바꾸고 같은(대칭) 또는 짝(비대칭) 키로 되돌리는 기법. 원문을 다시 읽어야 할 때 쓰고, 키 보관이 곧 보안 수준이다"
+    synonyms: ["encryption", "대칭키", "비대칭키"]
+    questions: ["대칭키와 비대칭키는 각각 어디에 쓰나", "비밀번호를 암호화가 아니라 해싱하는 이유는 무엇인가"]
+    uses: [sec-term-secret-key]
+  - id: hashing
+    kind: MECHANISM
+    name: "해싱"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "임의 길이 값을 고정 길이 값으로 바꾸는 단방향 함수. 원문을 복원하지 않고 같은지만 대조할 때 쓴다. 값의 공간이 좁으면 사전 대입으로 되돌려진다"
+    synonyms: ["hash", "SHA-256"]
+    questions: ["해시에 솔트나 키를 섞는 이유는 무엇인가"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/security/TokenKeys.kt, symbol: "fun blacklist(token: String): String", note: "토큰 원문 대신 SHA-256 을 Redis 키로 쓴다" }
+    contains: [sec-hmac]
+    causes: [sec-dictionary-attack]
+  - id: sec-hmac
+    kind: MECHANISM
+    name: "HMAC"
+    category: SECURITY
+    level: ADVANCED
+    description: "비밀 키를 섞어 계산하는 해시. 키 없이는 같은 값을 만들 수 없어 좁은 값 공간도 사전 대입으로 되돌릴 수 없다. 소셜 제공자 식별값을 가명처리하는 데 쓴다"
+    synonyms: ["Hash-based Message Authentication Code", "HmacSHA256", "keyed hash"]
+    questions: ["단순 SHA-256 대신 HMAC 을 쓰는 이유는 무엇인가", "HMAC 키를 잃으면 무엇이 불가능해지나"]
+    code:
+      - { path: auth/app/src/main/kotlin/com/kgd/auth/infrastructure/security/SubjectHasher.kt, symbol: "class SubjectHasher(", note: "제공자:sub 를 HmacSHA256 으로 가려 member 로 넘긴다" }
+    uses: [sec-term-secret-key]
+    mitigates: [sec-dictionary-attack]
+  - id: sec-dictionary-attack
+    kind: PROBLEM
+    name: "사전 대입 공격"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "가능한 입력을 전부 해시해 유출된 해시와 맞춰 원문을 알아내는 공격. 형식이 알려진 짧은 값(숫자 식별자 · 흔한 비밀번호)에서 쉽게 성공한다"
+    synonyms: ["dictionary attack", "rainbow table"]
+
+  # ── 웹 공격 방어 ──
+  - id: sec-web-attack-defense
+    kind: STAGE
+    name: "웹 공격 방어"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "브라우저와 입력값을 통해 들어오는 공격을 막는다. 공격마다 막는 자리가 다르다 — 출력(XSS), 쿠키 전송(CSRF), 질의 조립(SQL 인젝션), 이동 주소(오픈 리다이렉트)"
+    contains: [cors, sec-output-sanitization, sec-samesite-cookie, sec-parameter-binding, sec-redirect-allowlist, xss, csrf, sql-injection, sec-open-redirect]
+  - id: cors
+    kind: MECHANISM
+    name: "CORS"
+    category: SECURITY
+    level: BEGINNER
+    description: "동일 출처 정책이 막는 다른 출처 요청을 서버가 응답 헤더로 허용 목록을 밝혀 풀어 주는 브라우저 규칙. 막는 장치가 아니라 푸는 장치라, 와일드카드 대신 정확한 출처만 적는다"
+    synonyms: ["Cross-Origin Resource Sharing"]
+    questions: ["CORS 는 서버를 보호하나 사용자를 보호하나", "preflight 요청은 언제 나가나"]
+    code:
+      - { path: gateway/src/main/resources/application.yml, symbol: "allowedOriginPatterns:", note: "1989v.com 계열과 로컬 dev 만 허용" }
+    uses: [sec-term-same-origin-policy]
+  - id: sec-output-sanitization
+    kind: MECHANISM
+    name: "출력 정화"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "사용자가 쓴 내용을 HTML 로 그리기 전에 스크립트 · 이벤트 속성 · 위험 태그를 걷어 낸다. 입력 시점이 아니라 그리는 시점에 건다"
+    synonyms: ["sanitize", "DOMPurify"]
+    code:
+      - { path: portal-fe/src/pages/blog/markdown.ts, symbol: "return DOMPurify.sanitize(raw, {", note: "블로그 본문 마크다운을 그리기 전에 정화" }
+    mitigates: [xss]
+  - id: sec-samesite-cookie
+    kind: MECHANISM
+    name: "SameSite 쿠키"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "다른 사이트에서 시작된 요청에 쿠키를 싣지 않도록 브라우저에 지시하는 쿠키 속성. Lax 는 최상위 이동(GET)만 허용해 교차 사이트 POST 를 막는다"
+    synonyms: ["SameSite=Lax", "Secure 쿠키"]
+    code:
+      - { path: portal-fe/src/auth/auth.ts, symbol: "'SameSite=Lax',", note: "로그인 쿠키에 SameSite=Lax · Secure 를 붙인다" }
+    mitigates: [csrf]
+  - id: sec-parameter-binding
+    kind: MECHANISM
+    name: "파라미터 바인딩"
+    category: SECURITY
+    level: BEGINNER
+    description: "입력값을 SQL 문자열에 이어 붙이지 않고 자리표시자에 값으로 묶는다. DB 가 질의 구조와 값을 따로 받으므로 입력이 구문으로 해석되지 않는다"
+    synonyms: ["prepared statement", "bind parameter"]
+    code:
+      - { path: blog/feature/src/main/kotlin/com/kgd/blog/infrastructure/persistence/repository/BlogJpaRepositories.kt, symbol: "fun findSubtree(@Param(\"path\") path: String)", note: "LIKE 조건도 :path 자리표시자로 묶는다" }
+    mitigates: [sql-injection]
+  - id: sec-redirect-allowlist
+    kind: MECHANISM
+    name: "리다이렉트 허용 목록"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "로그인 뒤 돌아갈 주소(next)를 상대 경로와 자기 도메인으로만 제한한다. `//evil.com` 같은 프로토콜 상대 주소도 막는다"
+    code:
+      - { path: portal-fe/src/auth/auth.ts, symbol: "export function safeNext(next: string | null | undefined): string | null", note: "1989v 계열 https 와 상대 경로만 통과" }
+    mitigates: [sec-open-redirect]
+  - id: xss
+    kind: PROBLEM
+    name: "XSS"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "공격자가 넣은 스크립트가 다른 사용자의 브라우저에서 우리 출처 권한으로 실행되는 상태. JS 가 읽을 수 있는 쿠키 · 저장소의 토큰을 그대로 가져간다"
+    synonyms: ["Cross-Site Scripting", "크로스 사이트 스크립팅"]
+    questions: ["저장형 XSS 와 반사형 XSS 는 어떻게 다른가", "HttpOnly 쿠키가 XSS 피해를 줄이는 방식은 무엇인가"]
+  - id: csrf
+    kind: PROBLEM
+    name: "CSRF"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "다른 사이트가 로그인된 사용자의 브라우저로 우리 서버에 요청을 보내게 하는 공격. 브라우저가 쿠키를 자동으로 싣기 때문에 생긴다. 토큰을 Authorization 헤더로만 받는 API 는 쿠키만으로 인증되지 않아 CSRF 토큰 필터를 끈다"
+    synonyms: ["Cross-Site Request Forgery", "사이트 간 요청 위조"]
+    questions: ["Bearer 헤더 인증 API 가 CSRF 에 강한 이유는 무엇인가"]
+    code:
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/config/SecurityConfig.kt, symbol: ".csrf { it.disable() }", note: "헤더 토큰 방식이라 CSRF 토큰 필터를 끈다" }
+  - id: sql-injection
+    kind: PROBLEM
+    name: "SQL 인젝션"
+    category: SECURITY
+    level: BEGINNER
+    description: "입력값이 SQL 문자열에 이어 붙어 질의 구조를 바꾸는 상태. 조건을 무력화해 남의 행을 읽거나 지운다"
+    synonyms: ["SQL injection", "SQLi"]
+    questions: ["ORM 을 쓰면 SQL 인젝션이 사라지나"]
+  - id: sec-open-redirect
+    kind: PROBLEM
+    name: "오픈 리다이렉트"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "우리 도메인의 이동 파라미터가 임의 외부 주소로 보내는 상태. 믿을 만한 로그인 화면을 피싱 미끼로 쓰게 된다"
+    synonyms: ["open redirect"]
+
+  # ── 남용 제어 ──
+  - id: sec-abuse-control
+    kind: STAGE
+    name: "남용 제어"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "한 클라이언트가 자원을 독차지하거나 무차별 대입을 하지 못하게 요청량을 제한한다. 누구를 한 명으로 셀지(키)가 한도 값만큼 중요하다"
+    contains: [rate-limiting, sec-rejected-rate]
+  - id: rate-limiting
+    kind: MECHANISM
+    name: "레이트 리미팅"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "키(사용자 id · 방문자 IP)마다 일정 시간 요청 수를 제한하고 넘으면 429 로 거절한다. 프록시 뒤에서는 연결 IP 가 프록시 하나라 원래 방문자 IP 헤더를 키로 써야 한다"
+    synonyms: ["rate limiting", "throttling"]
+    questions: ["프록시 뒤에서 IP 로 세면 무엇이 잘못되나", "방문자 IP 헤더를 믿어도 되는 조건은 무엇인가"]
+    code:
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/config/RateLimiterConfig.kt, symbol: "fun adsClientIpKeyResolver(): KeyResolver", note: "CF-Connecting-IP 를 키로 방문자별로 센다" }
+    contains: [sec-token-bucket]
+    uses: [redis]
+    affects: [sec-rejected-rate]
+  - id: sec-token-bucket
+    kind: MECHANISM
+    name: "토큰 버킷"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "버킷에 초당 일정량(replenish)의 토큰을 채우고 요청마다 하나씩 꺼낸다. 버킷 크기(burst)만큼 순간 몰림을 받아 주면서 평균 속도를 제한한다"
+    synonyms: ["token bucket"]
+    code:
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/config/RateLimiterConfig.kt, symbol: "RedisRateLimiter(100, 200, 1)", note: "초당 100 개 보충 · 버스트 200 · 요청당 1 개" }
+  - id: sec-rejected-rate
+    kind: METRIC
+    name: "거절 비율(429)"
+    category: SECURITY
+    level: BEGINNER
+    description: "전체 요청 중 한도 초과로 429 를 받은 비율. 높으면 정상 사용자까지 막는 한도이거나 공격이 들어온 것이다"
+    synonyms: ["429 rate"]
+
+  # ── 용어 사전 ──
+  - id: security-glossary
+    kind: TERM
+    name: "보안 용어 사전"
+    category: BASICS
+    level: BEGINNER
+    description: "인증 · 인가 · 웹 공격을 읽는 데 필요한 말. 장치가 아니라 그것을 설명하는 용어를 모은다"
+    synonyms: ["glossary", "용어집"]
+    contains: [sec-term-access-token, sec-term-refresh-token, sec-term-claim, sec-term-authorization-code, sec-term-same-origin-policy, sec-term-secret-key]
+  - id: sec-term-access-token
+    kind: TERM
+    name: "액세스 토큰"
+    category: SECURITY
+    level: BEGINNER
+    description: "API 를 부를 때 싣는 짧은 수명의 토큰. 탈취돼도 피해 시간이 짧도록 수명을 짧게 둔다"
+    synonyms: ["access token"]
+  - id: sec-term-refresh-token
+    kind: TERM
+    name: "리프레시 토큰"
+    category: SECURITY
+    level: BEGINNER
+    description: "액세스 토큰이 만료됐을 때 새로 받는 데만 쓰는 긴 수명의 토큰. 서버 저장소에 남겨 두어 폐기할 수 있게 한다"
+    synonyms: ["refresh token"]
+  - id: sec-term-claim
+    kind: TERM
+    name: "클레임"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "토큰 안에 담긴 주장 한 항목(사용자 id · 역할 · 만료 시각). 서명이 맞으면 받는 쪽이 그대로 믿는다"
+    synonyms: ["claim"]
+  - id: sec-term-authorization-code
+    kind: TERM
+    name: "인가 코드"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "OAuth 제공자가 동의 뒤 redirect_uri 로 돌려주는 일회용 코드. 서버가 비밀과 함께 토큰으로 바꾸므로 코드만으로는 쓸 수 없다"
+    synonyms: ["authorization code"]
+  - id: sec-term-same-origin-policy
+    kind: TERM
+    name: "동일 출처 정책"
+    category: SECURITY
+    level: BEGINNER
+    description: "스킴 · 호스트 · 포트가 같은 출처끼리만 응답을 읽게 하는 브라우저 기본 규칙. 서브도메인끼리도 다른 출처다"
+    synonyms: ["Same-Origin Policy", "SOP"]
+  - id: sec-term-secret-key
+    kind: TERM
+    name: "비밀 키"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "서명 · HMAC · 대칭 암호화에 쓰는, 서버만 아는 값. 잃으면 검증 · 복원이 안 되고 새면 위조가 된다. 코드가 아니라 Secret 으로 주입한다"
+    synonyms: ["secret key", "서버 키"]

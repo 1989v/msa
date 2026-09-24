@@ -6,10 +6,12 @@ import com.kgd.blog.application.comment.dto.BlogCommentNode
 import com.kgd.blog.application.comment.usecase.GetBlogCommentsUseCase
 import com.kgd.blog.application.interaction.usecase.RecordBlogViewUseCase
 import com.kgd.blog.application.post.dto.BlogAuthorSpace
+import com.kgd.blog.application.post.dto.BlogConceptCount
 import com.kgd.blog.application.post.dto.BlogPage
 import com.kgd.blog.application.post.dto.BlogPostDetail
 import com.kgd.blog.application.post.dto.BlogPostSummary
 import com.kgd.blog.application.post.usecase.GetBlogAuthorSpaceUseCase
+import com.kgd.blog.application.post.usecase.GetBlogConceptCountsUseCase
 import com.kgd.blog.application.post.usecase.GetBlogPostUseCase
 import com.kgd.blog.application.post.usecase.GetBlogPostsUseCase
 import com.kgd.blog.application.profile.dto.BlogIdentity
@@ -37,7 +39,12 @@ class BlogPublicController(
     private val getComments: GetBlogCommentsUseCase,
     private val getAuthorSpace: GetBlogAuthorSpaceUseCase,
     private val recordView: RecordBlogViewUseCase,
+    private val getConceptCounts: GetBlogConceptCountsUseCase,
 ) {
+
+    /** 개념별 발행글 수 — 개념 아틀라스(`/tech`)가 노드에 글 수를 붙인다 */
+    @GetMapping("/concepts")
+    fun conceptCounts(): ApiResponse<List<BlogConceptCount>> = ApiResponse.success(getConceptCounts.execute())
 
     @GetMapping("/categories")
     fun categories(): ApiResponse<List<BlogCategoryNode>> =

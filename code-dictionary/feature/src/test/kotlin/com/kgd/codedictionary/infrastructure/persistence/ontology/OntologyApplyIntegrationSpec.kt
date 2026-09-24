@@ -127,6 +127,13 @@ class OntologyApplyIntegrationSpec : BehaviorSpec({
                 jdbc.queryForObject("SELECT COUNT(*) FROM concept_question WHERE concept_id = 't-fusion'", Int::class.java) shouldBe 1
                 store.codeOf("t-fusion").single().symbol shouldBe "fun t-fusion"
             }
+            then("아틀라스 집계가 관리 개념·코드 참조·관리 간선을 센다") {
+                val rows = store.managedConcepts()
+                rows.map { it.conceptId }.toSet() shouldBe setOf("t-sys", "t-fusion", "t-rrf", "t-ndcg", "t-gone")
+                rows.single { it.conceptId == "t-rrf" }.codeRefCount shouldBe 1
+                rows.all { it.domain == "t" } shouldBe true
+                store.managedEdges().size shouldBe 5
+            }
         }
 
         `when`("같은 revision·같은 해시를 다시 적용하면") {

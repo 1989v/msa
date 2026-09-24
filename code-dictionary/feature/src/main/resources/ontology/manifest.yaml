@@ -1,4 +1,5 @@
 # 개념 온톨로지 묶음 — 적용 단위는 이 목록 전체다 (ADR-0100).
 # 어느 파일이든 바꾸면 revision 을 올린다. 같은 revision 에 다른 내용이면 로더가 적용을 거부한다.
-revision: 1
-domains: [search]
+# 순서가 /tech 아틀라스의 학습 순서다 — 기초에서 응용으로.
+revision: 2
+domains: [cs-fundamentals, language, architecture, data, concurrency, distributed, network, security, infrastructure, testing, search]

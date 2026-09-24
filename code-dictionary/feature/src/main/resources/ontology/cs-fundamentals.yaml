@@ -1,0 +1,467 @@
+# CS 기초 온톨로지 — 원본은 이 파일이다 (ADR-0100, docs/specs/2026-09-24-concept-atlas).
+# 바꾸면 manifest.yaml 의 revision 을 올린다. 간선은 from 개념에만 적는다.
+domain: cs-fundamentals
+root: cs-fundamentals
+concepts:
+  - id: cs-fundamentals
+    kind: DOMAIN
+    name: "CS 기초"
+    category: BASICS
+    level: BEGINNER
+    description: "자료 구조와 알고리즘. 데이터를 어떤 모양으로 담을지 고르고, 그 위에서 탐색 · 정렬 · 최적화를 어떻게 할지 정하며, 둘 다 복잡도로 비교한다"
+    synonyms: ["computer science fundamentals", "자료 구조와 알고리즘", "DSA"]
+    contains: [cs-complexity-analysis, cs-sequential-storage, cs-key-lookup, cs-hierarchy-modeling, cs-graph-modeling, cs-search-and-sort, cs-algorithm-design, cs-glossary]
+
+  # ── 복잡도 분석 ─────────────────────────────────────────
+  - id: cs-complexity-analysis
+    kind: STAGE
+    name: "복잡도 분석"
+    category: ALGORITHM
+    level: BEGINNER
+    description: "입력 크기 n 이 커질 때 시간과 메모리가 어떻게 늘어나는지 점근적으로 셈해 자료 구조와 알고리즘을 비교한다"
+    questions: ["O(n log n) 정렬이 작은 입력에서는 O(n²) 정렬보다 느릴 수 있는 이유는 무엇인가"]
+    contains: [cs-amortized-analysis, cs-time-complexity, cs-space-complexity]
+    uses: [cs-big-o-notation]
+    flows_to: [cs-sequential-storage]
+  - id: cs-amortized-analysis
+    kind: MECHANISM
+    name: "분할 상환 분석"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "가끔 비싼 연산을 전체 연산 수로 나눠 한 번당 평균 비용을 셈한다. 동적 배열의 확장처럼 드물게 O(n) 이 섞여도 삽입 한 번은 O(1) 로 본다"
+    synonyms: ["amortized analysis", "상환 분석"]
+    measured_by: [cs-time-complexity]
+  - id: cs-time-complexity
+    kind: METRIC
+    name: "시간 복잡도"
+    category: ALGORITHM
+    level: BEGINNER
+    description: "입력 크기에 따라 연산 횟수가 늘어나는 정도. 보통 최악의 경우를 빅오로 적는다"
+    synonyms: ["time complexity"]
+  - id: cs-space-complexity
+    kind: METRIC
+    name: "공간 복잡도"
+    category: ALGORITHM
+    level: BEGINNER
+    description: "입력 크기에 따라 추가로 쓰는 메모리가 늘어나는 정도. 재귀 호출 스택도 포함한다"
+    synonyms: ["space complexity"]
+
+  # ── 순차 데이터 저장 ────────────────────────────────────
+  - id: cs-sequential-storage
+    kind: STAGE
+    name: "순차 데이터 저장"
+    category: DATA_STRUCTURE
+    level: BEGINNER
+    description: "원소를 한 줄로 담는다. 위치로 바로 접근할지(배열), 중간 삽입 · 삭제가 쌀지(연결 리스트), 넣고 빼는 순서를 제한할지(스택 · 큐)를 고른다"
+    questions: ["배열과 연결 리스트의 조회 · 삽입 비용은 각각 얼마인가"]
+    contains: [array, linked-list, stack, queue]
+    flows_to: [cs-key-lookup]
+  - id: array
+    kind: MECHANISM
+    name: "배열"
+    category: DATA_STRUCTURE
+    level: BEGINNER
+    description: "같은 크기의 원소를 연속 메모리에 둔다. 인덱스 접근은 O(1), 중간 삽입 · 삭제는 뒤 원소를 밀어야 해서 O(n) 이다. 캐시 지역성이 좋다"
+    synonyms: ["array", "동적 배열", "ArrayList"]
+    measured_by: [cs-time-complexity]
+    alternative_to:
+      - { to: linked-list, reason: "조회가 많으면 배열, 위치를 아는 중간 삽입 · 삭제가 많으면 연결 리스트" }
+  - id: linked-list
+    kind: MECHANISM
+    name: "연결 리스트"
+    category: DATA_STRUCTURE
+    level: BEGINNER
+    description: "각 노드가 값과 다음 노드 포인터를 가진다. 위치를 알면 삽입 · 삭제가 O(1) 이지만 k 번째 원소를 찾으려면 O(n) 을 걷는다"
+    synonyms: ["linked list", "LinkedList"]
+    contains: [skip-list]
+  - id: stack
+    kind: MECHANISM
+    name: "스택"
+    category: DATA_STRUCTURE
+    level: BEGINNER
+    description: "마지막에 넣은 것을 먼저 꺼낸다(LIFO). 함수 호출 스택 · 되돌리기 · 괄호 짝 맞추기 · 반복형 DFS 에 쓴다"
+    synonyms: ["stack", "LIFO"]
+    code:
+      - { path: code-dictionary/domain/src/main/kotlin/com/kgd/codedictionary/domain/concept/ontology/ConceptOntology.kt, symbol: "val stack = ArrayDeque<String>()", note: "순환 탐지 중 현재 경로를 스택으로 들고 있다" }
+    alternative_to:
+      - { to: queue, reason: "꺼내는 순서가 반대다 — 스택은 깊이 우선, 큐는 너비 우선 순회를 만든다" }
+  - id: queue
+    kind: MECHANISM
+    name: "큐"
+    category: DATA_STRUCTURE
+    level: BEGINNER
+    description: "먼저 넣은 것을 먼저 꺼낸다(FIFO). 작업 대기열 · 버퍼 · BFS 에 쓴다"
+    synonyms: ["queue", "FIFO", "deque"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/notification/InMemoryPriorityQueue.kt, symbol: "class InMemoryPriorityQueue", note: "우선순위마다 FIFO 큐 하나씩 두고 높은 순위부터 꺼낸다" }
+
+  # ── 키 조회 구조 설계 ───────────────────────────────────
+  - id: cs-key-lookup
+    kind: STAGE
+    name: "키 조회 구조 설계"
+    category: DATA_STRUCTURE
+    level: INTERMEDIATE
+    description: "키로 값을 빨리 찾는 구조를 고른다. 순서가 필요 없으면 해시, 범위 · 순서 조회가 필요하면 균형 트리나 스킵 리스트, 접두사 검색이면 트라이, 존재 여부만 싸게 알면 블룸 필터다"
+    questions: ["해시맵 대신 정렬된 트리를 고르는 조건은 무엇인가"]
+    contains: [hash-map, skip-list, bloom-filter, cs-hash-collision, cs-false-positive, cs-load-factor]
+    flows_to: [cs-hierarchy-modeling]
+  - id: hash-map
+    kind: MECHANISM
+    name: "해시맵"
+    category: DATA_STRUCTURE
+    level: INTERMEDIATE
+    description: "키를 해시 함수로 버킷 위치로 바꿔 평균 O(1) 로 넣고 찾는다. 순서가 없고, 충돌이 몰리면 최악 O(n) 이 된다. 적재율이 넘으면 버킷을 늘려 다시 배치한다"
+    synonyms: ["hash map", "hash table", "해시 테이블", "HashMap"]
+    questions: ["해시맵의 적재율이 높아지면 무엇이 느려지는가"]
+    uses: [cs-hash-function]
+    causes:
+      - { to: cs-hash-collision, reason: "키 공간이 버킷 수보다 커서 서로 다른 키가 같은 버킷에 떨어진다" }
+    measured_by: [cs-load-factor]
+    alternative_to:
+      - { to: bst, reason: "순서 · 범위 조회가 없으면 해시가 평균적으로 빠르다" }
+  - id: skip-list
+    kind: MECHANISM
+    name: "스킵 리스트"
+    category: DATA_STRUCTURE
+    level: ADVANCED
+    description: "정렬된 연결 리스트 위에 확률적으로 고른 노드만 잇는 층을 여러 개 쌓아 평균 O(log n) 에 찾고 넣는다. 회전 없이 균형이 맞아 구현이 단순하고 동시성 제어가 쉽다. Redis sorted set 이 이 구조다"
+    synonyms: ["skip list", "Redis ZSET"]
+    code:
+      - { path: recommendation/feature/src/main/kotlin/com/kgd/recommendation/infrastructure/persistence/RedisRecommendationAdapter.kt, symbol: "redis.opsForZSet()", note: "점수 순 상위 N 추천을 sorted set(스킵 리스트)에서 범위로 꺼낸다" }
+    alternative_to:
+      - { to: cs-balanced-bst, reason: "같은 O(log n) 순서 조회를 회전 대신 확률로 얻는다" }
+  - id: bloom-filter
+    kind: MECHANISM
+    name: "블룸 필터"
+    category: DATA_STRUCTURE
+    level: ADVANCED
+    description: "비트 배열과 해시 함수 여러 개로 원소가 「확실히 없음」 또는 「아마 있음」을 답한다. 메모리가 아주 작지만 거짓 양성이 있고 삭제가 안 된다. 비싼 조회 앞에서 없는 키를 걸러 낸다"
+    synonyms: ["Bloom filter"]
+    questions: ["블룸 필터가 거짓 음성은 내지 않는 이유는 무엇인가"]
+    uses: [cs-hash-function]
+    causes:
+      - { to: cs-false-positive, reason: "다른 원소들이 켠 비트가 겹치면 없는 원소도 있다고 답한다" }
+  - id: cs-hash-collision
+    kind: PROBLEM
+    name: "해시 충돌"
+    category: DATA_STRUCTURE
+    level: INTERMEDIATE
+    description: "서로 다른 키가 같은 해시 버킷에 떨어지는 상태. 체이닝이나 개방 주소법으로 처리하고, 몰리면 조회가 선형으로 느려진다"
+    synonyms: ["hash collision"]
+    measured_by: [cs-load-factor]
+  - id: cs-load-factor
+    kind: METRIC
+    name: "적재율"
+    category: DATA_STRUCTURE
+    level: INTERMEDIATE
+    description: "저장된 원소 수를 버킷 수로 나눈 값. 기준(자바 HashMap 은 0.75)을 넘으면 버킷을 늘려 다시 배치한다"
+    synonyms: ["load factor"]
+
+  # ── 계층 구조 표현 ──────────────────────────────────────
+  - id: cs-hierarchy-modeling
+    kind: STAGE
+    name: "계층 구조 표현"
+    category: DATA_STRUCTURE
+    level: INTERMEDIATE
+    description: "부모-자식 관계를 트리로 담는다. 정렬된 탐색(BST), 최솟값 · 최댓값 꺼내기(힙), 문자열 접두사(트라이)처럼 목적에 따라 트리 모양을 고른다"
+    questions: ["BST 가 한쪽으로 치우치면 탐색 비용은 얼마가 되는가"]
+    contains: [tree, cs-tree-skew]
+    flows_to: [cs-graph-modeling]
+  - id: tree
+    kind: MECHANISM
+    name: "트리"
+    category: DATA_STRUCTURE
+    level: INTERMEDIATE
+    description: "순환 없이 부모-자식으로 이어진 계층 구조. 루트에서 각 노드까지 경로가 하나뿐이다. 그래프의 특수한 경우다"
+    synonyms: ["tree"]
+    contains: [binary-tree, trie]
+  - id: binary-tree
+    kind: MECHANISM
+    name: "이진 트리"
+    category: DATA_STRUCTURE
+    level: INTERMEDIATE
+    description: "각 노드가 자식을 최대 둘 가지는 트리. 전위 · 중위 · 후위 · 레벨 순회로 읽는다"
+    synonyms: ["binary tree"]
+    contains: [bst, heap]
+  - id: bst
+    kind: MECHANISM
+    name: "이진 탐색 트리"
+    category: DATA_STRUCTURE
+    level: INTERMEDIATE
+    description: "왼쪽 자식 < 부모 < 오른쪽 자식을 지키는 이진 트리. 높이만큼 비교해 찾으므로 균형이면 O(log n), 치우치면 O(n) 이다. 중위 순회하면 정렬 순서가 나온다"
+    synonyms: ["binary search tree", "BST"]
+    contains: [cs-balanced-bst]
+    causes:
+      - { to: cs-tree-skew, reason: "정렬된 순서로 넣으면 한쪽으로만 자라 연결 리스트가 된다" }
+  - id: cs-balanced-bst
+    kind: MECHANISM
+    name: "균형 탐색 트리"
+    category: DATA_STRUCTURE
+    level: ADVANCED
+    description: "삽입 · 삭제 때 회전으로 높이를 O(log n) 으로 유지하는 BST. AVL 트리와 레드-블랙 트리(자바 TreeMap)가 대표다"
+    synonyms: ["self-balancing BST", "AVL tree", "red-black tree", "레드-블랙 트리"]
+    mitigates: [cs-tree-skew]
+  - id: heap
+    kind: MECHANISM
+    name: "힙"
+    category: DATA_STRUCTURE
+    level: INTERMEDIATE
+    description: "부모가 항상 자식보다 작거나(최소 힙) 큰(최대 힙) 완전 이진 트리. 루트 조회는 O(1), 넣기 · 꺼내기는 O(log n) 이다. 우선순위 큐와 상위 K 개 뽑기에 쓴다"
+    synonyms: ["heap", "priority queue", "우선순위 큐", "PriorityQueue"]
+    questions: ["상위 K 개를 뽑을 때 전체 정렬 대신 크기 K 힙을 쓰면 비용이 어떻게 달라지는가"]
+  - id: trie
+    kind: MECHANISM
+    name: "트라이"
+    category: DATA_STRUCTURE
+    level: ADVANCED
+    description: "문자열을 글자 단위로 쪼개 간선에 싣는 트리. 길이 m 인 문자열을 O(m) 에 찾고, 같은 접두사를 공유해 자동완성 · 사전 탐색에 맞다"
+    synonyms: ["trie", "prefix tree", "접두사 트리"]
+    alternative_to:
+      - { to: hash-map, reason: "정확 일치만 필요하면 해시, 접두사로 모아 찾아야 하면 트라이" }
+  - id: cs-tree-skew
+    kind: PROBLEM
+    name: "트리 편향"
+    category: DATA_STRUCTURE
+    level: INTERMEDIATE
+    description: "탐색 트리가 한쪽으로만 깊어져 높이가 n 에 가까워진 상태. O(log n) 이던 연산이 O(n) 으로 떨어진다"
+    synonyms: ["unbalanced tree", "skewed tree"]
+    measured_by: [cs-time-complexity]
+
+  # ── 그래프 모델링 ───────────────────────────────────────
+  - id: cs-graph-modeling
+    kind: STAGE
+    name: "그래프 모델링"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "관계를 정점과 간선으로 표현하고 그 위를 순회한다. 최단 단계 거리는 BFS, 경로 · 순환 탐지는 DFS, 의존 순서는 위상 정렬로 푼다"
+    questions: ["가중치 없는 그래프에서 최단 경로를 BFS 로 구할 수 있는 이유는 무엇인가"]
+    contains: [graph, bfs, dfs, topological-sort, cs-dependency-cycle, cs-stack-overflow]
+    flows_to: [cs-search-and-sort]
+  - id: graph
+    kind: MECHANISM
+    name: "그래프"
+    category: DATA_STRUCTURE
+    level: INTERMEDIATE
+    description: "정점과 간선의 집합. 방향 · 가중치 유무로 나뉘고, 인접 리스트(희소)나 인접 행렬(밀집)로 저장한다"
+    synonyms: ["graph", "인접 리스트", "adjacency list"]
+    code:
+      - { path: code-dictionary/domain/src/main/kotlin/com/kgd/codedictionary/domain/concept/ontology/ConceptOntology.kt, symbol: "class ConceptOntology(", note: "개념을 정점, 관계 9종을 방향 간선으로 담은 그래프" }
+    contains: [tree]
+  - id: bfs
+    kind: MECHANISM
+    name: "너비 우선 탐색"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "시작점에서 가까운 정점부터 큐로 한 겹씩 넓혀 방문한다. 가중치 없는 그래프에서 최소 간선 수 경로를 준다. O(V+E)"
+    synonyms: ["BFS", "breadth-first search"]
+    code:
+      - { path: agent-viewer/front/src/office/engine/pathfinding.ts, symbol: "export function findPath(", note: "타일 격자에서 BFS 로 최단 이동 경로를 찾는다" }
+    uses: [queue]
+    measured_by: [cs-time-complexity]
+    alternative_to:
+      - { to: dfs, reason: "최단 단계 거리가 필요하면 BFS, 경로 끝까지 파고들거나 순환을 찾으면 DFS" }
+  - id: dfs
+    kind: MECHANISM
+    name: "깊이 우선 탐색"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "한 경로를 끝까지 파고든 뒤 되돌아와 다른 경로를 본다. 재귀나 스택으로 구현하고, 방문 중 · 방문 끝 상태를 나누면 순환을 찾는다. O(V+E)"
+    synonyms: ["DFS", "depth-first search"]
+    code:
+      - { path: code-dictionary/domain/src/main/kotlin/com/kgd/codedictionary/domain/concept/ontology/ConceptOntology.kt, symbol: "private fun findCycle(", note: "CONTAINS 간선의 순환을 DFS 로 찾는다" }
+    uses:
+      - stack
+      - { to: recursion, reason: "호출 스택이 곧 방문 경로다" }
+    mitigates: [cs-dependency-cycle]
+    causes:
+      - { to: cs-stack-overflow, reason: "재귀로 깊은 그래프를 돌면 호출 스택이 넘친다" }
+  - id: topological-sort
+    kind: MECHANISM
+    name: "위상 정렬"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "방향 비순환 그래프(DAG)의 정점을 모든 간선이 앞에서 뒤로 향하게 나열한다. 진입 차수 0 부터 꺼내는 칸 알고리즘이나 DFS 종료 역순으로 구한다. 빌드 · 작업 의존 순서에 쓴다"
+    synonyms: ["topological sort", "Kahn's algorithm"]
+    questions: ["위상 정렬 중 남은 정점이 있는데 진입 차수 0 이 없으면 무엇을 뜻하는가"]
+    uses: [cs-dag, dfs]
+  - id: cs-dependency-cycle
+    kind: PROBLEM
+    name: "순환 의존"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "의존 관계가 한 바퀴 돌아 자기 자신에게 돌아오는 상태. 위상 순서가 존재하지 않아 어떤 것부터 처리할지 정할 수 없다"
+    synonyms: ["cycle", "circular dependency", "순환"]
+  - id: cs-stack-overflow
+    kind: PROBLEM
+    name: "스택 오버플로"
+    category: ALGORITHM
+    level: BEGINNER
+    description: "재귀가 너무 깊어 호출 스택 메모리를 넘는 상태. 반복문과 명시적 스택으로 바꾸거나 깊이를 제한한다"
+    synonyms: ["stack overflow", "StackOverflowError"]
+
+  # ── 탐색과 정렬 ─────────────────────────────────────────
+  - id: cs-search-and-sort
+    kind: STAGE
+    name: "탐색과 정렬"
+    category: ALGORITHM
+    level: BEGINNER
+    description: "원소를 기준에 따라 나열하고, 정렬된 데이터에서 원하는 값을 반씩 줄여 찾는다. 정렬 비용을 한 번 내면 이후 탐색이 싸진다"
+    questions: ["한 번만 찾을 때와 여러 번 찾을 때 정렬 후 이진 탐색의 손익은 어떻게 달라지는가"]
+    contains: [sorting, binary-search]
+    flows_to: [cs-algorithm-design]
+  - id: sorting
+    kind: MECHANISM
+    name: "정렬"
+    category: ALGORITHM
+    level: BEGINNER
+    description: "원소를 비교 기준에 따라 순서대로 나열한다. 비교 정렬의 하한은 O(n log n) 이고 병합 · 퀵 · 힙 정렬이 여기 닿는다. 같은 키의 원래 순서를 지키는지(안정성)도 고른다"
+    synonyms: ["sort", "merge sort", "quick sort", "병합 정렬", "퀵 정렬"]
+    uses: [cs-stable-sort, divide-and-conquer]
+    measured_by: [cs-time-complexity]
+  - id: binary-search
+    kind: MECHANISM
+    name: "이진 탐색"
+    category: ALGORITHM
+    level: BEGINNER
+    description: "정렬된 배열에서 가운데와 비교해 절반을 버리며 찾는다. O(log n). 값 자체가 아니라 「조건을 만족하는 최소 경계」를 찾는 데도 쓴다"
+    synonyms: ["binary search", "lower bound", "파라메트릭 서치"]
+    uses: [array]
+    measured_by: [cs-time-complexity]
+
+  # ── 알고리즘 설계 기법 ──────────────────────────────────
+  - id: cs-algorithm-design
+    kind: STAGE
+    name: "알고리즘 설계 기법"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "문제의 구조를 보고 푸는 틀을 고른다. 쪼개서 합치기(분할 정복), 부분 답 재사용(동적 계획법), 매 순간 최선(탐욕), 모든 후보를 되돌아가며 시도(백트래킹)"
+    questions: ["탐욕 알고리즘이 최적해를 보장하려면 문제가 무엇을 만족해야 하는가"]
+    contains: [divide-and-conquer, dynamic-programming, greedy, backtracking, cs-combinatorial-explosion]
+  - id: divide-and-conquer
+    kind: MECHANISM
+    name: "분할 정복"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "문제를 겹치지 않는 작은 문제로 나눠 재귀로 풀고 결과를 합친다. 병합 정렬 · 퀵 정렬 · 이진 탐색이 이 틀이다"
+    synonyms: ["divide and conquer"]
+    uses:
+      - { to: recursion, reason: "같은 문제를 작게 나눠 자기 자신을 다시 부른다" }
+  - id: dynamic-programming
+    kind: MECHANISM
+    name: "동적 계획법"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "겹치는 부분 문제의 답을 표에 저장해 한 번만 계산한다. 위에서 내려가며 저장(메모이제이션)하거나 작은 문제부터 표를 채운다(타뷸레이션). 최적 부분 구조가 있어야 한다"
+    synonyms: ["dynamic programming", "DP", "동적 프로그래밍"]
+    questions: ["분할 정복과 동적 계획법을 가르는 조건은 무엇인가"]
+    contains: [cs-memoization]
+    uses: [cs-optimal-substructure, cs-overlapping-subproblems]
+    mitigates: [cs-combinatorial-explosion]
+    alternative_to:
+      - { to: greedy, reason: "탐욕 선택이 최적을 보장하지 않으면 모든 부분 답을 비교하는 DP 로 간다" }
+  - id: cs-memoization
+    kind: MECHANISM
+    name: "메모이제이션"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "같은 인자로 부른 함수의 결과를 저장해 두고 다시 부르면 저장값을 돌려준다. 재귀형 DP 의 구현 방법이다"
+    synonyms: ["memoization", "top-down DP"]
+    uses: [hash-map]
+  - id: greedy
+    kind: MECHANISM
+    name: "탐욕 알고리즘"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "매 단계에서 지금 가장 좋아 보이는 선택을 하고 되돌아보지 않는다. 탐욕 선택 속성과 최적 부분 구조가 증명될 때만 최적해를 준다"
+    synonyms: ["greedy algorithm", "그리디"]
+    uses: [cs-optimal-substructure]
+  - id: backtracking
+    kind: MECHANISM
+    name: "백트래킹"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "후보를 하나씩 골라 해를 늘려 가다가 조건을 어기면 직전 선택으로 되돌아가 다른 후보를 본다. 가망 없는 가지를 일찍 잘라야 쓸 만한 속도가 나온다"
+    synonyms: ["backtracking"]
+    contains: [cs-pruning]
+    uses:
+      - dfs
+      - { to: recursion, reason: "한 칸 들어갔다가 막히면 호출을 되돌려 다른 가지로 간다" }
+    causes:
+      - { to: cs-combinatorial-explosion, reason: "가지치기가 약하면 후보 조합을 전부 돈다" }
+  - id: cs-pruning
+    kind: MECHANISM
+    name: "가지치기"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "지금까지의 선택으로는 답이 될 수 없음이 확실한 가지를 더 내려가지 않고 버린다"
+    synonyms: ["pruning", "branch and bound"]
+    mitigates: [cs-combinatorial-explosion]
+  - id: cs-combinatorial-explosion
+    kind: PROBLEM
+    name: "조합 폭발"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "입력이 조금 늘 때 살펴볼 후보 수가 지수 · 계승으로 늘어 계산이 끝나지 않는 상태"
+    synonyms: ["combinatorial explosion", "exponential blow-up"]
+    measured_by: [cs-time-complexity]
+
+  # ── 문제 · 확률적 구조 ──────────────────────────────────
+  - id: cs-false-positive
+    kind: PROBLEM
+    name: "거짓 양성"
+    category: DATA_STRUCTURE
+    level: INTERMEDIATE
+    description: "없는 원소를 있다고 답하는 오류. 블룸 필터는 비트 배열이 찰수록 이 확률이 오른다"
+    synonyms: ["false positive"]
+
+  # ── 용어 사전 ───────────────────────────────────────────
+  - id: cs-glossary
+    kind: TERM
+    name: "CS 기초 용어 사전"
+    category: BASICS
+    level: BEGINNER
+    description: "자료 구조와 알고리즘을 읽는 데 필요한 말. 장치가 아니라 그것을 설명하는 용어를 모은다"
+    synonyms: ["glossary", "용어집"]
+    contains: [cs-big-o-notation, cs-hash-function, cs-dag, cs-optimal-substructure, cs-overlapping-subproblems, cs-stable-sort]
+  - id: cs-big-o-notation
+    kind: TERM
+    name: "빅오 표기법"
+    category: ALGORITHM
+    level: BEGINNER
+    description: "증가율의 상한을 가장 큰 항만 남겨 적는 표기. 상수와 낮은 차수 항은 버린다. O(1) < O(log n) < O(n) < O(n log n) < O(n²) < O(2ⁿ)"
+    synonyms: ["Big-O", "점근 표기법"]
+  - id: cs-hash-function
+    kind: TERM
+    name: "해시 함수"
+    category: DATA_STRUCTURE
+    level: BEGINNER
+    description: "임의 길이의 입력을 고정 범위의 값으로 바꾸는 함수. 같은 입력은 항상 같은 값을 내고, 자료 구조용은 값이 고르게 퍼지는 것이 중요하다"
+    synonyms: ["hash function"]
+  - id: cs-dag
+    kind: TERM
+    name: "DAG"
+    category: DATA_STRUCTURE
+    level: INTERMEDIATE
+    description: "방향 비순환 그래프. 간선에 방향이 있고 순환이 없어 위상 순서가 존재한다"
+    synonyms: ["Directed Acyclic Graph", "방향 비순환 그래프"]
+  - id: cs-optimal-substructure
+    kind: TERM
+    name: "최적 부분 구조"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "전체 문제의 최적해가 부분 문제의 최적해로 이뤄지는 성질. 동적 계획법과 탐욕 알고리즘의 전제다"
+    synonyms: ["optimal substructure"]
+  - id: cs-overlapping-subproblems
+    kind: TERM
+    name: "중복 부분 문제"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "재귀로 풀 때 같은 부분 문제가 여러 번 나오는 성질. 이것이 있어야 답을 저장하는 동적 계획법이 이득이다"
+    synonyms: ["overlapping subproblems"]
+  - id: cs-stable-sort
+    kind: TERM
+    name: "안정 정렬"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "정렬 키가 같은 원소들의 원래 순서를 유지하는 정렬. 여러 기준으로 차례로 정렬할 때 필요하다(병합 정렬은 안정, 퀵 정렬은 아니다)"
+    synonyms: ["stable sort"]

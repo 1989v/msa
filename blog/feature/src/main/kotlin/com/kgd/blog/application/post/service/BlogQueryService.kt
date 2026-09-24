@@ -9,12 +9,14 @@ import com.kgd.blog.application.comment.usecase.GetBlogCommentsUseCase
 import com.kgd.blog.application.interaction.port.BlogReactionRepositoryPort
 import com.kgd.blog.application.post.dto.BlogAuthorSpace
 import com.kgd.blog.application.post.dto.BlogPage
+import com.kgd.blog.application.post.dto.BlogConceptCount
 import com.kgd.blog.application.post.dto.BlogPostDetail
 import com.kgd.blog.application.post.dto.BlogPostSummary
 import com.kgd.blog.application.post.port.BlogPostConceptRepositoryPort
 import com.kgd.blog.application.post.port.BlogPostRepositoryPort
 import com.kgd.blog.application.post.usecase.GetBlogAuthorSpaceUseCase
 import com.kgd.blog.application.post.usecase.GetBlogPostUseCase
+import com.kgd.blog.application.post.usecase.GetBlogConceptCountsUseCase
 import com.kgd.blog.application.post.usecase.GetBlogPostsUseCase
 import com.kgd.blog.application.profile.dto.BlogIdentity
 import com.kgd.blog.application.profile.port.BlogProfileRepositoryPort
@@ -44,7 +46,7 @@ class BlogQueryService(
     private val reactionRepository: BlogReactionRepositoryPort,
     private val assembler: BlogAssembler,
     private val conceptRepository: BlogPostConceptRepositoryPort,
-) : GetBlogCategoryTreeUseCase, GetBlogPostsUseCase, GetBlogPostUseCase, GetBlogAuthorSpaceUseCase, GetBlogCommentsUseCase {
+) : GetBlogCategoryTreeUseCase, GetBlogPostsUseCase, GetBlogConceptCountsUseCase, GetBlogPostUseCase, GetBlogAuthorSpaceUseCase, GetBlogCommentsUseCase {
 
     /** 목록·네비용 카테고리 트리. 숨김(HIDDEN)은 빠진다 */
     override fun execute(query: GetBlogCategoryTreeUseCase.Query): List<BlogCategoryNode> {
@@ -88,6 +90,9 @@ class BlogQueryService(
         val result = postRepository.findPublishedByConcept(concept, paging)
         return BlogPage.of(Paged(assembler.summaries(result.items), result.page, result.size, result.totalElements, result.totalPages))
     }
+
+    override fun execute(): List<BlogConceptCount> =
+        conceptRepository.countPublishedByConcept().map { (id, n) -> BlogConceptCount(id, n) }.sortedBy { it.conceptId }
 
     /** 공개 상세. 미발행 슬러그는 존재를 드러내지 않고 404 */
     override fun execute(query: GetBlogPostUseCase.Query): BlogPostDetail =

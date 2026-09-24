@@ -8,4 +8,7 @@ interface BlogPostConceptRepositoryPort {
     fun replace(postId: Long, conceptIds: List<String>)
 
     fun deleteByPostId(postId: Long)
+
+    /** 개념별 발행글 수 — 매핑이 있어도 발행 안 된 글은 세지 않는다 */
+    fun countPublishedByConcept(): Map<String, Long>
 }

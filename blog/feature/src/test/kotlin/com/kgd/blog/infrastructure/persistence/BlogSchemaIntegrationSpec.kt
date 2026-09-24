@@ -115,6 +115,8 @@ class BlogSchemaIntegrationSpec(
                     listOf("concept-newer", "concept-older")
                 posts.findPublishedByConcept("bm25", PageRequest.of(0, 10)).totalElements shouldBe 2L
                 posts.findPublishedByConcept("nothing", PageRequest.of(0, 10)).totalElements shouldBe 0L
+                // 초안에도 bm25 가 걸려 있지만 세지 않는다
+                adapter.countPublishedByConcept() shouldBe mapOf("bm25" to 2L, "inverted-index" to 1L)
 
                 tx.executeWithoutResult { adapter.deleteByPostId(older) }
                 adapter.findConceptIds(older) shouldBe emptyList()

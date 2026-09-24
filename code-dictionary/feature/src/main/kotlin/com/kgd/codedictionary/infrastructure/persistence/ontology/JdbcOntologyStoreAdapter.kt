@@ -1,7 +1,10 @@
 package com.kgd.codedictionary.infrastructure.persistence.ontology
 
+import com.kgd.codedictionary.application.graph.dto.AtlasConceptRow
+import com.kgd.codedictionary.application.graph.dto.AtlasEdgeRow
 import com.kgd.codedictionary.application.graph.dto.CodeRefDto
 import com.kgd.codedictionary.application.graph.dto.EvidenceDto
+import com.kgd.codedictionary.application.graph.port.ConceptAtlasQueryPort
 import com.kgd.codedictionary.application.graph.port.ConceptEvidenceQueryPort
 import com.kgd.codedictionary.application.ontology.dto.OntologyState
 import com.kgd.codedictionary.application.ontology.port.OntologyStorePort
@@ -18,7 +21,7 @@ import javax.sql.DataSource
  * 트랜잭션은 호출자가 연다 — 같은 DataSource 라 JPA 트랜잭션 매니저가 연결을 공유한다.
  */
 @Component
-class JdbcOntologyStoreAdapter(dataSource: DataSource) : OntologyStorePort, OntologySyncStatePort, ConceptEvidenceQueryPort {
+class JdbcOntologyStoreAdapter(dataSource: DataSource) : OntologyStorePort, OntologySyncStatePort, ConceptEvidenceQueryPort, ConceptAtlasQueryPort {
 
     private val jdbc = JdbcTemplate(dataSource)
 
@@ -133,6 +136,36 @@ class JdbcOntologyStoreAdapter(dataSource: DataSource) : OntologyStorePort, Onto
         jdbc.query("SELECT path, symbol, note FROM concept_code_ref WHERE concept_id = ? ORDER BY ordinal", { rs, _ ->
             CodeRefDto(rs.getString("path"), rs.getString("symbol"), rs.getString("note"))
         }, conceptId)
+
+    override fun managedConcepts(): List<AtlasConceptRow> =
+        jdbc.query(
+            """
+            SELECT c.concept_id, c.managed_by, c.kind, c.name, c.description,
+                   (SELECT COUNT(*) FROM concept_code_ref r WHERE r.concept_id = c.concept_id) AS code_refs
+            FROM concept c WHERE c.managed_by IS NOT NULL
+            ORDER BY c.managed_by, c.concept_id
+            """.trimIndent(),
+        ) { rs, _ ->
+            AtlasConceptRow(
+                conceptId = rs.getString("concept_id"),
+                domain = rs.getString("managed_by"),
+                kind = rs.getString("kind"),
+                name = rs.getString("name"),
+                description = rs.getString("description"),
+                codeRefCount = rs.getInt("code_refs"),
+            )
+        }
+
+    override fun managedEdges(): List<AtlasEdgeRow> =
+        jdbc.query(
+            """
+            SELECT f.managed_by AS from_domain, t.managed_by AS to_domain, e.kind
+            FROM concept_edge e
+            JOIN concept f ON f.concept_id = e.from_concept_id
+            JOIN concept t ON t.concept_id = e.to_concept_id
+            WHERE f.managed_by IS NOT NULL AND t.managed_by IS NOT NULL
+            """.trimIndent(),
+        ) { rs, _ -> AtlasEdgeRow(rs.getString("from_domain"), rs.getString("to_domain"), rs.getString("kind")) }
 
     override fun questionsOf(conceptId: String): List<String> =
         jdbc.queryForList("SELECT question FROM concept_question WHERE concept_id = ? ORDER BY ordinal", String::class.java, conceptId)

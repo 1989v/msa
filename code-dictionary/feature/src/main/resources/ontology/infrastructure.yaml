@@ -1,0 +1,488 @@
+# 인프라 · 배포 온톨로지 — 원본은 이 파일이다 (ADR-0100, docs/specs/2026-09-24-concept-atlas).
+# 바꾸면 manifest.yaml 의 revision 을 올린다. 간선은 from 개념에만 적는다.
+domain: infrastructure
+root: infra-platform
+concepts:
+  - id: infra-platform
+    kind: DOMAIN
+    name: "인프라 · 배포"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "코드를 이미지로 굽고, 선언한 상태대로 클러스터에 올리고, 트래픽을 받아 살아 있게 유지하는 일. 이 레포는 GitHub Actions 가 Jib 으로 이미지를 굽고 Argo CD 가 단일 노드 k3s 에 GitOps 로 올린다"
+    synonyms: ["infrastructure", "deployment", "DevOps"]
+    contains: [infra-build-packaging, infra-delivery-pipeline, infra-declarative-config, infra-rollout, infra-traffic-routing, infra-orchestration, infra-glossary]
+
+  # ── 빌드 · 패키징 ─────────────────────────────────────────
+  - id: infra-build-packaging
+    kind: STAGE
+    name: "빌드 · 패키징"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "소스를 모아 실행 가능한 컨테이너 이미지로 만든다. 서브모듈을 먼저 받아야 빌드가 성립하는 모듈이 있다"
+    contains: [git-submodule, container, docker, jib]
+    flows_to: [infra-delivery-pipeline]
+  - id: git-submodule
+    kind: MECHANISM
+    name: "Git 서브모듈"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "한 저장소 안에 다른 저장소를 커밋 SHA 포인터로 끼워 넣는다. 부모는 파일 내용이 아니라 포인터만 추적하므로, 서브모듈을 먼저 푸시하지 않으면 부모 커밋이 없는 SHA 를 가리킨다"
+    synonyms: ["submodule"]
+    questions: ["부모 저장소는 서브모듈의 무엇을 기록하나", "서브모듈과 부모 중 어느 쪽을 먼저 푸시해야 하나"]
+    code:
+      - { path: .gitmodules, symbol: '[submodule "gifticon"]', note: "gifticon 도메인을 별도 저장소로 끼운 선언" }
+      - { path: .github/workflows/submodule-bump.yml, symbol: "name: submodule-bump", note: "서브모듈 포인터를 올리는 워크플로" }
+  - id: container
+    kind: MECHANISM
+    name: "컨테이너"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "애플리케이션과 의존성을 한 이미지로 묶고, 커널을 공유한 채 프로세스를 격리해 실행한다. VM 보다 가볍고 어디서 돌려도 같은 이미지가 같게 돈다"
+    synonyms: ["containerization", "컨테이너화"]
+    questions: ["컨테이너와 VM 은 무엇을 공유하고 무엇을 격리하나"]
+    uses: [infra-container-image]
+  - id: docker
+    kind: TECHNOLOGY
+    name: "Docker"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "Dockerfile 로 이미지를 굽고 컨테이너를 실행하는 도구. 이 레포는 FE(nginx 정적 서빙)와 비 JVM 이미지를 Dockerfile 로 굽는다"
+    synonyms: ["도커", "Dockerfile"]
+    code:
+      - { path: portal-fe/Dockerfile, symbol: "FROM nginx:1.27-alpine", note: "portal-fe 멀티 스테이지 빌드의 실행 단계" }
+    implements:
+      - { to: container, reason: "Dockerfile 로 이미지를 굽고 컨테이너 런타임으로 실행한다" }
+  - id: jib
+    kind: TECHNOLOGY
+    name: "Jib"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "Dockerfile 과 Docker 데몬 없이 Gradle 에서 JVM 이미지를 굽는 플러그인. 의존성 · 리소스 · 클래스를 레이어로 갈라 바뀐 레이어만 다시 올린다"
+    code:
+      - { path: buildSrc/src/main/kotlin/commerce.jib-convention.gradle.kts, symbol: 'id("com.google.cloud.tools.jib")', note: "JVM 서비스 공통 Jib 컨벤션 플러그인" }
+    implements:
+      - { to: container, reason: "JVM 서비스 이미지를 Jib 이 굽는다" }
+    alternative_to:
+      - { to: docker, reason: "JVM 이미지는 Dockerfile 대신 Jib 으로 굽는다 — 데몬이 필요 없고 레이어가 자동으로 갈린다" }
+
+  # ── 배포 파이프라인 ───────────────────────────────────────
+  - id: infra-delivery-pipeline
+    kind: STAGE
+    name: "배포 파이프라인"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "커밋마다 검사 · 테스트 · 이미지 빌드 · 레지스트리 푸시 · 매니페스트 갱신을 자동으로 돌린다"
+    contains: [ci-cd, github-actions]
+    flows_to: [infra-declarative-config]
+  - id: ci-cd
+    kind: MECHANISM
+    name: "CI/CD"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "지속적 통합(CI)은 커밋마다 빌드와 테스트를 돌려 깨진 변경을 바로 잡고, 지속적 배포(CD)는 통과한 산출물을 사람 손 없이 배포 대상까지 옮긴다. 이 레포는 바뀐 서비스만 테스트 · 이미지 빌드하고 매니페스트의 이미지 태그를 커밋한다"
+    synonyms: ["continuous integration", "continuous delivery", "지속적 통합", "지속적 배포"]
+    questions: ["CI 와 CD 는 각각 무엇을 자동화하나", "매니페스트 태그를 커밋하는 방식은 kubectl 로 직접 배포하는 것과 무엇이 다른가"]
+    code:
+      - { path: .github/workflows/images.yml, symbol: "Update oci-arm manifest image tags", note: "이미지 푸시 뒤 oci-arm 매니페스트 태그를 갱신하는 단계" }
+    uses: [infra-image-registry]
+  - id: github-actions
+    kind: TECHNOLOGY
+    name: "GitHub Actions"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "저장소 이벤트로 워크플로를 돌리는 CI 러너. 이 레포는 arm64 러너에서 구조 게이트 · 컴파일 · 테스트 · Jib 빌드를 돌린다"
+    code:
+      - { path: .github/workflows/images.yml, symbol: "runs-on: ubuntu-24.04-arm", note: "운영 노드와 같은 arm64 러너에서 이미지를 굽는다" }
+    implements:
+      - { to: ci-cd, reason: "ci.yml(게이트) · images.yml(빌드 · 푸시 · 태그 커밋)이 파이프라인이다" }
+
+  # ── 선언형 구성 ───────────────────────────────────────────
+  - id: infra-declarative-config
+    kind: STAGE
+    name: "선언형 구성"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "클러스터가 가져야 할 상태를 파일로 적고, 도구가 실제 상태를 그 파일에 맞춘다. 명령을 순서대로 치는 대신 결과를 선언한다"
+    contains: [infrastructure-as-code, infra-gitops, infra-sync-watchdog, kustomize, argo-cd, infra-config-drift, infra-stuck-sync, infra-sync-duration]
+    flows_to: [infra-rollout]
+  - id: infrastructure-as-code
+    kind: MECHANISM
+    name: "IaC"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "인프라 구성을 코드 파일로 정의하고 버전 관리한다. 리뷰 · 되돌리기 · 재현이 코드와 같은 방식으로 된다"
+    synonyms: ["Infrastructure as Code", "코드형 인프라"]
+    questions: ["콘솔에서 손으로 바꾼 설정은 왜 IaC 에서 문제가 되나"]
+    code:
+      - { path: k8s/overlays/prod-k8s/kustomization.yaml, symbol: "kind: Kustomization", note: "managed K8s 배포 형태를 파일로 선언" }
+    uses: [infra-desired-state, infra-overlay]
+  - id: kustomize
+    kind: TECHNOLOGY
+    name: "Kustomize"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "템플릿 없이 베이스 매니페스트에 오버레이 패치를 겹쳐 환경별 구성을 만든다. 이 레포는 base → k3s-lite → oci-arm 순으로 겹친다"
+    code:
+      - { path: k8s/overlays/oci-arm/kustomization.yaml, symbol: "  - ../k3s-lite", note: "oci-arm 오버레이가 k3s-lite 를 베이스로 겹친다" }
+    implements:
+      - { to: infrastructure-as-code, reason: "배포 형태 셋(k3s-lite · oci-arm · prod-k8s)을 오버레이로 선언한다" }
+  - id: infra-gitops
+    kind: MECHANISM
+    name: "GitOps"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "Git 브랜치를 배포의 단일 원본으로 두고, 클러스터 안의 에이전트가 Git 과 실제 상태를 비교해 끌어와 맞춘다. 배포는 커밋이고 롤백은 되돌리기 커밋이다"
+    questions: ["푸시형 배포(CI 가 kubectl apply)와 풀형 배포(GitOps)는 권한이 어디에 있나", "클러스터에서 직접 고친 값은 GitOps 아래에서 어떻게 되나"]
+    uses: [infra-desired-state]
+    causes:
+      - { to: infra-stuck-sync, reason: "동기화 작업이 끝나지 않으면 뒤따르는 모든 리비전이 막힌다" }
+    mitigates:
+      - { to: infra-config-drift, reason: "selfHeal 이 Git 과 다른 클러스터 상태를 되돌린다" }
+    measured_by: [infra-sync-duration]
+  - id: argo-cd
+    kind: TECHNOLOGY
+    name: "Argo CD"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "Git 의 매니페스트를 클러스터에 동기화하는 GitOps 컨트롤러. 이 레포는 main 의 k8s/overlays/oci-arm 을 자동 동기화하고, 변경분만 적용한다"
+    synonyms: ["ArgoCD"]
+    code:
+      - { path: k8s/argocd/application.yaml, symbol: "selfHeal: true", note: "수동 변경을 Git 상태로 되돌리는 자동 동기화 정책" }
+    implements:
+      - { to: infra-gitops, reason: "Application 하나가 oci-arm 오버레이를 끌어와 맞춘다" }
+  - id: infra-sync-watchdog
+    kind: MECHANISM
+    name: "동기화 워치독"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "동기화 작업이 정해진 시간 넘게 Running 이면 끊는다. 재시도와 진행 기한은 「실패」만 다루고 「안 끝남」은 못 다뤄서 시간으로 자른다. 막힌 것에 막히지 않게 Argo 가 아니라 설치 스크립트가 직접 배포한다"
+    code:
+      - { path: k8s/argocd/stuck-sync-watchdog.yaml, symbol: "name: argocd-stuck-sync-watchdog", note: "20분 넘은 동기화 작업을 끊는 CronJob" }
+    mitigates:
+      - { to: infra-stuck-sync, reason: "큐 머리의 작업을 끊어 다음 리비전이 적용되게 한다" }
+  - id: infra-config-drift
+    kind: PROBLEM
+    name: "구성 드리프트"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "클러스터의 실제 상태가 선언한 파일과 어긋난 상태. 손으로 고친 값이 다음 배포에 사라지거나, 파일만 보고 판단하면 틀린다"
+    synonyms: ["configuration drift"]
+  - id: infra-stuck-sync
+    kind: PROBLEM
+    name: "동기화 정지"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "동기화 작업이 끝나지도 실패하지도 않고 Running 에 머무는 상태. 한 앱당 작업이 하나라 롤백을 포함한 모든 리비전이 그 뒤에서 기다린다"
+    measured_by: [infra-sync-duration]
+  - id: infra-sync-duration
+    kind: METRIC
+    name: "동기화 소요 시간"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "동기화 작업이 시작해서 끝나기까지 걸린 시간. 평소 수 분이고, 워치독 기준(20분)을 넘으면 정지로 본다"
+
+  # ── 롤아웃 ────────────────────────────────────────────────
+  - id: infra-rollout
+    kind: STAGE
+    name: "롤아웃"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "옛 버전에서 새 버전으로 트래픽을 넘긴다. 넘기는 동안 요청이 실패하지 않게 하는 것이 핵심이다"
+    contains: [infra-rolling-update, blue-green-deployment, canary-deployment, infra-deploy-downtime, infra-deploy-error-rate]
+  - id: infra-rolling-update
+    kind: MECHANISM
+    name: "롤링 업데이트"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "파드를 몇 개씩 새 버전으로 바꿔 끼운다. maxSurge 로 먼저 띄울 수, maxUnavailable 로 먼저 내릴 수를 정하고, 새 파드가 Ready 가 된 뒤에만 다음으로 넘어간다"
+    synonyms: ["rolling update", "RollingUpdate"]
+    questions: ["maxSurge:1 · maxUnavailable:0 과 그 반대는 무엇을 맞바꾸나"]
+    code:
+      - { path: k8s/overlays/oci-arm/patches/rolling-surge-first.yaml, symbol: "maxUnavailable: 0", note: "새 파드가 Ready 된 뒤에만 옛 파드를 내린다" }
+    uses: [health-check, infra-pod]
+    mitigates:
+      - { to: infra-deploy-downtime, reason: "옛 파드를 먼저 내리지 않아 JVM 부팅 동안 받을 곳이 비지 않는다" }
+    measured_by: [infra-deploy-error-rate]
+  - id: blue-green-deployment
+    kind: MECHANISM
+    name: "블루-그린 배포"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "같은 크기의 두 환경을 두고, 새 버전을 대기 환경에 다 올린 뒤 트래픽을 한 번에 전환한다. 되돌리기도 전환 한 번이지만 자원이 두 벌 든다"
+    synonyms: ["blue-green deployment"]
+    questions: ["블루-그린은 롤링보다 무엇이 빠르고 무엇이 비싼가"]
+    alternative_to:
+      - { to: infra-rolling-update, reason: "파드 단위로 섞어 바꾸는 대신 환경 단위로 한 번에 전환한다" }
+  - id: canary-deployment
+    kind: MECHANISM
+    name: "카나리 배포"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "새 버전에 트래픽 일부만 보내 오류율 · 지연을 보고, 괜찮으면 비율을 늘린다. 문제가 생겨도 일부 사용자만 영향을 받는다"
+    synonyms: ["canary release"]
+    questions: ["카나리 비율을 올릴지 판단하는 지표는 무엇인가"]
+    measured_by: [infra-deploy-error-rate]
+    alternative_to:
+      - { to: infra-rolling-update, reason: "파드 수가 아니라 트래픽 비율로 새 버전을 늘린다" }
+  - id: infra-deploy-downtime
+    kind: PROBLEM
+    name: "배포 순단"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "버전을 바꾸는 동안 요청을 받을 파드가 비어 503 이 나는 상태. 옛 파드를 먼저 내리거나, 새 파드가 준비되기 전에 트래픽을 받을 때 생긴다"
+    synonyms: ["deployment downtime"]
+    measured_by: [infra-deploy-error-rate]
+  - id: infra-deploy-error-rate
+    kind: METRIC
+    name: "배포 중 오류율"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "롤아웃 동안 짧은 간격으로 보낸 요청 중 200 이 아닌 응답의 비율. 무중단이면 0 이어야 한다"
+
+  # ── 트래픽 라우팅 ─────────────────────────────────────────
+  - id: infra-traffic-routing
+    kind: STAGE
+    name: "트래픽 라우팅"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "밖에서 들어온 요청을 TLS 로 받고, 호스트 · 경로로 가르고, 살아 있는 인스턴스 하나에 넘긴다"
+    contains: [reverse-proxy, api-gateway, load-balancer, service-discovery, infra-cert-renewal, ingress-nginx, cert-manager, infra-cert-expiry]
+  - id: reverse-proxy
+    kind: MECHANISM
+    name: "리버스 프록시"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "클라이언트 대신 요청을 받아 뒤의 서버로 넘긴다. TLS 종료 · 호스트별 라우팅 · 압축을 한곳에서 하고 뒤의 서버 주소를 숨긴다"
+    synonyms: ["reverse proxy"]
+    questions: ["포워드 프록시와 리버스 프록시는 누구를 대신하나"]
+    code:
+      - { path: k8s/overlays/oci-arm/ingresses/commerce-platform.yaml, symbol: "ingressClassName: nginx", note: "서브도메인별 host 규칙을 nginx 인그레스가 받는다" }
+      - { path: k8s/overlays/oci-arm/ingresses/commerce-platform.yaml, symbol: "- path: /ws", note: "FE 호스트의 /api · /ws · /sse 를 게이트웨이로 넘기는 ingress 경로" }
+    uses:
+      - infra-ingress
+      - { to: cloudflare, reason: "proxied DNS 의 엣지가 오리진 앞에서 요청을 받는다" }
+    flows_to: [api-gateway]
+  - id: api-gateway
+    kind: MECHANISM
+    name: "API 게이트웨이"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "모든 API 요청이 지나는 단일 진입점. 경로별 라우팅에 인증 · 속도 제한 · 공통 헤더 같은 횡단 관심사를 얹는다"
+    synonyms: ["API gateway"]
+    questions: ["API 게이트웨이와 리버스 프록시는 무엇이 같고 무엇이 다른가"]
+    code:
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/config/GatewayRouteConfig.kt, symbol: "class GatewayRouteConfig(", note: "경로별 라우트와 인증 필터 조합" }
+    uses: [reverse-proxy, service-discovery, rate-limiting, jwt]
+  - id: load-balancer
+    kind: MECHANISM
+    name: "로드 밸런서"
+    category: NETWORK
+    level: BEGINNER
+    description: "요청을 여러 인스턴스에 나눠 보낸다. 라운드 로빈 · 최소 연결 같은 규칙으로 고르고, 준비되지 않은 인스턴스는 뺀다"
+    synonyms: ["load balancer", "LB"]
+    questions: ["L4 와 L7 로드 밸런서는 무엇을 보고 나누나"]
+    code:
+      - { path: k8s/base/commerce/service.yaml, symbol: "kind: Service", note: "Service 가 Ready 파드들에 요청을 나눈다" }
+    uses: [health-check, infra-k8s-service]
+  - id: service-discovery
+    kind: MECHANISM
+    name: "서비스 디스커버리"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "호출할 서비스 인스턴스의 주소를 실행 시점에 찾는다. 이 레포는 별도 레지스트리(Eureka)를 걷어 내고 쿠버네티스 Service 의 DNS 이름으로 부른다"
+    synonyms: ["service discovery"]
+    questions: ["클라이언트 측 디스커버리와 서버 측 디스커버리는 누가 주소를 고르나"]
+    code:
+      - { path: gateway/src/main/resources/application.yml, symbol: "uri: http://atlas:8089", note: "게이트웨이 라우트가 Service DNS 이름으로 대상을 찾는다" }
+    uses: [infra-k8s-service]
+  - id: infra-cert-renewal
+    kind: MECHANISM
+    name: "인증서 자동 발급 · 갱신"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "ACME 챌린지로 도메인 소유를 증명해 TLS 인증서를 받고, 만료 전에 알아서 다시 받는다"
+    synonyms: ["ACME", "Let's Encrypt"]
+    mitigates:
+      - { to: infra-cert-expiry, reason: "만료 전에 자동으로 다시 발급한다" }
+    uses:
+      - { to: cloudflare, reason: "오리진 인증서와 Authenticated Origin Pull" }
+  - id: infra-cert-expiry
+    kind: PROBLEM
+    name: "인증서 만료"
+    category: SECURITY
+    level: BEGINNER
+    description: "TLS 인증서가 기한을 넘겨 브라우저가 접속을 막는 상태. 손으로 갱신하면 언젠가 잊는다"
+  - id: ingress-nginx
+    kind: TECHNOLOGY
+    name: "ingress-nginx"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "쿠버네티스 Ingress 규칙을 nginx 설정으로 바꿔 실행하는 인그레스 컨트롤러. 더 긴 경로 접두사가 먼저 이긴다"
+    implements:
+      - { to: reverse-proxy, reason: "호스트 · 경로별 Ingress 규칙대로 서비스에 넘긴다" }
+  - id: cert-manager
+    kind: TECHNOLOGY
+    name: "cert-manager"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "쿠버네티스 안에서 인증서 발급 · 갱신을 자동화하는 컨트롤러. 이 레포는 Let's Encrypt HTTP01 ClusterIssuer 를 쓴다"
+    code:
+      - { path: k8s/overlays/oci-arm/cert-manager/cluster-issuer-prod.yaml, symbol: "kind: ClusterIssuer", note: "Let's Encrypt 운영 발급자" }
+    implements:
+      - { to: infra-cert-renewal, reason: "Ingress 주석을 보고 인증서를 받아 Secret 으로 둔다" }
+
+  # ── 컨테이너 오케스트레이션 ───────────────────────────────
+  - id: infra-orchestration
+    kind: STAGE
+    name: "컨테이너 오케스트레이션"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "여러 컨테이너를 노드에 배치하고, 죽으면 다시 띄우고, 부하에 맞춰 수를 조절한다"
+    contains: [health-check, auto-scaler, kubernetes, k3s, infra-resource-contention, infra-cpu-utilization]
+  - id: health-check
+    kind: MECHANISM
+    name: "헬스 체크"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "인스턴스가 살아 있는지(liveness), 요청을 받을 준비가 됐는지(readiness)를 주기적으로 묻는다. 준비 안 된 인스턴스는 트래픽에서 빼고, 죽은 것은 다시 띄운다"
+    synonyms: ["health check", "probe"]
+    questions: ["readiness 실패와 liveness 실패는 각각 무엇을 일으키나", "타임아웃이 너무 짧으면 멀쩡한 파드에 무슨 일이 생기나"]
+    code:
+      - { path: k8s/base/commerce/deployment.yaml, symbol: "path: /actuator/health/readiness", note: "Spring Actuator readiness 를 프로브로 쓴다" }
+      - { path: k8s/overlays/oci-arm/patches/probe-tolerance.yaml, symbol: "readinessProbe:", note: "바쁜 노드에서 느림이 장애로 승격되지 않게 관용도를 올린다" }
+    uses:
+      - infra-probe
+      - { to: spring-boot, reason: "actuator 의 readiness · liveness 엔드포인트" }
+    causes:
+      - { to: infra-deploy-downtime, reason: "타임아웃이 짧으면 부하 순간 멀쩡한 파드의 readiness 가 실패해 엔드포인트가 빈다" }
+  - id: auto-scaler
+    kind: MECHANISM
+    name: "오토 스케일러"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "지표를 보고 인스턴스 수를 자동으로 늘리고 줄인다. 쿠버네티스 HPA 는 CPU 사용률 목표에 맞춰 레플리카 수를 조절한다"
+    synonyms: ["HPA", "Horizontal Pod Autoscaler", "autoscaling"]
+    questions: ["HPA 는 무엇을 보고 레플리카를 몇 개로 정하나", "노드가 하나뿐이면 수평 확장은 무엇에 막히나"]
+    code:
+      - { path: k8s/overlays/prod-k8s/hpa.yaml, symbol: "kind: HorizontalPodAutoscaler", note: "managed K8s 에서 CPU 70% 목표로 레플리카를 조절" }
+    uses: [infra-pod]
+    measured_by: [infra-cpu-utilization]
+  - id: infra-resource-contention
+    kind: PROBLEM
+    name: "노드 자원 경합"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "한 노드의 CPU · 메모리를 여러 파드가 동시에 다투는 상태. 단일 노드에서 전 서비스가 한꺼번에 롤아웃되면 부하가 치솟아 프로브와 터널 같은 다른 파드가 굶는다"
+    causes:
+      - { to: infra-deploy-downtime, reason: "굶은 파드가 제때 대답하지 못해 트래픽에서 빠진다" }
+    measured_by: [infra-cpu-utilization]
+  - id: infra-cpu-utilization
+    kind: METRIC
+    name: "CPU 사용률"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "요청한 CPU 대비 실제로 쓴 비율. HPA 의 목표값이자 노드 경합의 신호다"
+  - id: kubernetes
+    kind: TECHNOLOGY
+    name: "쿠버네티스"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "선언한 상태대로 컨테이너를 배치 · 재시작 · 확장하는 오케스트레이터. 이 레포의 managed K8s 배포 형태(prod-k8s)가 표준 쿠버네티스를 전제한다"
+    synonyms: ["Kubernetes", "K8s"]
+    implements:
+      - { to: infra-rolling-update, reason: "Deployment 의 기본 교체 전략" }
+      - { to: health-check, reason: "readiness · liveness · startup 프로브" }
+      - { to: auto-scaler, reason: "HorizontalPodAutoscaler" }
+      - { to: service-discovery, reason: "Service 이름이 클러스터 DNS 로 풀린다" }
+      - { to: load-balancer, reason: "Service 가 Ready 엔드포인트에 요청을 나눈다" }
+  - id: k3s
+    kind: TECHNOLOGY
+    name: "k3s"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "바이너리 하나로 도는 경량 쿠버네티스 배포판. 이 레포 운영(oci-arm)은 OCI Ampere A1 무료 범위(4 OCPU · 24GB) 단일 노드 k3s 위에서 돈다"
+    code:
+      - { path: k8s/overlays/oci-arm/README.md, symbol: "Single-node k3s 배포용 overlay", note: "운영 배포 형태가 단일 노드 k3s 다" }
+    implements:
+      - { to: infra-rolling-update, reason: "쿠버네티스 API 를 그대로 제공해 Deployment 전략이 같게 돈다" }
+      - { to: health-check, reason: "같은 프로브 규격" }
+
+  # ── 용어 ──────────────────────────────────────────────────
+  - id: infra-glossary
+    kind: TERM
+    name: "인프라 용어 사전"
+    category: BASICS
+    level: BEGINNER
+    description: "배포와 클러스터를 읽는 데 필요한 말. 단계 · 장치가 아니라 그것을 설명하는 이름과 산출물을 모은다"
+    synonyms: ["glossary", "용어집"]
+    contains: [infra-glossary-image, infra-glossary-cluster]
+  - id: infra-glossary-image
+    kind: TERM
+    name: "이미지 · 구성 용어"
+    category: BASICS
+    level: BEGINNER
+    description: "무엇을 배포하고 어떻게 선언하는지에 관한 말"
+    contains: [infra-container-image, infra-image-registry, infra-desired-state, infra-overlay]
+  - id: infra-container-image
+    kind: TERM
+    name: "컨테이너 이미지"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "실행에 필요한 파일 시스템과 실행 명령을 읽기 전용 레이어로 쌓은 산출물. 태그로 버전을 가리키고, 같은 태그를 덮어쓰지 않아야 롤백이 된다"
+    synonyms: ["container image", "OCI image"]
+  - id: infra-image-registry
+    kind: TERM
+    name: "이미지 레지스트리"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "이미지를 올리고 받는 저장소. 이 레포는 OCI 레지스트리(OCIR)에 arm64 이미지를 올린다"
+    synonyms: ["container registry", "OCIR"]
+  - id: infra-desired-state
+    kind: TERM
+    name: "원하는 상태"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "파일로 선언한, 클러스터가 가져야 할 상태. 컨트롤러는 실제 상태를 이것에 맞추는 루프를 끝없이 돈다"
+    synonyms: ["desired state", "선언 상태"]
+  - id: infra-overlay
+    kind: TERM
+    name: "오버레이"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "공통 베이스 매니페스트 위에 환경별 차이만 패치로 겹친 층. 배포 형태(k3s-lite · oci-arm · prod-k8s)마다 하나다"
+    synonyms: ["overlay"]
+  - id: infra-glossary-cluster
+    kind: TERM
+    name: "클러스터 용어"
+    category: BASICS
+    level: BEGINNER
+    description: "쿠버네티스 안에서 무엇이 돌고 요청이 어디로 들어오는지에 관한 말"
+    contains: [infra-pod, infra-k8s-service, infra-ingress, infra-probe]
+  - id: infra-pod
+    kind: TERM
+    name: "파드"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "쿠버네티스가 배치하는 가장 작은 단위. 네트워크와 볼륨을 공유하는 컨테이너 묶음이고, 교체될 때 주소가 바뀐다"
+    synonyms: ["Pod"]
+  - id: infra-k8s-service
+    kind: TERM
+    name: "Service"
+    category: NETWORK
+    level: BEGINNER
+    description: "바뀌는 파드 주소 앞에 고정된 이름과 가상 IP 를 두는 쿠버네티스 객체. 레이블로 고른 Ready 파드들에 요청을 나눈다"
+    synonyms: ["쿠버네티스 서비스", "ClusterIP"]
+  - id: infra-ingress
+    kind: TERM
+    name: "Ingress"
+    category: NETWORK
+    level: BEGINNER
+    description: "클러스터 밖의 HTTP 요청을 호스트 · 경로 규칙으로 Service 에 잇는 쿠버네티스 객체. 규칙만 적고 실제 처리는 인그레스 컨트롤러가 한다"
+    synonyms: ["인그레스"]
+  - id: infra-probe
+    kind: TERM
+    name: "프로브"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "kubelet 이 컨테이너 상태를 묻는 규칙. startup(기동 완료) · readiness(트래픽 수신 가능) · liveness(살아 있음) 셋이고, 주기 · 타임아웃 · 연속 실패 허용치를 갖는다"
+    synonyms: ["probe", "readinessProbe", "livenessProbe", "startupProbe"]

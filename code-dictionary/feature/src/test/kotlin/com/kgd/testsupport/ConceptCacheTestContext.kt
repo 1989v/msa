@@ -3,7 +3,9 @@ package com.kgd.testsupport
 import com.kgd.codedictionary.application.concept.port.ConceptEdgeRepositoryPort
 import com.kgd.codedictionary.application.concept.port.ConceptRepositoryPort
 import com.kgd.codedictionary.application.concept.service.ConceptService
+import com.kgd.codedictionary.application.graph.port.ConceptAtlasQueryPort
 import com.kgd.codedictionary.application.graph.port.ConceptEvidenceQueryPort
+import com.kgd.codedictionary.application.ontology.port.OntologySourcePort
 import com.kgd.codedictionary.application.graph.service.GraphService
 import com.kgd.codedictionary.application.index.port.ConceptIndexRepositoryPort
 import io.mockk.mockk
@@ -51,4 +53,11 @@ open class ConceptCacheTestContext {
     // 같은 패키지의 ConceptRelationsService 생성자 의존 — 이 테스트는 관계를 안 부른다
     @Bean
     open fun conceptEvidenceQueryPort(): ConceptEvidenceQueryPort = mockk(relaxed = false)
+
+    // 같은 패키지의 ConceptAtlasService 생성자 의존 — 이 테스트는 아틀라스를 안 부른다
+    @Bean
+    open fun conceptAtlasQueryPort(): ConceptAtlasQueryPort = mockk(relaxed = false)
+
+    @Bean
+    open fun ontologySourcePort(): OntologySourcePort = mockk(relaxed = false)
 }

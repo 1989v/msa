@@ -1,0 +1,541 @@
+# 데이터 저장 온톨로지 — 원본은 이 파일이다 (ADR-0100, docs/specs/2026-09-24-concept-atlas).
+# 바꾸면 manifest.yaml 의 revision 을 올린다. 간선은 from 개념에만 적는다.
+domain: data
+root: data-storage
+concepts:
+  - id: data-storage
+    kind: DOMAIN
+    name: "데이터 저장"
+    category: DATA
+    level: BEGINNER
+    description: "애플리케이션이 데이터를 잃지 않고, 동시에 고쳐도 깨지지 않고, 빨리 읽히게 저장하는 일. 저장소 선택 · 트랜잭션 · 동시 갱신 · 인덱스 · 스키마 변경 · 매핑 · 커넥션 · 캐시로 나눠 읽는다"
+    synonyms: ["persistence", "영속성", "데이터베이스"]
+    contains: [data-store-selection, data-transaction-management, data-concurrency-control, data-indexing, data-schema-migration, data-object-mapping, data-connection-management, data-caching-strategy, data-glossary]
+
+  # ── 저장소 선택 ─────────────────────────────────────────
+  - id: data-store-selection
+    kind: STAGE
+    name: "저장소 선택"
+    category: DATA
+    level: BEGINNER
+    description: "데이터의 모양과 읽는 방식에 맞춰 저장소를 고른다. 정합성이 중요한 원장은 관계형, 자주 읽는 값은 인메모리, 대량 집계는 컬럼 지향 저장소가 맞다"
+    questions: ["주문 원장과 이벤트 로그를 같은 저장소에 두지 않는 이유는 무엇인가"]
+    contains: [mysql, redis, clickhouse]
+    flows_to: [data-schema-migration]
+  - id: mysql
+    kind: TECHNOLOGY
+    name: "MySQL"
+    category: DATA
+    level: BEGINNER
+    description: "이 레포의 관계형 저장소(8.0, InnoDB). 도메인마다 스키마를 따로 두고 서비스 간에 공유하지 않는다. InnoDB 는 B-트리 인덱스 · MVCC · redo 로그(WAL)로 트랜잭션을 보장한다"
+    code:
+      - { path: k8s/infra/local/mysql/statefulset.yaml, symbol: "image: mysql:8.0", note: "로컬·운영 공통 단일 인스턴스 StatefulSet" }
+    implements:
+      - { to: data-mvcc, reason: "InnoDB 가 undo 로그로 행의 옛 버전을 남겨 일관된 읽기를 준다" }
+      - { to: write-ahead-log, reason: "InnoDB redo 로그가 커밋 전에 먼저 기록된다" }
+      - { to: b-tree, reason: "InnoDB 의 클러스터드 · 보조 인덱스가 B+트리다" }
+      - { to: replication, reason: "binlog 복제" }
+  - id: redis
+    kind: TECHNOLOGY
+    name: "Redis"
+    category: DATA
+    level: BEGINNER
+    description: "인메모리 키-값 저장소. 이 레포에서는 점수 캐시 · 재고 선차감 · 추천 결과(sorted set) · 레이트 리밋 카운터에 쓴다"
+    code:
+      - { path: k8s/infra/local/redis/statefulset.yaml, symbol: "image: redis:7.4-alpine", note: "standalone 단일 인스턴스" }
+    implements:
+      - { to: caching, reason: "자주 읽는 값을 메모리에 두어 DB 조회를 건너뛴다" }
+      - { to: data-ttl-expiration, reason: "키마다 만료 시간을 걸 수 있다" }
+      - { to: skip-list, reason: "정렬 집합(ZSET)이 스킵 리스트로 되어 있다" }
+  - id: clickhouse
+    kind: TECHNOLOGY
+    name: "ClickHouse"
+    category: DATA
+    level: INTERMEDIATE
+    description: "컬럼 지향 분석용 저장소. 행 단위 갱신 대신 대량 적재와 집계에 맞다. 이 레포에서는 analytics 가 이벤트를 쌓고 recommendation 이 읽기만 한다"
+    code:
+      - { path: analytics/app/src/main/kotlin/com/kgd/analytics/infrastructure/persistence/EventRepositoryAdapter.kt, symbol: "INSERT INTO analytics.events", note: "수집 이벤트를 ClickHouse 에 적재" }
+    alternative_to:
+      - { to: mysql, reason: "집계 질의는 컬럼 지향이, 행 단위 갱신 · 트랜잭션은 관계형이 맞다" }
+
+  # ── 트랜잭션 관리 ───────────────────────────────────────
+  - id: data-transaction-management
+    kind: STAGE
+    name: "트랜잭션 관리"
+    category: DATA
+    level: INTERMEDIATE
+    description: "여러 변경을 한 단위로 묶어 전부 반영하거나 전부 취소한다. 격리 수준을 정해 동시에 도는 트랜잭션끼리 무엇이 보이는지 정한다"
+    questions: ["트랜잭션 경계 안에서 외부 API 를 부르면 무엇이 문제인가", "READ COMMITTED 와 REPEATABLE READ 는 무엇이 다른가"]
+    contains: [data-isolation-level, data-mvcc, write-ahead-log, data-read-anomaly]
+    uses: [acid, data-transaction]
+    flows_to: [data-concurrency-control]
+  - id: data-isolation-level
+    kind: MECHANISM
+    name: "격리 수준"
+    category: DATA
+    level: INTERMEDIATE
+    description: "동시에 도는 트랜잭션이 서로의 변경을 얼마나 보는지 고르는 설정. READ UNCOMMITTED · READ COMMITTED · REPEATABLE READ(MySQL 기본) · SERIALIZABLE 순으로 이상 현상이 줄고 동시성이 준다"
+    synonyms: ["isolation level", "트랜잭션 격리 수준"]
+    questions: ["MySQL 기본 격리 수준에서 팬텀 읽기가 거의 안 보이는 이유는 무엇인가"]
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/application/ledger/service/LedgerService.kt, symbol: "isolation = Isolation.READ_COMMITTED", note: "원장 충전 트랜잭션의 격리 수준을 명시" }
+    uses: [data-dirty-read, data-non-repeatable-read, data-phantom-read]
+    mitigates: [data-read-anomaly]
+  - id: data-mvcc
+    kind: MECHANISM
+    name: "MVCC"
+    category: DATA
+    level: ADVANCED
+    description: "행의 여러 버전을 남겨 읽기는 잠금 없이 자기 시점의 스냅샷을 보게 한다. 읽기와 쓰기가 서로를 막지 않는다"
+    synonyms: ["Multi-Version Concurrency Control", "다중 버전 동시성 제어"]
+    questions: ["MVCC 에서 일반 SELECT 와 SELECT ... FOR UPDATE 는 무엇을 다르게 읽는가"]
+    mitigates: [data-read-anomaly]
+  - id: write-ahead-log
+    kind: MECHANISM
+    name: "WAL"
+    category: DATA
+    level: ADVANCED
+    description: "데이터 페이지를 고치기 전에 변경 내용을 로그에 먼저 순차 기록한다. 장애 뒤에 로그를 다시 적용해 커밋된 변경을 복구하므로 ACID 의 지속성을 만든다"
+    synonyms: ["Write-Ahead Log", "선행 기록 로그", "redo log"]
+    questions: ["WAL 이 랜덤 쓰기를 순차 쓰기로 바꾸는 이유는 무엇인가"]
+    uses: [acid]
+  - id: data-read-anomaly
+    kind: PROBLEM
+    name: "읽기 이상 현상"
+    category: DATA
+    level: INTERMEDIATE
+    description: "격리가 약할 때 다른 트랜잭션의 변경이 섞여 보이는 상태. 더티 리드 · 반복 불가능한 읽기 · 팬텀 읽기가 있다"
+    synonyms: ["read phenomena"]
+
+  # ── 동시 갱신 제어 ──────────────────────────────────────
+  - id: data-concurrency-control
+    kind: STAGE
+    name: "동시 갱신 제어"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "같은 행을 여러 요청이 동시에 고칠 때 한쪽 변경이 사라지지 않게 한다. 충돌이 드물면 낙관적 락, 잦거나 실패 비용이 크면 비관적 락을 고른다"
+    questions: ["재고 차감과 쿠폰 사용에 서로 다른 락을 고르는 기준은 무엇인가"]
+    contains: [optimistic-lock, pessimistic-lock, data-lock-ordering, data-skip-locked, data-lost-update, deadlock]
+    flows_to: [data-indexing]
+  - id: optimistic-lock
+    kind: MECHANISM
+    name: "낙관적 락"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "잠그지 않고 읽은 뒤, 저장할 때 버전 컬럼이 그대로인지 비교한다. 다르면 예외를 내고 재시도한다. 충돌이 드문 갱신에 맞다"
+    synonyms: ["optimistic locking", "@Version"]
+    questions: ["낙관적 락이 실패했을 때 누가 재시도를 책임져야 하는가"]
+    code:
+      - { path: promotion/feature/src/main/kotlin/com/kgd/promotion/infrastructure/persistence/coupon/entity/UserCouponJpaEntity.kt, symbol: "@Version @Column(nullable = false)", note: "한 쿠폰을 두 주문이 동시에 보류하면 한쪽이 진다" }
+      - { path: seller/feature/src/main/kotlin/com/kgd/seller/infrastructure/persistence/seller/entity/SellerJpaEntity.kt, symbol: "@Version", note: "판매자 행 버전 컬럼" }
+    mitigates:
+      - data-lost-update
+      - { to: race-condition, reason: "DB 행 단위에서 늦게 쓴 쪽을 실패시킨다" }
+    alternative_to:
+      - { to: pessimistic-lock, reason: "충돌이 드물면 잠금 대기 없이 버전 비교로 끝난다" }
+  - id: pessimistic-lock
+    kind: MECHANISM
+    name: "비관적 락"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "읽는 시점에 행을 잠가(SELECT ... FOR UPDATE) 다른 트랜잭션의 수정을 커밋까지 막는다. 충돌이 잦거나 한 번의 실패가 비싼 차감에 맞다"
+    synonyms: ["pessimistic locking", "SELECT FOR UPDATE", "PESSIMISTIC_WRITE"]
+    questions: ["비관적 락을 건 트랜잭션이 길어지면 무엇이 먼저 고갈되는가"]
+    code:
+      - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/infrastructure/persistence/inventory/repository/InventoryJpaRepository.kt, symbol: "fun findByIdForUpdate(", note: "재고 행을 PESSIMISTIC_WRITE 로 잠가 읽는다" }
+    mitigates:
+      - data-lost-update
+      - { to: race-condition, reason: "DB 행 단위에서 먼저 잡은 쪽만 쓰게 한다" }
+    causes:
+      - { to: deadlock, reason: "두 트랜잭션이 서로가 잡은 행을 기다리면 교착된다" }
+  - id: data-lock-ordering
+    kind: MECHANISM
+    name: "잠금 순서 고정"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "여러 행을 잠글 때 항상 같은 순서(예: id 오름차순)로 잠근다. 서로 반대 순서로 잠가 생기는 교착을 구조적으로 없앤다"
+    synonyms: ["lock ordering"]
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/infrastructure/persistence/ledger/repository/LedgerJpaRepositories.kt, symbol: "fun lockAllByIdOrdered(", note: "원장 계정을 id 순으로 잠근다" }
+    mitigates: [deadlock]
+  - id: data-skip-locked
+    kind: MECHANISM
+    name: "SKIP LOCKED 작업 나눠 갖기"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "FOR UPDATE SKIP LOCKED 로 이미 잠긴 행은 건너뛰고 나머지만 가져간다. 여러 워커가 같은 테이블을 큐처럼 나눠 처리할 때 서로 기다리지 않는다"
+    synonyms: ["FOR UPDATE SKIP LOCKED"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/messaging/outbox/OutboxRepository.kt, symbol: "FOR UPDATE SKIP LOCKED", note: "아웃박스 릴레이가 발행할 행을 나눠 집는다" }
+  - id: data-lost-update
+    kind: PROBLEM
+    name: "갱신 손실"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "두 요청이 같은 값을 읽고 각자 고쳐 쓰면 먼저 쓴 변경이 사라진다. 재고 · 잔액 · 쿠폰처럼 읽고-고치고-쓰는 흐름에서 생긴다"
+    synonyms: ["lost update"]
+  # ── 인덱스 설계 ─────────────────────────────────────────
+  - id: data-indexing
+    kind: STAGE
+    name: "인덱스 설계"
+    category: DATA
+    level: INTERMEDIATE
+    description: "자주 쓰는 조건 · 정렬에 맞춰 인덱스를 만들어 조회가 테이블 전체를 읽지 않게 한다. 인덱스가 늘면 쓰기와 저장 공간 비용이 는다"
+    questions: ["인덱스를 걸었는데도 쓰이지 않는 조건 세 가지는 무엇인가"]
+    contains: [b-tree, data-composite-index, data-full-table-scan, data-query-latency]
+    uses: [data-cardinality]
+    flows_to: [data-object-mapping]
+  - id: b-tree
+    kind: MECHANISM
+    name: "B-트리"
+    category: DATA_STRUCTURE
+    level: ADVANCED
+    description: "노드 하나에 키를 여러 개 담아 높이를 낮게 유지하는 자기 균형 탐색 트리. 디스크 페이지 단위로 읽기에 맞아 관계형 DB 인덱스의 기본 구조가 된다(InnoDB 는 잎에만 데이터를 두는 B+트리)"
+    synonyms: ["B-Tree", "B+Tree", "B+트리"]
+    questions: ["이진 탐색 트리 대신 B-트리를 디스크 인덱스로 쓰는 이유는 무엇인가"]
+    affects: [data-query-latency]
+  - id: data-composite-index
+    kind: MECHANISM
+    name: "복합 인덱스"
+    category: DATA
+    level: INTERMEDIATE
+    description: "여러 컬럼을 순서대로 묶은 인덱스. 앞 컬럼부터 조건에 쓰여야 탄다(leftmost prefix). 등치 조건 컬럼을 앞에, 범위 · 정렬 컬럼을 뒤에 둔다"
+    synonyms: ["composite index", "다중 컬럼 인덱스", "leftmost prefix"]
+    code:
+      - { path: blog/feature/src/main/resources/blogdb/migration/V1__blog.sql, symbol: "INDEX idx_blog_post_category (category_id, status, published_at DESC)", note: "카테고리 · 상태 등치 뒤에 발행일 정렬" }
+    uses: [b-tree]
+    mitigates: [data-full-table-scan]
+  - id: data-full-table-scan
+    kind: PROBLEM
+    name: "풀 테이블 스캔"
+    category: DATA
+    level: BEGINNER
+    description: "조건에 맞는 인덱스가 없거나 못 써서 테이블 전체를 읽는 상태. 행이 늘수록 조회 시간이 선형으로 는다"
+    synonyms: ["full table scan"]
+    measured_by: [data-query-latency]
+  - id: data-query-latency
+    kind: METRIC
+    name: "쿼리 지연"
+    category: DATA
+    level: BEGINNER
+    description: "쿼리 하나가 응답하기까지 걸린 시간. 평균보다 P95 · P99 로 보고, 실행 계획(EXPLAIN)과 함께 읽는다"
+    synonyms: ["query latency", "slow query"]
+
+  # ── 스키마 변경 관리 ────────────────────────────────────
+  - id: data-schema-migration
+    kind: STAGE
+    name: "스키마 변경 관리"
+    category: DATA
+    level: INTERMEDIATE
+    description: "테이블 구조 변경을 버전이 붙은 스크립트로 남겨 모든 환경에 같은 순서로 적용한다. 앱은 기동 시 스키마가 엔티티와 맞는지 검증만 한다"
+    questions: ["이미 적용된 마이그레이션 파일을 고치면 어떤 일이 생기는가"]
+    contains: [data-versioned-migration, data-schema-validation, data-schema-drift]
+    flows_to: [data-indexing]
+  - id: data-versioned-migration
+    kind: MECHANISM
+    name: "버전 마이그레이션"
+    category: DATA
+    level: INTERMEDIATE
+    description: "V1, V2 … 순번이 붙은 SQL 을 한 번씩만 적용하고 적용 이력을 스키마 이력 테이블에 남긴다. 적용된 파일은 체크섬으로 잠기므로 고치지 않고 새 버전을 더한다"
+    synonyms: ["schema migration", "DB 마이그레이션"]
+    code:
+      - { path: order/feature/src/main/resources/orderdb/migration/V1__create_orders_table.sql, symbol: "CREATE TABLE IF NOT EXISTS orders", note: "주문 스키마의 첫 버전" }
+    contains: [flyway]
+    mitigates: [data-schema-drift]
+  - id: flyway
+    kind: TECHNOLOGY
+    name: "Flyway"
+    category: DATA
+    level: INTERMEDIATE
+    description: "버전 마이그레이션 도구. 기동 시 안 된 버전만 적용하고 flyway_schema_history 에 기록한다. Spring Boot 4 에서는 자동설정 모듈을 따로 넣어야 실제로 돈다"
+    code:
+      - { path: build.gradle.kts, symbol: "val flywayNotWiredYet", note: "Flyway 자동설정이 빠진 모듈을 빌드에서 막는 게이트" }
+    implements:
+      - { to: data-versioned-migration, reason: "V{n}__*.sql 을 순서대로 한 번씩 적용한다" }
+  - id: data-schema-validation
+    kind: MECHANISM
+    name: "스키마 검증"
+    category: DATA
+    level: BEGINNER
+    description: "ORM 이 스키마를 만들지 않고 엔티티와 실제 테이블이 맞는지만 기동 시에 확인한다(ddl-auto: validate). 스키마 변경의 책임을 마이그레이션 한 곳에 둔다"
+    synonyms: ["ddl-auto validate"]
+    code:
+      - { path: commerce/app/src/main/resources/application.yml, symbol: "ddl-auto: validate", note: "Hibernate 는 검증만, 변경은 Flyway 가" }
+    mitigates: [data-schema-drift]
+  - id: data-schema-drift
+    kind: PROBLEM
+    name: "스키마 불일치"
+    category: DATA
+    level: INTERMEDIATE
+    description: "환경마다 테이블 구조가 달라지거나 엔티티와 테이블이 어긋난 상태. 손으로 고친 운영 DB, 자동 DDL, 적용 뒤 수정한 마이그레이션에서 생긴다"
+    synonyms: ["schema drift"]
+
+  # ── 객체-테이블 매핑 ────────────────────────────────────
+  - id: data-object-mapping
+    kind: STAGE
+    name: "객체-테이블 매핑"
+    category: DATA
+    level: BEGINNER
+    description: "코드의 객체와 DB 의 행을 오가게 한다. ORM 이 SQL 을 대신 만들지만, 언제 몇 번의 쿼리가 나가는지는 여전히 개발자가 알아야 한다"
+    questions: ["지연 로딩이 기본값인데도 N+1 이 생기는 경로는 어디인가"]
+    contains: [orm, data-lazy-loading, data-fetch-join, data-query-builder, n-plus-one, data-queries-per-request]
+    uses: [data-entity, data-persistence-context]
+  - id: orm
+    kind: MECHANISM
+    name: "ORM"
+    category: DATA
+    level: BEGINNER
+    description: "객체와 관계형 테이블을 매핑해 SQL 을 직접 쓰지 않고 객체로 읽고 저장하게 한다. 이 레포는 JPA 엔티티를 infrastructure 에 두고 도메인 모델과 분리한다"
+    synonyms: ["Object-Relational Mapping", "JPA"]
+    code:
+      - { path: seller/feature/src/main/kotlin/com/kgd/seller/infrastructure/persistence/seller/entity/SellerJpaEntity.kt, symbol: "class SellerJpaEntity(", note: "도메인 모델과 분리된 JPA 엔티티" }
+    contains: [hibernate]
+    uses: [data-entity, data-persistence-context]
+  - id: hibernate
+    kind: TECHNOLOGY
+    name: "Hibernate"
+    category: DATA
+    level: INTERMEDIATE
+    description: "JPA 구현체. 영속성 컨텍스트 · 변경 감지 · 지연 로딩 프록시를 제공한다. 이 레포는 스키마 생성을 끄고 검증만 시킨다"
+    implements:
+      - { to: orm, reason: "JPA 명세를 구현한다" }
+      - { to: data-lazy-loading, reason: "연관 엔티티를 프록시로 두고 접근 시에 읽는다" }
+      - { to: data-schema-validation, reason: "ddl-auto=validate 로 엔티티와 테이블을 대조한다" }
+      - { to: sec-parameter-binding, reason: "JPQL 의 값을 바인딩 파라미터로 보낸다" }
+  - id: data-lazy-loading
+    kind: MECHANISM
+    name: "지연 로딩"
+    category: DATA
+    level: INTERMEDIATE
+    description: "연관 엔티티를 처음 접근할 때 읽는다(FetchType.LAZY). 안 쓰는 연관을 읽지 않지만, 목록을 돌며 접근하면 행마다 쿼리가 나간다"
+    synonyms: ["lazy loading", "FetchType.LAZY"]
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/persistence/order/entity/OrderJpaEntity.kt, symbol: "fetch = FetchType.LAZY", note: "주문 → 주문 항목 연관" }
+    causes:
+      - { to: n-plus-one, reason: "목록 N 건을 돌며 연관을 건드리면 N 번 추가 조회한다" }
+  - id: data-fetch-join
+    kind: MECHANISM
+    name: "페치 조인"
+    category: DATA
+    level: INTERMEDIATE
+    description: "연관 엔티티를 한 쿼리의 JOIN 으로 같이 읽는다(JOIN FETCH, @EntityGraph). 컬렉션 페치 조인은 페이징과 함께 쓰면 메모리에서 잘리므로 주의한다"
+    synonyms: ["fetch join", "JOIN FETCH", "@EntityGraph"]
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/persistence/order/repository/OrderJpaRepository.kt, symbol: "JOIN FETCH o.items", note: "주문과 항목을 한 번에 읽는다" }
+      - { path: code-dictionary/feature/src/main/kotlin/com/kgd/codedictionary/infrastructure/persistence/techdomain/repository/TechDomainJpaRepository.kt, symbol: "@EntityGraph(attributePaths = [\"concepts\"])", note: "도메인과 개념 목록을 한 번에" }
+    mitigates: [n-plus-one]
+  - id: data-query-builder
+    kind: MECHANISM
+    name: "타입 안전 쿼리 빌더"
+    category: DATA
+    level: INTERMEDIATE
+    description: "조건이 바뀌는 동적 조회를 문자열 JPQL 대신 컴파일되는 코드로 조립한다. 오타 · 타입 오류가 빌드에서 잡힌다"
+    synonyms: ["dynamic query", "동적 쿼리"]
+    code:
+      - { path: game/feature/src/main/kotlin/com/kgd/game/infrastructure/persistence/catalog/repository/GameQueryRepository.kt, symbol: "class GameQueryRepository(", note: "게임 카탈로그 필터 · 정렬 동적 조회" }
+    contains: [querydsl]
+  - id: querydsl
+    kind: TECHNOLOGY
+    name: "Querydsl"
+    category: DATA
+    level: INTERMEDIATE
+    description: "엔티티에서 Q 타입을 생성해 JPQL 을 코드로 조립하는 라이브러리. JPAQueryFactory 로 쓴다"
+    implements:
+      - { to: data-query-builder, reason: "Q 타입으로 조건 · 정렬을 코드로 조립한다" }
+      - { to: sec-parameter-binding, reason: "쿼리 빌더가 값을 문자열에 붙이지 않고 바인딩한다" }
+  - id: n-plus-one
+    kind: PROBLEM
+    name: "N+1 문제"
+    category: DATA
+    level: INTERMEDIATE
+    description: "목록 1 번 조회 뒤에 각 행의 연관을 읽느라 N 번이 더 나가는 상태. 개발 데이터에서는 안 보이다가 운영 데이터 규모에서 지연으로 드러난다"
+    synonyms: ["N+1 query problem"]
+    questions: ["N+1 을 로그 없이 테스트에서 잡으려면 무엇을 세야 하는가"]
+    measured_by: [data-queries-per-request]
+  - id: data-queries-per-request
+    kind: METRIC
+    name: "요청당 쿼리 수"
+    category: DATA
+    level: BEGINNER
+    description: "요청 하나가 DB 에 보낸 쿼리 개수. 결과 행 수에 비례해 늘면 N+1 이다"
+    synonyms: ["query count"]
+
+  # ── 커넥션 관리 ─────────────────────────────────────────
+  - id: data-connection-management
+    kind: STAGE
+    name: "커넥션 관리"
+    category: DATA
+    level: INTERMEDIATE
+    description: "DB 연결을 만들고 나눠 쓰고 돌려받는다. 연결은 비싸고 DB 쪽 한도가 있으므로 풀 크기 · 대기 시간 · 트랜잭션 길이를 함께 본다"
+    questions: ["풀 크기를 늘리는 것이 항상 처리량을 늘리지 않는 이유는 무엇인가"]
+    contains: [connection-pool, data-read-replica-routing, data-pool-exhaustion, data-replication-lag, data-pool-wait-time]
+  - id: connection-pool
+    kind: MECHANISM
+    name: "커넥션 풀"
+    category: DATA
+    level: INTERMEDIATE
+    description: "DB 연결을 미리 만들어 두고 빌려 쓰고 돌려준다. 요청마다 TCP · 인증 비용을 내지 않는다. 풀이 비면 요청은 연결이 돌아올 때까지 기다린다"
+    synonyms: ["connection pool", "DB 커넥션 풀"]
+    code:
+      - { path: commerce/app/src/main/resources/application.yml, symbol: "maximum-pool-size: 5", note: "폴드 도메인마다 작은 풀을 따로 둔다" }
+    contains: [hikaricp]
+    affects: [data-pool-wait-time]
+  - id: hikaricp
+    kind: TECHNOLOGY
+    name: "HikariCP"
+    category: DATA
+    level: INTERMEDIATE
+    description: "Spring Boot 기본 JDBC 커넥션 풀. maximum-pool-size · minimum-idle · connection-timeout 으로 조절한다"
+    implements:
+      - { to: connection-pool, reason: "JDBC 커넥션을 풀로 관리한다" }
+  - id: data-read-replica-routing
+    kind: MECHANISM
+    name: "읽기 복제본 라우팅"
+    category: DATA
+    level: ADVANCED
+    description: "읽기 전용 트랜잭션은 복제본으로, 쓰기는 원본으로 보낸다. 원본의 부하를 덜지만 방금 쓴 값을 복제본에서 못 볼 수 있다"
+    synonyms: ["read replica", "master/replica routing"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/persistence/ReadReplicaRoutingDataSource.kt, symbol: "class ReadReplicaRoutingDataSource", note: "readOnly 트랜잭션이면 REPLICA 로 보낸다" }
+    causes:
+      - { to: data-replication-lag, reason: "복제가 비동기라 원본의 최신 쓰기가 늦게 보인다" }
+    uses:
+      - { to: replication, reason: "읽기 복제본은 원본의 복제로 채워진다" }
+  - id: data-pool-exhaustion
+    kind: PROBLEM
+    name: "커넥션 풀 고갈"
+    category: DATA
+    level: INTERMEDIATE
+    description: "모든 연결이 빌려 나가 새 요청이 타임아웃까지 기다리는 상태. 긴 트랜잭션, 트랜잭션 안의 외부 호출, 잠금 대기가 흔한 원인이다"
+    synonyms: ["connection pool exhaustion"]
+    measured_by: [data-pool-wait-time]
+  - id: data-replication-lag
+    kind: PROBLEM
+    name: "복제 지연"
+    category: DATA
+    level: INTERMEDIATE
+    description: "원본에 커밋된 변경이 복제본에 늦게 반영되는 상태. 쓰고 바로 읽는 화면에서 옛 값이 보인다"
+    synonyms: ["replication lag"]
+    measured_by:
+      - { to: dist-replication-lag, reason: "복제본이 원본보다 몇 초 뒤처졌는지" }
+  - id: data-pool-wait-time
+    kind: METRIC
+    name: "커넥션 대기 시간"
+    category: DATA
+    level: INTERMEDIATE
+    description: "요청이 풀에서 연결을 받기까지 기다린 시간. 0 에서 벗어나면 풀 크기보다 트랜잭션 길이부터 본다"
+    synonyms: ["connection acquire time", "hikaricp_connections_acquire"]
+
+  # ── 캐시 전략 ───────────────────────────────────────────
+  - id: data-caching-strategy
+    kind: STAGE
+    name: "캐시 전략"
+    category: DATA
+    level: INTERMEDIATE
+    description: "자주 읽고 드물게 바뀌는 값을 빠른 저장소에 복사해 둔다. 무엇을 · 얼마나 오래 · 원본이 바뀌면 어떻게 무효화할지를 정한다"
+    questions: ["캐시 TTL 을 길게 잡을 때 치르는 값은 무엇인가"]
+    contains: [caching, data-ttl-expiration, data-stale-cache, data-cache-stampede, cache-hit-rate, redis]
+  - id: caching
+    kind: MECHANISM
+    name: "캐싱"
+    category: DATA
+    level: BEGINNER
+    description: "원본보다 빠른 저장소(메모리 · Redis)에 결과를 보관해 다시 계산 · 조회하지 않는다. 대표 패턴은 먼저 캐시를 보고 없으면 원본을 읽어 채우는 cache-aside 다"
+    synonyms: ["cache", "cache-aside", "캐시"]
+    code:
+      - { path: analytics/app/src/main/kotlin/com/kgd/analytics/infrastructure/cache/ScoreCacheAdapter.kt, symbol: "class ScoreCacheAdapter(", note: "상품 · 키워드 점수를 Redis 에 캐시" }
+    affects: [cache-hit-rate]
+    causes:
+      - { to: data-stale-cache, reason: "원본이 바뀌어도 캐시 사본은 만료 전까지 옛 값이다" }
+  - id: data-ttl-expiration
+    kind: MECHANISM
+    name: "TTL 만료"
+    category: DATA
+    level: BEGINNER
+    description: "캐시 항목에 수명을 걸어 시간이 지나면 저절로 지운다. 무효화 로직 없이 옛 값이 머무는 시간을 상한으로 묶는다"
+    synonyms: ["TTL", "time to live", "expire"]
+    code:
+      - { path: analytics/app/src/main/kotlin/com/kgd/analytics/infrastructure/cache/ScoreCacheAdapter.kt, symbol: "analytics.score.product-cache-ttl", note: "점수 캐시 TTL 기본 7200 초" }
+    mitigates: [data-stale-cache]
+    causes:
+      - { to: data-cache-stampede, reason: "인기 키가 한꺼번에 만료되면 요청이 원본으로 몰린다" }
+  - id: data-stale-cache
+    kind: PROBLEM
+    name: "캐시 불일치"
+    category: DATA
+    level: INTERMEDIATE
+    description: "원본이 바뀌었는데 캐시가 옛 값을 내주는 상태. 가격 · 재고처럼 틀리면 비싼 값일수록 짧은 TTL 이나 쓰기 시 무효화가 필요하다"
+    synonyms: ["stale cache", "cache inconsistency"]
+  - id: data-cache-stampede
+    kind: PROBLEM
+    name: "캐시 스탬피드"
+    category: DATA
+    level: ADVANCED
+    description: "인기 키가 만료된 순간 많은 요청이 동시에 원본을 조회해 DB 가 몰리는 상태. 만료 시각 분산, 한 요청만 재계산하는 잠금으로 막는다"
+    synonyms: ["cache stampede", "thundering herd", "dog-pile"]
+  # ── 용어 사전 ───────────────────────────────────────────
+  - id: data-glossary
+    kind: TERM
+    name: "데이터 저장 용어 사전"
+    category: BASICS
+    level: BEGINNER
+    description: "트랜잭션 · 격리 · ORM 을 읽는 데 필요한 말. 단계 · 장치가 아니라 그것을 설명하는 용어를 모은다"
+    synonyms: ["glossary", "용어집"]
+    contains: [data-transaction, acid, data-dirty-read, data-non-repeatable-read, data-phantom-read, data-entity, data-persistence-context, data-cardinality]
+  - id: data-transaction
+    kind: TERM
+    name: "트랜잭션"
+    category: DATA
+    level: BEGINNER
+    description: "전부 반영(커밋)되거나 전부 취소(롤백)되는 작업 단위"
+    synonyms: ["transaction", "commit", "rollback"]
+  - id: acid
+    kind: TERM
+    name: "ACID"
+    category: DATA
+    level: INTERMEDIATE
+    description: "트랜잭션이 지켜야 할 네 성질. 원자성(전부 아니면 전무) · 일관성(제약을 깨지 않음) · 격리성(동시 실행이 서로 간섭하지 않음) · 지속성(커밋되면 장애 뒤에도 남음)"
+    synonyms: ["Atomicity", "Consistency", "Isolation", "Durability"]
+    questions: ["ACID 의 네 성질 중 WAL 이 직접 책임지는 것은 무엇인가"]
+  - id: data-dirty-read
+    kind: TERM
+    name: "더티 리드"
+    category: DATA
+    level: INTERMEDIATE
+    description: "다른 트랜잭션이 아직 커밋하지 않은 변경을 읽는 것. 그 트랜잭션이 롤백하면 존재한 적 없는 값을 본 셈이 된다"
+    synonyms: ["dirty read"]
+  - id: data-non-repeatable-read
+    kind: TERM
+    name: "반복 불가능한 읽기"
+    category: DATA
+    level: INTERMEDIATE
+    description: "한 트랜잭션 안에서 같은 행을 두 번 읽었는데 그 사이 다른 커밋 때문에 값이 달라지는 것"
+    synonyms: ["non-repeatable read"]
+  - id: data-phantom-read
+    kind: TERM
+    name: "팬텀 읽기"
+    category: DATA
+    level: INTERMEDIATE
+    description: "같은 조건으로 두 번 조회했는데 그 사이 다른 커밋이 행을 넣거나 지워 결과 행 집합이 달라지는 것"
+    synonyms: ["phantom read"]
+  - id: data-entity
+    kind: TERM
+    name: "엔티티(JPA)"
+    category: DATA
+    level: BEGINNER
+    description: "테이블 행에 매핑되는 객체. 식별자(@Id)로 구분되고 영속성 컨텍스트가 상태를 추적한다"
+    synonyms: ["JPA entity", "@Entity"]
+  - id: data-persistence-context
+    kind: TERM
+    name: "영속성 컨텍스트"
+    category: DATA
+    level: INTERMEDIATE
+    description: "트랜잭션 동안 읽은 엔티티를 담아 두는 1차 캐시. 같은 id 는 같은 객체로 돌려주고, 커밋 때 바뀐 필드를 찾아 UPDATE 를 만든다(변경 감지)"
+    synonyms: ["persistence context", "1차 캐시", "dirty checking"]
+  - id: data-cardinality
+    kind: TERM
+    name: "카디널리티"
+    category: DATA
+    level: INTERMEDIATE
+    description: "컬럼 값의 서로 다른 개수. 높을수록 인덱스가 행을 잘 걸러 낸다"
+    synonyms: ["cardinality", "선택도"]

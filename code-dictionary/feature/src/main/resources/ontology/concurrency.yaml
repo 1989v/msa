@@ -1,0 +1,278 @@
+# 동시성 온톨로지 — 원본은 이 파일이다 (ADR-0100, docs/specs/2026-09-24-concept-atlas).
+# 바꾸면 manifest.yaml 의 revision 을 올린다. 간선은 from 개념에만 적는다.
+domain: concurrency
+root: concurrent-programming
+concepts:
+  - id: concurrent-programming
+    kind: DOMAIN
+    name: "동시성"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "한 프로세스 안에서 여러 일을 겹쳐 진행하는 기법. 무엇으로 실행할지 고르고, 기다림을 어떻게 다룰지 정하고, 공유 자원을 어떻게 지킬지 정하는 세 가지 일로 읽는다"
+    synonyms: ["concurrency", "동시성 프로그래밍"]
+    contains: [conc-execution-model, conc-async-handling, conc-synchronization, concurrency-glossary]
+
+  # ── 실행 단위 구성 ──
+  - id: conc-execution-model
+    kind: STAGE
+    name: "실행 단위 구성"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "일을 무엇 위에서 돌릴지 정한다 — OS 스레드를 직접 쓸지, 풀로 재사용할지, 스레드 위에 가벼운 코루틴을 얹을지"
+    questions: ["스레드 1만 개와 코루틴 1만 개는 무엇이 다른가"]
+    contains: [thread, thread-pool, coroutine, conc-resource-exhaustion, conc-throughput]
+    flows_to: [conc-async-handling]
+    measured_by: [conc-throughput]
+  - id: thread
+    kind: MECHANISM
+    name: "스레드"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "프로세스 안에서 독립적으로 실행되는 OS 스케줄링 단위. 메모리는 프로세스와 공유하고 스택은 따로 가진다. 하나당 스택 메모리와 컨텍스트 스위칭 비용이 든다"
+    synonyms: ["thread", "OS thread", "플랫폼 스레드"]
+    questions: ["스레드끼리 공유하는 것과 따로 갖는 것은 무엇인가"]
+    uses: [conc-context-switch]
+    causes: [conc-resource-exhaustion]
+  - id: thread-pool
+    kind: MECHANISM
+    name: "스레드 풀"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "스레드를 미리 정해진 수만큼 만들어 두고 작업 큐에서 꺼내 재사용한다. 생성 비용을 없애고 동시 실행 수에 상한을 건다"
+    synonyms: ["thread pool", "executor"]
+    questions: ["풀 크기는 CPU 작업과 IO 작업에서 각각 어떻게 잡나", "큐가 가득 차면 무슨 일이 생기나"]
+    code:
+      - { path: code-dictionary/feature/src/main/kotlin/com/kgd/codedictionary/infrastructure/config/AsyncConfig.kt, symbol: "fun indexSyncExecutor(): Executor = ThreadPoolTaskExecutor().apply {", note: "색인 동기화를 스레드 1개짜리 풀에서 순서대로 돌린다" }
+    uses: [thread]
+    mitigates: [conc-resource-exhaustion]
+    affects: [conc-throughput]
+  - id: coroutine
+    kind: MECHANISM
+    name: "코루틴"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "중단 지점에서 스스로 멈췄다가 이어서 실행되는 경량 실행 단위. 멈춘 동안 스레드를 놓아 주므로 적은 스레드로 많은 IO 대기를 겹칠 수 있다"
+    synonyms: ["coroutine"]
+    questions: ["코루틴이 멈출 때 스레드는 무엇을 하나"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/discover/GlobalIndicesQuery.kt, symbol: "override suspend fun fetchAll(): List<GlobalIndexQuote> = coroutineScope {", note: "지수 시세를 코루틴 스코프 안에서 병렬로 받는다" }
+    contains: [kotlinx-coroutines]
+    uses: [conc-suspend-function, conc-structured-concurrency]
+    mitigates: [conc-resource-exhaustion]
+    alternative_to:
+      - { to: thread, reason: "IO 대기마다 스레드를 묶지 않아 같은 메모리로 훨씬 많은 동시 작업을 든다" }
+  - id: kotlinx-coroutines
+    kind: TECHNOLOGY
+    name: "kotlinx.coroutines"
+    category: LANGUAGE_FEATURE
+    level: INTERMEDIATE
+    description: "코틀린 코루틴 공식 라이브러리. 스코프·디스패처·Mutex·Semaphore·Flow 를 준다. reactor 어댑터로 WebFlux 의 Mono 와도 잇는다"
+    synonyms: ["Kotlin Coroutines"]
+    code:
+      - { path: gradle/libs.versions.toml, symbol: "org.jetbrains.kotlinx:kotlinx-coroutines-core", note: "버전 카탈로그의 코루틴 코어 의존성" }
+    implements:
+      - { to: coroutine, reason: "suspend 함수와 coroutineScope·launch·async 빌더를 준다" }
+      - { to: async-await, reason: "async 로 시작하고 await 로 결과를 받는다" }
+      - { to: mutex, reason: "kotlinx.coroutines.sync.Mutex 는 스레드를 막지 않고 코루틴만 멈춘다" }
+      - { to: semaphore, reason: "kotlinx.coroutines.sync.Semaphore 의 withPermit 으로 동시 실행 수를 제한한다" }
+  - id: conc-resource-exhaustion
+    kind: PROBLEM
+    name: "자원 고갈"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "요청마다 스레드·커넥션을 새로 잡다가 메모리나 한도가 바닥나 새 작업을 받지 못하는 상태"
+    synonyms: ["resource exhaustion", "thread starvation", "스레드 고갈"]
+  - id: conc-throughput
+    kind: METRIC
+    name: "처리량"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "단위 시간에 끝낸 작업 수. 동시성을 늘리는 목적이고, 경합이 커지면 오히려 줄어든다"
+    synonyms: ["throughput", "TPS"]
+
+  # ── 비동기 처리 ──
+  - id: conc-async-handling
+    kind: STAGE
+    name: "비동기 처리"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "IO 를 기다리는 동안 실행 단위를 막지 않고 다른 일을 하게 한다. 결과를 받는 모양을 순차 코드처럼 쓸지, 데이터 흐름으로 쓸지 고른다"
+    questions: ["블로킹 호출을 이벤트 루프 스레드에서 하면 무슨 일이 생기나"]
+    contains: [async-await, reactive-streams, conc-event-loop-blocking]
+  - id: async-await
+    kind: MECHANISM
+    name: "async/await"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "비동기 작업을 시작해 두고(async) 결과가 필요한 자리에서 기다리는(await) 방식. 콜백 없이 순차 코드 모양으로 여러 IO 를 겹친다"
+    synonyms: ["async await", "Deferred", "Future"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/discover/GlobalIndicesQuery.kt, symbol: "async { quoteOf(cfg.ticker, cfg.name) }", note: "지수마다 async 로 시작해 한꺼번에 기다린다" }
+    uses: [coroutine, conc-suspend-function, conc-blocking-nonblocking]
+    alternative_to:
+      - { to: reactive-streams, reason: "같은 논블로킹을 연산자 체인 대신 순차 코드 모양으로 쓴다" }
+  - id: reactive-streams
+    kind: MECHANISM
+    name: "리액티브 스트림"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "비동기 데이터 흐름을 Publisher·Subscriber 로 잇고, 구독자가 request(n) 으로 받을 양을 알려 백프레셔를 거는 논블로킹 표준. Reactor 의 Mono·Flux 가 구현이다"
+    synonyms: ["Reactive Streams", "Reactor", "Mono", "Flux"]
+    questions: ["request(n) 은 어떻게 생산 속도를 늦추나"]
+    code:
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/filter/ExperimentAssignmentFilter.kt, symbol: "override fun filter(exchange: ServerWebExchange, chain: GatewayFilterChain): Mono<Void> {", note: "게이트웨이 필터가 Mono 체인으로 요청을 넘긴다" }
+    contains: [spring-webflux]
+    uses: [backpressure, conc-blocking-nonblocking]
+  - id: spring-webflux
+    kind: TECHNOLOGY
+    name: "Spring WebFlux"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "Reactor 위의 논블로킹 웹 스택. 적은 이벤트 루프 스레드로 많은 연결을 처리한다. 이 레포의 게이트웨이(Spring Cloud Gateway)가 이 위에서 돌고, 서비스의 WebClient 호출도 이것을 쓴다"
+    synonyms: ["WebFlux", "Reactor Netty"]
+    code:
+      - { path: gradle/libs.versions.toml, symbol: "spring-cloud-starter-gateway-server-webflux", note: "게이트웨이가 쓰는 WebFlux 기반 Spring Cloud Gateway" }
+    implements:
+      - { to: reactive-streams, reason: "핸들러·필터가 Mono·Flux 를 주고받는다" }
+    causes: [conc-event-loop-blocking]
+  - id: conc-event-loop-blocking
+    kind: PROBLEM
+    name: "이벤트 루프 블로킹"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "소수의 이벤트 루프 스레드에서 JDBC·파일 IO 같은 블로킹 호출을 해 그 스레드가 맡은 모든 연결이 함께 멈추는 상태"
+    synonyms: ["blocking the event loop"]
+
+  # ── 동기화 ──
+  - id: conc-synchronization
+    kind: STAGE
+    name: "동기화"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "여러 실행 단위가 같은 자원을 만질 때 순서와 배타를 보장한다. 잠금으로 막을지, 원자 연산으로 잠금 없이 갈지 고른다"
+    questions: ["락 없이 카운터를 안전하게 올리는 방법은 무엇인가"]
+    contains: [mutex, semaphore, atomic-operation, race-condition, deadlock, conc-lock-contention]
+  - id: mutex
+    kind: MECHANISM
+    name: "뮤텍스"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "한 번에 하나만 임계 구역에 들어가게 하는 잠금. 잠근 쪽만 풀 수 있다. 여러 잠금을 순서 없이 잡으면 교착이 생긴다"
+    synonyms: ["mutex", "mutual exclusion", "lock"]
+    questions: ["뮤텍스와 이진 세마포어는 무엇이 다른가"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/fx/BithumbUsdtKrwProxy.kt, symbol: "private val refreshMutex = Mutex()", note: "환율 캐시 갱신을 한 코루틴만 하게 막는다" }
+    uses: [conc-critical-section]
+    mitigates: [race-condition]
+    causes: [deadlock, conc-lock-contention]
+  - id: semaphore
+    kind: MECHANISM
+    name: "세마포어"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "허가(permit) N 개를 두고 동시에 들어갈 수 있는 실행 단위 수를 N 으로 제한한다. 외부 API 동시 호출 상한처럼 자원 수를 맞출 때 쓴다"
+    synonyms: ["semaphore", "counting semaphore"]
+    code:
+      - { path: chatbot/feature/src/main/kotlin/com/kgd/chatbot/infrastructure/ai/ClaudeApiAdapter.kt, symbol: "private val semaphore = Semaphore(properties.ai.maxConcurrent)", note: "LLM API 동시 호출 수를 설정값으로 제한한다" }
+    uses: [conc-critical-section]
+    mitigates: [conc-resource-exhaustion]
+  - id: atomic-operation
+    kind: MECHANISM
+    name: "원자 연산"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "읽기·계산·쓰기를 중간에 끼어들 수 없는 한 동작으로 한다. 카운터 증가처럼 작은 공유 값은 잠금 없이 이것으로 지킨다"
+    synonyms: ["atomic operation", "AtomicLong", "atomic"]
+    code:
+      - { path: recommendation/feature/src/main/kotlin/com/kgd/recommendation/infrastructure/bandit/ThompsonSampler.kt, symbol: "ConcurrentHashMap<String, AtomicLong>()", note: "변형별 성공·실패 횟수를 AtomicLong 으로 잠금 없이 센다" }
+    contains: [compare-and-swap]
+    uses: [conc-memory-visibility]
+    mitigates: [race-condition]
+  - id: compare-and-swap
+    kind: MECHANISM
+    name: "CAS"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "메모리 값이 기대값과 같을 때만 새 값으로 바꾸는 CPU 원자 명령. 실패하면 다시 읽고 재시도한다. 락-프리 자료구조와 원자 변수가 이 위에 선다"
+    synonyms: ["compare-and-swap", "compareAndSet", "CAS"]
+    questions: ["ABA 문제는 무엇이고 어떻게 막나"]
+    mitigates: [conc-lock-contention]
+    alternative_to:
+      - { to: mutex, reason: "스레드를 재우지 않고 실패 시 재시도하는 락-프리 방식이다" }
+  - id: race-condition
+    kind: PROBLEM
+    name: "레이스 컨디션"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "여러 실행 단위가 공유 자원을 동시에 읽고 쓰는 순서에 따라 결과가 달라지는 상태. 확인 후 실행(check-then-act)이 대표 모양이다"
+    synonyms: ["race condition", "경쟁 상태"]
+    questions: ["check-then-act 가 왜 경쟁 상태를 만드나"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/messaging/IdempotentEventHandler.kt, symbol: "Outcome.RACE", note: "두 인스턴스가 같은 이벤트를 동시에 처리하면 PK 충돌로 한쪽만 남기고 RACE 로 돌려준다" }
+  - id: deadlock
+    kind: PROBLEM
+    name: "데드락"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "둘 이상의 실행 단위가 서로가 쥔 자원을 기다리며 영원히 멈춘 상태. 상호 배제·점유 대기·비선점·순환 대기 네 조건이 모두 있을 때 생기고, 잠금 순서를 고정하면 순환 대기가 깨진다. DB 에서는 InnoDB 가 감지해 한쪽 트랜잭션을 롤백한다"
+    synonyms: ["deadlock", "교착 상태"]
+    questions: ["교착 네 조건 중 무엇을 깨기가 가장 쉬운가"]
+  - id: conc-lock-contention
+    kind: PROBLEM
+    name: "락 경합"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "여러 실행 단위가 같은 잠금을 잡으려 몰려 대부분이 기다리는 데 시간을 쓰는 상태. 코어를 늘려도 처리량이 오르지 않는다"
+    synonyms: ["lock contention"]
+
+  # ── 용어 ──
+  - id: concurrency-glossary
+    kind: TERM
+    name: "동시성 용어 사전"
+    category: BASICS
+    level: BEGINNER
+    description: "동시성을 읽는 데 필요한 말. 장치가 아니라 장치를 설명하는 용어를 모은다"
+    synonyms: ["glossary", "용어집"]
+    contains: [conc-critical-section, conc-context-switch, conc-blocking-nonblocking, conc-suspend-function, conc-structured-concurrency, conc-memory-visibility]
+  - id: conc-critical-section
+    kind: TERM
+    name: "임계 구역"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "공유 자원을 만지는 코드 구간. 동시에 하나(또는 정해진 수)만 들어가야 결과가 맞는다"
+    synonyms: ["critical section"]
+  - id: conc-context-switch
+    kind: TERM
+    name: "컨텍스트 스위칭"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "CPU 가 실행 중인 스레드의 레지스터·스택 상태를 저장하고 다른 스레드 상태로 바꾸는 일. 스레드가 많을수록 이 비용이 커진다"
+    synonyms: ["context switch"]
+  - id: conc-blocking-nonblocking
+    kind: TERM
+    name: "블로킹 · 논블로킹"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "호출이 결과가 나올 때까지 실행 단위를 붙잡으면 블로킹, 곧바로 돌아오고 결과는 나중에 받으면 논블로킹이다. 동기·비동기는 결과를 누가 챙기느냐의 다른 축이다"
+    synonyms: ["blocking", "non-blocking"]
+  - id: conc-suspend-function
+    kind: TERM
+    name: "suspend 함수"
+    category: LANGUAGE_FEATURE
+    level: INTERMEDIATE
+    description: "코틀린에서 실행 중 멈췄다가 이어질 수 있는 함수. 컴파일러가 이어서 실행할 지점(continuation)을 인자로 넘기는 모양으로 바꾼다"
+    synonyms: ["suspend fun", "suspending function"]
+  - id: conc-structured-concurrency
+    kind: TERM
+    name: "구조화된 동시성"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "자식 작업의 수명이 그것을 연 스코프 안에 갇힌다는 원칙. 스코프는 자식이 모두 끝나야 끝나고, 하나가 실패하면 형제를 취소한다"
+    synonyms: ["structured concurrency", "coroutineScope"]
+  - id: conc-memory-visibility
+    kind: TERM
+    name: "메모리 가시성"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "한 스레드가 쓴 값이 다른 스레드에 언제 보이는지의 문제. CPU 캐시·재배치 때문에 volatile·원자 변수·잠금 같은 happens-before 관계가 없으면 보장되지 않는다"
+    synonyms: ["memory visibility", "happens-before", "volatile"]

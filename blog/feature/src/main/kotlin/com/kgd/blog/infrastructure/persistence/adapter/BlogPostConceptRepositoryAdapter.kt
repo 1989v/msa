@@ -23,4 +23,7 @@ class BlogPostConceptRepositoryAdapter(
     override fun deleteByPostId(postId: Long) {
         jpaRepository.deleteAllOfPost(postId)
     }
+
+    override fun countPublishedByConcept(): Map<String, Long> =
+        jpaRepository.countPublishedByConcept().associate { (it[0] as String) to (it[1] as Number).toLong() }
 }

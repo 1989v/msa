@@ -237,4 +237,13 @@ interface BlogPostConceptJpaRepository : JpaRepository<BlogPostConceptJpaEntity,
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM BlogPostConceptJpaEntity c WHERE c.postId = :postId")
     fun deleteAllOfPost(@Param("postId") postId: Long): Int
+
+    @Query(
+        """
+        SELECT c.conceptId, COUNT(c) FROM BlogPostConceptJpaEntity c, BlogPostJpaEntity p
+        WHERE p.id = c.postId AND p.status = com.kgd.blog.domain.model.PostStatus.PUBLISHED
+        GROUP BY c.conceptId
+        """,
+    )
+    fun countPublishedByConcept(): List<Array<Any>>
 }

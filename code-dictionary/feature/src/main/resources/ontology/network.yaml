@@ -1,0 +1,277 @@
+# 네트워크 온톨로지 — 원본은 이 파일이다 (ADR-0100, docs/specs/2026-09-24-concept-atlas).
+# 바꾸면 manifest.yaml 의 revision 을 올린다. 간선은 from 개념에만 적는다.
+domain: network
+root: network
+concepts:
+  - id: network
+    kind: DOMAIN
+    name: "네트워크"
+    category: NETWORK
+    level: BEGINNER
+    description: "브라우저의 요청이 이름 해석 · 전송 · 암호화 · 엣지 라우팅을 거쳐 서비스에 닿고 응답이 돌아오는 경로. 단계 순서대로 읽으면 요청 하나가 지나가는 길이 된다"
+    synonyms: ["networking", "네트워킹"]
+    contains: [net-name-resolution, net-transport, net-secure-channel, net-edge-routing, net-request-response, net-realtime-push, network-glossary]
+
+  # ── 이름 해석 ──
+  - id: net-name-resolution
+    kind: STAGE
+    name: "이름 해석"
+    category: NETWORK
+    level: BEGINNER
+    description: "도메인 이름을 연결할 IP 로 바꾼다. 요청이 출발하기 전 첫 단계다"
+    contains: [dns]
+    flows_to: [net-transport]
+  - id: dns
+    kind: MECHANISM
+    name: "DNS"
+    category: NETWORK
+    level: BEGINNER
+    description: "도메인 이름을 IP 주소로 바꾸는 계층형 조회 체계. 레코드마다 TTL 이 있어 바꾼 값이 퍼지는 데 시간이 걸린다. 클러스터 안에서는 CoreDNS 가 서비스 이름을 풀고, 규칙으로 바깥 이름을 안쪽 서비스로 돌려 쓸 수도 있다"
+    synonyms: ["Domain Name System"]
+    questions: ["A 레코드와 CNAME 은 어떻게 다른가", "DNS 를 바꿨는데 바로 반영되지 않는 이유는 무엇인가"]
+    code:
+      - { path: k8s/overlays/oci-arm/coredns-custom.yaml, symbol: "rewrite name mysql.1989v.com", note: "공개 호스트 이름을 클러스터 서비스 FQDN 으로 돌리는 CoreDNS rewrite" }
+
+  # ── 전송 ──
+  - id: net-transport
+    kind: STAGE
+    name: "전송"
+    category: NETWORK
+    level: BEGINNER
+    description: "두 호스트 사이에 바이트를 나른다. 순서 · 재전송을 보장할지(TCP), 가볍게 보낼지(UDP)를 고른다"
+    contains: [tcp, udp, net-rtt]
+    flows_to: [net-secure-channel]
+  - id: tcp
+    kind: MECHANISM
+    name: "TCP"
+    category: NETWORK
+    level: BEGINNER
+    description: "3-way 핸드셰이크로 연결을 맺고 순서 보장 · 재전송 · 흐름 제어를 하는 전송 프로토콜. HTTP/1.1 · HTTP/2 · WebSocket 이 이 위에서 돈다. 연결을 새로 맺을 때마다 왕복 한 번이 든다"
+    synonyms: ["Transmission Control Protocol"]
+    questions: ["3-way 핸드셰이크는 왜 세 번인가", "커넥션 재사용(keep-alive)이 지연을 줄이는 이유는 무엇인가"]
+    uses: [net-term-handshake]
+    affects: [net-rtt]
+  - id: udp
+    kind: MECHANISM
+    name: "UDP"
+    category: NETWORK
+    level: BEGINNER
+    description: "연결 없이 데이터그램을 보내는 전송 프로토콜. 순서 · 도착을 보장하지 않는 대신 지연이 작아 DNS 조회 · 스트리밍 · QUIC 이 쓴다"
+    synonyms: ["User Datagram Protocol"]
+    questions: ["UDP 위에서 신뢰성이 필요하면 어디서 보장하는가"]
+    alternative_to: [tcp]
+  - id: net-rtt
+    kind: METRIC
+    name: "RTT"
+    category: NETWORK
+    level: BEGINNER
+    description: "패킷이 갔다 돌아오는 왕복 시간. 핸드셰이크 횟수만큼 곱해져 첫 응답 지연을 정한다"
+    synonyms: ["Round Trip Time", "왕복 지연"]
+
+  # ── 보안 채널 ──
+  - id: net-secure-channel
+    kind: STAGE
+    name: "보안 채널 수립"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "전송 위에 암호화 · 무결성 · 서버 인증을 얹는다. 인증서가 누구 것인지 검증하는 것이 핵심이다"
+    contains: [ssl-tls]
+    flows_to: [net-edge-routing]
+  - id: ssl-tls
+    kind: MECHANISM
+    name: "SSL/TLS"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "핸드셰이크에서 인증서로 서버를 확인하고 세션 키를 합의한 뒤, 이후 트래픽을 대칭키로 암호화하는 프로토콜. 프록시 뒤에서는 클라이언트↔엣지, 엣지↔오리진 두 구간을 따로 맺는다"
+    synonyms: ["TLS", "SSL", "HTTPS"]
+    questions: ["TLS 핸드셰이크에서 비대칭키와 대칭키는 각각 어디에 쓰이나", "엣지 프록시 뒤 오리진 구간도 암호화해야 하는 이유는 무엇인가"]
+    code:
+      - { path: k8s/overlays/oci-arm/ingresses/commerce-platform.yaml, symbol: "secretName: cf-origin-ca-tls", note: "Cloudflare Origin CA 인증서로 엣지↔오리진 구간을 Full(strict) 검증" }
+    uses: [net-term-handshake, net-term-origin-certificate, encryption]
+    affects: [net-rtt]
+
+  # ── 엣지 · 게이트웨이 라우팅 ──
+  - id: net-edge-routing
+    kind: STAGE
+    name: "엣지 · 게이트웨이 라우팅"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "바깥 요청을 받아 경로 · 호스트로 알맞은 서비스에 보낸다. 인증 · 레이트 리미팅 같은 공통 관문도 여기서 건다"
+    contains: [reverse-proxy, api-gateway, net-edge-bypass-host, cloudflare, spring-cloud-gateway, net-proxy-idle-timeout]
+    flows_to: [net-request-response, net-realtime-push]
+  - id: net-edge-bypass-host
+    kind: MECHANISM
+    name: "우회 호스트"
+    category: NETWORK
+    level: ADVANCED
+    description: "오래 열려 있는 연결(WebSocket · SSE)만 엣지 프록시를 거치지 않는 별도 호스트로 받는다. 프록시의 유휴 타임아웃 · 응답 버퍼링을 피하는 대신 그 호스트는 엣지 보호를 받지 못한다"
+    code:
+      - { path: k8s/overlays/oci-arm/ingresses/commerce-platform.yaml, symbol: "secretName: rt-tls", note: "DNS only 호스트 rt 는 cert-manager 인증서로 직접 TLS 를 맺는다" }
+    mitigates: [net-proxy-idle-timeout]
+  - id: cloudflare
+    kind: TECHNOLOGY
+    name: "Cloudflare"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "사이트 앞단의 DNS · 엣지 프록시. proxied 레코드는 방문자 TLS 를 엣지에서 끝내고 Origin CA 인증서로 오리진에 다시 붙는다. 원래 방문자 IP 는 CF-Connecting-IP 헤더로 넘긴다"
+    code:
+      - { path: k8s/overlays/oci-arm/cloudflared/deployment.yaml, symbol: "name: cloudflared", note: "인바운드 포트 없이 엣지로 나가는 터널 커넥터" }
+    implements:
+      - { to: dns, reason: "도메인 레코드를 proxied(orange)로 둬 엣지 IP 로 응답한다" }
+      - { to: reverse-proxy, reason: "엣지가 요청을 받아 오리진으로 중계한다" }
+      - { to: ssl-tls, reason: "방문자 구간 TLS 를 엣지에서 종료하고 오리진 구간은 Origin CA 로 다시 맺는다" }
+    causes:
+      - { to: net-proxy-idle-timeout, reason: "엣지가 일정 시간 응답 없는 연결을 끊고 응답을 버퍼링한다" }
+  - id: spring-cloud-gateway
+    kind: TECHNOLOGY
+    name: "Spring Cloud Gateway"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "WebFlux 위에서 도는 API 게이트웨이 라이브러리. 라우트 DSL 로 경로 · 필터를 조립하고 WebSocket Upgrade 도 프록시한다"
+    code:
+      - { path: gateway/build.gradle.kts, symbol: "implementation(libs.spring.cloud.gateway)", note: "게이트웨이 모듈 의존성" }
+    implements:
+      - { to: api-gateway, reason: "RouteLocator 로 경로별 서비스와 필터를 조립한다" }
+      - { to: rate-limiting, reason: "RedisRateLimiter 로 라우트마다 토큰 버킷을 건다" }
+      - { to: cors, reason: "globalcors 설정으로 허용 출처를 게이트웨이 한곳에서 정한다" }
+  - id: net-proxy-idle-timeout
+    kind: PROBLEM
+    name: "프록시 유휴 타임아웃"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "중간 프록시가 한동안 바이트가 오가지 않는 연결을 끊거나 응답을 모아 두는 상태. 오래 열어 두는 SSE · WebSocket 이 조용히 끊기거나 이벤트가 늦게 도착한다"
+
+  # ── 요청-응답 ──
+  - id: net-request-response
+    kind: STAGE
+    name: "요청-응답 API 설계"
+    category: NETWORK
+    level: BEGINNER
+    description: "클라이언트가 묻고 서버가 한 번 답하는 API 를 설계한다. 자원을 어떻게 이름 붙이고 무엇을 한 번에 돌려줄지를 정한다"
+    contains: [http, rest, graphql, grpc, net-over-fetching]
+    measured_by: [net-rtt]
+  - id: http
+    kind: MECHANISM
+    name: "HTTP"
+    category: NETWORK
+    level: BEGINNER
+    description: "메서드 · 헤더 · 상태 코드로 요청과 응답을 주고받는 애플리케이션 계층 프로토콜. 상태가 없어 요청마다 인증 정보를 다시 싣는다"
+    synonyms: ["HyperText Transfer Protocol"]
+    questions: ["GET 과 POST 는 멱등성에서 어떻게 다른가", "HTTP 가 무상태라는 말은 인증에 무엇을 요구하나"]
+    uses: [net-term-status-code, net-term-idempotent-method]
+  - id: rest
+    kind: MECHANISM
+    name: "REST"
+    category: NETWORK
+    level: BEGINNER
+    description: "자원을 URL 로 이름 붙이고 HTTP 메서드로 조작하는 API 설계 스타일. 응답 모양을 서버가 정하므로 화면마다 필요한 필드와 어긋날 수 있다"
+    synonyms: ["Representational State Transfer", "RESTful"]
+    questions: ["URL 에 동사를 넣지 않는 이유는 무엇인가"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/response/ApiResponse.kt, symbol: "data class ApiResponse<T>(", note: "모든 REST 응답을 감싸는 공통 봉투" }
+    uses: [http]
+    causes: [net-over-fetching]
+  - id: graphql
+    kind: MECHANISM
+    name: "GraphQL"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "클라이언트가 필요한 필드 구조를 질의로 적어 보내는 API 방식. 엔드포인트 하나로 여러 자원을 한 번에 받는 대신 캐시 · 권한 검사가 필드 단위로 복잡해진다"
+    questions: ["GraphQL 에서 N+1 조회가 생기기 쉬운 이유는 무엇인가"]
+    alternative_to: [rest]
+    mitigates: [net-over-fetching]
+  - id: grpc
+    kind: MECHANISM
+    name: "gRPC"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "Protocol Buffers 스키마로 함수를 정의하고 HTTP/2 위에서 이진 직렬화로 호출하는 RPC 방식. 서비스 사이 내부 호출에 쓰고 브라우저에서 직접 부르기는 어렵다"
+    synonyms: ["Protocol Buffers RPC"]
+    questions: ["gRPC 가 REST 보다 내부 호출에 유리한 점은 무엇인가"]
+    alternative_to: [rest]
+  - id: net-over-fetching
+    kind: PROBLEM
+    name: "오버페칭 · 언더페칭"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "화면이 쓰지 않는 필드까지 받거나(오버), 한 화면을 그리려 여러 번 호출하는(언더) 상태. 응답 크기와 왕복 횟수가 늘어난다"
+    synonyms: ["over-fetching", "under-fetching"]
+    measured_by: [net-rtt]
+
+  # ── 실시간 푸시 ──
+  - id: net-realtime-push
+    kind: STAGE
+    name: "실시간 푸시"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "서버가 먼저 클라이언트에 데이터를 보낸다. 연결을 오래 열어 두므로 프록시 · 타임아웃 · 재연결을 함께 설계한다"
+    contains: [sse, websocket]
+  - id: sse
+    kind: MECHANISM
+    name: "SSE"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "HTTP 응답 하나를 끊지 않고 text/event-stream 으로 이벤트를 계속 흘려보내는 서버→클라이언트 단방향 방식. 브라우저 EventSource 가 끊기면 자동 재연결한다"
+    synonyms: ["Server-Sent Events", "EventSource"]
+    questions: ["SSE 가 WebSocket 보다 나은 경우는 언제인가", "중간 프록시가 SSE 를 망가뜨리는 방식은 무엇인가"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/presentation/paper/PaperStreamSseController.kt, symbol: "@GetMapping(\"/{strategyId}/paper/sse\", produces = [\"text/event-stream\"])", note: "모의 매매 체결을 SSE 로 흘린다" }
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/presentation/controller/ChartsStreamController.kt, symbol: "class ChartsStreamController(", note: "차트 시세 스트림" }
+    uses: [http, net-edge-bypass-host]
+    alternative_to: [websocket]
+  - id: websocket
+    kind: MECHANISM
+    name: "WebSocket"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "HTTP Upgrade 로 시작해 TCP 연결 하나를 양방향 메시지 채널로 바꾸는 프로토콜. 브라우저 WebSocket 은 Authorization 헤더를 붙일 수 없어 인증을 따로 설계한다"
+    questions: ["WebSocket 연결은 HTTP 에서 어떻게 넘어가나", "브라우저 WebSocket 에서 토큰을 어떻게 넘기나"]
+    code:
+      - { path: game/feature/src/main/kotlin/com/kgd/game/infrastructure/ws/GameRelayWebSocketConfig.kt, symbol: "registry.addHandler(handler, \"/ws/games/*\")", note: "온라인 대전 릴레이 엔드포인트 등록" }
+      - { path: game/feature/src/main/kotlin/com/kgd/game/infrastructure/ws/GameRelayWebSocketHandler.kt, symbol: "class GameRelayWebSocketHandler(", note: "방 참가자 사이에 메시지를 중계한다" }
+    uses: [tcp, net-term-upgrade, net-edge-bypass-host]
+
+  # ── 용어 사전 ──
+  - id: network-glossary
+    kind: TERM
+    name: "네트워크 용어 사전"
+    category: BASICS
+    level: BEGINNER
+    description: "네트워크 단계와 프로토콜을 읽는 데 필요한 말. 장치가 아니라 그것을 설명하는 용어를 모은다"
+    synonyms: ["glossary", "용어집"]
+    contains: [net-term-handshake, net-term-status-code, net-term-idempotent-method, net-term-upgrade, net-term-origin-certificate]
+  - id: net-term-handshake
+    kind: TERM
+    name: "핸드셰이크"
+    category: NETWORK
+    level: BEGINNER
+    description: "본 데이터를 보내기 전에 양쪽이 연결 조건을 맞추는 교환. TCP 는 연결을, TLS 는 인증서 확인과 키 합의를 맞춘다"
+    synonyms: ["handshake"]
+  - id: net-term-status-code
+    kind: TERM
+    name: "HTTP 상태 코드"
+    category: NETWORK
+    level: BEGINNER
+    description: "응답 결과를 세 자리 숫자로 나타낸 값. 2xx 성공, 3xx 이동, 4xx 요청 쪽 잘못(401 인증 없음 · 403 권한 없음 · 429 한도 초과), 5xx 서버 쪽 잘못이다"
+    synonyms: ["status code"]
+  - id: net-term-idempotent-method
+    kind: TERM
+    name: "멱등 메서드"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "같은 요청을 여러 번 보내도 결과 상태가 한 번 보낸 것과 같은 HTTP 메서드. GET · PUT · DELETE 가 해당하고 POST 는 아니어서 재시도에 주의한다"
+    synonyms: ["idempotent method"]
+  - id: net-term-upgrade
+    kind: TERM
+    name: "Upgrade 헤더"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "HTTP 연결을 다른 프로토콜로 바꾸자고 요청하는 헤더. 서버가 101 Switching Protocols 로 답하면 같은 연결이 WebSocket 이 된다"
+    synonyms: ["101 Switching Protocols"]
+  - id: net-term-origin-certificate
+    kind: TERM
+    name: "오리진 인증서"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "엣지 프록시와 오리진 서버 사이 구간에 쓰는 인증서. 공개 CA 가 아니라 프록시 업체가 발급해 그 프록시만 신뢰한다"
+    synonyms: ["Origin CA"]
