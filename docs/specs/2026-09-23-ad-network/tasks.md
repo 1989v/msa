@@ -24,7 +24,7 @@ Total Task Groups: 13
   - [x] 0.1 노드 여유 확인: `kubectl top node` · engagement 현재 사용량 — 768Mi 가 들어가는지 (OQ-002). 부족하면 증설이 아니라 동시성 축소안으로
   - [x] 0.2 운영 MySQL 에 1회 수동 SQL — `ads_db`·`ads_user`·GRANT (place_db 선례 `a599d857` 절차). 실행 전 대상 인스턴스·SQL 을 사용자에게 보여 주고 승인
   - [x] 0.3 SealedSecret `ADS_TOKEN_SECRET`(32바이트 이상 난수) 생성·커밋 준비
-  - [ ] 0.4 Cloudflare DNS `ads.1989v.com` proxied 레코드 (사용자 수행)
+  - [x] 0.4 Cloudflare DNS `ads.1989v.com` proxied 레코드 (사용자 수행) — 2026-09-24 등록, `curl -sI https://ads.1989v.com/` 200 · `x-robots-tag: noindex, nofollow` · 미로그인 시 apex 로그인(`next=`)으로 이동
   - [x] 0.5 Verify: `oci-mysql -e "SHOW DATABASES LIKE 'ads_db'; SHOW GRANTS FOR 'ads_user'@'%';"` · `kubectl get secret -n commerce ads-token -o jsonpath='{.data}' | jq 'keys'` · `dig +short ads.1989v.com`
 > 수행 기록(2026-09-24): `ssh msa-oci` 로 운영 MySQL SQL·`ads-token` 생성·노드 여유 확인(57%) — DNS(0.4)는 콘솔 공개 전 사용자 몫으로 남음
 **Acceptance Criteria:**
@@ -228,14 +228,20 @@ Total Task Groups: 13
 **Dependencies:** Task Group 10 운영 확인(HouseBanner 가 새 API 로 동작) 
 **Phase:** R4
 **Required Skills:** kotlin, flyway
-- [ ] 13.0 Complete 제거
-  - [ ] 13.1 테스트 2개: `ContentContextLoadSpec` 통과 · `GameSchemaIntegrationSpec` 통과(삭제 마이그레이션 적용 후) [test C-8]
-  - [ ] 13.2 game ads 코드·테스트 삭제(`domain/ads`·`application/ads`·`presentation/ads`·`persistence/ads`·`RewardGrantTest`), `gameApi.ts` 의 `fetchAdPlacement` 삭제
-  - [ ] 13.3 game 새 마이그레이션 — `ad_placement`·`ad_policy`·`reward_grant` DROP (별도 커밋, 적용된 V6·V8 불변)
-  - [ ] 13.4 ads 호환 경로 `/placements/**` 와 라우트 제거
-  - [ ] 13.5 Verify: `./gradlew :game:domain:test :game:feature:test --tests '*GameSchemaIntegrationSpec*' :content:app:test --tests '*ContentContextLoadSpec*' :ads:feature:test --tests '*LegacyPlacement*'`(삭제 확인 — 테스트 0건)
+- [x] 13.0 Complete 제거
+  - [x] 13.1 테스트 2개: `ContentContextLoadSpec` 통과 · `GameSchemaIntegrationSpec` 통과(삭제 마이그레이션 적용 후) [test C-8]
+  - [x] 13.2 game ads 코드·테스트 삭제(`domain/ads`·`application/ads`·`presentation/ads`·`persistence/ads`·`RewardGrantTest`), `gameApi.ts` 의 `fetchAdPlacement` 삭제
+  - [x] 13.3 game 새 마이그레이션 — `ad_placement`·`ad_policy`·`reward_grant` DROP (별도 커밋, 적용된 V6·V8 불변)
+  - [x] 13.4 ads 호환 경로 `/placements/**` 와 라우트 제거
+  - [x] 13.5 Verify: `./gradlew :game:domain:test :game:feature:test --tests '*GameSchemaIntegrationSpec*' :content:app:test --tests '*ContentContextLoadSpec*' :ads:feature:test --tests '*LegacyPlacement*'`(삭제 확인 — 테스트 0건)
 **Acceptance Criteria:**
 - AC-16b
+
+**구현 메모:**
+- 삭제 마이그레이션은 `V94__drop_ad_tables.sql`(`DROP TABLE IF EXISTS` 셋, 표 사이 외래 키 없음). 머지 전에 main 에 V94 가 먼저 생기면 번호를 올린다
+- `GameSchemaIntegrationSpec` 에 「광고 표 셋이 없다」 단언을 더했다 — 마이그레이션 없이 돌려 셋이 남은 빨간불을 본 뒤 V94 를 넣었다
+- 게이트웨이 `ads-public` 에서 `/api/v1/ads/placements/**` 를 뺐고, `AdsRouteSpec` 이 그 경로가 어떤 라우트에도 안 맞는 것을 본다
+- `Game.isMonetizable()` 은 보상형 광고 발급만 쓰던 게이트라 이제 호출처가 없다(테스트만 남음). 이번 범위 밖이라 두었다
 
 ---
 
