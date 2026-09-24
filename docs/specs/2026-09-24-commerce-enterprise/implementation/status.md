@@ -88,3 +88,9 @@
   - InventoryCommandServiceTest 10/0 · FulfillmentCommandServiceTest 5/0 · RetiredChoreographyCommandIntegrationSpec 4/0(실 MySQL·실 Kafka, 리스너 전부 켜짐) · CommerceContextLoadSpec 7/0 · OrderSheet 7/0 · Promotion 5/0 (skipped 0)
 - `@EnableKafka` 를 inventory `KafkaConfig` 에 추가(호스트 전체 리스너가 켜짐) — 제거 회귀 주입 시 통합 spec 컨텍스트 실패
 - 회귀 주입 12종 전부 빨간불
+
+## TG10 배포 (2026-09-24)
+- push `9315f31e`(+ `421d2be9`) → images success(run 35963715878) · commerce `:421d2be` ready
+- commerce 리스너 컨테이너 23개 파티션 할당 확인(order-read-model · inventory/payment/promotion/fulfillment 명령 · product-stock/seller-sync · order-service 만료) — 이전 배포까지 0개
+- 상품 재발행(클러스터 안에서 commerce:8085 에 어드민 헤더로 호출) → `{"published":24}` · product_db outbox PUBLISHED 24 → **order_db.product_view 24** (아웃박스 → 릴레이 → Kafka → 읽기 모델 전 구간 운영 확인)
+- commerce ERROR 0
