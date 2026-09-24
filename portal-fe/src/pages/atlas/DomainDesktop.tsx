@@ -8,10 +8,11 @@ import { KindGlyph } from './AtlasParts';
 import ConceptPanel from './ConceptPanel';
 import { useRelations } from './useAtlasData';
 
-const COL_W = 146;
-const NODE_W = 130;
-const NODE_H = 34;
-const ROW_H = 48;
+// 이름은 두 줄까지 접는다 — 한 줄 130px 에서는 개념 이름 셋 중 하나가 잘렸다
+const COL_W = 196;
+const NODE_W = 176;
+const NODE_H = 44;
+const ROW_H = 56;
 const LEFT = 24;
 const TOP = 96;
 const HIER = new Set(['PART_OF', 'CONTAINS']);
@@ -191,7 +192,7 @@ export default function DomainDesktop({ atlas, domain, tree, at, sel, owner, dom
                   style={{ left: x(n.column), top: y(n.row), width: NODE_W, height: NODE_H }}
                   onClick={() => go(n.id)}
                   aria-current={isSel ? 'true' : undefined}
-                  title={node?.description ?? undefined}
+                  title={[node?.name, node?.description].filter(Boolean).join('\n') || undefined}
                 >
                   <KindGlyph kind={node?.kind} />
                   <span className="atlas-node__name">{node?.name ?? n.id}</span>

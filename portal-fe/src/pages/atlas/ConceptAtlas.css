@@ -527,7 +527,16 @@
 }
 .atlas-node:hover { border-color: var(--ko-accent-text); }
 .atlas-node:active { transform: translateY(1px); }
-.atlas-node__name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.atlas-node__name {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
 .atlas-node__more,
 .atlas-node__tag { font-size: 0.5625rem; color: var(--ko-text-secondary); white-space: nowrap; }
 .atlas-node__tag { color: var(--kh-ocher-text); overflow: hidden; text-overflow: ellipsis; }
