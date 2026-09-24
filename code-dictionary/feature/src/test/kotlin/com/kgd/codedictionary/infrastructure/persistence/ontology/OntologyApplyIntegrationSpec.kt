@@ -43,7 +43,7 @@ class DockerAvailable : EnabledCondition {
 }
 
 /**
- * 적용 계약(스펙 SR-4.3)을 실제 MySQL 에서 본다 — 운영과 같은 Flyway V1~V26 을 돌린 스키마 위에서.
+ * 적용 계약을 실제 MySQL 에서 본다 — 운영과 같은 Flyway V1~V26 을 돌린 스키마 위에서.
  * FOR UPDATE 직렬화·strict 모드 롤백·ON DUPLICATE KEY 는 목(mock)으로는 재지 못한다.
  */
 @EnabledIf(DockerAvailable::class)

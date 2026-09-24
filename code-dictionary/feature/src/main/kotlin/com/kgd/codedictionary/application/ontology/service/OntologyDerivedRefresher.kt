@@ -10,7 +10,7 @@ import org.springframework.cache.annotation.CacheEvict
 import org.springframework.stereotype.Service
 
 /**
- * 파생물 갱신은 DB 적용과 분리해 기억하고 재시도한다(스펙 SR-4.3 ④).
+ * 파생물 갱신은 DB 적용과 분리해 기억하고 재시도한다.
  *
  * `derived_hash` 는 색인이 끝난 뒤에만 적히므로, 파드가 중간에 죽어도 다음 부팅이 두 해시가 다른 것을 보고 다시 돈다.
  * 다른 파드가 색인 중(Busy)이거나 실패하면 제한된 backoff 로 다시 시도하고, 끝내 안 되면 다음 부팅에 맡긴다.

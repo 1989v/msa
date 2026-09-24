@@ -25,7 +25,7 @@ import java.security.MessageDigest
 /**
  * `ontology/` 아래 `manifest.yaml` 과 도메인 파일(`<domain>.yaml`)을 읽는다.
  *
- * `content_hash` 규칙(스펙 SR-4.1): 파일을 **이름순으로 정렬**해 각 이름·길이·바이트를 이어 SHA-256 으로 낸다.
+ * `content_hash` 규칙: 파일을 **이름순으로 정렬**해 각 이름·길이·바이트를 이어 SHA-256 으로 낸다.
  * 열거 순서와 무관하고, 주석·공백 변경도 해시를 바꾼다 — 같은 revision 의 다른 해시는 적용이 오류로 거부한다.
  *
  * 모르는 키·kind·category 는 파싱 오류로 멈춘다. 오타가 조용히 빠진 간선이 되지 않게.

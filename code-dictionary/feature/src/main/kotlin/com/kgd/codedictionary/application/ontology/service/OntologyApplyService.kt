@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.support.TransactionOperations
 
 /**
- * 적용 계약(스펙 SR-4.3) — 단위는 manifest 전체다.
+ * 적용 계약 — 단위는 manifest 전체다.
  *
  * 파일을 읽고 검증하는 것은 트랜잭션 밖에서, 상태 행 잠금·revision 가드·적용·기록은 한 트랜잭션 안에서 한다.
  * 실패하면 전부 롤백되고 예외가 호출자(로더)로 나간다 — 로더는 기동을 멈추지 않는다.
