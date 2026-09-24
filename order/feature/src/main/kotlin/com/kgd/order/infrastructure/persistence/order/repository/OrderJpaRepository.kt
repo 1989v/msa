@@ -1,11 +1,14 @@
 package com.kgd.order.infrastructure.persistence.order.repository
 
+import com.kgd.order.domain.order.model.OrderLineStatus
 import com.kgd.order.domain.order.model.OrderStatus
 import com.kgd.order.infrastructure.persistence.order.entity.OrderJpaEntity
 import com.kgd.order.infrastructure.persistence.order.entity.OrderStatusHistoryJpaEntity
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
+import java.time.Instant
 import java.time.LocalDateTime
 
 interface OrderJpaRepository : JpaRepository<OrderJpaEntity, Long> {
@@ -16,6 +19,20 @@ interface OrderJpaRepository : JpaRepository<OrderJpaEntity, Long> {
     fun findAllByUserIdWithItems(userId: String): List<OrderJpaEntity>
 
     fun countByUserIdAndStatusIn(userId: String, statuses: Collection<OrderStatus>): Long
+
+    @Query(
+        """
+        SELECT DISTINCT o.id FROM OrderJpaEntity o JOIN o.items i
+        WHERE o.status = :status AND i.status = :lineStatus AND i.deliveredAt <= :deliveredBefore
+        ORDER BY o.id
+        """
+    )
+    fun findAutoConfirmCandidateIds(
+        @Param("status") status: OrderStatus,
+        @Param("lineStatus") lineStatus: OrderLineStatus,
+        @Param("deliveredBefore") deliveredBefore: Instant,
+        pageable: Pageable,
+    ): List<Long>
 
     // === Admin dashboard 집계 (read-only) ===
 

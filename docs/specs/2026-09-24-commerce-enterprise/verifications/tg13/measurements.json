@@ -1,0 +1,300 @@
+[
+  {
+    "name": "claim-preview-390-light",
+    "width": 390,
+    "theme": "light",
+    "h1": "주문이 확정되었습니다",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "claimPanel": true,
+    "sellerClaims": false,
+    "contrast": {
+      "panelTitle": 15.27,
+      "choiceName": 15.27,
+      "choiceDesc": 8.53,
+      "previewTotal": 14.48,
+      "previewHint": null,
+      "lineProgress": 15.27,
+      "cancelledLine": null,
+      "refundRow": null
+    },
+    "badges": [],
+    "buttons": [
+      {
+        "text": "선택 상품 취소",
+        "ratio": 15.27,
+        "h": 44
+      },
+      {
+        "text": "전체 취소",
+        "ratio": 15.27,
+        "h": 44
+      },
+      {
+        "text": "구매 확정",
+        "ratio": 15.82,
+        "h": 44
+      },
+      {
+        "text": "선택 상품 취소 요청",
+        "ratio": 15.82,
+        "h": 44
+      },
+      {
+        "text": "닫기",
+        "ratio": 14.48,
+        "h": 44
+      }
+    ],
+    "overflowX": false
+  },
+  {
+    "name": "claim-preview-390-dark",
+    "width": 390,
+    "theme": "dark",
+    "h1": "주문이 확정되었습니다",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "claimPanel": true,
+    "sellerClaims": false,
+    "contrast": {
+      "panelTitle": 13.34,
+      "choiceName": 13.34,
+      "choiceDesc": 10.11,
+      "previewTotal": 12.76,
+      "previewHint": null,
+      "lineProgress": 13.34,
+      "cancelledLine": null,
+      "refundRow": null
+    },
+    "badges": [],
+    "buttons": [
+      {
+        "text": "선택 상품 취소",
+        "ratio": 13.34,
+        "h": 44
+      },
+      {
+        "text": "전체 취소",
+        "ratio": 13.34,
+        "h": 44
+      },
+      {
+        "text": "구매 확정",
+        "ratio": 8.62,
+        "h": 44
+      },
+      {
+        "text": "선택 상품 취소 요청",
+        "ratio": 8.62,
+        "h": 44
+      },
+      {
+        "text": "닫기",
+        "ratio": 12.76,
+        "h": 44
+      }
+    ],
+    "overflowX": false
+  },
+  {
+    "name": "claim-status-390-light",
+    "width": 390,
+    "theme": "light",
+    "h1": "주문이 확정되었습니다",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "claimPanel": true,
+    "sellerClaims": false,
+    "contrast": {
+      "panelTitle": 15.27,
+      "choiceName": 15.27,
+      "choiceDesc": 8.53,
+      "previewTotal": null,
+      "previewHint": null,
+      "lineProgress": 15.27,
+      "cancelledLine": 8.53,
+      "refundRow": 8.53
+    },
+    "badges": [
+      {
+        "text": "환불 완료",
+        "ratio": 8.24,
+        "fg": "rgb(26, 71, 42)",
+        "bg": "rgb(227, 227, 221)"
+      },
+      {
+        "text": "판매자 확인 중 · 이미 출고",
+        "ratio": 6.72,
+        "fg": "oklch(0.8 0.15 75)",
+        "bg": "oklch(0.32 0.08 75)"
+      }
+    ],
+    "buttons": [
+      {
+        "text": "선택 상품 취소",
+        "ratio": 15.27,
+        "h": 44
+      },
+      {
+        "text": "전체 취소",
+        "ratio": 15.27,
+        "h": 44
+      }
+    ],
+    "overflowX": false
+  },
+  {
+    "name": "claim-status-390-dark",
+    "width": 390,
+    "theme": "dark",
+    "h1": "주문이 확정되었습니다",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "claimPanel": true,
+    "sellerClaims": false,
+    "contrast": {
+      "panelTitle": 13.34,
+      "choiceName": 13.34,
+      "choiceDesc": 10.11,
+      "previewTotal": null,
+      "previewHint": null,
+      "lineProgress": 13.34,
+      "cancelledLine": 10.11,
+      "refundRow": 10.11
+    },
+    "badges": [
+      {
+        "text": "환불 완료",
+        "ratio": 5.08,
+        "fg": "rgb(111, 159, 196)",
+        "bg": "rgb(42, 42, 42)"
+      },
+      {
+        "text": "판매자 확인 중 · 이미 출고",
+        "ratio": 6.72,
+        "fg": "oklch(0.8 0.15 75)",
+        "bg": "oklch(0.32 0.08 75)"
+      }
+    ],
+    "buttons": [
+      {
+        "text": "선택 상품 취소",
+        "ratio": 13.34,
+        "h": 44
+      },
+      {
+        "text": "전체 취소",
+        "ratio": 13.34,
+        "h": 44
+      }
+    ],
+    "overflowX": false
+  },
+  {
+    "name": "claim-seller-390-light",
+    "width": 390,
+    "theme": "light",
+    "h1": "취소 요청",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "claimPanel": false,
+    "sellerClaims": true,
+    "contrast": {
+      "panelTitle": null,
+      "choiceName": null,
+      "choiceDesc": null,
+      "previewTotal": null,
+      "previewHint": null,
+      "lineProgress": null,
+      "cancelledLine": null,
+      "refundRow": null
+    },
+    "badges": [
+      {
+        "text": "판매자 확인 중 · 이미 출고",
+        "ratio": 6.72,
+        "fg": "oklch(0.8 0.15 75)",
+        "bg": "oklch(0.32 0.08 75)"
+      },
+      {
+        "text": "환불 완료",
+        "ratio": 8.24,
+        "fg": "rgb(26, 71, 42)",
+        "bg": "rgb(227, 227, 221)"
+      },
+      {
+        "text": "취소 반려",
+        "ratio": 7.29,
+        "fg": "rgb(70, 70, 74)",
+        "bg": "rgb(227, 227, 221)"
+      }
+    ],
+    "buttons": [
+      {
+        "text": "반품 확인 · 승인",
+        "ratio": 15.82,
+        "h": 44
+      },
+      {
+        "text": "반려",
+        "ratio": 15.82,
+        "h": 44
+      }
+    ],
+    "overflowX": false
+  },
+  {
+    "name": "claim-seller-390-dark",
+    "width": 390,
+    "theme": "dark",
+    "h1": "취소 요청",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "claimPanel": false,
+    "sellerClaims": true,
+    "contrast": {
+      "panelTitle": null,
+      "choiceName": null,
+      "choiceDesc": null,
+      "previewTotal": null,
+      "previewHint": null,
+      "lineProgress": null,
+      "cancelledLine": null,
+      "refundRow": null
+    },
+    "badges": [
+      {
+        "text": "판매자 확인 중 · 이미 출고",
+        "ratio": 6.72,
+        "fg": "oklch(0.8 0.15 75)",
+        "bg": "oklch(0.32 0.08 75)"
+      },
+      {
+        "text": "환불 완료",
+        "ratio": 5.08,
+        "fg": "rgb(111, 159, 196)",
+        "bg": "rgb(42, 42, 42)"
+      },
+      {
+        "text": "취소 반려",
+        "ratio": 8.45,
+        "fg": "rgb(199, 198, 202)",
+        "bg": "rgb(42, 42, 42)"
+      }
+    ],
+    "buttons": [
+      {
+        "text": "반품 확인 · 승인",
+        "ratio": 8.62,
+        "h": 44
+      },
+      {
+        "text": "반려",
+        "ratio": 14.42,
+        "h": 44
+      }
+    ],
+    "overflowX": false
+  }
+]

@@ -163,6 +163,9 @@ export default function SellerProductsPage() {
             <SellerApplicationPanel application={load.application} showActions={false} />
 
             <div className="seller-toolbar">
+              <Link to="/shop/seller/claims" className="shop-header-link">
+                취소 요청
+              </Link>
               {notice && (
                 <span className="seller-hint" role="status">
                   {notice}

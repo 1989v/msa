@@ -271,6 +271,16 @@ class GatewayRouteConfig(
                     }
                     .uri(COMMERCE_URI)
             }
+            // 클레임(취소·부분 취소·환불 미리보기) — ROLE_USER. 본인 주문만은 서비스가 X-User-Id 로 본다.
+            // 판매자 결정(/api/v1/seller/claims/**)은 seller-portal 라우트가 ROLE_SELLER 로 받는다
+            .route("claim") { r ->
+                r.path("/api/v1/claims", "/api/v1/claims/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(userConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(COMMERCE_URI)
+            }
             // Order Service (ROLE_USER+)
             .route("order-service") { r ->
                 r.path("/api/v1/orders/**")

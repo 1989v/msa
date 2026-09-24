@@ -2,6 +2,7 @@ package com.kgd.order.application.order.port
 
 import com.kgd.order.domain.order.model.Order
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -10,6 +11,9 @@ interface OrderRepositoryPort {
     fun save(order: Order): Order
     fun findById(id: Long): Order?
     fun findAllByUserId(userId: String): List<Order>
+
+    /** 이행 중(FULFILLING)이고 배송 완료가 [deliveredBefore] 이하인 ACTIVE 라인이 있는 주문 id — 자동 구매 확정 후보 */
+    fun findAutoConfirmCandidateIds(deliveredBefore: Instant, limit: Int): List<Long>
 
     /** 결제 대기(CREATED · PAYMENT_PENDING) 주문 수 */
     fun countAwaitingPayment(userId: String): Long

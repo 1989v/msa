@@ -4,16 +4,19 @@ import com.kgd.order.application.order.port.DailyOrderCount
 import com.kgd.order.application.order.port.OrderRepositoryPort
 import com.kgd.order.domain.order.exception.OrderNotFoundException
 import com.kgd.order.domain.order.model.Order
+import com.kgd.order.domain.order.model.OrderLineStatus
 import com.kgd.order.domain.order.model.OrderStatus
 import com.kgd.order.infrastructure.persistence.order.entity.OrderJpaEntity
 import com.kgd.order.infrastructure.persistence.order.entity.OrderStatusHistoryJpaEntity
 import com.kgd.order.infrastructure.persistence.order.repository.OrderJpaRepository
 import com.kgd.order.infrastructure.persistence.order.repository.OrderStatusHistoryJpaRepository
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.data.domain.PageRequest
 import org.springframework.orm.ObjectOptimisticLockingFailureException
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.time.Clock
+import java.time.Instant
 import java.time.LocalDateTime
 
 /** 호출자의 order 트랜잭션 안에서 부른다. 저장할 때 도메인에 쌓인 상태 전이를 이력 행으로 함께 남긴다 */
@@ -54,6 +57,9 @@ class OrderRepositoryAdapter(
 
     override fun findAllByUserId(userId: String): List<Order> =
         jpaRepository.findAllByUserIdWithItems(userId).map { it.toDomain() }
+
+    override fun findAutoConfirmCandidateIds(deliveredBefore: Instant, limit: Int): List<Long> =
+        jpaRepository.findAutoConfirmCandidateIds(OrderStatus.FULFILLING, OrderLineStatus.ACTIVE, deliveredBefore, PageRequest.of(0, limit))
 
     override fun countAwaitingPayment(userId: String): Long =
         jpaRepository.countByUserIdAndStatusIn(userId, OrderStatus.entries.filter { it.awaitingPayment })

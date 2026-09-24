@@ -182,7 +182,8 @@ class OrderSagaCoordinator(
 
     override fun onFulfillmentCreated(orderId: Long) = withSaga(orderId) { order, saga, now ->
         if (saga.at(SagaStep.FULFILLMENT_CREATE)) {
-            order.startFulfilling(now)
+            // 클레임 컨슈머가 같은 이행 생성 답을 먼저 받아 전체 취소까지 끝냈으면 주문은 이미 CANCELLED 다
+            if (order.status == OrderStatus.CONFIRMED) order.startFulfilling(now)
             saga.complete()
         }
     }

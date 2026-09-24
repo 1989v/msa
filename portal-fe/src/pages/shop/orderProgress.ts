@@ -1,4 +1,4 @@
-import type { OrderDetail, OrderFailureReason, OrderStatus, SagaStep } from '../../api/shopApi';
+import type { OrderDetail, OrderFailureReason, OrderStatus, SagaStatus, SagaStep } from '../../api/shopApi';
 
 /** 결제 대기 화면의 네 단계 — 사가 단계를 사용자가 알아볼 묶음으로 접는다 */
 export const PROGRESS_STEPS = ['재고 확보', '혜택 적용', '결제 승인', '확정'] as const;
@@ -91,7 +91,16 @@ const UNKNOWN_FAILURE: FailureCopy = {
   action: 'cart',
 };
 
-export function failureCopy(status: OrderStatus, reason: OrderFailureReason | null): FailureCopy {
+/** 확정 뒤 클레임으로 모든 라인이 취소된 주문 */
+const CLAIM_CANCELLED: FailureCopy = {
+  title: '주문 전체를 취소했습니다',
+  body: '결제 금액은 결제 수단으로, 쓴 포인트는 포인트로 돌려드렸습니다. 아래에서 환불 내역을 볼 수 있습니다.',
+  action: 'shop',
+};
+
+export function failureCopy(status: OrderStatus, reason: OrderFailureReason | null, sagaStatus?: SagaStatus | null): FailureCopy {
+  // 사가가 끝까지 간(확정된) 주문의 취소는 결제 전 취소가 아니라 클레임 환불이다
+  if (status === 'CANCELLED' && sagaStatus === 'COMPLETED') return CLAIM_CANCELLED;
   if (status === 'CANCELLED') return FAILURE_COPY.BUYER_CANCELLED;
   return (reason && FAILURE_COPY[reason]) || UNKNOWN_FAILURE;
 }

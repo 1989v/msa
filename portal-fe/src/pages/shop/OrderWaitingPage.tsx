@@ -22,6 +22,8 @@ import {
   outcomeOf,
   pollDelay,
 } from './orderProgress';
+import OrderClaimPanel from './OrderClaimPanel';
+import { lineProgressLabel } from './claimModel';
 import '../Shop.css';
 import './Checkout.css';
 
@@ -111,6 +113,9 @@ export default function OrderWaitingPage() {
     }
   }, [order, navigate]);
 
+  // 클레임 환불·구매 확정 뒤 주문을 한 번 다시 불러온다(끝난 상태라 폴링은 한 번으로 멈춘다)
+  const reloadOrder = useCallback(() => setGeneration((g) => g + 1), []);
+
   if (!order) {
     return (
       <Shell>
@@ -134,13 +139,21 @@ export default function OrderWaitingPage() {
   const outcome = outcomeOf(order.status);
   const stepIndex = currentStepIndex(order);
   const noPayment = order.payableAmount === 0;
+  // 확정 뒤 클레임으로 전부 취소된 주문 — 사가는 끝까지 갔다
+  const cancelledByClaim = order.status === 'CANCELLED' && order.sagaStatus === 'COMPLETED';
 
   return (
     <Shell>
       <header className="checkout-head">
         <span className="kh-section-label">Order {order.orderId}</span>
         <h1 className="shop-page-title">
-          {outcome === 'success' ? '주문이 확정되었습니다' : outcome === 'failure' ? '주문이 끝나지 않았습니다' : '주문을 처리하고 있습니다'}
+          {outcome === 'success'
+            ? '주문이 확정되었습니다'
+            : cancelledByClaim
+              ? '주문을 취소했습니다'
+              : outcome === 'failure'
+                ? '주문이 끝나지 않았습니다'
+                : '주문을 처리하고 있습니다'}
         </h1>
       </header>
 
@@ -203,9 +216,11 @@ export default function OrderWaitingPage() {
                 결제와 재고 확보가 끝났습니다
               </p>
               <p>
-                {order.status === 'FULFILLING' || order.status === 'COMPLETED'
-                  ? '판매자가 출고를 준비하고 있습니다.'
-                  : '곧 출고 준비가 시작됩니다.'}
+                {order.status === 'COMPLETED'
+                  ? '구매 확정된 주문입니다.'
+                  : order.status === 'FULFILLING'
+                    ? '판매자가 출고를 준비하고 있습니다.'
+                    : '곧 출고 준비가 시작됩니다.'}
               </p>
               <div className="order-result-actions">
                 <Link to="/shop/orders" className="kh-button">
@@ -220,6 +235,8 @@ export default function OrderWaitingPage() {
 
           {outcome === 'failure' && <FailurePanel order={order} busy={busy} onRecreate={onRecreate} />}
 
+          {(outcome === 'success' || cancelledByClaim) && <OrderClaimPanel order={order} onOrderChanged={reloadOrder} />}
+
           {actionError && (
             <div className="kh-status-error checkout-error" role="alert">
               {actionError}
@@ -231,17 +248,21 @@ export default function OrderWaitingPage() {
               주문 상품
             </h2>
             <ul className="checkout-lines">
-              {order.lines.map((l) => (
-                <li key={l.lineNo} className="checkout-line">
-                  <div className="checkout-line-main">
-                    <span className="checkout-line-name">{l.productName}</span>
-                    <span className="checkout-line-meta checkout-num">
-                      {won(l.unitPrice)} × {l.quantity}
-                    </span>
-                  </div>
-                  <span className="checkout-line-amount checkout-num">{won(l.payable)}</span>
-                </li>
-              ))}
+              {order.lines.map((l) => {
+                const progress = lineProgressLabel(l);
+                return (
+                  <li key={l.lineNo} className={`checkout-line${l.status === 'CANCELLED' ? ' is-cancelled' : ''}`}>
+                    <div className="checkout-line-main">
+                      <span className="checkout-line-name">{l.productName}</span>
+                      <span className="checkout-line-meta checkout-num">
+                        {won(l.unitPrice)} × {l.quantity}
+                        {progress && <span className="order-line-progress"> · {progress}</span>}
+                      </span>
+                    </div>
+                    <span className="checkout-line-amount checkout-num">{won(l.payable)}</span>
+                  </li>
+                );
+              })}
             </ul>
           </section>
         </div>
@@ -259,6 +280,12 @@ export default function OrderWaitingPage() {
               <span>결제 금액</span>
               <span className="checkout-num">{won(order.payableAmount)}</span>
             </div>
+            {order.refundedAmount > 0 && (
+              <div className="checkout-row">
+                <span>{order.refundedAmount < order.payableAmount ? '부분 환불' : '환불'}</span>
+                <span className="checkout-num">−{won(order.refundedAmount)}</span>
+              </div>
+            )}
           </div>
         </aside>
       </div>
@@ -275,7 +302,7 @@ function FailurePanel({
   busy: boolean;
   onRecreate: () => Promise<void>;
 }) {
-  const copy = failureCopy(order.status, order.failureReason);
+  const copy = failureCopy(order.status, order.failureReason, order.sagaStatus);
   return (
     <section className="kh-status kh-status-error order-result is-failure" role="alert" aria-labelledby="order-failure-title">
       <p id="order-failure-title" className="kh-status-title">

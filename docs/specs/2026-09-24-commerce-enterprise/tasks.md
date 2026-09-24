@@ -189,12 +189,12 @@ Total Task Groups: 16 · 단계 P0~P7 (단계 끝마다 커밋·푸시·배포·
 **Dependencies:** Task Group 12
 **Phase:** P5
 **Required Skills:** Kotlin, 금액 계산, React
-- [ ] 13.0 Complete claims
-  - [ ] 13.1 테스트: 환불액 = 라인 결제액, 포인트 원복 + 부분 환불 · 쿠폰 유지/전체 취소 반환 · 배송비 규칙 · 클레임 분기(자동/cancel-rejected 대기) · 구매 확정 자동(Clock) → `order.line.purchase-confirmed` · 부분 취소 주문 남은 라인 확정 → COMPLETED (6)
-  - [ ] 13.2 클레임 API `/api/v1/claims`(본인), 판매자 승인 `/api/v1/seller/claims`, 사가형 처리(fulfillment cancel → restock → promotion restore → payment refund), `order.claim.refunded`
-  - [ ] 13.3 구매 확정 버튼 + 자동 스케줄러, `order.order.confirmed`(라인·배송비 라인 포함)
-  - [ ] 13.4 FE: 주문 상세 취소·부분 취소, 판매자 포털 클레임 승인
-  - [ ] 13.5 Verify: `$G :order:domain:test --tests '*Claim*' :order:feature:test --tests '*Claim*' --tests '*PurchaseConfirm*' :commerce:app:test --tests '*ClaimE2E*'`
+- [x] 13.0 Complete claims
+  - [x] 13.1 테스트: 환불액 = 라인 결제액, 포인트 원복 + 부분 환불 · 쿠폰 유지/전체 취소 반환 · 배송비 규칙 · 클레임 분기(자동/cancel-rejected 대기) · 구매 확정 자동(Clock) → `order.line.purchase-confirmed` · 부분 취소 주문 남은 라인 확정 → COMPLETED (6)
+  - [x] 13.2 클레임 API `/api/v1/claims`(본인), 판매자 승인 `/api/v1/seller/claims`, 사가형 처리(fulfillment cancel → restock → promotion restore → payment refund), `order.claim.refunded`
+  - [x] 13.3 구매 확정 버튼 + 자동 스케줄러, `order.order.confirmed`(라인·배송비 라인 포함)
+  - [x] 13.4 FE: 주문 상세 취소·부분 취소, 판매자 포털 클레임 승인
+  - [x] 13.5 Verify: `$G :order:domain:test --tests '*Claim*' :order:feature:test --tests '*Claim*' --tests '*PurchaseConfirm*' :commerce:app:test --tests '*ClaimE2E*'`
 **Acceptance Criteria:** 운영 부분 취소 1건 환불 완료
 
 ---

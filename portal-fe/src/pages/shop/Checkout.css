@@ -473,3 +473,98 @@ a.checkout-line-name:focus-visible {
   gap: var(--ko-space-2);
   margin-top: var(--ko-space-2);
 }
+
+/* ── 취소 · 구매 확정 ───────────────────────────── */
+
+.checkout-line.is-cancelled .checkout-line-name,
+.checkout-line.is-cancelled .checkout-line-amount {
+  color: var(--ko-text-secondary);
+  text-decoration: line-through;
+}
+
+.order-line-progress {
+  color: var(--ko-text-primary);
+  font-weight: var(--ko-weight-semibold);
+}
+
+.claim-panel legend {
+  padding: 0;
+  margin-bottom: var(--ko-space-1);
+}
+
+.claim-actions {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.claim-actions .kh-button {
+  width: auto;
+  flex: 1 1 auto;
+}
+
+.claim-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-3);
+  padding: var(--ko-space-4);
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--kh-radius);
+  background: var(--ko-surface-2);
+}
+
+.claim-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--ko-border-subtle);
+}
+
+.claim-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-1);
+  padding: var(--ko-space-3) 0;
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+.claim-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ko-space-2);
+}
+
+.claim-item-lines {
+  min-width: 0;
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-primary);
+}
+
+.claim-item-meta {
+  margin: 0;
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-secondary);
+}
+
+/* 상태는 낱말로 갈린다 — 색은 보조. 진행 중은 경고 면, 끝난 것은 중립 면 */
+.claim-badge {
+  white-space: nowrap;
+  background: var(--ko-surface-3);
+  color: var(--ko-text-primary);
+}
+
+.claim-badge--requested,
+.claim-badge--approved {
+  background: var(--ko-status-warning-bg);
+  color: var(--ko-status-warning);
+}
+
+.claim-badge--refunded {
+  color: var(--ko-accent-text, var(--ko-accent-primary));
+}
+
+.claim-badge--rejected {
+  color: var(--ko-text-secondary);
+}

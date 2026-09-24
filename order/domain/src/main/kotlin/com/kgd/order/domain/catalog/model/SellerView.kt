@@ -14,6 +14,8 @@ data class SellerView(
     /** 판매자별 고정 배송비(원) — 주문 안에서 판매자마다 한 번 */
     val shippingFee: Long,
     val occurredAt: Instant,
+    /** 판매자 회원 id — 판매자 포털 권한(X-User-Id 대조). 옛 이벤트로 채운 행은 비어 있다 */
+    val memberId: String? = null,
 ) {
     init {
         require(shippingFee >= 0) { "배송비는 음수일 수 없다" }

@@ -41,6 +41,9 @@ class SellerViewRepositoryAdapter(private val jpa: SellerViewJpaRepository) : Se
     override fun findAllByIds(sellerIds: Collection<Long>): List<SellerView> =
         if (sellerIds.isEmpty()) emptyList() else jpa.findAllById(sellerIds).map { it.toDomain() }
 
+    override fun findActiveByMemberId(memberId: String): SellerView? =
+        jpa.findFirstByMemberIdAndStatus(memberId, SellerView.ACTIVE)?.toDomain()
+
     override fun save(view: SellerView) {
         jpa.findById(view.sellerId).orElse(null)?.overwrite(view) ?: jpa.save(SellerViewJpaEntity.from(view))
     }

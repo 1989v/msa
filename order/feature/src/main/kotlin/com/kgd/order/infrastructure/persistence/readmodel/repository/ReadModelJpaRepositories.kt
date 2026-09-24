@@ -8,7 +8,9 @@ import com.kgd.order.infrastructure.persistence.readmodel.entity.UserCouponViewJ
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface ProductViewJpaRepository : JpaRepository<ProductViewJpaEntity, Long>
-interface SellerViewJpaRepository : JpaRepository<SellerViewJpaEntity, Long>
+interface SellerViewJpaRepository : JpaRepository<SellerViewJpaEntity, Long> {
+    fun findFirstByMemberIdAndStatus(memberId: String, status: String): SellerViewJpaEntity?
+}
 interface CouponDefinitionViewJpaRepository : JpaRepository<CouponDefinitionViewJpaEntity, Long>
 interface UserCouponViewJpaRepository : JpaRepository<UserCouponViewJpaEntity, Long>
 interface PointBalanceViewJpaRepository : JpaRepository<PointBalanceViewJpaEntity, String>

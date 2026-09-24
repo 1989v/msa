@@ -349,3 +349,22 @@
     transition: none;
   }
 }
+
+/* ── 취소 요청 ───────────────────────────────────── */
+
+.seller-claim-row {
+  flex-wrap: wrap;
+}
+
+.seller-claim-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-2);
+}
+
+.seller-claim-reject {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-2);
+  width: 100%;
+}

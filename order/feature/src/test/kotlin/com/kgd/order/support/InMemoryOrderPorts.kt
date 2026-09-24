@@ -33,6 +33,8 @@ class InMemoryOrderPorts {
     val sellers = object : SellerViewRepositoryPort {
         override fun findById(sellerId: Long) = sellerRows[sellerId]
         override fun findAllByIds(sellerIds: Collection<Long>) = sellerIds.mapNotNull { sellerRows[it] }
+        override fun findActiveByMemberId(memberId: String) =
+            sellerRows.values.firstOrNull { it.memberId == memberId && it.status == SellerView.ACTIVE }
         override fun save(view: SellerView) { sellerRows[view.sellerId] = view }
     }
     val couponDefinitions = object : CouponDefinitionViewRepositoryPort {

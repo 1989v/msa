@@ -73,3 +73,15 @@ questions:
     phase: post-impl
     status: open
     question: 사가 표에 COMPENSATING→STUCK·STUCK→COMPENSATING 추가(보상 재시도 소진) — SR-2 반영 여부 · 결제 대기 3건 상한은 잠금 없는 카운트(동시 요청 시 4건 가능) · 같은 Idempotency-Key 에 다른 본문이면 저장 응답 재생(본문 대조 없음) · 없는 주문서 404 · Strimzi 토픽 목록 갱신 필요
+  - id: Q19
+    phase: post-impl
+    status: open
+    question: 운영 스키마에 Hibernate 가 만든 MySQL ENUM 컬럼 13개(order·fulfillment 는 핫픽스로 VARCHAR, 나머지 product·member·auth·experiment·gifticon·place·chatbot) — 상태를 늘리면 운영에서만 INSERT 가 잘린다. 운영 스키마 ↔ Flyway 기준선 대조 게이트 필요
+  - id: Q20
+    phase: post-impl
+    status: open
+    question: /api/inventories · /api/warehouses · /api/fulfillments 가 ROLE_SELLER 만 보고 소유를 재판정하지 않는다 — 어느 판매자든 아무 상품 재고·창고·이행을 조작 가능(판매자가 생긴 지금 실제 위험)
+  - id: Q21
+    phase: post-impl
+    status: open
+    question: 배송비 정산은 판매자 마지막 ACTIVE 라인 확정 시 — 경계에서 line:null(CLAIM_CLOSED) 이벤트가 생긴다. 「첫 확정 라인」으로 바꾸면 경계 건이 사라짐 · 클레임은 판매자당 1건, 주문당 진행 1건(나머지 QUEUED) · 클레임 STUCK 재개 API 없음(TG15)

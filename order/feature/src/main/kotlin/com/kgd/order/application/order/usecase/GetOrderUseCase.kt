@@ -2,6 +2,7 @@ package com.kgd.order.application.order.usecase
 
 import com.kgd.order.domain.order.model.Order
 import com.kgd.order.domain.saga.model.OrderSaga
+import java.time.Instant
 import java.time.LocalDateTime
 
 /** 주문 단건 — 본인 것만(남의 것은 없는 주문과 같은 404), 어드민은 전부. FE 가 결제 대기 화면에서 폴링한다 */
@@ -45,6 +46,9 @@ data class OrderDetail(
         val pointAmount: Long,
         val payable: Long,
         val status: String,
+        val shippedAt: Instant? = null,
+        val deliveredAt: Instant? = null,
+        val purchaseConfirmedAt: Instant? = null,
     )
 
     data class Shipping(val sellerId: Long, val fee: Long)
@@ -67,7 +71,8 @@ data class OrderDetail(
             lines = order.items.map {
                 Line(
                     it.id, it.lineNo, it.productId, it.productName, it.sellerId, it.unitPrice.amount, it.quantity,
-                    it.couponDiscount, it.pointAmount, it.payable, it.status.name,
+                    it.couponDiscount, it.pointAmount, it.payable, it.status.name, it.shippedAt, it.deliveredAt,
+                    it.purchaseConfirmedAt,
                 )
             },
             shippingLines = order.shippingLines.map { Shipping(it.sellerId, it.fee) },

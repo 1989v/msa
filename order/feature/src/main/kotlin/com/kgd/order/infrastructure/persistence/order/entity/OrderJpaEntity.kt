@@ -64,15 +64,18 @@ class OrderJpaEntity(
     @OrderBy("id ASC")
     val shippingLines: MutableList<OrderShippingJpaEntity> = mutableListOf()
 
-    /** 바뀌는 것만 옮긴다 — 상태 · 실패 사유 · 환불 누계 · 라인 상태. 금액 스냅샷은 그대로 */
+    /** 바뀌는 것만 옮긴다 — 상태 · 실패 사유 · 환불 누계 · 라인 상태·진행 표시. 금액 스냅샷은 그대로 */
     fun apply(order: Order, now: Instant) {
-        val before = listOf(status, failureReason, refundedAmount) + items.map { it.status }
+        val before = listOf(status, failureReason, refundedAmount) + items.map { it.snapshot() }
         status = order.status
         failureReason = order.failureReason
         refundedAmount = order.refundedAmount
-        order.items.forEach { line -> items.first { it.id == line.id }.changeStatus(line.status) }
-        // 바뀐 것이 없으면 행을 건드리지 않는다(버전도 그대로)
-        if (listOf(status, failureReason, refundedAmount) + items.map { it.status } != before) updatedAt = now
+        order.items.forEach { line ->
+            items.first { it.id == line.id }.also { it.changeStatus(line.status); it.changeProgress(line) }
+        }
+        // 바뀐 것이 없으면 행을 건드리지 않는다(버전도 그대로). 라인만 바뀌어도 주문 행의 updated_at 을 바꿔 버전을 올린다 —
+        // 같은 주문의 라인을 두 트랜잭션이 동시에 바꾸면 늦은 쪽이 충돌로 되돌아가야 한다
+        if (listOf(status, failureReason, refundedAmount) + items.map { it.snapshot() } != before) updatedAt = now
     }
 
     fun toDomain(): Order = Order.restore(

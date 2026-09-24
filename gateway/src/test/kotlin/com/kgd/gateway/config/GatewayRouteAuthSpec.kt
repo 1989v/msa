@@ -113,6 +113,32 @@ class GatewayRouteAuthSpec(
         }
     }
 
+    Given("클레임 /api/v1/claims/** (ROLE_USER)") {
+        Then("토큰이 없으면 401") {
+            status(HttpMethod.POST, "/api/v1/claims") shouldBe 401
+            status(HttpMethod.GET, "/api/v1/claims?orderId=1") shouldBe 401
+            status(HttpMethod.GET, "/api/v1/claims/preview?orderId=1") shouldBe 401
+        }
+        Then("ROLE_USER 는 게이트웨이를 지난다") {
+            status(HttpMethod.POST, "/api/v1/claims", userToken) shouldNotBeIn listOf(401, 403, 404)
+            status(HttpMethod.GET, "/api/v1/claims/preview?orderId=1", userToken) shouldNotBeIn listOf(401, 403, 404)
+        }
+        Then("구매 확정은 주문 라우트(ROLE_USER) — 토큰이 없으면 401") {
+            status(HttpMethod.POST, "/api/v1/orders/1/purchase-confirm") shouldBe 401
+        }
+    }
+
+    Given("판매자 클레임 결정 /api/v1/seller/claims/** (ROLE_SELLER)") {
+        Then("토큰이 없으면 401, ROLE_USER 는 403") {
+            status(HttpMethod.GET, "/api/v1/seller/claims") shouldBe 401
+            status(HttpMethod.POST, "/api/v1/seller/claims/1/approve", userToken) shouldBe 403
+            status(HttpMethod.POST, "/api/v1/seller/claims/1/reject", userToken) shouldBe 403
+        }
+        Then("ROLE_SELLER 는 게이트웨이를 지난다 — ACTIVE 판매자 행은 서비스가 본다") {
+            status(HttpMethod.GET, "/api/v1/seller/claims", sellerToken) shouldNotBeIn listOf(401, 403, 404)
+        }
+    }
+
     Given("상품 어드민 /api/v1/admin/products/** (ROLE_ADMIN)") {
         Then("토큰이 없으면 401") {
             status(HttpMethod.POST, "/api/v1/admin/products/republish") shouldBe 401

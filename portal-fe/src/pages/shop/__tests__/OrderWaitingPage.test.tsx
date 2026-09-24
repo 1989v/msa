@@ -7,7 +7,8 @@ import { failureCopy, pollDelay } from '../orderProgress';
 
 vi.mock('../../../api/shopApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../api/shopApi')>();
-  return { ...actual, fetchOrder: vi.fn(), cancelOrder: vi.fn(), createOrderSheet: vi.fn() };
+  // 확정 뒤 주문 상세는 클레임 판을 붙여 클레임 목록을 묻는다 — 네트워크로 나가지 않게 빈 목록
+  return { ...actual, fetchOrder: vi.fn(), cancelOrder: vi.fn(), createOrderSheet: vi.fn(), fetchClaims: vi.fn().mockResolvedValue([]) };
 });
 vi.mock('../../../auth/auth', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../auth/auth')>();

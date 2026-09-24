@@ -4,18 +4,22 @@ import com.kgd.order.application.order.port.DailyOrderCount
 import com.kgd.order.application.order.port.IdempotencyKeyRepositoryPort
 import com.kgd.order.application.order.port.OrderEventPort
 import com.kgd.order.application.order.port.OrderRepositoryPort
+import com.kgd.order.application.order.port.PurchaseConfirmTrigger
 import com.kgd.order.application.saga.port.OrderOpsIssueRepositoryPort
 import com.kgd.order.application.saga.port.OrderSagaRepositoryPort
 import com.kgd.order.application.saga.port.SagaCommand
 import com.kgd.order.application.saga.port.SagaCommandPort
+import com.kgd.order.domain.claim.model.Claim
 import com.kgd.order.domain.idempotency.model.IdempotencyKey
 import com.kgd.order.domain.idempotency.model.IdempotencyStatus
 import com.kgd.order.domain.opsissue.model.OpsIssue
 import com.kgd.order.domain.order.model.Order
 import com.kgd.order.domain.order.model.OrderItem
+import com.kgd.order.domain.order.model.PurchaseConfirmation
 import com.kgd.order.domain.order.model.StatusChange
 import com.kgd.order.domain.saga.model.OrderSaga
 import com.kgd.order.domain.saga.model.SagaStatus
+import com.kgd.order.domain.sheet.model.ShippingLine
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.orm.ObjectOptimisticLockingFailureException
 import org.springframework.transaction.TransactionDefinition
@@ -38,6 +42,8 @@ class InMemorySagaWorld {
     private var historyRows = mutableListOf<Pair<Long, StatusChange>>()
     private var confirmedRows = mutableListOf<Order>()
     private var issueRows = mutableListOf<OpsIssue>()
+    private var claimRefundedRows = mutableListOf<Claim>()
+    private var purchaseConfirmedRows = mutableListOf<PurchaseConfirmedEvent>()
     private var orderSeq = 0L
     private var itemSeq = 0L
 
@@ -48,6 +54,8 @@ class InMemorySagaWorld {
     val history: List<Pair<Long, StatusChange>> get() = historyRows.toList()
     val confirmedEvents: List<Order> get() = confirmedRows.toList()
     val issues: List<OpsIssue> get() = issueRows.toList()
+    val claimRefundedEvents: List<Claim> get() = claimRefundedRows.toList()
+    val purchaseConfirmedEvents: List<PurchaseConfirmedEvent> get() = purchaseConfirmedRows.toList()
     fun order(id: Long): Order = requireNotNull(orderRows[id])
     fun saga(orderId: Long): OrderSaga = requireNotNull(sagaRows[orderId])
     fun orderCount() = orderRows.size
@@ -60,17 +68,19 @@ class InMemorySagaWorld {
         val keys: LinkedHashMap<Pair<String, String>, IdempotencyKey>, val commands: MutableList<SagaCommand>,
         val history: MutableList<Pair<Long, StatusChange>>, val confirmed: MutableList<Order>, val issues: MutableList<OpsIssue>,
         val orderSeq: Long, val itemSeq: Long,
+        val claimRefunded: MutableList<Claim>, val purchaseConfirmed: MutableList<PurchaseConfirmedEvent>,
     )
 
     private fun snapshot() = Snapshot(
         LinkedHashMap(orderRows.mapValues { copy(it.value) }), LinkedHashMap(sagaRows.mapValues { copy(it.value, it.value.version) }),
         LinkedHashMap(keyRows), commandRows.toMutableList(), historyRows.toMutableList(), confirmedRows.toMutableList(),
-        issueRows.toMutableList(), orderSeq, itemSeq,
+        issueRows.toMutableList(), orderSeq, itemSeq, claimRefundedRows.toMutableList(), purchaseConfirmedRows.toMutableList(),
     )
 
     private fun restore(s: Snapshot) {
         orderRows = s.orders; sagaRows = s.sagas; keyRows = s.keys; commandRows = s.commands; historyRows = s.history
         confirmedRows = s.confirmed; issueRows = s.issues; orderSeq = s.orderSeq; itemSeq = s.itemSeq
+        claimRefundedRows = s.claimRefunded; purchaseConfirmedRows = s.purchaseConfirmed
     }
 
     val transactionManager = object : AbstractPlatformTransactionManager() {
@@ -98,6 +108,12 @@ class InMemorySagaWorld {
         }
         override fun findById(id: Long) = orderRows[id]?.let(::copy)
         override fun findAllByUserId(userId: String) = orderRows.values.filter { it.userId == userId }.map(::copy).reversed()
+        override fun findAutoConfirmCandidateIds(deliveredBefore: Instant, limit: Int) = orderRows.values
+            .filter { o ->
+                o.status == com.kgd.order.domain.order.model.OrderStatus.FULFILLING &&
+                    o.items.any { it.status == com.kgd.order.domain.order.model.OrderLineStatus.ACTIVE && it.deliveredAt?.isAfter(deliveredBefore) == false }
+            }
+            .mapNotNull { it.id }.take(limit)
         override fun countAwaitingPayment(userId: String) = orderRows.values.count { it.userId == userId && it.status.awaitingPayment }.toLong()
         override fun countCreatedAfter(from: LocalDateTime) = 0L
         override fun sumRevenueCreatedAfter(from: LocalDateTime): BigDecimal = BigDecimal.ZERO
@@ -130,7 +146,17 @@ class InMemorySagaWorld {
 
     val events = object : OrderEventPort {
         override fun publishConfirmed(order: Order, confirmedAt: Instant) { confirmedRows += copy(order) }
+        override fun publishClaimRefunded(order: Order, claim: Claim, refundedAt: Instant) { claimRefundedRows += claim }
+        override fun publishPurchaseConfirmed(
+            order: Order, confirmations: List<PurchaseConfirmation>, trigger: PurchaseConfirmTrigger, confirmedAt: Instant,
+        ) { confirmations.forEach { purchaseConfirmedRows += PurchaseConfirmedEvent(it.line.lineNo, it.line.sellerId, it.shipping, trigger) } }
+        override fun publishShippingSettlementDue(order: Order, shipping: List<ShippingLine>, confirmedAt: Instant) {
+            shipping.forEach { purchaseConfirmedRows += PurchaseConfirmedEvent(null, it.sellerId, it, PurchaseConfirmTrigger.CLAIM_CLOSED) }
+        }
     }
+
+    /** `order.line.purchase-confirmed` 한 건 — [lineNo] 가 null 이면 배송비만 실은 건 */
+    data class PurchaseConfirmedEvent(val lineNo: Int?, val sellerId: Long, val shipping: ShippingLine?, val trigger: PurchaseConfirmTrigger)
 
     val opsIssues = object : OrderOpsIssueRepositoryPort {
         override fun save(issue: OpsIssue) { issueRows += issue }
@@ -168,7 +194,7 @@ class InMemorySagaWorld {
 
     private fun withId(i: OrderItem, id: Long?) = OrderItem.restore(
         id, i.lineNo, i.productId, i.productName, i.sellerId, i.unitPrice, i.quantity, i.couponDiscount, i.couponBearer,
-        i.pointAmount, i.commissionRateBp, i.status,
+        i.pointAmount, i.commissionRateBp, i.status, i.shippedAt, i.deliveredAt, i.purchaseConfirmedAt,
     )
 
     private fun copy(s: OrderSaga, version: Long) = OrderSaga.restore(

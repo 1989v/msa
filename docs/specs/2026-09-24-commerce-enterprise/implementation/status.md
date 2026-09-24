@@ -109,3 +109,16 @@
 - portal-fe vitest Test Files 5 · Tests 19 passed · tsc 0
 - 회귀 주입: 코디네이터 (b) VOID 건너뛰기 → 2 실패(`expected:<"COMPENSATING"> but was:<"RUNNING">`) · 결제 쪽 UNKNOWN 즉시 VOID → 1 실패
 - commerce 테스트 JVM `maxHeapSize = "1g"`(기본 512m 에서 E2E 기동 중 GC 정지 — 태스크 성립 조건이라 반영)
+
+## P4 배포 + 운영 주문 1건 시도 (2026-09-24)
+- push `95d169d5` → images success(run 35989730975) · commerce·portal-fe `:95d169d` · order_db 20260924.005 · inventory_db V6 · ERROR 0 · 파티션 할당 48
+- 운영 점검(사용자 id `ops-e2e-20260924`, 클러스터 안 호출): 창고 id 1 생성 → 상품 81 입고 5 → 주문서 id 1(1,700원) 생성 성공 → **주문 접수 500**
+- 원인: 운영 `orders.status` 가 Hibernate 가 만든 `enum('CANCELLED','COMPLETED','PENDING')` — Flyway V1 은 VARCHAR 라 테스트는 통과. `Data truncated for column 'status'`
+- 핫픽스 `c0714b09`(order V20260924_006 · fulfillment V20260924_004, status → VARCHAR(20)) — 임시 워크트리에서 origin/main 위에 푸시
+- 운영 ENUM 컬럼은 13개(다른 도메인 포함) — Q19
+
+## TG13 클레임 · 구매 확정 (2026-09-24)
+- `./gradlew :order:domain:test :order:feature:test :commerce:app:test --tests '*Claim*' --tests '*PurchaseConfirm*' --tests '*CommerceContextLoad*' --tests '*SagaE2E*' :gateway:test --tests '*RouteAuth*' verifyArchitecture` → exit 0
+  - ClaimRefundPlanTest 8/0 · ClaimTest 7/0 · PurchaseConfirmTest 5/0 · ClaimCoordinatorTest 15/0 · PurchaseConfirmServiceTest 4/0 · ClaimE2ETest 3/0 · OrderSagaE2ETest 14/0 · CommerceContextLoadSpec 8/0 · GatewayRouteAuthSpec 39/0
+- portal-fe vitest Test Files 7 · Tests 26 passed · tsc 0
+- 회귀 주입 8종 — 재입고 페이로드 키 변경은 단위 초록·E2E 만 빨강(배선은 E2E 만 지킨다)

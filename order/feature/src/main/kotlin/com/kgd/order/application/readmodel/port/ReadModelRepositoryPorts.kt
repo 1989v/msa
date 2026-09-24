@@ -16,6 +16,9 @@ interface ProductViewRepositoryPort {
 interface SellerViewRepositoryPort {
     fun findById(sellerId: Long): SellerView?
     fun findAllByIds(sellerIds: Collection<Long>): List<SellerView>
+
+    /** 회원의 ACTIVE 판매자 행 — 판매자 API 는 매 요청 이것으로 권한을 본다(정지 즉시 차단) */
+    fun findActiveByMemberId(memberId: String): SellerView?
     fun save(view: SellerView)
 }
 

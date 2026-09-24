@@ -7,6 +7,9 @@ enum class OpsIssueStatus { OPEN, RETRIED, CLOSED }
 enum class OpsIssueType {
     /** 사가 단계가 재시도 한도를 넘었다 */
     SAGA_STUCK,
+
+    /** 클레임 단계(이행 취소·재입고·원복·환불)가 재시도 한도를 넘었다 — 대상 id 는 claimId */
+    CLAIM_STUCK,
 }
 
 /** order 스키마의 운영 이슈 한 건 — 사람이 봐야 하는 것. 조회·재시도·종결 API 는 운영 큐 단계에서 붙는다 */

@@ -26,6 +26,7 @@ const DealPage = lazy(() => import('./pages/deal/DealPage'));
 // 판매자 화면은 판매자만 연다 — 스토어 번들에 싣지 않는다
 const SellerApplyPage = lazy(() => import('./pages/seller/SellerApplyPage'));
 const SellerProductsPage = lazy(() => import('./pages/seller/SellerProductsPage'));
+const SellerClaimsPage = lazy(() => import('./pages/seller/SellerClaimsPage'));
 const CartPage = lazy(() => import('./pages/shop/CartPage'));
 const OrderSheetPage = lazy(() => import('./pages/shop/OrderSheetPage'));
 const OrderWaitingPage = lazy(() => import('./pages/shop/OrderWaitingPage'));
@@ -244,6 +245,7 @@ function App() {
           <Route path="/shop/order-sheet/:id" element={<OrderSheetPage />} />
           <Route path="/shop/seller/apply" element={<SellerApplyPage />} />
           <Route path="/shop/seller/products" element={<SellerProductsPage />} />
+          <Route path="/shop/seller/claims" element={<SellerClaimsPage />} />
           <Route path="/oauth/callback" element={<ShopOAuthCallbackPage />} />
           {/* 게임 — 언어(/en)와 장르는 URL 로 승격해 검색엔진이 개별 색인할 수 있게 한다 */}
           <Route path="/place" element={placeRoute(<PlacePage />)} />

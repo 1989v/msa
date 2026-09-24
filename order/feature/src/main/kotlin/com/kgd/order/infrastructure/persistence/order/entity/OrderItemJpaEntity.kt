@@ -6,6 +6,7 @@ import com.kgd.order.domain.order.model.OrderItem
 import com.kgd.order.domain.order.model.OrderLineStatus
 import jakarta.persistence.*
 import java.math.BigDecimal
+import java.time.Instant
 
 /**
  * 주문 라인 — 주문서 라인 스냅샷. 옛 흐름 라인은 스냅샷 컬럼이 비어 있어 읽을 때 기본값(플랫폼 판매자 1, 할인 0)을 쓴다.
@@ -45,6 +46,18 @@ class OrderItemJpaEntity(
     var status: OrderLineStatus = status
         private set
 
+    @Column(name = "shipped_at")
+    var shippedAt: Instant? = null
+        private set
+
+    @Column(name = "delivered_at")
+    var deliveredAt: Instant? = null
+        private set
+
+    @Column(name = "purchase_confirmed_at")
+    var purchaseConfirmedAt: Instant? = null
+        private set
+
     fun assignOrder(order: OrderJpaEntity) {
         this.order = order
     }
@@ -52,6 +65,15 @@ class OrderItemJpaEntity(
     fun changeStatus(status: OrderLineStatus) {
         this.status = status
     }
+
+    fun changeProgress(item: OrderItem) {
+        shippedAt = item.shippedAt
+        deliveredAt = item.deliveredAt
+        purchaseConfirmedAt = item.purchaseConfirmedAt
+    }
+
+    /** 바뀌었는지 비교할 값 — 상태와 진행 표시 */
+    fun snapshot(): List<Any?> = listOf(status, shippedAt, deliveredAt, purchaseConfirmedAt)
 
     fun toDomain(fallbackLineNo: Int): OrderItem = OrderItem.restore(
         id = id,
@@ -66,6 +88,9 @@ class OrderItemJpaEntity(
         pointAmount = pointAmount ?: 0L,
         commissionRateBp = commissionRateBp ?: 0,
         status = status,
+        shippedAt = shippedAt,
+        deliveredAt = deliveredAt,
+        purchaseConfirmedAt = purchaseConfirmedAt,
     )
 
     companion object {
@@ -86,6 +111,6 @@ class OrderItemJpaEntity(
             pointAmount = item.pointAmount,
             commissionRateBp = item.commissionRateBp,
             status = item.status,
-        )
+        ).also { it.changeProgress(item) }
     }
 }

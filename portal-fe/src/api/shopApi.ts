@@ -257,7 +257,12 @@ export interface OrderLine {
   couponDiscount: number;
   pointAmount: number;
   payable: number;
+  /** ACTIVE · CANCELLED · PURCHASE_CONFIRMED */
   status: string;
+  /** 출고·배송 완료·구매 확정 시각 — 이행 이벤트로 채운다 */
+  shippedAt?: string | null;
+  deliveredAt?: string | null;
+  purchaseConfirmedAt?: string | null;
 }
 
 export interface OrderDetail {
@@ -275,6 +280,50 @@ export interface OrderDetail {
   createdAt: string;
   lines: OrderLine[];
   shippingLines: { sellerId: number; fee: number }[];
+}
+
+// ── Claim (취소 · 부분 취소) ─────────────────────────────────────────
+
+export type ClaimStatus = 'REQUESTED' | 'APPROVED' | 'REFUNDED' | 'REJECTED';
+export type ClaimStep =
+  | 'QUEUED'
+  | 'FULFILLMENT_WAIT'
+  | 'FULFILLMENT_CANCEL'
+  | 'SELLER_DECISION'
+  | 'INVENTORY_RESTOCK'
+  | 'PROMOTION_RESTORE'
+  | 'PAYMENT_REFUND'
+  | 'DONE';
+
+/** 클레임 — 판매자마다 한 건. 금액은 승인 뒤 환불 단계에 들어가면 채워진다 */
+export interface Claim {
+  claimId: number;
+  orderId: number;
+  sellerId: number;
+  lineNos: number[];
+  status: ClaimStatus;
+  step: ClaimStep;
+  goodsShipped: boolean;
+  refundAmount: number | null;
+  pointRestore: number | null;
+  shippingRefund: number | null;
+  fullCancel: boolean | null;
+  rejectReason: string | null;
+  stuck: boolean;
+  requestedAt: string;
+}
+
+/** 환불 미리보기 — 서버가 클레임과 같은 계산으로 낸다. FE 는 금액을 계산하지 않는다 */
+export interface ClaimPreview {
+  orderId: number;
+  lines: { lineNo: number; productName: string; sellerId: number; payable: number; pointAmount: number; shipped: boolean }[];
+  pointRestore: number;
+  shippingRefund: number;
+  /** 결제 수단으로 돌아가는 금액 */
+  refundAmount: number;
+  fullCancel: boolean;
+  couponReturn: boolean;
+  needsSellerApproval: boolean;
 }
 
 // ── Seller ────────────────────────────────────────────────────────
@@ -479,6 +528,51 @@ export const fetchOrder = async (id: string | number): Promise<OrderDetail> => {
 /** 결제 전(CREATED)만 받는다 — 결제 확인 중·결제 뒤는 409 */
 export const cancelOrder = async (id: string | number): Promise<OrderDetail> => {
   const res = await api.post<ApiResponse<OrderDetail>>(`/api/v1/orders/${id}/cancel`);
+  return res.data.data;
+};
+
+// ── 클레임 · 구매 확정 ─────────────────────────────────────────────
+
+/** [lineNos] 가 null 이면 전체 취소 */
+export const previewClaim = async (orderId: number, lineNos: number[] | null): Promise<ClaimPreview> => {
+  const res = await api.get<ApiResponse<ClaimPreview>>('/api/v1/claims/preview', {
+    params: lineNos ? { orderId, lines: lineNos.join(',') } : { orderId },
+  });
+  return res.data.data;
+};
+
+export const requestClaim = async (orderId: number, lineNos: number[] | null): Promise<Claim[]> => {
+  const res = await api.post<ApiResponse<Claim[]>>('/api/v1/claims', { orderId, lineNos });
+  return res.data.data;
+};
+
+export const fetchClaims = async (orderId: number): Promise<Claim[]> => {
+  const res = await api.get<ApiResponse<Claim[]>>('/api/v1/claims', { params: { orderId } });
+  return res.data.data;
+};
+
+/** 이행 중 주문의 취소되지 않은 라인 전부 — 진행 중 클레임이 있으면 409 */
+export const confirmPurchase = async (orderId: number): Promise<{ orderId: number; confirmedLineNos: number[] }> => {
+  const res = await api.post<ApiResponse<{ orderId: number; confirmedLineNos: number[] }>>(
+    `/api/v1/orders/${orderId}/purchase-confirm`,
+  );
+  return res.data.data;
+};
+
+/** 판매자 — 내 라인의 클레임(최신순) */
+export const fetchSellerClaims = async (): Promise<Claim[]> => {
+  const res = await api.get<ApiResponse<Claim[]>>('/api/v1/seller/claims');
+  return res.data.data;
+};
+
+/** 이미 출고된 취소 요청 승인 — 반품을 따로 받았다는 뜻. 재입고 없이 환불된다 */
+export const approveSellerClaim = async (claimId: number): Promise<Claim> => {
+  const res = await api.post<ApiResponse<Claim>>(`/api/v1/seller/claims/${claimId}/approve`);
+  return res.data.data;
+};
+
+export const rejectSellerClaim = async (claimId: number, reason: string): Promise<Claim> => {
+  const res = await api.post<ApiResponse<Claim>>(`/api/v1/seller/claims/${claimId}/reject`, { reason });
   return res.data.data;
 };
 
