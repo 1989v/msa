@@ -35,8 +35,8 @@ class ConceptRelationsServiceTest : BehaviorSpec({
     val edgeRepo = mockk<ConceptEdgeRepositoryPort>()
     val evidence = mockk<ConceptEvidenceQueryPort>()
     every { conceptRepo.findByConceptId("lattice-viterbi") } returns concepts[0]
-    every { conceptRepo.findAllList() } returns concepts
-    every { edgeRepo.findAll() } returns edges
+    every { conceptRepo.findSummariesByConceptIds(any()) } answers { concepts.filter { it.conceptId in firstArg<Collection<String>>() } }
+    every { edgeRepo.findTouching("lattice-viterbi") } returns edges
     every { evidence.evidenceOf("lattice-viterbi") } returns listOf(EvidenceDto("RECORD", "r", null))
     every { evidence.questionsOf("lattice-viterbi") } returns listOf("왜 최소 비용인가")
     every { evidence.codeOf("lattice-viterbi") } returns listOf(com.kgd.codedictionary.application.graph.dto.CodeRefDto("a/B.kt", "fun viterbi", null))

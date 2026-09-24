@@ -6,6 +6,7 @@ import com.kgd.codedictionary.application.graph.dto.ConceptAtlasDto
 import com.kgd.codedictionary.application.graph.port.ConceptAtlasQueryPort
 import com.kgd.codedictionary.application.graph.usecase.ConceptAtlasUseCase
 import com.kgd.codedictionary.application.ontology.port.OntologySourcePort
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 
 /**
@@ -25,6 +26,7 @@ class ConceptAtlasService(
         ontology.manifest.domains.mapNotNull { d -> roots[d]?.let { d to it } }
     }
 
+    @Cacheable(value = ["conceptAtlas"], key = "'atlas'")
     override fun getAtlas(): ConceptAtlasDto {
         val rows = query.managedConcepts()
         val byDomain = rows.groupBy { it.domain }

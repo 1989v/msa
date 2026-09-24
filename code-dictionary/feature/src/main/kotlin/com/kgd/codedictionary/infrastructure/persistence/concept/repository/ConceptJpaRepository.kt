@@ -15,4 +15,9 @@ interface ConceptJpaRepository : JpaRepository<ConceptJpaEntity, Long> {
         "SELECT c.id, c.conceptId, c.name, c.category, c.level, c.description, c.kind, c.managedBy FROM ConceptJpaEntity c",
     )
     fun findAllSummaryRows(): List<Array<Any?>>
+
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT c.id, c.conceptId, c.name, c.category, c.level, c.description, c.kind, c.managedBy FROM ConceptJpaEntity c WHERE c.conceptId IN :ids",
+    )
+    fun findSummaryRowsIn(@org.springframework.data.repository.query.Param("ids") ids: Collection<String>): List<Array<Any?>>
 }

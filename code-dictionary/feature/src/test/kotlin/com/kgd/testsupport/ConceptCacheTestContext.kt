@@ -38,7 +38,7 @@ import org.springframework.context.annotation.ComponentScan
 open class ConceptCacheTestContext {
 
     @Bean
-    open fun cacheManager(): CacheManager = CaffeineCacheManager("conceptCategoryStats")
+    open fun cacheManager(): CacheManager = CaffeineCacheManager("conceptCategoryStats", "conceptHierarchy", "conceptAtlas")
 
     @Bean
     open fun conceptRepositoryPort(): ConceptRepositoryPort = mockk(relaxed = false)

@@ -12,7 +12,8 @@ import java.time.Duration
  * Caffeine in-memory CacheManager.
  *
  * - V1: 단일 인스턴스 in-memory (spec.md §7 Caching Strategy)
- * - cache name: `conceptCategoryStats` — TTL 5 분, max 256 entries
+ * - cache name: `conceptCategoryStats` · `conceptHierarchy` · `conceptAtlas` — TTL 5 분, max 256 entries
+ *   계층 · 아틀라스는 온톨로지 적용(배포) 때만 바뀐다 — 파생물 갱신이 비우고, TTL 은 기동 직후 적용 전 응답이 남는 창을 막는다
  * - Micrometer Caffeine 통합 (`recordStats()` enable) — `cache.gets`, `cache.puts`, `cache.evictions` 노출
  * - V2 (별도 스펙): prod-k8s 다중 인스턴스 → Redis 분산 캐시 + StatsCachePort 추상화 검토
  */
@@ -22,7 +23,7 @@ class CacheConfig {
 
     @Bean
     fun cacheManager(): CacheManager {
-        val manager = CaffeineCacheManager(CACHE_CONCEPT_CATEGORY_STATS)
+        val manager = CaffeineCacheManager(CACHE_CONCEPT_CATEGORY_STATS, CACHE_CONCEPT_HIERARCHY, CACHE_CONCEPT_ATLAS)
         manager.setCaffeine(
             Caffeine.newBuilder()
                 .expireAfterWrite(Duration.ofMinutes(5))
@@ -34,5 +35,7 @@ class CacheConfig {
 
     companion object {
         const val CACHE_CONCEPT_CATEGORY_STATS = "conceptCategoryStats"
+        const val CACHE_CONCEPT_HIERARCHY = "conceptHierarchy"
+        const val CACHE_CONCEPT_ATLAS = "conceptAtlas"
     }
 }

@@ -59,19 +59,22 @@ class ConceptRepositoryAdapter(
     override fun findAllList(): List<Concept> =
         jpaRepository.findAll().map { it.toDomain() }
 
-    override fun findAllSummaries(): List<Concept> =
-        jpaRepository.findAllSummaryRows().map { r ->
-            Concept.restore(
-                id = r[0] as Long?,
-                conceptId = r[1] as String,
-                name = r[2] as String,
-                category = ConceptCategory.valueOf(r[3] as String),
-                level = ConceptLevel.valueOf(r[4] as String),
-                description = (r[5] as String?) ?: "",
-                synonyms = emptyList(),
-                relatedConceptIds = emptyList(),
-                kind = (r[6] as String?)?.let { k -> ConceptKind.entries.firstOrNull { it.name == k } },
-                managedBy = r[7] as String?,
-            )
-        }
+    override fun findAllSummaries(): List<Concept> = jpaRepository.findAllSummaryRows().map(::summaryOf)
+
+    override fun findSummariesByConceptIds(conceptIds: Collection<String>): List<Concept> =
+        if (conceptIds.isEmpty()) emptyList() else jpaRepository.findSummaryRowsIn(conceptIds).map(::summaryOf)
+
+    private fun summaryOf(r: Array<Any?>): Concept =
+        Concept.restore(
+            id = r[0] as Long?,
+            conceptId = r[1] as String,
+            name = r[2] as String,
+            category = ConceptCategory.valueOf(r[3] as String),
+            level = ConceptLevel.valueOf(r[4] as String),
+            description = (r[5] as String?) ?: "",
+            synonyms = emptyList(),
+            relatedConceptIds = emptyList(),
+            kind = (r[6] as String?)?.let { k -> ConceptKind.entries.firstOrNull { it.name == k } },
+            managedBy = r[7] as String?,
+        )
 }

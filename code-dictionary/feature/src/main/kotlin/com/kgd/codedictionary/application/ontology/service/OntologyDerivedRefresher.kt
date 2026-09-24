@@ -23,7 +23,7 @@ class OntologyDerivedRefresher(
 ) : RefreshOntologyDerivedUseCase {
     private val log = KotlinLogging.logger {}
 
-    @CacheEvict(value = ["conceptCategoryStats"], allEntries = true, beforeInvocation = true)
+    @CacheEvict(value = ["conceptCategoryStats", "conceptHierarchy", "conceptAtlas"], allEntries = true, beforeInvocation = true)
     override fun refreshIfStale(): Boolean {
         for (attempt in 0..backoffMs.size) {
             val state = syncState.readState()

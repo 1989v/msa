@@ -23,4 +23,7 @@ interface ConceptRepositoryPort {
      * 개념마다 추가 쿼리가 나가 수십 초가 걸린다.
      */
     fun findAllSummaries(): List<Concept>
+
+    /** [findAllSummaries] 와 같은 칸을 id 목록만큼 — 개념 화면의 이웃 */
+    fun findSummariesByConceptIds(conceptIds: Collection<String>): List<Concept>
 }

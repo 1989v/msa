@@ -11,4 +11,7 @@ class ConceptEdgeRepositoryAdapter(
 ) : ConceptEdgeRepositoryPort {
 
     override fun findAll(): List<ConceptEdge> = jpaRepository.findAll().mapNotNull { it.toDomain() }
+
+    override fun findTouching(conceptId: String): List<ConceptEdge> =
+        jpaRepository.findAllByFromConceptIdOrToConceptId(conceptId, conceptId).mapNotNull { it.toDomain() }
 }

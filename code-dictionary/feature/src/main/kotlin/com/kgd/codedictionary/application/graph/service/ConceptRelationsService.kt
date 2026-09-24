@@ -20,9 +20,9 @@ class ConceptRelationsService(
     /** 간선이 가리키는 개념 행이 없으면(값으로 든 id) 그 간선은 뺀다 — 이름 없는 이웃을 내지 않는다 */
     override fun getRelations(conceptId: String): ConceptRelationsDto {
         val concept = conceptRepository.findByConceptId(conceptId) ?: throw ConceptNotFoundException(conceptId)
-        val edges = edgeRepository.findAll().filter { it.fromConceptId == conceptId || it.toConceptId == conceptId }
+        val edges = edgeRepository.findTouching(conceptId)
         val neighborIds = edges.flatMap { listOf(it.fromConceptId, it.toConceptId) }.toSet() - conceptId
-        val neighbors = conceptRepository.findAllList().filter { it.conceptId in neighborIds }.associateBy { it.conceptId }
+        val neighbors = conceptRepository.findSummariesByConceptIds(neighborIds).associateBy { it.conceptId }
 
         val outgoing = edges.filter { it.fromConceptId == conceptId }.sortedWith(compareBy({ it.kind.ordinal }, { it.ordinal }))
             .mapNotNull { e ->

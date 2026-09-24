@@ -172,6 +172,8 @@ class GraphService(
      * 간선은 concept_id 를 값으로 들고 있어(FK 없음) 개념 행이 사라진 간선이 남을 수 있다 —
      * 그런 노드와 그 간선은 응답에서 뺀다. 화면이 이름 없는 노드를 그리게 두지 않는다.
      */
+    // 인자 이름 root 는 SpEL 의 #root 와 겹쳐 #p0 으로 쓴다
+    @Cacheable(value = ["conceptHierarchy"], key = "#p0 ?: '__all__'")
     override fun getHierarchy(root: String?): ConceptHierarchyDto {
         val hierarchy = ConceptHierarchy.build(edgeRepository.findAll(), root)
         val conceptsById = conceptRepository.findAllSummaries()
