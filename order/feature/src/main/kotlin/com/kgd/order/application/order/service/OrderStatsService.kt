@@ -9,7 +9,7 @@ import java.math.BigDecimal
 import java.time.LocalDate
 
 /**
- * 어드민 대시보드 집계. 주문 생성 흐름과 트랜잭션 경계가 달라 [OrderService] 와 분리한다.
+ * 어드민 대시보드 집계. 주문 접수 흐름과 트랜잭션 경계가 달라 [OrderPlacementService] 와 분리한다.
  *
  * 빈 결과 / 에러 시 admin FE 가 graceful degrade (catch → 0/[]) 하므로 여기선 0 으로 접는다.
  */

@@ -188,6 +188,56 @@ class CommerceContextLoadSpec(
             }
 
         /**
+         * 주문 접수·사가 시작·멱등 키 정리를 order TM 으로. 값으로 판정한다: order_db 의 주문·사가·멱등 키·아웃박스 행,
+         * 그리고 `@Modifying` 삭제(멱등 키 정리)가 실제로 행을 지웠는지 — 한정자가 어긋나면 예외 없이 0 이 된다.
+         */
+        Then("주문: 주문서로 접수 → 주문·사가·멱등 키·재고 예약 명령 행, 오래된 멱등 키 정리")
+            .config(enabledIf = { dockerAvailable }) {
+                val tx = org.springframework.transaction.support.TransactionTemplate(
+                    ctx.getBean("orderTransactionManager", org.springframework.transaction.PlatformTransactionManager::class.java),
+                )
+                val jdbc = org.springframework.jdbc.core.JdbcTemplate(
+                    ctx.getBean("orderMasterDataSource", javax.sql.DataSource::class.java),
+                )
+                val sheets = ctx.getBean(com.kgd.order.application.sheet.port.OrderSheetRepositoryPort::class.java)
+                val sheetId = requireNotNull(
+                    tx.execute {
+                        sheets.save(
+                            com.kgd.order.domain.sheet.model.OrderSheet.create(
+                                memberId = "ctx-order",
+                                lines = listOf(
+                                    com.kgd.order.domain.sheet.model.OrderSheetLine(1, 9101L, "컨텍스트 상품", 1L, 7_000L, 1, 0, null, 0, 0),
+                                ),
+                                shippingLines = listOf(com.kgd.order.domain.sheet.model.ShippingLine(1L, 0L)),
+                                userCouponId = null, couponDefinitionId = null,
+                                expiresAt = java.time.Instant.now().plusSeconds(900), createdAt = java.time.Instant.now(),
+                            ),
+                        ).id
+                    },
+                )
+                val place = ctx.getBean(com.kgd.order.application.order.usecase.PlaceOrderUseCase::class.java)
+                val accepted = place.place(com.kgd.order.application.order.usecase.PlaceOrderUseCase.Command("ctx-order", "ctx-key", sheetId))
+
+                jdbc.queryForObject("SELECT status FROM orders WHERE id = ?", String::class.java, accepted.orderId) shouldBe "CREATED"
+                jdbc.queryForObject("SELECT step FROM order_saga WHERE order_id = ?", String::class.java, accepted.orderId) shouldBe
+                    "INVENTORY_RESERVE"
+                jdbc.queryForObject(
+                    "SELECT status FROM idempotency_key WHERE user_id = 'ctx-order' AND idem_key = 'ctx-key'", String::class.java,
+                ) shouldBe "COMPLETED"
+                jdbc.queryForObject(
+                    "SELECT partition_key FROM outbox_event WHERE event_type = 'inventory.command.reserve' AND aggregate_id = ?",
+                    String::class.java, accepted.orderId,
+                ) shouldBe accepted.orderId.toString()
+
+                jdbc.update(
+                    "INSERT INTO idempotency_key (user_id, idem_key, status, lease_until, created_at) " +
+                        "VALUES ('ctx-order', 'old-key', 'COMPLETED', NOW(6), NOW(6) - INTERVAL 2 DAY)",
+                )
+                ctx.getBean(com.kgd.order.application.order.usecase.CleanupIdempotencyKeysUseCase::class.java).cleanup() shouldBe 1
+                jdbc.queryForObject("SELECT COUNT(*) FROM idempotency_key WHERE idem_key = 'old-key'", Long::class.java) shouldBe 0L
+            }
+
+        /**
          * 결제 쓰기·읽기를 payment TM 으로 — 기본 프로필(모의 PG)에서 승인 → 매입 → 대사.
          * 값으로 판정한다: 모의 PG 가 받은 승인 호출 수, payment_db 행, 아웃박스 행의 키, settled 행.
          */

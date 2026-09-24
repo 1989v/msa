@@ -69,3 +69,7 @@ questions:
     phase: post-impl
     status: open
     question: 이행 라인은 productId 로 식별 — 같은 주문에 같은 상품 라인 둘이면 orderItemId 필요 · release 뒤 늦게 온 reserve 재발행은 새로 예약(30분 만료로 정리) · InventoryMetricsPort.recordOrderCancellationLatency 호출부 소멸
+  - id: Q18
+    phase: post-impl
+    status: open
+    question: 사가 표에 COMPENSATING→STUCK·STUCK→COMPENSATING 추가(보상 재시도 소진) — SR-2 반영 여부 · 결제 대기 3건 상한은 잠금 없는 카운트(동시 요청 시 4건 가능) · 같은 Idempotency-Key 에 다른 본문이면 저장 응답 재생(본문 대조 없음) · 없는 주문서 404 · Strimzi 토픽 목록 갱신 필요

@@ -1,6 +1,8 @@
 package com.kgd.order.infrastructure.persistence.order.repository
 
+import com.kgd.order.domain.order.model.OrderStatus
 import com.kgd.order.infrastructure.persistence.order.entity.OrderJpaEntity
+import com.kgd.order.infrastructure.persistence.order.entity.OrderStatusHistoryJpaEntity
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
@@ -12,6 +14,8 @@ interface OrderJpaRepository : JpaRepository<OrderJpaEntity, Long> {
 
     @Query("SELECT DISTINCT o FROM OrderJpaEntity o JOIN FETCH o.items WHERE o.userId = :userId ORDER BY o.createdAt DESC")
     fun findAllByUserIdWithItems(userId: String): List<OrderJpaEntity>
+
+    fun countByUserIdAndStatusIn(userId: String, statuses: Collection<OrderStatus>): Long
 
     // === Admin dashboard 집계 (read-only) ===
 
@@ -38,4 +42,8 @@ interface OrderJpaRepository : JpaRepository<OrderJpaEntity, Long> {
         nativeQuery = true,
     )
     fun aggregateDailyOrders(@Param("from") from: LocalDateTime): List<Array<Any>>
+}
+
+interface OrderStatusHistoryJpaRepository : JpaRepository<OrderStatusHistoryJpaEntity, Long> {
+    fun findAllByOrderIdOrderByIdAsc(orderId: Long): List<OrderStatusHistoryJpaEntity>
 }

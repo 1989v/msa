@@ -231,21 +231,12 @@ kafka:
     stock-released: inventory.stock.released
     stock-confirmed: inventory.stock.confirmed
     reservation-expired: inventory.reservation.expired
-    # ADR-0058: order 도메인 폴드 — order 발행 토픽
-    order-completed: order.order.completed
-    order-cancelled: order.order.cancelled
     # ADR-0093: product 도메인 폴드 — 카탈로그 발행 토픽.
     # search-consumer 가 이 둘을 소비해 색인한다 — 이름을 바꾸면 색인이 끊긴다.
     product-created: product.item.created
     product-updated: product.item.updated
 
-# ADR-0058: order 도메인이 호출하는 외부 서비스 URL (commerce 폴드)
-product:
-  service:
-    url: ${PRODUCT_SERVICE_URL:http://localhost:8081}
 payment:
-  service:
-    url: ${PAYMENT_SERVICE_URL:http://localhost:9090}
   # ADR-0099 — 결제 도메인. PG 는 mock(기본, 서버 승인·항상 승인) | toss(토스페이먼츠 v1).
   # 운영(oci-arm)은 mock — commerce 상시 파드에 외부 egress 가 없다. toss 로 바꾸려면 egress 예외 ADR 이 먼저다.
   pg: ${PAYMENT_PG:mock}

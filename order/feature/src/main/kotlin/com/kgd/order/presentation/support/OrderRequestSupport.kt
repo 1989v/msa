@@ -16,7 +16,7 @@ internal object OrderRequestIdentity {
 }
 
 /**
- * 장바구니·주문서 컨트롤러의 예외 → HTTP 상태. 컨트롤러 로컬 `@ExceptionHandler` 로 둔다 —
+ * 장바구니·주문서·주문 컨트롤러의 예외 → HTTP 상태. 컨트롤러 로컬 `@ExceptionHandler` 로 둔다 —
  * commerce 의 범위 없는 전역 advice(Product·OrderExceptionHandler)는 422 를 모른다.
  */
 internal object OrderSheetErrorResponses {
@@ -26,6 +26,8 @@ internal object OrderSheetErrorResponses {
             ErrorCode.UNAUTHORIZED -> HttpStatus.UNAUTHORIZED
             ErrorCode.FORBIDDEN -> HttpStatus.FORBIDDEN
             ErrorCode.ORDER_SHEET_UNAVAILABLE -> HttpStatus.UNPROCESSABLE_CONTENT
+            ErrorCode.ORDER_CANCEL_NOT_ALLOWED, ErrorCode.IDEMPOTENCY_KEY_IN_PROGRESS -> HttpStatus.CONFLICT
+            ErrorCode.TOO_MANY_PENDING_ORDERS -> HttpStatus.TOO_MANY_REQUESTS
             ErrorCode.INVALID_INPUT -> HttpStatus.BAD_REQUEST
             else -> HttpStatus.INTERNAL_SERVER_ERROR
         }

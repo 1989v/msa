@@ -161,12 +161,12 @@ Total Task Groups: 16 · 단계 P0~P7 (단계 끝마다 커밋·푸시·배포·
 **Dependencies:** Task Group 10
 **Phase:** P4
 **Required Skills:** 사가 설계, JPA 락, Flyway 데이터 전환
-- [ ] 11.0 Complete saga
-  - [ ] 11.1 테스트: 주문·사가 전이표 전수 · Idempotency-Key 409/동일 응답/리스 만료 · 결제 대기 4번째 429 · PAYMENT_PENDING 취소 409 · 상태 전환 마이그레이션(COMPLETED→CONFIRMED, PENDING→FAILED) · `@Version`·status_history (6)
-  - [ ] 11.2 `order_saga`·`idempotency_key`·`order_status_history`·라인 상태·`refunded_amount` 마이그레이션, 유니크 제약(중복 조회 후)
-  - [ ] 11.3 코디네이터: 단계 진행·역순 보상·피벗 뒤 재시도(10회 → STUCK)·기한 재발행·0원 경로·보류 만료 (a)(b) 규칙·UNKNOWN 대기
-  - [ ] 11.4 `POST /api/v1/orders` 202 + `GET /api/v1/orders/{id}` 상태, 옛 `OrderService`·`PaymentAdapter`·`ProductAdapter`·`WebClientConfig`·`onReservationExpired` 삭제, 토픽 `order.order.completed/cancelled` 은퇴
-  - [ ] 11.5 Verify: `$G :order:domain:test :order:feature:test --tests '*Saga*' --tests '*Idempotency*'`
+- [x] 11.0 Complete saga
+  - [x] 11.1 테스트: 주문·사가 전이표 전수 · Idempotency-Key 409/동일 응답/리스 만료 · 결제 대기 4번째 429 · PAYMENT_PENDING 취소 409 · 상태 전환 마이그레이션(COMPLETED→CONFIRMED, PENDING→FAILED) · `@Version`·status_history (6)
+  - [x] 11.2 `order_saga`·`idempotency_key`·`order_status_history`·라인 상태·`refunded_amount` 마이그레이션, 유니크 제약(중복 조회 후)
+  - [x] 11.3 코디네이터: 단계 진행·역순 보상·피벗 뒤 재시도(10회 → STUCK)·기한 재발행·0원 경로·보류 만료 (a)(b) 규칙·UNKNOWN 대기
+  - [x] 11.4 `POST /api/v1/orders` 202 + `GET /api/v1/orders/{id}` 상태, 옛 `OrderService`·`PaymentAdapter`·`ProductAdapter`·`WebClientConfig`·`onReservationExpired` 삭제, 토픽 `order.order.completed/cancelled` 은퇴
+  - [x] 11.5 Verify: `$G :order:domain:test :order:feature:test --tests '*Saga*' --tests '*Idempotency*'`
 **Acceptance Criteria:** 11.1 통과
 
 ### Task Group 12: 사가 E2E · 결제 대기 화면

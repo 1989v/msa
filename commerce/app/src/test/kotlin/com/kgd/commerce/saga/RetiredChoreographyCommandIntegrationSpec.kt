@@ -201,6 +201,8 @@ class RetiredChoreographyCommandIntegrationSpec(
             "inventory-service" to "fulfillment.order.shipped",
             "inventory-service" to "fulfillment.order.cancelled",
             "fulfillment-service" to "inventory.stock.reserved",
+            // 주문 즉시 취소하던 order 구독 — 이제 사가 코디네이터(order-saga)가 보류 만료 규칙으로 받는다
+            "order-service" to "inventory.reservation.expired",
         )
         private val COMMAND_TOPICS = listOf(
             "inventory.command.reserve", "inventory.command.confirm", "inventory.command.release", "inventory.command.restock",

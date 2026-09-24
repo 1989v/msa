@@ -94,3 +94,11 @@
 - commerce 리스너 컨테이너 23개 파티션 할당 확인(order-read-model · inventory/payment/promotion/fulfillment 명령 · product-stock/seller-sync · order-service 만료) — 이전 배포까지 0개
 - 상품 재발행(클러스터 안에서 commerce:8085 에 어드민 헤더로 호출) → `{"published":24}` · product_db outbox PUBLISHED 24 → **order_db.product_view 24** (아웃박스 → 릴레이 → Kafka → 읽기 모델 전 구간 운영 확인)
 - commerce ERROR 0
+
+## TG11 사가 코디네이터 · 주문 상태 · 멱등 키 (2026-09-24)
+- `./gradlew :order:domain:test :order:feature:test :commerce:app:test :gateway:test --tests '*RouteAuth*' verifyArchitecture` → exit 0, 실패 0
+  - OrderTest 8/0 · OrderSagaTest 13/0 · OrderSagaCoordinatorTest 21/0 · OrderControllerIdempotencyTest 11/0 · OrderOutboxEventAdapterTest 3/0
+  - OrderSagaIdempotencyIntegrationSpec 8/0 (동시 이벤트 8개 → @Version 충돌 7회 재시도 수렴) · RetiredChoreographyCommandIntegrationSpec 4/0 · CommerceContextLoadSpec 8/0 (skipped 0)
+- 옛 OrderService·PaymentAdapter·ProductAdapter·WebClientConfig·onReservationExpired·order.order.completed/cancelled 삭제
+- 통합 테스트가 잡은 결함 2(MySQL JSON 정규화로 무변경 재시도가 충돌 · 배송비 라인 순서) 수정
+- 회귀 주입 5종 — 첫 시도 초록불(가드 이중) 후 가드까지 제거해 빨간불 확인. 리스 가드는 실 MySQL 통합만 잡음
