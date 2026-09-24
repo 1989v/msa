@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { ConceptAtlas } from '../../api/searchApi';
 import { KIND_META, RELATION_LABELS } from '../../components/hierarchy/kindLabels';
@@ -86,6 +87,15 @@ export default function DomainDesktop({ atlas, domain, tree, at, sel, owner, dom
   const go = (id: string) => navigate(`/tech/d/${domain}?at=${encodeURIComponent(id)}&sel=${encodeURIComponent(id)}`);
   const flows = tree.cross.filter((e) => e.kind === 'FLOWS_TO' && byId.has(e.from) && byId.has(e.to));
   const expanded = path.length - 1;
+  // 층이 깊으면 고른 노드가 오른쪽 밖으로 나간다 — 보이는 자리까지 가로로 민다
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const selCol = sp?.col ?? 0;
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const right = LEFT + selCol * COL_W + NODE_W * 2;
+    el.scrollTo({ left: Math.max(0, right - el.clientWidth), behavior: 'auto' });
+  }, [selCol, selected]);
 
   return (
     <div className="atlas-desk">
@@ -105,7 +115,7 @@ export default function DomainDesktop({ atlas, domain, tree, at, sel, owner, dom
           <h1>{tree.nodes.get(tree.rootId)?.name}</h1>
           <span className="kh-mono atlas-muted">개념 {tree.nodes.size} · 펼친 가지 {expanded}</span>
         </div>
-        <div className="atlas-desk__scroll">
+        <div className="atlas-desk__scroll" ref={scrollRef}>
           <div className="atlas-desk__canvas" style={{ width, height }}>
             <div className="kh-mono atlas-desk__cols" aria-hidden="true">
               {Array.from({ length: maxCol + 1 }, (_, c) => (

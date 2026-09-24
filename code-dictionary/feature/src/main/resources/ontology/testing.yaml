@@ -8,9 +8,9 @@ concepts:
     name: "테스트"
     category: TESTING
     level: BEGINNER
-    description: "코드가 의도대로 동작하는지 실행해서 확인하는 일. 어떻게 쓸지 정하고, 어디까지 볼지 고르고, 의존을 떼어 내고, 그 검사가 실제로 무는지 증명하는 순서로 읽는다"
+    description: "코드가 의도대로 동작하는지 실행해서 확인하는 일. 어떻게 쓸지 정하고, 어디까지 볼지 고르고, 의존을 떼어 내고, 데이터를 갖추고, 결과를 흔들리지 않게 하고, 그 검사가 실제로 무는지 증명하는 순서로 읽는다"
     synonyms: ["testing", "software testing"]
-    contains: [test-design, test-scope, test-isolation, test-gating, test-glossary]
+    contains: [test-design, test-scope, test-isolation, test-data-setup, test-reliability, test-gating, test-glossary]
 
   # ── 테스트 설계 ───────────────────────────────────────────
   - id: test-design
@@ -18,8 +18,9 @@ concepts:
     name: "테스트 설계"
     category: TESTING
     level: BEGINNER
-    description: "테스트를 언제 쓰고 어떤 모양으로 적을지 정한다. 이 레포는 Kotest BehaviorSpec 으로 given · when · then 을 한국어 문장으로 적는다"
-    contains: [tdd, bdd, kotest]
+    description: "테스트를 언제 쓰고, 어떤 입력을 고르고, 무엇으로 판정할지 정한다. 이 레포는 Kotest BehaviorSpec 으로 given · when · then 을 한국어 문장으로 적는다"
+    questions: ["좋은 테스트가 구현을 바꿔도 깨지지 않으려면 무엇을 확인해야 하나"]
+    contains: [tdd, bdd, test-atdd, test-classical-school, test-london-school, test-state-verification, test-behavior-verification, test-equivalence-partitioning, test-boundary-value-analysis, test-parameterized, test-property-based, test-fuzzing, test-snapshot-testing, test-black-box-testing, test-white-box-testing, test-implementation-coupling, kotest, vitest]
     flows_to: [test-scope]
   - id: tdd
     kind: MECHANISM
@@ -29,6 +30,8 @@ concepts:
     description: "실패하는 테스트를 먼저 쓰고(Red), 그것을 통과시킬 만큼만 구현하고(Green), 동작을 지킨 채 정리한다(Refactor). 테스트가 처음에 빨간불인 것을 봤으므로 그 테스트가 무는 것도 함께 확인된다"
     synonyms: ["Test-Driven Development", "테스트 주도 개발", "Red-Green-Refactor"]
     questions: ["TDD 에서 테스트를 먼저 실패시켜 보는 이유는 무엇인가"]
+    mitigates:
+      - { to: test-false-green, reason: "처음에 빨간불을 본 테스트만 남는다" }
   - id: bdd
     kind: MECHANISM
     name: "BDD"
@@ -40,17 +43,180 @@ concepts:
     code:
       - { path: product/domain/src/test/kotlin/com/kgd/product/domain/product/model/ProductTest.kt, symbol: "class ProductTest : BehaviorSpec({", note: "도메인 규칙을 given · when · then 문장으로 적은 스펙" }
     uses: [test-given-when-then]
+  - id: test-atdd
+    kind: MECHANISM
+    name: "ATDD"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "기능을 만들기 전에 기획 · 개발 · QA 가 합의한 인수 조건을 실행 가능한 테스트로 먼저 적고, 그것이 통과하면 완료로 본다. TDD 가 단위 설계를 이끈다면 ATDD 는 기능 범위를 이끈다"
+    synonyms: ["Acceptance Test-Driven Development", "인수 테스트 주도 개발", "Specification by Example"]
+    uses: [bdd]
+  - id: test-classical-school
+    kind: MECHANISM
+    name: "고전파 테스트"
+    category: TESTING
+    level: ADVANCED
+    description: "단위를 클래스 하나가 아니라 하나의 동작으로 보고, 공유 상태 · 외부 프로세스만 대역으로 바꾸고 나머지 협력 객체는 실물을 쓴다. 리팩터링에 강하고 결과 상태를 검증한다"
+    synonyms: ["Detroit school", "classicist", "sociable unit test"]
+    uses: [test-state-verification]
+    mitigates: [test-overmocking, test-implementation-coupling]
+  - id: test-london-school
+    kind: MECHANISM
+    name: "런던파 테스트"
+    category: TESTING
+    level: ADVANCED
+    description: "클래스 하나를 단위로 보고 모든 협력 객체를 목으로 바꿔 상호작용을 검증한다. 설계를 바깥에서 안으로 끌어내기 좋지만 구현 순서에 테스트가 묶이기 쉽다"
+    synonyms: ["London school", "mockist", "outside-in TDD", "solitary unit test"]
+    uses: [test-behavior-verification]
+    causes: [test-implementation-coupling]
+    alternative_to:
+      - { to: test-classical-school, reason: "협력 객체를 전부 대역으로 바꿔 원인은 좁히지만 리팩터링에 약하다" }
+  - id: test-state-verification
+    kind: MECHANISM
+    name: "상태 검증"
+    category: TESTING
+    level: BEGINNER
+    description: "대상을 실행한 뒤 반환값이나 남은 상태가 기대와 같은지 본다. 어떻게 했는지가 아니라 무엇이 되었는지를 확인해 구현이 바뀌어도 살아남는다"
+    synonyms: ["state verification", "output-based testing"]
+    code:
+      - { path: product/domain/src/test/kotlin/com/kgd/product/domain/product/model/ProductTest.kt, symbol: "product.status shouldBe ProductStatus.ACTIVE", note: "생성 결과의 상태를 본다" }
+  - id: test-behavior-verification
+    kind: MECHANISM
+    name: "상호작용 검증"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "대상이 의존을 몇 번 · 어떤 인자로 불렀는지 목으로 확인한다. 이벤트 발행 · 외부 호출처럼 상태로 남지 않는 부수효과에만 쓴다"
+    synonyms: ["behavior verification", "interaction testing", "verify"]
+    code:
+      - { path: quant/feature/src/test/kotlin/com/kgd/quant/application/live/AuditChainServiceSpec.kt, symbol: "coVerify(atLeast = 2) { repo.append(any()) }", note: "감사 저장소 append 가 두 번 이상 불렸는지 확인" }
+    uses: [mock]
+    causes: [test-implementation-coupling]
+    alternative_to:
+      - { to: test-state-verification, reason: "상태로 남지 않는 부수효과를 확인하지만 구현 순서에 묶인다" }
+  - id: test-equivalence-partitioning
+    kind: MECHANISM
+    name: "동치 분할"
+    category: TESTING
+    level: BEGINNER
+    description: "같은 방식으로 처리될 입력을 한 묶음으로 보고 묶음마다 대표값 하나만 시험한다. 입력 공간을 무한히 늘리지 않고 분기마다 한 번씩 닿게 한다"
+    synonyms: ["equivalence partitioning", "equivalence class"]
+  - id: test-boundary-value-analysis
+    kind: MECHANISM
+    name: "경계값 분석"
+    category: TESTING
+    level: BEGINNER
+    description: "묶음이 바뀌는 경계 바로 앞 · 위 · 뒤 값을 시험한다. off-by-one · 반올림 · 등호 실수는 경계에서만 드러난다"
+    synonyms: ["boundary value analysis", "BVA", "off-by-one"]
+    code:
+      - { path: ads/domain/src/test/kotlin/com/kgd/ads/domain/campaign/model/ChargeAmountTest.kt, symbol: "forAll(row(999L, 0L), row(1_000L, 1L), row(1_001L, 1L), row(2_999L, 2L))", note: "1,000 경계 앞뒤로 과금액 버림을 확인" }
+    uses: [test-equivalence-partitioning]
+  - id: test-parameterized
+    kind: MECHANISM
+    name: "파라미터화 테스트"
+    category: TESTING
+    level: BEGINNER
+    description: "같은 검증을 입력 · 기대값 표의 행마다 반복한다. 사례를 늘릴 때 테스트 코드를 복사하지 않고 표에 한 줄을 더한다"
+    synonyms: ["parameterized test", "data-driven test", "table-driven test", "forAll row"]
+    code:
+      - { path: ads/domain/src/test/kotlin/com/kgd/ads/domain/ledger/policy/RevenueSplitTest.kt, symbol: "forAll(", note: "수익 배분 사례를 표로 돌린다" }
+  - id: test-property-based
+    kind: MECHANISM
+    name: "속성 기반 테스트"
+    category: TESTING
+    level: ADVANCED
+    description: "특정 예시 대신 「어떤 입력이든 성립해야 할 속성(불변식)」을 적고, 생성기가 만든 수백 개 무작위 입력으로 확인한다. 실패하면 가장 작은 반례로 줄여 보여 준다"
+    synonyms: ["property-based testing", "PBT", "QuickCheck", "kotest-property"]
+    questions: ["예시 기반 테스트가 놓치는 결함을 속성 기반 테스트가 찾는 이유는 무엇인가", "좋은 속성은 어떻게 찾나"]
+    code:
+      - { path: quant/domain/src/test/kotlin/com/kgd/quant/domain/order/IdempotentOrderSpec.kt, symbol: "checkAll(15, Arb.uuid(), Arb.int(2..10))", note: "같은 주문 id 로 여러 번 쌓여도 한 주문만 남는 속성" }
+    contains: [test-arbitrary-generator, test-shrinking]
+    uses: [test-invariant]
+    alternative_to:
+      - { to: test-parameterized, reason: "사람이 고른 사례 대신 생성기가 입력 공간을 훑는다" }
+  - id: test-arbitrary-generator
+    kind: MECHANISM
+    name: "임의값 생성기"
+    category: TESTING
+    level: ADVANCED
+    description: "타입 · 범위 · 도메인 제약을 지키는 무작위 입력을 만드는 생성기. 도메인 객체 생성기를 조합해 유효한 입력만 만들고, 경계값을 자주 섞는다"
+    synonyms: ["Arb", "arbitrary", "generator"]
+    code:
+      - { path: quant/domain/src/test/kotlin/com/kgd/quant/domain/fixtures/TrancheFixtures.kt, symbol: "val arbValidConfig: Arb<TrancheStrategyConfig> = Arb.bind(", note: "유효한 분할 매수 설정만 만드는 생성기" }
+  - id: test-shrinking
+    kind: MECHANISM
+    name: "축소"
+    category: TESTING
+    level: ADVANCED
+    description: "속성을 깨는 입력을 찾으면 여전히 실패하는 더 작은 입력으로 반복해 줄인다. 거대한 무작위 반례 대신 원인이 보이는 최소 반례를 얻는다"
+    synonyms: ["shrinking", "minimal counterexample"]
+  - id: test-fuzzing
+    kind: MECHANISM
+    name: "퍼징"
+    category: TESTING
+    level: ADVANCED
+    description: "형식이 깨졌거나 극단적인 입력을 대량으로 자동 생성해 파서 · 역직렬화 · 경계 검사에 넣고, 크래시 · 예외 · 무한 루프가 나는 입력을 찾는다. 커버리지 피드백으로 새 경로에 닿는 입력을 우선 변형한다"
+    synonyms: ["fuzzing", "fuzz testing", "coverage-guided fuzzing", "Jazzer"]
+    alternative_to:
+      - { to: test-property-based, reason: "속성을 적지 않고 크래시 · 예외만을 판정 기준으로 입력 공간을 훑는다" }
+  - id: test-snapshot-testing
+    kind: MECHANISM
+    name: "스냅샷 테스트"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "출력 전체(렌더 결과 · 직렬화 결과)를 파일로 저장해 두고 다음 실행 결과와 비교한다. 넓게 잡지만 무엇이 옳은지 판정하지 않아, 바뀐 스냅샷을 생각 없이 갱신하면 검사가 아니게 된다"
+    synonyms: ["snapshot test", "golden file", "approval testing"]
+    causes: [test-false-green]
+  - id: test-black-box-testing
+    kind: MECHANISM
+    name: "블랙박스 테스트"
+    category: TESTING
+    level: BEGINNER
+    description: "내부 구현을 보지 않고 명세 · 공개 인터페이스의 입력과 출력만으로 테스트를 설계한다. 구현이 바뀌어도 테스트가 유지된다"
+    synonyms: ["black-box testing", "specification-based testing"]
+    uses: [test-equivalence-partitioning, test-boundary-value-analysis]
+  - id: test-white-box-testing
+    kind: MECHANISM
+    name: "화이트박스 테스트"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "코드의 분기 · 경로를 보고 모든 분기에 닿도록 입력을 고른다. 빠진 분기를 찾지만 코드가 틀린 명세를 구현했는지는 모른다"
+    synonyms: ["white-box testing", "structural testing", "glass-box"]
+    measured_by: [test-branch-coverage]
+    alternative_to:
+      - { to: test-black-box-testing, reason: "명세 대신 코드 구조로 입력을 골라 빠진 분기를 찾는다" }
+  - id: test-implementation-coupling
+    kind: PROBLEM
+    name: "구현 결합 테스트"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "테스트가 결과가 아니라 내부 호출 순서 · private 구조를 확인해, 동작이 같은 리팩터링에도 깨지는 상태. 테스트가 변경을 막는 비용이 된다"
+    synonyms: ["brittle test", "fragile test", "over-specification"]
   - id: kotest
     kind: TECHNOLOGY
     name: "Kotest"
     category: TESTING
     level: BEGINNER
-    description: "Kotlin 테스트 프레임워크. 스펙 스타일 여러 가지와 풍부한 매처(shouldBe …)를 준다. 이 레포는 BehaviorSpec 을 표준으로 쓴다"
+    description: "Kotlin 테스트 프레임워크. 스펙 스타일 여러 가지와 풍부한 매처(shouldBe …), 속성 기반 테스트(kotest-property), 데이터 주도 테스트(forAll · row)를 준다. 이 레포는 BehaviorSpec 을 표준으로 쓴다"
     code:
       - { path: gradle/libs.versions.toml, symbol: "kotest-runner-junit5", note: "JUnit5 플랫폼에서 Kotest 스펙을 돌리는 러너" }
+      - { path: gradle/libs.versions.toml, symbol: "kotest-property = { module = \"io.kotest:kotest-property\", version.ref = \"kotest\" }", note: "속성 기반 테스트 모듈" }
     implements:
       - { to: bdd, reason: "BehaviorSpec 의 given · when · then 블록" }
       - { to: dsl, reason: "given · when · then 을 Kotlin DSL 로 적는다" }
+      - { to: test-property-based, reason: "checkAll · Arb 로 속성을 돌린다" }
+      - { to: test-parameterized, reason: "forAll(row(...)) 표로 사례를 돌린다" }
+      - { to: test-async-await-polling, reason: "eventually 로 조건이 설 때까지 기다린다" }
+      - { to: spring-test-context, reason: "SpringExtension 이 테스트 컨텍스트를 연다" }
+  - id: vitest
+    kind: TECHNOLOGY
+    name: "Vitest"
+    category: TESTING
+    level: BEGINNER
+    description: "Vite 설정을 그대로 쓰는 JS/TS 테스트 러너. portal-fe 의 셸 · 인증 모듈 단위 테스트를 돌린다"
+    code:
+      - { path: portal-fe/package.json, symbol: "\"vitest\": \"^2.1.8\"", note: "portal-fe 테스트 러너" }
+    implements:
+      - { to: unit-test, reason: "FE 모듈을 브라우저 없이 jsdom 에서 돌린다" }
 
   # ── 검증 범위 ─────────────────────────────────────────────
   - id: test-scope
@@ -58,22 +224,56 @@ concepts:
     name: "검증 범위 선택"
     category: TESTING
     level: BEGINNER
-    description: "한 번의 테스트가 어디까지를 실제로 돌릴지 고른다. 범위가 좁을수록 빠르고 원인이 잘 보이고, 넓을수록 실제 결함을 더 잡는다"
-    synonyms: ["test pyramid", "테스트 피라미드"]
-    contains: [unit-test, integration-test, e2e-test, test-coverage]
+    description: "한 번의 테스트가 어디까지를 실제로 돌릴지 고른다. 범위가 좁을수록 빠르고 원인이 잘 보이고, 넓을수록 실제 결함을 더 잡는다. 그 비율을 정하는 모양(피라미드 · 트로피)이 전략이다"
+    questions: ["단위 · 통합 · E2E 테스트의 비율은 무엇을 기준으로 정하나"]
+    contains: [test-pyramid, test-trophy, unit-test, test-component-test, integration-test, test-contract-test, e2e-test, test-smoke-test, test-regression-test, test-exploratory-testing, test-ice-cream-cone, test-coverage, test-branch-coverage]
+    uses:
+      - { to: dist-chaos-engineering, reason: "운영 같은 환경에 장애를 넣어 회복을 검증하는 범위는 분산 도메인이 다룬다" }
+      - { to: k6, reason: "부하 · 성능 검증 범위는 관측성 도메인의 부하 테스트로 넘긴다" }
     flows_to: [test-isolation]
+  - id: test-pyramid
+    kind: MECHANISM
+    name: "테스트 피라미드"
+    category: TESTING
+    level: BEGINNER
+    description: "빠르고 싼 단위 테스트를 가장 많이, 통합 테스트를 그보다 적게, 느리고 불안정한 E2E 테스트를 가장 적게 두는 배분 원칙"
+    synonyms: ["test pyramid"]
+    uses: [unit-test, integration-test, e2e-test]
+    mitigates: [test-ice-cream-cone, test-slow-suite]
+  - id: test-trophy
+    kind: MECHANISM
+    name: "테스팅 트로피"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "정적 분석을 바닥에 깔고 통합 테스트에 가장 큰 비중을 두는 배분. 목이 많은 단위 테스트보다 실제 사용 방식에 가까운 테스트가 신뢰를 더 준다는 관점이다"
+    synonyms: ["testing trophy", "testing honeycomb"]
+    uses: [integration-test]
+    alternative_to:
+      - { to: test-pyramid, reason: "단위 대신 통합에 무게를 둬 목이 가리는 결함을 줄인다" }
   - id: unit-test
     kind: MECHANISM
     name: "단위 테스트"
     category: TESTING
     level: BEGINNER
-    description: "함수나 클래스 하나를 떼어 내 입력과 출력만 본다. 밀리초 단위로 돌아 가장 많이 쓴다. 이 레포의 도메인 테스트는 목 없이 순수 단위 테스트로 쓴다"
+    description: "함수나 클래스 하나(또는 하나의 동작)를 떼어 내 입력과 출력만 본다. 밀리초 단위로 돌아 가장 많이 쓴다. 이 레포의 도메인 테스트는 목 없이 순수 단위 테스트로 쓴다"
     synonyms: ["unit test"]
     questions: ["단위 테스트의 「단위」는 무엇으로 정하나", "도메인 테스트에서 목을 금지하는 이유는 무엇인가"]
     code:
       - { path: product/domain/src/test/kotlin/com/kgd/product/domain/product/model/ProductTest.kt, symbol: "class ProductTest : BehaviorSpec({", note: "프레임워크 없는 도메인 모델 단위 테스트" }
     flows_to: [integration-test]
     measured_by: [test-coverage]
+  - id: test-component-test
+    kind: MECHANISM
+    name: "컴포넌트 테스트"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "서비스 하나를 프로세스 안에서 띄우고 외부 의존만 대역으로 바꿔, 그 서비스의 API 를 바깥에서 호출해 본다. 라우팅 · 직렬화 · 필터 체인이 맞물리는지 확인한다"
+    synonyms: ["component test", "service test"]
+    code:
+      - { path: gateway/src/test/kotlin/com/kgd/gateway/config/GatewayRoutingSpec.kt, symbol: "val client = WebTestClient", note: "게이트웨이를 띄워 라우팅 결과를 HTTP 로 확인" }
+    uses:
+      - { to: spring-test-slice, reason: "스프링에서는 한 계층만 켠 슬라이스 컨텍스트로 띄운다" }
+      - { to: spring-webtestclient, reason: "띄운 서비스를 HTTP 로 부른다" }
   - id: integration-test
     kind: MECHANISM
     name: "통합 테스트"
@@ -91,6 +291,36 @@ concepts:
     uses:
       - { to: mysql, reason: "Testcontainers 로 진짜 MySQL 을 띄워 스키마 · 쿼리를 확인한다" }
       - { to: kafka, reason: "Testcontainers 로 진짜 브로커를 띄워 발행 · 소비를 확인한다" }
+  - id: test-contract-test
+    kind: MECHANISM
+    name: "계약 테스트"
+    category: TESTING
+    level: ADVANCED
+    description: "두 쪽이 주고받는 요청 · 응답 · 메시지의 형태를 계약으로 고정하고, 양쪽이 각자 그 계약을 지키는지 따로 확인한다. 둘을 함께 띄우는 E2E 없이 경계가 깨지는 것을 잡는다"
+    synonyms: ["contract testing"]
+    questions: ["계약 테스트가 통합 테스트를 대신할 수 있는 범위는 어디까지인가"]
+    contains: [test-consumer-driven-contract, test-port-contract-spec]
+    alternative_to:
+      - { to: e2e-test, reason: "서비스를 함께 띄우지 않고 경계의 형태만 양쪽에서 따로 확인한다" }
+  - id: test-consumer-driven-contract
+    kind: MECHANISM
+    name: "소비자 주도 계약"
+    category: TESTING
+    level: ADVANCED
+    description: "소비자가 자기가 실제로 쓰는 요청 · 응답 필드를 계약 파일로 내고, 제공자 CI 가 그 계약들을 모두 재생해 통과해야 배포한다. 제공자는 아무도 안 쓰는 필드만 안심하고 바꾼다"
+    synonyms: ["consumer-driven contract", "CDC", "Pact", "provider verification"]
+    questions: ["제공자가 소비자 계약을 검증하지 않으면 무엇이 운영에서 처음 드러나나"]
+  - id: test-port-contract-spec
+    kind: MECHANISM
+    name: "포트 계약 스펙"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "한 포트(인터페이스)의 구현체 여러 개(실물 어댑터 · 파일 어댑터 · 페이크)에 같은 스펙을 돌려, 모두 같은 약속을 지키는지 확인한다. 페이크가 실물과 다르게 동작해 테스트가 거짓말하는 것을 막는다"
+    synonyms: ["abstract test", "adapter contract test", "fake verification"]
+    code:
+      - { path: quant/feature/src/test/kotlin/com/kgd/quant/infrastructure/security/kms/KeyManagementServiceContractSpec.kt, symbol: "class KeyManagementServiceContractSpec : BehaviorSpec({", note: "KMS 어댑터 셋이 같은 wrap → unwrap 왕복을 지키는지" }
+    uses: [test-fake, port-adapter]
+    mitigates: [test-false-green]
   - id: e2e-test
     kind: MECHANISM
     name: "E2E 테스트"
@@ -101,14 +331,55 @@ concepts:
     questions: ["E2E 테스트를 적게 두는 이유는 무엇인가"]
     code:
       - { path: amp-arena/tools/e2e-online.mjs, symbol: "const A = new Page(port), B = new Page(port);", note: "탭 두 개로 방 만들기 · 코드 입장 · 매치 진입까지 재현" }
+      - { path: commerce/app/src/test/kotlin/com/kgd/commerce/saga/ClaimE2ETest.kt, symbol: "eventually(20.seconds) { claim(orderId)[\"status\"] shouldBe \"REFUNDED\" }", note: "주문 → 클레임 → 환불까지 사가 전체를 돌린다" }
+    causes: [test-flaky, test-slow-suite]
+  - id: test-smoke-test
+    kind: MECHANISM
+    name: "스모크 테스트"
+    category: TESTING
+    level: BEGINNER
+    description: "배포 직후 가장 중요한 경로 몇 개만 빠르게 찔러 시스템이 뜨고 연결됐는지 확인한다. 깊이 대신 속도로 「더 볼 가치가 있나」를 가른다"
+    synonyms: ["smoke test", "sanity check", "build verification test"]
+    code:
+      - { path: scripts/network-policy-smoke-test.sh, symbol: "# ADR-0031 NetworkPolicy Phase 1 smoke test", note: "NetworkPolicy 적용 뒤 허용 · 차단 경로를 한 번씩 찌른다" }
+  - id: test-regression-test
+    kind: MECHANISM
+    name: "회귀 테스트"
+    category: TESTING
+    level: BEGINNER
+    description: "고친 결함마다 그 결함을 재현하는 테스트를 남겨, 이후 변경이 같은 결함을 되살리면 바로 잡는다. 기존 스위트 전체를 변경마다 다시 돌리는 일도 이 이름으로 부른다"
+    synonyms: ["regression test", "non-regression"]
+    uses: [test-assertion]
+  - id: test-exploratory-testing
+    kind: MECHANISM
+    name: "탐색적 테스트"
+    category: TESTING
+    level: BEGINNER
+    description: "사람이 제품을 직접 써 보며 다음에 무엇을 시험할지 즉석에서 정한다. 자동화가 확인하지 않는 「있어야 할 것이 없음」 · 사용성 결함을 찾는다"
+    synonyms: ["exploratory testing", "manual testing"]
+  - id: test-ice-cream-cone
+    kind: PROBLEM
+    name: "아이스크림 콘"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "피라미드가 뒤집혀 수동 · E2E 테스트가 가장 많고 단위 테스트가 가장 적은 상태. 스위트가 느리고 불안정해 실패 원인을 좁히지 못한다"
+    synonyms: ["ice cream cone anti-pattern", "inverted pyramid"]
+    causes: [test-slow-suite, test-flaky]
   - id: test-coverage
     kind: METRIC
     name: "테스트 커버리지"
     category: TESTING
     level: BEGINNER
-    description: "테스트가 실행한 코드의 비율(줄 · 분기). 실행했다는 뜻이지 결과를 확인했다는 뜻은 아니어서, 높아도 단언이 없으면 결함을 못 잡는다"
-    synonyms: ["code coverage", "line coverage", "branch coverage"]
+    description: "테스트가 실행한 코드 줄의 비율. 실행했다는 뜻이지 결과를 확인했다는 뜻은 아니어서, 높아도 단언이 없으면 결함을 못 잡는다"
+    synonyms: ["code coverage", "line coverage", "statement coverage"]
     questions: ["커버리지 100% 인데 결함을 놓치는 경우는 언제인가"]
+  - id: test-branch-coverage
+    kind: METRIC
+    name: "분기 커버리지"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "조건문의 참 · 거짓 갈래 중 테스트가 지나간 비율. 줄 커버리지가 100% 여도 한쪽 갈래만 지났을 수 있어 더 엄격하다"
+    synonyms: ["branch coverage", "decision coverage", "MC/DC"]
 
   # ── 의존 격리 ─────────────────────────────────────────────
   - id: test-isolation
@@ -116,9 +387,11 @@ concepts:
     name: "의존 격리"
     category: TESTING
     level: INTERMEDIATE
-    description: "테스트 대상이 부르는 의존을 대역이나 일회용 실물로 바꿔, 결과가 대상 코드에만 달려 있게 한다"
-    contains: [test-double-substitution, test-disposable-dependency, mockk, testcontainers, test-overmocking]
-    flows_to: [test-gating]
+    description: "테스트 대상이 부르는 의존을 대역이나 일회용 실물로 바꿔, 결과가 대상 코드에만 달려 있게 한다. 테스트끼리도 상태를 나누지 않게 한다"
+    contains: [test-double-substitution, test-disposable-dependency, test-service-virtualization, test-transaction-rollback, mockk, testcontainers, test-overmocking]
+    uses:
+      - { to: spring-test-bean-override, reason: "스프링 컨텍스트 안의 빈을 대역으로 바꾼다" }
+    flows_to: [test-data-setup]
   - id: test-double-substitution
     kind: MECHANISM
     name: "테스트 더블 치환"
@@ -127,7 +400,7 @@ concepts:
     description: "진짜 의존 자리에 목 · 스텁 · 페이크 같은 대역을 넣는다. 이 레포는 애플리케이션 테스트에서 아웃바운드 포트만 MockK 로 바꾸고 도메인 테스트에선 쓰지 않는다"
     synonyms: ["test double"]
     questions: ["목 · 스텁 · 페이크는 각각 무엇을 대신하나"]
-    uses: [mock, stub, test-fake]
+    uses: [mock, stub, test-fake, test-spy, test-dummy, test-seam]
     causes:
       - { to: test-overmocking, reason: "대역이 많아질수록 테스트가 실제 의존의 동작 대신 대역 설정을 재게 된다" }
     alternative_to:
@@ -139,8 +412,41 @@ concepts:
     level: INTERMEDIATE
     description: "테스트마다 진짜 DB · 브로커를 컨테이너로 띄우고 끝나면 버린다. 대역 대신 실물의 동작을 재면서도 환경 사이의 상태 누수가 없다"
     synonyms: ["throwaway container"]
+    contains: [test-shared-container]
+    uses: [test-hermetic]
     mitigates:
       - { to: test-overmocking, reason: "직렬화기 · SKIP LOCKED 같은 실물 동작을 실물로 잰다" }
+  - id: test-shared-container
+    kind: MECHANISM
+    name: "컨테이너 공유"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "컨테이너 기동이 테스트 시간의 대부분이라, 한 JVM 안의 스펙들이 싱글턴 컨테이너 하나를 나눠 쓰고 테스트마다 데이터만 비운다"
+    synonyms: ["singleton container", "container reuse"]
+    code:
+      - { path: ads/feature/src/test/kotlin/com/kgd/ads/support/AdsTestContainers.kt, symbol: "object AdsTestContainers {", note: "광고 통합 스펙이 MySQL · Redis 컨테이너를 한 번만 띄워 공유" }
+    affects: [test-suite-duration]
+    causes:
+      - { to: test-order-dependency, reason: "데이터를 비우지 않으면 앞 스펙이 남긴 행을 뒤 스펙이 본다" }
+  - id: test-service-virtualization
+    kind: MECHANISM
+    name: "HTTP 스텁 서버"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "외부 HTTP API 자리에 요청을 받아 정해 둔 응답 · 지연 · 오류를 돌려주는 가짜 서버를 띄운다. 클라이언트의 직렬화 · 타임아웃 · 재시도를 실제 네트워크 호출로 시험한다"
+    synonyms: ["service virtualization", "WireMock", "MockWebServer", "HTTP stub"]
+    alternative_to:
+      - { to: test-double-substitution, reason: "클라이언트 코드를 목으로 바꾸지 않고 네트워크 경계에서 가짜를 세운다" }
+  - id: test-transaction-rollback
+    kind: MECHANISM
+    name: "트랜잭션 롤백 격리"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "테스트를 트랜잭션으로 감싸고 끝나면 롤백해 DB 를 원래대로 돌린다. 빠르지만 커밋 뒤에 일어나는 일(이벤트 · 아웃박스 발행 · 다른 스레드 조회)은 보지 못한다"
+    synonyms: ["rollback test", "@Transactional test"]
+    questions: ["롤백 격리 테스트가 커밋 후 리스너 버그를 놓치는 이유는 무엇인가"]
+    mitigates: [test-order-dependency]
+    causes: [test-false-green]
   - id: mockk
     kind: TECHNOLOGY
     name: "MockK"
@@ -151,6 +457,7 @@ concepts:
       - { path: product/feature/src/test/kotlin/com/kgd/product/application/product/service/ProductServiceTest.kt, symbol: "mockk<ProductTransactionalService>()", note: "애플리케이션 서비스 테스트에서 의존을 목으로 바꾼다" }
     implements:
       - { to: test-double-substitution, reason: "mockk · every · verify 로 목과 스텁을 만든다" }
+      - { to: test-behavior-verification, reason: "verify · coVerify · slot 으로 호출과 인자를 확인한다" }
   - id: testcontainers
     kind: TECHNOLOGY
     name: "Testcontainers"
@@ -171,6 +478,214 @@ concepts:
     synonyms: ["over-mocking"]
     causes:
       - { to: test-false-green, reason: "목이 대답을 정해 두면 실물이 틀려도 초록불이다" }
+      - { to: test-implementation-coupling, reason: "목 설정이 호출 순서를 그대로 적는다" }
+
+  # ── 테스트 데이터 준비 ─────────────────────────────────────
+  - id: test-data-setup
+    kind: STAGE
+    name: "테스트 데이터 준비"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "테스트가 쓸 객체 · 행을 읽기 쉽고 서로 간섭하지 않게 만든다. 이 테스트에 중요한 값만 드러내고 나머지는 기본값에 숨긴다"
+    questions: ["테스트 데이터에서 중요한 값과 아닌 값을 어떻게 구분해 드러내나"]
+    contains: [test-data-builder, test-object-mother, test-setup-teardown, test-mystery-guest, test-shared-mutable-fixture]
+    flows_to: [test-reliability]
+  - id: test-data-builder
+    kind: MECHANISM
+    name: "테스트 데이터 빌더"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "모든 필드에 유효한 기본값을 둔 생성 함수를 만들고, 테스트는 관심 있는 필드만 바꿔 부른다. Kotlin 에서는 기본값 인자 함수와 data class 의 copy 가 빌더 역할을 한다"
+    synonyms: ["test data builder", "default-argument factory"]
+    code:
+      - { path: seller/feature/src/test/kotlin/com/kgd/seller/application/seller/service/SellerFixtures.kt, symbol: "internal fun sellerRow(", note: "상태만 필수로 받고 나머지는 기본값인 판매자 생성 함수" }
+    uses: [builder-pattern, fixture]
+    mitigates: [test-mystery-guest]
+  - id: test-object-mother
+    kind: MECHANISM
+    name: "오브젝트 마더"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "「유효한 전략」「만료된 쿠폰」처럼 이름 붙은 표준 테스트 객체를 돌려주는 팩토리 모음. 여러 스펙이 같은 준비를 공유하지만 변형이 늘면 함수가 폭증한다"
+    synonyms: ["object mother", "fixture factory"]
+    code:
+      - { path: quant/domain/src/test/kotlin/com/kgd/quant/domain/fixtures/TrancheFixtures.kt, symbol: "object TrancheFixtures {", note: "분할 매수 스펙들이 공유하는 표준 설정 모음" }
+    uses: [fixture]
+    alternative_to:
+      - { to: test-data-builder, reason: "이름 붙은 표준 객체로 읽기 쉽지만 변형마다 함수가 늘어난다" }
+  - id: test-setup-teardown
+    kind: MECHANISM
+    name: "준비 · 정리 훅"
+    category: TESTING
+    level: BEGINNER
+    description: "각 테스트나 스펙 전후에 도는 훅으로 픽스처를 만들고 치운다. 정리를 빠뜨리면 다음 테스트가 남은 상태를 보고, 훅이 많아지면 테스트만 읽어서는 무엇이 준비됐는지 모른다"
+    synonyms: ["setup/teardown", "beforeEach", "afterEach", "lifecycle hooks"]
+    uses: [fixture]
+    mitigates: [test-order-dependency]
+    causes: [test-mystery-guest]
+  - id: test-mystery-guest
+    kind: PROBLEM
+    name: "미스터리 게스트"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "테스트 결과가 테스트 본문에 보이지 않는 데이터(공유 파일 · 훅이 만든 행 · 멀리 있는 상수)에 달려, 왜 통과 · 실패하는지 본문만 읽어서는 알 수 없는 상태"
+    synonyms: ["mystery guest", "obscure test"]
+  - id: test-shared-mutable-fixture
+    kind: PROBLEM
+    name: "공유 가변 픽스처"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "여러 테스트가 같은 객체 · 행을 고쳐 쓰는 상태. 실행 순서 · 병렬 여부에 따라 결과가 달라진다"
+    synonyms: ["shared mutable fixture", "general fixture"]
+    causes: [test-order-dependency, test-flaky]
+
+  # ── 테스트 안정성 ─────────────────────────────────────────
+  - id: test-reliability
+    kind: STAGE
+    name: "테스트 안정성"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "같은 코드에 같은 결과가 나오게 한다. 시간 · 난수 · 비동기 · 실행 순서 · 외부 환경처럼 테스트 밖에서 흔들리는 것을 고정하거나 기다리는 방법을 정한다"
+    questions: ["플래키 테스트를 재실행으로 넘기면 무엇을 잃나"]
+    contains: [test-determinism, test-async-testing, test-order-independence, test-quarantine, test-rerun-on-failure, test-flaky, test-order-dependency, test-fixed-sleep, test-slow-suite, test-flaky-rate, test-suite-duration]
+    uses:
+      - { to: conc-concurrency-stress-test, reason: "드문 경쟁 조건은 스트레스 반복으로 끌어낸다" }
+    flows_to: [test-gating]
+  - id: test-determinism
+    kind: MECHANISM
+    name: "결정성 확보"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "현재 시각 · 난수 · id 생성처럼 매번 달라지는 입력을 주입받게 바꾸고 테스트에서 고정한다. 코드가 Clock · Random 을 직접 부르면 고정할 틈이 없다"
+    synonyms: ["deterministic test"]
+    contains: [test-fixed-clock, test-seeded-random]
+    uses: [test-seam]
+    mitigates: [test-flaky]
+  - id: test-fixed-clock
+    kind: MECHANISM
+    name: "시각 고정"
+    category: TESTING
+    level: BEGINNER
+    description: "대상이 Clock 을 주입받게 하고 테스트는 고정 시각 Clock 을 넘긴다. 만료 · 자정 경계 · 보존 기간 계산을 원하는 시각에서 재현한다"
+    synonyms: ["fixed clock", "Clock.fixed", "time injection"]
+    code:
+      - { path: seller/feature/src/test/kotlin/com/kgd/seller/application/seller/service/SellerServiceTest.kt, symbol: "Clock.fixed(T0, ZoneOffset.UTC)", note: "판매자 서비스에 고정 시각을 주입" }
+  - id: test-seeded-random
+    kind: MECHANISM
+    name: "시드 고정 난수"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "난수 생성기를 시드로 초기화해 같은 시드면 같은 순서의 값이 나오게 한다. 실패한 무작위 실행을 시드로 다시 재현한다"
+    synonyms: ["seeded random", "deterministic RNG"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/backtest/DeterministicIdGenerator.kt, symbol: "class DeterministicIdGenerator(seed: Long) {", note: "백테스트 id 를 시드로 결정적으로 만든다" }
+  - id: test-async-testing
+    kind: MECHANISM
+    name: "비동기 코드 테스트"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "결과가 다른 스레드 · 메시지 · 스트림으로 나중에 오는 코드를 시험한다. 고정 시간을 자는 대신 조건이 설 때까지 기다리거나, 스트림 신호를 차례로 검증한다"
+    synonyms: ["asynchronous testing"]
+    contains: [test-async-await-polling, test-reactive-stream-verification]
+    mitigates: [test-fixed-sleep]
+  - id: test-async-await-polling
+    kind: MECHANISM
+    name: "조건 대기 폴링"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "기대 조건을 짧은 간격으로 다시 확인하다가 서면 바로 통과하고, 제한 시간을 넘기면 실패한다. 느린 환경에서도 통과하면서 빠른 환경에서는 기다리지 않는다"
+    synonyms: ["eventually", "Awaitility", "polling assertion"]
+    code:
+      - { path: commerce/app/src/test/kotlin/com/kgd/commerce/saga/ClaimE2ETest.kt, symbol: "eventually(20.seconds) { claim(orderId)[\"status\"] shouldBe \"REFUNDED\" }", note: "사가가 환불까지 가는 것을 최대 20초 기다린다" }
+  - id: test-reactive-stream-verification
+    kind: MECHANISM
+    name: "리액티브 스트림 검증"
+    category: TESTING
+    level: ADVANCED
+    description: "Mono · Flux 를 구독해 나오는 신호(값 · 완료 · 오류)를 순서대로 기대와 맞춘다. 블로킹으로 값을 꺼내 보면 오류 · 완료 신호를 놓친다"
+    synonyms: ["StepVerifier", "virtual time"]
+    code:
+      - { path: gateway/src/test/kotlin/com/kgd/gateway/filter/AuthenticationGatewayFilterTest.kt, symbol: "StepVerifier.create(gatewayFilter.filter(exchange, chain))", note: "게이트웨이 필터의 완료 신호를 검증" }
+    uses:
+      - spring-webflux
+      - { to: project-reactor, reason: "StepVerifier 로 스트림을 검증한다" }
+  - id: test-order-independence
+    kind: MECHANISM
+    name: "순서 독립 · 병렬 실행"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "각 테스트가 자기 데이터를 만들고(고유 id · 전용 스키마) 공유 상태를 쓰지 않아, 순서를 섞거나 병렬로 돌려도 결과가 같게 한다. 무작위 순서 실행이 숨은 의존을 드러낸다"
+    synonyms: ["test independence", "parallel test execution", "random order"]
+    uses: [test-hermetic]
+    mitigates: [test-order-dependency]
+    affects: [test-suite-duration]
+  - id: test-quarantine
+    kind: MECHANISM
+    name: "불안정 테스트 격리"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "플래키로 판정된 테스트를 게이트에서 빼 별도 목록으로 돌리고 담당 · 기한을 붙인다. 격리 목록이 끝없이 늘면 그만큼 게이트가 비어 간다"
+    synonyms: ["quarantine", "flaky test quarantine"]
+    uses: [test-tag]
+    causes: [test-false-green]
+  - id: test-rerun-on-failure
+    kind: MECHANISM
+    name: "실패 재실행"
+    category: TESTING
+    level: BEGINNER
+    description: "실패한 테스트를 자동으로 몇 번 더 돌려 한 번이라도 통과하면 통과로 친다. 파이프라인은 살리지만 진짜 경쟁 조건 결함까지 초록불로 덮는다"
+    synonyms: ["retry", "rerun flaky", "auto-retry"]
+    causes: [test-false-green]
+    alternative_to:
+      - { to: test-quarantine, reason: "목록 관리 없이 즉시 통과시키지만 결함을 숨긴다" }
+  - id: test-flaky
+    kind: PROBLEM
+    name: "플래키 테스트"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "코드가 같은데도 통과와 실패가 번갈아 나오는 테스트. 시간 · 순서 · 동시성 · 외부 환경이 원인이고, 쌓이면 사람들이 빨간불을 무시하게 된다"
+    synonyms: ["flaky test", "불안정 테스트", "non-deterministic test"]
+    questions: ["플래키 테스트의 흔한 원인 넷은 무엇인가"]
+    measured_by: [test-flaky-rate]
+    causes: [test-false-green]
+  - id: test-order-dependency
+    kind: PROBLEM
+    name: "순서 의존"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "앞 테스트가 남긴 상태에 기대어, 혼자 돌리거나 순서가 바뀌면 실패하는 상태"
+    synonyms: ["test order dependency", "test pollution"]
+    causes: [test-flaky]
+  - id: test-fixed-sleep
+    kind: PROBLEM
+    name: "고정 sleep 대기"
+    category: TESTING
+    level: BEGINNER
+    description: "비동기 결과를 기다리려고 정해진 시간을 잔다. 짧으면 느린 CI 에서 실패하고, 길면 모든 실행이 그만큼 느려진다"
+    synonyms: ["Thread.sleep in test", "fixed wait"]
+    causes: [test-flaky, test-slow-suite]
+  - id: test-slow-suite
+    kind: PROBLEM
+    name: "느린 스위트"
+    category: TESTING
+    level: BEGINNER
+    description: "전체 테스트가 오래 걸려 개발자가 로컬에서 돌리지 않고 CI 결과만 기다리는 상태. 피드백이 늦어져 결함이 쌓인 뒤에야 드러난다"
+    synonyms: ["slow test suite"]
+    measured_by: [test-suite-duration]
+  - id: test-flaky-rate
+    kind: METRIC
+    name: "플래키 비율"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "같은 커밋에서 재실행하면 결과가 바뀌는 테스트 실행의 비율. 테스트별로 추적해 격리 · 수정 대상을 고른다"
+    synonyms: ["flakiness rate"]
+  - id: test-suite-duration
+    kind: METRIC
+    name: "스위트 실행 시간"
+    category: TESTING
+    level: BEGINNER
+    description: "커밋부터 테스트 결과까지 걸린 시간. 느린 스펙 상위 몇 개가 대부분을 차지하는 경우가 많아 스펙별로 잰다"
+    synonyms: ["test suite duration", "feedback time"]
 
   # ── 게이트 증명 ───────────────────────────────────────────
   - id: test-gating
@@ -179,7 +694,10 @@ concepts:
     category: TESTING
     level: INTERMEDIATE
     description: "테스트를 배포 경로의 게이트로 걸고, 그 게이트가 결함을 실제로 잡는지 확인한다. 통과만 보고는 검사가 무는지 알 수 없다"
-    contains: [test-changed-module-gate, regression-injection, test-fail-on-skip, test-false-green]
+    contains: [test-changed-module-gate, test-impact-analysis, test-coverage-gate, regression-injection, test-mutation-testing, test-fail-on-skip, test-false-green, test-coverage-gaming, test-mutation-score]
+    uses:
+      - { to: arch-layer-dependency-gate, reason: "레이어 의존 규칙도 빌드 게이트로 검사한다" }
+      - { to: arch-pod-topology-gate, reason: "파드 배분 규칙을 빌드 게이트로 검사한다" }
   - id: test-changed-module-gate
     kind: MECHANISM
     name: "변경 모듈 테스트 게이트"
@@ -188,19 +706,51 @@ concepts:
     description: "바뀐 서비스의 테스트만 CI 에서 돌리고, 실패하면 그 커밋의 이미지를 만들지 않는다. 전체 스위트를 매번 돌리지 않아 빠르다"
     code:
       - { path: .github/workflows/images.yml, symbol: "./gradlew test (변경된 JVM 서비스만)", note: "이미지 빌드 전에 바뀐 JVM 서비스의 테스트를 돌린다" }
-    uses: [github-actions]
+    uses: [github-actions, test-impact-analysis]
+  - id: test-impact-analysis
+    kind: MECHANISM
+    name: "영향 분석 테스트 선택"
+    category: TESTING
+    level: ADVANCED
+    description: "바뀐 파일에서 의존 그래프를 따라 영향을 받는 모듈 · 테스트만 골라 돌린다. 공통 모듈 · 빌드 설정이 바뀌면 전부를 돌리는 규칙이 함께 있어야 빠뜨리지 않는다"
+    synonyms: ["test impact analysis", "selective testing", "affected tests"]
+    code:
+      - { path: .github/workflows/images.yml, symbol: "CHANGED_FILES=$(git diff --name-only \"$GITHUB_EVENT_BEFORE\" HEAD)", note: "바뀐 파일 목록으로 대상 서비스를 고른다" }
+    affects: [test-suite-duration]
+  - id: test-coverage-gate
+    kind: MECHANISM
+    name: "커버리지 게이트"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "커버리지가 기준 아래로 떨어지거나 바뀐 줄의 커버리지가 낮으면 병합을 막는다. 전체 수치보다 변경분 커버리지가 조작이 어렵다"
+    synonyms: ["coverage threshold", "diff coverage"]
+    measured_by: [test-coverage, test-branch-coverage]
+    causes: [test-coverage-gaming]
   - id: regression-injection
     kind: MECHANISM
     name: "회귀 주입"
     category: TESTING
     level: INTERMEDIATE
     description: "지키려는 코드에 결함을 일부러 넣고 그 테스트가 빨간불을 내는지 본 뒤 되돌린다. 빨간불을 본 검사만 「켰다」고 한다. 결함은 내 구현과 다른 모양으로 넣어야 구멍이 보이고, 임시 사본에서 한다"
-    synonyms: ["mutation testing", "뮤테이션 테스트", "fault injection"]
+    synonyms: ["manual fault seeding", "검사 증명"]
     questions: ["통과하는 테스트가 실제로 결함을 잡는지 어떻게 확인하나", "주입한 결함이 내 구현과 같은 모양이면 무엇을 놓치나"]
     code:
       - { path: docs/specs/2026-09-23-ad-network/verifications/regression-injection.md, symbol: "# 회귀 주입 기록", note: "대상별로 넣은 결함 · 빨간불 · 복원 뒤 결과를 남긴 기록" }
     mitigates:
       - { to: test-false-green, reason: "결함을 넣어도 초록인 검사를 찾아낸다" }
+  - id: test-mutation-testing
+    kind: MECHANISM
+    name: "뮤테이션 테스트"
+    category: TESTING
+    level: ADVANCED
+    description: "도구가 코드의 연산자 · 조건 · 반환값을 자동으로 조금씩 바꾼 변형체(뮤턴트)를 수백 개 만들고, 각각에 스위트를 돌려 어느 변형도 잡지 못한 곳을 찾는다. 회귀 주입을 기계적으로 전수 수행하는 셈이다"
+    synonyms: ["mutation testing", "PIT", "Pitest", "Stryker"]
+    questions: ["살아남은 뮤턴트는 무엇을 뜻하나", "뮤테이션 테스트가 커버리지보다 믿을 만한 이유는 무엇인가"]
+    uses: [test-mutant]
+    measured_by: [test-mutation-score]
+    mitigates: [test-false-green, test-coverage-gaming]
+    alternative_to:
+      - { to: regression-injection, reason: "사람이 고른 결함 대신 도구가 모든 자리를 기계적으로 바꾼다" }
   - id: test-fail-on-skip
     kind: MECHANISM
     name: "건너뜀 차단"
@@ -218,6 +768,21 @@ concepts:
     level: INTERMEDIATE
     description: "검사가 대상의 산출물이 아니라 자기가 만든 근거(이름 · 사본 · 목 설정)를 보거나 아예 돌지 않아, 기능을 지워도 통과하는 상태. 없는 검사보다 나쁘다 — 있다고 믿게 만든다"
     synonyms: ["false positive test", "vacuous test"]
+  - id: test-coverage-gaming
+    kind: PROBLEM
+    name: "커버리지 채우기"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "커버리지 수치가 목표가 되어, 단언 없이 코드를 실행만 하는 테스트로 숫자를 채우는 상태. 수치는 오르고 잡는 결함은 늘지 않는다"
+    synonyms: ["coverage gaming", "assertion-free test", "Goodhart's law"]
+    causes: [test-false-green]
+  - id: test-mutation-score
+    kind: METRIC
+    name: "뮤테이션 점수"
+    category: TESTING
+    level: ADVANCED
+    description: "만든 뮤턴트 중 테스트가 실패시켜 잡아낸 비율. 테스트가 실행만 했는지가 아니라 결과를 확인했는지를 잰다"
+    synonyms: ["mutation score", "killed mutants ratio"]
 
   # ── 용어 ──────────────────────────────────────────────────
   - id: test-glossary
@@ -227,7 +792,7 @@ concepts:
     level: BEGINNER
     description: "테스트 코드를 읽는 데 필요한 말. 테스트 방식이 아니라 그 안에 등장하는 이름과 구성 요소를 모은다"
     synonyms: ["glossary", "용어집"]
-    contains: [test-glossary-doubles, fixture, test-given-when-then, test-assertion]
+    contains: [test-glossary-doubles, test-sut, fixture, test-given-when-then, test-assertion, test-oracle, test-suite, test-tag, test-seam, test-hermetic, test-invariant, test-mutant]
   - id: test-glossary-doubles
     kind: TERM
     name: "테스트 더블"
@@ -235,7 +800,14 @@ concepts:
     level: BEGINNER
     description: "테스트에서 진짜 의존 대신 넣는 대역을 부르는 말. 무엇을 대신하고 무엇을 확인하는지에 따라 이름이 갈린다"
     synonyms: ["test double"]
-    contains: [mock, stub, test-fake]
+    contains: [test-dummy, stub, test-spy, mock, test-fake]
+  - id: test-dummy
+    kind: TERM
+    name: "더미"
+    category: TESTING
+    level: BEGINNER
+    description: "인자 자리를 채우려고 넘기지만 실제로는 쓰이지 않는 대역. 불리면 오히려 이상한 것이다"
+    synonyms: ["dummy", "dummy object"]
   - id: mock
     kind: TERM
     name: "목"
@@ -256,6 +828,15 @@ concepts:
     synonyms: ["stub"]
     code:
       - { path: product/feature/src/test/kotlin/com/kgd/product/application/product/service/ProductServiceTest.kt, symbol: "every { transactionalService.findById(999L) } throws ProductNotFoundException(999L)", note: "없는 상품 분기로 보내는 스텁" }
+  - id: test-spy
+    kind: TERM
+    name: "스파이"
+    category: TESTING
+    level: BEGINNER
+    description: "실물 동작은 그대로 하면서 받은 호출 · 인자를 기록해 두는 대역. 테스트가 끝난 뒤 기록을 꺼내 확인한다"
+    synonyms: ["spy", "test spy", "argument captor", "slot"]
+    code:
+      - { path: seller/feature/src/test/kotlin/com/kgd/seller/application/seller/service/SellerServiceTest.kt, symbol: "val saved = slot<Seller>()", note: "저장소로 넘어간 판매자 객체를 붙잡아 확인" }
   - id: test-fake
     kind: TERM
     name: "페이크"
@@ -265,6 +846,14 @@ concepts:
     synonyms: ["fake", "in-memory fake"]
     code:
       - { path: product/feature/src/test/kotlin/com/kgd/product/application/seller/InMemoryProductSellerRepository.kt, symbol: "class InMemoryProductSellerRepository : ProductSellerRepositoryPort", note: "포트를 메모리로 구현한 페이크 저장소" }
+      - { path: order/feature/src/test/kotlin/com/kgd/order/support/InMemorySagaWorld.kt, symbol: "class InMemorySagaWorld {", note: "사가 · 주문 포트의 메모리 구현에 롤백 · 버전 충돌까지 흉내 낸 페이크" }
+  - id: test-sut
+    kind: TERM
+    name: "테스트 대상(SUT)"
+    category: TESTING
+    level: BEGINNER
+    description: "이 테스트가 검증하려는 바로 그 코드. 대역은 SUT 가 아니라 SUT 의 의존 자리에만 넣는다"
+    synonyms: ["SUT", "System Under Test", "CUT"]
   - id: fixture
     kind: TERM
     name: "픽스처"
@@ -288,3 +877,54 @@ concepts:
     level: BEGINNER
     description: "실제 값이 기대와 같은지 확인하고 아니면 테스트를 실패시키는 문장. 단언이 없는 테스트는 코드를 실행만 하고 아무것도 확인하지 않는다"
     synonyms: ["assertion", "matcher", "shouldBe"]
+  - id: test-oracle
+    kind: TERM
+    name: "테스트 오라클"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "실행 결과가 맞는지 판정하는 근거 — 손으로 계산한 기대값, 참조 구현, 불변식. 오라클이 대상 코드의 사본이면 같은 버그를 함께 가져 판정이 무의미해진다"
+    synonyms: ["test oracle", "expected value"]
+  - id: test-suite
+    kind: TERM
+    name: "테스트 스위트"
+    category: TESTING
+    level: BEGINNER
+    description: "함께 돌리는 테스트의 묶음. 모듈 · 태그 · 단계(빠른 스위트 · 야간 스위트)로 나눠 게이트마다 다른 묶음을 건다"
+    synonyms: ["test suite", "spec"]
+  - id: test-tag
+    kind: TERM
+    name: "테스트 태그"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "테스트에 붙이는 분류 이름(integration · slow · 외부 자격 증명 필요). 러너가 태그로 포함 · 제외해 환경마다 다른 묶음을 돌린다"
+    synonyms: ["test tag", "@Tag", "test category"]
+    code:
+      - { path: quant/feature/src/test/kotlin/com/kgd/quant/infrastructure/security/kms/OciVaultKmsAdapterIntegrationSpec.kt, symbol: "@Tags(\"oci-integration\")", note: "실 OCI 자격 증명이 필요한 스펙을 기본 실행에서 뺀다" }
+  - id: test-seam
+    kind: TERM
+    name: "심(Seam)"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "코드를 고치지 않고 동작을 바꿔 끼울 수 있는 자리 — 생성자 주입 인자 · 인터페이스 · 함수 파라미터. 심이 없는 코드는 테스트에서 시간 · 외부 호출을 대체할 수 없다"
+    synonyms: ["seam", "injection point"]
+  - id: test-hermetic
+    kind: TERM
+    name: "밀폐 테스트"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "테스트가 필요한 모든 것을 스스로 갖춰 외부 네트워크 · 공유 DB · 남의 상태에 기대지 않는 성질. 어디서 몇 번 돌려도 같은 결과가 나온다"
+    synonyms: ["hermetic test", "self-contained test"]
+  - id: test-invariant
+    kind: TERM
+    name: "불변식"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "어떤 입력 · 어떤 순서에서도 항상 참이어야 하는 성질(합계 보존 · 멱등 · 왕복 복원 · 정렬 유지). 속성 기반 테스트는 이것을 단언한다"
+    synonyms: ["invariant", "property"]
+  - id: test-mutant
+    kind: TERM
+    name: "뮤턴트"
+    category: TESTING
+    level: ADVANCED
+    description: "원본 코드에 작은 변경(> 를 >= 로, 반환값을 null 로) 하나를 가한 변형체. 테스트가 실패하면 「잡혔다(killed)」, 통과하면 「살아남았다(survived)」고 한다"
+    synonyms: ["mutant", "killed mutant", "survived mutant", "equivalent mutant"]

@@ -8,9 +8,89 @@ concepts:
     name: "분산 시스템"
     category: DISTRIBUTED_SYSTEM
     level: INTERMEDIATE
-    description: "여러 노드·서비스가 네트워크로 나눠 일하는 시스템. 데이터를 나누고, 노드끼리 합의하고, 트랜잭션을 잇고, 메시지를 주고받고, 장애를 가두는 다섯 가지 일로 읽는다"
+    description: "여러 노드·서비스가 네트워크로 나눠 일하는 시스템. 장애를 가정하고, 데이터를 나누고 복제하고, 일관성 수준을 고르고, 시간과 순서를 맞추고, 노드끼리 합의하고, 트랜잭션을 잇고, 메시지를 주고받고, 장애를 가두는 일로 읽는다"
     synonyms: ["distributed system", "분산 아키텍처"]
-    contains: [dist-data-distribution, dist-coordination, dist-transaction, dist-messaging, dist-state-modeling, dist-fault-isolation, distributed-glossary]
+    contains: [dist-foundations, dist-data-distribution, dist-consistency-control, dist-conflict-free-replication, dist-time-ordering, dist-id-generation, dist-coordination, dist-transaction, dist-messaging, dist-state-modeling, dist-fault-isolation, dist-verification, distributed-glossary]
+
+  # ── 장애 가정 · 장애 감지 ──
+  - id: dist-foundations
+    kind: STAGE
+    name: "장애 가정 · 장애 감지"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "네트워크는 믿을 수 없고 노드는 일부만 죽는다는 가정에서 출발해, 어떤 장애 모델을 견딜지 정하고 누가 죽었는지를 감지한다"
+    questions: ["타임아웃이 났을 때 상대가 죽었는지, 느린지, 네트워크가 끊겼는지 구분할 수 있나", "분산 컴퓨팅의 8가지 오류 중 실무에서 가장 자주 밟는 것은 무엇인가"]
+    contains: [dist-failure-detection, dist-partial-failure, dist-gray-failure, dist-false-failure-suspicion]
+    uses: [dist-fallacies, dist-failure-model, dist-system-model, dist-flp-impossibility]
+  - id: dist-failure-detection
+    kind: MECHANISM
+    name: "장애 감지"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "주기적인 신호와 타임아웃으로 노드가 죽었는지 판단한다. 비동기 네트워크에서는 느린 노드와 죽은 노드를 완벽히 가를 수 없어 감지기는 늘 오판 가능성을 안는다"
+    synonyms: ["failure detection", "failure detector"]
+    questions: ["감지 타임아웃을 짧게 잡으면 무엇을 얻고 무엇을 잃나"]
+    contains: [dist-heartbeat, dist-phi-accrual-detector, dist-gossip-protocol]
+    causes:
+      - { to: dist-false-failure-suspicion, reason: "타임아웃 기반 판정은 느린 노드를 죽은 노드로 오판한다" }
+  - id: dist-heartbeat
+    kind: MECHANISM
+    name: "하트비트"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "노드가 일정 주기로 살아 있다는 신호를 보내고, 정해진 시간 동안 신호가 없으면 죽은 것으로 본다. Kafka 컨슈머 그룹·Raft 리더가 같은 방식을 쓴다"
+    synonyms: ["heartbeat"]
+  - id: dist-phi-accrual-detector
+    kind: MECHANISM
+    name: "파이 누적 장애 감지기"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "하트비트 도착 간격의 분포를 학습해 「지금 죽었을 확률」을 연속값(φ)으로 내고, 문턱은 쓰는 쪽이 고른다. 고정 타임아웃보다 네트워크 변동에 덜 흔들린다"
+    synonyms: ["phi accrual failure detector", "φ accrual"]
+    alternative_to:
+      - { to: dist-heartbeat, reason: "살았다/죽었다 이분 대신 의심 정도를 연속값으로 준다" }
+  - id: dist-gossip-protocol
+    kind: MECHANISM
+    name: "가십 프로토콜"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "각 노드가 주기적으로 무작위 이웃 몇에게 자기가 아는 멤버십·상태를 전하고, 소문처럼 로그 시간 안에 전체로 퍼진다. 중앙 조정자 없이 멤버십과 장애 정보를 맞춘다"
+    synonyms: ["gossip protocol", "epidemic protocol"]
+    contains: [dist-swim-protocol]
+  - id: dist-swim-protocol
+    kind: MECHANISM
+    name: "SWIM"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "무작위 한 노드를 직접 핑하고 응답이 없으면 다른 노드들에게 대신 핑을 부탁한 뒤에야 의심 상태로 올리는 멤버십 프로토콜. 감지 결과는 가십으로 퍼뜨린다"
+    synonyms: ["SWIM", "Scalable Weakly-consistent Infection-style Membership"]
+    mitigates:
+      - { to: dist-false-failure-suspicion, reason: "간접 핑과 의심 단계로 한 경로의 끊김을 사망으로 오판하지 않는다" }
+  - id: dist-partial-failure
+    kind: PROBLEM
+    name: "부분 장애"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "시스템의 일부 노드·링크만 실패하고 나머지는 계속 도는 상태. 호출한 쪽은 요청이 처리됐는지조차 모른 채 타임아웃을 받는다"
+    synonyms: ["partial failure"]
+    causes: [dist-cascading-failure]
+  - id: dist-gray-failure
+    kind: PROBLEM
+    name: "회색 장애"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "헬스 체크는 통과하는데 실제 요청은 느리거나 일부만 실패하는 상태. 감지기와 사용자가 보는 건강 상태가 달라 오래 방치된다"
+    synonyms: ["gray failure", "grey failure"]
+    causes: [dist-cascading-failure]
+    measured_by: [dist-failure-rate]
+  - id: dist-false-failure-suspicion
+    kind: PROBLEM
+    name: "장애 오판"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "살아 있지만 느리거나 잠깐 끊긴 노드를 죽었다고 판정하는 상태. 새 리더를 뽑거나 작업을 넘긴 뒤 옛 노드가 돌아오면 둘이 같은 일을 한다"
+    synonyms: ["false suspicion", "false positive failure detection"]
+    causes: [dist-split-brain]
 
   # ── 데이터 분산 ──
   - id: dist-data-distribution
@@ -20,18 +100,36 @@ concepts:
     level: INTERMEDIATE
     description: "한 대에 담기지 않거나 한 대가 죽으면 안 되는 데이터를 여러 노드에 나누고 복제한다"
     questions: ["샤딩과 레플리케이션은 각각 무엇을 해결하나", "네트워크가 갈라지면 일관성과 가용성 중 무엇을 포기하나"]
-    contains: [sharding, replication, dist-network-partition, dist-replication-lag]
+    contains: [sharding, replication, dist-network-partition, dist-replication-lag, dist-hot-partition, dist-failover-data-loss, dist-distributed-sql]
     measured_by: [dist-replication-lag]
-    uses: [cap-theorem, base]
+    uses: [cap-theorem, base, dist-pacelc]
   - id: sharding
     kind: MECHANISM
     name: "샤딩"
     category: DATA
     level: ADVANCED
     description: "데이터를 샤드 키로 나눠 여러 DB 인스턴스에 수평 분할해 저장한다. 쓰기 처리량과 저장 용량이 한 대를 넘을 때 쓰고, 샤드를 가로지르는 조인·트랜잭션을 잃는다"
-    synonyms: ["sharding", "수평 분할", "horizontal partitioning"]
+    synonyms: ["sharding", "수평 분할", "horizontal partitioning", "partitioning"]
     questions: ["샤드 키를 잘못 고르면 무엇이 생기나"]
-    contains: [consistent-hashing]
+    contains: [dist-range-partitioning, dist-hash-partitioning, consistent-hashing, dist-rendezvous-hashing, dist-rebalancing, dist-partitioned-secondary-index, dist-request-routing, dist-sharded-counter]
+  - id: dist-range-partitioning
+    kind: MECHANISM
+    name: "범위 분할"
+    category: DATA
+    level: INTERMEDIATE
+    description: "키의 연속 구간마다 파티션을 둔다. 범위 조회가 한 파티션에서 끝나지만, 시간처럼 단조 증가하는 키는 마지막 파티션에 쓰기가 몰린다"
+    synonyms: ["range partitioning", "key-range partitioning"]
+    causes:
+      - { to: dist-hot-partition, reason: "단조 증가 키가 마지막 구간에 쓰기를 몰아 준다" }
+  - id: dist-hash-partitioning
+    kind: MECHANISM
+    name: "해시 분할"
+    category: DATA
+    level: INTERMEDIATE
+    description: "키의 해시값으로 파티션을 고른다. 부하가 고르게 퍼지는 대신 키 순서가 사라져 범위 조회가 모든 파티션을 훑는다"
+    synonyms: ["hash partitioning"]
+    alternative_to:
+      - { to: dist-range-partitioning, reason: "범위 조회를 포기하고 쓰기 분산을 얻는다" }
   - id: consistent-hashing
     kind: MECHANISM
     name: "일관 해싱"
@@ -40,16 +138,167 @@ concepts:
     description: "노드와 키를 같은 해시 링에 올려 키를 시계 방향 첫 노드에 둔다. 노드가 늘거나 줄 때 옮겨지는 키가 전체의 1/N 정도로 줄어든다"
     synonyms: ["consistent hashing", "해시 링"]
     questions: ["단순 모듈러 해싱과 비교해 노드 추가 시 무엇이 다른가", "가상 노드는 왜 두나"]
+    contains: [dist-virtual-node]
+  - id: dist-virtual-node
+    kind: MECHANISM
+    name: "가상 노드"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "물리 노드 하나를 해시 링 위 여러 점으로 올린다. 구간 크기 편차가 줄고, 노드가 빠질 때 그 몫이 여러 노드로 나뉘어 옮겨진다"
+    synonyms: ["virtual node", "vnode"]
+  - id: dist-rendezvous-hashing
+    kind: MECHANISM
+    name: "랑데부 해싱"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "키마다 모든 노드와의 조합 해시를 계산해 가장 큰 값을 준 노드를 고른다. 링과 가상 노드 없이도 노드 변동 때 옮겨지는 키가 최소다"
+    synonyms: ["rendezvous hashing", "HRW", "highest random weight"]
+    alternative_to:
+      - { to: consistent-hashing, reason: "링 상태를 들고 있지 않는 대신 키마다 노드 수만큼 해시를 계산한다" }
+  - id: dist-rebalancing
+    kind: MECHANISM
+    name: "리밸런싱"
+    category: DATA
+    level: ADVANCED
+    description: "노드가 늘거나 부하가 치우칠 때 파티션을 노드 사이로 옮긴다. 파티션 수를 노드보다 넉넉히 고정해 두고 파티션 단위로 옮기는 방식이 흔하다"
+    synonyms: ["rebalancing", "partition rebalancing", "resharding"]
+    mitigates: [dist-hot-partition]
+  - id: dist-partitioned-secondary-index
+    kind: MECHANISM
+    name: "파티션된 보조 인덱스"
+    category: DATA
+    level: ADVANCED
+    description: "보조 인덱스를 문서와 같은 파티션에 두면(로컬) 쓰기는 싸고 조회는 전 파티션을 흩어 모으고, 인덱스 값으로 따로 나누면(글로벌) 조회는 싸고 쓰기가 여러 파티션을 건드린다"
+    synonyms: ["local secondary index", "global secondary index", "scatter-gather"]
+  - id: dist-request-routing
+    kind: MECHANISM
+    name: "요청 라우팅"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "키가 어느 파티션·노드에 있는지 찾아 요청을 보낸다. 아무 노드가 받아 넘기거나, 라우팅 계층을 두거나, 클라이언트가 파티션 지도를 들고 직접 간다"
+    synonyms: ["request routing", "partition-aware routing"]
+    uses:
+      - { to: service-discovery, reason: "파티션 지도를 가진 노드의 주소를 찾는다" }
+  - id: dist-sharded-counter
+    kind: MECHANISM
+    name: "샤딩 카운터"
+    category: DATA
+    level: INTERMEDIATE
+    description: "조회수·좋아요처럼 한 키에 쓰기가 몰리는 카운터를 N 개 하위 카운터로 쪼개 무작위로 올리고 읽을 때 합친다. 쓰기 경합을 N 분의 1로 줄이고 읽기 비용을 늘린다"
+    synonyms: ["sharded counter", "distributed counter"]
+    mitigates: [dist-hot-partition]
   - id: replication
     kind: MECHANISM
     name: "레플리케이션"
     category: DATA
     level: INTERMEDIATE
-    description: "같은 데이터를 여러 노드에 복제해 가용성과 읽기 성능을 높인다. 비동기 복제는 복제본이 늦게 따라오는 것을 감수한다"
+    description: "같은 데이터를 여러 노드에 복제해 가용성과 읽기 성능을 높인다. 누가 쓰기를 받는지(단일 리더·다중 리더·리더 없음)와 언제 응답하는지(동기·비동기)로 갈린다"
     synonyms: ["replication", "복제"]
     questions: ["동기 복제와 비동기 복제는 무엇을 맞바꾸나"]
+    contains: [dist-single-leader-replication, dist-multi-leader-replication, dist-leaderless-replication, dist-sync-replication, dist-failover, dist-chain-replication]
     uses: [eventual-consistency, dist-quorum]
     affects: [dist-replication-lag]
+  - id: dist-single-leader-replication
+    kind: MECHANISM
+    name: "단일 리더 복제"
+    category: DATA
+    level: INTERMEDIATE
+    description: "쓰기는 리더 하나만 받고 팔로워는 리더의 변경 로그를 순서대로 따라 적용한다. 쓰기 충돌이 없지만 리더가 쓰기 병목이자 단일 장애점이다"
+    synonyms: ["leader-follower", "primary-replica", "master-slave"]
+  - id: dist-multi-leader-replication
+    kind: MECHANISM
+    name: "다중 리더 복제"
+    category: DATA
+    level: ADVANCED
+    description: "여러 리더(대개 데이터센터마다 하나)가 각자 쓰기를 받고 서로 비동기로 전파한다. 지역별 쓰기 지연이 줄고 한 지역이 죽어도 쓰지만, 같은 키를 동시에 쓰면 충돌을 풀어야 한다"
+    synonyms: ["multi-leader", "active-active", "master-master"]
+    alternative_to:
+      - { to: dist-single-leader-replication, reason: "쓰기 가용성과 지역 지연을 얻고 충돌 해소를 떠안는다" }
+    causes: [dist-write-conflict]
+  - id: dist-leaderless-replication
+    kind: MECHANISM
+    name: "리더 없는 복제"
+    category: DATA
+    level: ADVANCED
+    description: "클라이언트(또는 조정 노드)가 여러 복제본에 직접 쓰고 읽으며 쿼럼으로 성공을 판정한다. Dynamo 계열이 쓰고, 뒤처진 복제본은 읽기 복구와 안티 엔트로피로 따라잡는다"
+    synonyms: ["leaderless replication", "Dynamo-style"]
+    contains: [dist-read-repair, dist-anti-entropy, dist-hinted-handoff, dist-sloppy-quorum]
+    alternative_to:
+      - { to: dist-single-leader-replication, reason: "리더 장애 전환이 없는 대신 쿼럼 설정과 충돌 해소를 떠안는다" }
+    uses: [dist-quorum]
+    causes: [dist-write-conflict]
+  - id: dist-read-repair
+    kind: MECHANISM
+    name: "읽기 복구"
+    category: DATA
+    level: ADVANCED
+    description: "쿼럼 읽기에서 복제본마다 다른 버전을 받으면 최신 값을 뒤처진 복제본에 다시 써 준다. 자주 읽히는 키만 고쳐진다"
+    synonyms: ["read repair"]
+    mitigates: [dist-stale-read]
+  - id: dist-anti-entropy
+    kind: MECHANISM
+    name: "안티 엔트로피"
+    category: DATA
+    level: ADVANCED
+    description: "백그라운드에서 복제본끼리 데이터를 비교해 차이를 메운다. 읽히지 않는 키까지 결국 맞춘다"
+    synonyms: ["anti-entropy"]
+    contains: [dist-merkle-tree]
+    mitigates: [dist-stale-read]
+  - id: dist-merkle-tree
+    kind: MECHANISM
+    name: "머클 트리"
+    category: DATA_STRUCTURE
+    level: ADVANCED
+    description: "키 구간의 해시를 트리로 쌓아 두 복제본이 루트부터 해시를 비교하며 다른 구간만 내려간다. 전체를 옮기지 않고 차이 나는 구간을 로그 단계로 찾는다"
+    synonyms: ["merkle tree", "hash tree"]
+  - id: dist-hinted-handoff
+    kind: MECHANISM
+    name: "힌트 핸드오프"
+    category: DATA
+    level: ADVANCED
+    description: "담당 복제본이 죽어 있으면 다른 노드가 쓰기를 대신 받아 힌트로 보관했다가, 담당 노드가 돌아오면 넘겨준다"
+    synonyms: ["hinted handoff"]
+  - id: dist-sloppy-quorum
+    kind: MECHANISM
+    name: "느슨한 쿼럼"
+    category: DATA
+    level: ADVANCED
+    description: "담당 복제본 N 개 중 W 개를 못 채우면 담당 밖 노드까지 세어 쓰기를 받는다. 쓰기 가용성을 높이지만 W+R>N 이어도 최신 값을 못 읽을 수 있다"
+    synonyms: ["sloppy quorum"]
+    causes: [dist-stale-read]
+  - id: dist-sync-replication
+    kind: MECHANISM
+    name: "동기 · 비동기 · 반동기 복제"
+    category: DATA
+    level: INTERMEDIATE
+    description: "복제본의 확인을 기다린 뒤 응답하면 동기, 안 기다리면 비동기, 한 대만 기다리면 반동기다. 기다릴수록 장애 전환 때 잃는 쓰기가 줄고 쓰기 지연이 늘어난다"
+    synonyms: ["synchronous replication", "asynchronous replication", "semi-synchronous replication"]
+    affects: [dist-replication-lag]
+    mitigates: [dist-failover-data-loss]
+  - id: dist-failover
+    kind: MECHANISM
+    name: "장애 조치"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "리더가 죽으면 팔로워 하나를 새 리더로 올리고 클라이언트 쓰기를 그쪽으로 돌린다. 자동 전환은 빠르지만 오판·데이터 유실·리더 둘의 위험을 안는다"
+    synonyms: ["failover", "active-standby"]
+    uses: [leader-election]
+    causes: [dist-failover-data-loss, dist-split-brain]
+  - id: dist-chain-replication
+    kind: MECHANISM
+    name: "체인 복제"
+    category: DATA
+    level: ADVANCED
+    description: "복제본을 사슬로 세워 쓰기는 머리로 들어가 꼬리까지 전달되고, 읽기는 꼬리에서 한다. 꼬리가 확인한 값만 읽혀 강한 일관성을 싸게 얻는다"
+    synonyms: ["chain replication"]
+  - id: dist-distributed-sql
+    kind: MECHANISM
+    name: "분산 SQL"
+    category: DATA
+    level: ADVANCED
+    description: "범위 파티션마다 합의 그룹을 두고 그 위에 분산 트랜잭션과 SQL 을 얹은 DB 구조(Spanner·CockroachDB·TiDB). 샤딩·복제·트랜잭션을 DB 가 대신 한다"
+    synonyms: ["distributed SQL", "NewSQL"]
+    uses: [dist-multi-raft, dist-truetime]
   - id: dist-replication-lag
     kind: METRIC
     name: "복제 지연"
@@ -65,6 +314,535 @@ concepts:
     description: "노드는 살아 있는데 서로 통신이 끊겨 두 무리로 갈라진 상태. CAP 정리가 다루는 P 가 이것이다"
     synonyms: ["network partition"]
     causes: [dist-split-brain]
+  - id: dist-hot-partition
+    kind: PROBLEM
+    name: "핫 파티션"
+    category: DATA
+    level: INTERMEDIATE
+    description: "키 분포가 치우쳐 한 파티션·샤드에 읽기·쓰기가 몰리는 상태. 노드를 늘려도 그 파티션은 한 대가 감당한다"
+    synonyms: ["hot partition", "hot shard", "hot key", "skew"]
+  - id: dist-failover-data-loss
+    kind: PROBLEM
+    name: "장애 조치 데이터 유실"
+    category: DATA
+    level: ADVANCED
+    description: "비동기 복제에서 리더가 죽으면 팔로워에 아직 안 온 쓰기가 사라진다. 옛 리더가 돌아와 다시 쓰면 키·ID 가 겹친다"
+    synonyms: ["failover data loss"]
+
+  # ── 일관성 수준 선택 ──
+  - id: dist-consistency-control
+    kind: STAGE
+    name: "일관성 수준 선택"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "화면·업무마다 필요한 일관성 모델을 정하고, 복제본이 갈라진 값을 어떻게 읽고 합칠지 정한다"
+    questions: ["재고 차감과 상품 조회수는 각각 어떤 일관성 모델이면 되나", "방금 쓴 값을 복제본에서 못 읽는 문제를 어떻게 막나"]
+    contains: [dist-tunable-quorum, dist-read-your-writes-routing, dist-conflict-resolution, dist-stale-read, dist-write-conflict, dist-silent-write-loss]
+    uses: [dist-linearizability, dist-causal-consistency, eventual-consistency, dist-session-guarantees]
+    measured_by: [dist-replication-lag]
+  - id: dist-tunable-quorum
+    kind: MECHANISM
+    name: "쿼럼 조정"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "복제본 N 개 중 쓰기 확인 W 개, 읽기 응답 R 개를 요청마다 고른다. W+R>N 이면 읽기가 최신 쓰기를 적어도 하나 보고, 작게 잡으면 지연과 가용성을 얻는다"
+    synonyms: ["tunable consistency", "N/W/R", "W+R>N"]
+    uses: [dist-quorum]
+    mitigates: [dist-stale-read]
+  - id: dist-read-your-writes-routing
+    kind: MECHANISM
+    name: "자기 쓰기 읽기 라우팅"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "사용자가 방금 쓴 데이터는 일정 시간 리더(또는 그 쓰기를 반영한 복제본)에서 읽게 한다. 마지막 쓰기 시각·버전을 세션에 들고 다니며 비교한다"
+    synonyms: ["sticky read", "read-your-writes routing"]
+    uses:
+      - dist-read-your-writes
+      - { to: data-read-replica-routing, reason: "읽기 전용 복제본으로 가던 조회를 조건부로 리더에 돌린다" }
+    mitigates:
+      - dist-stale-read
+      - { to: data-replication-lag, reason: "방금 쓴 사용자는 원본에서 읽게 한다" }
+  - id: dist-conflict-resolution
+    kind: MECHANISM
+    name: "충돌 해소"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "여러 복제본이 같은 키를 동시에 다르게 쓴 뒤 하나의 값으로 합친다. 마지막 쓰기 우선·모든 값 보존 후 애플리케이션 병합·CRDT 가 대표 방식이다"
+    synonyms: ["conflict resolution"]
+    contains: [dist-last-write-wins, dist-multi-value-siblings, dist-custom-merge]
+    mitigates: [dist-write-conflict]
+  - id: dist-last-write-wins
+    kind: MECHANISM
+    name: "마지막 쓰기 우선"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "충돌한 값 중 타임스탬프가 가장 큰 것만 남긴다. 구현이 가장 단순하지만 동시 쓰기 중 하나를 조용히 버리고, 시계가 어긋나면 늦게 쓴 값이 진다"
+    synonyms: ["LWW", "last-write-wins"]
+    causes: [dist-silent-write-loss]
+  - id: dist-multi-value-siblings
+    kind: MECHANISM
+    name: "형제 값 보존"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "동시에 쓰인 값을 모두 형제(sibling)로 남기고 다음 읽기에서 애플리케이션이 합쳐 다시 쓰게 한다. 버전 벡터로 동시성을 판정한다"
+    synonyms: ["siblings", "multi-value"]
+    uses: [dist-vector-clock]
+    alternative_to:
+      - { to: dist-last-write-wins, reason: "쓰기를 버리지 않는 대신 병합 책임을 애플리케이션에 넘긴다" }
+  - id: dist-custom-merge
+    kind: MECHANISM
+    name: "업무 규칙 병합"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "장바구니는 합집합, 잔액은 이력 재계산처럼 도메인 규칙으로 충돌 값을 합친다. 규칙이 교환·결합·멱등이면 CRDT 가 된다"
+    synonyms: ["application-defined merge", "semantic merge"]
+  - id: dist-stale-read
+    kind: PROBLEM
+    name: "낡은 읽기"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "복제 지연 때문에 복제본에서 이미 바뀐 값의 옛 버전을 읽는 상태. 방금 쓴 글이 안 보이거나 새로 고침할 때 값이 앞뒤로 튄다"
+    synonyms: ["stale read"]
+    measured_by: [dist-replication-lag]
+  - id: dist-write-conflict
+    kind: PROBLEM
+    name: "쓰기 충돌"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "서로 다른 복제본이 같은 키를 동시에 다른 값으로 바꿔, 전파 뒤 어느 쪽이 맞는지 정해야 하는 상태"
+    synonyms: ["write conflict", "concurrent write"]
+  - id: dist-silent-write-loss
+    kind: PROBLEM
+    name: "조용한 쓰기 유실"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "충돌 해소가 동시 쓰기 하나를 오류 없이 버려, 성공 응답을 받은 쓰기가 나중에 사라진 상태"
+    synonyms: ["lost write", "silent data loss"]
+
+  # ── CRDT · 병합 가능한 복제 ──
+  - id: dist-conflict-free-replication
+    kind: STAGE
+    name: "CRDT · 병합 가능한 복제"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "조정 없이 각 복제본이 따로 쓰고 나중에 합쳐도 같은 상태로 수렴하는 자료형을 고른다. 다중 리더·오프라인 편집·협업 편집의 충돌을 구조로 없앤다"
+    questions: ["CRDT 가 조정 없이도 수렴하는 수학적 조건은 무엇인가", "OR-Set 이 2P-Set 보다 나은 점과 치르는 비용은 무엇인가"]
+    contains: [dist-crdt, dist-operational-transform, dist-mrdt, dist-tombstone-bloat, dist-metadata-growth]
+    uses: [dist-strong-eventual-consistency, dist-semilattice, dist-convergence-laws]
+  - id: dist-crdt
+    kind: MECHANISM
+    name: "CRDT"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "병합 연산이 교환·결합·멱등이라 어떤 순서로 몇 번 합쳐도 같은 값이 되는 복제 자료형. 복제본은 조정 없이 로컬에서 바로 쓰고 나중에 합친다"
+    synonyms: ["Conflict-free Replicated Data Type", "convergent replicated data type"]
+    questions: ["상태 기반과 연산 기반 CRDT 는 전송 계층에 무엇을 다르게 요구하나"]
+    contains: [dist-state-based-crdt, dist-op-based-crdt, dist-delta-crdt, dist-crdt-counter, dist-crdt-set, dist-crdt-register, dist-crdt-map, dist-sequence-crdt, dist-json-crdt, dist-tree-crdt, dist-graph-crdt, dist-crdt-gc]
+    mitigates: [dist-write-conflict]
+  - id: dist-state-based-crdt
+    kind: MECHANISM
+    name: "상태 기반 CRDT"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "복제본이 전체 상태를 보내고 받는 쪽이 조인(최소 상한)으로 합친다. 메시지가 중복·유실·재정렬돼도 되지만 상태가 크면 전송이 비싸다"
+    synonyms: ["CvRDT", "state-based CRDT", "convergent"]
+    uses: [dist-semilattice]
+  - id: dist-op-based-crdt
+    kind: MECHANISM
+    name: "연산 기반 CRDT"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "상태 대신 연산을 퍼뜨리고 각 복제본이 적용한다. 메시지는 작지만 연산이 인과 순서대로 정확히 한 번씩 도착해야 한다"
+    synonyms: ["CmRDT", "operation-based CRDT", "commutative"]
+    uses: [dist-causal-broadcast]
+    alternative_to:
+      - { to: dist-state-based-crdt, reason: "전송량을 줄이고 전달 보장을 전송 계층에 요구한다" }
+  - id: dist-delta-crdt
+    kind: MECHANISM
+    name: "델타 CRDT"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "상태 전체 대신 이번 변경으로 생긴 상태 조각(델타)만 보내고 조인으로 합친다. 상태 기반의 느슨한 전달 요건을 지키면서 전송량을 연산 기반 수준으로 줄인다"
+    synonyms: ["δ-CRDT", "delta-state CRDT"]
+    alternative_to:
+      - { to: dist-state-based-crdt, reason: "같은 병합 규칙으로 전송량만 줄인다" }
+  - id: dist-crdt-counter
+    kind: MECHANISM
+    name: "카운터 CRDT"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "복제본마다 자기 칸을 두고 올린 뒤 합칠 때 칸별 최댓값을 더하는 카운터 계열"
+    synonyms: ["counter CRDT"]
+    contains: [dist-g-counter, dist-pn-counter, dist-bounded-counter]
+  - id: dist-g-counter
+    kind: MECHANISM
+    name: "G-Counter"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "증가만 되는 카운터. 복제본별 칸의 최댓값끼리 합치고 값은 칸의 합이다"
+    synonyms: ["grow-only counter"]
+  - id: dist-pn-counter
+    kind: MECHANISM
+    name: "PN-Counter"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "증가용·감소용 G-Counter 두 개로 증감을 표현하고 값은 두 합의 차다. 좋아요 수처럼 줄기도 하는 분산 카운터에 쓴다"
+    synonyms: ["positive-negative counter"]
+    uses: [dist-g-counter]
+  - id: dist-bounded-counter
+    kind: MECHANISM
+    name: "상한 카운터"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "값이 0 아래로 내려가지 않게 감소 권한을 복제본마다 미리 나눠 주고 모자라면 옆에서 넘겨받는다. 재고처럼 불변식이 있는 카운터를 조정 없이 다룬다"
+    synonyms: ["bounded counter", "escrow counter"]
+  - id: dist-crdt-set
+    kind: MECHANISM
+    name: "집합 CRDT"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "추가와 삭제가 동시에 일어날 때 무엇이 이기는지를 자료형마다 다르게 정한 집합 계열"
+    synonyms: ["set CRDT"]
+    contains: [dist-g-set, dist-2p-set, dist-or-set, dist-lww-element-set]
+    uses: [dist-add-wins-remove-wins]
+  - id: dist-g-set
+    kind: MECHANISM
+    name: "G-Set"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "추가만 되는 집합. 병합은 합집합이다"
+    synonyms: ["grow-only set"]
+  - id: dist-2p-set
+    kind: MECHANISM
+    name: "2P-Set"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "추가 집합과 삭제 집합(툼스톤) 두 G-Set 으로 이뤄진다. 한 번 지운 원소는 다시 넣을 수 없다"
+    synonyms: ["two-phase set"]
+    causes: [dist-tombstone-bloat]
+  - id: dist-or-set
+    kind: MECHANISM
+    name: "OR-Set"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "추가마다 고유 태그(dot)를 붙이고 삭제는 그때까지 본 태그만 지운다. 동시 추가·삭제면 추가가 이기고, 지운 원소를 다시 넣을 수 있다"
+    synonyms: ["observed-remove set", "add-wins set", "AW-Set"]
+    uses: [dist-dot-context]
+    causes: [dist-metadata-growth]
+    alternative_to:
+      - { to: dist-2p-set, reason: "재추가를 허용하는 대신 원소마다 태그 메타데이터를 든다" }
+  - id: dist-lww-element-set
+    kind: MECHANISM
+    name: "LWW-Element-Set"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "원소마다 추가·삭제 타임스탬프를 두고 더 늦은 쪽을 따른다. 단순하지만 시계에 의존한다"
+    synonyms: ["last-write-wins element set"]
+    uses: [dist-last-write-wins]
+  - id: dist-crdt-register
+    kind: MECHANISM
+    name: "레지스터 CRDT"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "값 하나를 담는 칸. 동시 쓰기를 하나로 고르는지(LWW) 모두 남기는지(MV)로 나뉜다"
+    synonyms: ["register CRDT"]
+    contains: [dist-lww-register, dist-mv-register]
+  - id: dist-lww-register
+    kind: MECHANISM
+    name: "LWW-Register"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "타임스탬프가 가장 큰 쓰기만 남기는 레지스터. 프로필 필드처럼 마지막 값만 의미 있는 데이터에 쓴다"
+    synonyms: ["last-write-wins register"]
+    uses: [dist-last-write-wins]
+  - id: dist-mv-register
+    kind: MECHANISM
+    name: "MV-Register"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "인과적으로 동시인 쓰기를 모두 값 집합으로 남긴다. 읽는 쪽이 고르거나 합친다"
+    synonyms: ["multi-value register"]
+    uses: [dist-vector-clock]
+    alternative_to:
+      - { to: dist-lww-register, reason: "쓰기를 잃지 않는 대신 읽는 쪽이 여러 값을 다뤄야 한다" }
+  - id: dist-crdt-map
+    kind: MECHANISM
+    name: "맵 CRDT"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "키마다 CRDT 값을 품는 맵. 키의 추가·삭제는 OR-Set 규칙으로, 값의 병합은 품은 CRDT 규칙으로 한다"
+    synonyms: ["map CRDT"]
+    contains: [dist-or-map]
+  - id: dist-or-map
+    kind: MECHANISM
+    name: "OR-Map"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "키 집합을 OR-Set 으로 관리하고 값은 중첩 CRDT 로 둔 맵. 여러 기기에서 고친 프로필·설정을 필드 단위로 합친다"
+    synonyms: ["observed-remove map"]
+    uses: [dist-or-set]
+  - id: dist-sequence-crdt
+    kind: MECHANISM
+    name: "시퀀스 CRDT"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "문서 글자처럼 순서 있는 목록을 동시에 편집하게 하는 CRDT. 위치를 인덱스 대신 전역 고유 ID 로 표현해 동시 삽입이 같은 순서로 정렬되게 한다"
+    synonyms: ["sequence CRDT", "list CRDT"]
+    contains: [dist-rga, dist-logoot, dist-treedoc, dist-woot, dist-yata, dist-fugue]
+  - id: dist-rga
+    kind: MECHANISM
+    name: "RGA"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "각 원소를 앞 원소 ID 뒤에 매달고 동시 삽입은 타임스탬프로 정렬하는 연결 목록형 시퀀스 CRDT. 지운 원소는 툼스톤으로 남긴다"
+    synonyms: ["Replicated Growable Array"]
+  - id: dist-logoot
+    kind: MECHANISM
+    name: "Logoot"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "두 위치 사이에 늘 새 식별자를 만들 수 있는 조밀한 식별자 목록으로 순서를 표현한다. 툼스톤이 없지만 식별자가 길어질 수 있다"
+    synonyms: ["dense identifier"]
+  - id: dist-treedoc
+    kind: MECHANISM
+    name: "Treedoc"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "위치를 이진 트리 경로로 표현하는 시퀀스 CRDT. 트리가 치우치면 경로가 길어져 재균형이 필요하다"
+  - id: dist-woot
+    kind: MECHANISM
+    name: "WOOT"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "삽입마다 앞뒤 원소를 기록하고 그 조건이 만족될 때 적용하는 최초의 시퀀스 CRDT. 툼스톤과 적용 비용이 크다"
+    synonyms: ["WithOut Operational Transform"]
+  - id: dist-yata
+    kind: MECHANISM
+    name: "YATA"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "왼쪽·오른쪽 원점을 함께 기록해 동시 삽입 순서를 정하는 RGA 변형. Yjs 가 쓰며 블록 단위 인코딩으로 메모리를 줄인다"
+    synonyms: ["Yet Another Transformation Approach"]
+  - id: dist-fugue
+    kind: MECHANISM
+    name: "Fugue"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "동시에 같은 곳에 쓴 두 문장이 글자 단위로 섞이지 않게(interleaving 최소화) 정렬 규칙을 정한 시퀀스 CRDT"
+  - id: dist-json-crdt
+    kind: MECHANISM
+    name: "JSON CRDT"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "맵·목록·레지스터 CRDT 를 중첩해 JSON 문서 전체를 병합 가능하게 만든다. Automerge 가 대표이고 변경 이력을 그래프로 남겨 시점 이동도 된다"
+    synonyms: ["JSON CRDT", "Automerge"]
+    uses: [dist-or-map, dist-sequence-crdt]
+  - id: dist-tree-crdt
+    kind: MECHANISM
+    name: "트리 CRDT"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "노드 이동을 지원하는 트리 CRDT. 동시 이동이 순환을 만들 수 있어 이동 연산을 로그 순서로 되돌렸다 다시 적용하며 순환을 막는다"
+    synonyms: ["tree CRDT", "move operation"]
+  - id: dist-graph-crdt
+    kind: MECHANISM
+    name: "그래프 CRDT"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "정점과 간선을 각각 집합 CRDT 로 두고, 지워진 정점에 매달린 간선을 무효로 보는 그래프(2P2P-Graph 등)"
+    synonyms: ["2P2P-Graph", "graph CRDT"]
+  - id: dist-crdt-gc
+    kind: MECHANISM
+    name: "CRDT 가비지 컬렉션"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "모든 복제본이 이미 본 연산(인과적으로 안정된 연산)의 툼스톤·메타데이터를 지우거나 스냅샷으로 압축한다. 복제본 전원의 진행을 알아야 해서 오프라인 복제본이 있으면 멈춘다"
+    synonyms: ["tombstone GC", "compaction"]
+    uses: [dist-causal-stability]
+    mitigates: [dist-tombstone-bloat, dist-metadata-growth]
+  - id: dist-operational-transform
+    kind: MECHANISM
+    name: "OT"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "동시 편집 연산을 서로에 맞게 변환(transform)한 뒤 적용해 의도를 보존한다. 보통 중앙 서버가 순서를 정하고, 변환 함수의 정확성 증명이 어렵다"
+    synonyms: ["Operational Transformation", "OT"]
+    alternative_to:
+      - { to: dist-crdt, reason: "중앙 서버 순서화에 기대는 대신 메타데이터가 작다" }
+  - id: dist-mrdt
+    kind: MECHANISM
+    name: "MRDT"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "Git 처럼 공통 조상과 두 갈래를 비교하는 3-way 병합 함수를 자료형마다 정의한다. 연산 교환성을 요구하지 않아 일반 자료형을 병합 가능하게 만든다"
+    synonyms: ["Mergeable Replicated Data Type", "3-way merge"]
+    alternative_to:
+      - { to: dist-crdt, reason: "교환 법칙 대신 공통 조상 추적을 요구한다" }
+  - id: dist-tombstone-bloat
+    kind: PROBLEM
+    name: "툼스톤 누적"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "삭제를 표시만 하고 지우지 않는 자료형에서 삭제 흔적이 끝없이 쌓여 메모리·전송량이 실제 데이터보다 커지는 상태"
+    synonyms: ["tombstone accumulation"]
+  - id: dist-metadata-growth
+    kind: PROBLEM
+    name: "인과 메타데이터 폭증"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "복제본(actor)이 늘수록 버전 벡터·dot 이 커져 값보다 메타데이터가 무거워지는 상태"
+    synonyms: ["actor explosion", "vector clock growth"]
+
+  # ── 시간 · 순서 추적 ──
+  - id: dist-time-ordering
+    kind: STAGE
+    name: "시간 · 순서 추적"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "노드마다 어긋나는 벽시계 대신 논리 시계와 브로드캐스트 규칙으로 사건의 선후와 동시성을 정한다"
+    questions: ["벽시계 타임스탬프로 두 노드의 이벤트 순서를 정하면 무엇이 틀어지나", "Lamport 시계로 알 수 없고 벡터 시계로는 알 수 있는 것은 무엇인가"]
+    contains: [dist-physical-clock-sync, dist-lamport-clock, dist-vector-clock, dist-hybrid-logical-clock, dist-truetime, dist-total-order-broadcast, dist-causal-broadcast, dist-clock-skew]
+    uses: [dist-happens-before]
+  - id: dist-physical-clock-sync
+    kind: MECHANISM
+    name: "물리 시계 동기화"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "NTP·chrony 로 노드 시계를 기준 서버에 맞춘다. 수~수십 밀리초 오차가 남고, 동기화 순간 시계가 뒤로 뛸 수 있다"
+    synonyms: ["NTP", "clock synchronization", "chrony"]
+  - id: dist-lamport-clock
+    kind: MECHANISM
+    name: "Lamport 시계"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "사건마다 카운터를 올리고 메시지를 받으면 max(내 값, 받은 값)+1 로 맞춘다. a 가 b 보다 먼저면 값도 작다는 것만 보장하고, 값이 작다고 먼저라고는 말할 수 없다"
+    synonyms: ["Lamport timestamp", "logical clock", "scalar clock"]
+  - id: dist-vector-clock
+    kind: MECHANISM
+    name: "벡터 시계"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "노드마다 칸을 둔 카운터 벡터를 들고 다니며 원소별 최댓값으로 합친다. 두 사건이 선후인지 동시인지를 판정할 수 있지만 노드 수만큼 커진다"
+    synonyms: ["vector clock", "version vector"]
+    alternative_to:
+      - { to: dist-lamport-clock, reason: "크기를 치르고 동시성 판정을 얻는다" }
+    causes: [dist-metadata-growth]
+  - id: dist-hybrid-logical-clock
+    kind: MECHANISM
+    name: "하이브리드 논리 시계"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "물리 시각과 논리 카운터를 한 값에 묶어, 벽시계와 가깝게 읽히면서 인과 순서를 지킨다. CockroachDB·YugabyteDB 가 트랜잭션 타임스탬프로 쓴다"
+    synonyms: ["HLC", "hybrid logical clock"]
+    alternative_to:
+      - { to: dist-lamport-clock, reason: "고정 크기를 유지하면서 값이 실제 시각에 가깝다" }
+  - id: dist-truetime
+    kind: MECHANISM
+    name: "TrueTime"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "GPS·원자시계로 시각을 [최소, 최대] 구간으로 돌려주고, 커밋 때 불확실 구간만큼 기다려(commit wait) 전역 순서를 보장한다. Spanner 의 외부 일관성 기반이다"
+    synonyms: ["TrueTime", "commit wait"]
+    mitigates:
+      - { to: dist-clock-skew, reason: "오차를 구간으로 드러내고 그만큼 기다려 순서 역전을 없앤다" }
+  - id: dist-total-order-broadcast
+    kind: MECHANISM
+    name: "전순서 브로드캐스트"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "모든 노드가 같은 메시지를 같은 순서로 받게 하는 브로드캐스트. 합의 문제와 동등하고, 복제 로그·상태 기계 복제의 바탕이다"
+    synonyms: ["total order broadcast", "atomic broadcast"]
+    uses: [dist-consensus]
+  - id: dist-causal-broadcast
+    kind: MECHANISM
+    name: "인과 브로드캐스트"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "원인 메시지를 받기 전에는 결과 메시지를 전달하지 않는다. 벡터 시계로 빠진 선행 메시지를 기다린다. 전순서보다 약하고 합의가 필요 없다"
+    synonyms: ["causal broadcast", "causal delivery"]
+    uses: [dist-vector-clock]
+  - id: dist-clock-skew
+    kind: PROBLEM
+    name: "시계 어긋남"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "노드마다 벽시계가 다르게 가거나 동기화 때 뒤로 뛰는 상태. 타임스탬프로 순서를 정하면 늦게 쓴 값이 지고, 리스가 겹친다"
+    synonyms: ["clock skew", "clock drift"]
+    causes: [dist-silent-write-loss, dist-id-collision]
+
+  # ── 전역 ID 생성 ──
+  - id: dist-id-generation
+    kind: STAGE
+    name: "전역 ID 생성"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "여러 노드가 조정 없이 겹치지 않는 식별자를 만든다. 정렬 가능성·길이·인덱스 지역성·예측 불가능성을 저울질해 고른다"
+    questions: ["UUIDv4 를 기본 키로 쓰면 B-tree 인덱스에 무엇이 생기나", "Snowflake ID 는 시계가 뒤로 가면 어떻게 되나"]
+    contains: [dist-snowflake-id, dist-uuid-v4, dist-uuid-v7, dist-ulid, dist-segment-allocation, dist-id-collision, dist-random-id-write-scatter]
+  - id: dist-snowflake-id
+    kind: MECHANISM
+    name: "Snowflake ID"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "밀리초 타임스탬프·노드 번호·순번을 64비트 하나에 넣는다. 시간순 정렬되고 짧지만 노드 번호 배정과 시계 역행 처리가 필요하다"
+    synonyms: ["Snowflake", "64-bit time-ordered id"]
+    uses: [dist-physical-clock-sync]
+    mitigates:
+      - { to: data-random-pk-fragmentation, reason: "시간 순 키라 인덱스 끝에 붙는다" }
+  - id: dist-uuid-v4
+    kind: MECHANISM
+    name: "UUIDv4"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "122비트 난수로 만든 UUID. 조정이 전혀 필요 없고 추측이 어렵지만, 순서가 없어 인덱스 삽입 위치가 흩어진다"
+    synonyms: ["random UUID"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/messaging/outbox/OutboxEntity.kt, symbol: "val eventId: String = UUID.randomUUID().toString(),", note: "아웃박스 이벤트마다 무작위 UUID 를 eventId 로 붙인다 — 소비 측 멱등 원장의 키" }
+    causes: [dist-random-id-write-scatter]
+  - id: dist-uuid-v7
+    kind: MECHANISM
+    name: "UUIDv7"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "앞 48비트에 유닉스 밀리초를 두고 나머지를 난수로 채운 UUID. 표준 UUID 형식을 유지하면서 시간순으로 정렬돼 인덱스 끝에 붙는다"
+    synonyms: ["UUID version 7", "time-ordered UUID"]
+    alternative_to:
+      - { to: dist-uuid-v4, reason: "같은 128비트 형식에 시간 정렬을 더한다" }
+    mitigates:
+      - dist-random-id-write-scatter
+      - { to: data-random-pk-fragmentation, reason: "시간 순 키라 인덱스 끝에 붙는다" }
+  - id: dist-ulid
+    kind: MECHANISM
+    name: "ULID"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "48비트 타임스탬프와 80비트 난수를 Crockford Base32 26자로 적은 식별자. 문자열 그대로 사전순이 시간순이다"
+    synonyms: ["Universally Unique Lexicographically Sortable Identifier", "KSUID"]
+    alternative_to:
+      - { to: dist-uuid-v7, reason: "UUID 형식 호환 대신 짧은 문자열 표현을 고른다" }
+  - id: dist-segment-allocation
+    kind: MECHANISM
+    name: "번호 구간 할당"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "중앙 시퀀스(티켓 서버·DB)에서 번호를 1,000개씩 구간으로 받아 노드가 메모리에서 나눠 쓴다. 짧은 정수 ID 를 유지하면서 중앙 호출을 구간마다 한 번으로 줄인다"
+    synonyms: ["hi/lo", "segment allocation", "ticket server"]
+    alternative_to:
+      - { to: dist-snowflake-id, reason: "시계 의존을 없애는 대신 중앙 저장소를 둔다" }
+  - id: dist-id-collision
+    kind: PROBLEM
+    name: "ID 충돌"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "두 노드가 같은 ID 를 만든 상태. 노드 번호 중복 배정이나 시계 역행 뒤 같은 밀리초 재사용이 원인이다"
+    synonyms: ["id collision"]
+  - id: dist-random-id-write-scatter
+    kind: PROBLEM
+    name: "무작위 키 삽입 분산"
+    category: DATA
+    level: INTERMEDIATE
+    description: "순서 없는 ID 를 클러스터 인덱스 키로 쓰면 새 행이 인덱스 곳곳에 끼어들어 페이지 분할과 버퍼 캐시 미스가 늘어나는 상태"
+    synonyms: ["random insert", "page split"]
 
   # ── 조정 · 합의 ──
   - id: dist-coordination
@@ -72,8 +850,95 @@ concepts:
     name: "조정 · 합의"
     category: DISTRIBUTED_SYSTEM
     level: ADVANCED
-    description: "여러 노드 중 누가 일할지, 누가 자원을 쥘지를 노드끼리 정한다"
-    contains: [leader-election, distributed-lock, dist-split-brain]
+    description: "여러 노드가 한 값·한 리더·한 순서에 동의하고, 누가 자원을 쥘지를 정한다"
+    questions: ["과반 합의는 왜 네트워크가 갈라져도 리더를 하나로 지키나", "분산 락만으로 공유 자원 보호가 끝나지 않는 이유는 무엇인가"]
+    contains: [dist-consensus, leader-election, distributed-lock, dist-coordination-service, dist-distributed-snapshot, dist-split-brain, dist-stale-lock-holder]
+    uses: [dist-quorum, dist-flp-impossibility]
+  - id: dist-consensus
+    kind: MECHANISM
+    name: "합의"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "일부 노드가 죽어도 살아남은 노드들이 같은 값을 되돌릴 수 없게 결정한다. 과반 쿼럼과 임기(term·epoch)로 안전성을 지키고, 진행은 리더가 안정될 때만 보장된다"
+    synonyms: ["consensus", "state machine replication"]
+    questions: ["노드 5대 클러스터는 몇 대까지 죽어도 쓰기를 받나"]
+    contains: [dist-paxos, dist-raft, dist-zab, dist-viewstamped-replication, dist-pbft]
+    uses: [dist-quorum, dist-epoch]
+    mitigates: [dist-split-brain]
+  - id: dist-paxos
+    kind: MECHANISM
+    name: "Paxos"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "제안자가 번호 붙은 준비(prepare)로 과반의 약속을 받고, 이미 수락된 값이 있으면 그 값을 이어 수락(accept)받는 두 단계 합의. 정확하지만 이해·구현이 어렵다"
+    synonyms: ["Basic Paxos", "Lamport Paxos"]
+    contains: [dist-multi-paxos]
+  - id: dist-multi-paxos
+    kind: MECHANISM
+    name: "Multi-Paxos"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "안정된 리더가 준비 단계를 한 번만 하고 이후 로그 칸마다 수락 단계만 돌려 연속 값을 합의한다. 실제 시스템의 Paxos 는 대개 이 형태다"
+    synonyms: ["Multi-Paxos"]
+  - id: dist-raft
+    kind: MECHANISM
+    name: "Raft"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "리더 선출·로그 복제·안전성으로 나눠 이해하기 쉽게 만든 합의 알고리즘. 임기마다 리더 하나가 로그를 팔로워에 복제하고 과반이 받으면 커밋한다. etcd·Kafka KRaft 가 쓴다"
+    synonyms: ["Raft consensus"]
+    questions: ["Raft 에서 로그가 뒤처진 노드는 왜 리더가 될 수 없나"]
+    contains: [dist-raft-log-replication, dist-joint-consensus, dist-multi-raft]
+    uses: [leader-election, dist-epoch]
+    alternative_to:
+      - { to: dist-paxos, reason: "같은 안전성을 강한 리더와 단순한 규칙으로 얻는다" }
+  - id: dist-raft-log-replication
+    kind: MECHANISM
+    name: "Raft 로그 복제"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "리더가 AppendEntries 로 앞 항목의 임기·인덱스를 함께 보내 팔로워 로그의 일치를 확인하고, 어긋나면 뒤로 물러나며 덮어쓴다. 로그가 길어지면 스냅샷으로 앞부분을 잘라낸다"
+    synonyms: ["AppendEntries", "log matching", "Raft snapshot"]
+  - id: dist-joint-consensus
+    kind: MECHANISM
+    name: "공동 합의 구성 변경"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "클러스터 구성원을 바꿀 때 옛 구성과 새 구성 양쪽의 과반을 함께 요구하는 중간 단계를 거친다. 전환 중 두 과반이 각자 리더를 뽑는 것을 막는다"
+    synonyms: ["joint consensus", "membership change"]
+    mitigates: [dist-split-brain]
+  - id: dist-multi-raft
+    kind: MECHANISM
+    name: "Multi-Raft"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "데이터를 범위 파티션으로 나누고 파티션마다 독립된 Raft 그룹을 돌린다. 합의 처리량이 파티션 수만큼 늘고, 하트비트 묶기 같은 최적화가 필요하다"
+    synonyms: ["Multi-Raft", "Raft group per range"]
+    uses: [sharding]
+  - id: dist-zab
+    kind: MECHANISM
+    name: "ZAB"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "ZooKeeper 의 원자적 브로드캐스트 프로토콜. 리더가 epoch 와 순번(zxid)으로 변경을 순서대로 퍼뜨리고, 리더 교체 때 이전 epoch 의 커밋을 복구한다"
+    synonyms: ["ZooKeeper Atomic Broadcast"]
+    alternative_to:
+      - { to: dist-paxos, reason: "주 백업 순서 보장을 우선한 리더 기반 변형이다" }
+  - id: dist-viewstamped-replication
+    kind: MECHANISM
+    name: "Viewstamped Replication"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "뷰 번호마다 주 복제본이 요청 순서를 정하고, 주가 죽으면 뷰 변경으로 다음 주를 정하는 복제 프로토콜. Paxos 와 같은 시기에 나온 리더 기반 합의다"
+    synonyms: ["VR", "view change"]
+  - id: dist-pbft
+    kind: MECHANISM
+    name: "PBFT"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "노드가 거짓말을 해도 3f+1 대 중 f 대까지 견디는 비잔틴 장애 허용 합의. 세 단계 투표로 메시지가 노드 수의 제곱으로 늘어난다"
+    synonyms: ["Practical Byzantine Fault Tolerance", "BFT", "Tendermint"]
+    uses: [dist-byzantine-fault]
   - id: leader-election
     kind: MECHANISM
     name: "리더 선출"
@@ -82,8 +947,20 @@ concepts:
     description: "여러 노드 중 하나를 조정자로 뽑아 쓰기·스케줄 같은 단독 작업을 맡긴다. 과반 합의로 뽑으면 갈라진 쪽 중 한쪽만 리더를 가진다"
     synonyms: ["leader election"]
     questions: ["리더가 둘이 되는 것을 무엇으로 막나"]
+    contains: [dist-lease]
     uses: [dist-quorum]
     mitigates: [dist-split-brain]
+  - id: dist-lease
+    kind: MECHANISM
+    name: "리스"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "권한을 기한부로 빌려주고, 기한 안에 갱신하지 않으면 다른 노드가 가져간다. 쥔 쪽이 죽어도 권한이 영원히 묶이지 않지만, 시계가 어긋나면 두 쥔 자가 겹친다"
+    synonyms: ["lease", "lease-based leadership"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/messaging/outbox/OutboxEntity.kt, symbol: "var leaseUntil: LocalDateTime? = null,", note: "릴레이가 집은 아웃박스 행에 리스 기한을 두고, 전송 중 죽으면 기한 뒤 다른 릴레이가 다시 집는다" }
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/idempotency/model/IdempotencyKey.kt, symbol: "fun begin(userId: String, key: String, now: Instant, lease: Duration = LEASE): IdempotencyKey {", note: "처리 중인 멱등 키에 리스를 걸어 앞 요청이 죽으면 기한 뒤 이어받게 한다" }
+    uses: [dist-physical-clock-sync]
   - id: distributed-lock
     kind: MECHANISM
     name: "분산락"
@@ -92,12 +969,50 @@ concepts:
     description: "여러 프로세스·노드가 공유 자원에 동시에 들어가지 않게 외부 저장소(Redis·ZooKeeper 등)에 잠금을 둔다. TTL 과 펜싱 토큰이 없으면 만료 뒤 두 쥔 자가 생긴다"
     synonyms: ["distributed lock"]
     questions: ["락 TTL 이 작업보다 먼저 끝나면 무엇이 생기나"]
+    contains: [dist-fencing-token, dist-redlock]
     mitigates:
       - { to: data-cache-stampede, reason: "한 요청만 원본에서 채우고 나머지는 기다린다" }
+      - { to: spring-duplicate-schedule, reason: "여러 파드 중 하나만 스케줄을 돌게 한다" }
     uses:
       - { to: redis, reason: "SETNX + TTL 로 잠금 키를 잡는다" }
+      - dist-lease
     alternative_to:
       - { to: pessimistic-lock, reason: "잠글 대상이 한 DB 의 행이면 행 잠금, 여러 저장소를 가로지르면 분산 락" }
+    causes:
+      - { to: dist-stale-lock-holder, reason: "GC 멈춤·네트워크 지연으로 TTL 이 지난 줄 모르는 보유자가 계속 쓴다" }
+  - id: dist-fencing-token
+    kind: MECHANISM
+    name: "펜싱 토큰"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "락을 줄 때마다 단조 증가하는 번호를 함께 주고, 자원 쪽이 지금까지 본 번호보다 작은 요청을 거절한다. 만료된 옛 보유자의 늦은 쓰기를 자원이 막는다"
+    synonyms: ["fencing token", "epoch fencing"]
+    mitigates: [dist-stale-lock-holder, dist-split-brain]
+  - id: dist-redlock
+    kind: MECHANISM
+    name: "Redlock"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "독립된 Redis N 대 중 과반에서 기한 안에 잠금을 얻으면 성공으로 보는 알고리즘. 시계·일시 정지 가정이 깨지면 안전하지 않다는 비판(Kleppmann)이 있어 정확성이 필요한 곳엔 펜싱을 함께 쓴다"
+    synonyms: ["RedLock", "Redisson RedLock"]
+    uses:
+      - dist-quorum
+      - { to: data-redis-set-nx, reason: "SET NX PX 로 잠금 키를 잡는다" }
+  - id: dist-coordination-service
+    kind: MECHANISM
+    name: "코디네이션 서비스"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "합의로 복제되는 작은 키-값 저장소에 락·리더·구성·멤버십을 두고, 임시 노드·감시(watch)·CAS 를 제공한다. ZooKeeper·etcd·Consul 이 이 역할이다"
+    synonyms: ["ZooKeeper", "etcd", "Consul", "coordination service"]
+    uses: [dist-consensus, dist-lease]
+  - id: dist-distributed-snapshot
+    kind: MECHANISM
+    name: "분산 스냅샷"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "마커 메시지를 채널마다 흘려 모든 노드의 로컬 상태와 채널에 떠 있던 메시지를 일관되게 기록한다(Chandy-Lamport). 스트림 처리의 체크포인트가 이 원리다"
+    synonyms: ["Chandy-Lamport", "consistent snapshot", "checkpoint"]
   - id: dist-split-brain
     kind: PROBLEM
     name: "스플릿 브레인"
@@ -105,6 +1020,13 @@ concepts:
     level: ADVANCED
     description: "분할된 양쪽이 각자 자기가 리더라고 믿고 쓰기를 받는 상태. 다시 합쳐질 때 충돌한 쓰기를 되돌릴 수 없다"
     synonyms: ["split brain"]
+  - id: dist-stale-lock-holder
+    kind: PROBLEM
+    name: "만료된 락 보유자 쓰기"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "락이나 리스가 이미 만료돼 다른 쪽이 가져갔는데 옛 보유자가 그 사실을 모르고 자원에 쓰는 상태"
+    synonyms: ["zombie lock holder", "process pause"]
 
   # ── 분산 트랜잭션 ──
   - id: dist-transaction
@@ -113,8 +1035,9 @@ concepts:
     category: DISTRIBUTED_SYSTEM
     level: ADVANCED
     description: "DB 가 서로 다른 서비스들에 걸친 한 업무를 전부 되거나 전부 안 되게 잇는다"
-    questions: ["2PC 대신 사가를 쓰면 무엇을 얻고 무엇을 잃나"]
-    contains: [two-phase-commit, saga-pattern, outbox-pattern, dist-dual-write]
+    questions: ["2PC 대신 사가를 쓰면 무엇을 얻고 무엇을 잃나", "DB 커밋과 메시지 발행을 어떻게 원자적으로 묶나"]
+    contains: [two-phase-commit, dist-three-phase-commit, saga-pattern, dist-tcc, outbox-pattern, dist-cdc, dist-deterministic-transaction, dist-dual-write, dist-coordinator-blocking, dist-saga-isolation-anomaly, dist-compensation-failure]
+    uses: [dist-compensating-transaction]
   - id: two-phase-commit
     kind: MECHANISM
     name: "2PC"
@@ -122,6 +1045,16 @@ concepts:
     level: ADVANCED
     description: "조정자가 모든 참여자에게 준비를 묻고, 전원이 동의하면 커밋을 지시하는 프로토콜. 조정자가 멈추면 참여자가 락을 쥔 채 기다린다"
     synonyms: ["two-phase commit", "2단계 커밋", "XA"]
+    causes: [dist-coordinator-blocking]
+  - id: dist-three-phase-commit
+    kind: MECHANISM
+    name: "3PC"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "준비와 커밋 사이에 사전 커밋 단계를 넣고 타임아웃으로 참여자가 스스로 결정하게 해 블로킹을 줄이려 한 프로토콜. 네트워크 분할에서는 불일치가 생겨 실무에 쓰이지 않는다"
+    synonyms: ["three-phase commit"]
+    alternative_to:
+      - { to: two-phase-commit, reason: "블로킹을 줄이려 했지만 분할 내성을 잃는다" }
   - id: saga-pattern
     kind: MECHANISM
     name: "사가 패턴"
@@ -133,9 +1066,53 @@ concepts:
     code:
       - { path: order/feature/src/main/kotlin/com/kgd/order/application/saga/service/OrderSagaCoordinator.kt, symbol: "class OrderSagaCoordinator(", note: "주문 사가 오케스트레이터 — 재고 · 프로모션 · 결제 응답과 기한 만료를 받아 다음 명령이나 보상을 낸다" }
       - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/infrastructure/messaging/InventoryCommandConsumer.kt, symbol: "fun onRelease(", note: "주문 사가의 재고 예약 해제 명령 — 앞 단계 예약을 되돌리는 보상 단계" }
-    uses: [dist-compensating-transaction, eventual-consistency]
+    contains: [dist-saga-choreography, dist-saga-orchestration, dist-semantic-lock]
+    uses: [dist-compensating-transaction, eventual-consistency, dist-pivot-transaction]
     alternative_to:
       - { to: two-phase-commit, reason: "참여자 락을 오래 쥐지 않는 대신 중간 상태가 보인다" }
+    causes: [dist-saga-isolation-anomaly]
+  - id: dist-saga-choreography
+    kind: MECHANISM
+    name: "코레오그래피 사가"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "중앙 조정자 없이 각 서비스가 앞 단계 이벤트를 듣고 자기 일을 한 뒤 다음 이벤트를 낸다. 결합이 느슨하지만 흐름이 코드 곳곳에 흩어져 추적이 어렵다"
+    synonyms: ["choreography", "event choreography"]
+    code:
+      - { path: product/feature/src/main/kotlin/com/kgd/product/infrastructure/messaging/InventoryStockSyncConsumer.kt, symbol: "class InventoryStockSyncConsumer(", note: "재고 서비스의 예약·해제 이벤트를 듣고 상품 재고 표시를 스스로 맞춘다 — 명령 없이 이벤트로 이어지는 단계" }
+  - id: dist-saga-orchestration
+    kind: MECHANISM
+    name: "오케스트레이션 사가"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "오케스트레이터가 사가 상태를 저장하고 단계별 명령을 보내며 응답·기한 만료에 따라 다음 단계나 보상을 고른다. 흐름이 한곳에 보이는 대신 조정자가 모든 참여자를 안다"
+    synonyms: ["orchestration", "saga orchestrator", "process manager"]
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/application/saga/service/OrderSagaCoordinator.kt, symbol: "class OrderSagaCoordinator(", note: "order_saga 행에 단계를 저장하고 재고 · 프로모션 · 결제에 명령을 보낸다" }
+    alternative_to:
+      - { to: dist-saga-choreography, reason: "흐름 가시성과 기한 관리를 얻고 중앙 조정자 결합을 치른다" }
+  - id: dist-semantic-lock
+    kind: MECHANISM
+    name: "시맨틱 락"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "사가가 진행 중인 레코드에 PENDING 같은 업무 상태를 표시해, 다른 사가가 중간 상태를 확정 값으로 읽거나 덮어쓰지 않게 한다. 사가에 없는 격리를 업무 규칙으로 보충한다"
+    synonyms: ["semantic lock", "countermeasure"]
+    mitigates: [dist-saga-isolation-anomaly]
+  - id: dist-tcc
+    kind: MECHANISM
+    name: "TCC"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "Try 에서 자원을 예약만 하고, 전원이 성공하면 Confirm 으로 확정, 하나라도 실패하면 Cancel 로 예약을 푼다. 2PC 처럼 두 단계지만 DB 락 대신 업무 예약 상태를 쓴다"
+    synonyms: ["Try-Confirm-Cancel", "reservation pattern"]
+    questions: ["Try 가 도착하기 전에 Cancel 이 먼저 오면 어떻게 처리하나"]
+    code:
+      - { path: inventory/domain/src/main/kotlin/com/kgd/inventory/domain/reservation/model/Reservation.kt, symbol: "fun confirm() {", note: "재고 예약을 확정한다 — 예약(Try) · 확정(Confirm) · 만료/해제(Cancel) 세 상태" }
+      - { path: inventory/domain/src/main/kotlin/com/kgd/inventory/domain/reservation/model/Reservation.kt, symbol: "fun expire() {", note: "기한 안에 확정되지 않은 예약을 풀어 재고를 되돌린다" }
+    alternative_to:
+      - { to: two-phase-commit, reason: "DB 락 대신 업무 예약으로 두 단계 확정을 한다" }
+    uses: [dist-lease]
   - id: outbox-pattern
     kind: MECHANISM
     name: "아웃박스 패턴"
@@ -146,10 +1123,41 @@ concepts:
     questions: ["아웃박스 릴레이는 왜 중복 발행을 할 수 있나"]
     code:
       - { path: common/src/main/kotlin/com/kgd/common/messaging/outbox/OutboxPollingPublisher.kt, symbol: "class OutboxPollingPublisher(", note: "아웃박스 행을 선점해 Kafka 로 보내고 결과를 정산하는 폴링 릴레이" }
+    contains: [dist-outbox-polling-relay]
     uses:
       - dist-delivery-semantics
       - { to: data-skip-locked, reason: "릴레이 여럿이 같은 행을 집지 않게 잠긴 행을 건너뛴다" }
     mitigates: [dist-dual-write]
+  - id: dist-outbox-polling-relay
+    kind: MECHANISM
+    name: "폴링 릴레이"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "릴레이가 주기적으로 아웃박스에서 발행할 차례인 행을 집어 보내고 상태를 바꾼다. 구현이 단순하지만 폴링 주기만큼 지연되고 DB 에 조회 부하를 준다"
+    synonyms: ["polling publisher", "outbox relay"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/messaging/outbox/OutboxRepository.kt, symbol: "fun findClaimable(", note: "재시도 시각이 된 PENDING 과 리스가 끝난 SENDING 행을 발행 차례로 집는다" }
+    uses: [dist-lease, dist-exponential-backoff]
+  - id: dist-cdc
+    kind: MECHANISM
+    name: "CDC"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "DB 의 변경 로그(binlog·WAL)를 읽어 행 변경을 이벤트로 흘린다(Debezium). 애플리케이션 코드 없이 커밋 순서대로 빠르게 발행하지만 DB 내부 형식과 운영 도구에 묶인다"
+    synonyms: ["Change Data Capture", "log tailing", "Debezium"]
+    uses:
+      - { to: write-ahead-log, reason: "커밋된 변경만 순서대로 담긴 로그를 원천으로 삼는다" }
+      - { to: data-binlog, reason: "CDC 는 binlog 를 읽는다" }
+    alternative_to:
+      - { to: dist-outbox-polling-relay, reason: "폴링 지연과 조회 부하를 없애고 커넥터 운영을 떠안는다" }
+  - id: dist-deterministic-transaction
+    kind: MECHANISM
+    name: "결정적 트랜잭션"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "트랜잭션 입력의 전역 순서를 먼저 합의하고 모든 복제본이 같은 순서로 결정적으로 실행한다(Calvin). 커밋 시점 조정이 사라지는 대신 읽기·쓰기 집합을 미리 알아야 한다"
+    synonyms: ["Calvin", "deterministic database"]
+    uses: [dist-total-order-broadcast]
   - id: dist-dual-write
     kind: PROBLEM
     name: "이중 쓰기 불일치"
@@ -157,6 +1165,27 @@ concepts:
     level: ADVANCED
     description: "DB 쓰기와 메시지 발행을 따로 하다가 한쪽만 성공한 상태. 주문은 저장됐는데 이벤트가 없거나, 이벤트만 나가고 저장은 롤백된다"
     synonyms: ["dual write"]
+  - id: dist-coordinator-blocking
+    kind: PROBLEM
+    name: "조정자 블로킹"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "2PC 에서 준비를 마친 참여자가 조정자의 결정을 못 받아 락을 쥔 채 무한히 기다리는 상태. 운영자가 수동으로 결정(heuristic)하면 불일치가 남는다"
+    synonyms: ["in-doubt transaction", "blocking commit"]
+  - id: dist-saga-isolation-anomaly
+    kind: PROBLEM
+    name: "사가 격리 이상"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "사가의 각 단계가 바로 커밋돼 다른 사가가 중간 상태를 읽거나 덮어쓰는 상태. 갱신 유실·더티 읽기·퍼지 읽기가 서비스 사이에서 생긴다"
+    synonyms: ["lack of isolation", "saga anomaly"]
+  - id: dist-compensation-failure
+    kind: PROBLEM
+    name: "보상 실패"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "보상 트랜잭션 자체가 실패하거나 원래 단계보다 먼저 도착해 되돌릴 대상이 없는 상태. 보상은 재시도·멱등·순서 역전을 견디게 설계해야 한다"
+    synonyms: ["compensation failure"]
 
   # ── 비동기 메시징 ──
   - id: dist-messaging
@@ -164,17 +1193,40 @@ concepts:
     name: "비동기 메시징"
     category: DISTRIBUTED_SYSTEM
     level: INTERMEDIATE
-    description: "서비스끼리 브로커를 사이에 두고 이벤트·명령을 주고받는다. 보내는 쪽과 받는 쪽의 속도·가용성이 서로 묶이지 않는다"
+    description: "서비스끼리 브로커를 사이에 두고 이벤트·명령을 주고받는다. 보내는 쪽과 받는 쪽의 속도·가용성이 서로 묶이지 않는다. 브로커 내부와 전달 보장 설정은 메시징 · 스트리밍 도메인이 다룬다"
     questions: ["at-least-once 전달에서 소비자는 무엇을 해야 하나"]
-    contains: [fan-out, idempotency, backpressure, dist-dead-letter-queue, dist-stream-processing, dist-duplicate-delivery, dist-poison-message, dist-consumer-lag-growth, dist-consumer-lag, kafka]
+    contains: [fan-out, idempotency, backpressure, dist-dead-letter-queue, dist-stream-processing, dist-duplicate-delivery, dist-poison-message, dist-consumer-lag-growth, dist-consumer-lag]
     measured_by: [dist-consumer-lag]
+    uses: [dist-delivery-semantics]
   - id: fan-out
     kind: MECHANISM
     name: "팬아웃"
     category: DISTRIBUTED_SYSTEM
     level: INTERMEDIATE
-    description: "한 메시지를 여러 수신자에게 전달한다. Kafka 에서는 한 토픽을 컨슈머 그룹 여럿이 각자 끝까지 읽는 모양이 된다"
+    description: "한 메시지·쓰기를 여러 수신자에게 퍼뜨린다. Kafka 에서는 한 토픽을 컨슈머 그룹 여럿이 각자 끝까지 읽는 모양이고, 피드 설계에서는 쓸 때 퍼뜨릴지 읽을 때 모을지의 선택이다"
     synonyms: ["fan-out", "pub/sub"]
+    contains: [dist-fanout-on-write, dist-fanout-on-read]
+  - id: dist-fanout-on-write
+    kind: MECHANISM
+    name: "쓰기 시 팬아웃"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "글이 쓰일 때 팔로워마다의 받은편지함(타임라인)에 미리 넣어 둔다. 읽기가 빠르지만 팔로워가 수백만인 작성자의 쓰기가 폭발한다"
+    synonyms: ["push model", "fan-out on write"]
+    causes: [dist-hot-partition]
+    uses:
+      - { to: fan-out, reason: "다른 도메인의 같은 개념과 잇는다" }
+  - id: dist-fanout-on-read
+    kind: MECHANISM
+    name: "읽기 시 팬아웃"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "읽을 때 팔로우한 작성자들의 최근 글을 모아 합친다. 쓰기는 싸지만 읽기 지연이 팔로우 수를 따라간다. 유명인만 읽기 시로 돌리는 혼합이 흔하다"
+    synonyms: ["pull model", "fan-out on read", "hybrid feed"]
+    alternative_to:
+      - { to: dist-fanout-on-write, reason: "쓰기 폭발을 피하고 읽기 지연을 치른다" }
+    uses:
+      - { to: fan-out, reason: "다른 도메인의 같은 개념과 잇는다" }
   - id: idempotency
     kind: MECHANISM
     name: "멱등 처리"
@@ -185,7 +1237,36 @@ concepts:
     questions: ["처리 이력 원장을 두 인스턴스가 동시에 쓰면 어떻게 한쪽만 남기나"]
     code:
       - { path: common/src/main/kotlin/com/kgd/common/messaging/IdempotentEventHandler.kt, symbol: "class IdempotentEventHandler(", note: "(eventId, consumerGroup) 원장으로 재배달을 건너뛰는 공용 멱등 처리기" }
+    contains: [dist-idempotency-key, dist-natural-idempotency, dist-inbox-pattern]
     uses: [dist-delivery-semantics]
+    mitigates: [dist-duplicate-delivery]
+  - id: dist-idempotency-key
+    kind: MECHANISM
+    name: "멱등 키"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "클라이언트가 요청마다 고유 키를 붙이고 서버가 키별 처리 상태·응답을 저장해, 같은 키 재요청에는 저장한 응답을 돌려준다. 처리 중 재요청과 같은 키 다른 본문을 따로 막아야 한다"
+    synonyms: ["Idempotency-Key", "idempotency key"]
+    questions: ["같은 멱등 키로 본문이 다른 요청이 오면 어떻게 답하나"]
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/idempotency/model/IdempotencyKey.kt, symbol: "class IdempotencyKey private constructor(", note: "주문 요청 멱등 키 — 처리 중·완료 상태와 저장된 응답, 리스 기한을 든다" }
+    uses: [dist-lease]
+  - id: dist-natural-idempotency
+    kind: MECHANISM
+    name: "자연 멱등"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "연산 자체를 멱등하게 짠다. 증감 대신 절대값 설정, 상태 전이 전 현재 상태 확인, 유니크 제약으로 중복 삽입 거절이 대표 방식이다"
+    synonyms: ["natural idempotency", "set instead of increment"]
+  - id: dist-inbox-pattern
+    kind: MECHANISM
+    name: "인박스 패턴"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "받은 메시지 ID 를 업무 처리와 같은 로컬 트랜잭션으로 수신 원장에 기록해, 재배달된 메시지는 원장에서 걸러낸다. 아웃박스의 소비 측 짝이다"
+    synonyms: ["inbox", "processed_event", "deduplication table"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/messaging/idempotency/ProcessedEventEntity.kt, symbol: "@Table(name = \"processed_event\")", note: "모든 도메인이 같은 스키마로 쓰는 멱등 소비 원장" }
     mitigates: [dist-duplicate-delivery]
   - id: backpressure
     kind: MECHANISM
@@ -213,11 +1294,10 @@ concepts:
     name: "스트림 처리"
     category: DISTRIBUTED_SYSTEM
     level: ADVANCED
-    description: "끝없이 들어오는 이벤트를 키별로 묶고 시간 창(window)으로 잘라 흐르는 동안 집계한다. 배치로 모았다가 나중에 세는 대신 지연을 초·분 단위로 줄인다"
+    description: "끝없이 들어오는 이벤트를 키별로 묶고 시간 창(window)으로 잘라 흐르는 동안 집계한다. 배치로 모았다가 나중에 세는 대신 지연을 초·분 단위로 줄인다. 창·상태 저장소·조인은 메시징 · 스트리밍 도메인이 다룬다"
     synonyms: ["stream processing", "윈도 집계"]
     code:
       - { path: analytics/app/src/main/kotlin/com/kgd/analytics/infrastructure/streaming/AnalyticsStreamTopology.kt, symbol: "fun buildPipeline(builder: StreamsBuilder)", note: "상품·키워드 이벤트를 키별 시간 창으로 집계하는 토폴로지" }
-    contains: [kafka-streams]
   - id: dist-duplicate-delivery
     kind: PROBLEM
     name: "중복 배달"
@@ -248,28 +1328,6 @@ concepts:
     level: INTERMEDIATE
     description: "파티션의 마지막 오프셋과 소비자가 커밋한 오프셋의 차이. 소비자가 얼마나 밀렸는지를 건수로 잰다"
     synonyms: ["consumer lag"]
-  - id: kafka
-    kind: TECHNOLOGY
-    name: "Kafka"
-    category: INFRASTRUCTURE
-    level: INTERMEDIATE
-    description: "파티션 단위로 순서를 지키는 로그형 메시지 브로커. 이 레포는 KRaft 단일 노드로 띄우고, 서비스 간 이벤트·명령을 모두 여기로 주고받는다"
-    synonyms: ["Apache Kafka"]
-    code:
-      - { path: k8s/infra/local/kafka/statefulset.yaml, symbol: "image: bitnamilegacy/kafka:3.8", note: "KRaft 단일 노드 브로커 StatefulSet" }
-    implements:
-      - { to: fan-out, reason: "컨슈머 그룹마다 오프셋을 따로 가져 한 토픽을 여럿이 읽는다" }
-      - { to: dist-messaging, reason: "이 레포 서비스 간 비동기 메시징의 브로커다" }
-  - id: kafka-streams
-    kind: TECHNOLOGY
-    name: "Kafka Streams"
-    category: INFRASTRUCTURE
-    level: ADVANCED
-    description: "Kafka 토픽을 입력·출력으로 쓰는 JVM 스트림 처리 라이브러리. 별도 클러스터 없이 애플리케이션 안에서 돈다. analytics 가 실시간 지표 집계에 쓴다"
-    code:
-      - { path: analytics/app/build.gradle.kts, symbol: "implementation(libs.kafka.streams)", note: "analytics 앱의 스트림 처리 의존성" }
-    implements:
-      - { to: dist-stream-processing, reason: "groupByKey·windowedBy 로 키별 시간 창 집계를 한다" }
 
   # ── 상태 모델링 ──
   - id: dist-state-modeling
@@ -278,7 +1336,7 @@ concepts:
     category: ARCHITECTURE
     level: ADVANCED
     description: "상태를 어떻게 저장하고 어떤 모양으로 읽힐지 정한다. 쓰기 모델과 읽기 모델을 가르거나, 현재 값 대신 변경 이력을 원본으로 둔다"
-    contains: [cqrs, event-sourcing]
+    contains: [cqrs, event-sourcing, dist-long-event-replay]
   - id: cqrs
     kind: MECHANISM
     name: "CQRS"
@@ -298,6 +1356,30 @@ concepts:
     description: "현재 상태 대신 상태를 바꾼 이벤트를 순서대로 저장하고, 상태는 그 이벤트를 다시 재생해 만든다. 감사 이력과 시점 복원을 얻는 대신 스키마 변경과 재생 비용을 떠안는다"
     synonyms: ["event sourcing"]
     questions: ["이벤트가 수백만 건이면 상태 복원을 어떻게 빠르게 하나"]
+    contains: [dist-event-snapshot, dist-event-versioning]
+    causes: [dist-long-event-replay]
+  - id: dist-event-snapshot
+    kind: MECHANISM
+    name: "이벤트 스냅샷"
+    category: ARCHITECTURE
+    level: ADVANCED
+    description: "N 번째 이벤트마다 그 시점 상태를 저장해 두고, 복원은 가장 가까운 스냅샷부터 이후 이벤트만 재생한다"
+    synonyms: ["snapshot", "event store snapshot"]
+    mitigates: [dist-long-event-replay]
+  - id: dist-event-versioning
+    kind: MECHANISM
+    name: "이벤트 버전 관리"
+    category: ARCHITECTURE
+    level: ADVANCED
+    description: "저장된 옛 이벤트는 고칠 수 없으므로 이벤트에 버전을 달고, 읽을 때 옛 형식을 새 형식으로 끌어올린다(upcasting)"
+    synonyms: ["event versioning", "upcasting"]
+  - id: dist-long-event-replay
+    kind: PROBLEM
+    name: "재생 비용 증가"
+    category: ARCHITECTURE
+    level: ADVANCED
+    description: "집합체 하나의 이벤트가 수만 건으로 쌓여 상태 복원·새 읽기 모델 구축이 느려지는 상태"
+    synonyms: ["long replay"]
 
   # ── 장애 격리 ──
   - id: dist-fault-isolation
@@ -305,10 +1387,29 @@ concepts:
     name: "장애 격리"
     category: DISTRIBUTED_SYSTEM
     level: INTERMEDIATE
-    description: "한 서비스·외부 의존의 장애가 호출한 쪽으로 번지지 않게 끊고, 나누고, 다시 시도한다"
-    questions: ["재시도가 장애를 키우는 경우는 언제인가"]
-    contains: [circuit-breaker, bulkhead-pattern, retry-pattern, service-mesh, dist-cascading-failure, dist-retry-storm, dist-failure-rate, resilience4j]
+    description: "한 서비스·외부 의존의 장애가 호출한 쪽으로 번지지 않게 기다림을 끊고, 자원을 나누고, 다시 시도하고, 넘치는 부하를 버린다"
+    questions: ["재시도가 장애를 키우는 경우는 언제인가", "타임아웃·재시도·서킷 브레이커를 겹칠 때 어떤 순서로 감싸나"]
+    contains: [dist-timeout, circuit-breaker, bulkhead-pattern, retry-pattern, dist-hedged-request, dist-graceful-degradation, dist-load-shedding, service-mesh, dist-cascading-failure, dist-retry-storm, dist-thundering-herd, dist-tail-latency-amplification, dist-metastable-failure, dist-failure-rate, resilience4j]
     measured_by: [dist-failure-rate]
+  - id: dist-timeout
+    kind: MECHANISM
+    name: "타임아웃"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "외부 호출마다 연결·응답을 기다리는 상한을 둔다. 없으면 느린 의존 하나에 스레드·커넥션이 무한히 묶이고, 너무 짧으면 정상 요청을 버리고 재시도를 부른다"
+    synonyms: ["timeout", "connect timeout", "read timeout"]
+    questions: ["타임아웃 값은 무엇을 기준으로 정하나"]
+    code:
+      - { path: recommendation/feature/src/main/kotlin/com/kgd/recommendation/infrastructure/client/RecommendationExperimentClient.kt, symbol: "setReadTimeout(1000)", note: "실험 서비스 호출을 연결 300ms · 응답 1초로 끊는다" }
+    contains: [dist-deadline-propagation]
+    mitigates: [dist-cascading-failure]
+  - id: dist-deadline-propagation
+    kind: MECHANISM
+    name: "데드라인 전파"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "호출 사슬 첫 요청의 남은 시간을 하위 호출에 넘겨, 이미 늦은 요청을 하류에서 계속 처리하지 않게 한다. gRPC deadline 이 대표다"
+    synonyms: ["deadline propagation", "timeout budget"]
   - id: circuit-breaker
     kind: MECHANISM
     name: "서킷 브레이커"
@@ -320,6 +1421,7 @@ concepts:
     code:
       - { path: payment/feature/src/main/kotlin/com/kgd/payment/infrastructure/pg/toss/TossPgConfig.kt, symbol: "fun paymentTossCircuitBreaker(): CircuitBreaker", note: "결제 → PG(토스) 호출을 서킷 브레이커로 감싼다" }
       - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/resilience/CircuitBreakerConfiguration.kt, symbol: "class CircuitBreakerConfiguration", note: "거래소 REST·WS 재연결·텔레그램 호출별 브레이커 등록" }
+    uses: [dist-graceful-degradation]
     mitigates: [dist-cascading-failure, dist-retry-storm]
     measured_by: [dist-failure-rate]
   - id: bulkhead-pattern
@@ -329,7 +1431,28 @@ concepts:
     level: INTERMEDIATE
     description: "의존별로 스레드 풀·커넥션·동시 호출 수를 따로 떼어 둔다. 한 의존이 느려져도 그 몫만 차고 다른 호출은 계속 돈다"
     synonyms: ["bulkhead", "격벽"]
+    contains: [dist-thread-pool-bulkhead, dist-semaphore-bulkhead]
     mitigates: [dist-cascading-failure]
+  - id: dist-thread-pool-bulkhead
+    kind: MECHANISM
+    name: "스레드 풀 격벽"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "의존마다 전용 스레드 풀과 대기열을 둔다. 호출 스레드가 분리돼 타임아웃을 강제할 수 있지만 스레드 전환 비용이 든다"
+    synonyms: ["thread pool bulkhead"]
+    uses:
+      - { to: thread-pool, reason: "격벽을 스레드 풀로 나눈다" }
+  - id: dist-semaphore-bulkhead
+    kind: MECHANISM
+    name: "세마포어 격벽"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "호출 스레드는 그대로 두고 의존별 동시 실행 수만 세마포어로 제한한다. 가볍고 코루틴에도 맞지만 느린 호출을 중간에 끊지는 못한다"
+    synonyms: ["semaphore bulkhead"]
+    alternative_to:
+      - { to: dist-thread-pool-bulkhead, reason: "스레드 분리를 포기하고 비용을 줄인다" }
+    uses:
+      - { to: semaphore, reason: "격벽을 동시 실행 허가 수로 나눈다" }
   - id: retry-pattern
     kind: MECHANISM
     name: "재시도 패턴"
@@ -339,7 +1462,7 @@ concepts:
     synonyms: ["retry"]
     code:
       - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/config/OrderKafkaConfig.kt, symbol: "FixedBackOff(1000L, 3L)", note: "소비 실패를 1초 간격 3회 재시도, 업무 예외는 재시도 제외" }
-    contains: [dist-exponential-backoff]
+    contains: [dist-exponential-backoff, dist-retry-budget]
     uses: [idempotency]
     causes: [dist-retry-storm, dist-duplicate-delivery]
   - id: dist-exponential-backoff
@@ -347,11 +1470,61 @@ concepts:
     name: "지수 백오프"
     category: DISTRIBUTED_SYSTEM
     level: INTERMEDIATE
-    description: "재시도 간격을 1·2·4·8초처럼 배로 늘리고 상한을 둔다. 지터(무작위 흔들기)를 더하면 여러 클라이언트가 같은 순간에 몰리지 않는다"
-    synonyms: ["exponential backoff", "jitter"]
+    description: "재시도 간격을 1·2·4·8초처럼 배로 늘리고 상한을 둔다. 회복 중인 의존에 줄 부하를 시간이 갈수록 줄인다"
+    synonyms: ["exponential backoff"]
     code:
       - { path: common/src/main/kotlin/com/kgd/common/messaging/outbox/OutboxPollingPublisher.kt, symbol: "fun backoffSeconds(attempts: Int)", note: "아웃박스 발행 실패 시 2^n 초, 최대 300초로 다음 시도를 미룬다" }
-    mitigates: [dist-retry-storm]
+    contains: [dist-jitter]
+    mitigates:
+      - dist-retry-storm
+      - { to: conc-livelock, reason: "무작위 대기가 서로 양보만 반복하는 고리를 끊는다" }
+  - id: dist-jitter
+    kind: MECHANISM
+    name: "지터"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "백오프 간격에 무작위 값을 섞어(full jitter · decorrelated jitter) 같은 순간에 실패한 클라이언트들이 같은 순간에 다시 몰리지 않게 흩는다"
+    synonyms: ["jitter", "full jitter", "decorrelated jitter"]
+    mitigates: [dist-thundering-herd]
+  - id: dist-retry-budget
+    kind: MECHANISM
+    name: "재시도 예산"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "재시도가 전체 요청의 일정 비율(예: 10%)을 넘지 못하게 막고, 재시도는 한 계층에서만 한다. 계층마다 재시도해 호출 수가 곱으로 불어나는 것을 끊는다"
+    synonyms: ["retry budget", "retry ratio"]
+    mitigates: [dist-retry-storm, dist-metastable-failure]
+  - id: dist-hedged-request
+    kind: MECHANISM
+    name: "헤지 요청"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "응답이 p95 쯤까지 안 오면 같은 요청을 다른 복제본에 한 번 더 보내고 먼저 온 답을 쓴다. 적은 추가 부하로 꼬리 지연을 줄이며, 읽기처럼 멱등한 요청에만 쓴다"
+    synonyms: ["hedged request", "backup request", "tail at scale"]
+    uses: [idempotency]
+    mitigates: [dist-tail-latency-amplification]
+  - id: dist-graceful-degradation
+    kind: MECHANISM
+    name: "우아한 기능 저하"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "의존이 실패하면 오류 대신 캐시 값·기본값·축소된 결과(fallback)로 답해 핵심 기능을 유지한다"
+    synonyms: ["graceful degradation", "fallback"]
+    code:
+      - { path: recommendation/feature/src/main/kotlin/com/kgd/recommendation/application/recommendation/service/PersonalizedService.kt, symbol: "private fun fallbackToCategoryBest(", note: "개인화 추천을 못 만들면 카테고리 인기 상품으로 대신 답한다" }
+    mitigates: [dist-cascading-failure]
+  - id: dist-load-shedding
+    kind: MECHANISM
+    name: "부하 차단"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "처리 한도를 넘는 요청을 입구에서 바로 거절(503·429)해, 받아 둔 요청이라도 제시간에 끝내게 한다. 동시 처리 수·대기열 길이·지연으로 넘침을 판단한다"
+    synonyms: ["load shedding", "admission control"]
+    code:
+      - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/infrastructure/admission/AdmissionControlFilter.kt, symbol: "class AdmissionControlFilter(", note: "재고 예약 요청의 동시 처리 수가 한도를 넘으면 입구에서 거절한다" }
+    alternative_to:
+      - { to: rate-limiting, reason: "호출자별 속도가 아니라 지금 서버가 감당할 수 있는 양으로 거른다" }
+    mitigates: [dist-metastable-failure, dist-cascading-failure]
   - id: service-mesh
     kind: MECHANISM
     name: "서비스 메시"
@@ -373,8 +1546,32 @@ concepts:
     category: DISTRIBUTED_SYSTEM
     level: INTERMEDIATE
     description: "막 회복하려는 서비스에 여러 호출자가 동시에 재시도를 퍼부어 다시 쓰러뜨리는 상태. 계층마다 재시도하면 호출 수가 곱으로 불어난다"
-    synonyms: ["retry storm", "thundering herd"]
-    causes: [dist-cascading-failure]
+    synonyms: ["retry storm", "retry amplification"]
+    causes: [dist-cascading-failure, dist-metastable-failure]
+  - id: dist-thundering-herd
+    kind: PROBLEM
+    name: "썬더링 허드"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "같은 사건(장애 회복·캐시 만료·타이머)을 기다리던 다수의 클라이언트가 한 순간에 동시에 깨어나 요청을 몰아넣는 상태"
+    synonyms: ["thundering herd", "synchronized retries"]
+    causes: [dist-retry-storm]
+  - id: dist-tail-latency-amplification
+    kind: PROBLEM
+    name: "꼬리 지연 증폭"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "한 요청이 하위 호출 N 개를 모두 기다리면, 하위 하나의 드문 느린 응답이 전체 요청에서는 흔한 일이 된다. 팬아웃이 클수록 p99 가 전체 지연을 정한다"
+    synonyms: ["tail latency amplification", "tail at scale"]
+    measured_by:
+      - { to: latency-percentile, reason: "팬아웃이 넓을수록 P99 가 느린 하나에 끌려간다" }
+  - id: dist-metastable-failure
+    kind: PROBLEM
+    name: "준안정 장애"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "촉발 원인이 사라져도 재시도·캐시 미스 같은 되먹임 때문에 과부하가 스스로 유지되는 상태. 부하를 인위로 줄이기 전에는 회복되지 않는다"
+    synonyms: ["metastable failure"]
   - id: dist-failure-rate
     kind: METRIC
     name: "실패율"
@@ -387,13 +1584,54 @@ concepts:
     name: "Resilience4j"
     category: INFRASTRUCTURE
     level: INTERMEDIATE
-    description: "JVM 장애 내성 라이브러리. 서킷 브레이커·재시도·벌크헤드·레이트 리미터를 모듈로 나눠 제공하고, 코틀린 suspend 함수도 감싼다. 이 레포는 서킷 브레이커를 쓴다"
+    description: "JVM 장애 내성 라이브러리. 서킷 브레이커·재시도·벌크헤드·레이트 리미터·타임 리미터를 모듈로 나눠 제공하고, 코틀린 suspend 함수도 감싼다. 이 레포는 서킷 브레이커와 레이트 리미터를 쓴다"
     code:
       - { path: payment/feature/build.gradle.kts, symbol: "implementation(libs.resilience4j.circuitbreaker)", note: "결제 모듈의 서킷 브레이커 의존성" }
     implements:
       - { to: circuit-breaker, reason: "CircuitBreakerRegistry 로 의존별 브레이커를 만들고 executeSuspendFunction 으로 감싼다" }
       - { to: retry-pattern, reason: "Retry 모듈이 횟수·백오프를 설정으로 준다" }
       - { to: bulkhead-pattern, reason: "Bulkhead 모듈이 의존별 동시 호출 수를 제한한다" }
+      - { to: dist-timeout, reason: "TimeLimiter 모듈이 비동기 호출에 상한을 건다" }
+
+  # ── 분산 시스템 검증 ──
+  - id: dist-verification
+    kind: STAGE
+    name: "분산 시스템 검증"
+    category: TESTING
+    level: ADVANCED
+    description: "단위 테스트로는 재현되지 않는 분할·지연·재시작 조합을 일부러 만들거나 명세로 모두 따져, 장애 처리 코드가 실제로 동작하는지 확인한다"
+    questions: ["재시도·타임아웃·서킷 브레이커가 설정대로 동작하는지 운영 전에 어떻게 확인하나"]
+    contains: [dist-fault-injection, dist-chaos-engineering, dist-jepsen-testing, dist-formal-specification]
+  - id: dist-fault-injection
+    kind: MECHANISM
+    name: "장애 주입"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "지연·패킷 유실·프로세스 종료·디스크 가득 참을 일부러 넣어 장애 경로를 실행한다. 게임 데이처럼 정기 훈련으로 운영 절차까지 함께 점검한다"
+    synonyms: ["fault injection", "game day"]
+  - id: dist-chaos-engineering
+    kind: MECHANISM
+    name: "카오스 엔지니어링"
+    category: TESTING
+    level: ADVANCED
+    description: "정상 상태 지표를 가설로 세우고 운영(또는 운영 같은) 환경에 통제된 장애를 넣어 가설이 유지되는지 실험한다. 폭발 반경을 좁혀 시작한다"
+    synonyms: ["chaos engineering", "Chaos Monkey"]
+    uses: [dist-fault-injection]
+  - id: dist-jepsen-testing
+    kind: MECHANISM
+    name: "Jepsen 방식 검증"
+    category: TESTING
+    level: ADVANCED
+    description: "분산 저장소에 동시 연산을 퍼붓고 분할을 넣은 뒤, 기록한 연산 이력이 주장한 일관성 모델(선형성 등)을 만족하는지 검사기로 판정한다"
+    synonyms: ["Jepsen", "linearizability checker"]
+    uses: [dist-fault-injection, dist-linearizability]
+  - id: dist-formal-specification
+    kind: MECHANISM
+    name: "형식 명세"
+    category: TESTING
+    level: ADVANCED
+    description: "프로토콜을 TLA+ 같은 명세 언어로 쓰고 모델 검사기로 모든 상태 전이를 훑어 불변식 위반을 찾는다. 드문 인터리빙 버그를 코드 전에 잡는다"
+    synonyms: ["TLA+", "model checking", "formal methods"]
 
   # ── 용어 ──
   - id: distributed-glossary
@@ -403,15 +1641,93 @@ concepts:
     level: BEGINNER
     description: "분산 시스템을 읽는 데 필요한 말. 장치가 아니라 장치를 설명하고 고르는 기준이 되는 정리·모델·용어를 모은다"
     synonyms: ["glossary", "용어집"]
-    contains: [cap-theorem, base, eventual-consistency, dist-quorum, dist-compensating-transaction, dist-delivery-semantics]
+    contains: [dist-glossary-theory, dist-glossary-consistency, dist-glossary-time, dist-glossary-crdt, dist-glossary-transaction, dist-quorum, dist-delivery-semantics]
+  - id: dist-glossary-theory
+    kind: TERM
+    name: "정리 · 장애 모델"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "분산 시스템이 무엇을 할 수 없는지 말하는 정리와, 무엇이 고장 날 수 있다고 가정하는지의 말"
+    contains: [dist-fallacies, dist-system-model, dist-failure-model, cap-theorem, dist-pacelc, dist-flp-impossibility, dist-two-generals, base]
+  - id: dist-fallacies
+    kind: TERM
+    name: "분산 컴퓨팅의 8가지 오류"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "네트워크는 믿을 수 있다·지연은 0 이다·대역폭은 무한하다·네트워크는 안전하다·토폴로지는 안 바뀐다·관리자는 한 명이다·전송 비용은 0 이다·네트워크는 균질하다는 여덟 가지 잘못된 가정"
+    synonyms: ["fallacies of distributed computing"]
+  - id: dist-system-model
+    kind: TERM
+    name: "시스템 모델"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "메시지 지연과 처리 시간에 상한이 있다고 보는지(동기), 전혀 없다고 보는지(비동기), 대부분은 있다고 보는지(부분 동기)의 가정. 실제 시스템은 부분 동기로 설계한다"
+    synonyms: ["synchronous model", "asynchronous model", "partial synchrony"]
+  - id: dist-failure-model
+    kind: TERM
+    name: "장애 모델"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "노드가 어떻게 고장 난다고 가정하는지의 분류. 가정이 약할수록(비잔틴) 견디는 데 드는 노드와 메시지가 늘어난다"
+    synonyms: ["failure model", "fault model"]
+    contains: [dist-crash-stop, dist-crash-recovery, dist-omission-fault, dist-byzantine-fault]
+  - id: dist-crash-stop
+    kind: TERM
+    name: "크래시 스톱"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "노드가 죽으면 영원히 돌아오지 않는다고 보는 가장 단순한 장애 가정"
+    synonyms: ["crash-stop", "fail-stop"]
+  - id: dist-crash-recovery
+    kind: TERM
+    name: "크래시 리커버리"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "노드가 죽었다가 디스크에 남은 상태로 다시 살아날 수 있다는 가정. 메모리 상태는 잃으므로 합의 로그처럼 지속해야 할 값을 가른다"
+    synonyms: ["crash-recovery"]
+  - id: dist-omission-fault
+    kind: TERM
+    name: "누락 장애"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "노드는 살아 있지만 일부 메시지를 보내거나 받지 못하는 장애"
+    synonyms: ["omission failure"]
+  - id: dist-byzantine-fault
+    kind: TERM
+    name: "비잔틴 장애"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "노드가 버그나 악의로 서로 다른 상대에게 모순된 거짓 메시지를 보낼 수 있다는 가정. f 대를 견디려면 3f+1 대가 필요하다"
+    synonyms: ["Byzantine fault", "Byzantine generals"]
   - id: cap-theorem
     kind: TERM
     name: "CAP 정리"
     category: DISTRIBUTED_SYSTEM
     level: ADVANCED
-    description: "네트워크 분할(P)이 일어나면 일관성(C)과 가용성(A) 중 하나를 포기해야 한다는 정리. 분할이 없을 때의 선택은 PACELC 가 지연과 일관성으로 더 나눠 말한다"
-    synonyms: ["CAP theorem", "브루어 정리", "PACELC"]
+    description: "네트워크 분할(P)이 일어나면 선형적 일관성(C)과 모든 요청에 대한 응답(A) 중 하나를 포기해야 한다는 정리. 분할이 없을 때의 선택은 말하지 않는다"
+    synonyms: ["CAP theorem", "브루어 정리"]
     questions: ["분할이 없을 때도 CAP 선택이 의미가 있나"]
+  - id: dist-pacelc
+    kind: TERM
+    name: "PACELC"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "분할(P) 때는 가용성(A)과 일관성(C)을, 그 밖(E)의 평상시에는 지연(L)과 일관성(C)을 맞바꾼다는 확장. 평상시에도 복제 확인을 기다릴지가 지연을 정한다"
+    synonyms: ["PACELC theorem", "PA/EL", "PC/EC"]
+  - id: dist-flp-impossibility
+    kind: TERM
+    name: "FLP 불가능성"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "완전 비동기 시스템에서 노드 하나만 죽을 수 있어도 항상 끝나는 결정적 합의 알고리즘은 없다는 정리. 실제 합의는 타임아웃(부분 동기)이나 무작위로 진행을 얻는다"
+    synonyms: ["FLP", "Fischer-Lynch-Paterson"]
+  - id: dist-two-generals
+    kind: TERM
+    name: "두 장군 문제"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "유실될 수 있는 통신로로는 두 쪽이 행동 시점에 확실히 합의할 수 없다는 사고 실험. 마지막 확인 메시지의 도착을 확인할 방법이 없다"
+    synonyms: ["Two Generals' Problem"]
   - id: base
     kind: TERM
     name: "BASE"
@@ -419,6 +1735,86 @@ concepts:
     level: ADVANCED
     description: "Basically Available, Soft state, Eventually consistent. ACID 의 즉시 일관성 대신 가용성을 우선하고 일관성은 시간이 지나 맞춰지는 것으로 받아들이는 모델"
     synonyms: ["Basically Available, Soft state, Eventually consistent"]
+  - id: dist-glossary-consistency
+    kind: TERM
+    name: "일관성 모델"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "복제된 데이터를 여러 클라이언트가 읽고 쓸 때 어떤 결과가 허용되는지에 대한 약속들. 강할수록 이해가 쉽고 지연·가용성 비용이 크다"
+    synonyms: ["consistency models"]
+    contains: [dist-linearizability, dist-sequential-consistency, dist-causal-consistency, dist-causal-plus-consistency, dist-session-guarantees, eventual-consistency, dist-strong-eventual-consistency]
+  - id: dist-linearizability
+    kind: TERM
+    name: "선형성"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "모든 연산이 호출과 응답 사이 어느 한 순간에 원자적으로 일어난 것처럼 보이고, 그 순서가 실제 시간 순서를 지킨다. 복제본이 하나인 것처럼 동작하는 가장 강한 단일 객체 모델이다"
+    synonyms: ["linearizability", "strong consistency", "atomic consistency"]
+    questions: ["선형성과 직렬성(serializability)은 무엇이 다른가"]
+  - id: dist-sequential-consistency
+    kind: TERM
+    name: "순차 일관성"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "모든 노드가 같은 전체 순서로 연산을 보고, 그 순서가 각 클라이언트의 프로그램 순서를 지킨다. 실제 시간 순서까지는 요구하지 않는다"
+    synonyms: ["sequential consistency"]
+  - id: dist-causal-consistency
+    kind: TERM
+    name: "인과 일관성"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "원인과 결과 관계인 연산은 모두가 같은 순서로 보고, 동시인 연산은 노드마다 다른 순서로 봐도 된다. 분할 중에도 가용성을 지키는 가장 강한 모델로 꼽힌다"
+    synonyms: ["causal consistency"]
+  - id: dist-causal-plus-consistency
+    kind: TERM
+    name: "인과+ 일관성"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "인과 일관성에 충돌한 동시 쓰기가 결국 같은 값으로 수렴한다는 조건을 더한 모델"
+    synonyms: ["causal+ consistency", "convergent causal consistency"]
+  - id: dist-session-guarantees
+    kind: TERM
+    name: "세션 보장"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "전체 일관성은 약하게 두고 한 사용자 세션 안에서만 지키는 약속들. 사용자가 느끼는 이상을 적은 비용으로 막는다"
+    synonyms: ["session guarantees", "client-centric consistency"]
+    contains: [dist-read-your-writes, dist-monotonic-reads, dist-monotonic-writes, dist-writes-follow-reads, dist-consistent-prefix-reads]
+  - id: dist-read-your-writes
+    kind: TERM
+    name: "자기 쓰기 읽기"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "사용자가 쓴 값은 그 사용자의 이후 읽기에 반드시 보인다는 보장"
+    synonyms: ["read-your-writes", "read-after-write consistency"]
+  - id: dist-monotonic-reads
+    kind: TERM
+    name: "단조 읽기"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "한 번 새 값을 본 사용자는 이후 그보다 옛 값을 보지 않는다는 보장. 복제본을 오가며 값이 뒤로 가는 것을 막는다"
+    synonyms: ["monotonic reads"]
+  - id: dist-monotonic-writes
+    kind: TERM
+    name: "단조 쓰기"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "한 사용자의 쓰기는 쓴 순서대로 모든 복제본에 적용된다는 보장"
+    synonyms: ["monotonic writes"]
+  - id: dist-writes-follow-reads
+    kind: TERM
+    name: "읽은 뒤 쓰기"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "사용자가 어떤 값을 읽고 쓴 새 값은, 읽은 그 값 뒤에 놓인다는 보장. 답글이 원글보다 먼저 보이는 것을 막는다"
+    synonyms: ["writes-follow-reads", "session causality"]
+  - id: dist-consistent-prefix-reads
+    kind: TERM
+    name: "일관된 접두사 읽기"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "쓰기들이 어떤 순서로 일어났다면 읽는 쪽도 그 순서의 앞부분만 본다는 보장. 파티션이 다른 질문과 답이 뒤바뀌어 보이는 것을 막는다"
+    synonyms: ["consistent prefix reads"]
   - id: eventual-consistency
     kind: TERM
     name: "최종 일관성"
@@ -427,13 +1823,90 @@ concepts:
     description: "새 쓰기가 멈추면 모든 복제본이 결국 같은 값에 이른다는 일관성 모델. 그 사이에는 복제본마다 다른 값이 보일 수 있다"
     synonyms: ["eventual consistency"]
     questions: ["자기가 쓴 값을 바로 읽어야 하는 화면은 어떻게 처리하나"]
-  - id: dist-quorum
+  - id: dist-strong-eventual-consistency
     kind: TERM
-    name: "쿼럼"
+    name: "강한 최종 일관성"
     category: DISTRIBUTED_SYSTEM
     level: ADVANCED
-    description: "결정에 필요한 최소 동의 노드 수. 보통 과반(N/2+1)이고, 읽기·쓰기 쿼럼의 합이 N 을 넘으면 읽기가 최신 쓰기를 적어도 하나 본다"
-    synonyms: ["quorum", "과반"]
+    description: "같은 업데이트 집합을 받은 복제본은 받은 순서와 무관하게 즉시 같은 상태라는 보장. 최종 일관성과 달리 충돌 해소를 위한 되돌림이 없다. CRDT 가 주는 보장이다"
+    synonyms: ["SEC", "strong eventual consistency"]
+  - id: dist-glossary-time
+    kind: TERM
+    name: "시간 · 순서 용어"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "사건의 선후와 권한의 세대를 말하는 용어"
+    contains: [dist-happens-before, dist-epoch]
+  - id: dist-happens-before
+    kind: TERM
+    name: "선후 관계"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "같은 노드에서 앞선 사건, 또는 메시지 전송과 그 수신으로 이어지는 사건 사이의 부분 순서(Lamport 1978). 어느 쪽으로도 이어지지 않는 두 사건은 동시다"
+    synonyms: ["happens-before", "causality", "→"]
+  - id: dist-epoch
+    kind: TERM
+    name: "에포크 · 임기"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "리더가 바뀔 때마다 1씩 늘리는 세대 번호. 더 큰 번호를 본 노드는 옛 리더의 메시지를 거절한다. Raft 의 term, ZAB·Kafka 의 epoch 가 이것이다"
+    synonyms: ["epoch", "term", "generation", "ballot number"]
+  - id: dist-glossary-crdt
+    kind: TERM
+    name: "CRDT 용어"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "병합 가능한 자료형의 수렴 조건과 메타데이터를 설명하는 말"
+    contains: [dist-semilattice, dist-convergence-laws, dist-add-wins-remove-wins, dist-dot-context, dist-causal-stability, dist-local-first]
+  - id: dist-semilattice
+    kind: TERM
+    name: "조인 반격자"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "임의의 두 원소에 최소 상한(join)이 있는 부분 순서 집합. 상태가 이 순서에서 올라가기만 하고 병합이 join 이면 복제본이 수렴한다"
+    synonyms: ["join-semilattice", "LUB", "least upper bound"]
+  - id: dist-convergence-laws
+    kind: TERM
+    name: "수렴 조건 (교환 · 결합 · 멱등)"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "병합이 교환·결합·멱등이면 메시지 순서·묶음·중복과 무관하게 같은 결과가 나온다는 조건. CRDT 설계의 증명 대상이다"
+    synonyms: ["ACI", "commutativity", "associativity", "idempotence"]
+  - id: dist-add-wins-remove-wins
+    kind: TERM
+    name: "추가 우선 · 삭제 우선"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "같은 원소의 동시 추가와 삭제 중 무엇을 이기게 할지의 집합 의미론. 찜 목록은 추가 우선, 차단 목록은 삭제 우선이 자연스럽다"
+    synonyms: ["add-wins", "remove-wins", "observed-remove"]
+  - id: dist-dot-context
+    kind: TERM
+    name: "dot · 인과 문맥"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "(복제본, 순번) 한 쌍으로 연산 하나를 식별하는 dot 과, 지금까지 본 dot 의 집합(인과 문맥). 버전 벡터를 압축해 OR-Set 의 메타데이터를 줄인다"
+    synonyms: ["dot", "causal context", "dotted version vector", "DVV"]
+  - id: dist-causal-stability
+    kind: TERM
+    name: "인과적 안정"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "어떤 연산을 모든 복제본이 이미 받아, 앞으로 그 연산과 동시인 연산이 올 수 없게 된 상태. 이때부터 그 연산의 툼스톤·메타데이터를 지워도 안전하다"
+    synonyms: ["causal stability"]
+  - id: dist-local-first
+    kind: TERM
+    name: "로컬 우선 소프트웨어"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "데이터의 원본을 기기에 두고 오프라인에서도 즉시 쓰며, 서버는 동기화 보조로 두는 설계 방향. CRDT 가 기기 간 병합을 맡는다"
+    synonyms: ["local-first", "offline-first"]
+  - id: dist-glossary-transaction
+    kind: TERM
+    name: "분산 트랜잭션 용어"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "사가·보상을 설계할 때 단계의 성격을 가르는 말"
+    contains: [dist-compensating-transaction, dist-pivot-transaction, dist-retriable-transaction]
   - id: dist-compensating-transaction
     kind: TERM
     name: "보상 트랜잭션"
@@ -441,10 +1914,31 @@ concepts:
     level: ADVANCED
     description: "이미 커밋된 단계의 효과를 업무적으로 되돌리는 새 트랜잭션(예: 재고 예약 해제, 결제 취소). DB 롤백과 달리 기록이 남고 그 자체도 실패할 수 있다"
     synonyms: ["compensating transaction", "보상"]
+  - id: dist-pivot-transaction
+    kind: TERM
+    name: "피벗 트랜잭션"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "사가에서 이것이 커밋되면 더 이상 보상하지 않고 끝까지 가는 분기점 단계. 앞은 보상 가능 단계, 뒤는 재시도로 반드시 끝내는 단계다"
+    synonyms: ["pivot transaction", "go/no-go"]
+  - id: dist-retriable-transaction
+    kind: TERM
+    name: "재시도 가능 단계"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "피벗 뒤에 놓여 실패해도 보상하지 않고 성공할 때까지 다시 하는 사가 단계. 멱등이어야 한다"
+    synonyms: ["retriable transaction", "forward recovery"]
+  - id: dist-quorum
+    kind: TERM
+    name: "쿼럼"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "결정에 필요한 최소 동의 노드 수. 보통 과반(N/2+1)이고, 읽기·쓰기 쿼럼의 합이 N 을 넘으면 읽기가 최신 쓰기를 적어도 하나 본다"
+    synonyms: ["quorum", "과반"]
   - id: dist-delivery-semantics
     kind: TERM
     name: "전달 보장 수준"
     category: DISTRIBUTED_SYSTEM
     level: INTERMEDIATE
-    description: "메시지가 몇 번 도착하는지에 대한 약속. at-most-once(유실 가능) · at-least-once(중복 가능) · exactly-once(브로커·소비자 협조 필요) 셋이다"
+    description: "메시지가 몇 번 도착하는지에 대한 약속. at-most-once(유실 가능) · at-least-once(중복 가능) · exactly-once(브로커·소비자 협조 필요) 셋이다. 각 보장을 만드는 방법은 메시징 · 스트리밍 도메인이 다룬다"
     synonyms: ["delivery semantics", "at-least-once", "exactly-once", "at-most-once"]

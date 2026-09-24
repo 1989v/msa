@@ -1,0 +1,1856 @@
+# 광고 온톨로지 — 원본은 이 파일이다 (ADR-0100, docs/specs/2026-09-24-concept-atlas).
+# 바꾸면 manifest.yaml 의 revision 을 올린다. 간선은 from 개념에만 적는다.
+# 재료: docs/specs/2026-09-23-ad-network/context/concepts.md(A1~K7) · ADR-0098 · ADR-0076 · 분야 표준(IAB · OpenRTB · MRC).
+domain: ads
+root: advertising
+concepts:
+  - id: advertising
+    kind: DOMAIN
+    name: "광고"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "돈을 내는 광고주와 지면을 파는 퍼블리셔를 잇는 시스템이다. 시장 구조 · 양쪽 도구 · 서빙 · 계측 · 정산 · 규제로 나눠 읽는다"
+    synonyms: ["ad tech", "애드테크", "online advertising"]
+    contains: [ads-market, ads-buy-side, ads-sell-side, ads-serving, ads-measurement, ads-money, ads-policy, ads-system-build, ads-glossary]
+
+  # ── 시장 구조 ─────────────────────────────────────────────
+  - id: ads-market
+    kind: DOMAIN
+    name: "시장 구조"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "누가 누구에게 어떤 경로로 노출을 사고파는지. 직접 판매 · 네트워크 중개 · 프로그래매틱 거래 세 갈래가 있다"
+    contains: [ads-direct-sales, ads-intermediation, ads-programmatic-trading]
+  - id: ads-direct-sales
+    kind: STAGE
+    name: "직접 판매 · 보장형 거래"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "지면을 기간이나 노출량으로 미리 계약해 판다. 계약 물량을 먼저 채우고 남은 것을 경매에 넘긴다"
+    questions:
+      - "보장형 계약 물량을 채우면서 경매 수익도 지키려면 무엇을 먼저 알아야 하나"
+    contains: [ads-guaranteed-delivery, ads-line-item-priority, ads-avails-forecasting, make-good]
+    flows_to: [ads-intermediation]
+  - id: ads-guaranteed-delivery
+    kind: MECHANISM
+    name: "보장형 게재"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "계약한 노출량이나 기간 점유를 보장하고 판다. 국내는 CPT · 보장형, 해외는 sponsorship · flat fee 로 부른다"
+    synonyms: ["guaranteed delivery", "sponsorship", "보장형"]
+    uses: [cpt, ads-avails-forecasting]
+    alternative_to: [ad-auction]
+  - id: ads-line-item-priority
+    kind: MECHANISM
+    name: "라인아이템 우선순위"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "보장형 계약 → 경매 → 하우스 순으로 채운다(GAM 의 Sponsorship · Standard · Price priority · House). 우선순위가 높은 줄은 가격과 무관하게 먼저 뽑힌다"
+    synonyms: ["line item priority", "GAM priority"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/campaign/model/CampaignPriority.kt, symbol: "enum class CampaignPriority { PAID, HOUSE }", note: "우선순위를 저장하지 않고 광고주 종류에서 파생 — PAID 가 먼저, HOUSE 가 뒤" }
+    uses: [house-ad]
+  - id: ads-avails-forecasting
+    kind: MECHANISM
+    name: "인벤토리 예측 (avails)"
+    category: DATA
+    level: ADVANCED
+    description: "기간 · 지면 · 타기팅별로 팔 수 있는 노출량을 추정한다. 보장형 판매와 카탈로그 예상치의 근거다"
+    synonyms: ["avails", "inventory forecasting"]
+  - id: make-good
+    kind: MECHANISM
+    name: "메이크굿"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "보장 물량을 못 채웠을 때 추가 노출이나 크레딧으로 보상한다"
+    synonyms: ["make-good", "보상 게재"]
+  - id: ads-intermediation
+    kind: STAGE
+    name: "네트워크 중개"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "광고 네트워크가 광고주와 퍼블리셔 사이에서 매칭 · 경매 · 과금 · 정산을 한 몸으로 한다. AdSense 형이 여기다"
+    contains: [ad-network, ad-server, dmp]
+    flows_to: [ads-programmatic-trading]
+  - id: ad-network
+    kind: MECHANISM
+    name: "광고 네트워크"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "여러 퍼블리셔의 지면을 모아 광고주에게 팔고 수익을 나누는 중개자다. AdSense · 카카오 애드핏 · 데이블. 1989v 의 ads 가 이것이다"
+    synonyms: ["ad network"]
+    questions:
+      - "광고 네트워크와 애드 익스체인지는 누가 가격을 정하는지에서 어떻게 다른가"
+    uses: [ad-server, ads-buy-sell-side, revenue-share]
+    alternative_to: [ad-exchange]
+  - id: ad-server
+    kind: MECHANISM
+    name: "광고 서버"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "광고 결정 · 소재 전달 · 노출 집계를 하는 시스템이다. 퍼블리셔 쪽(GAM)과 광고주 쪽이 따로 있고, 네트워크는 둘을 한 몸에 갖는다"
+    synonyms: ["ad server", "GAM", "decision engine"]
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/application/decision/service/DecisionService.kt, symbol: "class DecisionService(", note: "지면 여러 개를 한 번에 결정 — 후보 인덱스 · Redis 1회 읽기 · 경매 · 토큰 발급" }
+    contains: [ads-candidate-index]
+  - id: ads-candidate-index
+    kind: MECHANISM
+    name: "메모리 후보 인덱스"
+    category: DATA
+    level: ADVANCED
+    description: "게재 가능한 캠페인 · 소재 · 지면을 1분 주기로 파드 메모리 스냅샷에 올린다. 결정 경로에 DB 호출을 두지 않으려는 것이다"
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/application/decision/service/CandidateIndexService.kt, symbol: "class CandidateIndexService(", note: "AtomicReference 스냅샷을 통째로 교체" }
+    uses: [redis]
+    affects: [ads-decision-latency-budget]
+  - id: dmp
+    kind: MECHANISM
+    name: "DMP"
+    category: DATA
+    level: INTERMEDIATE
+    description: "노출 · 클릭 · 행동 로그를 모아 세그먼트를 만들고 타기팅 · 분석에 넘기는 데이터 쪽 플랫폼이다. 1989v 는 로그 수집을 analytics 가, 분석 · 적용을 광고가 나눠 갖는다"
+    synonyms: ["Data Management Platform", "CDP"]
+    uses: [clickhouse, impression-click-ledger]
+  - id: ads-programmatic-trading
+    kind: STAGE
+    name: "프로그래매틱 거래"
+    category: ARCHITECTURE
+    level: ADVANCED
+    description: "노출 하나하나를 기계가 실시간 입찰로 사고판다. 판매 쪽 SSP · 거래소 · 구매 쪽 DSP 가 표준 규격으로 이어진다"
+    questions:
+      - "RTB 요청 하나가 퍼블리셔 페이지에서 DSP 까지 갔다 오는 경로와 시간 예산은"
+      - "헤더 비딩이 워터폴을 대신한 이유는 무엇인가"
+    contains: [ad-exchange, ssp, dsp, rtb, header-bidding, ads-deal-types, supply-path-optimization, cookie-syncing, ads-supply-chain-opacity, win-rate]
+  - id: ad-exchange
+    kind: MECHANISM
+    name: "애드 익스체인지"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "SSP 가 가져온 노출에 여러 DSP 가 입찰하는 거래소다. 가격은 경매가 정하고 거래소는 수수료를 뗀다"
+    synonyms: ["ad exchange", "ADX"]
+    uses: [rtb, ad-auction]
+  - id: ssp
+    kind: MECHANISM
+    name: "SSP"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "퍼블리셔 지면을 여러 수요처에 팔아 수익을 최대로 만드는 판매 쪽 플랫폼이다. 최저가 · 차단 규칙을 퍼블리셔 대신 건다"
+    synonyms: ["Supply-Side Platform", "sell-side platform"]
+    uses: [floor-price, rtb]
+  - id: dsp
+    kind: MECHANISM
+    name: "DSP"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "광고주 예산으로 여러 거래소의 노출을 사는 구매 쪽 플랫폼이다. 입찰가 계산 · 페이싱 · 타기팅을 한다"
+    synonyms: ["Demand-Side Platform"]
+    uses: [rtb, ads-bid-strategy, pacing]
+  - id: rtb
+    kind: MECHANISM
+    name: "RTB (실시간 입찰)"
+    category: NETWORK
+    level: ADVANCED
+    description: "노출 하나마다 입찰 요청을 여러 입찰자에게 보내고 제한 시간(보통 100ms 안팎) 안에 온 응답으로 경매한다"
+    synonyms: ["Real-Time Bidding"]
+    contains: [openrtb]
+    uses: [ad-auction]
+  - id: openrtb
+    kind: MECHANISM
+    name: "OpenRTB"
+    category: NETWORK
+    level: ADVANCED
+    description: "IAB Tech Lab 의 입찰 요청 · 응답 규격(2.6)이다. imp · site · device · user · regs 필드를 정의한다. 1989v 는 연동하지 않고 필드 어휘만 빌려 쓴다"
+    synonyms: ["OpenRTB 2.6", "bid request", "bid response"]
+  - id: header-bidding
+    kind: MECHANISM
+    name: "헤더 비딩"
+    category: ARCHITECTURE
+    level: ADVANCED
+    description: "퍼블리셔 페이지(또는 서버)가 여러 수요처에 동시에 입찰을 받아 가장 높은 값을 광고 서버에 넘긴다. 순서대로 묻는 워터폴의 수익 손실을 없앤다"
+    synonyms: ["Prebid.js", "Prebid Server", "parallel bidding"]
+    alternative_to: [ads-waterfall]
+  - id: ads-deal-types
+    kind: MECHANISM
+    name: "프로그래매틱 거래 유형"
+    category: ARCHITECTURE
+    level: ADVANCED
+    description: "누구나 입찰하는 공개 경매, 초대된 구매자만 드는 PMP, 고정가 우선 협상(preferred deal), 물량까지 보장하는 programmatic guaranteed 로 나뉜다"
+    synonyms: ["open auction", "PMP", "private marketplace", "preferred deal", "programmatic guaranteed", "deal ID"]
+  - id: supply-path-optimization
+    kind: MECHANISM
+    name: "공급 경로 최적화 (SPO)"
+    category: ARCHITECTURE
+    level: ADVANCED
+    description: "같은 노출이 여러 재판매 경로로 들어올 때 DSP 가 수수료가 적고 투명한 경로만 남긴다"
+    synonyms: ["SPO", "Supply Path Optimization"]
+    uses: [sellers-json, schain]
+    mitigates: [ads-supply-chain-opacity]
+  - id: cookie-syncing
+    kind: MECHANISM
+    name: "쿠키 싱크"
+    category: DATA
+    level: ADVANCED
+    description: "서로 다른 플랫폼이 같은 브라우저에 붙인 식별자를 리다이렉트로 맞대어 사용자를 이어 붙인다. 3자 쿠키가 사라지면서 힘을 잃는다"
+    synonyms: ["cookie matching", "ID sync"]
+  - id: ads-supply-chain-opacity
+    kind: PROBLEM
+    name: "공급망 불투명 · 도메인 스푸핑"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "누가 어느 도메인의 지면을 팔 권한이 있는지 모르면 가짜 도메인으로 속여 파는 스푸핑과 무단 재판매가 생긴다"
+    synonyms: ["domain spoofing", "unauthorized reselling"]
+  - id: win-rate
+    kind: METRIC
+    name: "낙찰률"
+    category: DATA
+    level: INTERMEDIATE
+    description: "입찰한 것 중 이긴 비율이다. 입찰가 조정과 bid shading 의 되먹임 신호다"
+    synonyms: ["win rate"]
+
+  # ── 광고주 쪽 ─────────────────────────────────────────────
+  - id: ads-buy-side
+    kind: DOMAIN
+    name: "광고주 쪽"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "광고주가 캠페인 · 예산 · 입찰 · 소재를 정하는 컨트롤 플레인이다"
+    synonyms: ["buy-side", "control plane"]
+    contains: [ads-campaign-setup, ads-creative-management]
+  - id: ads-campaign-setup
+    kind: STAGE
+    name: "캠페인 설정"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "무엇을 얼마에 언제까지 누구에게 보일지 정한다. 캠페인 → 광고그룹 → 소재 계층에 예산 · 일정 · 입찰 · 타기팅이 걸린다"
+    questions:
+      - "CPM 입찰과 CPC 입찰을 한 경매에서 어떻게 비교하나"
+      - "일예산 · 총예산 · 시간당 상한이 각각 무엇을 막나"
+    contains: [ads-self-serve-console, ads-pricing-model, ads-bid-strategy, ads-flight-scheduling, ads-budget-cap]
+    uses: [ads-campaign, ads-ad-group, ads-budget, ads-bid]
+    flows_to: [ads-creative-management]
+  - id: ads-self-serve-console
+    kind: MECHANISM
+    name: "광고주 셀프서브 콘솔"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "광고주가 영업 담당 없이 가입 · 충전 · 캠페인 · 소재 · 리포트를 직접 다룬다. 1989v 는 ads.1989v.com 콘솔이다"
+    synonyms: ["self-serve"]
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/presentation/advertiser/controller/AdvertiserCampaignController.kt, symbol: "AdvertiserCampaignController", note: "/api/v1/ads/advertiser/** — 모든 리소스를 (id, 요청자 광고주 id)로 조회" }
+    uses: [ads-advertiser-account, ads-console-single-login]
+  - id: ads-pricing-model
+    kind: MECHANISM
+    name: "과금 모델"
+    category: BASICS
+    level: BEGINNER
+    description: "광고주가 무엇에 돈을 내는지 — 노출 · 클릭 · 전환 · 판매 · 기간. 과금 단위가 위험을 누가 지는지를 정한다"
+    synonyms: ["pricing model", "buying model"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/campaign/model/BidType.kt, symbol: "enum class BidType { CPM, CPC }", note: "1단계는 CPM · CPC 만" }
+    contains: [cpm, cpc, cpa, cpt, cps]
+  - id: cpm
+    kind: MECHANISM
+    name: "CPM"
+    category: BASICS
+    level: BEGINNER
+    description: "노출 천 회당 과금한다. 클릭 여부의 위험은 광고주가 진다. 1989v 는 가시 노출 1회에 floor(CPM ÷ 1000) 마이크로 크레딧을 청구한다"
+    synonyms: ["Cost Per Mille", "노출당 과금"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/campaign/model/Bid.kt, symbol: "const val CPM_UNIT = 1_000L", note: "CPM 입찰을 노출 1회 과금액으로 환산" }
+  - id: cpc
+    kind: MECHANISM
+    name: "CPC"
+    category: BASICS
+    level: BEGINNER
+    description: "클릭 한 번에 과금한다. 클릭률을 모르면 네트워크가 위험을 지므로 순위는 예상 클릭률로 환산한 eCPM 으로 매긴다"
+    synonyms: ["Cost Per Click", "클릭당 과금"]
+    uses: [ads-pctr]
+  - id: cpa
+    kind: MECHANISM
+    name: "CPA"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "가입 · 구매 같은 전환 1건에 과금한다. 전환 추적과 어트리뷰션이 있어야 성립한다"
+    synonyms: ["Cost Per Action", "Cost Per Acquisition", "전환당 과금"]
+    uses: [conversion-tracking, attribution-modeling]
+  - id: cpt
+    kind: MECHANISM
+    name: "CPT"
+    category: BASICS
+    level: BEGINNER
+    description: "구좌를 기간 단위로 사 단독 점유하고, 노출 수와 관계없이 기간이 지나면 과금한다. 카카오 비즈보드 CPT · 네이버 보장형이 국내 표준이다"
+    synonyms: ["Cost Per Time", "flat fee", "sponsorship"]
+  - id: cps
+    kind: MECHANISM
+    name: "CPS · 제휴 마케팅"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "판매가 일어나면 매출의 일정 비율을 준다. 제휴 링크(affiliate)가 대표적이고 링크 원본을 바꾸면 트래킹이 깨진다"
+    synonyms: ["Cost Per Sale", "affiliate marketing", "revenue per sale"]
+    code:
+      - { path: deal/feature/src/main/kotlin/com/kgd/deal/application/offer/service/DealRedirectService.kt, symbol: "class DealRedirectService(", note: "제휴 링크 원본 무변조 302 + 클릭 계측 (ADR-0069)" }
+  - id: ads-bid-strategy
+    kind: MECHANISM
+    name: "입찰 전략"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "광고주가 낼 최대 금액을 수동으로 정하거나(수동 입찰), 목표 CPA · ROAS 에 맞게 시스템이 노출마다 입찰가를 정하게 한다(자동 입찰)"
+    synonyms: ["bidding strategy", "manual CPC", "target CPA", "target ROAS"]
+    contains: [auto-bidding, bid-shading]
+    uses: [ads-bid]
+  - id: auto-bidding
+    kind: MECHANISM
+    name: "자동 입찰"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "노출마다 예상 전환 가치를 추정해 목표(CPA · ROAS · 예산 소진)를 맞추는 입찰가를 시스템이 정한다"
+    synonyms: ["auto-bidding", "smart bidding", "value-based bidding"]
+    uses: [ads-pctr]
+  - id: bid-shading
+    kind: MECHANISM
+    name: "bid shading"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "1차가 경매에서 낙찰 확률을 추정해 이길 만큼만 입찰가를 깎는다. 1차가로 옮긴 거래소에서 구매 쪽이 과지불을 막는 방법이다"
+    synonyms: ["입찰가 깎기"]
+    mitigates: [ads-winners-curse]
+    measured_by: [win-rate]
+  - id: ads-flight-scheduling
+    kind: MECHANISM
+    name: "게재 기간 · 스케줄"
+    category: BASICS
+    level: BEGINNER
+    description: "캠페인을 내보낼 시작 · 끝 시각을 정한다. 기간 밖은 상태가 아니라 게재 자격에서 파생해 거른다"
+    synonyms: ["flight", "flight dates"]
+    contains: [dayparting]
+  - id: dayparting
+    kind: MECHANISM
+    name: "요일 · 시간대 스케줄"
+    category: BASICS
+    level: BEGINNER
+    description: "요일과 시간대별로 게재를 켜고 끄거나 입찰가를 바꾼다"
+    synonyms: ["dayparting", "ad scheduling"]
+  - id: ads-budget-cap
+    kind: MECHANISM
+    name: "예산 상한 강제"
+    category: DATA
+    level: INTERMEDIATE
+    description: "일예산 · 총예산 · 캠페인 시간당 상한(max(일예산 × 25%, 1회 과금액))을 결정과 이벤트 수락 두 곳에서 확인한다. 토큰을 몰아 내도 상한을 넘은 몫은 over_budget 으로 과금하지 않는다"
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/campaign/model/Campaign.kt, symbol: "val hourlyCapMicros: Long?", note: "시간당 상한 — 작은 일예산도 0 이 되지 않게 1회 과금액 하한" }
+    uses: [ads-realtime-spend-counter, ads-budget]
+    mitigates: [ads-overdelivery]
+  - id: ads-creative-management
+    kind: STAGE
+    name: "소재 제작 · 심사"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "광고 형식에 맞춰 소재를 올리고 게재 전에 정책 위반을 심사한다"
+    contains: [ads-ad-format, ads-responsive-creative, ads-creative-review, dynamic-creative-optimization]
+    uses: [ads-creative, ads-landing-url]
+  - id: ads-ad-format
+    kind: MECHANISM
+    name: "광고 형식"
+    category: BASICS
+    level: BEGINNER
+    description: "소재가 페이지에 어떤 모양으로 들어가는지 — 디스플레이 · 네이티브 · 동영상 · 전면 · 보상형 · 검색 광고"
+    synonyms: ["ad format"]
+    contains: [display-ad, native-ad, video-ad, interstitial-ad, rewarded-ad, search-ad]
+  - id: display-ad
+    kind: MECHANISM
+    name: "디스플레이 광고"
+    category: BASICS
+    level: BEGINNER
+    description: "정해진 크기의 배너 자리에 이미지 · 텍스트 소재를 싣는다. IAB 표준 크기(300×250 · 728×90 …)가 있다"
+    synonyms: ["display ad", "banner", "IAB ad size"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/placement/model/PlacementFormat.kt, symbol: "enum class PlacementFormat { CARD, BANNER }", note: "1단계 형식 — 카드 · 배너" }
+  - id: native-ad
+    kind: MECHANISM
+    name: "네이티브 광고 (인피드)"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "목록 안에 스폰서 항목으로 섞여 주변 콘텐츠와 같은 모양으로 보인다. 커머스 · 목록형 서비스에서 비중이 크고 라벨 의무가 더 무겁다"
+    synonyms: ["native ad", "in-feed ad", "sponsored listing"]
+    uses: [ads-native-insertion, ads-ad-disclosure-label]
+  - id: video-ad
+    kind: MECHANISM
+    name: "동영상 광고"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "본편 앞 · 중간 · 뒤(pre · mid · post-roll)에 영상 소재를 넣는다. 플레이어와 광고 서버가 VAST 로 대화한다"
+    synonyms: ["video ad", "instream", "pre-roll"]
+    contains: [vast, simid]
+  - id: vast
+    kind: MECHANISM
+    name: "VAST"
+    category: NETWORK
+    level: ADVANCED
+    description: "영상 광고 응답 XML 규격이다. 소재 파일 · 추적 URL(시작 · 사분위 · 완료)을 담아 어떤 플레이어든 같은 방식으로 재생하고 보고한다"
+    synonyms: ["Video Ad Serving Template", "VMAP"]
+  - id: simid
+    kind: MECHANISM
+    name: "SIMID"
+    category: NETWORK
+    level: ADVANCED
+    description: "영상 광고 위에 상호작용 레이어를 얹는 IAB 규격이다. 옛 VPAID 가 스크립트를 플레이어 안에서 돌려 생긴 보안 · 성능 문제를 iframe 격리로 푼다"
+    synonyms: ["Secure Interactive Media Interface Definition", "VPAID 대체"]
+  - id: interstitial-ad
+    kind: MECHANISM
+    name: "전면 광고"
+    category: BASICS
+    level: BEGINNER
+    description: "화면 전환 사이에 전체 화면으로 뜬다. 주의를 끄는 만큼 정책상 빈도 · 위치 제한이 크다"
+    synonyms: ["interstitial"]
+  - id: rewarded-ad
+    kind: MECHANISM
+    name: "보상형 광고"
+    category: BASICS
+    level: BEGINNER
+    description: "끝까지 보면 게임 재화 같은 보상을 준다. 사용자가 고르는 광고라 완료율이 높다"
+    synonyms: ["rewarded video"]
+  - id: search-ad
+    kind: MECHANISM
+    name: "검색 광고"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "검색어에 광고주 키워드를 맞춰 결과 목록 위에 싣는다. 전통적으로 GSP 경매와 품질 점수로 순위를 매긴다"
+    synonyms: ["search ads", "sponsored search", "키워드 광고"]
+    uses: [gsp, quality-score, ads-keyword-matching]
+  - id: ads-responsive-creative
+    kind: MECHANISM
+    name: "반응형 소재 규격"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "모바일 웹 비중이 크면 고정 픽셀 대신 비율 · 최소 크기로 받는다. 지면 형식의 허용 비율과 맞아야 후보가 된다"
+    synonyms: ["responsive ad", "aspect ratio"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/placement/model/AspectRatio.kt, symbol: "value class AspectRatio private constructor", note: "지면이 받는 비율과 이미지 크기 대조" }
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/creative/policy/CreativeImageRules.kt, symbol: "const val MAX_DIMENSION = 2000", note: "헤더에서 크기를 먼저 읽어 디코딩 전에 거절" }
+  - id: ads-creative-review
+    kind: MECHANISM
+    name: "소재 심사"
+    category: SECURITY
+    level: BEGINNER
+    description: "게재 전에 사람이 정책 위반을 보고 승인 · 반려한다. 수정하면 다시 심사 대기로 돌아가 그동안 게재하지 않는다"
+    synonyms: ["creative review", "ad review", "creative approval"]
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/application/creative/service/CreativeReviewService.kt, symbol: "class CreativeReviewService(", note: "승인 · 반려(사유 코드) + 행위자 감사 기록" }
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/creative/model/Creative.kt, symbol: "fun revise(content: CreativeContent)", note: "내용 교체와 PENDING 복귀를 한 번에" }
+    uses: [ads-creative-policy]
+  - id: dynamic-creative-optimization
+    kind: MECHANISM
+    name: "동적 소재 최적화 (DCO)"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "제목 · 이미지 · 문구 조각을 노출마다 조합하고 성과가 좋은 조합을 더 많이 내보낸다"
+    synonyms: ["DCO", "Dynamic Creative Optimization"]
+    uses: [bandit-exploration]
+
+  # ── 퍼블리셔 쪽 ───────────────────────────────────────────
+  - id: ads-sell-side
+    kind: DOMAIN
+    name: "퍼블리셔 쪽"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "사이트를 등록하고 지면을 만들고 빈 지면까지 채워 수익을 최대로 만든다"
+    synonyms: ["sell-side", "publisher side"]
+    contains: [ads-site-onboarding, ads-inventory-setup, ads-yield-management]
+  - id: ads-site-onboarding
+    kind: STAGE
+    name: "사이트 등록 · 판매 권한 선언"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "도메인 소유를 증명하고 심사를 받고, 누가 이 도메인의 지면을 팔 수 있는지 공개한다"
+    questions:
+      - "ads.txt 가 없거나 SPA 폴백이 index.html 을 내보내면 왜 입찰이 끊기나"
+    contains: [ads-site-verification, ads-site-review, ads-txt, sellers-json, schain]
+    uses: [ads-publisher-account]
+    flows_to: [ads-inventory-setup]
+  - id: ads-site-verification
+    kind: MECHANISM
+    name: "사이트 소유권 확인"
+    category: SECURITY
+    level: BEGINNER
+    description: "메타태그나 ads.txt 에 게시자 ID 를 적어 도메인 소유를 증명한다"
+    synonyms: ["site verification"]
+    uses: [ads-publisher-id]
+  - id: ads-site-review
+    kind: MECHANISM
+    name: "사이트 심사"
+    category: SECURITY
+    level: BEGINNER
+    description: "네트워크가 콘텐츠 가치 · 정책 위반을 보고 게재를 허가한다. 1989v 는 AdSense 에서 이 단계로 두 지면이 반려됐다(가치 낮은 콘텐츠)"
+    synonyms: ["site review", "site approval"]
+  - id: ads-txt
+    kind: MECHANISM
+    name: "ads.txt"
+    category: SECURITY
+    level: BEGINNER
+    description: "이 도메인의 지면을 팔 권한이 있는 판매자 목록을 루트 경로에 공개한다. 없거나 틀리면 수요처가 입찰을 건너뛴다"
+    synonyms: ["Authorized Digital Sellers", "app-ads.txt"]
+    code:
+      - { path: portal-fe/nginx.conf, symbol: "location = /ads.txt", note: "호스트별 ads.txt — 명시 route 가 없으면 SPA 폴백이 index.html 을 낸다" }
+    mitigates: [ads-supply-chain-opacity]
+  - id: sellers-json
+    kind: MECHANISM
+    name: "sellers.json"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "네트워크 · SSP 가 자기 판매자(퍼블리셔 · 중개자)의 신원을 공개한다. ads.txt 의 짝이다"
+    synonyms: ["sellers.json"]
+    mitigates: [ads-supply-chain-opacity]
+  - id: schain
+    kind: MECHANISM
+    name: "SupplyChain 객체"
+    category: SECURITY
+    level: ADVANCED
+    description: "입찰 요청에 노출이 거쳐 온 판매자 목록을 순서대로 싣는다. sellers.json 으로 각 마디를 대조한다"
+    synonyms: ["schain", "SupplyChain Object"]
+    uses: [sellers-json]
+  - id: ads-inventory-setup
+    kind: STAGE
+    name: "지면 구성"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "페이지 어디에 어떤 형식의 광고 자리를 둘지 정하고, 코드 지면과 등록부를 맞춘다"
+    questions:
+      - "자동 광고 대신 코드로 지면을 정하면 무엇을 얻고 무엇을 잃나"
+      - "지면이 FE 에만 있고 등록부에 없으면 어떤 일이 생기나"
+    contains: [ads-manual-placement, ads-auto-ads, ads-lazy-loading, ads-slot-reservation, ads-native-insertion, ads-publisher-block-rules, ads-placement-registry-sync, ads-unregistered-placement, ads-layout-shift]
+    uses: [ads-placement, ads-ad-tag, ads-inventory-catalog]
+    flows_to: [ads-yield-management]
+  - id: ads-manual-placement
+    kind: MECHANISM
+    name: "코드 지정 지면"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "지면을 코드(AdSlot)가 정한다. 조작 영역 · 금지 면에 광고가 들어가지 않는 것을 코드로 보장하는 대신 지면을 늘리려면 코드를 고친다"
+    code:
+      - { path: portal-fe/src/components/ads/AdSlot.tsx, symbol: "export default function AdSlot({", note: "지면 키를 받는 단일 광고 자리" }
+    alternative_to: [ads-auto-ads]
+  - id: ads-auto-ads
+    kind: MECHANISM
+    name: "자동 광고"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "네트워크 스크립트가 DOM 을 훑어 스스로 자리를 잡는다. 코드가 0 이지만 금지 면 · 게임 화면에도 광고가 설 수 있어 1989v 는 콘솔에서 꺼 둔다"
+    synonyms: ["Auto ads"]
+  - id: ads-lazy-loading
+    kind: MECHANISM
+    name: "지면 지연 로딩"
+    category: NETWORK
+    level: BEGINNER
+    description: "지면이 화면에 가까워질 때 광고를 요청한다. 보이지 않을 노출에 요청 · 과금 · 지연을 쓰지 않는다"
+    synonyms: ["lazy loading"]
+    affects: [viewability-rate]
+  - id: ads-slot-reservation
+    kind: MECHANISM
+    name: "지면 높이 확보"
+    category: BASICS
+    level: BEGINNER
+    description: "결정을 기다리는 동안 지면의 최소 높이를 비워 둬 광고가 들어올 때 본문이 밀리지 않게 한다"
+    code:
+      - { path: portal-fe/src/components/ads/AdSlot.tsx, symbol: "minHeight = 100", note: "대기 중 최소 높이" }
+    mitigates: [ads-layout-shift]
+  - id: ads-native-insertion
+    kind: MECHANISM
+    name: "네이티브 삽입 규칙 · 광고 비중"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "목록의 몇 번째에 광고를 넣을지, 광고 사이 최소 간격, 같은 항목이 오가닉과 광고로 두 번 나오지 않게 하는 중복 제거를 정한다"
+    synonyms: ["ad load", "ad insertion", "slotting"]
+  - id: ads-publisher-block-rules
+    kind: MECHANISM
+    name: "퍼블리셔 차단 규칙"
+    category: SECURITY
+    level: BEGINNER
+    description: "퍼블리셔가 특정 광고주 · 업종 · 도메인의 광고를 거부한다"
+    synonyms: ["blocking controls", "advertiser block list"]
+  - id: ads-placement-registry-sync
+    kind: MECHANISM
+    name: "코드 지면 ↔ 등록부 동기화"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "지면은 FE 코드가 만들고 팔 수 있는 지면 목록은 백엔드 등록부가 가진다. 등록부에 없는 키는 광고 없음으로 내고 키별 요청 수를 모아 운영자에게 보인다"
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/application/decision/service/DecisionService.kt, symbol: "NoAdReason.UNREGISTERED_PLACEMENT", note: "미등록 지면 — 광고 없음 + 미등록 목록 누적" }
+    mitigates: [ads-unregistered-placement]
+  - id: ads-unregistered-placement
+    kind: PROBLEM
+    name: "등록 안 된 지면"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "한쪽에만 지면이 있으면 팔 수 없는 지면이 페이지에 서거나, 페이지에 없는 지면이 팔린다"
+  - id: ads-layout-shift
+    kind: PROBLEM
+    name: "레이아웃 밀림 (CLS)"
+    category: BASICS
+    level: BEGINNER
+    description: "광고가 늦게 들어오며 본문을 밀어 오클릭과 이탈을 부른다. Core Web Vitals CLS 로 잰다"
+    synonyms: ["CLS", "Cumulative Layout Shift"]
+  - id: ads-yield-management
+    kind: STAGE
+    name: "채움 · 수익 최적화"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "요청마다 가장 비싼 수요를 붙이고, 못 팔면 다음 수요처 · 하우스 광고 · 자리 숨김으로 채운다"
+    synonyms: ["yield optimization"]
+    questions:
+      - "채움 순서(유료 → AdSense → HOUSE → 숨김)에서 각 단계가 실패하는 경우는 무엇인가"
+    contains: [floor-price, ads-mediation, ads-unfilled-handling, ads-adslot-provider, google-adsense, fill-rate, rpm, ad-blocking]
+  - id: floor-price
+    kind: MECHANISM
+    name: "최저 가격"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "이 가격 밑이면 팔지 않는다. 너무 높으면 채움률이, 너무 낮으면 단가가 떨어진다. 1989v 는 지면별 CPM 최저가를 두고 CPC 는 eCPM 으로 비교한다"
+    synonyms: ["floor", "reserve price", "price floor"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/placement/model/AdPlacement.kt, symbol: "fun changeFloor(floorMicros: Long)", note: "지면 최저가 — 저장 뒤 오른 지면은 결정에서 제외" }
+    contains: [dynamic-floor]
+    affects: [fill-rate, rpm]
+  - id: dynamic-floor
+    kind: MECHANISM
+    name: "동적 최저가"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "지면 · 시간 · 수요 상황마다 과거 입찰 분포로 최저가를 다시 정한다"
+    synonyms: ["dynamic floor", "floor optimization"]
+  - id: ads-mediation
+    kind: MECHANISM
+    name: "미디에이션"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "여러 수요처를 한 지면에 붙여 어느 쪽 광고를 낼지 퍼블리셔 쪽에서 정한다"
+    synonyms: ["mediation"]
+    contains: [ads-waterfall]
+  - id: ads-waterfall
+    kind: MECHANISM
+    name: "워터폴"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "수요처를 우선순위대로 하나씩 묻고 못 채우면 다음으로 넘긴다. 뒤쪽 수요처가 더 비싸게 살 기회를 잃는다"
+    synonyms: ["waterfall", "daisy chain"]
+  - id: ads-unfilled-handling
+    kind: MECHANISM
+    name: "빈 지면 처리"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "유료 광고가 없으면 AdSense → 하우스 광고 → 자리 숨김 순으로 넘어간다. AdSense 가 unfilled 이거나 3초 안에 상태를 안 적으면(차단기) 하우스로 간다"
+    synonyms: ["unfilled", "passback", "fallback"]
+    code:
+      - { path: portal-fe/src/components/ads/AdSlot.tsx, symbol: "ADSENSE_STATUS_TIMEOUT_MS", note: "AdSense 상태가 안 적히면 HOUSE 로" }
+    contains: [house-ad]
+    uses: [ads-waterfall]
+    mitigates: [ad-blocking]
+  - id: house-ad
+    kind: MECHANISM
+    name: "하우스 광고"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "팔리지 않은 지면에 자기 서비스를 홍보한다. 예산 · 지갑 · 최저가 · 빈도 · 원장에서 면제되고 목록으로 받아 순환한다"
+    synonyms: ["HOUSE", "house ad", "자체 홍보"]
+    code:
+      - { path: portal-fe/src/components/ads/HouseRotator.tsx, symbol: "HOUSE_ROTATION_MS = 6_000", note: "HOUSE 소재 목록 6초 순환" }
+  - id: ads-adslot-provider
+    kind: MECHANISM
+    name: "AdSlot 수요처 추가"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "기존 AdSense 지면 컴포넌트에 자체 네트워크를 첫 수요처로 붙인다. 한 페이지의 지면을 결정 호출 한 번으로 묶는다"
+    code:
+      - { path: portal-fe/src/components/ads/adsApi.ts, symbol: "export const DECISION_TIMEOUT_MS = 800", note: "결정 호출 800ms 제한 — Bearer 를 붙이는 apiClient 로" }
+    uses: [ads-unfilled-handling, google-adsense]
+  - id: google-adsense
+    kind: TECHNOLOGY
+    name: "Google AdSense"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "구글의 퍼블리셔용 광고 네트워크다. 1989v 는 게시자 ID 하나가 로더 · 지면 · ads.txt 를 함께 켜고 끈다"
+    synonyms: ["AdSense"]
+    code:
+      - { path: portal-fe/src/seo/copy.mjs, symbol: "export const ADSENSE_CLIENT", note: "게시자 ID — 빈 값이면 광고 없음" }
+    implements: [ad-network, ads-unfilled-handling]
+  - id: fill-rate
+    kind: METRIC
+    name: "채움률"
+    category: DATA
+    level: BEGINNER
+    description: "광고 요청 대비 광고가 채워진 비율이다. 1989v 는 서버가 아는 유료 채움률과 FE 가 보고한 최종 채움 출처를 가른다"
+    synonyms: ["fill rate"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/placement/model/FillSource.kt, symbol: "enum class FillSource", note: "PAID · ADSENSE · HOUSE · EMPTY" }
+  - id: rpm
+    kind: METRIC
+    name: "RPM"
+    category: DATA
+    level: BEGINNER
+    description: "페이지(또는 노출) 천 회당 퍼블리셔 수익이다. 퍼블리셔가 지면 가치를 비교하는 기준이다"
+    synonyms: ["Revenue Per Mille", "page RPM"]
+  - id: ad-blocking
+    kind: PROBLEM
+    name: "광고 차단"
+    category: NETWORK
+    level: BEGINNER
+    description: "브라우저 확장이 광고 스크립트 · 요청을 막아 지면이 비거나 상태가 영영 적히지 않는다"
+    synonyms: ["ad blocker"]
+
+  # ── 서빙 ─────────────────────────────────────────────────
+  - id: ads-serving
+    kind: DOMAIN
+    name: "광고 서빙"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "요청이 오면 후보를 추리고 경매해 승자 소재를 안전하게 그리는 데이터 플레인이다. 지연 예산이 빡빡하다"
+    synonyms: ["ad serving", "data plane"]
+    contains: [ads-request-handling, ads-targeting, ads-eligibility, ads-ad-selection]
+  - id: ads-request-handling
+    kind: STAGE
+    name: "광고 요청 처리"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "로더가 지면 · 호스트 · 문맥을 보내면 결정해 소재와 토큰을 돌려주고, 소재는 페이지와 분리된 출처에서 그린다"
+    questions:
+      - "광고 결정 경로에 DB 나 외부 호출을 두면 무엇이 무너지나"
+      - "소재를 교차 출처 iframe 에 가두는 이유는"
+    contains: [ads-ad-request, ads-creative-sandboxing, ads-serving-domain-isolation, ads-decision-latency-budget]
+    uses: [ad-server, ads-candidate-index]
+    flows_to: [ads-targeting]
+  - id: ads-ad-request
+    kind: MECHANISM
+    name: "광고 요청"
+    category: NETWORK
+    level: BEGINNER
+    description: "로더가 지면 키 목록 · 호스트 · 문맥 키 · 뷰포트를 보낸다. 한 페이지의 지면을 한 번에 묶어 요청 수를 줄인다"
+    synonyms: ["ad request", "ad call"]
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/presentation/decision/controller/AdDecisionController.kt, symbol: "AdDecisionController", note: "POST /api/v1/ads/decisions" }
+  - id: ads-creative-sandboxing
+    kind: MECHANISM
+    name: "소재 격리 렌더링"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "광고주가 준 소재를 퍼블리셔 페이지와 다른 출처(교차 출처 iframe)에서 그려 스크립트 · 쿠키를 격리한다. 텍스트만 받는 소재는 텍스트 노드로만 그린다"
+    synonyms: ["cross-origin iframe", "SafeFrame"]
+    code:
+      - { path: portal-fe/src/components/ads/AdCard.tsx, symbol: "useImpression", note: "광고주 문자열은 텍스트 노드로만 — dangerouslySetInnerHTML 금지" }
+    uses: [sec-output-sanitization]
+    mitigates: [xss]
+  - id: ads-serving-domain-isolation
+    kind: MECHANISM
+    name: "광고 서빙 도메인 분리"
+    category: SECURITY
+    level: ADVANCED
+    description: "광고 요청 · 소재를 로그인 쿠키가 실리지 않는 별도 등록 도메인에서 낸다(AdSense 의 googlesyndication.com). 1989v 는 1단계에 두지 않았다"
+    synonyms: ["serving domain", "cookieless domain"]
+    uses: [sec-domain-cookie]
+  - id: ads-decision-latency-budget
+    kind: METRIC
+    name: "광고 결정 지연 예산"
+    category: DATA
+    level: INTERMEDIATE
+    description: "광고 결정의 서버 처리 P99 목표(1989v 30ms)다. 페이지 렌더를 잡고 있는 호출이라 넘으면 지면이 비거나 밀린다"
+    synonyms: ["latency budget", "decision latency"]
+  - id: ads-targeting
+    kind: STAGE
+    name: "타기팅"
+    category: DATA
+    level: INTERMEDIATE
+    description: "누구에게 · 어떤 페이지에 광고를 보일지 조건을 건다. 사람을 보는 방식(행태)과 페이지를 보는 방식(문맥)이 갈린다"
+    questions:
+      - "문맥 타기팅과 행태 타기팅은 개인정보 부담이 어떻게 다른가"
+    contains: [contextual-targeting, behavioral-targeting, retargeting, lookalike-targeting, ads-targeting-filter]
+    flows_to: [ads-eligibility]
+  - id: contextual-targeting
+    kind: MECHANISM
+    name: "문맥 타기팅"
+    category: DATA
+    level: INTERMEDIATE
+    description: "사람이 아니라 페이지 내용(주제 · 키워드)으로 광고를 고른다. 식별자가 필요 없어 3자 쿠키 이후에도 산다"
+    synonyms: ["contextual targeting"]
+    questions:
+      - "페이지 주제를 크롤러로 읽는 것과 DB 에서 바로 읽는 것은 무엇이 다른가"
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/application/category/service/ContextMappingService.kt, symbol: "class ContextMappingService(", note: "FE 문맥 키(blog:… · game:… · place:…) → 광고 카테고리 매핑" }
+    contains: [ads-page-classification, ads-content-taxonomy, ads-keyword-matching]
+    alternative_to: [behavioral-targeting]
+    mitigates: [third-party-cookie-deprecation]
+  - id: ads-page-classification
+    kind: MECHANISM
+    name: "페이지 분류 크롤러"
+    category: DATA
+    level: INTERMEDIATE
+    description: "Mediapartners-Google 처럼 페이지를 읽어 주제 · 키워드를 URL 단위로 캐시한다. 1989v 는 자기 페이지를 DB 에서 바로 읽을 수 있어 크롤러 없이 문맥 키를 받는다"
+    synonyms: ["Mediapartners-Google", "page classifier"]
+  - id: ads-content-taxonomy
+    kind: MECHANISM
+    name: "콘텐츠 분류 체계"
+    category: DATA
+    level: INTERMEDIATE
+    description: "페이지와 광고를 같은 분류 목록으로 맞춘다. 업계 표준은 IAB Content Taxonomy 3.x, 1989v 는 블로그 카테고리 · 게임 장르 · 관광 광역을 자체 목록에 매핑한다"
+    synonyms: ["IAB Content Taxonomy", "context category"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/category/model/ContextCategory.kt, symbol: "data class ContextCategory(", note: "ads 소유 고정 문맥 카테고리" }
+  - id: ads-keyword-matching
+    kind: MECHANISM
+    name: "키워드 매칭"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "광고주 키워드와 페이지 · 검색어 키워드를 맞춘다. 완전 · 구문 · 확장 일치가 있고 한국어는 형태소 분석을 거친다"
+    synonyms: ["keyword matching", "exact match", "phrase match", "broad match"]
+    uses: [analyzer-tokenizer, nori]
+  - id: behavioral-targeting
+    kind: MECHANISM
+    name: "행태 타기팅"
+    category: DATA
+    level: INTERMEDIATE
+    description: "사용자의 방문 · 클릭 이력과 쿠키로 관심사를 추정해 고른다. 1989v 는 식별 최소화 원칙(ADR-0078)으로 쓰지 않는다"
+    synonyms: ["behavioral targeting", "interest targeting", "audience targeting"]
+    uses: [cookie-syncing]
+  - id: retargeting
+    kind: MECHANISM
+    name: "리타기팅"
+    category: DATA
+    level: INTERMEDIATE
+    description: "사이트에 왔던 사람에게 다시 광고를 보인다. 방문자 목록(오디언스)과 교차 사이트 식별자가 필요하다"
+    synonyms: ["retargeting", "remarketing"]
+    uses: [cookie-syncing]
+  - id: lookalike-targeting
+    kind: MECHANISM
+    name: "유사 타기팅"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "전환한 사용자와 특징이 비슷한 사람을 찾아 넓힌다"
+    synonyms: ["lookalike audience", "similar audience"]
+  - id: ads-targeting-filter
+    kind: MECHANISM
+    name: "타기팅 조건 필터"
+    category: DATA
+    level: BEGINNER
+    description: "캠페인이 건 지면 · 기기 · 지역 조건에 맞지 않는 후보를 경매 전에 뺀다"
+    synonyms: ["targeting criteria"]
+    contains: [ads-placement-targeting, device-targeting, geo-targeting]
+  - id: ads-placement-targeting
+    kind: MECHANISM
+    name: "지면 타기팅"
+    category: DATA
+    level: BEGINNER
+    description: "광고주가 카탈로그에서 고른 지면에만 싣는다. 유료 캠페인은 HOUSE 전용 지면을 고를 수 없다"
+    synonyms: ["placement targeting", "site targeting"]
+  - id: device-targeting
+    kind: MECHANISM
+    name: "기기 타기팅"
+    category: DATA
+    level: BEGINNER
+    description: "모바일 · 데스크톱 · OS · 브라우저로 거른다"
+    synonyms: ["device targeting"]
+  - id: geo-targeting
+    kind: MECHANISM
+    name: "지역 타기팅"
+    category: DATA
+    level: BEGINNER
+    description: "IP · 위치로 추정한 지역에 따라 거른다"
+    synonyms: ["geo-targeting", "location targeting"]
+  - id: ads-eligibility
+    kind: STAGE
+    name: "후보 추림 · 게재 조절"
+    category: DATA
+    level: INTERMEDIATE
+    description: "게재 자격이 없는 후보를 빼고, 빈도 · 예산 · 소진 속도를 지키도록 요청 일부를 거른다"
+    questions:
+      - "예산을 하루에 고르게 쓰게 하려면 무엇을 비교해 통과 확률을 낮추나"
+      - "빈도 제한의 기준 식별자는 무엇이고, 그 값을 얼마나 보관하나"
+    contains: [ads-eligibility-filter, frequency-capping, pacing, ads-wallet-headroom, ads-overdelivery, ads-early-budget-exhaustion, ad-fatigue, ads-budget-utilization]
+    flows_to: [ads-ad-selection]
+  - id: ads-eligibility-filter
+    kind: MECHANISM
+    name: "게재 자격 판정"
+    category: DATA
+    level: BEGINNER
+    description: "광고주 · 캠페인 활성, 기간 안, 소재 승인, 비율 일치, eCPM ≥ 최저가, 카테고리 일치, 예산 · 지갑 여유, 빈도 미달을 모두 만족해야 후보가 된다"
+    synonyms: ["eligibility", "candidate filtering"]
+    uses: [ads-targeting-filter, ads-budget-cap, floor-price]
+  - id: frequency-capping
+    kind: MECHANISM
+    name: "빈도 제한"
+    category: DATA
+    level: BEGINNER
+    description: "같은 사람에게 같은 캠페인을 기간당 N 회 넘게 보이지 않는다. 1989v 는 방문자 해시 × 캠페인 × KST 날 키로 Redis 에 25시간 센다"
+    synonyms: ["frequency cap", "freq cap"]
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/infrastructure/redis/AdsRedisKeys.kt, symbol: "fun frequency(visitorHash: String, campaignId: Long, day: LocalDate)", note: "빈도 키" }
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/campaign/model/Campaign.kt, symbol: "const val DEFAULT_FREQUENCY_CAP_PER_DAY = 3", note: "방문자당 하루 기본 3회" }
+    uses: [ads-identity-key, redis]
+    mitigates: [ad-fatigue]
+  - id: pacing
+    kind: MECHANISM
+    name: "페이싱"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "예산을 하루에 고르게 쓰도록 요청 일부를 거른다. 하루 경과 비율보다 소진 비율이 앞서면 그 차만큼 통과 확률을 낮춘다"
+    synonyms: ["pacing", "budget pacing", "budget smoothing"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/decision/policy/Pacing.kt, symbol: "fun passProbability(spentTodayMicros: Long, dailyBudgetMicros: Long): Double", note: "경과 비율 대비 소진 비율로 통과 확률" }
+    contains: [ads-throttling-pacing, ads-bid-modification-pacing]
+    uses: [ads-realtime-spend-counter]
+    mitigates: [ads-early-budget-exhaustion]
+    measured_by: [ads-budget-utilization]
+  - id: ads-throttling-pacing
+    kind: MECHANISM
+    name: "확률 스로틀링 페이싱"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "입찰가는 그대로 두고 경매 참여 여부를 확률로 거른다. 구현이 단순하고 단가가 흔들리지 않는다"
+    synonyms: ["probabilistic throttling"]
+    alternative_to: [ads-bid-modification-pacing]
+  - id: ads-bid-modification-pacing
+    kind: MECHANISM
+    name: "입찰가 조절 페이싱"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "소진이 빠르면 입찰가를 낮추고 느리면 올린다(PID 제어 등). 같은 예산으로 더 싼 노출을 산다"
+    synonyms: ["bid modification", "PID pacing"]
+  - id: ads-wallet-headroom
+    kind: MECHANISM
+    name: "지갑 여유 판정"
+    category: DATA
+    level: ADVANCED
+    description: "인덱스 스냅샷의 잔액에서 정산 완료 시각 이후의 미정산 지출을 뺀 값으로 게재 가능 여부를 본다. 6시간 넘게 미정산이면 후보에서 뺀다"
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/decision/policy/WalletHeadroom.kt, symbol: "sealed interface WalletHeadroom", note: "Available · StaleSettlement" }
+    mitigates: [ads-overdelivery]
+  - id: ads-overdelivery
+    kind: PROBLEM
+    name: "초과 집행"
+    category: DATA
+    level: INTERMEDIATE
+    description: "지출 집계가 늦거나 토큰을 몰아 내면 예산을 넘겨 게재된다. 넘친 몫을 청구하지 않으면 네트워크가, 청구하면 광고주가 손해를 본다"
+    synonyms: ["overdelivery", "overspend"]
+  - id: ads-early-budget-exhaustion
+    kind: PROBLEM
+    name: "예산 조기 소진"
+    category: DATA
+    level: BEGINNER
+    description: "트래픽이 몰리는 아침에 하루 예산을 다 써 오후에는 광고가 나가지 않는다"
+    synonyms: ["budget exhaustion"]
+  - id: ad-fatigue
+    kind: PROBLEM
+    name: "광고 피로"
+    category: BASICS
+    level: BEGINNER
+    description: "같은 광고를 반복해 보면 클릭률이 떨어지고 반감이 생긴다"
+    synonyms: ["ad fatigue", "banner blindness"]
+  - id: ads-budget-utilization
+    kind: METRIC
+    name: "예산 소진율"
+    category: DATA
+    level: BEGINNER
+    description: "일 · 총예산 대비 지출 비율이다. 시각별로 보면 페이싱이 고르게 도는지 드러난다"
+    synonyms: ["budget utilization", "spend rate"]
+  - id: ads-ad-selection
+    kind: STAGE
+    name: "경매 · 순위"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "남은 후보를 같은 단위(eCPM)로 줄 세워 승자를 고르고 낼 가격을 정한다"
+    questions:
+      - "AdSense 가 2차가에서 1차가 경매로 옮긴 뒤 구매 쪽은 무엇을 바꿨나"
+      - "pCTR 을 위치 효과 없이 학습하면 무엇이 틀어지나"
+    contains: [ad-auction, ecpm-ranking, ads-pctr, quality-score, ads-creative-exploration, ads-position-debiasing, ads-winners-curse, ads-new-creative-cold-start, ecpm]
+  - id: ad-auction
+    kind: MECHANISM
+    name: "광고 경매"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "후보 중 승자를 고르고 낼 가격을 정한다. 1989v 는 한 응답 안에서 같은 캠페인이 두 지면을 이기지 않게 한다"
+    synonyms: ["ad auction"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/decision/policy/Auction.kt, symbol: "object Auction", note: "지면별 eCPM 1위 · 동점 캠페인 id · 캠페인 중복 승리 금지" }
+    contains: [first-price-auction, second-price-auction, gsp, vcg-auction]
+    uses: [floor-price, ecpm-ranking]
+  - id: first-price-auction
+    kind: MECHANISM
+    name: "1차가 경매"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "승자가 자기 입찰가를 낸다. 규칙이 단순하고 중개자가 가격을 조작할 여지가 없지만 구매 쪽이 입찰가를 깎는 전략(bid shading)을 쓴다. AdSense 가 2021년 전환했다"
+    synonyms: ["first-price auction", "1st price"]
+    causes: [ads-winners-curse]
+    alternative_to: [second-price-auction]
+  - id: second-price-auction
+    kind: MECHANISM
+    name: "2차가 경매"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "승자가 차순위 가격(+최소 단위)을 낸다. 한 자리 경매에서는 진짜 가치대로 입찰하는 것이 최선이다(Vickrey)"
+    synonyms: ["second-price auction", "Vickrey auction"]
+  - id: gsp
+    kind: MECHANISM
+    name: "GSP 경매"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "여러 광고 자리를 순위대로 나눌 때 각 자리 승자가 바로 아래 순위의 가격을 낸다. 검색 광고의 전통 방식이고 진실 입찰이 최선이 아니다"
+    synonyms: ["Generalized Second Price"]
+  - id: vcg-auction
+    kind: MECHANISM
+    name: "VCG 경매"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "각 승자가 자기가 참여해서 다른 참가자가 잃은 가치만큼 낸다. 여러 자리에서도 진실 입찰이 최선이지만 설명 · 계산이 어렵다"
+    synonyms: ["Vickrey-Clarke-Groves"]
+    alternative_to: [gsp]
+  - id: ecpm-ranking
+    kind: MECHANISM
+    name: "eCPM 순위"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "CPC 광고와 CPM 광고를 비교하려고 입찰가 × 예상 클릭률 × 1000 으로 노출 천 회당 기대 수익에 맞춘다"
+    synonyms: ["expected CPM ranking"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/campaign/model/Bid.kt, symbol: "fun ecpmMicros(predictedCtr: Double): Double", note: "CPM 은 입찰가, CPC 는 입찰가 × pCTR × 1000" }
+    uses: [ads-pctr]
+    measured_by: [ecpm]
+  - id: ads-pctr
+    kind: MECHANISM
+    name: "예상 클릭률 (pCTR)"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "과거 노출 · 클릭으로 이 소재가 이 지면에서 눌릴 확률을 추정한다. 데이터가 적을 때는 사전값을 섞는 베이지안 보정이 튀는 값을 막는다"
+    synonyms: ["pCTR", "predicted CTR", "CTR prediction"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/decision/policy/PredictedCtr.kt, symbol: "private const val PRIOR_IMPRESSIONS = 100.0", note: "(클릭 + 1) ÷ (가시 노출 + 100) — 소재 × 지면 시간별 집계에서" }
+    uses: [bayesian-smoothing, rec-ctr-prediction]
+    affects: [ecpm]
+  - id: quality-score
+    kind: MECHANISM
+    name: "품질 점수"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "순위를 입찰가 × 예상 클릭률 × 품질(랜딩 · 관련성)로 매겨 싸게 불러도 관련 높은 광고가 이기게 한다. 검색 광고의 품질지수다"
+    synonyms: ["Quality Score", "ad rank", "품질지수"]
+    uses: [ads-pctr]
+  - id: ads-creative-exploration
+    kind: MECHANISM
+    name: "새 소재 탐색"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "노출이 적어 pCTR 이 불확실한 새 소재에도 일부 기회를 준다. 활용만 하면 처음에 운 나빴던 소재는 영영 못 올라온다"
+    synonyms: ["explore/exploit", "creative exploration"]
+    uses: [bandit-exploration, exploration-exploitation]
+    mitigates: [ads-new-creative-cold-start]
+  - id: ads-position-debiasing
+    kind: MECHANISM
+    name: "위치 편향 보정"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "아래 자리일수록 클릭률이 낮다. 위치를 특징으로 넣고 서빙 때는 고정하거나 성향으로 나눠 학습해 pCTR 이 위치 효과를 광고 품질로 오인하지 않게 한다"
+    synonyms: ["position debiasing", "position bias correction"]
+    uses: [inverse-propensity-scoring]
+    mitigates: [position-bias]
+  - id: ads-winners-curse
+    kind: PROBLEM
+    name: "승자의 저주 · 과지불"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "1차가 경매에서 진짜 가치대로 입찰하면 이길수록 필요 이상으로 낸다"
+    synonyms: ["winner's curse", "overpaying"]
+  - id: ads-new-creative-cold-start
+    kind: PROBLEM
+    name: "새 소재 콜드 스타트"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "노출 기록이 없는 소재는 pCTR 이 사전값에 묶여 순위가 낮고, 노출이 없으니 기록도 쌓이지 않는다"
+  - id: ecpm
+    kind: METRIC
+    name: "eCPM"
+    category: DATA
+    level: BEGINNER
+    description: "과금 방식과 관계없이 노출 천 회당 수익으로 환산한 값이다. 광고주 쪽 순위와 네트워크 수익을 같은 단위로 본다"
+    synonyms: ["effective CPM"]
+
+  # ── 계측 · 어트리뷰션 ─────────────────────────────────────
+  - id: ads-measurement
+    kind: DOMAIN
+    name: "계측 · 어트리뷰션"
+    category: DATA
+    level: INTERMEDIATE
+    description: "무엇이 보였고 눌렸고 전환됐는지를 위조 없이 세고, 가짜 트래픽을 걸러 리포트로 낸다. 과금의 근거다"
+    contains: [ads-event-tracking, ads-attribution, ads-ivt-defense, ads-reporting]
+  - id: ads-event-tracking
+    kind: STAGE
+    name: "노출 · 클릭 계측"
+    category: DATA
+    level: INTERMEDIATE
+    description: "노출 · 가시 노출 · 클릭을 비콘과 리다이렉터로 받아 한 번씩만 센다"
+    questions:
+      - "렌더된 노출과 가시 노출(MRC)은 과금 근거로 어떻게 다른가"
+      - "같은 노출이 두 번 과금되지 않게 하는 키는 무엇인가"
+    contains: [ads-impression-tracking, viewability, ads-click-redirect, ads-event-dedup, ads-event-ledger-copy, ads-event-retention, ctr, viewability-rate]
+    uses: [ads-identity-key]
+    flows_to: [ads-attribution]
+  - id: ads-impression-tracking
+    kind: MECHANISM
+    name: "노출 계측"
+    category: DATA
+    level: BEGINNER
+    description: "광고가 렌더됐다는 신호를 비콘(sendBeacon)으로 보낸다. 응답을 보낸 시점(served)이 아니라 그린 시점(begin-to-render)에 센다"
+    synonyms: ["impression", "impression beacon", "begin-to-render"]
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/presentation/event/controller/AdEventController.kt, symbol: "@PostMapping(\"/events\"", note: "노출 토큰 묶음 — sendBeacon 허용" }
+  - id: viewability
+    kind: MECHANISM
+    name: "가시 노출"
+    category: DATA
+    level: INTERMEDIATE
+    description: "MRC 기준 — 디스플레이는 픽셀 50% 가 연속 1초, 동영상은 2초 보여야 센다. 브라우저에서는 IntersectionObserver 로 잰다. 1989v 는 가시 노출만 과금한다"
+    synonyms: ["viewable impression", "MRC viewability", "vCPM"]
+    code:
+      - { path: portal-fe/src/analytics/useImpression.ts, symbol: "export const VISIBLE_RATIO = 0.5", note: "면적 50% — 광고 카드도 같은 훅을 쓴다(사본 금지)" }
+    contains: [om-sdk]
+    measured_by: [viewability-rate]
+  - id: om-sdk
+    kind: MECHANISM
+    name: "OM SDK"
+    category: DATA
+    level: ADVANCED
+    description: "앱 · 웹의 광고 가시성을 제3자 검증 업체가 같은 방식으로 재게 하는 IAB 측정 SDK 다"
+    synonyms: ["Open Measurement SDK"]
+  - id: ads-click-redirect
+    kind: MECHANISM
+    name: "클릭 리다이렉트"
+    category: NETWORK
+    level: BEGINNER
+    description: "클릭은 네트워크 리다이렉터를 거쳐 서명을 확인하고 기록한 뒤 랜딩으로 302 한다. 목적지는 요청 값이 아니라 승인된 소재의 URL 이다"
+    synonyms: ["click tracking", "click redirect"]
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/presentation/event/controller/AdEventController.kt, symbol: "@GetMapping(\"/click/{clickToken}\")", note: "서명 불량이면 / 로, 과금 불가여도 랜딩으로" }
+    uses: [ads-signed-token, sec-redirect-allowlist]
+    mitigates: [sec-open-redirect]
+  - id: ads-event-dedup
+    kind: MECHANISM
+    name: "이벤트 중복 제거"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "같은 노출 · 클릭 토큰은 종류별로 한 번만 받는다. Redis 일회성 표식(TTL 3시간)이 멱등 키 역할을 한다"
+    synonyms: ["dedup", "deduplication"]
+    uses: [idempotency, redis]
+  - id: ads-event-ledger-copy
+    kind: MECHANISM
+    name: "이벤트 원장 사본 발행"
+    category: DATA
+    level: INTERMEDIATE
+    description: "수락한 노출 · 클릭만 analytics 원장 토픽으로 발행한다. 원장은 분석용이고 과금은 ads 카운터가 소유한다 — 권위 원천이 아니라 Outbox 를 쓰지 않는다"
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/infrastructure/messaging/AnalyticsCopyKafkaAdapter.kt, symbol: "class AnalyticsCopyKafkaAdapter(", note: "entity_type=AD 로 analytics.event.collected 발행, 실패는 경고만" }
+    uses: [kafka, impression-click-ledger]
+  - id: ads-event-retention
+    kind: MECHANISM
+    name: "계측 데이터 보존기간"
+    category: SECURITY
+    level: BEGINNER
+    description: "노출 · 클릭 원장은 90일, 방문자 빈도 키는 25시간만 둔다. 개인정보처리방침에 적은 숫자와 상수가 같아야 한다"
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/infrastructure/redis/AdsRedisKeys.kt, symbol: "const val VISITOR_FREQUENCY_TTL_HOURS = 25L", note: "/privacy §6 문구와 같은 값" }
+    uses: [ads-privacy-notice-sync]
+  - id: ctr
+    kind: METRIC
+    name: "CTR"
+    category: DATA
+    level: BEGINNER
+    description: "노출 대비 클릭 비율이다. 광고에서는 가시 노출을 분모로 둔다. 위치 · 형식의 영향을 크게 받아 소재끼리 비교할 때 같은 자리끼리 본다"
+    synonyms: ["Click-Through Rate", "클릭률"]
+  - id: viewability-rate
+    kind: METRIC
+    name: "가시율"
+    category: DATA
+    level: BEGINNER
+    description: "측정 가능한 노출 중 가시 노출 기준을 채운 비율이다"
+    synonyms: ["viewability rate"]
+  - id: ads-attribution
+    kind: STAGE
+    name: "전환 · 어트리뷰션"
+    category: DATA
+    level: ADVANCED
+    description: "클릭 · 노출 뒤 일어난 가입 · 구매를 어느 광고의 공으로 칠지 정한다. CPA 과금과 ROAS 가 이것에 기댄다"
+    questions:
+      - "마지막 클릭 어트리뷰션이 과대평가하는 채널은 어디인가"
+      - "광고가 없었어도 일어났을 전환을 어떻게 빼나"
+    contains: [conversion-tracking, attribution-modeling, incrementality-testing, ads-cvr, roas]
+    uses: [attribution-window]
+  - id: conversion-tracking
+    kind: MECHANISM
+    name: "전환 추적"
+    category: DATA
+    level: INTERMEDIATE
+    description: "광고주 사이트의 목표 행동을 픽셀(브라우저) 또는 서버 간 포스트백(S2S)으로 네트워크에 알린다. 쿠키가 막히면 서버 간 연동으로 옮겨 간다"
+    synonyms: ["conversion tracking", "tracking pixel", "postback", "S2S", "Conversions API"]
+  - id: attribution-modeling
+    kind: MECHANISM
+    name: "어트리뷰션 모델"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "전환 한 건의 공을 거쳐 온 접점에 나눠 준다 — 마지막 클릭 · 첫 클릭 · 선형 · 시간 감쇠 · 위치 기반 · 데이터 기반, 노출만 본 경우(view-through)"
+    synonyms: ["attribution", "last-click", "multi-touch attribution", "MTA", "view-through", "data-driven attribution"]
+    uses: [conversion-tracking]
+  - id: incrementality-testing
+    kind: MECHANISM
+    name: "증분 효과 측정"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "광고를 안 본 대조군(홀드아웃 · 고스트 광고)과 비교해 광고가 없어도 일어났을 전환을 뺀다"
+    synonyms: ["incrementality", "holdout test", "ghost ads", "lift test"]
+    uses: [ab-test]
+    alternative_to: [attribution-modeling]
+  - id: ads-cvr
+    kind: METRIC
+    name: "전환율 (CVR)"
+    category: DATA
+    level: BEGINNER
+    description: "클릭(또는 노출) 대비 전환 비율이다"
+    synonyms: ["CVR", "Conversion Rate"]
+  - id: roas
+    kind: METRIC
+    name: "ROAS"
+    category: DATA
+    level: BEGINNER
+    description: "광고비 대비 광고로 생긴 매출이다. 광고주가 캠페인 효율을 보는 최종 지표다"
+    synonyms: ["Return On Ad Spend"]
+  - id: ads-ivt-defense
+    kind: STAGE
+    name: "무효 트래픽 방어"
+    category: SECURITY
+    level: ADVANCED
+    description: "봇 · 자기 클릭 · 반복 클릭 · 토큰 위조로 생긴 노출 · 클릭을 과금에서 뺀다. 못 막은 것은 사후에 되돌린다"
+    synonyms: ["IVT", "ad fraud prevention"]
+    questions:
+      - "GIVT 와 SIVT 는 판정 방법이 어떻게 다른가"
+      - "비콘에 로그인 헤더가 없을 때 광고주 본인 클릭은 어디서 가르나"
+    contains: [ads-crawler-filter, ads-self-click-block, ads-click-rate-limit, ads-signed-token, ads-clawback, ads-sivt-detection, invalid-traffic, givt, sivt, ads-token-replay, ivt-rate]
+  - id: ads-crawler-filter
+    kind: MECHANISM
+    name: "크롤러 판정"
+    category: SECURITY
+    level: BEGINNER
+    description: "알려진 봇 · 크롤러 UA 는 광고를 과금 대상으로 받지 않는다(토큰 없음, Redis 접근 없음). analytics · deal · ads 가 같은 판정을 쓴다"
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/web/CrawlerUserAgents.kt, symbol: "fun isCrawler(userAgent: String?): Boolean", note: "common 으로 올린 공용 판정" }
+    mitigates: [givt]
+  - id: ads-self-click-block
+    kind: MECHANISM
+    name: "자기 클릭 방지"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "퍼블리셔 · 광고주 본인의 노출 · 클릭은 과금하지 않는다. 1989v 는 로그인 헤더가 실리는 결정 호출에서 판정해 토큰의 과금 여부에 적는다"
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/application/decision/service/DecisionService.kt, symbol: "billable = memberId != account.memberId", note: "낙찰 캠페인 소유 회원이면 과금 없음" }
+    mitigates: [invalid-traffic]
+  - id: ads-click-rate-limit
+    kind: MECHANISM
+    name: "클릭 속도 제한"
+    category: SECURITY
+    level: BEGINNER
+    description: "같은 방문자의 짧은 시간 반복 클릭은 과금하지 않는다(10분 창)"
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/application/event/service/AdEventService.kt, symbol: "const val CLICK_WINDOW_MINUTES = 10L", note: "창당 N 회 초과분 rate_limited" }
+    uses: [rate-limiting]
+    mitigates: [invalid-traffic]
+  - id: ads-signed-token
+    kind: MECHANISM
+    name: "서명 노출 · 클릭 토큰"
+    category: SECURITY
+    level: ADVANCED
+    description: "광고 응답에 노출 · 클릭 토큰을 HMAC-SHA256 으로 서명해 싣는다. 결정 id · 캠페인 · 과금액 · 방문자 해시 · 발급 시각이 들어가고 2시간 · 1회만 받는다"
+    synonyms: ["signed impression token", "click token"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/token/policy/ServeTokenSigner.kt, symbol: "class ServeTokenSigner(", note: "키 id 로 현재 · 이전 키 검증, MessageDigest.isEqual 상수 시간 비교" }
+    uses: [sec-hmac]
+    mitigates: [ads-token-replay]
+  - id: ads-clawback
+    kind: MECHANISM
+    name: "사후 수익 회수"
+    category: DATA
+    level: INTERMEDIATE
+    description: "무효로 판정된 이벤트의 과금 · 퍼블리셔 수익을 되돌린다. 1989v 는 정산 거래 전체를 역분개(REVERSAL)한다"
+    synonyms: ["clawback", "chargeback", "reversal"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/ledger/model/LedgerTransactionType.kt, symbol: "REVERSAL", note: "SETTLEMENT 만 전액 역분개" }
+    uses: [ads-credit-ledger]
+    mitigates: [invalid-traffic]
+  - id: ads-sivt-detection
+    kind: MECHANISM
+    name: "정교한 무효 트래픽 탐지"
+    category: SECURITY
+    level: ADVANCED
+    description: "데이터센터 IP · 비정상 클릭 간격 · 마우스 궤적 · 전환 없는 클릭 군집 같은 신호로 사람 흉내 봇과 클릭 농장을 찾는다"
+    synonyms: ["SIVT detection", "anomaly detection"]
+    mitigates: [sivt]
+  - id: invalid-traffic
+    kind: PROBLEM
+    name: "무효 트래픽 (IVT)"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "사람의 진짜 관심에서 나오지 않은 노출 · 클릭이다. 과금되면 광고주 돈이 새고 네트워크 신뢰가 무너진다"
+    synonyms: ["IVT", "invalid traffic", "ad fraud"]
+  - id: givt
+    kind: PROBLEM
+    name: "GIVT (일반 무효 트래픽)"
+    category: SECURITY
+    level: BEGINNER
+    description: "알려진 봇 · 크롤러 UA · 데이터센터 IP 처럼 목록으로 거를 수 있는 무효 트래픽이다"
+    synonyms: ["General Invalid Traffic"]
+    causes: [invalid-traffic]
+  - id: sivt
+    kind: PROBLEM
+    name: "SIVT (정교한 무효 트래픽)"
+    category: SECURITY
+    level: ADVANCED
+    description: "사람을 흉내 내는 봇 · 클릭 농장 · 광고 쌓기(ad stacking) · 픽셀 채우기처럼 분석해야 드러나는 무효 트래픽이다"
+    synonyms: ["Sophisticated Invalid Traffic", "click farm", "ad stacking", "pixel stuffing"]
+    causes: [invalid-traffic]
+  - id: ads-token-replay
+    kind: PROBLEM
+    name: "토큰 위조 · 재사용"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "노출 · 클릭 신호를 만들어 내거나 받은 토큰을 반복해 보내 과금을 부풀린다"
+    causes: [invalid-traffic]
+  - id: ivt-rate
+    kind: METRIC
+    name: "무효 트래픽 비율"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "받은 이벤트 중 거절 사유(crawler · duplicate · rate_limited · visitor_mismatch …)로 과금하지 않은 비율이다"
+    synonyms: ["IVT rate"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/token/model/EventRejectReason.kt, symbol: "enum class EventRejectReason", note: "거절 사유 코드 — 메트릭 태그" }
+  - id: ads-reporting
+    kind: STAGE
+    name: "리포트"
+    category: DATA
+    level: BEGINNER
+    description: "광고주 · 퍼블리셔 · 운영자가 각자 필요한 단위로 노출 · 클릭 · 지출 · 수익을 본다"
+    contains: [ads-advertiser-report, ads-publisher-report, ads-ops-dashboard]
+  - id: ads-advertiser-report
+    kind: MECHANISM
+    name: "광고주 리포트"
+    category: DATA
+    level: BEGINNER
+    description: "캠페인 · 소재별 일별 가시 노출 · 클릭 · CTR · 지출 · 청구액. 지출(카운터)과 청구액(원장)이 다른 날은 예산 초과분 미청구로 표시한다"
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/application/report/service/ReportService.kt, symbol: "class ReportService(", note: "원천은 시간별 집계 두 표와 원장뿐" }
+    measured_by: [ctr]
+  - id: ads-publisher-report
+    kind: MECHANISM
+    name: "퍼블리셔 리포트"
+    category: DATA
+    level: BEGINNER
+    description: "사이트 · 지면별 일별 요청 · 채움률 · 노출 · 클릭 · RPM · 수익. 지면별 몫은 참고치이고 원장 총액 행을 따로 둔다"
+    measured_by: [fill-rate, rpm]
+  - id: ads-ops-dashboard
+    kind: MECHANISM
+    name: "운영 대시보드"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "전체 채움률 · 무효 비율 · 결정 지연 · 예산 소진 · 마지막 정산 시각을 한 화면에 둔다"
+    measured_by: [ivt-rate, ads-decision-latency-budget]
+
+  # ── 과금 · 정산 ───────────────────────────────────────────
+  - id: ads-money
+    kind: DOMAIN
+    name: "과금 · 정산"
+    category: DATA
+    level: INTERMEDIATE
+    description: "광고주 돈을 언제 얼마나 빼고 퍼블리셔와 네트워크가 어떻게 나누는지. 원장이 모든 이동을 남긴다"
+    contains: [ads-billing, ads-settlement]
+  - id: ads-billing
+    kind: STAGE
+    name: "과금"
+    category: DATA
+    level: INTERMEDIATE
+    description: "광고주 지갑을 채우고, 게재 금액을 실시간으로 세고, 확정 시점에 청구한다"
+    questions:
+      - "실시간 차감과 집계 후 배치 차감은 초과 집행 위험을 어떻게 나눠 갖나"
+    contains: [ads-credit-topup, ads-realtime-spend-counter, ads-billing-timing]
+    flows_to: [ads-settlement]
+  - id: ads-credit-topup
+    kind: MECHANISM
+    name: "크레딧 충전"
+    category: DATA
+    level: BEGINNER
+    description: "광고주 지갑에 선불 크레딧을 넣는다. 1회 상한과 KST 하루 합계를 지갑 행 잠금 안에서 확인한다. 1989v 는 실결제 없는 가상 크레딧이다"
+    synonyms: ["top-up", "prepaid balance"]
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/application/ledger/service/LedgerService.kt, symbol: "val toppedUpToday", note: "하루 합계 한도 — 잠금 안에서 합산" }
+    uses: [pessimistic-lock, ads-credit-ledger]
+  - id: ads-realtime-spend-counter
+    kind: MECHANISM
+    name: "실시간 지출 카운터"
+    category: DATA
+    level: INTERMEDIATE
+    description: "수락한 이벤트마다 캠페인 · 광고주 · 시각별 지출을 Redis 에 올린다. 결정은 이 값으로 예산 여유를 보고, 정산은 이 값을 시간별 집계로 옮긴다"
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/infrastructure/redis/AdsRedisKeys.kt, symbol: "fun campaignHourSpend(campaignId: Long, hour: LocalDateTime): String", note: "캠페인 시각 지출 키 — TTL 48시간" }
+    uses: [redis]
+  - id: ads-billing-timing
+    kind: MECHANISM
+    name: "과금 확정 시점"
+    category: DATA
+    level: ADVANCED
+    description: "노출마다 실시간 차감할지, 집계 후 배치로 청구할지 정한다. 1989v 는 5분 주기로 카운터를 시간별 집계에 절대값 UPSERT 하고 닫힌 시각을 청구한다"
+    synonyms: ["billing cycle", "real-time vs batch billing"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/ledger/policy/SettlementCalculator.kt, symbol: "object SettlementCalculator", note: "청구액 = min(지출, 일예산 잔여, 총예산 잔여, 지갑)" }
+    causes: [ads-overdelivery]
+  - id: ads-settlement
+    kind: STAGE
+    name: "정산"
+    category: DATA
+    level: INTERMEDIATE
+    description: "청구한 돈을 원장에서 퍼블리셔 몫과 네트워크 수수료로 나누고, 주기마다 확정해 지급한다"
+    questions:
+      - "정산을 두 번 돌려도 이중 청구가 안 되려면 무엇을 키로 두나"
+      - "복식부기에서 불균형 거래를 아예 만들 수 없게 하는 방법은"
+    contains: [ads-credit-ledger, ads-settlement-idempotency, revenue-share, ads-impression-based-payout, ads-monthly-settlement, ads-credit-refund, ads-publisher-payout-tax, ads-ledger-balance-check, ads-ledger-imbalance]
+  - id: ads-credit-ledger
+    kind: MECHANISM
+    name: "광고 크레딧 복식부기 원장"
+    category: DATA
+    level: ADVANCED
+    description: "충전 · 정산 · 역분개를 차변 · 대변 한 쌍으로 적어 합이 항상 0 이다. 분개 합이 0 이 아닌 거래는 팩토리가 만들지 않는다. 잔액은 원장 계정 행이 갖고 id 순으로 잠근다"
+    synonyms: ["double-entry ledger", "복식부기"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/ledger/model/LedgerTransaction.kt, symbol: "class LedgerTransaction private constructor(", note: "생성자 private — 팩토리만 공개" }
+    uses: [ads-ledger-accounts, ord-double-entry, pessimistic-lock, data-lock-ordering]
+    mitigates: [ads-ledger-imbalance]
+  - id: ads-settlement-idempotency
+    kind: MECHANISM
+    name: "정산 멱등 키"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "정산 거래를 SETTLE:{캠페인}:{시각} 키로 유일하게 둔다. 파드가 없던 시각을 다음 실행이 따라잡아도 이중 청구가 없다"
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/ledger/model/LedgerTransaction.kt, symbol: "fun settlementKey(campaignId: Long, hourKst: LocalDateTime): String", note: "캠페인 × KST 시각" }
+    uses: [idempotency]
+  - id: revenue-share
+    kind: MECHANISM
+    name: "수익 배분"
+    category: BASICS
+    level: BEGINNER
+    description: "청구액에서 퍼블리셔 몫과 네트워크 수수료를 나눈다. AdSense 기준 퍼블리셔 약 68%(판매 쪽 80% × 구매 쪽 85%)"
+    synonyms: ["revenue share", "rev share", "take rate"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/ledger/policy/RevenueSplit.kt, symbol: "const val DEFAULT_PUBLISHER_RATE_BASIS_POINTS = 6_800", note: "퍼블리셔 몫 = floor(청구액 × 68%), 나머지 수수료" }
+  - id: ads-impression-based-payout
+    kind: MECHANISM
+    name: "노출당 정산"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "퍼블리셔에 클릭이 아니라 노출 기준으로 지급한다. AdSense 가 2024년 바꿨다 — 클릭 유도 동기를 줄인다"
+    synonyms: ["per-impression payment"]
+  - id: ads-monthly-settlement
+    kind: MECHANISM
+    name: "월 정산 · 지급 기준액"
+    category: DATA
+    level: BEGINNER
+    description: "매달 수익을 확정하고 누적이 기준액 이상이면 지급한다. 무효 트래픽 판정이 끝날 시간을 벌어 준다"
+    synonyms: ["payment threshold", "monthly close"]
+  - id: ads-credit-refund
+    kind: MECHANISM
+    name: "환불 · 잔액 소멸"
+    category: DATA
+    level: BEGINNER
+    description: "쓰지 않은 선불 크레딧을 돌려주거나 유효기간 뒤 소멸시킨다"
+  - id: ads-publisher-payout-tax
+    kind: MECHANISM
+    name: "실결제 · 지급 · 세무"
+    category: DATA
+    level: INTERMEDIATE
+    description: "PG 로 충전하고 퍼블리셔에게 원천징수 후 지급하며 전자금융 규제를 따른다. 1989v 는 가상 크레딧이라 하지 않는다"
+    synonyms: ["payout", "withholding tax", "전자금융"]
+  - id: ads-ledger-balance-check
+    kind: MECHANISM
+    name: "원장 합 검사"
+    category: DATA
+    level: INTERMEDIATE
+    description: "매일 전체 분개 합이 0 인지 확인하고, 어긋나면 ERROR 로그와 메트릭을 낸다"
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/application/ledger/service/LedgerCheckService.kt, symbol: "class LedgerCheckService(", note: "sumAllEntries() ≠ 0 이면 경보" }
+    mitigates: [ads-ledger-imbalance]
+  - id: ads-ledger-imbalance
+    kind: PROBLEM
+    name: "원장 불균형"
+    category: DATA
+    level: INTERMEDIATE
+    description: "분개 합이 0 이 아니면 어딘가에서 돈이 생기거나 사라진 것이다"
+
+  # ── 정책 · 규제 · 프라이버시 ─────────────────────────────
+  - id: ads-policy
+    kind: DOMAIN
+    name: "정책 · 규제 · 프라이버시"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "광고임을 밝히고, 금지 업종 · 금지 면을 지키고, 동의 없는 추적을 하지 않는다"
+    contains: [ads-regulatory-compliance, ads-privacy, ads-brand-safety]
+  - id: ads-regulatory-compliance
+    kind: STAGE
+    name: "광고 규제 준수"
+    category: SECURITY
+    level: BEGINNER
+    description: "표시광고법 · 업권 규제 · 퍼블리셔 정책을 코드와 심사로 지킨다"
+    questions:
+      - "규제 업권 광고주를 캠페인 단계가 아니라 어디서 막아야 하나"
+    contains: [ads-ad-disclosure-label, ads-restricted-verticals, ads-creative-policy, ads-excluded-surfaces, ads-privacy-notice-sync]
+    uses: [ads-disclosure-law]
+  - id: ads-ad-disclosure-label
+    kind: MECHANISM
+    name: "광고 라벨 표시"
+    category: SECURITY
+    level: BEGINNER
+    description: "모든 광고 카드에 「광고」 · 「AD」 라벨을 상시로 붙인다. 네이티브처럼 콘텐츠와 닮을수록 더 분명해야 한다"
+    synonyms: ["ad label", "sponsored label"]
+    uses: [ads-disclosure-law]
+  - id: ads-restricted-verticals
+    kind: MECHANISM
+    name: "금지 업종"
+    category: SECURITY
+    level: BEGINNER
+    description: "의료 · 금융 같은 규제 업권 광고를 받지 않는다(의료법 27조 · 금소법, ADR-0069 과 같은 기준). 반려 사유 코드로 고정한다"
+    synonyms: ["restricted categories"]
+  - id: ads-creative-policy
+    kind: MECHANISM
+    name: "소재 정책"
+    category: SECURITY
+    level: BEGINNER
+    description: "성인 · 도박 · 허위 · 과장 · 랜딩 불일치 · 이미지 품질 같은 반려 기준을 고정 목록으로 둔다"
+    synonyms: ["ad policy", "creative policy"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/creative/model/CreativeRejectReason.kt, symbol: "enum class CreativeRejectReason", note: "반려 사유 코드 고정 목록" }
+    uses: [ads-restricted-verticals]
+  - id: ads-excluded-surfaces
+    kind: MECHANISM
+    name: "광고 게재 금지 면"
+    category: SECURITY
+    level: BEGINNER
+    description: "메인 · 포트폴리오 · 이력서 · 게임 iframe 안 · 광고주 콘솔에는 지면을 두지 않는다. 조작 영역 위 광고는 UX 이전에 정책 위반이다"
+    uses: [ads-manual-placement]
+  - id: ads-privacy-notice-sync
+    kind: MECHANISM
+    name: "개인정보처리방침 동기화"
+    category: SECURITY
+    level: BEGINNER
+    description: "광고 이벤트 수집 항목 · 보존기간을 방침에 적고, 방침 숫자와 코드 상수가 같은지 테스트로 대조한다"
+    code:
+      - { path: portal-fe/src/pages/__tests__/privacyRetention.test.ts, symbol: "광고 이벤트 원장 보관기간", note: "방침 문구 ↔ 상수 대조" }
+  - id: ads-privacy
+    kind: STAGE
+    name: "프라이버시 · 동의"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "추적 · 타기팅에 개인 식별자를 쓸 때 동의를 받고, 식별자 없이 되는 방식으로 옮겨 간다"
+    questions:
+      - "3자 쿠키가 사라지면 리타기팅 · 빈도 제한 · 어트리뷰션은 각각 무엇으로 버티나"
+    contains: [consent-management, privacy-sandbox, third-party-cookie-deprecation]
+    uses: [ads-behavioral-data-guideline, ads-marketing-consent-law]
+  - id: consent-management
+    kind: MECHANISM
+    name: "동의 관리 (CMP)"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "쿠키 · 추적 목적별 동의를 받아 문자열로 입찰 요청에 실어 보낸다. 유럽은 IAB TCF, 미국 주법은 GPP 가 표준이다"
+    synonyms: ["CMP", "IAB TCF", "GPP", "consent string"]
+  - id: privacy-sandbox
+    kind: MECHANISM
+    name: "Privacy Sandbox"
+    category: SECURITY
+    level: ADVANCED
+    description: "브라우저 안에서 관심사(Topics) · 경매(Protected Audience)를 돌려 3자 쿠키 없이 타기팅하려던 크롬 제안이다. 구글이 2025-10 종료했다"
+    synonyms: ["Topics API", "Protected Audience", "FLEDGE"]
+    alternative_to: [cookie-syncing]
+    mitigates: [third-party-cookie-deprecation]
+  - id: third-party-cookie-deprecation
+    kind: PROBLEM
+    name: "3자 쿠키 소멸"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "브라우저가 교차 사이트 쿠키를 막아 행태 타기팅 · 리타기팅 · 쿠키 싱크 · 노출 기반 어트리뷰션이 약해진다"
+    synonyms: ["cookie deprecation", "ITP"]
+  - id: ads-brand-safety
+    kind: STAGE
+    name: "브랜드 안전"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "광고주가 원치 않는 주제 · 품질의 페이지에 광고가 서지 않게 한다"
+    contains: [brand-safety, ads-unsafe-adjacency]
+  - id: brand-safety
+    kind: MECHANISM
+    name: "브랜드 안전 필터"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "폭력 · 성인 · 재난 같은 민감 주제 페이지를 광고주 설정에 따라 피한다(GARM 기준, 브랜드 적합성)"
+    synonyms: ["brand safety", "brand suitability", "GARM"]
+    uses: [ads-content-taxonomy]
+    mitigates: [ads-unsafe-adjacency]
+  - id: ads-unsafe-adjacency
+    kind: PROBLEM
+    name: "부적절한 인접 노출"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "광고가 브랜드와 어울리지 않는 콘텐츠 옆에 서서 광고주 평판을 해친다"
+
+  # ── 1989v 광고 시스템 구축 조건 ───────────────────────────
+  - id: ads-system-build
+    kind: STAGE
+    name: "광고 시스템 구축"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "새 파드 없이 기존 호스트에 광고 도메인을 접고, 레이어 표준 · 로그인 · 기존 모듈과의 관계를 정한다"
+    questions:
+      - "광고를 새 서비스가 아니라 engagement 에 접은 이유는"
+    contains: [ads-engagement-fold, ads-layer-standard, ads-house-absorption, ads-console-single-login, ads-free-tier-ceiling]
+  - id: ads-engagement-fold
+    kind: MECHANISM
+    name: "engagement 폴드"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "ads 를 :feature 라이브러리로 engagement 호스트에 접는다. 경매 · pCTR · A/B 가 추천 · 실험과 같은 「순위를 매기고 실험하는」 성격이고 상주 JVM 이 늘지 않는다"
+    code:
+      - { path: engagement/app/src/main/kotlin/com/kgd/engagement/EngagementApplication.kt, symbol: "\"com.kgd.ads\"", note: "scanBasePackages 에 ads 추가" }
+    uses: [arch-modular-monolith]
+    mitigates: [ads-free-tier-ceiling]
+  - id: ads-layer-standard
+    kind: MECHANISM
+    name: "광고 도메인 레이어 배치"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "UseCase 인터페이스 + Outbound Port + Adapter 로 나누고 도메인은 프레임워크 없이 둔다(ADR-0083). 소재 이미지 저장소를 바꿀 때 어댑터만 바꾼다"
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/application/decision/port/DecisionPorts.kt, symbol: "interface CandidateSourcePort", note: "결정이 쓰는 포트 — 후보 원천 · 카운터 · 메트릭" }
+    uses: [port-adapter]
+  - id: ads-house-absorption
+    kind: MECHANISM
+    name: "game ads 흡수"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "게임에 흩어져 있던 HOUSE 지면 · 소재를 ads 로 옮기고, 한 릴리스 동안 옛 경로를 옛 응답 모양으로 제공한 뒤 지운다"
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/presentation/decision/controller/LegacyPlacementController.kt, symbol: "LegacyPlacementController", note: "전환 호환 GET /api/v1/ads/placements/{key}" }
+    uses: [house-ad]
+  - id: ads-console-single-login
+    kind: MECHANISM
+    name: "광고주 콘솔 단일 로그인"
+    category: SECURITY
+    level: BEGINNER
+    description: "ads.1989v.com 콘솔은 로그인을 그리지 않고 apex 로그인으로 보냈다가 도메인 쿠키로 돌아온다"
+    uses: [sec-single-login-origin]
+  - id: ads-free-tier-ceiling
+    kind: PROBLEM
+    name: "무료 티어 자원 상한"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "OCI 무료 범위를 넘을 수 없어 새 파드 · 새 저장소를 둘 수 없다. 광고는 메모리 등급 · 스키마 · 시크릿 · Redis 타임아웃 넷만 바꿨다"
+
+  # ── 용어 ─────────────────────────────────────────────────
+  - id: ads-glossary
+    kind: TERM
+    name: "광고 용어"
+    category: BASICS
+    level: BEGINNER
+    description: "광고를 설명하는 말 — 참여자 · 캠페인 구조 · 지면 · 식별 · 원장 · 규제"
+    contains: [ads-glossary-actors, ads-glossary-campaign, ads-glossary-inventory, ads-glossary-identity, ads-glossary-regulation]
+  - id: ads-glossary-actors
+    kind: TERM
+    name: "참여자"
+    category: BASICS
+    level: BEGINNER
+    description: "광고 시장에서 돈과 지면을 주고받는 쪽"
+    contains: [ads-advertiser, ads-publisher, ads-buy-sell-side, ads-advertiser-account, ads-publisher-account, ads-publisher-id]
+  - id: ads-advertiser
+    kind: TERM
+    name: "광고주"
+    category: BASICS
+    level: BEGINNER
+    description: "돈을 내고 광고를 싣는 쪽이다. 캠페인을 소유한다"
+    synonyms: ["advertiser", "demand"]
+  - id: ads-publisher
+    kind: TERM
+    name: "퍼블리셔"
+    category: BASICS
+    level: BEGINNER
+    description: "지면을 파는 쪽이다. 사이트를 소유하고 수익을 받는다. 1989v 는 자기 서브도메인만 퍼블리셔다"
+    synonyms: ["publisher", "supply", "매체"]
+  - id: ads-buy-sell-side
+    kind: TERM
+    name: "구매 쪽 · 판매 쪽"
+    category: BASICS
+    level: BEGINNER
+    description: "광고주 도구(Google Ads · DSP)와 퍼블리셔 도구(AdSense · SSP)의 구분이다. AdSense 는 두 쪽 수수료를 따로 뗀다"
+    synonyms: ["buy-side", "sell-side"]
+  - id: ads-advertiser-account
+    kind: TERM
+    name: "광고주 계정"
+    category: BASICS
+    level: BEGINNER
+    description: "로그인 회원이 광고주로 등록한 행이다. 권한은 전역 Role 이 아니라 이 프로필 행이 갖고, 정지되면 읽기만 된다"
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/advertiser/model/Advertiser.kt, symbol: "fun registerMember(memberId: Long, displayName: String): Advertiser", note: "MEMBER 광고주 — SYSTEM(하우스)과 구분" }
+  - id: ads-publisher-account
+    kind: TERM
+    name: "퍼블리셔 계정"
+    category: BASICS
+    level: BEGINNER
+    description: "수익을 받는 주체다. 1989v 는 단일 퍼블리셔라 원장 계정(퍼블리셔 미지급)으로만 있다"
+  - id: ads-publisher-id
+    kind: TERM
+    name: "게시자 ID"
+    category: BASICS
+    level: BEGINNER
+    description: "네트워크가 퍼블리셔에 준 식별자(ca-pub-…)다. 로더 · 지면 태그 · ads.txt · 소유권 메타에 같은 값이 들어간다"
+    synonyms: ["publisher ID", "ca-pub"]
+  - id: ads-glossary-campaign
+    kind: TERM
+    name: "캠페인 구조"
+    category: BASICS
+    level: BEGINNER
+    description: "광고주가 무엇을 얼마에 언제 보일지 담는 계층"
+    contains: [ads-campaign, ads-ad-group, ads-creative, ads-landing-url, ads-budget, ads-bid]
+  - id: ads-campaign
+    kind: TERM
+    name: "캠페인"
+    category: BASICS
+    level: BEGINNER
+    description: "예산 · 기간 · 목표를 묶는 단위다. 기간 밖 · 예산 소진은 상태가 아니라 게재 자격에서 파생한다"
+    synonyms: ["campaign"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/campaign/model/CampaignStatus.kt, symbol: "enum class CampaignStatus { DRAFT, ACTIVE, PAUSED, ENDED }", note: "ENDED 는 되돌리지 않는다" }
+  - id: ads-ad-group
+    kind: TERM
+    name: "광고그룹 · 라인아이템"
+    category: BASICS
+    level: BEGINNER
+    description: "타기팅 · 입찰가를 묶는 단위로 캠페인 아래 여럿 둔다. 1989v 1단계는 캠페인 한 층으로 합쳤다"
+    synonyms: ["ad group", "ad set", "line item"]
+  - id: ads-creative
+    kind: TERM
+    name: "소재"
+    category: BASICS
+    level: BEGINNER
+    description: "실제로 보이는 광고다 — 제목 · 문구 · 이미지 · 랜딩 링크와 크기 규격"
+    synonyms: ["creative", "크리에이티브"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/creative/model/CreativeStatus.kt, symbol: "enum class CreativeStatus { PENDING, APPROVED, REJECTED, ARCHIVED }", note: "심사 상태" }
+  - id: ads-landing-url
+    kind: TERM
+    name: "랜딩 URL · 클릭 URL"
+    category: BASICS
+    level: BEGINNER
+    description: "광고를 누르면 가는 곳(랜딩)과 그 전에 거치는 네트워크 리다이렉터 주소(클릭 URL)다. 랜딩은 https 만, userinfo 없이 받는다"
+    synonyms: ["landing page", "click URL", "destination URL"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/creative/model/LandingUrl.kt, symbol: "value class LandingUrl private constructor", note: "https · userinfo 금지 · 2048자" }
+  - id: ads-budget
+    kind: TERM
+    name: "일예산 · 총예산"
+    category: BASICS
+    level: BEGINNER
+    description: "하루와 전체 지출 한도다. 소진 판정은 청구 누계 + 미정산 지출로 한다"
+    synonyms: ["daily budget", "lifetime budget"]
+  - id: ads-bid
+    kind: TERM
+    name: "입찰가"
+    category: BASICS
+    level: BEGINNER
+    description: "광고주가 노출 천 회(CPM) 또는 클릭 한 번(CPC)에 낼 최대 금액이다. 1989v 는 정수 마이크로 크레딧으로 둔다"
+    synonyms: ["bid", "max CPC"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/campaign/model/Bid.kt, symbol: "data class Bid(val type: BidType, val micros: Long)", note: "과금 방식 + 마이크로 금액" }
+  - id: ads-glossary-inventory
+    kind: TERM
+    name: "지면"
+    category: BASICS
+    level: BEGINNER
+    description: "팔 수 있는 광고 자리와 그것을 싣는 코드"
+    contains: [ads-placement, ads-ad-tag, ads-inventory-catalog]
+  - id: ads-placement
+    kind: TERM
+    name: "광고 단위 · 지면 (구좌)"
+    category: BASICS
+    level: BEGINNER
+    description: "페이지 안의 광고 자리다. 키 · 호스트 · 형식 · 최저가를 갖는다. 국내 업계는 구좌라 부른다"
+    synonyms: ["ad unit", "placement", "slot", "구좌"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/placement/model/AdPlacement.kt, symbol: "class AdPlacement private constructor(", note: "지면의 단일 원본" }
+  - id: ads-ad-tag
+    kind: TERM
+    name: "게재 코드 (광고 태그)"
+    category: BASICS
+    level: BEGINNER
+    description: "퍼블리셔 페이지에 넣는 로더 스크립트 한 줄과 지면 태그(<ins data-client data-slot>)다"
+    synonyms: ["ad tag", "ad code"]
+  - id: ads-inventory-catalog
+    kind: TERM
+    name: "인벤토리 카탈로그"
+    category: BASICS
+    level: BEGINNER
+    description: "광고주가 보고 고르는 지면 목록이다 — 위치 설명 · 형식 · 예상 노출량 · 최저가"
+    synonyms: ["inventory", "rate card"]
+  - id: ads-glossary-identity
+    kind: TERM
+    name: "식별 · 원장"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "빈도 · 중복 · 어트리뷰션의 기준 키와 돈이 오가는 계정"
+    contains: [ads-identity-key, attribution-window, ads-ledger-accounts]
+  - id: ads-identity-key
+    kind: TERM
+    name: "식별 키"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "빈도 제한 · 중복 제거의 기준이다. 앱은 광고 식별자(IDFA · GAID/ADID), 웹은 1st-party 쿠키 ID — 1989v 는 visitorId 를 해시로만 쓰고 행태 타기팅에는 쓰지 않는다"
+    synonyms: ["IDFA", "GAID", "ADID", "advertising ID", "visitorId"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/token/policy/VisitorHash.kt, symbol: "object VisitorHash", note: "방문자 id 는 해시로만" }
+  - id: attribution-window
+    kind: TERM
+    name: "어트리뷰션 기간"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "클릭 · 노출 뒤 며칠 안의 전환까지 광고의 공으로 칠지다(예: 클릭 7일 · 노출 1일)"
+    synonyms: ["lookback window", "conversion window"]
+  - id: ads-ledger-accounts
+    kind: TERM
+    name: "원장 계정 과목"
+    category: DATA
+    level: INTERMEDIATE
+    description: "광고주 지갑 · 네트워크 수수료 · 퍼블리셔 미지급 · 충전 원천(음수 허용). 거래는 이들 사이의 이동이다"
+    synonyms: ["chart of accounts", "LedgerAccount"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/ledger/model/LedgerAccountType.kt, symbol: "enum class LedgerAccountType { ADVERTISER_WALLET, NETWORK_REVENUE, PUBLISHER_PAYABLE, TOPUP_SOURCE }", note: "원장 계정 종류" }
+  - id: ads-glossary-regulation
+    kind: TERM
+    name: "규제"
+    category: SECURITY
+    level: BEGINNER
+    description: "광고에 걸리는 법 · 지침"
+    contains: [ads-disclosure-law, ads-marketing-consent-law, ads-behavioral-data-guideline]
+  - id: ads-disclosure-law
+    kind: TERM
+    name: "광고 표시 의무"
+    category: SECURITY
+    level: BEGINNER
+    description: "표시광고법과 공정위 추천 · 보증 심사지침은 광고임을 소비자가 알아볼 수 있게 밝히라고 요구한다"
+    synonyms: ["표시광고법", "추천·보증 심사지침", "FTC disclosure"]
+  - id: ads-marketing-consent-law
+    kind: TERM
+    name: "광고성 정보 전송 동의"
+    category: SECURITY
+    level: BEGINNER
+    description: "정보통신망법 §50 — 알림 · 문자 · 메일로 광고를 보낼 때 사전 동의가 필요하다. 지면 광고는 해당하지 않는다"
+    synonyms: ["정보통신망법 50조", "opt-in"]
+  - id: ads-behavioral-data-guideline
+    kind: TERM
+    name: "행태정보 가이드라인"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "개인정보위의 맞춤형 광고 지침이다. 행태정보를 수집 · 이용하면 고지 · 선택권을 줘야 하고, 문맥 타기팅만 하면 부담이 작다"
+    synonyms: ["맞춤형 광고 가이드라인", "GDPR", "CCPA"]

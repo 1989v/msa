@@ -10,7 +10,7 @@ concepts:
     level: BEGINNER
     description: "코드를 이미지로 굽고, 선언한 상태대로 클러스터에 올리고, 트래픽을 받아 살아 있게 유지하는 일. 이 레포는 GitHub Actions 가 Jib 으로 이미지를 굽고 Argo CD 가 단일 노드 k3s 에 GitOps 로 올린다"
     synonyms: ["infrastructure", "deployment", "DevOps"]
-    contains: [infra-build-packaging, infra-delivery-pipeline, infra-declarative-config, infra-rollout, infra-traffic-routing, infra-orchestration, infra-glossary]
+    contains: [infra-build-packaging, infra-delivery-pipeline, infra-declarative-config, infra-orchestration, infra-rollout, infra-traffic-routing, infra-backup-dr, infra-glossary]
 
   # ── 빌드 · 패키징 ─────────────────────────────────────────
   - id: infra-build-packaging
@@ -19,7 +19,8 @@ concepts:
     category: INFRASTRUCTURE
     level: BEGINNER
     description: "소스를 모아 실행 가능한 컨테이너 이미지로 만든다. 서브모듈을 먼저 받아야 빌드가 성립하는 모듈이 있다"
-    contains: [git-submodule, container, docker, jib]
+    questions: ["컨테이너 이미지는 무엇으로 이루어지고 어떻게 재현 가능하게 만드나"]
+    contains: [git-submodule, container, infra-image-build, infra-supply-chain-security, infra-mutable-tag, infra-image-bloat, infra-vulnerable-image, infra-image-size]
     flows_to: [infra-delivery-pipeline]
   - id: git-submodule
     kind: MECHANISM
@@ -37,10 +38,108 @@ concepts:
     name: "컨테이너"
     category: INFRASTRUCTURE
     level: BEGINNER
-    description: "애플리케이션과 의존성을 한 이미지로 묶고, 커널을 공유한 채 프로세스를 격리해 실행한다. VM 보다 가볍고 어디서 돌려도 같은 이미지가 같게 돈다"
+    description: "애플리케이션과 의존성을 한 이미지로 묶고, 커널을 공유한 채 프로세스를 격리해 실행한다. 컨테이너는 namespace(보이는 것) 와 cgroup(쓸 수 있는 양) 을 가진 프로세스일 뿐 VM 이 아니다"
     synonyms: ["containerization", "컨테이너화"]
-    questions: ["컨테이너와 VM 은 무엇을 공유하고 무엇을 격리하나"]
+    questions: ["컨테이너와 VM 은 무엇을 공유하고 무엇을 격리하나", "컨테이너의 격리를 만드는 커널 기능 둘은 무엇인가"]
+    contains: [infra-linux-namespace, infra-cgroup, infra-union-filesystem, infra-container-runtime]
     uses: [infra-container-image]
+  - id: infra-linux-namespace
+    kind: MECHANISM
+    name: "리눅스 네임스페이스"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "프로세스가 보는 자원(pid · net · mnt · uts · ipc · user)을 따로 떼어 준다. 컨테이너 안의 PID 1 과 자기만의 네트워크 스택이 여기서 나온다"
+    synonyms: ["Linux namespace", "namespaces"]
+    questions: ["컨테이너 안에서 PID 1 이 죽으면 왜 컨테이너가 끝나나"]
+  - id: infra-cgroup
+    kind: MECHANISM
+    name: "cgroup"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "프로세스 묶음이 쓸 수 있는 CPU · 메모리 · I/O 양을 제한하고 센다. 쿠버네티스 limits 는 cgroup v2 의 memory.max · cpu.max 로 내려가고, 메모리 한도는 익명 메모리 · 페이지 캐시 · 커널 메모리를 한 통으로 센다"
+    synonyms: ["control groups", "cgroup v2"]
+    questions: ["컨테이너 메모리 한도는 무엇을 합쳐 세나", "cpu.max 에 닿으면 코어가 놀아도 왜 멈추나"]
+    causes:
+      - { to: infra-cpu-throttling, reason: "쿼터를 다 쓰면 주기가 끝날 때까지 실행을 멈춘다" }
+      - { to: infra-oom-killed, reason: "memory.max 를 넘으면 그 cgroup 안에서 프로세스를 죽인다" }
+  - id: infra-union-filesystem
+    kind: MECHANISM
+    name: "유니온 파일 시스템"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "읽기 전용 이미지 레이어를 겹쳐 하나의 루트 파일 시스템처럼 보이게 하고, 쓰기는 맨 위 쓰기 가능 레이어에만 한다(copy-on-write). 같은 레이어를 여러 컨테이너가 나눠 쓴다"
+    synonyms: ["OverlayFS", "copy-on-write", "union mount"]
+    uses: [infra-image-layer]
+  - id: infra-container-runtime
+    kind: MECHANISM
+    name: "컨테이너 런타임"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "이미지를 받아 풀고 namespace · cgroup 을 설정해 프로세스를 띄운다. kubelet 은 CRI 로 고수준 런타임(containerd · CRI-O)을 부르고, 그것이 OCI 런타임(runc)으로 실제 프로세스를 만든다"
+    synonyms: ["CRI", "containerd", "CRI-O", "runc", "OCI runtime"]
+    questions: ["쿠버네티스가 Docker 대신 containerd 를 직접 부르게 된 이유는"]
+    uses: [infra-oci-image-spec]
+  - id: infra-image-build
+    kind: MECHANISM
+    name: "이미지 빌드"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "소스와 의존성을 레이어로 쌓아 이미지를 만든다. 자주 바뀌는 것을 위 레이어에 두어야 캐시가 살고, 빌드 도구는 실행 이미지에 넣지 않는다"
+    synonyms: ["image build", "containerize"]
+    questions: ["레이어 순서가 빌드 시간과 이미지 크기에 어떤 영향을 주나"]
+    contains: [infra-multi-stage-build, infra-layer-caching, infra-multi-arch-build, infra-minimal-base-image, infra-immutable-image-tag, docker, jib]
+    uses: [infra-image-layer, infra-base-image, infra-image-tag]
+    measured_by: [infra-image-size]
+  - id: infra-multi-stage-build
+    kind: MECHANISM
+    name: "멀티 스테이지 빌드"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "빌드 단계 이미지에서 컴파일하고 산출물만 실행 단계 이미지로 복사한다. 컴파일러 · 소스 · 캐시가 실행 이미지에 남지 않는다"
+    synonyms: ["multi-stage build"]
+    code:
+      - { path: portal-fe/Dockerfile, symbol: "FROM node:24-alpine AS builder", note: "node 로 빌드하고 nginx 이미지에 정적 파일만 옮긴다" }
+    mitigates:
+      - { to: infra-image-bloat, reason: "빌드 도구와 중간 산출물을 실행 이미지에서 뺀다" }
+  - id: infra-layer-caching
+    kind: MECHANISM
+    name: "레이어 캐싱"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "바뀌지 않은 레이어는 다시 만들지도 다시 올리지도 않는다. 의존성처럼 드물게 바뀌는 것을 아래에, 애플리케이션 클래스처럼 자주 바뀌는 것을 위에 둔다"
+    synonyms: ["layer cache", "build cache"]
+    uses: [infra-image-layer]
+  - id: infra-multi-arch-build
+    kind: MECHANISM
+    name: "멀티 아키텍처 빌드"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "한 태그 아래 amd64 · arm64 같은 플랫폼별 이미지를 묶어 올린다(매니페스트 리스트). 운영 노드가 arm64 면 arm64 이미지가 있어야 뜬다"
+    synonyms: ["multi-arch image", "manifest list", "buildx"]
+    code:
+      - { path: buildSrc/src/main/kotlin/commerce.jib-convention.gradle.kts, symbol: "val jibPlatforms", note: "기본은 arm64, 속성으로 amd64 를 더해 멀티 아키텍처로 굽는다" }
+  - id: infra-minimal-base-image
+    kind: MECHANISM
+    name: "최소 베이스 이미지"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "셸 · 패키지 관리자 없이 실행에 필요한 것만 든 베이스(distroless · alpine)를 고른다. 이미지가 작아지고 취약점 표면이 준다"
+    synonyms: ["distroless", "alpine", "slim image"]
+    mitigates:
+      - { to: infra-image-bloat, reason: "베이스 레이어 자체가 작다" }
+      - { to: infra-vulnerable-image, reason: "들어 있는 패키지가 적어 취약점이 적다" }
+  - id: infra-immutable-image-tag
+    kind: MECHANISM
+    name: "불변 이미지 태그"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "커밋 SHA 처럼 한 번 쓴 태그를 다시 쓰지 않는다. 태그가 곧 버전이 되어 롤백이 이전 태그로 되돌리는 일이 된다"
+    synonyms: ["immutable tag", "git sha tag"]
+    code:
+      - { path: buildSrc/src/main/kotlin/commerce.jib-convention.gradle.kts, symbol: "// Usage: ./gradlew jib -PjibTag=abc1234", note: "커밋 SHA 를 이미지 태그로 쓴다" }
+    uses: [infra-image-digest]
+    mitigates:
+      - { to: infra-mutable-tag, reason: "같은 태그가 다른 내용을 가리키는 일이 없다" }
   - id: docker
     kind: TECHNOLOGY
     name: "Docker"
@@ -52,6 +151,7 @@ concepts:
       - { path: portal-fe/Dockerfile, symbol: "FROM nginx:1.27-alpine", note: "portal-fe 멀티 스테이지 빌드의 실행 단계" }
     implements:
       - { to: container, reason: "Dockerfile 로 이미지를 굽고 컨테이너 런타임으로 실행한다" }
+      - { to: infra-multi-stage-build, reason: "FROM ... AS 로 단계를 나눈다" }
   - id: jib
     kind: TECHNOLOGY
     name: "Jib"
@@ -62,8 +162,64 @@ concepts:
       - { path: buildSrc/src/main/kotlin/commerce.jib-convention.gradle.kts, symbol: 'id("com.google.cloud.tools.jib")', note: "JVM 서비스 공통 Jib 컨벤션 플러그인" }
     implements:
       - { to: container, reason: "JVM 서비스 이미지를 Jib 이 굽는다" }
+      - { to: infra-layer-caching, reason: "의존성 · 리소스 · 클래스를 별도 레이어로 자동으로 가른다" }
+      - { to: infra-multi-arch-build, reason: "플랫폼 목록을 받아 매니페스트 리스트로 올린다" }
     alternative_to:
       - { to: docker, reason: "JVM 이미지는 Dockerfile 대신 Jib 으로 굽는다 — 데몬이 필요 없고 레이어가 자동으로 갈린다" }
+  - id: infra-supply-chain-security
+    kind: MECHANISM
+    name: "소프트웨어 공급망 보안"
+    category: SECURITY
+    level: ADVANCED
+    description: "배포되는 이미지가 알려진 취약점이 없고, 우리가 만든 그 이미지가 맞는지 확인한다. 스캔 · 서명 · 구성 목록(SBOM)을 파이프라인에 넣는다"
+    synonyms: ["supply chain security", "SLSA"]
+    contains: [infra-image-scanning, infra-image-signing]
+    uses: [infra-sbom]
+    mitigates:
+      - { to: sec-supply-chain-attack, reason: "바꿔치기되거나 오염된 이미지가 클러스터에 들어오지 못하게 한다" }
+  - id: infra-image-scanning
+    kind: MECHANISM
+    name: "이미지 취약점 스캔"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "이미지 안 패키지 목록을 CVE 데이터베이스와 대조한다. 빌드 때 한 번, 레지스트리에 있는 동안 주기적으로 돌린다"
+    synonyms: ["image scanning", "Trivy", "CVE scan"]
+    mitigates:
+      - { to: infra-vulnerable-image, reason: "알려진 취약점이 있는 이미지를 배포 전에 막는다" }
+  - id: infra-image-signing
+    kind: MECHANISM
+    name: "이미지 서명"
+    category: SECURITY
+    level: ADVANCED
+    description: "빌드한 이미지 다이제스트에 서명하고, 클러스터 입장 정책이 서명이 맞는 이미지만 받는다. 레지스트리가 뚫려도 바꿔치기한 이미지가 돌지 않는다"
+    synonyms: ["cosign", "Sigstore", "image signing"]
+    uses: [infra-image-digest]
+  - id: infra-mutable-tag
+    kind: PROBLEM
+    name: "태그 덮어쓰기"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "latest 처럼 같은 태그에 다른 이미지를 다시 올리는 상태. 노드마다 다른 내용이 돌고, 되돌릴 이전 버전을 가리킬 방법이 없다"
+    synonyms: ["latest tag", "mutable tag"]
+  - id: infra-image-bloat
+    kind: PROBLEM
+    name: "이미지 비대"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "빌드 도구 · 캐시 · 불필요한 패키지가 실행 이미지에 남아 커진 상태. 끌어오기가 느려져 기동과 확장이 늦고 레지스트리 용량을 먹는다"
+    measured_by: [infra-image-size]
+  - id: infra-vulnerable-image
+    kind: PROBLEM
+    name: "취약한 이미지"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "알려진 취약점(CVE)이 있는 패키지를 품은 이미지가 운영에서 도는 상태"
+  - id: infra-image-size
+    kind: METRIC
+    name: "이미지 크기"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "레이어를 합친 이미지 용량. 끌어오기 시간과 레지스트리 저장 용량(무료 한도)을 정한다"
 
   # ── 배포 파이프라인 ───────────────────────────────────────
   - id: infra-delivery-pipeline
@@ -72,7 +228,8 @@ concepts:
     category: INFRASTRUCTURE
     level: BEGINNER
     description: "커밋마다 검사 · 테스트 · 이미지 빌드 · 레지스트리 푸시 · 매니페스트 갱신을 자동으로 돌린다"
-    contains: [ci-cd, github-actions]
+    questions: ["파이프라인이 빠르고 안전한지 무엇으로 재나"]
+    contains: [ci-cd, github-actions, infra-silent-image-skip, infra-deploy-frequency, infra-lead-time-for-changes, infra-change-failure-rate]
     flows_to: [infra-declarative-config]
   - id: ci-cd
     kind: MECHANISM
@@ -84,7 +241,67 @@ concepts:
     questions: ["CI 와 CD 는 각각 무엇을 자동화하나", "매니페스트 태그를 커밋하는 방식은 kubectl 로 직접 배포하는 것과 무엇이 다른가"]
     code:
       - { path: .github/workflows/images.yml, symbol: "Update oci-arm manifest image tags", note: "이미지 푸시 뒤 oci-arm 매니페스트 태그를 갱신하는 단계" }
-    uses: [infra-image-registry]
+    contains: [infra-trunk-based-development, infra-pipeline-gate, infra-change-detection-build, infra-build-once-promote, infra-manifest-commit-back, infra-pipeline-concurrency-control]
+    uses: [infra-image-registry, infra-artifact]
+    measured_by: [infra-deploy-frequency, infra-lead-time-for-changes, infra-change-failure-rate, obs-mttr]
+  - id: infra-trunk-based-development
+    kind: MECHANISM
+    name: "트렁크 기반 개발"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "모두가 짧게 사는 브랜치로 main 에 자주 합친다. 긴 브랜치의 병합 지옥을 없애는 대신 main 이 늘 배포 가능해야 해서 게이트와 기능 플래그가 따라온다"
+    synonyms: ["trunk-based development", "TBD"]
+    uses: [infra-feature-flag]
+  - id: infra-pipeline-gate
+    kind: MECHANISM
+    name: "파이프라인 게이트"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "컴파일 · 구조 규칙 · 테스트를 통과해야 다음 단계로 넘어간다. 게이트가 실패하면 그 커밋의 산출물은 만들어지지 않는다"
+    synonyms: ["quality gate", "CI gate"]
+    code:
+      - { path: .github/workflows/ci.yml, symbol: "name: ./gradlew verifyArchitecture", note: "레이어 구조 게이트가 컴파일 앞에 선다" }
+    causes:
+      - { to: infra-silent-image-skip, reason: "테스트 게이트 한 번 실패가 그 커밋의 모든 이미지를 막는다" }
+  - id: infra-change-detection-build
+    kind: MECHANISM
+    name: "변경 감지 빌드"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "모노레포에서 바뀐 경로를 서비스로 매핑해 그 서비스만 테스트하고 이미지를 굽는다. 매핑에 빠진 모듈은 바뀌어도 다시 빌드되지 않는다"
+    synonyms: ["path filter", "affected build", "monorepo selective build"]
+    code:
+      - { path: .github/workflows/images.yml, symbol: "id: changes", note: "변경 경로에서 JVM · Docker · Kustomize 대상 서비스를 뽑는 단계" }
+    causes:
+      - { to: infra-silent-image-skip, reason: "경로 매핑에 없는 모듈의 변경은 리빌드를 부르지 않는다" }
+  - id: infra-build-once-promote
+    kind: MECHANISM
+    name: "한 번 빌드 · 승격"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "산출물은 한 번만 굽고, 같은 다이제스트를 개발 → 스테이지 → 운영으로 옮긴다. 환경 차이는 이미지가 아니라 설정이 진다"
+    synonyms: ["build once deploy many", "artifact promotion"]
+    uses: [infra-image-digest]
+  - id: infra-manifest-commit-back
+    kind: MECHANISM
+    name: "매니페스트 태그 커밋백"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "CI 가 새 이미지 태그를 매니페스트에 적어 Git 에 커밋하고, GitOps 컨트롤러가 그 커밋을 끌어간다. 여러 런이 겹치면 최신 main 위에 태그만 다시 적어야 서로 덮지 않는다"
+    synonyms: ["image tag bump", "commit-back"]
+    code:
+      - { path: k8s/overlays/oci-arm/kustomization.yaml, symbol: "newTag: 95d169d", note: "CI 가 커밋한 서비스별 이미지 태그" }
+    alternative_to:
+      - { to: infra-image-update-automation, reason: "클러스터 쪽 에이전트가 레지스트리를 감시하는 대신 CI 가 태그를 직접 커밋한다" }
+  - id: infra-pipeline-concurrency-control
+    kind: MECHANISM
+    name: "파이프라인 동시 실행 제어"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "같은 브랜치의 파이프라인 런을 한 줄로 세우거나 옛 런을 취소한다. 푸시 도중 취소하면 반쪽 매니페스트가 남으므로 취소하지 않고 기다리게 하기도 한다"
+    synonyms: ["concurrency group", "cancel-in-progress"]
+    code:
+      - { path: .github/workflows/images.yml, symbol: "group: images-${{ github.ref }}", note: "ref 당 한 런만 돌게 묶는다" }
   - id: github-actions
     kind: TECHNOLOGY
     name: "GitHub Actions"
@@ -95,6 +312,34 @@ concepts:
       - { path: .github/workflows/images.yml, symbol: "runs-on: ubuntu-24.04-arm", note: "운영 노드와 같은 arm64 러너에서 이미지를 굽는다" }
     implements:
       - { to: ci-cd, reason: "ci.yml(게이트) · images.yml(빌드 · 푸시 · 태그 커밋)이 파이프라인이다" }
+      - { to: infra-pipeline-concurrency-control, reason: "워크플로의 concurrency 키" }
+  - id: infra-silent-image-skip
+    kind: PROBLEM
+    name: "이미지 누락"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "게이트 실패나 경로 매핑 누락으로 새 이미지가 조용히 만들어지지 않은 상태. 코드는 main 에 있는데 운영은 옛 태그로 돈다"
+  - id: infra-deploy-frequency
+    kind: METRIC
+    name: "배포 빈도"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "운영에 배포한 횟수를 기간으로 나눈 값. DORA 네 지표 중 하나로, 작은 변경을 자주 내보내는지 본다"
+    synonyms: ["deployment frequency", "DORA"]
+  - id: infra-lead-time-for-changes
+    kind: METRIC
+    name: "변경 리드 타임"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "커밋이 운영에 반영되기까지 걸린 시간. 파이프라인의 느린 단계와 대기열이 여기에 드러난다"
+    synonyms: ["lead time for changes"]
+  - id: infra-change-failure-rate
+    kind: METRIC
+    name: "변경 실패율"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "배포 중 장애 · 롤백 · 핫픽스를 부른 배포의 비율. 속도만 올리고 안정성을 잃지 않았는지 본다"
+    synonyms: ["change failure rate"]
 
   # ── 선언형 구성 ───────────────────────────────────────────
   - id: infra-declarative-config
@@ -103,7 +348,7 @@ concepts:
     category: INFRASTRUCTURE
     level: INTERMEDIATE
     description: "클러스터가 가져야 할 상태를 파일로 적고, 도구가 실제 상태를 그 파일에 맞춘다. 명령을 순서대로 치는 대신 결과를 선언한다"
-    contains: [infrastructure-as-code, infra-gitops, infra-sync-watchdog, kustomize, argo-cd, infra-config-drift, infra-stuck-sync, infra-sync-duration]
+    contains: [infrastructure-as-code, infra-manifest-composition, infra-gitops, infra-sync-watchdog, argo-cd, infra-config-drift, infra-stuck-sync, infra-sync-duration]
     flows_to: [infra-rollout]
   - id: infrastructure-as-code
     kind: MECHANISM
@@ -112,10 +357,59 @@ concepts:
     level: INTERMEDIATE
     description: "인프라 구성을 코드 파일로 정의하고 버전 관리한다. 리뷰 · 되돌리기 · 재현이 코드와 같은 방식으로 된다"
     synonyms: ["Infrastructure as Code", "코드형 인프라"]
-    questions: ["콘솔에서 손으로 바꾼 설정은 왜 IaC 에서 문제가 되나"]
+    questions: ["콘솔에서 손으로 바꾼 설정은 왜 IaC 에서 문제가 되나", "선언형과 명령형 인프라 관리는 무엇이 다른가"]
     code:
       - { path: k8s/overlays/prod-k8s/kustomization.yaml, symbol: "kind: Kustomization", note: "managed K8s 배포 형태를 파일로 선언" }
+    contains: [infra-plan-apply, infra-immutable-infrastructure]
     uses: [infra-desired-state, infra-overlay]
+    mitigates:
+      - { to: infra-config-drift, reason: "원본이 파일에 있어 실제 상태와 비교할 기준이 생긴다" }
+  - id: infra-plan-apply
+    kind: MECHANISM
+    name: "변경 계획 후 적용"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "적용 전에 현재 상태와 선언의 차이를 계산해 보여 주고, 확인한 차이만 적용한다. 무엇이 지워지는지 적용 뒤가 아니라 앞에서 안다"
+    synonyms: ["plan/apply", "kubectl diff", "dry-run"]
+  - id: infra-immutable-infrastructure
+    kind: MECHANISM
+    name: "불변 인프라"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "돌고 있는 서버를 고치지 않고 새 이미지로 새로 띄워 바꿔 끼운다. 손으로 고친 흔적이 쌓이지 않아 어느 인스턴스든 같다"
+    synonyms: ["immutable infrastructure", "cattle not pets"]
+    mitigates:
+      - { to: infra-config-drift, reason: "고쳐 쓰지 않고 교체하므로 인스턴스별 차이가 생기지 않는다" }
+  - id: infra-manifest-composition
+    kind: MECHANISM
+    name: "매니페스트 조립"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "환경마다 조금씩 다른 매니페스트를 공통 부분과 차이로 나눠 만든다. 템플릿에 값을 채우는 방식(Helm)과 베이스에 패치를 겹치는 방식(Kustomize)이 있다"
+    synonyms: ["manifest templating", "configuration management"]
+    questions: ["Helm 과 Kustomize 는 환경별 차이를 각각 어떻게 표현하나"]
+    contains: [kustomize, helm, infra-manifest-patch, infra-config-generator]
+    uses: [infra-overlay, infra-helm-chart, infra-helm-values]
+  - id: infra-manifest-patch
+    kind: MECHANISM
+    name: "매니페스트 패치"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "베이스 리소스의 일부만 바꾼다. 전략적 병합 패치는 리소스 모양 그대로 덮고, JSON 6902 패치는 경로와 연산으로 바꾼다 — 목록의 인덱스를 가리키는 패치는 목록 순서가 바뀌면 엉뚱한 항목을 고친다"
+    synonyms: ["strategic merge patch", "JSON 6902 patch"]
+    code:
+      - { path: k8s/overlays/oci-arm/patches/rolling-surge-first.yaml, symbol: "maxUnavailable: 0", note: "모든 Deployment 의 교체 전략을 패치로 바꾼다" }
+  - id: infra-config-generator
+    kind: MECHANISM
+    name: "설정 생성기"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "파일에서 ConfigMap · Secret 을 만들고 내용 해시를 이름에 붙인다. 내용이 바뀌면 이름이 바뀌어 참조하는 파드가 자동으로 새로 뜬다"
+    synonyms: ["configMapGenerator", "secretGenerator"]
+    code:
+      - { path: k8s/infra/prod/monitoring/dashboards/kustomization.yaml, symbol: "configMapGenerator", note: "Grafana 대시보드 JSON 을 ConfigMap 으로 만든다" }
+    mitigates:
+      - { to: infra-stale-config, reason: "해시 접미사가 바뀌면 롤아웃이 일어난다" }
   - id: kustomize
     kind: TECHNOLOGY
     name: "Kustomize"
@@ -126,6 +420,21 @@ concepts:
       - { path: k8s/overlays/oci-arm/kustomization.yaml, symbol: "  - ../k3s-lite", note: "oci-arm 오버레이가 k3s-lite 를 베이스로 겹친다" }
     implements:
       - { to: infrastructure-as-code, reason: "배포 형태 셋(k3s-lite · oci-arm · prod-k8s)을 오버레이로 선언한다" }
+      - { to: infra-manifest-composition, reason: "베이스 + 오버레이 패치" }
+      - { to: infra-config-generator, reason: "configMapGenerator · secretGenerator" }
+  - id: helm
+    kind: TECHNOLOGY
+    name: "Helm"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "템플릿과 값 파일을 묶은 차트로 애플리케이션을 설치 · 업그레이드 · 롤백하는 패키지 관리자. 이 레포는 kube-prometheus-stack 같은 외부 스택을 차트로 설치한다"
+    synonyms: ["Helm chart"]
+    code:
+      - { path: k8s/infra/prod/monitoring/README.md, symbol: "helm upgrade --install kube-prometheus-stack", note: "모니터링 스택을 values.yaml 로 설치" }
+    implements:
+      - { to: infra-manifest-composition, reason: "Go 템플릿에 values 를 채운다" }
+    alternative_to:
+      - { to: kustomize, reason: "패치를 겹치는 대신 템플릿에 값을 넣는다 — 배포 이력과 훅을 갖지만 템플릿이 읽기 어렵다" }
   - id: infra-gitops
     kind: MECHANISM
     name: "GitOps"
@@ -133,12 +442,57 @@ concepts:
     level: INTERMEDIATE
     description: "Git 브랜치를 배포의 단일 원본으로 두고, 클러스터 안의 에이전트가 Git 과 실제 상태를 비교해 끌어와 맞춘다. 배포는 커밋이고 롤백은 되돌리기 커밋이다"
     questions: ["푸시형 배포(CI 가 kubectl apply)와 풀형 배포(GitOps)는 권한이 어디에 있나", "클러스터에서 직접 고친 값은 GitOps 아래에서 어떻게 되나"]
-    uses: [infra-desired-state]
+    contains: [infra-sync-policy, infra-sync-wave, infra-app-of-apps, infra-image-update-automation, infra-server-side-apply]
+    uses: [infra-desired-state, infra-reconcile-loop]
     causes:
       - { to: infra-stuck-sync, reason: "동기화 작업이 끝나지 않으면 뒤따르는 모든 리비전이 막힌다" }
     mitigates:
       - { to: infra-config-drift, reason: "selfHeal 이 Git 과 다른 클러스터 상태를 되돌린다" }
     measured_by: [infra-sync-duration]
+  - id: infra-sync-policy
+    kind: MECHANISM
+    name: "동기화 정책"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "자동 동기화 · 자가 치유(selfHeal) · 정리(prune) · 재시도를 켜고 끈다. prune 은 Git 에서 지운 리소스를 클러스터에서도 지우므로, 잘못된 커밋 하나가 리소스를 연쇄로 지울 수 있다"
+    synonyms: ["auto-sync", "selfHeal", "prune"]
+    questions: ["selfHeal: true 가 장애 대응 중 손으로 한 조치를 어떻게 되돌리나"]
+    code:
+      - { path: k8s/argocd/application.yaml, symbol: "prune: true", note: "Git 에서 사라진 리소스를 클러스터에서도 지운다" }
+  - id: infra-sync-wave
+    kind: MECHANISM
+    name: "동기화 웨이브 · 훅"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "리소스에 순서 번호를 붙여 작은 번호부터 적용하고, 앞 웨이브가 건강해져야 다음으로 넘어간다. PreSync 훅으로 마이그레이션을, PostSync 훅으로 스모크 테스트를 끼운다"
+    synonyms: ["sync wave", "sync hook", "PreSync", "PostSync"]
+    code:
+      - { path: k8s/overlays/oci-arm/kustomization.yaml, symbol: 'argocd.argoproj.io/sync-wave: "1"', note: "서비스 롤아웃을 웨이브로 나눠 단일 노드 동시 서지를 막는다" }
+    mitigates:
+      - { to: infra-resource-contention, reason: "전 서비스가 한꺼번에 롤아웃되지 않게 순서를 준다" }
+  - id: infra-app-of-apps
+    kind: MECHANISM
+    name: "App of Apps · ApplicationSet"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "Application 을 만드는 Application(또는 생성기)으로 서비스 · 환경 · 클러스터 조합을 선언한다. 목록 · 클러스터 · Git 디렉토리 생성기가 대표적이다"
+    synonyms: ["App of Apps", "ApplicationSet", "generator"]
+  - id: infra-image-update-automation
+    kind: MECHANISM
+    name: "이미지 갱신 자동화"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "클러스터 쪽 에이전트가 레지스트리에서 새 태그를 찾아 매니페스트에 써 넣는다(Argo CD Image Updater · Flux Image Automation). CI 가 배포 대상 저장소를 몰라도 된다"
+    synonyms: ["Image Updater", "image automation"]
+  - id: infra-server-side-apply
+    kind: MECHANISM
+    name: "서버 측 적용"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "필드마다 소유자(field manager)를 기록하며 API 서버가 병합한다. 여러 도구가 한 리소스의 다른 필드를 고쳐도 충돌을 감지하고, 큰 매니페스트의 주석 크기 한도를 피한다"
+    synonyms: ["Server-Side Apply", "SSA", "field manager"]
+    code:
+      - { path: k8s/argocd/application.yaml, symbol: "- ServerSideApply=true", note: "kustomize 매니페스트 크기 한도를 피한다" }
   - id: argo-cd
     kind: TECHNOLOGY
     name: "Argo CD"
@@ -150,6 +504,8 @@ concepts:
       - { path: k8s/argocd/application.yaml, symbol: "selfHeal: true", note: "수동 변경을 Git 상태로 되돌리는 자동 동기화 정책" }
     implements:
       - { to: infra-gitops, reason: "Application 하나가 oci-arm 오버레이를 끌어와 맞춘다" }
+      - { to: infra-sync-policy, reason: "automated · selfHeal · prune · retry" }
+      - { to: infra-sync-wave, reason: "sync-wave 주석과 리소스 훅" }
   - id: infra-sync-watchdog
     kind: MECHANISM
     name: "동기화 워치독"
@@ -181,28 +537,990 @@ concepts:
     level: INTERMEDIATE
     description: "동기화 작업이 시작해서 끝나기까지 걸린 시간. 평소 수 분이고, 워치독 기준(20분)을 넘으면 정지로 본다"
 
+  # ── 쿠버네티스 운영 ───────────────────────────────────────
+  - id: infra-orchestration
+    kind: STAGE
+    name: "컨테이너 오케스트레이션"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "여러 컨테이너를 노드에 배치하고, 죽으면 다시 띄우고, 부하에 맞춰 수를 조절한다. 쿠버네티스는 이 일을 선언한 상태와 실제 상태를 맞추는 컨트롤러 묶음으로 한다"
+    synonyms: ["container orchestration", "쿠버네티스 운영"]
+    contains: [infra-cluster-architecture, infra-workload-management, infra-config-injection, infra-storage-provisioning, infra-scheduling, infra-autoscaling, infra-cluster-networking, infra-cluster-extension, infra-cluster-security, health-check, kubernetes, k3s, infra-resource-contention, infra-cpu-utilization]
+  - id: health-check
+    kind: MECHANISM
+    name: "헬스 체크"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "인스턴스가 살아 있는지(liveness), 요청을 받을 준비가 됐는지(readiness)를 주기적으로 묻는다. 준비 안 된 인스턴스는 트래픽에서 빼고, 죽은 것은 다시 띄운다"
+    synonyms: ["health check", "probe"]
+    questions: ["readiness 실패와 liveness 실패는 각각 무엇을 일으키나", "타임아웃이 너무 짧으면 멀쩡한 파드에 무슨 일이 생기나", "startupProbe 는 JVM 앱에서 무엇을 막나"]
+    code:
+      - { path: k8s/base/commerce/deployment.yaml, symbol: "path: /actuator/health/readiness", note: "Spring Actuator readiness 를 프로브로 쓴다" }
+      - { path: k8s/overlays/k3s-lite/patches/startup-probe.yaml, symbol: "startupProbe:", note: "느린 JVM 기동 동안 liveness 가 파드를 죽이지 않게 한다" }
+    uses:
+      - infra-probe
+      - { to: spring-boot, reason: "actuator 의 readiness · liveness 엔드포인트" }
+    causes:
+      - { to: infra-deploy-downtime, reason: "타임아웃이 짧으면 부하 순간 멀쩡한 파드의 readiness 가 실패해 엔드포인트가 빈다" }
+      - { to: infra-crashloop-backoff, reason: "기동이 느린데 liveness 가 먼저 돌면 파드를 반복해서 죽인다" }
+  - id: infra-resource-contention
+    kind: PROBLEM
+    name: "노드 자원 경합"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "한 노드의 CPU · 메모리를 여러 파드가 동시에 다투는 상태. 단일 노드에서 전 서비스가 한꺼번에 롤아웃되면 부하가 치솟아 프로브와 터널 같은 다른 파드가 굶는다"
+    synonyms: ["noisy neighbor"]
+    causes:
+      - { to: infra-deploy-downtime, reason: "굶은 파드가 제때 대답하지 못해 트래픽에서 빠진다" }
+    measured_by: [infra-cpu-utilization]
+  - id: infra-cpu-utilization
+    kind: METRIC
+    name: "CPU 사용률"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "요청한 CPU 대비 실제로 쓴 비율. HPA 의 목표값이자 노드 경합의 신호다"
+  - id: kubernetes
+    kind: TECHNOLOGY
+    name: "쿠버네티스"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "선언한 상태대로 컨테이너를 배치 · 재시작 · 확장하는 오케스트레이터. 이 레포의 managed K8s 배포 형태(prod-k8s)가 표준 쿠버네티스를 전제한다"
+    synonyms: ["Kubernetes", "K8s"]
+    implements:
+      - { to: infra-rolling-update, reason: "Deployment 의 기본 교체 전략" }
+      - { to: health-check, reason: "readiness · liveness · startup 프로브" }
+      - { to: auto-scaler, reason: "HorizontalPodAutoscaler" }
+      - { to: service-discovery, reason: "Service 이름이 클러스터 DNS 로 풀린다" }
+      - { to: load-balancer, reason: "Service 가 Ready 엔드포인트에 요청을 나눈다" }
+      - { to: infra-reconcile-loop, reason: "내장 컨트롤러 전부가 같은 조정 루프다" }
+      - { to: infra-control-plane, reason: "apiserver · etcd · scheduler · controller-manager" }
+  - id: k3s
+    kind: TECHNOLOGY
+    name: "k3s"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "바이너리 하나로 도는 경량 쿠버네티스 배포판. etcd 대신 kine(sqlite)을 상태 저장소로 쓸 수 있다. 이 레포 운영(oci-arm)은 OCI Ampere A1 무료 범위(4 OCPU · 24GB) 단일 노드 k3s 위에서 돈다"
+    code:
+      - { path: k8s/overlays/oci-arm/README.md, symbol: "Single-node k3s 배포용 overlay", note: "운영 배포 형태가 단일 노드 k3s 다" }
+    implements:
+      - { to: infra-rolling-update, reason: "쿠버네티스 API 를 그대로 제공해 Deployment 전략이 같게 돈다" }
+      - { to: health-check, reason: "같은 프로브 규격" }
+      - { to: infra-single-node-cluster, reason: "서버 · 에이전트를 한 프로세스로 묶어 노드 하나에 올린다" }
+    alternative_to:
+      - { to: kubernetes, reason: "구성 요소를 한 바이너리로 묶고 가벼운 저장소를 쓴 배포판 — API 는 같다" }
+
+  # 클러스터 구성
+  - id: infra-cluster-architecture
+    kind: STAGE
+    name: "클러스터 구성"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "제어 평면이 원하는 상태를 저장하고 결정하며, 각 노드의 에이전트가 그 결정을 실행한다. kubectl apply 한 줄이 apiserver → 저장소 → 컨트롤러 → 스케줄러 → kubelet 으로 흐른다"
+    questions: ["kubectl apply 한 줄은 클러스터 안에서 어떤 순서로 흘러가나", "스케줄러가 파드를 직접 시작하나"]
+    contains: [infra-control-plane, infra-data-plane, infra-single-node-cluster, infra-multi-cluster, infra-node-lifecycle, infra-state-store-compaction, infra-state-store-bloat]
+  - id: infra-control-plane
+    kind: MECHANISM
+    name: "제어 평면"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "클러스터의 두뇌. 요청을 받고(apiserver) 상태를 저장하고(etcd) 배치를 정하고(scheduler) 상태를 맞춘다(controller-manager)"
+    synonyms: ["control plane", "master"]
+    contains: [infra-kube-apiserver, infra-cluster-state-store, infra-kube-scheduler, infra-controller-manager, infra-cloud-controller-manager]
+  - id: infra-kube-apiserver
+    kind: MECHANISM
+    name: "kube-apiserver"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "모든 구성 요소가 거치는 유일한 REST 입구. 인증 → 인가 → 입장 제어 → 검증을 거쳐 저장소에 쓰고, 변경을 watch 로 흘려 보낸다"
+    synonyms: ["API server"]
+    questions: ["apiserver 요청 파이프라인의 단계는 무엇인가"]
+    uses: [infra-admission-control, infra-k8s-rbac]
+  - id: infra-cluster-state-store
+    kind: MECHANISM
+    name: "클러스터 상태 저장소"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "클러스터의 모든 객체를 담는 일관된 키-값 저장소. 표준은 Raft 합의로 복제하는 etcd 이고, k3s 는 kine 으로 sqlite 등을 etcd API 뒤에 둔다. 리비전을 계속 쌓으므로 컴팩션이 필요하다"
+    synonyms: ["etcd", "kine"]
+    questions: ["etcd 를 홀수 대로 두는 이유는", "etcd 백업이 없으면 무엇을 잃나"]
+    causes:
+      - { to: infra-state-store-bloat, reason: "옛 리비전을 지우지 않으면 저장소가 계속 자란다" }
+  - id: infra-kube-scheduler
+    kind: MECHANISM
+    name: "kube-scheduler"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "노드가 정해지지 않은 파드마다 걸러내기(filter)와 점수 매기기(score)로 노드를 골라 바인딩만 한다. 실제 기동은 kubelet 이 한다"
+    synonyms: ["scheduler", "scheduling framework"]
+    uses: [infra-resource-requests-limits, infra-node-affinity, infra-taint-toleration]
+    causes:
+      - { to: infra-pending-pod, reason: "조건을 만족하는 노드가 없으면 파드를 배치하지 않는다" }
+  - id: infra-controller-manager
+    kind: MECHANISM
+    name: "kube-controller-manager"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "Deployment · ReplicaSet · Node · Job 같은 내장 컨트롤러를 한 프로세스에서 돌린다. 각 컨트롤러는 자기 리소스의 실제 상태를 원하는 상태로 끌고 간다"
+    synonyms: ["controller manager"]
+    uses: [infra-reconcile-loop]
+  - id: infra-cloud-controller-manager
+    kind: MECHANISM
+    name: "cloud-controller-manager"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "클라우드 API 에 붙는 컨트롤러를 따로 떼어 낸 것. LoadBalancer 타입 Service 에 로드 밸런서를 만들고 노드 수명과 라우트를 클라우드와 맞춘다"
+    synonyms: ["CCM"]
+  - id: infra-data-plane
+    kind: MECHANISM
+    name: "노드 구성 요소"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "워커 노드마다 도는 에이전트. kubelet 이 파드를 띄우고 상태를 보고하며, kube-proxy 가 Service 주소를 파드로 잇는 규칙을 깐다"
+    synonyms: ["data plane", "worker node"]
+    contains: [infra-kubelet, infra-kube-proxy]
+  - id: infra-kubelet
+    kind: MECHANISM
+    name: "kubelet"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "노드에 배정된 파드를 컨테이너 런타임으로 띄우고, 프로브를 돌리고, 자원 압박이 오면 파드를 축출한다"
+    uses: [infra-container-runtime, infra-probe, infra-qos-class]
+  - id: infra-kube-proxy
+    kind: MECHANISM
+    name: "kube-proxy"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "Service 의 가상 IP 로 온 패킷을 뒤의 파드로 보내는 규칙을 노드마다 깐다. iptables 모드는 규칙 수에 비례해 느려지고, IPVS 는 해시 테이블로 찾는다"
+    synonyms: ["iptables mode", "IPVS"]
+    questions: ["ClusterIP 는 실제로 어디에 존재하나"]
+    uses: [infra-k8s-service, infra-endpoint-slice]
+    causes:
+      - { to: net-http2-connection-imbalance, reason: "연결 단위로 나누므로 오래 사는 연결이 처음 잡힌 파드에만 요청을 보낸다" }
+  - id: infra-single-node-cluster
+    kind: MECHANISM
+    name: "단일 노드 클러스터"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "제어 평면과 워크로드를 노드 하나에 올린다. 비용이 가장 싸지만 노드가 곧 장애 단위라 PDB · 안티 어피니티 · 수평 확장의 의미가 줄고, 동시 롤아웃이 노드를 굶긴다"
+    synonyms: ["single-node", "k3s-lite", "edge cluster"]
+    causes:
+      - { to: infra-resource-contention, reason: "모든 파드가 한 노드의 CPU · 메모리를 나눈다" }
+  - id: infra-multi-cluster
+    kind: MECHANISM
+    name: "멀티 클러스터 운영"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "환경 · 리전 · 장애 영역마다 클러스터를 따로 두고 한곳에서 선언 · 배포한다. 폭발 반경이 줄지만 서비스 간 이름 풀이와 배포 도구가 클러스터 경계를 넘어야 한다"
+    synonyms: ["multi-cluster", "Cluster API", "hub and spoke"]
+    uses: [infra-app-of-apps]
+  - id: infra-node-lifecycle
+    kind: MECHANISM
+    name: "노드 유지보수"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "노드를 cordon 으로 새 배치에서 빼고, drain 으로 파드를 옮긴 뒤 작업하고, uncordon 으로 되돌린다. drain 은 PDB 를 지키며 파드를 축출한다"
+    synonyms: ["cordon", "drain", "uncordon", "NotReady"]
+    uses: [infra-pod-disruption-budget]
+  - id: infra-state-store-compaction
+    kind: MECHANISM
+    name: "상태 저장소 컴팩션"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "저장소에 쌓인 옛 리비전을 지우고 파일을 줄인다. 한 번에 크게 지우면 저장소가 잠겨 apiserver 가 멈추므로 작은 배치로 나눠 지운다"
+    synonyms: ["etcd compaction", "defrag", "kine compaction"]
+    code:
+      - { path: scripts/kine-guard.service, symbol: "Description=kine 컴팩션 대행 — 옛 리비전을 작은 배치로 지운다", note: "k3s 가 하지 않는 kine 컴팩션을 타이머로 대신한다" }
+    mitigates:
+      - { to: infra-state-store-bloat, reason: "옛 리비전을 주기적으로 지운다" }
+  - id: infra-state-store-bloat
+    kind: PROBLEM
+    name: "상태 저장소 비대"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "컴팩션이 돌지 않아 상태 저장소 파일이 수십 GB 로 자란 상태. 디스크를 먹고 apiserver 응답을 늦춘다 — 파일을 지우면 클러스터가 죽는다"
+
+  # 워크로드 관리
+  - id: infra-workload-management
+    kind: STAGE
+    name: "워크로드 관리"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "성격에 맞는 워크로드 컨트롤러로 파드를 돌린다 — 상태 없는 서버, 이름과 디스크가 고정된 저장소, 노드마다 하나, 끝나는 작업, 정해진 시각의 작업"
+    questions: ["Deployment 와 StatefulSet 은 무엇이 다른가"]
+    contains: [infra-deployment-workload, infra-statefulset, infra-daemonset, infra-batch-job, infra-cronjob, infra-init-container, infra-sidecar-container, infra-graceful-shutdown, infra-crashloop-backoff, infra-oom-killed, infra-cron-overlap, infra-restart-count]
+  - id: infra-deployment-workload
+    kind: MECHANISM
+    name: "Deployment"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "상태 없는 파드 묶음을 선언한다. 템플릿이 바뀔 때마다 새 ReplicaSet 을 만들고 옛 것의 레플리카를 줄여 교체하며, 옛 ReplicaSet 을 남겨 되돌릴 수 있다"
+    synonyms: ["디플로이먼트"]
+    code:
+      - { path: k8s/base/commerce/deployment.yaml, symbol: "kind: Deployment", note: "commerce 폴드 호스트의 워크로드 선언" }
+    uses: [infra-replicaset, infra-label-selector]
+  - id: infra-statefulset
+    kind: MECHANISM
+    name: "StatefulSet"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "파드마다 고정된 이름(mysql-0)과 고정된 볼륨을 주고, 순서대로 띄우고 내린다. 헤드리스 Service 로 각 파드를 DNS 이름으로 부른다"
+    synonyms: ["스테이트풀셋"]
+    questions: ["StatefulSet 파드가 죽었다 살아나면 무엇이 유지되나"]
+    code:
+      - { path: k8s/infra/local/mysql/statefulset.yaml, symbol: "serviceName: mysql-headless", note: "MySQL 을 헤드리스 Service 와 함께 StatefulSet 으로 띄운다" }
+    uses: [infra-headless-service, infra-persistent-volume]
+    alternative_to:
+      - { to: infra-deployment-workload, reason: "교체 가능한 파드 대신 이름과 디스크가 고정된 파드" }
+  - id: infra-daemonset
+    kind: MECHANISM
+    name: "DaemonSet"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "조건에 맞는 노드마다 파드를 하나씩 둔다. 로그 수집기 · 노드 메트릭 수집기 · 커널 파라미터 조정처럼 노드에 붙어야 하는 일에 쓴다"
+    code:
+      - { path: k8s/overlays/oci-arm/sysctl-tuning/daemonset.yaml, symbol: "kind: DaemonSet", note: "노드 커널 파라미터를 매니페스트로 영구 적용한다" }
+    uses: [infra-taint-toleration]
+  - id: infra-batch-job
+    kind: MECHANISM
+    name: "Job"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "끝나는 작업을 성공할 때까지 돌린다. backoffLimit 로 재시도 횟수를, activeDeadlineSeconds 로 전체 기한을, completions · parallelism 으로 병렬 처리를 정한다"
+    synonyms: ["batch job"]
+    code:
+      - { path: k8s/infra/prod/percona-mysql/init-databases-job.yaml, symbol: "backoffLimit: 3", note: "DB · 계정 초기화를 세 번까지 재시도한다" }
+  - id: infra-cronjob
+    kind: MECHANISM
+    name: "CronJob"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "cron 식 일정마다 Job 을 만든다. concurrencyPolicy(Allow · Forbid · Replace)로 앞 작업이 안 끝났을 때 겹칠지를 정한다"
+    synonyms: ["크론잡"]
+    code:
+      - { path: k8s/base/db-backup/cronjob-mysql.yaml, symbol: "concurrencyPolicy: Forbid", note: "매일 03:00 백업이 앞 작업과 겹치지 않게 한다" }
+    uses: [infra-batch-job]
+    mitigates:
+      - { to: infra-cron-overlap, reason: "Forbid 면 앞 작업이 도는 동안 새 작업을 건너뛴다" }
+  - id: infra-init-container
+    kind: MECHANISM
+    name: "초기화 컨테이너"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "앱 컨테이너보다 먼저 순서대로 돌고 끝나는 컨테이너. 의존 서비스 대기 · 커널 파라미터 설정 · 파일 준비를 앱 이미지 밖에서 한다"
+    synonyms: ["init container"]
+    code:
+      - { path: k8s/infra/local/opensearch/statefulset.yaml, symbol: 'command: ["sh", "-c", "sysctl -w vm.max_map_count=262144 || true"]', note: "OpenSearch 기동 전에 mmap 조각 수 상한을 올린다" }
+  - id: infra-sidecar-container
+    kind: MECHANISM
+    name: "사이드카 컨테이너"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "앱 컨테이너 옆에서 같은 네트워크 · 볼륨을 나눠 쓰며 보조 일(프록시 · 로그 전달 · 설정 갱신)을 한다. 앱 코드를 바꾸지 않고 기능을 붙인다"
+    synonyms: ["sidecar"]
+  - id: infra-graceful-shutdown
+    kind: MECHANISM
+    name: "우아한 종료"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "SIGTERM 을 받으면 새 요청을 받지 않고 처리 중인 요청을 끝낸 뒤 나간다. preStop 지연으로 엔드포인트 제거가 퍼질 시간을 벌고, terminationGracePeriodSeconds 가 넘으면 SIGKILL 이 온다"
+    synonyms: ["graceful shutdown", "preStop", "SIGTERM"]
+    questions: ["파드 삭제와 엔드포인트 제거가 동시에 일어나서 생기는 문제는"]
+    code:
+      - { path: k8s/base/commerce/deployment.yaml, symbol: 'command: ["sh", "-c", "sleep 5"]', note: "preStop 으로 엔드포인트 제거가 퍼질 시간을 번다" }
+      - { path: commerce/app/src/main/resources/application.yml, symbol: "shutdown: graceful", note: "Spring 이 처리 중 요청을 끝내고 내려간다" }
+    uses: [infra-exit-code, spring-graceful-shutdown]
+    mitigates:
+      - { to: infra-deploy-downtime, reason: "교체되는 파드가 처리 중 요청을 끊지 않는다" }
+  - id: infra-crashloop-backoff
+    kind: PROBLEM
+    name: "CrashLoopBackOff"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "컨테이너가 뜨자마자 죽기를 반복해 kubelet 이 재시작 간격을 점점 늘리는 상태. 설정 오류 · 의존 서비스 부재 · 너무 이른 liveness 가 흔한 원인이다"
+    measured_by: [infra-restart-count]
+  - id: infra-oom-killed
+    kind: PROBLEM
+    name: "OOMKilled"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "컨테이너 메모리가 한도를 넘어 커널이 SIGKILL 로 죽인 상태(종료 코드 137). JVM 은 힙이 멀쩡해도 힙 밖 네이티브 메모리 때문에 한도를 넘는다"
+    synonyms: ["OOM kill", "exit 137"]
+    questions: ["JVM 힙은 여유가 있는데 파드가 OOMKilled 되는 이유는"]
+    measured_by: [infra-restart-count, obs-rss]
+  - id: infra-cron-overlap
+    kind: PROBLEM
+    name: "예약 작업 겹침"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "앞 회차가 끝나기 전에 다음 회차가 시작해 같은 일을 두 번 하거나 같은 자원을 다투는 상태"
+  - id: infra-restart-count
+    kind: METRIC
+    name: "재시작 횟수"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "컨테이너가 다시 시작된 누적 횟수. 늘고 있으면 죽는 이유(lastState 의 종료 코드)부터 본다"
+
+  # 설정 · 시크릿 주입
+  - id: infra-config-injection
+    kind: STAGE
+    name: "설정 · 시크릿 주입"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "이미지는 그대로 두고 환경별 설정과 비밀 값을 실행 시점에 넣는다. 비밀 값은 Git 에 평문으로 두지 않는다"
+    questions: ["GitOps 에서 시크릿은 어떻게 Git 에 두나"]
+    contains: [infra-configmap, infra-k8s-secret, infra-secret-management, infra-config-reload, infra-secret-leak, infra-stale-config]
+  - id: infra-configmap
+    kind: MECHANISM
+    name: "ConfigMap"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "비밀이 아닌 설정을 키-값이나 파일로 담아 환경 변수 · 볼륨 파일로 파드에 넣는다. 환경 변수로 넣은 값은 파드를 다시 띄워야 바뀐다"
+    code:
+      - { path: k8s/infra/prod/backup/configmap-env.yaml, symbol: "kind: ConfigMap", note: "백업 작업의 환경 설정" }
+  - id: infra-k8s-secret
+    kind: MECHANISM
+    name: "Secret"
+    category: SECURITY
+    level: BEGINNER
+    description: "비밀 값을 파드에 넣는 객체. 값은 base64 로 인코딩될 뿐 암호화가 아니므로, 저장소 암호화와 RBAC 로 따로 막아야 한다"
+    synonyms: ["쿠버네티스 시크릿"]
+    code:
+      - { path: k8s/base/commerce/deployment.yaml, symbol: "secretKeyRef: { name: seller-account-enc, key: key }", note: "암호화 키를 Secret 에서 환경 변수로 넣는다" }
+    uses: [infra-secret-encryption-at-rest]
+  - id: infra-secret-management
+    kind: MECHANISM
+    name: "GitOps 시크릿 전달"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "선언이 모두 Git 에 있는 GitOps 에서 비밀 값만은 평문으로 둘 수 없다. 암호문을 Git 에 두는 방식과 외부 금고에서 끌어오는 방식으로 클러스터까지 옮긴다"
+    synonyms: ["GitOps secrets"]
+    uses: [sec-secrets-management]
+    contains: [infra-sealed-secrets, infra-encrypted-file-secrets, infra-external-secrets]
+    mitigates:
+      - { to: infra-secret-leak, reason: "평문 비밀 값이 저장소에 남지 않는다" }
+  - id: infra-sealed-secrets
+    kind: MECHANISM
+    name: "Sealed Secrets"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "클러스터 컨트롤러의 공개키로 암호화한 SealedSecret 을 Git 에 두고, 클러스터 안에서만 복호화해 Secret 을 만든다. 키를 잃으면 모든 암호문을 다시 만들어야 한다"
+    synonyms: ["SealedSecret", "kubeseal"]
+  - id: infra-encrypted-file-secrets
+    kind: MECHANISM
+    name: "파일 단위 시크릿 암호화"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "YAML 의 값만 KMS · age 키로 암호화해 Git 에 둔다(SOPS). 키 구조는 보이므로 리뷰가 되고, 배포 도구가 복호화한다"
+    synonyms: ["SOPS"]
+    uses: [sec-kms]
+    alternative_to:
+      - { to: infra-sealed-secrets, reason: "클러스터 전용 키 대신 KMS · age 키로 값만 암호화한다" }
+  - id: infra-external-secrets
+    kind: MECHANISM
+    name: "외부 시크릿 동기화"
+    category: SECURITY
+    level: ADVANCED
+    description: "Git 에는 참조만 두고 컨트롤러가 Vault · 클라우드 시크릿 관리자에서 값을 끌어와 Secret 을 만든다. 키 회전이 금고 쪽에서 끝난다"
+    synonyms: ["External Secrets Operator", "ESO", "Vault"]
+    alternative_to:
+      - { to: infra-sealed-secrets, reason: "암호문을 Git 에 두지 않고 외부 금고를 원본으로 둔다" }
+  - id: infra-config-reload
+    kind: MECHANISM
+    name: "설정 변경 반영"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "설정이 바뀌면 파드가 새 값을 쓰게 한다. 템플릿에 설정 해시 주석을 넣어 롤아웃을 일으키거나, 볼륨 파일을 앱이 다시 읽는다"
+    synonyms: ["config reload", "checksum annotation", "rollout restart"]
+    mitigates:
+      - { to: infra-stale-config, reason: "설정이 바뀌면 파드가 새로 뜬다" }
+  - id: infra-secret-leak
+    kind: PROBLEM
+    name: "시크릿 유출"
+    category: SECURITY
+    level: BEGINNER
+    description: "비밀 값이 평문으로 Git · 로그 · 이미지에 남은 상태. 저장소 기록은 지워도 복제본에 남는다"
+  - id: infra-stale-config
+    kind: PROBLEM
+    name: "옛 설정으로 도는 파드"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "ConfigMap 을 바꿨는데 환경 변수로 받은 파드가 재시작 전까지 옛 값으로 도는 상태"
+
+  # 스토리지
+  - id: infra-storage-provisioning
+    kind: STAGE
+    name: "스토리지 프로비저닝"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "파드가 사라져도 남아야 하는 데이터에 볼륨을 붙인다. 요청(PVC)과 실제 디스크(PV)를 나누고 StorageClass 가 디스크를 만든다"
+    questions: ["PV 와 PVC 는 누가 만들고 어떻게 묶이나", "WaitForFirstConsumer 는 무엇을 막나"]
+    contains: [infra-persistent-volume, infra-storage-class, infra-csi, infra-volume-snapshot, infra-local-volume, infra-ephemeral-volume, infra-node-bound-volume, infra-volume-data-loss]
+  - id: infra-persistent-volume
+    kind: MECHANISM
+    name: "PV · PVC 바인딩"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "파드는 용량과 접근 모드를 적은 PVC 로 요청하고, 컨트롤러가 맞는 PV 를 찾거나 만들어 묶는다. 파드는 디스크의 종류를 몰라도 된다"
+    synonyms: ["PersistentVolume", "PersistentVolumeClaim", "PV", "PVC"]
+    code:
+      - { path: k8s/base/db-backup/pvc.yaml, symbol: "kind: PersistentVolumeClaim", note: "백업 덤프를 담는 볼륨 요청" }
+    uses: [infra-access-mode, infra-reclaim-policy]
+  - id: infra-storage-class
+    kind: MECHANISM
+    name: "StorageClass"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "PVC 가 들어오면 볼륨을 동적으로 만드는 방법을 정한다 — 프로비저너 · 디스크 종류 · 회수 정책 · 바인딩 시점(WaitForFirstConsumer 면 파드가 배치된 영역에 만든다)"
+    synonyms: ["dynamic provisioning", "WaitForFirstConsumer"]
+    uses: [infra-reclaim-policy]
+  - id: infra-csi
+    kind: MECHANISM
+    name: "CSI"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "스토리지 드라이버를 쿠버네티스 밖에서 플러그인으로 붙이는 표준 인터페이스. 볼륨 생성 · 부착 · 마운트 · 스냅샷을 드라이버가 구현한다"
+    synonyms: ["Container Storage Interface"]
+  - id: infra-volume-snapshot
+    kind: MECHANISM
+    name: "볼륨 스냅샷"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "CSI 드라이버가 볼륨의 특정 시점 사본을 만든다. 복제 · 백업 · 새 PVC 의 원본으로 쓴다"
+    synonyms: ["VolumeSnapshot", "PVC clone"]
+  - id: infra-local-volume
+    kind: MECHANISM
+    name: "로컬 볼륨"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "노드 디스크의 디렉토리를 볼륨으로 쓴다(local-path). 빠르고 공짜지만 데이터가 그 노드에 묶이고, 같은 디스크를 쓰는 DB · 백업이 IOPS 와 장애를 함께 나눈다"
+    synonyms: ["local-path", "hostPath", "local PV"]
+    code:
+      - { path: k8s/base/db-backup/cronjob-mysql.yaml, symbol: "local-path 가 유일한 StorageClass", note: "백업 PVC 가 데이터와 같은 디스크에 놓이는 이유" }
+    causes:
+      - { to: infra-node-bound-volume, reason: "볼륨이 특정 노드 디스크에 있다" }
+      - { to: infra-colocated-backup, reason: "백업과 원본이 같은 디스크에 놓인다" }
+  - id: infra-ephemeral-volume
+    kind: MECHANISM
+    name: "임시 볼륨"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "파드와 수명을 같이하는 볼륨(emptyDir). 컨테이너끼리 파일을 나누거나 캐시를 둘 때 쓰고, 크기 상한을 두지 않으면 노드 디스크를 채운다"
+    synonyms: ["emptyDir", "ephemeral volume"]
+    code:
+      - { path: k8s/base/search/deployment.yaml, symbol: "emptyDir: { sizeLimit: 256Mi }", note: "크기 상한을 둔 임시 볼륨" }
+  - id: infra-node-bound-volume
+    kind: PROBLEM
+    name: "노드에 묶인 볼륨"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "로컬 볼륨을 쓰는 파드가 그 노드에서만 뜰 수 있는 상태. 노드가 죽으면 데이터와 함께 파드도 옮길 곳이 없다"
+  - id: infra-volume-data-loss
+    kind: PROBLEM
+    name: "볼륨 데이터 삭제"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "회수 정책이 Delete 인 PV 가 PVC 삭제와 함께 실제 디스크까지 지워진 상태. 운영 데이터 볼륨은 Retain 으로 둔다"
+
+  # 스케줄링 · 자원 배분
+  - id: infra-scheduling
+    kind: STAGE
+    name: "스케줄링 · 자원 배분"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "파드를 어느 노드에 둘지, 자원을 얼마나 보장하고 어디까지 허용할지, 자발적 중단 때 몇 개를 남길지를 정한다"
+    questions: ["requests 와 limits 는 각각 무엇에 쓰이나", "파드가 Pending 에 머무를 때 무엇부터 보나"]
+    contains: [infra-resource-requests-limits, infra-node-affinity, infra-pod-affinity, infra-taint-toleration, infra-topology-spread, infra-priority-preemption, infra-pod-disruption-budget, infra-resource-quota, infra-pending-pod, infra-cpu-throttling, infra-request-allocation-ratio]
+  - id: infra-resource-requests-limits
+    kind: MECHANISM
+    name: "자원 요청 · 한도"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "requests 는 스케줄러가 노드를 고르는 기준이자 경쟁 시 CPU 비율과 OOM 우선순위이고, limits 는 cgroup 상한이다. 둘의 관계가 QoS 클래스를 정한다"
+    synonyms: ["requests", "limits", "resource requests and limits"]
+    questions: ["CPU limit 를 걸면 왜 지연이 튀나", "메모리 limit 를 requests 보다 크게 두면 무엇을 걸게 되나"]
+    code:
+      - { path: k8s/base/commerce/deployment.yaml, symbol: "memory: 1792Mi", note: "commerce 폴드 호스트의 메모리 한도" }
+    uses: [infra-cgroup, infra-qos-class]
+    causes:
+      - { to: infra-cpu-throttling, reason: "CPU limit 가 CFS 쿼터가 된다" }
+    measured_by: [infra-request-allocation-ratio]
+  - id: infra-node-affinity
+    kind: MECHANISM
+    name: "노드 어피니티"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "노드 레이블로 파드가 갈 노드를 고른다. required 는 조건이 안 맞으면 배치하지 않고, preferred 는 점수만 준다. nodeSelector 는 가장 단순한 형태다"
+    synonyms: ["nodeAffinity", "nodeSelector"]
+    uses: [infra-label-selector]
+  - id: infra-pod-affinity
+    kind: MECHANISM
+    name: "파드 어피니티 · 안티 어피니티"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "다른 파드의 위치를 보고 같이 두거나(지역성) 떨어뜨린다(가용성). 같은 서비스의 레플리카를 다른 노드 · 영역에 흩어 한 번의 장애로 전부 잃지 않게 한다"
+    synonyms: ["podAffinity", "podAntiAffinity"]
+    code:
+      - { path: k8s/overlays/oci-arm/cloudflared/deployment.yaml, symbol: "podAntiAffinity:", note: "터널 커넥터 레플리카를 흩어 둔다" }
+    uses: [infra-label-selector]
+  - id: infra-taint-toleration
+    kind: MECHANISM
+    name: "테인트 · 톨러레이션"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "노드에 테인트를 걸어 파드를 밀어내고, 그것을 견디는 톨러레이션이 있는 파드만 받는다. 전용 노드와 장애 노드 축출(NoExecute)에 쓴다"
+    synonyms: ["taint", "toleration", "NoSchedule", "NoExecute"]
+    code:
+      - { path: k8s/overlays/oci-arm/sysctl-tuning/daemonset.yaml, symbol: "tolerations:", note: "제어 평면 노드에도 DaemonSet 이 뜨게 한다" }
+  - id: infra-topology-spread
+    kind: MECHANISM
+    name: "토폴로지 분산 제약"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "노드 · 영역별 파드 수 차이(maxSkew)를 제한해 고르게 흩는다. 안티 어피니티보다 세밀하게 '최대 몇 개 차이까지'를 말할 수 있다"
+    synonyms: ["topologySpreadConstraints", "maxSkew"]
+    alternative_to:
+      - { to: infra-pod-affinity, reason: "있다 · 없다 대신 개수 차이로 분산을 표현한다" }
+  - id: infra-priority-preemption
+    kind: MECHANISM
+    name: "우선순위 · 선점"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "PriorityClass 로 파드에 우선순위를 주고, 자리가 없으면 낮은 우선순위 파드를 축출해 높은 파드를 배치한다"
+    synonyms: ["PriorityClass", "preemption"]
+    mitigates:
+      - { to: infra-pending-pod, reason: "중요한 파드가 덜 중요한 파드 자리를 가져간다" }
+  - id: infra-pod-disruption-budget
+    kind: MECHANISM
+    name: "PodDisruptionBudget"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "drain · 업그레이드 같은 자발적 중단 때 최소 몇 개(minAvailable)를 남기거나 최대 몇 개(maxUnavailable)만 내릴지 정한다. 노드 크래시 같은 비자발적 중단은 막지 못한다"
+    synonyms: ["PDB", "minAvailable", "maxUnavailable"]
+    questions: ["PDB 는 노드 크래시도 막나"]
+    code:
+      - { path: k8s/overlays/prod-k8s/pdb.yaml, symbol: "minAvailable: 1", note: "서비스마다 한 개는 남긴다" }
+    mitigates:
+      - { to: infra-deploy-downtime, reason: "노드 작업 중에도 받을 파드가 남는다" }
+  - id: infra-resource-quota
+    kind: MECHANISM
+    name: "자원 쿼터 · 기본 한도"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "ResourceQuota 로 네임스페이스 전체가 쓸 자원과 객체 수를 묶고, LimitRange 로 값을 안 적은 컨테이너에 기본 requests · limits 를 넣는다"
+    synonyms: ["ResourceQuota", "LimitRange"]
+    uses: [infra-k8s-namespace]
+  - id: infra-pending-pod
+    kind: PROBLEM
+    name: "Pending 파드"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "조건을 만족하는 노드가 없어 배치되지 못한 파드. requests 합이 노드를 넘었거나, 어피니티 · 테인트 · 볼륨 영역이 맞지 않는다 — Events 에 이유가 있다"
+    synonyms: ["Unschedulable"]
+  - id: infra-cpu-throttling
+    kind: PROBLEM
+    name: "CPU 스로틀링"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "CFS 쿼터를 주기(100ms) 안에 다 써서 코어가 놀아도 실행이 멈추는 상태. GC · JIT 처럼 스레드가 몰리는 순간 지연이 튄다"
+    synonyms: ["CFS throttling", "nr_throttled"]
+  - id: infra-request-allocation-ratio
+    kind: METRIC
+    name: "요청 할당률"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "노드 용량 대비 파드 requests 합의 비율. 100% 에 닿으면 새 파드가 배치되지 않고, limits 합이 용량을 넘는 만큼이 오버커밋이다"
+    synonyms: ["allocatable", "overcommit"]
+
+  # 오토스케일링
+  - id: infra-autoscaling
+    kind: STAGE
+    name: "오토스케일링"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "부하에 맞춰 파드 수 · 파드 크기 · 노드 수를 자동으로 바꾼다. 무엇을 보고 늘릴지와 얼마나 빨리 줄일지가 설계의 전부다"
+    questions: ["HPA 와 Cluster Autoscaler 는 어떻게 맞물리나"]
+    contains: [infra-metrics-server, auto-scaler, infra-custom-metric-autoscaling, infra-event-driven-autoscaling, infra-vertical-autoscaling, infra-cluster-autoscaling, infra-over-provisioning, infra-scaling-flapping, infra-scale-out-lag]
+  - id: infra-metrics-server
+    kind: MECHANISM
+    name: "리소스 메트릭 API"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "kubelet 에서 파드 · 노드의 CPU · 메모리 사용량을 모아 metrics API 로 내놓는다(metrics-server). HPA 와 kubectl top 이 이것을 읽고, 장기 저장은 하지 않는다"
+    synonyms: ["metrics-server", "kubectl top", "metrics.k8s.io"]
+    uses: [infra-kubelet]
+    flows_to: [auto-scaler]
+  - id: auto-scaler
+    kind: MECHANISM
+    name: "오토 스케일러"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "지표를 보고 인스턴스 수를 자동으로 늘리고 줄인다. 쿠버네티스 HPA 는 '현재 레플리카 × 현재값 / 목표값' 으로 원하는 레플리카 수를 계산하고, behavior 로 늘리고 줄이는 속도를 제한한다"
+    synonyms: ["HPA", "Horizontal Pod Autoscaler", "autoscaling"]
+    questions: ["HPA 는 무엇을 보고 레플리카를 몇 개로 정하나", "노드가 하나뿐이면 수평 확장은 무엇에 막히나"]
+    code:
+      - { path: k8s/overlays/prod-k8s/hpa.yaml, symbol: "kind: HorizontalPodAutoscaler", note: "managed K8s 에서 CPU 70% 목표로 레플리카를 조절" }
+    uses: [infra-pod]
+    causes:
+      - { to: infra-scaling-flapping, reason: "안정화 창이 짧으면 목표 근처에서 늘렸다 줄였다 한다" }
+    measured_by: [infra-cpu-utilization]
+  - id: infra-custom-metric-autoscaling
+    kind: MECHANISM
+    name: "사용자 지표 기반 확장"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "CPU 대신 요청 수 · 대기열 길이 · 지연 같은 애플리케이션 지표로 HPA 를 돌린다. 메트릭 어댑터가 Prometheus 값을 custom · external metrics API 로 내보낸다"
+    synonyms: ["HPA v2", "Prometheus Adapter", "custom metrics"]
+    uses: [prometheus]
+    alternative_to:
+      - { to: auto-scaler, reason: "자원 사용률이 아니라 일의 양으로 늘린다 — JVM 처럼 CPU 가 부하를 잘 대변하지 않을 때" }
+  - id: infra-event-driven-autoscaling
+    kind: MECHANISM
+    name: "이벤트 기반 확장"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "Kafka 컨슈머 지연 · 큐 길이 · cron 같은 이벤트 원천을 보고 0 개까지 줄였다가 늘린다(KEDA). 0 에서 깨어나는 동안의 첫 요청은 기다린다"
+    synonyms: ["KEDA", "scale to zero"]
+    causes:
+      - { to: infra-scale-out-lag, reason: "0 에서 첫 파드가 뜨기까지 요청이 기다린다" }
+  - id: infra-vertical-autoscaling
+    kind: MECHANISM
+    name: "수직 확장 자동화"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "실제 사용량 이력으로 파드의 requests · limits 를 추천하거나 고쳐 다시 띄운다(VPA). 같은 지표로 HPA 와 함께 돌리면 서로 싸운다"
+    synonyms: ["VPA", "Vertical Pod Autoscaler"]
+    alternative_to:
+      - { to: auto-scaler, reason: "파드 수 대신 파드 크기를 바꾼다" }
+  - id: infra-cluster-autoscaling
+    kind: MECHANISM
+    name: "노드 자동 확장"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "Pending 파드가 생기면 노드를 더하고, 비어 있는 노드는 뺀다. 노드 그룹 단위(Cluster Autoscaler)와 파드 요구에 맞는 인스턴스를 바로 고르는 방식(Karpenter)이 있다"
+    synonyms: ["Cluster Autoscaler", "Karpenter", "node provisioning"]
+    mitigates:
+      - { to: infra-pending-pod, reason: "자리가 없으면 노드를 더한다" }
+  - id: infra-over-provisioning
+    kind: MECHANISM
+    name: "여유 용량 선확보"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "우선순위가 가장 낮은 빈 파드로 자리를 미리 잡아 두고, 진짜 파드가 오면 그것을 선점해 바로 뜨게 한다. 노드 추가를 기다리는 시간을 없앤다"
+    synonyms: ["over-provisioning", "pause pod"]
+    uses: [infra-priority-preemption]
+    mitigates:
+      - { to: infra-scale-out-lag, reason: "노드가 늘어나기를 기다리지 않는다" }
+  - id: infra-scaling-flapping
+    kind: PROBLEM
+    name: "스케일 출렁임"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "레플리카 수가 짧은 간격으로 늘었다 줄었다 하는 상태. 새 파드의 JVM 워밍업이 부하를 올려 다시 늘리게 만들기도 한다"
+    synonyms: ["flapping", "thrashing"]
+  - id: infra-scale-out-lag
+    kind: PROBLEM
+    name: "확장 지연"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "부하가 오른 뒤 새 파드가 트래픽을 받기까지 걸리는 시간 동안 기존 파드가 버티지 못하는 상태. 지표 수집 주기 + 노드 추가 + 이미지 끌어오기 + JVM 기동이 더해진다"
+
+  # 클러스터 네트워킹
+  - id: infra-cluster-networking
+    kind: STAGE
+    name: "클러스터 네트워킹"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "모든 파드가 NAT 없이 서로 닿는 평평한 네트워크를 깔고, 바뀌는 파드 주소 앞에 고정 이름을 두고, 허용한 흐름만 통하게 막는다"
+    questions: ["쿠버네티스 네트워크 모델의 원칙은 무엇인가", "NetworkPolicy 는 무엇을 막고 무엇을 못 막나"]
+    contains: [infra-cni, infra-cluster-dns, infra-external-dns, infra-network-policy, infra-gateway-api, infra-ebpf-dataplane, infra-topology-aware-routing, infra-silent-policy-block]
+  - id: infra-cni
+    kind: MECHANISM
+    name: "CNI"
+    category: NETWORK
+    level: ADVANCED
+    description: "파드가 만들어질 때 네트워크 인터페이스와 IP 를 붙이는 플러그인 규약. 오버레이(VXLAN 으로 감싸기 · Flannel)와 라우팅(BGP · Calico)과 eBPF(Cilium) 구현이 있다"
+    synonyms: ["Container Network Interface", "Flannel", "Calico", "Cilium", "pod network"]
+    questions: ["오버레이 네트워크와 라우팅 방식은 무엇을 맞바꾸나"]
+  - id: infra-cluster-dns
+    kind: MECHANISM
+    name: "클러스터 DNS"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "Service 이름을 ClusterIP 로 푸는 클러스터 안 DNS(CoreDNS). 파드의 ndots:5 설정 때문에 점이 적은 외부 이름은 검색 도메인을 먼저 다 돌아본 뒤에야 풀린다"
+    synonyms: ["CoreDNS", "kube-dns", "ndots", "NodeLocal DNSCache"]
+    code:
+      - { path: k8s/base/network-policy/01-allow-dns-egress.yaml, symbol: "podSelector: {}", note: "default-deny 아래에서 DNS 질의만 먼저 연다" }
+    uses: [dns, net-cluster-dns-search]
+    causes:
+      - { to: net-ndots-amplification, reason: "외부 이름마다 검색 도메인 수만큼 질의가 늘어난다" }
+  - id: infra-external-dns
+    kind: MECHANISM
+    name: "외부 DNS 자동 등록"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "Ingress · Service 에 적힌 호스트 이름을 보고 공개 DNS 레코드를 자동으로 만들고 지운다(ExternalDNS). 매니페스트가 DNS 의 원본이 된다"
+    synonyms: ["ExternalDNS"]
+    uses: [dns, infra-ingress]
+  - id: infra-network-policy
+    kind: MECHANISM
+    name: "쿠버네티스 NetworkPolicy"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "레이블로 고른 파드의 들어오고 나가는 L3/L4 흐름을 허용 목록으로 묶는다. 모두 막는 정책을 먼저 두고 필요한 경로만 연다 — 정책은 CNI 가 집행하므로 지원하지 않는 CNI 에서는 조용히 무시된다"
+    synonyms: ["default deny", "network policy"]
+    questions: ["default-deny 를 걸면 가장 먼저 열어야 하는 흐름은"]
+    code:
+      - { path: k8s/base/network-policy/00-default-deny.yaml, symbol: "podSelector: {}                       # commerce ns 의 모든 Pod", note: "네임스페이스 전체를 기본 차단한다" }
+    uses: [infra-label-selector, cloud-microsegmentation]
+    causes:
+      - { to: infra-silent-policy-block, reason: "새 경로를 허용하지 않으면 연결이 응답 없이 끊긴다" }
+  - id: infra-gateway-api
+    kind: MECHANISM
+    name: "Gateway API"
+    category: NETWORK
+    level: ADVANCED
+    description: "Ingress 의 후속 표준. 인프라 운영자(GatewayClass · Gateway)와 앱 팀(HTTPRoute · GRPCRoute)의 역할을 갈라 두고, 가중치 분할 · 헤더 매칭을 주석이 아니라 스펙으로 쓴다"
+    synonyms: ["GatewayClass", "HTTPRoute"]
+    uses: [infra-ingress]
+  - id: infra-ebpf-dataplane
+    kind: MECHANISM
+    name: "eBPF 데이터 평면"
+    category: NETWORK
+    level: ADVANCED
+    description: "커널 안 eBPF 프로그램으로 Service 분산 · 정책 · 관측을 처리한다(Cilium). iptables 규칙 목록을 따라가지 않아 서비스가 많아도 느려지지 않고 L7 정책까지 건다"
+    synonyms: ["Cilium", "kube-proxy replacement"]
+    alternative_to:
+      - { to: infra-kube-proxy, reason: "iptables · IPVS 규칙 대신 eBPF 로 Service 를 처리한다" }
+  - id: infra-topology-aware-routing
+    kind: MECHANISM
+    name: "토폴로지 인지 라우팅"
+    category: NETWORK
+    level: ADVANCED
+    description: "Service 트래픽을 되도록 같은 영역의 엔드포인트로 보낸다. 영역 간 전송 비용과 지연을 줄이는 대신 영역별 부하가 기울 수 있다"
+    synonyms: ["topology-aware hints", "zone-aware routing"]
+    uses: [infra-endpoint-slice]
+  - id: infra-silent-policy-block
+    kind: PROBLEM
+    name: "정책 차단으로 인한 무응답"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "허용 규칙이 빠진 흐름의 SYN 이 응답 없이 버려져 연결 타임아웃으로만 드러나는 상태. 파드 이름 · 레이블이 바뀌면 정책이 옛 레이블을 가리켜 생긴다"
+
+  # 클러스터 확장
+  - id: infra-cluster-extension
+    kind: STAGE
+    name: "클러스터 확장"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "쿠버네티스 API 에 새 리소스 종류를 더하고, 그것을 맞추는 컨트롤러로 운영 지식을 코드로 만든다. 입장 제어로 들어오는 객체를 고치거나 막는다"
+    questions: ["CRD 만 만들면 무엇이 동작하나", "Controller 와 Operator 는 무엇이 다른가"]
+    contains: [infra-crd, infra-operator, infra-admission-control, infra-reconcile-hot-loop, infra-stuck-terminating]
+  - id: infra-crd
+    kind: MECHANISM
+    name: "CRD"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "사용자 리소스 종류를 OpenAPI 스키마와 함께 API 서버에 등록한다. CRD 만으로는 저장 · 검증만 되고, 동작은 그것을 보는 컨트롤러가 만든다. CRD 를 지우면 그 종류의 객체가 전부 지워진다"
+    synonyms: ["CustomResourceDefinition", "custom resource"]
+    uses: [infra-custom-resource]
+  - id: infra-operator
+    kind: MECHANISM
+    name: "오퍼레이터"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "CRD 와 컨트롤러를 묶어 데이터베이스 · 메시지 브로커 같은 상태 있는 소프트웨어의 설치 · 확장 · 백업 · 장애 조치를 자동화한다. 이 레포는 Kafka(Strimzi) · MySQL(Percona) 을 오퍼레이터 CR 로 선언한다"
+    synonyms: ["operator pattern", "Kubebuilder", "Operator SDK"]
+    questions: ["오퍼레이터를 직접 만들지 외부 것을 쓸지 무엇으로 정하나"]
+    code:
+      - { path: k8s/infra/prod/strimzi/kafka-cluster.yaml, symbol: "kind: KafkaNodePool", note: "Kafka 클러스터를 Strimzi CR 로 선언" }
+      - { path: k8s/infra/prod/percona-mysql/mysql-clusters.yaml, symbol: "kind: PerconaServerMySQL", note: "MySQL 클러스터를 Percona 오퍼레이터 CR 로 선언" }
+    contains: [infra-reconcile-loop, infra-finalizer, infra-status-subresource, infra-owner-reference]
+    uses: [infra-crd]
+  - id: infra-reconcile-loop
+    kind: MECHANISM
+    name: "조정 루프"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "원하는 상태와 실제 상태를 비교해 차이만 좁히는 일을 반복한다. 이벤트가 아니라 현재 상태를 보고 판단하므로(level-triggered) 놓친 이벤트가 있어도 다음 회차에 맞춰진다. informer 캐시와 재시도 큐가 받친다"
+    synonyms: ["reconcile loop", "controller pattern", "level-triggered", "informer", "workqueue"]
+    questions: ["조정 루프가 edge-triggered 가 아니라 level-triggered 인 이유는", "Reconcile 함수가 멱등이어야 하는 이유는"]
+    uses: [infra-desired-state]
+    causes:
+      - { to: infra-reconcile-hot-loop, reason: "자기가 쓴 변경이 다시 자기를 깨우면 끝없이 돈다" }
+  - id: infra-finalizer
+    kind: MECHANISM
+    name: "파이널라이저"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "객체에 표시를 달아 삭제 요청이 와도 컨트롤러가 외부 자원 정리를 끝내고 표시를 뗄 때까지 지우지 않는다"
+    synonyms: ["finalizer"]
+    causes:
+      - { to: infra-stuck-terminating, reason: "컨트롤러가 없거나 정리에 실패하면 표시가 영영 안 떨어진다" }
+  - id: infra-status-subresource
+    kind: MECHANISM
+    name: "status 하위 리소스"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "사용자가 쓰는 spec 과 컨트롤러가 쓰는 status 를 다른 엔드포인트로 가른다. status 갱신이 generation 을 올리지 않아 자기 쓰기로 다시 깨는 루프를 막고, observedGeneration 으로 어디까지 반영했는지 알린다"
+    synonyms: ["status subresource", "observedGeneration"]
+    mitigates:
+      - { to: infra-reconcile-hot-loop, reason: "status 쓰기가 spec 변경 이벤트를 만들지 않는다" }
+  - id: infra-owner-reference
+    kind: MECHANISM
+    name: "소유자 참조 · 가비지 컬렉션"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "자식 객체에 부모를 적어 두면 부모가 지워질 때 자식이 연쇄로 지워진다. Deployment → ReplicaSet → Pod 가 이렇게 묶여 있다"
+    synonyms: ["ownerReferences", "cascading delete", "garbage collection"]
+  - id: infra-admission-control
+    kind: MECHANISM
+    name: "입장 제어"
+    category: SECURITY
+    level: ADVANCED
+    description: "인증 · 인가를 통과한 요청이 저장되기 전에 고치거나(mutating) 거부한다(validating). 사이드카 주입 · 기본값 채우기 · 정책 강제가 여기서 일어난다"
+    synonyms: ["admission controller", "admission webhook"]
+    contains: [infra-admission-webhook, infra-validating-admission-policy]
+  - id: infra-admission-webhook
+    kind: MECHANISM
+    name: "입장 웹훅"
+    category: SECURITY
+    level: ADVANCED
+    description: "API 서버가 외부 HTTPS 서비스를 불러 객체를 고치거나 판정을 받는다. 웹훅이 죽으면 failurePolicy 에 따라 클러스터 쓰기가 막힐 수 있다"
+    synonyms: ["MutatingAdmissionWebhook", "ValidatingAdmissionWebhook"]
+  - id: infra-validating-admission-policy
+    kind: MECHANISM
+    name: "CEL 입장 정책"
+    category: SECURITY
+    level: ADVANCED
+    description: "CEL 식으로 쓴 검증 규칙을 API 서버 안에서 직접 평가한다. 웹훅 서버를 따로 운영하지 않아 장애 지점이 없다"
+    synonyms: ["ValidatingAdmissionPolicy", "CEL"]
+    alternative_to:
+      - { to: infra-admission-webhook, reason: "외부 서버 호출 대신 API 서버 안에서 규칙을 평가한다" }
+  - id: infra-reconcile-hot-loop
+    kind: PROBLEM
+    name: "조정 무한 루프"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "컨트롤러가 쓴 변경이 다시 자기를 깨워 쉬지 않고 도는 상태. API 서버 부하가 오르고 다른 컨트롤러가 밀린다"
+    synonyms: ["hot loop"]
+  - id: infra-stuck-terminating
+    kind: PROBLEM
+    name: "삭제 중 멈춤"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "파이널라이저가 남아 객체 · 네임스페이스가 Terminating 에 영영 머무는 상태. 파이널라이저를 억지로 떼면 외부 자원이 고아로 남는다"
+    synonyms: ["stuck terminating"]
+
+  # 클러스터 보안
+  - id: infra-cluster-security
+    kind: STAGE
+    name: "클러스터 보안"
+    category: SECURITY
+    level: ADVANCED
+    description: "누가 API 에 무엇을 할 수 있는지, 파드가 노드에서 어떤 권한으로 도는지, 어떤 객체가 들어올 수 있는지를 층층이 묶는다"
+    questions: ["RBAC 규칙을 이루는 네 요소는", "Pod Security Standards 의 세 단계는"]
+    contains: [infra-k8s-rbac, infra-pod-security-standards, infra-security-context, infra-policy-as-code, infra-audit-logging, infra-secret-encryption-at-rest, infra-over-privilege]
+  - id: infra-k8s-rbac
+    kind: MECHANISM
+    name: "쿠버네티스 RBAC"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "Role(무엇을 · 어떤 동사로)과 RoleBinding(누구에게)으로 API 권한을 준다. 네임스페이스 범위와 클러스터 범위(ClusterRole)를 가르고, 최소 권한으로 준다"
+    synonyms: ["Role", "ClusterRole", "RoleBinding"]
+    code:
+      - { path: k8s/argocd/stuck-sync-watchdog.yaml, symbol: 'verbs: ["get", "list", "watch", "patch", "update"]', note: "워치독 ServiceAccount 에 필요한 동사만 준다" }
+    uses: [rbac, infra-service-account]
+    mitigates:
+      - { to: infra-over-privilege, reason: "필요한 리소스 · 동사만 허용한다" }
+  - id: infra-pod-security-standards
+    kind: MECHANISM
+    name: "파드 보안 표준"
+    category: SECURITY
+    level: ADVANCED
+    description: "privileged · baseline · restricted 세 단계를 네임스페이스 레이블로 강제한다(Pod Security Admission). restricted 는 루트 실행 · 권한 상승 · 호스트 네임스페이스를 막는다"
+    synonyms: ["Pod Security Standards", "PSS", "Pod Security Admission", "PSA"]
+    uses: [infra-k8s-namespace]
+    mitigates:
+      - { to: infra-over-privilege, reason: "위험한 파드 설정을 입장 단계에서 막는다" }
+  - id: infra-security-context
+    kind: MECHANISM
+    name: "보안 컨텍스트"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "컨테이너가 도는 사용자 · 그룹, 루트 파일 시스템 쓰기, 리눅스 capability, seccomp 프로필을 정한다. 뚫려도 할 수 있는 일을 줄인다"
+    synonyms: ["securityContext", "runAsNonRoot", "readOnlyRootFilesystem", "capabilities", "seccomp"]
+    code:
+      - { path: k8s/overlays/oci-arm/cloudflared/deployment.yaml, symbol: "runAsNonRoot: true", note: "터널 커넥터를 비루트 · 읽기 전용 루트로 돌린다" }
+    mitigates:
+      - { to: infra-over-privilege, reason: "컨테이너 권한을 필요한 만큼으로 줄인다" }
+  - id: infra-policy-as-code
+    kind: MECHANISM
+    name: "정책 코드화"
+    category: SECURITY
+    level: ADVANCED
+    description: "'이미지 태그 latest 금지' '리소스 한도 필수' 같은 규칙을 정책 엔진(OPA Gatekeeper 의 Rego, Kyverno 의 YAML)으로 입장 단계에서 강제한다"
+    synonyms: ["OPA Gatekeeper", "Kyverno", "policy as code"]
+    uses: [infra-admission-control]
+    mitigates:
+      - { to: infra-mutable-tag, reason: "가변 태그를 쓰는 파드를 거부한다" }
+  - id: infra-audit-logging
+    kind: MECHANISM
+    name: "API 감사 로그"
+    category: SECURITY
+    level: ADVANCED
+    description: "API 서버에 들어온 요청을 누가 · 언제 · 무엇을 했는지 정책 수준(Metadata · Request · RequestResponse)별로 남긴다"
+    synonyms: ["audit log"]
+    uses: [sec-audit-logging]
+  - id: infra-secret-encryption-at-rest
+    kind: MECHANISM
+    name: "저장소 시크릿 암호화"
+    category: SECURITY
+    level: ADVANCED
+    description: "Secret 을 상태 저장소에 쓸 때 암호화한다(EncryptionConfiguration · KMS). 저장소 백업이 새도 비밀 값이 드러나지 않는다"
+    synonyms: ["encryption at rest", "EncryptionConfiguration"]
+  - id: infra-over-privilege
+    kind: PROBLEM
+    name: "과잉 권한"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "파드나 ServiceAccount 가 필요보다 넓은 권한(클러스터 관리자 · privileged · 호스트 네트워크)을 가진 상태. 하나가 뚫리면 노드와 클러스터가 함께 넘어간다"
+
   # ── 롤아웃 ────────────────────────────────────────────────
   - id: infra-rollout
     kind: STAGE
     name: "롤아웃"
     category: INFRASTRUCTURE
     level: INTERMEDIATE
-    description: "옛 버전에서 새 버전으로 트래픽을 넘긴다. 넘기는 동안 요청이 실패하지 않게 하는 것이 핵심이다"
-    contains: [infra-rolling-update, blue-green-deployment, canary-deployment, infra-deploy-downtime, infra-deploy-error-rate]
+    description: "옛 버전에서 새 버전으로 트래픽을 넘긴다. 넘기는 동안 요청이 실패하지 않게 하는 것, 잘못됐을 때 빨리 되돌리는 것이 핵심이다"
+    questions: ["Rolling · Blue-Green · Canary 는 각각 언제 고르나"]
+    contains: [infra-rolling-update, infra-recreate-deployment, blue-green-deployment, canary-deployment, infra-progressive-delivery, infra-shadow-traffic, infra-feature-flag, infra-rollback, infra-deploy-downtime, infra-incompatible-rollout, infra-deploy-error-rate]
   - id: infra-rolling-update
     kind: MECHANISM
     name: "롤링 업데이트"
     category: INFRASTRUCTURE
     level: BEGINNER
     description: "파드를 몇 개씩 새 버전으로 바꿔 끼운다. maxSurge 로 먼저 띄울 수, maxUnavailable 로 먼저 내릴 수를 정하고, 새 파드가 Ready 가 된 뒤에만 다음으로 넘어간다"
-    synonyms: ["rolling update", "RollingUpdate"]
+    synonyms: ["rolling update", "RollingUpdate", "maxSurge", "maxUnavailable"]
     questions: ["maxSurge:1 · maxUnavailable:0 과 그 반대는 무엇을 맞바꾸나"]
     code:
       - { path: k8s/overlays/oci-arm/patches/rolling-surge-first.yaml, symbol: "maxUnavailable: 0", note: "새 파드가 Ready 된 뒤에만 옛 파드를 내린다" }
-    uses: [health-check, infra-pod]
+    uses: [health-check, infra-pod, infra-graceful-shutdown]
     mitigates:
       - { to: infra-deploy-downtime, reason: "옛 파드를 먼저 내리지 않아 JVM 부팅 동안 받을 곳이 비지 않는다" }
     measured_by: [infra-deploy-error-rate]
+  - id: infra-recreate-deployment
+    kind: MECHANISM
+    name: "재생성 배포"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "옛 파드를 모두 내린 뒤 새 파드를 띄운다. 두 버전이 동시에 돌면 안 될 때(단일 쓰기 · 볼륨 독점) 쓰고, 그 사이 순단을 받아들인다"
+    synonyms: ["Recreate"]
+    code:
+      - { path: k8s/overlays/k3s-lite/patches/sideapp-local.yaml, symbol: "type: Recreate", note: "두 버전 동시 기동을 피하는 교체 전략" }
+    causes:
+      - { to: infra-deploy-downtime, reason: "옛 파드가 내려가고 새 파드가 Ready 되기 전까지 받을 곳이 없다" }
+    alternative_to:
+      - { to: infra-rolling-update, reason: "섞어 바꾸지 않고 다 내린 뒤 다시 띄운다" }
   - id: blue-green-deployment
     kind: MECHANISM
     name: "블루-그린 배포"
@@ -224,6 +1542,40 @@ concepts:
     measured_by: [infra-deploy-error-rate]
     alternative_to:
       - { to: infra-rolling-update, reason: "파드 수가 아니라 트래픽 비율로 새 버전을 늘린다" }
+  - id: infra-progressive-delivery
+    kind: MECHANISM
+    name: "점진적 전달"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "카나리 · 블루-그린의 단계마다 메트릭 분석(오류율 · p99 지연)을 돌려 통과하면 다음 비율로, 실패하면 자동으로 되돌린다(Argo Rollouts · Flagger). 분석 원천이 죽었을 때의 판정까지 정해야 한다"
+    synonyms: ["progressive delivery", "Argo Rollouts", "Flagger", "AnalysisTemplate"]
+    uses: [canary-deployment, infra-rollback, prometheus]
+    mitigates:
+      - { to: infra-deploy-downtime, reason: "나쁜 버전을 사람보다 먼저 되돌린다" }
+    measured_by: [infra-deploy-error-rate, obs-error-rate, latency-percentile]
+  - id: infra-shadow-traffic
+    kind: MECHANISM
+    name: "섀도 트래픽"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "실제 요청을 복제해 새 버전에도 보내되 응답은 버린다. 사용자 영향 없이 실제 부하에서 새 버전을 시험하지만, 쓰기 요청은 부수효과를 막아야 한다"
+    synonyms: ["dark launch", "traffic mirroring", "shadowing"]
+  - id: infra-feature-flag
+    kind: MECHANISM
+    name: "기능 플래그"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "코드 배포와 기능 공개를 떼어 놓는다. 꺼진 채로 배포하고 설정으로 켜며, 문제가 생기면 재배포 없이 끈다. 다 쓴 플래그를 지우지 않으면 분기가 쌓인다"
+    synonyms: ["feature flag", "feature toggle"]
+  - id: infra-rollback
+    kind: MECHANISM
+    name: "롤백"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "직전의 정상 버전으로 되돌린다. GitOps 에서는 되돌리기 커밋이 롤백이고, 이미지 태그가 불변이어야 되돌릴 대상이 존재한다. 이미 적용된 스키마 변경은 이미지만 되돌려서는 안 돌아간다"
+    synonyms: ["rollback", "revert"]
+    questions: ["DB 스키마가 바뀐 배포는 왜 이미지 롤백으로 되돌아가지 않나"]
+    uses: [infra-image-tag]
   - id: infra-deploy-downtime
     kind: PROBLEM
     name: "배포 순단"
@@ -232,6 +1584,13 @@ concepts:
     description: "버전을 바꾸는 동안 요청을 받을 파드가 비어 503 이 나는 상태. 옛 파드를 먼저 내리거나, 새 파드가 준비되기 전에 트래픽을 받을 때 생긴다"
     synonyms: ["deployment downtime"]
     measured_by: [infra-deploy-error-rate]
+  - id: infra-incompatible-rollout
+    kind: PROBLEM
+    name: "버전 비호환 롤아웃"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "롤아웃 중 옛 버전과 새 버전이 함께 도는데 스키마 · API · 메시지 형식이 서로 맞지 않아 한쪽이 실패하는 상태"
+    synonyms: ["breaking change", "schema incompatibility"]
   - id: infra-deploy-error-rate
     kind: METRIC
     name: "배포 중 오류율"
@@ -272,7 +1631,12 @@ concepts:
     questions: ["API 게이트웨이와 리버스 프록시는 무엇이 같고 무엇이 다른가"]
     code:
       - { path: gateway/src/main/kotlin/com/kgd/gateway/config/GatewayRouteConfig.kt, symbol: "class GatewayRouteConfig(", note: "경로별 라우트와 인증 필터 조합" }
-    uses: [reverse-proxy, service-discovery, rate-limiting, jwt]
+    uses:
+      - reverse-proxy
+      - service-discovery
+      - rate-limiting
+      - jwt
+      - { to: sec-identity-header-stripping, reason: "바깥에서 들어온 신원 헤더를 지우고 다시 쓴다" }
   - id: load-balancer
     kind: MECHANISM
     name: "로드 밸런서"
@@ -284,6 +1648,10 @@ concepts:
     code:
       - { path: k8s/base/commerce/service.yaml, symbol: "kind: Service", note: "Service 가 Ready 파드들에 요청을 나눈다" }
     uses: [health-check, infra-k8s-service]
+    contains:
+      - { to: cloud-l4-load-balancer, reason: "로드 밸런서의 종류다" }
+      - { to: cloud-l7-load-balancer, reason: "로드 밸런서의 종류다" }
+      - { to: cloud-gateway-load-balancer, reason: "로드 밸런서의 종류다" }
   - id: service-discovery
     kind: MECHANISM
     name: "서비스 디스커버리"
@@ -294,7 +1662,7 @@ concepts:
     questions: ["클라이언트 측 디스커버리와 서버 측 디스커버리는 누가 주소를 고르나"]
     code:
       - { path: gateway/src/main/resources/application.yml, symbol: "uri: http://atlas:8089", note: "게이트웨이 라우트가 Service DNS 이름으로 대상을 찾는다" }
-    uses: [infra-k8s-service]
+    uses: [infra-k8s-service, infra-cluster-dns]
   - id: infra-cert-renewal
     kind: MECHANISM
     name: "인증서 자동 발급 · 갱신"
@@ -320,6 +1688,10 @@ concepts:
     description: "쿠버네티스 Ingress 규칙을 nginx 설정으로 바꿔 실행하는 인그레스 컨트롤러. 더 긴 경로 접두사가 먼저 이긴다"
     implements:
       - { to: reverse-proxy, reason: "호스트 · 경로별 Ingress 규칙대로 서비스에 넘긴다" }
+      - { to: cloud-l7-load-balancer, reason: "인그레스가 호스트 · 경로 기준으로 나눠 준다" }
+      - { to: net-tls-termination, reason: "인그레스에서 TLS 를 끝낸다" }
+      - { to: net-hsts, reason: "HTTPS 강제 헤더를 붙인다" }
+      - { to: net-mtls, reason: "오리진 잠금 — 엣지 인증서만 받는다" }
   - id: cert-manager
     kind: TECHNOLOGY
     name: "cert-manager"
@@ -330,82 +1702,77 @@ concepts:
       - { path: k8s/overlays/oci-arm/cert-manager/cluster-issuer-prod.yaml, symbol: "kind: ClusterIssuer", note: "Let's Encrypt 운영 발급자" }
     implements:
       - { to: infra-cert-renewal, reason: "Ingress 주석을 보고 인증서를 받아 Secret 으로 둔다" }
+      - { to: net-pki, reason: "ACME 로 인증서 체인을 발급한다" }
 
-  # ── 컨테이너 오케스트레이션 ───────────────────────────────
-  - id: infra-orchestration
+  # ── 백업 · 재해 복구 ──────────────────────────────────────
+  - id: infra-backup-dr
     kind: STAGE
-    name: "컨테이너 오케스트레이션"
+    name: "백업 · 재해 복구"
     category: INFRASTRUCTURE
     level: INTERMEDIATE
-    description: "여러 컨테이너를 노드에 배치하고, 죽으면 다시 띄우고, 부하에 맞춰 수를 조절한다"
-    contains: [health-check, auto-scaler, kubernetes, k3s, infra-resource-contention, infra-cpu-utilization]
-  - id: health-check
+    description: "데이터와 클러스터 상태의 사본을 원본과 다른 장애 영역에 두고, 정해진 시간 안에 되살릴 수 있는지 주기적으로 확인한다"
+    questions: ["RPO 와 RTO 는 각각 무엇을 정하나", "백업이 원본과 같은 디스크에 있으면 무엇을 못 막나"]
+    contains: [infra-scheduled-backup, infra-offsite-backup, infra-cluster-state-backup, infra-restore-drill, infra-colocated-backup, infra-rpo, infra-rto]
+  - id: infra-scheduled-backup
     kind: MECHANISM
-    name: "헬스 체크"
+    name: "정기 백업 작업"
     category: INFRASTRUCTURE
     level: BEGINNER
-    description: "인스턴스가 살아 있는지(liveness), 요청을 받을 준비가 됐는지(readiness)를 주기적으로 묻는다. 준비 안 된 인스턴스는 트래픽에서 빼고, 죽은 것은 다시 띄운다"
-    synonyms: ["health check", "probe"]
-    questions: ["readiness 실패와 liveness 실패는 각각 무엇을 일으키나", "타임아웃이 너무 짧으면 멀쩡한 파드에 무슨 일이 생기나"]
+    description: "정해진 시각에 덤프 · 스냅샷을 만들고 보관 기간이 지난 것을 지운다. 백업 주기가 곧 잃을 수 있는 데이터의 최대 폭이다"
+    synonyms: ["scheduled backup", "retention"]
     code:
-      - { path: k8s/base/commerce/deployment.yaml, symbol: "path: /actuator/health/readiness", note: "Spring Actuator readiness 를 프로브로 쓴다" }
-      - { path: k8s/overlays/oci-arm/patches/probe-tolerance.yaml, symbol: "readinessProbe:", note: "바쁜 노드에서 느림이 장애로 승격되지 않게 관용도를 올린다" }
+      - { path: k8s/base/db-backup/cronjob-mysql.yaml, symbol: "- name: mysqldump", note: "매일 논리 백업을 만드는 CronJob 컨테이너" }
+    uses: [infra-cronjob, data-logical-backup]
+    measured_by: [infra-rpo]
+  - id: infra-offsite-backup
+    kind: MECHANISM
+    name: "오프사이트 사본"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "백업 한 부를 다른 장치 · 다른 장소(오브젝트 스토리지)에 더 둔다(3-2-1 규칙). 업로드 자격의 만료처럼 사본이 조용히 끊기는 경로를 실패로 드러나게 해야 한다"
+    synonyms: ["3-2-1 rule", "off-site backup"]
+    code:
+      - { path: k8s/base/db-backup/cronjob-mysql.yaml, symbol: "- name: PAR_EXPIRES", note: "오브젝트 스토리지 업로드 자격의 만료일 — 만료되면 Job 을 실패시킨다" }
+    mitigates:
+      - { to: infra-colocated-backup, reason: "원본 디스크가 사라져도 사본이 남는다" }
     uses:
-      - infra-probe
-      - { to: spring-boot, reason: "actuator 의 readiness · liveness 엔드포인트" }
-    causes:
-      - { to: infra-deploy-downtime, reason: "타임아웃이 짧으면 부하 순간 멀쩡한 파드의 readiness 가 실패해 엔드포인트가 빈다" }
-  - id: auto-scaler
+      - { to: cloud-signed-url, reason: "오브젝트 스토리지 쓰기 전용 사전 인증 URL" }
+  - id: infra-cluster-state-backup
     kind: MECHANISM
-    name: "오토 스케일러"
+    name: "클러스터 상태 백업"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "상태 저장소 스냅샷과 네임스페이스 · 볼륨 백업(Velero)으로 클러스터 객체를 되살릴 수 있게 한다. GitOps 라면 선언은 Git 에 있으므로 상태 있는 볼륨이 핵심이다"
+    synonyms: ["etcd snapshot", "Velero"]
+    uses: [infra-volume-snapshot]
+  - id: infra-restore-drill
+    kind: MECHANISM
+    name: "복구 리허설"
     category: INFRASTRUCTURE
     level: INTERMEDIATE
-    description: "지표를 보고 인스턴스 수를 자동으로 늘리고 줄인다. 쿠버네티스 HPA 는 CPU 사용률 목표에 맞춰 레플리카 수를 조절한다"
-    synonyms: ["HPA", "Horizontal Pod Autoscaler", "autoscaling"]
-    questions: ["HPA 는 무엇을 보고 레플리카를 몇 개로 정하나", "노드가 하나뿐이면 수평 확장은 무엇에 막히나"]
-    code:
-      - { path: k8s/overlays/prod-k8s/hpa.yaml, symbol: "kind: HorizontalPodAutoscaler", note: "managed K8s 에서 CPU 70% 목표로 레플리카를 조절" }
-    uses: [infra-pod]
-    measured_by: [infra-cpu-utilization]
-  - id: infra-resource-contention
+    description: "백업으로 실제로 되살려 보고 행 수 · 문자 집합 · 걸린 시간을 확인한다. 복구해 본 적 없는 백업은 백업이 아니다"
+    synonyms: ["restore test", "DR drill"]
+    measured_by: [infra-rto]
+  - id: infra-colocated-backup
     kind: PROBLEM
-    name: "노드 자원 경합"
+    name: "원본과 같은 곳의 백업"
     category: INFRASTRUCTURE
     level: INTERMEDIATE
-    description: "한 노드의 CPU · 메모리를 여러 파드가 동시에 다투는 상태. 단일 노드에서 전 서비스가 한꺼번에 롤아웃되면 부하가 치솟아 프로브와 터널 같은 다른 파드가 굶는다"
-    causes:
-      - { to: infra-deploy-downtime, reason: "굶은 파드가 제때 대답하지 못해 트래픽에서 빠진다" }
-    measured_by: [infra-cpu-utilization]
-  - id: infra-cpu-utilization
+    description: "백업이 원본과 같은 디스크 · 노드 · 리전에 있어 한 번의 장애로 둘 다 잃는 상태"
+  - id: infra-rpo
     kind: METRIC
-    name: "CPU 사용률"
-    category: INFRASTRUCTURE
-    level: BEGINNER
-    description: "요청한 CPU 대비 실제로 쓴 비율. HPA 의 목표값이자 노드 경합의 신호다"
-  - id: kubernetes
-    kind: TECHNOLOGY
-    name: "쿠버네티스"
+    name: "RPO"
     category: INFRASTRUCTURE
     level: INTERMEDIATE
-    description: "선언한 상태대로 컨테이너를 배치 · 재시작 · 확장하는 오케스트레이터. 이 레포의 managed K8s 배포 형태(prod-k8s)가 표준 쿠버네티스를 전제한다"
-    synonyms: ["Kubernetes", "K8s"]
-    implements:
-      - { to: infra-rolling-update, reason: "Deployment 의 기본 교체 전략" }
-      - { to: health-check, reason: "readiness · liveness · startup 프로브" }
-      - { to: auto-scaler, reason: "HorizontalPodAutoscaler" }
-      - { to: service-discovery, reason: "Service 이름이 클러스터 DNS 로 풀린다" }
-      - { to: load-balancer, reason: "Service 가 Ready 엔드포인트에 요청을 나눈다" }
-  - id: k3s
-    kind: TECHNOLOGY
-    name: "k3s"
+    description: "장애 시 잃어도 되는 데이터의 최대 시간 폭(목표 복구 시점). 하루 한 번 백업이면 RPO 는 24시간이다"
+    synonyms: ["Recovery Point Objective", "목표 복구 시점"]
+  - id: infra-rto
+    kind: METRIC
+    name: "RTO"
     category: INFRASTRUCTURE
     level: INTERMEDIATE
-    description: "바이너리 하나로 도는 경량 쿠버네티스 배포판. 이 레포 운영(oci-arm)은 OCI Ampere A1 무료 범위(4 OCPU · 24GB) 단일 노드 k3s 위에서 돈다"
-    code:
-      - { path: k8s/overlays/oci-arm/README.md, symbol: "Single-node k3s 배포용 overlay", note: "운영 배포 형태가 단일 노드 k3s 다" }
-    implements:
-      - { to: infra-rolling-update, reason: "쿠버네티스 API 를 그대로 제공해 Deployment 전략이 같게 돈다" }
-      - { to: health-check, reason: "같은 프로브 규격" }
+    description: "장애에서 서비스를 되살리기까지 허용되는 최대 시간(목표 복구 시간)"
+    synonyms: ["Recovery Time Objective", "목표 복구 시간"]
 
   # ── 용어 ──────────────────────────────────────────────────
   - id: infra-glossary
@@ -415,14 +1782,14 @@ concepts:
     level: BEGINNER
     description: "배포와 클러스터를 읽는 데 필요한 말. 단계 · 장치가 아니라 그것을 설명하는 이름과 산출물을 모은다"
     synonyms: ["glossary", "용어집"]
-    contains: [infra-glossary-image, infra-glossary-cluster]
+    contains: [infra-glossary-image, infra-glossary-cluster, infra-glossary-storage]
   - id: infra-glossary-image
     kind: TERM
     name: "이미지 · 구성 용어"
     category: BASICS
     level: BEGINNER
     description: "무엇을 배포하고 어떻게 선언하는지에 관한 말"
-    contains: [infra-container-image, infra-image-registry, infra-desired-state, infra-overlay]
+    contains: [infra-container-image, infra-oci-image-spec, infra-image-layer, infra-base-image, infra-image-tag, infra-image-digest, infra-sbom, infra-image-registry, infra-artifact, infra-desired-state, infra-overlay, infra-helm-chart, infra-helm-values]
   - id: infra-container-image
     kind: TERM
     name: "컨테이너 이미지"
@@ -430,13 +1797,62 @@ concepts:
     level: BEGINNER
     description: "실행에 필요한 파일 시스템과 실행 명령을 읽기 전용 레이어로 쌓은 산출물. 태그로 버전을 가리키고, 같은 태그를 덮어쓰지 않아야 롤백이 된다"
     synonyms: ["container image", "OCI image"]
+  - id: infra-oci-image-spec
+    kind: TERM
+    name: "OCI 규격"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "이미지 형식(매니페스트 · 설정 · 레이어), 배포 API, 런타임 동작을 정한 개방 표준. 어느 도구로 구운 이미지든 어느 런타임에서나 돈다"
+    synonyms: ["Open Container Initiative", "OCI image spec", "OCI runtime spec"]
+  - id: infra-image-layer
+    kind: TERM
+    name: "이미지 레이어"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "파일 시스템 변경분 하나를 담은 압축 묶음. 내용 해시로 식별되어 같은 레이어는 한 번만 저장 · 전송된다"
+    synonyms: ["layer"]
+  - id: infra-base-image
+    kind: TERM
+    name: "베이스 이미지"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "이미지가 올라서는 아래층 이미지(JRE · nginx · alpine). 베이스의 취약점과 크기를 그대로 물려받는다"
+    synonyms: ["base image", "FROM"]
+  - id: infra-image-tag
+    kind: TERM
+    name: "이미지 태그"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "이미지를 가리키는 사람이 읽는 이름표. 옮겨 붙일 수 있으므로 태그만으로는 같은 내용임을 보장하지 않는다"
+    synonyms: ["tag"]
+  - id: infra-image-digest
+    kind: TERM
+    name: "이미지 다이제스트"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "이미지 매니페스트의 내용 해시(sha256:…). 내용이 바뀌면 값이 바뀌므로 정확히 그 이미지를 가리킨다"
+    synonyms: ["digest", "sha256"]
+  - id: infra-sbom
+    kind: TERM
+    name: "SBOM"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "이미지 · 산출물에 든 구성 요소와 버전의 목록. 새 취약점이 발표되면 어느 이미지가 영향받는지 바로 찾는다"
+    synonyms: ["Software Bill of Materials", "소프트웨어 구성 목록"]
   - id: infra-image-registry
     kind: TERM
     name: "이미지 레지스트리"
     category: INFRASTRUCTURE
     level: BEGINNER
-    description: "이미지를 올리고 받는 저장소. 이 레포는 OCI 레지스트리(OCIR)에 arm64 이미지를 올린다"
-    synonyms: ["container registry", "OCIR"]
+    description: "이미지를 올리고 받는 저장소. 이 레포는 OCI 레지스트리(OCIR)에 arm64 이미지를 올리고, 비공개 레지스트리라 파드마다 끌어오기 자격(imagePullSecrets)이 필요하다"
+    synonyms: ["container registry", "OCIR", "imagePullSecrets"]
+  - id: infra-artifact
+    kind: TERM
+    name: "빌드 산출물"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "파이프라인이 만들어 다음 단계로 넘기는 결과물(이미지 · JAR · 정적 파일 묶음). 버전과 원천 커밋이 추적되어야 한다"
+    synonyms: ["artifact"]
   - id: infra-desired-state
     kind: TERM
     name: "원하는 상태"
@@ -451,13 +1867,27 @@ concepts:
     level: INTERMEDIATE
     description: "공통 베이스 매니페스트 위에 환경별 차이만 패치로 겹친 층. 배포 형태(k3s-lite · oci-arm · prod-k8s)마다 하나다"
     synonyms: ["overlay"]
+  - id: infra-helm-chart
+    kind: TERM
+    name: "Helm 차트"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "템플릿 · 기본값 · 의존 차트 · 훅을 묶은 설치 단위. 설치한 결과는 릴리스라는 이름으로 이력이 남는다"
+    synonyms: ["chart", "release"]
+  - id: infra-helm-values
+    kind: TERM
+    name: "values 파일"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "차트 템플릿에 채울 값. 환경별 차이를 values 파일로 갈라 같은 차트를 여러 번 설치한다"
+    synonyms: ["values.yaml"]
   - id: infra-glossary-cluster
     kind: TERM
     name: "클러스터 용어"
     category: BASICS
     level: BEGINNER
     description: "쿠버네티스 안에서 무엇이 돌고 요청이 어디로 들어오는지에 관한 말"
-    contains: [infra-pod, infra-k8s-service, infra-ingress, infra-probe]
+    contains: [infra-pod, infra-replicaset, infra-k8s-namespace, infra-label-selector, infra-annotation, infra-k8s-service, infra-service-types, infra-headless-service, infra-endpoint-slice, infra-ingress, infra-probe, infra-qos-class, infra-service-account, infra-custom-resource, infra-pod-phase, infra-exit-code, infra-k8s-event, infra-kubeconfig]
   - id: infra-pod
     kind: TERM
     name: "파드"
@@ -465,6 +1895,33 @@ concepts:
     level: BEGINNER
     description: "쿠버네티스가 배치하는 가장 작은 단위. 네트워크와 볼륨을 공유하는 컨테이너 묶음이고, 교체될 때 주소가 바뀐다"
     synonyms: ["Pod"]
+  - id: infra-replicaset
+    kind: TERM
+    name: "ReplicaSet"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "같은 템플릿의 파드를 정해진 수만큼 유지하는 객체. 직접 만들기보다 Deployment 가 버전마다 하나씩 만든다"
+  - id: infra-k8s-namespace
+    kind: TERM
+    name: "쿠버네티스 네임스페이스"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "한 클러스터 안에서 이름 · 권한 · 쿼터 · 정책의 범위를 가르는 칸. 리눅스 네임스페이스와 이름만 같다"
+    synonyms: ["Namespace", "ns"]
+  - id: infra-label-selector
+    kind: TERM
+    name: "레이블 · 셀렉터"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "객체에 붙인 키-값 표시와 그것으로 객체를 고르는 조건. Service · Deployment · NetworkPolicy 가 모두 레이블로 대상 파드를 고르므로, 레이블이 바뀌면 연결이 조용히 끊긴다"
+    synonyms: ["label", "selector", "matchLabels"]
+  - id: infra-annotation
+    kind: TERM
+    name: "어노테이션"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "객체에 붙이는, 고르는 데 쓰지 않는 메타데이터. 인그레스 컨트롤러 설정 · 동기화 웨이브 같은 도구별 지시를 담는다"
+    synonyms: ["annotation"]
   - id: infra-k8s-service
     kind: TERM
     name: "Service"
@@ -472,6 +1929,27 @@ concepts:
     level: BEGINNER
     description: "바뀌는 파드 주소 앞에 고정된 이름과 가상 IP 를 두는 쿠버네티스 객체. 레이블로 고른 Ready 파드들에 요청을 나눈다"
     synonyms: ["쿠버네티스 서비스", "ClusterIP"]
+  - id: infra-service-types
+    kind: TERM
+    name: "Service 타입"
+    category: NETWORK
+    level: BEGINNER
+    description: "Service 를 어디까지 드러낼지의 구분. ClusterIP(클러스터 안) · NodePort(노드 포트) · LoadBalancer(외부 로드 밸런서) · ExternalName(외부 DNS 별칭)"
+    synonyms: ["NodePort", "LoadBalancer", "ExternalName"]
+  - id: infra-headless-service
+    kind: TERM
+    name: "헤드리스 Service"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "가상 IP 없이(clusterIP: None) DNS 가 파드 주소들을 그대로 돌려주는 Service. StatefulSet 파드를 이름으로 부르거나 클라이언트가 직접 분산할 때 쓴다"
+    synonyms: ["headless service", "clusterIP: None"]
+  - id: infra-endpoint-slice
+    kind: TERM
+    name: "EndpointSlice"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "Service 뒤의 Ready 파드 주소 목록을 조각으로 나눠 담은 객체. 파드 하나가 바뀌어도 거대한 목록 전체를 다시 보내지 않는다"
+    synonyms: ["Endpoints"]
   - id: infra-ingress
     kind: TERM
     name: "Ingress"
@@ -486,3 +1964,73 @@ concepts:
     level: BEGINNER
     description: "kubelet 이 컨테이너 상태를 묻는 규칙. startup(기동 완료) · readiness(트래픽 수신 가능) · liveness(살아 있음) 셋이고, 주기 · 타임아웃 · 연속 실패 허용치를 갖는다"
     synonyms: ["probe", "readinessProbe", "livenessProbe", "startupProbe"]
+  - id: infra-qos-class
+    kind: TERM
+    name: "QoS 클래스"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "requests · limits 설정으로 자동으로 매겨지는 등급. Guaranteed(둘이 같음) · Burstable · BestEffort(둘 다 없음) 순으로 노드 압박 때 늦게 죽는다"
+    synonyms: ["Guaranteed", "Burstable", "BestEffort"]
+  - id: infra-service-account
+    kind: TERM
+    name: "ServiceAccount"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "파드가 API 서버에 자신을 밝히는 신원. RBAC 권한은 여기에 묶이고, 클라우드 IAM 과 이어 파드 단위 클라우드 권한을 주기도 한다"
+    synonyms: ["service account", "Workload Identity", "IRSA"]
+  - id: infra-custom-resource
+    kind: TERM
+    name: "커스텀 리소스"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "CRD 로 등록한 종류의 객체 하나(CR). spec 에 원하는 상태를, status 에 컨트롤러가 본 상태를 적는다"
+    synonyms: ["CR", "custom resource"]
+  - id: infra-pod-phase
+    kind: TERM
+    name: "파드 단계"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "파드 수명의 큰 단계 — Pending · Running · Succeeded · Failed · Unknown. 세부 원인은 컨테이너 상태의 reason(CrashLoopBackOff · ImagePullBackOff · OOMKilled)에 있다"
+    synonyms: ["pod phase", "ImagePullBackOff"]
+  - id: infra-exit-code
+    kind: TERM
+    name: "종료 코드"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "컨테이너 프로세스가 끝나며 남긴 숫자. 128 + 시그널 번호라 137 은 SIGKILL(OOM · 유예 초과), 143 은 SIGTERM 에 정상 종료한 것이다"
+    synonyms: ["exit code", "137", "143"]
+  - id: infra-k8s-event
+    kind: TERM
+    name: "이벤트"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "컨트롤러 · kubelet 이 객체에 남기는 짧은 기록(스케줄 실패 · 이미지 끌어오기 실패 · 프로브 실패). Pending · CrashLoop 의 이유가 여기에 있고, 기본 1시간 뒤 사라진다"
+    synonyms: ["Event", "kubectl get events"]
+  - id: infra-kubeconfig
+    kind: TERM
+    name: "kubeconfig"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "kubectl 이 어느 클러스터에 누구로 붙을지 적은 파일. 클러스터 · 사용자 자격 · 둘을 묶은 컨텍스트로 이루어진다"
+    synonyms: ["context", "~/.kube/config"]
+  - id: infra-glossary-storage
+    kind: TERM
+    name: "스토리지 용어"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "볼륨을 어떻게 붙이고 언제 지우는지에 관한 말"
+    contains: [infra-access-mode, infra-reclaim-policy]
+  - id: infra-access-mode
+    kind: TERM
+    name: "접근 모드"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "볼륨을 몇 노드가 어떻게 붙일 수 있는지. RWO(한 노드 읽기쓰기) · ROX(여러 노드 읽기) · RWX(여러 노드 읽기쓰기) · RWOP(한 파드)"
+    synonyms: ["ReadWriteOnce", "ReadWriteMany", "RWO", "RWX"]
+  - id: infra-reclaim-policy
+    kind: TERM
+    name: "회수 정책"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "PVC 가 지워진 뒤 PV 와 실제 디스크를 어떻게 할지. Delete 는 디스크까지 지우고, Retain 은 남겨 사람이 정리한다"
+    synonyms: ["reclaimPolicy", "Retain", "Delete"]

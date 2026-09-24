@@ -8,22 +8,34 @@ import { ConceptSearch, KindGlyph, SectionHead } from './AtlasParts';
  * 모르는 도메인이 새로 생기면 오른쪽 아래 빈자리에 줄 세운다.
  */
 const POSITIONS: Record<string, [number, number]> = {
-  architecture: [0.33, 0.14],
-  language: [0.13, 0.36],
-  'cs-fundamentals': [0.11, 0.74],
-  concurrency: [0.33, 0.64],
-  data: [0.5, 0.44],
-  distributed: [0.6, 0.8],
-  testing: [0.34, 0.93],
-  search: [0.76, 0.46],
-  infrastructure: [0.68, 0.12],
-  network: [0.92, 0.26],
-  security: [0.9, 0.68],
+  // 기초 — 왼쪽
+  'cs-fundamentals': [0.08, 0.8],
+  language: [0.1, 0.52],
+  runtime: [0.2, 0.94],
+  spring: [0.24, 0.3],
+  concurrency: [0.27, 0.7],
+  // 설계 · 저장 · 분산 — 가운데
+  architecture: [0.4, 0.1],
+  'commerce-catalog': [0.34, 0.5],
+  data: [0.47, 0.5],
+  'commerce-order': [0.61, 0.48],
+  testing: [0.42, 0.9],
+  distributed: [0.58, 0.72],
+  ads: [0.57, 0.93],
+  messaging: [0.72, 0.9],
+  observability: [0.56, 0.27],
+  // 인프라 · 네트워크 · 응용 — 오른쪽
+  infrastructure: [0.7, 0.1],
+  cloud: [0.88, 0.16],
+  network: [0.92, 0.4],
+  search: [0.77, 0.6],
+  security: [0.91, 0.7],
+  recommendation: [0.9, 0.9],
 };
 
 const STRIP_KINDS: ConceptKind[] = ['STAGE', 'MECHANISM', 'TERM', 'TECHNOLOGY', 'PROBLEM', 'METRIC'];
 
-function Constellation({ atlas, width, height, labelScale = 1 }: { atlas: ConceptAtlas; width: number; height: number; labelScale?: number }) {
+function Constellation({ atlas, width, height, labelScale = 1, maxLinks }: { atlas: ConceptAtlas; width: number; height: number; labelScale?: number; maxLinks: number }) {
   const navigate = useNavigate();
   const pad = 36;
   let spare = 0;
@@ -33,8 +45,11 @@ function Constellation({ atlas, width, height, labelScale = 1 }: { atlas: Concep
       return [d.domain, [pad + p[0] * (width - 2 * pad), pad + p[1] * (height - 2 * pad)] as const];
     }),
   );
-  const radius = (d: AtlasDomain) => (5 + Math.sqrt(d.conceptCount) * 1.55) * labelScale;
-  const links = [...atlas.links].sort((a, b) => a.count - b.count);
+  // 개념이 수백 개로 늘어도 원이 이웃을 덮지 않게 제곱근에 상한을 둔다
+  const radius = (d: AtlasDomain) => (5 + Math.min(Math.sqrt(d.conceptCount), 16) * 1.3) * labelScale;
+  // 강한 연결만 그린다 — 도메인이 늘면 약한 선이 지도를 실타래로 만든다. 굵기는 최대값 대비 비율
+  const links = [...atlas.links].sort((a, b) => b.count - a.count).slice(0, maxLinks).reverse();
+  const peak = Math.max(1, ...links.map((l) => l.count));
   return (
     <svg
       className="atlas-map"
@@ -51,9 +66,9 @@ function Constellation({ atlas, width, height, labelScale = 1 }: { atlas: Concep
             <line
               x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]}
               className="atlas-map__link"
-              style={{ strokeWidth: 0.8 + l.count * 0.28, opacity: Math.min(0.85, 0.2 + l.count * 0.06) }}
+              style={{ strokeWidth: (0.6 + 3.4 * (l.count / peak)) * labelScale, opacity: 0.14 + 0.5 * (l.count / peak) }}
             />
-            {l.count >= 5 && labelScale >= 1 && (
+            {l.count >= peak * 0.6 && labelScale >= 0.9 && (
               <text className="atlas-map__count" x={(a[0] + b[0]) / 2} y={(a[1] + b[1]) / 2 - 4} textAnchor="middle">
                 {l.count}
               </text>
@@ -126,13 +141,13 @@ export default function AtlasHome({ atlas, postCounts, wide }: { atlas: ConceptA
       </section>
       <section className="atlas-home__map" aria-label="도메인 지도">
         <div className="atlas-home__map-head">
-          <span className="kh-mono">지도 · 선 굵기 = 도메인 사이 관계 수</span>
+          <span className="kh-mono">지도 · 선 굵기 = 도메인 사이 관계 수 (강한 연결만)</span>
           {wide && <span className="kh-mono atlas-muted">원 크기 = 개념 수</span>}
         </div>
         {wide ? (
-          <Constellation atlas={atlas} width={846} height={740} labelScale={1.05} />
+          <Constellation atlas={atlas} width={846} height={780} labelScale={0.95} maxLinks={45} />
         ) : (
-          <Constellation atlas={atlas} width={356} height={330} labelScale={0.78} />
+          <Constellation atlas={atlas} width={356} height={440} labelScale={0.72} maxLinks={25} />
         )}
       </section>
       {!wide && <DomainList atlas={atlas} postsOf={postsOf} />}

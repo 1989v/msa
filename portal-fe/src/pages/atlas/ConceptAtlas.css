@@ -150,6 +150,9 @@
 .atlas-map__node { cursor: pointer; outline: none; }
 .atlas-map__disc { fill: var(--ko-surface-0); stroke: var(--ko-text-primary); stroke-width: 1; }
 .atlas-map__core { fill: var(--ko-text-primary); }
+/* 라벨에 바탕색 테두리를 둘러 선 위에서도 읽히게 한다 */
+.atlas-map__name,
+.atlas-map__num { paint-order: stroke; stroke: var(--ko-surface-1); stroke-width: 3px; stroke-linejoin: round; }
 .atlas-map__name { fill: var(--ko-text-primary); font-weight: 500; }
 .atlas-map__num { fill: var(--ko-text-secondary); font-family: var(--kh-font-mono); }
 .atlas-map__node:hover .atlas-map__disc,

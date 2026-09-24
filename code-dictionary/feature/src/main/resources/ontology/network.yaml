@@ -8,9 +8,120 @@ concepts:
     name: "네트워크"
     category: NETWORK
     level: BEGINNER
-    description: "브라우저의 요청이 이름 해석 · 전송 · 암호화 · 엣지 라우팅을 거쳐 서비스에 닿고 응답이 돌아오는 경로. 단계 순서대로 읽으면 요청 하나가 지나가는 길이 된다"
+    description: "브라우저의 요청이 주소 지정 · 이름 해석 · 전송 · 암호화 · HTTP · 엣지 라우팅을 거쳐 서비스에 닿고 응답이 돌아오는 경로. 단계 순서대로 읽으면 요청 하나가 지나가는 길이 되고, 뒤쪽 단계는 그 위에서 API 를 설계하는 방법이다"
     synonyms: ["networking", "네트워킹"]
-    contains: [net-name-resolution, net-transport, net-secure-channel, net-edge-routing, net-request-response, net-realtime-push, network-glossary]
+    contains: [net-addressing, net-name-resolution, net-transport, net-secure-channel, net-http-connection, net-edge-routing, net-request-response, net-rpc-contract, net-realtime-push, network-glossary]
+
+  # ── 주소 지정 · 패킷 전달 ──
+  - id: net-addressing
+    kind: STAGE
+    name: "주소 지정 · 패킷 전달"
+    category: NETWORK
+    level: BEGINNER
+    description: "호스트에 주소를 붙이고 패킷을 홉 단위로 목적지까지 보낸다. 계층 모델의 네트워크 계층(L3)이 하는 일이고, 위 계층은 전부 이 전달을 믿고 돈다"
+    questions: ["OSI 7계층과 TCP/IP 4계층은 어떻게 대응하나", "사설 IP 를 쓰는 호스트가 인터넷과 통신할 수 있는 이유는 무엇인가"]
+    uses: [net-term-osi-model, net-term-tcp-ip-model]
+    contains: [net-ipv4-addressing, net-cidr, net-ipv6, net-ip-routing, net-nat, net-arp, net-dhcp, net-icmp, net-mtu-fragmentation, net-anycast, net-ipv4-exhaustion, net-pmtu-blackhole]
+    flows_to: [net-name-resolution]
+  - id: net-ipv4-addressing
+    kind: MECHANISM
+    name: "IPv4 주소 지정"
+    category: NETWORK
+    level: BEGINNER
+    description: "32비트 주소로 호스트를 식별하고 네트워크 부분과 호스트 부분으로 나눈다. 사설 대역(10/8 · 172.16/12 · 192.168/16)은 인터넷에서 라우팅되지 않는다"
+    synonyms: ["IPv4", "Internet Protocol v4"]
+    uses: [net-term-private-address]
+    causes: [net-ipv4-exhaustion]
+  - id: net-cidr
+    kind: MECHANISM
+    name: "CIDR · 서브넷팅"
+    category: NETWORK
+    level: BEGINNER
+    description: "주소 뒤에 프리픽스 길이(/24 등)를 붙여 네트워크 크기를 비트 단위로 정하는 표기와 할당 방식. 클래스 구분을 없애 주소를 아끼고 라우팅 테이블을 요약할 수 있게 한다"
+    synonyms: ["Classless Inter-Domain Routing", "subnetting", "서브넷 마스크"]
+    questions: ["/20 대역에는 호스트 주소가 몇 개 있나"]
+    mitigates: [net-ipv4-exhaustion]
+  - id: net-ipv6
+    kind: MECHANISM
+    name: "IPv6"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "128비트 주소로 주소 고갈을 없앤 IP 버전. 모든 호스트가 전역 주소를 가질 수 있어 NAT 가 필요 없고, 대신 방화벽이 들어오는 연결을 명시적으로 막아야 한다"
+    synonyms: ["Internet Protocol v6", "dual-stack"]
+    questions: ["IPv6 에서 NAT 없이 사설망을 보호하는 방법은 무엇인가"]
+    alternative_to: [net-ipv4-addressing]
+    mitigates: [net-ipv4-exhaustion]
+  - id: net-ip-routing
+    kind: MECHANISM
+    name: "IP 라우팅 · Longest Prefix Match"
+    category: NETWORK
+    level: BEGINNER
+    description: "라우터가 목적지 주소와 가장 길게 일치하는 프리픽스의 경로를 골라 다음 홉으로 넘기는 방식. 겹치는 경로가 있으면 더 구체적인 경로가 이긴다"
+    synonyms: ["longest prefix match", "LPM", "라우팅 테이블"]
+    uses: [net-cidr]
+  - id: net-nat
+    kind: MECHANISM
+    name: "NAT · NAPT"
+    category: NETWORK
+    level: BEGINNER
+    description: "패킷의 출발지/목적지 주소와 포트를 바꿔 사설 주소 여러 개가 공인 주소 하나를 나눠 쓰게 한다. 바꾼 대응표(연결 추적)를 기억해야 응답을 되돌릴 수 있다"
+    synonyms: ["Network Address Translation", "SNAT", "DNAT", "PAT"]
+    questions: ["NAT 뒤에서 동시에 열 수 있는 연결 수는 무엇에 묶이나"]
+    uses: [net-term-five-tuple, net-term-ephemeral-port]
+    mitigates: [net-ipv4-exhaustion]
+  - id: net-arp
+    kind: MECHANISM
+    name: "ARP"
+    category: NETWORK
+    level: BEGINNER
+    description: "같은 링크 안에서 IP 주소에 대응하는 MAC 주소를 브로드캐스트로 묻는 프로토콜. L3 주소를 L2 프레임 목적지로 바꾸는 단계다"
+    synonyms: ["Address Resolution Protocol"]
+  - id: net-dhcp
+    kind: MECHANISM
+    name: "DHCP"
+    category: NETWORK
+    level: BEGINNER
+    description: "호스트가 켜질 때 IP 주소 · 게이트웨이 · DNS 서버를 임대받는 프로토콜. 클라우드 VPC 도 이 방식으로 인스턴스에 주소와 DNS 설정을 준다"
+    synonyms: ["Dynamic Host Configuration Protocol", "DHCP options"]
+  - id: net-icmp
+    kind: MECHANISM
+    name: "ICMP · ping · traceroute"
+    category: NETWORK
+    level: BEGINNER
+    description: "도달 불가 · TTL 초과 같은 제어 메시지를 나르는 프로토콜. ping 은 에코로 도달성을, traceroute 는 TTL 을 하나씩 늘려 경로의 홉을 본다"
+    synonyms: ["Internet Control Message Protocol"]
+  - id: net-mtu-fragmentation
+    kind: MECHANISM
+    name: "MTU · 단편화 · PMTUD"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "링크가 한 번에 나를 수 있는 최대 크기(MTU)를 넘는 패킷을 쪼개거나, 경로의 최소 MTU 를 ICMP 로 알아내(PMTUD) 처음부터 작게 보낸다. 터널 · VPN 은 헤더가 붙어 MTU 가 줄어든다"
+    synonyms: ["MTU", "Path MTU Discovery", "fragmentation"]
+    uses: [net-icmp, net-term-mss]
+    causes: [net-pmtu-blackhole]
+  - id: net-anycast
+    kind: MECHANISM
+    name: "애니캐스트"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "여러 위치에서 같은 IP 를 광고해 라우팅이 가장 가까운 지점으로 보내게 하는 방식. 공용 DNS 리졸버와 CDN 엣지가 이것으로 지연을 줄이고 공격 트래픽을 분산한다"
+    synonyms: ["anycast", "BGP anycast"]
+    uses: [net-ip-routing]
+    affects: [net-rtt]
+  - id: net-ipv4-exhaustion
+    kind: PROBLEM
+    name: "IPv4 주소 고갈"
+    category: NETWORK
+    level: BEGINNER
+    description: "32비트 주소 공간이 바닥나 새 공인 주소를 얻기 어렵고 비싸진 상태. NAT · CIDR · IPv6 가 모두 이 문제에 대한 답이다"
+    synonyms: ["IPv4 exhaustion"]
+  - id: net-pmtu-blackhole
+    kind: PROBLEM
+    name: "PMTU 블랙홀"
+    category: NETWORK
+    level: ADVANCED
+    description: "방화벽이 ICMP 를 막아 경로 MTU 를 알 수 없는 상태. 작은 요청은 되고 큰 응답만 멈춰, 핸드셰이크는 성공한 뒤 전송이 걸린 것처럼 보인다"
+    synonyms: ["PMTUD black hole"]
 
   # ── 이름 해석 ──
   - id: net-name-resolution
@@ -19,7 +130,7 @@ concepts:
     category: NETWORK
     level: BEGINNER
     description: "도메인 이름을 연결할 IP 로 바꾼다. 요청이 출발하기 전 첫 단계다"
-    contains: [dns]
+    contains: [dns, net-cluster-dns-search, net-dns-stale-record, net-ndots-amplification]
     flows_to: [net-transport]
   - id: dns
     kind: MECHANISM
@@ -31,6 +142,62 @@ concepts:
     questions: ["A 레코드와 CNAME 은 어떻게 다른가", "DNS 를 바꿨는데 바로 반영되지 않는 이유는 무엇인가"]
     code:
       - { path: k8s/overlays/oci-arm/coredns-custom.yaml, symbol: "rewrite name mysql.1989v.com", note: "공개 호스트 이름을 클러스터 서비스 FQDN 으로 돌리는 CoreDNS rewrite" }
+    contains: [net-dns-recursive-resolution, net-dns-ttl-caching, net-dnssec, net-encrypted-dns]
+    uses: [net-term-dns-record, net-term-authoritative-recursive, net-anycast, udp]
+  - id: net-dns-recursive-resolution
+    kind: MECHANISM
+    name: "재귀 · 반복 조회"
+    category: NETWORK
+    level: BEGINNER
+    description: "리졸버가 루트 → TLD → 권한 서버 순으로 물어 가며(반복) 답을 찾고, 클라이언트에게는 최종 답만 돌려준다(재귀). 한 번 찾은 답은 TTL 동안 캐시한다"
+    synonyms: ["recursive resolution", "iterative query"]
+    uses: [net-term-authoritative-recursive]
+  - id: net-dns-ttl-caching
+    kind: MECHANISM
+    name: "DNS TTL · 캐싱"
+    category: NETWORK
+    level: BEGINNER
+    description: "레코드마다 적힌 TTL 동안 리졸버 · OS · 앱이 답을 재사용한다. 없는 이름의 답(NXDOMAIN)도 캐시된다. TTL 이 길면 조회가 줄고, 짧으면 전환이 빨라진다"
+    synonyms: ["TTL", "negative caching"]
+    questions: ["장애 전환을 앞두고 TTL 을 미리 낮추는 이유는 무엇인가"]
+    uses: [caching]
+    causes: [net-dns-stale-record]
+  - id: net-dnssec
+    kind: MECHANISM
+    name: "DNSSEC"
+    category: NETWORK
+    level: ADVANCED
+    description: "권한 서버가 레코드에 서명하고 리졸버가 상위 영역부터 서명 체인을 검증해 위조된 응답을 걸러 낸다. 내용을 숨기지는 않는다"
+    synonyms: ["DNS Security Extensions"]
+  - id: net-encrypted-dns
+    kind: MECHANISM
+    name: "암호화 DNS (DoH · DoT)"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "DNS 질의를 HTTPS(DoH) 나 TLS(DoT) 안에 담아 경로 위에서 질의 내용을 엿보거나 바꾸지 못하게 한다. DNSSEC 이 진위를, 이것은 기밀성을 맡는다"
+    synonyms: ["DNS over HTTPS", "DNS over TLS", "DoH", "DoT"]
+    uses: [ssl-tls]
+  - id: net-cluster-dns-search
+    kind: MECHANISM
+    name: "클러스터 DNS 검색 경로 (ndots)"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "쿠버네티스 파드의 resolv.conf 는 search 도메인 여러 개와 ndots:5 를 둔다. 점이 다섯 개 미만인 이름은 search 도메인을 붙여 먼저 조회하므로 외부 이름 하나가 질의 여러 번이 된다. 이름 끝에 점을 붙이면(FQDN) 곧장 조회한다"
+    synonyms: ["ndots", "search domain", "CoreDNS"]
+    causes: [net-ndots-amplification]
+  - id: net-dns-stale-record
+    kind: PROBLEM
+    name: "DNS 반영 지연"
+    category: NETWORK
+    level: BEGINNER
+    description: "레코드를 바꿨는데 캐시된 옛 답이 TTL 이 끝날 때까지 남아 일부 클라이언트가 옛 주소로 가는 상태. TTL 을 무시하고 오래 붙드는 클라이언트(JVM DNS 캐시 등)도 있다"
+    synonyms: ["DNS propagation delay"]
+  - id: net-ndots-amplification
+    kind: PROBLEM
+    name: "ndots 질의 증폭"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "외부 이름을 조회할 때 search 도메인 조합을 차례로 실패시킨 뒤에야 진짜 이름을 묻는 상태. DNS 질의가 몇 배로 늘고 첫 요청 지연이 커진다"
 
   # ── 전송 ──
   - id: net-transport
@@ -38,18 +205,122 @@ concepts:
     name: "전송"
     category: NETWORK
     level: BEGINNER
-    description: "두 호스트 사이에 바이트를 나른다. 순서 · 재전송을 보장할지(TCP), 가볍게 보낼지(UDP)를 고른다"
-    contains: [tcp, udp, net-rtt]
+    description: "두 호스트 사이에 바이트를 나른다. 순서 · 재전송을 보장할지(TCP), 가볍게 보낼지(UDP), UDP 위에 신뢰성과 암호화를 새로 얹을지(QUIC)를 고른다"
+    contains: [tcp, udp, quic, net-rtt, net-bandwidth, net-packet-loss, net-head-of-line-blocking, net-time-wait-accumulation, net-close-wait-leak, net-accept-queue-overflow, net-nagle-delay]
     flows_to: [net-secure-channel]
   - id: tcp
     kind: MECHANISM
     name: "TCP"
     category: NETWORK
     level: BEGINNER
-    description: "3-way 핸드셰이크로 연결을 맺고 순서 보장 · 재전송 · 흐름 제어를 하는 전송 프로토콜. HTTP/1.1 · HTTP/2 · WebSocket 이 이 위에서 돈다. 연결을 새로 맺을 때마다 왕복 한 번이 든다"
+    description: "3-way 핸드셰이크로 연결을 맺고 순서 보장 · 재전송 · 흐름 제어 · 혼잡 제어를 하는 전송 프로토콜. HTTP/1.1 · HTTP/2 · WebSocket 이 이 위에서 돈다. 연결을 새로 맺을 때마다 왕복 한 번이 든다"
     synonyms: ["Transmission Control Protocol"]
     questions: ["3-way 핸드셰이크는 왜 세 번인가", "커넥션 재사용(keep-alive)이 지연을 줄이는 이유는 무엇인가"]
-    uses: [net-term-handshake]
+    contains: [net-tcp-connection-lifecycle, net-tcp-flow-control, net-tcp-congestion-control, net-tcp-retransmission, net-nagle-algorithm, net-tcp-keepalive, net-listen-backlog, net-socket-buffer-tuning, net-tcp-fast-open]
+    uses: [net-term-handshake, net-term-port-socket]
+    affects: [net-rtt]
+    causes: [net-head-of-line-blocking]
+  - id: net-tcp-connection-lifecycle
+    kind: MECHANISM
+    name: "TCP 연결 수립 · 종료"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "SYN · SYN-ACK · ACK 로 연결을 열고 FIN 교환으로 닫는다. 먼저 닫은 쪽은 늦게 온 패킷을 흘려보내려 TIME_WAIT(2MSL) 에 머물고, 상대가 닫았는데 앱이 close 를 부르지 않으면 CLOSE_WAIT 에 남는다"
+    synonyms: ["3-way handshake", "4-way handshake", "TIME_WAIT", "CLOSE_WAIT"]
+    questions: ["TIME_WAIT 은 어느 쪽에 생기고 왜 필요한가", "CLOSE_WAIT 가 쌓이면 누구의 잘못인가"]
+    uses: [net-term-tcp-state]
+    causes: [net-time-wait-accumulation, net-close-wait-leak]
+  - id: net-tcp-flow-control
+    kind: MECHANISM
+    name: "TCP 흐름 제어"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "수신자가 남은 버퍼 크기(수신 윈도)를 알려 송신자가 그만큼만 보내게 하는 슬라이딩 윈도 방식. 받는 쪽이 느리면 윈도가 0 이 되어 보내는 쪽이 멈춘다"
+    synonyms: ["sliding window", "rwnd", "receive window"]
+    uses: [net-term-window]
+  - id: net-tcp-congestion-control
+    kind: MECHANISM
+    name: "TCP 혼잡 제어"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "네트워크가 감당할 만큼만 보내도록 혼잡 윈도(cwnd)를 키우고 줄이는 방식. 손실을 혼잡 신호로 읽는 알고리즘(Reno · CUBIC)과 대역폭 · RTT 를 직접 재는 알고리즘(BBR)이 있다"
+    synonyms: ["congestion control", "cwnd"]
+    questions: ["흐름 제어와 혼잡 제어는 각각 누구를 보호하나", "패킷 손실이 적은데도 처리량이 낮은 이유는 무엇일 수 있나"]
+    contains: [net-slow-start, net-cubic, net-bbr]
+    uses: [net-term-window]
+    measured_by: [net-packet-loss, net-bandwidth]
+  - id: net-slow-start
+    kind: MECHANISM
+    name: "슬로 스타트 · AIMD"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "새 연결은 작은 윈도에서 시작해 ACK 마다 두 배로 키우다가(슬로 스타트), 임계값을 넘으면 하나씩 늘리고 손실이 나면 절반으로 줄인다(AIMD). 새 연결이 처음부터 빠르지 못한 이유다"
+    synonyms: ["slow start", "AIMD", "congestion avoidance"]
+  - id: net-cubic
+    kind: MECHANISM
+    name: "CUBIC"
+    category: NETWORK
+    level: ADVANCED
+    description: "손실 기반 혼잡 제어로, 마지막 손실 시점부터 경과 시간의 3차 함수로 윈도를 키운다. 리눅스 기본값이고 대역폭이 크고 먼 링크에서 Reno 보다 빨리 회복한다"
+  - id: net-bbr
+    kind: MECHANISM
+    name: "BBR"
+    category: NETWORK
+    level: ADVANCED
+    description: "손실 대신 병목 대역폭과 최소 RTT 를 재서 보낼 속도를 정하는 혼잡 제어. 버퍼가 큰 경로에서 큐를 덜 채워 지연이 작고, 손실이 잦은 무선망에서 처리량이 덜 무너진다"
+    synonyms: ["Bottleneck Bandwidth and RTT"]
+    alternative_to: [net-cubic]
+  - id: net-tcp-retransmission
+    kind: MECHANISM
+    name: "TCP 재전송"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "ACK 가 재전송 타이머(RTO) 안에 오지 않거나 중복 ACK 가 세 번 오면(빠른 재전송) 세그먼트를 다시 보낸다. RTO 는 RTT 측정값으로 계속 조정된다"
+    synonyms: ["RTO", "fast retransmit", "SACK"]
+    affects: [net-rtt]
+  - id: net-nagle-algorithm
+    kind: MECHANISM
+    name: "Nagle 알고리즘 · TCP_NODELAY"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "ACK 를 기다리는 동안 작은 쓰기를 모아 한 세그먼트로 보내는 방식. 상대의 지연 ACK 와 겹치면 요청마다 수십 ms 가 붙어, RPC · 대화형 트래픽은 TCP_NODELAY 로 끈다"
+    synonyms: ["Nagle's algorithm", "TCP_NODELAY", "delayed ACK"]
+    questions: ["요청마다 약 40 ms 가 일정하게 붙는다면 무엇부터 의심하나"]
+    causes: [net-nagle-delay]
+  - id: net-tcp-keepalive
+    kind: MECHANISM
+    name: "TCP keepalive"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "오래 조용한 연결에 빈 프로브를 보내 상대가 살아 있는지 확인하는 커널 기능. 기본 대기(2시간)가 길어, 중간 장비의 유휴 타임아웃보다 짧게 맞추거나 앱 수준 핑을 따로 둔다"
+    synonyms: ["SO_KEEPALIVE"]
+    mitigates: [net-proxy-idle-timeout]
+  - id: net-listen-backlog
+    kind: MECHANISM
+    name: "listen backlog · accept 큐"
+    category: NETWORK
+    level: ADVANCED
+    description: "커널이 핸드셰이크 중인 연결(SYN 큐)과 끝났지만 앱이 accept 하지 않은 연결(accept 큐)을 따로 쌓아 둔다. accept 큐 크기는 somaxconn 과 listen 인자 중 작은 값이다"
+    synonyms: ["SYN queue", "accept queue", "somaxconn"]
+    causes: [net-accept-queue-overflow]
+  - id: net-socket-buffer-tuning
+    kind: MECHANISM
+    name: "소켓 버퍼 튜닝"
+    category: NETWORK
+    level: ADVANCED
+    description: "송수신 버퍼를 대역폭 × RTT(BDP) 이상으로 잡아 먼 거리 · 큰 전송에서 링크를 채운다. 버퍼가 작으면 처리량이 RTT 에 묶인다"
+    synonyms: ["rmem", "wmem", "tcp_rmem", "SO_RCVBUF"]
+    code:
+      - { path: k8s/overlays/oci-arm/sysctl-tuning/daemonset.yaml, symbol: "sysctl -w net.core.rmem_max=7500000", note: "cloudflared 의 QUIC 수신 버퍼 한도를 노드 커널에서 올린다" }
+    uses: [net-term-bdp]
+    affects: [net-bandwidth]
+  - id: net-tcp-fast-open
+    kind: MECHANISM
+    name: "TCP Fast Open"
+    category: NETWORK
+    level: ADVANCED
+    description: "이전 연결에서 받은 쿠키를 SYN 에 실어 핸드셰이크와 동시에 데이터를 보낸다. 재접속의 첫 왕복을 줄이지만 미들박스가 막는 경우가 많아 널리 쓰이지 않는다"
+    synonyms: ["TFO"]
     affects: [net-rtt]
   - id: udp
     kind: MECHANISM
@@ -60,6 +331,28 @@ concepts:
     synonyms: ["User Datagram Protocol"]
     questions: ["UDP 위에서 신뢰성이 필요하면 어디서 보장하는가"]
     alternative_to: [tcp]
+  - id: quic
+    kind: MECHANISM
+    name: "QUIC"
+    category: NETWORK
+    level: ADVANCED
+    description: "UDP 위에서 스트림 다중화 · 재전송 · 혼잡 제어를 하고 TLS 1.3 을 핸드셰이크에 합친 전송 프로토콜. 스트림마다 따로 복구해 한 패킷 손실이 다른 스트림을 막지 않고, 연결 ID 로 IP 가 바뀌어도 연결을 잇는다"
+    synonyms: ["Quick UDP Internet Connections", "RFC 9000"]
+    questions: ["QUIC 이 TCP 위 HTTP/2 의 head-of-line blocking 을 어떻게 없애나", "QUIC 이 커널이 아니라 사용자 공간에서 구현되는 이유는 무엇인가"]
+    code:
+      - { path: k8s/overlays/oci-arm/sysctl-tuning/daemonset.yaml, symbol: "MASQUE/QUIC", note: "터널 커넥터가 QUIC 으로 엣지에 붙어 UDP 버퍼 한도를 요구한다" }
+    contains: [net-quic-connection-migration]
+    uses: [udp, net-tls13-handshake]
+    alternative_to: [tcp]
+    mitigates: [net-head-of-line-blocking]
+    affects: [net-rtt]
+  - id: net-quic-connection-migration
+    kind: MECHANISM
+    name: "연결 이전 (connection migration)"
+    category: NETWORK
+    level: ADVANCED
+    description: "IP · 포트 4-튜플이 아니라 연결 ID 로 연결을 식별해, 와이파이에서 LTE 로 바뀌어도 핸드셰이크 없이 같은 연결을 이어 쓴다"
+    synonyms: ["connection ID"]
   - id: net-rtt
     kind: METRIC
     name: "RTT"
@@ -67,6 +360,53 @@ concepts:
     level: BEGINNER
     description: "패킷이 갔다 돌아오는 왕복 시간. 핸드셰이크 횟수만큼 곱해져 첫 응답 지연을 정한다"
     synonyms: ["Round Trip Time", "왕복 지연"]
+  - id: net-bandwidth
+    kind: METRIC
+    name: "대역폭 · 처리량"
+    category: NETWORK
+    level: BEGINNER
+    description: "링크가 낼 수 있는 최대 전송률(대역폭)과 실제로 나른 양(처리량). 처리량은 윈도 크기 ÷ RTT 를 넘지 못한다"
+    synonyms: ["bandwidth", "throughput", "goodput"]
+  - id: net-packet-loss
+    kind: METRIC
+    name: "패킷 손실률"
+    category: NETWORK
+    level: BEGINNER
+    description: "보낸 패킷 중 도착하지 못한 비율. TCP 는 손실을 혼잡 신호로 읽어 속도를 줄이므로 1% 손실만으로도 처리량이 크게 떨어진다"
+    synonyms: ["packet loss"]
+  - id: net-head-of-line-blocking
+    kind: PROBLEM
+    name: "Head-of-line blocking"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "앞선 요청이나 패킷 하나가 늦으면 뒤따르는 것들이 전부 기다리는 상태. HTTP/1.1 은 연결 안의 요청 순서에서, HTTP/2 는 TCP 패킷 손실에서 생긴다"
+    synonyms: ["HOL blocking", "HOL"]
+  - id: net-time-wait-accumulation
+    kind: PROBLEM
+    name: "TIME_WAIT 누적 · 포트 고갈"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "짧은 연결을 계속 열고 닫아 TIME_WAIT 소켓이 쌓이고, 같은 목적지로 쓸 임시 포트가 바닥나 새 연결이 실패하는 상태. 연결 재사용(keep-alive · 풀)이 근본 해법이다"
+    synonyms: ["ephemeral port exhaustion"]
+  - id: net-close-wait-leak
+    kind: PROBLEM
+    name: "CLOSE_WAIT 누수"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "상대가 연결을 닫았는데 앱이 소켓을 닫지 않아 CLOSE_WAIT 가 쌓이는 상태. 커널이 아니라 앱 버그(응답 바디 미소비 · close 누락)이며 결국 파일 디스크립터가 바닥난다"
+  - id: net-accept-queue-overflow
+    kind: PROBLEM
+    name: "accept 큐 넘침"
+    category: NETWORK
+    level: ADVANCED
+    description: "앱이 accept 하는 속도보다 연결이 빨리 들어와 큐가 차면 커널이 SYN 이나 ACK 를 버린다. 클라이언트는 재전송 타이머만큼 기다렸다 다시 시도해, 오류가 아니라 초 단위 지연으로만 보인다"
+    synonyms: ["ListenOverflows", "SYN drop"]
+  - id: net-nagle-delay
+    kind: PROBLEM
+    name: "Nagle · 지연 ACK 교착 지연"
+    category: NETWORK
+    level: ADVANCED
+    description: "송신 측 Nagle 은 ACK 를 기다리고 수신 측은 ACK 를 늦추는 탓에 작은 요청마다 수십 ms 가 붙는 상태"
 
   # ── 보안 채널 ──
   - id: net-secure-channel
@@ -74,9 +414,9 @@ concepts:
     name: "보안 채널 수립"
     category: NETWORK
     level: INTERMEDIATE
-    description: "전송 위에 암호화 · 무결성 · 서버 인증을 얹는다. 인증서가 누구 것인지 검증하는 것이 핵심이다"
-    contains: [ssl-tls]
-    flows_to: [net-edge-routing]
+    description: "전송 위에 암호화 · 무결성 · 서버 인증을 얹는다. 인증서가 누구 것인지 검증하는 것과 TLS 를 어디서 끝내는지(신뢰 경계)가 핵심이다"
+    contains: [ssl-tls, net-pki, net-tls-termination, net-mitm-attack, net-zero-rtt-replay]
+    flows_to: [net-http-connection]
   - id: ssl-tls
     kind: MECHANISM
     name: "SSL/TLS"
@@ -87,8 +427,231 @@ concepts:
     questions: ["TLS 핸드셰이크에서 비대칭키와 대칭키는 각각 어디에 쓰이나", "엣지 프록시 뒤 오리진 구간도 암호화해야 하는 이유는 무엇인가"]
     code:
       - { path: k8s/overlays/oci-arm/ingresses/commerce-platform.yaml, symbol: "secretName: cf-origin-ca-tls", note: "Cloudflare Origin CA 인증서로 엣지↔오리진 구간을 Full(strict) 검증" }
-    uses: [net-term-handshake, net-term-origin-certificate, encryption]
+    contains: [net-tls12-handshake, net-tls13-handshake, net-tls-session-resumption, net-sni, net-alpn, net-mtls, net-hsts]
+    uses: [net-term-handshake, net-term-origin-certificate, net-term-cipher-suite, encryption]
     affects: [net-rtt]
+    mitigates: [net-mitm-attack]
+  - id: net-tls12-handshake
+    kind: MECHANISM
+    name: "TLS 1.2 핸드셰이크"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "ClientHello · ServerHello · 인증서 · 키 교환 · Finished 를 두 번 왕복해 주고받는다. RSA 키 교환을 고르면 서버 개인키 유출 시 과거 트래픽까지 풀린다"
+    synonyms: ["TLS 1.2", "2-RTT handshake"]
+    affects: [net-rtt]
+  - id: net-tls13-handshake
+    kind: MECHANISM
+    name: "TLS 1.3 핸드셰이크"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "클라이언트가 첫 메시지에 키 공유값을 미리 실어 1-RTT 로 끝낸다. 전방 비밀성이 없는 키 교환과 약한 암호를 없애 암호 스위트가 다섯 개로 줄었다"
+    synonyms: ["TLS 1.3", "1-RTT handshake"]
+    questions: ["TLS 1.3 이 1.2 보다 왕복이 적은 이유는 무엇인가"]
+    uses: [sec-term-forward-secrecy]
+    alternative_to: [net-tls12-handshake]
+    affects: [net-rtt]
+  - id: net-tls-session-resumption
+    kind: MECHANISM
+    name: "TLS 세션 재개 · 0-RTT"
+    category: NETWORK
+    level: ADVANCED
+    description: "이전 핸드셰이크에서 받은 세션 티켓(PSK)으로 인증서 검증을 건너뛴다. TLS 1.3 은 첫 비행에 요청 데이터까지 싣는 0-RTT 를 허용하지만 재전송 공격에 노출된다"
+    synonyms: ["session ticket", "PSK", "0-RTT", "early data"]
+    affects: [net-rtt]
+    causes: [net-zero-rtt-replay]
+  - id: net-sni
+    kind: MECHANISM
+    name: "SNI"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "ClientHello 에 접속하려는 호스트 이름을 실어, IP 하나에 여러 도메인 인증서를 둔 서버가 맞는 인증서를 고르게 한다. 평문이라 경로에서 보이므로 ECH 로 감추는 확장이 있다"
+    synonyms: ["Server Name Indication", "ECH"]
+  - id: net-alpn
+    kind: MECHANISM
+    name: "ALPN"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "TLS 핸드셰이크 안에서 위에 올릴 프로토콜(h2 · http/1.1)을 합의한다. 브라우저의 HTTP/2 는 사실상 이 협상을 거쳐서만 켜진다"
+    synonyms: ["Application-Layer Protocol Negotiation"]
+  - id: net-mtls
+    kind: MECHANISM
+    name: "mTLS (상호 TLS)"
+    category: NETWORK
+    level: ADVANCED
+    description: "서버뿐 아니라 클라이언트도 인증서를 내 서로를 확인하는 TLS. 서비스 사이 신원 확인이나, 오리진이 엣지 프록시에서 온 연결만 받게 할 때 쓴다"
+    synonyms: ["mutual TLS", "client certificate", "Authenticated Origin Pull"]
+    questions: ["mTLS 와 API 토큰은 각각 무엇을 증명하나"]
+    code:
+      - { path: k8s/overlays/oci-arm/origin-lockdown/aop-patch.yaml, symbol: 'nginx.ingress.kubernetes.io/auth-tls-verify-client: "on"', note: "Cloudflare 클라이언트 인증서가 없는 TLS 연결을 오리진에서 거절한다" }
+    uses: [net-pki]
+  - id: net-hsts
+    kind: MECHANISM
+    name: "HTTPS 강제 · HSTS"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "평문 요청을 HTTPS 로 돌려보내고, Strict-Transport-Security 헤더로 브라우저가 일정 기간 그 도메인에 평문으로 접속하지 않게 한다. 첫 요청의 다운그레이드를 막으려면 preload 목록에 올린다"
+    synonyms: ["HTTP Strict Transport Security", "HTTPS redirect", "HSTS preload"]
+    code:
+      - { path: k8s/overlays/oci-arm/ingresses/commerce-platform.yaml, symbol: 'nginx.ingress.kubernetes.io/ssl-redirect: "true"', note: "ingress-nginx 가 평문 요청을 HTTPS 로 돌리고 HSTS 헤더를 붙인다" }
+    mitigates: [net-mitm-attack]
+  - id: net-pki
+    kind: MECHANISM
+    name: "PKI · 인증서 체인 검증"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "서버 인증서에서 중간 CA 를 거쳐 신뢰 저장소의 루트 CA 까지 서명을 따라 올라가며, 이름 · 유효 기간 · 용도를 확인한다. 중간 인증서를 빠뜨리면 일부 클라이언트에서만 실패한다"
+    synonyms: ["Public Key Infrastructure", "certificate chain", "trust store"]
+    questions: ["서버가 중간 인증서를 보내지 않으면 무슨 일이 생기나"]
+    contains: [net-cert-revocation, net-certificate-transparency]
+    uses: [net-term-x509-certificate, net-term-ca-chain]
+    mitigates: [net-mitm-attack]
+  - id: net-cert-revocation
+    kind: MECHANISM
+    name: "인증서 폐기 확인 (OCSP · CRL)"
+    category: NETWORK
+    level: ADVANCED
+    description: "유효 기간 전에 폐기된 인증서를 CRL 목록이나 OCSP 질의로 확인한다. 서버가 OCSP 응답을 미리 받아 핸드셰이크에 붙이면(stapling) 클라이언트 조회가 없어진다"
+    synonyms: ["OCSP", "CRL", "OCSP stapling"]
+  - id: net-certificate-transparency
+    kind: MECHANISM
+    name: "Certificate Transparency"
+    category: NETWORK
+    level: ADVANCED
+    description: "CA 가 발급한 인증서를 공개 로그에 남기게 해, 도메인 주인이 모르는 발급을 찾아낼 수 있게 한다. 브라우저는 로그 증명(SCT)이 없는 인증서를 거부한다"
+    synonyms: ["CT log", "SCT"]
+  - id: net-tls-termination
+    kind: MECHANISM
+    name: "TLS 종단 위치"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "TLS 를 엣지 · 로드 밸런서 · 인그레스 · 앱 중 어디서 끝낼지 정한다. 끝낸 지점 뒤는 평문이거나 새 TLS 구간이므로, 종단 위치가 곧 신뢰 경계가 된다"
+    synonyms: ["TLS termination", "TLS offloading", "TLS passthrough", "re-encryption"]
+    questions: ["TLS 를 엣지에서 끝내면 오리진 구간은 어떻게 보호하나"]
+    uses: [ssl-tls]
+  - id: net-mitm-attack
+    kind: PROBLEM
+    name: "중간자 공격"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "통신 경로 위의 공격자가 양쪽인 척하며 트래픽을 엿보거나 바꾸는 상태. 인증서 검증을 끄거나 첫 요청이 평문이면 열린다"
+    synonyms: ["MITM", "man-in-the-middle", "SSL stripping"]
+  - id: net-zero-rtt-replay
+    kind: PROBLEM
+    name: "0-RTT 재전송 공격"
+    category: NETWORK
+    level: ADVANCED
+    description: "0-RTT 로 보낸 초기 데이터는 공격자가 그대로 다시 보내도 서버가 구분하지 못한다. 그래서 0-RTT 에는 멱등한 요청만 싣는다"
+
+  # ── HTTP 연결 · 버전 ──
+  - id: net-http-connection
+    kind: STAGE
+    name: "HTTP 연결 · 버전 선택"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "HTTP 메시지를 어떤 연결 방식으로 나를지 고른다. 연결당 요청 하나(1.1), 한 연결에 여러 스트림(2), UDP 위 스트림(3)이 지연 · 로드 밸런싱 · 프록시 호환성을 다르게 만든다"
+    contains: [net-http1-1, http2, http3, net-http2-connection-imbalance, net-ttfb]
+    flows_to: [net-edge-routing]
+  - id: net-http1-1
+    kind: MECHANISM
+    name: "HTTP/1.1"
+    category: NETWORK
+    level: BEGINNER
+    description: "텍스트 요청 · 응답을 연결 하나에 순서대로 하나씩 주고받는다. 동시에 보내려면 연결을 여러 개(브라우저는 호스트당 6개 안팎) 연다"
+    synonyms: ["HTTP 1.1"]
+    contains: [net-http-keep-alive, net-http-pipelining, net-chunked-transfer]
+    causes: [net-head-of-line-blocking]
+  - id: net-http-keep-alive
+    kind: MECHANISM
+    name: "지속 연결 (keep-alive)"
+    category: NETWORK
+    level: BEGINNER
+    description: "응답 뒤에도 TCP · TLS 연결을 닫지 않고 다음 요청에 재사용한다. 핸드셰이크 비용과 TIME_WAIT 을 줄이지만, 유휴 연결을 중간 장비가 먼저 끊으면 재사용 시 리셋을 맞는다"
+    synonyms: ["persistent connection", "Connection: keep-alive", "커넥션 재사용"]
+    affects: [net-rtt]
+    mitigates: [net-time-wait-accumulation]
+  - id: net-http-pipelining
+    kind: MECHANISM
+    name: "HTTP 파이프라이닝"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "응답을 기다리지 않고 요청을 연달아 보내지만 응답은 보낸 순서대로 와야 한다. 앞 응답이 느리면 뒤가 전부 막혀 브라우저들이 사실상 쓰지 않는다"
+    synonyms: ["pipelining"]
+    causes: [net-head-of-line-blocking]
+  - id: net-chunked-transfer
+    kind: MECHANISM
+    name: "청크 전송 인코딩"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "전체 길이를 모른 채 응답을 조각으로 나눠 보내는 방식. Content-Length 없이 스트리밍 응답을 보낼 수 있어 SSE 같은 긴 응답의 바탕이 된다"
+    synonyms: ["Transfer-Encoding: chunked"]
+  - id: http2
+    kind: MECHANISM
+    name: "HTTP/2"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "요청 · 응답을 이진 프레임으로 쪼개 TCP 연결 하나에 여러 스트림을 섞어 보내는 HTTP. 요청 순서 막힘은 없앴지만 TCP 패킷 하나가 빠지면 모든 스트림이 기다린다"
+    synonyms: ["h2", "HTTP 2"]
+    questions: ["HTTP/2 다중화는 HTTP/1.1 의 어떤 문제를 풀고 어떤 문제를 남기나", "HTTP/2 가 L4 로드 밸런싱을 어렵게 만드는 이유는 무엇인가"]
+    contains: [net-http2-multiplexing, net-hpack, net-http2-flow-control, net-http2-goaway]
+    uses: [net-alpn, tcp, net-term-h2c, net-term-http2-stream-frame]
+    alternative_to: [net-http1-1]
+    mitigates: [net-head-of-line-blocking]
+    causes: [net-http2-connection-imbalance]
+  - id: net-http2-multiplexing
+    kind: MECHANISM
+    name: "스트림 다중화"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "스트림 ID 가 붙은 프레임을 섞어 보내고 받는 쪽이 ID 로 다시 모은다. 연결 하나로 수백 개 요청을 동시에 처리해 연결 수와 핸드셰이크가 줄어든다"
+    synonyms: ["multiplexing"]
+    uses: [net-term-http2-stream-frame]
+  - id: net-hpack
+    kind: MECHANISM
+    name: "HPACK 헤더 압축"
+    category: NETWORK
+    level: ADVANCED
+    description: "양쪽이 공유하는 정적 · 동적 테이블에 헤더를 등록하고 인덱스만 보내며, 나머지는 허프만 부호로 줄인다. 요청마다 반복되는 쿠키 · 인증 헤더 크기를 크게 줄인다. HTTP/3 은 같은 역할을 QPACK 이 한다"
+    synonyms: ["HPACK", "QPACK", "header compression"]
+  - id: net-http2-flow-control
+    kind: MECHANISM
+    name: "HTTP/2 흐름 제어"
+    category: NETWORK
+    level: ADVANCED
+    description: "스트림별 · 연결별 윈도를 WINDOW_UPDATE 로 늘려 가며 보낸다. 기본 64KB 윈도는 먼 거리 대용량 스트림에서 BDP 를 채우지 못해 튜닝 대상이 된다"
+    synonyms: ["WINDOW_UPDATE", "stream window"]
+    uses: [net-term-window, net-term-bdp]
+  - id: net-http2-goaway
+    kind: MECHANISM
+    name: "GOAWAY · 우아한 연결 종료"
+    category: NETWORK
+    level: ADVANCED
+    description: "서버가 마지막으로 처리할 스트림 ID 를 알리고 새 스트림을 받지 않겠다고 선언한다. 클라이언트는 나머지 요청을 새 연결로 옮겨, 배포 중에도 요청을 잃지 않는다"
+    synonyms: ["GOAWAY", "graceful shutdown"]
+    mitigates: [net-http2-connection-imbalance]
+  - id: http3
+    kind: MECHANISM
+    name: "HTTP/3"
+    category: NETWORK
+    level: ADVANCED
+    description: "HTTP/2 의 스트림 모델을 QUIC 위로 옮긴 HTTP. 전송 계층 head-of-line blocking 과 TCP+TLS 의 이중 핸드셰이크가 없어지고, 서버는 Alt-Svc 헤더로 지원을 알린다"
+    synonyms: ["h3", "HTTP over QUIC", "Alt-Svc"]
+    uses: [quic]
+    alternative_to: [http2]
+    mitigates: [net-head-of-line-blocking]
+  - id: net-http2-connection-imbalance
+    kind: PROBLEM
+    name: "장기 연결 부하 쏠림"
+    category: NETWORK
+    level: ADVANCED
+    description: "HTTP/2 · gRPC 는 연결 하나를 오래 재사용하므로, 연결 단위로 나누는 L4 로드 밸런서(쿠버네티스 ClusterIP 포함) 뒤에서 요청이 처음 연결된 파드 하나에 몰린다. 새로 뜬 파드는 트래픽을 받지 못한다"
+    synonyms: ["L4 load balancing imbalance", "sticky connection"]
+  - id: net-ttfb
+    kind: METRIC
+    name: "TTFB"
+    category: NETWORK
+    level: BEGINNER
+    description: "요청을 보낸 뒤 응답의 첫 바이트가 오기까지의 시간. DNS · TCP · TLS 핸드셰이크와 서버 처리 시간이 모두 들어 있어 어느 구간이 느린지 쪼개 보는 출발점이다"
+    synonyms: ["Time To First Byte"]
 
   # ── 엣지 · 게이트웨이 라우팅 ──
   - id: net-edge-routing
@@ -97,8 +660,46 @@ concepts:
     category: NETWORK
     level: INTERMEDIATE
     description: "바깥 요청을 받아 경로 · 호스트로 알맞은 서비스에 보낸다. 인증 · 레이트 리미팅 같은 공통 관문도 여기서 건다"
-    contains: [reverse-proxy, api-gateway, net-edge-bypass-host, cloudflare, spring-cloud-gateway, net-proxy-idle-timeout]
+    contains: [reverse-proxy, api-gateway, net-forward-proxy, net-l7-routing, net-client-ip-forwarding, net-bff, net-edge-bypass-host, cloudflare, spring-cloud-gateway, net-proxy-idle-timeout]
     flows_to: [net-request-response, net-realtime-push]
+  - id: net-forward-proxy
+    kind: MECHANISM
+    name: "포워드 프록시"
+    category: NETWORK
+    level: BEGINNER
+    description: "클라이언트 쪽에 서서 클라이언트 대신 바깥 서버에 요청하는 프록시. 사내망 출구 통제 · 캐시 · 익명화에 쓰고, 서버 쪽에 서는 리버스 프록시와 방향이 반대다"
+    synonyms: ["forward proxy", "egress proxy", "HTTP CONNECT"]
+    alternative_to: [reverse-proxy]
+  - id: net-l7-routing
+    kind: MECHANISM
+    name: "호스트 · 경로 기반 라우팅"
+    category: NETWORK
+    level: BEGINNER
+    description: "HTTP 의 Host 헤더와 경로 접두사를 보고 요청을 백엔드에 나눈다. 같은 IP · 인증서 하나로 여러 서비스와 서브도메인을 받을 수 있다"
+    synonyms: ["host-based routing", "path-based routing", "virtual host"]
+    code:
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/config/GatewayRouteConfig.kt, symbol: "fun routeLocator(builder: RouteLocatorBuilder): RouteLocator =", note: "경로 · 호스트 조건으로 서비스별 라우트를 조립한다" }
+    uses: [http]
+  - id: net-client-ip-forwarding
+    kind: MECHANISM
+    name: "원 클라이언트 IP 전달"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "프록시를 거치면 서버가 보는 출발지가 프록시 IP 가 되므로, X-Forwarded-For · Forwarded · CF-Connecting-IP 헤더나 L4 의 PROXY protocol 로 원래 IP 를 넘긴다. 헤더는 누구나 쓸 수 있어 믿을 프록시가 넣은 값만 쓴다"
+    synonyms: ["X-Forwarded-For", "Forwarded", "PROXY protocol", "CF-Connecting-IP"]
+    questions: ["X-Forwarded-For 의 어느 값을 클라이언트 IP 로 믿어야 하나"]
+    code:
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/config/RateLimiterConfig.kt, symbol: "fun adsClientIpKeyResolver(): KeyResolver", note: "엣지가 넣은 CF-Connecting-IP 로 방문자를 구분한다" }
+    causes: [sec-client-ip-spoofing]
+  - id: net-bff
+    kind: MECHANISM
+    name: "BFF (Backend for Frontend)"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "화면 종류(웹 · 앱)마다 전용 API 계층을 두어 여러 서비스 호출을 모으고 화면에 맞는 응답 모양으로 바꾼다. 범용 게이트웨이에 화면 로직이 쌓이는 것을 막는다"
+    synonyms: ["Backend for Frontend"]
+    uses: [api-gateway]
+    mitigates: [net-over-fetching]
   - id: net-edge-bypass-host
     kind: MECHANISM
     name: "우회 호스트"
@@ -108,20 +709,30 @@ concepts:
     code:
       - { path: k8s/overlays/oci-arm/ingresses/commerce-platform.yaml, symbol: "secretName: rt-tls", note: "DNS only 호스트 rt 는 cert-manager 인증서로 직접 TLS 를 맺는다" }
     mitigates: [net-proxy-idle-timeout]
+    causes: [sec-client-ip-spoofing]
   - id: cloudflare
     kind: TECHNOLOGY
     name: "Cloudflare"
     category: INFRASTRUCTURE
     level: INTERMEDIATE
-    description: "사이트 앞단의 DNS · 엣지 프록시. proxied 레코드는 방문자 TLS 를 엣지에서 끝내고 Origin CA 인증서로 오리진에 다시 붙는다. 원래 방문자 IP 는 CF-Connecting-IP 헤더로 넘긴다"
+    description: "사이트 앞단의 DNS · 엣지 프록시 · CDN · WAF. proxied 레코드는 방문자 TLS 를 엣지에서 끝내고 Origin CA 인증서로 오리진에 다시 붙는다. 원래 방문자 IP 는 CF-Connecting-IP 헤더로 넘기고, 터널(cloudflared)로 인바운드 포트 없이 오리진을 붙인다"
     code:
       - { path: k8s/overlays/oci-arm/cloudflared/deployment.yaml, symbol: "name: cloudflared", note: "인바운드 포트 없이 엣지로 나가는 터널 커넥터" }
     implements:
       - { to: dns, reason: "도메인 레코드를 proxied(orange)로 둬 엣지 IP 로 응답한다" }
       - { to: reverse-proxy, reason: "엣지가 요청을 받아 오리진으로 중계한다" }
       - { to: ssl-tls, reason: "방문자 구간 TLS 를 엣지에서 종료하고 오리진 구간은 Origin CA 로 다시 맺는다" }
+      - { to: net-client-ip-forwarding, reason: "CF-Connecting-IP 헤더에 방문자 IP 를 싣는다" }
+      - { to: net-mtls, reason: "Authenticated Origin Pull 로 엣지가 오리진에 클라이언트 인증서를 낸다" }
+      - { to: cloud-cdn, reason: "엣지 PoP 에서 정적 응답을 캐시한다" }
+      - { to: cloud-anycast-edge, reason: "모든 PoP 가 같은 IP 를 광고해 가장 가까운 엣지가 받는다" }
+      - { to: cloud-waf, reason: "관리형 규칙과 레이트 규칙을 엣지에서 건다" }
+      - { to: cloud-ddos-protection, reason: "L3/L4 · L7 공격을 엣지 망에서 흡수한다" }
+      - { to: cloud-zero-trust-access, reason: "터널과 Access 정책으로 관리 콘솔을 공개 인터넷에 노출하지 않는다" }
+      - { to: sec-bot-detection, reason: "엣지 봇 점수 · Bot Fight 로 자동화 트래픽을 가른다" }
     causes:
       - { to: net-proxy-idle-timeout, reason: "엣지가 일정 시간 응답 없는 연결을 끊고 응답을 버퍼링한다" }
+      - { to: cloud-edge-stale-content, reason: "오리진이 Cache-Control 을 비우면 기본 TTL 로 옛 응답을 계속 낸다" }
   - id: spring-cloud-gateway
     kind: TECHNOLOGY
     name: "Spring Cloud Gateway"
@@ -134,6 +745,9 @@ concepts:
       - { to: api-gateway, reason: "RouteLocator 로 경로별 서비스와 필터를 조립한다" }
       - { to: rate-limiting, reason: "RedisRateLimiter 로 라우트마다 토큰 버킷을 건다" }
       - { to: cors, reason: "globalcors 설정으로 허용 출처를 게이트웨이 한곳에서 정한다" }
+      - { to: net-l7-routing, reason: "Path · Host 조건자로 요청을 서비스에 나눈다" }
+      - { to: spring-gateway-route, reason: "라우트 정의" }
+      - { to: spring-gateway-filter, reason: "라우트별 필터" }
   - id: net-proxy-idle-timeout
     kind: PROBLEM
     name: "프록시 유휴 타임아웃"
@@ -141,24 +755,64 @@ concepts:
     level: INTERMEDIATE
     description: "중간 프록시가 한동안 바이트가 오가지 않는 연결을 끊거나 응답을 모아 두는 상태. 오래 열어 두는 SSE · WebSocket 이 조용히 끊기거나 이벤트가 늦게 도착한다"
 
-  # ── 요청-응답 ──
+  # ── 요청-응답 API 설계 ──
   - id: net-request-response
     kind: STAGE
     name: "요청-응답 API 설계"
     category: NETWORK
     level: BEGINNER
-    description: "클라이언트가 묻고 서버가 한 번 답하는 API 를 설계한다. 자원을 어떻게 이름 붙이고 무엇을 한 번에 돌려줄지를 정한다"
-    contains: [http, rest, graphql, grpc, net-over-fetching]
+    description: "클라이언트가 묻고 서버가 한 번 답하는 API 를 설계한다. 자원을 어떻게 이름 붙이고, 무엇을 한 번에 돌려주고, 재시도 · 캐시 · 버전 변경을 어떻게 견딜지를 정한다"
+    contains: [http, rest, graphql, grpc, net-pagination, net-api-versioning, net-api-error-model, net-api-spec, net-webhook, net-over-fetching, net-grpc-message-size-limit]
     measured_by: [net-rtt]
   - id: http
     kind: MECHANISM
     name: "HTTP"
     category: NETWORK
     level: BEGINNER
-    description: "메서드 · 헤더 · 상태 코드로 요청과 응답을 주고받는 애플리케이션 계층 프로토콜. 상태가 없어 요청마다 인증 정보를 다시 싣는다"
-    synonyms: ["HyperText Transfer Protocol"]
+    description: "메서드 · 헤더 · 상태 코드로 요청과 응답을 주고받는 애플리케이션 계층 프로토콜. 상태가 없어 요청마다 인증 정보를 다시 싣는다. 의미(메서드 · 캐시 · 협상)는 버전과 상관없이 같다"
+    synonyms: ["HyperText Transfer Protocol", "HTTP semantics"]
     questions: ["GET 과 POST 는 멱등성에서 어떻게 다른가", "HTTP 가 무상태라는 말은 인증에 무엇을 요구하나"]
-    uses: [net-term-status-code, net-term-idempotent-method]
+    contains: [net-http-caching, net-conditional-request, net-content-negotiation, net-http-compression]
+    uses: [net-term-status-code, net-term-idempotent-method, net-term-http-header]
+  - id: net-http-caching
+    kind: MECHANISM
+    name: "HTTP 캐싱"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "Cache-Control 지시어로 브라우저 · 공유 캐시(CDN)가 응답을 얼마나 · 누구에게 재사용할지 정한다. 파일 이름에 콘텐츠 해시를 넣으면 immutable 로 영구 캐시하고, HTML 처럼 바뀌는 것은 no-cache 로 매번 확인한다"
+    synonyms: ["Cache-Control", "max-age", "s-maxage", "immutable"]
+    questions: ["no-cache 와 no-store 는 어떻게 다른가", "해시가 붙은 정적 파일을 1년 캐시해도 되는 이유는 무엇인가"]
+    code:
+      - { path: portal-fe/nginx.conf, symbol: 'add_header Cache-Control "public, max-age=31536000, immutable";', note: "콘텐츠 해시 파일은 영구 캐시" }
+    uses: [caching, net-term-cache-directive]
+    measured_by: [cache-hit-rate]
+  - id: net-conditional-request
+    kind: MECHANISM
+    name: "조건부 요청"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "캐시한 응답의 ETag · Last-Modified 를 If-None-Match · If-Modified-Since 로 보내, 바뀌지 않았으면 본문 없이 304 를 받는다. If-Match 로 쓰면 낙관적 동시성 제어가 된다"
+    synonyms: ["If-None-Match", "304 Not Modified", "If-Match", "revalidation"]
+    uses: [net-term-etag]
+    affects: [net-bandwidth]
+  - id: net-content-negotiation
+    kind: MECHANISM
+    name: "콘텐츠 협상"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "클라이언트가 Accept · Accept-Language · Accept-Encoding 으로 원하는 형식을 알리고 서버가 고른다. 같은 URL 이 다른 응답을 내면 Vary 헤더로 캐시 키를 나눠야 한다"
+    synonyms: ["Accept", "Vary"]
+  - id: net-http-compression
+    kind: MECHANISM
+    name: "HTTP 압축"
+    category: NETWORK
+    level: BEGINNER
+    description: "텍스트 응답을 gzip · brotli 로 줄여 보내고 Content-Encoding 으로 알린다. 이미 압축된 이미지 · 영상은 다시 줄지 않아 대상에서 뺀다"
+    synonyms: ["gzip", "brotli", "Content-Encoding"]
+    code:
+      - { path: portal-fe/nginx.conf, symbol: "gzip on;", note: "FE 정적 응답을 gzip 으로 줄인다" }
+    uses: [net-content-negotiation]
+    affects: [net-bandwidth]
   - id: rest
     kind: MECHANISM
     name: "REST"
@@ -169,7 +823,7 @@ concepts:
     questions: ["URL 에 동사를 넣지 않는 이유는 무엇인가"]
     code:
       - { path: common/src/main/kotlin/com/kgd/common/response/ApiResponse.kt, symbol: "data class ApiResponse<T>(", note: "모든 REST 응답을 감싸는 공통 봉투" }
-    uses: [http]
+    uses: [http, net-term-rest-maturity]
     causes: [net-over-fetching]
   - id: graphql
     kind: MECHANISM
@@ -178,17 +832,245 @@ concepts:
     level: INTERMEDIATE
     description: "클라이언트가 필요한 필드 구조를 질의로 적어 보내는 API 방식. 엔드포인트 하나로 여러 자원을 한 번에 받는 대신 캐시 · 권한 검사가 필드 단위로 복잡해진다"
     questions: ["GraphQL 에서 N+1 조회가 생기기 쉬운 이유는 무엇인가"]
+    contains: [net-graphql-dataloader]
     alternative_to: [rest]
     mitigates: [net-over-fetching]
+    causes: [n-plus-one]
+  - id: net-graphql-dataloader
+    kind: MECHANISM
+    name: "DataLoader 배치"
+    category: NETWORK
+    level: ADVANCED
+    description: "한 요청 안에서 리졸버들이 개별로 부르는 조회를 모아 키 목록 한 번으로 묶어 조회하고, 같은 키는 요청 동안 캐시한다"
+    synonyms: ["DataLoader", "batching"]
+    mitigates: [n-plus-one]
   - id: grpc
     kind: MECHANISM
     name: "gRPC"
     category: NETWORK
     level: INTERMEDIATE
-    description: "Protocol Buffers 스키마로 함수를 정의하고 HTTP/2 위에서 이진 직렬화로 호출하는 RPC 방식. 서비스 사이 내부 호출에 쓰고 브라우저에서 직접 부르기는 어렵다"
+    description: "Protocol Buffers 스키마로 함수를 정의하고 HTTP/2 위에서 이진 직렬화로 호출하는 RPC 방식. 데드라인 · 취소 · 스트리밍을 프로토콜이 지원해 서비스 사이 내부 호출에 쓰고, 브라우저에서 직접 부르기는 어렵다"
     synonyms: ["Protocol Buffers RPC"]
-    questions: ["gRPC 가 REST 보다 내부 호출에 유리한 점은 무엇인가"]
+    questions: ["gRPC 가 REST 보다 내부 호출에 유리한 점은 무엇인가", "gRPC 를 외부 공개 API 로 쓰기 어려운 이유는 무엇인가"]
+    contains: [net-grpc-unary, net-grpc-server-streaming, net-grpc-client-streaming, net-grpc-bidi-streaming, net-grpc-codegen-stub, net-grpc-interceptor, net-grpc-cancellation, net-grpc-error-model, net-grpc-retry-hedging, net-grpc-keepalive, net-grpc-compression, net-grpc-client-lb, net-grpc-health-protocol, net-grpc-reflection, net-grpc-channelz, net-grpc-web, net-grpc-transcoding, net-connect-rpc]
+    uses: [http2, protobuf, dist-deadline-propagation, dist-timeout, net-term-grpc-metadata, net-term-grpc-channel]
     alternative_to: [rest]
+    causes: [net-http2-connection-imbalance, net-grpc-message-size-limit]
+  - id: net-grpc-unary
+    kind: MECHANISM
+    name: "Unary RPC"
+    category: NETWORK
+    level: BEGINNER
+    description: "요청 하나에 응답 하나를 받는 가장 흔한 호출 패턴. REST 호출과 같은 모양이지만 HTTP/2 스트림 하나로 나른다"
+    synonyms: ["unary call"]
+  - id: net-grpc-server-streaming
+    kind: MECHANISM
+    name: "서버 스트리밍 RPC"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "요청 하나에 응답 메시지를 여러 개 흘려보낸다. 시세 · 진행 상황 구독처럼 서버가 이어서 보내는 데이터에 쓰고, 흐름 제어로 느린 소비자를 보호한다"
+    synonyms: ["server streaming"]
+    uses: [net-http2-flow-control, backpressure]
+    alternative_to: [sse]
+  - id: net-grpc-client-streaming
+    kind: MECHANISM
+    name: "클라이언트 스트리밍 RPC"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "클라이언트가 메시지를 여러 개 보내고 서버가 마지막에 응답 하나를 돌려준다. 업로드 · 측정값 모아 보내기에 쓴다"
+    synonyms: ["client streaming"]
+  - id: net-grpc-bidi-streaming
+    kind: MECHANISM
+    name: "양방향 스트리밍 RPC"
+    category: NETWORK
+    level: ADVANCED
+    description: "양쪽이 한 스트림에서 서로 독립적으로 메시지를 주고받는다. 채팅 · 실시간 협업에 쓰지만, 메시지 큐 대용으로 쓰면 재연결 · 재전송을 직접 짜야 한다"
+    synonyms: ["bidirectional streaming", "bidi"]
+    alternative_to: [websocket]
+  - id: net-grpc-codegen-stub
+    kind: MECHANISM
+    name: "코드 생성 · 스텁"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: ".proto 에서 protoc 플러그인이 언어별 메시지 클래스와 클라이언트 스텁 · 서버 베이스를 만든다. 스텁은 블로킹 · 비동기 · 코루틴 형태가 있고, 생성물을 모듈로 공유하는 방식이 계약 배포 방식이 된다"
+    synonyms: ["protoc", "stub", "coroutine stub"]
+    uses: [protobuf]
+  - id: net-grpc-interceptor
+    kind: MECHANISM
+    name: "인터셉터"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "호출 앞뒤에 끼어 인증 토큰 주입 · 로깅 · 메트릭 · 추적 전파 같은 공통 처리를 하는 클라이언트/서버 체인. 등록 순서가 실행 순서를 정한다"
+    synonyms: ["ClientInterceptor", "ServerInterceptor"]
+    uses: [net-term-grpc-metadata, chain-of-responsibility]
+  - id: net-grpc-cancellation
+    kind: MECHANISM
+    name: "취소 전파"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "클라이언트가 호출을 버리면 RST_STREAM 으로 서버에 알려, 서버와 그 아래 호출이 하던 일을 멈추게 한다. 사용자가 떠난 요청에 자원을 쓰지 않는다"
+    synonyms: ["cancellation", "RST_STREAM"]
+    uses: [dist-deadline-propagation]
+  - id: net-grpc-error-model
+    kind: MECHANISM
+    name: "gRPC 오류 모델"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "HTTP 상태가 아니라 16개 상태 코드와 메시지로 결과를 알리고, google.rpc.Status 의 details 에 필드 오류(BadRequest) · 재시도 힌트(RetryInfo) 같은 구조화된 정보를 싣는다. 코드에 따라 재시도 가능 여부가 갈린다"
+    synonyms: ["Status", "StatusRuntimeException", "google.rpc.Status", "rich error"]
+    questions: ["UNAVAILABLE 과 INTERNAL 은 재시도 판단에서 어떻게 다른가"]
+    uses: [net-term-grpc-status-code]
+  - id: net-grpc-retry-hedging
+    kind: MECHANISM
+    name: "재시도 · 헤징 정책"
+    category: NETWORK
+    level: ADVANCED
+    description: "서비스 설정(service config)에 상태 코드별 재시도 횟수 · 백오프를 적어 클라이언트 라이브러리가 재시도하게 한다. 헤징은 응답을 기다리지 않고 같은 요청을 여러 서버에 보내 꼬리 지연을 줄인다. 둘 다 멱등한 메서드에만 건다"
+    synonyms: ["service config", "retry policy", "hedging policy"]
+    uses: [retry-pattern, dist-exponential-backoff, dist-hedged-request]
+    affects: [latency-percentile]
+  - id: net-grpc-keepalive
+    kind: MECHANISM
+    name: "gRPC keepalive"
+    category: NETWORK
+    level: ADVANCED
+    description: "HTTP/2 PING 으로 유휴 연결을 살려 두고 죽은 연결을 빨리 찾는다. 서버 허용치보다 자주 보내면 서버가 GOAWAY(too_many_pings)로 연결을 끊는다"
+    synonyms: ["KEEPALIVE_TIME", "PERMIT_WITHOUT_CALLS"]
+    mitigates: [net-proxy-idle-timeout]
+  - id: net-grpc-compression
+    kind: MECHANISM
+    name: "메시지 압축"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "메시지 단위로 gzip 등을 켜는 선택 기능. 기본은 꺼져 있고, 이진 직렬화가 이미 작아 큰 반복 텍스트 필드가 있을 때만 이득이 난다"
+    synonyms: ["grpc-encoding"]
+    affects: [net-bandwidth]
+  - id: net-grpc-client-lb
+    kind: MECHANISM
+    name: "클라이언트 측 로드 밸런싱"
+    category: NETWORK
+    level: ADVANCED
+    description: "클라이언트가 이름 해석으로 서버 주소 목록을 받아(헤드리스 서비스 · xDS) 서버마다 연결을 열고 요청 단위로 나눈다. pick_first · round_robin 같은 정책을 고른다"
+    synonyms: ["client-side load balancing", "headless service", "name resolver"]
+    questions: ["쿠버네티스 ClusterIP 뒤에서 gRPC 부하가 한 파드에 몰리는 이유와 해법은 무엇인가"]
+    contains: [net-xds]
+    uses: [service-discovery, load-balancer]
+    mitigates: [net-http2-connection-imbalance]
+  - id: net-xds
+    kind: MECHANISM
+    name: "xDS"
+    category: NETWORK
+    level: ADVANCED
+    description: "제어 평면이 엔드포인트 · 라우트 · 정책을 스트리밍으로 내려 주는 Envoy 계열 API. gRPC 클라이언트가 직접 받아 사이드카 없이 서비스 메시처럼 동작할 수 있다"
+    synonyms: ["Envoy xDS", "proxyless service mesh"]
+    uses: [service-mesh]
+  - id: net-grpc-health-protocol
+    kind: MECHANISM
+    name: "gRPC 헬스 체크 프로토콜"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "grpc.health.v1.Health 서비스로 서비스별 SERVING 상태를 알린다. 로드 밸런서 · 쿠버네티스 프로브가 HTTP 엔드포인트 대신 이것을 부른다"
+    synonyms: ["grpc.health.v1"]
+    uses: [health-check]
+  - id: net-grpc-reflection
+    kind: MECHANISM
+    name: "서버 리플렉션"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "서버가 자기 서비스 · 메시지 정의를 런타임에 알려 주는 서비스. .proto 파일 없이 grpcurl 같은 도구로 호출해 볼 수 있지만 운영 외부에는 열지 않는다"
+    synonyms: ["server reflection", "grpcurl"]
+  - id: net-grpc-channelz
+    kind: MECHANISM
+    name: "Channelz"
+    category: NETWORK
+    level: ADVANCED
+    description: "채널 · 서브채널 · 소켓별 호출 수 · 실패 수 · 연결 상태를 런타임에 조회하는 진단 서비스. 연결이 어느 백엔드에 붙어 있는지 확인할 때 쓴다"
+  - id: net-grpc-web
+    kind: MECHANISM
+    name: "gRPC-Web"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "브라우저가 HTTP/2 트레일러와 프레임을 직접 다룰 수 없어, 변형된 형식으로 보내고 프록시가 진짜 gRPC 로 바꿔 주는 방식. 클라이언트 스트리밍은 지원하지 않는다"
+    synonyms: ["grpc-web"]
+  - id: net-grpc-transcoding
+    kind: MECHANISM
+    name: "gRPC ↔ REST 트랜스코딩"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: ".proto 에 HTTP 경로 주석을 달아 게이트웨이가 REST/JSON 요청을 gRPC 호출로 바꾼다. 내부는 gRPC, 외부는 REST 를 한 스키마로 유지한다"
+    synonyms: ["grpc-gateway", "JSON transcoding"]
+    alternative_to: [net-grpc-web]
+  - id: net-connect-rpc
+    kind: MECHANISM
+    name: "Connect 프로토콜"
+    category: NETWORK
+    level: ADVANCED
+    description: "같은 .proto 로 gRPC · gRPC-Web · 평범한 HTTP/JSON POST 를 모두 받는 RPC 프로토콜. 브라우저에서 프록시 없이 부를 수 있다"
+    synonyms: ["ConnectRPC", "Connect"]
+    alternative_to: [net-grpc-web]
+  - id: net-pagination
+    kind: MECHANISM
+    name: "페이지네이션"
+    category: NETWORK
+    level: BEGINNER
+    description: "큰 목록을 조각으로 나눠 돌려준다. 페이지 번호로 건너뛰는 오프셋 방식과, 마지막 항목의 정렬 키를 넘기는 커서 방식이 있다"
+    synonyms: ["pagination", "paging"]
+    questions: ["오프셋 페이지네이션이 뒤쪽 페이지에서 느려지고 항목을 중복 · 누락하는 이유는 무엇인가"]
+    contains: [net-offset-pagination, net-cursor-pagination]
+  - id: net-offset-pagination
+    kind: MECHANISM
+    name: "오프셋 페이지네이션"
+    category: NETWORK
+    level: BEGINNER
+    description: "page · size(또는 offset · limit)로 위치를 지정한다. 임의 페이지로 바로 갈 수 있고 전체 개수를 보여 주기 쉽지만, 앞 행을 전부 읽고 버려야 하고 그 사이 데이터가 바뀌면 밀린다"
+    synonyms: ["offset", "limit-offset"]
+    code:
+      - { path: place/feature/src/main/kotlin/com/kgd/place/presentation/attraction/dto/AttractionDtos.kt, symbol: "data class AttractionPageResponse(", note: "전체 개수 · 페이지 수 · 현재 페이지를 함께 돌려준다" }
+    causes: [data-deep-offset-pagination]
+  - id: net-cursor-pagination
+    kind: MECHANISM
+    name: "커서 페이지네이션"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "직전 페이지 마지막 항목의 정렬 키를 불투명한 커서로 넘기고 다음 조회는 그 키 뒤부터 읽는다(keyset). 깊이와 상관없이 비용이 같고 중간 삽입에도 밀리지 않지만 임의 페이지 이동은 못 한다"
+    synonyms: ["cursor", "keyset pagination", "seek method"]
+    uses: [data-keyset-pagination]
+    alternative_to: [net-offset-pagination]
+    mitigates: [data-deep-offset-pagination]
+  - id: net-api-versioning
+    kind: MECHANISM
+    name: "API 버전 관리"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "호환이 깨지는 변경을 새 버전(URL 경로 /v1 · 헤더 · 미디어 타입)으로 내고 옛 버전을 일정 기간 함께 운영한다. 필드 추가처럼 호환되는 변경은 버전을 올리지 않는다"
+    synonyms: ["API versioning", "/api/v1", "deprecation"]
+    questions: ["어떤 변경이 하위 호환을 깨는가"]
+  - id: net-api-error-model
+    kind: MECHANISM
+    name: "API 오류 응답 설계"
+    category: NETWORK
+    level: BEGINNER
+    description: "상태 코드로 오류의 부류를, 본문의 기계용 코드와 사람용 메시지로 원인을 알린다. RFC 9457 Problem Details 가 표준 모양이고, 재시도 가능 여부와 대기 시간(Retry-After)을 함께 알린다"
+    synonyms: ["Problem Details", "RFC 9457", "error code", "Retry-After"]
+    uses: [net-term-status-code]
+  - id: net-api-spec
+    kind: MECHANISM
+    name: "API 명세 (OpenAPI)"
+    category: NETWORK
+    level: BEGINNER
+    description: "경로 · 파라미터 · 응답 스키마를 기계가 읽는 문서로 적어 문서 화면 · 클라이언트 코드 · 계약 테스트를 만든다. 코드에서 명세를 뽑거나(code-first) 명세에서 코드를 만든다(spec-first)"
+    synonyms: ["OpenAPI", "Swagger", "springdoc"]
+    code:
+      - { path: code-dictionary/feature/build.gradle.kts, symbol: "implementation(libs.springdoc.openapi.starter.webmvc.ui)", note: "컨트롤러에서 OpenAPI 문서를 생성한다" }
+  - id: net-webhook
+    kind: MECHANISM
+    name: "웹훅"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "이벤트가 생기면 서버가 미리 등록된 상대 URL 로 HTTP 요청을 보내는 서버 간 알림. 서명으로 발신자를 확인하고, 재전송에 대비해 받는 쪽이 멱등하게 처리한다"
+    synonyms: ["webhook", "callback URL"]
+    uses: [http, sec-webhook-verification, dist-idempotency-key]
+    alternative_to: [net-short-polling]
   - id: net-over-fetching
     kind: PROBLEM
     name: "오버페칭 · 언더페칭"
@@ -197,6 +1079,73 @@ concepts:
     description: "화면이 쓰지 않는 필드까지 받거나(오버), 한 화면을 그리려 여러 번 호출하는(언더) 상태. 응답 크기와 왕복 횟수가 늘어난다"
     synonyms: ["over-fetching", "under-fetching"]
     measured_by: [net-rtt]
+  - id: net-grpc-message-size-limit
+    kind: PROBLEM
+    name: "메시지 크기 한도 초과"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "gRPC 는 받는 메시지 크기 기본 한도(4MB)를 넘으면 RESOURCE_EXHAUSTED 로 실패한다. 큰 목록은 스트리밍 · 페이지네이션으로 나눠 보낸다"
+    synonyms: ["MaxInboundMessageSize", "RESOURCE_EXHAUSTED"]
+
+  # ── 스키마 · 직렬화 계약 ──
+  - id: net-rpc-contract
+    kind: STAGE
+    name: "스키마 · 직렬화 계약"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "서비스 사이 메시지의 모양을 스키마로 정하고, 배포 순서가 섞여도 옛 · 새 버전이 서로 읽을 수 있게 진화 규칙을 지킨다"
+    contains: [protobuf, net-schema-evolution, net-schema-repository, net-schema-breaking-change]
+  - id: protobuf
+    kind: MECHANISM
+    name: "Protocol Buffers"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "IDL 로 메시지 · 서비스를 정의하고 필드 번호와 타입만 이진으로 싣는 직렬화 형식. 필드 이름을 싣지 않아 JSON 보다 작고 빠르지만 스키마 없이는 읽을 수 없다"
+    synonyms: ["protobuf", "proto3", ".proto", "IDL"]
+    questions: ["필드 번호를 재사용하면 안 되는 이유는 무엇인가", "proto3 에서 0 과 미설정을 어떻게 구분하나"]
+    contains: [net-protobuf-wire-format]
+    uses: [serialization, net-term-field-number, net-term-proto-oneof, net-term-field-presence, net-term-well-known-types, net-term-proto-editions]
+  - id: net-protobuf-wire-format
+    kind: MECHANISM
+    name: "Protobuf 와이어 포맷"
+    category: NETWORK
+    level: ADVANCED
+    description: "필드마다 (필드 번호 << 3 | 와이어 타입) 태그를 앞에 두고, 정수는 가변 길이(varint), 문자열 · 중첩 메시지는 길이 접두로 싣는다. 모르는 태그는 건너뛸 수 있어 전방 호환이 된다"
+    synonyms: ["wire format", "tag", "length-delimited", "packed repeated"]
+    uses: [net-term-varint-zigzag]
+  - id: net-schema-evolution
+    kind: MECHANISM
+    name: "스키마 진화 규칙"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "필드 추가는 안전하고, 삭제는 번호 · 이름을 reserved 로 묶어 재사용을 막으며, 타입 변경은 와이어 호환 그룹 안에서만 한다. 옛 코드는 새 필드를 무시하고 새 코드는 없는 필드를 기본값으로 읽는다"
+    synonyms: ["schema evolution", "backward compatibility", "forward compatibility"]
+    questions: ["하위 호환과 상위 호환은 각각 누가 누구를 읽는 경우인가"]
+    contains: [net-schema-breaking-check]
+    uses: [net-term-reserved-field]
+    mitigates: [net-schema-breaking-change]
+  - id: net-schema-breaking-check
+    kind: MECHANISM
+    name: "호환성 파괴 검사"
+    category: NETWORK
+    level: ADVANCED
+    description: "CI 에서 새 스키마를 이전 버전과 비교해 번호 재사용 · 타입 변경 · 필드 삭제 같은 파괴적 변경을 머지 전에 막는다(buf breaking 등)"
+    synonyms: ["buf breaking", "breaking change detection", "buf lint"]
+    mitigates: [net-schema-breaking-change]
+  - id: net-schema-repository
+    kind: MECHANISM
+    name: "스키마 저장소 전략"
+    category: NETWORK
+    level: ADVANCED
+    description: "스키마를 서비스마다 두거나, 전용 모듈 · 별도 저장소 · 스키마 레지스트리(BSR)에 모아 생산자와 소비자가 같은 원본을 쓰게 한다. 모을수록 거버넌스는 쉬워지고 배포는 묶인다"
+    synonyms: ["proto monorepo", "Buf Schema Registry", "BSR"]
+  - id: net-schema-breaking-change
+    kind: PROBLEM
+    name: "스키마 호환성 파괴"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "필드 번호를 재사용하거나 타입을 바꿔, 배포 순서가 다른 옛 · 새 서비스가 서로의 메시지를 잘못 해석하는 상태. 오류 없이 엉뚱한 값으로 읽힐 수 있다"
+    synonyms: ["breaking change"]
 
   # ── 실시간 푸시 ──
   - id: net-realtime-push
@@ -205,20 +1154,35 @@ concepts:
     category: NETWORK
     level: INTERMEDIATE
     description: "서버가 먼저 클라이언트에 데이터를 보낸다. 연결을 오래 열어 두므로 프록시 · 타임아웃 · 재연결을 함께 설계한다"
-    contains: [sse, websocket]
+    contains: [net-short-polling, net-long-polling, sse, websocket, net-heartbeat]
+  - id: net-short-polling
+    kind: MECHANISM
+    name: "폴링"
+    category: NETWORK
+    level: BEGINNER
+    description: "클라이언트가 일정 간격으로 새 데이터가 있는지 묻는다. 가장 단순하지만 대부분의 요청이 빈손으로 돌아가고 간격만큼 늦게 안다"
+    synonyms: ["polling", "short polling"]
+  - id: net-long-polling
+    kind: MECHANISM
+    name: "롱 폴링"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "서버가 새 데이터가 생길 때까지 응답을 붙들고 있다가 보내고, 클라이언트는 받자마자 다시 요청한다. 평범한 HTTP 만으로 푸시를 흉내 내지만 이벤트마다 요청 하나가 든다"
+    synonyms: ["long polling", "Comet"]
+    alternative_to: [net-short-polling]
   - id: sse
     kind: MECHANISM
     name: "SSE"
     category: NETWORK
     level: INTERMEDIATE
-    description: "HTTP 응답 하나를 끊지 않고 text/event-stream 으로 이벤트를 계속 흘려보내는 서버→클라이언트 단방향 방식. 브라우저 EventSource 가 끊기면 자동 재연결한다"
+    description: "HTTP 응답 하나를 끊지 않고 text/event-stream 으로 이벤트를 계속 흘려보내는 서버→클라이언트 단방향 방식. 브라우저 EventSource 가 끊기면 Last-Event-ID 를 실어 자동 재연결한다"
     synonyms: ["Server-Sent Events", "EventSource"]
     questions: ["SSE 가 WebSocket 보다 나은 경우는 언제인가", "중간 프록시가 SSE 를 망가뜨리는 방식은 무엇인가"]
     code:
       - { path: quant/feature/src/main/kotlin/com/kgd/quant/presentation/paper/PaperStreamSseController.kt, symbol: "@GetMapping(\"/{strategyId}/paper/sse\", produces = [\"text/event-stream\"])", note: "모의 매매 체결을 SSE 로 흘린다" }
       - { path: quant/feature/src/main/kotlin/com/kgd/quant/presentation/controller/ChartsStreamController.kt, symbol: "class ChartsStreamController(", note: "차트 시세 스트림" }
-    uses: [http, net-edge-bypass-host]
-    alternative_to: [websocket]
+    uses: [http, net-chunked-transfer, net-edge-bypass-host, net-term-last-event-id]
+    alternative_to: [websocket, net-long-polling]
   - id: websocket
     kind: MECHANISM
     name: "WebSocket"
@@ -230,6 +1194,14 @@ concepts:
       - { path: game/feature/src/main/kotlin/com/kgd/game/infrastructure/ws/GameRelayWebSocketConfig.kt, symbol: "registry.addHandler(handler, \"/ws/games/*\")", note: "온라인 대전 릴레이 엔드포인트 등록" }
       - { path: game/feature/src/main/kotlin/com/kgd/game/infrastructure/ws/GameRelayWebSocketHandler.kt, symbol: "class GameRelayWebSocketHandler(", note: "방 참가자 사이에 메시지를 중계한다" }
     uses: [tcp, net-term-upgrade, net-edge-bypass-host]
+  - id: net-heartbeat
+    kind: MECHANISM
+    name: "하트비트 · 앱 수준 핑"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "오래 열린 연결에 주기적으로 작은 메시지(SSE 주석 줄 · WebSocket ping)를 보내 중간 장비의 유휴 타임아웃을 피하고, 응답이 없으면 죽은 연결로 보고 재연결한다"
+    synonyms: ["heartbeat", "ping/pong"]
+    mitigates: [net-proxy-idle-timeout]
 
   # ── 용어 사전 ──
   - id: network-glossary
@@ -239,7 +1211,7 @@ concepts:
     level: BEGINNER
     description: "네트워크 단계와 프로토콜을 읽는 데 필요한 말. 장치가 아니라 그것을 설명하는 용어를 모은다"
     synonyms: ["glossary", "용어집"]
-    contains: [net-term-handshake, net-term-status-code, net-term-idempotent-method, net-term-upgrade, net-term-origin-certificate]
+    contains: [net-term-handshake, net-term-status-code, net-term-idempotent-method, net-term-upgrade, net-term-origin-certificate, net-glossary-layers, net-glossary-transport, net-glossary-http, net-glossary-tls, net-glossary-dns, net-glossary-rpc]
   - id: net-term-handshake
     kind: TERM
     name: "핸드셰이크"
@@ -252,15 +1224,15 @@ concepts:
     name: "HTTP 상태 코드"
     category: NETWORK
     level: BEGINNER
-    description: "응답 결과를 세 자리 숫자로 나타낸 값. 2xx 성공, 3xx 이동, 4xx 요청 쪽 잘못(401 인증 없음 · 403 권한 없음 · 429 한도 초과), 5xx 서버 쪽 잘못이다"
+    description: "응답 결과를 세 자리 숫자로 나타낸 값. 2xx 성공, 3xx 이동(301 · 302 · 304), 4xx 요청 쪽 잘못(401 인증 없음 · 403 권한 없음 · 409 충돌 · 429 한도 초과), 5xx 서버 쪽 잘못(502 · 503 · 504)이다"
     synonyms: ["status code"]
   - id: net-term-idempotent-method
     kind: TERM
-    name: "멱등 메서드"
+    name: "안전 · 멱등 메서드"
     category: NETWORK
     level: INTERMEDIATE
-    description: "같은 요청을 여러 번 보내도 결과 상태가 한 번 보낸 것과 같은 HTTP 메서드. GET · PUT · DELETE 가 해당하고 POST 는 아니어서 재시도에 주의한다"
-    synonyms: ["idempotent method"]
+    description: "상태를 바꾸지 않는 메서드(GET · HEAD)는 안전하고, 여러 번 보내도 결과 상태가 한 번과 같은 메서드(GET · PUT · DELETE)는 멱등하다. POST · PATCH 는 멱등하지 않아 재시도에 주의한다"
+    synonyms: ["idempotent method", "safe method"]
   - id: net-term-upgrade
     kind: TERM
     name: "Upgrade 헤더"
@@ -275,3 +1247,289 @@ concepts:
     level: INTERMEDIATE
     description: "엣지 프록시와 오리진 서버 사이 구간에 쓰는 인증서. 공개 CA 가 아니라 프록시 업체가 발급해 그 프록시만 신뢰한다"
     synonyms: ["Origin CA"]
+
+  - id: net-glossary-layers
+    kind: TERM
+    name: "계층 · 주소 용어"
+    category: NETWORK
+    level: BEGINNER
+    description: "계층 모델과 주소 · 포트를 읽는 데 필요한 말"
+    contains: [net-term-osi-model, net-term-tcp-ip-model, net-term-pdu, net-term-port-socket, net-term-five-tuple, net-term-private-address]
+  - id: net-term-osi-model
+    kind: TERM
+    name: "OSI 7계층"
+    category: NETWORK
+    level: BEGINNER
+    description: "통신을 물리 · 데이터링크 · 네트워크 · 전송 · 세션 · 표현 · 응용 일곱 계층으로 나눈 참조 모델. 실무에서는 L2(스위치) · L3(IP) · L4(TCP/UDP) · L7(HTTP) 처럼 번호로 장비와 기능을 부른다"
+    synonyms: ["OSI model", "L4", "L7"]
+  - id: net-term-tcp-ip-model
+    kind: TERM
+    name: "TCP/IP 4계층"
+    category: NETWORK
+    level: BEGINNER
+    description: "링크 · 인터넷 · 전송 · 응용 네 계층으로 나눈, 실제 인터넷이 따르는 모델. OSI 의 세션 · 표현 계층은 응용 계층에 합쳐진다"
+    synonyms: ["Internet protocol suite"]
+  - id: net-term-pdu
+    kind: TERM
+    name: "캡슐화 · PDU"
+    category: NETWORK
+    level: BEGINNER
+    description: "계층을 내려갈 때마다 헤더가 붙는 것을 캡슐화라 하고, 계층별 데이터 단위를 프레임(L2) · 패킷(L3) · 세그먼트/데이터그램(L4)으로 부른다"
+    synonyms: ["encapsulation", "frame", "packet", "segment"]
+  - id: net-term-port-socket
+    kind: TERM
+    name: "포트 · 소켓"
+    category: NETWORK
+    level: BEGINNER
+    description: "포트는 한 호스트 안에서 프로세스를 가르는 16비트 번호이고, 소켓은 (IP, 포트) 끝점을 앱이 읽고 쓰는 파일 디스크립터다. 소켓도 fd 라 연결이 많으면 fd 한도에 걸린다"
+    synonyms: ["port", "socket", "file descriptor"]
+  - id: net-term-five-tuple
+    kind: TERM
+    name: "5-튜플"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "출발지 IP · 출발지 포트 · 목적지 IP · 목적지 포트 · 프로토콜 다섯 값. 커널 · NAT · L4 로드 밸런서가 연결 하나를 이것으로 구분한다"
+    synonyms: ["5-tuple", "flow"]
+  - id: net-term-private-address
+    kind: TERM
+    name: "사설 주소 대역"
+    category: NETWORK
+    level: BEGINNER
+    description: "RFC 1918 이 정한 10.0.0.0/8 · 172.16.0.0/12 · 192.168.0.0/16. 인터넷에서 라우팅되지 않아 사설망 안에서 자유롭게 쓴다. 169.254.0.0/16 은 링크 로컬(클라우드 메타데이터)이다"
+    synonyms: ["RFC 1918", "private IP", "link-local"]
+
+  - id: net-glossary-transport
+    kind: TERM
+    name: "전송 계층 용어"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "TCP 상태와 윈도를 읽는 데 필요한 말"
+    contains: [net-term-tcp-state, net-term-window, net-term-bdp, net-term-ephemeral-port, net-term-mss]
+  - id: net-term-tcp-state
+    kind: TERM
+    name: "TCP 연결 상태"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "LISTEN · SYN_SENT · ESTABLISHED · FIN_WAIT · CLOSE_WAIT · TIME_WAIT 같은 소켓의 상태. ss -tan 으로 세어 보면 연결 누수와 짧은 연결 남발을 가를 수 있다"
+    synonyms: ["TCP state", "ESTABLISHED", "TIME_WAIT", "CLOSE_WAIT"]
+  - id: net-term-window
+    kind: TERM
+    name: "윈도 (rwnd · cwnd)"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "ACK 없이 보낼 수 있는 바이트 수. 수신자가 정하는 수신 윈도와 송신자가 추정하는 혼잡 윈도 중 작은 값이 실제 한도다"
+    synonyms: ["window", "receive window", "congestion window"]
+  - id: net-term-bdp
+    kind: TERM
+    name: "BDP (대역폭 지연 곱)"
+    category: NETWORK
+    level: ADVANCED
+    description: "대역폭 × RTT. 링크를 가득 채우려면 전송 중인 데이터가 이만큼 있어야 하므로 윈도 · 버퍼 크기의 기준이 된다"
+    synonyms: ["Bandwidth-Delay Product"]
+  - id: net-term-ephemeral-port
+    kind: TERM
+    name: "임시 포트"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "클라이언트가 나가는 연결에 커널이 자동으로 붙이는 출발지 포트 범위(리눅스 기본 32768~60999). 같은 목적지로 동시에 열 수 있는 연결 수를 정한다"
+    synonyms: ["ephemeral port", "ip_local_port_range"]
+  - id: net-term-mss
+    kind: TERM
+    name: "MSS"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "TCP 세그먼트 하나에 싣는 데이터 최대 크기. 보통 MTU 에서 IP · TCP 헤더를 뺀 값(1460)이고 핸드셰이크에서 알린다"
+    synonyms: ["Maximum Segment Size"]
+
+  - id: net-glossary-http
+    kind: TERM
+    name: "HTTP 용어"
+    category: NETWORK
+    level: BEGINNER
+    description: "HTTP 메시지와 버전을 읽는 데 필요한 말"
+    contains: [net-term-http-header, net-term-cache-directive, net-term-etag, net-term-h2c, net-term-http2-stream-frame, net-term-rest-maturity, net-term-last-event-id]
+  - id: net-term-http-header
+    kind: TERM
+    name: "HTTP 헤더"
+    category: NETWORK
+    level: BEGINNER
+    description: "요청 · 응답에 붙는 이름-값 메타데이터. Host · Content-Type · Authorization · Cache-Control 처럼 라우팅 · 해석 · 인증 · 캐시를 정한다"
+    synonyms: ["header"]
+  - id: net-term-cache-directive
+    kind: TERM
+    name: "Cache-Control 지시어"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "max-age · s-maxage(공유 캐시용) · no-cache(재검증 후 사용) · no-store(저장 금지) · private · public · immutable · stale-while-revalidate 같은 캐시 동작 지시"
+    synonyms: ["no-cache", "no-store", "stale-while-revalidate"]
+  - id: net-term-etag
+    kind: TERM
+    name: "ETag · Last-Modified"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "응답 내용의 버전 식별자와 마지막 수정 시각. 캐시가 재검증할 때 이 값을 조건으로 보낸다. 약한 ETag(W/)는 의미상 같으면 같은 값을 준다"
+    synonyms: ["ETag", "Last-Modified", "validator"]
+  - id: net-term-h2c
+    kind: TERM
+    name: "h2 · h2c"
+    category: NETWORK
+    level: ADVANCED
+    description: "h2 는 TLS 위 HTTP/2(ALPN 협상), h2c 는 평문 HTTP/2 다. 브라우저는 h2 만 쓰고, h2c 는 클러스터 내부 호출에서 쓴다"
+    synonyms: ["h2c", "HTTP/2 cleartext", "prior knowledge"]
+  - id: net-term-http2-stream-frame
+    kind: TERM
+    name: "스트림 · 프레임"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "HTTP/2 에서 요청 · 응답 한 쌍이 스트림 하나이고, 스트림은 HEADERS · DATA · SETTINGS · WINDOW_UPDATE · PING · RST_STREAM · GOAWAY 같은 프레임으로 쪼개진다"
+    synonyms: ["stream", "frame", "RST_STREAM"]
+  - id: net-term-rest-maturity
+    kind: TERM
+    name: "REST 성숙도 모델"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "Richardson 이 REST 다움을 네 단계로 나눈 것 — 엔드포인트 하나(0) · 자원 URL(1) · HTTP 메서드와 상태 코드(2) · 하이퍼미디어 링크 HATEOAS(3). 실무 API 는 대개 2단계다"
+    synonyms: ["Richardson Maturity Model", "HATEOAS"]
+  - id: net-term-last-event-id
+    kind: TERM
+    name: "Last-Event-ID"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "SSE 가 재연결할 때 마지막으로 받은 이벤트 id 를 싣는 헤더. 서버가 이 값 뒤부터 다시 보내면 끊긴 동안의 이벤트를 잃지 않는다"
+    synonyms: ["event id", "retry"]
+
+  - id: net-glossary-tls
+    kind: TERM
+    name: "TLS · 인증서 용어"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "인증서와 키 합의를 읽는 데 필요한 말"
+    contains: [net-term-x509-certificate, net-term-ca-chain, net-term-cipher-suite]
+  - id: net-term-x509-certificate
+    kind: TERM
+    name: "X.509 인증서"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "공개키와 주체 이름(SAN) · 발급자 · 유효 기간 · 용도를 묶어 CA 가 서명한 문서. 와일드카드(*.example.com)는 한 단계 서브도메인만 덮는다"
+    synonyms: ["certificate", "SAN", "wildcard certificate"]
+  - id: net-term-ca-chain
+    kind: TERM
+    name: "루트 · 중간 CA"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "신뢰 저장소에 든 루트 CA 는 오프라인에 두고, 루트가 서명한 중간 CA 가 실제 서버 인증서를 발급한다. 서버는 자기 인증서와 중간 인증서를 함께 보낸다"
+    synonyms: ["root CA", "intermediate CA", "trust anchor"]
+  - id: net-term-cipher-suite
+    kind: TERM
+    name: "암호 스위트"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "키 교환 · 인증 · 대칭 암호 · 해시 알고리즘의 조합 이름(예: TLS_AES_128_GCM_SHA256). 양쪽이 지원하는 것 중 하나를 핸드셰이크에서 고른다"
+    synonyms: ["cipher suite"]
+
+  - id: net-glossary-dns
+    kind: TERM
+    name: "DNS 용어"
+    category: NETWORK
+    level: BEGINNER
+    description: "DNS 레코드와 서버 역할을 읽는 데 필요한 말"
+    contains: [net-term-dns-record, net-term-authoritative-recursive]
+  - id: net-term-dns-record
+    kind: TERM
+    name: "DNS 레코드 타입"
+    category: NETWORK
+    level: BEGINNER
+    description: "A(IPv4) · AAAA(IPv6) · CNAME(다른 이름의 별칭) · MX(메일) · TXT(검증 · SPF) · NS(위임) · SOA(영역 정보) · SRV(서비스 위치) · CAA(발급 허용 CA). 영역 꼭대기(apex)에는 CNAME 을 둘 수 없다"
+    synonyms: ["A record", "CNAME", "TXT", "CAA"]
+  - id: net-term-authoritative-recursive
+    kind: TERM
+    name: "권한 서버 · 리졸버"
+    category: NETWORK
+    level: BEGINNER
+    description: "권한(authoritative) 서버는 자기 영역의 원본 답을 갖고, 재귀 리졸버는 클라이언트 대신 여러 권한 서버를 물어 답을 찾아 캐시한다"
+    synonyms: ["authoritative name server", "recursive resolver"]
+
+  - id: net-glossary-rpc
+    kind: TERM
+    name: "RPC · Protobuf 용어"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "Protobuf 스키마와 gRPC 호출을 읽는 데 필요한 말"
+    contains: [net-term-field-number, net-term-proto-oneof, net-term-field-presence, net-term-well-known-types, net-term-reserved-field, net-term-proto-editions, net-term-varint-zigzag, net-term-grpc-metadata, net-term-grpc-channel, net-term-grpc-status-code, net-term-call-credentials]
+  - id: net-term-field-number
+    kind: TERM
+    name: "필드 번호"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "와이어에서 필드를 식별하는 정수. 이름이 아니라 이 번호가 실리므로 한번 쓴 번호는 바꾸거나 다시 쓰지 않는다. 1~15 는 태그가 1바이트라 자주 쓰는 필드에 준다"
+    synonyms: ["field number", "tag number"]
+  - id: net-term-proto-oneof
+    kind: TERM
+    name: "oneof · repeated · map"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "oneof 는 여러 필드 중 하나만 값을 갖는 분기 타입, repeated 는 목록, map 은 키-값 목록이다"
+    synonyms: ["oneof", "repeated", "map"]
+  - id: net-term-field-presence
+    kind: TERM
+    name: "필드 존재 여부 (optional)"
+    category: NETWORK
+    level: ADVANCED
+    description: "proto3 는 기본값을 싣지 않아 0 과 미설정을 구분하지 못했다. optional 키워드나 래퍼 타입을 쓰면 has 메서드로 값이 설정됐는지 알 수 있다"
+    synonyms: ["field presence", "proto3 optional", "wrapper types"]
+  - id: net-term-well-known-types
+    kind: TERM
+    name: "Well-known types"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "Timestamp · Duration · Any · Struct · Value · FieldMask · Empty 같은 구글 표준 메시지. 시간 · 부분 수정 마스크를 제각각 정의하지 않고 이것을 쓴다"
+    synonyms: ["Timestamp", "FieldMask", "Any"]
+  - id: net-term-reserved-field
+    kind: TERM
+    name: "reserved"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "지운 필드의 번호와 이름을 묶어 두어 컴파일러가 재사용을 막게 하는 선언"
+    synonyms: ["reserved field"]
+  - id: net-term-proto-editions
+    kind: TERM
+    name: "proto2 · proto3 · Editions"
+    category: NETWORK
+    level: ADVANCED
+    description: "proto2 는 required 와 명시적 기본값이 있고, proto3 는 이를 없애 단순화했다. Editions 는 문법 버전 대신 기능 플래그 묶음으로 두 방식을 통합한 후속 체계다"
+    synonyms: ["proto2", "proto3", "editions"]
+  - id: net-term-varint-zigzag
+    kind: TERM
+    name: "varint · ZigZag"
+    category: NETWORK
+    level: ADVANCED
+    description: "varint 는 7비트씩 끊어 작은 수를 적은 바이트로 싣는 가변 길이 정수이고, 음수는 항상 10바이트가 되므로 sint32 · sint64 는 ZigZag 로 부호를 접어 작게 싣는다"
+    synonyms: ["varint", "ZigZag", "sint32"]
+  - id: net-term-grpc-metadata
+    kind: TERM
+    name: "gRPC 메타데이터"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "호출에 붙는 키-값 헤더(HTTP/2 헤더 · 트레일러). 인증 토큰 · 추적 ID · 요청 ID 를 싣고, -bin 으로 끝나는 키는 이진 값이다"
+    synonyms: ["metadata", "trailer"]
+  - id: net-term-grpc-channel
+    kind: TERM
+    name: "채널 · 서브채널"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "채널은 대상 서비스 하나에 대한 논리적 연결이고, 그 아래 서브채널이 서버 주소마다의 실제 연결이다. 채널은 비싸므로 요청마다 만들지 않고 재사용한다"
+    synonyms: ["channel", "subchannel", "ManagedChannel"]
+  - id: net-term-grpc-status-code
+    kind: TERM
+    name: "gRPC 상태 코드"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "OK · INVALID_ARGUMENT · NOT_FOUND · ALREADY_EXISTS · PERMISSION_DENIED · UNAUTHENTICATED · RESOURCE_EXHAUSTED · FAILED_PRECONDITION · UNAVAILABLE · DEADLINE_EXCEEDED · INTERNAL 등 16개. UNAVAILABLE 은 재시도 대상이고 INTERNAL 은 아니다"
+    synonyms: ["status code", "DEADLINE_EXCEEDED", "UNAVAILABLE"]
+  - id: net-term-call-credentials
+    kind: TERM
+    name: "채널 · 호출 자격 증명"
+    category: NETWORK
+    level: ADVANCED
+    description: "채널 자격 증명은 연결 전체의 TLS · mTLS 설정이고, 호출 자격 증명은 호출마다 메타데이터에 붙는 토큰이다. 둘을 합쳐 서비스 신원과 사용자 위임을 함께 전달한다"
+    synonyms: ["ChannelCredentials", "CallCredentials"]

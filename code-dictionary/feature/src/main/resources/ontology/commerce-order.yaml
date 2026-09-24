@@ -1,0 +1,1550 @@
+# 주문 · 결제 · 정산 온톨로지 — 원본은 이 파일이다 (ADR-0100, docs/specs/2026-09-24-concept-atlas).
+# 바꾸면 manifest.yaml 의 revision 을 올린다. 간선은 from 개념에만 적는다.
+domain: commerce-order
+root: commerce-order
+concepts:
+  - id: commerce-order
+    kind: DOMAIN
+    name: "주문 · 결제 · 정산"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "고객이 구매 버튼을 누른 순간부터 판매자 통장에 돈이 들어가기까지의 거래 시스템. 주문 · 결제 · 이행 · 정산이 각자 상태를 갖고 이벤트로 이어진다"
+    synonyms: ["커머스 거래", "order management", "OMS"]
+    contains: [ord-order-domain, ord-payment-domain, ord-aftercare-domain, ord-settlement-domain, ord-operations, ord-glossary]
+
+  # ───────────── 주문 ─────────────
+  - id: ord-order-domain
+    kind: DOMAIN
+    name: "주문"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "거래를 모델링하고, 서버가 금액을 정한 주문서로 주문을 받아, 사가로 재고 · 혜택 · 결제를 묶는다"
+    contains: [ord-transaction-modeling, ord-order-sheet, ord-order-placement, ord-saga-orchestration]
+    flows_to: [ord-payment-domain]
+  - id: ord-transaction-modeling
+    kind: STAGE
+    name: "거래 모델링"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "한 거래가 확정되는 시점과 상태 머신을 정한다. 주문 · 결제 · 이행 · 클레임을 한 상태에 몰지 않는다"
+    questions:
+      - "주문 상태 하나에 결제와 배송을 다 담으면 어떤 조합을 표현하지 못하나"
+      - "주문 · 이행 · 정산 시점마다 되돌리기 수단이 어떻게 다른가"
+    contains: [ord-three-timelines, ord-reversal-by-phase, ord-separate-state-machines, ord-order-state-machine, ord-transition-guard, ord-status-history, ord-impossible-state-combination]
+  - id: ord-three-timelines
+    kind: MECHANISM
+    name: "세 시간축 (주문 · 이행 · 정산 시점)"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "거래를 세 번 확정한다 — 주문 시점에 돈을 받을 권리, 이행 시점에 물건을 준 사실, 정산 시점에 누구에게 얼마를 줄지. 세 레인은 호출이 아니라 이벤트로 잇는다"
+    synonyms: ["세 확정 시점"]
+    questions: ["이행과 정산을 주문 요청의 응답 시간 안에 끝내지 않는 이유는 무엇인가"]
+    uses: [event-driven-architecture, ord-reversal-by-phase]
+  - id: ord-reversal-by-phase
+    kind: MECHANISM
+    name: "시점별 되돌리기 (무효 · 환불 · 차감)"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "결제 전에는 무효, 결제 뒤에는 환불, 정산 뒤에는 다음 정산에서 차감한다. 늦게 되돌릴수록 비용이 크다"
+    uses: [ord-void, ord-refund, ord-holdback]
+  - id: ord-separate-state-machines
+    kind: MECHANISM
+    name: "상태 머신 분리 (주문 · 결제 · 이행 · 클레임)"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "주문 · 결제 · 이행 · 클레임에 각자 상태 머신을 두고 고객이 보는 주문 상태는 나머지로부터 유도한다. 한 주문에 결제가 여러 건, 이행이 여러 건일 수 있다"
+    synonyms: ["주문 상태 유도"]
+    uses: [ord-order-state-machine, ord-payment-state-machine, ord-fulfillment-state-machine, ord-claim-state-machine]
+    mitigates: [ord-impossible-state-combination]
+  - id: ord-order-state-machine
+    kind: MECHANISM
+    name: "주문 상태 머신"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "CREATED → PAYMENT_PENDING → PAID → CONFIRMED → FULFILLING → COMPLETED, 실패는 FAILED, 취소는 CANCELLED. 허용 전이 표 밖으로는 움직이지 않는다"
+    synonyms: ["order status", "주문 상태"]
+    questions: ["부분 취소를 주문 상태가 아니라 라인 상태로 표현하는 이유는 무엇인가"]
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/order/model/OrderStatus.kt, symbol: "fun canMoveTo(next: OrderStatus)", note: "주문 상태 허용 전이 표" }
+    contains: [ord-partner-confirmation, ord-line-status]
+    uses: [ord-transition-guard, ord-status-history]
+  - id: ord-partner-confirmation
+    kind: MECHANISM
+    name: "파트너 확정 대기"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "숙박 · 예약처럼 파트너가 확정해야 하는 상품은 결제 완료와 주문 확정 사이에 대기 상태를 하나 더 둔다. 거절되면 결제 이후 보상(환불 · 혜택 원복)이 필요하다"
+    synonyms: ["CONFIRM_WAIT", "확정 대기"]
+    uses: [ord-async-accept]
+  - id: ord-line-status
+    kind: MECHANISM
+    name: "주문 라인 상태 (부분 취소 · 구매 확정)"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "라인마다 ACTIVE · CANCELLED · PURCHASE_CONFIRMED 를 갖고 주문은 환불 누계를 갖는다. 부분 취소된 주문도 같은 경로로 이행 · 정산된다"
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/order/model/OrderStatus.kt, symbol: "enum class OrderLineStatus { ACTIVE, CANCELLED, PURCHASE_CONFIRMED }", note: "라인 상태" }
+  - id: ord-transition-guard
+    kind: MECHANISM
+    name: "전이 가드 (도메인 메서드)"
+    category: DESIGN_PATTERN
+    level: BEGINNER
+    description: "상태는 setter 가 아니라 도메인 메서드로만 바꾸고, 메서드는 허용 전이 표로 현재 상태를 검사한다. 잘못된 순서로 온 이벤트가 상태를 뒤로 돌리지 못한다"
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/order/model/Order.kt, symbol: "fun cancelBeforePayment(actor: String, now: Instant)", note: "피벗 전 취소 — 상태 표로 가드" }
+    uses: [dist-natural-idempotency]
+    mitigates: [race-condition]
+  - id: ord-status-history
+    kind: MECHANISM
+    name: "상태 전이 이력"
+    category: DATA
+    level: BEGINNER
+    description: "모든 전이를 이전 · 이후 · 사유 · 주체 · 시각으로 한 줄씩 남긴다. CS 응대와 정산 분쟁의 근거다"
+    synonyms: ["status history", "감사 이력"]
+    code:
+      - { path: order/feature/src/main/resources/orderdb/migration/V20260924_005__order_saga_and_status.sql, symbol: "CREATE TABLE IF NOT EXISTS order_status_history", note: "주문 상태 이력 테이블" }
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/order/model/Order.kt, symbol: "fun pullStatusChanges()", note: "도메인이 모은 전이를 저장소로 넘긴다" }
+  - id: ord-impossible-state-combination
+    kind: PROBLEM
+    name: "표현할 수 없는 상태 조합"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "주문 상태 하나에 결제 · 배송을 담으면 「결제는 취소됐는데 배송은 나간」 같은 실제 조합을 적을 곳이 없다"
+
+  - id: ord-order-sheet
+    kind: STAGE
+    name: "주문서 · 금액 계산"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "서버가 가격 · 재고 · 혜택을 다시 계산해 만료가 있는 스냅샷을 만든다. 클라이언트 가격은 표시용 힌트일 뿐이다"
+    synonyms: ["order sheet", "checkout"]
+    questions:
+      - "본주문이 가격 대신 주문서 id 만 받게 하는 이유는 무엇인가"
+      - "주문 라인에 금액 항목을 무엇무엇 저장해야 부분 환불과 정산이 계산되나"
+    contains: [ord-order-sheet-snapshot, ord-server-side-pricing, ord-availability-check, ord-benefit-quote, ord-line-snapshot, ord-discount-allocation, ord-shipping-fee-line, ord-stored-total, ord-fx-snapshot, ord-order-read-model, ord-client-price-tampering, ord-stale-quote]
+    flows_to: [ord-order-placement]
+  - id: ord-order-sheet-snapshot
+    kind: MECHANISM
+    name: "주문서 스냅샷"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "상품 · 수량 · 옵션을 받아 가격 · 가용성 · 혜택을 계산한 결과를 id 와 만료 시각을 붙여 저장한다. 본주문은 이 id 만 받고 주문서 1개는 주문 1개가 된다"
+    synonyms: ["order sheet snapshot", "견적 스냅샷"]
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/sheet/model/OrderSheet.kt, symbol: "class OrderSheet private constructor(", note: "주문서 — 만료와 사용 여부를 가진다" }
+    contains: [ord-sheet-expiry]
+    uses: [ord-server-side-pricing, ord-line-snapshot, ord-stored-total]
+  - id: ord-sheet-expiry
+    kind: MECHANISM
+    name: "주문서 만료 · 재계산"
+    category: DESIGN_PATTERN
+    level: BEGINNER
+    description: "주문서는 유효 시간이 지나면 쓸 수 없다. 다시 계산해 금액이 바뀌었으면 고객에게 다시 보여 준다"
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/sheet/model/OrderSheet.kt, symbol: "fun checkUsableBy(memberId: String, now: Instant)", note: "만료 · 사용됨 · 소유자 검사" }
+    mitigates: [ord-stale-quote]
+  - id: ord-server-side-pricing
+    kind: MECHANISM
+    name: "서버 금액 재계산"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "정가 · 할인 · 배송비 · 세금을 서버가 자기 데이터로 다시 계산한다. 요청 본문의 가격 필드는 API 에서 없앤다"
+    synonyms: ["server-side pricing", "가격 재계산"]
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/sheet/model/OrderSheetPricing.kt, symbol: "object OrderSheetPricing", note: "읽기 모델로 주문서 금액 계산" }
+    uses: [ord-order-read-model, cat-list-sale-price, cat-money-type]
+    mitigates: [ord-client-price-tampering]
+  - id: ord-availability-check
+    kind: MECHANISM
+    name: "가용성 확인 (판매 상태 · 재고 · 판매 기간)"
+    category: DATA
+    level: BEGINNER
+    description: "주문서를 만들 때 상품이 판매 중인지, 판매자가 판매 가능한지, 재고가 있어 보이는지 확인한다. 최종 판정은 사가의 재고 예약이 한다"
+    uses: [cat-stock-ssot, cat-product-lifecycle]
+  - id: ord-benefit-quote
+    kind: MECHANISM
+    name: "혜택 견적 (쿠폰 · 포인트 · 제휴페이)"
+    category: DATA
+    level: INTERMEDIATE
+    description: "주문서의 할인과 포인트 잔액은 견적이다. 최종 판정은 사가의 혜택 예약이 하고, 거기서 실패하면 주문서를 다시 만든다"
+    synonyms: ["혜택 계산"]
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/benefit/model/CouponDefinitionView.kt, symbol: "fun quote(lines: List<CouponTargetLine>, now: Instant)", note: "쿠폰 견적" }
+    uses: [cat-coupon-definition, cat-point-ledger, cat-discount-stacking]
+  - id: ord-line-snapshot
+    kind: MECHANISM
+    name: "주문 라인 스냅샷 (정가 · 판매가 · 상품명)"
+    category: DATA
+    level: BEGINNER
+    description: "주문 시점의 상품명 · 옵션명 · 판매가 · 수수료율 · 판매자를 라인에 복사해 둔다. 상품이 나중에 바뀌어도 영수증과 환불 금액이 흔들리지 않는다"
+    synonyms: ["정가 · 판매가", "가격 스냅샷"]
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/sheet/model/OrderSheet.kt, symbol: "data class OrderSheetLine(", note: "라인 스냅샷 필드" }
+  - id: ord-discount-allocation
+    kind: MECHANISM
+    name: "할인 안분"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "주문 단위 할인(쿠폰 · 포인트)을 라인 금액 비율로 나눠 라인에 적는다. 부분 환불 금액과 판매자 정산이 이 분해로 계산된다"
+    synonyms: ["allocation", "할인 분해", "부담 주체 안분", "프로레이션"]
+    questions: ["안분 없이 부분 취소 환불액을 정하면 어떤 문제가 생기나"]
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/sheet/model/Allocation.kt, symbol: "object Allocation", note: "비율 안분 + 잔차 처리" }
+    contains: [ord-rounding-residual]
+    uses: [cat-cost-bearer]
+  - id: ord-rounding-residual
+    kind: MECHANISM
+    name: "원 단위 잔차 처리"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "비율로 내림한 뒤 남은 원 단위 잔차를 정해진 라인(금액이 가장 큰 라인)에 붙여 라인 합이 총액과 정확히 같게 한다"
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/sheet/model/Allocation.kt, symbol: "var residual = total - shares.sum()", note: "잔차를 큰 라인에" }
+    uses: [cat-rounding-rule]
+  - id: ord-shipping-fee-line
+    kind: MECHANISM
+    name: "판매자별 배송비 라인"
+    category: DATA
+    level: BEGINNER
+    description: "한 주문에 판매자가 여럿이면 배송비를 판매자마다 한 줄로 둔다. 판매자의 라인이 전부 출고 전 취소되면 그 배송비를 환불한다"
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/sheet/model/OrderSheet.kt, symbol: "data class ShippingLine(", note: "판매자별 배송비" }
+    uses: [cat-shipping-fee-policy]
+  - id: ord-stored-total
+    kind: MECHANISM
+    name: "합계 저장"
+    category: DATA
+    level: BEGINNER
+    description: "주문 합계를 매번 계산하지 않고 저장한다. 계산식이 바뀌어도 과거 주문 금액은 그대로여야 한다"
+    synonyms: ["합계"]
+  - id: ord-fx-snapshot
+    kind: MECHANISM
+    name: "환율 스냅샷"
+    category: DATA
+    level: INTERMEDIATE
+    description: "해외 통화 상품은 주문 시점 환율을 함께 저장한다. 환불과 정산은 그 환율로 계산한다"
+    uses: [cat-currency]
+  - id: ord-order-read-model
+    kind: MECHANISM
+    name: "주문 측 읽기 모델"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "상품 · 판매자 · 쿠폰 · 포인트를 이벤트로 받아 주문 스키마에 사본을 둔다. 주문서가 다른 서비스를 동기 호출하지 않고 금액을 계산한다"
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/application/readmodel/service/ReadModelSyncService.kt, symbol: "class ReadModelSyncService(", note: "늦게 온 이벤트는 버린다" }
+    uses: [cqrs, eventual-consistency]
+    causes: [ord-stale-quote]
+  - id: ord-client-price-tampering
+    kind: PROBLEM
+    name: "클라이언트 가격 위변조"
+    category: SECURITY
+    level: BEGINNER
+    description: "클라이언트가 보낸 단가를 그대로 주문에 쓰면 요청을 고쳐 싼 값에 살 수 있다"
+  - id: ord-stale-quote
+    kind: PROBLEM
+    name: "주문서 이후 가격 · 혜택 변동"
+    category: DATA
+    level: INTERMEDIATE
+    description: "주문서를 만든 뒤 가격이 바뀌거나 쿠폰이 소진돼 견적과 실제가 어긋난다"
+
+  - id: ord-order-placement
+    kind: STAGE
+    name: "주문 접수"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "주문서 id 와 멱등 키로 본주문을 받고, 사가를 시작한 뒤 202 로 곧바로 돌려준다"
+    questions:
+      - "더블클릭 · 재전송 · 동시 요청을 각각 무엇으로 막나"
+      - "느린 외부 의존이 있을 때 202 Accepted 와 상태 조회로 바꾸면 무엇이 좋아지나"
+    contains: [ord-api-idempotency-key, ord-unique-business-key, ord-async-accept, ord-pending-order-limit, ord-double-submit, ord-slow-dependency, ord-hold-abuse]
+    flows_to: [ord-saga-orchestration]
+  - id: ord-api-idempotency-key
+    kind: MECHANISM
+    name: "API 멱등 키 (Idempotency-Key)"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "(사용자, 키) 를 유니크로 저장한다. 처리 중이면 409, 끝났으면 저장한 응답을 그대로 돌려준다. 키 수명은 하루 정도다"
+    synonyms: ["Idempotency-Key", "API 층 멱등"]
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/idempotency/model/IdempotencyKey.kt, symbol: "class IdempotencyKey private constructor(", note: "PROCESSING · COMPLETED 와 저장 응답" }
+    contains: [ord-idempotency-lease]
+    uses: [idempotency, dist-idempotency-key]
+    mitigates: [ord-double-submit]
+  - id: ord-idempotency-lease
+    kind: MECHANISM
+    name: "처리 중 리스"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "PROCESSING 에 만료 시각을 붙여 처리 도중 죽은 요청의 키가 영원히 막히지 않게 한다. 리스가 지나면 재시도를 허용한다"
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/idempotency/model/IdempotencyKey.kt, symbol: "data object LeaseExpired : Decision", note: "리스 만료 판정" }
+  - id: ord-unique-business-key
+    kind: MECHANISM
+    name: "업무 키 유니크 제약"
+    category: DATA
+    level: BEGINNER
+    description: "(order_id, product_id) 예약, (order_id, warehouse_id) 이행처럼 두 번 생기면 안 되는 것을 DB 유니크 제약이 막게 한다"
+    synonyms: ["유니크 제약", "데이터 층 멱등"]
+    mitigates: [ord-double-submit, dist-duplicate-delivery]
+  - id: ord-async-accept
+    kind: MECHANISM
+    name: "접수형 처리 (202 Accepted + 상태 조회)"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "요청을 접수만 하고 202 와 Location 을 돌려준 뒤 처리는 큐 뒤 워커가 한다. 클라이언트는 폴링이나 SSE 로 결과를 받는다"
+    synonyms: ["202 Accepted", "비동기 요청-응답"]
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/presentation/order/controller/OrderController.kt, symbol: "ResponseEntity.accepted()", note: "주문 접수 202 + Location" }
+    uses: [sse]
+    mitigates: [ord-slow-dependency]
+  - id: ord-pending-order-limit
+    kind: MECHANISM
+    name: "결제 대기 주문 상한"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "결제 대기 주문을 사용자당 몇 건으로 제한해 결제 없이 재고 · 쿠폰을 묶어 두지 못하게 한다"
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/order/exception/OrderException.kt, symbol: "class TooManyPendingOrdersException(limit: Int)", note: "초과 시 429" }
+    uses: [rate-limiting]
+    mitigates: [ord-hold-abuse]
+  - id: ord-double-submit
+    kind: PROBLEM
+    name: "중복 주문 (더블클릭 · 재전송)"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "사용자 더블클릭이나 타임아웃 뒤 재전송으로 같은 주문이 두 번 만들어진다"
+  - id: ord-slow-dependency
+    kind: PROBLEM
+    name: "느린 외부 의존 (게이트웨이 타임아웃)"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "파트너 API 가 게이트웨이 제한 시간보다 오래 걸리면 동기 호출로는 응답을 줄 수 없고 스레드가 묶인다"
+  - id: ord-hold-abuse
+    kind: PROBLEM
+    name: "결제 없는 예약 점유"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "결제를 끝내지 않은 주문이 재고 · 쿠폰을 보류 기한 동안 붙잡아 다른 고객이 사지 못한다"
+
+  - id: ord-saga-orchestration
+    kind: STAGE
+    name: "주문 사가"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "재고 예약 → 혜택 예약 → 결제 승인(피벗) → 확정 → 매입 → 이행 순서를 코디네이터가 명령으로 실행하고, 피벗 전 실패는 역순 보상한다"
+    synonyms: ["order saga", "주문 오케스트레이션"]
+    questions:
+      - "되돌리기 비싼 단계(결제)를 뒤에 두는 이유와 피벗 뒤 단계의 조건은 무엇인가"
+      - "코레오그래피를 오케스트레이션으로 바꾸는 기준은 무엇인가"
+      - "예약 보류가 결제보다 먼저 만료되면 어떻게 처리하나"
+    contains: [ord-order-saga-coordinator, ord-choreography-flow, ord-best-effort-side-effects, ord-post-pivot-failure, ord-saga-stuck, ord-paid-stock-resold, ord-saga-dwell-time, ord-compensation-count]
+  - id: ord-order-saga-coordinator
+    kind: MECHANISM
+    name: "주문 사가 코디네이터 (오케스트레이션)"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "주문 서비스 안의 코디네이터가 사가 상태 테이블을 두고 이벤트를 받을 때마다 다음 명령을 아웃박스로 낸다. 흐름 · 타임아웃 · 보상이 한 곳에 있다"
+    synonyms: ["오케스트레이션", "orchestration saga", "saga coordinator"]
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/application/saga/service/OrderSagaCoordinator.kt, symbol: "class OrderSagaCoordinator(", note: "재고 · 혜택 · 결제 · 이행 응답을 받아 다음 단계로" }
+    contains: [ord-saga-step-order, ord-saga-state-table, ord-compensation-plan, ord-post-pivot-retry, ord-step-deadline, ord-hold-expiry-handling, ord-command-partition-key]
+    uses: [saga-pattern, dist-saga-orchestration, outbox-pattern, idempotency, dist-compensating-transaction]
+    alternative_to: [two-phase-commit]
+    measured_by: [ord-saga-dwell-time, ord-compensation-count]
+  - id: ord-saga-step-order
+    kind: MECHANISM
+    name: "사가 단계 순서 (보상 가능 → 피벗 → 재시도 가능)"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "되돌리기 쉬운 예약을 앞에, 결제 승인(피벗)을 가운데, 실패하지 않는 확정 단계를 뒤에 둔다. 승인만 한 상태에서는 보상이 싼 무효라 승인 · 매입을 쪼개 둔다"
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/saga/model/SagaStep.kt, symbol: "enum class SagaPhase { PRE_PIVOT, POST_PIVOT, COMPENSATION }", note: "단계마다 피벗 전후 구분" }
+    uses: [ord-auth-capture-split, dist-pivot-transaction]
+    mitigates: [ord-post-pivot-failure]
+  - id: ord-saga-state-table
+    kind: MECHANISM
+    name: "사가 상태 테이블"
+    category: DATA
+    level: INTERMEDIATE
+    description: "주문마다 현재 단계 · 상태 · 시도 수 · 다음 기한을 한 행으로 둔다. 어디서 멈췄는지 조회로 알 수 있다"
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/persistence/saga/entity/OrderSagaJpaEntity.kt, symbol: "class OrderSagaJpaEntity(", note: "order_saga 행 (@Version)" }
+    uses: [optimistic-lock]
+  - id: ord-compensation-plan
+    kind: MECHANISM
+    name: "역순 보상"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "피벗 전에 실패하면 이미 끝낸 단계를 거꾸로 되돌린다 — 혜택 원복 → 재고 해제 → 주문 FAILED"
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/saga/model/OrderSaga.kt, symbol: "private fun undoPlan(includeCurrent: Boolean)", note: "보상 순서 계산" }
+    uses: [cat-reservation-release, cat-benefit-tcc-hold]
+  - id: ord-post-pivot-retry
+    kind: MECHANISM
+    name: "피벗 뒤 재시도 · STUCK"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "피벗 뒤 단계는 보상하지 않고 같은 명령을 재시도한다. 한도를 넘으면 사가를 STUCK 으로 두고 운영 이슈를 연다"
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/saga/model/OrderSaga.kt, symbol: "fun resume(now: Instant, timing: SagaTiming)", note: "운영자 재시도로 STUCK → RUNNING" }
+    uses: [retry-pattern]
+    causes: [ord-saga-stuck]
+    mitigates: [ord-post-pivot-failure]
+  - id: ord-step-deadline
+    kind: MECHANISM
+    name: "단계 기한 · 명령 재발행"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "단계마다 기한을 두고 스케줄러가 넘긴 사가의 같은 명령을 다시 낸다. 받는 쪽이 멱등이라 중복 명령은 무해하다"
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/scheduler/OrderSagaSchedulers.kt, symbol: "class OrderSagaDeadlineScheduler(", note: "기한 지난 사가 처리" }
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/saga/model/OrderSaga.kt, symbol: "fun checkDeadline(now: Instant, timing: SagaTiming)", note: "재발행 · 보상 · STUCK 판정" }
+    uses: [idempotency]
+  - id: ord-hold-expiry-handling
+    kind: MECHANISM
+    name: "보류 만료 처리"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "재고 · 혜택 예약이 결제 결론보다 먼저 만료되면 승인된 결제는 무효로 돌리고 확정된 재고 · 혜택은 되돌린다. 보류 기한은 사가 기한 합보다 길게 잡는다"
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/application/saga/service/OrderSagaCoordinator.kt, symbol: "private fun holdExpired(order: Order, saga: OrderSaga, now: Instant)", note: "만료 뒤 VOID · 복원" }
+    uses: [ord-void, cat-restock, cat-benefit-restore, ord-term-hold-period]
+    mitigates: [ord-paid-stock-resold]
+  - id: ord-command-partition-key
+    kind: MECHANISM
+    name: "사가 메시지 키 = 주문 id"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "사가가 주고받는 명령 · 이벤트의 Kafka 키를 주문 id 로 둬 한 주문의 메시지가 한 파티션에서 순서대로 처리되게 한다"
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/messaging/SagaCommandOutboxAdapter.kt, symbol: "partitionKey = command.orderId.toString()", note: "아웃박스 행의 파티션 키" }
+    mitigates: [race-condition]
+    uses:
+      - { to: kafka, reason: "주문 id 를 키로 같은 파티션에 넣어 순서를 지킨다" }
+  - id: ord-choreography-flow
+    kind: MECHANISM
+    name: "코레오그래피 주문 흐름"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "중앙 없이 각 서비스가 앞 단계 이벤트를 듣고 다음 일을 한다. 결합은 낮지만 단계가 넷을 넘으면 순서와 보상이 코드 곳곳에 흩어져 전체 흐름이 안 보인다"
+    synonyms: ["코레오그래피", "choreography saga"]
+    uses: [dist-saga-choreography]
+    alternative_to: [ord-order-saga-coordinator]
+    causes: [ord-paid-stock-resold]
+  - id: ord-best-effort-side-effects
+    kind: MECHANISM
+    name: "사가 밖 부가 작업 (최선 노력)"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "알림 · 프로모션 응모처럼 보상이 필요 없는 일은 사가 밖에서 이벤트를 듣고 처리한다. 실패해도 주문을 되돌리지 않는다"
+    uses: [event-driven-architecture]
+  - id: ord-post-pivot-failure
+    kind: PROBLEM
+    name: "피벗 뒤 실패"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "결제가 끝난 뒤 재고 부족 같은 실패가 나면 보상할 자리가 없어 결제된 주문이 방치된다"
+  - id: ord-saga-stuck
+    kind: PROBLEM
+    name: "멈춘 사가"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "재시도 한도를 넘거나 응답이 끝내 오지 않아 사가가 한 단계에 머문다. 사람이 보지 않으면 영영 끝나지 않는다"
+  - id: ord-paid-stock-resold
+    kind: PROBLEM
+    name: "결제된 재고의 재판매"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "결제 뒤에도 예약 TTL 이 돌아 만료되면 이미 판 재고가 다시 팔린다. 사가 순서가 결제 → 재고일 때 생긴다"
+  - id: ord-saga-dwell-time
+    kind: METRIC
+    name: "사가 체류 시간"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "사가가 시작부터 종료까지, 또는 한 단계에 머문 시간. 길어지면 외부 의존이 느리거나 멈춘 사가가 있다"
+  - id: ord-compensation-count
+    kind: METRIC
+    name: "보상 발생 수"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "보상 경로로 끝난 사가 수. 재고 부족 · 결제 거절 비율을 드러낸다"
+
+  # ───────────── 결제 ─────────────
+  - id: ord-payment-domain
+    kind: DOMAIN
+    name: "결제"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "PG 를 통해 돈을 잡고(승인) 청구하고(매입) 돌려준다(무효 · 환불). 가장 비싼 버그는 실패가 아니라 결과를 모르는 상태다"
+    synonyms: ["payment"]
+    contains: [ord-payment-processing, ord-payment-uncertainty, ord-payment-methods]
+    flows_to: [ord-aftercare-domain]
+  - id: ord-payment-processing
+    kind: STAGE
+    name: "결제 처리 (승인 · 매입 · 무효 · 환불)"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "결제 상태 머신을 따라 PG 에 승인 · 매입 · 무효 · 환불을 요청한다. 모든 요청은 가맹점 주문번호로 멱등이다"
+    questions:
+      - "승인과 매입을 나누면 어떤 상황에서 보상이 싸지나"
+      - "무효와 환불은 언제 갈리고 수수료가 어떻게 다른가"
+    contains: [ord-payment-state-machine, ord-authorization, ord-capture, ord-auth-capture-split, ord-immediate-payment, ord-void, ord-refund, ord-net-cancel, ord-pg-integration, toss-payments, ord-double-charge, ord-payment-decline-rate]
+    measured_by: [ord-payment-decline-rate]
+  - id: ord-payment-state-machine
+    kind: MECHANISM
+    name: "결제 상태 머신"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "READY → AUTHORIZED · FAILED · UNKNOWN, AUTHORIZED → CAPTURED · VOIDED, CAPTURED → (PARTIALLY_)REFUNDED. 한 주문에 결제가 여러 건일 수 있어 주문과 따로 둔다"
+    code:
+      - { path: payment/domain/src/main/kotlin/com/kgd/payment/domain/payment/model/PaymentStatus.kt, symbol: "fun canTransitionTo(target: PaymentStatus)", note: "결제 허용 전이" }
+    uses: [ord-transition-guard]
+  - id: ord-authorization
+    kind: MECHANISM
+    name: "승인 (authorize)"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "카드 한도를 잡아 둔다. 돈은 아직 움직이지 않아 무효가 공짜다. 확정이 늦는 예약 상품에 쓴다"
+    synonyms: ["authorization", "오소리"]
+    code:
+      - { path: payment/domain/src/main/kotlin/com/kgd/payment/domain/payment/model/Payment.kt, symbol: "fun authorize(paymentKey: String, now: Instant)", note: "AUTHORIZED 로" }
+  - id: ord-capture
+    kind: MECHANISM
+    name: "매입 (capture)"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "잡아 둔 금액을 실제로 청구한다. 출고 · 확정 시점에 하고 이때부터 PG 수수료가 생긴다"
+    synonyms: ["capture", "매입 요청"]
+    code:
+      - { path: payment/domain/src/main/kotlin/com/kgd/payment/domain/payment/model/Payment.kt, symbol: "fun capture(now: Instant)", note: "CAPTURED 로" }
+  - id: ord-auth-capture-split
+    kind: MECHANISM
+    name: "승인 · 매입 분리"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "승인과 매입을 다른 시점에 한다. 승인 뒤 재고 · 확정에 실패하면 매입 없이 무효로 끝낼 수 있다"
+    synonyms: ["auth-capture", "지연 매입"]
+    uses: [ord-authorization, ord-capture, ord-void]
+  - id: ord-immediate-payment
+    kind: MECHANISM
+    name: "즉시 결제 (승인 + 매입)"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "승인과 매입을 한 번에 한다. 단순하지만 결제 뒤 실패는 무효가 아니라 환불로만 되돌린다"
+    synonyms: ["sale", "auto capture"]
+    alternative_to: [ord-auth-capture-split]
+  - id: ord-void
+    kind: MECHANISM
+    name: "무효 (void)"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "매입 전 승인을 취소한다. 재고 부족 · 확정 거절 같은 결제 직후 보상에 쓴다"
+    synonyms: ["void", "승인 취소"]
+    code:
+      - { path: payment/domain/src/main/kotlin/com/kgd/payment/domain/payment/model/Payment.kt, symbol: "fun void(now: Instant)", note: "VOIDED 로" }
+  - id: ord-refund
+    kind: MECHANISM
+    name: "환불 (refund)"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "매입 뒤 금액을 돌려준다. 전액 · 부분이 있고 수수료가 이미 생겼을 수 있어 정산에 반영한다"
+    synonyms: ["refund", "매입 취소"]
+    code:
+      - { path: payment/domain/src/main/kotlin/com/kgd/payment/domain/payment/model/Payment.kt, symbol: "fun refund(refundAmount: Long, now: Instant)", note: "환불 누계 반영" }
+    contains: [ord-partial-refund]
+  - id: ord-partial-refund
+    kind: MECHANISM
+    name: "부분 환불"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "매입액 중 일부만 돌려준다. 환불 합이 매입액을 넘지 않게 막고, 라인 안분으로 금액을 정한다"
+    synonyms: ["partial refund", "부분 취소 환불"]
+    code:
+      - { path: payment/domain/src/main/kotlin/com/kgd/payment/domain/payment/exception/PaymentExceptions.kt, symbol: "class RefundExceedsCapturedException(", note: "환불 합 ≤ 매입액" }
+    uses: [ord-discount-allocation]
+  - id: ord-net-cancel
+    kind: MECHANISM
+    name: "망취소"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "승인 응답을 받지 못했을 때 결과를 묻지 않고 PG 에 곧바로 취소를 요청한다. 재조회 대신 쓰는 PG 가 있고, 취소 요청 자체도 멱등이어야 한다"
+    synonyms: ["net cancel", "망상 취소"]
+    uses: [ord-merchant-order-no]
+    alternative_to: [ord-payment-inquiry]
+    mitigates: [ord-double-charge]
+  - id: ord-pg-integration
+    kind: MECHANISM
+    name: "PG 연동 (포트 · 어댑터)"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "승인 · 확인 · 매입 · 무효 · 환불 · 조회를 포트로 정의하고 PG 마다 어댑터를 둔다. 모의 PG 와 실제 PG 를 설정으로 바꾼다"
+    code:
+      - { path: payment/feature/src/main/kotlin/com/kgd/payment/application/payment/port/PgPort.kt, symbol: "fun inquire(orderNo: String): PgInquiry", note: "PG 포트" }
+    contains: [ord-mock-pg, ord-payment-window-confirm, ord-pg-timeout]
+    uses: [port-adapter]
+  - id: ord-mock-pg
+    kind: MECHANISM
+    name: "모의 PG"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "승인 · 거절 · 타임아웃 · 지연 웹훅 · 정산 파일을 결정적으로 만드는 가짜 PG. 사가 E2E 와 장애 주입 테스트가 이것으로 돈다"
+    synonyms: ["mock PG", "PG 시뮬레이터"]
+    code:
+      - { path: payment/feature/src/main/kotlin/com/kgd/payment/infrastructure/pg/mock/MockPgAdapter.kt, symbol: "class MockPgAdapter(", note: "같은 orderNo 는 거래 1건" }
+  - id: ord-payment-window-confirm
+    kind: MECHANISM
+    name: "결제창 인증 후 승인 확인 (confirm)"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "고객이 PG 결제창에서 인증하면 PG 가 거래 키를 돌려주고, 서버가 그 키 · 주문번호 · 금액으로 승인을 확정한다. 금액 위변조를 서버가 대조한다"
+    synonyms: ["payment confirm", "결제 승인 API"]
+    code:
+      - { path: payment/feature/src/main/kotlin/com/kgd/payment/infrastructure/pg/toss/TossPgAdapter.kt, symbol: "override fun confirm(paymentKey: String, orderNo: String, amount: Long)", note: "토스 승인 확인" }
+    uses: [ord-term-payment-key]
+  - id: ord-pg-timeout
+    kind: MECHANISM
+    name: "PG 호출 타임아웃 · 서킷 브레이커"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "연결 · 읽기 타임아웃을 짧게 두고 서킷 브레이커로 감싼다. 타임아웃이 없으면 서킷도 열리지 않고 스레드가 묶인다"
+    synonyms: ["타임아웃 (연결·읽기)"]
+    code:
+      - { path: payment/feature/src/main/kotlin/com/kgd/payment/infrastructure/pg/toss/TossPgAdapter.kt, symbol: "circuitBreaker.executeSupplier(block)", note: "PG 호출을 서킷으로 감싼다" }
+    uses: [dist-timeout, circuit-breaker, resilience4j, bulkhead-pattern]
+    mitigates: [dist-cascading-failure]
+  - id: toss-payments
+    kind: TECHNOLOGY
+    name: "토스페이먼츠"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "국내 PG. 결제창 인증 뒤 서버가 paymentKey 로 승인을 확인하고, 주문번호 조회 · 취소 API 와 웹훅을 제공한다. 이 레포는 payment.pg=toss 일 때만 어댑터를 켠다"
+    synonyms: ["Toss Payments"]
+    code:
+      - { path: payment/feature/src/main/kotlin/com/kgd/payment/infrastructure/pg/toss/TossPgAdapter.kt, symbol: "class TossPgAdapter(", note: "토스 어댑터" }
+    implements: [ord-pg-integration, ord-payment-window-confirm, ord-pg-webhook]
+  - id: ord-double-charge
+    kind: PROBLEM
+    name: "이중 결제"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "재시도가 PG 에 새 거래를 만들어 같은 주문에 돈이 두 번 빠진다"
+  - id: ord-payment-decline-rate
+    kind: METRIC
+    name: "결제 거절률"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "결제 시도 중 거절된 비율. 한도 · 인증 실패 · PG 장애가 섞여 있어 사유별로 나눠 본다"
+
+  - id: ord-payment-uncertainty
+    kind: STAGE
+    name: "결과 미상 처리"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "타임아웃 · 5xx 를 실패로 치지 않고 UNKNOWN 으로 저장한 뒤 재조회 · 웹훅으로 결론을 낸다. 결론 전에는 주문을 취소하지 않는다"
+    questions:
+      - "결제 타임아웃을 실패로 처리하면 무슨 일이 생기나"
+      - "응답 · 재조회 · 웹훅 세 경로가 같은 결과를 보낼 때 어떻게 한 번만 반영하나"
+    contains: [ord-unknown-state, ord-payment-inquiry, ord-pg-webhook, ord-single-transition-function, ord-merchant-order-no, ord-pending-void, ord-timeout-as-failure, ord-unknown-count]
+    measured_by: [ord-unknown-count]
+  - id: ord-unknown-state
+    kind: MECHANISM
+    name: "UNKNOWN (결과 미상) 상태"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "PG 응답을 못 받은 결제를 따로 적는 상태. 사가는 이 동안 대기하고, 재조회 결과로 AUTHORIZED 또는 FAILED 가 된다"
+    synonyms: ["UNKNOWN", "결과 미상"]
+    code:
+      - { path: payment/domain/src/main/kotlin/com/kgd/payment/domain/payment/model/Payment.kt, symbol: "fun markUnknown(reason: String, now: Instant)", note: "미상 기록" }
+    uses: [ord-payment-inquiry]
+    mitigates: [ord-timeout-as-failure, ord-double-charge]
+  - id: ord-payment-inquiry
+    kind: MECHANISM
+    name: "거래 재조회 (백오프)"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "가맹점 주문번호로 PG 에 거래를 조회해 실제 결과를 얻는다. 간격을 늘려 가며 몇 번 묻고 넘기면 운영 이슈로 보낸다"
+    synonyms: ["inquiry", "결제 조회"]
+    code:
+      - { path: payment/feature/src/main/kotlin/com/kgd/payment/infrastructure/scheduler/PaymentInquiryScheduler.kt, symbol: "class PaymentInquiryScheduler(", note: "미상 결제 재조회" }
+    uses: [dist-exponential-backoff, dist-jitter, ord-merchant-order-no]
+  - id: ord-pg-webhook
+    kind: MECHANISM
+    name: "PG 웹훅 (서명 검증 · 중복 무시)"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "PG 가 결과를 알려 오는 콜백. 서명(비밀)을 검증하고 이미 그 상태면 무시한다. 상태 · 금액은 웹훅 본문이 아니라 재조회 결과로 정한다"
+    synonyms: ["webhook", "결제 알림"]
+    code:
+      - { path: payment/feature/src/main/kotlin/com/kgd/payment/presentation/webhook/controller/TossWebhookController.kt, symbol: "MessageDigest.isEqual(secret, presented.toByteArray())", note: "상수 시간 비교 후 재조회로 결론" }
+    uses: [net-webhook, ord-single-transition-function]
+    mitigates: [dist-duplicate-delivery]
+  - id: ord-single-transition-function
+    kind: MECHANISM
+    name: "세 경로 단일 전이"
+    category: DESIGN_PATTERN
+    level: ADVANCED
+    description: "승인 응답 · 재조회 · 웹훅이 모두 같은 전이 함수를 부르고, 이미 도달한 상태면 아무것도 하지 않는다. 경로마다 따로 짜면 순서에 따라 결과가 달라진다"
+    code:
+      - { path: payment/feature/src/main/kotlin/com/kgd/payment/application/payment/service/PaymentResolutionService.kt, symbol: "class PaymentResolutionService(", note: "재조회 · 웹훅이 같은 해석 경로" }
+    uses: [idempotency]
+    mitigates: [race-condition]
+  - id: ord-merchant-order-no
+    kind: MECHANISM
+    name: "가맹점 주문번호 (외부 호출 멱등 키)"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "결제 시도마다 고유한 주문번호를 PG 에 넘겨 재시도해도 PG 가 같은 거래로 인식하게 한다. 없으면 재시도가 이중 결제가 된다"
+    synonyms: ["orderNo", "merchant uid", "외부 호출 층 멱등"]
+    code:
+      - { path: payment/domain/src/main/kotlin/com/kgd/payment/domain/payment/exception/PaymentExceptions.kt, symbol: "class OrderNoConflictException(orderNo: String)", note: "같은 orderNo 다른 금액 거부" }
+    uses: [idempotency, ord-term-order-no]
+    mitigates: [ord-double-charge]
+  - id: ord-pending-void
+    kind: MECHANISM
+    name: "지연 무효 예약"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "결과를 모르는 결제에 취소가 필요해지면 무효를 예약해 두고 결론이 AUTHORIZED 로 나는 순간 실행한다"
+    code:
+      - { path: payment/domain/src/main/kotlin/com/kgd/payment/domain/payment/model/VoidDecision.kt, symbol: "enum class VoidDecision", note: "지금 무효 · 예약 · 불필요" }
+    uses: [ord-void, ord-unknown-state]
+  - id: ord-timeout-as-failure
+    kind: PROBLEM
+    name: "타임아웃을 실패로 처리"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "응답이 안 온 결제를 실패로 치고 주문을 취소하면, PG 에서는 돈이 빠졌는데 주문은 사라진다"
+  - id: ord-unknown-count
+    kind: METRIC
+    name: "결과 미상 결제 수"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "UNKNOWN 에 머문 결제 수와 체류 시간. 늘면 PG 장애나 재조회 경로 이상이다"
+
+  - id: ord-payment-methods
+    kind: STAGE
+    name: "결제 수단"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "카드 · 간편결제 · 가상계좌 · 정기 결제 · 에스크로처럼 수단마다 인증과 확정 시점이 다르다"
+    questions: ["가상계좌 결제는 카드와 달리 주문 상태를 어떻게 다뤄야 하나"]
+    contains: [ord-composite-payment, ord-easy-pay, ord-virtual-account, ord-card-authentication, ord-billing-key, ord-escrow, ord-card-data-scope]
+  - id: ord-composite-payment
+    kind: MECHANISM
+    name: "복합 결제"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "한 주문을 카드 + 포인트 + 상품권처럼 여러 수단으로 나눠 낸다. 부분 환불 때 어느 수단부터 돌려줄지 규칙이 필요하다"
+    synonyms: ["split tender", "혼합 결제"]
+    uses: [cat-point-ledger]
+  - id: ord-easy-pay
+    kind: MECHANISM
+    name: "간편결제 (제휴페이)"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "카카오페이 · 네이버페이처럼 등록된 수단으로 인증만 받고 결제한다. PG 를 거치거나 페이사와 직접 연동한다"
+    synonyms: ["easy pay", "제휴페이"]
+  - id: ord-virtual-account
+    kind: MECHANISM
+    name: "가상계좌 · 입금 대기"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "주문마다 입금 계좌를 발급하고 입금 통지가 올 때 결제가 끝난다. 입금 기한이 지나면 주문을 자동 취소한다"
+    synonyms: ["virtual account", "무통장 입금"]
+  - id: ord-card-authentication
+    kind: MECHANISM
+    name: "카드 본인 인증 (3DS · ISP · 앱카드)"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "결제창에서 카드 소유자를 인증한다. 인증 결과를 받은 뒤 서버가 승인을 요청하는 2단계 흐름이 된다"
+    synonyms: ["3D Secure", "3DS"]
+  - id: ord-billing-key
+    kind: MECHANISM
+    name: "빌링키 (정기 · 자동 결제)"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "처음 한 번 인증한 카드를 PG 가 토큰으로 발급하고, 이후 서버가 그 토큰으로 인증 없이 결제한다. 카드번호를 보관하지 않고 정기 결제를 한다"
+    synonyms: ["billing key", "카드 토큰"]
+    uses: [ord-card-data-scope]
+  - id: ord-escrow
+    kind: MECHANISM
+    name: "에스크로 (구매 안전 서비스)"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "결제 대금을 제3자가 보관하다가 구매 확정 뒤 판매자에게 넘긴다. 현금성 결제에서 법으로 요구되는 경우가 있다"
+    synonyms: ["escrow"]
+    uses: [ord-purchase-confirm]
+  - id: ord-card-data-scope
+    kind: MECHANISM
+    name: "카드 정보 비보관 (PCI-DSS 범위 밖)"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "카드번호 · CVC 는 PG 결제창에서만 받고 서버 · DB · 로그에 남기지 않는다. 받는 순간 PCI-DSS 인증 범위에 들어간다"
+    synonyms: ["PCI-DSS"]
+    uses: [ord-payment-window-confirm]
+
+  # ───────────── 이행 · 클레임 ─────────────
+  - id: ord-aftercare-domain
+    kind: DOMAIN
+    name: "이행 · 클레임"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "결제된 주문을 출고 · 배송하고, 취소 · 반품 · 교환을 새 레코드로 처리하고, 구매 확정으로 정산 대상을 확정한다"
+    contains: [ord-fulfillment, ord-claims, ord-purchase-confirmation]
+    flows_to: [ord-settlement-domain]
+  - id: ord-fulfillment
+    kind: STAGE
+    name: "이행 (출고 · 배송)"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "확정된 주문을 창고별 이행 건으로 쪼개 피킹 · 패킹 · 출고 · 배송 완료까지 진행한다"
+    synonyms: ["fulfillment", "풀필먼트"]
+    questions: ["한 주문이 여러 이행 건으로 쪼개질 때 주문 상태는 어떻게 정하나"]
+    contains: [ord-fulfillment-state-machine, ord-split-fulfillment, ord-pick-pack-ship, ord-shipment-tracking, ord-delivery-completion, ord-line-fulfillment-cancel, ord-3pl, ord-non-shipping-fulfillment, ord-fulfillment-lead-time]
+    flows_to: [ord-purchase-confirmation]
+    measured_by: [ord-fulfillment-lead-time]
+  - id: ord-fulfillment-state-machine
+    kind: MECHANISM
+    name: "이행 상태 머신"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "PENDING → PICKING → PACKING → SHIPPED → DELIVERED, 출고 전까지만 CANCELLED 로 갈 수 있다"
+    code:
+      - { path: fulfillment/domain/src/main/kotlin/com/kgd/fulfillment/domain/fulfillment/model/FulfillmentStatus.kt, symbol: "fun canTransitionTo(next: FulfillmentStatus)", note: "이행 전이 표" }
+    uses: [ord-transition-guard]
+  - id: ord-split-fulfillment
+    kind: MECHANISM
+    name: "분할 이행 (주문 1 : 이행 N)"
+    category: DATA
+    level: INTERMEDIATE
+    description: "한 주문을 창고 · 판매자 · 입고 시점별로 여러 이행 건과 송장으로 나눈다"
+    synonyms: ["split shipment", "분할 배송", "부분 출고"]
+    code:
+      - { path: fulfillment/domain/src/main/kotlin/com/kgd/fulfillment/domain/fulfillment/model/FulfillmentOrder.kt, symbol: "class FulfillmentOrder private constructor(", note: "주문 · 창고 단위 이행 건" }
+    uses: [cat-warehouse-selection]
+  - id: ord-pick-pack-ship
+    kind: MECHANISM
+    name: "피킹 · 패킹 · 출고"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "창고에서 상품을 집고, 포장하고, 택배사에 넘기는 작업 단계. 단계마다 이행 상태가 한 칸씩 나아간다"
+    synonyms: ["pick pack ship"]
+  - id: ord-shipment-tracking
+    kind: MECHANISM
+    name: "송장 · 배송 추적"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "출고 때 택배사와 송장번호를 기록하고 택배사 추적 정보로 배송 상태를 갱신한다"
+    synonyms: ["tracking"]
+    uses: [ord-term-waybill]
+  - id: ord-delivery-completion
+    kind: MECHANISM
+    name: "배송 완료 처리"
+    category: DATA
+    level: BEGINNER
+    description: "배송 완료 시각을 라인에 남긴다. 자동 구매 확정 기한이 여기서부터 센다"
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/order/model/Order.kt, symbol: "fun markDelivered(productIds: Collection<Long>, at: Instant)", note: "라인 배송 완료 기록" }
+  - id: ord-line-fulfillment-cancel
+    kind: MECHANISM
+    name: "출고 전 라인 취소"
+    category: DATA
+    level: INTERMEDIATE
+    description: "이행 도메인이 출고 전이면 해당 라인을 취소하고, 이미 출고됐으면 거절로 답한다. 환불은 취소 응답 뒤에만 한다"
+    code:
+      - { path: fulfillment/domain/src/main/kotlin/com/kgd/fulfillment/domain/fulfillment/model/FulfillmentOrder.kt, symbol: "fun cancelLines(productIds: Set<Long>)", note: "Cancelled 또는 Rejected" }
+    mitigates: [ord-cancel-after-shipment]
+  - id: ord-3pl
+    kind: MECHANISM
+    name: "3PL · 풀필먼트 센터 위탁"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "보관 · 출고를 물류 대행사에 맡기고 출고 지시와 결과를 연동으로 주고받는다"
+    synonyms: ["3PL", "third-party logistics"]
+  - id: ord-non-shipping-fulfillment
+    kind: MECHANISM
+    name: "비배송 이행 (발권 · 바우처 · 디지털)"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "여행 · 티켓 · 디지털 상품은 배송 대신 파트너 발권이나 코드 발급이 이행이다. 파트너가 느리면 접수형 처리로 받는다"
+    synonyms: ["e-ticket", "발권"]
+    uses: [ord-async-accept]
+  - id: ord-fulfillment-lead-time
+    kind: METRIC
+    name: "출고 리드타임"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "주문 확정에서 출고 · 배송 완료까지 걸린 시간"
+
+  - id: ord-claims
+    kind: STAGE
+    name: "클레임 (취소 · 반품 · 교환)"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "주문 뒤 되돌림은 원래 상태를 되감지 않고 새 클레임 레코드로 적는다. 이력이 남아야 정산이 맞는다"
+    synonyms: ["claim", "CS 클레임"]
+    questions:
+      - "부분 취소 환불액과 돌려줄 쿠폰 · 포인트는 어떻게 정하나"
+      - "출고된 뒤 취소 요청이 오면 흐름이 어떻게 바뀌나"
+    contains: [ord-claim-record, ord-claim-state-machine, ord-order-cancel, ord-partial-cancel, ord-return, ord-exchange, ord-refund-amount-calc, ord-return-shipping-fee, ord-seller-claim-approval, ord-cancel-after-shipment, ord-claim-rate]
+    measured_by: [ord-claim-rate]
+  - id: ord-claim-record
+    kind: MECHANISM
+    name: "클레임 레코드"
+    category: DATA
+    level: INTERMEDIATE
+    description: "취소 · 반품 · 교환을 요청 단위의 새 행으로 둔다. 대상 라인 · 사유 · 처리 단계 · 환불 계획을 갖는다"
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/claim/model/Claim.kt, symbol: "class Claim private constructor(", note: "클레임 한 건" }
+    uses: [ord-claim-state-machine, ord-term-claim]
+  - id: ord-claim-state-machine
+    kind: MECHANISM
+    name: "클레임 상태 머신"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "REQUESTED → APPROVED → (회수) → REFUNDED, 거절은 REJECTED. 이행 취소 · 재입고 · 혜택 원복 · 환불을 단계로 밟는다"
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/claim/model/Claim.kt, symbol: "enum class ClaimStatus", note: "클레임 상태" }
+  - id: ord-order-cancel
+    kind: MECHANISM
+    name: "주문 취소 (전체)"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "모든 라인을 취소한다. 매입 전이면 무효, 뒤면 환불이고, 쓴 쿠폰은 기간 안이면 돌려준다"
+    synonyms: ["order cancel"]
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/order/model/Order.kt, symbol: "fun cancelByClaim(actor: String, now: Instant)", note: "전체 취소 클레임 완료" }
+    uses: [ord-void, ord-refund, cat-benefit-restore]
+  - id: ord-partial-cancel
+    kind: MECHANISM
+    name: "부분 취소 (라인)"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "일부 라인만 취소한다. 환불액은 라인 결제액이고, 포인트 안분분은 포인트로, 나머지는 결제 부분 환불로 돌려준다"
+    synonyms: ["partial cancel"]
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/order/model/Order.kt, symbol: "fun cancelLine(lineNo: Int)", note: "라인 취소" }
+    uses: [ord-refund-amount-calc, ord-partial-refund, cat-benefit-restore, cat-restock]
+  - id: ord-return
+    kind: MECHANISM
+    name: "반품 (회수 · 검수)"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "배송된 상품을 회수하고 검수한 뒤 환불과 재입고를 한다. 귀책에 따라 반품 배송비 부담이 갈린다"
+    synonyms: ["return", "RMA"]
+    uses: [cat-restock, ord-return-shipping-fee, ord-refund]
+  - id: ord-exchange
+    kind: MECHANISM
+    name: "교환"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "회수와 새 출고를 한 클레임으로 묶는다. 옵션 가격이 다르면 차액 결제나 부분 환불이 따른다"
+    synonyms: ["exchange"]
+    uses: [ord-return, ord-split-fulfillment]
+  - id: ord-refund-amount-calc
+    kind: MECHANISM
+    name: "환불 금액 계산"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "취소 라인의 안분 결과로 결제 환불액 · 포인트 원복액 · 쿠폰 반환 여부 · 배송비 환불 여부를 정한다. 쿠폰 최소 금액 미달이 돼도 부분 취소에서는 할인을 다시 계산하지 않는 식의 정책을 여기서 적용한다"
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/claim/model/ClaimRefundPlan.kt, symbol: "data class ClaimRefundPlan(", note: "환불 계획" }
+    uses: [ord-discount-allocation, ord-shipping-fee-line]
+  - id: ord-return-shipping-fee
+    kind: MECHANISM
+    name: "반품 배송비 · 귀책 판정"
+    category: DATA
+    level: BEGINNER
+    description: "단순 변심은 고객이, 상품 하자 · 오배송은 판매자가 반품 배송비를 낸다. 무료 배송 주문의 반품이면 처음 배송비까지 차감한다"
+  - id: ord-seller-claim-approval
+    kind: MECHANISM
+    name: "판매자 클레임 승인"
+    category: DATA
+    level: INTERMEDIATE
+    description: "이미 출고된 뒤의 취소 · 반품은 자동 승인되지 않고 판매자가 승인하거나 거절한다"
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/claim/model/Claim.kt, symbol: "fun approveBySeller(actor: String)", note: "판매자 승인" }
+    mitigates: [ord-cancel-after-shipment]
+  - id: ord-cancel-after-shipment
+    kind: PROBLEM
+    name: "출고 뒤 취소 요청"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "취소 요청과 출고가 엇갈리면 물건은 나갔는데 환불까지 되는 손실이 생긴다"
+  - id: ord-claim-rate
+    kind: METRIC
+    name: "클레임률 (취소 · 반품률)"
+    category: DATA
+    level: BEGINNER
+    description: "주문 대비 취소 · 반품 · 교환 비율. 상품 · 판매자 품질 신호다"
+
+  - id: ord-purchase-confirmation
+    kind: STAGE
+    name: "구매 확정"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "고객이 받았음을 확정해 더 이상 환불 대상이 아니게 한다. 확정된 라인만 판매자 정산 대상이다"
+    synonyms: ["purchase confirmation"]
+    questions: ["구매 확정 전후로 환불과 정산이 어떻게 달라지나"]
+    contains: [ord-purchase-confirm, ord-auto-purchase-confirm]
+  - id: ord-purchase-confirm
+    kind: MECHANISM
+    name: "구매 확정 (고객)"
+    category: DATA
+    level: BEGINNER
+    description: "고객이 버튼으로 라인을 확정한다. 열린 클레임이 있는 주문은 확정하지 않는다"
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/application/order/service/PurchaseConfirmService.kt, symbol: "class PurchaseConfirmService(", note: "확정 · 자동 확정" }
+    uses: [ord-line-status]
+  - id: ord-auto-purchase-confirm
+    kind: MECHANISM
+    name: "자동 구매 확정"
+    category: DATA
+    level: BEGINNER
+    description: "배송 완료 뒤 정해진 날짜가 지나면 시스템이 확정한다. 확정이 없으면 정산이 영원히 미뤄진다"
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/scheduler/OrderClaimSchedulers.kt, symbol: "class PurchaseConfirmScheduler(", note: "기한 지난 라인 확정" }
+    uses: [ord-delivery-completion]
+
+  # ───────────── 정산 · 원장 ─────────────
+  - id: ord-settlement-domain
+    kind: DOMAIN
+    name: "정산 · 원장"
+    category: ARCHITECTURE
+    level: ADVANCED
+    description: "돈의 움직임을 추가 전용 원장에 복식부기로 적고, 판매자별 지급액을 계산해 지급하고, PG · 원장 · 주문을 대사한다"
+    synonyms: ["settlement", "정산"]
+    contains: [ord-ledger, ord-settlement-calc, ord-payout, ord-reconciliation, ord-tax-evidence]
+  - id: ord-ledger
+    kind: STAGE
+    name: "원장 기록"
+    category: DATA
+    level: ADVANCED
+    description: "주문 테이블이 아니라 원장이 정산의 원천이다. 주문 상태는 바뀌지만 원장은 더하기만 한다"
+    synonyms: ["ledger"]
+    questions:
+      - "환불을 원래 거래를 지우지 않고 새 거래로 적는 이유는 무엇인가"
+      - "차변 합과 대변 합이 다르면 무엇을 의심하나"
+    contains: [ord-double-entry, ord-append-only-ledger, ord-reversing-entry, ord-journal-rules, ord-ledger-idempotency, ord-trial-balance, ord-unbalanced-journal]
+    flows_to: [ord-settlement-calc]
+  - id: ord-double-entry
+    kind: MECHANISM
+    name: "복식부기 (차변 · 대변)"
+    category: DATA
+    level: ADVANCED
+    description: "모든 돈의 움직임을 차변 · 대변 한 쌍으로 적어 거래 하나의 합이 늘 0 이 되게 한다. 안 맞으면 어딘가 버그가 있다는 신호다"
+    synonyms: ["double-entry bookkeeping"]
+    code:
+      - { path: settlement/domain/src/main/kotlin/com/kgd/settlement/domain/ledger/exception/LedgerExceptions.kt, symbol: "class UnbalancedJournalException(", note: "차 ≠ 대 거래 거부" }
+    uses: [ord-term-journal, ord-term-account]
+    mitigates: [ord-unbalanced-journal]
+  - id: ord-append-only-ledger
+    kind: MECHANISM
+    name: "추가 전용 원장"
+    category: DATA
+    level: INTERMEDIATE
+    description: "원장 행은 수정 · 삭제하지 않는다. 잔액은 행을 합해서 구하고 과거 시점 잔액도 다시 계산할 수 있다"
+    synonyms: ["append-only ledger", "immutable ledger"]
+    code:
+      - { path: settlement/domain/src/main/kotlin/com/kgd/settlement/domain/ledger/model/Journal.kt, symbol: "class Journal private constructor(", note: "거래 + 분개 줄" }
+    uses: [ord-reversing-entry]
+  - id: ord-reversing-entry
+    kind: MECHANISM
+    name: "역분개"
+    category: DATA
+    level: INTERMEDIATE
+    description: "잘못 적은 거래는 지우지 않고 차 · 대를 뒤집은 거래를 새로 적어 상쇄한다"
+    synonyms: ["reversal", "reversing entry"]
+    code:
+      - { path: settlement/domain/src/main/kotlin/com/kgd/settlement/domain/ledger/model/Journal.kt, symbol: "fun reverse(sourceKey: String, at: Instant)", note: "뒤집은 거래 생성" }
+  - id: ord-journal-rules
+    kind: MECHANISM
+    name: "분개 규칙 (매입 · 환불 · PG 입금 · 지급)"
+    category: DATA
+    level: ADVANCED
+    description: "사건마다 어느 계정에 얼마를 적는지 고정한다 — 매입 때 PG 미수금 · 판촉 비용 / 판매자 미지급금 · 수수료 수익, 환불은 그 반대"
+    code:
+      - { path: settlement/domain/src/main/kotlin/com/kgd/settlement/domain/ledger/model/JournalRules.kt, symbol: "object JournalRules", note: "사건별 분개" }
+    uses: [ord-double-entry, ord-term-pg-receivable, ord-term-seller-payable, ord-term-commission-revenue, ord-term-promo-expense]
+  - id: ord-ledger-idempotency
+    kind: MECHANISM
+    name: "원천 이벤트 키 멱등"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "거래마다 원천 사건 키(주문 매입 · 클레임 환불 · 정산서 지급)를 유니크로 둬 같은 이벤트가 두 번 와도 한 번만 적는다"
+    code:
+      - { path: settlement/domain/src/main/kotlin/com/kgd/settlement/domain/ledger/model/JournalRules.kt, symbol: "fun captureKey(orderId: Long)", note: "capture:order:{id}" }
+    uses: [idempotency]
+    mitigates: [dist-duplicate-delivery]
+  - id: ord-trial-balance
+    kind: MECHANISM
+    name: "시산표"
+    category: DATA
+    level: INTERMEDIATE
+    description: "계정별 차변 · 대변 합을 모아 전체가 맞는지 검산한다. 판매자 미지급금 잔액이 지급 예정액과 같은지도 여기서 본다"
+    synonyms: ["trial balance"]
+    code:
+      - { path: settlement/feature/src/main/kotlin/com/kgd/settlement/application/ledger/service/LedgerService.kt, symbol: "override fun trialBalance(): TrialBalance", note: "계정별 합" }
+    uses: [ord-double-entry]
+  - id: ord-unbalanced-journal
+    kind: PROBLEM
+    name: "차대 불일치"
+    category: DATA
+    level: INTERMEDIATE
+    description: "한 거래의 차변 합과 대변 합이 다르다. 금액 계산이나 분개 규칙 어딘가가 틀렸다"
+
+  - id: ord-settlement-calc
+    kind: STAGE
+    name: "정산 계산"
+    category: DATA
+    level: ADVANCED
+    description: "정산 기준일과 주기로 묶은 확정 라인에서 순매출 · 배송비 · 수수료를 모아 판매자별 정산서를 만든다"
+    questions:
+      - "정산 기준일을 결제일 · 이용일 · 구매확정일 중 무엇으로 잡느냐에 따라 무엇이 달라지나"
+      - "수수료율을 주문 시점에 스냅샷해야 하는 이유는 무엇인가"
+    contains: [ord-settlement-basis-date, ord-settlement-cycle, ord-commission-rule, ord-net-sales-calc, ord-settlement-statement, ord-holdback, ord-carry-over, ord-settlement-batch, ord-gmv, ord-take-rate]
+    flows_to: [ord-payout]
+  - id: ord-settlement-basis-date
+    kind: MECHANISM
+    name: "정산 기준일"
+    category: DATA
+    level: INTERMEDIATE
+    description: "결제일 · 이용일 · 구매확정일 중 무엇으로 정산 기간에 넣을지 정한다. 여행 상품은 이용일 기준이 흔하고, 기준이 바뀌면 월 매출이 달라진다"
+    synonyms: ["settlement date"]
+  - id: ord-settlement-cycle
+    kind: MECHANISM
+    name: "정산 주기"
+    category: DATA
+    level: BEGINNER
+    description: "판매자 등급별로 일 · 주 · 월 단위로 기간을 닫는다. 주기 안에서 생긴 환불은 같은 정산에서 상계한다"
+    synonyms: ["settlement cycle"]
+    code:
+      - { path: settlement/domain/src/main/kotlin/com/kgd/settlement/domain/statement/model/SettlementPeriod.kt, symbol: "fun lastClosedPeriod(today: LocalDate)", note: "주 · 월 기간 닫기" }
+  - id: ord-commission-rule
+    kind: MECHANISM
+    name: "수수료 규칙 · 요율 스냅샷"
+    category: DATA
+    level: INTERMEDIATE
+    description: "카테고리 · 판매자 · 프로모션별 요율로 수수료를 계산하고, 요율을 주문 라인에 스냅샷한다. 나중에 바뀐 요율을 과거 주문에 적용하면 분쟁이 된다"
+    synonyms: ["commission", "판매 수수료"]
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/sheet/model/Commission.kt, symbol: "fun of(netSales: Long, rateBp: Int)", note: "bp 요율 · HALF_UP" }
+    uses: [cat-rounding-rule]
+  - id: ord-net-sales-calc
+    kind: MECHANISM
+    name: "순매출 · 지급액 계산"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "라인 순매출 = 판매가 × 수량 − 판매자 부담 할인. 지급액 = Σ순매출 + Σ배송비 − Σ수수료. 플랫폼 부담 할인 · 포인트는 판매자 매출을 줄이지 않는다"
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/sheet/model/OrderSheet.kt, symbol: "val netSales: Long", note: "판매자 부담 쿠폰만 차감" }
+    uses: [cat-cost-bearer, ord-discount-allocation]
+  - id: ord-settlement-statement
+    kind: MECHANISM
+    name: "정산서"
+    category: DATA
+    level: INTERMEDIATE
+    description: "판매자 · 기간별 순매출 · 배송비 · 수수료 · 지급액 계산 결과. DRAFT → CONFIRMED → PAID, 지급액이 0 이하면 이월한다"
+    synonyms: ["settlement statement"]
+    code:
+      - { path: settlement/domain/src/main/kotlin/com/kgd/settlement/domain/statement/model/SettlementStatement.kt, symbol: "enum class StatementStatus { DRAFT, CONFIRMED, PAID, CARRIED_OVER }", note: "정산서 상태" }
+    uses: [ord-net-sales-calc, ord-commission-rule, ord-carry-over]
+  - id: ord-holdback
+    kind: MECHANISM
+    name: "보류 · 차감"
+    category: DATA
+    level: INTERMEDIATE
+    description: "분쟁 · 반품 대기 금액을 지급에서 빼 두고, 지급 뒤에 생긴 환불은 다음 정산에서 마이너스로 차감한다"
+    synonyms: ["holdback", "지급 유보", "보류 · 차감"]
+  - id: ord-carry-over
+    kind: MECHANISM
+    name: "상계 · 이월"
+    category: DATA
+    level: INTERMEDIATE
+    description: "같은 기간의 환불을 매출과 상계하고, 지급액이 0 이하면 지급하지 않고 다음 기간으로 넘긴다"
+    synonyms: ["carry over", "netting"]
+    code:
+      - { path: settlement/domain/src/main/kotlin/com/kgd/settlement/domain/statement/model/SettlementStatement.kt, symbol: "fun carryOver(now: Instant)", note: "CARRIED_OVER" }
+  - id: ord-settlement-batch
+    kind: MECHANISM
+    name: "정산 배치"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "하루 한 번 주기가 닫힌 판매자의 확정 라인을 모아 정산서를 만들고 지급 후 원장에 지급 거래를 적는다"
+    code:
+      - { path: settlement/feature/src/main/kotlin/com/kgd/settlement/application/statement/service/SettlementBatchService.kt, symbol: "class SettlementBatchService(", note: "정산서 생성 · 지급" }
+    uses: [ord-settlement-cycle, ord-settlement-statement]
+  - id: ord-gmv
+    kind: METRIC
+    name: "GMV (총 거래액)"
+    category: DATA
+    level: BEGINNER
+    description: "기간 동안 거래된 상품 금액의 합. 환불 · 할인을 빼는지에 따라 값이 달라 정의를 함께 적는다"
+    synonyms: ["Gross Merchandise Value", "거래액"]
+  - id: ord-take-rate
+    kind: METRIC
+    name: "테이크레이트"
+    category: DATA
+    level: INTERMEDIATE
+    description: "GMV 대비 플랫폼 수익(수수료 등) 비율. 마켓플레이스의 수익성을 본다"
+    synonyms: ["take rate"]
+
+  - id: ord-payout
+    kind: STAGE
+    name: "지급"
+    category: DATA
+    level: INTERMEDIATE
+    description: "확정된 정산서 금액을 판매자 계좌로 송금하고 원장에 지급 거래를 적는다"
+    synonyms: ["payout", "지급 대행"]
+    contains: [ord-seller-payout, ord-payout-account-protection]
+  - id: ord-seller-payout
+    kind: MECHANISM
+    name: "판매자 송금"
+    category: DATA
+    level: INTERMEDIATE
+    description: "펌뱅킹 · 지급 대행으로 판매자 계좌에 송금하고 송금 참조번호를 정산서에 남긴다. 송금 결과도 미상일 수 있어 재조회가 필요하다"
+    code:
+      - { path: settlement/feature/src/main/kotlin/com/kgd/settlement/infrastructure/payout/MockPayoutAdapter.kt, symbol: "class MockPayoutAdapter", note: "모의 송금" }
+    uses: [ord-payout-account-protection]
+  - id: ord-payout-account-protection
+    kind: MECHANISM
+    name: "지급 계좌 암호화 · 마스킹"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "정산 계좌번호를 암호화 컬럼과 마스킹 표시값으로 나눠 저장하고, 복호화는 지급 경로에서만 한다"
+    code:
+      - { path: seller/feature/src/main/kotlin/com/kgd/seller/infrastructure/crypto/AesGcmAccountCipher.kt, symbol: "class AesGcmAccountCipher(", note: "AES-GCM + 키 버전" }
+    uses: [encryption]
+
+  - id: ord-reconciliation
+    kind: STAGE
+    name: "대사"
+    category: DATA
+    level: ADVANCED
+    description: "내 기록과 바깥 기록(PG 정산 파일 · 은행 입금)을 건별로 맞춰 본다. 한쪽에만 있거나 금액이 다른 건은 사람이 본다"
+    synonyms: ["reconciliation"]
+    questions:
+      - "대사 불일치를 자동 보정하지 않고 사람 큐로 보내는 이유는 무엇인가"
+    contains: [ord-pg-reconciliation, ord-three-way-reconciliation, ord-mismatch-queue, ord-reconciliation-mismatch-count]
+    measured_by: [ord-reconciliation-mismatch-count]
+  - id: ord-pg-reconciliation
+    kind: MECHANISM
+    name: "PG 대사"
+    category: DATA
+    level: INTERMEDIATE
+    description: "매일 PG 정산 파일과 결제 행을 주문번호로 대조한다. 일치분은 입금액 · PG 수수료를 원장에 적는다"
+    synonyms: ["대사", "PG reconciliation"]
+    code:
+      - { path: payment/feature/src/main/kotlin/com/kgd/payment/application/payment/service/ReconciliationService.kt, symbol: "class ReconciliationService(", note: "정산 파일 ↔ 결제 행" }
+    uses: [ord-term-pg-settlement-file]
+  - id: ord-three-way-reconciliation
+    kind: MECHANISM
+    name: "3자 대사 (주문 · 결제 · 원장)"
+    category: DATA
+    level: ADVANCED
+    description: "주문 금액 · PG 결제 금액 · 원장 기록 셋을 맞춰 본다. 둘만 맞추면 셋째의 누락을 못 본다"
+    synonyms: ["three-way reconciliation", "3자 대사"]
+    uses: [ord-pg-reconciliation, ord-trial-balance]
+  - id: ord-mismatch-queue
+    kind: MECHANISM
+    name: "불일치 수동 큐"
+    category: DATA
+    level: INTERMEDIATE
+    description: "금액 불일치는 자동으로 고치지 않고 운영 이슈로 쌓는다. 자동 보정은 원인을 덮는다"
+    code:
+      - { path: payment/feature/src/main/kotlin/com/kgd/payment/application/payment/service/ReconciliationTransactionalService.kt, symbol: "fun mismatched(settleDate: LocalDate, orderNo: String, detail: String)", note: "불일치 → 운영 이슈" }
+    uses: [ord-ops-issue-queue]
+  - id: ord-reconciliation-mismatch-count
+    kind: METRIC
+    name: "대사 불일치 수"
+    category: DATA
+    level: INTERMEDIATE
+    description: "하루 대사에서 맞지 않은 건 수와 금액"
+
+  - id: ord-tax-evidence
+    kind: STAGE
+    name: "세금 · 증빙"
+    category: DATA
+    level: INTERMEDIATE
+    description: "부가세를 계산하고 세금계산서 · 현금영수증을 발행하고 거래 기록을 법정 기간 보존한다. 판매자 과세 유형에 따라 달라진다"
+    contains: [ord-vat, ord-tax-invoice, ord-record-retention]
+  - id: ord-vat
+    kind: MECHANISM
+    name: "부가세 · 과세 유형"
+    category: DATA
+    level: INTERMEDIATE
+    description: "과세 · 면세 · 영세율 상품과 일반 · 간이 과세자를 구분해 공급가액과 부가세를 나눈다"
+    synonyms: ["VAT", "부가가치세"]
+  - id: ord-tax-invoice
+    kind: MECHANISM
+    name: "세금계산서 · 현금영수증"
+    category: DATA
+    level: INTERMEDIATE
+    description: "사업자 구매에는 세금계산서, 개인 현금성 결제에는 현금영수증을 발행한다. 수수료에 대해서는 플랫폼이 판매자에게 세금계산서를 낸다"
+    synonyms: ["tax invoice", "세금 · 증빙"]
+  - id: ord-record-retention
+    kind: MECHANISM
+    name: "거래 기록 보존"
+    category: DATA
+    level: BEGINNER
+    description: "계약 · 결제 · 공급 기록을 전자상거래법이 정한 기간(5년) 보존한다. 개인정보 파기 주기와 따로 관리한다"
+
+  # ───────────── 운영 ─────────────
+  - id: ord-operations
+    kind: STAGE
+    name: "거래 운영 (사람이 끼어드는 자리)"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "결과 미상 결제 · 대사 불일치 · DLT 메시지 · 멈춘 사가는 자동화 뒤에도 남는다. 어디에 쌓이고 누가 어떻게 처리하는지까지 설계한다"
+    questions:
+      - "재처리 경로가 없는 DLQ 가 쓰레기통이 되는 이유는 무엇인가"
+      - "주문 id 하나로 전 서비스의 흔적을 모으려면 무엇을 전파해야 하나"
+    contains: [ord-ops-issue-queue, ord-dlt-reprocess, ord-manual-resolution, ord-audit-log, ord-order-tracing, ord-order-query-performance, ord-saga-e2e-test, ord-order-success-rate, ord-outbox-backlog]
+    measured_by: [ord-order-success-rate, ord-outbox-backlog]
+  - id: ord-ops-issue-queue
+    kind: MECHANISM
+    name: "운영 큐 (운영 이슈)"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "UNKNOWN 초과 · 대사 불일치 · DLT · 멈춘 사가를 종류 · 대상 · 상태를 가진 한 목록에 쌓고 한 화면에서 재시도 · 종결한다"
+    synonyms: ["ops issue", "운영 큐"]
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/opsissue/model/OpsIssue.kt, symbol: "class OpsIssue private constructor(", note: "SAGA_STUCK · CLAIM_STUCK" }
+    uses: [ord-manual-resolution]
+    mitigates: [ord-saga-stuck]
+  - id: ord-dlt-reprocess
+    kind: MECHANISM
+    name: "DLT 적재 · 재처리 도구"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "재시도가 끝난 메시지를 DLT 로 보내고 운영 이슈로 적재해 고친 뒤 재발행할 수 있게 한다. 재처리 경로가 없는 DLQ 는 쓰레기통이다"
+    synonyms: ["DLQ + 재처리 도구", "DLT replay"]
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/config/OrderKafkaConfig.kt, symbol: "DeadLetterPublishingRecoverer(kafkaTemplate)", note: "재시도 후 DLT 발행" }
+    uses: [dist-dead-letter-queue, ord-ops-issue-queue]
+    mitigates: [dist-poison-message]
+  - id: ord-manual-resolution
+    kind: MECHANISM
+    name: "수동 재시도 · 종결"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "운영자가 이슈를 재시도하거나 사유를 적고 종결한다. 누가 왜 했는지 남긴다"
+    code:
+      - { path: payment/feature/src/main/kotlin/com/kgd/payment/application/opsissue/service/OpsIssueTransactionalService.kt, symbol: "fun close(id: Long, actorId: String, reason: String)", note: "사유 필수 종결" }
+    uses: [ord-audit-log]
+  - id: ord-audit-log
+    kind: MECHANISM
+    name: "감사 로그"
+    category: SECURITY
+    level: BEGINNER
+    description: "상태 전이 · 금액 변경 · 어드민 수동 조치(판매자 상태 · 수수료율 · 재발행)를 행위자 · 사유 · 시각과 함께 남긴다"
+    synonyms: ["audit log"]
+    code:
+      - { path: seller/domain/src/main/kotlin/com/kgd/seller/domain/seller/model/SellerAdminAction.kt, symbol: "data class SellerAdminAction(", note: "판매자 어드민 조치 기록" }
+  - id: ord-order-tracing
+    kind: MECHANISM
+    name: "주문 흐름 추적 (traceId 전파)"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "traceId 를 HTTP 와 Kafka 헤더로 넘기고 아웃박스 행에도 저장했다가 발행 때 복원한다. 주문 id 하나로 전 서비스 로그를 모은다"
+    synonyms: ["추적", "traceparent"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/messaging/outbox/OutboxEntity.kt, symbol: "traceparent", note: "아웃박스 헤더 저장" }
+    uses:
+      - outbox-pattern
+      - { to: obs-distributed-tracing, reason: "주문 흐름을 서비스 경계 너머로 잇는다" }
+  - id: ord-order-query-performance
+    kind: MECHANISM
+    name: "주문 조회 성능"
+    category: DATA
+    level: INTERMEDIATE
+    description: "주문 목록은 커서 페이징 · 복합 인덱스 · 조회 모델 분리로 빠르게 하고 라인 · 이력을 한 번에 가져와 N+1 을 없앤다"
+    synonyms: ["조회 성능"]
+    uses: [net-cursor-pagination, data-composite-index, cqrs]
+    mitigates: [n-plus-one]
+  - id: ord-saga-e2e-test
+    kind: MECHANISM
+    name: "사가 E2E · 장애 주입 테스트"
+    category: TESTING
+    level: ADVANCED
+    description: "MySQL · Kafka 를 띄워 주문부터 정산까지 흘리고 결제 타임아웃 · 재고 부족 · 중복 메시지를 주입해 상태와 원장이 맞는지 본다"
+    synonyms: ["테스트"]
+    code:
+      - { path: commerce/app/src/test/kotlin/com/kgd/commerce/saga/OrderSagaE2ETest.kt, symbol: "class OrderSagaE2ETest(", note: "사가 E2E" }
+    uses: [testcontainers, e2e-test, ord-mock-pg]
+  - id: ord-order-success-rate
+    kind: METRIC
+    name: "주문 성공률"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "주문 접수 대비 CONFIRMED 까지 간 비율. 지표 · 알림의 첫 줄이다"
+    synonyms: ["지표 · 알림"]
+  - id: ord-outbox-backlog
+    kind: METRIC
+    name: "아웃박스 적체"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "발행되지 않고 쌓인 아웃박스 행 수와 가장 오래된 행의 나이. 늘면 사가 전체가 멈춘다"
+
+  # ───────────── 용어 ─────────────
+  - id: ord-glossary
+    kind: TERM
+    name: "주문 · 결제 · 정산 용어"
+    category: BASICS
+    level: BEGINNER
+    description: "거래 시스템에서 쓰는 이름과 값"
+    contains: [ord-glossary-order, ord-glossary-payment, ord-glossary-fulfillment, ord-glossary-ledger]
+  - id: ord-glossary-order
+    kind: TERM
+    name: "주문 용어"
+    category: BASICS
+    level: BEGINNER
+    description: "주문과 사가에서 쓰는 이름"
+    contains: [ord-term-order, ord-term-order-line, ord-term-order-no, ord-term-hold-period]
+  - id: ord-term-order
+    kind: TERM
+    name: "주문 (Order)"
+    category: BASICS
+    level: BEGINNER
+    description: "고객이 보는 거래 한 건. 라인 · 배송비 라인 · 합계 · 상태를 갖는다"
+    synonyms: ["order"]
+  - id: ord-term-order-line
+    kind: TERM
+    name: "주문 라인"
+    category: BASICS
+    level: BEGINNER
+    description: "주문 한 줄 — 상품 · 수량 · 금액 스냅샷 · 안분 할인 · 라인 상태"
+    synonyms: ["OrderItem", "order line"]
+  - id: ord-term-order-no
+    kind: TERM
+    name: "주문번호"
+    category: BASICS
+    level: BEGINNER
+    description: "외부(PG · 고객 · CS)에 보이는 주문 식별자. 내부 id 와 따로 둬 추측과 노출을 막는다"
+    synonyms: ["order number"]
+  - id: ord-term-hold-period
+    kind: TERM
+    name: "보류 기한"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "재고 · 혜택 예약이 확정 없이 유지되는 시간. 지나면 예약이 풀린다"
+    synonyms: ["hold TTL"]
+  - id: ord-glossary-payment
+    kind: TERM
+    name: "결제 용어"
+    category: BASICS
+    level: BEGINNER
+    description: "결제 연동에서 쓰는 이름"
+    contains: [ord-term-payment, ord-term-pg, ord-term-van, ord-term-card-parties, ord-term-payment-key, ord-term-pg-settlement-file]
+  - id: ord-term-payment
+    kind: TERM
+    name: "결제 (Payment)"
+    category: BASICS
+    level: BEGINNER
+    description: "주문 하나에 대한 결제 시도 한 건. 재시도 · 복합 결제면 주문 하나에 여럿이다"
+    synonyms: ["payment"]
+  - id: ord-term-pg
+    kind: TERM
+    name: "PG (전자지급결제대행)"
+    category: BASICS
+    level: BEGINNER
+    description: "가맹점 대신 카드사 · 은행과 결제를 중계하고 대금을 정산해 주는 사업자"
+    synonyms: ["payment gateway"]
+  - id: ord-term-van
+    kind: TERM
+    name: "VAN (부가가치통신망)"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "카드 승인 전문을 카드사로 전달하는 통신망 사업자. 오프라인 가맹점이 직접 쓰고 온라인은 대개 PG 뒤에 숨는다"
+  - id: ord-term-card-parties
+    kind: TERM
+    name: "발급사 · 매입사 · 카드 네트워크"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "카드를 내준 발급사, 가맹점 매출을 사들이는 매입사, 둘을 잇는 네트워크. 승인은 발급사가, 대금 지급은 매입사가 한다"
+    synonyms: ["issuer", "acquirer", "card network"]
+  - id: ord-term-payment-key
+    kind: TERM
+    name: "PG 거래 키"
+    category: BASICS
+    level: BEGINNER
+    description: "PG 가 거래마다 발급하는 키. 매입 · 취소 · 조회에 쓰고 가맹점 주문번호와 따로 저장한다"
+    synonyms: ["paymentKey", "tid"]
+  - id: ord-term-pg-settlement-file
+    kind: TERM
+    name: "PG 정산 파일"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "PG 가 날짜별로 주는 거래 · 수수료 · 입금 내역. 대사의 바깥 기록이다"
+  - id: ord-glossary-fulfillment
+    kind: TERM
+    name: "이행 · 클레임 용어"
+    category: BASICS
+    level: BEGINNER
+    description: "출고와 되돌림에서 쓰는 이름"
+    contains: [ord-term-fulfillment, ord-term-claim, ord-term-waybill]
+  - id: ord-term-fulfillment
+    kind: TERM
+    name: "이행 (Fulfillment)"
+    category: BASICS
+    level: BEGINNER
+    description: "주문한 것을 실제로 전달하는 일 한 건. 창고 · 송장 단위로 주문 하나에 여럿이다"
+    synonyms: ["fulfillment order"]
+  - id: ord-term-claim
+    kind: TERM
+    name: "클레임 (Claim)"
+    category: BASICS
+    level: BEGINNER
+    description: "주문 뒤의 취소 · 반품 · 교환 요청 레코드"
+  - id: ord-term-waybill
+    kind: TERM
+    name: "송장번호"
+    category: BASICS
+    level: BEGINNER
+    description: "택배사가 발급한 운송장 번호. 배송 추적의 키다"
+    synonyms: ["waybill", "tracking number"]
+  - id: ord-glossary-ledger
+    kind: TERM
+    name: "원장 용어"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "정산 원장에서 쓰는 이름"
+    contains: [ord-term-journal, ord-term-account, ord-term-pg-receivable, ord-term-seller-payable, ord-term-commission-revenue, ord-term-promo-expense]
+  - id: ord-term-journal
+    kind: TERM
+    name: "거래 · 분개"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "원장의 거래 한 건(journal)과 그 안의 차변 · 대변 줄(entry)"
+    synonyms: ["journal", "journal entry"]
+  - id: ord-term-account
+    kind: TERM
+    name: "계정과목"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "돈의 성격별 칸. 자산 · 부채 · 수익 · 비용으로 나뉘고 차변 · 대변 중 어디서 늘어나는지가 정해져 있다"
+    synonyms: ["account", "chart of accounts"]
+  - id: ord-term-pg-receivable
+    kind: TERM
+    name: "PG 미수금"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "매입했지만 PG 에서 아직 입금되지 않은 금액(자산)"
+  - id: ord-term-seller-payable
+    kind: TERM
+    name: "판매자 미지급금"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "판매자에게 줘야 하지만 아직 지급하지 않은 금액(부채). 잔액이 곧 지급 예정액이다"
+  - id: ord-term-commission-revenue
+    kind: TERM
+    name: "수수료 수익"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "판매 수수료로 플랫폼이 번 금액(수익)"
+  - id: ord-term-promo-expense
+    kind: TERM
+    name: "판촉 비용"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "플랫폼이 부담한 쿠폰 할인 · 포인트 사용액(비용). 판매자 매출을 줄이지 않는다"

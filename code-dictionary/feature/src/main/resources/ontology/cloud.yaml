@@ -1,0 +1,873 @@
+# 클라우드 · 네트워크 인프라 온톨로지 — 원본은 이 파일이다 (ADR-0100, docs/specs/2026-09-24-concept-atlas).
+# 바꾸면 manifest.yaml 의 revision 을 올린다. 간선은 from 개념에만 적는다.
+# 이름은 벤더 중립으로 적고, 벤더별 제품 이름은 동의어로 둔다.
+domain: cloud
+root: cloud
+concepts:
+  - id: cloud
+    kind: DOMAIN
+    name: "클라우드 · 네트워크 인프라"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "클라우드 위에 사설 네트워크를 긋고, 인터넷 출입과 트래픽을 통제하고, 부하를 나누고, 엣지에서 가까이 전달하고, 장애 구역을 넘어 살아남도록 배치하는 일. 네트워크 프로토콜 위에 얹는 설계 지식이다"
+    synonyms: ["cloud networking", "클라우드 네트워킹"]
+    contains: [cloud-network-design, cloud-routing, cloud-traffic-filtering, cloud-load-balancing, cloud-edge-delivery, cloud-private-connectivity, cloud-dns-traffic, cloud-availability-design, cloud-network-cost, cloud-network-diagnostics, cloud-glossary]
+
+  # ── 사설 네트워크 설계 ──
+  - id: cloud-network-design
+    kind: STAGE
+    name: "사설 네트워크 설계"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "클라우드 안에 나만의 격리된 네트워크를 만들고 주소 대역을 나눈다. 처음 정한 대역은 바꾸기 어려워 연결할 다른 망과 앞으로의 규모까지 보고 정한다"
+    questions: ["퍼블릭 서브넷과 프라이빗 서브넷을 가르는 것은 무엇인가", "VPC CIDR 을 너무 작게 잡으면 무슨 일이 생기나"]
+    contains: [cloud-vpc, cloud-cidr-planning, cloud-subnet, cloud-ipam, cloud-dual-stack, cloud-static-public-ip, cloud-byoip, oci, cloud-cidr-overlap, cloud-ip-exhaustion]
+    flows_to: [cloud-routing]
+  - id: cloud-vpc
+    kind: MECHANISM
+    name: "VPC (가상 사설 네트워크)"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "리전 하나에 걸친 논리적으로 격리된 네트워크. CIDR 대역 하나 이상을 갖고 서브넷 · 라우팅 테이블 · 게이트웨이 · 방화벽 규칙을 그 안에 둔다"
+    synonyms: ["Virtual Private Cloud", "VCN", "VNet"]
+    uses: [net-cidr, cloud-term-region]
+  - id: cloud-cidr-planning
+    kind: MECHANISM
+    name: "CIDR 대역 계획"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "VPC · 서브넷 · 파드 대역을 온프레미스와 다른 VPC 와 겹치지 않게, 파드 IP 까지 고려해 넉넉히 나눈다. 모자라면 보조(secondary) CIDR 을 붙인다"
+    synonyms: ["CIDR planning", "secondary CIDR", "address plan"]
+    uses: [net-cidr, net-term-private-address]
+    mitigates: [cloud-cidr-overlap, cloud-ip-exhaustion]
+  - id: cloud-subnet
+    kind: MECHANISM
+    name: "서브넷"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "VPC 대역을 가용 영역 하나에 묶인 작은 대역으로 나눈 것. 서브넷마다 라우팅 테이블이 붙어 인터넷으로 가는 길이 정해지고, 그 길이 퍼블릭과 프라이빗을 가른다"
+    synonyms: ["subnet"]
+    contains: [cloud-public-subnet, cloud-private-subnet]
+    uses: [cloud-term-availability-zone]
+  - id: cloud-public-subnet
+    kind: MECHANISM
+    name: "퍼블릭 서브넷"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "라우팅 테이블의 기본 경로가 인터넷 게이트웨이를 가리키는 서브넷. 공인 IP 를 가진 로드 밸런서 · NAT · 배스천만 둔다"
+    synonyms: ["public subnet"]
+    uses: [cloud-internet-gateway]
+  - id: cloud-private-subnet
+    kind: MECHANISM
+    name: "프라이빗 서브넷"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "인터넷에서 직접 들어올 수 없는 서브넷. 앱 · DB 를 두고, 나가는 트래픽만 NAT 게이트웨이나 사설 엔드포인트로 보낸다"
+    synonyms: ["private subnet"]
+    uses: [cloud-nat-gateway]
+    alternative_to: [cloud-public-subnet]
+  - id: cloud-ipam
+    kind: MECHANISM
+    name: "IP 주소 관리 (IPAM)"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "조직 전체의 주소 풀을 한곳에서 관리하고 VPC 를 만들 때 겹치지 않는 대역을 자동으로 떼어 준다. 계정 · VPC 가 많아질수록 스프레드시트 관리가 무너진다"
+    synonyms: ["IP Address Manager", "IPAM pool"]
+    mitigates: [cloud-cidr-overlap]
+  - id: cloud-dual-stack
+    kind: MECHANISM
+    name: "듀얼 스택 · IPv6 전용 서브넷"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "VPC 에 IPv6 대역을 더해 IPv4 와 함께 쓰거나(듀얼 스택) IPv6 만 쓰는 서브넷을 둔다. 공인 IPv4 과금을 줄이지만 IPv6 경로 · 방화벽 규칙을 따로 만들어야 한다"
+    synonyms: ["dual-stack", "IPv6-only subnet"]
+    uses: [net-ipv6]
+  - id: cloud-static-public-ip
+    kind: MECHANISM
+    name: "고정 공인 IP"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "인스턴스 · 로드 밸런서에 재시작해도 바뀌지 않는 공인 IPv4 를 붙인다. 파트너의 IP 허용 목록이나 DNS A 레코드가 가리킬 대상이 되고, 붙여 두기만 해도 과금되는 경우가 많다"
+    synonyms: ["Elastic IP", "EIP", "reserved public IP"]
+  - id: cloud-byoip
+    kind: MECHANISM
+    name: "BYOIP (자체 IP 반입)"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "조직이 보유한 공인 IP 대역을 ROA 로 인증해 클라우드에서 광고하게 한다. 이전 · 이중화 중에도 파트너 허용 목록과 IP 평판을 유지한다"
+    synonyms: ["Bring Your Own IP", "ROA"]
+  - id: oci
+    kind: TECHNOLOGY
+    name: "Oracle Cloud Infrastructure"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "운영 서버가 도는 클라우드. Always Free 범위의 Ampere A1(arm64) VM 한 대에 k3s 를 올리고, 이미지는 OCIR 에, DB 백업 사본은 Object Storage 에 둔다. 춘천 리전은 가용 도메인이 하나라 리전 손실을 막지 못한다"
+    synonyms: ["OCI", "OCIR", "VCN", "Object Storage"]
+    code:
+      - { path: .github/workflows/images.yml, symbol: 'registry: ${{ secrets.OCIR_REGION }}.ocir.io', note: "CI 가 이미지를 OCIR 로 푸시한다" }
+      - { path: k8s/base/db-backup/cronjob-mysql.yaml, symbol: "- name: PAR_EXPIRES", note: "덤프를 Object Storage 로 올리는 쓰기 전용 PAR 의 만료일" }
+    implements:
+      - { to: cloud-vpc, reason: "VCN 과 Security List 로 VM 의 네트워크를 둔다" }
+      - { to: infra-offsite-backup, reason: "Object Storage 가 노드 밖 백업 사본을 받는다" }
+    causes:
+      - { to: cloud-single-point-of-failure, reason: "단일 가용 도메인 리전 · 단일 노드 배치" }
+  - id: cloud-cidr-overlap
+    kind: PROBLEM
+    name: "CIDR 충돌"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "연결하려는 두 망(VPC · 온프레미스)의 대역이 겹쳐 피어링 · VPN 라우팅이 불가능한 상태. 나중에 대역을 바꾸려면 재구축에 가깝다"
+    synonyms: ["overlapping CIDR"]
+  - id: cloud-ip-exhaustion
+    kind: PROBLEM
+    name: "서브넷 IP 고갈"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "파드마다 VPC IP 를 주는 CNI 에서 서브넷 주소가 바닥나 새 파드가 Pending 에 머무는 상태. 클라우드는 서브넷마다 예약 주소 몇 개를 떼어 가 실제 가용 수는 더 적다"
+    synonyms: ["insufficient IP"]
+
+  # ── 라우팅 · 인터넷 출입 ──
+  - id: cloud-routing
+    kind: STAGE
+    name: "라우팅 · 인터넷 출입"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "서브넷의 트래픽이 어디로 나갈지 경로를 정하고, 인터넷으로 들어오고 나가는 입구를 둔다"
+    questions: ["프라이빗 서브넷의 인스턴스가 외부 API 를 호출할 수 있는 경로는 무엇인가"]
+    contains: [cloud-route-table, cloud-internet-gateway, cloud-nat-gateway, cloud-egress-only-gateway, cloud-snat-port-exhaustion]
+    flows_to: [cloud-traffic-filtering]
+  - id: cloud-route-table
+    kind: MECHANISM
+    name: "라우팅 테이블"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "서브넷에 붙어 목적지 대역별 다음 대상(local · 인터넷 게이트웨이 · NAT · 피어링 · 엔드포인트)을 정한다. VPC 내부(local) 경로는 지울 수 없고, 겹치면 더 구체적인 경로가 이긴다"
+    synonyms: ["route table", "main route table"]
+    uses: [net-ip-routing]
+  - id: cloud-internet-gateway
+    kind: MECHANISM
+    name: "인터넷 게이트웨이"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "VPC 와 인터넷을 양방향으로 잇는 관리형 입구. 인스턴스의 사설 IP 와 공인 IP 를 1:1 로 바꿔 준다. 경로 · 공인 IP · 방화벽 허용이 모두 있어야 통신이 된다"
+    synonyms: ["Internet Gateway", "IGW"]
+    uses: [net-nat]
+  - id: cloud-nat-gateway
+    kind: MECHANISM
+    name: "NAT 게이트웨이"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "프라이빗 서브넷의 나가는 트래픽을 공인 IP 하나로 바꿔(SNAT) 내보내고, 바깥에서 먼저 여는 연결은 막는다. 가용 영역에 묶이고 처리한 바이트만큼 과금된다"
+    synonyms: ["NAT Gateway", "SNAT"]
+    questions: ["NAT 게이트웨이를 가용 영역마다 두는 이유는 무엇인가"]
+    uses: [net-nat]
+    causes: [cloud-snat-port-exhaustion, cloud-nat-processing-cost]
+  - id: cloud-egress-only-gateway
+    kind: MECHANISM
+    name: "이그레스 전용 게이트웨이"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "IPv6 는 주소 변환이 없으므로, 나가는 연결과 그 응답만 통과시키고 들어오는 연결은 막는 IPv6 전용 입구를 둔다. NAT 게이트웨이의 IPv6 대응물이다"
+    synonyms: ["Egress-only Internet Gateway"]
+    uses: [net-ipv6]
+    alternative_to: [cloud-nat-gateway]
+  - id: cloud-snat-port-exhaustion
+    kind: PROBLEM
+    name: "SNAT 포트 고갈"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "NAT 뒤 많은 인스턴스가 같은 목적지로 짧은 연결을 쏟아 공인 IP 하나의 포트가 바닥나 외부 호출이 간헐적으로 실패하는 상태. 연결 재사용과 공인 IP 추가로 푼다"
+    synonyms: ["NAT port exhaustion"]
+
+  # ── 트래픽 통제 ──
+  - id: cloud-traffic-filtering
+    kind: STAGE
+    name: "트래픽 통제"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "누가 어디로 어떤 포트로 통신할 수 있는지를 층마다 정한다. 엣지(WAF · DDoS) → 서브넷(NACL) → 인스턴스(보안 그룹) → 파드(네트워크 정책) 순으로 겹겹이 막는다"
+    questions: ["보안 그룹과 NACL 은 상태 추적에서 어떻게 다른가", "오리진 IP 가 알려지면 엣지 보호가 왜 무력해지나"]
+    contains: [cloud-security-group, cloud-network-acl, cloud-prefix-list, cloud-network-firewall, cloud-waf, cloud-ddos-protection, cloud-egress-control, cloud-microsegmentation, cloud-origin-lockdown, cloud-zero-trust-access, cloud-ddos-attack]
+    flows_to: [cloud-load-balancing]
+  - id: cloud-security-group
+    kind: MECHANISM
+    name: "보안 그룹"
+    category: SECURITY
+    level: BEGINNER
+    description: "인스턴스 · 네트워크 인터페이스 단위의 상태 추적(stateful) 방화벽. 허용 규칙만 있고, 허용된 연결의 응답은 자동으로 통과한다"
+    synonyms: ["Security Group", "SG", "Network Security Group"]
+    contains: [cloud-sg-reference]
+    uses: [cloud-term-stateful-stateless]
+  - id: cloud-sg-reference
+    kind: MECHANISM
+    name: "보안 그룹 참조"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "출발지를 IP 대역 대신 다른 보안 그룹으로 지정해 그 그룹에 속한 인스턴스만 허용한다. 오토스케일링으로 IP 가 바뀌어도 규칙을 고치지 않는다"
+    synonyms: ["SG-to-SG", "security group reference"]
+  - id: cloud-network-acl
+    kind: MECHANISM
+    name: "네트워크 ACL"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "서브넷 경계의 상태 비추적(stateless) 규칙 목록. 허용 · 거부를 번호 순으로 평가하고, 응답이 돌아올 임시 포트 범위를 따로 열어야 한다. 특정 대역 차단처럼 거부가 필요할 때 쓴다"
+    synonyms: ["NACL", "Network ACL", "Security List"]
+    uses: [cloud-term-stateful-stateless, net-term-ephemeral-port]
+    alternative_to: [cloud-security-group]
+  - id: cloud-prefix-list
+    kind: MECHANISM
+    name: "프리픽스 목록"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "자주 쓰는 CIDR 묶음에 이름을 붙여 여러 규칙 · 라우팅 테이블에서 참조한다. 관리형 목록은 클라우드가 서비스 IP 대역을 알아서 갱신한다"
+    synonyms: ["managed prefix list"]
+  - id: cloud-network-firewall
+    kind: MECHANISM
+    name: "네트워크 방화벽 · IDS"
+    category: SECURITY
+    level: ADVANCED
+    description: "VPC 경계에서 흐름을 추적하며 도메인 · 시그니처 기반으로 검사하는 관리형 방화벽. 중앙 이그레스 경로에 두어 나가는 도메인을 제한하거나 침입 패턴을 막는다"
+    synonyms: ["Network Firewall", "IDS/IPS", "Suricata"]
+  - id: cloud-waf
+    kind: MECHANISM
+    name: "WAF (웹 애플리케이션 방화벽)"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "L7 요청의 경로 · 헤더 · 본문을 규칙과 대조해 SQL 인젝션 · XSS 패턴과 과도한 요청을 앱에 닿기 전에 막는다. 오탐으로 정상 요청이 막힐 수 있어 탐지 모드로 먼저 돌린다"
+    synonyms: ["Web Application Firewall", "managed rules"]
+    questions: ["WAF 가 막아 주는 것과 앱이 여전히 막아야 하는 것은 무엇인가"]
+    uses: [rate-limiting]
+    mitigates: [sql-injection, xss]
+  - id: cloud-ddos-protection
+    kind: MECHANISM
+    name: "DDoS 방어"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "넓은 엣지 망과 애니캐스트로 대량 트래픽을 흡수하고, L3/L4 폭주와 L7 요청 폭주를 걸러 오리진에는 정상 트래픽만 보낸다"
+    synonyms: ["DDoS mitigation", "Shield"]
+    uses: [net-anycast]
+    mitigates: [cloud-ddos-attack]
+  - id: cloud-egress-control
+    kind: MECHANISM
+    name: "이그레스 통제"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "나가는 트래픽을 기본 차단하고 필요한 목적지 · 포트만 연다. 침해된 워크로드의 데이터 유출과 클라우드 메타데이터 접근(169.254.169.254)을 막는다"
+    synonyms: ["egress filtering", "egress allowlist"]
+    questions: ["나가는 트래픽까지 막아야 하는 이유는 무엇인가"]
+    code:
+      - { path: k8s/base/network-policy/11-allow-egress-https-public.yaml, symbol: "169.254.0.0/16", note: "외부 443 을 허용하되 사설망과 링크 로컬 메타데이터 대역은 뺀다" }
+    uses: [sec-ssrf-defense]
+    mitigates: [sec-ssrf]
+  - id: cloud-microsegmentation
+    kind: MECHANISM
+    name: "마이크로 세그멘테이션 · 네트워크 정책"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "워크로드 단위로 허용할 통신만 명시하고 나머지는 기본 거부한다. 쿠버네티스 NetworkPolicy 가 파드 단위 보안 그룹 역할을 하며, DNS 허용을 빠뜨리면 모든 서비스가 즉시 죽는다"
+    synonyms: ["NetworkPolicy", "default deny", "zero trust network"]
+    uses: [cloud-egress-control, infra-network-policy]
+  - id: cloud-origin-lockdown
+    kind: MECHANISM
+    name: "오리진 잠금"
+    category: SECURITY
+    level: ADVANCED
+    description: "오리진이 엣지 프록시에서 온 연결만 받게 한다. 엣지 IP 대역 허용, 엣지 클라이언트 인증서 검증(mTLS), 인바운드 포트를 없애는 터널 중 하나 이상을 쓴다"
+    synonyms: ["origin lockdown", "Authenticated Origin Pull"]
+    code:
+      - { path: k8s/overlays/oci-arm/origin-lockdown/aop-patch.yaml, symbol: "name: commerce-proxied", note: "proxied 호스트 인그레스에 엣지 클라이언트 인증서를 요구한다" }
+    uses: [net-mtls]
+    mitigates: [sec-origin-bypass]
+  - id: cloud-zero-trust-access
+    kind: MECHANISM
+    name: "제로 트러스트 접근 · 아웃바운드 터널"
+    category: SECURITY
+    level: ADVANCED
+    description: "오리진 안의 커넥터가 엣지로 먼저 나가는 터널을 열고, 엣지가 사용자 신원을 확인한 요청만 터널로 들인다. 인바운드 포트와 VPN 없이 관리 콘솔을 연다"
+    synonyms: ["Zero Trust Network Access", "ZTNA", "Cloudflare Tunnel", "cloudflared"]
+    code:
+      - { path: k8s/overlays/oci-arm/cloudflared/deployment.yaml, symbol: "name: cloudflared-tunnel-token", note: "터널 커넥터가 쓰는 토큰" }
+    alternative_to: [cloud-site-to-site-vpn]
+    mitigates: [sec-origin-bypass]
+  - id: cloud-ddos-attack
+    kind: PROBLEM
+    name: "DDoS 공격"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "분산된 다수의 출발지가 대역폭 · 연결 테이블 · 앱 자원을 소진시켜 정상 사용자가 접근하지 못하게 하는 상태. 볼륨형(L3/L4)과 요청형(L7)이 있다"
+    synonyms: ["Distributed Denial of Service", "SYN flood", "HTTP flood"]
+
+  # ── 로드 밸런싱 ──
+  - id: cloud-load-balancing
+    kind: STAGE
+    name: "로드 밸런서 선택 · 구성"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "트래픽을 여러 대상에 나눌 로드 밸런서의 계층(L4 · L7)과 분배 · 연결 정리 방식을 고른다. 헬스 체크로 죽은 대상을 빼는 것이 기본 전제다"
+    questions: ["L4 와 L7 로드 밸런서는 무엇을 보고 나누나", "배포 중 대상을 뺄 때 진행 중인 요청을 잃지 않으려면 무엇이 필요한가"]
+    contains: [cloud-l4-load-balancer, cloud-l7-load-balancer, cloud-gateway-load-balancer, cloud-lb-algorithm, cloud-cross-zone-lb, cloud-connection-draining, cloud-sticky-session, cloud-client-ip-preservation, cloud-hot-target]
+    flows_to: [cloud-edge-delivery]
+  - id: cloud-l4-load-balancer
+    kind: MECHANISM
+    name: "L4 로드 밸런서"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "TCP/UDP 연결 단위로 대상을 고르고 내용은 보지 않는다. 지연이 작고 고정 IP · 초당 수백만 연결을 감당하지만, 연결 하나를 오래 쓰는 HTTP/2 · gRPC 는 한 대상에 몰린다"
+    synonyms: ["Network Load Balancer", "NLB", "TCP load balancer"]
+    uses: [tcp, net-term-five-tuple, health-check]
+    causes: [net-http2-connection-imbalance]
+  - id: cloud-l7-load-balancer
+    kind: MECHANISM
+    name: "L7 로드 밸런서"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "TLS 를 끝내고 HTTP 요청 단위로 호스트 · 경로 · 헤더를 보고 대상을 고른다. 요청 단위 분배 · 재시도 · 리다이렉트를 하지만 유휴 타임아웃이 WebSocket · SSE 를 끊을 수 있다"
+    synonyms: ["Application Load Balancer", "ALB", "HTTP load balancer", "ingress controller"]
+    uses: [net-l7-routing, net-tls-termination, health-check]
+    alternative_to: [cloud-l4-load-balancer]
+    mitigates: [net-http2-connection-imbalance]
+    causes: [net-proxy-idle-timeout]
+  - id: cloud-gateway-load-balancer
+    kind: MECHANISM
+    name: "게이트웨이 로드 밸런서"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "방화벽 · IDS 같은 보안 어플라이언스 무리에 L3 패킷을 투명하게 흘려 검사받게 하고, 어플라이언스를 수평 확장 · 교체할 수 있게 한다"
+    synonyms: ["Gateway Load Balancer", "GWLB", "bump-in-the-wire"]
+    uses: [cloud-network-firewall]
+  - id: cloud-lb-algorithm
+    kind: MECHANISM
+    name: "분배 알고리즘"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "다음 요청을 어느 대상에 줄지 정하는 규칙. 순서대로 돌리기, 가중치, 진행 중 요청이 가장 적은 곳, 키 해시(같은 키를 같은 대상에) 중에서 고른다"
+    synonyms: ["load balancing algorithm"]
+    contains: [cloud-round-robin, cloud-least-connections]
+    uses: [consistent-hashing]
+  - id: cloud-round-robin
+    kind: MECHANISM
+    name: "라운드 로빈 · 가중 라운드 로빈"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "대상을 차례대로(가중치만큼 더 자주) 고른다. 요청 비용이 고르면 공평하지만, 느린 요청이 섞이면 한 대상에 일이 쌓인다"
+    synonyms: ["round robin", "weighted round robin"]
+    causes: [cloud-hot-target]
+  - id: cloud-least-connections
+    kind: MECHANISM
+    name: "최소 연결 · 최소 대기"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "진행 중인 요청(연결)이 가장 적은 대상을 고른다. 둘을 무작위로 뽑아 덜 바쁜 쪽을 고르는 power of two choices 는 전체 상태 없이 비슷한 효과를 낸다"
+    synonyms: ["least connections", "least outstanding requests", "power of two choices"]
+    alternative_to: [cloud-round-robin]
+    mitigates: [cloud-hot-target]
+  - id: cloud-cross-zone-lb
+    kind: MECHANISM
+    name: "교차 영역 분배"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "로드 밸런서 노드가 자기 가용 영역뿐 아니라 모든 영역의 대상에 고르게 나눈다. 영역별 대상 수가 달라도 균등해지지만 영역 간 전송 비용이 생긴다"
+    synonyms: ["cross-zone load balancing"]
+    mitigates: [cloud-hot-target]
+    causes: [cloud-cross-zone-traffic-cost]
+  - id: cloud-connection-draining
+    kind: MECHANISM
+    name: "연결 드레이닝"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "대상을 뺄 때 새 요청은 보내지 않고, 진행 중인 요청은 정해진 시간 동안 끝내게 둔 뒤 제거한다. 배포 · 축소 때 요청이 끊기지 않게 한다"
+    synonyms: ["deregistration delay", "graceful drain"]
+    uses: [health-check]
+    mitigates: [infra-deploy-downtime]
+  - id: cloud-sticky-session
+    kind: MECHANISM
+    name: "세션 고정"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "쿠키나 출발지 IP 로 같은 사용자를 같은 대상에 계속 보낸다. 서버 메모리 세션을 쓸 때 필요하지만 분배가 치우치고 대상이 죽으면 세션을 잃는다"
+    synonyms: ["session affinity", "sticky session"]
+    causes: [cloud-hot-target]
+  - id: cloud-client-ip-preservation
+    kind: MECHANISM
+    name: "클라이언트 IP 보존"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "L4 는 출발지 IP 를 그대로 넘기거나(패스스루) PROXY protocol 로, L7 은 X-Forwarded-For 로 원래 IP 를 전달한다. 쿠버네티스는 externalTrafficPolicy: Local 이어야 노드 SNAT 을 피한다"
+    synonyms: ["preserve client IP", "externalTrafficPolicy"]
+    uses: [net-client-ip-forwarding]
+  - id: cloud-hot-target
+    kind: PROBLEM
+    name: "대상 쏠림"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "일부 대상에만 요청이 몰려 그 대상은 포화되고 나머지는 노는 상태. 요청 비용 편차 · 세션 고정 · 영역별 대상 수 불균형에서 생긴다"
+    synonyms: ["hot spot", "uneven load"]
+
+  # ── 엣지 전달 ──
+  - id: cloud-edge-delivery
+    kind: STAGE
+    name: "엣지 전달"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "사용자 가까운 엣지 거점에서 응답을 캐시하거나 연결을 받아, 오리진까지의 거리와 부하를 줄인다"
+    questions: ["배포했는데 사용자에게 옛 파일이 보이면 어느 캐시부터 보나"]
+    contains: [cloud-cdn, cloud-anycast-edge, cloud-edge-compute, cloud-edge-stale-content]
+    flows_to: [cloud-private-connectivity]
+  - id: cloud-cdn
+    kind: MECHANISM
+    name: "CDN"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "전 세계 엣지 거점(PoP)에 응답을 캐시해 가까운 곳에서 내준다. 무엇을 얼마나 캐시할지는 오리진의 Cache-Control 과 CDN 규칙이 함께 정한다"
+    synonyms: ["Content Delivery Network", "CloudFront"]
+    contains: [cloud-edge-caching, cloud-cache-purge, cloud-origin-shield, cloud-signed-url]
+    uses: [net-http-caching, cloud-term-edge-location]
+    measured_by: [cache-hit-rate]
+  - id: cloud-edge-caching
+    kind: MECHANISM
+    name: "엣지 캐시 키 · TTL"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "호스트 · 경로 · 쿼리 · 선택한 헤더로 캐시 키를 만들고 TTL 동안 재사용한다. 오리진이 Cache-Control 을 비우면 CDN 기본 TTL 이 붙어 의도보다 오래 남는다"
+    synonyms: ["cache key", "edge TTL"]
+    code:
+      - { path: portal-fe/nginx.conf, symbol: 'add_header Cache-Control "public, max-age=300, must-revalidate";', note: "엣지 기본 TTL 이 붙지 않도록 오리진이 짧은 TTL 을 명시한다" }
+    causes: [cloud-edge-stale-content]
+  - id: cloud-cache-purge
+    kind: MECHANISM
+    name: "캐시 무효화 (purge)"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "배포 뒤 URL · 태그 · 전체 단위로 엣지 캐시를 지워 새 응답을 받게 한다. 파일 이름에 해시를 넣으면 무효화 없이 새 URL 로 바뀐다"
+    synonyms: ["purge", "invalidation", "cache busting"]
+    mitigates: [cloud-edge-stale-content]
+  - id: cloud-origin-shield
+    kind: MECHANISM
+    name: "오리진 실드 · 계층형 캐시"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "엣지 거점들이 오리진 대신 중간 캐시 한 곳을 거치게 해, 같은 객체의 캐시 미스가 오리진에 한 번만 닿게 한다"
+    synonyms: ["origin shield", "tiered cache"]
+    mitigates: [data-cache-stampede]
+  - id: cloud-signed-url
+    kind: MECHANISM
+    name: "서명 URL · 서명 쿠키"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "만료 시각과 서명을 URL 이나 쿠키에 담아, 권한 있는 사용자만 정해진 시간 동안 엣지에서 비공개 파일을 받게 한다. 오브젝트 스토리지의 사전 인증 URL 도 같은 원리다"
+    synonyms: ["signed URL", "pre-signed URL", "PAR"]
+    uses: [sec-hmac]
+  - id: cloud-anycast-edge
+    kind: MECHANISM
+    name: "애니캐스트 엣지 가속"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "모든 엣지 거점이 같은 IP 를 광고해 사용자를 가장 가까운 거점에 붙이고, 거점부터 오리진까지는 사업자 백본으로 나른다. 장애 거점은 광고를 거둬 초 단위로 우회한다"
+    synonyms: ["Global Accelerator", "anycast edge"]
+    uses: [net-anycast]
+  - id: cloud-edge-compute
+    kind: MECHANISM
+    name: "엣지 컴퓨팅"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "엣지 거점에서 짧은 함수를 돌려 리다이렉트 · 헤더 조작 · 인증 확인 · A/B 분기를 오리진에 가기 전에 처리한다"
+    synonyms: ["edge functions", "Workers", "Lambda@Edge"]
+  - id: cloud-edge-stale-content
+    kind: PROBLEM
+    name: "엣지 캐시 잔존"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "배포나 설정 변경 뒤에도 엣지가 옛 응답을 TTL 동안 계속 내주는 상태. 오리진은 고쳐졌는데 사용자와 크롤러는 옛 내용을 받는다"
+    synonyms: ["stale CDN cache"]
+
+  # ── 사설 연결 ──
+  - id: cloud-private-connectivity
+    kind: STAGE
+    name: "사설 연결"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "VPC 끼리, VPC 와 관리형 서비스, VPC 와 온프레미스를 인터넷을 거치지 않고 잇는다. 연결 수가 늘수록 1:1 연결에서 허브 구조로 옮겨 간다"
+    questions: ["VPC 피어링과 트랜짓 허브는 연결 수가 늘 때 어떻게 다른가", "관리형 서비스 호출이 NAT 를 거치지 않게 하려면 무엇을 두나"]
+    contains: [cloud-vpc-peering, cloud-transit-hub, cloud-private-endpoint, cloud-gateway-endpoint, cloud-endpoint-service, cloud-site-to-site-vpn, cloud-dedicated-interconnect, cloud-service-network, cloud-resource-sharing, cloud-non-transitive-routing]
+    flows_to: [cloud-dns-traffic]
+  - id: cloud-vpc-peering
+    kind: MECHANISM
+    name: "VPC 피어링"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "두 VPC 를 사설 IP 로 직접 잇는다. 추가 홉이 없어 빠르고 싸지만 전이되지 않아(A-B, B-C 가 있어도 A-C 는 안 됨) VPC 가 늘면 연결 수가 제곱으로 는다"
+    synonyms: ["VPC peering"]
+    causes: [cloud-non-transitive-routing]
+  - id: cloud-transit-hub
+    kind: MECHANISM
+    name: "트랜짓 허브"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "허브 라우터 하나에 VPC · VPN · 전용선을 붙이는 허브-스포크 구조. 허브의 라우팅 테이블로 누가 누구와 통신할지 나누고, 연결 수가 선형으로 는다"
+    synonyms: ["Transit Gateway", "TGW", "hub-and-spoke", "DRG"]
+    alternative_to: [cloud-vpc-peering]
+    mitigates: [cloud-non-transitive-routing]
+  - id: cloud-private-endpoint
+    kind: MECHANISM
+    name: "사설 엔드포인트 (인터페이스형)"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "관리형 서비스나 다른 VPC 의 서비스를 내 서브넷의 사설 IP(네트워크 인터페이스)로 노출한다. 트래픽이 인터넷 · NAT 를 거치지 않고, 사설 DNS 가 공개 이름을 이 IP 로 풀어 준다"
+    synonyms: ["PrivateLink", "Interface Endpoint", "Private Service Connect"]
+    questions: ["사설 엔드포인트를 만들었는데도 트래픽이 NAT 로 나가는 이유는 무엇일 수 있나"]
+    uses: [cloud-private-dns-zone]
+    mitigates: [cloud-nat-processing-cost]
+  - id: cloud-gateway-endpoint
+    kind: MECHANISM
+    name: "게이트웨이 엔드포인트 (경로형)"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "라우팅 테이블에 서비스 프리픽스 경로를 넣어 오브젝트 스토리지 같은 서비스 트래픽을 사설 경로로 보낸다. 무료지만 지원 서비스가 적고 VPC 밖에서는 못 쓴다"
+    synonyms: ["Gateway Endpoint", "Service Gateway"]
+    uses: [cloud-route-table, cloud-prefix-list]
+    alternative_to: [cloud-private-endpoint]
+    mitigates: [cloud-nat-processing-cost]
+  - id: cloud-endpoint-service
+    kind: MECHANISM
+    name: "엔드포인트 서비스 (제공자 측)"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "내 서비스를 로드 밸런서 뒤에 두고 다른 계정 · VPC 가 사설 엔드포인트로 붙게 공개한다. 대역이 겹쳐도 연결할 수 있고 소비자에게 내 망 전체를 열지 않는다"
+    synonyms: ["Endpoint Service", "PrivateLink provider"]
+    uses: [cloud-l4-load-balancer]
+    mitigates: [cloud-cidr-overlap]
+  - id: cloud-site-to-site-vpn
+    kind: MECHANISM
+    name: "사이트 간 VPN"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "온프레미스와 VPC 사이에 인터넷 위 IPsec 터널을 맺는다. 빨리 만들 수 있지만 대역폭 · 지연이 인터넷을 따라가고, 터널 헤더만큼 MTU 가 준다"
+    synonyms: ["Site-to-Site VPN", "IPsec VPN", "client VPN"]
+    uses: [net-mtu-fragmentation, encryption]
+  - id: cloud-dedicated-interconnect
+    kind: MECHANISM
+    name: "전용 회선 연결"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "데이터센터와 클라우드 사이에 사설 전용선을 깔아 일정한 대역폭과 지연을 얻는다. 개통에 주 단위가 걸리고 자체로는 암호화되지 않아 VPN 을 백업 경로로 함께 둔다"
+    synonyms: ["Direct Connect", "Dedicated Interconnect", "FastConnect", "ExpressRoute"]
+    alternative_to: [cloud-site-to-site-vpn]
+  - id: cloud-service-network
+    kind: MECHANISM
+    name: "관리형 서비스 네트워크"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "VPC · 계정 경계를 넘어 서비스 단위로 연결 · 인증 · 라우팅을 관리형으로 묶는다. 사이드카 없는 서비스 메시에 가깝다"
+    synonyms: ["VPC Lattice", "service network"]
+    uses: [service-mesh]
+  - id: cloud-resource-sharing
+    kind: MECHANISM
+    name: "계정 간 네트워크 자원 공유"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "중앙 네트워크 계정이 서브넷 · 트랜짓 허브 · 프리픽스 목록을 다른 계정과 공유해, 각 팀이 자기 네트워크를 따로 짓지 않게 한다"
+    synonyms: ["Resource Access Manager", "RAM", "Shared VPC"]
+  - id: cloud-non-transitive-routing
+    kind: PROBLEM
+    name: "비전이 라우팅"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "피어링은 두 VPC 사이에서만 성립해 중간 VPC 를 거쳐 가는 통신이 되지 않는 상태. 메시로 다 잇거나 허브를 둔다"
+    synonyms: ["non-transitive peering"]
+
+  # ── DNS 기반 트래픽 관리 ──
+  - id: cloud-dns-traffic
+    kind: STAGE
+    name: "DNS 기반 트래픽 관리"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "DNS 응답을 바꿔 사용자를 가까운 · 건강한 · 비중을 준 대상으로 보내고, 사설 이름은 망 안에서만 풀리게 한다. 전환 속도는 TTL 과 클라이언트 캐시에 묶인다"
+    questions: ["DNS 장애 전환이 TTL 보다 늦게 끝나는 이유는 무엇인가"]
+    contains: [cloud-private-dns-zone, cloud-split-horizon-dns, cloud-hybrid-dns-resolver, cloud-dns-routing-policy, cloud-alias-record]
+    flows_to: [cloud-availability-design]
+  - id: cloud-private-dns-zone
+    kind: MECHANISM
+    name: "사설 DNS 영역"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "연결된 VPC 안에서만 풀리는 DNS 영역. 내부 서비스 이름을 공개 DNS 에 드러내지 않고, 사설 엔드포인트 이름을 사설 IP 로 풀 때도 쓴다"
+    synonyms: ["private hosted zone", "private DNS"]
+    uses: [dns]
+  - id: cloud-split-horizon-dns
+    kind: MECHANISM
+    name: "스플릿 호라이즌 DNS"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "같은 이름을 망 안에서는 사설 IP 로, 밖에서는 공개 IP 로 다르게 푼다. 두 영역의 레코드가 어긋나면 한쪽에서만 이름이 안 풀린다"
+    synonyms: ["split-horizon", "split-brain DNS"]
+    uses: [cloud-private-dns-zone]
+  - id: cloud-hybrid-dns-resolver
+    kind: MECHANISM
+    name: "하이브리드 DNS 포워딩"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "클라우드 리졸버와 온프레미스 DNS 가 서로의 영역 질의를 조건부로 넘겨, 양쪽 이름을 어디서든 풀게 한다"
+    synonyms: ["Route 53 Resolver", "conditional forwarding", "inbound/outbound endpoint"]
+    uses: [dns]
+  - id: cloud-dns-routing-policy
+    kind: MECHANISM
+    name: "DNS 라우팅 정책"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "같은 이름에 여러 레코드를 두고 가중치 · 지연 · 지역 · 건강 상태로 어느 답을 줄지 고른다. 전역 로드 밸런싱을 DNS 로 하는 방법이다"
+    synonyms: ["GSLB", "DNS load balancing", "traffic steering"]
+    contains: [cloud-weighted-dns, cloud-latency-dns, cloud-geo-dns, cloud-failover-dns]
+    uses: [dns]
+  - id: cloud-weighted-dns
+    kind: MECHANISM
+    name: "가중치 라우팅"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "레코드마다 비중을 줘 그 비율로 답한다. 새 환경에 트래픽을 조금씩 옮기는 카나리 · 블루그린 전환에 쓴다"
+    synonyms: ["weighted routing"]
+    uses: [canary-deployment]
+  - id: cloud-latency-dns
+    kind: MECHANISM
+    name: "지연 기반 라우팅"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "리졸버 위치에서 지연이 가장 작은 리전의 레코드로 답한다"
+    synonyms: ["latency-based routing"]
+    alternative_to: [cloud-geo-dns]
+  - id: cloud-geo-dns
+    kind: MECHANISM
+    name: "지역 기반 라우팅"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "질의한 리졸버(또는 EDNS 클라이언트 서브넷)의 국가 · 지역으로 답을 고른다. 데이터 주권 · 지역별 콘텐츠에 쓴다"
+    synonyms: ["geolocation routing", "geoproximity", "EDNS Client Subnet"]
+  - id: cloud-failover-dns
+    kind: MECHANISM
+    name: "DNS 장애 전환"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "주 대상의 헬스 체크가 실패하면 보조 대상의 레코드로 답을 바꾼다. 캐시된 옛 답이 TTL 동안 남아 전환이 즉시 끝나지 않는다"
+    synonyms: ["failover routing", "DNS health check"]
+    uses: [health-check]
+    causes: [net-dns-stale-record]
+  - id: cloud-alias-record
+    kind: MECHANISM
+    name: "별칭 레코드 · CNAME 평탄화"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "영역 꼭대기(apex)에는 CNAME 을 둘 수 없어, DNS 제공자가 대상 이름을 대신 풀어 A 레코드처럼 답한다. 로드 밸런서 · CDN 을 apex 도메인에 붙일 때 쓴다"
+    synonyms: ["ALIAS record", "CNAME flattening", "ANAME"]
+    uses: [net-term-dns-record]
+
+  # ── 가용성 설계 ──
+  - id: cloud-availability-design
+    kind: STAGE
+    name: "가용성 · 재해 복구 설계"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "한 장애 구역(영역 · 리전)이 통째로 사라져도 서비스가 이어지도록 여러 구역에 나눠 배치하고, 얼마나 잃고 얼마나 멈춰도 되는지(RPO · RTO)에 맞춰 복구 방식을 고른다"
+    questions: ["멀티 AZ 와 멀티 리전은 각각 어떤 장애를 막나", "RPO 24시간과 RTO 1시간은 백업 방식에 무엇을 요구하나"]
+    contains: [cloud-multi-az, cloud-multi-region, cloud-dr-strategy, cloud-single-point-of-failure]
+    flows_to: [cloud-network-cost]
+  - id: cloud-multi-az
+    kind: MECHANISM
+    name: "멀티 AZ 배치"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "같은 리전의 서로 다른 가용 영역에 인스턴스 · NAT · DB 복제본을 나눠 둔다. 영역 사이 지연이 작아 동기 복제가 가능하고, 영역 하나를 잃어도 버틴다"
+    synonyms: ["Multi-AZ", "zone redundancy"]
+    uses: [cloud-term-availability-zone, replication]
+    mitigates: [cloud-single-point-of-failure]
+    causes: [cloud-cross-zone-traffic-cost]
+  - id: cloud-multi-region
+    kind: MECHANISM
+    name: "멀티 리전 배치"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "여러 리전에 서비스를 두어 리전 전체 장애 · 먼 사용자 지연에 대비한다. 리전 사이 지연이 커 데이터는 대개 비동기 복제하고, 쓰기 충돌과 복제 지연을 설계해야 한다"
+    synonyms: ["Multi-Region"]
+    contains: [cloud-active-active, cloud-active-passive]
+    uses: [cloud-dns-routing-policy, cloud-term-region]
+    mitigates: [cloud-single-point-of-failure]
+  - id: cloud-active-active
+    kind: MECHANISM
+    name: "액티브-액티브"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "모든 리전이 동시에 트래픽을 받는다. 전환 시간이 거의 없지만 여러 곳에서 같은 데이터를 쓰는 충돌을 해소해야 한다"
+    synonyms: ["active-active", "multi-site"]
+    uses: [eventual-consistency]
+  - id: cloud-active-passive
+    kind: MECHANISM
+    name: "액티브-패시브"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "한 리전만 트래픽을 받고 다른 리전은 복제본을 들고 대기하다 장애 때 승격한다. 쓰기 충돌이 없는 대신 전환 시간과 복제 지연만큼 데이터를 잃을 수 있다"
+    synonyms: ["active-passive", "primary-standby"]
+    alternative_to: [cloud-active-active]
+    uses: [cloud-failover-dns]
+  - id: cloud-dr-strategy
+    kind: MECHANISM
+    name: "재해 복구 전략"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "평소에 얼마만큼 미리 띄워 둘지에 따라 백업 복원 · 파일럿 라이트 · 웜 스탠바이 · 액티브-액티브로 나뉜다. 오른쪽으로 갈수록 RTO · RPO 가 줄고 비용이 는다"
+    synonyms: ["disaster recovery", "DR"]
+    contains: [cloud-pilot-light, cloud-warm-standby]
+    uses: [infra-offsite-backup]
+    measured_by: [infra-rto, infra-rpo]
+  - id: cloud-pilot-light
+    kind: MECHANISM
+    name: "파일럿 라이트"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "DB 복제처럼 핵심 데이터 계층만 보조 리전에 계속 돌려 두고, 앱 서버는 장애 때 띄운다"
+    synonyms: ["pilot light"]
+  - id: cloud-warm-standby
+    kind: MECHANISM
+    name: "웜 스탠바이"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "보조 리전에 전체 스택을 작은 규모로 계속 돌려 두고, 장애 때 확장하고 트래픽을 옮긴다"
+    synonyms: ["warm standby"]
+    alternative_to: [cloud-pilot-light]
+  - id: cloud-single-point-of-failure
+    kind: PROBLEM
+    name: "단일 장애 구역 의존"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "노드 하나 · 가용 영역 하나 · 리전 하나가 사라지면 서비스나 데이터가 함께 사라지는 배치. 영역에 묶인 NAT 게이트웨이 하나처럼 눈에 덜 띄는 곳에도 숨는다"
+    synonyms: ["SPOF", "single AZ dependency"]
+
+  # ── 네트워크 비용 ──
+  - id: cloud-network-cost
+    kind: STAGE
+    name: "네트워크 비용 관리"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "클라우드는 들어오는 트래픽은 대개 무료이고 나가는 · 영역을 넘는 · NAT 를 지나는 트래픽에 과금한다. 트래픽이 어느 경계를 넘는지 그려 보고 경로를 바꿔 비용을 줄인다"
+    questions: ["같은 리전 안 호출인데 전송 비용이 나오는 이유는 무엇인가"]
+    contains: [cloud-topology-aware-routing, cloud-data-transfer-cost, cloud-cross-zone-traffic-cost, cloud-nat-processing-cost]
+    flows_to: [cloud-network-diagnostics]
+  - id: cloud-topology-aware-routing
+    kind: MECHANISM
+    name: "토폴로지 인식 라우팅"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "서비스 호출 · 복제 읽기를 같은 가용 영역의 대상에 먼저 보낸다(쿠버네티스 토폴로지 힌트 · Kafka rack awareness). 영역 간 비용과 지연이 줄지만 영역별 용량이 고르지 않으면 쏠린다"
+    synonyms: ["Topology Aware Routing", "zone-aware routing", "rack awareness"]
+    mitigates: [cloud-cross-zone-traffic-cost]
+    causes: [cloud-hot-target]
+  - id: cloud-data-transfer-cost
+    kind: METRIC
+    name: "데이터 전송 비용"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "인터넷으로 나가는(egress) 바이트 · 영역 · 리전 간 바이트 · NAT 처리 바이트에 붙는 요금. 무료 한도(예: 월 10TB 이그레스)를 넘는지부터 본다"
+    synonyms: ["egress cost", "data transfer out"]
+  - id: cloud-cross-zone-traffic-cost
+    kind: PROBLEM
+    name: "영역 간 트래픽 비용"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "서비스 호출 · 복제 · 로드 밸런서가 가용 영역을 넘나들며 양방향으로 과금되는 상태. 멀티 AZ 로 가용성을 얻는 대가지만 수다스러운 호출이 겹치면 청구서가 튄다"
+    synonyms: ["cross-AZ data transfer"]
+    measured_by: [cloud-data-transfer-cost]
+  - id: cloud-nat-processing-cost
+    kind: PROBLEM
+    name: "NAT 처리 비용"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "관리형 서비스 호출 · 이미지 pull 이 NAT 게이트웨이를 지나며 바이트당 처리 요금이 붙는 상태. 사설 엔드포인트로 경로를 바꾸면 사라진다"
+    synonyms: ["NAT data processing charge"]
+    measured_by: [cloud-data-transfer-cost]
+
+  # ── 네트워크 진단 ──
+  - id: cloud-network-diagnostics
+    kind: STAGE
+    name: "네트워크 진단"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "연결이 안 될 때 경로 · 규칙 · 실제 흐름을 차례로 확인한다. SYN 뒤 무응답이면 규칙, RST 면 포트, 느린 성공이면 DNS 부터 의심한다"
+    contains: [cloud-flow-logs, cloud-reachability-analysis, cloud-traffic-mirroring]
+  - id: cloud-flow-logs
+    kind: MECHANISM
+    name: "플로 로그"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "인터페이스 · 서브넷 · VPC 단위로 흐름의 5-튜플 · 바이트 · 허용/거부 여부를 기록한다. 패킷 내용은 없지만 누가 어디로 얼마나 보냈는지와 막힌 흐름을 찾는다"
+    synonyms: ["VPC Flow Logs"]
+    uses: [net-term-five-tuple]
+  - id: cloud-reachability-analysis
+    kind: MECHANISM
+    name: "도달성 분석"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "실제 패킷 없이 라우팅 테이블 · 보안 그룹 · NACL 설정을 따라가 출발지에서 목적지까지 갈 수 있는지와 막는 규칙을 계산한다"
+    synonyms: ["Reachability Analyzer", "Network Access Analyzer"]
+  - id: cloud-traffic-mirroring
+    kind: MECHANISM
+    name: "트래픽 미러링"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "인터페이스의 패킷을 복제해 분석 장비로 보낸다. 플로 로그로 부족한 내용 수준 분석 · 침입 탐지에 쓴다"
+    synonyms: ["Traffic Mirroring", "packet capture"]
+
+  # ── 용어 사전 ──
+  - id: cloud-glossary
+    kind: TERM
+    name: "클라우드 네트워크 용어 사전"
+    category: BASICS
+    level: BEGINNER
+    description: "클라우드 네트워크 설계를 읽는 데 필요한 말"
+    synonyms: ["glossary", "용어집"]
+    contains: [cloud-term-region, cloud-term-availability-zone, cloud-term-edge-location, cloud-term-stateful-stateless, cloud-term-target-group, cloud-term-traffic-direction, cloud-term-origin]
+  - id: cloud-term-region
+    kind: TERM
+    name: "리전"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "지리적으로 떨어진 데이터센터 묶음. 리전끼리는 독립적으로 장애 나고, 데이터 위치 규제의 단위가 된다"
+    synonyms: ["region"]
+  - id: cloud-term-availability-zone
+    kind: TERM
+    name: "가용 영역"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "리전 안에서 전원 · 냉각 · 네트워크를 따로 가진 데이터센터 묶음. 영역 사이는 저지연 회선으로 이어져 있다. 서브넷은 영역 하나에 묶인다"
+    synonyms: ["Availability Zone", "AZ", "Availability Domain", "AD"]
+  - id: cloud-term-edge-location
+    kind: TERM
+    name: "엣지 거점 · 로컬 존"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "사용자 가까운 도시에 둔 작은 거점. CDN · DNS · 엣지 컴퓨팅이 돌고, 로컬 존은 리전의 일부 자원을 대도시 가까이 늘린 것이다"
+    synonyms: ["PoP", "edge location", "Local Zone"]
+  - id: cloud-term-stateful-stateless
+    kind: TERM
+    name: "상태 추적 · 상태 비추적 필터"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "상태 추적 필터는 허용된 연결의 응답을 기억해 자동 통과시키고, 상태 비추적 필터는 패킷마다 규칙을 따로 평가해 응답 방향도 열어야 한다"
+    synonyms: ["stateful", "stateless"]
+  - id: cloud-term-target-group
+    kind: TERM
+    name: "대상 그룹"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "로드 밸런서가 요청을 보낼 대상(인스턴스 · IP · 함수)과 헬스 체크 설정을 묶은 단위. 리스너 규칙이 대상 그룹을 고른다"
+    synonyms: ["target group", "backend set", "backend pool"]
+  - id: cloud-term-traffic-direction
+    kind: TERM
+    name: "남북 · 동서 트래픽"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "남북(north-south)은 바깥 사용자와 내부 서비스 사이, 동서(east-west)는 내부 서비스끼리 오가는 트래픽이다. 엣지 보안은 남북을, 네트워크 정책 · 메시는 동서를 맡는다"
+    synonyms: ["north-south", "east-west", "ingress", "egress"]
+  - id: cloud-term-origin
+    kind: TERM
+    name: "오리진"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "CDN · 엣지 프록시 뒤에서 원본 응답을 만드는 서버. 엣지가 캐시하지 못한 요청만 오리진까지 온다"
+    synonyms: ["origin server"]

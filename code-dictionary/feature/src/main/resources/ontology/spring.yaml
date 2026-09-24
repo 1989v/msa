@@ -1,0 +1,1531 @@
+# Spring 온톨로지 — 원본은 이 파일이다 (ADR-0100, docs/specs/2026-09-24-concept-atlas).
+# 바꾸면 manifest.yaml 의 revision 을 올린다. 간선은 from 개념에만 적는다.
+domain: spring
+root: spring
+concepts:
+  - id: spring
+    kind: DOMAIN
+    name: "Spring"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "이 레포의 JVM 서비스가 올라가는 애플리케이션 프레임워크. 컨테이너가 객체를 만들고 엮는 방식, 프록시로 붙는 횡단 기능(트랜잭션·캐시·비동기), 요청 처리 파이프라인, 데이터 접근 추상화, 운영 노출과 테스트 지원을 익힌다"
+    synonyms: ["Spring Framework", "스프링"]
+    contains: [spring-container, spring-configuration, spring-cross-cutting, spring-transaction, spring-data-access, spring-web-mvc, spring-reactive-web, spring-execution, spring-operations, spring-testing, spring-glossary]
+
+  # ── 빈 구성과 의존성 주입 ─────────────────────────────────
+  - id: spring-container
+    kind: STAGE
+    name: "빈 구성과 의존성 주입"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "객체(빈)를 누가 만들고 누구에게 넘길지를 컨테이너에 맡긴다. 빈을 찾는 방법, 여러 후보 중 고르는 방법, 생성부터 소멸까지의 생명주기와 스코프를 정한다"
+    questions: ["IoC 컨테이너가 없으면 서비스 객체 그래프를 누가 조립하나", "싱글톤 빈에 가변 필드를 두면 무엇이 터지나"]
+    contains: [spring-ioc-container, spring-dependency-injection, spring-component-scan, spring-java-config, spring-bean-selection, spring-bean-lifecycle, spring-bean-scope, spring-application-event, spring-framework, spring-circular-dependency, spring-ambiguous-bean, spring-singleton-mutable-state, spring-scope-mismatch, spring-component-scan-miss]
+    flows_to: [spring-configuration]
+    measured_by: [rt-startup-time]
+  - id: spring-ioc-container
+    kind: MECHANISM
+    name: "IoC 컨테이너"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "빈 정의를 읽어 객체를 만들고 의존 관계를 채워 넣는 ApplicationContext. 객체가 자기 협력자를 직접 만들지 않고 컨테이너가 넣어 주므로 제어가 뒤집힌다(Inversion of Control)"
+    synonyms: ["IoC container", "ApplicationContext", "BeanFactory", "Inversion of Control"]
+    questions: ["BeanFactory 와 ApplicationContext 는 무엇이 다른가"]
+    uses: [spring-term-bean, spring-term-bean-definition, spring-term-application-context, factory-pattern]
+  - id: spring-dependency-injection
+    kind: MECHANISM
+    name: "의존성 주입"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "객체가 필요로 하는 협력자를 바깥(컨테이너)에서 넣어 준다. 구현을 바꿔 끼우거나 테스트 더블로 바꾸기 쉬워진다. 주입 경로는 생성자·세터·필드 셋이다"
+    synonyms: ["dependency injection", "DI", "@Autowired"]
+    questions: ["생성자 주입을 기본으로 쓰는 이유는 무엇인가"]
+    contains: [spring-constructor-injection, spring-field-injection]
+    uses: [interface]
+  - id: spring-constructor-injection
+    kind: MECHANISM
+    name: "생성자 주입"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "주 생성자 파라미터로 의존성을 받는다. 필드를 val 로 둘 수 있어 불변이고, 빠진 의존성은 객체 생성 시점에 드러난다. 생성자가 하나면 @Autowired 없이 주입된다"
+    synonyms: ["constructor injection"]
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/application/settlement/service/SettlementTransactionalService.kt, symbol: "class SettlementTransactionalService(", note: "주 생성자로 포트·저장소를 받는 서비스" }
+    uses: [immutability]
+    alternative_to:
+      - { to: spring-field-injection, reason: "주입 대상을 val 로 두고 누락을 생성 시점에 잡는다" }
+  - id: spring-field-injection
+    kind: MECHANISM
+    name: "필드 · 세터 주입"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "객체를 만든 뒤 필드·세터에 의존성을 넣는다. Kotlin 에서는 lateinit var 가 필요해 불변을 잃고, 테스트에서 컨테이너 없이 객체를 만들기 어렵다. 순환 의존을 숨기는 경우가 있다"
+    synonyms: ["field injection", "setter injection"]
+    uses: [lang-lateinit]
+  - id: spring-component-scan
+    kind: MECHANISM
+    name: "컴포넌트 스캔"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "지정한 패키지 아래의 @Component 계열 클래스를 찾아 빈으로 등록한다. 폴드 호스트는 scanBasePackages 로 여러 도메인 패키지를 한 컨텍스트에 싣는다"
+    synonyms: ["component scan", "@ComponentScan", "scanBasePackages"]
+    code:
+      - { path: commerce/app/src/main/kotlin/com/kgd/commerce/CommerceApplication.kt, symbol: "@SpringBootApplication(scanBasePackages = [", note: "commerce 호스트가 스캔할 도메인 패키지를 나열한다" }
+    uses: [spring-term-stereotype-annotation, spring-boot]
+    causes:
+      - { to: spring-component-scan-miss, reason: "패키지 목록에서 빠진 도메인은 빈이 없다" }
+    affects: [rt-startup-time]
+  - id: spring-java-config
+    kind: MECHANISM
+    name: "자바 설정 (@Configuration · @Bean)"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "설정 클래스의 @Bean 메서드가 반환한 객체를 빈으로 등록한다. 외부 라이브러리 객체처럼 클래스에 애너테이션을 붙일 수 없는 것을 등록할 때 쓴다. proxyBeanMethods=true 면 CGLIB 가 @Bean 메서드 간 호출을 가로채 싱글톤을 지킨다"
+    synonyms: ["Java config", "@Configuration", "@Bean", "proxyBeanMethods"]
+    questions: ["proxyBeanMethods = false 로 두면 무엇을 잃고 무엇을 얻나"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/quota/ExternalApiQuotaAutoConfiguration.kt, symbol: "@Configuration(proxyBeanMethods = false)", note: "메서드 간 호출이 없어 CGLIB 프록시를 끈 lite 모드" }
+    uses: [spring-cglib-proxy]
+    alternative_to:
+      - { to: spring-component-scan, reason: "클래스에 애너테이션을 다는 대신 설정 코드로 등록한다" }
+  - id: spring-bean-selection
+    kind: MECHANISM
+    name: "빈 선택 (@Primary · @Qualifier · ObjectProvider)"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "같은 타입의 빈이 여럿일 때 기본값(@Primary)·이름(@Qualifier)으로 하나를 고르거나, ObjectProvider 로 필요한 시점에 찾아 쓴다. 폴드 호스트에는 도메인마다 DataSource·TransactionManager 가 있어 이 선택이 항상 필요하다"
+    synonyms: ["@Primary", "@Qualifier", "ObjectProvider"]
+    code:
+      - { path: deal/feature/src/main/kotlin/com/kgd/deal/application/offer/service/DealRedirectService.kt, symbol: "@Qualifier(\"dealTransactionManager\")", note: "클래스 한정자로 자기 도메인 TM 을 고른다" }
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/kimchi/KimchiPremiumCalculator.kt, symbol: "private val adapters: ObjectProvider<MarketAdapter>,", note: "여러 어댑터 빈을 필요할 때 조회한다" }
+    mitigates: [spring-ambiguous-bean, spring-scope-mismatch]
+  - id: spring-bean-lifecycle
+    kind: MECHANISM
+    name: "빈 생명주기"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "빈은 인스턴스 생성 → 의존성 주입 → 후처리(프록시 감싸기) → 초기화 콜백 → 사용 → 소멸 콜백 순으로 산다. 연결·스레드 같은 자원은 초기화 콜백에서 열고 소멸 콜백에서 닫는다"
+    synonyms: ["bean lifecycle"]
+    questions: ["@PostConstruct 시점에 AOP 프록시는 이미 적용돼 있나"]
+    contains: [spring-lifecycle-callback, spring-bean-post-processor, spring-smart-lifecycle, spring-startup-runner]
+  - id: spring-lifecycle-callback
+    kind: MECHANISM
+    name: "초기화 · 소멸 콜백"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "의존성 주입이 끝난 뒤 @PostConstruct 가, 컨텍스트가 닫힐 때 @PreDestroy 가 불린다. 게이지 등록·클라이언트 종료처럼 빈 하나에 딸린 준비와 정리를 둔다"
+    synonyms: ["@PostConstruct", "@PreDestroy", "InitializingBean", "DisposableBean"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/metrics/OutboxPendingMetric.kt, symbol: "@PostConstruct", note: "주입이 끝난 뒤 게이지를 등록한다" }
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/clickhouse/ClickHouseConfig.kt, symbol: "@PreDestroy", note: "컨텍스트 종료 때 클라이언트를 닫는다" }
+  - id: spring-bean-post-processor
+    kind: MECHANISM
+    name: "빈 후처리기"
+    category: ARCHITECTURE
+    level: ADVANCED
+    description: "모든 빈의 초기화 전후에 끼어들어 빈을 바꾸거나 감싼다. @Transactional·@Async·@Cacheable 이 붙은 빈을 프록시로 바꿔 끼우는 곳이 여기다"
+    synonyms: ["BeanPostProcessor", "BeanFactoryPostProcessor"]
+    uses: [proxy-pattern]
+  - id: spring-smart-lifecycle
+    kind: MECHANISM
+    name: "SmartLifecycle"
+    category: ARCHITECTURE
+    level: ADVANCED
+    description: "컨텍스트 새로 고침이 끝난 뒤 phase 순서대로 start, 종료 때 역순으로 stop 을 부른다. 다른 빈의 시작보다 먼저 끝나야 하는 데이터 전환·리스너 시작 순서를 맞출 때 쓴다"
+    synonyms: ["Lifecycle", "phase"]
+    code:
+      - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/infrastructure/startup/LegacyReservationConversionLifecycle.kt, symbol: "override fun getPhase(): Int = PHASE", note: "만료 스케줄러보다 이른 phase 에 옛 예약을 전환한다" }
+  - id: spring-startup-runner
+    kind: MECHANISM
+    name: "기동 후 실행기"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "컨텍스트가 뜬 직후 한 번 도는 코드. ApplicationRunner·CommandLineRunner 로 배치성 작업이나 CronJob 진입점을 만든다"
+    synonyms: ["ApplicationRunner", "CommandLineRunner"]
+    code:
+      - { path: deal/feature/src/main/kotlin/com/kgd/deal/infrastructure/linkcheck/DealLinkCheckRunner.kt, symbol: ") : ApplicationRunner {", note: "CronJob 이 띄운 컨텍스트에서 링크 검사를 한 번 돌린다" }
+  - id: spring-bean-scope
+    kind: MECHANISM
+    name: "빈 스코프"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "빈 인스턴스가 몇 개이고 얼마나 사는지 정한다. 기본은 컨테이너당 하나인 singleton 이고 prototype(요청마다 새로)·request·session 이 있다"
+    synonyms: ["bean scope", "singleton", "prototype", "request scope"]
+    questions: ["싱글톤 빈에 prototype 빈을 주입하면 몇 개가 만들어지나"]
+    uses: [singleton-pattern]
+    causes:
+      - { to: spring-singleton-mutable-state, reason: "한 인스턴스를 모든 요청 스레드가 공유한다" }
+      - { to: spring-scope-mismatch, reason: "긴 스코프 빈이 짧은 스코프 빈을 주입 시점에 한 번만 받는다" }
+  - id: spring-application-event
+    kind: MECHANISM
+    name: "애플리케이션 이벤트"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "빈이 이벤트를 발행하고 @EventListener 가 받는다. 발행자가 구독자를 모르게 되어 결합이 끊긴다. 기본은 같은 스레드·같은 트랜잭션 안에서 동기로 돈다"
+    synonyms: ["ApplicationEventPublisher", "@EventListener", "ApplicationReadyEvent"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/clickhouse/QuantSchemaInitializer.kt, symbol: "@EventListener(ApplicationReadyEvent::class)", note: "기동 완료 이벤트를 받아 스키마를 만든다" }
+    uses: [observer-pattern]
+    mitigates:
+      - { to: spring-circular-dependency, reason: "한쪽 방향 호출을 이벤트로 바꿔 순환을 끊는다" }
+  - id: spring-circular-dependency
+    kind: PROBLEM
+    name: "순환 의존"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "빈 A 가 B 를, B 가 A 를 생성자로 요구해 어느 쪽도 먼저 만들 수 없는 상태. Spring Boot 2.6 부터 기본으로 기동을 실패시킨다"
+    synonyms: ["circular dependency", "BeanCurrentlyInCreationException"]
+  - id: spring-ambiguous-bean
+    kind: PROBLEM
+    name: "빈 후보 충돌"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "같은 타입의 빈이 둘 이상이라 주입이 실패하거나, @Primary 가 붙은 엉뚱한 빈이 조용히 주입되는 상태"
+    synonyms: ["NoUniqueBeanDefinitionException"]
+  - id: spring-singleton-mutable-state
+    kind: PROBLEM
+    name: "싱글톤 빈의 가변 상태"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "싱글톤 빈 필드에 요청별 값을 담아 동시 요청끼리 값을 덮어쓰는 상태. 빈은 상태 없이 두고 요청 값은 파라미터로 넘긴다"
+    causes: [race-condition]
+  - id: spring-scope-mismatch
+    kind: PROBLEM
+    name: "스코프 불일치"
+    category: ARCHITECTURE
+    level: ADVANCED
+    description: "싱글톤 빈이 prototype·request 스코프 빈을 주입받으면 처음 받은 하나를 계속 쓴다. ObjectProvider 나 scoped proxy 로 호출 시점에 찾아야 한다"
+    synonyms: ["scoped proxy"]
+  - id: spring-component-scan-miss
+    kind: PROBLEM
+    name: "스캔 누락"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "도메인 패키지가 컴포넌트 스캔·JPA 저장소·EMF 패키지 목록 중 하나에서 빠진 상태. 기동은 성공하고 그 도메인의 API 만 조용히 404 를 내거나 저장소 주입이 실패한다"
+  - id: spring-framework
+    kind: TECHNOLOGY
+    name: "Spring Framework"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "IoC 컨테이너·AOP·트랜잭션 추상화·Web MVC/WebFlux 를 담은 핵심 프레임워크. Spring Boot·Spring Data·Spring Security 가 모두 이 위에 올라간다. 이 레포는 Boot 4 가 가져오는 7.x 를 쓴다"
+    synonyms: ["Spring Core", "spring-context"]
+    implements:
+      - { to: spring-ioc-container, reason: "ApplicationContext 구현을 준다" }
+      - { to: spring-dependency-injection, reason: "생성자·필드 주입을 해 준다" }
+      - { to: spring-aop, reason: "프록시 기반 AOP 를 준다" }
+      - { to: spring-declarative-transaction, reason: "@Transactional 을 TransactionInterceptor 로 처리한다" }
+      - { to: spring-application-event, reason: "이벤트 발행·구독을 준다" }
+
+  # ── 설정과 자동 구성 ─────────────────────────────────────
+  - id: spring-configuration
+    kind: STAGE
+    name: "설정과 자동 구성"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "코드 밖의 값(환경변수·YAML)을 빈에 묶고, 환경(프로파일)과 조건에 따라 어떤 빈을 올릴지 정한다. Spring Boot 는 클래스패스를 보고 기본 빈을 자동으로 등록한다"
+    questions: ["@ConditionalOnMissingBean 이 붙은 자동 구성 빈은 언제 물러나나"]
+    contains: [spring-externalized-config, spring-profile, spring-auto-configuration, spring-condition-report, spring-autoconfig-backoff]
+    flows_to: [spring-cross-cutting]
+  - id: spring-externalized-config
+    kind: MECHANISM
+    name: "외부 설정"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "설정값을 코드 밖(application.yml·환경변수·커맨드라인 인자)에 두고 우선순위가 높은 출처가 낮은 출처를 덮는다. 같은 이미지를 환경마다 다른 값으로 띄운다"
+    synonyms: ["externalized configuration", "PropertySource", "Environment"]
+    contains: [spring-value-injection, spring-configuration-properties]
+    uses: [spring-term-property-source]
+  - id: spring-value-injection
+    kind: MECHANISM
+    name: "@Value 주입"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "프로퍼티 하나를 ${키} 플레이스홀더로 필드·파라미터에 넣는다. 흩어지면 같은 키가 여러 곳에 적히고 타입 검사가 없다"
+    synonyms: ["@Value", "placeholder"]
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/config/OrderKafkaConfig.kt, symbol: "spring.kafka.bootstrap-servers", note: "브로커 주소 하나를 플레이스홀더로 받는다" }
+  - id: spring-configuration-properties
+    kind: MECHANISM
+    name: "@ConfigurationProperties"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "접두사 아래의 프로퍼티를 타입 있는 객체(data class)에 한 번에 묶는다. 설정이 한 클래스에 모이고 기동 시점에 검증할 수 있다"
+    synonyms: ["type-safe configuration properties", "@EnableConfigurationProperties"]
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/application/token/config/AdsTokenProperties.kt, symbol: '@ConfigurationProperties(prefix = "ads.token")', note: "토큰 설정을 한 클래스에 묶는다" }
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/infrastructure/config/AdsConfig.kt, symbol: "@EnableConfigurationProperties(AdsTokenProperties::class, AdsTopUpProperties::class)", note: "프로퍼티 클래스를 등록한다" }
+    alternative_to:
+      - { to: spring-value-injection, reason: "키를 하나씩 받는 대신 묶음으로 타입 있게 받는다" }
+  - id: spring-profile
+    kind: MECHANISM
+    name: "프로파일"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "활성 프로파일(local·test·prod 등)에 따라 빈과 설정 파일을 골라 올린다. 모의 거래소처럼 환경마다 다른 구현을 바꿔 끼운다"
+    synonyms: ["@Profile", "spring.profiles.active"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/exchange/PaperExchangeAdapter.kt, symbol: '@Profile("paper", "test")', note: "모의 매매 프로파일에서만 올라가는 거래소 어댑터" }
+  - id: spring-auto-configuration
+    kind: MECHANISM
+    name: "자동 구성"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "Spring Boot 가 클래스패스와 설정을 보고 기본 빈을 등록한다. 라이브러리는 AutoConfiguration.imports 에 설정 클래스를 적어 두고, 조건 애너테이션으로 필요할 때만 켠다. common 모듈이 이 방식으로 선택 기능을 준다"
+    synonyms: ["auto-configuration", "@AutoConfiguration", "starter"]
+    questions: ["common 모듈이 @Enable 애너테이션 대신 자동 구성을 쓰는 이유는 무엇인가"]
+    code:
+      - { path: common/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports, symbol: "com.kgd.common.webclient.CommonWebClientAutoConfiguration", note: "자동 구성 클래스 등록부" }
+      - { path: common/src/main/kotlin/com/kgd/common/webclient/CommonWebClientAutoConfiguration.kt, symbol: "@AutoConfiguration(afterName", note: "Boot 기본 자동 구성 뒤에 돌도록 순서를 건다" }
+    contains: [spring-conditional-bean]
+    uses: [spring-boot, spring-term-starter]
+  - id: spring-conditional-bean
+    kind: MECHANISM
+    name: "조건부 빈"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "프로퍼티 값·클래스 존재·같은 타입 빈의 유무 같은 조건이 맞을 때만 빈을 등록한다. 서비스가 같은 타입 빈을 직접 등록하면 자동 구성 빈이 물러난다"
+    synonyms: ["@Conditional", "@ConditionalOnProperty", "@ConditionalOnMissingBean", "@ConditionalOnClass"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/webclient/CommonWebClientAutoConfiguration.kt, symbol: "@ConditionalOnClass(WebClient::class)", note: "WebClient 가 클래스패스에 있을 때만 켠다" }
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/infrastructure/scheduling/SettlementJob.kt, symbol: '@ConditionalOnProperty(prefix = "ads.scheduling"', note: "프로퍼티로 정산 잡을 켜고 끈다" }
+    causes:
+      - { to: spring-autoconfig-backoff, reason: "조건이 조용히 참·거짓이 되어 예상과 다른 빈이 남는다" }
+    mitigates:
+      - { to: spring-duplicate-schedule, reason: "스케줄 잡을 켤 파드를 프로퍼티로 고른다" }
+  - id: spring-condition-report
+    kind: MECHANISM
+    name: "조건 평가 보고서"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "자동 구성마다 어떤 조건이 맞고 틀렸는지 적은 보고서. --debug 로 기동하거나 actuator conditions 엔드포인트로 본다. 빈이 왜 없는지·왜 있는지를 추측 대신 확인한다"
+    synonyms: ["ConditionEvaluationReport", "--debug", "/actuator/conditions"]
+    mitigates: [spring-autoconfig-backoff]
+  - id: spring-autoconfig-backoff
+    kind: PROBLEM
+    name: "자동 구성 뜻밖의 양보"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "직접 등록한 빈 하나 때문에 자동 구성이 물러나 설정이 통째로 빠지거나, 반대로 두 벌이 공존하는 상태. 같은 타입 ObjectMapper 가 둘이 되어 모듈 설정이 한쪽에만 먹는 것이 흔한 예다"
+
+  # ── 횡단 관심사 분리 (AOP) ──────────────────────────────
+  - id: spring-cross-cutting
+    kind: STAGE
+    name: "횡단 관심사 분리 (AOP)"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "트랜잭션·캐시·비동기·권한처럼 여러 클래스에 반복되는 부가 기능을 핵심 로직 밖으로 뺀다. Spring 은 빈을 프록시로 감싸 호출 앞뒤에 부가 기능을 끼운다"
+    questions: ["같은 클래스 안에서 부른 @Transactional 메서드는 왜 트랜잭션이 안 걸리나", "JDK 동적 프록시와 CGLIB 프록시는 무엇이 다른가"]
+    contains: [spring-aop, spring-aspectj-weaving, spring-self-invocation, spring-final-class-proxy]
+    flows_to: [spring-transaction]
+  - id: spring-aop
+    kind: MECHANISM
+    name: "Spring AOP"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "빈을 런타임 프록시로 감싸 포인트컷에 맞는 메서드 호출 앞뒤에 어드바이스를 실행한다. 프록시를 거치는 외부 호출에만 적용되고 public 메서드 실행 지점만 다룬다"
+    synonyms: ["AOP", "aspect-oriented programming", "@Aspect", "@EnableAspectJAutoProxy"]
+    contains: [spring-jdk-dynamic-proxy, spring-cglib-proxy]
+    uses: [proxy-pattern, spring-term-aspect, spring-term-advice, spring-term-pointcut, spring-term-join-point, spring-term-advisor, spring-term-proxy-target]
+    causes:
+      - { to: spring-self-invocation, reason: "프록시를 거치지 않는 내부 호출에는 적용되지 않는다" }
+  - id: spring-jdk-dynamic-proxy
+    kind: MECHANISM
+    name: "JDK 동적 프록시"
+    category: DESIGN_PATTERN
+    level: ADVANCED
+    description: "대상이 구현한 인터페이스로 런타임 프록시를 만든다. 인터페이스 타입으로만 주입받을 수 있고 구체 클래스로 캐스팅하면 실패한다. Spring Data 저장소 구현도 이 프록시다"
+    synonyms: ["JDK dynamic proxy", "java.lang.reflect.Proxy"]
+    uses: [interface, reflection]
+  - id: spring-cglib-proxy
+    kind: MECHANISM
+    name: "CGLIB 프록시"
+    category: DESIGN_PATTERN
+    level: ADVANCED
+    description: "대상 클래스를 상속한 하위 클래스를 바이트코드로 만들어 메서드를 오버라이드한다. Spring Boot 의 기본값이다(proxy-target-class=true). final 클래스·메서드는 오버라이드할 수 없어 부가 기능이 빠진다"
+    synonyms: ["CGLIB", "class-based proxy", "proxyTargetClass"]
+    code:
+      - { path: code-dictionary/feature/src/test/kotlin/com/kgd/testsupport/ConceptCacheTestContext.kt, symbol: "@EnableCaching(proxyTargetClass = true)", note: "테스트 컨텍스트도 운영과 같은 CGLIB 프록시로 맞춘다" }
+    uses: [inheritance, rt-hidden-class]
+    causes:
+      - { to: spring-final-class-proxy, reason: "상속으로 감싸므로 final 을 넘지 못한다" }
+    alternative_to:
+      - { to: spring-jdk-dynamic-proxy, reason: "인터페이스 없이 클래스로 프록시를 만든다" }
+  - id: spring-aspectj-weaving
+    kind: MECHANISM
+    name: "AspectJ 위빙"
+    category: DESIGN_PATTERN
+    level: ADVANCED
+    description: "컴파일·로드 시점에 바이트코드에 어드바이스를 직접 짜 넣는다. 프록시가 없어 내부 호출·private 메서드·필드 접근에도 적용되지만 빌드·에이전트 설정이 필요하다"
+    synonyms: ["AspectJ", "compile-time weaving", "load-time weaving"]
+    uses: [spring-term-weaving]
+    alternative_to:
+      - { to: spring-aop, reason: "런타임 프록시 대신 바이트코드 위빙으로 적용한다" }
+    mitigates: [spring-self-invocation, spring-final-class-proxy]
+  - id: spring-self-invocation
+    kind: PROBLEM
+    name: "자기 호출 (self-invocation)"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "빈 안에서 this.method() 로 부른 호출은 프록시를 거치지 않아 @Transactional·@Async·@Cacheable 이 조용히 무시되는 상태. 클래스를 나누거나 TransactionTemplate 으로 경계를 코드에 둔다"
+    synonyms: ["self-invocation", "내부 호출"]
+  - id: spring-final-class-proxy
+    kind: PROBLEM
+    name: "final 에 막힌 프록시"
+    category: LANGUAGE_FEATURE
+    level: INTERMEDIATE
+    description: "Kotlin 클래스·메서드는 기본이 final 이라 CGLIB 가 오버라이드하지 못해 부가 기능이 빠지거나 프록시 생성이 실패하는 상태. private 메서드도 같은 이유로 적용되지 않는다"
+
+  # ── 트랜잭션 경계 관리 ─────────────────────────────────
+  - id: spring-transaction
+    kind: STAGE
+    name: "트랜잭션 경계 관리"
+    category: DATA
+    level: INTERMEDIATE
+    description: "어디서 트랜잭션을 열고 닫을지, 이미 열린 트랜잭션에 어떻게 참여할지, 어떤 예외에 롤백할지, 트랜잭션이 잡은 커넥션을 얼마나 오래 쥘지 정한다. 격리 수준·락 같은 DB 쪽 의미는 데이터 저장 도메인이 다룬다"
+    questions: ["REQUIRES_NEW 는 커넥션을 몇 개 쓰나", "내부 @Transactional 의 예외를 바깥에서 잡으면 왜 UnexpectedRollbackException 이 나나"]
+    contains: [spring-tx-demarcation, spring-tx-semantics, spring-tx-resources]
+    flows_to: [spring-data-access]
+    measured_by: [spring-transaction-duration]
+  - id: spring-tx-demarcation
+    kind: STAGE
+    name: "경계 선언"
+    category: DATA
+    level: INTERMEDIATE
+    description: "트랜잭션 경계를 애너테이션(선언형)이나 코드(프로그래밍형)로 긋고, 어느 트랜잭션 매니저가 그 경계를 맡을지 고른다"
+    contains: [spring-declarative-transaction, spring-programmatic-transaction, spring-reactive-transaction, spring-transaction-manager, spring-transaction-manager-qualifier, spring-class-level-transaction, spring-wrong-transaction-manager]
+    flows_to: [spring-tx-semantics]
+  - id: spring-declarative-transaction
+    kind: MECHANISM
+    name: "선언형 트랜잭션 (@Transactional)"
+    category: DATA
+    level: BEGINNER
+    description: "메서드·클래스에 @Transactional 을 붙이면 프록시의 TransactionInterceptor 가 호출 전에 트랜잭션을 열고 끝나면 커밋·롤백한다. 전파·격리·readOnly·타임아웃·롤백 규칙을 속성으로 준다"
+    synonyms: ["@Transactional", "TransactionInterceptor", "declarative transaction"]
+    questions: ["@Transactional 이 동작하지 않는 대표 원인 다섯 가지는 무엇인가"]
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/application/ledger/service/LedgerService.kt, symbol: '@Transactional("adsTransactionManager", isolation = Isolation.READ_COMMITTED)', note: "TM 한정자와 격리 수준을 속성으로 준다" }
+    uses: [spring-aop, data-transaction, data-isolation-level, spring-term-transaction-attribute]
+    causes:
+      - { to: spring-self-invocation, reason: "프록시 기반이라 내부 호출에 걸리지 않는다" }
+      - { to: spring-class-level-transaction, reason: "클래스에 붙이면 모든 public 메서드가 참여한다" }
+  - id: spring-programmatic-transaction
+    kind: MECHANISM
+    name: "프로그래밍형 트랜잭션 (TransactionTemplate)"
+    category: DATA
+    level: INTERMEDIATE
+    description: "TransactionTemplate.execute 블록 안만 트랜잭션으로 묶는다. 경계가 코드에 보이고 프록시를 거치지 않아 자기 호출·코루틴에서도 동작한다. 외부 호출 전후로 짧은 트랜잭션 둘을 여는 데 쓴다"
+    synonyms: ["TransactionTemplate", "PlatformTransactionManager 직접 사용"]
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/application/order/service/PurchaseConfirmService.kt, symbol: "private val tx = TransactionTemplate(transactionManager)", note: "구매 확정 흐름에서 트랜잭션 구간을 코드로 긋는다" }
+    uses: [template-method]
+    alternative_to:
+      - { to: spring-declarative-transaction, reason: "애너테이션 대신 블록으로 경계를 긋는다" }
+    mitigates: [spring-self-invocation]
+  - id: spring-reactive-transaction
+    kind: MECHANISM
+    name: "리액티브 · 코루틴 트랜잭션"
+    category: DATA
+    level: ADVANCED
+    description: "스레드가 바뀌는 리액티브·코루틴 코드에서는 ThreadLocal 에 둔 트랜잭션이 따라가지 않는다. ReactiveTransactionManager 와 TransactionalOperator 가 Reactor Context 로 트랜잭션을 옮긴다"
+    synonyms: ["TransactionalOperator", "ReactiveTransactionManager", "R2DBC transaction"]
+    uses: [reactive-streams, coroutine]
+  - id: spring-transaction-manager
+    kind: MECHANISM
+    name: "트랜잭션 매니저 추상화"
+    category: DATA
+    level: INTERMEDIATE
+    description: "PlatformTransactionManager 인터페이스 뒤에 JDBC·JPA·JTA 구현을 숨긴다. @Transactional 은 어느 자원인지 모른 채 매니저에게 시작·커밋·롤백만 요청한다"
+    synonyms: ["PlatformTransactionManager"]
+    contains: [spring-jpa-transaction-manager, spring-jta-transaction-manager]
+    uses: [strategy-pattern]
+  - id: spring-jpa-transaction-manager
+    kind: MECHANISM
+    name: "JpaTransactionManager"
+    category: DATA
+    level: INTERMEDIATE
+    description: "EntityManager 와 JDBC 커넥션을 한 트랜잭션에 묶는다. 커밋 직전에 영속성 컨텍스트를 flush 한다. 도메인마다 EMF 가 따로면 매니저도 따로 둔다"
+    synonyms: ["JpaTransactionManager", "DataSourceTransactionManager"]
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/config/OrderDataSourceConfig.kt, symbol: "): PlatformTransactionManager = JpaTransactionManager(emf)", note: "order 도메인 EMF 전용 매니저" }
+    uses: [data-persistence-context]
+  - id: spring-jta-transaction-manager
+    kind: MECHANISM
+    name: "JtaTransactionManager"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "여러 자원(DB 둘, DB 와 메시지 브로커)을 XA 2단계 커밋으로 한 트랜잭션에 묶는다. 느리고 자원이 XA 를 지원해야 해서 이 레포는 쓰지 않고 로컬 트랜잭션 + 아웃박스로 대신한다"
+    synonyms: ["JTA", "XA"]
+    uses: [two-phase-commit]
+  - id: spring-transaction-manager-qualifier
+    kind: MECHANISM
+    name: "도메인별 TM 한정자"
+    category: DATA
+    level: INTERMEDIATE
+    description: "한 JVM 에 도메인이 여럿이면 @Transactional 에 자기 TM 이름을 달거나 클래스에 @Qualifier 를 붙인다. 빌드 게이트 verifyTransactionQualifiers 가 비-primary 도메인의 누락을 막는다"
+    synonyms: ["@Transactional(transactionManager)", "verifyTransactionQualifiers"]
+    code:
+      - { path: deal/feature/src/main/kotlin/com/kgd/deal/application/offer/service/DealRedirectService.kt, symbol: "@Qualifier(\"dealTransactionManager\")", note: "클래스의 모든 @Transactional 이 deal TM 에 붙는다" }
+      - { path: build.gradle.kts, symbol: "val verifyTransactionQualifiers by tasks.registering {", note: "한정자 누락을 소스에서 찾는 게이트" }
+    uses: [spring-bean-selection]
+    mitigates: [spring-wrong-transaction-manager]
+  - id: spring-wrong-transaction-manager
+    kind: PROBLEM
+    name: "엉뚱한 TM 에 붙은 트랜잭션"
+    category: DATA
+    level: ADVANCED
+    description: "한정자 없는 @Transactional 이 호스트의 primary TM 에 붙어 자기 도메인 EntityManager 가 참여하지 않는 상태. @Modifying 쓰기가 커밋되지 않는데 컴파일·기동·예외 어디에도 드러나지 않는다"
+  - id: spring-class-level-transaction
+    kind: PROBLEM
+    name: "클래스 레벨 트랜잭션 과적용"
+    category: DATA
+    level: INTERMEDIATE
+    description: "클래스에 붙인 @Transactional 이 조회·외부 호출 메서드까지 쓰기 트랜잭션으로 감싸 커넥션을 오래 쥐거나 의도치 않은 롤백을 만드는 상태"
+  - id: spring-tx-semantics
+    kind: STAGE
+    name: "전파 · 롤백 규칙"
+    category: DATA
+    level: INTERMEDIATE
+    description: "이미 트랜잭션이 있을 때 참여할지 새로 열지(전파), 어떤 예외에 롤백할지, 읽기 전용으로 열지를 정한다. 논리 트랜잭션 여럿이 물리 트랜잭션 하나를 나눠 쓰는 모델을 이해해야 한다"
+    contains: [spring-propagation, spring-rollback-rule, spring-readonly-transaction, spring-unexpected-rollback, spring-checked-exception-commit, spring-readonly-silent-write]
+    flows_to: [spring-tx-resources]
+  - id: spring-propagation
+    kind: MECHANISM
+    name: "트랜잭션 전파"
+    category: DATA
+    level: INTERMEDIATE
+    description: "트랜잭션 메서드가 다른 트랜잭션 메서드를 부를 때 바깥 트랜잭션을 어떻게 다룰지 정하는 일곱 가지 규칙. 기본값은 REQUIRED 다"
+    synonyms: ["propagation", "Propagation"]
+    questions: ["REQUIRES_NEW 와 NESTED 는 안쪽이 실패했을 때 바깥에 무엇을 남기나"]
+    contains: [spring-propagation-required, spring-propagation-requires-new, spring-propagation-nested, spring-propagation-supports, spring-propagation-not-supported, spring-propagation-mandatory, spring-propagation-never]
+    uses: [spring-term-physical-logical-transaction]
+  - id: spring-propagation-required
+    kind: MECHANISM
+    name: "REQUIRED"
+    category: DATA
+    level: BEGINNER
+    description: "바깥 트랜잭션이 있으면 참여하고 없으면 새로 연다. 기본값이다. 참여한 쪽에서 난 롤백은 바깥 전체를 rollback-only 로 만든다"
+    causes:
+      - { to: spring-unexpected-rollback, reason: "안쪽이 rollback-only 를 찍으면 바깥 커밋이 실패한다" }
+  - id: spring-propagation-requires-new
+    kind: MECHANISM
+    name: "REQUIRES_NEW"
+    category: DATA
+    level: INTERMEDIATE
+    description: "바깥 트랜잭션을 보류하고 새 물리 트랜잭션을 연다. 안쪽 커밋·롤백이 바깥과 독립이라 감사 로그·조회수처럼 본 흐름과 분리할 쓰기에 쓴다. 커넥션을 동시에 두 개 쥔다"
+    synonyms: ["Propagation.REQUIRES_NEW"]
+    code:
+      - { path: deal/feature/src/main/kotlin/com/kgd/deal/application/offer/service/DealRedirectService.kt, symbol: "@Transactional(propagation = Propagation.REQUIRES_NEW)", note: "클릭 기록 실패가 리다이렉트로 번지지 않게 분리한다" }
+    causes:
+      - { to: data-pool-exhaustion, reason: "요청 하나가 커넥션 둘을 쥐어 동시 요청이 몰리면 풀이 마른다" }
+    mitigates: [spring-unexpected-rollback]
+  - id: spring-propagation-nested
+    kind: MECHANISM
+    name: "NESTED"
+    category: DATA
+    level: ADVANCED
+    description: "바깥 트랜잭션 안에 JDBC 세이브포인트를 찍고 안쪽 실패 시 그 지점까지만 되돌린다. 물리 트랜잭션은 하나이고 DataSource 계열 매니저에서만 지원된다"
+    synonyms: ["Propagation.NESTED", "savepoint"]
+    uses: [data-savepoint]
+    alternative_to:
+      - { to: spring-propagation-requires-new, reason: "새 커넥션 없이 부분 롤백만 얻는다" }
+  - id: spring-propagation-supports
+    kind: MECHANISM
+    name: "SUPPORTS"
+    category: DATA
+    level: INTERMEDIATE
+    description: "바깥 트랜잭션이 있으면 참여하고 없으면 트랜잭션 없이 실행한다"
+  - id: spring-propagation-not-supported
+    kind: MECHANISM
+    name: "NOT_SUPPORTED"
+    category: DATA
+    level: INTERMEDIATE
+    description: "바깥 트랜잭션을 보류하고 트랜잭션 없이 실행한다. 긴 외부 호출을 트랜잭션 밖으로 빼는 데 쓸 수 있다"
+  - id: spring-propagation-mandatory
+    kind: MECHANISM
+    name: "MANDATORY"
+    category: DATA
+    level: INTERMEDIATE
+    description: "바깥 트랜잭션이 반드시 있어야 하고 없으면 예외를 던진다. 원장 기록처럼 호출자 트랜잭션과 함께 커밋돼야 하는 쓰기를 강제한다"
+    synonyms: ["Propagation.MANDATORY"]
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/infrastructure/persistence/ledger/adapter/LedgerRepositoryAdapter.kt, symbol: '@Transactional("adsTransactionManager", propagation = Propagation.MANDATORY)', note: "원장 쓰기는 호출자 트랜잭션 안에서만 허용한다" }
+  - id: spring-propagation-never
+    kind: MECHANISM
+    name: "NEVER"
+    category: DATA
+    level: INTERMEDIATE
+    description: "트랜잭션 없이 실행해야 하고 바깥 트랜잭션이 있으면 예외를 던진다"
+  - id: spring-rollback-rule
+    kind: MECHANISM
+    name: "롤백 규칙"
+    category: DATA
+    level: INTERMEDIATE
+    description: "기본은 RuntimeException·Error 에만 롤백하고 checked 예외는 커밋한다(EJB 관례). rollbackFor·noRollbackFor 로 바꾼다. 예외를 잡아 삼키면 롤백 판단 자체가 일어나지 않는다"
+    synonyms: ["rollbackFor", "noRollbackFor"]
+    questions: ["Kotlin 에서 Exception 을 상속한 예외를 던지면 트랜잭션은 롤백되나"]
+    uses: [exception-handling, lang-checked-exception]
+    causes:
+      - { to: spring-checked-exception-commit, reason: "checked 계열 예외는 기본 커밋이다" }
+  - id: spring-readonly-transaction
+    kind: MECHANISM
+    name: "읽기 전용 트랜잭션"
+    category: DATA
+    level: INTERMEDIATE
+    description: "readOnly=true 면 Hibernate flush 를 끄고 스냅샷을 덜 남기며, 커넥션에 읽기 전용 힌트를 주고, 라우팅 DataSource 가 복제본을 고를 근거가 된다. 여러 쿼리가 같은 스냅샷을 봐야 할 때만 붙인다"
+    synonyms: ["@Transactional(readOnly = true)", "FlushMode.MANUAL"]
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/application/order/service/OrderStatsService.kt, symbol: "@Transactional(readOnly = true)", note: "집계 조회 서비스를 읽기 전용으로 연다" }
+    uses: [data-read-replica-routing, data-lazy-connection-acquisition, data-dirty-checking]
+    causes:
+      - { to: spring-readonly-silent-write, reason: "flush 가 꺼져 엔티티 변경이 반영되지 않는다" }
+  - id: spring-unexpected-rollback
+    kind: PROBLEM
+    name: "UnexpectedRollbackException"
+    category: DATA
+    level: INTERMEDIATE
+    description: "안쪽 @Transactional 에서 난 예외를 바깥에서 잡아 정상 반환했는데, 안쪽이 이미 rollback-only 를 찍어 바깥 커밋이 실패하는 상태. 중첩 트랜잭션에서 예외를 catch 하지 않고 null 반환 메서드를 따로 둔다"
+    synonyms: ["rollback-only", "UnexpectedRollbackException"]
+  - id: spring-checked-exception-commit
+    kind: PROBLEM
+    name: "checked 예외 커밋"
+    category: DATA
+    level: INTERMEDIATE
+    description: "Kotlin 은 checked 예외를 강제하지 않아 Exception 을 상속한 도메인 예외를 던지기 쉬운데, Spring 은 그것을 checked 로 보고 롤백 없이 커밋하는 상태"
+  - id: spring-readonly-silent-write
+    kind: PROBLEM
+    name: "읽기 전용 안의 조용한 쓰기 누락"
+    category: DATA
+    level: INTERMEDIATE
+    description: "readOnly 트랜잭션 안에서 엔티티를 바꿔도 flush 가 없어 반영되지 않고 예외도 나지 않는 상태"
+  - id: spring-tx-resources
+    kind: STAGE
+    name: "커넥션과 커밋 후 처리"
+    category: DATA
+    level: ADVANCED
+    description: "트랜잭션이 커넥션을 언제 잡고 얼마나 쥐는지, 커밋 전후에 무엇을 할지 정한다. 외부 호출은 트랜잭션 밖에 두고, 커밋 뒤에만 해야 할 일은 동기화 콜백이나 아웃박스로 넘긴다"
+    contains: [spring-transaction-synchronization, spring-transactional-event-listener, spring-transactional-service-split, spring-external-io-in-transaction, spring-transaction-duration]
+    uses: [data-read-replica-routing, data-lazy-connection-acquisition]
+  - id: spring-transaction-synchronization
+    kind: MECHANISM
+    name: "트랜잭션 동기화"
+    category: DATA
+    level: ADVANCED
+    description: "현재 스레드에 묶인 트랜잭션 상태(활성 여부·readOnly·이름)와 자원을 TransactionSynchronizationManager 가 ThreadLocal 로 들고 있다. afterCommit·afterCompletion 콜백을 등록해 커밋 뒤에만 할 일을 건다"
+    synonyms: ["TransactionSynchronizationManager", "TransactionSynchronization", "afterCommit"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/persistence/ReadReplicaRoutingDataSource.kt, symbol: "TransactionSynchronizationManager.isCurrentTransactionReadOnly()", note: "현재 트랜잭션의 readOnly 여부로 라우팅을 정한다" }
+    uses: [conc-thread-local]
+  - id: spring-transactional-event-listener
+    kind: MECHANISM
+    name: "@TransactionalEventListener"
+    category: DATA
+    level: ADVANCED
+    description: "이벤트를 받는 시점을 트랜잭션 단계(BEFORE_COMMIT·AFTER_COMMIT·AFTER_ROLLBACK·AFTER_COMPLETION)에 맞춘다. 커밋이 확정된 뒤에만 캐시 무효화·알림을 보낸다. 프로세스가 커밋 직후 죽으면 이벤트를 잃는다"
+    synonyms: ["TransactionPhase", "AFTER_COMMIT"]
+    uses: [spring-application-event, spring-transaction-synchronization]
+    alternative_to:
+      - { to: outbox-pattern, reason: "커밋 뒤 콜백으로 보내므로 가볍지만 유실을 막지 못한다" }
+  - id: spring-transactional-service-split
+    kind: MECHANISM
+    name: "트랜잭션 서비스 분리"
+    category: DATA
+    level: INTERMEDIATE
+    description: "짧은 DB 트랜잭션만 담는 {Entity}TransactionalService 와 흐름을 조율하는 트랜잭션 없는 서비스로 나눈다. TX1 저장 → 외부 호출 → TX2 반영 순으로 커넥션을 외부 호출 동안 쥐지 않는다. 자기 호출 문제도 함께 사라진다"
+    synonyms: ["TransactionalService 패턴", "외부 IO 분리"]
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/application/settlement/service/SettlementTransactionalService.kt, symbol: "class SettlementTransactionalService(", note: "정산의 DB 구간만 모은 서비스" }
+    mitigates: [spring-external-io-in-transaction, spring-self-invocation]
+  - id: spring-external-io-in-transaction
+    kind: PROBLEM
+    name: "트랜잭션 안의 외부 호출"
+    category: DATA
+    level: INTERMEDIATE
+    description: "트랜잭션 안에서 HTTP·캐시·메시지 호출을 기다리는 동안 DB 커넥션을 쥐고 있는 상태. 외부가 느려지면 커넥션 풀이 마르고, 외부 호출은 롤백되지 않아 DB 와 어긋난다"
+    causes: [data-pool-exhaustion, data-long-transaction]
+    measured_by: [spring-transaction-duration]
+  - id: spring-transaction-duration
+    kind: METRIC
+    name: "트랜잭션 보유 시간"
+    category: DATA
+    level: INTERMEDIATE
+    description: "트랜잭션이 열린 뒤 커밋·롤백까지 커넥션을 쥔 시간. 풀 크기 ÷ 이 시간이 초당 처리 가능한 트랜잭션 수의 상한이 된다"
+    synonyms: ["connection hold time", "transaction duration"]
+
+  # ── 데이터 접근 (Spring Data) ────────────────────────────
+  - id: spring-data-access
+    kind: STAGE
+    name: "데이터 접근 (Spring Data)"
+    category: DATA
+    level: INTERMEDIATE
+    description: "저장소 인터페이스만 선언하면 구현을 만들어 주는 Spring Data 로 CRUD·조회·페이징을 쓰고, 도메인별 DataSource·EMF 를 구성하고, 캐시 추상화로 조회 결과를 재사용한다. 영속성 컨텍스트·지연 로딩·페치 전략 같은 JPA 의미는 데이터 저장 도메인이 다룬다"
+    questions: ["open-in-view 를 끄는 이유는 무엇인가", "@Modifying 벌크 쿼리 뒤에 같은 트랜잭션에서 엔티티를 읽으면 무엇을 보나"]
+    contains: [spring-data-repository, spring-multi-datasource-config, spring-open-session-in-view, spring-cache-abstraction, spring-bulk-update-stale-context, spring-data-jpa]
+    flows_to: [spring-web-mvc]
+  - id: spring-data-repository
+    kind: MECHANISM
+    name: "Spring Data 저장소"
+    category: DATA
+    level: BEGINNER
+    description: "JpaRepository 를 상속한 인터페이스만 두면 런타임에 구현 프록시가 만들어진다. 저장·조회·삭제·페이징을 공통으로 주고, 메서드 이름·@Query 로 조회를 더한다. 이 레포는 이 저장소를 infrastructure 어댑터 안에만 둔다"
+    synonyms: ["Repository", "JpaRepository", "CrudRepository"]
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/persistence/idempotency/repository/IdempotencyKeyJpaRepository.kt, symbol: "interface IdempotencyKeyJpaRepository : JpaRepository<IdempotencyKeyJpaEntity, Long> {", note: "선언만 한 저장소 인터페이스" }
+    contains: [spring-derived-query, spring-query-annotation, spring-modifying-query, spring-paging, spring-projection, spring-jpa-auditing]
+    uses: [orm, hibernate, spring-jdk-dynamic-proxy, port-adapter, arch-repository-pattern]
+  - id: spring-derived-query
+    kind: MECHANISM
+    name: "메서드 이름 쿼리"
+    category: DATA
+    level: BEGINNER
+    description: "findByUserIdAndIdemKey 처럼 메서드 이름을 파싱해 JPQL 을 만든다. 조건이 둘을 넘으면 이름이 길어져 @Query 나 쿼리 빌더로 옮긴다"
+    synonyms: ["derived query", "query method"]
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/persistence/idempotency/repository/IdempotencyKeyJpaRepository.kt, symbol: "fun findByUserIdAndIdemKey(userId: String, idemKey: String): IdempotencyKeyJpaEntity?", note: "이름에서 조건 둘을 만든다" }
+  - id: spring-query-annotation
+    kind: MECHANISM
+    name: "@Query"
+    category: DATA
+    level: BEGINNER
+    description: "저장소 메서드에 JPQL·네이티브 SQL 을 직접 적는다. 문자열이라 기동 시점(JPQL 검증) 전에는 오타가 드러나지 않는다"
+    synonyms: ["@Query", "JPQL", "nativeQuery"]
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/persistence/idempotency/repository/IdempotencyKeyJpaRepository.kt, symbol: '@Query("DELETE FROM IdempotencyKeyJpaEntity k WHERE k.createdAt < :cutoff")', note: "보관 기한이 지난 키를 한 번에 지운다" }
+    alternative_to:
+      - { to: spring-derived-query, reason: "이름 규칙 대신 쿼리를 직접 적는다" }
+      - { to: data-query-builder, reason: "문자열 쿼리라 동적 조건 조립에는 약하다" }
+  - id: spring-modifying-query
+    kind: MECHANISM
+    name: "@Modifying 벌크 쿼리"
+    category: DATA
+    level: INTERMEDIATE
+    description: "@Query 의 UPDATE·DELETE 를 실행 쿼리로 표시한다. 영속성 컨텍스트를 거치지 않고 DB 에 바로 쓰므로 clearAutomatically 로 컨텍스트를 비우지 않으면 같은 트랜잭션의 엔티티가 옛 값을 가진다"
+    synonyms: ["@Modifying", "bulk update", "clearAutomatically"]
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/persistence/idempotency/repository/IdempotencyKeyJpaRepository.kt, symbol: "@Modifying(clearAutomatically = true)", note: "벌크 쓰기 뒤 영속성 컨텍스트를 비운다" }
+    uses: [data-bulk-update]
+    causes: [spring-bulk-update-stale-context]
+  - id: spring-paging
+    kind: MECHANISM
+    name: "페이징"
+    category: DATA
+    level: BEGINNER
+    description: "Pageable 로 페이지 번호·크기·정렬을 받아 LIMIT·OFFSET 과 전체 건수 쿼리를 만든다. Page 는 count 쿼리를 더 날리고 Slice 는 다음 페이지 유무만 본다. 깊은 OFFSET 은 느려져 커서 방식을 쓴다"
+    synonyms: ["Pageable", "Page", "Slice"]
+    code:
+      - { path: seller/feature/src/main/kotlin/com/kgd/seller/infrastructure/persistence/seller/repository/SellerJpaRepository.kt, symbol: "fun findAllByStatus(status: SellerStatus, pageable: Pageable): Page<SellerJpaEntity>", note: "상태별 판매자 목록을 페이지로 읽는다" }
+    uses: [spring-term-page-slice]
+  - id: spring-projection
+    kind: MECHANISM
+    name: "프로젝션"
+    category: DATA
+    level: INTERMEDIATE
+    description: "엔티티 전체 대신 필요한 컬럼만 인터페이스·DTO 로 받는다. 영속성 컨텍스트에 올리지 않아 집계·목록 조회가 가벼워진다"
+    synonyms: ["projection", "interface-based projection", "DTO projection"]
+    code:
+      - { path: game/feature/src/main/kotlin/com/kgd/game/infrastructure/persistence/play/repository/PlayJpaRepositories.kt, symbol: "interface MemberPlayProjection {", note: "플레이 집계 결과를 인터페이스 프로젝션으로 받는다" }
+  - id: spring-jpa-auditing
+    kind: MECHANISM
+    name: "JPA 감사 (Auditing)"
+    category: DATA
+    level: BEGINNER
+    description: "@CreatedDate·@LastModifiedDate·@CreatedBy 를 엔티티 리스너가 저장 시점에 채운다. 생성·수정 시각 코드를 엔티티마다 쓰지 않는다"
+    synonyms: ["@EnableJpaAuditing", "@CreatedDate", "AuditingEntityListener"]
+  - id: spring-multi-datasource-config
+    kind: MECHANISM
+    name: "도메인별 DataSource · EMF 구성"
+    category: DATA
+    level: ADVANCED
+    description: "폴드 호스트는 도메인마다 DataSource·EntityManagerFactory·TransactionManager 를 따로 만들고, @EnableJpaRepositories 로 저장소 패키지를 각자의 EMF 에 붙인다. 호스트마다 하나만 @Primary 다"
+    synonyms: ["@EnableJpaRepositories", "LocalContainerEntityManagerFactoryBean", "multiple datasources"]
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/config/OrderDataSourceConfig.kt, symbol: "@EnableJpaRepositories(", note: "order 저장소를 order EMF·TM 에 묶는다" }
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/config/OrderDataSourceConfig.kt, symbol: "): LocalContainerEntityManagerFactoryBean =", note: "order 엔티티 패키지 전용 EMF" }
+    uses: [spring-bean-selection, spring-configuration-properties]
+    causes:
+      - { to: spring-component-scan-miss, reason: "스캔·저장소·EMF 패키지 세 곳을 맞춰야 한다" }
+      - { to: spring-wrong-transaction-manager, reason: "TM 이 여럿이면 한정자 없는 선언이 primary 에 붙는다" }
+  - id: spring-open-session-in-view
+    kind: MECHANISM
+    name: "Open Session In View"
+    category: DATA
+    level: INTERMEDIATE
+    description: "영속성 컨텍스트를 요청 끝(뷰 렌더링)까지 열어 두어 컨트롤러에서도 지연 로딩이 되게 한다. Spring Boot 기본값은 켜짐이고, 켜 두면 요청 내내 커넥션을 쥔다. 이 레포는 끈다"
+    synonyms: ["OSIV", "spring.jpa.open-in-view"]
+    code:
+      - { path: search/app/src/main/resources/application.yml, symbol: "open-in-view: false", note: "요청 전체에 걸친 영속성 컨텍스트를 끈다" }
+    uses: [data-lazy-loading]
+    causes:
+      - { to: data-pool-exhaustion, reason: "느린 응답 동안 커넥션을 돌려주지 않는다" }
+  - id: spring-cache-abstraction
+    kind: MECHANISM
+    name: "캐시 추상화 (@Cacheable)"
+    category: DATA
+    level: INTERMEDIATE
+    description: "@Cacheable·@CacheEvict 를 프록시가 가로채 캐시에 결과가 있으면 메서드를 건너뛴다. 저장소(Caffeine·Redis)는 CacheManager 로 바꿔 끼운다. 프록시 기반이라 내부 호출에는 적용되지 않는다"
+    synonyms: ["@Cacheable", "@CacheEvict", "@EnableCaching", "CacheManager"]
+    code:
+      - { path: code-dictionary/feature/src/main/kotlin/com/kgd/codedictionary/application/graph/service/GraphService.kt, symbol: '@Cacheable(value = ["conceptCategoryStats"], key = "#filter")', note: "필터별 통계를 캐시한다" }
+      - { path: code-dictionary/feature/src/main/kotlin/com/kgd/codedictionary/infrastructure/cache/CacheConfig.kt, symbol: "@EnableCaching", note: "캐시 프록시를 켠다" }
+    uses: [caching, data-local-cache, spring-aop]
+    causes:
+      - { to: spring-self-invocation, reason: "같은 빈 안에서 부르면 캐시를 건너뛴다" }
+  - id: spring-bulk-update-stale-context
+    kind: PROBLEM
+    name: "벌크 쓰기 뒤 낡은 영속성 컨텍스트"
+    category: DATA
+    level: INTERMEDIATE
+    description: "벌크 UPDATE·DELETE 가 DB 만 바꾸고 이미 올라온 엔티티는 그대로라, 같은 트랜잭션에서 다시 읽으면 옛 값을 보는 상태"
+  - id: spring-data-jpa
+    kind: TECHNOLOGY
+    name: "Spring Data JPA"
+    category: DATA
+    level: BEGINNER
+    description: "JPA 위에 저장소 추상화를 얹은 라이브러리. 인터페이스 선언으로 구현을 생성하고 메서드 이름 쿼리·페이징·감사를 준다. 구현체는 Hibernate 다"
+    code:
+      - { path: order/feature/build.gradle.kts, symbol: "implementation(libs.spring.boot.starter.data.jpa)", note: "order 도메인이 Spring Data JPA 를 쓴다" }
+    implements:
+      - { to: spring-data-repository, reason: "저장소 인터페이스의 구현 프록시를 만든다" }
+      - { to: spring-derived-query, reason: "메서드 이름을 JPQL 로 바꾼다" }
+      - { to: spring-paging, reason: "Pageable 을 LIMIT·OFFSET 과 count 쿼리로 바꾼다" }
+      - { to: spring-jpa-auditing, reason: "감사 필드를 채우는 리스너를 준다" }
+
+  # ── 요청 처리 (Spring Web MVC) ───────────────────────────
+  - id: spring-web-mvc
+    kind: STAGE
+    name: "요청 처리 (Spring Web MVC)"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "HTTP 요청 하나가 서블릿 컨테이너 → 필터 체인 → DispatcherServlet → 인터셉터 → 컨트롤러 → 메시지 변환 → 예외 처리를 지나 응답이 되는 흐름. 각 단계가 무엇을 알고 무엇을 모르는지로 부가 기능의 자리를 정한다"
+    questions: ["인증 토큰 검사는 필터·인터셉터·AOP 중 어디에 두나", "필터에서 던진 예외를 @RestControllerAdvice 가 잡을 수 있나"]
+    contains: [spring-servlet-container, spring-servlet-filter, spring-dispatcher-servlet, spring-handler-interceptor, spring-annotated-controller, spring-argument-resolver, spring-message-converter, spring-response-body-advice, spring-exception-handler, spring-bean-validation, spring-async-request, spring-http-client, spring-filter-exception-escape, spring-webmvc]
+    flows_to: [spring-reactive-web]
+  - id: spring-servlet-container
+    kind: MECHANISM
+    name: "서블릿 컨테이너"
+    category: NETWORK
+    level: BEGINNER
+    description: "내장 Tomcat 이 커넥션을 받아 요청 하나를 워커 스레드 하나에 맡긴다(thread-per-request). 워커 수가 동시 처리 상한이고, 블로킹 호출이 길면 스레드가 마른다"
+    synonyms: ["Servlet container", "Tomcat", "thread-per-request"]
+    uses:
+      - thread-pool
+      - spring-term-servlet
+      - { to: conc-thread-per-connection, reason: "요청마다 스레드 하나를 쓴다" }
+  - id: spring-servlet-filter
+    kind: MECHANISM
+    name: "서블릿 필터"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "DispatcherServlet 앞에서 요청·응답을 감싸는 체인. 어느 핸들러가 불릴지 모르는 대신 모든 요청을 본다. 인코딩·트레이스 ID·입장 제한처럼 전 요청 공통 일에 쓰고, OncePerRequestFilter 로 한 요청에 한 번만 돌게 한다"
+    synonyms: ["Filter", "OncePerRequestFilter", "FilterRegistrationBean"]
+    code:
+      - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/infrastructure/admission/AdmissionControlFilter.kt, symbol: ") : OncePerRequestFilter() {", note: "동시 처리 한도를 넘는 요청을 필터에서 돌려보낸다" }
+    uses: [chain-of-responsibility, spring-term-builtin-filters]
+  - id: spring-dispatcher-servlet
+    kind: MECHANISM
+    name: "DispatcherServlet"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "모든 요청을 받는 프런트 컨트롤러. HandlerMapping 으로 처리할 핸들러를 찾고, HandlerAdapter 로 호출하고, 결과를 메시지 변환기로 응답에 쓰고, 예외는 HandlerExceptionResolver 체인에 넘긴다"
+    synonyms: ["front controller", "doDispatch"]
+    questions: ["doDispatch 안에서 인터셉터의 세 훅은 각각 언제 불리나"]
+    contains: [spring-handler-mapping, spring-handler-adapter]
+    uses: [spring-term-handler]
+  - id: spring-handler-mapping
+    kind: MECHANISM
+    name: "HandlerMapping"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "요청의 경로·메서드·헤더를 보고 처리할 핸들러(컨트롤러 메서드)와 인터셉터 체인을 고른다. @RequestMapping 을 읽는 구현이 기본이다"
+    synonyms: ["RequestMappingHandlerMapping"]
+  - id: spring-handler-adapter
+    kind: MECHANISM
+    name: "HandlerAdapter"
+    category: NETWORK
+    level: ADVANCED
+    description: "고른 핸들러를 실제로 호출한다. 파라미터는 ArgumentResolver 가 채우고 반환값은 ReturnValueHandler 가 응답으로 바꾼다"
+    synonyms: ["RequestMappingHandlerAdapter", "HandlerMethodReturnValueHandler"]
+    uses: [adapter-pattern]
+  - id: spring-handler-interceptor
+    kind: MECHANISM
+    name: "HandlerInterceptor"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "핸들러가 정해진 뒤 호출 전(preHandle)·후(postHandle)·완료(afterCompletion)에 끼어든다. 어느 컨트롤러 메서드인지 알아 애너테이션 기반 분기를 할 수 있다. @ResponseBody 응답은 postHandle 전에 이미 쓰인다"
+    synonyms: ["interceptor", "preHandle", "postHandle", "afterCompletion", "WebMvcConfigurer"]
+    alternative_to:
+      - { to: spring-servlet-filter, reason: "모든 요청 대신 핸들러를 안 뒤에 끼어든다" }
+  - id: spring-annotated-controller
+    kind: MECHANISM
+    name: "애너테이션 컨트롤러"
+    category: NETWORK
+    level: BEGINNER
+    description: "@RestController 클래스의 @GetMapping·@PostMapping 메서드가 요청을 처리한다. 경로 변수·쿼리·본문을 애너테이션으로 받고 반환 객체는 JSON 으로 쓰인다"
+    synonyms: ["@RestController", "@RequestMapping", "@PathVariable", "@RequestBody"]
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/presentation/order/controller/PurchaseConfirmController.kt, symbol: "class PurchaseConfirmController(private val confirmPurchase: ConfirmPurchaseUseCase) {", note: "유스케이스 인터페이스만 받는 컨트롤러" }
+    uses: [annotation]
+  - id: spring-argument-resolver
+    kind: MECHANISM
+    name: "ArgumentResolver"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "컨트롤러 파라미터를 채우는 전략. 파라미터 타입·애너테이션을 보고 헤더·세션·토큰에서 값을 꺼내 넣는다. 인증 헤더에서 테넌트를 꺼내는 코드를 컨트롤러마다 반복하지 않게 한다"
+    synonyms: ["HandlerMethodArgumentResolver"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/presentation/resolver/TenantIdHeaderArgumentResolver.kt, symbol: "class TenantIdHeaderArgumentResolver : HandlerMethodArgumentResolver {", note: "@TenantHeader 파라미터에 헤더 값을 넣는다" }
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/presentation/config/WebMvcConfig.kt, symbol: "override fun addArgumentResolvers(resolvers: MutableList<HandlerMethodArgumentResolver>) {", note: "리졸버를 MVC 설정에 등록한다" }
+    uses: [reflection, annotation, strategy-pattern]
+  - id: spring-message-converter
+    kind: MECHANISM
+    name: "HttpMessageConverter"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "@RequestBody 본문을 객체로, 반환 객체를 응답 본문으로 바꾸는 변환기 목록. Content-Type·Accept 와 대상 타입으로 변환기를 고르고, JSON 은 Jackson 변환기가 맡는다"
+    synonyms: ["HttpMessageConverter", "MappingJackson2HttpMessageConverter"]
+    contains: [spring-content-negotiation]
+    uses: [serialization, jackson]
+  - id: spring-content-negotiation
+    kind: MECHANISM
+    name: "콘텐츠 협상"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "요청의 Accept 헤더(또는 파라미터)와 핸들러가 낼 수 있는 미디어 타입을 맞춰 응답 형식을 고른다. 맞는 것이 없으면 406 을 낸다"
+    synonyms: ["content negotiation", "Accept", "produces"]
+    uses: [http]
+  - id: spring-response-body-advice
+    kind: MECHANISM
+    name: "ResponseBodyAdvice"
+    category: NETWORK
+    level: ADVANCED
+    description: "메시지 변환 직전에 응답 본문을 가로채 바꾼다(RequestBodyAdvice 는 요청 쪽). 공통 봉투로 감싸기·필드 가리기에 쓰지만, 모든 컨트롤러에 조용히 먹어 이미 감싼 응답을 두 번 감싸기 쉽다"
+    synonyms: ["ResponseBodyAdvice", "RequestBodyAdvice"]
+  - id: spring-exception-handler
+    kind: MECHANISM
+    name: "전역 예외 처리"
+    category: NETWORK
+    level: BEGINNER
+    description: "@RestControllerAdvice 의 @ExceptionHandler 가 컨트롤러에서 올라온 예외를 응답으로 바꾼다. 도메인 전용 핸들러는 @Order 로 공통 핸들러보다 먼저 받게 한다"
+    synonyms: ["@RestControllerAdvice", "@ExceptionHandler", "HandlerExceptionResolver"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/exception/GlobalExceptionHandler.kt, symbol: "@ExceptionHandler(MethodArgumentNotValidException::class)", note: "검증 실패를 공통 응답 포맷으로 바꾼다" }
+      - { path: order/feature/src/main/kotlin/com/kgd/order/presentation/order/controller/OrderExceptionHandler.kt, symbol: "@Order(Ordered.HIGHEST_PRECEDENCE)", note: "도메인 핸들러를 공통 핸들러보다 앞에 둔다" }
+    uses: [exception-handling, spring-term-problem-detail]
+  - id: spring-bean-validation
+    kind: MECHANISM
+    name: "Bean Validation"
+    category: NETWORK
+    level: BEGINNER
+    description: "요청 DTO 필드에 @NotBlank·@Size 같은 제약을 달고 @Valid 로 검증을 켠다. 실패하면 MethodArgumentNotValidException 이 나고 전역 핸들러가 400 으로 바꾼다. Kotlin 에서는 @field: 로 필드에 달아야 먹는다"
+    synonyms: ["@Valid", "@Validated", "Jakarta Bean Validation", "Hibernate Validator"]
+    code:
+      - { path: seller/feature/src/main/kotlin/com/kgd/seller/presentation/seller/controller/SellerController.kt, symbol: "@Valid @RequestBody request: ApplySellerRequest,", note: "입점 신청 본문을 검증한다" }
+      - { path: seller/feature/src/main/kotlin/com/kgd/seller/presentation/seller/dto/SellerRequests.kt, symbol: "@field:NotBlank @field:Size(max = 100) val businessName: String,", note: "제약을 Kotlin 프로퍼티의 필드에 단다" }
+    uses: [annotation, lang-annotation-use-site-target]
+  - id: spring-async-request
+    kind: MECHANISM
+    name: "비동기 요청 처리"
+    category: NETWORK
+    level: ADVANCED
+    description: "컨트롤러가 DeferredResult·Callable·SseEmitter 를 반환하면 요청 스레드를 돌려주고 응답은 다른 스레드가 나중에 쓴다. 긴 폴링·서버 푸시에서 워커 스레드를 붙잡지 않는다"
+    synonyms: ["DeferredResult", "Callable", "SseEmitter", "async servlet"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/chart/service/PriceStreamService.kt, symbol: "import org.springframework.web.servlet.mvc.method.annotation.SseEmitter", note: "시세 스트림을 SseEmitter 로 흘린다" }
+    uses: [sse]
+  - id: spring-http-client
+    kind: MECHANISM
+    name: "HTTP 클라이언트"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "다른 서비스·외부 API 를 부르는 Spring 의 클라이언트들. 동기 RestTemplate·RestClient, 논블로킹 WebClient, 인터페이스 선언형 HTTP interface 가 있다. 타임아웃을 항상 명시한다"
+    contains: [spring-rest-template, spring-rest-client, spring-webclient, spring-http-interface]
+  - id: spring-rest-template
+    kind: MECHANISM
+    name: "RestTemplate"
+    category: NETWORK
+    level: BEGINNER
+    description: "템플릿 메서드 모양의 동기 HTTP 클라이언트. 유지보수 모드이고 새 코드는 RestClient 를 쓴다"
+    code:
+      - { path: recommendation/feature/src/main/kotlin/com/kgd/recommendation/infrastructure/client/EmbeddingAnnRestClient.kt, symbol: "private val restTemplate: RestTemplate = RestTemplate(", note: "ANN 사이드카를 동기로 부른다" }
+  - id: spring-rest-client
+    kind: MECHANISM
+    name: "RestClient"
+    category: NETWORK
+    level: BEGINNER
+    description: "Spring 6.1 의 동기 fluent HTTP 클라이언트. RestTemplate 의 기반(메시지 변환기·인터셉터)을 그대로 쓰면서 WebClient 같은 체인 API 를 준다"
+    code:
+      - { path: payment/feature/src/main/kotlin/com/kgd/payment/infrastructure/pg/toss/TossPgConfig.kt, symbol: "): RestClient = tossRestClient(baseUrl, secretKey, CONNECT_TIMEOUT, READ_TIMEOUT)", note: "PG 호출용 클라이언트를 타임아웃과 함께 만든다" }
+    alternative_to:
+      - { to: spring-rest-template, reason: "같은 동기 모델에 체인 API 를 준다" }
+  - id: spring-webclient
+    kind: MECHANISM
+    name: "WebClient"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "Reactor 기반 논블로킹 HTTP 클라이언트. Mono·Flux 를 돌려주고 코루틴에서는 awaitBody 로 쓴다. MVC 서비스에서 block() 으로 쓰면 이점이 사라진다"
+    synonyms: ["WebClient", "WebClientCustomizer"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/notification/TelegramBotNotificationSender.kt, symbol: "private val webClient: WebClient by lazy { webClientBuilder.baseUrl(apiBase).build() }", note: "공통 빌더에서 알림용 클라이언트를 만든다" }
+      - { path: common/src/main/kotlin/com/kgd/common/webclient/CommonWebClientAutoConfiguration.kt, symbol: "fun commonWebClientCustomizer(): WebClientCustomizer =", note: "모든 WebClient 빌더에 메모리 한도를 건다" }
+    uses:
+      - spring-webflux
+      - reactive-streams
+      - { to: reactor-netty, reason: "WebClient 의 기본 전송 계층이다" }
+    alternative_to:
+      - { to: spring-rest-client, reason: "블로킹 대신 논블로킹으로 부른다" }
+  - id: spring-http-interface
+    kind: MECHANISM
+    name: "HTTP interface 클라이언트"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "@HttpExchange 를 단 인터페이스만 선언하면 RestClient·WebClient 위에 구현 프록시를 만든다. Feign 과 같은 선언형 클라이언트를 Spring 에 내장한 것이다"
+    synonyms: ["@HttpExchange", "HttpServiceProxyFactory", "declarative HTTP client"]
+    uses: [spring-rest-client, spring-jdk-dynamic-proxy]
+  - id: spring-filter-exception-escape
+    kind: PROBLEM
+    name: "필터 예외의 처리 누락"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "필터는 DispatcherServlet 밖이라 거기서 던진 예외는 @RestControllerAdvice 가 잡지 못하고 컨테이너 기본 오류 페이지가 나가는 상태. 필터 안에서 응답을 직접 쓰거나 전용 처리기를 둔다"
+  - id: spring-webmvc
+    kind: TECHNOLOGY
+    name: "Spring Web MVC"
+    category: NETWORK
+    level: BEGINNER
+    description: "서블릿 위의 동기 웹 스택. 이 레포의 서비스 API 는 전부 이것으로 요청을 받고, 게이트웨이만 WebFlux 다"
+    synonyms: ["spring-boot-starter-web", "Spring MVC"]
+    code:
+      - { path: order/feature/build.gradle.kts, symbol: "implementation(libs.spring.boot.starter.web)", note: "order 도메인이 MVC 스택을 쓴다" }
+    implements:
+      - { to: spring-dispatcher-servlet, reason: "프런트 컨트롤러를 준다" }
+      - { to: spring-handler-interceptor, reason: "인터셉터 체인을 준다" }
+      - { to: spring-argument-resolver, reason: "파라미터 해석 전략을 확장점으로 연다" }
+      - { to: spring-message-converter, reason: "변환기 목록을 구성한다" }
+      - { to: spring-exception-handler, reason: "HandlerExceptionResolver 체인을 준다" }
+
+  # ── 리액티브 웹 (WebFlux · Gateway) ───────────────────────
+  - id: spring-reactive-web
+    kind: STAGE
+    name: "리액티브 웹 (WebFlux · Gateway)"
+    category: NETWORK
+    level: ADVANCED
+    description: "적은 이벤트 루프 스레드로 많은 연결을 받는 WebFlux 의 요청 처리와, 그 위에서 도는 Spring Cloud Gateway 의 라우트·필터를 다룬다. 블로킹 호출 하나가 루프 전체를 멈춘다는 제약이 모든 설계를 정한다"
+    questions: ["WebFlux 필터에서 MDC 가 비어 있는 이유는 무엇인가"]
+    contains: [spring-dispatcher-handler, spring-functional-endpoint, spring-web-filter, spring-gateway-route, spring-gateway-filter, spring-reactor-context-loss]
+    flows_to: [spring-execution]
+  - id: spring-dispatcher-handler
+    kind: MECHANISM
+    name: "DispatcherHandler"
+    category: NETWORK
+    level: ADVANCED
+    description: "WebFlux 의 프런트 컨트롤러. 구조는 DispatcherServlet 과 같지만 핸들러가 Mono·Flux 를 돌려주고 스레드를 붙잡지 않는다. Reactor Netty 이벤트 루프 위에서 돈다"
+    synonyms: ["WebFlux", "Reactor Netty"]
+    uses: [spring-webflux, reactive-streams, conc-blocking-nonblocking, conc-reactor-context]
+    alternative_to:
+      - { to: spring-dispatcher-servlet, reason: "요청당 스레드 대신 이벤트 루프로 처리한다" }
+    causes:
+      - { to: conc-event-loop-blocking, reason: "핸들러 안의 블로킹 호출이 루프를 멈춘다" }
+      - { to: spring-reactor-context-loss, reason: "요청 처리가 여러 스레드를 옮겨 다닌다" }
+  - id: spring-functional-endpoint
+    kind: MECHANISM
+    name: "함수형 엔드포인트"
+    category: NETWORK
+    level: ADVANCED
+    description: "RouterFunction·HandlerFunction 으로 라우트를 코드로 조립한다. Kotlin 에서는 router·coRouter DSL 로 쓴다. 애너테이션 스캔 없이 라우팅이 한 곳에 보인다"
+    synonyms: ["RouterFunction", "coRouter", "HandlerFunction"]
+    uses: [dsl, lambda]
+    alternative_to:
+      - { to: spring-annotated-controller, reason: "애너테이션 대신 라우터 코드로 매핑한다" }
+  - id: spring-web-filter
+    kind: MECHANISM
+    name: "WebFilter"
+    category: NETWORK
+    level: ADVANCED
+    description: "WebFlux 의 필터. ServerWebExchange 와 체인을 받아 Mono<Void> 를 돌려준다. Spring Security 의 리액티브 필터 체인도 WebFilter 하나로 걸린다"
+    synonyms: ["WebFilter", "SecurityWebFilterChain"]
+    code:
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/config/SecurityConfig.kt, symbol: "fun securityWebFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain =", note: "게이트웨이 보안 설정이 WebFilter 체인으로 등록된다" }
+    uses: [spring-security]
+    alternative_to:
+      - { to: spring-servlet-filter, reason: "서블릿 대신 리액티브 교환 객체를 감싼다" }
+  - id: spring-gateway-route
+    kind: MECHANISM
+    name: "게이트웨이 라우트"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "Spring Cloud Gateway 의 라우트는 id · predicate(경로·호스트·헤더 조건) · filter 목록 · 대상 uri 로 이뤄진다. 첫 번째로 맞는 라우트가 요청을 받는다"
+    synonyms: ["route", "predicate", "Path="]
+    code:
+      - { path: gateway/src/main/resources/application.yml, symbol: "- Path=/api/v1/experiments/**", note: "경로 조건으로 실험 서비스에 보낸다" }
+    uses: [spring-cloud-gateway, api-gateway]
+  - id: spring-gateway-filter
+    kind: MECHANISM
+    name: "게이트웨이 필터"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "모든 라우트에 걸리는 GlobalFilter 와 라우트마다 설정으로 붙이는 GatewayFilter(팩토리)가 있다. Ordered 순서대로 체인을 이루고 인증·방문자 ID·로깅·레이트 리밋을 여기서 한다"
+    synonyms: ["GlobalFilter", "GatewayFilterFactory", "AbstractGatewayFilterFactory"]
+    code:
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/filter/VisitorIdFilter.kt, symbol: "class VisitorIdFilter : GlobalFilter, Ordered {", note: "모든 요청에 방문자 ID 를 붙인다" }
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/filter/AuthenticationGatewayFilter.kt, symbol: ") : AbstractGatewayFilterFactory<AuthenticationGatewayFilter.Config>(Config::class.java) {", note: "라우트별로 거는 인증 필터 팩토리" }
+    uses: [spring-cloud-gateway, chain-of-responsibility, spring-web-filter]
+  - id: spring-reactor-context-loss
+    kind: PROBLEM
+    name: "리액터에서 끊기는 ThreadLocal"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "MDC·트랜잭션·SecurityContextHolder 처럼 ThreadLocal 에 둔 값이 리액터 체인이 스레드를 옮길 때 따라가지 않는 상태. Reactor Context 와 context-propagation 으로 옮겨야 한다"
+    synonyms: ["MDC 유실", "Reactor Context"]
+
+  # ── 스케줄 · 비동기 · 배치 실행 ──────────────────────────
+  - id: spring-execution
+    kind: STAGE
+    name: "스케줄 · 비동기 · 배치 실행"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "요청 밖에서 도는 일을 정한다. 주기 작업은 스케줄러, 호출자를 기다리게 하지 않을 일은 비동기 메서드, 대량 데이터를 나눠 처리하고 재시작할 일은 배치 잡으로 둔다"
+    questions: ["레플리카가 셋이면 @Scheduled 잡은 몇 번 도나"]
+    contains: [spring-scheduling, spring-async-method, spring-batch-job, spring-duplicate-schedule, spring-batch]
+    flows_to: [spring-operations]
+  - id: spring-scheduling
+    kind: MECHANISM
+    name: "스케줄링 (@Scheduled)"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "@EnableScheduling 을 켜고 메서드에 fixedDelay·fixedRate·cron 을 달면 스케줄러 스레드가 주기적으로 부른다. 기본 스케줄러 스레드는 하나라 긴 잡이 다른 잡을 밀어낸다"
+    synonyms: ["@Scheduled", "@EnableScheduling", "TaskScheduler"]
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/infrastructure/scheduling/SettlementJob.kt, symbol: "@Scheduled(initialDelay = INITIAL_DELAY_MS, fixedDelay = INTERVAL_MS)", note: "정산 잡을 고정 간격으로 돌린다" }
+      - { path: commerce/app/src/main/kotlin/com/kgd/commerce/CommerceApplication.kt, symbol: "@EnableScheduling", note: "commerce 호스트에서 스케줄러를 켠다" }
+    causes:
+      - { to: spring-duplicate-schedule, reason: "각 레플리카가 자기 스케줄러를 갖는다" }
+    uses:
+      - { to: conc-scheduled-executor, reason: "@Scheduled 가 예약 실행기에서 돈다" }
+  - id: spring-async-method
+    kind: MECHANISM
+    name: "비동기 메서드 (@Async)"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "@Async 메서드 호출을 프록시가 TaskExecutor 에 넘기고 호출자는 바로 돌아간다. 전용 스레드 풀을 지정하지 않으면 기본 실행기를 공유하고, 내부 호출에는 적용되지 않는다"
+    synonyms: ["@Async", "@EnableAsync", "TaskExecutor", "ThreadPoolTaskExecutor"]
+    code:
+      - { path: code-dictionary/feature/src/main/kotlin/com/kgd/codedictionary/infrastructure/config/AsyncConfig.kt, symbol: "fun indexSyncExecutor(): Executor = ThreadPoolTaskExecutor().apply {", note: "색인 동기화 전용 스레드 풀" }
+    uses: [thread-pool, spring-aop]
+    causes:
+      - { to: spring-self-invocation, reason: "같은 빈 안의 호출은 동기로 돈다" }
+  - id: spring-batch-job
+    kind: MECHANISM
+    name: "배치 잡"
+    category: DATA
+    level: INTERMEDIATE
+    description: "Spring Batch 의 Job 은 Step 여럿으로 이뤄지고, 실행 이력과 진행 위치를 JobRepository 에 남겨 실패한 지점부터 다시 돌 수 있다"
+    synonyms: ["Job", "Step", "JobBuilder"]
+    code:
+      - { path: search/batch/src/main/kotlin/com/kgd/search/infrastructure/job/AttractionApiReindexJobConfig.kt, symbol: "JobBuilder(\"attractionApiReindexJob\", jobRepository)", note: "관광지 재색인 잡 정의" }
+    contains: [spring-chunk-processing, spring-tasklet]
+    uses: [spring-term-job-repository]
+  - id: spring-chunk-processing
+    kind: MECHANISM
+    name: "청크 처리"
+    category: DATA
+    level: INTERMEDIATE
+    description: "ItemReader 로 한 건씩 읽고 ItemProcessor 로 바꿔 chunk 크기만큼 모이면 ItemWriter 가 한 트랜잭션으로 쓴다. 실패는 그 청크만 되돌린다"
+    synonyms: ["chunk-oriented processing", "ItemReader", "ItemProcessor", "ItemWriter"]
+    code:
+      - { path: search/batch/src/main/kotlin/com/kgd/search/infrastructure/job/ProductDbReindexJobConfig.kt, symbol: ".chunk<ProductRow, ProductDocument>(pageSize, transactionManager)", note: "DB 행을 문서로 바꿔 페이지 크기 단위로 쓴다" }
+      - { path: search/batch/src/main/kotlin/com/kgd/search/infrastructure/job/ProductEsItemWriter.kt, symbol: ") : ItemWriter<ProductDocument>, StepExecutionListener {", note: "청크를 OpenSearch 벌크로 쓰는 writer" }
+  - id: spring-tasklet
+    kind: MECHANISM
+    name: "Tasklet"
+    category: DATA
+    level: INTERMEDIATE
+    description: "Step 하나를 execute 메서드 하나로 끝낸다. 외부 API 한 번 호출·파일 정리처럼 읽기-쓰기로 나눌 필요가 없는 일에 쓴다"
+    synonyms: ["Tasklet", "RepeatStatus"]
+    code:
+      - { path: search/batch/src/main/kotlin/com/kgd/search/infrastructure/job/AttractionApiReindexTasklet.kt, symbol: "override fun execute(contribution: StepContribution, chunkContext: ChunkContext): RepeatStatus =", note: "원천 API 재색인을 한 스텝으로 돌린다" }
+    alternative_to:
+      - { to: spring-chunk-processing, reason: "읽기·쓰기 반복 대신 한 번의 작업으로 끝낸다" }
+  - id: spring-duplicate-schedule
+    kind: PROBLEM
+    name: "레플리카 중복 실행"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "스케줄 잡이 파드마다 돌아 정산·만료 처리가 여러 번 실행되는 상태. 분산 락·전용 파드·CronJob 으로 한 번만 돌게 한다"
+    causes: [dist-duplicate-delivery]
+  - id: spring-batch
+    kind: TECHNOLOGY
+    name: "Spring Batch"
+    category: DATA
+    level: INTERMEDIATE
+    description: "잡·스텝·청크 모델과 실행 이력 저장소를 주는 배치 프레임워크. 이 레포는 검색 재색인 배치(search/batch)에 쓴다"
+    code:
+      - { path: search/batch/build.gradle.kts, symbol: "implementation(libs.spring.boot.starter.batch)", note: "검색 배치 모듈이 Spring Batch 를 쓴다" }
+    implements:
+      - { to: spring-batch-job, reason: "Job·Step·JobRepository 를 준다" }
+      - { to: spring-chunk-processing, reason: "청크 트랜잭션 루프를 준다" }
+      - { to: spring-tasklet, reason: "Tasklet 스텝을 준다" }
+
+  # ── 운영 노출 (Actuator) ─────────────────────────────────
+  - id: spring-operations
+    kind: STAGE
+    name: "운영 노출 (Actuator)"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "상태·지표·설정을 HTTP 엔드포인트로 내보내 쿠버네티스 프로브와 모니터링이 읽게 하고, 종료 신호를 받으면 처리 중 요청을 끝낸 뒤 내려간다"
+    questions: ["readiness 와 liveness 헬스 그룹을 나누는 이유는 무엇인가"]
+    contains: [spring-actuator-endpoint, spring-health-indicator, spring-custom-endpoint, spring-graceful-shutdown, spring-actuator-exposure, spring-boot-actuator]
+    flows_to: [spring-testing]
+  - id: spring-actuator-endpoint
+    kind: MECHANISM
+    name: "Actuator 엔드포인트"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "health·info·metrics·prometheus·loggers·env 같은 운영 엔드포인트를 /actuator 아래에 연다. 노출할 목록을 명시하고 나머지는 닫는다"
+    synonyms: ["/actuator", "management.endpoints.web.exposure.include"]
+    code:
+      - { path: commerce/app/src/main/resources/application.yml, symbol: "include: health,info,metrics,prometheus", note: "노출할 엔드포인트를 넷으로 제한한다" }
+    causes:
+      - { to: spring-actuator-exposure, reason: "env·heapdump 까지 열면 비밀과 메모리가 샌다" }
+  - id: spring-health-indicator
+    kind: MECHANISM
+    name: "HealthIndicator"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "DB·브로커·외부 의존의 상태를 UP·DOWN 으로 모아 /actuator/health 에 합친다. liveness·readiness 그룹으로 나눠 쿠버네티스 프로브가 각각 읽는다"
+    synonyms: ["HealthIndicator", "health group", "liveness", "readiness"]
+    code:
+      - { path: blog/feature/src/main/kotlin/com/kgd/blog/infrastructure/render/BlogShellHealthIndicator.kt, symbol: ") : HealthIndicator {", note: "블로그 셸 HTML 을 받아 왔는지를 상태로 낸다" }
+    uses: [health-check, infra-probe]
+  - id: spring-custom-endpoint
+    kind: MECHANISM
+    name: "사용자 정의 엔드포인트"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "@Endpoint 와 @ReadOperation·@WriteOperation 으로 운영용 엔드포인트를 만든다. 노출 설정·보안을 기본 엔드포인트와 같이 받는다"
+    synonyms: ["@Endpoint", "@ReadOperation"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/observability/IngestEndpoint.kt, symbol: "@Endpoint(id = \"ingest\")", note: "수집 상태를 보는 운영 엔드포인트" }
+  - id: spring-graceful-shutdown
+    kind: MECHANISM
+    name: "우아한 종료"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "server.shutdown=graceful 이면 컨텍스트 종료 때 웹 서버가 새 요청을 거절하고 처리 중인 요청을 spring.lifecycle.timeout-per-shutdown-phase 안에 끝낸 뒤 빈을 닫는다. 파드 쪽 종료 절차(preStop·유예 시간)와 짝을 이룬다"
+    synonyms: ["server.shutdown=graceful", "timeout-per-shutdown-phase"]
+    code:
+      - { path: commerce/app/src/main/resources/application.yml, symbol: "shutdown: graceful", note: "commerce 호스트의 종료 방식" }
+    uses: [infra-graceful-shutdown]
+    mitigates: [infra-deploy-downtime]
+  - id: spring-actuator-exposure
+    kind: PROBLEM
+    name: "운영 엔드포인트 노출"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "env·configprops·heapdump 가 외부에 열려 비밀번호·키·메모리 내용이 새는 상태. 노출 목록을 좁히고 게이트웨이에서 /actuator 경로를 막는다"
+  - id: spring-boot-actuator
+    kind: TECHNOLOGY
+    name: "Spring Boot Actuator"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "운영 엔드포인트와 Micrometer 지표 연동을 주는 Spring Boot 모듈"
+    code:
+      - { path: order/feature/build.gradle.kts, symbol: "implementation(libs.spring.boot.starter.actuator)", note: "order 도메인이 Actuator 를 싣는다" }
+    implements:
+      - { to: spring-actuator-endpoint, reason: "기본 엔드포인트를 준다" }
+      - { to: spring-health-indicator, reason: "헬스 합산과 그룹을 준다" }
+      - { to: spring-custom-endpoint, reason: "@Endpoint 확장점을 준다" }
+
+  # ── 스프링 테스트 ────────────────────────────────────────
+  - id: spring-testing
+    kind: STAGE
+    name: "스프링 테스트"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "스프링 컨텍스트를 어디까지 띄워 검증할지 정한다. 전체 컨텍스트는 느리지만 배선을 보고, 슬라이스·스탠드얼론은 빠르지만 일부만 본다. 컨텍스트 캐시가 깨지지 않게 설정을 맞춘다"
+    questions: ["@SpringBootTest 마다 설정이 조금씩 다르면 스위트 시간이 왜 늘어나나"]
+    contains: [spring-test-context, spring-test-slice, spring-mockmvc, spring-webtestclient, spring-dynamic-property, spring-test-bean-override, spring-context-cache-miss]
+  - id: spring-test-context
+    kind: MECHANISM
+    name: "스프링 통합 테스트 컨텍스트"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "@SpringBootTest 가 애플리케이션 컨텍스트 전체를 띄워 실제 빈 배선·트랜잭션·설정으로 검증한다. 같은 설정의 컨텍스트는 캐시해 테스트 클래스끼리 재사용한다. Kotest 는 SpringExtension 으로 붙인다"
+    synonyms: ["@SpringBootTest", "SpringExtension", "context caching"]
+    code:
+      - { path: commerce/app/src/test/kotlin/com/kgd/commerce/promotion/PromotionIntegrationSpec.kt, symbol: "override fun extensions() = listOf(SpringExtension)", note: "Kotest 스펙에 스프링 컨텍스트를 붙인다" }
+    uses:
+      - integration-test
+      - kotest
+      - { to: test-shared-container, reason: "비싼 기동을 여러 테스트가 재사용한다" }
+  - id: spring-test-slice
+    kind: MECHANISM
+    name: "테스트 슬라이스"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "@WebMvcTest·@DataJpaTest·@WebFluxTest 처럼 한 계층에 필요한 자동 구성만 켠 작은 컨텍스트. 나머지 빈은 테스트 더블로 채운다"
+    synonyms: ["@WebMvcTest", "@DataJpaTest", "@WebFluxTest", "test slice"]
+    alternative_to:
+      - { to: spring-test-context, reason: "전체 대신 한 계층만 띄운다" }
+      - { to: test-component-test, reason: "컨텍스트 일부만 띄워 좁힌다" }
+  - id: spring-mockmvc
+    kind: MECHANISM
+    name: "MockMvc"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "서블릿 컨테이너 없이 DispatcherServlet 을 흉내 내 요청·응답을 검증한다. standaloneSetup 은 컨트롤러만 직접 넣어 컨텍스트 없이 돈다"
+    synonyms: ["MockMvc", "standaloneSetup"]
+    code:
+      - { path: seller/feature/src/test/kotlin/com/kgd/seller/presentation/seller/controller/SellerControllerTest.kt, symbol: ".standaloneSetup(SellerController(service, service, applications), SellerAdminController(service, admin))", note: "컨트롤러를 직접 넣은 스탠드얼론 MockMvc" }
+    uses: [spring-dispatcher-servlet, unit-test]
+  - id: spring-webtestclient
+    kind: MECHANISM
+    name: "WebTestClient"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "WebFlux 애플리케이션이나 실제 서버에 요청을 보내 응답을 검증하는 테스트 클라이언트"
+    synonyms: ["WebTestClient"]
+    code:
+      - { path: gateway/src/test/kotlin/com/kgd/gateway/config/GatewayRouteAuthSpec.kt, symbol: "val client = WebTestClient", note: "게이트웨이 라우트 인증을 검증한다" }
+    alternative_to:
+      - { to: spring-mockmvc, reason: "리액티브 스택을 같은 방식으로 검증한다" }
+  - id: spring-dynamic-property
+    kind: MECHANISM
+    name: "@DynamicPropertySource"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "테스트가 띄운 컨테이너의 포트·URL 을 컨텍스트가 뜨기 전에 프로퍼티로 넣는다. Testcontainers 와 짝을 이룬다"
+    synonyms: ["@DynamicPropertySource", "@ServiceConnection"]
+    code:
+      - { path: commerce/app/src/test/kotlin/com/kgd/commerce/outbox/OutboxRelayIntegrationSpec.kt, symbol: "@DynamicPropertySource", note: "컨테이너 DB·Kafka 주소를 프로퍼티로 넣는다" }
+    uses: [testcontainers, test-disposable-dependency]
+  - id: spring-test-bean-override
+    kind: MECHANISM
+    name: "테스트 빈 교체"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "@TestConfiguration·@MockitoBean(@MockkBean) 으로 컨텍스트 안의 빈 일부를 테스트 더블로 바꾼다. 바꿀 때마다 새 컨텍스트가 필요해 캐시가 깨진다"
+    synonyms: ["@TestConfiguration", "@MockitoBean", "@MockkBean"]
+    code:
+      - { path: commerce/app/src/test/kotlin/com/kgd/commerce/saga/SagaE2ESupport.kt, symbol: "@TestConfiguration(proxyBeanMethods = false)", note: "사가 E2E 에서 외부 의존을 대체 빈으로 넣는다" }
+    uses: [test-double-substitution, mockk]
+    causes:
+      - { to: spring-context-cache-miss, reason: "교체 조합마다 다른 컨텍스트 키가 된다" }
+  - id: spring-context-cache-miss
+    kind: PROBLEM
+    name: "테스트 컨텍스트 캐시 깨짐"
+    category: TESTING
+    level: INTERMEDIATE
+    description: "테스트 클래스마다 프로파일·프로퍼티·교체 빈이 조금씩 달라 컨텍스트를 매번 새로 띄우는 상태. 스위트 시간이 컨텍스트 수에 비례해 는다"
+    causes: [test-slow-suite]
+
+  # ── 용어 사전 ─────────────────────────────────────────────
+  - id: spring-glossary
+    kind: TERM
+    name: "Spring 용어 사전"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "Spring 코드와 문서를 읽을 때 나오는 이름들. 하는 일이 아니라 컨테이너·AOP·트랜잭션·웹·데이터에 「있는 것」을 모은다"
+    synonyms: ["glossary", "용어집"]
+    contains: [spring-glossary-container, spring-glossary-aop, spring-glossary-transaction, spring-glossary-web, spring-glossary-data]
+  - id: spring-glossary-container
+    kind: TERM
+    name: "컨테이너 용어"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "IoC 컨테이너와 설정을 말할 때 쓰는 이름"
+    contains: [spring-term-bean, spring-term-bean-definition, spring-term-application-context, spring-term-stereotype-annotation, spring-term-property-source, spring-term-starter]
+  - id: spring-term-bean
+    kind: TERM
+    name: "빈"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "Spring 컨테이너가 만들고 관리하는 객체. 이름·타입·스코프를 갖고 다른 빈에 주입된다"
+    synonyms: ["bean", "Spring bean"]
+  - id: spring-term-bean-definition
+    kind: TERM
+    name: "빈 정의"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "빈을 어떻게 만들지 적은 메타데이터(클래스·스코프·의존성·초기화 메서드). 컨테이너는 객체를 만들기 전에 이것부터 모은다"
+    synonyms: ["BeanDefinition"]
+  - id: spring-term-application-context
+    kind: TERM
+    name: "ApplicationContext"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "빈 팩토리에 이벤트 발행·메시지·환경(Environment)·리소스 로딩을 더한 컨테이너 인터페이스. 애플리케이션 하나가 보통 하나를 갖는다"
+    synonyms: ["application context"]
+  - id: spring-term-stereotype-annotation
+    kind: TERM
+    name: "스테레오타입 애너테이션"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "@Component 와 그 특수형 @Service·@Repository·@Controller·@Configuration. 스캔 대상 표시이고, @Repository 는 영속 예외 변환이 더 붙는다"
+    synonyms: ["@Component", "@Service", "@Repository", "@Controller"]
+  - id: spring-term-property-source
+    kind: TERM
+    name: "PropertySource"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "키-값 설정의 출처 하나(YAML 파일·환경변수·시스템 프로퍼티). Environment 가 여러 출처를 우선순위대로 겹쳐 조회한다"
+    synonyms: ["property source", "Environment"]
+  - id: spring-term-starter
+    kind: TERM
+    name: "스타터"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "기능 하나에 필요한 의존성 묶음(spring-boot-starter-web 등). 자동 구성이 이 의존성이 있는지를 보고 켜진다"
+    synonyms: ["starter", "spring-boot-starter"]
+  - id: spring-glossary-aop
+    kind: TERM
+    name: "AOP 용어"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "AOP 를 말할 때 쓰는 이름"
+    contains: [spring-term-aspect, spring-term-advice, spring-term-pointcut, spring-term-join-point, spring-term-advisor, spring-term-weaving, spring-term-proxy-target]
+  - id: spring-term-aspect
+    kind: TERM
+    name: "애스펙트"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "어드바이스와 포인트컷을 묶은 모듈. @Aspect 클래스 하나가 애스펙트 하나다"
+    synonyms: ["aspect", "@Aspect"]
+  - id: spring-term-advice
+    kind: TERM
+    name: "어드바이스"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "조인 포인트에서 실행할 부가 동작과 그 시점. @Before·@AfterReturning·@AfterThrowing·@After·@Around 가 있고 @Around 만 원래 호출을 막거나 바꿀 수 있다"
+    synonyms: ["advice", "@Around", "@Before"]
+  - id: spring-term-pointcut
+    kind: TERM
+    name: "포인트컷"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "어드바이스를 적용할 조인 포인트를 고르는 식. execution(* com.kgd..*Service.*(..)) 이나 @annotation(...) 으로 쓴다"
+    synonyms: ["pointcut", "execution()", "@annotation()"]
+  - id: spring-term-join-point
+    kind: TERM
+    name: "조인 포인트"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "어드바이스가 끼어들 수 있는 실행 지점. Spring AOP 에서는 메서드 실행 하나뿐이다"
+    synonyms: ["join point", "ProceedingJoinPoint"]
+  - id: spring-term-advisor
+    kind: TERM
+    name: "어드바이저"
+    category: DESIGN_PATTERN
+    level: ADVANCED
+    description: "포인트컷 하나와 어드바이스 하나를 묶은 Spring 내부 단위. @Transactional 은 TransactionAttributeSourceAdvisor 로 등록된다"
+    synonyms: ["advisor"]
+  - id: spring-term-weaving
+    kind: TERM
+    name: "위빙"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "애스펙트를 대상 코드에 적용하는 일. 시점에 따라 컴파일 타임·로드 타임·런타임(프록시) 위빙으로 나뉜다"
+    synonyms: ["weaving"]
+  - id: spring-term-proxy-target
+    kind: TERM
+    name: "타깃 객체"
+    category: DESIGN_PATTERN
+    level: INTERMEDIATE
+    description: "프록시가 감싼 원래 빈. 타깃 안에서 this 는 프록시가 아니라 타깃 자신이다"
+    synonyms: ["target object", "AopContext.currentProxy()"]
+  - id: spring-glossary-transaction
+    kind: TERM
+    name: "트랜잭션 용어"
+    category: DATA
+    level: INTERMEDIATE
+    description: "Spring 트랜잭션을 말할 때 쓰는 이름"
+    contains: [spring-term-transaction-attribute, spring-term-physical-logical-transaction, spring-term-rollback-only, spring-term-transaction-timeout]
+  - id: spring-term-transaction-attribute
+    kind: TERM
+    name: "트랜잭션 속성"
+    category: DATA
+    level: INTERMEDIATE
+    description: "@Transactional 에 적는 전파·격리·readOnly·timeout·롤백 규칙·트랜잭션 매니저 이름의 묶음"
+    synonyms: ["TransactionDefinition", "transaction attribute"]
+  - id: spring-term-physical-logical-transaction
+    kind: TERM
+    name: "물리 · 논리 트랜잭션"
+    category: DATA
+    level: ADVANCED
+    description: "DB 커넥션 위의 실제 트랜잭션이 물리 트랜잭션이고, @Transactional 메서드마다 잡히는 범위가 논리 트랜잭션이다. REQUIRED 로 참여한 논리 트랜잭션 여럿이 물리 트랜잭션 하나를 나눠 쓴다"
+    synonyms: ["physical transaction", "logical transaction"]
+  - id: spring-term-rollback-only
+    kind: TERM
+    name: "rollback-only 표시"
+    category: DATA
+    level: INTERMEDIATE
+    description: "물리 트랜잭션을 커밋할 수 없게 찍은 표시. 참여한 논리 트랜잭션 하나라도 찍으면 바깥이 커밋을 시도할 때 UnexpectedRollbackException 이 난다"
+    synonyms: ["rollback-only", "setRollbackOnly"]
+  - id: spring-term-transaction-timeout
+    kind: TERM
+    name: "트랜잭션 타임아웃"
+    category: DATA
+    level: INTERMEDIATE
+    description: "트랜잭션이 이 시간을 넘으면 다음 SQL 실행 시점에 롤백시키는 속성. 이미 실행 중인 SQL 을 끊지는 않는다"
+    synonyms: ["timeout", "spring.transaction.default-timeout"]
+  - id: spring-glossary-web
+    kind: TERM
+    name: "웹 용어"
+    category: NETWORK
+    level: BEGINNER
+    description: "Spring Web 을 말할 때 쓰는 이름"
+    contains: [spring-term-servlet, spring-term-handler, spring-term-builtin-filters, spring-term-problem-detail, spring-term-response-entity]
+  - id: spring-term-servlet
+    kind: TERM
+    name: "서블릿"
+    category: NETWORK
+    level: BEGINNER
+    description: "요청 하나를 받아 응답을 쓰는 자바 웹 표준 컴포넌트. Spring MVC 에서는 DispatcherServlet 하나가 모든 요청을 받는다"
+    synonyms: ["Servlet", "Jakarta Servlet"]
+  - id: spring-term-handler
+    kind: TERM
+    name: "핸들러"
+    category: NETWORK
+    level: BEGINNER
+    description: "요청을 실제로 처리하는 대상. 애너테이션 컨트롤러에서는 @RequestMapping 메서드 하나(HandlerMethod)다"
+    synonyms: ["handler", "HandlerMethod"]
+  - id: spring-term-builtin-filters
+    kind: TERM
+    name: "기본 제공 필터"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "Spring 이 주는 서블릿 필터들. CharacterEncodingFilter·ForwardedHeaderFilter(프록시 뒤 원래 호스트·스킴 복원)·ShallowEtagHeaderFilter(본문 해시 ETag)·CommonsRequestLoggingFilter 등"
+    synonyms: ["ForwardedHeaderFilter", "ShallowEtagHeaderFilter", "CharacterEncodingFilter"]
+  - id: spring-term-problem-detail
+    kind: TERM
+    name: "ProblemDetail"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "RFC 9457(구 7807) 의 application/problem+json 오류 본문(type·title·status·detail·instance). Spring 6 이 기본 지원하지만 이 레포는 ApiResponse 봉투로 오류를 낸다"
+    synonyms: ["Problem Details", "RFC 7807", "RFC 9457"]
+  - id: spring-term-response-entity
+    kind: TERM
+    name: "ResponseEntity"
+    category: NETWORK
+    level: BEGINNER
+    description: "상태 코드·헤더·본문을 함께 담은 응답 객체. 컨트롤러가 상태 코드를 경우마다 바꿔야 할 때 반환한다"
+    synonyms: ["ResponseEntity"]
+  - id: spring-glossary-data
+    kind: TERM
+    name: "데이터 · 배치 용어"
+    category: DATA
+    level: BEGINNER
+    description: "Spring Data 와 Spring Batch 를 말할 때 쓰는 이름"
+    contains: [spring-term-page-slice, spring-term-job-repository]
+  - id: spring-term-page-slice
+    kind: TERM
+    name: "Page · Slice"
+    category: DATA
+    level: BEGINNER
+    description: "페이징 결과 타입. Page 는 전체 건수·전체 페이지 수를 담아 count 쿼리가 더 나가고, Slice 는 다음 페이지가 있는지만 담는다"
+    synonyms: ["Page", "Slice", "Pageable"]
+  - id: spring-term-job-repository
+    kind: TERM
+    name: "JobRepository"
+    category: DATA
+    level: INTERMEDIATE
+    description: "잡·스텝 실행 이력과 ExecutionContext(진행 위치)를 저장하는 Spring Batch 메타데이터 저장소. 재시작 지점이 여기서 나온다"
+    synonyms: ["JobRepository", "JobExecution", "ExecutionContext"]

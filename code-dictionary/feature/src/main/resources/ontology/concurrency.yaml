@@ -8,9 +8,9 @@ concepts:
     name: "동시성"
     category: CONCURRENCY
     level: INTERMEDIATE
-    description: "한 프로세스 안에서 여러 일을 겹쳐 진행하는 기법. 무엇으로 실행할지 고르고, 기다림을 어떻게 다룰지 정하고, 공유 자원을 어떻게 지킬지 정하는 세 가지 일로 읽는다"
+    description: "한 프로세스 안에서 여러 일을 겹쳐 진행하는 기법. 무엇으로 실행할지, 메모리를 어떻게 공유하고 지킬지, 기다림(IO)을 어떻게 다룰지를 차례로 정한다"
     synonyms: ["concurrency", "동시성 프로그래밍"]
-    contains: [conc-execution-model, conc-async-handling, conc-synchronization, concurrency-glossary]
+    contains: [conc-execution-model, conc-memory-model, conc-synchronization, conc-coordination, conc-concurrent-collections, conc-async-handling, conc-coroutine-programming, conc-reactive-programming, conc-context-propagation, conc-io-model, conc-event-driven-server, conc-diagnosis, concurrency-glossary]
 
   # ── 실행 단위 구성 ──
   - id: conc-execution-model
@@ -18,34 +18,142 @@ concepts:
     name: "실행 단위 구성"
     category: CONCURRENCY
     level: BEGINNER
-    description: "일을 무엇 위에서 돌릴지 정한다 — OS 스레드를 직접 쓸지, 풀로 재사용할지, 스레드 위에 가벼운 코루틴을 얹을지"
-    questions: ["스레드 1만 개와 코루틴 1만 개는 무엇이 다른가"]
-    contains: [thread, thread-pool, coroutine, conc-resource-exhaustion, conc-throughput]
-    flows_to: [conc-async-handling]
-    measured_by: [conc-throughput]
+    description: "일을 무엇 위에서 돌릴지 정한다 — OS 스레드를 직접 쓸지, 풀로 재사용할지, 가상 스레드나 코루틴처럼 가벼운 단위를 얹을지"
+    questions: ["스레드 1만 개와 코루틴 1만 개는 무엇이 다른가", "CPU 작업과 IO 작업에서 실행 단위 선택이 왜 달라지나"]
+    contains: [thread, thread-pool, conc-fork-join-pool, conc-virtual-thread, coroutine, conc-resource-exhaustion, conc-vt-pinning, conc-common-pool-saturation, conc-throughput, conc-pool-queue-depth]
+    flows_to: [conc-memory-model]
+    measured_by: [conc-throughput, conc-pool-queue-depth]
   - id: thread
     kind: MECHANISM
     name: "스레드"
     category: CONCURRENCY
     level: BEGINNER
     description: "프로세스 안에서 독립적으로 실행되는 OS 스케줄링 단위. 메모리는 프로세스와 공유하고 스택은 따로 가진다. 하나당 스택 메모리와 컨텍스트 스위칭 비용이 든다"
-    synonyms: ["thread", "OS thread", "플랫폼 스레드"]
-    questions: ["스레드끼리 공유하는 것과 따로 갖는 것은 무엇인가"]
-    uses: [conc-context-switch]
+    synonyms: ["thread", "OS thread", "플랫폼 스레드", "platform thread"]
+    questions: ["스레드끼리 공유하는 것과 따로 갖는 것은 무엇인가", "스레드 상태 6개 중 BLOCKED 와 WAITING 은 무엇이 다른가"]
+    contains: [conc-thread-interruption, conc-thread-factory]
+    uses: [conc-context-switch, conc-thread-state, conc-daemon-thread]
     causes: [conc-resource-exhaustion]
+  - id: conc-thread-interruption
+    kind: MECHANISM
+    name: "인터럽트"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "다른 스레드에 멈춰 달라는 신호를 플래그로 보낸다. 대기 중이던 스레드는 InterruptedException 으로 깨어나고, 받은 쪽이 플래그를 복원하거나 정리하고 끝낸다. 강제 종료가 아니라 협력적 취소다"
+    synonyms: ["interrupt", "Thread.interrupt", "InterruptedException"]
+    questions: ["InterruptedException 을 삼키면 무슨 문제가 생기나"]
+  - id: conc-thread-factory
+    kind: MECHANISM
+    name: "ThreadFactory"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "풀이 스레드를 만들 때 이름·데몬 여부·UncaughtExceptionHandler 를 정하는 생성 정책. 스레드 이름을 붙여 두면 스레드 덤프에서 어느 풀인지 바로 보인다"
+    synonyms: ["ThreadFactory", "UncaughtExceptionHandler"]
   - id: thread-pool
     kind: MECHANISM
     name: "스레드 풀"
     category: CONCURRENCY
     level: INTERMEDIATE
-    description: "스레드를 미리 정해진 수만큼 만들어 두고 작업 큐에서 꺼내 재사용한다. 생성 비용을 없애고 동시 실행 수에 상한을 건다"
-    synonyms: ["thread pool", "executor"]
-    questions: ["풀 크기는 CPU 작업과 IO 작업에서 각각 어떻게 잡나", "큐가 가득 차면 무슨 일이 생기나"]
+    description: "스레드를 미리 정해진 수만큼 만들어 두고 작업 큐에서 꺼내 재사용한다. 생성 비용을 없애고 동시 실행 수에 상한을 건다. ThreadPoolExecutor 의 core·max·keepAlive·큐·거절 정책이 동작을 정한다"
+    synonyms: ["thread pool", "executor", "ThreadPoolExecutor", "ExecutorService"]
+    questions: ["core 가 찼을 때 새 작업은 스레드를 늘리나 큐에 쌓이나", "큐가 가득 차면 무슨 일이 생기나"]
     code:
       - { path: code-dictionary/feature/src/main/kotlin/com/kgd/codedictionary/infrastructure/config/AsyncConfig.kt, symbol: "fun indexSyncExecutor(): Executor = ThreadPoolTaskExecutor().apply {", note: "색인 동기화를 스레드 1개짜리 풀에서 순서대로 돌린다" }
-    uses: [thread]
+    contains: [conc-pool-sizing, conc-rejection-policy, conc-scheduled-executor, conc-graceful-shutdown]
+    uses: [thread, conc-work-queue, conc-blocking-queue]
     mitigates: [conc-resource-exhaustion]
     affects: [conc-throughput]
+  - id: conc-pool-sizing
+    kind: MECHANISM
+    name: "풀 크기 산정"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "CPU 작업은 코어 수 근처로, IO 작업은 코어 수 × (1 + 대기 시간/계산 시간)으로 잡고 측정으로 고친다. 크면 전환·메모리 비용이, 작으면 대기열이 늘어난다"
+    synonyms: ["pool sizing", "Goetz 공식"]
+    questions: ["IO 대기가 90% 인 작업의 풀 크기는 어떻게 잡나"]
+    affects: [conc-throughput]
+  - id: conc-rejection-policy
+    kind: MECHANISM
+    name: "거절 정책"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "큐와 최대 스레드가 모두 찼을 때 새 작업을 어떻게 할지 정한다 — 예외(Abort), 호출자가 직접 실행(CallerRuns), 버림(Discard), 가장 오래된 것 버림(DiscardOldest). CallerRuns 는 호출 쪽을 늦춰 자연스러운 배압이 된다"
+    synonyms: ["RejectedExecutionHandler", "CallerRunsPolicy", "AbortPolicy"]
+    mitigates: [conc-resource-exhaustion]
+  - id: conc-scheduled-executor
+    kind: MECHANISM
+    name: "예약 실행기"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "지연 후 한 번, 또는 고정 주기(fixedRate)·고정 간격(fixedDelay)으로 작업을 돌린다. 작업이 예외를 던지면 이후 주기가 조용히 멈추므로 작업 안에서 예외를 잡는다"
+    synonyms: ["ScheduledExecutorService", "scheduleAtFixedRate", "scheduleWithFixedDelay"]
+  - id: conc-graceful-shutdown
+    kind: MECHANISM
+    name: "풀 종료"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "shutdown 으로 새 작업을 막고 awaitTermination 으로 진행 중인 작업을 기다린 뒤, 시한이 지나면 shutdownNow 로 인터럽트한다. 이 순서를 빼면 배포 때 작업이 중간에 잘린다"
+    synonyms: ["graceful shutdown", "shutdown", "awaitTermination"]
+    uses: [conc-thread-interruption]
+  - id: conc-fork-join-pool
+    kind: MECHANISM
+    name: "ForkJoinPool"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "큰 작업을 쪼개(fork) 병렬로 풀고 합치는(join) 풀. 스레드마다 덱을 두고 한가한 스레드가 남의 덱 끝에서 작업을 훔쳐 온다. parallelStream·CompletableFuture 기본 실행기·가상 스레드 스케줄러가 이 위에 선다"
+    synonyms: ["ForkJoinPool", "commonPool", "fork/join"]
+    questions: ["work stealing 이 일반 공유 큐보다 경합이 적은 이유는 무엇인가"]
+    contains: [conc-work-stealing]
+    uses: [conc-recursive-task, divide-and-conquer]
+    causes: [conc-common-pool-saturation]
+  - id: conc-work-stealing
+    kind: MECHANISM
+    name: "워크 스틸링"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "각 스레드는 자기 덱의 머리에서 일을 꺼내고, 일이 없는 스레드는 다른 스레드 덱의 꼬리에서 훔친다. 한 큐를 모두가 두드리는 경합을 줄이고 부하를 고르게 한다"
+    synonyms: ["work stealing"]
+    mitigates: [conc-lock-contention]
+  - id: conc-common-pool-saturation
+    kind: PROBLEM
+    name: "공용 풀 점유"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "parallelStream 이나 실행기를 지정하지 않은 CompletableFuture 가 JVM 전체가 공유하는 commonPool 에 블로킹 작업을 올려, 무관한 다른 비동기 작업까지 함께 멈추는 상태"
+    synonyms: ["commonPool starvation"]
+  - id: conc-virtual-thread
+    kind: MECHANISM
+    name: "가상 스레드"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "JVM 이 스케줄하는 경량 스레드(JDK 21, Loom). 블로킹 호출을 만나면 스택을 힙에 떼어 두고 캐리어 스레드를 놓아 준다. 블로킹 코드를 그대로 두고 동시 요청 수만 늘리고 싶을 때 쓴다"
+    synonyms: ["virtual thread", "Project Loom", "JEP 444", "Thread.ofVirtual"]
+    questions: ["가상 스레드는 CPU 바운드 작업도 빠르게 하나", "가상 스레드를 풀링하면 안 되는 이유는 무엇인가"]
+    code:
+      - { path: sideapp/app/src/main/resources/application.yml, symbol: "enabled: true  # ADR-0024 §3 가상 스레드 (quant)", note: "quant 를 싣는 sideapp 호스트에서 Spring 요청 처리를 가상 스레드로 돌린다" }
+    contains: [conc-structured-task-scope]
+    uses: [conc-carrier-thread, conc-continuation, conc-fork-join-pool]
+    causes: [conc-vt-pinning]
+    mitigates: [conc-resource-exhaustion]
+    alternative_to:
+      - { to: thread-pool, reason: "요청마다 가상 스레드 하나를 새로 만들어 쓰므로 스레드를 풀로 아낄 이유가 없어진다" }
+      - { to: reactive-streams, reason: "블로킹 코드 모양을 유지한 채 논블로킹 수준의 동시 연결을 든다" }
+  - id: conc-structured-task-scope
+    kind: MECHANISM
+    name: "StructuredTaskScope"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "자바 쪽 구조화된 동시성 API. 스코프 안에서 fork 한 하위 작업을 join 으로 함께 기다리고, 하나가 실패하면 나머지를 취소(ShutdownOnFailure)하거나 첫 성공만 받는다(ShutdownOnSuccess)"
+    synonyms: ["Structured Concurrency", "JEP 453", "JEP 462", "ShutdownOnFailure"]
+    uses: [conc-structured-concurrency]
+  - id: conc-vt-pinning
+    kind: PROBLEM
+    name: "가상 스레드 피닝"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "가상 스레드가 synchronized 블록이나 네이티브 호출 안에서 블로킹해 캐리어 스레드를 놓지 못하는 상태. 캐리어가 모두 묶이면 가상 스레드 수와 무관하게 처리가 멈춘다. JDK 24(JEP 491)에서 synchronized 피닝은 풀렸다"
+    synonyms: ["pinning", "carrier pinning", "jdk.tracePinnedThreads"]
+    questions: ["JDK 21 에서 synchronized 안의 JDBC 호출이 왜 위험한가"]
   - id: coroutine
     kind: MECHANISM
     name: "코루틴"
@@ -57,16 +165,17 @@ concepts:
     code:
       - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/discover/GlobalIndicesQuery.kt, symbol: "override suspend fun fetchAll(): List<GlobalIndexQuote> = coroutineScope {", note: "지수 시세를 코루틴 스코프 안에서 병렬로 받는다" }
     contains: [kotlinx-coroutines]
-    uses: [conc-suspend-function, conc-structured-concurrency]
+    uses: [conc-suspend-function, conc-structured-concurrency, conc-cps-transformation]
     mitigates: [conc-resource-exhaustion]
     alternative_to:
       - { to: thread, reason: "IO 대기마다 스레드를 묶지 않아 같은 메모리로 훨씬 많은 동시 작업을 든다" }
+      - { to: conc-virtual-thread, reason: "같은 경량 실행을 런타임이 아니라 컴파일러 변환(suspend)으로 얻고, 취소·구조화를 언어 차원에서 준다" }
   - id: kotlinx-coroutines
     kind: TECHNOLOGY
     name: "kotlinx.coroutines"
     category: LANGUAGE_FEATURE
     level: INTERMEDIATE
-    description: "코틀린 코루틴 공식 라이브러리. 스코프·디스패처·Mutex·Semaphore·Flow 를 준다. reactor 어댑터로 WebFlux 의 Mono 와도 잇는다"
+    description: "코틀린 코루틴 공식 라이브러리. 스코프·디스패처·Mutex·Semaphore·Flow·Channel 을 준다. reactor 어댑터로 WebFlux 의 Mono 와도 잇는다"
     synonyms: ["Kotlin Coroutines"]
     code:
       - { path: gradle/libs.versions.toml, symbol: "org.jetbrains.kotlinx:kotlinx-coroutines-core", note: "버전 카탈로그의 코루틴 코어 의존성" }
@@ -75,13 +184,18 @@ concepts:
       - { to: async-await, reason: "async 로 시작하고 await 로 결과를 받는다" }
       - { to: mutex, reason: "kotlinx.coroutines.sync.Mutex 는 스레드를 막지 않고 코루틴만 멈춘다" }
       - { to: semaphore, reason: "kotlinx.coroutines.sync.Semaphore 의 withPermit 으로 동시 실행 수를 제한한다" }
+      - { to: conc-kotlin-flow, reason: "Flow·SharedFlow·StateFlow 를 준다" }
+      - { to: conc-coroutine-channel, reason: "Channel 과 produce 빌더를 준다" }
+      - { to: conc-coroutine-dispatcher, reason: "Dispatchers.Default·IO·Main·Unconfined 를 준다" }
+      - { to: conc-reactor-coroutine-bridge, reason: "kotlinx-coroutines-reactor 가 awaitSingle·asFlow·mono{} 를 준다" }
   - id: conc-resource-exhaustion
     kind: PROBLEM
     name: "자원 고갈"
     category: CONCURRENCY
     level: INTERMEDIATE
-    description: "요청마다 스레드·커넥션을 새로 잡다가 메모리나 한도가 바닥나 새 작업을 받지 못하는 상태"
-    synonyms: ["resource exhaustion", "thread starvation", "스레드 고갈"]
+    description: "요청마다 스레드·커넥션을 새로 잡다가 메모리나 한도가 바닥나 새 작업을 받지 못하는 상태. 풀이면 모든 워커가 막혀 대기열만 느는 모양으로 나타난다"
+    synonyms: ["resource exhaustion", "스레드 고갈", "pool exhaustion"]
+    measured_by: [conc-pool-queue-depth]
   - id: conc-throughput
     kind: METRIC
     name: "처리량"
@@ -89,59 +203,109 @@ concepts:
     level: BEGINNER
     description: "단위 시간에 끝낸 작업 수. 동시성을 늘리는 목적이고, 경합이 커지면 오히려 줄어든다"
     synonyms: ["throughput", "TPS"]
+  - id: conc-pool-queue-depth
+    kind: METRIC
+    name: "풀 대기열 길이"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "실행기 큐에 쌓인 작업 수와 활성 스레드 수. 활성 스레드가 최대에 붙은 채 대기열이 늘면 풀이 포화된 것이다"
+    synonyms: ["queue size", "active threads", "executor.queued"]
 
-  # ── 비동기 처리 ──
-  - id: conc-async-handling
+  # ── 메모리 모델 ──
+  - id: conc-memory-model
     kind: STAGE
-    name: "비동기 처리"
-    category: CONCURRENCY
-    level: INTERMEDIATE
-    description: "IO 를 기다리는 동안 실행 단위를 막지 않고 다른 일을 하게 한다. 결과를 받는 모양을 순차 코드처럼 쓸지, 데이터 흐름으로 쓸지 고른다"
-    questions: ["블로킹 호출을 이벤트 루프 스레드에서 하면 무슨 일이 생기나"]
-    contains: [async-await, reactive-streams, conc-event-loop-blocking]
-  - id: async-await
-    kind: MECHANISM
-    name: "async/await"
-    category: CONCURRENCY
-    level: INTERMEDIATE
-    description: "비동기 작업을 시작해 두고(async) 결과가 필요한 자리에서 기다리는(await) 방식. 콜백 없이 순차 코드 모양으로 여러 IO 를 겹친다"
-    synonyms: ["async await", "Deferred", "Future"]
-    code:
-      - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/discover/GlobalIndicesQuery.kt, symbol: "async { quoteOf(cfg.ticker, cfg.name) }", note: "지수마다 async 로 시작해 한꺼번에 기다린다" }
-    uses: [coroutine, conc-suspend-function, conc-blocking-nonblocking]
-    alternative_to:
-      - { to: reactive-streams, reason: "같은 논블로킹을 연산자 체인 대신 순차 코드 모양으로 쓴다" }
-  - id: reactive-streams
-    kind: MECHANISM
-    name: "리액티브 스트림"
+    name: "메모리 모델 이해"
     category: CONCURRENCY
     level: ADVANCED
-    description: "비동기 데이터 흐름을 Publisher·Subscriber 로 잇고, 구독자가 request(n) 으로 받을 양을 알려 백프레셔를 거는 논블로킹 표준. Reactor 의 Mono·Flux 가 구현이다"
-    synonyms: ["Reactive Streams", "Reactor", "Mono", "Flux"]
-    questions: ["request(n) 은 어떻게 생산 속도를 늦추나"]
+    description: "한 스레드가 쓴 값이 다른 스레드에 언제·어떤 순서로 보이는지 정하는 규칙(JMM)을 이해하고, 그 보장을 얻는 도구를 고른다"
+    synonyms: ["Java Memory Model", "JMM"]
+    questions: ["volatile 이 원자성을 보장하지 않는 예를 들어 보라", "DCL 에 volatile 이 없으면 무엇이 깨지나"]
+    contains: [conc-volatile, conc-memory-barrier, conc-safe-publication, conc-final-field-semantics, conc-double-checked-locking, conc-cache-line-padding, conc-visibility-failure, conc-word-tearing, conc-unsafe-publication, conc-false-sharing]
+    flows_to: [conc-synchronization]
+    uses: [conc-happens-before, conc-reordering, conc-memory-visibility]
+  - id: conc-volatile
+    kind: MECHANISM
+    name: "volatile"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "변수의 읽기·쓰기를 주 메모리 기준으로 보이게 하고 앞뒤 재배치를 막는다. 쓰기와 이후 읽기 사이에 happens-before 가 생긴다. 가시성만 주고 복합 연산(i++)의 원자성은 주지 않는다"
+    synonyms: ["volatile", "@Volatile"]
+    questions: ["volatile 카운터에 i++ 을 하면 왜 틀리나"]
     code:
-      - { path: gateway/src/main/kotlin/com/kgd/gateway/filter/ExperimentAssignmentFilter.kt, symbol: "override fun filter(exchange: ServerWebExchange, chain: GatewayFilterChain): Mono<Void> {", note: "게이트웨이 필터가 Mono 체인으로 요청을 넘긴다" }
-    contains: [spring-webflux]
-    uses: [backpressure, conc-blocking-nonblocking]
-  - id: spring-webflux
-    kind: TECHNOLOGY
-    name: "Spring WebFlux"
-    category: INFRASTRUCTURE
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/fx/BithumbUsdtKrwProxy.kt, symbol: "@Volatile", note: "갱신된 환율 캐시를 다른 코루틴 스레드가 바로 보게 한다" }
+    uses: [conc-happens-before, conc-memory-barrier, conc-acquire-release]
+    mitigates: [conc-visibility-failure, conc-word-tearing]
+  - id: conc-memory-barrier
+    kind: MECHANISM
+    name: "메모리 배리어"
+    category: CONCURRENCY
     level: ADVANCED
-    description: "Reactor 위의 논블로킹 웹 스택. 적은 이벤트 루프 스레드로 많은 연결을 처리한다. 이 레포의 게이트웨이(Spring Cloud Gateway)가 이 위에서 돌고, 서비스의 WebClient 호출도 이것을 쓴다"
-    synonyms: ["WebFlux", "Reactor Netty"]
-    code:
-      - { path: gradle/libs.versions.toml, symbol: "spring-cloud-starter-gateway-server-webflux", note: "게이트웨이가 쓰는 WebFlux 기반 Spring Cloud Gateway" }
-    implements:
-      - { to: reactive-streams, reason: "핸들러·필터가 Mono·Flux 를 주고받는다" }
-    causes: [conc-event-loop-blocking]
-  - id: conc-event-loop-blocking
+    description: "CPU·컴파일러가 배리어 앞뒤의 메모리 연산 순서를 바꾸지 못하게 하는 명령. LoadLoad·StoreStore·LoadStore·StoreLoad 네 종류가 있고, volatile·락·원자 변수가 이것으로 구현된다"
+    synonyms: ["memory barrier", "memory fence", "StoreLoad"]
+    uses: [conc-reordering, conc-hardware-memory-model]
+  - id: conc-safe-publication
+    kind: MECHANISM
+    name: "안전한 공개"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "완전히 생성된 객체의 참조를 다른 스레드에 넘기는 방법. static 초기화·volatile/원자 참조·락으로 보호된 필드·final 필드 중 하나를 거쳐야 받는 쪽이 초기화된 값을 본다"
+    synonyms: ["safe publication"]
+    uses: [conc-volatile, conc-final-field-semantics]
+    mitigates: [conc-unsafe-publication]
+  - id: conc-final-field-semantics
+    kind: MECHANISM
+    name: "final 필드 보장"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "생성자가 끝나면 final 필드 값이 모든 스레드에 보인다는 JLS 17.5 의 보장. 생성 중 this 가 새지 않는 한, 불변 객체는 동기화 없이 공유해도 안전하다"
+    synonyms: ["final field semantics", "freeze"]
+  - id: conc-double-checked-locking
+    kind: MECHANISM
+    name: "Double-Checked Locking"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "지연 초기화에서 락 밖에서 한 번, 락 안에서 한 번 더 null 을 확인해 락 비용을 첫 호출에만 낸다. 필드가 volatile 이 아니면 반쯤 만든 객체가 보일 수 있다"
+    synonyms: ["DCL", "double-checked locking"]
+    uses: [conc-volatile, conc-synchronized]
+  - id: conc-cache-line-padding
+    kind: MECHANISM
+    name: "캐시 라인 패딩"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "자주 쓰이는 필드 사이를 빈 바이트로 채우거나 @Contended 를 붙여, 서로 다른 스레드가 쓰는 값이 같은 캐시 라인에 앉지 않게 한다"
+    synonyms: ["padding", "@Contended"]
+    uses: [rt-cache-line]
+    mitigates: [conc-false-sharing]
+  - id: conc-visibility-failure
     kind: PROBLEM
-    name: "이벤트 루프 블로킹"
+    name: "가시성 결함"
     category: CONCURRENCY
     level: ADVANCED
-    description: "소수의 이벤트 루프 스레드에서 JDBC·파일 IO 같은 블로킹 호출을 해 그 스레드가 맡은 모든 연결이 함께 멈추는 상태"
-    synonyms: ["blocking the event loop"]
+    description: "한 스레드가 바꾼 값을 다른 스레드가 영영, 또는 늦게 보는 상태. 종료 플래그를 못 보고 무한히 도는 루프가 대표 모양이다"
+    synonyms: ["stale read", "visibility bug"]
+  - id: conc-word-tearing
+    kind: PROBLEM
+    name: "64비트 찢김"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "volatile 이 아닌 long·double 쓰기가 32비트 두 번으로 나뉘어, 다른 스레드가 반은 옛 값·반은 새 값을 읽는 상태. JLS 17.7 이 허용하지만 64비트 JVM 에서는 사실상 나타나지 않는다"
+    synonyms: ["word tearing", "64-bit tearing"]
+  - id: conc-unsafe-publication
+    kind: PROBLEM
+    name: "불완전 공개"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "생성이 끝나기 전의 객체 참조가 다른 스레드에 새어, 기본값(0·null)이 든 필드를 읽는 상태. 생성자에서 this 를 리스너로 등록하는 것이 흔한 원인이다"
+    synonyms: ["this escape", "partially constructed object"]
+  - id: conc-false-sharing
+    kind: PROBLEM
+    name: "False Sharing"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "서로 다른 변수를 쓰는 스레드들이 그 변수들이 같은 캐시 라인에 있다는 이유로 라인을 계속 빼앗아 성능이 수십 배 떨어지는 상태. 논리적 공유가 없어 코드만 봐서는 안 보인다"
+    synonyms: ["false sharing", "거짓 공유"]
+    questions: ["false sharing 을 perf 로 어떻게 확인하나"]
+    measured_by: [rt-cache-miss-rate]
 
   # ── 동기화 ──
   - id: conc-synchronization
@@ -149,9 +313,12 @@ concepts:
     name: "동기화"
     category: CONCURRENCY
     level: INTERMEDIATE
-    description: "여러 실행 단위가 같은 자원을 만질 때 순서와 배타를 보장한다. 잠금으로 막을지, 원자 연산으로 잠금 없이 갈지 고른다"
-    questions: ["락 없이 카운터를 안전하게 올리는 방법은 무엇인가"]
-    contains: [mutex, semaphore, atomic-operation, race-condition, deadlock, conc-lock-contention]
+    description: "여러 실행 단위가 같은 자원을 만질 때 순서와 배타를 보장한다. 잠금으로 막을지, 원자 연산으로 잠금 없이 갈지, 아예 공유하지 않을지 고른다"
+    questions: ["락 없이 카운터를 안전하게 올리는 방법은 무엇인가", "synchronized 대신 ReentrantLock 을 쓸 때는 언제인가"]
+    contains: [mutex, semaphore, atomic-operation, conc-lock-free-algorithm, conc-thread-confinement, conc-lock-ordering, race-condition, deadlock, conc-livelock, conc-starvation, conc-priority-inversion, conc-lock-contention, conc-aba-problem, conc-lock-wait-time]
+    flows_to: [conc-coordination]
+    uses: [immutability]
+    measured_by: [conc-lock-wait-time]
   - id: mutex
     kind: MECHANISM
     name: "뮤텍스"
@@ -162,9 +329,86 @@ concepts:
     questions: ["뮤텍스와 이진 세마포어는 무엇이 다른가"]
     code:
       - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/fx/BithumbUsdtKrwProxy.kt, symbol: "private val refreshMutex = Mutex()", note: "환율 캐시 갱신을 한 코루틴만 하게 막는다" }
+    contains: [conc-synchronized, conc-reentrant-lock, conc-read-write-lock, conc-stamped-lock, conc-spin-lock, conc-aqs]
     uses: [conc-critical-section]
     mitigates: [race-condition]
     causes: [deadlock, conc-lock-contention]
+  - id: conc-synchronized
+    kind: MECHANISM
+    name: "synchronized"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "모든 객체가 가진 모니터를 잡는 자바 내장 잠금. 블록을 벗어나면 자동으로 풀리고 재진입이 된다. 풀 때의 쓰기가 다음에 잡는 스레드에 보인다(happens-before)"
+    synonyms: ["synchronized", "intrinsic lock", "monitor lock"]
+    questions: ["인스턴스 락과 클래스 락은 무엇이 다른가"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/chart/OrderbookSnapshotMaintainer.kt, symbol: "synchronized(state) {", note: "호가창 한 종목의 델타 적용을 그 종목 상태 객체로 잠근다" }
+    contains: [conc-lock-inflation]
+    uses: [conc-monitor, conc-reentrancy, conc-condition-variable]
+    causes: [conc-vt-pinning]
+  - id: conc-lock-inflation
+    kind: MECHANISM
+    name: "락 팽창"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "HotSpot 은 경합 정도에 따라 synchronized 를 경량 락(Mark Word CAS)에서 중량 락(OS 뮤텍스 + 대기열)으로 키운다. 편향 락은 JDK 15 에서 폐기됐다"
+    synonyms: ["lock inflation", "biased lock", "lightweight lock", "thin lock", "fat lock"]
+    uses: [rt-object-header, compare-and-swap]
+  - id: conc-reentrant-lock
+    kind: MECHANISM
+    name: "ReentrantLock"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "명시적으로 lock·unlock 하는 재진입 잠금. tryLock(시한)·lockInterruptibly·공정성·여러 Condition 을 준다. finally 에서 풀어야 한다"
+    synonyms: ["ReentrantLock", "tryLock", "lockInterruptibly"]
+    questions: ["tryLock 시한이 교착을 어떻게 끊나"]
+    contains: [conc-fair-lock]
+    uses: [conc-aqs, conc-condition-variable, conc-reentrancy]
+    mitigates: [deadlock, conc-vt-pinning]
+    alternative_to:
+      - { to: conc-synchronized, reason: "시한·인터럽트·공정성·다중 조건이 필요할 때 쓰고, 가상 스레드를 캐리어에 묶지 않는다" }
+  - id: conc-fair-lock
+    kind: MECHANISM
+    name: "공정 락"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "도착 순서대로 락을 넘겨주는 모드. 새치기를 막아 굶주림이 없지만, 막 풀린 락을 깨어 있는 스레드가 바로 잡지 못해 처리량은 떨어진다"
+    synonyms: ["fair lock", "fairness"]
+    mitigates: [conc-starvation]
+  - id: conc-read-write-lock
+    kind: MECHANISM
+    name: "ReadWriteLock"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "읽기는 여럿이 함께, 쓰기는 혼자만 들어가게 한다. 읽기가 압도적이고 임계 구역이 길 때만 이득이고, 짧으면 관리 비용 때문에 일반 락보다 느리다"
+    synonyms: ["ReadWriteLock", "ReentrantReadWriteLock"]
+    uses: [conc-aqs]
+    causes: [conc-starvation]
+  - id: conc-stamped-lock
+    kind: MECHANISM
+    name: "StampedLock"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "쓰기·읽기·낙관적 읽기 세 모드를 스탬프 값으로 다룬다. 낙관적 읽기는 잠그지 않고 읽은 뒤 validate 로 그사이 쓰기가 있었는지 확인한다. 재진입이 안 되고 Condition 이 없다"
+    synonyms: ["StampedLock", "optimistic read", "tryOptimisticRead"]
+    alternative_to:
+      - { to: conc-read-write-lock, reason: "읽기 쪽이 락을 잡지 않아 읽기 폭주 시 쓰기가 굶지 않는다" }
+  - id: conc-spin-lock
+    kind: MECHANISM
+    name: "스핀 락"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "잠들지 않고 CAS 를 반복하며 락이 풀리기를 기다린다. 대기가 컨텍스트 스위치보다 짧을 때만 이득이다. JVM 의 적응형 스핀은 과거 성공률로 스핀 횟수를 정한다"
+    synonyms: ["spin lock", "busy waiting", "adaptive spinning"]
+    uses: [compare-and-swap]
+  - id: conc-aqs
+    kind: MECHANISM
+    name: "AQS"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "state 정수 하나와 CLH 변형 대기열로 락·동기화기를 만드는 뼈대. ReentrantLock·Semaphore·CountDownLatch·ReentrantReadWriteLock 이 이것을 상속해 규칙만 다르게 정한다"
+    synonyms: ["AbstractQueuedSynchronizer", "CLH queue"]
+    uses: [compare-and-swap]
   - id: semaphore
     kind: MECHANISM
     name: "세마포어"
@@ -174,18 +418,19 @@ concepts:
     synonyms: ["semaphore", "counting semaphore"]
     code:
       - { path: chatbot/feature/src/main/kotlin/com/kgd/chatbot/infrastructure/ai/ClaudeApiAdapter.kt, symbol: "private val semaphore = Semaphore(properties.ai.maxConcurrent)", note: "LLM API 동시 호출 수를 설정값으로 제한한다" }
-    uses: [conc-critical-section]
+    uses: [conc-critical-section, conc-aqs]
     mitigates: [conc-resource-exhaustion]
   - id: atomic-operation
     kind: MECHANISM
     name: "원자 연산"
     category: CONCURRENCY
     level: INTERMEDIATE
-    description: "읽기·계산·쓰기를 중간에 끼어들 수 없는 한 동작으로 한다. 카운터 증가처럼 작은 공유 값은 잠금 없이 이것으로 지킨다"
-    synonyms: ["atomic operation", "AtomicLong", "atomic"]
+    description: "읽기·계산·쓰기를 중간에 끼어들 수 없는 한 동작으로 한다. 카운터 증가·참조 교체처럼 작은 공유 값은 잠금 없이 AtomicXxx 로 지킨다"
+    synonyms: ["atomic operation", "AtomicLong", "AtomicReference", "atomic"]
     code:
       - { path: recommendation/feature/src/main/kotlin/com/kgd/recommendation/infrastructure/bandit/ThompsonSampler.kt, symbol: "ConcurrentHashMap<String, AtomicLong>()", note: "변형별 성공·실패 횟수를 AtomicLong 으로 잠금 없이 센다" }
-    contains: [compare-and-swap]
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/application/decision/service/CandidateIndexService.kt, symbol: "private val current = AtomicReference<CandidateSnapshot?>(null)", note: "광고 후보 색인 스냅샷을 참조 하나로 통째 바꿔 읽는 쪽이 잠그지 않는다" }
+    contains: [compare-and-swap, conc-long-adder, conc-var-handle, conc-atomic-stamped-reference]
     uses: [conc-memory-visibility]
     mitigates: [race-condition]
   - id: compare-and-swap
@@ -194,18 +439,69 @@ concepts:
     category: CONCURRENCY
     level: ADVANCED
     description: "메모리 값이 기대값과 같을 때만 새 값으로 바꾸는 CPU 원자 명령. 실패하면 다시 읽고 재시도한다. 락-프리 자료구조와 원자 변수가 이 위에 선다"
-    synonyms: ["compare-and-swap", "compareAndSet", "CAS"]
-    questions: ["ABA 문제는 무엇이고 어떻게 막나"]
+    synonyms: ["compare-and-swap", "compareAndSet", "CAS", "compare-and-exchange"]
+    questions: ["ABA 문제는 무엇이고 어떻게 막나", "경합이 심할 때 CAS 재시도가 왜 느려지나"]
+    causes: [conc-aba-problem]
     mitigates: [conc-lock-contention]
     alternative_to:
       - { to: mutex, reason: "스레드를 재우지 않고 실패 시 재시도하는 락-프리 방식이다" }
+  - id: conc-long-adder
+    kind: MECHANISM
+    name: "LongAdder"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "경합이 생기면 값을 여러 셀로 나눠 스레드마다 다른 셀을 올리고, 읽을 때 합친다. 쓰기가 몰리는 카운터에서 AtomicLong 의 CAS 실패 재시도를 없앤다. 읽기는 순간값이 아니다"
+    synonyms: ["LongAdder", "DoubleAdder", "Striped64"]
+    mitigates: [conc-lock-contention]
+  - id: conc-var-handle
+    kind: MECHANISM
+    name: "VarHandle"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "필드·배열 원소에 plain·opaque·acquire/release·volatile 수준을 골라 원자 연산을 거는 표준 API(JDK 9). sun.misc.Unsafe 와 AtomicXxxFieldUpdater 를 대신한다"
+    synonyms: ["VarHandle", "AtomicIntegerFieldUpdater", "AtomicXxxArray"]
+    uses: [conc-acquire-release]
+  - id: conc-atomic-stamped-reference
+    kind: MECHANISM
+    name: "AtomicStampedReference"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "참조와 버전 번호(stamp)를 함께 CAS 해, 값이 A→B→A 로 돌아와도 버전이 달라 변경을 알아챈다"
+    synonyms: ["AtomicStampedReference", "AtomicMarkableReference"]
+    mitigates: [conc-aba-problem]
+  - id: conc-lock-free-algorithm
+    kind: MECHANISM
+    name: "락-프리 알고리즘"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "잠금 없이 CAS 재시도로 공유 구조를 바꿔, 한 스레드가 멈춰도 다른 스레드는 진행하게 한다. 모든 스레드의 진행까지 보장하면 wait-free 라 한다"
+    synonyms: ["lock-free", "non-blocking algorithm", "wait-free"]
+    uses: [compare-and-swap]
+    mitigates: [deadlock, conc-priority-inversion]
+  - id: conc-thread-confinement
+    kind: MECHANISM
+    name: "스레드 한정"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "상태를 한 스레드(또는 한 이벤트 루프·한 액터)만 만지게 해 동기화를 없앤다. 공유하지 않으면 지킬 것도 없다"
+    synonyms: ["thread confinement", "stack confinement"]
+    uses: [conc-thread-local]
+    mitigates: [race-condition]
+  - id: conc-lock-ordering
+    kind: MECHANISM
+    name: "락 순서 고정"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "여러 락을 잡을 때 모든 코드가 같은 전역 순서(예: id 오름차순)로 잡게 해 순환 대기를 없앤다"
+    synonyms: ["lock ordering"]
+    mitigates: [deadlock]
   - id: race-condition
     kind: PROBLEM
     name: "레이스 컨디션"
     category: CONCURRENCY
     level: INTERMEDIATE
-    description: "여러 실행 단위가 공유 자원을 동시에 읽고 쓰는 순서에 따라 결과가 달라지는 상태. 확인 후 실행(check-then-act)이 대표 모양이다"
-    synonyms: ["race condition", "경쟁 상태"]
+    description: "여러 실행 단위가 공유 자원을 동시에 읽고 쓰는 순서에 따라 결과가 달라지는 상태. 확인 후 실행(check-then-act)과 읽고-고치고-쓰기(read-modify-write)가 대표 모양이다"
+    synonyms: ["race condition", "경쟁 상태", "data race"]
     questions: ["check-then-act 가 왜 경쟁 상태를 만드나"]
     code:
       - { path: common/src/main/kotlin/com/kgd/common/messaging/IdempotentEventHandler.kt, symbol: "Outcome.RACE", note: "두 인스턴스가 같은 이벤트를 동시에 처리하면 PK 충돌로 한쪽만 남기고 RACE 로 돌려준다" }
@@ -214,9 +510,30 @@ concepts:
     name: "데드락"
     category: CONCURRENCY
     level: INTERMEDIATE
-    description: "둘 이상의 실행 단위가 서로가 쥔 자원을 기다리며 영원히 멈춘 상태. 상호 배제·점유 대기·비선점·순환 대기 네 조건이 모두 있을 때 생기고, 잠금 순서를 고정하면 순환 대기가 깨진다. DB 에서는 InnoDB 가 감지해 한쪽 트랜잭션을 롤백한다"
+    description: "둘 이상의 실행 단위가 서로가 쥔 자원을 기다리며 영원히 멈춘 상태. 코프먼 네 조건이 모두 있을 때 생기고, 잠금 순서를 고정하면 순환 대기가 깨진다. DB 에서는 InnoDB 가 감지해 한쪽 트랜잭션을 롤백한다"
     synonyms: ["deadlock", "교착 상태"]
     questions: ["교착 네 조건 중 무엇을 깨기가 가장 쉬운가"]
+  - id: conc-livelock
+    kind: PROBLEM
+    name: "라이브락"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "스레드들이 멈추지는 않고 서로에게 양보하거나 같은 재시도를 반복하느라 아무도 진전하지 못하는 상태. 재시도 간격에 무작위를 섞어 끊는다"
+    synonyms: ["livelock"]
+  - id: conc-starvation
+    kind: PROBLEM
+    name: "기아"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "특정 스레드가 락·CPU·풀 자리를 계속 남에게 빼앗겨 오래 실행되지 못하는 상태. 불공정 락·읽기 폭주 속 쓰기·우선순위 차이가 원인이다"
+    synonyms: ["starvation", "thread starvation", "writer starvation"]
+  - id: conc-priority-inversion
+    kind: PROBLEM
+    name: "우선순위 역전"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "낮은 우선순위 스레드가 쥔 락을 높은 우선순위 스레드가 기다리는 동안, 중간 우선순위 스레드가 CPU 를 차지해 높은 쪽이 사실상 가장 늦게 도는 상태. 우선순위 상속으로 푼다"
+    synonyms: ["priority inversion", "priority inheritance"]
   - id: conc-lock-contention
     kind: PROBLEM
     name: "락 경합"
@@ -224,6 +541,976 @@ concepts:
     level: ADVANCED
     description: "여러 실행 단위가 같은 잠금을 잡으려 몰려 대부분이 기다리는 데 시간을 쓰는 상태. 코어를 늘려도 처리량이 오르지 않는다"
     synonyms: ["lock contention"]
+    measured_by: [conc-lock-wait-time]
+  - id: conc-aba-problem
+    kind: PROBLEM
+    name: "ABA 문제"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "CAS 가 값만 비교하므로, 그사이 A→B→A 로 바뀐 것을 변경 없음으로 오판하는 상태. 재사용되는 노드 포인터를 다루는 락-프리 스택·큐에서 구조가 깨진다"
+    synonyms: ["ABA problem"]
+  - id: conc-lock-wait-time
+    kind: METRIC
+    name: "락 대기 시간"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "스레드가 모니터·락을 얻으려 막혀 있던 시간. JFR 의 jdk.JavaMonitorEnter·ThreadPark 이벤트나 async-profiler lock 모드로 잰다"
+    synonyms: ["lock wait", "monitor blocked time"]
+
+  # ── 스레드 간 조율 ──
+  - id: conc-coordination
+    kind: STAGE
+    name: "스레드 간 조율"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "여러 스레드가 서로를 기다리거나 신호를 주고받아 단계를 맞춘다 — 조건 대기, 한 번짜리 게이트, 반복 장벽, 생산자·소비자 넘겨주기"
+    questions: ["CountDownLatch 와 CyclicBarrier 는 무엇이 다른가", "wait 를 if 가 아니라 while 로 감싸는 이유는 무엇인가"]
+    contains: [conc-condition-variable, conc-countdown-latch, conc-cyclic-barrier, conc-phaser, conc-exchanger, conc-producer-consumer, conc-spurious-wakeup]
+    flows_to: [conc-concurrent-collections]
+  - id: conc-condition-variable
+    kind: MECHANISM
+    name: "조건 변수"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "락을 쥔 채 조건이 참이 될 때까지 잠들고(wait/await), 상태를 바꾼 쪽이 깨운다(notify/signal). 깨어나면 조건을 다시 확인해야 하므로 while 루프 안에서 기다린다"
+    synonyms: ["condition variable", "wait/notify", "Condition", "await/signal"]
+    mitigates: [conc-spurious-wakeup]
+  - id: conc-countdown-latch
+    kind: MECHANISM
+    name: "CountDownLatch"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "카운트가 0 이 될 때까지 기다리는 일회용 게이트. N 개 작업이 끝나기를 메인이 기다리거나, 여러 스레드를 한 번에 출발시킬 때 쓴다. 되돌릴 수 없다"
+    synonyms: ["CountDownLatch"]
+    uses: [conc-aqs]
+  - id: conc-cyclic-barrier
+    kind: MECHANISM
+    name: "CyclicBarrier"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "정해진 수의 스레드가 모두 장벽에 도착해야 함께 다음 단계로 넘어가고, 장벽이 재사용된다. 한 스레드가 깨지면 나머지는 BrokenBarrierException 을 받는다"
+    synonyms: ["CyclicBarrier"]
+  - id: conc-phaser
+    kind: MECHANISM
+    name: "Phaser"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "참가자를 실행 중에 등록·해제할 수 있는 다단계 장벽. 단계 번호를 세며 CyclicBarrier 와 CountDownLatch 를 함께 일반화한다"
+    synonyms: ["Phaser"]
+    alternative_to:
+      - { to: conc-cyclic-barrier, reason: "참가자 수가 단계마다 바뀔 때 쓴다" }
+  - id: conc-exchanger
+    kind: MECHANISM
+    name: "Exchanger"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "두 스레드가 만나는 지점에서 객체를 맞바꾼다. 채운 버퍼와 빈 버퍼를 교대로 넘기는 이중 버퍼링에 쓴다"
+    synonyms: ["Exchanger"]
+  - id: conc-producer-consumer
+    kind: MECHANISM
+    name: "생산자·소비자"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "만드는 쪽과 쓰는 쪽 사이에 크기 제한 큐를 두어 속도 차이를 흡수한다. 큐가 차면 생산자가, 비면 소비자가 기다린다"
+    synonyms: ["producer-consumer"]
+    uses: [conc-blocking-queue]
+    mitigates: [conc-resource-exhaustion]
+  - id: conc-spurious-wakeup
+    kind: PROBLEM
+    name: "가짜 깨어남"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "notify 없이도, 또는 다른 스레드가 조건을 먼저 소비한 뒤에 대기 스레드가 깨어나는 상태. if 로 한 번만 확인하면 조건이 거짓인 채로 진행한다. 반대로 notify 가 wait 보다 먼저 오면 신호를 잃는다(lost wakeup)"
+    synonyms: ["spurious wakeup", "lost wakeup"]
+
+  # ── 동시 컬렉션 ──
+  - id: conc-concurrent-collections
+    kind: STAGE
+    name: "동시 컬렉션 선택"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "여러 스레드가 함께 쓰는 자료구조를 고른다 — 읽기·쓰기 비율, 정렬 필요, 대기 필요(블로킹 큐)에 따라 달라진다"
+    questions: ["Collections.synchronizedMap 과 ConcurrentHashMap 의 차이는 무엇인가", "CopyOnWriteArrayList 가 맞는 경우는 언제인가"]
+    contains: [conc-synchronized-collection, conc-concurrent-hash-map, conc-concurrent-skip-list-map, conc-copy-on-write-collection, conc-concurrent-linked-queue, conc-blocking-queue, conc-disruptor, conc-concurrent-modification]
+    flows_to: [conc-async-handling]
+  - id: conc-synchronized-collection
+    kind: MECHANISM
+    name: "동기화 래퍼 컬렉션"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "Collections.synchronizedXxx·Hashtable·Vector 처럼 메서드마다 객체 전체를 잠근다. 개별 호출은 안전하지만 복합 동작과 순회는 호출자가 따로 잠가야 하고, 모두가 한 락을 두드린다"
+    synonyms: ["Collections.synchronizedMap", "Hashtable", "Vector"]
+    causes: [conc-lock-contention]
+  - id: conc-concurrent-hash-map
+    kind: MECHANISM
+    name: "ConcurrentHashMap"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "버킷 단위 잠금과 CAS 로 여러 스레드가 동시에 읽고 쓰는 해시 맵. 읽기는 잠그지 않고, 충돌이 많은 버킷은 트리로 바꾸며, 크기 조정도 여러 스레드가 나눠 한다. compute·merge 로 복합 연산을 원자적으로 한다"
+    synonyms: ["ConcurrentHashMap", "computeIfAbsent"]
+    questions: ["computeIfAbsent 람다 안에서 같은 맵을 고치면 무슨 일이 생기나"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/market/MarketDataHub.kt, symbol: "private val latestTicks = ConcurrentHashMap<Symbol, Tick>()", note: "종목별 최신 시세를 여러 소비자가 잠금 없이 읽는다" }
+    uses: [compare-and-swap, hash-map, conc-weakly-consistent-iteration]
+    mitigates: [conc-lock-contention, conc-concurrent-modification]
+    alternative_to:
+      - { to: conc-synchronized-collection, reason: "맵 전체가 아니라 버킷만 잠가 쓰기끼리도 대부분 겹치지 않는다" }
+  - id: conc-concurrent-skip-list-map
+    kind: MECHANISM
+    name: "ConcurrentSkipListMap"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "스킵 리스트를 CAS 로 고치는 정렬된 동시 맵. 범위 조회·최솟값·최댓값을 잠금 없이 얻는다. 해시 맵보다 느리지만 순서가 필요할 때 쓴다"
+    synonyms: ["ConcurrentSkipListMap", "ConcurrentSkipListSet"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/chart/OrderbookSnapshotMaintainer.kt, symbol: "import java.util.concurrent.ConcurrentSkipListMap", note: "호가창의 매도·매수 가격을 정렬된 동시 맵으로 든다" }
+    uses: [skip-list, compare-and-swap]
+  - id: conc-copy-on-write-collection
+    kind: MECHANISM
+    name: "Copy-On-Write 컬렉션"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "쓸 때마다 배열 전체를 복사해 새 배열로 바꾼다. 읽기와 순회는 잠그지 않고 스냅샷을 보므로 리스너 목록처럼 읽기가 압도적일 때 맞고, 쓰기가 잦으면 복사 비용이 커진다"
+    synonyms: ["CopyOnWriteArrayList", "CopyOnWriteArraySet"]
+    code:
+      - { path: agent-viewer/api/src/main/kotlin/com/kgd/agentviewer/websocket/EventBroadcaster.kt, symbol: "private val sessions = CopyOnWriteArrayList<WebSocketSession>()", note: "웹소켓 세션 목록을 순회하며 방송하는 동안 접속·해제가 끼어들어도 안전하다" }
+    mitigates: [conc-concurrent-modification]
+  - id: conc-concurrent-linked-queue
+    kind: MECHANISM
+    name: "ConcurrentLinkedQueue"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "CAS 로 머리·꼬리를 옮기는 비차단 연결 큐(Michael-Scott 큐). 기다리는 기능이 없어 비어 있으면 null 을 돌려준다. size() 는 순회라 느리다"
+    synonyms: ["ConcurrentLinkedQueue", "ConcurrentLinkedDeque", "Michael-Scott queue"]
+    uses: [conc-lock-free-algorithm]
+  - id: conc-blocking-queue
+    kind: MECHANISM
+    name: "BlockingQueue"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "비어 있으면 꺼내는 쪽이, 가득 차면 넣는 쪽이 기다리는 큐. 생산자·소비자와 스레드 풀 작업 큐의 표준이다. 구현마다 용량·순서·넘겨주기 방식이 다르다"
+    synonyms: ["BlockingQueue", "put/take", "offer/poll"]
+    contains: [conc-array-blocking-queue, conc-linked-blocking-queue, conc-priority-blocking-queue, conc-delay-queue, conc-synchronous-queue, conc-linked-transfer-queue]
+    uses: [conc-condition-variable]
+  - id: conc-array-blocking-queue
+    kind: MECHANISM
+    name: "ArrayBlockingQueue"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "고정 크기 배열 위의 블로킹 큐. 락 하나로 넣기·꺼내기를 모두 지키고 용량이 항상 유한하다"
+    synonyms: ["ArrayBlockingQueue"]
+  - id: conc-linked-blocking-queue
+    kind: MECHANISM
+    name: "LinkedBlockingQueue"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "연결 노드 위의 블로킹 큐. 넣기 락과 꺼내기 락을 따로 둬 양쪽이 덜 부딪친다. 용량을 안 주면 사실상 무한이라 Executors.newFixedThreadPool 의 메모리 폭주 원인이 된다"
+    synonyms: ["LinkedBlockingQueue"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/notification/InMemoryPriorityQueue.kt, symbol: "import java.util.concurrent.LinkedBlockingQueue", note: "알림 우선순위마다 블로킹 큐 하나를 둔다" }
+    causes: [conc-resource-exhaustion]
+  - id: conc-priority-blocking-queue
+    kind: MECHANISM
+    name: "PriorityBlockingQueue"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "힙으로 우선순위가 높은 원소부터 꺼내는 무한 블로킹 큐. 같은 우선순위끼리의 순서는 보장하지 않는다"
+    synonyms: ["PriorityBlockingQueue"]
+    uses: [heap]
+  - id: conc-delay-queue
+    kind: MECHANISM
+    name: "DelayQueue"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "지정한 지연이 지난 원소만 꺼낼 수 있는 큐. 만료 처리·재시도 예약을 스레드 하나로 할 때 쓴다"
+    synonyms: ["DelayQueue", "Delayed"]
+  - id: conc-synchronous-queue
+    kind: MECHANISM
+    name: "SynchronousQueue"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "용량이 0 인 큐. 넣는 쪽은 꺼내는 쪽이 올 때까지 기다려 직접 넘겨준다. newCachedThreadPool 이 이것으로 작업마다 스레드를 늘린다"
+    synonyms: ["SynchronousQueue", "hand-off"]
+  - id: conc-linked-transfer-queue
+    kind: MECHANISM
+    name: "LinkedTransferQueue"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "넣을 때 소비자에게 바로 넘길지(transfer) 큐에 둘지 고를 수 있는 무한 큐. SynchronousQueue 와 LinkedBlockingQueue 를 합친 모양이다"
+    synonyms: ["LinkedTransferQueue", "TransferQueue"]
+  - id: conc-disruptor
+    kind: MECHANISM
+    name: "Disruptor"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "미리 할당한 링 버퍼와 시퀀스 번호로 스레드 간 메시지를 넘기는 LMAX 의 구조. 락·할당·false sharing 을 모두 피해 큐보다 한두 자릿수 빠르다(mechanical sympathy)"
+    synonyms: ["LMAX Disruptor", "ring buffer", "mechanical sympathy"]
+    uses: [conc-cache-line-padding, compare-and-swap]
+    alternative_to:
+      - { to: conc-blocking-queue, reason: "락과 노드 할당 없이 링 버퍼 칸을 재사용해 지연 꼬리가 짧다" }
+  - id: conc-concurrent-modification
+    kind: PROBLEM
+    name: "순회 중 변경"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "일반 컬렉션을 순회하는 동안 다른 스레드(또는 같은 스레드)가 구조를 바꿔 ConcurrentModificationException 이 나거나 원소를 건너뛰는 상태"
+    synonyms: ["ConcurrentModificationException", "fail-fast iterator"]
+
+  # ── 비동기 처리 ──
+  - id: conc-async-handling
+    kind: STAGE
+    name: "비동기 처리"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "IO 를 기다리는 동안 실행 단위를 막지 않고 다른 일을 하게 한다. 결과를 콜백으로 받을지, 조합 가능한 Future 로 받을지, 순차 코드 모양(async/await)으로 받을지 고른다"
+    questions: ["thenApply 와 thenCompose 는 무엇이 다른가", "비동기로 짜면 무조건 빨라지나"]
+    contains: [conc-callback, conc-future, conc-completion-service, async-await, conc-callback-hell]
+    flows_to: [conc-coroutine-programming]
+    uses: [conc-blocking-nonblocking, conc-sync-async]
+  - id: conc-callback
+    kind: MECHANISM
+    name: "콜백"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "작업이 끝나면 불러 달라고 함수를 넘겨 둔다. 가장 단순한 비동기 결과 전달이지만, 여러 단계를 이으면 중첩이 깊어지고 예외 전파가 끊긴다"
+    synonyms: ["callback", "listener"]
+    causes: [conc-callback-hell]
+  - id: conc-callback-hell
+    kind: PROBLEM
+    name: "콜백 지옥"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "비동기 단계를 콜백 안의 콜백으로 이어 코드가 오른쪽으로 깊어지고, 예외 처리·취소·타임아웃이 단계마다 흩어지는 상태"
+    synonyms: ["callback hell", "pyramid of doom"]
+  - id: conc-future
+    kind: MECHANISM
+    name: "Future"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "아직 안 끝난 계산의 결과 자리. get() 으로 기다려 받고 cancel 로 취소한다. get 이 블로킹이라 조합에는 맞지 않는다"
+    synonyms: ["Future", "FutureTask", "Callable"]
+    contains: [conc-completable-future]
+  - id: conc-completable-future
+    kind: MECHANISM
+    name: "CompletableFuture"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "완료 시 이어 붙일 단계를 thenApply·thenCompose·thenCombine·allOf 로 조합하고 exceptionally·handle 로 예외를 다루는 Future. Async 없는 메서드는 완료시킨 스레드에서, 실행기를 안 주면 commonPool 에서 돈다"
+    synonyms: ["CompletableFuture", "CompletionStage", "thenCompose", "allOf"]
+    questions: ["thenApplyAsync 에 실행기를 안 넘기면 어디서 도나"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/messaging/outbox/OutboxPollingPublisher.kt, symbol: "CompletableFuture.failedFuture(it)", note: "Kafka 전송 실패를 실패한 Future 로 감싸 발행 결과를 한 모양으로 모은다" }
+    uses: [conc-fork-join-pool]
+    causes: [conc-common-pool-saturation]
+    mitigates: [conc-callback-hell]
+  - id: conc-completion-service
+    kind: MECHANISM
+    name: "CompletionService"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "여러 작업을 제출하고 끝난 순서대로 결과를 꺼낸다. 완료된 Future 를 내부 큐에 넣어, 느린 첫 작업 때문에 빠른 결과 처리가 밀리지 않게 한다"
+    synonyms: ["ExecutorCompletionService"]
+    uses: [conc-blocking-queue, thread-pool]
+  - id: async-await
+    kind: MECHANISM
+    name: "async/await"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "비동기 작업을 시작해 두고(async) 결과가 필요한 자리에서 기다리는(await) 방식. 콜백 없이 순차 코드 모양으로 여러 IO 를 겹친다"
+    synonyms: ["async await", "Deferred", "launch/async"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/discover/GlobalIndicesQuery.kt, symbol: "async { quoteOf(cfg.ticker, cfg.name) }", note: "지수마다 async 로 시작해 한꺼번에 기다린다" }
+    uses: [coroutine, conc-suspend-function, conc-blocking-nonblocking, conc-function-coloring]
+    mitigates: [conc-callback-hell]
+    alternative_to:
+      - { to: reactive-streams, reason: "같은 논블로킹을 연산자 체인 대신 순차 코드 모양으로 쓴다" }
+      - { to: conc-completable-future, reason: "then 체인 대신 순차 코드와 try/catch 로 조합한다" }
+
+  # ── 코루틴 설계 ──
+  - id: conc-coroutine-programming
+    kind: STAGE
+    name: "코루틴 설계"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "코루틴의 수명·실행 스레드·취소·예외 전파·스트림을 정한다. 스코프를 어디에 두고, 블로킹 호출을 어느 디스패처로 격리하고, 값의 흐름을 Flow 로 쓸지 Channel 로 쓸지 고른다"
+    questions: ["launch 와 async 에서 예외가 전파되는 방식은 어떻게 다른가", "withContext(Dispatchers.IO) 는 무엇을 바꾸나"]
+    contains: [conc-coroutine-scope, conc-coroutine-dispatcher, conc-coroutine-cancellation, conc-coroutine-exception-handling, conc-cps-transformation, conc-kotlin-flow, conc-coroutine-channel, conc-run-blocking, conc-coroutine-leak, conc-blocking-in-coroutine]
+    flows_to: [conc-reactive-programming]
+    uses: [coroutine]
+  - id: conc-coroutine-scope
+    kind: MECHANISM
+    name: "CoroutineScope"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "코루틴을 띄우는 범위이자 자식들의 부모. coroutineScope 는 자식이 모두 끝나야 돌아오고 하나가 실패하면 형제를 취소한다. 컴포넌트 수명에 맞춘 스코프를 두고 끝날 때 cancel 한다"
+    synonyms: ["CoroutineScope", "coroutineScope", "Job 트리"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/discover/RankingQuery.kt, symbol: "): List<MarketRanking> = coroutineScope {", note: "랭킹 조회의 병렬 하위 호출을 한 스코프에 묶어 함께 끝내고 함께 실패한다" }
+    contains: [conc-supervisor-job]
+    uses: [conc-structured-concurrency, conc-job, conc-coroutine-context]
+    mitigates: [conc-coroutine-leak]
+  - id: conc-supervisor-job
+    kind: MECHANISM
+    name: "SupervisorJob"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "자식 하나의 실패가 부모와 형제로 번지지 않게 하는 Job. 구독자·워커처럼 서로 독립인 장기 작업을 한 스코프에 둘 때 쓰고, supervisorScope 가 같은 규칙의 스코프 함수다"
+    synonyms: ["SupervisorJob", "supervisorScope"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/exchange/BithumbOrderbookSubscriber.kt, symbol: "private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)", note: "종목별 호가 구독 하나가 죽어도 다른 구독은 계속 돈다" }
+  - id: conc-coroutine-dispatcher
+    kind: MECHANISM
+    name: "디스패처"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "코루틴을 어느 스레드에서 이어 실행할지 정한다. Default 는 CPU 코어 수, IO 는 최대 64개(또는 코어 수) 스레드, Main 은 UI 스레드, Unconfined 는 재개한 스레드 그대로다. withContext 로 구간마다 바꾼다"
+    synonyms: ["Dispatchers.IO", "Dispatchers.Default", "withContext", "CoroutineDispatcher"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/discover/ClickHouseRankingAdapter.kt, symbol: "): List<MarketRanking> = withContext(Dispatchers.IO) {", note: "블로킹 JDBC 조회를 IO 디스패처로 옮겨 호출한 코루틴 스레드를 막지 않는다" }
+    uses: [thread-pool]
+    mitigates: [conc-blocking-in-coroutine]
+  - id: conc-coroutine-cancellation
+    kind: MECHANISM
+    name: "코루틴 취소"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "취소는 협력적이다 — 중단 지점(delay·await·yield)이나 isActive·ensureActive 확인에서만 CancellationException 으로 멈춘다. withTimeout 은 시한에 취소하고, 정리 중 중단 호출은 NonCancellable 로 감싼다"
+    synonyms: ["cancellation", "CancellationException", "withTimeout", "NonCancellable", "ensureActive"]
+    questions: ["CancellationException 을 catch 해서 삼키면 무엇이 깨지나"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/presentation/paper/PaperStreamSseController.kt, symbol: "job.cancel(CancellationException(\"SSE emitter timeout\"))", note: "SSE 연결이 끝나면 시세 수집 코루틴을 취소해 정리한다" }
+      - { path: chatbot/feature/src/main/kotlin/com/kgd/chatbot/infrastructure/ai/ClaudeApiAdapter.kt, symbol: "withTimeout(properties.ai.timeoutSeconds.seconds) {", note: "LLM 호출에 시한을 걸어 넘기면 취소한다" }
+    uses: [conc-job, conc-thread-interruption]
+    mitigates: [conc-coroutine-leak]
+  - id: conc-coroutine-exception-handling
+    kind: MECHANISM
+    name: "코루틴 예외 전파"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "launch 의 예외는 부모로 올라가 스코프를 취소하고, 끝까지 잡히지 않으면 CoroutineExceptionHandler 가 받는다. async 의 예외는 await 할 때 던져지지만 부모 취소는 그 전에 이미 일어난다"
+    synonyms: ["CoroutineExceptionHandler", "exception propagation"]
+    uses: [conc-job]
+  - id: conc-cps-transformation
+    kind: MECHANISM
+    name: "CPS 변환"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "컴파일러가 suspend 함수에 Continuation 인자를 더하고 본문을 중단 지점마다 번호 붙은 상태 머신으로 바꾼다. 중단하면 지역 변수를 Continuation 객체에 담아 돌아가고, 재개하면 그 상태부터 이어 간다"
+    synonyms: ["continuation-passing style", "state machine", "Continuation"]
+    uses: [conc-continuation, conc-suspend-function]
+  - id: conc-kotlin-flow
+    kind: MECHANISM
+    name: "Flow"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "collect 할 때마다 처음부터 값을 만드는 콜드 비동기 스트림. 생산과 소비가 같은 코루틴에서 순차로 돌아 중단 자체가 배압이 되고, map·filter·flatMapLatest·buffer·conflate·debounce·catch·retry 로 가공한다"
+    synonyms: ["Kotlin Flow", "cold flow", "flowOn", "collectLatest"]
+    questions: ["flowOn 은 위쪽과 아래쪽 중 어느 쪽의 실행 스레드를 바꾸나"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/marketdata/port/MarketDataSubscriber.kt, symbol: "fun subscribe(symbol: Symbol): Flow<Tick>", note: "종목 시세 구독을 Flow 로 내준다" }
+    contains: [conc-shared-flow, conc-state-flow]
+    uses: [conc-hot-cold-stream, conc-suspend-function]
+    alternative_to:
+      - { to: reactive-streams, reason: "request(n) 대신 suspend 로 배압을 얻고 연산자를 일반 코틀린 함수로 쓴다" }
+  - id: conc-shared-flow
+    kind: MECHANISM
+    name: "SharedFlow"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "여러 구독자에게 같은 값을 방송하는 핫 스트림. replay 로 늦게 온 구독자에게 과거 값을 주고, 버퍼가 차면 onBufferOverflow(SUSPEND·DROP_OLDEST·DROP_LATEST)대로 한다"
+    synonyms: ["SharedFlow", "MutableSharedFlow", "shareIn"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/market/MarketDataHub.kt, symbol: "private val flow = MutableSharedFlow<Tick>(", note: "거래소 시세 한 줄기를 여러 소비자에게 방송한다" }
+    uses: [conc-hot-cold-stream]
+  - id: conc-state-flow
+    kind: MECHANISM
+    name: "StateFlow"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "항상 현재값 하나를 가진 SharedFlow. 같은 값은 다시 내보내지 않고(distinct) 느린 구독자는 중간값을 건너뛰고 최신값만 받는다. 화면 상태처럼 '지금 값'이 중요한 곳에 쓴다"
+    synonyms: ["StateFlow", "MutableStateFlow", "stateIn"]
+  - id: conc-coroutine-channel
+    kind: MECHANISM
+    name: "Channel"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "코루틴 사이에서 값을 하나씩 넘기는 핫 통로. send 와 receive 가 중단 함수라 스레드를 막지 않는다. 용량 모드는 RENDEZVOUS(0)·BUFFERED·CONFLATED(최신 1개)·UNLIMITED 네 가지다"
+    synonyms: ["Channel", "produce", "RENDEZVOUS", "CONFLATED"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/notification/InMemoryPriorityQueue.kt, symbol: "private val notify: Channel<Unit> = Channel(capacity = Channel.UNLIMITED)", note: "알림이 들어왔다는 신호를 소비 코루틴에 넘긴다" }
+    contains: [conc-channel-fan-pattern]
+    uses: [conc-hot-cold-stream]
+    alternative_to:
+      - { to: conc-blocking-queue, reason: "넣기·꺼내기 대기가 스레드가 아니라 코루틴만 멈춘다" }
+  - id: conc-channel-fan-pattern
+    kind: MECHANISM
+    name: "팬아웃 · 팬인 · 파이프라인"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "한 채널을 여러 워커 코루틴이 나눠 받아(팬아웃) 병렬로 처리하고, 여러 생산자가 한 채널에 보내(팬인) 모으며, 단계마다 채널을 이어 파이프라인을 만든다"
+    synonyms: ["fan-out", "fan-in", "pipeline"]
+  - id: conc-run-blocking
+    kind: MECHANISM
+    name: "runBlocking"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "현재 스레드를 막고 그 안에서 코루틴을 돌려 끝날 때까지 기다리는 다리. main 함수·테스트·레거시 동기 코드에서만 쓰고, 코루틴이나 이벤트 루프 안에서 부르면 스레드를 묶는다"
+    synonyms: ["runBlocking"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/backtest/service/RunHybridBacktestService.kt, symbol: "val ticks = runBlocking {", note: "동기 흐름인 백테스트 평가에서 suspend 조회를 기다린다" }
+    causes: [conc-event-loop-blocking, conc-blocking-in-coroutine]
+  - id: conc-coroutine-leak
+    kind: PROBLEM
+    name: "코루틴 누수"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "GlobalScope 나 수명이 끝난 스코프에서 띄운 코루틴이 아무도 취소하지 않은 채 계속 돌며 메모리·커넥션을 쥐는 상태"
+    synonyms: ["coroutine leak", "GlobalScope"]
+  - id: conc-blocking-in-coroutine
+    kind: PROBLEM
+    name: "코루틴 안 블로킹"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "Default 디스패처 코루틴에서 JDBC·Thread.sleep 같은 블로킹 호출을 해, 코어 수만큼뿐인 스레드가 묶여 다른 코루틴이 재개되지 못하는 상태"
+    synonyms: ["blocking call in coroutine", "dispatcher starvation"]
+
+  # ── 리액티브 스트림 ──
+  - id: conc-reactive-programming
+    kind: STAGE
+    name: "리액티브 스트림 처리"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "비동기 데이터 흐름을 Publisher·Subscriber 연산자 체인으로 선언하고, 구독 시점에 실행·스레드·배압을 정한다. 연산자 체인은 구독하기 전에는 아무 일도 하지 않는다"
+    questions: ["publishOn 과 subscribeOn 은 각각 어느 구간의 스레드를 바꾸나", "Mono 를 만들고 subscribe 하지 않으면 무슨 일이 생기나"]
+    contains: [reactive-streams, conc-reactor-operators, conc-reactor-schedulers, conc-reactor-sinks, conc-backpressure-overflow-strategy, conc-reactor-coroutine-bridge, conc-unbounded-buffer, conc-unsubscribed-publisher]
+    flows_to: [conc-context-propagation]
+    uses: [conc-reactive-signals, conc-hot-cold-stream, conc-assembly-subscription, test-reactive-stream-verification]
+  - id: reactive-streams
+    kind: MECHANISM
+    name: "리액티브 스트림"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "비동기 데이터 흐름을 Publisher·Subscriber·Subscription·Processor 로 잇고, 구독자가 request(n) 으로 받을 양을 알려 배압을 거는 논블로킹 표준. Reactor 의 Mono·Flux 가 구현이다"
+    synonyms: ["Reactive Streams", "Reactor", "Mono", "Flux"]
+    questions: ["request(n) 은 어떻게 생산 속도를 늦추나"]
+    code:
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/filter/ExperimentAssignmentFilter.kt, symbol: "override fun filter(exchange: ServerWebExchange, chain: GatewayFilterChain): Mono<Void> {", note: "게이트웨이 필터가 Mono 체인으로 요청을 넘긴다" }
+    contains: [spring-webflux, project-reactor, conc-java-flow-api]
+    uses: [backpressure, conc-blocking-nonblocking, conc-reactive-signals]
+  - id: conc-java-flow-api
+    kind: MECHANISM
+    name: "java.util.concurrent.Flow"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "리액티브 스트림 네 인터페이스를 JDK 9 표준 라이브러리에 옮긴 것. 구현은 없고 Reactor·RxJava 가 어댑터로 이것과 맞물린다"
+    synonyms: ["Java 9 Flow API", "Flow.Publisher"]
+  - id: project-reactor
+    kind: TECHNOLOGY
+    name: "Project Reactor"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "리액티브 스트림 구현 라이브러리. 0~1개 결과의 Mono, 0~N개의 Flux 와 연산자·스케줄러·Context·Sinks 를 준다. Spring WebFlux 와 이 레포의 게이트웨이 필터가 이 위에 선다"
+    synonyms: ["Reactor Core", "Mono", "Flux"]
+    code:
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/filter/AuthenticationGatewayFilter.kt, symbol: "import reactor.core.publisher.Mono", note: "인증 필터가 Mono 로 응답을 이어 붙인다" }
+    implements:
+      - { to: reactive-streams, reason: "Mono·Flux 가 Publisher 를 구현하고 request(n) 규약을 지킨다" }
+      - { to: conc-reactor-operators, reason: "map·flatMap·zip·retry 같은 연산자를 준다" }
+      - { to: conc-reactor-schedulers, reason: "Schedulers.parallel·boundedElastic·single 과 publishOn·subscribeOn 을 준다" }
+      - { to: conc-reactor-sinks, reason: "Sinks.one·many 로 명령형 코드에서 값을 밀어 넣는다" }
+      - { to: conc-reactor-context, reason: "contextWrite·deferContextual 로 구독 경로에 값을 싣는다" }
+      - { to: conc-backpressure-overflow-strategy, reason: "onBackpressureBuffer·Drop·Latest·Error 연산자를 준다" }
+  - id: spring-webflux
+    kind: TECHNOLOGY
+    name: "Spring WebFlux"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "Reactor 위의 논블로킹 웹 스택. 적은 이벤트 루프 스레드로 많은 연결을 처리한다. 이 레포의 게이트웨이(Spring Cloud Gateway)가 이 위에서 돌고, 서비스의 WebClient 호출도 이것을 쓴다"
+    synonyms: ["WebFlux"]
+    code:
+      - { path: gradle/libs.versions.toml, symbol: "spring-cloud-starter-gateway-server-webflux", note: "게이트웨이가 쓰는 WebFlux 기반 Spring Cloud Gateway" }
+    implements:
+      - { to: reactive-streams, reason: "핸들러·필터가 Mono·Flux 를 주고받는다" }
+      - { to: spring-dispatcher-handler, reason: "리액티브 요청 분배기" }
+      - { to: spring-functional-endpoint, reason: "함수형 라우팅" }
+      - { to: spring-web-filter, reason: "리액티브 필터 체인" }
+      - { to: spring-webclient, reason: "리액티브 HTTP 클라이언트" }
+    causes: [conc-event-loop-blocking]
+  - id: conc-reactor-operators
+    kind: MECHANISM
+    name: "리액티브 연산자"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "흐름을 바꾸는 단계들. map 은 동기 변환, flatMap 은 내부 흐름을 병렬로 펼쳐 순서를 섞고, concatMap 은 순서를 지키며, switchMap 은 새 값이 오면 이전 내부 흐름을 버린다. zip·merge·concat 이 흐름을 합친다"
+    synonyms: ["flatMap", "concatMap", "switchMap", "zip", "merge"]
+    questions: ["flatMap 과 concatMap 중 순서를 보장하는 것은 무엇인가"]
+  - id: conc-reactor-schedulers
+    kind: MECHANISM
+    name: "리액티브 스케줄러"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "연산자가 돌 스레드 풀. parallel 은 CPU 작업, boundedElastic 은 블로킹 호출 격리, single 은 단일 스레드용이다. subscribeOn 은 구독(발원) 쪽을, publishOn 은 그 뒤 연산자를 옮긴다"
+    synonyms: ["Schedulers", "boundedElastic", "publishOn", "subscribeOn"]
+    uses: [thread-pool]
+    mitigates: [conc-event-loop-blocking]
+  - id: conc-reactor-sinks
+    kind: MECHANISM
+    name: "Sinks"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "명령형 코드에서 tryEmitNext 로 값을 밀어 넣는 핫 발행자. 구독자 하나(unicast)·여럿(multicast)·과거값 재생(replay)을 고르고, 동시 emit 은 실패 결과로 돌려준다"
+    synonyms: ["Sinks.many", "Sinks.one", "tryEmitNext"]
+    uses: [conc-hot-cold-stream]
+  - id: conc-backpressure-overflow-strategy
+    kind: MECHANISM
+    name: "배압 넘침 전략"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "소비자가 못 따라올 때 넘친 값을 쌓을지(BUFFER), 새 값을 버릴지(DROP), 최신 하나만 둘지(LATEST), 에러로 끝낼지(ERROR) 정한다. 시세처럼 최신값만 의미 있으면 버리는 쪽을 고른다"
+    synonyms: ["onBackpressureBuffer", "onBackpressureDrop", "onBackpressureLatest", "BufferOverflow", "limitRate"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/market/MarketDataHub.kt, symbol: "onBufferOverflow = BufferOverflow.DROP_OLDEST,", note: "느린 소비자 때문에 시세 생산이 막히지 않게 가장 오래된 틱을 버린다" }
+    uses: [backpressure]
+    mitigates: [conc-unbounded-buffer]
+  - id: conc-reactor-coroutine-bridge
+    kind: MECHANISM
+    name: "Reactor ↔ 코루틴 연결"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "Mono 를 awaitSingle 로 suspend 결과로, Flux 를 asFlow 로 Flow 로 바꾸고 반대로 mono{}·asFlux 로 감싼다. WebClient 같은 리액티브 API 를 코루틴 코드에서 순차 모양으로 쓴다"
+    synonyms: ["kotlinx-coroutines-reactor", "awaitSingle", "asFlow", "mono {}"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/exchange/BithumbMarketAdapter.kt, symbol: ".awaitSingle()", note: "WebClient 응답 Mono 를 suspend 결과로 받는다" }
+    uses: [coroutine, reactive-streams]
+  - id: conc-unbounded-buffer
+    kind: PROBLEM
+    name: "무한 버퍼"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "소비가 느린데 넘침 전략 없이 버퍼를 무한으로 두거나 request(Long.MAX) 로 구독해 쌓인 값이 힙을 채우는 상태. 배압이 끊긴 자리가 OOM 의 자리다"
+    synonyms: ["unbounded buffer", "onBackpressureBuffer 무한"]
+    causes: [rt-oom-heap-space]
+  - id: conc-unsubscribed-publisher
+    kind: PROBLEM
+    name: "구독 누락"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "Mono·Flux 를 만들기만 하고 반환하거나 subscribe 하지 않아 아무 동작도 일어나지 않는 상태. 조립 시점과 구독 시점을 헷갈릴 때 생긴다"
+    synonyms: ["nothing happens until you subscribe"]
+
+  # ── 실행 문맥 전달 ──
+  - id: conc-context-propagation
+    kind: STAGE
+    name: "실행 문맥 전달"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "요청 id·인증·트랜잭션·로그 MDC 처럼 요청을 따라가야 하는 값을 실행 단위에 싣는다. 스레드가 바뀌는 비동기·코루틴·리액티브에서는 스레드에 붙인 값이 끊기므로 운반 수단을 고른다"
+    questions: ["스레드 풀에서 ThreadLocal 을 remove 하지 않으면 무슨 일이 생기나", "코루틴에서 MDC 가 사라지는 이유는 무엇인가"]
+    contains: [conc-thread-local, conc-inheritable-thread-local, conc-scoped-value, conc-mdc-propagation, conc-reactor-context, conc-thread-context-element, conc-threadlocal-leak]
+    flows_to: [conc-io-model]
+  - id: conc-thread-local
+    kind: MECHANISM
+    name: "ThreadLocal"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "스레드마다 따로 값을 두는 변수. 각 스레드의 ThreadLocalMap 에 약한 키로 저장된다. 요청 문맥·스레드 비안전 객체 재사용에 쓰고, 풀 스레드에서는 끝날 때 remove 해야 한다"
+    synonyms: ["ThreadLocal", "ThreadLocalMap"]
+    questions: ["ThreadLocalMap 의 키만 약한 참조인 것이 왜 누수를 막지 못하나"]
+    causes:
+      - conc-threadlocal-leak
+      - { to: spring-reactor-context-loss, reason: "스레드가 바뀌면 ThreadLocal 값이 사라진다" }
+  - id: conc-inheritable-thread-local
+    kind: MECHANISM
+    name: "InheritableThreadLocal"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "자식 스레드를 만들 때 부모의 값을 복사한다. 스레드 풀은 스레드를 재사용하므로 처음 만든 요청의 값이 그대로 남아 다른 요청에 샌다"
+    synonyms: ["InheritableThreadLocal"]
+    causes: [conc-threadlocal-leak]
+  - id: conc-scoped-value
+    kind: MECHANISM
+    name: "ScopedValue"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "정해진 호출 범위 안에서만 읽히는 불변 문맥 값(JEP 446). 범위가 끝나면 자동으로 사라지고 구조화된 동시성의 하위 작업에 복사 없이 물려준다. 가상 스레드 수백만 개에서도 싸다"
+    synonyms: ["ScopedValue", "JEP 446", "JEP 464"]
+    alternative_to:
+      - { to: conc-thread-local, reason: "변경 불가·범위 한정이라 remove 누락 누수가 없고 가상 스레드에 싸다" }
+  - id: conc-mdc-propagation
+    kind: MECHANISM
+    name: "MDC 전파"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "로그의 traceId 같은 MDC 값은 ThreadLocal 이라 스레드가 바뀌면 사라진다. 실행기를 감싸 제출 시점 값을 복사하거나, 코루틴 MDCContext·Reactor Context 브리지로 옮겨 싣는다"
+    synonyms: ["MDC", "MDCContext", "TaskDecorator"]
+    uses: [conc-thread-local, conc-thread-context-element]
+    mitigates:
+      - { to: spring-reactor-context-loss, reason: "MDC 를 스레드 전환 너머로 옮긴다" }
+  - id: conc-reactor-context
+    kind: MECHANISM
+    name: "Reactor Context"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "구독 경로를 따라 아래에서 위로 전달되는 불변 키-값 저장소. 연산자가 스레드를 옮겨도 값이 따라가므로 WebFlux 에서 ThreadLocal 대신 인증·추적 값을 싣는다"
+    synonyms: ["Reactor Context", "contextWrite", "ContextView"]
+    alternative_to:
+      - { to: conc-thread-local, reason: "스레드가 아니라 구독에 붙어 스케줄러를 건너도 끊기지 않는다" }
+    mitigates: [spring-reactor-context-loss]
+  - id: conc-thread-context-element
+    kind: MECHANISM
+    name: "ThreadContextElement"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "코루틴이 재개될 때마다 ThreadLocal 값을 설정하고 중단될 때 되돌리는 코루틴 문맥 원소. ThreadLocal.asContextElement() 와 MDCContext 가 이것이다"
+    synonyms: ["asContextElement", "ThreadContextElement"]
+    uses: [conc-coroutine-context]
+  - id: conc-threadlocal-leak
+    kind: PROBLEM
+    name: "ThreadLocal 누수"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "풀 스레드에 남은 ThreadLocal 값이 다음 요청에 섞이거나(교차 오염), 값이 클래스로더를 붙잡아 재배포 때 Metaspace 가 새는 상태"
+    synonyms: ["ThreadLocal leak", "cross-request leak"]
+    causes: [rt-classloader-leak]
+
+  # ── IO 모델 ──
+  - id: conc-io-model
+    kind: STAGE
+    name: "IO 모델 선택"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "연결을 어떻게 기다릴지 정한다 — 연결마다 스레드가 막혀 기다릴지, 한 스레드가 여러 소켓의 준비를 감시할지(다중화), 커널이 끝낸 결과를 받을지(비동기 IO)"
+    questions: ["IO 다중화는 동기인가 비동기인가", "epoll 이 select 보다 빠른 이유는 무엇인가"]
+    contains: [conc-thread-per-connection, conc-blocking-io, conc-nonblocking-io, conc-io-multiplexing, conc-async-io, conc-java-nio, conc-zero-copy, conc-c10k]
+    flows_to: [conc-event-driven-server]
+    uses: [conc-io-two-phases, conc-sync-async, conc-blocking-nonblocking]
+  - id: conc-thread-per-connection
+    kind: MECHANISM
+    name: "연결당 스레드"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "연결(요청) 하나에 스레드 하나를 붙여 블로킹 IO 로 처리한다. 코드가 단순하지만 동시 연결 수가 스레드 수에 묶이고, 스레드마다 스택과 전환 비용이 든다. 서블릿·Tomcat 의 기본 모델이다"
+    synonyms: ["thread-per-connection", "thread-per-request"]
+    uses: [conc-blocking-io, thread-pool]
+    causes: [conc-c10k]
+  - id: conc-blocking-io
+    kind: MECHANISM
+    name: "블로킹 IO"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "read 가 데이터가 준비되고 사용자 버퍼로 복사될 때까지 호출한 스레드를 재운다. 두 단계(준비 대기·복사) 모두에서 막힌다"
+    synonyms: ["blocking IO", "BIO"]
+  - id: conc-nonblocking-io
+    kind: MECHANISM
+    name: "논블로킹 IO"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "소켓을 O_NONBLOCK 으로 두면 준비가 안 됐을 때 read 가 EAGAIN 으로 곧바로 돌아온다. 혼자 쓰면 계속 다시 묻는 바쁜 대기가 되어 다중화와 함께 쓴다"
+    synonyms: ["non-blocking IO", "O_NONBLOCK", "EAGAIN"]
+  - id: conc-io-multiplexing
+    kind: MECHANISM
+    name: "IO 다중화"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "한 스레드가 여러 fd 중 준비된 것을 커널에 물어 한꺼번에 받는다. 준비 대기만 공유하고 복사는 여전히 호출 스레드가 하므로 동기 IO 로 분류된다"
+    synonyms: ["IO multiplexing", "event demultiplexer"]
+    contains: [conc-select, conc-poll, conc-epoll, conc-kqueue]
+    uses: [conc-nonblocking-io, conc-edge-level-trigger]
+    mitigates: [conc-c10k]
+  - id: conc-select
+    kind: MECHANISM
+    name: "select"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "감시할 fd 를 비트맵으로 넘기고 준비된 것을 비트맵으로 돌려받는 가장 오래된 다중화(1983, BSD). fd 1024 개 상한이 있고, 호출마다 전체를 복사·순회해 O(n) 이다"
+    synonyms: ["select", "FD_SETSIZE"]
+  - id: conc-poll
+    kind: MECHANISM
+    name: "poll"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "fd 를 배열로 넘겨 1024 상한을 없앤 다중화. 여전히 호출마다 목록 전체를 커널에 복사하고 전부 훑는다"
+    synonyms: ["poll"]
+    alternative_to:
+      - { to: conc-select, reason: "fd 수 상한 없이 같은 방식으로 감시한다" }
+  - id: conc-epoll
+    kind: MECHANISM
+    name: "epoll"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "커널에 감시 목록을 한 번 등록해 두고(epoll_ctl) 준비된 fd 만 돌려받는(epoll_wait) 리눅스 다중화. 연결 수와 무관하게 준비된 수만큼만 일한다. Netty·nginx·Node 의 바탕이다"
+    synonyms: ["epoll", "epoll_wait", "epoll_ctl"]
+    questions: ["엣지 트리거에서 데이터를 끝까지 읽지 않으면 무슨 일이 생기나"]
+    alternative_to:
+      - { to: conc-poll, reason: "목록을 커널에 두고 준비된 것만 받아 fd 1만 개에서도 O(준비 수)다" }
+  - id: conc-kqueue
+    kind: MECHANISM
+    name: "kqueue"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "BSD·macOS 의 이벤트 통지 장치. 소켓뿐 아니라 파일 변경·시그널·타이머도 한 큐로 받는다. 자바 NIO Selector 가 macOS 에서 이것을 쓴다"
+    synonyms: ["kqueue", "kevent"]
+    alternative_to:
+      - { to: conc-epoll, reason: "BSD 계열에서 같은 준비 통지를 더 일반화된 이벤트 필터로 준다" }
+  - id: conc-async-io
+    kind: MECHANISM
+    name: "비동기 IO"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "요청만 커널에 넘기고 돌아온 뒤, 데이터 복사까지 끝났다는 완료 통지를 받는다. 두 단계 모두 호출자가 막히지 않는다"
+    synonyms: ["asynchronous IO", "AIO", "completion-based IO"]
+    contains: [conc-iocp, conc-posix-aio, conc-io-uring]
+    uses: [conc-io-two-phases]
+  - id: conc-iocp
+    kind: MECHANISM
+    name: "IOCP"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "윈도우의 완료 포트. 겹친(overlapped) IO 를 걸어 두면 커널이 끝난 작업을 포트 큐에 넣고 워커 스레드가 꺼내 처리한다. 프로액터 패턴의 대표 구현이다"
+    synonyms: ["IO Completion Port", "IOCP"]
+  - id: conc-posix-aio
+    kind: MECHANISM
+    name: "POSIX AIO"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "aio_read 등 POSIX 비동기 IO. 리눅스에서는 glibc 가 스레드로 흉내 내거나(libaio 는 O_DIRECT 파일만) 제약이 커서 DB 의 직접 IO 말고는 거의 쓰이지 않았다"
+    synonyms: ["POSIX AIO", "libaio"]
+  - id: conc-io-uring
+    kind: MECHANISM
+    name: "io_uring"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "사용자와 커널이 공유하는 제출 링(SQE)·완료 링(CQE)으로 IO 를 주고받는 리눅스 5.1+ 인터페이스. 여러 요청을 시스템 콜 한 번에 넣고, SQPOLL 이면 시스템 콜 없이도 된다. 보안 이슈로 막아 둔 환경이 많다"
+    synonyms: ["io_uring", "SQE", "CQE", "SQPOLL"]
+    alternative_to:
+      - { to: conc-epoll, reason: "준비 통지가 아니라 완료 통지를 받고 시스템 콜 수를 묶어서 줄인다" }
+  - id: conc-java-nio
+    kind: MECHANISM
+    name: "Java NIO"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "Channel·Buffer·Selector 세 추상으로 논블로킹 IO 를 쓰는 JDK 1.4 API. Selector 가 운영체제의 epoll·kqueue 를 감싼다"
+    synonyms: ["NIO", "java.nio"]
+    contains: [conc-nio-selector, conc-nio-channel, conc-byte-buffer, conc-nio2-async-channel]
+  - id: conc-nio-selector
+    kind: MECHANISM
+    name: "Selector"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "여러 채널을 등록해 두고 select() 로 준비된 SelectionKey 들을 받는다. 처리한 키를 selectedKeys 에서 직접 지워야 다음에 다시 안 나온다"
+    synonyms: ["Selector", "SelectionKey"]
+    uses: [conc-epoll, conc-kqueue]
+  - id: conc-nio-channel
+    kind: MECHANISM
+    name: "Channel"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "fd 를 감싼 양방향 IO 통로. SocketChannel·ServerSocketChannel·FileChannel 이 있고, configureBlocking(false) 로 논블로킹이 된다"
+    synonyms: ["SocketChannel", "FileChannel", "ServerSocketChannel"]
+  - id: conc-byte-buffer
+    kind: MECHANISM
+    name: "ByteBuffer"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "position·limit·capacity·mark 네 포인터로 읽기·쓰기 모드를 오가는 바이트 버퍼. 쓰고 나서 flip 해야 읽힌다. 힙 버퍼와 힙 밖 다이렉트 버퍼가 있다"
+    synonyms: ["ByteBuffer", "flip", "heap buffer", "direct buffer"]
+    uses: [rt-direct-memory]
+  - id: conc-nio2-async-channel
+    kind: MECHANISM
+    name: "AsynchronousChannel"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "JDK 7 NIO.2 의 완료 기반 채널. CompletionHandler 나 Future 로 결과를 받는다. 리눅스에서는 내부적으로 epoll + 스레드 풀로 흉내 내 이점이 작아 널리 쓰이지 않았다"
+    synonyms: ["NIO.2", "AsynchronousSocketChannel", "CompletionHandler"]
+    uses: [conc-async-io]
+  - id: conc-zero-copy
+    kind: MECHANISM
+    name: "제로 카피"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "파일을 소켓으로 보낼 때 사용자 공간을 거치지 않고 커널 안에서 넘겨 복사와 모드 전환을 줄인다. Kafka 가 로그 세그먼트를 컨슈머에 보내는 방식이다"
+    synonyms: ["zero-copy"]
+    contains: [conc-sendfile]
+    uses: [data-page-cache, rt-mmap]
+  - id: conc-sendfile
+    kind: MECHANISM
+    name: "sendfile · transferTo"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "페이지 캐시의 파일 내용을 소켓 버퍼로 커널 안에서 바로 넘기는 시스템 콜. 자바에서는 FileChannel.transferTo 가 이것을 부른다. splice 는 파이프를 거치는 변형이다"
+    synonyms: ["sendfile", "FileChannel.transferTo", "splice"]
+  - id: conc-c10k
+    kind: PROBLEM
+    name: "C10K 문제"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "동시 연결 1만 개를 연결당 스레드로 받으면 스택 메모리·컨텍스트 스위치·커널 자료구조·락 경합이 한꺼번에 한계에 닿는 문제(1999). 다중화와 이벤트 루프가 그 답이었다"
+    synonyms: ["C10K", "C10M"]
+
+  # ── 이벤트 루프 서버 ──
+  - id: conc-event-driven-server
+    kind: STAGE
+    name: "이벤트 루프 서버 구성"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "적은 수의 이벤트 루프 스레드가 다중화로 받은 준비 이벤트를 핸들러로 돌린다. 루프를 몇 개 두고, 연결 수락과 처리를 나눌지, 블로킹 작업을 어디로 뺄지 정한다"
+    questions: ["Netty EventLoop 가 스레드 하나인 이유는 무엇인가", "리액터와 프로액터는 무엇이 다른가"]
+    contains: [conc-event-loop, conc-reactor-pattern, conc-proactor-pattern, conc-netty-event-loop-group, conc-channel-pipeline, conc-netty-bytebuf, conc-fast-thread-local, conc-hashed-wheel-timer, reactor-netty, conc-event-loop-blocking, conc-bytebuf-leak]
+    flows_to: [conc-diagnosis]
+  - id: conc-event-loop
+    kind: MECHANISM
+    name: "이벤트 루프"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "스레드 하나가 준비된 이벤트를 기다렸다 핸들러를 차례로 부르는 무한 루프. 한 연결은 항상 같은 루프에서 처리되어 동기화가 필요 없고, 대신 핸들러가 막히면 루프 전체가 멈춘다"
+    synonyms: ["event loop"]
+    uses: [conc-io-multiplexing, conc-thread-confinement]
+    causes: [conc-event-loop-blocking]
+  - id: conc-reactor-pattern
+    kind: MECHANISM
+    name: "리액터 패턴"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "다중화기가 '읽을 준비가 됐다'는 이벤트를 알려 주면 디스패처가 등록된 핸들러를 불러 직접 읽고 처리한다. 준비 통지 모델이라 리눅스 epoll 과 맞는다"
+    synonyms: ["Reactor pattern", "Doug Lea Scalable IO"]
+    contains: [conc-multi-reactor]
+    uses: [conc-io-multiplexing]
+  - id: conc-multi-reactor
+    kind: MECHANISM
+    name: "멀티 리액터"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "연결 수락만 하는 메인 리액터와 수락된 연결의 읽기·쓰기를 나눠 맡는 서브 리액터 여럿으로 나눈다(Doug Lea 의 변형 3·4). 필요하면 뒤에 업무 처리용 워커 풀을 둔다"
+    synonyms: ["main-sub reactor", "master-worker reactor"]
+  - id: conc-proactor-pattern
+    kind: MECHANISM
+    name: "프로액터 패턴"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "IO 를 커널에 맡겨 두고 '다 읽었다'는 완료 이벤트가 오면 핸들러가 결과만 처리한다. 완료 통지 모델이라 IOCP·io_uring 과 맞는다"
+    synonyms: ["Proactor pattern"]
+    uses: [conc-async-io]
+    alternative_to:
+      - { to: conc-reactor-pattern, reason: "준비 통지 대신 완료 통지를 받아 읽기 자체를 커널이 끝낸다" }
+  - id: conc-netty-event-loop-group
+    kind: MECHANISM
+    name: "EventLoopGroup"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "Netty 의 이벤트 루프 묶음. boss 그룹이 연결을 수락해 worker 그룹의 루프 하나에 채널을 평생 배정한다. 네이티브 epoll·kqueue·io_uring 전송을 고를 수 있다"
+    synonyms: ["EventLoopGroup", "boss/worker", "NioEventLoop", "EpollEventLoop"]
+    uses: [conc-event-loop, conc-multi-reactor]
+  - id: conc-channel-pipeline
+    kind: MECHANISM
+    name: "ChannelPipeline"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "채널마다 달린 핸들러 사슬. 들어오는 이벤트는 머리에서 꼬리로 인바운드 핸들러를, 나가는 쓰기는 꼬리에서 머리로 아웃바운드 핸들러를 지난다. 코덱·TLS·업무 핸들러를 이 순서로 끼운다"
+    synonyms: ["ChannelPipeline", "ChannelHandler", "ChannelHandlerContext", "inbound/outbound"]
+    uses: [chain-of-responsibility]
+  - id: conc-netty-bytebuf
+    kind: MECHANISM
+    name: "ByteBuf"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "읽기·쓰기 인덱스를 따로 둔 Netty 버퍼. 다이렉트 메모리를 풀링(jemalloc 방식)해 재사용하고 참조 카운트(refCnt)로 반납 시점을 정한다. 마지막 사용자가 release 해야 한다"
+    synonyms: ["ByteBuf", "PooledByteBufAllocator", "refCnt", "CompositeByteBuf"]
+    uses: [rt-direct-memory]
+    causes: [conc-bytebuf-leak]
+  - id: conc-fast-thread-local
+    kind: MECHANISM
+    name: "FastThreadLocal"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "Netty 전용 스레드에서 해시 조회 대신 배열 인덱스로 값을 찾는 ThreadLocal 대체. 이벤트 루프처럼 조회가 아주 잦은 곳에서 쓴다"
+    synonyms: ["FastThreadLocal"]
+    alternative_to:
+      - { to: conc-thread-local, reason: "해시 충돌 탐색 없이 고정 인덱스로 찾는다" }
+  - id: conc-hashed-wheel-timer
+    kind: MECHANISM
+    name: "해시 휠 타이머"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "시간을 칸으로 나눈 바퀴에 타임아웃을 넣고 틱마다 한 칸만 본다. 연결마다 걸린 수십만 개 타임아웃을 우선순위 큐보다 싸게 다룬다"
+    synonyms: ["HashedWheelTimer", "timing wheel"]
+  - id: reactor-netty
+    kind: TECHNOLOGY
+    name: "Reactor Netty"
+    category: NETWORK
+    level: ADVANCED
+    description: "Netty 위에 Reactor 의 Mono·Flux 로 HTTP·TCP·웹소켓 서버와 클라이언트를 여는 라이브러리. WebFlux 의 기본 서버이자 WebClient 의 기본 전송이고, 이 레포는 거래소 웹소켓 구독에 직접 쓴다"
+    synonyms: ["reactor-netty", "Netty"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/stream/BithumbWebSocketSubscriber.kt, symbol: "import reactor.netty.http.client.HttpClient", note: "빗썸 시세 웹소켓을 Reactor Netty 클라이언트로 연다" }
+    implements:
+      - { to: conc-event-loop, reason: "Netty 이벤트 루프 위에서 연결을 처리한다" }
+      - { to: conc-netty-event-loop-group, reason: "LoopResources 로 boss·worker 루프를 만든다" }
+      - { to: conc-channel-pipeline, reason: "HTTP 코덱과 사용자 핸들러를 파이프라인에 끼운다" }
+  - id: conc-event-loop-blocking
+    kind: PROBLEM
+    name: "이벤트 루프 블로킹"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "소수의 이벤트 루프 스레드에서 JDBC·파일 IO·Thread.sleep·block() 같은 블로킹 호출을 해 그 스레드가 맡은 모든 연결이 함께 멈추는 상태"
+    synonyms: ["blocking the event loop", "BlockHound"]
+  - id: conc-bytebuf-leak
+    kind: PROBLEM
+    name: "ByteBuf 누수"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "release 하지 않은 풀링 버퍼가 다이렉트 메모리를 계속 붙잡는 상태. GC 가 힙 객체만 치워도 버퍼는 반납되지 않아 결국 다이렉트 메모리 OOM 이 난다. ResourceLeakDetector 가 샘플링해 알린다"
+    synonyms: ["ByteBuf leak", "ResourceLeakDetector"]
+    causes: [rt-oom-direct-buffer]
+
+  # ── 진단 ──
+  - id: conc-diagnosis
+    kind: STAGE
+    name: "동시성 문제 진단"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "멈춤·느려짐·간헐 오류가 교착·경합·풀 고갈·피닝 중 무엇인지 가른다. 스레드 덤프를 여러 번 떠 비교하고, 락 대기를 프로파일러로 재고, 경쟁 상태는 스트레스 테스트로 재현한다"
+    questions: ["스레드 덤프 한 장으로 판단하면 안 되는 이유는 무엇인가", "BLOCKED 스레드가 많을 때 누가 막고 있는지 어떻게 찾나"]
+    contains: [conc-deadlock-detection, conc-lock-profiling, conc-pinning-trace, conc-coroutine-debugging, conc-concurrency-stress-test]
+    measured_by: [conc-lock-wait-time]
+  - id: conc-deadlock-detection
+    kind: MECHANISM
+    name: "교착 탐지"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "스레드 덤프의 'waiting to lock <주소>'와 'locked <주소>'를 이어 대기 그래프를 만들고 순환을 찾는다. jstack·jcmd Thread.print 는 모니터 교착을 끝에 'Found one Java-level deadlock'으로 직접 알려 준다"
+    synonyms: ["deadlock detection", "Thread.print", "ThreadMXBean.findDeadlockedThreads"]
+    uses: [rt-thread-dump]
+  - id: conc-lock-profiling
+    kind: MECHANISM
+    name: "락 프로파일링"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "어느 락에서 누가 얼마나 기다렸는지 스택별로 모은다. async-profiler 의 lock 모드나 JFR 의 모니터·park 이벤트를 쓰고, 부하가 걸린 상태에서 떠야 의미가 있다"
+    synonyms: ["lock profiling", "async-profiler -e lock", "jdk.JavaMonitorEnter"]
+    uses: [rt-async-profiler, rt-jfr]
+  - id: conc-pinning-trace
+    kind: MECHANISM
+    name: "피닝 추적"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "-Djdk.tracePinnedThreads=full 이나 JFR 의 jdk.VirtualThreadPinned 이벤트로 가상 스레드가 캐리어에 묶인 스택을 찾는다"
+    synonyms: ["jdk.tracePinnedThreads", "jdk.VirtualThreadPinned"]
+    uses: [rt-jfr]
+  - id: conc-coroutine-debugging
+    kind: MECHANISM
+    name: "코루틴 디버깅"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "kotlinx-coroutines-debug 의 DebugProbes 로 떠 있는 코루틴과 그 중단 지점·생성 스택을 덤프한다. 스레드 덤프에는 중단된 코루틴이 보이지 않아서 따로 떠야 한다"
+    synonyms: ["kotlinx-coroutines-debug", "DebugProbes", "-Dkotlinx.coroutines.debug"]
+  - id: conc-concurrency-stress-test
+    kind: MECHANISM
+    name: "동시성 스트레스 테스트"
+    category: TESTING
+    level: ADVANCED
+    description: "같은 연산을 여러 스레드로 수백만 번 겹쳐 돌려 드물게 나는 결과(재배치·가시성·원자성 위반)를 모은다. jcstress 가 JMM 수준의 허용·금지 결과를 판정한다"
+    synonyms: ["jcstress", "stress test"]
+    mitigates: [race-condition, conc-visibility-failure]
 
   # ── 용어 ──
   - id: concurrency-glossary
@@ -231,30 +1518,205 @@ concepts:
     name: "동시성 용어 사전"
     category: BASICS
     level: BEGINNER
-    description: "동시성을 읽는 데 필요한 말. 장치가 아니라 장치를 설명하는 용어를 모은다"
+    description: "동시성을 읽는 데 필요한 말. 장치가 아니라 장치를 설명하는 용어를 스레드·메모리·동기화·비동기 넷으로 나눠 모은다"
     synonyms: ["glossary", "용어집"]
-    contains: [conc-critical-section, conc-context-switch, conc-blocking-nonblocking, conc-suspend-function, conc-structured-concurrency, conc-memory-visibility]
-  - id: conc-critical-section
+    contains: [conc-glossary-thread, conc-glossary-memory, conc-glossary-sync, conc-glossary-async]
+  - id: conc-glossary-thread
     kind: TERM
-    name: "임계 구역"
+    name: "스레드 용어"
+    category: BASICS
+    level: BEGINNER
+    description: "실행 단위의 상태와 구성 요소를 가리키는 말"
+    contains: [conc-thread-state, conc-daemon-thread, conc-context-switch, conc-carrier-thread, conc-continuation, conc-work-queue, conc-recursive-task]
+  - id: conc-thread-state
+    kind: TERM
+    name: "스레드 상태"
     category: CONCURRENCY
     level: BEGINNER
-    description: "공유 자원을 만지는 코드 구간. 동시에 하나(또는 정해진 수)만 들어가야 결과가 맞는다"
-    synonyms: ["critical section"]
+    description: "NEW·RUNNABLE·BLOCKED(모니터 대기)·WAITING(무기한 대기)·TIMED_WAITING(시한 대기)·TERMINATED 여섯 가지. IO 에서 막힌 스레드도 자바에서는 RUNNABLE 로 보인다"
+    synonyms: ["Thread.State", "BLOCKED", "WAITING", "TIMED_WAITING"]
+  - id: conc-daemon-thread
+    kind: TERM
+    name: "데몬 스레드"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "남은 스레드가 데몬뿐이면 JVM 이 기다리지 않고 종료하는 보조 스레드. 종료 시 finally 가 실행되지 않을 수 있다"
+    synonyms: ["daemon thread"]
   - id: conc-context-switch
     kind: TERM
     name: "컨텍스트 스위칭"
     category: CONCURRENCY
     level: BEGINNER
-    description: "CPU 가 실행 중인 스레드의 레지스터·스택 상태를 저장하고 다른 스레드 상태로 바꾸는 일. 스레드가 많을수록 이 비용이 커진다"
+    description: "CPU 가 실행 중인 스레드의 레지스터·스택 상태를 저장하고 다른 스레드 상태로 바꾸는 일. 수 마이크로초가 들고 캐시가 식는다. 스레드가 많을수록 이 비용이 커진다"
     synonyms: ["context switch"]
+  - id: conc-carrier-thread
+    kind: TERM
+    name: "캐리어 스레드"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "가상 스레드를 실제로 실행하는 플랫폼 스레드. 기본으로 코어 수만큼의 ForkJoinPool 이고, 가상 스레드가 중단될 때마다 다른 가상 스레드를 태운다"
+    synonyms: ["carrier thread"]
+  - id: conc-continuation
+    kind: TERM
+    name: "Continuation"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "멈춘 지점 이후의 실행을 담은 값. 가상 스레드는 JVM 내부 Continuation 으로 스택을 힙에 떼어 두고, 코틀린 코루틴은 컴파일러가 만든 Continuation 객체에 지역 변수와 재개 위치를 담는다"
+    synonyms: ["continuation"]
+  - id: conc-work-queue
+    kind: TERM
+    name: "작업 큐"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "실행기에 제출된 작업이 스레드를 기다리는 대기열. 크기 제한이 없으면 과부하가 지연과 메모리로 번진다"
+    synonyms: ["work queue", "task queue"]
+  - id: conc-recursive-task
+    kind: TERM
+    name: "RecursiveTask · RecursiveAction"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "ForkJoinPool 에 올리는 분할 정복 작업 단위. 결과가 있으면 RecursiveTask, 없으면 RecursiveAction 이고, compute 안에서 fork·join 으로 쪼갠다"
+    synonyms: ["RecursiveTask", "RecursiveAction", "ForkJoinTask"]
+  - id: conc-glossary-memory
+    kind: TERM
+    name: "메모리 모델 용어"
+    category: BASICS
+    level: ADVANCED
+    description: "스레드 사이의 쓰기가 언제·어떤 순서로 보이는지 말하는 용어"
+    contains: [conc-memory-visibility, conc-happens-before, conc-synchronizes-with, conc-reordering, conc-acquire-release, conc-as-if-serial, conc-hardware-memory-model]
+  - id: conc-memory-visibility
+    kind: TERM
+    name: "메모리 가시성"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "한 스레드가 쓴 값이 다른 스레드에 언제 보이는지의 문제. CPU 캐시·재배치 때문에 happens-before 관계가 없으면 보장되지 않는다"
+    synonyms: ["memory visibility"]
+  - id: conc-happens-before
+    kind: TERM
+    name: "happens-before"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "A 가 B 보다 먼저 일어났다고 JMM 이 보장하는 관계. A 의 쓰기가 B 에서 보인다는 뜻이다. 프로그램 순서·모니터 해제→획득·volatile 쓰기→읽기·스레드 start/join·전이성 규칙으로 생긴다"
+    synonyms: ["happens-before", "HB"]
+  - id: conc-synchronizes-with
+    kind: TERM
+    name: "synchronizes-with"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "서로 다른 스레드의 두 동작을 잇는 동기화 간선 — 모니터 해제와 그다음 획득, volatile 쓰기와 그 값을 본 읽기. happens-before 가 스레드를 건너는 유일한 길이다"
+    synonyms: ["synchronizes-with"]
+  - id: conc-reordering
+    kind: TERM
+    name: "명령 재배치"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "컴파일러·JIT·CPU 가 한 스레드 결과가 같다는 전제로 메모리 연산 순서를 바꾸는 것. 다른 스레드에서는 바뀐 순서가 보여 초기화 전 값을 읽게 된다"
+    synonyms: ["reordering", "instruction reordering"]
+  - id: conc-acquire-release
+    kind: TERM
+    name: "acquire · release"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "release 쓰기 앞의 연산은 뒤로 못 가고, acquire 읽기 뒤의 연산은 앞으로 못 온다는 한 방향 순서 보장. 락 획득·해제와 volatile 읽기·쓰기의 하드웨어 의미다"
+    synonyms: ["acquire semantics", "release semantics"]
+  - id: conc-as-if-serial
+    kind: TERM
+    name: "as-if-serial"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "한 스레드 안에서는 재배치를 해도 순서대로 실행한 것과 결과가 같아야 한다는 규칙. 다른 스레드에서 보이는 순서는 약속하지 않는다"
+    synonyms: ["as-if-serial"]
+  - id: conc-hardware-memory-model
+    kind: TERM
+    name: "하드웨어 메모리 모델"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "CPU 마다 허용하는 재배치가 다르다 — x86 은 Store→Load 만 바뀌는 TSO 로 강하고, ARM 은 대부분을 바꾸는 약한 모델이다. x86 에서 우연히 돌던 경쟁 코드가 ARM 서버에서 깨진다"
+    synonyms: ["TSO", "weak memory model", "x86 vs ARM"]
+  - id: conc-glossary-sync
+    kind: TERM
+    name: "동기화 용어"
+    category: BASICS
+    level: BEGINNER
+    description: "잠금과 안전성을 말하는 용어"
+    contains: [conc-critical-section, conc-monitor, conc-reentrancy, conc-thread-safety, conc-check-then-act, conc-coffman-conditions, conc-weakly-consistent-iteration]
+  - id: conc-critical-section
+    kind: TERM
+    name: "임계 구역"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "공유 자원을 만지는 코드 구간. 동시에 하나(또는 정해진 수)만 들어가야 결과가 맞는다. 짧게 잡을수록 경합이 준다"
+    synonyms: ["critical section"]
+  - id: conc-monitor
+    kind: TERM
+    name: "모니터"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "상호 배제 잠금 하나와 조건 대기 집합 하나를 묶은 동기화 단위. 자바는 모든 객체가 모니터를 하나씩 갖고, synchronized·wait·notify 가 그것을 쓴다"
+    synonyms: ["monitor", "ObjectMonitor"]
+  - id: conc-reentrancy
+    kind: TERM
+    name: "재진입성"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "이미 락을 쥔 스레드가 같은 락을 다시 잡아도 막히지 않는 성질. 보유 횟수를 세어 그만큼 풀어야 해제된다"
+    synonyms: ["reentrancy", "reentrant"]
+  - id: conc-thread-safety
+    kind: TERM
+    name: "스레드 안전"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "여러 스레드가 어떤 순서로 불러도 추가 동기화 없이 명세대로 동작하는 성질. 불변·한정·동기화 셋 중 하나로 얻는다"
+    synonyms: ["thread safety", "thread-safe"]
+  - id: conc-check-then-act
+    kind: TERM
+    name: "check-then-act"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "조건을 확인하고 그 결과로 행동하는 두 단계 사이에 다른 스레드가 끼어들 수 있는 모양. 지연 초기화·'없으면 넣기'가 대표이고 한 원자 연산(putIfAbsent)으로 합쳐야 한다"
+    synonyms: ["check-then-act", "read-modify-write"]
+  - id: conc-coffman-conditions
+    kind: TERM
+    name: "교착 네 조건"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "상호 배제·점유 대기·비선점·순환 대기. 넷이 동시에 성립해야 교착이 생기므로 하나만 깨면 된다"
+    synonyms: ["Coffman conditions"]
+  - id: conc-glossary-async
+    kind: TERM
+    name: "비동기 용어"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "기다림을 다루는 방식과 스트림의 성질을 말하는 용어"
+    contains: [conc-blocking-nonblocking, conc-sync-async, conc-io-two-phases, conc-edge-level-trigger, conc-suspend-function, conc-structured-concurrency, conc-coroutine-context, conc-job, conc-function-coloring, conc-hot-cold-stream, conc-reactive-signals, conc-assembly-subscription]
   - id: conc-blocking-nonblocking
     kind: TERM
     name: "블로킹 · 논블로킹"
     category: CONCURRENCY
     level: BEGINNER
-    description: "호출이 결과가 나올 때까지 실행 단위를 붙잡으면 블로킹, 곧바로 돌아오고 결과는 나중에 받으면 논블로킹이다. 동기·비동기는 결과를 누가 챙기느냐의 다른 축이다"
+    description: "호출이 결과가 나올 때까지 실행 단위를 붙잡으면 블로킹, 곧바로 돌아오고 결과는 나중에 받으면 논블로킹이다. 호출한 쪽이 제어권을 돌려받느냐의 축이다"
     synonyms: ["blocking", "non-blocking"]
+  - id: conc-sync-async
+    kind: TERM
+    name: "동기 · 비동기"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "결과를 호출한 쪽이 직접 챙기면 동기, 완료를 통지·콜백으로 받으면 비동기다. 블로킹 여부와는 다른 축이라 네 분면이 생긴다"
+    synonyms: ["synchronous", "asynchronous", "4분면"]
+  - id: conc-io-two-phases
+    kind: TERM
+    name: "IO 의 두 단계"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "데이터가 커널 버퍼에 준비되기를 기다리는 단계와 커널에서 사용자 버퍼로 복사하는 단계. 어느 단계에서 막히느냐로 블로킹·다중화·비동기 IO 가 갈린다"
+    synonyms: ["wait for data", "copy to user"]
+  - id: conc-edge-level-trigger
+    kind: TERM
+    name: "엣지 · 레벨 트리거"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "레벨 트리거는 읽을 데이터가 남아 있는 동안 계속 알리고, 엣지 트리거는 상태가 바뀐 순간 한 번만 알린다. 엣지면 EAGAIN 이 날 때까지 다 읽어야 한다"
+    synonyms: ["edge-triggered", "level-triggered", "EPOLLET"]
   - id: conc-suspend-function
     kind: TERM
     name: "suspend 함수"
@@ -268,11 +1730,53 @@ concepts:
     category: CONCURRENCY
     level: INTERMEDIATE
     description: "자식 작업의 수명이 그것을 연 스코프 안에 갇힌다는 원칙. 스코프는 자식이 모두 끝나야 끝나고, 하나가 실패하면 형제를 취소한다"
-    synonyms: ["structured concurrency", "coroutineScope"]
-  - id: conc-memory-visibility
+    synonyms: ["structured concurrency"]
+  - id: conc-coroutine-context
     kind: TERM
-    name: "메모리 가시성"
+    name: "CoroutineContext"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "코루틴에 붙은 원소 묶음 — Job·디스패처·이름·예외 처리기·ThreadContextElement. + 로 합치고 자식은 부모 문맥을 물려받아 일부만 덮어쓴다"
+    synonyms: ["CoroutineContext", "CoroutineName"]
+  - id: conc-job
+    kind: TERM
+    name: "Job"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "코루틴 하나의 수명 손잡이. New·Active·Completing·Cancelling·Cancelled·Completed 상태를 거치고, 부모-자식 트리로 취소와 실패가 전파된다"
+    synonyms: ["Job", "Deferred"]
+  - id: conc-function-coloring
+    kind: TERM
+    name: "함수 색칠"
     category: CONCURRENCY
     level: ADVANCED
-    description: "한 스레드가 쓴 값이 다른 스레드에 언제 보이는지의 문제. CPU 캐시·재배치 때문에 volatile·원자 변수·잠금 같은 happens-before 관계가 없으면 보장되지 않는다"
-    synonyms: ["memory visibility", "happens-before", "volatile"]
+    description: "suspend·async 함수는 같은 종류 안에서만 부를 수 있어 호출 사슬 전체가 비동기로 물드는 현상. 가상 스레드는 일반 함수 그대로라 이 문제가 없다"
+    synonyms: ["function coloring", "What color is your function"]
+  - id: conc-hot-cold-stream
+    kind: TERM
+    name: "핫 · 콜드 스트림"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "콜드는 구독할 때마다 처음부터 새로 만든다(Flow·기본 Flux). 핫은 구독과 무관하게 이미 흐르고 있어 늦게 온 구독자는 지난 값을 놓친다(SharedFlow·Sinks·share)"
+    synonyms: ["hot publisher", "cold publisher"]
+  - id: conc-reactive-signals
+    kind: TERM
+    name: "리액티브 신호"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "onSubscribe 로 Subscription 을 받고, request(n) 만큼 onNext 가 오며, onError 나 onComplete 로 한 번 끝난다. 이 순서 규약이 리액티브 스트림 명세다"
+    synonyms: ["onSubscribe", "onNext", "onError", "onComplete", "request(n)"]
+  - id: conc-assembly-subscription
+    kind: TERM
+    name: "조립 시점 · 구독 시점"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "연산자 체인을 만드는 조립 시점에는 아무 일도 없고, subscribe 하는 구독 시점에 위로 거슬러 올라가며 실행이 시작된다. 부수 효과를 조립 시점에 두면 한 번만 돈다"
+    synonyms: ["assembly time", "subscription time", "defer"]
+  - id: conc-weakly-consistent-iteration
+    kind: TERM
+    name: "약한 일관성 순회"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "동시 컬렉션의 반복자는 예외를 던지지 않고, 순회 시작 뒤의 변경은 보일 수도 안 보일 수도 있다. size()·isEmpty() 도 순간값의 어림이다"
+    synonyms: ["weakly consistent iterator", "fail-safe iterator"]

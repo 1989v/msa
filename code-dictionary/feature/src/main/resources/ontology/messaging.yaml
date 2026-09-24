@@ -1,0 +1,1406 @@
+# 메시징 · 스트리밍 온톨로지 — 원본은 이 파일이다 (ADR-0100, docs/specs/2026-09-24-concept-atlas).
+# 바꾸면 manifest.yaml 의 revision 을 올린다. 간선은 from 개념에만 적는다.
+domain: messaging
+root: messaging-streaming
+concepts:
+  - id: messaging-streaming
+    kind: DOMAIN
+    name: "메시징 · 스트리밍"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "브로커를 사이에 두고 이벤트를 주고받고 흐르는 동안 처리하는 분야. 메시징 모델을 고르고, 로그를 저장·복제하고, 생산하고 소비하고, 전달 보장과 실패 처리를 정하고, 스키마를 관리하고, 스트림을 처리하고, 운영하는 일로 읽는다"
+    synonyms: ["messaging", "event streaming", "Kafka"]
+    contains: [msg-messaging-model, msg-log-storage, msg-cluster-replication, msg-producing, msg-consuming, msg-delivery-guarantee, msg-failure-handling, msg-schema-management, msg-stream-processing, msg-operations, msg-glossary]
+
+  # ── 메시징 모델 선택 ──
+  - id: msg-messaging-model
+    kind: STAGE
+    name: "메시징 모델 선택"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "메시지를 한 소비자만 가져갈지 모두가 받을지, 브로커가 메시지를 지울지 로그로 남길지, 이벤트에 무엇을 실을지를 정한다"
+    questions: ["큐 기반 브로커와 로그 기반 브로커는 소비 후 메시지를 어떻게 다르게 다루나", "이벤트에 ID 만 실을지 상태 전체를 실을지는 무엇으로 정하나"]
+    contains: [msg-point-to-point-queue, msg-publish-subscribe, msg-log-based-broker, msg-competing-consumers, msg-request-reply, msg-event-notification, msg-event-carried-state-transfer, msg-topic-naming-convention, kafka, spring-kafka]
+    uses:
+      - { to: event-driven-architecture, reason: "서비스 경계를 이벤트로 잇는 아키텍처의 전송 수단을 고르는 일이다" }
+      - msg-event-message
+      - msg-command-message
+  - id: msg-point-to-point-queue
+    kind: MECHANISM
+    name: "점대점 큐"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "메시지 하나를 소비자 하나만 가져가고, 확인(ack)하면 브로커가 지운다. 작업 분배에 맞고, 지나간 메시지를 다시 읽을 수 없다"
+    synonyms: ["point-to-point", "message queue", "RabbitMQ", "SQS"]
+  - id: msg-publish-subscribe
+    kind: MECHANISM
+    name: "발행 · 구독"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "발행자는 토픽에만 보내고, 구독자는 각자 사본을 받는다. 발행자가 수신자를 몰라 새 소비자를 발행자 변경 없이 붙인다"
+    synonyms: ["pub/sub", "publish-subscribe", "topic"]
+    uses: [fan-out]
+  - id: msg-log-based-broker
+    kind: MECHANISM
+    name: "로그 기반 브로커"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "메시지를 파티션별 추가 전용 로그에 보관 기간 동안 남기고, 소비자는 자기 오프셋만 옮긴다. 여러 그룹이 같은 로그를 따로 읽고, 과거 위치로 되감아 다시 처리할 수 있다"
+    synonyms: ["log-based message broker", "commit log", "event streaming platform"]
+    questions: ["소비가 끝난 메시지를 지우지 않는 설계가 주는 이점은 무엇인가"]
+    alternative_to:
+      - { to: msg-point-to-point-queue, reason: "메시지 단위 확인·삭제 대신 오프셋과 보관 기간으로 재처리를 얻는다" }
+  - id: msg-competing-consumers
+    kind: MECHANISM
+    name: "경쟁 소비자"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "같은 그룹의 소비자 여럿이 메시지를 나눠 가져 처리량을 늘린다. Kafka 에서는 파티션 단위로 나눠 갖기 때문에 그룹 안 소비자 수가 파티션 수를 넘으면 남는 소비자는 논다"
+    synonyms: ["competing consumers", "consumer group scaling"]
+    uses: [msg-consumer-group]
+  - id: msg-request-reply
+    kind: MECHANISM
+    name: "요청 · 응답 메시징"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "명령 메시지에 응답 토픽과 상관 ID 를 실어 보내고 응답을 비동기로 받는다. 사가 오케스트레이터가 참여자에게 명령을 내리고 결과를 받는 모양이 이것이다"
+    synonyms: ["request-reply", "correlation id", "async command"]
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/messaging/SagaCommandOutboxAdapter.kt, symbol: "\"inventory.command.release\"", note: "사가 명령을 명령 토픽으로 보내고 결과는 재고 이벤트 토픽으로 받는다" }
+    uses: [msg-command-message]
+  - id: msg-event-notification
+    kind: MECHANISM
+    name: "이벤트 알림"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "이벤트에 무엇이 바뀌었는지와 식별자만 싣고, 필요한 소비자는 원천에 다시 물어 본다. 이벤트가 작고 스키마 결합이 약하지만 원천 호출이 되돌아온다"
+    synonyms: ["event notification", "thin event"]
+  - id: msg-event-carried-state-transfer
+    kind: MECHANISM
+    name: "상태 전달 이벤트"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "이벤트에 소비자가 필요한 상태를 함께 실어 소비자가 자기 사본을 유지하게 한다. 원천이 죽어도 소비자가 돌지만 이벤트가 커지고 스키마 결합이 생긴다"
+    synonyms: ["event-carried state transfer", "fat event", "ECST"]
+    alternative_to:
+      - { to: msg-event-notification, reason: "되묻는 호출을 없애고 스키마 결합과 페이로드 크기를 치른다" }
+  - id: msg-topic-naming-convention
+    kind: MECHANISM
+    name: "토픽 명명 규약"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "토픽 이름을 {도메인}.{엔티티}.{이벤트} 형식으로, 실패 토픽은 .DLT 접미사로, 컨슈머 그룹은 {서비스}-{용도}로 짓는다. 이름만으로 발행 주체와 의미가 드러난다"
+    synonyms: ["topic naming", "{domain}.{entity}.{event}"]
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/messaging/OrderSagaConsumer.kt, symbol: "\"inventory.reservation.released\"", note: "도메인.엔티티.이벤트 형식의 토픽을 구독한다" }
+
+  # ── 로그 저장 구조 ──
+  - id: msg-log-storage
+    kind: STAGE
+    name: "로그 저장 구조"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "토픽을 파티션 로그로 나눠 디스크에 추가 전용으로 쓰고, 세그먼트 단위로 보관·삭제·압축한다"
+    questions: ["Kafka 가 디스크에 쓰는데도 빠른 이유는 무엇인가", "보관 기간 삭제와 로그 압축은 각각 어떤 토픽에 맞나"]
+    contains: [msg-topic-partition, msg-log-segment, msg-sequential-append, msg-zero-copy, msg-retention-policy, msg-log-compaction, msg-tiered-storage, msg-disk-exhaustion]
+    uses: [msg-record, msg-offset, msg-tombstone]
+  - id: msg-topic-partition
+    kind: MECHANISM
+    name: "토픽 파티션"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "토픽을 여러 파티션 로그로 나눠 브로커에 흩어 둔다. 파티션이 병렬 처리의 단위이자 순서 보장의 단위다 — 순서는 한 파티션 안에서만 지켜진다"
+    synonyms: ["partition", "topic partition"]
+    questions: ["주문 이벤트의 순서를 지키려면 무엇을 같은 파티션에 보내야 하나"]
+    code:
+      - { path: k8s/infra/prod/strimzi/kafka-topics.yaml, symbol: "partitions: 6", note: "운영 토픽을 파티션 6개 · 복제 3벌로 선언한다" }
+    uses:
+      - { to: dist-hash-partitioning, reason: "키 해시로 레코드의 파티션을 정한다" }
+  - id: msg-log-segment
+    kind: MECHANISM
+    name: "로그 세그먼트"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "파티션 로그를 일정 크기·시간마다 파일(세그먼트)로 끊어 쓴다. 쓰기는 활성 세그먼트 끝에만 하고, 삭제·압축은 닫힌 세그먼트 단위로 한다"
+    synonyms: ["log segment", ".log file"]
+    contains: [msg-offset-index]
+  - id: msg-offset-index
+    kind: MECHANISM
+    name: "오프셋 · 시간 인덱스"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "세그먼트마다 오프셋→파일 위치(.index), 타임스탬프→오프셋(.timeindex)의 희소 인덱스를 두어 특정 오프셋·시각에서 읽기 시작할 위치를 이분 탐색으로 찾는다"
+    synonyms: [".index", ".timeindex", "sparse index"]
+  - id: msg-sequential-append
+    kind: MECHANISM
+    name: "순차 추가 쓰기 · 페이지 캐시"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "로그 끝에만 순차로 쓰고 fsync 는 OS 에 맡겨 페이지 캐시를 버퍼로 쓴다. 최근 데이터 읽기는 캐시에서 끝나고, 내구성은 복제로 보충한다"
+    synonyms: ["append-only", "sequential I/O", "page cache"]
+    affects: [msg-throughput]
+  - id: msg-zero-copy
+    kind: MECHANISM
+    name: "제로 카피 전송"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "sendfile 로 페이지 캐시의 데이터를 사용자 공간을 거치지 않고 소켓으로 바로 보낸다. 브로커가 레코드 배치를 풀지 않고 그대로 넘기기 때문에 가능하다"
+    synonyms: ["zero-copy", "sendfile"]
+    affects: [msg-throughput]
+    uses:
+      - { to: conc-zero-copy, reason: "브로커가 sendfile 로 소켓에 바로 보낸다" }
+  - id: msg-retention-policy
+    kind: MECHANISM
+    name: "보관 기간 삭제"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "시간(retention.ms)이나 크기(retention.bytes)를 넘은 닫힌 세그먼트를 통째로 지운다. 소비 여부와 무관하게 지워지므로 느린 소비자는 메시지를 놓칠 수 있다"
+    synonyms: ["retention", "cleanup.policy=delete", "retention.ms"]
+    code:
+      - { path: k8s/infra/prod/strimzi/kafka-topics.yaml, symbol: "retention.ms: \"604800000\"", note: "운영 토픽을 7일 보관한다" }
+    mitigates: [msg-disk-exhaustion]
+  - id: msg-log-compaction
+    kind: MECHANISM
+    name: "로그 압축"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "키별 마지막 값만 남기고 옛 값을 지우는 보관 정책. 값이 null 인 레코드(툼스톤)는 일정 시간 뒤 키째 지운다. 테이블의 최신 상태를 토픽으로 들고 다닐 때 쓴다"
+    synonyms: ["log compaction", "cleanup.policy=compact", "compacted topic"]
+    questions: ["압축 토픽에서 키를 지우려면 무엇을 보내야 하나"]
+    uses: [msg-tombstone, msg-message-key]
+    alternative_to:
+      - { to: msg-retention-policy, reason: "기간이 지난 것이 아니라 덮어쓰인 것을 지운다" }
+  - id: msg-tiered-storage
+    kind: MECHANISM
+    name: "계층형 저장"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "최근 세그먼트는 브로커 로컬 디스크에 두고 닫힌 옛 세그먼트는 오브젝트 스토리지로 옮겨 긴 보관을 싸게 한다(KIP-405). 옛 데이터 읽기는 느려진다"
+    synonyms: ["tiered storage", "KIP-405", "remote log storage"]
+    mitigates: [msg-disk-exhaustion]
+  - id: msg-disk-exhaustion
+    kind: PROBLEM
+    name: "브로커 디스크 고갈"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "보관 기간·파티션 수·유입량이 디스크를 넘어 브로커가 쓰기를 멈추는 상태"
+    synonyms: ["disk full"]
+
+  # ── 클러스터 · 복제 ──
+  - id: msg-cluster-replication
+    kind: STAGE
+    name: "클러스터 · 복제"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "파티션을 여러 브로커에 복제하고, 리더가 죽으면 동기화된 복제본 중에서 새 리더를 뽑고, 클러스터 메타데이터를 합의로 관리한다"
+    questions: ["ISR 에서 빠진 복제본이 리더가 되면 무엇을 잃나", "KRaft 는 ZooKeeper 의 어떤 역할을 대신하나"]
+    contains: [msg-partition-replication, msg-partition-leader-election, msg-rack-awareness, msg-kraft, msg-zookeeper-coordination, msg-partition-reassignment, msg-cross-cluster-mirroring, msg-isr-shrink, msg-unclean-data-loss, msg-under-replicated-partitions]
+    uses: [msg-isr, msg-high-watermark, msg-leader-epoch]
+    measured_by: [msg-under-replicated-partitions]
+  - id: msg-partition-replication
+    kind: MECHANISM
+    name: "파티션 복제"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "파티션마다 리더 하나가 쓰기를 받고 팔로워가 리더에게서 당겨 와 복제한다. 모든 ISR 이 받은 위치까지(하이 워터마크)만 소비자에게 보인다"
+    synonyms: ["replication factor", "leader-follower replica"]
+    contains: [msg-isr-management]
+    uses:
+      - { to: dist-single-leader-replication, reason: "파티션 단위의 단일 리더 복제다" }
+  - id: msg-isr-management
+    kind: MECHANISM
+    name: "ISR 관리"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "replica.lag.time.max.ms 안에 리더를 따라잡지 못한 팔로워를 ISR 에서 빼고, 따라잡으면 다시 넣는다. acks=all 은 그때의 ISR 전원이 받으면 성공이다"
+    synonyms: ["ISR shrink/expand", "replica.lag.time.max.ms"]
+    causes: [msg-isr-shrink]
+  - id: msg-partition-leader-election
+    kind: MECHANISM
+    name: "파티션 리더 선출"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "리더 브로커가 죽으면 컨트롤러가 ISR 안의 복제본 중 하나를 새 리더로 정하고 리더 에포크를 올린다. 옛 리더의 늦은 쓰기는 에포크로 잘라낸다"
+    synonyms: ["clean leader election", "preferred leader"]
+    contains: [msg-unclean-leader-election]
+    uses: [leader-election]
+  - id: msg-unclean-leader-election
+    kind: MECHANISM
+    name: "비정상 리더 선출"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "ISR 이 모두 죽었을 때 ISR 밖의 뒤처진 복제본을 리더로 올려 가용성을 되찾는다. 그 복제본에 없던 커밋된 메시지는 사라진다. 기본값은 꺼져 있다"
+    synonyms: ["unclean.leader.election.enable"]
+    causes: [msg-unclean-data-loss]
+  - id: msg-rack-awareness
+    kind: MECHANISM
+    name: "랙 인식 배치"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "한 파티션의 복제본을 서로 다른 랙·가용 영역에 나눠 둬 영역 하나가 죽어도 복제본이 남게 하고, 소비자는 같은 영역의 팔로워에서 읽을 수 있다"
+    synonyms: ["rack awareness", "broker.rack", "follower fetching"]
+  - id: msg-kraft
+    kind: MECHANISM
+    name: "KRaft"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "클러스터 메타데이터를 내부 토픽(__cluster_metadata)에 두고 컨트롤러 쿼럼이 Raft 로 복제한다. ZooKeeper 없이 Kafka 만으로 돌고, 4.0 부터 유일한 모드다"
+    synonyms: ["KRaft", "Kafka Raft", "controller quorum"]
+    questions: ["컨트롤러 쿼럼을 3대와 5대로 두면 각각 몇 대 장애를 견디나"]
+    code:
+      - { path: k8s/infra/local/kafka/statefulset.yaml, symbol: "value: \"controller,broker\"", note: "한 노드가 컨트롤러와 브로커를 겸하는 KRaft 결합 모드" }
+    uses: [dist-raft]
+    alternative_to:
+      - { to: msg-zookeeper-coordination, reason: "외부 합의 시스템을 없애고 메타데이터를 Kafka 로그로 복제한다" }
+  - id: msg-zookeeper-coordination
+    kind: MECHANISM
+    name: "ZooKeeper 모드"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "컨트롤러 선출·브로커 등록·토픽 메타데이터를 외부 ZooKeeper 앙상블에 두던 옛 방식. 파티션이 많으면 컨트롤러 장애 복구가 느렸고 4.0 에서 제거됐다"
+    synonyms: ["ZooKeeper mode", "ZK"]
+    uses: [dist-coordination-service]
+  - id: msg-partition-reassignment
+    kind: MECHANISM
+    name: "파티션 재배치"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "브로커를 늘리거나 부하가 치우칠 때 파티션 복제본을 다른 브로커로 옮긴다. 복제 트래픽이 커서 속도를 제한해 옮기고, Cruise Control 이 자동화한다"
+    synonyms: ["partition reassignment", "Cruise Control"]
+    uses: [dist-rebalancing]
+  - id: msg-cross-cluster-mirroring
+    kind: MECHANISM
+    name: "클러스터 간 미러링"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "한 클러스터의 토픽을 다른 클러스터로 복제해 재해 복구·지역 분산을 한다(MirrorMaker 2). 오프셋이 클러스터마다 달라 소비자 전환에 오프셋 변환이 필요하다"
+    synonyms: ["MirrorMaker 2", "MM2", "cluster linking", "geo-replication"]
+    uses: [dist-multi-leader-replication]
+  - id: msg-isr-shrink
+    kind: PROBLEM
+    name: "ISR 축소"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "팔로워가 느려져 ISR 이 줄어든 상태. min.insync.replicas 아래로 내려가면 acks=all 쓰기가 거절된다"
+    synonyms: ["ISR shrink", "NotEnoughReplicas"]
+    measured_by: [msg-under-replicated-partitions]
+  - id: msg-unclean-data-loss
+    kind: PROBLEM
+    name: "비정상 선출 유실"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "뒤처진 복제본이 리더가 되면서 이미 확인 응답을 받은 메시지가 로그에서 잘려 나간 상태"
+    synonyms: ["committed data loss"]
+  - id: msg-under-replicated-partitions
+    kind: METRIC
+    name: "복제 부족 파티션 수"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "ISR 크기가 복제 계수보다 작은 파티션의 수. 0 이 아니면 브로커 장애·디스크·네트워크 문제를 뜻한다"
+    synonyms: ["URP", "UnderReplicatedPartitions"]
+
+  # ── 생산(프로듀서) ──
+  - id: msg-producing
+    kind: STAGE
+    name: "생산(프로듀서)"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "레코드의 파티션을 정하고, 모아 보내고, 몇 개의 복제본이 받았을 때 성공으로 볼지 정하고, 재시도해도 중복·역순이 없게 한다"
+    questions: ["acks=all 이어도 메시지가 유실되는 설정 조합은 무엇인가", "재시도가 순서를 바꾸는 경우와 막는 설정은 무엇인가"]
+    contains: [msg-partitioner, msg-acks, msg-min-isr-durability, msg-idempotent-producer, msg-batching-linger, msg-producer-compression, msg-in-flight-ordering, msg-delivery-timeout, msg-message-loss, msg-reordering-on-retry, msg-producer-buffer-exhaustion, msg-throughput, msg-end-to-end-latency]
+    measured_by: [msg-throughput, msg-end-to-end-latency]
+    flows_to: [msg-consuming]
+  - id: msg-partitioner
+    kind: MECHANISM
+    name: "파티셔너"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "레코드를 보낼 파티션을 고른다. 키가 있으면 키 해시로, 없으면 한 배치가 찰 때까지 한 파티션에 붙여 보낸다"
+    synonyms: ["partitioner"]
+    contains: [msg-key-hash-partitioning, msg-sticky-partitioner]
+  - id: msg-key-hash-partitioning
+    kind: MECHANISM
+    name: "키 해시 파티셔닝"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "같은 키(주문 ID 등)의 레코드를 늘 같은 파티션에 보내 그 키의 순서를 지킨다. 파티션 수를 바꾸면 키-파티션 대응이 바뀌어 순서가 깨진다"
+    synonyms: ["key-based partitioning", "murmur2", "ordering key"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/messaging/outbox/OutboxPollingPublisher.kt, symbol: "val key = row.partitionKey ?: row.aggregateId.toString()", note: "집합체 ID 를 키로 보내 같은 주문의 이벤트를 한 파티션에 모은다" }
+    uses: [msg-message-key]
+    causes:
+      - { to: dist-hot-partition, reason: "소수 키에 트래픽이 몰리면 그 파티션만 붐빈다" }
+  - id: msg-sticky-partitioner
+    kind: MECHANISM
+    name: "스티키 파티셔너"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "키 없는 레코드를 배치 하나가 찰 때까지 한 파티션에 몰아 보내고 다음 배치는 다른 파티션으로 옮긴다. 라운드로빈보다 배치가 커져 지연이 준다"
+    synonyms: ["sticky partitioner", "KIP-480", "round-robin partitioner"]
+    alternative_to:
+      - { to: msg-key-hash-partitioning, reason: "순서가 필요 없는 레코드에서 배치 효율을 얻는다" }
+  - id: msg-acks
+    kind: MECHANISM
+    name: "acks"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "프로듀서가 성공으로 볼 확인 수준. 0 은 안 기다림, 1 은 리더 기록, all 은 ISR 전원 기록이다. 높을수록 유실이 줄고 지연이 늘어난다"
+    synonyms: ["acks=0", "acks=1", "acks=all"]
+    questions: ["acks=1 인 상태에서 리더가 죽으면 무엇을 잃나"]
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/config/OrderKafkaConfig.kt, symbol: "ProducerConfig.ACKS_CONFIG to \"all\"", note: "주문 이벤트는 ISR 전원 기록을 기다린다" }
+      - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/config/KafkaProducerConfig.kt, symbol: "ProducerConfig.ACKS_CONFIG to \"1\"", note: "노출·클릭 로그는 리더 기록만 기다려 지연을 줄인다" }
+    affects: [msg-end-to-end-latency]
+    mitigates: [msg-message-loss]
+  - id: msg-min-isr-durability
+    kind: MECHANISM
+    name: "min.insync.replicas"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "acks=all 쓰기가 성공하려면 ISR 이 최소 몇 개여야 하는지 정한다. 복제 3 · 최소 ISR 2 면 브로커 하나가 죽어도 쓰고, 둘이 죽으면 쓰기를 거절해 유실 대신 가용성을 포기한다"
+    synonyms: ["min.insync.replicas", "min ISR"]
+    code:
+      - { path: k8s/infra/prod/strimzi/kafka-topics.yaml, symbol: "min.insync.replicas: \"2\"", note: "운영 토픽은 복제 3벌 중 2벌 이상 기록돼야 쓰기 성공" }
+    uses: [msg-isr]
+    mitigates: [msg-message-loss, msg-unclean-data-loss]
+  - id: msg-idempotent-producer
+    kind: MECHANISM
+    name: "멱등 프로듀서"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "프로듀서 ID 와 파티션별 순번을 레코드에 붙여, 재시도로 같은 배치가 다시 와도 브로커가 버린다. 한 프로듀서 세션·한 파티션 안의 중복만 막는다"
+    synonyms: ["enable.idempotence", "idempotent producer"]
+    questions: ["멱등 프로듀서만으로 end-to-end exactly-once 가 안 되는 이유는 무엇인가"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/messaging/outbox/OutboxKafka.kt, symbol: "ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG to true", note: "아웃박스 릴레이 프로듀서의 재시도 중복을 브로커에서 거른다" }
+    uses: [msg-producer-id]
+    mitigates: [dist-duplicate-delivery, msg-reordering-on-retry]
+  - id: msg-batching-linger
+    kind: MECHANISM
+    name: "배치 · linger"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "파티션별로 레코드를 batch.size 까지 모으거나 linger.ms 만큼 기다렸다가 한 요청으로 보낸다. 조금 기다려 처리량과 압축률을 얻는다"
+    synonyms: ["batch.size", "linger.ms", "record batch"]
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/config/KafkaProducerConfig.kt, symbol: "ProducerConfig.LINGER_MS_CONFIG to 5", note: "검색 로그를 5ms 모아 보낸다" }
+    affects: [msg-throughput, msg-end-to-end-latency]
+  - id: msg-producer-compression
+    kind: MECHANISM
+    name: "프로듀서 압축"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "레코드 배치를 gzip·snappy·lz4·zstd 로 압축해 보내고, 브로커는 압축된 채 저장·전달한다. 네트워크와 디스크를 줄이고 CPU 를 쓴다"
+    synonyms: ["compression.type", "zstd", "lz4"]
+    uses: [msg-batching-linger]
+    affects: [msg-throughput]
+  - id: msg-in-flight-ordering
+    kind: MECHANISM
+    name: "동시 전송 요청과 순서"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "확인을 기다리지 않고 동시에 보내는 요청 수(max.in.flight)가 2 이상이면 앞 배치 재시도가 뒤 배치보다 늦게 붙어 순서가 바뀐다. 멱등 프로듀서를 켜면 5 까지 순서가 지켜진다"
+    synonyms: ["max.in.flight.requests.per.connection"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/messaging/outbox/OutboxKafka.kt, symbol: "ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION to 5", note: "멱등 프로듀서와 함께 5 로 둬 순서를 지키면서 동시 전송한다" }
+    uses: [msg-idempotent-producer]
+    causes: [msg-reordering-on-retry]
+  - id: msg-delivery-timeout
+    kind: MECHANISM
+    name: "전송 기한"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "send 한 레코드를 재시도까지 포함해 성공시킬 상한 시간(delivery.timeout.ms). 넘으면 콜백에 실패가 오고, 이때부터는 애플리케이션이 다시 보낼지 정한다"
+    synonyms: ["delivery.timeout.ms", "retries", "request.timeout.ms"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/messaging/outbox/OutboxKafka.kt, symbol: "ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG to 10_000", note: "릴레이 한 번의 전송을 10초로 끊고 실패 행은 백오프 뒤 다시 집는다" }
+    uses: [retry-pattern]
+  - id: msg-message-loss
+    kind: PROBLEM
+    name: "메시지 유실"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "생산자는 성공으로 알았는데 브로커에 남지 않았거나, 소비자가 처리 전에 오프셋을 커밋해 처리되지 않은 채 지나간 상태"
+    synonyms: ["message loss", "data loss"]
+  - id: msg-reordering-on-retry
+    kind: PROBLEM
+    name: "재시도 역순"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "앞 배치가 실패해 재시도되는 사이 뒤 배치가 먼저 기록돼 같은 파티션 안 순서가 바뀐 상태"
+    synonyms: ["out-of-order delivery"]
+  - id: msg-producer-buffer-exhaustion
+    kind: PROBLEM
+    name: "프로듀서 버퍼 고갈"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "브로커가 느려 보내지 못한 레코드가 buffer.memory 를 채워 send 호출이 max.block.ms 동안 막히거나 실패하는 상태"
+    synonyms: ["buffer.memory", "max.block.ms"]
+    causes: [dist-cascading-failure]
+  - id: msg-throughput
+    kind: METRIC
+    name: "메시지 처리량"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "초당 생산·소비한 레코드 수나 바이트 수"
+    synonyms: ["throughput", "records/sec", "MB/s"]
+  - id: msg-end-to-end-latency
+    kind: METRIC
+    name: "종단 지연"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "생산자가 보낸 시각부터 소비자가 받은 시각까지의 시간. 배치 대기·복제 확인·폴링 주기가 더해진다"
+    synonyms: ["end-to-end latency", "produce-to-consume latency"]
+
+  # ── 소비(컨슈머) ──
+  - id: msg-consuming
+    kind: STAGE
+    name: "소비(컨슈머)"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "컨슈머 그룹이 파티션을 나눠 갖고, 폴링해 처리하고, 어디까지 처리했는지 오프셋을 커밋한다. 구성원이 바뀌면 파티션을 다시 나눈다"
+    questions: ["리밸런스가 일어나는 조건 세 가지는 무엇인가", "처리 전에 커밋하면 무엇이, 처리 후에 커밋하면 무엇이 생기나"]
+    contains: [msg-group-coordination, msg-rebalance, msg-assignment-strategy, msg-poll-loop, msg-offset-commit, msg-offset-reset-policy, msg-offset-replay, msg-consumer-concurrency, msg-rebalance-storm, msg-poll-interval-eviction]
+    uses: [msg-consumer-group, msg-offset, msg-group-coordinator]
+    measured_by: [dist-consumer-lag]
+  - id: msg-group-coordination
+    kind: MECHANISM
+    name: "그룹 멤버십 관리"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "그룹 코디네이터 브로커가 하트비트로 구성원의 생존을, poll 간격으로 처리 진행을 본다. session.timeout 안에 하트비트가 없거나 max.poll.interval 안에 poll 이 없으면 구성원을 뺀다"
+    synonyms: ["session.timeout.ms", "heartbeat.interval.ms", "max.poll.interval.ms"]
+    uses: [dist-heartbeat]
+  - id: msg-rebalance
+    kind: MECHANISM
+    name: "리밸런스"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "구성원이 들어오고 나가거나 구독 파티션이 바뀌면 그룹의 파티션 할당을 다시 정한다. 프로토콜에 따라 모두 멈추거나, 옮길 파티션만 멈춘다"
+    synonyms: ["consumer rebalance"]
+    questions: ["eager 와 cooperative 리밸런스는 멈추는 범위가 어떻게 다른가"]
+    contains: [msg-eager-rebalance, msg-cooperative-rebalance, msg-static-membership, msg-server-side-rebalance]
+    causes: [dist-duplicate-delivery]
+  - id: msg-eager-rebalance
+    kind: MECHANISM
+    name: "eager 리밸런스"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "리밸런스가 시작되면 모든 구성원이 가진 파티션을 전부 내려놓고 새 할당을 받는다. 그 사이 그룹 전체의 소비가 멈춘다(stop-the-world)"
+    synonyms: ["eager rebalance", "stop-the-world rebalance"]
+    causes: [msg-rebalance-storm]
+  - id: msg-cooperative-rebalance
+    kind: MECHANISM
+    name: "cooperative 리밸런스"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "옮겨야 할 파티션만 내려놓고 나머지는 계속 소비하며, 두 번의 짧은 라운드로 할당을 바꾼다(KIP-429). CooperativeStickyAssignor 가 이 방식이다"
+    synonyms: ["incremental cooperative rebalance", "KIP-429", "CooperativeStickyAssignor"]
+    alternative_to:
+      - { to: msg-eager-rebalance, reason: "전원 정지 대신 옮기는 파티션만 멈춘다" }
+    mitigates: [msg-rebalance-storm]
+  - id: msg-static-membership
+    kind: MECHANISM
+    name: "정적 멤버십"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "구성원마다 고정 ID(group.instance.id)를 주면 재시작으로 잠깐 빠져도 session.timeout 안에 돌아오면 리밸런스 없이 같은 파티션을 되찾는다(KIP-345). 롤링 배포에 맞다"
+    synonyms: ["group.instance.id", "KIP-345", "static membership"]
+    mitigates: [msg-rebalance-storm]
+  - id: msg-server-side-rebalance
+    kind: MECHANISM
+    name: "차세대 그룹 프로토콜"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "할당 계산을 클라이언트 리더가 아니라 브로커의 그룹 코디네이터가 하고, 구성원별로 점진적으로 조정한다(KIP-848). 전역 동기화 장벽이 사라진다"
+    synonyms: ["KIP-848", "consumer group protocol", "group.protocol=consumer"]
+    alternative_to:
+      - { to: msg-cooperative-rebalance, reason: "클라이언트 쪽 두 라운드 협상을 서버 쪽 점진 조정으로 바꾼다" }
+    mitigates: [msg-rebalance-storm]
+  - id: msg-assignment-strategy
+    kind: MECHANISM
+    name: "파티션 할당 전략"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "그룹 구성원에게 파티션을 나누는 규칙. Range 는 토픽별 연속 구간, RoundRobin 은 번갈아, Sticky 는 기존 할당을 최대한 유지한다"
+    synonyms: ["RangeAssignor", "RoundRobinAssignor", "StickyAssignor", "partition.assignment.strategy"]
+  - id: msg-poll-loop
+    kind: MECHANISM
+    name: "폴링 루프"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "소비자가 poll 로 최대 max.poll.records 건을 받아 처리하고 다시 poll 한다. 한 번 받은 묶음 처리가 max.poll.interval 을 넘으면 그룹에서 빠진다"
+    synonyms: ["poll loop", "max.poll.records"]
+    code:
+      - { path: search/consumer/src/main/kotlin/com/kgd/search/infrastructure/config/KafkaConsumerConfig.kt, symbol: "ConsumerConfig.MAX_POLL_RECORDS_CONFIG to 50", note: "색인이 느린 소비자는 한 번에 50 건만 받아 poll 간격을 지킨다" }
+    uses: [backpressure]
+    causes: [msg-poll-interval-eviction]
+  - id: msg-offset-commit
+    kind: MECHANISM
+    name: "오프셋 커밋"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "그룹이 파티션별로 다음에 읽을 위치를 __consumer_offsets 토픽에 기록한다. 커밋 시점이 처리 전이냐 후냐가 유실과 중복을 가른다"
+    synonyms: ["offset commit", "commitSync", "commitAsync"]
+    contains: [msg-auto-commit, msg-manual-commit]
+    uses: [msg-consumer-offsets-topic]
+  - id: msg-auto-commit
+    kind: MECHANISM
+    name: "자동 커밋"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "poll 할 때 일정 주기로 마지막으로 받은 위치를 자동 커밋한다. 처리 중 죽으면 처리 안 된 메시지가 커밋됐거나, 처리한 메시지가 다시 온다"
+    synonyms: ["enable.auto.commit=true", "auto.commit.interval.ms"]
+    causes: [msg-message-loss, dist-duplicate-delivery]
+  - id: msg-manual-commit
+    kind: MECHANISM
+    name: "수동 커밋"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "처리가 끝난 뒤 애플리케이션(또는 리스너 컨테이너)이 커밋한다. 레코드마다 커밋하면 중복 범위가 한 건으로 줄고 커밋 요청이 늘어난다"
+    synonyms: ["enable.auto.commit=false", "AckMode.RECORD", "manual ack"]
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/config/OrderKafkaConfig.kt, symbol: "ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG to false", note: "자동 커밋을 끄고 리스너 컨테이너가 커밋한다" }
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/config/OrderKafkaConfig.kt, symbol: "containerProperties.ackMode = ContainerProperties.AckMode.RECORD", note: "레코드 하나를 처리할 때마다 커밋한다" }
+    alternative_to:
+      - { to: msg-auto-commit, reason: "커밋 시점을 처리 완료 뒤로 옮겨 유실을 없앤다" }
+  - id: msg-offset-reset-policy
+    kind: MECHANISM
+    name: "오프셋 초기화 정책"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "커밋된 오프셋이 없거나 보관 기간이 지나 사라졌을 때 가장 앞(earliest)에서 읽을지 가장 뒤(latest)부터 읽을지 정한다"
+    synonyms: ["auto.offset.reset", "earliest", "latest"]
+    code:
+      - { path: recommendation/feature/src/main/kotlin/com/kgd/recommendation/infrastructure/kafka/KafkaConsumerConfig.kt, symbol: "ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to \"latest\"", note: "추천 소비자는 기동 시점부터 읽고 과거 이벤트는 따로 채운다" }
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/config/OrderKafkaConfig.kt, symbol: "ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to \"earliest\"", note: "주문 사가 소비자는 처음부터 읽어 놓치는 명령이 없게 한다" }
+  - id: msg-offset-replay
+    kind: MECHANISM
+    name: "오프셋 되감기 재처리"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "그룹 오프셋을 특정 오프셋·시각(offsetsForTimes)으로 옮겨 과거 메시지를 다시 처리한다. 버그 수정 뒤 재처리나 새 읽기 모델 구축에 쓰고, 소비자가 멱등이어야 한다"
+    synonyms: ["seek", "offsetsForTimes", "reset-offsets", "replay"]
+    uses: [idempotency, msg-offset-index]
+  - id: msg-consumer-concurrency
+    kind: MECHANISM
+    name: "소비 병렬도"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "그룹 안 소비자 스레드 수를 파티션 수 이하로 맞춰 늘린다. 파티션보다 많으면 논다. 한 파티션 안을 더 쪼개려면 키 단위 병렬 처리기를 따로 둬야 한다"
+    synonyms: ["listener concurrency", "parallel consumer"]
+    uses:
+      - msg-topic-partition
+      - { to: thread-pool, reason: "리스너 컨테이너가 스레드를 나눠 쓴다" }
+    affects: [dist-consumer-lag]
+  - id: msg-rebalance-storm
+    kind: PROBLEM
+    name: "리밸런스 폭주"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "배포·오토스케일·느린 처리로 리밸런스가 연달아 일어나 그룹이 할당만 반복하고 소비를 못 하는 상태"
+    synonyms: ["rebalance storm"]
+    causes: [dist-consumer-lag-growth]
+    measured_by: [dist-consumer-lag]
+  - id: msg-poll-interval-eviction
+    kind: PROBLEM
+    name: "poll 간격 초과 퇴출"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "한 묶음 처리가 max.poll.interval.ms 를 넘어 소비자가 그룹에서 빠지고, 처리 중이던 메시지의 커밋이 거절돼 다른 소비자가 다시 처리하는 상태"
+    synonyms: ["CommitFailedException", "max.poll.interval exceeded"]
+    causes: [msg-rebalance-storm, dist-duplicate-delivery]
+
+  # ── 전달 보장 ──
+  - id: msg-delivery-guarantee
+    kind: STAGE
+    name: "전달 보장"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "메시지가 최대 한 번·최소 한 번·정확히 한 번 처리되도록 생산·커밋·처리 순서와 트랜잭션을 조합한다"
+    questions: ["Kafka 트랜잭션이 외부 DB 쓰기까지 정확히 한 번으로 묶지 못하는 이유는 무엇인가", "실무에서 exactly-once 대신 무엇을 조합하나"]
+    contains: [msg-at-most-once, msg-at-least-once, msg-exactly-once-semantics, msg-effectively-once, msg-zombie-producer, msg-hanging-transaction]
+    uses: [dist-delivery-semantics]
+  - id: msg-at-most-once
+    kind: MECHANISM
+    name: "최대 한 번 전달"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "생산 재시도를 끄거나 소비 전에 오프셋을 커밋한다. 중복은 없지만 장애 때 메시지가 사라진다. 지표 샘플처럼 잃어도 되는 데이터에 쓴다"
+    synonyms: ["at-most-once"]
+    causes: [msg-message-loss]
+  - id: msg-at-least-once
+    kind: MECHANISM
+    name: "최소 한 번 전달"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "확인을 받을 때까지 재전송하고, 처리가 끝난 뒤 오프셋을 커밋한다. 유실은 없지만 재시작·리밸런스 때 같은 메시지가 다시 온다. 이 레포의 기본 전달 보장이다"
+    synonyms: ["at-least-once"]
+    uses: [msg-manual-commit, retry-pattern]
+    causes: [dist-duplicate-delivery]
+    alternative_to:
+      - { to: msg-at-most-once, reason: "유실 대신 중복을 허용하고 소비자 멱등으로 흡수한다" }
+  - id: msg-exactly-once-semantics
+    kind: MECHANISM
+    name: "Exactly-once (EOS)"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "멱등 프로듀서와 트랜잭션으로, Kafka 에서 읽고 처리해 Kafka 에 쓰는 흐름의 출력과 소비 오프셋 커밋을 한 원자 단위로 묶는다. 경계 밖(외부 DB·HTTP)은 보장하지 않는다"
+    synonyms: ["EOS", "exactly-once semantics", "exactly_once_v2"]
+    questions: ["read_committed 소비자는 진행 중인 트랜잭션의 메시지를 어떻게 다루나"]
+    contains: [msg-kafka-transactions, msg-read-committed, msg-transactional-offset-commit]
+    uses: [msg-idempotent-producer]
+    mitigates: [dist-duplicate-delivery]
+  - id: msg-kafka-transactions
+    kind: MECHANISM
+    name: "Kafka 트랜잭션"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "transactional.id 를 가진 프로듀서가 여러 파티션 쓰기를 begin·commit·abort 로 묶고, 트랜잭션 코디네이터가 커밋·중단 마커를 파티션에 쓴다. 같은 ID 의 새 인스턴스가 뜨면 에포크를 올려 옛 인스턴스를 막는다"
+    synonyms: ["transactional producer", "transactional.id", "zombie fencing"]
+    uses: [msg-transactional-id, two-phase-commit]
+    mitigates: [msg-zombie-producer]
+    causes: [msg-hanging-transaction]
+  - id: msg-read-committed
+    kind: MECHANISM
+    name: "read_committed 격리"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "소비자가 커밋된 트랜잭션의 메시지만 받고 중단된 것은 거른다. 마지막 안정 오프셋(LSO) 너머는 트랜잭션이 끝날 때까지 읽지 않는다"
+    synonyms: ["isolation.level=read_committed", "read_uncommitted"]
+    uses: [msg-last-stable-offset]
+  - id: msg-transactional-offset-commit
+    kind: MECHANISM
+    name: "트랜잭션 안 오프셋 커밋"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "소비 오프셋을 프로듀서 트랜잭션에 포함해(sendOffsetsToTransaction) 출력 쓰기와 입력 진행을 함께 커밋하거나 함께 버린다. consume-transform-produce 가 정확히 한 번이 되는 핵심이다"
+    synonyms: ["sendOffsetsToTransaction", "consume-transform-produce"]
+  - id: msg-effectively-once
+    kind: MECHANISM
+    name: "사실상 한 번 처리"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "전달은 최소 한 번으로 두고, 소비자가 이벤트 ID 원장이나 자연 멱등으로 중복 효과를 없앤다. 외부 DB 까지 포함한 흐름에서 쓰는 실용적 정답이다"
+    synonyms: ["effectively-once", "at-least-once + idempotent consumer"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/messaging/IdempotentEventHandler.kt, symbol: "fun process(", note: "원장 기록과 업무 처리를 한 트랜잭션에서 하고 이미 본 eventId 는 건너뛴다" }
+    uses: [msg-at-least-once, idempotency, dist-inbox-pattern]
+    alternative_to:
+      - { to: msg-exactly-once-semantics, reason: "Kafka 밖 저장소까지 포함하려고 브로커 트랜잭션 대신 소비자 멱등을 쓴다" }
+    mitigates: [dist-duplicate-delivery]
+  - id: msg-zombie-producer
+    kind: PROBLEM
+    name: "좀비 프로듀서"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "멈췄다 살아난 옛 인스턴스가 새 인스턴스가 이미 이어받은 일을 계속 써서 출력이 중복되는 상태"
+    synonyms: ["zombie instance"]
+    causes: [dist-duplicate-delivery]
+  - id: msg-hanging-transaction
+    kind: PROBLEM
+    name: "끝나지 않은 트랜잭션"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "커밋도 중단도 되지 않은 트랜잭션이 남아 LSO 가 멈추고, read_committed 소비자가 그 뒤 메시지를 읽지 못하는 상태"
+    synonyms: ["hanging transaction", "stuck LSO"]
+    causes: [dist-consumer-lag-growth]
+
+  # ── 소비 실패 처리 ──
+  - id: msg-failure-handling
+    kind: STAGE
+    name: "소비 실패 처리"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "처리에 실패한 메시지를 제자리에서 다시 할지, 재시도 토픽으로 넘길지, 격리할지를 오류 종류로 나눠 정하고 격리한 메시지를 다시 흘린다"
+    questions: ["업무 예외와 일시 장애를 같은 재시도 정책으로 다루면 무엇이 생기나", "블로킹 재시도가 파티션 전체를 멈추는 이유는 무엇인가"]
+    contains: [msg-blocking-retry, msg-retry-topic, msg-error-classification, msg-deserialization-error-handling, msg-dlq-reprocessing, msg-head-of-line-blocking]
+    uses: [dist-dead-letter-queue, retry-pattern]
+  - id: msg-blocking-retry
+    kind: MECHANISM
+    name: "블로킹 재시도"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "실패한 레코드를 그 자리에서 백오프를 두고 다시 처리하고, 다 실패하면 DLT 로 넘긴 뒤 다음 레코드로 간다. 순서는 지키지만 재시도하는 동안 그 파티션이 멈춘다"
+    synonyms: ["DefaultErrorHandler", "in-place retry"]
+    code:
+      - { path: search/consumer/src/main/kotlin/com/kgd/search/infrastructure/config/KafkaConsumerConfig.kt, symbol: "ExponentialBackOff(1000L, 2.0)", note: "색인 소비 실패를 1초부터 배로 늘려 최대 30초까지 제자리에서 다시 한다" }
+    uses: [dist-exponential-backoff, dist-dead-letter-queue]
+    causes: [msg-head-of-line-blocking]
+  - id: msg-retry-topic
+    kind: MECHANISM
+    name: "재시도 토픽"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "실패한 레코드를 지연 단계별 재시도 토픽(retry-1s·retry-10s …)으로 넘기고 원래 파티션은 계속 진행한다. 마지막 단계도 실패하면 DLT 로 보낸다. 같은 키의 순서는 깨진다"
+    synonyms: ["non-blocking retry", "retry topic", "@RetryableTopic"]
+    uses: [dist-dead-letter-queue, dist-exponential-backoff]
+    alternative_to:
+      - { to: msg-blocking-retry, reason: "파티션 정체를 없애고 키 순서를 포기한다" }
+    mitigates: [msg-head-of-line-blocking]
+  - id: msg-error-classification
+    kind: MECHANISM
+    name: "재시도 대상 분류"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "업무 예외·입력 검증 실패처럼 다시 해도 같은 결과인 오류는 재시도 없이 바로 DLT 로, 타임아웃·연결 오류만 재시도한다"
+    synonyms: ["not retryable exceptions", "retryable vs fatal"]
+    code:
+      - { path: search/consumer/src/main/kotlin/com/kgd/search/infrastructure/config/KafkaConsumerConfig.kt, symbol: "addNotRetryableExceptions(", note: "업무 예외와 입력 검증 예외는 재시도하지 않는다" }
+    mitigates: [msg-head-of-line-blocking, dist-retry-storm]
+  - id: msg-deserialization-error-handling
+    kind: MECHANISM
+    name: "역직렬화 오류 처리"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "역직렬화 실패는 리스너에 닿기 전에 poll 루프에서 터져 같은 레코드를 끝없이 다시 읽는다. 역직렬화기를 오류 처리 래퍼로 감싸 실패를 레코드 오류로 바꿔 DLT 로 넘긴다"
+    synonyms: ["ErrorHandlingDeserializer", "deserialization failure"]
+    mitigates: [dist-poison-message]
+  - id: msg-dlq-reprocessing
+    kind: MECHANISM
+    name: "DLQ 재처리"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "DLT 에 쌓인 메시지를 원인(헤더의 예외·원래 토픽·오프셋)별로 보고, 고친 뒤 원래 토픽으로 다시 흘리거나 폐기한다. 재처리 대상 소비자는 멱등이어야 한다"
+    synonyms: ["DLQ replay", "redrive", "parking lot"]
+    uses: [dist-dead-letter-queue, idempotency]
+  - id: msg-head-of-line-blocking
+    kind: PROBLEM
+    name: "파티션 선두 정체"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "파티션 맨 앞 레코드 하나가 재시도로 붙잡혀 뒤의 정상 레코드까지 모두 기다리는 상태"
+    synonyms: ["head-of-line blocking", "partition stall"]
+    causes: [dist-consumer-lag-growth]
+
+  # ── 스키마 · 직렬화 ──
+  - id: msg-schema-management
+    kind: STAGE
+    name: "스키마 · 직렬화"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "메시지를 어떤 형식으로 직렬화하고, 생산자와 소비자가 따로 배포돼도 서로 읽을 수 있게 스키마를 어떻게 바꿀지 정한다"
+    questions: ["소비자를 먼저 배포해야 하는 스키마 변경과 생산자를 먼저 배포해야 하는 변경은 무엇인가"]
+    contains: [msg-serialization-format, msg-schema-registry, msg-compatibility-mode, msg-schema-evolution, msg-type-mapping, msg-breaking-schema-change]
+    uses: [msg-event-envelope]
+  - id: msg-serialization-format
+    kind: MECHANISM
+    name: "직렬화 형식"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "메시지 키·값을 바이트로 바꾸는 형식. 사람이 읽는 JSON 과 스키마 기반 이진 형식(Avro·Protobuf) 중에서 크기·속도·진화 규칙을 저울질한다"
+    synonyms: ["serde", "serializer", "deserializer"]
+    contains: [msg-json-serde, msg-avro-serde]
+  - id: msg-json-serde
+    kind: MECHANISM
+    name: "JSON 직렬화"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "값을 JSON 문자열로 보낸다. 스키마 없이 읽기 쉽고 필드 추가에 관대하지만, 크기가 크고 형식 검사를 소비자 코드가 한다"
+    synonyms: ["JsonSerializer", "JsonDeserializer"]
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/config/OrderKafkaConfig.kt, symbol: "DefaultKafkaProducerFactory(props, StringSerializer(), JacksonJsonSerializer())", note: "키는 문자열, 값은 Jackson JSON 으로 보낸다" }
+  - id: msg-avro-serde
+    kind: MECHANISM
+    name: "Avro 직렬화"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "스키마로 필드 이름 없이 값만 이진으로 적고, 읽을 때 쓴 스키마와 읽는 스키마를 맞춰 해석한다. 메시지 앞에 스키마 ID 만 붙이고 스키마는 레지스트리에 둔다"
+    synonyms: ["Avro", "Protobuf", "schema-based binary"]
+    uses: [msg-schema-registry]
+    alternative_to:
+      - { to: msg-json-serde, reason: "크기와 호환성 검사를 얻고 스키마 관리 인프라를 둔다" }
+  - id: msg-schema-registry
+    kind: MECHANISM
+    name: "스키마 레지스트리"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "주제(subject)별 스키마 버전을 저장하고, 새 스키마 등록 때 호환성 모드를 검사해 깨지는 변경을 거절한다. 생산자는 스키마 ID 를 메시지에 붙인다"
+    synonyms: ["Schema Registry", "Apicurio", "subject"]
+    uses: [msg-compatibility-mode]
+    mitigates: [msg-breaking-schema-change]
+  - id: msg-compatibility-mode
+    kind: MECHANISM
+    name: "호환성 모드"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "BACKWARD(새 소비자가 옛 데이터를 읽음) · FORWARD(옛 소비자가 새 데이터를 읽음) · FULL(둘 다) · NONE, 그리고 직전 버전만이 아니라 모든 옛 버전과 비교하는 TRANSITIVE 변형이 있다. 모드가 배포 순서를 정한다"
+    synonyms: ["BACKWARD", "FORWARD", "FULL", "TRANSITIVE"]
+  - id: msg-schema-evolution
+    kind: MECHANISM
+    name: "스키마 진화"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "필드는 기본값과 함께 추가하고, 지울 때는 먼저 선택 필드로 바꾸고, 이름·타입은 바꾸지 않고 새 필드를 더한다. 깨지는 변경은 새 토픽·새 이벤트 버전으로 낸다"
+    synonyms: ["schema evolution", "event versioning"]
+    uses: [dist-event-versioning]
+    mitigates: [msg-breaking-schema-change]
+  - id: msg-type-mapping
+    kind: MECHANISM
+    name: "타입 헤더 매핑"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "생산자가 값의 클래스 이름을 헤더(__TypeId__)에 넣고 소비자가 그 이름으로 역직렬화한다. 서비스마다 패키지가 달라 헤더를 무시하고 소비자 쪽 기본 타입으로 읽게 하기도 한다"
+    synonyms: ["__TypeId__", "type info header"]
+    code:
+      - { path: search/consumer/src/main/kotlin/com/kgd/search/infrastructure/config/KafkaConsumerConfig.kt, symbol: "JsonDeserializer.USE_TYPE_INFO_HEADERS to false", note: "생산자 패키지의 클래스 이름 헤더를 무시하고 소비자 쪽 이벤트 타입으로 읽는다" }
+    causes:
+      - { to: msg-breaking-schema-change, reason: "생산자 클래스 이름·패키지 변경이 곧 소비자 역직렬화 실패가 된다" }
+  - id: msg-breaking-schema-change
+    kind: PROBLEM
+    name: "호환 깨는 스키마 변경"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "필수 필드 삭제·타입 변경처럼 이미 배포된 소비자가 새 메시지를(또는 새 소비자가 옛 메시지를) 읽지 못하게 된 변경"
+    synonyms: ["breaking change", "schema drift"]
+    causes: [dist-poison-message]
+
+  # ── 스트림 처리 ──
+  - id: msg-stream-processing
+    kind: STAGE
+    name: "스트림 처리"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "토픽을 흐르는 이벤트를 변환·집계·조인하고, 시간 창으로 자르고, 늦게 온 이벤트와 상태 저장·복구를 다룬다"
+    questions: ["이벤트 시간과 처리 시간 중 무엇으로 창을 자르나", "스트림 처리 앱이 재시작하면 집계 상태를 어디서 되찾나"]
+    contains: [msg-stateless-transform, msg-stateful-aggregation, msg-windowing, msg-late-event-handling, msg-suppress-emit, msg-state-store, msg-stream-join, msg-repartition, msg-interactive-queries, msg-streams-eos, msg-processor-api, msg-connector-integration, msg-lambda-architecture, msg-kappa-architecture, kafka-streams, msg-late-event-drop, msg-state-restore-delay]
+    uses: [dist-stream-processing, msg-kstream, msg-ktable, msg-time-semantics]
+  - id: msg-stateless-transform
+    kind: MECHANISM
+    name: "무상태 변환"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "map·filter·flatMap·branch·merge 처럼 레코드 하나만 보고 결과를 내는 연산. 상태 저장소가 필요 없어 병렬화와 복구가 쉽다"
+    synonyms: ["map", "filter", "flatMap", "branch"]
+  - id: msg-stateful-aggregation
+    kind: MECHANISM
+    name: "상태 집계"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "키별로 묶어(groupByKey) count·reduce·aggregate 로 누적 값을 유지한다. 누적 값은 상태 저장소에 두고, 결과는 갱신 스트림(KTable)이 된다"
+    synonyms: ["groupByKey", "aggregate", "reduce", "count"]
+    code:
+      - { path: analytics/app/src/main/kotlin/com/kgd/analytics/infrastructure/streaming/AnalyticsStreamTopology.kt, symbol: ".groupByKey(Grouped.with(Serdes.String(), eventSerde))", note: "상품·키워드 ID 로 묶어 이벤트 지표를 누적한다" }
+    uses:
+      - msg-state-store
+      - { to: clickhouse, reason: "스트림 집계 결과를 분석 저장소에 쌓는다" }
+  - id: msg-windowing
+    kind: MECHANISM
+    name: "윈도잉"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "끝없는 스트림을 시간 창으로 잘라 창마다 집계한다. 창의 모양(고정·겹침·세션·슬라이딩)과 시간 기준(이벤트 시간·처리 시간)을 고른다"
+    synonyms: ["windowing", "windowedBy"]
+    contains: [msg-tumbling-window, msg-hopping-window, msg-sliding-window, msg-session-window]
+  - id: msg-tumbling-window
+    kind: MECHANISM
+    name: "텀블링 윈도"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "겹치지 않는 고정 크기 창. 모든 이벤트가 정확히 한 창에 들어간다. 분당·시간당 집계에 쓴다"
+    synonyms: ["tumbling window", "fixed window"]
+    code:
+      - { path: analytics/app/src/main/kotlin/com/kgd/analytics/infrastructure/streaming/AnalyticsStreamTopology.kt, symbol: "TimeWindows.ofSizeWithNoGrace(WINDOW_SIZE)", note: "고정 크기 창으로 자르고 유예 시간을 두지 않는다" }
+    causes:
+      - { to: msg-late-event-drop, reason: "유예 없이 창을 닫아 늦게 온 이벤트가 버려진다" }
+  - id: msg-hopping-window
+    kind: MECHANISM
+    name: "호핑 윈도"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "고정 크기 창이 그보다 짧은 간격으로 움직여 서로 겹친다. 「최근 5분을 1분마다」 같은 이동 집계에 쓰며 이벤트 하나가 여러 창에 들어간다"
+    synonyms: ["hopping window"]
+  - id: msg-sliding-window
+    kind: MECHANISM
+    name: "슬라이딩 윈도"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "이벤트 시각을 기준으로 앞뒤 일정 간격 안의 이벤트를 한 창으로 본다. 스트림-스트림 조인과 「10초 안의 두 사건」 탐지에 쓴다"
+    synonyms: ["sliding window"]
+  - id: msg-session-window
+    kind: MECHANISM
+    name: "세션 윈도"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "활동 사이 공백이 정해진 시간을 넘으면 창을 끊는다. 창 길이가 사용자 행동에 따라 달라지며, 늦은 이벤트가 두 세션을 합칠 수 있다"
+    synonyms: ["session window", "inactivity gap"]
+  - id: msg-late-event-handling
+    kind: MECHANISM
+    name: "늦은 이벤트 처리"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "워터마크(이 시각 이전 이벤트는 다 왔다는 추정)나 유예 시간(grace) 동안 창을 열어 두어 늦게 도착한 이벤트를 제 창에 넣는다. 유예가 길수록 결과 확정이 늦어진다"
+    synonyms: ["watermark", "grace period", "allowed lateness"]
+    uses: [msg-event-time]
+    mitigates: [msg-late-event-drop]
+  - id: msg-suppress-emit
+    kind: MECHANISM
+    name: "결과 방출 억제"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "창 집계가 갱신될 때마다 내보내지 않고 창이 닫힐 때 최종값 하나만 내보낸다(suppress · emit final). 하류의 중간값 처리를 없애고 지연을 늘린다"
+    synonyms: ["suppress", "emit final", "untilWindowCloses"]
+    uses: [msg-late-event-handling]
+  - id: msg-state-store
+    kind: MECHANISM
+    name: "상태 저장소"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "집계·조인에 필요한 상태를 태스크 로컬(RocksDB·메모리)에 두고 변경을 체인지로그 토픽에 복제한다. 로컬이라 빠르고, 태스크가 옮겨 가면 체인지로그로 다시 채운다"
+    synonyms: ["state store", "RocksDB", "WindowStore"]
+    code:
+      - { path: analytics/app/src/main/kotlin/com/kgd/analytics/infrastructure/streaming/AnalyticsStreamTopology.kt, symbol: "WindowStore<Bytes, ByteArray>", note: "창 집계를 이름 붙인 창 저장소에 물질화한다" }
+      - { path: analytics/app/src/main/kotlin/com/kgd/analytics/infrastructure/config/KafkaStreamsConfig.kt, symbol: "StreamsConfig.STATE_DIR_CONFIG", note: "로컬 상태 저장소 디렉터리" }
+    contains: [msg-changelog-topic, msg-standby-replica]
+  - id: msg-changelog-topic
+    kind: MECHANISM
+    name: "체인지로그 토픽"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "상태 저장소의 모든 변경을 압축 토픽에 기록해 둔다. 인스턴스가 죽거나 태스크가 옮겨 가면 이 토픽을 처음부터 읽어 상태를 복원한다"
+    synonyms: ["changelog topic"]
+    uses: [msg-log-compaction]
+    causes: [msg-state-restore-delay]
+  - id: msg-standby-replica
+    kind: MECHANISM
+    name: "스탠바이 복제본"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "다른 인스턴스가 체인지로그를 미리 따라 읽어 상태 사본을 들고 있다가, 태스크가 옮겨 오면 복원 없이 바로 이어받는다"
+    synonyms: ["standby replica", "num.standby.replicas"]
+    mitigates: [msg-state-restore-delay]
+  - id: msg-stream-join
+    kind: MECHANISM
+    name: "스트림 조인"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "두 스트림·테이블을 키로 합친다. 양쪽이 같은 키로 같은 파티션 수를 가져야(co-partitioning) 태스크 하나 안에서 맞출 수 있다"
+    synonyms: ["join", "co-partitioning"]
+    contains: [msg-stream-stream-join, msg-stream-table-join, msg-table-table-join, msg-global-table-join]
+    uses: [msg-repartition]
+  - id: msg-stream-stream-join
+    kind: MECHANISM
+    name: "스트림-스트림 조인"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "두 이벤트 스트림에서 같은 키가 정해진 시간 창 안에 함께 나타나면 합친다. 노출과 클릭처럼 두 사건의 짝을 찾는다"
+    synonyms: ["KStream-KStream join", "windowed join"]
+    uses: [msg-sliding-window]
+  - id: msg-stream-table-join
+    kind: MECHANISM
+    name: "스트림-테이블 조인"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "이벤트가 올 때마다 테이블의 그 키 현재값을 붙인다(보강). 테이블 쪽 변경은 결과를 만들지 않는다"
+    synonyms: ["KStream-KTable join", "enrichment"]
+    uses: [msg-ktable]
+  - id: msg-table-table-join
+    kind: MECHANISM
+    name: "테이블-테이블 조인"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "양쪽 테이블 어느 쪽이 바뀌어도 조인 결과 테이블을 갱신한다. 외래 키 조인도 지원한다"
+    synonyms: ["KTable-KTable join", "foreign-key join"]
+    uses: [msg-ktable]
+  - id: msg-global-table-join
+    kind: MECHANISM
+    name: "글로벌 테이블 조인"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "작은 참조 테이블을 모든 인스턴스에 통째로 복제해 두고 재파티션 없이 아무 키로나 조인한다"
+    synonyms: ["GlobalKTable join"]
+    uses: [msg-global-ktable]
+  - id: msg-repartition
+    kind: MECHANISM
+    name: "재파티션"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "키를 바꾼 뒤 집계·조인하려면 새 키로 내부 재파티션 토픽에 다시 써서 같은 키를 한 태스크로 모은다. 네트워크·디스크 비용이 한 번 더 든다"
+    synonyms: ["repartition topic", "selectKey", "through"]
+    uses: [msg-message-key]
+  - id: msg-interactive-queries
+    kind: MECHANISM
+    name: "인터랙티브 쿼리"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "스트림 앱의 로컬 상태 저장소를 API 로 직접 조회한다. 키가 어느 인스턴스에 있는지 메타데이터로 찾아 그 인스턴스에 묻는다"
+    synonyms: ["interactive queries", "queryable state"]
+    uses: [msg-state-store]
+  - id: msg-streams-eos
+    kind: MECHANISM
+    name: "스트림 EOS"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "processing.guarantee=exactly_once_v2 로 입력 오프셋·상태 체인지로그·출력 쓰기를 한 Kafka 트랜잭션으로 묶는다. 인스턴스당 프로듀서 하나로 트랜잭션 비용을 줄인 v2 가 기본이다"
+    synonyms: ["exactly_once_v2", "KIP-447", "processing.guarantee"]
+    uses: [msg-exactly-once-semantics]
+  - id: msg-processor-api
+    kind: MECHANISM
+    name: "Processor API"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "DSL 아래 층에서 레코드마다 호출되는 처리기와 상태 저장소, 시간 기반 호출(punctuate)을 직접 짠다. DSL 로 표현하기 어려운 사용자 정의 상태 로직에 쓴다"
+    synonyms: ["Processor API", "punctuator", "Transformer"]
+    uses: [msg-state-store]
+  - id: msg-connector-integration
+    kind: MECHANISM
+    name: "커넥터 통합"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "외부 시스템과 토픽 사이를 코드 대신 설정한 소스·싱크 커넥터로 잇고, 단일 메시지 변환(SMT)으로 필드를 바꾼다(Kafka Connect). CDC 소스 커넥터가 대표 용례다"
+    synonyms: ["Kafka Connect", "source connector", "sink connector", "SMT"]
+    uses: [dist-cdc]
+  - id: msg-lambda-architecture
+    kind: MECHANISM
+    name: "람다 아키텍처"
+    category: ARCHITECTURE
+    level: ADVANCED
+    description: "정확한 배치 계층과 빠른 스피드(스트림) 계층을 따로 돌리고 조회 때 합친다. 같은 로직을 두 번 구현·운영해야 한다"
+    synonyms: ["Lambda architecture", "batch + speed layer"]
+  - id: msg-kappa-architecture
+    kind: MECHANISM
+    name: "카파 아키텍처"
+    category: ARCHITECTURE
+    level: ADVANCED
+    description: "스트림 처리 하나만 두고, 재계산이 필요하면 로그를 처음부터 다시 흘려 새 결과를 만든 뒤 바꿔 낀다. 로그 보관이 전제다"
+    synonyms: ["Kappa architecture", "stream-only"]
+    uses: [msg-offset-replay]
+    alternative_to:
+      - { to: msg-lambda-architecture, reason: "배치 계층을 없애고 로그 재생으로 재계산한다" }
+  - id: msg-late-event-drop
+    kind: PROBLEM
+    name: "늦은 이벤트 누락"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "창이 닫힌 뒤 도착한 이벤트가 집계에서 빠져 결과가 실제보다 작게 나오는 상태. 모바일 오프라인 전송·재시도에서 흔하다"
+    synonyms: ["late arrival", "out-of-order event"]
+  - id: msg-state-restore-delay
+    kind: PROBLEM
+    name: "상태 복원 지연"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "리밸런스·재시작 뒤 체인지로그에서 상태를 다시 채우는 동안 그 태스크의 처리가 멈추는 상태. 상태가 클수록 길다"
+    synonyms: ["state restoration", "restore lag"]
+    causes: [dist-consumer-lag-growth]
+
+  # ── 운영 · 관측 ──
+  - id: msg-operations
+    kind: STAGE
+    name: "운영 · 관측"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "토픽을 선언적으로 만들고, 파티션 수를 정하고, 클라이언트 사용량과 접근을 제한하고, 랙·복제 상태를 지켜본다"
+    questions: ["컨슈머 랙이 늘 때 소비자 증설로 해결되지 않는 경우는 언제인가", "파티션 수는 무엇을 근거로 정하고 나중에 늘리면 무엇이 깨지나"]
+    contains: [msg-topic-provisioning, msg-topic-auto-creation, msg-partition-count-sizing, msg-client-quota, msg-access-control, msg-lag-monitoring]
+    measured_by: [dist-consumer-lag, msg-under-replicated-partitions, msg-throughput]
+  - id: msg-topic-provisioning
+    kind: MECHANISM
+    name: "선언적 토픽 관리"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "토픽 이름·파티션·복제·보관 설정을 매니페스트로 선언하고 오퍼레이터가 클러스터에 맞춘다. 설정이 코드 리뷰를 거치고 환경마다 같게 유지된다"
+    synonyms: ["KafkaTopic", "topic as code", "Strimzi topic operator"]
+    code:
+      - { path: k8s/infra/prod/strimzi/kafka-topics.yaml, symbol: "kind: KafkaTopic", note: "운영 토픽을 Strimzi KafkaTopic 리소스로 선언한다" }
+    uses:
+      - { to: infra-operator, reason: "토픽을 오퍼레이터 CR 로 선언한다" }
+  - id: msg-topic-auto-creation
+    kind: MECHANISM
+    name: "토픽 자동 생성"
+    category: INFRASTRUCTURE
+    level: BEGINNER
+    description: "없는 토픽에 쓰거나 구독하면 브로커 기본값(파티션·복제 수)으로 토픽을 만든다. 로컬 개발에 편하지만 오타가 새 토픽이 되고 설정이 기본값에 묶인다"
+    synonyms: ["auto.create.topics.enable"]
+    code:
+      - { path: k8s/infra/local/kafka/statefulset.yaml, symbol: "KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE", note: "로컬 단일 노드 브로커는 토픽을 자동 생성한다" }
+    alternative_to:
+      - { to: msg-topic-provisioning, reason: "선언 없이 편하게 쓰는 대신 설정을 통제하지 못한다" }
+  - id: msg-partition-count-sizing
+    kind: MECHANISM
+    name: "파티션 수 결정"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "목표 처리량 ÷ 파티션당 처리량과 최대 소비자 수로 파티션 수를 정한다. 늘리기만 되고 늘리면 키-파티션 대응이 바뀌므로, 순서가 중요한 토픽은 처음에 넉넉히 잡는다"
+    synonyms: ["partition count"]
+    affects: [msg-throughput]
+  - id: msg-client-quota
+    kind: MECHANISM
+    name: "클라이언트 쿼터"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "클라이언트·사용자별 생산·소비 바이트와 요청 비율에 상한을 두고, 넘으면 브로커가 응답을 늦춰 속도를 낮춘다. 한 클라이언트가 클러스터를 독점하지 못하게 한다"
+    synonyms: ["quota", "throttling"]
+    uses: [rate-limiting]
+  - id: msg-access-control
+    kind: MECHANISM
+    name: "브로커 인증 · 인가"
+    category: SECURITY
+    level: ADVANCED
+    description: "SASL(SCRAM·OAUTHBEARER)이나 mTLS 로 클라이언트를 인증하고, 토픽·그룹·클러스터 단위 ACL 로 읽기·쓰기를 허락한다"
+    synonyms: ["SASL", "mTLS", "ACL"]
+  - id: msg-lag-monitoring
+    kind: MECHANISM
+    name: "랙 모니터링"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "그룹·파티션별 컨슈머 랙과 그 증가 추세를 수집해 경보를 건다. 절대값보다 계속 늘어나는지와 한 파티션만 늘어나는지를 본다"
+    synonyms: ["lag exporter", "Burrow", "kafka_exporter"]
+    mitigates: [dist-consumer-lag-growth]
+    measured_by: [dist-consumer-lag]
+
+  # ── 기술 ──
+  - id: kafka
+    kind: TECHNOLOGY
+    name: "Kafka"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "파티션 단위로 순서를 지키는 로그형 메시지 브로커. 이 레포는 로컬에서 KRaft 단일 노드로 띄우고(운영 설계안은 Strimzi 3 브로커), 서비스 간 이벤트·명령을 모두 여기로 주고받는다"
+    synonyms: ["Apache Kafka"]
+    code:
+      - { path: k8s/infra/local/kafka/statefulset.yaml, symbol: "image: bitnamilegacy/kafka:3.8", note: "KRaft 단일 노드 브로커 StatefulSet" }
+    implements:
+      - { to: fan-out, reason: "컨슈머 그룹마다 오프셋을 따로 가져 한 토픽을 여럿이 읽는다" }
+      - { to: dist-messaging, reason: "이 레포 서비스 간 비동기 메시징의 브로커다" }
+      - { to: msg-log-based-broker, reason: "파티션별 추가 전용 로그를 보관 기간 동안 남긴다" }
+      - { to: msg-kraft, reason: "메타데이터를 Raft 컨트롤러 쿼럼으로 관리한다" }
+      - { to: msg-kafka-transactions, reason: "트랜잭션 코디네이터와 커밋 마커를 제공한다" }
+  - id: kafka-streams
+    kind: TECHNOLOGY
+    name: "Kafka Streams"
+    category: INFRASTRUCTURE
+    level: ADVANCED
+    description: "Kafka 토픽을 입력·출력으로 쓰는 JVM 스트림 처리 라이브러리. 별도 클러스터 없이 애플리케이션 안에서 돈다. analytics 가 실시간 지표 집계에 쓴다"
+    code:
+      - { path: analytics/app/build.gradle.kts, symbol: "implementation(libs.kafka.streams)", note: "analytics 앱의 스트림 처리 의존성" }
+    implements:
+      - { to: dist-stream-processing, reason: "groupByKey·windowedBy 로 키별 시간 창 집계를 한다" }
+      - { to: msg-windowing, reason: "TimeWindows·SessionWindows·SlidingWindows 를 제공한다" }
+      - { to: msg-state-store, reason: "RocksDB 저장소와 체인지로그 복제를 내장한다" }
+      - { to: msg-streams-eos, reason: "processing.guarantee 설정 하나로 트랜잭션 처리를 켠다" }
+  - id: spring-kafka
+    kind: TECHNOLOGY
+    name: "Spring for Apache Kafka"
+    category: INFRASTRUCTURE
+    level: INTERMEDIATE
+    description: "Kafka 클라이언트를 스프링 빈으로 감싼 라이브러리. @KafkaListener 리스너 컨테이너가 poll·커밋(AckMode)·오류 처리(DefaultErrorHandler)·DLT 발행을 맡는다. 이 레포의 모든 생산·소비 코드가 이것을 쓴다"
+    synonyms: ["spring-kafka", "@KafkaListener", "KafkaTemplate"]
+    code:
+      - { path: common/build.gradle.kts, symbol: "implementation(libs.spring.kafka)", note: "공용 메시징(아웃박스 · 멱등 소비) 모듈의 의존성" }
+    implements:
+      - { to: msg-manual-commit, reason: "리스너 컨테이너가 AckMode 에 따라 처리 뒤 커밋한다" }
+      - { to: msg-blocking-retry, reason: "DefaultErrorHandler 가 백오프 재시도 뒤 복구기를 부른다" }
+      - { to: msg-retry-topic, reason: "@RetryableTopic 이 재시도 토픽 체인을 만든다" }
+      - { to: dist-dead-letter-queue, reason: "DeadLetterPublishingRecoverer 가 실패 레코드를 .DLT 로 보낸다" }
+
+  # ── 용어 ──
+  - id: msg-glossary
+    kind: TERM
+    name: "메시징 · 스트리밍 용어 사전"
+    category: BASICS
+    level: BEGINNER
+    description: "브로커 로그와 클라이언트, 스트림 처리를 읽는 데 필요한 말"
+    synonyms: ["glossary", "용어집"]
+    contains: [msg-glossary-log, msg-glossary-client, msg-glossary-stream]
+  - id: msg-glossary-log
+    kind: TERM
+    name: "로그 · 복제 용어"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "파티션 로그의 레코드와 위치, 복제 상태를 가리키는 말"
+    contains: [msg-record, msg-message-key, msg-offset, msg-log-end-offset, msg-high-watermark, msg-last-stable-offset, msg-isr, msg-leader-epoch, msg-tombstone, msg-consumer-offsets-topic]
+  - id: msg-record
+    kind: TERM
+    name: "레코드"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "Kafka 로그에 쓰이는 메시지 한 건. 키·값·헤더·타임스탬프로 이뤄지고, 레코드 배치로 묶여 압축·전송·저장된다"
+    synonyms: ["record", "message", "record batch", "headers"]
+  - id: msg-message-key
+    kind: TERM
+    name: "메시지 키"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "레코드의 파티션을 정하고 압축 토픽에서 같은 대상을 가리키는 값. 순서를 지켜야 하는 단위(주문 ID 등)를 키로 둔다"
+    synonyms: ["message key", "partition key"]
+  - id: msg-offset
+    kind: TERM
+    name: "오프셋"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "파티션 로그 안 레코드의 순번. 파티션마다 0 부터 늘어나고, 소비자는 다음에 읽을 오프셋을 커밋한다"
+    synonyms: ["offset"]
+  - id: msg-log-end-offset
+    kind: TERM
+    name: "LEO"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "복제본 로그에 다음으로 쓰일 오프셋. 복제본마다 다르고, 리더는 팔로워들의 LEO 로 하이 워터마크를 정한다"
+    synonyms: ["Log End Offset"]
+  - id: msg-high-watermark
+    kind: TERM
+    name: "하이 워터마크"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "ISR 전원이 복제한 마지막 위치. 이 아래만 커밋된 것으로 보고 소비자에게 보여 준다"
+    synonyms: ["HW", "high watermark"]
+  - id: msg-last-stable-offset
+    kind: TERM
+    name: "LSO"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "진행 중인 트랜잭션 중 가장 앞선 것의 시작 위치. read_committed 소비자는 여기까지만 읽는다"
+    synonyms: ["Last Stable Offset"]
+  - id: msg-isr
+    kind: TERM
+    name: "ISR"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "리더를 제때 따라잡고 있는 복제본의 집합(리더 포함). 커밋 판정과 새 리더 후보가 이 집합으로 정해진다"
+    synonyms: ["In-Sync Replicas"]
+  - id: msg-leader-epoch
+    kind: TERM
+    name: "리더 에포크"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "파티션 리더가 바뀔 때마다 늘어나는 번호와 그 에포크가 시작된 오프셋. 팔로워는 복구 때 이것으로 자를 위치를 정해 하이 워터마크만으로 생기던 로그 불일치를 막는다"
+    synonyms: ["leader epoch", "KIP-101"]
+  - id: msg-tombstone
+    kind: TERM
+    name: "툼스톤"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "값이 null 인 레코드. 압축 토픽에서 그 키를 지우라는 표시이고, delete.retention.ms 동안 남았다가 사라진다"
+    synonyms: ["tombstone", "null value record"]
+  - id: msg-consumer-offsets-topic
+    kind: TERM
+    name: "__consumer_offsets"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "컨슈머 그룹의 커밋 오프셋을 저장하는 내부 압축 토픽. 그룹 ID 해시로 파티션이 정해지고, 그 파티션 리더가 그룹 코디네이터가 된다"
+    synonyms: ["__consumer_offsets"]
+  - id: msg-glossary-client
+    kind: TERM
+    name: "클라이언트 · 메시지 용어"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "생산자·소비자와 메시지 종류를 가리키는 말"
+    contains: [msg-consumer-group, msg-group-coordinator, msg-producer-id, msg-transactional-id, msg-event-envelope, msg-event-message, msg-command-message]
+  - id: msg-consumer-group
+    kind: TERM
+    name: "컨슈머 그룹"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "같은 group.id 를 쓰는 소비자 묶음. 그룹 안에서는 파티션을 나눠 갖고, 그룹끼리는 같은 토픽을 각자 끝까지 읽는다"
+    synonyms: ["consumer group", "group.id"]
+    code:
+      - { path: recommendation/feature/src/main/kotlin/com/kgd/recommendation/infrastructure/kafka/RecommendationClickConsumer.kt, symbol: "groupId = \"recommendation-click-consumer\",", note: "{서비스}-{용도} 규약으로 지은 그룹 ID" }
+  - id: msg-group-coordinator
+    kind: TERM
+    name: "그룹 코디네이터"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "한 컨슈머 그룹의 구성원·리밸런스·오프셋 커밋을 맡는 브로커"
+    synonyms: ["group coordinator"]
+  - id: msg-producer-id
+    kind: TERM
+    name: "프로듀서 ID · 순번"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "브로커가 프로듀서 세션에 준 ID(PID)와 파티션별로 1씩 늘어나는 배치 순번. 브로커는 이미 받은 순번을 버리고 건너뛴 순번은 오류로 본다"
+    synonyms: ["PID", "sequence number", "producer epoch"]
+  - id: msg-transactional-id
+    kind: TERM
+    name: "트랜잭션 ID"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "재시작해도 유지되는 프로듀서의 논리 이름. 같은 ID 로 새로 뜨면 브로커가 에포크를 올려 옛 인스턴스의 쓰기를 거절한다"
+    synonyms: ["transactional.id"]
+  - id: msg-event-envelope
+    kind: TERM
+    name: "이벤트 봉투"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "업무 페이로드를 감싸는 공통 메타데이터 — 이벤트 ID·종류·발생 시각·추적 ID·스키마 버전. 멱등 처리와 추적이 이 값에 기댄다"
+    synonyms: ["envelope", "event metadata", "eventId"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/messaging/outbox/OutboxPollingPublisher.kt, symbol: ".put(\"eventId\", row.eventId)", note: "릴레이가 페이로드에 eventId 를 넣어 보낸다 — 소비 측 멱등 원장의 키" }
+  - id: msg-event-message
+    kind: TERM
+    name: "이벤트 메시지"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "이미 일어난 사실을 과거형으로 알리는 메시지(order.completed). 발행자는 누가 받는지 모르고 받는 쪽이 할 일을 정한다"
+    synonyms: ["event", "domain event message"]
+  - id: msg-command-message
+    kind: TERM
+    name: "명령 메시지"
+    category: DISTRIBUTED_SYSTEM
+    level: BEGINNER
+    description: "특정 수신자에게 할 일을 요청하는 메시지(inventory.command.release). 보내는 쪽이 결과를 기대하고, 수신자가 거절할 수 있다"
+    synonyms: ["command"]
+  - id: msg-glossary-stream
+    kind: TERM
+    name: "스트림 처리 용어"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "스트림과 테이블, 처리 토폴로지, 시간 기준을 가리키는 말"
+    contains: [msg-kstream, msg-ktable, msg-global-ktable, msg-stream-table-duality, msg-topology, msg-time-semantics]
+  - id: msg-kstream
+    kind: TERM
+    name: "KStream"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "레코드 하나하나가 독립된 사건인 스트림. 같은 키의 레코드가 와도 앞의 것을 덮지 않는다"
+    synonyms: ["event stream", "record stream"]
+  - id: msg-ktable
+    kind: TERM
+    name: "KTable"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "키마다 최신 값만 의미 있는 변경 로그 스트림. 같은 키의 새 레코드는 이전 값을 덮고, null 은 삭제다. 파티션별로 나눠 들고 있다"
+    synonyms: ["changelog stream", "table"]
+  - id: msg-global-ktable
+    kind: TERM
+    name: "GlobalKTable"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "모든 파티션의 데이터를 인스턴스마다 전부 복제해 둔 테이블. 작은 참조 데이터에 쓴다"
+    synonyms: ["global table"]
+  - id: msg-stream-table-duality
+    kind: TERM
+    name: "스트림-테이블 이중성"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "테이블은 변경 스트림을 누적한 스냅샷이고 스트림은 테이블 변경의 기록이라, 서로 바꿔 표현할 수 있다는 관점"
+    synonyms: ["stream-table duality"]
+  - id: msg-topology
+    kind: TERM
+    name: "토폴로지"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "소스·처리기·싱크를 이은 스트림 처리 그래프. 입력 파티션마다 태스크 하나로 복제돼 병렬로 돈다"
+    synonyms: ["topology", "stream task", "sub-topology"]
+    code:
+      - { path: analytics/app/src/main/kotlin/com/kgd/analytics/infrastructure/streaming/AnalyticsStreamTopology.kt, symbol: "fun buildPipeline(builder: StreamsBuilder)", note: "analytics 스트림 토폴로지를 조립한다" }
+  - id: msg-time-semantics
+    kind: TERM
+    name: "시간 의미론"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "스트림 처리에서 창과 순서를 정할 때 어느 시각을 기준으로 삼는지의 구분"
+    synonyms: ["time semantics"]
+    contains: [msg-event-time, msg-processing-time]
+  - id: msg-event-time
+    kind: TERM
+    name: "이벤트 시간"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "사건이 실제로 일어난 시각(레코드 타임스탬프). 재처리해도 결과가 같지만 늦게 오는 이벤트를 기다려야 한다"
+    synonyms: ["event time"]
+  - id: msg-processing-time
+    kind: TERM
+    name: "처리 시간"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "처리기가 레코드를 본 시각. 기다림이 없지만 재처리·지연에 따라 결과가 달라진다"
+    synonyms: ["processing time", "wall-clock time", "ingestion time"]

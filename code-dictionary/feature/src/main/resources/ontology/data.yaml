@@ -8,9 +8,9 @@ concepts:
     name: "데이터 저장"
     category: DATA
     level: BEGINNER
-    description: "애플리케이션이 데이터를 잃지 않고, 동시에 고쳐도 깨지지 않고, 빨리 읽히게 저장하는 일. 저장소 선택 · 트랜잭션 · 동시 갱신 · 인덱스 · 스키마 변경 · 매핑 · 커넥션 · 캐시로 나눠 읽는다"
+    description: "애플리케이션이 데이터를 잃지 않고, 동시에 고쳐도 깨지지 않고, 빨리 읽히게 저장하는 일. 저장소 선택 · 관계형 DB · 인메모리 저장소 · 데이터 접근과 캐시 · 분석용 저장으로 나눠 읽는다"
     synonyms: ["persistence", "영속성", "데이터베이스"]
-    contains: [data-store-selection, data-transaction-management, data-concurrency-control, data-indexing, data-schema-migration, data-object-mapping, data-connection-management, data-caching-strategy, data-glossary]
+    contains: [data-store-selection, data-relational, data-inmemory-store, data-access, data-analytical-storage, data-glossary]
 
   # ── 저장소 선택 ─────────────────────────────────────────
   - id: data-store-selection
@@ -20,8 +20,23 @@ concepts:
     level: BEGINNER
     description: "데이터의 모양과 읽는 방식에 맞춰 저장소를 고른다. 정합성이 중요한 원장은 관계형, 자주 읽는 값은 인메모리, 대량 집계는 컬럼 지향 저장소가 맞다"
     questions: ["주문 원장과 이벤트 로그를 같은 저장소에 두지 않는 이유는 무엇인가"]
-    contains: [mysql, redis, clickhouse]
-    flows_to: [data-schema-migration]
+    contains: [data-polyglot-persistence, data-row-oriented-storage, mysql, redis, clickhouse]
+    uses: [data-oltp, data-olap]
+  - id: data-polyglot-persistence
+    kind: MECHANISM
+    name: "용도별 저장소 분리"
+    category: DATA
+    level: INTERMEDIATE
+    description: "한 시스템 안에서 데이터의 접근 모양마다 다른 저장소를 쓴다. 원장은 관계형, 캐시는 키-값, 이벤트 집계는 컬럼 지향, 검색은 역색인에 둔다. 저장소가 늘수록 동기화와 운영 비용이 는다"
+    synonyms: ["polyglot persistence"]
+    uses: [mysql, redis, clickhouse]
+  - id: data-row-oriented-storage
+    kind: MECHANISM
+    name: "행 지향 저장"
+    category: DATA
+    level: INTERMEDIATE
+    description: "한 행의 컬럼들을 디스크에 붙여 둔다. 행 하나를 읽고 고치는 트랜잭션 처리에 맞고, 몇 컬럼만 대량으로 훑는 집계에는 필요 없는 컬럼까지 읽는다"
+    synonyms: ["row store", "row-oriented"]
   - id: mysql
     kind: TECHNOLOGY
     name: "MySQL"
@@ -35,6 +50,10 @@ concepts:
       - { to: write-ahead-log, reason: "InnoDB redo 로그가 커밋 전에 먼저 기록된다" }
       - { to: b-tree, reason: "InnoDB 의 클러스터드 · 보조 인덱스가 B+트리다" }
       - { to: replication, reason: "binlog 복제" }
+      - { to: data-row-oriented-storage, reason: "InnoDB 는 행을 클러스터드 인덱스 잎에 통째로 둔다" }
+      - { to: data-buffer-pool, reason: "InnoDB 버퍼 풀이 페이지를 메모리에 캐시한다" }
+      - { to: data-row-lock-range, reason: "InnoDB 가 레코드 · 갭 · 넥스트키 락을 건다" }
+      - { to: data-online-ddl, reason: "ALGORITHM=INSTANT/INPLACE/COPY 를 고를 수 있다" }
   - id: redis
     kind: TECHNOLOGY
     name: "Redis"
@@ -47,6 +66,10 @@ concepts:
       - { to: caching, reason: "자주 읽는 값을 메모리에 두어 DB 조회를 건너뛴다" }
       - { to: data-ttl-expiration, reason: "키마다 만료 시간을 걸 수 있다" }
       - { to: skip-list, reason: "정렬 집합(ZSET)이 스킵 리스트로 되어 있다" }
+      - { to: data-redis-single-thread, reason: "명령 실행이 한 스레드의 이벤트 루프에서 돈다" }
+      - { to: data-aof, reason: "운영 인스턴스가 appendonly 로 뜬다" }
+      - { to: data-eviction-policy, reason: "maxmemory 에 닿으면 정책에 따라 키를 내보낸다" }
+      - { to: data-lua-script, reason: "EVAL 로 스크립트를 원자적으로 돌린다" }
   - id: clickhouse
     kind: TECHNOLOGY
     name: "ClickHouse"
@@ -55,8 +78,687 @@ concepts:
     description: "컬럼 지향 분석용 저장소. 행 단위 갱신 대신 대량 적재와 집계에 맞다. 이 레포에서는 analytics 가 이벤트를 쌓고 recommendation 이 읽기만 한다"
     code:
       - { path: analytics/app/src/main/kotlin/com/kgd/analytics/infrastructure/persistence/EventRepositoryAdapter.kt, symbol: "INSERT INTO analytics.events", note: "수집 이벤트를 ClickHouse 에 적재" }
+    implements:
+      - { to: data-columnar-storage, reason: "컬럼마다 파일을 따로 두고 압축한다" }
+      - { to: data-mergetree, reason: "MergeTree 계열 엔진이 기본 테이블 엔진이다" }
+      - { to: data-materialized-view, reason: "INSERT 트리거형 머티리얼라이즈드 뷰로 집계를 미리 만든다" }
+      - { to: data-vectorized-execution, reason: "컬럼 블록 단위로 연산한다" }
     alternative_to:
       - { to: mysql, reason: "집계 질의는 컬럼 지향이, 행 단위 갱신 · 트랜잭션은 관계형이 맞다" }
+
+  # ═══ 관계형 데이터베이스 ═══════════════════════════════
+  - id: data-relational
+    kind: DOMAIN
+    name: "관계형 데이터베이스"
+    category: DATA
+    level: INTERMEDIATE
+    description: "테이블 · 행 · 키로 데이터를 담고 SQL 로 다루는 저장소의 설계와 내부. 스키마 설계에서 시작해 저장 엔진 · 인덱스 · 실행 계획 · 트랜잭션 · 잠금 · 매핑 · 스키마 변경 · 복제 · 파티셔닝 · 백업 순으로 읽는다"
+    synonyms: ["RDBMS", "relational database"]
+    contains: [data-schema-design, data-sql-querying, data-storage-engine, data-indexing, data-query-optimization, data-transaction-management, data-concurrency-control, data-object-mapping, data-schema-migration, data-replication-ha, data-partitioning, data-backup-recovery]
+
+  # ── 스키마 설계 ─────────────────────────────────────────
+  - id: data-schema-design
+    kind: STAGE
+    name: "스키마 설계"
+    category: DATA
+    level: BEGINNER
+    description: "무엇을 어떤 테이블 · 컬럼 · 키 · 제약으로 담을지 정한다. 중복을 없애는 정규화와 읽기 비용을 줄이는 반정규화 사이에서, 키를 어떻게 만들지까지 고른다"
+    questions: ["정규화를 깨고 컬럼을 복제해도 되는 조건은 무엇인가", "UUIDv4 를 InnoDB 기본 키로 쓰면 무엇이 느려지는가"]
+    contains: [data-normalization, data-denormalization, data-primary-key-design, data-constraint, data-soft-delete, data-json-column, data-generated-column, data-update-anomaly, data-random-pk-fragmentation]
+    uses: [data-relational-model, data-normal-form, data-er-model]
+    flows_to: [data-sql-querying]
+  - id: data-normalization
+    kind: MECHANISM
+    name: "정규화"
+    category: DATA
+    level: BEGINNER
+    description: "한 사실을 한 곳에만 두도록 테이블을 함수 종속에 따라 쪼갠다(1NF → 2NF → 3NF → BCNF). 갱신 이상을 없애는 대신 읽을 때 조인이 는다"
+    synonyms: ["normalization"]
+    uses: [data-normal-form]
+    mitigates: [data-update-anomaly]
+  - id: data-denormalization
+    kind: MECHANISM
+    name: "반정규화"
+    category: DATA
+    level: INTERMEDIATE
+    description: "자주 함께 읽는 값을 일부러 복제하거나 미리 합쳐 두어 조인 · 집계를 줄인다. 복제본을 원본과 맞추는 책임이 생긴다"
+    synonyms: ["denormalization", "역정규화"]
+    alternative_to:
+      - { to: data-normalization, reason: "읽기 비용이 갱신 정합성 비용보다 크면 복제를 택한다" }
+    causes:
+      - { to: data-update-anomaly, reason: "복제된 값 중 하나만 고치면 서로 어긋난다" }
+  - id: data-primary-key-design
+    kind: MECHANISM
+    name: "기본 키 설계"
+    category: DATA
+    level: INTERMEDIATE
+    description: "행을 식별할 키를 고른다. 업무 의미가 없는 대리 키를 쓰고, InnoDB 에서는 키가 곧 물리 순서이므로 증가하는 값이 삽입에 유리하다. 키 길이는 모든 보조 인덱스 크기에 붙는다"
+    synonyms: ["primary key", "PK 전략"]
+    contains: [data-auto-increment-key]
+    uses: [data-surrogate-key, data-natural-key, data-clustered-index, dist-uuid-v7, dist-snowflake-id]
+  - id: data-auto-increment-key
+    kind: MECHANISM
+    name: "자동 증가 키"
+    category: DATA
+    level: BEGINNER
+    description: "DB 가 삽입마다 1씩 늘린 정수를 키로 준다. 삽입이 항상 인덱스 오른쪽 끝에 붙어 페이지 분할이 적다. 여러 DB 에 나눠 쓰면 값이 겹치고, 커밋되지 않은 번호는 비어 남는다"
+    synonyms: ["AUTO_INCREMENT", "IDENTITY", "sequence"]
+    code:
+      - { path: order/feature/src/main/resources/orderdb/migration/V1__create_orders_table.sql, symbol: "id BIGINT NOT NULL AUTO_INCREMENT", note: "주문 기본 키" }
+    uses: [data-auto-inc-lock]
+    mitigates:
+      - { to: data-random-pk-fragmentation, reason: "삽입이 늘 인덱스 오른쪽 끝에 붙는다" }
+  - id: data-random-pk-fragmentation
+    kind: PROBLEM
+    name: "랜덤 키 삽입 단편화"
+    category: DATA
+    level: ADVANCED
+    description: "UUIDv4 처럼 무작위 값을 클러스터드 키로 쓰면 삽입이 인덱스 곳곳에 흩어져 페이지 분할 · 반쯤 빈 페이지 · 버퍼 풀 미스가 늘어난다"
+    synonyms: ["UUIDv4 PK", "random primary key"]
+  - id: data-constraint
+    kind: MECHANISM
+    name: "무결성 제약"
+    category: DATA
+    level: BEGINNER
+    description: "NOT NULL · UNIQUE · CHECK · FOREIGN KEY 로 잘못된 행을 DB 가 거절하게 한다. 애플리케이션 검사가 빠뜨린 경우와 동시 요청 경쟁까지 막는 마지막 방어선이다. 이 레포는 서비스 경계를 넘는 참조에 FK 제약 대신 plain ID 를 둔다"
+    synonyms: ["constraint", "foreign key", "CHECK 제약", "FK-as-ID"]
+    code:
+      - { path: blog/feature/src/main/resources/blogdb/migration/V1__blog.sql, symbol: "CONSTRAINT chk_blog_comment_status CHECK", note: "댓글 상태 값을 CHECK 로 묶는다" }
+  - id: data-soft-delete
+    kind: MECHANISM
+    name: "소프트 삭제"
+    category: DATA
+    level: BEGINNER
+    description: "행을 지우지 않고 삭제 표시 컬럼(deleted_at · 상태)을 세운다. 복구와 감사가 쉽지만 모든 조회와 유니크 제약이 그 표시를 알아야 한다"
+    synonyms: ["soft delete", "logical delete", "논리 삭제"]
+  - id: data-json-column
+    kind: MECHANISM
+    name: "JSON 컬럼"
+    category: DATA
+    level: INTERMEDIATE
+    description: "모양이 자주 바뀌거나 조회 조건에 쓰지 않는 부가 속성을 JSON 한 컬럼에 담는다. 스키마 변경 없이 필드를 늘리지만 제약 · 인덱스가 약해진다"
+    synonyms: ["JSON type", "JSONB", "semi-structured column"]
+    code:
+      - { path: quant/feature/src/main/resources/quantdb/migration/V20260505_001__phase3_live_trading.sql, symbol: "backup_codes_hash JSON NOT NULL", note: "배열 값을 JSON 컬럼 하나에" }
+  - id: data-generated-column
+    kind: MECHANISM
+    name: "생성 컬럼"
+    category: DATA
+    level: INTERMEDIATE
+    description: "다른 컬럼에서 식으로 계산되는 컬럼. 저장형(STORED)은 인덱스 · 유니크를 걸 수 있어 식 인덱스나 조건부 유니크를 흉내 낸다"
+    synonyms: ["generated column", "computed column", "virtual column"]
+    code:
+      - { path: seller/feature/src/main/resources/sellerdb/migration/V1__create_seller_schema.sql, symbol: "GENERATED ALWAYS AS (", note: "열린 상태일 때만 member_id 를 채워 1인 1판매자 유니크를 건다" }
+  - id: data-update-anomaly
+    kind: PROBLEM
+    name: "갱신 이상"
+    category: DATA
+    level: BEGINNER
+    description: "같은 사실이 여러 행에 복제되어 삽입 · 수정 · 삭제 중 일부만 반영되고 서로 어긋나는 상태"
+    synonyms: ["update anomaly", "insertion anomaly", "deletion anomaly"]
+
+  # ── SQL 질의 작성 ───────────────────────────────────────
+  - id: data-sql-querying
+    kind: STAGE
+    name: "SQL 질의 작성"
+    category: DATA
+    level: BEGINNER
+    description: "원하는 결과 집합을 선언적으로 적는다. 조인 · 서브쿼리 · 집계 · 윈도 함수 · CTE 로 모양을 만들고, 값은 바인딩 파라미터로 넘긴다"
+    questions: ["윈도 함수와 GROUP BY 는 결과 행 수가 어떻게 다른가"]
+    contains: [data-join, data-subquery, data-aggregation, data-window-function, data-cte, data-upsert, data-prepared-statement]
+    uses: [data-join-types, data-three-valued-logic]
+    flows_to: [data-storage-engine]
+  - id: data-join
+    kind: MECHANISM
+    name: "조인"
+    category: DATA
+    level: BEGINNER
+    description: "두 테이블의 행을 조건으로 짝지어 하나의 결과로 만든다. 어떤 순서 · 어떤 알고리즘으로 짝지을지는 옵티마이저가 정한다"
+    synonyms: ["JOIN"]
+    uses: [data-join-types, data-join-algorithm]
+  - id: data-subquery
+    kind: MECHANISM
+    name: "서브쿼리"
+    category: DATA
+    level: BEGINNER
+    description: "질의 안에 넣은 질의. 바깥 행마다 다시 도는 상관 서브쿼리는 옵티마이저가 조인으로 바꾸지 못하면 느려진다"
+    synonyms: ["subquery", "correlated subquery", "semi-join"]
+  - id: data-aggregation
+    kind: MECHANISM
+    name: "집계"
+    category: DATA
+    level: BEGINNER
+    description: "GROUP BY 로 행을 묶고 COUNT · SUM · AVG 로 묶음마다 값 하나를 낸다. HAVING 은 묶은 뒤에 거른다"
+    synonyms: ["GROUP BY", "HAVING", "aggregate function"]
+  - id: data-window-function
+    kind: MECHANISM
+    name: "윈도 함수"
+    category: DATA
+    level: INTERMEDIATE
+    description: "행을 줄이지 않고 각 행 옆에 같은 묶음(PARTITION BY) 안의 순위 · 누적 · 이전 값을 붙인다. 그룹별 상위 N 개와 전일 대비가 대표 용도다"
+    synonyms: ["window function", "OVER", "ROW_NUMBER", "RANK", "LAG", "LEAD"]
+    code:
+      - { path: recommendation/feature/src/main/kotlin/com/kgd/recommendation/infrastructure/persistence/ClickHouseItemSimilarityComputer.kt, symbol: "row_number() OVER (PARTITION BY item_a", note: "상품마다 유사 상품 상위 N 개" }
+  - id: data-cte
+    kind: MECHANISM
+    name: "CTE"
+    category: DATA
+    level: INTERMEDIATE
+    description: "WITH 로 이름 붙인 중간 결과를 만들어 질의를 단계로 읽히게 한다. 재귀 CTE 는 계층 · 그래프를 SQL 안에서 따라 내려간다"
+    synonyms: ["Common Table Expression", "WITH", "recursive CTE"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/discover/ClickHouseRankingAdapter.kt, symbol: "WITH latest_per_market AS (", note: "시장별 최신 값을 먼저 뽑고 순위를 매긴다" }
+  - id: data-upsert
+    kind: MECHANISM
+    name: "업서트"
+    category: DATA
+    level: INTERMEDIATE
+    description: "키가 없으면 넣고 있으면 고친다를 한 문장으로 원자적으로 한다(INSERT ... ON DUPLICATE KEY UPDATE, MERGE). 조회 후 삽입의 경쟁을 없앤다"
+    synonyms: ["upsert", "ON DUPLICATE KEY UPDATE", "MERGE", "INSERT ... ON CONFLICT"]
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/infrastructure/persistence/stats/adapter/HourlyStatsAdapter.kt, symbol: "ON DUPLICATE KEY UPDATE impressions = :impressions", note: "시간별 통계 행을 넣거나 덮는다" }
+    mitigates: [data-duplicate-insert]
+  - id: data-prepared-statement
+    kind: MECHANISM
+    name: "Prepared Statement"
+    category: DATA
+    level: BEGINNER
+    description: "SQL 틀과 값을 따로 보내 서버가 틀을 한 번 파싱해 재사용한다. 값이 SQL 문법으로 해석되지 않아 SQL 인젝션도 막는다"
+    synonyms: ["prepared statement", "바인딩 파라미터", "server-side prepare"]
+    mitigates: [sql-injection]
+
+  # ── 저장 엔진 내부 ──────────────────────────────────────
+  - id: data-storage-engine
+    kind: STAGE
+    name: "저장 엔진 내부"
+    category: DATA
+    level: ADVANCED
+    description: "행이 디스크 페이지에 어떻게 놓이고, 메모리에 어떻게 캐시되고, 장애 뒤에 어떻게 복구되는지를 다룬다. 쿼리 비용의 대부분은 몇 페이지를 디스크에서 읽느냐로 정해진다"
+    questions: ["커밋이 끝났는데 데이터 페이지는 아직 디스크에 없어도 되는 이유는 무엇인가", "B-트리 엔진과 LSM 엔진은 쓰기 · 읽기 비용이 어떻게 다른가"]
+    contains: [data-buffer-pool, write-ahead-log, data-undo-log, data-checkpoint, data-doublewrite-buffer, data-crash-recovery, data-fsync, data-group-commit, data-page-cache, data-direct-io, data-lsm-tree, data-torn-page, data-write-amplification, data-buffer-pool-hit-ratio]
+    uses: [data-page, data-dirty-page, data-lsn, data-sequential-random-io]
+    measured_by: [obs-iops]
+    flows_to: [data-indexing]
+  - id: data-buffer-pool
+    kind: MECHANISM
+    name: "버퍼 풀"
+    category: DATA
+    level: INTERMEDIATE
+    description: "DB 가 디스크 페이지를 자기 메모리에 캐시하는 영역. 자주 쓰는 페이지(working set)가 다 들어가면 읽기가 디스크를 거의 타지 않는다. InnoDB 는 풀스캔이 캐시를 밀어내지 않게 LRU 중간 지점에 새 페이지를 넣는다"
+    synonyms: ["buffer pool", "innodb_buffer_pool_size", "midpoint insertion"]
+    questions: ["working set 이 버퍼 풀보다 커지면 지연이 어떻게 변하는가"]
+    affects: [data-buffer-pool-hit-ratio]
+    alternative_to:
+      - { to: data-page-cache, reason: "DB 가 캐시 정책을 직접 쥐려면 OS 캐시 대신 자기 버퍼 풀을 쓴다" }
+  - id: write-ahead-log
+    kind: MECHANISM
+    name: "WAL"
+    category: DATA
+    level: ADVANCED
+    description: "데이터 페이지를 고치기 전에 변경 내용을 로그에 먼저 순차 기록한다. 장애 뒤에 로그를 다시 적용해 커밋된 변경을 복구하므로 ACID 의 지속성을 만든다"
+    synonyms: ["Write-Ahead Log", "선행 기록 로그", "redo log"]
+    questions: ["WAL 이 랜덤 쓰기를 순차 쓰기로 바꾸는 이유는 무엇인가"]
+    uses: [acid, data-lsn, data-fsync]
+  - id: data-undo-log
+    kind: MECHANISM
+    name: "undo 로그"
+    category: DATA
+    level: ADVANCED
+    description: "행을 고치기 전의 값을 남긴다. 롤백할 때 되돌리는 데 쓰고, MVCC 읽기가 옛 버전을 찾아가는 버전 체인이 된다. 오래 열린 트랜잭션이 있으면 지우지 못하고 쌓인다"
+    synonyms: ["undo log", "rollback segment", "history list"]
+  - id: data-checkpoint
+    kind: MECHANISM
+    name: "체크포인트"
+    category: DATA
+    level: ADVANCED
+    description: "버퍼 풀의 더티 페이지를 디스크로 내리고 로그의 어디까지가 반영됐는지 표시한다. 복구 때 다시 적용할 로그 구간을 줄이고 로그 공간을 재사용하게 한다"
+    synonyms: ["checkpoint", "fuzzy checkpoint", "page flush"]
+    uses: [data-dirty-page, data-lsn]
+  - id: data-doublewrite-buffer
+    kind: MECHANISM
+    name: "이중 쓰기 버퍼"
+    category: DATA
+    level: ADVANCED
+    description: "페이지를 제자리에 쓰기 전에 별도 영역에 먼저 통째로 써 둔다. 쓰는 도중 전원이 나가 페이지가 반만 써져도 온전한 사본으로 되살린다"
+    synonyms: ["doublewrite buffer"]
+    mitigates: [data-torn-page]
+  - id: data-crash-recovery
+    kind: MECHANISM
+    name: "장애 복구"
+    category: DATA
+    level: ADVANCED
+    description: "재기동 때 마지막 체크포인트 이후의 redo 로그를 다시 적용하고(redo), 커밋되지 않은 트랜잭션은 undo 로 되돌린다. 커밋된 것만 남는 상태를 다시 만든다"
+    synonyms: ["crash recovery", "ARIES", "redo/undo recovery"]
+    uses: [write-ahead-log, data-undo-log, data-checkpoint]
+  - id: data-fsync
+    kind: MECHANISM
+    name: "fsync 내구성 기록"
+    category: DATA
+    level: INTERMEDIATE
+    description: "OS 페이지 캐시에 있는 더티 페이지를 저장 장치까지 내리고 끝날 때까지 기다린다. write() 가 끝났어도 fsync 전에는 전원이 나가면 사라질 수 있다. 밀리초 단위로 느려 커밋 지연의 하한이 된다"
+    synonyms: ["fsync", "fdatasync", "innodb_flush_log_at_trx_commit", "durable write"]
+    questions: ["write() 가 성공했는데도 데이터가 사라질 수 있는 경우는 언제인가"]
+  - id: data-group-commit
+    kind: MECHANISM
+    name: "그룹 커밋"
+    category: DATA
+    level: ADVANCED
+    description: "동시에 커밋하는 여러 트랜잭션의 로그를 한 번의 fsync 로 함께 내린다. 커밋 하나당 fsync 비용을 나눠 처리량을 올린다"
+    synonyms: ["group commit", "binlog group commit"]
+    uses: [data-fsync]
+    affects: [obs-iops]
+  - id: data-page-cache
+    kind: MECHANISM
+    name: "OS 페이지 캐시"
+    category: DATA
+    level: INTERMEDIATE
+    description: "커널이 디스크 파일 내용을 빈 메모리에 캐시한다. read() · mmap 모두 이곳을 거치고, 메모리 압박이 오면 가장 먼저 버려진다. 검색 엔진 · 로그 저장소는 이 캐시에 성능을 기댄다"
+    synonyms: ["page cache", "buffer cache", "file cache"]
+  - id: data-direct-io
+    kind: MECHANISM
+    name: "Direct I/O"
+    category: DATA
+    level: ADVANCED
+    description: "O_DIRECT 로 OS 페이지 캐시를 건너뛰고 장치와 직접 읽고 쓴다. DB 가 자기 버퍼 풀을 가질 때 같은 페이지를 메모리에 두 번 두지 않으려고 쓴다"
+    synonyms: ["O_DIRECT", "innodb_flush_method"]
+    alternative_to:
+      - { to: data-page-cache, reason: "자체 버퍼 풀이 있으면 OS 캐시는 중복이다" }
+  - id: data-lsm-tree
+    kind: MECHANISM
+    name: "LSM 트리"
+    category: DATA_STRUCTURE
+    level: ADVANCED
+    description: "쓰기를 메모리 테이블에 모았다가 정렬된 파일로 한꺼번에 내리고, 뒤에서 파일들을 병합한다. 쓰기가 전부 순차라 빠르지만 읽기는 여러 파일을 봐야 해서 블룸 필터 · 병합으로 보완한다"
+    synonyms: ["Log-Structured Merge-tree", "LSM-tree", "memtable", "SSTable"]
+    questions: ["LSM 트리가 쓰기에 강하고 읽기에 약한 이유는 무엇인가"]
+    contains: [data-lsm-compaction]
+    uses: [bloom-filter]
+    alternative_to:
+      - { to: b-tree, reason: "쓰기가 압도적으로 많으면 제자리 갱신 대신 추가 후 병합을 택한다" }
+  - id: data-lsm-compaction
+    kind: MECHANISM
+    name: "컴팩션"
+    category: DATA
+    level: ADVANCED
+    description: "LSM 저장소가 쌓인 정렬 파일들을 병합하며 덮어쓴 값 · 삭제 표시를 정리한다. 읽을 파일 수를 줄이는 대신 같은 데이터를 여러 번 다시 쓴다"
+    synonyms: ["compaction", "merge", "leveled compaction", "size-tiered compaction"]
+    causes:
+      - { to: data-write-amplification, reason: "한 번 쓴 값이 병합마다 다시 쓰인다" }
+  - id: data-torn-page
+    kind: PROBLEM
+    name: "찢어진 페이지"
+    category: DATA
+    level: ADVANCED
+    description: "DB 페이지(16KB)가 장치의 원자 쓰기 단위(4KB)보다 커서, 쓰는 중에 장애가 나면 페이지 일부만 새 값인 상태로 남는 것. redo 로그만으로는 되살릴 수 없다"
+    synonyms: ["torn page", "partial page write"]
+  - id: data-write-amplification
+    kind: PROBLEM
+    name: "쓰기 증폭"
+    category: DATA
+    level: ADVANCED
+    description: "애플리케이션이 쓴 양보다 저장 장치에 실제로 쓰는 양이 몇 배 많은 상태. 인덱스마다 따로 쓰는 갱신, 로그 · 이중 쓰기, 컴팩션이 원인이다"
+    synonyms: ["write amplification"]
+    measured_by: [obs-iops]
+  - id: data-buffer-pool-hit-ratio
+    kind: METRIC
+    name: "버퍼 풀 적중률"
+    category: DATA
+    level: INTERMEDIATE
+    description: "페이지 요청 중 디스크를 읽지 않고 버퍼 풀에서 끝난 비율. 99% 아래로 떨어지면 working set 이 메모리를 넘은 신호다"
+    synonyms: ["buffer pool hit ratio", "Innodb_buffer_pool_reads"]
+
+  # ── 인덱스 설계 ─────────────────────────────────────────
+  - id: data-indexing
+    kind: STAGE
+    name: "인덱스 설계"
+    category: DATA
+    level: INTERMEDIATE
+    description: "자주 쓰는 조건 · 정렬에 맞춰 인덱스를 만들어 조회가 테이블 전체를 읽지 않게 한다. 인덱스가 늘면 쓰기와 저장 공간 비용이 는다"
+    questions: ["인덱스를 걸었는데도 쓰이지 않는 조건 세 가지는 무엇인가"]
+    contains: [b-tree, data-clustered-index, data-secondary-index, data-covering-index, data-composite-index, data-unique-index, data-hash-index, data-fulltext-index, data-spatial-index, data-functional-index, data-partial-index, data-bitmap-index, data-full-table-scan, data-index-invalidation, data-over-indexing, data-secondary-lookup-cost, data-query-latency]
+    uses: [data-cardinality, data-selectivity, data-fanout, data-sargable, data-leftmost-prefix]
+    flows_to: [data-query-optimization]
+  - id: b-tree
+    kind: MECHANISM
+    name: "B-트리"
+    category: DATA_STRUCTURE
+    level: ADVANCED
+    description: "노드 하나에 키를 여러 개 담아 높이를 낮게 유지하는 자기 균형 탐색 트리. 디스크 페이지 단위로 읽기에 맞아 관계형 DB 인덱스의 기본 구조가 된다"
+    synonyms: ["B-Tree", "B트리"]
+    questions: ["이진 탐색 트리 대신 B-트리를 디스크 인덱스로 쓰는 이유는 무엇인가"]
+    contains: [data-b-plus-tree]
+    uses: [data-fanout]
+    affects: [data-query-latency]
+    alternative_to:
+      - { to: cs-balanced-bst, reason: "노드가 페이지 하나라 높이가 3~4 로 낮다 — 디스크에서는 이진 균형 트리보다 읽는 페이지가 훨씬 적다" }
+  - id: data-b-plus-tree
+    kind: MECHANISM
+    name: "B+트리"
+    category: DATA_STRUCTURE
+    level: ADVANCED
+    description: "값은 잎 노드에만 두고 내부 노드는 길잡이 키만 담는 B-트리 변형. 내부 노드에 키가 더 들어가 높이가 낮고, 잎끼리 연결 리스트로 이어져 범위 스캔이 잎을 따라 흐른다. InnoDB 인덱스가 이것이다"
+    synonyms: ["B+Tree", "B+ tree"]
+    contains: [data-page-split]
+  - id: data-page-split
+    kind: MECHANISM
+    name: "페이지 분할 · 병합"
+    category: DATA
+    level: ADVANCED
+    description: "꽉 찬 잎 페이지에 키가 들어오면 반으로 나눠 부모에 키를 올리고, 너무 비면 옆 페이지와 합친다. 중간 삽입이 잦으면 분할이 늘어 페이지가 반쯤 빈다"
+    synonyms: ["page split", "page merge", "fill factor"]
+    causes:
+      - { to: data-write-amplification, reason: "분할 한 번에 페이지 여러 장을 새로 쓴다" }
+  - id: data-clustered-index
+    kind: MECHANISM
+    name: "클러스터드 인덱스"
+    category: DATA
+    level: INTERMEDIATE
+    description: "테이블 행 자체를 키 순서로 잎에 담은 인덱스. 테이블당 하나이고 InnoDB 에서는 기본 키가 이것이다. 키 범위 조회가 연속 페이지로 끝난다"
+    synonyms: ["clustered index", "index-organized table", "primary index"]
+    uses: [data-b-plus-tree]
+  - id: data-secondary-index
+    kind: MECHANISM
+    name: "보조 인덱스"
+    category: DATA
+    level: INTERMEDIATE
+    description: "기본 키가 아닌 컬럼의 인덱스. InnoDB 에서는 잎에 행 위치 대신 기본 키 값을 담아, 찾은 뒤 클러스터드 인덱스를 한 번 더 탄다"
+    synonyms: ["secondary index", "non-clustered index"]
+    uses: [data-clustered-index]
+    causes:
+      - { to: data-secondary-lookup-cost, reason: "결과 행마다 기본 키로 다시 찾아간다" }
+  - id: data-covering-index
+    kind: MECHANISM
+    name: "커버링 인덱스"
+    category: DATA
+    level: INTERMEDIATE
+    description: "질의가 쓰는 컬럼이 전부 인덱스 안에 있어 테이블 행을 읽지 않고 인덱스만으로 답한다. 실행 계획에 Using index 로 보인다"
+    synonyms: ["covering index", "index-only scan", "Using index"]
+    uses: [data-secondary-index]
+    mitigates: [data-secondary-lookup-cost]
+  - id: data-composite-index
+    kind: MECHANISM
+    name: "복합 인덱스"
+    category: DATA
+    level: INTERMEDIATE
+    description: "여러 컬럼을 순서대로 묶은 인덱스. 앞 컬럼부터 조건에 쓰여야 탄다. 등치 조건 컬럼을 앞에, 범위 · 정렬 컬럼을 뒤에 둔다"
+    synonyms: ["composite index", "다중 컬럼 인덱스", "multi-column index"]
+    code:
+      - { path: blog/feature/src/main/resources/blogdb/migration/V1__blog.sql, symbol: "INDEX idx_blog_post_category (category_id, status, published_at DESC)", note: "카테고리 · 상태 등치 뒤에 발행일 정렬" }
+    uses: [b-tree, data-leftmost-prefix]
+    mitigates: [data-full-table-scan]
+  - id: data-unique-index
+    kind: MECHANISM
+    name: "유니크 인덱스"
+    category: DATA
+    level: BEGINNER
+    description: "같은 키 값을 두 번 넣지 못하게 막는 인덱스. 동시 삽입 경쟁에서도 DB 가 한쪽을 거절하므로 중복 방지의 최종 수단이 된다. NULL 은 여럿 허용된다"
+    synonyms: ["unique index", "UNIQUE KEY"]
+    code:
+      - { path: seller/feature/src/main/resources/sellerdb/migration/V1__create_seller_schema.sql, symbol: "UNIQUE KEY uk_seller_open_member (open_member_id)", note: "1인 1판매자" }
+  - id: data-hash-index
+    kind: MECHANISM
+    name: "해시 인덱스"
+    category: DATA
+    level: INTERMEDIATE
+    description: "키의 해시로 위치를 찾는 인덱스. 등치 조회는 O(1) 이지만 범위 · 정렬 · 앞부분 일치를 못 한다"
+    synonyms: ["hash index"]
+    contains: [data-adaptive-hash-index]
+    uses: [hash-map]
+    alternative_to:
+      - { to: b-tree, reason: "등치 조회만 있으면 해시, 범위 · 정렬이 있으면 B-트리" }
+  - id: data-adaptive-hash-index
+    kind: MECHANISM
+    name: "적응형 해시 인덱스"
+    category: DATA
+    level: ADVANCED
+    description: "InnoDB 가 자주 찾는 B+트리 경로를 보고 메모리에 해시 인덱스를 자동으로 만들어 트리 탐색을 건너뛴다. 경합이 심하면 오히려 잠금 병목이 되어 끄기도 한다"
+    synonyms: ["Adaptive Hash Index", "AHI"]
+  - id: data-fulltext-index
+    kind: MECHANISM
+    name: "전문 인덱스"
+    category: DATA
+    level: INTERMEDIATE
+    description: "텍스트를 단어로 쪼개 역색인을 만든 DB 내장 인덱스. 앞에 %가 붙은 LIKE 가 못 하는 단어 검색을 하지만, 분석기 · 랭킹이 약해 본격 검색은 전용 검색 엔진으로 넘긴다"
+    synonyms: ["FULLTEXT index", "tsvector", "full-text search"]
+    uses: [inverse-index]
+  - id: data-spatial-index
+    kind: MECHANISM
+    name: "공간 인덱스"
+    category: DATA
+    level: ADVANCED
+    description: "좌표 · 도형을 겹치는 경계 상자로 묶은 R-트리로 색인해 「이 영역 안에 있는 것」을 빨리 찾는다"
+    synonyms: ["spatial index", "R-Tree", "GiST"]
+  - id: data-functional-index
+    kind: MECHANISM
+    name: "함수 기반 인덱스"
+    category: DATA
+    level: INTERMEDIATE
+    description: "컬럼 값이 아니라 식의 결과(LOWER(email), DATE(created_at))로 인덱스를 만든다. WHERE 에 함수를 씌운 조건도 인덱스를 탄다"
+    synonyms: ["functional index", "expression index"]
+    uses: [data-generated-column]
+    mitigates: [data-index-invalidation]
+  - id: data-partial-index
+    kind: MECHANISM
+    name: "부분 인덱스"
+    category: DATA
+    level: ADVANCED
+    description: "조건을 만족하는 행만 인덱스에 넣는다(PostgreSQL WHERE 절 인덱스). MySQL 에는 없어서 조건일 때만 값이 있는 생성 컬럼에 인덱스를 걸어 흉내 낸다"
+    synonyms: ["partial index", "filtered index", "conditional unique"]
+    uses: [data-generated-column]
+  - id: data-bitmap-index
+    kind: MECHANISM
+    name: "비트맵 인덱스"
+    category: DATA
+    level: ADVANCED
+    description: "값마다 행 수만큼의 비트 배열을 두고 AND · OR 비트 연산으로 조건을 합친다. 카디널리티가 낮은 컬럼의 분석 질의에 강하지만 갱신이 잦으면 잠금 범위가 커서 OLTP 에 맞지 않는다(InnoDB 미지원)"
+    synonyms: ["bitmap index"]
+    uses: [cs-bitset]
+  - id: data-full-table-scan
+    kind: PROBLEM
+    name: "풀 테이블 스캔"
+    category: DATA
+    level: BEGINNER
+    description: "조건에 맞는 인덱스가 없거나 못 써서 테이블 전체를 읽는 상태. 행이 늘수록 조회 시간이 선형으로 는다"
+    synonyms: ["full table scan", "type=ALL"]
+    measured_by: [data-query-latency, data-rows-examined]
+  - id: data-index-invalidation
+    kind: PROBLEM
+    name: "인덱스 무효화"
+    category: DATA
+    level: INTERMEDIATE
+    description: "인덱스가 있는데도 조건 모양 때문에 못 쓰는 상태. 컬럼에 함수 · 연산, 암시적 형변환, 앞에 % 가 붙은 LIKE, 부정 조건, 한쪽만 인덱스인 OR, 복합 인덱스 앞 컬럼 누락이 흔한 원인이다"
+    synonyms: ["index not used", "non-sargable predicate"]
+    causes: [data-full-table-scan]
+  - id: data-over-indexing
+    kind: PROBLEM
+    name: "인덱스 과다"
+    category: DATA
+    level: INTERMEDIATE
+    description: "쓰이지 않거나 겹치는 인덱스가 쌓인 상태. 쓰기마다 인덱스를 모두 고쳐야 하고, 버퍼 풀을 나눠 먹고, 옵티마이저가 잘못 고를 후보가 는다"
+    synonyms: ["redundant index", "unused index"]
+    causes: [data-write-amplification]
+  - id: data-secondary-lookup-cost
+    kind: PROBLEM
+    name: "보조 인덱스 재조회 비용"
+    category: DATA
+    level: INTERMEDIATE
+    description: "보조 인덱스로 찾은 행마다 기본 키로 클러스터드 인덱스를 다시 찾아가는 랜덤 읽기. 결과가 많으면 옵티마이저가 차라리 풀스캔을 고른다"
+    synonyms: ["bookmark lookup", "back to table", "double lookup"]
+  - id: data-query-latency
+    kind: METRIC
+    name: "쿼리 지연"
+    category: DATA
+    level: BEGINNER
+    description: "쿼리 하나가 응답하기까지 걸린 시간. 평균보다 P95 · P99 로 보고, 실행 계획(EXPLAIN)과 함께 읽는다"
+    synonyms: ["query latency", "slow query"]
+
+  # ── 실행 계획 · 옵티마이저 ──────────────────────────────
+  - id: data-query-optimization
+    kind: STAGE
+    name: "실행 계획 · 옵티마이저"
+    category: DATA
+    level: ADVANCED
+    description: "DB 가 SQL 을 어떤 인덱스 · 조인 순서 · 알고리즘으로 돌릴지 정하는 과정을 읽고 바로잡는다. 옵티마이저는 통계로 비용을 추정하므로 통계가 틀리면 계획도 틀린다"
+    questions: ["EXPLAIN 의 rows 와 EXPLAIN ANALYZE 의 실제 행 수가 크게 다르면 무엇을 의심하는가", "OFFSET 이 큰 페이지가 느린 이유와 대안은 무엇인가"]
+    contains: [data-execution-plan, data-cost-based-optimizer, data-join-algorithm, data-index-condition-pushdown, data-multi-range-read, data-index-merge, data-index-skip-scan, data-keyset-pagination, data-slow-query-log, data-plan-misestimate, data-filesort-temp-table, data-deep-offset-pagination, data-rows-examined]
+    uses: [data-access-type]
+    flows_to: [data-transaction-management]
+  - id: data-execution-plan
+    kind: MECHANISM
+    name: "실행 계획 읽기"
+    category: DATA
+    level: INTERMEDIATE
+    description: "EXPLAIN 으로 테이블별 접근 방식(type) · 쓴 인덱스(key) · 예상 행 수(rows) · 추가 작업(Extra)을 본다. EXPLAIN ANALYZE 는 실제로 돌려 단계별 실측 시간과 행 수를 낸다"
+    synonyms: ["EXPLAIN", "EXPLAIN ANALYZE", "query plan", "실행 계획"]
+    code:
+      - { path: place/feature/src/main/resources/placedb/migration/V19__attraction_ldong_count_index.sql, symbol: "EXPLAIN type=index", note: "실행 계획을 근거로 인덱스를 추가한 마이그레이션" }
+    uses: [data-access-type]
+  - id: data-cost-based-optimizer
+    kind: MECHANISM
+    name: "비용 기반 옵티마이저"
+    category: DATA
+    level: ADVANCED
+    description: "가능한 실행 계획마다 읽을 페이지 · 행 수를 통계로 추정해 비용이 가장 작은 것을 고른다. 조인 순서와 인덱스 선택이 여기서 정해진다"
+    synonyms: ["cost-based optimizer", "CBO", "cost model"]
+    contains: [data-table-statistics, data-optimizer-hint]
+    causes:
+      - { to: data-plan-misestimate, reason: "추정은 통계의 요약이라 치우친 분포 · 상관된 컬럼에서 틀린다" }
+  - id: data-table-statistics
+    kind: MECHANISM
+    name: "테이블 통계"
+    category: DATA
+    level: ADVANCED
+    description: "행 수 · 인덱스 카디널리티 · 값 분포를 표본으로 추정해 저장해 둔다. ANALYZE TABLE 로 갱신하고, 대량 변경 뒤 오래된 통계는 계획을 틀리게 만든다"
+    synonyms: ["table statistics", "persistent statistics", "ANALYZE TABLE", "index dive"]
+    contains: [data-histogram]
+    uses: [data-cardinality]
+  - id: data-histogram
+    kind: MECHANISM
+    name: "히스토그램"
+    category: DATA
+    level: ADVANCED
+    description: "인덱스가 없는 컬럼의 값 분포를 구간별로 요약한 통계. 값이 치우친 컬럼의 조건 선택도를 옵티마이저가 제대로 추정하게 한다"
+    synonyms: ["histogram", "column statistics"]
+    mitigates: [data-plan-misestimate]
+  - id: data-optimizer-hint
+    kind: MECHANISM
+    name: "옵티마이저 힌트"
+    category: DATA
+    level: INTERMEDIATE
+    description: "SQL 안에 인덱스 · 조인 순서 · 알고리즘을 지정해 옵티마이저의 선택을 덮는다. 데이터 분포가 바뀌어도 고정되므로 통계 교정이 안 될 때의 마지막 수단이다"
+    synonyms: ["optimizer hint", "FORCE INDEX", "USE INDEX"]
+    mitigates: [data-plan-misestimate]
+  - id: data-join-algorithm
+    kind: MECHANISM
+    name: "조인 알고리즘"
+    category: DATA
+    level: ADVANCED
+    description: "두 입력을 짝짓는 방법. 바깥 행마다 안쪽을 인덱스로 찾는 중첩 루프, 한쪽으로 해시 표를 만드는 해시 조인, 둘 다 정렬해 나란히 걷는 정렬 병합 조인이 있다"
+    synonyms: ["join algorithm"]
+    contains: [data-nested-loop-join, data-hash-join, data-sort-merge-join]
+  - id: data-nested-loop-join
+    kind: MECHANISM
+    name: "중첩 루프 조인"
+    category: DATA
+    level: INTERMEDIATE
+    description: "바깥 테이블의 행마다 안쪽 테이블을 찾는다. 안쪽 조인 컬럼에 인덱스가 있으면 빠르고, 없으면 바깥 행 수 × 안쪽 전체를 읽는다"
+    synonyms: ["nested loop join", "NLJ", "index nested loop", "block nested loop"]
+  - id: data-hash-join
+    kind: MECHANISM
+    name: "해시 조인"
+    category: DATA
+    level: ADVANCED
+    description: "작은 쪽 입력으로 조인 키 해시 표를 만들고 큰 쪽을 훑으며 짝을 찾는다. 인덱스가 없는 등치 조인에 강하고 메모리가 모자라면 디스크로 나눠 넘긴다"
+    synonyms: ["hash join"]
+    uses: [hash-map]
+    alternative_to:
+      - { to: data-nested-loop-join, reason: "안쪽에 쓸 인덱스가 없는 대량 등치 조인이면" }
+  - id: data-sort-merge-join
+    kind: MECHANISM
+    name: "정렬 병합 조인"
+    category: DATA
+    level: ADVANCED
+    description: "두 입력을 조인 키로 정렬한 뒤 두 포인터로 나란히 걸으며 짝짓는다. 이미 정렬된 입력이나 범위 조인에 맞다"
+    synonyms: ["sort-merge join", "merge join"]
+    uses: [cs-merge-sort, cs-two-pointers]
+    alternative_to:
+      - { to: data-hash-join, reason: "입력이 이미 키 순서면 해시 표를 만들 필요가 없다" }
+  - id: data-index-condition-pushdown
+    kind: MECHANISM
+    name: "인덱스 조건 푸시다운"
+    category: DATA
+    level: ADVANCED
+    description: "인덱스에 있는 컬럼 조건을 저장 엔진이 인덱스를 읽는 단계에서 먼저 걸러, 테이블 행을 읽으러 가는 횟수를 줄인다"
+    synonyms: ["Index Condition Pushdown", "ICP", "Using index condition"]
+    mitigates: [data-secondary-lookup-cost]
+  - id: data-multi-range-read
+    kind: MECHANISM
+    name: "다중 범위 읽기"
+    category: DATA
+    level: ADVANCED
+    description: "보조 인덱스로 모은 기본 키들을 정렬해서 클러스터드 인덱스를 순서대로 읽는다. 랜덤 읽기를 순차에 가깝게 바꾼다"
+    synonyms: ["Multi-Range Read", "MRR"]
+    mitigates: [data-secondary-lookup-cost]
+  - id: data-index-merge
+    kind: MECHANISM
+    name: "인덱스 병합"
+    category: DATA
+    level: ADVANCED
+    description: "한 테이블에서 인덱스 여러 개를 따로 타고 결과 행 집합을 교집합 · 합집합으로 합친다. 대개 복합 인덱스 하나가 더 싸다는 신호다"
+    synonyms: ["index merge", "Using union", "Using intersect"]
+  - id: data-index-skip-scan
+    kind: MECHANISM
+    name: "인덱스 스킵 스캔"
+    category: DATA
+    level: ADVANCED
+    description: "복합 인덱스의 앞 컬럼 조건이 없어도, 앞 컬럼의 서로 다른 값마다 뒤 컬럼 범위를 건너뛰며 읽는다. 앞 컬럼 카디널리티가 낮을 때만 이득이다"
+    synonyms: ["index skip scan"]
+  - id: data-keyset-pagination
+    kind: MECHANISM
+    name: "키셋 페이지네이션"
+    category: DATA
+    level: INTERMEDIATE
+    description: "「마지막으로 본 키보다 큰 것부터 N 개」로 다음 페이지를 읽는다. 앞 페이지를 건너뛰며 버리지 않아 깊은 페이지도 첫 페이지만큼 빠르다. 임의 페이지 번호로 점프는 못 한다"
+    synonyms: ["keyset pagination", "seek method", "cursor pagination", "no-offset"]
+    mitigates: [data-deep-offset-pagination]
+  - id: data-slow-query-log
+    kind: MECHANISM
+    name: "슬로 쿼리 로그"
+    category: DATA
+    level: BEGINNER
+    description: "기준 시간을 넘긴 쿼리를 실행 시간 · 검사 행 수와 함께 기록한다. 튜닝 대상을 추측 대신 기록으로 고르게 한다"
+    synonyms: ["slow query log", "long_query_time", "SLOWLOG"]
+    measured_by: [data-query-latency, data-rows-examined]
+  - id: data-plan-misestimate
+    kind: PROBLEM
+    name: "실행 계획 오판"
+    category: DATA
+    level: ADVANCED
+    description: "통계가 오래되었거나 분포가 치우쳐 옵티마이저가 행 수를 크게 틀리게 추정하고 나쁜 인덱스 · 조인 순서를 고른 상태. 데이터가 늘며 어느 날 갑자기 느려지는 쿼리의 흔한 원인이다"
+    synonyms: ["plan regression", "cardinality misestimate"]
+    measured_by: [data-rows-examined]
+  - id: data-filesort-temp-table
+    kind: PROBLEM
+    name: "파일 정렬 · 임시 테이블"
+    category: DATA
+    level: INTERMEDIATE
+    description: "ORDER BY · GROUP BY 를 인덱스 순서로 풀지 못해 결과를 따로 정렬하거나 임시 테이블을 만드는 상태(Using filesort · Using temporary). 결과가 크면 디스크 정렬로 번진다"
+    synonyms: ["Using filesort", "Using temporary", "external sort"]
+  - id: data-deep-offset-pagination
+    kind: PROBLEM
+    name: "깊은 OFFSET 페이지"
+    category: DATA
+    level: INTERMEDIATE
+    description: "LIMIT 20 OFFSET 100000 은 앞의 10만 행을 읽고 버린 뒤 20 행을 준다. 페이지가 뒤로 갈수록 선형으로 느려진다"
+    synonyms: ["OFFSET pagination", "deep pagination"]
+    measured_by: [data-rows-examined]
+  - id: data-rows-examined
+    kind: METRIC
+    name: "검사 행 수"
+    category: DATA
+    level: INTERMEDIATE
+    description: "쿼리가 결과를 내려고 읽은 행 수. 반환 행 수에 비해 크면 인덱스가 조건을 제대로 거르지 못한다는 뜻이다"
+    synonyms: ["rows examined", "rows_examined", "filtered"]
 
   # ── 트랜잭션 관리 ───────────────────────────────────────
   - id: data-transaction-management
@@ -66,8 +768,8 @@ concepts:
     level: INTERMEDIATE
     description: "여러 변경을 한 단위로 묶어 전부 반영하거나 전부 취소한다. 격리 수준을 정해 동시에 도는 트랜잭션끼리 무엇이 보이는지 정한다"
     questions: ["트랜잭션 경계 안에서 외부 API 를 부르면 무엇이 문제인가", "READ COMMITTED 와 REPEATABLE READ 는 무엇이 다른가"]
-    contains: [data-isolation-level, data-mvcc, write-ahead-log, data-read-anomaly]
-    uses: [acid, data-transaction]
+    contains: [data-isolation-level, data-mvcc, data-savepoint, data-read-anomaly, data-long-transaction]
+    uses: [acid, data-transaction, data-autocommit, write-ahead-log]
     flows_to: [data-concurrency-control]
   - id: data-isolation-level
     kind: MECHANISM
@@ -79,8 +781,61 @@ concepts:
     questions: ["MySQL 기본 격리 수준에서 팬텀 읽기가 거의 안 보이는 이유는 무엇인가"]
     code:
       - { path: ads/feature/src/main/kotlin/com/kgd/ads/application/ledger/service/LedgerService.kt, symbol: "isolation = Isolation.READ_COMMITTED", note: "원장 충전 트랜잭션의 격리 수준을 명시" }
+    contains: [data-read-uncommitted, data-read-committed, data-repeatable-read, data-snapshot-isolation, data-serializable]
     uses: [data-dirty-read, data-non-repeatable-read, data-phantom-read]
     mitigates: [data-read-anomaly]
+  - id: data-read-uncommitted
+    kind: MECHANISM
+    name: "READ UNCOMMITTED"
+    category: DATA
+    level: INTERMEDIATE
+    description: "커밋되지 않은 변경까지 읽는 가장 약한 격리. 더티 리드가 생겨 실무에서는 거의 쓰지 않는다"
+    synonyms: ["RU", "read uncommitted"]
+    uses: [data-dirty-read]
+  - id: data-read-committed
+    kind: MECHANISM
+    name: "READ COMMITTED"
+    category: DATA
+    level: INTERMEDIATE
+    description: "문장마다 새 스냅샷을 떠서 커밋된 것만 읽는다. 더티 리드는 없지만 한 트랜잭션 안에서 같은 행을 다시 읽으면 값이 바뀔 수 있다. InnoDB 에서는 갭 락을 거의 걸지 않아 잠금 경합이 준다"
+    synonyms: ["RC", "read committed"]
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/application/ledger/service/LedgerService.kt, symbol: "isolation = Isolation.READ_COMMITTED", note: "잠금 읽기로 잔액을 보호하고 갭 락은 피한다" }
+    uses: [data-non-repeatable-read]
+  - id: data-repeatable-read
+    kind: MECHANISM
+    name: "REPEATABLE READ"
+    category: DATA
+    level: INTERMEDIATE
+    description: "트랜잭션 첫 읽기 때 뜬 스냅샷을 끝까지 쓴다. 같은 행을 다시 읽어도 값이 같다. InnoDB 는 일반 읽기는 스냅샷으로, 잠금 읽기는 넥스트키 락으로 팬텀까지 막는다"
+    synonyms: ["RR", "repeatable read", "MySQL 기본 격리 수준"]
+    uses: [data-phantom-read]
+  - id: data-snapshot-isolation
+    kind: MECHANISM
+    name: "스냅샷 격리"
+    category: DATA
+    level: ADVANCED
+    description: "트랜잭션 시작 시점의 커밋된 스냅샷만 보고, 같은 행을 둘이 고치면 늦게 커밋한 쪽을 실패시킨다. 대부분의 이상 현상을 막지만 서로 다른 행을 읽고 쓰는 쓰기 왜곡은 못 막는다"
+    synonyms: ["snapshot isolation", "SI", "first-committer-wins"]
+    uses: [data-write-skew]
+  - id: data-serializable
+    kind: MECHANISM
+    name: "SERIALIZABLE"
+    category: DATA
+    level: ADVANCED
+    description: "동시 실행 결과가 어떤 순서로 하나씩 실행한 것과 같음을 보장하는 가장 강한 격리. InnoDB 는 모든 읽기를 공유 잠금 읽기로 바꿔 구현해 경합이 크다"
+    synonyms: ["serializable", "직렬화 가능"]
+    contains: [data-serializable-snapshot-isolation]
+    uses: [data-write-skew]
+  - id: data-serializable-snapshot-isolation
+    kind: MECHANISM
+    name: "직렬화 가능 스냅샷 격리"
+    category: DATA
+    level: ADVANCED
+    description: "스냅샷 격리 위에서 트랜잭션 사이의 읽기-쓰기 의존을 추적해 직렬 순서가 불가능한 조합이 생기면 한쪽을 중단한다. 잠금 없이 SERIALIZABLE 을 준다(PostgreSQL)"
+    synonyms: ["SSI", "serializable snapshot isolation"]
+    alternative_to:
+      - { to: data-two-phase-locking, reason: "잠그고 기다리는 대신 낙관적으로 진행하다 충돌만 되돌린다" }
   - id: data-mvcc
     kind: MECHANISM
     name: "MVCC"
@@ -89,23 +844,59 @@ concepts:
     description: "행의 여러 버전을 남겨 읽기는 잠금 없이 자기 시점의 스냅샷을 보게 한다. 읽기와 쓰기가 서로를 막지 않는다"
     synonyms: ["Multi-Version Concurrency Control", "다중 버전 동시성 제어"]
     questions: ["MVCC 에서 일반 SELECT 와 SELECT ... FOR UPDATE 는 무엇을 다르게 읽는가"]
+    contains: [data-read-view, data-consistent-read, data-mvcc-purge]
+    uses: [data-undo-log]
     mitigates: [data-read-anomaly]
-  - id: write-ahead-log
+    alternative_to:
+      - { to: data-two-phase-locking, reason: "읽기-쓰기 충돌을 잠금 대기 대신 옛 버전 읽기로 푼다" }
+  - id: data-read-view
     kind: MECHANISM
-    name: "WAL"
+    name: "읽기 뷰"
     category: DATA
     level: ADVANCED
-    description: "데이터 페이지를 고치기 전에 변경 내용을 로그에 먼저 순차 기록한다. 장애 뒤에 로그를 다시 적용해 커밋된 변경을 복구하므로 ACID 의 지속성을 만든다"
-    synonyms: ["Write-Ahead Log", "선행 기록 로그", "redo log"]
-    questions: ["WAL 이 랜덤 쓰기를 순차 쓰기로 바꾸는 이유는 무엇인가"]
-    uses: [acid]
+    description: "스냅샷을 뜬 순간 활성 트랜잭션 id 목록. 행 버전을 만든 트랜잭션 id 를 이 목록과 비교해 보일지 말지 정하고, 안 보이면 undo 체인을 따라 더 옛 버전으로 간다"
+    synonyms: ["read view", "snapshot", "visibility check"]
+    uses: [data-undo-log]
+  - id: data-consistent-read
+    kind: MECHANISM
+    name: "일관된 읽기"
+    category: DATA
+    level: INTERMEDIATE
+    description: "잠금 없이 읽기 뷰 기준의 스냅샷을 읽는 일반 SELECT. 다른 트랜잭션이 이미 고쳐 커밋한 최신 값은 안 보일 수 있다"
+    synonyms: ["consistent read", "snapshot read", "non-locking read"]
+    alternative_to:
+      - { to: data-locking-read, reason: "읽은 값을 근거로 고치지 않으면 잠금 없는 스냅샷으로 충분하다" }
+  - id: data-mvcc-purge
+    kind: MECHANISM
+    name: "옛 버전 정리"
+    category: DATA
+    level: ADVANCED
+    description: "어떤 스냅샷도 더 이상 보지 않는 옛 행 버전을 뒤에서 지운다(InnoDB purge · PostgreSQL VACUUM). 긴 트랜잭션이 옛 스냅샷을 쥐고 있으면 정리가 멈춰 공간과 읽기 비용이 불어난다"
+    synonyms: ["purge", "VACUUM", "history list length", "bloat"]
+  - id: data-savepoint
+    kind: MECHANISM
+    name: "세이브포인트"
+    category: DATA
+    level: INTERMEDIATE
+    description: "트랜잭션 중간에 표시를 남겨 그 지점까지만 되돌린다. 전체를 버리지 않고 일부 작업만 취소할 때 쓴다(Spring 의 NESTED 전파가 이것이다)"
+    synonyms: ["savepoint", "ROLLBACK TO SAVEPOINT"]
   - id: data-read-anomaly
     kind: PROBLEM
     name: "읽기 이상 현상"
     category: DATA
     level: INTERMEDIATE
-    description: "격리가 약할 때 다른 트랜잭션의 변경이 섞여 보이는 상태. 더티 리드 · 반복 불가능한 읽기 · 팬텀 읽기가 있다"
-    synonyms: ["read phenomena"]
+    description: "격리가 약할 때 다른 트랜잭션의 변경이 섞여 보이는 상태. 더티 리드 · 반복 불가능한 읽기 · 팬텀 읽기 · 쓰기 왜곡이 있다"
+    synonyms: ["read phenomena", "isolation anomaly"]
+  - id: data-long-transaction
+    kind: PROBLEM
+    name: "긴 트랜잭션"
+    category: DATA
+    level: INTERMEDIATE
+    description: "트랜잭션이 오래 열린 채 남은 상태. 커넥션과 잠금을 쥐고, undo 정리를 막고, DDL 의 메타데이터 락을 기다리게 만든다. 트랜잭션 안의 외부 호출이 흔한 원인이다"
+    synonyms: ["long-running transaction", "idle in transaction"]
+    causes:
+      - { to: data-pool-exhaustion, reason: "커넥션을 트랜잭션 내내 빌려 둔다" }
+      - { to: data-metadata-lock-chain, reason: "열린 트랜잭션이 테이블 메타데이터 락을 쥐고 있어 DDL 이 막히고 뒤따르는 쿼리가 줄을 선다" }
 
   # ── 동시 갱신 제어 ──────────────────────────────────────
   - id: data-concurrency-control
@@ -113,10 +904,11 @@ concepts:
     name: "동시 갱신 제어"
     category: CONCURRENCY
     level: INTERMEDIATE
-    description: "같은 행을 여러 요청이 동시에 고칠 때 한쪽 변경이 사라지지 않게 한다. 충돌이 드물면 낙관적 락, 잦거나 실패 비용이 크면 비관적 락을 고른다"
-    questions: ["재고 차감과 쿠폰 사용에 서로 다른 락을 고르는 기준은 무엇인가"]
-    contains: [optimistic-lock, pessimistic-lock, data-lock-ordering, data-skip-locked, data-lost-update, deadlock]
-    flows_to: [data-indexing]
+    description: "같은 행을 여러 요청이 동시에 고칠 때 한쪽 변경이 사라지지 않게 한다. 충돌이 드물면 낙관적 락, 잦거나 실패 비용이 크면 비관적 락, 단순 증감이면 조건부 원자 갱신을 고른다"
+    questions: ["재고 차감과 쿠폰 사용에 서로 다른 락을 고르는 기준은 무엇인가", "넥스트키 락은 무엇을 막으려고 갭까지 잠그는가"]
+    contains: [optimistic-lock, pessimistic-lock, data-conditional-update, data-unique-constraint-guard, data-locking-read, data-lock-mode, data-row-lock-range, data-two-phase-locking, data-metadata-lock, data-auto-inc-lock, data-advisory-lock, data-lock-ordering, data-deadlock-detection, data-lock-wait-timeout, data-skip-locked, data-lost-update, data-duplicate-insert, data-metadata-lock-chain, deadlock, data-lock-wait-time]
+    uses: [data-lock-escalation]
+    flows_to: [data-object-mapping]
   - id: optimistic-lock
     kind: MECHANISM
     name: "낙관적 락"
@@ -139,15 +931,134 @@ concepts:
     category: CONCURRENCY
     level: INTERMEDIATE
     description: "읽는 시점에 행을 잠가(SELECT ... FOR UPDATE) 다른 트랜잭션의 수정을 커밋까지 막는다. 충돌이 잦거나 한 번의 실패가 비싼 차감에 맞다"
-    synonyms: ["pessimistic locking", "SELECT FOR UPDATE", "PESSIMISTIC_WRITE"]
+    synonyms: ["pessimistic locking", "PESSIMISTIC_WRITE"]
     questions: ["비관적 락을 건 트랜잭션이 길어지면 무엇이 먼저 고갈되는가"]
     code:
       - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/infrastructure/persistence/inventory/repository/InventoryJpaRepository.kt, symbol: "fun findByIdForUpdate(", note: "재고 행을 PESSIMISTIC_WRITE 로 잠가 읽는다" }
+    uses: [data-locking-read]
     mitigates:
       - data-lost-update
       - { to: race-condition, reason: "DB 행 단위에서 먼저 잡은 쪽만 쓰게 한다" }
     causes:
       - { to: deadlock, reason: "두 트랜잭션이 서로가 잡은 행을 기다리면 교착된다" }
+  - id: data-conditional-update
+    kind: MECHANISM
+    name: "조건부 원자 갱신"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "읽고 계산하고 쓰는 대신 UPDATE ... SET n = n + 1 WHERE n < limit 한 문장으로 조건 확인과 변경을 함께 한다. 바뀐 행 수가 0 이면 조건이 깨진 것이다. 단순 증감 · 한도 소진에 가장 싸다"
+    synonyms: ["atomic update", "compare-and-set UPDATE", "conditional write"]
+    code:
+      - { path: promotion/feature/src/main/kotlin/com/kgd/promotion/infrastructure/persistence/coupon/repository/CouponRepositories.kt, symbol: "fun incrementIssuedIfBelowLimit(", note: "쿠폰 발급 한도 아래일 때만 1 올린다" }
+    mitigates: [data-lost-update]
+    alternative_to:
+      - { to: pessimistic-lock, reason: "값의 증감만 필요하면 행을 잡고 기다릴 필요가 없다" }
+  - id: data-unique-constraint-guard
+    kind: MECHANISM
+    name: "유니크 제약 중복 차단"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "「없으면 넣는다」를 조회로 확인하지 않고, 유니크 인덱스에 맡겨 두 번째 삽입이 제약 위반으로 실패하게 한다. 그 예외를 「이미 있음」으로 번역한다"
+    synonyms: ["unique constraint", "insert-or-fail", "DataIntegrityViolationException"]
+    code:
+      - { path: seller/feature/src/main/kotlin/com/kgd/seller/infrastructure/persistence/seller/adapter/SellerRepositoryAdapter.kt, symbol: "catch (e: DataIntegrityViolationException)", note: "유니크 위반을 도메인 예외로 바꾼다" }
+    uses: [data-unique-index]
+    mitigates: [data-duplicate-insert]
+  - id: data-locking-read
+    kind: MECHANISM
+    name: "잠금 읽기"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "SELECT ... FOR UPDATE(배타) · FOR SHARE(공유)로 스냅샷이 아닌 최신 커밋 값을 읽으며 그 행(과 범위)을 잠근다. 읽은 값으로 고칠 때 쓴다"
+    synonyms: ["locking read", "SELECT FOR UPDATE", "FOR SHARE", "current read"]
+    uses: [data-row-lock-range]
+  - id: data-lock-mode
+    kind: MECHANISM
+    name: "공유 · 배타 잠금"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "공유 잠금(S)끼리는 함께 걸리고 배타 잠금(X)은 무엇과도 함께 걸리지 않는다. 읽기끼리는 막지 않고 쓰기만 줄 세우는 호환성 표가 잠금 설계의 바탕이다"
+    synonyms: ["shared lock", "exclusive lock", "S lock", "X lock", "lock compatibility"]
+    contains: [data-intention-lock]
+  - id: data-intention-lock
+    kind: MECHANISM
+    name: "의도 잠금"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "행을 잠그기 전에 테이블에 「안쪽 행을 S/X 로 잠글 것」이라는 표시(IS · IX)를 먼저 건다. 테이블 전체 잠금이 행마다 확인하지 않고 충돌을 바로 판단하게 한다"
+    synonyms: ["intention lock", "IS", "IX"]
+  - id: data-row-lock-range
+    kind: MECHANISM
+    name: "행 잠금 범위"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "InnoDB 는 행이 아니라 인덱스 레코드를 잠근다. 레코드만 잠그는지, 레코드 사이 빈틈까지 잠그는지로 팬텀 삽입을 막는 정도가 정해진다. 인덱스를 못 타는 조건은 훑은 레코드를 전부 잠근다"
+    synonyms: ["InnoDB row lock", "index record lock"]
+    contains: [data-record-lock, data-gap-lock, data-next-key-lock, data-insert-intention-lock]
+  - id: data-record-lock
+    kind: MECHANISM
+    name: "레코드 락"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "인덱스 레코드 하나만 잠근다. 유니크 인덱스로 한 행을 정확히 찾은 잠금 읽기 · 갱신이 이것만 건다"
+    synonyms: ["record lock"]
+  - id: data-gap-lock
+    kind: MECHANISM
+    name: "갭 락"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "인덱스 레코드 사이의 빈틈을 잠가 그 범위에 새 행이 들어오지 못하게 한다. 갭 락끼리는 충돌하지 않지만 삽입과 충돌해 교착의 흔한 원인이 된다"
+    synonyms: ["gap lock"]
+    causes:
+      - { to: deadlock, reason: "두 트랜잭션이 같은 갭을 잡은 뒤 서로 그 갭에 삽입하려 하면 교착된다" }
+  - id: data-next-key-lock
+    kind: MECHANISM
+    name: "넥스트키 락"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "레코드 락과 그 앞 갭 락을 합친 것. REPEATABLE READ 의 범위 잠금 읽기가 기본으로 걸어 팬텀 삽입을 막는다"
+    synonyms: ["next-key lock"]
+    uses: [data-record-lock, data-gap-lock]
+    mitigates: [data-read-anomaly]
+  - id: data-insert-intention-lock
+    kind: MECHANISM
+    name: "삽입 의도 락"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "행을 넣기 전에 넣을 갭에 거는 특수 갭 락. 같은 갭의 다른 위치 삽입끼리는 막지 않지만, 누군가 그 갭에 갭 락을 쥐고 있으면 기다린다"
+    synonyms: ["insert intention lock"]
+  - id: data-two-phase-locking
+    kind: MECHANISM
+    name: "2단계 잠금"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "트랜잭션이 잠금을 얻기만 하는 단계와 풀기만 하는 단계를 나눈다. 커밋까지 쥐는 엄격한 2PL 은 직렬화 가능성을 보장하지만 대기와 교착이 는다"
+    synonyms: ["2PL", "two-phase locking", "strict 2PL"]
+    causes: [deadlock]
+  - id: data-metadata-lock
+    kind: MECHANISM
+    name: "메타데이터 락"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "테이블 구조가 쓰이는 동안 바뀌지 않게 DML 은 공유, DDL 은 배타 메타데이터 락을 잡는다. 트랜잭션이 끝날 때까지 풀리지 않는다"
+    synonyms: ["MDL", "metadata lock"]
+    causes: [data-metadata-lock-chain]
+  - id: data-auto-inc-lock
+    kind: MECHANISM
+    name: "자동 증가 잠금"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "자동 증가 값을 나눠 줄 때 쓰는 테이블 수준 잠금. 모드에 따라 문장 단위로 쥐거나(연속 번호) 가벼운 뮤텍스만 쓴다(번호 구멍 허용)"
+    synonyms: ["AUTO-INC lock", "innodb_autoinc_lock_mode"]
+  - id: data-advisory-lock
+    kind: MECHANISM
+    name: "명명 잠금"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "행이 아니라 애플리케이션이 정한 이름에 DB 가 잠금을 걸어 준다(GET_LOCK · pg_advisory_lock). 별도 인프라 없이 여러 인스턴스 사이 상호 배제를 얻는다"
+    synonyms: ["advisory lock", "named lock", "GET_LOCK"]
+    alternative_to:
+      - { to: distributed-lock, reason: "이미 공유하는 DB 가 있으면 Redis · ZooKeeper 없이 상호 배제를 얻는다" }
   - id: data-lock-ordering
     kind: MECHANISM
     name: "잠금 순서 고정"
@@ -158,15 +1069,33 @@ concepts:
     code:
       - { path: ads/feature/src/main/kotlin/com/kgd/ads/infrastructure/persistence/ledger/repository/LedgerJpaRepositories.kt, symbol: "fun lockAllByIdOrdered(", note: "원장 계정을 id 순으로 잠근다" }
     mitigates: [deadlock]
+  - id: data-deadlock-detection
+    kind: MECHANISM
+    name: "DB 교착 감지"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "잠금 대기 관계를 그래프(wait-for graph)로 들고 있다가 순환이 생기면 되돌리기 비용이 작은 트랜잭션 하나를 희생시켜 롤백한다. 애플리케이션은 그 오류를 받아 재시도한다"
+    synonyms: ["deadlock detection", "wait-for graph", "SHOW ENGINE INNODB STATUS"]
+    uses: [graph, dfs, conc-coffman-conditions]
+    mitigates: [deadlock]
+  - id: data-lock-wait-timeout
+    kind: MECHANISM
+    name: "잠금 대기 제한"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "잠금을 정한 시간 이상 기다리면 그 문장을 실패시킨다(innodb_lock_wait_timeout). 교착이 아닌 긴 대기가 요청 스레드를 끝없이 붙잡지 않게 한다"
+    synonyms: ["lock wait timeout", "innodb_lock_wait_timeout"]
+    mitigates: [conc-lock-contention]
   - id: data-skip-locked
     kind: MECHANISM
     name: "SKIP LOCKED 작업 나눠 갖기"
     category: CONCURRENCY
     level: ADVANCED
     description: "FOR UPDATE SKIP LOCKED 로 이미 잠긴 행은 건너뛰고 나머지만 가져간다. 여러 워커가 같은 테이블을 큐처럼 나눠 처리할 때 서로 기다리지 않는다"
-    synonyms: ["FOR UPDATE SKIP LOCKED"]
+    synonyms: ["FOR UPDATE SKIP LOCKED", "NOWAIT"]
     code:
       - { path: common/src/main/kotlin/com/kgd/common/messaging/outbox/OutboxRepository.kt, symbol: "FOR UPDATE SKIP LOCKED", note: "아웃박스 릴레이가 발행할 행을 나눠 집는다" }
+    mitigates: [conc-lock-contention]
   - id: data-lost-update
     kind: PROBLEM
     name: "갱신 손실"
@@ -174,52 +1103,164 @@ concepts:
     level: INTERMEDIATE
     description: "두 요청이 같은 값을 읽고 각자 고쳐 쓰면 먼저 쓴 변경이 사라진다. 재고 · 잔액 · 쿠폰처럼 읽고-고치고-쓰는 흐름에서 생긴다"
     synonyms: ["lost update"]
-  # ── 인덱스 설계 ─────────────────────────────────────────
-  - id: data-indexing
-    kind: STAGE
-    name: "인덱스 설계"
-    category: DATA
-    level: INTERMEDIATE
-    description: "자주 쓰는 조건 · 정렬에 맞춰 인덱스를 만들어 조회가 테이블 전체를 읽지 않게 한다. 인덱스가 늘면 쓰기와 저장 공간 비용이 는다"
-    questions: ["인덱스를 걸었는데도 쓰이지 않는 조건 세 가지는 무엇인가"]
-    contains: [b-tree, data-composite-index, data-full-table-scan, data-query-latency]
-    uses: [data-cardinality]
-    flows_to: [data-object-mapping]
-  - id: b-tree
-    kind: MECHANISM
-    name: "B-트리"
-    category: DATA_STRUCTURE
-    level: ADVANCED
-    description: "노드 하나에 키를 여러 개 담아 높이를 낮게 유지하는 자기 균형 탐색 트리. 디스크 페이지 단위로 읽기에 맞아 관계형 DB 인덱스의 기본 구조가 된다(InnoDB 는 잎에만 데이터를 두는 B+트리)"
-    synonyms: ["B-Tree", "B+Tree", "B+트리"]
-    questions: ["이진 탐색 트리 대신 B-트리를 디스크 인덱스로 쓰는 이유는 무엇인가"]
-    affects: [data-query-latency]
-  - id: data-composite-index
-    kind: MECHANISM
-    name: "복합 인덱스"
-    category: DATA
-    level: INTERMEDIATE
-    description: "여러 컬럼을 순서대로 묶은 인덱스. 앞 컬럼부터 조건에 쓰여야 탄다(leftmost prefix). 등치 조건 컬럼을 앞에, 범위 · 정렬 컬럼을 뒤에 둔다"
-    synonyms: ["composite index", "다중 컬럼 인덱스", "leftmost prefix"]
-    code:
-      - { path: blog/feature/src/main/resources/blogdb/migration/V1__blog.sql, symbol: "INDEX idx_blog_post_category (category_id, status, published_at DESC)", note: "카테고리 · 상태 등치 뒤에 발행일 정렬" }
-    uses: [b-tree]
-    mitigates: [data-full-table-scan]
-  - id: data-full-table-scan
+  - id: data-duplicate-insert
     kind: PROBLEM
-    name: "풀 테이블 스캔"
+    name: "중복 삽입 경쟁"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "「있는지 조회 → 없으면 삽입」을 두 요청이 동시에 하면 둘 다 없다고 보고 둘 다 넣는다. 낙관적 락은 아직 없는 행을 보호하지 못한다"
+    synonyms: ["check-then-act", "insert race", "duplicate insert"]
+  - id: data-metadata-lock-chain
+    kind: PROBLEM
+    name: "메타데이터 락 대기 사슬"
     category: DATA
-    level: BEGINNER
-    description: "조건에 맞는 인덱스가 없거나 못 써서 테이블 전체를 읽는 상태. 행이 늘수록 조회 시간이 선형으로 는다"
-    synonyms: ["full table scan"]
-    measured_by: [data-query-latency]
-  - id: data-query-latency
+    level: ADVANCED
+    description: "긴 트랜잭션이 테이블을 쓰는 중에 DDL 이 배타 MDL 을 기다리면, 그 뒤에 온 모든 일반 쿼리까지 DDL 뒤에 줄을 서서 테이블 전체가 멈춘다"
+    synonyms: ["MDL chain", "Waiting for table metadata lock"]
+  - id: data-lock-wait-time
     kind: METRIC
-    name: "쿼리 지연"
+    name: "행 잠금 대기 시간"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "행 잠금을 얻으려고 기다린 시간의 합 · 횟수 · 최대. 늘면 잠금 범위가 넓거나 트랜잭션이 길다"
+    synonyms: ["Innodb_row_lock_time", "Innodb_row_lock_waits", "lock wait"]
+
+  # ── 객체-테이블 매핑 ────────────────────────────────────
+  - id: data-object-mapping
+    kind: STAGE
+    name: "객체-테이블 매핑"
     category: DATA
     level: BEGINNER
-    description: "쿼리 하나가 응답하기까지 걸린 시간. 평균보다 P95 · P99 로 보고, 실행 계획(EXPLAIN)과 함께 읽는다"
-    synonyms: ["query latency", "slow query"]
+    description: "코드의 객체와 DB 의 행을 오가게 한다. ORM 이 SQL 을 대신 만들지만, 언제 몇 번의 쿼리가 나가는지는 여전히 개발자가 알아야 한다"
+    questions: ["지연 로딩이 기본값인데도 N+1 이 생기는 경로는 어디인가"]
+    contains: [orm, data-lazy-loading, data-fetch-join, data-dirty-checking, data-query-builder, data-jdbc-batch, data-bulk-update, data-second-level-cache, n-plus-one, data-collection-fetch-paging, data-queries-per-request]
+    uses: [data-entity, data-persistence-context]
+    flows_to: [data-schema-migration]
+  - id: orm
+    kind: MECHANISM
+    name: "ORM"
+    category: DATA
+    level: BEGINNER
+    description: "객체와 관계형 테이블을 매핑해 SQL 을 직접 쓰지 않고 객체로 읽고 저장하게 한다. 이 레포는 JPA 엔티티를 infrastructure 에 두고 도메인 모델과 분리한다"
+    synonyms: ["Object-Relational Mapping", "JPA"]
+    code:
+      - { path: seller/feature/src/main/kotlin/com/kgd/seller/infrastructure/persistence/seller/entity/SellerJpaEntity.kt, symbol: "class SellerJpaEntity(", note: "도메인 모델과 분리된 JPA 엔티티" }
+    contains: [hibernate]
+    uses: [data-entity, data-persistence-context]
+  - id: hibernate
+    kind: TECHNOLOGY
+    name: "Hibernate"
+    category: DATA
+    level: INTERMEDIATE
+    description: "JPA 구현체. 영속성 컨텍스트 · 변경 감지 · 지연 로딩 프록시를 제공한다. 이 레포는 스키마 생성을 끄고 검증만 시킨다"
+    implements:
+      - { to: orm, reason: "JPA 명세를 구현한다" }
+      - { to: data-lazy-loading, reason: "연관 엔티티를 프록시로 두고 접근 시에 읽는다" }
+      - { to: data-schema-validation, reason: "ddl-auto=validate 로 엔티티와 테이블을 대조한다" }
+      - { to: sec-parameter-binding, reason: "JPQL 의 값을 바인딩 파라미터로 보낸다" }
+      - { to: data-dirty-checking, reason: "플러시 때 스냅샷과 비교해 UPDATE 를 만든다" }
+  - id: data-lazy-loading
+    kind: MECHANISM
+    name: "지연 로딩"
+    category: DATA
+    level: INTERMEDIATE
+    description: "연관 엔티티를 처음 접근할 때 읽는다(FetchType.LAZY). 안 쓰는 연관을 읽지 않지만, 목록을 돌며 접근하면 행마다 쿼리가 나간다"
+    synonyms: ["lazy loading", "FetchType.LAZY"]
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/persistence/order/entity/OrderJpaEntity.kt, symbol: "fetch = FetchType.LAZY", note: "주문 → 주문 항목 연관" }
+    causes:
+      - { to: n-plus-one, reason: "목록 N 건을 돌며 연관을 건드리면 N 번 추가 조회한다" }
+  - id: data-fetch-join
+    kind: MECHANISM
+    name: "페치 조인"
+    category: DATA
+    level: INTERMEDIATE
+    description: "연관 엔티티를 한 쿼리의 JOIN 으로 같이 읽는다(JOIN FETCH, @EntityGraph). 컬렉션 페치 조인은 페이징과 함께 쓰면 메모리에서 잘리므로 주의한다"
+    synonyms: ["fetch join", "JOIN FETCH", "@EntityGraph"]
+    code:
+      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/persistence/order/repository/OrderJpaRepository.kt, symbol: "JOIN FETCH o.items", note: "주문과 항목을 한 번에 읽는다" }
+      - { path: code-dictionary/feature/src/main/kotlin/com/kgd/codedictionary/infrastructure/persistence/techdomain/repository/TechDomainJpaRepository.kt, symbol: "@EntityGraph(attributePaths = [\"concepts\"])", note: "도메인과 개념 목록을 한 번에" }
+    mitigates: [n-plus-one]
+    causes:
+      - { to: data-collection-fetch-paging, reason: "일대다 조인으로 행이 불어나 DB 에서 LIMIT 을 걸 수 없다" }
+  - id: data-dirty-checking
+    kind: MECHANISM
+    name: "변경 감지"
+    category: DATA
+    level: INTERMEDIATE
+    description: "영속성 컨텍스트가 읽은 엔티티의 처음 상태를 기억했다가 플러시 때 바뀐 필드만 찾아 UPDATE 를 만든다. save 를 부르지 않아도 트랜잭션 안에서 고친 관리 엔티티는 저장된다"
+    synonyms: ["dirty checking", "automatic flush"]
+    uses: [data-persistence-context]
+  - id: data-query-builder
+    kind: MECHANISM
+    name: "타입 안전 쿼리 빌더"
+    category: DATA
+    level: INTERMEDIATE
+    description: "조건이 바뀌는 동적 조회를 문자열 JPQL 대신 컴파일되는 코드로 조립한다. 오타 · 타입 오류가 빌드에서 잡힌다"
+    synonyms: ["dynamic query", "동적 쿼리"]
+    code:
+      - { path: game/feature/src/main/kotlin/com/kgd/game/infrastructure/persistence/catalog/repository/GameQueryRepository.kt, symbol: "class GameQueryRepository(", note: "게임 카탈로그 필터 · 정렬 동적 조회" }
+    contains: [querydsl]
+  - id: querydsl
+    kind: TECHNOLOGY
+    name: "Querydsl"
+    category: DATA
+    level: INTERMEDIATE
+    description: "엔티티에서 Q 타입을 생성해 JPQL 을 코드로 조립하는 라이브러리. JPAQueryFactory 로 쓴다"
+    implements:
+      - { to: data-query-builder, reason: "Q 타입으로 조건 · 정렬을 코드로 조립한다" }
+      - { to: sec-parameter-binding, reason: "쿼리 빌더가 값을 문자열에 붙이지 않고 바인딩한다" }
+  - id: data-jdbc-batch
+    kind: MECHANISM
+    name: "배치 쓰기"
+    category: DATA
+    level: INTERMEDIATE
+    description: "INSERT · UPDATE 여러 건을 한 번의 왕복으로 묶어 보낸다(JDBC batch · hibernate.jdbc.batch_size). MySQL 드라이버는 rewriteBatchedStatements 로 다건 VALUES 한 문장으로 바꿔야 효과가 크다. IDENTITY 키는 배치 삽입을 막는다"
+    synonyms: ["JDBC batch", "batch insert", "rewriteBatchedStatements"]
+    code:
+      - { path: search/batch/src/main/resources/application-db.yml, symbol: "rewriteBatchedStatements=true", note: "배치가 다건 INSERT 를 한 문장으로 보낸다" }
+  - id: data-bulk-update
+    kind: MECHANISM
+    name: "벌크 갱신"
+    category: DATA
+    level: INTERMEDIATE
+    description: "엔티티를 하나씩 읽어 고치지 않고 UPDATE/DELETE 한 문장으로 여러 행을 바꾼다. 영속성 컨텍스트를 거치지 않으므로 이미 읽어 둔 엔티티는 옛 값을 들고 있다"
+    synonyms: ["bulk update", "@Modifying", "bulk delete"]
+    code:
+      - { path: settlement/feature/src/main/kotlin/com/kgd/settlement/infrastructure/persistence/statement/repository/StatementRepositories.kt, symbol: "UPDATE SettlementItemJpaEntity i SET i.statementId", note: "정산 항목들을 한 문장으로 명세서에 묶는다" }
+    causes:
+      - { to: spring-bulk-update-stale-context, reason: "벌크 쿼리는 영속성 컨텍스트를 거치지 않는다" }
+  - id: data-second-level-cache
+    kind: MECHANISM
+    name: "2차 캐시"
+    category: DATA
+    level: ADVANCED
+    description: "트랜잭션을 넘어 애플리케이션 전체가 공유하는 엔티티 캐시. 영속성 컨텍스트(1차 캐시)는 트랜잭션이 끝나면 사라지지만 2차 캐시는 남는다. 여러 인스턴스면 무효화가 어렵다"
+    synonyms: ["second-level cache", "L2 cache"]
+    uses: [caching]
+  - id: n-plus-one
+    kind: PROBLEM
+    name: "N+1 문제"
+    category: DATA
+    level: INTERMEDIATE
+    description: "목록 1 번 조회 뒤에 각 행의 연관을 읽느라 N 번이 더 나가는 상태. 개발 데이터에서는 안 보이다가 운영 데이터 규모에서 지연으로 드러난다"
+    synonyms: ["N+1 query problem"]
+    questions: ["N+1 을 로그 없이 테스트에서 잡으려면 무엇을 세야 하는가"]
+    measured_by: [data-queries-per-request]
+  - id: data-collection-fetch-paging
+    kind: PROBLEM
+    name: "컬렉션 페치 조인 페이징"
+    category: DATA
+    level: ADVANCED
+    description: "일대다 컬렉션을 페치 조인하고 페이지를 요청하면 조인으로 불어난 행 때문에 DB 에서 자르지 못해 전부 메모리로 읽고 잘라 낸다. 둘 이상의 컬렉션을 페치 조인하면 곱으로 불어난다"
+    synonyms: ["HHH90003004", "firstResult/maxResults specified with collection fetch", "MultipleBagFetchException"]
+  - id: data-queries-per-request
+    kind: METRIC
+    name: "요청당 쿼리 수"
+    category: DATA
+    level: BEGINNER
+    description: "요청 하나가 DB 에 보낸 쿼리 개수. 결과 행 수에 비례해 늘면 N+1 이다"
+    synonyms: ["query count"]
 
   # ── 스키마 변경 관리 ────────────────────────────────────
   - id: data-schema-migration
@@ -227,10 +1268,10 @@ concepts:
     name: "스키마 변경 관리"
     category: DATA
     level: INTERMEDIATE
-    description: "테이블 구조 변경을 버전이 붙은 스크립트로 남겨 모든 환경에 같은 순서로 적용한다. 앱은 기동 시 스키마가 엔티티와 맞는지 검증만 한다"
-    questions: ["이미 적용된 마이그레이션 파일을 고치면 어떤 일이 생기는가"]
-    contains: [data-versioned-migration, data-schema-validation, data-schema-drift]
-    flows_to: [data-indexing]
+    description: "테이블 구조 변경을 버전이 붙은 스크립트로 남겨 모든 환경에 같은 순서로 적용한다. 큰 테이블은 쓰기를 멈추지 않는 방식으로 바꾸고, 앱과 스키마가 잠시 공존하도록 단계를 나눈다"
+    questions: ["이미 적용된 마이그레이션 파일을 고치면 어떤 일이 생기는가", "컬럼 이름을 무중단으로 바꾸려면 몇 번의 배포가 필요한가"]
+    contains: [data-versioned-migration, data-schema-validation, data-expand-contract, data-online-ddl, data-shadow-table-migration, data-schema-drift, data-ddl-write-block]
+    flows_to: [data-replication-ha]
   - id: data-versioned-migration
     kind: MECHANISM
     name: "버전 마이그레이션"
@@ -262,6 +1303,37 @@ concepts:
     code:
       - { path: commerce/app/src/main/resources/application.yml, symbol: "ddl-auto: validate", note: "Hibernate 는 검증만, 변경은 Flyway 가" }
     mitigates: [data-schema-drift]
+  - id: data-expand-contract
+    kind: MECHANISM
+    name: "확장-축소 마이그레이션"
+    category: DATA
+    level: ADVANCED
+    description: "호환되지 않는 변경을 여러 배포로 쪼갠다. 새 구조를 더하고(확장) → 앱이 양쪽에 쓰고 옛 데이터를 옮기고 → 새 구조만 읽게 바꾼 뒤 → 옛 구조를 지운다(축소). 앱의 옛 버전과 새 버전이 함께 도는 동안에도 깨지지 않는다"
+    synonyms: ["expand-contract", "parallel change", "무중단 스키마 변경"]
+    uses: [data-versioned-migration]
+    mitigates:
+      - data-ddl-write-block
+      - { to: infra-incompatible-rollout, reason: "롤아웃 중 두 버전이 같은 스키마를 쓴다" }
+  - id: data-online-ddl
+    kind: MECHANISM
+    name: "온라인 DDL"
+    category: DATA
+    level: ADVANCED
+    description: "DB 가 테이블 변경 중에도 읽기 · 쓰기를 받게 한다. 메타데이터만 바꾸는 INSTANT, 제자리에서 다시 만드는 INPLACE, 새 테이블로 통째로 복사하는 COPY 순으로 비용과 잠금이 커진다"
+    synonyms: ["online DDL", "ALGORITHM=INSTANT", "ALGORITHM=INPLACE", "ALGORITHM=COPY", "LOCK=NONE", "CREATE INDEX CONCURRENTLY"]
+    questions: ["INSTANT 로 가능한 변경과 COPY 가 필요한 변경은 무엇이 다른가"]
+    uses: [data-metadata-lock]
+    mitigates: [data-ddl-write-block]
+  - id: data-shadow-table-migration
+    kind: MECHANISM
+    name: "그림자 테이블 마이그레이션"
+    category: DATA
+    level: ADVANCED
+    description: "새 구조의 빈 테이블을 만들고 기존 행을 조금씩 복사하면서, 그사이 변경은 트리거(pt-osc)나 binlog(gh-ost)로 따라 적용한 뒤 이름을 바꿔치기한다. 부하 조절과 중단이 자유롭다"
+    synonyms: ["gh-ost", "pt-online-schema-change", "shadow table", "cut-over"]
+    uses: [data-binlog]
+    alternative_to:
+      - { to: data-online-ddl, reason: "DB 내장 방식이 긴 잠금 · 복제 지연을 만들 때 외부에서 속도를 조절하며 옮긴다" }
   - id: data-schema-drift
     kind: PROBLEM
     name: "스키마 불일치"
@@ -269,146 +1341,84 @@ concepts:
     level: INTERMEDIATE
     description: "환경마다 테이블 구조가 달라지거나 엔티티와 테이블이 어긋난 상태. 손으로 고친 운영 DB, 자동 DDL, 적용 뒤 수정한 마이그레이션에서 생긴다"
     synonyms: ["schema drift"]
-
-  # ── 객체-테이블 매핑 ────────────────────────────────────
-  - id: data-object-mapping
-    kind: STAGE
-    name: "객체-테이블 매핑"
-    category: DATA
-    level: BEGINNER
-    description: "코드의 객체와 DB 의 행을 오가게 한다. ORM 이 SQL 을 대신 만들지만, 언제 몇 번의 쿼리가 나가는지는 여전히 개발자가 알아야 한다"
-    questions: ["지연 로딩이 기본값인데도 N+1 이 생기는 경로는 어디인가"]
-    contains: [orm, data-lazy-loading, data-fetch-join, data-query-builder, n-plus-one, data-queries-per-request]
-    uses: [data-entity, data-persistence-context]
-  - id: orm
-    kind: MECHANISM
-    name: "ORM"
-    category: DATA
-    level: BEGINNER
-    description: "객체와 관계형 테이블을 매핑해 SQL 을 직접 쓰지 않고 객체로 읽고 저장하게 한다. 이 레포는 JPA 엔티티를 infrastructure 에 두고 도메인 모델과 분리한다"
-    synonyms: ["Object-Relational Mapping", "JPA"]
-    code:
-      - { path: seller/feature/src/main/kotlin/com/kgd/seller/infrastructure/persistence/seller/entity/SellerJpaEntity.kt, symbol: "class SellerJpaEntity(", note: "도메인 모델과 분리된 JPA 엔티티" }
-    contains: [hibernate]
-    uses: [data-entity, data-persistence-context]
-  - id: hibernate
-    kind: TECHNOLOGY
-    name: "Hibernate"
-    category: DATA
-    level: INTERMEDIATE
-    description: "JPA 구현체. 영속성 컨텍스트 · 변경 감지 · 지연 로딩 프록시를 제공한다. 이 레포는 스키마 생성을 끄고 검증만 시킨다"
-    implements:
-      - { to: orm, reason: "JPA 명세를 구현한다" }
-      - { to: data-lazy-loading, reason: "연관 엔티티를 프록시로 두고 접근 시에 읽는다" }
-      - { to: data-schema-validation, reason: "ddl-auto=validate 로 엔티티와 테이블을 대조한다" }
-      - { to: sec-parameter-binding, reason: "JPQL 의 값을 바인딩 파라미터로 보낸다" }
-  - id: data-lazy-loading
-    kind: MECHANISM
-    name: "지연 로딩"
-    category: DATA
-    level: INTERMEDIATE
-    description: "연관 엔티티를 처음 접근할 때 읽는다(FetchType.LAZY). 안 쓰는 연관을 읽지 않지만, 목록을 돌며 접근하면 행마다 쿼리가 나간다"
-    synonyms: ["lazy loading", "FetchType.LAZY"]
-    code:
-      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/persistence/order/entity/OrderJpaEntity.kt, symbol: "fetch = FetchType.LAZY", note: "주문 → 주문 항목 연관" }
-    causes:
-      - { to: n-plus-one, reason: "목록 N 건을 돌며 연관을 건드리면 N 번 추가 조회한다" }
-  - id: data-fetch-join
-    kind: MECHANISM
-    name: "페치 조인"
-    category: DATA
-    level: INTERMEDIATE
-    description: "연관 엔티티를 한 쿼리의 JOIN 으로 같이 읽는다(JOIN FETCH, @EntityGraph). 컬렉션 페치 조인은 페이징과 함께 쓰면 메모리에서 잘리므로 주의한다"
-    synonyms: ["fetch join", "JOIN FETCH", "@EntityGraph"]
-    code:
-      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/persistence/order/repository/OrderJpaRepository.kt, symbol: "JOIN FETCH o.items", note: "주문과 항목을 한 번에 읽는다" }
-      - { path: code-dictionary/feature/src/main/kotlin/com/kgd/codedictionary/infrastructure/persistence/techdomain/repository/TechDomainJpaRepository.kt, symbol: "@EntityGraph(attributePaths = [\"concepts\"])", note: "도메인과 개념 목록을 한 번에" }
-    mitigates: [n-plus-one]
-  - id: data-query-builder
-    kind: MECHANISM
-    name: "타입 안전 쿼리 빌더"
-    category: DATA
-    level: INTERMEDIATE
-    description: "조건이 바뀌는 동적 조회를 문자열 JPQL 대신 컴파일되는 코드로 조립한다. 오타 · 타입 오류가 빌드에서 잡힌다"
-    synonyms: ["dynamic query", "동적 쿼리"]
-    code:
-      - { path: game/feature/src/main/kotlin/com/kgd/game/infrastructure/persistence/catalog/repository/GameQueryRepository.kt, symbol: "class GameQueryRepository(", note: "게임 카탈로그 필터 · 정렬 동적 조회" }
-    contains: [querydsl]
-  - id: querydsl
-    kind: TECHNOLOGY
-    name: "Querydsl"
-    category: DATA
-    level: INTERMEDIATE
-    description: "엔티티에서 Q 타입을 생성해 JPQL 을 코드로 조립하는 라이브러리. JPAQueryFactory 로 쓴다"
-    implements:
-      - { to: data-query-builder, reason: "Q 타입으로 조건 · 정렬을 코드로 조립한다" }
-      - { to: sec-parameter-binding, reason: "쿼리 빌더가 값을 문자열에 붙이지 않고 바인딩한다" }
-  - id: n-plus-one
+  - id: data-ddl-write-block
     kind: PROBLEM
-    name: "N+1 문제"
+    name: "DDL 쓰기 정지"
     category: DATA
     level: INTERMEDIATE
-    description: "목록 1 번 조회 뒤에 각 행의 연관을 읽느라 N 번이 더 나가는 상태. 개발 데이터에서는 안 보이다가 운영 데이터 규모에서 지연으로 드러난다"
-    synonyms: ["N+1 query problem"]
-    questions: ["N+1 을 로그 없이 테스트에서 잡으려면 무엇을 세야 하는가"]
-    measured_by: [data-queries-per-request]
-  - id: data-queries-per-request
-    kind: METRIC
-    name: "요청당 쿼리 수"
-    category: DATA
-    level: BEGINNER
-    description: "요청 하나가 DB 에 보낸 쿼리 개수. 결과 행 수에 비례해 늘면 N+1 이다"
-    synonyms: ["query count"]
+    description: "큰 테이블의 구조 변경이 테이블을 잠그거나 오래 복사해 그동안 쓰기가 멈추는 상태. 복제본은 같은 DDL 을 다시 돌리느라 뒤처진다"
+    synonyms: ["table lock during ALTER", "blocking DDL"]
 
-  # ── 커넥션 관리 ─────────────────────────────────────────
-  - id: data-connection-management
+  # ── 복제 · 고가용성 ─────────────────────────────────────
+  - id: data-replication-ha
     kind: STAGE
-    name: "커넥션 관리"
-    category: DATA
-    level: INTERMEDIATE
-    description: "DB 연결을 만들고 나눠 쓰고 돌려받는다. 연결은 비싸고 DB 쪽 한도가 있으므로 풀 크기 · 대기 시간 · 트랜잭션 길이를 함께 본다"
-    questions: ["풀 크기를 늘리는 것이 항상 처리량을 늘리지 않는 이유는 무엇인가"]
-    contains: [connection-pool, data-read-replica-routing, data-pool-exhaustion, data-replication-lag, data-pool-wait-time]
-  - id: connection-pool
-    kind: MECHANISM
-    name: "커넥션 풀"
-    category: DATA
-    level: INTERMEDIATE
-    description: "DB 연결을 미리 만들어 두고 빌려 쓰고 돌려준다. 요청마다 TCP · 인증 비용을 내지 않는다. 풀이 비면 요청은 연결이 돌아올 때까지 기다린다"
-    synonyms: ["connection pool", "DB 커넥션 풀"]
-    code:
-      - { path: commerce/app/src/main/resources/application.yml, symbol: "maximum-pool-size: 5", note: "폴드 도메인마다 작은 풀을 따로 둔다" }
-    contains: [hikaricp]
-    affects: [data-pool-wait-time]
-  - id: hikaricp
-    kind: TECHNOLOGY
-    name: "HikariCP"
-    category: DATA
-    level: INTERMEDIATE
-    description: "Spring Boot 기본 JDBC 커넥션 풀. maximum-pool-size · minimum-idle · connection-timeout 으로 조절한다"
-    implements:
-      - { to: connection-pool, reason: "JDBC 커넥션을 풀로 관리한다" }
-  - id: data-read-replica-routing
-    kind: MECHANISM
-    name: "읽기 복제본 라우팅"
+    name: "DB 복제 · 고가용성"
     category: DATA
     level: ADVANCED
-    description: "읽기 전용 트랜잭션은 복제본으로, 쓰기는 원본으로 보낸다. 원본의 부하를 덜지만 방금 쓴 값을 복제본에서 못 볼 수 있다"
-    synonyms: ["read replica", "master/replica routing"]
-    code:
-      - { path: common/src/main/kotlin/com/kgd/common/persistence/ReadReplicaRoutingDataSource.kt, symbol: "class ReadReplicaRoutingDataSource", note: "readOnly 트랜잭션이면 REPLICA 로 보낸다" }
-    causes:
-      - { to: data-replication-lag, reason: "복제가 비동기라 원본의 최신 쓰기가 늦게 보인다" }
-    uses:
-      - { to: replication, reason: "읽기 복제본은 원본의 복제로 채워진다" }
-  - id: data-pool-exhaustion
-    kind: PROBLEM
-    name: "커넥션 풀 고갈"
+    description: "원본의 변경 로그를 복제본으로 보내 읽기를 나누고 장애 때 넘겨받게 한다. 복제를 얼마나 동기로 할지가 유실 가능성과 쓰기 지연을 함께 정한다"
+    questions: ["비동기 복제에서 원본이 죽으면 어떤 쓰기가 사라질 수 있는가", "쓰고 바로 읽는 화면에서 복제 지연을 어떻게 숨기는가"]
+    contains: [data-binlog, data-async-replication, data-semi-sync-replication, data-gtid, data-group-replication, data-db-failover, data-replication-lag]
+    uses: [dist-read-your-writes-routing, dist-cdc]
+    flows_to: [data-partitioning]
+  - id: data-binlog
+    kind: MECHANISM
+    name: "바이너리 로그"
+    category: DATA
+    level: ADVANCED
+    description: "커밋된 변경을 순서대로 남기는 서버 수준 로그. 복제본이 이것을 받아 재실행하고, 시점 복구와 변경 데이터 캡처도 이것을 읽는다. 엔진의 redo 로그와 별개다"
+    synonyms: ["binlog", "binary log", "replication log"]
+    contains: [data-binlog-format]
+  - id: data-binlog-format
+    kind: MECHANISM
+    name: "binlog 형식"
+    category: DATA
+    level: ADVANCED
+    description: "SQL 문장을 남기는 STATEMENT, 바뀐 행 값을 남기는 ROW, 섞는 MIXED 가 있다. NOW() · 난수처럼 비결정적인 문장은 STATEMENT 에서 복제본 값이 달라지므로 ROW 가 표준이다"
+    synonyms: ["SBR", "RBR", "binlog_format=ROW", "statement-based replication", "row-based replication"]
+  - id: data-async-replication
+    kind: MECHANISM
+    name: "비동기 복제"
     category: DATA
     level: INTERMEDIATE
-    description: "모든 연결이 빌려 나가 새 요청이 타임아웃까지 기다리는 상태. 긴 트랜잭션, 트랜잭션 안의 외부 호출, 잠금 대기가 흔한 원인이다"
-    synonyms: ["connection pool exhaustion"]
-    measured_by: [data-pool-wait-time]
+    description: "원본이 커밋하고 바로 응답한 뒤 변경을 복제본에 보낸다. 쓰기 지연이 없지만 원본이 죽으면 아직 전달되지 않은 커밋이 사라진다"
+    synonyms: ["asynchronous replication"]
+    uses: [replication]
+    causes: [data-replication-lag]
+  - id: data-semi-sync-replication
+    kind: MECHANISM
+    name: "반동기 복제"
+    category: DATA
+    level: ADVANCED
+    description: "복제본 하나 이상이 변경을 받았다고 알려 올 때까지 원본이 커밋 응답을 미룬다. 페일오버 때의 유실을 막는 대신 쓰기마다 왕복 지연이 붙는다"
+    synonyms: ["semi-synchronous replication", "rpl_semi_sync"]
+    uses: [replication]
+    alternative_to:
+      - { to: data-async-replication, reason: "커밋 유실을 허용할 수 없으면 쓰기 지연을 내고 확인을 기다린다" }
+  - id: data-gtid
+    kind: MECHANISM
+    name: "GTID"
+    category: DATA
+    level: ADVANCED
+    description: "트랜잭션마다 서버를 넘어 유일한 id 를 붙여, 복제본이 어디까지 적용했는지를 파일 위치 대신 id 집합으로 안다. 페일오버 뒤 새 원본에 다시 붙이기가 쉬워진다"
+    synonyms: ["Global Transaction ID"]
+  - id: data-group-replication
+    kind: MECHANISM
+    name: "그룹 복제"
+    category: DATA
+    level: ADVANCED
+    description: "여러 노드가 합의 프로토콜로 트랜잭션 순서를 맞춰 커밋한다. 다수가 동의해야 커밋되어 유실 없는 자동 페일오버와 다중 원본 쓰기를 준다"
+    synonyms: ["Group Replication", "InnoDB Cluster", "Galera", "multi-primary"]
+    uses: [replication]
+  - id: data-db-failover
+    kind: MECHANISM
+    name: "DB 페일오버"
+    category: DATA
+    level: ADVANCED
+    description: "원본이 죽으면 가장 앞선 복제본을 새 원본으로 올리고 애플리케이션의 연결을 옮긴다. 두 원본이 동시에 쓰지 않게 옛 원본을 확실히 떼어 내는 것이 핵심이다"
+    synonyms: ["failover", "promotion", "switchover"]
+    uses: [leader-election]
+    causes:
+      - { to: data-stale-connection, reason: "풀에 남은 옛 원본 연결이 죽은 채 빌려 나간다" }
   - id: data-replication-lag
     kind: PROBLEM
     name: "복제 지연"
@@ -418,13 +1428,905 @@ concepts:
     synonyms: ["replication lag"]
     measured_by:
       - { to: dist-replication-lag, reason: "복제본이 원본보다 몇 초 뒤처졌는지" }
+
+  # ── 파티셔닝 · 데이터 수명 ──────────────────────────────
+  - id: data-partitioning
+    kind: STAGE
+    name: "파티셔닝 · 데이터 수명"
+    category: DATA
+    level: ADVANCED
+    description: "큰 테이블을 한 DB 안에서 기준 값으로 나눠 조회가 필요한 조각만 읽게 하고, 오래된 데이터는 조각째 떼어 버린다. 서버를 넘어 나누는 것은 샤딩이다"
+    questions: ["파티션 키가 조회 조건에 없으면 파티셔닝이 오히려 느려지는 이유는 무엇인가"]
+    contains: [data-table-partitioning, data-partition-pruning, data-retention-purge]
+    flows_to: [data-backup-recovery]
+  - id: data-table-partitioning
+    kind: MECHANISM
+    name: "테이블 파티셔닝"
+    category: DATA
+    level: ADVANCED
+    description: "한 논리 테이블을 파티션 키에 따라 여러 물리 조각으로 나눈다. 각 조각이 따로 인덱스를 가져 작아지고, 조각 단위로 지우고 옮길 수 있다"
+    synonyms: ["table partitioning", "PARTITION BY"]
+    code:
+      - { path: quant/feature/src/main/resources/clickhouse/quant/V005__ohlcv_unified.sql, symbol: "PARTITION BY toYYYYMM(ts)", note: "시세 테이블을 월 단위 조각으로" }
+    contains: [data-list-partitioning]
+    uses: [dist-range-partitioning, dist-hash-partitioning]
+    alternative_to:
+      - { to: sharding, reason: "한 서버 안에서 나눠 관리 비용을 줄이고, 서버 한 대의 한계를 넘을 때는 샤딩으로 간다" }
+  - id: data-list-partitioning
+    kind: MECHANISM
+    name: "목록 파티셔닝"
+    category: DATA
+    level: ADVANCED
+    description: "지역 · 상태처럼 정해진 값 목록마다 파티션을 둔다"
+    synonyms: ["LIST partitioning"]
+  - id: data-partition-pruning
+    kind: MECHANISM
+    name: "파티션 프루닝"
+    category: DATA
+    level: ADVANCED
+    description: "조건에 파티션 키가 있으면 옵티마이저가 해당 조각만 읽고 나머지는 건너뛴다. 파티셔닝이 조회를 빠르게 만드는 유일한 길이다"
+    synonyms: ["partition pruning", "partition elimination"]
+    mitigates: [data-full-table-scan]
+  - id: data-retention-purge
+    kind: MECHANISM
+    name: "보존 기간 정리"
+    category: DATA
+    level: INTERMEDIATE
+    description: "정한 보존 기간이 지난 행을 주기적으로 지운다. 한 번에 지우면 잠금 · 복제 지연이 크므로 작은 묶음으로 나눠 지우거나 파티션째 떼어 낸다"
+    synonyms: ["retention", "data purge", "TTL delete", "archiving"]
+    code:
+      - { path: code-dictionary/feature/src/main/kotlin/com/kgd/codedictionary/infrastructure/retention/RetentionRunner.kt, symbol: "class RetentionRunner(", note: "조회 · 클릭 원장을 보존 기간 뒤 지우는 CronJob" }
+
+  # ── 백업 · 복구 ─────────────────────────────────────────
+  - id: data-backup-recovery
+    kind: STAGE
+    name: "백업 · 복구"
+    category: DATA
+    level: INTERMEDIATE
+    description: "데이터를 잃었을 때 어느 시점으로, 얼마나 빨리 되돌릴지 정하고 그만큼 사본을 떠 둔다. 복제는 실수로 지운 것까지 복제하므로 백업을 대신하지 못한다"
+    questions: ["매일 한 번 덤프만 뜨는 구성의 RPO 는 얼마인가", "백업 파일이 데이터와 같은 디스크에 있으면 무엇을 못 막는가"]
+    contains: [data-logical-backup, data-physical-backup, data-pitr, data-data-loss]
+    measured_by: [infra-rpo, infra-rto]
+  - id: data-logical-backup
+    kind: MECHANISM
+    name: "논리 백업"
+    category: DATA
+    level: BEGINNER
+    description: "데이터를 SQL 문장 · CSV 로 뽑아 둔다(mysqldump). 버전 간 이동과 부분 복원이 쉽지만 크기가 크면 백업과 복원이 느리다. 한 트랜잭션 스냅샷으로 떠야 테이블 사이가 맞는다"
+    synonyms: ["logical backup", "mysqldump", "--single-transaction"]
+    code:
+      - { path: k8s/base/db-backup/cronjob-mysql.yaml, symbol: "--all-databases --single-transaction", note: "매일 03:00 UTC 전체 덤프" }
+    uses: [data-consistent-read]
+    mitigates: [data-data-loss]
+  - id: data-physical-backup
+    kind: MECHANISM
+    name: "물리 백업"
+    category: DATA
+    level: INTERMEDIATE
+    description: "데이터 파일을 통째로 복사하고 복사하는 동안의 redo 로그를 함께 챙긴다(XtraBackup). 큰 DB 에서 백업 · 복원이 빠르다"
+    synonyms: ["physical backup", "XtraBackup", "hot backup", "snapshot backup"]
+    uses: [write-ahead-log]
+    mitigates: [data-data-loss]
+    alternative_to:
+      - { to: data-logical-backup, reason: "DB 가 커서 덤프 · 재적재 시간이 복구 목표를 넘으면" }
+  - id: data-pitr
+    kind: MECHANISM
+    name: "시점 복구"
+    category: DATA
+    level: ADVANCED
+    description: "마지막 전체 백업을 복원한 뒤 binlog 를 원하는 시각(사고 직전)까지 다시 적용한다. RPO 를 백업 주기에서 몇 초로 줄인다"
+    synonyms: ["PITR", "point-in-time recovery"]
+    uses: [data-binlog]
+    affects: [infra-rpo]
+    mitigates: [data-data-loss]
+  - id: data-data-loss
+    kind: PROBLEM
+    name: "데이터 유실"
+    category: DATA
+    level: BEGINNER
+    description: "잘못된 삭제 · 디스크 손상 · 노드 손실로 커밋된 데이터가 사라진 상태. 복제만 있으면 삭제도 그대로 복제되어 되돌릴 수 없다"
+    synonyms: ["data loss"]
+    measured_by: [infra-rpo]
+
+  # ═══ 인메모리 저장소 ═══════════════════════════════════
+  - id: data-inmemory-store
+    kind: DOMAIN
+    name: "인메모리 저장소"
+    category: DATA
+    level: INTERMEDIATE
+    description: "모든 데이터를 메모리에 두는 키-값 저장소(Redis)의 실행 모델 · 자료구조 · 메모리 관리 · 영속화 · 복제 · 원자 실행 · 메시지 전달. 빠른 대신 메모리 한도와 유실 가능성을 설계에 넣어야 한다"
+    synonyms: ["in-memory data store", "key-value store", "Redis"]
+    contains: [data-redis-execution-model, data-redis-data-modeling, data-redis-memory-management, data-redis-persistence, data-redis-ha-scaling, data-redis-atomic-execution, data-redis-messaging]
+
+  # ── 실행 모델 ───────────────────────────────────────────
+  - id: data-redis-execution-model
+    kind: STAGE
+    name: "Redis 실행 모델"
+    category: DATA
+    level: INTERMEDIATE
+    description: "명령 하나하나가 한 스레드에서 차례로 실행되는 구조를 이해하고, 네트워크 왕복과 느린 명령이 전체를 막지 않게 쓴다"
+    questions: ["Redis 가 단일 스레드인데도 초당 10만 건을 넘게 처리하는 이유는 무엇인가", "KEYS * 가 운영에서 금지되는 이유는 무엇인가"]
+    contains: [data-redis-single-thread, data-redis-io-threads, data-resp, data-pipelining, data-client-side-caching, data-blocking-command, data-redis-command-latency]
+    flows_to: [data-redis-data-modeling]
+  - id: data-redis-single-thread
+    kind: MECHANISM
+    name: "단일 스레드 이벤트 루프"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "epoll 같은 I/O 다중화로 많은 연결의 요청을 받고, 명령 실행은 한 스레드가 하나씩 한다. 잠금 없이 모든 명령이 원자적이지만 느린 명령 하나가 모두를 기다리게 한다"
+    synonyms: ["single-threaded", "event loop", "I/O multiplexing", "epoll"]
+    uses:
+      - conc-io-multiplexing
+      - { to: conc-event-loop, reason: "명령을 한 이벤트 루프가 차례로 처리한다" }
+    causes: [data-blocking-command]
+  - id: data-redis-io-threads
+    kind: MECHANISM
+    name: "I/O 스레드"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "Redis 6 부터 소켓 읽기 · 응답 쓰기만 여러 스레드에 나눈다. 명령 실행은 여전히 한 스레드라 원자성은 그대로이고, 네트워크 처리량이 병목일 때만 이득이다"
+    synonyms: ["io-threads", "threaded I/O"]
+  - id: data-resp
+    kind: MECHANISM
+    name: "RESP 프로토콜"
+    category: NETWORK
+    level: INTERMEDIATE
+    description: "Redis 클라이언트와 서버가 주고받는 텍스트 기반 요청 · 응답 형식. RESP3 는 서버가 먼저 보내는 푸시 메시지를 더해 클라이언트 캐시 무효화를 가능하게 했다"
+    synonyms: ["RESP", "RESP2", "RESP3", "Redis Serialization Protocol", "HELLO"]
+  - id: data-pipelining
+    kind: MECHANISM
+    name: "파이프라이닝"
+    category: DATA
+    level: INTERMEDIATE
+    description: "여러 명령을 응답을 기다리지 않고 연달아 보낸 뒤 응답을 한꺼번에 받는다. 왕복 지연을 명령 수만큼이 아니라 한 번만 낸다. 원자적이지는 않다"
+    synonyms: ["pipelining", "pipeline"]
+    alternative_to:
+      - { to: data-multi-exec, reason: "원자성이 필요 없고 왕복만 줄이면 된다" }
+  - id: data-client-side-caching
+    kind: MECHANISM
+    name: "클라이언트 측 캐시"
+    category: DATA
+    level: ADVANCED
+    description: "클라이언트가 읽은 키를 자기 메모리에 두고, 서버가 그 키가 바뀌면 무효화 메시지를 밀어 준다(tracking). 네트워크 왕복 없이 읽으면서도 옛 값이 오래 남지 않는다"
+    synonyms: ["client-side caching", "CLIENT TRACKING", "near cache"]
+    uses: [data-resp]
+    mitigates: [data-hot-key]
+  - id: data-blocking-command
+    kind: PROBLEM
+    name: "긴 명령에 의한 전체 정지"
+    category: DATA
+    level: INTERMEDIATE
+    description: "KEYS · 큰 컬렉션의 HGETALL · SMEMBERS · 큰 키 DEL 처럼 O(N) 인 명령이 도는 동안 다른 모든 요청이 기다리는 상태. SCAN 계열로 나눠 읽고 UNLINK 로 지운다"
+    synonyms: ["O(N) command", "KEYS *", "slow command"]
+    measured_by: [data-redis-command-latency]
+  - id: data-redis-command-latency
+    kind: METRIC
+    name: "Redis 명령 지연"
+    category: DATA
+    level: INTERMEDIATE
+    description: "명령 하나를 처리하는 데 걸린 시간. 정상은 마이크로초 단위라 밀리초가 보이면 긴 명령 · fork · 스왑을 의심한다. SLOWLOG · LATENCY 로 본다"
+    synonyms: ["SLOWLOG", "LATENCY DOCTOR", "redis latency"]
+
+  # ── 자료구조 선택 ───────────────────────────────────────
+  - id: data-redis-data-modeling
+    kind: STAGE
+    name: "Redis 자료구조 선택"
+    category: DATA_STRUCTURE
+    level: INTERMEDIATE
+    description: "값의 모양과 필요한 연산에 맞춰 String · List · Hash · Set · Sorted Set · Bitmap · HyperLogLog · Geo · Stream 중에서 고른다. 원소가 적을 때는 작고 빽빽한 인코딩으로, 커지면 해시 표 · 스킵 리스트로 바뀐다"
+    questions: ["실시간 순위표에 Sorted Set 을 쓰면 갱신과 상위 N 조회 비용은 각각 얼마인가", "작은 Hash 를 여러 개 두는 것이 큰 Hash 하나보다 메모리가 적게 드는 이유는 무엇인가"]
+    contains: [data-redis-string, data-redis-list, data-redis-hash, data-redis-set, data-redis-sorted-set, data-redis-bitmap, data-redis-hyperloglog, data-redis-geo, data-redis-stream, data-listpack, data-big-key, data-hot-key]
+    flows_to: [data-redis-memory-management]
+  - id: data-redis-string
+    kind: MECHANISM
+    name: "Redis String"
+    category: DATA_STRUCTURE
+    level: BEGINNER
+    description: "키 하나에 바이트열 하나. 캐시 값 · 직렬화한 객체 · INCR 카운터에 쓴다. 정수로 읽히는 값은 int 인코딩, 짧은 문자열은 객체와 한 덩어리(embstr)로 저장된다"
+    synonyms: ["String", "SET", "GET", "INCR", "embstr"]
+    contains: [data-sds]
+  - id: data-sds
+    kind: MECHANISM
+    name: "SDS"
+    category: DATA_STRUCTURE
+    level: ADVANCED
+    description: "Redis 의 문자열 구현. 길이와 남은 용량을 머리에 두어 길이 조회가 O(1) 이고, 이진 데이터를 담고, 늘릴 때 여유를 미리 잡아 재할당을 줄인다"
+    synonyms: ["Simple Dynamic String"]
+    uses: [cs-dynamic-array]
+  - id: data-redis-list
+    kind: MECHANISM
+    name: "Redis List"
+    category: DATA_STRUCTURE
+    level: BEGINNER
+    description: "양 끝에서 넣고 빼는 목록. 큐 · 최근 N 개 기록에 쓰고, BLPOP 으로 빈 목록을 기다린다. 중간 원소 조회는 O(N) 이다"
+    synonyms: ["List", "LPUSH", "RPOP", "BLPOP", "LRANGE"]
+    contains: [data-quicklist]
+    uses: [cs-deque]
+  - id: data-quicklist
+    kind: MECHANISM
+    name: "quicklist"
+    category: DATA_STRUCTURE
+    level: ADVANCED
+    description: "작은 listpack 덩어리들을 이중 연결 리스트로 이은 List 인코딩. 양 끝 삽입은 연결 리스트처럼 싸고, 메모리는 배열처럼 빽빽하다"
+    synonyms: ["quicklist"]
+    uses: [cs-doubly-linked-list, data-listpack]
+  - id: data-redis-hash
+    kind: MECHANISM
+    name: "Redis Hash"
+    category: DATA_STRUCTURE
+    level: BEGINNER
+    description: "키 하나 아래에 필드-값 쌍 여러 개. 객체의 필드를 따로 읽고 고치며, 필드별 증감(HINCRBY)이 원자적이다"
+    synonyms: ["Hash", "HSET", "HGET", "HINCRBY"]
+    code:
+      - { path: recommendation/feature/src/main/kotlin/com/kgd/recommendation/infrastructure/bandit/RedisThompsonSampler.kt, symbol: "redis.opsForHash<String, String>().increment(key, variant, 1L)", note: "변형별 성공 · 실패 횟수를 Hash 필드로 센다" }
+    contains: [data-redis-dict]
+  - id: data-redis-dict
+    kind: MECHANISM
+    name: "점진적 재해싱 해시 표"
+    category: DATA_STRUCTURE
+    level: ADVANCED
+    description: "Redis 의 해시 표는 커질 때 새 표를 만들고 이후 명령마다 버킷 몇 개씩 옮긴다. 한 번에 전부 옮기며 멈추는 일이 없다"
+    synonyms: ["dict", "hashtable encoding", "incremental rehashing"]
+    uses: [hash-map, cs-rehashing]
+  - id: data-redis-set
+    kind: MECHANISM
+    name: "Redis Set"
+    category: DATA_STRUCTURE
+    level: BEGINNER
+    description: "중복 없는 원소 모음. 포함 여부 확인과 교집합 · 합집합 · 차집합을 서버에서 한다. 정수만 있으면 정렬 배열(intset)로 빽빽하게 담는다"
+    synonyms: ["Set", "SADD", "SISMEMBER", "SINTER"]
+    contains: [data-intset]
+  - id: data-intset
+    kind: MECHANISM
+    name: "intset"
+    category: DATA_STRUCTURE
+    level: ADVANCED
+    description: "정수만 담긴 작은 Set 을 정렬된 정수 배열로 저장하고 이진 탐색으로 찾는다. 큰 수가 들어오면 원소 폭을 넓히고, 원소가 많아지면 해시 표로 바뀐다"
+    synonyms: ["intset"]
+    uses: [binary-search]
+  - id: data-redis-sorted-set
+    kind: MECHANISM
+    name: "Redis Sorted Set"
+    category: DATA_STRUCTURE
+    level: INTERMEDIATE
+    description: "원소마다 점수를 붙여 점수 순으로 유지하는 집합. 갱신과 순위 조회가 O(log N) 이라 순위표 · 시간순 큐 · 슬라이딩 윈도 카운터에 쓴다. 내부는 스킵 리스트와 해시 표를 함께 쓴다"
+    synonyms: ["Sorted Set", "ZSET", "ZADD", "ZRANGE", "ZRANGEBYSCORE"]
+    code:
+      - { path: recommendation/feature/src/main/kotlin/com/kgd/recommendation/infrastructure/persistence/RedisRecommendationAdapter.kt, symbol: "redis.opsForZSet()", note: "점수 순 상위 N 추천을 범위로 꺼낸다" }
+    uses: [skip-list, hash-map]
+  - id: data-redis-bitmap
+    kind: MECHANISM
+    name: "Redis Bitmap"
+    category: DATA_STRUCTURE
+    level: INTERMEDIATE
+    description: "String 을 비트 배열로 다룬다. 사용자 id 를 비트 위치로 삼아 출석 · 활성 여부를 한 비트에 담고, BITCOUNT · BITOP 으로 센다"
+    synonyms: ["Bitmap", "SETBIT", "BITCOUNT", "BITOP"]
+    uses: [cs-bitset]
+  - id: data-redis-hyperloglog
+    kind: MECHANISM
+    name: "Redis HyperLogLog"
+    category: DATA_STRUCTURE
+    level: ADVANCED
+    description: "키 하나 12KB 로 수억 개 원소의 서로 다른 개수를 오차 0.81% 로 센다. 순방문자 수처럼 정확한 값이 필요 없는 집계에 쓴다"
+    synonyms: ["PFADD", "PFCOUNT", "PFMERGE"]
+    uses: [hyperloglog]
+  - id: data-redis-geo
+    kind: MECHANISM
+    name: "Redis Geo"
+    category: DATA_STRUCTURE
+    level: INTERMEDIATE
+    description: "위경도를 지오해시 정수로 바꿔 Sorted Set 점수로 저장하고, 반경 · 사각형 안의 원소를 찾는다"
+    synonyms: ["GEOADD", "GEOSEARCH", "GEORADIUS"]
+    uses: [data-redis-sorted-set, srch-geohash]
+  - id: data-redis-stream
+    kind: MECHANISM
+    name: "Redis Stream"
+    category: DATA_STRUCTURE
+    level: ADVANCED
+    description: "시각 기반 id 가 붙은 항목을 추가만 하는 로그. 소비자 그룹 · 확인 응답 · 보관 길이 제한을 갖춰 작은 규모의 메시지 큐로 쓴다. 내부는 radix 트리에 listpack 을 매단다"
+    synonyms: ["Stream", "XADD", "XREAD", "XTRIM", "MAXLEN"]
+    uses: [cs-radix-tree, data-listpack]
+  - id: data-listpack
+    kind: MECHANISM
+    name: "listpack"
+    category: DATA_STRUCTURE
+    level: ADVANCED
+    description: "작은 List · Hash · Set · Sorted Set 을 포인터 없이 한 연속 메모리에 원소를 이어 붙인 인코딩. 메모리가 아주 적지만 조회가 O(N) 이라 원소 수 · 크기 한도를 넘으면 해시 표 · 스킵 리스트로 바뀐다"
+    synonyms: ["listpack", "ziplist", "compact encoding", "OBJECT ENCODING"]
+    uses: [array]
+  - id: data-big-key
+    kind: PROBLEM
+    name: "빅 키"
+    category: DATA
+    level: INTERMEDIATE
+    description: "값 하나가 수 MB 이거나 원소가 수십만 개인 키. 읽기 · 삭제 · 복제 · 만료가 한 번에 오래 걸려 전체를 멈추고, 클러스터에서는 한 노드의 메모리를 치우치게 한다"
+    synonyms: ["big key", "--bigkeys"]
+    causes: [data-blocking-command]
+  - id: data-hot-key
+    kind: PROBLEM
+    name: "핫 키"
+    category: DATA
+    level: INTERMEDIATE
+    description: "소수의 키에 요청이 몰려 그 키를 가진 노드 하나의 CPU · 네트워크가 한계에 닿는 상태. 샤드를 늘려도 한 키는 한 노드에만 있어 풀리지 않는다"
+    synonyms: ["hot key", "hot shard", "--hotkeys"]
+
+  # ── 메모리 · 만료 관리 ──────────────────────────────────
+  - id: data-redis-memory-management
+    kind: STAGE
+    name: "메모리 · 만료 관리"
+    category: DATA
+    level: INTERMEDIATE
+    description: "메모리 한도를 정하고, 만료된 키가 언제 실제로 지워지는지, 한도에 닿으면 무엇을 내보낼지를 정한다. 한도와 정책이 없으면 메모리가 차는 순간 쓰기가 실패한다"
+    questions: ["TTL 이 지난 키가 곧바로 메모리에서 사라지지 않는 이유는 무엇인가", "캐시 전용 Redis 와 큐로 쓰는 Redis 에 다른 eviction 정책을 주는 이유는 무엇인가"]
+    contains: [data-ttl-expiration, data-expiry-algorithm, data-eviction-policy, data-lazy-free, data-active-defrag, data-maxmemory-reached, data-memory-fragmentation, data-redis-memory-usage]
+    flows_to: [data-redis-persistence]
+  - id: data-expiry-algorithm
+    kind: MECHANISM
+    name: "만료 처리 방식"
+    category: DATA
+    level: ADVANCED
+    description: "만료된 키는 접근할 때 확인해 지우고(lazy), 주기적으로 만료 키 표본을 뽑아 지운다(active). 표본의 상당수가 만료였으면 한 번 더 돈다. 아무도 안 읽는 만료 키는 잠시 메모리에 남는다"
+    synonyms: ["lazy expiration", "active expiration", "expire cycle"]
+  - id: data-eviction-policy
+    kind: MECHANISM
+    name: "eviction 정책"
+    category: DATA
+    level: INTERMEDIATE
+    description: "maxmemory 에 닿았을 때 무엇을 내보낼지 고른다. 모든 키 또는 TTL 이 있는 키 중에서 LRU · LFU · 무작위 · 만료 임박 순으로 고르거나, 아예 내보내지 않고 쓰기를 거절한다(noeviction)"
+    synonyms: ["eviction policy", "maxmemory-policy", "allkeys-lru", "volatile-lru", "noeviction"]
+    contains: [data-approximate-lru, data-lfu-eviction]
+    uses: [lru-cache]
+    mitigates: [data-maxmemory-reached]
+    affects: [cache-hit-rate]
+  - id: data-approximate-lru
+    kind: MECHANISM
+    name: "근사 LRU"
+    category: DATA
+    level: ADVANCED
+    description: "모든 키를 연결 리스트로 줄 세우지 않고, 무작위로 뽑은 표본 몇 개 중 가장 오래 안 쓴 것을 내보낸다. 메모리를 거의 안 쓰고 정확한 LRU 에 가깝다"
+    synonyms: ["approximated LRU", "maxmemory-samples"]
+    uses: [cs-reservoir-sampling]
+  - id: data-lfu-eviction
+    kind: MECHANISM
+    name: "LFU 내보내기"
+    category: DATA
+    level: ADVANCED
+    description: "접근 빈도가 가장 낮은 키를 내보낸다. 빈도는 확률적으로 늘고 시간이 지나면 줄어드는 8비트 카운터로 센다. 한 번 훑고 지나간 키가 자주 쓰는 키를 밀어내지 않는다"
+    synonyms: ["LFU", "allkeys-lfu", "Morris counter"]
+    alternative_to:
+      - { to: data-approximate-lru, reason: "일회성 대량 조회가 캐시를 밀어내는 패턴이면 빈도 기준이 낫다" }
+  - id: data-lazy-free
+    kind: MECHANISM
+    name: "비동기 해제"
+    category: DATA
+    level: INTERMEDIATE
+    description: "큰 키의 메모리 반환을 백그라운드 스레드에 넘긴다(UNLINK · FLUSHALL ASYNC · lazyfree-lazy-eviction). 삭제 명령이 메인 스레드를 막지 않는다"
+    synonyms: ["lazy free", "UNLINK", "FLUSHALL ASYNC"]
+    mitigates: [data-blocking-command]
+  - id: data-active-defrag
+    kind: MECHANISM
+    name: "능동 조각 모음"
+    category: DATA
+    level: ADVANCED
+    description: "메모리 할당자에 흩어진 빈 조각을 줄이려고 값을 새 자리로 옮겨 담는다. CPU 를 조금 써서 할당된 메모리와 실제 쓰는 메모리의 차이를 줄인다"
+    synonyms: ["active defragmentation", "activedefrag"]
+    mitigates: [data-memory-fragmentation]
+  - id: data-maxmemory-reached
+    kind: PROBLEM
+    name: "메모리 한도 도달"
+    category: DATA
+    level: INTERMEDIATE
+    description: "사용 메모리가 maxmemory 에 닿은 상태. noeviction 이면 쓰기가 OOM 오류로 실패하고, 한도를 안 걸었으면 컨테이너 한도에 닿아 프로세스가 강제 종료된다"
+    synonyms: ["OOM command not allowed", "maxmemory"]
+    measured_by: [data-redis-memory-usage]
+  - id: data-memory-fragmentation
+    kind: PROBLEM
+    name: "메모리 단편화"
+    category: DATA
+    level: ADVANCED
+    description: "키를 지워도 할당자가 OS 에 메모리를 돌려주지 못해 프로세스가 실제 데이터보다 훨씬 많은 메모리를 쥔 상태. mem_fragmentation_ratio 가 1.5 를 넘으면 의심한다"
+    synonyms: ["fragmentation", "mem_fragmentation_ratio"]
+    measured_by: [data-redis-memory-usage]
+  - id: data-redis-memory-usage
+    kind: METRIC
+    name: "Redis 메모리 사용량"
+    category: DATA
+    level: INTERMEDIATE
+    description: "데이터가 쓰는 used_memory, 프로세스가 쥔 used_memory_rss, 둘의 비율(단편화), 내보낸 키 수(evicted_keys)를 함께 본다"
+    synonyms: ["used_memory", "used_memory_rss", "evicted_keys", "INFO memory"]
+
+  # ── 영속화 ──────────────────────────────────────────────
+  - id: data-redis-persistence
+    kind: STAGE
+    name: "Redis 영속화"
+    category: DATA
+    level: INTERMEDIATE
+    description: "메모리의 데이터를 디스크에 남겨 재시작 뒤 되살린다. 주기 스냅샷(RDB)과 명령 로그(AOF) 중에서, 또는 둘을 섞어 유실 허용 범위와 쓰기 비용을 고른다"
+    questions: ["appendfsync everysec 에서 장애 시 최대 얼마나 잃는가", "RDB 스냅샷 중 메모리가 두 배 가까이 늘 수 있는 이유는 무엇인가"]
+    contains: [data-rdb-snapshot, data-aof, data-hybrid-persistence, data-fork-copy-on-write, data-cow-memory-spike]
+    flows_to: [data-redis-ha-scaling]
+  - id: data-rdb-snapshot
+    kind: MECHANISM
+    name: "RDB 스냅샷"
+    category: DATA
+    level: INTERMEDIATE
+    description: "정한 조건(N 초 동안 M 번 변경)마다 전체 데이터를 압축된 파일 하나로 떠 둔다. 복원이 빠르고 파일이 작지만 마지막 스냅샷 이후 변경은 잃는다"
+    synonyms: ["RDB", "BGSAVE", "save", "snapshotting"]
+    code:
+      - { path: k8s/infra/local/redis/statefulset.yaml, symbol: "- --save", note: "60 초에 1 건 이상 바뀌면 스냅샷" }
+    uses: [data-fork-copy-on-write]
+  - id: data-aof
+    kind: MECHANISM
+    name: "AOF"
+    category: DATA
+    level: INTERMEDIATE
+    description: "쓰기 명령을 로그 파일 끝에 계속 덧붙이고 재시작 때 다시 실행한다. fsync 정책에 따라 유실 범위가 0 ~ 1초가 된다. 파일이 커지면 현재 상태만 담도록 다시 쓴다"
+    synonyms: ["Append Only File", "appendonly"]
+    code:
+      - { path: k8s/infra/local/redis/statefulset.yaml, symbol: "- --appendonly", note: "명령 로그를 켠다" }
+    contains: [data-aof-fsync-policy, data-aof-rewrite]
+    alternative_to:
+      - { to: data-rdb-snapshot, reason: "몇 분치 유실도 안 되면 명령 로그를 남긴다" }
+  - id: data-aof-fsync-policy
+    kind: MECHANISM
+    name: "AOF fsync 정책"
+    category: DATA
+    level: ADVANCED
+    description: "로그를 디스크까지 내리는 시점. always(명령마다, 가장 느림) · everysec(1초마다, 기본) · no(OS 에 맡김)"
+    synonyms: ["appendfsync", "everysec"]
+    uses: [data-fsync]
+  - id: data-aof-rewrite
+    kind: MECHANISM
+    name: "AOF 재작성"
+    category: DATA
+    level: ADVANCED
+    description: "쌓인 명령 로그 대신 현재 데이터를 만드는 최소 명령으로 로그를 새로 쓴다. 자식 프로세스가 쓰는 동안 들어온 명령은 따로 모았다가 붙인다"
+    synonyms: ["BGREWRITEAOF", "AOF rewrite", "multi-part AOF"]
+    uses: [data-fork-copy-on-write]
+  - id: data-hybrid-persistence
+    kind: MECHANISM
+    name: "혼합 영속화"
+    category: DATA
+    level: ADVANCED
+    description: "AOF 재작성 때 앞부분은 RDB 형식으로 쓰고 이후 명령만 AOF 로 붙인다. RDB 의 빠른 복원과 AOF 의 작은 유실 범위를 함께 얻는다"
+    synonyms: ["aof-use-rdb-preamble", "RDB + AOF"]
+    uses: [data-rdb-snapshot, data-aof]
+  - id: data-fork-copy-on-write
+    kind: MECHANISM
+    name: "fork 와 copy-on-write"
+    category: DATA
+    level: ADVANCED
+    description: "스냅샷 · 재작성 때 프로세스를 fork 해 자식이 그 순간의 메모리를 디스크에 쓴다. 부모 · 자식은 페이지를 공유하다 부모가 고친 페이지만 복사된다"
+    synonyms: ["fork", "copy-on-write", "CoW"]
+    causes: [data-cow-memory-spike]
+  - id: data-cow-memory-spike
+    kind: PROBLEM
+    name: "스냅샷 중 메모리 급증"
+    category: DATA
+    level: ADVANCED
+    description: "fork 뒤 쓰기가 많으면 고친 페이지마다 복사가 일어나 메모리가 최대 두 배 가까이 는다. 대형 페이지(THP)면 4KB 대신 2MB 씩 복사되어 더 심하다. fork 자체도 큰 인스턴스에서 수십 ms 를 멈춘다"
+    synonyms: ["fork latency", "CoW memory spike", "THP"]
+    causes: [data-maxmemory-reached]
+
+  # ── 복제 · 클러스터 ─────────────────────────────────────
+  - id: data-redis-ha-scaling
+    kind: STAGE
+    name: "Redis 복제 · 클러스터"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "복제본으로 읽기를 나누고 장애 때 넘겨받게 하며(Sentinel), 데이터가 한 대 메모리를 넘으면 해시 슬롯으로 여러 노드에 나눈다(Cluster)"
+    questions: ["Redis Cluster 에서 MGET 이 여러 키에 대해 실패하는 이유와 해법은 무엇인가", "Sentinel 페일오버 뒤에 쓰기가 사라질 수 있는 이유는 무엇인가"]
+    contains: [data-redis-replication, data-redis-wait, data-sentinel, data-redis-cluster, data-cross-slot-error, data-redis-failover-write-loss]
+    flows_to: [data-redis-atomic-execution]
+  - id: data-redis-replication
+    kind: MECHANISM
+    name: "Redis 복제"
+    category: DISTRIBUTED_SYSTEM
+    level: INTERMEDIATE
+    description: "복제본이 원본에 붙어 처음엔 RDB 전체를 받고 이후 명령 흐름을 따라 받는다. 잠깐 끊기면 원본의 백로그에서 빠진 부분만 이어 받는다(PSYNC). 기본은 비동기다"
+    synonyms: ["replica", "PSYNC", "replication backlog", "REPLICAOF"]
+    uses: [replication, data-rdb-snapshot]
+    causes: [data-redis-failover-write-loss]
+  - id: data-redis-wait
+    kind: MECHANISM
+    name: "WAIT 복제 확인"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "WAIT N timeout 은 직전 쓰기를 복제본 N 개가 받을 때까지 기다린다. 유실 가능성을 줄이지만 강한 일관성을 보장하지는 않는다(페일오버 선택이 그 복제본을 고른다는 보장이 없다)"
+    synonyms: ["WAIT", "WAITAOF"]
+    mitigates: [data-redis-failover-write-loss]
+  - id: data-sentinel
+    kind: MECHANISM
+    name: "Sentinel"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "여러 감시 프로세스가 원본을 지켜보다 정족수가 다운에 동의하면 복제본 하나를 원본으로 올리고 클라이언트에 새 주소를 알려 준다"
+    synonyms: ["Redis Sentinel", "quorum", "failover"]
+    uses: [leader-election]
+  - id: data-redis-cluster
+    kind: MECHANISM
+    name: "Redis Cluster"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "키 공간을 16384 개 해시 슬롯으로 나눠 노드들이 나눠 갖는다. 노드끼리 가십으로 상태를 나누고, 원본이 죽으면 그 복제본이 스스로 승격한다. 클라이언트가 슬롯 지도를 들고 바로 해당 노드로 간다"
+    synonyms: ["Redis Cluster", "cluster mode", "gossip"]
+    contains: [data-hash-slot, data-hash-tag, data-cluster-redirect, data-resharding]
+    uses: [sharding, dist-gossip-protocol]
+  - id: data-hash-slot
+    kind: MECHANISM
+    name: "해시 슬롯"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "CRC16(key) mod 16384 로 키를 고정된 슬롯에 넣고, 슬롯을 노드에 배정한다. 노드가 늘면 키가 아니라 슬롯 단위로 옮긴다"
+    synonyms: ["hash slot", "CRC16", "16384 slots"]
+    alternative_to:
+      - { to: consistent-hashing, reason: "해시 링 대신 고정 개수의 슬롯을 두고 배정표를 옮긴다" }
+  - id: data-hash-tag
+    kind: MECHANISM
+    name: "해시 태그"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "키 이름의 {…} 안 부분만 해시해 관련 키들을 같은 슬롯에 모은다. 여러 키 명령 · 트랜잭션 · Lua 스크립트를 클러스터에서 쓸 수 있게 한다. 한 태그에 몰리면 핫 슬롯이 된다"
+    synonyms: ["hash tag", "{user:1}"]
+    mitigates: [data-cross-slot-error]
+  - id: data-cluster-redirect
+    kind: MECHANISM
+    name: "MOVED · ASK 리다이렉트"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "슬롯 주인이 아닌 노드에 요청하면 MOVED 로 주인을 알려 주고 클라이언트는 지도를 고친다. 슬롯을 옮기는 중이면 ASK 로 이번 한 번만 새 노드로 보낸다"
+    synonyms: ["MOVED", "ASK", "cluster redirection", "topology refresh"]
+  - id: data-resharding
+    kind: MECHANISM
+    name: "리샤딩"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "슬롯을 한 노드에서 다른 노드로 키째 옮겨 부하 · 메모리를 다시 나눈다. 옮기는 동안에도 ASK 리다이렉트로 요청을 받는다"
+    synonyms: ["resharding", "slot migration", "rebalance"]
+  - id: data-cross-slot-error
+    kind: PROBLEM
+    name: "CROSSSLOT 오류"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "한 명령 · 트랜잭션 · 스크립트가 서로 다른 슬롯의 키를 건드리면 클러스터가 거절한다. standalone 에서 되던 MGET · MULTI · Lua 가 클러스터로 옮기면 깨진다"
+    synonyms: ["CROSSSLOT", "multi-key limitation"]
+  - id: data-redis-failover-write-loss
+    kind: PROBLEM
+    name: "페일오버 쓰기 유실"
+    category: DISTRIBUTED_SYSTEM
+    level: ADVANCED
+    description: "비동기 복제라 원본이 응답한 쓰기가 복제본에 닿기 전에 원본이 죽고 복제본이 승격되면 그 쓰기가 사라진다. 네트워크가 갈린 동안 옛 원본이 받은 쓰기도 되돌아올 때 버려진다"
+    synonyms: ["acknowledged write loss", "split-brain write loss"]
+
+  # ── 원자 실행 · 락 ──────────────────────────────────────
+  - id: data-redis-atomic-execution
+    kind: STAGE
+    name: "원자 실행 · 락"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "여러 명령을 다른 클라이언트가 끼어들지 못하게 묶어 실행한다. 확인과 변경을 한 스크립트 안에서 하면 잠금 없이 경쟁을 없앤다. 여러 인스턴스 사이의 상호 배제에는 SET NX 잠금을 쓴다"
+    questions: ["MULTI/EXEC 안에서 앞 명령의 결과로 뒤 명령을 바꿀 수 없는 이유는 무엇인가", "재고 선차감을 Lua 로 하는 이유는 무엇인가"]
+    contains: [data-redis-atomic-counter, data-multi-exec, data-watch-cas, data-lua-script, data-redis-functions, data-redis-set-nx]
+    flows_to: [data-redis-messaging]
+  - id: data-redis-atomic-counter
+    kind: MECHANISM
+    name: "원자 카운터"
+    category: CONCURRENCY
+    level: BEGINNER
+    description: "INCR · INCRBY · HINCRBY 는 읽고-더하고-쓰기를 서버에서 한 번에 해 여러 클라이언트가 동시에 올려도 값이 사라지지 않는다. 레이트 리밋 · 쿼터 · 조회수에 쓴다"
+    synonyms: ["INCR", "INCRBY", "atomic counter"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/quota/RedisExternalApiQuotaLedger.kt, symbol: "redis.opsForValue().increment(key, cost)", note: "외부 API 일일 호출 쿼터를 원자적으로 센다" }
+    mitigates: [data-lost-update]
+  - id: data-multi-exec
+    kind: MECHANISM
+    name: "MULTI/EXEC 트랜잭션"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "MULTI 뒤 명령들을 큐에 모았다가 EXEC 때 한꺼번에 끼어듦 없이 실행한다. 중간 명령이 실패해도 앞 명령을 되돌리지 않고, 앞 결과로 뒤 명령을 바꿀 수 없다"
+    synonyms: ["MULTI", "EXEC", "Redis transaction"]
+  - id: data-watch-cas
+    kind: MECHANISM
+    name: "WATCH 낙관적 잠금"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "WATCH 한 키가 EXEC 전에 바뀌면 트랜잭션 전체를 버린다. 읽고 계산하고 쓰는 흐름을 Redis 에서 낙관적으로 보호하고, 실패하면 처음부터 다시 한다"
+    synonyms: ["WATCH", "check-and-set"]
+    uses: [data-multi-exec, compare-and-swap]
+    alternative_to:
+      - { to: data-lua-script, reason: "스크립트를 쓸 수 없거나 계산이 클라이언트에 있어야 하면" }
+  - id: data-lua-script
+    kind: MECHANISM
+    name: "Lua 스크립트"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "EVAL 로 보낸 스크립트를 서버가 다른 명령 끼어듦 없이 끝까지 실행한다. 조건 확인과 변경을 한 번의 왕복으로 원자적으로 한다. 스크립트가 길면 그동안 전체가 멈춘다"
+    synonyms: ["EVAL", "EVALSHA", "Lua"]
+    questions: ["Lua 스크립트가 잠금 없이 경쟁을 없애는 이유와 치르는 값은 무엇인가"]
+    code:
+      - { path: inventory/feature/src/main/kotlin/com/kgd/inventory/infrastructure/cache/InventoryCacheAdapter.kt, symbol: "reserveScript = loadScript(", note: "재고 확인과 선차감을 한 스크립트로" }
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/infrastructure/redis/DecisionCounterRedisAdapter.kt, symbol: "val INCREMENT_WITH_TTL: RedisScript<Long>", note: "증가와 만료 설정을 한 번에" }
+    mitigates:
+      - data-lost-update
+      - { to: race-condition, reason: "확인과 변경 사이에 다른 명령이 끼지 못한다" }
+    causes: [data-blocking-command]
+  - id: data-redis-functions
+    kind: MECHANISM
+    name: "Redis Functions"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "Lua 스크립트를 이름 붙인 라이브러리로 서버에 올려 두고 FCALL 로 부른다. 스크립트가 서버 데이터로 저장 · 복제되어 재기동 · 페일오버 뒤에도 남는다"
+    synonyms: ["FUNCTION LOAD", "FCALL"]
+    alternative_to:
+      - { to: data-lua-script, reason: "스크립트를 앱이 매번 싣지 않고 서버가 버전과 함께 관리하게 할 때" }
+  - id: data-redis-set-nx
+    kind: MECHANISM
+    name: "SET NX 선점 키"
+    category: CONCURRENCY
+    level: INTERMEDIATE
+    description: "SET key value NX PX ttl 로 키가 없을 때만 만들고 만료를 건다. 먼저 만든 쪽만 성공해 단일 노드 잠금 · 중복 처리 방지 · 최소 간격 제한이 된다. 해제는 자기 값일 때만 지우도록 스크립트로 한다"
+    synonyms: ["SETNX", "SET NX PX", "single-instance lock", "setIfAbsent"]
+    code:
+      - { path: analytics/app/src/main/kotlin/com/kgd/analytics/infrastructure/bandit/BanditStateRedisWriter.kt, symbol: "setIfAbsent(key, \"1\", DEDUP_TTL_SECONDS", note: "같은 이벤트를 한 번만 반영하는 중복 차단 키" }
+    uses: [distributed-lock]
+    mitigates: [dist-duplicate-delivery]
+
+  # ── 메시지 전달 ─────────────────────────────────────────
+  - id: data-redis-messaging
+    kind: STAGE
+    name: "Redis 메시지 전달"
+    category: DATA
+    level: INTERMEDIATE
+    description: "Redis 로 메시지를 흘린다. 받는 쪽이 없으면 버려지는 Pub/Sub 과, 저장하고 소비 확인을 받는 Stream 소비자 그룹 중에서 전달 보장이 필요한 만큼 고른다"
+    questions: ["Pub/Sub 으로 보낸 메시지를 구독자가 재기동 중에 놓치면 어떻게 되는가"]
+    contains: [data-redis-pubsub, data-stream-consumer-group, data-keyspace-notification]
+  - id: data-redis-pubsub
+    kind: MECHANISM
+    name: "Redis Pub/Sub"
+    category: DATA
+    level: INTERMEDIATE
+    description: "채널에 보낸 메시지를 그 순간 구독 중인 연결에만 밀어 준다. 저장하지 않아 끊긴 구독자는 놓친다. 인스턴스 간 실시간 알림 · 캐시 무효화 방송에 쓴다"
+    synonyms: ["PUBLISH", "SUBSCRIBE", "PSUBSCRIBE", "sharded pub/sub"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/chart/PriceStreamRedisFanout.kt, symbol: "redis.convertAndSend(channelName", note: "시세를 다른 인스턴스의 SSE 구독자에게 뿌린다" }
+    uses: [fan-out]
+  - id: data-stream-consumer-group
+    kind: MECHANISM
+    name: "Stream 소비자 그룹"
+    category: DATA
+    level: ADVANCED
+    description: "그룹 안의 소비자들이 Stream 항목을 나눠 받고, 처리 뒤 XACK 로 확인한다. 확인 안 된 항목은 대기 목록(PEL)에 남아 XCLAIM · XAUTOCLAIM 으로 다른 소비자가 가져가 재처리한다"
+    synonyms: ["XREADGROUP", "XACK", "PEL", "XCLAIM", "XAUTOCLAIM"]
+    uses: [data-redis-stream]
+    alternative_to:
+      - { to: data-redis-pubsub, reason: "메시지를 잃으면 안 되고 재처리가 필요하면" }
+  - id: data-keyspace-notification
+    kind: MECHANISM
+    name: "키 공간 알림"
+    category: DATA
+    level: ADVANCED
+    description: "키가 만료 · 삭제 · 변경될 때 Pub/Sub 채널로 이벤트를 낸다. 만료 이벤트는 실제로 지워질 때 나가므로 정확한 시각의 타이머로는 쓰지 못한다"
+    synonyms: ["keyspace notifications", "__keyevent@0__:expired", "notify-keyspace-events"]
+    uses: [data-redis-pubsub]
+
+  # ═══ 데이터 접근 · 캐시 ════════════════════════════════
+  - id: data-access
+    kind: DOMAIN
+    name: "데이터 접근 · 캐시"
+    category: DATA
+    level: INTERMEDIATE
+    description: "애플리케이션이 저장소에 닿는 길. 연결을 풀로 나눠 쓰고 읽기 · 쓰기를 원본과 복제본으로 가르며, 자주 읽는 값은 캐시에 두어 저장소까지 가지 않게 한다"
+    contains: [data-connection-management, data-caching-strategy]
+
+  # ── 커넥션 관리 ─────────────────────────────────────────
+  - id: data-connection-management
+    kind: STAGE
+    name: "커넥션 관리"
+    category: DATA
+    level: INTERMEDIATE
+    description: "DB 연결을 만들고 나눠 쓰고 돌려받는다. 연결은 비싸고 DB 쪽 한도가 있으므로 풀 크기 · 대기 시간 · 트랜잭션 길이를 함께 본다"
+    questions: ["풀 크기를 늘리는 것이 항상 처리량을 늘리지 않는 이유는 무엇인가", "Connection is not available 오류가 나면 무엇부터 보는가"]
+    contains: [connection-pool, data-pool-sizing, data-acquire-timeout, data-connection-lifetime, data-connection-keepalive, data-connection-validation, data-connection-leak-detection, data-statement-cache, data-read-replica-routing, data-lazy-connection-acquisition, data-external-pooler, data-multiplexed-connection, data-reactive-db-driver, data-pool-exhaustion, data-connection-leak, data-stale-connection, data-connection-storm, data-max-connections-exceeded, data-replication-lag, data-pool-wait-time, data-pool-utilization]
+    flows_to: [data-caching-strategy]
+  - id: connection-pool
+    kind: MECHANISM
+    name: "커넥션 풀"
+    category: DATA
+    level: INTERMEDIATE
+    description: "DB 연결을 미리 만들어 두고 빌려 쓰고 돌려준다. 요청마다 TCP · 인증 비용을 내지 않는다. 풀이 비면 요청은 연결이 돌아올 때까지 기다린다"
+    synonyms: ["connection pool", "DB 커넥션 풀"]
+    code:
+      - { path: commerce/app/src/main/resources/application.yml, symbol: "maximum-pool-size: 5", note: "폴드 도메인마다 작은 풀을 따로 둔다" }
+    contains: [hikaricp, data-concurrent-bag]
+    affects: [data-pool-wait-time, data-pool-utilization]
+  - id: hikaricp
+    kind: TECHNOLOGY
+    name: "HikariCP"
+    category: DATA
+    level: INTERMEDIATE
+    description: "Spring Boot 기본 JDBC 커넥션 풀. maximum-pool-size · minimum-idle · connection-timeout · max-lifetime · keepalive-time · leak-detection-threshold 로 조절한다"
+    implements:
+      - { to: connection-pool, reason: "JDBC 커넥션을 풀로 관리한다" }
+      - { to: data-concurrent-bag, reason: "ConcurrentBag 으로 빌리고 돌려준다" }
+      - { to: data-connection-lifetime, reason: "maxLifetime 이 지난 연결을 닫고 새로 만든다" }
+      - { to: data-connection-leak-detection, reason: "leakDetectionThreshold 를 넘긴 대여를 스택과 함께 로그로 남긴다" }
+  - id: data-concurrent-bag
+    kind: MECHANISM
+    name: "ConcurrentBag"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "HikariCP 의 대여 구조. 스레드가 최근 쓴 연결을 ThreadLocal 에서 먼저 찾고, 없으면 공유 목록을 CAS 로 훑고, 그래도 없으면 반납을 기다린다. 대부분의 대여가 잠금 없이 끝난다"
+    synonyms: ["ConcurrentBag", "ThreadLocal cache", "handoff queue"]
+    uses: [compare-and-swap]
+  - id: data-pool-sizing
+    kind: MECHANISM
+    name: "풀 크기 산정"
+    category: DATA
+    level: ADVANCED
+    description: "DB 가 실제로 동시에 처리할 수 있는 수(코어 × 2 + 디스크 수 근처)에서 시작해, 리틀의 법칙(동시 사용 = 처리량 × 연결 보유 시간)으로 필요량을 확인한다. 인스턴스 수를 곱한 합이 DB max_connections 를 넘지 않게 한다"
+    synonyms: ["pool sizing", "connections = cores × 2 + spindles", "Little's Law"]
+    code:
+      - { path: seller/feature/src/main/kotlin/com/kgd/seller/infrastructure/config/SellerDataSourceConfig.kt, symbol: "maximum-pool-size`(=3)", note: "폴드 도메인의 원본 · 복제본 풀을 3 으로" }
+    uses: [obs-littles-law]
+    mitigates: [data-max-connections-exceeded]
+  - id: data-acquire-timeout
+    kind: MECHANISM
+    name: "대여 대기 제한"
+    category: DATA
+    level: INTERMEDIATE
+    description: "풀에서 연결을 기다리는 최대 시간(connectionTimeout). 넘으면 예외를 내 요청 스레드가 무한히 쌓이지 않게 한다. 기본 30초는 사용자 요청에 너무 길어 짧게 줄인다"
+    synonyms: ["connectionTimeout", "acquire timeout", "maxWait"]
+    affects: [data-pool-wait-time]
+  - id: data-connection-lifetime
+    kind: MECHANISM
+    name: "커넥션 수명 제한"
+    category: DATA
+    level: INTERMEDIATE
+    description: "쓰지 않은 연결은 idleTimeout 뒤에 줄이고, 모든 연결은 maxLifetime 이 지나면 닫고 새로 만든다. DB · 방화벽이 먼저 연결을 끊기 전에 풀이 먼저 교체하도록 그들의 제한보다 짧게 잡는다"
+    synonyms: ["maxLifetime", "idleTimeout", "wait_timeout"]
+    mitigates: [data-stale-connection]
+  - id: data-connection-keepalive
+    kind: MECHANISM
+    name: "커넥션 keepalive"
+    category: DATA
+    level: INTERMEDIATE
+    description: "쉬고 있는 연결에 주기적으로 가벼운 확인을 보내, 중간 장비가 조용히 끊은 연결을 빌려주기 전에 찾아내고 유휴 끊김도 막는다"
+    synonyms: ["keepaliveTime", "TCP keepalive"]
+    mitigates: [data-stale-connection, net-proxy-idle-timeout]
+  - id: data-connection-validation
+    kind: MECHANISM
+    name: "커넥션 검증"
+    category: DATA
+    level: INTERMEDIATE
+    description: "빌려주기 직전에 연결이 살아 있는지 확인한다(JDBC4 isValid · 테스트 쿼리). 죽은 연결로 요청이 실패하는 것을 막고, 확인 비용이 대여마다 붙는다"
+    synonyms: ["validation", "isValid", "connectionTestQuery", "testOnBorrow"]
+    mitigates: [data-stale-connection]
+  - id: data-connection-leak-detection
+    kind: MECHANISM
+    name: "커넥션 누수 감지"
+    category: DATA
+    level: INTERMEDIATE
+    description: "대여 뒤 정한 시간 안에 반납되지 않으면 빌린 위치의 스택을 로그로 남긴다. 반납을 잊은 코드나 트랜잭션 안의 긴 외부 호출을 찾는다"
+    synonyms: ["leakDetectionThreshold", "leak detection"]
+    mitigates: [data-connection-leak]
+  - id: data-statement-cache
+    kind: MECHANISM
+    name: "Statement 캐시"
+    category: DATA
+    level: ADVANCED
+    description: "연결마다 준비된 SQL 문장을 캐시해 같은 SQL 의 파싱 · 준비 왕복을 되풀이하지 않는다(cachePrepStmts · useServerPrepStmts)"
+    synonyms: ["prepared statement cache", "cachePrepStmts", "useServerPrepStmts"]
+    uses: [data-prepared-statement]
+  - id: data-read-replica-routing
+    kind: MECHANISM
+    name: "읽기 복제본 라우팅"
+    category: DATA
+    level: ADVANCED
+    description: "읽기 전용 트랜잭션은 복제본으로, 쓰기는 원본으로 보낸다. 원본의 부하를 덜지만 방금 쓴 값을 복제본에서 못 볼 수 있다"
+    synonyms: ["read replica", "master/replica routing", "AbstractRoutingDataSource"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/persistence/ReadReplicaRoutingDataSource.kt, symbol: "class ReadReplicaRoutingDataSource", note: "readOnly 트랜잭션이면 REPLICA 로 보낸다" }
+    causes:
+      - { to: data-replication-lag, reason: "복제가 비동기라 원본의 최신 쓰기가 늦게 보인다" }
+    uses:
+      - { to: replication, reason: "읽기 복제본은 원본의 복제로 채워진다" }
+      - { to: data-lazy-connection-acquisition, reason: "트랜잭션 속성이 정해진 뒤에 연결을 골라야 라우팅이 맞는다" }
+      - { to: spring-transaction-synchronization, reason: "readOnly 플래그를 트랜잭션 동기화에서 읽는다" }
+  - id: data-lazy-connection-acquisition
+    kind: MECHANISM
+    name: "커넥션 늦게 잡기"
+    category: DATA
+    level: ADVANCED
+    description: "트랜잭션이 시작돼도 실제 쿼리가 나갈 때까지 연결을 빌리지 않는다. readOnly 여부가 정해진 뒤에 원본 · 복제본을 고르고, 쿼리 없는 트랜잭션은 연결을 아예 쓰지 않는다"
+    synonyms: ["LazyConnectionDataSourceProxy", "lazy acquisition"]
+    code:
+      - { path: seller/feature/src/main/kotlin/com/kgd/seller/infrastructure/config/SellerDataSourceConfig.kt, symbol: "LazyConnectionDataSourceProxy(routingDataSource)", note: "라우팅 데이터소스를 감싼다" }
+    affects: [data-pool-utilization]
+  - id: data-external-pooler
+    kind: MECHANISM
+    name: "외부 커넥션 풀러"
+    category: DATA
+    level: ADVANCED
+    description: "애플리케이션과 DB 사이에 풀을 따로 두어 많은 앱 연결을 적은 DB 연결에 몰아 쓴다(PgBouncer · ProxySQL · RDS Proxy). 트랜잭션 단위로 연결을 돌려쓰면 세션 상태를 쓸 수 없다"
+    synonyms: ["PgBouncer", "ProxySQL", "RDS Proxy", "connection multiplexer"]
+    mitigates: [data-max-connections-exceeded]
+    alternative_to:
+      - { to: connection-pool, reason: "인스턴스가 많아 앱 풀의 합이 DB 한도를 넘을 때 DB 앞에서 모은다" }
+  - id: data-multiplexed-connection
+    kind: MECHANISM
+    name: "다중화 연결"
+    category: NETWORK
+    level: ADVANCED
+    description: "연결 하나로 여러 스레드의 요청을 응답을 기다리지 않고 보내고 응답을 순서대로 돌려준다(Lettuce). 스레드마다 연결을 빌리는 방식(Jedis)과 달리 풀이 거의 필요 없다. 블로킹 명령 · 트랜잭션은 전용 연결이 필요하다"
+    synonyms: ["Lettuce", "multiplexing", "shared connection", "Jedis"]
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/infrastructure/redis/AdsRedisConnection.kt, symbol: "private val connectionFactory: LettuceConnectionFactory", note: "광고 전용 Redis 연결" }
+    alternative_to:
+      - { to: connection-pool, reason: "요청이 짧은 Redis 는 연결 하나를 나눠 쓰는 편이 싸다" }
+    uses:
+      - { to: conc-event-loop, reason: "연결 하나로 여러 요청을 멀티플렉싱한다" }
+  - id: data-reactive-db-driver
+    kind: MECHANISM
+    name: "논블로킹 DB 드라이버"
+    category: CONCURRENCY
+    level: ADVANCED
+    description: "응답을 기다리는 동안 스레드를 붙잡지 않는 DB 드라이버와 그 풀(R2DBC). 이벤트 루프 위에서 블로킹 JDBC 를 부르면 루프가 멈추므로 리액티브 스택에는 이것을 쓴다"
+    synonyms: ["R2DBC", "r2dbc-pool", "reactive driver"]
+    mitigates: [conc-event-loop-blocking]
+    uses:
+      - { to: reactive-streams, reason: "R2DBC 는 리액티브 스트림 규약을 따른다" }
+  - id: data-pool-exhaustion
+    kind: PROBLEM
+    name: "커넥션 풀 고갈"
+    category: DATA
+    level: INTERMEDIATE
+    description: "모든 연결이 빌려 나가 새 요청이 타임아웃까지 기다리는 상태. 느린 쿼리, 긴 트랜잭션, 트랜잭션 안의 외부 호출, 잠금 대기가 흔한 원인이고 진짜 풀 부족은 드물다"
+    synonyms: ["connection pool exhaustion", "Connection is not available"]
+    measured_by: [data-pool-wait-time, data-pool-utilization]
+  - id: data-connection-leak
+    kind: PROBLEM
+    name: "커넥션 누수"
+    category: DATA
+    level: INTERMEDIATE
+    description: "빌린 연결을 돌려주지 않아 풀이 조금씩 줄어드는 상태. 결국 고갈로 이어진다"
+    synonyms: ["connection leak"]
+    causes: [data-pool-exhaustion]
+  - id: data-stale-connection
+    kind: PROBLEM
+    name: "죽은 커넥션"
+    category: DATA
+    level: INTERMEDIATE
+    description: "DB wait_timeout · 방화벽 · 페일오버로 이미 끊긴 연결이 풀에 남아 빌려 나가는 상태. 첫 쿼리가 통신 오류로 실패한다"
+    synonyms: ["stale connection", "Communications link failure", "broken pipe"]
+  - id: data-connection-storm
+    kind: PROBLEM
+    name: "커넥션 폭주"
+    category: DATA
+    level: ADVANCED
+    description: "많은 인스턴스가 동시에 재기동 · 재연결하며 DB 에 한꺼번에 연결을 만드는 상태. 인증 · TLS 비용이 몰려 DB 가 느려지고 다시 타임아웃 · 재연결을 부른다"
+    synonyms: ["connection storm", "thundering herd reconnect"]
+    causes: [data-max-connections-exceeded]
+  - id: data-max-connections-exceeded
+    kind: PROBLEM
+    name: "DB 연결 한도 초과"
+    category: DATA
+    level: INTERMEDIATE
+    description: "인스턴스 수 × 풀 크기의 합이 DB max_connections 를 넘어 새 연결이 거절되는 상태. 오토스케일로 인스턴스가 늘 때 드러난다"
+    synonyms: ["Too many connections", "max_connections"]
   - id: data-pool-wait-time
     kind: METRIC
     name: "커넥션 대기 시간"
     category: DATA
     level: INTERMEDIATE
     description: "요청이 풀에서 연결을 받기까지 기다린 시간. 0 에서 벗어나면 풀 크기보다 트랜잭션 길이부터 본다"
-    synonyms: ["connection acquire time", "hikaricp_connections_acquire"]
+    synonyms: ["connection acquire time", "hikaricp_connections_acquire", "hikaricp_connections_pending"]
+  - id: data-pool-utilization
+    kind: METRIC
+    name: "풀 사용률"
+    category: DATA
+    level: INTERMEDIATE
+    description: "빌려 나간 연결 수를 최대 풀 크기로 나눈 값과 대기 중인 스레드 수. 사용률 100% 에 대기가 붙으면 고갈이다"
+    synonyms: ["hikaricp_connections_active", "hikaricp_connections_idle", "pool saturation"]
 
   # ── 캐시 전략 ───────────────────────────────────────────
   - id: data-caching-strategy
@@ -432,21 +2334,90 @@ concepts:
     name: "캐시 전략"
     category: DATA
     level: INTERMEDIATE
-    description: "자주 읽고 드물게 바뀌는 값을 빠른 저장소에 복사해 둔다. 무엇을 · 얼마나 오래 · 원본이 바뀌면 어떻게 무효화할지를 정한다"
-    questions: ["캐시 TTL 을 길게 잡을 때 치르는 값은 무엇인가"]
-    contains: [caching, data-ttl-expiration, data-stale-cache, data-cache-stampede, cache-hit-rate, redis]
+    description: "자주 읽고 드물게 바뀌는 값을 빠른 저장소에 복사해 둔다. 누가 채우고 누가 쓰는지(패턴), 얼마나 오래 두는지(TTL), 원본이 바뀌면 어떻게 지우는지(무효화), 만료 순간 몰림을 어떻게 막는지를 정한다"
+    questions: ["캐시 TTL 을 길게 잡을 때 치르는 값은 무엇인가", "인기 키가 만료되는 순간 DB 로 몰리는 요청을 어떻게 막는가"]
+    contains: [caching, data-local-cache, data-multi-level-cache, data-cache-invalidation, data-ttl-expiration, data-ttl-jitter, data-single-flight, data-probabilistic-early-expiration, data-negative-caching, data-stale-cache, data-cache-stampede, data-cache-penetration, data-cache-avalanche, cache-hit-rate, redis]
   - id: caching
     kind: MECHANISM
     name: "캐싱"
     category: DATA
     level: BEGINNER
-    description: "원본보다 빠른 저장소(메모리 · Redis)에 결과를 보관해 다시 계산 · 조회하지 않는다. 대표 패턴은 먼저 캐시를 보고 없으면 원본을 읽어 채우는 cache-aside 다"
-    synonyms: ["cache", "cache-aside", "캐시"]
-    code:
-      - { path: analytics/app/src/main/kotlin/com/kgd/analytics/infrastructure/cache/ScoreCacheAdapter.kt, symbol: "class ScoreCacheAdapter(", note: "상품 · 키워드 점수를 Redis 에 캐시" }
+    description: "원본보다 빠른 저장소(메모리 · Redis)에 결과를 보관해 다시 계산 · 조회하지 않는다. 읽기 · 쓰기에서 캐시와 원본을 누가 어떤 순서로 다루는지에 따라 패턴이 나뉜다"
+    synonyms: ["cache", "캐시"]
+    contains: [data-cache-aside, data-read-through, data-write-through, data-write-behind, data-refresh-ahead]
     affects: [cache-hit-rate]
     causes:
       - { to: data-stale-cache, reason: "원본이 바뀌어도 캐시 사본은 만료 전까지 옛 값이다" }
+  - id: data-cache-aside
+    kind: MECHANISM
+    name: "cache-aside"
+    category: DATA
+    level: BEGINNER
+    description: "애플리케이션이 먼저 캐시를 보고, 없으면 원본을 읽어 캐시에 채운다. 쓸 때는 원본을 고치고 캐시를 지운다. 가장 흔한 패턴이고 캐시가 죽어도 원본으로 돈다"
+    synonyms: ["cache-aside", "lazy loading cache", "look-aside"]
+    code:
+      - { path: analytics/app/src/main/kotlin/com/kgd/analytics/infrastructure/cache/ScoreCacheAdapter.kt, symbol: "class ScoreCacheAdapter(", note: "상품 · 키워드 점수를 Redis 에 캐시" }
+  - id: data-read-through
+    kind: MECHANISM
+    name: "read-through"
+    category: DATA
+    level: INTERMEDIATE
+    description: "애플리케이션은 캐시에만 묻고, 없으면 캐시 계층이 원본을 읽어 채운다. 채우는 로직이 캐시 쪽 한 곳에 모인다"
+    synonyms: ["read-through", "loading cache"]
+    alternative_to:
+      - { to: data-cache-aside, reason: "채우는 코드를 호출부마다 두지 않고 캐시 계층에 모은다" }
+  - id: data-write-through
+    kind: MECHANISM
+    name: "write-through"
+    category: DATA
+    level: INTERMEDIATE
+    description: "쓰기를 캐시와 원본에 함께 반영하고 둘 다 끝나면 응답한다. 캐시가 항상 최신이지만 쓰기 지연이 늘고 안 읽을 값까지 캐시에 들어간다"
+    synonyms: ["write-through"]
+    mitigates: [data-stale-cache]
+  - id: data-write-behind
+    kind: MECHANISM
+    name: "write-behind"
+    category: DATA
+    level: ADVANCED
+    description: "캐시에만 쓰고 바로 응답한 뒤 원본에는 모아서 나중에 쓴다. 쓰기가 아주 빠르고 여러 번 쓴 값을 한 번으로 합치지만, 원본에 닿기 전에 캐시가 죽으면 쓰기를 잃는다"
+    synonyms: ["write-behind", "write-back"]
+    alternative_to:
+      - { to: data-write-through, reason: "쓰기 처리량이 중요하고 약간의 유실을 허용하면" }
+  - id: data-refresh-ahead
+    kind: MECHANISM
+    name: "refresh-ahead"
+    category: DATA
+    level: ADVANCED
+    description: "만료가 가까운 인기 키를 요청이 오기 전에 뒤에서 미리 다시 읽어 채운다. 사용자가 캐시 미스를 겪지 않지만 안 읽힐 키까지 새로 고칠 수 있다"
+    synonyms: ["refresh-ahead", "background refresh", "stale-while-revalidate"]
+    mitigates: [data-cache-stampede]
+  - id: data-local-cache
+    kind: MECHANISM
+    name: "로컬 캐시"
+    category: DATA
+    level: INTERMEDIATE
+    description: "애플리케이션 프로세스 메모리 안의 캐시(Caffeine). 네트워크 왕복이 없어 가장 빠르지만 인스턴스마다 따로라 서로 다른 값을 볼 수 있고, 힙을 쓴다"
+    synonyms: ["local cache", "in-process cache", "Caffeine", "@Cacheable"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/discover/GlobalIndicesQuery.kt, symbol: "Caffeine.newBuilder()", note: "글로벌 지수 시세를 프로세스 안에 짧게 캐시" }
+    uses: [lru-cache]
+  - id: data-multi-level-cache
+    kind: MECHANISM
+    name: "다단 캐시"
+    category: DATA
+    level: ADVANCED
+    description: "로컬 캐시(L1) 뒤에 공유 캐시(L2 · Redis)를 두고 둘 다 없을 때만 원본에 간다. 핫 키 부하를 로컬에서 흡수하지만 무효화를 두 층에 전해야 한다"
+    synonyms: ["multi-level cache", "L1/L2 cache", "near cache"]
+    uses: [data-local-cache, data-redis-pubsub]
+    mitigates: [data-hot-key]
+  - id: data-cache-invalidation
+    kind: MECHANISM
+    name: "캐시 무효화"
+    category: DATA
+    level: INTERMEDIATE
+    description: "원본이 바뀌면 캐시를 지우거나 새 값으로 바꾼다. 갱신 대신 삭제가 안전하고, 쓰기 · 삭제 사이에 옛 값이 다시 채워지는 경쟁은 지연 이중 삭제 · 버전 비교로 막는다. 이벤트로 여러 인스턴스에 알린다"
+    synonyms: ["cache invalidation", "cache eviction on write", "delayed double delete"]
+    mitigates: [data-stale-cache]
   - id: data-ttl-expiration
     kind: MECHANISM
     name: "TTL 만료"
@@ -459,6 +2430,40 @@ concepts:
     mitigates: [data-stale-cache]
     causes:
       - { to: data-cache-stampede, reason: "인기 키가 한꺼번에 만료되면 요청이 원본으로 몰린다" }
+  - id: data-ttl-jitter
+    kind: MECHANISM
+    name: "TTL 지터"
+    category: DATA
+    level: INTERMEDIATE
+    description: "TTL 에 무작위 값을 조금 더해 같은 때 채운 키들이 같은 때 만료되지 않게 흩는다"
+    synonyms: ["TTL jitter", "randomized expiry"]
+    uses: [cs-prng]
+    mitigates: [data-cache-avalanche, data-cache-stampede]
+  - id: data-single-flight
+    kind: MECHANISM
+    name: "단일 재계산"
+    category: DATA
+    level: ADVANCED
+    description: "캐시 미스가 동시에 여러 개 오면 하나만 원본을 읽어 채우고 나머지는 그 결과를 기다리거나 옛 값을 받는다. 인스턴스 안에서는 진행 중 요청 공유로, 인스턴스 사이에서는 SET NX 잠금으로 한다"
+    synonyms: ["single flight", "request coalescing", "mutex lock recompute"]
+    uses: [data-redis-set-nx]
+    mitigates: [data-cache-stampede]
+  - id: data-probabilistic-early-expiration
+    kind: MECHANISM
+    name: "확률적 조기 갱신"
+    category: DATA
+    level: ADVANCED
+    description: "만료가 가까워질수록 높아지는 확률로 요청 하나가 만료 전에 미리 다시 계산한다(XFetch). 잠금 없이 재계산을 시간에 흩뜨린다"
+    synonyms: ["XFetch", "probabilistic early recomputation"]
+    mitigates: [data-cache-stampede]
+  - id: data-negative-caching
+    kind: MECHANISM
+    name: "부정 캐싱"
+    category: DATA
+    level: INTERMEDIATE
+    description: "「없음」이라는 결과도 짧은 TTL 로 캐시한다. 존재하지 않는 키를 반복해 묻는 요청이 매번 원본까지 가지 않는다"
+    synonyms: ["negative caching", "null caching"]
+    mitigates: [data-cache-penetration]
   - id: data-stale-cache
     kind: PROBLEM
     name: "캐시 불일치"
@@ -472,16 +2477,176 @@ concepts:
     category: DATA
     level: ADVANCED
     description: "인기 키가 만료된 순간 많은 요청이 동시에 원본을 조회해 DB 가 몰리는 상태. 만료 시각 분산, 한 요청만 재계산하는 잠금으로 막는다"
-    synonyms: ["cache stampede", "thundering herd", "dog-pile"]
+    synonyms: ["cache stampede", "thundering herd", "dog-pile", "hot key expiry"]
+  - id: data-cache-penetration
+    kind: PROBLEM
+    name: "캐시 관통"
+    category: DATA
+    level: INTERMEDIATE
+    description: "존재하지 않는 키를 계속 요청해 캐시가 한 번도 적중하지 않고 모든 요청이 원본으로 가는 상태. 공격이나 잘못된 id 순회에서 생긴다"
+    synonyms: ["cache penetration"]
+  - id: data-cache-avalanche
+    kind: PROBLEM
+    name: "캐시 사태"
+    category: DATA
+    level: INTERMEDIATE
+    description: "많은 키가 한꺼번에 만료되거나 캐시 서버가 통째로 죽어 전체 트래픽이 원본으로 쏟아지는 상태"
+    synonyms: ["cache avalanche", "mass expiry"]
+    causes: [dist-cascading-failure]
+
+  # ═══ 분석용 저장 ═══════════════════════════════════════
+  - id: data-analytical-storage
+    kind: STAGE
+    name: "분석용 저장"
+    category: DATA
+    level: ADVANCED
+    description: "많은 행의 몇 컬럼만 훑어 집계하는 질의를 빠르게 하도록 저장한다. 컬럼 단위로 담아 압축하고, 대량으로 덧붙여 적재하며, 자주 보는 집계는 미리 만들어 둔다. 행 하나를 고치는 일은 비싸다"
+    questions: ["컬럼 지향 저장이 SUM(price) 같은 질의에 수십 배 빠른 이유는 무엇인가", "분석 저장소에 한 건씩 INSERT 하면 안 되는 이유는 무엇인가"]
+    contains: [data-columnar-storage, data-column-compression, data-vectorized-execution, data-mergetree, data-sparse-primary-index, data-materialized-view, data-pre-aggregation, data-olap-point-mutation, clickhouse]
+    uses: [data-oltp, data-olap]
+  - id: data-columnar-storage
+    kind: MECHANISM
+    name: "컬럼 지향 저장"
+    category: DATA
+    level: INTERMEDIATE
+    description: "같은 컬럼의 값끼리 모아 저장한다. 질의가 쓰는 컬럼만 읽고, 비슷한 값이 붙어 있어 압축이 잘 된다. 한 행을 통째로 읽거나 고치려면 컬럼 파일을 전부 건드린다"
+    synonyms: ["column store", "columnar", "column-oriented"]
+    questions: ["컬럼 지향 저장소에서 SELECT * 가 특히 비싼 이유는 무엇인가"]
+    alternative_to:
+      - { to: data-row-oriented-storage, reason: "몇 컬럼을 대량으로 훑는 집계면 컬럼 지향, 행 단위 읽기 · 갱신이면 행 지향" }
+  - id: data-column-compression
+    kind: MECHANISM
+    name: "컬럼 압축"
+    category: DATA
+    level: ADVANCED
+    description: "컬럼 값의 성질에 맞춰 사전 · 델타 · 런렝스 인코딩을 한 뒤 LZ4 · ZSTD 로 압축한다. 디스크에서 읽을 바이트가 줄어 I/O 가 병목인 집계가 빨라진다"
+    synonyms: ["LowCardinality", "delta encoding", "run-length encoding", "LZ4", "ZSTD"]
+    uses: [data-columnar-storage]
+  - id: data-vectorized-execution
+    kind: MECHANISM
+    name: "벡터화 실행"
+    category: DATA
+    level: ADVANCED
+    description: "행 하나씩이 아니라 컬럼 값 수천 개 묶음 단위로 연산한다. 함수 호출 비용이 줄고 CPU 캐시 · SIMD 를 잘 탄다"
+    synonyms: ["vectorized execution", "SIMD", "block processing"]
+    uses: [array]
+  - id: data-mergetree
+    kind: MECHANISM
+    name: "MergeTree"
+    category: DATA
+    level: ADVANCED
+    description: "ClickHouse 의 기본 테이블 엔진. 적재마다 정렬 키 순서로 정렬된 조각(part)을 만들고 뒤에서 조각들을 병합한다. 병합 때 같은 키 행을 합치는 변형(Replacing · Summing · Aggregating)이 있다"
+    synonyms: ["MergeTree", "ReplacingMergeTree", "SummingMergeTree", "part", "ORDER BY key"]
+    code:
+      - { path: engagement/app/src/main/resources/db/migration-clickhouse/V1__recommendation_events.sql, symbol: "ENGINE = MergeTree()", note: "추천 이벤트 원장" }
+    uses: [data-lsm-tree, data-sparse-primary-index]
+  - id: data-sparse-primary-index
+    kind: MECHANISM
+    name: "희소 기본 인덱스"
+    category: DATA
+    level: ADVANCED
+    description: "모든 행이 아니라 수천 행 묶음(granule)마다 첫 정렬 키 하나만 인덱스에 둔다. 인덱스가 메모리에 다 들어가고, 조건에 맞는 묶음만 골라 읽는다. 정렬 키 앞 컬럼이 조건에 있어야 잘 거른다"
+    synonyms: ["sparse index", "granule", "index_granularity", "primary key (ClickHouse)"]
+  - id: data-materialized-view
+    kind: MECHANISM
+    name: "머티리얼라이즈드 뷰"
+    category: DATA
+    level: ADVANCED
+    description: "질의 결과를 테이블로 저장해 둔 뷰. ClickHouse 에서는 원본 테이블에 들어오는 적재마다 변환 · 집계를 돌려 대상 테이블에 쌓는 트리거처럼 동작한다"
+    synonyms: ["materialized view", "MV"]
+    code:
+      - { path: engagement/app/src/main/resources/db/migration-clickhouse/V1__recommendation_events.sql, symbol: "CREATE MATERIALIZED VIEW IF NOT EXISTS analytics.recommendation_score_daily", note: "이벤트 적재 시 일별 점수를 쌓는다" }
+    uses: [data-pre-aggregation]
+  - id: data-pre-aggregation
+    kind: MECHANISM
+    name: "사전 집계"
+    category: DATA
+    level: INTERMEDIATE
+    description: "원본 이벤트를 조회 때마다 집계하지 않고, 적재 시점에 시간 · 차원 단위로 미리 합친 요약 테이블을 만든다. 조회가 빨라지는 대신 미리 정하지 않은 차원으로는 못 자른다"
+    synonyms: ["pre-aggregation", "rollup", "summary table"]
+    code:
+      - { path: engagement/app/src/main/resources/db/migration-clickhouse/V1__recommendation_events.sql, symbol: "ENGINE = SummingMergeTree()", note: "같은 키의 수치를 병합 때 더한다" }
+  - id: data-olap-point-mutation
+    kind: PROBLEM
+    name: "분석 저장소의 행 단위 변경"
+    category: DATA
+    level: ADVANCED
+    description: "컬럼 지향 저장소에서 한 건씩 INSERT · UPDATE · DELETE 하면 조각이 폭증하거나 조각 전체를 다시 쓴다. 모아서 대량으로 적재하고, 변경은 새 버전 행을 덧붙인 뒤 병합에 맡긴다"
+    synonyms: ["too many parts", "ALTER TABLE UPDATE", "mutation"]
+    causes: [data-write-amplification]
+
   # ── 용어 사전 ───────────────────────────────────────────
   - id: data-glossary
     kind: TERM
     name: "데이터 저장 용어 사전"
     category: BASICS
     level: BEGINNER
-    description: "트랜잭션 · 격리 · ORM 을 읽는 데 필요한 말. 단계 · 장치가 아니라 그것을 설명하는 용어를 모은다"
+    description: "데이터 저장을 읽는 데 필요한 말. 단계 · 장치가 아니라 그것을 설명하는 용어를 모은다"
     synonyms: ["glossary", "용어집"]
-    contains: [data-transaction, acid, data-dirty-read, data-non-repeatable-read, data-phantom-read, data-entity, data-persistence-context, data-cardinality]
+    contains: [data-glossary-modeling, data-glossary-transaction, data-glossary-storage, data-glossary-index, data-glossary-orm]
+  - id: data-glossary-modeling
+    kind: TERM
+    name: "모델링 · SQL 용어"
+    category: BASICS
+    level: BEGINNER
+    description: "관계형 모델과 SQL 을 읽는 데 필요한 말"
+    contains: [data-relational-model, data-normal-form, data-er-model, data-surrogate-key, data-natural-key, data-join-types, data-three-valued-logic]
+  - id: data-relational-model
+    kind: TERM
+    name: "관계형 모델"
+    category: DATA
+    level: BEGINNER
+    description: "데이터를 릴레이션(테이블) · 튜플(행) · 속성(컬럼)과 키로 표현하는 모델. 행에는 순서가 없고 키로 식별한다"
+    synonyms: ["relational model", "relation", "tuple", "attribute"]
+  - id: data-normal-form
+    kind: TERM
+    name: "정규형"
+    category: DATA
+    level: INTERMEDIATE
+    description: "테이블이 만족하는 중복 제거 수준. 1NF(원자 값) · 2NF(부분 종속 없음) · 3NF(이행 종속 없음) · BCNF(모든 결정자가 후보 키)"
+    synonyms: ["normal form", "1NF", "2NF", "3NF", "BCNF", "functional dependency"]
+  - id: data-er-model
+    kind: TERM
+    name: "ER 모델"
+    category: DATA
+    level: BEGINNER
+    description: "엔티티 · 속성 · 관계(1:1 · 1:N · N:M)로 데이터 구조를 그리는 설계 표기. 테이블로 옮길 때 N:M 은 연결 테이블이 된다"
+    synonyms: ["ERD", "entity-relationship model", "cardinality ratio"]
+  - id: data-surrogate-key
+    kind: TERM
+    name: "대리 키"
+    category: DATA
+    level: BEGINNER
+    description: "업무 의미 없이 식별만을 위해 만든 키(자동 증가 번호 · UUID). 업무 규칙이 바뀌어도 변하지 않는다"
+    synonyms: ["surrogate key", "artificial key"]
+  - id: data-natural-key
+    kind: TERM
+    name: "자연 키"
+    category: DATA
+    level: BEGINNER
+    description: "업무 데이터 자체로 유일한 값(주민번호 · 이메일 · 사업자번호). 바뀔 수 있고 개인정보일 수 있어 기본 키 대신 유니크 제약으로 둔다"
+    synonyms: ["natural key", "business key"]
+  - id: data-join-types
+    kind: TERM
+    name: "조인 종류"
+    category: DATA
+    level: BEGINNER
+    description: "짝이 없는 행을 어떻게 다루는지에 따른 구분. INNER(짝 있는 것만) · LEFT/RIGHT OUTER(한쪽은 전부, 짝 없으면 NULL) · FULL OUTER · CROSS(모든 조합) · 세미/안티 조인(EXISTS · NOT EXISTS)"
+    synonyms: ["INNER JOIN", "LEFT JOIN", "OUTER JOIN", "CROSS JOIN", "anti-join"]
+  - id: data-three-valued-logic
+    kind: TERM
+    name: "3값 논리"
+    category: DATA
+    level: INTERMEDIATE
+    description: "SQL 의 조건은 참 · 거짓 · 알 수 없음(NULL) 셋 중 하나다. NULL = NULL 은 알 수 없음이라 WHERE 에서 걸러지고, NOT IN 목록에 NULL 이 섞이면 결과가 비어 버린다"
+    synonyms: ["three-valued logic", "NULL semantics", "UNKNOWN"]
+  - id: data-glossary-transaction
+    kind: TERM
+    name: "트랜잭션 · 이상 현상 용어"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "트랜잭션과 격리 이상 현상을 읽는 데 필요한 말"
+    contains: [data-transaction, acid, data-autocommit, data-dirty-read, data-non-repeatable-read, data-phantom-read, data-write-skew, data-lock-escalation]
   - id: data-transaction
     kind: TERM
     name: "트랜잭션"
@@ -497,6 +2662,13 @@ concepts:
     description: "트랜잭션이 지켜야 할 네 성질. 원자성(전부 아니면 전무) · 일관성(제약을 깨지 않음) · 격리성(동시 실행이 서로 간섭하지 않음) · 지속성(커밋되면 장애 뒤에도 남음)"
     synonyms: ["Atomicity", "Consistency", "Isolation", "Durability"]
     questions: ["ACID 의 네 성질 중 WAL 이 직접 책임지는 것은 무엇인가"]
+  - id: data-autocommit
+    kind: TERM
+    name: "자동 커밋"
+    category: DATA
+    level: BEGINNER
+    description: "명시적 트랜잭션이 없으면 문장 하나하나가 각자 커밋되는 모드. 트랜잭션 관리자는 트랜잭션을 열 때 이것을 끄고 끝날 때 되돌린다"
+    synonyms: ["autocommit"]
   - id: data-dirty-read
     kind: TERM
     name: "더티 리드"
@@ -510,7 +2682,7 @@ concepts:
     category: DATA
     level: INTERMEDIATE
     description: "한 트랜잭션 안에서 같은 행을 두 번 읽었는데 그 사이 다른 커밋 때문에 값이 달라지는 것"
-    synonyms: ["non-repeatable read"]
+    synonyms: ["non-repeatable read", "read skew"]
   - id: data-phantom-read
     kind: TERM
     name: "팬텀 읽기"
@@ -518,6 +2690,125 @@ concepts:
     level: INTERMEDIATE
     description: "같은 조건으로 두 번 조회했는데 그 사이 다른 커밋이 행을 넣거나 지워 결과 행 집합이 달라지는 것"
     synonyms: ["phantom read"]
+  - id: data-write-skew
+    kind: TERM
+    name: "쓰기 왜곡"
+    category: DATA
+    level: ADVANCED
+    description: "두 트랜잭션이 같은 조건을 읽고 서로 다른 행을 고쳐, 각자는 규칙을 지켰는데 합친 결과는 규칙을 깨는 것(당직 의사가 둘 다 빠지는 예). 스냅샷 격리에서도 생긴다"
+    synonyms: ["write skew"]
+  - id: data-lock-escalation
+    kind: TERM
+    name: "잠금 확대"
+    category: DATA
+    level: ADVANCED
+    description: "행 잠금이 너무 많아지면 DB 가 테이블 잠금으로 바꿔 관리 비용을 줄이는 것(SQL Server 등). InnoDB 는 잠금을 비트맵으로 들고 있어 확대하지 않는다"
+    synonyms: ["lock escalation"]
+  - id: data-glossary-storage
+    kind: TERM
+    name: "저장 · 입출력 용어"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "저장 엔진과 디스크 입출력을 읽는 데 필요한 말"
+    contains: [data-page, data-dirty-page, data-lsn, data-sequential-random-io, data-oltp, data-olap]
+  - id: data-page
+    kind: TERM
+    name: "페이지"
+    category: DATA
+    level: INTERMEDIATE
+    description: "DB 가 디스크와 메모리 사이에 주고받는 최소 단위(InnoDB 16KB). 행 하나를 읽어도 그 행이 든 페이지 전체를 읽는다"
+    synonyms: ["page", "block", "innodb_page_size"]
+  - id: data-dirty-page
+    kind: TERM
+    name: "더티 페이지"
+    category: DATA
+    level: INTERMEDIATE
+    description: "메모리에서 고쳐졌지만 아직 디스크에 내려가지 않은 페이지. 체크포인트 · writeback 이 내린다. OS 페이지 캐시에도 같은 개념이 있어 dirty_ratio 를 넘으면 쓰기가 멈춘다"
+    synonyms: ["dirty page", "writeback", "vm.dirty_ratio"]
+  - id: data-lsn
+    kind: TERM
+    name: "LSN"
+    category: DATA
+    level: ADVANCED
+    description: "로그 순번. redo 로그에서 각 변경의 위치를 나타내는 증가 값이다. 페이지마다 마지막으로 반영된 LSN 을 적어 두어 복구 때 어디부터 다시 적용할지 안다"
+    synonyms: ["Log Sequence Number"]
+  - id: data-sequential-random-io
+    kind: TERM
+    name: "순차 · 랜덤 I/O"
+    category: DATA
+    level: INTERMEDIATE
+    description: "붙어 있는 블록을 이어 읽는 순차 I/O 는 대역폭(MB/s)이 한계고, 흩어진 작은 블록을 읽는 랜덤 I/O 는 요청 수(IOPS)가 한계다. 같은 양이라도 랜덤이 수십~수백 배 느리다"
+    synonyms: ["sequential I/O", "random I/O"]
+  - id: data-oltp
+    kind: TERM
+    name: "OLTP"
+    category: DATA
+    level: BEGINNER
+    description: "짧은 트랜잭션이 몇 행을 읽고 고치는 온라인 업무 처리. 주문 · 결제 · 재고가 여기다. 행 지향 관계형 DB 가 맞다"
+    synonyms: ["Online Transaction Processing"]
+  - id: data-olap
+    kind: TERM
+    name: "OLAP"
+    category: DATA
+    level: BEGINNER
+    description: "많은 행을 훑어 집계하는 분석 처리. 대시보드 · 리포트 · 추천 점수 계산이 여기다. 컬럼 지향 저장소가 맞다"
+    synonyms: ["Online Analytical Processing"]
+  - id: data-glossary-index
+    kind: TERM
+    name: "인덱스 · 실행 계획 용어"
+    category: BASICS
+    level: INTERMEDIATE
+    description: "인덱스 설계와 실행 계획을 읽는 데 필요한 말"
+    contains: [data-cardinality, data-selectivity, data-fanout, data-sargable, data-leftmost-prefix, data-access-type]
+  - id: data-cardinality
+    kind: TERM
+    name: "카디널리티"
+    category: DATA
+    level: INTERMEDIATE
+    description: "컬럼 값의 서로 다른 개수. 높을수록 인덱스가 행을 잘 걸러 낸다"
+    synonyms: ["cardinality"]
+  - id: data-selectivity
+    kind: TERM
+    name: "선택도"
+    category: DATA
+    level: INTERMEDIATE
+    description: "조건을 만족하는 행의 비율. 낮을수록(조금만 남길수록) 인덱스가 이득이고, 대략 전체의 20~30% 를 넘게 남기면 옵티마이저는 풀스캔을 고른다"
+    synonyms: ["selectivity", "filter factor"]
+  - id: data-fanout
+    kind: TERM
+    name: "팬아웃"
+    category: DATA
+    level: ADVANCED
+    description: "B-트리 노드 하나가 가리키는 자식 수. 페이지 크기 ÷ (키 길이 + 포인터)로 정해지고, 팬아웃이 수백이면 수억 행도 높이 3~4 로 찾는다. 키가 길면 팬아웃이 줄어 트리가 깊어진다"
+    synonyms: ["fanout", "branching factor"]
+  - id: data-sargable
+    kind: TERM
+    name: "SARGable 조건"
+    category: DATA
+    level: INTERMEDIATE
+    description: "인덱스 범위 탐색에 쓸 수 있는 모양의 조건. 컬럼을 가공하지 않고 상수와 비교해야 한다(WHERE created_at >= ? 는 되고 WHERE DATE(created_at) = ? 는 안 된다)"
+    synonyms: ["SARGable", "Search ARGument ABLE"]
+  - id: data-leftmost-prefix
+    kind: TERM
+    name: "최좌측 접두 규칙"
+    category: DATA
+    level: INTERMEDIATE
+    description: "복합 인덱스 (a, b, c) 는 a, (a, b), (a, b, c) 조건에만 탄다. 앞 컬럼을 건너뛴 b 만의 조건은 인덱스 정렬 순서를 쓸 수 없다. 범위 조건이 나온 컬럼 뒤는 정렬에 못 쓴다"
+    synonyms: ["leftmost prefix rule"]
+  - id: data-access-type
+    kind: TERM
+    name: "접근 방식"
+    category: DATA
+    level: INTERMEDIATE
+    description: "EXPLAIN 의 type 열. const(기본 키 1행) · eq_ref · ref(등치) · range(범위) · index(인덱스 전체) · ALL(테이블 전체) 순으로 나빠진다"
+    synonyms: ["EXPLAIN type", "const", "ref", "range", "index", "ALL"]
+  - id: data-glossary-orm
+    kind: TERM
+    name: "ORM 용어"
+    category: BASICS
+    level: BEGINNER
+    description: "JPA 로 객체와 테이블을 오가는 데 필요한 말"
+    contains: [data-entity, data-persistence-context]
   - id: data-entity
     kind: TERM
     name: "엔티티(JPA)"
@@ -530,12 +2821,5 @@ concepts:
     name: "영속성 컨텍스트"
     category: DATA
     level: INTERMEDIATE
-    description: "트랜잭션 동안 읽은 엔티티를 담아 두는 1차 캐시. 같은 id 는 같은 객체로 돌려주고, 커밋 때 바뀐 필드를 찾아 UPDATE 를 만든다(변경 감지)"
-    synonyms: ["persistence context", "1차 캐시", "dirty checking"]
-  - id: data-cardinality
-    kind: TERM
-    name: "카디널리티"
-    category: DATA
-    level: INTERMEDIATE
-    description: "컬럼 값의 서로 다른 개수. 높을수록 인덱스가 행을 잘 걸러 낸다"
-    synonyms: ["cardinality", "선택도"]
+    description: "트랜잭션 동안 읽은 엔티티를 담아 두는 1차 캐시. 같은 id 는 같은 객체로 돌려주고, 커밋 때 바뀐 필드를 찾아 UPDATE 를 만든다"
+    synonyms: ["persistence context", "1차 캐시", "first-level cache"]

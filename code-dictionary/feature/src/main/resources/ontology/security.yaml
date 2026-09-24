@@ -8,9 +8,597 @@ concepts:
     name: "보안"
     category: SECURITY
     level: BEGINNER
-    description: "누가 요청했는지 확인하고(인증), 무엇을 해도 되는지 가르고(인가), 저장한 값을 지키고, 웹 공격과 남용을 막는 일. 단계마다 무엇을 막는 장치인지로 읽는다"
+    description: "누가 요청했는지 확인하고(인증), 무엇을 해도 되는지 가르고(인가), 저장한 값을 지키고, 웹 공격과 남용을 막는 일. 암호 기초 → 신원 · 접근 제어 → 애플리케이션 방어 → 보안 운영 순으로 읽는다"
     synonyms: ["application security", "애플리케이션 보안"]
-    contains: [sec-authentication, sec-authorization, sec-data-protection, sec-web-attack-defense, sec-abuse-control, security-glossary]
+    contains: [sec-cryptography, sec-identity-access, sec-application-defense, sec-security-operations, security-glossary]
+
+  # ════════════════════════════════════════════════════════════
+  # 암호 기초
+  # ════════════════════════════════════════════════════════════
+  - id: sec-cryptography
+    kind: DOMAIN
+    name: "암호 기초"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "기밀성(암호화) · 무결성과 진위(해시 · MAC · 서명) · 공개키 신뢰 · 비밀번호 저장 · 키 관리를 이루는 암호 원시와 그 조합. 알고리즘보다 키를 어떻게 만들고 보관하고 바꾸는지가 실제 보안 수준을 정한다"
+    synonyms: ["cryptography", "crypto primitives", "암호 원시"]
+    contains: [sec-data-protection, sec-integrity, sec-public-key-crypto, sec-password-storage, sec-key-management]
+
+  # ── 기밀성 보호 ──
+  - id: sec-data-protection
+    kind: STAGE
+    name: "기밀성 보호"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "저장하거나 전송하는 값이 새도 읽히지 않게 암호화한다. 되돌려 읽어야 하면 암호화, 대조만 하면 되면 해싱을 고르고, 암호화는 변조까지 잡는 AEAD 로 한다"
+    synonyms: ["데이터 보호", "confidentiality"]
+    questions: ["암호화와 해싱은 각각 언제 고르나", "암호화만 하고 무결성을 확인하지 않으면 무엇이 뚫리나"]
+    contains: [encryption, sec-aes, sec-block-cipher-mode, sec-aead, sec-nonce-reuse, sec-ecb-pattern-leak, sec-padding-oracle]
+    flows_to: [sec-integrity]
+  - id: encryption
+    kind: MECHANISM
+    name: "암호화"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "키로 데이터를 읽을 수 없게 바꾸고 같은(대칭) 또는 짝(비대칭) 키로 되돌리는 기법. 원문을 다시 읽어야 할 때 쓰고, 키 보관이 곧 보안 수준이다"
+    synonyms: ["encryption"]
+    questions: ["대칭키와 비대칭키는 각각 어디에 쓰나", "비밀번호를 암호화가 아니라 해싱하는 이유는 무엇인가"]
+    contains: [sec-symmetric-encryption, sec-asymmetric-encryption, sec-hybrid-encryption]
+    uses: [sec-term-secret-key, sec-term-plaintext-ciphertext]
+  - id: sec-symmetric-encryption
+    kind: MECHANISM
+    name: "대칭키 암호화"
+    category: SECURITY
+    level: BEGINNER
+    description: "암호화와 복호화에 같은 키를 쓴다. 빠르고 데이터 크기에 제약이 없지만, 그 키를 상대에게 안전하게 전하는 문제가 남는다"
+    synonyms: ["symmetric encryption", "대칭키", "secret-key cryptography"]
+    uses: [sec-aes, sec-aead]
+    alternative_to:
+      - { to: sec-asymmetric-encryption, reason: "훨씬 빠르지만 키를 미리 나눠 가져야 한다" }
+  - id: sec-asymmetric-encryption
+    kind: MECHANISM
+    name: "비대칭키 암호화"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "공개키로 암호화하고 짝인 개인키로만 푼다. 키를 미리 나누지 않아도 되지만 느리고 평문 길이 제한이 있어 큰 데이터 대신 대칭키를 감싸는 데 쓴다"
+    synonyms: ["asymmetric encryption", "public-key encryption", "비대칭키", "RSA-OAEP"]
+    uses: [sec-rsa, sec-term-public-private-key]
+  - id: sec-hybrid-encryption
+    kind: MECHANISM
+    name: "하이브리드 암호화"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "데이터는 대칭키로 암호화하고 그 대칭키만 비대칭키(또는 키 합의)로 전한다. 대칭의 속도와 비대칭의 키 분배를 함께 얻는 방식이고 TLS · 봉투 암호화가 이 모양이다"
+    synonyms: ["hybrid encryption", "KEM-DEM"]
+    uses: [sec-symmetric-encryption, sec-asymmetric-encryption, sec-diffie-hellman]
+  - id: sec-aes
+    kind: MECHANISM
+    name: "AES"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "128비트 블록을 128 · 192 · 256비트 키로 치환 · 순열 라운드를 반복해 암호화하는 대칭 블록 암호 표준. 블록 하나만 다루므로 긴 데이터에는 운용 모드를 함께 고른다"
+    synonyms: ["Advanced Encryption Standard", "AES-256", "Rijndael"]
+    questions: ["AES 만으로 긴 메시지를 암호화할 수 없는 이유는 무엇인가"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/security/AesUtil.kt, symbol: "private const val KEY_SIZE = 32 // 256-bit", note: "256비트 키로 고정" }
+  - id: sec-block-cipher-mode
+    kind: MECHANISM
+    name: "블록 암호 운용 모드"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "블록 암호를 여러 블록에 이어 적용하는 방식. 블록끼리 어떻게 엮는지와 IV 를 어떻게 쓰는지가 모드마다 다르고, 무결성은 따로 붙여야 하는 모드가 대부분이다"
+    synonyms: ["mode of operation"]
+    contains: [sec-mode-ecb, sec-mode-cbc, sec-mode-ctr]
+    uses: [sec-term-iv-nonce]
+  - id: sec-mode-ecb
+    kind: MECHANISM
+    name: "ECB 모드"
+    category: SECURITY
+    level: BEGINNER
+    description: "블록마다 독립적으로 같은 키로 암호화한다. 같은 평문 블록이 같은 암호문이 되어 패턴이 그대로 드러나므로 쓰지 않는다"
+    synonyms: ["Electronic Codebook"]
+    causes: [sec-ecb-pattern-leak]
+  - id: sec-mode-cbc
+    kind: MECHANISM
+    name: "CBC 모드"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "앞 블록의 암호문을 다음 평문 블록에 XOR 해 엮는다. 예측 불가능한 IV 와 패딩이 필요하고, 무결성 검사 없이 복호화 오류를 드러내면 패딩 오라클 공격이 된다"
+    synonyms: ["Cipher Block Chaining"]
+    causes: [sec-padding-oracle]
+  - id: sec-mode-ctr
+    kind: MECHANISM
+    name: "CTR 모드"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "논스와 카운터를 암호화한 키스트림을 평문에 XOR 해 블록 암호를 스트림 암호처럼 쓴다. 병렬화가 되고 패딩이 없지만, 같은 키에서 논스가 겹치면 두 평문의 XOR 이 새어 나온다"
+    synonyms: ["Counter mode"]
+    causes: [sec-nonce-reuse]
+  - id: sec-aead
+    kind: MECHANISM
+    name: "AEAD"
+    category: SECURITY
+    level: ADVANCED
+    description: "암호화와 무결성 검증을 한 번에 하는 인증 암호화. 암호문과 함께 인증 태그를 내고, 암호화하지 않는 연관 데이터(AAD)까지 태그에 묶어 문맥이 바뀐 암호문을 거부한다"
+    synonyms: ["Authenticated Encryption with Associated Data", "인증 암호화"]
+    questions: ["AAD 에는 무엇을 넣나", "AES-CBC + HMAC 을 직접 조합하는 것보다 AEAD 가 나은 이유는 무엇인가"]
+    code:
+      - { path: seller/feature/src/main/kotlin/com/kgd/seller/infrastructure/crypto/AesGcmAccountCipher.kt, symbol: "updateAAD(\"seller-account:v$keyVersion\".toByteArray(Charsets.UTF_8))", note: "용도 · 키 버전을 AAD 로 묶어 다른 문맥의 암호문을 거부한다" }
+    contains: [sec-aes-gcm, sec-chacha20-poly1305, sec-aes-gcm-siv]
+    uses: [sec-term-authentication-tag, sec-term-iv-nonce]
+    mitigates: [sec-padding-oracle]
+    alternative_to:
+      - { to: sec-block-cipher-mode, reason: "기밀성만 주는 모드에 MAC 을 손으로 붙이는 대신 한 번에 준다" }
+  - id: sec-aes-gcm
+    kind: MECHANISM
+    name: "AES-GCM"
+    category: SECURITY
+    level: ADVANCED
+    description: "CTR 모드 암호화에 GHASH 인증을 붙인 AEAD. 하드웨어 가속으로 빠르지만 같은 키에서 96비트 IV 가 한 번이라도 겹치면 기밀성과 인증 키가 함께 무너진다"
+    synonyms: ["Galois/Counter Mode", "AES/GCM/NoPadding"]
+    questions: ["GCM 에서 IV 를 랜덤으로 뽑을 때 한 키로 몇 번까지 안전한가"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/security/AesUtil.kt, symbol: "private const val ALGORITHM = \"AES/GCM/NoPadding\"", note: "12바이트 IV + 128비트 태그" }
+    uses: [sec-aes, sec-mode-ctr]
+    causes: [sec-nonce-reuse]
+  - id: sec-chacha20-poly1305
+    kind: MECHANISM
+    name: "ChaCha20-Poly1305"
+    category: SECURITY
+    level: ADVANCED
+    description: "ChaCha20 스트림 암호와 Poly1305 MAC 을 묶은 AEAD. AES 하드웨어 가속이 없는 모바일 · 저사양 기기에서 AES-GCM 보다 빠르고 타이밍 누설에 강하다"
+    synonyms: ["ChaCha20", "XChaCha20-Poly1305"]
+    alternative_to:
+      - { to: sec-aes-gcm, reason: "AES-NI 가 없는 환경에서 더 빠르고 상수 시간 구현이 쉽다" }
+  - id: sec-aes-gcm-siv
+    kind: MECHANISM
+    name: "AES-GCM-SIV"
+    category: SECURITY
+    level: ADVANCED
+    description: "평문에서 합성 IV 를 만들어 논스가 겹쳐도 같은 평문인지만 드러나고 키는 무너지지 않는 논스 오용 내성 AEAD. 논스 유일성을 보장하기 어려운 분산 환경에서 고른다"
+    synonyms: ["AES-SIV", "nonce-misuse-resistant AEAD"]
+    mitigates: [sec-nonce-reuse]
+    alternative_to:
+      - { to: sec-aes-gcm, reason: "조금 느린 대신 논스 재사용이 치명적이지 않다" }
+  - id: sec-nonce-reuse
+    kind: PROBLEM
+    name: "논스 재사용"
+    category: SECURITY
+    level: ADVANCED
+    description: "같은 키로 같은 IV · 논스를 두 번 쓰는 상태. CTR · GCM 에서는 두 평문의 XOR 이 드러나고 GCM 은 인증 키까지 복원돼 위조가 가능해진다"
+    synonyms: ["nonce reuse", "IV reuse", "forbidden attack"]
+    questions: ["랜덤 IV 로도 논스 충돌이 날 수 있는 이유는 무엇인가"]
+  - id: sec-ecb-pattern-leak
+    kind: PROBLEM
+    name: "ECB 패턴 노출"
+    category: SECURITY
+    level: BEGINNER
+    description: "같은 평문 블록이 같은 암호문 블록으로 바뀌어 원문의 구조 · 반복이 암호문에서 보이는 상태. 「ECB 펭귄」 그림이 대표 예다"
+    synonyms: ["ECB penguin"]
+  - id: sec-padding-oracle
+    kind: PROBLEM
+    name: "패딩 오라클"
+    category: SECURITY
+    level: ADVANCED
+    description: "서버가 복호화 뒤 패딩이 틀렸는지를 오류 메시지나 응답 시간으로 알려 주면, 공격자가 그 신호만으로 암호문을 한 바이트씩 복원하는 공격"
+    synonyms: ["padding oracle attack", "POODLE"]
+
+  # ── 무결성 · 진위 확인 ──
+  - id: sec-integrity
+    kind: STAGE
+    name: "무결성 · 진위 확인"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "값이 바뀌지 않았는지(해시), 비밀을 아는 쪽이 만들었는지(MAC), 특정 개인키 소유자가 만들었는지(서명)를 확인한다. 검증하는 쪽이 누구인지에 따라 셋 중 하나를 고른다"
+    questions: ["MAC 과 디지털 서명은 각각 누가 검증할 수 있나"]
+    contains: [hashing, sec-mac, sec-digital-signature, sec-constant-time-comparison, sec-length-extension-attack, sec-timing-attack]
+    flows_to: [sec-public-key-crypto]
+  - id: hashing
+    kind: MECHANISM
+    name: "해싱"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "임의 길이 값을 고정 길이 값으로 바꾸는 단방향 함수. 원문을 복원하지 않고 같은지만 대조할 때 쓴다. 값의 공간이 좁으면 사전 대입으로 되돌려진다"
+    synonyms: ["hash", "cryptographic hash"]
+    questions: ["해시에 솔트나 키를 섞는 이유는 무엇인가"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/security/TokenKeys.kt, symbol: "fun blacklist(token: String): String", note: "토큰 원문 대신 SHA-256 을 Redis 키로 쓴다" }
+    contains: [sec-sha-2, sec-sha-3]
+    uses: [sec-term-collision-resistance]
+    causes: [sec-dictionary-attack]
+  - id: sec-sha-2
+    kind: MECHANISM
+    name: "SHA-2"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "Merkle-Damgård 구조의 해시 계열(SHA-256 · SHA-512). 지금 가장 널리 쓰는 표준이지만 내부 상태를 그대로 출력해 H(키 ‖ 메시지) 꼴로 MAC 을 만들면 길이 확장 공격을 당한다"
+    synonyms: ["SHA-256", "SHA-512"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/token/policy/VisitorHash.kt, symbol: "MessageDigest.getInstance(\"SHA-256\").digest(visitorId.toByteArray())", note: "방문자 식별값을 SHA-256 으로 줄인다" }
+    causes: [sec-length-extension-attack]
+  - id: sec-sha-3
+    kind: MECHANISM
+    name: "SHA-3"
+    category: SECURITY
+    level: ADVANCED
+    description: "스펀지 구조(Keccak)의 해시 표준. 내부 상태 일부만 출력해 길이 확장 공격에 구조적으로 강하고, SHA-2 가 깨질 때를 대비한 다른 설계의 대안이다"
+    synonyms: ["Keccak", "SHAKE"]
+    alternative_to:
+      - { to: sec-sha-2, reason: "다른 내부 구조라 SHA-2 계열이 깨져도 함께 무너지지 않는다" }
+  - id: sec-mac
+    kind: MECHANISM
+    name: "메시지 인증 코드"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "비밀 키와 메시지로 짧은 태그를 만들어, 같은 키를 가진 쪽이 메시지가 바뀌지 않았고 키 소유자가 만들었음을 확인한다. 검증자도 같은 키를 가지므로 제3자 증명은 안 된다"
+    synonyms: ["MAC", "Message Authentication Code", "GMAC", "KMAC"]
+    contains: [sec-hmac]
+    uses: [sec-term-secret-key]
+    alternative_to:
+      - { to: sec-digital-signature, reason: "빠르고 짧지만 검증자도 같은 키로 위조할 수 있어 부인 방지가 없다" }
+  - id: sec-hmac
+    kind: MECHANISM
+    name: "HMAC"
+    category: SECURITY
+    level: ADVANCED
+    description: "비밀 키를 섞어 두 번 해시하는 MAC. 키 없이는 같은 값을 만들 수 없어 좁은 값 공간도 사전 대입으로 되돌릴 수 없다. 서명 토큰 · 웹훅 · 소셜 식별값 가명처리에 쓴다"
+    synonyms: ["Hash-based Message Authentication Code", "HmacSHA256", "keyed hash"]
+    questions: ["단순 SHA-256 대신 HMAC 을 쓰는 이유는 무엇인가", "HMAC 키를 잃으면 무엇이 불가능해지나"]
+    code:
+      - { path: auth/app/src/main/kotlin/com/kgd/auth/infrastructure/security/SubjectHasher.kt, symbol: "class SubjectHasher(", note: "제공자:sub 를 HmacSHA256 으로 가려 member 로 넘긴다" }
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/token/policy/ServeTokenSigner.kt, symbol: "class ServeTokenSigner(", note: "광고 노출 토큰의 12개 값을 HMAC 으로 서명한다" }
+    uses: [sec-term-secret-key, sec-sha-2]
+    mitigates: [sec-dictionary-attack, sec-length-extension-attack]
+  - id: sec-digital-signature
+    kind: MECHANISM
+    name: "디지털 서명"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "개인키로 메시지 해시에 서명하고 누구나 공개키로 검증한다. 검증자가 위조할 수 없어 발급자와 검증자가 다른 조직일 때(JWKS · 인증서 · 코드 서명) 쓴다"
+    synonyms: ["digital signature", "RS256", "ES256"]
+    questions: ["서명을 검증하는 쪽이 개인키를 갖지 않아도 되는 이유는 무엇인가"]
+    contains: [sec-rsa-pss, sec-ecdsa, sec-eddsa]
+    uses: [hashing, sec-term-public-private-key]
+  - id: sec-rsa-pss
+    kind: MECHANISM
+    name: "RSA-PSS"
+    category: SECURITY
+    level: ADVANCED
+    description: "무작위 솔트를 섞는 RSA 서명 패딩. 옛 PKCS#1 v1.5 서명보다 안전성 증명이 있어 새 설계에서 고른다(PS256)"
+    synonyms: ["PS256", "Probabilistic Signature Scheme"]
+    uses: [sec-rsa]
+  - id: sec-ecdsa
+    kind: MECHANISM
+    name: "ECDSA"
+    category: SECURITY
+    level: ADVANCED
+    description: "타원 곡선(P-256) 위의 서명. RSA 보다 키 · 서명이 짧지만 서명마다 쓰는 난수 k 가 겹치거나 치우치면 개인키가 복원된다"
+    synonyms: ["ES256", "Elliptic Curve DSA"]
+    uses: [sec-ecc, sec-csprng]
+  - id: sec-eddsa
+    kind: MECHANISM
+    name: "EdDSA · Ed25519"
+    category: SECURITY
+    level: ADVANCED
+    description: "Edwards 곡선 위의 결정적 서명. 서명 난수를 메시지에서 유도해 난수 실수로 키가 새지 않고 빠르다"
+    synonyms: ["Ed25519", "EdDSA"]
+    uses: [sec-ecc]
+    alternative_to:
+      - { to: sec-ecdsa, reason: "서명 난수를 결정적으로 만들어 난수 사고가 없다" }
+  - id: sec-constant-time-comparison
+    kind: MECHANISM
+    name: "상수 시간 비교"
+    category: SECURITY
+    level: ADVANCED
+    description: "두 바이트열을 첫 불일치에서 멈추지 않고 끝까지 비교해 걸린 시간이 내용과 무관하게 한다. MAC · 토큰 · 웹훅 비밀을 비교할 때 == 대신 쓴다"
+    synonyms: ["constant-time compare", "MessageDigest.isEqual"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/token/policy/ServeTokenSigner.kt, symbol: "if (!MessageDigest.isEqual(mac(key, payload), signature)) return null", note: "서명 비교를 상수 시간으로" }
+      - { path: payment/feature/src/main/kotlin/com/kgd/payment/presentation/webhook/controller/TossWebhookController.kt, symbol: "!MessageDigest.isEqual(secret, presented.toByteArray())", note: "웹훅 비밀 헤더를 상수 시간으로 대조" }
+    mitigates: [sec-timing-attack]
+  - id: sec-length-extension-attack
+    kind: PROBLEM
+    name: "길이 확장 공격"
+    category: SECURITY
+    level: ADVANCED
+    description: "H(비밀 ‖ 메시지) 값만 알면 비밀을 모른 채 뒤에 데이터를 덧붙인 메시지의 올바른 해시를 만드는 공격. Merkle-Damgård 해시로 MAC 을 손수 만들 때 생긴다"
+    synonyms: ["length extension attack"]
+  - id: sec-timing-attack
+    kind: PROBLEM
+    name: "타이밍 공격"
+    category: SECURITY
+    level: ADVANCED
+    description: "비교 · 연산에 걸린 시간 차이로 비밀 값을 한 바이트씩 알아내는 부채널 공격. 첫 불일치에서 반환하는 문자열 비교가 대표 원인이다"
+    synonyms: ["timing attack", "side-channel attack", "부채널 공격"]
+
+  # ── 공개키 암호 · 신뢰 ──
+  - id: sec-public-key-crypto
+    kind: STAGE
+    name: "공개키 암호 · 신뢰"
+    category: SECURITY
+    level: ADVANCED
+    description: "만난 적 없는 상대와 키를 합의하고, 그 공개키가 정말 그 상대의 것인지 인증서 체인으로 믿는다. 양자 컴퓨터가 깨뜨릴 수 있는 부분을 교체할 준비도 여기에 든다"
+    questions: ["공개키만 있으면 상대를 믿을 수 있나 — 무엇이 더 필요한가"]
+    contains: [sec-rsa, sec-ecc, sec-diffie-hellman, sec-post-quantum-crypto, sec-harvest-now-decrypt-later]
+    uses:
+      - { to: net-pki, reason: "공개키를 누구의 것으로 믿을지는 네트워크 도메인의 인증서 체인 검증이 정한다" }
+  - id: sec-rsa
+    kind: MECHANISM
+    name: "RSA"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "큰 수의 소인수분해가 어렵다는 데 기댄 공개키 방식. 암호화(OAEP)와 서명(PSS)에 쓰고, 2048비트 이상을 쓰며 패딩 없는 교과서 RSA 는 쓰지 않는다"
+    synonyms: ["Rivest–Shamir–Adleman", "RSA-2048"]
+    alternative_to:
+      - { to: sec-ecc, reason: "검증은 빠르지만 같은 보안 강도에 키가 훨씬 길다" }
+  - id: sec-ecc
+    kind: MECHANISM
+    name: "타원 곡선 암호"
+    category: SECURITY
+    level: ADVANCED
+    description: "타원 곡선 위 이산 로그 문제에 기댄 공개키 방식. 256비트 키가 RSA 3072비트와 비슷한 강도라 키 · 서명이 짧고 빠르다"
+    synonyms: ["ECC", "Elliptic Curve Cryptography", "P-256", "Curve25519"]
+  - id: sec-diffie-hellman
+    kind: MECHANISM
+    name: "Diffie-Hellman 키 합의"
+    category: SECURITY
+    level: ADVANCED
+    description: "양쪽이 공개 값만 주고받아 도청자가 모르는 같은 비밀을 계산한다. 연결마다 새 임시 키(ECDHE)를 쓰면 나중에 장기 키가 새도 과거 트래픽이 풀리지 않는다"
+    synonyms: ["DH", "ECDH", "ECDHE", "X25519", "key exchange", "키 교환"]
+    questions: ["임시(ephemeral) 키 합의가 전방 비밀성을 주는 이유는 무엇인가"]
+    uses: [sec-ecc, sec-term-forward-secrecy]
+  - id: sec-post-quantum-crypto
+    kind: MECHANISM
+    name: "양자 내성 암호"
+    category: SECURITY
+    level: ADVANCED
+    description: "양자 컴퓨터(Shor 알고리즘)가 깨는 RSA · ECC 대신 격자 · 해시 기반 문제에 기댄 알고리즘. 키 합의는 ML-KEM, 서명은 ML-DSA 가 NIST 표준이다"
+    synonyms: ["PQC", "Post-Quantum Cryptography", "ML-KEM", "Kyber", "ML-DSA", "Dilithium", "SLH-DSA", "SPHINCS+", "Falcon"]
+    contains: [sec-hybrid-key-exchange]
+    mitigates: [sec-harvest-now-decrypt-later]
+  - id: sec-hybrid-key-exchange
+    kind: MECHANISM
+    name: "하이브리드 키 합의"
+    category: SECURITY
+    level: ADVANCED
+    description: "고전 키 합의(X25519)와 양자 내성 KEM(ML-KEM)을 함께 돌려 두 비밀을 섞는다. 둘 중 하나만 버텨도 안전해 전환기에 쓴다"
+    synonyms: ["X25519MLKEM768", "hybrid TLS"]
+    uses: [sec-diffie-hellman]
+  - id: sec-harvest-now-decrypt-later
+    kind: PROBLEM
+    name: "지금 수집 · 나중 해독"
+    category: SECURITY
+    level: ADVANCED
+    description: "오늘 도청한 암호문을 쌓아 두었다가 양자 컴퓨터가 나오면 푸는 위협. 오래 비밀이어야 하는 데이터는 지금부터 양자 내성 키 합의가 필요하다"
+    synonyms: ["HNDL", "Harvest Now Decrypt Later"]
+
+  # ── 비밀번호 저장 ──
+  - id: sec-password-storage
+    kind: STAGE
+    name: "비밀번호 저장"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "비밀번호를 되돌릴 수 없고 대입이 느린 형태로 저장한다. DB 가 통째로 새도 원문을 알아내는 비용이 사용자 수 × 추측 수 × 해시 비용이 되게 한다"
+    questions: ["SHA-256 한 번으로 비밀번호를 저장하면 안 되는 이유는 무엇인가"]
+    contains: [sec-password-hashing, sec-salt, sec-pepper, sec-dictionary-attack, sec-brute-force]
+  - id: sec-password-hashing
+    kind: MECHANISM
+    name: "비밀번호 해싱"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "일부러 느리고(반복) 메모리를 많이 쓰는(메모리 경화) 함수로 비밀번호를 해시한다. 작업 계수는 로그인 한 번이 사용자가 못 느낄 만큼(~100ms) 느리게 맞춘다"
+    synonyms: ["password hashing", "password KDF", "slow hash"]
+    questions: ["메모리 경화 함수가 GPU 대입을 늦추는 이유는 무엇인가"]
+    contains: [sec-bcrypt, sec-scrypt, sec-argon2, sec-pbkdf2]
+    uses: [sec-salt, sec-term-work-factor]
+    mitigates: [sec-dictionary-attack, sec-brute-force]
+  - id: sec-bcrypt
+    kind: MECHANISM
+    name: "bcrypt"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "Blowfish 키 스케줄을 비용 계수만큼 반복하는 비밀번호 해시. 솔트가 결과 문자열에 들어 있어 쓰기 쉽지만 입력이 72바이트에서 잘린다"
+    synonyms: ["BCrypt"]
+  - id: sec-scrypt
+    kind: MECHANISM
+    name: "scrypt"
+    category: SECURITY
+    level: ADVANCED
+    description: "큰 메모리 배열을 채우고 무작위로 읽게 해 GPU · ASIC 병렬 대입을 비싸게 만드는 메모리 경화 KDF"
+    alternative_to:
+      - { to: sec-bcrypt, reason: "메모리 비용까지 올려 전용 하드웨어 대입에 더 강하다" }
+  - id: sec-argon2
+    kind: MECHANISM
+    name: "Argon2"
+    category: SECURITY
+    level: ADVANCED
+    description: "시간 · 메모리 · 병렬도를 따로 조절하는 비밀번호 해시 경진 대회 우승 알고리즘. 새 설계의 기본값은 Argon2id 다"
+    synonyms: ["Argon2id"]
+    alternative_to:
+      - { to: sec-bcrypt, reason: "메모리 경화에 입력 길이 제한이 없고 조절 인자가 세분된다" }
+  - id: sec-pbkdf2
+    kind: MECHANISM
+    name: "PBKDF2"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "HMAC 을 수십만 번 반복하는 비밀번호 기반 KDF. FIPS 인증이 필요한 곳에서 쓰지만 메모리 경화가 없어 GPU 대입에 약하다"
+    synonyms: ["Password-Based Key Derivation Function 2"]
+    uses: [sec-hmac]
+  - id: sec-salt
+    kind: MECHANISM
+    name: "솔트"
+    category: SECURITY
+    level: BEGINNER
+    description: "사용자마다 다른 무작위 값을 비밀번호에 섞어 해시한다. 같은 비밀번호도 해시가 달라져 미리 계산한 표(레인보우 테이블)와 한 번에 여러 계정을 맞추는 대입이 무력해진다"
+    synonyms: ["salt"]
+    uses: [sec-csprng, sec-term-rainbow-table]
+    mitigates: [sec-dictionary-attack]
+  - id: sec-pepper
+    kind: MECHANISM
+    name: "페퍼"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "DB 밖(시크릿 · HSM)에 둔 서버 공통 비밀을 해시에 섞는다. DB 만 유출되면 대입 자체를 시작할 수 없다"
+    synonyms: ["pepper"]
+    uses: [sec-term-secret-key]
+  - id: sec-dictionary-attack
+    kind: PROBLEM
+    name: "사전 대입 공격"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "가능한 입력을 전부 해시해 유출된 해시와 맞춰 원문을 알아내는 공격. 형식이 알려진 짧은 값(숫자 식별자 · 흔한 비밀번호)에서 쉽게 성공한다"
+    synonyms: ["dictionary attack"]
+  - id: sec-brute-force
+    kind: PROBLEM
+    name: "무차별 대입"
+    category: SECURITY
+    level: BEGINNER
+    description: "가능한 값을 차례로 전부 시도해 비밀번호 · 토큰 · 키를 맞히는 공격. 오프라인(유출 해시)은 해시 비용이, 온라인(로그인 API)은 시도 제한이 막는다"
+    synonyms: ["brute force", "exhaustive search"]
+
+  # ── 키 관리 ──
+  - id: sec-key-management
+    kind: STAGE
+    name: "키 관리"
+    category: SECURITY
+    level: ADVANCED
+    description: "키를 안전한 난수로 만들고, 코드 밖에 보관하고, 용도별로 나누고, 주기적으로 바꾸고, 잃거나 새었을 때 복구한다. 암호가 뚫리는 대부분의 원인은 알고리즘이 아니라 여기다"
+    synonyms: ["key management", "key lifecycle"]
+    questions: ["키를 교체할 때 이미 암호화된 데이터는 어떻게 하나", "키를 잃는 것과 키가 새는 것 중 어느 쪽이 복구하기 어려운가"]
+    contains: [sec-csprng, sec-kdf, sec-envelope-encryption, sec-kms, sec-hsm, sec-key-rotation, sec-secrets-management, sec-crypto-agility, sec-key-compromise, sec-key-loss]
+  - id: sec-csprng
+    kind: MECHANISM
+    name: "안전 난수 생성"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "OS 엔트로피를 씨앗으로 다음 값을 예측할 수 없는 난수를 만든다. 키 · IV · 토큰 · 솔트는 반드시 이것으로 뽑고, 시드를 고정하는 일반 난수(Random)는 쓰지 않는다"
+    synonyms: ["CSPRNG", "SecureRandom", "DRBG"]
+    questions: ["java.util.Random 으로 토큰을 만들면 무엇이 문제인가"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/security/AesUtil.kt, symbol: "val iv = ByteArray(GCM_IV_LENGTH).also { SecureRandom().nextBytes(it) }", note: "GCM IV 를 SecureRandom 으로 뽑는다" }
+  - id: sec-kdf
+    kind: MECHANISM
+    name: "키 유도 함수"
+    category: SECURITY
+    level: ADVANCED
+    description: "하나의 마스터 비밀에서 용도별 키를 결정적으로 뽑아낸다. 암호화 키와 MAC 키를 같은 값으로 쓰지 않게 하고, 키 합의 결과를 균일한 키로 바꾼다"
+    synonyms: ["KDF", "Key Derivation Function"]
+    contains: [sec-hkdf]
+  - id: sec-hkdf
+    kind: MECHANISM
+    name: "HKDF"
+    category: SECURITY
+    level: ADVANCED
+    description: "HMAC 으로 입력 비밀의 엔트로피를 모으고(extract) 용도 문자열(info)별로 필요한 길이만큼 늘린다(expand). SHA256(비밀) 같은 자체 유도 대신 쓰는 표준이다"
+    synonyms: ["RFC 5869", "extract-and-expand"]
+    uses: [sec-hmac]
+  - id: sec-envelope-encryption
+    kind: MECHANISM
+    name: "봉투 암호화"
+    category: SECURITY
+    level: ADVANCED
+    description: "데이터는 데이터 키(DEK)로 암호화하고 DEK 만 KMS 의 키 암호화 키(KEK)로 감싸 함께 저장한다. 큰 데이터를 KMS 로 보내지 않고, KEK 를 바꿀 때 DEK 만 다시 감싸면 된다"
+    synonyms: ["envelope encryption", "DEK/KEK"]
+    questions: ["KEK 를 교체할 때 데이터를 다시 암호화하지 않아도 되는 이유는 무엇인가"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/security/EnvelopeCryptoCodec.kt, symbol: "class EnvelopeCryptoCodec(", note: "호출마다 새 DEK 로 AES-GCM, DEK 는 KMS 로 wrap 해 저장" }
+    contains: [sec-key-wrap]
+    uses: [sec-kms, sec-aead, sec-term-dek-kek]
+  - id: sec-key-wrap
+    kind: MECHANISM
+    name: "키 래핑"
+    category: SECURITY
+    level: ADVANCED
+    description: "키를 다른 키로 암호화해 보관 · 전송한다. 평문 DEK 는 메모리에서만 쓰고 저장소에는 감싼 형태만 남긴다"
+    synonyms: ["key wrap", "RFC 3394", "RFC 5649"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/security/port/KeyManagementService.kt, symbol: "suspend fun wrap(plaintextDek: ByteArray): WrappedDek", note: "KMS 포트의 DEK 래핑" }
+  - id: sec-kms
+    kind: MECHANISM
+    name: "KMS"
+    category: SECURITY
+    level: ADVANCED
+    description: "키를 밖으로 내보내지 않고 암호화 · 복호화 · 래핑 API 만 제공하는 관리형 키 서비스. 키 접근이 IAM 정책과 감사 로그로 통제된다"
+    synonyms: ["Key Management Service", "Cloud KMS", "OCI Vault"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/security/kms/OciVaultKmsAdapter.kt, symbol: "class OciVaultKmsAdapter(", note: "OCI Vault 로 DEK 를 wrap · unwrap 하는 어댑터" }
+    uses: [sec-hsm]
+  - id: sec-hsm
+    kind: MECHANISM
+    name: "HSM"
+    category: SECURITY
+    level: ADVANCED
+    description: "키를 변조 방지 하드웨어 안에서 만들고 쓰며 밖으로 꺼내지 않는 장비. FIPS 140 등급으로 보증 수준을 가르고, KMS 의 루트 키가 여기에 산다"
+    synonyms: ["Hardware Security Module", "FIPS 140-3", "PKCS#11"]
+  - id: sec-key-rotation
+    kind: MECHANISM
+    name: "키 교체"
+    category: SECURITY
+    level: ADVANCED
+    description: "새 키로 발급 · 암호화하면서 교체 기간 동안 옛 키로도 검증 · 복호화한다. 데이터에 키 id(버전)를 함께 적어 두어야 어느 키로 풀지 고를 수 있다"
+    synonyms: ["key rotation", "dual key", "kid"]
+    questions: ["키 id 를 데이터나 토큰에 싣지 않으면 교체가 어려워지는 이유는 무엇인가"]
+    code:
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/token/policy/ServeTokenSigner.kt, symbol: "val key = listOfNotNull(current, previous).firstOrNull { it.id == fields[11] } ?: return null", note: "현재 키와 교체 중인 이전 키를 키 id 로 고른다" }
+    contains: [sec-reencryption]
+    uses: [sec-term-key-id]
+    mitigates: [sec-key-compromise]
+  - id: sec-reencryption
+    kind: MECHANISM
+    name: "재암호화"
+    category: SECURITY
+    level: ADVANCED
+    description: "옛 키 버전으로 저장된 암호문을 새 키로 다시 감싼다. 한 번에 전부 하지 않고 읽을 때나 배치로 조금씩(lazy) 옮긴다"
+    synonyms: ["re-encryption", "re-wrap", "lazy re-encryption"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/security/LazyReencryptionJob.kt, symbol: "class LazyReencryptionJob(", note: "옛 KEK 버전의 DEK 를 배치로 새 KEK 로 다시 감싼다" }
+  - id: sec-secrets-management
+    kind: MECHANISM
+    name: "시크릿 관리"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "비밀번호 · API 키 · 서명 키를 코드와 설정 파일 밖 저장소(K8s Secret · Vault · 시크릿 매니저)에 두고 실행 시점에 주입한다. 없으면 기본값으로 뜨지 않고 기동을 거부한다"
+    synonyms: ["secrets management", "Vault", "Secret Manager", "SealedSecret"]
+    questions: ["시크릿이 비었을 때 기본값으로 기동하면 무엇이 위험한가"]
+    code:
+      - { path: k8s/base/auth/deployment.yaml, symbol: "secretKeyRef: { name: auth-subject-hash, key: key }", note: "HMAC 키를 Secret 에서 주입" }
+      - { path: auth/app/src/main/kotlin/com/kgd/auth/infrastructure/security/SubjectHasher.kt, symbol: "\"AUTH_SUBJECT_HASH_KEY 를 주입하세요 — 이 키 없이는 로그인 식별자를 안전하게 만들 수 없습니다.\"", note: "키가 없으면 기동을 거부한다" }
+    mitigates: [infra-secret-leak]
+  - id: sec-crypto-agility
+    kind: MECHANISM
+    name: "암호 민첩성"
+    category: SECURITY
+    level: ADVANCED
+    description: "알고리즘 · 키 길이를 코드 곳곳에 박지 않고 암호문 · 토큰에 알고리즘과 버전을 함께 적어, 깨진 알고리즘을 데이터 이전 없이 교체할 수 있게 설계한다"
+    synonyms: ["crypto-agility", "algorithm agility"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/security/KekVersionLabel.kt, symbol: "object KekVersionLabel {", note: "암호문마다 KEK 버전 라벨을 남긴다" }
+  - id: sec-key-compromise
+    kind: PROBLEM
+    name: "키 유출"
+    category: SECURITY
+    level: ADVANCED
+    description: "서명 · 암호화 키가 밖으로 새 공격자가 토큰을 위조하거나 저장 데이터를 푸는 상태. 새 키로 교체하고 그 키로 만든 모든 것을 무효화해야 끝난다"
+    synonyms: ["key compromise", "key leak"]
+  - id: sec-key-loss
+    kind: PROBLEM
+    name: "키 분실"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "복호화 · 해시 대조에 필요한 키를 잃어 저장된 값을 영영 풀거나 맞출 수 없는 상태. HMAC 가명처리 키를 잃으면 전 회원이 로그인하지 못한다 — 키도 백업 대상이다"
+    synonyms: ["key loss", "crypto-shredding"]
+
+  # ════════════════════════════════════════════════════════════
+  # 신원 · 접근 제어
+  # ════════════════════════════════════════════════════════════
+  - id: sec-identity-access
+    kind: DOMAIN
+    name: "신원 · 접근 제어"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "요청자가 누구인지 확인하고(인증), 그 결과를 세션 · 토큰으로 이어 가고, 그 신원이 이 동작을 해도 되는지 가른다(인가). 사람이 아닌 서비스끼리의 신원도 여기에 든다"
+    synonyms: ["IAM", "Identity and Access Management"]
+    contains: [sec-authentication, sec-session-token, sec-authorization, sec-service-authentication]
 
   # ── 인증 ──
   - id: sec-authentication
@@ -18,24 +606,203 @@ concepts:
     name: "인증"
     category: SECURITY
     level: INTERMEDIATE
-    description: "요청한 사람이 누구인지 확인하고 그 결과를 토큰으로 남긴다. 이후 요청은 토큰만 보고 신원을 믿는다"
+    description: "요청한 사람이 누구인지 확인한다. 직접 비밀번호 · 2차 요소를 받거나, 믿을 만한 제공자(IdP)에게 확인을 위임하고 결과만 받는다"
     synonyms: ["authentication", "AuthN"]
-    contains: [oauth, sec-single-login-origin, jwt, sec-token-revocation, sec-domain-cookie, spring-security]
-    flows_to: [sec-authorization]
+    questions: ["인증과 인가는 어떻게 다른가"]
+    contains: [sec-password-authentication, sec-mfa, sec-magic-link, oauth, sec-oidc, sec-saml, sec-sso, sec-single-login-origin, sec-scim, spring-security, sec-phishing, sec-code-interception, sec-xml-signature-wrapping]
+    flows_to: [sec-session-token]
+  - id: sec-password-authentication
+    kind: MECHANISM
+    name: "비밀번호 인증"
+    category: SECURITY
+    level: BEGINNER
+    description: "사용자가 아는 비밀을 받아 저장된 비밀번호 해시와 대조한다. 가장 흔하지만 재사용 · 피싱 · 대입에 약해 정책 · 시도 제한 · 2차 요소를 함께 둔다"
+    synonyms: ["password authentication", "knowledge factor"]
+    contains: [sec-password-policy]
+    uses: [sec-password-hashing, sec-constant-time-comparison]
+    causes: [sec-credential-stuffing, sec-phishing]
+  - id: sec-password-policy
+    kind: MECHANISM
+    name: "비밀번호 정책"
+    category: SECURITY
+    level: BEGINNER
+    description: "복잡도 규칙 · 주기적 변경 강제 대신 충분한 길이와 유출 비밀번호 목록 대조를 요구한다(NIST SP 800-63B). 강제 변경은 예측 가능한 변형만 늘린다"
+    synonyms: ["password policy", "NIST 800-63B", "breached password check"]
+    mitigates: [sec-credential-stuffing]
+  - id: sec-magic-link
+    kind: MECHANISM
+    name: "매직 링크 · 이메일 OTP"
+    category: SECURITY
+    level: BEGINNER
+    description: "비밀번호 대신 이메일 · 문자로 보낸 일회용 링크나 코드로 로그인한다. 비밀번호 저장 부담이 없지만 메일함 보안이 곧 계정 보안이 된다"
+    synonyms: ["magic link", "email OTP", "passwordless login"]
+    uses: [sec-csprng]
+    alternative_to:
+      - { to: sec-password-authentication, reason: "기억할 비밀을 없애는 대신 메일함을 신뢰한다" }
+  - id: sec-mfa
+    kind: MECHANISM
+    name: "다중 요소 인증"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "아는 것(비밀번호) · 가진 것(기기 · 키) · 자신인 것(생체) 중 둘 이상을 확인한다. 비밀번호가 새도 두 번째 요소 없이는 로그인하지 못한다"
+    synonyms: ["MFA", "2FA", "two-factor authentication", "2단계 인증"]
+    questions: ["SMS OTP 가 약한 2차 요소로 꼽히는 이유는 무엇인가"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/live/service/TwoFactorService.kt, symbol: "class TwoFactorService(", note: "실매매 전환 전에 2차 인증과 백업 코드를 확인" }
+    contains: [sec-totp, sec-webauthn]
+    mitigates: [sec-credential-stuffing]
+  - id: sec-totp
+    kind: MECHANISM
+    name: "TOTP"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "공유 비밀과 현재 시각(30초 단위)을 HMAC 해 6자리 코드를 만든다. 서버와 인증 앱이 같은 비밀만 가지면 통신 없이 같은 코드를 계산한다. 카운터 기반 HOTP 의 시간판이다"
+    synonyms: ["Time-based One-Time Password", "RFC 6238", "HOTP", "OTP"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/live/service/TwoFactorService.kt, symbol: "otpAuthUri = \"otpauth://totp/", note: "인증 앱에 등록할 otpauth URI(30초 · 6자리)" }
+    uses: [sec-hmac]
+  - id: sec-webauthn
+    kind: MECHANISM
+    name: "WebAuthn · 패스키"
+    category: SECURITY
+    level: ADVANCED
+    description: "기기 안의 개인키로 서버 챌린지에 서명해 로그인한다. 서명에 출처가 묶여 가짜 사이트에서는 서명이 나오지 않아 피싱에 강하고, 서버에는 공개키만 남는다"
+    synonyms: ["FIDO2", "passkey", "passwordless"]
+    uses: [sec-digital-signature]
+    mitigates: [sec-phishing, sec-credential-stuffing]
+    alternative_to:
+      - { to: sec-totp, reason: "코드를 옮겨 적지 않아 피싱 사이트에 중계되지 않는다" }
   - id: oauth
     kind: MECHANISM
     name: "OAuth"
     category: SECURITY
     level: INTERMEDIATE
-    description: "사용자가 제공자(Google · Kakao)에서 동의하면 우리 서버가 인가 코드를 받아 토큰으로 바꾸는 위임 인가 프레임워크. 로그인에 쓸 때는 OpenID Connect 의 openid 스코프로 제공자 식별값(sub)만 받는다"
-    synonyms: ["OAuth 2.0", "OpenID Connect", "OIDC"]
+    description: "사용자가 제공자(Google · Kakao)에서 동의하면 클라이언트가 그 사용자 대신 자원에 접근할 토큰을 받는 위임 인가 프레임워크. 원래 인가용이고, 로그인에 쓰려면 위에 OIDC 를 얹는다"
+    synonyms: ["OAuth 2.0", "OAuth 2.1"]
     questions: ["인가 코드를 브라우저가 아니라 서버가 토큰으로 바꾸는 이유는 무엇인가", "state 파라미터는 무엇을 막나"]
     code:
       - { path: auth/app/src/main/kotlin/com/kgd/auth/infrastructure/client/GoogleOAuthClient.kt, symbol: "override suspend fun exchangeCodeForToken(authCode: String, redirectUri: String): OAuthTokenResult", note: "인가 코드를 제공자 토큰으로 교환" }
       - { path: portal-fe/src/auth/auth.ts, symbol: "export function buildGoogleAuthUrl(): string", note: "scope=openid 만 요청하는 인가 요청 URL" }
+    contains: [sec-authorization-code-flow, sec-pkce, sec-client-credentials-flow, sec-assertion-grant, sec-device-authorization-flow, sec-implicit-flow, sec-ropc-flow, sec-par]
     uses:
       - sec-term-authorization-code
+      - sec-term-oauth-roles
+      - sec-term-scope
+      - sec-term-redirect-uri
       - { to: sec-hmac, reason: "받은 제공자 식별값(sub)을 저장 전에 HMAC 으로 가명처리한다" }
+  - id: sec-authorization-code-flow
+    kind: MECHANISM
+    name: "인가 코드 흐름"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "브라우저는 일회용 인가 코드만 받아 오고, 서버가 그 코드를 클라이언트 비밀 · PKCE 검증값과 함께 토큰 엔드포인트에서 토큰으로 바꾼다. 토큰이 브라우저 주소창 · 기록에 남지 않는다"
+    synonyms: ["Authorization Code Grant", "authorization code flow"]
+    code:
+      - { path: auth/app/src/main/kotlin/com/kgd/auth/application/user/service/AuthService.kt, symbol: "val tokenResult = oauthClient.exchangeCodeForToken(command.authCode, command.redirectUri)", note: "콜백으로 받은 코드를 서버에서 토큰으로 교환" }
+    uses: [sec-term-authorization-code, sec-term-state-nonce, sec-pkce]
+  - id: sec-pkce
+    kind: MECHANISM
+    name: "PKCE"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "인가 요청 때 무작위 검증값의 해시(code_challenge)를 보내고, 코드 교환 때 원래 값(code_verifier)을 내게 한다. 코드를 가로챈 쪽은 검증값이 없어 토큰으로 바꾸지 못한다. OAuth 2.1 에서 모든 클라이언트에 필수다"
+    synonyms: ["Proof Key for Code Exchange", "RFC 7636", "code_verifier", "code_challenge"]
+    questions: ["클라이언트 비밀이 있는 서버 앱에도 PKCE 를 쓰는 이유는 무엇인가"]
+    uses: [hashing, sec-csprng]
+    mitigates: [sec-code-interception]
+  - id: sec-client-credentials-flow
+    kind: MECHANISM
+    name: "클라이언트 자격 증명 흐름"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "사용자 없이 서비스가 자기 id · 비밀로 직접 토큰을 받는다. 서비스 간(M2M) 호출에 쓰고 사용자 신원은 담기지 않는다"
+    synonyms: ["Client Credentials Grant", "M2M"]
+  - id: sec-assertion-grant
+    kind: MECHANISM
+    name: "JWT 어서션 그랜트"
+    category: SECURITY
+    level: ADVANCED
+    description: "클라이언트가 자기 개인키로 서명한 JWT 를 내고 토큰을 받는다. 공유 비밀을 두지 않아 클라이언트 인증 비밀이 새는 문제를 없앤다"
+    synonyms: ["JWT Bearer Grant", "RFC 7523", "private_key_jwt"]
+    uses: [sec-digital-signature]
+    alternative_to:
+      - { to: sec-client-credentials-flow, reason: "공유 비밀 대신 서명으로 클라이언트를 인증한다" }
+  - id: sec-device-authorization-flow
+    kind: MECHANISM
+    name: "기기 인가 흐름"
+    category: SECURITY
+    level: ADVANCED
+    description: "입력 장치가 없는 TV · CLI 가 짧은 사용자 코드를 보여 주고, 사용자는 휴대폰 브라우저에서 그 코드로 승인한다. 기기는 토큰이 나올 때까지 폴링한다"
+    synonyms: ["Device Authorization Grant", "RFC 8628", "device code"]
+  - id: sec-implicit-flow
+    kind: MECHANISM
+    name: "암묵적 흐름 (폐기)"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "토큰을 인가 응답 URL 조각으로 브라우저에 바로 돌려주던 방식. 토큰이 주소 · 기록 · Referer 로 새고 가로채기에 약해 OAuth 2.1 에서 빠졌다 — PKCE 인가 코드 흐름으로 바꾼다"
+    synonyms: ["Implicit Grant", "response_type=token"]
+    causes: [sec-token-theft]
+  - id: sec-ropc-flow
+    kind: MECHANISM
+    name: "비밀번호 자격 증명 흐름 (폐기)"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "클라이언트가 사용자 비밀번호를 직접 받아 토큰으로 바꾸던 방식. 위임의 의미가 없고 MFA · 피싱 방어를 우회해 OAuth 2.1 에서 빠졌다"
+    synonyms: ["Resource Owner Password Credentials", "ROPC"]
+    causes: [sec-phishing]
+  - id: sec-par
+    kind: MECHANISM
+    name: "PAR · JAR"
+    category: SECURITY
+    level: ADVANCED
+    description: "인가 요청 파라미터를 브라우저 URL 로 싣지 않고 서버가 먼저 제공자에 보내 참조값만 받거나(PAR), 요청 자체를 서명된 JWT 로 보낸다(JAR). 요청 변조와 URL 길이 문제를 막는다"
+    synonyms: ["Pushed Authorization Requests", "RFC 9126", "JWT-Secured Authorization Request", "RFC 9101"]
+  - id: sec-oidc
+    kind: MECHANISM
+    name: "OpenID Connect"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "OAuth 2.0 위에 신원 계층을 얹은 로그인 표준. openid 스코프로 요청하면 사용자가 누구인지 담은 서명된 ID 토큰을 받는다. 이 레포는 제공자 식별값(sub)만 받고 이메일 · 이름 스코프를 요청하지 않는다"
+    synonyms: ["OIDC", "OpenID Connect Core"]
+    questions: ["ID 토큰과 액세스 토큰은 각각 누구에게 보내는 토큰인가", "OIDC 의 nonce 는 무엇을 막나"]
+    code:
+      - { path: portal-fe/src/auth/auth.ts, symbol: "'&response_type=code&scope=openid&state=google'", note: "openid 스코프만 요청한다" }
+    contains: [sec-oidc-discovery, sec-federated-logout]
+    uses: [oauth, sec-term-id-token, sec-term-state-nonce, jwt]
+  - id: sec-oidc-discovery
+    kind: MECHANISM
+    name: "OIDC 디스커버리 · JWKS"
+    category: SECURITY
+    level: ADVANCED
+    description: "제공자가 /.well-known/openid-configuration 에 엔드포인트와 서명 공개키 목록(JWKS) 주소를 게시하고, 클라이언트는 그것을 읽어 설정과 키 교체를 자동으로 따라간다"
+    synonyms: ["well-known configuration", "JWKS URI"]
+    uses: [sec-jwks]
+  - id: sec-federated-logout
+    kind: MECHANISM
+    name: "연합 로그아웃"
+    category: SECURITY
+    level: ADVANCED
+    description: "IdP 에서 로그아웃하면 연결된 앱들의 세션도 끝낸다. 브라우저 iframe 으로 알리는 프런트 채널과 서버끼리 로그아웃 토큰을 보내는 백 채널 방식이 있다"
+    synonyms: ["Single Logout", "SLO", "front-channel logout", "back-channel logout"]
+  - id: sec-saml
+    kind: MECHANISM
+    name: "SAML 2.0"
+    category: SECURITY
+    level: ADVANCED
+    description: "IdP 가 서명한 XML 어서션을 브라우저를 거쳐 SP 에 넘겨 로그인시키는 기업용 SSO 표준. XML 서명 · 정규화가 복잡해 서명 래핑 공격 같은 구현 결함이 잦다"
+    synonyms: ["Security Assertion Markup Language", "SAML assertion"]
+    uses: [sec-term-idp-sp, sec-digital-signature]
+    causes: [sec-xml-signature-wrapping]
+    alternative_to:
+      - { to: sec-oidc, reason: "기업 IdP 호환성은 높지만 XML 서명이 무겁고 모바일 · SPA 에 맞지 않는다" }
+  - id: sec-sso
+    kind: MECHANISM
+    name: "SSO"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "한 번 로그인하면 여러 서비스에 다시 로그인하지 않는다. IdP 세션을 공유하는 연합 방식(OIDC · SAML)과, 같은 상위 도메인 쿠키를 공유하는 방식이 있다"
+    synonyms: ["Single Sign-On", "통합 로그인"]
+    uses: [sec-oidc, sec-saml, sec-domain-cookie]
   - id: sec-single-login-origin
     kind: MECHANISM
     name: "단일 로그인 출처"
@@ -45,41 +812,14 @@ concepts:
     questions: ["서브도메인마다 로그인 화면을 두면 무엇이 깨지나"]
     code:
       - { path: portal-fe/src/auth/auth.ts, symbol: "export function getOAuthRedirectUri(): string", note: "어느 호스트에서 눌러도 apex 콜백 주소를 쓴다" }
-    uses: [sec-domain-cookie, sec-redirect-allowlist]
-  - id: jwt
+    uses: [sec-domain-cookie, sec-redirect-allowlist, sec-term-redirect-uri]
+  - id: sec-scim
     kind: MECHANISM
-    name: "JWT"
-    category: SECURITY
-    level: INTERMEDIATE
-    description: "클레임을 서명해 담은 토큰으로, 받는 쪽이 저장소 조회 없이 서명만 검증해 신원을 믿는 무상태 인증 방식. 대신 발급한 토큰을 만료 전에 거둘 수 없어 폐기 장치를 따로 둔다"
-    synonyms: ["JSON Web Token"]
-    questions: ["JWT 는 암호화인가 서명인가", "JWT 를 만료 전에 무효화하려면 무엇이 필요한가"]
-    code:
-      - { path: common/src/main/kotlin/com/kgd/common/security/JwtUtil.kt, symbol: "fun generateAccessToken(userId: String, roles: List<String>): String", note: "사용자 id 와 역할을 클레임으로 담아 서명" }
-      - { path: gateway/src/main/kotlin/com/kgd/gateway/security/JwtTokenValidator.kt, symbol: "fun validateAndExtract(token: String): Claims?", note: "게이트웨이가 서명을 검증하고 클레임을 꺼낸다" }
-    uses: [sec-term-claim, sec-term-access-token, sec-term-refresh-token]
-  - id: sec-token-revocation
-    kind: MECHANISM
-    name: "토큰 폐기 · 회전"
+    name: "SCIM 프로비저닝"
     category: SECURITY
     level: ADVANCED
-    description: "로그아웃한 토큰을 남은 수명 동안 블랙리스트에 올리고, 리프레시 토큰은 한 번 쓰면 폐기하고 새로 발급한다. 탈취된 토큰이 한 번 쓰이면 끝나게 한다"
-    synonyms: ["token blacklist", "refresh token rotation"]
-    questions: ["블랙리스트 보관 기간을 토큰 최대 수명으로 잡는 이유는 무엇인가", "블랙리스트 저장소가 죽으면 요청을 막아야 하나 통과시켜야 하나"]
-    code:
-      - { path: auth/app/src/main/kotlin/com/kgd/auth/infrastructure/persistence/token/adapter/RedisTokenStoreAdapter.kt, symbol: "override fun blacklist(token: String, ttl: Duration)", note: "폐기 토큰을 TTL 과 함께 Redis 에 올린다" }
-      - { path: gateway/src/main/kotlin/com/kgd/gateway/filter/AuthenticationGatewayFilter.kt, symbol: "redisTemplate.hasKey(TokenKeys.blacklist(token))", note: "게이트웨이가 요청마다 블랙리스트를 확인(장애 시 통과)" }
-    uses: [jwt, hashing, redis, sec-term-refresh-token]
-  - id: sec-domain-cookie
-    kind: MECHANISM
-    name: "도메인 쿠키 세션 공유"
-    category: SECURITY
-    level: INTERMEDIATE
-    description: "토큰을 상위 도메인(.1989v.com) 쿠키에 담아 모든 서브도메인이 같은 로그인 상태를 읽게 한다. JS 가 읽는 쿠키라 XSS 방어가 함께 따라와야 한다"
-    questions: ["localStorage 대신 도메인 쿠키를 쓰면 무엇이 달라지나", "HttpOnly 가 없는 쿠키는 무엇에 약한가"]
-    code:
-      - { path: portal-fe/src/auth/auth.ts, symbol: "const COOKIE_DOMAIN = '.1989v.com';", note: "서브도메인이 함께 읽는 쿠키 도메인" }
-    uses: [sec-samesite-cookie]
+    description: "IdP 가 표준 REST API 로 앱에 사용자 · 그룹을 만들고 비활성화한다. 퇴사자 계정이 앱마다 남는 문제를 로그인 연동과 별개로 해결한다"
+    synonyms: ["System for Cross-domain Identity Management", "user provisioning"]
   - id: spring-security
     kind: TECHNOLOGY
     name: "Spring Security"
@@ -91,6 +831,204 @@ concepts:
       - { path: gateway/src/main/kotlin/com/kgd/gateway/config/SecurityConfig.kt, symbol: "@EnableWebFluxSecurity", note: "게이트웨이 WebFlux 보안 체인" }
     implements:
       - { to: sec-authentication, reason: "무상태 세션 정책으로 요청마다 토큰으로 신원을 세운다" }
+  - id: sec-phishing
+    kind: PROBLEM
+    name: "피싱"
+    category: SECURITY
+    level: BEGINNER
+    description: "진짜처럼 꾸민 화면으로 비밀번호 · OTP 를 입력받아 가로채는 공격. 사람이 코드를 옮겨 적는 인증 요소는 실시간 중계로 함께 뚫린다"
+    synonyms: ["phishing", "AiTM phishing"]
+  - id: sec-xml-signature-wrapping
+    kind: PROBLEM
+    name: "XML 서명 래핑"
+    category: SECURITY
+    level: ADVANCED
+    description: "서명된 SAML 어서션은 그대로 두고 문서 다른 위치에 위조 어서션을 끼워, 서명 검증부와 값을 읽는 부분이 서로 다른 요소를 보게 만드는 공격"
+    synonyms: ["XML Signature Wrapping", "XSW"]
+  - id: sec-code-interception
+    kind: PROBLEM
+    name: "인가 코드 가로채기"
+    category: SECURITY
+    level: ADVANCED
+    description: "리다이렉트로 돌아오는 인가 코드를 악성 앱 · 로그 · Referer 가 가로채 먼저 토큰으로 바꾸는 공격. 공개 클라이언트는 비밀이 없어 코드만으로 교환이 된다"
+    synonyms: ["authorization code interception"]
+
+  # ── 세션 · 토큰 관리 ──
+  - id: sec-session-token
+    kind: STAGE
+    name: "세션 · 토큰 관리"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "인증 결과를 서버 세션이나 토큰으로 남겨 이후 요청이 매번 로그인하지 않게 한다. 어디에 두고, 얼마나 살리고, 도난 · 로그아웃 때 어떻게 거두는지를 정한다"
+    questions: ["서버 세션과 JWT 중 무엇을 고를지 가르는 기준은 무엇인가"]
+    contains: [sec-server-session, jwt, sec-opaque-token, sec-paseto, sec-macaroon, sec-refresh-token-rotation, sec-token-revocation, sec-sender-constrained-token, sec-session-expiry, sec-domain-cookie, sec-token-theft, sec-jwt-algorithm-confusion, sec-session-fixation]
+    flows_to: [sec-authorization]
+  - id: sec-server-session
+    kind: MECHANISM
+    name: "서버 세션"
+    category: SECURITY
+    level: BEGINNER
+    description: "서버 저장소에 세션을 두고 브라우저에는 추측 불가능한 세션 id 쿠키만 준다. 즉시 폐기가 쉽지만 요청마다 저장소를 조회하고 여러 서버가 저장소를 공유해야 한다"
+    synonyms: ["stateful session", "session cookie", "JSESSIONID"]
+    uses: [sec-csprng]
+    alternative_to:
+      - { to: jwt, reason: "즉시 무효화가 쉬운 대신 요청마다 저장소 조회가 든다" }
+  - id: jwt
+    kind: MECHANISM
+    name: "JWT"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "헤더 · 클레임 · 서명 세 부분을 점으로 이은 토큰으로, 받는 쪽이 저장소 조회 없이 서명만 검증해 신원을 믿는 무상태 인증 방식. 대신 발급한 토큰을 만료 전에 거둘 수 없어 폐기 장치를 따로 둔다"
+    synonyms: ["JSON Web Token", "RFC 7519"]
+    questions: ["JWT 는 암호화인가 서명인가", "JWT 를 만료 전에 무효화하려면 무엇이 필요한가"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/security/JwtUtil.kt, symbol: "fun generateAccessToken(userId: String, roles: List<String>): String", note: "사용자 id 와 역할을 클레임으로 담아 서명" }
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/security/JwtTokenValidator.kt, symbol: "fun validateAndExtract(token: String): Claims?", note: "게이트웨이가 서명을 검증하고 클레임을 꺼낸다" }
+    contains: [sec-jws, sec-jwe, sec-jwt-validation, sec-jwks, jjwt]
+    uses: [sec-term-claim, sec-term-access-token, sec-term-refresh-token, sec-term-jti]
+  - id: sec-jws
+    kind: MECHANISM
+    name: "JWS"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "JWT 에 서명(HS256 · RS256 · ES256 · EdDSA)을 붙이는 형식. 내용은 Base64URL 이라 누구나 읽을 수 있고 변조만 막는다 — 비밀을 넣지 않는다"
+    synonyms: ["JSON Web Signature", "RFC 7515", "HS256", "RS256"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/security/JwtUtil.kt, symbol: "Keys.hmacShaKeyFor(props.secret.toByteArray(Charsets.UTF_8))", note: "공유 비밀로 HS256 서명(발급 · 검증이 같은 키)" }
+    uses: [sec-hmac, sec-digital-signature]
+  - id: sec-jwe
+    kind: MECHANISM
+    name: "JWE"
+    category: SECURITY
+    level: ADVANCED
+    description: "JWT 내용을 암호화하는 형식. 콘텐츠 키를 어떻게 전할지(alg)와 내용을 무엇으로 암호화할지(enc)를 따로 적는다"
+    synonyms: ["JSON Web Encryption", "RFC 7516"]
+    uses: [sec-aead, sec-key-wrap]
+  - id: sec-jwt-validation
+    kind: MECHANISM
+    name: "JWT 검증 규칙"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "서명만 보지 않고 허용한 알고리즘인지(alg 허용 목록 · none 거부), 만료(exp) · 발급자(iss) · 대상(aud) · 토큰 종류까지 확인한다. 하나라도 빠지면 다른 서비스용 토큰이 통과한다"
+    synonyms: ["JWT validation", "iss/aud/exp check", "alg allowlist"]
+    questions: ["aud 검사를 빼면 어떤 토큰이 통과하나", "alg=none 공격은 어떻게 막나"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/security/JwtUtil.kt, symbol: "throw JwtException(\"Issuer mismatch: expected=$configured got=$tokenIss\")", note: "서명 검증 뒤 iss · aud 를 확인" }
+    mitigates: [sec-jwt-algorithm-confusion]
+  - id: sec-jwks
+    kind: MECHANISM
+    name: "JWKS · kid 키 게시"
+    category: SECURITY
+    level: ADVANCED
+    description: "서명 공개키를 JSON 키 목록으로 게시하고 토큰 헤더의 kid 로 어느 키인지 고르게 한다. 교체 때 옛 키와 새 키를 함께 게시해 발급 중인 토큰이 끊기지 않는다"
+    synonyms: ["JSON Web Key Set", "JWK", "RFC 7517", "kid"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/security/JwtUtil.kt, symbol: ".apply { props.kid?.let { header().keyId(it).and() } }", note: "설정된 키 id 를 헤더에 싣는다" }
+    uses: [sec-key-rotation, sec-term-key-id]
+  - id: sec-opaque-token
+    kind: MECHANISM
+    name: "불투명 토큰 · 인트로스펙션"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "토큰에 의미 없는 무작위 참조값만 담고, 받는 쪽이 인가 서버에 물어(인트로스펙션) 유효성과 속성을 얻는다. 즉시 폐기되지만 요청마다 조회가 든다"
+    synonyms: ["opaque token", "reference token", "token introspection", "RFC 7662"]
+    alternative_to:
+      - { to: jwt, reason: "자기완결성 대신 즉시 폐기와 내용 비공개를 얻는다" }
+  - id: sec-paseto
+    kind: MECHANISM
+    name: "PASETO"
+    category: SECURITY
+    level: ADVANCED
+    description: "알고리즘을 헤더로 고르게 하지 않고 버전마다 한 가지 조합으로 못박은 토큰 형식. alg 혼동 같은 JWT 의 설정 실수를 형식 수준에서 없앤다"
+    synonyms: ["Platform-Agnostic Security Tokens"]
+    mitigates: [sec-jwt-algorithm-confusion]
+    alternative_to:
+      - { to: jwt, reason: "알고리즘 선택권을 없애 설정 실수를 막지만 생태계가 작다" }
+  - id: sec-macaroon
+    kind: MECHANISM
+    name: "Macaroon"
+    category: SECURITY
+    level: ADVANCED
+    description: "HMAC 사슬로 만든 권한 토큰. 가진 사람이 서버에 묻지 않고 조건(만료 · 대상 · 읽기 전용)을 덧붙여 더 좁은 토큰으로 위임할 수 있다"
+    synonyms: ["macaroons", "capability token", "caveat"]
+    uses: [sec-hmac]
+    alternative_to:
+      - { to: jwt, reason: "발급자 없이도 권한을 좁혀 위임할 수 있다" }
+  - id: sec-refresh-token-rotation
+    kind: MECHANISM
+    name: "리프레시 토큰 회전"
+    category: SECURITY
+    level: ADVANCED
+    description: "리프레시 토큰을 쓸 때마다 폐기하고 새 것을 준다. 이미 쓴 토큰이 다시 오면 탈취로 보고 그 계열 전체를 끊는다(재사용 탐지)"
+    synonyms: ["refresh token rotation", "reuse detection"]
+    questions: ["재사용 탐지는 공격자와 정상 사용자 중 누가 먼저 썼는지 몰라도 동작하나"]
+    code:
+      - { path: auth/app/src/main/kotlin/com/kgd/auth/application/user/service/AuthService.kt, symbol: "tokenStore.blacklist(command.refreshToken, refreshTtl)", note: "쓴 리프레시 토큰을 즉시 폐기하고 새로 발급" }
+    uses: [sec-token-revocation, sec-term-refresh-token]
+    mitigates: [sec-token-theft]
+  - id: sec-token-revocation
+    kind: MECHANISM
+    name: "토큰 폐기"
+    category: SECURITY
+    level: ADVANCED
+    description: "로그아웃한 토큰을 남은 수명 동안 블랙리스트에 올리고 요청마다 확인한다. 무상태 토큰에 상태 조회 한 번을 되돌려 놓는 대가로 즉시 무효화를 얻는다"
+    synonyms: ["token blacklist", "denylist", "jti denylist", "RFC 7009"]
+    questions: ["블랙리스트 보관 기간을 토큰 최대 수명으로 잡는 이유는 무엇인가", "블랙리스트 저장소가 죽으면 요청을 막아야 하나 통과시켜야 하나"]
+    code:
+      - { path: auth/app/src/main/kotlin/com/kgd/auth/infrastructure/persistence/token/adapter/RedisTokenStoreAdapter.kt, symbol: "override fun blacklist(token: String, ttl: Duration)", note: "폐기 토큰을 TTL 과 함께 Redis 에 올린다" }
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/filter/AuthenticationGatewayFilter.kt, symbol: "redisTemplate.hasKey(TokenKeys.blacklist(token))", note: "게이트웨이가 요청마다 블랙리스트를 확인(장애 시 통과)" }
+    uses: [jwt, hashing, redis, sec-term-refresh-token]
+    mitigates: [sec-token-theft]
+  - id: sec-sender-constrained-token
+    kind: MECHANISM
+    name: "송신자 제약 토큰"
+    category: SECURITY
+    level: ADVANCED
+    description: "토큰을 클라이언트의 키에 묶어, 요청마다 그 키로 만든 증명(DPoP 헤더)이나 같은 클라이언트 인증서(mTLS 바인딩)를 함께 내게 한다. 훔친 Bearer 토큰만으로는 쓸 수 없다"
+    synonyms: ["DPoP", "RFC 9449", "proof-of-possession", "certificate-bound token", "RFC 8705", "Token Binding"]
+    uses: [sec-digital-signature, sec-term-bearer-token]
+    mitigates: [sec-token-theft]
+  - id: sec-session-expiry
+    kind: MECHANISM
+    name: "세션 만료 정책"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "요청이 없으면 끊는 유휴 만료와 로그인 뒤 최대 수명인 절대 만료를 함께 둔다. 액세스 토큰은 짧게, 리프레시 토큰은 길게 두어 도난 피해와 재로그인 빈도를 맞바꾼다"
+    synonyms: ["idle timeout", "absolute timeout", "sliding session"]
+    code:
+      - { path: auth/app/src/main/kotlin/com/kgd/auth/application/user/service/AuthService.kt, symbol: "private val accessTtl = Duration.ofSeconds(jwtProperties.accessExpiry)", note: "액세스 · 리프레시 수명을 따로 둔다" }
+    uses: [sec-term-access-token, sec-term-refresh-token]
+  - id: sec-domain-cookie
+    kind: MECHANISM
+    name: "도메인 쿠키 세션 공유"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "토큰을 상위 도메인(.1989v.com) 쿠키에 담아 모든 서브도메인이 같은 로그인 상태를 읽게 한다. JS 가 읽는 쿠키라 XSS 방어가 함께 따라와야 한다"
+    questions: ["localStorage 대신 도메인 쿠키를 쓰면 무엇이 달라지나", "HttpOnly 가 없는 쿠키는 무엇에 약한가"]
+    code:
+      - { path: portal-fe/src/auth/auth.ts, symbol: "const COOKIE_DOMAIN = '.1989v.com';", note: "서브도메인이 함께 읽는 쿠키 도메인" }
+    uses: [sec-samesite-cookie, sec-secure-cookie]
+  - id: sec-token-theft
+    kind: PROBLEM
+    name: "토큰 탈취"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "Bearer 토큰이 XSS · 로그 · 저장소 · 네트워크로 새어 공격자가 만료 전까지 그 사용자로 요청하는 상태. 가진 사람이 곧 주인인 토큰의 근본 약점이다"
+    synonyms: ["token theft", "session hijacking", "세션 하이재킹"]
+  - id: sec-jwt-algorithm-confusion
+    kind: PROBLEM
+    name: "JWT 알고리즘 혼동"
+    category: SECURITY
+    level: ADVANCED
+    description: "검증자가 토큰 헤더의 alg 를 그대로 믿어, alg=none 서명 없는 토큰이나 RS256 공개키를 HS256 비밀로 쓴 위조 토큰을 받아들이는 상태"
+    synonyms: ["alg=none", "algorithm confusion", "HS/RS confusion", "CVE-2015-9235"]
+  - id: sec-session-fixation
+    kind: PROBLEM
+    name: "세션 고정"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "공격자가 미리 정한 세션 id 를 피해자가 쓰게 한 뒤 피해자가 로그인하면 같은 세션으로 들어오는 공격. 로그인 성공 때 세션 id 를 새로 발급해 막는다"
+    synonyms: ["session fixation"]
 
   # ── 인가 ──
   - id: sec-authorization
@@ -98,9 +1036,10 @@ concepts:
     name: "인가"
     category: SECURITY
     level: INTERMEDIATE
-    description: "확인된 신원이 이 자원 · 이 동작을 해도 되는지 가른다. 신원을 위조할 틈이 없어야 판정이 의미를 갖는다"
-    synonyms: ["authorization", "AuthZ"]
-    contains: [rbac, sec-identity-header-stripping, sec-identity-spoofing]
+    description: "확인된 신원이 이 자원 · 이 동작을 해도 되는지 가른다. 역할 · 속성 · 관계 중 무엇으로 판정할지 모델을 고르고, 판정을 요청 경로의 모든 자원 접근에 빠짐없이 건다"
+    synonyms: ["authorization", "AuthZ", "access control"]
+    questions: ["401 과 403 은 어떻게 다른가"]
+    contains: [rbac, sec-abac, sec-rebac, sec-policy-engine, sec-object-level-authorization, sec-least-privilege, sec-identity-header-stripping, sec-broken-access-control, sec-idor, sec-privilege-escalation, sec-identity-spoofing]
   - id: rbac
     kind: MECHANISM
     name: "RBAC"
@@ -108,11 +1047,57 @@ concepts:
     level: INTERMEDIATE
     description: "사용자에게 역할을 주고 역할마다 허용 범위를 정하는 접근 제어 모델. 역할은 회원-역할 행에 두고 토큰 클레임에 실어 게이트웨이가 라우트마다 필요한 역할과 대조한다"
     synonyms: ["Role-Based Access Control", "역할 기반 접근 제어"]
-    questions: ["역할을 토큰에 실으면 역할을 뺏었을 때 언제 반영되나", "401 과 403 은 어떻게 다른가"]
+    questions: ["역할을 토큰에 실으면 역할을 뺏었을 때 언제 반영되나"]
     code:
       - { path: auth/domain/src/main/kotlin/com/kgd/auth/domain/role/model/Role.kt, symbol: "ROLE_USER, ROLE_SELLER, ROLE_ADMIN", note: "역할 세 가지" }
       - { path: gateway/src/main/kotlin/com/kgd/gateway/config/GatewayRouteConfig.kt, symbol: "requiredRoles = listOf(\"ROLE_ADMIN\")", note: "어드민 라우트가 요구하는 역할" }
     uses: [jwt, sec-term-claim]
+  - id: sec-abac
+    kind: MECHANISM
+    name: "ABAC"
+    category: SECURITY
+    level: ADVANCED
+    description: "주체 · 자원 · 행동 · 환경의 속성(부서 · 소유자 · 시각 · 지역)을 조건식으로 평가해 허용 여부를 정한다. 역할이 폭증하는 세밀한 규칙을 적은 수의 정책으로 표현한다"
+    synonyms: ["Attribute-Based Access Control", "속성 기반 접근 제어", "PBAC"]
+    alternative_to:
+      - { to: rbac, reason: "역할 폭증 없이 세밀한 조건을 적지만 판정 근거를 추적하기 어렵다" }
+  - id: sec-rebac
+    kind: MECHANISM
+    name: "ReBAC"
+    category: SECURITY
+    level: ADVANCED
+    description: "「문서의 편집자」「폴더의 소유자의 팀」처럼 주체와 자원 사이 관계 그래프를 따라가 권한을 정한다. 공유 · 협업 서비스의 권한을 표현하는 모델이고 Google Zanzibar 가 대표다"
+    synonyms: ["Relationship-Based Access Control", "Zanzibar", "관계 기반 접근 제어"]
+    alternative_to:
+      - { to: rbac, reason: "자원별 공유 관계를 역할로 펴지 않고 그래프로 판정한다" }
+  - id: sec-policy-engine
+    kind: MECHANISM
+    name: "정책 엔진"
+    category: SECURITY
+    level: ADVANCED
+    description: "인가 규칙을 애플리케이션 코드에서 떼어 선언형 정책 언어로 쓰고, 서비스는 엔진에 「허용?」만 묻는다. 정책을 코드 배포 없이 바꾸고 한곳에서 감사한다"
+    synonyms: ["policy as code", "OPA", "Rego", "Cedar", "Casbin", "PDP/PEP"]
+    uses: [sec-abac]
+  - id: sec-object-level-authorization
+    kind: MECHANISM
+    name: "객체 수준 인가"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "라우트 · 역할 검사를 통과해도 요청한 그 행이 요청자의 것인지 다시 확인한다. id 를 경로 · 본문으로 받는 모든 조회 · 변경에 필요하다"
+    synonyms: ["object-level authorization", "ownership check", "BOLA 방어"]
+    questions: ["로그인과 역할 검사가 있어도 IDOR 이 생기는 이유는 무엇인가"]
+    code:
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/sheet/model/OrderSheet.kt, symbol: "if (memberId != this.memberId) throw OrderSheetUnavailableException(OrderSheetRejection.NOT_OWNER)", note: "주문서가 요청 회원의 것인지 도메인에서 확인" }
+      - { path: promotion/feature/src/main/kotlin/com/kgd/promotion/application/hold/service/PromotionHoldService.kt, symbol: "if (c.memberId != command.memberId) return fail(PromotionFailureReason.COUPON_NOT_OWNED)", note: "남의 쿠폰은 쓸 수 없다" }
+    mitigates: [sec-idor, sec-broken-access-control]
+  - id: sec-least-privilege
+    kind: MECHANISM
+    name: "최소 권한"
+    category: SECURITY
+    level: BEGINNER
+    description: "사람 · 서비스 · 계정에 일에 필요한 권한만, 필요한 기간만 준다. 뚫렸을 때 피해 범위(blast radius)를 권한 크기로 제한한다"
+    synonyms: ["least privilege", "PoLP"]
+    mitigates: [sec-privilege-escalation]
   - id: sec-identity-header-stripping
     kind: MECHANISM
     name: "신원 헤더 제거"
@@ -121,103 +1106,117 @@ concepts:
     description: "게이트웨이가 검증한 신원만 내부 헤더(X-User-Id)로 넘기고, 클라이언트가 직접 붙인 같은 헤더는 벗긴다. 뒤쪽 서비스가 헤더를 믿는 구조의 전제 조건이다"
     code:
       - { path: gateway/src/main/kotlin/com/kgd/gateway/filter/AuthenticationGatewayFilter.kt, symbol: "private fun asAnonymous(request: ServerHttpRequest): ServerHttpRequest", note: "익명 통과 시 X-User-Id · X-User-Roles 를 지운다" }
+    uses: [api-gateway]
     mitigates: [sec-identity-spoofing]
+  - id: sec-broken-access-control
+    kind: PROBLEM
+    name: "접근 제어 실패"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "인가 검사가 빠지거나 틀려 권한 없는 기능 · 데이터에 닿는 상태. OWASP Top 10 1위이고, 검사를 화면에서만 숨기고 API 에는 걸지 않았을 때 흔하다"
+    synonyms: ["Broken Access Control", "OWASP A01"]
+  - id: sec-idor
+    kind: PROBLEM
+    name: "IDOR"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "요청의 id 만 바꾸면 남의 주문 · 문서가 조회 · 수정되는 상태. 순차 id 는 추측을 쉽게 할 뿐이고 원인은 소유권 검사 누락이다"
+    synonyms: ["Insecure Direct Object Reference", "BOLA", "Broken Object Level Authorization"]
+    causes: [sec-broken-access-control]
+  - id: sec-privilege-escalation
+    kind: PROBLEM
+    name: "권한 상승"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "일반 사용자가 관리자 기능을 쓰거나(수직), 다른 사용자의 권한으로 행동하는(수평) 상태"
+    synonyms: ["privilege escalation", "vertical/horizontal escalation"]
   - id: sec-identity-spoofing
     kind: PROBLEM
     name: "신원 위조"
     category: SECURITY
     level: INTERMEDIATE
     description: "요청자가 남의 신원이나 더 높은 역할을 주장해 통과하는 상태. 내부 헤더를 그대로 믿는 서비스에서 헤더 한 줄로 일어난다"
-    synonyms: ["spoofing", "권한 상승"]
+    synonyms: ["spoofing"]
+    causes: [sec-privilege-escalation]
 
-  # ── 데이터 보호 ──
-  - id: sec-data-protection
+  # ── 서비스 간 인증 ──
+  - id: sec-service-authentication
     kind: STAGE
-    name: "데이터 보호"
-    category: SECURITY
-    level: INTERMEDIATE
-    description: "저장하거나 전송하는 값이 새도 읽히지 않게 한다. 되돌려 읽어야 하면 암호화, 대조만 하면 되면 해싱을 고른다"
-    contains: [encryption, hashing, sec-dictionary-attack]
-  - id: encryption
-    kind: MECHANISM
-    name: "암호화"
-    category: SECURITY
-    level: INTERMEDIATE
-    description: "키로 데이터를 읽을 수 없게 바꾸고 같은(대칭) 또는 짝(비대칭) 키로 되돌리는 기법. 원문을 다시 읽어야 할 때 쓰고, 키 보관이 곧 보안 수준이다"
-    synonyms: ["encryption", "대칭키", "비대칭키"]
-    questions: ["대칭키와 비대칭키는 각각 어디에 쓰나", "비밀번호를 암호화가 아니라 해싱하는 이유는 무엇인가"]
-    uses: [sec-term-secret-key]
-  - id: hashing
-    kind: MECHANISM
-    name: "해싱"
-    category: SECURITY
-    level: INTERMEDIATE
-    description: "임의 길이 값을 고정 길이 값으로 바꾸는 단방향 함수. 원문을 복원하지 않고 같은지만 대조할 때 쓴다. 값의 공간이 좁으면 사전 대입으로 되돌려진다"
-    synonyms: ["hash", "SHA-256"]
-    questions: ["해시에 솔트나 키를 섞는 이유는 무엇인가"]
-    code:
-      - { path: common/src/main/kotlin/com/kgd/common/security/TokenKeys.kt, symbol: "fun blacklist(token: String): String", note: "토큰 원문 대신 SHA-256 을 Redis 키로 쓴다" }
-    contains: [sec-hmac]
-    causes: [sec-dictionary-attack]
-  - id: sec-hmac
-    kind: MECHANISM
-    name: "HMAC"
+    name: "서비스 간 인증"
     category: SECURITY
     level: ADVANCED
-    description: "비밀 키를 섞어 계산하는 해시. 키 없이는 같은 값을 만들 수 없어 좁은 값 공간도 사전 대입으로 되돌릴 수 없다. 소셜 제공자 식별값을 가명처리하는 데 쓴다"
-    synonyms: ["Hash-based Message Authentication Code", "HmacSHA256", "keyed hash"]
-    questions: ["단순 SHA-256 대신 HMAC 을 쓰는 이유는 무엇인가", "HMAC 키를 잃으면 무엇이 불가능해지나"]
-    code:
-      - { path: auth/app/src/main/kotlin/com/kgd/auth/infrastructure/security/SubjectHasher.kt, symbol: "class SubjectHasher(", note: "제공자:sub 를 HmacSHA256 으로 가려 member 로 넘긴다" }
-    uses: [sec-term-secret-key]
-    mitigates: [sec-dictionary-attack]
-  - id: sec-dictionary-attack
-    kind: PROBLEM
-    name: "사전 대입 공격"
-    category: SECURITY
-    level: INTERMEDIATE
-    description: "가능한 입력을 전부 해시해 유출된 해시와 맞춰 원문을 알아내는 공격. 형식이 알려진 짧은 값(숫자 식별자 · 흔한 비밀번호)에서 쉽게 성공한다"
-    synonyms: ["dictionary attack", "rainbow table"]
-
-  # ── 웹 공격 방어 ──
-  - id: sec-web-attack-defense
-    kind: STAGE
-    name: "웹 공격 방어"
-    category: SECURITY
-    level: INTERMEDIATE
-    description: "브라우저와 입력값을 통해 들어오는 공격을 막는다. 공격마다 막는 자리가 다르다 — 출력(XSS), 쿠키 전송(CSRF), 질의 조립(SQL 인젝션), 이동 주소(오픈 리다이렉트)"
-    contains: [cors, sec-output-sanitization, sec-samesite-cookie, sec-parameter-binding, sec-redirect-allowlist, xss, csrf, sql-injection, sec-open-redirect]
-  - id: cors
+    description: "사람이 아닌 서비스 · 엣지 · 외부 시스템이 보낸 요청을 믿을지 정한다. 네트워크 위치만으로 믿지 않고 인증서 · 서명 · 비밀로 매번 확인한다"
+    synonyms: ["service-to-service authentication", "workload identity"]
+    contains: [sec-workload-identity, sec-api-key, sec-webhook-verification, sec-origin-bypass]
+    uses:
+      - { to: net-mtls, reason: "서비스 · 엣지의 신원을 클라이언트 인증서로 확인한다" }
+      - { to: cloud-zero-trust-access, reason: "관리 콘솔을 공개 경로 대신 신원 확인 터널 뒤에 둔다" }
+  - id: sec-workload-identity
     kind: MECHANISM
-    name: "CORS"
+    name: "워크로드 신원"
+    category: SECURITY
+    level: ADVANCED
+    description: "파드 · 서비스마다 짧게 사는 인증서 형태의 신원(SPIFFE ID)을 자동 발급 · 교체해, 서비스 메시가 호출마다 mTLS 로 상대를 확인하게 한다"
+    synonyms: ["SPIFFE", "SPIRE", "SVID"]
+    uses: [net-mtls, service-mesh]
+  - id: sec-api-key
+    kind: MECHANISM
+    name: "API 키"
     category: SECURITY
     level: BEGINNER
-    description: "동일 출처 정책이 막는 다른 출처 요청을 서버가 응답 헤더로 허용 목록을 밝혀 풀어 주는 브라우저 규칙. 막는 장치가 아니라 푸는 장치라, 와일드카드 대신 정확한 출처만 적는다"
-    synonyms: ["Cross-Origin Resource Sharing"]
-    questions: ["CORS 는 서버를 보호하나 사용자를 보호하나", "preflight 요청은 언제 나가나"]
-    code:
-      - { path: gateway/src/main/resources/application.yml, symbol: "allowedOriginPatterns:", note: "1989v.com 계열과 로컬 dev 만 허용" }
-    uses: [sec-term-same-origin-policy]
-  - id: sec-output-sanitization
+    description: "호출자에게 고정 비밀 문자열을 주고 요청마다 헤더로 받는다. 단순하지만 사용자 신원이 없고 만료가 없어, 저장 시 해시하고 범위 · 회전을 따로 챙겨야 한다"
+    synonyms: ["API key"]
+    alternative_to:
+      - { to: sec-client-credentials-flow, reason: "토큰 발급 서버 없이 쓰지만 만료 · 범위가 없다" }
+  - id: sec-webhook-verification
     kind: MECHANISM
-    name: "출력 정화"
+    name: "웹훅 발신자 검증"
     category: SECURITY
     level: INTERMEDIATE
-    description: "사용자가 쓴 내용을 HTML 로 그리기 전에 스크립트 · 이벤트 속성 · 위험 태그를 걷어 낸다. 입력 시점이 아니라 그리는 시점에 건다"
-    synonyms: ["sanitize", "DOMPurify"]
+    description: "외부 시스템이 보낸 웹훅이 진짜인지 공유 비밀 헤더나 본문 HMAC 서명으로 확인하고, 시각 · 이벤트 id 로 재전송을 거른다. 확인 전에는 본문을 믿지 않는다"
+    synonyms: ["webhook signature", "webhook secret"]
     code:
-      - { path: portal-fe/src/pages/blog/markdown.ts, symbol: "return DOMPurify.sanitize(raw, {", note: "블로그 본문 마크다운을 그리기 전에 정화" }
-    mitigates: [xss]
-  - id: sec-samesite-cookie
-    kind: MECHANISM
-    name: "SameSite 쿠키"
+      - { path: payment/feature/src/main/kotlin/com/kgd/payment/presentation/webhook/controller/TossWebhookController.kt, symbol: "log.warn { \"토스 웹훅 비밀 불일치 — 거부\" }", note: "비밀 헤더가 다르면 401 로 거부" }
+    uses: [sec-hmac, sec-constant-time-comparison]
+  - id: sec-origin-bypass
+    kind: PROBLEM
+    name: "오리진 우회"
+    category: SECURITY
+    level: ADVANCED
+    description: "엣지(WAF · 레이트 리밋) 뒤에 있어야 할 서버에 공격자가 공개 IP 로 직접 붙어 엣지 방어를 전부 건너뛰는 상태. DNS 에 남은 직결 레코드가 입구가 된다"
+    synonyms: ["origin bypass", "origin IP exposure"]
+
+  # ════════════════════════════════════════════════════════════
+  # 애플리케이션 방어
+  # ════════════════════════════════════════════════════════════
+  - id: sec-application-defense
+    kind: DOMAIN
+    name: "애플리케이션 방어"
     category: SECURITY
     level: INTERMEDIATE
-    description: "다른 사이트에서 시작된 요청에 쿠키를 싣지 않도록 브라우저에 지시하는 쿠키 속성. Lax 는 최상위 이동(GET)만 허용해 교차 사이트 POST 를 막는다"
-    synonyms: ["SameSite=Lax", "Secure 쿠키"]
+    description: "입력값 · 브라우저 · 요청량을 통해 들어오는 공격을 막는다. 공격마다 막는 자리가 다르다 — 질의 조립, 출력, 쿠키 전송, 이동 주소, 서버의 외부 호출, 요청 빈도"
+    synonyms: ["OWASP Top 10", "web application security"]
+    contains: [sec-web-attack-defense, sec-browser-security, sec-abuse-control]
+
+  # ── 입력 · 출력 방어 ──
+  - id: sec-web-attack-defense
+    kind: STAGE
+    name: "입력 · 출력 방어"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "사용자 입력이 질의 · 명령 · HTML · URL · 객체로 해석되는 모든 자리에서 값이 구조를 바꾸지 못하게 한다. 입력은 검증하고, 조립은 바인딩하고, 출력은 문맥에 맞게 인코딩한다"
+    synonyms: ["웹 공격 방어", "injection defense"]
+    contains: [sec-input-validation, sec-parameter-binding, sec-output-encoding, sec-output-sanitization, sec-csrf-token, sec-redirect-allowlist, sec-ssrf-defense, sec-safe-deserialization, sql-injection, sec-command-injection, xss, csrf, sec-open-redirect, sec-ssrf, sec-insecure-deserialization, sec-path-traversal, sec-xxe, sec-mass-assignment, sec-request-smuggling]
+  - id: sec-input-validation
+    kind: MECHANISM
+    name: "입력 검증"
+    category: SECURITY
+    level: BEGINNER
+    description: "들어온 값이 기대한 타입 · 길이 · 형식 · 범위인지 허용 목록 방식으로 확인하고 아니면 거부한다. 서버에서 해야 하고, 검증은 인젝션 방어를 돕지만 바인딩 · 인코딩을 대신하지 않는다"
+    synonyms: ["input validation", "allowlist validation"]
     code:
-      - { path: portal-fe/src/auth/auth.ts, symbol: "'SameSite=Lax',", note: "로그인 쿠키에 SameSite=Lax · Secure 를 붙인다" }
-    mitigates: [csrf]
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/token/policy/ServeTokenSigner.kt, symbol: "require(SAFE_VALUE.matches(it)) { \"토큰 값에 쓸 수 없는 문자가 있습니다: $it\" }", note: "구분자로 쓰는 문자가 값에 섞이지 않게 허용 문자만 받는다" }
+    mitigates: [sec-path-traversal, sec-mass-assignment]
   - id: sec-parameter-binding
     kind: MECHANISM
     name: "파라미터 바인딩"
@@ -228,6 +1227,38 @@ concepts:
     code:
       - { path: blog/feature/src/main/kotlin/com/kgd/blog/infrastructure/persistence/repository/BlogJpaRepositories.kt, symbol: "fun findSubtree(@Param(\"path\") path: String)", note: "LIKE 조건도 :path 자리표시자로 묶는다" }
     mitigates: [sql-injection]
+  - id: sec-output-encoding
+    kind: MECHANISM
+    name: "출력 인코딩"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "값을 HTML 본문 · 속성 · JS · URL 에 넣을 때 그 문맥의 특수 문자를 이스케이프해 데이터로만 보이게 한다. 템플릿 · 프레임워크의 자동 이스케이프가 기본이고, 우회 API(innerHTML)가 구멍이다"
+    synonyms: ["output encoding", "escaping", "contextual escaping"]
+    mitigates: [xss]
+  - id: sec-output-sanitization
+    kind: MECHANISM
+    name: "출력 정화"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "사용자가 쓴 HTML 을 그대로 그려야 할 때 스크립트 · 이벤트 속성 · 위험 태그를 걷어 낸다. 입력 시점이 아니라 그리는 시점에 건다"
+    synonyms: ["sanitize", "HTML sanitization"]
+    code:
+      - { path: portal-fe/src/pages/blog/markdown.ts, symbol: "return DOMPurify.sanitize(raw, {", note: "블로그 본문 마크다운을 그리기 전에 정화" }
+    contains: [dompurify]
+    mitigates: [xss]
+    alternative_to:
+      - { to: sec-output-encoding, reason: "마크업을 살려야 할 때 전부 이스케이프하는 대신 위험 요소만 지운다" }
+  - id: sec-csrf-token
+    kind: MECHANISM
+    name: "CSRF 토큰"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "상태를 바꾸는 요청에 세션과 묶인 예측 불가능한 값을 함께 내게 해, 다른 사이트가 만든 요청을 거른다. 쿠키로 인증하는 폼 · API 에 필요하다"
+    synonyms: ["anti-CSRF token", "synchronizer token", "double submit cookie"]
+    uses: [sec-csprng]
+    mitigates: [csrf]
+    alternative_to:
+      - { to: sec-samesite-cookie, reason: "브라우저 속성에 기대지 않고 서버가 직접 확인한다" }
   - id: sec-redirect-allowlist
     kind: MECHANISM
     name: "리다이렉트 허용 목록"
@@ -237,14 +1268,49 @@ concepts:
     code:
       - { path: portal-fe/src/auth/auth.ts, symbol: "export function safeNext(next: string | null | undefined): string | null", note: "1989v 계열 https 와 상대 경로만 통과" }
     mitigates: [sec-open-redirect]
+  - id: sec-ssrf-defense
+    kind: MECHANISM
+    name: "SSRF 방어"
+    category: SECURITY
+    level: ADVANCED
+    description: "서버가 사용자 입력 URL 을 대신 호출할 때 목적지를 허용 목록으로 제한하고, 사설 · 메타데이터 IP 로 해석되는 주소와 리다이렉트를 막고, 네트워크 이그레스도 좁힌다"
+    synonyms: ["SSRF protection", "egress allowlist"]
+    mitigates: [sec-ssrf]
+  - id: sec-safe-deserialization
+    kind: MECHANISM
+    name: "안전한 역직렬화"
+    category: SECURITY
+    level: ADVANCED
+    description: "신뢰할 수 없는 입력을 언어 기본 객체 직렬화로 풀지 않고, JSON 같은 데이터 형식을 정해진 타입으로만 바인딩한다. 다형 타입 정보를 입력에서 받지 않는다"
+    synonyms: ["safe deserialization", "type allowlist"]
+    uses:
+      - jackson
+      - { to: lang-polymorphic-json, reason: "허용한 타입 이름만 역직렬화한다" }
+    mitigates: [sec-insecure-deserialization]
+  - id: sql-injection
+    kind: PROBLEM
+    name: "SQL 인젝션"
+    category: SECURITY
+    level: BEGINNER
+    description: "입력값이 SQL 문자열에 이어 붙어 질의 구조를 바꾸는 상태. 조건을 무력화해 남의 행을 읽거나 지운다"
+    synonyms: ["SQL injection", "SQLi"]
+    questions: ["ORM 을 쓰면 SQL 인젝션이 사라지나"]
+  - id: sec-command-injection
+    kind: PROBLEM
+    name: "명령어 인젝션"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "입력값이 셸 · OS 명령 문자열에 섞여 임의 명령이 실행되는 상태. 셸을 거치지 않는 인자 배열 실행과 허용 목록으로 막는다. LDAP · NoSQL · 템플릿 인젝션도 같은 뿌리다"
+    synonyms: ["command injection", "OS injection", "injection"]
   - id: xss
     kind: PROBLEM
     name: "XSS"
     category: SECURITY
     level: INTERMEDIATE
     description: "공격자가 넣은 스크립트가 다른 사용자의 브라우저에서 우리 출처 권한으로 실행되는 상태. JS 가 읽을 수 있는 쿠키 · 저장소의 토큰을 그대로 가져간다"
-    synonyms: ["Cross-Site Scripting", "크로스 사이트 스크립팅"]
+    synonyms: ["Cross-Site Scripting", "크로스 사이트 스크립팅", "stored XSS", "reflected XSS", "DOM XSS"]
     questions: ["저장형 XSS 와 반사형 XSS 는 어떻게 다른가", "HttpOnly 쿠키가 XSS 피해를 줄이는 방식은 무엇인가"]
+    causes: [sec-token-theft]
   - id: csrf
     kind: PROBLEM
     name: "CSRF"
@@ -255,14 +1321,6 @@ concepts:
     questions: ["Bearer 헤더 인증 API 가 CSRF 에 강한 이유는 무엇인가"]
     code:
       - { path: gateway/src/main/kotlin/com/kgd/gateway/config/SecurityConfig.kt, symbol: ".csrf { it.disable() }", note: "헤더 토큰 방식이라 CSRF 토큰 필터를 끈다" }
-  - id: sql-injection
-    kind: PROBLEM
-    name: "SQL 인젝션"
-    category: SECURITY
-    level: BEGINNER
-    description: "입력값이 SQL 문자열에 이어 붙어 질의 구조를 바꾸는 상태. 조건을 무력화해 남의 행을 읽거나 지운다"
-    synonyms: ["SQL injection", "SQLi"]
-    questions: ["ORM 을 쓰면 SQL 인젝션이 사라지나"]
   - id: sec-open-redirect
     kind: PROBLEM
     name: "오픈 리다이렉트"
@@ -270,6 +1328,148 @@ concepts:
     level: INTERMEDIATE
     description: "우리 도메인의 이동 파라미터가 임의 외부 주소로 보내는 상태. 믿을 만한 로그인 화면을 피싱 미끼로 쓰게 된다"
     synonyms: ["open redirect"]
+    causes: [sec-phishing]
+  - id: sec-ssrf
+    kind: PROBLEM
+    name: "SSRF"
+    category: SECURITY
+    level: ADVANCED
+    description: "공격자가 준 URL 을 서버가 대신 호출해, 밖에서 닿지 않는 내부 서비스 · 클라우드 메타데이터(169.254.169.254)의 자격 증명을 읽어 가는 상태"
+    synonyms: ["Server-Side Request Forgery", "서버 측 요청 위조"]
+    questions: ["URL 허용 목록 검사를 DNS 재바인딩으로 우회하는 방법은 무엇인가"]
+  - id: sec-insecure-deserialization
+    kind: PROBLEM
+    name: "안전하지 않은 역직렬화"
+    category: SECURITY
+    level: ADVANCED
+    description: "신뢰할 수 없는 바이트를 객체로 복원하면서 클래스패스의 가젯 체인이 실행돼 원격 코드 실행까지 이어지는 상태"
+    synonyms: ["insecure deserialization", "gadget chain", "RCE"]
+  - id: sec-path-traversal
+    kind: PROBLEM
+    name: "경로 조작"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "파일 이름 입력에 ../ 를 넣어 의도한 디렉터리 밖의 파일을 읽거나 쓰는 상태"
+    synonyms: ["path traversal", "directory traversal"]
+  - id: sec-xxe
+    kind: PROBLEM
+    name: "XXE"
+    category: SECURITY
+    level: ADVANCED
+    description: "XML 파서가 외부 엔티티를 풀어 서버 파일을 읽거나 내부 URL 을 호출하는 상태. 파서의 DTD · 외부 엔티티 처리를 꺼서 막는다"
+    synonyms: ["XML External Entity"]
+    causes: [sec-ssrf]
+  - id: sec-mass-assignment
+    kind: PROBLEM
+    name: "과다 바인딩"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "요청 본문을 엔티티에 통째로 바인딩해 사용자가 보내면 안 되는 필드(role · price)까지 바뀌는 상태. 요청 전용 DTO 로 받을 필드를 고정해 막는다"
+    synonyms: ["mass assignment", "over-posting"]
+    causes: [sec-privilege-escalation]
+
+  - id: sec-request-smuggling
+    kind: PROBLEM
+    name: "HTTP 요청 밀반입"
+    category: SECURITY
+    level: ADVANCED
+    description: "프록시와 백엔드가 요청 경계(Content-Length · Transfer-Encoding)를 다르게 해석해, 한 요청 안에 숨긴 두 번째 요청이 다음 사용자의 요청에 붙어 처리되는 상태"
+    synonyms: ["HTTP request smuggling", "desync attack"]
+
+  # ── 브라우저 보안 정책 ──
+  - id: sec-browser-security
+    kind: STAGE
+    name: "브라우저 보안 정책"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "브라우저가 출처 경계 · 쿠키 전송 · 스크립트 실행 · 프레임 삽입을 어떻게 다룰지 응답 헤더와 쿠키 속성으로 지시한다. 서버가 한 줄 설정으로 공격 한 갈래를 통째로 막는 자리다"
+    questions: ["보안 헤더는 서버를 보호하나 사용자를 보호하나"]
+    contains: [cors, sec-samesite-cookie, sec-httponly-cookie, sec-secure-cookie, sec-csp, sec-security-headers, sec-subresource-integrity, sec-clickjacking, sec-cors-misconfiguration]
+    uses:
+      - { to: net-hsts, reason: "HTTPS 강제는 네트워크 도메인의 HSTS 로 건다" }
+  - id: cors
+    kind: MECHANISM
+    name: "CORS"
+    category: SECURITY
+    level: BEGINNER
+    description: "동일 출처 정책이 막는 다른 출처 요청을 서버가 응답 헤더로 허용 목록을 밝혀 풀어 주는 브라우저 규칙. 막는 장치가 아니라 푸는 장치라, 와일드카드 대신 정확한 출처만 적는다"
+    synonyms: ["Cross-Origin Resource Sharing"]
+    questions: ["CORS 는 서버를 보호하나 사용자를 보호하나", "preflight 요청은 언제 나가나"]
+    code:
+      - { path: gateway/src/main/resources/application.yml, symbol: "allowedOriginPatterns:", note: "1989v.com 계열과 로컬 dev 만 허용" }
+    uses: [sec-term-same-origin-policy, sec-term-preflight]
+  - id: sec-samesite-cookie
+    kind: MECHANISM
+    name: "SameSite 쿠키"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "다른 사이트에서 시작된 요청에 쿠키를 싣지 않도록 브라우저에 지시하는 쿠키 속성. Lax 는 최상위 이동(GET)만 허용해 교차 사이트 POST 를 막는다"
+    synonyms: ["SameSite=Lax", "SameSite=Strict"]
+    code:
+      - { path: portal-fe/src/auth/auth.ts, symbol: "'SameSite=Lax',", note: "로그인 쿠키에 SameSite=Lax 를 붙인다" }
+    uses: [sec-term-origin-vs-site]
+    mitigates: [csrf]
+  - id: sec-httponly-cookie
+    kind: MECHANISM
+    name: "HttpOnly 쿠키"
+    category: SECURITY
+    level: BEGINNER
+    description: "JS(document.cookie)가 읽지 못하게 하는 쿠키 속성. XSS 가 나도 세션 쿠키를 훔쳐 가지 못하지만, 그러면 JS 가 토큰을 헤더에 실을 수 없어 쿠키 인증과 CSRF 방어가 함께 필요해진다"
+    synonyms: ["HttpOnly"]
+    mitigates: [sec-token-theft]
+  - id: sec-secure-cookie
+    kind: MECHANISM
+    name: "Secure 쿠키"
+    category: SECURITY
+    level: BEGINNER
+    description: "HTTPS 연결에서만 쿠키를 보내게 하는 속성. 평문 HTTP 로 새지 않지만 로컬 http 개발 환경에서는 쿠키가 조용히 거부된다"
+    synonyms: ["Secure", "__Host- prefix"]
+    code:
+      - { path: portal-fe/src/auth/auth.ts, symbol: "if (window.location.protocol === 'https:') parts.push('Secure');", note: "https 에서만 Secure 를 붙여 로컬 개발을 살린다" }
+  - id: sec-csp
+    kind: MECHANISM
+    name: "CSP"
+    category: SECURITY
+    level: ADVANCED
+    description: "페이지가 스크립트 · 스타일 · 프레임을 어느 출처에서만 불러오고 실행할지 응답 헤더로 제한한다. 인라인 스크립트를 막으면 XSS 가 들어와도 실행되지 않고, frame-ancestors 는 클릭재킹을 막는다"
+    synonyms: ["Content Security Policy", "frame-ancestors", "nonce-based CSP"]
+    questions: ["CSP 에 unsafe-inline 을 허용하면 무엇을 잃나"]
+    code:
+      - { path: portal-fe/nginx.conf, symbol: "add_header Content-Security-Policy \"frame-ancestors 'self' https://*.1989v.com\" always;", note: "1989v 계열만 프레임으로 삽입할 수 있다" }
+    mitigates: [xss, sec-clickjacking]
+  - id: sec-security-headers
+    kind: MECHANISM
+    name: "보안 응답 헤더"
+    category: SECURITY
+    level: BEGINNER
+    description: "nosniff(콘텐츠 타입 추측 금지) · Referrer-Policy · Permissions-Policy 같은 헤더로 브라우저의 위험한 기본 동작을 끈다. 사용자 업로드를 내려줄 때 특히 필요하다"
+    synonyms: ["X-Content-Type-Options", "nosniff", "Referrer-Policy", "Permissions-Policy"]
+    code:
+      - { path: ads/feature/src/main/kotlin/com/kgd/ads/presentation/support/ImageResponses.kt, symbol: ".header(\"X-Content-Type-Options\", \"nosniff\")", note: "광고 소재 이미지를 스크립트로 해석하지 못하게 한다" }
+    mitigates: [xss]
+  - id: sec-subresource-integrity
+    kind: MECHANISM
+    name: "하위 리소스 무결성"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "CDN 에서 불러오는 스크립트 태그에 기대 해시를 적어, 내용이 바뀌면 브라우저가 실행하지 않게 한다"
+    synonyms: ["SRI", "Subresource Integrity", "integrity attribute"]
+    uses: [hashing]
+    mitigates: [sec-supply-chain-attack]
+  - id: sec-clickjacking
+    kind: PROBLEM
+    name: "클릭재킹"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "우리 페이지를 투명한 프레임으로 겹쳐 두고 사용자가 다른 것을 누른다고 믿게 해 버튼을 누르게 하는 공격"
+    synonyms: ["clickjacking", "UI redressing"]
+  - id: sec-cors-misconfiguration
+    kind: PROBLEM
+    name: "CORS 설정 오류"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "요청의 Origin 을 그대로 반사하거나 와일드카드에 자격 증명 허용을 켜서, 아무 사이트나 사용자 권한으로 API 응답을 읽게 되는 상태"
+    synonyms: ["CORS misconfiguration", "origin reflection"]
 
   # ── 남용 제어 ──
   - id: sec-abuse-control
@@ -277,21 +1477,25 @@ concepts:
     name: "남용 제어"
     category: SECURITY
     level: INTERMEDIATE
-    description: "한 클라이언트가 자원을 독차지하거나 무차별 대입을 하지 못하게 요청량을 제한한다. 누구를 한 명으로 셀지(키)가 한도 값만큼 중요하다"
-    contains: [rate-limiting, sec-rejected-rate]
+    description: "한 클라이언트가 자원을 독차지하거나 무차별 대입 · 자동화로 남용하지 못하게 요청량을 제한하고 봇을 가른다. 누구를 한 명으로 셀지(키)가 한도 값만큼 중요하다"
+    contains: [rate-limiting, sec-trusted-client-ip, sec-account-lockout, sec-bot-detection, sec-captcha, sec-credential-stuffing, sec-scraping, sec-client-ip-spoofing, sec-rejected-rate, sec-login-failure-rate]
+    uses:
+      - { to: cloud-waf, reason: "알려진 공격 패턴은 앱에 닿기 전 엣지에서 거른다" }
+      - { to: cloud-ddos-protection, reason: "대량 트래픽은 엣지 망이 흡수한다" }
   - id: rate-limiting
     kind: MECHANISM
     name: "레이트 리미팅"
     category: SECURITY
     level: INTERMEDIATE
-    description: "키(사용자 id · 방문자 IP)마다 일정 시간 요청 수를 제한하고 넘으면 429 로 거절한다. 프록시 뒤에서는 연결 IP 가 프록시 하나라 원래 방문자 IP 헤더를 키로 써야 한다"
+    description: "키(사용자 id · 방문자 IP)마다 일정 시간 요청 수를 제한하고 넘으면 429 로 거절한다. 세는 방식(버킷 · 창)에 따라 순간 몰림을 얼마나 받아 줄지가 달라진다"
     synonyms: ["rate limiting", "throttling"]
-    questions: ["프록시 뒤에서 IP 로 세면 무엇이 잘못되나", "방문자 IP 헤더를 믿어도 되는 조건은 무엇인가"]
+    questions: ["프록시 뒤에서 IP 로 세면 무엇이 잘못되나", "여러 게이트웨이 인스턴스가 한도를 나눠 세게 하려면 무엇이 필요한가"]
     code:
-      - { path: gateway/src/main/kotlin/com/kgd/gateway/config/RateLimiterConfig.kt, symbol: "fun adsClientIpKeyResolver(): KeyResolver", note: "CF-Connecting-IP 를 키로 방문자별로 센다" }
-    contains: [sec-token-bucket]
-    uses: [redis]
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/config/RateLimiterConfig.kt, symbol: "fun adsClientIpKeyResolver(): KeyResolver", note: "방문자별로 세는 키" }
+    contains: [sec-token-bucket, sec-leaky-bucket, sec-fixed-window-counter, sec-sliding-window]
+    uses: [redis, spring-cloud-gateway, sec-trusted-client-ip]
     affects: [sec-rejected-rate]
+    mitigates: [sec-brute-force, sec-scraping]
   - id: sec-token-bucket
     kind: MECHANISM
     name: "토큰 버킷"
@@ -301,6 +1505,92 @@ concepts:
     synonyms: ["token bucket"]
     code:
       - { path: gateway/src/main/kotlin/com/kgd/gateway/config/RateLimiterConfig.kt, symbol: "RedisRateLimiter(100, 200, 1)", note: "초당 100 개 보충 · 버스트 200 · 요청당 1 개" }
+  - id: sec-leaky-bucket
+    kind: MECHANISM
+    name: "리키 버킷"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "요청을 큐에 넣고 일정한 속도로만 흘려보낸다. 출력이 고르지만 몰림을 받아 주지 않고 큐가 차면 버린다"
+    synonyms: ["leaky bucket"]
+    alternative_to:
+      - { to: sec-token-bucket, reason: "버스트를 허용하지 않고 처리 속도를 평탄하게 만든다" }
+  - id: sec-fixed-window-counter
+    kind: MECHANISM
+    name: "고정 창 카운터"
+    category: ALGORITHM
+    level: BEGINNER
+    description: "분 · 시 같은 고정 구간마다 카운터를 세고 넘으면 거절한다. 가장 싸지만 구간 경계 앞뒤로 한도의 두 배가 몰릴 수 있다"
+    synonyms: ["fixed window"]
+  - id: sec-sliding-window
+    kind: MECHANISM
+    name: "슬라이딩 창"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "지금부터 거슬러 올라간 창 안의 요청 수를 로그나 두 창의 가중합으로 센다. 경계 몰림이 없지만 저장 · 계산이 더 든다"
+    synonyms: ["sliding window log", "sliding window counter"]
+    alternative_to:
+      - { to: sec-fixed-window-counter, reason: "경계 몰림을 없애는 대신 기록을 더 남긴다" }
+  - id: sec-trusted-client-ip
+    kind: MECHANISM
+    name: "신뢰 프록시의 클라이언트 IP"
+    category: SECURITY
+    level: ADVANCED
+    description: "프록시 뒤에서는 연결 IP 가 프록시 하나라, 믿을 수 있는 엣지가 넣은 헤더(CF-Connecting-IP)에서만 방문자 IP 를 읽는다. 클라이언트가 보낸 X-Forwarded-For 첫 값은 믿지 않는다"
+    synonyms: ["client IP resolution", "X-Forwarded-For", "CF-Connecting-IP"]
+    code:
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/config/RateLimiterConfig.kt, symbol: "exchange.request.headers.getFirst(\"CF-Connecting-IP\")?.takeIf { it.isNotBlank() }", note: "Cloudflare 가 넣은 방문자 IP 를 키로 쓴다" }
+    mitigates: [sec-client-ip-spoofing]
+  - id: sec-account-lockout
+    kind: MECHANISM
+    name: "로그인 시도 제한"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "계정 · IP 별로 인증 실패 횟수를 세고 넘으면 지연 · 잠금 · 추가 확인을 건다. 계정을 영구 잠그면 공격자가 남의 계정을 잠그는 도구가 되므로 점진 지연을 선호한다"
+    synonyms: ["account lockout", "login throttling", "progressive delay"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/security/port/TwoFactorRateLimiterPort.kt, symbol: "interface TwoFactorRateLimiterPort {", note: "2차 인증 코드 시도 횟수를 제한한다" }
+    mitigates: [sec-brute-force, sec-credential-stuffing]
+    measured_by: [sec-login-failure-rate]
+  - id: sec-bot-detection
+    kind: MECHANISM
+    name: "봇 식별"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "User-Agent · 행동 패턴 · 엣지 봇 점수로 자동화 트래픽을 가려 집계 · 과금 · 한도에서 뺀다. UA 는 위조되므로 선량한 크롤러를 가르는 1차 필터로만 믿는다"
+    synonyms: ["bot detection", "crawler filter", "bot management", "Bot Fight"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/web/CrawlerUserAgents.kt, symbol: "object CrawlerUserAgents {", note: "크롤러 UA 를 가려 계측 · 광고 과금에서 뺀다" }
+    mitigates: [sec-scraping]
+  - id: sec-captcha
+    kind: MECHANISM
+    name: "CAPTCHA · 챌린지"
+    category: SECURITY
+    level: BEGINNER
+    description: "의심스러운 요청에 사람만 풀기 쉬운 과제나 브라우저 검증을 요구한다. 매번 걸면 사용자가 떠나므로 위험 점수가 높을 때만 건다"
+    synonyms: ["CAPTCHA", "Turnstile", "challenge page"]
+    mitigates: [sec-credential-stuffing]
+  - id: sec-credential-stuffing
+    kind: PROBLEM
+    name: "크리덴셜 스터핑"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "다른 사이트에서 유출된 아이디 · 비밀번호 목록을 자동화로 대량 대입해 비밀번호를 재사용한 계정을 뚫는 공격"
+    synonyms: ["credential stuffing", "account takeover", "ATO"]
+    measured_by: [sec-login-failure-rate]
+  - id: sec-scraping
+    kind: PROBLEM
+    name: "스크래핑 · 자동화 남용"
+    category: SECURITY
+    level: BEGINNER
+    description: "봇이 콘텐츠 · 가격 · 재고를 대량으로 긁어 가거나 계측 · 광고 노출을 부풀리는 상태"
+    synonyms: ["scraping", "automated abuse", "invalid traffic"]
+  - id: sec-client-ip-spoofing
+    kind: PROBLEM
+    name: "클라이언트 IP 헤더 위조"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "X-Forwarded-For 같은 헤더를 클라이언트가 직접 꾸며 레이트 리밋 키 · IP 허용 목록 · 감사 기록을 속이는 상태"
+    synonyms: ["X-Forwarded-For spoofing"]
   - id: sec-rejected-rate
     kind: METRIC
     name: "거절 비율(429)"
@@ -308,16 +1598,422 @@ concepts:
     level: BEGINNER
     description: "전체 요청 중 한도 초과로 429 를 받은 비율. 높으면 정상 사용자까지 막는 한도이거나 공격이 들어온 것이다"
     synonyms: ["429 rate"]
+  - id: sec-login-failure-rate
+    kind: METRIC
+    name: "로그인 실패율"
+    category: SECURITY
+    level: BEGINNER
+    description: "인증 시도 중 실패 비율과 계정 · IP 별 실패 수. 평소보다 뛰면 크리덴셜 스터핑이나 무차별 대입이 들어온 것이다"
+    synonyms: ["authentication failure rate"]
 
-  # ── 용어 사전 ──
+  # ════════════════════════════════════════════════════════════
+  # 보안 운영 · 개인정보
+  # ════════════════════════════════════════════════════════════
+  - id: sec-security-operations
+    kind: DOMAIN
+    name: "보안 운영 · 개인정보"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "개인정보를 덜 모으고 짧게 두고, 누가 무엇을 했는지 남기고, 설계 · 빌드 단계에서 취약점을 미리 걷어 내는 일. 사고를 막는 것만큼 사고를 알아차리고 줄이는 것을 다룬다"
+    synonyms: ["security operations", "SecOps", "privacy"]
+    contains: [sec-privacy, sec-audit, sec-secure-development]
+
+  # ── 개인정보 보호 ──
+  - id: sec-privacy
+    kind: STAGE
+    name: "개인정보 보호"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "개인 식별 정보를 필요한 만큼만 받고, 식별이 안 되게 가리고, 정해진 기간이 지나면 지운다. 저장하지 않는 것보다 받지 않는 것이 확실하다"
+    synonyms: ["privacy", "data protection", "PII protection"]
+    questions: ["가명처리와 익명처리는 어떻게 다른가"]
+    contains: [sec-data-minimization, sec-pseudonymization, sec-tokenization, sec-data-masking, sec-field-level-encryption, sec-format-preserving-encryption, sec-data-retention, sec-pii-leak]
+  - id: sec-data-minimization
+    kind: MECHANISM
+    name: "수집 최소화"
+    category: SECURITY
+    level: BEGINNER
+    description: "서비스에 꼭 필요한 개인정보만 요청하고, 필요 없는 스코프 · 필드는 처음부터 받지 않는다. 받지 않은 값은 새지도 않고 보존 · 파기 의무도 생기지 않는다"
+    synonyms: ["data minimization", "collection limitation"]
+    code:
+      - { path: auth/app/src/main/kotlin/com/kgd/auth/application/user/service/AuthService.kt, symbol: "// 원본 sub 은 여기서 끝난다 — member 로도, DB 로도 넘어가지 않는다 (ADR-0078)", note: "제공자 원본 식별값을 인증 서비스 밖으로 넘기지 않는다" }
+    mitigates: [sec-pii-leak]
+  - id: sec-pseudonymization
+    kind: MECHANISM
+    name: "가명처리"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "식별값을 키 있는 해시 · 대체값으로 바꿔 추가 정보(키) 없이는 원래 사람을 알 수 없게 한다. 같은 사람은 같은 값이 되어 대조 · 집계는 여전히 된다"
+    synonyms: ["pseudonymization", "가명화"]
+    code:
+      - { path: auth/app/src/main/kotlin/com/kgd/auth/infrastructure/security/SubjectHasher.kt, symbol: "override fun hash(provider: String, subject: String): String", note: "제공자:sub 를 HMAC 으로 가명처리" }
+    uses: [sec-hmac, sec-term-pii]
+    mitigates: [sec-pii-leak]
+  - id: sec-tokenization
+    kind: MECHANISM
+    name: "토큰화"
+    category: SECURITY
+    level: ADVANCED
+    description: "카드 번호 같은 민감값을 의미 없는 대체 토큰으로 바꾸고 원본은 별도 금고에만 둔다. 대부분의 시스템이 토큰만 다뤄 규제 범위(PCI)가 금고로 줄어든다"
+    synonyms: ["tokenization", "vault tokenization"]
+    alternative_to:
+      - { to: sec-field-level-encryption, reason: "원본을 각 DB 에 암호문으로 두지 않고 한 금고로 모은다" }
+  - id: sec-data-masking
+    kind: MECHANISM
+    name: "마스킹"
+    category: SECURITY
+    level: BEGINNER
+    description: "화면 · 로그 · toString 에 민감값의 일부만 보이거나 전부 가려서 내보낸다. 저장값은 그대로 두고 노출 지점만 줄인다"
+    synonyms: ["data masking", "redaction", "log masking"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/infrastructure/security/EnvelopeCryptoCodec.kt, symbol: "override fun toString(): String =", note: "암호문 · 감싼 DEK 가 로그에 찍히지 않게 가린다" }
+    mitigates: [sec-pii-leak]
+  - id: sec-field-level-encryption
+    kind: MECHANISM
+    name: "필드 단위 암호화"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "DB 전체가 아니라 계좌 · 비밀 같은 민감 컬럼만 애플리케이션에서 암호화해 저장한다. DB · 백업 · 덤프가 새도 그 컬럼은 읽히지 않지만 그 컬럼으로 검색 · 정렬은 못 한다"
+    synonyms: ["field-level encryption", "application-level encryption", "column encryption"]
+    code:
+      - { path: seller/feature/src/main/kotlin/com/kgd/seller/infrastructure/crypto/AesGcmAccountCipher.kt, symbol: "class AesGcmAccountCipher(", note: "판매자 정산 계좌를 AES-GCM 으로 암호화해 저장" }
+    uses: [sec-aead]
+  - id: sec-format-preserving-encryption
+    kind: MECHANISM
+    name: "형식 보존 암호화"
+    category: SECURITY
+    level: ADVANCED
+    description: "16자리 숫자는 16자리 숫자로 암호화하는 식으로 원래 형식을 유지한다. 스키마 · 검증 규칙을 바꿀 수 없는 레거시에 암호화를 넣을 때 쓴다"
+    synonyms: ["FPE", "FF1", "FF3-1"]
+  - id: sec-data-retention
+    kind: MECHANISM
+    name: "보존 기간 · 파기"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "개인정보가 담긴 원장 · 로그마다 보존 기간을 정하고 지나면 자동으로 지운다. 개인정보처리방침에 적은 숫자와 코드의 상수가 같아야 한다"
+    synonyms: ["data retention", "retention policy", "purge"]
+    code:
+      - { path: k8s/base/retention/cronjob.yaml, symbol: "# ADR-0077 — 원장 보존기간 정리 (blog_post_view 90일, resume_access_log 365일).", note: "주 1회 보존 기간이 지난 원장 행을 지운다" }
+    mitigates: [sec-pii-leak]
+  - id: sec-pii-leak
+    kind: PROBLEM
+    name: "개인정보 유출"
+    category: SECURITY
+    level: BEGINNER
+    description: "개인 식별 정보가 로그 · 에러 메시지 · 백업 · 분석 적재 · 제3자 호출로 의도하지 않은 곳에 복제되는 상태. DB 보다 로그에서 더 자주 샌다"
+    synonyms: ["PII leak", "data breach", "개인정보 유출"]
+
+  # ── 감사 · 탐지 ──
+  - id: sec-audit
+    kind: STAGE
+    name: "감사 · 탐지"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "누가 언제 무엇을 했는지 지울 수 없게 남기고, 이상 징후를 알아차려 대응한다. 막지 못한 사고의 범위를 알아내는 유일한 근거다"
+    questions: ["감사 로그와 애플리케이션 로그는 무엇이 다른가"]
+    contains: [sec-audit-logging, sec-tamper-evident-log, sec-security-monitoring, sec-incident-response, sec-repudiation, sec-time-to-detect]
+  - id: sec-audit-logging
+    kind: MECHANISM
+    name: "감사 로그"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "권한 변경 · 민감 데이터 접근 · 관리자 조치를 행위자 · 대상 · 시각 · 결과와 함께 별도 저장소에 남긴다. 비밀값 자체는 남기지 않는다"
+    synonyms: ["audit log", "audit trail"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/audit/AuditLogPublisher.kt, symbol: "interface AuditLogPublisher {", note: "실매매 조치를 감사 이벤트로 발행" }
+    mitigates: [sec-repudiation]
+  - id: sec-tamper-evident-log
+    kind: MECHANISM
+    name: "변조 탐지 로그"
+    category: SECURITY
+    level: ADVANCED
+    description: "각 로그 항목에 앞 항목의 해시를 넣어 사슬로 엮는다. 중간 항목을 고치거나 지우면 이후 해시가 전부 어긋나 검증에서 드러난다"
+    synonyms: ["hash chain", "tamper-evident log", "append-only log"]
+    code:
+      - { path: quant/feature/src/main/kotlin/com/kgd/quant/application/live/service/AuditChainService.kt, symbol: "val prevHash = repo.lastTipHash(tenantId)", note: "직전 해시에 이어 감사 항목을 붙인다" }
+    uses: [hashing, sec-audit-logging]
+    mitigates: [sec-repudiation]
+  - id: sec-security-monitoring
+    kind: MECHANISM
+    name: "보안 이벤트 탐지"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "인증 실패 급증 · 권한 거부 · 비정상 위치 로그인 같은 보안 신호를 모아 규칙 · 기준선으로 경보를 낸다"
+    synonyms: ["SIEM", "security monitoring", "intrusion detection"]
+    uses: [sec-audit-logging]
+    affects: [sec-time-to-detect]
+  - id: sec-incident-response
+    kind: MECHANISM
+    name: "보안 사고 대응"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "탐지 → 격리 → 키 · 토큰 교체와 무효화 → 원인 제거 → 영향 범위 통지 → 회고 순으로 움직인다. 키 교체 절차를 미리 연습해 두지 않으면 사고 때 못 한다"
+    synonyms: ["incident response", "breach response"]
+    uses: [sec-key-rotation, sec-token-revocation]
+  - id: sec-repudiation
+    kind: PROBLEM
+    name: "부인"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "행위자가 한 일을 하지 않았다고 주장해도 반박할 기록이 없는 상태. 관리자 조치 · 금전 조치에서 문제가 된다"
+    synonyms: ["repudiation", "부인 방지 실패"]
+  - id: sec-time-to-detect
+    kind: METRIC
+    name: "탐지까지 걸린 시간"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "침해가 시작된 때부터 알아차린 때까지의 시간. 길수록 유출 범위가 커지고 감사 로그가 보존 기간 밖으로 밀려난다"
+    synonyms: ["MTTD", "dwell time"]
+
+  # ── 보안 설계 · 검증 ──
+  - id: sec-secure-development
+    kind: STAGE
+    name: "보안 설계 · 검증"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "설계 때 위협을 목록으로 만들고, 빌드 때 코드와 의존성을 검사하고, 배포 전에 노출면을 줄인다. 뒤로 갈수록 고치는 비용이 커져 앞으로 당긴다(shift-left)"
+    synonyms: ["secure SDLC", "DevSecOps", "shift-left security"]
+    contains: [sec-threat-modeling, sec-defense-in-depth, sec-attack-surface-reduction, sec-sast, sec-dast, sec-dependency-scanning, sec-penetration-testing, sec-vulnerability-disclosure, sec-security-misconfiguration, sec-vulnerable-dependency, sec-supply-chain-attack]
+    uses:
+      - { to: infra-supply-chain-security, reason: "이미지 스캔 · 서명 · SBOM 은 배포 파이프라인에 건다" }
+  - id: sec-threat-modeling
+    kind: MECHANISM
+    name: "위협 모델링"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "데이터 흐름도에 신뢰 경계를 그리고 경계마다 무엇이 잘못될 수 있는지(STRIDE: 위장 · 변조 · 부인 · 정보 노출 · 서비스 거부 · 권한 상승)를 적어 대응을 정한다"
+    synonyms: ["threat modeling", "STRIDE", "trust boundary"]
+    questions: ["STRIDE 의 여섯 범주는 각각 어떤 보안 속성을 깨뜨리나"]
+  - id: sec-defense-in-depth
+    kind: MECHANISM
+    name: "심층 방어"
+    category: SECURITY
+    level: BEGINNER
+    description: "한 겹이 뚫려도 다음 겹이 막도록 엣지 · 게이트웨이 · 서비스 · 데이터에 독립된 방어를 겹친다. 한 장치에 모든 것을 기대지 않는다"
+    synonyms: ["defense in depth", "layered security"]
+  - id: sec-attack-surface-reduction
+    kind: MECHANISM
+    name: "노출면 축소"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "밖에서 닿을 필요가 없는 엔드포인트 · 관리 콘솔 · 포트 · 버전 정보를 공개 경로에서 뺀다. 인증이 걸려 있어도 로그인 화면과 정확한 버전이 공개되면 공격 표적이 된다"
+    synonyms: ["attack surface reduction", "hardening"]
+    code:
+      - { path: k8s/overlays/oci-arm/ingresses/commerce-platform.yaml, symbol: "# `/actuator` 는 어느 host 에도 두지 않는다", note: "actuator 를 공개 경로에서 뺐다" }
+    mitigates: [sec-security-misconfiguration, sec-origin-bypass]
+  - id: sec-sast
+    kind: MECHANISM
+    name: "정적 보안 분석"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "코드를 실행하지 않고 소스 · 바이트코드에서 인젝션 흐름 · 하드코딩된 비밀 · 위험 API 를 찾는다. 빌드마다 돌릴 수 있지만 오탐이 많다"
+    synonyms: ["SAST", "static analysis", "secret scanning"]
+    mitigates: [infra-secret-leak]
+  - id: sec-dast
+    kind: MECHANISM
+    name: "동적 보안 분석"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "돌아가는 서비스에 공격 요청을 보내 응답으로 취약점을 찾는다. 실제로 뚫리는 것만 잡지만 경로 커버리지가 낮다"
+    synonyms: ["DAST", "web vulnerability scanner"]
+    alternative_to:
+      - { to: sec-sast, reason: "오탐이 적지만 실행 경로에 닿은 곳만 본다" }
+  - id: sec-dependency-scanning
+    kind: MECHANISM
+    name: "의존성 취약점 스캔"
+    category: SECURITY
+    level: BEGINNER
+    description: "사용하는 라이브러리 · 이미지의 버전을 공개 취약점 DB(CVE)와 대조해 알려진 취약 버전을 찾는다. 전이 의존성까지 봐야 의미가 있다"
+    synonyms: ["SCA", "Software Composition Analysis", "Dependabot"]
+    uses: [sec-term-cve-cvss]
+    mitigates: [sec-vulnerable-dependency]
+  - id: sec-penetration-testing
+    kind: MECHANISM
+    name: "모의 해킹"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "사람이 공격자 관점으로 여러 결함을 엮어 실제 침투 경로를 찾는다. 도구가 못 찾는 로직 결함 · 인가 누락을 잡는다"
+    synonyms: ["penetration testing", "pentest", "red team"]
+  - id: sec-vulnerability-disclosure
+    kind: MECHANISM
+    name: "취약점 제보 창구"
+    category: SECURITY
+    level: BEGINNER
+    description: "외부 연구자가 찾은 취약점을 알릴 연락처와 정책을 공개한다. 창구가 없으면 제보가 공개 게시로 먼저 나간다"
+    synonyms: ["security.txt", "RFC 9116", "bug bounty", "VDP"]
+    code:
+      - { path: portal-fe/public/.well-known/security.txt, symbol: "Canonical: https://1989v.com/.well-known/security.txt", note: "RFC 9116 제보 창구" }
+  - id: sec-security-misconfiguration
+    kind: PROBLEM
+    name: "보안 설정 오류"
+    category: SECURITY
+    level: BEGINNER
+    description: "기본 계정 · 디버그 엔드포인트 · 과도한 권한 · 공개 버킷처럼 코드가 아니라 설정 때문에 열린 구멍. 매니페스트에서 지워도 클러스터에 남은 잔재가 흔한 원인이다"
+    synonyms: ["security misconfiguration", "OWASP A05"]
+  - id: sec-vulnerable-dependency
+    kind: PROBLEM
+    name: "취약한 의존성"
+    category: SECURITY
+    level: BEGINNER
+    description: "공개된 취약점이 있는 버전의 라이브러리 · 베이스 이미지를 쓰는 상태. 코드 한 줄 안 고쳐도 새 CVE 공개만으로 생긴다"
+    synonyms: ["vulnerable component", "OWASP A06", "Log4Shell"]
+  - id: sec-supply-chain-attack
+    kind: PROBLEM
+    name: "공급망 공격"
+    category: SECURITY
+    level: ADVANCED
+    description: "라이브러리 · 빌드 도구 · CDN 스크립트에 악성 코드를 심어 그것을 쓰는 모든 서비스를 한꺼번에 뚫는 공격. 오타 패키지 · 탈취된 관리자 계정이 흔한 입구다"
+    synonyms: ["supply chain attack", "typosquatting", "OWASP A08"]
+
+  # ════════════════════════════════════════════════════════════
+  # 기술
+  # ════════════════════════════════════════════════════════════
+  - id: jjwt
+    kind: TECHNOLOGY
+    name: "JJWT"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "JWT 발급 · 파싱 · 서명 검증 Java 라이브러리(io.jsonwebtoken). 이 레포의 JwtUtil 이 HS256 서명과 iss · aud 검증에 쓴다"
+    synonyms: ["io.jsonwebtoken", "jjwt-api"]
+    code:
+      - { path: gradle/libs.versions.toml, symbol: "jjwt-api = { module = \"io.jsonwebtoken:jjwt-api\", version.ref = \"jjwt\" }", note: "JWT 라이브러리 좌표" }
+    implements:
+      - { to: jwt, reason: "Jwts.builder · parser 로 토큰을 만들고 검증한다" }
+      - { to: sec-jws, reason: "signWith · verifyWith 로 서명과 검증을 한다" }
+  - id: dompurify
+    kind: TECHNOLOGY
+    name: "DOMPurify"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "브라우저 DOM 파서로 HTML 을 읽어 허용 목록 밖의 태그 · 속성을 지우는 정화 라이브러리. 블로그 마크다운 렌더 결과를 그리기 전에 거친다"
+    code:
+      - { path: portal-fe/package.json, symbol: "\"dompurify\": \"^3.4.13\",", note: "portal-fe 의존성" }
+    implements:
+      - { to: sec-output-sanitization, reason: "sanitize() 가 위험 태그 · 이벤트 속성을 걷어 낸다" }
+
+  # ════════════════════════════════════════════════════════════
+  # 용어 사전
+  # ════════════════════════════════════════════════════════════
   - id: security-glossary
     kind: TERM
     name: "보안 용어 사전"
     category: BASICS
     level: BEGINNER
-    description: "인증 · 인가 · 웹 공격을 읽는 데 필요한 말. 장치가 아니라 그것을 설명하는 용어를 모은다"
+    description: "암호 · 신원 · 웹 공격 · 보안 운영을 읽는 데 필요한 말. 장치가 아니라 그것을 설명하는 용어를 모은다"
     synonyms: ["glossary", "용어집"]
-    contains: [sec-term-access-token, sec-term-refresh-token, sec-term-claim, sec-term-authorization-code, sec-term-same-origin-policy, sec-term-secret-key]
+    contains: [sec-glossary-crypto, sec-glossary-identity, sec-glossary-web, sec-glossary-governance]
+  - id: sec-glossary-crypto
+    kind: TERM
+    name: "암호 용어"
+    category: SECURITY
+    level: BEGINNER
+    description: "암호 원시와 키를 설명하는 말"
+    contains: [sec-term-secret-key, sec-term-public-private-key, sec-term-plaintext-ciphertext, sec-term-iv-nonce, sec-term-authentication-tag, sec-term-associated-data, sec-term-dek-kek, sec-term-key-id, sec-term-collision-resistance, sec-term-rainbow-table, sec-term-work-factor, sec-term-forward-secrecy, sec-term-kerckhoffs-principle, sec-term-spn]
+  - id: sec-term-secret-key
+    kind: TERM
+    name: "비밀 키"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "서명 · HMAC · 대칭 암호화에 쓰는, 서버만 아는 값. 잃으면 검증 · 복원이 안 되고 새면 위조가 된다. 코드가 아니라 Secret 으로 주입한다"
+    synonyms: ["secret key", "서버 키"]
+  - id: sec-term-public-private-key
+    kind: TERM
+    name: "공개키 · 개인키"
+    category: SECURITY
+    level: BEGINNER
+    description: "비대칭 방식의 키 한 쌍. 공개키는 누구에게나 주고 개인키는 소유자만 갖는다. 공개키로 암호화한 것은 개인키로만 풀리고, 개인키로 서명한 것은 공개키로 검증한다"
+    synonyms: ["public key", "private key", "key pair"]
+  - id: sec-term-plaintext-ciphertext
+    kind: TERM
+    name: "평문 · 암호문"
+    category: SECURITY
+    level: BEGINNER
+    description: "암호화 전의 원래 값(평문)과 암호화한 결과(암호문). 암호문 길이 · 빈도로도 정보가 샐 수 있다"
+    synonyms: ["plaintext", "ciphertext"]
+  - id: sec-term-iv-nonce
+    kind: TERM
+    name: "IV · 논스"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "같은 키로 같은 평문을 암호화해도 결과가 달라지게 섞는 값. 비밀일 필요는 없고 암호문 앞에 붙여 저장하지만, 같은 키에서 겹치면 안 된다(논스 = 한 번만 쓰는 수)"
+    synonyms: ["IV", "Initialization Vector", "nonce", "number used once"]
+  - id: sec-term-authentication-tag
+    kind: TERM
+    name: "인증 태그"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "AEAD · MAC 이 내는 짧은 검증값. 복호화 전에 태그를 확인해 한 비트라도 바뀐 암호문은 풀지 않고 거부한다"
+    synonyms: ["authentication tag", "MAC tag", "GCM tag"]
+  - id: sec-term-associated-data
+    kind: TERM
+    name: "연관 데이터(AAD)"
+    category: SECURITY
+    level: ADVANCED
+    description: "암호화하지는 않지만 인증 태그에 함께 묶는 값(용도 · 행 id · 키 버전). 암호문을 다른 행 · 다른 용도로 옮겨 붙이면 태그 검증이 실패한다"
+    synonyms: ["AAD", "Additional Authenticated Data"]
+  - id: sec-term-dek-kek
+    kind: TERM
+    name: "DEK · KEK"
+    category: SECURITY
+    level: ADVANCED
+    description: "데이터를 직접 암호화하는 데이터 키(DEK)와 그 DEK 를 감싸는 키 암호화 키(KEK). KEK 는 KMS 밖으로 나오지 않는다"
+    synonyms: ["Data Encryption Key", "Key Encryption Key", "CMK"]
+  - id: sec-term-key-id
+    kind: TERM
+    name: "키 id"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "암호문 · 토큰에 함께 적는 「어느 키로 만들었나」의 식별값. 교체 중 여러 키가 공존할 때 검증 · 복호화할 키를 고르는 근거다"
+    synonyms: ["kid", "key version"]
+  - id: sec-term-collision-resistance
+    kind: TERM
+    name: "충돌 저항성"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "같은 해시값을 내는 서로 다른 두 입력을 찾기 어려운 성질. 원상 저항성(해시로 입력 찾기)·제2 원상 저항성과 함께 암호 해시의 세 가지 보안 속성이다. MD5 · SHA-1 은 이것이 깨졌다"
+    synonyms: ["collision resistance", "preimage resistance"]
+  - id: sec-term-rainbow-table
+    kind: TERM
+    name: "레인보우 테이블"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "흔한 입력의 해시를 미리 계산해 압축 저장한 표. 솔트 없는 해시는 표에서 찾아보는 것만으로 되돌려진다"
+    synonyms: ["rainbow table", "precomputed hash table"]
+  - id: sec-term-work-factor
+    kind: TERM
+    name: "작업 계수"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "비밀번호 해시 한 번에 드는 반복 횟수 · 메모리 크기. 하드웨어가 빨라지면 올리고, 저장값에 함께 적어 로그인 때 점진적으로 다시 해시한다"
+    synonyms: ["work factor", "cost factor", "iterations"]
+  - id: sec-term-forward-secrecy
+    kind: TERM
+    name: "전방 비밀성"
+    category: SECURITY
+    level: ADVANCED
+    description: "장기 키가 나중에 새도 과거 세션의 트래픽은 풀리지 않는 성질. 세션마다 임시 키 합의를 하면 얻는다"
+    synonyms: ["forward secrecy", "PFS", "Perfect Forward Secrecy"]
+  - id: sec-term-kerckhoffs-principle
+    kind: TERM
+    name: "케르크호프스 원칙"
+    category: SECURITY
+    level: BEGINNER
+    description: "암호 방식은 알고리즘이 공개돼도 키만 비밀이면 안전해야 한다는 원칙. 알고리즘을 숨겨 얻는 보안(security through obscurity)에 기대지 않는다"
+    synonyms: ["Kerckhoffs's principle"]
+  - id: sec-term-spn
+    kind: TERM
+    name: "치환-순열 네트워크"
+    category: SECURITY
+    level: ADVANCED
+    description: "S-box 치환과 행 이동 · 열 섞기(MixColumns) 순열을 키 스케줄로 만든 라운드 키와 함께 여러 번 반복하는 블록 암호 구조. AES 의 내부가 이 모양이다"
+    synonyms: ["SPN", "Substitution-Permutation Network", "S-box", "MixColumns", "key schedule"]
+  - id: sec-glossary-identity
+    kind: TERM
+    name: "신원 · 토큰 용어"
+    category: SECURITY
+    level: BEGINNER
+    description: "인증 · 인가 · OAuth · OIDC 를 설명하는 말"
+    contains: [sec-term-access-token, sec-term-refresh-token, sec-term-id-token, sec-term-bearer-token, sec-term-claim, sec-term-jti, sec-term-scope, sec-term-authorization-code, sec-term-redirect-uri, sec-term-state-nonce, sec-term-oauth-roles, sec-term-idp-sp]
   - id: sec-term-access-token
     kind: TERM
     name: "액세스 토큰"
@@ -332,13 +2028,43 @@ concepts:
     level: BEGINNER
     description: "액세스 토큰이 만료됐을 때 새로 받는 데만 쓰는 긴 수명의 토큰. 서버 저장소에 남겨 두어 폐기할 수 있게 한다"
     synonyms: ["refresh token"]
+  - id: sec-term-id-token
+    kind: TERM
+    name: "ID 토큰"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "OIDC 에서 클라이언트에게 「누가 로그인했나」를 알려 주는 서명된 JWT. 대상(aud)이 클라이언트라 API 호출에 쓰지 않는다"
+    synonyms: ["ID token", "id_token"]
+  - id: sec-term-bearer-token
+    kind: TERM
+    name: "Bearer 토큰"
+    category: SECURITY
+    level: BEGINNER
+    description: "가진 사람이면 누구나 쓸 수 있는 토큰. Authorization: Bearer 헤더로 보내고, 보관 · 전송 경로의 안전이 곧 토큰의 안전이다"
+    synonyms: ["bearer token", "Authorization header"]
   - id: sec-term-claim
     kind: TERM
     name: "클레임"
     category: SECURITY
     level: INTERMEDIATE
-    description: "토큰 안에 담긴 주장 한 항목(사용자 id · 역할 · 만료 시각). 서명이 맞으면 받는 쪽이 그대로 믿는다"
-    synonyms: ["claim"]
+    description: "토큰 안에 담긴 주장 한 항목(사용자 id · 역할 · 만료 시각). 서명이 맞으면 받는 쪽이 그대로 믿는다. 등록 클레임은 sub · iss · aud · exp · iat · nbf · jti 다"
+    synonyms: ["claim", "registered claims"]
+  - id: sec-term-jti
+    kind: TERM
+    name: "토큰 id(jti)"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "토큰마다 붙이는 고유 id 클레임. 폐기 목록 · 재사용 탐지가 토큰 전체 대신 이 값으로 토큰을 가리킨다"
+    synonyms: ["jti", "JWT ID"]
+    code:
+      - { path: common/src/main/kotlin/com/kgd/common/security/JwtUtil.kt, symbol: ".id(UUID.randomUUID().toString())", note: "발급마다 무작위 jti" }
+  - id: sec-term-scope
+    kind: TERM
+    name: "스코프"
+    category: SECURITY
+    level: BEGINNER
+    description: "클라이언트가 요청하고 사용자가 동의하는 접근 범위 이름(openid · profile · email). 적게 요청할수록 동의 화면이 짧고 받는 정보가 준다"
+    synonyms: ["scope", "consent"]
   - id: sec-term-authorization-code
     kind: TERM
     name: "인가 코드"
@@ -346,6 +2072,41 @@ concepts:
     level: INTERMEDIATE
     description: "OAuth 제공자가 동의 뒤 redirect_uri 로 돌려주는 일회용 코드. 서버가 비밀과 함께 토큰으로 바꾸므로 코드만으로는 쓸 수 없다"
     synonyms: ["authorization code"]
+  - id: sec-term-redirect-uri
+    kind: TERM
+    name: "redirect_uri"
+    category: SECURITY
+    level: BEGINNER
+    description: "제공자가 인가 결과를 돌려보낼 주소. 제공자 콘솔에 미리 등록한 값과 정확히 같아야 하고, 느슨하게 매칭하면 코드가 공격자 주소로 샌다"
+    synonyms: ["callback URL", "redirect URI"]
+  - id: sec-term-state-nonce
+    kind: TERM
+    name: "state · nonce"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "인가 요청마다 만든 무작위 값. state 는 콜백이 내가 시작한 요청의 응답인지 확인해 로그인 CSRF 를 막고, nonce 는 ID 토큰에 되돌아와 토큰 재사용을 막는다"
+    synonyms: ["state parameter", "nonce", "login CSRF"]
+  - id: sec-term-oauth-roles
+    kind: TERM
+    name: "OAuth 역할"
+    category: SECURITY
+    level: BEGINNER
+    description: "자원 소유자(사용자) · 클라이언트(우리 앱) · 인가 서버(토큰 발급) · 자원 서버(API) 네 참여자. 누가 토큰을 받고 누가 검증하는지를 이 이름으로 말한다"
+    synonyms: ["resource owner", "client", "authorization server", "resource server"]
+  - id: sec-term-idp-sp
+    kind: TERM
+    name: "IdP · SP · RP"
+    category: SECURITY
+    level: BEGINNER
+    description: "신원을 확인해 주는 쪽(IdP)과 그 결과를 받아 로그인시키는 서비스(SAML 의 SP, OIDC 의 RP)"
+    synonyms: ["Identity Provider", "Service Provider", "Relying Party"]
+  - id: sec-glossary-web
+    kind: TERM
+    name: "웹 보안 용어"
+    category: SECURITY
+    level: BEGINNER
+    description: "브라우저 보안 모델과 웹 공격을 설명하는 말"
+    contains: [sec-term-same-origin-policy, sec-term-origin-vs-site, sec-term-preflight, sec-term-owasp-top-10]
   - id: sec-term-same-origin-policy
     kind: TERM
     name: "동일 출처 정책"
@@ -353,10 +2114,52 @@ concepts:
     level: BEGINNER
     description: "스킴 · 호스트 · 포트가 같은 출처끼리만 응답을 읽게 하는 브라우저 기본 규칙. 서브도메인끼리도 다른 출처다"
     synonyms: ["Same-Origin Policy", "SOP"]
-  - id: sec-term-secret-key
+  - id: sec-term-origin-vs-site
     kind: TERM
-    name: "비밀 키"
+    name: "출처 · 사이트"
     category: SECURITY
     level: INTERMEDIATE
-    description: "서명 · HMAC · 대칭 암호화에 쓰는, 서버만 아는 값. 잃으면 검증 · 복원이 안 되고 새면 위조가 된다. 코드가 아니라 Secret 으로 주입한다"
-    synonyms: ["secret key", "서버 키"]
+    description: "출처(origin)는 스킴 · 호스트 · 포트 전체, 사이트(site)는 스킴과 등록 도메인(eTLD+1)이다. game.1989v.com 과 1989v.com 은 다른 출처지만 같은 사이트라 SameSite 쿠키가 실린다"
+    synonyms: ["origin", "site", "eTLD+1", "same-site"]
+  - id: sec-term-preflight
+    kind: TERM
+    name: "프리플라이트"
+    category: SECURITY
+    level: INTERMEDIATE
+    description: "단순 요청이 아닌 교차 출처 요청(커스텀 헤더 · JSON · PUT) 전에 브라우저가 OPTIONS 로 서버 허용 여부를 먼저 묻는 요청"
+    synonyms: ["preflight request", "OPTIONS"]
+  - id: sec-term-owasp-top-10
+    kind: TERM
+    name: "OWASP Top 10"
+    category: SECURITY
+    level: BEGINNER
+    description: "웹 애플리케이션에서 가장 흔하고 치명적인 위험 열 갈래(접근 제어 실패 · 암호 실패 · 인젝션 · 안전하지 않은 설계 · 설정 오류 · 취약 구성 요소 · 인증 실패 · 무결성 실패 · 로깅 실패 · SSRF)를 묶은 목록"
+    synonyms: ["OWASP", "OWASP API Security Top 10"]
+  - id: sec-glossary-governance
+    kind: TERM
+    name: "보안 운영 용어"
+    category: SECURITY
+    level: BEGINNER
+    description: "개인정보와 취약점 관리를 설명하는 말"
+    contains: [sec-term-pii, sec-term-cve-cvss, sec-term-cia-triad]
+  - id: sec-term-pii
+    kind: TERM
+    name: "개인 식별 정보"
+    category: SECURITY
+    level: BEGINNER
+    description: "이름 · 이메일 · 전화번호처럼 단독으로, 또는 다른 정보와 결합해 특정 개인을 알아볼 수 있는 정보. 소셜 제공자의 사용자 식별값(sub)도 여기에 든다"
+    synonyms: ["PII", "Personally Identifiable Information", "개인정보"]
+  - id: sec-term-cve-cvss
+    kind: TERM
+    name: "CVE · CVSS"
+    category: SECURITY
+    level: BEGINNER
+    description: "공개 취약점에 붙는 고유 번호(CVE)와 그 심각도 점수(CVSS 0~10). 스캐너 결과를 우선순위로 바꾸는 기준이다"
+    synonyms: ["CVE", "CVSS", "Common Vulnerabilities and Exposures"]
+  - id: sec-term-cia-triad
+    kind: TERM
+    name: "기밀성 · 무결성 · 가용성"
+    category: SECURITY
+    level: BEGINNER
+    description: "보안이 지키려는 세 속성. 읽으면 안 되는 사람이 못 읽고(기밀성), 바뀌면 안 되는 것이 안 바뀌고(무결성), 써야 할 때 쓸 수 있다(가용성)"
+    synonyms: ["CIA triad", "Confidentiality", "Integrity", "Availability"]
