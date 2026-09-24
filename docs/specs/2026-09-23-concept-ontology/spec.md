@@ -1,5 +1,7 @@
 # Specification: 개념 온톨로지 (concept ontology)
 
+> 개정 4 (2026-09-24). 3차 리뷰(방향 승인 — P1 1 · P2 2 · 문구 2)를 반영했다. 파생물 sync 에 파드 간 단일 실행 리스와 대상 해시 고정·교체 직전 재확인·수렴 재실행을 넣고,
+> `content_hash` 계산 규칙을 고정하고, id 이동은 참조 실측(0건)으로 정책을 확정했다.
 > 개정 3 (2026-09-24). 2차 리뷰(REVISE — P1 2 · P2 2 · 문구 4)를 반영했다. 적용 단위를 **manifest 전체**로 통일하고(파일별 revision 폐기, 상태 행 하나가 잠금·이력·파생물 기록을 겸한다),
 > DB 적용과 파생물(캐시·색인) 갱신을 분리해 실패를 기억하고 재시도하며, kind 경계 사례 넷의 배치를 확정했다. 개정 2 는 커밋 `38098ece`, 개정 1 은 `5d05472e`.
 > 현행 `concept_edge`(플랜 `docs/plans/2026-09-09-search-architecture-graph.md` §3) 위에 얹는다. 외부 제안과의 대조는 §9, 운영 실측은 §0.
@@ -53,7 +55,7 @@ CONTAINS 가 **구성·변종·사전 등재·사용** 네 뜻을 겸하고, 원
 
 - MECHANISM 과 TERM 의 경계: 시스템이 **돌리거나 고르는 것**(알고리즘·절차·모드·파라미터 세트)이면 MECHANISM, **알아야 읽히는 이름**(구조·값·정의·산출물)이면 TERM. 격리 수준은 고르는 모드라 MECHANISM.
 - STAGE 는 활동이다. 산출물과 묶음은 STAGE 가 아니다.
-- **TERM 의 자리는 용어 사전 가지뿐이다.** TERM 의 CONTAINS 부모는 정확히 하나(사전 묶음 또는 TERM 묶음)이고, 단계·장치가 용어를 쓰면 USES 다. 용어 사전 가지에는 TERM 만 둔다 — 장치로 판정된 것은 사전에서 빼고 장치 트리에만 둔다(검색창·동의어로 닿고, 그것이 쓰는 용어들이 USES 로 역참조되어 보인다).
+- **TERM 의 자리는 용어 사전 가지뿐이다.** TERM 의 CONTAINS 부모는 정확히 하나(사전 묶음 또는 TERM 묶음)이고 — `<domain>-glossary` 가지의 뿌리만 예외로 부모가 DOMAIN 루트다 —, 단계·장치가 용어를 쓰면 USES 다. 용어 사전 가지에는 TERM 만 둔다 — 장치로 판정된 것은 사전에서 빼고 장치 트리에만 둔다(검색창·동의어로 닿고, 그것이 쓰는 용어들이 USES 로 역참조되어 보인다).
 - TECHNOLOGY 는 그것이 구현하는 단계·장치 **아래에 놓인다**(CONTAINS). 층 번호가 아니라 배치된 자리다 — DOMAIN·STAGE 가 중첩하므로 고정된 「넷째 층」은 없다. 장치 단위 구현은 `IMPLEMENTS` 로 잇고, 부모를 다시 IMPLEMENTS 로 적지 않는다.
 - `category`(주제 13종)와 `level`(난이도)은 그대로 둔다. kind 는 역할 축이라 둘과 직교한다 — `bm25` 는 category ALGORITHM · kind MECHANISM.
 - 외부 제안의 여덟 유형에서 `Pattern` 은 MECHANISM 에, `Solution` 은 MECHANISM + `MITIGATES` 간선에, `Example` 은 증거층(SR-5)에 흡수했다. 역할은 간선이 진다.
@@ -63,8 +65,8 @@ CONTAINS 가 **구성·변종·사전 등재·사용** 네 뜻을 겸하고, 원
 | 개념 | 판정 | 배치 |
 |---|---|---|
 | `viterbi-algorithm` 비터비 | MECHANISM(분석기가 돌린다) | CONTAINS 부모는 `lattice-viterbi` 하나. 사전(`glossary-morphology`)에서 뺀다. 격자·단어 비용·연접 비용·문맥 ID 는 TERM 으로 사전에 남고 `lattice-viterbi` 가 USES |
-| `search-ops-metrics` 운영 지표 · `offline-metrics` 오프라인 지표 | 묶음이 아니라 활동 → STAGE | id 이동 `search-ops-monitoring`(운영 관측) · `offline-evaluation`(오프라인 평가). METRIC 자식은 STAGE→METRIC 으로 그대로 |
-| `judgment-set` 판정 세트 | 산출물과 활동을 가른다 | 산출물 `judgment-set` 은 **TERM**(쿼리·문서·등급 삼중항 집합) 으로 `glossary-learning` 아래. 활동 `judgment-set-building`(판정 세트 구축) 은 **STAGE** 로 신설 — 풀링은 그 아래 MECHANISM, 커버리지는 METRIC. 등급 척도는 TERM 으로 사전에 두고 STAGE 가 USES. `offline-evaluation` 이 `judgment-set` 을 USES |
+| `search-ops-metrics` 운영 지표 · `offline-metrics` 오프라인 지표 | 묶음이 아니라 활동 → STAGE. **의미가 바뀌므로 이름 변경이 아니라 새 개념** | **새 id** `search-ops-monitoring`(운영 관측) · `offline-evaluation`(오프라인 평가)을 만들고 옛 행은 관리 해제 뒤 어드민 삭제. 옛 id 를 가리키는 행은 `service_concept`·`tech_domain_concept`·`concept_index`·블로그 본문 모두 0건(2026-09-24 실측)이라 참조 이전·리다이렉트는 만들지 않는다. METRIC 자식은 새 STAGE 아래로 |
+| `judgment-set` 판정 세트 | 산출물과 활동을 가른다 | 산출물 `judgment-set` 은 **id 를 유지한 채 TERM**(쿼리·문서·등급 삼중항 집합) 으로 `glossary-learning` 아래. 활동 `judgment-set-building`(판정 세트 구축) 은 **STAGE** 로 신설 — 풀링은 그 아래 MECHANISM, 커버리지는 METRIC. 등급 척도는 TERM 으로 사전에 두고 STAGE 가 USES. `offline-evaluation` 이 `judgment-set` 을 USES |
 | `lattice-viterbi` 의 TERM 자식들 | 장치가 용어를 품을 수 없다 | 자식 CONTAINS 를 USES 로(둘째 부모 22건과 같은 전환) |
 
 **관리 표시** — `concept.managed_by VARCHAR(40) NULL`: 이 개념을 관리하는 온톨로지 파일의 도메인. `kind` 와 `managed_by` 는 **로더만 쓴다**.
@@ -129,7 +131,7 @@ manifest 의 파일 전부를 합집합으로 받아 아래를 검사하고 위�
 | ② | 파일의 모든 개념에 kind 가 있고, 간선 양 끝에 kind 가 있다 | 미배치 개념에 간선이 걸려 range 검사가 빈다 |
 | ③ | (from.kind, to.kind) 가 그 관계의 허용 범위 안 | TERM 이 장치를 CONTAINS, TECHNOLOGY 가 METRIC 을 MITIGATES |
 | ④ | CONTAINS 비순환 | 층 계산 무한 루프·깊이 오류 |
-| ⑤ | 파일당 루트 하나(DOMAIN, CONTAINS 부모 없음). 그 외 모든 개념은 CONTAINS 부모 ≥ 1. **TERM 은 정확히 1** | 고아 — 트리 뷰에서 사라진다 · 용어의 두 부모 |
+| ⑤ | 파일당 루트 하나(DOMAIN, CONTAINS 부모 없음). 그 외 모든 개념은 CONTAINS 부모 ≥ 1. **TERM 은 정확히 1** — `<domain>-glossary` 가지의 뿌리만 예외(부모는 DOMAIN 루트) | 고아 — 트리 뷰에서 사라진다 · 용어의 두 부모 |
 | ⑥ | FLOWS_TO 양 끝이 CONTAINS 부모를 하나 이상 공유 | 층을 건너뛰는 화살표 |
 | ⑦ | ALTERNATIVE_TO 는 한 방향만. 자기 자신 간선 금지(현행) | 역방향 유도와 이중 저장 충돌 |
 | ⑧ | 같은 (from, to) 에 CONTAINS 와 USES 를 함께 걸지 않는다 | 「두 부모 위장」 재발 |
@@ -181,6 +183,7 @@ concepts:
 
 - 관계 키는 관계 kind 의 소문자. 값은 `id` 또는 `{to, reason, evidence}`. 간선은 **from 노드에만** 적고 ALTERNATIVE_TO 는 어느 한쪽에 한 번.
 - **적용 단위는 manifest 전체**다. 검증·적용·건너뛰기·관리 해제·도메인 삭제는 모두 manifest 단위로 한다. 파일별 버전 조합을 관리하지 않는다 — 「검색 3 + 추천 2」처럼 검증하지 않은 조합이 DB 에 남는 길을 없앤다.
+- **`content_hash` 계산 규칙**: manifest 와 도메인 파일을 **경로순으로 정렬**해 각 경로·길이·파일 바이트를 이어 SHA-256 으로 계산한다. 주석·공백 변경도 해시가 바뀌므로 revision 증가 대상이다. 파일 열거 순서에 따라 해시가 달라지지 않는다 — 같은 revision 의 다른 해시를 오류로 다루므로 입력이 구현마다 달라서는 안 된다.
 
 #### 4.2 소유와 관리 해제
 
@@ -194,9 +197,9 @@ concepts:
 | # | 계약 | 왜 |
 |---|---|---|
 | ① | **읽기 관대화가 먼저 배포된다.** `ConceptEdgeJpaEntity.kind` 는 문자열로 들고, `toDomain()` 은 모르는 값을 경고 로그 후 제외한다. 이 변경과 enum 9종을 담은 배포(S1)가 먼저 나가고, 새 관계 데이터를 쓰는 로더(S2)는 그 다음 배포다. **지원하는 롤백 하한은 S1** 이다 | content 파드는 롤링(maxSurge 1)이라 새 파드가 USES 를 쓰는 동안 옛 파드가 `Enum.valueOf` 로 죽어 계층 API 가 500 이 된다. 롤백도 같은 구멍 |
-| ② | **상태 행 하나** `ontology_state(id=1, revision, content_hash, applied_at, app_version, derived_hash, derived_at)`. **마이그레이션이 만들어 두고 항상 존재한다.** 로더는 이 행을 `FOR UPDATE` 로 먼저 잠근 뒤 revision 을 다시 읽어 적용 여부를 정한다 — manifest revision 이 DB 보다 **작으면 건너뛰고 경고**, 같고 해시가 같으면 건너뛰고, 같은데 해시가 다르면 **오류**(revision 을 안 올린 것), 크면 적용 | 옛 이미지(옛 파일)를 재기동해도 데이터가 되돌아가지 않는다. 최초 부팅·신규 도메인·전체 삭제도 같은 행에서 직렬화된다 — 없는 도메인 행에는 잠금이 걸리지 않는다. 동시에 뜨는 파드는 뒤가 같은 revision 을 보고 건너뛴다 |
+| ② | **상태 행 하나** `ontology_state(id=1, revision, content_hash, applied_at, app_version, derived_hash, derived_at, sync_owner, sync_lease_until, sync_target_hash)` — **최신 적용 상태**이지 과거 이력이 아니다. **마이그레이션이 만들어 두고 항상 존재한다.** 로더는 이 행을 `FOR UPDATE` 로 먼저 잠근 뒤 revision 을 다시 읽어 적용 여부를 정한다 — manifest revision 이 DB 보다 **작으면 건너뛰고 경고**, 같고 해시가 같으면 건너뛰고, 같은데 해시가 다르면 **오류**(revision 을 안 올린 것), 크면 적용 | 옛 이미지(옛 파일)를 재기동해도 데이터가 되돌아가지 않는다. 최초 부팅·신규 도메인·전체 삭제도 같은 행에서 직렬화된다 — 없는 도메인 행에는 잠금이 걸리지 않는다. 동시에 뜨는 파드는 뒤가 같은 revision 을 보고 건너뛴다 |
 | ③ | **단일 트랜잭션.** manifest 전체를 읽어 합집합을 검증한 뒤 온톨로지 전체를 한 트랜잭션으로 적용하고 `revision`·`content_hash` 를 기록한다. 실패하면 전체 롤백, error 로그, **기동은 계속** | 도메인별 커밋이면 검색 적재만 실패하고 추천 적재가 성공해 검증하지 않은 조합이 남는다. 호스트 생존과 부분 커밋은 별개 결정이다 |
-| ④ | **파생물 갱신은 DB 적용과 분리해 기억하고 재시도한다.** DB 커밋 뒤 `conceptCategoryStats` 캐시를 비우고 `SyncService.submit()` 으로 OpenSearch 개념 색인 잡을 돌린다. `derived_hash` 는 **잡이 완료된 뒤에만** `content_hash` 로 기록한다. 부팅 때 `content_hash ≠ derived_hash` 면 적용은 건너뛰어도 evict 와 sync 를 다시 돌린다 | sync 잡 등록부는 프로세스 안 `ConcurrentHashMap` 이라 파드가 죽으면 사라지고, 다음 부팅은 같은 해시라 적용을 건너뛰어 색인이 영영 옛 상태로 남는다. 「잡을 제출했다」는 로그는 반영 완료의 증거가 아니다 |
+| ④ | **파생물 갱신은 DB 적용과 분리해 기억하고 재시도하며, 파드 간 단일 실행이다.** DB 커밋 뒤 `conceptCategoryStats` 캐시를 비우고 OpenSearch 개념 색인 sync 를 돌린다. sync 는 수동 `/api/v1/index/sync` 경로를 포함해 상태 행의 **리스**(`sync_owner`·`sync_lease_until`, 만료된 리스는 탈취)를 잡은 쪽만 돈다. 잡은 **시작 때 대상 `content_hash` 를 고정**(`sync_target_hash`)하고, 별칭 교체 직전에 현재 해시를 다시 읽어 다르면 만든 색인을 버리고 최신으로 다시 돈다. 성공하면 **고정했던 해시만** `derived_hash` 에 적는다. 완료 뒤 현재 해시와 다르면 재실행하고, 실패는 제한된 backoff(3회)로 재시도한 뒤 다음 부팅에 맡긴다. 부팅 때 `content_hash ≠ derived_hash` 면 적용은 건너뛰어도 evict 와 sync 를 다시 돌린다. DB 적용 트랜잭션은 외부 IO 동안 잡지 않는다 — 적용 잠금과 sync 조정은 별개다 | sync 잡 등록부는 프로세스 안 `ConcurrentHashMap` 이라 파드가 죽으면 사라지고, 다음 부팅은 같은 해시라 적용을 건너뛰어 색인이 영영 옛 상태로 남는다. 롤링 창에서 겹친 두 파드가 각각 sync 를 띄우면 늦게 끝난 옛 sync 가 별칭을 옛 색인으로 되돌린다. 완료 시점의 현재 해시를 적으면 옛 내용을 색인하고 최신 완료로 기록한다. 「잡을 제출했다」는 로그는 반영 완료의 증거가 아니다 |
 | ⑤ | **캐시 범위.** 캐시는 Caffeine 로컬이고 content 파드는 replicas 1 이라 in-process evict 로 충분하다. 레플리카를 늘리면 다른 파드는 캐시 TTL 이 상한이 되고, 그때 캐시 키에 `revision` 을 섞어 자연 무효화한다 | 로컬 캐시의 무효화 방법은 배포 형태에 묶여 있다 — 지금 값과 조건을 적어 둔다 |
 | ⑥ | **쓰기 경로 잠금.** managed 개념의 PUT·DELETE 는 409 (SR-1) | 어드민이 고친 값이 다음 부팅까지 파일과 다르다 |
 | ⑦ | 두 번째 부팅의 변경 수는 0 (②의 해시 비교) | 멱등 증거 |
@@ -221,7 +224,10 @@ CREATE TABLE ontology_state (
   applied_at   DATETIME     NULL,
   app_version  VARCHAR(40)  NULL,
   derived_hash CHAR(64)     NULL,                    -- 캐시·색인 갱신이 끝난 content_hash
-  derived_at   DATETIME     NULL
+  derived_at   DATETIME     NULL,
+  sync_owner        VARCHAR(64) NULL,                -- sync 리스: 잡은 파드(호스트명+pid)
+  sync_lease_until  DATETIME    NULL,                -- 만료된 리스는 탈취한다
+  sync_target_hash  CHAR(64)    NULL                 -- 이번 sync 가 시작 때 고정한 content_hash
 );
 INSERT INTO ontology_state (id, revision) VALUES (1, 0);
 ```
@@ -233,7 +239,7 @@ INSERT INTO ontology_state (id, revision) VALUES (1, 0);
 #### 4.6 첫 파일 만드는 법
 
 운영 `concept`·`concept_edge`·`concept_synonym` 에서 V22~V24 상태를 내보내 YAML 로 만들고, kind 를 경계 규칙대로 부여하고, 용어의 둘째 부모 22건과 `lattice-viterbi` 의 TERM 자식을 `uses` 로 옮기고,
-`mecab-ko-dic`·`sejong-corpus` 를 형태소 분석 단계 아래로 옮기고, SR-1 의 경계 사례 넷(비터비 이동 · 운영 관측/오프라인 평가 id 이동 · 판정 세트 분리·구축 STAGE 신설 · 등급 척도 사전 이동)을 반영하고, 신규 관계를 각 1건 이상 심는다.
+`mecab-ko-dic`·`sejong-corpus` 를 형태소 분석 단계 아래로 옮기고, SR-1 의 경계 사례 넷(비터비 이동 · 운영 관측/오프라인 평가 **새 id** 생성과 옛 행 정리 · 판정 세트 분리·구축 STAGE 신설 · 등급 척도 사전 이동)을 반영하고, 신규 관계를 각 1건 이상 심는다.
 검증은 **간선 단위 diff 목록**으로 한다 — 「전환 목록(CONTAINS→USES)」 + 「승인된 신규·이동·신설 목록」이 재적재 전/후 차이와 정확히 일치해야 한다. 총합 비교는 잘못된 간선 교체를 통과시킨다.
 
 ### SR-5 증거층과 질문 — 3차 슬라이스
@@ -305,15 +311,16 @@ INSERT INTO ontology_state (id, revision) VALUES (1, 0);
 8. **쓰기 잠금**: managed 개념 PUT·DELETE → 409, 미관리 개념 → 200
 9. **단일 트랜잭션**: 둘째 파일에 실패를 주입 → 첫째 파일 변경도 0, 상태 행 불변, 기동은 계속
 10. **파생물 재시도**: DB 적용 뒤 sync 완료 전에 종료를 주입 → 재기동 시 `content_hash ≠ derived_hash` 로 evict + sync 재실행, 완료 뒤 두 해시 일치
-11. **이관 diff**: 재적재 전/후 `concept_edge` 차이 = 전환 목록 + 승인된 신규·이동·신설 목록. 총합이 아니라 간선 단위
-12. `/tech` 계층 탭 CDP 4조합 스크린샷 + 콘솔 오류 0. 롤아웃 확인은 새 심볼(응답의 `kind` 필드)로. mermaid 스크립트 출력의 노드 집합이 플랜 §1 그림과 일치
+11. **동시 sync 수렴**: 이전 revision 의 sync 를 지연시킨 채 새 revision 을 적용 → 최종 색인과 `derived_hash` 가 최신 revision 으로 수렴한다. 옛 sync 는 교체 직전 재확인에서 만든 색인을 버리고, 리스를 못 잡은 쪽은 돌지 않는다
+12. **이관 diff**: 재적재 전/후 `concept_edge` 차이 = 전환 목록 + 승인된 신규·이동·신설 목록. 총합이 아니라 간선 단위
+13. `/tech` 계층 탭 CDP 4조합 스크린샷 + 콘솔 오류 0. 롤아웃 확인은 새 심볼(응답의 `kind` 필드)로. mermaid 스크립트 출력의 노드 집합이 플랜 §1 그림과 일치
 
 ## 11. 슬라이스
 
 | 슬라이스 | 내용 | 단독 배포 값 |
 |---|---|---|
-| S1 | 읽기 관대화 + Flyway 한 번호(kind·managed_by·reason·evidence_ref·`ontology_state` 행) + enum 9종 + `validate()` + 쓰기 잠금. **데이터 변경 없음** | 새 관계를 읽을 수 있는 코드가 먼저 운영에 있다. 롤백 하한 |
-| S2 | 로더(상태 행 잠금 · manifest revision 가드 · 단일 트랜잭션 · 관리 해제 · 파생물 재시도) + `manifest.yaml` + `search.yaml` 이관 | 온톨로지가 검사되는 파일이 되고 DB 가 그것을 따라간다 |
+| S1 | 읽기 관대화 + Flyway 한 번호(kind·managed_by·reason·evidence_ref·`ontology_state` 행과 sync 리스 칼럼) + enum 9종 + `validate()` + 쓰기 잠금. **데이터 변경 없음** | 새 관계를 읽을 수 있는 코드가 먼저 운영에 있다. 롤백 하한 |
+| S2 | 로더(상태 행 잠금 · manifest revision 가드 · 단일 트랜잭션 · 관리 해제 · 파생물 재시도 · sync 리스와 대상 해시 고정, 수동 sync 경로 포함) + `manifest.yaml` + `search.yaml` 이관 | 온톨로지가 검사되는 파일이 되고 DB 가 그것을 따라간다 |
 | S3 | `concept_evidence`·`concept_question` + `/relations` 엔드포인트 | 노드가 근거와 질문을 갖는다 |
 | S4 | `/tech` 계층 탭 개편 + mermaid 스크립트 + 플랜·블로그 도식 재생성 | 화면과 문서가 파일에서 나온다 |
 
