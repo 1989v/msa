@@ -143,7 +143,7 @@ jobs:
           set -euo pipefail
 
           # 서비스 → 테스트 태스크 매핑은 images.yml 의 매핑과 동일하게 유지할 것
-          ALL_JVM="gateway product search search-batch search-consumer auth gifticon analytics experiment code-dictionary commerce chatbot place quant recommendation"
+          ALL_JVM="gateway product search search-batch search-consumer auth gifticon analytics engagement code-dictionary commerce chatbot place quant"
 
           CHANGED_FILES=$(git diff --name-only "$BASE_SHA"...HEAD)
           echo "── 변경 파일 ($(echo "$CHANGED_FILES" | wc -l) 개):"
@@ -166,7 +166,7 @@ jobs:
                 gifticon|gifticon/app/*|gifticon/domain/*) SVCS+=" gifticon" ;;
                 inventory/*|warehouse/*|fulfillment/*|order/*|member/*|wishlist/*|commerce/*)           SVCS+=" commerce" ;;
                 analytics/*)                               SVCS+=" analytics" ;;
-                experiment/*)                              SVCS+=" experiment" ;;
+                experiment/*)                              SVCS+=" engagement" ;;   # ADR-0093 폴드
                 # code-dictionary:app 에 폴드된 모듈 — 여기 빠지면 그 도메인은 PR 에서 테스트가 한 건도 안 돈다
                 #   game (ADR-0059) · deal (ADR-0069) · blog (ADR-0072) · ranking (ADR-0081)
                 ranking/ingest/*)                          ;;   # 파이썬 배치 — JVM 테스트 대상 아님
@@ -177,7 +177,7 @@ jobs:
                 quant/app/*|quant/domain/*)                SVCS+=" quant" ;;
                 # engagement:app 에 폴드된 ads (ADR-0098) — 기본 분기는 없는 :ads:app:test 를 부른다
                 ads/*|engagement/*)                        SVCS+=" engagement" ;;
-                recommendation/app/*|recommendation/domain/*) SVCS+=" recommendation" ;;
+                recommendation/*)                          SVCS+=" engagement" ;;   # ADR-0093 폴드
               esac
             done <<< "$CHANGED_FILES"
           fi
