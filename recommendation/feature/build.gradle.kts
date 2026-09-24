@@ -23,6 +23,9 @@ dependencies {
 
     // ClickHouse JDBC — analytics DB 조회용 (read-only).
     implementation("com.clickhouse:clickhouse-jdbc:0.6.0")
+    // 0.6.0 은 httpclient5 를 전이 의존성으로 가져오지 않는다. 없으면 HTTP 연결이
+    // HttpURLConnection 으로 떨어지며 기동마다 NoClassDefFoundError WARN 을 남긴다.
+    runtimeOnly(libs.httpclient5)
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
 
     testImplementation(libs.spring.boot.starter.test)
