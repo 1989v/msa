@@ -1,6 +1,5 @@
 package com.kgd.product.application.product.usecase
 
-import java.math.BigDecimal
 
 interface UpdateProductUseCase {
     fun execute(command: Command, requester: ProductRequester): Result
@@ -8,7 +7,7 @@ interface UpdateProductUseCase {
     data class Command(
         val id: Long,
         val name: String? = null,
-        val price: BigDecimal? = null,
+        val price: Long? = null,
         val brand: String? = null,
         val description: String? = null,
         val category: String? = null,
@@ -26,7 +25,7 @@ interface UpdateProductUseCase {
     data class Result(
         val id: Long,
         val name: String,
-        val price: BigDecimal,
+        val price: Long,
         val stock: Int,
         val status: String,
         val sellerId: Long,

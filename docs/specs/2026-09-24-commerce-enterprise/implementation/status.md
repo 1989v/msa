@@ -168,3 +168,9 @@
 - strimzi YAML 115 문서 파싱 · 이름 중복 0 · 코드 토픽 − 선언 = 없음. ci.yml 은 생성물 topology.sh 가 새 4도메인 테스트를 이미 돌려 수정 안 함
 - `verifications/regression-injection.md` — 필수 일곱 중 여섯은 임시 사본에 재주입 빨간불, 아웃박스 직렬화·(b) 사가 쪽은 통합/E2E 라 TG1·TG12 기록이 근거
 - **사고**: 구현 에이전트가 `pkill -f "cat"` 으로 Docker Desktop 을 종료시켰다(23:43 KST). 로컬 Testcontainers 검증 불가 — CI 테스트 게이트(commerce:app:test 포함)가 대신한다
+
+## TG8 8.3 보완 — 상품 가격 원 단위 (2026-09-25, 최종 검증 지적)
+- `./gradlew :product:domain:test :product:feature:test :search:batch:compileKotlin :search:consumer:test :order:feature:test verifyArchitecture` → exit 0, 실패 0 · ProductJpaEntityTest 2/0 · portal-fe `tsc -b` 0
+- product_db `V20260925_001__add_products_price_won`(소수부 가드 → price_won BIGINT 백필), 엔티티는 price_won 기준 + 옛 price 동시 기록, 요청의 소수 원은 400
+- 회귀 주입: 원 단위 검사 항상 참 · update 에서 옛 price 쓰기 제거 → 2 실패
+- 실 MySQL 마이그레이션 검증은 로컬 Docker 중단으로 CI 테스트 게이트에 맡김

@@ -1,6 +1,8 @@
 package com.kgd.product.presentation.product.dto
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.kgd.product.application.product.usecase.UpdateProductUseCase
+import jakarta.validation.constraints.AssertTrue
 import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.PositiveOrZero
 import jakarta.validation.constraints.Size
@@ -42,10 +44,14 @@ data class UpdateProductRequest(
     @field:Size(max = 30, message = "품목제조보고번호는 30자 이하여야 합니다")
     val itemReportNo: String? = null
 ) {
+    @get:JsonIgnore
+    @get:AssertTrue(message = "가격은 원 단위 정수여야 합니다")
+    val isPriceWholeWon: Boolean get() = isWholeWonPrice(price)
+
     fun toCommand(id: Long) = UpdateProductUseCase.Command(
         id = id,
         name = name,
-        price = price,
+        price = price?.longValueExact(),
         brand = brand,
         description = description,
         category = category,

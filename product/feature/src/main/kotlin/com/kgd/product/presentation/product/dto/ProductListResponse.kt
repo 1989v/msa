@@ -1,7 +1,6 @@
 package com.kgd.product.presentation.product.dto
 
 import com.kgd.product.application.product.usecase.GetAllProductsUseCase
-import java.math.BigDecimal
 import java.time.LocalDateTime
 
 data class ProductListResponse(
@@ -12,7 +11,7 @@ data class ProductListResponse(
     data class ProductItem(
         val id: Long,
         val name: String,
-        val price: BigDecimal,
+        val price: Long,
         val status: String,
         val stock: Int,
         val createdAt: LocalDateTime,

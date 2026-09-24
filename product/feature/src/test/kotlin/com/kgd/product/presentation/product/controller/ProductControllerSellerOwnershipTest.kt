@@ -43,7 +43,7 @@ class ProductControllerSellerOwnershipTest : BehaviorSpec({
         .build()
 
     fun productOf(sellerId: Long) =
-        Product.restore(1L, "상품", Money(1000.toBigDecimal()), 10, ProductStatus.ACTIVE, LocalDateTime.now(), sellerId = sellerId)
+        Product.restore(1L, "상품", Money(1000L), 10, ProductStatus.ACTIVE, LocalDateTime.now(), sellerId = sellerId)
 
     fun seller(sellerId: Long, memberId: String, status: ProductSellerStatus) =
         sellers.save(ProductSeller(sellerId, memberId, status, Instant.parse("2026-09-24T00:00:00Z")))
@@ -148,6 +148,31 @@ class ProductControllerSellerOwnershipTest : BehaviorSpec({
         then("판매자 행이 없는 어드민이 등록하면 플랫폼 기본 판매자(1)") {
             create("1", "ROLE_ADMIN").status shouldBe 201
             saved.captured.sellerId shouldBe Product.PLATFORM_SELLER_ID
+        }
+    }
+
+    given("가격은 원 단위 정수") {
+        then("소수부가 0 인 값은 받아 정수로 저장하고, 응답 가격도 소수점 없는 정수다") {
+            val response = create("1", "ROLE_ADMIN", """{"name":"상품","price":12900.00,"stock":10}""")
+
+            response.status shouldBe 201
+            saved.captured.price.amount shouldBe 12_900L
+            val price = jacksonMapperBuilder().build().readTree(response.contentAsString).findValue("price")
+            price.isIntegralNumber shouldBe true
+            price.asLong() shouldBe 12_900L
+        }
+        then("소수 원이 있으면 등록·수정 모두 400 이고 저장하지 않는다 — 잘라서 받지 않는다") {
+            every { transactionalService.findById(1L) } returns productOf(8L)
+
+            create("1", "ROLE_ADMIN", """{"name":"상품","price":1000.5,"stock":10}""").status shouldBe 400
+            mockMvc.perform(
+                MockMvcRequestBuilders.put("/api/v1/products/1")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"price":99.9}""")
+                    .header("X-User-Id", "1")
+                    .header("X-User-Roles", "ROLE_ADMIN"),
+            ).andReturn().response.status shouldBe 400
+            verify(exactly = 0) { transactionalService.save(any()) }
         }
     }
 })

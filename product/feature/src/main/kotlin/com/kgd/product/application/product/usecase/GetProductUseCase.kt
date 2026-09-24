@@ -1,6 +1,5 @@
 package com.kgd.product.application.product.usecase
 
-import java.math.BigDecimal
 
 interface GetProductUseCase {
     fun execute(id: Long): Result
@@ -8,7 +7,7 @@ interface GetProductUseCase {
     data class Result(
         val id: Long,
         val name: String,
-        val price: BigDecimal,
+        val price: Long,
         val stock: Int,
         val status: String,
         val sellerId: Long,

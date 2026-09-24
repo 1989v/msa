@@ -93,3 +93,7 @@ questions:
     phase: post-impl
     status: open
     question: 운영에 이미 쌓인 `-dlt` 토픽 레코드는 새 DLT 리스너가 안 본다 · Strimzi 에 `.DLT` 선언 여부(자동 생성 꺼진 환경 대비) · 이제 안 쓰는 JSON KafkaTemplate 4개 삭제 여부 · seller ops_issue 는 원천 없음 · 샘플링 0.1 에서 비샘플 traceId 전파 미검증 · 테스트 로그의 inventory_db 두 번째 Flyway ERROR 원인 미확인
+  - id: Q24
+    phase: post-impl
+    status: open
+    question: 금액 축소 단계(SR-13)는 다음 릴리스 몫 — 옛 컬럼 products.price · order_items.unit_price 삭제와 price_won · unit_price_won NOT NULL 전환. 지금은 확장 단계라 코드가 새 컬럼을 읽고 옛 컬럼에도 같은 값을 쓴다. 삭제 전 선행 — ① search:batch ProductDbReindexJobConfig 가 product_db 의 옛 price 컬럼을 SQL 로 직접 읽는다(price_won 으로 바꿔야 함) ② 롤백 기간에 옛 코드가 쓴 행은 price_won/unit_price_won 이 NULL 이라 백필 UPDATE 재실행 필요 ③ 두 마이그레이션의 소수부 가드(임시 테이블 CHECK)는 로컬 Docker 없이 Testcontainers 로 미검증

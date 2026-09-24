@@ -18,7 +18,6 @@ import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import java.math.BigDecimal
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 
@@ -33,10 +32,10 @@ class ProductServiceTest : BehaviorSpec({
     given("상품 생성 명령이 들어오면") {
         `when`("유효한 커맨드이면") {
             then("상품이 저장되고 이벤트가 발행되어야 한다") {
-                val savedProduct = Product.restore(1L, "테스트", Money(1000.toBigDecimal()), 10, ProductStatus.ACTIVE, java.time.LocalDateTime.now())
+                val savedProduct = Product.restore(1L, "테스트", Money(1000L), 10, ProductStatus.ACTIVE, java.time.LocalDateTime.now())
                 every { transactionalService.save(any()) } returns savedProduct
 
-                val result = service.execute(CreateProductUseCase.Command("테스트", 1000.toBigDecimal(), 10), admin)
+                val result = service.execute(CreateProductUseCase.Command("테스트", 1000L, 10), admin)
 
                 result.id shouldBe 1L
                 result.name shouldBe "테스트"
@@ -49,7 +48,7 @@ class ProductServiceTest : BehaviorSpec({
     given("상품 조회 시") {
         `when`("존재하는 상품 ID이면") {
             then("상품 정보가 반환되어야 한다") {
-                val product = Product.restore(1L, "상품", Money(1000.toBigDecimal()), 10, ProductStatus.ACTIVE, java.time.LocalDateTime.now())
+                val product = Product.restore(1L, "상품", Money(1000L), 10, ProductStatus.ACTIVE, java.time.LocalDateTime.now())
                 every { transactionalService.findById(1L) } returns product
 
                 val result = service.execute(1L)
@@ -72,15 +71,15 @@ class ProductServiceTest : BehaviorSpec({
     given("상품 수정 시") {
         `when`("유효한 수정 명령이면") {
             then("상품이 수정되고 이벤트가 발행되어야 한다") {
-                val existingProduct = Product.restore(1L, "기존상품", Money(1000.toBigDecimal()), 10, ProductStatus.ACTIVE, java.time.LocalDateTime.now())
-                val updatedProduct = Product.restore(1L, "수정상품", Money(2000.toBigDecimal()), 10, ProductStatus.ACTIVE, java.time.LocalDateTime.now())
+                val existingProduct = Product.restore(1L, "기존상품", Money(1000L), 10, ProductStatus.ACTIVE, java.time.LocalDateTime.now())
+                val updatedProduct = Product.restore(1L, "수정상품", Money(2000L), 10, ProductStatus.ACTIVE, java.time.LocalDateTime.now())
                 every { transactionalService.findById(1L) } returns existingProduct
                 every { transactionalService.save(any()) } returns updatedProduct
 
-                val result = service.execute(UpdateProductUseCase.Command(1L, "수정상품", 2000.toBigDecimal()), admin)
+                val result = service.execute(UpdateProductUseCase.Command(1L, "수정상품", 2000L), admin)
 
                 result.name shouldBe "수정상품"
-                result.price shouldBe 2000.toBigDecimal()
+                result.price shouldBe 2000L
                 verify(exactly = 1) { eventPort.publishProductUpdated(any()) }
             }
         }
@@ -97,7 +96,7 @@ class ProductServiceTest : BehaviorSpec({
     given("상품 목록 조회 시") {
         `when`("유효한 페이지 파라미터가 주어지면") {
             then("페이지네이션된 상품 목록을 반환해야 한다") {
-                val product = Product.restore(1L, "테스트", Money(1000.toBigDecimal()), 10, ProductStatus.ACTIVE, java.time.LocalDateTime.now())
+                val product = Product.restore(1L, "테스트", Money(1000L), 10, ProductStatus.ACTIVE, java.time.LocalDateTime.now())
                 every { transactionalService.findAll(any(), any()) } returns PageImpl(
                     listOf(product),
                     PageRequest.of(0, 100),

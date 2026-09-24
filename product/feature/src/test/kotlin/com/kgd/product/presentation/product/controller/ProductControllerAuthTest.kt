@@ -37,7 +37,7 @@ class ProductControllerAuthTest : BehaviorSpec({
         .setMessageConverters(JacksonJsonHttpMessageConverter(jacksonMapperBuilder().build()))
         .build()
 
-    val product = Product.restore(1L, "상품", Money(1000.toBigDecimal()), 10, ProductStatus.ACTIVE, LocalDateTime.now())
+    val product = Product.restore(1L, "상품", Money(1000L), 10, ProductStatus.ACTIVE, LocalDateTime.now())
 
     beforeEach {
         clearMocks(transactionalService, eventPort)

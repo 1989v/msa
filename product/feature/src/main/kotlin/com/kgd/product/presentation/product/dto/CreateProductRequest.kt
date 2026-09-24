@@ -1,6 +1,8 @@
 package com.kgd.product.presentation.product.dto
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.kgd.product.application.product.usecase.CreateProductUseCase
+import jakarta.validation.constraints.AssertTrue
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Positive
@@ -41,9 +43,13 @@ data class CreateProductRequest(
     @field:Size(max = 30, message = "품목제조보고번호는 30자 이하여야 합니다")
     val itemReportNo: String? = null
 ) {
+    @get:JsonIgnore
+    @get:AssertTrue(message = "가격은 원 단위 정수여야 합니다")
+    val isPriceWholeWon: Boolean get() = isWholeWonPrice(price)
+
     fun toCommand() = CreateProductUseCase.Command(
         name = name,
-        price = price,
+        price = price.longValueExact(),
         stock = stock,
         brand = brand,
         description = description,
@@ -59,3 +65,13 @@ data class CreateProductRequest(
         itemReportNo = itemReportNo
     )
 }
+
+/**
+ * 요청 가격이 원 단위 정수인지 — 1000.00 처럼 소수부가 0 이면 받는다. 요청은 BigDecimal 로 받아 소수 원을 400 으로
+ * 거부한다(Long 으로 받으면 Jackson 이 1000.5 를 1000 으로 조용히 자른다). 정수부 17자리는 확장 단계 동안
+ * 같이 쓰는 옛 `price DECIMAL(19,2)` 의 한도다.
+ */
+internal fun isWholeWonPrice(price: BigDecimal?): Boolean =
+    price == null || price.stripTrailingZeros().let { it.scale() <= 0 && it.precision() - it.scale() <= PRICE_MAX_INTEGER_DIGITS }
+
+private const val PRICE_MAX_INTEGER_DIGITS = 17

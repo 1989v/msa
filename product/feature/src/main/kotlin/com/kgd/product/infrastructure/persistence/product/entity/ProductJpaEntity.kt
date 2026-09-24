@@ -14,7 +14,8 @@ class ProductJpaEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
     name: String,
-    price: BigDecimal,
+    /** 원 단위 가격 — `price_won` 과 옛 `price` 를 둘 다 이 값으로 쓴다 */
+    price: Long,
     stock: Int,
     status: ProductStatus,
     /** 소유 판매자 — 등록 뒤 바뀌지 않는다. 기존 행은 플랫폼 기본 판매자(1)로 백필 */
@@ -40,8 +41,14 @@ class ProductJpaEntity(
     var name: String = name
         private set
 
+    /** 원 단위 가격 — 코드가 읽는 컬럼. 확장 단계라 DB 는 NULL 을 허용한다 */
+    @Column(name = "price_won")
+    var priceWon: Long? = price
+        private set
+
+    /** 옛 컬럼 — 확장 단계라 롤백한 옛 코드가 읽도록 같은 값을 계속 쓴다. 다음 단계에서 삭제 */
     @Column(nullable = false, precision = 19, scale = 2)
-    var price: BigDecimal = price
+    var price: BigDecimal = BigDecimal.valueOf(price)
         private set
 
     @Column(nullable = false)
@@ -106,7 +113,8 @@ class ProductJpaEntity(
     /** 전체 동기화 — 도메인 모델 기준으로 영속 상태를 덮어쓴다 (entity-mutation.md) */
     fun update(product: Product) {
         name = product.name
-        price = product.price.amount
+        priceWon = product.price.amount
+        price = BigDecimal.valueOf(product.price.amount)
         stock = product.stock
         status = product.status
         brand = product.brand
@@ -126,7 +134,7 @@ class ProductJpaEntity(
     fun toDomain(): Product = Product.restore(
         id = id,
         name = name,
-        price = Money(price),
+        price = Money(requireNotNull(priceWon) { "price_won 백필 누락: products.id=$id" }),
         stock = stock,
         status = status,
         createdAt = createdAt,

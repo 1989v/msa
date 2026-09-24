@@ -33,7 +33,7 @@ class ProductAdminControllerTest : BehaviorSpec({
     }
     val events = ProductEventAdapter(outbox, mapper, "product.item.created", "product.item.updated")
     val products = (1L..150L).map { id ->
-        Product.restore(id, "상품$id", Money("${1000 + id}.00".toBigDecimal()), 1,
+        Product.restore(id, "상품$id", Money(1000 + id), 1,
             if (id % 2 == 0L) ProductStatus.INACTIVE else ProductStatus.ACTIVE, LocalDateTime.now())
     }
     val repository = mockk<ProductRepositoryPort>()
