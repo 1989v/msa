@@ -6,6 +6,7 @@ import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldNotBeIn
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.cloud.gateway.route.RouteLocator
@@ -118,6 +119,41 @@ class GatewayRouteAuthSpec(
         Then("ROLE_USER·ROLE_SELLER 는 403") {
             status(HttpMethod.GET, "/api/v1/admin/sellers", userToken) shouldBe 403
             status(HttpMethod.POST, "/api/v1/admin/sellers/2/approve", sellerToken) shouldBe 403
+        }
+    }
+
+    Given("결제 운영 이슈 /api/v1/admin/payments/** (ROLE_ADMIN)") {
+        Then("토큰이 없으면 401") {
+            status(HttpMethod.GET, "/api/v1/admin/payments/ops-issues") shouldBe 401
+            status(HttpMethod.POST, "/api/v1/admin/payments/ops-issues/1/retry") shouldBe 401
+        }
+        Then("ROLE_USER·ROLE_SELLER 는 403") {
+            status(HttpMethod.GET, "/api/v1/admin/payments/ops-issues", userToken) shouldBe 403
+            status(HttpMethod.POST, "/api/v1/admin/payments/ops-issues/1/close", sellerToken) shouldBe 403
+        }
+    }
+
+    Given("토스 웹훅 /api/v1/payments/webhooks/toss (공개 · 서명은 서비스가 본다)") {
+        Then("토큰 없이 게이트웨이를 지난다 — 위조 신원 헤더를 붙여도 막히지 않고 벗겨진다") {
+            // 백엔드 호스트를 해석할 수 없어 5xx 로 끝난다. 라우트가 없으면 404, 인증 필터가 막으면 401 이다
+            client.post().uri("/api/v1/payments/webhooks/toss")
+                .header("X-User-Id", "1")
+                .header("X-User-Roles", "ROLE_ADMIN")
+                .header("Content-Type", "application/json")
+                .exchange()
+                .returnResult(String::class.java)
+                .status.value() shouldNotBeIn listOf(401, 403, 404)
+        }
+        Then("웹훅 라우트는 신원 헤더를 지우고 레이트 리밋을 건다") {
+            val route = routeLocator.routes.collectList().block().orEmpty().single { it.id == "payment-webhook-toss" }
+            val filters = route.filters.joinToString(" ") { it.toString() }
+            filters shouldContain "X-User-Id"
+            filters shouldContain "X-User-Roles"
+            filters shouldContain "RequestRateLimiter"
+        }
+        Then("같은 접두의 다른 결제 경로는 공개로 열리지 않는다") {
+            status(HttpMethod.POST, "/api/v1/payments/webhooks/other") shouldBe 404
+            status(HttpMethod.GET, "/api/v1/payments/1") shouldBe 404
         }
     }
 

@@ -250,7 +250,7 @@ class OutboxRelayIntegrationSpec(
                     c.start()
                     c.createConnection("").use { conn ->
                         conn.createStatement().use { st ->
-                            listOf("warehouse_db", "fulfillment_db", "order_db", "product_db", "deal_db", "seller_db")
+                            listOf("warehouse_db", "fulfillment_db", "order_db", "product_db", "deal_db", "seller_db", "payment_db")
                                 .forEach { st.execute("CREATE DATABASE IF NOT EXISTS $it") }
                         }
                     }
@@ -312,7 +312,7 @@ class OutboxRelayIntegrationSpec(
             }
             for (role in listOf("master", "replica")) {
                 ds("spring.datasource.$role", inv)
-                for (domain in listOf("warehouse", "fulfillment", "order", "product", "seller")) {
+                for (domain in listOf("warehouse", "fulfillment", "order", "product", "seller", "payment")) {
                     ds("spring.datasource.$domain.$role", inv.replace("/inventory_db", "/${domain}_db"))
                 }
             }

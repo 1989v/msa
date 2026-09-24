@@ -187,6 +187,72 @@ class CommerceContextLoadSpec(
                 }
             }
 
+        /**
+         * 결제 쓰기·읽기를 payment TM 으로 — 기본 프로필(모의 PG)에서 승인 → 매입 → 대사.
+         * 값으로 판정한다: 모의 PG 가 받은 승인 호출 수, payment_db 행, 아웃박스 행의 키, settled 행.
+         */
+        Then("결제: 같은 orderNo 승인 두 번 → 모의 PG 승인 1회, payment_db 행 쓰기·읽기, 키 = orderId, 대사 settled")
+            .config(enabledIf = { dockerAvailable }) {
+                (ctx.getBean("paymentMasterDataSource") as com.zaxxer.hikari.HikariDataSource).maximumPoolSize shouldBe 3
+                listOf(
+                    "paymentEntityManagerFactory", "paymentTransactionManager", "paymentFlyway",
+                    "paymentOutboxPort", "paymentOutboxPollingPublisher", "paymentIdempotentEventHandler",
+                    "paymentIdempotentEventCleanupScheduler", "paymentKafkaListenerContainerFactory",
+                ).forEach { ctx.containsBean(it).shouldBeTrue() }
+                ctx.getBeansOfType(
+                    com.kgd.payment.presentation.opsissue.controller.PaymentOpsIssueAdminController::class.java,
+                ).size shouldBe 1
+
+                // 기본 프로필 = 모의 PG. 토스 빈은 하나도 없고 웹훅 컨트롤러도 없다(경로 404)
+                ctx.getBean(com.kgd.payment.application.payment.port.PgPort::class.java)::class shouldBe
+                    com.kgd.payment.infrastructure.pg.mock.MockPgAdapter::class
+                ctx.containsBean("paymentTossCircuitBreaker") shouldBe false
+                ctx.getBeansOfType(com.kgd.payment.infrastructure.pg.toss.TossPgAdapter::class.java).size shouldBe 0
+                ctx.getBeansOfType(
+                    com.kgd.payment.presentation.webhook.controller.TossWebhookController::class.java,
+                ).size shouldBe 0
+
+                val commands = ctx.getBean(com.kgd.payment.application.payment.usecase.ProcessPaymentCommandUseCase::class.java)
+                val recorder = ctx.getBean(com.kgd.payment.infrastructure.pg.mock.MockPgCallRecorder::class.java)
+                val outbox = ctx.getBean(com.kgd.payment.infrastructure.outbox.PaymentOutboxRepository::class.java)
+                val jdbc = org.springframework.jdbc.core.JdbcTemplate(
+                    ctx.getBean("paymentMasterDataSource", javax.sql.DataSource::class.java),
+                )
+                val command = com.kgd.payment.application.payment.usecase.ProcessPaymentCommandUseCase.Authorize(
+                    orderId = 880001L, orderNo = "CTX-880001-1", amount = 12_000L,
+                )
+
+                val first = commands.authorize(command)
+                commands.authorize(command).id shouldBe first.id
+                recorder.count(com.kgd.payment.infrastructure.pg.mock.MockPgCallRecorder.Op.AUTHORIZE, "CTX-880001-1") shouldBe 1
+
+                jdbc.queryForMap("SELECT status, payment_key, amount FROM payment WHERE order_no = 'CTX-880001-1'").let {
+                    it["status"] shouldBe "AUTHORIZED"
+                    it["payment_key"] shouldBe "mock-CTX-880001-1"
+                    it["amount"] shouldBe 12_000L
+                }
+                jdbc.queryForObject("SELECT COUNT(*) FROM payment WHERE order_no = 'CTX-880001-1'", Long::class.java) shouldBe 1L
+
+                commands.capture("CTX-880001-1").status shouldBe com.kgd.payment.domain.payment.model.PaymentStatus.CAPTURED
+
+                val today = java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul"))
+                ctx.getBean(com.kgd.payment.application.payment.usecase.ReconcilePaymentsUseCase::class.java)
+                    .reconcile(today).matched shouldBe 1
+
+                val rows = outbox.findAll().filter { it.aggregateId == first.id }
+                rows.map { it.eventType }.toSet() shouldBe setOf(
+                    "payment.payment.authorized", "payment.payment.captured", "payment.reconciliation.settled",
+                )
+                rows.forEach { it.partitionKey shouldBe "880001" }
+                // 모의 PG 수수료 2% — 12,000원 → 240원, 입금 11,760원
+                ctx.getBean(tools.jackson.databind.ObjectMapper::class.java)
+                    .readTree(rows.single { it.eventType == "payment.reconciliation.settled" }.payload).let {
+                        it["grossAmount"].asLong() shouldBe 12_000L
+                        it["pgFee"].asLong() shouldBe 240L
+                        it["depositAmount"].asLong() shouldBe 11_760L
+                    }
+            }
+
         // 상품 이벤트는 직접 send 가 아니라 product_db 아웃박스 행이다 — 행이 실제로 늘었는지로 판정한다.
         Then("상품 등록이 product_db 아웃박스에 product.item.created 행을 남긴다")
             .config(enabledIf = { dockerAvailable }) {
@@ -313,6 +379,7 @@ class CommerceContextLoadSpec(
                             it.execute("CREATE DATABASE IF NOT EXISTS product_db")
                             it.execute("CREATE DATABASE IF NOT EXISTS deal_db")
                             it.execute("CREATE DATABASE IF NOT EXISTS seller_db")
+                            it.execute("CREATE DATABASE IF NOT EXISTS payment_db")
                         }
                     }
                 }
@@ -331,6 +398,7 @@ class CommerceContextLoadSpec(
             val prod = inv.replace("/inventory_db", "/product_db")
             val deal = inv.replace("/inventory_db", "/deal_db")
             val seller = inv.replace("/inventory_db", "/seller_db")
+            val payment = inv.replace("/inventory_db", "/payment_db")
             // inventory (master/replica)
             for (role in listOf("master", "replica")) {
                 registry.add("spring.datasource.$role.jdbc-url") { inv }
@@ -357,6 +425,10 @@ class CommerceContextLoadSpec(
                 registry.add("spring.datasource.seller.$role.username") { mysql.username }
                 registry.add("spring.datasource.seller.$role.password") { mysql.password }
                 registry.add("spring.datasource.seller.$role.driver-class-name") { "com.mysql.cj.jdbc.Driver" }
+                registry.add("spring.datasource.payment.$role.jdbc-url") { payment }
+                registry.add("spring.datasource.payment.$role.username") { mysql.username }
+                registry.add("spring.datasource.payment.$role.password") { mysql.password }
+                registry.add("spring.datasource.payment.$role.driver-class-name") { "com.mysql.cj.jdbc.Driver" }
             }
             // deal 은 master/replica 가 아니라 단일 url 이다 — 읽기 복제본이 없다.
             // 이 키가 있어야 DealDataSourceConfig(@ConditionalOnProperty)가 켜진다.

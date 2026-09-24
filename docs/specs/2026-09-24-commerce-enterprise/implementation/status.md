@@ -39,3 +39,9 @@
 - portal-fe `npx vitest run src/pages/seller src/pages/__tests__/privacyRetention.test.ts` → Test Files 3 passed · Tests 9 passed; tsc(tsconfig.app.json) portal 0 · admin 0
 - 추가: `GET /api/v1/sellers/me`(ROLE_USER, 네 상태 + 사유) · 상품 목록 `sellerId` 필터
 - CDP: ACTIVE 인장 라이트 1.46:1 발견 → `--ko-accent-text` 로 8.24:1. 캡처 `verifications/tg5/`
+
+## TG6 payment 도메인 (2026-09-24)
+- `./gradlew :payment:domain:test :payment:feature:test :commerce:app:test :gateway:test --tests '*RouteAuth*' verifyArchitecture` → exit 0
+  - PaymentTest 69/0 · OpsIssueTest 3/0 · PaymentCommandServiceTest 5/0 · PaymentResolutionServiceTest 5/0 · ReconciliationServiceTest 2/0 · TossPgAdapterTest 6/0 · TossWebhookControllerTest 3/0 · PaymentOpsIssueAdminControllerTest 2/0
+  - PaymentPgSelectionSpec 5/0 · CommerceContextLoadSpec 6/0 · OutboxRelayIntegrationSpec 5/0 · SellerAccountKeyStartupSpec 3/0 · DualDataSource 2/0 · GatewayRouteAuthSpec 21/0 (skipped 0)
+- 회귀 주입: orderNo 재승인 → 2곳 빨간불 · 보류 VOID (b-1) → 빨간불 · (b-2) → 도메인 테스트만 잡음(서비스 테스트는 requireNotNull 이 먼저 멈춤) · 웹훅 조건 제거 → 404 테스트 빨간불

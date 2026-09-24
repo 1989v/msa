@@ -90,13 +90,13 @@ Total Task Groups: 16 · 단계 P0~P7 (단계 끝마다 커밋·푸시·배포·
 **Dependencies:** Task Group 2
 **Phase:** P2
 **Required Skills:** 신규 도메인 폴드, 결제 상태 머신, MockWebServer, 스케줄러
-- [ ] 6.0 Complete payment domain
-  - [ ] 6.1 테스트: 전이표 전수(종착 포함) · 같은 orderNo → 모의 PG 승인 1건 · UNKNOWN → 재조회 → AUTHORIZED · 재조회 5회 초과 운영 이슈 · 환불 합 > 매입 거부 · 기본 프로필 토스 빈 없음·웹훅 404 · 토스 어댑터 confirm/조회/취소(MockWebServer) · 토스 웹훅 서명 401·중복 no-op·본문 금액 무시 · 대사 불일치 운영 이슈 / 일치 settled (8)
-  - [ ] 6.2 `payment:domain`/`payment:feature`, `payment_db`, 폴드 3곳, `ops_issue` 테이블
-  - [ ] 6.3 `PgPort` + 모의 PG(`MockPgScenario` 테스트 빈, 운영은 항상 승인) + 토스 어댑터(`payment.pg=toss`, 3초/5초, 서킷 브레이커 빈 이름 `paymentTossCircuitBreaker`)
-  - [ ] 6.4 명령 컨슈머 `payment.command.*` → 이벤트 `payment.payment.*`(키 orderId), UNKNOWN 재조회 스케줄러(30초·1·2·4·2.5분)
-  - [ ] 6.5 대사 배치(모의 PG 정산 파일) → `payment.reconciliation.settled`
-  - [ ] 6.6 Verify: `$G :payment:domain:test :payment:feature:test`
+- [x] 6.0 Complete payment domain
+  - [x] 6.1 테스트: 전이표 전수(종착 포함) · 같은 orderNo → 모의 PG 승인 1건 · UNKNOWN → 재조회 → AUTHORIZED · 재조회 5회 초과 운영 이슈 · 환불 합 > 매입 거부 · 기본 프로필 토스 빈 없음·웹훅 404 · 토스 어댑터 confirm/조회/취소(MockWebServer) · 토스 웹훅 서명 401·중복 no-op·본문 금액 무시 · 대사 불일치 운영 이슈 / 일치 settled (8)
+  - [x] 6.2 `payment:domain`/`payment:feature`, `payment_db`, 폴드 3곳, `ops_issue` 테이블
+  - [x] 6.3 `PgPort` + 모의 PG(`MockPgScenario` 테스트 빈, 운영은 항상 승인) + 토스 어댑터(`payment.pg=toss`, 3초/5초, 서킷 브레이커 빈 이름 `paymentTossCircuitBreaker`)
+  - [x] 6.4 명령 컨슈머 `payment.command.*` → 이벤트 `payment.payment.*`(키 orderId), UNKNOWN 재조회 스케줄러(30초·1·2·4·2.5분)
+  - [x] 6.5 대사 배치(모의 PG 정산 파일) → `payment.reconciliation.settled`
+  - [x] 6.6 Verify: `$G :payment:domain:test :payment:feature:test`
 **Acceptance Criteria:** 6.1 통과, 운영 기본 프로필에서 `/api/v1/payments/webhooks/toss` 404
 
 **P2 배포:** `payment_db` 생성 → 푸시 → 모의 결제 명령 1건을 Kafka 로 넣어 AUTHORIZED 확인

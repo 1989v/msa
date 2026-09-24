@@ -68,6 +68,7 @@ class GatewayRouteConfig(
         "fulfillment" to ("http://commerce:8085" to "/v3/api-docs/fulfillment"),
         "warehouse" to ("http://commerce:8085" to "/v3/api-docs/warehouse"),
         "seller" to ("http://commerce:8085" to "/v3/api-docs/seller"),
+        "payment" to ("http://commerce:8085" to "/v3/api-docs/payment"),
         "gifticon" to ("http://sideapp:8095" to "/v3/api-docs/gifticon"),
         "recommendation" to ("http://engagement:8091" to "/v3/api-docs/recommendation"),
         "member" to ("http://account:8093" to "/v3/api-docs/member"),
@@ -184,6 +185,35 @@ class GatewayRouteConfig(
                 r.path("/api/v1/seller/**")
                     .filters { f ->
                         f.filter(authFilter.apply(sellerConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(COMMERCE_URI)
+            }
+            // === ADR-0099 결제 (commerce 폴드) ===
+            // 운영 이슈(결과 미상 소진·대사 불일치) — 어드민 전용
+            .route("payment-admin") { r ->
+                r.path("/api/v1/admin/payments", "/api/v1/admin/payments/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(adminConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(COMMERCE_URI)
+            }
+            // 토스 웹훅 — 토스 서버가 부르므로 공개다. 검증은 서비스가 한다(공유 비밀 + PG 재조회).
+            // 신원 헤더를 벗겨 위조 X-User-Id 가 백엔드에 닿지 않게 하고, 공개 쓰기라 레이트 리밋을 건다.
+            // 컨트롤러는 payment.pg=toss 일 때만 생긴다 — 운영(모의 PG)에서는 여기를 지나 404 다.
+            .route("payment-webhook-toss") { r ->
+                r.method(HttpMethod.POST)
+                    .and().path("/api/v1/payments/webhooks/toss")
+                    .filters { f ->
+                        f.removeRequestHeader("X-User-Id")
+                            .removeRequestHeader("X-User-Roles")
+                            .removeRequestHeader("Authorization")
+                            .requestRateLimiter { config ->
+                                config.setRateLimiter(redisRateLimiter)
+                                config.setKeyResolver(userKeyResolver)
+                                config.setDenyEmptyKey(false)
+                            }
                             .stripPrefix(0)
                     }
                     .uri(COMMERCE_URI)

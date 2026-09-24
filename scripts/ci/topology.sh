@@ -10,7 +10,7 @@ topology_pod_for_path() {
     analytics/*) echo "analytics" ;;
     atlas/*|code-dictionary/*) echo "atlas" ;;
     auth/*) echo "auth" ;;
-    commerce/*|deal/*|fulfillment/*|inventory/*|order/*|product/*|seller/*|warehouse/*) echo "commerce" ;;
+    commerce/*|deal/*|fulfillment/*|inventory/*|order/*|payment/*|product/*|seller/*|warehouse/*) echo "commerce" ;;
     blog/*|content/*|game/*|place/*|ranking/*) echo "content" ;;
     ads/*|engagement/*|experiment/*|recommendation/*) echo "engagement" ;;
     search/*) echo "search" ;;
@@ -25,7 +25,7 @@ topology_test_tasks() {
     analytics) echo ":analytics:app:test" ;;
     atlas) echo ":atlas:app:test :code-dictionary:domain:test :code-dictionary:feature:test" ;;
     auth) echo ":auth:app:test" ;;
-    commerce) echo ":commerce:app:test :deal:domain:test :deal:feature:test :fulfillment:domain:test :fulfillment:feature:test :inventory:domain:test :inventory:feature:test :order:domain:test :order:feature:test :product:domain:test :product:feature:test :seller:domain:test :seller:feature:test :warehouse:domain:test :warehouse:feature:test" ;;
+    commerce) echo ":commerce:app:test :deal:domain:test :deal:feature:test :fulfillment:domain:test :fulfillment:feature:test :inventory:domain:test :inventory:feature:test :order:domain:test :order:feature:test :payment:domain:test :payment:feature:test :product:domain:test :product:feature:test :seller:domain:test :seller:feature:test :warehouse:domain:test :warehouse:feature:test" ;;
     content) echo ":content:app:test :blog:domain:test :blog:feature:test :game:domain:test :game:feature:test :place:domain:test :place:feature:test :ranking:domain:test :ranking:feature:test" ;;
     engagement) echo ":engagement:app:test :ads:domain:test :ads:feature:test :experiment:domain:test :experiment:feature:test :recommendation:domain:test :recommendation:feature:test" ;;
     search) echo ":search:app:test" ;;

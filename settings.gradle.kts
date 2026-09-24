@@ -64,5 +64,7 @@ include(
     "ranking:domain",
     "ranking:feature", // ADR-0081: 랭킹 리더보드 라이브러리 (code-dictionary:app 이 흡수, 비-bootable)
     "seller:domain",
-    "seller:feature" // ADR-0099: 판매자(마켓플레이스) 라이브러리 (commerce:app 이 흡수, 전용 스키마 seller_db)
+    "seller:feature", // ADR-0099: 판매자(마켓플레이스) 라이브러리 (commerce:app 이 흡수, 전용 스키마 seller_db)
+    "payment:domain",
+    "payment:feature" // ADR-0099: 결제(모의 PG·토스 어댑터) 라이브러리 (commerce:app 이 흡수, 전용 스키마 payment_db)
 )

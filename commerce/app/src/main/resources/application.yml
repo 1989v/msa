@@ -104,6 +104,23 @@ spring:
         driver-class-name: com.mysql.cj.jdbc.Driver
         maximum-pool-size: 3
         minimum-idle: 1
+    # ADR-0099 — payment 도메인 전용 datasource(payment_db). seller 와 같이 order 인스턴스에 스키마만 분리한다.
+    # 풀 크기 키는 hikari. 하위가 아니라 여기 바로 둔다(seller 와 같은 이유 — 컨텍스트 로드 spec 이 실제 값 3 을 확인).
+    payment:
+      master:
+        jdbc-url: jdbc:mysql://${PAYMENT_DB_MASTER:localhost:3326}/payment_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        username: ${PAYMENT_MYSQL_USER:payment_user}
+        password: ${PAYMENT_MYSQL_PASSWORD:payment_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        maximum-pool-size: 3
+        minimum-idle: 1
+      replica:
+        jdbc-url: jdbc:mysql://${PAYMENT_DB_REPLICA:localhost:3327}/payment_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        username: ${PAYMENT_MYSQL_USER:payment_user}
+        password: ${PAYMENT_MYSQL_PASSWORD:payment_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        maximum-pool-size: 3
+        minimum-idle: 1
     # ADR-0093 — product 도메인 전용 datasource(카탈로그 SSOT, 스키마 격리).
     product:
       master:
@@ -212,6 +229,15 @@ product:
 payment:
   service:
     url: ${PAYMENT_SERVICE_URL:http://localhost:9090}
+  # ADR-0099 — 결제 도메인. PG 는 mock(기본, 서버 승인·항상 승인) | toss(토스페이먼츠 v1).
+  # 운영(oci-arm)은 mock — commerce 상시 파드에 외부 egress 가 없다. toss 로 바꾸려면 egress 예외 ADR 이 먼저다.
+  pg: ${PAYMENT_PG:mock}
+  flyway:
+    enabled: true
+  toss:
+    # **기본값을 두지 않는다.** pg=toss 일 때만 읽히고, 그때 없으면 기동하지 않는다(pg=mock 은 읽지 않는다).
+    secret-key: ${TOSS_SECRET_KEY}
+    webhook-secret: ${TOSS_WEBHOOK_SECRET}
 
 outbox:
   polling:
