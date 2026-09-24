@@ -12,3 +12,16 @@
   - ProductControllerAuthTest 8/0 · OrderReservationTest 6/0 · ReservationStockSyncEventTest 4/0 · InventoryReservationLockOrderTest 1/0 · GatewayRouteAuthSpec 9/0 · GatewayRoutingSpec 17/0 · OrderStatsControllerTest 4/0 · CommerceContextLoadSpec 4/0 (skipped 0)
 - `npx tsc --noEmit -p tsconfig.app.json` portal-fe 0 · admin 0 (`-p .` 는 files:[] 라 0개 파일 검사 — tasks.md 명령 수정)
 - 회귀 주입: 권한 무조건 통과 → 3 실패 · 게이트웨이 쓰기 라우트 userConfig → 1 실패 · 부족 라인 건너뛰기 → 4 실패
+
+## P0 배포 (2026-09-24)
+- push `269c352c` → images success · ci success (Docs Health 실패는 이전 커밋부터 계속된 기존 실패)
+- oci-arm: commerce·gateway `:269c352` ready 1/1, Argo Synced (health Degraded 는 2026-09-20T05:00 부터 — 이번 배포와 무관)
+- 운영 확인: GET /api/v1/products 200 · 옛 /api/products 404 · 무토큰 PUT /api/v1/products/1 401 · /api/v1/admin/orders/stats 401 · /internal/** 게이트웨이 미도달(portal-fe 405)
+- Flyway: order_db·product_db 20260924.001 success=1 · commerce 최근 20분 ERROR 0
+- commerce 메모리 P0 후: 455MiB / 1200Mi (cgroup memory.current)
+
+## TG3 seller 도메인 (2026-09-24)
+- `./gradlew :seller:domain:test :seller:feature:test :gateway:test :commerce:app:test :commerce:app:check` → exit 0
+  - SellerTest 27/0 · AccountNumberTest 3/0 · SellerAdminServiceTest 4/0 · SellerPrivacyServiceTest 2/0 · SellerServiceTest 4/0 · AesGcmAccountCipherTest 6/0 · SellerControllerTest 10/0
+  - GatewayRouteAuthSpec 14/0 · OutboxRelayIntegrationSpec 5/0 · SellerAccountKeyStartupSpec 3/0 · CommerceContextLoadSpec 5/0 · CommerceDualDataSourceIntegrationSpec 2/0 (skipped 0)
+- 회귀 주입: 키 기본값 넣으면 기동 실패 테스트 FAILED · seller-admin 라우트 userConfig → 403 테스트 FAILED · TM 한정자 제거 → verifyTransactionQualifiers BUILD FAILED

@@ -16,6 +16,7 @@ dependencies {
     implementation(project(":order:feature")) // co-deploy (commerce 모듈러 모놀리스)
     implementation(project(":product:feature")) // ADR-0093: 카탈로그 SSOT 폴드
     implementation(project(":deal:feature")) // ADR-0093 ②: 혜택 링크 허브 폴드 (전용 스키마 deal_db)
+    implementation(project(":seller:feature")) // ADR-0099: 판매자(마켓플레이스) 폴드 (전용 스키마 seller_db)
     // 메인 클래스(@SpringBootApplication) 컴파일 + bootJar 구성용 최소 의존
     implementation(libs.spring.boot.starter.web)
 
@@ -27,6 +28,8 @@ dependencies {
     // 아웃박스 릴레이 통합 검증 — 실제 브로커가 받은 바이트를 본다
     testImplementation(libs.testcontainers.kafka)
     testImplementation(project(":common"))
+    // 컨텍스트 로드 spec 이 판매자 유스케이스 Command(도메인 enum 포함)를 직접 만든다
+    testImplementation(project(":seller:domain"))
     testImplementation(libs.spring.kafka)
 }
 

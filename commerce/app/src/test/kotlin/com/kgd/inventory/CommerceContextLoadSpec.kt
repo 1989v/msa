@@ -29,6 +29,9 @@ private val dockerAvailable: Boolean =
 @Suppress("unused")
 fun commerceDockerAvailable(): Boolean = dockerAvailable
 
+/** 테스트 전용 32바이트 hex 키 — 운영 키와 무관 */
+const val TEST_SELLER_ACCOUNT_KEY = "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+
 @org.springframework.boot.test.context.SpringBootTest(
     classes = [CommerceApplication::class],
     webEnvironment = org.springframework.boot.test.context.SpringBootTest.WebEnvironment.NONE,
@@ -44,6 +47,8 @@ fun commerceDockerAvailable(): Boolean = dockerAvailable
         "spring.kafka.bootstrap-servers=localhost:9092",
         // 도메인별 cleanup 스케줄러가 다중 port 로 모호하지 않은지(k8s 경로) 검증.
         "kgd.common.messaging.idempotent.cleanup.enabled=true",
+        // 판매자 계좌 키 — 운영 설정 파일엔 기본값이 없어 테스트가 직접 준다(없으면 기동 실패가 정상).
+        "seller.account.enc-key=$TEST_SELLER_ACCOUNT_KEY",
     ],
 )
 @org.junit.jupiter.api.condition.EnabledIf(
@@ -92,6 +97,94 @@ class CommerceContextLoadSpec(
                     "dealDataSource", "dealEntityManagerFactory",
                     "dealTransactionManager", "dealFlyway",
                 ).forEach { ctx.containsBean(it).shouldBeTrue() }
+
+                // ADR-0099 — seller 전용 스키마(seller_db) + 전용 outbox/idempotency
+                listOf(
+                    "sellerEntityManagerFactory", "sellerTransactionManager", "sellerFlyway",
+                    "sellerOutboxPort", "sellerOutboxPollingPublisher", "sellerIdempotentEventHandler",
+                    "sellerIdempotentEventCleanupScheduler",
+                ).forEach { ctx.containsBean(it).shouldBeTrue() }
+                // scanBasePackages 에서 com.kgd.seller 가 빠지면 기동은 되고 판매자 API 만 조용히 404 다
+                ctx.getBeansOfType(com.kgd.seller.presentation.seller.controller.SellerController::class.java).size shouldBe 1
+                ctx.getBeansOfType(com.kgd.seller.presentation.seller.controller.SellerAdminController::class.java).size shouldBe 1
+            }
+
+        /**
+         * seller 쓰기·읽기를 seller TM 으로 — 신청 → 승인 → 판매자 포털 조회.
+         * 값으로 판정한다: 행이 실제로 남았는지, 계좌 컬럼이 암호문인지, 아웃박스 행이 생겼는지.
+         */
+        Then("판매자: 신청·승인이 seller_db 에 행을 쓰고 읽으며 seller.seller.approved 아웃박스 행을 남긴다")
+            .config(enabledIf = { dockerAvailable }) {
+                val jdbc = org.springframework.jdbc.core.JdbcTemplate(
+                    ctx.getBean("sellerMasterDataSource", javax.sql.DataSource::class.java),
+                )
+                // 풀 크기는 설정이 아니라 실제 HikariDataSource 값으로 본다 (hikari. 하위 키는 먹지 않는다)
+                (ctx.getBean("sellerMasterDataSource") as com.zaxxer.hikari.HikariDataSource).maximumPoolSize shouldBe 3
+
+                // V1 시드 — 플랫폼 기본 판매자
+                jdbc.queryForMap("SELECT member_id, status, commission_rate_bp FROM seller WHERE id = 1").let {
+                    it["member_id"] shouldBe "platform"
+                    it["status"] shouldBe "ACTIVE"
+                    it["commission_rate_bp"] shouldBe 0
+                }
+
+                val apply = ctx.getBean(com.kgd.seller.application.seller.usecase.ApplySellerUseCase::class.java)
+                val manage = ctx.getBean(com.kgd.seller.application.seller.usecase.ManageSellerUseCase::class.java)
+                val me = ctx.getBean(com.kgd.seller.application.seller.usecase.GetMySellerUseCase::class.java)
+                val outbox = ctx.getBean(com.kgd.seller.infrastructure.outbox.SellerOutboxRepository::class.java)
+                val command = com.kgd.seller.application.seller.usecase.ApplySellerUseCase.Command(
+                    memberId = "ctx-9001",
+                    businessName = "컨텍스트 상점",
+                    businessRegistrationNo = "123-45-67890",
+                    representativeName = "대표",
+                    bankName = "은행",
+                    accountNumber = "110-123-456789",
+                    shippingFee = 3000L,
+                    settlementCycle = com.kgd.seller.domain.seller.model.SettlementCycle.WEEKLY,
+                )
+
+                val applied = apply.execute(command)
+                manage.approve(
+                    com.kgd.seller.application.seller.usecase.ManageSellerUseCase.Approve(
+                        sellerId = applied.id, actorId = "1", commissionRateBp = 1200, reason = "컨텍스트 검사",
+                    ),
+                )
+
+                // 읽기 — 커밋된 행을 다시 읽어 ACTIVE 로 본다
+                me.execute("ctx-9001").let {
+                    it.id shouldBe applied.id
+                    it.status shouldBe com.kgd.seller.domain.seller.model.SellerStatus.ACTIVE
+                    it.commissionRateBp shouldBe 1200
+                }
+                // 계좌 컬럼에 평문이 없다
+                jdbc.queryForMap(
+                    "SELECT account_number_enc, account_number_masked, account_key_version FROM seller WHERE id = ?",
+                    applied.id,
+                ).let {
+                    (it["account_number_enc"] as String).contains("110123456789") shouldBe false
+                    it["account_number_masked"] shouldBe "********6789"
+                    it["account_key_version"] shouldBe 1
+                }
+                jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM seller_admin_action WHERE seller_id = ? AND action = 'APPROVE' AND actor_id = '1'",
+                    Long::class.java, applied.id,
+                ) shouldBe 1L
+
+                val rows = outbox.findAll().filter { it.aggregateId == applied.id }
+                rows.map { it.eventType }.toSet() shouldBe setOf("seller.seller.applied", "seller.seller.approved")
+                rows.forEach {
+                    it.partitionKey shouldBe applied.id.toString()
+                    it.payload.contains("110123456789") shouldBe false
+                    it.payload.contains("1234567890") shouldBe false
+                }
+
+                // 1인 1판매자 — 서비스를 거치지 않은 동시 INSERT 도 DB 유니크 제약이 막는다
+                io.kotest.assertions.throwables.shouldThrow<org.springframework.dao.DataIntegrityViolationException> {
+                    jdbc.update(
+                        "INSERT INTO seller (member_id, status, business_name, shipping_fee, settlement_cycle, " +
+                            "applied_at, updated_at) VALUES ('ctx-9001', 'PENDING', 'dup', 0, 'WEEKLY', NOW(6), NOW(6))",
+                    )
+                }
             }
 
         // 상품 이벤트는 직접 send 가 아니라 product_db 아웃박스 행이다 — 행이 실제로 늘었는지로 판정한다.
@@ -219,6 +312,7 @@ class CommerceContextLoadSpec(
                             it.execute("CREATE DATABASE IF NOT EXISTS order_db")
                             it.execute("CREATE DATABASE IF NOT EXISTS product_db")
                             it.execute("CREATE DATABASE IF NOT EXISTS deal_db")
+                            it.execute("CREATE DATABASE IF NOT EXISTS seller_db")
                         }
                     }
                 }
@@ -236,6 +330,7 @@ class CommerceContextLoadSpec(
             val ord = inv.replace("/inventory_db", "/order_db")
             val prod = inv.replace("/inventory_db", "/product_db")
             val deal = inv.replace("/inventory_db", "/deal_db")
+            val seller = inv.replace("/inventory_db", "/seller_db")
             // inventory (master/replica)
             for (role in listOf("master", "replica")) {
                 registry.add("spring.datasource.$role.jdbc-url") { inv }
@@ -258,6 +353,10 @@ class CommerceContextLoadSpec(
                 registry.add("spring.datasource.product.$role.username") { mysql.username }
                 registry.add("spring.datasource.product.$role.password") { mysql.password }
                 registry.add("spring.datasource.product.$role.driver-class-name") { "com.mysql.cj.jdbc.Driver" }
+                registry.add("spring.datasource.seller.$role.jdbc-url") { seller }
+                registry.add("spring.datasource.seller.$role.username") { mysql.username }
+                registry.add("spring.datasource.seller.$role.password") { mysql.password }
+                registry.add("spring.datasource.seller.$role.driver-class-name") { "com.mysql.cj.jdbc.Driver" }
             }
             // deal 은 master/replica 가 아니라 단일 url 이다 — 읽기 복제본이 없다.
             // 이 키가 있어야 DealDataSourceConfig(@ConditionalOnProperty)가 켜진다.

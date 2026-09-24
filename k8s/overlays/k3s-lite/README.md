@@ -52,10 +52,15 @@ scripts/image-import.sh --fe                       # FE only
 # Or, in one shot (jib tars + every FE + non-JVM image):
 scripts/image-import.sh --all-images
 
-# 4. apply the full overlay
+# 4. (one time) app secrets that have no default — commerce won't start without them
+kubectl create namespace commerce --dry-run=client -o yaml | kubectl apply -f -
+kubectl -n commerce create secret generic seller-account-enc \
+    --from-literal=key="$(openssl rand -hex 32)"
+
+# 5. apply the full overlay
 kubectl apply -k k8s/overlays/k3s-lite
 
-# 5. wait for everything to reach Ready
+# 6. wait for everything to reach Ready
 kubectl -n commerce get pods -w
 ```
 

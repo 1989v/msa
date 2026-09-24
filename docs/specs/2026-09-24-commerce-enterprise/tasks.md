@@ -50,12 +50,12 @@ Total Task Groups: 16 · 단계 P0~P7 (단계 끝마다 커밋·푸시·배포·
 **Dependencies:** Task Group 2
 **Phase:** P1
 **Required Skills:** 신규 도메인 폴드, JPA, AES-GCM, Kafka
-- [ ] 3.0 Complete seller domain
-  - [ ] 3.1 테스트: 상태 전이표 전수 · 1인 1판매자(ACTIVE·PENDING·SUSPENDED) · 계좌 암호화·마스킹 · 키 없으면 기동 실패 · 승인 시 `seller.seller.approved` 아웃박스 · 반려 30일 파기 (6)
-  - [ ] 3.2 `seller:domain`/`seller:feature` 골격, `seller_db` Flyway, `SellerDataSourceConfig`(Hikari max 3), Messaging(아웃박스·멱등 원장), commerce 폴드 3곳 + 컨텍스트 로드 spec(행 쓰기·읽기)
-  - [ ] 3.3 API: `POST /api/v1/sellers/apply` · `/api/v1/seller/me` · 어드민 `/api/v1/admin/sellers/**`(승인·반려·정지·재활성·수수료율) + 조치 이력
-  - [ ] 3.4 `SELLER_ACCOUNT_ENC_KEY` Secret(oci-arm·prod 오버레이), 기본값 없음; 운영 `seller_db`·계정 생성(oci-mysql) + init 파일 동기화
-  - [ ] 3.5 Verify: `$G :seller:domain:test :seller:feature:test :commerce:app:test --tests '*CommerceContextLoad*'`
+- [x] 3.0 Complete seller domain
+  - [x] 3.1 테스트: 상태 전이표 전수 · 1인 1판매자(ACTIVE·PENDING·SUSPENDED) · 계좌 암호화·마스킹 · 키 없으면 기동 실패 · 승인 시 `seller.seller.approved` 아웃박스 · 반려 30일 파기 (6)
+  - [x] 3.2 `seller:domain`/`seller:feature` 골격, `seller_db` Flyway, `SellerDataSourceConfig`(Hikari max 3), Messaging(아웃박스·멱등 원장), commerce 폴드 3곳 + 컨텍스트 로드 spec(행 쓰기·읽기)
+  - [x] 3.3 API: `POST /api/v1/sellers/apply` · `/api/v1/seller/me` · 어드민 `/api/v1/admin/sellers/**`(승인·반려·정지·재활성·수수료율) + 조치 이력
+  - [x] 3.4 `SELLER_ACCOUNT_ENC_KEY` Secret(oci-arm·prod 오버레이), 기본값 없음; 운영 `seller_db`·계정 생성(oci-mysql) + init 파일 동기화
+  - [x] 3.5 Verify: `$G :seller:domain:test :seller:feature:test :commerce:app:test --tests '*CommerceContextLoad*'`
 **Acceptance Criteria:** 3.1 통과, 컨텍스트 로드가 seller 행을 쓰고 읽는다
 
 ### Task Group 4: 역할 연동 · 상품 판매자 소유

@@ -58,6 +58,7 @@ import kotlin.reflect.KClass
         // 스케줄 릴레이가 테스트가 부르는 릴레이와 섞이지 않게 첫 실행을 미룬다.
         "outbox.polling.initial-delay-ms=3600000",
         "outbox.cleanup.initial-delay-ms=3600000",
+        "seller.account.enc-key=00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff",
     ],
 )
 class OutboxRelayIntegrationSpec(
@@ -249,7 +250,7 @@ class OutboxRelayIntegrationSpec(
                     c.start()
                     c.createConnection("").use { conn ->
                         conn.createStatement().use { st ->
-                            listOf("warehouse_db", "fulfillment_db", "order_db", "product_db", "deal_db")
+                            listOf("warehouse_db", "fulfillment_db", "order_db", "product_db", "deal_db", "seller_db")
                                 .forEach { st.execute("CREATE DATABASE IF NOT EXISTS $it") }
                         }
                     }
@@ -311,7 +312,7 @@ class OutboxRelayIntegrationSpec(
             }
             for (role in listOf("master", "replica")) {
                 ds("spring.datasource.$role", inv)
-                for (domain in listOf("warehouse", "fulfillment", "order", "product")) {
+                for (domain in listOf("warehouse", "fulfillment", "order", "product", "seller")) {
                     ds("spring.datasource.$domain.$role", inv.replace("/inventory_db", "/${domain}_db"))
                 }
             }

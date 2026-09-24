@@ -67,6 +67,7 @@ class GatewayRouteConfig(
         "inventory" to ("http://commerce:8085" to "/v3/api-docs/inventory"),
         "fulfillment" to ("http://commerce:8085" to "/v3/api-docs/fulfillment"),
         "warehouse" to ("http://commerce:8085" to "/v3/api-docs/warehouse"),
+        "seller" to ("http://commerce:8085" to "/v3/api-docs/seller"),
         "gifticon" to ("http://sideapp:8095" to "/v3/api-docs/gifticon"),
         "recommendation" to ("http://engagement:8091" to "/v3/api-docs/recommendation"),
         "member" to ("http://account:8093" to "/v3/api-docs/member"),
@@ -152,6 +153,36 @@ class GatewayRouteConfig(
                 r.path("/api/v1/admin/orders/**")
                     .filters { f ->
                         f.filter(authFilter.apply(adminConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(COMMERCE_URI)
+            }
+            // === ADR-0099 판매자 (commerce 폴드) ===
+            // 게이트웨이는 역할까지만 본다. "ACTIVE 판매자 행인가"는 서비스가 매 요청 X-User-Id 로 다시 본다 —
+            // 정지는 토큰 만료를 기다리지 않고 바로 막혀야 한다.
+            .route("seller-admin") { r ->
+                r.path("/api/v1/admin/sellers", "/api/v1/admin/sellers/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(adminConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(COMMERCE_URI)
+            }
+            // 입점 신청 — 로그인 회원 누구나(1인 1판매자는 서비스가 본다)
+            .route("seller-apply") { r ->
+                r.path("/api/v1/sellers/apply")
+                    .filters { f ->
+                        f.filter(authFilter.apply(userConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(COMMERCE_URI)
+            }
+            // 판매자 포털 API — ROLE_SELLER. 필터는 ROLE_ADMIN 을 모든 역할의 상위로 통과시키지만
+            // 판매자 행이 없는 어드민은 서비스가 403 으로 막는다.
+            .route("seller-portal") { r ->
+                r.path("/api/v1/seller/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(sellerConfig()))
                             .stripPrefix(0)
                     }
                     .uri(COMMERCE_URI)

@@ -55,6 +55,25 @@ ssh opc@<OCI_IP> "for t in ~/images/*.tar; do sudo k3s ctr images import \$t; do
 # 옵션 2: 외부 레지스트리 (OCIR / Docker Hub) push → k3s 가 pull
 ```
 
+## 앱 Secret (적용 전 1회)
+
+레포가 공개라 키는 매니페스트에 없다. 아래 Secret 이 없으면 해당 파드가 `CreateContainerConfigError` 로
+뜨지 않는다 — 약한 기본값으로 조용히 뜨는 경로를 두지 않았다.
+
+| Secret | 키 | 쓰는 파드 | 만드는 법 |
+|---|---|---|---|
+| `auth-subject-hash` | `key` | auth | `k8s/base/auth/deployment.yaml` 주석 |
+| `seller-account-enc` | `key` | commerce | 아래 |
+
+```bash
+# 판매자 정산 계좌 AES-256-GCM 키 (ADR-0099). hex 64자.
+kubectl -n commerce create secret generic seller-account-enc \
+    --from-literal=key="$(openssl rand -hex 32)"
+```
+
+**`seller-account-enc` 를 잃으면 저장된 판매자 계좌를 풀 수 없다** — 만든 직후 값을 백업한다
+(`AUTH_SUBJECT_HASH_KEY` 와 같은 취급). 교체 절차는 `seller/CLAUDE.md`.
+
 ## 적용 절차
 
 **권장 경로: Argo CD 가 자동 sync** — `k8s/argocd/install.sh` 가 Application CRD 의

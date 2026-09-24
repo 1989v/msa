@@ -86,6 +86,24 @@ spring:
       hikari:
         maximum-pool-size: 3
         minimum-idle: 1
+    # ADR-0099 — seller 도메인 전용 datasource(seller_db). 인스턴스는 order 와 같고 스키마만 분리한다.
+    # 풀 크기 키는 hikari. 하위가 아니라 여기 바로 둔다 — DataSourceBuilder 가 만든 HikariDataSource 에
+    # 직접 바인딩되므로 hikari. 하위 키는 적용되지 않는다(컨텍스트 로드 spec 이 실제 값 3 을 확인).
+    seller:
+      master:
+        jdbc-url: jdbc:mysql://${SELLER_DB_MASTER:localhost:3326}/seller_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        username: ${SELLER_MYSQL_USER:seller_user}
+        password: ${SELLER_MYSQL_PASSWORD:seller_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        maximum-pool-size: 3
+        minimum-idle: 1
+      replica:
+        jdbc-url: jdbc:mysql://${SELLER_DB_REPLICA:localhost:3327}/seller_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        username: ${SELLER_MYSQL_USER:seller_user}
+        password: ${SELLER_MYSQL_PASSWORD:seller_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        maximum-pool-size: 3
+        minimum-idle: 1
     # ADR-0093 — product 도메인 전용 datasource(카탈로그 SSOT, 스키마 격리).
     product:
       master:
@@ -198,6 +216,16 @@ payment:
 outbox:
   polling:
     enabled: ${OUTBOX_POLLING_ENABLED:true}
+
+# ADR-0099 — 판매자 도메인.
+seller:
+  flyway:
+    enabled: true
+  account:
+    # 정산 계좌 AES-256-GCM 키(hex 64자). **기본값을 두지 않는다** — 없으면 commerce 가 기동하지 않는다.
+    # 값은 Secret `seller-account-enc` 에서 온다(seller/CLAUDE.md). 키를 잃으면 저장된 계좌를 못 푼다 — 백업 대상.
+    enc-key: ${SELLER_ACCOUNT_ENC_KEY}
+    key-version: 1
 
 inventory:
   reservation:

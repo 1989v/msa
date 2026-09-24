@@ -21,3 +21,15 @@ questions:
     phase: post-impl
     status: open
     question: quant LiveOrderController 도 /api/v1/orders 사용 — 게이트웨이는 commerce 로만 보냄(이름 충돌)
+  - id: Q6
+    phase: post-impl
+    status: open
+    question: 기존 도메인(inventory·order·warehouse·fulfillment)의 hikari.maximum-pool-size 가 적용되지 않고 런타임 10 — DataSourceBuilder 바인딩 구조 결함(기존). 메모리 예산(Q2) 영향. seller 는 3 적용됨
+  - id: Q7
+    phase: post-impl
+    status: open
+    question: 게이트웨이 hasRequiredRole 이 ROLE_ADMIN 을 모든 역할 상위로 통과 — /api/v1/seller/** 는 게이트웨이에서 ROLE_SELLER 전용이 불가, 판매자 행 없는 어드민은 서비스가 403
+  - id: Q8
+    phase: post-impl
+    status: open
+    question: 반려 판매자 파기 시 상호(businessName)는 이력용으로 남김 — 개인사업자 상호의 개인정보 여부 확인

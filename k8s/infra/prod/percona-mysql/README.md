@@ -92,6 +92,7 @@ kubectl -n commerce create secret generic commerce-app-db-secrets \
     --from-literal=GAME_PASSWORD='...' \
     --from-literal=EXPERIMENT_PASSWORD='...' \
     --from-literal=ADS_PASSWORD='...' \
+    --from-literal=SELLER_PASSWORD='...' \
     --dry-run=client -o yaml \
   | kubeseal --format=yaml \
   > k8s/infra/prod/sealed-secrets/commerce-app-db-secrets-sealed.yaml
@@ -113,6 +114,7 @@ kubectl -n commerce create secret generic commerce-app-db-secrets \
 | `GAME_PASSWORD` | `game_db` | `game_user` | code-dictionary (ADR-0059 폴드) |
 | `EXPERIMENT_PASSWORD` | `experiment_db` | `commerce` | experiment |
 | `ADS_PASSWORD` | `ads_db` | `ads_user` | engagement (ADR-0098 폴드) |
+| `SELLER_PASSWORD` | `seller_db` | `seller_user` | commerce (ADR-0099 폴드) |
 
 새 서비스를 추가할 때는 ① `init.sql` 의 DB ② `users.txt` 의
 `db:user:ENV` ③ 이 Secret 키 ④ overlay 의 `db-password-*.yaml` 4곳을

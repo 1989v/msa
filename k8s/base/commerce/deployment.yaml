@@ -29,6 +29,20 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "kubernetes"
+            # 판매자 정산 계좌 AES-256-GCM 키 (ADR-0099).
+            #
+            # optional: false — 없으면 파드가 뜨지 않는다. 설정 파일에도 기본값이 없어
+            # 평문 저장이나 약한 기본 키로 조용히 뜨는 경로가 없다.
+            #
+            # 이 레포는 공개라 키를 매니페스트에 두지 않는다:
+            #   kubectl -n commerce create secret generic seller-account-enc \
+            #     --from-literal=key="$(openssl rand -hex 32)"
+            #
+            # **키를 잃으면 저장된 판매자 계좌를 풀 수 없다** — AUTH_SUBJECT_HASH_KEY 와 같은 백업 대상.
+            # 교체 절차는 seller/CLAUDE.md 참조.
+            - name: SELLER_ACCOUNT_ENC_KEY
+              valueFrom:
+                secretKeyRef: { name: seller-account-enc, key: key }
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness

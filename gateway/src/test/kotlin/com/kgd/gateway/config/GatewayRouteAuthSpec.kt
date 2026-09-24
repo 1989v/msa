@@ -40,6 +40,7 @@ class GatewayRouteAuthSpec(
 
     val userToken = jwtUtil.generateAccessToken("7", listOf("ROLE_USER"))
     val adminToken = jwtUtil.generateAccessToken("1", listOf("ROLE_ADMIN"))
+    val sellerToken = jwtUtil.generateAccessToken("8", listOf("ROLE_USER", "ROLE_SELLER"))
 
     fun status(method: HttpMethod, path: String, token: String? = null): Int =
         client.method(method).uri(path)
@@ -80,6 +81,32 @@ class GatewayRouteAuthSpec(
         }
         Then("ROLE_USER 는 403") {
             status(HttpMethod.GET, "/api/v1/admin/orders/stats/today", userToken) shouldBe 403
+        }
+    }
+
+    Given("입점 신청 /api/v1/sellers/apply (ROLE_USER)") {
+        Then("토큰이 없으면 401") {
+            status(HttpMethod.POST, "/api/v1/sellers/apply") shouldBe 401
+        }
+    }
+
+    Given("판매자 포털 /api/v1/seller/** (ROLE_SELLER)") {
+        Then("토큰이 없으면 401") {
+            status(HttpMethod.GET, "/api/v1/seller/me") shouldBe 401
+        }
+        Then("ROLE_USER 는 403") {
+            status(HttpMethod.GET, "/api/v1/seller/me", userToken) shouldBe 403
+        }
+    }
+
+    Given("판매자 관리 /api/v1/admin/sellers/** (ROLE_ADMIN)") {
+        Then("토큰이 없으면 401") {
+            status(HttpMethod.GET, "/api/v1/admin/sellers") shouldBe 401
+            status(HttpMethod.POST, "/api/v1/admin/sellers/2/approve") shouldBe 401
+        }
+        Then("ROLE_USER·ROLE_SELLER 는 403") {
+            status(HttpMethod.GET, "/api/v1/admin/sellers", userToken) shouldBe 403
+            status(HttpMethod.POST, "/api/v1/admin/sellers/2/approve", sellerToken) shouldBe 403
         }
     }
 

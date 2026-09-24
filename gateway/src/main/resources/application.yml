@@ -249,6 +249,8 @@ springdoc:
         url: /api/docs/specs/fulfillment
       - name: warehouse
         url: /api/docs/specs/warehouse
+      - name: seller
+        url: /api/docs/specs/seller
       - name: recommendation
         url: /api/docs/specs/recommendation
       - name: member
