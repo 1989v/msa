@@ -366,7 +366,7 @@ images:
     newTag: 24c3f4a
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
-    newTag: 24c3f4a
+    newTag: 6f6609a
   - name: commerce/content
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/content
     newTag: 24c3f4a
@@ -375,7 +375,7 @@ images:
     newTag: 24c3f4a
   - name: commerce/gateway
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gateway
-    newTag: 24c3f4a
+    newTag: 6f6609a
   - name: commerce/gifticon-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon-fe
     newTag: 6a1889c
