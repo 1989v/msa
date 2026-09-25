@@ -959,7 +959,7 @@ concepts:
     synonyms: ["lease", "lease-based leadership"]
     code:
       - { path: common/src/main/kotlin/com/kgd/common/messaging/outbox/OutboxEntity.kt, symbol: "var leaseUntil: LocalDateTime? = null,", note: "릴레이가 집은 아웃박스 행에 리스 기한을 두고, 전송 중 죽으면 기한 뒤 다른 릴레이가 다시 집는다" }
-      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/idempotency/model/IdempotencyKey.kt, symbol: "fun begin(userId: String, key: String, now: Instant, lease: Duration = LEASE): IdempotencyKey {", note: "처리 중인 멱등 키에 리스를 걸어 앞 요청이 죽으면 기한 뒤 이어받게 한다" }
+      - { path: order/domain/src/main/kotlin/com/kgd/order/domain/idempotency/model/IdempotencyKey.kt, symbol: "fun begin(userId: String, key: String, now: Instant, requestHash: String, lease: Duration = LEASE): IdempotencyKey {", note: "처리 중인 멱등 키에 리스를 걸어 앞 요청이 죽으면 기한 뒤 이어받게 한다" }
     uses: [dist-physical-clock-sync]
   - id: distributed-lock
     kind: MECHANISM

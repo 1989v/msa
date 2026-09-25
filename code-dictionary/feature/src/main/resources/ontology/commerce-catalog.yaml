@@ -395,7 +395,7 @@ concepts:
     level: BEGINNER
     description: "판매 상태 · 카테고리 · 판매자 조건으로 거르고 최신 · 가격 · 인기 순으로 정렬해 페이지로 나눈다"
     code:
-      - { path: product/feature/src/main/kotlin/com/kgd/product/infrastructure/persistence/product/repository/ProductQueryRepository.kt, symbol: "fun findAllByStatus(", note: "상태 · 판매자 조건 목록" }
+      - { path: product/feature/src/main/kotlin/com/kgd/product/infrastructure/persistence/product/repository/ProductQueryRepository.kt, symbol: "fun findAll(status: ProductStatus?, sellerId: Long?, pageable: Pageable)", note: "상태 · 판매자 조건 목록(정렬은 pageable)" }
     uses: [cat-faceted-filter, querydsl]
   - id: cat-faceted-filter
     kind: MECHANISM
