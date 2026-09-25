@@ -405,7 +405,7 @@ images:
     newTag: 76c1c26
   - name: commerce/search-batch
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-batch
-    newTag: 24c3f4a
+    newTag: 46caa71
   - name: commerce/search-consumer
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-consumer
     newTag: 24c3f4a
