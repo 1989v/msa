@@ -1,103 +1,127 @@
 questions:
   - id: Q1
     phase: post-impl
-    status: open
-    question: 토스페이먼츠 어댑터를 oci-arm 운영에서 켤 것인가 — commerce 상시 파드 egress 금지(ADR-0031/0070)와 충돌. 켜려면 egress 예외 ADR + NetworkPolicy + ExternalApiProvider 쿼터
+    status: closed
+    question: "토스페이먼츠 어댑터를 oci-arm 운영에서 켤 것인가 — commerce 상시 파드 egress 금지(ADR-0031/0070)와 충돌. 켜려면 egress 예외 ADR + NetworkPolicy + ExternalApiProvider 쿼터"
     default: 어댑터·테스트(MockWebServer)만 두고 운영은 모의 PG
+    answer: "운영은 모의 PG 유지(egress 금지 ADR-0031/0070) — 토스 어댑터·계약만 바로잡음(Q13). key-decisions Q1·Q13"
   - id: Q2
     phase: pre-impl
     status: closed
-    question: 새 도메인 4개(payment·seller·promotion·settlement)의 전용 DB 가 commerce 1200Mi 한도 안에 들어가나
-    answer: Hikari 풀을 도메인당 max 3 로 두고, 단계마다 배포 후 컨테이너 메모리 실측. 넘으면 한도 조정이 아니라 풀·스레드 축소(무료 티어 제약)
+    question: "새 도메인 4개(payment·seller·promotion·settlement)의 전용 DB 가 commerce 1200Mi 한도 안에 들어가나"
+    answer: "Hikari 풀을 도메인당 max 3 로 두고, 단계마다 배포 후 컨테이너 메모리 실측. 넘으면 한도 조정이 아니라 풀·스레드 축소(무료 티어 제약)"
   - id: Q3
     phase: post-impl
-    status: open
-    question: ProductExceptionHandler·OrderExceptionHandler 가 범위 없는 HIGHEST_PRECEDENCE 전역 advice — commerce 전 컨트롤러의 BusinessException 을 서로 가로챈다(기존 결함, TG2 는 양쪽에 401/403 매핑만)
+    status: closed
+    question: "ProductExceptionHandler·OrderExceptionHandler 가 범위 없는 HIGHEST_PRECEDENCE 전역 advice — commerce 전 컨트롤러의 BusinessException 을 서로 가로챈다(기존 결함, TG2 는 양쪽에 401/403 매핑만)"
+    answer: "예외 처리기를 basePackages 로 범위 한정 (W1)"
   - id: Q4
     phase: post-impl
-    status: open
-    question: admin FE 가 부르는 DELETE /api/v1/products/{id} · PATCH /api/v1/orders/{id}/status 백엔드 부재(기존 결함)
+    status: closed
+    question: "admin FE 가 부르는 DELETE /api/v1/products/{id} · PATCH /api/v1/orders/{id}/status 백엔드 부재(기존 결함)"
+    answer: "상품 DELETE = 어드민 판매 중지(INACTIVE), 주문 상태 PATCH 는 FE 호출 제거 (W1)"
   - id: Q5
     phase: post-impl
-    status: open
-    question: quant LiveOrderController 도 /api/v1/orders 사용 — 게이트웨이는 commerce 로만 보냄(이름 충돌)
+    status: closed
+    question: "quant LiveOrderController 도 /api/v1/orders 사용 — 게이트웨이는 commerce 로만 보냄(이름 충돌)"
+    answer: "quant 경로를 /api/v1/quant/orders 로 이동, 무인증 /api/v1/quant/** 를 assets 로 좁힘 — 운영 401 확인 (W4)"
   - id: Q6
     phase: post-impl
-    status: open
-    question: 기존 도메인(inventory·order·warehouse·fulfillment)의 hikari.maximum-pool-size 가 적용되지 않고 런타임 10 — DataSourceBuilder 바인딩 구조 결함(기존). 메모리 예산(Q2) 영향. seller 는 3 적용됨
+    status: closed
+    question: "기존 도메인(inventory·order·warehouse·fulfillment)의 hikari.maximum-pool-size 가 적용되지 않고 런타임 10 — DataSourceBuilder 바인딩 구조 결함(기존). 메모리 예산(Q2) 영향. seller 는 3 적용됨"
+    answer: "Hikari 풀 키를 master/replica 바로 아래로, 전 도메인 3 — commerce 947MiB → 651MiB (W4)"
   - id: Q7
     phase: post-impl
-    status: open
-    question: 게이트웨이 hasRequiredRole 이 ROLE_ADMIN 을 모든 역할 상위로 통과 — /api/v1/seller/** 는 게이트웨이에서 ROLE_SELLER 전용이 불가, 판매자 행 없는 어드민은 서비스가 403
+    status: closed
+    question: "게이트웨이 hasRequiredRole 이 ROLE_ADMIN 을 모든 역할 상위로 통과 — /api/v1/seller/** 는 게이트웨이에서 ROLE_SELLER 전용이 불가, 판매자 행 없는 어드민은 서비스가 403"
+    answer: "유지(전역 규약) — 판매자 포털은 서비스가 판매자 행으로 판정, 문서화"
   - id: Q8
     phase: post-impl
-    status: open
-    question: 반려 판매자 파기 시 상호(businessName)는 이력용으로 남김 — 개인사업자 상호의 개인정보 여부 확인
+    status: closed
+    question: "반려 판매자 파기 시 상호(businessName)는 이력용으로 남김 — 개인사업자 상호의 개인정보 여부 확인"
+    answer: "반려 판매자 상호까지 파기(`[파기]`), 이력은 id·상태·사유만 (W4)"
   - id: Q9
     phase: post-impl
-    status: open
-    question: auth 가 이벤트 시각을 저장하지 않아 재시도로 늦게 온 approved 가 suspended 뒤에 ROLE_SELLER 를 다시 붙일 수 있다 — 쓰기 권한은 product ACTIVE 행이 막으므로 토큰에 역할만 남음. 필요 시 회원별 마지막 반영 시각
+    status: closed
+    question: "auth 가 이벤트 시각을 저장하지 않아 재시도로 늦게 온 approved 가 suspended 뒤에 ROLE_SELLER 를 다시 붙일 수 있다 — 쓰기 권한은 product ACTIVE 행이 막으므로 토큰에 역할만 남음. 필요 시 회원별 마지막 반영 시각"
+    answer: "auth 회원별 마지막 반영 시각으로 늦은 이벤트를 버림 (W4)"
   - id: Q10
     phase: post-impl
-    status: open
-    question: ACTIVE 판매자 행이 있는 어드민의 상품 등록은 그 판매자 소유 — 어드민은 항상 플랫폼 1 로 할지
+    status: closed
+    question: "ACTIVE 판매자 행이 있는 어드민의 상품 등록은 그 판매자 소유 — 어드민은 항상 플랫폼 1 로 할지"
+    answer: "어드민 상품 등록은 항상 플랫폼 판매자 1 (W1)"
   - id: Q11
     phase: post-impl
-    status: open
-    question: 주문내역 `.shop-badge-completed` 도 헤리티지 라이트에서 --ko-accent-secondary 라 1.46:1 추정(기존) — P4 주문 상태 인장 개편 때 같이
+    status: closed
+    question: "주문내역 `.shop-badge-completed` 도 헤리티지 라이트에서 --ko-accent-secondary 라 1.46:1 추정(기존) — P4 주문 상태 인장 개편 때 같이"
+    answer: "TG12 에서 수정(라이트 8.24:1)"
   - id: Q12
     phase: post-impl
-    status: open
-    question: 상품 목록 API 는 ACTIVE 만 — 판매 중지된 내 상품이 판매자 화면에 안 보임. 판매자 전용 전체 상태 목록 필요 여부 · ProductQueryRepository 가 pageable 정렬 미적용(기존)
+    status: closed
+    question: "상품 목록 API 는 ACTIVE 만 — 판매 중지된 내 상품이 판매자 화면에 안 보임. 판매자 전용 전체 상태 목록 필요 여부 · ProductQueryRepository 가 pageable 정렬 미적용(기존)"
+    answer: "판매자 전용 전체 상태 목록 + pageable 정렬 (W1)"
   - id: Q13
     phase: post-impl
-    status: open
-    question: 토스는 confirm 에서 자동 매입 — 사가의 AUTHORIZED→CAPTURED 계약과 PG 실제 상태가 어긋남. 토스 웹훅은 HMAC 이 없고 임의 헤더를 못 붙여 공유 비밀 헤더 방식은 프록시 필요. Q1(토스 운영 활성화)과 묶어 결정
+    status: closed
+    question: "토스는 confirm 에서 자동 매입 — 사가의 AUTHORIZED→CAPTURED 계약과 PG 실제 상태가 어긋남. 토스 웹훅은 HMAC 이 없고 임의 헤더를 못 붙여 공유 비밀 헤더 방식은 프록시 필요. Q1(토스 운영 활성화)과 묶어 결정"
+    answer: "토스 승인 확인 = 매입(authorized→captured 연속 발행, 사가 무변경), 웹훅은 재조회 신호만 — 운영 웹훅 404 (W3)"
   - id: Q14
     phase: post-impl
-    status: open
-    question: 대사 날짜 경계 — KST 자정 근처 매입은 결제 행과 모의 PG 원장이 ms 차로 다른 날이 되어 가짜 불일치 가능 · mock_pg_transaction 이 payment_db 에 있음(모의 PG 원장)
+    status: closed
+    question: "대사 날짜 경계 — KST 자정 근처 매입은 결제 행과 모의 PG 원장이 ms 차로 다른 날이 되어 가짜 불일치 가능 · mock_pg_transaction 이 payment_db 에 있음(모의 PG 원장)"
+    answer: "매입 시각 한 값을 결제 행과 모의 PG 원장에 공유, KST 기준 (W3)"
   - id: Q15
     phase: post-impl
-    status: open
-    question: 장바구니·주문서가 판매자를 "판매자 7" 로 표시 — 상호를 seller 이벤트·order 읽기 모델에 싣을지. 판매 불가 품목이 있으면 주문서 전체 422(부분 생성 안 함). 헤더 "포털 홈" 링크 라이트 4.23:1(기존)
+    status: closed
+    question: "장바구니·주문서가 판매자를 \"판매자 7\" 로 표시 — 상호를 seller 이벤트·order 읽기 모델에 싣을지. 판매 불가 품목이 있으면 주문서 전체 422(부분 생성 안 함). 헤더 \"포털 홈\" 링크 라이트 4.23:1(기존)"
+    answer: "상호를 seller 이벤트·order 읽기 모델에 싣고 표시(운영 seller_view 2 = ops-check-shop), 판매 불가는 전체 422 유지, 포털 홈 대비 8.83:1 (W2)"
   - id: Q16
     phase: post-impl
-    status: open
-    question: commerce 호스트 전체의 @EnableKafka 가 inventory KafkaConfig 에 있다(app 모듈 컴파일 클래스패스에 spring-kafka 없음). CommerceApplication 으로 옮길지 · 테스트의 spring.kafka.listener.auto-startup=false 가 커스텀 팩토리에 안 먹음
+    status: closed
+    question: "commerce 호스트 전체의 @EnableKafka 가 inventory KafkaConfig 에 있다(app 모듈 컴파일 클래스패스에 spring-kafka 없음). CommerceApplication 으로 옮길지 · 테스트의 spring.kafka.listener.auto-startup=false 가 커스텀 팩토리에 안 먹음"
+    answer: "@EnableKafka 를 CommerceApplication 으로, 테스트 auto-startup 은 팩토리에 적용 (W1)"
   - id: Q17
     phase: post-impl
-    status: open
-    question: 이행 라인은 productId 로 식별 — 같은 주문에 같은 상품 라인 둘이면 orderItemId 필요 · release 뒤 늦게 온 reserve 재발행은 새로 예약(30분 만료로 정리) · InventoryMetricsPort.recordOrderCancellationLatency 호출부 소멸
+    status: closed
+    question: "이행 라인은 productId 로 식별 — 같은 주문에 같은 상품 라인 둘이면 orderItemId 필요 · release 뒤 늦게 온 reserve 재발행은 새로 예약(30분 만료로 정리) · InventoryMetricsPort.recordOrderCancellationLatency 호출부 소멸"
+    answer: "이행 라인 orderItemId 식별, release 뒤 늦은 reserve 거절, 안 쓰는 메트릭 메서드 삭제 (W2)"
   - id: Q18
     phase: post-impl
-    status: open
-    question: 사가 표에 COMPENSATING→STUCK·STUCK→COMPENSATING 추가(보상 재시도 소진) — SR-2 반영 여부 · 결제 대기 3건 상한은 잠금 없는 카운트(동시 요청 시 4건 가능) · 같은 Idempotency-Key 에 다른 본문이면 저장 응답 재생(본문 대조 없음) · 없는 주문서 404 · Strimzi 토픽 목록 갱신 필요
+    status: closed
+    question: "사가 표에 COMPENSATING→STUCK·STUCK→COMPENSATING 추가(보상 재시도 소진) — SR-2 반영 여부 · 결제 대기 3건 상한은 잠금 없는 카운트(동시 요청 시 4건 가능) · 같은 Idempotency-Key 에 다른 본문이면 저장 응답 재생(본문 대조 없음) · 없는 주문서 404 · Strimzi 토픽 목록 갱신 필요"
+    answer: "스펙 표 COMPENSATING↔STUCK 반영, 결제 대기 상한은 회원 행 잠금, 같은 키 다른 본문 422(본문 해시) (W1)"
   - id: Q19
     phase: post-impl
-    status: open
-    question: 운영 스키마에 Hibernate 가 만든 MySQL ENUM 컬럼 13개(order·fulfillment 는 핫픽스로 VARCHAR, 나머지 product·member·auth·experiment·gifticon·place·chatbot) — 상태를 늘리면 운영에서만 INSERT 가 잘린다. 운영 스키마 ↔ Flyway 기준선 대조 게이트 필요
+    status: closed
+    question: "운영 스키마에 Hibernate 가 만든 MySQL ENUM 컬럼 13개(order·fulfillment 는 핫픽스로 VARCHAR, 나머지 product·member·auth·experiment·gifticon·place·chatbot) — 상태를 늘리면 운영에서만 INSERT 가 잘린다. 운영 스키마 ↔ Flyway 기준선 대조 게이트 필요"
+    answer: "7개 모듈 VARCHAR 전환 + scripts/ops/schema-enum-check.sh — 운영 ENUM 11 → 0 (W4)"
   - id: Q20
     phase: post-impl
-    status: open
-    question: /api/inventories · /api/warehouses · /api/fulfillments 가 ROLE_SELLER 만 보고 소유를 재판정하지 않는다 — 어느 판매자든 아무 상품 재고·창고·이행을 조작 가능(판매자가 생긴 지금 실제 위험)
+    status: closed
+    question: "/api/inventories · /api/warehouses · /api/fulfillments 가 ROLE_SELLER 만 보고 소유를 재판정하지 않는다 — 어느 판매자든 아무 상품 재고·창고·이행을 조작 가능(판매자가 생긴 지금 실제 위험)"
+    answer: "재고·이행은 상품 판매자 또는 어드민, 창고는 어드민 전용 — 운영 소유 검사 403/200 확인 (W1)"
   - id: Q21
     phase: post-impl
-    status: open
-    question: 배송비 정산은 판매자 마지막 ACTIVE 라인 확정 시 — 경계에서 line:null(CLAIM_CLOSED) 이벤트가 생긴다. 「첫 확정 라인」으로 바꾸면 경계 건이 사라짐 · 클레임은 판매자당 1건, 주문당 진행 1건(나머지 QUEUED) · 클레임 STUCK 재개 API 없음(TG15)
+    status: closed
+    question: "배송비 정산은 판매자 마지막 ACTIVE 라인 확정 시 — 경계에서 line:null(CLAIM_CLOSED) 이벤트가 생긴다. 「첫 확정 라인」으로 바꾸면 경계 건이 사라짐 · 클레임은 판매자당 1건, 주문당 진행 1건(나머지 QUEUED) · 클레임 STUCK 재개 API 없음(TG15)"
+    answer: "배송비는 판매자 첫 확정 라인에 (W2)"
   - id: Q22
     phase: post-impl
-    status: open
-    question: settlement 는 발행 토픽이 없어 outbox 없음(SR-10 문구) · 역분개 진입점 API 없음 · 플랫폼 판매자 1 에도 모의 지급 · PG 입금 뒤 환불은 PG 미수금 음수 · 정산서 기간 표기보다 앞선 이월·지각 항목 포함
+    status: closed
+    question: "settlement 는 발행 토픽이 없어 outbox 없음(SR-10 문구) · 역분개 진입점 API 없음 · 플랫폼 판매자 1 에도 모의 지급 · PG 입금 뒤 환불은 PG 미수금 음수 · 정산서 기간 표기보다 앞선 이월·지각 항목 포함"
+    answer: "스펙 문구 정정, 역분개 어드민 API, 플랫폼 판매자 PLATFORM_RETAINED(지급 없음), 정산서 실제 포함 기간 표기 (W2)"
   - id: Q23
     phase: post-impl
-    status: open
-    question: 운영에 이미 쌓인 `-dlt` 토픽 레코드는 새 DLT 리스너가 안 본다 · Strimzi 에 `.DLT` 선언 여부(자동 생성 꺼진 환경 대비) · 이제 안 쓰는 JSON KafkaTemplate 4개 삭제 여부 · seller ops_issue 는 원천 없음 · 샘플링 0.1 에서 비샘플 traceId 전파 미검증 · 테스트 로그의 inventory_db 두 번째 Flyway ERROR 원인 미확인
+    status: closed
+    question: "운영에 이미 쌓인 `-dlt` 토픽 레코드는 새 DLT 리스너가 안 본다 · Strimzi 에 `.DLT` 선언 여부(자동 생성 꺼진 환경 대비) · 이제 안 쓰는 JSON KafkaTemplate 4개 삭제 여부 · seller ops_issue 는 원천 없음 · 샘플링 0.1 에서 비샘플 traceId 전파 미검증 · 테스트 로그의 inventory_db 두 번째 Flyway ERROR 원인 미확인"
+    answer: "JSON 템플릿 4 삭제·이중 Flyway 끔·runbook. 운영 옛 -dlt 1건(0원 PG 입금)은 원장 수정(46caa71) 뒤 재발행해 처리, 토픽 삭제 (2026-09-26)"
   - id: Q24
     phase: post-impl
     status: open
-    question: 금액 축소 단계(SR-13)는 다음 릴리스 몫 — 옛 컬럼 products.price · order_items.unit_price 삭제와 price_won · unit_price_won NOT NULL 전환. 지금은 확장 단계라 코드가 새 컬럼을 읽고 옛 컬럼에도 같은 값을 쓴다. 삭제 전 선행 — ① search:batch ProductDbReindexJobConfig 가 product_db 의 옛 price 컬럼을 SQL 로 직접 읽는다(price_won 으로 바꿔야 함) ② 롤백 기간에 옛 코드가 쓴 행은 price_won/unit_price_won 이 NULL 이라 백필 UPDATE 재실행 필요 ③ 두 마이그레이션의 소수부 가드(임시 테이블 CHECK)는 로컬 Docker 없이 Testcontainers 로 미검증
+    progress: "1단계 배포(V20260926_001 — 새 컬럼 NOT NULL·엔티티가 옛 컬럼 미매핑·옛 컬럼 NULL 허용). search-batch 46caa71 선행 확인. 남은 것은 2단계(옛 컬럼 DROP, 되돌릴 수 없음) — pending-migrations/*-02-*.sql"
+    question: "금액 축소 단계(SR-13)는 다음 릴리스 몫 — 옛 컬럼 products.price · order_items.unit_price 삭제와 price_won · unit_price_won NOT NULL 전환. 지금은 확장 단계라 코드가 새 컬럼을 읽고 옛 컬럼에도 같은 값을 쓴다. 삭제 전 선행 — ① search:batch ProductDbReindexJobConfig 가 product_db 의 옛 price 컬럼을 SQL 로 직접 읽는다(price_won 으로 바꿔야 함) ② 롤백 기간에 옛 코드가 쓴 행은 price_won/unit_price_won 이 NULL 이라 백필 UPDATE 재실행 필요 ③ 두 마이그레이션의 소수부 가드(임시 테이블 CHECK)는 로컬 Docker 없이 Testcontainers 로 미검증"
   - id: Q25
     phase: post-impl
-    status: open
-    question: Q3 부수 효과 — inventory·fulfillment·warehouse·deal 은 이제 공통 GlobalExceptionHandler 가 처리해 재고 REST INSUFFICIENT_STOCK 이 409→400, INVALID_FULFILLMENT_STATUS 는 매핑 없어 500(기존). 이행 조회는 라인 하나라도·쓰기는 전부 자기 상품 규칙(해석) · 없는 이행 id 404 로 존재 노출
+    status: closed
+    question: "Q3 부수 효과 — inventory·fulfillment·warehouse·deal 은 이제 공통 GlobalExceptionHandler 가 처리해 재고 REST INSUFFICIENT_STOCK 이 409→400, INVALID_FULFILLMENT_STATUS 는 매핑 없어 500(기존). 이행 조회는 라인 하나라도·쓰기는 전부 자기 상품 규칙(해석) · 없는 이행 id 404 로 존재 노출"
+    answer: "INSUFFICIENT_STOCK·INVALID_FULFILLMENT_STATUS 409 매핑 (W2)"
