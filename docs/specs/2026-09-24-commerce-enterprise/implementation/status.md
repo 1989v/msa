@@ -238,3 +238,8 @@
 - 1단계 `V20260926_001`(product_db·order_db): 엔티티가 옛 DECIMAL 을 매핑하지 않음, 새 컬럼 NOT NULL, 옛 컬럼 NULL 허용
   - OrderSheetIntegrationSpec 9/0(축소 2건 추가: 롤링 중 옛 파드 행 백필 → NOT NULL · 소수 원 행이면 DDL 전 중단) · TracingPropagation 4/0 · CommerceContextLoadSpec 13/0(ddl validate) · ProductJpaEntityTest 2/0
   - 회귀 주입: 축소 마이그레이션의 백필 UPDATE 제거 → failures=1, 복원 → 0
+- 1단계 운영 반영(`badecc8`, run 36165974476 success, commerce 1/1): product_db·order_db `flyway_schema_history` 20260926.001 success=1
+  - `products.price_won` NO / `price` YES · `order_items.unit_price_won` NO / `unit_price` YES (is_nullable)
+  - 새 행: 어드민 상품 98 등록 `price` NULL · `price_won` 4300 → 판매 중지(UPDATE) INACTIVE 200 / 주문 4 12초 사가 COMPLETED(FULFILLING), 라인 `unit_price` NULL · `unit_price_won` 1700
+  - commerce ERROR 로그 0, 메모리 583Mi(재기동 직후) / 1200Mi
+- 남은 것: 2단계(옛 컬럼 DROP) — 되돌릴 수 없는 마이그레이션이라 사용자 확인 후
