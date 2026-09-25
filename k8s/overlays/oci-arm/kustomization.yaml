@@ -366,7 +366,7 @@ images:
     newTag: 76c1c26
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
-    newTag: 46caa71
+    newTag: badecc8
   - name: commerce/content
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/content
     newTag: 76c1c26
