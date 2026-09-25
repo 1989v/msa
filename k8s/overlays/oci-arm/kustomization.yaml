@@ -366,7 +366,7 @@ images:
     newTag: e70a611
   - name: commerce/auth
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/auth
-    newTag: 76c1c26
+    newTag: ec1fdb0
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
     newTag: e70a611
