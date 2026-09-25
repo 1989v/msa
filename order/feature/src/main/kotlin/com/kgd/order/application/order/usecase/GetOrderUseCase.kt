@@ -21,9 +21,9 @@ data class OrderDetail(
     val status: String,
     /** FAILED 사유(또는 구매자 취소 BUYER_CANCELLED 는 사가 쪽). 성공 경로는 null */
     val failureReason: String?,
-    /** 사가 단계·상태 — 옛 흐름 주문은 사가가 없어 null */
-    val sagaStep: String?,
-    val sagaStatus: String?,
+    /** 사가 단계·상태 — 주문과 같은 트랜잭션에서 생겨 항상 있다 */
+    val sagaStep: String,
+    val sagaStatus: String,
     val itemsAmount: Long,
     val couponDiscount: Long,
     val pointAmount: Long,
@@ -56,13 +56,13 @@ data class OrderDetail(
     data class Shipping(val sellerId: Long, val fee: Long)
 
     companion object {
-        fun of(order: Order, saga: OrderSaga?, sellerNames: Map<Long, String> = emptyMap()) = OrderDetail(
+        fun of(order: Order, saga: OrderSaga, sellerNames: Map<Long, String> = emptyMap()) = OrderDetail(
             orderId = requireNotNull(order.id),
             userId = order.userId,
             status = order.status.name,
             failureReason = order.failureReason?.name,
-            sagaStep = saga?.step?.name,
-            sagaStatus = saga?.status?.name,
+            sagaStep = saga.step.name,
+            sagaStatus = saga.status.name,
             itemsAmount = order.itemsAmount,
             couponDiscount = order.couponDiscount,
             pointAmount = order.pointAmount,

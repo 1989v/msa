@@ -117,8 +117,8 @@ questions:
     answer: "JSON 템플릿 4 삭제·이중 Flyway 끔·runbook. 운영 옛 -dlt 1건(0원 PG 입금)은 원장 수정(46caa71) 뒤 재발행해 처리, 토픽 삭제 (2026-09-26)"
   - id: Q24
     phase: post-impl
-    status: open
-    progress: "1단계 배포(V20260926_001 — 새 컬럼 NOT NULL·엔티티가 옛 컬럼 미매핑·옛 컬럼 NULL 허용). search-batch 46caa71 선행 확인. 남은 것은 2단계(옛 컬럼 DROP, 되돌릴 수 없음) — pending-migrations/*-02-*.sql"
+    status: closed
+    answer: "1단계 V20260926_001(새 원 단위 컬럼 NOT NULL) → 2단계 V20260926_002(옛 price·unit_price DROP). 같은 배포에서 주문·라인 스냅샷 NOT NULL, 옛 예약 전환 코드·표식 테이블(inventory V9)·LEGACY_ABANDONED 제거 — 운영에 사가 이전 데이터 0건 확인 뒤 (2026-09-26)"
     question: "금액 축소 단계(SR-13)는 다음 릴리스 몫 — 옛 컬럼 products.price · order_items.unit_price 삭제와 price_won · unit_price_won NOT NULL 전환. 지금은 확장 단계라 코드가 새 컬럼을 읽고 옛 컬럼에도 같은 값을 쓴다. 삭제 전 선행 — ① search:batch ProductDbReindexJobConfig 가 product_db 의 옛 price 컬럼을 SQL 로 직접 읽는다(price_won 으로 바꿔야 함) ② 롤백 기간에 옛 코드가 쓴 행은 price_won/unit_price_won 이 NULL 이라 백필 UPDATE 재실행 필요 ③ 두 마이그레이션의 소수부 가드(임시 테이블 CHECK)는 로컬 Docker 없이 Testcontainers 로 미검증"
   - id: Q25
     phase: post-impl

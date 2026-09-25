@@ -32,8 +32,6 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.shouldBe
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.flywaydb.core.Flyway
-import org.flywaydb.core.api.FlywayException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.ApplicationContext
@@ -50,7 +48,7 @@ import javax.sql.DataSource
 import kotlin.reflect.KClass
 
 /**
- * 주문서 · 읽기 모델 · 금액 백필을 실제 MySQL 로 — **모든 도메인 Flyway + `ddl-auto=validate`** 로 띄워
+ * 주문서 · 읽기 모델을 실제 MySQL 로 — **모든 도메인 Flyway + `ddl-auto=validate`** 로 띄워
  * 새 order 마이그레이션과 엔티티가 맞는지까지 본다(운영과 같은 조합).
  *
  * 읽기 모델은 손으로 만든 JSON 이 아니라 **발행 도메인의 유스케이스가 남긴 아웃박스 행**을 릴레이와 같은 모양
@@ -122,76 +120,6 @@ class OrderSheetIntegrationSpec(
         }
 
         fun sheetRequest(json: String): CreateOrderSheetRequest = objectMapper.readValue(json, CreateOrderSheetRequest::class.java)
-
-        Given("금액 백필 마이그레이션 (DECIMAL → BIGINT, 확장)") {
-            fun flyway(db: String, target: String? = null) = Flyway.configure()
-                .dataSource(jdbcUrl(db), mysql.username, mysql.password)
-                .locations("classpath:orderdb/migration")
-                .apply { target?.let { target(it) } }
-                .load()
-
-            Then("정수 단가는 unit_price_won 으로 옮겨지고 옛 컬럼은 그대로") {
-                flyway("order_backfill_ok", target = "20260924.001").migrate()
-                val jdbc = jdbcOf("order_backfill_ok")
-                jdbc.update("INSERT INTO orders (id, user_id, status, created_at) VALUES (1, 'u', 'COMPLETED', NOW())")
-                jdbc.update("INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES (1, 10, 2, 12000.00), (1, 11, 1, 3500.00)")
-
-                flyway("order_backfill_ok").migrate()
-
-                jdbc.queryForList("SELECT unit_price, unit_price_won FROM order_items ORDER BY product_id").map {
-                    (it["unit_price"] as java.math.BigDecimal).toPlainString() to it["unit_price_won"]
-                } shouldBe listOf("12000.00" to 12_000L, "3500.00" to 3_500L)
-            }
-            Then("소수 원이 한 행이라도 있으면 컬럼을 만들기 전에 멈춘다 — 스키마는 그대로") {
-                flyway("order_backfill_fraction", target = "20260924.001").migrate()
-                val jdbc = jdbcOf("order_backfill_fraction")
-                jdbc.update("INSERT INTO orders (id, user_id, status, created_at) VALUES (1, 'u', 'COMPLETED', NOW())")
-                jdbc.update("INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES (1, 10, 1, 12000.00), (1, 11, 1, 100.50)")
-
-                shouldThrow<FlywayException> { flyway("order_backfill_fraction").migrate() }
-
-                jdbc.queryForObject(
-                    "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = 'order_backfill_fraction' " +
-                        "AND table_name = 'order_items' AND column_name = 'unit_price_won'",
-                    Long::class.java,
-                ) shouldBe 0L
-            }
-        }
-
-        Given("금액 축소 마이그레이션 (unit_price_won NOT NULL, 옛 컬럼 NULL 허용)") {
-            fun flyway(db: String, target: String? = null) = Flyway.configure()
-                .dataSource(jdbcUrl(db), mysql.username, mysql.password)
-                .locations("classpath:orderdb/migration")
-                .apply { target?.let { target(it) } }
-                .load()
-            fun nullable(db: String, column: String) = jdbcOf(db).queryForObject(
-                "SELECT is_nullable FROM information_schema.columns WHERE table_schema = ? AND table_name = 'order_items' AND column_name = ?",
-                String::class.java, db, column,
-            )
-
-            Then("롤링 배포 중 옛 파드가 unit_price_won 없이 쓴 행을 채우고 NOT NULL 로 바꾼다") {
-                flyway("order_contract_ok", target = "20260925.201").migrate()
-                val jdbc = jdbcOf("order_contract_ok")
-                jdbc.update("INSERT INTO orders (id, user_id, status, created_at) VALUES (1, 'u', 'CONFIRMED', NOW())")
-                jdbc.update("INSERT INTO order_items (order_id, product_id, quantity, unit_price, status) VALUES (1, 10, 1, 7000.00, 'ACTIVE')")
-
-                flyway("order_contract_ok").migrate()
-
-                jdbc.queryForObject("SELECT unit_price_won FROM order_items", Long::class.java) shouldBe 7_000L
-                nullable("order_contract_ok", "unit_price_won") shouldBe "NO"
-                nullable("order_contract_ok", "unit_price") shouldBe "YES"
-            }
-            Then("채울 수 없는 행(소수 원)이 있으면 DDL 전에 멈춘다 — 컬럼은 NULL 허용 그대로") {
-                flyway("order_contract_fraction", target = "20260925.201").migrate()
-                val jdbc = jdbcOf("order_contract_fraction")
-                jdbc.update("INSERT INTO orders (id, user_id, status, created_at) VALUES (1, 'u', 'CONFIRMED', NOW())")
-                jdbc.update("INSERT INTO order_items (order_id, product_id, quantity, unit_price, status) VALUES (1, 10, 1, 100.50, 'ACTIVE')")
-
-                shouldThrow<FlywayException> { flyway("order_contract_fraction").migrate() }
-
-                nullable("order_contract_fraction", "unit_price_won") shouldBe "YES"
-            }
-        }
 
         Given("읽기 모델(실제 발행 페이로드) → 주문서") {
             val admin = ProductRequester("1", setOf("ROLE_ADMIN"))
@@ -341,7 +269,7 @@ class OrderSheetIntegrationSpec(
                         conn.createStatement().use { st ->
                             listOf(
                                 "warehouse_db", "fulfillment_db", "order_db", "product_db", "deal_db", "seller_db", "payment_db",
-                                "promotion_db", "settlement_db", "order_backfill_ok", "order_backfill_fraction", "order_contract_ok", "order_contract_fraction",
+                                "promotion_db", "settlement_db",
                             ).forEach { st.execute("CREATE DATABASE IF NOT EXISTS $it") }
                         }
                     }

@@ -32,7 +32,6 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
-import org.flywaydb.core.Flyway
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.ApplicationContext
@@ -115,35 +114,6 @@ class OrderSagaIdempotencyIntegrationSpec(
         fun outbox(orderId: Long) = jdbc.queryForList(
             "SELECT event_type, payload, partition_key FROM outbox_event WHERE aggregate_id = ? ORDER BY id", orderId,
         )
-
-        Given("상태값 전환 마이그레이션 (SR-13)") {
-            Then("COMPLETED → CONFIRMED, PENDING → FAILED(LEGACY_ABANDONED), 나머지는 그대로 — 전환마다 이력 한 줄") {
-                fun flyway(target: String? = null) = Flyway.configure()
-                    .dataSource(jdbcUrl("order_status_migration"), mysql.username, mysql.password)
-                    .locations("classpath:orderdb/migration")
-                    .apply { target?.let { target(it) } }
-                    .load()
-                flyway(target = "20260924.004").migrate()
-                val legacy = jdbcOf("order_status_migration")
-                legacy.update(
-                    "INSERT INTO orders (id, user_id, status, created_at) VALUES " +
-                        "(1, 'u', 'COMPLETED', NOW()), (2, 'u', 'PENDING', NOW()), (3, 'u', 'CANCELLED', NOW())",
-                )
-
-                flyway().migrate()
-
-                legacy.queryForList("SELECT id, status, failure_reason FROM orders ORDER BY id").map {
-                    Triple(it["id"], it["status"], it["failure_reason"])
-                } shouldContainExactly listOf(
-                    Triple(1L, "CONFIRMED", null), Triple(2L, "FAILED", "LEGACY_ABANDONED"), Triple(3L, "CANCELLED", null),
-                )
-                legacy.queryForList("SELECT order_id, from_status, to_status, actor FROM order_status_history ORDER BY order_id").map {
-                    listOf(it["order_id"], it["from_status"], it["to_status"], it["actor"])
-                } shouldContainExactly listOf(
-                    listOf(1L, "COMPLETED", "CONFIRMED", "MIGRATION"), listOf(2L, "PENDING", "FAILED", "MIGRATION"),
-                )
-            }
-        }
 
         Given("Idempotency-Key (실제 유니크 제약)") {
             Then("완료 뒤 같은 키는 처음 응답 그대로 — 주문 1건, 다른 키로 같은 주문서는 422") {
@@ -308,7 +278,7 @@ class OrderSagaIdempotencyIntegrationSpec(
                         conn.createStatement().use { st ->
                             listOf(
                                 "warehouse_db", "fulfillment_db", "order_db", "product_db", "deal_db", "seller_db", "payment_db",
-                                "promotion_db", "settlement_db", "order_status_migration",
+                                "promotion_db", "settlement_db",
                             ).forEach { st.execute("CREATE DATABASE IF NOT EXISTS $it") }
                         }
                     }

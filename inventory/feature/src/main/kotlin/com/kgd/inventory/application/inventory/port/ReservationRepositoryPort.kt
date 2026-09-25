@@ -16,6 +16,5 @@ interface ReservationRepositoryPort {
     fun findActiveByOrderIdAndProductId(orderId: Long, productId: Long): Reservation?
 
     fun findAllExpired(): List<Reservation>
-    fun findAllActive(): List<Reservation>
     fun findAllByOrderId(orderId: Long): List<Reservation>
 }

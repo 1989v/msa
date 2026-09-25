@@ -1,7 +1,6 @@
 package com.kgd.commerce.saga
 
 import com.kgd.commerce.CommerceApplication
-import com.kgd.inventory.application.reservation.usecase.ConvertLegacyReservationsUseCase
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.annotation.EnabledCondition
 import io.kotest.core.annotation.EnabledIf
@@ -36,7 +35,7 @@ import javax.sql.DataSource
 import kotlin.reflect.KClass
 
 /**
- * 옛 코레오그래피 구독 은퇴 · 재고/이행 명령 · 옛 ACTIVE 예약 전환을 실제 MySQL(모든 도메인 Flyway + validate) +
+ * 옛 코레오그래피 구독 은퇴 · 재고/이행 명령을 실제 MySQL(모든 도메인 Flyway + validate) +
  * 실제 Kafka 로 본다.
  *
  * 은퇴 판정은 둘이다. ① 리스너 레지스트리 — 은퇴한 (컨슈머 그룹, 토픽) 쌍을 구독하는 컨테이너가 없다(빠른 판정).
@@ -157,34 +156,6 @@ class RetiredChoreographyCommandIntegrationSpec(
                 val insertFulfillment = "INSERT INTO fulfillment_order (order_id, warehouse_id, status, created_at) VALUES (990901, 1, 'PENDING', NOW(6))"
                 fulfillmentJdbc.update(insertFulfillment)
                 shouldThrow<DataIntegrityViolationException> { fulfillmentJdbc.update(insertFulfillment) }
-            }
-        }
-
-        Given("옛 흐름이 남긴 ACTIVE 예약") {
-            Then("전환을 두 번 돌려도 reserved_qty 는 한 번만 줄고 stock.confirmed 는 한 번 — 사가 예약은 그대로") {
-                val conversion = ctx.getBean(ConvertLegacyReservationsUseCase::class.java)
-                // 기동 때 이미 한 번 돌았다(빈 DB) — 표식을 지우고 옛 예약을 심어 다시 돌린다
-                inventoryJdbc.queryForObject("SELECT COUNT(*) FROM inventory_migration_marker", Long::class.java) shouldBe 1L
-                inventoryJdbc.update("DELETE FROM inventory_migration_marker")
-                seedInventory(7002L, 6, reserved = 4)
-                inventoryJdbc.update(
-                    "INSERT INTO reservation (order_id, product_id, warehouse_id, qty, status, expired_at, created_at) " +
-                        "VALUES (880001, 7002, 1, 4, 'ACTIVE', NOW(6) - INTERVAL 1 DAY, NOW(6) - INTERVAL 1 DAY)",
-                )
-                fun confirmedEvents() = inventoryJdbc.queryForObject(
-                    "SELECT COUNT(*) FROM outbox_event WHERE event_type = 'inventory.stock.confirmed' AND JSON_EXTRACT(payload, '$.productId') = 7002",
-                    Long::class.java,
-                )
-
-                conversion.convert() shouldBe 1
-                conversion.convert() shouldBe null
-
-                reserved(7002L) shouldBe 0
-                available(7002L) shouldBe 6
-                inventoryJdbc.queryForObject("SELECT status FROM reservation WHERE order_id = 880001", String::class.java) shouldBe "CONFIRMED"
-                confirmedEvents() shouldBe 1L
-                // 사가가 예약한 주문(답 원장에 RESERVE)은 ACTIVE 로 남는다
-                inventoryJdbc.queryForObject("SELECT status FROM reservation WHERE order_id = 770002", String::class.java) shouldBe "ACTIVE"
             }
         }
     }

@@ -117,7 +117,7 @@ class OrderPlacementService(
     }
 
     private companion object {
-        /** 주문 생성 시각(LocalDateTime) — 옛 흐름과 같은 JVM 기본 시간대. 대시보드 집계가 이 기준이다 */
+        /** 주문 생성 시각(LocalDateTime) — JVM 기본 시간대. 대시보드 집계가 이 기준이다 */
         val ZONE: ZoneId = ZoneId.systemDefault()
     }
 }

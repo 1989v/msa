@@ -206,8 +206,7 @@ export type OrderFailureReason =
   | 'PAYMENT_DECLINED'
   | 'HOLD_EXPIRED'
   | 'TIMEOUT'
-  | 'BUYER_CANCELLED'
-  | 'LEGACY_ABANDONED';
+  | 'BUYER_CANCELLED';
 
 export type SagaStep =
   | 'INVENTORY_RESERVE'
@@ -275,8 +274,8 @@ export interface OrderDetail {
   orderId: number;
   status: OrderStatus;
   failureReason: OrderFailureReason | null;
-  sagaStep: SagaStep | null;
-  sagaStatus: SagaStatus | null;
+  sagaStep: SagaStep;
+  sagaStatus: SagaStatus;
   itemsAmount: number;
   couponDiscount: number;
   pointAmount: number;

@@ -15,7 +15,7 @@ import java.time.ZoneId
 class Order private constructor(
     val id: Long?,
     val userId: String,
-    val orderSheetId: Long?,
+    val orderSheetId: Long,
     val userCouponId: Long?,
     val items: List<OrderItem>,
     val shippingLines: List<ShippingLine>,
@@ -199,7 +199,7 @@ class Order private constructor(
         fun restore(
             id: Long?,
             userId: String,
-            orderSheetId: Long?,
+            orderSheetId: Long,
             userCouponId: Long?,
             items: List<OrderItem>,
             shippingLines: List<ShippingLine>,

@@ -78,11 +78,6 @@ const FAILURE_COPY: Record<OrderFailureReason, FailureCopy> = {
     body: '결제 전에 취소한 주문입니다. 확보한 재고와 혜택은 되돌렸습니다.',
     action: 'shop',
   },
-  LEGACY_ABANDONED: {
-    title: '완료되지 않은 이전 주문입니다',
-    body: '이전 방식으로 접수되어 끝나지 않은 주문입니다. 결제는 청구되지 않았습니다.',
-    action: 'shop',
-  },
 };
 
 const UNKNOWN_FAILURE: FailureCopy = {

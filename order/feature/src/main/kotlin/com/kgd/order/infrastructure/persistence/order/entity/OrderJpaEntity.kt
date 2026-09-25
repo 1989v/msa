@@ -10,7 +10,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 
 /**
- * 주문. 금액 합계 컬럼은 라인에서 유도되는 값을 저장한 것이다(조회용). 옛 흐름 주문은 새 컬럼이 비어 있다(확장 단계라 NULL 허용).
+ * 주문. 금액 합계 컬럼은 라인에서 유도되는 값을 저장한 것이다(조회용).
  * `@Version` — 같은 주문을 두 트랜잭션이 동시에 바꾸면 늦은 쪽이 충돌로 되돌아간다.
  */
 @Entity
@@ -26,15 +26,15 @@ class OrderJpaEntity(
     val createdAt: LocalDateTime = LocalDateTime.now(),
     @OneToMany(mappedBy = "order", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     val items: MutableList<OrderItemJpaEntity> = mutableListOf(),
-    @Column(name = "order_sheet_id")
-    val orderSheetId: Long? = null,
+    @Column(name = "order_sheet_id", nullable = false)
+    val orderSheetId: Long,
     @Column(name = "user_coupon_id")
     val userCouponId: Long? = null,
-    @Column(name = "items_amount") val itemsAmount: Long? = null,
-    @Column(name = "coupon_discount") val couponDiscount: Long? = null,
-    @Column(name = "point_amount") val pointAmount: Long? = null,
-    @Column(name = "shipping_amount") val shippingAmount: Long? = null,
-    @Column(name = "payable_amount") val payableAmount: Long? = null,
+    @Column(name = "items_amount", nullable = false) val itemsAmount: Long,
+    @Column(name = "coupon_discount", nullable = false) val couponDiscount: Long,
+    @Column(name = "point_amount", nullable = false) val pointAmount: Long,
+    @Column(name = "shipping_amount", nullable = false) val shippingAmount: Long,
+    @Column(name = "payable_amount", nullable = false) val payableAmount: Long,
 ) {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -83,7 +83,7 @@ class OrderJpaEntity(
         userId = userId,
         orderSheetId = orderSheetId,
         userCouponId = userCouponId,
-        items = items.sortedBy { it.lineNo ?: 0 }.mapIndexed { index, item -> item.toDomain(index + 1) },
+        items = items.sortedBy { it.lineNo }.map { it.toDomain() },
         shippingLines = shippingLines.map { ShippingLine(it.sellerId, it.fee) },
         status = status,
         failureReason = failureReason,
@@ -129,7 +129,7 @@ class OrderShippingJpaEntity(
     @Column(nullable = false) val fee: Long,
 )
 
-/** 주문 상태 이력 — 추가만 한다. 옛 상태값(PENDING 등)도 담겨 있어 문자열로 둔다 */
+/** 주문 상태 이력 — 추가만 한다. 상태 enum 이 바뀌어도 지난 이력이 그대로 읽히도록 문자열로 둔다 */
 @Entity
 @Table(name = "order_status_history")
 class OrderStatusHistoryJpaEntity(

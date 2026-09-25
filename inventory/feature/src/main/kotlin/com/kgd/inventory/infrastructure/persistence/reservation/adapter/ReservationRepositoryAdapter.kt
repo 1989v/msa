@@ -37,9 +37,6 @@ class ReservationRepositoryAdapter(
         ).map { it.toDomain() }
     }
 
-    override fun findAllActive(): List<Reservation> =
-        jpaRepository.findAllByStatus(ReservationStatus.ACTIVE.name).map { it.toDomain() }
-
     override fun findAllByOrderId(orderId: Long): List<Reservation> {
         return jpaRepository.findAllByOrderId(orderId).map { it.toDomain() }
     }

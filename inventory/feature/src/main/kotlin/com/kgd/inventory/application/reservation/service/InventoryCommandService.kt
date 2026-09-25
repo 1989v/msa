@@ -86,11 +86,6 @@ class InventoryCommandService(
         val rows = reservations.findAllByOrderId(orderId)
         if (rows.isEmpty()) return fail(orderId, command, ReservationEvent.REASON_NOT_RESERVED)
 
-        // 옛 흐름 전환으로 이미 확정됐다
-        if (rows.all { it.getStatus() == ReservationStatus.CONFIRMED }) {
-            return answer(orderId, command, CONFIRMED, ReservationEvent.Confirmed(orderId, rows.map { it.toLine(it.qty) }))
-        }
-
         // 한 라인이라도 만료·해제됐거나 기한이 지났으면 확정하지 않는다 — 남은 ACTIVE 도 풀고 EXPIRED 로 답한다.
         // 결제된 주문의 재고가 다른 주문에 팔렸을 수 있어 부분 확정은 의미가 없다(사가가 VOID 로 되돌린다).
         val lapsed = rows.any { it.getStatus() == ReservationStatus.EXPIRED || it.getStatus() == ReservationStatus.CANCELLED } ||

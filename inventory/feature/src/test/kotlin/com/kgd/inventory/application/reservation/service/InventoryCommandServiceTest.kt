@@ -208,23 +208,4 @@ class InventoryCommandServiceTest : BehaviorSpec({
         }
     }
 
-    given("옛 흐름 ACTIVE 예약 전환") {
-        then("두 번 돌려도 수량은 한 번만 바뀌고, 사가가 예약한 주문은 건드리지 않는다") {
-            val h = harness()
-            h.seedLegacyActive(orderId = 500L, productId = 100L, qty = 3)
-            h.seedLegacyActive(orderId = 501L, productId = 200L, qty = 2)
-            h.consumer.onReserve(h.record(InventoryCommandConsumer.RESERVE, h.reserveJson(UUID.randomUUID(), 502L, 100L to 1)))
-
-            h.conversion.convert() shouldBe 2
-            h.conversion.convert() shouldBe null
-
-            h.inventory(100L).getReservedQty() shouldBe 1 // 사가 예약 1 만 남는다
-            h.inventory(100L).getAvailableQty() shouldBe 6
-            h.inventory(200L).getReservedQty() shouldBe 0
-            h.reservations.rows.filter { it.orderId in setOf(500L, 501L) }.map { it.getStatus() }.toSet() shouldBe
-                setOf(ReservationStatus.CONFIRMED)
-            h.reservations.rows.single { it.orderId == 502L }.getStatus() shouldBe ReservationStatus.ACTIVE
-            h.events("inventory.stock.confirmed") shouldHaveSize 2
-        }
-    }
 })

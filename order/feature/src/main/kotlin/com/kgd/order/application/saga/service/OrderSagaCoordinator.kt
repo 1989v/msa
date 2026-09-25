@@ -266,7 +266,7 @@ class OrderSagaCoordinator(
             sagas.save(saga)
             orders.save(order)
         }
-        return inTx { OrderDetail.of(requireNotNull(orders.findById(orderId)), sagas.findByOrderId(orderId)) }
+        return inTx { OrderDetail.of(requireNotNull(orders.findById(orderId)), requireNotNull(sagas.findByOrderId(orderId)) { "사가 없는 주문: orderId=$orderId" }) }
     }
 
     // ---- 전이 ----
@@ -370,7 +370,7 @@ class OrderSagaCoordinator(
 
     // ---- 트랜잭션 ----
 
-    /** 사가가 없는 주문(옛 흐름·다른 테스트가 낸 이벤트)은 건너뛴다 */
+    /** 사가가 없는 주문 키의 답(이 사가가 내지 않은 명령의 답)은 건너뛴다 */
     private fun withSaga(orderId: Long, block: (Order, OrderSaga, Instant) -> Unit) = inTx {
         val saga = sagas.findByOrderId(orderId)
         if (saga == null) {

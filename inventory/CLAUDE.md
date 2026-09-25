@@ -25,9 +25,9 @@ Outbox·멱등 원장은 common 바인딩(`InventoryOutboxRepository`·`Inventor
 `@Qualifier("inventoryOutboxPort")` 로 common `OutboxPort` 를 받는다.
 
 - `application/inventory` — 재고 유스케이스(예약·확정·해제·입고, 주문 단위 `ReserveOrderStock`·`ConfirmStockByOrder`·`ReleaseStockByOrder`) · 대사
-- `application/reservation` — `ProcessInventoryCommandUseCase`(`InventoryCommandService`) · 만료 · 옛 예약 전환
+- `application/reservation` — `ProcessInventoryCommandUseCase`(`InventoryCommandService`) · 만료
 - `infrastructure/messaging` — `InventoryCommandConsumer`(그룹 `inventory-service`) · `InventoryDltConsumer`
-- `infrastructure/persistence/command` — 답 원장 `inventory_command_answer` · 전환 표식 `inventory_migration_marker`
+- `infrastructure/persistence/command` — 답 원장 `inventory_command_answer`
 
 ## Key Rules
 
@@ -43,7 +43,6 @@ Outbox·멱등 원장은 common 바인딩(`InventoryOutboxRepository`·`Inventor
 - **재입고**(클레임·보류 만료 보상): 라인 지정 시 `restockKey` 필수(키별 멱등), 확정 수량을 넘으면 `failed(NOT_RESTOCKABLE)`.
 - **보류 만료**: 예약 기한 30분(`commerce.hold-minutes`), 1분 주기 스케줄러가 만료시키고 `inventory.reservation.expired`. 사가가 받아 처리한다.
 - **재고 동기화 이벤트**(product 가 소비): `inventory.stock.{reserved,released,confirmed,received,restocked}` — 예약·해제·확정·입고·재입고 전부.
-- **옛 흐름 예약 전환**: 기동 시 phase 0 `SmartLifecycle` 이 사가 밖에서 생긴 ACTIVE 예약을 한 번 확정한다(만료 스케줄러·리스너보다 먼저).
 - **은퇴한 구독**: `order.order.completed`·`cancelled`, `fulfillment.order.shipped`·`cancelled` 를 더는 받지 않는다 — 되살리지 않는다.
 - **`@EnableKafka` 는 호스트 `CommerceApplication` 에 있다**(여기 두면 이 도메인을 빼는 순간 호스트 전체 리스너가 꺼진다). 지우면 폴드된
   모든 도메인의 리스너가 조용히 사라진다(컴파일·기동은 통과). `RetiredChoreographyCommandIntegrationSpec` 이 잡는다.

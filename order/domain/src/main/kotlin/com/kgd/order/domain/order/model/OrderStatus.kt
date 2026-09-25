@@ -49,7 +49,4 @@ enum class OrderFailureReason {
     /** 피벗 전 기한(10분) 초과 */
     TIMEOUT,
     BUYER_CANCELLED,
-
-    /** 옛 흐름의 PENDING 주문 — 전환 마이그레이션이 붙인다 */
-    LEGACY_ABANDONED,
 }

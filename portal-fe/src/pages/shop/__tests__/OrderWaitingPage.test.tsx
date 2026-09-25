@@ -128,7 +128,7 @@ describe('결제 대기 화면', () => {
 
   it('실패 사유마다 제목과 다음 행동이 정해져 있다 — 재생성은 BENEFIT_UNAVAILABLE 뿐', () => {
     const reasons: OrderFailureReason[] = [
-      'INSUFFICIENT_STOCK', 'BENEFIT_UNAVAILABLE', 'PAYMENT_DECLINED', 'HOLD_EXPIRED', 'TIMEOUT', 'BUYER_CANCELLED', 'LEGACY_ABANDONED',
+      'INSUFFICIENT_STOCK', 'BENEFIT_UNAVAILABLE', 'PAYMENT_DECLINED', 'HOLD_EXPIRED', 'TIMEOUT', 'BUYER_CANCELLED',
     ];
     const copies = reasons.map((r) => failureCopy('FAILED', r));
     expect(new Set(copies.map((c) => c.title)).size).toBe(reasons.length);

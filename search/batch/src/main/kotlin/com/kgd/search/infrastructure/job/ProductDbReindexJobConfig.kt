@@ -23,7 +23,7 @@ import java.math.BigDecimal
 import java.sql.ResultSet
 import javax.sql.DataSource
 
-/** 금액은 원 단위 정수 `price_won` 에서 읽는다 — 옛 `price` DECIMAL 은 금액 축소 단계에서 지워진다. */
+/** 금액은 원 단위 정수 `price_won` 에서 읽는다 */
 internal const val PRODUCT_DB_SELECT =
     "SELECT id, name, price_won, stock, status, brand, description, category, " +
         "energy_kcal, carbohydrate_g, protein_g, fat_g, sugar_g, sodium_mg, " +
@@ -32,14 +32,10 @@ internal const val PRODUCT_DB_SELECT =
 internal fun mapProductRow(rs: ResultSet): ProductRow {
     // getDouble 은 NULL 을 0.0 으로 뭉개므로 getObject 로 nullable 유지
     fun nullableDouble(column: String): Double? = (rs.getObject(column) as? Number)?.toDouble()
-    val id = rs.getLong("id")
-    // 비어 있으면 0 원으로 색인하지 않는다 — 롤백 기간에 옛 코드가 쓴 행이라 백필(UPDATE … SET price_won = price)이 먼저다
-    val priceWon = (rs.getObject("price_won") as? Number)?.toLong()
-        ?: throw IllegalStateException("products.price_won 이 비어 있다(id=$id) — 백필 후 재색인")
     return ProductRow(
-        id = id,
+        id = rs.getLong("id"),
         name = rs.getString("name"),
-        price = BigDecimal.valueOf(priceWon),
+        price = BigDecimal.valueOf(rs.getLong("price_won")),
         stock = rs.getInt("stock"),
         status = rs.getString("status"),
         brand = rs.getString("brand"),

@@ -10,7 +10,6 @@ import com.kgd.inventory.application.inventory.port.ReservationRepositoryPort
 import com.kgd.inventory.application.inventory.service.InventoryService
 import com.kgd.inventory.application.reservation.port.CommandAnswer
 import com.kgd.inventory.application.reservation.port.CommandAnswerRepositoryPort
-import com.kgd.inventory.application.reservation.port.MigrationMarkerPort
 import com.kgd.inventory.domain.inventory.model.Inventory
 import com.kgd.inventory.domain.reservation.model.Reservation
 import com.kgd.inventory.domain.reservation.model.ReservationStatus
@@ -79,7 +78,6 @@ class InventoryCommandHarness(vararg initial: Inventory) {
         override fun findActiveByOrderIdAndProductId(orderId: Long, productId: Long) =
             rows.firstOrNull { it.orderId == orderId && it.productId == productId && it.getStatus() == ReservationStatus.ACTIVE }?.copy()
         override fun findAllExpired() = rows.filter { it.getStatus() == ReservationStatus.ACTIVE && it.isExpired() }.map { it.copy() }
-        override fun findAllActive() = rows.filter { it.getStatus() == ReservationStatus.ACTIVE }.map { it.copy() }
         override fun findAllByOrderId(orderId: Long) = rows.filter { it.orderId == orderId }.sortedBy { it.id }.map { it.copy() }
     }
 
@@ -91,16 +89,6 @@ class InventoryCommandHarness(vararg initial: Inventory) {
             if (find(answer.orderId, answer.commandKey) != null) throw DataIntegrityViolationException("uk_inventory_command_answer")
             rows += answer
         }
-        override fun existsReserveAnswer(orderId: Long) = find(orderId, "RESERVE") != null
-    }
-
-    val markers = FakeMarkers()
-    class FakeMarkers : MigrationMarkerPort {
-        val names = mutableSetOf<String>()
-        override fun exists(name: String) = name in names
-        override fun mark(name: String) {
-            if (!names.add(name)) throw DataIntegrityViolationException("inventory_migration_marker PK")
-        }
     }
 
     val objectMapper = jacksonMapperBuilder().build()
@@ -109,7 +97,6 @@ class InventoryCommandHarness(vararg initial: Inventory) {
     val commands = InventoryCommandService(
         reservations, inventories, answers, inventoryService, inventoryService, inventoryService, expiry, outbox, objectMapper,
     )
-    val conversion = LegacyReservationConversionService(reservations, answers, markers, inventoryService)
 
     private val processed = mutableSetOf<Pair<UUID, String>>()
     private val idempotent = IdempotentEventHandler(
@@ -143,13 +130,6 @@ class InventoryCommandHarness(vararg initial: Inventory) {
         reservations.rows += lapsed
     }
 
-    /** 옛 흐름이 남긴 ACTIVE 예약을 그대로 심는다(재고 행의 reserved 도 같이) */
-    fun seedLegacyActive(orderId: Long, productId: Long, qty: Int) {
-        val inv = inventory(productId)
-        inv.reserve(qty)
-        inventories.save(inv)
-        reservations.save(Reservation.create(orderId, productId, inv.warehouseId, qty))
-    }
 
 
     private object NoopTransactionManager : AbstractPlatformTransactionManager() {

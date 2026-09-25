@@ -1,13 +1,13 @@
 {
-"revision": 8,
-"source": "03a505d2f4c7d3b26c57a14cc0835f7f73229c7f13580a9c740e96c04ae18927",
+"revision": 9,
+"source": "e02c9049e00d21e2aed0a18b1698a1491cea7834556fe307f3c6a7ec0d5831ef",
 "kinds": ["DOMAIN", "STAGE", "MECHANISM", "TERM", "TECHNOLOGY", "PROBLEM", "METRIC"],
 "edgeKinds": ["CONTAINS", "FLOWS_TO", "USES", "IMPLEMENTS", "AFFECTS", "CAUSES", "MITIGATES", "MEASURED_BY", "ALTERNATIVE_TO"],
 "domains": [
 ["cs-fundamentals", "CS 기초", "자료 구조와 알고리즘. 데이터를 어떤 모양으로 담을지 고르고, 그 위에서 탐색 · 정렬 · 최적화를 어떻게 할지 정하며, 둘 다 복잡도로 비교한다", "cs-fundamentals", 15],
 ["language", "언어 · Kotlin", "이 레포의 백엔드 언어 Kotlin 과 그 아래의 Java 플랫폼을 기준으로 타입 설계, 타입 시스템, 컴파일 타임 안전장치, 간결한 표현, 컬렉션 처리, 런타임 메타 정보, Java 상호 운용을 익힌다. 언어 구성 요소 이름은 용어 사전에 모은다", "lang-kotlin-language", 80],
 ["runtime", "JVM · 런타임", "자바·코틀린 코드가 실제로 도는 자리. 메모리를 어떻게 나눠 쓰고, 쓰레기를 어떻게 치우고, 바이트코드를 어떻게 기계어로 바꾸고, 컨테이너와 운영체제 위에서 어떻게 진단하는지를 다룬다", "rt-jvm-runtime", 8],
-["spring", "Spring", "이 레포의 JVM 서비스가 올라가는 애플리케이션 프레임워크. 컨테이너가 객체를 만들고 엮는 방식, 프록시로 붙는 횡단 기능(트랜잭션·캐시·비동기), 요청 처리 파이프라인, 데이터 접근 추상화, 운영 노출과 테스트 지원을 익힌다", "spring", 77],
+["spring", "Spring", "이 레포의 JVM 서비스가 올라가는 애플리케이션 프레임워크. 컨테이너가 객체를 만들고 엮는 방식, 프록시로 붙는 횡단 기능(트랜잭션·캐시·비동기), 요청 처리 파이프라인, 데이터 접근 추상화, 운영 노출과 테스트 지원을 익힌다", "spring", 76],
 ["architecture", "소프트웨어 아키텍처", "요구와 품질 속성을 정하고, 도메인 경계를 긋고, 배포 단위와 통합 방식을 고르고, 서비스 안의 계층과 객체 협력을 설계하는 일이다. 원칙 → 객체 → 계층 → 경계 → 분해 → 통합 → 시스템 설계 → 결정 기록 순으로 넓혀 읽는다", "arch-software-architecture", 47],
 ["data", "데이터 저장", "애플리케이션이 데이터를 잃지 않고, 동시에 고쳐도 깨지지 않고, 빨리 읽히게 저장하는 일. 저장소 선택 · 관계형 DB · 인메모리 저장소 · 데이터 접근과 캐시 · 분석용 저장으로 나눠 읽는다", "data-storage", 55],
 ["concurrency", "동시성", "한 프로세스 안에서 여러 일을 겹쳐 진행하는 기법. 무엇으로 실행할지, 메모리를 어떻게 공유하고 지킬지, 기다림(IO)을 어떻게 다룰지를 차례로 정한다", "concurrent-programming", 32],

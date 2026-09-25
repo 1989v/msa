@@ -21,5 +21,4 @@ interface ReservationJpaRepository : JpaRepository<ReservationJpaEntity, Long> {
 
     fun findAllByStatusAndExpiredAtBefore(status: String, expiredAt: LocalDateTime): List<ReservationJpaEntity>
     fun findAllByOrderId(orderId: Long): List<ReservationJpaEntity>
-    fun findAllByStatus(status: String): List<ReservationJpaEntity>
 }
