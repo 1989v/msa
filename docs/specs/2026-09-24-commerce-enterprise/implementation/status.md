@@ -243,3 +243,12 @@
   - 새 행: 어드민 상품 98 등록 `price` NULL · `price_won` 4300 → 판매 중지(UPDATE) INACTIVE 200 / 주문 4 12초 사가 COMPLETED(FULFILLING), 라인 `unit_price` NULL · `unit_price_won` 1700
   - commerce ERROR 로그 0, 메모리 583Mi(재기동 직후) / 1200Mi
 - 남은 것: 2단계(옛 컬럼 DROP) — 되돌릴 수 없는 마이그레이션이라 사용자 확인 후
+
+## 전환기 코드 제거 · 금액 축소 2단계 (2026-09-26 KST, `e70a611b`)
+- 운영 사전 확인: 주문 4건 전부 사가 있음 · 주문/라인 스냅샷 null 0 · 예약 전부 CONFIRMED · 예약 전환 표식 2026-09-24 적용
+- 제거: 옛 price·unit_price 컬럼(V20260926_002) · 주문/라인 스냅샷 nullable·기본값 대입 · 옛 ACTIVE 예약 전환(기동 작업·유스케이스·표식 테이블 V9) · LEGACY_ABANDONED(백엔드·FE) · 검색 배치 null 처리 · 운영에서 끝난 전환만 검증하던 테스트
+- 테스트: inventory 16/0 · order domain 23/0 · order feature 47/0 · product 18/0 · search-batch 2/0 · OntologyFilesSpec 4/0 · AtlasGraphExportSpec 재내보내기 후 exit 0
+  · commerce OrderSheet 5/0 · OrderSagaIdempotency 9/0 · RetiredChoreography 3/0 · CommerceContextLoad 13/0 · Tracing 4/0 · OrderSagaE2E 14/0 · ClaimE2E 3/0 · SettlementE2E 2/0
+  · FE `tsc -b` 오류 0(실패 사유 값 주입 시 1) · vitest shop 14/14
+- 운영(run 36186858103 success, atlas·commerce·portal-fe·search-batch `e70a611`): flyway order/product 20260926.002 · inventory 9 success=1,
+  unit_price·price 컬럼 없음, 표식 테이블 없음, 스냅샷 컬럼 NOT NULL, 주문 12초 사가 COMPLETED, ERROR 0
