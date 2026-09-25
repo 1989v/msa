@@ -351,7 +351,7 @@ patches:
 images:
   - name: commerce/account
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/account
-    newTag: 24c3f4a
+    newTag: 76c1c26
   - name: commerce/admin-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/admin-fe
     newTag: 24c3f4a
@@ -360,22 +360,22 @@ images:
     newTag: 24c3f4a
   - name: commerce/atlas
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/atlas
-    newTag: abf0bfa
+    newTag: 76c1c26
   - name: commerce/auth
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/auth
-    newTag: 24c3f4a
+    newTag: 76c1c26
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
-    newTag: 6f6609a
+    newTag: 76c1c26
   - name: commerce/content
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/content
-    newTag: 24c3f4a
+    newTag: 76c1c26
   - name: commerce/engagement
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/engagement
-    newTag: 24c3f4a
+    newTag: 76c1c26
   - name: commerce/gateway
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gateway
-    newTag: 6f6609a
+    newTag: 76c1c26
   - name: commerce/gifticon-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon-fe
     newTag: 6a1889c
@@ -402,7 +402,7 @@ images:
     newTag: 6a1889c
   - name: commerce/search
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search
-    newTag: 24c3f4a
+    newTag: 76c1c26
   - name: commerce/search-batch
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-batch
     newTag: 24c3f4a
@@ -414,7 +414,7 @@ images:
     newTag: 8f325ca
   - name: commerce/sideapp
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/sideapp
-    newTag: 24c3f4a
+    newTag: 76c1c26
   # 인프라 이미지 — default-deny egress 라 기동 래퍼의 nori 다운로드가 불가.
   # analysis-nori 베이크 이미지로 교체 (docker/opensearch/Dockerfile, 수동 빌드·푸시)
   - name: opensearchproject/opensearch
