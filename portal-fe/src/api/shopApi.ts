@@ -1,8 +1,7 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import {
   buildLoginHref,
-  getAccessToken,
-  logout as clearAuth,
+  clearLocalSession,
   type OAuthProvider,
 } from '../auth/auth';
 import { refreshAccessToken } from '../auth/refresh';
@@ -379,24 +378,16 @@ export interface SellerProductRequest {
 
 // ── Auth ──────────────────────────────────────────────────────────
 
+/** 토큰은 싣지 않는다 — 응답이 HttpOnly 쿠키를 건다(ADR-0101) */
 export interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
   memberId: string;
   isNewMember: boolean;
 }
 
 // ── Axios instance + interceptors ────────────────────────────────
 
+// 인증은 세션 쿠키가 싣는다 — 같은 오리진 상대 경로라 저절로 실린다(ADR-0101)
 const api = axios.create({ baseURL: BASE_URL });
-
-api.interceptors.request.use((config) => {
-  const token = getAccessToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
 
 interface RetriableConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
@@ -410,9 +401,9 @@ api.interceptors.response.use(
       config._retry = true;
       const refreshed = await refreshAccessToken();
       if (refreshed) {
-        return api(config); // 원 요청 재시도 (request 인터셉터가 새 토큰 부착)
+        return api(config); // 원 요청 재시도 — 갱신 응답이 건 새 쿠키가 실린다
       }
-      clearAuth();
+      clearLocalSession();
       window.location.href = buildLoginHref();
     }
     return Promise.reject(error);
@@ -646,8 +637,9 @@ export const loginWithProvider = async (
   return res.data.data;
 };
 
-export const logoutApi = async (refreshToken: string): Promise<void> => {
-  await api.post('/api/auth/logout', { refreshToken });
+/** 서버가 토큰을 폐기하고 세션 쿠키를 지운다(HttpOnly 는 JS 가 못 지운다) */
+export const logoutApi = async (): Promise<void> => {
+  await api.post('/api/auth/logout');
 };
 
 export const applySeller = async (body: ApplySellerRequest): Promise<SellerProfile> => {

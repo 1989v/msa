@@ -10,6 +10,8 @@ import './styles/kh-motion.css';
 // 앱 셸 — 탭바·시트·스켈레톤·스택 전환. 모바일(< 768px)에서만 개입한다.
 import './styles/kh-shell.css';
 import App from './App';
+import { upgradeLegacySession } from './auth/auth';
+import { refreshAccessToken } from './auth/refresh';
 import { bootstrapTheme } from './hooks/useHeritageSurface';
 import { queryClient } from './shell/queryClient';
 import { AuthProvider } from './shell/AuthContext';
@@ -17,6 +19,9 @@ import { AuthProvider } from './shell/AuthContext';
 // 렌더 전에 톤을 정한다 — 훅은 effect 에서 돌아서, 여기서 칠하지 않으면
 // 라이트를 고른 사람도 다크가 한 번 번쩍인 뒤 바뀐다.
 bootstrapTheme();
+
+// HttpOnly 전환 전 세션을 끊지 않고 옮긴다 — 읽히는 옛 토큰 쿠키가 있으면 한 번 갱신해 서버가 바꿔 끼우게 한다(ADR-0101)
+void upgradeLegacySession(refreshAccessToken);
 
 // ADR-0058 R3 FE 통합 — 통합 셸 provider: QueryClient + Auth (흡수될 sub-app 공유).
 createRoot(document.getElementById('root')!).render(

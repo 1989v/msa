@@ -38,10 +38,10 @@ describe('AdSlot — 채움 순서', () => {
     installIntersectionObserver();
     events = captureAdEvents();
     window.adsbygoogle = [];
-    document.cookie = 'portal_access_token=tok-owner; path=/';
+    document.cookie = 'portal_user_id=7; path=/';
   });
   afterEach(() => {
-    document.cookie = 'portal_access_token=; max-age=0; path=/';
+    document.cookie = 'portal_user_id=; max-age=0; path=/';
     vi.useRealTimers();
     vi.unstubAllGlobals();
   });
@@ -167,20 +167,20 @@ describe('AdSlot — 결정 호출', () => {
     window.adsbygoogle = [];
   });
   afterEach(() => {
-    document.cookie = 'portal_access_token=; max-age=0; path=/';
+    document.cookie = 'portal_user_id=; max-age=0; path=/';
     vi.useRealTimers();
     vi.unstubAllGlobals();
   });
 
-  it('로그인 토큰이 있으면 결정 요청에 Bearer 가 실린다 — 서버의 광고주 본인 판정이 이 값을 쓴다', async () => {
-    document.cookie = 'portal_access_token=tok-owner; path=/';
+  it('결정 요청은 Authorization 을 만들지 않는다 — 광고주 본인 판정의 신원은 세션 쿠키가 싣는다(ADR-0101)', async () => {
+    document.cookie = 'portal_user_id=7; path=/';
     const sent = installDecisionAdapter(() => ({ status: 200, data: decisionBody([]) }));
     renderSlot('blog-post-end', { contextKey: 'blog:backend' });
     await advance(0);
 
     expect(sent).toHaveLength(1);
     expect(sent[0].url).toBe('/api/v1/ads/decisions');
-    expect(sent[0].authorization).toBe('Bearer tok-owner');
+    expect(sent[0].authorization).toBeUndefined();
     expect(sent[0].body).toEqual({ placements: ['blog-post-end'], host: window.location.hostname, contextKey: 'blog:backend' });
   });
 

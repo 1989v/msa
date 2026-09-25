@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { gamePath } from '../../seo/copy.mjs';
 import { displayTitle, getGameLang, listGames, type GameSummary } from '../../api/gameApi';
-import { getAccessToken } from '../../auth/auth';
+import { isLoggedIn } from '../../auth/auth';
 import {
   castBallot,
   fetchRosters,
@@ -78,7 +78,7 @@ export default function PartyPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const signedIn = Boolean(getAccessToken());
+  const signedIn = isLoggedIn();
   const startedRef = useRef(false);
 
   /* 방은 화면에 들어오는 즉시 연다 — 설정하는 동안 사람들이 들어와 있게 하려면

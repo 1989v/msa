@@ -1,7 +1,7 @@
 // 진행 서버 동기화 — 플랫폼 세이브 API (`GET/PUT /api/v1/games/arena/save`, games/lib/platform.js 와 같은 계약).
 // 회원은 Bearer 로, 게스트는 서버가 준 12자리 이어하기 코드로 식별한다. 로컬이 원본이고 서버는 기기 간 이어하기용:
 // 서버 version 이 이 기기가 마지막으로 맞춘 version 보다 앞서면 서버본을 받는다(다른 기기가 더 놀았다).
-import { onPlatform, authToken, SLUG } from './score.ts';
+import { onPlatform, signedIn, SLUG } from './score.ts';
 import { PROGRESS_KEY, sanitizeProgress, type Progress } from './progress.ts';
 
 const VER_KEY = 'amp.progress.ver';
@@ -24,8 +24,6 @@ function remember(version: number, code: string | null | undefined): void {
 interface SaveState { data: Record<string, unknown> | null; version: number; code?: string | null }
 async function api(path: string, init: RequestInit): Promise<SaveState | null> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json', 'X-Device-Id': deviceId() };
-  const token = authToken();
-  if (token) headers.Authorization = `Bearer ${token}`;
   try {
     const r = await fetch(`/api/v1/games/${SLUG}${path}`, { ...init, headers });
     const b = (await r.json()) as { success?: boolean; data?: SaveState };
@@ -38,7 +36,7 @@ async function api(path: string, init: RequestInit): Promise<SaveState | null> {
 export async function pullProgress(local: Progress): Promise<Progress | null> {
   if (!onPlatform()) return null;
   const code = localCode();
-  if (!authToken() && !code) return null;
+  if (!signedIn() && !code) return null;
   const s = await api(`/save${code ? `?code=${encodeURIComponent(code)}` : ''}`, { method: 'GET' });
   if (!s) return null;
   remember(s.version, s.code);

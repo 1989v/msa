@@ -1,12 +1,13 @@
 /**
  * 액세스 토큰 재발급 — **앱 전체가 이 하나를 공유한다.**
  *
- * 액세스 토큰은 1시간이고 토큰 쿠키는 30일 산다(`auth.ts`). `isLoggedIn()` 은 쿠키
- * 존재만 보므로, 재발급이 없는 API 모듈은 로그인 한 시간 뒤부터 **화면은 로그인 상태인데
- * 호출만 전부 401** 이 된다 (2026-08-29 찜 목록이 이 상태였다).
+ * 액세스 토큰은 1시간이고 세션 쿠키는 리프레시 토큰만큼 산다. `isLoggedIn()` 은 표시 쿠키만
+ * 보므로, 재발급이 없는 API 모듈은 로그인 한 시간 뒤부터 **화면은 로그인 상태인데 호출만 전부 401**
+ * 이 된다 (2026-08-29 찜 목록이 이 상태였다). 토큰은 HttpOnly 쿠키라(ADR-0101) 여기서는 보지도
+ * 보내지도 않는다 — `/api/auth/refresh` 에 쿠키가 실리고, 응답이 새 쿠키를 건다.
  */
 import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
-import { getRefreshToken, updateTokens } from './auth';
+import { isLoggedIn } from './auth';
 
 // VITE_API_URL 이 빈 문자열이면 same-origin relative path (운영 / K8s ingress 경유).
 const BASE_URL: string = import.meta.env.VITE_API_URL ?? 'http://localhost:8089';
@@ -17,7 +18,6 @@ interface RetriableConfig extends InternalAxiosRequestConfig {
 
 interface RefreshResponse {
   success: boolean;
-  data: { accessToken: string; refreshToken: string } | null;
   error: { code: string; message: string } | null;
 }
 
@@ -32,37 +32,36 @@ interface RefreshResponse {
 let inFlight: Promise<boolean> | null = null;
 
 /**
- * 방금 실패한 리프레시 토큰 — 같은 것으로는 잠시 다시 시도하지 않는다.
+ * 방금 실패한 재발급 — 잠시 다시 시도하지 않는다.
  *
  * 죽은 세션은 화면에 뜬 호출 수만큼 재발급을 시도한다. 하트·목록·상세가 각자 401 을
- * 받으므로 auth 로 가는 요청이 사용자 수가 아니라 **위젯 수**를 따라간다. 다시 로그인해
- * 토큰이 바뀌면 그 즉시 풀리므로, 창을 길게 잡아 정상 복구를 늦출 이유는 없다.
+ * 받으므로 auth 로 가는 요청이 사용자 수가 아니라 **위젯 수**를 따라간다. 토큰은 JS 가
+ * 못 보므로 「같은 토큰」 대신 시각으로 막고, 다시 로그인하면(`resetRefreshCooldown`) 즉시 푼다.
  */
 const FAILURE_COOLDOWN_MS = 30_000;
-let lastFailure: { token: string; at: number } | null = null;
+let lastFailureAt: number | null = null;
+
+export function resetRefreshCooldown(): void {
+  lastFailureAt = null;
+}
 
 export function refreshAccessToken(): Promise<boolean> {
   if (inFlight) return inFlight;
-
-  const refreshToken = getRefreshToken();
-  if (!refreshToken) return Promise.resolve(false);
-  if (lastFailure?.token === refreshToken && Date.now() - lastFailure.at < FAILURE_COOLDOWN_MS) {
-    return Promise.resolve(false);
-  }
+  if (!isLoggedIn()) return Promise.resolve(false);
+  if (lastFailureAt != null && Date.now() - lastFailureAt < FAILURE_COOLDOWN_MS) return Promise.resolve(false);
 
   inFlight = (async () => {
     try {
-      // 인터셉터 루프 방지를 위해 인스턴스가 아닌 bare axios 사용
-      const res = await axios.post<RefreshResponse>(`${BASE_URL}/api/auth/refresh`, { refreshToken });
-      if (res.data.success && res.data.data) {
-        updateTokens(res.data.data.accessToken, res.data.data.refreshToken);
-        lastFailure = null;
+      // 인터셉터 루프 방지를 위해 인스턴스가 아닌 bare axios 사용. 본문 없음 — 리프레시 쿠키가 실린다
+      const res = await axios.post<RefreshResponse>(`${BASE_URL}/api/auth/refresh`);
+      if (res.data.success) {
+        lastFailureAt = null;
         return true;
       }
-      lastFailure = { token: refreshToken, at: Date.now() };
+      lastFailureAt = Date.now();
       return false;
     } catch {
-      lastFailure = { token: refreshToken, at: Date.now() };
+      lastFailureAt = Date.now();
       return false;
     } finally {
       inFlight = null;

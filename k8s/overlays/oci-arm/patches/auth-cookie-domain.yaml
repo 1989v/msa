@@ -1,0 +1,14 @@
+# 세션 쿠키 도메인(ADR-0101) — 서브도메인이 로그인 세션을 공유하도록 `.1989v.com` 에 건다.
+# 기본값은 비어 있어 로컬 k3d 는 host-only 쿠키로 떨어진다(도메인이 달라 거부되지 않게).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          env:
+            - name: AUTH_COOKIE_DOMAIN
+              value: ".1989v.com"

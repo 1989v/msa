@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { getAccessToken } from '../auth/auth';
 import { attachRefreshRetry } from '../auth/refresh';
 
 // VITE_API_URL 이 빈 문자열이면 same-origin relative path (운영 / K8s ingress 경유).
@@ -19,11 +18,6 @@ interface ApiResponse<T> {
  */
 const api = axios.create({ baseURL: BASE_URL, timeout: 10_000 });
 
-api.interceptors.request.use((config) => {
-  const token = getAccessToken();
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
 
 attachRefreshRetry(api);
 

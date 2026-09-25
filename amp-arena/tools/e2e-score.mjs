@@ -18,7 +18,7 @@ try {
     void page.send('Fetch.fulfillRequest', { requestId: p.requestId, responseCode: 200, responseHeaders: [{ name: 'Content-Type', value: 'application/json' }], body });
   });
   await page.waitFor(`document.querySelector('.practice')`, { timeout: 20000 });
-  await page.eval(`document.cookie = 'portal_access_token=test-token; path=/'`);
+  await page.eval(`document.cookie = 'portal_user_id=7; path=/'`);
   await page.type('.nick', '기록실측');
   await page.eval(`document.querySelector('.bots').value = '3'; document.querySelector('.mode').value = 'ffa_dm'`);
   await page.click('.practice');
@@ -34,7 +34,8 @@ try {
   const expectScore = mine.kos * 100 + mine.dmg + (mine.win ? 50 : 0);
   checks.posted = !!captured && captured.method === 'POST' && captured.url.endsWith('/api/v1/games/arena/scores');
   checks.body = !!captured && captured.body.nickname === '기록실측' && captured.body.board === 'practice' && captured.body.score === expectScore && typeof captured.body.detail === 'string' && captured.body.detail.includes('KO');
-  checks.bearer = !!captured && captured.headers.Authorization === 'Bearer test-token';
+  // 신원은 세션 쿠키(HttpOnly)가 싣는다 — 게임이 Authorization 을 만들면 안 된다(ADR-0101)
+  checks.noBearer = !!captured && !captured.headers.Authorization;
   checks.noteShown = note === `연습 순위표 3위 · ${expectScore}점 (새 기록)`;
   await page.shot(`${out}/e2e-score.png`);
   console.log(`checks ${JSON.stringify(checks)} · errors ${page.errors.length}`);

@@ -1,20 +1,10 @@
 import axios from 'axios';
-import { getAccessToken } from '../auth/auth';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:8089',
   timeout: 10_000,
 });
 
-// 스니펫 전문은 로그인 사용자에게 열린다 — Bearer 를 실어야 게이트웨이가 X-User-Id 를
-// 주입한다. 401 강제 이동은 하지 않는다: 포트폴리오는 익명이 기본이다.
-api.interceptors.request.use((config) => {
-  const token = getAccessToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
 
 /** 공개면의 코드 스니펫 — 익명에게는 미리보기만 오고 `code` 는 응답에 없다 */
 export interface PortfolioSnippet {

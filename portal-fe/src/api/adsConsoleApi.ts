@@ -2,7 +2,7 @@ import axios, { type AxiosError } from 'axios';
 import { apiClient } from '../shell/apiClient';
 
 /**
- * 광고주 콘솔 API (ADR-0098). 신원은 Bearer 뿐이고 요청은 광고주 id 를 들고 가지 않는다 —
+ * 광고주 콘솔 API (ADR-0098). 신원은 세션 쿠키뿐이고(ADR-0101) 요청은 광고주 id 를 들고 가지 않는다 —
  * 서버가 회원 id 로 광고주를 찾는다. 금액은 전부 정수 마이크로 크레딧(1 크레딧 = 1,000,000)이다.
  */
 
@@ -207,7 +207,7 @@ export async function archiveCreative(creativeId: number): Promise<Creative> {
   return unwrap(await apiClient.delete(`${BASE}/creatives/${creativeId}`));
 }
 
-/** 미리보기는 인증 경로다 — Bearer 를 실어 받아 blob 으로 그린다. */
+/** 미리보기는 인증 경로다 — 받아서 blob 으로 그린다. */
 export async function fetchPreviewBlob(imageUrl: string): Promise<Blob> {
   const res = await apiClient.get<Blob>(imageUrl, { responseType: 'blob' });
   return res.data;

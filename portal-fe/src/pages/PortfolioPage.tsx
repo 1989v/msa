@@ -43,7 +43,7 @@ export default function PortfolioPage() {
   const [focusedTag, setFocusedTag] = useState<string | null>(null);
   const [opened, setOpened] = useState<OpenedProject | null>(null);
   // 광고 시청 보상 토큰 — 탭 세션에 남아 있으면 첫 조회부터 전문을 받는다.
-  // 로그인 사용자는 토큰 없이도 서버가 열어준다 (Bearer → X-User-Id).
+  // 로그인 사용자는 보상 토큰 없이도 서버가 열어준다 (세션 쿠키 → X-User-Id).
   const [unlockToken, setUnlockToken] = useState<string | null>(() => storedUnlockToken());
 
   useEffect(() => {

@@ -23,7 +23,7 @@ export function CreditNote() {
 }
 
 /**
- * 인증 경로의 미리보기 이미지. `<img src>` 는 Bearer 를 싣지 못하므로 받아서 blob 주소로 그린다.
+ * 인증 경로의 미리보기 이미지. 받아서 blob 주소로 그린다 — 실패를 화면이 알 수 있게.
  */
 export function PreviewImage({ url, alt }: { url: string; alt: string }) {
   const [src, setSrc] = useState<string | null>(null);

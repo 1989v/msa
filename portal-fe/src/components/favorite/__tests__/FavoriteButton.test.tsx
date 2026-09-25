@@ -30,11 +30,11 @@ function renderButton(targetKey = 'abyssal-crown', lang?: 'ko' | 'en') {
   );
 }
 
-/** 토큰은 도메인 쿠키에 산다 (ADR-0079) — 테스트도 같은 곳을 봐야 한다 */
-function setSession(token: string | null) {
-  document.cookie = token
-    ? `portal_access_token=${token}; Path=/`
-    : 'portal_access_token=; Path=/; Max-Age=0';
+/** 토큰은 HttpOnly 라 JS 가 못 본다 — 로그인 여부는 표시 쿠키로 본다 (ADR-0101) */
+function setSession(memberId: string | null) {
+  document.cookie = memberId
+    ? `portal_user_id=${memberId}; Path=/`
+    : 'portal_user_id=; Path=/; Max-Age=0';
 }
 
 beforeEach(() => {

@@ -1,9 +1,10 @@
 /**
- * auth — portal-fe 쇼핑 플로우 인증 모듈.
+ * auth — portal-fe 인증 모듈.
  *
- * 도메인 쿠키 기반 토큰 보관 + OAuth 인가 URL 빌더.
+ * 토큰은 **서버가 HttpOnly 쿠키로 내리고 JS 는 읽지 못한다**(ADR-0101). 요청은 같은 오리진 상대 경로라
+ * 쿠키가 저절로 실리고, 게이트웨이가 그 쿠키에서 토큰을 읽는다. 이 모듈이 아는 것은
+ * 「로그인했다」는 표시 쿠키(`portal_user_id`, 비밀 아님)뿐이다.
  * 로그인은 **apex 한 곳**에서만 일어난다 (ADR-0079).
- * API 호출(로그인/리프레시/로그아웃)은 src/api/shopApi.ts 가 담당.
  */
 
 import { PORTAL_ORIGIN } from '../seo/copy.mjs';
@@ -11,21 +12,7 @@ import { PORTAL_ORIGIN } from '../seo/copy.mjs';
 const ACCESS_TOKEN_KEY = 'portal_access_token';
 const REFRESH_TOKEN_KEY = 'portal_refresh_token';
 const USER_ID_KEY = 'portal_user_id';
-
-/**
- * 토큰은 쿠키에 둔다 — `localStorage` 가 아니다 (ADR-0079).
- *
- * `localStorage` 는 **오리진마다 격리**된다. 1989v.com 에서 로그인해도 game.1989v.com 은
- * 그 토큰을 읽지 못해, 서브도메인 수만큼 따로 로그인해야 했다. `.1989v.com` 도메인 쿠키는
- * 전 서브도메인이 공유하므로 한 번 로그인하면 어디서든 로그인 상태다.
- *
- * **httpOnly 로 두지 않는다.** 그러면 JS 가 못 읽어 `Authorization: Bearer` 를 만들 수 없고,
- * 게이트웨이를 쿠키 인증으로 바꿔야 하며 CSRF 방어가 새로 필요해진다. JS 가 읽는 쿠키는
- * XSS 노출 면에서 localStorage 와 동일하므로 후퇴가 없고, 서브도메인 공유만 얻는다.
- * 전송은 지금처럼 헤더로 하므로 쿠키 자동 전송에 기대지 않는다(=CSRF 표면 없음).
- */
 const COOKIE_DOMAIN = '.1989v.com';
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30일 — refresh 토큰 수명과 맞춘다
 
 /** 프로덕션 1989v 계열 호스트인가 (로컬·k3d 는 서브도메인이 없어 도메인 쿠키를 못 쓴다) */
 const isProd1989vHost =
@@ -38,24 +25,10 @@ function readCookie(name: string): string | null {
   return hit ? decodeURIComponent(hit.slice(name.length + 1)) : null;
 }
 
-function writeCookie(name: string, value: string): void {
-  const parts = [
-    `${name}=${encodeURIComponent(value)}`,
-    'Path=/',
-    `Max-Age=${COOKIE_MAX_AGE}`,
-    'SameSite=Lax',
-  ];
-  // Secure 쿠키는 http 에서 거부된다 — 로컬 개발이 조용히 로그인 불가가 되지 않게 가른다
-  if (window.location.protocol === 'https:') parts.push('Secure');
-  if (isProd1989vHost) parts.push(`Domain=${COOKIE_DOMAIN}`);
-  document.cookie = parts.join('; ');
-}
-
 function clearCookie(name: string): void {
   const base = `${name}=; Path=/; Max-Age=0; SameSite=Lax`;
   document.cookie = isProd1989vHost ? `${base}; Domain=${COOKIE_DOMAIN}` : base;
-  // 도메인 쿠키 도입 전에 남은 host-only 쿠키도 함께 지운다 — 남아 있으면 같은 이름의
-  // 쿠키가 둘이 되어 브라우저가 더 좁은 쪽을 돌려주고, 로그아웃이 안 먹는 것처럼 보인다.
+  // 도메인 쿠키 도입 전에 남은 host-only 쿠키도 함께 지운다
   document.cookie = base;
 }
 
@@ -64,42 +37,39 @@ export const LOGIN_NEXT_KEY = 'portal_login_next';
 
 export type OAuthProvider = 'kakao' | 'google';
 
-export function getAccessToken(): string | null {
-  return readCookie(ACCESS_TOKEN_KEY);
-}
-
-export function getRefreshToken(): string | null {
-  return readCookie(REFRESH_TOKEN_KEY);
-}
-
 export function getUserId(): string | null {
   return readCookie(USER_ID_KEY);
 }
 
+/** 표시 쿠키로 본다 — 토큰은 HttpOnly 라 여기서 보이지 않는다. 토큰이 만료됐으면 첫 요청의 401 이 갱신을 부른다 */
 export function isLoggedIn(): boolean {
-  return getAccessToken() != null;
+  return getUserId() != null;
 }
 
-export function login(accessToken: string, refreshToken: string, memberId: string | number): void {
-  writeCookie(ACCESS_TOKEN_KEY, accessToken);
-  writeCookie(REFRESH_TOKEN_KEY, refreshToken);
-  writeCookie(USER_ID_KEY, String(memberId));
-}
-
-/** 토큰 갱신 시 access/refresh 만 교체 */
-export function updateTokens(accessToken: string, refreshToken: string): void {
-  writeCookie(ACCESS_TOKEN_KEY, accessToken);
-  writeCookie(REFRESH_TOKEN_KEY, refreshToken);
-}
-
-export function logout(): void {
-  clearCookie(ACCESS_TOKEN_KEY);
-  clearCookie(REFRESH_TOKEN_KEY);
+/**
+ * 로컬 흔적을 지운다. 서버 쿠키(HttpOnly)는 `/api/auth/logout` 응답이 지우고, 여기서는 JS 가 볼 수 있는
+ * 것만 지운다 — 표시 쿠키, 쿠키 전환 전의 읽히는 토큰 쿠키, 그보다 앞선 localStorage 잔재.
+ */
+export function clearLocalSession(): void {
   clearCookie(USER_ID_KEY);
-  // 쿠키 전환 이전 세션의 잔재 — 남겨두면 isLoggedIn 이 쿠키를 보는데 옛 값이 계속 남는다
+  if (readCookie(ACCESS_TOKEN_KEY) != null) clearCookie(ACCESS_TOKEN_KEY);
+  if (readCookie(REFRESH_TOKEN_KEY) != null) clearCookie(REFRESH_TOKEN_KEY);
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
   localStorage.removeItem(USER_ID_KEY);
+}
+
+/**
+ * HttpOnly 전환 전에 로그인한 세션 — 토큰 쿠키가 JS 에 **보이면** 옛 것이다(ADR-0101 §5).
+ * 한 번 갱신을 불러 서버가 HttpOnly 쿠키로 바꿔 끼우게 하고, 읽히는 옛 쿠키를 지운다.
+ * 갱신은 호출자가 넘긴다(순환 의존을 피해). 끊지 않고 옮기는 것이 요점이다.
+ */
+export async function upgradeLegacySession(refresh: () => Promise<boolean>): Promise<void> {
+  if (readCookie(REFRESH_TOKEN_KEY) == null && readCookie(ACCESS_TOKEN_KEY) == null) return;
+  const ok = await refresh();
+  // 성공이면 서버가 같은 이름의 HttpOnly 쿠키를 새로 걸었다 — 남은 읽히는 사본(Path=/ 리프레시)만 지운다
+  if (readCookie(REFRESH_TOKEN_KEY) != null) clearCookie(REFRESH_TOKEN_KEY);
+  if (!ok) clearLocalSession();
 }
 
 /**
@@ -164,13 +134,38 @@ export function isProviderEnabled(provider: OAuthProvider): boolean {
   return (provider === 'kakao' ? KAKAO_CLIENT_ID : GOOGLE_CLIENT_ID).trim().length > 0;
 }
 
+const OAUTH_STATE_KEY = 'portal_oauth_state';
+
+/**
+ * OAuth `state` — 로그인을 시작할 때마다 새 난수(ADR-0101 §4).
+ *
+ * 제공자 이름만 넣던 때는 누구나 같은 값을 만들 수 있어, 공격자가 자기 인가 코드로 만든 콜백 링크를
+ * 밟게 하면 피해자가 공격자 계정으로 로그인됐다(로그인 CSRF). 시작한 탭의 sessionStorage 에 두고
+ * 콜백에서 같은지 본다. 로그인은 apex 한 곳이라 시작과 콜백이 같은 오리진이다.
+ */
+function newOAuthState(provider: OAuthProvider): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  const state = `${provider}.${Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')}`;
+  sessionStorage.setItem(OAUTH_STATE_KEY, state);
+  return state;
+}
+
+/** 콜백의 `state` 가 이 탭에서 시작한 것과 같으면 제공자를, 아니면 null. 한 번 쓰면 지운다 */
+export function consumeOAuthState(state: string | null): OAuthProvider | null {
+  const expected = sessionStorage.getItem(OAUTH_STATE_KEY);
+  sessionStorage.removeItem(OAUTH_STATE_KEY);
+  if (!state || !expected || state !== expected) return null;
+  const provider = state.split('.')[0];
+  return provider === 'kakao' || provider === 'google' ? provider : null;
+}
+
 export function buildKakaoAuthUrl(): string {
   const redirectUri = getOAuthRedirectUri();
   return (
     'https://kauth.kakao.com/oauth/authorize' +
     `?client_id=${KAKAO_CLIENT_ID}` +
     `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-    '&response_type=code&state=kakao'
+    `&response_type=code&state=${encodeURIComponent(newOAuthState('kakao'))}`
   );
 }
 
@@ -187,6 +182,6 @@ export function buildGoogleAuthUrl(): string {
     'https://accounts.google.com/o/oauth2/v2/auth' +
     `?client_id=${GOOGLE_CLIENT_ID}` +
     `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-    '&response_type=code&scope=openid&state=google'
+    `&response_type=code&scope=openid&state=${encodeURIComponent(newOAuthState('google'))}`
   );
 }

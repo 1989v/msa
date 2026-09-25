@@ -1,7 +1,7 @@
 // 게임 플랫폼 기록 연동 (2026-09-12). 판이 끝나면 내 결과를 `POST /api/v1/games/arena/scores` 로 보낸다.
 // 플레이 세션(`/sessions`)은 카탈로그 상세 페이지(IFRAME 호스트)가 열고 닫으므로 게임은 손대지 않는다 — 여기서 또 열면 두 번 센다.
 // 보드는 둘: `online`(사람과 붙은 판) · `practice`(봇 연습). 한 보드에 섞으면 봇 연습 점수가 순위를 덮는다.
-// 로그인 토큰은 `.1989v.com` 쿠키(`portal_access_token`, games/lib/auth.js 와 같은 자리)에서 읽어 Bearer 로 싣는다 — 있으면 회원 기록으로 묶인다.
+// 로그인 신원은 세션 쿠키(HttpOnly)가 싣는다 — 같은 오리진 요청이라 저절로 실리고, 로그인했으면 회원 기록으로 묶인다(ADR-0101).
 import type { RankEntry } from '@amp/shared';
 
 export const SLUG = 'arena';
@@ -30,10 +30,9 @@ export function onPlatform(): boolean {
   return location.pathname.startsWith('/games/');
 }
 
-export function authToken(): string | null {
-  const prefix = 'portal_access_token=';
-  const hit = document.cookie.split('; ').find((c) => c.startsWith(prefix));
-  return hit ? decodeURIComponent(hit.slice(prefix.length)) : null;
+/** 로그인했는가 — 토큰은 JS 가 못 보고, 비밀이 아닌 표시 쿠키(`portal_user_id`)로 본다 */
+export function signedIn(): boolean {
+  return document.cookie.split('; ').some((c) => c.startsWith('portal_user_id='));
 }
 
 /** 다른 게임들이 쓰는 플랫폼 닉네임(`game_nickname`) — 처음 오는 사람의 빈칸을 채운다 */
@@ -44,8 +43,6 @@ export function platformNickname(): string | null {
 export async function submitScore(req: ScoreRequest): Promise<ScoreResult | null> {
   if (!onPlatform() || !(req.score > 0)) return null;
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const token = authToken();
-  if (token) headers.Authorization = `Bearer ${token}`;
   try {
     const r = await fetch(`/api/v1/games/${SLUG}/scores`, { method: 'POST', headers, body: JSON.stringify(req) });
     const b = (await r.json()) as { success?: boolean; data?: ScoreResult };

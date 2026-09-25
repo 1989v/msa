@@ -108,7 +108,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
   길안내는 구글맵 링크(키·쿼터 없음)로 넘긴다. 경로 API 를 직접 부르면 출발지가 전국에 흩어져
   캐시가 듣지 않고 호출 수가 사용자 수를 따라간다
 - **광고 수익화 (AdSense)**: 지면 4곳(블로그 글 끝·게임 목록 끝·관광지 상세 끝·혜택 목록 바깥)에 `AdSlot` — **자동 광고는 콘솔에서 끈 채로 둔다** → `docs/adr/ADR-0076-adsense-monetization.md`. `copy.mjs` 의 `ADSENSE_CLIENT` 한 줄이 로더·지면·`ads.txt` 셋을 동시에 켜고 끈다(빈 값 = 광고 없음이 정상 상태). **`/ads.txt` 는 nginx 명시 route 가 없으면 SPA 폴백이 index.html 을 내보내고, 그 응답은 '유효한 판매자 0줄'로 읽혀 도메인 전체 입찰이 끊긴다.** resume 는 제외 (ADR-0064 와 같은 기준)
-- **로그인 진입점**: **apex `/login` 한 곳**, 토큰은 `.1989v.com` 도메인 쿠키 → `docs/adr/ADR-0079-single-login-origin.md`. 서브도메인에서 로그인을 그리면 OAuth 콜백이 그 호스트로 잡혀 `redirect_uri_mismatch` 가 난다(2026-08-22 game 호스트 실제 사고). **제공자 콘솔에 등록할 redirect_uri 는 `https://1989v.com/oauth/callback` 하나뿐**. `localStorage` 로 되돌리면 서브도메인 세션 공유가 깨져 로그인 화면도 다시 갈라야 한다.
+- **로그인 진입점**: **apex `/login` 한 곳**, 토큰은 `.1989v.com` 도메인 쿠키 → `docs/adr/ADR-0079-single-login-origin.md`. **토큰 쿠키는 HttpOnly — auth 가 내리고 게이트웨이가 읽는다. FE · 게임은 토큰을 보지도 헤더로 보내지도 않고, 로그인 여부는 표시 쿠키 `portal_user_id` 로 본다. 쿠키로 인증된 쓰기는 게이트웨이가 Origin 이 우리 도메인일 때만 받는다** → `docs/adr/ADR-0101-httponly-session-cookies.md`. 서브도메인에서 로그인을 그리면 OAuth 콜백이 그 호스트로 잡혀 `redirect_uri_mismatch` 가 난다(2026-08-22 game 호스트 실제 사고). **제공자 콘솔에 등록할 redirect_uri 는 `https://1989v.com/oauth/callback` 하나뿐**. `localStorage` 로 되돌리면 서브도메인 세션 공유가 깨져 로그인 화면도 다시 갈라야 한다.
   **토큰을 읽는 곳을 늘리지 않는다** — 캔버스 게임 21곳이 각자 `localStorage` 읽기 한 줄을 복사해
   갖고 있어서 쿠키 전환이 그곳들을 지나쳤고, 서버·게이트웨이의 회원 경로가 멀쩡한 채로
   **로그인 사용자가 전 게임에서 게스트로 취급됐다**(2026-08-28 수정). 지금은

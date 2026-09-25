@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { getAccessToken } from '../auth/auth';
 import { attachRefreshRetry } from '../auth/refresh';
 import { GENRE_LABELS_EN, GENRE_LABELS_KO } from '../seo/copy.mjs';
 
@@ -10,15 +9,6 @@ const api = axios.create({
   timeout: 10_000,
 });
 
-// 평점(인증 필수)·세션(로그인 시 식별)에 Bearer 를 실어보낸다.
-// shell/apiClient 와 달리 401 시 로그인 페이지로 강제 이동하지 않는다 — 게임 화면은 게스트도 머문다.
-api.interceptors.request.use((config) => {
-  const token = getAccessToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
 
 // 액세스 토큰이 만료되면 평점·세션·점수 제출이 조용히 게스트 취급된다 — 재발급 후 재시도한다.
 attachRefreshRetry(api);

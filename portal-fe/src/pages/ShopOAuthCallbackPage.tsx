@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { loginWithProvider, extractErrorMessage } from '../api/shopApi';
-import { LOGIN_NEXT_KEY, buildLoginHref, getOAuthRedirectUri, safeNext, type OAuthProvider } from '../auth/auth';
+import { LOGIN_NEXT_KEY, buildLoginHref, consumeOAuthState, getOAuthRedirectUri, safeNext } from '../auth/auth';
 import { useAuth } from '../auth/useAuth';
 import LoginShell from '../components/chrome/LoginShell';
 import { portalTitle } from '../seo/copy.mjs';
@@ -23,14 +23,17 @@ export default function ShopOAuthCallbackPage() {
     const code = searchParams.get('code');
     const state = searchParams.get('state');
 
+    // state 는 이 탭에서 로그인을 시작할 때 만든 난수와 같아야 한다 — 다르면 남이 만든 콜백 링크다(로그인 CSRF)
+    const provider = consumeOAuthState(state);
+
     const doLogin = async () => {
-      if (!code || (state !== 'kakao' && state !== 'google')) {
-        setError('로그인 정보가 올바르지 않습니다.');
+      if (!code || !provider) {
+        setError('로그인 정보가 올바르지 않습니다. 다시 로그인해 주세요.');
         return;
       }
       try {
-        const res = await loginWithProvider(state as OAuthProvider, code, getOAuthRedirectUri());
-        login(res.accessToken, res.refreshToken, res.memberId);
+        await loginWithProvider(provider, code, getOAuthRedirectUri());
+        login();
         const next = safeNext(sessionStorage.getItem(LOGIN_NEXT_KEY));
         sessionStorage.removeItem(LOGIN_NEXT_KEY);
         // next 는 다른 호스트의 절대 URL 일 수 있다 (로그인은 apex 한 곳이므로) —
