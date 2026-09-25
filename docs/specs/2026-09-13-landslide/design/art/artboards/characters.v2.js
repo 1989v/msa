@@ -1,7 +1,6 @@
-/* 사태(沙汰) — SD 무장 캐릭터 도형 라이브러리 (v3 · 4차 한국색 보정, README §10)
-   · 옷: 청흑 두정갑(황동 징 점) 위에 V자 교임 깃, 아래로 주름 잡힌 황토 철릭 자락. 스탠드 칼라·사선 단추 줄·금 비늘 없음
-   · 머리: 궁수 갓(얇은 원판 챙+높은 대우+구슬 갓끈) / 검사 발립형 투구(앞챙+간주 삼지창+드림) / 포수·창병·방패병 전립(아래로 휜 챙+상모 한 줌+공작깃 하나)
-   · 무기: 각궁(끝이 되휜 활) · 청동 총통 · 좁고 살짝 휜 환도 · 가는 날 장창 · 장방패
+/* 사태(沙汰) — SD 무장 캐릭터 도형 라이브러리 (v2 · 조선 고증 반영)
+   · 갑옷은 조선 특유의 포(袍)형 두정갑 — 무릎 아래까지 내려오는 긴 자락 + 두정못 격자 + 견철
+   · 머리: 궁수 갓(흑립) / 검사 투구(간주+삼지창+드림) / 포수·창병·방패병 전립(벙거지+상모)
    · 허리 전대와 등깃발만 팀색. 캐릭터 상자 200×300, 발이 y=300. */
 window.Sata = (function () {
   const C = {
@@ -21,11 +20,11 @@ window.Sata = (function () {
       <path d="M${px} ${y1} L${px - f * 50} ${y1 + 16} L${px - f * 36} ${y1 + 44} L${px} ${y1 + 36} Z" fill="${team(t)}" ${ink(6)}/></g>`;
   }
 
-  /* 두정 — 청흑 천 위 황동 징 점 */
+  /* 두정못 격자 (징은 점으로) */
   function studs() {
     let s = '';
-    for (let r = 0; r < 2; r++) for (let c = 0; c < 4; c++) s += `<circle cx="${72 + c * 19}" cy="${184 + r * 18}" r="3.6" fill="${C.ochreL}"/>`;
-    for (let c = 0; c < 5; c++) s += `<circle cx="${64 + c * 18}" cy="${256}" r="3.6" fill="${C.ochreL}"/>`;
+    for (let r = 0; r < 2; r++) for (let c = 0; c < 4; c++) s += `<circle cx="${74 + c * 17}" cy="${184 + r * 17}" r="3.2" fill="${C.ink}"/>`;
+    for (let r = 0; r < 2; r++) for (let c = 0; c < 5; c++) s += `<circle cx="${64 + c * 18}" cy="${252 + r * 16}" r="3.2" fill="${C.ink}"/>`;
     return s;
   }
 
@@ -122,21 +121,20 @@ window.Sata = (function () {
     goryeo: { coat: coatGoryeo, hat: goryeoHelm }
   };
 
-  /* 철릭 자락(주름) + 청흑 두정갑 + V자 교임 깃 + 광다회(팀색) */
+  /* 포(袍)형 두정갑 : 긴 자락 + 견철 + 전대(팀색) */
   function coat(t) {
     const sk = skins[CUR];
     if (sk && sk.coat) return sk.coat(t);
-    let pleats = '';
-    for (let i = 0; i < 7; i++) { const x = 52 + i * 16; pleats += `<path d="M${x + 2} 262 L${x - 2 + (i - 3) * 2} 282" fill="none" ${ink(3.5)}/>`; }
     return `<g>
-      <path d="M48 246 L152 246 L162 280 Q100 294 38 280 Z" fill="${C.ochre}" ${ink()}/>
-      ${pleats}
-      <path d="M60 176 Q60 160 80 158 L120 158 Q140 160 140 176 L148 262 Q100 274 52 262 Z" fill="${C.steel}" ${ink()}/>
+      <path d="M58 178 Q58 162 78 160 L122 160 Q142 162 142 178 L156 268 Q100 284 44 268 Z" fill="${C.ochre}" ${ink()}/>
+      <path d="M100 162 Q116 186 110 268" fill="none" ${ink(4)}/>
       ${studs()}
-      <path d="M78 158 L92 158 L106 178 L98 186 Z" fill="${C.hanji}" ${ink(4)}/>
-      <path d="M108 158 L124 158 L80 218 L68 210 Z" fill="${C.hanji}" ${ink(5)}/>
+      <path d="M44 268 Q100 284 156 268" fill="none" ${ink(4)}/>
+      <g fill="${C.ochreL}" ${ink(5)}>
+        <path d="M50 186 Q42 170 58 164 L74 162 L70 184 Z"/>
+        <path d="M150 186 Q158 170 142 164 L126 162 L130 184 Z"/></g>
       <path d="M50 222 Q100 236 150 222 L152 250 Q100 264 48 250 Z" fill="${team(t)}" ${ink()}/>
-      <path d="M60 238 L40 252 L48 268 L66 250" fill="${team(t)}" ${ink(5)}/>
+      <path d="M150 236 L172 246 L166 262 L146 250" fill="${team(t)}" ${ink(5)}/>
     </g>`;
   }
 
@@ -166,44 +164,34 @@ window.Sata = (function () {
       <path d="M${100 + f * 16 - 11} 142 Q${100 + f * 16} 152 ${100 + f * 16 + 11} 142" fill="none" ${ink(5)}/></g>`;
   }
 
-  /* 갓(흑립) — 얇고 평평한 검은 원판 챙 + 높은 원통 대우 + 구슬 갓끈 한 줄 */
-  const beads = (() => {
-    let s = '';
-    for (let i = 1; i <= 7; i++) {
-      const u = i / 7, x = (1 - u) * (1 - u) * 44 + 2 * u * (1 - u) * 22 + u * u * 70, y = (1 - u) * (1 - u) * 60 + 2 * u * (1 - u) * 130 + u * u * 178;
-      s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5.5" fill="${C.ochreL}" ${ink(3.5)}/>`;
-    }
-    return `<path d="M44 60 Q22 130 70 178" fill="none" ${ink(3)}/>` + s;
-  })();
+  /* 갓(흑립) — 원통 대우 + 넓고 평평한 양태, 갓끈 */
   const gat = `<g>
-    <path d="M72 52 L74 -6 Q74 -14 100 -14 Q126 -14 126 -6 L128 52 Z" fill="${C.ink}" ${ink(6)}/>
-    <path d="M74 40 Q100 36 126 40" fill="none" stroke="${C.steel}" stroke-width="7"/>
-    <path d="M6 56 Q100 44 194 56 Q100 66 6 56 Z" fill="${C.ink}" ${ink(5)}/>
-    ${beads}</g>`;
+    <path d="M68 52 L70 20 Q70 6 100 6 Q130 6 130 20 L132 52 Z" fill="${C.ink}" ${ink(6)}/>
+    <ellipse cx="100" cy="54" rx="90" ry="14" fill="${C.ink}"/>
+    <ellipse cx="100" cy="50" rx="90" ry="14" fill="${C.steel}" ${ink(5)}/>
+    <path d="M30 56 Q40 96 58 104" fill="none" ${ink(4)}/>
+    <circle cx="58" cy="106" r="6" fill="${C.pine}" ${ink(4)}/></g>`;
 
-  /* 전립(벙거지) — 둥근 몸통 + 끝이 아래로 휜 챙 + 상모 한 줌 + 공작깃 하나 */
+  /* 전립(벙거지) — 둥근 모자 + 붉은 상모 + 공작 깃 */
   const jeonrip = `<g>
-    <path d="M58 56 Q58 12 100 12 Q142 12 142 56 Z" fill="${C.steel}" ${ink()}/>
-    <path d="M16 70 Q30 46 100 46 Q170 46 184 70 Q170 62 100 60 Q30 62 16 70 Z" fill="${C.steel}" ${ink()}/>
-    <path d="M130 24 Q152 0 156 -30" fill="none" stroke="${C.ink}" stroke-width="11" stroke-linecap="round"/>
-    <path d="M130 24 Q152 0 156 -30" fill="none" stroke="${C.pine}" stroke-width="5" stroke-linecap="round"/>
-    <ellipse cx="157" cy="-38" rx="9" ry="12" fill="${C.pine}" ${ink(5)}/>
-    <circle cx="157" cy="-38" r="4" fill="${C.ochreL}"/>
-    <g fill="${C.red}" ${ink(5)}><circle cx="92" cy="8" r="8"/><circle cx="108" cy="8" r="8"/><circle cx="100" cy="-2" r="8"/></g></g>`;
+    <path d="M56 56 Q56 14 100 14 Q144 14 144 56 Z" fill="${C.steel}" ${ink()}/>
+    <ellipse cx="100" cy="56" rx="80" ry="14" fill="${C.steel}" ${ink()}/>
+    <path d="M24 56 Q100 72 176 56" fill="none" ${ink(4)}/>
+    <path d="M132 26 Q158 4 168 -18" fill="none" ${ink(6)} stroke="${C.pine}"/>
+    <circle cx="100" cy="12" r="11" fill="${C.red}" ${ink(6)}/></g>`;
 
-  /* 투구 — 둥근 발립형 + 앞에만 짧은 챙 + 긴 간주(삼지창) + 드림(귀·목 덮는 천) */
+  /* 투구 — 반구 개철 + 간주·삼지창 + 붉은 상모 + 긴 드림(목가리개) */
   const helmet = `<g>
-    <g fill="${C.steel}" ${ink()}>
-      <path d="M36 70 Q30 150 46 168 L76 160 Q64 110 68 66 Z"/>
-      <path d="M164 70 Q170 150 154 168 L124 160 Q136 110 132 66 Z"/></g>
-    <g fill="${C.ochreL}"><circle cx="48" cy="98" r="3.6"/><circle cx="50" cy="124" r="3.6"/><circle cx="54" cy="150" r="3.6"/>
-      <circle cx="152" cy="98" r="3.6"/><circle cx="150" cy="124" r="3.6"/><circle cx="146" cy="150" r="3.6"/></g>
-    <path d="M56 66 Q56 14 100 14 Q144 14 144 66 Z" fill="${C.steel}" ${ink()}/>
-    <path d="M60 40 Q100 30 140 40" fill="none" stroke="${C.ochre}" stroke-width="6"/>
-    <path d="M52 64 Q100 56 148 64 Q100 94 52 64 Z" fill="${C.ochreD}" ${ink()}/>
-    <line x1="100" y1="14" x2="100" y2="-54" ${ink(8)}/>
-    <path d="M84 -70 Q84 -50 100 -46 Q116 -50 116 -70 M100 -46 L100 -78" fill="none" ${ink(7)}/>
-    <circle cx="100" cy="-8" r="10" fill="${C.red}" ${ink(5)}/></g>`;
+    <g fill="${C.ochreD}" ${ink()}>
+      <path d="M34 72 Q30 150 44 166 L74 158 Q62 108 66 68 Z"/>
+      <path d="M166 72 Q170 150 156 166 L126 158 Q138 108 134 68 Z"/></g>
+    <g fill="${C.ink}"><circle cx="46" cy="96" r="3.2"/><circle cx="46" cy="120" r="3.2"/><circle cx="46" cy="144" r="3.2"/>
+      <circle cx="154" cy="96" r="3.2"/><circle cx="154" cy="120" r="3.2"/><circle cx="154" cy="144" r="3.2"/></g>
+    <path d="M56 64 Q56 16 100 16 Q144 16 144 64 Z" fill="${C.steel}" ${ink()}/>
+    <ellipse cx="100" cy="64" rx="62" ry="12" fill="${C.ochreD}" ${ink()}/>
+    <path d="M62 40 Q100 54 138 40" fill="none" ${ink(4)}/>
+    <line x1="100" y1="16" x2="100" y2="-8" ${ink(8)}/>
+    <circle cx="100" cy="-16" r="12" fill="${C.red}" ${ink(6)}/></g>`;
 
   const hats = { gat, jeonrip, helmet };
 
@@ -224,11 +212,10 @@ window.Sata = (function () {
   const units = {
     /* 궁수 — 갓 + 각궁. 키만 한 활의 곡선 */
     archer(t, e) {
-      const bowD = 'M180 10 Q156 18 162 42 Q238 158 162 274 Q156 298 180 306';
       const bow = `<g>
-        <path d="${bowD}" fill="none" stroke="${C.ink}" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="${bowD}" fill="none" stroke="${C.ochreL}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M166 26 L112 158 L166 290" fill="none" ${ink(4)}/></g>`;
+        <path d="M158 26 Q252 158 158 290" fill="none" stroke="${C.ink}" stroke-width="20" stroke-linecap="round"/>
+        <path d="M158 26 Q244 158 158 290" fill="none" stroke="${C.ochreL}" stroke-width="9" stroke-linecap="round"/>
+        <path d="M158 26 L112 158 L158 290" fill="none" ${ink(4)}/></g>`;
       const arrow = `<g><line x1="104" y1="158" x2="248" y2="158" ${ink(6)}/>
         <path d="M248 158 L232 148 L232 168 Z" fill="${C.ink}"/>
         <path d="M104 158 L92 150 M104 158 L92 166" ${ink(4)}/></g>`;
@@ -242,13 +229,11 @@ window.Sata = (function () {
     /* 포수 — 전립 + 총통. 몸통보다 굵은 사선 */
     gunner(t) {
       const barrel = `<g>
-        <line x1="34" y1="264" x2="216" y2="136" stroke="${C.ink}" stroke-width="50" stroke-linecap="round"/>
-        <line x1="38" y1="261" x2="212" y2="139" stroke="${C.ochreD}" stroke-width="36" stroke-linecap="round"/>
-        <line x1="44" y1="250" x2="200" y2="140" stroke="${C.ochre}" stroke-width="6" stroke-linecap="round"/>
-        <line x1="76" y1="234" x2="92" y2="223" stroke="${C.ink}" stroke-width="46"/>
-        <line x1="146" y1="185" x2="160" y2="175" stroke="${C.ink}" stroke-width="46"/>
-        <circle cx="214" cy="138" r="23" fill="${C.ochreD}" ${ink(6)}/>
-        <circle cx="214" cy="138" r="10" fill="${C.ink}"/></g>`;
+        <line x1="22" y1="272" x2="226" y2="128" stroke="${C.ink}" stroke-width="48" stroke-linecap="round"/>
+        <line x1="26" y1="269" x2="222" y2="131" stroke="${C.steel}" stroke-width="34" stroke-linecap="round"/>
+        <line x1="70" y1="238" x2="92" y2="222" stroke="${C.ink}" stroke-width="44"/>
+        <line x1="150" y1="182" x2="170" y2="168" stroke="${C.ink}" stroke-width="44"/>
+        <circle cx="222" cy="131" r="22" fill="${C.steel}" ${ink(6)}/></g>`;
       const carriage = `<g>
         <path d="M112 208 L74 300" ${ink(14)} stroke="${C.ochreD}"/>
         <path d="M112 208 L166 300" ${ink(14)} stroke="${C.ochreD}"/>
@@ -257,13 +242,13 @@ window.Sata = (function () {
         <circle cx="106" cy="184" r="9" fill="${C.red}" ${ink(4)}/></g>`;
       return flag(t, 1) + boots('wide') + coat(t) + barrel + carriage +
         arm(130, 192, 152, 214) + hand(152, 214) + arm(72, 192, 56, 222) + hand(56, 222) + match + head(1, null, 'jeonrip') + `
-        <path d="M230 124 L262 100 M238 144 L274 136" fill="none" ${ink(5)}/>`;
+        <path d="M236 120 L268 96 M244 140 L280 132" fill="none" ${ink(5)}/>`;
     },
     /* 검사 — 무관 투구 + 환도. 머리 위 검의 사선 */
     sword(t) {
       const blade = `<g>
-        <path d="M184 30 Q112 -44 50 -162 Q88 -70 170 42 Z" fill="${C.steel}" ${ink()}/>
-        <path d="M176 30 Q112 -40 62 -136" fill="none" stroke="${C.hanji}" stroke-width="4" opacity=".55"/>
+        <path d="M190 22 L86 -120 Q68 -146 52 -156 Q54 -134 44 -114 L166 46 Z" fill="${C.steel}" ${ink()}/>
+        <path d="M62 -136 L182 30" fill="none" stroke="${C.hanji}" stroke-width="4" opacity=".5"/>
         <line x1="174" y1="32" x2="200" y2="58" ${ink(9)} stroke="${C.pine}"/>
         <line x1="192" y1="50" x2="218" y2="78" stroke="${C.ochreD}" stroke-width="20" stroke-linecap="round"/>
         <line x1="192" y1="50" x2="218" y2="78" fill="none" ${ink(3)}/></g>`;
@@ -275,9 +260,8 @@ window.Sata = (function () {
       const shaft = `<g>
         <line x1="176" y1="-128" x2="122" y2="308" stroke="${C.ink}" stroke-width="20" stroke-linecap="round"/>
         <line x1="176" y1="-128" x2="122" y2="308" stroke="${C.ochreD}" stroke-width="11" stroke-linecap="round"/>
-        <path d="M182 -170 Q198 -130 179 -100 Q162 -130 182 -170 Z" fill="${C.steel}" ${ink(6)}/>
-        <line x1="166" y1="-94" x2="190" y2="-91" stroke="${C.ink}" stroke-width="14" stroke-linecap="round"/>
-        <line x1="166" y1="-94" x2="190" y2="-91" stroke="${C.ochre}" stroke-width="6" stroke-linecap="round"/></g>`;
+        <path d="M180 -148 L206 -52 L152 -44 Z" fill="${C.steel}" ${ink(6)}/>
+        <line x1="160" y1="-34" x2="198" y2="-40" ${ink(10)} stroke="${C.red}"/></g>`;
       return flag(t, 1) + shaft + boots('lunge') + coat(t) +
         arm(72, 198, 148, 96) + arm(130, 202, 158, 154) + hand(150, 96) + hand(158, 152) + head(1, null, 'jeonrip');
     },
@@ -305,9 +289,8 @@ window.Sata = (function () {
     if (e === 'hit') inner = `<g transform="rotate(-13 100 296)">${inner}</g>`;
     if (e === 'win') inner = `<g transform="translate(0,-14)">${inner}</g>`;
     if (e === 'buried') inner = inner + `
-      <path d="M-80 236 Q10 212 70 226 Q120 238 180 216 Q230 202 240 226 L240 310 L-80 310 Z" fill="${C.ash}" stroke="${C.hanji}" stroke-width="10"/>
-      <path d="M-80 236 Q10 212 70 226 Q120 238 180 216 Q230 202 240 226" fill="none" stroke="${C.ink}" stroke-width="6"/>
-      <path d="M-60 262 Q40 250 120 260 Q200 270 240 258" fill="none" stroke="${C.hanji}" stroke-width="4" opacity=".4"/>`;
+      <path d="M-80 236 Q10 212 70 226 Q120 238 180 216 Q230 202 240 226 L240 310 L-80 310 Z" fill="${C.ash}" stroke="${C.ink}" stroke-width="6"/>
+      <path d="M-60 258 Q40 246 120 256 Q200 266 240 254" fill="none" stroke="${C.hanji}" stroke-width="4" opacity=".35"/>`;
     return `<svg viewBox="-80 -170 320 480" width="${(h * 320) / 300}" height="${(h * 480) / 300}"
       overflow="visible" aria-label="${names[unit] || unit}">${inner}</svg>`;
   }
