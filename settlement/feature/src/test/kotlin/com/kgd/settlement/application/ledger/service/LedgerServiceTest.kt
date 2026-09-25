@@ -46,6 +46,14 @@ class LedgerServiceTest : BehaviorSpec({
         }
     }
 
+    Given("같은 정산일에 매입과 전액 환불이 겹쳐 입금액·수수료가 0 인 PG 입금") {
+        Then("예외 없이 분개하지 않는다 — 움직인 돈이 없다") {
+            val h = SettlementHarness(t0)
+            h.ledger.recordPgDeposit(RecordLedgerUseCase.PgDeposit(1L, "ORD-1-1", LocalDate.of(2026, 9, 24), 0L, 0L, "evt-zero")) shouldBe false
+            h.journals.journals.count { it.type == JournalType.PG_DEPOSIT } shouldBe 0
+        }
+    }
+
     Given("환불 기록") {
         Then("환불 거래와 함께 환불된 라인·배송비 키를 남긴다 — 정산서가 거르는 근거") {
             val h = SettlementHarness(t0)

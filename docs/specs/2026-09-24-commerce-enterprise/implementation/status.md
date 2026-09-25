@@ -219,3 +219,11 @@
 - Q19 7개 모듈 VARCHAR 전환 · Q6 풀 키를 master/replica 바로 아래로(전부 3, deal 포함) · Q5 quant `/api/v1/quant/orders` + 무인증 `/api/v1/quant/**` 를 assets 로 좁힘 · Q8 반려 상호 `[파기]` · Q9 auth 회원별 마지막 반영 시각(숫자·ISO occurredAt) · Q23 JSON 템플릿 4 삭제·이중 Flyway 끔·옛 -dlt runbook · 모니터링 알림 사가 지표로 · Q24 1단계 search:batch price_won
 - 서브모듈: auth `4a784c4`(fe0f5f6 에서 ff) · gifticon `848ed98` — 원격 main 푸시 완료
 - 회귀 주입 4종 빨간불
+
+## W3+W4 운영 반영 확인 (2026-09-26)
+- W4 push 빌드(run 36155655593)가 AtlasGraphExportSpec(온톨로지 YAML ↔ portal-fe 정적 그래프)로 실패 → `ATLAS_EXPORT=write` 재내보내기 `76c1c266` → 10개 서비스 dispatch(run 36157225661) success
+- 운영: commerce·gateway·auth·account·engagement·sideapp·content `:76c1c26` ready, 전 서비스 ERROR(15m) 0
+- `scripts/ops/schema-enum-check.sh` → **ENUM 컬럼 없음**(배포 전 11)
+- commerce 메모리 947MiB → **651MiB** / 1200Mi (풀 19개 × 최대 3·최소 유휴 1)
+- 운영 주문 3: 10초 FULFILLING · 사가 COMPLETED(새 이미지 회귀 없음) · `/api/v1/quant/orders` 401 · 토스 웹훅 404 · `/api/warehouses` 401
+- 옛 `-dlt` 토픽: `payment.reconciliation.settled-dlt` 1건(주문 1 의 0원 PG 입금 — 같은 날 매입·전액 환불). 원인은 입금액·수수료 0 인 분개를 원장이 거부한 것 → 0원 입금은 분개하지 않게 수정(LedgerServiceTest, 회귀 주입 빨간불 확인)

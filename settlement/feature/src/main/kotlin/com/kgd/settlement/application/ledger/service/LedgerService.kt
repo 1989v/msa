@@ -51,11 +51,18 @@ class LedgerService(
     }
 
     @Transactional("settlementTransactionManager")
-    override fun recordPgDeposit(command: RecordLedgerUseCase.PgDeposit): Boolean = append(
-        JournalRules.pgDeposit(
-            command.orderId, command.orderNo, command.settleDate, command.depositAmount, command.pgFee, command.eventId, clock.instant(),
-        ),
-    )
+    override fun recordPgDeposit(command: RecordLedgerUseCase.PgDeposit): Boolean {
+        // 같은 정산일에 매입과 전액 환불이 겹친 거래는 입금액·수수료가 모두 0 — 움직인 돈이 없어 분개하지 않는다
+        if (command.depositAmount == 0L && command.pgFee == 0L) {
+            log.info { "입금액·수수료가 0 인 PG 입금 — 분개 없음: order=${command.orderId}, orderNo=${command.orderNo}, date=${command.settleDate}" }
+            return false
+        }
+        return append(
+            JournalRules.pgDeposit(
+                command.orderId, command.orderNo, command.settleDate, command.depositAmount, command.pgFee, command.eventId, clock.instant(),
+            ),
+        )
+    }
 
     @Transactional("settlementTransactionManager")
     override fun reverse(journalId: Long, actorId: String, reason: String): Journal {
