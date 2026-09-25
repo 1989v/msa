@@ -1,4 +1,4 @@
--- 금액 축소 1단계 (product_db). 배치: productdb/migration/V<배포일>_001__products_price_won_not_null.sql
+-- 금액 축소 1단계 (product_db) — 코드는 이제 price_won 만 쓴다
 -- 롤백 기간에 옛 코드가 쓴 행은 price_won 이 비어 있다 — 먼저 다시 채운다.
 UPDATE products SET price_won = CAST(price AS SIGNED) WHERE price_won IS NULL;
 

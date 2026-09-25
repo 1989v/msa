@@ -5,7 +5,6 @@ import com.kgd.product.domain.product.model.Product
 import com.kgd.product.domain.product.model.ProductStatus
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
-import java.math.BigDecimal
 import java.time.LocalDateTime
 
 @Entity
@@ -14,7 +13,7 @@ class ProductJpaEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
     name: String,
-    /** 원 단위 가격 — `price_won` 과 옛 `price` 를 둘 다 이 값으로 쓴다 */
+    /** 원 단위 가격 */
     price: Long,
     stock: Int,
     status: ProductStatus,
@@ -41,14 +40,9 @@ class ProductJpaEntity(
     var name: String = name
         private set
 
-    /** 원 단위 가격 — 코드가 읽는 컬럼. 확장 단계라 DB 는 NULL 을 허용한다 */
-    @Column(name = "price_won")
-    var priceWon: Long? = price
-        private set
-
-    /** 옛 컬럼 — 확장 단계라 롤백한 옛 코드가 읽도록 같은 값을 계속 쓴다. 다음 단계에서 삭제 */
-    @Column(nullable = false, precision = 19, scale = 2)
-    var price: BigDecimal = BigDecimal.valueOf(price)
+    /** 원 단위 가격 */
+    @Column(name = "price_won", nullable = false)
+    var priceWon: Long = price
         private set
 
     @Column(nullable = false)
@@ -114,7 +108,6 @@ class ProductJpaEntity(
     fun update(product: Product) {
         name = product.name
         priceWon = product.price.amount
-        price = BigDecimal.valueOf(product.price.amount)
         stock = product.stock
         status = product.status
         brand = product.brand
@@ -134,7 +127,7 @@ class ProductJpaEntity(
     fun toDomain(): Product = Product.restore(
         id = id,
         name = name,
-        price = Money(requireNotNull(priceWon) { "price_won 백필 누락: products.id=$id" }),
+        price = Money(priceWon),
         stock = stock,
         status = status,
         createdAt = createdAt,

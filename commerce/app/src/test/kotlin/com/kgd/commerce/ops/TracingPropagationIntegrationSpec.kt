@@ -80,7 +80,7 @@ class TracingPropagationIntegrationSpec(
             infra.createTopics("product.item.updated")
             infra.awaitAssigned(ctx.getBean(KafkaListenerEndpointRegistry::class.java), setOf("tracing-probe"))
             productJdbc.update(
-                "INSERT INTO products (name, price, price_won, stock, status, created_at, seller_id) VALUES ('추적 확인', 1000, 1000, 1, 'ACTIVE', NOW(), 1)",
+                "INSERT INTO products (name, price_won, stock, status, created_at, seller_id) VALUES ('추적 확인', 1000, 1, 'ACTIVE', NOW(), 1)",
             )
             val traceId = "4bf92f3577b34da6a3ce929d0e0e4736"
 

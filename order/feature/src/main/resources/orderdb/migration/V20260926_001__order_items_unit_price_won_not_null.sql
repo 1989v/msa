@@ -1,4 +1,4 @@
--- 금액 축소 1단계 (order_db). 배치: orderdb/migration/V<배포일>_001__order_items_unit_price_won_not_null.sql
+-- 금액 축소 1단계 (order_db) — 코드는 이제 unit_price_won 만 쓴다
 -- 롤백 기간에 옛 코드가 쓴 행은 unit_price_won 이 비어 있다 — 먼저 다시 채운다.
 UPDATE order_items SET unit_price_won = CAST(unit_price AS SIGNED) WHERE unit_price_won IS NULL;
 

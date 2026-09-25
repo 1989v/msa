@@ -158,6 +158,41 @@ class OrderSheetIntegrationSpec(
             }
         }
 
+        Given("금액 축소 마이그레이션 (unit_price_won NOT NULL, 옛 컬럼 NULL 허용)") {
+            fun flyway(db: String, target: String? = null) = Flyway.configure()
+                .dataSource(jdbcUrl(db), mysql.username, mysql.password)
+                .locations("classpath:orderdb/migration")
+                .apply { target?.let { target(it) } }
+                .load()
+            fun nullable(db: String, column: String) = jdbcOf(db).queryForObject(
+                "SELECT is_nullable FROM information_schema.columns WHERE table_schema = ? AND table_name = 'order_items' AND column_name = ?",
+                String::class.java, db, column,
+            )
+
+            Then("롤링 배포 중 옛 파드가 unit_price_won 없이 쓴 행을 채우고 NOT NULL 로 바꾼다") {
+                flyway("order_contract_ok", target = "20260925.201").migrate()
+                val jdbc = jdbcOf("order_contract_ok")
+                jdbc.update("INSERT INTO orders (id, user_id, status, created_at) VALUES (1, 'u', 'CONFIRMED', NOW())")
+                jdbc.update("INSERT INTO order_items (order_id, product_id, quantity, unit_price, status) VALUES (1, 10, 1, 7000.00, 'ACTIVE')")
+
+                flyway("order_contract_ok").migrate()
+
+                jdbc.queryForObject("SELECT unit_price_won FROM order_items", Long::class.java) shouldBe 7_000L
+                nullable("order_contract_ok", "unit_price_won") shouldBe "NO"
+                nullable("order_contract_ok", "unit_price") shouldBe "YES"
+            }
+            Then("채울 수 없는 행(소수 원)이 있으면 DDL 전에 멈춘다 — 컬럼은 NULL 허용 그대로") {
+                flyway("order_contract_fraction", target = "20260925.201").migrate()
+                val jdbc = jdbcOf("order_contract_fraction")
+                jdbc.update("INSERT INTO orders (id, user_id, status, created_at) VALUES (1, 'u', 'CONFIRMED', NOW())")
+                jdbc.update("INSERT INTO order_items (order_id, product_id, quantity, unit_price, status) VALUES (1, 10, 1, 100.50, 'ACTIVE')")
+
+                shouldThrow<FlywayException> { flyway("order_contract_fraction").migrate() }
+
+                nullable("order_contract_fraction", "unit_price_won") shouldBe "YES"
+            }
+        }
+
         Given("읽기 모델(실제 발행 페이로드) → 주문서") {
             val admin = ProductRequester("1", setOf("ROLE_ADMIN"))
             val products = ctx.getBean(CreateProductUseCase::class.java)
@@ -306,7 +341,7 @@ class OrderSheetIntegrationSpec(
                         conn.createStatement().use { st ->
                             listOf(
                                 "warehouse_db", "fulfillment_db", "order_db", "product_db", "deal_db", "seller_db", "payment_db",
-                                "promotion_db", "settlement_db", "order_backfill_ok", "order_backfill_fraction",
+                                "promotion_db", "settlement_db", "order_backfill_ok", "order_backfill_fraction", "order_contract_ok", "order_contract_fraction",
                             ).forEach { st.execute("CREATE DATABASE IF NOT EXISTS $it") }
                         }
                     }

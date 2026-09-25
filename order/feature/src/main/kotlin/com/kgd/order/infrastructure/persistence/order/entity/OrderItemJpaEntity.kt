@@ -5,7 +5,6 @@ import com.kgd.order.domain.order.model.Money
 import com.kgd.order.domain.order.model.OrderItem
 import com.kgd.order.domain.order.model.OrderLineStatus
 import jakarta.persistence.*
-import java.math.BigDecimal
 import java.time.Instant
 
 /**
@@ -20,12 +19,9 @@ class OrderItemJpaEntity(
     val productId: Long,
     @Column(nullable = false)
     val quantity: Int,
-    /** 옛 컬럼 — 확장 단계라 롤백한 옛 코드가 읽도록 같은 값을 계속 쓴다. 다음 단계에서 삭제 */
-    @Column(nullable = false, precision = 19, scale = 2)
-    val unitPrice: BigDecimal,
-    /** 원 단위 단가 — 코드가 읽는 컬럼. 확장 단계라 DB 는 NULL 을 허용한다 */
-    @Column(name = "unit_price_won")
-    val unitPriceWon: Long?,
+    /** 원 단위 단가 */
+    @Column(name = "unit_price_won", nullable = false)
+    val unitPriceWon: Long,
     order: OrderJpaEntity? = null,
     @Column(name = "line_no") val lineNo: Int? = null,
     @Column(name = "product_name", length = 255) val productName: String? = null,
@@ -81,7 +77,7 @@ class OrderItemJpaEntity(
         productId = productId,
         productName = productName.orEmpty(),
         sellerId = sellerId ?: PLATFORM_SELLER_ID,
-        unitPrice = Money(requireNotNull(unitPriceWon) { "unit_price_won 백필 누락: order_items.id=$id" }),
+        unitPrice = Money(unitPriceWon),
         quantity = quantity,
         couponDiscount = couponDiscount ?: 0L,
         couponBearer = couponBearer,
@@ -101,7 +97,6 @@ class OrderItemJpaEntity(
             id = item.id,
             productId = item.productId,
             quantity = item.quantity,
-            unitPrice = BigDecimal.valueOf(item.unitPrice.amount),
             unitPriceWon = item.unitPrice.amount,
             lineNo = item.lineNo,
             productName = item.productName,
