@@ -6,6 +6,7 @@ import com.kgd.codedictionary.infrastructure.ontology.YamlOntologyReader
 import com.zaxxer.hikari.HikariDataSource
 import io.kotest.core.annotation.EnabledIf
 import io.kotest.core.spec.style.BehaviorSpec
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import org.flywaydb.core.Flyway
 import org.springframework.jdbc.core.JdbcTemplate
@@ -57,16 +58,15 @@ class SearchOntologyMigrationSpec : BehaviorSpec({
             report.outcome shouldBe ApplyOutcome.APPLIED
             edges() shouldBe loaded.ontology.relations.map { Triple(it.from, it.to, it.kind.name) }.toSet()
         }
-        then("관리 대상 개념 전부에 kind 가 있고, 옛 지표 묶음 둘은 관리 밖이다") {
+        then("관리 대상 개념 전부에 kind 가 있고, 옛 지표 묶음 둘은 V29 가 지웠다") {
             jdbc.queryForObject("SELECT COUNT(*) FROM concept WHERE managed_by IS NOT NULL AND kind IS NOT NULL", Int::class.java) shouldBe
                 loaded.ontology.concepts.size
             jdbc.queryForObject(
-                "SELECT COUNT(*) FROM concept WHERE concept_id IN ('search-ops-metrics','offline-metrics') AND managed_by IS NULL", Int::class.java,
-            ) shouldBe 2
+                "SELECT COUNT(*) FROM concept WHERE concept_id IN ('search-ops-metrics','offline-metrics')", Int::class.java,
+            ) shouldBe 0
         }
-        then("배치율 — 시드에 있던 개념 중 관리 밖은 옛 지표 묶음 둘뿐이다") {
-            jdbc.queryForList("SELECT concept_id FROM concept WHERE managed_by IS NULL", String::class.java).toSet() shouldBe
-                setOf("search-ops-metrics", "offline-metrics")
+        then("배치율 — 시드에 있던 개념이 전부 온톨로지 파일에 놓였다") {
+            jdbc.queryForList("SELECT concept_id FROM concept WHERE managed_by IS NULL", String::class.java).shouldBeEmpty()
         }
     }
 })
