@@ -1,23 +1,37 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchConceptPostCounts, fetchPosts } from '../../api/blogApi';
-import { fetchAtlas, fetchConceptHierarchy, fetchConceptRelations } from '../../api/searchApi';
-import { buildTree } from './atlasModel';
+import { fetchConceptRelations } from '../../api/searchApi';
+import { indexGraph, type Graph, type RawGraph } from './atlasGraph';
 
 const LONG = 10 * 60 * 1000;
 
-export function useAtlas() {
-  return useQuery({ queryKey: ['atlas'], queryFn: fetchAtlas, staleTime: LONG });
+/**
+ * 개념 그래프는 빌드에 실린 정적 청크다 — 파일명에 해시가 붙어 Cloudflare 가장자리에서 받고
+ * API 를 부르지 않는다. 구조는 한 번에, 설명은 도메인마다 따로(크기의 대부분이 설명이다).
+ */
+const graphChunk = import.meta.glob<{ default: RawGraph }>('./generated/graph.json');
+const descChunks = import.meta.glob<{ default: Record<string, string> }>('./generated/desc/*.json');
+
+export function useGraph() {
+  return useQuery({
+    queryKey: ['atlas', 'graph'],
+    queryFn: async (): Promise<Graph> => indexGraph((await graphChunk['./generated/graph.json']()).default),
+    staleTime: Infinity,
+  });
 }
 
-/** 개념 id → 그 개념을 관리하는 도메인. 도메인 간 관계에 「다른 도메인」 표식을 붙일 때 쓴다 */
-export function useOwnerIndex() {
-  const atlas = useAtlas();
-  return useMemo(() => {
-    const owner = new Map<string, string>();
-    for (const d of atlas.data?.domains ?? []) for (const id of d.conceptIds) owner.set(id, d.domain);
-    return owner;
-  }, [atlas.data]);
+/** 도메인 하나의 개념 설명 — 모르는 도메인이면 빈 표 */
+export function useDescriptions(domain: string | undefined) {
+  return useQuery({
+    queryKey: ['atlas', 'desc', domain],
+    queryFn: async () => {
+      const load = descChunks[`./generated/desc/${domain}.json`];
+      return load ? (await load()).default : {};
+    },
+    enabled: Boolean(domain),
+    staleTime: Infinity,
+  });
 }
 
 /** 개념별 발행글 수. 블로그가 죽어도 아틀라스는 그대로 그린다 — 실패는 빈 표로 */
@@ -29,17 +43,6 @@ export function usePostCounts() {
     retry: false,
   });
   return useMemo(() => new Map((q.data ?? []).map((c) => [c.conceptId, c.postCount])), [q.data]);
-}
-
-export function useDomainTree(rootId: string | undefined) {
-  const q = useQuery({
-    queryKey: ['hierarchy', rootId],
-    queryFn: () => fetchConceptHierarchy(rootId),
-    enabled: Boolean(rootId),
-    staleTime: LONG,
-  });
-  const tree = useMemo(() => (q.data && rootId ? buildTree(q.data, rootId) : null), [q.data, rootId]);
-  return { tree, isLoading: q.isLoading, isError: q.isError };
 }
 
 export function useRelations(conceptId: string | undefined) {

@@ -203,186 +203,227 @@
   .atlas-home.is-wide .atlas-domain-row__desc { display: none; }
 }
 
-/* ─── 도메인 그래프 · 모바일 ───────────────────────────────── */
-.atlas-domain-m { padding: var(--ko-space-4) var(--ko-space-4) 120px; }
-.atlas-rail-path ol {
-  position: relative;
-  display: flex;
-  gap: 0;
-  margin: var(--ko-space-2) 0 0;
-  padding: 0;
-  list-style: none;
-  overflow-x: auto;
-  scrollbar-width: none;
+/* ─── 도메인 · 병풍 ────────────────────────────────────────── */
+/* 첫 층 묶음이 패널 하나씩 옆으로 늘어선다 — 도메인 전체가 한 화면. 패널은 번갈아 어긋난다(병풍 접힘) */
+.atlas-domain { --atlas-panel-w: 272px; padding-bottom: var(--ko-space-12); }
+.atlas-domain__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--ko-space-2) var(--ko-space-6);
+  align-items: end;
+  padding: var(--ko-space-8) var(--ko-space-4) var(--ko-space-4);
 }
-.atlas-rail-path ol::before {
-  content: '';
-  position: absolute;
-  left: 5px;
-  right: 24px;
-  top: 5px;
-  height: 1px;
-  background: var(--ko-border-default);
-}
-.atlas-rail-path li { position: relative; flex: 1 0 96px; max-width: 150px; font-size: 0.75rem; line-height: 1.35; }
-.atlas-rail-path li a,
-.atlas-rail-path li > span {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ko-space-2);
-  min-height: 44px;
-  padding-right: var(--ko-space-2);
-  color: var(--ko-text-secondary);
-  text-decoration: none;
-}
-.atlas-rail-path li .atlas-glyph--domain,
-.atlas-rail-path li .atlas-glyph--term { background-color: var(--ko-surface-0); }
-.atlas-rail-path li.is-current > span { color: var(--ko-accent-text); font-weight: 600; }
+.atlas-domain__title { margin: var(--ko-space-1) 0 0; font-size: clamp(1.5rem, 4vw, 2.25rem); line-height: 1.15; letter-spacing: -0.02em; text-wrap: balance; }
+.atlas-domain__lead { margin: var(--ko-space-2) 0 0; max-width: 62ch; font-size: 0.875rem; color: var(--ko-text-secondary); }
+.atlas-domain__side { display: flex; flex-direction: column; align-items: flex-end; gap: var(--ko-space-3); }
+.atlas-domain__stats { display: flex; gap: var(--ko-space-4); font-size: 0.6875rem; color: var(--ko-text-muted); }
+.atlas-domain__stats b { color: var(--ko-text-primary); font-weight: 600; font-variant-numeric: tabular-nums; }
+.atlas-chip { font-size: 0.6875rem; padding: 6px 10px; border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius); background: none; color: var(--ko-text-secondary); cursor: pointer; }
+.atlas-chip[aria-pressed='true'] { color: var(--ko-accent-text); border-color: var(--ko-accent-text); background: var(--ko-accent-primary-bg); }
+.atlas-chip:active { transform: translateY(1px); }
 
-.atlas-layers {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--ko-space-3);
-  margin-top: var(--ko-space-4);
-  padding: var(--ko-space-3) 0;
-  border-top: 1px solid var(--ko-border-subtle);
-  border-bottom: 1px solid var(--ko-border-subtle);
-}
-.atlas-layers > .atlas-eyebrow { align-self: center; }
-.atlas-layers__bar { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.625rem; color: var(--ko-text-secondary); }
-.atlas-layers__bar > span:first-child { display: block; width: 16px; background: var(--ko-border-default); }
-.atlas-layers__bar.is-current > span:first-child { background: var(--ko-accent-text); }
-.atlas-layers__bar.is-current { color: var(--ko-accent-text); }
-.atlas-layers__note { margin-left: auto; align-self: center; font-size: 0.75rem; color: var(--ko-text-secondary); }
+/* 개념 바로 가기 — 상자 없이 아래 선 하나 */
+.atlas-jump { position: relative; max-width: 420px; margin-top: var(--ko-space-3); }
+.atlas-jump__key { position: absolute; left: 2px; top: 10px; font-size: 0.75rem; color: var(--ko-text-muted); }
+.atlas-jump input { width: 100%; font: inherit; font-size: 0.875rem; color: var(--ko-text-primary); background: none; border: 0; border-bottom: 1px solid var(--ko-border-default); padding: 8px 2px 8px 22px; }
+.atlas-jump input:focus { outline: none; border-bottom-color: var(--ko-accent-text); box-shadow: 0 1px 0 var(--ko-accent-text); }
+.atlas-jump__list { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 4px); list-style: none; margin: 0; padding: 4px; background: var(--ko-surface-1); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius-asym); max-height: 320px; overflow: auto; }
+.atlas-jump__list button { display: flex; gap: var(--ko-space-2); align-items: center; width: 100%; padding: 7px 8px; border: 0; border-radius: var(--kh-radius); background: none; color: inherit; font: inherit; font-size: 0.875rem; text-align: left; cursor: pointer; }
+.atlas-jump__list button[aria-selected='true'], .atlas-jump__list button:hover { background: var(--ko-surface-3); }
+.atlas-jump__list mark { background: none; color: var(--ko-accent-text); font-weight: 600; }
+.atlas-jump__domain { margin-left: auto; font-size: 0.625rem; color: var(--kh-ocher-text); white-space: nowrap; }
+.atlas-jump__none { padding: 8px; font-size: 0.75rem; }
 
-.atlas-focus {
-  margin-top: var(--ko-space-5);
-  padding: var(--ko-space-5);
+.atlas-legend { display: flex; flex-wrap: wrap; gap: var(--ko-space-3); padding: 0 var(--ko-space-4) var(--ko-space-2); font-size: 0.625rem; color: var(--ko-text-muted); }
+.atlas-legend > span { display: inline-flex; align-items: center; gap: 5px; }
+.atlas-legend__flow { color: var(--ko-accent-text); }
+.atlas-legend__rel { color: var(--kh-ocher-text); }
+
+/* 흐름 띠 — 묶음을 한 줄로. 앞뒤 흐름이 있으면 화살, 없으면 점 */
+.atlas-strip { position: sticky; top: 64px; z-index: 5; background: var(--ko-surface-0); border-block: 1px solid var(--ko-border-subtle); overflow-x: auto; scrollbar-width: none; }
+.atlas-strip ol { list-style: none; margin: 0; padding: var(--ko-space-2) var(--ko-space-4); display: flex; align-items: center; gap: 2px; width: max-content; }
+.atlas-strip li { display: flex; align-items: center; gap: 2px; }
+.atlas-strip button { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border: 0; border-radius: var(--kh-radius); background: none; color: var(--ko-text-secondary); font: inherit; font-size: 0.8125rem; white-space: nowrap; cursor: pointer; }
+.atlas-strip button[aria-current='true'] { color: var(--ko-text-primary); box-shadow: inset 0 -2px 0 var(--ko-accent-text); }
+.atlas-strip .atlas-muted { font-size: 0.625rem; }
+.atlas-strip__sep { font-size: 0.75rem; color: var(--ko-text-muted); padding-inline: 2px; }
+.atlas-strip__sep.is-flow { color: var(--ko-accent-text); }
+
+.atlas-stage { display: grid; grid-template-columns: minmax(0, 1fr) 440px; align-items: start; }
+.atlas-stage.is-closed { grid-template-columns: minmax(0, 1fr); }
+.atlas-screen-scroll { overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; }
+.atlas-screen { display: flex; width: max-content; padding: var(--ko-space-5) var(--ko-space-4) var(--ko-space-12); }
+.atlas-panel { width: var(--atlas-panel-w); flex: none; padding: 0 14px var(--ko-space-4); border-left: 1px solid var(--ko-border-subtle); scroll-snap-align: start; scroll-margin-left: var(--ko-space-4); }
+.atlas-panel:first-child { border-left: 0; padding-left: 0; }
+.atlas-panel:nth-child(even) { margin-top: 22px; }
+.atlas-panel__head { padding-bottom: 10px; margin-bottom: var(--ko-space-2); border-bottom: 1px solid var(--kh-ocher); }
+.atlas-panel__top { display: flex; align-items: baseline; gap: var(--ko-space-2); font-size: 0.6875rem; }
+.atlas-panel__idx { color: var(--kh-ocher-text); }
+.atlas-panel__head h2 { margin: 2px 0 0; font-size: 1.0625rem; line-height: 1.3; letter-spacing: -0.01em; text-wrap: balance; }
+.atlas-panel__head h2 button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.atlas-panel__head h2 button[aria-current='true'] { color: var(--ko-accent-text); }
+.atlas-panel__head p { margin: 4px 0 0; font-size: 0.78rem; color: var(--ko-text-secondary); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.atlas-panel__next { margin-top: 6px; font-size: 0.6875rem; color: var(--ko-accent-text); }
+
+.atlas-tree { list-style: none; margin: 0; padding: 0; }
+.atlas-tree .atlas-tree { margin-left: 9px; padding-left: 10px; border-left: 1px solid var(--ko-border-default); }
+.atlas-row {
+  display: grid;
+  grid-template-columns: 16px 14px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 4px;
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 6px 6px 2px;
+  border: 0;
+  border-radius: var(--kh-radius);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 120ms var(--kh-ease, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.atlas-row:hover { background: var(--ko-surface-2); }
+.atlas-row:active { transform: translateY(1px); }
+.atlas-row .atlas-glyph { margin-top: 5px; }
+.atlas-row__step { font-size: 0.625rem; color: var(--ko-accent-text); padding-top: 3px; text-align: right; }
+.atlas-row__name { font-size: 0.875rem; line-height: 1.35; overflow-wrap: anywhere; }
+.atlas-row__meta { font-size: 0.625rem; color: var(--ko-text-muted); padding-top: 3px; white-space: nowrap; }
+.atlas-row__caret { display: inline-block; margin-left: 2px; transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1); }
+.atlas-row[aria-expanded='true'] .atlas-row__caret { transform: rotate(90deg); }
+.atlas-row__hidden { color: var(--kh-ocher-text); margin-right: 6px; }
+.atlas-row__seal { color: var(--kh-ocher-text); margin-right: 6px; }
+.atlas-row__rel { grid-column: 3 / 5; font-size: 0.625rem; color: var(--kh-ocher-text); }
+.atlas-row.is-related { box-shadow: inset 2px 0 0 var(--kh-ocher); background: color-mix(in srgb, var(--kh-ocher) 9%, transparent); }
+.atlas-row.is-selected { background: var(--kh-slab); color: var(--kh-on-slab); border-radius: var(--kh-radius-asym); }
+.atlas-row.is-selected .atlas-row__meta, .atlas-row.is-selected .atlas-row__step { color: var(--kh-on-slab-muted); }
+.atlas-flow-link { position: relative; height: 10px; margin-left: 9px; border-left: 1px solid var(--ko-accent-text); }
+.atlas-flow-link::after { content: ''; position: absolute; left: -4px; bottom: -1px; border: 4px solid transparent; border-top-color: var(--ko-accent-text); border-bottom: 0; }
+
+/* ─── 개념 판 — 데스크탑 오른쪽, 모바일 아래 시트 ─────────────── */
+.atlas-board {
+  position: sticky;
+  top: 116px;
+  margin: var(--ko-space-5) var(--ko-space-4) 0 0;
+  max-height: calc(100dvh - 136px);
+  overflow: auto;
+  padding: 18px 18px 20px;
   background: var(--kh-slab);
   color: var(--kh-on-slab);
+  border-radius: var(--kh-radius-asym);
+}
+.atlas-board__grip { display: none; }
+.atlas-board__kind { display: flex; align-items: center; gap: var(--ko-space-2); font-size: 0.6875rem; color: var(--kh-on-slab-muted); }
+.atlas-board__close { margin-left: auto; width: 32px; height: 32px; display: grid; place-items: center; border: 0; border-radius: var(--kh-radius); background: none; color: var(--kh-on-slab-muted); font-size: 1.125rem; line-height: 1; cursor: pointer; }
+.atlas-board__close:hover { color: var(--kh-on-slab); background: color-mix(in srgb, var(--kh-on-slab) 8%, transparent); }
+.atlas-board__name { margin: var(--ko-space-2) 0 6px; font-size: 1.25rem; line-height: 1.25; letter-spacing: -0.01em; text-wrap: balance; }
+.atlas-board__desc { margin: 0; font-size: 0.84rem; color: color-mix(in srgb, var(--kh-on-slab) 86%, transparent); }
+.atlas-board__path { margin-top: var(--ko-space-2); font-size: 0.6875rem; color: var(--kh-on-slab-muted); }
+.atlas-board__tabs { display: flex; gap: 2px; margin-top: var(--ko-space-4); border-bottom: 1px solid var(--kh-slab-border); }
+.atlas-board__tabs button { padding: 8px 10px; border: 0; background: none; color: var(--kh-on-slab-muted); font-size: 0.75rem; cursor: pointer; }
+.atlas-board__tabs button[aria-selected='true'] { color: var(--kh-on-slab); box-shadow: inset 0 -2px 0 var(--kh-ocher); }
+.atlas-board__controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
+.atlas-pill { display: inline-flex; gap: 3px; padding: 4px 8px; border: 1px solid var(--kh-slab-border); border-radius: 9999px; background: none; color: var(--kh-on-slab-muted); font-size: 0.65rem; cursor: pointer; }
+.atlas-pill[aria-pressed='true'] { color: var(--kh-on-slab); border-color: var(--kh-ocher); background: color-mix(in srgb, var(--kh-ocher) 16%, transparent); }
+.atlas-pill span { opacity: 0.7; }
+.atlas-depth { display: inline-flex; margin-left: auto; border: 1px solid var(--kh-slab-border); border-radius: var(--kh-radius); overflow: hidden; }
+.atlas-depth button { padding: 4px 8px; border: 0; background: none; color: var(--kh-on-slab-muted); font-size: 0.65rem; cursor: pointer; }
+.atlas-depth button[aria-pressed='true'] { background: var(--kh-on-slab); color: var(--kh-slab); }
+.atlas-board__open { display: inline-flex; margin-top: var(--ko-space-4); padding: 8px 12px; border: 1px solid var(--kh-on-slab-muted); border-radius: var(--kh-radius); color: var(--kh-on-slab); font-size: 0.75rem; text-decoration: none; }
+.atlas-board__open:active { transform: translateY(1px); }
+
+/* 관계 판 — 들어오는 쪽 | 나가는 쪽 */
+.atlas-rel { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: var(--ko-space-3); }
+.atlas-rel__head { display: flex; align-items: baseline; gap: 6px; padding-bottom: 6px; border-bottom: 1px solid var(--kh-slab-border); font-size: 0.6875rem; color: var(--kh-on-slab-muted); }
+.atlas-rel__head b { color: var(--kh-on-slab); font-weight: 600; }
+.atlas-rel__arrow { color: var(--kh-ocher); }
+.atlas-rel__group { margin-top: 10px; }
+.atlas-rel__group h3 { margin: 0 0 4px; font-size: 0.65rem; font-weight: 500; color: var(--kh-ocher); }
+.atlas-rel__group h3.is-hier { color: var(--kh-on-slab-muted); }
+.atlas-rel__group ul { list-style: none; margin: 0; padding: 0; }
+.atlas-rel__group li > button { display: flex; align-items: flex-start; gap: 7px; width: 100%; padding: 5px 4px; border: 0; border-radius: var(--kh-radius); background: none; color: var(--kh-on-slab); font: inherit; font-size: 0.8125rem; line-height: 1.35; text-align: left; cursor: pointer; }
+.atlas-rel__group li > button:hover { background: color-mix(in srgb, var(--kh-on-slab) 8%, transparent); }
+.atlas-rel__group .atlas-glyph { margin-top: 4px; }
+.atlas-rel__seal { margin-left: auto; padding: 1px 5px; border: 1px solid var(--kh-slab-border); border-radius: 2px; font-size: 0.625rem; color: var(--kh-ocher); white-space: nowrap; }
+.atlas-rel__hop { margin: 0 0 4px 17px; padding-left: 8px; border-left: 1px solid var(--kh-slab-border); }
+.atlas-rel__hop button { display: flex; gap: 4px; width: 100%; padding: 3px 4px; border: 0; background: none; color: var(--kh-on-slab-muted); font: inherit; font-size: 0.75rem; text-align: left; cursor: pointer; }
+.atlas-rel__hop .kh-mono { font-size: 0.6rem; color: var(--kh-ocher); white-space: nowrap; }
+.atlas-rel__none { margin: 10px 0 0; font-size: 0.75rem; color: var(--kh-on-slab-muted); }
+
+/* 그래프 판 — 먹빛 하나에 황토(흐름 · 중심 · 강조)만. 유형은 모양이 가른다 */
+.atlas-graph {
+  position: relative;
+  height: 440px;
+  margin-top: var(--ko-space-3);
+  overflow: hidden;
+  touch-action: none;
   border: 1px solid var(--kh-slab-border);
   border-radius: var(--kh-radius-asym);
+  background: radial-gradient(color-mix(in srgb, var(--kh-on-slab) 9%, transparent) 1px, transparent 1.3px) 0 0 / 18px 18px, var(--kh-slab);
 }
-.atlas-focus__kind { display: flex; align-items: center; font-size: 0.6875rem; color: var(--kh-on-slab-muted); }
-.atlas-focus__name { margin: var(--ko-space-3) 0 var(--ko-space-2); font-size: 1.625rem; line-height: 1.2; letter-spacing: var(--kh-tracking-display); font-weight: 700; }
-.atlas-focus__desc { margin: 0; font-size: 0.875rem; line-height: 1.6; color: var(--kh-on-slab); opacity: 0.86; }
-.atlas-focus__meta { display: flex; flex-wrap: wrap; gap: var(--ko-space-4); margin-top: var(--ko-space-4); font-size: 0.6875rem; color: var(--kh-on-slab-muted); }
-.atlas-focus__meta a { color: var(--kh-on-slab); text-decoration: underline; text-underline-offset: 3px; }
+.atlas-graph.is-full { position: fixed; inset: 12px; z-index: 50; height: auto; margin: 0; }
+.atlas-graph svg { display: block; width: 100%; height: 100%; }
+.atlas-graph__edge { fill: none; stroke: var(--kh-on-slab); stroke-opacity: 0.14; stroke-width: 1; transition: stroke-opacity 240ms ease; }
+.atlas-graph__edge.is-cross { stroke-opacity: 0.4; stroke-dasharray: 2 3; }
+.atlas-graph__edge.is-flow { stroke: var(--kh-ocher); stroke-opacity: 0.85; stroke-width: 1.4; }
+.atlas-graph__edge.is-hot { stroke: var(--kh-ocher); stroke-opacity: 0.95; }
+.atlas-graph__edge.is-dim, .atlas-graph__node.is-dim { opacity: 0.1; }
+.atlas-graph__marker path { fill: var(--kh-on-slab); fill-opacity: 0.45; }
+.atlas-graph__marker.is-flow path { fill: var(--kh-ocher); fill-opacity: 0.9; }
+.atlas-graph__node { cursor: pointer; transition: opacity 240ms ease; }
+.atlas-graph__shape { fill: var(--kh-on-slab); stroke: var(--kh-on-slab); stroke-width: 1.4; }
+.atlas-graph__node.is-term .atlas-graph__shape,
+.atlas-graph__node.is-metric .atlas-graph__shape,
+.atlas-graph__node.is-technology .atlas-graph__shape { fill: var(--kh-slab); }
+.atlas-graph__dot { fill: var(--kh-on-slab); }
+.atlas-graph__node.d2 .atlas-graph__shape, .atlas-graph__node.d2 .atlas-graph__dot { opacity: 0.5; }
+.atlas-graph__halo { fill: var(--kh-ocher); fill-opacity: 0.14; }
+.atlas-graph__ring { fill: none; stroke: var(--kh-ocher); stroke-width: 1.4; }
+.atlas-graph__node text { font-size: 11px; fill: var(--kh-on-slab); fill-opacity: 0.88; paint-order: stroke; stroke: var(--kh-slab); stroke-width: 4px; stroke-linejoin: round; pointer-events: none; }
+.atlas-graph__node.d0 text { font-size: 12.5px; font-weight: 600; fill-opacity: 1; }
+.atlas-graph__node.d2 text { font-size: 10px; fill-opacity: 0.5; }
+.atlas-graph__node.is-quiet text { display: none; }
+.atlas-graph__node:hover text { display: inline; fill-opacity: 1; }
+.atlas-graph__full { position: absolute; top: 8px; right: 8px; padding: 3px 7px; border: 1px solid var(--kh-slab-border); border-radius: var(--kh-radius); background: var(--kh-slab); color: var(--kh-on-slab-muted); font-size: 0.65rem; cursor: pointer; }
+.atlas-graph__hint { position: absolute; left: 10px; bottom: 8px; font-size: 0.625rem; color: var(--kh-on-slab-muted); pointer-events: none; }
+.atlas-graph__key { position: absolute; right: 10px; bottom: 8px; display: flex; gap: 10px; font-size: 0.625rem; color: var(--kh-on-slab-muted); pointer-events: none; }
+.atlas-graph__key i { display: inline-block; width: 16px; margin-right: 4px; vertical-align: middle; border-top: 1px solid var(--kh-on-slab); }
+.atlas-graph__key .is-flow i { border-top: 1.5px solid var(--kh-ocher); }
+.atlas-graph__key .is-cross i { border-top-style: dashed; opacity: 0.7; }
+.atlas-graph__key .is-hier i { opacity: 0.35; }
 
-/* 가지 — 왼쪽 등줄기에서 괘선이 꺾여 나온다 */
-.atlas-branches { position: relative; margin: 0; padding: var(--ko-space-2) 0 0 28px; list-style: none; }
-.atlas-branches::before {
-  content: '';
-  position: absolute;
-  left: 12px;
-  top: 0;
-  bottom: 30px;
-  width: 1px;
-  background: var(--ko-border-default);
+/* 좁은 화면 — 패널 하나가 거의 한 폭, 판은 아래 시트 */
+@media (max-width: 1023px) {
+  .atlas-domain { --atlas-panel-w: calc(100vw - 56px); }
+  .atlas-domain__head { grid-template-columns: 1fr; }
+  .atlas-domain__side { align-items: flex-start; }
+  .atlas-stage { display: block; }
+  .atlas-screen { padding-bottom: calc(46vh + var(--kh-shell-bottom, 0px)); }
+  .atlas-panel:nth-child(even) { margin-top: 0; }
+  .atlas-board {
+    position: fixed;
+    top: auto;
+    left: 0;
+    right: 0;
+    /* 앱 하단 탭바가 있으면 그 위에 선다 — 탭바가 안전 영역까지 이미 비운다 */
+    bottom: var(--kh-shell-bottom, 0px);
+    z-index: 20;
+    margin: 0;
+    max-height: 40vh;
+    padding: 4px var(--ko-space-4) var(--ko-space-4);
+    border-radius: 0 12px 0 0;
+    transition: max-height 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .atlas-board.is-open { max-height: 86vh; }
+  .atlas-board__grip { display: block; width: 100%; padding: 6px 0 8px; border: 0; background: none; cursor: pointer; }
+  .atlas-board__grip span { display: block; width: 36px; height: 4px; margin: 0 auto; border-radius: 9999px; background: var(--kh-on-slab-muted); }
+  .atlas-board__desc { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .atlas-board.is-open .atlas-board__desc { display: block; }
+  /* 관계 판은 위아래 — 들어오는 쪽이 위 */
+  .atlas-rel { grid-template-columns: 1fr; }
+  .atlas-graph { height: 56vh; }
 }
-.atlas-branches > li { position: relative; margin-top: 4px; }
-.atlas-branches > li::before {
-  content: '';
-  position: absolute;
-  left: -16px;
-  top: 30px;
-  width: 16px;
-  height: 1px;
-  background: var(--ko-border-default);
-}
-.atlas-branches > li.is-selected::before { background: var(--ko-accent-text); height: 2px; }
-.atlas-branches > li.is-selected { background: var(--ko-surface-2); border-radius: var(--kh-radius-asym); }
-.atlas-branch {
-  display: flex;
-  align-items: center;
-  gap: var(--ko-space-2);
-  min-height: 60px;
-  padding: var(--ko-space-2) var(--ko-space-3);
-  border-bottom: 1px solid var(--ko-border-subtle);
-  color: var(--ko-text-primary);
-  text-decoration: none;
-}
-.is-selected > .atlas-branch { border-bottom-color: transparent; }
-.atlas-branch:active { transform: translateY(1px); }
-.atlas-branch__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.atlas-branch__name { font-size: 0.9375rem; font-weight: 600; }
-.is-selected .atlas-branch__name { color: var(--ko-accent-text); font-weight: 700; }
-.atlas-branch__desc { font-size: 0.75rem; color: var(--ko-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.atlas-branch > .kh-mono { font-size: 0.625rem; white-space: nowrap; }
-.atlas-branch__cross { padding: 0 var(--ko-space-3) var(--ko-space-4) 30px; display: flex; flex-direction: column; gap: var(--ko-space-2); }
-.atlas-branch__cross dl { margin: 0; display: grid; grid-template-columns: 76px minmax(0, 1fr); row-gap: 2px; column-gap: var(--ko-space-2); }
-.atlas-branch__cross dl > div { display: contents; }
-.atlas-branch__cross dt { font-size: 0.75rem; color: var(--ko-text-secondary); align-self: center; }
-.atlas-branch__cross dd { margin: 0; }
-.atlas-branch__cross dd a { display: flex; align-items: center; min-height: 32px; font-size: 0.8125rem; color: var(--ko-text-primary); text-decoration: none; }
-.atlas-narrow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 var(--ko-space-3);
-  border: 1px solid var(--ko-accent-text);
-  border-radius: var(--kh-radius);
-  color: var(--ko-accent-text);
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-decoration: none;
-}
-.atlas-narrow .kh-mono { font-size: 0.625rem; }
-
-.atlas-next {
-  display: flex;
-  align-items: center;
-  gap: var(--ko-space-3);
-  min-height: 52px;
-  margin-top: var(--ko-space-5);
-  padding: 0 var(--ko-space-3);
-  border: 1px solid var(--ko-border-default);
-  border-radius: var(--kh-radius-asym);
-  color: var(--ko-text-primary);
-  text-decoration: none;
-}
-.atlas-next svg { color: var(--ko-accent-text); flex-shrink: 0; }
-.atlas-next__name { font-size: 0.9375rem; font-weight: 600; }
-.atlas-domain-m__posts { margin-top: var(--ko-space-8); }
-
-/* 바텀시트 — 고른 가지의 한 줄 요약. 열면 개념 화면으로 */
-.atlas-sheet {
-  position: fixed;
-  z-index: 20;
-  left: 0;
-  right: 0;
-  /* 모바일 앱 셸의 탭바 위에 선다 — 탭바가 없으면 0 */
-  bottom: var(--kh-shell-bottom, 0px);
-  padding: var(--ko-space-2) var(--ko-space-4) var(--ko-space-4);
-  background: var(--kh-slab);
-  color: var(--kh-on-slab);
-  border-top: 1px solid var(--kh-slab-border);
-  border-radius: 0 12px 0 0;
-  animation: atlas-sheet-in var(--kh-dur-state) var(--kh-ease-enter);
-}
-@keyframes atlas-sheet-in {
-  from { transform: translateY(24px); opacity: 0; }
-  to { transform: none; opacity: 1; }
-}
-.atlas-sheet__handle { display: block; width: 36px; height: 4px; margin: 0 auto var(--ko-space-3); background: var(--kh-on-slab-muted); opacity: 0.6; }
-.atlas-sheet__row { display: flex; align-items: center; gap: var(--ko-space-3); max-width: 720px; margin: 0 auto; }
-.atlas-sheet__body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.atlas-sheet__name { font-size: 1rem; font-weight: 700; }
-.atlas-sheet__body .kh-mono { font-size: 0.625rem; color: var(--kh-on-slab-muted); }
-.atlas-sheet__open {
-  display: flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 var(--ko-space-4);
-  background: var(--kh-on-slab);
-  color: var(--kh-slab);
-  border-radius: 0 6px 0 6px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-decoration: none;
-}
-.atlas-sheet__open:active { transform: translateY(1px); }
 
 /* ─── 개념 ──────────────────────────────────────────────────── */
 .atlas-concept-page { padding: var(--ko-space-3) var(--ko-space-4) var(--ko-space-12); max-width: 720px; margin: 0 auto; }
@@ -472,113 +513,7 @@
 .atlas-questions li { display: flex; gap: var(--ko-space-3); padding: var(--ko-space-3) 0; border-bottom: 1px solid var(--ko-border-subtle); font-size: 0.875rem; line-height: 1.6; color: var(--ko-text-secondary); }
 .atlas-questions .kh-mono { font-size: 0.6875rem; color: var(--kh-ocher-text); padding-top: 2px; }
 
-/* ─── 도메인 그래프 · 데스크탑 ─────────────────────────────── */
-.atlas-desk { display: grid; grid-template-columns: 240px minmax(0, 1fr) 440px; min-height: calc(100dvh - 64px); }
-.atlas-desk__rail { border-right: 1px solid var(--ko-border-subtle); padding: var(--ko-space-5) 0; display: flex; flex-direction: column; }
-.atlas-desk__rail > .atlas-eyebrow { padding: 0 var(--ko-space-5) var(--ko-space-3); font-size: 0.625rem; }
-.atlas-desk__domain {
-  display: flex;
-  align-items: baseline;
-  gap: var(--ko-space-3);
-  min-height: 40px;
-  padding: 10px var(--ko-space-5);
-  box-sizing: border-box;
-  color: var(--ko-text-primary);
-  text-decoration: none;
-}
-.atlas-desk__domain > .kh-mono:first-child { width: 18px; font-size: 0.625rem; color: var(--kh-ocher-text); }
-.atlas-desk__domain > .kh-mono:last-child { font-size: 0.625rem; }
-.atlas-desk__domain-name { flex: 1; font-size: 0.875rem; }
-.atlas-desk__domain:hover { background: var(--ko-surface-1); }
-.atlas-desk__domain.is-current { background: var(--ko-surface-2); color: var(--ko-accent-text); }
-.atlas-desk__domain.is-current .atlas-desk__domain-name { font-weight: 700; }
-
-.atlas-desk__stage { position: relative; min-width: 0; display: flex; flex-direction: column; }
-.atlas-desk__title { display: flex; align-items: baseline; gap: var(--ko-space-5); padding: var(--ko-space-5) var(--ko-space-6) 0; }
-.atlas-desk__title h1 { margin: 0; font-size: 1.375rem; font-weight: 700; letter-spacing: var(--kh-tracking-display); }
-.atlas-desk__title .kh-mono { font-size: 0.6875rem; }
-.atlas-desk__scroll { flex: 1; overflow: auto; }
-.atlas-desk__canvas { position: relative; }
-.atlas-desk__cols { position: absolute; top: 56px; left: 0; right: 0; font-size: 0.625rem; color: var(--kh-ocher-text); }
-.atlas-desk__cols span { position: absolute; }
-.atlas-desk__wires { position: absolute; inset: 0; pointer-events: none; }
-.atlas-wire { fill: none; stroke: var(--ko-border-default); stroke-width: 1; }
-.atlas-wire.is-path { stroke: var(--ko-accent-text); stroke-width: 2; }
-.atlas-wire.is-flow { stroke: var(--ko-accent-text); stroke-width: 1; opacity: 0.55; }
-.atlas-wire.is-cross { stroke: var(--kh-ocher); stroke-width: 1.2; stroke-dasharray: 4 4; }
-.atlas-arrow { fill: none; stroke: var(--ko-accent-text); stroke-width: 1; }
-.atlas-desk__wire-label { font-family: var(--kh-font-mono); font-size: 9px; fill: var(--kh-ocher-text); }
-
-.atlas-node {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 0 10px;
-  box-sizing: border-box;
-  border: 1px solid var(--ko-border-default);
-  background: var(--ko-surface-0);
-  color: var(--ko-text-primary);
-  font: inherit;
-  font-size: 0.8125rem;
-  text-align: left;
-  text-decoration: none;
-  cursor: pointer;
-}
-.atlas-node:hover { border-color: var(--ko-accent-text); }
-.atlas-node:active { transform: translateY(1px); }
-.atlas-node__name {
-  flex: 1;
-  min-width: 0;
-  line-height: 1.25;
-  overflow: hidden;
-  overflow-wrap: anywhere;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-.atlas-node__more,
-.atlas-node__tag { font-size: 0.5625rem; color: var(--ko-text-secondary); white-space: nowrap; }
-.atlas-node__tag { color: var(--kh-ocher-text); overflow: hidden; text-overflow: ellipsis; }
-/* 유령 노드 — 이름이 먼저, 어디 있는지(태그)는 아랫줄 */
-.atlas-node__stack { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; line-height: 1.2; }
-.atlas-node.is-path { border-color: var(--ko-accent-text); border-width: 1.5px; color: var(--ko-accent-text); font-weight: 600; }
-.atlas-node.is-root { background: var(--kh-slab); color: var(--kh-on-slab); border-color: var(--kh-slab-border); font-weight: 600; }
-.atlas-node.is-root .atlas-glyph--domain { border-color: var(--kh-on-slab); }
-.atlas-node.is-root .atlas-node__more { color: var(--kh-on-slab); }
-.atlas-node.is-selected:not(.is-root) .atlas-node__more { color: var(--kh-hanji); }
-.atlas-node.is-selected:not(.is-root) { background: var(--ko-accent-primary); border-color: var(--ko-accent-primary); color: var(--kh-hanji); }
-.atlas-node.is-selected .atlas-glyph { background: var(--kh-hanji); border-color: var(--kh-hanji); }
-.atlas-node.is-ghost { border: 1px dashed var(--kh-ocher); background: transparent; color: var(--ko-text-secondary); font-size: 0.75rem; }
-
-.atlas-legend {
-  position: sticky;
-  bottom: var(--ko-space-4);
-  align-self: flex-start;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--ko-space-4);
-  margin: 0 var(--ko-space-6) var(--ko-space-4);
-  padding: 10px 14px;
-  background: var(--ko-surface-1);
-  border: 1px solid var(--ko-border-subtle);
-  border-radius: var(--kh-radius-asym);
-  font-size: 0.75rem;
-  color: var(--ko-text-secondary);
-}
-.atlas-legend__kinds { display: flex; flex-wrap: wrap; gap: var(--ko-space-3); }
-.atlas-legend__kinds .atlas-glyph { margin-right: 2px; }
-.atlas-legend__line { display: inline-flex; align-items: center; gap: 6px; }
-.atlas-legend__line i { display: inline-block; width: 24px; height: 0; border-top: 1px solid var(--ko-border-strong); }
-.atlas-legend__line i.is-cross { border-top: 1.2px dashed var(--kh-ocher); }
-.atlas-legend__line i.is-path { border-top: 2px solid var(--ko-accent-text); }
-
-.atlas-desk__panel { border-left: 1px solid var(--ko-border-subtle); background: var(--ko-surface-1); padding: var(--ko-space-6) var(--ko-space-6) var(--ko-space-12); overflow-y: auto; max-height: calc(100dvh - 64px); position: sticky; top: 64px; }
-.atlas-concept--panel { gap: var(--ko-space-6); }
-.atlas-concept--panel .atlas-concept__name { font-size: 1.75rem; }
-
 @media (prefers-reduced-motion: reduce) {
-  .atlas-sheet { animation: none; }
+  .atlas-row__caret, .atlas-board, .atlas-graph__edge, .atlas-graph__node { transition: none; }
   .atlas-domain-row__chev { transition: none; }
 }

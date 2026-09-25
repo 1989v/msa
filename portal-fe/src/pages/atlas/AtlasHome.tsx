@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import type { AtlasDomain, ConceptAtlas } from '../../api/searchApi';
+import type { AtlasDomain, ConceptAtlas } from './atlasGraph';
 import type { ConceptKind } from '../../types/graph';
 import { ConceptSearch, KindGlyph, SectionHead } from './AtlasParts';
 

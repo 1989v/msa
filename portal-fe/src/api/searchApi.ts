@@ -104,7 +104,7 @@ export const searchConcepts = async (query: string, size = 20): Promise<SearchRe
   return { hits, totalHits: group?.total ?? 0, maxScore: hits[0]?.score ?? null };
 };
 
-import type { GraphData, SuggestItem, ConceptDetail, ConceptHierarchy, ConceptRelations } from '../types/graph';
+import type { GraphData, SuggestItem, ConceptDetail, ConceptRelations } from '../types/graph';
 
 /** 자동완성도 같은 이유로 통합 검색의 concept 묶음이다 — 접두사 매칭이 아니라 BM25 상위다 */
 export const suggestConcepts = async (query: string, size = 8): Promise<SuggestItem[]> => {
@@ -124,38 +124,9 @@ export const fetchGraphData = async (): Promise<GraphData> => {
   return res.data.data;
 };
 
-/** root 를 주면 그 아래만, 없으면 진입점 전부 */
-export const fetchConceptHierarchy = async (root?: string): Promise<ConceptHierarchy> => {
-  const query = root ? `?${new URLSearchParams({ root })}` : '';
-  const res = await api.get<ApiResponse<ConceptHierarchy>>(`/api/v1/concepts/graph/hierarchy${query}`);
-  return res.data.data;
-};
-
 /** 개념 하나의 이웃 — 계층 응답 밖(다른 루트)으로 가는 간선까지. 도메인 간 탐색은 이것으로 한 홉씩 */
 export const fetchConceptRelations = async (conceptId: string): Promise<ConceptRelations> => {
   const res = await api.get<ApiResponse<ConceptRelations>>(`/api/v1/concepts/${encodeURIComponent(conceptId)}/relations`);
-  return res.data.data;
-};
-
-/** `GET /api/v1/concepts/atlas` — 도메인(1차 노드) 목록과 도메인 사이 관계 수. 순서는 학습 순서 */
-export interface AtlasDomain {
-  domain: string;
-  rootId: string;
-  name: string;
-  description?: string | null;
-  conceptCount: number;
-  kindCounts: Record<string, number>;
-  codeRefCount: number;
-  conceptIds: string[];
-}
-
-export interface ConceptAtlas {
-  domains: AtlasDomain[];
-  links: { from: string; to: string; count: number }[];
-}
-
-export const fetchAtlas = async (): Promise<ConceptAtlas> => {
-  const res = await api.get<ApiResponse<ConceptAtlas>>('/api/v1/concepts/atlas');
   return res.data.data;
 };
 

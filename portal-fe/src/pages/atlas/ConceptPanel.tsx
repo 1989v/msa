@@ -4,7 +4,6 @@ import { fetchConceptDetail } from '../../api/searchApi';
 import { RELATION_LABELS } from '../../components/hierarchy/kindLabels';
 import { unifiedHitHref } from '../../shell/serviceHref';
 import type { RelationEdge } from '../../types/graph';
-import { pathTo, type DomainTree } from './atlasModel';
 import { KindGlyph, SectionHead, kindLabel } from './AtlasParts';
 import { GITHUB_BLOB, useConceptPosts, useRelations, useSnippet } from './useAtlasData';
 
@@ -18,13 +17,14 @@ interface Props {
   conceptId: string;
   /** 지금 보고 있는 도메인 — 경로 링크가 이 도메인 그래프로 돌아간다 */
   domain?: string;
-  tree: DomainTree | null;
-  owner: Map<string, string>;
-  domainNames: Map<string, string>;
+  /** 도메인 루트에서 이 개념 바로 위까지 */
+  path: { id: string; name: string }[];
+  owner: (conceptId: string) => string | undefined;
+  domainName: (domain: string) => string | undefined;
   variant: 'page' | 'panel';
 }
 
-export default function ConceptPanel({ conceptId, domain, tree, owner, domainNames, variant }: Props) {
+export default function ConceptPanel({ conceptId, domain, path, owner, domainName, variant }: Props) {
   const relations = useRelations(conceptId);
   const detail = useQuery({
     queryKey: ['concept', 'detail', conceptId],
@@ -46,23 +46,22 @@ export default function ConceptPanel({ conceptId, domain, tree, owner, domainNam
   const edges = [...r.outgoing, ...r.incoming].sort(
     (a, b) => LABEL_ORDER.indexOf(a.label) - LABEL_ORDER.indexOf(b.label),
   );
-  const path = tree ? pathTo(tree, conceptId).slice(0, -1) : [];
-  const home = owner.get(conceptId);
+  const home = owner(conceptId);
   const otherDomain = (id: string) => {
-    const d = owner.get(id);
-    return d && d !== home ? domainNames.get(d) : undefined;
+    const d = owner(id);
+    return d && d !== home ? domainName(d) : undefined;
   };
   let section = 0;
 
   return (
     <article className={`atlas-concept atlas-concept--${variant}`}>
       <header className="atlas-concept__head">
-        {path.length > 0 && tree && domain && (
+        {path.length > 0 && domain && (
           <nav className="kh-mono atlas-concept__path" aria-label="속한 경로">
-            {path.map((id, i) => (
-              <span key={id}>
+            {path.map((p, i) => (
+              <span key={p.id}>
                 {i > 0 && <span aria-hidden="true"> / </span>}
-                <Link to={`/tech/d/${domain}?at=${encodeURIComponent(id)}`}>{tree.nodes.get(id)?.name ?? id}</Link>
+                <Link to={`/tech/d/${domain}?sel=${encodeURIComponent(p.id)}`}>{p.name}</Link>
               </span>
             ))}
           </nav>

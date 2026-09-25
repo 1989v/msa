@@ -596,9 +596,9 @@
         <div class="page-head"><span class="page-path">/tech</span><span class="seal badge-light">개념 아틀라스</span></div>
         <div class="page-body">
           <div>
-            <p class="page-desc">도메인 열한 개를 지도로 보고 <strong>아틀라스 → 도메인 그래프 → 개념</strong> 순으로 좁혀 간다. 노드 유형은 색이 아니라 <strong>모양</strong>(◆ 진입 · ● 단계 · ■ 장치 · ○ 용어 · ▲ 구현체 · ▼ 문제 · ◎ 지표)으로 가르고, 지나온 길은 액션 색 실선, 가로지르는 관계는 황토 점선이다. 고른 단계는 어두운 판, 모바일은 한 층씩 가지를 늘어놓고 바텀시트로 개념을 연다. 원본 시안은 클로드 디자인 캔버스 「개념 아틀라스 — /tech 시안」.</p>
+            <p class="page-desc">도메인 스무 개를 지도로 보고 <strong>아틀라스 → 도메인 병풍 → 개념</strong> 순으로 좁혀 간다. 도메인 화면은 <strong>병풍</strong> — 첫 층 묶음이 패널 하나씩 옆으로 늘어서 도메인 전체가 한 화면에 보이고, 패널은 번갈아 어긋난다. 항목은 한 번 누르면 바로 펼쳐지고, 형제 사이 흐름은 <code>1 → 2 → 3</code> 순번(액션 색)으로 붙는다. 고른 개념은 어두운 판이 되고, 오른쪽 판(모바일은 아래 시트)이 <strong>관계 판</strong>(들어오는 쪽 | 나가는 쪽, 관계 이름별 칩)과 <strong>그래프 판</strong>(고른 개념 중심의 로컬 그래프, 깊이 1~2)을 보인다. 그래프 판은 먹빛 판 위 흰 계열 하나에 <strong>황토 한 색</strong>(흐름 · 중심 · 강조)만 쓴다 — 색을 넷 쓰던 시안은 촌스럽다는 평을 받고 걷었다. 노드 유형은 색이 아니라 <strong>모양</strong>(◆ 진입 · ● 단계 · ■ 장치 · ○ 용어 · ▲ 구현체 · ▼ 문제 · ◎ 지표)으로 가른다. 원본 시안은 아티팩트 「병풍 개념 아틀라스」(시안 B-3).</p>
           </div>
-          <ul class="parts"><li><code>.atlas-*</code> (<code>pages/atlas/ConceptAtlas.css</code>)</li><li><code>.kh-slab</code> 고른 단계 판</li><li>섹션 머리 <code>01_</code> + 괘선</li><li>한글 모노 라벨은 자간 0</li></ul>
+          <ul class="parts"><li><code>.atlas-*</code> (<code>pages/atlas/ConceptAtlas.css</code>)</li><li><code>.atlas-panel</code> 병풍 패널 · <code>.atlas-row.is-selected</code> 판 · <code>--kh-radius-asym</code></li><li><code>.atlas-board</code> 관계 판 · 그래프 판(먹빛 판 + 점 격자)</li><li>한글 모노 라벨은 자간 0</li></ul>
         </div>
       </article>
     </div>
