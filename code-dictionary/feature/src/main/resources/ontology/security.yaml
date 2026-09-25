@@ -760,7 +760,7 @@ concepts:
     synonyms: ["OIDC", "OpenID Connect Core"]
     questions: ["ID 토큰과 액세스 토큰은 각각 누구에게 보내는 토큰인가", "OIDC 의 nonce 는 무엇을 막나"]
     code:
-      - { path: portal-fe/src/auth/auth.ts, symbol: "'&response_type=code&scope=openid&state=google'", note: "openid 스코프만 요청한다" }
+      - { path: portal-fe/src/auth/auth.ts, symbol: "&response_type=code&scope=openid&state=", note: "openid 스코프만 요청한다" }
     contains: [sec-oidc-discovery, sec-federated-logout]
     uses: [oauth, sec-term-id-token, sec-term-state-nonce, jwt]
   - id: sec-oidc-discovery
@@ -1305,7 +1305,8 @@ concepts:
     synonyms: ["Cross-Site Request Forgery", "사이트 간 요청 위조"]
     questions: ["Bearer 헤더 인증 API 가 CSRF 에 강한 이유는 무엇인가"]
     code:
-      - { path: gateway/src/main/kotlin/com/kgd/gateway/config/SecurityConfig.kt, symbol: ".csrf { it.disable() }", note: "헤더 토큰 방식이라 CSRF 토큰 필터를 끈다" }
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/config/SecurityConfig.kt, symbol: ".csrf { it.disable() }", note: "스프링 CSRF 토큰 필터는 끈다 — 쿠키로 인증된 쓰기는 인증 필터가 출처로 막는다" }
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/filter/AuthenticationGatewayFilter.kt, symbol: "private fun fromTrustedOrigin(request: ServerHttpRequest): Boolean", note: "쿠키로 인증된 쓰기는 Origin(없으면 Referer)이 우리 도메인일 때만 받는다" }
   - id: sec-open-redirect
     kind: PROBLEM
     name: "오픈 리다이렉트"
@@ -1391,7 +1392,7 @@ concepts:
     description: "다른 사이트에서 시작된 요청에 쿠키를 싣지 않도록 브라우저에 지시하는 쿠키 속성. Lax 는 최상위 이동(GET)만 허용해 교차 사이트 POST 를 막는다"
     synonyms: ["SameSite=Lax", "SameSite=Strict"]
     code:
-      - { path: portal-fe/src/auth/auth.ts, symbol: "'SameSite=Lax',", note: "로그인 쿠키에 SameSite=Lax 를 붙인다" }
+      - { path: portal-fe/src/auth/auth.ts, symbol: "Max-Age=0; SameSite=Lax", note: "로그인 표시 쿠키를 지울 때도 같은 SameSite=Lax 로 덮는다" }
     uses: [sec-term-origin-vs-site]
     mitigates: [csrf]
   - id: sec-httponly-cookie
@@ -1401,6 +1402,8 @@ concepts:
     level: BEGINNER
     description: "JS(document.cookie)가 읽지 못하게 하는 쿠키 속성. XSS 가 나도 세션 쿠키를 훔쳐 가지 못하지만, 그러면 JS 가 토큰을 헤더에 실을 수 없어 쿠키 인증과 CSRF 방어가 함께 필요해진다"
     synonyms: ["HttpOnly"]
+    code:
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/filter/AuthenticationGatewayFilter.kt, symbol: "val token = headerToken ?: request.cookies.getFirst(ACCESS_COOKIE)?.value?.takeIf { it.isNotBlank() }", note: "JS 가 못 읽는 세션 쿠키에서 게이트웨이가 토큰을 꺼낸다" }
     mitigates: [sec-token-theft]
   - id: sec-secure-cookie
     kind: MECHANISM
@@ -1409,8 +1412,6 @@ concepts:
     level: BEGINNER
     description: "HTTPS 연결에서만 쿠키를 보내게 하는 속성. 평문 HTTP 로 새지 않지만 로컬 http 개발 환경에서는 쿠키가 조용히 거부된다"
     synonyms: ["Secure", "__Host- prefix"]
-    code:
-      - { path: portal-fe/src/auth/auth.ts, symbol: "if (window.location.protocol === 'https:') parts.push('Secure');", note: "https 에서만 Secure 를 붙여 로컬 개발을 살린다" }
   - id: sec-csp
     kind: MECHANISM
     name: "CSP"
