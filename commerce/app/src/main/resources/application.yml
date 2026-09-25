@@ -261,7 +261,6 @@ payment:
   toss:
     # **기본값을 두지 않는다.** pg=toss 일 때만 읽히고, 그때 없으면 기동하지 않는다(pg=mock 은 읽지 않는다).
     secret-key: ${TOSS_SECRET_KEY}
-    webhook-secret: ${TOSS_WEBHOOK_SECRET}
 
 # ADR-0099 — 혜택(쿠폰·포인트·TCC 보류). 보류 만료 스케줄러 주기만 여기서 정한다.
 promotion:

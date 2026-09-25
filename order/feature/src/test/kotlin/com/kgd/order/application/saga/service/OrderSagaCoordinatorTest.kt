@@ -193,6 +193,42 @@ class OrderSagaCoordinatorTest : BehaviorSpec({
         }
     }
 
+    given("토스 — 승인 확인이 곧 매입이라 결제가 authorized 직후 captured 를 낸다") {
+        then("승인 단계의 captured 는 PAID·재고 확정으로 간 뒤라 단계를 바꾸지 않고, 매입 단계의 captured 답으로 확정된다") {
+            val f = Fixture()
+            f.toAuthorize()
+            f.pay(PaymentOutcomeType.AUTHORIZED)
+            val afterAuthorize = f.world.commands.size
+            f.pay(PaymentOutcomeType.CAPTURED)
+            f.world.commands.size shouldBe afterAuthorize
+            f.saga().step shouldBe SagaStep.INVENTORY_CONFIRM
+            f.order().status shouldBe OrderStatus.PAID
+
+            f.inv(InventoryAnswerType.CONFIRMED, "CONFIRM")
+            f.promo(PromotionAnswerType.CONFIRMED, "CONFIRM")
+            // 결제는 이미 매입된 결제에 온 매입 명령에 PG 호출 없이 captured 로 다시 답한다
+            f.world.commands.last() shouldBe SagaCommand.CapturePayment(f.orderId, "ORD-${f.orderId}-1")
+            f.pay(PaymentOutcomeType.CAPTURED)
+            f.order().status shouldBe OrderStatus.CONFIRMED
+            f.world.commands.last().shouldBeInstanceOf<SagaCommand.CreateFulfillment>()
+            f.world.commands.count { it is SagaCommand.CapturePayment } shouldBe 1
+        }
+        then("매입된 결제도 재고 확정 중 보류 만료면 VOID(결제 쪽 전액 취소) → voided 답 뒤 보상 → FAILED(HOLD_EXPIRED)") {
+            val f = Fixture()
+            f.toAuthorize()
+            f.pay(PaymentOutcomeType.AUTHORIZED)
+            f.pay(PaymentOutcomeType.CAPTURED)
+            f.inv(InventoryAnswerType.FAILED, "CONFIRM", "EXPIRED", emptyList())
+            f.world.commands.last() shouldBe SagaCommand.VoidPayment(f.orderId, "ORD-${f.orderId}-1")
+            f.pay(PaymentOutcomeType.VOIDED)
+            f.promo(PromotionAnswerType.CANCELLED, "CANCEL")
+            f.inv(InventoryAnswerType.RELEASED, "RELEASE", lines = emptyList())
+            f.order().status shouldBe OrderStatus.FAILED
+            f.order().failureReason shouldBe OrderFailureReason.HOLD_EXPIRED
+            f.world.commands.none { it is SagaCommand.CapturePayment } shouldBe true
+        }
+    }
+
     given("결제 결과 미상") {
         then("UNKNOWN 이면 기한이 30분 지나도 명령 없이 기다린다 — 주문은 PAYMENT_PENDING") {
             val f = Fixture()

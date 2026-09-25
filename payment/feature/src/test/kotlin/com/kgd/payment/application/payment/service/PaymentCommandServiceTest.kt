@@ -12,6 +12,7 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.runs
 import io.mockk.verify
+import io.mockk.verifyOrder
 
 /**
  * 결제 명령 처리 — 실제 서비스·도메인에 저장소는 메모리, PG·이벤트는 목.
@@ -49,21 +50,70 @@ class PaymentCommandServiceTest : BehaviorSpec({
         }
     }
 
-    given("토스 흐름 — 명령에 paymentKey 가 있다") {
-        then("서버 승인이 아니라 승인 확인(confirm)을 부른다") {
-            val h = PaymentHarness()
-            every { h.pg.confirm("tpk", "ORD-100-1", 10_000L) } returns PgResult.Approved("tpk")
+    given("토스 흐름 — 명령에 paymentKey 가 있고, 승인 확인이 곧 매입이다") {
+        fun tossCaptured(): PaymentHarness = PaymentHarness().also { h ->
+            every { h.pg.confirm("tpk", "ORD-100-1", 10_000L) } returns PgResult.Approved("tpk", captured = true)
+            every { h.pg.void(any(), any()) } just runs
+            h.commands.authorize(authorize.copy(paymentKey = "tpk"))
+        }
 
-            h.commands.authorize(authorize.copy(paymentKey = "tpk")).status shouldBe PaymentStatus.AUTHORIZED
+        then("서버 승인이 아니라 승인 확인(confirm)을 부르고, authorized 뒤 captured 를 이어서 낸다 — 행은 CAPTURED") {
+            val h = tossCaptured()
 
             verify(exactly = 0) { h.pg.authorize(any(), any()) }
+            h.payments.rows.values.single().let {
+                it.status shouldBe PaymentStatus.CAPTURED
+                it.capturedAmount shouldBe 10_000L
+                it.capturedAt shouldBe T0
+            }
+            verifyOrder {
+                h.events.publish(PaymentEventType.AUTHORIZED, any(), any(), any())
+                h.events.publish(PaymentEventType.CAPTURED, any(), any(), any())
+            }
+        }
+
+        then("사가의 매입 명령은 PG 를 부르지 않고 captured 로 다시 답한다 (상태 그대로)") {
+            val h = tossCaptured()
+
+            h.commands.capture("ORD-100-1").status shouldBe PaymentStatus.CAPTURED
+
+            verify(exactly = 0) { h.pg.capture(any(), any(), any()) }
+            verify(exactly = 2) { h.events.publish(PaymentEventType.CAPTURED, any(), any(), any()) }
+            h.payments.rows.values.single().status shouldBe PaymentStatus.CAPTURED
+        }
+
+        then("매입된 결제의 VOID 는 전액 취소 — PG 취소 1회, REFUNDED, voided 답(환불액 = 결제액), 다시 와도 PG 를 안 부른다") {
+            val h = tossCaptured()
+
+            h.commands.void("ORD-100-1").status shouldBe PaymentStatus.REFUNDED
+            h.commands.void("ORD-100-1").status shouldBe PaymentStatus.REFUNDED
+
+            verify(exactly = 1) { h.pg.void("tpk", 10_000L) }
+            h.payments.rows.values.single().refundedAmount shouldBe 10_000L
+            h.refunds.rows.single().amount shouldBe 10_000L
+            verify(exactly = 1) { h.events.publish(PaymentEventType.VOIDED, any(), any(), 10_000L) }
+        }
+    }
+
+    given("모의 PG 매입") {
+        then("결제 쪽 시각을 PG 에 넘기고, 결제 행은 PG 가 돌려준 매입 시각을 쓴다") {
+            val h = PaymentHarness()
+            val pgRecorded = T0.minusMillis(1)
+            every { h.pg.authorize(any(), any()) } returns PgResult.Approved("pk-1")
+            every { h.pg.capture("pk-1", 10_000L, T0) } returns pgRecorded
+            h.commands.authorize(authorize)
+
+            h.commands.capture("ORD-100-1").status shouldBe PaymentStatus.CAPTURED
+
+            h.payments.rows.values.single().capturedAt shouldBe pgRecorded
+            verify(exactly = 1) { h.events.publish(PaymentEventType.CAPTURED, any(), any(), any()) }
         }
     }
 
     given("환불") {
         fun captured(h: PaymentHarness) {
             every { h.pg.authorize(any(), any()) } returns PgResult.Approved("pk-1")
-            every { h.pg.capture(any(), any()) } just runs
+            every { h.pg.capture(any(), any(), any()) } answers { thirdArg() }
             every { h.pg.refund(any(), any(), any(), any()) } just runs
             h.commands.authorize(authorize)
             h.commands.capture("ORD-100-1").status shouldBe PaymentStatus.CAPTURED

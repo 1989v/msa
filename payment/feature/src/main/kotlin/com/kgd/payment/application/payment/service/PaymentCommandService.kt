@@ -12,7 +12,9 @@ import com.kgd.payment.domain.payment.model.Payment
 import com.kgd.payment.domain.payment.model.PaymentStatus
 import com.kgd.payment.domain.payment.model.VoidDecision
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
+import java.time.Clock
 
 /**
  * 결제 명령 흐름. 트랜잭션 없음 — DB 는 [PaymentTransactionalService] 의 짧은 트랜잭션, PG 는 그 사이에 부른다.
@@ -27,6 +29,7 @@ class PaymentCommandService(
     private val pg: PgPort,
     private val tx: PaymentTransactionalService,
     private val voids: PaymentVoidExecutor,
+    @Qualifier("paymentClock") private val clock: Clock,
 ) : ProcessPaymentCommandUseCase {
     private val log = KotlinLogging.logger {}
 
@@ -46,14 +49,21 @@ class PaymentCommandService(
             }
         }
 
+    /**
+     * 이미 매입된 결제(토스는 승인 확인에서 매입, 또는 같은 명령의 재배달)는 PG 를 부르지 않고 captured 로 다시 답한다 —
+     * 사가는 이 단계에서 captured 를 기다리고, 승인 직후 먼저 온 captured 는 단계가 달라 버렸다.
+     */
     override fun capture(orderNo: String): PaymentView {
         val p = find(orderNo)
+        if (p.status == PaymentStatus.CAPTURED && p.voidRequestedAt == null) {
+            return PaymentView.from(tx.answerCaptured(requireNotNull(p.id)))
+        }
         if (p.status.isCaptured) return PaymentView.from(p)
         if (p.status != PaymentStatus.AUTHORIZED || p.voidRequestedAt != null) {
             throw InvalidPaymentStateException(p.status, "CAPTURE")
         }
-        pg.capture(requireNotNull(p.paymentKey), p.amount)
-        return PaymentView.from(tx.markCaptured(requireNotNull(p.id)))
+        val capturedAt = pg.capture(requireNotNull(p.paymentKey), p.amount, clock.instant())
+        return PaymentView.from(tx.markCaptured(requireNotNull(p.id), capturedAt))
     }
 
     override fun void(orderNo: String): PaymentView {

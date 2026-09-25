@@ -293,7 +293,6 @@ concepts:
     synonyms: ["constant-time compare", "MessageDigest.isEqual"]
     code:
       - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/token/policy/ServeTokenSigner.kt, symbol: "if (!MessageDigest.isEqual(mac(key, payload), signature)) return null", note: "서명 비교를 상수 시간으로" }
-      - { path: payment/feature/src/main/kotlin/com/kgd/payment/presentation/webhook/controller/TossWebhookController.kt, symbol: "!MessageDigest.isEqual(secret, presented.toByteArray())", note: "웹훅 비밀 헤더를 상수 시간으로 대조" }
     mitigates: [sec-timing-attack]
   - id: sec-length-extension-attack
     kind: PROBLEM
@@ -1163,8 +1162,6 @@ concepts:
     level: INTERMEDIATE
     description: "외부 시스템이 보낸 웹훅이 진짜인지 공유 비밀 헤더나 본문 HMAC 서명으로 확인하고, 시각 · 이벤트 id 로 재전송을 거른다. 확인 전에는 본문을 믿지 않는다"
     synonyms: ["webhook signature", "webhook secret"]
-    code:
-      - { path: payment/feature/src/main/kotlin/com/kgd/payment/presentation/webhook/controller/TossWebhookController.kt, symbol: "log.warn { \"토스 웹훅 비밀 불일치 — 거부\" }", note: "비밀 헤더가 다르면 401 로 거부" }
     uses: [sec-hmac, sec-constant-time-comparison]
   - id: sec-origin-bypass
     kind: PROBLEM

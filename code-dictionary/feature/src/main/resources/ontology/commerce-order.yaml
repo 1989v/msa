@@ -669,13 +669,13 @@ concepts:
     uses: [dist-exponential-backoff, dist-jitter, ord-merchant-order-no]
   - id: ord-pg-webhook
     kind: MECHANISM
-    name: "PG 웹훅 (서명 검증 · 중복 무시)"
+    name: "PG 웹훅 (재조회 신호 · 중복 무시)"
     category: SECURITY
     level: INTERMEDIATE
-    description: "PG 가 결과를 알려 오는 콜백. 서명(비밀)을 검증하고 이미 그 상태면 무시한다. 상태 · 금액은 웹훅 본문이 아니라 재조회 결과로 정한다"
+    description: "PG 가 결과를 알려 오는 콜백. 서명이 없는 웹훅은 본문 · 헤더를 믿지 않고 주문번호로 PG 를 다시 조회하라는 신호로만 쓴다. 상태 · 금액은 재조회 결과로 정하고, 이미 그 상태면 무시한다"
     synonyms: ["webhook", "결제 알림"]
     code:
-      - { path: payment/feature/src/main/kotlin/com/kgd/payment/presentation/webhook/controller/TossWebhookController.kt, symbol: "MessageDigest.isEqual(secret, presented.toByteArray())", note: "상수 시간 비교 후 재조회로 결론" }
+      - { path: payment/feature/src/main/kotlin/com/kgd/payment/presentation/webhook/controller/TossWebhookController.kt, symbol: "resolvePaymentUseCase.resolveByOrderNo(orderNo)", note: "본문에서 주문번호만 읽어 재조회로 결론" }
     uses: [net-webhook, ord-single-transition-function]
     mitigates: [dist-duplicate-delivery]
   - id: ord-single-transition-function

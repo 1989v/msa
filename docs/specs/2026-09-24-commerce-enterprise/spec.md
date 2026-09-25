@@ -116,8 +116,9 @@ PAYMENT_PENDING 중 구매자 취소는 받지 않는다(409, 「결제 결과 �
 - **흐름 분리**: 모의 PG 는 서버가 승인을 요청한다. 토스는 FE 결제창 인증 → 토스가 준 `paymentKey` 로 서버가 승인 확인(confirm). 둘 다 가맹점 주문번호 `orderNo`(= 결제 시도 id, 멱등 키)를 쓰고 `paymentKey` 는 PG 가 준 거래 키로 따로 저장한다.
 - 같은 `orderNo` 재요청은 PG 에 새 승인을 만들지 않는다(모의 PG 는 호출 기록 1건).
 - 타임아웃·5xx 는 UNKNOWN. 재조회 스케줄러가 백오프로 결론, 5회 초과 운영 이슈.
-- 웹훅 `POST /api/v1/payments/webhooks/toss` — `payment.pg=toss` 일 때만 매핑된다. 서명 검증 실패 401, 이미 도달한 상태 no-op, 상태·금액은 웹훅 본문이 아니라 **PG 재조회 결과**로 정한다. 모의 PG 는 웹훅을 HTTP 없이 같은 전이 함수로 흉내 낸다 — 운영(모의 PG)에는 웹훅 경로가 열리지 않는다.
+- 웹훅 `POST /api/v1/payments/webhooks/toss` — `payment.pg=toss` 일 때만 매핑된다. 토스 웹훅은 서명이 없고 임의 헤더를 못 붙이므로 **재조회 신호로만** 쓴다 — 본문·헤더를 믿지 않고 `data.orderId` 로 PG 를 재조회해 그 결과로 정한다, 이미 도달한 상태 no-op. 모의 PG 는 웹훅을 HTTP 없이 같은 전이 함수로 흉내 낸다 — 운영(모의 PG)에는 웹훅 경로가 열리지 않는다.
 - 매입 전 취소 VOID, 매입 후 전액·부분 환불, 환불 합 ≤ 매입액.
+- 토스는 승인 확인이 곧 매입이다 — 결제는 AUTHORIZED → CAPTURED 를 한 번에 기록하고 `authorized` 뒤 `captured` 를 낸다. 사가의 매입 명령에는 PG 호출 없이 `captured` 로 다시 답하고, 매입된 결제의 VOID 는 전액 취소(REFUNDED)다.
 - 카드 정보는 PG 결제창에서만 받는다. 서버·DB·로그에 카드번호·CVC 가 없다 (PCI-DSS 범위 밖 선언).
 - PG 대사(일 1회): PG 정산 파일(모의 PG 가 생성) ↔ payment 행 건별 대조, 불일치는 운영 이슈, 일치분은 `payment.reconciliation.settled` 이벤트(입금액·PG 수수료).
 
@@ -189,7 +190,7 @@ PAYMENT_PENDING 중 구매자 취소는 받지 않는다(409, 「결제 결과 �
 | `/api/v1/sellers/apply` | ROLE_USER | 1인 1판매자 |
 | `/api/v1/seller/**` (판매자 포털 API) | ROLE_SELLER | ACTIVE 판매자 행 + 자기 판매자 id |
 | `/api/v1/products` 쓰기 | ROLE_SELLER · ROLE_ADMIN | 판매자는 자기 상품만 |
-| `/api/v1/payments/webhooks/toss` | 공개(서명) | `payment.pg=toss` 일 때만, 신원 헤더 제거, 레이트 리밋 |
+| `/api/v1/payments/webhooks/toss` | 공개(재조회 신호) | `payment.pg=toss` 일 때만, 신원 헤더 제거, 레이트 리밋 |
 | `/api/v1/admin/**` | ROLE_ADMIN | — |
 
 도메인마다 `GroupedOpenApi` 와 gateway `openApiServices` 등록.
@@ -226,7 +227,7 @@ PAYMENT_PENDING 중 구매자 취소는 받지 않는다(409, 「결제 결과 �
 
 ### SR-14 배포 · 문서 · 개인정보
 - 새 도메인 넷은 `commerce:app` 폴드. Hikari 풀 도메인당 최대 3. 단계 배포마다 commerce 컨테이너 메모리 실측 기록.
-- Secret: `SELLER_ACCOUNT_ENC_KEY`(필수) · `TOSS_SECRET_KEY`·`TOSS_WEBHOOK_SECRET`(`payment.pg=toss` 일 때만 필수). 필수 키 누락은 기동 실패 — 조용한 무동작 금지. **세 키 모두 설정 파일에 기본값을 두지 않는다**(`${KEY}` 만).
+- Secret: `SELLER_ACCOUNT_ENC_KEY`(필수) · `TOSS_SECRET_KEY`(`payment.pg=toss` 일 때만 필수). 필수 키 누락은 기동 실패 — 조용한 무동작 금지. **두 키 모두 설정 파일에 기본값을 두지 않는다**(`${KEY}` 만). 웹훅 비밀 키는 없다(재조회 신호).
 - auth(private 서브모듈)에 Kafka 컨슈머 의존 추가 — 서브모듈 먼저 푸시.
 - 개인정보처리방침(`PrivacyPage.tsx`) §2 수집 항목에 판매자 정보(상호·사업자번호·대표자·계좌), 보존기간 표에 정산 기록(전자상거래법 5년) 추가 — 상수와 문구를 같이.
 - CI PR 게이트 목록(`.github/workflows/ci.yml`)에 새 도메인 테스트 추가.

@@ -60,8 +60,11 @@ class Payment private constructor(
 
     val refundableAmount: Long get() = capturedAmount - refundedAmount
 
-    /** 기억해 둔 VOID 를 지금 실행해야 하는가 */
-    val pendingVoidDue: Boolean get() = voidRequestedAt != null && status == PaymentStatus.AUTHORIZED
+    /** 기억해 둔 VOID 를 지금 실행해야 하는가 — 승인만 됐거나, PG 가 승인과 함께 매입했고 아직 환불이 없을 때 */
+    val pendingVoidDue: Boolean get() = voidRequestedAt != null && (status == PaymentStatus.AUTHORIZED || voidableByRefund)
+
+    /** 매입됐지만 환불이 하나도 없다 — VOID 를 전액 취소로 처리할 수 있다(토스는 승인 확인이 곧 매입) */
+    private val voidableByRefund: Boolean get() = status == PaymentStatus.CAPTURED && refundedAmount == 0L
 
     fun authorize(paymentKey: String, now: Instant) {
         require(paymentKey.isNotBlank()) { "PG 거래 키가 비었습니다" }
@@ -109,6 +112,10 @@ class Payment private constructor(
         updatedAt = now
     }
 
+    /**
+     * VOID 명령. 매입된 결제(토스는 승인 확인이 곧 매입)도 환불이 없으면 실행 대상이다 — 실행은 전액 취소([cancelCaptured]).
+     * VOID 로 전액 취소된 결제(REFUNDED + VOID 표시)에 다시 오면 할 일이 없다. 부분 환불이 있으면 거부한다.
+     */
     fun requestVoid(now: Instant): VoidDecision = when (status) {
         PaymentStatus.AUTHORIZED -> VoidDecision.EXECUTE
         PaymentStatus.READY, PaymentStatus.UNKNOWN -> {
@@ -117,16 +124,42 @@ class Payment private constructor(
             VoidDecision.DEFERRED
         }
         PaymentStatus.VOIDED, PaymentStatus.FAILED -> VoidDecision.ALREADY_SETTLED
-        PaymentStatus.CAPTURED, PaymentStatus.PARTIALLY_REFUNDED, PaymentStatus.REFUNDED ->
-            throw InvalidPaymentStateException(status, "VOID")
+        PaymentStatus.CAPTURED ->
+            if (voidableByRefund) VoidDecision.EXECUTE else throw InvalidPaymentStateException(status, "VOID")
+        PaymentStatus.REFUNDED ->
+            if (voidRequestedAt != null) VoidDecision.ALREADY_SETTLED else throw InvalidPaymentStateException(status, "VOID")
+        PaymentStatus.PARTIALLY_REFUNDED -> throw InvalidPaymentStateException(status, "VOID")
     }
 
     fun void(now: Instant) {
         transition(PaymentStatus.VOIDED, now)
     }
 
+    /**
+     * 매입된 결제의 VOID = 전액 취소. 돈이 이미 매입됐으므로 VOIDED 가 아니라 REFUNDED 로 끝난다(매입 − 환불 = 0 이라 대사가 맞는다).
+     * VOID 표시를 남겨 같은 VOID 가 다시 와도 [requestVoid] 가 할 일 없음으로 답한다.
+     */
+    fun cancelCaptured(now: Instant) {
+        if (!voidableByRefund) throw InvalidPaymentStateException(status, "VOID(전액 취소)")
+        transition(PaymentStatus.REFUNDED, now)
+        refundedAmount = capturedAmount
+        if (voidRequestedAt == null) voidRequestedAt = now
+    }
+
     fun capture(now: Instant) {
         if (voidRequestedAt != null) throw InvalidPaymentStateException(status, "CAPTURE(VOID 요청됨)")
+        recordCapture(now)
+    }
+
+    /**
+     * PG 가 승인과 함께 매입했다(토스 승인 확인). VOID 가 기억돼 있어도 돈은 이미 매입됐으니 기록한다 —
+     * 그 VOID 는 [pendingVoidDue] 로 전액 취소가 된다.
+     */
+    fun captureByPg(now: Instant) {
+        recordCapture(now)
+    }
+
+    private fun recordCapture(now: Instant) {
         transition(PaymentStatus.CAPTURED, now)
         capturedAmount = amount
         capturedAt = now

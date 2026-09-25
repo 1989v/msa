@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import java.time.Clock
+import java.time.Instant
 import java.time.LocalDate
 
 /**
@@ -74,17 +75,19 @@ class MockPgAdapter(
         }
     }
 
-    override fun capture(paymentKey: String, amount: Long) {
+    /** 매입 시각은 결제 쪽이 넘긴 값을 그대로 원장에 쓴다. 이미 매입된 거래면 처음 기록한 시각을 돌려준다 */
+    override fun capture(paymentKey: String, amount: Long, capturedAt: Instant): Instant {
         recorder.record(MockPgCallRecorder.Op.CAPTURE, paymentKey)
         val tx = byKey(paymentKey)
-        if (tx.status == MockPgTxStatus.CAPTURED) return
+        if (tx.status == MockPgTxStatus.CAPTURED) return requireNotNull(tx.capturedAt)
         if (scenario.onCapture(tx.orderNo, amount) != MockPgScenario.Outcome.APPROVE) {
             throw PgCallException("모의 PG: 매입 응답 없음", retryable = true)
         }
         check(tx.status == MockPgTxStatus.APPROVED) { "모의 PG: 승인되지 않은 거래는 매입할 수 없다 (${tx.status})" }
         tx.capturedAmount = amount
-        tx.capturedAt = clock.instant()
+        tx.capturedAt = capturedAt
         update(tx, MockPgTxStatus.CAPTURED)
+        return capturedAt
     }
 
     override fun void(paymentKey: String, amount: Long) {

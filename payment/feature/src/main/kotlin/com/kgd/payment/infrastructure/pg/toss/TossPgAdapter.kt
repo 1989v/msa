@@ -13,6 +13,7 @@ import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.ObjectMapper
+import java.time.Instant
 
 /**
  * 토스페이먼츠 v1 REST.
@@ -21,8 +22,9 @@ import tools.jackson.databind.ObjectMapper
  * - 조회 `GET /v1/payments/orders/{orderId}`
  * - 취소 `POST /v1/payments/{paymentKey}/cancel` {cancelReason, cancelAmount?} + `Idempotency-Key`
  *
- * 토스 카드 결제는 승인 확인에서 **자동 매입**된다 — [capture] 는 PG 를 부르지 않는다. 그래서 매입 전 VOID 도
- * 토스에서는 전액 취소 호출이다. 카드번호·CVC 는 토스 결제창에서만 오가고 이 어댑터는 paymentKey 만 다룬다.
+ * 토스 카드 결제는 승인 확인이 곧 **매입**이다 — 승인 확인·조회의 DONE 은 `captured = true` 로 답하고(결제는 AUTHORIZED 를
+ * 거쳐 바로 CAPTURED), [capture] 는 PG 를 부르지 않는다. 그래서 VOID 도 토스에서는 전액 취소(cancel) 호출이다.
+ * 카드번호·CVC 는 토스 결제창에서만 오가고 이 어댑터는 paymentKey 만 다룬다.
  */
 class TossPgAdapter(
     private val restClient: RestClient,
@@ -43,7 +45,7 @@ class TossPgAdapter(
         }
         val node = objectMapper.readTree(body)
         if (node.path("status").asString() == "DONE") {
-            PgResult.Approved(node.path("paymentKey").asString(paymentKey))
+            PgResult.Approved(node.path("paymentKey").asString(paymentKey), captured = true)
         } else {
             PgResult.Unknown("TOSS_STATUS:${node.path("status").asString()}")
         }
@@ -68,9 +70,8 @@ class TossPgAdapter(
         PgInquiry.Unavailable("TOSS_UNAVAILABLE:${e.javaClass.simpleName}")
     }
 
-    override fun capture(paymentKey: String, amount: Long) {
-        // 자동 매입 — 호출할 API 가 없다
-    }
+    /** 승인 확인에서 이미 매입됐다 — 호출할 API 가 없다 */
+    override fun capture(paymentKey: String, amount: Long, capturedAt: Instant): Instant = capturedAt
 
     override fun void(paymentKey: String, amount: Long) =
         cancel(paymentKey, mapOf("cancelReason" to "VOID"), idempotencyKey = "void-$paymentKey")
@@ -96,7 +97,7 @@ class TossPgAdapter(
 
     private fun toInquiry(node: JsonNode): PgInquiry = when (val status = node.path("status").asString()) {
         // 부분 취소도 한 번은 승인된 거래다
-        "DONE", "PARTIAL_CANCELED" -> PgInquiry.Approved(node.path("paymentKey").asString(), node.path("totalAmount").asLong())
+        "DONE", "PARTIAL_CANCELED" -> PgInquiry.Approved(node.path("paymentKey").asString(), node.path("totalAmount").asLong(), captured = true)
         "CANCELED", "ABORTED", "EXPIRED" -> PgInquiry.Declined("TOSS_$status")
         else -> PgInquiry.Unavailable("TOSS_$status") // READY · IN_PROGRESS · WAITING_FOR_DEPOSIT
     }

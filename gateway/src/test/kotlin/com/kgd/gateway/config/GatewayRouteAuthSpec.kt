@@ -263,7 +263,7 @@ class GatewayRouteAuthSpec(
         }
     }
 
-    Given("토스 웹훅 /api/v1/payments/webhooks/toss (공개 · 서명은 서비스가 본다)") {
+    Given("토스 웹훅 /api/v1/payments/webhooks/toss (공개 · 서비스는 재조회 신호로만 쓴다)") {
         Then("토큰 없이 게이트웨이를 지난다 — 위조 신원 헤더를 붙여도 막히지 않고 벗겨진다") {
             // 백엔드 호스트를 해석할 수 없어 5xx 로 끝난다. 라우트가 없으면 404, 인증 필터가 막으면 401 이다
             client.post().uri("/api/v1/payments/webhooks/toss")

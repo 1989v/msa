@@ -119,17 +119,51 @@ class PaymentTest : BehaviorSpec({
             p.fail("DECLINED", t0)
             p.pendingVoidDue shouldBe false
         }
-        then("AUTHORIZED 면 바로 실행, 이미 VOIDED·FAILED 면 할 일 없음, 매입 뒤면 거부") {
+        then("AUTHORIZED 면 바로 실행, 이미 VOIDED·FAILED 면 할 일 없음, 환불이 있는 매입 결제면 거부") {
             payment(PaymentStatus.AUTHORIZED).requestVoid(t0) shouldBe VoidDecision.EXECUTE
             payment(PaymentStatus.VOIDED).requestVoid(t0) shouldBe VoidDecision.ALREADY_SETTLED
             payment(PaymentStatus.FAILED).requestVoid(t0) shouldBe VoidDecision.ALREADY_SETTLED
-            shouldThrow<InvalidPaymentStateException> { payment(PaymentStatus.CAPTURED).requestVoid(t0) }
+            shouldThrow<InvalidPaymentStateException> { payment(PaymentStatus.PARTIALLY_REFUNDED, refunded = 1_000L).requestVoid(t0) }
+            shouldThrow<InvalidPaymentStateException> { payment(PaymentStatus.REFUNDED, refunded = 10_000L).requestVoid(t0) }
         }
         then("VOID 가 기억된 결제는 매입하지 않는다") {
             val p = payment(PaymentStatus.UNKNOWN)
             p.requestVoid(t0)
             p.authorize("pk", t0)
             shouldThrow<InvalidPaymentStateException> { p.capture(t0) }
+        }
+    }
+
+    given("PG 가 승인과 함께 매입한 결제 (토스 승인 확인 = 매입)") {
+        then("AUTHORIZED 를 거쳐 CAPTURED 로 기록되고 매입액·매입 시각이 남는다") {
+            val p = payment(PaymentStatus.READY)
+            p.authorize("tpk", t0)
+            p.captureByPg(t0)
+            p.status shouldBe PaymentStatus.CAPTURED
+            p.capturedAmount shouldBe 10_000L
+            p.capturedAt shouldBe t0
+        }
+        then("VOID 는 전액 취소 — REFUNDED, 환불액 = 매입액, 같은 VOID 가 다시 오면 할 일 없음") {
+            val p = payment(PaymentStatus.CAPTURED)
+            p.requestVoid(t0) shouldBe VoidDecision.EXECUTE
+            p.cancelCaptured(t0)
+            p.status shouldBe PaymentStatus.REFUNDED
+            p.refundedAmount shouldBe 10_000L
+            p.refundableAmount shouldBe 0L
+            p.requestVoid(t0) shouldBe VoidDecision.ALREADY_SETTLED
+        }
+        then("결과 미상 중 기억된 VOID 는 매입 결론에서도 실행 대상이다") {
+            val p = payment(PaymentStatus.UNKNOWN)
+            p.requestVoid(t0)
+            p.authorize("tpk", t0)
+            p.captureByPg(t0)
+            p.status shouldBe PaymentStatus.CAPTURED
+            p.pendingVoidDue shouldBe true
+        }
+        then("부분 환불이 있는 결제는 전액 취소할 수 없다") {
+            val p = payment(PaymentStatus.CAPTURED)
+            p.refund(1_000L, t0)
+            shouldThrow<InvalidPaymentStateException> { p.cancelCaptured(t0) }
         }
     }
 

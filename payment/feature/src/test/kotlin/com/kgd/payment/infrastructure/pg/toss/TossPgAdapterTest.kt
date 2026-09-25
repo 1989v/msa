@@ -12,6 +12,7 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.SocketPolicy
 import tools.jackson.module.kotlin.jacksonMapperBuilder
 import java.time.Duration
+import java.time.Instant
 import java.util.Base64
 import java.util.concurrent.TimeUnit
 
@@ -42,11 +43,11 @@ class TossPgAdapterTest : BehaviorSpec({
     fun ok(body: String) = MockResponse().setResponseCode(200).setHeader("Content-Type", "application/json").setBody(body)
 
     given("승인 확인 POST /v1/payments/confirm") {
-        then("paymentKey·orderId(=orderNo)·amount 를 Basic 인증(시크릿 키 + ':')으로 보내고 DONE 이면 승인") {
+        then("paymentKey·orderId(=orderNo)·amount 를 Basic 인증(시크릿 키 + ':')으로 보내고 DONE 이면 매입까지 끝난 승인") {
             withServer { server, toss ->
                 server.enqueue(ok("""{"paymentKey":"tpk_1","orderId":"ORD-1-1","status":"DONE","totalAmount":10000}"""))
 
-                toss.confirm("tpk_1", "ORD-1-1", 10_000L) shouldBe PgResult.Approved("tpk_1")
+                toss.confirm("tpk_1", "ORD-1-1", 10_000L) shouldBe PgResult.Approved("tpk_1", captured = true)
 
                 val req = server.takeRequest(1, TimeUnit.SECONDS)!!
                 req.method shouldBe "POST"
@@ -75,13 +76,13 @@ class TossPgAdapterTest : BehaviorSpec({
     }
 
     given("조회 GET /v1/payments/orders/{orderId}") {
-        then("DONE 은 승인(PG 금액), 없으면 NotFound, 진행 중이면 미결") {
+        then("DONE 은 매입까지 끝난 승인(PG 금액), 없으면 NotFound, 진행 중이면 미결") {
             withServer { server, toss ->
                 server.enqueue(ok("""{"paymentKey":"tpk_1","orderId":"ORD-1-1","status":"DONE","totalAmount":10000}"""))
                 server.enqueue(MockResponse().setResponseCode(404).setBody("""{"code":"NOT_FOUND_PAYMENT","message":"없음"}"""))
                 server.enqueue(ok("""{"paymentKey":"tpk_1","orderId":"ORD-1-1","status":"IN_PROGRESS","totalAmount":10000}"""))
 
-                toss.inquire("ORD-1-1") shouldBe PgInquiry.Approved("tpk_1", 10_000L)
+                toss.inquire("ORD-1-1") shouldBe PgInquiry.Approved("tpk_1", 10_000L, captured = true)
                 toss.inquire("ORD-1-1") shouldBe PgInquiry.NotFound
                 toss.inquire("ORD-1-1").shouldBeInstanceOf<PgInquiry.Unavailable>()
 
@@ -124,9 +125,10 @@ class TossPgAdapterTest : BehaviorSpec({
     }
 
     given("매입") {
-        then("토스는 승인 확인에서 자동 매입되므로 HTTP 를 부르지 않는다") {
+        then("토스는 승인 확인이 곧 매입이라 HTTP 를 부르지 않고, 결제 쪽 매입 시각을 그대로 돌려준다") {
             withServer { server, toss ->
-                toss.capture("tpk_1", 10_000L)
+                val at = Instant.parse("2026-09-24T14:59:59.999Z")
+                toss.capture("tpk_1", 10_000L, at) shouldBe at
                 server.requestCount shouldBe 0
             }
         }

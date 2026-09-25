@@ -201,3 +201,8 @@
 - 배포 전 확인: 운영 FULFILLING 주문 0 · order 아웃박스 CLAIM_CLOSED 행 0
 - 회귀 주입 5종 빨간불
 - W1 배포는 576fd1c7 run 이 온톨로지 게이트로 실패, fa495e69(온톨로지만)는 atlas 만 빌드 → commerce 는 이 W2 push 로 W1+W2 함께 빌드
+
+## 미결 후속 W3 — 결제 (2026-09-25)
+- `./gradlew verifyArchitecture compileTestKotlin :payment:domain:test :payment:feature:test :order:feature:test :gateway:test :code-dictionary:feature:test :commerce:app:test` → exit 0, 실패 0 · MockPgReconciliationBoundaryTest 1/0 · TossPgAdapterTest 6/0 · TossWebhookControllerTest 3/0 · PaymentPgSelectionSpec 4/0 · E2E 19/0
+- Q1 토스 운영 비활성 유지(문서) · Q13 토스 승인 확인 = 매입(authorized → captured 연속 발행, 사가 무변경, 매입된 결제의 VOID = 전액 취소), 웹훅은 재조회 신호만(비밀 헤더 제거) · Q14 매입 시각 한 값을 결제 행과 모의 PG 원장에 공유, KST 23:59:59.999 경계 테스트
+- 회귀 주입: AUTHORIZED 강제 → 7 실패 · 원장 시각 분리 → 대사 불일치

@@ -9,9 +9,7 @@ import com.kgd.payment.domain.opsissue.model.OpsIssueType
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
-import io.mockk.just
 import io.mockk.mockk
-import io.mockk.runs
 import io.mockk.verify
 import java.time.LocalDate
 
@@ -24,7 +22,7 @@ class ReconciliationServiceTest : BehaviorSpec({
     fun setup(): Pair<PaymentHarness, ReconciliationService> {
         val h = PaymentHarness()
         every { h.pg.authorize(any(), any()) } answers { PgResult.Approved("pk-${firstArg<String>()}") }
-        every { h.pg.capture(any(), any()) } just runs
+        every { h.pg.capture(any(), any(), any()) } answers { thirdArg() }
         listOf("ORD-1-1" to 10_000L, "ORD-2-1" to 20_000L).forEachIndexed { i, (orderNo, amount) ->
             h.commands.authorize(ProcessPaymentCommandUseCase.Authorize(i + 1L, orderNo, amount))
             h.commands.capture(orderNo)

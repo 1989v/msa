@@ -73,7 +73,7 @@ code-dictionary 와 다르다 — 여기서는 **각 feature 가 자기 `{Svc}Da
 ## 운영
 
 - k8s `k8s/base/commerce` — 이미지 태그 하나가 열 도메인을 함께 올린다. 한 도메인의 테스트 실패가 전체 배포를 막는다
-- 필수 Secret: `SELLER_ACCOUNT_ENC_KEY`(없으면 기동 실패). `PAYMENT_PG=toss` 일 때만 `TOSS_SECRET_KEY`·`TOSS_WEBHOOK_SECRET`. 셋 다 설정 파일에 기본값이 없다
+- 필수 Secret: `SELLER_ACCOUNT_ENC_KEY`(없으면 기동 실패). `PAYMENT_PG=toss` 일 때만 `TOSS_SECRET_KEY`(웹훅은 재조회 신호라 비밀이 없다). 둘 다 설정 파일에 기본값이 없다
 - 새 스키마·계정은 운영 MySQL init 이 재실행되지 않으므로 배포 전 `oci-mysql` 로 만들고 init 파일도 같이 고친다
 - 헬스: datasource 중 하나라도 replica 서비스가 없으면 DOWN 이 난다 (2026-08-06 member/wishlist replica 부재 사례)
 - 운영 큐: admin-fe 가 여덟 도메인(order·inventory·fulfillment·product·payment·seller·promotion·settlement)의

@@ -231,7 +231,7 @@ class GatewayRouteConfig(
                     }
                     .uri(COMMERCE_URI)
             }
-            // 토스 웹훅 — 토스 서버가 부르므로 공개다. 검증은 서비스가 한다(공유 비밀 + PG 재조회).
+            // 토스 웹훅 — 토스 서버가 부르므로 공개다. 서비스는 본문·헤더를 믿지 않고 주문번호로 PG 를 재조회만 한다.
             // 신원 헤더를 벗겨 위조 X-User-Id 가 백엔드에 닿지 않게 하고, 공개 쓰기라 레이트 리밋을 건다.
             // 컨트롤러는 payment.pg=toss 일 때만 생긴다 — 운영(모의 PG)에서는 여기를 지나 404 다.
             .route("payment-webhook-toss") { r ->

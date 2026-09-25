@@ -12,6 +12,7 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.runs
 import io.mockk.verify
+import io.mockk.verifyOrder
 
 /**
  * 결과 미상(UNKNOWN) 결제를 재조회로 결론 내기 · 보류 만료 규칙 (b).
@@ -83,6 +84,26 @@ class PaymentResolutionServiceTest : BehaviorSpec({
             verify(exactly = 1) { h.pg.void("pk-9", 10_000L) }
             h.payments.rows.values.single().status shouldBe PaymentStatus.VOIDED
             verify(exactly = 1) { h.events.publish(PaymentEventType.VOIDED, any(), any(), any()) }
+        }
+
+        then("재조회가 매입까지 끝난 승인(토스 DONE)이면 CAPTURED 로 기록한 뒤 그 VOID 를 전액 취소로 실행한다") {
+            val h = unknown()
+            every { h.pg.inquire(any()) } returns PgInquiry.Approved("tpk-9", 10_000L, captured = true)
+
+            h.commands.void("ORD-100-1")
+            h.tick(30)
+
+            verify(exactly = 1) { h.pg.void("tpk-9", 10_000L) }
+            h.payments.rows.values.single().let {
+                it.status shouldBe PaymentStatus.REFUNDED
+                it.capturedAmount shouldBe 10_000L
+                it.refundedAmount shouldBe 10_000L
+            }
+            verifyOrder {
+                h.events.publish(PaymentEventType.AUTHORIZED, any(), any(), any())
+                h.events.publish(PaymentEventType.CAPTURED, any(), any(), any())
+                h.events.publish(PaymentEventType.VOIDED, any(), any(), 10_000L)
+            }
         }
 
         then("재조회가 거절이면 PG 취소는 0회, FAILED 로 끝난다") {

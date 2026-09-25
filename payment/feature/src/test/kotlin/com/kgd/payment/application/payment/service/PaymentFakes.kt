@@ -96,6 +96,6 @@ class PaymentHarness(val clock: MutableClock = MutableClock()) {
     val pg = mockk<PgPort>()
     val tx = PaymentTransactionalService(payments, refunds, opsIssues, events, clock)
     val voids = PaymentVoidExecutor(pg, tx)
-    val commands = PaymentCommandService(payments, refunds, pg, tx, voids)
+    val commands = PaymentCommandService(payments, refunds, pg, tx, voids, clock)
     val resolution = PaymentResolutionService(payments, pg, tx, voids, clock)
 }
