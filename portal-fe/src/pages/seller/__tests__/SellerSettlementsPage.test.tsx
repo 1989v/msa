@@ -18,7 +18,8 @@ vi.mock('../../../auth/auth', async (importOriginal) => {
 import { fetchSellerSettlement, fetchSellerSettlements } from '../../../api/shopApi';
 
 const statement = (over: Partial<SettlementStatement>): SettlementStatement => ({
-  id: 3, sellerId: 7, periodStart: '2026-09-21', periodEnd: '2026-09-27', status: 'PAID',
+  id: 3, sellerId: 7, periodStart: '2026-09-21', periodEnd: '2026-09-27',
+  includedFrom: '2026-09-24T03:00:00Z', includedTo: '2026-09-24T03:00:00Z', status: 'PAID',
   netSales: 24_000, shippingFee: 3_000, commission: 2_400, payout: 24_600, payoutReference: 'MOCK-PAYOUT-7-3',
   lineCount: 2, createdAt: '2026-09-27T20:30:00Z', confirmedAt: '2026-09-27T20:30:00Z', paidAt: '2026-09-27T20:30:00Z',
   carriedOverAt: null, lines: null, ...over,
@@ -79,6 +80,17 @@ describe('판매자 정산서', () => {
     );
     renderPage();
     expect(await screen.findByText('승인된(ACTIVE) 판매자만 정산서를 볼 수 있습니다.')).toBeInTheDocument();
+  });
+
+  it('이월·지각 항목이 있으면 명목 기간과 별개로 실제 포함 확정일(KST)을 보인다', async () => {
+    vi.mocked(fetchSellerSettlements).mockResolvedValue([
+      // 09-10 이월분 ~ 09-27 14:59Z(= 09-27 23:59 KST)
+      statement({ includedFrom: '2026-09-10T00:00:00Z', includedTo: '2026-09-27T14:59:00Z' }),
+    ]);
+    renderPage();
+
+    expect(await screen.findByText('2026.09.21 ~ 09.27')).toBeInTheDocument();
+    expect(screen.getByText('실제 포함 확정일 2026.09.10 ~ 09.27')).toBeInTheDocument();
   });
 
   it('기간 표기 — 해가 바뀌면 끝 날짜에도 연도를 쓴다', () => {

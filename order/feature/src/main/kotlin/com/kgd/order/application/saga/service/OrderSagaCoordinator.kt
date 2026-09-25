@@ -343,12 +343,28 @@ class OrderSagaCoordinator(
             SagaStep.INVENTORY_CONFIRM -> SagaCommand.ConfirmInventory(orderId)
             SagaStep.PROMOTION_CONFIRM -> SagaCommand.ConfirmPromotion(orderId)
             SagaStep.PAYMENT_CAPTURE -> SagaCommand.CapturePayment(orderId, saga.orderNo)
-            SagaStep.FULFILLMENT_CREATE -> SagaCommand.CreateFulfillment(orderId, saga.reservedLines)
+            SagaStep.FULFILLMENT_CREATE -> SagaCommand.CreateFulfillment(orderId, fulfillmentLines(order, saga))
             SagaStep.PAYMENT_VOID -> SagaCommand.VoidPayment(orderId, saga.orderNo)
             SagaStep.PROMOTION_CANCEL -> SagaCommand.CancelPromotion(orderId)
             SagaStep.PROMOTION_RESTORE -> SagaCommand.RestorePromotion(orderId, "saga-undo:$orderId", order.pointAmount, fullCancel = true)
             SagaStep.INVENTORY_RELEASE -> SagaCommand.ReleaseInventory(orderId)
             SagaStep.INVENTORY_RESTOCK -> SagaCommand.RestockInventory(orderId)
+        }
+    }
+
+    /**
+     * 이행 라인 — 주문 라인마다 하나. 재고는 상품 단위로 합쳐 한 창고에서 예약하므로(같은 상품 라인은 같은 창고)
+     * 창고는 예약 답의 상품 → 창고로 찾는다.
+     */
+    private fun fulfillmentLines(order: Order, saga: OrderSaga): List<SagaCommand.FulfillmentLine> {
+        val warehouseOf = saga.reservedLines.associate { it.productId to it.warehouseId }
+        return order.items.map {
+            SagaCommand.FulfillmentLine(
+                orderItemId = requireNotNull(it.id) { "저장되지 않은 라인: orderId=${order.id}, line=${it.lineNo}" },
+                productId = it.productId,
+                quantity = it.quantity,
+                warehouseId = requireNotNull(warehouseOf[it.productId]) { "예약 답에 없는 상품: orderId=${order.id}, productId=${it.productId}" },
+            )
         }
     }
 

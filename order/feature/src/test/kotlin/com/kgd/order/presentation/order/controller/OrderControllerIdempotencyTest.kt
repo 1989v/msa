@@ -54,7 +54,7 @@ class OrderControllerIdempotencyTest : BehaviorSpec({
             SagaTiming(Duration.ofSeconds(60), Duration.ofMinutes(10), 10), world.transactionManager,
         )
         val placement = OrderPlacementService(world.orders, ports.sheets, world.keys, world.guards, coordinator, mapper, clock, world.transactionManager, 3)
-        val query = OrderQueryService(world.orders, world.sagas)
+        val query = OrderQueryService(world.orders, world.sagas, InMemoryOrderPorts().sellers)
         val mvc: MockMvc = MockMvcBuilders.standaloneSetup(OrderController(placement, query, query, coordinator))
             .setMessageConverters(JacksonJsonHttpMessageConverter(mapper))
             .build()

@@ -66,7 +66,10 @@ sealed interface SagaCommand {
     /** 결제가 결과 미상이면 결제 쪽이 미뤄 뒀다가 결론 시 실행한다(규칙 b) */
     data class VoidPayment(override val orderId: Long, val orderNo: String) : SagaCommand
 
-    data class CreateFulfillment(override val orderId: Long, val lines: List<ReservedLine>) : SagaCommand
+    /** `fulfillment.command.create` — 주문 라인마다 한 줄(주문 라인 id 로 식별), 창고는 재고 예약 답이 정한 상품의 창고 */
+    data class CreateFulfillment(override val orderId: Long, val lines: List<FulfillmentLine>) : SagaCommand
+
+    data class FulfillmentLine(val orderItemId: Long, val productId: Long, val quantity: Int, val warehouseId: Long)
 
     data class StockLine(val productId: Long, val quantity: Int)
     data class SellerAmount(val sellerId: Long, val amount: Long)

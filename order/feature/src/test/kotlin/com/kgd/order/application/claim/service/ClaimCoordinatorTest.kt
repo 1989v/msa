@@ -62,6 +62,9 @@ class ClaimCoordinatorTest : BehaviorSpec({
         fun order() = world.order(orderId)
         fun lastCommand() = claims.commands.last()
 
+        /** 주문 라인 id — 이행 라인은 이것으로 식별한다 */
+        fun itemIdOf(lineNo: Int) = requireNotNull(order().items.single { it.lineNo == lineNo }.id)
+
         /** 출고 전 경로를 끝까지 — 이행 취소 → 재입고 → 원복 → 환불 답 */
         fun answerPreShipment(restockKey: String) {
             coordinator.onFulfillmentCancelled(orderId)
@@ -75,9 +78,9 @@ class ClaimCoordinatorTest : BehaviorSpec({
         val f = Fixture()
         val claim = f.coordinator.request("m-1", f.orderId, listOf(1)).single()
 
-        Then("이행 취소 명령(라인 1 의 상품)을 먼저 낸다") {
+        Then("이행 취소 명령(라인 1 의 주문 라인 id)을 먼저 낸다") {
             claim.step shouldBe ClaimStep.FULFILLMENT_CANCEL.name
-            f.lastCommand() shouldBe ClaimCommand.CancelFulfillment(f.orderId, listOf(101L))
+            f.lastCommand() shouldBe ClaimCommand.CancelFulfillment(f.orderId, listOf(f.itemIdOf(1)))
         }
         When("이행이 cancelled 로 답한다 — 출고 전") {
             f.coordinator.onFulfillmentCancelled(f.orderId)
@@ -171,7 +174,7 @@ class ClaimCoordinatorTest : BehaviorSpec({
         }
         Then("이행 생성 답 → 취소 명령") {
             f.coordinator.onFulfillmentCreated(f.orderId)
-            f.lastCommand() shouldBe ClaimCommand.CancelFulfillment(f.orderId, listOf(102L))
+            f.lastCommand() shouldBe ClaimCommand.CancelFulfillment(f.orderId, listOf(f.itemIdOf(2)))
         }
     }
 

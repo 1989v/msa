@@ -71,12 +71,12 @@ class SettlementEventConsumer(
         )
     }
 
-    /** 정산 대상 — 확정 라인과(판매자 마지막 라인이면) 배송비 */
+    /** 정산 대상 — 확정 라인과(판매자의 첫 확정 라인이면) 배송비 */
     @KafkaListener(topics = [LINE_PURCHASE_CONFIRMED], groupId = GROUP, containerFactory = FACTORY)
     fun onLinePurchaseConfirmed(record: ConsumerRecord<String, String>) = handle(record, LinePurchaseConfirmedMessage::class.java) { m ->
         items.register(
             RegisterSettlementItemUseCase.PurchaseConfirmed(
-                orderId = m.orderId, line = m.line?.toAmounts(), shipping = m.shippingLine?.toAmount(), confirmedAt = m.confirmedAt,
+                orderId = m.orderId, line = m.line.toAmounts(), shipping = m.shippingLine?.toAmount(), confirmedAt = m.confirmedAt,
             ),
         )
     }
@@ -166,7 +166,7 @@ data class LinePurchaseConfirmedMessage(
     override val eventId: String? = null,
     val orderId: Long,
     val confirmedAt: Instant,
-    val line: LineMessage? = null,
+    val line: LineMessage,
     val shippingLine: ShippingLineMessage? = null,
 ) : SettlementMessage
 

@@ -18,4 +18,6 @@ data class CartLineView(
     val price: Long?,
     val sellerId: Long?,
     val onSale: Boolean,
+    /** 판매자 상호 — 읽기 모델에 없으면 null(화면이 판매자 번호로 대신한다) */
+    val sellerName: String? = null,
 )

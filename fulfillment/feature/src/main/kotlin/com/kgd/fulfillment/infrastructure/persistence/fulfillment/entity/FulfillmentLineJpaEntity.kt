@@ -16,13 +16,16 @@ import jakarta.persistence.UniqueConstraint
 @Entity
 @Table(
     name = "fulfillment_line",
-    uniqueConstraints = [UniqueConstraint(name = "uk_fulfillment_line_product", columnNames = ["fulfillment_id", "product_id"])],
+    uniqueConstraints = [UniqueConstraint(name = "uk_fulfillment_line_item", columnNames = ["fulfillment_id", "order_item_id"])],
 )
 class FulfillmentLineJpaEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
     @Column(nullable = false)
     val fulfillmentId: Long,
+    /** 주문 라인 id — 이 식별이 생기기 전 행은 null */
+    @Column
+    val orderItemId: Long? = null,
     @Column(nullable = false)
     val productId: Long,
     @Column(nullable = false)
@@ -34,12 +37,13 @@ class FulfillmentLineJpaEntity(
     var status: FulfillmentLineStatus = status
         private set
 
-    fun toDomain(): FulfillmentLine = FulfillmentLine.restore(id, productId, quantity, status)
+    fun toDomain(): FulfillmentLine = FulfillmentLine.restore(id, orderItemId, productId, quantity, status)
 
     companion object {
         fun fromDomain(fulfillmentId: Long, line: FulfillmentLine) = FulfillmentLineJpaEntity(
             id = line.id,
             fulfillmentId = fulfillmentId,
+            orderItemId = line.orderItemId,
             productId = line.productId,
             quantity = line.quantity,
             status = line.getStatus(),

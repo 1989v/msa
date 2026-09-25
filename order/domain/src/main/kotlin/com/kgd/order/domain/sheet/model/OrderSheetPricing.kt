@@ -13,6 +13,8 @@ import java.time.Instant
 /**
  * 주문서 금액 계산 — 입력은 읽기 모델뿐이고 요청의 가격은 받지 않는다.
  *
+ * 0. 같은 상품이 여러 번 오면 처음 나온 자리에서 수량을 합쳐 한 라인으로 만든다 — 라인이 곧 상품 한 종이라
+ *    화면·클레임이 헷갈리지 않는다(이행은 주문 라인 id 로 식별하므로 두 라인이어도 동작은 한다).
  * 1. 판매 가능: 상품 ACTIVE + 판매자 판매 가능(ACTIVE·수수료율 있음). 아니면 422.
  * 2. 쿠폰 견적을 대상 라인 금액 비율로 안분.
  * 3. 포인트: 잔액 이하, 쿠폰 뒤 상품 금액 이하(배송비는 포인트 대상이 아니다). 쿠폰 뒤 라인 금액 비율로 안분.
@@ -41,8 +43,22 @@ object OrderSheetPricing {
         ttl: Duration,
     ): OrderSheet {
         require(items.isNotEmpty()) { "주문 항목이 없다" }
-        require(items.map { it.productId }.toSet().size == items.size) { "같은 상품이 두 줄에 있다" }
         require(items.all { it.quantity > 0 }) { "수량은 1 이상" }
+        val merged = items.groupBy { it.productId }.map { (productId, same) -> Item(productId, same.sumOf { it.quantity }) }
+        return priceMerged(memberId, merged, products, sellers, coupon, pointAmount, pointBalance, now, ttl)
+    }
+
+    private fun priceMerged(
+        memberId: String,
+        items: List<Item>,
+        products: Map<Long, ProductView>,
+        sellers: Map<Long, SellerView>,
+        coupon: CouponChoice?,
+        pointAmount: Long,
+        pointBalance: Long,
+        now: Instant,
+        ttl: Duration,
+    ): OrderSheet {
         require(pointAmount >= 0) { "포인트는 음수일 수 없다" }
 
         val sold = items.map { item ->

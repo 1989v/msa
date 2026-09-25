@@ -45,7 +45,7 @@ class FulfillmentCommandServiceTest : BehaviorSpec({
             // 유니크 (order_id, warehouse_id) 를 흉내 낸다
             check(rows.values.none { it.id != id && it.orderId == fulfillmentOrder.orderId && it.warehouseId == fulfillmentOrder.warehouseId })
             val lines = fulfillmentOrder.getLines().map {
-                FulfillmentLine.restore(it.id ?: ++lineSeq, it.productId, it.quantity, it.getStatus())
+                FulfillmentLine.restore(it.id ?: ++lineSeq, it.orderItemId, it.productId, it.quantity, it.getStatus())
             }
             rows[id] = FulfillmentOrder.restore(id, fulfillmentOrder.orderId, fulfillmentOrder.warehouseId,
                 fulfillmentOrder.getStatus(), fulfillmentOrder.createdAt, lines)
@@ -56,7 +56,7 @@ class FulfillmentCommandServiceTest : BehaviorSpec({
         override fun findByOrderIdAndWarehouseId(orderId: Long, warehouseId: Long) =
             rows.values.firstOrNull { it.orderId == orderId && it.warehouseId == warehouseId }?.let(::copy)
         private fun copy(fo: FulfillmentOrder) = FulfillmentOrder.restore(fo.id, fo.orderId, fo.warehouseId, fo.getStatus(), fo.createdAt,
-            fo.getLines().map { FulfillmentLine.restore(it.id, it.productId, it.quantity, it.getStatus()) })
+            fo.getLines().map { FulfillmentLine.restore(it.id, it.orderItemId, it.productId, it.quantity, it.getStatus()) })
     }
 
     class Harness {
@@ -101,21 +101,22 @@ class FulfillmentCommandServiceTest : BehaviorSpec({
         fun events(type: String) = outboxRows.filter { it.eventType == type }
         fun json(row: Row): JsonNode = objectMapper.readTree(row.payload)
 
-        /** 주문 1: 창고 1 에 상품 10·20, 창고 2 에 상품 30 */
+        /** 주문 1: 창고 1 에 주문 라인 100(상품 10)·200(상품 20), 창고 2 에 라인 300(상품 30) */
         fun create(eventId: UUID = UUID.randomUUID()) = consumer.onCreate(
             record(
                 FulfillmentCommandConsumer.CREATE,
                 """{"eventId":"$eventId","orderId":1,"lines":[
-                    {"productId":10,"quantity":2,"warehouseId":1},
-                    {"productId":20,"quantity":1,"warehouseId":1},
-                    {"productId":30,"quantity":5,"warehouseId":2}]}""",
+                    {"orderItemId":100,"productId":10,"quantity":2,"warehouseId":1},
+                    {"orderItemId":200,"productId":20,"quantity":1,"warehouseId":1},
+                    {"orderItemId":300,"productId":30,"quantity":5,"warehouseId":2}]}""",
             ),
         )
 
-        fun cancel(vararg productIds: Long) = consumer.onCancel(
+        /** 취소는 주문 라인 id 로 — 상품 id 는 싣지만 보지 않는다 */
+        fun cancel(vararg orderItemIds: Long) = consumer.onCancel(
             record(
                 FulfillmentCommandConsumer.CANCEL,
-                """{"eventId":"${UUID.randomUUID()}","orderId":1,"lines":[${productIds.joinToString(",") { """{"productId":$it}""" }}]}""",
+                """{"eventId":"${UUID.randomUUID()}","orderId":1,"lines":[${orderItemIds.joinToString(",") { """{"orderItemId":$it,"productId":${it / 10}}""" }}]}""",
             ),
         )
 
@@ -156,7 +157,7 @@ class FulfillmentCommandServiceTest : BehaviorSpec({
             val h = Harness()
             h.create()
 
-            h.cancel(10L, 30L)
+            h.cancel(100L, 300L)
 
             h.fulfillmentOf(1L).getStatus() shouldBe FulfillmentStatus.PENDING
             h.fulfillmentOf(1L).getLines().associate { it.productId to it.getStatus() } shouldBe
@@ -170,9 +171,28 @@ class FulfillmentCommandServiceTest : BehaviorSpec({
             h.events("fulfillment.order.cancelled").single().partitionKey shouldBe "1"
 
             // 같은 라인 취소가 다시 와도 같은 라인으로 cancelled — 효과는 없다
-            h.cancel(10L, 30L)
+            h.cancel(100L, 300L)
             h.events("fulfillment.order.cancelled") shouldHaveSize 2
             h.fulfillmentOf(1L).getLines().single { it.productId == 20L }.getStatus() shouldBe FulfillmentLineStatus.ACTIVE
+        }
+
+        then("같은 상품이 두 주문 라인이면 이행 라인도 둘이고, 한 라인만 취소된다") {
+            val h = Harness()
+            h.consumer.onCreate(
+                h.record(
+                    FulfillmentCommandConsumer.CREATE,
+                    """{"eventId":"${UUID.randomUUID()}","orderId":1,"lines":[
+                        {"orderItemId":401,"productId":40,"quantity":1,"warehouseId":1},
+                        {"orderItemId":402,"productId":40,"quantity":2,"warehouseId":1}]}""",
+                ),
+            )
+            h.fulfillmentOf(1L).getLines().map { it.orderItemId to it.quantity } shouldBe listOf(401L to 1, 402L to 2)
+
+            h.cancel(402L)
+
+            h.fulfillmentOf(1L).getLines().associate { it.orderItemId to it.getStatus() } shouldBe
+                mapOf(401L to FulfillmentLineStatus.ACTIVE, 402L to FulfillmentLineStatus.CANCELLED)
+            h.fulfillmentOf(1L).getStatus() shouldBe FulfillmentStatus.PENDING
         }
 
         then("요청 라인 중 하나라도 이미 출고됐으면 아무것도 취소하지 않고 cancel-rejected — 예외(DLT)가 아니다") {
@@ -180,7 +200,7 @@ class FulfillmentCommandServiceTest : BehaviorSpec({
             h.create()
             h.ship(2L)
 
-            shouldNotThrowAny { h.cancel(10L, 30L) }
+            shouldNotThrowAny { h.cancel(100L, 300L) }
 
             h.events("fulfillment.order.cancelled").shouldBeEmpty()
             h.json(h.events("fulfillment.order.cancel-rejected").single()).let { p ->
@@ -194,7 +214,7 @@ class FulfillmentCommandServiceTest : BehaviorSpec({
 
         then("이행이 없는 주문의 취소는 계약 위반 예외 — 이것만 DLT 로 간다") {
             val h = Harness()
-            shouldThrow<IllegalArgumentException> { h.cancel(10L) }
+            shouldThrow<IllegalArgumentException> { h.cancel(100L) }
         }
     }
 

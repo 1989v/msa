@@ -78,13 +78,6 @@ class SettlementEventConsumerTest : BehaviorSpec({
                     "shippingLine":{"sellerId":7,"fee":3000}}""",
                 ),
             )
-            c.onLinePurchaseConfirmed(
-                record(
-                    "order.line.purchase-confirmed",
-                    """{"eventId":"${UUID.randomUUID()}","orderId":503,"memberId":"buyer","sellerId":7,"trigger":"CLAIM_CLOSED",
-                    "confirmedAt":"2026-09-24T05:00:00Z","line":null,"shippingLine":{"sellerId":7,"fee":2500}}""",
-                ),
-            )
             c.onReconciliationSettled(
                 record(
                     "payment.reconciliation.settled",
@@ -102,7 +95,7 @@ class SettlementEventConsumerTest : BehaviorSpec({
 
             h.journals.journals.map { it.type } shouldBe listOf(JournalType.CAPTURE, JournalType.REFUND, JournalType.PG_DEPOSIT)
             h.refunded.keys.keys shouldBe setOf("line:11", "shipping:501:7")
-            h.items.items.keys shouldBe setOf("line:21", "shipping:502:7", "shipping:503:7")
+            h.items.items.keys shouldBe setOf("line:21", "shipping:502:7")
             h.sellers.find(7L)?.memberId shouldBe "m7"
             h.payableOf(7L) shouldBe 0L
         }

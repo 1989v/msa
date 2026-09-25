@@ -264,6 +264,10 @@ class OrderSagaE2ETest(
                 fulfillmentJdbc.queryForList(
                     "SELECT product_id, quantity FROM fulfillment_line WHERE fulfillment_id = ?", fulfillmentIds.single(),
                 ).map { (it["product_id"] as Number).toLong() to (it["quantity"] as Number).toInt() } shouldBe listOf(productId to 2)
+                // 이행 라인은 주문 라인 id 로 식별한다 — 사가가 명령에 실어 보낸 값이 이행 행까지 온다
+                fulfillmentJdbc.queryForList(
+                    "SELECT order_item_id FROM fulfillment_line WHERE fulfillment_id = ?", Long::class.java, fulfillmentIds.single(),
+                ) shouldBe orderJdbc.queryForList("SELECT id FROM order_items WHERE order_id = ?", Long::class.java, orderId)
 
                 val confirmed = orderJdbc.queryForList(
                     "SELECT payload, partition_key FROM outbox_event WHERE aggregate_id = ? AND event_type = 'order.order.confirmed'", orderId,

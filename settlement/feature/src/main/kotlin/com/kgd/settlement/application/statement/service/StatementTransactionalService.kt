@@ -23,6 +23,7 @@ class StatementTransactionalService(
 ) {
     /**
      * 초안 → 확정. 지급액 > 0 이면 CONFIRMED 로 두고 항목을 묶는다. ≤ 0 이면 CARRIED_OVER — 항목을 묶지 않아 다음 기간 정산서가 가져간다.
+     * 플랫폼 판매자는 금액과 무관하게 PLATFORM_RETAINED — 자기 매출이라 지급하지 않고, 항목은 묶어 감사 기록으로 남긴다(지급 거래 없음).
      * 담을 항목이 없으면 null. (판매자, 기간 시작) 유니크라 두 배치가 같은 정산서를 만들지 못한다.
      */
     @Transactional("settlementTransactionManager")
@@ -32,9 +33,12 @@ class StatementTransactionalService(
         val refunded = refundedItems.findRefundedKeys(candidates.map { it.key })
         val statement = SettlementStatement.draft(sellerId, period, candidates, refunded, now) ?: return null
         statement.confirm(now)
-        if (statement.payout <= 0) statement.carryOver(now)
+        when {
+            statement.isPlatform -> statement.retainForPlatform()
+            statement.payout <= 0 -> statement.carryOver(now)
+        }
         val saved = statements.save(statement)
-        if (saved.status == StatementStatus.CONFIRMED) items.assign(saved.lines.map { it.key }, requireNotNull(saved.id))
+        if (saved.status in BOUND_STATUSES) items.assign(saved.lines.map { it.key }, requireNotNull(saved.id))
         return saved
     }
 
@@ -47,5 +51,10 @@ class StatementTransactionalService(
         val payout = JournalRules.payout(statementId, statement.sellerId, statement.payout, now)
         if (!journals.existsBySourceKey(payout.sourceKey)) journals.append(payout)
         return statements.save(statement)
+    }
+
+    private companion object {
+        /** 항목을 정산서에 묶는 상태 — 이월만 묶지 않는다(다음 기간 정산서가 가져간다) */
+        val BOUND_STATUSES = setOf(StatementStatus.CONFIRMED, StatementStatus.PLATFORM_RETAINED)
     }
 }

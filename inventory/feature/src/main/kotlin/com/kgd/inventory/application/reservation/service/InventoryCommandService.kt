@@ -41,6 +41,12 @@ class InventoryCommandService(
     @Transactional("inventoryTransactionManager")
     override fun reserve(command: ProcessInventoryCommandUseCase.Reserve): Answer {
         replay(command.orderId, ReservationEvent.COMMAND_RESERVE)?.let { return it }
+        // 해제 답이 먼저 나간 주문(보상이 예약 답보다 앞선 경우)에 예약 명령이 늦게 오면 거절한다 —
+        // 받아 주면 아무도 풀지 않는 예약이 30분 만료까지 재고를 붙잡는다
+        if (answers.find(command.orderId, ReservationEvent.COMMAND_RELEASE)?.eventType == RELEASED) {
+            log.info { "해제된 주문에 늦게 온 예약 명령 — 거절한다: orderId=${command.orderId}" }
+            return fail(command.orderId, ReservationEvent.COMMAND_RESERVE, ReservationEvent.REASON_RELEASED)
+        }
 
         val result = reserveOrderStock.execute(
             ReserveOrderStockUseCase.Command(

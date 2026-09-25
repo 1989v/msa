@@ -52,6 +52,7 @@ class CartService(
                     price = product?.price,
                     sellerId = product?.sellerId,
                     onSale = product != null && product.isOnSale && sellerById[product.sellerId]?.isSellable == true,
+                    sellerName = product?.let { sellerById[it.sellerId]?.businessName },
                 )
             },
         )

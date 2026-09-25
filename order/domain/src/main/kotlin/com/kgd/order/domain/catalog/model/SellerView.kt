@@ -16,6 +16,8 @@ data class SellerView(
     val occurredAt: Instant,
     /** 판매자 회원 id — 판매자 포털 권한(X-User-Id 대조). 옛 이벤트로 채운 행은 비어 있다 */
     val memberId: String? = null,
+    /** 상호 — 구매 화면 표시용. seller 가 승인된 판매자에게만 싣는다(심사 중·옛 이벤트는 비어 있다) */
+    val businessName: String? = null,
 ) {
     init {
         require(shippingFee >= 0) { "배송비는 음수일 수 없다" }

@@ -256,7 +256,7 @@ class SettlementE2ETest(
                 debitCredit("refund:claim:$claimId").let { (dr, cr) -> dr shouldBe cr; dr shouldBe 8_000L }
                 settlementJdbc.queryForObject("SELECT claim_id FROM settlement_refunded_item WHERE item_key = ?", Long::class.java, "line:$coasterItemId") shouldBe claimId
 
-                // 3) 남은 머그 구매 확정 → 정산 항목(라인 + 판매자 마지막 라인이라 배송비)
+                // 3) 남은 머그 구매 확정 → 정산 항목(라인 + 판매자의 첫 확정 라인이라 배송비)
                 val mugItemId = requireNotNull(
                     orderJdbc.queryForObject("SELECT id FROM order_items WHERE order_id = ? AND product_id = ?", Long::class.java, orderId, mug),
                 )

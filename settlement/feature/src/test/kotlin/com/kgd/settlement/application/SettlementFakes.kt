@@ -32,6 +32,10 @@ class InMemoryJournals : JournalRepositoryPort {
 
     override fun existsBySourceKey(sourceKey: String) = journals.any { it.sourceKey == sourceKey }
 
+    override fun findById(id: Long) = journals.firstOrNull { it.id == id }
+
+    override fun findBySourceKey(sourceKey: String) = journals.firstOrNull { it.sourceKey == sourceKey }
+
     override fun append(journal: Journal): Journal {
         check(!existsBySourceKey(journal.sourceKey)) { "유니크 위반: ${journal.sourceKey}" }
         return journal.withId(journals.size + 1L).also { journals += it }

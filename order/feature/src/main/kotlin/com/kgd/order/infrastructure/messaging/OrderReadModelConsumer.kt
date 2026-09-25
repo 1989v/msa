@@ -78,6 +78,7 @@ class OrderReadModelConsumer(
                 shippingFee = node.long("shippingFee"),
                 occurredAt = instantOf(node.required("occurredAt")),
                 memberId = node.get("memberId")?.takeUnless { it.isNull }?.asString(),
+                businessName = node.get("businessName")?.takeUnless { it.isNull }?.asString(),
             ),
         )
     }

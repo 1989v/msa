@@ -10,6 +10,7 @@ import com.kgd.order.support.InMemoryOrderPorts
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import org.springframework.http.MediaType
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter
 import org.springframework.test.web.servlet.MockMvc
@@ -35,7 +36,7 @@ class OrderSheetControllerTest : BehaviorSpec({
     fun setup(): Pair<InMemoryOrderPorts, MockMvc> {
         val ports = InMemoryOrderPorts()
         ports.sellers.save(SellerView(1L, "ACTIVE", 0, 0L, old))
-        ports.sellers.save(SellerView(7L, "ACTIVE", 1_200, 3_000L, old))
+        ports.sellers.save(SellerView(7L, "ACTIVE", 1_200, 3_000L, old, businessName = "도자기 공방"))
         ports.sellers.save(SellerView(8L, "SUSPENDED", 1_000, 2_500L, old))
         ports.products.save(ProductView(101L, "머그", 12_000L, "ACTIVE", 7L, old))
         ports.products.save(ProductView(103L, "플랫폼 상품", 20_000L, "ACTIVE", 1L, old))
@@ -69,6 +70,9 @@ class OrderSheetControllerTest : BehaviorSpec({
             saved.itemsAmount shouldBe 24_000L
             saved.couponDiscount shouldBe 0L
             saved.payableAmount shouldBe 27_000L
+        }
+        then("응답 라인에 판매자 상호가 실린다") {
+            response.contentAsString shouldContain """"sellerName":"도자기 공방""""
         }
         then("요청 DTO 에는 가격·금액 필드가 없다") {
             val names = CreateOrderSheetRequest::class.memberProperties.map { it.name } +

@@ -151,6 +151,24 @@ class InventoryCommandServiceTest : BehaviorSpec({
             h.objectMapper.readTree(h.events("inventory.reservation.failed").single().payload)["reason"].asText() shouldBe "ALREADY_CONFIRMED"
             h.inventory(100L).getAvailableQty() shouldBe 6
         }
+
+        then("해제 답이 먼저 나간 주문에 예약 명령이 늦게 오면 failed(RELEASED) — 재고를 다시 잡지 않고, 재발행에도 같은 답") {
+            val h = harness()
+            h.consumer.onRelease(h.record(InventoryCommandConsumer.RELEASE, h.orderJson(UUID.randomUUID(), 15L)))
+
+            h.consumer.onReserve(h.record(InventoryCommandConsumer.RESERVE, h.reserveJson(UUID.randomUUID(), 15L, 100L to 4)))
+            h.consumer.onReserve(h.record(InventoryCommandConsumer.RESERVE, h.reserveJson(UUID.randomUUID(), 15L, 100L to 4)))
+
+            h.reservations.rows.shouldBeEmpty()
+            h.inventory(100L).getAvailableQty() shouldBe 10
+            h.inventory(100L).getReservedQty() shouldBe 0
+            h.events("inventory.reservation.reserved").shouldBeEmpty()
+            val failed = h.events("inventory.reservation.failed")
+            failed shouldHaveSize 2
+            failed.map { h.objectMapper.readTree(it.payload).let { p -> p["reason"].asText() to p["command"].asText() } }.toSet() shouldBe
+                setOf("RELEASED" to "RESERVE")
+            failed.map { it.partitionKey }.toSet() shouldBe setOf("15")
+        }
     }
 
     given("restock 명령") {

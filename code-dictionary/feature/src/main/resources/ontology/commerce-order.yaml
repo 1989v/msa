@@ -852,7 +852,7 @@ concepts:
     level: INTERMEDIATE
     description: "이행 도메인이 출고 전이면 해당 라인을 취소하고, 이미 출고됐으면 거절로 답한다. 환불은 취소 응답 뒤에만 한다"
     code:
-      - { path: fulfillment/domain/src/main/kotlin/com/kgd/fulfillment/domain/fulfillment/model/FulfillmentOrder.kt, symbol: "fun cancelLines(productIds: Set<Long>)", note: "Cancelled 또는 Rejected" }
+      - { path: fulfillment/domain/src/main/kotlin/com/kgd/fulfillment/domain/fulfillment/model/FulfillmentOrder.kt, symbol: "fun cancelLines(orderItemIds: Set<Long>)", note: "주문 라인 id 로 찾아 Cancelled 또는 Rejected" }
     mitigates: [ord-cancel-after-shipment]
   - id: ord-3pl
     kind: MECHANISM
@@ -1056,7 +1056,7 @@ concepts:
     description: "잘못 적은 거래는 지우지 않고 차 · 대를 뒤집은 거래를 새로 적어 상쇄한다"
     synonyms: ["reversal", "reversing entry"]
     code:
-      - { path: settlement/domain/src/main/kotlin/com/kgd/settlement/domain/ledger/model/Journal.kt, symbol: "fun reverse(sourceKey: String, at: Instant)", note: "뒤집은 거래 생성" }
+      - { path: settlement/domain/src/main/kotlin/com/kgd/settlement/domain/ledger/model/Journal.kt, symbol: "fun reverse(actorId: String, reason: String, at: Instant)", note: "뒤집은 거래 생성 — 행위자·사유를 남긴다" }
   - id: ord-journal-rules
     kind: MECHANISM
     name: "분개 규칙 (매입 · 환불 · PG 입금 · 지급)"
@@ -1147,7 +1147,7 @@ concepts:
     description: "판매자 · 기간별 순매출 · 배송비 · 수수료 · 지급액 계산 결과. DRAFT → CONFIRMED → PAID, 지급액이 0 이하면 이월한다"
     synonyms: ["settlement statement"]
     code:
-      - { path: settlement/domain/src/main/kotlin/com/kgd/settlement/domain/statement/model/SettlementStatement.kt, symbol: "enum class StatementStatus { DRAFT, CONFIRMED, PAID, CARRIED_OVER }", note: "정산서 상태" }
+      - { path: settlement/domain/src/main/kotlin/com/kgd/settlement/domain/statement/model/SettlementStatement.kt, symbol: "enum class StatementStatus { DRAFT, CONFIRMED, PAID, CARRIED_OVER, PLATFORM_RETAINED }", note: "정산서 상태" }
     uses: [ord-net-sales-calc, ord-commission-rule, ord-carry-over]
   - id: ord-holdback
     kind: MECHANISM

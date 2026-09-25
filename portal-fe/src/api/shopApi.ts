@@ -95,6 +95,8 @@ export interface CartLine {
   price: number | null;
   sellerId: number | null;
   onSale: boolean;
+  /** 판매자 상호 — 읽기 모델에 없으면 null */
+  sellerName: string | null;
 }
 
 export interface Cart {
@@ -120,6 +122,8 @@ export interface OrderSheetLine {
   productId: number;
   productName: string;
   sellerId: number;
+  /** 판매자 상호 — 없으면 null */
+  sellerName: string | null;
   unitPrice: number;
   quantity: number;
   amount: number;
@@ -252,6 +256,8 @@ export interface OrderLine {
   productId: number;
   productName: string;
   sellerId: number;
+  /** 판매자 상호 — 조회 시점 값, 없으면 null */
+  sellerName?: string | null;
   unitPrice: number;
   quantity: number;
   couponDiscount: number;
@@ -576,7 +582,7 @@ export const rejectSellerClaim = async (claimId: number, reason: string): Promis
   return res.data.data;
 };
 
-export type SettlementStatus = 'DRAFT' | 'CONFIRMED' | 'PAID' | 'CARRIED_OVER';
+export type SettlementStatus = 'DRAFT' | 'CONFIRMED' | 'PAID' | 'CARRIED_OVER' | 'PLATFORM_RETAINED';
 
 /** 정산서 한 줄 — 구매 확정 라인(LINE) 또는 배송비(SHIPPING). payout = 순매출 + 배송비 − 수수료 */
 export interface SettlementLine {
@@ -590,12 +596,17 @@ export interface SettlementLine {
   confirmedAt: string;
 }
 
-/** 판매자 정산서. periodEnd 는 마지막 날(포함), lines 는 상세에서만 온다 */
+/**
+ * 판매자 정산서. periodEnd 는 마지막 날(포함), lines 는 상세에서만 온다.
+ * includedFrom~includedTo 는 실제로 담긴 항목의 확정 시각 범위 — 이월·지각 항목이 있으면 명목 기간보다 앞선다.
+ */
 export interface SettlementStatement {
   id: number;
   sellerId: number;
   periodStart: string;
   periodEnd: string;
+  includedFrom: string;
+  includedTo: string;
   status: SettlementStatus;
   netSales: number;
   shippingFee: number;

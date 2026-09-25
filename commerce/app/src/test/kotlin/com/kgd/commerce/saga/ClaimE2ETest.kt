@@ -253,7 +253,7 @@ class ClaimE2ETest(
                     (l["netSales"].asLong() - l["platformCouponAllocation"].asLong() - l["pointAllocation"].asLong()) shouldBe mugPayable
                 }
 
-                // 남은 라인 구매 확정 → COMPLETED, 판매자 마지막 ACTIVE 라인이라 배송비 라인 3,000 이 실린다
+                // 남은 라인 구매 확정 → COMPLETED, 판매자의 첫 확정 라인이라 배송비 라인 3,000 이 실린다
                 confirmPurchase.confirm(buyer, orderId)
                 orderRow(orderId)["status"] shouldBe "COMPLETED"
                 val confirmed = outboxPayloads(orderId, "order.line.purchase-confirmed").single()

@@ -10,6 +10,10 @@ import com.kgd.settlement.domain.ledger.model.Journal
 interface JournalRepositoryPort {
     fun existsBySourceKey(sourceKey: String): Boolean
 
+    fun findById(id: Long): Journal?
+
+    fun findBySourceKey(sourceKey: String): Journal?
+
     fun append(journal: Journal): Journal
 
     /** 계정별 차변 합·대변 합 */

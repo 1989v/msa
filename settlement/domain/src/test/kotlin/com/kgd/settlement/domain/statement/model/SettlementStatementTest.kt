@@ -19,6 +19,11 @@ class SettlementStatementTest : BehaviorSpec({
     val plate = SettlementItem.line(orderId = 502L, orderItemId = 21L, sellerId = 7L, netSales = 9_999L, commission = 1_000L, confirmedAt = inWeek)
     val ship501 = SettlementItem.shipping(orderId = 501L, sellerId = 7L, fee = 3_000L, confirmedAt = inWeek)
 
+    fun statementIn(status: StatementStatus, payout: Long, sellerId: Long = 7L): SettlementStatement {
+        val item = SettlementItem.line(900L, 91L, sellerId, netSales = payout, commission = 0L, confirmedAt = inWeek)
+        return SettlementStatement.restore(1L, sellerId, week, status, listOf(item), now, null, null, null, null)
+    }
+
     fun draft(items: List<SettlementItem>, refunded: Set<String> = emptySet()) =
         requireNotNull(SettlementStatement.draft(7L, week, items, refunded, now)) { "담을 항목이 있는데 정산서가 없다" }
 
@@ -89,23 +94,24 @@ class SettlementStatementTest : BehaviorSpec({
             StatementStatus.CONFIRMED to { s -> s.confirm(now) },
             StatementStatus.PAID to { s -> s.pay("MOCK-PAYOUT-7-1", now) },
             StatementStatus.CARRIED_OVER to { s -> s.carryOver(now) },
+            StatementStatus.PLATFORM_RETAINED to { s -> s.retainForPlatform() },
         )
         val allowed = setOf(
             StatementStatus.DRAFT to StatementStatus.CONFIRMED,
             StatementStatus.CONFIRMED to StatementStatus.PAID,
             StatementStatus.CONFIRMED to StatementStatus.CARRIED_OVER,
+            StatementStatus.CONFIRMED to StatementStatus.PLATFORM_RETAINED,
         )
-
-        fun statementIn(status: StatementStatus, payout: Long): SettlementStatement {
-            val item = SettlementItem.line(900L, 91L, 7L, netSales = payout, commission = 0L, confirmedAt = inWeek)
-            return SettlementStatement.restore(1L, 7L, week, status, listOf(item), now, null, null, null, null)
-        }
 
         Then("표의 행은 허용, 나머지 전부 예외") {
             for (from in StatementStatus.entries) {
                 for ((to, act) in actions) {
                     // 이월은 지급액 0, 지급은 지급액 양수에서만 성립한다 — 금액 가드가 아니라 상태 가드를 본다
-                    val s = statementIn(from, payout = if (to == StatementStatus.CARRIED_OVER) 0L else 10_000L)
+                    val s = statementIn(
+                        from,
+                        payout = if (to == StatementStatus.CARRIED_OVER) 0L else 10_000L,
+                        sellerId = if (to == StatementStatus.PLATFORM_RETAINED) SettlementStatement.PLATFORM_SELLER_ID else 7L,
+                    )
                     if (from to to in allowed) {
                         shouldNotThrowAny { act(s) }
                         s.status shouldBe to
@@ -115,6 +121,25 @@ class SettlementStatementTest : BehaviorSpec({
                     }
                 }
             }
+        }
+    }
+
+    Given("플랫폼 판매자(1) 정산서") {
+        Then("지급할 수 없고 PLATFORM_RETAINED 로만 닫힌다 · 일반 판매자는 보류할 수 없다") {
+            val platform = statementIn(StatementStatus.CONFIRMED, 10_000L, SettlementStatement.PLATFORM_SELLER_ID)
+            shouldThrow<InvalidStatementStateException> { platform.pay("MOCK", now) }
+            platform.retainForPlatform()
+            platform.status shouldBe StatementStatus.PLATFORM_RETAINED
+            shouldThrow<InvalidStatementStateException> { statementIn(StatementStatus.CONFIRMED, 10_000L).retainForPlatform() }
+        }
+    }
+
+    Given("실제 포함 기간") {
+        Then("명목 기간과 별개로, 담긴 항목의 최소~최대 확정 시각 — 이월 항목이 있으면 기간 시작보다 앞선다") {
+            val carried = SettlementItem.line(505L, 51L, 7L, 1_000L, 100L, Instant.parse("2026-09-10T00:00:00Z"))
+            val s = draft(listOf(mug, carried))
+            s.includedFrom shouldBe Instant.parse("2026-09-10T00:00:00Z")
+            s.includedTo shouldBe inWeek
         }
     }
 

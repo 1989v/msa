@@ -63,11 +63,10 @@ class ExceptionHandlerScopeTest : BehaviorSpec({
         }
     }
 
-    given("로컬 핸들러가 없는 다른 도메인 컨트롤러(재고)가 재고 부족 BusinessException 을 던지면") {
+    given("로컬 핸들러가 없는 다른 도메인 컨트롤러(재고)가 BusinessException 을 던지면") {
         val receive = mockk<ReceiveStockUseCase>()
         val authorizer = mockk<AuthorizeInventoryAccessUseCase>()
         every { authorizer.requireProductAccess(any(), any()) } just runs
-        every { receive.execute(any()) } throws BusinessException(ErrorCode.INSUFFICIENT_STOCK)
         val controller = InventoryController(
             mockk<ReserveStockUseCase>(), mockk<ReleaseStockUseCase>(), mockk<ConfirmStockUseCase>(),
             receive, mockk<GetInventoryUseCase>(), authorizer,
@@ -78,13 +77,20 @@ class ExceptionHandlerScopeTest : BehaviorSpec({
             .setMessageConverters(JacksonJsonHttpMessageConverter(jacksonMapperBuilder().build()))
             .build()
 
-        then("상품 처리기의 409 도, 주문 처리기의 500 도 아닌 공통 처리기의 400 이다") {
-            mockMvc.perform(
-                MockMvcRequestBuilders.post("/api/inventories/receive")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content("""{"productId":1,"warehouseId":1,"qty":1}""")
-                    .header("X-User-Id", "1").header("X-User-Roles", "ROLE_ADMIN"),
-            ).andReturn().response.status shouldBe 400
+        fun receive() = mockMvc.perform(
+            MockMvcRequestBuilders.post("/api/inventories/receive")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"productId":1,"warehouseId":1,"qty":1}""")
+                .header("X-User-Id", "1").header("X-User-Roles", "ROLE_ADMIN"),
+        ).andReturn().response.status
+
+        then("INVALID_INPUT 은 상품·주문 처리기라면 500, 공통 처리기만 400 — 공통 처리기가 받는다") {
+            every { receive.execute(any()) } throws BusinessException(ErrorCode.INVALID_INPUT)
+            receive() shouldBe 400
+        }
+        then("재고 부족은 공통 처리기에서 409") {
+            every { receive.execute(any()) } throws BusinessException(ErrorCode.INSUFFICIENT_STOCK)
+            receive() shouldBe 409
         }
     }
 })

@@ -126,7 +126,13 @@ class OrderSagaCoordinatorTest : BehaviorSpec({
         then("매입 → CONFIRMED + order.order.confirmed(라인·배송비) + 이행 생성(확정 라인의 창고)") {
             f.pay(PaymentOutcomeType.CAPTURED)
             f.order().status shouldBe OrderStatus.CONFIRMED
-            f.world.commands.last() shouldBe SagaCommand.CreateFulfillment(f.orderId, LINES)
+            // 주문 라인마다 한 줄 — 주문 라인 id 로 식별하고, 창고는 예약 답(LINES)의 상품 창고
+            val items = f.order().items.sortedBy { it.lineNo }
+            f.world.commands.last() shouldBe SagaCommand.CreateFulfillment(
+                f.orderId,
+                items.map { SagaCommand.FulfillmentLine(requireNotNull(it.id), it.productId, it.quantity, 3L) },
+            )
+            items.map { it.productId to it.quantity } shouldContainExactly listOf(101L to 2, 102L to 1)
             f.world.confirmedEvents.single().let {
                 it.items.map { l -> l.sellerId } shouldContainExactly listOf(7L, 1L)
                 it.shippingLines shouldContainExactly listOf(ShippingLine(7L, 3_000), ShippingLine(1L, 0))

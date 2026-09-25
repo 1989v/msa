@@ -7,9 +7,13 @@ import org.springframework.data.jpa.repository.Query
 
 interface LedgerJournalJpaRepository : JpaRepository<LedgerJournalJpaEntity, Long> {
     fun existsBySourceKey(sourceKey: String): Boolean
+
+    fun findBySourceKey(sourceKey: String): LedgerJournalJpaEntity?
 }
 
 interface LedgerEntryJpaRepository : JpaRepository<LedgerEntryJpaEntity, Long> {
+
+    fun findAllByJournalIdOrderById(journalId: Long): List<LedgerEntryJpaEntity>
 
     /** [account, side, SUM(amount)] */
     @Query("SELECT e.account, e.side, SUM(e.amount) FROM LedgerEntryJpaEntity e GROUP BY e.account, e.side")

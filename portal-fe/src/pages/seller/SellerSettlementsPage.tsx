@@ -14,7 +14,7 @@ import {
 } from '../../api/shopApi';
 import { buildLoginHref, isLoggedIn } from '../../auth/auth';
 import { formatWon } from '../shopFormat';
-import { formatPeriod, SETTLEMENT_STATUS_LABEL } from './settlementFormat';
+import { formatIncluded, formatPeriod, SETTLEMENT_STATUS_LABEL } from './settlementFormat';
 import '../Shop.css';
 import '../shop/Checkout.css';
 import './Seller.css';
@@ -118,6 +118,9 @@ export default function SellerSettlementsPage() {
                           <span className="checkout-num">
                             순매출 {formatWon(s.netSales)} · 배송비 {formatWon(s.shippingFee)} · 수수료 {formatWon(s.commission)}
                           </span>
+                        </span>
+                        <span className="seller-product-meta checkout-num">
+                          실제 포함 확정일 {formatIncluded(s.includedFrom, s.includedTo)}
                         </span>
                       </div>
                       <div className="seller-claim-actions">

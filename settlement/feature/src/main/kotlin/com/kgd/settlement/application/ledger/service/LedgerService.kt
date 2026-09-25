@@ -1,9 +1,11 @@
 package com.kgd.settlement.application.ledger.service
 
+import com.kgd.common.exception.NotFoundException
 import com.kgd.settlement.application.ledger.port.AccountBalance
 import com.kgd.settlement.application.ledger.port.JournalRepositoryPort
 import com.kgd.settlement.application.ledger.usecase.GetTrialBalanceUseCase
 import com.kgd.settlement.application.ledger.usecase.RecordLedgerUseCase
+import com.kgd.settlement.application.ledger.usecase.ReverseJournalUseCase
 import com.kgd.settlement.application.ledger.usecase.SellerPayable
 import com.kgd.settlement.application.ledger.usecase.TrialBalance
 import com.kgd.settlement.application.statement.port.RefundedItemRepositoryPort
@@ -26,7 +28,7 @@ class LedgerService(
     private val journals: JournalRepositoryPort,
     private val refundedItems: RefundedItemRepositoryPort,
     @Qualifier("settlementClock") private val clock: Clock,
-) : RecordLedgerUseCase, GetTrialBalanceUseCase {
+) : RecordLedgerUseCase, GetTrialBalanceUseCase, ReverseJournalUseCase {
     private val log = KotlinLogging.logger {}
 
     @Transactional("settlementTransactionManager")
@@ -54,6 +56,18 @@ class LedgerService(
             command.orderId, command.orderNo, command.settleDate, command.depositAmount, command.pgFee, command.eventId, clock.instant(),
         ),
     )
+
+    @Transactional("settlementTransactionManager")
+    override fun reverse(journalId: Long, actorId: String, reason: String): Journal {
+        val original = journals.findById(journalId) ?: throw NotFoundException("원장 거래", journalId)
+        journals.findBySourceKey(Journal.reversalKey(journalId))?.let {
+            log.info { "이미 역분개된 거래 — 기존 역분개를 돌려준다: journal=$journalId, reversal=${it.id}" }
+            return it
+        }
+        val reversal = journals.append(original.reverse(actorId, reason, clock.instant()))
+        log.info { "역분개: journal=$journalId → reversal=${reversal.id}, actor=$actorId, reason=$reason" }
+        return reversal
+    }
 
     @Transactional("settlementTransactionManager", readOnly = true)
     override fun trialBalance(): TrialBalance {

@@ -207,9 +207,8 @@ class ClaimCoordinator(
 
     /** REFUNDED — 라인 취소 · 환불 누계 · 주문 상태 · 정산 이벤트. 클레임 행은 호출자가 저장한다 */
     private fun finish(order: Order, claim: Claim, now: Instant) {
-        val shippingDue = order.closeClaim(claim.lineNos, requireNotNull(claim.pgRefund), claim.userId, now)
+        order.closeClaim(claim.lineNos, requireNotNull(claim.pgRefund), claim.userId, now)
         events.publishClaimRefunded(order, claim, now)
-        if (shippingDue.isNotEmpty()) events.publishShippingSettlementDue(order, shippingDue, now)
         log.info { "클레임 환불 완료: claimId=${claim.id}, orderId=${claim.orderId}, order=${order.status}, refunded=${order.refundedAmount}" }
     }
 
@@ -242,7 +241,9 @@ class ClaimCoordinator(
         val lines = order.items.filter { it.lineNo in claim.lineNos }
         val command = when (claim.step) {
             ClaimStep.FULFILLMENT_WAIT -> return
-            ClaimStep.FULFILLMENT_CANCEL -> ClaimCommand.CancelFulfillment(orderId, lines.map { it.productId }.distinct())
+            ClaimStep.FULFILLMENT_CANCEL -> ClaimCommand.CancelFulfillment(
+                orderId, lines.map { requireNotNull(it.id) { "저장되지 않은 라인: orderId=$orderId, line=${it.lineNo}" } },
+            )
             ClaimStep.INVENTORY_RESTOCK -> ClaimCommand.RestockInventory(
                 orderId, claim.idempotencyKey,
                 lines.groupBy { it.productId }.map { (productId, ls) -> ClaimCommand.Line(productId, ls.sumOf { it.quantity }) },

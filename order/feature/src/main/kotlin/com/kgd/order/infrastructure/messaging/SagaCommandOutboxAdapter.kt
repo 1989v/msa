@@ -51,7 +51,7 @@ class SagaCommandOutboxAdapter(
             is SagaCommand.CreateFulfillment -> "fulfillment.command.create" to mapOf(
                 "orderId" to command.orderId,
                 "lines" to command.lines.map {
-                    mapOf("productId" to it.productId, "quantity" to it.quantity, "warehouseId" to it.warehouseId)
+                    mapOf("orderItemId" to it.orderItemId, "productId" to it.productId, "quantity" to it.quantity, "warehouseId" to it.warehouseId)
                 },
             )
         }

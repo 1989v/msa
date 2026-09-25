@@ -9,6 +9,7 @@ import com.kgd.fulfillment.application.ownership.InMemoryOwnershipRepository
 import com.kgd.fulfillment.application.ownership.service.FulfillmentAccessAuthorizer
 import com.kgd.fulfillment.application.ownership.service.FulfillmentOwnershipSyncService
 import com.kgd.fulfillment.application.ownership.usecase.SyncOwnershipUseCase
+import com.kgd.fulfillment.domain.fulfillment.model.FulfillmentLine
 import com.kgd.fulfillment.domain.fulfillment.model.FulfillmentOrder
 import com.kgd.fulfillment.domain.fulfillment.model.FulfillmentStatus
 import io.kotest.core.spec.style.BehaviorSpec
@@ -45,7 +46,7 @@ class FulfillmentControllerOwnershipTest : BehaviorSpec({
 
     fun fulfillment(id: Long, vararg productIds: Long) = FulfillmentOrder.restore(
         id, 77L, 1L, FulfillmentStatus.PENDING, LocalDateTime.now(),
-        FulfillmentOrder.create(77L, 1L, productIds.map { it to 1 }).getLines(),
+        FulfillmentOrder.create(77L, 1L, productIds.map { FulfillmentLine.create(it * 10, it, 1) }).getLines(),
     )
 
     beforeEach {

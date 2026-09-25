@@ -120,17 +120,20 @@ class Order private constructor(
         items.filter { it.status == OrderLineStatus.ACTIVE && it.deliveredAt?.isAfter(cutoff) == false }.map { it.lineNo }
 
     /**
-     * 구매 확정 — 이행 중인 주문의 ACTIVE 라인만. 판매자의 마지막 ACTIVE 라인이 확정되면 그 판매자 배송비 라인을
-     * 그 라인(한 번에 여럿이면 라인 번호가 가장 큰 것)에 붙여 돌려준다. 남은 라인이 전부 확정되면 COMPLETED.
+     * 구매 확정 — 이행 중인 주문의 ACTIVE 라인만. 판매자의 **첫** 확정 라인에 그 판매자 배송비 라인을 붙여 돌려준다
+     * (한 번에 여럿이면 라인 번호가 가장 작은 것). 확정 라인이 하나라도 생기면 그 판매자 배송비는 환불되지 않으므로
+     * 이 시점에 정산 대상이 된다 — 뒤 라인이 확정되든 클레임으로 취소되든 배송비 시점이 흔들리지 않는다.
+     * 남은 라인이 전부 확정되면 COMPLETED.
      */
     fun confirmPurchases(lineNos: Collection<Int>, now: Instant): List<PurchaseConfirmation> {
         requireStatus(OrderStatus.FULFILLING)
         val targets = lineNos.distinct().sorted().map(::line)
         require(targets.isNotEmpty()) { "구매 확정할 라인이 없다: orderId=$id" }
+        val alreadySettled = items.filter { it.status == OrderLineStatus.PURCHASE_CONFIRMED }.map { it.sellerId }.toSet()
         targets.forEach { it.confirmPurchase(now) }
         val shippingCarrier = targets.groupBy { it.sellerId }
-            .filterKeys { sellerId -> items.none { it.sellerId == sellerId && it.status == OrderLineStatus.ACTIVE } }
-            .mapValues { (_, lines) -> lines.maxOf { it.lineNo } }
+            .filterKeys { it !in alreadySettled }
+            .mapValues { (_, lines) -> lines.minOf { it.lineNo } }
         val confirmations = targets.map { item ->
             val shipping = if (shippingCarrier[item.sellerId] == item.lineNo) shippingLineOf(item.sellerId) else null
             PurchaseConfirmation(item, shipping)
@@ -141,12 +144,8 @@ class Order private constructor(
         return confirmations
     }
 
-    /**
-     * 클레임 환불 완료 — 라인 취소 · 환불 누계 · 주문 상태(전부 취소면 CANCELLED, 남은 라인이 전부 확정이면 COMPLETED).
-     * 이 취소로 판매자의 ACTIVE 라인이 없어졌는데 확정된 라인이 있으면 그 판매자 배송비는 아직 정산에 오르지 않았다 —
-     * 확정 이벤트가 「마지막 ACTIVE 라인」에서만 배송비를 싣기 때문이다. 그 배송비 라인을 돌려준다.
-     */
-    fun closeClaim(lineNos: Collection<Int>, pgRefund: Long, actor: String, now: Instant): List<ShippingLine> {
+    /** 클레임 환불 완료 — 라인 취소 · 환불 누계 · 주문 상태(전부 취소면 CANCELLED, 남은 라인이 전부 확정이면 COMPLETED) */
+    fun closeClaim(lineNos: Collection<Int>, pgRefund: Long, actor: String, now: Instant) {
         lineNos.forEach(::cancelLine)
         if (pgRefund > 0) addRefund(pgRefund)
         if (items.all { it.status == OrderLineStatus.CANCELLED }) {
@@ -156,10 +155,6 @@ class Order private constructor(
         ) {
             completePurchase(now)
         }
-        return lineNos.map { line(it).sellerId }.distinct().filter { sellerId ->
-            val lines = items.filter { it.sellerId == sellerId }
-            lines.none { it.status == OrderLineStatus.ACTIVE } && lines.any { it.status == OrderLineStatus.PURCHASE_CONFIRMED }
-        }.mapNotNull(::shippingLineOf)
     }
 
     private fun shippingLineOf(sellerId: Long): ShippingLine? = shippingLines.firstOrNull { it.sellerId == sellerId }

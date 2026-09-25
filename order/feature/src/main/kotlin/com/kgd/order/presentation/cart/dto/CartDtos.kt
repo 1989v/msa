@@ -14,7 +14,7 @@ data class PutCartItemRequest(
 data class CartResponse(val items: List<CartLineResponse>) {
     companion object {
         fun from(view: CartView) = CartResponse(
-            view.items.map { CartLineResponse(it.productId, it.quantity, it.productName, it.price, it.sellerId, it.onSale) },
+            view.items.map { CartLineResponse(it.productId, it.quantity, it.productName, it.price, it.sellerId, it.onSale, it.sellerName) },
         )
     }
 }
@@ -26,4 +26,5 @@ data class CartLineResponse(
     val price: Long?,
     val sellerId: Long?,
     val onSale: Boolean,
+    val sellerName: String?,
 )

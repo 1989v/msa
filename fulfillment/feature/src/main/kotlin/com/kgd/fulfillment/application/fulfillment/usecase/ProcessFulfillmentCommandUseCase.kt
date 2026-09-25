@@ -8,12 +8,12 @@ interface ProcessFulfillmentCommandUseCase {
     fun create(command: Create): Answer
     fun cancel(command: Cancel): Answer
 
-    /** 창고별로 이행 하나. 라인의 창고는 재고 예약 답(`inventory.reservation.reserved`)이 정한 것 */
+    /** 창고별로 이행 하나, 주문 라인마다 이행 라인 하나. 라인의 창고는 재고 예약 답(`inventory.reservation.reserved`)이 정한 것 */
     data class Create(val orderId: Long, val lines: List<CreateLine>)
-    data class CreateLine(val productId: Long, val quantity: Int, val warehouseId: Long)
+    data class CreateLine(val orderItemId: Long, val productId: Long, val quantity: Int, val warehouseId: Long)
 
-    /** [productIds] 가 null 이면 주문의 모든 라인. 라인 취소는 라인 전체(수량 일부 취소 없음) */
-    data class Cancel(val orderId: Long, val productIds: Set<Long>?)
+    /** [orderItemIds] 가 null 이면 주문의 모든 라인. 라인 취소는 라인 전체(수량 일부 취소 없음) */
+    data class Cancel(val orderId: Long, val orderItemIds: Set<Long>?)
 
     data class Answer(val eventType: String)
 }

@@ -51,6 +51,7 @@ data class OrderResponse(
                 OrderLineResponse(
                     it.orderItemId, it.lineNo, it.productId, it.productName, it.sellerId, it.unitPrice, it.quantity,
                     it.couponDiscount, it.pointAmount, it.payable, it.status, it.shippedAt, it.deliveredAt, it.purchaseConfirmedAt,
+                    it.sellerName,
                 )
             },
             shippingLines = d.shippingLines.map { OrderShippingResponse(it.sellerId, it.fee) },
@@ -75,6 +76,8 @@ data class OrderLineResponse(
     val shippedAt: Instant?,
     val deliveredAt: Instant?,
     val purchaseConfirmedAt: Instant?,
+    /** 판매자 상호 — 조회 시점 읽기 모델 값, 없으면 null */
+    val sellerName: String?,
 )
 
 data class OrderShippingResponse(val sellerId: Long, val fee: Long)

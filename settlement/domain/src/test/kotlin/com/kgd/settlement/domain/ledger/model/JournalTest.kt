@@ -54,10 +54,13 @@ class JournalTest : BehaviorSpec({
         ).withId(100L)
 
         Then("역분개는 차·대를 뒤집은 새 거래이고 원 거래를 가리키며, 둘을 합치면 모든 계정 순액이 0") {
-            val reversal = original.reverse("reversal:capture:order:1", t0.plusSeconds(60))
+            val reversal = original.reverse("admin-1", "금액 오기입", t0.plusSeconds(60))
 
             reversal.type shouldBe JournalType.REVERSAL
             reversal.reversalOf shouldBe 100L
+            reversal.sourceKey shouldBe "reversal:journal:100"
+            reversal.actorId shouldBe "admin-1"
+            reversal.reason shouldBe "금액 오기입"
             reversal.debitTotal shouldBe reversal.creditTotal
             reversal.debitTotal shouldBe original.debitTotal
             Account.entries.forEach { a -> (original.netOf(a) + reversal.netOf(a)) shouldBe 0L }
@@ -66,11 +69,14 @@ class JournalTest : BehaviorSpec({
         }
         Then("저장 전 거래와 역분개 거래는 역분개하지 않는다") {
             shouldThrow<InvalidJournalException> {
-                JournalRules.payout(1L, 7L, 100L, t0).reverse("x", t0)
+                JournalRules.payout(1L, 7L, 100L, t0).reverse("admin-1", "x", t0)
             }
             shouldThrow<InvalidJournalException> {
-                original.reverse("r1", t0).withId(101L).reverse("r2", t0)
+                original.reverse("admin-1", "r1", t0).withId(101L).reverse("admin-1", "r2", t0)
             }
+        }
+        Then("사유 없는 역분개는 만들지 않는다") {
+            shouldThrow<InvalidJournalException> { original.reverse("admin-1", "  ", t0) }
         }
     }
 })

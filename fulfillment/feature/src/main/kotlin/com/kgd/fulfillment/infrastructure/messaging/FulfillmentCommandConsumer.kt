@@ -31,7 +31,8 @@ class FulfillmentCommandConsumer(
     fun onCreate(record: ConsumerRecord<String, String>) = handle(record) { c ->
         val lines = requireNotNull(c.lines) { "create 에 lines 가 없다" }.map {
             ProcessFulfillmentCommandUseCase.CreateLine(
-                productId = it.productId,
+                orderItemId = requireNotNull(it.orderItemId) { "create 라인에 orderItemId 가 없다" },
+                productId = requireNotNull(it.productId) { "create 라인에 productId 가 없다" },
                 quantity = requireNotNull(it.quantity) { "create 라인에 quantity 가 없다" },
                 warehouseId = requireNotNull(it.warehouseId) { "create 라인에 warehouseId 가 없다" },
             )
@@ -41,7 +42,8 @@ class FulfillmentCommandConsumer(
 
     @KafkaListener(topics = [CANCEL], groupId = GROUP, containerFactory = FACTORY)
     fun onCancel(record: ConsumerRecord<String, String>) = handle(record) { c ->
-        commands.cancel(ProcessFulfillmentCommandUseCase.Cancel(c.orderId, c.lines?.map { it.productId }?.toSet()))
+        val orderItemIds = c.lines?.map { requireNotNull(it.orderItemId) { "cancel 라인에 orderItemId 가 없다" } }?.toSet()
+        commands.cancel(ProcessFulfillmentCommandUseCase.Cancel(c.orderId, orderItemIds))
     }
 
     private fun handle(record: ConsumerRecord<String, String>, block: (FulfillmentCommandMessage) -> Unit) {
@@ -67,11 +69,19 @@ class FulfillmentCommandConsumer(
     }
 }
 
-/** `fulfillment.command.*` 페이로드. create 라인은 productId·quantity·warehouseId, cancel 라인은 productId 만 본다 */
+/**
+ * `fulfillment.command.*` 페이로드. 라인은 주문 라인 id([FulfillmentCommandLine.orderItemId])로 식별한다 —
+ * create 라인은 orderItemId·productId·quantity·warehouseId, cancel 라인은 orderItemId 만 본다
+ */
 data class FulfillmentCommandMessage(
     val eventId: String? = null,
     val orderId: Long,
     val lines: List<FulfillmentCommandLine>? = null,
 )
 
-data class FulfillmentCommandLine(val productId: Long, val quantity: Int? = null, val warehouseId: Long? = null)
+data class FulfillmentCommandLine(
+    val orderItemId: Long? = null,
+    val productId: Long? = null,
+    val quantity: Int? = null,
+    val warehouseId: Long? = null,
+)

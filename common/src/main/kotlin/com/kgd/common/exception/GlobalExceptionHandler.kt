@@ -25,8 +25,9 @@ class GlobalExceptionHandler {
             ErrorCode.UNAUTHORIZED -> HttpStatus.UNAUTHORIZED
             ErrorCode.FORBIDDEN -> HttpStatus.FORBIDDEN
             ErrorCode.INVALID_INPUT, ErrorCode.DUPLICATE_RESOURCE,
-            ErrorCode.INSUFFICIENT_STOCK, ErrorCode.INVALID_ORDER_STATUS,
-            ErrorCode.INVALID_PRODUCT_STATUS -> HttpStatus.BAD_REQUEST
+            ErrorCode.INVALID_ORDER_STATUS, ErrorCode.INVALID_PRODUCT_STATUS -> HttpStatus.BAD_REQUEST
+            // 요청은 올바른데 지금 자원 상태와 충돌한다(재고 부족 · 이행 상태 전이 불가) — 다시 시도할 수 있는 409
+            ErrorCode.INSUFFICIENT_STOCK, ErrorCode.INVALID_FULFILLMENT_STATUS -> HttpStatus.CONFLICT
             ErrorCode.CIRCUIT_BREAKER_OPEN, ErrorCode.EXTERNAL_API_ERROR -> HttpStatus.SERVICE_UNAVAILABLE
             ErrorCode.TIMEOUT -> HttpStatus.GATEWAY_TIMEOUT
             else -> HttpStatus.INTERNAL_SERVER_ERROR

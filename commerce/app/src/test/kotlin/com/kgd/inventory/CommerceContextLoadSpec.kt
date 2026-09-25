@@ -434,6 +434,20 @@ class CommerceContextLoadSpec(
                     it["payout"] shouldBe 9_000L
                 }
                 jdbc.queryForObject("SELECT statement_id FROM settlement_item WHERE item_key = 'line:88001'", Long::class.java) shouldBe statement.id
+
+                // 역분개 — 저장된 거래를 분개까지 다시 읽어 뒤집고, 행위자·사유를 행에 남긴다. 두 번째 요청은 같은 거래
+                val captureId = requireNotNull(jdbc.queryForObject("SELECT id FROM ledger_journal WHERE source_key = 'capture:order:880001'", Long::class.java))
+                val reverse = ctx.getBean(com.kgd.settlement.application.ledger.usecase.ReverseJournalUseCase::class.java)
+                val reversal = reverse.reverse(captureId, "ctx-admin", "점검 정정")
+                reverse.reverse(captureId, "ctx-admin-2", "다시").id shouldBe reversal.id
+                jdbc.queryForMap("SELECT type, reversal_of, actor_id, reason FROM ledger_journal WHERE source_key = 'reversal:journal:$captureId'").let {
+                    it["type"] shouldBe "REVERSAL"
+                    (it["reversal_of"] as Number).toLong() shouldBe captureId
+                    it["actor_id"] shouldBe "ctx-admin"
+                    it["reason"] shouldBe "점검 정정"
+                }
+                reversal.debitTotal shouldBe 10_000L
+                ctx.getBean(com.kgd.settlement.application.ledger.usecase.GetTrialBalanceUseCase::class.java).trialBalance().net shouldBe 0L
             }
 
         Then("상품 등록이 product_db 아웃박스에 product.item.created 행을 남긴다")

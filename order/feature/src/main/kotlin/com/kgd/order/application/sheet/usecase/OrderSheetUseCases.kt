@@ -64,12 +64,14 @@ data class OrderSheetResult(
         val pointAmount: Long,
         val commissionRateBp: Int,
         val payable: Long,
+        /** 판매자 상호 — 조회 시점의 읽기 모델 값(주문서 스냅샷이 아니다). 없으면 null */
+        val sellerName: String? = null,
     )
 
     data class Shipping(val sellerId: Long, val fee: Long)
 
     companion object {
-        fun from(sheet: OrderSheet) = OrderSheetResult(
+        fun from(sheet: OrderSheet, sellerNames: Map<Long, String> = emptyMap()) = OrderSheetResult(
             id = requireNotNull(sheet.id) { "저장 전 주문서" },
             memberId = sheet.memberId,
             status = sheet.status,
@@ -85,7 +87,7 @@ data class OrderSheetResult(
             lines = sheet.lines.map {
                 Line(
                     it.lineNo, it.productId, it.productName, it.sellerId, it.unitPrice, it.quantity, it.amount,
-                    it.couponDiscount, it.couponBearer, it.pointAmount, it.commissionRateBp, it.payable,
+                    it.couponDiscount, it.couponBearer, it.pointAmount, it.commissionRateBp, it.payable, sellerNames[it.sellerId],
                 )
             },
             shippingLines = sheet.shippingLines.map { Shipping(it.sellerId, it.fee) },

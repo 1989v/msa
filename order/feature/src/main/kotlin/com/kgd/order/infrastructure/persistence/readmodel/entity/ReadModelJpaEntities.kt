@@ -56,24 +56,31 @@ class SellerViewJpaEntity(
     shippingFee: Long,
     occurredAt: Instant,
     memberId: String?,
+    businessName: String?,
 ) {
     @Column(nullable = false, length = 20) var status: String = status; private set
     @Column(name = "commission_rate_bp") var commissionRateBp: Int? = commissionRateBp; private set
     @Column(name = "shipping_fee", nullable = false) var shippingFee: Long = shippingFee; private set
     @Column(name = "occurred_at", nullable = false) var occurredAt: Instant = occurredAt; private set
     @Column(name = "member_id", length = 64) var memberId: String? = memberId; private set
+    @Column(name = "business_name", length = 100) var businessName: String? = businessName; private set
 
-    /** 회원 id 가 없는 이벤트(옛 페이로드)는 있던 값을 지우지 않는다 — 판매자의 회원은 바뀌지 않는다 */
+    /**
+     * 회원 id·상호가 없는 이벤트(옛 페이로드·심사 중)는 있던 값을 지우지 않는다 — 판매자의 회원은 바뀌지 않고,
+     * 상호는 승인된 판매자 이벤트만 싣는다
+     */
     fun overwrite(view: SellerView) {
         status = view.status; commissionRateBp = view.commissionRateBp; shippingFee = view.shippingFee; occurredAt = view.occurredAt
         memberId = view.memberId ?: memberId
+        businessName = view.businessName ?: businessName
     }
 
-    fun toDomain() = SellerView(sellerId, status, commissionRateBp, shippingFee, occurredAt, memberId)
+    fun toDomain() = SellerView(sellerId, status, commissionRateBp, shippingFee, occurredAt, memberId, businessName)
 
     companion object {
-        fun from(view: SellerView) =
-            SellerViewJpaEntity(view.sellerId, view.status, view.commissionRateBp, view.shippingFee, view.occurredAt, view.memberId)
+        fun from(view: SellerView) = SellerViewJpaEntity(
+            view.sellerId, view.status, view.commissionRateBp, view.shippingFee, view.occurredAt, view.memberId, view.businessName,
+        )
     }
 }
 

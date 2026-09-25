@@ -66,6 +66,8 @@ data class OrderSheetResponse(
         val couponBearer: CouponBearer?,
         val pointAmount: Long,
         val payable: Long,
+        /** 판매자 상호 — 없으면 null */
+        val sellerName: String?,
     )
 
     data class Shipping(val sellerId: Long, val fee: Long)
@@ -83,7 +85,7 @@ data class OrderSheetResponse(
             expiresAt = r.expiresAt,
             lines = r.lines.map {
                 Line(it.lineNo, it.productId, it.productName, it.sellerId, it.unitPrice, it.quantity, it.amount, it.couponDiscount,
-                    it.couponBearer, it.pointAmount, it.payable)
+                    it.couponBearer, it.pointAmount, it.payable, it.sellerName)
             },
             shippingLines = r.shippingLines.map { Shipping(it.sellerId, it.fee) },
         )

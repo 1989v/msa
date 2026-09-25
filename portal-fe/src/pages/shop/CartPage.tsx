@@ -118,7 +118,7 @@ export default function CartPage() {
           <div className="checkout-layout">
             <div className="checkout-main">
               {groupBySeller(items).map((group) => {
-                const label = sellerLabel(group.sellerId);
+                const label = sellerLabel(group.sellerId, group.sellerName);
                 return (
                   <section key={String(group.sellerId)} className="checkout-panel" aria-label={label}>
                     <h2 className="checkout-panel-title">{label}</h2>

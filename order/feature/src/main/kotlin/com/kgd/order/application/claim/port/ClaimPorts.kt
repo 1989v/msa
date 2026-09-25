@@ -30,8 +30,8 @@ interface ClaimCommandPort {
 sealed interface ClaimCommand {
     val orderId: Long
 
-    /** `fulfillment.command.cancel` — 이행 라인은 productId 로 식별한다 */
-    data class CancelFulfillment(override val orderId: Long, val productIds: List<Long>) : ClaimCommand
+    /** `fulfillment.command.cancel` — 이행 라인은 주문 라인 id 로 식별한다(같은 상품 두 라인도 따로) */
+    data class CancelFulfillment(override val orderId: Long, val orderItemIds: List<Long>) : ClaimCommand
 
     /** `inventory.command.restock` — 라인 지정 재입고, 출고 전 취소만 */
     data class RestockInventory(override val orderId: Long, val restockKey: String, val lines: List<Line>) : ClaimCommand

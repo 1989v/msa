@@ -1,6 +1,7 @@
 package com.kgd.settlement.application.ledger.usecase
 
 import com.kgd.settlement.application.ledger.port.AccountBalance
+import com.kgd.settlement.domain.ledger.model.Journal
 import com.kgd.settlement.domain.ledger.model.LineAmounts
 import com.kgd.settlement.domain.ledger.model.ShippingAmount
 import java.time.Instant
@@ -42,6 +43,14 @@ interface RecordLedgerUseCase {
         val pgFee: Long,
         val eventId: String?,
     )
+}
+
+/**
+ * 어드민 정정 — 원장 거래 하나를 역분개한다. 한 거래는 한 번만 역분개되고(원천 키 `reversal:journal:{id}` 유니크),
+ * 이미 역분개된 거래를 다시 요청하면 기존 역분개 거래를 돌려준다. 행위자·사유를 역분개 거래에 남긴다.
+ */
+interface ReverseJournalUseCase {
+    fun reverse(journalId: Long, actorId: String, reason: String): Journal
 }
 
 /** 시산표 — 계정별 (차 − 대), 전체 합은 0 이어야 한다 */

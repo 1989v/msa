@@ -208,7 +208,7 @@ export default function OrderSheetPage() {
       <div className="checkout-layout">
         <div className="checkout-main">
           {groupBySeller(sheet.lines).map((group) => {
-            const label = sellerLabel(group.sellerId);
+            const label = sellerLabel(group.sellerId, group.sellerName);
             const fee = group.sellerId == null ? 0 : (shippingBySeller.get(group.sellerId) ?? 0);
             return (
               <section key={String(group.sellerId)} className="checkout-panel" aria-label={label}>

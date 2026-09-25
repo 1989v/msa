@@ -102,11 +102,20 @@ class GlobalExceptionHandlerWebMvcTest : BehaviorSpec({
         }
 
         `when`("BusinessException(INSUFFICIENT_STOCK) 이 발생하면") {
-            then("400 + error.code=INSUFFICIENT_STOCK 로 기존과 동일하게 응답한다") {
+            then("409 + error.code=INSUFFICIENT_STOCK — 요청이 아니라 지금 재고와 충돌한다") {
                 val res = mockMvc.perform(get("/api/v1/probe/business-stock")).andReturn().response
 
-                res.status shouldBe 400
+                res.status shouldBe 409
                 res.contentAsString shouldContain "\"code\":\"INSUFFICIENT_STOCK\""
+            }
+        }
+
+        `when`("BusinessException(INVALID_FULFILLMENT_STATUS) 가 발생하면") {
+            then("409 + error.code=INVALID_FULFILLMENT_STATUS — 매핑이 없어 500 이던 것") {
+                val res = mockMvc.perform(get("/api/v1/probe/business-fulfillment-status")).andReturn().response
+
+                res.status shouldBe 409
+                res.contentAsString shouldContain "\"code\":\"INVALID_FULFILLMENT_STATUS\""
             }
         }
 
@@ -213,6 +222,9 @@ private open class ProbeController {
 
     @GetMapping("/api/v1/probe/business-stock")
     open fun businessStock(): Nothing = throw BusinessException(ErrorCode.INSUFFICIENT_STOCK)
+
+    @GetMapping("/api/v1/probe/business-fulfillment-status")
+    open fun businessFulfillmentStatus(): Nothing = throw BusinessException(ErrorCode.INVALID_FULFILLMENT_STATUS)
 
     @GetMapping("/api/v1/probe/typed/{id}")
     open fun typed(@PathVariable id: Long): ApiResponse<Long> = ApiResponse.success(id)

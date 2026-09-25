@@ -2,15 +2,20 @@ import { apiClient } from './client';
 
 interface ApiResponse<T> { success: boolean; data: T; error: { code: string; message: string } | null; }
 
-export const STATEMENT_STATUSES = ['DRAFT', 'CONFIRMED', 'PAID', 'CARRIED_OVER'] as const;
+export const STATEMENT_STATUSES = ['DRAFT', 'CONFIRMED', 'PAID', 'CARRIED_OVER', 'PLATFORM_RETAINED'] as const;
 export type StatementStatus = (typeof STATEMENT_STATUSES)[number];
 
-/** 정산서 — periodEnd 는 마지막 날(포함). 지급액 = 순매출 + 배송비 − 수수료 */
+/**
+ * 정산서 — periodEnd 는 마지막 날(포함). 지급액 = 순매출 + 배송비 − 수수료.
+ * includedFrom~includedTo 는 실제로 담긴 항목의 확정 시각 범위 — 이월·지각 항목이 있으면 명목 기간보다 앞선다.
+ */
 export interface Statement {
   id: number;
   sellerId: number;
   periodStart: string;
   periodEnd: string;
+  includedFrom: string;
+  includedTo: string;
   status: StatementStatus;
   netSales: number;
   shippingFee: number;
@@ -33,7 +38,7 @@ export interface TrialBalance {
   net: number;
 }
 
-export interface BatchRunResult { opened: number; paid: number; carriedOver: number; failed: number; }
+export interface BatchRunResult { opened: number; paid: number; carriedOver: number; failed: number; platformRetained: number; }
 
 const BASE = '/api/v1/admin/settlements';
 

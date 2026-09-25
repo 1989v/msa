@@ -64,8 +64,9 @@
   outline-offset: 2px;
 }
 
+/* 포털 홈도 다른 링크와 같은 색 — text-muted 는 한지 바탕에서 4.23:1 로 본문 기준(4.5:1)에 못 미쳤다 */
 .shop-header-home {
-  color: var(--ko-text-muted);
+  color: var(--ko-text-secondary);
 }
 
 /* 링크가 여섯이 되면 390 폭에서 낱말이 꺾인다 — 낱말은 한 줄로 두고 좁은 화면에서만 간격을 줄인다 */

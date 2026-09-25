@@ -21,7 +21,7 @@ import java.time.Instant
 class CartControllerTest : BehaviorSpec({
     val old = Instant.parse("2026-01-01T00:00:00Z")
     val ports = InMemoryOrderPorts()
-    ports.sellers.save(SellerView(7L, "ACTIVE", 1_200, 3_000L, old))
+    ports.sellers.save(SellerView(7L, "ACTIVE", 1_200, 3_000L, old, businessName = "도자기 공방"))
     ports.sellers.save(SellerView(8L, "SUSPENDED", 1_000, 0L, old))
     ports.products.save(ProductView(101L, "머그", 12_000L, "ACTIVE", 7L, old))
     ports.products.save(ProductView(104L, "정지 판매자 상품", 5_000L, "ACTIVE", 8L, old))
@@ -44,6 +44,11 @@ class CartControllerTest : BehaviorSpec({
             putItem(101L, 1, "m-1").status shouldBe 200
             putItem(101L, 3, "m-1").status shouldBe 200
             ports.cartRows.filter { it.memberId == "m-1" }.map { it.productId to it.quantity } shouldBe listOf(101L to 3)
+        }
+        then("판매자 상호를 싣는다 — 읽기 모델에 상호가 없으면 null") {
+            val body = putItem(101L, 1, "m-3").contentAsString
+            body shouldContain """"sellerId":7,"onSale":true,"sellerName":"도자기 공방""""
+            putItem(104L, 1, "m-3").contentAsString shouldContain """"sellerId":8,"onSale":false,"sellerName":null"""
         }
         then("읽기 모델에 없는 상품은 404") { putItem(999L, 1, "m-1").status shouldBe 404 }
         then("수량 0 은 400") { putItem(101L, 0, "m-1").status shouldBe 400 }

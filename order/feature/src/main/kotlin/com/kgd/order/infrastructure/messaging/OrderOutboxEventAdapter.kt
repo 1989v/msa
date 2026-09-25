@@ -7,7 +7,6 @@ import com.kgd.order.domain.claim.model.Claim
 import com.kgd.order.domain.order.model.Order
 import com.kgd.order.domain.order.model.OrderItem
 import com.kgd.order.domain.order.model.PurchaseConfirmation
-import com.kgd.order.domain.sheet.model.ShippingLine
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import tools.jackson.databind.ObjectMapper
@@ -87,17 +86,6 @@ class OrderOutboxEventAdapter(
         }
     }
 
-    override fun publishShippingSettlementDue(order: Order, shipping: List<ShippingLine>, confirmedAt: Instant) {
-        val orderId = requireNotNull(order.id)
-        shipping.forEach {
-            val payload = LinePurchaseConfirmedPayload(
-                orderId = orderId, memberId = order.userId, sellerId = it.sellerId, trigger = PurchaseConfirmTrigger.CLAIM_CLOSED.name,
-                confirmedAt = confirmedAt, line = null, shippingLine = OrderConfirmedShipping(it.sellerId, it.fee),
-            )
-            save(orderId, LINE_PURCHASE_CONFIRMED_TOPIC, AGGREGATE_TYPE, orderId, payload)
-        }
-    }
-
     private fun line(orderId: Long, it: OrderItem) = OrderConfirmedLine(
         orderItemId = requireNotNull(it.id) { "저장되지 않은 라인: orderId=$orderId, line=${it.lineNo}" },
         lineNo = it.lineNo,
@@ -161,17 +149,16 @@ data class ClaimRefundedPayload(
 )
 
 /**
- * `order.line.purchase-confirmed` — 정산 대상. 확정 라인마다 한 건이고, 그 판매자의 마지막 ACTIVE 라인이면 [shippingLine] 이 실린다.
- * [line] 이 null 인 건은 배송비만 싣는다(trigger=CLAIM_CLOSED: 확정 라인이 있는 판매자의 마지막 ACTIVE 라인이 클레임으로 취소됐다).
+ * `order.line.purchase-confirmed` — 정산 대상. 확정 라인마다 한 건이고, 그 판매자의 첫 확정 라인이면 [shippingLine] 이 실린다.
  */
 data class LinePurchaseConfirmedPayload(
     val orderId: Long,
     val memberId: String,
     val sellerId: Long,
-    /** BUYER · AUTO · CLAIM_CLOSED */
+    /** BUYER · AUTO */
     val trigger: String,
     val confirmedAt: Instant,
-    val line: OrderConfirmedLine?,
+    val line: OrderConfirmedLine,
     val shippingLine: OrderConfirmedShipping?,
 )
 

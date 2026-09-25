@@ -121,21 +121,36 @@ class FulfillmentOrderTest : BehaviorSpec({
         }
     }
     given("라인 취소 (클레임)") {
-        fun order() = FulfillmentOrder.create(orderId = 1L, warehouseId = 100L, lines = listOf(10L to 2, 20L to 1))
+        // 주문 라인 101(상품 10)·102(상품 20)
+        fun order() = FulfillmentOrder.create(
+            orderId = 1L, warehouseId = 100L,
+            lines = listOf(FulfillmentLine.create(101L, 10L, 2), FulfillmentLine.create(102L, 20L, 1)),
+        )
 
         then("출고 전이면 지정한 라인만 취소되고, 마지막 라인까지 취소되면 이행 전체가 CANCELLED") {
             val order = order()
             order.transition(FulfillmentStatus.PICKING)
 
-            val first = order.cancelLines(setOf(10L))
+            val first = order.cancelLines(setOf(101L))
             (first as LineCancelResult.Cancelled).wholeCancelled shouldBe false
             order.getStatus() shouldBe FulfillmentStatus.PICKING
             order.getLines().map { it.productId to it.getStatus() }.toSet() shouldBe
                 setOf(10L to FulfillmentLineStatus.CANCELLED, 20L to FulfillmentLineStatus.ACTIVE)
 
-            val second = order.cancelLines(setOf(20L))
+            val second = order.cancelLines(setOf(102L))
             (second as LineCancelResult.Cancelled).wholeCancelled shouldBe true
             order.getStatus() shouldBe FulfillmentStatus.CANCELLED
+        }
+
+        then("같은 상품이 두 주문 라인이면 주문 라인 id 로 하나만 취소된다") {
+            val order = FulfillmentOrder.create(
+                orderId = 1L, warehouseId = 100L,
+                lines = listOf(FulfillmentLine.create(201L, 10L, 1), FulfillmentLine.create(202L, 10L, 3)),
+            )
+            order.cancelLines(setOf(202L))
+            order.getLines().map { it.orderItemId to it.getStatus() } shouldBe
+                listOf(201L to FulfillmentLineStatus.ACTIVE, 202L to FulfillmentLineStatus.CANCELLED)
+            order.getStatus() shouldBe FulfillmentStatus.PENDING
         }
 
         then("이미 출고됐으면 거절하고 라인은 그대로다") {
@@ -144,7 +159,7 @@ class FulfillmentOrderTest : BehaviorSpec({
             order.transition(FulfillmentStatus.PACKING)
             order.transition(FulfillmentStatus.SHIPPED)
 
-            order.cancelLines(setOf(10L)) shouldBe LineCancelResult.Rejected(FulfillmentStatus.SHIPPED)
+            order.cancelLines(setOf(101L)) shouldBe LineCancelResult.Rejected(FulfillmentStatus.SHIPPED)
             order.getLines().map { it.getStatus() }.toSet() shouldBe setOf(FulfillmentLineStatus.ACTIVE)
         }
     }

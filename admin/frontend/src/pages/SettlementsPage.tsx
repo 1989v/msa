@@ -18,9 +18,13 @@ const STATUS_LABEL: Record<StatementStatus, string> = {
   CONFIRMED: '지급 대기',
   PAID: '지급 완료',
   CARRIED_OVER: '이월',
+  PLATFORM_RETAINED: '플랫폼 매출(지급 없음)',
 };
 
 const won = (n: number) => `${n.toLocaleString('ko-KR')}원`;
+
+/** UTC ISO → KST 날짜. 정산 기간이 KST 기준이라 같은 기준으로 맞춘다 */
+const kstDate = (iso: string) => new Date(Date.parse(iso) + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
 function errorMessage(err: unknown): string {
   if (axios.isAxiosError(err)) {
@@ -81,7 +85,7 @@ export function SettlementsPage() {
             onClick={() =>
               act(async () => {
                 const r = await runSettlementBatch();
-                return `배치 — 생성 ${r.opened} · 지급 ${r.paid} · 이월 ${r.carriedOver} · 실패 ${r.failed}`;
+                return `배치 — 생성 ${r.opened} · 지급 ${r.paid} · 이월 ${r.carriedOver} · 플랫폼 매출 ${r.platformRetained} · 실패 ${r.failed}`;
               })
             }
           >
@@ -181,7 +185,10 @@ export function SettlementsPage() {
                     <div className="font-mono text-xs">#{s.id} · 판매자 {s.sellerId}</div>
                     <div className="text-xs text-zinc-500">{s.lineCount}건</div>
                   </td>
-                  <td className="p-3 font-mono text-xs">{s.periodStart} ~ {s.periodEnd}</td>
+                  <td className="p-3 font-mono text-xs">
+                    <div>{s.periodStart} ~ {s.periodEnd}</div>
+                    <div className="text-zinc-500">실제 포함 {kstDate(s.includedFrom)} ~ {kstDate(s.includedTo)}</div>
+                  </td>
                   <td className="p-3 text-right font-mono">{won(s.netSales)}</td>
                   <td className="p-3 text-right font-mono">{won(s.shippingFee)}</td>
                   <td className="p-3 text-right font-mono">{won(s.commission)}</td>

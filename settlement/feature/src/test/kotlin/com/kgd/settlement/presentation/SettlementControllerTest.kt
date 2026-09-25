@@ -39,7 +39,7 @@ class SettlementControllerTest : BehaviorSpec({
         val mvc = MockMvcBuilders.standaloneSetup(
             SellerSettlementController(h.queries),
             SettlementAdminController(h.queries, h.batch, h.batch),
-            LedgerAdminController(h.ledger),
+            LedgerAdminController(h.ledger, h.ledger),
         ).setMessageConverters(JacksonJsonHttpMessageConverter(mapper)).build()
         return h to mvc
     }
@@ -95,6 +95,51 @@ class SettlementControllerTest : BehaviorSpec({
             (data["net"] as Number).toLong() shouldBe 0L
             (data["totalDebit"] as Number).toLong() shouldBe h.ledger.trialBalance().totalDebit
             tb.contentAsString.contains("\"name\":\"판매자 미지급금\"") shouldBe true
+        }
+        Then("정산서 응답은 명목 기간과 함께 실제 포함 범위(최소~최대 확정 시각)를 싣는다") {
+            val (_, mvc) = setup()
+            val res = mvc.call(get("/api/v1/admin/settlements/statements").as_("a1", "ROLE_ADMIN"))
+            @Suppress("UNCHECKED_CAST")
+            val row = (mapper.readValue<Map<String, Any?>>(res.contentAsString)["data"] as List<Map<String, Any?>>).single()
+            row["includedFrom"] shouldBe "2026-09-24T03:00:00Z"
+            row["includedTo"] shouldBe "2026-09-24T03:00:00Z"
+        }
+    }
+
+    Given("어드민 역분개 POST /api/v1/admin/settlements/ledger/journals/{id}/reverse") {
+        fun reverse(id: Long, reason: String?) = post("/api/v1/admin/settlements/ledger/journals/$id/reverse")
+            .contentType("application/json").content(mapper.writeValueAsString(mapOf("reason" to reason)))
+
+        Then("ROLE_USER 403 · 사유 없음 400 · 없는 거래 404 · 역분개 거래는 다시 역분개 400") {
+            val (h, mvc) = setup()
+            val capture = requireNotNull(h.journals.journals.first().id)
+            mvc.call(reverse(capture, "x").as_("u1", "ROLE_USER")).status shouldBe 403
+            mvc.call(reverse(capture, " ").as_("a1", "ROLE_ADMIN")).status shouldBe 400
+            mvc.call(reverse(9_999L, "x").as_("a1", "ROLE_ADMIN")).status shouldBe 404
+            mvc.call(reverse(capture, "x").as_("a1", "ROLE_ADMIN")).status shouldBe 200
+            val reversalId = requireNotNull(h.journals.journals.last().id)
+            mvc.call(reverse(reversalId, "x").as_("a1", "ROLE_ADMIN")).status shouldBe 400
+        }
+        Then("행위자·사유를 남긴 역분개 거래 하나 — 같은 거래를 다시 요청하면 같은 역분개를 돌려주고, 원장 합은 0") {
+            val (h, mvc) = setup()
+            val capture = h.journals.journals.first()
+            val before = h.journals.journals.size
+
+            val first = mvc.call(reverse(requireNotNull(capture.id), "금액 오기입").as_("a1", "ROLE_ADMIN"))
+            val again = mvc.call(reverse(requireNotNull(capture.id), "다시 누름").as_("a2", "ROLE_ADMIN"))
+
+            first.status shouldBe 200
+            again.status shouldBe 200
+            h.journals.journals.size shouldBe before + 1
+            val reversal = h.journals.journals.last()
+            reversal.reversalOf shouldBe capture.id
+            reversal.actorId shouldBe "a1"
+            reversal.reason shouldBe "금액 오기입"
+            @Suppress("UNCHECKED_CAST")
+            val data = mapper.readValue<Map<String, Any?>>(again.contentAsString)["data"] as Map<String, Any?>
+            (data["id"] as Number).toLong() shouldBe reversal.id
+            data["actorId"] shouldBe "a1"
+            h.ledger.trialBalance().net shouldBe 0L
         }
     }
 })

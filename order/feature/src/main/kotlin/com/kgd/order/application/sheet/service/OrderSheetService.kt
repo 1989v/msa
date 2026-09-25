@@ -12,6 +12,7 @@ import com.kgd.order.application.sheet.port.OrderSheetRepositoryPort
 import com.kgd.order.application.sheet.usecase.CreateOrderSheetUseCase
 import com.kgd.order.application.sheet.usecase.GetOrderSheetUseCase
 import com.kgd.order.application.sheet.usecase.OrderSheetResult
+import com.kgd.order.domain.catalog.model.SellerView
 import com.kgd.order.domain.sheet.exception.OrderSheetNotFoundException
 import com.kgd.order.domain.sheet.model.OrderSheetPricing
 import org.springframework.beans.factory.annotation.Qualifier
@@ -65,13 +66,16 @@ class OrderSheetService(
             now = clock.instant(),
             ttl = ttl,
         )
-        return OrderSheetResult.from(sheets.save(sheet))
+        return OrderSheetResult.from(sheets.save(sheet), sellerById.namesOf())
     }
 
     @Transactional("orderTransactionManager", readOnly = true)
     override fun execute(memberId: String, orderSheetId: Long): OrderSheetResult {
         val sheet = sheets.findById(orderSheetId)?.takeIf { it.memberId == memberId }
             ?: throw OrderSheetNotFoundException(orderSheetId)
-        return OrderSheetResult.from(sheet)
+        return OrderSheetResult.from(sheet, sellers.findAllByIds(sheet.lines.map { it.sellerId }.toSet()).associateBy { it.sellerId }.namesOf())
     }
+
+    private fun Map<Long, SellerView>.namesOf(): Map<Long, String> =
+        mapNotNull { (id, view) -> view.businessName?.let { id to it } }.toMap()
 }

@@ -36,15 +36,17 @@ class OrderReadModelConsumerTest : BehaviorSpec({
     given("seller.seller.*") {
         then("정지 뒤 늦게 도착한 옛 승인은 반영하지 않는다") {
             consumer.onSeller(record("seller.seller.suspended",
-                """{"eventId":"${id()}","sellerId":7,"memberId":"m-7","status":"SUSPENDED","commissionRateBp":1200,"shippingFee":3000,"settlementCycle":"WEEKLY","occurredAt":"2026-10-02T00:00:00Z"}"""))
+                """{"eventId":"${id()}","sellerId":7,"memberId":"m-7","status":"SUSPENDED","commissionRateBp":1200,"shippingFee":3000,"settlementCycle":"WEEKLY","occurredAt":"2026-10-02T00:00:00Z","businessName":"도자기 공방"}"""))
             consumer.onSeller(record("seller.seller.approved",
                 """{"eventId":"${id()}","sellerId":7,"memberId":"m-7","status":"ACTIVE","commissionRateBp":1200,"shippingFee":3000,"settlementCycle":"WEEKLY","occurredAt":"2026-10-01T00:00:00Z"}"""))
             ports.sellerRows[7L]!!.status shouldBe "SUSPENDED"
+            ports.sellerRows[7L]!!.businessName shouldBe "도자기 공방"
         }
         then("승인 전(PENDING) 수수료율 null 도 받는다 — epoch 초(ms) 시각도") {
             consumer.onSeller(record("seller.seller.applied",
                 """{"eventId":"${id()}","sellerId":9,"memberId":"m-9","status":"PENDING","commissionRateBp":null,"shippingFee":0,"settlementCycle":"MONTHLY","occurredAt":1790000000.123}"""))
             ports.sellerRows[9L]!!.commissionRateBp shouldBe null
+            ports.sellerRows[9L]!!.businessName shouldBe null
             ports.sellerRows[9L]!!.occurredAt shouldBe Instant.ofEpochSecond(1790000000L, 123000000L)
         }
     }

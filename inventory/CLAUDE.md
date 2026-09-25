@@ -38,6 +38,8 @@ Outbox·멱등 원장은 common 바인딩(`InventoryOutboxRepository`·`Inventor
   부족은 예외가 아니라 `inventory.reservation.failed(INSUFFICIENT_STOCK, shortages)`.
 - **확정**: 한 라인이라도 만료·해제됐거나 기한이 지났으면 확정하지 않고 남은 ACTIVE 도 풀고 `failed(EXPIRED)` — 예외가 아니다(DLT 로 새지 않는다).
   이미 CONFIRMED 인 예약에 release 가 오면 `failed(ALREADY_CONFIRMED)` — 사가가 재입고로 되돌린다.
+- **해제 뒤 늦은 예약**: 그 주문에 `released` 로 답한 적이 있으면 reserve 는 `failed(RELEASED)` 로 거절한다(재고를 잡지 않는다) —
+  받아 주면 아무도 풀지 않는 예약이 30분 만료까지 재고를 붙잡는다. 예약은 상품 단위라 재입고도 상품+수량이면 된다.
 - **재입고**(클레임·보류 만료 보상): 라인 지정 시 `restockKey` 필수(키별 멱등), 확정 수량을 넘으면 `failed(NOT_RESTOCKABLE)`.
 - **보류 만료**: 예약 기한 30분(`commerce.hold-minutes`), 1분 주기 스케줄러가 만료시키고 `inventory.reservation.expired`. 사가가 받아 처리한다.
 - **재고 동기화 이벤트**(product 가 소비): `inventory.stock.{reserved,released,confirmed,received,restocked}` — 예약·해제·확정·입고·재입고 전부.

@@ -24,10 +24,10 @@ import java.time.Duration
 
 /**
  * 구매 확정 (스펙 SR-8) — 버튼(본인) 또는 배송 완료 후 `order.purchase-confirm-days`(기본 7)일 자동.
- * 확정 라인마다 `order.line.purchase-confirmed`(판매자 마지막 ACTIVE 라인이면 배송비 라인 포함), 남은 라인이 전부 확정이면 COMPLETED.
+ * 확정 라인마다 `order.line.purchase-confirmed`(판매자의 첫 확정 라인이면 배송비 라인 포함), 남은 라인이 전부 확정이면 COMPLETED.
  *
- * 진행 중 클레임(REQUESTED·APPROVED)이 있는 주문은 확정하지 않는다 — 취소 중인 라인과 같은 판매자의 라인이 먼저 확정되면
- * 배송비가 실릴 「마지막 ACTIVE 라인」이 클레임 쪽으로 넘어가 정산 시점이 흔들린다.
+ * 진행 중 클레임(REQUESTED·APPROVED)이 있는 주문은 확정하지 않는다 — 클레임의 배송비 환불 여부는 환불을 시작할 때
+ * 「그 판매자 라인이 전부 취소되는가」로 정해지는데, 그 사이 같은 판매자 라인이 확정되면 배송비가 환불과 정산에 둘 다 오를 수 있다.
  */
 @Service
 class PurchaseConfirmService(

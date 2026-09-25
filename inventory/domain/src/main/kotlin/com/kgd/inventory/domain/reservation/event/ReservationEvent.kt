@@ -66,5 +66,8 @@ sealed class ReservationEvent {
         const val REASON_NOT_RESERVED = "NOT_RESERVED"
         const val REASON_ALREADY_CONFIRMED = "ALREADY_CONFIRMED"
         const val REASON_NOT_RESTOCKABLE = "NOT_RESTOCKABLE"
+
+        /** 이 주문은 이미 해제(release)로 답했다 — 늦게 온 예약 명령으로 재고를 다시 잡지 않는다 */
+        const val REASON_RELEASED = "RELEASED"
     }
 }

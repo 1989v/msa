@@ -34,7 +34,9 @@ class FulfillmentCommandService(
             return Answer(FulfillmentEventPublisher.CREATED)
         }
         val created = command.lines.groupBy { it.warehouseId }.map { (warehouseId, lines) ->
-            fulfillments.save(FulfillmentOrder.create(command.orderId, warehouseId, lines.map { it.productId to it.quantity }))
+            fulfillments.save(
+                FulfillmentOrder.create(command.orderId, warehouseId, lines.map { FulfillmentLine.create(it.orderItemId, it.productId, it.quantity) }),
+            )
         }
         events.created(command.orderId, created)
         return Answer(FulfillmentEventPublisher.CREATED)
@@ -45,14 +47,14 @@ class FulfillmentCommandService(
         require(all.isNotEmpty()) { "이행이 없는 주문의 취소 명령: orderId=${command.orderId}" }
 
         val targets: List<Pair<FulfillmentOrder, FulfillmentLine>> = all.flatMap { fo ->
-            fo.getLines().filter { command.productIds == null || it.productId in command.productIds }.map { fo to it }
+            fo.getLines().filter { command.orderItemIds == null || it.orderItemId in command.orderItemIds }.map { fo to it }
         }
-        command.productIds?.let { requested ->
-            val missing = requested - targets.map { it.second.productId }.toSet()
-            require(missing.isEmpty()) { "이행에 없는 라인의 취소 명령: orderId=${command.orderId}, productIds=$missing" }
+        command.orderItemIds?.let { requested ->
+            val missing = requested - targets.mapNotNull { it.second.orderItemId }.toSet()
+            require(missing.isEmpty()) { "이행에 없는 라인의 취소 명령: orderId=${command.orderId}, orderItemIds=$missing" }
         }
         // 전체 취소면 라인 없는 이행(REST 수동 생성)도 대상이다
-        val touched = if (command.productIds == null) all else targets.map { it.first }.distinctBy { it.id }
+        val touched = if (command.orderItemIds == null) all else targets.map { it.first }.distinctBy { it.id }
 
         // 한 라인이라도 이미 출고됐으면 아무것도 취소하지 않는다 — 클레임은 판매자 승인으로 넘어간다
         val rejected = touched.filter { it.isShippedOrDelivered() }.flatMap { fo ->
@@ -69,8 +71,8 @@ class FulfillmentCommandService(
         }
 
         touched.forEach { fo ->
-            val productIds = targets.filter { it.first.id == fo.id }.map { it.second.productId }.toSet()
-            fo.cancelLines(productIds)
+            val lineIds = targets.filter { it.first.id == fo.id }.mapNotNull { it.second.orderItemId }.toSet()
+            if (command.orderItemIds == null) fo.cancelAllLines() else fo.cancelLines(lineIds)
             fulfillments.save(fo)
         }
         val cancelledIds = touched.filter { it.getStatus() == FulfillmentStatus.CANCELLED }.mapNotNull { it.id }

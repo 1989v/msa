@@ -61,6 +61,14 @@ class OrderSheetTest : BehaviorSpec({
         }
     }
 
+    given("같은 상품이 요청에 두 번 온다") {
+        val sheet = price(listOf(item(101L, 1), item(103L, 1), item(101L, 2)))
+        then("처음 나온 자리에서 수량을 합쳐 한 라인 — 라인 번호는 1부터 이어진다") {
+            sheet.lines.map { Triple(it.lineNo, it.productId, it.quantity) } shouldBe listOf(Triple(1, 101L, 3), Triple(2, 103L, 1))
+            sheet.lines.first().amount shouldBe 36_000L
+        }
+    }
+
     given("쿠폰·포인트 없는 두 판매자 주문") {
         val sheet = price(listOf(item(101L, 2), item(102L, 1), item(103L, 1)))
         then("라인 금액은 읽기 모델 가격 × 수량") {

@@ -40,9 +40,9 @@ const sheet = (over: Partial<OrderSheet> = {}): OrderSheet => ({
   payableAmount: 27_777,
   expiresAt: inMinutes(12),
   lines: [
-    { lineNo: 1, productId: 11, productName: '한지 노트', sellerId: 7, unitPrice: 5_000, quantity: 2, amount: 10_000,
+    { lineNo: 1, productId: 11, productName: '한지 노트', sellerId: 7, sellerName: '한지 공방', unitPrice: 5_000, quantity: 2, amount: 10_000,
       couponDiscount: 400, couponBearer: 'PLATFORM', pointAmount: 100, payable: 9_500 },
-    { lineNo: 2, productId: 12, productName: '먹 벼루', sellerId: 8, unitPrice: 20_000, quantity: 1, amount: 20_000,
+    { lineNo: 2, productId: 12, productName: '먹 벼루', sellerId: 8, sellerName: null, unitPrice: 20_000, quantity: 1, amount: 20_000,
       couponDiscount: 834, couponBearer: 'PLATFORM', pointAmount: 400, payable: 18_766 },
   ],
   shippingLines: [
@@ -110,7 +110,8 @@ describe('주문서 화면', () => {
     expect(within(row('결제 금액')).getByText('₩27,777')).toBeInTheDocument();
 
     // 판매자별 묶음과 그 판매자 배송비
-    expect(screen.getByRole('region', { name: '판매자 7' })).toHaveTextContent('배송비₩3,000');
+    // 상호가 있으면 상호, 읽기 모델에 아직 없으면 판매자 번호
+    expect(screen.getByRole('region', { name: '한지 공방' })).toHaveTextContent('배송비₩3,000');
     expect(screen.getByRole('region', { name: '판매자 8' })).toHaveTextContent('배송비무료');
     expect(screen.getByRole('button', { name: '결제하기' })).toBeEnabled();
   });

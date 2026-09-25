@@ -68,7 +68,7 @@ ADR-0032 의 코레오그래피를 대체).
   라인 상태(ACTIVE → CANCELLED)와 `refunded_amount` 다.
 - 한 주문에서 답을 기다리는 클레임은 하나 — 답에 클레임 id 가 없어서(키 = orderId) 나머지는 QUEUED. 기한 초과 반복은 `CLAIM_STUCK`.
 - 구매 확정: `POST /api/v1/orders/{id}/purchase-confirm` 또는 배송 완료 후 `order.purchase-confirm-days`(7)일 자동.
-  라인마다 `order.line.purchase-confirmed`(판매자의 마지막 ACTIVE 라인이면 배송비 라인 동봉), 전부 확정되면 주문 COMPLETED.
+  라인마다 `order.line.purchase-confirmed`(판매자의 첫 확정 라인이면 배송비 라인 동봉 — 확정 라인이 생긴 판매자의 배송비는 더는 환불되지 않는다), 전부 확정되면 주문 COMPLETED.
 
 ## Key Rules
 
@@ -78,7 +78,12 @@ ADR-0032 의 코레오그래피를 대체).
 - **Idempotency-Key**: (사용자, 키) 유니크, 처리 중 리스 60초(409), 완료 뒤 저장 응답 그대로, 24시간 보관. 결제 대기 주문은 사용자당 3건(`order.pending-order-limit`, 초과 429).
 - **읽기 모델**(`product_view`·`seller_view`·`coupon_definition_view`·`user_coupon_view`·`point_balance_view`)은
   `OrderReadModelConsumer` 가 이벤트로만 채운다. 늦게 온 옛 이벤트는 `occurred_at` 으로 거른다.
-  플랫폼 판매자 1 은 이벤트가 없어 마이그레이션이 시드한다
+  플랫폼 판매자 1 은 이벤트가 없어 마이그레이션이 시드한다.
+  `seller_view.business_name`(상호)은 장바구니·주문서·주문 응답의 `sellerName` 이 된다 — 조회 시점 값이고 주문 스냅샷이 아니다.
+  seller 가 승인된 판매자 이벤트에만 싣고, 상호가 없는 이벤트는 있던 값을 지우지 않는다
+- **배포 뒤 1회(상호)**: 상호 추가 전 승인된 판매자는 다음 seller 이벤트 전까지 이름이 비어(화면은 「판매자 N」) 있다.
+  seller_db 와 order_db 가 같은 인스턴스라 한 줄로 옮긴다:
+  `UPDATE order_db.seller_view v JOIN seller_db.seller s ON s.id = v.seller_id SET v.business_name = s.business_name WHERE v.business_name IS NULL AND s.status IN ('ACTIVE','SUSPENDED');`
 - **배포 뒤 1회**: 상품 이벤트는 변경 때만 나가므로 기존 상품은 읽기 모델에 없다 —
   어드민 토큰으로 `POST /api/v1/admin/products/republish` 를 한 번 부른다(여러 번 불러도 안전).
   확인: `SELECT COUNT(*) FROM order_db.product_view` = `SELECT COUNT(*) FROM product_db.products`

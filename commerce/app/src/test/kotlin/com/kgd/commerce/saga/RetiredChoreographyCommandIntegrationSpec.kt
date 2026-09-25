@@ -126,7 +126,7 @@ class RetiredChoreographyCommandIntegrationSpec(
                     )
                     send(
                         "fulfillment.command.create", "770003",
-                        """{"eventId":"${UUID.randomUUID()}","orderId":770003,"lines":[{"productId":7001,"quantity":1,"warehouseId":1}]}""",
+                        """{"eventId":"${UUID.randomUUID()}","orderId":770003,"lines":[{"orderItemId":770301,"productId":7001,"quantity":1,"warehouseId":1}]}""",
                     )
                 }
 

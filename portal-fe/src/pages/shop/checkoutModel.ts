@@ -1,19 +1,28 @@
 import type { MyCoupon, OrderSheet } from '../../api/shopApi';
 
-/** 판매자별로 묶는다 — 처음 나온 순서를 지킨다. 판매자를 모르는 줄(null)은 따로 한 묶음이다 */
-export function groupBySeller<T extends { sellerId: number | null }>(
+/**
+ * 판매자별로 묶는다 — 처음 나온 순서를 지킨다. 판매자를 모르는 줄(null)은 따로 한 묶음이다.
+ * 상호는 묶음 안에서 처음 보이는 값(서버가 판매자마다 같은 값을 싣는다).
+ */
+export function groupBySeller<T extends { sellerId: number | null; sellerName?: string | null }>(
   lines: T[],
-): { sellerId: number | null; lines: T[] }[] {
+): { sellerId: number | null; sellerName: string | null; lines: T[] }[] {
   const groups = new Map<number | null, T[]>();
   for (const line of lines) {
     const list = groups.get(line.sellerId);
     if (list) list.push(line);
     else groups.set(line.sellerId, [line]);
   }
-  return Array.from(groups, ([sellerId, grouped]) => ({ sellerId, lines: grouped }));
+  return Array.from(groups, ([sellerId, grouped]) => ({
+    sellerId,
+    sellerName: grouped.find((l) => l.sellerName)?.sellerName ?? null,
+    lines: grouped,
+  }));
 }
 
-export function sellerLabel(sellerId: number | null): string {
+/** 상호가 있으면 상호, 없으면(읽기 모델에 아직 없음) 판매자 번호 */
+export function sellerLabel(sellerId: number | null, sellerName?: string | null): string {
+  if (sellerName) return sellerName;
   return sellerId == null ? '판매 정보 없음' : `판매자 ${sellerId}`;
 }
 

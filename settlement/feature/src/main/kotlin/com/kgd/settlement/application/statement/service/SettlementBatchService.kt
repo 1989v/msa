@@ -19,7 +19,8 @@ import java.time.Clock
 
 /**
  * 정산 배치(스펙 SR-9). 정산 대상이 남은 판매자마다 주기(주간 월~일 · 월간 달력 월, KST)가 닫힌 가장 최근 기간의 정산서를 만든다.
- * 지급액 > 0 → 모의 송금 → PAID + 지급 거래, ≤ 0 → CARRIED_OVER. 판매자 하나가 실패해도 나머지는 계속한다.
+ * 지급액 > 0 → 모의 송금 → PAID + 지급 거래, ≤ 0 → CARRIED_OVER, 플랫폼 판매자 → PLATFORM_RETAINED(송금·지급 거래 없음).
+ * 판매자 하나가 실패해도 나머지는 계속한다.
  *
  * 먼저 지난 배치가 확정만 하고 지급을 못 끝낸 정산서(CONFIRMED)를 다시 지급한다 — 송금 참조가 정산서마다 같아 두 번 보내지 않는다.
  */
@@ -40,6 +41,7 @@ class SettlementBatchService(
         var opened = 0
         var paid = 0
         var carried = 0
+        var retained = 0
         var failed = 0
 
         statements.findByStatus(StatementStatus.CONFIRMED).forEach { s ->
@@ -55,12 +57,13 @@ class SettlementBatchService(
                 when (statement.status) {
                     StatementStatus.CONFIRMED -> pay(statement).also { paid++ }
                     StatementStatus.CARRIED_OVER -> carried++
+                    StatementStatus.PLATFORM_RETAINED -> retained++
                     else -> Unit
                 }
             }.onFailure { failed++; log.error(it) { "판매자 $sellerId 정산 실패" } }
         }
-        log.info { "정산 배치 $today: opened=$opened, paid=$paid, carriedOver=$carried, failed=$failed" }
-        return RunSettlementBatchUseCase.BatchResult(opened, paid, carried, failed)
+        log.info { "정산 배치 $today: opened=$opened, paid=$paid, carriedOver=$carried, platformRetained=$retained, failed=$failed" }
+        return RunSettlementBatchUseCase.BatchResult(opened, paid, carried, failed, retained)
     }
 
     override fun retry(statementId: Long): SettlementStatement {

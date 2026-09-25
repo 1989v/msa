@@ -194,3 +194,10 @@
 - portal-fe·admin `tsc -b --force` 0
 - Q20 재고·이행 소유 판정(각자 상품→판매자·판매자 ACTIVE 읽기 모델), 창고 어드민 전용 · Q3 예외 처리기 basePackages · Q4 상품 DELETE = 판매 중지 · Q10 어드민 등록은 플랫폼 판매자 · Q12 판매자 전용 목록 + 정렬 · Q16 @EnableKafka → CommerceApplication · Q18 회원 행 잠금 + 멱등 키 본문 해시(다른 본문 422)
 - 회귀 주입 5종 빨간불(소유 비교 삭제 · 이행 판정 무력화 · FOR UPDATE 삭제 · basePackages 제거 · auto-startup 적용 제거)
+
+## 미결 후속 W2 — 정산·주문·이행 (2026-09-25)
+- `./gradlew verifyArchitecture compileTestKotlin :common:test :order:* :inventory:* :fulfillment:* :settlement:* :seller:feature:test :gateway:test :code-dictionary:feature:test :commerce:app:test` → exit 0, 실패 0 · E2E 19/0 · portal/admin `tsc -b` 0
+- Q21 배송비는 판매자 첫 확정 라인에 · Q22 역분개 API · 플랫폼 판매자 PLATFORM_RETAINED(지급 없음) · 정산서 실제 포함 기간 · Q15 상호(ACTIVE·SUSPENDED 만 이벤트에) · 「포털 홈」 대비 4.23→8.83 · Q17 이행 라인 orderItemId · 해제 뒤 늦은 예약 RELEASED 거절 · Q25 INSUFFICIENT_STOCK·INVALID_FULFILLMENT_STATUS 409
+- 배포 전 확인: 운영 FULFILLING 주문 0 · order 아웃박스 CLAIM_CLOSED 행 0
+- 회귀 주입 5종 빨간불
+- W1 배포는 576fd1c7 run 이 온톨로지 게이트로 실패, fa495e69(온톨로지만)는 atlas 만 빌드 → commerce 는 이 W2 push 로 W1+W2 함께 빌드

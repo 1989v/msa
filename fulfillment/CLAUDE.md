@@ -30,7 +30,9 @@ Outbox·멱등 원장은 common 바인딩(`FulfillmentOutboxRepository`·`Fulfil
 
 - **명령**(키 = orderId, 그룹 `fulfillment-service`): `fulfillment.command.create`(라인별 창고) — 창고마다 이행 하나,
   (order_id, warehouse_id) 유니크. 이미 있으면 지금 상태로 `created` 를 다시 낸다.
-  `fulfillment.command.cancel`(라인 지정 또는 전체) — 대상 중 하나라도 SHIPPED·DELIVERED 면 **아무것도 취소하지 않고**
+  **이행 라인은 주문 라인 id(`orderItemId`)로 식별한다** — 주문 라인마다 이행 라인 하나, 같은 상품이 두 라인이어도 합치지 않고 따로 취소된다
+  ((fulfillment_id, order_item_id) 유니크). 이 식별 전에 만든 행은 `order_item_id` 가 NULL 이라 라인 지정 취소 대상이 되지 않는다(전체 취소는 된다).
+  `fulfillment.command.cancel`(주문 라인 id 지정 또는 전체) — 대상 중 하나라도 SHIPPED·DELIVERED 면 **아무것도 취소하지 않고**
   `fulfillment.order.cancel-rejected`(클레임이 판매자 결정으로 넘어간다), 아니면 라인 취소 후 `fulfillment.order.cancelled`.
 - **발행**(아웃박스, 키 = orderId): `fulfillment.order.{created,shipped,delivered,cancelled,cancel-rejected}` → order(사가·클레임·자동 구매 확정 기준 시각),
   `fulfillment.order.status-changed`(REST 수동 전이, 현재 수신자 없음). 명령 하나 = fulfillment_db 트랜잭션 하나(이행·라인·아웃박스 행).

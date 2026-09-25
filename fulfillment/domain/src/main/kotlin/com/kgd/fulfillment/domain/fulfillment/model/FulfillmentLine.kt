@@ -1,20 +1,24 @@
 package com.kgd.fulfillment.domain.fulfillment.model
 
-/** 이행 한 건 안의 상품 한 줄. 클레임이 출고 전에 라인 단위로 취소한다 */
+/**
+ * 이행 한 건 안의 주문 라인 하나. 주문 라인 id([orderItemId])로 식별한다 — 같은 상품이 두 라인이어도 따로 취소된다.
+ * 클레임이 출고 전에 라인 단위로 취소한다. [orderItemId] 가 null 인 행은 이 식별이 생기기 전에 만든 것이다.
+ */
 class FulfillmentLine private constructor(
     val id: Long?,
+    val orderItemId: Long?,
     val productId: Long,
     val quantity: Int,
     private var status: FulfillmentLineStatus,
 ) {
     companion object {
-        fun create(productId: Long, quantity: Int): FulfillmentLine {
-            require(quantity > 0) { "이행 라인 수량은 0보다 커야 합니다: productId=$productId, quantity=$quantity" }
-            return FulfillmentLine(null, productId, quantity, FulfillmentLineStatus.ACTIVE)
+        fun create(orderItemId: Long, productId: Long, quantity: Int): FulfillmentLine {
+            require(quantity > 0) { "이행 라인 수량은 0보다 커야 합니다: orderItemId=$orderItemId, quantity=$quantity" }
+            return FulfillmentLine(null, orderItemId, productId, quantity, FulfillmentLineStatus.ACTIVE)
         }
 
-        fun restore(id: Long?, productId: Long, quantity: Int, status: FulfillmentLineStatus) =
-            FulfillmentLine(id, productId, quantity, status)
+        fun restore(id: Long?, orderItemId: Long?, productId: Long, quantity: Int, status: FulfillmentLineStatus) =
+            FulfillmentLine(id, orderItemId, productId, quantity, status)
     }
 
     internal fun cancel() {

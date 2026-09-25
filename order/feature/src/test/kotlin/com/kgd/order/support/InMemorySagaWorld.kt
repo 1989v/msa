@@ -156,13 +156,10 @@ class InMemorySagaWorld {
         override fun publishPurchaseConfirmed(
             order: Order, confirmations: List<PurchaseConfirmation>, trigger: PurchaseConfirmTrigger, confirmedAt: Instant,
         ) { confirmations.forEach { purchaseConfirmedRows += PurchaseConfirmedEvent(it.line.lineNo, it.line.sellerId, it.shipping, trigger) } }
-        override fun publishShippingSettlementDue(order: Order, shipping: List<ShippingLine>, confirmedAt: Instant) {
-            shipping.forEach { purchaseConfirmedRows += PurchaseConfirmedEvent(null, it.sellerId, it, PurchaseConfirmTrigger.CLAIM_CLOSED) }
-        }
     }
 
-    /** `order.line.purchase-confirmed` 한 건 — [lineNo] 가 null 이면 배송비만 실은 건 */
-    data class PurchaseConfirmedEvent(val lineNo: Int?, val sellerId: Long, val shipping: ShippingLine?, val trigger: PurchaseConfirmTrigger)
+    /** `order.line.purchase-confirmed` 한 건 */
+    data class PurchaseConfirmedEvent(val lineNo: Int, val sellerId: Long, val shipping: ShippingLine?, val trigger: PurchaseConfirmTrigger)
 
     val opsIssues = object : OrderOpsIssueRepositoryPort {
         override fun save(issue: OpsIssue) { issueRows += issue }

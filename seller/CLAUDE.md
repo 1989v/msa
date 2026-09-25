@@ -38,7 +38,8 @@
 - **어드민 조치**(`/api/v1/admin/sellers/**`): 승인(수수료율 bp)·반려·정지·재활성·수수료율 변경. 행위자·사유·전후 상태가
   `seller_admin_action` 에 남는다. 반려·정지·수수료율 변경은 사유 필수.
 - **이벤트**(아웃박스, 키 = sellerId): `seller.seller.{applied,approved,suspended,reactivated,updated}` —
-  sellerId · memberId · status · commissionRateBp · shippingFee · settlementCycle. **계좌·사업자번호·대표자는 싣지 않는다.**
+  sellerId · memberId · status · commissionRateBp · shippingFee · settlementCycle · businessName(**ACTIVE·SUSPENDED 일 때만**, 심사 중은 null —
+  반려 뒤 파기할 상호를 읽기 모델에 퍼뜨리지 않는다). **계좌·사업자번호·대표자는 싣지 않는다.**
   반려는 이벤트가 없다. 수신: order(읽기 모델) · auth(ROLE_SELLER) · product.
 - **개인정보 파기**: 반려 후 30일이 지나면 사업자번호·대표자·은행·계좌를 NULL 로 지운다(매일 04:20 KST).
   행·상태·상호·반려 사유는 이력으로 남는다.

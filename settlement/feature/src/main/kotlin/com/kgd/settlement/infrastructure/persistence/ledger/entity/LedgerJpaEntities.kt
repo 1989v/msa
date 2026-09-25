@@ -38,6 +38,13 @@ class LedgerJournalJpaEntity(
     @Column(name = "reversal_of")
     val reversalOf: Long?,
 
+    /** 어드민 역분개의 행위자 — 이벤트가 만든 거래는 null */
+    @Column(name = "actor_id", length = 64)
+    val actorId: String? = null,
+
+    @Column(length = 500)
+    val reason: String? = null,
+
     @Column(name = "occurred_at", nullable = false)
     val occurredAt: Instant,
 

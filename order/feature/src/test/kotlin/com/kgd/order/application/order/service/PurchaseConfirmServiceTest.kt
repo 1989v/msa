@@ -62,10 +62,10 @@ class PurchaseConfirmServiceTest : BehaviorSpec({
         When("7일이 지난다") {
             f.clock.now = t0.plus(Duration.ofDays(7))
             f.sweep()
-            Then("라인 1·2 확정 이벤트 — 판매자 7 의 마지막 ACTIVE 라인(2)에 배송비 3,000, 주문은 라인 3 이 남아 FULFILLING") {
+            Then("라인 1·2 확정 이벤트 — 판매자 7 의 첫 확정 라인(1)에 배송비 3,000, 주문은 라인 3 이 남아 FULFILLING") {
                 f.world.purchaseConfirmedEvents shouldContainExactly listOf(
-                    PurchaseConfirmedEvent(1, 7L, null, PurchaseConfirmTrigger.AUTO),
-                    PurchaseConfirmedEvent(2, 7L, ShippingLine(7L, 3_000), PurchaseConfirmTrigger.AUTO),
+                    PurchaseConfirmedEvent(1, 7L, ShippingLine(7L, 3_000), PurchaseConfirmTrigger.AUTO),
+                    PurchaseConfirmedEvent(2, 7L, null, PurchaseConfirmTrigger.AUTO),
                 )
                 f.order().status shouldBe OrderStatus.FULFILLING
             }

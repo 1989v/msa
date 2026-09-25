@@ -22,7 +22,7 @@ class ClaimCommandOutboxAdapter(
         val (topic, payload) = when (command) {
             is ClaimCommand.CancelFulfillment -> "fulfillment.command.cancel" to mapOf(
                 "orderId" to command.orderId,
-                "lines" to command.productIds.map { mapOf("productId" to it) },
+                "lines" to command.orderItemIds.map { mapOf("orderItemId" to it) },
             )
             is ClaimCommand.RestockInventory -> "inventory.command.restock" to mapOf(
                 "orderId" to command.orderId,

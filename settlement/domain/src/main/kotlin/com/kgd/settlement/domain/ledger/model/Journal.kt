@@ -31,7 +31,7 @@ data class JournalEntry(
  * 수정·삭제 메서드가 없다. 정정은 [reverse] 가 만드는 역분개 거래로만 한다.
  *
  * [sourceKey] 는 원천(주문·클레임·대사·정산서)의 자연 키다 — 같은 원천은 원장에 한 번만 들어간다.
- * 원천 이벤트 id([sourceEventId])는 추적용으로 함께 남긴다.
+ * 원천 이벤트 id([sourceEventId])는 추적용으로 함께 남긴다. 사람이 만든 거래(역분개)는 [actorId]·[reason] 을 갖는다.
  */
 class Journal private constructor(
     val id: Long?,
@@ -42,6 +42,8 @@ class Journal private constructor(
     val reversalOf: Long?,
     val occurredAt: Instant,
     val entries: List<JournalEntry>,
+    val actorId: String?,
+    val reason: String?,
 ) {
     val debitTotal: Long get() = entries.filter { it.side == EntrySide.DEBIT }.sumOf { it.amount }
     val creditTotal: Long get() = entries.filter { it.side == EntrySide.CREDIT }.sumOf { it.amount }
@@ -51,16 +53,27 @@ class Journal private constructor(
         entries.filter { it.account == account && (sellerId == null || it.sellerId == sellerId) }
             .sumOf { if (it.side == EntrySide.DEBIT) it.amount else -it.amount }
 
-    /** 역분개 — 차·대를 뒤집은 새 거래. 원 거래는 그대로 남는다 */
-    fun reverse(sourceKey: String, at: Instant): Journal {
+    /**
+     * 역분개 — 차·대를 뒤집은 새 거래. 원 거래는 그대로 남는다. 원천 키가 원 거래 id 에서 나와([reversalKey]) 한 거래는 한 번만 역분개된다.
+     * 누가 왜 했는지([actorId]·[reason])를 거래에 남긴다.
+     */
+    fun reverse(actorId: String, reason: String, at: Instant): Journal {
         val originalId = id ?: throw InvalidJournalException("저장되지 않은 거래는 역분개할 수 없습니다: ${this.sourceKey}")
         if (type == JournalType.REVERSAL) throw InvalidJournalException("역분개 거래를 다시 역분개하지 않는다 — 원 거래를 새로 기록한다")
-        return record(JournalType.REVERSAL, sourceKey, null, orderId, at, entries.map(JournalEntry::reversed), reversalOf = originalId)
+        if (actorId.isBlank()) throw InvalidJournalException("역분개 행위자가 비었다")
+        if (reason.isBlank()) throw InvalidJournalException("역분개 사유를 적어 주세요")
+        return record(
+            JournalType.REVERSAL, reversalKey(originalId), null, orderId, at, entries.map(JournalEntry::reversed),
+            reversalOf = originalId, actorId = actorId, reason = reason.trim(),
+        )
     }
 
-    fun withId(id: Long): Journal = Journal(id, type, sourceKey, sourceEventId, orderId, reversalOf, occurredAt, entries)
+    fun withId(id: Long): Journal = Journal(id, type, sourceKey, sourceEventId, orderId, reversalOf, occurredAt, entries, actorId, reason)
 
     companion object {
+        /** 원 거래 [journalId] 의 역분개 원천 키 — 유니크라 같은 거래의 역분개가 둘 생기지 않는다 */
+        fun reversalKey(journalId: Long): String = "reversal:journal:$journalId"
+
         fun record(
             type: JournalType,
             sourceKey: String,
@@ -69,12 +82,14 @@ class Journal private constructor(
             occurredAt: Instant,
             entries: List<JournalEntry>,
             reversalOf: Long? = null,
+            actorId: String? = null,
+            reason: String? = null,
         ): Journal {
             if (sourceKey.isBlank()) throw InvalidJournalException("원천 키가 비었다")
             if (entries.none { it.side == EntrySide.DEBIT } || entries.none { it.side == EntrySide.CREDIT }) {
                 throw InvalidJournalException("거래에는 차변과 대변이 모두 있어야 합니다: $sourceKey")
             }
-            val journal = Journal(null, type, sourceKey, sourceEventId, orderId, reversalOf, occurredAt, entries.toList())
+            val journal = Journal(null, type, sourceKey, sourceEventId, orderId, reversalOf, occurredAt, entries.toList(), actorId, reason)
             if (journal.debitTotal != journal.creditTotal) {
                 throw UnbalancedJournalException(journal.debitTotal, journal.creditTotal, sourceKey)
             }
@@ -91,6 +106,8 @@ class Journal private constructor(
             reversalOf: Long?,
             occurredAt: Instant,
             entries: List<JournalEntry>,
-        ): Journal = record(type, sourceKey, sourceEventId, orderId, occurredAt, entries, reversalOf).withId(id)
+            actorId: String? = null,
+            reason: String? = null,
+        ): Journal = record(type, sourceKey, sourceEventId, orderId, occurredAt, entries, reversalOf, actorId, reason).withId(id)
     }
 }

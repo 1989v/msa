@@ -30,7 +30,7 @@ class SettlementBatchServiceTest : BehaviorSpec({
     val mug = LineAmounts(11L, 7L, netSales = 23_000L, commission = 2_300L, platformCoupon = 1_500L, point = 600L)
     val coaster = LineAmounts(12L, 9L, netSales = 8_000L, commission = 400L, platformCoupon = 500L, point = 400L)
 
-    /** 주문 501: 판매자 7 머그 + 판매자 9 받침, 받침·배송비 9 는 확정 전 환불, 머그는 확정(판매자 7 마지막 라인이라 배송비 7 동봉) */
+    /** 주문 501: 판매자 7 머그 + 판매자 9 받침, 받침·배송비 9 는 확정 전 환불, 머그는 확정(판매자 7 첫 확정 라인이라 배송비 7 동봉) */
     fun scenario(h: SettlementHarness) {
         h.sellerSync.sync(SettlementSeller(7L, "m7", "ACTIVE", SettlementCycle.WEEKLY, thursday))
         h.sellerSync.sync(SettlementSeller(9L, "m9", "ACTIVE", SettlementCycle.WEEKLY, thursday))
@@ -150,6 +150,31 @@ class SettlementBatchServiceTest : BehaviorSpec({
 
             h.batch.retry(requireNotNull(s.id)).status shouldBe StatementStatus.PAID
             h.journals.journals.count { it.type == JournalType.PAYOUT } shouldBe 1
+            shouldThrow<InvalidStatementStateException> { h.batch.retry(requireNotNull(s.id)) }
+        }
+    }
+
+    Given("플랫폼 판매자(1) — 자기 매출") {
+        Then("정산서는 감사용으로 만들되 PLATFORM_RETAINED — 송금·지급 거래가 없고 항목은 묶여 다시 정산되지 않는다") {
+            val h = SettlementHarness(Instant.parse("2026-09-30T20:30:00Z")) // 10-01 05:30 KST — 플랫폼은 월간(V1 시드)
+            h.sellerSync.sync(SettlementSeller(1L, "platform", "ACTIVE", SettlementCycle.MONTHLY, thursday))
+            val own = LineAmounts(81L, 1L, netSales = 1_700L, commission = 0L, platformCoupon = 0L, point = 0L)
+            h.ledger.recordCapture(RecordLedgerUseCase.Capture(801L, 1_700L, listOf(own), emptyList(), thursday, "e81"))
+            h.register.register(RegisterSettlementItemUseCase.PurchaseConfirmed(801L, own, null, thursday))
+
+            val result = h.batch.run()
+
+            result.opened shouldBe 1
+            result.paid shouldBe 0
+            result.platformRetained shouldBe 1
+            val s = h.statements.rows.values.single()
+            s.status shouldBe StatementStatus.PLATFORM_RETAINED
+            s.payout shouldBe 1_700L
+            h.payout.calls.size shouldBe 0
+            h.journals.journals.none { it.type == JournalType.PAYOUT } shouldBe true
+            h.items.assignedTo["line:81"] shouldBe s.id
+            h.payableOf(1L) shouldBe 1_700L
+            h.batch.run().opened shouldBe 0
             shouldThrow<InvalidStatementStateException> { h.batch.retry(requireNotNull(s.id)) }
         }
     }

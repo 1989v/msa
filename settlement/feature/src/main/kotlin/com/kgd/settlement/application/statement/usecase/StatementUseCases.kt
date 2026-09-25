@@ -6,13 +6,13 @@ import com.kgd.settlement.domain.statement.model.SettlementStatement
 import com.kgd.settlement.domain.statement.model.StatementStatus
 import java.time.Instant
 
-/** `order.line.purchase-confirmed` → 정산 대상 항목. [line] 이 없으면 배송비만 실린 건이다 */
+/** `order.line.purchase-confirmed` → 정산 대상 항목. [shipping] 은 그 판매자의 첫 확정 라인일 때만 실린다 */
 interface RegisterSettlementItemUseCase {
     fun register(command: PurchaseConfirmed)
 
     data class PurchaseConfirmed(
         val orderId: Long,
-        val line: LineAmounts?,
+        val line: LineAmounts,
         val shipping: ShippingAmount?,
         val confirmedAt: Instant,
     )
@@ -22,7 +22,7 @@ interface RegisterSettlementItemUseCase {
 interface RunSettlementBatchUseCase {
     fun run(): BatchResult
 
-    data class BatchResult(val opened: Int, val paid: Int, val carriedOver: Int, val failed: Int)
+    data class BatchResult(val opened: Int, val paid: Int, val carriedOver: Int, val failed: Int, val platformRetained: Int = 0)
 }
 
 /** 확정됐는데 지급이 끝나지 않은 정산서(송금 뒤 장애 등)의 지급을 다시 한다 */

@@ -49,12 +49,14 @@ data class OrderDetail(
         val shippedAt: Instant? = null,
         val deliveredAt: Instant? = null,
         val purchaseConfirmedAt: Instant? = null,
+        /** 판매자 상호 — 조회 시점의 읽기 모델 값. 없으면 null */
+        val sellerName: String? = null,
     )
 
     data class Shipping(val sellerId: Long, val fee: Long)
 
     companion object {
-        fun of(order: Order, saga: OrderSaga?) = OrderDetail(
+        fun of(order: Order, saga: OrderSaga?, sellerNames: Map<Long, String> = emptyMap()) = OrderDetail(
             orderId = requireNotNull(order.id),
             userId = order.userId,
             status = order.status.name,
@@ -72,7 +74,7 @@ data class OrderDetail(
                 Line(
                     it.id, it.lineNo, it.productId, it.productName, it.sellerId, it.unitPrice.amount, it.quantity,
                     it.couponDiscount, it.pointAmount, it.payable, it.status.name, it.shippedAt, it.deliveredAt,
-                    it.purchaseConfirmedAt,
+                    it.purchaseConfirmedAt, sellerNames[it.sellerId],
                 )
             },
             shippingLines = order.shippingLines.map { Shipping(it.sellerId, it.fee) },

@@ -13,14 +13,14 @@ class FulfillmentOrder private constructor(
     private val lines: List<FulfillmentLine> = emptyList(),
 ) {
     companion object {
-        /** [lines] 는 (상품 id, 수량). 같은 상품은 한 줄로 합친다 — 라인 취소가 상품으로 줄을 찾는다 */
-        fun create(orderId: Long, warehouseId: Long, lines: List<Pair<Long, Int>> = emptyList()): FulfillmentOrder {
-            val merged = lines.groupBy({ it.first }, { it.second }).map { (productId, qty) -> FulfillmentLine.create(productId, qty.sum()) }
+        /** [lines] 는 주문 라인마다 하나 — 합치지 않는다(라인 취소가 주문 라인 id 로 줄을 찾는다) */
+        fun create(orderId: Long, warehouseId: Long, lines: List<FulfillmentLine> = emptyList()): FulfillmentOrder {
+            require(lines.mapNotNull { it.orderItemId }.let { it.size == it.toSet().size }) { "같은 주문 라인이 두 번 있다: orderId=$orderId" }
             return FulfillmentOrder(
                 orderId = orderId,
                 warehouseId = warehouseId,
                 status = FulfillmentStatus.PENDING,
-                lines = merged,
+                lines = lines,
             )
         }
 
@@ -66,12 +66,17 @@ class FulfillmentOrder private constructor(
     }
 
     /**
-     * 클레임의 라인 취소. 출고 전(PENDING·PICKING·PACKING)이면 [productIds] 의 라인을 취소하고, 남은 라인이 없으면
+     * 클레임의 라인 취소. 출고 전(PENDING·PICKING·PACKING)이면 주문 라인 [orderItemIds] 의 라인을 취소하고, 남은 라인이 없으면
      * 이행 전체를 CANCELLED 로 둔다. 이미 출고(SHIPPED·DELIVERED)됐으면 아무것도 바꾸지 않고 거절한다.
      */
-    fun cancelLines(productIds: Set<Long>): LineCancelResult {
+    fun cancelLines(orderItemIds: Set<Long>): LineCancelResult = cancelWhere { it.orderItemId in orderItemIds }
+
+    /** 주문 전체 취소 — 모든 라인(주문 라인 id 가 없는 옛 행 포함)과 라인 없는 이행까지 */
+    fun cancelAllLines(): LineCancelResult = cancelWhere { true }
+
+    private fun cancelWhere(selected: (FulfillmentLine) -> Boolean): LineCancelResult {
         if (status == FulfillmentStatus.SHIPPED || status == FulfillmentStatus.DELIVERED) return LineCancelResult.Rejected(status)
-        val targets = lines.filter { it.productId in productIds && it.getStatus() == FulfillmentLineStatus.ACTIVE }
+        val targets = lines.filter { selected(it) && it.getStatus() == FulfillmentLineStatus.ACTIVE }
         targets.forEach { it.cancel() }
         val whole = status != FulfillmentStatus.CANCELLED && lines.none { it.getStatus() == FulfillmentLineStatus.ACTIVE }
         if (whole) status = FulfillmentStatus.CANCELLED
