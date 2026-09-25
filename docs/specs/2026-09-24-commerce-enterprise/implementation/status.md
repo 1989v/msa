@@ -206,3 +206,9 @@
 - `./gradlew verifyArchitecture compileTestKotlin :payment:domain:test :payment:feature:test :order:feature:test :gateway:test :code-dictionary:feature:test :commerce:app:test` → exit 0, 실패 0 · MockPgReconciliationBoundaryTest 1/0 · TossPgAdapterTest 6/0 · TossWebhookControllerTest 3/0 · PaymentPgSelectionSpec 4/0 · E2E 19/0
 - Q1 토스 운영 비활성 유지(문서) · Q13 토스 승인 확인 = 매입(authorized → captured 연속 발행, 사가 무변경, 매입된 결제의 VOID = 전액 취소), 웹훅은 재조회 신호만(비밀 헤더 제거) · Q14 매입 시각 한 값을 결제 행과 모의 PG 원장에 공유, KST 23:59:59.999 경계 테스트
 - 회귀 주입: AUTHORIZED 강제 → 7 실패 · 원장 시각 분리 → 대사 불일치
+
+## W1+W2 운영 반영 확인 (2026-09-26)
+- images run 36148387814(24c3f4a8) success → commerce `:24c3f4a` ready. gateway 는 W1 게이트웨이 변경이 담긴 빌드가 실패·취소되어 `386eae4` 에 머묾 → commerce·gateway dispatch 로 재빌드 중
+- 상품 재발행 `{"published":25}` → inventory `product_owner` 25
+- 소유 판정(클러스터 안 commerce 직접 호출): 판매자2→자기 상품 97 입고 201 · 남의 상품 81 입고 403 · 신원 없음 401 · 판매자2→창고 목록 403 · 어드민→창고 200 · 판매자 전용 목록은 자기 상품만
+- 판매자 상호 채우기 SQL(order/CLAUDE.md) 1행 반영 → seller_view 2 `ops-check-shop`
