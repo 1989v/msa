@@ -1,6 +1,7 @@
 package com.kgd.deal.infrastructure.config
 
 import com.kgd.common.persistence.ScopedFlywayMigrator
+import com.zaxxer.hikari.HikariDataSource
 import jakarta.persistence.EntityManagerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
@@ -40,10 +41,15 @@ class DealDataSourceConfig {
     @ConfigurationProperties(prefix = "spring.datasource.deal")
     fun dealDataSourceProperties(): DataSourceProperties = DataSourceProperties()
 
+    /**
+     * DataSourceProperties 는 url·계정만 안다 — 풀 키는 `spring.datasource.deal.hikari` 를 만들어진
+     * HikariDataSource 에 따로 바인딩해야 적용된다(반환 타입이 HikariDataSource 여야 바인딩 대상이 된다).
+     */
     @Bean
+    @ConfigurationProperties(prefix = "spring.datasource.deal.hikari")
     fun dealDataSource(
         @Qualifier("dealDataSourceProperties") properties: DataSourceProperties,
-    ): DataSource = properties.initializeDataSourceBuilder().build()
+    ): HikariDataSource = properties.initializeDataSourceBuilder().type(HikariDataSource::class.java).build()
 
     /** deal 전용 Flyway — 호스트 기본(`classpath:db/migration`) 재귀 스캔과 분리한다 */
     @Bean

@@ -115,6 +115,22 @@ class CommerceContextLoadSpec(
             }
 
         /**
+         * 메모리 예산(1200Mi)은 도메인당 풀 3 을 전제로 한다. 설정 파일이 아니라 떠 있는 HikariDataSource 의
+         * 값을 읽는다 — 키가 바인딩되지 않는 경로(`hikari.` 하위)에 있으면 설정은 3 인데 풀은 기본값 10 이다.
+         */
+        Then("commerce 의 모든 도메인 datasource 풀이 실제로 3 이다")
+            .config(enabledIf = { dockerAvailable }) {
+                val expected = listOf("", "warehouse", "fulfillment", "order", "product", "seller", "payment", "promotion", "settlement")
+                    .flatMap { d ->
+                        listOf("Master", "Replica").map { r -> if (d.isEmpty()) r.lowercase() + "DataSource" else "$d${r}DataSource" }
+                    } + "dealDataSource"
+                val pools = ctx.getBeansOfType(com.zaxxer.hikari.HikariDataSource::class.java)
+                // 빠진 빈이 있으면 아래 검사가 그 풀을 건너뛰므로 이름부터 확인한다.
+                pools.keys shouldBe expected.toSet()
+                pools.mapValues { it.value.maximumPoolSize } shouldBe expected.associateWith { 3 }
+            }
+
+        /**
          * seller 쓰기·읽기를 seller TM 으로 — 신청 → 승인 → 판매자 포털 조회.
          * 값으로 판정한다: 행이 실제로 남았는지, 계좌 컬럼이 암호문인지, 아웃박스 행이 생겼는지.
          */
@@ -179,8 +195,34 @@ class CommerceContextLoadSpec(
                 rows.map { it.eventType }.toSet() shouldBe setOf("seller.seller.applied", "seller.seller.approved")
                 rows.forEach {
                     it.partitionKey shouldBe applied.id.toString()
+                    // auth·order 는 occurredAt(초 단위 숫자 또는 ISO-8601)으로 늦게 온 옛 이벤트를 버린다 — 빠지거나 모양이 바뀌면 순서 판정이 꺼진다
+                    val occurredAt = tools.jackson.databind.ObjectMapper().readTree(it.payload).get("occurredAt")
+                    (occurredAt != null && (occurredAt.isNumber || Regex("^\\d{4}-\\d{2}-\\d{2}T").containsMatchIn(occurredAt.asString()))) shouldBe true
                     it.payload.contains("110123456789") shouldBe false
                     it.payload.contains("1234567890") shouldBe false
+                }
+
+                // 반려 파기 — 30일 지난 반려 행은 상호까지 DB 에서 지워지고 id·상태·사유·시각만 남는다
+                val rejected = apply.execute(command.copy(memberId = "ctx-9002", businessName = "홍길동상회"))
+                manage.reject(
+                    com.kgd.seller.application.seller.usecase.ManageSellerUseCase.Reject(
+                        sellerId = rejected.id, actorId = "1", reason = "서류 미비",
+                    ),
+                )
+                jdbc.update("UPDATE seller SET rejected_at = NOW(6) - INTERVAL 31 DAY WHERE id = ?", rejected.id)
+                ctx.getBean(com.kgd.seller.application.seller.usecase.PurgeRejectedApplicationsUseCase::class.java)
+                    .execute() shouldBe 1
+                jdbc.queryForMap(
+                    "SELECT business_name, representative_name, account_number_enc, status, reject_reason, " +
+                        "rejected_at, pii_purged_at, applied_at FROM seller WHERE id = ?",
+                    rejected.id,
+                ).let {
+                    it["business_name"] shouldBe com.kgd.seller.domain.seller.model.Seller.PURGED_BUSINESS_NAME
+                    it["representative_name"] shouldBe null
+                    it["account_number_enc"] shouldBe null
+                    it["status"] shouldBe "REJECTED"
+                    it["reject_reason"] shouldBe "서류 미비"
+                    (it["rejected_at"] != null && it["pii_purged_at"] != null && it["applied_at"] != null) shouldBe true
                 }
 
                 // 1인 1판매자 — 서비스를 거치지 않은 동시 INSERT 도 DB 유니크 제약이 막는다

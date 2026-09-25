@@ -3,9 +3,7 @@ package com.kgd.product.infrastructure.config
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.ops.DltKafka
 import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization.StringDeserializer
-import org.apache.kafka.common.serialization.StringSerializer
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -13,12 +11,9 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
 import org.springframework.kafka.core.ConsumerFactory
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory
-import org.springframework.kafka.core.DefaultKafkaProducerFactory
 import org.springframework.kafka.core.KafkaTemplate
-import org.springframework.kafka.core.ProducerFactory
 import org.springframework.kafka.listener.ContainerProperties
 import org.springframework.kafka.listener.DefaultErrorHandler
-import org.springframework.kafka.support.serializer.JacksonJsonSerializer
 import org.springframework.util.backoff.FixedBackOff
 
 @Configuration
@@ -26,23 +21,6 @@ class ProductKafkaConfig {
 
     @Value("\${spring.kafka.bootstrap-servers}")
     private lateinit var bootstrapServers: String
-
-    @Bean
-    fun productProducerFactory(): ProducerFactory<String, Any> {
-        val props = mapOf(
-            ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to bootstrapServers,
-            ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
-            ProducerConfig.ACKS_CONFIG to "all",
-            ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG to true,
-            ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION to 5,
-            ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG to 120000
-        )
-        return DefaultKafkaProducerFactory(props, StringSerializer(), JacksonJsonSerializer())
-    }
-
-    @Bean
-    fun productKafkaTemplate(producerFactory: ProducerFactory<String, Any>): KafkaTemplate<String, Any> =
-        KafkaTemplate(producerFactory)
 
     @Bean
     fun productConsumerFactory(): ConsumerFactory<String, String> {

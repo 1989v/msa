@@ -31,13 +31,14 @@ order-service (TX) ──> outbox_event (PENDING) ──> OutboxPollingPublisher
 | `outbox_pending_count{application=...}` | 가장 최근 polling 시점의 PENDING row 수 | <100, 빈번히 0 |
 | `outbox_publish_total` | 발행 성공 누적 (counter) | 정상 트래픽에 비례 |
 | `outbox_publish_error_total` | 발행 실패 누적 (counter) | 0 또는 매우 낮은 비율 |
-| `order_cancellation_to_release_latency_seconds` | order.cancelled → inventory release latency (histogram) | p99 ≤ 5s |
+| `commerce_saga_active{status}` · `commerce_saga_step_dwell_max_seconds` · `commerce_saga_compensations` | 사가 상태별 수 · 가장 긴 단계 체류 · 보상 누계 (gauge) | STUCK 0 · 체류 < 600s |
+| `commerce_payment_unknown` | 결과 미상 결제 수 (gauge) | 0 (30분 이상 유지 금지) |
 | `inventory_reservation_expired_total{warehouse_id=...}` | TTL fallback 발화 누적 | **0** |
 
 Grafana 대시보드 패널 위치:
 1. "Outbox PENDING rows by service" — outbox_pending_count
 2. "Outbox publish rate (success vs error)"
-3. "Order cancellation → inventory release latency" — p50/p95/p99 by reason
+3. "Saga — active by status · compensations · payment UNKNOWN"
 4. "TTL fallback expiries (last 1h)" — invariant 검증
 5. "Kafka consumer lag — inventory-service"
 
@@ -96,30 +97,30 @@ Grafana 대시보드 패널 위치:
    - `SerializationException` → ObjectMapper / Avro schema 불일치 (본 plan 은 Jackson 사용 — schema registry 미사용).
 3. broker 자체가 정상이면 (`kubectl get pods -n kafka`) `kafkaTemplate` ProducerFactory bean 의 metric 확인.
 
-### 3.4 CancellationLatencyP99High (warn, p99 > 5s for 10m)
+### 3.4 사가·결제 알람 (ADR-0099)
 
-**의미**: order.cancelled → inventory release latency SLA 위반.
+주문 취소 → 재고 해제 지연 히스토그램(`order_cancellation_to_release_latency_seconds`)과 `CancellationLatencyP99High` 는
+코레오그래피(`order.order.cancelled`)가 오케스트레이션 사가로 바뀌면서 없어졌다. 대신 사가 게이지를 본다.
+게이지는 order·payment 가 DB 를 세어 주기적으로 갱신한다(`OrderSagaMetrics`·`PaymentOpsMetrics`).
 
-**진단 순서**:
-1. Grafana "Kafka consumer lag — inventory-service" 패널 확인.
-   - lag 가 누적 → consumer 처리 느림 (3.4.a).
-   - lag 0 인데 latency 큼 → 시계 skew 또는 Outbox publisher 자체 지연 (3.1).
-2. inventory-service 로그.
-   ```
-   kubectl logs -n commerce -l app=inventory-service --tail=300 | grep -i "Released stock"
-   ```
-3. Order 측 publish 시각 vs inventory 처리 시각 차이 패턴 확인:
-   - 항상 1-2초 → 정상 (polling 1s + 처리).
-   - 가끔 30s+ spike → consumer rebalance / DB lock.
+#### SagaStuck
+`commerce_saga_active{status="STUCK"} > 0` (5분). 보상 재시도를 다 쓴 사가다 — 자동으로 풀리지 않는다.
+`order_db.ops_issue` 에 같은 건이 열려 있으니 사유를 보고 원인(재고·결제·혜택 답 누락, DLT)을 해소한 뒤 어드민에서 재개한다.
 
-#### 3.4.a Consumer 처리 지연 진단
-- `releaseStockByOrderUseCase` 의 DB lock contention: MySQL `SHOW PROCESSLIST` / `information_schema.innodb_trx`.
-- inventory-service replica 증설.
-- 멱등 dedup row insert 가 병목? → ADR-0029 의 `processed_event` 테이블 인덱스 확인.
+#### SagaStepDwellHigh
+`commerce_saga_step_dwell_max_seconds > 600` (5분). 진행 중 사가 하나가 한 단계에 10분 넘게 머문다 — 답 이벤트가 안 온다.
+3.1(아웃박스 정체)과 `.DLT` 운영 이슈부터 본다. 결제 대기 단계면 10분 기한에서 보상으로 넘어간다.
+
+#### SagaCompensationSpike
+`delta(commerce_saga_compensations[1h]) > 20` (10분). 결제 거절·재고 부족은 정상 보상이라 0 이 목표가 아니다.
+`SELECT failure_reason, COUNT(*) FROM order_saga WHERE updated_at >= NOW() - INTERVAL 1 HOUR GROUP BY 1` 로 원인을 가른다.
+
+#### PaymentUnknownPersisting
+`commerce_payment_unknown > 0` (30분). 결과 미상 결제를 재조회가 정리하지 못하고 있다. payment `ops_issue` 와 PG 원장을 대조한다.
 
 ### 3.5 ReservationExpiryFallbackTriggered (warn, increase > 0 for 5m)
 
-**의미**: ADR-0032 핵심 invariant 위반. Outbox + cancellation consumer 흐름이 30분 안에 release 하지 못해 TTL fallback 이 동작.
+**의미**: 사가가 30분 보류 기한 안에 재고 확정·해제 명령을 보내지 못해 TTL fallback 이 동작.
 
 **진단 순서**:
 1. **위 1-4 알람 동반 발화 확인** — 모두 정상이면 별도 issue (예: order-service 가 cancel 호출 자체를 안 함, payment timeout 인데 cancelOrder 미호출 등).
@@ -131,11 +132,11 @@ Grafana 대시보드 패널 위치:
       AND updated_at >= NOW() - INTERVAL 1 HOUR
     ORDER BY updated_at DESC LIMIT 50;
    ```
-3. 각 orderId 에 대해:
-   - `outbox_event` 에서 `order.order.cancelled` row 가 발행됐는지: `SELECT * FROM outbox_event WHERE event_type='order.order.cancelled' AND aggregate_id=?`.
-     - row 없음 → order-service 가 cancelOrder 자체를 호출 안 함 (애플리케이션 버그).
-     - row PENDING (>30m old) → publisher 정지 — 3.1 으로 핸드오버.
-     - row PUBLISHED → inventory consumer 가 처리 못함 (3.4 로 핸드오버).
+3. 각 orderId 에 대해 사가를 본다(`order_db`):
+   `SELECT status, step, failure_reason, step_entered_at FROM order_saga WHERE order_id = ?`.
+     - STUCK·COMPENSATING 에서 멈춤 → 3.4(SagaStuck·SagaStepDwellHigh)로 핸드오버.
+     - 확정·해제 명령 아웃박스 행이 PENDING (>30m old) → publisher 정지 — 3.1 으로 핸드오버.
+     - 명령은 PUBLISHED 인데 재고 답이 없음 → inventory 컨슈머·`.DLT` 운영 이슈 확인.
 4. 본 알람은 사용자 경험 영향 큼 (재고가 30분 묶임). 발화 시 Inventory Squad 에 즉시 공유.
 
 ## 4. 일반 진단 명령어
@@ -171,7 +172,7 @@ kubectl exec -n kafka kafka-0 -- \
 # topic 상태
 kubectl exec -n kafka kafka-0 -- \
   kafka-topics.sh --bootstrap-server localhost:9092 \
-    --describe --topic order.order.cancelled
+    --describe --topic inventory.command.release
 ```
 
 ### 4.3 멱등 처리 상태
@@ -227,3 +228,4 @@ PR-2 / PR-3 (Order Outbox + cancellation consumer) 의 rollback 은 `docs/plans/
 | 일자 | 변경 | 근거 |
 |---|---|---|
 | 2026-05-01 | 최초 작성 (PR-4) | ADR-0032 Phase 3 |
+| 2026-09-25 | 취소 지연 알람을 사가·결제 알람으로 교체 | ADR-0099 — 코레오그래피 은퇴로 지연 히스토그램 삭제 |

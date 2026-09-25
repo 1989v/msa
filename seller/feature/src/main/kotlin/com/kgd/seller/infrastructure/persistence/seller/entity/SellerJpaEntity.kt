@@ -28,8 +28,7 @@ class SellerJpaEntity(
     @Column(nullable = false, length = 64)
     val memberId: String,
 
-    @Column(nullable = false, length = 100)
-    val businessName: String,
+    businessName: String,
 
     @Column(nullable = false)
     val shippingFee: Long,
@@ -41,6 +40,10 @@ class SellerJpaEntity(
     @Column(nullable = false)
     val appliedAt: Instant,
 ) {
+    @Column(nullable = false, length = 100)
+    var businessName: String = businessName
+        private set
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     var status: SellerStatus = SellerStatus.PENDING
@@ -97,6 +100,7 @@ class SellerJpaEntity(
     /** 도메인 상태 → 가변 컬럼 전체 동기화 (불변 컬럼은 생성 때 한 번만 쓴다) */
     fun syncFrom(seller: Seller) {
         status = seller.status
+        businessName = seller.businessName
         businessRegistrationNo = seller.businessRegistrationNo
         representativeName = seller.representativeName
         bankName = seller.bankName

@@ -348,7 +348,7 @@ concepts:
     synonyms: ["acks=0", "acks=1", "acks=all"]
     questions: ["acks=1 인 상태에서 리더가 죽으면 무엇을 잃나"]
     code:
-      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/config/OrderKafkaConfig.kt, symbol: "ProducerConfig.ACKS_CONFIG to \"all\"", note: "주문 이벤트는 ISR 전원 기록을 기다린다" }
+      - { path: common/src/main/kotlin/com/kgd/common/messaging/outbox/OutboxKafka.kt, symbol: "ProducerConfig.ACKS_CONFIG to \"all\"", note: "아웃박스 릴레이(주문·재고·결제 이벤트)는 ISR 전원 기록을 기다린다" }
       - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/config/KafkaProducerConfig.kt, symbol: "ProducerConfig.ACKS_CONFIG to \"1\"", note: "노출·클릭 로그는 리더 기록만 기다려 지연을 줄인다" }
     affects: [msg-end-to-end-latency]
     mitigates: [msg-message-loss]
@@ -799,7 +799,7 @@ concepts:
     description: "값을 JSON 문자열로 보낸다. 스키마 없이 읽기 쉽고 필드 추가에 관대하지만, 크기가 크고 형식 검사를 소비자 코드가 한다"
     synonyms: ["JsonSerializer", "JsonDeserializer"]
     code:
-      - { path: order/feature/src/main/kotlin/com/kgd/order/infrastructure/config/OrderKafkaConfig.kt, symbol: "DefaultKafkaProducerFactory(props, StringSerializer(), JacksonJsonSerializer())", note: "키는 문자열, 값은 Jackson JSON 으로 보낸다" }
+      - { path: game/feature/src/main/kotlin/com/kgd/game/infrastructure/config/GameKafkaConfig.kt, symbol: "DefaultKafkaProducerFactory(props, StringSerializer(), JacksonJsonSerializer())", note: "키는 문자열, 값은 Jackson JSON 으로 보낸다" }
   - id: msg-avro-serde
     kind: MECHANISM
     name: "Avro 직렬화"

@@ -1,4 +1,5 @@
-# ADR-0032 Phase 3 / PR-4 — Order Outbox + Cancellation 보상 흐름 알람.
+# ADR-0032 Phase 3 / PR-4 — Order Outbox 알람 + ADR-0099 오케스트레이션 사가·결제 알람.
+# (주문 취소 → 재고 해제 지연 히스토그램은 코레오그래피 은퇴와 함께 없어져 사가 게이지로 대체했다.)
 #
 # kube-prometheus-stack 의 Prometheus operator 가 PrometheusRule CRD 를 watch.
 # `release: kube-prometheus-stack` 라벨이 chart 의 default ruleSelector 와 매칭되어
@@ -19,31 +20,31 @@ spec:
       rules:
         - alert: OutboxLagHigh
           # Outbox PENDING 가 지속 누적 = polling publisher 또는 broker 장애 의심.
-          expr: max by (application) (outbox_pending_count) > 100
+          expr: max by (application, outbox) (outbox_pending_count) > 100
           for: 5m
           labels:
             severity: warning
             adr: "0032"
             channel: slack
           annotations:
-            summary: "Outbox PENDING rows backlog ({{ $labels.application }})"
+            summary: "Outbox PENDING rows backlog ({{ $labels.application }}/{{ $labels.outbox }})"
             description: |
               {{ $labels.application }} 의 outbox_pending_count 가 5분 동안 100 초과를 유지.
               → polling publisher 또는 Kafka broker 장애 의심.
             runbook_url: "https://github.com/.../docs/runbooks/order-outbox-cancellation.md#outboxlaghigh"
 
         - alert: OutboxLagCritical
-          expr: max by (application) (outbox_pending_count) > 1000
+          expr: max by (application, outbox) (outbox_pending_count) > 1000
           for: 1m
           labels:
             severity: critical
             adr: "0032"
             channel: pagerduty
           annotations:
-            summary: "Outbox backlog catastrophic ({{ $labels.application }})"
+            summary: "Outbox backlog catastrophic ({{ $labels.application }}/{{ $labels.outbox }})"
             description: |
-              {{ $labels.application }} 의 outbox_pending_count 가 1분 동안 1000 초과.
-              보상 흐름이 사실상 정지 — flash sale / refund 실패 가능성 큼.
+              {{ $labels.application }} 의 {{ $labels.outbox }} outbox_pending_count 가 1분 동안 1000 초과.
+              사가 명령·답이 멈춰 주문·보상이 사실상 정지 — 결제 대기·재고 보류가 기한까지 묶인다.
             runbook_url: "https://github.com/.../docs/runbooks/order-outbox-cancellation.md#outboxlagcritical"
 
         - alert: OutboxPublishFailureRateHigh
@@ -69,28 +70,65 @@ spec:
               Kafka broker 가용성 / topic ACL / payload 직렬화 오류 의심.
             runbook_url: "https://github.com/.../docs/runbooks/order-outbox-cancellation.md#outboxpublishfailureratehigh"
 
-        - alert: CancellationLatencyP99High
-          # order.order.cancelled → inventory release p99 > 5s = SLA 위반.
-          expr: |
-            histogram_quantile(
-              0.99,
-              sum by (le, reason) (rate(order_cancellation_to_release_latency_seconds_bucket[5m]))
-            ) > 5
+        - alert: SagaStuck
+          # 보상 재시도를 다 쓴 사가. 자동으로 풀리지 않으므로 어드민 조치(재개)가 필요하다.
+          expr: max(commerce_saga_active{status="STUCK"}) > 0
+          for: 5m
+          labels:
+            severity: critical
+            adr: "0099"
+            channel: pagerduty
+          annotations:
+            summary: "STUCK 사가 {{ $value }}건"
+            description: |
+              보상 재시도를 소진한 사가가 있다. order ops_issue 에 같은 건이 열려 있다 — 원인(재고·결제·혜택 답 누락)을 보고 재개한다.
+            runbook_url: "https://github.com/.../docs/runbooks/order-outbox-cancellation.md#sagastuck"
+
+        - alert: SagaStepDwellHigh
+          # 진행 중 사가가 한 단계에 10분 넘게 머문다 = 답 이벤트가 오지 않는다(컨슈머 정지·DLT·아웃박스 정체).
+          expr: max(commerce_saga_step_dwell_max_seconds) > 600
+          for: 5m
+          labels:
+            severity: warning
+            adr: "0099"
+            channel: slack
+          annotations:
+            summary: "사가 단계 체류 {{ $value }}s"
+            description: |
+              RUNNING·COMPENSATING 사가 중 가장 오래 머문 단계가 10분을 넘었다. 결제 대기 기한(10분)을 넘기면 보상으로 간다.
+            runbook_url: "https://github.com/.../docs/runbooks/order-outbox-cancellation.md#sagastepdwellhigh"
+
+        - alert: SagaCompensationSpike
+          # 보상 누계 게이지의 1시간 증가. 결제 거절·재고 부족은 정상 보상이라 0 이 목표가 아니다 — 급증만 본다.
+          expr: max(delta(commerce_saga_compensations[1h])) > 20
           for: 10m
           labels:
             severity: warning
-            adr: "0032"
+            adr: "0099"
             channel: slack
           annotations:
-            summary: "Order cancellation p99 latency > 5s (reason={{ $labels.reason }})"
+            summary: "사가 보상 1시간 {{ $value }}건"
             description: |
-              order.order.cancelled → inventory release p99 latency 가 10분 동안 5s 초과.
-              SLA (Outbox polling 1s + Kafka + consumer) 위반. consumer lag / DB lock 의심.
-            runbook_url: "https://github.com/.../docs/runbooks/order-outbox-cancellation.md#cancellationlatencyp99high"
+              최근 1시간 보상에 들어간 사가가 20건을 넘었다. 실패 사유(order_db.order_saga.failure_reason) 분포로 PG·재고·혜택 중 어디인지 가른다.
+            runbook_url: "https://github.com/.../docs/runbooks/order-outbox-cancellation.md#sagacompensationspike"
+
+        - alert: PaymentUnknownPersisting
+          # 결과 미상 결제는 재조회가 결론을 내면 줄어든다. 30분 넘게 남아 있으면 재조회가 결론을 못 내고 있다.
+          expr: max(commerce_payment_unknown) > 0
+          for: 30m
+          labels:
+            severity: warning
+            adr: "0099"
+            channel: slack
+          annotations:
+            summary: "결과 미상 결제 {{ $value }}건이 30분 넘게 남아 있다"
+            description: |
+              PG 결과 미상(UNKNOWN) 결제가 재조회로 정리되지 않는다. payment ops_issue 와 PG 원장을 대조한다.
+            runbook_url: "https://github.com/.../docs/runbooks/order-outbox-cancellation.md#paymentunknownpersisting"
 
         - alert: ReservationExpiryFallbackTriggered
-          # ADR-0032 invariant: 정상 흐름에서 inventory_reservation_expired_total 은 0.
-          # 1시간 윈도 increase > 0 = cancellation 흐름 또는 Outbox 장애 의심.
+          # 정상 흐름에서 inventory_reservation_expired_total 은 0 — 사가가 보류를 확정하거나 해제한다.
+          # 1시간 윈도 increase > 0 = 사가가 30분 보류 기한 안에 결론을 못 냈다(답 누락·아웃박스 정체).
           expr: sum(increase(inventory_reservation_expired_total[1h])) > 0
           for: 5m
           labels:
@@ -101,5 +139,5 @@ spec:
             summary: "TTL fallback expiries detected (ADR-0032 invariant violated)"
             description: |
               최근 1시간 내 reservation TTL fallback 이 발화했다. 이는 정상 흐름에서 0 이어야 하며,
-              발화는 order.order.cancelled 흐름 또는 Order Outbox 장애를 의미한다.
+              발화는 사가의 확정·해제 명령이 기한 안에 닿지 않았다는 뜻이다(STUCK·체류 알람과 함께 본다).
             runbook_url: "https://github.com/.../docs/runbooks/order-outbox-cancellation.md#reservationexpiryfallbacktriggered"

@@ -212,3 +212,10 @@
 - 상품 재발행 `{"published":25}` → inventory `product_owner` 25
 - 소유 판정(클러스터 안 commerce 직접 호출): 판매자2→자기 상품 97 입고 201 · 남의 상품 81 입고 403 · 신원 없음 401 · 판매자2→창고 목록 403 · 어드민→창고 200 · 판매자 전용 목록은 자기 상품만
 - 판매자 상호 채우기 SQL(order/CLAUDE.md) 1행 반영 → seller_view 2 `ops-check-shop`
+
+## 미결 후속 W4 — 스키마·인프라 (2026-09-26)
+- `./gradlew verifyArchitecture compileTestKotlin test`(레포 전체) → exit 0, 전 모듈 실패 0 · E2E 19/0 · CommerceContextLoadSpec 13/0(풀 19개 전부 3) · TracingPropagation 4/0(비샘플 포함) · 이중 Flyway ERROR 로그 0
+- 배포 전 운영 ENUM 기준선: `scripts/ops/schema-enum-check.sh` → 11개
+- Q19 7개 모듈 VARCHAR 전환 · Q6 풀 키를 master/replica 바로 아래로(전부 3, deal 포함) · Q5 quant `/api/v1/quant/orders` + 무인증 `/api/v1/quant/**` 를 assets 로 좁힘 · Q8 반려 상호 `[파기]` · Q9 auth 회원별 마지막 반영 시각(숫자·ISO occurredAt) · Q23 JSON 템플릿 4 삭제·이중 Flyway 끔·옛 -dlt runbook · 모니터링 알림 사가 지표로 · Q24 1단계 search:batch price_won
+- 서브모듈: auth `4a784c4`(fe0f5f6 에서 ff) · gifticon `848ed98` — 원격 main 푸시 완료
+- 회귀 주입 4종 빨간불

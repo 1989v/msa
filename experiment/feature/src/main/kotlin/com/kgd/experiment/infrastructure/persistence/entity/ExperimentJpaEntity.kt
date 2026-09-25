@@ -30,7 +30,7 @@ class ExperimentJpaEntity(
         private set
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     var status: ExperimentStatus = status
         private set
 

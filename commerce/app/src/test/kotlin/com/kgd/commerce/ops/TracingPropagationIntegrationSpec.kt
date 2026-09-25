@@ -103,6 +103,30 @@ class TracingPropagationIntegrationSpec(
             }
         }
 
+        // 운영 샘플링은 0.1 이다 — 열 중 아홉은 sampled=00 으로 들어온다. 기록하지 않는 요청이어도
+        // traceId 는 이어져야 로그를 한 줄로 꿸 수 있다.
+        Given("샘플링되지 않은(flags 00) traceparent 를 단 요청") {
+            val traceId = "0af7651916cd43dd8448eb211c80319c"
+
+            val res = infra.post(
+                port, "/api/v1/admin/products/republish",
+                ADMIN + ("traceparent" to "00-$traceId-b7ad6b7169203331-00"),
+            )
+
+            Then("리스너의 MDC traceId 가 그 요청의 traceId 와 같다") {
+                res.statusCode() shouldBe 200
+                // 재발행은 상품마다 레코드를 낸다 — 이 요청의 레코드가 나올 때까지 앞선 것은 건너뛴다
+                val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(60)
+                var mine: Seen? = null
+                while (mine == null && System.nanoTime() < deadline) {
+                    val next = probe.seen.poll(1, TimeUnit.SECONDS) ?: continue
+                    if (next.traceparent?.contains(traceId) == true) mine = next
+                }
+                requireNotNull(mine) { "이 요청의 traceId 를 단 레코드가 오지 않았다 — 비샘플 요청에서 전파가 끊겼다" }
+                mine.mdcTraceId shouldBe traceId
+            }
+        }
+
         Given("운영 지표 — 실제 스키마에서 센 값") {
             Then("사가·결제·정산 게이지가 등록되고 SQL 이 실제 스키마에서 돈다") {
                 ctx.getBean(OrderSagaMetrics::class.java).refresh().getOrThrow()

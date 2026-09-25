@@ -119,6 +119,14 @@ DDL 의 단일 소유자는 Flyway 마이그레이션(`db/migration`)이다. Hib
 > 태스크가 막는다(`check` 에 연결돼 `./gradlew build` 에서 실패). 위 7종은 그 안에
 > **명시적 부채 목록**으로 적혀 있고, 고친 서비스를 목록에서 지우는 것이 완료 기준이다.
 
+> [!WARNING] Hibernate 가 만든 운영 스키마에는 enum 이 MySQL `ENUM` 으로 남아 있을 수 있다
+> Flyway 기준선은 `VARCHAR` 라 새 스키마 테스트는 통과하는데, 상태 값을 하나 늘리면 운영에서만
+> INSERT 가 `Data truncated for column` 으로 잘린다(2026-09-24 주문 `PAYMENT_PENDING` 500).
+> 소유 모듈마다 `ALTER TABLE … MODIFY COLUMN <col> VARCHAR(n) NOT NULL` 마이그레이션으로 맞췄고
+> (ENUM·VARCHAR 어느 쪽에서 돌아도 결과가 같다), 남은 것이 있는지는
+> `scripts/ops/schema-enum-check.sh` 로 본다(`information_schema` 읽기 전용, 0행이 정상).
+> **enum 에 값을 추가하기 전에 이 스크립트를 먼저 돌린다.**
+
 `open-in-view` 는 끈다. 영속성 컨텍스트를 뷰 렌더링까지 끌고 가지 않고, 필요한 데이터는 트랜잭션 경계 안에서 조회를 끝낸다.
 
 ## 4. 영속성 컨텍스트

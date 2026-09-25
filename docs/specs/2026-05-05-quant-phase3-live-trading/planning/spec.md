@@ -310,8 +310,8 @@ class ReconcileJob(...) {
 | PUT | `/api/v1/kill-switch/tenant` | JWT + 2FA(해제 시) | tenant kill-switch |
 | PUT | `/api/v1/kill-switch/strategy/{id}` | JWT + 2FA(해제 시) | strategy kill-switch |
 | PUT | `/api/v1/admin/kill-switch/global` | Admin JWT + 2FA | global kill-switch |
-| GET | `/api/v1/orders` | JWT | 주문 이력 (페이징) |
-| POST | `/api/v1/orders/{id}/cancel` | JWT | 사용자 수동 취소 |
+| GET | `/api/v1/quant/orders` | JWT | 주문 이력 (페이징) — 커머스 `/api/v1/orders` 와 겹쳐 2026-09-25 quant 접두로 이동 |
+| POST | `/api/v1/quant/orders/{id}/cancel` | JWT | 사용자 수동 취소 |
 | GET | `/api/v1/audit-log` | JWT | 본인 audit chain 조회 |
 
 ## 8. 데이터베이스

@@ -4,22 +4,23 @@ spring:
   lifecycle:
     timeout-per-shutdown-phase: 30s
   datasource:
+    # 풀 키(maximum-pool-size·minimum-idle)는 hikari. 하위가 아니라 master/replica 바로 아래에 둔다 —
+    # 각 도메인 설정이 DataSourceBuilder 로 만든 HikariDataSource 에 이 경로를 직접 바인딩하므로
+    # hikari. 하위 키는 조용히 무시되고 풀이 기본값 10 으로 뜬다(CommerceContextLoadSpec 이 런타임 값 3 을 확인).
     master:
       jdbc-url: jdbc:mysql://localhost:3328/inventory_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       username: ${MYSQL_USER:inventory_user}
       password: ${MYSQL_PASSWORD:inventory_password}
       driver-class-name: com.mysql.cj.jdbc.Driver
-      hikari:
-        maximum-pool-size: 5
-        minimum-idle: 2
+      maximum-pool-size: 3
+      minimum-idle: 1
     replica:
       jdbc-url: jdbc:mysql://localhost:3329/inventory_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       username: ${MYSQL_USER:inventory_user}
       password: ${MYSQL_PASSWORD:inventory_password}
       driver-class-name: com.mysql.cj.jdbc.Driver
-      hikari:
-        maximum-pool-size: 5
-        minimum-idle: 2
+      maximum-pool-size: 3
+      minimum-idle: 1
     # ADR-0058: commerce 폴드 — warehouse 도메인 전용 datasource(스키마 격리). env 는 inventory 와 분리.
     warehouse:
       master:
@@ -27,17 +28,15 @@ spring:
         username: ${WAREHOUSE_MYSQL_USER:warehouse_user}
         password: ${WAREHOUSE_MYSQL_PASSWORD:warehouse_password}
         driver-class-name: com.mysql.cj.jdbc.Driver
-        hikari:
-          maximum-pool-size: 3
-          minimum-idle: 1
+        maximum-pool-size: 3
+        minimum-idle: 1
       replica:
         jdbc-url: jdbc:mysql://${WAREHOUSE_DB_REPLICA:localhost:3333}/warehouse_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
         username: ${WAREHOUSE_MYSQL_USER:warehouse_user}
         password: ${WAREHOUSE_MYSQL_PASSWORD:warehouse_password}
         driver-class-name: com.mysql.cj.jdbc.Driver
-        hikari:
-          maximum-pool-size: 3
-          minimum-idle: 1
+        maximum-pool-size: 3
+        minimum-idle: 1
     # ADR-0058: commerce 폴드 — fulfillment 도메인 전용 datasource(스키마 격리, 전용 outbox/idempotency).
     fulfillment:
       master:
@@ -45,17 +44,15 @@ spring:
         username: ${FULFILLMENT_MYSQL_USER:fulfillment_user}
         password: ${FULFILLMENT_MYSQL_PASSWORD:fulfillment_password}
         driver-class-name: com.mysql.cj.jdbc.Driver
-        hikari:
-          maximum-pool-size: 3
-          minimum-idle: 1
+        maximum-pool-size: 3
+        minimum-idle: 1
       replica:
         jdbc-url: jdbc:mysql://${FULFILLMENT_DB_REPLICA:localhost:3331}/fulfillment_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
         username: ${FULFILLMENT_MYSQL_USER:fulfillment_user}
         password: ${FULFILLMENT_MYSQL_PASSWORD:fulfillment_password}
         driver-class-name: com.mysql.cj.jdbc.Driver
-        hikari:
-          maximum-pool-size: 3
-          minimum-idle: 1
+        maximum-pool-size: 3
+        minimum-idle: 1
     # ADR-0058: commerce 폴드 — order 도메인 전용 datasource(스키마 격리, 전용 outbox/idempotency).
     order:
       master:
@@ -63,17 +60,15 @@ spring:
         username: ${ORDER_MYSQL_USER:order_user}
         password: ${ORDER_MYSQL_PASSWORD:order_password}
         driver-class-name: com.mysql.cj.jdbc.Driver
-        hikari:
-          maximum-pool-size: 3
-          minimum-idle: 1
+        maximum-pool-size: 3
+        minimum-idle: 1
       replica:
         jdbc-url: jdbc:mysql://${ORDER_DB_REPLICA:localhost:3327}/order_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
         username: ${ORDER_MYSQL_USER:order_user}
         password: ${ORDER_MYSQL_PASSWORD:order_password}
         driver-class-name: com.mysql.cj.jdbc.Driver
-        hikari:
-          maximum-pool-size: 3
-          minimum-idle: 1
+        maximum-pool-size: 3
+        minimum-idle: 1
     # ADR-0093 ② — deal 도메인 전용 datasource(deal_db).
     # 원래 code-dictionary 스키마를 공유했고, 파드가 갈리면서 자기 스키마로 뗐다.
     # 이 키가 있으면 DealDataSourceConfig 가 켜진다 — code-dictionary 에는 이 키가 없어
@@ -83,6 +78,7 @@ spring:
       username: ${DEAL_MYSQL_USER:deal_user}
       password: ${DEAL_MYSQL_PASSWORD:deal_password}
       driver-class-name: com.mysql.cj.jdbc.Driver
+      # DealDataSourceConfig 가 이 하위를 HikariDataSource 에 바인딩한다(DataSourceProperties 는 풀 키를 모른다).
       hikari:
         maximum-pool-size: 3
         minimum-idle: 1
@@ -161,17 +157,15 @@ spring:
         username: ${PRODUCT_MYSQL_USER:product_user}
         password: ${PRODUCT_MYSQL_PASSWORD:product_password}
         driver-class-name: com.mysql.cj.jdbc.Driver
-        hikari:
-          maximum-pool-size: 5
-          minimum-idle: 2
+        maximum-pool-size: 3
+        minimum-idle: 1
       replica:
         jdbc-url: jdbc:mysql://${PRODUCT_DB_REPLICA:localhost:3317}/product_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
         username: ${PRODUCT_MYSQL_USER:product_user}
         password: ${PRODUCT_MYSQL_PASSWORD:product_password}
         driver-class-name: com.mysql.cj.jdbc.Driver
-        hikari:
-          maximum-pool-size: 5
-          minimum-idle: 2
+        maximum-pool-size: 3
+        minimum-idle: 1
     # ADR-0058 round 2 — member 도메인 전용 datasource(스키마 격리).
     member:
       master:
@@ -216,13 +210,11 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: false
-  # ADR-0029 PR-3a: Flyway baseline. Hibernate ddl-auto=validate 와 결합해 스키마 변경은 Flyway 단독 책임.
-  # baseline-on-migrate=true + baseline-version=1 로 기존 운영 DB(이미 ddl-auto 가 만든 테이블 보유) 보호.
+  # Boot 의 Flyway 자동설정은 끈다 — 이 호스트의 스키마는 도메인마다 ScopedFlywayMigrator(<domain>db/migration)가
+  # 자기 datasource 에 돌린다. 켜 두면 product:feature 가 끌어온 spring-boot-flyway 가 primary(inventory_db)에
+  # 빈 classpath:db/migration 으로 한 번 더 돌아 "has version N, but no migration could be resolved" ERROR 를 남긴다.
   flyway:
-    enabled: true
-    locations: classpath:db/migration
-    baseline-on-migrate: true
-    baseline-version: 1
+    enabled: false
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
   # 도메인마다 아웃박스 릴레이·정리·예약 만료 등 @Scheduled 가 여럿이다. 기본 1스레드면 긴 배치 하나가

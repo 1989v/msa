@@ -113,6 +113,23 @@ class GatewayRouteAuthSpec(
         }
     }
 
+    Given("quant 실매매 주문 /api/v1/quant/orders/** (ROLE_USER)") {
+        Then("토큰이 없으면 401 — 위조한 X-User-Id 로는 통과하지 못한다") {
+            status(HttpMethod.GET, "/api/v1/quant/orders") shouldBe 401
+            client.post().uri("/api/v1/quant/orders/1/cancel")
+                .header("X-User-Id", "7")
+                .exchange()
+                .expectStatus().isUnauthorized
+        }
+        Then("커머스가 아니라 sideapp 으로 간다") {
+            val route = routeLocator.routes.collectList().block().orEmpty().single { it.id == "quant-live-order" }
+            route.uri.host shouldBe "sideapp"
+        }
+        Then("quant 자산 카탈로그는 그대로 무인증으로 열려 있다") {
+            status(HttpMethod.GET, "/api/v1/quant/assets") shouldNotBeIn listOf(401, 403, 404)
+        }
+    }
+
     Given("주문서 /api/v1/order-sheets/** (ROLE_USER)") {
         Then("토큰이 없으면 401") {
             status(HttpMethod.POST, "/api/v1/order-sheets") shouldBe 401

@@ -66,6 +66,7 @@ Spring Kafka 4 의 `DeadLetterPublishingRecoverer` 기본값은 `-dlt` 라 규�
 - 재시도: 1초 간격(`FixedBackOff(1000, 3)`), 최대 3회 → DLT. 원 헤더와 예외·원 위치 헤더(`kafka_dlt-*`)가 붙는다
 - commerce: 도메인마다 `{domain}-dlt-ops` 그룹이 `.*\.DLT` 를 패턴 구독하고, **원 컨슈머 그룹 헤더가 자기 도메인 것인 레코드만**
   그 도메인 `ops_issue` 에 `DLT` 이슈로 적재한다. 어드민 재시도 = 원 토픽으로 재발행. DLT 리스너에는 DLT 발행기를 붙이지 않는다(`x.DLT.DLT` 순환 방지)
+- 이름을 바꾸기 전에 `<원 토픽>-dlt` 로 들어간 레코드는 새 리스너가 보지 않는다 — 점검·재발행·정리는 `docs/runbooks/legacy-dlt-topics.md`
 - search-consumer·analytics 는 지금 DLT 발행기를 두지 않는다(예전 표에 있던 `search.*.DLT` 는 배선된 적이 없다)
 - 업무상 실패(재고 부족·만료·거절)는 DLT 가 아니라 `…failed{reason}` 답 이벤트다. DLT 는 계약 위반(필드 누락·금액 불일치)과 인프라 오류만
 

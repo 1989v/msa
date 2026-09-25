@@ -133,10 +133,13 @@ class SellerTest : BehaviorSpec({
             val s = seller(SellerStatus.REJECTED)
             s.purgePersonalData(due.minusSeconds(1)) shouldBe false
             s.representativeName shouldBe "대표"
+            (s.businessName == Seller.PURGED_BUSINESS_NAME) shouldBe false
         }
-        then("30일이 지나면 사업자번호·대표자·계좌를 지우고 이력(상태·회원·반려 사유)은 남긴다") {
+        then("30일이 지나면 상호·사업자번호·대표자·계좌를 지우고 이력(상태·회원·반려 사유)은 남긴다") {
             val s = seller(SellerStatus.REJECTED)
             s.purgePersonalData(due) shouldBe true
+            // 개인사업자 상호는 개인 이름을 담는 일이 많아 개인정보로 본다
+            s.businessName shouldBe Seller.PURGED_BUSINESS_NAME
             s.businessRegistrationNo.shouldBeNull()
             s.representativeName.shouldBeNull()
             s.bankName.shouldBeNull()

@@ -247,8 +247,12 @@ class GlobalKillSwitchController(
     }
 }
 
+/**
+ * 실매매 주문 — `/api/v1/quant/orders`. `/api/v1/orders` 는 커머스 주문이 쓰고 게이트웨이가 commerce 로 보낸다.
+ * 게이트웨이는 이 경로를 인증 라우트로 받아 X-User-Id 를 토큰에서 채운다(클라이언트 헤더 위조 불가).
+ */
 @RestController
-@RequestMapping("/api/v1/orders")
+@RequestMapping("/api/v1/quant/orders")
 class LiveOrderController(
     private val cancelUseCase: CancelLiveOrderUseCase,
 ) {

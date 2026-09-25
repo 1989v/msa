@@ -41,8 +41,8 @@
   sellerId · memberId · status · commissionRateBp · shippingFee · settlementCycle · businessName(**ACTIVE·SUSPENDED 일 때만**, 심사 중은 null —
   반려 뒤 파기할 상호를 읽기 모델에 퍼뜨리지 않는다). **계좌·사업자번호·대표자는 싣지 않는다.**
   반려는 이벤트가 없다. 수신: order(읽기 모델) · auth(ROLE_SELLER) · product.
-- **개인정보 파기**: 반려 후 30일이 지나면 사업자번호·대표자·은행·계좌를 NULL 로 지운다(매일 04:20 KST).
-  행·상태·상호·반려 사유는 이력으로 남는다.
+- **개인정보 파기**: 반려 후 30일이 지나면 사업자번호·대표자·은행·계좌를 NULL 로, 상호를 `[파기]` 로 지운다
+  (매일 04:20 KST — 개인사업자 상호는 대표자 이름을 담는 일이 많아 개인정보로 본다). 행 id·상태·반려 사유·시각만 이력으로 남는다.
 - **운영 이슈**: `seller_db.ops_issue` + `/api/v1/admin/sellers/ops-issues`(ROLE_ADMIN, 조회·재시도·종결). seller 는 구독하는
   토픽이 없어 DLT 컨슈머가 없다 — 운영 큐가 여덟 도메인을 같은 모양으로 합치도록 테이블과 API 만 둔다.
 - **플랫폼 기본 판매자**: `seller.id = 1`(member `platform`, ACTIVE, 수수료 0) — V1 시드. 기존 상품의 백필 대상.

@@ -2,7 +2,7 @@
   "__inputs": [],
   "__requires": [],
   "annotations": { "list": [] },
-  "description": "ADR-0032 Phase 3 — Order Outbox / Cancellation 보상 흐름 가시성. Outbox lag, cancellation latency, TTL fallback 발화량.",
+  "description": "ADR-0032 Order Outbox + ADR-0099 사가 가시성. Outbox lag, 사가 상태·보상, TTL fallback 발화량.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -81,12 +81,12 @@
     },
     {
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "description": "order.order.cancelled 발행 시각 → inventory release 완료 시각 사이 latency (p50/p95/p99). SLA: p99 <= 5s.",
+      "description": "오케스트레이션 사가(ADR-0099) 상태별 진행 수 · 보상 누계 · 결과 미상 결제. STUCK·UNKNOWN 은 0 이 정상, 보상은 결제 거절·재고 부족으로도 늘어난다(급증만 본다).",
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
           "custom": { "lineWidth": 2 },
-          "unit": "s"
+          "unit": "short"
         },
         "overrides": []
       },
@@ -96,29 +96,29 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "histogram_quantile(0.5, sum(rate(order_cancellation_to_release_latency_seconds_bucket[5m])) by (le, reason))",
-          "legendFormat": "p50 {{reason}}",
+          "expr": "max(commerce_saga_active{application=~\"$application\"}) by (status)",
+          "legendFormat": "saga {{status}}",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "histogram_quantile(0.95, sum(rate(order_cancellation_to_release_latency_seconds_bucket[5m])) by (le, reason))",
-          "legendFormat": "p95 {{reason}}",
+          "expr": "max(commerce_saga_compensations{application=~\"$application\"})",
+          "legendFormat": "compensations (cumulative)",
           "refId": "B"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "histogram_quantile(0.99, sum(rate(order_cancellation_to_release_latency_seconds_bucket[5m])) by (le, reason))",
-          "legendFormat": "p99 {{reason}}",
+          "expr": "max(commerce_payment_unknown{application=~\"$application\"})",
+          "legendFormat": "payment UNKNOWN",
           "refId": "C"
         }
       ],
-      "title": "Order cancellation → inventory release latency",
+      "title": "Saga — active by status · compensations · payment UNKNOWN",
       "type": "timeseries"
     },
     {
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "description": "TTL fallback (30분 expiry) 발화 누적. 정상 흐름이면 0. 발화 = order.order.cancelled 흐름 또는 Outbox 장애 의심.",
+      "description": "TTL fallback (30분 보류 기한) 발화 누적. 정상 흐름이면 0. 발화 = 사가의 확정·해제 명령이 기한 안에 닿지 않음(아웃박스 정체·답 누락).",
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },

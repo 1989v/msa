@@ -19,7 +19,44 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.transaction.PlatformTransactionManager
+import java.math.BigDecimal
+import java.sql.ResultSet
 import javax.sql.DataSource
+
+/** 금액은 원 단위 정수 `price_won` 에서 읽는다 — 옛 `price` DECIMAL 은 금액 축소 단계에서 지워진다. */
+internal const val PRODUCT_DB_SELECT =
+    "SELECT id, name, price_won, stock, status, brand, description, category, " +
+        "energy_kcal, carbohydrate_g, protein_g, fat_g, sugar_g, sodium_mg, " +
+        "ingredients, origin_country, item_report_no, created_at"
+
+internal fun mapProductRow(rs: ResultSet): ProductRow {
+    // getDouble 은 NULL 을 0.0 으로 뭉개므로 getObject 로 nullable 유지
+    fun nullableDouble(column: String): Double? = (rs.getObject(column) as? Number)?.toDouble()
+    val id = rs.getLong("id")
+    // 비어 있으면 0 원으로 색인하지 않는다 — 롤백 기간에 옛 코드가 쓴 행이라 백필(UPDATE … SET price_won = price)이 먼저다
+    val priceWon = (rs.getObject("price_won") as? Number)?.toLong()
+        ?: throw IllegalStateException("products.price_won 이 비어 있다(id=$id) — 백필 후 재색인")
+    return ProductRow(
+        id = id,
+        name = rs.getString("name"),
+        price = BigDecimal.valueOf(priceWon),
+        stock = rs.getInt("stock"),
+        status = rs.getString("status"),
+        brand = rs.getString("brand"),
+        description = rs.getString("description"),
+        category = rs.getString("category"),
+        energyKcal = nullableDouble("energy_kcal"),
+        carbohydrateG = nullableDouble("carbohydrate_g"),
+        proteinG = nullableDouble("protein_g"),
+        fatG = nullableDouble("fat_g"),
+        sugarG = nullableDouble("sugar_g"),
+        sodiumMg = nullableDouble("sodium_mg"),
+        ingredients = rs.getString("ingredients"),
+        originCountry = rs.getString("origin_country"),
+        itemReportNo = rs.getString("item_report_no"),
+        createdAt = rs.getTimestamp("created_at").toLocalDateTime(),
+    )
+}
 
 @Configuration
 @ConditionalOnProperty(name = ["reindex.source"], havingValue = "db")
@@ -53,11 +90,7 @@ class ProductDbReindexJobConfig(
     fun productJdbcReader() = run {
         val provider = SqlPagingQueryProviderFactoryBean().apply {
             setDataSource(productDataSource)
-            setSelectClause(
-                "SELECT id, name, price, stock, status, brand, description, category, " +
-                    "energy_kcal, carbohydrate_g, protein_g, fat_g, sugar_g, sodium_mg, " +
-                    "ingredients, origin_country, item_report_no, created_at"
-            )
+            setSelectClause(PRODUCT_DB_SELECT)
             setFromClause("FROM products")
             setSortKeys(mapOf("id" to Order.ASCENDING))
         }
@@ -66,30 +99,7 @@ class ProductDbReindexJobConfig(
             .dataSource(productDataSource)
             .queryProvider(provider.`object`)
             .pageSize(pageSize)
-            .rowMapper { rs, _ ->
-                // getDouble 은 NULL 을 0.0 으로 뭉개므로 getObject 로 nullable 유지
-                fun nullableDouble(column: String): Double? = (rs.getObject(column) as? Number)?.toDouble()
-                ProductRow(
-                    id = rs.getLong("id"),
-                    name = rs.getString("name"),
-                    price = rs.getBigDecimal("price"),
-                    stock = rs.getInt("stock"),
-                    status = rs.getString("status"),
-                    brand = rs.getString("brand"),
-                    description = rs.getString("description"),
-                    category = rs.getString("category"),
-                    energyKcal = nullableDouble("energy_kcal"),
-                    carbohydrateG = nullableDouble("carbohydrate_g"),
-                    proteinG = nullableDouble("protein_g"),
-                    fatG = nullableDouble("fat_g"),
-                    sugarG = nullableDouble("sugar_g"),
-                    sodiumMg = nullableDouble("sodium_mg"),
-                    ingredients = rs.getString("ingredients"),
-                    originCountry = rs.getString("origin_country"),
-                    itemReportNo = rs.getString("item_report_no"),
-                    createdAt = rs.getTimestamp("created_at").toLocalDateTime()
-                )
-            }
+            .rowMapper { rs, _ -> mapProductRow(rs) }
             .build()
     }
 

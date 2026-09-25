@@ -61,10 +61,12 @@ spring:
                 response-timeout: 0
                 connect-timeout: 5000
             # TG-P2-13 — Quant REST (short-lived).
+            # /api/v1/quant/** 를 통째로 받지 않는다 — 실매매 주문(/api/v1/quant/orders/**)은
+            # GatewayRouteConfig.kt 의 인증 라우트가 받는다. 여기서 겹치면 무인증 쪽이 이길 수 있다.
             - id: quant-service
               uri: http://sideapp:8095 # ADR-0093: sideapp 폴드
               predicates:
-                - Path=/api/v1/strategies/**, /api/v1/dashboard/**, /api/v1/leaderboard/**, /api/v1/runs/**, /api/v1/signal-strategies/**, /api/v1/charts/**, /api/v1/learn/**, /api/v1/quant/**, /api/v1/discover/**
+                - Path=/api/v1/strategies/**, /api/v1/dashboard/**, /api/v1/leaderboard/**, /api/v1/runs/**, /api/v1/signal-strategies/**, /api/v1/charts/**, /api/v1/learn/**, /api/v1/quant/assets/**, /api/v1/discover/**
 
             # 인증이 필요한 백엔드 REST 라우트(product/order/auth/member/…)는 여기가 아니라
             # GatewayRouteConfig.kt 의 RouteLocator 에 인증필터와 함께 둔다. 같은 path 를 여기에

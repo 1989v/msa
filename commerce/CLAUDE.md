@@ -36,6 +36,10 @@ seller · payment · promotion · settlement 열 `:feature` 라이브러리를 �
 | settlement | `settlement_db` | `spring.datasource.settlement` | Hikari 최대 3 |
 
 seller·payment·promotion·settlement 은 order 와 같은 MySQL 인스턴스(`mysql-order-master`)에 스키마만 분리한다.
+**Hikari 풀은 모든 도메인이 최대 3 · 최소 유휴 1** 이다. 풀 키는 `master`/`replica` 바로 아래에 둔다 — `hikari.` 하위에 두면
+DataSourceBuilder 가 만든 풀에 바인딩되지 않고 조용히 기본값 10 으로 뜬다(deal 만 `DataSourceProperties` 라 `hikari.` 하위를 따로 바인딩).
+`CommerceContextLoadSpec` 이 떠 있는 풀 전부의 `maximumPoolSize` 를 읽어 확인한다.
+Boot 의 Flyway 자동설정은 꺼져 있다(`spring.flyway.enabled: false`) — 스키마는 도메인별 `ScopedFlywayMigrator` 만 돌린다.
 `application.yml` 에 남은 `member`·`wishlist` 블록은 account 호스트로 옮긴 뒤(ADR-0093)의 잔재로, 스캔 대상이 아니라 읽히지 않는다.
 
 ## 구조 상태 (ADR-0083)

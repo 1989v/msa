@@ -11,13 +11,13 @@ import java.time.Instant
 /**
  * 판매자 신청·등록 한 건. 반려된 신청은 종착이고 재신청은 새 행이다.
  *
- * 상태 전이는 이 클래스의 메서드로만 일어난다. 개인정보(사업자번호·대표자·계좌)는 반려 후
- * [REJECTED_PII_RETENTION] 이 지나면 [purgePersonalData] 로 지운다 — 행과 상태는 이력으로 남긴다.
+ * 상태 전이는 이 클래스의 메서드로만 일어난다. 개인정보(상호·사업자번호·대표자·계좌)는 반려 후
+ * [REJECTED_PII_RETENTION] 이 지나면 [purgePersonalData] 로 지운다 — id·상태·사유·시각만 이력으로 남긴다.
  */
 class Seller private constructor(
     val id: Long?,
     val memberId: String,
-    val businessName: String,
+    businessName: String,
     businessRegistrationNo: String?,
     representativeName: String?,
     bankName: String?,
@@ -33,6 +33,7 @@ class Seller private constructor(
     val appliedAt: Instant,
     updatedAt: Instant,
 ) {
+    var businessName: String = businessName; private set
     var businessRegistrationNo: String? = businessRegistrationNo; private set
     var representativeName: String? = representativeName; private set
     var bankName: String? = bankName; private set
@@ -86,6 +87,8 @@ class Seller private constructor(
         val rejected = rejectedAt ?: return false
         if (status != SellerStatus.REJECTED || piiPurgedAt != null) return false
         if (now.isBefore(rejected.plus(REJECTED_PII_RETENTION))) return false
+        // 개인사업자 상호는 대표자 이름을 담는 일이 많다 — 개인정보로 보고 함께 지운다(컬럼은 NOT NULL 이라 표지로 덮는다)
+        businessName = PURGED_BUSINESS_NAME
         businessRegistrationNo = null
         representativeName = null
         bankName = null
@@ -106,6 +109,9 @@ class Seller private constructor(
     companion object {
         /** 반려 신청의 개인정보 보존 기한 */
         val REJECTED_PII_RETENTION: Duration = Duration.ofDays(30)
+
+        /** 파기된 상호 자리에 남기는 표지 */
+        const val PURGED_BUSINESS_NAME = "[파기]"
 
         private const val MAX_BP = 10_000
         private val BRN = Regex("^\\d{10}$")

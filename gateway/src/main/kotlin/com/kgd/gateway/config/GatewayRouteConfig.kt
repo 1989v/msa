@@ -322,6 +322,16 @@ class GatewayRouteConfig(
                     }
                     .uri(COMMERCE_URI)
             }
+            // quant 실매매 주문 (ROLE_USER+) — 커머스 /api/v1/orders 와 이름이 겹치지 않게 quant 접두 아래 둔다.
+            // 컨트롤러가 X-User-Id 를 테넌트로 쓰므로 반드시 인증 필터를 거쳐 토큰 값으로 채운다.
+            .route("quant-live-order") { r ->
+                r.path("/api/v1/quant/orders", "/api/v1/quant/orders/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(userConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri("http://sideapp:8095") // ADR-0093: sideapp 폴드
+            }
             // Gifticon Service (ROLE_USER+)
             .route("gifticon-service") { r ->
                 r.path("/api/gifticons/**")
