@@ -227,3 +227,14 @@
 - commerce 메모리 947MiB → **651MiB** / 1200Mi (풀 19개 × 최대 3·최소 유휴 1)
 - 운영 주문 3: 10초 FULFILLING · 사가 COMPLETED(새 이미지 회귀 없음) · `/api/v1/quant/orders` 401 · 토스 웹훅 404 · `/api/warehouses` 401
 - 옛 `-dlt` 토픽: `payment.reconciliation.settled-dlt` 1건(주문 1 의 0원 PG 입금 — 같은 날 매입·전액 환불). 원인은 입금액·수수료 0 인 분개를 원장이 거부한 것 → 0원 입금은 분개하지 않게 수정(LedgerServiceTest, 회귀 주입 빨간불 확인)
+
+## 옛 DLT 재처리 · 금액 축소 1단계 (2026-09-26 KST)
+- commerce `46caa71`(0원 PG 입금 무분개) 운영 반영 → `payment.reconciliation.settled-dlt` 1건을 원 토픽으로 재발행(commerce 라벨 일회용 `bitnamilegacy/kafka:3.8` 파드, `kafka:29092`)
+  - 로그 `입금액·수수료가 0 인 PG 입금 — 분개 없음: order=1, orderNo=ORD-1-1` · 그룹 `settlement-ledger` lag 0 · 새 `.DLT` 없음
+  - 옛 `-dlt` 토픽 삭제 → 남은 `-dlt` 토픽 0
+- search-batch cronjob 5종 `24c3f4a` → `46caa71`(Argo `a35eb4bd` Synced). 수동 `search-reindex` 잡 COMPLETED 25 docs / 0 errors
+  - 운영 cronjob 은 전부 API 경로 — products 를 SQL 로 읽는 `productDbReindexJob` 은 수동 전용이고 이제 `price_won` 판
+- 운영 사전 확인: products 25행 · order_items 4행 모두 `*_won` NULL 0 · 옛 컬럼과 불일치 0
+- 1단계 `V20260926_001`(product_db·order_db): 엔티티가 옛 DECIMAL 을 매핑하지 않음, 새 컬럼 NOT NULL, 옛 컬럼 NULL 허용
+  - OrderSheetIntegrationSpec 9/0(축소 2건 추가: 롤링 중 옛 파드 행 백필 → NOT NULL · 소수 원 행이면 DDL 전 중단) · TracingPropagation 4/0 · CommerceContextLoadSpec 13/0(ddl validate) · ProductJpaEntityTest 2/0
+  - 회귀 주입: 축소 마이그레이션의 백필 UPDATE 제거 → failures=1, 복원 → 0
