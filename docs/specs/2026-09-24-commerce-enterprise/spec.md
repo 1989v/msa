@@ -89,7 +89,7 @@ PAYMENT_PENDING 중 구매자 취소는 받지 않는다(409, 「결제 결과 �
 
 **정산서**: DRAFT → CONFIRMED → PAID · CONFIRMED → CARRIED_OVER(지급액 ≤ 0 이면 다음 기간 이월).
 
-**사가**: RUNNING → COMPENSATING → FAILED · RUNNING → COMPLETED · RUNNING → STUCK(재시도 한도 초과, 운영 이슈) · STUCK → RUNNING(운영자 재시도).
+**사가**: RUNNING → COMPENSATING → FAILED · RUNNING → COMPLETED · RUNNING → STUCK(재시도 한도 초과, 운영 이슈) · STUCK → RUNNING(운영자 재시도) · COMPENSATING → STUCK(보상 재시도 한도 초과, 운영 이슈) · STUCK → COMPENSATING(보상 중 멈춘 사가의 운영자 재시도 — 보상을 이어 간다).
 
 모든 전이는 도메인 메서드 가드로만 일어나고 주문은 `order_status_history`(이전·이후·사유·주체·시각)를 남긴다.
 

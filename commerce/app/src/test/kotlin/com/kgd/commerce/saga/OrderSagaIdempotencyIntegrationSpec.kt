@@ -15,6 +15,8 @@ import com.kgd.order.application.saga.usecase.PromotionAnswerType
 import com.kgd.order.application.sheet.port.OrderSheetRepositoryPort
 import com.kgd.order.domain.benefit.model.CouponBearer
 import com.kgd.order.domain.order.exception.IdempotencyKeyInProgressException
+import com.kgd.order.domain.order.exception.IdempotencyKeyReusedException
+import com.kgd.order.domain.order.exception.TooManyPendingOrdersException
 import com.kgd.order.domain.saga.model.ReservedLine
 import com.kgd.order.domain.sheet.exception.OrderSheetUnavailableException
 import com.kgd.order.domain.sheet.model.OrderSheet
@@ -165,6 +167,36 @@ class OrderSagaIdempotencyIntegrationSpec(
                 jdbc.update("UPDATE idempotency_key SET lease_until = NOW(6) - INTERVAL 1 SECOND WHERE user_id = 'idem-2'")
                 place.place(PlaceOrderUseCase.Command("idem-2", "key-1", sheet("idem-2"))).status shouldBe "CREATED"
                 jdbc.queryForObject("SELECT COUNT(*) FROM orders WHERE user_id = 'idem-2'", Long::class.java) shouldBe 1L
+            }
+            Then("같은 키에 다른 본문(다른 주문서)이면 422 — 처음 응답을 재생하지 않고, 키 행의 본문 해시는 처음 것 그대로") {
+                val firstSheet = sheet("idem-3")
+                place.place(PlaceOrderUseCase.Command("idem-3", "key-1", firstSheet))
+                shouldThrow<IdempotencyKeyReusedException> { place.place(PlaceOrderUseCase.Command("idem-3", "key-1", sheet("idem-3"))) }
+                jdbc.queryForObject("SELECT COUNT(*) FROM orders WHERE user_id = 'idem-3'", Long::class.java) shouldBe 1L
+                jdbc.queryForMap("SELECT status, request_hash FROM idempotency_key WHERE user_id = 'idem-3'").let {
+                    it["status"] shouldBe "COMPLETED"
+                    it["request_hash"] shouldBe PlaceOrderUseCase.Command("idem-3", "key-1", firstSheet).requestHash
+                }
+            }
+        }
+
+        Given("결제 대기 상한 3건 (회원 잠금 행 SELECT … FOR UPDATE)") {
+            Then("한 회원이 서로 다른 키·주문서로 5건을 동시에 보내도 접수는 3건, 나머지는 상한 초과") {
+                val sheetIds = (1..5).map { sheet("cap-1") }
+                val pool = Executors.newFixedThreadPool(5)
+                val start = CountDownLatch(1)
+                val results = sheetIds.mapIndexed { i, sheetId ->
+                    pool.submit<Result<Unit>> {
+                        start.await()
+                        runCatching { place.place(PlaceOrderUseCase.Command("cap-1", "cap-key-$i", sheetId)); Unit }
+                    }
+                }
+                start.countDown()
+                val outcomes = results.map { it.get(60, TimeUnit.SECONDS) }
+                pool.shutdown()
+                outcomes.count { it.isSuccess } shouldBe 3
+                outcomes.filter { it.isFailure }.forEach { (it.exceptionOrNull() is TooManyPendingOrdersException) shouldBe true }
+                jdbc.queryForObject("SELECT COUNT(*) FROM orders WHERE user_id = 'cap-1'", Long::class.java) shouldBe 3L
             }
         }
 

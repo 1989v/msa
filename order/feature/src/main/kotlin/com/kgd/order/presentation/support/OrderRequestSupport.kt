@@ -25,7 +25,7 @@ internal object OrderSheetErrorResponses {
             ErrorCode.NOT_FOUND -> HttpStatus.NOT_FOUND
             ErrorCode.UNAUTHORIZED -> HttpStatus.UNAUTHORIZED
             ErrorCode.FORBIDDEN -> HttpStatus.FORBIDDEN
-            ErrorCode.ORDER_SHEET_UNAVAILABLE -> HttpStatus.UNPROCESSABLE_CONTENT
+            ErrorCode.ORDER_SHEET_UNAVAILABLE, ErrorCode.IDEMPOTENCY_KEY_REUSED -> HttpStatus.UNPROCESSABLE_CONTENT
             ErrorCode.ORDER_CANCEL_NOT_ALLOWED, ErrorCode.IDEMPOTENCY_KEY_IN_PROGRESS -> HttpStatus.CONFLICT
             ErrorCode.TOO_MANY_PENDING_ORDERS -> HttpStatus.TOO_MANY_REQUESTS
             ErrorCode.INVALID_INPUT -> HttpStatus.BAD_REQUEST

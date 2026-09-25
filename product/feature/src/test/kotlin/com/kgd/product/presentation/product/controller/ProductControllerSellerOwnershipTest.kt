@@ -18,6 +18,8 @@ import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
 import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 import org.springframework.http.MediaType
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
@@ -37,7 +39,7 @@ class ProductControllerSellerOwnershipTest : BehaviorSpec({
     val eventPort = mockk<ProductEventPort>(relaxed = true)
     val sellers = InMemoryProductSellerRepository()
     val service = ProductService(transactionalService, eventPort, ProductWriteAuthorizer(sellers))
-    val mockMvc = MockMvcBuilders.standaloneSetup(ProductController(service, service, service, service))
+    val mockMvc = MockMvcBuilders.standaloneSetup(ProductController(service, service, service, service, service), SellerProductController(service))
         .setControllerAdvice(ProductExceptionHandler())
         .setMessageConverters(JacksonJsonHttpMessageConverter(jacksonMapperBuilder().build()))
         .build()
@@ -148,6 +150,65 @@ class ProductControllerSellerOwnershipTest : BehaviorSpec({
         then("판매자 행이 없는 어드민이 등록하면 플랫폼 기본 판매자(1)") {
             create("1", "ROLE_ADMIN").status shouldBe 201
             saved.captured.sellerId shouldBe Product.PLATFORM_SELLER_ID
+        }
+    }
+
+    given("ACTIVE 판매자 행이 있는 어드민이 등록하면") {
+        then("그래도 플랫폼 기본 판매자(1) 소유다 — 어드민 등록은 개인 판매자 매출이 아니다") {
+            seller(7L, "1", ProductSellerStatus.ACTIVE)
+            create("1", "ROLE_ADMIN,ROLE_SELLER").status shouldBe 201
+            saved.captured.sellerId shouldBe Product.PLATFORM_SELLER_ID
+        }
+    }
+
+    given("판매 중지 DELETE /api/v1/products/{id}") {
+        fun stop(userId: String, roles: String) = mockMvc.perform(
+            MockMvcRequestBuilders.delete("/api/v1/products/1").header("X-User-Id", userId).header("X-User-Roles", roles),
+        ).andReturn().response
+
+        then("어드민은 200 — 행을 지우지 않고 INACTIVE 로 저장하고 갱신 이벤트를 낸다") {
+            every { transactionalService.findById(1L) } returns productOf(7L)
+            val response = stop("1", "ROLE_ADMIN")
+            response.status shouldBe 200
+            saved.captured.status shouldBe ProductStatus.INACTIVE
+            response.contentAsString.contains("\"status\":\"INACTIVE\"") shouldBe true
+            verify(exactly = 1) { eventPort.publishProductUpdated(match { it.status == ProductStatus.INACTIVE }) }
+        }
+        then("이미 중지된 상품이면 저장·이벤트 없이 200") {
+            every { transactionalService.findById(1L) } returns
+                Product.restore(1L, "상품", Money(1000L), 10, ProductStatus.INACTIVE, LocalDateTime.now(), sellerId = 7L)
+            stop("1", "ROLE_ADMIN").status shouldBe 200
+            verify(exactly = 0) { transactionalService.save(any()) }
+            verify(exactly = 0) { eventPort.publishProductUpdated(any()) }
+        }
+        then("판매자는 자기 상품이어도 403") {
+            seller(7L, "501", ProductSellerStatus.ACTIVE)
+            every { transactionalService.findById(1L) } returns productOf(7L)
+            stop("501", "ROLE_SELLER").status shouldBe 403
+            verify(exactly = 0) { transactionalService.save(any()) }
+        }
+    }
+
+    given("판매자 포털 내 상품 GET /api/v1/seller/products") {
+        then("요청자의 판매자 id 로, 최근 등록순(id 내림차순) 질의한다 — 판매 중지 상품도 응답에 상태와 함께 실린다") {
+            seller(7L, "501", ProductSellerStatus.ACTIVE)
+            val pageable = slot<Pageable>()
+            every { transactionalService.findAllBySeller(capture(pageable), 7L) } returns PageImpl(
+                listOf(Product.restore(2L, "중지", Money(1000L), 0, ProductStatus.INACTIVE, LocalDateTime.now(), sellerId = 7L)),
+            )
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders.get("/api/v1/seller/products").param("sellerId", "8")
+                    .header("X-User-Id", "501").header("X-User-Roles", "ROLE_SELLER"),
+            ).andReturn().response
+            response.status shouldBe 200
+            response.contentAsString.contains("\"status\":\"INACTIVE\"") shouldBe true
+            pageable.captured.sort shouldBe Sort.by("id").descending()
+            verify(exactly = 0) { transactionalService.findAllBySeller(any(), 8L) }
+        }
+        then("판매자 행이 없는 어드민은 403") {
+            mockMvc.perform(
+                MockMvcRequestBuilders.get("/api/v1/seller/products").header("X-User-Id", "1").header("X-User-Roles", "ROLE_ADMIN"),
+            ).andReturn().response.status shouldBe 403
         }
     }
 

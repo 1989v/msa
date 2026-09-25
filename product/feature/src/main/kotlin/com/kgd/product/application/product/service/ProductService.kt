@@ -3,11 +3,15 @@ package com.kgd.product.application.product.service
 import com.kgd.product.application.product.port.ProductEventPort
 import com.kgd.product.application.product.usecase.CreateProductUseCase
 import com.kgd.product.application.product.usecase.GetAllProductsUseCase
+import com.kgd.product.application.product.usecase.GetSellerProductsUseCase
 import com.kgd.product.application.product.usecase.GetProductUseCase
 import com.kgd.product.application.product.usecase.ProductRequester
+import com.kgd.product.application.product.usecase.StopSellingProductUseCase
 import com.kgd.product.application.product.usecase.UpdateProductUseCase
 import com.kgd.product.domain.product.model.Money
 import com.kgd.product.domain.product.model.Product
+import com.kgd.product.domain.product.model.ProductStatus
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
@@ -22,7 +26,8 @@ class ProductService(
     private val transactionalService: ProductTransactionalService,
     private val eventPort: ProductEventPort,
     private val writeAuthorizer: ProductWriteAuthorizer,
-) : CreateProductUseCase, GetProductUseCase, UpdateProductUseCase, GetAllProductsUseCase {
+) : CreateProductUseCase, GetProductUseCase, UpdateProductUseCase, GetAllProductsUseCase,
+    StopSellingProductUseCase, GetSellerProductsUseCase {
 
     @Transactional(transactionManager = "productTransactionManager")
     override fun execute(command: CreateProductUseCase.Command, requester: ProductRequester): CreateProductUseCase.Result {
@@ -86,31 +91,34 @@ class ProductService(
         )
         val saved = transactionalService.save(product)
         eventPort.publishProductUpdated(saved)
-        return UpdateProductUseCase.Result(
-            id = requireNotNull(saved.id) { "저장된 상품에 ID가 없습니다" },
-            name = saved.name,
-            price = saved.price.amount,
-            stock = saved.stock,
-            status = saved.status.name,
-            sellerId = saved.sellerId,
-            brand = saved.brand,
-            description = saved.description,
-            category = saved.category,
-            energyKcal = saved.energyKcal,
-            carbohydrateG = saved.carbohydrateG,
-            proteinG = saved.proteinG,
-            fatG = saved.fatG,
-            sugarG = saved.sugarG,
-            sodiumMg = saved.sodiumMg,
-            ingredients = saved.ingredients,
-            originCountry = saved.originCountry,
-            itemReportNo = saved.itemReportNo
-        )
+        return saved.toUpdateResult()
+    }
+
+    @Transactional(transactionManager = "productTransactionManager")
+    override fun execute(id: Long, requester: ProductRequester): UpdateProductUseCase.Result {
+        writeAuthorizer.authorizeStopSelling(requester)
+        val product = transactionalService.findById(id)
+        if (product.status == ProductStatus.INACTIVE) return product.toUpdateResult()
+        product.deactivate()
+        val saved = transactionalService.save(product)
+        // 읽기 모델(order·search)이 판매 불가로 바뀌는 근거 — 삭제 이벤트가 아니라 상태가 바뀐 갱신이다
+        eventPort.publishProductUpdated(saved)
+        return saved.toUpdateResult()
     }
 
     override fun execute(query: GetAllProductsUseCase.Query): GetAllProductsUseCase.Result {
         val pageable = PageRequest.of(query.page, query.size, Sort.by("id").ascending())
-        val page = transactionalService.findAll(pageable, query.sellerId)
+        return transactionalService.findAll(pageable, query.sellerId).toListResult()
+    }
+
+    override fun execute(query: GetSellerProductsUseCase.Query, requester: ProductRequester): GetAllProductsUseCase.Result {
+        val sellerId = writeAuthorizer.ownSellerId(requester)
+        val pageable = PageRequest.of(query.page, query.size, Sort.by("id").descending())
+        return transactionalService.findAllBySeller(pageable, sellerId).toListResult()
+    }
+
+    private fun Page<Product>.toListResult(): GetAllProductsUseCase.Result {
+        val page = this
         return GetAllProductsUseCase.Result(
             products = page.content.map { product ->
                 GetAllProductsUseCase.Result.ProductResult(
@@ -139,6 +147,27 @@ class ProductService(
             totalPages = page.totalPages
         )
     }
+
+    private fun Product.toUpdateResult() = UpdateProductUseCase.Result(
+        id = requireNotNull(id) { "저장된 상품에 ID가 없습니다" },
+        name = name,
+        price = price.amount,
+        stock = stock,
+        status = status.name,
+        sellerId = sellerId,
+        brand = brand,
+        description = description,
+        category = category,
+        energyKcal = energyKcal,
+        carbohydrateG = carbohydrateG,
+        proteinG = proteinG,
+        fatG = fatG,
+        sugarG = sugarG,
+        sodiumMg = sodiumMg,
+        ingredients = ingredients,
+        originCountry = originCountry,
+        itemReportNo = itemReportNo
+    )
 
     private fun CreateProductUseCase.Command.toDomain(sellerId: Long): Product = Product.create(
         name = name,

@@ -2,6 +2,7 @@ package com.kgd.order.support
 
 import com.kgd.order.application.order.port.DailyOrderCount
 import com.kgd.order.application.order.port.IdempotencyKeyRepositoryPort
+import com.kgd.order.application.order.port.PendingOrderGuardPort
 import com.kgd.order.application.order.port.OrderEventPort
 import com.kgd.order.application.order.port.OrderRepositoryPort
 import com.kgd.order.application.order.port.PurchaseConfirmTrigger
@@ -169,18 +170,25 @@ class InMemorySagaWorld {
             issueRows.any { it.type == type && it.targetId == targetId && it.status == OpsIssueStatus.OPEN }
     }
 
+    /** 단일 스레드라 잠금은 호출 순서만 기록한다 — 동시성은 commerce 통합 테스트(MySQL)가 본다 */
+    val guardCalls = mutableListOf<String>()
+    val guards = object : PendingOrderGuardPort {
+        override fun ensure(userId: String) { guardCalls += "ensure:$userId" }
+        override fun lock(userId: String) { guardCalls += "lock:$userId" }
+    }
+
     val keys = object : IdempotencyKeyRepositoryPort {
         override fun insert(key: IdempotencyKey) {
             if (keyRows.containsKey(key.userId to key.key)) throw DataIntegrityViolationException("uk_idempotency_key_user_key")
             keyRows[key.userId to key.key] = key
         }
         override fun find(userId: String, key: String) = keyRows[userId to key]?.let {
-            IdempotencyKey.restore(it.userId, it.key, it.status, it.leaseUntil, it.response, it.createdAt)
+            IdempotencyKey.restore(it.userId, it.key, it.status, it.leaseUntil, it.response, it.createdAt, it.requestHash)
         }
         override fun takeOver(userId: String, key: String, now: Instant, leaseUntil: Instant): Boolean {
             val k = keyRows[userId to key] ?: return false
             if (k.status != IdempotencyStatus.PROCESSING || k.leaseUntil.isAfter(now)) return false
-            keyRows[userId to key] = IdempotencyKey.restore(k.userId, k.key, k.status, leaseUntil, k.response, k.createdAt)
+            keyRows[userId to key] = IdempotencyKey.restore(k.userId, k.key, k.status, leaseUntil, k.response, k.createdAt, k.requestHash)
             return true
         }
         override fun complete(key: IdempotencyKey) { keyRows[key.userId to key.key] = key }

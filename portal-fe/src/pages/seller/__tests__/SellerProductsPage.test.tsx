@@ -66,14 +66,27 @@ describe('판매자 상품 화면', () => {
       .mockResolvedValue({ products: [product(1, '내 한지 노트'), product(4, '내 벼루')], totalElements: 2, totalPages: 1 });
   });
 
-  it('ACTIVE 면 내 판매자 id 로 걸러 달라고 한 번 묻고 그 상품을 보여 준다', async () => {
+  it('ACTIVE 면 판매자 전용 내 상품 목록을 한 번 묻고 그 상품을 보여 준다', async () => {
     vi.mocked(fetchMySellerApplication).mockResolvedValue(application({}));
     renderPage();
     expect(await screen.findByText('내 한지 노트')).toBeInTheDocument();
     expect(screen.getByText('내 벼루')).toBeInTheDocument();
     expect(screen.getByText('승인됨')).toBeInTheDocument();
     expect(fetchSellerProducts).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(fetchSellerProducts).mock.calls[0][0]).toBe(7);
+    expect(vi.mocked(fetchSellerProducts).mock.calls[0][0]).toBe(0);
+  });
+
+  it('판매 중지된 상품도 목록에 남고 상태 표시가 붙는다', async () => {
+    vi.mocked(fetchMySellerApplication).mockResolvedValue(application({}));
+    vi.mocked(fetchSellerProducts).mockResolvedValue({
+      products: [product(4, '내 벼루'), { ...product(1, '중지된 붓'), status: 'INACTIVE' }],
+      totalElements: 2,
+      totalPages: 1,
+    });
+    renderPage();
+    const stopped = (await screen.findByText('중지된 붓')).closest('li');
+    expect(stopped).toHaveTextContent('판매 중지');
+    expect(screen.getByText('내 벼루').closest('li')).toHaveTextContent('판매 중');
   });
 
   it('반려면 상태·반려 사유·재신청 링크를 보여 주고 판매자 포털과 상품 목록은 부르지 않는다', async () => {

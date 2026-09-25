@@ -43,8 +43,12 @@ Outbox·멱등 원장은 common 바인딩(`InventoryOutboxRepository`·`Inventor
 - **재고 동기화 이벤트**(product 가 소비): `inventory.stock.{reserved,released,confirmed,received,restocked}` — 예약·해제·확정·입고·재입고 전부.
 - **옛 흐름 예약 전환**: 기동 시 phase 0 `SmartLifecycle` 이 사가 밖에서 생긴 ACTIVE 예약을 한 번 확정한다(만료 스케줄러·리스너보다 먼저).
 - **은퇴한 구독**: `order.order.completed`·`cancelled`, `fulfillment.order.shipped`·`cancelled` 를 더는 받지 않는다 — 되살리지 않는다.
-- **`@EnableKafka` 가 여기(`KafkaConfig`)에 있다** — commerce 호스트 전체의 `@KafkaListener` 가 이 한 줄로 켜진다. 지우면 폴드된 모든 도메인의
-  리스너가 조용히 사라진다(컴파일·기동은 통과). `RetiredChoreographyCommandIntegrationSpec` 이 잡는다.
+- **`@EnableKafka` 는 호스트 `CommerceApplication` 에 있다**(여기 두면 이 도메인을 빼는 순간 호스트 전체 리스너가 꺼진다). 지우면 폴드된
+  모든 도메인의 리스너가 조용히 사라진다(컴파일·기동은 통과). `RetiredChoreographyCommandIntegrationSpec` 이 잡는다.
+- **REST 소유 판정** (`/api/inventories/**`): 어드민은 전부, 판매자는 ACTIVE 판매자 행 + **자기 상품**만(아니면 403), 신원 헤더 없으면 401.
+  근거는 자체 읽기 모델 두 개 — `product_owner`(`product.item.{created,updated}` → 상품의 판매자) · `owner_seller`(`seller.seller.*` →
+  회원·상태), 그룹 `inventory-ownership`, `occurredAt` 으로 옛 이벤트를 버린다. 소유를 모르는 상품은 거부한다.
+  새로 붙은 그룹이라 7일 보관을 넘긴 상품 이벤트는 못 받는다 — 배포 뒤 `POST /api/v1/admin/products/republish` 를 한 번 부른다.
 - 컨슈머 멱등은 common `IdempotentEventHandler` — `InventoryMessagingConfig` 가 inventory 전용 빈을 등록한다.
 - **DLT**: 1초 간격 3회 재시도 뒤 `<원 토픽>.DLT`. `inventory-dlt-ops` 그룹이 inventory 가 실패한 것만 운영 이슈로 적재 —
   `/api/v1/admin/inventories/ops-issues` 재시도 = 원 토픽 재발행.

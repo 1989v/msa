@@ -18,3 +18,6 @@ class TooManyPendingOrdersException(limit: Int) :
 
 /** 409 — 같은 Idempotency-Key 요청이 아직 처리 중(리스 유효) */
 class IdempotencyKeyInProgressException : BusinessException(ErrorCode.IDEMPOTENCY_KEY_IN_PROGRESS)
+
+/** 422 — 같은 Idempotency-Key 를 다른 요청 본문으로 다시 썼다(키를 새로 만들어야 한다) */
+class IdempotencyKeyReusedException : BusinessException(ErrorCode.IDEMPOTENCY_KEY_REUSED)

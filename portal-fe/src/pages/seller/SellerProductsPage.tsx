@@ -8,7 +8,6 @@ import {
   createSellerProduct,
   errorStatus,
   extractErrorMessage,
-  fetchMySeller,
   fetchMySellerApplication,
   fetchSellerProducts,
   updateSellerProduct,
@@ -27,16 +26,14 @@ import {
 import '../Shop.css';
 import './Seller.css';
 
-/** 목록 API 최대 쪽 크기(@Max(500)) */
-const LIST_PAGE_SIZE = 500;
+/** 판매자 목록 API 최대 쪽 크기(@Max(100)) */
+const LIST_PAGE_SIZE = 100;
 
-/** 서버가 판매자로 거른다 — 보통 한 번이고, 500개를 넘을 때만 다음 쪽을 더 부른다 */
-async function fetchOwnProducts(sellerId: number): Promise<ProductSummary[]> {
-  const first = await fetchSellerProducts(sellerId, 0, LIST_PAGE_SIZE);
+/** 서버가 로그인한 판매자로 거른다 — 보통 한 번이고, 100개를 넘을 때만 다음 쪽을 더 부른다 */
+async function fetchOwnProducts(): Promise<ProductSummary[]> {
+  const first = await fetchSellerProducts(0, LIST_PAGE_SIZE);
   const rest = await Promise.all(
-    Array.from({ length: Math.max(0, first.totalPages - 1) }, (_, i) =>
-      fetchSellerProducts(sellerId, i + 1, LIST_PAGE_SIZE),
-    ),
+    Array.from({ length: Math.max(0, first.totalPages - 1) }, (_, i) => fetchSellerProducts(i + 1, LIST_PAGE_SIZE)),
   );
   return [first, ...rest].flatMap((p) => p.products);
 }
@@ -51,7 +48,8 @@ type Load =
 type Editing = { mode: 'create' } | { mode: 'edit'; product: ProductSummary } | null;
 
 /**
- * 신청 상태(`/sellers/me`)를 먼저 본다 — ACTIVE 일 때만 판매자 포털(`/seller/me`)과 상품 목록으로 간다.
+ * 신청 상태(`/sellers/me`)를 먼저 본다 — ACTIVE 일 때만 판매자 포털의 내 상품 목록(`/seller/products`)으로 간다.
+ * 목록에는 판매 중지된 상품도 상태와 함께 나온다.
  * 심사 중·반려·정지는 상태와 사유를 보여 주고 끝난다.
  */
 async function loadSellerProducts(): Promise<Load> {
@@ -59,8 +57,7 @@ async function loadSellerProducts(): Promise<Load> {
     const application = await fetchMySellerApplication();
     if (!application) return { kind: 'none' };
     if (application.status !== 'ACTIVE') return { kind: 'application', application };
-    const me = await fetchMySeller();
-    return { kind: 'ready', application, products: await fetchOwnProducts(me.id) };
+    return { kind: 'ready', application, products: await fetchOwnProducts() };
   } catch (err) {
     return {
       kind: 'error',

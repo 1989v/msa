@@ -41,7 +41,3 @@ export async function fetchOrder(id: number): Promise<OrderDetail | null> {
     return null;
   }
 }
-
-export async function updateOrderStatus(id: number, status: string): Promise<void> {
-  await apiClient.patch(`/api/v1/orders/${id}/status`, { status });
-}

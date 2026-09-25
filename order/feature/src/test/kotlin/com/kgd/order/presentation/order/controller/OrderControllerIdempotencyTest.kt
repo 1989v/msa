@@ -2,6 +2,7 @@ package com.kgd.order.presentation.order.controller
 
 import com.kgd.order.application.order.service.OrderPlacementService
 import com.kgd.order.application.order.service.OrderQueryService
+import com.kgd.order.application.order.usecase.PlaceOrderUseCase
 import com.kgd.order.application.saga.port.SagaCommand
 import com.kgd.order.application.saga.service.OrderSagaCoordinator
 import com.kgd.order.application.saga.usecase.InventoryAnswer
@@ -9,6 +10,7 @@ import com.kgd.order.application.saga.usecase.InventoryAnswerType
 import com.kgd.order.application.saga.usecase.PromotionAnswer
 import com.kgd.order.application.saga.usecase.PromotionAnswerType
 import com.kgd.order.domain.idempotency.model.IdempotencyKey
+import com.kgd.order.domain.idempotency.model.IdempotencyStatus
 import com.kgd.order.domain.order.model.OrderStatus
 import com.kgd.order.domain.saga.model.SagaTiming
 import com.kgd.order.domain.sheet.model.OrderSheet
@@ -38,6 +40,8 @@ import java.time.ZoneOffset
  */
 class OrderControllerIdempotencyTest : BehaviorSpec({
 
+    fun hashOf(sheetId: Long) = PlaceOrderUseCase.Command("m-1", "k-1", sheetId).requestHash
+
     val now = Instant.parse("2026-10-10T00:00:00Z")
 
     class Fixture {
@@ -49,7 +53,7 @@ class OrderControllerIdempotencyTest : BehaviorSpec({
             world.orders, world.sagas, world.commandPort, world.events, world.opsIssues, clock,
             SagaTiming(Duration.ofSeconds(60), Duration.ofMinutes(10), 10), world.transactionManager,
         )
-        val placement = OrderPlacementService(world.orders, ports.sheets, world.keys, coordinator, mapper, clock, world.transactionManager, 3)
+        val placement = OrderPlacementService(world.orders, ports.sheets, world.keys, world.guards, coordinator, mapper, clock, world.transactionManager, 3)
         val query = OrderQueryService(world.orders, world.sagas)
         val mvc: MockMvc = MockMvcBuilders.standaloneSetup(OrderController(placement, query, query, coordinator))
             .setMessageConverters(JacksonJsonHttpMessageConverter(mapper))
@@ -105,15 +109,38 @@ class OrderControllerIdempotencyTest : BehaviorSpec({
         }
         then("처리 중(리스 유효) 같은 키 → 409, 주문 0건") {
             val f = Fixture()
-            f.world.putKey(IdempotencyKey.begin("m-1", "k-1", now.minusSeconds(10)))
-            f.place(f.sheet()).status shouldBe 409
+            val sheetId = f.sheet()
+            f.world.putKey(IdempotencyKey.begin("m-1", "k-1", now.minusSeconds(10), hashOf(sheetId)))
+            f.place(sheetId).status shouldBe 409
             f.world.orderCount() shouldBe 0
         }
         then("리스(60초)가 지난 처리 중 키 → 이어받아 202, 주문 1건") {
             val f = Fixture()
-            f.world.putKey(IdempotencyKey.begin("m-1", "k-1", now.minusSeconds(61)))
-            f.place(f.sheet()).status shouldBe 202
+            val sheetId = f.sheet()
+            f.world.putKey(IdempotencyKey.begin("m-1", "k-1", now.minusSeconds(61), hashOf(sheetId)))
+            f.place(sheetId).status shouldBe 202
             f.world.orderCount() shouldBe 1
+        }
+        then("같은 키에 다른 본문(다른 주문서) → 422, 저장한 응답을 재생하지 않고 키도 그대로 둔다") {
+            val f = Fixture()
+            val first = f.place(f.sheet())
+            first.status shouldBe 202
+            val reused = f.place(f.sheet())
+            reused.status shouldBe 422
+            reused.contentAsString shouldContain "IDEMPOTENCY_KEY_REUSED"
+            f.world.orderCount() shouldBe 1
+            f.world.key("m-1", "k-1")?.status shouldBe IdempotencyStatus.COMPLETED
+        }
+        then("처리 중인 키에 다른 본문 → 409 가 아니라 422") {
+            val f = Fixture()
+            f.world.putKey(IdempotencyKey.begin("m-1", "k-1", now.minusSeconds(10), hashOf(f.sheet())))
+            f.place(f.sheet()).status shouldBe 422
+            f.world.orderCount() shouldBe 0
+        }
+        then("접수는 회원 잠금 행을 만든 뒤 잠근다(상한 세기 전)") {
+            val f = Fixture()
+            f.place(f.sheet()).status shouldBe 202
+            f.world.guardCalls shouldBe listOf("ensure:m-1", "lock:m-1")
         }
         then("처리가 실패하면(422) 키를 풀어 같은 키로 다시 시도할 수 있다") {
             val f = Fixture()

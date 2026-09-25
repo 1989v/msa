@@ -10,7 +10,11 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 
-@RestControllerAdvice
+/**
+ * product 컨트롤러 전용. commerce 호스트에는 도메인이 여럿 폴드돼 있어, 범위 없이 두면 HIGHEST_PRECEDENCE 로
+ * 다른 도메인의 BusinessException 까지 가로채 그 도메인의 상태코드 매핑을 덮는다.
+ */
+@RestControllerAdvice(basePackages = ["com.kgd.product"])
 @Order(Ordered.HIGHEST_PRECEDENCE)
 class ProductExceptionHandler {
 

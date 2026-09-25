@@ -21,11 +21,12 @@ class ProductWriteAuthorizer(
 
     /**
      * 등록 권한을 판정하고 **상품이 속할 판매자 id** 를 돌려준다. 소유자는 요청 본문이 아니라 여기서만 정해진다.
-     * ACTIVE 판매자면 그 판매자, 판매자 행이 없는 어드민이면 플랫폼 기본 판매자다.
+     * 어드민이면 (판매자 행이 있어도) 플랫폼 기본 판매자, 아니면 요청자의 ACTIVE 판매자다.
      */
     fun authorizeCreate(requester: ProductRequester): Long {
-        activeSellerOf(requester)?.let { return it.sellerId }
+        // 어드민 등록은 판매자 행이 있어도 플랫폼 상품이다 — 어드민 화면에서 만든 상품이 개인 판매자 매출로 잡히지 않게
         if (requester.isAdmin) return Product.PLATFORM_SELLER_ID
+        activeSellerOf(requester)?.let { return it.sellerId }
         throw forbidden(requester)
     }
 
@@ -35,6 +36,14 @@ class ProductWriteAuthorizer(
         val seller = activeSellerOf(requester) ?: throw forbidden(requester)
         if (seller.sellerId != product.sellerId) throw forbidden(requester)
     }
+
+    /** 판매 중지는 어드민만 — 판매자는 자기 상품이라도 중지하지 못한다(판매 재개 경로가 없다) */
+    fun authorizeStopSelling(requester: ProductRequester) {
+        if (!requester.isAdmin) throw forbidden(requester)
+    }
+
+    /** 판매자 포털 — 요청자의 ACTIVE 판매자 id. 판매자 행이 없으면 어드민도 403 */
+    fun ownSellerId(requester: ProductRequester): Long = activeSellerOf(requester)?.sellerId ?: throw forbidden(requester)
 
     private fun activeSellerOf(requester: ProductRequester): ProductSeller? =
         if (requester.isSeller) sellers.findActiveByMemberId(requester.userId) else null

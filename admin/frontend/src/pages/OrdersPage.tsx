@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { createColumnHelper, useReactTable, getCoreRowModel } from '@tanstack/react-table';
 import type { ColumnDef } from '@tanstack/react-table';
-import { fetchOrders, fetchOrder, updateOrderStatus } from '@/api/orders';
+import { fetchOrders, fetchOrder } from '@/api/orders';
 import type { Order, OrderDetail } from '@/api/orders';
 import { DataTable } from '@/components/common/DataTable';
 import { Pagination } from '@/components/common/Pagination';
 import { Dialog } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 
@@ -23,14 +22,6 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELLED: 'CANCELLED',
 };
 
-const NEXT_STATUSES: Record<string, string[]> = {
-  PENDING: ['PAID', 'CANCELLED'],
-  PAID: ['SHIPPED', 'CANCELLED'],
-  SHIPPED: ['DELIVERED', 'CANCELLED'],
-  DELIVERED: [],
-  CANCELLED: [],
-};
-
 function OrderDetailDialog({
   orderId,
   onClose,
@@ -38,19 +29,9 @@ function OrderDetailDialog({
   orderId: number;
   onClose: () => void;
 }) {
-  const queryClient = useQueryClient();
-
   const { data: order, isLoading } = useQuery<OrderDetail | null>({
     queryKey: ['order', orderId],
     queryFn: () => fetchOrder(orderId),
-  });
-
-  const statusMutation = useMutation({
-    mutationFn: (status: string) => updateOrderStatus(orderId, status),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['order', orderId] });
-      void queryClient.invalidateQueries({ queryKey: ['orders'] });
-    },
   });
 
   if (isLoading || !order) {
@@ -60,8 +41,6 @@ function OrderDetailDialog({
       </Dialog>
     );
   }
-
-  const nextStatuses = NEXT_STATUSES[order.status] ?? [];
 
   return (
     <Dialog open title={`주문 상세 #${order.id}`} onClose={onClose} className="max-w-xl">
@@ -92,27 +71,9 @@ function OrderDetailDialog({
           )}
         </div>
 
-        {nextStatuses.length > 0 && (
-          <>
-            <hr className="border-zinc-200 dark:border-zinc-700" />
-            <div>
-              <h3 className="text-sm font-medium mb-2">상태 변경</h3>
-              <div className="flex gap-2 flex-wrap">
-                {nextStatuses.map((s) => (
-                  <Button
-                    key={s}
-                    size="sm"
-                    variant={s === 'CANCELLED' ? 'destructive' : 'default'}
-                    onClick={() => statusMutation.mutate(s)}
-                    disabled={statusMutation.isPending}
-                  >
-                    {s}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
+        <p className="text-xs text-zinc-500">
+          주문 상태는 주문 처리 흐름(결제·재고·출고)이 바꿉니다. 취소·반품은 클레임으로 처리합니다.
+        </p>
       </div>
     </Dialog>
   );

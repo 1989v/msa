@@ -31,8 +31,10 @@
 - 영양 필드는 100g 기준·nullable — 오픈데이터(#15100066) 품목제조보고번호 조인, 미매칭 null (추정 채움 금지)
 - **상품은 판매자 소유다** (`products.seller_id`, ADR-0099 §8). 쓰기는 어드민 또는 **ACTIVE 판매자 행**(`product_seller`,
   `seller.seller.*` 이벤트로 채우는 읽기 모델, memberId == `X-User-Id`) + 토큰의 ROLE_SELLER. 판매자는 자기 상품만 고친다.
-  등록 시 `seller_id` 는 본문이 아니라 `ProductWriteAuthorizer.authorizeCreate` 가 돌려준 값이다 — 판매자 행이 없는 어드민과
+  등록 시 `seller_id` 는 본문이 아니라 `ProductWriteAuthorizer.authorizeCreate` 가 돌려준 값이다 — 어드민(판매자 행이 있어도)과
   `/internal` 일괄 적재는 플랫폼 기본 판매자(1). 기존 상품도 1 로 백필했다
+- `DELETE /api/v1/products/{id}` 는 **삭제가 아니라 어드민 판매 중지**(INACTIVE + `product.item.updated`). 주문·정산이 상품 id 를 참조한다.
+  판매자 포털 목록은 `GET /api/v1/seller/products`(판매 중지 포함, id 내림차순) — 공개 목록(`/api/v1/products`)은 판매 중만
 - Kafka 발행 토픽(**아웃박스**, 키 = productId): `product.item.created`, `product.item.updated` (페이로드에 `sellerId`, 원 단위 정수 `price`, `occurredAt`).
   수신: order 읽기 모델(`order-read-model`) · search.
 - Kafka 소비: `inventory.stock.{reserved,released,confirmed,received,restocked}`(그룹 `product-stock-sync`, 재고 사본) ·

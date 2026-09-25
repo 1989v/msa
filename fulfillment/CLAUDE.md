@@ -41,6 +41,9 @@ Outbox·멱등 원장은 common 바인딩(`FulfillmentOutboxRepository`·`Fulfil
 - **DLT**: 1초 간격 3회 재시도 뒤 `<원 토픽>.DLT`, `fulfillment-dlt-ops` 가 운영 이슈로 적재 — `/api/v1/admin/fulfillments/ops-issues` 재시도 = 원 토픽 재발행
 - 운영 `fulfillment_order.status` 는 Hibernate 가 만든 ENUM 이었다 — VARCHAR(20) 로 바꿨다. 상태를 늘릴 때 운영 컬럼 타입을 먼저 본다.
 - inventory 와 같은 JVM 이지만 **Kafka 유지** (ADR-0058 불변식 2)
+- **REST 소유 판정** (`/api/fulfillments/**`): 어드민은 전부. 판매자(ACTIVE 행)는 전이·취소는 이행의 **라인 전부**가 자기 상품일 때만,
+  조회는 라인 **하나라도** 자기 상품이면(주문별 목록은 그런 이행만 거른다). 수동 생성은 어드민만. 신원 헤더 없으면 401.
+  근거는 inventory 와 같은 모양의 자체 읽기 모델(`product_owner` · `owner_seller`, 그룹 `fulfillment-ownership`).
 
 ## Docs
 

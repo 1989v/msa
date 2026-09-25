@@ -142,6 +142,16 @@ class GatewayRouteConfig(
                     }
                     .uri(COMMERCE_URI) // ADR-0093: commerce 폴드
             }
+            // 상품 판매 중지(DELETE) — 어드민 전용. 쓰기 라우트보다 먼저 선언해야 가려지지 않는다 (서비스도 역할을 다시 본다)
+            .route("product-service-stop") { r ->
+                r.method(HttpMethod.DELETE)
+                    .and().path("/api/v1/products/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(adminConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(COMMERCE_URI)
+            }
             // Product Service 쓰기 — 판매자·어드민만. "자기 상품인가"는 서비스가 X-User-Roles 로 다시 판정한다.
             .route("product-service-write") { r ->
                 r.path("/api/v1/products/**")
@@ -345,7 +355,7 @@ class GatewayRouteConfig(
                     .filters { f -> f.stripPrefix(0) }
                     .uri("http://search:8083")
             }
-            // Inventory Service — Rate Limiter 적용 (ROLE_SELLER+)
+            // Inventory Service — Rate Limiter 적용 (ROLE_SELLER+). "자기 상품 재고인가"는 서비스가 다시 판정한다
             .route("inventory-service") { r ->
                 r.path("/api/inventories/**")
                     .filters { f ->
@@ -359,7 +369,7 @@ class GatewayRouteConfig(
                     }
                     .uri("http://commerce:8085")
             }
-            // Fulfillment Service (ROLE_SELLER+)
+            // Fulfillment Service (ROLE_SELLER+). "자기 상품 이행인가"는 서비스가 다시 판정한다
             .route("fulfillment-service") { r ->
                 r.path("/api/fulfillments/**")
                     .filters { f ->
@@ -368,11 +378,11 @@ class GatewayRouteConfig(
                     }
                     .uri("http://commerce:8085")
             }
-            // Warehouse (ADR-0058: commerce 폴드 — inventory:app 이 warehouse 엔드포인트 서빙)
+            // Warehouse (ADR-0058: commerce 폴드) — 어드민 전용. 창고는 판매자별 소유가 없는 플랫폼 자원이다
             .route("warehouse-service") { r ->
                 r.path("/api/warehouses/**")
                     .filters { f ->
-                        f.filter(authFilter.apply(sellerConfig()))
+                        f.filter(authFilter.apply(adminConfig()))
                             .stripPrefix(0)
                     }
                     .uri("http://commerce:8085")

@@ -31,7 +31,7 @@ class ProductControllerAuthTest : BehaviorSpec({
     val transactionalService = mockk<ProductTransactionalService>()
     val eventPort = mockk<ProductEventPort>(relaxed = true)
     val service = ProductService(transactionalService, eventPort, ProductWriteAuthorizer(com.kgd.product.application.seller.InMemoryProductSellerRepository()))
-    val controller = ProductController(service, service, service, service)
+    val controller = ProductController(service, service, service, service, service)
     val mockMvc = MockMvcBuilders.standaloneSetup(controller)
         .setControllerAdvice(ProductExceptionHandler())
         .setMessageConverters(JacksonJsonHttpMessageConverter(jacksonMapperBuilder().build()))

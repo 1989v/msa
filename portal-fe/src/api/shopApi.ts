@@ -671,14 +671,10 @@ export const fetchMySeller = async (): Promise<SellerProfile> => {
   }
 };
 
-/** 그 판매자의 판매 중 상품 — 서버가 판매자로 거른다 */
-export const fetchSellerProducts = async (
-  sellerId: number,
-  page = 0,
-  size = 500,
-): Promise<ProductListResponse> => {
-  const res = await api.get<ApiResponse<ProductListResponse>>('/api/v1/products', {
-    params: { sellerId, page, size },
+/** 내 상품 전체(판매 중지 포함, 최근 등록순) — 서버가 로그인한 판매자로 정한다 */
+export const fetchSellerProducts = async (page = 0, size = 100): Promise<ProductListResponse> => {
+  const res = await api.get<ApiResponse<ProductListResponse>>('/api/v1/seller/products', {
+    params: { page, size },
   });
   return res.data.data;
 };

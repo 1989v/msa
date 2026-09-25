@@ -42,6 +42,7 @@ export async function updateProduct(id: number, data: Partial<Product>): Promise
   await apiClient.put(`/api/v1/products/${id}`, data);
 }
 
-export async function deleteProduct(id: number): Promise<void> {
+/** 판매 중지 — 행을 지우지 않고 INACTIVE 로 바꾼다(어드민 전용). 주문·정산이 상품 id 를 계속 참조한다 */
+export async function stopSellingProduct(id: number): Promise<void> {
   await apiClient.delete(`/api/v1/products/${id}`);
 }

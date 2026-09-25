@@ -70,6 +70,42 @@ class GatewayRouteAuthSpec(
         }
     }
 
+    Given("상품 판매 중지 DELETE /api/v1/products/{id} (ROLE_ADMIN)") {
+        Then("토큰이 없으면 401, ROLE_USER·ROLE_SELLER 는 403") {
+            status(HttpMethod.DELETE, "/api/v1/products/1") shouldBe 401
+            status(HttpMethod.DELETE, "/api/v1/products/1", userToken) shouldBe 403
+            status(HttpMethod.DELETE, "/api/v1/products/1", sellerToken) shouldBe 403
+        }
+        Then("ROLE_ADMIN 은 게이트웨이를 지난다") {
+            status(HttpMethod.DELETE, "/api/v1/products/1", adminToken) shouldNotBeIn listOf(401, 403, 404)
+        }
+    }
+
+    Given("재고·이행 REST (ROLE_SELLER · ROLE_ADMIN — 소유는 서비스가 판정)") {
+        Then("토큰이 없으면 401, ROLE_USER 는 403") {
+            status(HttpMethod.POST, "/api/inventories/receive") shouldBe 401
+            status(HttpMethod.PATCH, "/api/fulfillments/1/transition") shouldBe 401
+            status(HttpMethod.POST, "/api/inventories/receive", userToken) shouldBe 403
+            status(HttpMethod.PATCH, "/api/fulfillments/1/transition", userToken) shouldBe 403
+        }
+        Then("ROLE_SELLER 는 게이트웨이를 지난다") {
+            status(HttpMethod.POST, "/api/inventories/receive", sellerToken) shouldNotBeIn listOf(401, 403, 404)
+            status(HttpMethod.PATCH, "/api/fulfillments/1/transition", sellerToken) shouldNotBeIn listOf(401, 403, 404)
+        }
+    }
+
+    Given("창고 /api/warehouses/** (ROLE_ADMIN)") {
+        Then("토큰이 없으면 401, ROLE_USER·ROLE_SELLER 는 403") {
+            status(HttpMethod.GET, "/api/warehouses") shouldBe 401
+            status(HttpMethod.POST, "/api/warehouses", userToken) shouldBe 403
+            status(HttpMethod.GET, "/api/warehouses/1", sellerToken) shouldBe 403
+            status(HttpMethod.POST, "/api/warehouses", sellerToken) shouldBe 403
+        }
+        Then("ROLE_ADMIN 은 게이트웨이를 지난다") {
+            status(HttpMethod.GET, "/api/warehouses", adminToken) shouldNotBeIn listOf(401, 403, 404)
+        }
+    }
+
     Given("주문 (ROLE_USER)") {
         Then("토큰이 없으면 401") {
             status(HttpMethod.GET, "/api/v1/orders/my") shouldBe 401

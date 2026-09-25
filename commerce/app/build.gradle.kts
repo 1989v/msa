@@ -22,6 +22,8 @@ dependencies {
     implementation(project(":settlement:feature")) // ADR-0099: 원장·정산 폴드 (전용 스키마 settlement_db)
     // 메인 클래스(@SpringBootApplication) 컴파일 + bootJar 구성용 최소 의존
     implementation(libs.spring.boot.starter.web)
+    // 호스트의 @EnableKafka · 리스너 팩토리 auto-startup 적용 (CommerceApplication)
+    implementation(libs.spring.kafka)
     // 추적 — HTTP·Kafka `traceparent` 전파와 로그 MDC 의 traceId. 내보내기(exporter)는 없다 — 전파와 로그 상관만 쓴다
     implementation("org.springframework.boot:spring-boot-micrometer-tracing-brave")
     implementation("io.micrometer:micrometer-tracing-bridge-brave")

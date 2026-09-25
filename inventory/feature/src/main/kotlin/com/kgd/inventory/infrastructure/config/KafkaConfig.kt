@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.kafka.annotation.EnableKafka
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
 import org.springframework.kafka.core.ConsumerFactory
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory
@@ -22,13 +21,8 @@ import org.springframework.kafka.listener.DefaultErrorHandler
 import org.springframework.kafka.support.serializer.JacksonJsonSerializer
 import org.springframework.util.backoff.FixedBackOff
 
-/**
- * `@EnableKafka` 는 명시한다 — Boot 4 는 Kafka 자동설정이 별도 모듈(spring-boot-kafka)이고 commerce 호스트엔 없다.
- * 없으면 폴드된 모든 도메인의 `@KafkaListener` 가 하나도 등록되지 않는데 컴파일·기동은 통과한다
- * (리스너 레지스트리 빈 자체가 없다). inventory 가 호스트의 primary 도메인이라 여기 둔다. auth·search-consumer 와 같은 이유.
- */
+/** `@EnableKafka` 는 여기가 아니라 호스트(CommerceApplication)에 있다 — 호스트 전체 설정이다 */
 @Configuration
-@EnableKafka
 class KafkaConfig {
 
     @Value("\${spring.kafka.bootstrap-servers}")

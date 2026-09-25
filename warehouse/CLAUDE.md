@@ -30,6 +30,7 @@ Phase 2 분리 검토는 미착수). `commerce:app` 에 폴드된 라이브러�
 ## Key Rules
 
 - Kafka 발행/소비 없음. 다른 도메인이 창고를 알 필요가 있으면 API 로 묻는다 (DB 조인 금지)
+- `/api/warehouses/**` 는 **어드민 전용** — 게이트웨이(ROLE_ADMIN)와 컨트롤러가 두 번 본다. 창고는 판매자별 소유가 없는 플랫폼 자원이다
 - `@Transactional("warehouseTransactionManager")` 명시
 - 응답은 `ApiResponse<T>` (`WarehouseResponse`)
 

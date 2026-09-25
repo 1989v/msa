@@ -30,4 +30,7 @@ class ProductTransactionalService(
 
     @Transactional(readOnly = true)
     fun findAll(pageable: Pageable, sellerId: Long?): Page<Product> = productRepository.findAll(pageable, sellerId)
+
+    @Transactional(readOnly = true)
+    fun findAllBySeller(pageable: Pageable, sellerId: Long): Page<Product> = productRepository.findAllBySeller(pageable, sellerId)
 }

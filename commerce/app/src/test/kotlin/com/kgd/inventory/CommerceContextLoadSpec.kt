@@ -1,6 +1,11 @@
 package com.kgd.inventory
 
 import com.kgd.commerce.CommerceApplication
+import com.kgd.product.application.product.usecase.CreateProductUseCase
+import com.kgd.product.application.product.usecase.GetAllProductsUseCase
+import com.kgd.product.application.product.usecase.GetSellerProductsUseCase
+import com.kgd.product.application.product.usecase.ProductRequester
+import com.kgd.product.application.product.usecase.StopSellingProductUseCase
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.booleans.shouldBeTrue
@@ -444,6 +449,51 @@ class CommerceContextLoadSpec(
                 )
 
                 outbox.findAll().count { it.eventType == "product.item.created" } shouldBe before + 1
+            }
+
+        Then("판매자 상품 목록: 판매 중지 포함 · id 내림차순, 공개 목록은 판매 중만 · id 오름차순 (정렬이 실제 SQL 에 실린다)")
+            .config(enabledIf = { dockerAvailable }) {
+                ctx.getBean(com.kgd.product.application.seller.usecase.SyncProductSellerUseCase::class.java).execute(
+                    com.kgd.product.application.seller.usecase.SyncProductSellerUseCase.Command(
+                        770L, "ctx-product-seller", "ACTIVE", java.time.Instant.parse("2026-09-25T00:00:00Z"),
+                    ),
+                )
+                val sellerReq = ProductRequester("ctx-product-seller", setOf("ROLE_SELLER"))
+                val admin = ProductRequester("1", setOf("ROLE_ADMIN"))
+                val create = ctx.getBean(CreateProductUseCase::class.java)
+                val ids = (1..3).map { create.execute(CreateProductUseCase.Command(name = "sort-$it", price = 1000L, stock = 1), sellerReq).id }
+                ctx.getBean(StopSellingProductUseCase::class.java).execute(ids[1], admin).status shouldBe "INACTIVE"
+
+                val mine = ctx.getBean(GetSellerProductsUseCase::class.java)
+                    .execute(GetSellerProductsUseCase.Query(0, 10), sellerReq).products
+                mine.map { it.id } shouldBe ids.reversed()
+                mine.single { it.id == ids[1] }.status shouldBe "INACTIVE"
+
+                ctx.getBean(GetAllProductsUseCase::class.java)
+                    .execute(GetAllProductsUseCase.Query(0, 10, 770L)).products.map { it.id } shouldBe listOf(ids[0], ids[2])
+            }
+
+        Then("재고 소유 읽기 모델: 이벤트 반영이 inventory_db 에 쓰이고, 판정이 그 행을 읽는다")
+            .config(enabledIf = { dockerAvailable }) {
+                val sync = ctx.getBean(com.kgd.inventory.application.ownership.usecase.SyncOwnershipUseCase::class.java)
+                val t0 = java.time.Instant.parse("2026-09-25T00:00:00Z")
+                sync.syncSeller(com.kgd.inventory.application.ownership.usecase.SyncOwnershipUseCase.Seller(771L, "ctx-inv-seller", "ACTIVE", t0))
+                sync.syncProduct(com.kgd.inventory.application.ownership.usecase.SyncOwnershipUseCase.Product(97_001L, 771L, t0))
+                sync.syncProduct(com.kgd.inventory.application.ownership.usecase.SyncOwnershipUseCase.Product(97_002L, 772L, t0))
+                val authorizer = ctx.getBean(com.kgd.inventory.application.ownership.service.InventoryAccessAuthorizer::class.java)
+                val seller = com.kgd.inventory.application.ownership.usecase.InventoryRequester("ctx-inv-seller", setOf("ROLE_SELLER"))
+                authorizer.requireProductAccess(seller, listOf(97_001L))
+                io.kotest.assertions.throwables.shouldThrow<com.kgd.common.exception.ForbiddenException> {
+                    authorizer.requireProductAccess(seller, listOf(97_002L))
+                }
+            }
+
+        Then("리스너 컨테이너는 등록되고, spring.kafka.listener.auto-startup=false 가 도메인 팩토리 전부에 먹는다")
+            .config(enabledIf = { dockerAvailable }) {
+                val registry = ctx.getBean(org.springframework.kafka.config.KafkaListenerEndpointRegistry::class.java)
+                val containers = registry.allListenerContainers
+                (containers.size > 20) shouldBe true
+                containers.filter { it.isRunning }.map { it.listenerId } shouldBe emptyList()
             }
 
         // 주문 단위 예약을 실제 MySQL 로 — FOR UPDATE 잠금 쿼리가 돌고, 모자란 라인이 있으면 행이 하나도 안 남는다.

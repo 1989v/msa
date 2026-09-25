@@ -6,7 +6,7 @@ import {
   fetchProducts,
   createProduct,
   updateProduct,
-  deleteProduct,
+  stopSellingProduct,
 } from '@/api/products';
 import type { Product } from '@/api/products';
 import { DataTable } from '@/components/common/DataTable';
@@ -171,8 +171,8 @@ export function ProductsPage() {
     queryFn: () => fetchProducts(page, 20, search || undefined),
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) => deleteProduct(id),
+  const stopMutation = useMutation({
+    mutationFn: (id: number) => stopSellingProduct(id),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['products'] });
     },
@@ -197,10 +197,10 @@ export function ProductsPage() {
     setDialogOpen(true);
   };
 
-  const handleDelete = (e: React.MouseEvent, id: number) => {
+  const handleStopSelling = (e: React.MouseEvent, id: number) => {
     e.stopPropagation();
-    if (confirm('삭제하시겠습니까?')) {
-      deleteMutation.mutate(id);
+    if (confirm('판매를 중지하시겠습니까? 상품은 지워지지 않고 목록·주문에서 빠집니다.')) {
+      stopMutation.mutate(id);
     }
   };
 
@@ -227,16 +227,17 @@ export function ProductsPage() {
     columnHelper.display({
       id: 'actions',
       header: '',
-      cell: ({ row }) => (
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={(e) => handleDelete(e, row.original.id)}
-          disabled={deleteMutation.isPending}
-        >
-          삭제
-        </Button>
-      ),
+      cell: ({ row }) =>
+        row.original.status === 'ACTIVE' ? (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={(e) => handleStopSelling(e, row.original.id)}
+            disabled={stopMutation.isPending}
+          >
+            판매 중지
+          </Button>
+        ) : null,
     }) as ColumnDef<Product, string>,
   ];
 

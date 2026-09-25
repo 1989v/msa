@@ -187,3 +187,10 @@
   - 운영 큐 8개 도메인 API 전부 응답, OPEN 0
 - 정산서: 판매자 2 는 WEEKLY — 기간이 닫히는 다음 주 배치(05:30 KST)에서 첫 정산서가 나온다(열린 기간은 설계상 정산하지 않음)
 - 점검 데이터: 창고 1 · 판매자 2(`ops-e2e-seller-20260925`) · 상품 97 · 주문 1·2 · 클레임 1·2
+
+## 미결 후속 W1 — 보안·정합성 (2026-09-25)
+- `./gradlew verifyArchitecture :common:test :gateway:test :order:domain:test :order:feature:test :product:domain:test :product:feature:test :inventory:feature:test :fulfillment:feature:test :warehouse:feature:test :commerce:app:test` → exit 0, 전 모듈 실패 0 (로컬 Docker 복구 후 실행)
+  - InventoryControllerOwnershipTest 8/0 · FulfillmentControllerOwnershipTest 7/0 · ExceptionHandlerScopeTest 3/0 · OrderSagaIdempotencyIntegrationSpec 10/0 · CommerceContextLoadSpec 12/0 · E2E 19/0
+- portal-fe·admin `tsc -b --force` 0
+- Q20 재고·이행 소유 판정(각자 상품→판매자·판매자 ACTIVE 읽기 모델), 창고 어드민 전용 · Q3 예외 처리기 basePackages · Q4 상품 DELETE = 판매 중지 · Q10 어드민 등록은 플랫폼 판매자 · Q12 판매자 전용 목록 + 정렬 · Q16 @EnableKafka → CommerceApplication · Q18 회원 행 잠금 + 멱등 키 본문 해시(다른 본문 422)
+- 회귀 주입 5종 빨간불(소유 비교 삭제 · 이행 판정 무력화 · FOR UPDATE 삭제 · basePackages 제거 · auto-startup 적용 제거)

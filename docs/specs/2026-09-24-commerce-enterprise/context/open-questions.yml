@@ -97,3 +97,7 @@ questions:
     phase: post-impl
     status: open
     question: 금액 축소 단계(SR-13)는 다음 릴리스 몫 — 옛 컬럼 products.price · order_items.unit_price 삭제와 price_won · unit_price_won NOT NULL 전환. 지금은 확장 단계라 코드가 새 컬럼을 읽고 옛 컬럼에도 같은 값을 쓴다. 삭제 전 선행 — ① search:batch ProductDbReindexJobConfig 가 product_db 의 옛 price 컬럼을 SQL 로 직접 읽는다(price_won 으로 바꿔야 함) ② 롤백 기간에 옛 코드가 쓴 행은 price_won/unit_price_won 이 NULL 이라 백필 UPDATE 재실행 필요 ③ 두 마이그레이션의 소수부 가드(임시 테이블 CHECK)는 로컬 Docker 없이 Testcontainers 로 미검증
+  - id: Q25
+    phase: post-impl
+    status: open
+    question: Q3 부수 효과 — inventory·fulfillment·warehouse·deal 은 이제 공통 GlobalExceptionHandler 가 처리해 재고 REST INSUFFICIENT_STOCK 이 409→400, INVALID_FULFILLMENT_STATUS 는 매핑 없어 500(기존). 이행 조회는 라인 하나라도·쓰기는 전부 자기 상품 규칙(해석) · 없는 이행 id 404 로 존재 노출

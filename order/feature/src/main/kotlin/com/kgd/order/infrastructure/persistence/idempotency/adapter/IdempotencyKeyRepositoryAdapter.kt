@@ -16,14 +16,14 @@ class IdempotencyKeyRepositoryAdapter(
         jpa.saveAndFlush(
             IdempotencyKeyJpaEntity(
                 userId = key.userId, idemKey = key.key, status = key.status, leaseUntil = key.leaseUntil,
-                response = key.response, createdAt = key.createdAt,
+                response = key.response, createdAt = key.createdAt, requestHash = key.requestHash,
             ),
         )
     }
 
     override fun find(userId: String, key: String): IdempotencyKey? =
         jpa.findByUserIdAndIdemKey(userId, key)?.let {
-            IdempotencyKey.restore(it.userId, it.idemKey, it.status, it.leaseUntil, it.response, it.createdAt)
+            IdempotencyKey.restore(it.userId, it.idemKey, it.status, it.leaseUntil, it.response, it.createdAt, it.requestHash)
         }
 
     override fun takeOver(userId: String, key: String, now: Instant, leaseUntil: Instant): Boolean =

@@ -27,4 +27,6 @@ class IdempotencyKeyJpaEntity(
     @Column(name = "lease_until", nullable = false) var leaseUntil: Instant,
     @Column(name = "response", length = 2000) var response: String?,
     @Column(name = "created_at", nullable = false) val createdAt: Instant,
+    /** 요청 본문 SHA-256(hex) — 같은 키에 다른 본문을 거절하는 근거. 열 추가 전 행은 null */
+    @Column(name = "request_hash", length = 64) val requestHash: String? = null,
 )
