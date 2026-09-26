@@ -29,6 +29,10 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "kubernetes"
+            # 로그인 때 회원을 찾거나 만드는 곳(/api/members/sso). ADR-0093 으로 member 는 account 파드에 있다 —
+            # commerce 를 가리키면 로그인이 404 로 전부 실패한다(2026-09-27 구글 로그인 「내부 서버 오류」).
+            - name: MEMBER_API_BASE_URL
+              value: "http://account:8093"
             # JWT 서명 키 — gateway 와 **같은 값**이어야 한다. 다르면 auth 가 발급한 토큰을
             # gateway 가 검증할 수 없어 전 API 가 401 이 된다 (2026-08-09 어드민 로그인 장애).
             # optional: true — 시크릿이 없으면 application.yml 의 로컬 기본값으로 기동한다.
