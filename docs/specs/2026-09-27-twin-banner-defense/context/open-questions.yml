@@ -2,9 +2,10 @@ status: design-review
 questions:
   - id: reference-game
     stage: pre-impl
-    status: open
+    status: closed
     question: 사용자가 이어받으려는 기존 게임은 무엇인가?
-    proposed: 전란의 시대물 콘셉트와 귀야행의 실루엣 규칙을 참고
+    answer: 조선판 포트리스인 사태에서 참고/진행한 디자인들과 디자인 컨셉
+    decided_at: 2026-09-27
   - id: multiplayer-mode
     stage: pre-impl
     status: closed
@@ -14,7 +15,8 @@ questions:
   - id: visual-direction
     stage: pre-impl
     status: open
-    question: 짧은 비례의 채색형 무장과 병기 화풍, 가칭 쌍성 수비대를 채택하는가?
+    question: 사태의 최신 무장 기준을 따른 병사·병기·적·이동로 수정 시안과 가칭을 채택하는가?
+    rejected: 초기 일반 채색 시안은 사태 화풍과 다름. 후속 정적 SVG 시안의 적·길 품질은 사용자 지적.
   - id: solo-rule
     stage: pre-impl
     status: open

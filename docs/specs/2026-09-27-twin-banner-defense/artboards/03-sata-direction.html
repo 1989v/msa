@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>구도 비교 기록 — 적·길 아트 품질 기각</title>
+<style>
+/* Root DESIGN.md + Sata character palette. Review-only artboard, no game simulation. */
+:root{--paper:#F9F8F2;--ink:#1D1D1F;--ochre:#B38B6D;--blue:#2B4B63;--red:#A2231D;--pine:#1A472A;--cloth:#DAD5C8;--iron:#565C68;--navy:#2F4B7E;--sky:#9FBFD3;--earth:#8A6A50;--skin:#F7C79C}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:'Gowun Dodum',Pretendard,system-ui,sans-serif}main{max-width:1440px;margin:auto;padding:28px 36px}header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:20px}h1{font-family:'Nanum Myeongjo','AppleMyungjo',serif;font-size:34px;margin:0}header p{font-size:14px;margin:0;color:var(--earth)}.layout{display:grid;grid-template-columns:minmax(0,1fr) 244px;gap:24px}.game{border:3px solid var(--ink);border-radius:12px;overflow:hidden;background:var(--cloth)}.hud{display:flex;justify-content:space-between;align-items:center;background:var(--ink);color:var(--paper);padding:15px 22px;gap:24px}.hud b{font-size:18px}.health{flex:1;max-width:310px}.health div{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}.bar{height:10px;border:2px solid var(--paper);border-radius:5px}.bar:after{content:'';display:block;background:var(--ochre);width:90%;height:100%}.board{display:block;width:100%;aspect-ratio:1040/625}.toolbar{display:flex;gap:12px;align-items:center;background:var(--ink);color:var(--paper);padding:16px 22px}.currency{margin-right:auto;min-width:72px}.currency small{display:block;color:var(--ochre);font-size:12px}.currency b{font-size:26px}.control{padding:12px 18px;border:2px solid var(--paper);border-radius:8px;font-size:15px;min-height:48px}.control.primary{background:var(--red);font-weight:700}.control.secondary{background:var(--ochre);color:var(--ink);border-color:var(--ochre)}aside h2{font-family:'Nanum Myeongjo','AppleMyungjo',serif;font-size:22px;margin:0 0 8px}aside>p{font-size:13px;line-height:1.6;margin:0 0 18px}.unit-row{display:flex;align-items:center;border-top:1px solid var(--ochre);height:105px}.portrait{width:91px;height:99px;display:flex;align-items:center;justify-content:center;overflow:hidden}.portrait svg{height:123px;width:82px}.unit-copy b{display:block;font-size:16px;margin-bottom:4px}.unit-copy small{font-size:12px;color:var(--earth)}.note{border-top:2px solid var(--ink);padding-top:12px;font-size:13px;line-height:1.7}.footer{display:flex;gap:28px;justify-content:space-between;margin-top:18px;font-size:13px;line-height:1.7}.footer strong{display:block;font-size:15px}.badge{background:var(--blue);color:var(--paper);padding:4px 8px;border-radius:4px;font-size:12px}.bottom-note{margin-top:16px;color:var(--earth);font-size:12px}svg text{font-family:'Gowun Dodum',system-ui,sans-serif;fill:var(--ink)}@media(max-width:800px){main{padding:16px}.layout{grid-template-columns:1fr}header{display:block}header p{margin-top:8px}aside{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}aside h2,aside>p,.note{grid-column:1/-1}.footer{display:block}.toolbar{gap:8px;padding:12px}.control{padding:12px 8px;font-size:12px}}
+</style>
+<main>
+<header><h1>쌍성 수비대</h1><p>구도 비교 기록 · 적과 길의 품질 미달로 아트 기준 채택 안 함</p></header>
+<div class="layout">
+<section class="game" aria-label="협동 전투 화면의 정적 디자인 시안">
+<div class="hud"><b>온라인 협동</b><div class="health"><div><span>함께 지키는 성문</span><span>18 / 20</span></div><div class="bar"></div></div><b>8 / 20 <small>웨이브</small></b></div>
+<svg class="board" viewBox="0 0 1040 625" role="img" aria-label="좌우 4 곱하기 4 진영과 공동 성문, 외곽의 적 이동로">
+<defs>
+<pattern id="stone" width="56" height="24" patternUnits="userSpaceOnUse"><path d="M0 0H56V24H0ZM28 0V24" fill="var(--iron)" stroke="var(--ink)" stroke-width="2"/></pattern>
+<g id="pine"><path d="M0 30V80M0 52L-20 38M0 39L18 28" stroke="var(--earth)" stroke-width="10" stroke-linecap="round"/><path d="M-43 35Q-47 11 -20 14Q-14 -11 11 1Q37 -7 40 19Q65 44 27 44H-21Q-37 48 -43 35Z" fill="var(--pine)" stroke="var(--ink)" stroke-width="4"/></g>
+<g id="enemy"><path d="M-12 8L-17 30H17L12 8Z" fill="var(--earth)" stroke="var(--ink)" stroke-width="3"/><path d="M-8 29L-10 36M8 29L10 36" stroke="var(--ink)" stroke-width="6" stroke-linecap="round"/><ellipse cy="-1" rx="11" ry="14" fill="var(--skin)" stroke="var(--ink)" stroke-width="3"/><path d="M-15 -5L-9 -16L9 -16L15 -5Z" fill="var(--cloth)" stroke="var(--ink)" stroke-width="3"/><path d="M-7 -1H-3M3 -1H7M-4 6H4M19 10L26 30" stroke="var(--ink)" stroke-width="2"/></g>
+<g id="arrow"><path d="M-12 0H12M5 -7L12 0L5 7" fill="none" stroke="var(--paper)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></g>
+</defs>
+<rect width="1040" height="625" fill="var(--cloth)"/>
+<path d="M26 88Q97 41 208 56T408 48M660 40Q789 14 1026 64" fill="none" stroke="var(--paper)" stroke-width="25"/>
+<rect x="330" y="0" width="380" height="100" fill="url(#stone)" stroke="var(--ink)" stroke-width="4"/>
+<path d="M462 100V53Q520 4 578 53V100Z" fill="var(--earth)" stroke="var(--ink)" stroke-width="4"/>
+<path d="M480 40V100M500 26V100M520 24V100M540 26V100M560 40V100" stroke="var(--ink)" stroke-width="3"/>
+<path d="M430 15L466 -7H574L610 15L590 28H450Z" fill="var(--ink)"/>
+<path d="M520 99V130H955V551H85V130H430" fill="none" stroke="var(--ink)" stroke-width="57" stroke-linejoin="round"/>
+<path d="M520 99V130H955V551H85V130H430" fill="none" stroke="var(--ochre)" stroke-width="49" stroke-linejoin="round"/>
+<path d="M520 99V130H955V551H85V130H430" fill="none" stroke="var(--paper)" stroke-opacity=".45" stroke-width="2" stroke-dasharray="5 13"/>
+<use href="#arrow" x="420" y="551" transform="rotate(180 420 551)"/><use href="#arrow" x="700" y="551" transform="rotate(180 700 551)"/><use href="#arrow" x="85" y="390" transform="rotate(-90 85 390)"/><use href="#arrow" x="955" y="330" transform="rotate(90 955 330)"/><use href="#arrow" x="775" y="130"/><use href="#arrow" x="300" y="130"/>
+<g id="grids"></g>
+<g><rect x="195" y="170" width="278" height="30" rx="4" fill="var(--blue)"/><text x="334" y="191" text-anchor="middle" style="fill:var(--paper)" font-size="15">● 나의 진영</text><rect x="568" y="170" width="278" height="30" rx="4" fill="var(--red)"/><text x="707" y="191" text-anchor="middle" style="fill:var(--paper)" font-size="15">◆ 동료의 진영</text></g>
+<g id="units"></g>
+<g id="enemies"><use href="#enemy" x="219" y="122"/><use href="#enemy" x="85" y="251"/><use href="#enemy" x="85" y="447"/><use href="#enemy" x="259" y="540"/><use href="#enemy" x="808" y="540"/><use href="#enemy" x="955" y="430"/><use href="#enemy" x="955" y="243"/><use href="#enemy" x="837" y="121"/></g>
+<path d="M229 220L213 149M785 437L814 513" stroke="var(--ink)" stroke-width="2" stroke-dasharray="6 8"/><path d="M205 154L213 145L220 151M806 509L816 519L822 509" fill="none" stroke="var(--ink)" stroke-width="3"/>
+<g fill="none" stroke="var(--ochre)" stroke-width="3"><circle cx="955" cy="430" r="24"/><path d="M921 418L912 414M980 449L988 456M972 406L980 396"/></g>
+<use href="#pine" x="42" y="12"/><use href="#pine" x="966" y="12"/><use href="#pine" x="26" y="546"/><use href="#pine" x="1009" y="533"/>
+<text x="520" y="609" text-anchor="middle" font-size="14">같은 성문, 두 사람의 진영</text>
+</svg>
+<div class="toolbar"><div class="currency"><small>군량</small><b>240</b></div><span class="control primary">소환 · 50</span><span class="control secondary">병종 강화</span><span class="control">동료 지원</span></div>
+</section>
+<aside><h2>사태의 무장 그대로</h2><p>긴 두정갑과 절제된 투구.<br>먹선과 평면 채색으로 읽히는 병과.</p><div id="roster"></div><div class="note"><span class="badge">싱글 플레이</span><br>내 진영 + 동료 AI를 제안합니다.<br>화차·군악수는 같은 조형으로 확장.</div></aside>
+</div>
+<div class="footer"><div><strong>한국 무장의 실루엣</strong>갓 · 전립 · 드림 달린 투구 · 긴 포형 갑옷</div><div><strong>팀색은 깃발과 허리띠</strong>청 / 홍 갑옷으로 인물 전체를 칠하지 않습니다.</div><div><strong>격자 위에서 읽히는 전투</strong>한 칸에 한 유닛. 병종별 무기와 자세로 구별.</div></div>
+<p class="bottom-note">검토용 정적 시안입니다. 사태 원본 SVG를 배치했으며 탑뷰 방향별 동작, 사거리·길 연결, 싱글 규칙과 수치는 구현 전 확정합니다.</p>
+</main>
+<script src="../../2026-09-13-landslide/design/art/artboards/characters.js"></script>
+<script>
+const NS='http://www.w3.org/2000/svg';
+const baseX=[195,568], baseY=211, cell=68;
+for(let p=0;p<2;p++)for(let r=0;r<4;r++)for(let c=0;c<4;c++){
+ const tile=document.createElementNS(NS,'rect');Object.entries({x:baseX[p]+c*cell,y:baseY+r*cell,width:cell-6,height:cell-6,rx:4,fill:'var(--paper)',stroke:'var(--ochre)','stroke-width':2,'data-tile':`${p}:${r}:${c}`}).forEach(([k,v])=>tile.setAttribute(k,v));document.querySelector('#grids').append(tile);
+}
+const setup=[[0,0,0,'archer'],[0,0,3,'spear'],[0,1,1,'gunner'],[0,3,0,'shield'],[0,3,2,'sword'],[1,0,0,'sword'],[1,0,3,'archer'],[1,1,2,'gunner'],[1,3,0,'spear'],[1,3,3,'shield']];
+for(const[p,r,c,kind]of setup){
+ const g=document.createElementNS(NS,'g');g.setAttribute('data-soldier',kind);g.setAttribute('transform',`translate(${baseX[p]+c*cell+9} ${baseY+r*cell-15})`);
+ g.innerHTML=Sata.render(kind,{h:49,team:p?'red':'blue',skin:'joseon'});document.querySelector('#units').append(g);
+}
+const roles={archer:'단일 표적 · 긴 사거리',gunner:'범위 포격 · 무거운 한 발',sword:'검기 · 경로 관통',spear:'직선 찌르기 · 밀집 대응',shield:'진격 저지 · 동료 보호'};
+document.querySelector('#roster').innerHTML=Object.entries(roles).map(([kind,role])=>`<div class="unit-row"><div class="portrait">${Sata.render(kind,{h:80,team:'red',skin:'joseon'})}</div><div class="unit-copy"><b>${Sata.names[kind]}</b><small>${role}</small></div></div>`).join('');
+</script>
+</html>
