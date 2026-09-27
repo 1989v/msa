@@ -189,9 +189,9 @@
 | srch-transliteration | · · · · 음차 · 로마자 변환 (MECHANISM) | 지도 §3 | placed |
 | srch-cross-lingual-expansion | · · · · 교차 언어 확장 (MECHANISM) | 지도 §3 · 벡터 노트 E §04 | placed |
 | srch-pseudo-relevance-feedback | · · · · 의사 적합성 피드백 (MECHANISM) | 분야 표준 | placed |
-| srch-query-rewriting | · · · 질의 재작성 (MECHANISM) | 지도 §3 | placed |
+| srch-query-rewriting | · · · 쿼리 리포뮬레이션 (MECHANISM) | 지도 §3 | placed |
 | srch-llm-query-rewrite | · · · · LLM 질의 재작성 (MECHANISM) | 지도 §3 · 벡터 노트 E §10 | placed |
-| srch-zero-result-recovery | · · · 0건 복구 (MECHANISM) | 지도 §3 · 벡터 노트 E §02 | placed |
+| srch-zero-result-recovery | · · · 0건 대체 결과 (MECHANISM) | 지도 §3 · 벡터 노트 E §02 | placed |
 | srch-policy-switch | · · · 랭킹 정책 스위치 (MECHANISM) | 지도 §3 | placed |
 | srch-morpheme-fragment-noise | · · · 형태소 조각 오탐 (PROBLEM) | 벡터 노트 E 서문 · §03 | placed |
 | srch-zero-result | · · · 0건 (PROBLEM) | 지도 §3 | placed |
@@ -378,7 +378,7 @@
 | srch-slate-bandit | · · · · 슬레이트 · 캐스케이드 밴딧 (MECHANISM) | study/19 §G (slate-cascade 후속) | placed |
 | srch-north-star-guardrail | · · · 노스스타 · 가드레일 지표 (MECHANISM) | study/19 §H · #45 §5-2 | placed |
 | srch-shadow-traffic | · · · 섀도 트래픽 (MECHANISM) | study/19 §H · #45 §9-2 | excluded — 같은 개념 infra-shadow-traffic 로 합쳤다 |
-| srch-ramp-up | · · · 단계적 확대 (MECHANISM) | study/19 §H · #45 §9-4 | placed |
+| srch-ramp-up | · · · 점진적 롤아웃 (MECHANISM) | study/19 §H · #45 §9-4 | placed |
 | srch-ab-sample-size | · · · 표본 크기 · 유의성 검정 (MECHANISM) | study/19 §H · #45 §9-3 | placed |
 | srch-sequential-testing | · · · · 순차 검정 (MECHANISM) | study/19 §H (SPRT) | placed |
 | srch-click-models | · · · 클릭 모델 (MECHANISM) | study/19 §H (click model) | placed |
