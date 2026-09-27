@@ -57,6 +57,11 @@ spec:
             # 2026-09-21 실측 RssAnon 1.52 GB 중 힙이 512 뿐이라 나머지 1 GB 의 내역이 없었다. jcmd 1 VM.native_memory summary
             - name: OPENSEARCH_JAVA_OPTS
               value: "-Xms512m -Xmx512m -XX:NativeMemoryTracking=summary"
+            # glibc 는 스레드마다 malloc 아레나를 늘려 코어 × 8 개까지 만든다(4코어 = 32 + 메인).
+            # 아레나는 free 한 메모리를 OS 에 잘 돌려주지 않아 힙 밖 anon 이 계속 늘었다 — 2026-09-27 실측
+            # 64MB 경계 익명 영역 34개가 RSS 610 MB, 재시작 5일 만에 RssAnon 1.01 → 1.46 GB. NMT 에는 안 보인다.
+            - name: MALLOC_ARENA_MAX
+              value: "2"
             - name: cluster.name
               value: "commerce-local"
           readinessProbe:
