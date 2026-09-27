@@ -18,7 +18,7 @@ import com.kgd.ads.infrastructure.persistence.category.repository.HostCategoryJp
 import com.kgd.ads.infrastructure.persistence.creative.repository.CreativeAssetJpaRepository
 import com.kgd.ads.infrastructure.persistence.creative.repository.CreativeJpaRepository
 import com.kgd.ads.infrastructure.persistence.ledger.repository.LedgerAccountJpaRepository
-import com.kgd.ads.infrastructure.persistence.placement.repository.PlacementJpaRepository
+import com.kgd.ads.infrastructure.persistence.placement.adapter.PlacementLoader
 import com.kgd.ads.infrastructure.persistence.settlement.repository.AdvertiserSettledThroughJpaRepository
 import com.kgd.ads.infrastructure.persistence.settlement.repository.SettlementJpaRepository
 import com.kgd.ads.infrastructure.persistence.stats.repository.CreativeHourlyJpaRepository
@@ -42,7 +42,7 @@ class CandidateSourceAdapter(
     private val campaignCategoryRepository: CampaignCategoryJpaRepository,
     private val creativeRepository: CreativeJpaRepository,
     private val creativeAssetRepository: CreativeAssetJpaRepository,
-    private val placementRepository: PlacementJpaRepository,
+    private val placementLoader: PlacementLoader,
     private val contextMappingRepository: ContextMappingJpaRepository,
     private val hostCategoryRepository: HostCategoryJpaRepository,
     private val ledgerAccountRepository: LedgerAccountJpaRepository,
@@ -70,18 +70,18 @@ class CandidateSourceAdapter(
                 row.toDomain(kind, placementKeys[row.id].orEmpty().toSet(), categoryCodes[row.id].orEmpty().toSet())
             }
         }
-        val kindOfCampaign = campaigns.associate { requireNotNull(it.id) to it.advertiserKind }
+        val campaignById = campaigns.associateBy { requireNotNull(it.id) }
         val creativeRows = creativeRepository.findAllByCampaignIdInAndStatus(campaignIds, CreativeStatus.APPROVED)
         val creatives = creativeRows.mapNotNull { row ->
-            val kind = kindOfCampaign[row.campaignId] ?: return@mapNotNull null
-            skipInvalid("소재 ${row.id}") { row.toDomain(kind) }
+            val campaign = campaignById[row.campaignId] ?: return@mapNotNull null
+            skipInvalid("소재 ${row.id}") { row.toDomain(campaign.advertiserKind, campaign.creativeFormat) }
         }
         val imageSizes = creativeAssetRepository.findAllById(creatives.mapNotNull { it.content.imageHash }.toSet())
             .associate { it.hash to ImageSize(it.width, it.height) }
 
         val memberAdvertiserIds = advertisers.filter { it.kind == AdvertiserKind.MEMBER }.mapNotNull { it.id }
         return CandidateSource(
-            placements = placementRepository.findAllByActiveTrue().mapNotNull { skipInvalid("지면 ${it.placementKey}") { it.toDomain() } },
+            placements = placementLoader.findActive { key, e -> log.warn { "광고 후보 인덱스에서 제외: 지면 $key — ${e.message}" } },
             contextMappings = contextMappingRepository.findAll().associate { it.contextKey to it.categoryCode },
             hostCategories = hostCategoryRepository.findAll().associate { it.host to it.categoryCode },
             advertisers = advertisers,

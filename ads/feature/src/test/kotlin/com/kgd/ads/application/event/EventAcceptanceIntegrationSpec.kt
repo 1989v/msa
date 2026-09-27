@@ -88,6 +88,36 @@ class EventAcceptanceIntegrationSpec(
             AdsRedisKeys.creativeFieldPrefix(s.creativeId, s.campaignId, s.advertiserId, key) + ":" + metric,
         )
 
+    given("★ 띠배너 우승자") {
+        then("노출은 카드와 같은 경로로 한 번 과금되고(CPM), 클릭은 랜딩으로 보내며 한 번 과금된다(CPC)") {
+            fixtures.placement("e-strip", formats = listOf(AdsFixtures.CARD, AdsFixtures.BANNER))
+            val advertiserId = fixtures.memberAdvertiser(12_501)
+            val cpm = fixtures.paidCampaign(advertiserId, listOf("e-strip"), bidMicros = 60_000, format = "BANNER")
+            val creativeId = fixtures.paidCreative(cpm, advertiserId, width = 1280, height = 200, title = "띠배너", body = "")
+            refreshIndex.refresh()
+            val s = Setup(advertiserId, cpm, creativeId)
+
+            val ad = decisions.decide(listOf("e-strip"), visitorId = "vid-strip").placement("e-strip")["ad"]
+            ad["format"].asString() shouldBe "BANNER"
+            events.events(listOf(ad["impressionToken"].asString()), visitorId = "vid-strip").accepted shouldBe 1
+            events.events(listOf(ad["impressionToken"].asString()), visitorId = "vid-strip").rejected("duplicate") shouldBe 1
+            campaignSpend(cpm) shouldBe 60L
+            creativeCounter(s, "e-strip", AdsRedisKeys.METRIC_IMPRESSIONS) shouldBe "1"
+            creativeCounter(s, "e-strip", AdsRedisKeys.METRIC_SPEND) shouldBe "60"
+
+            fixtures.placement("e-strip-cpc", formats = listOf(AdsFixtures.BANNER))
+            val cpcAdvertiser = fixtures.memberAdvertiser(12_502)
+            val cpc = fixtures.paidCampaign(cpcAdvertiser, listOf("e-strip-cpc"), bidType = "CPC", bidMicros = 7_000, format = "BANNER")
+            fixtures.paidCreative(cpc, cpcAdvertiser, width = 1280, height = 200, title = "띠배너", body = "")
+            refreshIndex.refresh()
+            val clickUrl = decisions.decide(listOf("e-strip-cpc"), visitorId = "vid-strip").placement("e-strip-cpc")["ad"]["clickUrl"].asString()
+            val redirect = events.click(clickUrl.substringAfterLast('/'), visitorId = "vid-strip")
+            redirect.statusCode() shouldBe 302
+            redirect.headers().firstValue("Location").orElse(null) shouldBe "https://example.com/landing"
+            campaignSpend(cpc) shouldBe 7_000L
+        }
+    }
+
     given("★ 같은 노출 토큰을 두 번 내면") {
         then("과금은 한 번, 두 번째는 duplicate — 지출·노출·빈도·광고주 지출이 한 번만 오른다") {
             val s = paidSetup("e-dup", memberId = 9001)

@@ -5,6 +5,7 @@ import com.kgd.ads.domain.advertiser.model.AdvertiserKind
 import com.kgd.ads.domain.campaign.exception.InvalidCampaignException
 import com.kgd.ads.domain.ledger.model.Credits
 import com.kgd.ads.domain.placement.model.AdPlacement
+import com.kgd.ads.domain.placement.model.PlacementFormat
 import java.time.LocalDateTime
 
 /**
@@ -12,6 +13,9 @@ import java.time.LocalDateTime
  *
  * PAID 는 [draftPaid] 로만, HOUSE 는 [draftHouse] 로만 만든다 — HOUSE 팩토리에는 입찰·예산·빈도
  * 인자가 없어 HOUSE 가 예산을 갖는 조합을 만들 수 없다.
+ *
+ * 광고 형태([creativeFormat])는 만들 때 정하고 바꾸는 경로가 없다 — 소재 종류·이미지 비율·최저가가 모두 형태를 따르므로,
+ * 바꿀 수 있으면 이미 올린 소재와 어긋난다. HOUSE 는 형태가 의미 없어 카드로 두고 형태 규격 검사를 받지 않는다.
  *
  * 「기간 밖」·「예산 소진」은 상태로 두지 않는다. 상태를 바꾸면 기간이 늘거나 예산이 채워졌을 때
  * 누가 되돌릴지가 생기므로, [isRunningAt]·[hasBudgetFor]·[isUnderHourlyCap]·[isUnderFrequencyCap] 가 매번 파생한다.
@@ -21,6 +25,7 @@ class Campaign private constructor(
     val advertiserId: Long,
     val advertiserKind: AdvertiserKind,
     val name: String,
+    val creativeFormat: PlacementFormat,
     status: CampaignStatus,
     val bid: Bid?,
     val dailyBudgetMicros: Long?,
@@ -68,16 +73,16 @@ class Campaign private constructor(
 
     /**
      * 게재를 켜기 전(시작·재개) 저장 불변식을 지금의 지면 값으로 다시 확인한다 — 저장 뒤 최저가가 오르거나
-     * 지면이 HOUSE 전용으로 바뀌었으면 켜지 않는다. 멈추는 전이(일시정지·종료)는 확인하지 않는다: 멈추는 것은 항상 되어야 한다.
+     * 캠페인 형태의 규격이 지워졌거나 지면이 HOUSE 전용으로 바뀌었으면 켜지 않는다. HOUSE 는 지면 키만 본다. 멈추는 전이(일시정지·종료)는 확인하지 않는다: 멈추는 것은 항상 되어야 한다.
      * [placements] 는 이 캠페인이 타기팅한 지면 전부여야 한다.
      */
     fun verifyTargeting(placements: List<AdPlacement>) {
         if (placements.map { it.key }.toSet() != placementKeys) invalid("타기팅 지면 중 등록부에 없는 것이 있습니다")
-        if (priority == CampaignPriority.PAID) requirePaidTargeting(requireNotNull(bid), placements)
+        if (priority == CampaignPriority.PAID) requirePaidTargeting(requireNotNull(bid), creativeFormat, placements)
     }
 
     /**
-     * 유료 캠페인의 내용을 바꾼 새 값. 상태는 그대로이고, 저장 불변식은 [draftPaid] 와 같은 검사를 다시 거친다.
+     * 유료 캠페인의 내용을 바꾼 새 값. 상태·형태는 그대로이고, 저장 불변식은 [draftPaid] 와 같은 검사를 다시 거친다.
      * 종료된 캠페인은 고칠 수 없다.
      */
     fun revisePaid(
@@ -95,10 +100,10 @@ class Campaign private constructor(
         if (status == CampaignStatus.ENDED) invalid("종료된 캠페인은 고칠 수 없습니다")
         if (advertiser.id != advertiserId) invalid("다른 광고주의 캠페인입니다")
         val revised = draftPaid(
-            advertiser, name, bid, dailyBudgetMicros, totalBudgetMicros, startAt, endAt, placements, categoryCodes, frequencyCapPerDay,
+            advertiser, name, creativeFormat, bid, dailyBudgetMicros, totalBudgetMicros, startAt, endAt, placements, categoryCodes, frequencyCapPerDay,
         )
         return restore(
-            requireNotNull(id), advertiserId, advertiserKind, revised.name, status, revised.bid, revised.dailyBudgetMicros,
+            requireNotNull(id), advertiserId, advertiserKind, revised.name, creativeFormat, status, revised.bid, revised.dailyBudgetMicros,
             revised.totalBudgetMicros, revised.startAt, revised.endAt, revised.frequencyCapPerDay, revised.placementKeys, revised.categoryCodes,
         )
     }
@@ -157,13 +162,16 @@ class Campaign private constructor(
 
         private fun invalid(message: String): Nothing = throw InvalidCampaignException(message)
 
-        private fun requirePaidTargeting(bid: Bid, placements: List<AdPlacement>) {
+        private fun requirePaidTargeting(bid: Bid, format: PlacementFormat, placements: List<AdPlacement>) {
             placements.firstOrNull { !it.paidAllowed }?.let {
                 invalid("지면 ${it.key} 는 유료 광고를 받지 않습니다")
             }
+            val specs = placements.map { placement ->
+                placement to (placement.spec(format) ?: invalid("지면 ${placement.key} 는 ${format.label} 광고를 받지 않습니다"))
+            }
             if (bid.type == BidType.CPM) {
-                placements.firstOrNull { bid.micros < it.floorMicros }?.let {
-                    invalid("입찰가가 지면 ${it.key} 의 최저가(${Credits.format(it.floorMicros)})보다 낮습니다")
+                specs.firstOrNull { (_, spec) -> bid.micros < spec.floorMicros }?.let { (placement, spec) ->
+                    invalid("입찰가가 지면 ${placement.key} 의 ${format.label} 최저가(${Credits.format(spec.floorMicros)})보다 낮습니다")
                 }
             }
         }
@@ -171,13 +179,15 @@ class Campaign private constructor(
         /**
          * 회원 광고주의 유료 캠페인을 DRAFT 로 만든다.
          *
-         * - CPM 입찰가는 타기팅한 **모든** 지면의 최저가 이상이어야 한다 — 저장 뒤 최저가가 오르면 결정이 그 지면을 뺀다.
+         * - 타기팅한 지면마다 캠페인 형태의 규격이 있어야 한다
+         * - CPM 입찰가는 타기팅한 **모든** 지면의 (그 형태) 최저가 이상이어야 한다 — 저장 뒤 최저가가 오르면 결정이 그 지면을 뺀다.
          *   CPC 는 클릭 단가라 노출 천 회 단위인 최저가와 단위가 달라 여기서 비교하지 않고, 결정 때 eCPM 으로 비교한다
          * - 유료를 받지 않는 지면(HOUSE 전용)은 타기팅할 수 없다 — 경매에서만 빼면 광고주는 왜 안 나가는지 모른다
          */
         fun draftPaid(
             advertiser: Advertiser,
             name: String,
+            creativeFormat: PlacementFormat,
             bid: Bid,
             dailyBudgetMicros: Long,
             totalBudgetMicros: Long?,
@@ -188,12 +198,13 @@ class Campaign private constructor(
             frequencyCapPerDay: Int = DEFAULT_FREQUENCY_CAP_PER_DAY,
         ): Campaign {
             if (advertiser.kind != AdvertiserKind.MEMBER) invalid("유료 캠페인은 회원 광고주만 만듭니다")
-            requirePaidTargeting(bid, placements)
+            requirePaidTargeting(bid, creativeFormat, placements)
             return Campaign(
                 id = null,
                 advertiserId = requireNotNull(advertiser.id) { "저장되지 않은 광고주" },
                 advertiserKind = advertiser.kind,
                 name = name.trim(),
+                creativeFormat = creativeFormat,
                 status = CampaignStatus.DRAFT,
                 bid = bid,
                 dailyBudgetMicros = dailyBudgetMicros,
@@ -206,7 +217,7 @@ class Campaign private constructor(
             )
         }
 
-        /** 「1989v 하우스」의 HOUSE 캠페인. 예산·지갑·최저가·빈도·원장에서 면제된다. */
+        /** 「1989v 하우스」의 HOUSE 캠페인. 예산·지갑·최저가·빈도·원장·형태 규격에서 면제된다. */
         fun draftHouse(
             advertiser: Advertiser,
             name: String,
@@ -221,6 +232,7 @@ class Campaign private constructor(
                 advertiserId = requireNotNull(advertiser.id) { "저장되지 않은 광고주" },
                 advertiserKind = advertiser.kind,
                 name = name.trim(),
+                creativeFormat = PlacementFormat.CARD,
                 status = CampaignStatus.DRAFT,
                 bid = null,
                 dailyBudgetMicros = null,
@@ -238,6 +250,7 @@ class Campaign private constructor(
             advertiserId: Long,
             advertiserKind: AdvertiserKind,
             name: String,
+            creativeFormat: PlacementFormat,
             status: CampaignStatus,
             bid: Bid?,
             dailyBudgetMicros: Long?,
@@ -248,7 +261,7 @@ class Campaign private constructor(
             placementKeys: Set<String>,
             categoryCodes: Set<String>,
         ): Campaign = Campaign(
-            id, advertiserId, advertiserKind, name, status, bid, dailyBudgetMicros, totalBudgetMicros,
+            id, advertiserId, advertiserKind, name, creativeFormat, status, bid, dailyBudgetMicros, totalBudgetMicros,
             startAt, endAt, frequencyCapPerDay, placementKeys, categoryCodes,
         )
     }

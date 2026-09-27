@@ -5,6 +5,7 @@ import com.kgd.ads.domain.campaign.model.Bid
 import com.kgd.ads.domain.campaign.model.BidType
 import com.kgd.ads.domain.campaign.model.Campaign
 import com.kgd.ads.domain.campaign.model.CampaignStatus
+import com.kgd.ads.domain.placement.model.PlacementFormat
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -31,6 +32,10 @@ class CampaignJpaEntity(
 
     @Column(name = "name", nullable = false, length = 100)
     val name: String,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "creative_format", nullable = false, length = 16)
+    val creativeFormat: PlacementFormat,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 16)
@@ -70,6 +75,7 @@ class CampaignJpaEntity(
             advertiserId = advertiserId,
             advertiserKind = advertiserKind,
             name = name,
+            creativeFormat = creativeFormat,
             status = status,
             bid = if (bidType != null && bidMicros != null) Bid(bidType, bidMicros) else null,
             dailyBudgetMicros = dailyBudgetMicros,
@@ -87,6 +93,7 @@ class CampaignJpaEntity(
             id = campaign.id,
             advertiserId = campaign.advertiserId,
             name = campaign.name,
+            creativeFormat = campaign.creativeFormat,
             status = campaign.status,
             bidType = campaign.bid?.type,
             bidMicros = campaign.bid?.micros,

@@ -13,7 +13,7 @@ import com.kgd.ads.domain.advertiser.model.AdvertiserStatus
 import com.kgd.ads.domain.campaign.model.CampaignPriority
 import com.kgd.ads.domain.campaign.model.CampaignStatus
 import com.kgd.ads.domain.creative.model.HouseCreativeContent
-import com.kgd.ads.domain.creative.model.PaidCreativeContent
+import com.kgd.ads.domain.creative.model.PaidContent
 import com.kgd.ads.domain.decision.policy.PredictedCtr
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Qualifier
@@ -26,6 +26,8 @@ import java.util.concurrent.atomic.AtomicReference
  * 후보 인덱스 — 파드 메모리에 한 벌을 두고 갱신 때 통째로 바꾼다.
  *
  * 결정 경로가 DB 를 읽지 않는 대가로 승인·정지·반려·매핑 변경은 다음 갱신(1분 안)에 반영된다.
+ * 유료 후보는 (지면, 캠페인 형태) 규격으로 거른다 — 규격이 없거나, 이미지가 그 규격 비율에 맞지 않거나, eCPM 이 그 규격
+ * 최저가보다 낮으면 그 지면 후보가 아니다. HOUSE 는 형태 필터를 받지 않는다.
  * 갱신이 실패하면 이전 인덱스를 그대로 쓴다 — 빈 인덱스로 바꾸면 모든 지면이 미등록으로 집계된다.
  */
 @Service
@@ -70,10 +72,11 @@ class CandidateIndexService(
                     is HouseCreativeContent -> if (campaign.priority == CampaignPriority.HOUSE) {
                         house.getOrPut(placement.key) { mutableListOf() } += HouseCandidate(campaign, creativeId, content)
                     }
-                    is PaidCreativeContent -> {
+                    is PaidContent -> {
                         if (campaign.priority != CampaignPriority.PAID || !placement.paidAllowed) return@forEach
+                        val spec = placement.spec(campaign.creativeFormat) ?: return@forEach
                         val size = source.imageSizes[content.imageHash] ?: return@forEach
-                        val ratio = placement.aspectRatios.firstOrNull { it.fits(size.width, size.height) } ?: return@forEach
+                        val ratio = spec.aspectRatios.firstOrNull { it.fits(size.width, size.height) } ?: return@forEach
                         val candidate = PaidCandidate(
                             campaign = campaign,
                             creativeId = creativeId,
@@ -81,7 +84,7 @@ class CandidateIndexService(
                             aspectRatio = ratio,
                             predictedCtr = ctr[creativeId to placement.key] ?: PredictedCtr.of(0, 0),
                         )
-                        if (candidate.ecpmMicros >= placement.floorMicros) {
+                        if (candidate.ecpmMicros >= spec.floorMicros) {
                             paid.getOrPut(placement.key) { mutableListOf() } += candidate
                         }
                     }

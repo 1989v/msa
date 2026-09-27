@@ -3,7 +3,6 @@ package com.kgd.ads.infrastructure.persistence.placement.adapter
 import com.kgd.ads.application.placement.dto.UnregisteredPlacementView
 import com.kgd.ads.application.placement.port.PlacementPort
 import com.kgd.ads.domain.placement.model.AdPlacement
-import com.kgd.ads.infrastructure.persistence.placement.entity.PlacementJpaEntity
 import com.kgd.ads.infrastructure.persistence.placement.repository.PlacementJpaRepository
 import com.kgd.ads.infrastructure.persistence.support.NativeRows
 import jakarta.persistence.EntityManager
@@ -17,27 +16,27 @@ import java.time.LocalDateTime
 @Component
 class PlacementRepositoryAdapter(
     private val repository: PlacementJpaRepository,
+    private val loader: PlacementLoader,
     @Qualifier("adsEntityManagerFactory") emf: EntityManagerFactory,
 ) : PlacementPort {
 
     private val em: EntityManager = SharedEntityManagerCreator.createSharedEntityManager(emf)
 
-    override fun findAll(): List<AdPlacement> = repository.findAll().map { it.toDomain() }
+    override fun findAll(): List<AdPlacement> = loader.findAll()
 
-    override fun findByKeys(keys: Collection<String>): List<AdPlacement> =
-        if (keys.isEmpty()) emptyList() else repository.findAllById(keys).map { it.toDomain() }
+    override fun findByKeys(keys: Collection<String>): List<AdPlacement> = loader.findByKeys(keys)
 
-    override fun findByKey(key: String): AdPlacement? = repository.findByIdOrNull(key)?.toDomain()
+    override fun findByKey(key: String): AdPlacement? = loader.findByKey(key)
 
     override fun create(placement: AdPlacement, now: LocalDateTime): Boolean {
         if (repository.existsById(placement.key)) return false
-        repository.save(PlacementJpaEntity.of(placement, now, now))
+        loader.save(placement, now, now)
         return true
     }
 
     override fun update(placement: AdPlacement, now: LocalDateTime) {
         val existing = repository.findByIdOrNull(placement.key) ?: error("지면 없음: ${placement.key}")
-        repository.save(PlacementJpaEntity.of(placement, existing.createdAt, now))
+        loader.save(placement, existing.createdAt, now)
     }
 
     override fun findUnregistered(): List<UnregisteredPlacementView> =

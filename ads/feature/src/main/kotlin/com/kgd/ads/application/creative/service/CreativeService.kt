@@ -13,9 +13,12 @@ import com.kgd.ads.application.creative.usecase.PreviewCreativeImageUseCase
 import com.kgd.ads.domain.campaign.model.Campaign
 import com.kgd.ads.domain.campaign.model.CampaignStatus
 import com.kgd.ads.domain.creative.exception.InvalidCreativeException
+import com.kgd.ads.domain.creative.model.BannerCreativeContent
 import com.kgd.ads.domain.creative.model.Creative
 import com.kgd.ads.domain.creative.model.LandingUrl
+import com.kgd.ads.domain.creative.model.PaidContent
 import com.kgd.ads.domain.creative.model.PaidCreativeContent
+import com.kgd.ads.domain.placement.model.PlacementFormat
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -58,9 +61,9 @@ class CreativeService(
         val image = draft.image ?: throw InvalidCreativeException("유료 소재에는 이미지가 필요합니다")
         val now = LocalDateTime.now(clock)
         val landing = LandingUrl.of(draft.landingUrl)
-        val hash = imageService.store(image, campaignRules.placements(campaign.placementKeys), now)
-        val saved = creativePort.save(Creative.submit(campaign, PaidCreativeContent(draft.title, draft.body, landing, hash)), now)
-        log.info { "소재 제출: creativeId=${saved.id} campaignId=$campaignId" }
+        val hash = imageService.store(image, campaign, campaignRules.placements(campaign.placementKeys), now)
+        val saved = creativePort.save(Creative.submit(campaign, content(campaign.creativeFormat, draft, landing, hash)), now)
+        log.info { "소재 제출: creativeId=${saved.id} campaignId=$campaignId format=${campaign.creativeFormat}" }
         return CreativeView.from(saved)
     }
 
@@ -68,13 +71,13 @@ class CreativeService(
     override fun revise(memberId: Long, creativeId: Long, draft: PaidCreativeDraft): CreativeView {
         val advertiser = access.requireWritable(memberId)
         val creative = ownedCreative(requireNotNull(advertiser.id), creativeId)
+        val campaign = ownedCampaign(requireNotNull(advertiser.id), creative.campaignId)
         val now = LocalDateTime.now(clock)
         val landing = LandingUrl.of(draft.landingUrl)
         val hash = draft.image?.let { image ->
-            val campaign = ownedCampaign(requireNotNull(advertiser.id), creative.campaignId)
-            imageService.store(image, campaignRules.placements(campaign.placementKeys), now)
+            imageService.store(image, campaign, campaignRules.placements(campaign.placementKeys), now)
         } ?: requireNotNull(creative.content.imageHash)
-        creative.revise(PaidCreativeContent(draft.title, draft.body, landing, hash))
+        creative.revise(content(campaign.creativeFormat, draft, landing, hash))
         log.info { "소재 수정(심사 대기로): creativeId=$creativeId" }
         return CreativeView.from(creativePort.save(creative, now))
     }
@@ -96,6 +99,12 @@ class CreativeService(
     private fun assetOf(creative: Creative): CreativeAsset {
         val hash = creative.content.imageHash ?: throw BusinessException(ErrorCode.NOT_FOUND, "이미지가 없는 소재입니다")
         return creativeReadPort.findAsset(hash) ?: throw BusinessException(ErrorCode.NOT_FOUND, "이미지가 없습니다")
+    }
+
+    /** 캠페인 형태의 내용 종류로 읽는다 — 띠배너는 제목 칸이 대체 텍스트이고 설명은 읽지 않는다. */
+    private fun content(format: PlacementFormat, draft: PaidCreativeDraft, landing: LandingUrl, hash: String): PaidContent = when (format) {
+        PlacementFormat.CARD -> PaidCreativeContent(draft.title, draft.body, landing, hash)
+        PlacementFormat.BANNER -> BannerCreativeContent(draft.title, landing, hash)
     }
 
     private fun ownedCampaign(advertiserId: Long, campaignId: Long): Campaign =

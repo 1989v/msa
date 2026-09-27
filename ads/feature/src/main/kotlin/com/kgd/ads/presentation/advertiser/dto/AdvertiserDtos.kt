@@ -6,6 +6,7 @@ import com.kgd.ads.application.creative.dto.CreativeView
 import com.kgd.ads.domain.campaign.model.BidType
 import com.kgd.ads.domain.creative.model.CreativeRejectReason
 import com.kgd.ads.domain.creative.model.CreativeStatus
+import com.kgd.ads.domain.placement.model.PlacementFormat
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Positive
@@ -37,6 +38,7 @@ data class TopUpResponse(val transactionId: Long, val balanceMicros: Long)
 /**
  * 유료 캠페인 입력. 우선순위·심사 상태·원장 계정 필드는 없다 — 본문에 실려 와도 읽지 않는다.
  * 상태는 [CampaignStatusRequest] 의 전이 명령으로만 바뀐다.
+ * [creativeFormat] 은 만들 때만 읽는다(없으면 카드 — 형태를 모르는 옛 화면 호환). 수정 요청에 실려 와도 형태는 바뀌지 않는다.
  */
 data class CampaignRequest(
     @field:NotBlank
@@ -57,9 +59,11 @@ data class CampaignRequest(
     val placementKeys: List<@Size(min = 1, max = 64) String>,
     @field:Size(max = MAX_TARGETS)
     val categoryCodes: List<@Size(min = 1, max = 32) String> = emptyList(),
+    val creativeFormat: PlacementFormat? = null,
 ) {
     fun toDraft() = PaidCampaignDraft(
         name = name,
+        creativeFormat = creativeFormat ?: PlacementFormat.CARD,
         bidType = bidType,
         bidMicros = bidMicros,
         dailyBudgetMicros = dailyBudgetMicros,
@@ -80,12 +84,13 @@ data class CampaignStatusRequest(val action: CampaignAction)
 
 /**
  * 소재 응답. [imageUrl] 은 로그인한 광고주 본인만 볼 수 있는 미리보기 주소다(심사 상태와 무관).
- * 반려면 [rejectReason] 이 있다.
+ * 띠배너([format] = BANNER)면 [title] 이 대체 텍스트이고 [body] 는 빈 문자열이다. 반려면 [rejectReason] 이 있다.
  */
 data class CreativeResponse(
     val id: Long,
     val campaignId: Long,
     val status: CreativeStatus,
+    val format: PlacementFormat?,
     val title: String,
     val body: String,
     val landingUrl: String,
@@ -98,6 +103,7 @@ data class CreativeResponse(
             id = view.id,
             campaignId = view.campaignId,
             status = view.status,
+            format = view.format,
             title = view.title,
             body = view.body,
             landingUrl = view.link,

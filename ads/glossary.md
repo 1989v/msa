@@ -1,17 +1,24 @@
 # Ads — 유비쿼터스 언어
 
-> BC: ads · 관련 ADR: ADR-0098 · 매핑: `docs/context-map.md` · 원천: `docs/specs/2026-09-23-ad-network/planning/requirements.md` Ontology
+> BC: ads · 관련 ADR: ADR-0098 · 매핑: `docs/context-map.md` · 원천: `docs/specs/2026-09-23-ad-network/planning/requirements.md` Ontology · 광고 형태: `docs/specs/2026-09-27-ad-creative-format/spec.md`
+>
+> 「형식」은 이미지 **파일** 형식(PNG·JPEG)에만 쓴다. 카드·띠배너는 「광고 형태」다.
 
 | 용어 | 유형 | 정의 | 피해야 할 표현 | 코드 |
 |---|---|---|---|---|
 | 광고주 (Advertiser) | Aggregate | 광고를 싣는 쪽. 종류 `MEMBER`(회원 1명당 1행, 지갑 원장 계정 1개) · `SYSTEM`(「1989v 하우스」 하나, 회원·지갑 없음). 상태 `ACTIVE` ⇄ `SUSPENDED`(어드민만). 권한은 전역 Role 이 아니라 이 행이 갖는다 | 「광고주 계정」(원장 계정과 혼동), 「셀러」(auth 의 ROLE_SELLER 와 다른 축) | `domain/advertiser/model/Advertiser.kt` |
-| 캠페인 (Campaign) | Aggregate | 입찰 방식·입찰가·일예산·총예산·기간·빈도 제한·타기팅 지면·문맥 카테고리를 묶는 단위. 상태 `DRAFT` → `ACTIVE` ⇄ `PAUSED` → `ENDED`(되돌리지 않음) | 「광고그룹」·「라인아이템」(단일 레벨이라 없다) | `domain/campaign/model/Campaign.kt` |
+| 캠페인 (Campaign) | Aggregate | 광고 형태·입찰 방식·입찰가·일예산·총예산·기간·빈도 제한·타기팅 지면·문맥 카테고리를 묶는 단위. 형태는 만들 때 정하고 바꿀 수 없다. 상태 `DRAFT` → `ACTIVE` ⇄ `PAUSED` → `ENDED`(되돌리지 않음) | 「광고그룹」·「라인아이템」(단일 레벨이라 없다) | `domain/campaign/model/Campaign.kt` |
+| 광고 형태 (PlacementFormat) | VO (enum) | 유료 캠페인이 고르는 광고의 모양 — `CARD` 카드 · `BANNER` 띠배너. 소재 내용 종류·이미지 비율·최저가가 모두 형태를 따른다. **HOUSE 에는 의미가 없다**(HOUSE 캠페인은 기본값 카드를 가질 뿐 형태 검사를 받지 않는다) | 「형식」(파일 형식과 혼동), 「포맷」, 「배너 타입」 | `domain/placement/model/PlacementFormat.kt` |
+| 카드 | 개념 (형태) | 1.91:1 이미지 + 제목(1~40) + 설명(1~90) + 랜딩 URL | 「네이티브 광고」 | `PaidCreativeContent` |
+| 띠배너 | 개념 (형태) | 6.4:1 이미지 한 장 + 대체 텍스트 + 랜딩 URL. 문구는 이미지 안에 있다. 이미지 밖에 「광고 · 광고주 이름」 한 줄을 붙인다 | 「배너」 단독(디스플레이 광고 전체를 부르는 말과 혼동) | `BannerCreativeContent` |
+| 형태 규격 (FormatSpec) | VO | 지면이 한 광고 형태에 대해 갖는 허용 비율 목록 + 최저가. 지면당 형태마다 하나, 최소 하나. 규격이 없는 형태의 유료 캠페인은 그 지면을 고를 수 없다 | 「지면 형식」, 「슬롯 사이즈」 | `domain/placement/model/FormatSpec.kt` |
+| 대체 텍스트 | 개념 | 띠배너 이미지의 `alt`. 화면에 보이지 않고 스크린 리더와 심사 화면에 쓴다. 1~40자, 저장은 소재의 제목 칸 | 「제목」(카드의 제목과 혼동) | `BannerCreativeContent.altText` |
 | 우선순위 (PAID / HOUSE) | VO (파생) | **저장하지 않는다.** 소유 광고주가 `SYSTEM` 이면 HOUSE, 아니면 PAID | 「우선순위 설정」(광고주가 고를 수 없다) | `CampaignPriority.kt` |
 | 게재 자격 | 개념 (파생) | 「기간 밖」·「예산 소진」은 상태가 아니라 이 판정에서 나온다. 예산 소진 기준은 **청구 누계 + 미정산 지출** | 「종료됨」(상태 `ENDED` 와 혼동) | `Campaign` |
 | 입찰 (Bid) | VO | 방식 `CPM`(노출 천 회당) · `CPC`(클릭당) + 금액. 1회 과금액 계산의 입력 | 「단가」(과금액과 혼동) | `domain/campaign/model/Bid.kt` |
-| 소재 (Creative) | Entity | 실제 보이는 광고. PAID 는 제목·문구·랜딩 URL·이미지 1장, HOUSE 는 제목·문구·이모지·링크(이미지 선택). 심사 `PENDING` → `APPROVED` \| `REJECTED`(사유 코드 필수), 삭제는 `ARCHIVED`, `revise()` 는 내용 교체와 `PENDING` 복귀를 함께 한다 | 「크리에이티브」, 「배너」(형식 하나일 뿐) | `domain/creative/model/Creative.kt` |
-| 지면 (AdPlacement) | Aggregate | 페이지 안의 광고 자리. 키(kebab)·호스트·형식·최저가·활성·`paid_allowed`. `paid_allowed=false` 면 HOUSE 전용 | 「슬롯」, 「구좌」, 「Placement」 단독(common `Placement` 와 다른 개념) | `domain/placement/model/AdPlacement.kt` |
-| 최저가 (floor) | VO | 지면이 받는 최소 eCPM(노출 천 회 기준). 결정 때 eCPM ≥ 최저가로 거른다 — CPC 입찰은 저장 때 비교하지 않는다(단위가 다르다) | 「최소 입찰가」 | `AdPlacement` |
+| 소재 (Creative) | Entity | 실제 보이는 광고. PAID 는 캠페인 형태를 따른다 — 카드는 제목·설명·랜딩 URL·이미지 1장, 띠배너는 대체 텍스트·랜딩 URL·이미지 1장. HOUSE 는 형태와 무관하게 제목·문구·이모지·링크(이미지 선택). 심사 `PENDING` → `APPROVED` \| `REJECTED`(사유 코드 필수), 삭제는 `ARCHIVED`, `revise()` 는 내용 교체와 `PENDING` 복귀를 함께 한다(종류는 바꿀 수 없다) | 「크리에이티브」, 「배너」(띠배너는 광고 형태 하나일 뿐이다) | `domain/creative/model/Creative.kt` |
+| 지면 (AdPlacement) | Aggregate | 페이지 안의 광고 자리. 키(kebab)·호스트·형태 규격 목록·활성·`paid_allowed`. `paid_allowed=false` 면 HOUSE 전용 | 「슬롯」, 「구좌」, 「Placement」 단독(common `Placement` 와 다른 개념) | `domain/placement/model/AdPlacement.kt` |
+| 최저가 (floor) | VO | 지면이 **한 광고 형태에 대해** 받는 최소 eCPM(노출 천 회 기준) — 형태 규격의 값이다. 저장·시작 때 CPM 입찰가 ≥ 그 형태 최저가, 결정 때 eCPM ≥ 그 형태 최저가로 거른다 — CPC 입찰은 저장 때 비교하지 않는다(단위가 다르다) | 「최소 입찰가」 | `FormatSpec.floorMicros` |
 | 문맥 카테고리 (ContextCategory) | Supporting | ads 가 소유한 고정 분류 목록. 지면 문맥 키 → 카테고리 매핑으로 타기팅한다. 행태 타기팅은 없다 | 「관심사」(행태 타기팅으로 읽힌다) | `domain/category/model/ContextCategory.kt` |
 | 결정 (decision) | 개념 | 한 페이지의 지면들에 광고를 고르는 요청 1회. 자격 필터 → eCPM 상위 → 1차 경매·페이싱 → 토큰 발급. 결정 id 로 결정→토큰→이벤트→정산을 잇는다 | 「입찰 요청」(RTB 가 아니다) | `domain/decision/policy/Auction.kt` |
 | 노출 토큰 / 클릭 토큰 | VO | 결정이 발급하는 서명 토큰(HMAC-SHA256, 키 id). 종류별로 한 번만 수락된다. 캠페인 소유자 본인이 받은 토큰은 과금 안 함으로 서명된다 | 「광고 id」, 「트래킹 코드」 | `domain/token/model/ServeClaims.kt` · `policy/ServeTokenSigner.kt` |

@@ -122,7 +122,12 @@ class DecisionService(
         } else {
             memoryEligible.mapValues { (_, list) ->
                 list.filter { it.campaignId in topCampaigns && isRealtimeEligible(it, snapshot, counters, now, hour) }
-                    .map { AuctionCandidate(it.campaignId, it.creativeId, it.advertiserId, requireNotNull(it.campaign.bid), it.aspectRatio, it.predictedCtr) }
+                    .map {
+                        AuctionCandidate(
+                            it.campaignId, it.creativeId, it.advertiserId, requireNotNull(it.campaign.bid), it.campaign.creativeFormat,
+                            it.aspectRatio, it.predictedCtr,
+                        )
+                    }
             }
         }
         val winners = Auction.run(registered, auctionInput).associate { it.placementKey to it.winner }
@@ -235,6 +240,7 @@ class DecisionService(
         return ServedAdView(
             campaignId = candidate.campaignId,
             creativeId = candidate.creativeId,
+            format = candidate.content.format,
             title = candidate.content.title,
             body = candidate.content.body,
             imageHash = candidate.content.imageHash,

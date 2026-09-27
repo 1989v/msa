@@ -2,7 +2,7 @@ package com.kgd.ads.application.decision.dto
 
 import com.kgd.ads.domain.campaign.model.Campaign
 import com.kgd.ads.domain.creative.model.HouseCreativeContent
-import com.kgd.ads.domain.creative.model.PaidCreativeContent
+import com.kgd.ads.domain.creative.model.PaidContent
 import com.kgd.ads.domain.decision.policy.WalletHeadroom
 import com.kgd.ads.domain.placement.model.AdPlacement
 import com.kgd.ads.domain.placement.model.AspectRatio
@@ -12,7 +12,7 @@ import java.time.LocalDateTime
 /**
  * 결정이 읽는 후보 인덱스 한 벌. 통째로 바꿔 끼우므로 결정 하나는 항상 한 시점의 값만 본다.
  *
- * 요청마다 달라지지 않는 자격(상태·승인·지면 타기팅·유료 허용·비율·eCPM ≥ 최저가)은 만들 때 이미 걸렀다.
+ * 요청마다 달라지지 않는 자격(상태·승인·지면 타기팅·유료 허용·캠페인 형태 규격의 비율·eCPM ≥ 그 규격 최저가)은 만들 때 이미 걸렀다.
  * 남은 것(기간·카테고리·예산·빈도·지갑·페이싱)은 결정이 요청 시각과 Redis 값으로 판정한다.
  */
 class CandidateSnapshot(
@@ -45,11 +45,11 @@ class CandidateSnapshot(
     fun paidCampaign(campaignId: Long): Campaign? = paidCampaigns[campaignId]
 }
 
-/** 한 지면의 유료 후보 (캠페인, 소재). [aspectRatio] 는 소재 이미지가 맞는 그 지면의 허용 비율. */
+/** 한 지면의 유료 후보 (캠페인, 소재). [aspectRatio] 는 소재 이미지가 맞는 그 지면의 (캠페인 형태) 허용 비율. */
 data class PaidCandidate(
     val campaign: Campaign,
     val creativeId: Long,
-    val content: PaidCreativeContent,
+    val content: PaidContent,
     val aspectRatio: AspectRatio,
     val predictedCtr: Double,
 ) {

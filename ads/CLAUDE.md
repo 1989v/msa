@@ -94,3 +94,37 @@ recommendation·experiment 도 같은 파드라 **함께 멈춘다.** 이미지�
 - 2 뒤·3 전 — 게이트웨이 라우트만 content 로 되돌린다
 - 3 뒤 — **FE 이미지와 게이트웨이를 함께** 되돌린다. 그 사이 발급된 클릭 토큰은 404 가 되고, 그 손실은 받아들인다
 - 4 뒤 — game 에 광고 코드도 표도 없어 content 로 되돌릴 곳이 없다. 광고 장애는 ads 안에서 고친다
+
+## 광고 형태(카드·띠배너) 릴리스와 되돌리기
+
+스펙: `docs/specs/2026-09-27-ad-creative-format/spec.md`. 지면은 형태마다 규격(`ad_placement_format`)을 갖고,
+캠페인은 만들 때 형태 하나(`ad_campaign.creative_format`)를 고른다.
+
+1. **engagement** (V4 + 결정 응답 `format` + 카탈로그 규격·업로드 규칙) 푸시 → 운영에서 V4·결정·카탈로그 확인.
+   **롤아웃 동안 어드민에서 지면을 만들지 않는다** — 옛 파드가 만든 지면에는 규격 행이 없다
+2. **portal-fe · admin-fe** 를 **별도 푸시** → 번들에 새 심볼 확인. 같은 푸시로 내면 두 이미지가 함께 롤아웃돼 순서가 보장되지 않는다
+3. 어드민에서 `game-list-banner` 의 유료를 켠다 (V4 는 끈 채로 둔다)
+4. 다음 릴리스 V5 — 옛 지면 컬럼 `ad_placement.format`·`aspect_ratios`·`floor_micros` 삭제
+
+1~2 사이 호환:
+- 옛 지면 컬럼은 V5 까지 남는다. 코드는 대표 규격(카드가 있으면 카드, 없으면 첫 규격)을 계속 쓰고 **읽지 않는다**
+- 카탈로그·어드민 지면 응답은 옛 필드 `format`·`aspectRatios`·`floorMicros` 를 대표 규격 값으로 함께 싣는다.
+  옛 모양의 최저가 PATCH(`PATCH /placements/{key}` 의 `floorMicros`)는 대표 규격에 적용한다
+- 형태 없이 온 캠페인 생성 요청은 카드다
+- 이 창에 API 로 띠배너 캠페인이 생기면 옛 번들은 `blog-post-end`·`attraction-end` 에서 띠배너를 카드 틀로 그리고 노출이 과금된다 — 창이 짧아 받아들인다
+
+되돌리기:
+- 2 만 되돌리는 것은 안전하다
+- 1 을 되돌려야 하면 **먼저** 아래 SQL 로 띠배너 캠페인의 소재를 보관하면서 설명을 채운다. 옛 코드의 소재 목록은
+  상태로 거르지 않고 빈 설명을 거절해서, 보관만 하면 그 캠페인 소재 화면이 계속 500 이다.
+  보관 소재는 반려 사유를 갖지 않는다(도메인 불변식) — 반려됐던 행도 사유를 비운다.
+  `AdsSchemaMigrationIntegrationSpec` 이 **이 블록을 이 파일에서 읽어** 실행하고 결과 행을 확인한다 — SQL 은 여기서만 고친다
+- 되돌린 뒤 V4 이후 바꾼 최저가는 옛 컬럼의 대표 값으로 보인다(띠배너 최저가는 사라진다)
+
+```sql
+-- 광고 형태 되돌리기: 띠배너 캠페인의 소재를 보관하고 설명 칸을 제목(대체 텍스트)으로 채운다
+UPDATE ad_creative c
+JOIN ad_campaign a ON a.id = c.campaign_id
+SET c.status = 'ARCHIVED', c.reject_reason = NULL, c.body = c.title
+WHERE a.creative_format = 'BANNER';
+```

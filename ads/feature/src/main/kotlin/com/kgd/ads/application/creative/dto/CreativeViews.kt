@@ -4,11 +4,13 @@ import com.kgd.ads.domain.creative.model.Creative
 import com.kgd.ads.domain.creative.model.CreativeRejectReason
 import com.kgd.ads.domain.creative.model.CreativeStatus
 import com.kgd.ads.domain.creative.model.HouseCreativeContent
-import com.kgd.ads.domain.creative.model.PaidCreativeContent
+import com.kgd.ads.domain.creative.model.PaidContent
+import com.kgd.ads.domain.placement.model.PlacementFormat
 import java.time.LocalDateTime
 
 /**
  * 소재 한 건. [link] 는 유료면 랜딩 URL, HOUSE 면 앱 안 경로 또는 https URL.
+ * [format] 은 유료 소재의 광고 형태(HOUSE 는 null) — 띠배너면 [title] 이 대체 텍스트이고 [body] 는 빈 문자열이다.
  * 반려면 [rejectReason] 이 있다 — 광고주가 무엇을 고쳐야 하는지 아는 유일한 단서다.
  */
 data class CreativeView(
@@ -16,6 +18,7 @@ data class CreativeView(
     val campaignId: Long,
     val advertiserId: Long,
     val status: CreativeStatus,
+    val format: PlacementFormat?,
     val title: String,
     val body: String,
     val link: String,
@@ -27,7 +30,7 @@ data class CreativeView(
     companion object {
         fun from(creative: Creative): CreativeView {
             val (link, emoji) = when (val c = creative.content) {
-                is PaidCreativeContent -> c.landingUrl.value to null
+                is PaidContent -> c.landingUrl.value to null
                 is HouseCreativeContent -> c.link.value to c.emoji
             }
             return CreativeView(
@@ -35,6 +38,7 @@ data class CreativeView(
                 campaignId = creative.campaignId,
                 advertiserId = creative.advertiserId,
                 status = creative.status,
+                format = (creative.content as? PaidContent)?.format,
                 title = creative.content.title,
                 body = creative.content.body,
                 link = link,
@@ -47,7 +51,10 @@ data class CreativeView(
     }
 }
 
-/** 광고주 소재 입력. 심사 상태는 입력이 아니다 — 올리거나 고치면 항상 심사 대기다. [image] 가 null 이면 이미지를 그대로 둔다. */
+/**
+ * 광고주 소재 입력. 심사 상태는 입력이 아니다 — 올리거나 고치면 항상 심사 대기다. [image] 가 null 이면 이미지를 그대로 둔다.
+ * 형태는 입력이 아니라 캠페인에서 온다 — 띠배너 캠페인이면 [title] 이 대체 텍스트이고 [body] 는 읽지 않는다.
+ */
 data class PaidCreativeDraft(val title: String, val body: String, val landingUrl: String, val image: ByteArray?)
 
 data class HouseCreativeDraft(val title: String, val body: String, val emoji: String?, val link: String, val image: ByteArray?)

@@ -40,7 +40,7 @@ class HouseCreativeService(
         val campaign = houseCampaign(campaignId)
         val now = LocalDateTime.now(clock)
         val link = HouseLink.of(draft.link)
-        val hash = draft.image?.let { imageService.store(it, campaignRules.placements(campaign.placementKeys), now) }
+        val hash = draft.image?.let { imageService.store(it, campaign, campaignRules.placements(campaign.placementKeys), now) }
         val content = HouseCreativeContent(draft.title, draft.body, draft.emoji?.takeIf { it.isNotBlank() }, link, hash)
         val saved = creativePort.save(Creative.createHouse(campaign, content, actorMemberId, now), now)
         auditPort.record(AdminAction(actorMemberId, "HOUSE_CREATIVE_CREATE", TARGET, saved.id.toString(), "campaign=$campaignId", now))

@@ -2,8 +2,11 @@ package com.kgd.ads.domain.decision.policy
 
 import com.kgd.ads.domain.campaign.model.Bid
 import com.kgd.ads.domain.campaign.model.BidType
+import com.kgd.ads.domain.placement.model.AspectRatio
+import com.kgd.ads.domain.placement.model.PlacementFormat
 import com.kgd.ads.domain.support.AdsDomainFixtures
 import com.kgd.ads.domain.support.AdsDomainFixtures.SQUARE
+import com.kgd.ads.domain.support.AdsDomainFixtures.STRIP
 import com.kgd.ads.domain.support.AdsDomainFixtures.WIDE
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.doubles.plusOrMinus
@@ -20,9 +23,11 @@ class AuctionTest : BehaviorSpec({
         bid: Bid,
         predictedCtr: Double = PredictedCtr.of(clicks = 0, viewableImpressions = 0),
         creativeId: Long = campaignId * 10,
+        format: PlacementFormat = PlacementFormat.CARD,
+        aspectRatio: AspectRatio = if (format == PlacementFormat.BANNER) STRIP else WIDE,
     ) = AuctionCandidate(
         campaignId = campaignId, creativeId = creativeId, advertiserId = campaignId + 100,
-        bid = bid, aspectRatio = WIDE, predictedCtr = predictedCtr,
+        bid = bid, format = format, aspectRatio = aspectRatio, predictedCtr = predictedCtr,
     )
 
     val blog = AdsDomainFixtures.placement("blog-post-end")
@@ -132,6 +137,41 @@ class AuctionTest : BehaviorSpec({
                     override fun nextDouble(): Double = 0.75
                 }
                 pacing.passes(800, 1_000, fixed) shouldBe false
+            }
+        }
+    }
+    given("형태를 가로지르는 한 우승자 — 두 형태를 받는 지면 (카드 0.10 · 띠배너 0.05)") {
+        val dual = AdsDomainFixtures.dualPlacement()
+
+        `when`("카드와 띠배너가 한 지면에서 겨루면") {
+            then("형태와 무관하게 eCPM 이 큰 쪽 하나가 이긴다") {
+                val card = candidate(1, Bid(BidType.CPM, 150_000))
+                val strip = candidate(2, Bid(BidType.CPM, 160_000), format = PlacementFormat.BANNER)
+                Auction.run(listOf(dual), mapOf(dual.key to listOf(card, strip))).single().winner shouldBe strip
+                val richerCard = candidate(3, Bid(BidType.CPM, 170_000))
+                Auction.run(listOf(dual), mapOf(dual.key to listOf(card, strip, richerCard))).single().winner shouldBe richerCard
+            }
+        }
+        `when`("eCPM 0.07 인 띠배너와 카드가 있으면") {
+            then("띠배너는 띠배너 최저가(0.05)를 넘어 남고, 카드는 카드 최저가(0.10)에 걸려 빠진다") {
+                val strip = candidate(1, Bid(BidType.CPC, 7_000), predictedCtr = 0.01, format = PlacementFormat.BANNER)
+                val card = candidate(2, Bid(BidType.CPC, 7_000), predictedCtr = 0.01)
+                strip.ecpmMicros shouldBe (70_000.0 plusOrMinus 1e-6)
+                Auction.run(listOf(dual), mapOf(dual.key to listOf(card))).single().winner.shouldBeNull()
+                Auction.run(listOf(dual), mapOf(dual.key to listOf(card, strip))).single().winner shouldBe strip
+            }
+        }
+        `when`("후보 형태의 규격이 지면에 없으면") {
+            then("그 지면에서 제외") {
+                val cardOnly = AdsDomainFixtures.placement("game-hub-end")
+                val strip = candidate(1, Bid(BidType.CPM, 500_000), format = PlacementFormat.BANNER)
+                Auction.run(listOf(cardOnly), mapOf(cardOnly.key to listOf(strip))).single().winner.shouldBeNull()
+            }
+        }
+        `when`("띠배너 후보의 비율이 띠배너 규격이 아니면") {
+            then("카드 비율이어도 제외") {
+                val misfit = candidate(1, Bid(BidType.CPM, 500_000), format = PlacementFormat.BANNER, aspectRatio = WIDE)
+                Auction.run(listOf(dual), mapOf(dual.key to listOf(misfit))).single().winner.shouldBeNull()
             }
         }
     }

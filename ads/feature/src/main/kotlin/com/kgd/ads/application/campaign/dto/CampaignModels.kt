@@ -3,14 +3,16 @@ package com.kgd.ads.application.campaign.dto
 import com.kgd.ads.domain.campaign.model.BidType
 import com.kgd.ads.domain.campaign.model.Campaign
 import com.kgd.ads.domain.campaign.model.CampaignStatus
+import com.kgd.ads.domain.placement.model.PlacementFormat
 import java.time.LocalDateTime
 
 /**
  * 광고주가 정하는 유료 캠페인 값. 우선순위·심사 상태·원장 계정은 여기 없다 — 우선순위는 소유 광고주 종류에서,
- * 상태는 전이 명령에서만 정해진다.
+ * 상태는 전이 명령에서만 정해진다. [creativeFormat] 은 만들 때만 쓰고 수정에서는 읽지 않는다(형태는 바꿀 수 없다).
  */
 data class PaidCampaignDraft(
     val name: String,
+    val creativeFormat: PlacementFormat,
     val bidType: BidType,
     val bidMicros: Long,
     val dailyBudgetMicros: Long,
@@ -39,6 +41,7 @@ enum class CampaignAction { START, PAUSE, RESUME, END }
 data class CampaignView(
     val id: Long,
     val name: String,
+    val creativeFormat: PlacementFormat,
     val status: CampaignStatus,
     val bidType: BidType?,
     val bidMicros: Long?,
@@ -55,6 +58,7 @@ data class CampaignView(
         fun of(campaign: Campaign, now: LocalDateTime) = CampaignView(
             id = requireNotNull(campaign.id),
             name = campaign.name,
+            creativeFormat = campaign.creativeFormat,
             status = campaign.status,
             bidType = campaign.bid?.type,
             bidMicros = campaign.bid?.micros,

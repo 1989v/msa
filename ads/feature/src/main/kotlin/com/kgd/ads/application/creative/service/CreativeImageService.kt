@@ -3,6 +3,7 @@ package com.kgd.ads.application.creative.service
 import com.kgd.ads.application.creative.dto.StoredImage
 import com.kgd.ads.application.creative.port.CreativeAssetStorePort
 import com.kgd.ads.application.creative.port.CreativeImageTranscoderPort
+import com.kgd.ads.domain.campaign.model.Campaign
 import com.kgd.ads.domain.creative.exception.InvalidCreativeException
 import com.kgd.ads.domain.creative.policy.CreativeImageRules
 import com.kgd.ads.domain.placement.model.AdPlacement
@@ -19,9 +20,12 @@ class CreativeImageService(
     private val transcoder: CreativeImageTranscoderPort,
     private val assetStore: CreativeAssetStorePort,
 ) {
-    /** @return 저장한 이미지의 내용 해시 */
-    fun store(bytes: ByteArray, placements: List<AdPlacement>, now: LocalDateTime): String {
-        val header = CreativeImageRules.inspect(bytes, placements)
+    /**
+     * 비율은 유료면 [campaign] 형태 규격, HOUSE 면 지면의 어느 규격으로든 본다([CreativeImageRules.inspect]).
+     * [placements] 는 캠페인이 타기팅한 지면 전부. @return 저장한 이미지의 내용 해시
+     */
+    fun store(bytes: ByteArray, campaign: Campaign, placements: List<AdPlacement>, now: LocalDateTime): String {
+        val header = CreativeImageRules.inspect(bytes, campaign, placements)
         val encoded = transcoder.reencode(bytes, header.format)
         // 헤더가 픽셀과 다른 크기를 적었으면 위 검사가 엉뚱한 값을 본 것이다.
         if (encoded.width != header.width || encoded.height != header.height) {

@@ -12,9 +12,12 @@ import com.kgd.ads.application.placement.dto.PlacementView
 import com.kgd.ads.application.placement.dto.UnregisteredPlacementView
 import com.kgd.ads.application.placement.usecase.ManagePlacementUseCase
 import com.kgd.ads.application.report.usecase.GetPublisherReportUseCase
+import com.kgd.ads.domain.placement.model.PlacementFormat
 import com.kgd.ads.presentation.admin.dto.AdminCreativeResponse
+import com.kgd.ads.presentation.admin.dto.ChangeFormatFloorRequest
 import com.kgd.ads.presentation.admin.dto.ContextMappingRequest
 import com.kgd.ads.presentation.admin.dto.CreatePlacementRequest
+import com.kgd.ads.presentation.admin.dto.FormatSpecRequest
 import com.kgd.ads.presentation.admin.dto.HostCategoryRequest
 import com.kgd.ads.presentation.admin.dto.LedgerCheckResponse
 import com.kgd.ads.presentation.admin.dto.RejectCreativeRequest
@@ -133,9 +136,7 @@ class AdsAdminController(
             ManagePlacementUseCase.Create(
                 key = request.key,
                 host = request.host,
-                format = request.format,
-                aspectRatios = request.aspectRatios,
-                floorMicros = request.floorMicros,
+                formats = request.formats.map(FormatSpecRequest::toInput),
                 active = request.active,
                 paidAllowed = request.paidAllowed,
                 description = request.description,
@@ -161,6 +162,40 @@ class AdsAdminController(
                 actorMemberId = RequestIdentity.admin(userId, roles),
             ),
         ),
+    )
+
+    @PostMapping("/placements/{placementKey}/formats")
+    fun addPlacementFormat(
+        @RequestHeader(USER, required = false) userId: String?,
+        @RequestHeader(ROLES, required = false) roles: String?,
+        @PathVariable placementKey: String,
+        @Valid @RequestBody request: FormatSpecRequest,
+    ): ApiResponse<PlacementView> = ApiResponse.success(
+        placements.addFormat(ManagePlacementUseCase.AddFormat(placementKey, request.toInput(), RequestIdentity.admin(userId, roles))),
+    )
+
+    @PatchMapping("/placements/{placementKey}/formats/{format}")
+    fun changePlacementFormatFloor(
+        @RequestHeader(USER, required = false) userId: String?,
+        @RequestHeader(ROLES, required = false) roles: String?,
+        @PathVariable placementKey: String,
+        @PathVariable format: PlacementFormat,
+        @RequestBody request: ChangeFormatFloorRequest,
+    ): ApiResponse<PlacementView> = ApiResponse.success(
+        placements.changeFormatFloor(
+            ManagePlacementUseCase.ChangeFormatFloor(placementKey, format, request.floorMicros, RequestIdentity.admin(userId, roles)),
+        ),
+    )
+
+    /** 마지막 규격은 지울 수 없다(400). 그 형태의 유료 캠페인은 이 지면 결정에서 빠지고 시작·재개가 거절된다. */
+    @DeleteMapping("/placements/{placementKey}/formats/{format}")
+    fun removePlacementFormat(
+        @RequestHeader(USER, required = false) userId: String?,
+        @RequestHeader(ROLES, required = false) roles: String?,
+        @PathVariable placementKey: String,
+        @PathVariable format: PlacementFormat,
+    ): ApiResponse<PlacementView> = ApiResponse.success(
+        placements.removeFormat(ManagePlacementUseCase.RemoveFormat(placementKey, format, RequestIdentity.admin(userId, roles))),
     )
 
     @GetMapping("/placements/unregistered")

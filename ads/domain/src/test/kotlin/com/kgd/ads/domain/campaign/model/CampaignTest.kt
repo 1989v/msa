@@ -1,12 +1,14 @@
 package com.kgd.ads.domain.campaign.model
 
 import com.kgd.ads.domain.campaign.exception.InvalidCampaignException
+import com.kgd.ads.domain.placement.model.PlacementFormat
 import com.kgd.ads.domain.support.AdsDomainFixtures
 import com.kgd.ads.domain.support.AdsDomainFixtures.START
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 
 class CampaignTest : BehaviorSpec({
     given("캠페인 상태 전이") {
@@ -189,11 +191,111 @@ class CampaignTest : BehaviorSpec({
             then("거부한다") {
                 shouldThrow<InvalidCampaignException> {
                     Campaign.draftPaid(
-                        advertiser = AdsDomainFixtures.house(), name = "x", bid = Bid(BidType.CPM, 200_000),
+                        advertiser = AdsDomainFixtures.house(), name = "x", creativeFormat = PlacementFormat.CARD, bid = Bid(BidType.CPM, 200_000),
                         dailyBudgetMicros = 10_000_000, totalBudgetMicros = null, startAt = START, endAt = null,
                         placements = listOf(AdsDomainFixtures.placement()), categoryCodes = emptySet(),
                     )
                 }
+            }
+        }
+    }
+    given("캠페인 형태와 지면 형태 규격 — 두 형태를 받는 지면 (카드 0.10 · 띠배너 0.05)") {
+        val dual = AdsDomainFixtures.dualPlacement()
+
+        `when`("띠배너 캠페인이 띠배너 최저가와 같은 CPM 0.05 로 입찰하면") {
+            then("저장된다 — 경계 포함, 형태는 만들 때 정한 값") {
+                val campaign = AdsDomainFixtures.paidCampaign(
+                    bid = Bid(BidType.CPM, 50_000), placements = listOf(dual), creativeFormat = PlacementFormat.BANNER,
+                )
+                campaign.creativeFormat shouldBe PlacementFormat.BANNER
+            }
+        }
+        `when`("띠배너 캠페인이 0.049 로 입찰하면") {
+            then("거절 — 문구에 지면 키와 형태") {
+                val error = shouldThrow<InvalidCampaignException> {
+                    AdsDomainFixtures.paidCampaign(bid = Bid(BidType.CPM, 49_999), placements = listOf(dual), creativeFormat = PlacementFormat.BANNER)
+                }
+                error.message shouldContain "blog-post-end"
+                error.message shouldContain "띠배너"
+            }
+        }
+        `when`("카드 캠페인이 같은 지면에 0.05 로 입찰하면") {
+            then("거절 — 카드 최저가 0.10 을 따른다") {
+                val error = shouldThrow<InvalidCampaignException> {
+                    AdsDomainFixtures.paidCampaign(bid = Bid(BidType.CPM, 50_000), placements = listOf(dual), creativeFormat = PlacementFormat.CARD)
+                }
+                error.message shouldContain "카드"
+            }
+        }
+        `when`("그 형태 규격이 없는 지면을 고르면") {
+            then("거절 — 문구에 지면 키와 형태") {
+                val error = shouldThrow<InvalidCampaignException> {
+                    AdsDomainFixtures.paidCampaign(
+                        bid = Bid(BidType.CPC, 50_000),
+                        placements = listOf(AdsDomainFixtures.placement("game-hub-end")),
+                        creativeFormat = PlacementFormat.BANNER,
+                    )
+                }
+                error.message shouldContain "game-hub-end"
+                error.message shouldContain "띠배너"
+            }
+        }
+        `when`("유료 캠페인 내용을 고치면") {
+            then("형태는 그대로다") {
+                val campaign = AdsDomainFixtures.paidCampaign(
+                    bid = Bid(BidType.CPM, 50_000), placements = listOf(dual), creativeFormat = PlacementFormat.BANNER,
+                )
+                val restored = Campaign.restore(
+                    id = 7, advertiserId = campaign.advertiserId, advertiserKind = campaign.advertiserKind, name = campaign.name,
+                    creativeFormat = campaign.creativeFormat, status = campaign.status, bid = campaign.bid,
+                    dailyBudgetMicros = campaign.dailyBudgetMicros, totalBudgetMicros = null, startAt = START, endAt = null,
+                    frequencyCapPerDay = 3, placementKeys = campaign.placementKeys, categoryCodes = emptySet(),
+                )
+                val revised = restored.revisePaid(
+                    AdsDomainFixtures.member(), "고친 이름", Bid(BidType.CPM, 60_000), 10_000_000, null, START, null, listOf(dual), emptySet(), 3,
+                )
+                revised.creativeFormat shouldBe PlacementFormat.BANNER
+            }
+        }
+    }
+
+    given("시작·재개 검사 — 저장 뒤 지면 형태 규격이 바뀌면") {
+        `when`("캠페인 형태의 규격이 지워졌으면") {
+            then("시작을 거절한다") {
+                val dual = AdsDomainFixtures.dualPlacement()
+                val campaign = AdsDomainFixtures.paidCampaign(
+                    bid = Bid(BidType.CPM, 200_000), placements = listOf(dual), creativeFormat = PlacementFormat.BANNER,
+                )
+                dual.removeFormat(PlacementFormat.BANNER)
+                shouldThrow<InvalidCampaignException> { campaign.verifyTargeting(listOf(dual)) }
+            }
+        }
+        `when`("캠페인 형태의 최저가가 입찰가보다 높아졌으면") {
+            then("재개를 거절하고, 다른 형태의 최저가 변경은 영향이 없다") {
+                val dual = AdsDomainFixtures.dualPlacement()
+                val campaign = AdsDomainFixtures.paidCampaign(
+                    bid = Bid(BidType.CPM, 60_000), placements = listOf(dual), creativeFormat = PlacementFormat.BANNER,
+                )
+                dual.changeFloor(PlacementFormat.CARD, 5_000_000)
+                campaign.verifyTargeting(listOf(dual))
+                dual.changeFloor(PlacementFormat.BANNER, 60_001)
+                shouldThrow<InvalidCampaignException> { campaign.verifyTargeting(listOf(dual)) }
+            }
+        }
+    }
+
+    given("HOUSE 는 형태 규격 검사에서 면제") {
+        `when`("형태 기본값(카드)의 HOUSE 캠페인이 띠배너 전용 지면을 타기팅하면") {
+            then("저장·시작·재개가 된다") {
+                val campaign = AdsDomainFixtures.houseCampaign(setOf("game-list-banner"))
+                campaign.creativeFormat shouldBe PlacementFormat.CARD
+                val bannerOnly = AdsDomainFixtures.bannerOnlyPlacement(paidAllowed = false)
+                campaign.verifyTargeting(listOf(bannerOnly))
+                campaign.start()
+                campaign.pause()
+                campaign.verifyTargeting(listOf(bannerOnly))
+                campaign.resume()
+                campaign.status shouldBe CampaignStatus.ACTIVE
             }
         }
     }

@@ -1,8 +1,11 @@
 package com.kgd.ads.application.advertiser
 
 import com.kgd.ads.application.advertiser.usecase.RegisterAdvertiserUseCase
+import com.kgd.ads.application.decision.usecase.RefreshCandidateIndexUseCase
 import com.kgd.ads.application.ledger.config.AdsTopUpProperties
+import com.kgd.ads.domain.campaign.model.BidType
 import com.kgd.ads.domain.ledger.model.Credits
+import com.kgd.ads.domain.placement.model.PlacementFormat
 import com.kgd.ads.presentation.admin.dto.HouseCampaignRequest
 import com.kgd.ads.presentation.advertiser.dto.CampaignRequest
 import com.kgd.ads.presentation.advertiser.dto.RegisterAdvertiserRequest
@@ -13,6 +16,7 @@ import com.kgd.ads.support.AdsApiClient.FilePart
 import com.kgd.ads.support.AdsFixtures
 import com.kgd.ads.support.AdsIntegrationSpec
 import com.kgd.ads.support.AdsIntegrationTestApplication.Companion.NOON_HALF
+import com.kgd.ads.support.DecisionClient
 import com.kgd.ads.support.DockerAvailable
 import com.kgd.ads.support.MutableClock
 import com.kgd.ads.support.TestImages
@@ -45,11 +49,13 @@ class AdvertiserApiIntegrationSpec(
     @Autowired @Qualifier("adsDataSource") adsDataSource: DataSource,
     @Autowired @Qualifier("adsClock") clock: Clock,
     @Autowired topUpLimits: AdsTopUpProperties,
+    @Autowired refreshIndex: RefreshCandidateIndexUseCase,
 ) : AdsIntegrationSpec({
 
     val jdbc = JdbcTemplate(adsDataSource)
     val fixtures = AdsFixtures(jdbc)
     val api = AdsApiClient(env.getRequiredProperty("local.server.port").toInt())
+    val decisions = DecisionClient(env.getRequiredProperty("local.server.port").toInt())
     val mutableClock = clock as MutableClock
 
     afterSpec { mutableClock.set(NOON_HALF) }
@@ -64,13 +70,15 @@ class AdvertiserApiIntegrationSpec(
         placements: List<String>,
         bidMicros: Long = 200_000,
         dailyBudgetMicros: Long = 5_000_000,
+        creativeFormat: PlacementFormat? = null,
     ) = CampaignRequest(
         name = "가을 캠페인",
-        bidType = com.kgd.ads.domain.campaign.model.BidType.CPM,
+        bidType = BidType.CPM,
         bidMicros = bidMicros,
         dailyBudgetMicros = dailyBudgetMicros,
         startAt = LocalDateTime.of(2026, 9, 1, 0, 0),
         placementKeys = placements,
+        creativeFormat = creativeFormat,
     )
 
     fun createCampaign(memberId: Long, placements: List<String>): Long {
@@ -221,12 +229,12 @@ class AdvertiserApiIntegrationSpec(
         then("저장 뒤 최저가가 올랐으면 시작이 거절되고, 멈추는 전이는 언제나 된다 — 종료는 되돌릴 수 없다") {
             fixtures.placement("a-api-raise", floorMicros = 100_000)
             val campaignId = createCampaign(11_020, listOf("a-api-raise"))
-            jdbc.update("UPDATE ad_placement SET floor_micros = 500000 WHERE placement_key = 'a-api-raise'")
+            fixtures.changeFormatFloor("a-api-raise", "CARD", 500_000)
             status(campaignId, 11_020, "START").status shouldBe 400
-            jdbc.update("UPDATE ad_placement SET floor_micros = 100000 WHERE placement_key = 'a-api-raise'")
+            fixtures.changeFormatFloor("a-api-raise", "CARD", 100_000)
             status(campaignId, 11_020, "START").data["status"].asString() shouldBe "ACTIVE"
 
-            jdbc.update("UPDATE ad_placement SET floor_micros = 500000 WHERE placement_key = 'a-api-raise'")
+            fixtures.changeFormatFloor("a-api-raise", "CARD", 500_000)
             status(campaignId, 11_020, "PAUSE").data["status"].asString() shouldBe "PAUSED"
             status(campaignId, 11_020, "RESUME").status shouldBe 400
             status(campaignId, 11_020, "END").data["status"].asString() shouldBe "ENDED"
@@ -268,11 +276,11 @@ class AdvertiserApiIntegrationSpec(
         register(13_001)
         fun errorOf(response: AdsApiClient.Response) = response.body["error"]["message"].asString()
 
-        then("CPM 입찰가가 최저가보다 낮으면 400 — 어느 지면의 최저가가 얼마인지 크레딧으로 알려 준다") {
+        then("CPM 입찰가가 최저가보다 낮으면 400 — 어느 지면의 어느 형태 최저가가 얼마인지 크레딧으로 알려 준다") {
             val response = api.post("/api/v1/ads/advertiser/campaigns", As(13_001), campaignRequest(listOf("a-api-msg-floor"), bidMicros = 200_000))
             response.status shouldBe 400
             response.body["error"]["code"].asString() shouldBe "INVALID_INPUT"
-            errorOf(response) shouldBe "입찰가가 지면 a-api-msg-floor 의 최저가(0.3 크레딧)보다 낮습니다"
+            errorOf(response) shouldBe "입찰가가 지면 a-api-msg-floor 의 카드 최저가(0.3 크레딧)보다 낮습니다"
         }
         then("일예산이 1회 과금액보다 작으면 그 과금액을 알려 준다") {
             val response = api.post(
@@ -361,6 +369,105 @@ class AdvertiserApiIntegrationSpec(
             catalog["categories"].items().map { it["code"].asString() } shouldContain "TECH"
             catalog["hourlyCapPercent"].asLong() shouldBe 25L
             mutableClock.set(NOON_HALF)
+        }
+        then("지면마다 형태 규격 목록과, 옛 화면용 옛 필드(대표 규격 값)를 함께 싣는다 — 업로드 규칙도 서버 상수로") {
+            fixtures.placement("a-api-cat-dual", formats = listOf(AdsFixtures.CARD, AdsFixtures.BANNER))
+            fixtures.placement("a-api-cat-strip", formats = listOf(AdsFixtures.BANNER))
+            register(12_210)
+            val catalog = api.get("/api/v1/ads/advertiser/catalog", As(12_210)).data
+            fun entry(key: String) = catalog["placements"].items().first { it["key"].asString() == key }
+            fun formats(key: String) = entry(key)["formats"].items().map {
+                Triple(it["format"].asString(), it["aspectRatios"].items().map { r -> r.asString() }, it["floorMicros"].asLong())
+            }
+
+            formats("a-api-cat-dual") shouldBe listOf(Triple("CARD", listOf("1.91:1"), 100_000L), Triple("BANNER", listOf("6.4:1"), 50_000L))
+            entry("a-api-cat-dual").let {
+                it["format"].asString() shouldBe "CARD"
+                it["aspectRatios"].items().map { r -> r.asString() } shouldBe listOf("1.91:1")
+                it["floorMicros"].asLong() shouldBe 100_000L
+            }
+            entry("a-api-cat-strip").let {
+                it["format"].asString() shouldBe "BANNER"
+                it["aspectRatios"].items().map { r -> r.asString() } shouldBe listOf("6.4:1")
+                it["floorMicros"].asLong() shouldBe 50_000L
+            }
+            val rules = catalog["uploadRules"]
+            rules["fileTypes"].items().map { it.asString() } shouldBe listOf("image/png", "image/jpeg")
+            rules["maxBytes"].asLong() shouldBe 300L * 1024
+            rules["maxDimension"].asLong() shouldBe 2_000L
+            rules["aspectTolerance"].asDouble() shouldBe 0.01
+        }
+    }
+
+    given("광고 형태 — 만들 때 하나, 바꿀 수 없다") {
+        fixtures.placement("a-fmt-dual", formats = listOf(AdsFixtures.CARD, AdsFixtures.BANNER))
+        register(12_201)
+        api.post("/api/v1/ads/advertiser/top-ups", As(12_201), TopUpRequest(10_000_000, "fmt-topup")).status shouldBe 200
+        val member = As(12_201)
+
+        then("형태 없이 만들면 카드다 (옛 콘솔 호환)") {
+            val created = api.post("/api/v1/ads/advertiser/campaigns", member, campaignRequest(listOf("a-fmt-dual")))
+            created.status shouldBe 200
+            created.data["creativeFormat"].asString() shouldBe "CARD"
+            jdbc.queryForObject("SELECT creative_format FROM ad_campaign WHERE id = ?", String::class.java, created.data["id"].asLong()) shouldBe "CARD"
+        }
+        then("띠배너 최저가 0.05 에 딱 맞춘 입찰은 띠배너로만 받는다 — 카드는 카드 최저가에 걸린다") {
+            api.post("/api/v1/ads/advertiser/campaigns", member, campaignRequest(listOf("a-fmt-dual"), bidMicros = 50_000, creativeFormat = PlacementFormat.CARD))
+                .status shouldBe 400
+            api.post("/api/v1/ads/advertiser/campaigns", member, campaignRequest(listOf("a-fmt-dual"), bidMicros = 50_000, creativeFormat = PlacementFormat.BANNER))
+                .data["creativeFormat"].asString() shouldBe "BANNER"
+        }
+        then("띠배너 캠페인: 6.4:1 소재만 받고, 문구 수정도 띠배너 내용으로 읽히며, 수정 요청의 형태는 무시된다 — 결정 응답은 format=BANNER·body 빈 값") {
+            val campaignId = api.post(
+                "/api/v1/ads/advertiser/campaigns", member,
+                campaignRequest(listOf("a-fmt-dual"), bidMicros = 60_000, creativeFormat = PlacementFormat.BANNER),
+            ).data["id"].asLong()
+            fun upload(file: FilePart, fields: Map<String, String>) =
+                api.multipart("POST", "/api/v1/ads/advertiser/campaigns/$campaignId/creatives", member, fields, file)
+
+            upload(FilePart("card.png", "image/png", TestImages.png(1200, 628, shade = 221)), mapOf("title" to "대체", "landingUrl" to "https://example.com/strip"))
+                .status shouldBe 400
+            val submitted = upload(
+                FilePart("strip.png", "image/png", TestImages.png(1280, 200, shade = 222)),
+                mapOf("title" to "가을 세일 띠배너", "landingUrl" to "https://example.com/strip"),
+            )
+            submitted.status shouldBe 200
+            submitted.data["title"].asString() shouldBe "가을 세일 띠배너"
+            submitted.data["body"].asString() shouldBe ""
+            submitted.data["format"].asString() shouldBe "BANNER"
+            val creativeId = submitted.data["id"].asLong()
+
+            val revised = api.multipart(
+                "PUT", "/api/v1/ads/advertiser/creatives/$creativeId", member,
+                mapOf("title" to "고친 대체 텍스트", "body" to "띠배너에는 쓰이지 않는 문구", "landingUrl" to "https://example.com/strip"), null,
+            )
+            revised.status shouldBe 200
+            revised.data["title"].asString() shouldBe "고친 대체 텍스트"
+            revised.data["body"].asString() shouldBe ""
+            jdbc.queryForObject("SELECT body FROM ad_creative WHERE id = ?", String::class.java, creativeId) shouldBe ""
+
+            // 광고주 소재 목록·운영자 심사 큐가 띠배너 행을 읽는다(500 없음)
+            api.get("/api/v1/ads/advertiser/campaigns/$campaignId/creatives", member).let {
+                it.status shouldBe 200
+                it.data.items().single()["format"].asString() shouldBe "BANNER"
+            }
+            api.get("/api/v1/admin/ads/creatives/pending", As(12_299, admin = true)).data.items()
+                .first { it["id"].asLong() == creativeId }["format"].asString() shouldBe "BANNER"
+
+            api.put(
+                "/api/v1/ads/advertiser/campaigns/$campaignId", member,
+                campaignRequest(listOf("a-fmt-dual"), bidMicros = 70_000, creativeFormat = PlacementFormat.CARD),
+            ).data["creativeFormat"].asString() shouldBe "BANNER"
+            jdbc.queryForObject("SELECT creative_format FROM ad_campaign WHERE id = ?", String::class.java, campaignId) shouldBe "BANNER"
+
+            status(campaignId, 12_201, "START").data["status"].asString() shouldBe "ACTIVE"
+            fixtures.approve(creativeId)
+            refreshIndex.refresh()
+            val ad = decisions.decide(listOf("a-fmt-dual"), visitorId = "vid-fmt-1").placement("a-fmt-dual")["ad"]
+            ad["creativeId"].asLong() shouldBe creativeId
+            ad["format"].asString() shouldBe "BANNER"
+            ad["title"].asString() shouldBe "고친 대체 텍스트"
+            ad["body"].asString() shouldBe ""
         }
     }
 

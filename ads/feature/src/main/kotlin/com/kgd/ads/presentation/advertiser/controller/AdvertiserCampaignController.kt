@@ -29,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile
 /**
  * 광고주의 캠페인·소재. 모든 경로의 id 는 요청 회원의 광고주 범위 안에서만 찾는다 — 남의 것은 404.
  * 소재는 multipart(제목·문구·랜딩 URL·이미지)로 받고, 올리거나 고치면 심사 대기가 된다.
+ * 띠배너 캠페인은 제목 칸이 대체 텍스트이고 문구는 보내지 않아도 된다(보내도 읽지 않는다).
  */
 @RestController
 @RequestMapping("/api/v1/ads/advertiser")
@@ -72,7 +73,7 @@ class AdvertiserCampaignController(
         @RequestHeader(USER, required = false) userId: String?,
         @PathVariable campaignId: Long,
         @RequestParam title: String,
-        @RequestParam body: String,
+        @RequestParam(defaultValue = "") body: String,
         @RequestParam landingUrl: String,
         @RequestPart("image") image: MultipartFile,
     ): ApiResponse<CreativeResponse> {
@@ -90,7 +91,7 @@ class AdvertiserCampaignController(
         @RequestHeader(USER, required = false) userId: String?,
         @PathVariable creativeId: Long,
         @RequestParam title: String,
-        @RequestParam body: String,
+        @RequestParam(defaultValue = "") body: String,
         @RequestParam landingUrl: String,
         @RequestPart("image", required = false) image: MultipartFile?,
     ): ApiResponse<CreativeResponse> {

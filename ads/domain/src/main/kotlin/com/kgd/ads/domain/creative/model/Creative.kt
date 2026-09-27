@@ -75,9 +75,15 @@ class Creative private constructor(
     }
 
     companion object {
-        /** 유료 캠페인에 소재를 올린다. 심사 전이라 `PENDING`. */
-        fun submit(campaign: Campaign, content: PaidCreativeContent): Creative {
+        /**
+         * 유료 캠페인에 소재를 올린다. 심사 전이라 `PENDING`.
+         * 내용 종류는 캠페인 형태와 같아야 한다 — 형태는 바뀌지 않으므로 이후 수정은 [revise] 의 종류 검사로 충분하다.
+         */
+        fun submit(campaign: Campaign, content: PaidContent): Creative {
             if (campaign.priority != CampaignPriority.PAID) throw InvalidCreativeException("유료 소재는 유료 캠페인에만 올립니다")
+            if (content.format != campaign.creativeFormat) {
+                throw InvalidCreativeException("${campaign.creativeFormat.label} 캠페인에는 ${content.format.label} 소재를 올릴 수 없습니다")
+            }
             return Creative(
                 id = null,
                 campaignId = requireNotNull(campaign.id) { "저장되지 않은 캠페인" },

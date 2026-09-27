@@ -4,6 +4,7 @@ import com.kgd.ads.application.creative.port.CreativePort
 import com.kgd.ads.domain.creative.model.Creative
 import com.kgd.ads.domain.creative.model.CreativeStatus
 import com.kgd.ads.infrastructure.persistence.advertiser.repository.AdvertiserJpaRepository
+import com.kgd.ads.infrastructure.persistence.campaign.repository.CampaignJpaRepository
 import com.kgd.ads.infrastructure.persistence.creative.entity.CreativeJpaEntity
 import com.kgd.ads.infrastructure.persistence.creative.repository.CreativeJpaRepository
 import org.springframework.data.repository.findByIdOrNull
@@ -14,6 +15,7 @@ import java.time.LocalDateTime
 class CreativeRepositoryAdapter(
     private val creativeRepository: CreativeJpaRepository,
     private val advertiserRepository: AdvertiserJpaRepository,
+    private val campaignRepository: CampaignJpaRepository,
 ) : CreativePort {
 
     override fun findById(id: Long): Creative? = creativeRepository.findByIdOrNull(id)?.let { toDomain(listOf(it)).single() }
@@ -30,9 +32,16 @@ class CreativeRepositoryAdapter(
         return toDomain(listOf(creativeRepository.save(CreativeJpaEntity.of(creative, createdAt, now)))).single()
     }
 
+    /** 행 → 도메인은 (광고주 종류, 캠페인 형태)로 가른다 — 후보 인덱스와 같은 변환([CreativeJpaEntity.toDomain]). */
     private fun toDomain(rows: List<CreativeJpaEntity>): List<Creative> {
         if (rows.isEmpty()) return emptyList()
         val kinds = advertiserRepository.findAllById(rows.map { it.advertiserId }.toSet()).associate { requireNotNull(it.id) to it.kind }
-        return rows.map { it.toDomain(requireNotNull(kinds[it.advertiserId]) { "광고주 없음: ${it.advertiserId}" }) }
+        val formats = campaignRepository.findAllById(rows.map { it.campaignId }.toSet()).associate { requireNotNull(it.id) to it.creativeFormat }
+        return rows.map {
+            it.toDomain(
+                requireNotNull(kinds[it.advertiserId]) { "광고주 없음: ${it.advertiserId}" },
+                requireNotNull(formats[it.campaignId]) { "캠페인 없음: ${it.campaignId}" },
+            )
+        }
     }
 }

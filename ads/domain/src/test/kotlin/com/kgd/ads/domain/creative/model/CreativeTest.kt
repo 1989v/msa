@@ -5,6 +5,7 @@ import com.kgd.ads.domain.campaign.model.BidType
 import com.kgd.ads.domain.campaign.model.Campaign
 import com.kgd.ads.domain.campaign.model.CampaignStatus
 import com.kgd.ads.domain.creative.exception.InvalidCreativeException
+import com.kgd.ads.domain.placement.model.PlacementFormat
 import com.kgd.ads.domain.support.AdsDomainFixtures
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
@@ -17,9 +18,11 @@ class CreativeTest : BehaviorSpec({
     val hash = "a".repeat(64)
     fun content(title: String = "가을 여행 특가") =
         PaidCreativeContent(title = title, body = "지금 떠나기 좋은 곳", landingUrl = LandingUrl.of("https://shop.example/autumn"), imageHash = hash)
-    fun campaign() = Campaign.restore(
+    fun banner(altText: String = "가을 여행 특가 — 지금 보기") =
+        BannerCreativeContent(altText = altText, landingUrl = LandingUrl.of("https://shop.example/autumn"), imageHash = hash)
+    fun campaign(format: PlacementFormat = PlacementFormat.CARD) = Campaign.restore(
         id = 5, advertiserId = 1, advertiserKind = AdsDomainFixtures.member().kind, name = "c",
-        status = CampaignStatus.ACTIVE,
+        creativeFormat = format, status = CampaignStatus.ACTIVE,
         bid = Bid(BidType.CPM, 200_000),
         dailyBudgetMicros = 10_000_000, totalBudgetMicros = null, startAt = AdsDomainFixtures.START, endAt = null,
         frequencyCapPerDay = 3, placementKeys = setOf("blog-post-end"), categoryCodes = emptySet(),
@@ -107,6 +110,59 @@ class CreativeTest : BehaviorSpec({
                     "http://evil.example",
                     "games",
                 ).forEach { shouldThrow<InvalidCreativeException> { HouseLink.of(it) } }
+            }
+        }
+    }
+    given("형태별 유료 내용") {
+        `when`("띠배너 대체 텍스트가 1~40자면") {
+            then("받고, 제목 칸에 대체 텍스트·설명은 빈 문자열로 읽힌다") {
+                val content = banner("가".repeat(40))
+                content.title shouldBe "가".repeat(40)
+                content.body shouldBe ""
+                content.format shouldBe PlacementFormat.BANNER
+            }
+        }
+        `when`("대체 텍스트가 비었거나 41자면") {
+            then("거부한다") {
+                listOf("", "   ", "가".repeat(41)).forEach { shouldThrow<InvalidCreativeException> { banner(it) } }
+            }
+        }
+        `when`("카드 내용의 설명이 비었으면") {
+            then("카드 규칙 그대로 거부한다") {
+                shouldThrow<InvalidCreativeException> {
+                    PaidCreativeContent("제목", "", LandingUrl.of("https://shop.example/a"), hash)
+                }
+            }
+        }
+        `when`("캠페인 형태와 다른 종류의 내용을 올리면") {
+            then("거부한다 — 띠배너 캠페인에 카드, 카드 캠페인에 띠배너") {
+                shouldThrow<InvalidCreativeException> { Creative.submit(campaign(PlacementFormat.BANNER), content()) }
+                shouldThrow<InvalidCreativeException> { Creative.submit(campaign(PlacementFormat.CARD), banner()) }
+                Creative.submit(campaign(PlacementFormat.BANNER), banner()).content shouldBe banner()
+            }
+        }
+        `when`("카드 소재를 띠배너 내용으로(또는 반대로) 고치면") {
+            then("거부한다") {
+                val card = Creative.submit(campaign(PlacementFormat.CARD), content())
+                shouldThrow<InvalidCreativeException> { card.revise(banner()) }
+                val strip = Creative.submit(campaign(PlacementFormat.BANNER), banner())
+                shouldThrow<InvalidCreativeException> { strip.revise(content()) }
+                strip.revise(banner("고친 대체 텍스트"))
+                strip.content.title shouldBe "고친 대체 텍스트"
+            }
+        }
+        `when`("형태 기본값(카드)의 HOUSE 캠페인에 HOUSE 내용을 올리고 고치면") {
+            then("형태와 무관하게 된다") {
+                val houseCampaign = Campaign.restore(
+                    id = 6, advertiserId = 99, advertiserKind = AdsDomainFixtures.house().kind, name = "h",
+                    creativeFormat = PlacementFormat.CARD, status = CampaignStatus.ACTIVE, bid = null,
+                    dailyBudgetMicros = null, totalBudgetMicros = null, startAt = AdsDomainFixtures.START, endAt = null,
+                    frequencyCapPerDay = null, placementKeys = setOf("game-list-banner"), categoryCodes = emptySet(),
+                )
+                val house = HouseCreativeContent("새 게임", "지금 해 보기", "🎮", HouseLink.of("/games"), null)
+                val creative = Creative.createHouse(houseCampaign, house, actorMemberId = 9, at = at)
+                creative.revise(house.copy(title = "새 게임 둘"))
+                creative.content.title shouldBe "새 게임 둘"
             }
         }
     }

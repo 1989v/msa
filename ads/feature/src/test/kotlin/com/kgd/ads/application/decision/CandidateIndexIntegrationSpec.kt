@@ -93,6 +93,42 @@ class CandidateIndexIntegrationSpec(
         }
     }
 
+    given("형태 규격 사전 필터 — 두 형태를 받는 지면 (카드 0.10 · 띠배너 0.05)") {
+        then("eCPM 0.07 띠배너는 남고 같은 eCPM 의 카드는 빠진다 — 띠배너 행은 (광고주 종류, 캠페인 형태)로 읽힌다") {
+            fixtures.placement("i4-dual", formats = listOf(AdsFixtures.CARD, AdsFixtures.BANNER))
+            // 카드를 먼저 넣어 캠페인 id 가 작다 — 인덱스에 남으면 동률 규칙으로 카드가 이긴다
+            val cardAdvertiser = fixtures.memberAdvertiser(12_301)
+            val cardCampaign = fixtures.paidCampaign(cardAdvertiser, listOf("i4-dual"), bidMicros = 70_000)
+            fixtures.paidCreative(cardCampaign, cardAdvertiser)
+            val stripAdvertiser = fixtures.memberAdvertiser(12_302)
+            val stripCampaign = fixtures.paidCampaign(stripAdvertiser, listOf("i4-dual"), bidMicros = 70_000, format = "BANNER")
+            val stripCreative = fixtures.paidCreative(stripCampaign, stripAdvertiser, width = 1280, height = 200, title = "띠배너 대체 텍스트", body = "")
+            refreshIndex.refresh()
+
+            val ad = client.decide(listOf("i4-dual"), visitorId = "vid-i4-1").placement("i4-dual")["ad"]
+            ad["creativeId"].asLong() shouldBe stripCreative
+            ad["format"].asString() shouldBe "BANNER"
+            ad["title"].asString() shouldBe "띠배너 대체 텍스트"
+            ad["body"].asString() shouldBe ""
+        }
+        then("캠페인 형태의 규격이 없는 지면에서는 후보가 되지 않는다") {
+            fixtures.placement("i4-card-only")
+            val advertiserId = fixtures.memberAdvertiser(12_303)
+            val campaignId = fixtures.paidCampaign(advertiserId, listOf("i4-card-only"), bidMicros = 500_000, format = "BANNER")
+            fixtures.paidCreative(campaignId, advertiserId, width = 1280, height = 200, title = "대체", body = "")
+            refreshIndex.refresh()
+            hasAd("i4-card-only") shouldBe false
+        }
+        then("이미지가 캠페인 형태 규격의 비율과 다르면 — 지면의 다른 형태 규격에 맞아도 — 후보가 되지 않는다") {
+            fixtures.placement("i4-misfit", formats = listOf(AdsFixtures.CARD, AdsFixtures.BANNER))
+            val advertiserId = fixtures.memberAdvertiser(12_304)
+            val campaignId = fixtures.paidCampaign(advertiserId, listOf("i4-misfit"), bidMicros = 500_000, format = "BANNER")
+            fixtures.paidCreative(campaignId, advertiserId, width = 1200, height = 628, title = "대체", body = "")
+            refreshIndex.refresh()
+            hasAd("i4-misfit") shouldBe false
+        }
+    }
+
     given("인덱스 갱신 시각 메트릭") {
         then("갱신을 부른 시각(epoch 초)을 가리킨다") {
             val at = NOON_HALF.plusMinutes(7)

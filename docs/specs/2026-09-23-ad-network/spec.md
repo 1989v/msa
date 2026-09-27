@@ -125,7 +125,7 @@
 - 원천은 시간별 집계 두 표와 원장뿐
 
 ### SR-14 HOUSE 와 game ads 흡수
-- HOUSE 캠페인은 `SYSTEM` 광고주 소유, 어드민 API 로만. 면제: 예산·지갑·최저가·빈도·원장
+- HOUSE 캠페인은 `SYSTEM` 광고주 소유, 어드민 API 로만. 면제: 예산·지갑·최저가·빈도·원장·광고 형태 규격(2026-09-27 광고 형태 스펙 — HOUSE 소재는 캠페인 형태와 무관하게 HOUSE 내용이다)
 - HOUSE 소재 형식: 제목·문구·이모지·링크, 이미지 선택. 링크는 서버가 검증한다 — 앱 안 경로 `^/(?![/\\])` 또는 `https` URL(userinfo 금지). 시드 상태 `APPROVED`
 - 결정 응답의 HOUSE 는 지면의 승인된 HOUSE 소재 **목록** — `HouseBanner` 가 6초 순환, 앱 안 경로는 SPA 링크
 - game `game-list-banner` 소재 3종을 ads 시드 마이그레이션으로 옮긴다. `game-detail-banner`·보상형은 호출처 0 이라 옮기지 않는다

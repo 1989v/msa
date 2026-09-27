@@ -43,6 +43,7 @@ class CampaignService(
         val campaign = Campaign.draftPaid(
             advertiser = advertiser,
             name = draft.name,
+            creativeFormat = draft.creativeFormat,
             bid = bid(draft),
             dailyBudgetMicros = draft.dailyBudgetMicros,
             totalBudgetMicros = draft.totalBudgetMicros,
@@ -54,7 +55,7 @@ class CampaignService(
         )
         val now = LocalDateTime.now(clock)
         val saved = campaignPort.save(campaign, now)
-        log.info { "캠페인 생성: campaignId=${saved.id} advertiserId=${advertiser.id}" }
+        log.info { "캠페인 생성: campaignId=${saved.id} advertiserId=${advertiser.id} format=${saved.creativeFormat}" }
         return CampaignView.of(saved, now)
     }
 

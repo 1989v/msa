@@ -1,5 +1,7 @@
 package com.kgd.ads.application.decision.usecase
 
+import com.kgd.ads.domain.placement.model.PlacementFormat
+
 /**
  * 한 페이지의 지면들에 광고를 정한다. 지면마다 유료 광고 하나 또는 없음(사유) + HOUSE 소재 목록.
  * 결정 경로는 DB 를 읽지 않는다 — 후보는 메모리 인덱스, 실시간 값은 ads Redis 한 번 읽기.
@@ -30,9 +32,11 @@ interface DecideAdsUseCase {
         val house: List<HouseCreativeView>,
     )
 
+    /** 띠배너([format] = BANNER)면 [title] 이 대체 텍스트이고 [body] 는 빈 문자열이다. */
     data class ServedAdView(
         val campaignId: Long,
         val creativeId: Long,
+        val format: PlacementFormat,
         val title: String,
         val body: String,
         val imageHash: String,

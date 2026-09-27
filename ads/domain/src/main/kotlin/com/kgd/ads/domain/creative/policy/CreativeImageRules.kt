@@ -1,5 +1,7 @@
 package com.kgd.ads.domain.creative.policy
 
+import com.kgd.ads.domain.campaign.model.Campaign
+import com.kgd.ads.domain.campaign.model.CampaignPriority
 import com.kgd.ads.domain.creative.exception.InvalidCreativeException
 import com.kgd.ads.domain.placement.model.AdPlacement
 
@@ -15,6 +17,8 @@ data class CreativeImageHeader(val format: CreativeImageFormat, val width: Int, 
 /**
  * 업로드 이미지를 **디코딩하기 전에** 거르는 규칙. 순서가 규칙의 일부다:
  * 매직 바이트 → 헤더의 가로·세로(2000px 초과면 거절) → 크기(300KB) → 타기팅한 모든 지면의 허용 비율.
+ * 유료의 비율은 캠페인 형태 규격으로만 본다(지면의 다른 형태 규격에 맞아도 통과시키지 않는다).
+ * HOUSE 는 형태가 없어 그 지면의 어느 규격에든 맞으면 통과한다.
  *
  * 헤더를 먼저 보는 이유 — 압축된 PNG 는 300KB 안에 20000×20000 을 담을 수 있고, 그것을 풀면 수백 MB 를 잡는다.
  * 가로·세로는 헤더 몇 바이트에 적혀 있으므로 픽셀을 풀지 않고 거절할 수 있다.
@@ -26,15 +30,26 @@ object CreativeImageRules {
     private val PNG_MAGIC = byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A)
     private val JPEG_MAGIC = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte())
 
-    /** 통과하면 헤더를 돌려준다. 어느 단계든 어기면 [InvalidCreativeException]. */
-    fun inspect(bytes: ByteArray, placements: List<AdPlacement>): CreativeImageHeader {
+    /**
+     * 통과하면 헤더를 돌려준다. 어느 단계든 어기면 [InvalidCreativeException].
+     * [placements] 는 [campaign] 이 타기팅한 지면 전부여야 한다.
+     */
+    fun inspect(bytes: ByteArray, campaign: Campaign, placements: List<AdPlacement>): CreativeImageHeader {
         val header = readHeader(bytes)
         if (header.width > MAX_DIMENSION || header.height > MAX_DIMENSION) {
             invalid("이미지는 가로·세로 ${MAX_DIMENSION}px 이하여야 합니다 (${header.width}×${header.height})")
         }
         if (bytes.size > MAX_BYTES) invalid("이미지는 ${MAX_BYTES / 1024}KB 이하여야 합니다")
-        placements.firstOrNull { !it.fitsImage(header.width, header.height) }?.let {
-            invalid("이미지 비율(${header.width}×${header.height})이 지면 ${it.key} 의 허용 비율에 맞지 않습니다")
+        when (campaign.priority) {
+            CampaignPriority.PAID -> {
+                val format = campaign.creativeFormat
+                placements.firstOrNull { !it.fitsImage(format, header.width, header.height) }?.let {
+                    invalid("이미지 비율(${header.width}×${header.height})이 지면 ${it.key} 의 ${format.label} 허용 비율에 맞지 않습니다")
+                }
+            }
+            CampaignPriority.HOUSE -> placements.firstOrNull { !it.fitsAnyFormat(header.width, header.height) }?.let {
+                invalid("이미지 비율(${header.width}×${header.height})이 지면 ${it.key} 의 허용 비율에 맞지 않습니다")
+            }
         }
         return header
     }

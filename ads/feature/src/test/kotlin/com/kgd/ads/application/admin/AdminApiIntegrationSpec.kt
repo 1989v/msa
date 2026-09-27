@@ -3,6 +3,7 @@ package com.kgd.ads.application.admin
 import com.kgd.ads.application.decision.usecase.RefreshCandidateIndexUseCase
 import com.kgd.ads.presentation.admin.dto.ContextMappingRequest
 import com.kgd.ads.presentation.admin.dto.CreatePlacementRequest
+import com.kgd.ads.presentation.admin.dto.FormatSpecRequest
 import com.kgd.ads.presentation.admin.dto.HouseCampaignRequest
 import com.kgd.ads.presentation.advertiser.dto.CampaignRequest
 import com.kgd.ads.presentation.advertiser.dto.RegisterAdvertiserRequest
@@ -22,6 +23,7 @@ import io.kotest.core.annotation.EnabledIf
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.core.env.Environment
@@ -57,7 +59,7 @@ class AdminApiIntegrationSpec(
     fun createPlacement(key: String, paidAllowed: Boolean = true, format: PlacementFormat = PlacementFormat.CARD) =
         api.post(
             "/api/v1/admin/ads/placements", admin,
-            CreatePlacementRequest(key, "blog.1989v.com", format, listOf("1.91:1"), 100_000, true, paidAllowed, "어드민 스펙 지면"),
+            CreatePlacementRequest(key, "blog.1989v.com", listOf(FormatSpecRequest(format, listOf("1.91:1"), 100_000)), true, paidAllowed, "어드민 스펙 지면"),
         )
 
     fun servedCreative(placement: String, visitor: String): Long? =
@@ -168,6 +170,70 @@ class AdminApiIntegrationSpec(
             )
             val row = api.get("/api/v1/admin/ads/placements/unregistered", admin).data.items().first { it["placementKey"].asString() == "a-adm-unknown" }
             row["requests"].asLong() shouldBe 7L
+        }
+    }
+
+    given("지면 형태 규격") {
+        val strip = As(12_401)
+        api.post("/api/v1/ads/advertiser/register", strip, RegisterAdvertiserRequest("형태 광고주"))
+        fun spec(key: String, format: String) =
+            api.get("/api/v1/admin/ads/placements", admin).data.items().first { it["key"].asString() == key }["formats"].items()
+                .firstOrNull { it["format"].asString() == format }
+        fun lastAudit(action: String, key: String): String =
+            jdbc.queryForList(
+                "SELECT detail FROM ad_admin_action WHERE action = ? AND target_id = ? ORDER BY id DESC", String::class.java, action, key,
+            ).first()
+        fun bannerCampaign(bidMicros: Long) = api.post(
+            "/api/v1/ads/advertiser/campaigns", strip,
+            CampaignRequest(
+                "띠배너", BidType.CPM, bidMicros, 5_000_000, null, LocalDateTime.of(2026, 9, 1, 0, 0), null, null, listOf("a-adm-fmt"),
+                creativeFormat = PlacementFormat.BANNER,
+            ),
+        )
+
+        then("규격을 추가·최저가 변경하면 응답·감사 요약이 형태별 최저가를 모두 싣고, 옛 컬럼에는 대표 규격(카드)이 남는다") {
+            createPlacement("a-adm-fmt").status shouldBe 200
+            val added = api.post("/api/v1/admin/ads/placements/a-adm-fmt/formats", admin, FormatSpecRequest(PlacementFormat.BANNER, listOf("6.4:1"), 50_000))
+            added.status shouldBe 200
+            added.data["formats"].items().map { it["format"].asString() } shouldBe listOf("CARD", "BANNER")
+            added.data["floorMicros"].asLong() shouldBe 100_000L
+            api.post("/api/v1/admin/ads/placements/a-adm-fmt/formats", admin, FormatSpecRequest(PlacementFormat.BANNER, listOf("6.4:1"), 50_000))
+                .status shouldBe 400
+
+            api.patch("/api/v1/admin/ads/placements/a-adm-fmt/formats/BANNER", admin, mapOf("floorMicros" to 60_000)).status shouldBe 200
+            spec("a-adm-fmt", "BANNER")!!["floorMicros"].asLong() shouldBe 60_000L
+            lastAudit("PLACEMENT_FORMAT_UPDATE", "a-adm-fmt").let {
+                it shouldContain "CARD:100000"
+                it shouldContain "BANNER:60000"
+            }
+            lastAudit("PLACEMENT_FORMAT_ADD", "a-adm-fmt") shouldContain "BANNER:50000"
+            jdbc.queryForMap("SELECT format, aspect_ratios, floor_micros FROM ad_placement WHERE placement_key = 'a-adm-fmt'").let {
+                listOf(it["format"], it["aspect_ratios"], (it["floor_micros"] as Number).toLong()) shouldBe listOf("CARD", "1.91:1", 100_000L)
+            }
+        }
+        then("옛 모양의 최저가 PATCH 는 대표 규격(카드)에 적용된다 — 띠배너는 그대로") {
+            api.patch("/api/v1/admin/ads/placements/a-adm-fmt", admin, mapOf("floorMicros" to 120_000)).status shouldBe 200
+            spec("a-adm-fmt", "CARD")!!["floorMicros"].asLong() shouldBe 120_000L
+            spec("a-adm-fmt", "BANNER")!!["floorMicros"].asLong() shouldBe 60_000L
+            val listed = api.get("/api/v1/admin/ads/placements", admin).data.items().first { it["key"].asString() == "a-adm-fmt" }
+            listed["floorMicros"].asLong() shouldBe 120_000L
+            listed["format"].asString() shouldBe "CARD"
+            listed["aspectRatios"].items().map { it.asString() } shouldBe listOf("1.91:1")
+        }
+        then("옛 컬럼을 다른 값으로 바꿔도 검사는 규격 값을 따른다") {
+            jdbc.update("UPDATE ad_placement SET format = 'CARD', aspect_ratios = '1:1', floor_micros = 9000000 WHERE placement_key = 'a-adm-fmt'")
+            bannerCampaign(59_999).status shouldBe 400
+            bannerCampaign(60_000).status shouldBe 200
+            spec("a-adm-fmt", "CARD")!!["floorMicros"].asLong() shouldBe 120_000L
+        }
+        then("규격을 지우면 그 형태 캠페인의 시작이 거절되고, 마지막 규격은 지울 수 없다") {
+            val campaignId = bannerCampaign(60_000).data["id"].asLong()
+            api.delete("/api/v1/admin/ads/placements/a-adm-fmt/formats/BANNER", admin).status shouldBe 200
+            lastAudit("PLACEMENT_FORMAT_REMOVE", "a-adm-fmt") shouldBe "formats=CARD:120000 active=true paidAllowed=true"
+            spec("a-adm-fmt", "BANNER") shouldBe null
+            api.put("/api/v1/ads/advertiser/campaigns/$campaignId/status", strip, mapOf("action" to "START")).status shouldBe 400
+            api.delete("/api/v1/admin/ads/placements/a-adm-fmt/formats/CARD", admin).status shouldBe 400
+            spec("a-adm-fmt", "CARD")!!["floorMicros"].asLong() shouldBe 120_000L
         }
     }
 

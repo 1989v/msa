@@ -116,6 +116,36 @@ class CreativeUploadIntegrationSpec(
         }
     }
 
+    given("두 형태를 받는 지면의 띠배너 캠페인") {
+        fixtures.placement("a-upload-dual", formats = listOf(AdsFixtures.CARD, AdsFixtures.BANNER))
+        val stripAdvertiser = fixtures.memberAdvertiser(11_102)
+        val stripCampaign = fixtures.paidCampaign(stripAdvertiser, listOf("a-upload-dual"), bidMicros = 60_000, format = "BANNER")
+        val stripMember = As(11_102)
+        fun uploadStrip(file: FilePart) = api.multipart(
+            "POST", "/api/v1/ads/advertiser/campaigns/$stripCampaign/creatives", stripMember,
+            mapOf("title" to "가을 세일 띠배너", "landingUrl" to "https://example.com/strip"), file,
+        )
+        fun stripCount(): Long = jdbc.queryForObject("SELECT COUNT(*) FROM ad_creative WHERE campaign_id = ?", Long::class.java, stripCampaign)!!
+
+        then("6.4:1 은 받아 설명 없이 저장한다") {
+            val response = uploadStrip(FilePart("strip.png", "image/png", TestImages.png(1280, 200)))
+            response.status shouldBe 200
+            jdbc.queryForObject("SELECT body FROM ad_creative WHERE id = ?", String::class.java, response.data["id"].asLong()) shouldBe ""
+        }
+        then("카드 비율(1.91:1)과 6.4:1 헤더 폭탄(20000×3125)은 디코딩 전에 거절한다") {
+            listOf(
+                FilePart("card.png", "image/png", TestImages.png(1200, 628, shade = 31)),
+                FilePart("strip-bomb.png", "image/png", TestImages.pngBomb(width = 20_000, height = 3_125)),
+            ).forEach { file ->
+                val before = stripCount()
+                val decodedBefore = decoder.count
+                uploadStrip(file).status shouldBe 400
+                stripCount() shouldBe before
+                decoder.count shouldBe decodedBefore
+            }
+        }
+    }
+
     given("랜딩 URL 규칙") {
         then("https 가 아니거나 userinfo 가 있으면 400, 소재 행 없음") {
             val before = creativeCount()

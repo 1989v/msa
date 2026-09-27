@@ -14,12 +14,38 @@ import java.util.UUID
  */
 class AdsFixtures(private val jdbc: JdbcTemplate) {
 
-    fun placement(key: String, floorMicros: Long = 100_000, paidAllowed: Boolean = true, host: String = BLOG_HOST, ratios: String = "1.91:1") {
+    /** 지면 하나의 형태 규격 — [format] 은 `CARD`·`BANNER`. */
+    data class Spec(val format: String, val ratios: String, val floorMicros: Long)
+
+    /**
+     * 지면 + 형태 규격. 규격 기본값은 카드 하나이고 그 비율·최저가가 [ratios]·[floorMicros] 다.
+     * 옛 지면 컬럼에는 운영 코드처럼 대표 규격(카드가 있으면 카드)을 쓴다.
+     */
+    fun placement(
+        key: String,
+        floorMicros: Long = 100_000,
+        paidAllowed: Boolean = true,
+        host: String = BLOG_HOST,
+        ratios: String = "1.91:1",
+        formats: List<Spec> = listOf(Spec("CARD", ratios, floorMicros)),
+    ) {
+        val representative = formats.firstOrNull { it.format == "CARD" } ?: formats.first()
         jdbc.update(
             "INSERT INTO ad_placement (placement_key, host, format, aspect_ratios, floor_micros, active, paid_allowed, description, created_at, updated_at) " +
-                "VALUES (?, ?, 'CARD', ?, ?, TRUE, ?, '테스트 지면', ?, ?)",
-            key, host, ratios, floorMicros, paidAllowed, T0, T0,
+                "VALUES (?, ?, ?, ?, ?, TRUE, ?, '테스트 지면', ?, ?)",
+            key, host, representative.format, representative.ratios, representative.floorMicros, paidAllowed, T0, T0,
         )
+        formats.forEach {
+            jdbc.update(
+                "INSERT INTO ad_placement_format (placement_key, format, aspect_ratios, floor_micros) VALUES (?, ?, ?, ?)",
+                key, it.format, it.ratios, it.floorMicros,
+            )
+        }
+    }
+
+    /** 그 지면·형태 규격의 최저가를 바꾼다(어드민 변경과 같은 효과를 DB 로). */
+    fun changeFormatFloor(key: String, format: String, floorMicros: Long) {
+        jdbc.update("UPDATE ad_placement_format SET floor_micros = ? WHERE placement_key = ? AND format = ?", floorMicros, key, format)
     }
 
     /**
@@ -28,7 +54,8 @@ class AdsFixtures(private val jdbc: JdbcTemplate) {
      * 통합 스펙들은 컨테이너 DB 하나를 같이 쓰고 회원 id 는 유일 키다. 스펙마다 대역을 나눠 쓴다 —
      * 결정 5xxx · 후보 인덱스 6xxx · 클릭 7xxx · 에셋 8xxx · 이벤트 수락 9xxx ·
      * 집계 100xx · 정산 101xx · 원장 102xx · 광고주 API 110xx · 소재 업로드 111xx · 어드민 API 112xx · 리포트 113xx ·
-     * analytics 사본 120xx · 리포트 원장 총액 121xx · 광고주 API 거절 문구·충전 여유 130xx.
+     * analytics 사본 120xx · 리포트 원장 총액 121xx · 광고 형태(광고주 API 122xx · 후보 인덱스 123xx · 어드민 API 124xx · 이벤트 수락 125xx) ·
+     * 광고주 API 거절 문구·충전 여유 130xx.
      * 어드민 API 의 운영자(행위자)는 11299.
      *
      * 집계·정산 작업은 DB 전체의 닫힌 미정산 행을 훑는다. 광고주 API·리포트 스펙이 시간별 집계·정산 행을 직접 넣을 때는
@@ -70,19 +97,29 @@ class AdsFixtures(private val jdbc: JdbcTemplate) {
         totalBudgetMicros: Long? = null,
         frequencyCap: Int = 3,
         categories: Set<String> = emptySet(),
+        format: String = "CARD",
     ): Long {
         val id = insert(
             "INSERT INTO ad_campaign (advertiser_id, name, status, bid_type, bid_micros, daily_budget_micros, total_budget_micros, " +
-                "start_at, end_at, frequency_cap_per_day, created_at, updated_at) VALUES (?, '테스트 캠페인', 'ACTIVE', ?, ?, ?, ?, ?, NULL, ?, ?, ?)",
-            advertiserId, bidType, bidMicros, dailyBudgetMicros, totalBudgetMicros, CAMPAIGN_START, frequencyCap, T0, T0,
+                "start_at, end_at, frequency_cap_per_day, creative_format, created_at, updated_at) " +
+                "VALUES (?, '테스트 캠페인', 'ACTIVE', ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?)",
+            advertiserId, bidType, bidMicros, dailyBudgetMicros, totalBudgetMicros, CAMPAIGN_START, frequencyCap, format, T0, T0,
         )
         placementKeys.forEach { jdbc.update("INSERT INTO ad_campaign_placement (campaign_id, placement_key) VALUES (?, ?)", id, it) }
         categories.forEach { jdbc.update("INSERT INTO ad_campaign_category (campaign_id, category_code) VALUES (?, ?)", id, it) }
         return id
     }
 
-    /** 유료 소재 + 이미지 메타. @return 소재 id */
-    fun paidCreative(campaignId: Long, advertiserId: Long, status: String = "APPROVED", width: Int = 1200, height: Int = 628): Long {
+    /** 유료 소재 + 이미지 메타. 띠배너 소재는 [title] 에 대체 텍스트, [body] 는 빈 문자열로 넣는다. @return 소재 id */
+    fun paidCreative(
+        campaignId: Long,
+        advertiserId: Long,
+        status: String = "APPROVED",
+        width: Int = 1200,
+        height: Int = 628,
+        title: String = "가을 세일",
+        body: String = "지금 바로 확인하세요",
+    ): Long {
         val hash = MessageDigest.getInstance("SHA-256").digest(UUID.randomUUID().toString().toByteArray())
             .joinToString("") { "%02x".format(it) }
         jdbc.update(
@@ -91,8 +128,8 @@ class AdsFixtures(private val jdbc: JdbcTemplate) {
         )
         return insert(
             "INSERT INTO ad_creative (campaign_id, advertiser_id, title, body, link_url, emoji, image_hash, status, reject_reason, " +
-                "reviewed_by, reviewed_at, created_at, updated_at) VALUES (?, ?, '가을 세일', '지금 바로 확인하세요', 'https://example.com/landing', NULL, ?, ?, NULL, NULL, NULL, ?, ?)",
-            campaignId, advertiserId, hash, status, T0, T0,
+                "reviewed_by, reviewed_at, created_at, updated_at) VALUES (?, ?, ?, ?, 'https://example.com/landing', NULL, ?, ?, NULL, NULL, NULL, ?, ?)",
+            campaignId, advertiserId, title, body, hash, status, T0, T0,
         )
     }
 
@@ -118,6 +155,8 @@ class AdsFixtures(private val jdbc: JdbcTemplate) {
 
     companion object {
         const val BLOG_HOST = "blog.1989v.com"
+        val CARD = Spec("CARD", "1.91:1", 100_000)
+        val BANNER = Spec("BANNER", "6.4:1", 50_000)
         private val T0: LocalDateTime = LocalDateTime.of(2026, 9, 1, 0, 0)
         private val CAMPAIGN_START: LocalDateTime = LocalDateTime.of(2026, 9, 1, 0, 0)
     }

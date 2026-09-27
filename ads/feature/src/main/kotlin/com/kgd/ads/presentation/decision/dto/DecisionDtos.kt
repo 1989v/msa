@@ -1,6 +1,7 @@
 package com.kgd.ads.presentation.decision.dto
 
 import com.kgd.ads.application.decision.usecase.DecideAdsUseCase
+import com.kgd.ads.domain.placement.model.PlacementFormat
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 
@@ -48,9 +49,13 @@ data class PlacementDecisionResponse(
     }
 }
 
-/** 유료 광고 카드. 광고주 문자열은 화면에서 텍스트 노드로만 그린다. 카드 링크는 [clickUrl](클릭 리다이렉터). */
+/**
+ * 유료 광고. 광고주 문자열은 화면에서 텍스트 노드로만 그린다. 링크는 [clickUrl](클릭 리다이렉터).
+ * [format] 이 BANNER(띠배너)면 [title] 은 이미지 대체 텍스트이고 [body] 는 빈 문자열이다.
+ */
 data class AdResponse(
     val creativeId: Long,
+    val format: PlacementFormat,
     val title: String,
     val body: String,
     val advertiserName: String,
@@ -61,6 +66,7 @@ data class AdResponse(
     companion object {
         fun from(ad: DecideAdsUseCase.ServedAdView) = AdResponse(
             creativeId = ad.creativeId,
+            format = ad.format,
             title = ad.title,
             body = ad.body,
             advertiserName = ad.advertiserName,

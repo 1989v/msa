@@ -12,7 +12,7 @@ interface PlacementPort {
     /** 새 지면. 같은 키가 있으면 false. */
     fun create(placement: AdPlacement, now: LocalDateTime): Boolean
 
-    /** 최저가·활성·유료 허용·설명을 반영한다. */
+    /** 형태 규격·활성·유료 허용·설명을 반영한다. */
     fun update(placement: AdPlacement, now: LocalDateTime)
 
     fun findUnregistered(): List<UnregisteredPlacementView>
