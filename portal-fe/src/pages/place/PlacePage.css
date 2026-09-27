@@ -260,7 +260,8 @@
 
 .place-corrected {
   margin: 0;
-  color: var(--ko-text-muted);
+  /* muted 는 라이트 배경에서 대비 4.23 — 13.6px 글자라 AA(4.5) 미달 (2026-09-27 CDP 실측) */
+  color: var(--ko-text-secondary);
   font-size: 0.85rem;
 }
 
