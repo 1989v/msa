@@ -463,12 +463,12 @@ function CampaignEditorBody({ current, readOnly }: { current: Campaign | null; r
           </div>
 
           <aside className="adc-campaign__aside" aria-label="미리보기와 예상">
-            <div className="adc-preview" aria-hidden="true">
-              <div className="adc-preview__img">소재 이미지 1.91:1</div>
-              <div className="adc-preview__body">
-                <span className="adc-preview__tag">광고</span>
-                <span className="adc-preview__title">소재 제목</span>
-                <span className="adc-preview__text">소재 설명 한두 줄</span>
+            <div className="adc-mock" aria-hidden="true">
+              <div className="adc-mock__img">소재 이미지 1.91:1</div>
+              <div className="adc-mock__body">
+                <span className="adc-mock__tag">광고</span>
+                <span className="adc-mock__title">소재 제목</span>
+                <span className="adc-mock__text">소재 설명 한두 줄</span>
               </div>
             </div>
             <p className="adc-hint">

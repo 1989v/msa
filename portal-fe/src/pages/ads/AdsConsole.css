@@ -852,8 +852,8 @@
   color: var(--ko-text-secondary);
 }
 
-/* 오른쪽 — 소재 미리보기(어두운 판) + 상한 계산 */
-.adc-preview {
+/* 오른쪽 — 소재 미리보기(어두운 판) + 상한 계산. 썸네일용 .adc-preview 와 이름을 가른다 */
+.adc-mock {
   display: flex;
   flex-direction: column;
   border-radius: var(--kh-radius);
@@ -862,7 +862,7 @@
   color: var(--kh-on-slab);
 }
 
-.adc-preview__img {
+.adc-mock__img {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -872,14 +872,14 @@
   color: var(--kh-on-slab-muted);
 }
 
-.adc-preview__body {
+.adc-mock__body {
   display: flex;
   flex-direction: column;
   gap: var(--ko-space-1);
   padding: var(--ko-space-3) var(--ko-space-4) var(--ko-space-4);
 }
 
-.adc-preview__tag {
+.adc-mock__tag {
   align-self: flex-start;
   padding: 0 var(--ko-space-1);
   border: 1px solid var(--kh-slab-border);
@@ -888,11 +888,11 @@
   color: var(--kh-ocher);
 }
 
-.adc-preview__title {
+.adc-mock__title {
   font-weight: 700;
 }
 
-.adc-preview__text {
+.adc-mock__text {
   font-size: var(--ko-text-sm);
   color: var(--kh-on-slab-muted);
 }
