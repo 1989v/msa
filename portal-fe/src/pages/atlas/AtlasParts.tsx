@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { KIND_META } from '../../components/hierarchy/kindLabels';
 import { useSuggest } from '../../hooks/useSuggest';
 import type { ConceptKind } from '../../types/graph';
 
@@ -8,10 +7,6 @@ import type { ConceptKind } from '../../types/graph';
 export function KindGlyph({ kind, className = '' }: { kind?: ConceptKind | null; className?: string }) {
   const k = (kind ?? 'TERM').toLowerCase();
   return <span className={`atlas-glyph atlas-glyph--${k} ${className}`} aria-hidden="true" />;
-}
-
-export function kindLabel(kind?: ConceptKind | null): string {
-  return kind ? KIND_META[kind].label : '용어';
 }
 
 /** k-heritage 섹션 머리 — `01_` 순번이 제목 앞, 아래로 전폭 괘선 */

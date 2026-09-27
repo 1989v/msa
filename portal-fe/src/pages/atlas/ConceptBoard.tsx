@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { RELATION_LABELS } from '../../components/hierarchy/kindLabels';
+import { RELATION_LABELS, kindLabel } from '../../components/hierarchy/kindLabels';
 import { GROUP_RANK, neighbors, type Graph, type Neighbor } from './atlasGraph';
-import { KindGlyph, kindLabel } from './AtlasParts';
+import { KindGlyph } from './AtlasParts';
 import GraphBoard from './GraphBoard';
 
 interface Props {

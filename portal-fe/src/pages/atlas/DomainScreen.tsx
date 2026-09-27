@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { RELATION_LABELS } from '../../components/hierarchy/kindLabels';
+import { RELATION_LABELS, kindLabel } from '../../components/hierarchy/kindLabels';
 import {
   descendantCount, neighbors, orderSiblings, pathFromRoot, searchConcepts,
   type Graph, type GraphDomain,
 } from './atlasGraph';
-import { KindGlyph, kindLabel } from './AtlasParts';
+import { KindGlyph } from './AtlasParts';
 import ConceptBoard from './ConceptBoard';
 import GraphBoard from './GraphBoard';
 

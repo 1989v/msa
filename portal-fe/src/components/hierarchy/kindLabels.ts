@@ -14,6 +14,10 @@ export const KIND_META: Record<ConceptKind, { label: string; glyph: string; colo
   METRIC: { label: '지표', glyph: '◎', color: 'var(--ko-status-profit)' },
 };
 
+export function kindLabel(kind?: ConceptKind | null): string {
+  return kind ? KIND_META[kind].label : '용어';
+}
+
 export const KIND_ORDER: ConceptKind[] = ['DOMAIN', 'STAGE', 'MECHANISM', 'TERM', 'TECHNOLOGY', 'PROBLEM', 'METRIC'];
 
 /** 관계를 읽는 말 — 나가는 쪽 · 들어오는 쪽(역방향). 순서는 「탐색 순서」이지 선수 지식이 아니다 */

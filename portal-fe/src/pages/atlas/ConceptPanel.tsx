@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { fetchConceptDetail } from '../../api/searchApi';
-import { RELATION_LABELS } from '../../components/hierarchy/kindLabels';
+import { RELATION_LABELS, kindLabel } from '../../components/hierarchy/kindLabels';
 import { unifiedHitHref } from '../../shell/serviceHref';
 import type { RelationEdge } from '../../types/graph';
-import { KindGlyph, SectionHead, kindLabel } from './AtlasParts';
+import { KindGlyph, SectionHead } from './AtlasParts';
 import { GITHUB_BLOB, useConceptPosts, useRelations, useSnippet } from './useAtlasData';
 
 /** 관계 표의 줄 순서 — 속한 곳과 포함이 먼저, 가로지르는 관계가 뒤 */
