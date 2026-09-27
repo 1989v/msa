@@ -6,6 +6,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.opensearch.client.json.JsonpDeserializer
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.opensearch.client.opensearch._types.mapping.TypeMapping
+import org.opensearch.client.opensearch.core.CountRequest
 import org.opensearch.client.opensearch.indices.CreateIndexRequest
 import org.opensearch.client.opensearch.indices.IndexSettings
 import org.springframework.stereotype.Component
@@ -28,6 +29,9 @@ class IndexAliasManager(private val osClient: OpenSearchClient) {
     companion object {
         /** settings/mappings 의 SSOT (ADR-0055) — nori 분석기 + 필드 매핑 전체. */
         const val PRODUCTS_INDEX_DEFINITION = "/opensearch/products-index.json"
+
+        /** 새 색인이 라이브 건수의 이 비율 밑이면 별칭을 넘기지 않는다. 하룻밤 원천이 10% 넘게 줄면 사람이 볼 일이다. */
+        const val MIN_DOC_RATIO = 0.9
 
         /** 관광지 인덱스 정의 (ADR-0065) — nori + english 서브필드 + geo_point. */
         const val ATTRACTIONS_INDEX_DEFINITION = "/opensearch/attractions-index.json"
@@ -67,9 +71,16 @@ class IndexAliasManager(private val osClient: OpenSearchClient) {
     /**
      * alias를 newIndexName으로 atomic 교체하고, 이름 prefix 로 전체 timestamped 인덱스를 스캔해
      * 최신 maxRetention 개를 제외한 옛 인덱스를 삭제.
+     *
+     * **교체 전에 새 색인의 건수를 지금 라이브 색인과 견준다.** 새 색인이 비었거나 라이브의
+     * [MIN_DOC_RATIO] 에 못 미치면 새 색인을 지우고 예외를 던진다 — 별칭은 그대로 남는다.
+     * 색인 도중 OpenSearch 가 OOM 으로 재시작되면 벌크가 수천 건 실패한 채로도 잡은 끝까지 가고,
+     * 게이트가 없던 때는 45,535 / 59,735 건짜리 색인이 그대로 라이브가 됐다. 검사를 호출자가 아니라
+     * 이 함수 안에 둔 이유는 교체 경로가 여기 하나뿐이라 어느 잡도 건너뛸 수 없게 하려는 것이다.
      */
     fun updateAliasAndCleanup(alias: String, newIndexName: String, maxRetention: Int = 2) {
         val aliasedIndices = getIndicesForAlias(alias)
+        checkNewIndexComplete(alias, newIndexName, aliasedIndices)
 
         osClient.indices().updateAliases { req ->
             // opensearch-java: actions(Function<Builder, ObjectBuilder<Action>>) 는 단건 액션 빌더.
@@ -92,6 +103,24 @@ class IndexAliasManager(private val osClient: OpenSearchClient) {
                 log.info { "Deleted old index: $oldIndex" }
             }
     }
+
+    private fun checkNewIndexComplete(alias: String, newIndexName: String, liveIndices: List<String>) {
+        osClient.indices().refresh { it.index(newIndexName) }
+        val newCount = countDocs(newIndexName)
+        val liveCount = liveIndices.filter { it != newIndexName }.sumOf { countDocs(it) }
+        val floor = (liveCount * MIN_DOC_RATIO).toLong()
+        if (newCount == 0L || newCount < floor) {
+            runCatching { osClient.indices().delete { d -> d.index(newIndexName) } }
+            error(
+                "별칭 '$alias' 교체 거부 — 새 색인 $newIndexName 이 $newCount 건으로 라이브 $liveCount 건의 " +
+                    "${(MIN_DOC_RATIO * 100).toInt()}% ($floor 건)에 못 미친다. 새 색인은 지웠고 라이브는 그대로다",
+            )
+        }
+        log.info { "Alias '$alias' 교체 검사 통과 — 새 $newCount 건 / 라이브 $liveCount 건" }
+    }
+
+    private fun countDocs(index: String): Long =
+        osClient.count(CountRequest.of { it.index(index) }).count()
 
     private fun getIndicesForAlias(alias: String): List<String> =
         runCatching {

@@ -10,6 +10,13 @@ import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import io.mockk.verify
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.string.shouldContain
+import org.opensearch.client.opensearch.core.CountRequest
+import org.opensearch.client.opensearch.core.CountResponse
+import org.opensearch.client.opensearch.indices.GetAliasResponse
+import org.opensearch.client.opensearch.indices.GetIndexResponse
 import org.opensearch.client.json.jackson3.JacksonJsonpMapper
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.opensearch.client.opensearch._types.mapping.Property
@@ -104,6 +111,64 @@ class IndexAliasManagerTest : BehaviorSpec({
                     index.numberOfShards() shouldBe 1
                     index.numberOfReplicas() shouldBe 0
                 }
+            }
+        }
+    }
+
+    // 별칭 교체 게이트 — 판정 근거는 이 관리자가 OpenSearch 에 실제로 보내는 요청(updateAliases · delete)이다.
+    // 색인 도중 OOM 으로 벌크가 수천 건 죽은 반쪽 색인(45,535 / 59,735)이 라이브가 된 사고의 재현.
+    given("별칭 교체 게이트") {
+        fun wire(live: Map<String, Long>, newIndex: String, newCount: Long): OpenSearchIndicesClient {
+            val indices = mockk<OpenSearchIndicesClient>(relaxed = true)
+            every { osClient.indices() } returns indices
+            val aliasResp = mockk<GetAliasResponse>()
+            every { aliasResp.result() } returns live.keys.associateWith { mockk(relaxed = true) }
+            if (live.isEmpty()) {
+                every { indices.getAlias(any<java.util.function.Function<*, *>>() as java.util.function.Function<org.opensearch.client.opensearch.indices.GetAliasRequest.Builder, org.opensearch.client.util.ObjectBuilder<org.opensearch.client.opensearch.indices.GetAliasRequest>>) } throws RuntimeException("alias 없음")
+            } else {
+                every { indices.getAlias(any<java.util.function.Function<org.opensearch.client.opensearch.indices.GetAliasRequest.Builder, org.opensearch.client.util.ObjectBuilder<org.opensearch.client.opensearch.indices.GetAliasRequest>>>()) } returns aliasResp
+            }
+            val getResp = mockk<GetIndexResponse>()
+            every { getResp.result() } returns (live.keys + newIndex).associateWith { mockk(relaxed = true) }
+            every { indices.get(any<java.util.function.Function<org.opensearch.client.opensearch.indices.GetIndexRequest.Builder, org.opensearch.client.util.ObjectBuilder<org.opensearch.client.opensearch.indices.GetIndexRequest>>>()) } returns getResp
+            val counts = live + (newIndex to newCount)
+            every { osClient.count(any<CountRequest>()) } answers {
+                val index = firstArg<CountRequest>().index().single()
+                mockk<CountResponse> { every { count() } returns counts.getValue(index) }
+            }
+            return indices
+        }
+
+        `when`("새 색인이 라이브의 90% 에 못 미치면 (45,535 / 59,735)") {
+            then("별칭을 넘기지 않고 새 색인을 지운 뒤 예외를 던진다") {
+                val indices = wire(mapOf("attractions_old" to 59_735L), "attractions_new", 45_535L)
+                val e = shouldThrow<IllegalStateException> {
+                    manager.updateAliasAndCleanup("attractions", "attractions_new", maxRetention = 1)
+                }
+                e.message!! shouldContain "교체 거부"
+                verify(exactly = 0) { indices.updateAliases(any<java.util.function.Function<org.opensearch.client.opensearch.indices.UpdateAliasesRequest.Builder, org.opensearch.client.util.ObjectBuilder<org.opensearch.client.opensearch.indices.UpdateAliasesRequest>>>()) }
+                verify(exactly = 1) { indices.delete(any<java.util.function.Function<org.opensearch.client.opensearch.indices.DeleteIndexRequest.Builder, org.opensearch.client.util.ObjectBuilder<org.opensearch.client.opensearch.indices.DeleteIndexRequest>>>()) }
+            }
+        }
+        `when`("새 색인이 라이브와 같은 건수면") {
+            then("별칭을 넘긴다") {
+                val indices = wire(mapOf("attractions_old" to 59_735L), "attractions_new", 59_735L)
+                manager.updateAliasAndCleanup("attractions", "attractions_new", maxRetention = 1)
+                verify(exactly = 1) { indices.updateAliases(any<java.util.function.Function<org.opensearch.client.opensearch.indices.UpdateAliasesRequest.Builder, org.opensearch.client.util.ObjectBuilder<org.opensearch.client.opensearch.indices.UpdateAliasesRequest>>>()) }
+            }
+        }
+        `when`("라이브 색인이 없는 첫 색인이면") {
+            then("건수가 있으면 별칭을 넘긴다") {
+                val indices = wire(emptyMap(), "unified_new", 351L)
+                manager.updateAliasAndCleanup("unified", "unified_new")
+                verify(exactly = 1) { indices.updateAliases(any<java.util.function.Function<org.opensearch.client.opensearch.indices.UpdateAliasesRequest.Builder, org.opensearch.client.util.ObjectBuilder<org.opensearch.client.opensearch.indices.UpdateAliasesRequest>>>()) }
+            }
+        }
+        `when`("새 색인이 비어 있으면") {
+            then("라이브가 없어도 넘기지 않는다") {
+                val indices = wire(emptyMap(), "unified_new", 0L)
+                shouldThrow<IllegalStateException> { manager.updateAliasAndCleanup("unified", "unified_new") }
+                verify(exactly = 0) { indices.updateAliases(any<java.util.function.Function<org.opensearch.client.opensearch.indices.UpdateAliasesRequest.Builder, org.opensearch.client.util.ObjectBuilder<org.opensearch.client.opensearch.indices.UpdateAliasesRequest>>>()) }
             }
         }
     }
