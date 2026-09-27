@@ -13,6 +13,9 @@ interface Props {
   full: boolean;
   onToggleFull: () => void;
   onSelect: (id: string) => void;
+  /** 중심 말고 따로 표시할 노드 — 도메인 그래프에서 아래에 펼친 묶음 */
+  picked?: string;
+  hint?: string;
 }
 
 interface Node extends SimNode {
@@ -64,7 +67,7 @@ function hiddenLabels(nodes: Node[], degree: Map<string, number>): Set<string> {
  * 그래프 판 — 옵시디언 로컬 그래프처럼 고른 개념을 가운데 두고 깊이 1~2 의 이웃을 힘으로 배치한다.
  * 색은 먹빛 하나에 황토(흐름 · 중심 · 강조)만 쓰고, 유형은 모양으로 가른다. 노드를 누르면 중심이 옮겨 간다.
  */
-export default function GraphBoard({ graph, sel, depth, hidden, full, onToggleFull, onSelect }: Props) {
+export default function GraphBoard({ graph, sel, depth, hidden, full, onToggleFull, onSelect, picked, hint = '드래그 · 휠 확대 · 누르면 중심 이동' }: Props) {
   const lg = useMemo(() => localGraph(graph, sel, depth, hidden), [graph, sel, depth, hidden]);
   // 시뮬레이션은 ref 의 노드를 움직이고, 그리기는 틱마다 찍은 스냅숏(state)에서 한다
   const [snap, setSnap] = useState<{ nodes: Node[]; links: { a: string; b: string; group: RelationGroup }[] }>({ nodes: [], links: [] });
@@ -231,6 +234,7 @@ export default function GraphBoard({ graph, sel, depth, hidden, full, onToggleFu
                     <circle className="atlas-graph__ring" r={r + 5} />
                   </>
                 )}
+                {n.id === picked && <circle className="atlas-graph__ring" r={r + 5} />}
                 <Shape kind={n.kind} r={r} />
                 <text x={r + 5} y={4}>{name}</text>
               </g>
@@ -239,7 +243,7 @@ export default function GraphBoard({ graph, sel, depth, hidden, full, onToggleFu
         </g>
       </svg>
       <button type="button" className="kh-mono atlas-graph__full" onClick={onToggleFull}>{full ? '닫기' : '크게'}</button>
-      <div className="kh-mono atlas-graph__hint" aria-hidden="true">드래그 · 휠 확대 · 누르면 중심 이동</div>
+      <div className="kh-mono atlas-graph__hint" aria-hidden="true">{hint}</div>
       <div className="kh-mono atlas-graph__key" aria-hidden="true">
         <span className="is-flow"><i />흐름</span>
         <span className="is-cross"><i />가로지름</span>

@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
-import { fetchConceptPostCounts, fetchPosts } from '../../api/blogApi';
+import { fetchPosts } from '../../api/blogApi';
 import { fetchConceptRelations } from '../../api/searchApi';
 import { indexGraph, type Graph, type RawGraph } from './atlasGraph';
 
@@ -32,17 +31,6 @@ export function useDescriptions(domain: string | undefined) {
     enabled: Boolean(domain),
     staleTime: Infinity,
   });
-}
-
-/** 개념별 발행글 수. 블로그가 죽어도 아틀라스는 그대로 그린다 — 실패는 빈 표로 */
-export function usePostCounts() {
-  const q = useQuery({
-    queryKey: ['blog', 'concept-counts'],
-    queryFn: fetchConceptPostCounts,
-    staleTime: LONG,
-    retry: false,
-  });
-  return useMemo(() => new Map((q.data ?? []).map((c) => [c.conceptId, c.postCount])), [q.data]);
 }
 
 export function useRelations(conceptId: string | undefined) {
@@ -96,17 +84,4 @@ export function useSnippet(path: string, symbol: string) {
     staleTime: 60 * 60 * 1000,
     retry: false,
   });
-}
-
-export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(() => window.matchMedia?.(query).matches ?? false);
-  useEffect(() => {
-    const mql = window.matchMedia?.(query);
-    if (!mql) return;
-    const on = () => setMatches(mql.matches);
-    on();
-    mql.addEventListener('change', on);
-    return () => mql.removeEventListener('change', on);
-  }, [query]);
-  return matches;
 }

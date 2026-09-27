@@ -131,76 +131,56 @@
 }
 .atlas-home__lead { margin: 0; font-size: 0.9375rem; line-height: 1.7; color: var(--ko-text-secondary); max-width: 34rem; }
 .atlas-stats { display: flex; flex-wrap: wrap; gap: var(--ko-space-4); margin-top: var(--ko-space-4); font-size: 0.6875rem; color: var(--ko-text-secondary); }
-.atlas-home__map {
-  margin-top: var(--ko-space-6);
-  background: var(--ko-surface-1);
-  border: 1px solid var(--ko-border-subtle);
-  border-radius: var(--kh-radius-asym);
-}
-.atlas-home__map-head {
-  display: flex;
-  justify-content: space-between;
-  padding: var(--ko-space-3) var(--ko-space-4) 0;
-  font-size: 0.625rem;
-  color: var(--kh-ocher-text);
-}
-.atlas-map { display: block; width: 100%; height: auto; }
-.atlas-map__link { stroke: var(--ko-text-primary); fill: none; }
-.atlas-map__count { font-family: var(--kh-font-mono); font-size: 9px; fill: var(--ko-text-secondary); }
-.atlas-map__node { cursor: pointer; outline: none; }
-.atlas-map__disc { fill: var(--ko-surface-0); stroke: var(--ko-text-primary); stroke-width: 1; }
-.atlas-map__core { fill: var(--ko-text-primary); }
-/* 라벨에 바탕색 테두리를 둘러 선 위에서도 읽히게 한다 */
-.atlas-map__name,
-.atlas-map__num { paint-order: stroke; stroke: var(--ko-surface-1); stroke-width: 3px; stroke-linejoin: round; }
-.atlas-map__name { fill: var(--ko-text-primary); font-weight: 500; }
-.atlas-map__num { fill: var(--ko-text-secondary); font-family: var(--kh-font-mono); }
-.atlas-map__node:hover .atlas-map__disc,
-.atlas-map__node:focus-visible .atlas-map__disc { fill: var(--ko-accent-primary-bg); stroke: var(--ko-accent-text); stroke-width: 1.6; }
+.atlas-home__intro { max-width: 1240px; margin: 0 auto; }
+.atlas-home__sec { max-width: 1240px; margin: var(--ko-space-10) auto 0; }
 
-.atlas-domains { margin-top: var(--ko-space-8); }
-.atlas-domains__list { margin: 0; padding: 0; list-style: none; }
-.atlas-domain-row {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) 20px;
-  column-gap: var(--ko-space-3);
-  padding: var(--ko-space-4) 0;
-  border-bottom: 1px solid var(--ko-border-subtle);
-  color: var(--ko-text-primary);
+/* 서비스 도메인 — 어두운 판 다섯, 비대칭 모서리 */
+.atlas-services { list-style: none; margin: var(--ko-space-4) 0 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--ko-space-3); }
+.atlas-service {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-2);
+  height: 100%;
+  min-height: 196px;
+  padding: var(--ko-space-4) var(--ko-space-4) 14px;
+  border: 1px solid var(--kh-slab-border);
+  border-radius: var(--kh-radius-asym);
+  background: var(--kh-slab);
+  color: var(--kh-on-slab);
   text-decoration: none;
+  transition: transform var(--kh-dur-feedback) var(--kh-ease-enter);
 }
-.atlas-domain-row:active { transform: translateY(1px); }
-.atlas-domain-row__index { padding-top: 3px; font-size: 0.6875rem; color: var(--kh-ocher-text); }
-.atlas-domain-row__body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.atlas-domain-row__name { font-size: 1.0625rem; font-weight: 700; }
-.atlas-domain-row__desc {
-  font-size: 0.8125rem;
-  line-height: 1.5;
-  color: var(--ko-text-secondary);
+.atlas-service:hover { transform: translateY(-2px); }
+.atlas-service:active { transform: translateY(1px); }
+.atlas-service__top { display: flex; justify-content: space-between; font-size: 0.6875rem; color: var(--kh-on-slab-muted); }
+.atlas-service__name { font-size: 1.125rem; font-weight: 700; line-height: 1.25; text-wrap: balance; }
+.atlas-service__desc {
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--kh-on-slab) 78%, transparent);
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.atlas-domain-row__meta { font-size: 0.625rem; }
-.atlas-domain-row__chev { align-self: center; color: var(--ko-text-secondary); transition: transform var(--kh-dur-feedback) var(--kh-ease-enter); }
-.atlas-domain-row:hover .atlas-domain-row__chev { transform: translateX(3px); color: var(--ko-accent-text); }
-.atlas-kinds { display: flex; flex-wrap: wrap; gap: var(--ko-space-3); font-size: 0.625rem; color: var(--ko-text-secondary); }
-.atlas-kinds .atlas-glyph { width: 8px; height: 8px; margin-right: 3px; }
+.atlas-service__foot { margin-top: auto; display: flex; gap: 10px; font-size: 0.6875rem; color: var(--kh-ocher); }
 
-@media (min-width: 1024px) {
-  .atlas-home.is-wide {
-    display: grid;
-    grid-template-columns: 480px minmax(0, 1fr);
-    gap: var(--ko-space-12);
-    max-width: 1440px;
-    margin: 0 auto;
-    padding: var(--ko-space-10) var(--ko-space-8);
-  }
-  .atlas-home.is-wide .atlas-home__map { margin-top: 0; align-self: start; position: sticky; top: 88px; }
-  .atlas-home.is-wide .atlas-domains { margin-top: var(--ko-space-8); }
-  .atlas-home.is-wide .atlas-domain-row { padding: var(--ko-space-3) 0; }
-  .atlas-home.is-wide .atlas-domain-row__desc { display: none; }
+/* 기반 기술 — 네 묶음, 한지 위 행 목록 */
+.atlas-tech { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--ko-space-6); margin-top: var(--ko-space-4); }
+.atlas-tech__group h3 { display: flex; align-items: baseline; gap: var(--ko-space-2); margin: 0 0 6px; font-size: 0.9375rem; }
+.atlas-tech__group h3 .atlas-muted { font-size: 0.6875rem; font-weight: 400; }
+.atlas-tech__group p { margin: 0 0 var(--ko-space-2); font-size: 0.78rem; color: var(--ko-text-secondary); }
+.atlas-tech__group ul { list-style: none; margin: 0; padding: 0; }
+.atlas-tech__row { display: flex; justify-content: space-between; align-items: baseline; gap: var(--ko-space-2); padding: 9px 2px; border-top: 1px solid var(--ko-border-subtle); color: var(--ko-text-primary); font-size: 0.875rem; text-decoration: none; }
+.atlas-tech__row .atlas-muted { font-size: 0.6875rem; }
+.atlas-tech__row:hover { color: var(--ko-accent-text); }
+
+@media (max-width: 1023px) {
+  .atlas-services, .atlas-tech { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .atlas-service { min-height: 0; }
+}
+@media (max-width: 560px) {
+  .atlas-services, .atlas-tech { grid-template-columns: 1fr; }
 }
 
 /* ─── 도메인 · 병풍 ────────────────────────────────────────── */
@@ -249,6 +229,11 @@
 .atlas-strip__sep { font-size: 0.75rem; color: var(--ko-text-muted); padding-inline: 2px; }
 .atlas-strip__sep.is-flow { color: var(--ko-accent-text); }
 
+.atlas-domain__graph { padding: 0 var(--ko-space-4) var(--ko-space-4); }
+.atlas-domain__graph .atlas-graph { margin-top: 0; }
+/* 묶음 하나만 펼칠 때는 패널이 폭을 다 쓴다 */
+.atlas-screen.is-single { width: auto; }
+.atlas-screen.is-single .atlas-panel { width: min(100%, 760px); }
 .atlas-stage { display: grid; grid-template-columns: minmax(0, 1fr) 440px; align-items: start; }
 .atlas-stage.is-closed { grid-template-columns: minmax(0, 1fr); }
 .atlas-screen-scroll { overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; }
@@ -515,5 +500,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .atlas-row__caret, .atlas-board, .atlas-graph__edge, .atlas-graph__node { transition: none; }
-  .atlas-domain-row__chev { transition: none; }
+  .atlas-service { transition: none; }
 }

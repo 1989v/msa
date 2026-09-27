@@ -6,6 +6,7 @@ import {
 } from './atlasGraph';
 import { KindGlyph, kindLabel } from './AtlasParts';
 import ConceptBoard from './ConceptBoard';
+import GraphBoard from './GraphBoard';
 
 interface Props {
   graph: Graph;
@@ -16,7 +17,8 @@ interface Props {
 }
 
 /**
- * 도메인 화면 — 병풍. 첫 층 묶음이 패널 하나씩 옆으로 늘어서 도메인 전체가 한 화면에 보인다.
+ * 도메인 화면 — 위에 도메인 중심 그래프(그래프 판과 같은 것)로 첫 층 묶음과 그 이웃을 보이고,
+ * 묶음을 고르면 아래에 그 묶음 하나를 펼친다. 「모두 펼치기」는 묶음 전체를 병풍으로 옆으로 늘어세운다.
  * 항목은 한 번 누르면 바로 펼치고 고른다(되묻지 않는다). 형제 사이 흐름은 1 → 2 → 3 순번으로,
  * 고른 개념의 관계는 오른쪽 판(모바일은 아래 시트)이 보인다.
  */
@@ -33,6 +35,11 @@ export default function DomainScreen({ graph, domain, sel, descriptions, onSelec
   };
 
   const groups = orderSiblings(graph, graph.children.get(rootId) ?? []).list;
+  // 펼친 묶음 — 고른 개념이 있으면 그 개념이 속한 첫 층, 없으면 첫 묶음
+  const picked = path[1] ?? groups[0];
+  const shown = allOpen ? groups : groups.filter((g) => g === picked);
+  const [graphFull, setGraphFull] = useState(false);
+  const noHidden = useMemo(() => new Set<string>(), []);
   const related = useMemo(() => {
     const m = new Map<string, string[]>();
     if (!sel) return m;
@@ -78,7 +85,7 @@ export default function DomainScreen({ graph, domain, sel, descriptions, onSelec
     );
     root.querySelectorAll('.atlas-panel').forEach((p) => io.observe(p));
     return () => io.disconnect();
-  }, [domain.key]);
+  }, [domain.key, allOpen]);
   // 고른 항목이 옆 패널에 있으면 그 패널로 민다
   useEffect(() => {
     if (!sel) return;
@@ -109,6 +116,23 @@ export default function DomainScreen({ graph, domain, sel, descriptions, onSelec
         </div>
       </header>
 
+      <div className="atlas-domain__graph">
+        <GraphBoard
+          graph={graph}
+          sel={rootId}
+          depth={2}
+          hidden={noHidden}
+          full={graphFull}
+          onToggleFull={() => setGraphFull((f) => !f)}
+          onSelect={(id) => {
+            select(id);
+            document.querySelector('.atlas-strip')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }}
+          picked={picked}
+          hint="드래그 · 휠 확대 · 묶음을 누르면 아래에 펼친다"
+        />
+      </div>
+
       <div className="kh-mono atlas-legend" aria-hidden="true">
         {(['STAGE', 'MECHANISM', 'TERM', 'TECHNOLOGY', 'PROBLEM', 'METRIC'] as const).map((k) => (
           <span key={k}><KindGlyph kind={k} />{kindLabel(k)}</span>
@@ -128,8 +152,12 @@ export default function DomainScreen({ graph, domain, sel, descriptions, onSelec
                 {i > 0 && <span className={`kh-mono atlas-strip__sep ${isFlow ? 'is-flow' : ''}`}>{isFlow ? '→' : '·'}</span>}
                 <button
                   type="button"
-                  aria-current={current === g}
-                  onClick={() => document.querySelector(`.atlas-panel[data-group="${CSS.escape(g)}"]`)?.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' })}
+                  aria-current={(allOpen ? current : picked) === g}
+                  onClick={() =>
+                    allOpen
+                      ? document.querySelector(`.atlas-panel[data-group="${CSS.escape(g)}"]`)?.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' })
+                      : select(g)
+                  }
                 >
                   <KindGlyph kind={c?.kind} />
                   <span>{c?.name}</span>
@@ -143,8 +171,9 @@ export default function DomainScreen({ graph, domain, sel, descriptions, onSelec
 
       <div className={`atlas-stage ${sel ? '' : 'is-closed'}`}>
         <div className="atlas-screen-scroll" ref={scrollRef}>
-          <div className="atlas-screen">
-            {groups.map((g, i) => {
+          <div className={`atlas-screen ${allOpen ? '' : 'is-single'}`}>
+            {shown.map((g) => {
+              const i = groups.indexOf(g);
               const c = graph.concepts.get(g);
               const next = (graph.out.get(g) ?? []).filter((e) => e.kind === 'FLOWS_TO').map((e) => graph.concepts.get(e.to)?.name);
               return (

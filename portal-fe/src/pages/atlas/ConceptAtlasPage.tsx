@@ -8,7 +8,7 @@ import AtlasHome from './AtlasHome';
 import { domainLinks, kindCounts, pathFromRoot } from './atlasGraph';
 import ConceptPanel from './ConceptPanel';
 import DomainScreen from './DomainScreen';
-import { useDescriptions, useGraph, useMediaQuery, usePostCounts } from './useAtlasData';
+import { useDescriptions, useGraph } from './useAtlasData';
 import './ConceptAtlas.css';
 
 const NAV = [
@@ -17,7 +17,7 @@ const NAV = [
 ];
 
 /**
- * `/tech` 개념 아틀라스 — 아틀라스(도메인 지도) → 도메인 병풍 → 개념 순으로 좁혀 간다.
+ * `/tech` 개념 아틀라스 — 아틀라스(서비스 도메인 · 기반 기술) → 도메인(그래프 · 묶음) → 개념 순으로 좁혀 간다.
  * 주소가 상태를 든다: `/tech` · `/tech/d/<domain>?sel=<conceptId>` · `/tech/c/<conceptId>` — 글에서 넘어오고 공유된다.
  * 그래프 구조는 빌드에 실린 정적 청크라 API 를 기다리지 않는다. 코드 · 글 · 질문만 개념 화면에서 API 로 받는다.
  */
@@ -26,9 +26,7 @@ export default function ConceptAtlasPage() {
   const { domain: domainParam, conceptId } = useParams();
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const wide = useMediaQuery('(min-width: 1024px)');
   const graph = useGraph();
-  const postCounts = usePostCounts();
   const g = graph.data;
 
   const domainKey = conceptId ? g?.concepts.get(conceptId)?.domain : domainParam;
@@ -83,7 +81,7 @@ export default function ConceptAtlasPage() {
       </main>
     );
   } else if (!domainParam && !conceptId) {
-    body = <AtlasHome atlas={atlas} postCounts={postCounts} wide={wide} />;
+    body = <AtlasHome atlas={atlas} />;
   } else if (conceptId) {
     // 개념 화면 — 코드 · 글 · 질문까지. 도메인에 놓이지 않은 개념도 관계는 보인다
     const path = domain ? pathFromRoot(g, domain.rootId, conceptId).slice(0, -1) : [];
