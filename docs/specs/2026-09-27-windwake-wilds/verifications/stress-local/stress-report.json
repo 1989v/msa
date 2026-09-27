@@ -1,0 +1,1283 @@
+{
+  "mode": "stress",
+  "url": "http://127.0.0.1:8789/",
+  "startedAt": "2026-09-27T14:03:12.811Z",
+  "status": "passed",
+  "adventures": [],
+  "continuous": null,
+  "stress": {
+    "naturalApproach": true,
+    "cycles": 10,
+    "samples": [
+      {
+        "cycle": 1,
+        "inside": {
+          "frames": 2,
+          "samples": 2,
+          "fps": 9.233610341643587,
+          "frameP95": 200,
+          "frameP99": 200,
+          "renderAverage": 3.5,
+          "droppedTime": 0.1,
+          "renderer": {
+            "drawCalls": 3,
+            "triangles": 4427,
+            "staticTriangles": 2928,
+            "dynamicTriangles": 1499,
+            "frameMs": 0.3000001907348633,
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "residentChunks": 0,
+            "maxResidentChunks": 64,
+            "residentBytes": 386496,
+            "chunkBuilds": 31,
+            "chunkEvictions": 31,
+            "disposedChunks": 31,
+            "activeScene": "dungeon-sunfields",
+            "dungeonBuffers": 1,
+            "dungeonBytes": 386496,
+            "sceneTransitions": 1,
+            "visibleNPCs": 0,
+            "chunkBuildsThisFrame": 0,
+            "cameraDistance": 5.630456358996676,
+            "cameraEye": [
+              0,
+              3.180671215057373,
+              -9.28909683227539
+            ],
+            "cameraTarget": [
+              0,
+              1.25,
+              -4
+            ],
+            "closedDungeonDoors": 3
+          },
+          "world": {
+            "cachedChunks": 62,
+            "maxCachedChunks": 96,
+            "generatedChunks": 62,
+            "evictedChunks": 0,
+            "lastQueryCells": 1,
+            "lastQueryCandidates": 3
+          },
+          "actors": 0,
+          "audioVoices": 14
+        },
+        "outside": {
+          "frames": 2,
+          "samples": 2,
+          "fps": 9.233610341643587,
+          "frameP95": 200,
+          "frameP99": 200,
+          "renderAverage": 3.5,
+          "droppedTime": 0.1,
+          "renderer": {
+            "drawCalls": 13,
+            "triangles": 18420,
+            "staticTriangles": 18558,
+            "dynamicTriangles": 5777,
+            "frameMs": 1.6999998092651367,
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "residentChunks": 12,
+            "maxResidentChunks": 64,
+            "residentBytes": 2449656,
+            "chunkBuilds": 43,
+            "chunkEvictions": 31,
+            "disposedChunks": 31,
+            "activeScene": "world",
+            "dungeonBuffers": 0,
+            "dungeonBytes": 0,
+            "sceneTransitions": 2,
+            "visibleNPCs": 3,
+            "chunkBuildsThisFrame": 2,
+            "cameraDistance": 9,
+            "cameraEye": [
+              106,
+              18.23687171936035,
+              -478.454345703125
+            ],
+            "cameraTarget": [
+              106,
+              15.15079116821289,
+              -470
+            ],
+            "closedDungeonDoors": 3
+          },
+          "world": {
+            "cachedChunks": 62,
+            "maxCachedChunks": 96,
+            "generatedChunks": 62,
+            "evictedChunks": 0,
+            "lastQueryCells": 2,
+            "lastQueryCandidates": 14
+          },
+          "actors": 40,
+          "audioVoices": 8
+        }
+      },
+      {
+        "cycle": 2,
+        "inside": {
+          "frames": 2,
+          "samples": 2,
+          "fps": 9.233610341643587,
+          "frameP95": 200,
+          "frameP99": 200,
+          "renderAverage": 3.5,
+          "droppedTime": 0.1,
+          "renderer": {
+            "drawCalls": 3,
+            "triangles": 4427,
+            "staticTriangles": 2928,
+            "dynamicTriangles": 1499,
+            "frameMs": 0.19999980926513672,
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "residentChunks": 0,
+            "maxResidentChunks": 64,
+            "residentBytes": 386496,
+            "chunkBuilds": 61,
+            "chunkEvictions": 61,
+            "disposedChunks": 61,
+            "activeScene": "dungeon-sunfields",
+            "dungeonBuffers": 1,
+            "dungeonBytes": 386496,
+            "sceneTransitions": 3,
+            "visibleNPCs": 0,
+            "chunkBuildsThisFrame": 0,
+            "cameraDistance": 5.630456358996676,
+            "cameraEye": [
+              0,
+              3.180671215057373,
+              -9.28909683227539
+            ],
+            "cameraTarget": [
+              0,
+              1.25,
+              -4
+            ],
+            "closedDungeonDoors": 3
+          },
+          "world": {
+            "cachedChunks": 64,
+            "maxCachedChunks": 96,
+            "generatedChunks": 64,
+            "evictedChunks": 0,
+            "lastQueryCells": 1,
+            "lastQueryCandidates": 3
+          },
+          "actors": 0,
+          "audioVoices": 10
+        },
+        "outside": {
+          "frames": 2,
+          "samples": 2,
+          "fps": 9.233610341643587,
+          "frameP95": 200,
+          "frameP99": 200,
+          "renderAverage": 3.5,
+          "droppedTime": 0.1,
+          "renderer": {
+            "drawCalls": 13,
+            "triangles": 18420,
+            "staticTriangles": 21973,
+            "dynamicTriangles": 5777,
+            "frameMs": 1.4000000953674316,
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "residentChunks": 14,
+            "maxResidentChunks": 64,
+            "residentBytes": 2900436,
+            "chunkBuilds": 75,
+            "chunkEvictions": 61,
+            "disposedChunks": 61,
+            "activeScene": "world",
+            "dungeonBuffers": 0,
+            "dungeonBytes": 0,
+            "sceneTransitions": 4,
+            "visibleNPCs": 3,
+            "chunkBuildsThisFrame": 2,
+            "cameraDistance": 9,
+            "cameraEye": [
+              106,
+              18.23687171936035,
+              -478.454345703125
+            ],
+            "cameraTarget": [
+              106,
+              15.15079116821289,
+              -470
+            ],
+            "closedDungeonDoors": 3
+          },
+          "world": {
+            "cachedChunks": 64,
+            "maxCachedChunks": 96,
+            "generatedChunks": 64,
+            "evictedChunks": 0,
+            "lastQueryCells": 2,
+            "lastQueryCandidates": 14
+          },
+          "actors": 40,
+          "audioVoices": 14
+        }
+      },
+      {
+        "cycle": 3,
+        "inside": {
+          "frames": 2,
+          "samples": 2,
+          "fps": 9.233610341643587,
+          "frameP95": 200,
+          "frameP99": 200,
+          "renderAverage": 3.5,
+          "droppedTime": 0.1,
+          "renderer": {
+            "drawCalls": 3,
+            "triangles": 4427,
+            "staticTriangles": 2928,
+            "dynamicTriangles": 1499,
+            "frameMs": 0.20000028610229492,
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "residentChunks": 0,
+            "maxResidentChunks": 64,
+            "residentBytes": 386496,
+            "chunkBuilds": 75,
+            "chunkEvictions": 75,
+            "disposedChunks": 75,
+            "activeScene": "dungeon-sunfields",
+            "dungeonBuffers": 1,
+            "dungeonBytes": 386496,
+            "sceneTransitions": 5,
+            "visibleNPCs": 0,
+            "chunkBuildsThisFrame": 0,
+            "cameraDistance": 5.630456358996676,
+            "cameraEye": [
+              0,
+              3.180671215057373,
+              -9.28909683227539
+            ],
+            "cameraTarget": [
+              0,
+              1.25,
+              -4
+            ],
+            "closedDungeonDoors": 3
+          },
+          "world": {
+            "cachedChunks": 64,
+            "maxCachedChunks": 96,
+            "generatedChunks": 64,
+            "evictedChunks": 0,
+            "lastQueryCells": 1,
+            "lastQueryCandidates": 3
+          },
+          "actors": 0,
+          "audioVoices": 20
+        },
+        "outside": {
+          "frames": 2,
+          "samples": 2,
+          "fps": 9.233610341643587,
+          "frameP95": 200,
+          "frameP99": 200,
+          "renderAverage": 3.5,
+          "droppedTime": 0.1,
+          "renderer": {
+            "drawCalls": 13,
+            "triangles": 18420,
+            "staticTriangles": 18558,
+            "dynamicTriangles": 5777,
+            "frameMs": 1.299999713897705,
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "residentChunks": 12,
+            "maxResidentChunks": 64,
+            "residentBytes": 2449656,
+            "chunkBuilds": 87,
+            "chunkEvictions": 75,
+            "disposedChunks": 75,
+            "activeScene": "world",
+            "dungeonBuffers": 0,
+            "dungeonBytes": 0,
+            "sceneTransitions": 6,
+            "visibleNPCs": 3,
+            "chunkBuildsThisFrame": 2,
+            "cameraDistance": 9,
+            "cameraEye": [
+              106,
+              18.23687171936035,
+              -478.454345703125
+            ],
+            "cameraTarget": [
+              106,
+              15.15079116821289,
+              -470
+            ],
+            "closedDungeonDoors": 3
+          },
+          "world": {
+            "cachedChunks": 64,
+            "maxCachedChunks": 96,
+            "generatedChunks": 64,
+            "evictedChunks": 0,
+            "lastQueryCells": 2,
+            "lastQueryCandidates": 14
+          },
+          "actors": 40,
+          "audioVoices": 20
+        }
+      },
+      {
+        "cycle": 4,
+        "inside": {
+          "frames": 2,
+          "samples": 2,
+          "fps": 9.233610341643587,
+          "frameP95": 200,
+          "frameP99": 200,
+          "renderAverage": 3.5,
+          "droppedTime": 0.1,
+          "renderer": {
+            "drawCalls": 3,
+            "triangles": 4427,
+            "staticTriangles": 2928,
+            "dynamicTriangles": 1499,
+            "frameMs": 0.19999980926513672,
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "residentChunks": 0,
+            "maxResidentChunks": 64,
+            "residentBytes": 386496,
+            "chunkBuilds": 87,
+            "chunkEvictions": 87,
+            "disposedChunks": 87,
+            "activeScene": "dungeon-sunfields",
+            "dungeonBuffers": 1,
+            "dungeonBytes": 386496,
+            "sceneTransitions": 7,
+            "visibleNPCs": 0,
+            "chunkBuildsThisFrame": 0,
+            "cameraDistance": 5.630456358996676,
+            "cameraEye": [
+              0,
+              3.180671215057373,
+              -9.28909683227539
+            ],
+            "cameraTarget": [
+              0,
+              1.25,
+              -4
+            ],
+            "closedDungeonDoors": 3
+          },
+          "world": {
+            "cachedChunks": 64,
+            "maxCachedChunks": 96,
+            "generatedChunks": 64,
+            "evictedChunks": 0,
+            "lastQueryCells": 1,
+            "lastQueryCandidates": 3
+          },
+          "actors": 0,
+          "audioVoices": 24
+        },
+        "outside": {
+          "frames": 2,
+          "samples": 2,
+          "fps": 9.233610341643587,
+          "frameP95": 200,
+          "frameP99": 200,
+          "renderAverage": 3.5,
+          "droppedTime": 0.1,
+          "renderer": {
+            "drawCalls": 13,
+            "triangles": 18420,
+            "staticTriangles": 21973,
+            "dynamicTriangles": 5777,
+            "frameMs": 1.5,
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "residentChunks": 14,
+            "maxResidentChunks": 64,
+            "residentBytes": 2900436,
+            "chunkBuilds": 101,
+            "chunkEvictions": 87,
+            "disposedChunks": 87,
+            "activeScene": "world",
+            "dungeonBuffers": 0,
+            "dungeonBytes": 0,
+            "sceneTransitions": 8,
+            "visibleNPCs": 3,
+            "chunkBuildsThisFrame": 2,
+            "cameraDistance": 9,
+            "cameraEye": [
+              106,
+              18.23687171936035,
+              -478.454345703125
+            ],
+            "cameraTarget": [
+              106,
+              15.15079116821289,
+              -470
+            ],
+            "closedDungeonDoors": 3
+          },
+          "world": {
+            "cachedChunks": 64,
+            "maxCachedChunks": 96,
+            "generatedChunks": 64,
+            "evictedChunks": 0,
+            "lastQueryCells": 2,
+            "lastQueryCandidates": 14
+          },
+          "actors": 40,
+          "audioVoices": 25
+        }
+      },
+      {
+        "cycle": 5,
+        "inside": {
+          "frames": 2,
+          "samples": 2,
+          "fps": 9.233610341643587,
+          "frameP95": 200,
+          "frameP99": 200,
+          "renderAverage": 3.5,
+          "droppedTime": 0.1,
+          "renderer": {
+            "drawCalls": 3,
+            "triangles": 4427,
+            "staticTriangles": 2928,
+            "dynamicTriangles": 1499,
+            "frameMs": 0.20000028610229492,
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "residentChunks": 0,
+            "maxResidentChunks": 64,
+            "residentBytes": 386496,
+            "chunkBuilds": 101,
+            "chunkEvictions": 101,
+            "disposedChunks": 101,
+            "activeScene": "dungeon-sunfields",
+            "dungeonBuffers": 1,
+            "dungeonBytes": 386496,
+            "sceneTransitions": 9,
+            "visibleNPCs": 0,
+            "chunkBuildsThisFrame": 0,
+            "cameraDistance": 5.630456358996676,
+            "cameraEye": [
+              0,
+              3.180671215057373,
+              -9.28909683227539
+            ],
+            "cameraTarget": [
+              0,
+              1.25,
+              -4
+            ],
+            "closedDungeonDoors": 3
+          },
+          "world": {
+            "cachedChunks": 64,
+            "maxCachedChunks": 96,
+            "generatedChunks": 64,
+            "evictedChunks": 0,
+            "lastQueryCells": 1,
+            "lastQueryCandidates": 3
+          },
+          "actors": 0,
+          "audioVoices": 25
+        },
+        "outside": {
+          "frames": 2,
+          "samples": 2,
+          "fps": 9.233610341643587,
+          "frameP95": 200,
+          "frameP99": 200,
+          "renderAverage": 3.5,
+          "droppedTime": 0.1,
+          "renderer": {
+            "drawCalls": 13,
+            "triangles": 18420,
+            "staticTriangles": 21973,
+            "dynamicTriangles": 5777,
+            "frameMs": 1.3000001907348633,
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "residentChunks": 14,
+            "maxResidentChunks": 64,
+            "residentBytes": 2900436,
+            "chunkBuilds": 115,
+            "chunkEvictions": 101,
+            "disposedChunks": 101,
+            "activeScene": "world",
+            "dungeonBuffers": 0,
+            "dungeonBytes": 0,
+            "sceneTransitions": 10,
+            "visibleNPCs": 3,
+            "chunkBuildsThisFrame": 2,
+            "cameraDistance": 9,
+            "cameraEye": [
+              106,
+              18.23687171936035,
+              -478.454345703125
+            ],
+            "cameraTarget": [
+              106,
+              15.15079116821289,
+              -470
+            ],
+            "closedDungeonDoors": 3
+          },
+          "world": {
+            "cachedChunks": 64,
+            "maxCachedChunks": 96,
+            "generatedChunks": 64,
+            "evictedChunks": 0,
+            "lastQueryCells": 2,
+            "lastQueryCandidates": 14
+          },
+          "actors": 40,
+          "audioVoices": 25
+        }
+      },
+      {
+        "cycle": 6,
+        "inside": {
+          "frames": 2,
+          "samples": 2,
+          "fps": 9.233610341643587,
+          "frameP95": 200,
+          "frameP99": 200,
+          "renderAverage": 3.5,
+          "droppedTime": 0.1,
+          "renderer": {
+            "drawCalls": 3,
+            "triangles": 4427,
+            "staticTriangles": 2928,
+            "dynamicTriangles": 1499,
+            "frameMs": 0.20000028610229492,
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "residentChunks": 0,
+            "maxResidentChunks": 64,
+            "residentBytes": 386496,
+            "chunkBuilds": 115,
+            "chunkEvictions": 115,
+            "disposedChunks": 115,
+            "activeScene": "dungeon-sunfields",
+            "dungeonBuffers": 1,
+            "dungeonBytes": 386496,
+            "sceneTransitions": 11,
+            "visibleNPCs": 0,
+            "chunkBuildsThisFrame": 0,
+            "cameraDistance": 5.630456358996676,
+            "cameraEye": [
+              0,
+              3.180671215057373,
+              -9.28909683227539
+            ],
+            "cameraTarget": [
+              0,
+              1.25,
+              -4
+            ],
+            "closedDungeonDoors": 3
+          },
+          "world": {
+            "cachedChunks": 64,
+            "maxCachedChunks": 96,
+            "generatedChunks": 64,
+            "evictedChunks": 0,
+            "lastQueryCells": 1,
+            "lastQueryCandidates": 3
+          },
+          "actors": 0,
+          "audioVoices": 25
+        },
+        "outside": {
+          "frames": 2,
+          "samples": 2,
+          "fps": 9.233610341643587,
+          "frameP95": 200,
+          "frameP99": 200,
+          "renderAverage": 3.5,
+          "droppedTime": 0.1,
+          "renderer": {
+            "drawCalls": 13,
+            "triangles": 18420,
+            "staticTriangles": 21973,
+            "dynamicTriangles": 5777,
+            "frameMs": 1.5,
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "residentChunks": 14,
+            "maxResidentChunks": 64,
+            "residentBytes": 2900436,
+            "chunkBuilds": 129,
+            "chunkEvictions": 115,
+            "disposedChunks": 115,
+            "activeScene": "world",
+            "dungeonBuffers": 0,
+            "dungeonBytes": 0,
+            "sceneTransitions": 12,
+            "visibleNPCs": 3,
+            "chunkBuildsThisFrame": 2,
+            "cameraDistance": 9,
+            "cameraEye": [
+              106,
+              18.23687171936035,
+              -478.454345703125
+            ],
+            "cameraTarget": [
+              106,
+              15.15079116821289,
+              -470
+            ],
+            "closedDungeonDoors": 3
+          },
+          "world": {
+            "cachedChunks": 64,
+            "maxCachedChunks": 96,
+            "generatedChunks": 64,
+            "evictedChunks": 0,
+            "lastQueryCells": 2,
+            "lastQueryCandidates": 14
+          },
+          "actors": 40,
+          "audioVoices": 25
+        }
+      },
+      {
+        "cycle": 7,
+        "inside": {
+          "frames": 2,
+          "samples": 2,
+          "fps": 9.233610341643587,
+          "frameP95": 200,
+          "frameP99": 200,
+          "renderAverage": 3.5,
+          "droppedTime": 0.1,
+          "renderer": {
+            "drawCalls": 3,
+            "triangles": 4427,
+            "staticTriangles": 2928,
+            "dynamicTriangles": 1499,
+            "frameMs": 0.2999997138977051,
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "residentChunks": 0,
+            "maxResidentChunks": 64,
+            "residentBytes": 386496,
+            "chunkBuilds": 129,
+            "chunkEvictions": 129,
+            "disposedChunks": 129,
+            "activeScene": "dungeon-sunfields",
+            "dungeonBuffers": 1,
+            "dungeonBytes": 386496,
+            "sceneTransitions": 13,
+            "visibleNPCs": 0,
+            "chunkBuildsThisFrame": 0,
+            "cameraDistance": 5.630456358996676,
+            "cameraEye": [
+              0,
+              3.180671215057373,
+              -9.28909683227539
+            ],
+            "cameraTarget": [
+              0,
+              1.25,
+              -4
+            ],
+            "closedDungeonDoors": 3
+          },
+          "world": {
+            "cachedChunks": 64,
+            "maxCachedChunks": 96,
+            "generatedChunks": 64,
+            "evictedChunks": 0,
+            "lastQueryCells": 1,
+            "lastQueryCandidates": 3
+          },
+          "actors": 0,
+          "audioVoices": 25
+        },
+        "outside": {
+          "frames": 2,
+          "samples": 2,
+          "fps": 9.233610341643587,
+          "frameP95": 200,
+          "frameP99": 200,
+          "renderAverage": 3.5,
+          "droppedTime": 0.1,
+          "renderer": {
+            "drawCalls": 13,
+            "triangles": 18420,
+            "staticTriangles": 18558,
+            "dynamicTriangles": 5777,
+            "frameMs": 1.5,
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "residentChunks": 12,
+            "maxResidentChunks": 64,
+            "residentBytes": 2449656,
+            "chunkBuilds": 141,
+            "chunkEvictions": 129,
+            "disposedChunks": 129,
+            "activeScene": "world",
+            "dungeonBuffers": 0,
+            "dungeonBytes": 0,
+            "sceneTransitions": 14,
+            "visibleNPCs": 3,
+            "chunkBuildsThisFrame": 2,
+            "cameraDistance": 9,
+            "cameraEye": [
+              106,
+              18.23687171936035,
+              -478.454345703125
+            ],
+            "cameraTarget": [
+              106,
+              15.15079116821289,
+              -470
+            ],
+            "closedDungeonDoors": 3
+          },
+          "world": {
+            "cachedChunks": 64,
+            "maxCachedChunks": 96,
+            "generatedChunks": 64,
+            "evictedChunks": 0,
+            "lastQueryCells": 2,
+            "lastQueryCandidates": 14
+          },
+          "actors": 40,
+          "audioVoices": 25
+        }
+      },
+      {
+        "cycle": 8,
+        "inside": {
+          "frames": 2,
+          "samples": 2,
+          "fps": 9.233610341643587,
+          "frameP95": 200,
+          "frameP99": 200,
+          "renderAverage": 3.5,
+          "droppedTime": 0.1,
+          "renderer": {
+            "drawCalls": 3,
+            "triangles": 4427,
+            "staticTriangles": 2928,
+            "dynamicTriangles": 1499,
+            "frameMs": 0.2999997138977051,
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "residentChunks": 0,
+            "maxResidentChunks": 64,
+            "residentBytes": 386496,
+            "chunkBuilds": 141,
+            "chunkEvictions": 141,
+            "disposedChunks": 141,
+            "activeScene": "dungeon-sunfields",
+            "dungeonBuffers": 1,
+            "dungeonBytes": 386496,
+            "sceneTransitions": 15,
+            "visibleNPCs": 0,
+            "chunkBuildsThisFrame": 0,
+            "cameraDistance": 5.630456358996676,
+            "cameraEye": [
+              0,
+              3.180671215057373,
+              -9.28909683227539
+            ],
+            "cameraTarget": [
+              0,
+              1.25,
+              -4
+            ],
+            "closedDungeonDoors": 3
+          },
+          "world": {
+            "cachedChunks": 64,
+            "maxCachedChunks": 96,
+            "generatedChunks": 64,
+            "evictedChunks": 0,
+            "lastQueryCells": 1,
+            "lastQueryCandidates": 3
+          },
+          "actors": 0,
+          "audioVoices": 25
+        },
+        "outside": {
+          "frames": 2,
+          "samples": 2,
+          "fps": 9.233610341643587,
+          "frameP95": 200,
+          "frameP99": 200,
+          "renderAverage": 3.5,
+          "droppedTime": 0.1,
+          "renderer": {
+            "drawCalls": 13,
+            "triangles": 18420,
+            "staticTriangles": 25228,
+            "dynamicTriangles": 5777,
+            "frameMs": 1.4000000953674316,
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "residentChunks": 16,
+            "maxResidentChunks": 64,
+            "residentBytes": 3330096,
+            "chunkBuilds": 157,
+            "chunkEvictions": 141,
+            "disposedChunks": 141,
+            "activeScene": "world",
+            "dungeonBuffers": 0,
+            "dungeonBytes": 0,
+            "sceneTransitions": 16,
+            "visibleNPCs": 3,
+            "chunkBuildsThisFrame": 2,
+            "cameraDistance": 9,
+            "cameraEye": [
+              106,
+              18.23687171936035,
+              -478.454345703125
+            ],
+            "cameraTarget": [
+              106,
+              15.15079116821289,
+              -470
+            ],
+            "closedDungeonDoors": 3
+          },
+          "world": {
+            "cachedChunks": 64,
+            "maxCachedChunks": 96,
+            "generatedChunks": 64,
+            "evictedChunks": 0,
+            "lastQueryCells": 2,
+            "lastQueryCandidates": 14
+          },
+          "actors": 40,
+          "audioVoices": 25
+        }
+      },
+      {
+        "cycle": 9,
+        "inside": {
+          "frames": 2,
+          "samples": 2,
+          "fps": 9.233610341643587,
+          "frameP95": 200,
+          "frameP99": 200,
+          "renderAverage": 3.5,
+          "droppedTime": 0.1,
+          "renderer": {
+            "drawCalls": 3,
+            "triangles": 4427,
+            "staticTriangles": 2928,
+            "dynamicTriangles": 1499,
+            "frameMs": 0.19999980926513672,
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "residentChunks": 0,
+            "maxResidentChunks": 64,
+            "residentBytes": 386496,
+            "chunkBuilds": 157,
+            "chunkEvictions": 157,
+            "disposedChunks": 157,
+            "activeScene": "dungeon-sunfields",
+            "dungeonBuffers": 1,
+            "dungeonBytes": 386496,
+            "sceneTransitions": 17,
+            "visibleNPCs": 0,
+            "chunkBuildsThisFrame": 0,
+            "cameraDistance": 5.630456358996676,
+            "cameraEye": [
+              0,
+              3.180671215057373,
+              -9.28909683227539
+            ],
+            "cameraTarget": [
+              0,
+              1.25,
+              -4
+            ],
+            "closedDungeonDoors": 3
+          },
+          "world": {
+            "cachedChunks": 64,
+            "maxCachedChunks": 96,
+            "generatedChunks": 64,
+            "evictedChunks": 0,
+            "lastQueryCells": 1,
+            "lastQueryCandidates": 3
+          },
+          "actors": 0,
+          "audioVoices": 25
+        },
+        "outside": {
+          "frames": 2,
+          "samples": 2,
+          "fps": 9.233610341643587,
+          "frameP95": 200,
+          "frameP99": 200,
+          "renderAverage": 3.5,
+          "droppedTime": 0.1,
+          "renderer": {
+            "drawCalls": 13,
+            "triangles": 18420,
+            "staticTriangles": 18558,
+            "dynamicTriangles": 5777,
+            "frameMs": 1.4000000953674316,
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "residentChunks": 12,
+            "maxResidentChunks": 64,
+            "residentBytes": 2449656,
+            "chunkBuilds": 169,
+            "chunkEvictions": 157,
+            "disposedChunks": 157,
+            "activeScene": "world",
+            "dungeonBuffers": 0,
+            "dungeonBytes": 0,
+            "sceneTransitions": 18,
+            "visibleNPCs": 3,
+            "chunkBuildsThisFrame": 2,
+            "cameraDistance": 9,
+            "cameraEye": [
+              106,
+              18.23687171936035,
+              -478.454345703125
+            ],
+            "cameraTarget": [
+              106,
+              15.15079116821289,
+              -470
+            ],
+            "closedDungeonDoors": 3
+          },
+          "world": {
+            "cachedChunks": 64,
+            "maxCachedChunks": 96,
+            "generatedChunks": 64,
+            "evictedChunks": 0,
+            "lastQueryCells": 2,
+            "lastQueryCandidates": 14
+          },
+          "actors": 40,
+          "audioVoices": 25
+        }
+      },
+      {
+        "cycle": 10,
+        "inside": {
+          "frames": 2,
+          "samples": 2,
+          "fps": 9.233610341643587,
+          "frameP95": 200,
+          "frameP99": 200,
+          "renderAverage": 3.5,
+          "droppedTime": 0.1,
+          "renderer": {
+            "drawCalls": 3,
+            "triangles": 4427,
+            "staticTriangles": 2928,
+            "dynamicTriangles": 1499,
+            "frameMs": 0.19999980926513672,
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "residentChunks": 0,
+            "maxResidentChunks": 64,
+            "residentBytes": 386496,
+            "chunkBuilds": 169,
+            "chunkEvictions": 169,
+            "disposedChunks": 169,
+            "activeScene": "dungeon-sunfields",
+            "dungeonBuffers": 1,
+            "dungeonBytes": 386496,
+            "sceneTransitions": 19,
+            "visibleNPCs": 0,
+            "chunkBuildsThisFrame": 0,
+            "cameraDistance": 5.630456358996676,
+            "cameraEye": [
+              0,
+              3.180671215057373,
+              -9.28909683227539
+            ],
+            "cameraTarget": [
+              0,
+              1.25,
+              -4
+            ],
+            "closedDungeonDoors": 3
+          },
+          "world": {
+            "cachedChunks": 64,
+            "maxCachedChunks": 96,
+            "generatedChunks": 64,
+            "evictedChunks": 0,
+            "lastQueryCells": 1,
+            "lastQueryCandidates": 3
+          },
+          "actors": 0,
+          "audioVoices": 25
+        },
+        "outside": {
+          "frames": 232,
+          "samples": 232,
+          "fps": 58.00290014500726,
+          "frameP95": 16.800000000000182,
+          "frameP99": 33.30000000000109,
+          "renderAverage": 0.17844825571980968,
+          "droppedTime": 0,
+          "renderer": {
+            "drawCalls": 13,
+            "triangles": 18420,
+            "staticTriangles": 21973,
+            "dynamicTriangles": 5777,
+            "frameMs": 1.5,
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "residentChunks": 14,
+            "maxResidentChunks": 64,
+            "residentBytes": 2900436,
+            "chunkBuilds": 183,
+            "chunkEvictions": 169,
+            "disposedChunks": 169,
+            "activeScene": "world",
+            "dungeonBuffers": 0,
+            "dungeonBytes": 0,
+            "sceneTransitions": 20,
+            "visibleNPCs": 3,
+            "chunkBuildsThisFrame": 2,
+            "cameraDistance": 9,
+            "cameraEye": [
+              106,
+              18.23687171936035,
+              -478.454345703125
+            ],
+            "cameraTarget": [
+              106,
+              15.15079116821289,
+              -470
+            ],
+            "closedDungeonDoors": 3
+          },
+          "world": {
+            "cachedChunks": 64,
+            "maxCachedChunks": 96,
+            "generatedChunks": 64,
+            "evictedChunks": 0,
+            "lastQueryCells": 2,
+            "lastQueryCandidates": 14
+          },
+          "actors": 40,
+          "audioVoices": 5
+        }
+      }
+    ],
+    "indoorPerformance": {
+      "frames": 232,
+      "samples": 232,
+      "fps": 58.00290014500726,
+      "frameP95": 16.800000000000182,
+      "frameP99": 33.30000000000109,
+      "renderAverage": 0.17844825571980968,
+      "droppedTime": 0,
+      "renderer": {
+        "drawCalls": 3,
+        "triangles": 4427,
+        "staticTriangles": 2928,
+        "dynamicTriangles": 1499,
+        "frameMs": 0.19999980926513672,
+        "width": 1280,
+        "height": 800,
+        "pixelRatio": 1,
+        "residentChunks": 0,
+        "maxResidentChunks": 64,
+        "residentBytes": 386496,
+        "chunkBuilds": 169,
+        "chunkEvictions": 169,
+        "disposedChunks": 169,
+        "activeScene": "dungeon-sunfields",
+        "dungeonBuffers": 1,
+        "dungeonBytes": 386496,
+        "sceneTransitions": 19,
+        "visibleNPCs": 0,
+        "chunkBuildsThisFrame": 0,
+        "cameraDistance": 5.630456358996676,
+        "cameraEye": [
+          0,
+          3.180671215057373,
+          -9.28909683227539
+        ],
+        "cameraTarget": [
+          0,
+          1.25,
+          -4
+        ],
+        "closedDungeonDoors": 3
+      },
+      "world": {
+        "cachedChunks": 64,
+        "maxCachedChunks": 96,
+        "generatedChunks": 64,
+        "evictedChunks": 0,
+        "lastQueryCells": 1,
+        "lastQueryCandidates": 3
+      },
+      "actors": 0,
+      "audioVoices": 1
+    },
+    "outdoorPerformance": {
+      "frames": 240,
+      "samples": 240,
+      "fps": 59.75351674343334,
+      "frameP95": 16.799999999999272,
+      "frameP99": 16.80000000000109,
+      "renderAverage": 0.5520833174387614,
+      "droppedTime": 0,
+      "renderer": {
+        "drawCalls": 17,
+        "triangles": 23653,
+        "staticTriangles": 75264,
+        "dynamicTriangles": 5777,
+        "frameMs": 0.5,
+        "width": 1280,
+        "height": 800,
+        "pixelRatio": 1,
+        "residentChunks": 49,
+        "maxResidentChunks": 64,
+        "residentBytes": 9934848,
+        "chunkBuilds": 218,
+        "chunkEvictions": 169,
+        "disposedChunks": 169,
+        "activeScene": "world",
+        "dungeonBuffers": 0,
+        "dungeonBytes": 0,
+        "sceneTransitions": 20,
+        "visibleNPCs": 3,
+        "chunkBuildsThisFrame": 0,
+        "cameraDistance": 9,
+        "cameraEye": [
+          106,
+          18.23687171936035,
+          -478.454345703125
+        ],
+        "cameraTarget": [
+          106,
+          15.15079116821289,
+          -470
+        ],
+        "closedDungeonDoors": 3
+      },
+      "world": {
+        "cachedChunks": 77,
+        "maxCachedChunks": 96,
+        "generatedChunks": 77,
+        "evictedChunks": 0,
+        "lastQueryCells": 2,
+        "lastQueryCandidates": 14
+      },
+      "actors": 40,
+      "audioVoices": 1
+    },
+    "final": {
+      "position": {
+        "x": 106,
+        "z": -470,
+        "y": 13.900790743623723,
+        "vx": 0,
+        "vy": 0,
+        "vz": 0,
+        "yaw": 0,
+        "hp": 100,
+        "maxHp": 100,
+        "stamina": 100,
+        "maxStamina": 100,
+        "energy": 100,
+        "maxEnergy": 100,
+        "grounded": true,
+        "airState": "GROUND",
+        "gliding": false,
+        "action": "idle",
+        "actionTime": 0,
+        "combo": 0,
+        "attackTimer": 0,
+        "attackElapsed": 0,
+        "attackHit": false,
+        "attackQueued": false,
+        "comboWindow": 0,
+        "dodgeTimer": 0,
+        "parryTimer": 0,
+        "parryCooldown": 0,
+        "invulnerable": 0,
+        "skillCooldown": 0,
+        "abilityCooldowns": {},
+        "dashTimer": 0,
+        "slowTimer": 0,
+        "crystals": 0,
+        "flasks": 3,
+        "checkpoint": "camp",
+        "coyote": 0.12,
+        "jumpBuffer": 0,
+        "plunge": false,
+        "safeX": 106,
+        "safeY": 13.900790743623723,
+        "safeZ": -470,
+        "fallPeak": 13.900790743623723
+      },
+      "metrics": {
+        "jumps": 0,
+        "landings": 0,
+        "hits": 0,
+        "kills": 0,
+        "parries": 0,
+        "dodges": 0,
+        "combos": 0,
+        "damageTaken": 0,
+        "distance": 540.5052013132508,
+        "falls": 0,
+        "secrets": 0
+      },
+      "expedition": {
+        "active": null,
+        "progress": {
+          "dungeon-sunfields": {
+            "killed": [],
+            "solved": [],
+            "opened": [],
+            "claimed": false
+          }
+        }
+      }
+    }
+  },
+  "errors": [],
+  "cacheContract": "Retained CPU world cache <=96 is intentional reuse. Indoor generation delta must be zero; GPU world chunks must be zero and dungeon batch count one. Initial cache-empty assertion was corrected; initial-cache-assertion artifacts preserve that harness failure.",
+  "finishedAt": "2026-09-27T14:03:28.901Z"
+}

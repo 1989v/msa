@@ -14,3 +14,5 @@ User authorizes implementation; no redundant approval gate. Existing ADR-0096/00
 ## Verification status
 
 Tasks 1–4 complete: full suite 203/203, local Chrome and independent implementation review SHIP. Near-actor admission and core seam corrected after review. Task 5 in progress; public release evidence will be recorded separately.
+
+Task 5 complete: public bytes, Chrome original/frontier/continuous journeys, WILDS controls and save/reload verified. See release-verification.md.

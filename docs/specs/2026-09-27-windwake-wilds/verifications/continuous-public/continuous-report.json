@@ -1,0 +1,13 @@
+{
+  "mode": "continuous",
+  "url": "https://game.1989v.com/games/windwake/index.html",
+  "startedAt": "2026-09-27T14:32:31.733Z",
+  "status": "failed",
+  "adventures": [],
+  "continuous": null,
+  "stress": null,
+  "errors": [],
+  "cacheContract": "Retained CPU world cache <=96 is intentional reuse. Indoor generation delta must be zero; GPU world chunks must be zero and dungeon batch count one. Initial cache-empty assertion was corrected; initial-cache-assertion artifacts preserve that harness failure.",
+  "failure": "Error: Game did not initialize within ten seconds\n    at waitForGame (file:///Users/gideok-kwon/IdeaProjects/msa/windwake/tests/journey-browser.mjs:42:9)\n    at async file:///Users/gideok-kwon/IdeaProjects/msa/windwake/tests/journey-browser.mjs:197:51",
+  "finishedAt": "2026-09-27T14:32:55.704Z"
+}

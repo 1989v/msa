@@ -1,0 +1,186 @@
+{
+  "url": "https://game.1989v.com/games/windwake/index.html",
+  "sourceCommit": "1d26445064a712ed28ad7696fee957083a79d3fc",
+  "assets": [
+    {
+      "name": "index.html",
+      "sha256": "22c5e31e1406ce3b1312ac106cabd39aa9ec80e500c53fb1b8127e3bcd1d58ad",
+      "contentType": "text/html"
+    },
+    {
+      "name": "style.css",
+      "sha256": "9be68e9dd0465679f4e4430dbb088d52c243dd421b6d822ef66ede3d101f731e",
+      "contentType": "text/css"
+    },
+    {
+      "name": "main.mjs",
+      "sha256": "d584359ae92d3cdeaffded305eb2a4ae5bfc3face8eedd1ce0892a74a50c4f37",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "world.mjs",
+      "sha256": "784e77fc8163731bbe4104bb4a2b5b160be81ae38d28c0bc0fa389e2032a2480",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "terrain.mjs",
+      "sha256": "a13030157a10b161342f8e7cf072970812dea32db41e826dd32bdc08cb6901bf",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "sim.mjs",
+      "sha256": "291964f1056c2f4b438cfdda442724f64f0a80ace2c55ee49dbdf96982521aaf",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "render.mjs",
+      "sha256": "ee6a9a2ae1d4dc3ac47ed093ba053f837b0115cdc8fb2555105dc492350f8515",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "presentation.mjs",
+      "sha256": "74c431b916f21e03f6497d4072d8d8bfe19d672a4067cb468aa35c6d633db28c",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "melee.mjs",
+      "sha256": "0ce92ca066783fc4f7e3f91238535764520bb1f9e8c22d38e206be3861b99e74",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "audio.mjs",
+      "sha256": "8719500fef22a802602f969c870bd3182450743ecd57afb24f22aae677c656ae",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "input.mjs",
+      "sha256": "bc8594d3b3da9cc4f03e45de71584f4c46880665eac445b232766afc4c4d29d4",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "combat.mjs",
+      "sha256": "dd15431552d7a1684ca9fae092a31675a1b5e014377c764f2faed8c79711a4f8",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "progression.mjs",
+      "sha256": "c68b4fa198ef5af8e6edb110a2458a58f36f49d12ee99e36d6a8ef37014c9046",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "village.mjs",
+      "sha256": "3bfa62d3ee3effafb10565a781aa491e35bc21a49f62b9dfa84ad8c0ca169de6",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "frontier-ui.mjs",
+      "sha256": "10eb8300740e85d10e7bd1f748b788b53ca2a651efa17a3780b6a564a4499c31",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "dungeons.mjs",
+      "sha256": "72b22a446f7c5e53686fde3f940f43ce98dddcfba3fbd5ae88456212a943e817",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "settlements.mjs",
+      "sha256": "75a3edd86da454054fb8c7db7c063f0f4ff970d90baaacd68421edba612dde75",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "relics.mjs",
+      "sha256": "114fa9274a220c5a61c3c1dc57ffb4202bca1e75b76bb69becca5a257c6629ff",
+      "contentType": "text/javascript"
+    },
+    {
+      "name": "journey-ui.mjs",
+      "sha256": "67e7177e558c200bee0f72a89aa641a1c249e04704f47263ba82d1d7c02ff03b",
+      "contentType": "text/javascript"
+    }
+  ],
+  "trustedInput": {
+    "z": -66.6916666666668,
+    "jumps": 1,
+    "grounded": false
+  },
+  "journey": {
+    "stage": "deployed-ending",
+    "frame": 8250,
+    "position": [
+      0.014,
+      28,
+      26.193
+    ],
+    "hp": 77,
+    "sigils": [
+      "quarry",
+      "forest",
+      "ruins"
+    ],
+    "crystals": 48,
+    "jumps": 7,
+    "kills": 8,
+    "parries": 3,
+    "falls": 0,
+    "mode": "won"
+  },
+  "frontier": {
+    "stage": "natural-frontier-adventure-complete",
+    "frame": 54389,
+    "seconds": 906.48,
+    "position": [
+      0,
+      18.12,
+      871.02
+    ],
+    "hp": 100,
+    "flasks": 3,
+    "distance": 3750.78,
+    "falls": 0,
+    "kills": 13,
+    "parries": 13,
+    "waypoints": [
+      "home",
+      "waypoint-sunfields",
+      "waypoint-dunes",
+      "waypoint-coast",
+      "waypoint-alpine"
+    ],
+    "bosses": [
+      "boss-sunfields",
+      "boss-dunes",
+      "boss-coast",
+      "boss-alpine",
+      "boss-frontier"
+    ],
+    "xp": 1290,
+    "villageTasks": [
+      "gather",
+      "build",
+      "plant",
+      "water",
+      "harvest",
+      "defend"
+    ],
+    "villageLevel": 3,
+    "reputation": 16,
+    "materials": {
+      "wood": 93,
+      "stone": 61,
+      "food": 6
+    },
+    "day": 2,
+    "clock": 373.22,
+    "raid": "won",
+    "raidWave": 2,
+    "beaconHp": 180,
+    "finalDefeated": true
+  },
+  "resumed": {
+    "mode": "playing",
+    "final": true,
+    "level": 3,
+    "raidRewarded": true
+  },
+  "errors": []
+}
