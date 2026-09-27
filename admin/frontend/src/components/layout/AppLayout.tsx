@@ -6,14 +6,22 @@ import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
 export function AppLayout() {
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { status } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
 
-  if (!isAuthenticated) {
+  if (status === 'checking') {
+    return <FullScreenNotice>세션 확인 중…</FullScreenNotice>;
+  }
+
+  if (status === 'error') {
+    return <FullScreenNotice>세션을 확인하지 못했습니다. 잠시 뒤 새로고침해 주세요.</FullScreenNotice>;
+  }
+
+  if (status === 'anonymous') {
     return <Navigate to="/login" replace />;
   }
 
-  if (!isAdmin) {
+  if (status === 'forbidden') {
     return <Navigate to="/unauthorized" replace />;
   }
 
@@ -31,6 +39,14 @@ export function AppLayout() {
           <Outlet />
         </div>
       </main>
+    </div>
+  );
+}
+
+function FullScreenNotice({ children }: { children: string }) {
+  return (
+    <div className="min-h-screen bg-zinc-950 text-zinc-400 flex items-center justify-center p-4 text-sm">
+      {children}
     </div>
   );
 }

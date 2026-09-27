@@ -1,79 +1,50 @@
-import { useState, useCallback, useEffect } from 'react';
-import type { JwtPayload, AuthState } from '@/types/auth';
-import { TOKEN_KEY } from '@/api/client';
-import { getDevAuthToken } from '@/lib/dev-auth';
-
-const UNAUTHENTICATED: AuthState = { token: null, user: null, isAdmin: false, isAuthenticated: false };
-
-function decodeJwt(token: string): JwtPayload | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const payload = parts[1];
-    // Add padding if needed
-    const padded = payload + '='.repeat((4 - (payload.length % 4)) % 4);
-    const decoded = atob(padded.replace(/-/g, '+').replace(/_/g, '/'));
-    return JSON.parse(decoded) as JwtPayload;
-  } catch {
-    return null;
-  }
-}
-
-function isTokenExpired(payload: JwtPayload): boolean {
-  return Date.now() / 1000 > payload.exp;
-}
-
-function hasAdminRole(payload: JwtPayload): boolean {
-  return Array.isArray(payload.roles) && payload.roles.includes('ROLE_ADMIN');
-}
-
-function buildAuthState(token: string | null): AuthState {
-  if (!token) return UNAUTHENTICATED;
-  const payload = decodeJwt(token);
-  if (!payload || isTokenExpired(payload)) {
-    localStorage.removeItem(TOKEN_KEY);
-    return UNAUTHENTICATED;
-  }
-  return {
-    token,
-    user: payload,
-    isAdmin: hasAdminRole(payload),
-    isAuthenticated: true,
-  };
-}
+import { useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
+import { apiClient, LOGIN_PATH } from '@/api/client';
+import { endSession, getSessionUserId } from '@/lib/session';
 
 /**
- * 저장된 토큰이 없을 때만 개발용 토큰을 localStorage 에 심는다. 이렇게 해두면
- * api/client 는 localStorage 하나만 보면 되고, 인증 분기를 둘로 나눌 필요가 없다.
+ * - `checking`: 역할 조회 중
+ * - `admin`: ROLE_ADMIN
+ * - `forbidden`: 로그인했지만 관리자가 아니다
+ * - `anonymous`: 세션이 없거나 만료됐다
+ * - `error`: 조회가 네트워크·서버 오류로 실패했다 — 로그인 화면으로 보내지 않는다
  */
-function readToken(): string | null {
-  const stored = localStorage.getItem(TOKEN_KEY);
-  if (stored) return stored;
-  const devToken = getDevAuthToken();
-  if (devToken) localStorage.setItem(TOKEN_KEY, devToken);
-  return devToken;
+export type AuthStatus = 'checking' | 'admin' | 'forbidden' | 'anonymous' | 'error';
+
+/**
+ * 관리자 여부는 서버에 묻는다 — 토큰이 HttpOnly 라 역할을 JS 에서 볼 수 없다(ADR-0101).
+ * `/api/auth/roles/{id}` 는 게이트웨이가 ROLE_ADMIN 만 통과시키므로 200 이 곧 관리자다.
+ */
+async function fetchStatus(userId: string | null): Promise<AuthStatus> {
+  if (!userId) return 'anonymous';
+  try {
+    await apiClient.get(`/api/auth/roles/${userId}`);
+    return 'admin';
+  } catch (e) {
+    const status = axios.isAxiosError(e) ? e.response?.status : undefined;
+    if (status === 403) return 'forbidden';
+    if (status === 401) return 'anonymous';
+    throw e;
+  }
 }
 
 export function useAuth() {
-  const [authState, setAuthState] = useState<AuthState>(() => buildAuthState(readToken()));
+  const userId = getSessionUserId();
+  const query = useQuery({
+    queryKey: ['auth-status', userId],
+    queryFn: () => fetchStatus(userId),
+    retry: false,
+    staleTime: Infinity,
+  });
 
-  useEffect(() => {
-    setAuthState(buildAuthState(readToken()));
+  const status: AuthStatus = query.isPending ? 'checking' : query.isError ? 'error' : query.data;
+
+  const logout = useCallback(async () => {
+    await endSession();
+    window.location.href = LOGIN_PATH;
   }, []);
 
-  const login = useCallback((token: string) => {
-    localStorage.setItem(TOKEN_KEY, token);
-    setAuthState(buildAuthState(token));
-  }, []);
-
-  const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
-    setAuthState(UNAUTHENTICATED);
-  }, []);
-
-  return {
-    ...authState,
-    login,
-    logout,
-  };
+  return { status, userId, logout };
 }

@@ -8,7 +8,7 @@ interface HeaderProps {
 }
 
 export function Header({ onToggleSidebar }: HeaderProps) {
-  const { user, logout } = useAuth();
+  const { userId, logout } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 h-14 flex items-center justify-between px-4 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
@@ -20,8 +20,8 @@ export function Header({ onToggleSidebar }: HeaderProps) {
       </div>
       <div className="flex items-center gap-2">
         <ThemeToggle />
-        {user && (
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">{user.userId}</span>
+        {userId && (
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">{userId}</span>
         )}
         <Button variant="ghost" size="icon" onClick={logout} aria-label="Logout">
           <LogOut className="h-4 w-4" />

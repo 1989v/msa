@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { getDevAuthToken } from '@/lib/dev-auth';
+import { refreshSession } from '@/lib/session';
 
-const TOKEN_KEY = 'admin_token';
-const LOGIN_PATH = '/login';
+export const LOGIN_PATH = '/login';
 
 /**
  * axios 기본 타임아웃은 무한이다. 그대로 두면 느린 요청이 실패로도 바뀌지 않아
@@ -25,20 +26,29 @@ export const apiClient = axios.create({
   },
 });
 
+// 운영은 HttpOnly 세션 쿠키가 같은 오리진 요청에 저절로 실린다(ADR-0101) — 헤더를 만들지 않는다.
+// 헤더는 로컬 개발용 토큰에만 쓴다(게이트웨이는 헤더가 있으면 헤더를 먼저 본다).
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem(TOKEN_KEY);
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  const devToken = getDevAuthToken();
+  if (devToken) {
+    config.headers.Authorization = `Bearer ${devToken}`;
   }
   return config;
 });
 
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // 만료·위조·역할 박탈 등 서버가 거부한 토큰은 즉시 버리고 로그인으로 되돌린다.
+  async (error) => {
+    const config = error.config as
+      | (typeof error.config & { _retried?: boolean; _refreshed?: boolean })
+      | undefined;
+
+    // 액세스 토큰은 한 시간이라 먼저 한 번 재발급해 본다. 그래도 401 이면 로그인 화면으로 보낸다.
     if (error.response?.status === 401) {
-      localStorage.removeItem(TOKEN_KEY);
+      if (config && !config._refreshed) {
+        config._refreshed = true;
+        if (await refreshSession()) return apiClient(config);
+      }
       if (window.location.pathname !== LOGIN_PATH) {
         window.location.href = LOGIN_PATH;
       }
@@ -47,7 +57,6 @@ apiClient.interceptors.response.use(
 
     // 타임아웃·네트워크 단절은 조회에 한해 한 번만 다시 시도한다. 쓰기는 재시도하지 않는다 —
     // 서버가 이미 처리했는데 응답만 못 받은 경우 중복 실행이 된다.
-    const config = error.config as (typeof error.config & { _retried?: boolean }) | undefined;
     const method = config?.method?.toLowerCase() ?? '';
     const transient = error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK';
     if (config && !config._retried && transient && RETRY_ONCE_METHODS.has(method)) {
@@ -59,4 +68,3 @@ apiClient.interceptors.response.use(
   }
 );
 
-export { TOKEN_KEY };

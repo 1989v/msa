@@ -44,6 +44,7 @@ auth 의 로그인 · 갱신 응답이 본문 대신 `Set-Cookie` 로 토큰을 
 - API 호출은 같은 오리진 상대 경로라 쿠키가 저절로 실린다. `Authorization` 을 만들지 않는다.
 - 로그인 여부는 `portal_user_id` 표시 쿠키로 본다. 401 이면 `/api/auth/refresh` 를 부르고(쿠키가 실린다) 재시도한다.
 - 게임 공용 `lib/auth.js` 는 `GameAuth.signedIn()` 을 내고, `token()` 은 늘 `null` 이다(고치지 못한 게임은 게스트로 떨어질 뿐 깨지지 않는다).
+- 어드민(`admin.1989v.com`)도 같다. 로그인은 apex `/login?next=` 로 보내고, 관리자 여부는 JWT 를 읽는 대신 `GET /api/auth/roles/{내 id}`(게이트웨이가 ROLE_ADMIN 만 통과) 응답으로 판단한다. 처음 전환 때 어드민이 빠져, 로그인 응답에서 토큰을 찾다가 로그인 화면으로 계속 되돌아갔다(2026-09-27 수정).
 
 ### 4) OAuth `state` 는 매번 새 난수
 

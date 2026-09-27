@@ -1,7 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { LoginPage } from '@/pages/LoginPage';
-import { OAuthCallbackPage } from '@/pages/OAuthCallbackPage';
 import { UnauthorizedPage } from '@/pages/UnauthorizedPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { SystemPage } from '@/pages/SystemPage';
@@ -45,7 +44,6 @@ export default function App() {
     <Routes>
       {/* 전용 서브도메인(admin.<domain>) 루트 서빙 — prefix 없이 / 가 곧 대시보드 */}
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
       <Route path="/" element={<AppLayout />}>
         <Route index element={<DashboardPage />} />

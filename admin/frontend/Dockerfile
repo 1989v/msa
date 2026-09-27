@@ -7,10 +7,6 @@ COPY vendor ./vendor
 # 2026-09-09 에 그렇게 멈췄다(react 19.3.0 ↔ fiber peer 상한). CI 게이트도 `npm ci` 다.
 RUN npm ci --no-audit --no-fund
 COPY . .
-# OAuth client_id 는 브라우저에 노출되는 공개값이지만 값은 레포에 두지 않고 CI 가 넘긴다.
-# 미주입이면 빈 문자열이 되어 로그인 버튼이 동작하지 않는다.
-ARG VITE_GOOGLE_CLIENT_ID=""
-ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 RUN npx vite build --base /
 
 FROM nginx:1.27-alpine
