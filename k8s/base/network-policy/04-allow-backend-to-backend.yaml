@@ -6,6 +6,7 @@
 #     일괄 적재 `/internal/products/bulk` 는 이 규칙으로만 닿는다 — gateway 에 `/internal` 라우트가 없고
 #     ingress 도 열지 않는다. NetworkPolicy 는 L4 라 경로를 가르지 못하므로, 경로 차단은 그 두 곳이 맡는다.
 #   - auth → commerce         (SSO 회원 조회/생성)
+#   - auth → account          (로그인 시 회원 조회/생성 — member 는 account 에 폴드, ADR-0093)
 #
 # ADR-0093: order → product 는 **규칙이 필요 없어졌다** — 둘 다 commerce 안이라 프로세스 내부
 # 호출이다. product 를 가리키던 두 규칙은 파드가 사라져 아무것도 선택하지 않는 채로 남아 있었고,
@@ -55,6 +56,28 @@ spec:
   podSelector:
     matchLabels:
       app.kubernetes.io/name: commerce
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: auth
+      ports:
+        - { port: http, protocol: TCP }
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-auth-to-account
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: account
   policyTypes:
     - Ingress
   ingress:
