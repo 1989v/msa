@@ -22,7 +22,7 @@
 | 지도학습 3순위 | **LTR 리랭커(LambdaMART)** — 학습은 서버 밖, 서빙은 `search:app` 안 트리 평가기, 피처는 **서빙에 있는 것만** | §2 S4. 파드 +0 · OpenSearch 메모리 +0. `opensearch-ltr` 플러그인은 스파이크 뒤 결정 |
 | 분석기 L2 · L3 | **보류** — 게이트: 사용자 사전으로 못 고치는 오분석이 판정 세트 정답을 내리는 사례 ≥ 10 + 라벨 코퍼스 | §2 S5. 플러그인 빌드 파이프라인 소유 비용이 이득보다 크다 |
 | 강화학습 | **장치 먼저, 학습은 트래픽 게이트 뒤** — 관광지 검색 계측(R0) → 탐색 · 성향 로깅(R1) → 오프폴리시 평가(R2) → 묶음 순서 밴딧(R3) → 인터리빙(R4) | §3. 지금 원장은 30일 검색 2건 · 관광지 검색 화면은 계측 0 |
-| 판정 | 모든 단계를 `scripts/search-eval/run-eval.sh` 의 **같은 판정 세트 · 같은 3구성 + 새 구성 D** 로. 온라인 지표는 게이트 통과 뒤 | §4 |
+| 판정 | 모든 단계를 `search-eval` CronJob 의 **같은 판정 세트 · 같은 3구성 + 새 구성 D** 로. 온라인 지표는 게이트 통과 뒤 | §4 |
 | 계층 그래프 | 이 로드맵의 장치를 `/tech` 「검색 시스템」 계층에 **가지로 붙인다** — 새 개념 17 · CONTAINS 21 · FLOWS_TO 5 (V23) | §7 |
 | 무료 티어 | 파드 +0 · OpenSearch 메모리 +0 · CronJob +0(학습은 로컬 PC) | §5 |
 
@@ -96,7 +96,7 @@ S1 · S2 는 재색인을 유발한다. 09-22 04:32 KST 에 벌크 15,800건이 
 | 형식 | `user_dictionary_rules` 인라인, 복합어는 `도쿄디즈니랜드 도쿄 디즈니랜드` 꼴. 파일 마운트를 만들지 않는다 |
 | 위치 | `search/batch/src/main/resources/opensearch/attractions-index.json` — 계약 SSOT. 규칙 목록은 같은 파일 |
 | 규모 | 첫 판 ≤ 200항. 항목마다 「기본 분해 → 사전 분해」 한 줄을 PR 에 남긴다 |
-| 판정 | 재색인 뒤 `run-eval.sh` — **C 가 내려가면 되돌린다.** 오르지 않아도 후보 제목이 한 토큰으로 검색되는지 20건 스팟체크로 남긴다 |
+| 판정 | 재색인 뒤 `search-eval` — **C 가 내려가면 되돌린다.** 오르지 않아도 후보 제목이 한 토큰으로 검색되는지 20건 스팟체크로 남긴다 |
 
 ### S2 — `decompound_mode: mixed`
 
@@ -177,10 +177,10 @@ S1 · S2 는 재색인을 유발한다. 09-22 04:32 KST 에 벌크 15,800건이 
 | 순서 | 단계 | 착수 조건 | 완료 판정 | 계층 노드(§7) |
 |---|---|---|---|---|
 | P0 | S0 별칭 게이트 · R0 관광지 계측 · R1 성향 로깅 · **LTR 스파이크**(hybrid 위 `sltr`) | 없음 | 게이트에 회귀 주입 → 별칭 안 넘어감 확인 · 원장에 PLACE_SEARCH 행 · 스파이크 결과 한 줄 | `alias-swap` · `impression-click-ledger` · `propensity-logging` |
-| P1 | S1 사용자 사전 + S2 mixed (같은 재색인) | 09-23 1-bit 재측정 값이 기준선으로 있을 것 | `run-eval.sh` C(ko · en) 가 기준선 이상 · 후보 제목 20건 스팟체크 | `user-dictionary` · `decompound-mode` |
+| P1 | S1 사용자 사전 + S2 mixed (같은 재색인) | 09-23 1-bit 재측정 값이 기준선으로 있을 것 | `search-eval` C(ko · en) 가 기준선 이상 · 후보 제목 20건 스팟체크 | `user-dictionary` · `decompound-mode` |
 | P2 | S3 판정 세트 150 쿼리 | P1 배포 | `judgments-attractions-<날짜>.json` v2 · 커버리지 100% · 4구성 재측정 | `judgment-set` · `pooling` |
 | P3 | S4 LTR 학습 · 서빙(플래그 off) | P2 | CV 평균 nDCG@10 ≥ C + 0.02(ko · en 모두) · 재채점 P99 +≤ 5ms(A) | `learning-to-rank` · `ranking-features` |
-| P4 | S4 켜기 | P3 + R2 로 오프폴리시 CTR 이 C 이상(성향 노출 ≥ 2,000 일 때) — 없으면 오프라인만으로 켜고 R4 가 뒤에 검증 | 라이브 C+LTR 를 D 구성으로 `run-eval.sh` 에 추가 | `reranking` |
+| P4 | S4 켜기 | P3 + R2 로 오프폴리시 CTR 이 C 이상(성향 노출 ≥ 2,000 일 때) — 없으면 오프라인만으로 켜고 R4 가 뒤에 검증 | 라이브 C+LTR 를 D 구성으로 `search-eval` 에 추가 | `reranking` |
 | P5 | R3 밴딧 · R4 인터리빙 | 트래픽 게이트(§3) | 밴딧: 첫 묶음 CTR 이 규칙 대비 내려가지 않음 · 인터리빙: 승률 신뢰구간 | `bandit-exploration` · `interleaving` |
 | — | S5 L2 · L3 · R5 | §2 S5 · §3 R5 게이트 | 별도 ADR | `system-dictionary-entry` · `tokenizer-cost-retraining` · `contextual-bandit` |
 
@@ -268,7 +268,7 @@ FLOWS_TO — `user-dictionary → system-dictionary-entry → tokenizer-cost-ret
 ## 9. 검증 4줄
 
 ```bash
-scp -r scripts/search-eval msa-oci:/tmp/ && ssh msa-oci bash /tmp/search-eval/run-eval.sh   # 기준선 · 매 단계 뒤 같은 세트
+ssh msa-oci 'sudo kubectl -n commerce create job --from=cronjob/search-eval search-eval-manual'   # 기준선 · 매 단계 뒤 같은 세트(매일 05:30 KST 에도 돈다)
 python3 scripts/unified-search-report.py --days 14                                          # 원장 — 검색 · 노출 · 클릭 · 화면
 docker run --rm -d -p 19200:9200 -e discovery.type=single-node -e DISABLE_SECURITY_PLUGIN=true opensearch-nori:3.8.0  # 분해 · sltr 스파이크
 python3 scripts/search-eval/features.py --judgments <v2.json> --out features.tsv           # (P3) 학습 피처 = 서빙 피처

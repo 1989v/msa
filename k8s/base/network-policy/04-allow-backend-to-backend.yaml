@@ -176,3 +176,28 @@ spec:
               app.kubernetes.io/name: ranking-ingest
       ports:
         - { port: http, protocol: TCP }
+---
+# 관광지 검색 평가(search-eval) → search: 라이브 API(C 구성)와 질의 인코더(B 구성).
+# search 파드는 게이트웨이 말고는 받지 않으므로 평가 Job 만 따로 연다.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-search-eval-to-search
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: search
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: search-eval
+      ports:
+        - { port: http, protocol: TCP }
+        - { port: encoder, protocol: TCP }

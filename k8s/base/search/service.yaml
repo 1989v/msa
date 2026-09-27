@@ -13,3 +13,7 @@ spec:
     - name: http
       port: 8083
       targetPort: http
+    # 질의 인코더 사이드카 — app 은 localhost 로 부르고, 이 포트는 평가 Job(search-eval)만 쓴다
+    - name: encoder
+      port: 8099
+      targetPort: encoder

@@ -6,13 +6,18 @@
 
 A·B 는 색인을 직접 질의해 구성을 통제하고, C 는 서비스가 실제로 내는 답을 쓴다.
 셋 다 같은 인덱스·같은 lang 필터다.
-"""
-import json, sys, urllib.parse, urllib.request
 
-OS_URL   = "http://127.0.0.1:19200"
-ENC_URL  = "http://127.0.0.1:18099"
-API_URL  = "https://place.1989v.com/api/search/attractions"
-MODEL_REF = "microsoft/harrier-oss-v1-270m@31de22b#d640"
+매일 CronJob `search-eval` 이 재색인 뒤에 돌린다. C 가 기준선(EVAL_BASELINE_KO/EN)보다
+EVAL_TOLERANCE 넘게 떨어지거나 질의가 하나라도 실패하면 종료 코드 1 — Job 이 Failed 로 남는다.
+
+  python3 live-eval.py <판정.json> [결과.json]
+"""
+import json, os, sys, urllib.parse, urllib.request
+
+OS_URL   = os.environ.get("EVAL_OPENSEARCH_URL", "http://opensearch:9200")
+ENC_URL  = os.environ.get("EVAL_ENCODER_URL", "http://search:8099")
+API_URL  = os.environ.get("EVAL_API_URL", "http://search:8083/api/search/attractions")
+MODEL_REF = os.environ.get("EVAL_MODEL_REF", "microsoft/harrier-oss-v1-270m@31de22b#d640")
 FIELDS = ["title^3", "title.en^3", "titleLocal^3", "overview", "overview.en", "address", "address.en"]
 K, RRF_K = 10, 60
 
@@ -103,7 +108,8 @@ def main():
         print(f"  [{n:2d}/{len(qs)}] {lang} {q[:22]:<24} "
               f"A={r.get('A') and round(r['A'],4)} B={r.get('B') and round(r['B'],4)} C={r.get('C') and round(r['C'],4)}"
               f"{' ERR ' + r['error'] if 'error' in r else ''}", flush=True)
-    json.dump(rows, open(sys.argv[2], "w"), ensure_ascii=False, indent=1)
+    if len(sys.argv) > 2:
+        json.dump(rows, open(sys.argv[2], "w"), ensure_ascii=False, indent=1)
 
     def avg(lang, key):
         v = [r[key] for r in rows if r.get("lang") == lang and r.get(key) is not None]
@@ -114,7 +120,20 @@ def main():
     err = [r for r in rows if "error" in r]
     if err:
         print(f"\n  실패 {len(err)}건: {err[0]['error']}")
+    return gate(avg("ko", "C"), avg("en", "C"), len(err))
+
+
+def gate(c_ko, c_en, n_err):
+    """기준선 대비 C 하락 판정. 기준선이 없으면 재기만 하고 통과시킨다."""
+    tol = float(os.environ.get("EVAL_TOLERANCE", "0.03"))
+    base = {"ko": os.environ.get("EVAL_BASELINE_KO"), "en": os.environ.get("EVAL_BASELINE_EN")}
+    fails = [f"질의 실패 {n_err}건"] if n_err else []
+    for lang, got in (("ko", c_ko), ("en", c_en)):
+        if base[lang] and got < float(base[lang]) - tol:
+            fails.append(f"C {lang} {got:.4f} < 기준선 {float(base[lang]):.4f} - {tol}")
+    print("\n  판정: " + ("회귀 — " + " · ".join(fails) if fails else "통과"), flush=True)
+    return 1 if fails else 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

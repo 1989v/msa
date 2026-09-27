@@ -1,20 +1,23 @@
 # 관광지 검색 품질 평가 — 판정 세트와 3구성 nDCG@10
 
-`hybrid-search-local-embedding`(ADR-0090) 의 품질 근거다. **이 폴더가 판정 세트의 원본이다** — 2026-09-21 까지는
-OCI 노드 `/tmp` 에만 있었고, 재부팅 한 번이면 「하이브리드가 BM25 보다 낫다」를 다시 증명할 길이 없었다.
+`hybrid-search-local-embedding`(ADR-0090) 의 품질 근거다. 이 폴더는 **측정 기록**이고, 스크립트와 판정 세트는
+CronJob 이 ConfigMap 으로 싣도록 `k8s/base/search-batch/eval/` 에 있다.
 
 | 파일 | 무엇 |
 |---|---|
-| `judgments-attractions-2026-09-13.json` | 쿼리 48개(ko 24 · en 24) × 관광지 id 등급 0~3, 2,141건. 풀링은 세 구성의 top-10 합집합 |
-| `live-eval.py` | A. BM25 · B. 하이브리드(RRF) · C. 하이브리드 + 쿼리 언더스탠딩(라이브 API) 의 nDCG@10 |
-| `run-eval.sh` | 노드에서 포트포워드 두 개(OpenSearch · 인코더 사이드카)를 열고 위를 돌린다 |
+| `k8s/base/search-batch/eval/judgments-attractions-2026-09-13.json` | 쿼리 48개(ko 24 · en 24) × 관광지 id 등급 0~3, 2,141건. 풀링은 세 구성의 top-10 합집합 |
+| `k8s/base/search-batch/eval/live-eval.py` | A. BM25 · B. 하이브리드(RRF) · C. 하이브리드 + 쿼리 언더스탠딩(라이브 API) 의 nDCG@10 + 회귀 판정 |
+| `k8s/base/search-batch/cronjob-eval.yaml` | 매일 KST 05:30(재색인 뒤) 실행. C 가 기준선 − 0.03 아래면 Job Failed |
 | `results/<날짜>.json` | 남길 값이 있던 실행의 결과 |
 
 ## 돌리는 법
 
 ```bash
-scp -r scripts/search-eval msa-oci:/tmp/ && ssh msa-oci bash /tmp/search-eval/run-eval.sh
+ssh msa-oci 'sudo kubectl -n commerce create job --from=cronjob/search-eval search-eval-manual'
+ssh msa-oci 'sudo kubectl -n commerce logs job/search-eval-manual'     # 표와 판정 줄
 ```
+
+기준선은 CronJob env(`EVAL_BASELINE_KO/EN`)다. 의도해서 순위를 바꾼 변경 뒤에는 새 값을 재고 env 를 같이 고친다.
 
 ## 기준선 (2026-09-13)
 
