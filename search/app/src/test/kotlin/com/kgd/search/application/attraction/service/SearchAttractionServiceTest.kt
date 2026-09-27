@@ -42,12 +42,51 @@ class SearchAttractionServiceTest : BehaviorSpec({
 
     // 스펙 안에서 목을 공유하므로 매 테스트마다 지운다 — 안 지우면 `verify(exactly = 0)` 이
     // 앞 테스트의 호출까지 세어 엉뚱하게 실패한다.
-    beforeTest { clearMocks(searchPort, resolveQueryVector) }
+    beforeTest {
+        clearMocks(searchPort, resolveQueryVector)
+        // 기본은 고칠 오타 없음 — 교정을 보는 테스트만 따로 답을 준다
+        every { searchPort.correct(any(), any()) } returns null
+    }
 
     fun document(id: String = "1", overview: String? = null) = AttractionDocument(
         id = id, contentId = "126508", lang = "ko", title = "경복궁",
         latitude = 37.5788, longitude = 126.977, category = "history", overview = overview,
     )
+
+    given("오타 교정") {
+        `when`("포트가 고친 검색어를 돌려주면") {
+            then("고친 검색어로 찾고 응답에 알린다") {
+                val captured = slot<AttractionSearchPort.SearchQuery>()
+                every { searchPort.correct("경복굼 야경", "ko") } returns "경복궁 야경"
+                every { searchPort.search(capture(captured), any()) } returns PageImpl(emptyList())
+
+                val result = service.execute(SearchAttractionUseCase.Query(keyword = "경복굼 야경", lang = "ko"))
+
+                captured.captured.keyword shouldBe "경복궁 야경"
+                result.correctedKeyword shouldBe "경복궁 야경"
+            }
+        }
+        `when`("고칠 것이 없으면") {
+            then("원문으로 찾고 교정 표시는 비운다") {
+                val captured = slot<AttractionSearchPort.SearchQuery>()
+                every { searchPort.search(capture(captured), any()) } returns PageImpl(emptyList())
+
+                val result = service.execute(SearchAttractionUseCase.Query(keyword = "해운대", lang = "ko"))
+
+                captured.captured.keyword shouldBe "해운대"
+                result.correctedKeyword shouldBe null
+            }
+        }
+        `when`("검색어가 없으면") {
+            then("교정을 부르지 않는다") {
+                every { searchPort.search(any(), any()) } returns PageImpl(emptyList())
+
+                service.execute(SearchAttractionUseCase.Query(lat = 37.0, lng = 127.0))
+
+                verify(exactly = 0) { searchPort.correct(any(), any()) }
+            }
+        }
+    }
 
     given("관광지 검색 시") {
         `when`("lat/lng/radiusKm 와 sort=distance 가 주어지면") {

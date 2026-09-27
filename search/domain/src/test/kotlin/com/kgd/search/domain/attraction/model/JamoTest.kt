@@ -45,4 +45,23 @@ class JamoTest : BehaviorSpec({
             }
         }
     }
+
+    given("자모 조합 (분해의 역)") {
+        `when`("분해한 것을 되돌리면") {
+            then("원문이 나온다 — 받침 뒤 초성이 모음 앞이면 다음 음절로 간다") {
+                listOf("경복궁", "해운대해수욕장", "닭갈비", "바다", "N서울타워", "gyeongbokgung")
+                    .forEach { Jamo.compose(Jamo.decompose(it)) shouldBe it.lowercase() }
+            }
+        }
+        `when`("교정 제안 자모열이면") {
+            then("음절로 되돌린다") {
+                Jamo.compose("ㄱㅕㅇㅂㅗㄱㄱㅜㅇ") shouldBe "경복궁"
+            }
+        }
+        `when`("음절을 이루지 못하는 자모면") {
+            then("그대로 둔다") {
+                Jamo.compose("ㄱㄴ") shouldBe "ㄱㄴ"
+            }
+        }
+    }
 })

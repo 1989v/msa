@@ -258,6 +258,12 @@
   text-align: center;
 }
 
+.place-corrected {
+  margin: 0;
+  color: var(--ko-text-muted);
+  font-size: 0.85rem;
+}
+
 .place-card {
   position: relative; /* 찜 하트의 기준 좌표 (ADR-0074) */
   display: flex;

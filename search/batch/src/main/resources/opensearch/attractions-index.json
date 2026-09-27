@@ -106,7 +106,13 @@
       "titleJamo": {
         "type": "text",
         "analyzer": "jamo_index",
-        "search_analyzer": "jamo_search"
+        "search_analyzer": "jamo_search",
+        "fields": {
+          "spell": {
+            "type": "text",
+            "analyzer": "jamo_search"
+          }
+        }
       },
       "address": {
         "type": "text",

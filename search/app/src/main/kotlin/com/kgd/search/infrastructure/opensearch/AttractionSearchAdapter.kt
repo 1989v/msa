@@ -9,6 +9,7 @@ import com.kgd.search.domain.attraction.port.AttractionSearchPort
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.opensearch.client.opensearch._types.FieldValue
 import org.opensearch.client.opensearch._types.SortOrder
+import org.opensearch.client.opensearch._types.SuggestMode
 import org.opensearch.client.opensearch._types.mapping.FieldType
 import org.opensearch.client.opensearch._types.query_dsl.FieldValueFactorModifier
 import org.opensearch.client.opensearch._types.query_dsl.FunctionBoostMode
@@ -58,6 +59,15 @@ class AttractionSearchAdapter(
          * 하이브리드가 꺼져 있어도 뺀다: 필드는 이미 `_source` 에 있고, 문서당 4KB 를 그냥 실어 보낼 이유가 없다.
          */
         private const val VECTOR_FIELD = "embedding"
+
+        /** 제목을 자모로 편 단어 사전 — 오타 교정 제안의 출처 (색인 매핑 `titleJamo.spell`) */
+        private const val SPELL_FIELD = "titleJamo.spell"
+        private const val SPELL_SUGGESTER = "spell"
+        /** 두 글자 미만은 고치지 않는다 — 한 글자 단어는 편집거리 2 안에 후보가 너무 많다 */
+        private const val SPELL_MIN_CHARS = 2
+        /** 제안 유사도 하한. 실측: 경복굼→경복궁 0.89 · haeundea→haeundae 0.88, 엉뚱한 제안은 0.6~0.8 */
+        private const val SPELL_MIN_SCORE = 0.85
+        private val WHITESPACE = Regex("\\s+")
     }
 
     override fun search(
@@ -135,6 +145,60 @@ class AttractionSearchAdapter(
             }
         }
     }
+
+    /**
+     * 오타 교정 — 단어마다 두 단계를 거친다.
+     *  1. 검색 필드 어디에도 없는 단어만 후보다. 제목에만 없는 단어(「야경」)까지 고치면 제대로 친
+     *     질의를 망가뜨린다 — 제목 사전만 보면 「야경」 을 「유경」 으로 바꾼다(2026-09-27 실측).
+     *  2. 후보를 자모로 펴서 제목 자모 사전(`titleJamo.spell`)에서 편집거리 2 안의 표기를 찾는다.
+     *     음절 단위로 재면 「굼」→「궁」 이 한 글자 전체라 멀지만, 자모로는 한 획(ㅁ→ㅇ)이다.
+     * 사전 필드가 아직 없는 색인(재색인 전)이면 예외 대신 교정 없음으로 돌아간다.
+     */
+    override fun correct(keyword: String, lang: String?): String? {
+        val words = keyword.trim().split(WHITESPACE).filter { it.isNotEmpty() }
+        val fixes = words
+            .filter { it.length >= SPELL_MIN_CHARS && countMatches(it, lang) == 0L }
+            .mapNotNull { word -> closestTitleSpelling(word)?.let { word to it } }
+            .toMap()
+        if (fixes.isEmpty()) return null
+        return words.joinToString(" ") { fixes[it] ?: it }
+    }
+
+    private fun countMatches(word: String, lang: String?): Long {
+        val query = Query.of { q ->
+            q.bool { b ->
+                b.must { m -> m.multiMatch { it.query(word).fields(KEYWORD_FIELDS).operator(Operator.And) } }
+                lang?.let { l -> b.filter { f -> f.term { it.field("lang").value(FieldValue.of(l)) } } }
+                b
+            }
+        }
+        return client.count { it.index(INDEX).query(query) }.count()
+    }
+
+    private fun closestTitleSpelling(word: String): String? = runCatching {
+        val response = client.search(
+            { s ->
+                s.index(INDEX).size(0).suggest { sg ->
+                    sg.suggesters(SPELL_SUGGESTER) { fs ->
+                        fs.text(Jamo.decompose(word)).term { t ->
+                            t.field(SPELL_FIELD)
+                                .suggestMode(SuggestMode.Missing)
+                                .maxEdits(2)
+                                .prefixLength(1)
+                                .minWordLength(4)
+                                .size(1)
+                        }
+                    }
+                }
+            },
+            AttractionSearchDocument::class.java,
+        )
+        response.suggest()[SPELL_SUGGESTER].orEmpty()
+            .firstOrNull { it.isTerm }?.term()?.options()
+            ?.firstOrNull { it.score() >= SPELL_MIN_SCORE }
+            ?.let { Jamo.compose(it.text()) }
+            ?.takeIf { it != word }
+    }.getOrNull()
 
     private fun suggestAttractions(prefix: String, lang: String?, size: Int): List<SuggestHit> {
         if (size <= 0) return emptyList()

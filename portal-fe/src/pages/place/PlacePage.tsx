@@ -61,6 +61,7 @@ const UI = {
     searchArea: '이 지역 재검색',
     all: '전체',
     empty: '검색 결과가 없습니다',
+    corrected: (k: string) => `‘${k}’(으)로 검색한 결과입니다`,
     failed: '목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
     mapKeyMissing: '지도 키가 설정되지 않아 목록만 표시합니다',
     openInGoogleMaps: '구글맵에서 보기',
@@ -94,6 +95,7 @@ const UI = {
     searchArea: 'Search this area',
     all: 'All',
     empty: 'No results found',
+    corrected: (k: string) => `Showing results for “${k}”`,
     failed: 'Could not load the list. Please try again in a moment.',
     mapKeyMissing: 'Map key not configured — showing list only',
     openInGoogleMaps: 'Open in Google Maps',
@@ -1073,6 +1075,9 @@ export default function PlacePage() {
             <section className="place-list" aria-busy={isLoading}>
               {attractions.length === 0 && !isLoading && (
                 <p className="place-empty">{isError ? L.failed : L.empty}</p>
+              )}
+              {data?.correctedKeyword && attractions.length > 0 && (
+                <p className="place-corrected" role="status">{L.corrected(data.correctedKeyword)}</p>
               )}
               {attractions.map((a) => (
                 <PlaceCard key={a.id} attraction={a} lang={lang} onSelect={() => setSelectedId(a.id)} />

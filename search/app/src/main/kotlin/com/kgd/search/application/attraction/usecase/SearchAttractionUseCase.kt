@@ -79,5 +79,7 @@ interface SearchAttractionUseCase {
         val totalElements: Long,
         val totalPages: Int,
         val currentPage: Int,
+        /** 오타 교정으로 바꿔 검색했으면 바꾼 검색어. 화면이 「OO(으)로 검색한 결과」를 알린다 */
+        val correctedKeyword: String? = null,
     )
 }

@@ -81,6 +81,8 @@ export interface AttractionSearchResult {
   totalElements: number;
   totalPages: number;
   currentPage: number;
+  /** 오타 교정으로 바꿔 검색했으면 바꾼 검색어 */
+  correctedKeyword?: string | null;
 }
 
 /**

@@ -42,4 +42,36 @@ object Jamo {
         }
         return out.toString()
     }
+
+    /**
+     * [decompose] 의 역 — 오타 교정 제안(자모열)을 화면에 낼 음절로 되돌린다.
+     * 자음 뒤에 모음이 오면 그 자음은 다음 음절의 초성이고, 아니면 앞 음절의 종성이다.
+     * 음절을 이루지 못하는 자모와 한글이 아닌 문자는 그대로 둔다.
+     */
+    fun compose(jamo: String): String {
+        val out = StringBuilder(jamo.length)
+        var i = 0
+        while (i < jamo.length) {
+            val cho = CHOSEONG.indexOf(jamo[i])
+            val jung = if (i + 1 < jamo.length) JUNGSEONG.indexOf(jamo[i + 1]) else -1
+            if (cho < 0 || jung < 0) {
+                out.append(jamo[i])
+                i++
+                continue
+            }
+            var next = i + 2
+            var jong = 0
+            if (next < jamo.length) {
+                val candidate = JONGSEONG.indexOf(jamo[next])
+                val startsNextSyllable = next + 1 < jamo.length && JUNGSEONG.indexOf(jamo[next + 1]) >= 0
+                if (candidate > 0 && !startsNextSyllable) {
+                    jong = candidate
+                    next++
+                }
+            }
+            out.append((BASE + (cho * JUNG_COUNT + jung) * JONG_COUNT + jong).toChar())
+            i = next
+        }
+        return out.toString()
+    }
 }

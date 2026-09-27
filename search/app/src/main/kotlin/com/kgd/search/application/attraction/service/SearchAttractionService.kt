@@ -35,6 +35,9 @@ class SearchAttractionService(
     /** 질의 이해가 의도어를 필터로 옮긴 요청 수. 사전이 실제로 무는지 보는 값이다. */
     private val intentCounter = meterRegistry.counter("search.attraction.intent")
 
+    /** 오타 교정으로 검색어를 바꾼 요청 수. */
+    private val correctionCounter = meterRegistry.counter("search.attraction.correction")
+
     override fun execute(prefix: String, lang: String?, size: Int): List<SuggestAttractionUseCase.Suggestion> =
         attractionSearchPort.suggest(prefix, lang?.takeIf { it.isNotBlank() }, size).map { hit ->
             SuggestAttractionUseCase.Suggestion(
@@ -57,7 +60,11 @@ class SearchAttractionService(
     override fun execute(query: SearchAttractionUseCase.Query): SearchAttractionUseCase.Result {
         val geo = toGeoFilter(query)
         val pageable = PageRequest.of(query.page.coerceAtLeast(0), query.size.coerceIn(1, 100))
-        val keyword = query.keyword?.takeIf { it.isNotBlank() }
+        val original = query.keyword?.takeIf { it.isNotBlank() }
+        // 오타 교정은 두 레그 모두에 준다 — 오타가 섞인 문장은 벡터도 엉뚱한 곳을 가리킨다.
+        val corrected = original?.let { attractionSearchPort.correct(it, query.lang?.takeIf { l -> l.isNotBlank() }) }
+        if (corrected != null) correctionCounter.increment()
+        val keyword = corrected ?: original
         // 벡터 레그에는 **원문**을 준다 — 문장의 뜻이 그 레그의 전부라 잘라내면 안 된다 (ADR-0090 개정).
         val embedding = resolveEmbedding(keyword, geo)
         // 키워드 레그에는 의도어를 뺀 잔여만 준다. 형태소가 쪼갠 조각이 내용어로 채점되는 것을 막는다.
@@ -94,6 +101,7 @@ class SearchAttractionService(
             totalElements = page.totalElements,
             totalPages = page.totalPages,
             currentPage = page.number,
+            correctedKeyword = corrected,
         )
     }
 

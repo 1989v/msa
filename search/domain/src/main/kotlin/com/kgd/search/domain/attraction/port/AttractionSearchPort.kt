@@ -18,6 +18,12 @@ interface AttractionSearchPort {
     fun suggest(prefix: String, lang: String?, size: Int): List<SuggestHit>
 
     /**
+     * 오타 교정 — 어느 검색 필드에도 없는 단어만 관광지 제목에서 가까운 표기로 바꾼다.
+     * 고칠 단어가 없으면 null. 제대로 친 질의는 건드리지 않는 것이 이 함수의 첫째 조건이다.
+     */
+    fun correct(keyword: String, lang: String?): String?
+
+    /**
      * 키워드가 null/blank 면 필터-only 탐색 (지도 영역 브라우징).
      * [geo] 지정 시 반경 필터가 걸리고, sortByDistance 면 거리 오름차순 정렬.
      */
