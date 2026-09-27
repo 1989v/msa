@@ -55,3 +55,19 @@ oci-mysql --write game_db "DELETE FROM game_score_daily WHERE id IN (1,2,18,20,2
 | `game_score_daily` 총행 | 36 − 16 = **20** |
 | `GET /api/v1/games/arena/leaderboard?board=practice` | `[(1, 가즈아, 1322)]` |
 | 허브 레일 `GET /api/v1/games/leaderboards` | arena/online · circle-trace · zombie-lane · zombie-march · sum-trail · archer-outbreak · serpent-legion · block-burst — 시험 닉 없음 |
+
+## 4. 2차 정리 (2026-09-27)
+
+09-25·26 에 사용자가 **비로그인 상태로** 사태(landslide)를 플레이해 두 행이 남았다 — 둘 다 `member_id NULL`
+이고 그 시각에 `operator=true` 제외 로그가 없다(= 게이트웨이가 신원을 못 봤다). 규칙 결함이 아니라
+「게스트 운영자는 구별할 수 없다」는 기록된 한계다. 사용자 결정으로 두 행을 지웠다.
+
+```
+oci-mysql --write game_db "DELETE FROM game_score       WHERE id IN (43,44)"   미리보기 2 → 반영 2
+oci-mysql --write game_db "DELETE FROM game_score_daily WHERE id IN (37,38)"   미리보기 2 → 반영 2
+```
+
+| 질의 | 값 |
+|---|---|
+| `game_score` 총행 | 22 − 2 = **20** (`go` 14 · `스넥크` 4 · `가즈아` 2) |
+| `game_score_daily` 총행 | 22 − 2 = **20** |
