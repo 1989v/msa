@@ -1,4 +1,4 @@
-status: design-review
+status: implementation
 questions:
   - id: reference-game
     stage: pre-impl
@@ -14,16 +14,18 @@ questions:
     decided_at: 2026-09-27
   - id: visual-direction
     stage: pre-impl
-    status: open
+    status: closed
     question: 사태의 최신 무장 기준을 따른 병사·병기·적·이동로 수정 시안과 가칭을 채택하는가?
     rejected: 초기 일반 채색 시안은 사태 화풍과 다름. 후속 정적 SVG 시안의 적·길 품질은 사용자 지적.
   - id: solo-rule
     stage: pre-impl
-    status: open
+    status: closed
     question: 싱글은 AI 동료 보조인가, 혼자 두 진영을 관리하는가?
     proposed: AI 동료 보조
   - id: combat-layout
     stage: pre-impl
-    status: open
+    status: closed
     question: 정확한 적 경로와 사거리, 세로 전장의 논리 좌표 대응은 무엇인가?
     proposed: 시안 결정 뒤 경로와 근접 유닛 효용을 검증해 확정
+
+resolution: 2026-09-27 user approved latest generated image and implementation; solo AI and layout resolved as implementation defaults in spec.md.

@@ -1,0 +1,155 @@
+{
+  "suite": "twin-banner-defense browser E2E",
+  "startedAt": "2026-09-27T14:34:18.343Z",
+  "status": "pass",
+  "checks": [
+    {
+      "name": "assets load in two independent browser contexts",
+      "status": "pass",
+      "durationMs": 648,
+      "details": {
+        "visibility": [
+          "visible",
+          "visible"
+        ],
+        "contexts": 2,
+        "url": "http://127.0.0.1:54228/?test=1"
+      }
+    },
+    {
+      "name": "corrupt save is explained and cleared without starting a match",
+      "status": "pass",
+      "durationMs": 392
+    },
+    {
+      "name": "solo pause, save, reload and resume preserve progress",
+      "status": "pass",
+      "durationMs": 1989,
+      "details": {
+        "savedTick": 36,
+        "resumedTick": 36
+      }
+    },
+    {
+      "name": "code-room create/join/ready/start uses the actual WebSocket relay",
+      "status": "pass",
+      "durationMs": 338,
+      "details": {
+        "room": "33HHPJ",
+        "seed": 1611917392,
+        "host": {
+          "seat": 0,
+          "host": true,
+          "online": true,
+          "room": "33HHPJ",
+          "phase": "playing",
+          "mode": "code"
+        },
+        "guest": {
+          "seat": 1,
+          "host": false,
+          "online": true,
+          "room": "33HHPJ",
+          "phase": "playing",
+          "mode": "code"
+        },
+        "checkpoint": {
+          "label": "initial match",
+          "tick": 0,
+          "wave": 0,
+          "gateHp": 20,
+          "gold": [
+            240,
+            240
+          ],
+          "hash": "3230c99d2c3a288e9db6bd5ff84b723a940a1fb6642c0d4c611b41ccf9035b20"
+        }
+      }
+    },
+    {
+      "name": "guest move and summon reach host; portrait controls are at least 44px",
+      "status": "pass",
+      "durationMs": 2406,
+      "details": {
+        "minimumButton": 44,
+        "checkpoint": {
+          "label": "after guest commands",
+          "tick": 15,
+          "wave": 0,
+          "gateHp": 20,
+          "gold": [
+            240,
+            190
+          ],
+          "hash": "d2e4df975fa86a660cf7a25e4294f53cdceb96d484c28be8275583e6d1e7fc0a"
+        }
+      }
+    },
+    {
+      "name": "both peers finish a short real round and return to the same code room",
+      "status": "pass",
+      "durationMs": 32027,
+      "details": {
+        "result": "won",
+        "completedWave": 3,
+        "sameRoom": "33HHPJ",
+        "nextSeed": 429497060
+      }
+    },
+    {
+      "name": "host window closes; guest continues retained state with AI",
+      "status": "pass",
+      "durationMs": 2252,
+      "details": {
+        "checkpoint": {
+          "label": "before host loss",
+          "tick": 60,
+          "wave": 1,
+          "gateHp": 20,
+          "gold": [
+            240,
+            240
+          ],
+          "hash": "aa3f33c1098e3d40474a476d0dc8d6317532830c2868a56fed53ab2af9f95ff2"
+        },
+        "beforeTick": 60,
+        "afterTick": 64,
+        "seedPreserved": 429497060
+      }
+    },
+    {
+      "name": "gallery contains all 14 kinds and 84 actual animation frames",
+      "status": "pass",
+      "durationMs": 525,
+      "details": {
+        "kinds": 14,
+        "frames": 84
+      }
+    },
+    {
+      "name": "whole browser session stays inside relay message limits",
+      "status": "pass",
+      "durationMs": 0,
+      "details": {
+        "messages": 356,
+        "maxChars": 2193,
+        "maxPerSecond": 18
+      }
+    }
+  ],
+  "screenshots": [
+    "e2e-title.png",
+    "e2e-portrait-combat.png",
+    "e2e-landscape-combat.png",
+    "e2e-round-result.png",
+    "e2e-ai-continuation.png",
+    "e2e-gallery.png"
+  ],
+  "runtimeErrors": [],
+  "finishedAt": "2026-09-27T14:34:59.934Z",
+  "relayMetrics": {
+    "messages": 356,
+    "maxChars": 2193,
+    "maxPerSecond": 18
+  }
+}
