@@ -1,0 +1,26 @@
+status: design-review
+questions:
+  - id: reference-game
+    stage: pre-impl
+    status: open
+    question: 사용자가 이어받으려는 기존 게임은 무엇인가?
+    proposed: 전란의 시대물 콘셉트와 귀야행의 실루엣 규칙을 참고
+  - id: multiplayer-mode
+    stage: pre-impl
+    status: open
+    question: 서로 다른 기기의 온라인 협동인가, 한 화면 로컬 협동인가?
+    proposed: 온라인 2인 협동
+  - id: visual-direction
+    stage: pre-impl
+    status: open
+    question: 짧은 비례의 채색형 무장과 병기 화풍, 가칭 쌍성 수비대를 채택하는가?
+  - id: solo-rule
+    stage: pre-impl
+    status: open
+    question: 싱글은 AI 동료 보조인가, 혼자 두 진영을 관리하는가?
+    proposed: AI 동료 보조
+  - id: combat-layout
+    stage: pre-impl
+    status: open
+    question: 정확한 적 경로와 사거리, 세로 전장의 논리 좌표 대응은 무엇인가?
+    proposed: 시안 결정 뒤 경로와 근접 유닛 효용을 검증해 확정
