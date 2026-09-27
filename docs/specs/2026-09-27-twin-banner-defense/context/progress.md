@@ -49,3 +49,5 @@
 User requested harder difficulty and immediate deployment with verification procedures skipped to save tokens. Broad reviews/browser tests omitted; required minimum existing core suite17/17 passed. Same-seed quick comparison: onlyseat0AI builds→loss atwave17; bothAIbuild→wave20win. This is a sample, not a guarantee for every player strategy.
 Normal waves: enemies6+wave→10+wave (max30); spacing.9s→.65s; speed+12%; health1.4×(1+.28p+.008p²), p=wave−1; boss additional1.35×. Rewards perkill perplayer ceil(base×.65) so added enemies do not inflate economy. Test-mode numbers unchanged.
 Scoped games release81794e10; parentc55fec2e. Only deployment rollout/artifact confirmation follows; no extra E2E/review.
+
+Difficulty deployment complete: images run36339577687 success; portal-fe:c55fec2 rollout complete. Public core.mjs fetched with curl and cmp matched exactly (exit0). Broad E2E/review skipped per user request; existing core17tests passed.
