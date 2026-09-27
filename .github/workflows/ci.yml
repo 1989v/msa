@@ -3,7 +3,7 @@ name: ci
 # PR/main 머지 전 사전 검증.
 #
 # 다섯 job (병렬):
-#   - compile-gate       : 구조 게이트(verifyArchitecture) + Kotlin/Java 컴파일 검증 (test 는 미포함)
+#   - compile-gate       : 구조 게이트(verifyArchitecture) + Kotlin/Java 컴파일 검증 + 온톨로지 파일 검사(모든 푸시)
 #   - test-gate          : 변경된 JVM 서비스만 ./gradlew test (PR 전용)
 #   - frontend-gate      : portal-fe tsc --noEmit + vitest run
 #   - yaml-validate      : application*.yml syntax + duplicate key 검증
@@ -91,6 +91,13 @@ jobs:
       # main 직푸시에서는 **아무 게이트도 걸리지 않았다.**
       - name: ./gradlew compileTestKotlin
         run: ./gradlew compileTestKotlin --no-daemon
+
+      # 개념 온톨로지의 코드 참조는 레포 전체의 파일 · 심볼을 가리킨다 — 그래서 **어느 경로를 바꾼 푸시든**
+      # 여기서 본다. 이미지 게이트는 code-dictionary 가 바뀔 때만 이 스펙을 돌려, 다른 모듈의 리팩터가 참조를
+      # 깨면 한참 뒤 code-dictionary 를 건드린 커밋의 이미지 전체가 막혔다(2026-09-26 HttpOnly 전환이 참조 셋을
+      # 깨 atlas · portal-fe · gateway 배포가 한 번 막혔다). 파일 검사라 도커가 필요 없다.
+      - name: 온톨로지 파일 검사 (코드 참조 · 커버리지 · /tech 정적 그래프)
+        run: ./gradlew :code-dictionary:feature:test --tests '*OntologyFilesSpec' --tests '*OntologyCoverageSpec' --tests '*AtlasGraphExportSpec' --no-daemon
 
   test-gate:
     name: Changed-services test (PR only)
