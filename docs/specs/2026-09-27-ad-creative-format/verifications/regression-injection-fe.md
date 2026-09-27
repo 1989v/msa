@@ -49,3 +49,15 @@ $ npx vitest run src/components/ads src/pages/ads src/pages/games
  Test Files  17 passed (17)
       Tests  144 passed (144)
 ```
+
+## V1 — 띠배너 CDP (2026-09-27)
+
+`BannerAd` 를 jsdom 에서 렌더한 DOM + 운영 스타일시트(tokens · index · k-heritage · AdSlot.css), 헤드리스 크롬.
+
+| 폭 | 테마 | 액자 높이(로드 전 = 후) | 아래 글 이동 | 「광고」 대비 |
+|---|---|---|---|---|
+| 360 | 라이트 · 다크 | 51.3px | 0 | 8.83 · 10.93 |
+| 390 | 라이트 · 다크 | 55.9px | 0 | 8.83 · 10.93 |
+| 1280 | 라이트 · 다크 | 195px | 0 | 8.83 · 10.93 |
+
+스크린샷에서만 보인 결함 1건: 「광고·스튜디오」 — flex 항목 끝 공백이 사라져 구분점이 붙었다 → `.ad-banner-meta` 에 `column-gap` (재캡처로 확인).

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { fetchCreativeImage } from '@/api/ads';
 
 /** 심사 전 소재 이미지는 공개 경로에 없다 — 어드민 미리보기 API 에서 Bearer 로 받아 blob 으로 그린다. */
-export function AdminPreviewImage({ url, alt }: { url: string; alt: string }) {
+/** @param banner 띠배너면 6.4:1, 아니면 카드 1.91:1 자리로 그린다 */
+export function AdminPreviewImage({ url, alt, banner = false }: { url: string; alt: string; banner?: boolean }) {
   const [src, setSrc] = useState<string | null>(null);
 
   useEffect(() => {
@@ -22,9 +23,10 @@ export function AdminPreviewImage({ url, alt }: { url: string; alt: string }) {
     };
   }, [url]);
 
+  const aspect = banner ? 'aspect-[6.4/1]' : 'aspect-[1.91/1]';
   return src ? (
-    <img src={src} alt={alt} className="aspect-[1.91/1] w-full rounded-md object-cover" />
+    <img src={src} alt={alt} className={`${aspect} w-full rounded-md object-cover`} />
   ) : (
-    <div className="aspect-[1.91/1] w-full rounded-md bg-zinc-100 dark:bg-zinc-800" aria-hidden="true" />
+    <div className={`${aspect} w-full rounded-md bg-zinc-100 dark:bg-zinc-800`} aria-hidden="true" />
   );
 }

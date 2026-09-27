@@ -42,7 +42,7 @@ Total Task Groups: 7 · 스펙 `spec.md` 개정 3 · 테스트 `planning/test-qu
 ### Task Group 4: 문서 (①)
 **Dependencies:** 3
 - [x] 4.1 `ads/glossary.md`(SR-9), ADR-0098 개정, `ads/CLAUDE.md` 릴리스·되돌리기 절(되돌리기 SQL 은 이 파일의 SQL 블록이 원본 — I1 이 읽는다)
-- [ ] 4.2 **릴리스 ①**: 커밋·푸시(백엔드만) → 운영 V4·결정 `format`·카탈로그 확인
+- [x] 4.2 **릴리스 ①**: 커밋·푸시(백엔드만) → 운영 V4·결정 `format`·카탈로그 확인
 
 ### Task Group 5: portal-fe (②)
 **Dependencies:** 3 의 API 계약(코드는 병행 가능, 푸시는 ① 확인 뒤)
@@ -63,7 +63,7 @@ Total Task Groups: 7 · 스펙 `spec.md` 개정 3 · 테스트 `planning/test-qu
 
 ### Task Group 7: 릴리스 ② · ②' · 운영 검증
 **Dependencies:** 4.2 운영 확인, 5, 6
-- [ ] 7.1 CDP V1(360·390·1280 × 라이트·다크, 띠배너 높이 예약·「광고」 대비) — 목데이터 렌더 + 운영 스타일시트
+- [x] 7.1 CDP V1(360·390·1280 × 라이트·다크, 띠배너 높이 예약·「광고」 대비) — 목데이터 렌더 + 운영 스타일시트
 - [ ] 7.2 **릴리스 ②**: FE·어드민만 커밋·푸시 → 번들에 새 심볼 확인
 - [ ] 7.3 **②'**: 어드민 API 로 `game-list-banner` `paid_allowed` 켬 → 결정 응답·카탈로그 확인
 - [ ] 7.4 E1(사용자 로그인 필요)은 요청만

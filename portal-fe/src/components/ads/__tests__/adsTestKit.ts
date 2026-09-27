@@ -81,6 +81,10 @@ export const paidAd = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
+/** 띠배너 우승자 — `title` 이 대체 텍스트이고 설명은 비어 온다 */
+export const bannerAd = (overrides: Record<string, unknown> = {}) =>
+  paidAd({ format: 'BANNER', title: '가을 원서 모임 — 첫 달 무료', body: '', imageUrl: '/api/v1/ads/assets/strip1', ...overrides });
+
 export const houseItem = (creativeId: number, title: string, link: string) => ({
   creativeId,
   title,

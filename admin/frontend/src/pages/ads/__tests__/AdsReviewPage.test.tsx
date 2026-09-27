@@ -60,4 +60,24 @@ describe('AdsReviewPage', () => {
     await waitFor(() => expect(adsApi.rejectCreative).toHaveBeenCalledWith(31, 'GAMBLING'));
     expect(adsApi.approveCreative).not.toHaveBeenCalled();
   });
+
+  it('띠배너는 6.4:1 미리보기와 「대체 텍스트」 라벨로 그리고 설명 칸이 없다', async () => {
+    vi.mocked(adsApi.listPendingCreatives).mockResolvedValue([
+      pending({ format: 'BANNER', title: '가을 원서 모임 — 첫 달 무료', body: '' }),
+    ]);
+    render(<AdsReviewPage />);
+
+    const item = await screen.findByTestId('ads-review-item');
+    expect(item).toHaveTextContent('대체 텍스트');
+    expect(screen.getByText('가을 원서 모임 — 첫 달 무료')).toBeInTheDocument();
+    expect(item.querySelector('.aspect-\\[6\\.4\\/1\\]')).not.toBeNull();
+    expect(item.querySelector('.aspect-\\[1\\.91\\/1\\]')).toBeNull();
+  });
+
+  it('형태가 없는 옛 응답은 카드로 그린다', async () => {
+    render(<AdsReviewPage />);
+    const item = await screen.findByTestId('ads-review-item');
+    expect(item).not.toHaveTextContent('대체 텍스트');
+    expect(item.querySelector('.aspect-\\[1\\.91\\/1\\]')).not.toBeNull();
+  });
 });

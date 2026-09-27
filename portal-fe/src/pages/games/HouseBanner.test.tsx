@@ -5,7 +5,7 @@ import HouseBanner from './HouseBanner';
 import { HOUSE_ROTATION_MS } from '../../components/ads/HouseRotator';
 import { resetAdsForTest } from '../../components/ads/adsApi';
 import {
-  advance, captureAdEvents, decisionBody, houseItem, installDecisionAdapter,
+  advance, bannerAd, captureAdEvents, decisionBody, houseItem, installDecisionAdapter, installIntersectionObserver, paidAd,
 } from '../../components/ads/__tests__/adsTestKit';
 
 /** F3 — 게임 목록 HOUSE 배너는 결정 응답의 HOUSE 목록을 6초마다 돌리고, 앱 안 경로는 SPA 로 이동한다. */
@@ -98,5 +98,35 @@ describe('HouseBanner', () => {
 
     expect(container.querySelector('.house-banner')).toBeNull();
     expect(events.fills()).toEqual([{ placementKey: 'game-list-banner', source: 'EMPTY' }]);
+  });
+
+  it('유료 띠배너 우승자가 있으면 HOUSE 대신 띠배너를 「광고」 로 그리고 PAID 를 알린다', async () => {
+    installIntersectionObserver();
+    installDecisionAdapter(() => ({
+      status: 200,
+      data: decisionBody([{ placementKey: 'game-list-banner', ad: bannerAd(), house: HOUSE }]),
+    }));
+    const { container } = renderBanner();
+    await advance(0);
+
+    const aside = container.querySelector('aside.house-banner');
+    expect(aside?.getAttribute('aria-label')).toBe('광고');
+    expect(aside?.querySelector('a.ad-banner img')?.getAttribute('alt')).toBe('가을 원서 모임 — 첫 달 무료');
+    expect(title()).toBeUndefined();
+    expect(events.fills()).toEqual([{ placementKey: 'game-list-banner', source: 'PAID' }]);
+  });
+
+  it('유료가 없으면 HOUSE 를 「홍보」 로 그린다 — 카드 우승자는 이 띠에 그릴 틀이 없다', async () => {
+    installDecisionAdapter(() => ({
+      status: 200,
+      data: decisionBody([{ placementKey: 'game-list-banner', ad: paidAd(), house: HOUSE }]),
+    }));
+    const { container } = renderBanner();
+    await advance(0);
+
+    expect(container.querySelector('aside.house-banner')?.getAttribute('aria-label')).toBe('홍보');
+    expect(container.querySelector('a.ad-banner')).toBeNull();
+    expect(title()).toBe('IT 개념 사전');
+    expect(events.fills()).toEqual([{ placementKey: 'game-list-banner', source: 'HOUSE' }]);
   });
 });

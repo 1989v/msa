@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   adsErrorMessage,
+  campaignFormat,
   changeCampaignStatus,
   createCampaign,
   creditsToMicros,
@@ -10,12 +11,15 @@ import {
   fetchCatalog,
   formatCredits,
   microsToCreditsInput,
+  specFor,
   updateCampaign,
+  type AdFormat,
   type BidType,
   type Campaign,
   type CampaignAction,
   type CampaignInput,
   type CatalogPlacement,
+  type FormatSpec,
 } from '../../api/adsConsoleApi';
 import { PLACEMENT_GUIDE, estimateSpend } from './campaignGuide';
 import CreativesPanel from './CreativesPanel';
@@ -23,6 +27,8 @@ import { CreditNote, StatePill } from './consoleParts';
 import { campaignState, consoleHref } from './consoleView';
 
 interface FormState {
+  /** 만들 때만 고른다 — 기존 캠페인에서는 읽기 전용 */
+  creativeFormat: AdFormat;
   name: string;
   bidType: BidType;
   bid: string;
@@ -41,6 +47,7 @@ function emptyForm(): FormState {
   const now = new Date();
   now.setMinutes(0, 0, 0);
   return {
+    creativeFormat: 'CARD',
     name: '',
     bidType: 'CPM',
     bid: '',
@@ -66,6 +73,7 @@ function toLocalInput(value: string): string {
 
 function fromCampaign(campaign: Campaign): FormState {
   return {
+    creativeFormat: campaignFormat(campaign),
     name: campaign.name,
     bidType: campaign.bidType ?? 'CPM',
     bid: microsToCreditsInput(campaign.bidMicros),
@@ -153,6 +161,7 @@ function CampaignEditorBody({ current, readOnly }: { current: Campaign | null; r
   const [form, setForm] = useState<FormState>(() => (current ? fromCampaign(current) : emptyForm()));
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [formatNotice, setFormatNotice] = useState<string | null>(null);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['ads', 'campaigns'] });
@@ -160,7 +169,8 @@ function CampaignEditorBody({ current, readOnly }: { current: Campaign | null; r
   };
 
   const save = useMutation({
-    mutationFn: (input: CampaignInput) => (campaignId != null ? updateCampaign(campaignId, input) : createCampaign(input)),
+    mutationFn: (input: CampaignInput) =>
+      campaignId != null ? updateCampaign(campaignId, input) : createCampaign(input, form.creativeFormat),
     onSuccess: (saved) => {
       setError(null);
       setNotice('저장했습니다.');
@@ -202,6 +212,22 @@ function CampaignEditorBody({ current, readOnly }: { current: Campaign | null; r
     transition.mutate(action);
   };
 
+  // 형태를 바꾸면 그 형태를 받지 않는 지면을 선택에서 빼고, 뺀 지면을 알린다
+  const pickFormat = (next: AdFormat) => {
+    if (next === form.creativeFormat) return;
+    const dropped = placements.filter((p) => form.placementKeys.includes(p.key) && !specFor(p, next));
+    setForm((prev) => ({
+      ...prev,
+      creativeFormat: next,
+      placementKeys: prev.placementKeys.filter((key) => !dropped.some((p) => p.key === key)),
+    }));
+    setFormatNotice(
+      dropped.length > 0
+        ? `${FORMAT_NAME[next]}를 받지 않는 지면을 선택에서 뺐습니다: ${dropped.map((p) => p.description).join(', ')}`
+        : null,
+    );
+  };
+
   const toggle = (field: 'placementKeys' | 'categoryCodes', value: string) =>
     setForm((prev) => ({
       ...prev,
@@ -212,17 +238,22 @@ function CampaignEditorBody({ current, readOnly }: { current: Campaign | null; r
   const locked = readOnly || ended;
   const state = current ? campaignState(current, null) : null;
 
+  const format = form.creativeFormat;
   const placements = catalog.data?.placements ?? [];
+  // 고를 수 있는 지면은 이 형태 규격이 있는 곳뿐이다. 이미 고른 지면에서 규격이 사라졌으면 해제할 수 있게 따로 보인다
+  const offered = placements.filter((p) => specFor(p, format));
+  const withdrawn = placements.filter((p) => !specFor(p, format) && form.placementKeys.includes(p.key));
+  const bannerOnly = placements.filter((p) => specFor(p, 'BANNER') && !specFor(p, 'CARD'));
   const hourlyCapPercent = catalog.data?.hourlyCapPercent;
   const bidMicros = creditsToMicros(form.bid);
   const dailyMicros = creditsToMicros(form.dailyBudget);
   const totalMicros = form.totalBudget.trim() ? creditsToMicros(form.totalBudget) : null;
   const estimate =
     hourlyCapPercent != null ? estimateSpend(form.bidType, bidMicros, dailyMicros, totalMicros, hourlyCapPercent) : null;
-  // 안내만 한다 — 저장 판정은 서버가 한다. 최저가는 CPM 입찰에만 걸리고, 고른 지면 중 가장 높은 값이 문다
+  // 안내만 한다 — 저장 판정은 서버가 한다. 최저가는 CPM 입찰에만 걸리고, 고른 지면의 이 형태 최저가 중 가장 높은 값이 문다
   const floorMicros = Math.max(
     0,
-    ...placements.filter((p) => form.placementKeys.includes(p.key)).map((p) => p.floorMicros),
+    ...offered.filter((p) => form.placementKeys.includes(p.key)).map((p) => specFor(p, format)!.floorMicros),
   );
   const belowFloor = form.bidType === 'CPM' && bidMicros != null && floorMicros > 0 && bidMicros < floorMicros;
 
@@ -266,21 +297,69 @@ function CampaignEditorBody({ current, readOnly }: { current: Campaign | null; r
                 />
               </label>
 
+              <section className="adc-step" aria-labelledby="adc-step-format">
+                <h2 id="adc-step-format" className="adc-step__title">
+                  ⓪ 어떤 모양으로 보일까 — 광고 형태
+                </h2>
+                {current ? (
+                  <p className="adc-step__lead">
+                    이 캠페인의 형태는 <b>{FORMAT_NAME[format]}</b>입니다. 형태를 바꾸려면 새 캠페인을 만드세요.
+                  </p>
+                ) : (
+                  <>
+                    <p className="adc-step__lead">
+                      캠페인마다 형태를 하나 고릅니다. 만든 뒤에는 바꿀 수 없습니다. 형태마다 받는 지면과 최저가가 다릅니다.
+                    </p>
+                    <div className="adc-formats" role="radiogroup" aria-label="광고 형태">
+                      {FORMATS.map((option) => (
+                        <FormatOption
+                          key={option.value}
+                          option={option}
+                          placements={placements}
+                          checked={format === option.value}
+                          onPick={() => pickFormat(option.value)}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+                <p className="adc-hint">
+                  두 형태를 받는 자리에서는 카드와 같은 값(1,000번 보일 때의 값)으로 겨룹니다
+                  {bannerOnly.length > 0 && ` — 띠배너만 받는 자리: ${bannerOnly.map((p) => p.description).join(', ')}`}
+                </p>
+                {formatNotice && (
+                  <p className="adc-done" role="status">
+                    {formatNotice}
+                  </p>
+                )}
+              </section>
+
               <section className="adc-step" aria-labelledby="adc-step-where">
                 <h2 id="adc-step-where" className="adc-step__title">
                   ① 어디에 보일까 — 지면
                 </h2>
                 <p className="adc-step__lead">
-                  지면은 광고 카드가 들어가는 자리입니다. 모두 페이지를 <b>다 읽은 뒤</b> 나오는 자리라 읽기를 방해하지
-                  않고, 카드 모양은 같습니다 — 가로 1.91:1 이미지 + 제목 + 설명.
+                  지면은 광고가 들어가는 자리입니다. {FORMAT_LEAD[format]} 고른 형태를 받는 지면만 보입니다.
                 </p>
                 {catalog.isLoading && <p className="adc-status">지면 목록을 불러오는 중…</p>}
                 <div className="adc-places">
-                  {placements.map((placement) => (
+                  {offered.map((placement) => (
                     <PlacementCard
                       key={placement.key}
                       placement={placement}
+                      spec={specFor(placement, format)}
+                      format={format}
                       checked={form.placementKeys.includes(placement.key)}
+                      onToggle={() => toggle('placementKeys', placement.key)}
+                    />
+                  ))}
+                  {withdrawn.map((placement) => (
+                    <PlacementCard
+                      key={placement.key}
+                      placement={placement}
+                      spec={null}
+                      format={format}
+                      checked
                       onToggle={() => toggle('placementKeys', placement.key)}
                     />
                   ))}
@@ -463,14 +542,21 @@ function CampaignEditorBody({ current, readOnly }: { current: Campaign | null; r
           </div>
 
           <aside className="adc-campaign__aside" aria-label="미리보기와 예상">
-            <div className="adc-mock" aria-hidden="true">
-              <div className="adc-mock__img">소재 이미지 1.91:1</div>
-              <div className="adc-mock__body">
-                <span className="adc-mock__tag">광고</span>
-                <span className="adc-mock__title">소재 제목</span>
-                <span className="adc-mock__text">소재 설명 한두 줄</span>
+            {format === 'BANNER' ? (
+              <div className="adc-mock adc-mock--banner" aria-hidden="true">
+                <div className="adc-mock__img adc-mock__img--banner">띠배너 이미지 6.4:1 · 권장 1280×200</div>
+                <span className="adc-mock__meta">광고 · 광고주 이름</span>
               </div>
-            </div>
+            ) : (
+              <div className="adc-mock" aria-hidden="true">
+                <div className="adc-mock__img">소재 이미지 1.91:1</div>
+                <div className="adc-mock__body">
+                  <span className="adc-mock__tag">광고</span>
+                  <span className="adc-mock__title">소재 제목</span>
+                  <span className="adc-mock__text">소재 설명 한두 줄</span>
+                </div>
+              </div>
+            )}
             <p className="adc-hint">
               {current ? '소재는 아래에서 올리고, 심사를 거쳐야 나옵니다.' : '캠페인을 만든 뒤 소재를 올리고, 심사를 거쳐야 나옵니다.'}
             </p>
@@ -517,7 +603,14 @@ function CampaignEditorBody({ current, readOnly }: { current: Campaign | null; r
         </form>
       </section>
 
-      {current && <CreativesPanel campaignId={current.id} readOnly={locked} />}
+      {current && (
+        <CreativesPanel
+          campaignId={current.id}
+          readOnly={locked}
+          format={campaignFormat(current)}
+          placementKeys={current.placementKeys}
+        />
+      )}
     </div>
   );
 }
@@ -557,13 +650,20 @@ function MoneyField({
   );
 }
 
-/** 지면 하나 — 페이지 도식에 광고 자리를 표시하고, 카탈로그의 최저가·요청 수를 붙인다 */
+/**
+ * 지면 하나 — 페이지 도식에 광고 자리를 표시하고, 카탈로그의 이 형태 최저가·요청 수를 붙인다.
+ * 규격이 없는(`spec` null) 지면은 이미 고른 것을 해제하는 용도로만 보인다.
+ */
 function PlacementCard({
   placement,
+  spec,
+  format,
   checked,
   onToggle,
 }: {
   placement: CatalogPlacement;
+  spec: FormatSpec | null;
+  format: AdFormat;
   checked: boolean;
   onToggle: () => void;
 }) {
@@ -580,21 +680,83 @@ function PlacementCard({
                 block.ad ? 'adc-place__block adc-place__block--ad' : block.size === 'lg' ? 'adc-place__block adc-place__block--lg' : 'adc-place__block'
               }
             >
-              {block.label}
+              {block.ad ? AD_BLOCK_LABEL[format] : block.label}
             </span>
           ))}
         </span>
       )}
       <span className="adc-place__head">
-        <input type="checkbox" checked={checked} onChange={onToggle} />
+        {/* 규격이 사라진 지면은 다시 고를 수 없다 — 해제만 된다 */}
+        <input type="checkbox" checked={checked} disabled={!spec && !checked} onChange={onToggle} />
         <span className="adc-place__title">{placement.description}</span>
       </span>
+      {!spec && <span className="adc-warn">이 형태를 더 받지 않음 — 선택을 해제해 주세요.</span>}
       {guide && <span className="adc-place__where">{guide.where}</span>}
       <span className="adc-place__meta">
         <span>하루 평균 요청 {placement.averageDailyRequests.toLocaleString('ko-KR')}</span>
-        <span>최저 CPM {formatCredits(placement.floorMicros)}</span>
+        {spec && <span>최저 CPM {formatCredits(spec.floorMicros)}</span>}
+        {spec && <span>비율 {spec.aspectRatios.join(', ')}</span>}
         <code>{placement.key}</code>
       </span>
+    </label>
+  );
+}
+
+const FORMAT_NAME: Record<AdFormat, string> = { CARD: '카드', BANNER: '띠배너' };
+
+const FORMAT_LEAD: Record<AdFormat, string> = {
+  CARD: '카드는 페이지를 다 읽은 뒤 나오는 자리에 가로 1.91:1 이미지 + 제목 + 설명으로 보입니다.',
+  BANNER: '띠배너는 가로 6.4:1 이미지 한 장이고, 글자는 이미지 안에 넣습니다.',
+};
+
+const AD_BLOCK_LABEL: Record<AdFormat, string> = { CARD: '광고 카드', BANNER: '띠배너' };
+
+interface FormatChoice {
+  value: AdFormat;
+  title: string;
+  body: string;
+}
+
+const FORMATS: FormatChoice[] = [
+  {
+    value: 'CARD',
+    title: '카드 — 이미지 + 제목 + 설명',
+    body: '글 끝에서 눈에 잘 띄는 큰 카드. 무엇을 하는 곳인지 설명할 수 있습니다.',
+  },
+  {
+    value: 'BANNER',
+    title: '띠배너 — 가로로 긴 이미지 한 장',
+    body: '글자는 이미지 안에 넣습니다. 자리를 적게 차지해 더 싸게 나갈 수 있습니다.',
+  },
+];
+
+/** 형태 하나 — 모양 도식, 받는 지면, 그 형태의 가장 낮은 최저가(카탈로그 값) */
+function FormatOption({
+  option,
+  placements,
+  checked,
+  onPick,
+}: {
+  option: FormatChoice;
+  placements: CatalogPlacement[];
+  checked: boolean;
+  onPick: () => void;
+}) {
+  const specs = placements.flatMap((p) => {
+    const spec = specFor(p, option.value);
+    return spec ? [{ name: p.description, floor: spec.floorMicros }] : [];
+  });
+  const lowest = specs.length > 0 ? Math.min(...specs.map((s) => s.floor)) : null;
+  return (
+    <label className="adc-format">
+      <input type="radio" name="creativeFormat" value={option.value} checked={checked} onChange={onPick} />
+      <span className={`adc-format__shape adc-format__shape--${option.value.toLowerCase()}`} aria-hidden="true">
+        {option.value === 'BANNER' ? '6.4 : 1' : '1.91 : 1'}
+      </span>
+      <span className="adc-format__title">{option.title}</span>
+      <span className="adc-format__body">{option.body}</span>
+      <span className="adc-format__meta">지면: {specs.length > 0 ? specs.map((s) => s.name).join(' · ') : '없음'}</span>
+      {lowest != null && <span className="adc-format__floor">최저 CPM {formatCredits(lowest)}부터</span>}
     </label>
   );
 }
@@ -603,7 +765,7 @@ const BID_TYPES: { value: BidType; title: string; body: string; fit: string }[] 
   {
     value: 'CPM',
     title: 'CPM — 보인 만큼',
-    body: '광고가 실제로 보인 1,000번마다 입찰가를 냅니다. 「보였다」는 카드 면적의 절반 이상이 1초 넘게 화면에 있었다는 뜻이라, 스크롤로 스쳐 간 것은 세지 않습니다.',
+    body: '광고가 실제로 보인 1,000번마다 입찰가를 냅니다. 「보였다」는 광고 면적의 절반 이상이 1초 넘게 화면에 있었다는 뜻이라, 스크롤로 스쳐 간 것은 세지 않습니다.',
     fit: '알리는 게 목적일 때',
   },
   {

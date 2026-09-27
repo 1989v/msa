@@ -25,7 +25,7 @@ export function CreditNote() {
 /**
  * 인증 경로의 미리보기 이미지. 받아서 blob 주소로 그린다 — 실패를 화면이 알 수 있게.
  */
-export function PreviewImage({ url, alt }: { url: string; alt: string }) {
+export function PreviewImage({ url, alt, className = 'adc-preview' }: { url: string; alt: string; className?: string }) {
   const [src, setSrc] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,5 +45,5 @@ export function PreviewImage({ url, alt }: { url: string; alt: string }) {
     };
   }, [url]);
 
-  return src ? <img className="adc-preview" src={src} alt={alt} /> : <span className="adc-preview adc-preview--empty" aria-hidden="true" />;
+  return src ? <img className={className} src={src} alt={alt} /> : <span className={`${className} adc-preview--empty`} aria-hidden="true" />;
 }

@@ -43,6 +43,8 @@ export interface AdminCreative {
   imageUrl: string | null;
   rejectReason: CreativeRejectReason | null;
   reviewedAt: string | null;
+  /** 캠페인의 광고 형태. 싣기 전의 응답·HOUSE 는 없거나 null — 카드로 본다. 띠배너는 `title` 이 대체 텍스트다 */
+  format?: PlacementFormat | null;
 }
 
 export interface AdminAdvertiser {
@@ -56,7 +58,15 @@ export interface AdminAdvertiser {
   suspendedAt: string | null;
 }
 
-export interface AdPlacement {
+/** 지면이 한 광고 형태에 대해 갖는 규격 — 허용 비율과 최저가(CPM 마이크로) */
+export interface FormatSpec {
+  format: PlacementFormat;
+  aspectRatios: string[];
+  floorMicros: number;
+}
+
+/** 지면 등록 입력 — 첫 형태 규격 하나. 요청은 `formats` 목록으로 보낸다(`createPlacement`). 다른 형태는 등록 뒤 규격 추가로 붙인다 */
+export interface PlacementInput {
   key: string;
   host: string;
   format: PlacementFormat;
@@ -65,6 +75,22 @@ export interface AdPlacement {
   active: boolean;
   paidAllowed: boolean;
   description: string;
+}
+
+/**
+ * 지면. `formats` 가 규격 목록의 원본이고, `format`·`aspectRatios`·`floorMicros` 는 옛 화면을 위한 대표 규격이다.
+ * 규격 목록을 싣기 전의 응답에는 `formats` 가 없다 — 그때는 옛 필드 셋이 규격 하나다.
+ */
+export interface AdPlacement extends PlacementInput {
+  formats?: FormatSpec[];
+}
+
+export function placementSpecs(placement: AdPlacement): FormatSpec[] {
+  return (
+    placement.formats ?? [
+      { format: placement.format, aspectRatios: placement.aspectRatios, floorMicros: placement.floorMicros },
+    ]
+  );
 }
 
 export interface PlacementPatch {
@@ -188,12 +214,31 @@ export async function listPlacements(): Promise<AdPlacement[]> {
   return unwrap(await apiClient.get(`${BASE}/placements`));
 }
 
-export async function createPlacement(input: AdPlacement): Promise<AdPlacement> {
-  return unwrap(await apiClient.post(`${BASE}/placements`, input));
+export async function createPlacement(input: PlacementInput): Promise<AdPlacement> {
+  const { format, aspectRatios, floorMicros, ...rest } = input;
+  // 서버는 규격 목록으로만 받는다 — 첫 규격 하나를 목록에 담아 보낸다
+  return unwrap(await apiClient.post(`${BASE}/placements`, { ...rest, formats: [{ format, aspectRatios, floorMicros }] }));
 }
 
 export async function updatePlacement(key: string, patch: PlacementPatch): Promise<AdPlacement> {
   return unwrap(await apiClient.patch(`${BASE}/placements/${encodeURIComponent(key)}`, patch));
+}
+
+const formatsPath = (key: string) => `${BASE}/placements/${encodeURIComponent(key)}/formats`;
+
+/** 지면에 형태 규격을 더한다. 같은 형태가 이미 있으면 서버가 거절한다 */
+export async function addPlacementFormat(key: string, spec: FormatSpec): Promise<AdPlacement> {
+  return unwrap(await apiClient.post(formatsPath(key), spec));
+}
+
+/** 한 형태의 최저가를 바꾼다 — 올리면 그보다 낮게 입찰한 그 형태 캠페인이 이 지면에서 빠진다 */
+export async function updatePlacementFormatFloor(key: string, format: PlacementFormat, floorMicros: number): Promise<AdPlacement> {
+  return unwrap(await apiClient.patch(`${formatsPath(key)}/${format}`, { floorMicros }));
+}
+
+/** 형태 규격을 뺀다. 마지막 규격은 서버가 거절한다 */
+export async function removePlacementFormat(key: string, format: PlacementFormat): Promise<AdPlacement> {
+  return unwrap(await apiClient.delete(`${formatsPath(key)}/${format}`));
 }
 
 export async function listUnregisteredPlacements(): Promise<UnregisteredPlacement[]> {

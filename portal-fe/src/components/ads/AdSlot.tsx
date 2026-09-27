@@ -3,6 +3,7 @@ import { ADSENSE_CLIENT, ADSENSE_SLOTS } from '../../seo/copy.mjs';
 import { ensureAdsenseLoaded } from './adsenseLoader';
 import { reportFill, requestDecision, type FillSource, type HouseCreative, type PaidAd } from './adsApi';
 import AdCard from './AdCard';
+import BannerAd from './BannerAd';
 import HouseRotator from './HouseRotator';
 import './AdSlot.css';
 
@@ -148,7 +149,7 @@ export default function AdSlot({
   if (phase === 'paid' && ad) {
     return (
       <aside className={classes} aria-label="광고">
-        <AdCard ad={ad} />
+        {ad.format === 'BANNER' ? <BannerAd ad={ad} /> : <AdCard ad={ad} />}
       </aside>
     );
   }

@@ -13,9 +13,16 @@ import { sessionId, visitorId } from '../../analytics/identity';
 
 export type FillSource = 'PAID' | 'ADSENSE' | 'HOUSE' | 'EMPTY';
 
-/** 유료 광고 한 건. 광고주 문자열(`title`·`body`·`advertiserName`)은 텍스트로만 그린다. */
+/** 광고 형태 — 카드(이미지 + 제목 + 설명) 또는 띠배너(6.4:1 이미지 한 장). */
+export type AdFormat = 'CARD' | 'BANNER';
+
+/**
+ * 유료 광고 한 건. 광고주 문자열(`title`·`body`·`advertiserName`)은 텍스트로만 그린다.
+ * 띠배너는 `title` 이 이미지의 대체 텍스트이고 `body` 는 비어 있다.
+ */
 export interface PaidAd {
   creativeId: number;
+  format: AdFormat;
   title: string;
   body: string;
   advertiserName: string;
@@ -130,14 +137,24 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 
 const isString = (v: unknown): v is string => typeof v === 'string';
 
-function parseAd(v: unknown): PaidAd | null {
+/**
+ * 형태가 없으면 카드다 — 형태를 싣기 전의 광고 서버가 응답하는 동안 유료 광고가 사라지지 않게.
+ * 모르는 형태는 그릴 틀이 없으므로 광고를 버린다.
+ */
+function parseFormat(v: unknown): AdFormat | null {
+  if (v === undefined || v === null) return 'CARD';
+  return v === 'CARD' || v === 'BANNER' ? v : null;
+}
+
+export function parseAd(v: unknown): PaidAd | null {
   if (!isRecord(v)) return null;
   const { creativeId, title, body, advertiserName, imageUrl, clickUrl, impressionToken } = v;
-  if (typeof creativeId !== 'number') return null;
+  const format = parseFormat(v.format);
+  if (typeof creativeId !== 'number' || format === null) return null;
   if (![title, body, advertiserName, imageUrl, clickUrl, impressionToken].every(isString)) return null;
   // 링크·이미지는 광고 서버의 두 경로만 받는다 — 다른 값이 오면 카드를 그리지 않는다
   if (!(clickUrl as string).startsWith(CLICK_PREFIX) || !(imageUrl as string).startsWith(ASSET_PREFIX)) return null;
-  return v as unknown as PaidAd;
+  return { ...(v as unknown as PaidAd), format };
 }
 
 function parseHouse(v: unknown): HouseCreative | null {

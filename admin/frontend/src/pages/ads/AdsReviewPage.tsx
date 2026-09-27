@@ -63,19 +63,37 @@ export function AdsReviewPage() {
       <div className="space-y-3">
         {items.map((creative) => {
           const reason = reasons[creative.id] ?? 'MISLEADING';
+          // 띠배너는 이미지 한 장이다 — 제목 칸의 글은 화면에 보이지 않는 대체 텍스트이고 설명은 없다
+          const banner = creative.format === 'BANNER';
           return (
-            <Card key={creative.id} className="grid gap-4 p-4 md:grid-cols-[240px_1fr]" data-testid="ads-review-item">
+            <Card
+              key={creative.id}
+              // 띠배너는 이미지 안의 글자를 읽어야 해서 전폭으로 그린다
+              className={`grid gap-4 p-4 ${banner ? '' : 'md:grid-cols-[240px_1fr]'}`}
+              data-testid="ads-review-item"
+            >
               {creative.imageUrl ? (
-                <AdminPreviewImage url={creative.imageUrl} alt={creative.title} />
+                <AdminPreviewImage url={creative.imageUrl} alt={creative.title} banner={banner} />
               ) : (
-                <div className="aspect-[1.91/1] w-full rounded-md bg-zinc-100 dark:bg-zinc-800" />
+                <div
+                  className={`${banner ? 'aspect-[6.4/1]' : 'aspect-[1.91/1]'} w-full rounded-md bg-zinc-100 dark:bg-zinc-800`}
+                />
               )}
               <div className="min-w-0 space-y-2">
                 <div className="font-mono text-xs text-zinc-500">
                   소재 #{creative.id} · 캠페인 #{creative.campaignId} · 광고주 #{creative.advertiserId}
                 </div>
-                <p className="break-words font-semibold">{creative.title}</p>
-                <p className="break-words text-sm text-zinc-600 dark:text-zinc-300">{creative.body}</p>
+                {banner ? (
+                  <p className="break-words">
+                    <span className="mr-2 text-xs text-zinc-500">띠배너 · 대체 텍스트</span>
+                    <span className="font-semibold">{creative.title}</span>
+                  </p>
+                ) : (
+                  <>
+                    <p className="break-words font-semibold">{creative.title}</p>
+                    <p className="break-words text-sm text-zinc-600 dark:text-zinc-300">{creative.body}</p>
+                  </>
+                )}
                 <p className="break-all font-mono text-xs text-zinc-500">{creative.link}</p>
                 <div className="flex flex-wrap items-center gap-2 pt-2">
                   <Button size="sm" onClick={() => run(() => approveCreative(creative.id), '승인했습니다')}>

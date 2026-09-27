@@ -23,6 +23,8 @@ export type AdvertiserStatus = 'ACTIVE' | 'SUSPENDED';
 export type BidType = 'CPM' | 'CPC';
 export type CampaignStatus = 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'ENDED';
 export type CampaignAction = 'START' | 'PAUSE' | 'RESUME' | 'END';
+/** 광고 형태 — 캠페인이 만들 때 하나 고르고 바꿀 수 없다 */
+export type AdFormat = 'CARD' | 'BANNER';
 export type CreativeStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'ARCHIVED';
 export type CreativeRejectReason =
   | 'REGULATED_INDUSTRY'
@@ -59,6 +61,8 @@ export interface Campaign {
   frequencyCapPerDay: number | null;
   placementKeys: string[];
   categoryCodes: string[];
+  /** 형태를 싣기 전의 응답에는 없다 — 그때는 카드다 */
+  creativeFormat?: AdFormat;
   /** 지금이 게재 기간 안인지 — 「기간 밖」은 상태가 아니라 파생 표시다 */
   inPeriod: boolean;
 }
@@ -89,6 +93,7 @@ export interface Creative {
   reviewedAt: string | null;
 }
 
+/** 띠배너는 `title` 에 대체 텍스트를 싣고 `body` 는 비워 보낸다 */
 export interface CreativeInput {
   title: string;
   body: string;
@@ -96,14 +101,34 @@ export interface CreativeInput {
   image: File | null;
 }
 
+/** 지면이 한 형태에 대해 갖는 규격 — 허용 비율과 최저가(CPM 마이크로) */
+export interface FormatSpec {
+  format: AdFormat;
+  aspectRatios: string[];
+  floorMicros: number;
+}
+
 export interface CatalogPlacement {
   key: string;
   host: string;
-  format: 'CARD' | 'BANNER';
+  /** 형태 규격 목록. 싣기 전의 응답에는 없고, 그때는 아래 옛 필드 셋이 규격 하나다 */
+  formats?: FormatSpec[];
+  format: AdFormat;
   aspectRatios: string[];
   floorMicros: number;
   description: string;
   averageDailyRequests: number;
+}
+
+/** 소재 이미지 업로드 규칙 — 서버 상수. 콘솔의 사전 검사는 이 값만 쓴다(사본을 두지 않는다) */
+export interface UploadRules {
+  /** 허용 이미지 형식(MIME) — 판정은 파일 앞 바이트로 한다 */
+  fileTypes: string[];
+  maxBytes: number;
+  /** 가로·세로 각각의 최대 픽셀 */
+  maxDimension: number;
+  /** 비율 상대 오차 — 0.01 이면 1% */
+  aspectTolerance: number;
 }
 
 export interface Catalog {
@@ -111,6 +136,26 @@ export interface Catalog {
   categories: { code: string; label: string }[];
   /** 한 시간에 쓸 수 있는 일예산 비율(%) — 서버 규칙 값 */
   hourlyCapPercent: number;
+  /** 싣기 전의 응답에는 없다 — 그때는 사전 검사 없이 서버가 판정한다 */
+  uploadRules?: UploadRules;
+}
+
+/** 지면의 형태 규격 목록. 옛 응답은 옛 필드 셋을 규격 하나로 읽는다 */
+export function placementSpecs(placement: CatalogPlacement): FormatSpec[] {
+  return (
+    placement.formats ?? [
+      { format: placement.format, aspectRatios: placement.aspectRatios, floorMicros: placement.floorMicros },
+    ]
+  );
+}
+
+/** 지면이 이 형태를 받으면 그 규격, 아니면 null */
+export function specFor(placement: CatalogPlacement, format: AdFormat): FormatSpec | null {
+  return placementSpecs(placement).find((spec) => spec.format === format) ?? null;
+}
+
+export function campaignFormat(campaign: Campaign): AdFormat {
+  return campaign.creativeFormat ?? 'CARD';
 }
 
 export interface CampaignDay {
@@ -168,8 +213,9 @@ export async function fetchCampaign(id: number): Promise<Campaign> {
   return unwrap(await apiClient.get(`${BASE}/campaigns/${id}`));
 }
 
-export async function createCampaign(input: CampaignInput): Promise<Campaign> {
-  return unwrap(await apiClient.post(`${BASE}/campaigns`, input));
+/** 형태는 만들 때만 보낸다 — 수정 요청에는 형태 필드가 없다 */
+export async function createCampaign(input: CampaignInput, creativeFormat: AdFormat): Promise<Campaign> {
+  return unwrap(await apiClient.post(`${BASE}/campaigns`, { ...input, creativeFormat }));
 }
 
 export async function updateCampaign(id: number, input: CampaignInput): Promise<Campaign> {

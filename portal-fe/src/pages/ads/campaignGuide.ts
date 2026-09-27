@@ -9,7 +9,7 @@ import type { BidType } from '../../api/adsConsoleApi';
 
 export interface PageBlock {
   label: string;
-  /** 광고 카드가 들어가는 자리 */
+  /** 광고가 들어가는 자리 — 도식에는 고른 형태 이름으로 적힌다 */
   ad?: boolean;
   /** 도식 안 높이 — 본문처럼 긴 구역은 lg */
   size?: 'lg' | 'sm';
@@ -33,6 +33,10 @@ export const PLACEMENT_GUIDE: Record<string, PlacementGuide> = {
   'game-hub-end': {
     where: '게임 카드 격자의 맨 아래, 푸터 위. 게임 화면 안에는 넣지 않습니다.',
     blocks: [{ label: '게임 카드 격자', size: 'lg' }, { label: '광고 카드', ad: true }, { label: '푸터' }],
+  },
+  'game-list-banner': {
+    where: '게임 목록 제목 아래, 정렬·필터와 게임 카드 격자 위. 띠배너만 받습니다.',
+    blocks: [{ label: '게임 목록 제목' }, { label: '띠배너', ad: true }, { label: '정렬 · 필터 · 게임 카드 격자', size: 'lg' }, { label: '푸터' }],
   },
 };
 

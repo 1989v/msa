@@ -1004,6 +1004,241 @@
   background: var(--ko-surface-2);
 }
 
+/* 띠배너 소재 썸네일 — 목록의 이미지 칸은 형태 비율을 따른다 */
+.adc-preview--banner {
+  aspect-ratio: 6.4 / 1;
+}
+
+.adc-creative__label {
+  font-size: var(--ko-text-xs);
+  font-weight: 400;
+  color: var(--ko-text-secondary);
+}
+
+.adc-mono {
+  font-family: var(--kh-font-mono);
+}
+
+/* 화면에는 숨기되 화면 낭독기와 파일 선택에는 남긴다 */
+.adc-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ─── 광고 형태 선택 (새 캠페인) ─── */
+
+.adc-formats {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ko-space-3);
+}
+
+@media (min-width: 640px) {
+  .adc-formats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.adc-format {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ko-space-2);
+  padding: var(--ko-space-4);
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--kh-radius);
+  background: var(--ko-surface-1);
+  cursor: pointer;
+}
+
+.adc-format:has(input:checked) {
+  border-color: var(--ko-accent-primary);
+  box-shadow: inset 0 0 0 1px var(--ko-accent-primary);
+  background: var(--ko-accent-primary-bg);
+}
+
+.adc-format:has(input:focus-visible) {
+  outline: var(--ko-focus-ring);
+  outline-offset: 2px;
+}
+
+.adc-format input {
+  position: absolute;
+  top: var(--ko-space-4);
+  right: var(--ko-space-4);
+}
+
+.adc-format__shape {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--kh-radius);
+  background: var(--kh-aged-pine);
+  font-size: var(--ko-text-xs);
+  color: var(--kh-on-slab-muted);
+}
+
+.adc-format__shape--card {
+  width: min(100%, 11rem);
+  aspect-ratio: 1.91 / 1;
+}
+
+.adc-format__shape--banner {
+  width: min(100%, 17rem);
+  aspect-ratio: 6.4 / 1;
+}
+
+.adc-format__title {
+  font-weight: 700;
+}
+
+.adc-format__body,
+.adc-format__meta {
+  font-size: var(--ko-text-sm);
+  line-height: 1.6;
+  color: var(--ko-text-secondary);
+}
+
+.adc-format__floor {
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-sm);
+  color: var(--ko-accent-text);
+}
+
+/* 미리보기 목업 — 띠배너는 이미지 한 장 + 이미지 밖 표시 한 줄 */
+.adc-mock--banner {
+  gap: var(--ko-space-2);
+  padding: var(--ko-space-3);
+}
+
+.adc-mock__img--banner {
+  aspect-ratio: 6.4 / 1;
+  border-radius: var(--kh-radius);
+  text-align: center;
+}
+
+.adc-mock__meta {
+  font-size: var(--ko-text-xs);
+  color: var(--kh-on-slab-muted);
+}
+
+/* ─── 소재 이미지 — 끌어다 놓기 ─── */
+
+.adc-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ko-space-2);
+  padding: var(--ko-space-6);
+  border: 2px dashed var(--ko-border-default);
+  border-radius: var(--kh-radius);
+  background: var(--ko-surface-1);
+  text-align: center;
+}
+
+.adc-drop--over {
+  border-color: var(--ko-accent-primary);
+  background: var(--ko-accent-primary-bg);
+}
+
+.adc-drop:has(input:focus-visible) .adc-drop__pick {
+  outline: var(--ko-focus-ring);
+  outline-offset: 2px;
+}
+
+.adc-drop__title {
+  font-weight: 700;
+}
+
+.adc-drop__rule {
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-secondary);
+}
+
+.adc-drop__pick {
+  position: relative;
+  cursor: pointer;
+}
+
+.adc-upload {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-3);
+  width: 100%;
+  text-align: left;
+}
+
+/* 통과한 파일만 풀어 그린다 — 자리는 형태 비율로 */
+.adc-upload__preview {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1.91 / 1;
+  object-fit: cover;
+  border-radius: var(--kh-radius);
+  background: var(--ko-surface-2);
+}
+
+.adc-upload__preview--banner {
+  aspect-ratio: 6.4 / 1;
+}
+
+.adc-upload__file {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--ko-space-3);
+  font-size: var(--ko-text-sm);
+  overflow-wrap: anywhere;
+}
+
+.adc-upload__cancel {
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.adc-checks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--ko-text-sm);
+}
+
+.adc-check {
+  display: flex;
+  gap: var(--ko-space-2);
+}
+
+.adc-check__mark {
+  width: 1.1em;
+  font-weight: 700;
+  color: var(--ko-accent-text);
+}
+
+.adc-check--bad .adc-check__mark {
+  color: var(--kh-yeonji);
+}
+
+.adc-check__value {
+  margin-left: auto;
+  color: var(--ko-text-secondary);
+  text-align: right;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .adc-btn {
     transition: none;
