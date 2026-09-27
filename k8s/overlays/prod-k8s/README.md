@@ -56,6 +56,11 @@ kubectl apply -k k8s/overlays/prod-k8s
       `api.commerce.example.com` with your production hostname.
 - [ ] Confirm cert-manager ClusterIssuer name matches
       `letsencrypt-prod` or adjust the annotation.
+- [ ] Session cookies (ADR-0101) are host-only by default, which is
+      right for a single host. If several subdomains must share one
+      login, add an `AUTH_COOKIE_DOMAIN=.<your-domain>` env patch to the
+      `auth` Deployment (see `k8s/overlays/oci-arm/patches/auth-cookie-domain.yaml`).
+      `MEMBER_API_BASE_URL` already comes from `k8s/base/auth`.
 - [ ] Adjust HPA min/max replicas per service based on expected load.
 - [ ] Wire Secrets via SealedSecrets or External Secrets (Phase 4)
       instead of the plaintext defaults in application-kubernetes.yml.
