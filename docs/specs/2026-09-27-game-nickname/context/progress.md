@@ -11,3 +11,11 @@
 - 함정: MySQL REPEATABLE_READ snapshot 경합→READ_COMMITTED+profile lock; delayed401 자동재시도→계정B오염 방지를 위해 profile PUT retry차단; 저장중 시작GET→PUT완료generation무효화. Vite가 apply_patch CSS변경을 감지하지 못해 서버 재시작 후 4테마대비를 다시 검증함.
 
 - 구현 커밋: msa e64c70c4, games e1c6bc4a (codex/game-player-nickname). root submodule pointer는 작업 전부터 dirty라 포함하지 않음.
+
+## 2026-09-28 deployment continuation
+- User authorized deployment. Isolated root worktree: /private/tmp/msa-game-nickname-release (release/game-nickname), base origin/main 6d1469d0. Games worktree: /private/tmp/games-nickname-release. Shared tree is untouched.
+- Latest HttpOnly auth and operator/automation excluded score behavior preserved during cherry-pick; root d20ec036 + 7a8f7499. Games 38b70b2b pushed to main.
+- Release validation: Gradle BUILD SUCCESSFUL in 1m26s; domain72 + feature286 (MySQL17, skipped0) + gateway114 =472, no failures. Portal tsc-b and 83 tests PASS; widget9 PASS.
+- Fresh review found standalone expired-session recovery missing; adding owner-guarded refresh with no mutation replay, then re-review/test before root push.
+- Next: commit release verification, push root main (normal fast-forward), monitor images workflow (gateway/content/portal-fe), Argo rollout, production smoke. Do not reset or merge shared dirty main.
+- Evidence: /private/tmp/nickname-release-tests.log, /private/tmp/nickname-release-frontend.log. Initialized auth/gifticon/games at release pointers. gh account1989v required by push hook.

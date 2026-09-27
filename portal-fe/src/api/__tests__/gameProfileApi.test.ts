@@ -68,3 +68,46 @@ describe('game profile auth retries through the real shared client', () => {
     expect(sent).toEqual(['member-a', 'member-a']);
   });
 });
+
+
+describe('expired nickname mutation recovery', () => {
+  it('refreshes the same session but requires another explicit PUT', async () => {
+    let fresh = false;
+    const sent: string[] = [];
+    const refresh = vi.spyOn(axios, 'post').mockImplementation(async () => {
+      fresh = true;
+      return { data: { success: true, data: null } };
+    });
+    gameHttp.defaults.adapter = async (config) => {
+      sent.push(getUserId()!);
+      if (!fresh) throw unauthorized(config);
+      return { status: 200, statusText: 'OK', headers: {}, config, data: {
+        success: true, data: { playerId: 'player-a', nickname: 'Alice' },
+      } };
+    };
+    await expect(updateGameProfile('Alice')).rejects.toThrow('다시 저장');
+    expect(sent).toEqual(['member-a']);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    await expect(updateGameProfile('Alice')).resolves.toMatchObject({ nickname: 'Alice' });
+    expect(sent).toEqual(['member-a', 'member-a']);
+  });
+
+  it('does not replay or accept a session changed during credential refresh', async () => {
+    const started = deferred<void>();
+    const finish = deferred<void>();
+    let puts = 0;
+    vi.spyOn(axios, 'post').mockImplementation(async () => {
+      started.resolve();
+      await finish.promise;
+      return { data: { success: true, data: null } };
+    });
+    gameHttp.defaults.adapter = async (config) => { puts++; throw unauthorized(config); };
+    const put = updateGameProfile('Alice');
+    const rejection = expect(put).rejects.toThrow('계정이 변경');
+    await started.promise;
+    signIn('member-b');
+    finish.resolve();
+    await rejection;
+    expect(puts).toBe(1);
+  });
+});

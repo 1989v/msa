@@ -17,7 +17,7 @@
 - SR-5: 사이트 공통 닉네임 버튼과 접근 가능한 모달(레이블·포커스 트랩·원래 포커스 복구·Escape·오류·저장 중 중복 제출 방지)을 제공한다. DESIGN.md 토큰 사용. 서버 실패와 미설정을 구분한다. guest와 member의 cache owner를 분리하고 계정 전환 중 지연 응답은 무시한다.
 - SR-6: 공용 rank.js/platform.js는 서버 프로필을 읽고 저장한다. iframe에서는 부모 전역 모달을 열고 독립 실행에서는 자체 DOM 모달을 사용한다. postMessage는 정확한 origin 및 게임 iframe source를 검사한다. 성공한 변경을 현재 화면·다른 탭에 반영하고 랭킹을 다시 읽는다. localStorage는 표시 캐시이며 권한/소유권 근거가 아니다. 사용자 정의 이름 없이 점수를 올린 경우 현재 계정에 한정한 pending 점수를 두고 설정 성공 시 재시도한다. 계정 전환 시 pending은 버린다. pending에 slug/track/board/score/detail/owner를 고정한다. 서버 실패 시 pending을 유지하고 실패를 표시한다. 전체화면에서는 fullscreen element 안에 모달을 렌더하거나 먼저 전체화면을 나간다. 부모 acknowledgement가 없으면 standalone 모달로 폴백한다.
 - SR-7: 로그인 회원에게 프로필이 없고 유효한 게스트 쿠키가 있으면 해당 프로필을 회원에 귀속시켜 기존 playerId/닉네임/기록을 유지하고 guest hash를 제거한다. 회원 프로필이 이미 있으면 회원 프로필이 우선이며 게스트 기록은 합치지 않는다. profile의 member_id/guest_token_hash는 정확히 하나만 존재한다. 귀속은 profile 행 잠금 후 member_id가 없고 guest hash가 일치함을 다시 확인하여 두 필드를 원자적으로 바꾼다. PUT의 이름 변경과 귀속은 한 트랜잭션이며 중복 실패 시 모두 rollback한다. 최초 조회는 쓰기를 하지 않고, 명시 PUT에서 귀속한다. UI는 조회 결과가 없는 회원에게 게스트 이름을 자동 표시/클레임하지 않는다. 신규 게임 제안 작성자 이름도 서버의 회원 프로필을 사용하고 과거 작성 당시 이름은 보존한다.
-- SR-8: 공개 플레이·랭킹 조회와 게스트 닉네임/점수 제출 모두 허용. 각 쓰기에서 서버가 profile 소유권을 확인한다. 프로필 미설정은 INVALID_INPUT(닉네임 설정 필요)로 거부하고 설정 성공 후 재시도한다. game submodule은 쿠키 인증 전환이 앞서 있지만 root gateway는 Bearer 인증이므로 클라이언트는 읽을 수 있는 portal_access_token이 있으면 Bearer도 보내고, HttpOnly 환경에서는 same-origin 쿠키를 보낸다. 인증 토큰 자체를 캐시하거나 메시지로 전파하지 않는다.
+- SR-8: 공개 플레이·랭킹 조회와 게스트 닉네임/점수 제출 모두 허용. 각 쓰기에서 서버가 profile 소유권을 확인한다. 프로필 미설정은 INVALID_INPUT(닉네임 설정 필요)로 거부하고 설정 성공 후 재시도한다. ADR-0101의 HttpOnly 인증과 통합하여 클라이언트는 same-origin 쿠키를 보내고 gateway가 검증한다. 게임 쓰기는 명시된 잘못된 Authorization을 회원 쿠키로 대체하지 않는다. 인증 토큰 자체를 캐시하거나 메시지로 전파하지 않는다.
 
 ## Verification
 - Domain: normalization, invalid character/length, case/fullwidth duplicates.
@@ -32,7 +32,7 @@
 - portal-fe/src/components/GNB.tsx, src/api/gameApi.ts, public/games/lib/rank.js
 
 ## Out of Scope
-member 서비스 표시 이름, 파티 참가자 별칭, 채팅·실시간 릴레이 이름, 별도 arcade Redis MVP 계정 체계, 점수 진위 검증, 배포.
+member 서비스 표시 이름, 파티 참가자 별칭, 채팅·실시간 릴레이 이름, 별도 arcade Redis MVP 계정 체계, 점수 진위 검증. 배포는 2026-09-28 사용자 추가 요청으로 승인됨.
 
 ## Open Questions
 없음. 2026-09-27 사용자 답변: “비로그인도 별도 게스트 계정으로 닉네임·랭킹 사용”.

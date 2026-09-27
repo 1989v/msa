@@ -12,3 +12,5 @@
 - profile PUT은 자동 auth retry를 하지 않는다. 계정 A 요청의 지연401을 B로 재전송하지 않도록 한다.
 - rank PUT 성공은 저장 중 시작한 GET까지 무효화한다. 과거 GET이 새 이름을 덮거나 pending을 지우지 못한다.
 - MySQL 실제 동시점수 테스트에서 REPEATABLE_READ snapshot 문제가 재현됨. READ_COMMITTED+profile FOR UPDATE로 해결했다.
+
+- 2026-09-28 배포 통합: 최신 main의 ADR-0101 HttpOnly 인증과 운영자·자동화 점수 제외를 유지한다. excluded 경로는 프로필 없이 성공하며 새 기록을 만들지 않는다. 실제 로그인/clearLocalSession에서 소유자 변경을 알린다.
