@@ -1,0 +1,66 @@
+# visual-review — 5차 라운드 (gate 2026-09-27T12:47:49.440Z, sourceHash 12e770dbd8a9)
+
+통합 세션이 게이트 스크린샷 62장을 4×4 모음판 4장(각 320px)으로 묶어 Read 로 보았다. 5차는 규칙·설명 문구만 바뀌어 4차와 화면이 같다. 한 장에 한 줄.
+
+- boot-desktop.png — 타이틀 — 로고·새 게임·불러오기·온라인 대전 버튼, 헥스 배경. 결함 없음
+- stage-E1.png — 시대 시나리오 E1 — 시대에 맞는 도시·국경·지형이 채워진 지도, HUD·미니맵·유닛 패널 정상. 다른 시대와 화면이 다르다
+- stage-E2.png — 시대 시나리오 E2 — 시대에 맞는 도시·국경·지형이 채워진 지도, HUD·미니맵·유닛 패널 정상. 다른 시대와 화면이 다르다
+- stage-E3.png — 시대 시나리오 E3 — 시대에 맞는 도시·국경·지형이 채워진 지도, HUD·미니맵·유닛 패널 정상. 다른 시대와 화면이 다르다
+- stage-E4.png — 시대 시나리오 E4 — 시대에 맞는 도시·국경·지형이 채워진 지도, HUD·미니맵·유닛 패널 정상. 다른 시대와 화면이 다르다
+- stage-E5.png — 시대 시나리오 E5 — 시대에 맞는 도시·국경·지형이 채워진 지도, HUD·미니맵·유닛 패널 정상. 다른 시대와 화면이 다르다
+- stage-E6.png — 시대 시나리오 E6 — 시대에 맞는 도시·국경·지형이 채워진 지도, HUD·미니맵·유닛 패널 정상. 다른 시대와 화면이 다르다
+- stage-E7.png — 시대 시나리오 E7 — 시대에 맞는 도시·국경·지형이 채워진 지도, HUD·미니맵·유닛 패널 정상. 다른 시대와 화면이 다르다
+- stage-E8.png — 시대 시나리오 E8 — 시대에 맞는 도시·국경·지형이 채워진 지도, HUD·미니맵·유닛 패널 정상. 다른 시대와 화면이 다르다
+- enemy-barb_warrior.png — 적 병종 barb_warrior 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-barb_archer.png — 적 병종 barb_archer 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-barb_raider.png — 적 병종 barb_raider 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-warrior.png — 적 병종 warrior 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-slinger.png — 적 병종 slinger 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-chariot.png — 적 병종 chariot 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-ram.png — 적 병종 ram 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-galley.png — 적 병종 galley 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-archer.png — 적 병종 archer 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-swordsman.png — 적 병종 swordsman 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-horseman.png — 적 병종 horseman 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-catapult.png — 적 병종 catapult 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-trireme.png — 적 병종 trireme 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-pikeman.png — 적 병종 pikeman 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-crossbow.png — 적 병종 crossbow 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-knight.png — 적 병종 knight 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-trebuchet.png — 적 병종 trebuchet 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-caravel.png — 적 병종 caravel 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-musketman.png — 적 병종 musketman 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-fieldgun.png — 적 병종 fieldgun 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-cuirassier.png — 적 병종 cuirassier 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-cannon.png — 적 병종 cannon 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-frigate.png — 적 병종 frigate 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-lineinf.png — 적 병종 lineinf 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-gatling.png — 적 병종 gatling 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-cavalry.png — 적 병종 cavalry 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-howitzer.png — 적 병종 howitzer 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-ironclad.png — 적 병종 ironclad 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-rifleman.png — 적 병종 rifleman 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-machinegun.png — 적 병종 machinegun 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-tank.png — 적 병종 tank 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-spg.png — 적 병종 spg 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-battleship.png — 적 병종 battleship 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-mechinf.png — 적 병종 mechinf 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-rocketart.png — 적 병종 rocketart 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-moderntank.png — 적 병종 moderntank 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-missile.png — 적 병종 missile 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-submarine.png — 적 병종 submarine 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-exo.png — 적 병종 exo 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-laser.png — 적 병종 laser 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-hovertank.png — 적 병종 hovertank 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- enemy-orbital.png — 적 병종 orbital 소환 — 시작 지점 옆 칸에 유닛이 서 있고 HUD 정상. 같은 자리에서 찍어 서로 비슷하다
+- boss-warlord.png — 보스 — 해당 판에 보스 유닛·주변 전장 표시, HUD 정상
+- boss-capital_siege.png — 보스 — 해당 판에 보스 유닛·주변 전장 표시, HUD 정상
+- hit-0.png — 타격 연속 컷 — 공격 섬광·피해 표시가 이어진다
+- hit-1.png — 타격 연속 컷 — 공격 섬광·피해 표시가 이어진다
+- hit-2.png — 타격 연속 컷 — 공격 섬광·피해 표시가 이어진다
+- idle-end.png — 방치 끝 — 턴 진행 후 화면, 표시 정상
+- mash-end.png — 난타 끝 — 안내 토스트·알림, 클리어 없음
+- play-desktop.png — 실시간 플레이 — 데스크톱 HUD 전부 정상
+- mobile-portrait.png — 폰 세로 390×844 — 하단 명령 시트·유닛 46 CSS px, 넘침 없음
+- mobile-landscape.png — 폰 가로 844×390 — 좌하단 패널·턴 버튼, 가림 없음
+- play-mobile-landscape.png — 폰 가로 실시간 — 부스트 알림 카드가 오른쪽 위에 뜬다(1차부터 알려진 가림, 9초 뒤 사라짐)
