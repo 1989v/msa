@@ -14,12 +14,16 @@
 export interface StageEnv {
   /** 카탈로그가 선언한 방향 */
   orientation: string | null | undefined;
+  /**
+   * 방향과 따로 「시작할 때 전체화면」 (V96). 세로·가로를 둘 다 받지만 화면이 넓어야 판이 읽히는 게임 —
+   * 헥스 4X 가 그렇다. 방향을 LANDSCAPE 로 바꾸면 세로 배치를 버리므로 칸을 따로 둔다. 잠금은 없다
+   */
+  startFullscreen?: boolean;
   /** 이미 전체화면인가 — 두 번 부르면 브라우저가 거절한다 */
   fullscreen: boolean;
 }
 
 export function shouldEnterFullStage(env: StageEnv): boolean {
-  if (env.orientation !== 'LANDSCAPE') return false;
   if (env.fullscreen) return false;
-  return true;
+  return env.orientation === 'LANDSCAPE' || env.startFullscreen === true;
 }

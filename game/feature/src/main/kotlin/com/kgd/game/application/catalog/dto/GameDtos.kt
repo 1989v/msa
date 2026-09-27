@@ -79,6 +79,8 @@ data class GameDetailDto(
     val entryUrl: String,
     val orientation: Orientation,
     val supportsMobile: Boolean,
+    /** ▶ 플레이 때 무대를 전체화면으로 연다(가로 잠금 없이) */
+    val startFullscreen: Boolean,
     val developerName: String,
     val sdkIntegrated: Boolean,
     val status: GameStatus,
@@ -121,6 +123,7 @@ data class GameDetailDto(
             entryUrl = game.entryUrl,
             orientation = game.orientation,
             supportsMobile = game.supportsMobile,
+            startFullscreen = game.startFullscreen,
             developerName = game.developerName,
             sdkIntegrated = game.sdkIntegrated,
             status = game.status,

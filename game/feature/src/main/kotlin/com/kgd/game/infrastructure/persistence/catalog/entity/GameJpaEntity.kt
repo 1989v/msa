@@ -45,6 +45,7 @@ class GameJpaEntity(
     entryUrl: String,
     orientation: Orientation,
     supportsMobile: Boolean,
+    startFullscreen: Boolean = false,
     developerName: String,
     sdkIntegrated: Boolean,
     status: GameStatus,
@@ -97,6 +98,10 @@ class GameJpaEntity(
     var supportsMobile: Boolean = supportsMobile
         private set
 
+    @Column(name = "start_fullscreen", nullable = false)
+    var startFullscreen: Boolean = startFullscreen
+        private set
+
     @Column(name = "developer_name", nullable = false, length = 100)
     var developerName: String = developerName
         private set
@@ -145,6 +150,7 @@ class GameJpaEntity(
         entryUrl = game.entryUrl
         orientation = game.orientation
         supportsMobile = game.supportsMobile
+        startFullscreen = game.startFullscreen
         developerName = game.developerName
         sdkIntegrated = game.sdkIntegrated
         status = game.status
@@ -168,6 +174,7 @@ class GameJpaEntity(
         entryUrl = entryUrl,
         orientation = orientation,
         supportsMobile = supportsMobile,
+        startFullscreen = startFullscreen,
         developerName = developerName,
         sdkIntegrated = sdkIntegrated,
         status = status,
@@ -193,6 +200,7 @@ class GameJpaEntity(
             entryUrl = game.entryUrl,
             orientation = game.orientation,
             supportsMobile = game.supportsMobile,
+            startFullscreen = game.startFullscreen,
             developerName = game.developerName,
             sdkIntegrated = game.sdkIntegrated,
             status = game.status,

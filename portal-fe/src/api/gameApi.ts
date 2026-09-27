@@ -143,6 +143,8 @@ export interface GameDetail extends GameSummary {
   engineType: string;
   entryUrl: string;
   orientation: string;
+  /** ▶ 플레이 때 무대를 전체화면으로 연다(가로 잠금 없이). 가로 전용 게임은 orientation 이 따로 연다 (V96) */
+  startFullscreen?: boolean;
   developerName: string;
   sdkIntegrated: boolean;
   /** 게임이 나눈 랭킹 보드. 비어 있으면 보드가 하나뿐이라 탭을 그리지 않는다 (V59) */

@@ -30,7 +30,9 @@ class Game private constructor(
     /** 게임이 나눈 랭킹 보드. 비어 있으면 보드가 하나뿐이라는 뜻이다 (V59) */
     var scoreBoards: List<ScoreBoardDef>,
     var releasedAt: Instant?,
-    var contentUpdatedAt: Instant?
+    var contentUpdatedAt: Instant?,
+    /** ▶ 플레이 때 무대를 전체화면으로 연다 — 가로 잠금 없이. 가로 전용 게임은 orientation 이 따로 연다 */
+    var startFullscreen: Boolean = false
 ) {
     companion object {
         private val SLUG_PATTERN = Regex("^[a-z0-9]+(-[a-z0-9]+)*$")
@@ -102,7 +104,8 @@ class Game private constructor(
             tags: List<String>,
             scoreBoards: List<ScoreBoardDef> = emptyList(),
             releasedAt: Instant?,
-            contentUpdatedAt: Instant?
+            contentUpdatedAt: Instant?,
+            startFullscreen: Boolean = false
         ): Game = Game(
             id = id,
             slug = slug,
@@ -124,7 +127,8 @@ class Game private constructor(
             tags = tags,
             scoreBoards = scoreBoards,
             releasedAt = releasedAt,
-            contentUpdatedAt = contentUpdatedAt
+            contentUpdatedAt = contentUpdatedAt,
+            startFullscreen = startFullscreen
         )
     }
 

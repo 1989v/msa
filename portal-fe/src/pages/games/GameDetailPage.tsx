@@ -1,4 +1,5 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import axios from 'axios';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import {
   displayTitle,
@@ -89,6 +90,10 @@ export default function GameDetailPage() {
   const [boardToken, setBoardToken] = useState(0);
   const stageFit = useStageFit(playing);
   const [notFound, setNotFound] = useState(false);
+  /* 없는 게임(404)과 잠깐 못 불러온 것을 가른다 — 배포 중 몇 초짜리 공백까지 「찾을 수 없습니다」로
+     보이면 사람은 게임이 사라진 줄 안다. 못 불러온 쪽은 다시 시도로 돌린다 */
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [reloadToken, setReloadToken] = useState(0);
   // 내 평점은 BE 척도(halves 1~10) 그대로 든다 — 화면 변환은 StarRating 몫
   const [myHalves, setMyHalves] = useState<number | null>(null);
   const [ratingMessage, setRatingMessage] = useState<string | null>(null);
@@ -118,14 +123,17 @@ export default function GameDetailPage() {
     };
   }, [immersive]);
 
-  const enterLandscape = useCallback(() => {
+  /** 무대를 전체화면으로. 가로 잠금은 가로 전용 게임·수동 ⛶ 에서만 — 양방향 게임은 기기 방향을 그대로 둔다 */
+  const enterFullStage = useCallback((lockLandscape: boolean) => {
     const el = stageRef.current;
     if (!el || document.fullscreenElement) return;
     el.requestFullscreen?.()
       .then(() =>
-        (screen.orientation as unknown as { lock?: (o: string) => Promise<void> })
-          ?.lock?.('landscape')
-          ?.catch(() => undefined),
+        lockLandscape
+          ? (screen.orientation as unknown as { lock?: (o: string) => Promise<void> })
+              ?.lock?.('landscape')
+              ?.catch(() => undefined)
+          : undefined,
       )
       .catch(() => undefined);
   }, []);
@@ -136,7 +144,7 @@ export default function GameDetailPage() {
       document.exitFullscreen().catch(() => undefined);
       return;
     }
-    enterLandscape();
+    enterFullStage(true);
   };
 
   /**
@@ -156,14 +164,17 @@ export default function GameDetailPage() {
      화면이 깜빡이며 "불러오는 중" 에서 진입이 막혔다. 아래 주석이 경고하던 바로 그것이다. */
   const orientationRef = useRef<string | null | undefined>(undefined);
   orientationRef.current = game?.orientation;
+  const startFullscreenRef = useRef<boolean | undefined>(undefined);
+  startFullscreenRef.current = game?.startFullscreen;
 
   const autoLandscape = useCallback(() => {
     const go = shouldEnterFullStage({
       orientation: orientationRef.current,
+      startFullscreen: startFullscreenRef.current,
       fullscreen: !!document.fullscreenElement,
     });
-    if (go) enterLandscape();
-  }, [enterLandscape]);
+    if (go) enterFullStage(orientationRef.current === 'LANDSCAPE');
+  }, [enterFullStage]);
 
   /* 자동 시작(파티 인계)이 상세 로드 직후 이 함수를 부르므로 slug 기준으로 고정한다 —
      매 렌더마다 새로 만들면 그 effect 가 계속 다시 돈다.
@@ -184,6 +195,7 @@ export default function GameDetailPage() {
     setGame(null);
     setPlaying(false);
     setNotFound(false);
+    setLoadFailed(false);
     setMyHalves(null);
     setRatingMessage(null);
     fetchGameDetail(slug)
@@ -193,11 +205,14 @@ export default function GameDetailPage() {
            누르게 하지 않는다. 여기서 값을 지우지는 않는다: 읽어서 소비하는 쪽은 게임이다 */
         if (peekParty(slug)) void handlePlay();
       })
-      .catch(() => setNotFound(true));
+      .catch((err) => {
+        if (axios.isAxiosError(err) && err.response?.status === 404) setNotFound(true);
+        else setLoadFailed(true);
+      });
     fetchSimilarGames(slug)
       .then(setSimilar)
       .catch(() => setSimilar([]));
-  }, [slug, handlePlay]);
+  }, [slug, handlePlay, reloadToken]);
 
   /* 세션 종료 — 화면을 떠날 때와 탭을 닫을 때 둘 다.
      언마운트만 걸어 두면 탭을 그냥 닫는 사람의 판이 통째로 안 세어진다(그쪽이 더 흔하다).
@@ -282,6 +297,28 @@ export default function GameDetailPage() {
 
   /* 로딩·에러 화면도 같은 껍데기를 쓴다. 본문만 껍데기 안에 두면 이 두 화면에서는
      사이트 구조가 사라져 돌아갈 길이 뒤로가기뿐이 된다 — 이 커밋이 고치려던 바로 그것이다. */
+  if (loadFailed) {
+    return (
+      <>
+        <GNB items={[]} />
+        <div className="games-page kh-arcade">
+          <p className="games-status">
+            {lang === 'en'
+              ? "Couldn't load the game. Please try again in a moment."
+              : '게임을 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.'}
+          </p>
+          <button type="button" className="games-back" onClick={() => setReloadToken((token) => token + 1)}>
+            {lang === 'en' ? 'Try again' : '다시 시도'}
+          </button>
+          <Link className="games-back" to={gamePath(lang, HUB_SUB)} viewTransition>
+            {lang === 'en' ? '← Back to all games' : '← 게임 목록으로'}
+          </Link>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+
   if (notFound) {
     return (
       <>

@@ -22,4 +22,16 @@ describe('가로 전용 게임을 시작할 때 무대를 전체화면으로', (
   it('이미 전체화면이면 다시 요청하지 않는다 — 두 번 부르면 브라우저가 거절한다', () => {
     expect(shouldEnterFullStage({ ...base, fullscreen: true })).toBe(false);
   });
+  it('양방향 게임도 「시작할 때 전체화면」 이 켜져 있으면 올린다 (V96)', () => {
+    expect(shouldEnterFullStage({ orientation: 'BOTH', startFullscreen: true, fullscreen: false })).toBe(true);
+  });
+
+  it('「시작할 때 전체화면」 이 꺼져 있거나 없으면 양방향 게임은 그대로다', () => {
+    expect(shouldEnterFullStage({ orientation: 'BOTH', startFullscreen: false, fullscreen: false })).toBe(false);
+    expect(shouldEnterFullStage({ orientation: 'BOTH', fullscreen: false })).toBe(false);
+  });
+
+  it('켜져 있어도 이미 전체화면이면 다시 요청하지 않는다', () => {
+    expect(shouldEnterFullStage({ orientation: 'BOTH', startFullscreen: true, fullscreen: true })).toBe(false);
+  });
 });
