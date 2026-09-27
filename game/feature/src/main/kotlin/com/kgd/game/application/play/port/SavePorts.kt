@@ -29,7 +29,7 @@ interface GameRunRepositoryPort {
 }
 
 /** 랭킹 항목 — rank 는 조회 시점 계산 */
-data class ScoreEntry(val rank: Int, val nickname: String, val score: Long, val detail: String?)
+data class ScoreEntry(val rank: Int, val nickname: String, val score: Long, val detail: String?, val playerId: String? = null, val legacy: Boolean = playerId == null)
 
 /**
  * 보드 식별자 — 랭킹은 게임이 아니라 **(게임, 트랙, 보드)** 단위다.
@@ -40,9 +40,9 @@ data class ScoreBoardRef(val gameId: Long, val track: ScoreTrack, val board: Sco
 
 interface GameScoreRepositoryPort {
     /**
-     * 보드 안에서 닉네임당 최고 기록 upsert. 반영 여부와 그 보드 내 **역대** 순위를 돌려준다.
+     * 보드 안에서 playerId당 최고 기록 upsert. 반영 여부와 그 보드 내 **역대** 순위를 돌려준다.
      *
-     * 같은 호출이 오늘 보드(`playDate` 안에서 닉네임당 최고)도 함께 올린다 — 제출 한 번에
+     * 같은 호출이 오늘 보드(`playDate` 안에서 playerId당 최고)도 함께 올린다 — 제출 한 번에
      * 보드 둘이 갱신되어야 두 보드가 어긋나지 않는다. 둘의 판정은 독립이다:
      * 지난달의 자기 최고에 못 미친 런도 오늘 안에서는 최고일 수 있다.
      */
@@ -50,6 +50,7 @@ interface GameScoreRepositoryPort {
         gameId: Long,
         track: ScoreTrack,
         board: ScoreBoardKey,
+        /** Compatibility only; never an ownership credential. */
         nickname: String,
         score: Long,
         detail: String?,
@@ -59,6 +60,7 @@ interface GameScoreRepositoryPort {
          * 조용히 밀리고, score(Long) 가 memberId(Long?) 자리에 들어가도 컴파일된다.
          */
         memberId: Long? = null,
+        playerId: String? = null,
     ): Pair<Boolean, Int>
 
     fun top(gameId: Long, track: ScoreTrack, board: ScoreBoardKey, limit: Int): List<ScoreEntry>

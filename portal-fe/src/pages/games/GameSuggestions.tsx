@@ -1,3 +1,4 @@
+import { openGameProfile, useGameProfile } from '../../game-profile/profileStore';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -5,8 +6,6 @@ import {
   editSuggestion,
   fetchSuggestions,
   replyToSuggestion,
-  resolveGameNickname,
-  setGameNickname,
   type GameLang,
   type GameSuggestion,
   type SuggestionStatus,
@@ -22,9 +21,7 @@ import {
  * 보인다는 것이 이 디자인의 판단이고(`docs/design/k-heritage.html`), 화면마다 자기 폼을
  * 그리면 그 판단이 화면 수만큼 갈린다.
  *
- * 표시 이름은 랭킹에 쓰는 것과 같은 값(`game_nickname`)이다. 아직 없으면 회원 닉네임을
- * 받아 채우고, 그것도 못 받으면 그 자리에서 입력받는다 — 제안을 쓰려던 사람을
- * 다른 화면으로 보내지 않는다.
+ * 작성자 이름은 서버 게임 프로필에서 가져온다. 미설정이면 공통 닉네임 모달을 연다.
  */
 
 const STATUS_LABEL: Record<SuggestionStatus, { ko: string; en: string }> = {
@@ -83,8 +80,8 @@ export function GameSuggestionsPanel({ slug, lang, loggedIn }: {
   const [items, setItems] = useState<GameSuggestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [body, setBody] = useState('');
-  const [nickname, setNickname] = useState<string | null>(null);
-  const [nicknameDraft, setNicknameDraft] = useState('');
+  const profileState = useGameProfile();
+  const nickname = profileState.profile?.nickname ?? null;
   const [editing, setEditing] = useState<number | null>(null);
   const [editBody, setEditBody] = useState('');
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
@@ -114,16 +111,6 @@ export function GameSuggestionsPanel({ slug, lang, loggedIn }: {
     return reload();
   }, [reload]);
 
-  // 이름은 쓰려는 사람에게만 필요하다 — 비로그인 방문자에게 회원 API 를 부르지 않는다
-  useEffect(() => {
-    if (!loggedIn) return;
-    let alive = true;
-    resolveGameNickname().then((n) => alive && setNickname(n));
-    return () => {
-      alive = false;
-    };
-  }, [loggedIn]);
-
   function fail(error: unknown) {
     const detail = (error as { response?: { data?: { error?: { message?: string } } } })
       ?.response?.data?.error?.message;
@@ -135,7 +122,7 @@ export function GameSuggestionsPanel({ slug, lang, loggedIn }: {
     setBusy(true);
     setMessage(null);
     try {
-      await createSuggestion(slug, nickname, body);
+      await createSuggestion(slug, body);
       setBody('');
       reload();
     } catch (error) {
@@ -196,20 +183,12 @@ export function GameSuggestionsPanel({ slug, lang, loggedIn }: {
           {t('하면 제안을 남길 수 있습니다.', ' to leave a suggestion.')}
         </p>
       ) : nickname == null ? (
-        /* 회원 닉네임을 못 받았을 때만 물어본다 — 평소에는 이 줄이 보이지 않는다 */
         <div className="game-suggestion-nick">
-          <label htmlFor="game-suggestion-nick-input">{t('표시할 이름', 'Display name')}</label>
-          <input
-            className="kh-field"
-            id="game-suggestion-nick-input"
-            type="text"
-            maxLength={16}
-            value={nicknameDraft}
-            onChange={(e) => setNicknameDraft(e.target.value)}
-            placeholder={t('2~16자', '2-16 chars')}
-          />
-          <button className="kh-button" type="button" onClick={() => setNickname(setGameNickname(nicknameDraft))}>
-            {t('저장', 'Save')}
+          <p>{profileState.status === 'error'
+            ? t('프로필을 확인하지 못했습니다. 닉네임 설정에서 다시 시도해 주세요.', 'Could not load your profile. Open nickname settings to retry.')
+            : t('게임 닉네임을 설정하면 제안을 남길 수 있습니다.', 'Set your game nickname to leave a suggestion.')}</p>
+          <button className="kh-button" type="button" onClick={openGameProfile}>
+            {t('게임 닉네임 설정', 'Set game nickname')}
           </button>
         </div>
       ) : (

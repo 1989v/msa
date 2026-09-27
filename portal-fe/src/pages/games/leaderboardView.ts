@@ -104,7 +104,7 @@ export function stepIndex(current: number, length: number, delta: number): numbe
   return (((current + delta) % length) + length) % length;
 }
 
-/** 내 기록 판정 — 게스트 제출을 허용하므로 닉네임이 곧 신원이다. */
-export function isMyEntry(entry: ScoreEntry, nickname: string | null): boolean {
-  return !!nickname && entry.nickname === nickname;
+/** 내 기록 판정 — 서버가 부여한 playerId만 사용하며 과거 기록은 소유권을 주장하지 않는다. */
+export function isMyEntry(entry: ScoreEntry, playerId: string | null): boolean {
+  return !!playerId && entry.playerId != null && !entry.legacy && entry.playerId === playerId;
 }

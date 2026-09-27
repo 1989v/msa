@@ -46,6 +46,12 @@ export function isLoggedIn(): boolean {
   return getUserId() != null;
 }
 
+/** 로그인/로그아웃 후 같은 화면과 다른 탭의 게임 프로필 소유자를 다시 확인한다. */
+export function notifyAuthChanged(): void {
+  window.dispatchEvent(new CustomEvent('portal-auth-changed'));
+  try { localStorage.setItem('portal_auth_revision', `${Date.now()}-${Math.random()}`); } catch { /* optional cross-tab signal */ }
+}
+
 /**
  * 로컬 흔적을 지운다. 서버 쿠키(HttpOnly)는 `/api/auth/logout` 응답이 지우고, 여기서는 JS 가 볼 수 있는
  * 것만 지운다 — 표시 쿠키, 쿠키 전환 전의 읽히는 토큰 쿠키, 그보다 앞선 localStorage 잔재.
@@ -57,6 +63,7 @@ export function clearLocalSession(): void {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
   localStorage.removeItem(USER_ID_KEY);
+  notifyAuthChanged();
 }
 
 /**

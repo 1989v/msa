@@ -27,9 +27,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 data class SuggestionCreateRequest(
-    /** 랭킹에 남는 것과 같은 표시 이름 (`game_nickname`) */
-    @field:NotBlank
-    @field:Size(min = GameSuggestion.MIN_NICKNAME, max = GameSuggestion.MAX_NICKNAME)
+    /** Kept for old clients; the service uses the authenticated profile name. */
     val nickname: String = "",
     @field:NotBlank
     @field:Size(min = GameSuggestion.MIN_BODY, max = GameSuggestion.MAX_BODY)

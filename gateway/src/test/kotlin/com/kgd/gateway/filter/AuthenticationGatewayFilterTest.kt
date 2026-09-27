@@ -224,4 +224,84 @@ class AuthenticationGatewayFilterTest : BehaviorSpec({
             passed!!.request.headers["X-User-Id"] shouldBe listOf("user-8")
         }
     }
+    given("게임 프로필의 회원·게스트 인증 경계") {
+        val config = AuthenticationGatewayFilter.Config(
+            required = false, rejectInvalidCredentials = true,
+            sameOriginWrites = true,
+        )
+        `when`("유효한 회원 쿠키와 위조 신원 헤더를 함께 보내면") {
+            then("JWT의 회원으로 대체한다") {
+                val token = jwtUtil.generateAccessToken("42", listOf("ROLE_USER"))
+                val captured = slot<ServerWebExchange>()
+                every { chain.filter(capture(captured)) } returns Mono.empty()
+                val request = MockServerHttpRequest.put("https://game.1989v.com/api/v1/games/profile/me")
+                    .header("Origin", "https://game.1989v.com")
+                    .header("X-User-Id", "999")
+                    .cookie(HttpCookie("portal_access_token", token)).build()
+                val exchange = MockServerWebExchange.from(request)
+                StepVerifier.create(filter.apply(config).filter(exchange, chain)).verifyComplete()
+                captured.captured.request.headers.getFirst("X-User-Id") shouldBe "42"
+            }
+        }
+        `when`("회원 인증이 유효하지 않으면") {
+            then("게스트 쿠키가 있어도 익명으로 다운그레이드하지 않는다") {
+                val request = MockServerHttpRequest.post("https://game.1989v.com/api/v1/games/snake/scores")
+                    .header("Authorization", "Bearer invalid")
+                    .cookie(HttpCookie("game_guest_token", "guest-credential")).build()
+                val exchange = MockServerWebExchange.from(request)
+                StepVerifier.create(filter.apply(config).filter(exchange, chain)).verifyComplete()
+                exchange.response.statusCode shouldBe HttpStatus.UNAUTHORIZED
+            }
+            then("잘못된 명시 헤더를 유효한 회원 쿠키로 대체하지 않는다") {
+                val token = jwtUtil.generateAccessToken("42", listOf("ROLE_USER"))
+                val exchange = MockServerWebExchange.from(
+                    MockServerHttpRequest.put("https://game.1989v.com/api/v1/games/profile/me")
+                        .header("Authorization", "invalid")
+                        .cookie(HttpCookie("portal_access_token", token)).build(),
+                )
+                StepVerifier.create(filter.apply(config).filter(exchange, chain)).verifyComplete()
+                exchange.response.statusCode shouldBe HttpStatus.UNAUTHORIZED
+            }
+        }
+        `when`("회원 자격 증명이 없는 게스트이면") {
+            then("신원 헤더는 벗기고 게스트 쿠키만 백엔드에 전달한다") {
+                val captured = slot<ServerWebExchange>()
+                every { chain.filter(capture(captured)) } returns Mono.empty()
+                val exchange = MockServerWebExchange.from(
+                    MockServerHttpRequest.put("https://game.1989v.com/api/v1/games/profile/me")
+                        .header("X-User-Id", "999").header("X-User-Roles", "ROLE_ADMIN")
+                        .cookie(HttpCookie("game_guest_token", "opaque")).build(),
+                )
+                StepVerifier.create(filter.apply(config).filter(exchange, chain)).verifyComplete()
+                captured.captured.request.headers.getFirst("X-User-Id") shouldBe null
+                captured.captured.request.headers.getFirst("X-User-Roles") shouldBe null
+                captured.captured.request.cookies.getFirst("game_guest_token")?.value shouldBe "opaque"
+            }
+        }
+        `when`("다른 사이트 또는 형제가 게임 계정에 쓰기를 시도하면") {
+            then("쿠키 인증 이전에 Origin을 거부한다") {
+                listOf("https://evil.example", "https://other.1989v.com", "null", "https://game.1989v.com:444").forEach { origin ->
+                    val exchange = MockServerWebExchange.from(
+                        MockServerHttpRequest.put("https://game.1989v.com/api/v1/games/profile/me")
+                            .header("Origin", origin).build(),
+                    )
+                    StepVerifier.create(filter.apply(config).filter(exchange, chain)).verifyComplete()
+                    exchange.response.statusCode shouldBe HttpStatus.FORBIDDEN
+                }
+            }
+            then("TLS ingress를 지난 동일 호스트 요청은 허용한다") {
+                val captured = slot<ServerWebExchange>()
+                every { chain.filter(capture(captured)) } returns Mono.empty()
+                val exchange = MockServerWebExchange.from(
+                    MockServerHttpRequest.put("http://game.1989v.com/api/v1/games/profile/me")
+                        .header("Origin", "https://game.1989v.com")
+                        .header("X-Forwarded-Proto", "https").build(),
+                )
+                StepVerifier.create(filter.apply(config).filter(exchange, chain)).verifyComplete()
+                exchange.response.statusCode shouldBe null
+                captured.isCaptured shouldBe true
+            }
+        }
+    }
+
 })

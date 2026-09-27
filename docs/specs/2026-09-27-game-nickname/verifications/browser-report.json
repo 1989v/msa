@@ -1,0 +1,153 @@
+{
+  "passed": true,
+  "scenarios": [
+    "desktop open/input focus",
+    "duplicate server error",
+    "guest profile create",
+    "rename same player",
+    "mobile 390px no overflow",
+    "Shift-Tab focus trap",
+    "Escape closes"
+  ],
+  "profile": {
+    "playerId": "6b6e7db9-09c6-4f6e-bf79-c2a6ba9df341",
+    "nickname": "달빛 여행자"
+  },
+  "geometry": {
+    "left": 16,
+    "right": 374,
+    "top": 246,
+    "bottom": 598,
+    "scroll": 390,
+    "width": 390
+  },
+  "contrasts": [
+    {
+      "os": "light",
+      "theme": "light",
+      "color": "rgb(249, 248, 242)",
+      "background": "rgb(26, 71, 42)",
+      "ratio": 9.975011981572255
+    },
+    {
+      "os": "light",
+      "theme": "dark",
+      "color": "rgb(249, 248, 242)",
+      "background": "rgb(43, 75, 99)",
+      "ratio": 8.621369128389876
+    },
+    {
+      "os": "dark",
+      "theme": "light",
+      "color": "rgb(249, 248, 242)",
+      "background": "rgb(26, 71, 42)",
+      "ratio": 9.975011981572255
+    },
+    {
+      "os": "dark",
+      "theme": "dark",
+      "color": "rgb(249, 248, 242)",
+      "background": "rgb(43, 75, 99)",
+      "ratio": 8.621369128389876
+    }
+  ],
+  "errors": [],
+  "requests": [
+    {
+      "path": "/api/v1/games/profile/me",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/resume/status",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/resume/status",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/games/leaderboards",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/ads/placements/game-list-banner",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/games/collections",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/games/tags",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/games",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/games",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/games/leaderboards",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/ads/placements/game-list-banner",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/games/collections",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/games/tags",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/games",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/games",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/games/profile/me",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/games/profile/me",
+      "method": "PUT"
+    },
+    {
+      "path": "/api/v1/games/profile/me",
+      "method": "PUT"
+    },
+    {
+      "path": "/api/v1/games/leaderboards",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/games/profile/me",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/games/profile/me",
+      "method": "PUT"
+    },
+    {
+      "path": "/api/v1/games/leaderboards",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/games/profile/me",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/games/profile/me",
+      "method": "GET"
+    }
+  ]
+}

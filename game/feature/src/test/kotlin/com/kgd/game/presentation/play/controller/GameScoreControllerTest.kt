@@ -2,6 +2,11 @@ package com.kgd.game.presentation.play.controller
 
 import com.kgd.game.application.catalog.port.GameRepositoryPort
 import com.kgd.game.application.play.port.GameScoreRepositoryPort
+import com.kgd.game.application.profile.port.GamePlayerProfile
+import com.kgd.game.application.profile.port.GamePlayerProfilePort
+import com.kgd.game.presentation.profile.controller.GamePlayerIdentityResolver
+import jakarta.servlet.http.Cookie
+import org.springframework.mock.web.MockHttpServletRequest
 import com.kgd.game.application.play.service.GameScoreService
 import com.kgd.game.application.play.usecase.GetGameLeaderboardUseCase
 import com.kgd.game.domain.catalog.model.EngineType
@@ -40,51 +45,55 @@ class GameScoreControllerTest : BehaviorSpec({
         val games = mockk<GameRepositoryPort> { every { findBySlug("coin-corgi") } returns game() }
         // submit 은 기록되는 케이스에서만 스텁한다 — 제외 케이스에서 불리면 MockK 가 예외를 던진다
         val scores = mockk<GameScoreRepositoryPort>()
-        val service = GameScoreService(games, scores)
-        return GameScoreController(service, mockk<GetGameLeaderboardUseCase>()) to scores
+        val profiles = mockk<GamePlayerProfilePort> {
+            every { findForUpdate(any()) } returns GamePlayerProfile("player-one", "가나")
+        }
+        val service = GameScoreService(games, scores, profiles)
+        return GameScoreController(service, mockk<GetGameLeaderboardUseCase>(), GamePlayerIdentityResolver()) to scores
     }
 
+    val httpRequest = MockHttpServletRequest().apply { setCookies(Cookie("game_guest_token", "a".repeat(43))) }
     val request = ScoreSubmitRequest(nickname = "가나", score = 900)
 
     Given("점수 제출 헤더 배선") {
 
         When("헤드리스 크롬 UA · 역할 헤더 없음") {
             val (controller, scores) = rig()
-            val res = controller.submit("coin-corgi", null, null, headlessUa, request)
+            val res = controller.submit("coin-corgi", null, null, headlessUa, request, httpRequest)
             Then("excluded 이고 저장소는 불리지 않는다") {
                 res.data!!.excluded shouldBe true
                 res.data!!.rank shouldBe 0
-                verify(exactly = 0) { scores.submit(any(), any(), any(), any(), any(), any(), any(), any()) }
+                verify(exactly = 0) { scores.submit(any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             }
         }
 
         When("사람 UA · X-User-Roles 에 ROLE_ADMIN") {
             val (controller, scores) = rig()
-            val res = controller.submit("coin-corgi", "1", "ROLE_USER,ROLE_ADMIN", humanUa, request)
+            val res = controller.submit("coin-corgi", "1", "ROLE_USER,ROLE_ADMIN", humanUa, request, httpRequest)
             Then("excluded 이고 저장소는 불리지 않는다") {
                 res.data!!.excluded shouldBe true
-                verify(exactly = 0) { scores.submit(any(), any(), any(), any(), any(), any(), any(), any()) }
+                verify(exactly = 0) { scores.submit(any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             }
         }
 
         When("사람 UA · X-User-Roles 에 ROLE_USER 만") {
             val (controller, scores) = rig()
-            every { scores.submit(any(), any(), any(), any(), any(), any(), any(), any()) } returns (true to 3)
-            val res = controller.submit("coin-corgi", "7", "ROLE_USER", humanUa, request)
+            every { scores.submit(any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns (true to 3)
+            val res = controller.submit("coin-corgi", "7", "ROLE_USER", humanUa, request, httpRequest)
             Then("기록된다 — 사람을 거르지 않는다") {
                 res.data!!.excluded shouldBe false
                 res.data!!.rank shouldBe 3
-                verify(exactly = 1) { scores.submit(1L, any(), any(), "가나", 900, null, any(), 7L) }
+                verify(exactly = 1) { scores.submit(1L, any(), any(), "가나", 900, null, any(), 7L, "player-one") }
             }
         }
 
         When("사람 UA · 역할 헤더 없음 (게이트웨이가 익명 통과 시 헤더를 지운다)") {
             val (controller, scores) = rig()
-            every { scores.submit(any(), any(), any(), any(), any(), any(), any(), any()) } returns (true to 1)
-            val res = controller.submit("coin-corgi", null, null, humanUa, request)
+            every { scores.submit(any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns (true to 1)
+            val res = controller.submit("coin-corgi", null, null, humanUa, request, httpRequest)
             Then("게스트로 기록된다") {
                 res.data!!.excluded shouldBe false
-                verify(exactly = 1) { scores.submit(1L, any(), any(), "가나", 900, null, any(), null) }
+                verify(exactly = 1) { scores.submit(1L, any(), any(), "가나", 900, null, any(), null, "player-one") }
             }
         }
     }

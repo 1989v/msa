@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AuthButton from './AuthButton';
 import KhSheet from './shell/KhSheet';
@@ -7,6 +7,7 @@ import { useResumeStatus } from '../hooks/useResumeStatus';
 import { useScrollDirection } from '../hooks/useScrollDirection';
 import ThemeToggle from './ThemeToggle';
 import './GNB.css';
+import { openGameProfile } from '../game-profile/profileStore';
 
 export interface GNBItem {
   label: string;
@@ -39,6 +40,7 @@ export default function GNB({ pageLabel, items = TECH_ITEMS, onSearchFocus }: GN
   // 모바일(< 768px)에서는 메뉴·토글·로그인이 전부 서랍으로 들어간다 — 좁은 폭에서
   // 로그인 칩이 머리띠 밖으로 밀려 나가던 가로 오버플로의 근본 수술이다.
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const menuTrigger = useRef<HTMLButtonElement>(null);
   const [explorerOpen, setExplorerOpen] = useState(false);
   // 지금 보고 있는 섹션 — 탭 활성은 긋기(밑줄)로 표시한다
   const [activeAnchor, setActiveAnchor] = useState<string | null>(null);
@@ -95,6 +97,7 @@ export default function GNB({ pageLabel, items = TECH_ITEMS, onSearchFocus }: GN
           ))}
         </ul>
         <div className="gnb-right">
+          <button type="button" className="gnb-menu-item" aria-haspopup="dialog" onClick={openGameProfile}>게임 닉네임</button>
           <ThemeToggle />
           <AuthButton />
           {onSearchFocus && (
@@ -108,6 +111,7 @@ export default function GNB({ pageLabel, items = TECH_ITEMS, onSearchFocus }: GN
         </div>
         <button
           type="button"
+          ref={menuTrigger}
           className="gnb-hamburger"
           aria-label="메뉴"
           aria-haspopup="dialog"
@@ -180,6 +184,10 @@ export default function GNB({ pageLabel, items = TECH_ITEMS, onSearchFocus }: GN
               </button>
             </li>
           </ul>
+          <button type="button" className="gnb-drawer-item" aria-haspopup="dialog" onClick={() => {
+            setDrawerOpen(false);
+            requestAnimationFrame(() => { menuTrigger.current?.focus(); openGameProfile(); });
+          }}>게임 닉네임</button>
           <div className="gnb-drawer-actions">
             <ThemeToggle />
             <AuthButton />

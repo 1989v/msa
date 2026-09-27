@@ -2,6 +2,8 @@ package com.kgd.game.application.suggestion.service
 
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
+import com.kgd.game.application.profile.port.GamePlayerProfilePort
+import com.kgd.game.application.profile.port.GamePlayerOwner
 import com.kgd.game.application.catalog.port.GameRepositoryPort
 import com.kgd.game.application.suggestion.dto.GameSuggestionDto
 import com.kgd.game.application.suggestion.dto.SuggestionReplyDto
@@ -31,15 +33,18 @@ class GameSuggestionService(
     private val games: GameRepositoryPort,
     private val suggestions: GameSuggestionRepositoryPort,
     private val replies: SuggestionReplyRepositoryPort,
+    private val profiles: GamePlayerProfilePort,
 ) : CreateGameSuggestionUseCase, EditGameSuggestionUseCase, ReplyToGameSuggestionUseCase {
 
     override fun execute(command: CreateGameSuggestionUseCase.Command): GameSuggestionDto {
         val game = findVisibleGame(command.slug)
+        val profile = profiles.find(GamePlayerOwner(memberId = command.memberId))
+            ?: throw BusinessException(ErrorCode.INVALID_INPUT, "닉네임 설정이 필요합니다")
         val saved = suggestions.save(
             GameSuggestion.open(
                 gameId = requireNotNull(game.id),
                 memberId = command.memberId,
-                nickname = command.nickname,
+                nickname = profile.nickname,
                 body = command.body,
             )
         )

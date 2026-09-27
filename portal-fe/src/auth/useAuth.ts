@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { clearLocalSession, getUserId, isLoggedIn as isLoggedInRaw } from './auth';
+import { clearLocalSession, getUserId, notifyAuthChanged, isLoggedIn as isLoggedInRaw } from './auth';
 import { resetRefreshCooldown } from './refresh';
 import { logoutApi } from '../api/shopApi';
 
@@ -15,6 +15,7 @@ export function useAuth() {
   /** 로그인 응답이 쿠키를 건 뒤 부른다 */
   const login = useCallback(() => {
     resetRefreshCooldown();
+    notifyAuthChanged();
     setLoggedIn(true);
   }, []);
 

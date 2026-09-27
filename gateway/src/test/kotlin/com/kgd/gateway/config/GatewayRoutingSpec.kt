@@ -152,6 +152,20 @@ class GatewayRoutingSpec(
         }
     }
 
+    Given("게임 계정 프로필 라우트") {
+        Then("/profile/me를 회원 전용 */me보다 먼저 잡는다") {
+            val routes = routeLocator.routes.collectList().block().orEmpty().map { it.id }
+            (routes.indexOf("game-player-profile") < routes.indexOf("game-my-record")) shouldBe true
+        }
+        Then("잘못된 회원 인증을 guest로 바꾸지 않는다") {
+            client.put().uri("/api/v1/games/profile/me")
+                .header("Authorization", "Bearer invalid")
+                .header("Content-Type", "application/json")
+                .bodyValue("""{"nickname":"player"}""")
+                .exchange().expectStatus().isUnauthorized
+        }
+    }
+
     // ADR-0093 — 재편의 가장 큰 위험은 라우팅이다. 파드가 합쳐지면 목적지 호스트 이름이
     // 바뀌는데, 라우트를 하나 빠뜨려도 게이트웨이는 멀쩡히 뜨고 그 경로만 죽는다
     // (2026-09-11: product 를 commerce 로 옮기고 게이트웨이 이미지가 안 나가 /api/v1/products 가

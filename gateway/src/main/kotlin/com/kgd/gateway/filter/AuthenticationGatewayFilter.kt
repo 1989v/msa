@@ -33,7 +33,10 @@ class AuthenticationGatewayFilter(
          * (게스트 허용 엔드포인트에서 로그인 사용자만 식별하려는 용도).
          * 이때 클라이언트가 보낸 신원 헤더는 제거되므로 위조가 불가능하다.
          */
-        val required: Boolean = true
+        val required: Boolean = true,
+        /** 게임 계정은 인증 실패를 게스트 계정으로 바꾸면 다른 소유자의 기록이 된다. */
+        val rejectInvalidCredentials: Boolean = false,
+        val sameOriginWrites: Boolean = false,
     )
 
     private val log = KotlinLogging.logger {}
@@ -42,12 +45,25 @@ class AuthenticationGatewayFilter(
     override fun apply(config: Config): GatewayFilter = GatewayFilter { exchange, chain ->
         val request = exchange.request
         val authHeader = request.headers.getFirst(HttpHeaders.AUTHORIZATION)
-        // 헤더가 먼저다(서버 간 호출 · 도구). 브라우저는 HttpOnly 쿠키로 싣는다(ADR-0101)
+        // Game writes must not replace explicit malformed credentials with another owner’s cookie.
         val headerToken = jwtTokenValidator.extractFromHeader(authHeader)
-        val token = headerToken ?: request.cookies.getFirst(ACCESS_COOKIE)?.value?.takeIf { it.isNotBlank() }
+        val cookieToken = request.cookies.getFirst(ACCESS_COOKIE)?.value
+        val token = if (config.rejectInvalidCredentials && authHeader != null) headerToken
+        else headerToken ?: cookieToken?.takeIf { it.isNotBlank() }
+        val credentialsProvided = authHeader != null || cookieToken != null
+
+        if (config.sameOriginWrites && request.method !in SAFE_METHODS) {
+            val origin = request.headers.origin
+            if (origin != null && !sameOrigin(origin, request)) {
+                exchange.response.statusCode = HttpStatus.FORBIDDEN
+                return@GatewayFilter exchange.response.setComplete()
+            }
+        }
 
         fun reject(reason: String, status: HttpStatus = HttpStatus.UNAUTHORIZED): Mono<Void> {
-            if (!config.required) return chain.filter(exchange.mutate().request(asAnonymous(request)).build())
+            if (!config.required && !(config.rejectInvalidCredentials && credentialsProvided)) {
+                return chain.filter(exchange.mutate().request(asAnonymous(request)).build())
+            }
             log.warn { "$reason: ${request.uri}" }
             exchange.response.statusCode = status
             return exchange.response.setComplete()
@@ -75,6 +91,9 @@ class AuthenticationGatewayFilter(
                         reject("Invalid JWT token")
                     } else {
                         val userId = claims.get("userId", String::class.java) ?: ""
+                        if (config.rejectInvalidCredentials && userId.isBlank()) {
+                            return@flatMap reject("Missing JWT member identity")
+                        }
                         @Suppress("UNCHECKED_CAST")
                         val roles = (claims.get("roles", List::class.java) as? List<*>)
                             ?.map { it.toString() } ?: emptyList()
@@ -121,4 +140,18 @@ class AuthenticationGatewayFilter(
         const val ACCESS_COOKIE = "portal_access_token"
         private val SAFE_METHODS = setOf(HttpMethod.GET, HttpMethod.HEAD, HttpMethod.OPTIONS)
     }
+
+    private fun sameOrigin(origin: String, request: ServerHttpRequest): Boolean = runCatching {
+        val target = request.uri
+        val source = URI(origin)
+        fun port(uri: URI): Int = if (uri.port != -1) uri.port else if (uri.scheme == "https") 443 else 80
+        // ingress terminates TLS; forwarded scheme changes neither the host nor the allowed origin.
+        val scheme = request.headers.getFirst("X-Forwarded-Proto")
+            ?.takeIf { it == "https" || it == "http" } ?: target.scheme
+        val targetPort = if (target.port != -1) target.port else if (scheme == "https") 443 else 80
+        source.userInfo == null && source.rawQuery == null && source.rawFragment == null &&
+            source.rawPath.isNullOrEmpty() && source.host != null &&
+            source.scheme.equals(scheme, ignoreCase = true) &&
+            source.host.equals(target.host, ignoreCase = true) && port(source) == targetPort
+    }.getOrDefault(false)
 }

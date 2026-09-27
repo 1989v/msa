@@ -16,7 +16,7 @@ import {
   type TrackBoards,
 } from '../leaderboardView';
 
-const entry = (rank: number, nickname: string): ScoreEntry => ({ rank, nickname, score: 100 - rank, detail: null });
+const entry = (rank: number, nickname: string): ScoreEntry => ({ rank, playerId: `player-${nickname}`, nickname, score: 100 - rank, detail: null });
 
 const boards = (base: ScoreEntry[], modded: ScoreEntry[]): TrackBoards => ({ BASE: base, MODDED: modded });
 
@@ -73,16 +73,22 @@ describe('레일 회전 인덱스', () => {
   });
 });
 
-describe('내 기록 판정 — 닉네임이 곧 신원이다 (게스트 제출 허용)', () => {
+describe('내 기록 판정 — 서버 playerId만 신원이다', () => {
   it('닉네임이 없으면 어떤 줄도 내 것이 아니다', () => {
     expect(isMyEntry(entry(1, '가'), null)).toBe(false);
     expect(isMyEntry(entry(1, '가'), '')).toBe(false);
   });
 
   it('정확히 같은 닉네임만 내 줄이다', () => {
-    expect(isMyEntry(entry(1, '가'), '가')).toBe(true);
+    expect(isMyEntry(entry(1, '가'), 'player-가')).toBe(true);
     expect(isMyEntry(entry(1, '가'), '가나')).toBe(false);
   });
+  it('이름이 같아도 legacy 기록은 내 기록이 아니다', () => {
+    expect(isMyEntry({ ...entry(1, '가'), playerId: null }, 'player-가')).toBe(false);
+    expect(isMyEntry({ ...entry(1, '가'), legacy: true }, 'player-가')).toBe(false);
+    expect(isMyEntry({ ...entry(1, '이름변경'), playerId: 'player-가' }, 'player-가')).toBe(true);
+  });
+
 });
 
 describe('보드 기간 — 전체와 오늘은 서로 다른 원장이다', () => {

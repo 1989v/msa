@@ -10,8 +10,9 @@ import com.kgd.common.web.CrawlerUserAgents
 import com.kgd.game.application.play.port.ScoreEntry
 import com.kgd.game.application.play.usecase.GetGameLeaderboardUseCase
 import com.kgd.game.application.play.usecase.SubmitGameScoreUseCase
+import com.kgd.game.presentation.profile.controller.GamePlayerIdentityResolver
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
-import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.PositiveOrZero
 import org.springframework.http.HttpHeaders
 import org.springframework.web.bind.annotation.GetMapping
@@ -25,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
 
 data class ScoreSubmitRequest(
-    @field:NotBlank val nickname: String = "",
+    val nickname: String = "",
     @field:PositiveOrZero val score: Long = 0,
     val detail: String? = null,
     /** 영구 강화를 적용한 런이면 "MODDED" — 생략하면 BASE */
@@ -41,7 +42,7 @@ data class ScoreSubmitRequest(
 data class ScoreSubmitResponse(val applied: Boolean, val rank: Int, val excluded: Boolean = false)
 
 /**
- * 게임별 랭킹 — 게스트 제출 허용. 닉네임당 최고 기록 1행.
+ * 게임별 랭킹 — 게스트 제출 허용. playerId당 최고 기록 1행.
  *
  * 제출자 판별은 여기서 헤더를 읽어 Command 에 싣는다. `X-User-Roles` 는 게이트웨이가 서버 발행값으로만
  * 넣는다(손으로 붙인 것은 지운다) — 운영자 판별은 위조할 수 없다. 반대로 「운영자인 척」해 기록을
@@ -52,6 +53,7 @@ data class ScoreSubmitResponse(val applied: Boolean, val rank: Int, val excluded
 class GameScoreController(
     private val submitScore: SubmitGameScoreUseCase,
     private val getLeaderboard: GetGameLeaderboardUseCase,
+    private val identity: GamePlayerIdentityResolver,
 ) {
     @PostMapping("/scores")
     fun submit(
@@ -60,7 +62,9 @@ class GameScoreController(
         @RequestHeader("X-User-Roles", required = false) roles: String?,
         @RequestHeader(value = HttpHeaders.USER_AGENT, required = false) userAgent: String?,
         @Valid @RequestBody request: ScoreSubmitRequest,
+        httpRequest: HttpServletRequest,
     ): ApiResponse<ScoreSubmitResponse> {
+        val owner = identity.owner(userId, identity.token(httpRequest))
         val result =
             submitScore.execute(
                 SubmitGameScoreUseCase.Command(
@@ -68,7 +72,8 @@ class GameScoreController(
                     track = ScoreTrack.from(request.track),
                     board = ScoreBoardKey.from(request.board),
                     nickname = request.nickname,
-                    memberId = userId?.toLongOrNull(),
+                    memberId = owner.memberId,
+                    guestTokenHash = owner.guestTokenHash,
                     score = request.score,
                     detail = request.detail,
                     isOperator = isOperator(roles),

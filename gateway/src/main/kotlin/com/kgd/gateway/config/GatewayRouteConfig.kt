@@ -50,6 +50,12 @@ class GatewayRouteConfig(
     /** 게스트 허용 — 토큰이 있으면 식별하고, 없으면 익명으로 통과 (ADR-0059 게임 세션) */
     private fun optionalUserConfig() = AuthenticationGatewayFilter.Config(required = false)
 
+    private fun gamePlayerConfig() = AuthenticationGatewayFilter.Config(
+        required = false,
+        rejectInvalidCredentials = true,
+        sameOriginWrites = true,
+    )
+
     /**
      * Swagger UI 집계 대상 — 서비스명 → (내부 URI, 업스트림 spec 경로).
      * `/api/docs/specs/{service}` 가 그 경로로 프록시되고, gateway 의 springdoc UI (`/api/docs`)
@@ -464,6 +470,12 @@ class GatewayRouteConfig(
                     }
                     .uri(CONTENT_URI)
             }
+            // /profile/me 는 아래 */me 보다 먼저 매칭해야 게스트도 프로필을 쓸 수 있다.
+            .route("game-player-profile") { r ->
+                r.path("/api/v1/games/profile/me")
+                    .filters { f -> f.filter(authFilter.apply(gamePlayerConfig())).stripPrefix(0) }
+                    .uri(CONTENT_URI)
+            }
             // 내 기록 — **로그인 전용**. 아래 카탈로그가 /api/v1/games/** 를 필터 없이 받으므로
             // 여기서 먼저 잡지 않으면 두 가지가 동시에 터진다: 필터가 없어 X-User-Id 가
             // 주입되지 않아 로그인 사용자도 401 이고, 동시에 손으로 붙인 X-User-Id 가
@@ -476,12 +488,12 @@ class GatewayRouteConfig(
                     }
                     .uri(CONTENT_URI)
             }
-            // 점수 제출 — 게스트 허용. 로그인 사용자만 X-User-Id 로 식별해 기록을 잇는다.
+            // 점수 제출 — 게스트도 서버가 발급한 프로필을 소유해야 한다.
             // 필터가 없으면 신원 헤더 위조로 남의 이름에 점수를 귀속시킬 수 있다.
             .route("game-score-submit") { r ->
                 r.path("/api/v1/games/*/scores")
                     .filters { f ->
-                        f.filter(authFilter.apply(optionalUserConfig()))
+                        f.filter(authFilter.apply(gamePlayerConfig()))
                             .stripPrefix(0)
                     }
                     .uri(CONTENT_URI)

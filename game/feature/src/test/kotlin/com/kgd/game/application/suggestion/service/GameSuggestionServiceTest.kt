@@ -22,6 +22,8 @@ import com.kgd.game.domain.suggestion.model.ReplyAuthorType
 import com.kgd.game.domain.suggestion.model.SuggestionReply
 import com.kgd.game.domain.suggestion.model.SuggestionStatus
 import io.kotest.assertions.throwables.shouldThrow
+import com.kgd.game.application.profile.port.GamePlayerProfilePort
+import com.kgd.game.application.profile.port.GamePlayerProfile
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -32,6 +34,7 @@ import org.springframework.data.domain.PageRequest
 import java.time.LocalDateTime
 
 class GameSuggestionServiceTest : BehaviorSpec({
+    fun profiles() = mockk<GamePlayerProfilePort> { every { find(any()) } returns GamePlayerProfile("player-one", "서버이름") }
 
     fun game(id: Long, slug: String, status: GameStatus = GameStatus.PUBLISHED): Game = Game.restore(
         id = id,
@@ -83,10 +86,11 @@ class GameSuggestionServiceTest : BehaviorSpec({
                 val saved = slot<GameSuggestion>()
                 every { suggestions.save(capture(saved)) } answers { suggestion() }
 
-                val dto = GameSuggestionService(games, suggestions, replies).execute(
+                val dto = GameSuggestionService(games, suggestions, replies, profiles()).execute(
                     CreateGameSuggestionUseCase.Command("archer-outbreak", 7L, "활잡이", "2스테이지 보스가 너무 빠릅니다")
                 )
 
+                saved.captured.nickname shouldBe "서버이름"
                 saved.captured.gameId shouldBe 100L
                 saved.captured.status shouldBe SuggestionStatus.OPEN
                 dto.mine shouldBe true
@@ -100,7 +104,7 @@ class GameSuggestionServiceTest : BehaviorSpec({
                 every { games.findBySlug("secret") } returns game(101L, "secret", GameStatus.DRAFT)
 
                 shouldThrow<GameNotFoundException> {
-                    GameSuggestionService(games, mockk(), mockk()).execute(
+                    GameSuggestionService(games, mockk(), mockk(), profiles()).execute(
                         CreateGameSuggestionUseCase.Command("secret", 7L, "활잡이", "미공개 게임에 제안")
                     )
                 }
@@ -117,7 +121,7 @@ class GameSuggestionServiceTest : BehaviorSpec({
                 every { suggestions.findById(1L) } returns suggestion(gameId = 100L)
 
                 shouldThrow<BusinessException> {
-                    GameSuggestionService(games, suggestions, mockk()).execute(
+                    GameSuggestionService(games, suggestions, mockk(), profiles()).execute(
                         EditGameSuggestionUseCase.Command("coin-corgi", 1L, 7L, "다른 게임에서 수정")
                     )
                 }
@@ -132,7 +136,7 @@ class GameSuggestionServiceTest : BehaviorSpec({
                 every { suggestions.findById(1L) } returns suggestion(memberId = 7L)
 
                 shouldThrow<BusinessException> {
-                    GameSuggestionService(games, suggestions, mockk()).execute(
+                    GameSuggestionService(games, suggestions, mockk(), profiles()).execute(
                         EditGameSuggestionUseCase.Command("archer-outbreak", 1L, 8L, "남의 글 고치기")
                     )
                 }
@@ -151,7 +155,7 @@ class GameSuggestionServiceTest : BehaviorSpec({
                 val saved = slot<SuggestionReply>()
                 every { replies.save(capture(saved)) } answers { saved.captured }
 
-                val dto = GameSuggestionService(games, suggestions, replies).execute(
+                val dto = GameSuggestionService(games, suggestions, replies, profiles()).execute(
                     ReplyToGameSuggestionUseCase.Command("archer-outbreak", 1L, 99L, isOperator = true, body = "1.2 에서 낮췄습니다")
                 )
 
@@ -169,7 +173,7 @@ class GameSuggestionServiceTest : BehaviorSpec({
                 every { suggestions.findById(1L) } returns suggestion(memberId = 7L)
 
                 shouldThrow<BusinessException> {
-                    GameSuggestionService(games, suggestions, mockk()).execute(
+                    GameSuggestionService(games, suggestions, mockk(), profiles()).execute(
                         ReplyToGameSuggestionUseCase.Command("archer-outbreak", 1L, 8L, isOperator = false, body = "저도요")
                     )
                 }

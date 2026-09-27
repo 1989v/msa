@@ -2,6 +2,7 @@ import { useLayoutEffect } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
 import { consumeTabNav } from '../../shell/appShell';
 import KhTabBar from './KhTabBar';
+import GameProfileHost from '../../game-profile/GameProfileHost';
 
 /**
  * 앱 셸 크롬 — 라우터 안에서 화면에 상주하는 층.
@@ -23,5 +24,5 @@ export default function AppShellChrome() {
         : 'push';
   }, [pathname, navType]);
 
-  return <KhTabBar />;
+  return <><KhTabBar /><GameProfileHost /></>;
 }

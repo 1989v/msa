@@ -18,7 +18,11 @@ import com.kgd.game.domain.play.model.ScoreTrack
 import com.kgd.game.application.play.usecase.GetActiveLeaderboardsUseCase
 import com.kgd.game.application.play.usecase.GetGameLeaderboardUseCase
 import com.kgd.game.application.play.usecase.SubmitGameScoreUseCase
+import com.kgd.game.application.profile.port.GamePlayerProfilePort
+import com.kgd.game.application.profile.port.GamePlayerProfile
 import com.kgd.common.exception.BusinessException
+import com.kgd.common.exception.ErrorCode
+import com.kgd.game.application.profile.port.GamePlayerOwner
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldContainExactly
@@ -29,6 +33,10 @@ import io.mockk.verify
 import java.time.LocalDate
 
 class GameScoreServiceTest : BehaviorSpec({
+
+    fun profiles() = mockk<GamePlayerProfilePort> {
+        every { findForUpdate(any()) } returns GamePlayerProfile("player-one", "가나")
+    }
 
     val default = ScoreBoardKey.DEFAULT
 
@@ -77,7 +85,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 every { scoreRepository.top(2L, ScoreTrack.BASE, default, 3) } returns listOf(entry(1, "나", 700))
                 every { scoreRepository.topDaily(any(), any(), any(), any(), any()) } returns emptyList()
 
-                val boards = GameScoreService(gameRepository, scoreRepository).execute(GetActiveLeaderboardsUseCase.Query(8, 3))
+                val boards = GameScoreService(gameRepository, scoreRepository, profiles()).execute(GetActiveLeaderboardsUseCase.Query(8, 3))
 
                 boards.map { it.slug } shouldContainExactly listOf("abyssal-crown", "coin-corgi")
                 boards[0].track shouldBe ScoreTrack.MODDED
@@ -108,7 +116,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 every { scoreRepository.top(1L, ScoreTrack.BASE, rock, 3) } returns listOf(entry(1, "가", 900))
                 every { scoreRepository.topDaily(any(), any(), any(), any(), any()) } returns emptyList()
 
-                val boards = GameScoreService(gameRepository, scoreRepository).execute(GetActiveLeaderboardsUseCase.Query(8, 3))
+                val boards = GameScoreService(gameRepository, scoreRepository, profiles()).execute(GetActiveLeaderboardsUseCase.Query(8, 3))
 
                 boards.size shouldBe 1
                 boards[0].board shouldBe "rockfall"
@@ -130,7 +138,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 every { scoreRepository.top(1L, ScoreTrack.BASE, fresh, 3) } returns listOf(entry(1, "가", 900))
                 every { scoreRepository.topDaily(any(), any(), any(), any(), any()) } returns emptyList()
 
-                val boards = GameScoreService(gameRepository, scoreRepository).execute(GetActiveLeaderboardsUseCase.Query(8, 3))
+                val boards = GameScoreService(gameRepository, scoreRepository, profiles()).execute(GetActiveLeaderboardsUseCase.Query(8, 3))
 
                 boards[0].board shouldBe "newmode"
                 boards[0].boardName shouldBe null
@@ -153,7 +161,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 every { scoreRepository.top(2L, ScoreTrack.BASE, default, 3) } returns listOf(entry(1, "나", 700))
                 every { scoreRepository.topDaily(any(), any(), any(), any(), any()) } returns emptyList()
 
-                val boards = GameScoreService(gameRepository, scoreRepository).execute(GetActiveLeaderboardsUseCase.Query(8, 3))
+                val boards = GameScoreService(gameRepository, scoreRepository, profiles()).execute(GetActiveLeaderboardsUseCase.Query(8, 3))
 
                 boards.map { it.slug } shouldContainExactly listOf("coin-corgi")
             }
@@ -166,7 +174,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 every { scoreRepository.activeBoards(any()) } returns emptyList()
                 every { gameRepository.findByIds(emptyList()) } returns emptyList()
 
-                GameScoreService(gameRepository, scoreRepository).execute(GetActiveLeaderboardsUseCase.Query(8, 3)) shouldBe emptyList()
+                GameScoreService(gameRepository, scoreRepository, profiles()).execute(GetActiveLeaderboardsUseCase.Query(8, 3)) shouldBe emptyList()
             }
         }
 
@@ -180,7 +188,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 every { scoreRepository.top(1L, ScoreTrack.BASE, default, 1) } returns listOf(entry(1, "나", 700))
                 every { scoreRepository.topDaily(any(), any(), any(), any(), any()) } returns emptyList()
 
-                GameScoreService(gameRepository, scoreRepository).execute(GetActiveLeaderboardsUseCase.Query(0, 0))
+                GameScoreService(gameRepository, scoreRepository, profiles()).execute(GetActiveLeaderboardsUseCase.Query(0, 0))
 
                 // 0 → 1 로 올라가고, 집계는 여유분(×6)까지 긁는다 — 게임당 보드가 최대 3개가 됐다
                 verify { scoreRepository.activeBoards(6) }
@@ -202,7 +210,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 val (games, scores) = serving("coin-corgi")
                 every { scores.top(1L, ScoreTrack.BASE, default, 10) } returns listOf(entry(1, "가", 900))
 
-                GameScoreService(games, scores).execute(GetGameLeaderboardUseCase.Query("coin-corgi", ScoreTrack.BASE, 10))
+                GameScoreService(games, scores, profiles()).execute(GetGameLeaderboardUseCase.Query("coin-corgi", ScoreTrack.BASE, 10))
                     .map { it.nickname } shouldContainExactly listOf("가")
 
                 verify(exactly = 0) { scores.topDaily(any(), any(), any(), any(), any()) }
@@ -214,7 +222,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 val (games, scores) = serving("coin-corgi")
                 every { scores.top(1L, ScoreTrack.BASE, default, 10) } returns listOf(entry(1, "가", 900))
 
-                GameScoreService(games, scores).execute(GetGameLeaderboardUseCase.Query("coin-corgi", ScoreTrack.BASE, 10))
+                GameScoreService(games, scores, profiles()).execute(GetGameLeaderboardUseCase.Query("coin-corgi", ScoreTrack.BASE, 10))
 
                 verify { scores.top(1L, ScoreTrack.BASE, ScoreBoardKey.DEFAULT, 10) }
             }
@@ -226,7 +234,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 val rock = ScoreBoardKey.from("rockfall")
                 every { scores.top(1L, ScoreTrack.BASE, rock, 10) } returns listOf(entry(1, "돌잡이", 798))
 
-                GameScoreService(games, scores).execute(GetGameLeaderboardUseCase.Query("bee-guard", ScoreTrack.BASE, 10, rock))
+                GameScoreService(games, scores, profiles()).execute(GetGameLeaderboardUseCase.Query("bee-guard", ScoreTrack.BASE, 10, rock))
                     .map { it.nickname } shouldContainExactly listOf("돌잡이")
 
                 verify(exactly = 0) { scores.top(1L, ScoreTrack.BASE, ScoreBoardKey.DEFAULT, any()) }
@@ -239,7 +247,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 every { scores.topDaily(1L, ScoreTrack.BASE, default, GameDay.today(), 10) } returns
                     listOf(entry(1, "나", 300))
 
-                GameScoreService(games, scores)
+                GameScoreService(games, scores, profiles())
                     .execute(GetGameLeaderboardUseCase.Query("coin-corgi", ScoreTrack.BASE, 10, default, ScorePeriod.DAILY))
                     .map { it.nickname } shouldContainExactly listOf("나")
 
@@ -254,7 +262,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 every { scores.topDaily(1L, ScoreTrack.BASE, bee, GameDay.today(), 10) } returns
                     listOf(entry(1, "벌잡이", 383))
 
-                GameScoreService(games, scores)
+                GameScoreService(games, scores, profiles())
                     .execute(GetGameLeaderboardUseCase.Query("bee-guard", ScoreTrack.BASE, 10, bee, ScorePeriod.DAILY))
                     .map { it.nickname } shouldContainExactly listOf("벌잡이")
             }
@@ -266,7 +274,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 val past = LocalDate.of(2026, 8, 1)
                 every { scores.topDaily(1L, ScoreTrack.BASE, default, past, 10) } returns listOf(entry(1, "다", 120))
 
-                GameScoreService(games, scores)
+                GameScoreService(games, scores, profiles())
                     .execute(GetGameLeaderboardUseCase.Query("coin-corgi", ScoreTrack.BASE, 10, default, ScorePeriod.DAILY, past))
                     .map { it.nickname } shouldContainExactly listOf("다")
             }
@@ -277,7 +285,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 val (games, scores) = serving("coin-corgi")
                 every { scores.topDaily(any(), any(), any(), any(), any()) } returns emptyList()
 
-                GameScoreService(games, scores)
+                GameScoreService(games, scores, profiles())
                     .execute(GetGameLeaderboardUseCase.Query("coin-corgi", ScoreTrack.BASE, 10, default, ScorePeriod.DAILY)) shouldBe emptyList()
             }
         }
@@ -287,7 +295,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 val (games, scores) = serving("coin-corgi")
                 every { scores.topDaily(1L, ScoreTrack.BASE, default, GameDay.today(), 50) } returns emptyList()
 
-                GameScoreService(games, scores)
+                GameScoreService(games, scores, profiles())
                     .execute(GetGameLeaderboardUseCase.Query("coin-corgi", ScoreTrack.BASE, 999, default, ScorePeriod.DAILY))
 
                 verify { scores.topDaily(1L, ScoreTrack.BASE, default, GameDay.today(), 50) }
@@ -302,14 +310,14 @@ class GameScoreServiceTest : BehaviorSpec({
                 val scoreRepository = mockk<GameScoreRepositoryPort>()
                 every { gameRepository.findBySlug("coin-corgi") } returns game(1L, "coin-corgi")
                 every {
-                    scoreRepository.submit(1L, ScoreTrack.BASE, default, "가나", 900, null, GameDay.today())
+                    scoreRepository.submit(1L, ScoreTrack.BASE, default, "가나", 900, null, GameDay.today(), playerId = "player-one")
                 } returns (true to 1)
 
-                GameScoreService(gameRepository, scoreRepository)
+                GameScoreService(gameRepository, scoreRepository, profiles())
                     .execute(SubmitGameScoreUseCase.Command("coin-corgi", ScoreTrack.BASE, default, "가나", 900, null)) shouldBe
                     SubmitGameScoreUseCase.Result(applied = true, rank = 1, excluded = false)
 
-                verify(exactly = 1) { scoreRepository.submit(1L, ScoreTrack.BASE, default, "가나", 900, null, GameDay.today()) }
+                verify(exactly = 1) { scoreRepository.submit(1L, ScoreTrack.BASE, default, "가나", 900, null, GameDay.today(), playerId = "player-one") }
             }
         }
 
@@ -320,11 +328,13 @@ class GameScoreServiceTest : BehaviorSpec({
                 val scoreRepository = mockk<GameScoreRepositoryPort>()
                 every { gameRepository.findBySlug("coin-corgi") } returns game(1L, "coin-corgi")
 
-                GameScoreService(gameRepository, scoreRepository)
+                val identity = mockk<GamePlayerProfilePort>()
+                GameScoreService(gameRepository, scoreRepository, identity)
                     .execute(SubmitGameScoreUseCase.Command("coin-corgi", ScoreTrack.BASE, default, "가나", 900, null, isOperator = true)) shouldBe
                     SubmitGameScoreUseCase.Result(applied = false, rank = 0, excluded = true)
 
-                verify(exactly = 0) { scoreRepository.submit(any(), any(), any(), any(), any(), any(), any(), any()) }
+                verify(exactly = 0) { identity.findForUpdate(any()) }
+                verify(exactly = 0) { scoreRepository.submit(any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             }
         }
 
@@ -334,25 +344,27 @@ class GameScoreServiceTest : BehaviorSpec({
                 val scoreRepository = mockk<GameScoreRepositoryPort>()
                 every { gameRepository.findBySlug("coin-corgi") } returns game(1L, "coin-corgi")
 
-                GameScoreService(gameRepository, scoreRepository)
+                val identity = mockk<GamePlayerProfilePort>()
+                GameScoreService(gameRepository, scoreRepository, identity)
                     .execute(SubmitGameScoreUseCase.Command("coin-corgi", ScoreTrack.BASE, default, "실측417930", 227, null, isAutomation = true)) shouldBe
                     SubmitGameScoreUseCase.Result(applied = false, rank = 0, excluded = true)
 
-                verify(exactly = 0) { scoreRepository.submit(any(), any(), any(), any(), any(), any(), any(), any()) }
+                verify(exactly = 0) { identity.findForUpdate(any()) }
+                verify(exactly = 0) { scoreRepository.submit(any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             }
         }
 
-        `when`("자동화 제출이라도 닉네임이 규격 밖이면") {
+        `when`("자동화 제출이라도 점수가 규격 밖이면") {
             then("excluded 가 아니라 400 이다 — 검증이 제외보다 앞선다") {
                 val gameRepository = mockk<GameRepositoryPort>()
                 val scoreRepository = mockk<GameScoreRepositoryPort>()
                 every { gameRepository.findBySlug("coin-corgi") } returns game(1L, "coin-corgi")
 
                 shouldThrow<BusinessException> {
-                    GameScoreService(gameRepository, scoreRepository)
-                        .execute(SubmitGameScoreUseCase.Command("coin-corgi", ScoreTrack.BASE, default, "a", 900, null, isAutomation = true))
+                    GameScoreService(gameRepository, scoreRepository, profiles())
+                        .execute(SubmitGameScoreUseCase.Command("coin-corgi", ScoreTrack.BASE, default, "ignored", -1, null, isAutomation = true))
                 }
-                verify(exactly = 0) { scoreRepository.submit(any(), any(), any(), any(), any(), any(), any(), any()) }
+                verify(exactly = 0) { scoreRepository.submit(any(), any(), any(), any(), any(), any(), any(), any(), any()) }
             }
         }
 
@@ -364,10 +376,10 @@ class GameScoreServiceTest : BehaviorSpec({
                 every { gameRepository.findBySlug("bee-guard") } returns
                     game(1L, "bee-guard", scoreBoards = listOf(ScoreBoardDef("leak", "물 막기")))
                 every {
-                    scoreRepository.submit(1L, ScoreTrack.BASE, fresh, "가나", 900, null, GameDay.today())
+                    scoreRepository.submit(1L, ScoreTrack.BASE, fresh, "가나", 900, null, GameDay.today(), playerId = "player-one")
                 } returns (true to 1)
 
-                GameScoreService(gameRepository, scoreRepository)
+                GameScoreService(gameRepository, scoreRepository, profiles())
                     .execute(SubmitGameScoreUseCase.Command("bee-guard", ScoreTrack.BASE, fresh, "가나", 900, null)) shouldBe
                     SubmitGameScoreUseCase.Result(applied = true, rank = 1)
             }
@@ -391,11 +403,39 @@ class GameScoreServiceTest : BehaviorSpec({
                     listOf(entry(1, "오늘1등", 400))
                 every { scoreRepository.topDaily(2L, ScoreTrack.BASE, default, GameDay.today(), 3) } returns emptyList()
 
-                val boards = GameScoreService(gameRepository, scoreRepository).execute(GetActiveLeaderboardsUseCase.Query(8, 3))
+                val boards = GameScoreService(gameRepository, scoreRepository, profiles()).execute(GetActiveLeaderboardsUseCase.Query(8, 3))
 
                 boards[0].todayEntries.map { it.nickname } shouldContainExactly listOf("오늘1등")
                 boards[1].todayEntries shouldBe emptyList()
             }
         }
     }
+    given("account score ownership") {
+        then("missing profile cannot submit by borrowing a nickname") {
+            val games = mockk<GameRepositoryPort>()
+            val scores = mockk<GameScoreRepositoryPort>()
+            val identity = mockk<GamePlayerProfilePort>()
+            every { games.findBySlug("snake") } returns game(1L, "snake")
+            every { identity.findForUpdate(GamePlayerOwner(memberId = 9L)) } returns null
+            shouldThrow<BusinessException> {
+                GameScoreService(games, scores, identity).execute(
+                    SubmitGameScoreUseCase.Command("snake", ScoreTrack.BASE, default, "가나", 900, null, 9L),
+                )
+            }.errorCode shouldBe ErrorCode.INVALID_INPUT
+            verify(exactly = 0) { scores.submit(any(), any(), any(), any(), any(), any(), any(), any(), any()) }
+        }
+        then("guest credential determines player and client nickname is ignored") {
+            val games = mockk<GameRepositoryPort>()
+            val scores = mockk<GameScoreRepositoryPort>()
+            val identity = mockk<GamePlayerProfilePort>()
+            every { games.findBySlug("snake") } returns game(1L, "snake")
+            every { identity.findForUpdate(GamePlayerOwner(guestTokenHash = "hash")) } returns GamePlayerProfile("guest-id", "진짜이름")
+            every { scores.submit(1L, ScoreTrack.BASE, default, "진짜이름", 900, null, GameDay.today(), playerId = "guest-id") } returns (true to 1)
+            GameScoreService(games, scores, identity).execute(
+                SubmitGameScoreUseCase.Command("snake", ScoreTrack.BASE, default, "위조이름", 900, null, guestTokenHash = "hash"),
+            ) shouldBe SubmitGameScoreUseCase.Result(applied = true, rank = 1)
+            verify { scores.submit(1L, ScoreTrack.BASE, default, "진짜이름", 900, null, GameDay.today(), playerId = "guest-id") }
+        }
+    }
+
 })

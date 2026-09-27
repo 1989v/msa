@@ -315,6 +315,8 @@ export interface ScoreBoardDef {
 export type ScorePeriod = 'ALL_TIME' | 'DAILY';
 
 export interface ScoreEntry {
+  playerId?: string | null;
+  legacy?: boolean;
   rank: number;
   nickname: string;
   score: number;
@@ -339,57 +341,6 @@ export interface LeaderboardBoard {
   entries: ScoreEntry[];
   /** 같은 보드의 오늘 기록. 아무도 안 논 날은 비고, 그때 레일은 역대 기록을 그린다 */
   todayEntries: ScoreEntry[];
-}
-
-const GAME_NICKNAME_KEY = 'game_nickname';
-
-/**
- * 게임 안 랭킹 위젯(`public/games/lib/rank.js`)이 점수를 올릴 때 쓰는 것과 **같은 키**다.
- * 게임은 같은 오리진의 iframe 이라 localStorage 를 공유한다 — 프레임 간 메시지 규약 없이
- * "이 줄이 내 기록"을 짚을 수 있는 유일한 단서.
- */
-export function getGameNickname(): string | null {
-  return localStorage.getItem(GAME_NICKNAME_KEY);
-}
-
-/**
- * 랭킹 위젯과 같은 키에 쓴다 — 제안에 남긴 이름이 다음 점수 제출에도 그대로 쓰인다.
- * 게임 안 위젯(`rank.js`)의 규격과 같은 2~16 자만 받는다.
- */
-export function setGameNickname(raw: string): string | null {
-  const trimmed = raw.trim();
-  if (trimmed.length < 2 || trimmed.length > 16) return null;
-  localStorage.setItem(GAME_NICKNAME_KEY, trimmed);
-  return trimmed;
-}
-
-interface MemberProfile {
-  id: number;
-  name: string;
-}
-
-/**
- * 랭킹에 쓰는 이름이 아직 없을 때 채울 값을 회원 서비스에서 받아온다.
- *
- * 게임 쪽에 이름 생성기를 다시 두지 않는다 — member 가 가입 시점에 이미 만들어 둔
- * 표시 이름이 있고(ADR-0078), 그것을 쓰면 사람이 사이트 안에서 같은 이름으로 보인다.
- * 실패하면 null 이고, 그때 화면은 직접 입력을 받는다.
- */
-export async function fetchMemberDisplayName(): Promise<string | null> {
-  try {
-    const res = await api.get<ApiResponse<MemberProfile>>('/api/members/me');
-    return res.data.data?.name ?? null;
-  } catch {
-    return null;
-  }
-}
-
-/** 랭킹에 쓰는 이름을 확보한다 — 있으면 그대로, 없으면 회원 닉네임으로 채운다 */
-export async function resolveGameNickname(): Promise<string | null> {
-  const stored = getGameNickname();
-  if (stored) return stored;
-  const fromMember = await fetchMemberDisplayName();
-  return fromMember ? setGameNickname(fromMember) : null;
 }
 
 export type SuggestionStatus = 'OPEN' | 'REVIEWING' | 'APPLIED' | 'DECLINED';
@@ -433,12 +384,11 @@ export async function fetchSuggestions(slug: string, page = 0, size = 20): Promi
 
 export async function createSuggestion(
   slug: string,
-  nickname: string,
   body: string,
 ): Promise<GameSuggestion> {
   const res = await api.post<ApiResponse<GameSuggestion>>(
     `/api/v1/games/${encodeURIComponent(slug)}/suggestions`,
-    { nickname, body },
+    { body },
   );
   return res.data.data;
 }

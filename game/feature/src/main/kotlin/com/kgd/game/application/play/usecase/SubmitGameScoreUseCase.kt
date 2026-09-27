@@ -30,6 +30,7 @@ interface SubmitGameScoreUseCase {
         val isOperator: Boolean = false,
         /** 자동화 UA 제출 — 기록하지 않는다 */
         val isAutomation: Boolean = false,
+        val guestTokenHash: String? = null,
     )
 
     /**

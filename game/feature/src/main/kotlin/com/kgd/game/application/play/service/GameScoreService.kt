@@ -1,5 +1,7 @@
 package com.kgd.game.application.play.service
 
+import com.kgd.game.application.profile.port.GamePlayerProfilePort
+import com.kgd.game.application.profile.port.GamePlayerOwner
 import com.kgd.game.application.catalog.port.GameRepositoryPort
 import com.kgd.game.application.play.dto.LeaderboardBoardDto
 import com.kgd.game.application.play.port.GameScoreRepositoryPort
@@ -18,16 +20,18 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.annotation.Isolation
 import java.time.LocalDate
 
 private val log = KotlinLogging.logger {}
 
-/** 게임별 랭킹 — 닉네임당 최고 기록. 게스트 제출 허용 (닉네임이 곧 신원) */
+/** 게임별 랭킹 — playerId별 최고 기록. 회원/게스트 모두 서버 프로필 소유권으로 제출 */
 @Service
 @Qualifier("gameTransactionManager")
 class GameScoreService(
     private val gameRepository: GameRepositoryPort,
     private val scoreRepository: GameScoreRepositoryPort,
+    private val profiles: GamePlayerProfilePort,
 ) : SubmitGameScoreUseCase, GetGameLeaderboardUseCase, GetActiveLeaderboardsUseCase {
     companion object {
         /**
@@ -41,7 +45,6 @@ class GameScoreService(
          * 아니라 서버가 판정을 갖는 구조다.
          */
         private const val MAX_SCORE = 1_000_000_000_000L
-        private val NICK_REGEX = Regex("^[\\p{L}\\p{N} _.-]{2,16}$")
         private const val MAX_ACTIVE_BOARDS = 12
         private const val MAX_ACTIVE_ENTRIES = 10
 
@@ -60,27 +63,28 @@ class GameScoreService(
      * 보드가 갈라지고, 게임 57종이 쓰는 공용 제출 코드(`lib/rank.js`)를 전부 고쳐야 한다.
      *
      * 운영자·자동화 제출은 검증 **뒤**, 저장소 **앞**에서 돌려보낸다 — 시험 스크립트도 규격 밖 입력은
-     * 400 으로 보고, 로그에 닿는 닉은 규격 안 문자열이다. 조회 경로는 손대지 않는다: 쓰지 않은 행은
+     * 400 으로 보고, 제외 대상은 프로필 생성 없이도 시험할 수 있다. 조회 경로는 손대지 않는다: 쓰지 않은 행은
      * 걸러 낼 것도 없다.
      */
-    @Transactional
+    // A catalog read must not fix an old MySQL snapshot before waiting for the profile lock.
+    @Transactional(transactionManager = "gameTransactionManager", isolation = Isolation.READ_COMMITTED)
     override fun execute(command: SubmitGameScoreUseCase.Command): SubmitGameScoreUseCase.Result {
         // 위치 분해를 쓰지 않는다 — Command 에 필드를 하나 끼워 넣는 순간 값이 조용히 밀린다
         val gameId = resolveGameId(command.slug)
-        val nick = command.nickname.trim()
         val score = command.score
-        if (!NICK_REGEX.matches(nick)) throw BusinessException(ErrorCode.INVALID_INPUT, "닉네임은 2~16자 (문자/숫자/공백/._-)")
         if (score !in 0..MAX_SCORE) throw BusinessException(ErrorCode.INVALID_INPUT, "점수 범위 오류")
         if (command.isOperator || command.isAutomation) {
-            log.info { "score excluded slug=${command.slug} nick=$nick operator=${command.isOperator} automation=${command.isAutomation}" }
+            log.info { "score excluded slug=${command.slug} operator=${command.isOperator} automation=${command.isAutomation}" }
             return SubmitGameScoreUseCase.Result(applied = false, rank = 0, excluded = true)
         }
+        val profile = profiles.findForUpdate(GamePlayerOwner(command.memberId, command.guestTokenHash))
+            ?: throw BusinessException(ErrorCode.INVALID_INPUT, "닉네임 설정이 필요합니다")
         // 보드 키는 카탈로그 선언과 대조하지 않는다 — 게임이 모드를 늘렸는데 시드가 아직
         // 안 따라온 순간에 기록을 버리게 된다. 선언은 사이트가 탭 이름을 짓는 데만 쓴다.
         val (applied, rank) = scoreRepository.submit(
-            gameId = gameId, track = command.track, board = command.board, nickname = nick,
+            gameId = gameId, track = command.track, board = command.board, nickname = profile.nickname,
             score = score, detail = command.detail?.take(64), playDate = GameDay.today(),
-            memberId = command.memberId,
+            memberId = command.memberId, playerId = profile.playerId,
         )
         return SubmitGameScoreUseCase.Result(applied = applied, rank = rank)
     }

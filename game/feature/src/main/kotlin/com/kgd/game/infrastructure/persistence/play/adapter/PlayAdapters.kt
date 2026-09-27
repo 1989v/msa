@@ -12,6 +12,8 @@ import com.kgd.game.infrastructure.persistence.play.repository.GamePlaySessionJp
 import com.kgd.game.infrastructure.persistence.play.repository.GameRatingJpaRepository
 import com.kgd.game.infrastructure.persistence.play.repository.GameSaveDataJpaRepository
 import com.kgd.game.infrastructure.persistence.play.repository.GameScoreJpaRepository
+import com.kgd.game.infrastructure.persistence.play.repository.GamePlayerScoreJpaRepository
+import com.kgd.game.infrastructure.persistence.profile.repository.GamePlayerProfileJpaRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Repository
 
@@ -71,12 +73,15 @@ class MemberGameRecordAdapter(
     private val sessions: GamePlaySessionJpaRepository,
     private val scores: GameScoreJpaRepository,
     private val saves: GameSaveDataJpaRepository,
+    private val players: GamePlayerScoreJpaRepository,
+    private val profiles: GamePlayerProfileJpaRepository,
 ) : MemberGameRecordPort {
     override fun summarize(gameId: Long, memberId: Long): MyGameRecordDto {
         val play = sessions.summarize(gameId, memberId)
-        val best = scores.findTop1ByGameIdAndMemberIdOrderByScoreDesc(gameId, memberId)
+        val best = profiles.findByMemberId(memberId)?.let { players.findTop1ByGameIdAndPlayerIdOrderByScoreDesc(gameId, it.playerId) }
         val rank = best?.let {
-            scores.countByGameIdAndTrackAndBoardAndScoreGreaterThan(gameId, it.track, it.board, it.score).toInt() + 1
+            (scores.countByGameIdAndTrackAndBoardAndScoreGreaterThan(gameId, it.track, it.board, it.score) +
+                players.countByGameIdAndTrackAndBoardAndScoreGreaterThan(gameId, it.track, it.board, it.score)).toInt() + 1
         }
         return MyGameRecordDto(
             plays = play.getPlays(),

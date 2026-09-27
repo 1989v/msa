@@ -20,12 +20,15 @@ vi.mock('../../../api/gameApi', async (importOriginal) => {
     fetchGameDetail: vi.fn(),
     fetchSimilarGames: vi.fn(),
     fetchLeaderboard: vi.fn(),
-    getGameNickname: vi.fn(() => null),
+    fetchSuggestions: vi.fn(async () => ({ content: [], totalElements: 0, number: 0, last: true })),
+    fetchReleaseNotes: vi.fn(async () => []),
+    fetchFavoriteCount: vi.fn(async () => 0),
     startGameSession: vi.fn(),
     endGameSession: vi.fn(),
     rateGame: vi.fn(),
   };
 });
+vi.mock('../../../game-profile/profileStore', () => ({ useGameProfile: () => ({ profile: null, revision: 0 }), openGameProfile: vi.fn() }));
 vi.mock('../../../api/searchApi', () => ({ fetchGraphData: vi.fn(() => Promise.resolve({ nodes: [], links: [] })) }));
 vi.mock('../../../seo/useSeo', () => ({ useSeo: () => undefined }));
 // 모듈을 통째로 대체하므로 **이 모듈이 내보내는 것을 다 채워야 한다.**

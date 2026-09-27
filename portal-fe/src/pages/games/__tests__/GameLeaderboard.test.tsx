@@ -8,14 +8,18 @@ vi.mock('../../../api/gameApi', async (importOriginal) => {
   return {
     ...actual,
     fetchLeaderboard: vi.fn(),
-    getGameNickname: vi.fn(() => null),
   };
 });
 
-import { fetchLeaderboard, getGameNickname } from '../../../api/gameApi';
+import { fetchLeaderboard } from '../../../api/gameApi';
+
+vi.mock('../../../game-profile/profileStore', () => ({ useGameProfile: vi.fn() }));
+import { useGameProfile } from '../../../game-profile/profileStore';
+const profile = (playerId: string | null) => ({ owner: 'guest', status: 'ready' as const, profile: playerId ? { playerId, nickname: 'Current name' } : null, error: null, revision: 0 });
 
 const entry = (rank: number, nickname: string, score: number): ScoreEntry => ({
   rank,
+  playerId: `player-${nickname}`,
   nickname,
   score,
   detail: null,
@@ -75,7 +79,7 @@ function serveByBoard(byBoard: Record<string, ScoreEntry[]>) {
 
 describe('게임 상세 랭킹', () => {
   beforeEach(() => {
-    vi.mocked(getGameNickname).mockReturnValue(null);
+    vi.mocked(useGameProfile).mockReturnValue(profile(null));
   });
 
   afterEach(() => {
@@ -163,7 +167,7 @@ describe('게임 상세 랭킹', () => {
   });
 
   it('내 기록 줄은 색이 아니라 낱말로도 표시된다', async () => {
-    vi.mocked(getGameNickname).mockReturnValue('가');
+    vi.mocked(useGameProfile).mockReturnValue(profile('player-가'));
     serve([entry(1, '가', 900), entry(2, '나', 500)], []);
     const { container } = renderBoard();
 

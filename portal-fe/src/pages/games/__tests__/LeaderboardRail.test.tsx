@@ -9,11 +9,14 @@ vi.mock('../../../api/gameApi', async (importOriginal) => {
   return {
     ...actual,
     fetchActiveLeaderboards: vi.fn(),
-    getGameNickname: vi.fn(() => null),
   };
 });
 
-import { fetchActiveLeaderboards, getGameNickname } from '../../../api/gameApi';
+import { fetchActiveLeaderboards } from '../../../api/gameApi';
+
+vi.mock('../../../game-profile/profileStore', () => ({ useGameProfile: vi.fn() }));
+import { useGameProfile } from '../../../game-profile/profileStore';
+const profile = (playerId: string | null) => ({ owner: 'guest', status: 'ready' as const, profile: playerId ? { playerId, nickname: 'Current name' } : null, error: null, revision: 0 });
 
 const board = (slug: string, title: string, todayEntries: LeaderboardBoard['entries'] = []): LeaderboardBoard => ({
   slug,
@@ -25,8 +28,8 @@ const board = (slug: string, title: string, todayEntries: LeaderboardBoard['entr
   boardName: null,
   boardNameEn: null,
   entries: [
-    { rank: 1, nickname: `${slug}-1등`, score: 900, detail: null },
-    { rank: 2, nickname: `${slug}-2등`, score: 500, detail: null },
+    { rank: 1, playerId: `player-${slug}`, nickname: `${slug}-1등`, score: 900, detail: null },
+    { rank: 2, playerId: `second-${slug}`, nickname: `${slug}-2등`, score: 500, detail: null },
   ],
   todayEntries,
 });
@@ -60,7 +63,7 @@ describe('허브 랭킹 레일', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     stubReducedMotion(false);
-    vi.mocked(getGameNickname).mockReturnValue(null);
+    vi.mocked(useGameProfile).mockReturnValue(profile(null));
   });
 
   afterEach(() => {
@@ -147,7 +150,7 @@ describe('허브 랭킹 레일', () => {
 
   it('오늘 기록이 있으면 오늘 것을 싣고 "오늘" 표식을 단다', async () => {
     vi.mocked(fetchActiveLeaderboards).mockResolvedValue([
-      board('a', '가 게임', [{ rank: 1, nickname: '오늘1등', score: 400, detail: null }]),
+      board('a', '가 게임', [{ rank: 1, playerId: 'player-today', nickname: '오늘1등', score: 400, detail: null }]),
     ]);
     renderRail();
     await flush();
@@ -169,7 +172,7 @@ describe('허브 랭킹 레일', () => {
   });
 
   it('내 기록은 색이 아니라 낱말로도 짚어 준다', async () => {
-    vi.mocked(getGameNickname).mockReturnValue('a-1등');
+    vi.mocked(useGameProfile).mockReturnValue(profile('player-a'));
     vi.mocked(fetchActiveLeaderboards).mockResolvedValue([board('a', '가 게임')]);
     renderRail();
     await flush();

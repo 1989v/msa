@@ -12,7 +12,7 @@ import java.time.LocalDateTime
  * 사후에 달라질 수 있다. 운영자가 할 일은 처리 상태를 바꾸고([changeStatus]) 답글을
  * 다는 것([reply])이다.
  *
- * 표시 이름([nickname])은 랭킹에 남는 것과 **같은 값**이다(브라우저의 `game_nickname`).
+ * 표시 이름([nickname])은 랭킹에 남는 것과 **같은 값**이다(작성 당시 서버 프로필 이름).
  * 회원 프로필을 따로 부르지 않으므로 목록 조회에 서비스 간 호출이 없고, 한 사람이 게임 안에서
  * 늘 같은 이름으로 보인다. 신원은 [memberId] 가 갖고 있어 이름을 바꿔도 소유권은 그대로다.
  *
@@ -135,7 +135,7 @@ class GameSuggestion private constructor(
 
         fun validateNickname(nickname: String): String {
             val trimmed = nickname.trim()
-            if (trimmed.length !in MIN_NICKNAME..MAX_NICKNAME) {
+            if (trimmed.codePointCount(0, trimmed.length) !in MIN_NICKNAME..MAX_NICKNAME) {
                 throw BusinessException(
                     ErrorCode.INVALID_INPUT,
                     "닉네임은 $MIN_NICKNAME~$MAX_NICKNAME 자여야 합니다",

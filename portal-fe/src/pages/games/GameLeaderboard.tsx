@@ -1,7 +1,7 @@
+import { useGameProfile } from '../../game-profile/profileStore';
 import { useCallback, useEffect, useState } from 'react';
 import {
   fetchLeaderboard,
-  getGameNickname,
   type GameLang,
   type ScoreBoardDef,
   type ScorePeriod,
@@ -109,7 +109,8 @@ export default function GameLeaderboard({ slug, lang, scoreBoards, reloadToken, 
   // 모드는 트랙과 달리 "고른 것만" 읽는다. 넷을 미리 받는 트랙·기간과 달리 모드는 게임마다
   // 개수가 다르고, 셋을 미리 받으면 요청이 4개에서 12개가 된다 — 대부분 빈 응답으로.
   const [board, setBoard] = useState<string | null>(initialBoard(scoreBoards));
-  const [nickname, setNickname] = useState<string | null>(null);
+  const profileState = useGameProfile();
+  const playerId = profileState.profile?.playerId ?? null;
 
   const load = useCallback(() => {
     setFailed(false);
@@ -127,7 +128,6 @@ export default function GameLeaderboard({ slug, lang, scoreBoards, reloadToken, 
           ALL_TIME: { BASE: base, MODDED: modded },
           DAILY: { BASE: baseToday, MODDED: moddedToday },
         });
-        setNickname(getGameNickname());
       })
       .catch(() => {
         setBoards(null);
@@ -147,7 +147,7 @@ export default function GameLeaderboard({ slug, lang, scoreBoards, reloadToken, 
 
   useEffect(() => {
     load();
-  }, [load, reloadToken]);
+  }, [load, reloadToken, profileState.revision]);
 
   const view = (boards ?? EMPTY)[period];
   const tracks = trackedTracks(view);
@@ -283,12 +283,13 @@ export default function GameLeaderboard({ slug, lang, scoreBoards, reloadToken, 
                 </thead>
                 <tbody>
                   {(pageSize ? rows.slice(page * pageSize, (page + 1) * pageSize) : rows).map((entry) => {
-                    const mine = isMyEntry(entry, nickname);
+                    const mine = isMyEntry(entry, playerId);
                     return (
                       <tr key={`${entry.rank}-${entry.nickname}`} className={mine ? 'is-me' : undefined}>
                         <td className="game-leaderboard-rank num">{entry.rank}</td>
                         <td>
                           <span className="game-leaderboard-nick">{entry.nickname}</span>
+                          {(entry.legacy || !entry.playerId) && <span className="game-leaderboard-detail">{lang === 'en' ? 'Historical record' : '과거 기록'}</span>}
                           {/* 내 줄은 색으로만 구분하지 않는다 — 낱말과 굵은 선을 함께 준다 */}
                           {mine && <span className="game-leaderboard-me">{L.me}</span>}
                           {entry.detail && <span className="game-leaderboard-detail">{entry.detail}</span>}
@@ -330,7 +331,7 @@ export default function GameLeaderboard({ slug, lang, scoreBoards, reloadToken, 
           )}
 
           {period === 'DAILY' && <p className="game-leaderboard-note">{L.dayNote}</p>}
-          {!nickname && <p className="game-leaderboard-note">{L.nickNote}</p>}
+          {!playerId && <p className="game-leaderboard-note">{L.nickNote}</p>}
         </>
       )}
 

@@ -9,12 +9,14 @@ vi.mock('../../../api/gameApi', async (importOriginal) => {
   return {
     ...actual,
     fetchSuggestions: vi.fn(),
-    resolveGameNickname: vi.fn(),
-    fetchMemberDisplayName: vi.fn(),
   };
 });
 
-import { fetchSuggestions, resolveGameNickname } from '../../../api/gameApi';
+import { fetchSuggestions } from '../../../api/gameApi';
+
+vi.mock('../../../game-profile/profileStore', () => ({ useGameProfile: vi.fn(), openGameProfile: vi.fn() }));
+import { useGameProfile } from '../../../game-profile/profileStore';
+const profile = (nickname: string | null) => ({ owner: 'member:1', status: 'ready' as const, profile: nickname ? { playerId: 'player-1', nickname } : null, error: null, revision: 0 });
 
 function suggestion(over: Partial<GameSuggestion> = {}): GameSuggestion {
   return {
@@ -52,7 +54,7 @@ function renderPanel(loggedIn: boolean) {
 describe('GameSuggestionsPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(resolveGameNickname).mockResolvedValue('활잡이');
+    vi.mocked(useGameProfile).mockReturnValue(profile('활잡이'));
   });
 
   it('비로그인이면 폼 대신 로그인 안내를 내고, 회원 이름을 부르지 않는다', async () => {
@@ -63,7 +65,6 @@ describe('GameSuggestionsPanel', () => {
     expect(screen.queryByLabelText('개선 제안 내용')).toBeNull();
     expect(screen.getByRole('link', { name: '로그인' })).toBeTruthy();
     // 읽기만 하는 방문자에게 회원 API 를 부르지 않는다
-    expect(vi.mocked(resolveGameNickname)).not.toHaveBeenCalled();
   });
 
   it('로그인하면 저장된 이름으로 폼이 열린다 — 이름을 다시 묻지 않는다', async () => {
@@ -75,12 +76,12 @@ describe('GameSuggestionsPanel', () => {
     expect(screen.getByText('활잡이')).toBeTruthy();
   });
 
-  it('이름을 확보하지 못하면 그 자리에서 입력받는다 — 다른 화면으로 보내지 않는다', async () => {
+  it('닉네임 미설정이면 공통 모달 진입점을 보여준다', async () => {
     serve([]);
-    vi.mocked(resolveGameNickname).mockResolvedValue(null);
+    vi.mocked(useGameProfile).mockReturnValue(profile(null));
     renderPanel(true);
 
-    await waitFor(() => expect(screen.getByLabelText('표시할 이름')).toBeTruthy());
+    await waitFor(() => expect(screen.getByRole('button', { name: '게임 닉네임 설정' })).toBeTruthy());
     expect(screen.queryByLabelText('개선 제안 내용')).toBeNull();
   });
 

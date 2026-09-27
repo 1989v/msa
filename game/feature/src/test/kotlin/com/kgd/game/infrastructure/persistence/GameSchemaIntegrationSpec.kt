@@ -51,6 +51,26 @@ import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.MySQLContainer
 import org.testcontainers.utility.DockerImageName
 import java.time.LocalDate
+import com.kgd.game.application.profile.port.GamePlayerOwner
+import com.kgd.game.application.profile.service.GamePlayerProfileService
+import com.kgd.game.infrastructure.persistence.profile.adapter.GamePlayerProfileAdapter
+import com.kgd.game.infrastructure.persistence.profile.entity.GamePlayerProfileJpaEntity
+import com.kgd.game.infrastructure.persistence.profile.repository.GamePlayerProfileJpaRepository
+import com.kgd.game.infrastructure.persistence.play.adapter.MemberGameRecordAdapter
+import com.kgd.game.infrastructure.persistence.play.repository.GamePlaySessionJpaRepository
+import com.kgd.game.infrastructure.persistence.play.repository.GameSaveDataJpaRepository
+import com.kgd.game.infrastructure.persistence.play.repository.GamePlayerScoreJpaRepository
+import com.kgd.game.infrastructure.persistence.play.repository.GamePlayerScoreDailyJpaRepository
+import com.kgd.game.infrastructure.persistence.play.entity.GamePlayerScoreJpaEntity
+import com.kgd.game.infrastructure.persistence.play.entity.GamePlayerScoreDailyJpaEntity
+import com.kgd.common.exception.BusinessException
+import com.kgd.common.exception.ErrorCode
+import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.support.TransactionTemplate
+import java.util.UUID
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import javax.sql.DataSource
 
 /**
@@ -120,6 +140,13 @@ class GameSchemaIntegrationSpec(
     @Autowired private val suggestionAdapter: GameSuggestionRepositoryAdapter,
     @Autowired private val replyAdapter: SuggestionReplyRepositoryAdapter,
     @Autowired @Qualifier("gameDataSource") private val gameDataSource: DataSource,
+    @Autowired private val profiles: GamePlayerProfileJpaRepository,
+    @Autowired private val playerScores: GamePlayerScoreJpaRepository,
+    @Autowired private val playerDaily: GamePlayerScoreDailyJpaRepository,
+    @Autowired private val profileService: GamePlayerProfileService,
+    @Autowired private val sessions: GamePlaySessionJpaRepository,
+    @Autowired private val saves: GameSaveDataJpaRepository,
+    @Autowired @Qualifier("gameTransactionManager") private val transactionManager: PlatformTransactionManager,
 ) : BehaviorSpec({
 
     val pageable = PageRequest.of(0, 10)
@@ -280,19 +307,21 @@ class GameSchemaIntegrationSpec(
                 .config(enabledIf = { dockerAvailable }) {
                     val gameId = gameRepository.findBySlug("snake")!!.id!!
                     val day = LocalDate.of(2026, 8, 23)
-                    val adapter = GameScoreRepositoryAdapter(scoreRepository, dailyScoreRepository)
+                    val adapter = GameScoreRepositoryAdapter(scoreRepository, dailyScoreRepository, playerScores, playerDaily, profiles)
+                    val first = profileService.save(GamePlayerOwner(memberId = 60001), "하루")
+                    val other = profileService.save(GamePlayerOwner(memberId = 60002), "이웃")
                     try {
                         // 역대 최고를 먼저 높게 세워 둔다 — 이후 런은 역대 보드를 건드리지 못한다
                         val base = ScoreBoardKey.DEFAULT
-                        adapter.submit(gameId, ScoreTrack.BASE, base, "하루", 5_000, null, day)
-                        adapter.submit(gameId, ScoreTrack.BASE, base, "하루", 900, null, day)
-                        adapter.submit(gameId, ScoreTrack.BASE, base, "하루", 2_000, null, day)
-                        adapter.submit(gameId, ScoreTrack.BASE, base, "이웃", 1_500, null, day)
+                        adapter.submit(gameId, ScoreTrack.BASE, base, "하루", 5_000, null, day, playerId = first.playerId)
+                        adapter.submit(gameId, ScoreTrack.BASE, base, "하루", 900, null, day, playerId = first.playerId)
+                        adapter.submit(gameId, ScoreTrack.BASE, base, "하루", 2_000, null, day, playerId = first.playerId)
+                        adapter.submit(gameId, ScoreTrack.BASE, base, "이웃", 1_500, null, day, playerId = other.playerId)
 
                         // 유니크 키 (game_id, track, board, play_date, nickname) — 세 번 올려도 한 행
-                        val mine = dailyScoreRepository
-                            .findByGameIdAndTrackAndBoardAndPlayDateAndNickname(
-                                gameId, ScoreTrack.BASE, "", day, "하루",
+                        val mine = playerDaily
+                            .findByGameIdAndTrackAndBoardAndPlayDateAndPlayerId(
+                                gameId, ScoreTrack.BASE, "", day, first.playerId,
                             )!!
                         mine.score shouldBe 5_000
 
@@ -301,18 +330,15 @@ class GameSchemaIntegrationSpec(
                         board.map { it.rank } shouldBe listOf(1, 2)
 
                         // 다른 날은 같은 닉네임이어도 별개 행이다
-                        adapter.submit(gameId, ScoreTrack.BASE, base, "하루", 100, null, day.plusDays(1))
+                        adapter.submit(gameId, ScoreTrack.BASE, base, "하루", 100, null, day.plusDays(1), playerId = first.playerId)
                         adapter.topDaily(gameId, ScoreTrack.BASE, base, day.plusDays(1), 10)
                             .map { it.score } shouldBe listOf(100L)
                         adapter.topDaily(gameId, ScoreTrack.BASE, base, day, 10).map { it.score } shouldBe
                             listOf(5_000L, 1_500L)
                     } finally {
-                        dailyScoreRepository.deleteAll(
-                            dailyScoreRepository.findAll().filter { it.gameId == gameId },
-                        )
-                        scoreRepository.deleteAll(
-                            scoreRepository.findAll().filter { it.gameId == gameId && it.nickname in setOf("하루", "이웃") },
-                        )
+                        playerDaily.deleteAll(playerDaily.findAll().filter { it.gameId == gameId })
+                        playerScores.deleteAll(playerScores.findAll().filter { it.gameId == gameId })
+                        profiles.deleteAllById(listOf(first.playerId, other.playerId))
                     }
                 }
 
@@ -447,6 +473,100 @@ class GameSchemaIntegrationSpec(
                 }
         }
     }
+    Given("ADR-0102 account-owned profiles and scores") {
+        Then("GET never claims; explicit PUT keeps playerId and rollback preserves guest ownership").config(enabledIf = { dockerAvailable }) {
+            val guest = GamePlayerOwner(guestTokenHash = "a".repeat(64))
+            val original = profileService.save(guest, "게스트원본")
+            val member = GamePlayerOwner(memberId = 70001, guestTokenHash = guest.guestTokenHash)
+            profileService.get(member) shouldBe null
+            val occupied = profileService.save(GamePlayerOwner(memberId = 70002), "이미사용중")
+            shouldThrow<BusinessException> { profileService.save(member, "이미사용중") }.errorCode shouldBe ErrorCode.DUPLICATE_RESOURCE
+            profileService.get(guest)?.playerId shouldBe original.playerId
+            profiles.findById(original.playerId).orElseThrow().memberId shouldBe null
+            val claimed = profileService.save(member, "새회원이름")
+            claimed.playerId shouldBe original.playerId
+            profileService.get(guest) shouldBe null
+            profileService.get(GamePlayerOwner(memberId = 70001))?.nickname shouldBe "새회원이름"
+            val another = profileService.save(GamePlayerOwner(guestTokenHash = "b".repeat(64)), "다른게스트")
+            profileService.save(GamePlayerOwner(memberId = 70002, guestTokenHash = "b".repeat(64)), "회원우선").playerId shouldBe occupied.playerId
+            profileService.get(GamePlayerOwner(guestTokenHash = "b".repeat(64)))?.playerId shouldBe another.playerId
+        }
+        Then("simultaneous normalized nickname creation has one winner").config(enabledIf = { dockerAvailable }) {
+            val executor = Executors.newFixedThreadPool(2)
+            val ready = CountDownLatch(2)
+            val start = CountDownLatch(1)
+            try {
+                val attempts = listOf(71001L to "ＮｉｃｋＲａｃｅ", 71002L to "nickrace").map { (id, nick) ->
+                    executor.submit<Boolean> {
+                        ready.countDown(); start.await(10, TimeUnit.SECONDS)
+                        try { profileService.save(GamePlayerOwner(memberId = id), nick); true }
+                        catch (e: BusinessException) { e.errorCode shouldBe ErrorCode.DUPLICATE_RESOURCE; false }
+                    }
+                }
+                ready.await(10, TimeUnit.SECONDS) shouldBe true
+                start.countDown()
+                attempts.map { it.get(20, TimeUnit.SECONDS) }.count { it } shouldBe 1
+            } finally { executor.shutdownNow() }
+        }
+        Then("parallel score updates serialize on profile; legacy remains separate and rename projects current name").config(enabledIf = { dockerAvailable }) {
+            val gameId = gameRepository.findBySlug("snake")!!.id!!
+            val owner = GamePlayerOwner(memberId = 72001)
+            val profile = profileService.save(owner, "같은표시이름")
+            val legacy = scoreRepository.saveAndFlush(GameScoreJpaEntity(gameId = gameId, nickname = profile.nickname,
+                memberId = 72001, board = "profile-test", score = 150, detail = "legacy"))
+            val adapter = GameScoreRepositoryAdapter(scoreRepository, dailyScoreRepository, playerScores, playerDaily, profiles)
+            val records = MemberGameRecordAdapter(sessions, scoreRepository, saves, playerScores, profiles)
+            records.summarize(gameId, 72001).bestScore shouldBe null
+            val profileAdapter = GamePlayerProfileAdapter(profiles)
+            val executor = Executors.newFixedThreadPool(3)
+            val tx = TransactionTemplate(transactionManager).apply { isolationLevel = org.springframework.transaction.TransactionDefinition.ISOLATION_READ_COMMITTED }
+            val board = ScoreBoardKey.from("profile-test")
+            val day = LocalDate.of(2026, 9, 27)
+            try {
+                val results = listOf(100L, 300L, 200L).map { score -> executor.submit {
+                    tx.executeWithoutResult {
+                        val locked = profileAdapter.findForUpdate(owner)!!
+                        adapter.submit(gameId, ScoreTrack.BASE, board, "forged", score, null, day, playerId = locked.playerId)
+                    }
+                } }
+                results.forEach { it.get(20, TimeUnit.SECONDS) }
+                playerScores.findByGameIdAndTrackAndBoardAndPlayerId(gameId, ScoreTrack.BASE, board.value, profile.playerId)?.score shouldBe 300L
+                playerDaily.findByGameIdAndTrackAndBoardAndPlayDateAndPlayerId(gameId, ScoreTrack.BASE, board.value, day, profile.playerId)?.score shouldBe 300L
+                tx.execute { adapter.submit(gameId, ScoreTrack.BASE, board, "forged", 100, null, day, playerId = profile.playerId) } shouldBe (false to 1)
+                profileService.save(owner, "새이름랭킹")
+                val rows = adapter.top(gameId, ScoreTrack.BASE, board, 10)
+                rows.map { it.nickname } shouldBe listOf("새이름랭킹", "같은표시이름")
+                rows.map { it.playerId } shouldBe listOf(profile.playerId, null)
+                rows.map { it.legacy } shouldBe listOf(false, true)
+                scoreRepository.findById(legacy.id!!).orElseThrow().score shouldBe 150L
+                records.summarize(gameId, 72001).bestScore shouldBe 300L
+                val leader = scoreRepository.saveAndFlush(GameScoreJpaEntity(gameId = gameId, nickname = "과거1등",
+                    board = board.value, score = 500, detail = null))
+                try {
+                    tx.execute { adapter.submit(gameId, ScoreTrack.BASE, board, "forged", 250, null, day, playerId = profile.playerId) } shouldBe (false to 2)
+                    adapter.top(gameId, ScoreTrack.BASE, board, 10).map { it.rank } shouldBe listOf(1, 2, 3)
+                    records.summarize(gameId, 72001).bestRank shouldBe 2
+                } finally { scoreRepository.deleteById(leader.id!!) }
+                shouldThrow<DataIntegrityViolationException> {
+                    playerScores.saveAndFlush(GamePlayerScoreJpaEntity(gameId = gameId, track = ScoreTrack.BASE, board = board.value,
+                        playerId = profile.playerId, score = 999, detail = null))
+                }
+                shouldThrow<DataIntegrityViolationException> {
+                    playerDaily.saveAndFlush(GamePlayerScoreDailyJpaEntity(gameId = gameId, track = ScoreTrack.BASE, board = board.value,
+                        playDate = day, playerId = profile.playerId, score = 999, detail = null))
+                }
+            } finally { executor.shutdownNow(); scoreRepository.deleteById(legacy.id!!) }
+        }
+        Then("profile owner XOR is enforced by MySQL").config(enabledIf = { dockerAvailable }) {
+            shouldThrow<DataIntegrityViolationException> {
+                profiles.saveAndFlush(GamePlayerProfileJpaEntity(UUID.randomUUID().toString(), null, null, "주인없음", "주인없음"))
+            }
+            shouldThrow<DataIntegrityViolationException> {
+                profiles.saveAndFlush(GamePlayerProfileJpaEntity(UUID.randomUUID().toString(), 73001, "c".repeat(64), "둘다있음", "둘다있음"))
+            }
+        }
+    }
+
 }) {
 
     override fun extensions() = listOf(SpringExtension)
@@ -462,6 +582,8 @@ class GameSchemaIntegrationSpec(
         // 컴포넌트 스캔이 없는 좁은 슬라이스라 어댑터는 이름으로 들여온다
         GameSuggestionRepositoryAdapter::class,
         SuggestionReplyRepositoryAdapter::class,
+        GamePlayerProfileAdapter::class,
+        GamePlayerProfileService::class,
     )
     open class Ctx {
         @Bean

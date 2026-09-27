@@ -1,9 +1,9 @@
+import { useGameProfile } from '../../game-profile/profileStore';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   displayTitle,
   fetchActiveLeaderboards,
-  getGameNickname,
   type GameLang,
   type LeaderboardBoard,
 } from '../../api/gameApi';
@@ -55,7 +55,8 @@ export default function LeaderboardRail({ lang }: { lang: GameLang }) {
   const [boards, setBoards] = useState<LeaderboardBoard[]>([]);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [nickname, setNickname] = useState<string | null>(null);
+  const profileState = useGameProfile();
+  const playerId = profileState.profile?.playerId ?? null;
 
   useEffect(() => {
     let alive = true;
@@ -63,14 +64,13 @@ export default function LeaderboardRail({ lang }: { lang: GameLang }) {
       .then((list) => {
         if (!alive) return;
         setBoards(list);
-        setNickname(getGameNickname());
       })
       // 실패도 "보여줄 랭킹 없음"과 같게 다룬다 — 허브 상단에 오류 상자를 세우지 않는다
       .catch(() => undefined);
     return () => {
       alive = false;
     };
-  }, []);
+  }, [profileState.revision]);
 
   const total = boards.length;
 
@@ -138,12 +138,12 @@ export default function LeaderboardRail({ lang }: { lang: GameLang }) {
           {shown.entries.map((entry) => (
             <li
               key={`${entry.rank}-${entry.nickname}`}
-              className={isMyEntry(entry, nickname) ? 'is-me' : undefined}
+              className={isMyEntry(entry, playerId) ? 'is-me' : undefined}
             >
               <span className="games-rail-rank">{entry.rank}</span>
-              <span className="games-rail-nick">{entry.nickname}</span>
+              <span className="games-rail-nick">{entry.nickname}{(entry.legacy || !entry.playerId) && <small> · {lang === 'en' ? 'Historical' : '과거 기록'}</small>}</span>
               {/* 색만으로 "내 기록"을 표시하지 않는다 */}
-              {isMyEntry(entry, nickname) && <span className="games-rail-me">{L.me}</span>}
+              {isMyEntry(entry, playerId) && <span className="games-rail-me">{L.me}</span>}
               <span className="games-rail-score">{entry.score.toLocaleString()}</span>
             </li>
           ))}

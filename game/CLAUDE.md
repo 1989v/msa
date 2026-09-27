@@ -5,6 +5,17 @@
 그쪽으로 흡수된 뒤 제거됐다(V94, ADR-0098).
 신규 JVM 없이 **`code-dictionary:app` 에 폴드**된 모듈러 모놀리스 라이브러리다 (ADR-0059, ADR-0058 컨벤션).
 
+## 게임 계정 닉네임 (ADR-0102, 2026-09-27)
+
+- `GET/PUT /api/v1/games/profile/me`: 회원과 게스트 계정 모두 서버 프로필 `{playerId, nickname}` 하나를 사용한다. NFKC·소문자화 key로 전역 중복을 DB에서 거부한다. 회원 표시 이름과 별개다.
+- 게스트는 서버 발급 HttpOnly `game_guest_token` 쿠키로 인증한다. DB에는 SHA-256 hash만 저장한다. 쿠키 삭제 시 기존 계정의 소유권을 회복할 수 없다.
+- 기존 회원 프로필이 없으면 명시적 PUT에서 해당 브라우저의 guest 프로필을 회원에 귀속한다. 기존 회원 프로필이 있으면 우선하며 기록을 합치지 않는다.
+- 신규 점수는 `game_player_score` / `game_player_score_daily`에 `(game_id, track, board, player_id[, play_date])`별 최고 하나를 저장한다. 입력 nickname은 권한이나 이름의 원본이 아니다.
+- 기존 `game_score` / `game_score_daily`는 읽기 전용 과거 기록으로 보존한다. 기존 member_id도 nickname 기반 claim이므로 소유권으로 신뢰하지 않는다. 공개 랭킹에는 구분 표시하며 개인 기록은 새 player 점수만 사용한다.
+- 닉네임 변경은 같은 playerId를 유지하고 랭킹 조회는 현재 프로필 이름을 사용한다. 점수·변경 쓰기는 프로필 행 잠금 및 READ_COMMITTED로 직렬화한다(기본 REPEATABLE_READ snapshot이 잠금 전 열리면 기다린 뒤 과거 점수를 조회하는 실제 경합을 방지).
+- 사이트 공통 「게임 닉네임」 모달과 `lib/rank.js`가 동일 API를 사용한다. `GameRank.setNickname`은 이제 Promise다. iframe은 부모 모달을 열고 부모가 없으면 독립 모달을 사용한다. localStorage 닉네임은 소유권으로 사용하지 않는다.
+- 게이트웨이 `game-player-profile`은 `game-my-record`의 `*/me`보다 먼저 매칭한다. profile/score는 쿠키 또는 Bearer JWT를 검증하고 유효하지 않은 회원 인증을 게스트로 바꾸지 않는다.
+
 ## Modules
 
 | Gradle path | 역할 |
@@ -84,7 +95,7 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
 | `GET /api/v1/games/{slug}`, `/{slug}/similar` | 상세(BETA 노출 허용) / 태그 교집합 유사 게임 |
 | `POST /api/v1/games/{slug}/sessions`, `PATCH .../{sessionKey}` | 세션 시작(게스트 OK)/종료 |
 | `PUT /api/v1/games/{slug}/rating` | 평점 upsert (X-User-Id 필수) |
-| `POST /api/v1/games/{slug}/scores`, `GET .../leaderboard?track=&board=&limit=&period=&date=` | 랭킹 제출/조회 (게스트 OK). **운영자(ROLE_ADMIN)·자동화 UA 제출은 받되 기록하지 않고 `excluded=true` 로 답한다**(ADR-0084 개정 2026-09-20). `board` 는 게임이 나눈 모드 키이고 생략 시 기본 보드(V59). `period=ALL_TIME\|DAILY`, 생략 시 ALL_TIME — 게임 안 위젯(`lib/rank.js`)이 부르는 계약이 그것이다. `date` 는 DAILY 전용이고 생략 시 **KST 오늘** |
+| `POST /api/v1/games/{slug}/scores`, `GET .../leaderboard?track=&board=&limit=&period=&date=` | 랭킹 제출/조회 (서버 프로필을 설정한 게스트 OK; playerId 기준). **운영자(ROLE_ADMIN)·자동화 UA 제출은 받되 기록하지 않고 `excluded=true` 로 답한다**(ADR-0084 개정 2026-09-20). `board` 는 게임이 나눈 모드 키이고 생략 시 기본 보드(V59). `period=ALL_TIME\|DAILY`, 생략 시 ALL_TIME — 게임 안 위젯(`lib/rank.js`)이 부르는 계약이 그것이다. `date` 는 DAILY 전용이고 생략 시 **KST 오늘** |
 | `GET /api/v1/games/leaderboards?boards=&entries=` | 허브 레일용 배치 — 기록 있는 보드의 TOP N + **오늘 기록(`todayEntries`)**을 한 응답에 |
 | `GET/PUT /api/v1/games/{slug}/save` | 서버 세이브 — **게스트 허용** (V9). 로그인 사용자는 `X-User-Id`, 게스트는 서버 발급 12자리 **이어하기 코드**(`?code=` / body `code`)로 식별. PUT 은 `{data, version, code?}` 낙관적 저장, 신규 시 코드 발급. 클라이언트는 로그인 중에도 코드를 함께 보내고, 서버는 계정 슬롯을 먼저 찾은 뒤 없을 때만 코드로 폴백한다. **동시 쓰기 방어는 `@Version` 하나뿐** — `X-Device-Id` 리스는 걷어냈다(아래 Key Rules) |
 | `POST /api/v1/games/{slug}/runs`, `GET .../{runKey}`, `POST .../{runKey}/consume` | 로그라이크 런 — 서버 시드 발급/조회/소모 (게스트 허용) |
