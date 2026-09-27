@@ -70,3 +70,8 @@
 
 ### 2026-09-28 — stage routes and deployment authorization
 User requests stage-specific center/both-flanks/one-sided invasions, and explicitly requests deployment once done. This supersedes SR-1.1's single fixed outer route and the earlier deployment exclusion. Exact geometry, per-enemy route persistence, version2 compatibility and acceptance tests are in [routes-v2](planning/routes-v2.md). Twenty waves become four five-wave stages: center, both, left, right. All routes end with central shared defense before the gate. Same-map browser save v1 is safely rejected; network protocol2 rejects old clients with an explicit update notice. Release uses isolated fresh remote-main worktrees and only own commits, preserving concurrent game changes. Direct game URL deployment is authorized; catalog/DB registration is not required for this release.
+
+## 2026-09-28 difficulty patch
+User requested harder difficulty and immediate deployment with verification procedures skipped to save tokens. Broad reviews/browser tests omitted; required minimum existing core suite17/17 passed. Same-seed quick comparison: onlyseat0AI builds→loss atwave17; bothAIbuild→wave20win. This is a sample, not a guarantee for every player strategy.
+Normal waves: enemies6+wave→10+wave (max30); spacing.9s→.65s; speed+12%; health1.4×(1+.28p+.008p²), p=wave−1; boss additional1.35×. Rewards perkill perplayer ceil(base×.65) so added enemies do not inflate economy. Test-mode numbers unchanged.
+Scoped games release81794e10; parentc55fec2e. Only deployment rollout/artifact confirmation follows; no extra E2E/review.

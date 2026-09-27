@@ -44,3 +44,8 @@
 - Final tests41/41, localE2E10/10, actualproduction two-Chrome smoke6/6. Full evidence status.md and verifications/public/public-smoke.json.
 - All route-revision/deployment tasks complete. No blockers. Catalog DB row not added; direct index URL works and invitation retains /index.html.
 - Shared parent remains on its original local history; deployment used clean worktrees to preserve other sessions. Do not force shared parent to release branch. Test-only public-smoke assertion improvement is local commitdb35ad77.
+
+## 2026-09-28 difficulty patch
+User requested harder difficulty and immediate deployment with verification procedures skipped to save tokens. Broad reviews/browser tests omitted; required minimum existing core suite17/17 passed. Same-seed quick comparison: onlyseat0AI builds→loss atwave17; bothAIbuild→wave20win. This is a sample, not a guarantee for every player strategy.
+Normal waves: enemies6+wave→10+wave (max30); spacing.9s→.65s; speed+12%; health1.4×(1+.28p+.008p²), p=wave−1; boss additional1.35×. Rewards perkill perplayer ceil(base×.65) so added enemies do not inflate economy. Test-mode numbers unchanged.
+Scoped games release81794e10; parentc55fec2e. Only deployment rollout/artifact confirmation follows; no extra E2E/review.
