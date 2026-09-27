@@ -134,6 +134,12 @@ class IndexAliasManager(
                             }
                         )
                     }
+                        // 운영 OpenSearch 는 단일 노드다. 선언하지 않으면 서버 기본값(레플리카 1)이
+                        // 들어가고 복제본을 둘 곳이 없어 클러스터가 상시 yellow 가 된다 — 가용성
+                        // 이득은 없고 진짜 장애 신호만 가린다(2026-09-25 개념 재색인이 그렇게 만들었다).
+                        // 프라이머리 1 은 단일 노드에서 검색이 샤드로 갈라지지 않는 유일한 값이다.
+                        .numberOfShards(1)
+                        .numberOfReplicas(0)
                 }
                 .mappings { m ->
                     m.properties("concept_id", Property.of { p -> p.keyword { k -> k } })
