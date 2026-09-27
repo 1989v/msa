@@ -7,9 +7,10 @@ questions:
     proposed: 전란의 시대물 콘셉트와 귀야행의 실루엣 규칙을 참고
   - id: multiplayer-mode
     stage: pre-impl
-    status: open
+    status: closed
     question: 서로 다른 기기의 온라인 협동인가, 한 화면 로컬 협동인가?
-    proposed: 온라인 2인 협동
+    answer: 온라인 2인 협동 + 싱글
+    decided_at: 2026-09-27
   - id: visual-direction
     stage: pre-impl
     status: open
