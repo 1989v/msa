@@ -42,6 +42,8 @@ A first browser run exposed a stale-snapshot guest summon-selection race after a
 - Image workflow: https://github.com/1989v/msa/actions/runs/36338402776 — completed/success.
 - Rollout: deployment portal-fe successfully rolled out, updated1/replicas1/ready1; image portal-fe:02ced3b.
 - Deployed js/data.mjs: HTTP200,text/javascript; byte-for-byte identical to locally verified data.mjs.
-- `PUBLIC_GAME_URL=https://game.1989v.com/games/twin-banner-defense/index.html node tools/public-smoke.mjs`: PASS6/6, finished 2026-09-27T17:56:42.692Z. Real production WebSocket, two independent Chrome processes, no testhooks. Both peers shared schema2/routeIds/normal20-wave settings and matching wire snapshots; guest closure preserved live host progress with AI. Runtime errors0.
+- `PUBLIC_GAME_URL=https://game.1989v.com/games/twin-banner-defense/index.html node tools/public-smoke.mjs`: PASS6/6, finished 2026-09-27T17:58:57.263Z. Real production WebSocket, two independent Chrome processes, no testhooks. Both peers shared schema2/routeIds/normal20-wave settings and matching wire snapshots; guest closure preserved live host progress with AI. Runtime errors0.
 - Evidence: [public-smoke.json](verifications/public/public-smoke.json), [production combat](verifications/public/public-online-host.png). Actual physical-phone thermal tests remain unperformed.
 - Test-only assertion strengthened after release in local commit db35ad77; runtime release remains19e6c2c3. No unrelated dirty code deployed.
+
+Public smoke CLI cleanup was hardened after the first successful report retained a native CDP closing handle. Browser cleanup and JSON writing are awaited before returning the recorded exit code. Final production rerun exited0 with PASS6/6; deployed game runtime unchanged.

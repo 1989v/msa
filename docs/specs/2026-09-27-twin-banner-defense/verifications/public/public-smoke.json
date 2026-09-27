@@ -1,13 +1,13 @@
 {
   "suite": "public route-v2 native browser smoke",
   "url": "https://game.1989v.com/games/twin-banner-defense/index.html",
-  "startedAt": "2026-09-27T17:56:21.138Z",
+  "startedAt": "2026-09-27T17:58:38.020Z",
   "status": "pass",
   "checks": [
     {
       "name": "two independent browser processes load deployed artwork and modules",
       "status": "pass",
-      "durationMs": 6627,
+      "durationMs": 4920,
       "details": {
         "browserProcesses": 2,
         "testHooks": false,
@@ -20,7 +20,7 @@
     {
       "name": "normal solo enters gameplay and exits through the visible controls",
       "status": "pass",
-      "durationMs": 928,
+      "durationMs": 937,
       "details": {
         "hud": true
       }
@@ -28,16 +28,16 @@
     {
       "name": "private room, ready and start use the production WebSocket endpoint",
       "status": "pass",
-      "durationMs": 2901,
+      "durationMs": 2567,
       "details": {
-        "room": "UPRDTY",
+        "room": "TN3PMS",
         "relay": "wss://game.1989v.com/ws/games/twin-banner-defense",
         "initial": {
           "key": "1:1",
-          "hash": "de7995293d453f97a7fe1c839d84b075ea437f1f8f2448d05713ed2cd7589ee1",
+          "hash": "25815a558ce1e29b6cdd22dc42d9672959365d9af4289d030afa7dd22181fcb7",
           "tick": 0,
           "wave": 0,
-          "seed": 382805865,
+          "seed": 431496292,
           "gateHp": 20,
           "routeIds": [],
           "enemies": 0,
@@ -49,19 +49,19 @@
     {
       "name": "normal twenty-wave configuration publishes matching route-v2 combat snapshots",
       "status": "pass",
-      "durationMs": 6310,
+      "durationMs": 6293,
       "details": {
-        "key": "1:12",
-        "hash": "5e3868c87dd5e3ca500abe764b45f0fd8cd5eb6a25d25619220bdf3905f33434",
-        "tick": 166,
+        "key": "1:13",
+        "hash": "0c4b5d92fef327a5f3f38877f690b98dc6c2224fd4dee4f1056efac271a1cee0",
+        "tick": 181,
         "wave": 1,
-        "seed": 382805865,
+        "seed": 431496292,
         "gateHp": 20,
         "routeIds": [
           "center-left",
           "center-right"
         ],
-        "enemies": 3,
+        "enemies": 4,
         "maxWaves": 20,
         "testMode": false
       }
@@ -69,7 +69,7 @@
     {
       "name": "guest window closure preserves host wave and visibly continues with AI",
       "status": "pass",
-      "durationMs": 2643,
+      "durationMs": 2616,
       "details": {
         "beforeWave": 1,
         "afterWave": "1 / 20 공세",
@@ -86,7 +86,7 @@
           "side": "host",
           "messages": 28,
           "maxChars": 2210,
-          "maxPerSecond": 7,
+          "maxPerSecond": 6,
           "snapshots": 14
         },
         {
@@ -110,5 +110,5 @@
   "limitations": [
     "A normal 20-wave configuration is verified; this short smoke does not complete all 20 waves."
   ],
-  "finishedAt": "2026-09-27T17:56:42.692Z"
+  "finishedAt": "2026-09-27T17:58:57.263Z"
 }
