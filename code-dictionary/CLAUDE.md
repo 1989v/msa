@@ -49,7 +49,6 @@ FE 는 별도 앱이 아니라 **portal-fe 단일 SPA 의 메인 콘텐츠**로 
 |--------|------|
 | `GET /api/v1/concepts` (+graph, treemap stats, CRUD) | 개념 조회/관리, 그래프/트리맵 데이터 |
 | `GET /api/v1/concepts/{conceptId}/relations` | 개념 하나의 이웃 전부(나가는·들어오는 간선 + 역방향 라벨 · reason · 근거 · 질문) — 도메인 간 탐색은 이것으로 한 홉씩 |
-| `GET /api/v1/concepts/graph/hierarchy?root=` | `CONTAINS` 로 층을 센 DAG (root 없으면 진입점 전부). `/tech` 「계층」 탭이 읽는다 |
 | `GET /api/v1/search`, `/api/v1/search/suggest` | 개념 검색 + 자동완성 |
 | `POST /api/v1/index`, `/api/v1/index/sync` | 색인 적재/동기화 (job 상태 조회 포함) |
 | `GET /api/v1/services` | 서비스 카탈로그 |
