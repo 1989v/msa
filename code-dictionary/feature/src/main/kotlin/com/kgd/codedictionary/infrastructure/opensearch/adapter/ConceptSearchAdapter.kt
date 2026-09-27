@@ -8,6 +8,9 @@ import com.kgd.codedictionary.application.search.port.SearchHit
 import com.kgd.codedictionary.application.search.port.SearchResponse
 import com.kgd.codedictionary.application.search.port.SuggestHit
 import io.github.oshai.kotlinlogging.KotlinLogging
+import jakarta.json.JsonNumber
+import jakarta.json.JsonString
+import jakarta.json.JsonValue
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 
@@ -78,16 +81,16 @@ class ConceptSearchAdapter(
             }
 
             SearchHit(
-                conceptId = sourceMap["concept_id"]?.toString() ?: "",
-                conceptName = sourceMap["concept_name"]?.toString() ?: "",
-                category = sourceMap["category"]?.toString() ?: "",
-                level = sourceMap["level"]?.toString() ?: "",
-                filePath = sourceMap["file_path"]?.toString(),
-                lineStart = (sourceMap["line_start"] as? Number)?.toInt(),
-                lineEnd = (sourceMap["line_end"] as? Number)?.toInt(),
-                codeSnippet = sourceMap["code_snippet"]?.toString(),
-                gitUrl = sourceMap["git_url"]?.toString(),
-                description = sourceMap["description"]?.toString(),
+                conceptId = jsonText(sourceMap["concept_id"]) ?: "",
+                conceptName = jsonText(sourceMap["concept_name"]) ?: "",
+                category = jsonText(sourceMap["category"]) ?: "",
+                level = jsonText(sourceMap["level"]) ?: "",
+                filePath = jsonText(sourceMap["file_path"]),
+                lineStart = jsonInt(sourceMap["line_start"]),
+                lineEnd = jsonInt(sourceMap["line_end"]),
+                codeSnippet = jsonText(sourceMap["code_snippet"]),
+                gitUrl = jsonText(sourceMap["git_url"]),
+                description = jsonText(sourceMap["description"]),
                 score = hit.score()?.toFloat() ?: 0f
             )
         }
@@ -141,18 +144,32 @@ class ConceptSearchAdapter(
                 it.to(Map::class.java) as Map<String, Any?>
             } ?: return@mapNotNull null
 
-            fun stripQuotes(value: Any?): String? = value?.toString()?.removeSurrounding("\"")
-
-            val conceptId = stripQuotes(sourceMap["concept_id"]) ?: return@mapNotNull null
+            val conceptId = jsonText(sourceMap["concept_id"]) ?: return@mapNotNull null
             if (!seen.add(conceptId)) return@mapNotNull null
 
             SuggestHit(
                 conceptId = conceptId,
-                conceptName = stripQuotes(sourceMap["concept_name"]) ?: "",
-                category = stripQuotes(sourceMap["category"]) ?: "",
-                level = stripQuotes(sourceMap["level"]) ?: "",
-                description = stripQuotes(sourceMap["description"])
+                conceptName = jsonText(sourceMap["concept_name"]) ?: "",
+                category = jsonText(sourceMap["category"]) ?: "",
+                level = jsonText(sourceMap["level"]) ?: "",
+                description = jsonText(sourceMap["description"])
             )
         }.take(size)
     }
+}
+
+/**
+ * `JsonData.to(Map)` 은 값을 JSON-P 객체로 남긴다 — `toString()` 으로 꺼내면 문자열에 따옴표가 한 겹 더 붙고
+ * (`"\"lattice-viterbi\""`), JSON null 은 `"null"` 이라는 글자가 되며, 숫자는 [Number] 가 아니라 늘 null 로 떨어진다.
+ */
+internal fun jsonText(v: Any?): String? = when (v) {
+    null, JsonValue.NULL -> null
+    is JsonString -> v.string
+    else -> v.toString()
+}
+
+internal fun jsonInt(v: Any?): Int? = when (v) {
+    is JsonNumber -> v.intValue()
+    is Number -> v.toInt()
+    else -> null
 }
