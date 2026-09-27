@@ -27,7 +27,7 @@ class GraphServiceCategoryStatsTest : BehaviorSpec({
 
     val conceptRepository = mockk<ConceptRepositoryPort>()
     val indexRepository = mockk<ConceptIndexRepositoryPort>()
-    val service = GraphService(conceptRepository, indexRepository, mockk<ConceptEdgeRepositoryPort>())
+    val service = GraphService(conceptRepository, indexRepository)
 
     beforeEach { clearMocks(conceptRepository, indexRepository) }
 

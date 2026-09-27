@@ -19,11 +19,8 @@ interface ConceptRepositoryPort {
     fun findAllList(): List<Concept>
 
     /**
-     * 계층 · 아틀라스용 — 동의어 · 옛 관계 없이 칸만 읽는다. 개념이 수천 개라 [findAllList] 의 EAGER 로드는
-     * 개념마다 추가 쿼리가 나가 수십 초가 걸린다.
+     * 개념 화면의 이웃 — 동의어 · 옛 관계 없이 칸만 id 목록만큼 읽는다. [findAllList] 의 EAGER 로드는
+     * 개념마다 추가 쿼리가 나가 수천 개에서 수십 초가 걸린다.
      */
-    fun findAllSummaries(): List<Concept>
-
-    /** [findAllSummaries] 와 같은 칸을 id 목록만큼 — 개념 화면의 이웃 */
     fun findSummariesByConceptIds(conceptIds: Collection<String>): List<Concept>
 }

@@ -59,8 +59,6 @@ class ConceptRepositoryAdapter(
     override fun findAllList(): List<Concept> =
         jpaRepository.findAll().map { it.toDomain() }
 
-    override fun findAllSummaries(): List<Concept> = jpaRepository.findAllSummaryRows().map(::summaryOf)
-
     override fun findSummariesByConceptIds(conceptIds: Collection<String>): List<Concept> =
         if (conceptIds.isEmpty()) emptyList() else jpaRepository.findSummaryRowsIn(conceptIds).map(::summaryOf)
 

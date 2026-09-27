@@ -37,18 +37,6 @@ export interface GraphData {
 }
 
 /** `GET /api/v1/concepts/graph/hierarchy` — CONTAINS 로 층을 센 DAG */
-export interface HierarchyNode {
-  id: string;
-  name: string;
-  category: Category;
-  level: Level;
-  /** 진입점이 0. 두 부모를 가지면 짧은 쪽 */
-  depth: number;
-  description?: string | null;
-  /** 역할 축. 온톨로지 파일에 아직 놓이지 않은 개념은 null */
-  kind?: ConceptKind | null;
-}
-
 /** 노드 유형 7종 — 판정은 개념 자체의 성격으로 (ADR-0100) */
 export type ConceptKind = 'DOMAIN' | 'STAGE' | 'MECHANISM' | 'TERM' | 'TECHNOLOGY' | 'PROBLEM' | 'METRIC';
 
@@ -63,16 +51,6 @@ export type HierarchyEdgeKind =
   | 'MITIGATES'
   | 'MEASURED_BY'
   | 'ALTERNATIVE_TO';
-
-export interface HierarchyEdge {
-  from: string;
-  to: string;
-  kind: HierarchyEdgeKind;
-  ordinal: number;
-  /** 관계의 「왜」와 적용 조건 */
-  reason?: string | null;
-  evidenceRef?: string | null;
-}
 
 /** `GET /api/v1/concepts/{conceptId}/relations` — 개념 하나의 이웃 전부(루트·도메인 무관) */
 export interface RelationEdge {
@@ -102,12 +80,6 @@ export interface ConceptRelations {
   questions: string[];
   /** 이 레포에서 그 개념인 코드 — 줄 번호 없이 파일·심볼. 원본은 GitHub raw 로 받는다 */
   code?: { path: string; symbol: string; note?: string | null }[];
-}
-
-export interface ConceptHierarchy {
-  roots: string[];
-  nodes: HierarchyNode[];
-  edges: HierarchyEdge[];
 }
 
 export interface SuggestItem {

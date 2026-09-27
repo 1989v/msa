@@ -1,12 +1,10 @@
 package com.kgd.codedictionary.application.graph.service
 
-import com.kgd.codedictionary.application.concept.port.ConceptEdgeRepositoryPort
 import com.kgd.codedictionary.application.concept.port.ConceptRepositoryPort
 import com.kgd.codedictionary.application.graph.dto.*
 import com.kgd.codedictionary.application.graph.usecase.ConceptGraphUseCase
 import com.kgd.codedictionary.application.index.port.ConceptIndexRepositoryPort
 import com.kgd.codedictionary.domain.concept.model.Concept
-import com.kgd.codedictionary.domain.concept.model.ConceptHierarchy
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
@@ -15,7 +13,6 @@ import org.springframework.stereotype.Service
 class GraphService(
     private val conceptRepository: ConceptRepositoryPort,
     private val indexRepository: ConceptIndexRepositoryPort,
-    private val edgeRepository: ConceptEdgeRepositoryPort,
 ) : ConceptGraphUseCase {
     private val log = KotlinLogging.logger {}
 
@@ -166,47 +163,6 @@ class GraphService(
         }
 
         return TreemapDataDto(categories = categoryDtos, totals = totals)
-    }
-
-    /**
-     * 간선은 concept_id 를 값으로 들고 있어(FK 없음) 개념 행이 사라진 간선이 남을 수 있다 —
-     * 그런 노드와 그 간선은 응답에서 뺀다. 화면이 이름 없는 노드를 그리게 두지 않는다.
-     */
-    // 인자 이름 root 는 SpEL 의 #root 와 겹쳐 #p0 으로 쓴다
-    @Cacheable(value = ["conceptHierarchy"], key = "#p0 ?: '__all__'")
-    override fun getHierarchy(root: String?): ConceptHierarchyDto {
-        val hierarchy = ConceptHierarchy.build(edgeRepository.findAll(), root)
-        val conceptsById = conceptRepository.findAllSummaries()
-            .filter { it.conceptId in hierarchy.conceptIds }
-            .associateBy { it.conceptId }
-
-        val nodes = hierarchy.depthOf.mapNotNull { (conceptId, depth) ->
-            conceptsById[conceptId]?.let { concept ->
-                HierarchyNodeDto(
-                    id = concept.conceptId,
-                    name = concept.name,
-                    category = concept.category.name,
-                    level = concept.level.name,
-                    depth = depth,
-                    description = concept.description,
-                    kind = concept.kind?.name,
-                )
-            }
-        }
-        val edges = hierarchy.edges
-            .filter { it.fromConceptId in conceptsById && it.toConceptId in conceptsById }
-            .map {
-                HierarchyEdgeDto(
-                    from = it.fromConceptId, to = it.toConceptId, kind = it.kind.name, ordinal = it.ordinal,
-                    reason = it.reason, evidenceRef = it.evidenceRef,
-                )
-            }
-
-        return ConceptHierarchyDto(
-            roots = hierarchy.roots.filter { it in conceptsById },
-            nodes = nodes,
-            edges = edges,
-        )
     }
 
     /**
