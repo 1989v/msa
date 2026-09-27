@@ -30,3 +30,17 @@
 ## 로컬 커밋
 - games 구현 커밋: `d5caa78381089ac809ad02adb7ce92424cee9dfc`. 푸시 없음.
 - 부모 저장소의 games 포인터는 작업 시작 전부터 다른 세션 커밋들과 차이가 있어 이번 문서 커밋에 포함하지 않는다. 후속 통합 시 이 게임 커밋을 보존하고 포인터를 함께 정리한다.
+
+## 2026-09-28 stage routes/release in progress
+- User requested center/both/one-side variety by stage and explicitly authorized deployment. Four stages1–5/6–10/11–15/16–20 implemented.
+- Fresh image `assets/battlefield-routes-v2.png` opens the central road, image_gen prompt retained at `planning/route-background-prompt.txt`; regeneration several minutes, do not redo.
+- Save/protocol version2, strict routeId, symmetric starting units and remainingdistance targeting. Fresh review caught and fixed late legacy hi, quick invite room-mode and busyACKloop regressions.
+- Clean release worktrees `/private/tmp/twin-release-games-20260928` and `/private/tmp/twin-release-msa-20260928`, both based on fresh remote main. Shared dirty checkout must never be rebased or pushed wholesale.
+- Public verification runner: `PUBLIC_GAME_URL=https://game.1989v.com/games/twin-banner-defense/index.html node portal-fe/public/games/twin-banner-defense/tools/public-smoke.mjs`. Independent Chrome processes, actual WebSocket snapshots, no game debughooks.
+
+## 2026-09-28 completed public release
+- Public URL https://game.1989v.com/games/twin-banner-defense/index.html
+- Games remote commit19e6c2c3; parent deployment02ced3bc; imagesrun36338402776 success; serverimage02ced3b ready1/1.
+- Final tests41/41, localE2E10/10, actualproduction two-Chrome smoke6/6. Full evidence status.md and verifications/public/public-smoke.json.
+- All route-revision/deployment tasks complete. No blockers. Catalog DB row not added; direct index URL works and invitation retains /index.html.
+- Shared parent remains on its original local history; deployment used clean worktrees to preserve other sessions. Do not force shared parent to release branch. Test-only public-smoke assertion improvement is local commitdb35ad77.

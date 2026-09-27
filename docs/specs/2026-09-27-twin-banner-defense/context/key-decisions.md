@@ -25,3 +25,9 @@
 - 사용자 원문: "이거 근데 적이 이동하는 라인이나 적 캐릭터 퀄리티가 너무 떨어져 보여".
 - 결정: 단순 도형 적·균일한 갈색 띠 도로 기각. 완성된 적 스프라이트, 돌판·흙·높낮이를 가진 경로, 출현과 성문 도달을 읽을 수 있는 화면을 다시 제작한다.
 - 제약: 질감을 늘리더라도 사태의 먹선·평면 색면과 타워 배치 가독성을 유지한다.
+
+## 2026-09-28 — stage-varying invasion and release
+- User: "이거 스테이지별로 위치 바꿔가면서 진행. 둘 다 섞어서. 혹은 한쪽에 몰아서 등등?"
+- User: "그거 되는대로 배포해 줘". Deployment now authorized.
+- Four stages of five waves: center→both→left→right; shared central finish. Side muster points sit on the existing outer road. Approved artwork retains its style with central entrance opened.
+- Route schema2 + protocol2 prevent old map state from silently changing. Fresh remote-main release worktrees preserve unrelated concurrent commits.

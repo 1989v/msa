@@ -1,47 +1,84 @@
 {
   "suite": "twin-banner-defense browser E2E",
-  "startedAt": "2026-09-27T14:34:18.343Z",
+  "startedAt": "2026-09-27T17:48:24.066Z",
   "status": "pass",
   "checks": [
     {
       "name": "assets load in two independent browser contexts",
       "status": "pass",
-      "durationMs": 648,
+      "durationMs": 701,
       "details": {
         "visibility": [
           "visible",
           "visible"
         ],
         "contexts": 2,
-        "url": "http://127.0.0.1:54228/?test=1"
+        "url": "http://127.0.0.1:63347/?test=1"
       }
     },
     {
       "name": "corrupt save is explained and cleared without starting a match",
       "status": "pass",
-      "durationMs": 392
+      "durationMs": 426
     },
     {
       "name": "solo pause, save, reload and resume preserve progress",
       "status": "pass",
-      "durationMs": 1989,
+      "durationMs": 2091,
       "details": {
-        "savedTick": 36,
-        "resumedTick": 36
+        "savedTick": 37,
+        "resumedTick": 37
       }
+    },
+    {
+      "name": "four campaign stages display and spawn their configured entry routes",
+      "status": "pass",
+      "durationMs": 6641,
+      "details": [
+        {
+          "wave": 1,
+          "mode": "중앙",
+          "routeIds": [
+            "center-right",
+            "center-left"
+          ]
+        },
+        {
+          "wave": 6,
+          "mode": "양쪽",
+          "routeIds": [
+            "flank-left",
+            "flank-right"
+          ]
+        },
+        {
+          "wave": 11,
+          "mode": "왼쪽",
+          "routeIds": [
+            "flank-left"
+          ]
+        },
+        {
+          "wave": 16,
+          "mode": "오른쪽",
+          "routeIds": [
+            "flank-right"
+          ]
+        }
+      ]
     },
     {
       "name": "code-room create/join/ready/start uses the actual WebSocket relay",
       "status": "pass",
-      "durationMs": 338,
+      "durationMs": 337,
       "details": {
-        "room": "33HHPJ",
-        "seed": 1611917392,
+        "room": "353GBS",
+        "seed": 433470767,
         "host": {
           "seat": 0,
           "host": true,
           "online": true,
-          "room": "33HHPJ",
+          "room": "353GBS",
           "phase": "playing",
           "mode": "code"
         },
@@ -49,7 +86,7 @@
           "seat": 1,
           "host": false,
           "online": true,
-          "room": "33HHPJ",
+          "room": "353GBS",
           "phase": "playing",
           "mode": "code"
         },
@@ -62,14 +99,14 @@
             240,
             240
           ],
-          "hash": "3230c99d2c3a288e9db6bd5ff84b723a940a1fb6642c0d4c611b41ccf9035b20"
+          "hash": "adf72b9982c549018e989dca83561e83a3b21023c3c2a1aa9f2fff4e70623733"
         }
       }
     },
     {
       "name": "guest move and summon reach host; portrait controls are at least 44px",
       "status": "pass",
-      "durationMs": 2406,
+      "durationMs": 2342,
       "details": {
         "minimumButton": 44,
         "checkpoint": {
@@ -81,46 +118,46 @@
             240,
             190
           ],
-          "hash": "d2e4df975fa86a660cf7a25e4294f53cdceb96d484c28be8275583e6d1e7fc0a"
+          "hash": "109ea63c0fe183914c73a3a5832ea7b7c434199d6962d63503b97464970b0254"
         }
       }
     },
     {
       "name": "both peers finish a short real round and return to the same code room",
       "status": "pass",
-      "durationMs": 32027,
+      "durationMs": 27001,
       "details": {
         "result": "won",
         "completedWave": 3,
-        "sameRoom": "33HHPJ",
-        "nextSeed": 429497060
+        "sameRoom": "353GBS",
+        "nextSeed": 1413756565
       }
     },
     {
       "name": "host window closes; guest continues retained state with AI",
       "status": "pass",
-      "durationMs": 2252,
+      "durationMs": 2257,
       "details": {
         "checkpoint": {
           "label": "before host loss",
-          "tick": 60,
+          "tick": 62,
           "wave": 1,
           "gateHp": 20,
           "gold": [
             240,
             240
           ],
-          "hash": "aa3f33c1098e3d40474a476d0dc8d6317532830c2868a56fed53ab2af9f95ff2"
+          "hash": "cef2609ebeb685dde8a117a2cbf5009693c67ec1c92229a251ce1b23e0dddac5"
         },
-        "beforeTick": 60,
-        "afterTick": 64,
-        "seedPreserved": 429497060
+        "beforeTick": 62,
+        "afterTick": 66,
+        "seedPreserved": 1413756565
       }
     },
     {
       "name": "gallery contains all 14 kinds and 84 actual animation frames",
       "status": "pass",
-      "durationMs": 525,
+      "durationMs": 509,
       "details": {
         "kinds": 14,
         "frames": 84
@@ -131,14 +168,18 @@
       "status": "pass",
       "durationMs": 0,
       "details": {
-        "messages": 356,
-        "maxChars": 2193,
-        "maxPerSecond": 18
+        "messages": 302,
+        "maxChars": 2222,
+        "maxPerSecond": 20
       }
     }
   ],
   "screenshots": [
     "e2e-title.png",
+    "e2e-stage-1.png",
+    "e2e-stage-6.png",
+    "e2e-stage-11.png",
+    "e2e-stage-16.png",
     "e2e-portrait-combat.png",
     "e2e-landscape-combat.png",
     "e2e-round-result.png",
@@ -146,10 +187,10 @@
     "e2e-gallery.png"
   ],
   "runtimeErrors": [],
-  "finishedAt": "2026-09-27T14:34:59.934Z",
+  "finishedAt": "2026-09-27T17:49:07.196Z",
   "relayMetrics": {
-    "messages": 356,
-    "maxChars": 2193,
-    "maxPerSecond": 18
+    "messages": 302,
+    "maxChars": 2222,
+    "maxPerSecond": 20
   }
 }

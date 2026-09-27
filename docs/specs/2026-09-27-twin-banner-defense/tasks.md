@@ -35,3 +35,10 @@ Dependencies: 1,2,3,4. Phase: verify. Required Skills: hns:verify.
 - [x] 핵심 테스트 직접 재실행, 자연 플레이 싱글/협동, 애니메이션 상태 실제 관찰.
 - [x] 독립 리뷰, 발견 수정, 자산 출처/실행 README/검증 보고와 scoped commit.
 - Verify: `node --test tests/*.test.mjs`, `node tools/verify-assets.mjs`, `node tools/e2e.mjs`.
+
+### Task Group 6: Stage-varying routes and release (2026-09-28)
+Dependencies: initial implementation. User authorized revision and deployment.
+- [x] Route geometry/core persistence/version2 + stage tests.
+- [x] Center-road artwork, current/next invasion preview and help.
+- [x] Browser regression, compatibility tests and fresh review.
+- [x] Scoped remote release, production assets and two-browser online verification.

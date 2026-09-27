@@ -28,4 +28,17 @@ questions:
     question: 정확한 적 경로와 사거리, 세로 전장의 논리 좌표 대응은 무엇인가?
     proposed: 시안 결정 뒤 경로와 근접 유닛 효용을 검증해 확정
 
+  - id: route-variety-v2
+    stage: impl-discovery
+    status: closed
+    question: Single central entry or side entries?
+    answer: User requests stage-specific mix of center, both flanks and concentrated one-side invasions; four stages in routes-v2.md.
+    decided_at: 2026-09-28
+  - id: public-release-v2
+    stage: closure
+    status: closed
+    question: Deploy after route revision?
+    answer: User explicitly authorized deployment once complete.
+    decided_at: 2026-09-28
+
 resolution: 2026-09-27 user approved latest generated image and implementation; solo AI and layout resolved as implementation defaults in spec.md.

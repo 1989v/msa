@@ -65,3 +65,8 @@
 
 ## Vocabulary
 좌석=한 플레이어의 소유권. 성문=공동 체력/실패 목표. 군량=좌석별 소비 재화. 소환 풀=고정10종. 등급=개별 유닛 합성 성장. 병종 강화=해당 좌석 같은 종류 전체 강화. 지원=두 좌석 사이 군량 이전. Avoid: 등급과 병종 강화의 혼용.
+
+## Amendments
+
+### 2026-09-28 — stage routes and deployment authorization
+User requests stage-specific center/both-flanks/one-sided invasions, and explicitly requests deployment once done. This supersedes SR-1.1's single fixed outer route and the earlier deployment exclusion. Exact geometry, per-enemy route persistence, version2 compatibility and acceptance tests are in [routes-v2](planning/routes-v2.md). Twenty waves become four five-wave stages: center, both, left, right. All routes end with central shared defense before the gate. Same-map browser save v1 is safely rejected; network protocol2 rejects old clients with an explicit update notice. Release uses isolated fresh remote-main worktrees and only own commits, preserving concurrent game changes. Direct game URL deployment is authorized; catalog/DB registration is not required for this release.

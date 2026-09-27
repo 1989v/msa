@@ -1,0 +1,114 @@
+{
+  "suite": "public route-v2 native browser smoke",
+  "url": "http://127.0.0.1:8801/twin-banner-defense/index.html",
+  "startedAt": "2026-09-27T17:47:31.152Z",
+  "status": "pass",
+  "checks": [
+    {
+      "name": "two independent browser processes load deployed artwork and modules",
+      "status": "pass",
+      "durationMs": 796,
+      "details": {
+        "browserProcesses": 2,
+        "testHooks": false,
+        "moduleResponses": [
+          7,
+          7
+        ]
+      }
+    },
+    {
+      "name": "normal solo enters gameplay and exits through the visible controls",
+      "status": "pass",
+      "durationMs": 966,
+      "details": {
+        "hud": true
+      }
+    },
+    {
+      "name": "private room, ready and start use the production WebSocket endpoint",
+      "status": "pass",
+      "durationMs": 466,
+      "details": {
+        "room": "5LH2KD",
+        "relay": "ws://127.0.0.1:8801/ws/games/twin-banner-defense",
+        "initial": {
+          "key": "1:1",
+          "hash": "6d1fa91dc97d50ee2bc5150f69a326570c2d85f03277ecad2819aee6c0fc11a3",
+          "tick": 0,
+          "wave": 0,
+          "seed": 95561555,
+          "gateHp": 20,
+          "routeIds": [],
+          "enemies": 0,
+          "maxWaves": 20,
+          "testMode": false
+        }
+      }
+    },
+    {
+      "name": "normal twenty-wave configuration publishes matching route-v2 combat snapshots",
+      "status": "pass",
+      "durationMs": 6325,
+      "details": {
+        "key": "1:13",
+        "hash": "74775700d342a3d9d48c228e23edbcbd7a4ec6cc3a68f8c4bd98e848718cb788",
+        "tick": 182,
+        "wave": 1,
+        "seed": 95561555,
+        "gateHp": 20,
+        "routeIds": [
+          "center-left",
+          "center-right"
+        ],
+        "enemies": 4,
+        "maxWaves": 20,
+        "testMode": false
+      }
+    },
+    {
+      "name": "guest window closure preserves host wave and visibly continues with AI",
+      "status": "pass",
+      "durationMs": 2225,
+      "details": {
+        "beforeWave": 1,
+        "afterWave": "1 / 20 공세",
+        "beforeCooldown": 8,
+        "afterCooldown": 0
+      }
+    },
+    {
+      "name": "public run stays within message budgets without runtime errors",
+      "status": "pass",
+      "durationMs": 0,
+      "details": [
+        {
+          "side": "host",
+          "messages": 25,
+          "maxChars": 2181,
+          "maxPerSecond": 7,
+          "snapshots": 13
+        },
+        {
+          "side": "guest",
+          "messages": 3,
+          "maxChars": 88,
+          "maxPerSecond": 3,
+          "snapshots": 13
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    "public-title.png",
+    "public-solo.png",
+    "public-online-guest.png",
+    "public-online-host.png",
+    "public-ai-continuation.png"
+  ],
+  "runtimeErrors": [],
+  "limitations": [
+    "A normal 20-wave configuration is verified; this short smoke does not complete all 20 waves."
+  ],
+  "finishedAt": "2026-09-27T17:47:44.021Z"
+}
