@@ -364,7 +364,7 @@ concepts:
     description: "정해진 크기의 배너 자리에 이미지 · 텍스트 소재를 싣는다. IAB 표준 크기(300×250 · 728×90 …)가 있다"
     synonyms: ["display ad", "banner", "IAB ad size"]
     code:
-      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/placement/model/PlacementFormat.kt, symbol: "enum class PlacementFormat { CARD, BANNER }", note: "1단계 형식 — 카드 · 배너" }
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/placement/model/PlacementFormat.kt, symbol: "enum class PlacementFormat", note: "1단계 형식 — 카드 · 배너" }
   - id: native-ad
     kind: MECHANISM
     name: "네이티브 광고 (인피드)"
@@ -607,7 +607,7 @@ concepts:
     description: "이 가격 밑이면 팔지 않는다. 너무 높으면 채움률이, 너무 낮으면 단가가 떨어진다. 1989v 는 지면별 CPM 최저가를 두고 CPC 는 eCPM 으로 비교한다"
     synonyms: ["floor", "reserve price", "price floor"]
     code:
-      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/placement/model/AdPlacement.kt, symbol: "fun changeFloor(floorMicros: Long)", note: "지면 최저가 — 저장 뒤 오른 지면은 결정에서 제외" }
+      - { path: ads/domain/src/main/kotlin/com/kgd/ads/domain/placement/model/AdPlacement.kt, symbol: "fun changeFloor", note: "지면 최저가 — 저장 뒤 오른 지면은 결정에서 제외" }
     contains: [dynamic-floor]
     affects: [fill-rate, rpm]
   - id: dynamic-floor
