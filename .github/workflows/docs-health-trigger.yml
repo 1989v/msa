@@ -5,19 +5,24 @@ name: Docs Health
 # — 그건 .github/workflows/docs-health.yml (재사용 워크플로) 에 그대로 보존돼 있고,
 # ANTHROPIC_API_KEY_FOR_WORKFLOWS 시크릿 등록 시 트리거 측 uses 만 바꿔 재활성 가능.
 #
-# Doctor.py 가 FAIL 이면 CI 빨강. WARN 만 있으면 통과 (--strict 미사용).
+# 저장소 정책 진입점 scripts/docs-health.py: FAIL 은 차단, WARN 은 통과.
+# source citation 은 docs/standards/doc-index-tracking.md 에 따라 선택 사항(WARN).
 on:
   pull_request:
     paths:
       - '**/*.md'
       - 'docs/**'
       - '.github/workflows/docs-health-trigger.yml'
+      - 'scripts/docs-health.py'
+      - 'scripts/tests/test_docs_health.py'
   push:
     branches: [main]
     paths:
       - '**/*.md'
       - 'docs/**'
       - '.github/workflows/docs-health-trigger.yml'
+      - 'scripts/docs-health.py'
+      - 'scripts/tests/test_docs_health.py'
   workflow_dispatch:
 
 concurrency:
@@ -26,7 +31,7 @@ concurrency:
 
 jobs:
   doctor:
-    name: Doctor (4-layer health diagnostic)
+    name: Doctor (5-layer health diagnostic)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -46,16 +51,9 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Run doctor
-        # doctor.py 종료 코드 규약: 0=PASS · 2=WARN · 1=FAIL.
-        # 그냥 실행하면 WARN(2)도 실패로 잡혀 **늘 빨간 CI** 가 된다 —
-        # 미인용 문서 30건이 WARN 이라 사실상 항상 빨갛고, 그러면 아무도 CI 를 안 본다.
-        # 이 파일 상단 주석이 정한 대로 FAIL 만 빨갛게 한다.
-        run: |
-          set +e
-          python3 ai/plugins/hns/scripts/doctor.py
-          code=$?
-          set -e
-          echo "doctor exit=$code (0=PASS 2=WARN 1=FAIL)"
-          [ "$code" -eq 1 ] && exit 1
-          exit 0
+      - name: Test Docs Health policy
+        run: python3 -m unittest discover -s scripts/tests -p 'test_docs_health.py' -v
+
+      - name: Run doctor with repository policy
+        # 예상하지 못한 실행 오류도 그대로 실패시킨다.
+        run: python3 scripts/docs-health.py
