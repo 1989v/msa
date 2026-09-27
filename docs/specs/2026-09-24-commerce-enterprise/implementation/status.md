@@ -252,3 +252,13 @@
   · FE `tsc -b` 오류 0(실패 사유 값 주입 시 1) · vitest shop 14/14
 - 운영(run 36186858103 success, atlas·commerce·portal-fe·search-batch `e70a611`): flyway order/product 20260926.002 · inventory 9 success=1,
   unit_price·price 컬럼 없음, 표식 테이블 없음, 스냅샷 컬럼 NOT NULL, 주문 12초 사가 COMPLETED, ERROR 0
+
+## 마감 결정 (2026-09-27 KST)
+- 운영 점검 데이터는 **남긴다** — 창고 1 · 판매자 2(`ops-e2e-seller-20260925`) · 상품 97 · 98(INACTIVE) · 주문 1~5 · 클레임 1·2.
+  원장·정산 흐름의 실제 예시이고, 지우려면 역분개까지 맞춰야 한다.
+- 판매자 계좌 암호화 키: 로컬 사본을 비밀번호 관리자로 옮기고 `~/.config/msa-secrets` 삭제. 운영 원본은 Secret `seller-account-enc`(64자 확인).
+- 블로그 draft id 35 는 DRAFT 유지. SealedSecret 도입은 보류(별도 작업).
+- commerce 메모리 797Mi / 1200Mi (기동 약 9시간 뒤).
+- **첫 정산서 확인 예정**: 2026-09-28(월) 05:30 KST 배치. 판매자 2 의 settlement_item 두 건(line:3 순매출 5,000·수수료 500, shipping:2:2 배송비 3,000)이
+  주간(9/21~9/27) 정산서 하나로 묶이고 지급액 7,500 이어야 한다.
+  `oci-mysql settlement_db "SELECT * FROM settlement_statement"` · `SELECT id, statement_id FROM settlement_item`
