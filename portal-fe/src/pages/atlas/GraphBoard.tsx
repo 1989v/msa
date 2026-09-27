@@ -30,6 +30,35 @@ const W = 420;
 const H = 440;
 const radius = (n: Node) => (n.depth === 0 ? 9 : n.depth === 1 ? 6 : 4);
 const endId = (e: string | Node) => (typeof e === 'string' ? e : e.id);
+const MAX_LABEL = 22;
+const labelOf = (name: string) => (name.length > MAX_LABEL ? `${name.slice(0, MAX_LABEL - 1)}…` : name);
+
+/** 이름표 폭 어림 — 한글은 글자 크기만큼, 라틴 · 숫자는 그 절반 남짓 */
+function labelWidth(text: string, size: number): number {
+  let w = 0;
+  for (const ch of text) w += /[\u1100-\u11ff\u3130-\u318f\uac00-\ud7af]/.test(ch) ? size : size * 0.58;
+  return w;
+}
+
+/**
+ * 겹치는 이름표를 숨긴다 — 중심 → 깊이 1(연결이 많은 순) → 깊이 2 순으로 놓고, 이미 놓인 것과 겹치면 뺀다.
+ * 숨긴 이름표는 노드에 마우스를 올리면 보인다. 줌은 글자와 좌표를 같이 키우므로 겹침은 줌과 무관하다.
+ */
+function hiddenLabels(nodes: Node[], degree: Map<string, number>): Set<string> {
+  const order = [...nodes].sort((a, b) => a.depth - b.depth || (degree.get(b.id) ?? 0) - (degree.get(a.id) ?? 0));
+  const placed: { l: number; r: number; t: number; b: number }[] = [];
+  const hidden = new Set<string>();
+  for (const n of order) {
+    if (n.x == null || n.y == null) continue;
+    const size = n.depth === 0 ? 12.5 : n.depth === 2 ? 10 : 11;
+    const l = n.x + radius(n) + 5;
+    const box = { l, r: l + labelWidth(labelOf(n.name), size), t: n.y - size * 0.8, b: n.y + size * 0.35 };
+    const hit = placed.some((p) => box.l < p.r && p.l < box.r && box.t < p.b && p.t < box.b);
+    if (hit && n.depth > 0) hidden.add(n.id);
+    else placed.push(box);
+  }
+  return hidden;
+}
 
 /**
  * 그래프 판 — 옵시디언 로컬 그래프처럼 고른 개념을 가운데 두고 깊이 1~2 의 이웃을 힘으로 배치한다.
@@ -138,7 +167,12 @@ export default function GraphBoard({ graph, sel, depth, hidden, full, onToggleFu
 
   const nodes = snap.nodes;
   const byId = new Map(nodes.map((n) => [n.id, n]));
-  const crowded = nodes.length > 30;
+  const degree = new Map<string, number>();
+  for (const l of snap.links) {
+    degree.set(l.a, (degree.get(l.a) ?? 0) + 1);
+    degree.set(l.b, (degree.get(l.b) ?? 0) + 1);
+  }
+  const quiet = hiddenLabels(nodes, degree);
 
   return (
     <div className={`atlas-graph ${full ? 'is-full' : ''}`}>
@@ -180,12 +214,12 @@ export default function GraphBoard({ graph, sel, depth, hidden, full, onToggleFu
           {nodes.map((n) => {
             if (n.x == null || n.y == null) return null;
             const r = radius(n);
-            const name = n.name.length > 22 ? `${n.name.slice(0, 21)}…` : n.name;
+            const name = labelOf(n.name);
             return (
               <g
                 key={n.id}
                 transform={`translate(${n.x} ${n.y})`}
-                className={`atlas-graph__node is-${n.kind.toLowerCase()} d${n.depth} ${near && !near.has(n.id) ? 'is-dim' : ''} ${crowded && n.depth === 2 ? 'is-quiet' : ''}`}
+                className={`atlas-graph__node is-${n.kind.toLowerCase()} d${n.depth} ${near && !near.has(n.id) ? 'is-dim' : ''} ${quiet.has(n.id) ? 'is-quiet' : ''}`}
                 onPointerDown={(e) => onDown(e, n.id)}
                 onPointerEnter={() => setFocus(n.id)}
                 onPointerLeave={() => setFocus(null)}
