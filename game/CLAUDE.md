@@ -188,8 +188,10 @@ kubectl -n commerce create secret generic game-hmac \
   그래서 **테스트는 로그인 상태로, 상세 페이지를 연 지 1시간 안에** 한다(토큰 만료 뒤 제출은 게스트로
   기록된다 — 게임 안에는 재발급이 없다). e2e 는 UA 를 사람 것으로 씌우지 않는다(씌우면 행이 남는다).
   양성 경로(`applied=true`)를 운영에서 재야 하면 사람 UA + 사후 삭제, 또는 로컬 k3d.
-  `lib/rank.js` 는 `GameAuth.token()` 이 있을 때만 Bearer 를 싣으므로 게임 페이지가 `lib/auth.js` 를
-  **rank.js 앞에** 실어야 운영자 판별이 닿는다(2026-09-20 에 22종을 맞췄다)
+  신원은 **HttpOnly 쿠키가 same-origin 요청에 자동으로 실려** 게이트웨이까지 간다(ADR-0101) — 게임이
+  토큰을 읽거나 헤더를 만들지 않으므로 어느 게임에서든 판별이 닿는다. 단 **제출 경로는 optionalUser 라
+  401 을 내지 않아** 스스로 재발급을 부르지 않는다: 안의 JWT 가 만료된 뒤(1시간)의 제출은 조용히 게스트로
+  기록된다 — 쿠키 자체는 30일 살아 계속 실린다(`lib/rank.js` 는 SPA 의 재발급 인터셉터를 타지 않는 맨 `fetch` 다)
 - DRAFT/REVIEW/SUSPENDED 게임은 공개 API 에서 NOT_FOUND (존재 여부 은닉)
 - **세이브 슬롯은 게임당 하나인데 신원은 둘이다** — 회원은 `member_id`(유니크 `uk_save_game_member`),
   게스트는 이어하기 코드. 게스트로 놀던 사람이 로그인하면 **계정 슬롯이 비어 있을 때만** 그 행이
