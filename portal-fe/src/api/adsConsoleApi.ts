@@ -109,6 +109,8 @@ export interface CatalogPlacement {
 export interface Catalog {
   placements: CatalogPlacement[];
   categories: { code: string; label: string }[];
+  /** 한 시간에 쓸 수 있는 일예산 비율(%) — 서버 규칙 값 */
+  hourlyCapPercent: number;
 }
 
 export interface CampaignDay {

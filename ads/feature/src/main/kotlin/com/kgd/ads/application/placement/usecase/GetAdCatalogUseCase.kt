@@ -6,7 +6,12 @@ import com.kgd.ads.domain.placement.model.PlacementFormat
 interface GetAdCatalogUseCase {
     fun execute(): Catalog
 
-    data class Catalog(val placements: List<CatalogPlacement>, val categories: List<CatalogCategory>)
+    /** @param hourlyCapPercent 한 시간에 쓸 수 있는 일예산 비율 — 화면이 규칙을 사본으로 두지 않게 서버 값을 싣는다 */
+    data class Catalog(
+        val placements: List<CatalogPlacement>,
+        val categories: List<CatalogCategory>,
+        val hourlyCapPercent: Long,
+    )
 
     /** @param averageDailyRequests 최근 7일(오늘 제외) 일평균 요청 수 */
     data class CatalogPlacement(

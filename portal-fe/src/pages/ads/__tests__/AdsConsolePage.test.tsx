@@ -88,6 +88,7 @@ const catalog: Catalog = {
     },
   ],
   categories: [{ code: 'tech', label: '기술' }],
+  hourlyCapPercent: 25,
 };
 
 function serverError(message: string): AxiosError {
@@ -308,5 +309,26 @@ describe('광고주 콘솔 — 캠페인 편집', () => {
       placementKeys: ['blog-post-end'],
       frequencyCapPerDay: 3,
     });
+  });
+
+  it('입력한 입찰가·예산으로 상한을 계산하고, 고른 지면의 최저가 미만 CPM 은 미리 알린다', async () => {
+    renderConsole('campaign-new', '/campaigns/new');
+
+    await userEvent.type(await screen.findByLabelText('입찰가'), '0.5');
+    await userEvent.type(screen.getByLabelText('일예산'), '5');
+    await userEvent.type(screen.getByLabelText('총예산(선택)'), '50');
+
+    const estimate = screen.getByRole('complementary', { name: '미리보기와 예상' });
+    expect(estimate).toHaveTextContent('하루 최대 가시 노출10,000회');
+    expect(estimate).toHaveTextContent('한 시간 최대 사용1.25 크레딧');
+    expect(estimate).toHaveTextContent('총예산을 다 쓰는 데 최소10일');
+    expect(screen.queryByText(/최저가\(CPM 2.00\)보다 낮아/)).not.toBeInTheDocument();
+
+    await userEvent.click(await screen.findByRole('checkbox', { name: /블로그 글 끝/ }));
+    expect(screen.getByText(/최저가\(CPM 2.00\)보다 낮아/)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('radio', { name: /CPC — 누른 만큼/ }));
+    expect(screen.queryByText(/최저가\(CPM 2.00\)보다 낮아/)).not.toBeInTheDocument();
+    expect(estimate).toHaveTextContent('하루 최대 클릭10회');
   });
 });

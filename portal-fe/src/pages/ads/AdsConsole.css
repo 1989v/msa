@@ -570,6 +570,377 @@
   font-family: var(--kh-font-mono);
 }
 
+/* ─── 캠페인 편집 — 본문 + 오른쪽 요약(좁으면 아래로) ─── */
+
+.adc-campaign {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: var(--ko-space-8);
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .adc-campaign {
+    grid-template-columns: minmax(0, 1fr) 22rem;
+  }
+
+  .adc-campaign__aside {
+    position: sticky;
+    top: var(--ko-space-4);
+  }
+}
+
+.adc-campaign__main,
+.adc-campaign__aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-4);
+  min-width: 0;
+}
+
+.adc-step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-3);
+  padding-top: var(--ko-space-5);
+  border-top: 1px solid var(--ko-border-subtle);
+}
+
+.adc-step__title {
+  margin: 0;
+  font-size: var(--ko-text-lg);
+}
+
+.adc-step__lead {
+  margin: 0;
+  font-size: var(--ko-text-sm);
+  line-height: 1.6;
+  color: var(--ko-text-secondary);
+}
+
+.adc-muted {
+  font-weight: 400;
+  color: var(--ko-text-muted);
+}
+
+.adc-warn {
+  color: var(--kh-yeonji);
+}
+
+.adc-grid--3 {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .adc-grid--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* 지면 카드 — 페이지 도식 위에 광고 자리를 점선으로 */
+.adc-places {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: var(--ko-space-3);
+}
+
+.adc-place {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-2);
+  padding: var(--ko-space-3);
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--kh-radius);
+  background: var(--ko-surface-1);
+  cursor: pointer;
+}
+
+.adc-place--on {
+  border-color: var(--ko-accent-primary);
+  box-shadow: inset 0 0 0 1px var(--ko-accent-primary);
+}
+
+.adc-place__page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-1);
+  padding: var(--ko-space-3);
+  border-radius: var(--kh-radius);
+  background: var(--ko-surface-2);
+}
+
+.adc-place__host {
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-muted);
+}
+
+.adc-place__block {
+  display: flex;
+  align-items: center;
+  min-height: 1.5rem;
+  padding: 0 var(--ko-space-2);
+  border-radius: var(--kh-radius);
+  background: var(--ko-surface-0);
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-muted);
+}
+
+.adc-place__block--lg {
+  min-height: 3.5rem;
+}
+
+.adc-place__block--ad {
+  justify-content: center;
+  min-height: 2.5rem;
+  border: 2px dashed var(--ko-accent-primary);
+  background: var(--ko-accent-primary-bg);
+  font-weight: 700;
+  color: var(--ko-accent-text);
+}
+
+.adc-place__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ko-space-2);
+}
+
+.adc-place__head input {
+  margin-top: 4px;
+}
+
+.adc-place__title {
+  font-weight: 700;
+}
+
+.adc-place__where {
+  font-size: var(--ko-text-sm);
+  line-height: 1.5;
+  color: var(--ko-text-secondary);
+}
+
+.adc-place__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-1) var(--ko-space-3);
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-secondary);
+}
+
+.adc-place__meta code {
+  font-family: var(--kh-font-mono);
+  color: var(--ko-text-muted);
+  overflow-wrap: anywhere;
+}
+
+/* 입찰 방식 — 설명이 붙은 선택 카드 */
+.adc-bidtypes {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ko-space-3);
+}
+
+@media (min-width: 640px) {
+  .adc-bidtypes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.adc-bidtype {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--ko-space-1) var(--ko-space-2);
+  padding: var(--ko-space-4);
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--kh-radius);
+  background: var(--ko-surface-1);
+  cursor: pointer;
+}
+
+.adc-bidtype:has(input:checked) {
+  border-color: var(--ko-accent-primary);
+  box-shadow: inset 0 0 0 1px var(--ko-accent-primary);
+  background: var(--ko-accent-primary-bg);
+}
+
+.adc-bidtype input {
+  margin-top: 4px;
+}
+
+.adc-bidtype__title {
+  font-weight: 700;
+}
+
+.adc-bidtype__body,
+.adc-bidtype__fit {
+  grid-column: 2;
+  font-size: var(--ko-text-sm);
+  line-height: 1.6;
+}
+
+.adc-bidtype__body {
+  color: var(--ko-text-secondary);
+}
+
+.adc-bidtype__fit {
+  color: var(--ko-accent-text);
+}
+
+.adc-bidrow {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: start;
+  gap: var(--ko-space-4);
+}
+
+@media (min-width: 640px) {
+  .adc-bidrow {
+    grid-template-columns: 16rem minmax(0, 1fr);
+  }
+}
+
+.adc-explain {
+  padding: var(--ko-space-3) var(--ko-space-4);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius);
+  background: var(--ko-surface-1);
+  font-size: var(--ko-text-sm);
+  line-height: 1.7;
+  color: var(--ko-text-secondary);
+}
+
+.adc-explain ol {
+  margin: 0;
+  padding-left: var(--ko-space-5);
+}
+
+.adc-explain__title {
+  margin: 0 0 var(--ko-space-1);
+  font-weight: 700;
+  color: var(--ko-text-primary);
+}
+
+/* 예산 네 겹 — 안쪽으로 들여 한도가 포개진 것을 보인다 */
+.adc-layers {
+  margin: 0;
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--kh-radius);
+  overflow: hidden;
+}
+
+.adc-layers__row {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: var(--ko-space-3);
+  padding: var(--ko-space-3) var(--ko-space-4);
+  font-size: var(--ko-text-sm);
+}
+
+.adc-layers__row:nth-child(1) { background: var(--ko-surface-3); }
+.adc-layers__row:nth-child(2) { background: var(--ko-surface-2); padding-left: calc(var(--ko-space-4) + var(--ko-space-3)); }
+.adc-layers__row:nth-child(3) { background: var(--ko-surface-1); padding-left: calc(var(--ko-space-4) + var(--ko-space-6)); }
+.adc-layers__row:nth-child(4) { background: var(--ko-surface-0); padding-left: calc(var(--ko-space-4) + var(--ko-space-8)); }
+
+.adc-layers dt {
+  font-weight: 700;
+}
+
+.adc-layers dd {
+  margin: 0;
+  line-height: 1.6;
+  color: var(--ko-text-secondary);
+}
+
+/* 오른쪽 — 소재 미리보기(어두운 판) + 상한 계산 */
+.adc-preview {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--kh-radius);
+  overflow: hidden;
+  background: var(--kh-slab);
+  color: var(--kh-on-slab);
+}
+
+.adc-preview__img {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1.91 / 1;
+  background: var(--kh-aged-pine);
+  font-size: var(--ko-text-xs);
+  color: var(--kh-on-slab-muted);
+}
+
+.adc-preview__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-1);
+  padding: var(--ko-space-3) var(--ko-space-4) var(--ko-space-4);
+}
+
+.adc-preview__tag {
+  align-self: flex-start;
+  padding: 0 var(--ko-space-1);
+  border: 1px solid var(--kh-slab-border);
+  border-radius: var(--kh-radius);
+  font-size: var(--ko-text-xs);
+  color: var(--kh-ocher);
+}
+
+.adc-preview__title {
+  font-weight: 700;
+}
+
+.adc-preview__text {
+  font-size: var(--ko-text-sm);
+  color: var(--kh-on-slab-muted);
+}
+
+.adc-estimate {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-3);
+  padding: var(--ko-space-4);
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--kh-radius);
+  background: var(--ko-surface-1);
+}
+
+.adc-estimate__lead {
+  margin: 0;
+  line-height: 1.7;
+}
+
+.adc-estimate__rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-2);
+  margin: 0;
+  font-size: var(--ko-text-sm);
+}
+
+.adc-estimate__rows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--ko-space-3);
+}
+
+.adc-estimate__rows dt {
+  color: var(--ko-text-secondary);
+}
+
+.adc-estimate__rows dd {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.adc-btn--block {
+  width: 100%;
+  min-height: 48px;
+}
+
 .adc-actions {
   display: flex;
   flex-wrap: wrap;

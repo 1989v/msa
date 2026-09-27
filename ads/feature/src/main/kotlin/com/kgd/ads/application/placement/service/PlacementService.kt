@@ -8,6 +8,7 @@ import com.kgd.ads.application.placement.dto.UnregisteredPlacementView
 import com.kgd.ads.application.placement.port.PlacementPort
 import com.kgd.ads.application.placement.usecase.GetAdCatalogUseCase
 import com.kgd.ads.application.placement.usecase.ManagePlacementUseCase
+import com.kgd.ads.domain.campaign.model.Campaign
 import com.kgd.ads.domain.placement.model.AdPlacement
 import com.kgd.ads.domain.placement.model.AspectRatio
 import com.kgd.common.exception.BusinessException
@@ -45,7 +46,7 @@ class PlacementService(
                 )
             }
         val categories = categoryPort.categories().map { GetAdCatalogUseCase.CatalogCategory(it.code, it.label) }
-        return GetAdCatalogUseCase.Catalog(placements, categories)
+        return GetAdCatalogUseCase.Catalog(placements, categories, Campaign.HOURLY_CAP_PERCENT)
     }
 
     override fun list(): List<PlacementView> = placementPort.findAll().sortedBy { it.key }.map(PlacementView::from)

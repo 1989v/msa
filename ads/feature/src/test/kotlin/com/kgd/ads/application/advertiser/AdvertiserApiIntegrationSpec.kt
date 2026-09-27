@@ -359,6 +359,7 @@ class AdvertiserApiIntegrationSpec(
             keys shouldNotContain "a-api-cat-house"
             catalog["placements"].items().first { it["key"].asString() == "a-api-cat" }["averageDailyRequests"].asLong() shouldBe (100L + 200 + 300 + 400 + 500 + 600 + 700) / 7
             catalog["categories"].items().map { it["code"].asString() } shouldContain "TECH"
+            catalog["hourlyCapPercent"].asLong() shouldBe 25L
             mutableClock.set(NOON_HALF)
         }
     }
