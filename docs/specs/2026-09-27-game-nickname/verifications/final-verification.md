@@ -1,3 +1,5 @@
+<!-- source: game/feature/src/main/kotlin/com/kgd/game/application/profile/service/GamePlayerProfileService.kt, portal-fe/src/game-profile/GameProfileHost.tsx -->
+
 # Verification — 2026-09-27
 
 ## Result
@@ -31,3 +33,5 @@ Button text contrast after theme correction: light 9.98:1, dark 8.62:1; OS light
 Updated ADR-0102, spec, decisions, tasks and game/CLAUDE.md. `doc_scan.py --base HEAD --json` ran. `doc_map.py --check` reports drift for the shared working tree (501 changed paths; broad unrelated pending work). The generated global lock was not rewritten to mix those changes into this task. No global docs lock PASS claim.
 
 Existing games submodule pointer was already different from root HEAD before this task (root3356e767 vs local630f6669). Widget changes are committed inside games separately; unrelated pre-existing pointer changes are preserved rather than included in the root commit.
+
+커밋 훅은 실행되었고 exit0으로 완료했다. warn-only doctor는 기존 문서들의 source citation 부족 등 전역 문서 health 경고를 출력했다. 이번 spec 문서에는 source citation을 추가했다.

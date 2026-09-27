@@ -1,3 +1,5 @@
+<!-- source: game/feature/src/main/kotlin/com/kgd/game/application/profile/service/GamePlayerProfileService.kt, portal-fe/src/game-profile/GameProfileHost.tsx -->
+
 # Decisions
 
 - 2026-09-27: 사용자가 요청한 회원별 고유 닉네임 및 전역 수정 모달을 구현한다.

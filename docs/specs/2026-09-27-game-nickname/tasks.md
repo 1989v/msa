@@ -1,3 +1,5 @@
+<!-- source: game/feature/src/main/kotlin/com/kgd/game/application/profile/service/GamePlayerProfileService.kt, portal-fe/src/game-profile/GameProfileHost.tsx -->
+
 # Task Breakdown: 게임 공통 닉네임
 ## Overview
 Total Task Groups: 3

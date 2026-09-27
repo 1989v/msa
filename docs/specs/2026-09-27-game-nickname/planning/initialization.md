@@ -1,3 +1,5 @@
+<!-- source: game/feature/src/main/kotlin/com/kgd/game/application/profile/service/GamePlayerProfileService.kt, portal-fe/src/game-profile/GameProfileHost.tsx -->
+
 # 요청
 
 내 게임 서비스의 닉네임이 현재 고유한 값이 아닌가? 유저별로 닉네임 하나로만 생성 가능하고 전역으로 수정하는 모달같은거 만들어 줘

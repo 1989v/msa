@@ -1,3 +1,5 @@
+<!-- source: game/feature/src/main/kotlin/com/kgd/game/application/profile/service/GamePlayerProfileService.kt, portal-fe/src/game-profile/GameProfileHost.tsx -->
+
 # Specification: 게임 공통 닉네임
 
 ## Goal
