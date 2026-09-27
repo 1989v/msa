@@ -440,7 +440,7 @@ flowchart TB
 
 한도가 1536Mi 일 때는 페이지 캐시가 43MB 까지 밀려 BM25 는 0.19초인데 kNN 만 112초가 나왔다. 같은 노드 같은 색인에서 나는 차이라 원인은 캐시 하나다.
 
-- [검색 시스템 아키텍처를 키워드 계층으로](/posts/search-architecture-keyword-layers) — 같은 개념을 계층 트리로 정리한 글
-- [OpenSearch 하이브리드 검색에 쿼리 언더스탠딩 붙이기](/posts/opensearch-hybrid-query-understanding) — 4절의 하이브리드와 3절의 쿼리 언더스탠딩을 한 엔진에 붙인 기록
-- [힙은 정상인데 컨테이너가 OOMKilled 될 때](/posts/jvm-native-memory-glibc-malloc-arena) — 9절의 네이티브 메모리 항
-- [Elasticsearch · OpenSearch 클러스터 사이징](/posts/search-cluster-capacity-sizing) — 9절의 샤드와 용량 산정
+- [검색 시스템 아키텍처를 키워드 계층으로](https://blog.1989v.com/posts/search-architecture-keyword-layers) — 같은 개념을 계층 트리로 정리한 글
+- [OpenSearch 하이브리드 검색에 쿼리 언더스탠딩 붙이기](https://blog.1989v.com/posts/opensearch-hybrid-query-understanding) — 4절의 하이브리드와 3절의 쿼리 언더스탠딩을 한 엔진에 붙인 기록
+- [힙은 정상인데 컨테이너가 OOMKilled 될 때](https://blog.1989v.com/posts/jvm-native-memory-glibc-malloc-arena) — 9절의 네이티브 메모리 항
+- [Elasticsearch · OpenSearch 클러스터 사이징](https://blog.1989v.com/posts/search-cluster-capacity-sizing) — 9절의 샤드와 용량 산정
