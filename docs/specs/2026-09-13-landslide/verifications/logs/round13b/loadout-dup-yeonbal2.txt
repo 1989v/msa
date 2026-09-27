@@ -1,0 +1,4 @@
+NOVOID=0 archer-sword item: archer 홍 47.5 · archer 청 43.0 · 평균 45.25 · 첫 차례 쪽 53.25 · 무승부 0/400
+NOVOID=1 archer-sword item: archer 홍 46.5 · archer 청 43.5 · 평균 45.00 · 첫 차례 쪽 51.00 · 무승부 0/400
+NOVOID=0 archer-shield item: archer 홍 22.0 · archer 청 23.0 · 평균 22.50 · 첫 차례 쪽 55.50 · 무승부 1/400
+NOVOID=1 archer-shield item: archer 홍 28.0 · archer 청 27.0 · 평균 27.50 · 첫 차례 쪽 54.50 · 무승부 0/400

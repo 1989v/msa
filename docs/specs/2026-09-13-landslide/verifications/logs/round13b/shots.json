@@ -1,0 +1,49 @@
+{
+ "aim_1280x720": {
+  "x": true,
+  "n": 146,
+  "grab": 90,
+  "grabPx": 135
+ },
+ "xHot_1280x720": true,
+ "cancel_1280x720": {
+  "before": "0:2251",
+  "after": "0:500 mode aim",
+  "xSize": 52,
+  "xHidden": true
+ },
+ "slidePreview": "{\"ghost\":447,\"walkTo\":437}",
+ "slide": "{\"x\":447,\"walkTo\":437}",
+ "prepDup": "{\"loadout\":[1,1],\"pts\":\"남은 점수 0\",\"label\":\"연발 ×2\"}",
+ "prepRemove": "[1]",
+ "boardH": 36,
+ "console_1280x720": [],
+ "aim_844x390": {
+  "x": true,
+  "n": 170,
+  "grab": 90,
+  "grabPx": 73
+ },
+ "xHot_844x390": true,
+ "cancel_844x390": {
+  "before": "0:1965",
+  "after": "0:500 mode aim",
+  "xSize": 52,
+  "xHidden": true
+ },
+ "console_844x390": [],
+ "aim_390x844": {
+  "x": true,
+  "n": 170,
+  "grab": 90,
+  "grabPx": 73
+ },
+ "xHot_390x844": true,
+ "cancel_390x844": {
+  "before": "0:1952",
+  "after": "0:500 mode aim",
+  "xSize": 52,
+  "xHidden": true
+ },
+ "console_390x844": []
+}

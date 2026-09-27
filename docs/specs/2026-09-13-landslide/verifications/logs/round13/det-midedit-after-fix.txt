@@ -1,0 +1,43 @@
+┌─────────┬───────┬────────┬─────────┬───────┬───────────────────┬────────────┬────────────┬────────┬──────┬────────────┬──────┐
+│ (index) │ seed  │ style  │ mode    │ turns │ deaths            │ order      │ hash1      │ replay │ jsc  │ nonInteger │ ok   │
+├─────────┼───────┼────────┼─────────┼───────┼───────────────────┼────────────┼────────────┼────────┼──────┼────────────┼──────┤
+│ 0       │ 1234  │ 'ffa'  │ 'basic' │ 30    │ '2,0,5,3,7'       │ '01234567' │ '9ea4f15e' │ true   │ true │ '-'        │ true │
+│ 1       │ 1234  │ 'team' │ 'basic' │ 30    │ '2,3'             │ '04152637' │ '9a825a92' │ true   │ true │ '-'        │ true │
+│ 2       │ 77    │ 'ffa'  │ 'item'  │ 30    │ '1,4,2,3,0,5,6,7' │ '01234567' │ 'cb436186' │ true   │ true │ '-'        │ true │
+│ 3       │ 77    │ 'team' │ 'item'  │ 30    │ '4,7'             │ '04152637' │ '53d2ac83' │ true   │ true │ '-'        │ true │
+│ 4       │ 2026  │ 'ffa'  │ 'basic' │ 30    │ '3,5,0,1'         │ '01234567' │ '3300a6bd' │ true   │ true │ '-'        │ true │
+│ 5       │ 2026  │ 'team' │ 'basic' │ 30    │ '3,2,1,4'         │ '04152637' │ '22ab8e79' │ true   │ true │ '-'        │ true │
+│ 6       │ 9     │ 'ffa'  │ 'item'  │ 28    │ '1,3,5,2,0,6,7'   │ '01234567' │ '5ebb4afb' │ true   │ true │ '-'        │ true │
+│ 7       │ 9     │ 'team' │ 'item'  │ 28    │ '5,0,3,2,4,1,6,7' │ '04152637' │ '94ec21b5' │ true   │ true │ '-'        │ true │
+│ 8       │ 31337 │ 'ffa'  │ 'item'  │ 30    │ ''                │ '01234567' │ '8873af0'  │ true   │ true │ '-'        │ true │
+│ 9       │ 31337 │ 'team' │ 'item'  │ 25    │ '2,3,1,0,5'       │ '04152637' │ 'd92ed567' │ true   │ true │ '-'        │ true │
+└─────────┴───────┴────────┴─────────┴───────┴───────────────────┴────────────┴────────────┴────────┴──────┴────────────┴──────┘
+8인 죽음 합계 45 · 순서표 01234567 / 04152637
+레코드 종류 합계: {"item":84,"shot":129,"shot2":12,"guard":240,"rain":52,"cure":9,"spend":101,"blocked":31,"bash":7,"sudden":35,"thrust":51,"down":49,"throw":7,"abyss":4,"leap":8,"slash":32,"qiPick":3,"freeze":53,"stun":1,"melt":24}
+┌─────────┬───────────┬───────┬──────────────────────┬───────┬─────────────┬─────────────┬────────────┬────────────┬────────────┬─────────┬──────────────────────────────────────────────────────────────────────────────────────────┬──────┐
+│ (index) │ biome     │ seed  │ cls                  │ turns │ replayHash1 │ replayHash2 │ sameReplay │ nonInteger │ jscHash    │ jscSame │ kinds                                                                                    │ ok   │
+├─────────┼───────────┼───────┼──────────────────────┼───────┼─────────────┼─────────────┼────────────┼────────────┼────────────┼─────────┼──────────────────────────────────────────────────────────────────────────────────────────┼──────┤
+│ 0       │ 'volcano' │ 1234  │ 'gunner-shield item' │ 22    │ '49a6cd39'  │ '49a6cd39'  │ true       │ '-'        │ '49a6cd39' │ true    │ 'item5 shot11 shot21 guard11 rain4 cure1 spend4 blocked3'                                │ true │
+│ 1       │ 'volcano' │ 77    │ 'shield-shield item' │ 30    │ 'df8429b8'  │ 'df8429b8'  │ true       │ '-'        │ 'df8429b8' │ true    │ 'guard28 cure1 item3 spend2 bash1 sudden4'                                               │ true │
+│ 2       │ 'volcano' │ 2026  │ 'spear-shield item'  │ 14    │ '2d326354'  │ '2d326354'  │ true       │ '-'        │ '2d326354' │ true    │ 'guard5 item5 spend4 shot2 shot21 cure1 blocked2 rain4 thrust4 down3 throw1 bash1'       │ true │
+│ 3       │ 'volcano' │ 9     │ 'archer-shield item' │ 23    │ 'fc2dd20d'  │ 'fc2dd20d'  │ true       │ '-'        │ 'fc2dd20d' │ true    │ 'item5 shot11 shot21 guard11 blocked4 rain4 cure1 spend5 abyss1'                         │ true │
+│ 4       │ 'volcano' │ 31337 │ 'sword-spear item'   │ 17    │ '2fcce653'  │ '2fcce653'  │ true       │ '-'        │ '2fcce653' │ true    │ 'spend7 shot5 leap2 cure1 item3 slash7 thrust3 down3'                                    │ true │
+│ 5       │ 'dune'    │ 1234  │ 'gunner-shield item' │ 30    │ '92d201dd'  │ '92d201dd'  │ true       │ '-'        │ '92d201dd' │ true    │ 'item5 shot15 shot21 guard14 rain8 spend7 qiPick1 sudden4 blocked1'                      │ true │
+│ 6       │ 'dune'    │ 77    │ 'shield-shield item' │ 30    │ 'fa19da7d'  │ 'fa19da7d'  │ true       │ '-'        │ 'fa19da7d' │ true    │ 'guard28 item3 spend2 bash1 sudden4'                                                     │ true │
+│ 7       │ 'dune'    │ 2026  │ 'spear-shield item'  │ 26    │ '43974b18'  │ '43974b18'  │ true       │ '-'        │ '43974b18' │ true    │ 'guard13 item5 spend5 shot2 shot21 rain4 thrust10 blocked5 down10 sudden2'               │ true │
+│ 8       │ 'dune'    │ 9     │ 'archer-shield item' │ 23    │ '19f1ddc8'  │ '19f1ddc8'  │ true       │ '-'        │ '19f1ddc8' │ true    │ 'item5 shot11 shot21 guard11 blocked1 rain4 spend5 abyss1'                               │ true │
+│ 9       │ 'dune'    │ 31337 │ 'sword-spear item'   │ 24    │ 'be23201b'  │ 'be23201b'  │ true       │ '-'        │ 'be23201b' │ true    │ 'spend8 shot6 leap2 item3 slash10 thrust6 down6 sudden1'                                 │ true │
+│ 10      │ 'snow'    │ 1234  │ 'gunner-shield item' │ 28    │ 'b808fbd0'  │ 'b808fbd0'  │ true       │ '-'        │ 'b808fbd0' │ true    │ 'item5 shot14 shot21 guard14 rain4 freeze11 qiPick2 spend4 blocked1 sudden3'             │ true │
+│ 11      │ 'snow'    │ 77    │ 'shield-shield item' │ 28    │ '2b6f4dc4'  │ '2b6f4dc4'  │ true       │ '-'        │ '2b6f4dc4' │ true    │ 'guard15 item3 spend4 bash2 throw6 down1 sudden3 stun1'                                  │ true │
+│ 12      │ 'snow'    │ 2026  │ 'spear-shield item'  │ 26    │ '316c59ed'  │ '316c59ed'  │ true       │ '-'        │ '316c59ed' │ true    │ 'guard13 item5 spend5 shot2 shot21 rain4 freeze2 thrust10 down10 blocked4 sudden2'       │ true │
+│ 13      │ 'snow'    │ 9     │ 'archer-shield item' │ 30    │ '3911aa3c'  │ '3911aa3c'  │ true       │ '-'        │ '3911aa3c' │ true    │ 'item5 shot15 shot21 guard14 rain4 freeze18 spend7 melt14 sudden4'                       │ true │
+│ 14      │ 'snow'    │ 31337 │ 'sword-spear item'   │ 16    │ 'd3116a1c'  │ 'd3116a1c'  │ true       │ '-'        │ 'd3116a1c' │ true    │ 'slash8 spend4 shot2 leap2 item3 thrust6 freeze1 down4'                                  │ true │
+│ 15      │ 'mixed'   │ 1234  │ 'gunner-shield item' │ 20    │ '9bc047ac'  │ '9bc047ac'  │ true       │ '-'        │ '9bc047ac' │ true    │ 'item5 shot10 shot21 guard10 blocked1 rain4 cure2 freeze6 spend4'                        │ true │
+│ 16      │ 'mixed'   │ 77    │ 'shield-shield item' │ 30    │ 'a120e108'  │ 'a120e108'  │ true       │ '-'        │ 'a120e108' │ true    │ 'guard28 cure1 item3 spend2 bash1 sudden4'                                               │ true │
+│ 17      │ 'mixed'   │ 2026  │ 'spear-shield item'  │ 26    │ '8ed58d9f'  │ '8ed58d9f'  │ true       │ '-'        │ '8ed58d9f' │ true    │ 'guard13 item5 spend5 shot2 shot21 blocked6 rain4 thrust10 down10 sudden2'               │ true │
+│ 18      │ 'mixed'   │ 9     │ 'archer-shield item' │ 27    │ '89c1a0de'  │ '89c1a0de'  │ true       │ '-'        │ '89c1a0de' │ true    │ 'item5 shot13 shot21 guard12 rain4 spend7 blocked3 freeze11 melt10 sudden2 bash1 abyss1' │ true │
+│ 19      │ 'mixed'   │ 31337 │ 'sword-spear item'   │ 21    │ '1c7da53a'  │ '1c7da53a'  │ true       │ '-'        │ '1c7da53a' │ true    │ 'spend10 shot8 leap2 cure1 item3 freeze4 slash7 thrust2 down2 abyss1'                    │ true │
+└─────────┴───────────┴───────┴──────────────────────┴───────┴─────────────┴─────────────┴────────────┴────────────┴────────────┴─────────┴──────────────────────────────────────────────────────────────────────────────────────────┴──────┘
+jsc 교차 30회 · 최대 1.5초 (제한 120/240초)
+✓ 결정론 게이트 통과
+※ 실행 중에 작업 트리의 소스가 바뀌었다: 07-sim.js — 이 판정은 시작 시점 스냅숏 기준이다

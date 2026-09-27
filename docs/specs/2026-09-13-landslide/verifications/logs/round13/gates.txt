@@ -1,0 +1,76 @@
+== 1. lint-sim (시뮬 패키지 금지 함수) ==
+✓ lint-sim: js/00~08 코드에 금지 함수 없음
+  ✓ lint-sim 깨끗
+  ✓ 회귀 주입 → 빨간불: bash /var/folders/ph/y0b21nzx597650trbnnzdy640000gn/T/tmp.QtbhBXlkrG/tools/lint-sim.sh
+== 2. 결정론 (재생 두 번 · node/jsc 교차 · 정수 단언) ==
+┌─────────┬───────┬────────┬─────────┬───────┬───────────────────┬────────────┬────────────┬────────┬──────┬────────────┬──────┐
+│ (index) │ seed  │ style  │ mode    │ turns │ deaths            │ order      │ hash1      │ replay │ jsc  │ nonInteger │ ok   │
+├─────────┼───────┼────────┼─────────┼───────┼───────────────────┼────────────┼────────────┼────────┼──────┼────────────┼──────┤
+│ 0       │ 1234  │ 'ffa'  │ 'basic' │ 30    │ '2,0,3,5,6,7,1'   │ '45670123' │ 'a186f16c' │ true   │ true │ '-'        │ true │
+│ 1       │ 1234  │ 'team' │ 'basic' │ 28    │ '5,4,2,0,3,6,7'   │ '41526370' │ '3fb9f526' │ true   │ true │ '-'        │ true │
+│ 2       │ 77    │ 'ffa'  │ 'item'  │ 30    │ '1,4,2,7,5,0,3,6' │ '34567012' │ '181b4406' │ true   │ true │ '-'        │ true │
+│ 3       │ 77    │ 'team' │ 'item'  │ 30    │ '4'               │ '37041526' │ 'b1602de5' │ true   │ true │ '-'        │ true │
+│ 4       │ 2026  │ 'ffa'  │ 'basic' │ 30    │ '3,1,0,4,5,6,2'   │ '70123456' │ '21c17ca9' │ true   │ true │ '-'        │ true │
+│ 5       │ 2026  │ 'team' │ 'basic' │ 24    │ '3,2,1,0'         │ '70415263' │ '2b61f563' │ true   │ true │ '-'        │ true │
+│ 6       │ 9     │ 'ffa'  │ 'item'  │ 25    │ '5,1,3,6,2,4,7'   │ '45670123' │ 'ae661baa' │ true   │ true │ '-'        │ true │
+│ 7       │ 9     │ 'team' │ 'item'  │ 30    │ '3,4,0'           │ '41526370' │ '47921ea1' │ true   │ true │ '-'        │ true │
+│ 8       │ 31337 │ 'ffa'  │ 'item'  │ 30    │ '4,6,2,7'         │ '56701234' │ '49ff9315' │ true   │ true │ '-'        │ true │
+│ 9       │ 31337 │ 'team' │ 'item'  │ 27    │ '2,3,1,0,4,5'     │ '52637041' │ '70177437' │ true   │ true │ '-'        │ true │
+└─────────┴───────┴────────┴─────────┴───────┴───────────────────┴────────────┴────────────┴────────┴──────┴────────────┴──────┘
+8인 죽음 합계 54 · 순서표 45670123 / 41526370 / 34567012 / 37041526 / 70123456 / 70415263 / 56701234 / 52637041
+레코드 종류 합계: {"item":84,"shot":117,"shot2":12,"guard":219,"rain":52,"cure":9,"spend":116,"bash":19,"blocked":30,"first1":12,"sudden":38,"thrust":58,"down":59,"throw":2,"qiPick":6,"abyss":6,"leap":8,"slash":28,"freeze":49,"melt":14}
+┌─────────┬───────────┬───────┬───────┬──────────────────────┬───────┬─────────────┬─────────────┬────────────┬────────────┬────────────┬─────────┬──────────────────────────────────────────────────────────────────────────────────────────────┬──────┐
+│ (index) │ biome     │ seed  │ first │ cls                  │ turns │ replayHash1 │ replayHash2 │ sameReplay │ nonInteger │ jscHash    │ jscSame │ kinds                                                                                        │ ok   │
+├─────────┼───────────┼───────┼───────┼──────────────────────┼───────┼─────────────┼─────────────┼────────────┼────────────┼────────────┼─────────┼──────────────────────────────────────────────────────────────────────────────────────────────┼──────┤
+│ 0       │ 'volcano' │ 1234  │ 0     │ 'gunner-shield item' │ 15    │ '1b6539b3'  │ '1b6539b3'  │ true       │ '-'        │ '1b6539b3' │ true    │ 'item5 shot8 shot21 guard4 rain4 cure1 spend4 bash1 blocked1'                                │ true │
+│ 1       │ 'volcano' │ 77    │ 1     │ 'shield-shield item' │ 30    │ 'e8c87079'  │ 'e8c87079'  │ true       │ '-'        │ 'e8c87079' │ true    │ 'guard26 item3 cure1 spend4 bash2 sudden4'                                                   │ true │
+│ 2       │ 'volcano' │ 2026  │ 1     │ 'spear-shield item'  │ 26    │ '7f2378a2'  │ '7f2378a2'  │ true       │ '-'        │ '7f2378a2' │ true    │ 'guard10 item5 spend4 shot2 blocked4 shot21 cure1 rain4 thrust11 bash1 down6 sudden2 throw1' │ true │
+│ 3       │ 'volcano' │ 9     │ 0     │ 'archer-shield item' │ 19    │ '1b315afa'  │ '1b315afa'  │ true       │ '-'        │ '1b315afa' │ true    │ 'item5 shot9 shot21 guard7 blocked4 rain4 cure1 spend6 bash1 qiPick1 abyss1'                 │ true │
+│ 4       │ 'volcano' │ 31337 │ 1     │ 'sword-spear item'   │ 20    │ '48059ac9'  │ '48059ac9'  │ true       │ '-'        │ '48059ac9' │ true    │ 'item3 spend8 shot6 cure1 qiPick2 leap2 slash8 thrust3 down7 abyss1'                         │ true │
+│ 5       │ 'dune'    │ 1234  │ 0     │ 'gunner-shield item' │ 15    │ 'b8fdcdad'  │ 'b8fdcdad'  │ true       │ '-'        │ 'b8fdcdad' │ true    │ 'item5 shot8 shot21 guard5 rain8 spend4 qiPick1 blocked1 abyss1'                             │ true │
+│ 6       │ 'dune'    │ 77    │ 1     │ 'shield-shield item' │ 30    │ 'ff6c322d'  │ 'ff6c322d'  │ true       │ '-'        │ 'ff6c322d' │ true    │ 'guard26 item3 spend4 bash2 sudden4'                                                         │ true │
+│ 7       │ 'dune'    │ 2026  │ 1     │ 'spear-shield item'  │ 30    │ '4a1ab0b0'  │ '4a1ab0b0'  │ true       │ '-'        │ '4a1ab0b0' │ true    │ 'guard13 item5 spend4 shot2 blocked6 shot21 rain4 thrust13 bash1 down11 sudden4'             │ true │
+│ 8       │ 'dune'    │ 9     │ 0     │ 'archer-shield item' │ 23    │ '19f1ddc8'  │ '19f1ddc8'  │ true       │ '-'        │ '19f1ddc8' │ true    │ 'item5 shot11 shot21 guard9 blocked1 rain4 spend7 bash1 abyss1'                              │ true │
+│ 9       │ 'dune'    │ 31337 │ 1     │ 'sword-spear item'   │ 16    │ '12f6780'   │ '12f6780'   │ true       │ '-'        │ '12f6780'  │ true    │ 'item3 spend5 shot2 leap2 slash6 down6 thrust5'                                              │ true │
+│ 10      │ 'snow'    │ 1234  │ 0     │ 'gunner-shield item' │ 30    │ 'ef75de34'  │ 'ef75de34'  │ true       │ '-'        │ 'ef75de34' │ true    │ 'item5 shot15 shot21 guard13 rain4 freeze13 qiPick1 spend9 bash1 sudden4 blocked2'           │ true │
+│ 11      │ 'snow'    │ 77    │ 1     │ 'shield-shield item' │ 30    │ 'ccf88a57'  │ 'ccf88a57'  │ true       │ '-'        │ 'ccf88a57' │ true    │ 'guard26 item3 spend4 bash2 sudden4'                                                         │ true │
+│ 12      │ 'snow'    │ 2026  │ 1     │ 'spear-shield item'  │ 30    │ '79daee17'  │ '79daee17'  │ true       │ '-'        │ '79daee17' │ true    │ 'guard13 item5 spend12 shot10 blocked2 shot21 rain4 thrust5 freeze8 bash1 down5 sudden4'     │ true │
+│ 13      │ 'snow'    │ 9     │ 0     │ 'archer-shield item' │ 30    │ 'b2f4cc1b'  │ 'b2f4cc1b'  │ true       │ '-'        │ 'b2f4cc1b' │ true    │ 'item5 shot15 shot21 guard13 rain4 freeze19 spend9 melt14 bash1 sudden4'                     │ true │
+│ 14      │ 'snow'    │ 31337 │ 1     │ 'sword-spear item'   │ 13    │ '5da02528'  │ '5da02528'  │ true       │ '-'        │ '5da02528' │ true    │ 'slash6 down6 item3 spend4 shot1 leap2 thrust5 freeze1'                                      │ true │
+│ 15      │ 'mixed'   │ 1234  │ 0     │ 'gunner-shield item' │ 22    │ '6291701e'  │ '6291701e'  │ true       │ '-'        │ '6291701e' │ true    │ 'item5 shot11 shot21 guard9 blocked1 rain4 cure2 freeze8 spend6 bash1'                       │ true │
+│ 16      │ 'mixed'   │ 77    │ 1     │ 'shield-shield item' │ 30    │ '3bfccc93'  │ '3bfccc93'  │ true       │ '-'        │ '3bfccc93' │ true    │ 'guard26 item3 cure1 spend4 bash2 sudden4'                                                   │ true │
+│ 17      │ 'mixed'   │ 2026  │ 1     │ 'spear-shield item'  │ 30    │ '5293152d'  │ '5293152d'  │ true       │ '-'        │ '5293152d' │ true    │ 'guard13 item5 spend4 shot2 blocked5 shot21 rain4 thrust13 bash1 down11 sudden4'             │ true │
+│ 18      │ 'mixed'   │ 9     │ 0     │ 'archer-shield item' │ 18    │ '23ecc337'  │ '23ecc337'  │ true       │ '-'        │ '23ecc337' │ true    │ 'item5 shot9 shot21 guard6 rain4 spend6 blocked3 bash1 qiPick1 throw1 abyss1'                │ true │
+│ 19      │ 'mixed'   │ 31337 │ 1     │ 'sword-spear item'   │ 20    │ '6c123604'  │ '6c123604'  │ true       │ '-'        │ '6c123604' │ true    │ 'item3 spend8 shot6 cure1 leap2 slash8 thrust3 down7 abyss1'                                 │ true │
+└─────────┴───────────┴───────┴───────┴──────────────────────┴───────┴─────────────┴─────────────┴────────────┴────────────┴────────────┴─────────┴──────────────────────────────────────────────────────────────────────────────────────────────┴──────┘
+jsc 교차 30회 · 최대 1.0초 (제한 120/240초)
+✓ 결정론 게이트 통과
+  ✓ 결정론 통과 (바이옴 4 × 5시드 · 다섯 병과 · 레코드 7종 커버 + 8인 개인전·팀전 × 5시드 · 죽음·순서표 커버)
+  ✓ 회귀 주입 → 빨간불: node tools/determinism.mjs
+  ✓ 회귀 주입 → 빨간불: node tools/determinism.mjs
+  ✓ 회귀 주입 → 빨간불: node tools/determinism.mjs
+  ✓ 회귀 주입 → 빨간불: node tools/determinism.mjs
+  ✓ 회귀 주입 → 빨간불: node tools/determinism.mjs
+  ✓ 회귀 주입 → 빨간불: node tools/determinism.mjs
+== 3. 봇 공개 뷰 (tsc checkJs) ==
+✓ typecheck-bot: 봇은 BotView 에 있는 필드만 읽는다
+  ✓ 봇 뷰 타입 통과
+  ✓ 회귀 주입 → 빨간불: bash /var/folders/ph/y0b21nzx597650trbnnzdy640000gn/T/tmp.nAc0BCj6kM/tools/typecheck-bot.sh
+== 4. 모바일·플랫폼 정적 검사 ==
+  ✅ landslide
+
+  게임 1종 · 통과 1 · 실패 0 · 경고 0
+  ✓ lint-game-mobile --strict
+== 5. 온라인 E2E (개발 릴레이 + 헤드리스 두 인스턴스) ==
+  · 건너뜀 — LANDSLIDE_E2E_CDP 에 크롬 CDP 포트 둘(쉼표)을 넘겨라: scripts/cdp-chrome.sh start a / b
+== 6. 병과 매치업 봇 판 (빠른 확인 40판 × 15) ==
+  ✓ 매치업 15종 완주
+== 6b. 화면 문구 (합쇼체 · 개발 용어 없음) ==
+  ✓ 화면 문구 걸림 0
+  ✓ 회귀 주입 → 빨간불: node /var/folders/ph/y0b21nzx597650trbnnzdy640000gn/T/tmp.sVU2zDVJ0P/tools/wording-lint.mjs
+  ✓ 회귀 주입 → 빨간불: node /var/folders/ph/y0b21nzx597650trbnnzdy640000gn/T/tmp.sVU2zDVJ0P/tools/wording-lint.mjs
+  ✓ 회귀 주입 → 빨간불: node /var/folders/ph/y0b21nzx597650trbnnzdy640000gn/T/tmp.sVU2zDVJ0P/tools/wording-lint.mjs
+== 7. IP 스캔 (서빙 파일에 참조작 이름) ==
+  ✓ 서빙 파일에 참조작 명칭 없음
+
+통과 18 · 실패 0
