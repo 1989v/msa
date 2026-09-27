@@ -1403,7 +1403,7 @@ concepts:
     description: "JS(document.cookie)가 읽지 못하게 하는 쿠키 속성. XSS 가 나도 세션 쿠키를 훔쳐 가지 못하지만, 그러면 JS 가 토큰을 헤더에 실을 수 없어 쿠키 인증과 CSRF 방어가 함께 필요해진다"
     synonyms: ["HttpOnly"]
     code:
-      - { path: gateway/src/main/kotlin/com/kgd/gateway/filter/AuthenticationGatewayFilter.kt, symbol: "val token = headerToken ?: request.cookies.getFirst(ACCESS_COOKIE)?.value?.takeIf { it.isNotBlank() }", note: "JS 가 못 읽는 세션 쿠키에서 게이트웨이가 토큰을 꺼낸다" }
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/filter/AuthenticationGatewayFilter.kt, symbol: "val cookieToken = request.cookies.getFirst(ACCESS_COOKIE)?.value", note: "JS 가 못 읽는 세션 쿠키에서 게이트웨이가 토큰을 꺼낸다" }
     mitigates: [sec-token-theft]
   - id: sec-secure-cookie
     kind: MECHANISM
