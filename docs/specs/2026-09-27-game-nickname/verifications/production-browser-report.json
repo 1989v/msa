@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "origin": "https://game.1989v.com",
+  "first": {
+    "playerId": "6c4b6932-cbd4-4609-97b1-e9659146201f",
+    "nickname": "배포확인muk47tzh"
+  },
+  "renamed": {
+    "playerId": "6c4b6932-cbd4-4609-97b1-e9659146201f",
+    "nickname": "배포변경muk47tzh"
+  },
+  "duplicateStatus": 400,
+  "cookie": {
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "Lax",
+    "path": "/api/v1/games"
+  },
+  "geometry": {
+    "left": 16,
+    "right": 374,
+    "bottom": 614.5,
+    "width": 390,
+    "scroll": 390
+  },
+  "errors": []
+}

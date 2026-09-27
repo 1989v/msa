@@ -1,0 +1,22 @@
+[
+  {
+    "name": "guest GET",
+    "status": 200,
+    "body": "{\"success\":true,\"data\":null,\"error\":null}"
+  },
+  {
+    "name": "bad member header",
+    "status": 401,
+    "body": ""
+  },
+  {
+    "name": "cross-origin profile write",
+    "status": 403,
+    "body": ""
+  },
+  {
+    "name": "automation score excluded",
+    "status": 200,
+    "body": "{\"success\":true,\"data\":{\"applied\":false,\"rank\":0,\"excluded\":true},\"error\":null}"
+  }
+]

@@ -19,3 +19,8 @@
 - Fresh review found standalone expired-session recovery missing; adding owner-guarded refresh with no mutation replay, then re-review/test before root push.
 - Next: commit release verification, push root main (normal fast-forward), monitor images workflow (gateway/content/portal-fe), Argo rollout, production smoke. Do not reset or merge shared dirty main.
 - Evidence: /private/tmp/nickname-release-tests.log, /private/tmp/nickname-release-frontend.log. Initialized auth/gifticon/games at release pointers. gh account1989v required by push hook.
+
+## Deployment complete
+- Production nickname images: gateway/content/portal-fe9b5989c, all rollout success and Ready1. V102 applied success1. Public guest create/duplicate/rename/mobile/security/automation-exclusion checks PASS; temporary profiles deleted2, remaining0.
+- Evidence: ../verifications/deployment.md, production-browser-report.json, production-api-report.json, production-mobile.png. Release worktrees retained; shared working tree remains untouched.
+- Follow-up ontology citation correction af49c196 locally verified (OntologyFilesSpec4pass); automatic CI pending at evidence snapshot. No further nickname rollout action required.
