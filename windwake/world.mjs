@@ -1,3 +1,4 @@
+import { landformHeight, createHeightfield } from './terrain.mjs';
 // Deterministic world data. Coordinates are metres; +Y is up, +Z is north.
 export const WORLD = Object.freeze({ size:960, chunkSize:60, spawn:{x:0,z:-72}, waterLevel:-3, seed:18092026 });
 export const VILLAGE = Object.freeze({x:-34,z:-86,radius:28,cellSize:4});
@@ -83,7 +84,7 @@ for(const t of townPositions){
 const segments=TRAILS.flatMap(t=>t.points.slice(1).map((b,i)=>({a:t.points[i],b,ay:t.points[i].y??baseHeight(t.points[i].x,t.points[i].z),by:b.y??baseHeight(b.x,b.z)})));
 // This finite authored spatial index is geometry-free; atlas sampling never touches the chunk cache.
 const trailCells=new Map(),trailCellSize=60;
-for(const s of segments)for(let x=Math.floor((Math.min(s.a.x,s.b.x)-18)/trailCellSize);x<=Math.floor((Math.max(s.a.x,s.b.x)+18)/trailCellSize);x++)for(let z=Math.floor((Math.min(s.a.z,s.b.z)-18)/trailCellSize);z<=Math.floor((Math.max(s.a.z,s.b.z)+18)/trailCellSize);z++){
+for(const s of segments)for(let x=Math.floor((Math.min(s.a.x,s.b.x)-36)/trailCellSize);x<=Math.floor((Math.max(s.a.x,s.b.x)+36)/trailCellSize);x++)for(let z=Math.floor((Math.min(s.a.z,s.b.z)-36)/trailCellSize);z<=Math.floor((Math.max(s.a.z,s.b.z)+36)/trailCellSize);z++){
   const key=`${x},${z}`;if(!trailCells.has(key))trailCells.set(key,[]);trailCells.get(key).push(s);
 }
 function trailSample(x,z){
@@ -94,7 +95,7 @@ function trailSample(x,z){
   }
   return{distance,y};
 }
-export function heightAt(x,z){
+function legacyGround(x,z){
   let h=baseHeight(x,z);const edge=Math.max(Math.abs(x),Math.abs(z));
   if(edge>120){const path=trailSample(x,z);if(path.distance<15)h=mix(h,path.y,(1-smooth((path.distance-4)/11))*smooth((edge-120)/25));}
   for(const t of townPositions){const d=Math.hypot(x-t.x,z-t.z);if(d<39)h=mix(t.floor,h,smooth((d-28)/11));}
@@ -102,6 +103,32 @@ export function heightAt(x,z){
   const homeDistance=Math.hypot(x-VILLAGE.x,z-VILLAGE.z);
   if(homeDistance<35)h=mix(legacyHeight(VILLAGE.x,VILLAGE.z),h,smooth((homeDistance-29)/6));
   return h;
+}
+// Authored anchors and old PRNG rejection decisions use the original surface.
+// Height changes must never change what an existing durable wild-…-0/1 ID means.
+export const WORLD_GENERATION=Object.freeze({version:2,maxDurableIds:12288,legacySlotsPerChunk:2,newSlotsPerChunk:9});
+const reliefWeights=[.95,1.08,.8,1.15,1.4,1.12,1.3,.9];
+function reliefAt(x,z){let sum=0,weights=0;for(let i=0;i<BIOMES.length;i++){const b=BIOMES[i],w=1/(10000+(x-b.x)**2+(z-b.z)**2);sum+=w*reliefWeights[i];weights+=w;}return sum/weights;}
+function terrainVertex(x,z){
+  const edge=Math.max(Math.abs(x),Math.abs(z));
+  if(edge<=120)return legacyGround(x,z);
+  let h=baseHeight(x,z)+landformHeight(x,z,WORLD.seed,reliefAt(x,z))*smooth((edge-120)/90);
+  const path=trailSample(x,z);
+  if(path.distance<34)h=mix(h,path.y,(1-smooth((path.distance-8)/26))*smooth((edge-120)/25));
+  for(const b of bossPositions){const d=Math.hypot(x-b.x,z-b.z);if(d<48)h=mix(baseHeight(b.x,b.z),h,smooth((d-28)/20));}
+  for(const w of waypointPositions){const d=Math.hypot(x-w.x,z-w.z);if(d<25)h=mix(baseHeight(w.x,w.z),h,smooth((d-10)/15));}
+  for(const t of townPositions){const d=Math.hypot(x-t.x,z-t.z);if(d<50)h=mix(t.floor,h,smooth((d-31)/19));}
+  for(const e of entrancePositions){const d=Math.hypot(x-e.x,z-e.z);if(d<27)h=mix(e.floor,h,smooth((d-10)/17));}
+  return h;
+}
+const heightfield=createHeightfield(terrainVertex);
+export function heightAt(x,z){
+  const edge=Math.max(Math.abs(x),Math.abs(z));
+  if(edge<=117)return legacyGround(x,z);
+  const mesh=heightfield.heightAt(x,z);
+  // Match the coarse edge itself, not only its vertices. The final three core
+  // metres blend into the same triangles so an analytic/mesh seam cannot jump.
+  return edge<120?mix(legacyGround(x,z),mesh,smooth((edge-117)/3)):mesh;
 }
 export function terrainColor(x,z){
   const h=heightAt(x,z),m=Math.sin(x*1.31+z*.79)*.018,edge=Math.max(Math.abs(x),Math.abs(z));
@@ -230,8 +257,9 @@ function newChunk(cx,cz){
   for(let i=0;i<23;i++){
     const x=(cx+random())*60,z=(cz+random())*60,scale=.65+random()*1.1,yaw=random()*TAU;
     if(Math.max(Math.abs(x),Math.abs(z))<124||reserved(x,z,1.5))continue;
-    const y=ground(x,z);if(y<WORLD.waterLevel+.4)continue;
+    const oldY=legacyGround(x,z);if(oldY<WORLD.waterLevel+.4)continue;
     const biome=biomeAt(x,z),type=biome.props[Math.floor(random()*biome.props.length)],id=`prop-${cx}-${cz}-${i}`;
+    const y=ground(x,z);if(y<WORLD.waterLevel+.4)continue;
     props.push({id,type,x,y,z,scale,yaw,biomeId:biome.id});
     if(type.includes('tree')||type==='pine')solids.push({id:`solid-${id}`,x,y,z,w:.7*scale,h:3*scale,d:.7*scale,kind:'trunk'});
     else if(type==='rock')solids.push({id:`solid-${id}`,x,y,z,w:1.7*scale,h:.9*scale,d:1.7*scale,kind:'rock'});
@@ -239,9 +267,45 @@ function newChunk(cx,cz){
   // Two persistent encounter slots per outer chunk keep local AI bounded at source.
   for(let i=0;i<2;i++){
     const x=(cx+.18+random()*.64)*60,z=(cz+.18+random()*.64)*60;
-    if(Math.max(Math.abs(x),Math.abs(z))<130||reserved(x,z,4)||ground(x,z)<WORLD.waterLevel+1)continue;
+    if(Math.max(Math.abs(x),Math.abs(z))<130||reserved(x,z,4)||legacyGround(x,z)<WORLD.waterLevel+1)continue;
     const biome=biomeAt(x,z);
-    spawns.push({id:`wild-${cx}-${cz}-${i}`,type:biome.enemies[Math.floor(random()*biome.enemies.length)],x,z,y:ground(x,z),biomeId:biome.id});
+    const type=biome.enemies[Math.floor(random()*biome.enemies.length)],y=ground(x,z);
+    if(y>=WORLD.waterLevel+1)spawns.push({id:`wild-${cx}-${cz}-${i}`,type,x,z,y,biomeId:biome.id});
+  }
+  // Independent stream and namespace: additions cannot perturb legacy identity.
+  const groupRandom=randomFor(cx+8192,cz-4096);
+  const safe=(x,z)=>{
+    if(x<cx*60+3||x>(cx+1)*60-3||z<cz*60+3||z>(cz+1)*60-3)return false;
+    if(Math.max(Math.abs(x),Math.abs(z))<145||reserved(x,z,4)||entrancePositions.some(e=>Math.hypot(x-e.x,z-e.z)<42))return false;
+    const y=ground(x,z);if(y<WORLD.waterLevel+1)return false;
+    if([[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dz])=>Math.abs(ground(x+dx,z+dz)-y)>.72))return false;
+    if(solids.some(p=>Math.abs(x-p.x)<p.w/2+1.2&&Math.abs(z-p.z)<p.d/2+1.2))return false;
+    return !spawns.some(p=>Math.hypot(x-p.x,z-p.z)<2.8);
+  };
+  for(let group=0;group<3;group++){
+    let center;
+    // Prefer a route shoulder, but retain exploration groups where no road exists.
+    for(let attempt=0;attempt<18;attempt++){
+      const candidate={x:(cx+.12+groupRandom()*.76)*60,z:(cz+.12+groupRandom()*.76)*60};
+      if(!safe(candidate.x,candidate.z))continue;
+      if(group===0&&attempt<8&&trailSample(candidate.x,candidate.z).distance>24)continue;
+      center=candidate;break;
+    }
+    if(!center)continue;
+    const biome=biomeAt(center.x,center.z),rotation=Math.floor(groupRandom()*biome.enemies.length);
+    for(let member=0;member<3;member++){
+      let at=member===0?center:null;
+      for(let attempt=0;!at&&attempt<10;attempt++){
+        const angle=groupRandom()*TAU,r=3.5+groupRandom()*6,x=center.x+Math.cos(angle)*r,z=center.z+Math.sin(angle)*r;
+        if(safe(x,z))at={x,z};
+      }
+      if(at)spawns.push({id:`wild-v2-${cx}-${cz}-${group}-${member}`,type:biome.enemies[(rotation+member)%biome.enemies.length],...at,y:ground(at.x,at.z),biomeId:biome.id});
+    }
+  }
+  // Suppress newly unsafe legacy placements; never move them or reuse their IDs.
+  for(let i=spawns.length-1;i>=0;i--){
+    const s=spawns[i];if(!s.id.startsWith('wild-')||s.id.startsWith('wild-v2-'))continue;
+    if(entrancePositions.some(e=>Math.hypot(s.x-e.x,s.z-e.z)<42)||[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dz])=>Math.abs(ground(s.x+dx,s.z+dz)-s.y)>.72)||solids.some(p=>Math.abs(s.x-p.x)<p.w/2+1.2&&Math.abs(s.z-p.z)<p.d/2+1.2))spawns.splice(i,1);
   }
   spawns.push(...BOSS_SITES.filter(b=>cell(b.x,b.z)===id));
   return{id,cx,cz,props,solids,spawns};

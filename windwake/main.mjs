@@ -256,6 +256,7 @@ function updateHUD(){
   const near=interaction(state);$('interaction').hidden=!near||!!panel;if(near){$('interact-title').textContent=near.kind==='rune'?`${near.name}의 돌`:near.name;$('interact-description').textContent=near.description;}
   if(state.toast!==lastToast){lastToast=state.toast;$('toast').textContent=state.toast;}$('toast').classList.toggle('visible',!!state.toast&&!panel);
   $('skill-feedback').textContent=p.skillCooldown>0?`울림 재충전 ${p.skillCooldown.toFixed(1)}초`:p.energy<35?'울림이 모이는 중…':p.gliding?'Space 돛 접기 · WASD 활강 방향':'Q 울림 준비';
+  if(p.attackTimer>0)$('skill-feedback').textContent=`${p.combo}/3 · ${['','횡베기','올려베기','내려베기'][p.combo]} · K 회피 / F 패링`;
   const boss=state.enemies.filter(e=>e.type==='boss'&&e.hp>0&&distance(p,e)<45&&(e.bossId||e.dungeonId||p.y>22)).sort((a,b)=>distance(p,a)-distance(p,b))[0],show=!!boss;$('boss-bar').hidden=!show;
   if(show){$('boss-bar').firstElementChild.textContent=boss.name||(boss.dungeonId?`${DUNGEONS.find(d=>d.id===boss.dungeonId)?.name||'던전'} · 수호자`:'고요의 수호자');$('boss-fill').style.transform=`scaleX(${boss.hp/boss.maxHp})`;$('boss-phase').textContent=boss.state==='telegraph'?(bossTells[boss.pattern]||'공격 준비 — 거리를 살피세요'):boss.state==='recover'?'지금이 공격할 기회':boss.phase===2?'격노 · 두 번째 울림':'공격 예고를 살피세요';}
   drawMap($('minimap'));
@@ -313,7 +314,7 @@ window.WINDWAKE={
   respawn(){respawn(state);lastMode='playing';draw(0);},
   save:()=>exportSave(state),load(data){state=loadSave(data);lastMode='playing';draw(0);return snapshot(state);},
   metrics(){const a=[...performanceData.samples].sort((a,b)=>a-b),r=performanceData.renderMs;return {frames:performanceData.frames,samples:a.length,fps:a.length?1000/(a.reduce((x,y)=>x+y,0)/a.length):0,frameP95:a[Math.floor(a.length*.95)]||0,frameP99:a[Math.floor(a.length*.99)]||0,renderAverage:r.length?r.reduce((x,y)=>x+y,0)/r.length:0,droppedTime:performanceData.droppedTime,renderer:renderer?.stats,world:worldStats(),actors:state.enemies.length,audioVoices:audio.voices.size};},
-  camera(){return {...camera};},setCamera(values){for(const k of ['yaw','pitch','distance'])if(Number.isFinite(values[k]))camera[k]=values[k];draw(0);},
+  camera(){return {...camera};},setCamera(values){for(const k of ['yaw','pitch','distance'])if(Number.isFinite(values[k]))camera[k]=values[k];if(typeof values.foliageFade==='boolean')camera.foliageFade=values.foliageFade;draw(0);},
   resetMetrics(){performanceData.frames=0;performanceData.samples.length=0;performanceData.renderMs.length=0;performanceData.droppedTime=0;},
   events:()=>structuredClone(eventHistory),input:()=>({held:[...input.held],pending:[...input.pending],keys:[...keys],axes:{...input.axes}}),
   ui:()=>({started,manual,panel,storageAvailable,audio:audio.context?.state||'locked',muted:audio.muted,hitStop}),

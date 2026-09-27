@@ -100,7 +100,7 @@ export function validateAdventure(raw) {
   a.waypoints=[...new Set(['home',...knownList(raw.waypoints,new Set(WAYPOINTS.map(w=>w.id)),9)])];
   if(Array.isArray(raw.completedTasks))a.completedTasks=[...new Set(raw.completedTasks.filter(id=>typeof id==='string' && /^[a-zA-Z0-9:_-]{1,64}$/.test(id)))].slice(0,128);
   if(raw.worldDefeated && typeof raw.worldDefeated==='object' && !Array.isArray(raw.worldDefeated)){
-    for(const [id,value] of Object.entries(raw.worldDefeated).slice(0,4096))
+    for(const [id,value] of Object.entries(raw.worldDefeated).slice(0,16384))
       if(value===true && /^[a-zA-Z0-9:_-]{1,96}$/.test(id) && !['__proto__','constructor','prototype'].includes(id))a.worldDefeated[id]=true;
   }
   a.chapter=raw.chapter===2?2:1;

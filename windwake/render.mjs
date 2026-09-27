@@ -1,5 +1,6 @@
 import { WORLD, VILLAGE, TOWNS, LANDMARKS, RUNES, PLATE, heightAt, terrainColor, getChunk, querySolids } from './world.mjs';
 import { dungeonGeometry, dungeonFloor, dungeonSolids, dungeonCleared } from './dungeons.mjs';
+import {attackPose,FOLIAGE_FRAGMENT} from './presentation.mjs';
 
 // Original procedural geometry. Colors extend the local wind-worn DESIGN.md palette.
 export const PALETTE = Object.freeze({
@@ -23,6 +24,13 @@ const mix = (a, b, t) => a + (b - a) * t;
 const noise = (x, z) => { const n = Math.sin(x * 127.1 + z * 311.7) * 43758.5453; return n - Math.floor(n); };
 const tint = (c, n) => [c[0] * n, c[1] * n, c[2] * n];
 const SQRT3 = Math.sqrt(3);
+// Finer mesh in the authored puzzle core; edge midpoint vertices sit on the
+// neighboring 3m edge so the mixed resolutions cannot leave a crack.
+export function renderTerrainHeight(x,z){
+  if(Math.abs(x)===120&&Math.abs(z)<120){const a=Math.floor(z/3)*3;return mix(heightAt(x,a),heightAt(x,a+3),(z-a)/3);}
+  if(Math.abs(z)===120&&Math.abs(x)<120){const a=Math.floor(x/3)*3;return mix(heightAt(a,z),heightAt(a+3,z),(x-a)/3);}
+  return heightAt(x,z);
+}
 export function daylightAt(clock) {
   if (!Number.isFinite(clock)) return 1;
   const t = ((clock % 600) + 600) % 600;
@@ -152,16 +160,26 @@ void main() {
   gl_Position = uViewProjection * vec4(aPosition, 1.0);
 }`;
 const FRAGMENT = `
-precision mediump float;
+precision highp float;
 varying vec3 vWorld;
 varying vec3 vNormal;
 varying vec4 vColor;
 varying float vMaterial;
 uniform vec3 uEye;
+uniform vec3 uFocus;
+uniform float uFoliageFade;
 uniform vec3 uFog;
 uniform float uTime;
 uniform float uDaylight;
+${FOLIAGE_FRAGMENT}
 void main() {
+  if (vMaterial > 2.5 && uFoliageFade > 0.5) {
+    float visibility = foliageVisibility(vWorld);
+    // Stable screen-space ordered coverage avoids alpha sorting and frame noise.
+    vec2 pixel = mod(floor(gl_FragCoord.xy),4.0);
+    float threshold = fract((pixel.x*4.0+pixel.y)*0.5625);
+    if (visibility < 0.999 && threshold >= visibility) discard;
+  }
   vec3 normal = normalize(vNormal);
   vec3 sun = normalize(vec3(-0.48, 0.82, -0.30));
   float diffuse = max(dot(normal, sun), 0.0);
@@ -169,7 +187,7 @@ void main() {
   vec3 color = vColor.rgb * (hemi + diffuse * 0.34);
   color += vec3(0.06, 0.035, 0.0) * diffuse;
   if (vMaterial > 0.5 && vMaterial < 1.5) color = vColor.rgb;
-  if (vMaterial > 1.5) {
+  if (vMaterial > 1.5 && vMaterial < 2.5) {
     float wave = sin(vWorld.x * 0.73 + vWorld.z * 0.32 + uTime * 0.9);
     float crossWave = sin(vWorld.z * 1.42 - vWorld.x * 0.17 - uTime * 0.64);
     float sparkle = pow(max(wave * crossWave, 0.0), 12.0);
@@ -284,7 +302,7 @@ export class Renderer {
     const gl = this.gl;
     this.program = program(gl, VERTEX, FRAGMENT); this.skyProgram = program(gl, SKY_VERTEX, SKY_FRAGMENT);
     this.attributes = ['aPosition', 'aNormal', 'aColor', 'aMaterial'].map(n => gl.getAttribLocation(this.program, n));
-    this.uniforms = Object.fromEntries(['uViewProjection', 'uEye', 'uFog', 'uTime', 'uDaylight'].map(n => [n, gl.getUniformLocation(this.program, n)]));
+    this.uniforms = Object.fromEntries(['uViewProjection', 'uEye', 'uFocus', 'uFoliageFade', 'uFog', 'uTime', 'uDaylight'].map(n => [n, gl.getUniformLocation(this.program, n)]));
     this.skyUniforms = Object.fromEntries(['uYawPitch', 'uAspect', 'uTime', 'uFog', 'uDaylight'].map(n => [n, gl.getUniformLocation(this.skyProgram, n)]));
     this.skyPosition = gl.getAttribLocation(this.skyProgram, 'aPosition');
     this.skyBuffer = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, this.skyBuffer);
@@ -342,10 +360,10 @@ export class Renderer {
     this.backdrop = this.upload(backdrop);
   }
   buildChunk(cx, cz) {
-    const chunk = getChunk(cx, cz), mesh = new Mesh(4000), step = 3, minX = cx * this.chunkSize, minZ = cz * this.chunkSize;
+    const chunk = getChunk(cx, cz), mesh = new Mesh(4000), step = cx>=-2&&cx<2&&cz>=-2&&cz<2?1.5:3, minX = cx * this.chunkSize, minZ = cz * this.chunkSize;
     this.buildingMesh = mesh;
     for (let x = minX; x < minX + this.chunkSize; x += step) for (let z = minZ; z < minZ + this.chunkSize; z += step) {
-      const x2 = x + step, z2 = z + step, a = heightAt(x,z), b = heightAt(x2,z), c = heightAt(x2,z2), d = heightAt(x,z2);
+      const x2 = x + step, z2 = z + step, a = renderTerrainHeight(x,z), b = renderTerrainHeight(x2,z), c = renderTerrainHeight(x2,z2), d = renderTerrainHeight(x,z2);
       const col = terrainColor(x + step / 2, z + step / 2);
       mesh.tri(x,a,z,x,d,z2,x2,c,z2,col); mesh.tri(x,a,z,x2,c,z2,x2,b,z,tint(col,1.005));
     }
@@ -528,6 +546,7 @@ export class Renderer {
     const m = this.chunk(x, z), type = prop.type || prop.kind || 'rock';
     m.origin(x, y, z, prop.yaw || noise(x, z) * TAU, s);
     if (type.includes('tree') || type.includes('pine')) {
+      const treeStart=m.length;
       const pine = type.includes('pine'), h = pine ? 5.8 : 4.5;
       const foliage=type.includes('autumn')?PALETTE.autumn:prop.biomeId==='alpine'?PALETTE.alpine:PALETTE.leaf;
       const light=type.includes('autumn')?PALETTE.amber:PALETTE.leafLight;
@@ -542,6 +561,7 @@ export class Renderer {
         m.jewel(1.0, 3.0, 0.25, 1.15, 1.6, light, 0.8);
         m.jewel(-0.8, 3.3, 0.5, 1.35, 1.8, light, 0.2);
       }
+      for(let i=treeStart+10;i<m.length;i+=STRIDE)m.data[i]=3;
     } else if (type.includes('grass') || type.includes('reed')) {
       for (let i = 0; i < 3; i++) {
         const px = (i - 1) * 0.14, h = type.includes('reed') ? 1.1 : 0.40 + i * 0.07;
@@ -632,7 +652,7 @@ export class Renderer {
     const distance = clamp(Number.isFinite(camera.distance) ? camera.distance : 8, 3.0, 18);
     const targetX = p.x, targetY = p.y + (p.gliding ? 1.1 : 1.25), targetZ = p.z;
     if (!this.eyeInitialized || Math.hypot(targetX - this.target[0], targetY - this.target[1], targetZ - this.target[2]) > 15 || state.frame < this.lastFrame) {
-      this.target.set([targetX, targetY, targetZ]); this.eyeInitialized = true;
+      this.target.set([targetX, targetY, targetZ]); this.eyeInitialized = true;this.cameraReach=undefined;
     }
     const smoothing = 1 - Math.exp(-Math.min(Math.max(dt || 1 / 60, 0.001), 0.1) * 12);
     this.target[0] = mix(this.target[0], targetX, smoothing);
@@ -660,7 +680,14 @@ export class Renderer {
       if (y<this.floorAt(x,z)+padding) { fraction=Math.max(0,(i-1)/steps); break; }
       if (t===fraction) break;
     }
+    const desiredLength=Math.hypot(...delta),allowed=desiredLength*fraction;
+    // Pull in immediately. Only outward recovery is damped, so smoothing never
+    // sends the eye or near plane through a newly encountered obstacle.
+    if(!Number.isFinite(this.cameraReach)||allowed<this.cameraReach)this.cameraReach=allowed;
+    else this.cameraReach=mix(this.cameraReach,allowed,1-Math.exp(-Math.min(dt||1/60,.1)*5));
+    fraction=Math.min(fraction,this.cameraReach/(desiredLength||1));
     for (let axis=0;axis<3;axis++) this.eye[axis]=this.target[axis]+delta[axis]*fraction;
+    this.stats.cameraDistance=this.cameraReach;this.stats.cameraEye=[...this.eye];this.stats.cameraTarget=[...this.target];
     lookAt(this.view, ...this.eye, ...this.target); multiply(this.viewProjection, this.projection, this.view);
     this.cameraYaw = yaw; this.cameraPitch = pitch; this.lastFrame = state.frame;
   }
@@ -675,11 +702,12 @@ export class Renderer {
     const speed = Math.hypot(p.vx || 0, p.vz || 0), moving = clamp(speed / 4, 0, 1);
     const gait = Math.sin(time * (speed > 6 ? 16 : 11)) * 0.35 * moving;
     const attacking = (p.attackTimer || 0) > 0 || p.action === 'attack';
+    const pose=attacking?attackPose(p.combo,p.attackElapsed):null;
     const dodging = (p.dodgeTimer || 0) > 0 || p.action === 'dodge';
     const airborne = !p.grounded, bodyY = dodging ? -0.4 : (airborne ? 0.04 : Math.abs(gait) * 0.04);
     const flash = (p.invulnerable || 0) > 0 && Math.floor(time * 15) % 2 === 0;
     const tunic = flash ? PALETTE.paper : PALETTE.cloth;
-    m.origin(p.x, p.y + bodyY, p.z, p.yaw || 0);
+    m.origin(p.x, p.y + bodyY, p.z, (p.yaw || 0)+(pose?.twist||0));
     for (let side = -1; side <= 1; side += 2) {
       const x = side * 0.19, swing = airborne ? -0.1 : side * gait;
       m.beam(x, 0.86, 0, x, 0.46, swing * 0.45, 0.20, 0.24, PALETTE.paper);
@@ -704,10 +732,7 @@ export class Renderer {
     let handX = 0.45, handY = 0.95, handZ = 0.18;
     let swordX = 0.91, swordY = 0.38, swordZ = 0.66;
     if (attacking) {
-      const phase = ((0.55 - (p.actionTime || p.attackTimer || 0)) * 12 + (p.combo || 0) * 0.8);
-      const sweep = Math.sin(phase) * 1.4;
-      handX = Math.sin(sweep) * 0.62; handZ = 0.15 + Math.cos(sweep) * 0.54; handY = 1.02 + (p.combo === 3 ? 0.28 : 0);
-      swordX = Math.sin(sweep) * 1.65; swordY = handY + 0.1; swordZ = 0.15 + Math.cos(sweep) * 1.65;
+      [handX,handY,handZ]=pose.hand;[swordX,swordY,swordZ]=pose.tip;
     } else if ((p.parryTimer || 0) > 0 || p.action === 'parry') {
       handX = 0.26; handY = 1.12; handZ = 0.6; swordX = -0.25; swordY = 2.0; swordZ = 0.62;
     }
@@ -727,11 +752,14 @@ export class Renderer {
     m.origin(0, 0, 0);
     const ground = this.floorAt(p.x, p.z);
     this.shadow(p.x, ground, p.z, 0.55 + Math.min(Math.max(p.y - ground, 0), 12) * 0.04, 0.20 / (1 + Math.max(p.y - ground, 0) * 0.12));
-    if (attacking) {
-      const a = this.transparent; a.origin(p.x, p.y + 0.92, p.z, p.yaw || 0);
-      const sweep = Math.sin((0.55 - (p.actionTime || 0)) * 14) * 0.9;
-      a.ring(0, 0, 0, 1.9, 0.20, PALETTE.paper, 0.62, -0.7 + sweep, 1.5, 1, 16);
-      a.ring(0, 0.035, 0, 2.05, 0.045, PALETTE.amber, 0.87, -0.7 + sweep, 1.5, 1, 16);
+    if (pose?.active) {
+      const a = this.transparent; a.origin(p.x,p.y+bodyY,p.z,(p.yaw||0)+pose.twist);
+      for(let i=0;i<6;i++){
+        const now=attackPose(p.combo,p.attackElapsed-i*.012),prev=attackPose(p.combo,p.attackElapsed-(i+1)*.012);
+        const inner=now.hand.map((v,j)=>mix(v,now.tip[j],.65)),lastInner=prev.hand.map((v,j)=>mix(v,prev.tip[j],.65));
+        a.quad(...inner,...now.tip,...prev.tip,...lastInner,PALETTE.paper,.62*(1-i/7),1);
+        a.beam(...now.tip,...prev.tip,.035,.035,PALETTE.amber,.85*(1-i/7),1);
+      }
       a.origin(0, 0, 0);
     }
     if ((p.parryTimer || 0) > 0) {
@@ -1096,6 +1124,7 @@ export class Renderer {
         a.ring(x, y + 0.11, z, radius, 0.09 + fade * 0.16, color, fade * 0.85);
         a.ring(x, y + 0.18 + t * 0.7, z, radius * 0.88, 0.04, PALETTE.paper, fade * 0.45);
       } else if (type.includes('slash') || type.includes('attack')) {
+        if(type==='slash'&&e.basic===true)continue; // Basic trail follows the actual weapon in player().
         a.origin(x, y + 0.95, z, e.yaw || 0);
         a.ring(0, 0, 0, 1.7 + t * 0.7, 0.25 * fade, PALETTE.paper, fade * 0.7, -0.9 + t, 1.8, 1, 20); a.origin(0, 0, 0);
       } else {
@@ -1205,6 +1234,7 @@ export class Renderer {
     gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.useProgram(this.program);
     gl.uniformMatrix4fv(this.uniforms.uViewProjection, false, this.viewProjection);
     gl.uniform3fv(this.uniforms.uEye, this.eye); gl.uniform3fv(this.uniforms.uFog, fog); gl.uniform1f(this.uniforms.uDaylight, daylight);
+    gl.uniform3fv(this.uniforms.uFocus,this.target);gl.uniform1f(this.uniforms.uFoliageFade,camera.foliageFade===false?0:1);
     gl.uniform1f(this.uniforms.uTime, state.time || this.time);
     if(indoors){if(this.dungeonBatch)this.draw(this.dungeonBatch.buffer,this.dungeonBatch.count);}else this.draw(this.backdrop.buffer, this.backdrop.count);
     this.updateFrustum();
@@ -1213,7 +1243,7 @@ export class Renderer {
       this.draw(chunk.buffer, chunk.count);
     }
     for (const effect of state.effects || []) {
-      if (effect.type !== 'hit' || (effect.age || 0) > 0.045) continue;
+      if (effect.type !== 'hit' || effect.hitStop===false || (effect.age || 0) > 0.045) continue;
       const impact = `${state.frame - Math.round((effect.age || 0) * 60)}:${effect.x}:${effect.z}`;
       if (impact !== this.lastImpact) { this.lastImpact = impact; this.hitStopRemaining = 0.035; }
     }

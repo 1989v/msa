@@ -1,0 +1,14 @@
+ra eye and near plane remain outside adjacent dungeon walls, closed doors and ceilings
+  ---
+  duration_ms: 32.489833
+  type: 'test'
+  ...
+1..203
+# tests 203
+# suites 0
+# pass 203
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7248.327458

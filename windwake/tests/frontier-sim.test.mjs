@@ -96,8 +96,8 @@ test('regional first-clear pays once, survives reload and does not respawn after
 test('defeated streamed regular enemies stay defeated across unload, return and save reload',()=>{
   const s=isolated();let spec;
   for(const w of WAYPOINTS){spec=spawnsNear(w.x,w.z,110).find(e=>e.type!=='boss'&&!e.id.startsWith('enemy-'));if(spec)break;}
-  assert.ok(spec,'finite streamed regular spawn exists');place(s,spec.x,spec.z-2);advance(s,1);
-  const e=s.enemies.find(e=>e.id===spec.id);assert.ok(e);e.hp=1;e.state='recover';e.timer=99;
+  assert.ok(spec,'finite streamed regular spawn exists');place(s,spec.x,spec.z-10);advance(s,1);
+  const e=s.enemies.find(e=>e.id===spec.id);assert.ok(e);place(s,e.x,e.z-2);e.hp=1;e.state='recover';e.timer=99;
   stepGame(s,{skill:true});assert.equal(e.hp,0);assert.equal(s.adventure.worldDefeated[e.id],true);
   place(s,850,-850);advance(s,2);place(s,spec.x,spec.z);advance(s,2);
   assert.equal(s.enemies.some(a=>a.id===spec.id&&a.hp>0),false);

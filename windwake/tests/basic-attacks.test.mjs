@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {COMBO_STAGES} from '../melee.mjs';
 import {createGame,stepGame,spawnEnemy,DT} from '../sim.mjs';
 
 // Controlled combat fixtures isolate interruption from damage and enemy AI.
@@ -9,14 +10,14 @@ function encounter(type='stalker',extra={}){
   return {s,p,e};
 }
 function advance(s,n,input={}){const events=[];for(let i=0;i<n;i++){stepGame(s,input);events.push(...s.events);}return events;}
-function primeImpact(s,combo=1){Object.assign(s.player,{combo,attackTimer:.3,attackElapsed:[0,.10,.12,.18][combo],attackHit:false,attackQueued:false,comboWindow:.8});}
+function primeImpact(s,combo=1){Object.assign(s.player,{combo,attackTimer:.3,attackElapsed:COMBO_STAGES[combo-1].impact,attackHit:false,attackQueued:false,comboWindow:.8});}
 
 for(const combo of [1,2,3])test(`basic combo${combo} damages without cancelling an incoming attack or moving its victim`,()=>{
   const {s,p,e}=encounter();primeImpact(s,combo);const before={hp:e.hp,timer:e.timer,x:e.x,z:e.z};
   stepGame(s);
-  assert.equal(e.hp,before.hp-[0,16,21,38][combo]);assert.equal(e.state,'telegraph');assert.ok(Math.abs(e.timer-(before.timer-DT))<1e-9);
+  assert.equal(e.hp,before.hp-COMBO_STAGES[combo-1].damage);assert.equal(e.state,'telegraph');assert.ok(Math.abs(e.timer-(before.timer-DT))<1e-9);
   assert.equal(e.vx,0);assert.equal(e.vz,0);assert.equal(e.x,before.x);assert.equal(e.z,before.z);
-  assert.ok(e.hitFlash>0);assert.ok(s.effects.some(f=>f.type==='hit'));assert.equal(s.events.find(v=>v.type==='hit').hitStop,false);
+  assert.ok(e.hitFlash>0);assert.ok(s.effects.some(f=>f.type==='hit'&&f.hitStop===false));assert.equal(s.events.find(v=>v.type==='hit').hitStop,false);
   advance(s,32);assert.ok(p.hp<p.maxHp,'the enemy must finish its advertised attack despite the hit');
 });
 

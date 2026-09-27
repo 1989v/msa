@@ -1,5 +1,6 @@
 import {WORLD,LANDMARKS,RUNES,PLATE,BLOCK_SPAWN,ENEMY_SPAWNS,WAYPOINTS,BOSS_SITES,VILLAGE,querySolids,spawnsNear,heightAt,supportAt,regionAt,clamp,distance} from './world.mjs';
 
+import {COMBO_STAGES} from './melee.mjs';
 import {ENEMY_STATS,updateExpandedEnemy} from './combat.mjs';
 import {initAdventure,awardXP,modifiers,validateAdventure,ACTIVE_SKILLS} from './progression.mjs';
 import {initVillage,tickVillage,villageAction,villageInteraction,villageSolids,captureRaid,restoreRaid,validateVillage} from './village.mjs';
@@ -15,8 +16,21 @@ const BUTTONS=['jump','attack','dodge','parry','skill','interact','heal','skill1
 function random(s){s.rng=(Math.imul(s.rng,1664525)+1013904223)>>>0;return s.rng/4294967296;}
 function emit(s,type,text,at=s.player,extra={}){s.events.push({type,text,x:at.x,y:at.y,z:at.z,...extra});}
 function fx(s,type,at,extra={}){s.effects.push({type,x:at.x,y:at.y,z:at.z,age:0,life:.45,yaw:at.yaw||0,...extra});if(s.effects.length>100)s.effects.splice(0,s.effects.length-100);}
+function replaceableAmbient(e,p,minDistance=40){
+  return e.frontier&&!e.raid&&!e.trialId&&!e.dungeonId&&!e.bossId&&!e.summonedBy&&
+    (e.hp<=0||e.state==='idle'&&e.hp===e.maxHp&&distance(e,p)>minDistance);
+}
 export function spawnEnemy(s,type='stalker',x=s.player.x+6,z=s.player.z+6,y,extra={}) {
-  if(!ENEMY_STATS[type] || s.enemies.length>=64)return null;
+  if(!ENEMY_STATS[type])return null;
+  if(s.enemies.length>=64){
+    // Reserve admission for authored encounters even with an old saturated save.
+    // Only untouched, idle, distant ambient actors are eligible for eviction.
+    const priority=extra.raid||extra.trialId||extra.dungeonId||extra.bossId;
+    const candidate=priority?s.enemies.filter(e=>replaceableAmbient(e,s.player))
+      .sort((a,b)=>distance(b,s.player)-distance(a,s.player))[0]:null;
+    if(!candidate)return null;
+    s.enemies.splice(s.enemies.indexOf(candidate),1);
+  }
   const spec=ENEMY_STATS[type];
   const e={id:`spawn-${s.nextId++}`,type,x,z,y:y??supportFor(s,x,z,floorAt(s,x,z)),yaw:0,hp:spec.hp,maxHp:spec.hp,state:'idle',timer:.4,hitFlash:0,homeX:x,homeZ:z,homeY:y??floorAt(s,x,z),vx:0,vz:0,vy:0,attackCount:0,pattern:'slam',phase:1,rewarded:false,poise:0,...extra};
   s.enemies.push(e);return e;
@@ -32,7 +46,11 @@ export function createGame(seed=WORLD.seed) {
 export const snapshot=s=>structuredClone(s);
 export function restoreSnapshot(data){
   if(!data||![1,2,3].includes(data.version)||!Number.isFinite(data.frame)||!data.player||!Number.isFinite(data.player.x))throw new Error('Invalid simulation snapshot');
-  const next=structuredClone(data);next.adventure??=initAdventure();next.village??=initVillage();next.player.abilityCooldowns??={};next.player.dashTimer??=0;next.player.slowTimer??=0;next.expedition??=initExpedition();next.journey??=initJourney();next.version=3;if(next.expedition.active)next.blocks=next.expedition.active.blocks;return next;
+  const next=structuredClone(data);next.adventure??=initAdventure();next.village??=initVillage();next.player.abilityCooldowns??={};next.player.dashTimer??=0;next.player.slowTimer??=0;next.expedition??=initExpedition();next.journey??=initJourney();next.version=3;if(next.expedition.active)next.blocks=next.expedition.active.blocks;
+  const p=next.player,floor=supportFor(next,p.x,p.z,p.y);
+  if(p.grounded||p.y<floor){p.y=floor;p.vy=0;p.grounded=true;}
+  p.safeY=supportFor(next,p.safeX,p.safeZ,p.safeY);
+  return next;
 }
 function toast(s,text,type='notice'){s.toast=text;s.toastTime=4;emit(s,type,text);}
 export function floorAt(s,x,z){return s?.expedition?.active?dungeonFloor(s,x,z):heightAt(x,z);}
@@ -99,10 +117,10 @@ function startAttack(s){
   const p=s.player;if(p.dodgeTimer>0||p.parryTimer>0)return;
   const e=target(s);if(e)p.yaw=Math.atan2(e.x-p.x,e.z-p.z);
   p.combo=p.comboWindow>0?p.combo%3+1:1;
-  p.attackTimer=[0,.36,.40,.58][p.combo];p.attackElapsed=0;p.attackHit=false;p.attackQueued=false;p.comboWindow=.9;
+  p.attackTimer=COMBO_STAGES[p.combo-1].duration;p.attackElapsed=0;p.attackHit=false;p.attackQueued=false;p.comboWindow=.9;
   p.action='attack';p.actionTime=p.attackTimer;
   if(!p.grounded&&!p.gliding){p.plunge=true;p.vy=Math.min(p.vy,-15);}
-  emit(s,`attack${p.combo}`);fx(s,'slash',p,{life:p.attackTimer,combo:p.combo,power:p.combo});
+  emit(s,`attack${p.combo}`);fx(s,'slash',p,{life:p.attackTimer,combo:p.combo,power:p.combo,basic:true});
   if(p.combo===3)s.metrics.combos++;
 }
 function dropReward(s,e){
@@ -140,7 +158,7 @@ function hitEnemy(s,e,damage,kind='sword',knock=3){
     e.state='hit';e.timer=kind==='parry'?1.6:kind==='pulse'?.95:.36;e.poise=0;
     if(e.type==='boss')toast(s,'수호자의 균열 · 지금 검을 이어 휘두르세요!');
   }
-  s.metrics.hits++;p.energy=Math.min(p.maxEnergy,p.energy+3);emit(s,'hit',undefined,e,{hitStop:controlHit});fx(s,'hit',e,{power:damage,life:.45});
+  s.metrics.hits++;p.energy=Math.min(p.maxEnergy,p.energy+3);emit(s,'hit',undefined,e,{hitStop:controlHit});fx(s,'hit',e,{power:damage,life:.45,hitStop:controlHit});
 }
 function playerDamage(s,amount,source,unblockable=false){
   const p=s.player;if(s.mode!=='playing'||p.invulnerable>0)return false;
@@ -272,7 +290,7 @@ function enemyAttack(s,e){
   // The ring passes below a jumping player. Slam must be dodged or outranged.
   const avoidByJump=e.pattern==='ring'&&p.y-e.y>1.0;
   if(d<radius&&dy<(e.type==='boss'?2.5:1.8)&&!avoidByJump&&facing(e,p,e.type==='boss'?Math.PI:1.3)&&lineClear(e,p,s))playerDamage(s,ENEMY_STATS[e.type].damage,e);
-  if(e.state!=='hit'){e.state='recover';e.timer=e.type==='boss'?1.6:.8;}
+  if(e.state!=='hit'){e.state='recover';e.timer=e.type==='boss'?1.6:.55;}
 }
 function updateEnemy(s,e){
   if(e.raid)return;
@@ -302,7 +320,7 @@ function updateEnemy(s,e){
       if(d<range&&dy<2.4){
         e.state='telegraph';e.attackCount++;
         e.pattern=e.type==='charger'?'charge':e.type==='ranger'?'bolt':boss?(['slam','ring',...(e.phase===2?['bolt','ring']:[])][(e.attackCount-1)%(e.phase===2?4:2)]):'slam';
-        e.timer=boss?(e.phase===2?.85:1.1):e.type==='charger'?.9:.7;
+        e.timer=boss?(e.phase===2?.85:1.1):e.type==='charger'?.9:e.type==='ranger'?.8:.55;
       }else{
         const speed=ENEMY_STATS[e.type].speed*(boss&&e.phase===2?1.3:1);
         horizontalMove(e,Math.sin(e.yaw)*speed*DT,Math.cos(e.yaw)*speed*DT,solidsFor(s,e.x,e.z),.5,1.65,.4,s);
@@ -361,18 +379,23 @@ export function stepGame(s,raw={}){
     p.vx=Math.sin(p.yaw)*14;p.vz=Math.cos(p.yaw)*14;s.metrics.dodges++;emit(s,'dodge');fx(s,'dodge',p,{life:.35});
   }
   if(pressed.parry&&p.stamina>=10&&p.parryCooldown===0&&p.dodgeTimer<=0){p.stamina-=10;p.parryTimer=.23;p.parryCooldown=.7;p.action='parry';p.actionTime=.3;emit(s,'guard');}
-  if(pressed.attack){if(p.attackTimer>0)p.attackQueued=true;else startAttack(s);}
+  if(pressed.attack&&p.attackTimer>0)p.attackQueued=true;
+  if(input.attack&&p.attackTimer<=0)startAttack(s);
   if(p.attackTimer>0){
     p.attackTimer-=DT;p.attackElapsed+=DT;
-    if(!p.attackHit&&p.attackElapsed>[0,.10,.12,.18][p.combo]){
-      p.attackHit=true;const base=[0,16,21,38][p.combo]+s.progress.upgrades.power*5+mods.bladeDamage;
-      for(const e of s.enemies)if(e.hp>0&&distance(p,e)<(p.combo===3?3.9:3.2)&&Math.abs(p.y-e.y)<1.9&&facing(p,e,p.combo===3?1.8:1.25)&&lineClear(p,e,s))hitEnemy(s,e,base,'sword',p.combo===3?8:3);
+    const stage=COMBO_STAGES[p.combo-1];
+    if(!p.attackHit&&p.attackElapsed>=stage.impact){
+      p.attackHit=true;const base=stage.damage+s.progress.upgrades.power*5+mods.bladeDamage;
+      for(const e of s.enemies)if(e.hp>0&&distance(p,e)<stage.range&&Math.abs(p.y-e.y)<1.9&&facing(p,e,stage.arc)&&lineClear(p,e,s))hitEnemy(s,e,base,'sword',0);
     }
-    if(p.attackTimer<=0&&p.attackQueued)startAttack(s);
+    if(p.attackTimer<=0&&(p.attackQueued||input.attack))startAttack(s);
   }
   p.coyote=p.grounded?.12:Math.max(0,p.coyote-DT);p.jumpBuffer=Math.max(0,p.jumpBuffer-DT);
   if(pressed.jump){
-    if(!p.grounded&&p.coyote<=0&&s.progress.glider){p.gliding=!p.gliding&&p.stamina>5;p.plunge=false;if(p.gliding){emit(s,'glide');p.vy=Math.min(p.vy,1);}}
+    const support=supportFor(s,p.x+p.vx*.10,p.z+p.vz*.10,p.y);
+    const nearLanding=p.vy<=0&&p.y-support<=Math.max(.25,-p.vy*.15+.5*25*.15*.15)&&p.y>=support-.02;
+    if(p.gliding){p.gliding=false;p.plunge=false;}
+    else if(!p.grounded&&p.coyote<=0&&s.progress.glider&&!nearLanding){p.gliding=p.stamina>5;p.plunge=false;if(p.gliding){emit(s,'glide');p.vy=Math.min(p.vy,1);}}
     else p.jumpBuffer=.15;
   }
   if(p.jumpBuffer>0&&p.coyote>0){p.vy=10.8;p.grounded=false;p.coyote=0;p.jumpBuffer=0;p.airState='JUMP';p.fallPeak=p.y;s.metrics.jumps++;emit(s,'jump');}
@@ -410,7 +433,7 @@ export function stepGame(s,raw={}){
   if(p.grounded&&p.y>(s.expedition?.active?-.1:WORLD.waterLevel+.8)&&!s.blocks.some(b=>overlaps(p.x,p.z,b,.8))){p.safeX=p.x;p.safeY=p.y;p.safeZ=p.z;}
   if(s.mode!=='playing')return s;
   if(!s.expedition?.active&&distance(p,WORLD.spawn)<180)updateBlocks(s);
-  for(const e of s.enemies)if(distance(e,p)<130)updateEnemy(s,e);
+  for(const e of s.enemies)if(distance(e,p)<(e.bossId||e.dungeonId?80:45)||e.state!=='idle')updateEnemy(s,e);
   updateProjectiles(s);
   if(s.expedition?.active){tickDungeon(s,DT,dungeonHooks(s));s.region=s.expedition.active?.roomId||'dungeon';return s;}
   tickVillage(s,DT,villageHooks(s));
@@ -547,12 +570,27 @@ function streamEnemies(s,force=false){
   if(s.expedition?.active)return;
   const p=s.player,cell=`${Math.floor(p.x/30)}:${Math.floor(p.z/30)}`;
   if(!force&&cell===s.streamCell&&s.frame%90!==0)return;s.streamCell=cell;
-  s.enemies=s.enemies.filter(e=>!e.frontier||e.raid||e.trialId||distance(e,p)<145);
+  s.enemies=s.enemies.filter(e=>!e.frontier||e.raid||e.trialId||distance(e,p)<145||e.hp>0&&e.state!=='idle');
   const original=new Set(ENEMY_SPAWNS.map(e=>e.id));
-  for(const spec of spawnsNear(p.x,p.z,110)){
+  const nearby=spawnsNear(p.x,p.z,110).sort((a,b)=>(b.type==='boss')-(a.type==='boss')||distance(a,p)-distance(b,p));
+  for(const spec of nearby){
     if(original.has(spec.id)||s.enemies.some(e=>e.id===spec.id)||s.adventure.worldDefeated[spec.id])continue;
     const site=BOSS_SITES.find(b=>b.id===spec.id);
     if(site&&(s.adventure.bosses.includes(site.id)||(site.final&&(s.adventure.bosses.filter(id=>id!=='boss-frontier').length<4||s.village.level<3))))continue;
+    // Keep 24 slots free for boss/raid/trial/summon admission. Arrival remains safe.
+    if(!site){
+      const incomingDistance=distance(spec,p);
+      if(incomingDistance<9)continue;
+      if(s.enemies.length>=40){
+        // Walking into a new cell must refresh the nearest encounters, even
+        // before the 145 m unload boundary. A 12 m distance advantage prevents
+        // residency churn; actors within 40 m and every engaged actor stay.
+        const outgoing=s.enemies.filter(e=>replaceableAmbient(e,p,Math.max(40,incomingDistance+12)))
+          .sort((a,b)=>distance(b,p)-distance(a,p))[0];
+        if(!outgoing)continue;
+        s.enemies.splice(s.enemies.indexOf(outgoing),1);
+      }
+    }
     const extra={...spec,frontier:true};
     if(site){Object.assign(extra,{bossId:site.id,family:site.family,name:site.name,final:!!site.final,level:site.level,hp:site.final?1250:480+(site.level||1)*45,maxHp:site.final?1250:480+(site.level||1)*45});}
     spawnEnemy(s,spec.type,spec.x,spec.z,spec.y,extra);

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DT, createGame, stepGame, snapshot, restoreSnapshot, spawnEnemy, awardSigil,
   interact, interaction, upgrade, exportSave, loadSave, respawn, fastTravel } from '../sim.mjs';
+import { COMBO_STAGES } from '../melee.mjs';
 import { WORLD, LANDMARKS, RUNES, PLATE, BLOCK_SPAWN, PLATFORMS, OBSTACLES, heightAt } from '../world.mjs';
 
 // These are controlled simulation scenarios, not evidence of a complete player
@@ -126,16 +127,17 @@ test('sword damages a forward target but not targets behind or on a higher floor
 test('sword, pulse and enemy melee cannot damage through the solid quarry wall', () => {
   const s = isolated(); place(s, -57.4, 0); s.player.yaw = Math.PI / 2;
   const enemy = stationaryEnemy(s, 'stalker', -54.6, 0, heightAt(-54.6, 0));
-  press(s, 'attack'); advance(s, 9);
+  press(s, 'attack'); advance(s, Math.ceil(COMBO_STAGES[0].impact/DT));
+  assert.equal(s.player.attackHit,true,'cover assertion runs after the shared impact time');
   assert.equal(enemy.hp, enemy.maxHp, 'wall-west separates the two actors');
   press(s, 'skill'); assert.equal(enemy.hp, enemy.maxHp, 'pulse must also respect cover');
   Object.assign(enemy, { state: 'telegraph', timer: DT / 2, yaw: -Math.PI / 2, pattern: 'slam' });
   stepGame(s, {}); assert.equal(s.player.hp, s.player.maxHp, 'enemy cannot hit through cover');
 });
 
-test('held attack fires once; separate buffered presses produce a three-hit combo', () => {
+test('held attack chains; separate buffered presses produce a three-hit combo', () => {
   const held = isolated(), events = advance(held, 100, { attack: true });
-  assert.deepEqual(events.filter(e => /^attack[123]$/.test(e.type)).map(e => e.type), ['attack1']);
+  assert.deepEqual(events.filter(e => /^attack[123]$/.test(e.type)).map(e => e.type), ['attack1', 'attack2', 'attack3']);
   const s = isolated(), attacks = [];
   for (let frame = 0; frame < 95; frame++) {
     stepGame(s, { attack: [0, 12, 36].includes(frame) });

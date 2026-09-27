@@ -1,16 +1,16 @@
 // Deterministic expanded enemy decisions. Physics, rewards and effects stay in
 // the simulation behind injected hooks; this module never imports the sim/UI.
 export const ENEMY_STATS = Object.freeze(Object.fromEntries(Object.entries({
-  stalker: { hp:55, speed:3.3, damage:13, xp:14, name:'갈퀴 망령' },
-  ranger: { hp:44, speed:2.5, damage:12, xp:16, name:'파편술사' },
-  charger: { hp:95, speed:2.5, damage:22, xp:24, name:'돌갑옷' },
+  stalker: { hp:100, speed:3.3, damage:18, xp:14, name:'갈퀴 망령' },
+  ranger: { hp:76, speed:2.5, damage:16, xp:16, name:'파편술사' },
+  charger: { hp:120, speed:2.5, damage:24, xp:24, name:'돌갑옷' },
   slime: { hp:36, speed:2.1, damage:10, xp:12, name:'이슬 방울' },
-  wolf: { hp:52, speed:4.0, damage:15, xp:18, name:'황혼 늑대' },
-  boar: { hp:86, speed:2.9, damage:20, xp:22, name:'갈기 멧돼지' },
-  shaman: { hp:58, speed:2.3, damage:11, xp:24, name:'숲의 주술사' },
+  wolf: { hp:82, speed:4.0, damage:18, xp:18, name:'황혼 늑대' },
+  boar: { hp:112, speed:2.9, damage:22, xp:22, name:'갈기 멧돼지' },
+  shaman: { hp:74, speed:2.3, damage:14, xp:24, name:'숲의 주술사' },
   wisp: { hp:40, speed:3.0, damage:12, xp:20, name:'바람 도깨비불' },
   bomber: { hp:40, speed:2.8, damage:24, xp:18, name:'불씨 풍선' },
-  sentinel: { hp:118, speed:1.9, damage:20, xp:28, name:'유적 파수꾼' },
+  sentinel: { hp:144, speed:1.9, damage:22, xp:28, name:'유적 파수꾼' },
   burrower: { hp:62, speed:3.1, damage:17, xp:20, name:'모래 잠복자' },
   frostling: { hp:48, speed:2.5, damage:11, xp:20, name:'서리 정령' },
   boss: { hp:740, speed:2.6, damage:23, xp:130, name:'고요의 수호자' },
@@ -183,7 +183,7 @@ function activeAttack(s,e,dt,hooks) {
     facing(e,s.player,1.45)&&hooks.lineClear(e,s.player))e.didHit=true;
   if((e.timer<=0||blocked)&&e.state!=='hit'){
     hooks.effect('shockwave',e,{life:.45,power:radius,pattern:e.pattern});
-    recover(e,patternBoss(e)?1.55:1.25);
+    recover(e,patternBoss(e)?1.55:e.type==='wolf'?.75:1.25);
   }
 }
 

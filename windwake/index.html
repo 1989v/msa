@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="hsl(204 25% 13%)">
-  <title>WINDWAKE JOURNEYS — 마을과 잊힌 회랑</title>
+  <title>WINDWAKE WILDS — 능선과 바람의 길</title>
   <meta name="description" content="여덟 마을의 주민을 만나고 잊힌 던전을 탐험하는 오픈월드 액션 어드벤처. 유물과 기술, 농사와 달밤의 마을 방어.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='hsl(164,40%25,67%25)' d='M16 1 30 16 16 31 2 16z'/%3E%3Cpath fill='hsl(204,25%25,13%25)' d='m16 6 6 13-6-3-6 3z'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./style.css">
@@ -28,20 +28,20 @@
     <div id="toast" role="status" aria-live="polite"></div>
     <div id="interaction" hidden><kbd>E</kbd><div><strong id="interact-title"></strong><small id="interact-description"></small></div></div>
     <div id="skill-feedback"></div><div id="active-skills"><span id="active-1">1 기술 장착 · T</span><span id="active-2">2 기술 장착 · T</span></div><div id="world-clock"></div>
-    <div class="controls-strip"><span><kbd>WASD</kbd> 이동</span><span><kbd>Space</kbd> 점프 · 돛</span><span><kbd>J</kbd> / 클릭 공격</span><span><kbd>K</kbd> 회피</span><span><kbd>Q</kbd> 울림</span><span><kbd>F</kbd> 패링</span><span>우클릭 드래그 · 시점</span></div>
+    <div class="controls-strip"><span><kbd>WASD</kbd> 이동</span><span><kbd>Space</kbd> 점프 · 돛</span><span><kbd>J</kbd> / 클릭 유지 · 연격</span><span><kbd>K</kbd> 회피</span><span><kbd>Q</kbd> 울림</span><span><kbd>F</kbd> 패링</span><span>우클릭 드래그 · 시점</span></div>
     <div id="touch-controls"><div id="joystick" aria-label="이동 조이스틱"><div></div></div><div class="touch-actions"><button data-action="interact">사용</button><button data-action="skill">울림</button><button data-action="parry">패링</button><button data-action="dodge">회피</button><button data-action="attack" class="attack-button">공격</button><button data-action="jump">점프</button><button data-action="heal">회복</button><button data-action="skill1">기술 1</button><button data-action="skill2">기술 2</button></div><span class="touch-look">화면 오른쪽을 쓸어 시점 회전</span></div>
   </div>
   <main id="start-screen" class="screen title-screen">
     <div class="title-content">
-      <div class="eyebrow">JOURNEYS / AN OPEN-WORLD ADVENTURE</div>
+      <div class="eyebrow">WILDS / AN OPEN-WORLD ADVENTURE</div>
       <h1>WIND<br>WAKE<span>바람뜰의 모험</span></h1>
       <div class="title-rule"></div>
-      <p>마을의 이야기가 길을 열고,<br>잊힌 회랑의 빛이 집으로 이어집니다.</p>
+      <p>능선을 넘고, 위협의 빈틈을 읽고.<br>바람이 닿는 길 너머로 떠나세요.</p>
       <button id="continue-button" class="primary" hidden>여정 이어가기 <span>→</span></button>
       <button id="start-button" class="primary">여정 시작하기 <span>→</span></button>
       <div class="title-hint">8개의 지역 마을 · 4개의 던전 · 유물과 기술 · 농사와 마을 방어</div>
     </div>
-    <div class="title-footer"><span>03 / THE CONNECTED JOURNEYS</span><span>HEADPHONES RECOMMENDED</span></div>
+    <div class="title-footer"><span>04 / RIDGES AND WILDS</span><span>HEADPHONES RECOMMENDED</span></div>
   </main>
   <section id="panel" class="screen panel-screen" hidden aria-modal="true" role="dialog" aria-labelledby="panel-title">
     <div class="panel-body"><div class="panel-header"><div><div class="eyebrow" id="panel-kicker">WINDWAKE</div><h2 id="panel-title">여정</h2></div><button id="close-panel" aria-label="게임으로 돌아가기">닫기 ×</button></div><div id="panel-content"></div></div>

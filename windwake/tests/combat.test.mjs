@@ -29,8 +29,8 @@ function fixture(type,extra={}){
   return {s,e,calls,options,hooks,tick,until};
 }
 
-test('original actors remain simulation-owned and retain their combat stats',()=>{
-  for(const [type,hp,speed,damage] of [['stalker',55,3.3,13],['ranger',44,2.5,12],['charger',95,2.5,22],['boss',740,2.6,23]]){
+test('original actors remain simulation-owned with the intentional Wilds resistance tuning',()=>{
+  for(const [type,hp,speed,damage] of [['stalker',100,3.3,18],['ranger',76,2.5,16],['charger',120,2.5,24],['boss',740,2.6,23]]){
     const f=fixture(type),before=structuredClone(f.e);
     assert.equal(updateExpandedEnemy(f.s,f.e,DT,f.hooks),false);assert.deepEqual(f.e,before);
     assert.equal(ENEMY_STATS[type].hp,hp);assert.equal(ENEMY_STATS[type].speed,speed);assert.equal(ENEMY_STATS[type].damage,damage);

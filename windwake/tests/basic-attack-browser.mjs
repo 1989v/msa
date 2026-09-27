@@ -20,13 +20,13 @@ try{
   for(let i=0;i<100;i++){await c.sleep(100);if(await c.evaluate('!!window.WINDWAKE'))break;}
   assert.equal(await c.evaluate('!!window.WINDWAKE&&document.getElementById("fatal").hidden'),true);await c.clickId('start-button');await c.sleep(1100);
   // Deliberate fixtures isolate interruption; full natural adventures are separate.
-  await c.evaluate(`window.basicFixture=(combo=0)=>{
+  await c.evaluate(`(async()=>{window.comboStages=(await import('./melee.mjs')).COMBO_STAGES;window.basicFixture=(combo=0)=>{
     WINDWAKE.reset();let s=WINDWAKE.snapshot();s.enemies=[];WINDWAKE.restore(s);
     const p=s.player,spawn=WINDWAKE.spawnEnemy('stalker',p.x,p.z+2,p.y);s=WINDWAKE.snapshot();
     Object.assign(s.enemies[0],{state:'telegraph',timer:1.2,pattern:'slam',yaw:Math.PI,hp:300,maxHp:300});
-    if(combo)Object.assign(s.player,{combo,attackTimer:.3,attackElapsed:[0,.10,.12,.18][combo],attackHit:false,comboWindow:.8});
+    if(combo)Object.assign(s.player,{combo,attackTimer:.3,attackElapsed:comboStages[combo-1].impact,attackHit:false,comboWindow:.8});
     WINDWAKE.restore(s);return spawn.id;
-  }`);
+  };})()`);
   const comboImpacts=[];
   for(const combo of [1,2,3]){
     const result=await c.evaluate(`basicFixture(${combo});WINDWAKE.step(1,{});({enemy:WINDWAKE.state().enemies[0],ui:WINDWAKE.ui(),events:WINDWAKE.events()})`);

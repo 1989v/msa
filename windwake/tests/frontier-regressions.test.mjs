@@ -19,7 +19,9 @@ test('ten completed nights release defeated actor slots and continue admitting e
     const second=s.enemies.filter(e=>e.raid&&e.hp>0);assert.equal(second.length,4,`day${day} wave2 physically spawned`);
     second.forEach(e=>e.hp=0);stepGame(s,{});
     assert.equal(s.village.raid.status,'won');assert.equal(s.enemies.filter(e=>e.raid).length,0);
-    assert.ok(s.enemies.length<25);
+    // Wilds admits up to 40 ordinary residents and reserves the rest for raids.
+    assert.ok(s.enemies.filter(e=>!e.raid&&!e.bossId&&!e.trialId).length<=40);
+    assert.ok(s.enemies.length<=64);
   }
 });
 
