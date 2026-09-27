@@ -5,7 +5,7 @@
 #   1. GitHub auth account = 1989v
 #   2. push 되는 커밋의 author = kgd <1989v@naver.com>
 #   3. 서브모듈 포인터가 원격에 실제로 존재
-#   4. Kotlin 소스가 섞여 있으면 구조 게이트 verifyArchitecture (ADR-0083)
+#   4. Kotlin 소스나 서브모듈 포인터가 바뀌면 구조 게이트 verifyArchitecture (ADR-0083) — **푸시하는 커밋 그대로** 검사
 #
 # main 이 곧 배포 브랜치라 CI 는 "밀고 난 뒤" 다. 여기가 위반을 막을 수 있는 마지막 지점이다.
 
@@ -29,6 +29,8 @@ fi
 remote="$1"
 url="$2"
 KT_TOUCHED=""
+PUSH_OID=""
+SUB_PATHS=$(git config -f .gitmodules --get-regexp '^submodule\..*\.path$' 2>/dev/null | awk '{print $2}')
 
 while read local_ref local_oid remote_ref remote_oid; do
     if [ "$local_oid" = "0000000000000000000000000000000000000000" ]; then
@@ -42,9 +44,12 @@ while read local_ref local_oid remote_ref remote_oid; do
     fi
 
     # 게이트를 돌릴지 판단 (Check 4). 루프 밖에서 쓰므로 여기서 모아 둔다.
-    if git diff --name-only "$range" 2>/dev/null | grep -q '\.kt$'; then
+    # 서브모듈 포인터가 바뀐 것도 코드가 바뀐 것이다 — 포인터만 올린 커밋이 게이트를 건너뛰면 안 된다
+    CHANGED=$(git diff --name-only "$range" 2>/dev/null)
+    if printf '%s\n' "$CHANGED" | grep -q '\.kt$' || printf '%s\n' "$CHANGED" | grep -qxF -f <(printf '%s\n' $SUB_PATHS); then
         KT_TOUCHED=1
     fi
+    PUSH_OID="$local_oid"
 
     BAD_COMMITS=$(git log "$range" --format='%H %an <%ae>' 2>/dev/null | grep -v "$REQUIRED_NAME <$REQUIRED_EMAIL>" | grep -v "Co-Authored-By")
 
@@ -102,14 +107,33 @@ done
 # --- Check 4: 레이어/배선 게이트 (ADR-0083 / 0082 / Flyway) ---
 # `check` 에 붙어 있지만 CI 도 로컬도 보통 `test` 만 돌린다 — Kotlin 이 섞인 push 에서만 직접 부른다.
 # 개별 태스크가 아니라 묶음(verifyArchitecture)을 부른다 — 게이트를 새로 만들 때 호출부 추가를 잊지 않도록.
-# 텍스트 스캔이라 컴파일하지 않는다 (측정 ~7s).
-if [ -n "$KT_TOUCHED" ]; then
-    echo "▶ 구조 게이트 (verifyArchitecture)"
-    if ! ./gradlew -q verifyArchitecture; then
+#
+# **작업 트리가 아니라 푸시하는 커밋을 검사한다.** 작업 트리를 보면 두 가지가 샌다 —
+#   ① 서브모듈을 고쳐 두고 포인터를 안 올린 커밋이 통과한다(2026-09-26: 위반 포인터 49e5a3f 가 올라가
+#      CI verifyLayerDependencies 가 그 커밋의 이미지 전부를 막았다)
+#   ② 공유 트리에서는 남의 미커밋 코드가 판정을 바꾼다
+# 그래서 커밋을 임시 디렉토리에 풀고, 서브모듈도 그 커밋이 가리키는 포인터로 풀어 그곳에서 돈다(측정 ~13s).
+if [ -n "$KT_TOUCHED" ] && [ -n "$PUSH_OID" ]; then
+    echo "▶ 구조 게이트 (verifyArchitecture) — 푸시하는 커밋 ${PUSH_OID:0:8} 그대로"
+    GATE_DIR=$(mktemp -d "${TMPDIR:-/tmp}/prepush-gate.XXXXXX")
+    trap 'rm -rf "$GATE_DIR"' EXIT
+    git archive "$PUSH_OID" | tar -x -C "$GATE_DIR"
+    for sub_path in $SUB_PATHS; do
+        sub_sha=$(git rev-parse "$PUSH_OID:$sub_path" 2>/dev/null) || continue
+        [ -e "$sub_path/.git" ] || continue          # 체크아웃 안 된 서브모듈은 여기서 못 푼다
+        mkdir -p "$GATE_DIR/$sub_path"
+        if ! env -u GIT_DIR -u GIT_WORK_TREE git -C "$sub_path" archive "$sub_sha" 2>/dev/null | tar -x -C "$GATE_DIR/$sub_path"; then
+            echo "❌ PUSH BLOCKED: 서브모듈 $sub_path 의 커밋 ${sub_sha:0:8} 을 로컬에서 찾을 수 없어 검사할 수 없다"
+            echo "   Fix: git -C $sub_path fetch"
+            exit 1
+        fi
+    done
+    if ! ./gradlew -q -p "$GATE_DIR" verifyArchitecture; then
         echo ""
         echo "❌ PUSH BLOCKED: 구조 게이트 위반 (ADR-0083)"
         echo ""
         echo "   허용목록에 새 항목을 넣어 통과시키지 않는다 — 코드를 고친다."
+        echo "   서브모듈을 고쳤다면 포인터를 올린 뒤 푸시한다(게이트는 커밋된 포인터를 본다)."
         echo "   표준: docs/conventions/package-structure.md · 체크리스트: docs/standards/new-domain-checklist.md"
         echo ""
         exit 1
