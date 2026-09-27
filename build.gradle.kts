@@ -601,6 +601,63 @@ val verifySearchIndexContract by tasks.registering {
 subprojects { plugins.withId("java") { tasks.named("check") { dependsOn(verifySearchIndexContract) } } }
 
 /**
+ * OpenSearch 인덱스 샤드·레플리카 선언 게이트.
+ *
+ * 운영 OpenSearch 는 노드가 하나다. 인덱스를 만들 때 선언하지 않으면 서버 기본값(레플리카 1)이 들어가
+ * 복제본을 둘 곳이 없어 클러스터가 상시 yellow 가 된다 — 가용성 이득은 없고 진짜 장애 신호만 가린다.
+ * 한 경로를 고친 뒤 다른 경로에서 재발했다(2026-09-17 search 정의 4종, 2026-09-25 code-dictionary 개념
+ * 인덱스). 모듈 테스트는 각자 자기 경로만 지키므로, 새로 생기는 생성 경로는 여기서 잡는다.
+ *
+ * 인덱스를 만드는 길은 둘이고 둘 다 선언을 요구한다:
+ *   1. 정의 JSON — `src/main/resources/opensearch/` 의 .json 중 settings·mappings 를 가진 것은
+ *      settings.index.number_of_shards · number_of_replicas 를 적는다
+ *   2. 코드에서 `indices().create` 를 부르는 파일 — 정의 JSON 을 읽어 넣거나(`IndexSettings._DESERIALIZER`,
+ *      그 JSON 은 1 이 본다) 빌더에 numberOfShards · numberOfReplicas 를 직접 적는다
+ * 값은 보지 않는다 — 노드가 늘면 레플리카를 올리는 것이 맞고, 여기서 막을 것은 「선언 없음」이다.
+ */
+val verifyIndexShardDeclaration by tasks.registering {
+    group = "verification"
+    description = "OpenSearch 인덱스를 만드는 모든 경로가 샤드·레플리카를 선언하는지 확인"
+    doLast {
+        val offenders = mutableListOf<String>()
+        subprojects.forEach { sp ->
+            sp.file("src/main/resources/opensearch").listFiles { f -> f.extension == "json" }.orEmpty().forEach { f ->
+                @Suppress("UNCHECKED_CAST")
+                val parsed = groovy.json.JsonSlurper().parse(f) as? Map<String, Any?> ?: return@forEach
+                val settings = parsed["settings"] as? Map<String, Any?>
+                if (settings == null || parsed["mappings"] == null) return@forEach
+                val index = settings["index"] as? Map<String, Any?>
+                val missing = listOf("number_of_shards", "number_of_replicas").filter { index?.get(it) == null }
+                if (missing.isNotEmpty()) offenders += "${rootProject.relativePath(f)}: settings.index.${missing.joinToString("·")} 없음"
+            }
+            sp.file("src/main/kotlin").walkTopDown()
+                .filter { it.isFile && it.extension == "kt" }
+                .forEach { f ->
+                    val text = f.readText()
+                    if ("indices().create" !in text) return@forEach
+                    val fromDefinition = "IndexSettings._DESERIALIZER" in text
+                    val declared = "numberOfShards(" in text && "numberOfReplicas(" in text
+                    if (!fromDefinition && !declared) {
+                        offenders += "${rootProject.relativePath(f)}: indices().create 에 numberOfShards·numberOfReplicas 없음"
+                    }
+                }
+        }
+        if (offenders.isNotEmpty()) {
+            throw GradleException(
+                offenders.joinToString(
+                    prefix = "샤드·레플리카를 선언하지 않고 인덱스를 만드는 경로:\n  ",
+                    separator = "\n  ",
+                    postfix = "\n\n선언이 없으면 레플리카 1 이 들어가 단일 노드 클러스터가 yellow 가 된다. " +
+                        "정의 JSON 은 settings.index 에, 빌더는 .numberOfShards(1).numberOfReplicas(0) 로 적을 것.",
+                ),
+            )
+        }
+    }
+}
+
+subprojects { plugins.withId("java") { tasks.named("check") { dependsOn(verifyIndexShardDeclaration) } } }
+
+/**
  * ADR-0093 파드 토폴로지 게이트.
  *
  * 새 도메인은 **기본적으로 새 파드를 만들지 않는다.** 성격 축으로 정한 상주 파드 중 하나에
@@ -1003,6 +1060,7 @@ val verifyArchitecture by tasks.registering {
         verifyFlywayWiring,
         verifyExternalApiQuota,
         verifySearchIndexContract,
+        verifyIndexShardDeclaration,
         verifyPodTopology,
         verifyTransactionQualifiers,
         verifyTopologyGenerated,
