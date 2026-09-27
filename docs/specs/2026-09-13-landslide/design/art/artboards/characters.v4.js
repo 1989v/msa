@@ -1,4 +1,4 @@
-/* 사태(沙汰) — SD 무장 캐릭터 도형 라이브러리 (v5 · README §12 — 색 선명도 + 36px 머리 실루엣)
+/* 사태(沙汰) — SD 무장 캐릭터 도형 라이브러리 (v4 · korean-warrior.md 기준)
    · 3.2등신: 머리(정수리 y12 ~ 턱 y100) 88, 발 y300. 얼굴은 세로 달걀형, 망건 띠 한 줄, 곧은 눈썹, 가로 눈매선, 작은 가로 입
    · 갑옷: 짙은 남색 두정갑(작은 황동 두정 점) · 무릎 근처 긴 자락 + 앞 트임 · 암적 가선 · 작은 분절 견갑 · 철 비갑
    · 투구: 둥근 철제 + 귀·목 덮는 드림 + 짧은 간주에 작은 술 하나(붉은 공 없음) / 궁수 갓 / 포수 전립(공작깃 하나)
@@ -8,13 +8,13 @@ window.Sata = (function () {
     hanji: '#F9F8F2', ink: '#1D1D1F',
     ochre: '#B38B6D', ochreD: '#8A6A50', ochreL: '#CBAA8C',
     red: '#A2231D', blue: '#2B4B63', pine: '#1A472A',
-    skin: '#F7C79C', ash: '#4A4A4C', steel: '#3A3A3D',
-    navy: '#2F4B7E', iron: '#565C68', ironD: '#3B3F48', ironL: '#AEB5C0', dred: '#962E24',
-    rbrown: '#94553A', rbrownD: '#6E3E2A', brass: '#A88A4E', cloth: '#DAD5C8',
-    bronze: '#7D6B45', felt: '#2A2A2E', meok: '#3A3440', tRed: '#D02A1E', tBlue: '#1C64C0'
+    skin: '#F0CBA5', ash: '#4A4A4C', steel: '#3A3A3D',
+    navy: '#232A3A', iron: '#4E525B', ironD: '#35383F', dred: '#6E2620',
+    rbrown: '#7A4A34', rbrownD: '#573325', brass: '#A88A4E', cloth: '#DAD5C8',
+    bronze: '#7D6B45', felt: '#2A2A2E', meok: '#2E2B2B'
   };
   const ink = (w) => `stroke="${C.ink}" stroke-width="${w || 7}" stroke-linejoin="round" stroke-linecap="round"`;
-  const team = (t) => (t === 'blue' ? C.tBlue : C.tRed);
+  const team = (t) => (t === 'blue' ? C.blue : C.red);
   let CUR = 'joseon';
 
   /* 등깃발 */
@@ -59,7 +59,7 @@ window.Sata = (function () {
       <path d="M84 181 L78 204 L86 206 L92 183" fill="${team(t)}" ${ink(4)}/>`;
   const guards = (c) => `<g fill="${c || C.iron}" ${ink(5)}>
       <path d="M64 116 Q54 128 58 144 L70 142 Q68 128 76 114 Z"/>
-      <path d="M136 116 Q146 128 142 144 L130 142 Q132 128 124 114 Z"/></g><path d="M63 122 Q58 130 60 138 M137 122 Q142 130 140 138" fill="none" stroke="${C.ironL}" stroke-width="3" stroke-linecap="round"/>`;
+      <path d="M136 116 Q146 128 142 144 L130 142 Q132 128 124 114 Z"/></g>`;
 
   /* 조선 — 짙은 남색 두정갑 */
   function coatJoseon(t) {
@@ -67,11 +67,10 @@ window.Sata = (function () {
     let st = '';
     rows.forEach(([y, xs]) => xs.forEach((x) => { st += dot(x, y); }));
     return `<g><path d="${OUTLINE}" fill="${C.navy}" ${ink()}/>
-      <path d="M93 238 L100 220 L107 238 Z" fill="${C.dred}" ${ink(4)}/>
-      <path d="M57 229 L95 231 M105 231 L143 229" stroke="${C.dred}" stroke-width="9" stroke-linecap="round"/>
+      <path d="M57 229 L95 231 M105 231 L143 229" stroke="${C.dred}" stroke-width="5" stroke-linecap="round"/>
       <path d="M100 132 L100 222" fill="none" ${ink(3.5)}/>
       ${st}
-      <path d="M80 110 L100 142 L120 110 Z" fill="${C.dred}" ${ink(4)}/><path d="M86 110 L100 132 L114 110 Z" fill="${C.cloth}" ${ink(4)}/>
+      <path d="M86 110 L100 132 L114 110 Z" fill="${C.cloth}" ${ink(4)}/>
       ${guards()}${belt(t)}</g>`;
   }
   /* 고구려 — 철 찰갑 흉갑 + 암적 치마 자락 */
@@ -80,7 +79,6 @@ window.Sata = (function () {
     [124, 136, 148, 160].forEach((y) => { rows += `<path d="M64 ${y} L136 ${y}" stroke="${C.ironD}" stroke-width="3"/>`; });
     for (let x = 70; x <= 130; x += 10) rows += `<path d="M${x} 118 L${x} 164" stroke="${C.ironD}" stroke-width="1.6" opacity=".7"/>`;
     return `<g><path d="${OUTLINE}" fill="${C.dred}" ${ink()}/>
-      <path d="M93 238 L100 220 L107 238 Z" fill="${C.dred}" ${ink(4)}/>
       <path d="M100 196 L100 222" fill="none" ${ink(3.5)}/>
       <path d="M84 110 L116 110 Q132 112 136 124 L139 166 L61 166 L64 124 Q68 112 84 110 Z" fill="${C.iron}" ${ink(6)}/>
       ${rows}
@@ -90,8 +88,7 @@ window.Sata = (function () {
   /* 신라 — 먹색 포 + 흰 교임 깃 */
   function coatSilla(t) {
     return `<g><path d="${OUTLINE}" fill="${C.meok}" ${ink()}/>
-      <path d="M93 238 L100 220 L107 238 Z" fill="${C.dred}" ${ink(4)}/>
-      <path d="M57 229 L95 231 M105 231 L143 229" stroke="${C.dred}" stroke-width="9" stroke-linecap="round"/>
+      <path d="M57 229 L95 231 M105 231 L143 229" stroke="${C.dred}" stroke-width="5" stroke-linecap="round"/>
       <path d="M100 196 L100 222" fill="none" ${ink(3.5)}/>
       <path d="M84 110 L94 110 L128 160 L118 164 Z" fill="${C.cloth}" ${ink(4)}/>
       ${belt(t)}</g>`;
@@ -104,7 +101,7 @@ window.Sata = (function () {
       <path d="M100 132 L100 214" fill="none" ${ink(3.5)}/>
       ${st}
       <g fill="${C.iron}" ${ink(5)}><path d="M58 184 L82 188 L80 210 L54 204 Z"/><path d="M142 184 L118 188 L120 210 L146 204 Z"/></g>
-      <path d="M80 110 L100 142 L120 110 Z" fill="${C.dred}" ${ink(4)}/><path d="M86 110 L100 132 L114 110 Z" fill="${C.cloth}" ${ink(4)}/>
+      <path d="M86 110 L100 132 L114 110 Z" fill="${C.cloth}" ${ink(4)}/>
       ${guards()}${belt(t)}</g>`;
   }
 
@@ -122,32 +119,13 @@ window.Sata = (function () {
     }
     return s;
   })();
-  const TOPS = {
-    tassel,
-    feather: `<path d="M100 -4 Q84 -40 36 -60 Q56 -34 66 -26 Q50 -26 40 -30 Q68 -6 100 -4 Z" fill="${C.hanji}" ${ink(5)}/>
-      <path d="M98 -6 Q78 -32 46 -50" fill="none" stroke="${C.dred}" stroke-width="3.5" stroke-linecap="round"/>`,
-    spike: `<path d="M93 -4 L100 -56 L107 -4 Z" fill="${C.iron}" ${ink(5)}/>
-      <path d="M100 -48 L100 -8" stroke="${C.ironL}" stroke-width="2.5"/>
-      <ellipse cx="100" cy="-4" rx="12" ry="5" fill="${C.ironD}" ${ink(4)}/>`
-  };
-  const helmetBackWide = `<path d="M52 40 Q28 88 34 124 L166 124 Q172 88 148 40 Z" fill="${C.navy}" ${ink(6)}/>
-    <path d="M37 116 L163 116" stroke="${C.dred}" stroke-width="7"/>
-    ${dot(46, 66)}${dot(42, 90)}${dot(154, 66)}${dot(158, 90)}`;
-  const domeHL = `<path d="M72 30 Q78 8 98 2" fill="none" stroke="${C.ironL}" stroke-width="4" stroke-linecap="round"/>`;
-  function helm(top, wide) {
-    return { back: wide ? helmetBackWide : helmetBack(C.navy), front: `<g>
+  const HATS = {
+    helmet: { back: helmetBack(C.navy), front: `<g>
       <path d="M60 44 Q58 -4 100 -6 Q142 -4 140 44 Z" fill="${C.iron}" ${ink()}/>
       <path d="M100 -6 L100 38 M80 -1 Q72 18 74 40 M120 -1 Q128 18 126 40" fill="none" stroke="${C.ironD}" stroke-width="4"/>
-      ${domeHL}
       <path d="M56 40 Q100 32 144 40 L144 48 Q100 40 56 48 Z" fill="${C.ironD}" ${ink(5)}/>
       ${dot(68, 42, 2.6)}${dot(84, 39, 2.6)}${dot(100, 38, 2.6)}${dot(116, 39, 2.6)}${dot(132, 42, 2.6)}
-      ${TOPS[top]}</g>` };
-  }
-  const HATS = {
-    helmet: helm('tassel', false),
-    feather: helm('feather', false),
-    spike: helm('spike', false),
-    wide: helm('tassel', true),
+      ${tassel}</g>` },
     gat: { ears: true, front: `<g>
       <path d="M78 44 L80 -4 Q80 -10 100 -10 Q120 -10 120 -4 L122 44 Z" fill="${C.felt}" ${ink(6)}/>
       <path d="M80 32 Q100 28 120 32" fill="none" stroke="${C.iron}" stroke-width="5"/>
@@ -162,20 +140,22 @@ window.Sata = (function () {
       <circle cx="100" cy="2" r="4" fill="${C.brass}" ${ink(2.5)}/></g>` }
   };
   const SKIN_HATS = {
-    goguryeo: { lift: -16, plume: `<path d="M100 -22 L100 -34" ${ink(6)}/><path d="M100 -34 Q88 -56 96 -76 Q110 -56 100 -34 Z" fill="${C.dred}" ${ink(4)}/>`, back: `<path d="M54 42 Q46 84 52 112 L148 112 Q154 84 146 42 Z" fill="${C.ironD}" ${ink(6)}/>
+    goguryeo: { back: `<path d="M54 42 Q46 84 52 112 L148 112 Q154 84 146 42 Z" fill="${C.ironD}" ${ink(6)}/>
       <path d="M50 70 L62 70 M50 90 L62 90 M138 70 L150 70 M138 90 L150 90" stroke="${C.ink}" stroke-width="3"/>`, front: `<g>
+      <path d="M100 -22 L100 -34" ${ink(6)}/>
+      <path d="M100 -34 Q88 -56 96 -76 Q110 -56 100 -34 Z" fill="${C.dred}" ${ink(4)}/>
       <path d="M60 44 Q56 -12 100 -22 Q144 -12 140 44 Z" fill="${C.iron}" ${ink()}/>
       <path d="M100 -22 L100 40 M84 -18 L80 40 M116 -18 L120 40 M70 -6 L66 40 M130 -6 L134 40" fill="none" stroke="${C.ironD}" stroke-width="3.5"/>
       <path d="M56 40 Q100 32 144 40 L144 48 Q100 40 56 48 Z" fill="${C.ironD}" ${ink(5)}/>
       <g fill="${C.iron}" ${ink(5)}><path d="M62 44 Q56 70 64 96 L76 92 Q70 66 74 46 Z"/><path d="M138 44 Q144 70 136 96 L124 92 Q130 66 126 46 Z"/></g>
       ${dot(68, 64, 2.4)}${dot(69, 80, 2.4)}${dot(132, 64, 2.4)}${dot(131, 80, 2.4)}</g>` },
-    silla: { lift: -10, ears: true, front: `<g>
+    silla: { ears: true, front: `<g>
       <path d="M122 20 Q144 -16 140 -62 Q128 -22 112 16 Z" fill="${C.hanji}" ${ink(5)}/>
       <path d="M118 16 Q132 -16 138 -52" fill="none" ${ink(2.5)}/>
       <path d="M68 46 Q70 0 100 -16 Q130 0 132 46 Z" fill="${C.rbrown}" ${ink()}/>
       <path d="M66 44 Q100 36 134 44" fill="none" stroke="${C.rbrownD}" stroke-width="6"/>
       <path d="M70 46 Q70 90 92 104 M130 46 Q130 90 108 104" fill="none" stroke="${C.dred}" stroke-width="4" stroke-linecap="round"/></g>` },
-    goryeo: { lift: 4, back: helmetBack(C.rbrown), front: `<g>
+    goryeo: { back: helmetBack(C.rbrown), front: `<g>
       <path d="M62 42 Q60 0 100 -2 Q140 0 138 42 Z" fill="${C.iron}" ${ink()}/>
       <path d="M100 -2 L100 36 M82 3 Q76 20 78 38 M118 3 Q124 20 122 38" fill="none" stroke="${C.ironD}" stroke-width="4"/>
       <path d="M34 46 Q100 30 166 46 Q100 58 34 46 Z" fill="${C.ironD}" ${ink(5)}/>
@@ -206,15 +186,13 @@ window.Sata = (function () {
   }
 
   function head(f, e, hat) {
-    const sk = SKIN_HATS[CUR], H = sk || HATS[hat] || HATS.helmet;
-    const crest = sk && (hat === 'feather' || hat === 'spike') ? `<g transform="translate(0 ${sk.lift || 0})">${TOPS[hat]}</g>` : '';
-    const backL = sk && hat === 'wide' && sk.back ? helmetBackWide : (H.back || '');
-    return `<g>${sk && sk.plume && !crest ? sk.plume : ''}${backL}
+    const H = SKIN_HATS[CUR] || HATS[hat] || HATS.helmet;
+    return `<g>${H.back || ''}
       <rect x="91" y="94" width="18" height="20" fill="${C.skin}" ${ink(6)}/>
       ${H.ears ? `<ellipse cx="65" cy="68" rx="6" ry="9" fill="${C.skin}" ${ink(5)}/><ellipse cx="135" cy="68" rx="6" ry="9" fill="${C.skin}" ${ink(5)}/>` : ''}
       <path d="${FACE}" fill="${C.skin}" ${ink()}/>
       <path d="M66 48 Q100 42 134 48 L134 54 Q100 48 66 54 Z" fill="${C.ink}"/>
-      ${eyes(f, e)}${H.front}${crest}</g>`;
+      ${eyes(f, e)}${H.front}</g>`;
   }
 
   const COATS = { joseon: coatJoseon, goguryeo: coatGoguryeo, silla: coatSilla, goryeo: coatGoryeo };
@@ -222,11 +200,10 @@ window.Sata = (function () {
   const coat = (t) => (COATS[CUR] || coatJoseon)(t);
 
   function arm(x1, y1, x2, y2) {
-    const p = (u) => [x1 + (x2 - x1) * u, y1 + (y2 - y1) * u], [a, b] = p(0.62), [c, d] = p(0.84), [g, k] = p(0.95);
+    const p = (u) => [x1 + (x2 - x1) * u, y1 + (y2 - y1) * u], [a, b] = p(0.62), [c, d] = p(0.88);
     return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${C.ink}" stroke-width="24" stroke-linecap="round"/>
       <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${SLEEVE[CUR] || C.navy}" stroke-width="14" stroke-linecap="round"/>
-      <line x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="${C.iron}" stroke-width="14"/>
-      <line x1="${c}" y1="${d}" x2="${g}" y2="${k}" stroke="${C.dred}" stroke-width="16"/>`;
+      <line x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="${C.iron}" stroke-width="14"/>`;
   }
   const hand = (x, y) => `<circle cx="${x}" cy="${y}" r="11" fill="${C.skin}" ${ink(6)}/>`;
 
@@ -269,29 +246,27 @@ window.Sata = (function () {
       return flag(t, 1) + legs('wide') + coat(t) + hwando(true) + gun +
         arm(70, 122, 110, 148) + arm(130, 122, 156, 142) + head(1, e, 'jeonrip') + match + hand(110, 148) + hand(158, 142);
     },
-    /* 검사 — 깃털 투구 + 환도. 몸 앞에서 두 손으로 비스듬히 아래로 겨눈 짧고 굵은 사선 */
+    /* 검사 — 투구 + 환도. 머리 위 짧은 칼의 사선 */
     sword(t, e) {
       const blade = `<g>
-        <path d="M154 128 Q200 158 238 210 Q184 190 138 158 Z" fill="${C.ironL}" ${ink(6)}/>
-        <path d="M152 142 Q192 166 226 200" fill="none" stroke="${C.hanji}" stroke-width="3.5" stroke-linecap="round"/>
-        <ellipse cx="145" cy="144" rx="7" ry="16" fill="${C.ironD}" ${ink(4)} transform="rotate(36 145 144)"/>
-        <line x1="140" y1="148" x2="108" y2="172" stroke="${C.ink}" stroke-width="14" stroke-linecap="round"/>
-        <line x1="140" y1="148" x2="108" y2="172" stroke="${C.rbrown}" stroke-width="7" stroke-linecap="round"/></g>`;
-      return flag(t, -1) + legs('wide') + coat(t) + hwando(false) + head(0, e, 'feather') +
-        arm(70, 122, 114, 168) + arm(130, 122, 130, 156) + blade + hand(114, 168) + hand(129, 156);
+        <path d="M149 10 Q98 -32 40 -94 Q90 -20 136 26 Z" fill="${C.iron}" ${ink(7)}/>
+        <path d="M138 12 Q98 -24 56 -74" fill="none" stroke="${C.hanji}" stroke-width="3" opacity=".55"/>
+        <ellipse cx="142" cy="18" rx="9" ry="4.5" fill="${C.ink}" transform="rotate(47 142 18)"/>
+        <line x1="144" y1="20" x2="166" y2="46" stroke="${C.ink}" stroke-width="12" stroke-linecap="round"/>
+        <line x1="144" y1="20" x2="166" y2="46" stroke="${C.rbrown}" stroke-width="6" stroke-linecap="round"/></g>`;
+      return flag(t, -1) + legs('') + coat(t) + hwando(false) + arm(70, 122, 150, 30) + head(0, e, 'helmet') + blade +
+        arm(130, 122, 162, 44) + hand(150, 28) + hand(162, 42);
     },
-    /* 창병 — 첨주 투구 + 장창. 수직 장창 · 넓은 잎 창날 · 붉은 술 */
+    /* 창병 — 투구 + 장창. 키 1.5배 수직선 */
     spear(t, e) {
       const shaft = `<g>
-        <line x1="150" y1="300" x2="158" y2="-84" stroke="${C.ink}" stroke-width="18" stroke-linecap="round"/>
-        <line x1="150" y1="300" x2="158" y2="-84" stroke="${C.rbrown}" stroke-width="8" stroke-linecap="round"/>
-        <path d="M150 -80 Q132 -58 138 -30 Q148 -42 158 -34 Q168 -42 178 -30 Q184 -58 166 -80 Z" fill="${C.dred}" ${ink(5)}/>
-        <path d="M145 -56 L143 -40 M158 -60 L158 -42 M171 -56 L173 -40" stroke="${C.ink}" stroke-width="2.5" stroke-linecap="round"/>
-        <rect x="148" y="-90" width="20" height="12" rx="3" fill="${C.ironD}" ${ink(4)}/>
-        <path d="M158 -172 Q194 -124 166 -88 L150 -88 Q122 -124 158 -172 Z" fill="${C.ironL}" ${ink(6)}/>
-        <path d="M158 -162 L158 -94" stroke="${C.iron}" stroke-width="4"/></g>`;
-      return flag(t, 1) + shaft + legs('') + coat(t) + hwando(true) +
-        arm(70, 122, 153, 150) + arm(130, 122, 154, 96) + head(1, e, 'spike') + hand(153, 150) + hand(154, 96);
+        <line x1="112" y1="308" x2="170" y2="-150" stroke="${C.ink}" stroke-width="19" stroke-linecap="round"/>
+        <line x1="112" y1="308" x2="170" y2="-150" stroke="${C.rbrown}" stroke-width="9" stroke-linecap="round"/>
+        <path d="M173 -178 Q190 -142 170 -112 Q154 -144 173 -178 Z" fill="${C.iron}" ${ink(5)}/>
+        <line x1="169" y1="-118" x2="168" y2="-106" ${ink(10)}/>
+        <path d="M167 -106 Q156 -96 158 -80 M167 -106 Q164 -94 168 -80" fill="none" stroke="${C.dred}" stroke-width="5" stroke-linecap="round"/></g>`;
+      return flag(t, 1) + shaft + legs('lunge') + coat(t) + hwando(true) +
+        arm(70, 122, 132, 150) + arm(130, 122, 139, 98) + head(1, e, 'helmet') + hand(132, 150) + hand(139, 98);
     },
     /* 방패병 — 투구 + 긴 세로 장방패 */
     shield(t, e) {
@@ -302,7 +277,7 @@ window.Sata = (function () {
         <circle cx="140" cy="196" r="10" fill="${C.iron}" ${ink(5)}/>${dot(140, 196, 3.5)}</g>`;
       const low = `<g><path d="M48 196 Q32 222 12 248 Q36 226 42 194 Z" fill="${C.iron}" ${ink(5)}/>
         <ellipse cx="48" cy="192" rx="7" ry="4" fill="${C.ink}" transform="rotate(-50 48 192)"/></g>`;
-      return flag(t, 1) + legs('wide') + coat(t) + hwando(false) + arm(130, 122, 150, 168) + head(0.4, e, 'wide') + sh +
+      return flag(t, 1) + legs('wide') + coat(t) + hwando(false) + arm(130, 122, 150, 168) + head(0.4, e, 'helmet') + sh +
         low + arm(70, 122, 50, 188) + hand(50, 190);
     }
   };
