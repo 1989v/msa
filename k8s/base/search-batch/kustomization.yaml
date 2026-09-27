@@ -4,7 +4,8 @@ namespace: commerce
 # ADR-0058 — 상주 Deployment 제거. batch 는 CronJob 으로만 구동(idle 메모리 0).
 resources:
   - serviceaccount.yaml
-  - cronjob-eval.yaml
+  # search-eval-daily(상품 기준선 평가)는 2026-09-27 제거 — 판정 0행으로 매일 건너뛰기만 했다.
+  # 검색 품질 평가는 scripts/search-eval/ (관광지 판정 2,141건 · 3구성 nDCG@10).
   - cronjob-reindex.yaml
   - cronjob-attraction-reindex.yaml
   - cronjob-region-reindex.yaml

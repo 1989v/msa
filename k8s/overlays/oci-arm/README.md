@@ -160,7 +160,7 @@ JVM heap 보정: `JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60.0` 전 백엔드 주
 
 | 그룹 | 메모리 한도 합 | 동시 트리거 burst |
 |---|---|---|
-| CronJob 12종 (quant-ingest-*, search-eval-daily) | ~6.75 Gi (명목) | 매시 정각 1m+5m+30m+hourly 4개 동시 ≈ 2 Gi 일시 점유 |
+| CronJob 12종 (quant-ingest-* 등) | ~6.75 Gi (명목) | 매시 정각 1m+5m+30m+hourly 4개 동시 ≈ 2 Gi 일시 점유 |
 
 K8s scheduler 는 requests 합 (~13.7 Gi) 로만 노드 capacity 체크 → scheduling 안전.
 limits 가 노드 capacity 를 명목상 초과해도 cgroup burst 허용; CronJob 들의
