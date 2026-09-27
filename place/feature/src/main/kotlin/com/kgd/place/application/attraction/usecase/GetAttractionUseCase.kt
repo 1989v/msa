@@ -51,6 +51,8 @@ interface GetAttractionUseCase {
         val petAcmpyType: String?,
         val petRaw: String?,
         val petSyncedAt: LocalDateTime?,
+        /** 주로 즐기는 곳 — indoor · outdoor · mixed (파생 값, 없으면 null) */
+        val setting: String?,
         val imagesRaw: String?,
         val infoRaw: String?,
         val extraSyncedAt: LocalDateTime?,

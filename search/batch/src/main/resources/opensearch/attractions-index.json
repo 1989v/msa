@@ -166,6 +166,9 @@
       "petAcmpyType": {
         "type": "keyword"
       },
+      "setting": {
+        "type": "keyword"
+      },
       "location": {
         "type": "geo_point"
       },

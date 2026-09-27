@@ -36,6 +36,8 @@ data class AttractionDocument(
     val contentTypeId: String? = null,
     /** 반려동물 동반 여부 (원천 `acmpyTypeCd`). 테마 필터 축 — 값 그대로 term 으로 건다. */
     val petAcmpyType: String? = null,
+    /** 주로 즐기는 곳 — indoor · outdoor · mixed (place 파생 값). 「실내」·「비 오는 날」 질의의 필터 축. */
+    val setting: String? = null,
     val imageUrl: String? = null,
     /** 대표 이미지 썸네일(원천 firstimage2, 150×100). 카드 얼굴처럼 작은 자리는 원본(약 500KB) 대신 이것을 쓴다. */
     val thumbnailUrl: String? = null,

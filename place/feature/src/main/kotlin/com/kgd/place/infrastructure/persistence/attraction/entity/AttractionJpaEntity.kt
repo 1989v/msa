@@ -138,6 +138,9 @@ class AttractionJpaEntity(
     @Column(name = "pet_synced_at")
     val petSyncedAt: java.time.LocalDateTime? = null,
 
+    @Column(name = "setting", length = 16)
+    val setting: String? = null,
+
     @Column(name = "images_raw", columnDefinition = "JSON")
     val imagesRaw: String? = null,
 
@@ -199,6 +202,7 @@ class AttractionJpaEntity(
         petAcmpyType = petAcmpyType,
         petRaw = petRaw,
         petSyncedAt = petSyncedAt,
+        setting = setting,
         imagesRaw = imagesRaw,
         infoRaw = infoRaw,
         extraSyncedAt = extraSyncedAt,
@@ -249,6 +253,7 @@ class AttractionJpaEntity(
             petAcmpyType = attraction.petAcmpyType,
             petRaw = attraction.petRaw,
             petSyncedAt = attraction.petSyncedAt,
+            setting = attraction.setting,
             imagesRaw = attraction.imagesRaw,
             infoRaw = attraction.infoRaw,
             extraSyncedAt = attraction.extraSyncedAt,

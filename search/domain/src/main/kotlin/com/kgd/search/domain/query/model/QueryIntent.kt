@@ -60,6 +60,23 @@ object QueryIntent {
     /** 관광 유형 필터가 걸리는 인덱스 필드 */
     const val CONTENT_TYPE_FIELD = "contentTypeId"
 
+    /**
+     * 주로 즐기는 곳(`setting`) — place 가 분류 규칙과 로컬 LLM 판정으로 채운 파생 값이다.
+     * 「비 오는 날」은 실내를 찾는 말이라 같은 값으로 보낸다. 띄어 쓴 형태는 [RAINY_DAY] 가 먼저 붙인다.
+     */
+    val SETTING_INTENTS: Map<String, String> = mapOf(
+        "실내" to "indoor", "실내관광지" to "indoor", "실내여행지" to "indoor",
+        "비오는날" to "indoor", "비올때" to "indoor",
+        "indoor" to "indoor", "rainyday" to "indoor", "rainydays" to "indoor",
+        "야외" to "outdoor", "outdoor" to "outdoor",
+    )
+
+    /** 실내·실외 필터가 걸리는 인덱스 필드 */
+    const val SETTING_FIELD = "setting"
+
+    /** 「비 오는 날」·「비가 오는 날」·「비 올 때」 — 세 어절이라 어절 창(최대 둘)이 못 잡아 먼저 붙인다 */
+    private val RAINY_DAY = Regex("""비\s*(?:가\s*)?(?:오는\s*날|올\s*때)""")
+
     /** 분류체계 코드가 걸리는 필드 — 깊이(1·2·3)가 어느 필드인지 정한다 */
     fun lclsField(depth: Int): String = "lclsSystm$depth"
 
@@ -216,8 +233,9 @@ object QueryIntent {
      * @param searchTypes 타입 의도어([SEARCH_TYPE_INTENTS])를 읽을지. **대상이 정해진 화면(관광지 검색)은 false** —
      *   거기서 「게임」·「상품」을 대상 지시로 읽어 검색어에서 빼면 그 말로 찾던 문서를 놓친다.
      */
-    fun analyze(raw: String, lexicon: Lexicon = Lexicon.EMPTY, searchTypes: Boolean = false): Understood {
-        val words = raw.trim().split(Regex("""\s+""")).filter { it.isNotBlank() }
+    fun analyze(rawQuery: String, lexicon: Lexicon = Lexicon.EMPTY, searchTypes: Boolean = false): Understood {
+        val raw = RAINY_DAY.replace(rawQuery.trim()) { it.value.replace(Regex("""\s|가(?=\s*오)"""), "") }
+        val words = raw.split(Regex("""\s+""")).filter { it.isNotBlank() }
         if (words.isEmpty()) return Understood(residual = null)
 
         // **질의 전체를 한 구절로 먼저 맞춘다.** 아래 어절 창은 최대 두 어절이라
@@ -290,6 +308,8 @@ object QueryIntent {
     private val normalizedFoodWords: Set<String> = FOOD_WORDS.map { normalize(it) }.toSet()
     private val normalizedTypeIntents: Map<String, String> =
         TYPE_INTENTS.entries.associate { normalize(it.key) to it.value }
+    private val normalizedSettingIntents: Map<String, String> =
+        SETTING_INTENTS.entries.associate { normalize(it.key) to it.value }
     private val normalizedSearchTypes: Map<String, String> =
         SEARCH_TYPE_INTENTS.entries.associate { normalize(it.key) to it.value }
 
@@ -301,6 +321,8 @@ object QueryIntent {
         if (normalized in normalizedCommerceWords) return null
         val type = if (searchTypes) normalizedSearchTypes[normalized] else null
         normalizedTypeIntents[normalized]?.let { return Hit(type, mapOf(CONTENT_TYPE_FIELD to it)) }
+        // 분류 사전보다 먼저 본다 — 「indoor」가 `Inline Skating (Indoor)` 소분류로 새지 않게.
+        normalizedSettingIntents[normalized]?.let { return Hit(type, mapOf(SETTING_FIELD to it)) }
         if (type != null) return Hit(type, emptyMap())
         lexicon.lookup(normalized)?.let { facet ->
             // 같은 이유로 분류 의도도 음식(FD)·쇼핑(SH)·숙박(AC) 으로는 필터를 만들지 않는다.

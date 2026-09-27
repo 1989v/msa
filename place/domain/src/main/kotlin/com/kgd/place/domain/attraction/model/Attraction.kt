@@ -48,6 +48,12 @@ class Attraction private constructor(
     var petRaw: String? = null,
     var petSyncedAt: LocalDateTime? = null,
     /**
+     * 주로 즐기는 곳 — `indoor` · `outdoor` · `mixed`. 원천에 없는 파생 값이다: 분류 코드로 정해지는 것은
+     * 규칙으로, 애매한 분류는 개요를 읽은 로컬 LLM 판정으로 채운다 (`scripts/attraction-setting/`).
+     * 목록 동기화에는 없는 값이라 [syncFrom] 이 지우지 않는다.
+     */
+    var setting: String? = null,
+    /**
      * 부가 사진·반복정보 (TourAPI detailImage2 / detailInfo2).
      *
      * **원문을 그대로 남긴다.** 둘 다 레코드당 여러 건이고 유형마다 키가 다르다
@@ -221,6 +227,7 @@ class Attraction private constructor(
             petAcmpyType: String?,
             petRaw: String?,
             petSyncedAt: LocalDateTime?,
+            setting: String?,
             imagesRaw: String?,
             infoRaw: String?,
             extraSyncedAt: LocalDateTime?,
@@ -267,6 +274,7 @@ class Attraction private constructor(
             petAcmpyType = petAcmpyType,
             petRaw = petRaw,
             petSyncedAt = petSyncedAt,
+            setting = setting,
             imagesRaw = imagesRaw,
             infoRaw = infoRaw,
             extraSyncedAt = extraSyncedAt,
@@ -348,6 +356,8 @@ class Attraction private constructor(
         petAcmpyType = source.petAcmpyType ?: petAcmpyType
         petRaw = source.petRaw ?: petRaw
         petSyncedAt = source.petSyncedAt ?: petSyncedAt
+        /* 실내·실외도 동기화 원천에 없는 파생 값이다 — 백필이 채운 것을 목록 동기화가 지우지 않게 둔다. */
+        setting = source.setting ?: setting
         /* 부가 사진·반복정보도 같은 보강 필드다 — 목록 동기화에는 없고 별도 오퍼레이션으로만 온다. */
         imagesRaw = source.imagesRaw ?: imagesRaw
         infoRaw = source.infoRaw ?: infoRaw

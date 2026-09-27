@@ -42,6 +42,8 @@ data class AttractionIndexDocument(
     val contentTypeId: String? = null,
     /** 반려동물 동반 여부 (원천 `acmpyTypeCd`). 테마 필터 축 — 값 그대로 term 으로 건다. */
     val petAcmpyType: String? = null,
+    /** 주로 즐기는 곳 — indoor · outdoor · mixed (place 파생 값). 질의 이해가 term 으로 건다. */
+    val setting: String? = null,
     val imageUrl: String? = null,
     /** 대표 이미지 썸네일 — 표시 전용이라 색인하지 않는다 (mapping: index=false). */
     val thumbnailUrl: String? = null,
@@ -104,6 +106,7 @@ data class AttractionIndexDocument(
             lclsSystm3 = doc.lclsSystm3,
             contentTypeId = doc.contentTypeId,
             petAcmpyType = doc.petAcmpyType,
+            setting = doc.setting,
             imageUrl = doc.imageUrl,
             thumbnailUrl = doc.thumbnailUrl,
             tel = doc.tel,

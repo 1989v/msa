@@ -70,6 +70,7 @@ class AttractionServiceTest : BehaviorSpec({
                     introSyncedAt = java.time.LocalDateTime.of(2026, 9, 5, 4, 0),
                     petAcmpyType = "전구역 동반가능", petRaw = null,
                     petSyncedAt = java.time.LocalDateTime.of(2026, 9, 8, 4, 0),
+                    setting = "outdoor",
                     imagesRaw = """[{"originimgurl":"https://tong.visitkorea.or.kr/a.jpg"}]""",
                     infoRaw = """[{"infoname":"내국인예약안내","infotext":"가능"}]""",
                     extraSyncedAt = java.time.LocalDateTime.of(2026, 9, 13, 4, 0),

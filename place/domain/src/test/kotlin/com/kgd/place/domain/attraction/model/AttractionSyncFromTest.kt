@@ -17,6 +17,17 @@ class AttractionSyncFromTest : BehaviorSpec({
         overview = overview, petAcmpyType = petType,
     )
 
+    Given("실내·실외 파생 값을 가진 기존 레코드") {
+        When("그 값이 없는 목록 동기화가 덮으려 하면") {
+            val existing = base().apply { setting = "indoor" }
+            existing.syncFrom(base())
+
+            Then("백필이 채운 값은 지워지지 않는다") {
+                existing.setting shouldBe "indoor"
+            }
+        }
+    }
+
     Given("보강 필드를 가진 기존 레코드") {
         When("보강 필드가 빈 목록 동기화가 덮으려 하면") {
             val existing = base(petType = "전구역 동반가능", overview = "조선의 법궁")

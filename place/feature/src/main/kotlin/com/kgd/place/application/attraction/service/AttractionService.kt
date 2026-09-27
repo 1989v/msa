@@ -119,6 +119,7 @@ class AttractionService(
         petAcmpyType = petAcmpyType,
         petRaw = petRaw,
         petSyncedAt = petSyncedAt,
+        setting = setting,
         imagesRaw = imagesRaw,
         infoRaw = infoRaw,
         extraSyncedAt = extraSyncedAt,

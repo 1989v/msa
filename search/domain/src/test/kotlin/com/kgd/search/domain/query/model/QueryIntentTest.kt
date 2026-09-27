@@ -212,7 +212,7 @@ class QueryIntentTest : BehaviorSpec({
             )
 
             Then("별칭으로 쓰지 않는다") {
-                QueryIntent.analyze("indoor", qualifier).hasFilter shouldBe false
+                QueryIntent.analyze("indoor", qualifier).facets["lclsSystm3"] shouldBe null
                 QueryIntent.analyze("산", qualifier).hasFilter shouldBe false
             }
             Then("이름 전체로는 여전히 걸린다") {
@@ -304,6 +304,36 @@ class QueryIntentTest : BehaviorSpec({
             }
             Then("「관광지」의 유형 필터는 그대로 걸린다") {
                 QueryIntent.analyze("관광지 야경", lexicon).facets shouldBe mapOf("contentTypeId" to "12")
+            }
+        }
+    }
+
+    Given("실내·실외 의도어") {
+        When("「실내」·「indoor」만 치면") {
+            Then("실내 필터가 되고 검색어는 남지 않는다") {
+                listOf("실내", "indoor").forEach {
+                    val u = QueryIntent.analyze(it)
+                    u.facets[QueryIntent.SETTING_FIELD] shouldBe "indoor"
+                    u.residual shouldBe null
+                }
+            }
+        }
+        When("「비 오는 날」을 띄어 쓰거나 조사를 붙여도") {
+            Then("실내 필터가 되고 나머지 말만 검색어로 남는다") {
+                listOf("비 오는 날 가볼만한 곳", "비가 오는 날 서울", "비 올 때 부산").forEach {
+                    QueryIntent.analyze(it).facets[QueryIntent.SETTING_FIELD] shouldBe "indoor"
+                }
+                QueryIntent.analyze("비가 오는 날 서울").residual shouldBe "서울"
+            }
+        }
+        When("「rainy day」 두 어절이면") {
+            Then("실내 필터가 된다") {
+                QueryIntent.analyze("rainy day seoul").facets[QueryIntent.SETTING_FIELD] shouldBe "indoor"
+            }
+        }
+        When("「비빔밥」처럼 비로 시작하는 다른 말이면") {
+            Then("필터를 만들지 않는다") {
+                QueryIntent.analyze("비빔밥 맛집").facets[QueryIntent.SETTING_FIELD] shouldBe null
             }
         }
     }
