@@ -2,7 +2,6 @@ package com.kgd.commerce.saga
 
 import com.kgd.commerce.CommerceApplication
 import com.kgd.common.messaging.outbox.OutboxKafka
-import com.kgd.inventory.application.inventory.usecase.ReceiveStockUseCase
 import com.kgd.order.application.claim.usecase.RequestClaimUseCase
 import com.kgd.order.application.order.usecase.ConfirmPurchaseUseCase
 import com.kgd.order.application.order.usecase.PlaceOrderUseCase
@@ -104,6 +103,7 @@ class SettlementE2ETest(
     override fun extensions() = listOf(SpringExtension)
 
     private val orderJdbc = JdbcTemplate(ctx.getBean("orderMasterDataSource", DataSource::class.java))
+    private val inventoryJdbc = JdbcTemplate(ctx.getBean("masterDataSource", DataSource::class.java))
     private val settlementJdbc = JdbcTemplate(ctx.getBean("settlementMasterDataSource", DataSource::class.java))
     private val objectMapper = ctx.getBean(ObjectMapper::class.java)
 
@@ -144,7 +144,10 @@ class SettlementE2ETest(
     private fun product(name: String, price: Long, stock: Int): Long {
         val id = ctx.getBean(CreateProductUseCase::class.java)
             .execute(CreateProductUseCase.Command(name = name, price = price.toLong(), stock = stock), sellerRequester).id
-        ctx.getBean(ReceiveStockUseCase::class.java).execute(ReceiveStockUseCase.Command(productId = id, warehouseId = 1L, qty = stock))
+        // 등록한 재고는 product.item.created 를 받은 inventory 가 창고 1 에 입고한다
+        awaitUntil("inventory $id") {
+            inventoryJdbc.queryForList("SELECT available_qty FROM inventory WHERE product_id = ?", Int::class.java, id).singleOrNull() == stock
+        }
         awaitUntil("product_view $id") {
             orderJdbc.queryForList("SELECT price FROM product_view WHERE product_id = ?", Long::class.java, id).singleOrNull() == price
         }

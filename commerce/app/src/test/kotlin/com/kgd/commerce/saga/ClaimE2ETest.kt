@@ -2,7 +2,6 @@ package com.kgd.commerce.saga
 
 import com.kgd.commerce.CommerceApplication
 import com.kgd.fulfillment.application.fulfillment.usecase.TransitionFulfillmentUseCase
-import com.kgd.inventory.application.inventory.usecase.ReceiveStockUseCase
 import com.kgd.order.application.claim.usecase.DecideClaimUseCase
 import com.kgd.order.application.claim.usecase.RequestClaimUseCase
 import com.kgd.order.application.order.usecase.ConfirmPurchaseUseCase
@@ -126,7 +125,10 @@ class ClaimE2ETest(
     private fun product(name: String, price: Long, stock: Int): Long {
         val id = ctx.getBean(CreateProductUseCase::class.java)
             .execute(CreateProductUseCase.Command(name = name, price = price.toLong(), stock = stock), sellerRequester).id
-        ctx.getBean(ReceiveStockUseCase::class.java).execute(ReceiveStockUseCase.Command(productId = id, warehouseId = 1L, qty = stock))
+        // 등록한 재고는 product.item.created 를 받은 inventory 가 창고 1 에 입고한다
+        awaitUntil("inventory $id") {
+            inventoryJdbc.queryForList("SELECT available_qty FROM inventory WHERE product_id = ?", Int::class.java, id).singleOrNull() == stock
+        }
         awaitUntil("product_view $id") {
             orderJdbc.queryForList("SELECT price FROM product_view WHERE product_id = ?", Long::class.java, id).singleOrNull() == price
         }

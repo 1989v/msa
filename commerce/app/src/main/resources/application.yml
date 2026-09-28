@@ -287,6 +287,8 @@ seller:
     key-version: 1
 
 inventory:
+  # 상품 등록 때 입력한 재고를 입고할 창고 — 판매자 상품도 플랫폼 창고에서 출고한다(창고는 어드민 마스터)
+  default-warehouse-id: 1
   reservation:
     ttl-minutes: 30
   reconciliation:

@@ -29,6 +29,7 @@ class ProductEventAdapter(
             price = product.price.amount,
             status = product.status.name,
             sellerId = product.sellerId,
+            initialStock = product.stock,
             brand = product.brand,
             description = product.description,
             category = product.category,

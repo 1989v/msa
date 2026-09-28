@@ -42,6 +42,9 @@ Outbox·멱등 원장은 common 바인딩(`InventoryOutboxRepository`·`Inventor
   받아 주면 아무도 풀지 않는 예약이 30분 만료까지 재고를 붙잡는다. 예약은 상품 단위라 재입고도 상품+수량이면 된다.
 - **재입고**(클레임·보류 만료 보상): 라인 지정 시 `restockKey` 필수(키별 멱등), 확정 수량을 넘으면 `failed(NOT_RESTOCKABLE)`.
 - **보류 만료**: 예약 기한 30분(`commerce.hold-minutes`), 1분 주기 스케줄러가 만료시키고 `inventory.reservation.expired`. 사가가 받아 처리한다.
+- **초기 재고**: 재고 행은 입고로만 생긴다. 상품 등록 때 입력한 재고는 `product.item.created` 의 `initialStock` 으로 실려 오고,
+  `InitialStockConsumer`(그룹 `inventory-initial-stock`)가 기본 출고 창고(`inventory.default-warehouse-id`)에 입고한다 — 이게 없으면
+  상품 목록엔 재고가 보이는데 예약은 `INSUFFICIENT_STOCK` 로 실패한다. `initialStock` 이 없는 옛 이벤트·0 은 입고하지 않는다.
 - **재고 동기화 이벤트**(product 가 소비): `inventory.stock.{reserved,released,confirmed,received,restocked}` — 예약·해제·확정·입고·재입고 전부.
 - **은퇴한 구독**: `order.order.completed`·`cancelled`, `fulfillment.order.shipped`·`cancelled` 를 더는 받지 않는다 — 되살리지 않는다.
 - **`@EnableKafka` 는 호스트 `CommerceApplication` 에 있다**(여기 두면 이 도메인을 빼는 순간 호스트 전체 리스너가 꺼진다). 지우면 폴드된

@@ -1,7 +1,6 @@
 package com.kgd.commerce.saga
 
 import com.kgd.commerce.CommerceApplication
-import com.kgd.inventory.application.inventory.usecase.ReceiveStockUseCase
 import com.kgd.inventory.application.reservation.usecase.ExpireReservationsUseCase
 import com.kgd.order.application.order.usecase.PlaceOrderUseCase
 import com.kgd.order.application.sheet.usecase.CreateOrderSheetUseCase
@@ -111,7 +110,6 @@ class OrderSagaE2ETest(
     private val createSheet = ctx.getBean(CreateOrderSheetUseCase::class.java)
     private val place = ctx.getBean(PlaceOrderUseCase::class.java)
     private val products = ctx.getBean(CreateProductUseCase::class.java)
-    private val receiveStock = ctx.getBean(ReceiveStockUseCase::class.java)
     private val grantPoints = ctx.getBean(GrantPointsUseCase::class.java)
     private val claimCoupon = ctx.getBean(ClaimCouponUseCase::class.java)
     private val objectMapper = ctx.getBean(ObjectMapper::class.java)
@@ -146,10 +144,13 @@ class OrderSagaE2ETest(
 
     // ---- 준비 (유스케이스로) ----
 
-    /** 플랫폼(판매자 1, 배송비 0) 상품 + 창고 1 입고 — order 읽기 모델에 들어올 때까지 기다린다 */
+    /** 플랫폼(판매자 1, 배송비 0) 상품 — 창고 1 재고와 order 읽기 모델에 들어올 때까지 기다린다 */
     private fun product(name: String, price: Long, stock: Int, requester: ProductRequester = admin): Long {
         val id = products.execute(CreateProductUseCase.Command(name = name, price = price.toLong(), stock = stock), requester).id
-        receiveStock.execute(ReceiveStockUseCase.Command(productId = id, warehouseId = 1L, qty = stock))
+        // 등록한 재고는 product.item.created 를 받은 inventory 가 창고 1 에 입고한다
+        awaitUntil("inventory $id") {
+            inventoryJdbc.queryForList("SELECT available_qty FROM inventory WHERE product_id = ?", Int::class.java, id).singleOrNull() == stock
+        }
         awaitUntil("product_view $id") {
             orderJdbc.queryForList("SELECT price FROM product_view WHERE product_id = ?", Long::class.java, id).singleOrNull() == price
         }

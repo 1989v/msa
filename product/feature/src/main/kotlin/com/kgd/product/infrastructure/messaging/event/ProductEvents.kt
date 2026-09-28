@@ -12,6 +12,8 @@ data class ProductCreatedEvent(
     val price: Long,
     val status: String,
     val sellerId: Long,
+    /** 등록할 때 입력한 재고 — inventory 가 기본 출고 창고로 입고해 재고 행을 만든다(재고 원본은 inventory) */
+    val initialStock: Int,
     val brand: String? = null,
     val description: String? = null,
     val category: String? = null,
