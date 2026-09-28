@@ -2,7 +2,7 @@
 title: Elasticsearch · OpenSearch parent-join 실전 — has_child 쿼리, 자식 값 정렬, nested 와 비교
 slug: opensearch-parent-join-has-child
 category: /tech/server/search
-summary: join 필드는 한 인덱스 안에서 부모·자식 문서를 잇고 "조건 맞는 자식이 있는 부모"를 찾는다. 지원 버전, 매핑 규칙, routing 색인, has_child·has_parent·parent_id, 자식 값으로 부모 정렬, children·parent 집계, 필터드 별칭, nested 비교와 운영 함정을 OpenSearch 3.5 실습 결과와 함께 담는다.
+summary: join 필드는 한 인덱스 안에서 부모·자식 문서를 잇고 "조건 맞는 자식이 있는 부모"를 찾는다. 지원 버전, 매핑 규칙, routing 색인, has_child·has_parent·parent_id, 자식 값으로 부모 정렬, children·parent 집계, 필터드 별칭, nested 비교와 운영 함정을 담는다. OpenSearch 3.5 기준.
 ---
 
 join 필드로 한 인덱스 안의 문서끼리 부모-자식 관계를 맺고 조회하는 방법을 다룬다. OpenSearch 3.5 · 3.7, Elasticsearch 7.x 기준이다.
@@ -52,7 +52,7 @@ flowchart LR
 | Elasticsearch 7.x | <span class="pill p-green">지원</span> | 기본 배포에 `parent-join` 모듈 포함 |
 | Elasticsearch SQL 7.x | <span class="pill p-red">JOIN 미지원</span> | SQL 문법의 JOIN 이 없는 것이고, Query DSL 의 parent-join 과는 별개다 |
 | OpenSearch 1.x ~ 3.x | <span class="pill p-green">지원</span> | ES 7.10.2 에서 갈라져 `parent-join` 모듈을 그대로 가진다 |
-| OpenSearch 3.5 관리형 | <span class="pill p-green">실습 통과</span> | 매핑·색인·쿼리·정렬·집계·별칭을 직접 실행 (마지막 절) |
+| OpenSearch 3.5 관리형 | <span class="pill p-green">지원</span> | 이 글의 매핑·쿼리·정렬·집계·별칭 예시의 기준 버전 |
 | OpenSearch 3.7 관리형 | <span class="pill p-green">모듈 있음</span> | `GET _nodes/_local` 의 modules 에 `parent-join` |
 
 > [!TIP]
@@ -244,22 +244,3 @@ POST _aliases
 | 저장 크기 | 자식마다 `_id`·`_routing`·`_source` 가 따로 있어 nested 보다 커질 수 있음 | 전환 전 같은 데이터로 크기 측정 |
 | 샤드 쏠림 | routing 이 부모 id 라 큰 부모가 한 샤드에 몰림 | 부모당 자식 수 분포 확인 |
 | 재색인 | 관계는 한 인덱스 안에서만 성립 | 새 인덱스 전체 색인 → 별칭 교체 |
-
-## OpenSearch 3.5 실습 결과
-
-관리형 OpenSearch 3.5 에 샤드 1개 임시 인덱스를 만들고 부모 2건·자식 4건으로 실행했다. 데이터는 첫 절 그림과 같고, p1 의 11-03 자식과 p2 의 자식 제목에 "리조트 Y" 가 들어 있다.
-
-| 항목 | 기대 | 결과 |
-|---|---|---|
-| join 매핑 · 부모/자식 bulk (routing) | 성공 | <span class="pill p-green">성공</span> |
-| `has_child` 같은 자식 AND — 리조트 Y + 10월 | p1 제외 (p1 의 리조트 Y 는 11월) | <span class="pill p-green">p2 만</span> |
-| `has_child` — 리조트 Y + 11월 | p1 | <span class="pill p-green">p1</span> |
-| inner_hits 10월 최저가 1건 | p1 519,900 · p2 479,900 | <span class="pill p-green">일치</span> |
-| 점수 정렬 (`score_mode: min` → `_score` asc) | p2 → p1 | <span class="pill p-green">일치</span> 점수 = 최저가 |
-| `children` → terms → `parent` | A: 자식 3·부모 1, B: 자식 1·부모 1 | <span class="pill p-green">일치</span> |
-| 필터드 별칭 + `has_child` | 별칭 match_all 2, 인덱스 6, has_child 정상 | <span class="pill p-green">일치</span> |
-| 부모 삭제 후 자식 | 남음 | <span class="pill p-amber">남음</span> cascade 없음 |
-| routing 없이 자식 색인 | 거부 | <span class="pill p-green">거부</span> `mapper_parsing_exception` |
-
-> [!NOTE]
-> 기능 확인용 소규모 실습이다. 자식 수백만 건 규모의 조회 지연과 저장 크기는 실제 데이터로 따로 재야 한다.
