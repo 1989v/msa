@@ -37,5 +37,5 @@ Dependencies:1–4. Phase: verification/release. Required Skills:hns:validate.
 - [x] `node --test windwake/tests/*.test.mjs`; old core/frontier/town/dungeon and new paths.
 - [x] Chrome actual input + visual captures, new outdoor/cave/life loop, console; no deferred hardware/cold-load project.
 - [x] Fresh independent review + verdict, corrections, retest, documentation.
-- [ ] Scoped commit, existing deployment, exact public modules and critical playable paths.
+- [x] Scoped commit, existing deployment, exact public modules and critical playable paths.
 Acceptance: SR6; evidence before completion; unrelated changes preserved.

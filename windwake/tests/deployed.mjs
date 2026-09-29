@@ -4,11 +4,12 @@ import {execFileSync} from 'node:child_process';
 import {readFile, writeFile, mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
+import {resolve} from 'node:path';
 import {connect} from './cdp.mjs';
 
 const url = new URL(process.argv[2] || 'https://game.1989v.com/games/windwake/index.html');
 const base = new URL('./', url);
-const output = process.argv[3] || '/private/tmp/windwake-deployed';
+const output = resolve(process.argv[3] || '/private/tmp/windwake-deployed');
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const env = {...process.env, CLAUDE_SCRATCHPAD: '/private/tmp/windwake-deploy-qa'};
 await mkdir(output, {recursive: true});
