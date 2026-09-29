@@ -1,0 +1,7 @@
+threshold: 0.2
+rounds: 1
+ambiguity: 0.15
+topology: [서버 렌더(R1), 속성 추출(R2), 패싯 검색(R3), 지역 집계(R4), 비슷한 곳(R5), 인기도(R6)]
+answers:
+  facets: "운영·휴무, 주차 가능, 반려동물, 신용카드·유모차·입장 무료"
+  popularity: "순위에도 섞음"
