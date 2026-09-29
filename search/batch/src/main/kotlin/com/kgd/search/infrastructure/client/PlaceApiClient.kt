@@ -4,18 +4,28 @@ import tools.jackson.databind.ObjectMapper
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Component
 import com.kgd.search.domain.embedding.VectorCodec
 import org.springframework.web.reactive.function.client.WebClient
+import reactor.core.publisher.Mono
+import java.time.Duration
 import java.time.LocalDateTime
 
 @Component
 class PlaceApiClient(
     @Qualifier("placeWebClient") private val webClient: WebClient,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
+    /**
+     * 호출 하나가 응답 본문까지 끝나야 하는 시간. 없으면 place 가 응답을 안 주는 순간 잡이 기한까지 멈춰 있다
+     * (2026-09-29 재색인이 14분 넘게 한 호출을 기다렸다). 넘기면 예외가 올라가 잡이 실패하고 별칭은 그대로다.
+     */
+    @Value("\${place.service.response-timeout:60s}") private val responseTimeout: Duration = Duration.ofSeconds(60),
 ) {
     private val log = KotlinLogging.logger {}
+
+    private suspend fun <T : Any> Mono<T>.awaitWithinTimeout(): T = timeout(responseTimeout).awaitSingle()
 
     /**
      * 응답 JSON 을 Map 으로 받아 손으로 꺼내 담는다 — **필드를 여기 추가하지 않으면 기본값 null 이 조용히 이긴다.**
@@ -63,10 +73,10 @@ class PlaceApiClient(
         val status: String,
     )
 
+    /** [nextAfterId] 가 null 이면 마지막 페이지다. */
     data class AttractionPageResponse(
         val attractions: List<AttractionDto>,
-        val totalElements: Long,
-        val totalPages: Int
+        val nextAfterId: Long?,
     )
 
     data class RegionDto(
@@ -94,7 +104,7 @@ class PlaceApiClient(
             .uri("/api/places/regions/page?page=$page&size=$size")
             .retrieve()
             .bodyToMono(object : ParameterizedTypeReference<Map<String, Any>>() {})
-            .awaitSingle()
+            .awaitWithinTimeout()
 
         @Suppress("UNCHECKED_CAST")
         val data = response["data"] as? Map<String, Any>
@@ -120,14 +130,18 @@ class PlaceApiClient(
         )
     }
 
-    suspend fun fetchPage(page: Int, size: Int = 100): AttractionPageResponse {
-        log.debug { "Fetching attractions: page=$page, size=$size" }
+    /**
+     * id 가 [afterId] 보다 큰 관광지를 id 순으로 [size] 건 — 키셋 페이징. 첫 페이지는 0 을 넘긴다.
+     * OFFSET 페이지(`page=`)는 뒤로 갈수록 느려져 590쪽이 18초 걸렸다. 키셋은 어느 위치든 첫 페이지 속도다.
+     */
+    suspend fun fetchPageAfter(afterId: Long, size: Int = 100): AttractionPageResponse {
+        log.debug { "Fetching attractions: afterId=$afterId, size=$size" }
 
         val response = webClient.get()
-            .uri("/api/places/attractions?page=$page&size=$size")
+            .uri("/api/places/attractions?afterId=$afterId&size=$size")
             .retrieve()
             .bodyToMono(object : ParameterizedTypeReference<Map<String, Any>>() {})
-            .awaitSingle()
+            .awaitWithinTimeout()
 
         @Suppress("UNCHECKED_CAST")
         val data = response["data"] as? Map<String, Any>
@@ -177,8 +191,7 @@ class PlaceApiClient(
 
         return AttractionPageResponse(
             attractions = attractions,
-            totalElements = (data["totalElements"] as Number).toLong(),
-            totalPages = (data["totalPages"] as Number).toInt()
+            nextAfterId = (data["nextAfterId"] as? Number)?.toLong(),
         )
     }
 
@@ -198,7 +211,7 @@ class PlaceApiClient(
             .uri("/api/places/administrative-regions?level=SIDO&lang=$lang")
             .retrieve()
             .bodyToMono(object : ParameterizedTypeReference<Map<String, Any>>() {})
-            .awaitSingle()
+            .awaitWithinTimeout()
 
         @Suppress("UNCHECKED_CAST")
         val items = (response["data"] as? Map<String, Any>)?.get("regions") as? List<Map<String, Any>>
@@ -223,7 +236,7 @@ class PlaceApiClient(
             .uri("/api/places/administrative-regions?level=SIGUNGU")
             .retrieve()
             .bodyToMono(object : ParameterizedTypeReference<Map<String, Any>>() {})
-            .awaitSingle()
+            .awaitWithinTimeout()
 
         @Suppress("UNCHECKED_CAST")
         val items = (response["data"] as? Map<String, Any>)?.get("regions") as? List<Map<String, Any>>
@@ -248,7 +261,7 @@ class PlaceApiClient(
             .uri("/api/places/attractions/category-codes?lang=$lang")
             .retrieve()
             .bodyToMono(object : ParameterizedTypeReference<Map<String, Any>>() {})
-            .awaitSingle()
+            .awaitWithinTimeout()
 
         @Suppress("UNCHECKED_CAST")
         val items = response["data"] as? List<Map<String, Any>> ?: return emptyMap()
@@ -271,7 +284,7 @@ class PlaceApiClient(
             .bodyValue(mapOf("ids" to ids))
             .retrieve()
             .bodyToMono(object : ParameterizedTypeReference<Map<String, Any>>() {})
-            .awaitSingle()
+            .awaitWithinTimeout()
 
         @Suppress("UNCHECKED_CAST")
         val items = (response["data"] as? Map<String, Any>)?.get("items") as? List<Map<String, Any>>
@@ -294,7 +307,7 @@ class PlaceApiClient(
             .bodyValue(mapOf("modelRef" to modelRef, "ids" to ids))
             .retrieve()
             .bodyToMono(object : ParameterizedTypeReference<Map<String, Any>>() {})
-            .awaitSingle()
+            .awaitWithinTimeout()
 
         @Suppress("UNCHECKED_CAST")
         val data = response["data"] as? Map<String, Any>

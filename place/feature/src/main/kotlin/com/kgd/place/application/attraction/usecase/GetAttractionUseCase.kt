@@ -9,6 +9,15 @@ interface GetAttractionUseCase {
 
     fun findPage(lang: String?, pageable: Pageable): Page<AttractionView>
 
+    /**
+     * id 가 [afterId] 보다 큰 관광지를 id 순으로 최대 [size] 건. 다음 요청은 [AttractionSlice.nextAfterId] 를 넘긴다.
+     * OFFSET 페이징은 건너뛸 행을 전부 읽어 뒤 페이지일수록 느려진다 — 풀스캔은 이 경로를 쓴다.
+     */
+    fun findAfter(lang: String?, afterId: Long, size: Int): AttractionSlice
+
+    /** [nextAfterId] 가 null 이면 더 읽을 것이 없다. */
+    data class AttractionSlice(val items: List<AttractionView>, val nextAfterId: Long?)
+
     data class AttractionView(
         val id: Long,
         val contentId: String,

@@ -13,3 +13,6 @@
 | TG3 | `npx vitest run src/seo src/pages/place` | 9 files · 146 passed · 골든 재생성 diff 없음 |
 | TG3 | 회귀 주입 | escape 제거 · data-seo-multi 제거 · copy.mjs 필드 제거 · findById 2회 · 30초 백오프 제거 → 각각 빨간불 |
 | TG3+ | 상세 응답 속성·지역 필드 `SearchAttractionServiceTest` | 21/0 · 회귀 주입(closureState 매핑 삭제) `Expected "WEEKLY" but actual was null` · search:app 전체 21 classes 135/0 |
+| TG2 수정 | 운영 재색인이 1차 훑기에서 14분 멈춤 — place 클라이언트 시간 제한 없음 + OFFSET 페이징(OFFSET 59000 = 4,892ms, 키셋 266ms, 버퍼 풀 128MB, 행 평균 6KB) | 키셋 `afterId` + 연결 5초·응답 60초 |
+| TG2 수정 | `./gradlew :place:feature:test (Service·Controller·SchemaIntegration) :search:batch:test (Tasklet·PlaceApiClient) verifyArchitecture :content:app:compileKotlin` | Service 5/0 · Controller 2/0 · SchemaIntegration(Testcontainers MySQL) 2/0 · Tasklet 11/0 · PlaceApiClient 15/0 · RoundTrip 1/0 |
+| TG2 수정 | 회귀 주입 | afterId→0L SchemaIntegration FAILED · 1차/2차 쪽 번호 전달 Tasklet FAILED · timeout 제거 PlaceApiClient FAILED |

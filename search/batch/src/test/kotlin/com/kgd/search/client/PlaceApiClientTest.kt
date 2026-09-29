@@ -2,7 +2,9 @@ package com.kgd.search.client
 
 import tools.jackson.databind.ObjectMapper
 import com.kgd.search.infrastructure.client.PlaceApiClient
+import com.sun.net.httpserver.HttpServer
 import io.kotest.core.spec.style.BehaviorSpec
+import io.kotest.matchers.longs.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -10,6 +12,9 @@ import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.client.ClientResponse
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
+import java.net.InetSocketAddress
+import java.time.Duration
+import java.util.concurrent.TimeoutException
 
 /**
  * place API 응답을 담는 매핑 검사.
@@ -20,9 +25,12 @@ import reactor.core.publisher.Mono
  */
 class PlaceApiClientTest : BehaviorSpec({
 
+    val requestedUris = mutableListOf<String>()
+
     fun clientReturning(body: String): PlaceApiClient {
         val webClient = WebClient.builder()
-            .exchangeFunction { _ ->
+            .exchangeFunction { request ->
+                requestedUris += request.url().toString()
                 Mono.just(
                     ClientResponse.create(HttpStatus.OK)
                         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
@@ -45,11 +53,11 @@ class PlaceApiClientTest : BehaviorSpec({
               "thumbnailUrl":"https://tong.visitkorea.or.kr/cms/resource/98/3487598_image3_1.jpg",
               "tel":"02-3700-3900","overview":"조선의 법궁","googlePlaceId":"ChIJ",
               "sourceModifiedAt":"2026-01-02T03:04:05","status":"ACTIVE"
-            }],"totalElements":1,"totalPages":1,"currentPage":0}}
+            }],"totalElements":-1,"totalPages":-1,"currentPage":-1,"nextAfterId":7}}
         """.trimIndent()
 
         When("한 페이지를 받으면") {
-            val page = clientReturning(body).fetchPage(0, 100)
+            val page = clientReturning(body).fetchPageAfter(0L, 100)
             val first = page.attractions.first()
 
             Then("표시에 쓰는 이미지 두 개가 모두 담긴다") {
@@ -62,7 +70,11 @@ class PlaceApiClientTest : BehaviorSpec({
                 first.title shouldBe "경복궁"
                 first.category shouldBe "history"
                 first.googlePlaceId shouldBe "ChIJ"
-                page.totalPages shouldBe 1
+            }
+
+            Then("키셋으로 요청하고 다음 커서를 담는다") {
+                requestedUris.last() shouldBe "/api/places/attractions?afterId=0&size=100"
+                page.nextAfterId shouldBe 7L
             }
         }
     }
@@ -76,11 +88,40 @@ class PlaceApiClientTest : BehaviorSpec({
         """.trimIndent()
 
         When("한 페이지를 받으면") {
-            val first = clientReturning(body).fetchPage(0, 100).attractions.first()
+            val page = clientReturning(body).fetchPageAfter(0L, 100)
+            val first = page.attractions.first()
 
             Then("null 그대로 담겨 화면이 폴백을 고를 수 있다") {
                 first.imageUrl shouldBe null
                 first.thumbnailUrl shouldBe null
+            }
+            Then("nextAfterId 가 없으면 마지막 페이지다") {
+                page.nextAfterId shouldBe null
+            }
+        }
+    }
+
+    Given("place 가 응답을 제한 시간 넘게 주지 않을 때") {
+        // 실제 소켓 — 헤더도 본문도 보내지 않고 붙들고 있는다. 운영에서 재색인이 14분 넘게 한 호출을 기다렸다
+        val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0).apply {
+            createContext("/") { exchange -> Thread.sleep(3_000); exchange.close() }
+            start()
+        }
+        val client = PlaceApiClient(
+            WebClient.builder().baseUrl("http://127.0.0.1:${server.address.port}").build(),
+            ObjectMapper(),
+            responseTimeout = Duration.ofMillis(200),
+        )
+
+        When("한 페이지를 요청하면") {
+            val startedAt = System.nanoTime()
+            val failure = runCatching { client.fetchPageAfter(0L, 100) }.exceptionOrNull()
+            val elapsedMs = (System.nanoTime() - startedAt) / 1_000_000
+            server.stop(0)
+
+            Then("기다리지 않고 시간 초과로 실패해야 한다 — 잡이 실패해야 별칭이 그대로 남는다") {
+                (failure is TimeoutException) shouldBe true
+                elapsedMs shouldBeLessThan 2_000L
             }
         }
     }

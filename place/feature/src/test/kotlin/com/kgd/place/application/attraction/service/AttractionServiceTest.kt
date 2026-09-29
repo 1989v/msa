@@ -98,4 +98,44 @@ class AttractionServiceTest : BehaviorSpec({
             }
         }
     }
+
+    given("id 로 이어 읽을 때 (키셋)") {
+        fun stored(id: Long) = Attraction.restore(
+            id = id, contentId = "c$id", lang = "ko", title = "관광지$id",
+            address = null, areaCode = null, sigunguCode = null, ldongRegnCd = null, ldongSignguCd = null,
+            category = null, cat1 = null, cat2 = null, cat3 = null,
+            lclsSystm1 = null, lclsSystm2 = null, lclsSystm3 = null,
+            contentTypeId = null, copyrightDivCd = null, thumbnailUrl = null,
+            mapLevel = null, zipcode = null, sourceCreatedAt = null,
+            latitude = 37.5, longitude = 127.0, imageUrl = null, tel = null, overview = null,
+            introRaw = null, useTime = null, restDate = null, useFee = null,
+            parking = null, parkingFee = null, infoCenter = null, introSyncedAt = null,
+            petAcmpyType = null, petRaw = null, petSyncedAt = null, setting = null,
+            imagesRaw = null, infoRaw = null, extraSyncedAt = null, googlePlaceId = null,
+            sourceModifiedAt = null, status = "ACTIVE", createdAt = java.time.LocalDateTime.now(),
+        )
+
+        `when`("size 보다 많이 남아 있으면") {
+            then("size 건만 주고 그 마지막 id 를 다음 커서로 줘야 한다") {
+                // 한 건 더 읽어 다음이 있는지 본다
+                every { repository.findAfter("en", 10L, 3) } returns listOf(stored(11), stored(12), stored(15))
+
+                val slice = service.findAfter("en", 10L, 2)
+
+                slice.items.map { it.id } shouldBe listOf(11L, 12L)
+                slice.nextAfterId shouldBe 12L
+            }
+        }
+
+        `when`("마지막 페이지면 (남은 것이 size 이하)") {
+            then("남은 것을 다 주고 다음 커서는 null 이어야 한다") {
+                every { repository.findAfter(null, 12L, 3) } returns listOf(stored(15), stored(16))
+
+                val slice = service.findAfter(null, 12L, 2)
+
+                slice.items.map { it.id } shouldBe listOf(15L, 16L)
+                slice.nextAfterId shouldBe null
+            }
+        }
+    }
 })

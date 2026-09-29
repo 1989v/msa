@@ -225,11 +225,16 @@ data class AttractionResponse(
     }
 }
 
+/**
+ * [nextAfterId] 는 키셋 요청(`afterId`)에서만 채운다. 키셋 응답은 count 쿼리를 하지 않으므로 전체 건수·쪽수를 모른다 —
+ * 세 수를 -1 로 둔다. 필드를 빼거나 null 로 바꾸면 이 모양을 non-null 로 읽는 기존 호출자가 깨진다.
+ */
 data class AttractionPageResponse(
     val attractions: List<AttractionResponse>,
     val totalElements: Long,
     val totalPages: Int,
     val currentPage: Int,
+    val nextAfterId: Long? = null,
 )
 
 /** 개요 negative cache 기록 요청 (ADR-0070) — 원천이 빈 개요를 준 (contentId, lang). */

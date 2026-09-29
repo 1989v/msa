@@ -4,6 +4,7 @@ import com.kgd.search.infrastructure.client.PlaceApiClient
 import com.kgd.search.infrastructure.indexing.AttractionIndexDocument
 import com.kgd.search.infrastructure.indexing.IndexAliasManager
 import com.kgd.search.infrastructure.indexing.OsBulkDocumentProcessor
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.doubles.plusOrMinus
@@ -14,6 +15,7 @@ import io.mockk.Runs
 import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -25,6 +27,7 @@ import org.springframework.test.util.ReflectionTestUtils
 import tools.jackson.databind.cfg.DateTimeFeature
 import tools.jackson.module.kotlin.jacksonMapperBuilder
 import tools.jackson.module.kotlin.readValue
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicLong
 
 class AttractionApiReindexTaskletTest : BehaviorSpec({
@@ -51,8 +54,8 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
         bulkJson.readValue(bulkJson.writeValueAsString(doc))
 
     fun onePage(vararg attractions: PlaceApiClient.AttractionDto) {
-        coEvery { placeApiClient.fetchPage(0, 100) } returns PlaceApiClient.AttractionPageResponse(
-            attractions = attractions.toList(), totalElements = attractions.size.toLong(), totalPages = 1,
+        coEvery { placeApiClient.fetchPageAfter(0L, 100) } returns PlaceApiClient.AttractionPageResponse(
+            attractions = attractions.toList(), nextAfterId = null,
         )
     }
 
@@ -78,9 +81,9 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
     given("관광지 재색인 실행 시") {
         `when`("place API 가 ACTIVE 2건 + 비활성 1건을 반환하면") {
             then("새 인덱스 생성 → ACTIVE 만 색인 → flush → alias swap 순서로 수행해야 한다") {
-                coEvery { placeApiClient.fetchPage(0, 100) } returns PlaceApiClient.AttractionPageResponse(
+                coEvery { placeApiClient.fetchPageAfter(0L, 100) } returns PlaceApiClient.AttractionPageResponse(
                     attractions = listOf(dto(1, "ko"), dto(2, "en"), dto(3, "ko", status = "INACTIVE")),
-                    totalElements = 3, totalPages = 1,
+                    nextAfterId = null,
                 )
 
                 val result = tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
@@ -97,7 +100,7 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
             then("문서 title 은 표시명, titleLocal·idSort·popularityScore 가 실려야 한다") {
                 val documents = mutableListOf<AttractionIndexDocument>()
                 every { bulkProcessor.processDocument("attractions_1", any<String>(), capture(documents)) } just Runs
-                coEvery { placeApiClient.fetchPage(0, 100) } returns PlaceApiClient.AttractionPageResponse(
+                coEvery { placeApiClient.fetchPageAfter(0L, 100) } returns PlaceApiClient.AttractionPageResponse(
                     attractions = listOf(
                         dto(7, "en").copy(
                             title = "Dosan Park(도산공원)",
@@ -108,7 +111,7 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                         // 파생 컬럼이 아직 없는 place 응답 — 원문 title 로 폴백한다
                         dto(8, "ko"),
                     ),
-                    totalElements = 2, totalPages = 1,
+                    nextAfterId = null,
                 )
 
                 tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
@@ -133,8 +136,8 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
             then("place 벡터를 조회하지 않고 세 필드가 빈 채로 색인해야 한다") {
                 val documents = mutableListOf<AttractionIndexDocument>()
                 every { bulkProcessor.processDocument("attractions_1", any<String>(), capture(documents)) } just Runs
-                coEvery { placeApiClient.fetchPage(0, 100) } returns PlaceApiClient.AttractionPageResponse(
-                    attractions = listOf(dto(1, "ko")), totalElements = 1, totalPages = 1,
+                coEvery { placeApiClient.fetchPageAfter(0L, 100) } returns PlaceApiClient.AttractionPageResponse(
+                    attractions = listOf(dto(1, "ko")), nextAfterId = null,
                 )
 
                 tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
@@ -151,8 +154,8 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                 useModelRef(MODEL_REF)
                 val documents = mutableListOf<AttractionIndexDocument>()
                 every { bulkProcessor.processDocument("attractions_1", any<String>(), capture(documents)) } just Runs
-                coEvery { placeApiClient.fetchPage(0, 100) } returns PlaceApiClient.AttractionPageResponse(
-                    attractions = listOf(dto(1, "ko"), dto(2, "ko")), totalElements = 2, totalPages = 1,
+                coEvery { placeApiClient.fetchPageAfter(0L, 100) } returns PlaceApiClient.AttractionPageResponse(
+                    attractions = listOf(dto(1, "ko"), dto(2, "ko")), nextAfterId = null,
                 )
                 coEvery { placeApiClient.lookupEmbeddings(MODEL_REF, listOf(1L, 2L)) } returns mapOf(
                     1L to PlaceApiClient.EmbeddingDto(1L, "hash-1", listOf(0.6f, 0.8f)),
@@ -247,23 +250,24 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                 // 호출 횟수를 세므로 앞선 실행의 기록만 지운다 (스텁은 남긴다)
                 clearMocks(placeApiClient, answers = false)
                 val documents = captureDocuments()
-                coEvery { placeApiClient.fetchPage(0, 100) } returns PlaceApiClient.AttractionPageResponse(
+                coEvery { placeApiClient.fetchPageAfter(0L, 100) } returns PlaceApiClient.AttractionPageResponse(
                     attractions = listOf(
                         jongno(1, "VE030100", 37.500),
                         jongno(2, "VE030100", 37.501),
                         // 비활성은 색인하지 않으므로 수에도 들지 않는다
                         jongno(9, "VE030100", 37.5005).copy(status = "INACTIVE"),
                     ),
-                    totalElements = 5, totalPages = 2,
+                    // 이 쪽의 마지막 id 가 다음 요청의 afterId 다
+                    nextAfterId = 9L,
                 )
-                coEvery { placeApiClient.fetchPage(1, 100) } returns PlaceApiClient.AttractionPageResponse(
+                coEvery { placeApiClient.fetchPageAfter(9L, 100) } returns PlaceApiClient.AttractionPageResponse(
                     attractions = listOf(
                         jongno(3, "VE030100", 37.510),
                         jongno(4, "VE070100", 37.502),
                         // 다른 시도(부산 26)의 같은 3자리 시군구 코드 — 종로와 섞이면 안 된다
                         jongno(5, "VE030100", 37.5001).copy(ldongRegnCd = "26"),
                     ),
-                    totalElements = 5, totalPages = 2,
+                    nextAfterId = null,
                 )
                 coEvery { placeApiClient.fetchSigunguNames() } returns mapOf(
                     "ko" to mapOf("11110" to "종로구", "26110" to "중구"),
@@ -292,9 +296,14 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                 busan["regionTypeCount"] shouldBe 1
                 busan["sameCategoryNearby"] shouldBe emptyList<Any>()
 
-                // 두 번 훑는다 — 페이지마다 place 를 두 번 부른다
-                coVerify(exactly = 2) { placeApiClient.fetchPage(0, 100) }
-                coVerify(exactly = 2) { placeApiClient.fetchPage(1, 100) }
+                // 두 번 훑는다 — 1차·2차 모두 키셋으로, 앞 쪽이 준 커서를 다음 요청에 넘긴다
+                coVerifyOrder {
+                    placeApiClient.fetchPageAfter(0L, 100)
+                    placeApiClient.fetchPageAfter(9L, 100)
+                    placeApiClient.fetchPageAfter(0L, 100)
+                    placeApiClient.fetchPageAfter(9L, 100)
+                }
+                coVerify(exactly = 4) { placeApiClient.fetchPageAfter(any(), any()) }
             }
         }
 
@@ -318,6 +327,17 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                 }
                 // 빠진 문서는 남의 수에도 들지 않는다
                 bulkSource(documents.single { it.id == "1" })["regionTypeCount"] shouldBe 1
+            }
+        }
+
+        `when`("place 페이지 호출이 제한 시간을 넘기면") {
+            then("잡이 실패하고 별칭은 넘기지 않아야 한다") {
+                clearMocks(aliasManager, answers = false)
+                coEvery { placeApiClient.fetchPageAfter(0L, 100) } throws TimeoutException("place 응답 없음")
+
+                shouldThrow<TimeoutException> { tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>()) }
+
+                verify(exactly = 0) { aliasManager.updateAliasAndCleanup(any(), any(), any()) }
             }
         }
 

@@ -16,6 +16,9 @@ interface AttractionRepositoryPort {
     /** lang 미지정 시 전체 — search-batch 재색인 풀스캔용. */
     fun findPage(lang: String?, pageable: Pageable): Page<Attraction>
 
+    /** id > afterId 를 id 순으로 최대 limit 건 — OFFSET 없이 이어 읽는 풀스캔용. */
+    fun findAfter(lang: String?, afterId: Long, limit: Int): List<Attraction>
+
     fun count(): Long
 
     /** 법정동 축 관광지 건수 — 드릴다운이 "몇 곳"을 보이는 근거. 관광 분류만 센다. */

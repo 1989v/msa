@@ -1,6 +1,8 @@
 package com.kgd.place.infrastructure.persistence
 
+import com.kgd.place.domain.attraction.model.Attraction
 import com.kgd.place.infrastructure.config.PlaceDataSourceConfig
+import com.kgd.place.infrastructure.persistence.attraction.adapter.AttractionRepositoryAdapter
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionCategoryCodeJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionLinkJpaRepository
@@ -63,6 +65,30 @@ class PlaceSchemaIntegrationSpec(
                 // count() 는 엔티티마다 실제 SQL 을 MySQL 로 보낸다 — 컬럼이 어긋나면
                 // validate 에서 컨텍스트가 아예 안 뜨고, 뜬 뒤에도 매핑이 틀리면 여기서 터진다.
                 listOf(r0, r1, r2, r3, r4, r5).map { it.count() }.size shouldBe 6
+            }
+    }
+
+    Given("관광지를 id 로 이어 읽을 때 (키셋)") {
+        Then("afterId 다음부터 id 순으로 이어지고 lang 이 걸러져야 한다")
+            .config(enabledIf = { dockerAvailable }) {
+                val adapter = AttractionRepositoryAdapter(r3)
+                adapter.upsertAll(
+                    (1..5).flatMap { n ->
+                        listOf("ko", "en").map { lang ->
+                            Attraction.create(contentId = "keyset-$n", lang = lang, title = "t$n", latitude = 37.0, longitude = 127.0)
+                        }
+                    },
+                )
+                val all = r3.findAll().filter { it.contentId.startsWith("keyset-") }.map { it.id!! }.sorted()
+
+                // 두 쪽으로 이어 읽으면 빠짐·겹침 없이 전체가 id 순으로 나온다
+                val first = adapter.findAfter(null, 0L, 6).map { it.id!! }
+                val second = adapter.findAfter(null, first.last(), 6).map { it.id!! }
+                first + second shouldBe all
+
+                val ko = adapter.findAfter("ko", all[1], 10)
+                ko.map { it.lang }.distinct() shouldBe listOf("ko")
+                ko.map { it.id!! }.all { it > all[1] } shouldBe true
             }
     }
 }) {

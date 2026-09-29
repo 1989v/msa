@@ -32,6 +32,9 @@ import tools.jackson.databind.ObjectMapper
  * place 를 **두 번 훑는다.** 지역 안 위치(같은 시군구·유형 수, 같은 분류 가까운 곳)는 전체를 봐야 셀 수 있는데
  * 문서 전체를 메모리에 들면 배치 힙(약 256MB)을 넘는다. 1차는 가벼운 투영만 모아 집계하고, 2차가 지금처럼
  * 페이지 단위로 색인하면서 집계 결과와 원문에서 뽑은 방문 속성을 붙인다.
+ *
+ * 두 번 다 id 키셋으로 읽는다(`afterId`). OFFSET 페이지는 건너뛸 행을 전부 읽어 뒤로 갈수록 느려졌고
+ * (0쪽 0.5초 → 590쪽 18초), 그대로 두 번 훑으면 CronJob 기한 30분을 넘긴다.
  */
 @Component
 @ConditionalOnProperty(name = ["reindex.source"], havingValue = "api", matchIfMissing = true)
@@ -90,15 +93,15 @@ class AttractionApiReindexTasklet(
             val indexStartedAt = System.nanoTime()
 
             var page = 0
-            var totalPages: Int
+            var afterId: Long? = 0L
             var totalIndexed = 0L
             var withVector = 0L
             var withRegion = 0L
             var unreadableIntro = 0L
 
-            do {
-                val response = placeApiClient.fetchPage(page, pageSize)
-                totalPages = response.totalPages
+            while (afterId != null) {
+                val response = placeApiClient.fetchPageAfter(afterId, pageSize)
+                afterId = response.nextAfterId
 
                 val active = response.attractions.filter { it.status == "ACTIVE" }
                 val embeddings = if (modelRef.isEmpty()) {
@@ -192,9 +195,9 @@ class AttractionApiReindexTasklet(
                     totalIndexed++
                 }
 
-                log.info { "Processed page ${page + 1}/$totalPages: ${response.attractions.size} attractions" }
                 page++
-            } while (page < totalPages)
+                log.info { "Processed page $page (next afterId=$afterId): ${response.attractions.size} attractions" }
+            }
 
             bulkProcessor.flush()
 
@@ -223,13 +226,13 @@ class AttractionApiReindexTasklet(
         val startedAt = System.nanoTime()
         val projections = ArrayList<RegionProjection>()
         var page = 0
-        var totalPages: Int
-        do {
-            val response = placeApiClient.fetchPage(page, pageSize)
-            totalPages = response.totalPages
+        var afterId: Long? = 0L
+        while (afterId != null) {
+            val response = placeApiClient.fetchPageAfter(afterId, pageSize)
+            afterId = response.nextAfterId
             response.attractions.filter { it.status == "ACTIVE" }.mapTo(projections) { it.toProjection() }
             page++
-        } while (page < totalPages)
+        }
 
         val placements = RegionAggregator.aggregate(projections)
         log.info {

@@ -1,6 +1,7 @@
 package com.kgd.place.infrastructure.persistence.attraction.repository
 
 import com.kgd.place.infrastructure.persistence.attraction.entity.AttractionJpaEntity
+import org.springframework.data.domain.Limit
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
@@ -16,6 +17,11 @@ interface AttractionJpaRepository : JpaRepository<AttractionJpaEntity, Long> {
     fun findByContentIdIn(contentIds: Collection<String>): List<AttractionJpaEntity>
 
     fun findByLang(lang: String, pageable: Pageable): Page<AttractionJpaEntity>
+
+    /** 키셋 풀스캔 — PK 범위 스캔이라 뒤 페이지도 첫 페이지만큼 빠르고, List 반환이라 count 쿼리가 없다. */
+    fun findByIdGreaterThanOrderByIdAsc(afterId: Long, limit: Limit): List<AttractionJpaEntity>
+
+    fun findByLangAndIdGreaterThanOrderByIdAsc(lang: String, afterId: Long, limit: Limit): List<AttractionJpaEntity>
 
     /** 구글 place_id 미보강분 — Pageable 정렬(id)로 안정된 스캔 순서를 보장한다. */
     fun findByGooglePlaceIdIsNullAndStatus(status: String, pageable: Pageable): Page<AttractionJpaEntity>

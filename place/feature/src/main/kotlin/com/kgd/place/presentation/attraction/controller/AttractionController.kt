@@ -47,12 +47,29 @@ class AttractionController(
         return ApiResponse.success(BulkUpsertAttractionResponse.from(result))
     }
 
+    /**
+     * `afterId` 가 있으면 키셋(`id > afterId ORDER BY id`) — 재색인 풀스캔이 쓴다. 없으면 예전 OFFSET 페이지.
+     * OFFSET 은 건너뛸 행을 전부 읽어 590쪽이 18초 걸렸다(키셋은 같은 위치가 0.3초).
+     */
     @GetMapping
     fun findPage(
         @RequestParam(required = false) lang: String?,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
+        @RequestParam(required = false) afterId: Long?,
     ): ApiResponse<AttractionPageResponse> {
+        if (afterId != null) {
+            val slice = getAttractionUseCase.findAfter(lang, afterId, size.coerceIn(1, 200))
+            return ApiResponse.success(
+                AttractionPageResponse(
+                    attractions = slice.items.map { AttractionResponse.from(it) },
+                    totalElements = UNKNOWN,
+                    totalPages = UNKNOWN.toInt(),
+                    currentPage = UNKNOWN.toInt(),
+                    nextAfterId = slice.nextAfterId,
+                ),
+            )
+        }
         val pageable = PageRequest.of(page.coerceAtLeast(0), size.coerceIn(1, 200), Sort.by("id"))
         val result = getAttractionUseCase.findPage(lang, pageable)
         return ApiResponse.success(
@@ -94,4 +111,9 @@ class AttractionController(
         ApiResponse.success(
             RecordOverviewProbeResponse(overviewProbeUseCase.record(request.probes.map { it.toCommand() })),
         )
+
+    private companion object {
+        /** 키셋 응답은 전체 건수를 세지 않는다. */
+        const val UNKNOWN = -1L
+    }
 }

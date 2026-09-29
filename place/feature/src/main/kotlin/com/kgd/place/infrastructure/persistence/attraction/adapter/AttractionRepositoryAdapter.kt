@@ -4,6 +4,7 @@ import com.kgd.place.application.attraction.port.AttractionRepositoryPort
 import com.kgd.place.domain.attraction.model.Attraction
 import com.kgd.place.infrastructure.persistence.attraction.entity.AttractionJpaEntity
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionJpaRepository
+import org.springframework.data.domain.Limit
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
@@ -53,6 +54,12 @@ class AttractionRepositoryAdapter(
     override fun findPage(lang: String?, pageable: Pageable): Page<Attraction> =
         (lang?.let { jpaRepository.findByLang(it, pageable) } ?: jpaRepository.findAll(pageable))
             .map { it.toDomain() }
+
+    override fun findAfter(lang: String?, afterId: Long, limit: Int): List<Attraction> =
+        (
+            lang?.let { jpaRepository.findByLangAndIdGreaterThanOrderByIdAsc(it, afterId, Limit.of(limit)) }
+                ?: jpaRepository.findByIdGreaterThanOrderByIdAsc(afterId, Limit.of(limit))
+            ).map { it.toDomain() }
 
     override fun count(): Long = jpaRepository.count()
 

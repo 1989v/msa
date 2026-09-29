@@ -12,3 +12,6 @@
 - **서버 본문에 반경 주변·편의시설은 없음** (TG3): 관광지당 조회 한 번 규칙. 화면이 그린다.
 - **유형 라벨 표 출처** (TG3): portal-fe 에 표가 없어 place-ingest `sync_tour.py` CONTENT_TYPES + TourAPI 코드표.
 - **상세 응답에 속성(색인 표기)·지역(단건만)** (TG3): 하이드레이션이 서버 JSON-LD 를 다시 쓰므로 화면도 같은 값을 받아야 한다.
+- **place 목록 키셋 페이징** (TG2 수정): `afterId` 선택 파라미터 · `nextAfterId` · 키셋 응답의 합계 필드는 -1(기존 non-null 호출자 호환). OFFSET 경로는 파이썬 호출자(place/ingest·tools/embed)용으로 남긴다.
+- **배포 순서**: place(content) 가 search-batch 보다 먼저 떠야 한다. 옛 place 는 afterId 를 몰라 첫 100건만 주고, 배치는 별칭 교체 검사(라이브의 90%)에 걸려 실패한다(사용자 영향 없음).
+- **예전 재색인 소요는 9분 34초~12분**(에이전트 보고 「2분대」는 틀림). 실측으로만 판단한다.

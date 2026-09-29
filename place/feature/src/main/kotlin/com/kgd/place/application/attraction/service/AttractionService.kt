@@ -33,6 +33,16 @@ class AttractionService(
     override fun findPage(lang: String?, pageable: Pageable): Page<GetAttractionUseCase.AttractionView> =
         attractionRepository.findPage(lang, pageable).map { it.toView() }
 
+    // 한 건 더 읽어 다음이 있는지 안다 — 마지막 페이지가 꼭 size 로 끝나도 빈 요청을 한 번 더 부르지 않게.
+    override fun findAfter(lang: String?, afterId: Long, size: Int): GetAttractionUseCase.AttractionSlice {
+        val rows = attractionRepository.findAfter(lang, afterId, size + 1)
+        val items = rows.take(size).map { it.toView() }
+        return GetAttractionUseCase.AttractionSlice(
+            items = items,
+            nextAfterId = if (rows.size > size) items.last().id else null,
+        )
+    }
+
     private fun UpsertAttractionUseCase.Command.toDomain(): Attraction = Attraction.create(
         contentId = contentId,
         lang = lang,
