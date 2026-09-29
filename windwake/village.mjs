@@ -1,6 +1,8 @@
-import {VILLAGE,RESOURCE_NODES,heightAt,querySolids} from './world.mjs';
+import {VILLAGE,RESOURCE_NODES,TOWNS,heightAt,querySolids} from './world.mjs';
 import {awardXP,modifiers} from './progression.mjs';
 import {allianceBenefits} from './relics.mjs';
+import {validateJourney} from './settlements.mjs';
+import {validateExpedition,dungeonCleared} from './dungeons.mjs';
 
 export const DAY_SECONDS=600;
 export const DUSK_SECONDS=450;
@@ -11,6 +13,8 @@ export const CROPS=Object.freeze({
 });
 const building=(id,name,description,cost,hp,level,w,d,h,solid)=>Object.freeze({id,name,description,cost,hp,level,w,d,h,solid});
 export const BUILDINGS=Object.freeze({
+  kitchen:building('kitchen','들녘 부엌','수확물을 원정 도시락과 재배 영약으로 만듭니다.',{wood:8,stone:4},160,1,3.2,3.2,3,true),
+  workshop:building('workshop','돌바람 작업장','협곡 탐험으로 얻은 기술로 수리 꾸러미를 만듭니다.',{wood:8,stone:6},180,1,3.2,3.2,3.3,true),
   plot:building('plot','텃밭','씨앗을 심고 물을 주어 식량을 기릅니다.',{wood:4},60,1,3,3,.18,false),
   cottage:building('cottage','작은 집','첫 수확을 마치면 마을의 밤 방어가 시작됩니다.',{wood:12,stone:4},180,1,3.2,3.2,3.8,true),
   well:building('well','우물','우물 곁에서 쉬면 회복약을 넉넉하게 보충합니다.',{wood:3,stone:8},140,1,1.8,1.8,1.2,true),
@@ -20,6 +24,38 @@ export const BUILDINGS=Object.freeze({
   flowers:building('flowers','꽃밭','여행 끝에 반기는 작은 꽃밭입니다.',{wood:1,food:1},35,1,2,2,.5,false),
   lantern:building('lantern','길잡이 등불','밤에도 마을 길을 환하게 비춥니다.',{wood:2,stone:2},65,1,.5,.5,2.5,false),
 });
+export const RECIPES=Object.freeze({
+  trailMeal:Object.freeze({id:'trailMeal',name:'원정 도시락',building:'kitchen',produce:{turnip:1,wheat:1},materials:{},effect:'체력 45 · 기력 35 회복',unlock:'처음부터 만들 수 있습니다.'}),
+  repairKit:Object.freeze({id:'repairKit',name:'돌바람 수리 꾸러미',building:'workshop',produce:{pumpkin:1},materials:{wood:2,stone:2},cave:'cave-canyon',effect:'선택한 건물 내구도 100 복구',unlock:'메아리 협곡 자연동굴 완료'}),
+  growthTonic:Object.freeze({id:'growthTonic',name:'달꽃 재배 영약',building:'kitchen',produce:{moonflower:1,turnip:1},materials:{},cave:'cave-mistwood',effect:'선택한 작물 물주기 · 성장 45초',unlock:'안개수림 자연동굴 완료'}),
+});
+const residentNames={sunfields:'밀밭지기 루미',dunes:'대상단 목수 사하',coast:'항구 수비대 네리',autumn:'과수원지기 다온',alpine:'산장 수비대 보라',mistwood:'약초사 이슬',canyon:'대장장이 로안',lavender:'별꽃지기 세라'};
+export const RESIDENTS=Object.freeze(Object.fromEntries(TOWNS.map(t=>[`resident-${t.biomeId}`,Object.freeze({id:`resident-${t.biomeId}`,townId:t.id,name:residentNames[t.biomeId]})])));
+export const JOBS=Object.freeze({farmer:'농부 · 6초마다 물주기',artisan:'장인 · 8초마다 목재 1 / 돌 1로 내구도 30 수리',guard:'경비 · 2초마다 근처 습격자에게 피해 8'});
+const JOB_SECONDS={farmer:6,artisan:8,guard:2};
+function validatedProof(s){const state={...s,expedition:validateExpedition(s.expedition)};return {...state,journey:validateJourney(s.journey,state)};}
+export function residentEligible(s,id){return has(RESIDENTS,id)&&validatedProof(s).journey.allies.includes(RESIDENTS[id].townId);}
+export function recipeUnlocked(s,id){return has(RECIPES,id)&&(!RECIPES[id].cave||dungeonCleared(validatedProof(s),RECIPES[id].cave));}
+export function housingCapacity(s){return Math.min(8,(s.village?.structures||[]).filter(b=>b.type==='cottage'&&b.hp>0).length);}
+export function normalizeResidents(s,proofView=s){
+  if(!s.village)return [];
+  const allies=validatedProof(proofView).journey.allies,seen=new Set();
+  s.village.residents=(Array.isArray(s.village.residents)?s.village.residents:[]).filter(r=>r&&has(RESIDENTS,r.id)&&!seen.has(r.id)&&allies.includes(RESIDENTS[r.id].townId)&&seen.add(r.id)).slice(0,8).map(r=>({id:r.id,job:has(JOBS,r.job)?r.job:'farmer',timer:number(r.timer,0,JOB_SECONDS[has(JOBS,r.job)?r.job:'farmer'])})).sort((a,b)=>a.id.localeCompare(b.id));
+  return s.village.residents;
+}
+export function residentActors(s){
+  const v=s.village;if(!v)return [];
+  const houses=v.structures.filter(b=>b.type==='cottage'&&b.hp>0).sort((a,b)=>a.id.localeCompare(b.id));
+  const available=!s.expedition?.active&&s.mode==='playing'&&dist(s.player,VILLAGE)<=64;
+  return [...(v.residents||[])].sort((a,b)=>a.id.localeCompare(b.id)).map((r,i)=>{
+    const active=i<Math.min(8,houses.length)&&available;
+    const target=r.job==='farmer'?v.plots.find(p=>p.crop&&!p.watered&&v.structures.some(b=>b.id===p.id&&b.hp>0)):r.job==='artisan'?v.structures.find(b=>b.hp<b.maxHp):null;
+    const anchor=active&&target?target:houses[i]||home();
+    const x=anchor.x+2.2,z=anchor.z+1.8;
+    return {...r,name:RESIDENTS[r.id]?.name||r.id,active,activity:active?r.job:'paused',targetId:target?.id||null,x,y:heightAt(x,z),z};
+  });
+}
+export function raidForecast(s){const r=s.village.raid,day=['queued','active'].includes(r.status)?r.day:s.village.clock>=DUSK_SECONDS&&r.day===s.village.day?s.village.day+1:s.village.day;return {day,direction:['north','east','south','west'][(day-1)%4],text:`${day}일 ${DIRECTIONS[['north','east','south','west'][(day-1)%4]]} · 1차 추적자/늑대/돌격수 3 · 2차 늑대/돌격수/슬라임/추적자 4 · 늑대 측면, 돌격수 건물 집중`};}
 const MATERIALS=['wood','stone','food'];
 const DIRECTIONS={north:'북쪽',east:'동쪽',south:'남쪽',west:'서쪽'};
 const TASKS=['gather','build','plant','water','harvest','defend'];
@@ -66,6 +102,7 @@ function validCell(x,z){
 export function initVillage(){
   return {clock:90,day:1,elapsed:0,materials:{wood:48,stone:30,food:6},
     seeds:{turnip:4,wheat:2,pumpkin:1,moonflower:1},structures:[],plots:[],level:1,reputation:0,nextId:1,
+    produce:Object.fromEntries(Object.keys(CROPS).map(id=>[id,0])),items:Object.fromEntries(Object.keys(RECIPES).map(id=>[id,0])),residents:[],
     beaconHp:180,maxBeaconHp:180,gathered:{},tasks:[],builtTypes:[],raid:emptyRaid()};
 }
 export function villageSolids(s){
@@ -79,6 +116,7 @@ export function villageAction(s,action,payload={}){
   if(s?.mode!=='playing' || !s.village)return fail('모험 중에 마을을 돌볼 수 있습니다.');
   if(!payload || typeof payload!=='object')return fail('선택한 행동을 확인해 주세요.');
   const v=s.village,p=s.player;
+  if(['invite','assign','craft','useItem'].includes(action))return communityAction(s,action,payload);
   if(action==='build'){
     if(!has(BUILDINGS,payload.type))return fail('알 수 없는 건물입니다.');
     const def=BUILDINGS[payload.type],cell=validCell(payload.x,payload.z);
@@ -181,7 +219,7 @@ export function villageAction(s,action,payload={}){
   if(!plot.crop || plot.growth<CROPS[plot.crop].growthSeconds)return fail('아직 수확할 때가 아닙니다.');
   const defCrop=CROPS[plot.crop],bonus=v.structures.some(b=>b.type==='granary'&&b.hp>0)?2:0;
   const food=Math.floor(defCrop.food*modifiers(s).harvest)+bonus;
-  gain(v,{food});v.seeds[plot.crop]=Math.min(9999,v.seeds[plot.crop]+1);v.reputation=Math.min(99999,v.reputation+2);
+  gain(v,{food});v.produce[plot.crop]=Math.min(9999,v.produce[plot.crop]+1);v.seeds[plot.crop]=Math.min(9999,v.seeds[plot.crop]+1);v.reputation=Math.min(99999,v.reputation+2);
   Object.assign(plot,{crop:null,watered:false,growth:0,stage:'empty'});task(s,'harvest');
   event(s,'harvest',`${defCrop.name} 수확 · 식량 ${food}개와 씨앗 1개`,plot);return {ok:true,food,crop:defCrop.id};
 }
@@ -304,7 +342,8 @@ function clearRaidSight(s,a,b,hooks,ignoredId=null){
 }
 function selectRaidTarget(s,e){
   const p=s.player,beacon={id:'beacon',...home()};
-  const intended=dist(e,p)<4.5&&Math.abs(e.y-p.y)<2.6?p:beacon;
+  const pressured=e.type==='charger'?s.village.structures.filter(b=>b.hp>0&&BUILDINGS[b.type]?.solid).sort((a,b)=>dist(e,a)-dist(e,b)||a.id.localeCompare(b.id))[0]:null;
+  const intended=pressured||(e.type!=='slime'&&dist(e,p)<(e.type==='wolf'?12:4.5)&&Math.abs(e.y-p.y)<2.6?p:beacon);
   const from={...e,y:e.y+.95},to={...intended,y:intended.y+.95};
   const blocker=villageSolids(s).map(box=>({box,t:segmentEntry(from,to,box)}))
     .filter(hit=>hit.t!==null).sort((a,b)=>a.t-b.t)[0];
@@ -336,7 +375,7 @@ function updateRaidActor(s,e,dt,hooks){
       if(target&&dist(e,target)<(target===p?3:3.2)&&Math.abs(e.y-target.y)<1.8&&facing
         &&clearRaidSight(s,e,target,hooks,target===p||target.id==='beacon'?null:target.id)){
         const damage=8+Math.min(8,s.village.day);
-        if(target===p)hooks.damagePlayer?.(damage,e);else hitStructure(s,target,damage);
+        if(target===p)hooks.damagePlayer?.(damage,e);else hitStructure(s,target,damage*(e.type==='charger'?2:1));
         event(s,'enemy-attack',undefined,e);
       }
       e.state='recover';e.timer=.9;e.raidTarget=null;
@@ -349,6 +388,7 @@ function updateRaidActor(s,e,dt,hooks){
   if(d<range&&Math.abs(e.y-target.y)<1.8){
     e.state='telegraph';e.timer=.9;e.pattern='slam';e.attackCount++;e.raidTarget=target===p?'player':target.id;return;
   }
+  if(e.type==='wolf'&&d>5&&d<18){const side=e.raidIndex%2?1:-1;e.yaw+=side*.65;}
   e.state='chase';const step=Math.min(d,2.6*dt),dx=Math.sin(e.yaw)*step,dz=Math.cos(e.yaw)*step;
   if(!moveRaidActor(s,e,dx,dz,hooks)){
     const side=e.raidIndex%2?1:-1,sx=Math.cos(e.yaw)*step*side,sz=-Math.sin(e.yaw)*step*side;
@@ -368,6 +408,7 @@ export function tickVillage(s,dt,hooks={}){
   if(s?.mode!=='playing'||!s.village||!Number.isFinite(dt)||dt<=0||dt>1)return;
   const v=s.village,r=v.raid;v.elapsed=Math.min(1e9,v.elapsed+dt);
   for(const p of v.plots)if(p.crop&&p.watered){p.growth=Math.min(CROPS[p.crop].growthSeconds,p.growth+dt);p.stage=stage(p);}
+  if(dist(s.player,VILLAGE)<=64)tickResidents(s,dt,hooks);
   const unresolved=r.status==='queued'||r.status==='active';
   if(!unresolved){
     v.clock+=dt;
@@ -443,7 +484,10 @@ export function validateVillage(raw){
   const v=initVillage();if(!raw||typeof raw!=='object')return v;
   v.clock=number(raw.clock,0,DAY_SECONDS-.00001,90);v.day=Math.max(1,integer(raw.day,100000));v.elapsed=number(raw.elapsed,0,1e9);
   for(const id of MATERIALS)v.materials[id]=integer(raw.materials?.[id]);
-  for(const id of Object.keys(CROPS))v.seeds[id]=integer(raw.seeds?.[id],9999);
+  for(const id of Object.keys(CROPS)){v.seeds[id]=integer(raw.seeds?.[id],9999);v.produce[id]=integer(raw.produce?.[id],9999);}
+  for(const id of Object.keys(RECIPES))v.items[id]=integer(raw.items?.[id],9999);
+  const residentIds=new Set();
+  v.residents=(Array.isArray(raw.residents)?raw.residents:[]).slice(0,64).filter(r=>r&&has(RESIDENTS,r.id)&&!residentIds.has(r.id)&&residentIds.add(r.id)).slice(0,8).map(r=>({id:r.id,job:has(JOBS,r.job)?r.job:'farmer',timer:number(r.timer,0,JOB_SECONDS[has(JOBS,r.job)?r.job:'farmer'])})).sort((a,b)=>a.id.localeCompare(b.id));
   v.level=clamp(integer(raw.level,3),1,3);v.reputation=integer(raw.reputation);
   v.beaconHp=number(raw.beaconHp,0,180,180);v.maxBeaconHp=180;
   v.tasks=Array.isArray(raw.tasks)?[...new Set(raw.tasks.filter(id=>TASKS.includes(id)))]:[];
@@ -467,4 +511,83 @@ export function validateVillage(raw){
   v.raid=validateRaid(raw.raid,v.day);
   if(v.raid.status==='active' && v.beaconHp===0){v.raid.status='lost';v.raid.enemies=[];v.raid.spawned=false;}
   return v;
+}
+
+const countValid=n=>Number.isInteger(n)&&n>=0&&n<=9999;
+function communityAction(s,action,payload){
+  const v=s.village,id=payload.id;
+  if(!Object.hasOwn(payload,'id')||typeof id!=='string')return fail('대상을 선택해 주세요.');
+  if(action==='invite'){
+    if(!has(RESIDENTS,id)||!residentEligible(s,id))return fail('이 지역의 두 의뢰를 보고하고 동맹을 맺어 주세요.');
+    const guide=TOWNS.find(t=>t.id===RESIDENTS[id].townId)?.npcs.find(n=>n.role==='guide');
+    if(!canReach(s,home(),7)&&(!guide||!canReach(s,guide,4.2)))return fail('동맹 도시 안내인이나 귀환 봉화 곁에서 초대하세요.');
+    if(v.residents.some(r=>r.id===id))return fail('이미 함께 사는 주민입니다.');
+    if(v.residents.length>=housingCapacity(s))return fail('온전한 작은 집 한 채마다 주민 한 명을 초대할 수 있습니다. 최대 8명입니다.');
+    v.residents.push({id,job:'farmer',timer:0});v.residents.sort((a,b)=>a.id.localeCompare(b.id));
+    event(s,'reward',`${RESIDENTS[id].name} 합류 · 마을 메뉴에서 일을 맡겨 주세요.`);return {ok:true,id};
+  }
+  if(action==='assign'){
+    const r=v.residents.find(r=>r.id===id);
+    if(!r||!Object.hasOwn(payload,'job')||!has(JOBS,payload.job)||!residentEligible(s,id))return fail('주민과 맡길 일을 확인해 주세요.');
+    if(!canReach(s,home(),7))return fail('귀환 봉화 곁에서 일을 맡겨 주세요.');
+    if([...v.residents].sort((a,b)=>a.id.localeCompare(b.id)).findIndex(item=>item.id===id)>=housingCapacity(s))return fail('먼저 작은 집을 수리하여 작업 자리를 마련하세요.');
+    if(r.job===payload.job)return {ok:true};
+    r.job=payload.job;r.timer=0;return {ok:true};
+  }
+  if(!has(RECIPES,id))return fail('알 수 없는 제작품입니다.');
+  const recipe=RECIPES[id];
+  if(!countValid(v.items?.[id]))return fail('제작품 수량을 확인해 주세요.');
+  if(action==='craft'){
+    if(!recipeUnlocked(s,id))return fail(recipe.unlock);
+    if(!v.structures.some(b=>b.type===recipe.building&&b.hp>0&&canReach(s,b)))return fail(`${BUILDINGS[recipe.building].name} 가까이 다가가세요.`);
+    if(v.items[id]>=9999)return fail('제작품 주머니가 가득 찼습니다.');
+    if(!Object.entries(recipe.produce).every(([key,n])=>countValid(v.produce?.[key])&&v.produce[key]>=n)||!Object.entries(recipe.materials).every(([key,n])=>Number.isInteger(v.materials?.[key])&&v.materials[key]>=n&&v.materials[key]<=99999))return fail('필요한 수확물과 재료가 부족합니다.');
+    for(const [key,n] of Object.entries(recipe.produce))v.produce[key]-=n;
+    spend(v,recipe.materials);v.items[id]++;event(s,'craft',`${recipe.name} 제작 · ${recipe.effect}`);return {ok:true,id};
+  }
+  if(v.items[id]<1)return fail('먼저 제작해 주세요.');
+  if(!['x','y','z'].every(key=>Number.isFinite(s.player?.[key]))||dist(s.player,VILLAGE)>VILLAGE.radius+4||Math.abs(s.player.y-heightAt(s.player.x,s.player.z))>3)return fail('마을에 돌아와 제작품을 사용하세요.');
+  if(id==='trailMeal'){
+    const p=s.player;
+    if(!['hp','maxHp','stamina','maxStamina'].every(k=>Number.isFinite(p[k])&&p[k]>=0))return fail('회복 상태를 확인해 주세요.');
+    if(p.hp>=p.maxHp&&p.stamina>=p.maxStamina)return fail('이미 충분히 회복했습니다.');
+    p.hp=Math.min(p.maxHp,p.hp+45);p.stamina=Math.min(p.maxStamina,p.stamina+35);
+  }else{
+    if(!Object.hasOwn(payload,'targetId')||typeof payload.targetId!=='string')return fail('사용할 건물이나 밭을 선택하세요.');
+    const b=v.structures.find(b=>b.id===payload.targetId);
+    if(!b||!canReach(s,b))return fail('대상 가까이 다가가세요.');
+    if(id==='repairKit'){
+      if(!Number.isFinite(b.hp)||!Number.isFinite(b.maxHp)||b.hp>=b.maxHp)return fail('수리가 필요한 건물을 선택하세요.');
+      b.hp=Math.min(b.maxHp,b.hp+100);
+    }else{
+      const p=v.plots.find(p=>p.id===b.id);
+      if(!p||!has(CROPS,p.crop)||b.hp<=0||!Number.isFinite(p.growth)||p.growth>=CROPS[p.crop].growthSeconds)return fail('자라는 작물이 있는 온전한 밭을 선택하세요.');
+      p.watered=true;p.growth=Math.min(CROPS[p.crop].growthSeconds,p.growth+45);p.stage=stage(p);
+    }
+  }
+  v.items[id]--;event(s,'craft',`${recipe.name} 사용 · ${recipe.effect}`);return {ok:true,id};
+}
+function tickResidents(s,dt,hooks){
+  const v=s.village;
+  for(const actor of residentActors(s)){
+    if(!actor.active)continue;
+    const r=v.residents.find(r=>r.id===actor.id);if(!r||!has(JOBS,r.job))continue;
+    r.timer=Math.min(JOB_SECONDS[r.job],r.timer+dt);
+    if(r.timer+1e-8<JOB_SECONDS[r.job])continue;
+    if(r.job==='farmer'){
+      // Earlier workers in this tick may already have watered the displayed target.
+      const p=v.plots.find(p=>p.crop&&!p.watered&&v.structures.some(b=>b.id===p.id&&b.hp>0));if(!p)continue;
+      p.watered=true;r.timer=0;event(s,'water',`${actor.name} · 물주기`,actor);
+    }else if(r.job==='artisan'){
+      // Re-select immediately before spending; never pay for another worker's completed repair.
+      const b=v.structures.find(b=>Number.isFinite(b.hp)&&Number.isFinite(b.maxHp)&&b.hp<b.maxHp);
+      if(!b||!afford(v,{wood:1,stone:1}))continue;
+      spend(v,{wood:1,stone:1});b.hp=Math.min(b.maxHp,b.hp+30);r.timer=0;event(s,'repair',`${actor.name} · 수리`,actor);
+    }else{
+      const e=(s.enemies||[]).filter(e=>e.raid&&e.hp>0&&dist(e,actor)<14&&Math.abs(e.y-actor.y)<3&&clearRaidSight(s,actor,e,hooks)).sort((a,b)=>dist(a,actor)-dist(b,actor)||a.id.localeCompare(b.id))[0];
+      if(!e)continue;
+      if(hooks.damageEnemy)hooks.damageEnemy(e,8,'resident');else e.hp=Math.max(0,e.hp-8);
+      r.timer=0;event(s,'tower',`${actor.name} · 마을 방어`,actor);
+    }
+  }
 }

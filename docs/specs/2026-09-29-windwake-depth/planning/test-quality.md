@@ -1,0 +1,5 @@
+<!-- source: windwake/tests/terrain.test.mjs -->
+# Test quality
+Independent proofs: numerical terrain vs rendered triangles; ordinary movement through authored routes/caves; domain action failure is atomic; replay/save preserves progress; visible attack geometry matches actual damage; Chrome observes actual controls and rendered spatial content. Controlled fixtures are labeled; they do not replace fresh-game connected routes. Baseline203/203. Loading/device benchmarking deferred, functional browser checks mandatory.
+
+New economy matrix: unknown/prototype IDs; negative/nonfinite and over-domain bounds via direct validator input (JSON serializes NaN as null); duplicate residents; partial/all housing loss and deterministic resumption; insufficient-resource atomicity; forged alliance/cave unlocks. Exercise full loadSave and restoreSnapshot proof ordering, plus repeated save/load with no duplicated produce, worker tick or recipe reward. Define one resident per intact cottage, eight maximum. Connect caveclear→home→harvest→craft→effect→save/load in one ordinary-action acceptance path.

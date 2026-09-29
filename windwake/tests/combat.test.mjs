@@ -47,12 +47,12 @@ test('all nine added archetypes telegraph before dealing damage or firing',()=>{
   }
 });
 
-test('slime hops physically while chasing and wolf pack pursuit is faster',()=>{
+test('slime hops physically while chasing and wolf tactics retain base pursuit speed',()=>{
   const slime=fixture('slime');slime.s.player.z=12;slime.tick(8);
   assert.ok(slime.e.y>.1);assert.ok(slime.e.z>0);
   const lone=fixture('wolf'),pack=fixture('wolf');lone.s.player.z=pack.s.player.z=14;
   pack.s.enemies.push({id:'packmate',type:'wolf',x:2,y:0,z:0,hp:50,maxHp:50});
-  lone.tick(30);pack.tick(30);assert.ok(pack.e.z>lone.e.z);
+  lone.tick(30);pack.tick(30);assert.equal(pack.e.z,lone.e.z);assert.equal(pack.e.packSlot,1);assert.equal(lone.e.packSlot,undefined);
 });
 
 test('wolf leap direction locks at its tell and a sidestep avoids its strike',()=>{

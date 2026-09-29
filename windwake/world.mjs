@@ -109,7 +109,7 @@ function legacyGround(x,z){
 export const WORLD_GENERATION=Object.freeze({version:2,maxDurableIds:12288,legacySlotsPerChunk:2,newSlotsPerChunk:9});
 const reliefWeights=[.95,1.08,.8,1.15,1.4,1.12,1.3,.9];
 function reliefAt(x,z){let sum=0,weights=0;for(let i=0;i<BIOMES.length;i++){const b=BIOMES[i],w=1/(10000+(x-b.x)**2+(z-b.z)**2);sum+=w*reliefWeights[i];weights+=w;}return sum/weights;}
-function terrainVertex(x,z){
+function originalTerrainVertex(x,z){
   const edge=Math.max(Math.abs(x),Math.abs(z));
   if(edge<=120)return legacyGround(x,z);
   let h=baseHeight(x,z)+landformHeight(x,z,WORLD.seed,reliefAt(x,z))*smooth((edge-120)/90);
@@ -119,6 +119,40 @@ function terrainVertex(x,z){
   for(const w of waypointPositions){const d=Math.hypot(x-w.x,z-w.z);if(d<25)h=mix(baseHeight(w.x,w.z),h,smooth((d-10)/15));}
   for(const t of townPositions){const d=Math.hypot(x-t.x,z-t.z);if(d<50)h=mix(t.floor,h,smooth((d-31)/19));}
   for(const e of entrancePositions){const d=Math.hypot(x-e.x,z-e.z);if(d<27)h=mix(e.floor,h,smooth((d-10)/17));}
+  return h;
+}
+// Preserve the original heightfield and reservation inputs for every existing PRNG stream.
+const originalHeightfield=createHeightfield(originalTerrainVertex);
+const branch=(x,z,y)=>({x,z,y});
+const alpineStart=branch(0,635,baseHeight(0,635));
+const canyonStart=branch(-715,-100,38);
+export const EXPEDITIONS=[
+  {id:'expedition-alpine',name:'서리별 하늘마루 순환길',biomeId:'alpine',waypointId:'waypoint-alpine',approachPoints:[alpineStart],points:[alpineStart,branch(100,650,53),branch(180,700,77),branch(270,780,110)],returnPoints:[branch(270,780,110),branch(330,670,81),branch(220,570,57),branch(100,570,43),alpineStart],clueId:'clue-alpine',discoveryId:'discovery-alpine',rewardId:'chest-expedition-alpine'},
+  {id:'expedition-canyon',name:'메아리 바닥길 순환로',biomeId:'canyon',waypointId:'waypoint-canyon',approachPoints:[branch(-615,0,baseHeight(-615,0)),branch(-615,-100,baseHeight(-615,0)),canyonStart],points:[canyonStart,branch(-785,-110,23),branch(-850,-160,2)],returnPoints:[branch(-850,-160,2),branch(-830,-260,11),branch(-715,-240,27),canyonStart],clueId:'clue-canyon',discoveryId:'discovery-canyon',rewardId:'chest-expedition-canyon'},
+];
+const mistTown=townPositions.find(t=>t.biomeId==='mistwood');
+const mistOldEntrance=entrancePositions.find(e=>e.biomeId==='mistwood');
+const cavePositions=[
+  {id:'cave-canyon',kind:'dungeon',natural:true,biomeId:'canyon',townId:'town-canyon',name:'메아리 바람굴',x:-850,z:-160,floor:2,yaw:0,description:'E 바람굴 입장 · 무거운 돌을 바람으로 옮겨 길을 여세요.'},
+  {id:'cave-mistwood',kind:'dungeon',natural:true,biomeId:'mistwood',townId:mistTown.id,name:'안개뿌리 깊은굴',...localPoint(mistTown,0,108),floor:mistTown.floor,yaw:mistTown.yaw,description:'E 깊은굴 입장 · 낮은 뿌리에서 높은 등불로 울림을 이으세요.'},
+];
+export const CAVE_APPROACHES=[{id:'approach-cave-canyon',entranceId:'cave-canyon',points:EXPEDITIONS[1].points},{id:'approach-cave-mistwood',entranceId:'cave-mistwood',points:[localPoint(mistTown,0,0),branch(mistOldEntrance.x,mistOldEntrance.z,mistTown.floor),branch(cavePositions[1].x,cavePositions[1].z,mistTown.floor)]}];
+const expeditionTrails=[...EXPEDITIONS.flatMap(e=>[{id:e.id,points:e.points},{id:`${e.id}-return`,points:e.returnPoints},{id:`${e.id}-approach`,points:e.approachPoints}]),...CAVE_APPROACHES];
+const expeditionSegments=expeditionTrails.flatMap(t=>t.points.slice(1).map((b,i)=>({a:t.points[i],b})));
+function expeditionSample(x,z){let distance=Infinity,y=0;for(const {a,b} of expeditionSegments){const dx=b.x-a.x,dz=b.z-a.z,t=clamp(((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz||1),0,1),d=Math.hypot(x-a.x-dx*t,z-a.z-dz*t);if(d<distance){distance=d;y=mix(a.y,b.y,t);}}return{distance,y};}
+TRAILS.push(...expeditionTrails);
+function terrainVertex(x,z){
+  const original=originalTerrainVertex(x,z);let h=original;
+  // Broad authored massifs and an incised valley make silhouettes, not merely a painted road.
+  if(x>45&&z>485){const mask=smooth((x-45)/65)*smooth((z-485)/65);h+=hill(x,z,270,780,100,70)*mask;}
+  if(x< -680&&z< -55)h-=hill(x,z,-850,-160,65,22)*smooth((-x-680)/40)*smooth((-z-55)/40);
+  const route=expeditionSample(x,z);
+  if(route.distance<38)h=mix(h,route.y,1-smooth((route.distance-9)/29));
+  for(const e of cavePositions){const d=Math.hypot(x-e.x,z-e.z);if(d<27)h=mix(e.floor,h,smooth((d-10)/17));}
+  for(const t of townPositions){const d=distance({x,z},t);if(d<50)h=mix(original,h,smooth((d-31)/19));}
+  for(const e of entrancePositions){const d=distance({x,z},e);if(d<27)h=mix(original,h,smooth((d-10)/17));}
+  for(const w of waypointPositions){const d=distance({x,z},w);if(d<25)h=mix(original,h,smooth((d-10)/15));}
+  for(const b of bossPositions){const d=distance({x,z},b);if(d<48)h=mix(original,h,smooth((d-28)/20));}
   return h;
 }
 const heightfield=createHeightfield(terrainVertex);
@@ -134,18 +168,33 @@ export function terrainColor(x,z){
   const h=heightAt(x,z),m=Math.sin(x*1.31+z*.79)*.018,edge=Math.max(Math.abs(x),Math.abs(z));
   let c=h<-2?PALETTE.sand:x<-23&&z>20?PALETTE.forest:(x<-29&&z<16&&z>-25)||h>7?PALETTE.stone:PALETTE.grass;
   if(edge>120){const outer=biomeColor(x,z),blend=smooth((edge-120)/80);c=c.map((v,i)=>mix(v,outer[i],blend));}
+  if(x>140&&x<420&&z>560&&z<900&&h>65)c=PALETTE.alpine.map((v,i)=>mix(v,PALETTE.stone[i],.65));
+  if(x< -750&&z< -80&&z> -310&&h>12)c=PALETTE.sand.map((v,i)=>mix(v,PALETTE.stone[i],.7));
   if(h<-2)c=PALETTE.sand;
-  if((Math.abs(x)<2.1&&z<3&&z>-125)||edge<120&&Math.abs(z+21-Math.sin(x*.055)*5)<1.7||edge>120&&trailSample(x,z).distance<2.3)c=PALETTE.path;
+  if((Math.abs(x)<2.1&&z<3&&z>-125)||edge<120&&Math.abs(z+21-Math.sin(x*.055)*5)<1.7||edge>120&&(trailSample(x,z).distance<2.3||expeditionSample(x,z).distance<2.3))c=PALETTE.path;
   if(distance({x,z},VILLAGE)<29)c=PALETTE.grass;
   return c.map(v=>v+m);
 }
 const ground=(x,z)=>heightAt(x,z);
+const townLayouts=[
+  [[-14,-15],[-15,0],[-14,16],[13,-17],[15,0],[13,14]],
+  [[-17,-12],[-14,4],[-12,19],[12,-19],[17,-4],[17,12]],
+  [[-13,-19],[-16,-3],[-16,13],[13,-16],[13,0],[13,16]],
+  [[-16,-16],[-13,0],[-16,16],[16,-16],[13,0],[16,16]],
+  [[-12,-18],[-16,0],[-12,18],[15,-14],[17,2],[13,18]],
+  [[-18,-13],[-13,3],[-15,19],[13,-19],[17,-3],[15,13]],
+  [[-14,-18],[-17,-2],[-13,15],[16,-15],[13,1],[17,17]],
+  [[-16,-13],[-13,3],[-17,18],[17,-18],[14,-2],[16,14]],
+];
+const decorationTypes={mill:['grain-sacks','millstone','haycart'],caravan:['market-canopy','trade-crates','caravan-sign'],fishery:['fishing-net','mooring-post','fish-rack'],orchard:['fruit-tree','fruit-baskets','orchard-trellis'],lodge:['log-stack','trail-sign','mountain-bench'],herbalist:['herb-planter','drying-rack','mushroom-bed'],forge:['anvil','ore-cart','forge-brazier'],observatory:['telescope','star-chart','armillary']};
 export const TOWNS=townPositions.map((t,i)=>({
   ...t,kind:'town',y:ground(t.x,t.z),
   npcs:['guide','merchant','keeper'].map((role,j)=>({id:`npc-${t.biomeId}-${role}`,townId:t.id,name:residentNames[i][j],role,...localPoint(t,...[[0,-6],[-6,0],[6,0]][j]),yaw:t.yaw})),
-  buildings:Array.from({length:6},(_,j)=>({id:`building-${t.biomeId}-${j}`,type:j===1?'service':'house',style:t.style,...localPoint(t,j<3?-13:13,[-15,0,15][j%3]),w:6,d:6,h:j===1&&['mill','observatory','forge'].includes(t.style)?8:5,yaw:t.yaw})),
+  layout:['mill-yard','market-crescent','harbor-row','orchard-court','lodge-terraces','herbal-garden','forge-yard','observatory-court'][i],
+  decorations:decorationTypes[t.style].map((type,j)=>({id:`decoration-${t.biomeId}-${j}`,type,style:t.style,...localPoint(t,...[[-23,-7],[23,7],[0,23]][j]),yaw:t.yaw,blocking:false})),
+  buildings:Array.from({length:6},(_,j)=>({id:`building-${t.biomeId}-${j}`,type:j===1?'service':'house',style:t.style,...localPoint(t,...townLayouts[i][j]),w:6,d:6,h:j===1&&['mill','observatory','forge'].includes(t.style)?8:5,yaw:t.yaw})),
 }));
-export const DUNGEON_ENTRANCES=entrancePositions.map(e=>({...e,y:ground(e.x,e.z)}));
+export const DUNGEON_ENTRANCES=[...entrancePositions,...cavePositions].map(e=>({...e,y:ground(e.x,e.z)}));
 export const WAYPOINTS=[{id:'home',kind:'waypoint',name:'바람이 머무는 마을',x:VILLAGE.x,z:VILLAGE.z,description:'E 마을 · 집으로 돌아오는 등불'},...waypointPositions.map(w=>({...w,kind:'waypoint',description:'E 등대 활성화 · 활성화한 등대는 지도에서 이동할 수 있습니다.'}))].map(w=>({...w,y:ground(w.x,w.z)}));
 export const BOSS_SITES=bossPositions.map(b=>({...b,kind:'boss',y:ground(b.x,b.z),description:b.final?'네 변방의 승리와 마을3단계가 먼 바람의 왕을 깨웁니다.':`${b.name} · 첫 승리: ${b.reward}`}));
 export const RESOURCE_NODES=[
@@ -164,7 +213,13 @@ export const REGIONS = [
   {id:'grotto',name:'숨결 동굴',x:-68,z:25,radius:15,description:'그늘진 바위 아래, 길을 벗어난 자의 보물.'},
   {id:'summit',name:'고요한 하늘섬',x:0,z:27,radius:19,minY:22,description:'이곳에서 모든 바람이 멈췄다.'},
 ];
+export const EXPEDITION_LANDMARKS=EXPEDITIONS.flatMap(e=>[
+  {id:e.clueId,kind:'clue',name:`${e.name} · 길잡이`,...e.points[0],x:e.points[0].x+12,description:e.biomeId==='alpine'?'동쪽 돌표지를 따라 하늘마루로, 남쪽 능선으로 돌아오세요. 정상에는 여행자의 보급품이 남아 있습니다.':'능선에서 36m 아래 바람굴로 내려가세요. 남쪽 돌다리 길이 돌아오는 길입니다.'},
+  {id:e.discoveryId,kind:'discovery',name:e.biomeId==='alpine'?'구름 위 돌마루':'메아리 층벽 전망대',...e.points[1],description:'길을 따라 도착한 탐험 기록. 돌표지 너머 다음 목적지가 보입니다.'},
+  {id:e.rewardId,kind:'chest',name:e.biomeId==='alpine'?'하늘마루의 보급함':'협곡 탐험가의 보급함',...(e.biomeId==='canyon'?{x:-849,z:-168}:e.points.at(-1)),description:'긴 순환길을 마친 여행자를 위한 재료와 경험치.'},
+].map(l=>({...l,biomeId:e.biomeId,expeditionId:e.id,y:ground(l.x,l.z)})));
 export const LANDMARKS = [
+  ...EXPEDITION_LANDMARKS,
   ...TOWNS, ...DUNGEON_ENTRANCES, ...WAYPOINTS, ...BOSS_SITES, ...RESOURCE_NODES, ...outerLocations.filter(l=>l.kind!=='resource').map(l=>({...l,y:ground(l.x,l.z)})),
   {id:'camp',kind:'camp',name:'여행자의 모닥불',x:0,z:-69,y:ground(0,-69),description:'E 휴식 · 5 결정으로 체력 / 7 결정으로 검 강화'},
   {id:'quarry',kind:'shrine',name:'돌의 봉인',x:-49,z:-4,y:ground(-49,-4),description:'Q 울림으로 돌을 금빛 원 안에 밀어 넣으세요. 제단에서 E: 돌 되돌리기.'},
@@ -245,11 +300,12 @@ for(const box of [...SOLIDS,...townSolids]){
   }
 }
 function randomFor(cx,cz){let n=(WORLD.seed^Math.imul(cx,374761393)^Math.imul(cz,668265263))>>>0;return()=>{n=(Math.imul(n,1664525)+1013904223)>>>0;return n/4294967296;};}
+const legacyLandmarks=LANDMARKS.filter(l=>!l.expeditionId&&!l.natural);
 function reserved(x,z,padding=0){
   if(TOWNS.some(t=>Math.hypot(x-t.x,z-t.z)<t.radius+7+padding))return true;
   if(Math.hypot(x-VILLAGE.x,z-VILLAGE.z)<VILLAGE.radius+6+padding)return true;
   if(trailSample(x,z).distance<4.5+padding)return true;
-  return LANDMARKS.some(l=>Math.hypot(x-l.x,z-l.z)<(l.kind==='boss'?26:7)+padding);
+  return legacyLandmarks.some(l=>Math.hypot(x-l.x,z-l.z)<(l.kind==='boss'?26:7)+padding);
 }
 function newChunk(cx,cz){
   const id=`${cx},${cz}`,props=PROPS.filter(p=>cell(p.x,p.z)===id),solids=[...(ownerCells.get(id)||[])],spawns=ENEMY_SPAWNS.filter(p=>cell(p.x,p.z)===id);
@@ -259,7 +315,7 @@ function newChunk(cx,cz){
     if(Math.max(Math.abs(x),Math.abs(z))<124||reserved(x,z,1.5))continue;
     const oldY=legacyGround(x,z);if(oldY<WORLD.waterLevel+.4)continue;
     const biome=biomeAt(x,z),type=biome.props[Math.floor(random()*biome.props.length)],id=`prop-${cx}-${cz}-${i}`;
-    const y=ground(x,z);if(y<WORLD.waterLevel+.4)continue;
+    const y=ground(x,z);if(originalHeightfield.heightAt(x,z)<WORLD.waterLevel+.4)continue;
     props.push({id,type,x,y,z,scale,yaw,biomeId:biome.id});
     if(type.includes('tree')||type==='pine')solids.push({id:`solid-${id}`,x,y,z,w:.7*scale,h:3*scale,d:.7*scale,kind:'trunk'});
     else if(type==='rock')solids.push({id:`solid-${id}`,x,y,z,w:1.7*scale,h:.9*scale,d:1.7*scale,kind:'rock'});
@@ -270,15 +326,15 @@ function newChunk(cx,cz){
     if(Math.max(Math.abs(x),Math.abs(z))<130||reserved(x,z,4)||legacyGround(x,z)<WORLD.waterLevel+1)continue;
     const biome=biomeAt(x,z);
     const type=biome.enemies[Math.floor(random()*biome.enemies.length)],y=ground(x,z);
-    if(y>=WORLD.waterLevel+1)spawns.push({id:`wild-${cx}-${cz}-${i}`,type,x,z,y,biomeId:biome.id});
+    if(originalHeightfield.heightAt(x,z)>=WORLD.waterLevel+1)spawns.push({id:`wild-${cx}-${cz}-${i}`,type,x,z,y,biomeId:biome.id});
   }
   // Independent stream and namespace: additions cannot perturb legacy identity.
   const groupRandom=randomFor(cx+8192,cz-4096);
   const safe=(x,z)=>{
     if(x<cx*60+3||x>(cx+1)*60-3||z<cz*60+3||z>(cz+1)*60-3)return false;
     if(Math.max(Math.abs(x),Math.abs(z))<145||reserved(x,z,4)||entrancePositions.some(e=>Math.hypot(x-e.x,z-e.z)<42))return false;
-    const y=ground(x,z);if(y<WORLD.waterLevel+1)return false;
-    if([[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dz])=>Math.abs(ground(x+dx,z+dz)-y)>.72))return false;
+    const y=originalHeightfield.heightAt(x,z);if(y<WORLD.waterLevel+1)return false;
+    if([[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dz])=>Math.abs(originalHeightfield.heightAt(x+dx,z+dz)-y)>.72))return false;
     if(solids.some(p=>Math.abs(x-p.x)<p.w/2+1.2&&Math.abs(z-p.z)<p.d/2+1.2))return false;
     return !spawns.some(p=>Math.hypot(x-p.x,z-p.z)<2.8);
   };
@@ -305,8 +361,10 @@ function newChunk(cx,cz){
   // Suppress newly unsafe legacy placements; never move them or reuse their IDs.
   for(let i=spawns.length-1;i>=0;i--){
     const s=spawns[i];if(!s.id.startsWith('wild-')||s.id.startsWith('wild-v2-'))continue;
-    if(entrancePositions.some(e=>Math.hypot(s.x-e.x,s.z-e.z)<42)||[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dz])=>Math.abs(ground(s.x+dx,s.z+dz)-s.y)>.72)||solids.some(p=>Math.abs(s.x-p.x)<p.w/2+1.2&&Math.abs(s.z-p.z)<p.d/2+1.2))spawns.splice(i,1);
+    if(entrancePositions.some(e=>Math.hypot(s.x-e.x,s.z-e.z)<42)||[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dz])=>Math.abs(originalHeightfield.heightAt(s.x+dx,s.z+dz)-originalHeightfield.heightAt(s.x,s.z))>.72)||solids.some(p=>Math.abs(s.x-p.x)<p.w/2+1.2&&Math.abs(s.z-p.z)<p.d/2+1.2))spawns.splice(i,1);
   }
+  for(let i=props.length-1;i>=0;i--)if(expeditionSample(props[i].x,props[i].z).distance<7||cavePositions.some(e=>distance(e,props[i])<17)){const id=props[i].id;props.splice(i,1);const j=solids.findIndex(s=>s.id===`solid-${id}`);if(j>=0)solids.splice(j,1);}
+  for(let i=spawns.length-1;i>=0;i--){const s=spawns[i];if(s.id.startsWith('wild-')&&(s.y<WORLD.waterLevel+1||expeditionSample(s.x,s.z).distance<13||cavePositions.some(e=>distance(e,s)<42)||[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dz])=>Math.abs(ground(s.x+dx,s.z+dz)-s.y)>.72)))spawns.splice(i,1);}
   spawns.push(...BOSS_SITES.filter(b=>cell(b.x,b.z)===id));
   return{id,cx,cz,props,solids,spawns};
 }

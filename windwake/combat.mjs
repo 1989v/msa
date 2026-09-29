@@ -32,6 +32,77 @@ const finite = (n,fallback=0) => Number.isFinite(n) ? n : fallback;
 const facing = (e,p,angle) => Math.abs(Math.atan2(Math.sin(Math.atan2(p.x-e.x,p.z-e.z)-e.yaw),
   Math.cos(Math.atan2(p.x-e.x,p.z-e.z)-e.yaw))) <= angle;
 
+const angleGap=(a,b)=>Math.abs(Math.atan2(Math.sin(a-b),Math.cos(a-b)));
+
+// One serializable shape drives both the renderer and contact decisions. Angles
+// are absolute yaw; angle/safeAngle are half widths. Circles never track targets.
+export function attackContains(spec,p) {
+  if(!spec||Math.abs(p.y-spec.y)>2.4||(spec.jumpable&&p.y-spec.y>1))return false;
+  if(spec.kind==='circles')return spec.circles.some(c=>Math.abs(p.y-c.y)<=2.4&&DISTANCE(c,p)<=c.radius);
+  const d=DISTANCE(spec,p),yaw=Math.atan2(p.x-spec.x,p.z-spec.z);
+  if(spec.kind==='lanes')return spec.angles.some(a=>{
+    const forward=(p.x-spec.x)*Math.sin(a)+(p.z-spec.z)*Math.cos(a);
+    const side=(p.x-spec.x)*Math.cos(a)-(p.z-spec.z)*Math.sin(a);
+    return forward>=0&&forward<=spec.range&&Math.abs(side)<=spec.width;
+  });
+  if(d>spec.radius)return false;
+  if(spec.kind==='wave')return angleGap(yaw,spec.safeYaw)>spec.safeAngle;
+  return angleGap(yaw,spec.yaw)<=spec.angle;
+}
+
+function attackGeometry(e,pattern,p) {
+  const boss=patternBoss(e),{radius}=settings(e,pattern),yaw=Math.atan2(p.x-e.x,p.z-e.z);
+  const spec={kind:'sector',x:e.x,y:e.y,z:e.z,yaw,radius,angle:pattern==='sweep'?1.85:pattern==='slam'?1.45:Math.PI};
+  if(pattern==='bolt'||pattern==='slow'&&!boss){
+    const offsets=boss?(e.phase===2?[-.66,-.44,0,.22,.44]:[-.44,0,.22]):e.type==='wisp'?[-.07,.07]:[0];
+    return {...spec,kind:pattern==='slow'?'circles':'lanes',
+      ...(pattern==='slow'?{circles:[{x:p.x,y:p.y,z:p.z,radius}]}:{}),
+      angles:offsets.map(a=>yaw+a),range:(boss?11:e.type==='frostling'?7:8)*4,width:.65,aimY:p.y,aimDistance:Math.max(1,DISTANCE(e,p))};
+  }
+  if(pattern==='eruption'||pattern==='slow'){
+    const circles=[{x:p.x,y:p.y,z:p.z,radius}];
+    if(boss&&e.family==='thorn')for(const side of [-1,1])circles.push({x:p.x+Math.cos(yaw)*side*5,y:p.y,z:p.z-Math.sin(yaw)*side*5,radius:2.5});
+    return {...spec,kind:'circles',circles};
+  }
+  if(pattern==='charge'||pattern==='leap'){
+    const speed=pattern==='charge'?boss?13:14:boss?10:e.type==='wolf'?11:6;
+    const duration=pattern==='charge'?.65:boss?.72:.58;
+    return {...spec,kind:'lanes',angles:[yaw],range:speed*duration+radius,width:pattern==='charge'?2:radius};
+  }
+  if(pattern==='ring'&&e.family!=='tide')return {...spec,jumpable:true};
+  if(pattern==='ring')return {...spec,kind:'wave',jumpable:true,safeYaw:yaw+Math.PI/2,safeAngle:e.family==='tide'?.5:0};
+  if(boss&&e.family==='bulwark'&&pattern==='slam')spec.followup={...spec,radius:6.5,angle:1.05,followupStrike:true};
+  return spec;
+}
+
+function geometryHit(s,e,hooks,spec,damage=ENEMY_STATS[e.type].damage) {
+  if(!attackContains(spec,s.player)||!hooks.lineClear(e,s.player))return false;
+  const origin=spec.kind==='circles'?spec.circles.find(c=>DISTANCE(c,s.player)<=c.radius&&Math.abs(c.y-s.player.y)<=2.4):spec;
+  if(!origin||!hooks.lineClear(e,origin)||!hooks.lineClear(origin,s.player))return false;
+  return hooks.damagePlayer(damage,e);
+}
+
+const sameScene=(a,b)=>(a.dungeonId||null)===(b.dungeonId||null);
+function wolfTactics(s,e,hooks) {
+  const peers=s.enemies.filter(a=>a.hp>0&&a.type==='wolf'&&!a.raid&&sameScene(a,e)&&
+    DISTANCE(a,e)<=12&&Math.abs(a.y-e.y)<2.8&&hooks.lineClear(e,a)).sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+  if(peers.length<2){delete e.packSlot;return {commit:true,target:s.player};}
+  const index=peers.indexOf(e);e.packSlot=index;
+  const engaged=peers.some(a=>a!==e&&(a.state==='telegraph'||a.state==='attack'));
+  const candidates=peers.filter(a=>!['telegraph','attack','recover','hit'].includes(a.state)&&
+    DISTANCE(a,s.player)<=6&&Math.abs(a.y-s.player.y)<2.8&&hooks.lineClear(a,s.player))
+    .sort((a,b)=>finite(a.attackCount)-finite(b.attackCount)||String(a.id).localeCompare(String(b.id)));
+  const angle=index*Math.PI*2/peers.length;
+  const target=DISTANCE(e,s.player)>9?s.player:{x:s.player.x+Math.sin(angle)*4.3,z:s.player.z+Math.cos(angle)*4.3};
+  return {commit:!engaged&&candidates[0]===e,target};
+}
+
+function casterScreen(s,e,hooks) {
+  return s.enemies.filter(a=>a.type==='shaman'&&a.hp>0&&!a.raid&&sameScene(a,e)&&
+    DISTANCE(a,e)<10&&Math.abs(a.y-e.y)<2.8&&hooks.lineClear(e,a)&&hooks.lineClear(a,s.player))
+    .sort((a,b)=>String(a.id).localeCompare(String(b.id)))[0];
+}
+
 function initialize(e) {
   e.homeX=finite(e.homeX,e.x); e.homeY=finite(e.homeY,e.y); e.homeZ=finite(e.homeZ,e.z);
   for(const key of ['timer','hitFlash','vx','vy','vz','yaw','attackCount','specialCooldown','hopTimer']) e[key]=finite(e[key]);
@@ -97,11 +168,12 @@ function telegraph(s,e,pattern,hooks) {
   const {radius,windup}=settings(e,pattern),p=s.player;
   e.state='telegraph';e.pattern=pattern;e.timer=windup;e.telegraphRadius=radius;
   e.yaw=Math.atan2(p.x-e.x,p.z-e.z);e.targetX=p.x;e.targetY=p.y;e.targetZ=p.z;
+  e.attackSpec=attackGeometry(e,pattern,p);
   e.attackCount++;e.didHit=false;e.guarding=false;e.burrowed=e.type==='burrower';
   // These serializable target coordinates tell the renderer where a fixed
   // eruption/slow tell belongs. No tracking in the final dodge window.
   hooks.effect('telegraph',e,{life:windup,power:radius,pattern,
-    targetX:e.targetX,targetY:e.targetY,targetZ:e.targetZ});
+    targetX:e.targetX,targetY:e.targetY,targetZ:e.targetZ,attackSpec:e.attackSpec});
 }
 
 function summon(s,e,hooks) {
@@ -125,7 +197,8 @@ function summon(s,e,hooks) {
 }
 
 function createSlowZone(e,hooks) {
-  e.zone={x:e.targetX,y:e.targetY,z:e.targetZ,radius:e.telegraphRadius,remaining:3.2};
+  const circle=e.attackSpec.circles[0];
+  e.zone={...circle,remaining:3.2};
   hooks.effect('shockwave',e.zone,{life:3.2,power:e.zone.radius,pattern:'slow'});
 }
 
@@ -139,33 +212,38 @@ function updateZone(s,e,dt,hooks) {
 
 function launch(s,e,hooks) {
   const boss=patternBoss(e),pattern=e.pattern;
+  // Legacy restored transients may not yet carry a shape.
+  e.attackSpec ||= attackGeometry(e,pattern,{x:finite(e.targetX,s.player.x),y:finite(e.targetY,s.player.y),z:finite(e.targetZ,s.player.z)});
   hooks.emit('enemy-attack',e);
   if(pattern==='charge'||pattern==='leap'){
     e.state='attack';e.attackDuration=pattern==='charge'?.65:boss?.72:.58;e.timer=e.attackDuration;
     const speed=pattern==='charge'?boss?13:14:boss?10:e.type==='wolf'?11:6;
-    e.vx=Math.sin(e.yaw)*speed;e.vz=Math.cos(e.yaw)*speed;
+    e.yaw=e.attackSpec.yaw;e.vx=Math.sin(e.yaw)*speed;e.vz=Math.cos(e.yaw)*speed;
     if(pattern==='leap'&&e.type!=='wisp')e.vy=boss?8:6.5;
     e.didHit=false;return;
   }
   if(pattern==='bolt'){
-    if(hooks.lineClear(e,s.player))hooks.shoot(e,boss?(e.phase===2?5:3):e.type==='wisp'?2:1,
-      {speed:boss?11:8,damage:ENEMY_STATS[e.type].damage,spread:boss?.22:.14});
+    const spec=e.attackSpec;
+    hooks.shoot(e,spec.angles.length,{speed:boss?11:8,damage:ENEMY_STATS[e.type].damage,
+      angles:spec.angles,yaw:spec.yaw,origin:{x:spec.x,y:spec.y,z:spec.z},aimY:spec.aimY,aimDistance:spec.aimDistance});
   }else if(pattern==='summon')summon(s,e,hooks);
   else if(pattern==='slow'){
-    const target={x:e.targetX,y:e.targetY,z:e.targetZ};
+    const target=e.attackSpec.circles[0];
     if(hooks.lineClear(e,target)){
       createSlowZone(e,hooks);
-      if(boss)circleHit(s,e,hooks,{...target,radius:e.telegraphRadius,damage:15});
+      if(boss)geometryHit(s,e,hooks,e.attackSpec,15);
     }
-    if(!boss&&hooks.lineClear(e,s.player))hooks.shoot(e,1,{kind:'frost',speed:7,damage:11,slow:2.5});
+    if(!boss){const spec=e.attackSpec;hooks.shoot(e,spec.angles.length,{kind:'frost',speed:7,damage:11,slow:2.5,angles:spec.angles,yaw:spec.yaw,origin:{x:spec.x,y:spec.y,z:spec.z},aimY:spec.aimY,aimDistance:spec.aimDistance});}
   }else{
     const targeted=pattern==='eruption';
-    const origin=targeted?{x:e.targetX,y:e.targetY,z:e.targetZ}:e;
-    hooks.effect('shockwave',origin,{life:.65,power:e.telegraphRadius,pattern});
+    const origin=targeted?e.attackSpec.circles[0]:e.attackSpec;
+    hooks.effect('shockwave',origin,{life:.65,power:e.telegraphRadius,pattern,attackSpec:e.attackSpec});
     // Eruptions cannot move a burrower through a wall or reach a different floor.
-    if(!targeted||Math.abs(e.targetY-e.y)<3&&hooks.lineClear(e,origin))circleHit(s,e,hooks,{
-      x:origin.x,y:origin.y,z:origin.z,radius:e.telegraphRadius,
-      jumpable:pattern==='ring',angle:pattern==='sweep'?1.85:pattern==='slam'?1.45:Math.PI});
+    if(!targeted||Math.abs(origin.y-e.y)<3)geometryHit(s,e,hooks,e.attackSpec);
+    if(e.attackSpec.followup&&e.state!=='hit'&&e.hp>0){
+      e.attackSpec=e.attackSpec.followup;e.state='telegraph';e.timer=.6;
+      hooks.effect('telegraph',e,{life:.6,power:e.attackSpec.radius,pattern,attackSpec:e.attackSpec});return;
+    }
     if(pattern==='burst'&&e.hp>0)hooks.hitEnemy(e,e.hp,'explosion',0);
   }
   recover(e,boss?1.45:e.type==='sentinel'?1.65:e.type==='burrower'?1.3:1.05);
@@ -175,11 +253,11 @@ function activeAttack(s,e,dt,hooks) {
   const before={x:e.x,z:e.z};
   hooks.move(e,e.vx*dt,e.vz*dt,patternBoss(e)?.85:.5);
   const blocked=Math.hypot(e.x-before.x,e.z-before.z)<Math.hypot(e.vx,e.vz)*dt*.15;
-  const radius=e.pattern==='charge'?2:e.telegraphRadius;
-  if(!e.didHit&&circleHit(s,e,hooks,{radius,angle:1.45})){e.didHit=true;}
+  const radius=e.attackSpec?.width??(e.pattern==='charge'?2:e.telegraphRadius);
+  if(!e.didHit&&(!e.attackSpec||attackContains(e.attackSpec,s.player))&&circleHit(s,e,hooks,{radius,angle:1.45})){e.didHit=true;}
   // A miss or a dodged contact still consumes this strike. In particular, a
   // multi-frame charge may not keep rolling damage after invulnerability ends.
-  else if(!e.didHit&&DISTANCE(e,s.player)<radius&&Math.abs(e.y-s.player.y)<2.4&&
+  else if(!e.didHit&&(!e.attackSpec||attackContains(e.attackSpec,s.player))&&DISTANCE(e,s.player)<radius&&Math.abs(e.y-s.player.y)<2.4&&
     facing(e,s.player,1.45)&&hooks.lineClear(e,s.player))e.didHit=true;
   if((e.timer<=0||blocked)&&e.state!=='hit'){
     hooks.effect('shockwave',e,{life:.45,power:radius,pattern:e.pattern});
@@ -189,7 +267,7 @@ function activeAttack(s,e,dt,hooks) {
 
 function leash(e,dt,hooks) {
   e.state='idle';e.guarding=e.type==='sentinel';e.burrowed=false;e.vx=0;e.vz=0;
-  delete e.zone;moveToward(e,{x:e.homeX,z:e.homeZ},ENEMY_STATS[e.type].speed,dt,hooks);
+  delete e.zone;delete e.attackSpec;delete e.packSlot;moveToward(e,{x:e.homeX,z:e.homeZ},ENEMY_STATS[e.type].speed,dt,hooks);
 }
 
 export function updateExpandedEnemy(s,e,dt,hooks) {
@@ -208,13 +286,16 @@ export function updateExpandedEnemy(s,e,dt,hooks) {
   const homeDistance=DISTANCE(e,home),playerHome=DISTANCE(p,home);
   if(homeDistance>(boss?22:28)||playerHome>(boss?36:40))leash(e,dt,hooks);
   else if(e.state==='hit'){
-    e.guarding=false;e.burrowed=false;
+    e.guarding=false;e.burrowed=false;delete e.attackSpec;
     hooks.move(e,e.vx*dt,e.vz*dt);e.vx*=Math.pow(.84,dt*60);e.vz*=Math.pow(.84,dt*60);
     if(e.timer<=0){e.state='recover';e.timer=.35;}
   }else if(e.state==='telegraph'){
     if(e.timer<=0)launch(s,e,hooks);
   }else if(e.state==='attack')activeAttack(s,e,dt,hooks);
   else if(e.state==='recover'){
+    if(e.type==='shaman'&&DISTANCE(e,p)<7&&hooks.lineClear(e,p)){
+      const d=Math.max(.01,DISTANCE(e,p));moveToward(e,{x:e.x+(e.x-p.x)/d*3,z:e.z+(e.z-p.z)/d*3},ENEMY_STATS.shaman.speed,dt,hooks);
+    }
     if(e.type==='wisp'&&e.timer>.65&&DISTANCE(e,p)<5){
       const a=Math.atan2(e.x-p.x,e.z-p.z);hooks.move(e,Math.sin(a)*1.8*dt,Math.cos(a)*1.8*dt);
     }
@@ -225,17 +306,22 @@ export function updateExpandedEnemy(s,e,dt,hooks) {
     else{
       e.state='chase';e.guarding=e.type==='sentinel';
       const pattern=chosenPattern(s,e,hooks),{range}=settings(e,pattern);
-      if(d<=range&&(height<2.8||e.type==='wisp'||pattern==='bolt')&&hooks.lineClear(e,p))telegraph(s,e,pattern,hooks);
+      const pack=e.type==='wolf'?wolfTactics(s,e,hooks):null;
+      const retreat=e.type==='shaman'&&e.attackCount>0&&d<6;
+      const caster=e.type==='sentinel'?casterScreen(s,e,hooks):null;
+      if(!retreat&&(!pack||pack.commit)&&d<=range&&(height<2.8||e.type==='wisp'||pattern==='bolt')&&hooks.lineClear(e,p))telegraph(s,e,pattern,hooks);
       else{
         let speed=ENEMY_STATS[e.type].speed*(boss&&e.phase===2?1.12:1);
-        // Slimes travel in bursts with real vertical hops; wolves gain a small
-        // pack pursuit bonus but retain their full individual leap tell.
+        // Slimes travel in bursts; wolves spend pursuit time taking distinct
+        // flank slots instead of gaining stats from nearby packmates.
         if(e.type==='slime'){
           if(e.hopTimer<=0){e.vy=4.6;e.hopTimer=.95;}
           speed*=e.hopTimer>.55?1.4:.25;
         }
-        if(e.type==='wolf'&&s.enemies.some(a=>a!==e&&a.type==='wolf'&&a.hp>0&&DISTANCE(e,a)<8))speed*=1.16;
-        moveToward(e,p,speed,dt,hooks);
+        let target=pack?.target||p;
+        if(retreat){const away=Math.max(.01,d);target={x:e.x+(e.x-p.x)/away*3,z:e.z+(e.z-p.z)/away*3};}
+        if(caster){const distance=Math.max(.01,DISTANCE(caster,p));target={x:caster.x+(p.x-caster.x)/distance*3,z:caster.z+(p.z-caster.z)/distance*3};e.screenTarget=caster.id;}else delete e.screenTarget;
+        moveToward(e,target,speed,dt,hooks);
       }
     }
   }

@@ -64,7 +64,7 @@ test('adventure validation derives points, rejects unknown and unaffordable node
   assert.equal(a.worldDefeated['normal-enemy'],true);assert.equal(Object.getPrototypeOf(a.worldDefeated),Object.prototype);
 });
 test('village starts with eight recipes, four crops and enough supplies for home, two plots and tower',()=>{
-  const s=fixture();assert.equal(Object.keys(BUILDINGS).length,8);assert.equal(Object.keys(CROPS).length,4);
+  const s=fixture();assert.equal(Object.keys(BUILDINGS).length,10);assert.equal(Object.keys(CROPS).length,4);
   build(s,'cottage',2,0);build(s,'plot',-2,0);build(s,'plot',0,2);build(s,'tower',0,-2);
   assert.equal(s.village.structures.length,4);assert.ok(s.village.materials.wood>=0);assert.ok(s.village.materials.stone>=0);
 });

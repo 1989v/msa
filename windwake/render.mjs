@@ -1,5 +1,7 @@
-import { WORLD, VILLAGE, TOWNS, LANDMARKS, RUNES, PLATE, heightAt, terrainColor, getChunk, querySolids } from './world.mjs';
+import { WORLD, VILLAGE, TOWNS, EXPEDITIONS, LANDMARKS, RUNES, PLATE, heightAt, terrainColor, getChunk, querySolids } from './world.mjs';
 import { dungeonGeometry, dungeonFloor, dungeonSolids, dungeonCleared } from './dungeons.mjs';
+import {floorSurface} from './caves.mjs';
+import {residentActors} from './village.mjs';
 import {attackPose,FOLIAGE_FRAGMENT} from './presentation.mjs';
 
 // Original procedural geometry. Colors extend the local wind-worn DESIGN.md palette.
@@ -371,6 +373,11 @@ export class Renderer {
     for (const prop of chunk.props) this.staticProp(prop);
     const owns = p => Math.floor(p.x / this.chunkSize) === cx && Math.floor(p.z / this.chunkSize) === cz;
     for (const town of TOWNS) for (const building of town.buildings) if (owns(building)) this.settlementBuilding(mesh,building);
+    for(const town of TOWNS)for(const prop of town.decorations||[])if(owns(prop))this.townDecoration(mesh,prop);
+    for(const route of EXPEDITIONS)for(const [index,p] of [...route.points,...route.returnPoints].entries())if(owns(p)){
+      const y=heightAt(p.x,p.z);mesh.cone(p.x+2,y,p.z,.45,.5,PALETTE.stone,5,.27);
+      mesh.cone(p.x+2,y+.5,p.z,.26,.32,PALETTE.stone,5,.12);mesh.box(p.x+2,y+.66,p.z+.15,.18,.12,.04,PALETTE.amber);
+    }
     for (const landmark of LANDMARKS) if (owns(landmark)) this.staticLandmark(landmark);
     for (const rune of RUNES) if (owns(rune)) {
       mesh.cone(rune.x,rune.y,rune.z,.66,1.45,PALETTE.stone,6,.5);
@@ -419,19 +426,53 @@ export class Renderer {
       const mesh=new Mesh(6000);this.buildingMesh=mesh;
       const theme=geometry.id.endsWith('sunfields')?PALETTE.dune:geometry.id.endsWith('canyon')?PALETTE.rock:geometry.id.endsWith('mistwood')?tint(PALETTE.pine,1.65):PALETTE.alpine;
       for(const floor of geometry.floors){
+        if(floor.kind==='ramp'){
+          const x0=floor.x-floor.w/2,x1=floor.x+floor.w/2,z0=floor.z-floor.d/2,z1=floor.z+floor.d/2;
+          const a=floorSurface(floor,x0,z0),b=floorSurface(floor,x1,z0),c=floorSurface(floor,x1,z1),d=floorSurface(floor,x0,z1);
+          mesh.quad(x0,a,z0,x0,d,z1,x1,c,z1,x1,b,z0,theme);
+          mesh.quad(x0,floor.y,z0,x0,a,z0,x1,b,z0,x1,floor.y,z0,PALETTE.stoneDark);
+          mesh.quad(x1,floor.y,z1,x1,c,z1,x0,d,z1,x0,floor.y,z1,PALETTE.stoneDark);
+          for(let t=.15;t<1;t+=.2){const x=floor.axis==='x'?x0+floor.w*t:floor.x,z=floor.axis==='z'?z0+floor.d*t:floor.z;
+            mesh.box(x,floorSurface(floor,x,z)+.01,z,.22,.02,.22,PALETTE.amber);}
+          continue;
+        }
         mesh.box(floor.x,floor.y,floor.z,floor.w,floor.h,floor.d,PALETTE.stoneDark);
         // Surface tiles follow the exact collision cuboid; never create a hidden floor.
         const y=floor.y+floor.h+.008;
+        if(geometry.natural){
+          const x0=floor.x-floor.w/2,z0=floor.z-floor.d/2;
+          for(let x=x0;x<x0+floor.w;x+=3)for(let z=z0;z<z0+floor.d;z+=3){
+            const x1=Math.min(x+3,x0+floor.w),z1=Math.min(z+3,z0+floor.d),col=tint(theme,.78+noise(x,z)*.18);
+            mesh.tri(x,y,z,x,y,z1,x1,y,z1,col);mesh.tri(x,y,z,x1,y,z1,x1,y,z,tint(col,.98));
+          }
+          continue;
+        }
         for(let x=floor.x-floor.w/2+2;x<floor.x+floor.w/2;x+=4)mesh.beam(x,y,floor.z-floor.d/2,x,y,floor.z+floor.d/2,.025,.016,PALETTE.stone);
         for(let z=floor.z-floor.d/2+2;z<floor.z+floor.d/2;z+=4)mesh.beam(floor.x-floor.w/2,y,z,floor.x+floor.w/2,y,z,.025,.016,PALETTE.stone);
       }
       for(const wall of geometry.walls){
         const col=wall.kind==='ceiling'?PALETTE.stoneDark:theme;
         mesh.box(wall.x,wall.y,wall.z,wall.w,wall.h,wall.d,col);
-        if(wall.kind!=='ceiling')mesh.box(wall.x,wall.y+wall.h-.16,wall.z,wall.w+.04,.16,wall.d+.04,PALETTE.stoneDark);
+        if(geometry.natural&&wall.kind==='rockwall'){
+          const alongX=wall.w>wall.d,length=Math.max(wall.w,wall.d);
+          // Faceted rock faces stay on the shared collider boundary. No fake ledges.
+          for(const side of [-1,1])for(let k=0;k<length;k+=3){
+            const u0=k-length/2,u1=Math.min(k+3,length)-length/2;
+            for(let h=0;h<wall.h;h+=2.4){
+              const y0=wall.y+h,y1=wall.y+Math.min(wall.h,h+2.4),cx=wall.x+(alongX?(u0+u1)/2:side*(wall.w/2+.003)),cz=wall.z+(alongX?side*(wall.d/2+.003):(u0+u1)/2);
+              const x0=alongX?wall.x+u0:cx,x1=alongX?wall.x+u1:cx,z0=alongX?cz:wall.z+u0,z1=alongX?cz:wall.z+u1;
+              const col=tint(theme,.71+noise(cx+h,cz)*.31),mid=(y0+y1)/2;
+              mesh.tri(x0,y0,z0,x1,y0,z1,cx,mid,cz,col);mesh.tri(x1,y0,z1,x1,y1,z1,cx,mid,cz,tint(col,.94));
+              mesh.tri(x1,y1,z1,x0,y1,z0,cx,mid,cz,tint(col,1.07));mesh.tri(x0,y1,z0,x0,y0,z0,cx,mid,cz,tint(col,.98));
+            }
+          }
+        }
+        if(!geometry.natural&&wall.kind!=='ceiling')mesh.box(wall.x,wall.y+wall.h-.16,wall.z,wall.w+.04,.16,wall.d+.04,PALETTE.stoneDark);
       }
       for(const prop of geometry.props||[]){
-        if([prop.w,prop.h,prop.d,prop.y].every(Number.isFinite))mesh.box(prop.x,prop.y,prop.z,prop.w,prop.h,prop.d,theme);
+        if(prop.kind==='crystal'){mesh.jewel(prop.x,prop.y+.5,prop.z,.5,1.2,PALETTE.crystal,.3,1);mesh.jewel(prop.x+.55,prop.y+.2,prop.z+.2,.25,.7,PALETTE.wind,-.5,1);}
+        else if(prop.kind==='cave-lamp'){mesh.box(prop.x,prop.y,prop.z,.4,.6,.4,PALETTE.trunk);mesh.jewel(prop.x,prop.y+.85,prop.z,.22,.45,PALETTE.amber,0,1);}
+        else if([prop.w,prop.h,prop.d,prop.y].every(Number.isFinite))mesh.box(prop.x,prop.y,prop.z,prop.w,prop.h,prop.d,theme);
         else this.staticProp(prop);
       }
       this.dungeonBatch=this.upload(mesh);this.buildingMesh=null;
@@ -595,11 +636,53 @@ export class Renderer {
     m.origin(0, 0, 0);
   }
 
+  townDecoration(m,p) {
+    m.origin(p.x,p.y??heightAt(p.x,p.z),p.z,p.yaw||0);const type=p.type;
+    if(type.includes('sign')||type==='star-chart'){
+      m.box(0,0,0,.15,1.5,.15,PALETTE.trunk);m.box(0,1.1,0,1.5,.6,.12,PALETTE.trunk);m.box(0,1.35,.07,1.1,.06,.02,PALETTE.paper);
+    }else if(type.includes('rack')||type.includes('net')||type.includes('trellis')||type.includes('canopy')){
+      for(const x of [-1.3,1.3])m.box(x,0,0,.12,2.1,.12,PALETTE.trunk);m.beam(-1.4,2,0,1.4,2,0,.12,.12,PALETTE.trunk);
+      if(type.includes('canopy'))m.quad(-1.5,2,-1,1.5,2,-1,1.5,2.3,1,-1.5,2.3,1,PALETTE.cape);
+      else for(let k=0;k<7;k++){const x=-1+k/3;m.beam(x,.4,0,x,2,0,.025,.025,PALETTE.paper);if(!type.includes('net'))m.jewel(x,1.4,0,.13,.5,type.includes('fish')?PALETTE.steel:PALETTE.leafLight);}
+    }else if(type==='telescope'||type==='armillary'){
+      for(let k=0;k<3;k++){const a=k*TAU/3;m.beam(Math.sin(a),0,Math.cos(a),0,1.4,0,.08,.08,PALETTE.trunk);}
+      if(type==='telescope')m.beam(0,1.4,-.7,0,2.1,1,.32,.32,PALETTE.steel);
+      else{m.jewel(0,1.8,0,.4,.6,PALETTE.amber);m.ring(0,1.8,0,.8,.06,PALETTE.steel,1);}
+    }else if(type==='fruit-tree'){
+      m.cone(0,0,0,.15,2.4,PALETTE.trunk,5,.1);m.jewel(0,2.2,0,1.3,1.8,PALETTE.leaf);
+      for(let k=0;k<5;k++)m.jewel(Math.sin(k*2)*.8,2+Math.cos(k)*.4,Math.cos(k*2)*.8,.18,.25,PALETTE.danger);
+    }else if(type==='anvil'||type==='millstone'||type==='forge-brazier'){
+      m.box(0,0,0,1.2,.65,1.1,PALETTE.stoneDark);
+      if(type==='anvil')m.box(0,.65,0,1.6,.3,.6,PALETTE.steel);
+      else m.cone(0,.65,0,.8,.25,type==='forge-brazier'?PALETTE.amber:PALETTE.stone,10,.7);
+    }else if(type==='mountain-bench'||type==='log-stack'||type==='mooring-post'){
+      m.box(0,.35,0,2.1,.25,.7,PALETTE.trunk);for(const x of [-.8,.8])m.box(x,0,0,.18,.5,.55,PALETTE.trunk);
+      if(type==='log-stack')for(const x of [-.5,.5])m.beam(x,.8,-.7,x,.8,.7,.45,.45,PALETTE.trunk);
+    }else{
+      m.box(0,0,0,1.7,.35,1.3,PALETTE.trunk);
+      const col=type.includes('herb')||type.includes('mushroom')?PALETTE.leafLight:type.includes('ore')?PALETTE.stone:PALETTE.cropRipe;
+      for(let k=0;k<6;k++)m.jewel((k%3-1)*.43,.5, (Math.floor(k/3)-.5)*.48,.24,.4,col);
+      if(type.includes('cart'))for(const side of [-1,1])m.jewel(side*.95,.3,0,.32,.6,PALETTE.stoneDark);
+    }
+    m.origin(0,0,0);
+  }
+
   staticLandmark(l) {
     const y = l.y ?? heightAt(l.x, l.z), m = this.chunk(l.x, l.z), kind = l.kind || '';
     m.origin(l.x, y, l.z);
     if(kind==='town'){
       m.box(-3,0,-2,.16,2.3,.16,PALETTE.trunk);m.box(-3,1.5,-2,2.2,.8,.16,PALETTE.trunk);m.box(-3,1.83,-2.1,1.5,.08,.03,PALETTE.paper);
+    }else if(kind==='clue'){
+      m.box(0,0,0,.14,1.5,.14,PALETTE.trunk);m.box(0,1.1,0,1.35,.65,.12,PALETTE.trunk);
+      for(let i=0;i<3;i++)m.box(-.1,1.24+i*.12,.07,.85-i*.15,.03,.02,PALETTE.paper);
+    }else if(kind==='discovery'){
+      m.cone(0,0,0,.7,.55,PALETTE.stone,7,.4);m.jewel(0,1,0,.28,.65,PALETTE.wind,0,1);
+    }else if(kind==='dungeon'&&l.id.startsWith('cave-')){
+      m.box(0,0,-.4,4.6,4.4,.4,PALETTE.ink);
+      for(const side of [-1,1]){m.cone(side*2.7,-.15,0,1.45,4.6,PALETTE.rock,5,.55);m.jewel(side*2.0,4.15,0,1.3,1.6,PALETTE.stoneDark);}
+      m.jewel(0,4.6,0,2.1,1.4,PALETTE.rock);m.cone(-3.3,0,1.2,.5,1.1,PALETTE.stone,5,.2);
+      m.box(3.3,0,1.2,.12,1.7,.12,PALETTE.trunk);m.jewel(3.3,1.8,1.2,.22,.45,PALETTE.amber,0,1);
+      m.ring(0,.08,1,2.3,.10,PALETTE.wind,.8);
     }else if(kind==='dungeon'){
       m.origin(l.x,y,l.z,l.yaw||0);
       for(const side of [-1,1]){m.box(side*2.4,0,0,.9,4.5,1.2,PALETTE.stoneDark);m.cone(side*2.4,4.5,0,.7,.6,PALETTE.stone,5);}
@@ -850,7 +933,9 @@ export class Renderer {
     if(boss&&e.family==='tide'){m.ring(0,1.8,0,.65,.08,PALETTE.crystal,.9);m.beam(.7,.1,.2,.7,2.6,.2,.10,.10,PALETTE.steel);m.jewel(.7,2.65,.2,.25,.5,PALETTE.wind,time,1);}
     m.origin(0, 0, 0);
     this.shadow(e.x, Math.max(this.floorAt(e.x, e.z), e.y - 0.08), e.z, 0.65 * scale);
-    if (e.state === 'telegraph') {
+    if(e.guarding)this.transparent.ring(e.x,e.y+.13,e.z,1.3,.10,PALETTE.amber,.8,(e.yaw||0)-1.05,2.1);
+    if(e.state==='telegraph'&&e.attackSpec)this.attackTell(e.attackSpec,time,e);
+    if (e.state === 'telegraph'&&!e.attackSpec) {
       const targeted=['eruption','slow'].includes(e.pattern);
       const tx=targeted&&Number.isFinite(e.targetX)?e.targetX:e.x,tz=targeted&&Number.isFinite(e.targetZ)?e.targetZ:e.z;
       const a = this.transparent, y = (targeted&&Number.isFinite(e.targetY)?e.targetY:e.y) + .075, yaw = e.yaw || 0;
@@ -911,7 +996,18 @@ export class Renderer {
       const solved = (progress.sigils || []).includes(l.sigil || l.id) || (l.id === 'forest' && (progress.sigils || []).includes('forest'));
       if(kind==='town'){
         // The sign, inhabitants and service buildings provide the town signal.
-      }else if(kind==='dungeon'){
+      }else if(kind==='clue'){
+      m.box(0,0,0,.14,1.5,.14,PALETTE.trunk);m.box(0,1.1,0,1.35,.65,.12,PALETTE.trunk);
+      for(let i=0;i<3;i++)m.box(-.1,1.24+i*.12,.07,.85-i*.15,.03,.02,PALETTE.paper);
+    }else if(kind==='discovery'){
+      m.cone(0,0,0,.7,.55,PALETTE.stone,7,.4);m.jewel(0,1,0,.28,.65,PALETTE.wind,0,1);
+    }else if(kind==='dungeon'&&l.id.startsWith('cave-')){
+      m.box(0,0,-.4,4.6,4.4,.4,PALETTE.ink);
+      for(const side of [-1,1]){m.cone(side*2.7,-.15,0,1.45,4.6,PALETTE.rock,5,.55);m.jewel(side*2.0,4.15,0,1.3,1.6,PALETTE.stoneDark);}
+      m.jewel(0,4.6,0,2.1,1.4,PALETTE.rock);m.cone(-3.3,0,1.2,.5,1.1,PALETTE.stone,5,.2);
+      m.box(3.3,0,1.2,.12,1.7,.12,PALETTE.trunk);m.jewel(3.3,1.8,1.2,.22,.45,PALETTE.amber,0,1);
+      m.ring(0,.08,1,2.3,.10,PALETTE.wind,.8);
+    }else if(kind==='dungeon'){
         const done=dungeonCleared(state,l.id);
         const col=done?PALETTE.wind:PALETTE.lavender;
         a.ring(l.x,y+.12,l.z,2.15,.09,col,.8,time*.3,5.2);m.jewel(l.x,y+4.55,l.z,.4,.8,col,time*.3,1);
@@ -991,6 +1087,27 @@ export class Renderer {
     }
   }
 
+  attackTell(spec,time,e) {
+    const a=this.transparent,pulse=.58+Math.sin(time*14)*.16,y=spec.y+.08;
+    const circles=spec.circles||[];
+    for(const c of circles){a.ring(c.x,c.y+.07,c.z,c.radius,.12,PALETTE.danger,pulse);a.ring(c.x,c.y+.08,c.z,c.radius,c.radius,PALETTE.danger,.12);a.jewel(c.x,c.y+.5,c.z,.16,.55,PALETTE.amber,0,1);}
+    for(const angle of spec.angles||[]){
+      a.origin(spec.x,y,spec.z,angle);const w=spec.width||.65,r=spec.range||24;
+      a.quad(-w,0,0,w,0,0,w,0,r,-w,0,r,PALETTE.danger,.11,1);
+      a.beam(-w,.02,0,-w,.02,r,.045,.035,PALETTE.danger,pulse,1);a.beam(w,.02,0,w,.02,r,.045,.035,PALETTE.danger,pulse,1);
+      a.tri(-w,.03,r-1.5,w,.03,r-1.5,0,.03,r,PALETTE.paper,.65,1);a.origin(0,0,0);
+    }
+    if(spec.kind==='sector'||spec.kind==='wave'){
+      const r=spec.radius||5,half=spec.angle??Math.PI;
+      const start=spec.kind==='wave'&&Number.isFinite(spec.safeYaw)?spec.safeYaw+(spec.safeAngle||0):spec.yaw-half;
+      const span=spec.kind==='wave'&&Number.isFinite(spec.safeYaw)?TAU-2*(spec.safeAngle||0):Math.min(TAU,half*2);
+      a.ring(spec.x,y,spec.z,r,.14,PALETTE.danger,pulse,start,span,1,48);
+      a.ring(spec.x,y+.01,spec.z,r,r,PALETTE.danger,.10,start,span,1,48);
+      if(spec.jumpable)a.ring(spec.x,y+.32,spec.z,1+(time*3%1)*(r-1),.06,PALETTE.paper,.65,start,span);
+      if(spec.kind==='wave'&&Number.isFinite(spec.safeYaw))a.ring(spec.x,y+.02,spec.z,r,.10,PALETTE.wind,.8,spec.safeYaw-(spec.safeAngle||0),2*(spec.safeAngle||0));
+    }
+  }
+
   settlements(state) {
     const m=this.dynamic,p=state.player,time=state.time||0;let count=0;
     for(const t of TOWNS){
@@ -1030,6 +1147,13 @@ export class Renderer {
         else if(type==='plot'){
           m.box(0,0,0,3,.12,3,PALETTE.soil);
           for(const side of [-1,1]){m.box(side*1.45,.02,0,.1,.18,3,PALETTE.trunk);m.box(0,.02,side*1.45,3,.18,.1,PALETTE.trunk);}
+        }else if(type==='kitchen'||type==='workshop'){
+          const kitchen=type==='kitchen';
+          for(const x of [-1.4,1.4])for(const z of [-1.4,1.4])m.box(x,0,z,.16,2.8,.16,PALETTE.trunk);
+          m.quad(-1.7,2.8,-1.7,1.7,2.8,-1.7,1.7,3.3,1.7,-1.7,3.3,1.7,kitchen?PALETTE.cape:PALETTE.cloth);
+          m.box(0,.7,0,2.3,.25,1.3,PALETTE.trunk);
+          if(kitchen){m.cone(-.65,.95,0,.45,.4,PALETTE.armor,8,.4);m.cone(-.65,1.36,0,.36,.03,PALETTE.amber,8,.36);m.jewel(.65,1.03,0,.2,.3,PALETTE.cropRipe);m.box(.5,.97,.4,.7,.05,.3,PALETTE.paper);}
+          else{m.box(-.4,.95,0,.7,.35,.4,PALETTE.steel);m.beam(.2,1,.25,.9,1.02,.25,.08,.08,PALETTE.trunk);m.box(.85,1,.25,.25,.12,.35,PALETTE.armor);}
         }else if(type==='cottage'||type==='granary'){
           const granary=type==='granary',base=granary?.6:0,h=granary?1.8:2.3;
           if(granary)for(const x of [-1.1,1.1])for(const z of [-1.1,1.1])m.box(x,0,z,.2,.7,.2,PALETTE.trunk);
@@ -1064,6 +1188,20 @@ export class Renderer {
         }
         m.origin(0,0,0);
         if(!ruined&&b.hp<b.maxHp){a.ring(b.x,(b.y??0)+.2,b.z,1.9,.08,PALETTE.danger,.7,0,TAU*clamp(b.hp/b.maxHp,0,1));}
+      }
+      for(const npc of residentActors(state)){
+        if(Math.hypot(npc.x-p.x,npc.z-p.z)>85)continue;
+        const col=npc.job==='farmer'?PALETTE.leafLight:npc.job==='artisan'?PALETTE.amber:PALETTE.cloth;
+        m.origin(npc.x,npc.y,npc.z,Math.atan2(p.x-npc.x,p.z-npc.z));
+        for(const side of [-1,1])m.box(side*.16,0,0,.18,.72,.24,PALETTE.leather);
+        m.box(0,.68,0,.58,.68,.38,col);m.box(0,1.38,0,.34,.36,.32,PALETTE.skin);
+        m.cone(0,1.75,0,npc.job==='farmer'?.48:.24,.17,npc.job==='guard'?PALETTE.steel:PALETTE.dune,7,.1);
+        const motion=npc.active?Math.sin(time*3)*.14:0;
+        m.beam(-.3,1.2,0,-.4,.8+motion,.15,.14,.14,PALETTE.skin);m.beam(.3,1.2,0,.45,.8-motion,.25,.14,.14,PALETTE.skin);
+        if(npc.job==='guard')m.beam(.48,.3,.25,.48,1.5,.25,.1,.06,PALETTE.steel);
+        else if(npc.job==='farmer'){m.beam(.46,.3,.25,.46,1.2,.25,.05,.05,PALETTE.trunk);m.box(.46,.3,.36,.45,.06,.25,PALETTE.steel);}
+        else m.box(.48,.82-motion,.3,.35,.12,.22,PALETTE.steel);
+        m.origin(0,0,0);this.shadow(npc.x,npc.y,npc.z,.45,.15);
       }
       for(const plot of (village.plots||[]).slice(0,16)){
         if(!plot.crop||Math.hypot(plot.x-p.x,plot.z-p.z)>85)continue;
@@ -1108,7 +1246,13 @@ export class Renderer {
       const e = effects[index], life = Math.max(0.01, e.life || 0.6), age = e.age || 0;
       const t = clamp(age / life, 0, 1), fade = 1 - t, power = e.power || 1;
       const type = e.type || '', x = e.x || 0, y = e.y || 0, z = e.z || 0;
-      if(type.includes('bloom')||type.includes('healing')){
+      if(e.attackSpec){
+        const spec=e.attackSpec,r=(spec.radius||3.5)*Math.max(.04,t),half=spec.angle??Math.PI;
+        const start=spec.kind==='wave'&&Number.isFinite(spec.safeYaw)?spec.safeYaw+(spec.safeAngle||0):spec.yaw-half;
+        const span=spec.kind==='wave'&&Number.isFinite(spec.safeYaw)?TAU-2*(spec.safeAngle||0):Math.min(TAU,half*2);
+        if(spec.circles?.length)for(const c of spec.circles)a.ring(c.x,c.y+.15,c.z,c.radius*Math.max(.04,t),.18,PALETTE.danger,fade);
+        else a.ring(spec.x,spec.y+.12,spec.z,r,.18,PALETTE.danger,fade,start,span);
+      }else if(type.includes('bloom')||type.includes('healing')){
         a.ring(x,y+.08,z,1+t*4,.12,PALETTE.wind,fade*.8);
         for(let i=0;i<8;i++){const angle=i/8*TAU+time*.3;m.jewel(x+Math.sin(angle)*t*3,y+.3+Math.sin(t*Math.PI),z+Math.cos(angle)*t*3,.14*fade,.3*fade,PALETTE.paper,angle,1);}
       }else if(type.includes('winddash')){

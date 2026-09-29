@@ -1,0 +1,15 @@
+{
+  "url": "http://127.0.0.1:8791/",
+  "fixtures": "Combo/canopy capture uses explicit scene fixtures; terrain traversal starts at a known trail point, then uses ordinary movement. Full-world routes run separately.",
+  "environment": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)"
+  },
+  "trustedMovement": {
+    "z": -70.26833333333337,
+    "jumps": 1,
+    "air": "ASCENDING"
+  },
+  "status": "failed",
+  "failure": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(report.trustedMovement.z>-70&&report.trustedMovement.jumps>0)\n"
+}

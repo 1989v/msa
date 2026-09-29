@@ -1,4 +1,4 @@
-import {WORLD,LANDMARKS,RUNES,REGIONS,PLATE,VILLAGE,WAYPOINTS,TOWNS,DUNGEON_ENTRANCES,worldStats,heightAt,terrainColor,regionAt,distance,clamp} from './world.mjs';
+import {WORLD,LANDMARKS,RUNES,REGIONS,PLATE,VILLAGE,WAYPOINTS,TOWNS,DUNGEON_ENTRANCES,EXPEDITIONS,worldStats,heightAt,terrainColor,regionAt,distance,clamp} from './world.mjs';
 import {DT,createGame,stepGame,snapshot,restoreSnapshot,spawnEnemy,awardSigil,interaction,upgrade,respawn,fastTravel,exportSave,loadSave,useAbility,floorAt,enterExpedition,exitExpedition,expeditionAction} from './sim.mjs';
 import {Renderer} from './render.mjs';
 import {AudioSystem} from './audio.mjs';
@@ -72,8 +72,22 @@ function openPanel(kind){
     title.textContent='바람을 따라 남긴 기록';$('panel-kicker').textContent='ATLAS / JOURNAL';
     content.innerHTML=`<div class="map-layout"><div><canvas id="atlas" width="520" height="520" aria-label="북쪽이 위인 전체 세계 지도"></canvas><p class="save-status">◎ 웨이포인트 · ⌂ 내 마을 · ♜ 수호자 · ▲ 현재 위치<br>중앙의 작은 섬 밖으로 8개의 길이 이어집니다. 총 1.92 × 1.92 km.</p></div><div id="journal"></div></div>`;
     const journal=$('journal');
+    const expeditionHead=document.createElement('h3');expeditionHead.textContent='산길과 골짜기의 탐험';journal.append(expeditionHead);
+    for(const route of EXPEDITIONS){
+      const done=state.progress.chests.includes(route.rewardId),discovered=state.progress.discovered.includes(route.discoveryId),row=document.createElement('article');row.className=`journal-item ${done?'done':''}`;
+      const heading=document.createElement('h3');heading.textContent=`${done?'◆':'◇'} ${route.name}`;
+      const text=document.createElement('p'),start=WAYPOINTS.find(w=>w.id===route.waypointId);
+      text.textContent=`${start.name}에서 출발 · ${route.biomeId==='alpine'?'동쪽 산길로 정상에 오르고 남쪽 능선으로 귀환':'남쪽 능선을 거쳐 골짜기로 내려가고 남쪽 우회로로 귀환'}. ${done?'보급함 획득 완료':discovered?'중간 전망대 발견 · 보급함을 찾아보세요':'이정표와 전망대를 따라 보급함을 찾아보세요'}.`;
+      row.append(heading,text);journal.append(row);
+    }
+    for(const cave of DUNGEON_ENTRANCES.filter(e=>e.natural)){
+      const done=dungeonCleared(state,cave.id),row=document.createElement('article');row.className=`journal-item ${done?'done':''}`;
+      const heading=document.createElement('h3');heading.textContent=`${done?'◆':'▣'} ${cave.name}`;
+      const text=document.createElement('p');text.textContent=`${cave.biomeId==='canyon'?'메아리 바닥길의 낮은 골짜기':'안개가지 마을에서 기존 기억전당을 지나 이어지는 길'} · ${done?'완료 · 제작법 해금':'입구에서 E로 들어가 퍼즐과 수호자를 공략하세요'}. ${cave.biomeId==='canyon'?'작업장: 돌바람 수리 꾸러미':'부엌: 달꽃 재배 영약'}.`;
+      row.append(heading,text);journal.append(row);
+    }
     journeyJournal(journal,state,{travel:id=>{if(fastTravel(state,id)){save();closePanel();}else{state.toastTime=5;updateHUD();}},track:id=>{trackQuest(state,id);save();updateHUD();},openRelics:()=>openPanel('relics')});
-    content.querySelector('.save-status').textContent=state.expedition?.active?'실내 지도 · 방과 복도를 직접 걸어서 탐험하세요. ▣ 잠긴 문 · ◇ 장치 · △ 귀환문.':'⌂ 지역 마을 · ◎ 웨이포인트 · ▣ 던전 · ♜ 수호자 · ▲ 내 위치. 1.92 × 1.92 km, 원래 맵의 면적 64배.';
+    content.querySelector('.save-status').textContent=state.expedition?.active?'실내 지도 · 방과 복도를 직접 걸어서 탐험하세요. ▣ 잠긴 문 · ◇ 장치 · △ 귀환문.':'⌂ 마을 · ◎ 등대 · ▣ 던전/동굴 · ♜ 수호자 · ▲ 내 위치. 탐험 실선은 가는 길, 점선은 돌아오는 길이며 ◆는 보급함 획득을 뜻합니다.';
     frontierJournal(journal,state,id=>{if(fastTravel(state,id)){save();closePanel();}else {const reason=document.createElement('p');reason.className='action-feedback';reason.textContent=state.toast;journal.prepend(reason);}});
 
     for(const id of ['quarry','forest','ruins']){
@@ -199,6 +213,14 @@ function drawMap(target,mini=true){
   const at=(x,z)=>({x:w/2+(x-cx)*scale,y:h/2-(z-cz)*scale});
   if(mini){const base=localMapBase(p),top=at(base.cx-48,base.cz+48);ctx.drawImage(base.image,top.x,top.y,96*scale,96*scale);}
   else{const top=at(-WORLD.size,WORLD.size);ctx.drawImage(mapBase(),top.x,top.y,WORLD.size*2*scale,WORLD.size*2*scale);}
+  for(const route of EXPEDITIONS){
+    const done=state.progress.chests.includes(route.rewardId);ctx.strokeStyle=done?COLORS.wind:COLORS.amber;ctx.lineWidth=mini?2.5:2;
+    for(const [points,dashed] of [[route.approachPoints,false],[route.points,false],[route.returnPoints,true]]){
+      ctx.setLineDash(dashed?[4,3]:[]);ctx.beginPath();points.forEach((point,i)=>{const pos=at(point.x,point.z);if(i===0)ctx.moveTo(pos.x,pos.y);else ctx.lineTo(pos.x,pos.y);});ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    if(!mini){const end=route.points.at(-1),pos=at(end.x,end.z);ctx.fillStyle=done?COLORS.wind:COLORS.amber;ctx.font='11px system-ui';ctx.textAlign='center';ctx.fillText(`${done?'◆':'◇'} ${route.biomeId==='alpine'?'하늘마루':'메아리 바닥길'}`,pos.x,pos.y-12);}
+  }
   ctx.textAlign='center';
   for(const l of LANDMARKS){
     if(mini&&distance(l,p)>55)continue;
@@ -207,7 +229,9 @@ function drawMap(target,mini=true){
     if(!mini&&Math.hypot(l.x,l.z)<130&&!['village','wind'].includes(l.kind))continue;
     const pos=at(l.x,l.z);ctx.fillStyle=l.kind==='boss'?COLORS.danger:l.kind==='waypoint'?(state.adventure.waypoints.includes(l.id)?COLORS.wind:COLORS.muted):l.kind==='shrine'?(state.progress.sigils.includes(l.id)?COLORS.wind:COLORS.amber):COLORS.paper;
     if(l.kind==='dungeon'&&dungeonCleared(state,l.id))ctx.fillStyle=COLORS.wind;
-    ctx.font=`${mini?13:16}px system-ui`;const symbol={camp:'△',wind:'◎',chest:'·',waypoint:'◎',boss:'♜',resource:'✦',trial:'◇',village:'⌂',town:'⌂',dungeon:'▣'}[l.kind]||(state.progress.sigils.includes(l.id)?'◆':'◇');ctx.fillText(symbol,pos.x,pos.y+4);
+    if(l.expeditionId&&state.progress.discovered.includes(l.id))ctx.fillStyle=COLORS.wind;
+    ctx.font=`${mini?13:16}px system-ui`;const symbol={camp:'△',wind:'◎',chest:'·',waypoint:'◎',boss:'♜',resource:'✦',trial:'◇',village:'⌂',town:'⌂',dungeon:'▣',clue:'!',discovery:'◇'}[l.kind]||(state.progress.sigils.includes(l.id)?'◆':'◇');ctx.fillText(symbol,pos.x,pos.y+4);
+    if(!mini&&l.natural){ctx.font='10px system-ui';ctx.fillText(l.name,pos.x,pos.y+16);}
     if(!mini&&['town','village'].includes(l.kind)){ctx.font='10px system-ui';ctx.fillText(l.name,pos.x,pos.y+17);}
   }
   if(mini)for(const npc of TOWNS.flatMap(t=>t.npcs)){if(distance(npc,p)>45)continue;const pos=at(npc.x,npc.z);ctx.fillStyle=COLORS.wind;ctx.fillText(npc.role==='guide'?'!':'·',pos.x,pos.y);}

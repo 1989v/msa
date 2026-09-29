@@ -1,0 +1,124 @@
+{
+  "url": "http://127.0.0.1:8791/",
+  "status": "passed",
+  "fixtures": "Caves start fresh with ordinary input. Expedition starts are explicitly positioned at existing waypoints. Visuals replay earned snapshots, with camera changes only.",
+  "errors": [],
+  "trustedMovement": {
+    "jumps": 1,
+    "distance": 2.0216666666666185,
+    "air": "ASCENDING"
+  },
+  "caves": [
+    {
+      "id": "cave-canyon",
+      "frames": 13172,
+      "hp": 100,
+      "distance": 1503.9039839265836,
+      "falls": 0,
+      "progress": {
+        "killed": [
+          "cave-canyon:basin-guard",
+          "cave-canyon:side-guard",
+          "cave-canyon:deep-guardian"
+        ],
+        "solved": [
+          "cave-canyon:seal"
+        ],
+        "opened": [
+          "cave-canyon:side-cache"
+        ],
+        "claimed": true
+      }
+    },
+    {
+      "id": "cave-mistwood",
+      "frames": 11241,
+      "hp": 100,
+      "distance": 1331.5930394838954,
+      "falls": 0,
+      "progress": {
+        "killed": [
+          "cave-mistwood:basin-guard",
+          "cave-mistwood:side-guard",
+          "cave-mistwood:deep-guardian"
+        ],
+        "solved": [
+          "cave-mistwood:seal"
+        ],
+        "opened": [
+          "cave-mistwood:side-cache"
+        ],
+        "claimed": true
+      }
+    }
+  ],
+  "expeditions": [
+    {
+      "id": "expedition-alpine",
+      "frames": 6467,
+      "falls": 0,
+      "hp": 100,
+      "distance": 828.0925635182712
+    },
+    {
+      "id": "expedition-canyon",
+      "frames": 7275,
+      "falls": 0,
+      "hp": 100,
+      "distance": 924.5135906709115
+    }
+  ],
+  "metrics": {
+    "frames": 18,
+    "samples": 18,
+    "fps": 15.21298174442191,
+    "frameP95": 200,
+    "frameP99": 200,
+    "renderAverage": 3.538888851801554,
+    "droppedTime": 0.23319999999999982,
+    "renderer": {
+      "drawCalls": 17,
+      "triangles": 22448,
+      "staticTriangles": 77158,
+      "dynamicTriangles": 1523,
+      "frameMs": 0.20000028610229492,
+      "width": 1280,
+      "height": 800,
+      "pixelRatio": 1,
+      "residentChunks": 49,
+      "maxResidentChunks": 64,
+      "residentBytes": 10184856,
+      "chunkBuilds": 226,
+      "chunkEvictions": 177,
+      "disposedChunks": 177,
+      "activeScene": "world",
+      "dungeonBuffers": 0,
+      "dungeonBytes": 0,
+      "sceneTransitions": 3,
+      "visibleNPCs": 3,
+      "chunkBuildsThisFrame": 0,
+      "cameraDistance": 15.997834830257528,
+      "cameraEye": [
+        -623.3200073242188,
+        29.073131561279297,
+        -60.16130447387695
+      ],
+      "cameraTarget": [
+        -615,
+        22.843280792236328,
+        -48
+      ],
+      "closedDungeonDoors": 0
+    },
+    "world": {
+      "cachedChunks": 96,
+      "maxCachedChunks": 96,
+      "generatedChunks": 493,
+      "evictedChunks": 397,
+      "lastQueryCells": 4,
+      "lastQueryCandidates": 37
+    },
+    "actors": 11,
+    "audioVoices": 1
+  }
+}

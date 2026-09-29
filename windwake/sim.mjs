@@ -3,7 +3,7 @@ import {WORLD,LANDMARKS,RUNES,PLATE,BLOCK_SPAWN,ENEMY_SPAWNS,WAYPOINTS,BOSS_SITE
 import {COMBO_STAGES} from './melee.mjs';
 import {ENEMY_STATS,updateExpandedEnemy} from './combat.mjs';
 import {initAdventure,awardXP,modifiers,validateAdventure,ACTIVE_SKILLS} from './progression.mjs';
-import {initVillage,tickVillage,villageAction,villageInteraction,villageSolids,captureRaid,restoreRaid,validateVillage} from './village.mjs';
+import {initVillage,tickVillage,villageAction,villageInteraction,villageSolids,captureRaid,restoreRaid,validateVillage,normalizeResidents} from './village.mjs';
 import {initJourney,validateJourney,townInteraction,townAction,grantRelic} from './settlements.mjs';
 import {DUNGEONS,initExpedition,validateExpedition,dungeonFloor,dungeonSolids,dungeonBounds,dungeonInteraction,dungeonAction,tickDungeon,enterDungeon,leaveDungeon,recordDungeonKill,dungeonObjective} from './dungeons.mjs';
 
@@ -47,6 +47,9 @@ export const snapshot=s=>structuredClone(s);
 export function restoreSnapshot(data){
   if(!data||![1,2,3].includes(data.version)||!Number.isFinite(data.frame)||!data.player||!Number.isFinite(data.player.x))throw new Error('Invalid simulation snapshot');
   const next=structuredClone(data);next.adventure??=initAdventure();next.village??=initVillage();next.player.abilityCooldowns??={};next.player.dashTimer??=0;next.player.slowTimer??=0;next.expedition??=initExpedition();next.journey??=initJourney();next.version=3;if(next.expedition.active)next.blocks=next.expedition.active.blocks;
+  const community=validateVillage(next.village);
+  Object.assign(next.village,{produce:community.produce,items:community.items,residents:community.residents});
+  normalizeResidents(next,{...next,adventure:validateAdventure(next.adventure),village:community,expedition:validateExpedition(next.expedition)});
   const p=next.player,floor=supportFor(next,p.x,p.z,p.y);
   if(p.grounded||p.y<floor){p.y=floor;p.vy=0;p.grounded=true;}
   p.safeY=supportFor(next,p.safeX,p.safeZ,p.safeY);
@@ -211,6 +214,10 @@ export function interact(s){
   if(s.expedition?.active){const result=dungeonAction(s,'interact',{id:near.id},dungeonHooks(s));if(!result.ok)toast(s,result.reason);return near;}
   if(near.kind==='npc'){
     const result=townAction(s,'talk',{npcId:near.id});if(result.ok){s.activeTown=near.townId;emit(s,'town-open');}else toast(s,result.reason);
+  }else if(near.kind==='clue'){
+    toast(s,near.description);
+  }else if(near.kind==='discovery'){
+    if(!s.progress.discovered.includes(near.id)){s.progress.discovered.push(near.id);awardXP(s,40);p.crystals+=3;toast(s,`${near.name} 발견 · 경험치 40 · 결정 3`,'reward');}else toast(s,near.description);
   }else if(near.kind==='dungeon'){
     const result=enterDungeon(s,near.id,dungeonHooks(s));if(!result.ok)toast(s,result.reason);
   }else if(['village','resource','crop'].includes(near.kind)){
@@ -272,10 +279,12 @@ function updateBlocks(s){
   }
 }
 function shoot(s,e,count=1,options={}){
-  const p=s.player;
-  for(let i=0;i<count;i++){
-    const a=Math.atan2(p.x-e.x,p.z-e.z)+(i-(count-1)/2)*(options.spread??.18),speed=options.speed??(e.type==='boss'?12:9);
-    const d=Math.max(1,distance(p,e));s.projectiles.push({id:`bolt-${s.nextId++}`,type:options.kind||'bolt',team:'enemy',slow:options.slow||0,x:e.x,y:e.y+1.3,z:e.z,vx:Math.sin(a)*speed,vz:Math.cos(a)*speed,vy:(p.y+.8-e.y-1.3)/d*speed,life:4,damage:options.damage??ENEMY_STATS[e.type].damage,owner:e.id});
+  const p=s.player,origin=options.origin||e,angles=options.angles;
+  const n=Array.isArray(angles)?Math.min(angles.length,9):count;
+  for(let i=0;i<n;i++){
+    const a=angles?.[i]??((options.yaw??Math.atan2(p.x-origin.x,p.z-origin.z))+(i-(n-1)/2)*(options.spread??.18)),speed=options.speed??(e.type==='boss'?12:9);
+    const d=Math.max(1,options.aimDistance??distance(p,origin)),aimY=options.aimY??p.y;
+    s.projectiles.push({id:`bolt-${s.nextId++}`,type:options.kind||'bolt',team:'enemy',slow:options.slow||0,x:origin.x,y:origin.y+1.3,z:origin.z,vx:Math.sin(a)*speed,vz:Math.cos(a)*speed,vy:(aimY+.8-origin.y-1.3)/d*speed,life:4,damage:options.damage??ENEMY_STATS[e.type].damage,owner:e.id});
   }
   if(s.projectiles.length>60)s.projectiles.splice(0,s.projectiles.length-60);emit(s,'enemy-attack',undefined,e);
 }
@@ -481,6 +490,7 @@ export function loadSave(data){
   if(data.version>=2){s.adventure=validateAdventure(data.adventure);s.village=validateVillage(data.village);}
   const expedition=data.version===3?validateExpedition(data.expedition):initExpedition();
   s.journey=data.version===3?validateJourney(data.journey,{...s,expedition}):initJourney();
+  normalizeResidents(s,{...s,expedition});
   if(s.village.level<3)s.adventure.finalDefeated=false;
   const mods=modifiers(s);
   p.crystals=number(data.crystals,9999);p.maxHp=100+s.progress.upgrades.health*25;p.hp=p.maxHp;p.maxStamina=100+Math.max(0,s.progress.sigils.length-1)*20+mods.stamina;p.stamina=p.maxStamina;p.maxEnergy=100+mods.energy;p.energy=p.maxEnergy;

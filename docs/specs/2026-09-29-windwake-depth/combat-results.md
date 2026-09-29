@@ -1,0 +1,17 @@
+<!-- source: windwake/combat.mjs -->
+<!-- source: windwake/tests/tactics.test.mjs -->
+# Task 2 — Tactical combat evidence
+
+Implemented in combat.mjs and tactics.test.mjs; one legacy combat.test.mjs assertion now checks unchanged wolf base speed plus coordination slot instead of the removed pack speed bonus. No enemy HP/damage increase; boss slow contact remains 15. Root owns sim/projectile and render integration. No commits by this worker.
+
+- Nearby visible same-floor/same-scene wolves take stable-ID flank slots, permit one local committed attack, and prioritize the least-used available attacker. Three-wolf fixture rotates all IDs through multiple attacks. Remote, blocked, other-floor and other-scene actors cannot suppress an attack.
+- Shaman retreats during recovery and subsequent close pursuit toward 6–7m standoff. Sentinel moves through the normal collision hook toward a point between a visible nearby shaman and the player.
+- Bulwark slam has a locked second sector with its own 600ms tell, then recovery. Tempest uses 3/5 exact locked lanes with a missing lane. Thorn phase-two eruption has three fixed circles. Tide ring has a locked safe sector and remains jumpable. Skills/parries cancel queued follow-up; moving strikes consume contact even during invulnerability.
+- `attackSpec` stores serializable geometry. Sector `angle` and wave `safeAngle` are half widths; all yaw values are absolute. Circle origins, lane half-widths/lengths, locked vertical target/distance and optional follow-up remain authoritative. Projectile width .65 and range speed×4 match the actual projectile lifetime/contact envelope. Slow circles optionally also carry projectile angles and lanes.
+- Root shoot hook honors `angles`, `origin`, `aimY`, `aimDistance`, retaining old defaults for simulation-owned enemies. Renderer receives geometry both on tell and impact effects.
+
+Validation: `node --test windwake/tests/combat.test.mjs windwake/tests/basic-attacks.test.mjs windwake/tests/wilds-combat.test.mjs windwake/tests/tactics.test.mjs` → **52 tests / 52 pass / 0 fail**, `/private/tmp/windwake-depth-combat-final.log` (about 2.3s). Includes normal-100HP defensive advantage, unchanged basic attack control boundaries, actual sim projectile geometry and standing/gap damage, deterministic JSON replay, bounded summons and interrupt/contact tests. Fixtures explicitly declare injected starting poses and are not claimed as exploration evidence.
+
+Earlier failure evidence retained: `/private/tmp/windwake-depth-combat.log` captured in-progress life integration failure plus too-short sentinel fixture movement time; `/private/tmp/windwake-depth-combat-integration.log` captured the expected missing shoot-angle integration (51/52). Root subsequently integrated locked projectile options and final suite passes.
+
+Natural journey regression was also run mid-integration: `node --test windwake/tests/frontier-sim.test.mjs windwake/tests/dungeons.test.mjs` → **27 pass / 5 fail** (`/private/tmp/windwake-depth-combat-journeys.log`). Three original dungeon journeys passed new combat. Remaining failures were alpine waypoint activation (also blocking the natural capstone route before its alpine fight), the old layout loop applying original assumptions to new caves, and missing cave approach routing. These belong to concurrent geography/cave integration and were reported to root; they must be rerun by root after that integration. This result is not presented as full journey acceptance.

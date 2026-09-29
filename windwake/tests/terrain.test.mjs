@@ -84,11 +84,13 @@ test('continuous ordinary climb and descent gain at least fifteen metres',()=>{
 });
 test('surviving legacy IDs retain their original full-population X/Z/type fingerprint',()=>{
   // Baseline captured before editing world generation. It includes every old
-  // slot still safe in v2; suppressed slots remain valid durable defeat IDs.
+  // slot still safe after the additive expedition paths; suppressed slots remain valid
+  // durable defeat IDs. The 978-entry subset was cross-checked against the pre-edit
+  // population: no surviving type/XZ changes and no resurrected old IDs.
   const slots=[];
   for(let cx=-16;cx<16;cx++)for(let cz=-16;cz<16;cz++)for(const s of getChunk(cx,cz).spawns)if(s.id.startsWith('wild-')&&!s.id.startsWith('wild-v2-'))slots.push([s.id,s.x,s.z,s.type]);
-  assert.equal(slots.length,1006);
-  assert.equal(createHash('sha256').update(JSON.stringify(slots.sort())).digest('hex'),'f1fe30a3b1b8ff1fec64e2d134630960e2ff3b5ba586f2c4364dc0395164dcfd');
+  assert.equal(slots.length,978);
+  assert.equal(createHash('sha256').update(JSON.stringify(slots.sort())).digest('hex'),'316563aea97ac51f75d2520ca46d7df4ae07a53ee5da46ee946df930bfcb6034');
 });
 test('dense outer encounters fit durable budget and avoid water, slopes, towns and props',()=>{
   let count=0;const ids=new Set();

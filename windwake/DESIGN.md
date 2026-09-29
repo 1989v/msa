@@ -64,3 +64,6 @@ Eight warm, readable biomes surround the original island. Skill branches use pre
 
 ## 10. Journeys
 Eight regional settlements use the existing biome palette and readable resident roles. Amber gates, named rooms, explicit puzzle clues and the local map orient dungeon exploration. Relic cards state effects, source and two-slot equipment state; incomplete quests show a destination and return requirement. Indoor lighting stays bright, and ceilings share camera collision without painting over the floor map.
+
+## 11. Ridges and hearths
+Alpine ridgelines and a descending canyon loop use amber path stones and named discoveries. Natural caves use faceted rock, clipped room corners, sloped passages, warm lamps and crystal landmarks; rendered floors share collision heights. Regional towns have distinct layouts and occupational props. Home kitchens/workshops use open awnings, and residents carry job-specific tools. Attack lanes, sectors, circle targets and wave gaps share the damage specification; health bars stay visible during tells.

@@ -1,6 +1,6 @@
 import {VILLAGE,RESOURCE_NODES,WAYPOINTS,BOSS_SITES,BIOMES,heightAt,distance} from './world.mjs';
 import {SKILLS,ACTIVE_SKILLS,learnSkill,equipSkill} from './progression.mjs';
-import {BUILDINGS,CROPS,villageAction,villageObjective} from './village.mjs';
+import {BUILDINGS,CROPS,RECIPES,RESIDENTS,JOBS,recipeUnlocked,residentEligible,housingCapacity,residentActors,raidForecast,villageAction,villageObjective} from './village.mjs';
 
 function el(tag,text,cls){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;}
 function button(text,action,disabled=false){const b=el('button',text);b.disabled=disabled;b.onclick=action;return b;}
@@ -38,13 +38,29 @@ export function villagePanel(root,s,onChange){
   root.append(el('p',villageObjective(s),'hint-box'));
   const dayPhase=v.clock>=450?'밤':v.clock>=420?'해질녘':'낮';
   root.append(el('p',`${v.day}일째 ${dayPhase} · ${v.raid.status==='active'?`방어 중 ${v.raid.wave}/${v.raid.waves}차 습격`:v.raid.status==='queued'?'침공 대기 — 마을로 돌아와 대비하세요':v.raid.status==='lost'?'봉화를 수리하고 다시 준비하세요':'첫 집과 첫 수확을 마치면 밤에 침공이 찾아옵니다.'}`));
+  root.append(el('p',`습격 예보 · ${raidForecast(s).text}`,'hint-box'));
+  root.append(el('p',`수확물 · ${Object.entries(CROPS).map(([id,c])=>`${c.name} ${v.produce[id]||0}`).join(' / ')} · 수확 때 기존 식량·씨앗과 함께 각각 1개를 얻습니다.`));
+  const recipes=el('section');recipes.append(el('h3','부엌과 작업장 · 탐험에서 생활로'));
+  for(const recipe of Object.values(RECIPES)){
+    const unlocked=recipeUnlocked(s,recipe.id),row=el('article',undefined,'quest-row');row.dataset.recipe=recipe.id;
+    row.append(el('strong',`${recipe.name} · 보유 ${v.items[recipe.id]||0}`),el('p',`${BUILDINGS[recipe.building].name} · ${Object.entries(recipe.produce).map(([id,n])=>`${CROPS[id].name} ${n}`).join(' / ')}${Object.keys(recipe.materials).length?' / '+costText(recipe.materials):''}`),el('p',recipe.effect),el('small',`${unlocked?'제작 가능':'잠김'} · ${recipe.unlock}`));
+    row.append(button('가까운 작업대에서 제작',()=>act('craft',{id:recipe.id}),!unlocked),button(recipe.id==='trailMeal'?'도시락 먹기':'선택한 건물·밭에 사용',()=>act('useItem',{id:recipe.id,targetId:selectedCell?.id}),!v.items[recipe.id]));recipes.append(row);
+  }root.append(recipes);
+  const residents=el('section');residents.append(el('h3',`함께 사는 주민 ${v.residents.length}/8 · 온전한 집 ${housingCapacity(s)}`),el('p','집 한 채에 한 명. 집이 무너지면 카탈로그 순서로 정원을 넘는 주민의 일이 멈추며, 수리하면 이어집니다. 멀리 떠나거나 동굴 안에서는 작업이 멈춥니다.'));
+  const actors=residentActors(s);
+  for(const resident of Object.values(RESIDENTS)){
+    const actor=actors.find(a=>a.id===resident.id),row=el('article',undefined,'quest-row');row.dataset.resident=resident.id;row.append(el('strong',resident.name));
+    if(actor){row.append(el('p',`${actor.active?'작업 중':'작업 대기'} · ${JOBS[actor.job]} · ${actor.timer.toFixed(1)}초`));for(const [job,name] of Object.entries(JOBS))row.append(button(name,()=>act('assign',{id:actor.id,job}),actor.job===job));}
+    else{const eligible=residentEligible(s,resident.id);row.append(el('p',eligible?'동맹 완료 · 빈 집을 마련하고 초대하세요.':'해당 도시의 지역 의뢰까지 보고하여 동맹을 맺으세요.'),button('봉화에서 초대',()=>act('invite',{id:resident.id}),!eligible||v.residents.length>=housingCapacity(s)));}
+    residents.append(row);
+  }root.append(residents);
   const homeDistance=distance(p,VILLAGE);
   if(homeDistance>VILLAGE.radius+4){root.append(el('p','마을에 돌아오면 건설하고 작물을 돌볼 수 있습니다. 지도 M의 「바람뜰 마을」로 이동하세요.'));return;}
   const layout=el('div',undefined,'village-layout'),left=el('div'),right=el('div');
   left.append(el('h3','내 발밑의 마을 설계도'),el('p','설계도와 빈 칸을 선택해 배치를 확인한 뒤 건설하세요. 한 칸은 4m입니다. 걸어가면 다른 자리도 꾸밀 수 있습니다.','save-status'));
   const grid=el('div',undefined,'village-grid');grid.setAttribute('aria-label','플레이어 주변 7×7 마을 배치');
   const cx=VILLAGE.x+Math.round((p.x-VILLAGE.x)/4)*4,cz=VILLAGE.z+Math.round((p.z-VILLAGE.z)/4)*4;
-  const symbols={plot:'▧',cottage:'⌂',well:'○',granary:'▤',tower:'♜',fence:'═',flowers:'✿',lantern:'✦'};
+  const symbols={plot:'▧',cottage:'⌂',well:'○',granary:'▤',tower:'♜',fence:'═',flowers:'✿',lantern:'✦',kitchen:'♨',workshop:'⚒'};
   for(let iz=3;iz>=-3;iz--)for(let ix=-3;ix<=3;ix++){
     const x=cx+ix*4,z=cz+iz*4,object=[...v.structures,...v.plots.map(a=>({...a,type:'plot'}))].find(a=>Math.hypot(a.x-x,a.z-z)<1);
     const here=Math.abs(p.x-x)<2&&Math.abs(p.z-z)<2;

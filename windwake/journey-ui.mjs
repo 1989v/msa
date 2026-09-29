@@ -1,5 +1,6 @@
 import {TOWNS,LANDMARKS} from './world.mjs';
 import {QUESTS,SERVICES,townAction,questStatus,trackQuest,journeyObjective} from './settlements.mjs';
+import {RESIDENTS,residentEligible,housingCapacity,villageAction} from './village.mjs';
 import {RELICS,equipRelic,allianceBenefits} from './relics.mjs';
 
 const element=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
@@ -25,6 +26,10 @@ export function townPanel(root,s,townId,changed=()=>{}){
       section.append(element('h3',npc.name),element('p',`${roles[npc.role]} · ${Math.round(Math.hypot(s.player.x-npc.x,s.player.z-npc.z))}m`));
       if(!available)section.append(element('p',s.expedition?.active?'던전 밖에서 만날 수 있습니다.':`${npc.name}에게 가까이 가면 이용할 수 있습니다.`,'save-status'));
       if(npc.role==='guide'){
+        const resident=Object.values(RESIDENTS).find(r=>r.townId===town.id),eligible=resident&&residentEligible(s,resident.id),invited=resident&&s.village.residents.some(r=>r.id===resident.id);
+        if(resident){section.append(element('p',`${resident.name} · 두 의뢰를 보고하여 동맹을 맺으면 바람뜰에 초대할 수 있습니다. 온전한 작은 집 한 채가 필요합니다.`));
+          section.append(button(invited?'마을에 합류함':'바람뜰 주민으로 초대',()=>{const result=villageAction(s,'invite',{id:resident.id});feedback=result.ok?'주민이 바람뜰에 합류했습니다.':result.reason;changed(result);render();},!available||!eligible||invited||s.village.residents.length>=housingCapacity(s)));}
+        section.append(element('p',town.biomeId==='canyon'?'아래 메아리 골짜기의 자연동굴을 탐험하세요. 완료하면 작업장에서 호박으로 수리 꾸러미를 만듭니다.':town.biomeId==='mistwood'?'안개수림 자연동굴의 높은 등불을 이어 보세요. 완료하면 부엌에서 달꽃과 순무로 재배 영약을 만듭니다.':town.biomeId==='alpine'?'산장 길에서 서리별 정상 산길로 오를 수 있습니다. 지역 던전의 보물을 회수하면 동맹을 맺습니다.':'지역 의뢰를 따라 탐험하고 동맹 주민을 초대하세요. 바람뜰 부엌에서 순무와 밀로 원정 도시락을 만들 수 있습니다.','hint-box'));
         for(const q of QUESTS.filter(q=>q.townId===town.id)){
           const info=questStatus(s,q.id),row=element('article',undefined,'quest-row');row.dataset.quest=q.id;
           row.append(element('strong',`${q.stage}. ${q.name} · ${states[info.status]}`),element('p',q.description),element('small',`목적지: ${destination(info.destinationId)} · 보상: ${rewardText(q)}`));

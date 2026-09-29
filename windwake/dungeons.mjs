@@ -1,4 +1,5 @@
 import { DUNGEON_ENTRANCES } from './world.mjs';
+import {CAVES,floorSurface} from './caves.mjs';
 
 // Authored scene data and durable facts only. The simulation supplies physics,
 // actors and rewards; both collision and rendering consume this same geometry.
@@ -84,6 +85,7 @@ export const DUNGEONS=freeze([
   layout({biome:'canyon',name:'메아리 채굴장',description:'지그재그 갱도를 돌아 두 등불의 전력을 복구하세요.',family:'tempest',relays:[true,true],plates:0,jumpAxis:'x',positions:{entry:[0,0],ascent:[32,0],guard:[64,0],runes:[64,32],boss:[32,32],treasure:[96,0]},links:[['entry','ascent'],['ascent','guard'],['guard','runes','guard'],['runes','boss','lights'],['guard','treasure']]}),
   layout({biome:'mistwood',name:'뿌리의 기억전당',description:'갈라진 뿌리 회랑에서 역순의 기억과 두 돌의 균형을 찾으세요.',family:'thorn',sequence:[2,0,1],plates:2,jumpAxis:'x',positions:{entry:[0,0],runes:[0,32],guard:[32,32],weights:[64,32],ascent:[96,32],boss:[128,32],treasure:[0,64]},links:[['entry','runes'],['runes','guard','lights'],['guard','weights','guard'],['weights','ascent','weights'],['ascent','boss'],['runes','treasure']]}),
   layout({biome:'alpine',name:'서리별 관측소',description:'엇갈린 등불과 얼어붙은 돌단 너머 별의 봉인을 지키는 곳.',family:'tide',relays:[true,false,true],plates:1,positions:{entry:[0,0],weights:[32,0],guard:[64,0],ascent:[64,32],runes:[64,64],boss:[32,64],treasure:[96,0]},links:[['entry','weights'],['weights','guard','weights'],['guard','ascent','guard'],['ascent','runes'],['runes','boss','lights'],['guard','treasure']]}),
+  ...CAVES,
 ]);
 
 const catalog=id=>DUNGEONS.find(d=>d.id===id);
@@ -116,9 +118,9 @@ export function dungeonGeometry(s){
       (q?.type==='relays'&&!!active.relayStates?.[q.id]?.[l.index])||(q?.type==='plate'&&active.plateCharges?.[q.id]>0);
     return {...l,solved,active:!!lit,opened:p.opened.includes(l.id)};
   });
-  return {id:d.id,name:d.name,rooms:d.rooms,floors:d.floors,walls:d.walls,props:d.props,landmarks,doors:d.doors.map(door=>({...door,open:door.requires.every(id=>has(p,id))}))};
+  return {id:d.id,name:d.name,natural:!!d.natural,rooms:d.rooms,floors:d.floors,walls:d.walls,props:d.props,landmarks,doors:d.doors.map(door=>({...door,open:door.requires.every(id=>has(p,id))}))};
 }
-export function dungeonFloor(s,x,z){const d=current(s);return d?d.floors.filter(f=>inside({x,z},f)).reduce((floor,f)=>Math.max(floor,f.y+f.h),-12):-12;}
+export function dungeonFloor(s,x,z){const d=current(s);return d?d.floors.filter(f=>inside({x,z},f)).reduce((floor,f)=>Math.max(floor,floorSurface(f,x,z)),-12):-12;}
 export const dungeonBounds=s=>current(s)?.bounds||{minX:-150,maxX:150,minZ:-150,maxZ:150};
 export function dungeonSolids(s,x,z,r=6){
   const g=dungeonGeometry(s);if(!g)return [];
@@ -237,8 +239,8 @@ export function tickDungeon(s,dt,hooks={}){
     hooks.spawn?.(spawn.type,spawn.x,spawn.z,{...spawn,maxHp:spawn.hp,homeX:spawn.x,homeY:spawn.y,homeZ:spawn.z,dungeonId:d.id});
   }
   if(!p.claimed&&completed(d,p)){
-    p.claimed=true;hooks.rewardXP?.(120);hooks.rewardMaterials?.({wood:10,stone:8,food:4,crystals:8});hooks.grantRelic?.(d.relicId);
-    hooks.toast?.(`${d.name} 봉인 해제! 유물을 얻었습니다. 귀환의 빛으로 돌아가세요.`);hooks.effect?.('reward',s.player,{life:1.4,power:8});
+    p.claimed=true;hooks.rewardXP?.(120);hooks.rewardMaterials?.({wood:10,stone:8,food:4,crystals:8});if(d.relicId)hooks.grantRelic?.(d.relicId);
+    hooks.toast?.(d.natural?`${d.name} 탐험 완료 · ${d.unlockText} 해금! 마을로 돌아가 활용하세요.`:`${d.name} 봉인 해제! 유물을 얻었습니다. 귀환의 빛으로 돌아가세요.`);hooks.effect?.('reward',s.player,{life:1.4,power:8});
   }
 }
 export function dungeonObjective(s){

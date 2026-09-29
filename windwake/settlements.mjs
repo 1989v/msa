@@ -20,7 +20,7 @@ export const QUESTS=Object.freeze(TOWNS.flatMap(town=>{
   return [Object.freeze({id:`quest-${town.biomeId}-local`,townId:town.id,biomeId:town.biomeId,stage:1,name:local.name,description:local.text,
     objective:{kind:local.kind,id:local.id},cost:local.cost||{},reward:{xp:25,food:2},destinationId:local.id}),
   Object.freeze({id:`quest-${town.biomeId}-regional`,townId:town.id,biomeId:town.biomeId,stage:2,name:`${town.name}의 동맹`,
-    description:`${dungeon?'지역 던전의 마지막 보물을 회수':'지역 수호자를 격파'}한 뒤 이 도시 안내인에게 돌아오세요.`,objective:{kind:dungeon?'dungeon':'boss',id:target},cost:{},
+    description:`${dungeon?'지역 던전의 마지막 보물을 회수':'지역 수호자를 격파'}한 뒤 이 도시 안내인에게 돌아오세요. 동맹을 맺으면 이 도시 주민을 바람뜰의 빈 집에 초대할 수 있습니다.`,objective:{kind:dungeon?'dungeon':'boss',id:target},cost:{},
     reward:{xp:70,reputation:3,...(dungeon?{}:{relic:`relic-${town.biomeId}`})},destinationId:target})];
 }));
 const service=(id,name,description,cost,effect)=>Object.freeze({id,name,description,cost,effect});

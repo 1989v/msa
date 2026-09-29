@@ -1,0 +1,211 @@
+{
+  "url": "http://127.0.0.1:8791/",
+  "status": "passed",
+  "fixtures": "Caves start fresh with ordinary input. Expedition starts are explicitly positioned at existing waypoints. Visuals replay earned snapshots, with camera changes only.",
+  "errors": [],
+  "trustedMovement": {
+    "jumps": 1,
+    "distance": 3.6649999999999068,
+    "air": "ASCENDING"
+  },
+  "caves": [
+    {
+      "id": "cave-canyon",
+      "frames": 13172,
+      "hp": 100,
+      "distance": 1503.9039839265836,
+      "falls": 0,
+      "progress": {
+        "killed": [
+          "cave-canyon:basin-guard",
+          "cave-canyon:side-guard",
+          "cave-canyon:deep-guardian"
+        ],
+        "solved": [
+          "cave-canyon:seal"
+        ],
+        "opened": [
+          "cave-canyon:side-cache"
+        ],
+        "claimed": true
+      }
+    },
+    {
+      "id": "cave-mistwood",
+      "frames": 11241,
+      "hp": 100,
+      "distance": 1331.5930394838954,
+      "falls": 0,
+      "progress": {
+        "killed": [
+          "cave-mistwood:basin-guard",
+          "cave-mistwood:side-guard",
+          "cave-mistwood:deep-guardian"
+        ],
+        "solved": [
+          "cave-mistwood:seal"
+        ],
+        "opened": [
+          "cave-mistwood:side-cache"
+        ],
+        "claimed": true
+      }
+    }
+  ],
+  "life": {
+    "cave": {
+      "id": "cave-mistwood",
+      "frames": 11241,
+      "hp": 100,
+      "distance": 1331.5930394838954,
+      "falls": 0,
+      "progress": {
+        "killed": [
+          "cave-mistwood:basin-guard",
+          "cave-mistwood:side-guard",
+          "cave-mistwood:deep-guardian"
+        ],
+        "solved": [
+          "cave-mistwood:seal"
+        ],
+        "opened": [
+          "cave-mistwood:side-cache"
+        ],
+        "claimed": true
+      }
+    },
+    "finish": {
+      "stage": "depth-life-reloaded",
+      "frame": 20229,
+      "seconds": 337.15,
+      "position": [
+        -34,
+        0.16,
+        -88
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 1390.83,
+      "falls": 0,
+      "kills": 4,
+      "parries": 1,
+      "waypoints": [
+        "home",
+        "waypoint-mistwood"
+      ],
+      "bosses": [],
+      "xp": 350,
+      "villageTasks": [
+        "build",
+        "plant",
+        "water",
+        "harvest"
+      ],
+      "villageLevel": 1,
+      "reputation": 6,
+      "materials": {
+        "wood": 48,
+        "stone": 42,
+        "food": 28
+      },
+      "day": 1,
+      "clock": 371.37,
+      "raid": "idle",
+      "raidWave": 0,
+      "beaconHp": 180,
+      "finalDefeated": false
+    },
+    "recipe": "growthTonic",
+    "produce": {
+      "turnip": 0,
+      "wheat": 0,
+      "pumpkin": 0,
+      "moonflower": 0
+    },
+    "items": {
+      "trailMeal": 0,
+      "repairKit": 0,
+      "growthTonic": 0
+    },
+    "plot": {
+      "id": "building-1",
+      "x": -42,
+      "z": -82,
+      "y": 0.16314922545805566,
+      "crop": "pumpkin",
+      "watered": true,
+      "growth": 45,
+      "stage": "sprout"
+    },
+    "saveReloads": 2
+  },
+  "expeditions": [
+    {
+      "id": "expedition-alpine",
+      "frames": 6467,
+      "falls": 0,
+      "hp": 100,
+      "distance": 828.0925635182712
+    },
+    {
+      "id": "expedition-canyon",
+      "frames": 7275,
+      "falls": 0,
+      "hp": 100,
+      "distance": 924.5135906709115
+    }
+  ],
+  "metrics": {
+    "frames": 25,
+    "samples": 25,
+    "fps": 18.985419198055897,
+    "frameP95": 200,
+    "frameP99": 200,
+    "renderAverage": 2.699999980926514,
+    "droppedTime": 0.20009999999999992,
+    "renderer": {
+      "drawCalls": 17,
+      "triangles": 22448,
+      "staticTriangles": 77158,
+      "dynamicTriangles": 1523,
+      "frameMs": 0.3000001907348633,
+      "width": 1280,
+      "height": 800,
+      "pixelRatio": 1,
+      "residentChunks": 49,
+      "maxResidentChunks": 64,
+      "residentBytes": 10184856,
+      "chunkBuilds": 309,
+      "chunkEvictions": 260,
+      "disposedChunks": 260,
+      "activeScene": "world",
+      "dungeonBuffers": 0,
+      "dungeonBytes": 0,
+      "sceneTransitions": 3,
+      "visibleNPCs": 3,
+      "chunkBuildsThisFrame": 0,
+      "cameraDistance": 15.996439151848218,
+      "cameraEye": [
+        -623.3192749023438,
+        29.072587966918945,
+        -60.16024398803711
+      ],
+      "cameraTarget": [
+        -615,
+        22.843280792236328,
+        -48
+      ],
+      "closedDungeonDoors": 0
+    },
+    "world": {
+      "cachedChunks": 96,
+      "maxCachedChunks": 96,
+      "generatedChunks": 655,
+      "evictedChunks": 559,
+      "lastQueryCells": 4,
+      "lastQueryCandidates": 37
+    },
+    "actors": 11,
+    "audioVoices": 0
+  }
+}

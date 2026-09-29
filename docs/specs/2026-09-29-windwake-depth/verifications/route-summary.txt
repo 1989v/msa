@@ -1,0 +1,12 @@
+CAVE ORDINARY ROUTE PASS {"id":"cave-canyon","frames":13172,"hp":100,"distance":1503.9039839265836,"falls":0,"progress":{"killed":["cave-canyon:basin-guard","cave-canyon:side-guard","cave-canyon:deep-guardian"],"solved":["cave-canyon:seal"],"opened":["cave-canyon:side-cache"],"claimed":true}}
+CAVE ORDINARY ROUTE PASS {"id":"cave-mistwood","frames":11241,"hp":100,"distance":1331.5930394838954,"falls":0,"progress":{"killed":["cave-mistwood:basin-guard","cave-mistwood:side-guard","cave-mistwood:deep-guardian"],"solved":["cave-mistwood:seal"],"opened":["cave-mistwood:side-cache"],"claimed":true}}
+CHROME CONTINUOUS TOWN PASS town-sunfields {"frames":11192,"distance":1161.89,"allies":1,"relics":1}
+CHROME CONTINUOUS TOWN PASS town-dunes {"frames":21149,"distance":2417.48,"allies":2,"relics":2}
+CHROME CONTINUOUS TOWN PASS town-coast {"frames":29886,"distance":3612.3,"allies":3,"relics":3}
+CHROME CONTINUOUS TOWN PASS town-autumn {"frames":41396,"distance":5184.47,"allies":4,"relics":4}
+CHROME CONTINUOUS TOWN PASS town-alpine {"frames":57148,"distance":7103.99,"allies":5,"relics":5}
+CHROME CONTINUOUS TOWN PASS town-mistwood {"frames":72084,"distance":8860.91,"allies":6,"relics":6}
+CHROME CONTINUOUS TOWN PASS town-canyon {"frames":85575,"distance":10434.15,"allies":7,"relics":7}
+CHROME CONTINUOUS TOWN PASS town-lavender {"frames":93432,"distance":11491.02,"allies":8,"relics":8}
+JOURNEY BROWSER PASS continuous
+WILDS CHROME PASS {"combo":[{"type":"attack1","frame":1},{"type":"attack2","frame":29},{"type":"attack3","frame":63},{"type":"attack1","frame":110}],"foliagePixels":58169,"heightGain":18.514206587172662,"fps":58.75244801866741,"errors":0}
