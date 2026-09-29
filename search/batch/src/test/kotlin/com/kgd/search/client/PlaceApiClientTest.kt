@@ -108,6 +108,45 @@ class PlaceApiClientTest : BehaviorSpec({
         }
     }
 
+    Given("place 가 시군구 목록을 돌려줄 때") {
+        // place 행정구역 응답 그대로 — code 는 시도 2 + 시군구 3 의 5자리다
+        val client = clientReturning(
+            """
+            {"success":true,"data":{"regions":[
+              {"code":"11110","parentCode":"11","level":"SIGUNGU","name":"종로구","nameEn":"Jongno-gu","attractionCount":null},
+              {"code":"26110","parentCode":"26","level":"SIGUNGU","name":"중구","nameEn":null,"attractionCount":null}
+            ]}}
+            """.trimIndent(),
+        )
+        val names = kotlinx.coroutines.runBlocking { client.fetchSigunguNames() }
+
+        When("언어별 이름표를 만들면") {
+            Then("국문은 name, 영문은 nameEn 이고 영문명이 없으면 국문명이어야 한다") {
+                names.getValue("ko") shouldBe mapOf("11110" to "종로구", "26110" to "중구")
+                names.getValue("en") shouldBe mapOf("11110" to "Jongno-gu", "26110" to "중구")
+            }
+        }
+    }
+
+    Given("place 가 분류 코드표를 돌려줄 때") {
+        val client = clientReturning(
+            """
+            {"success":true,"data":[
+              {"lang":"ko","code":"VE","depth":1,"parentCode":null,"name":"역사관광"},
+              {"lang":"ko","code":"VE03","depth":2,"parentCode":"VE","name":"역사유적지"},
+              {"lang":"ko","code":"VE030100","depth":3,"parentCode":"VE03","name":"고궁"}
+            ]}
+            """.trimIndent(),
+        )
+        val names = kotlinx.coroutines.runBlocking { client.fetchCategoryNames("ko") }
+
+        When("소분류 이름표를 만들면") {
+            Then("depth 3 만 남아야 한다") {
+                names shouldBe mapOf("VE030100" to "고궁")
+            }
+        }
+    }
+
     Given("벡터 base64 를 직접 풀 때") {
         When("서버가 낸 문자열을 준다") {
             Then("JVM 인코더의 역이어야 한다") {

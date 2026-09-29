@@ -24,12 +24,12 @@ Total Task Groups: 10
 **Dependencies:** Task Group 1
 **Phase:** P1-enrichment
 **Required Skills:** Spring Batch, OpenSearch 매핑
-- [ ] 2.0 Complete 재색인 확장
-  - [ ] 2.1 Write tests: `AttractionApiReindexTaskletTest` 확장(T11 · bulk 캡처로 속성·지역 값, 파서 버전, 코드 없는 문서) · 매핑 단언(T21)
-  - [ ] 2.2 1차 훑기(가벼운 투영) → 집계, 2차 훑기에서 색인 — 기존 합류(sidoNames · links · embeddings) 유지
-  - [ ] 2.3 시군구 이름 조회(SIGUNGU 이름표, sidoNames 와 같은 방식)
-  - [ ] 2.4 매핑: 필터 대상 keyword, 표시용 `index:false`/색인 안 하는 객체 · 쓰기·읽기 문서 클래스 · `searchIndexContracts`·`searchReadOmitted`
-  - [ ] 2.5 Verify: `./gradlew :search:batch:test --tests '*AttractionApiReindexTaskletTest' && ./gradlew verifyArchitecture`
+- [x] 2.0 Complete 재색인 확장
+  - [x] 2.1 Write tests: `AttractionApiReindexTaskletTest` 확장(T11 · bulk 캡처로 속성·지역 값, 파서 버전, 코드 없는 문서) · 매핑 단언(T21)
+  - [x] 2.2 1차 훑기(가벼운 투영) → 집계, 2차 훑기에서 색인 — 기존 합류(sidoNames · links · embeddings) 유지
+  - [x] 2.3 시군구 이름 조회(SIGUNGU 이름표, sidoNames 와 같은 방식)
+  - [x] 2.4 매핑: 필터 대상 keyword, 표시용 `index:false`/색인 안 하는 객체 · 쓰기·읽기 문서 클래스 · `searchIndexContracts`·`searchReadOmitted`
+  - [x] 2.5 Verify: `./gradlew :search:batch:test --tests '*AttractionApiReindexTaskletTest' && ./gradlew verifyArchitecture`
   - [ ] 2.6 배포 뒤: 재색인 1회 · 색인 크기 전후 기록 · 표본 문서에 속성·지역 필드 존재 확인
 **Acceptance Criteria:** 계약 게이트 통과 · bulk 문서에 새 값 · 재색인 1800초 안 · 색인 크기 기록
 

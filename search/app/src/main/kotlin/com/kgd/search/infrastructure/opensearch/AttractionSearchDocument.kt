@@ -2,7 +2,15 @@ package com.kgd.search.infrastructure.opensearch
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.kgd.search.domain.attraction.model.Admission
+import com.kgd.search.domain.attraction.model.AttractionAttributeCodes
+import com.kgd.search.domain.attraction.model.AttractionAttributeCodes.enumOrNull
+import com.kgd.search.domain.attraction.model.AttractionAttributes
 import com.kgd.search.domain.attraction.model.AttractionDocument
+import com.kgd.search.domain.attraction.model.AttractionRegion
+import com.kgd.search.domain.attraction.model.Availability
+import com.kgd.search.domain.attraction.model.NearbyPlace
+import com.kgd.search.domain.attraction.model.PetPolicy
 import java.time.LocalDateTime
 
 /**
@@ -45,8 +53,50 @@ data class AttractionSearchDocument(
     val popularityScore: Double = 1.0,
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     val modifiedAt: LocalDateTime? = null,
+    /*
+     * 방문 속성·지역 안 위치 — 재색인 전 옛 인덱스 문서에는 없다. 그때는 도메인 값이 null 로 남아
+     * 「모두 UNKNOWN」과 구별된다. 표기는 [AttractionAttributeCodes] 가 정한다.
+     */
+    val closureState: String? = null,
+    val closedWeekdays: List<String>? = null,
+    val attrParking: String? = null,
+    val attrCreditCard: String? = null,
+    val attrStrollerRental: String? = null,
+    val petPolicy: String? = null,
+    val attrAdmission: String? = null,
+    val attributeParserVersion: Int? = null,
+    val sigunguName: String? = null,
+    val regionTypeCount: Int? = null,
+    val regionCategoryCount: Int? = null,
+    val lclsSystm3Name: String? = null,
+    val sameCategoryNearby: List<Nearby>? = null,
 ) {
     @JsonIgnoreProperties(ignoreUnknown = true)
+    data class Nearby(val id: String, val title: String, val distanceMeters: Int)
+
+    // 속성 필드는 재색인이 한 벌로 싣는다 — closureState 가 있으면 나머지도 있다.
+    private fun attributes(): AttractionAttributes? = closureState?.let { state ->
+        AttractionAttributes(
+            regularClosure = AttractionAttributeCodes.regularClosure(state, closedWeekdays),
+            parking = enumOrNull<Availability>(attrParking) ?: Availability.UNKNOWN,
+            petPolicy = enumOrNull<PetPolicy>(petPolicy) ?: PetPolicy.UNKNOWN,
+            creditCard = enumOrNull<Availability>(attrCreditCard) ?: Availability.UNKNOWN,
+            strollerRental = enumOrNull<Availability>(attrStrollerRental) ?: Availability.UNKNOWN,
+            freeAdmission = enumOrNull<Admission>(attrAdmission) ?: Admission.UNKNOWN,
+            parserVersion = attributeParserVersion ?: 0,
+        )
+    }
+
+    private fun region(): AttractionRegion? = regionTypeCount?.let { typeCount ->
+        AttractionRegion(
+            sigunguName = sigunguName,
+            typeCount = typeCount,
+            categoryCount = regionCategoryCount,
+            categoryName = lclsSystm3Name,
+            sameCategoryNearby = sameCategoryNearby.orEmpty().map { NearbyPlace(it.id, it.title, it.distanceMeters) },
+        )
+    }
+
 
     fun toDomain(): AttractionDocument = AttractionDocument(
         id = id,
@@ -80,5 +130,7 @@ data class AttractionSearchDocument(
         googlePlaceId = googlePlaceId,
         popularityScore = popularityScore,
         modifiedAt = modifiedAt,
+        attributes = attributes(),
+        region = region(),
     )
 }

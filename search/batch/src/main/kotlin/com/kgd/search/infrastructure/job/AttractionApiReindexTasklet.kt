@@ -1,6 +1,12 @@
 package com.kgd.search.infrastructure.job
 
+import com.kgd.search.domain.attraction.model.AttractionAttributeParser
+import com.kgd.search.domain.attraction.model.AttractionAttributeSource
 import com.kgd.search.domain.attraction.model.AttractionDocument
+import com.kgd.search.domain.attraction.model.AttractionRegion
+import com.kgd.search.domain.attraction.model.RegionAggregator
+import com.kgd.search.domain.attraction.model.RegionPlacement
+import com.kgd.search.domain.attraction.model.RegionProjection
 import com.kgd.search.infrastructure.client.PlaceApiClient
 import com.kgd.search.infrastructure.indexing.AttractionIndexDocument
 import com.kgd.search.infrastructure.indexing.IndexAliasManager
@@ -14,6 +20,7 @@ import org.springframework.batch.infrastructure.repeat.RepeatStatus
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
+import tools.jackson.databind.ObjectMapper
 
 /**
  * 관광지 전체 재색인 (ADR-0065) — place API 풀스캔 → attractions alias swap.
@@ -21,6 +28,10 @@ import org.springframework.stereotype.Component
  *
  * 문서 벡터(ADR-0090)는 페이지마다 place 에서 받아 함께 싣는다. 벡터가 없는 문서는 세 필드가 빈 채로
  * 색인되고 BM25 로만 찾힌다 — **재색인은 벡터를 기다리지 않는다.**
+ *
+ * place 를 **두 번 훑는다.** 지역 안 위치(같은 시군구·유형 수, 같은 분류 가까운 곳)는 전체를 봐야 셀 수 있는데
+ * 문서 전체를 메모리에 들면 배치 힙(약 256MB)을 넘는다. 1차는 가벼운 투영만 모아 집계하고, 2차가 지금처럼
+ * 페이지 단위로 색인하면서 집계 결과와 원문에서 뽑은 방문 속성을 붙인다.
  */
 @Component
 @ConditionalOnProperty(name = ["reindex.source"], havingValue = "api", matchIfMissing = true)
@@ -59,14 +70,31 @@ class AttractionApiReindexTasklet(
              * 화면이 이걸 받아 코드 하나를 이름으로 바꾸던 호출을 없애려는 것이므로,
              * 색인 쪽에서 관광지마다 부르면 본말전도다.
              */
-            val sidoNames = listOf("ko", "en").associateWith { lang ->
+            val sidoNames = LANGS.associateWith { lang ->
                 runCatching { placeApiClient.fetchSidoNames(lang) }.getOrElse { emptyMap() }
             }
+            // 시군구·분류 이름표도 같은 이유로 회차당 한 번. 못 받으면 이름만 비고 수·가까운 곳은 싣는다.
+            val sigunguNames = runCatching { placeApiClient.fetchSigunguNames() }.getOrElse { e ->
+                log.warn(e) { "시군구 이름표를 못 받아 sigunguName 없이 색인한다" }
+                emptyMap()
+            }
+            val categoryNames = LANGS.associateWith { lang ->
+                runCatching { placeApiClient.fetchCategoryNames(lang) }.getOrElse { e ->
+                    log.warn(e) { "분류 이름표($lang)를 못 받아 lclsSystm3Name 없이 색인한다" }
+                    emptyMap()
+                }
+            }
+
+            val placements = collectRegionPlacements()
+
+            val indexStartedAt = System.nanoTime()
 
             var page = 0
             var totalPages: Int
             var totalIndexed = 0L
             var withVector = 0L
+            var withRegion = 0L
+            var unreadableIntro = 0L
 
             do {
                 val response = placeApiClient.fetchPage(page, pageSize)
@@ -98,6 +126,21 @@ class AttractionApiReindexTasklet(
                         )
                     }
                     if (embedding != null) withVector++
+                    val intro = readIntro(attraction.introRaw)
+                    if (intro == null) unreadableIntro++
+                    val attributes = AttractionAttributeParser.parse(
+                        AttractionAttributeSource(
+                            restDate = attraction.restDate,
+                            parking = attraction.parking,
+                            useFee = attraction.useFee,
+                            petAcmpyType = attraction.petAcmpyType,
+                            intro = intro.orEmpty(),
+                        ),
+                    )
+                    val region = placements[attraction.id.toString()]?.let { placement ->
+                        withRegion++
+                        regionOf(attraction, placement, sigunguNames, categoryNames)
+                    }
                     val document = AttractionIndexDocument.fromDomain(
                         AttractionDocument(
                             id = attraction.id.toString(),
@@ -140,6 +183,8 @@ class AttractionApiReindexTasklet(
                             links = links[attraction.id],
                             googlePlaceId = attraction.googlePlaceId,
                             modifiedAt = attraction.sourceModifiedAt,
+                            attributes = attributes,
+                            region = region,
                         ),
                         embedding,
                     )
@@ -160,9 +205,81 @@ class AttractionApiReindexTasklet(
             // stale 여부는 여기서 알 수 없다 — 그것은 place `/status` 가 attractions.updated_at 과 견줘 센다.
             log.info {
                 "Attraction reindex complete: $totalIndexed docs, ${bulkProcessor.errorCount.get()} errors, " +
-                    "vectors $withVector/$totalIndexed" + if (modelRef.isEmpty()) " (model-ref 미설정)" else " ($modelRef)"
+                    "vectors $withVector/$totalIndexed" + (if (modelRef.isEmpty()) " (model-ref 미설정)" else " ($modelRef)") +
+                    ", region $withRegion/$totalIndexed, unreadable introRaw $unreadableIntro, " +
+                    "attribute parser v${AttractionAttributeParser.VERSION}, index pass ${elapsedMs(indexStartedAt)}ms"
             }
 
             RepeatStatus.FINISHED
         }
+
+    /**
+     * 1차 훑기 — 색인할 문서(ACTIVE)의 투영만 모아 지역 안 위치를 센다. 벡터·링크는 부르지 않는다.
+     *
+     * 투영은 문서당 약 200B 다: 언어·시도·시군구·유형·분류 코드는 종류가 수백 개뿐이라 intern 으로 한 벌만 두고,
+     * 문서마다 새로 드는 것은 id·제목·좌표뿐이다. 6만 건이면 약 12MB, 집계 결과(가까운 곳 5건씩)까지 약 30MB.
+     */
+    private suspend fun collectRegionPlacements(): Map<String, RegionPlacement> {
+        val startedAt = System.nanoTime()
+        val projections = ArrayList<RegionProjection>()
+        var page = 0
+        var totalPages: Int
+        do {
+            val response = placeApiClient.fetchPage(page, pageSize)
+            totalPages = response.totalPages
+            response.attractions.filter { it.status == "ACTIVE" }.mapTo(projections) { it.toProjection() }
+            page++
+        } while (page < totalPages)
+
+        val placements = RegionAggregator.aggregate(projections)
+        log.info {
+            "Region pass: ${projections.size} projections over $page pages → ${placements.size} placements " +
+                "(${projections.size - placements.size} without sigungu/type), ${elapsedMs(startedAt)}ms"
+        }
+        return placements
+    }
+
+    private fun PlaceApiClient.AttractionDto.toProjection() = RegionProjection(
+        id = id.toString(),
+        lang = lang.intern(),
+        ldongRegnCd = ldongRegnCd?.intern(),
+        ldongSignguCd = ldongSignguCd?.intern(),
+        contentTypeId = contentTypeId?.intern(),
+        lclsSystm3 = lclsSystm3?.intern(),
+        latitude = latitude,
+        longitude = longitude,
+        // 가까운 곳 목록에 나가는 이름이라 색인 문서 title 과 같은 표시명을 쓴다
+        title = titleDisplay ?: title,
+    )
+
+    private fun regionOf(
+        attraction: PlaceApiClient.AttractionDto,
+        placement: RegionPlacement,
+        sigunguNames: Map<String, Map<String, String>>,
+        categoryNames: Map<String, Map<String, String>>,
+    ) = AttractionRegion(
+        // 집계기가 결과를 냈다면 두 코드가 다 있다. 이름표 키는 시도 2자리 + 시군구 3자리다.
+        sigunguName = sigunguNames[attraction.lang]?.get("${attraction.ldongRegnCd}${attraction.ldongSignguCd}"),
+        typeCount = placement.typeCount,
+        categoryCount = placement.categoryCount,
+        categoryName = placement.categoryCount?.let { attraction.lclsSystm3?.let { categoryNames[attraction.lang]?.get(it) } },
+        sameCategoryNearby = placement.nearest,
+    )
+
+    /**
+     * introRaw(TourAPI 소개 원문 JSON) → 키·값. 신용카드·유모차 대여 키만 쓴다.
+     * 원문이 없으면 빈 맵, 깨져 있으면 null — 깨진 원문은 두 속성이 UNKNOWN 이 되고 건수를 로그에 남긴다.
+     */
+    private fun readIntro(raw: String?): Map<String, String?>? {
+        if (raw.isNullOrBlank()) return emptyMap()
+        val node = runCatching { introReader.readTree(raw) }.getOrNull()?.takeIf { it.isObject } ?: return null
+        return node.properties().associate { (key, value) -> key to value.takeIf { it.isValueNode && !it.isNull }?.asString() }
+    }
+
+    private fun elapsedMs(startedAt: Long) = (System.nanoTime() - startedAt) / 1_000_000
+
+    companion object {
+        private val LANGS = listOf("ko", "en")
+        private val introReader = ObjectMapper()
+    }
 }

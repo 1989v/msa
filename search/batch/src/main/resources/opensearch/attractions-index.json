@@ -261,6 +261,50 @@
       "modifiedAt": {
         "type": "date",
         "format": "yyyy-MM-dd'T'HH:mm:ss"
+      },
+      "closureState": {
+        "type": "keyword"
+      },
+      "closedWeekdays": {
+        "type": "keyword"
+      },
+      "attrParking": {
+        "type": "keyword"
+      },
+      "attrCreditCard": {
+        "type": "keyword"
+      },
+      "attrStrollerRental": {
+        "type": "keyword"
+      },
+      "petPolicy": {
+        "type": "keyword"
+      },
+      "attrAdmission": {
+        "type": "keyword"
+      },
+      "attributeParserVersion": {
+        "type": "integer"
+      },
+      "sigunguName": {
+        "type": "keyword",
+        "index": false
+      },
+      "regionTypeCount": {
+        "type": "integer",
+        "index": false
+      },
+      "regionCategoryCount": {
+        "type": "integer",
+        "index": false
+      },
+      "lclsSystm3Name": {
+        "type": "keyword",
+        "index": false
+      },
+      "sameCategoryNearby": {
+        "type": "object",
+        "enabled": false
       }
     }
   }

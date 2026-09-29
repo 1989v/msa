@@ -3,6 +3,7 @@ package com.kgd.search.infrastructure.indexing
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.kgd.search.domain.attraction.model.AttractionAttributeCodes
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.Jamo
 import java.time.LocalDateTime
@@ -79,55 +80,103 @@ data class AttractionIndexDocument(
     val embeddingHash: String? = null,
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     val modifiedAt: LocalDateTime? = null,
+    /*
+     * 방문 속성 — 원문(restDate·parking·useFee·petAcmpyType·introRaw)에서 뽑은 파생 값이고 원문은 위에 그대로 있다.
+     * 값을 모르면 UNKNOWN 을 **싣는다**. 비워 두면 「정보 없음」과 「아직 계산 안 함」이 구분되지 않는다.
+     */
+    /** ALWAYS_OPEN · WEEKLY · NO_WEEKLY · UNKNOWN ([com.kgd.search.domain.attraction.model.ClosureState]). */
+    val closureState: String,
+    /** WEEKLY 일 때만 MON..SUN. */
+    val closedWeekdays: List<String>? = null,
+    /** YES · NO · UNKNOWN */
+    val attrParking: String,
+    val attrCreditCard: String,
+    val attrStrollerRental: String,
+    /** ALLOWED · PARTIAL · UNKNOWN */
+    val petPolicy: String,
+    /** FREE · PAID · UNKNOWN */
+    val attrAdmission: String,
+    /** 이 값을 만든 해석 규칙의 판 — 규칙을 고친 뒤 옛 판으로 남은 문서를 찾는 데 쓴다. */
+    val attributeParserVersion: Int,
+    /*
+     * 지역 안 위치 — 상세 표시 전용이라 색인하지 않는다(mapping: index=false · enabled=false).
+     * 시군구 코드나 유형이 없는 문서는 다섯 필드가 모두 빈다.
+     */
+    val sigunguName: String? = null,
+    val regionTypeCount: Int? = null,
+    val regionCategoryCount: Int? = null,
+    val lclsSystm3Name: String? = null,
+    val sameCategoryNearby: List<Nearby>? = null,
 ) {
     /** OpenSearch geo_point object 표기 — 필드명 lat/lon 고정. */
 
     /** 재색인이 place 에서 받아 오는 벡터 한 벌. 세 필드가 **함께** 채워지거나 함께 빈다. */
     data class Embedding(val vector: List<Float>, val modelRef: String, val textHash: String)
 
+    /** 같은 시군구·유형·분류의 가까운 곳 한 건. */
+    data class Nearby(val id: String, val title: String, val distanceMeters: Int)
+
     companion object {
-        fun fromDomain(doc: AttractionDocument, embedding: Embedding? = null) = AttractionIndexDocument(
-            id = doc.id,
-            idSort = doc.id.toLongOrNull() ?: 0L,
-            contentId = doc.contentId,
-            lang = doc.lang,
-            title = doc.title,
-            titleLocal = doc.titleLocal,
-            titleJamo = Jamo.decompose(doc.title),
-            location = GeoPoint(lat = doc.latitude, lon = doc.longitude),
-            address = doc.address,
-            areaCode = doc.areaCode,
-            sigunguCode = doc.sigunguCode,
-            ldongRegnCd = doc.ldongRegnCd,
-            ldongSignguCd = doc.ldongSignguCd,
-            category = doc.category,
-            lclsSystm1 = doc.lclsSystm1,
-            lclsSystm2 = doc.lclsSystm2,
-            lclsSystm3 = doc.lclsSystm3,
-            contentTypeId = doc.contentTypeId,
-            petAcmpyType = doc.petAcmpyType,
-            setting = doc.setting,
-            imageUrl = doc.imageUrl,
-            thumbnailUrl = doc.thumbnailUrl,
-            tel = doc.tel,
-            overview = doc.overview,
-            useTime = doc.useTime,
-            restDate = doc.restDate,
-            useFee = doc.useFee,
-            parking = doc.parking,
-            parkingFee = doc.parkingFee,
-            infoCenter = doc.infoCenter,
-            introRaw = doc.introRaw,
-            imagesRaw = doc.imagesRaw,
-            infoRaw = doc.infoRaw,
-            sidoName = doc.sidoName,
-            links = doc.links,
-            googlePlaceId = doc.googlePlaceId,
-            popularityScore = doc.popularityScore,
-            embedding = embedding?.vector,
-            embeddingModel = embedding?.modelRef,
-            embeddingHash = embedding?.textHash,
-            modifiedAt = doc.modifiedAt,
-        )
+        /** 속성은 재색인이 계산해 [AttractionDocument.attributes] 로 넘긴다 — 없으면 UNKNOWN 을 싣지 못하므로 거부한다. */
+        fun fromDomain(doc: AttractionDocument, embedding: Embedding? = null): AttractionIndexDocument {
+            val attributes = requireNotNull(doc.attributes) { "속성을 계산하지 않은 문서는 색인하지 않는다: ${doc.id}" }
+            val region = doc.region
+            return AttractionIndexDocument(
+                id = doc.id,
+                idSort = doc.id.toLongOrNull() ?: 0L,
+                contentId = doc.contentId,
+                lang = doc.lang,
+                title = doc.title,
+                titleLocal = doc.titleLocal,
+                titleJamo = Jamo.decompose(doc.title),
+                location = GeoPoint(lat = doc.latitude, lon = doc.longitude),
+                address = doc.address,
+                areaCode = doc.areaCode,
+                sigunguCode = doc.sigunguCode,
+                ldongRegnCd = doc.ldongRegnCd,
+                ldongSignguCd = doc.ldongSignguCd,
+                category = doc.category,
+                lclsSystm1 = doc.lclsSystm1,
+                lclsSystm2 = doc.lclsSystm2,
+                lclsSystm3 = doc.lclsSystm3,
+                contentTypeId = doc.contentTypeId,
+                petAcmpyType = doc.petAcmpyType,
+                setting = doc.setting,
+                imageUrl = doc.imageUrl,
+                thumbnailUrl = doc.thumbnailUrl,
+                tel = doc.tel,
+                overview = doc.overview,
+                useTime = doc.useTime,
+                restDate = doc.restDate,
+                useFee = doc.useFee,
+                parking = doc.parking,
+                parkingFee = doc.parkingFee,
+                infoCenter = doc.infoCenter,
+                introRaw = doc.introRaw,
+                imagesRaw = doc.imagesRaw,
+                infoRaw = doc.infoRaw,
+                sidoName = doc.sidoName,
+                links = doc.links,
+                googlePlaceId = doc.googlePlaceId,
+                popularityScore = doc.popularityScore,
+                embedding = embedding?.vector,
+                embeddingModel = embedding?.modelRef,
+                embeddingHash = embedding?.textHash,
+                modifiedAt = doc.modifiedAt,
+                closureState = AttractionAttributeCodes.closureState(attributes.regularClosure).name,
+                closedWeekdays = AttractionAttributeCodes.closedWeekdays(attributes.regularClosure),
+                attrParking = attributes.parking.name,
+                attrCreditCard = attributes.creditCard.name,
+                attrStrollerRental = attributes.strollerRental.name,
+                petPolicy = attributes.petPolicy.name,
+                attrAdmission = attributes.freeAdmission.name,
+                attributeParserVersion = attributes.parserVersion,
+                sigunguName = region?.sigunguName,
+                regionTypeCount = region?.typeCount,
+                regionCategoryCount = region?.categoryCount,
+                lclsSystm3Name = region?.categoryName,
+                sameCategoryNearby = region?.sameCategoryNearby?.map { Nearby(it.id, it.title, it.distanceMeters) },
+            )
+        }
     }
 }

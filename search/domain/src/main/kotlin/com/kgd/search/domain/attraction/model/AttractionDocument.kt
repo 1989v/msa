@@ -66,4 +66,11 @@ data class AttractionDocument(
      */
     val popularityScore: Double = AttractionPopularity.score(imageUrl = imageUrl, overview = overview, tel = tel),
     val modifiedAt: LocalDateTime? = null,
+    /**
+     * 원문에서 뽑은 방문 속성 ([AttractionAttributeParser]). 재색인이 계산해 싣는다.
+     * null 은 이 필드가 생기기 전에 색인된 문서다 — 「모두 UNKNOWN」과 다르다.
+     */
+    val attributes: AttractionAttributes? = null,
+    /** 지역 안 위치. 시군구 코드나 유형이 없는 문서는 null. */
+    val region: AttractionRegion? = null,
 )

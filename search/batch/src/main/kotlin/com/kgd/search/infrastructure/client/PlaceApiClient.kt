@@ -211,6 +211,53 @@ class PlaceApiClient(
     }
 
     /**
+     * 시군구 5자리 코드(시도 2 + 시군구 3) → 이름, 언어별. 250행 남짓이라 회차당 한 번 받는다.
+     * `lang` 을 넘기지 않는다 — 넘기면 place 가 관광지 건수를 group by 로 세는데 여기선 이름만 쓴다.
+     * 영문은 화면(`nameEn || name`)과 같은 규칙으로 영문명이 없을 때 국문명을 쓴다.
+     */
+    suspend fun fetchSigunguNames(): Map<String, Map<String, String>> {
+        val response = webClient.get()
+            .uri("/api/places/administrative-regions?level=SIGUNGU")
+            .retrieve()
+            .bodyToMono(object : ParameterizedTypeReference<Map<String, Any>>() {})
+            .awaitSingle()
+
+        @Suppress("UNCHECKED_CAST")
+        val items = (response["data"] as? Map<String, Any>)?.get("regions") as? List<Map<String, Any>>
+            ?: return emptyMap()
+        val ko = HashMap<String, String>()
+        val en = HashMap<String, String>()
+        items.forEach { r ->
+            val code = r["code"] as? String ?: return@forEach
+            val name = (r["name"] as? String)?.takeIf { it.isNotBlank() } ?: return@forEach
+            ko[code] = name
+            en[code] = (r["nameEn"] as? String)?.takeIf { it.isNotBlank() } ?: name
+        }
+        return mapOf("ko" to ko, "en" to en)
+    }
+
+    /**
+     * 원천 분류체계 소분류(lclsSystm3) 코드 → 이름. place 가 TourAPI 코드표를 언어별로 들고 있다.
+     * 문서마다 부르지 않고 회차당 언어별로 한 번 받는다.
+     */
+    suspend fun fetchCategoryNames(lang: String): Map<String, String> {
+        val response = webClient.get()
+            .uri("/api/places/attractions/category-codes?lang=$lang")
+            .retrieve()
+            .bodyToMono(object : ParameterizedTypeReference<Map<String, Any>>() {})
+            .awaitSingle()
+
+        @Suppress("UNCHECKED_CAST")
+        val items = response["data"] as? List<Map<String, Any>> ?: return emptyMap()
+        return items.mapNotNull { c ->
+            if ((c["depth"] as? Number)?.toInt() != 3) return@mapNotNull null
+            val code = c["code"] as? String ?: return@mapNotNull null
+            val name = (c["name"] as? String)?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+            code to name
+        }.toMap()
+    }
+
+    /**
      * 관광지 외부 링크 벌크 조회 (ADR-0095). **큐를 건드리지 않는 경로**를 쓴다 —
      * 화면용 `/links` 는 조회할 때 수집 큐에 올리므로 재색인이 부르면 큐가 가득 찬다.
      */
