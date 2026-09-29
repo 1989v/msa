@@ -1,0 +1,29 @@
+# ADR-0103 — portal-fe → search (관광지 상세 서버 렌더)
+#
+# portal-fe 의 nginx 가 /attractions/{id} 를 search 의 /internal/render/** 로 프록시한다.
+# search 파드는 게이트웨이(03)와 평가 Job(04) 말고는 받지 않으므로, 이 정책이 없으면
+# 패킷이 버려져 연결 거부가 아니라 연결 시간 초과(0.5초)가 되고 모든 상세가 SPA 셸로 나간다.
+#
+# FE → 백엔드라 04(백엔드↔백엔드)에 넣지 않고 따로 둔다. search 는 폴드된 도메인이 아니라
+# 자기 파드라서 kgd.io/host-of 를 달지 않는다.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-portal-fe-to-search-render
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: search
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: portal-fe
+      ports:
+        - { port: 8083, protocol: TCP }

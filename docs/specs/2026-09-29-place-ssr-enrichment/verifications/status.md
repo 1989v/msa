@@ -16,3 +16,7 @@
 | TG2 수정 | 운영 재색인이 1차 훑기에서 14분 멈춤 — place 클라이언트 시간 제한 없음 + OFFSET 페이징(OFFSET 59000 = 4,892ms, 키셋 266ms, 버퍼 풀 128MB, 행 평균 6KB) | 키셋 `afterId` + 연결 5초·응답 60초 |
 | TG2 수정 | `./gradlew :place:feature:test (Service·Controller·SchemaIntegration) :search:batch:test (Tasklet·PlaceApiClient) verifyArchitecture :content:app:compileKotlin` | Service 5/0 · Controller 2/0 · SchemaIntegration(Testcontainers MySQL) 2/0 · Tasklet 11/0 · PlaceApiClient 15/0 · RoundTrip 1/0 |
 | TG2 수정 | 회귀 주입 | afterId→0L SchemaIntegration FAILED · 1차/2차 쪽 번호 전달 Tasklet FAILED · timeout 제거 PlaceApiClient FAILED |
+| TG4 | `nginx -t`(템플릿 + env 두 개) · `kubectl kustomize k8s/overlays/{oci-arm,k3s-lite,prod-k8s}` · `verifyArchitecture` | successful · exit 0 ×3 · exit 0 |
+| TG4 | 스텁 search + 실제 nginx:1.27-alpine | 숫자 id 만 전달 · Cookie/Authorization 미전달 · upstream 404 통과 · 500/5초 지연/중지 → 셸 200 `proxy-fallback` (3.02초 · 1.01초) · 비숫자 id 404 · /regions 프리렌더 유지 |
+| TG4 | 회귀 주입(스크래치 사본) | Cookie 제거 줄 삭제 → cookie 전달됨 · error_page 에 404 추가 → 404 가 200 셸 · netpol 라벨 오타 → verifyPodTopology FAILED |
+| TG4 | 운영 파드 전제 | command 덮어쓰기 없음 · root · 쓰기 가능 · /docker-entrypoint.d 에 15-local-resolvers·20-envsubst · nameserver 10.43.0.10 |

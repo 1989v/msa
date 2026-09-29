@@ -1,0 +1,29 @@
+# ADR-0103 — search → portal-fe (관광지 서버 렌더의 셸 페치)
+#
+# search 는 portal-fe 의 http://portal-fe/index.html 을 받아 관광지 메타·본문을 넣는다.
+# 13-allow-ingress-to-frontend 는 FE 파드의 ingress 를 ingress-nginx 로만 열어 두므로,
+# 이 정책이 없으면 셸 페치가 막혀 search 가 최소 HTML 을 낸다(화면은 뜨는데 SPA 가 안 붙는다).
+#
+# 18(블로그 셸 페치)과 같은 이유로 13 을 고치지 않고 portal-fe 에만 붙는 정책으로 둔다.
+# 셸 경로 /index.html 은 nginx 의 정적 .html location 이라 프록시 경로로 되돌아오지 않는다.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-search-shell-fetch
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: portal-fe
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: search
+      ports:
+        - { port: 80, protocol: TCP }

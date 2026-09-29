@@ -15,3 +15,6 @@
 - **place 목록 키셋 페이징** (TG2 수정): `afterId` 선택 파라미터 · `nextAfterId` · 키셋 응답의 합계 필드는 -1(기존 non-null 호출자 호환). OFFSET 경로는 파이썬 호출자(place/ingest·tools/embed)용으로 남긴다.
 - **배포 순서**: place(content) 가 search-batch 보다 먼저 떠야 한다. 옛 place 는 afterId 를 몰라 첫 100건만 주고, 배치는 별칭 교체 검사(라이브의 90%)에 걸려 실패한다(사용자 영향 없음).
 - **예전 재색인 소요는 9분 34초~12분**(에이전트 보고 「2분대」는 틀림). 실측으로만 판단한다.
+- **nginx 설정은 템플릿** (TG4): resolver 를 기동 때 /etc/resolv.conf 에서 읽는다(클러스터마다 DNS IP 가 다름). 치환 대상은 NGINX_LOCAL_RESOLVERS 하나. 이미지 밖에서 `nginx -t` 할 때는 templates 경로 + env 두 개가 필요하다.
+- **`X-Render: proxy-fallback`** (TG4): nginx 폴백 표지. search 쪽 `shell-fallback` 과 헤더로 가른다.
+- **비숫자 id 는 nginx 기본 404** (TG4): 잘못 만든 링크에서만 생긴다. SPA NotFound 화면은 두지 않는다.

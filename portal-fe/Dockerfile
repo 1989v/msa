@@ -63,5 +63,11 @@ RUN node scripts/strip-html-comments.mjs
 
 FROM nginx:1.27-alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# 설정은 템플릿으로 넣는다. 관광지 서버 렌더 프록시는 search 이름을 요청 때 풀어서 resolver
+# 주소가 필요한데, 클러스터 DNS 주소는 클러스터마다 달라 기동 때 /etc/resolv.conf 에서 읽는다
+# (이미지 엔트리포인트의 15-local-resolvers → 20-envsubst). 치환 대상은 그 변수 하나로 좁힌다 —
+# 안 좁히면 환경 변수와 이름이 겹치는 nginx 변수까지 바뀐다.
+ENV NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1 \
+    NGINX_ENVSUBST_FILTER=NGINX_LOCAL_RESOLVERS
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 EXPOSE 80
