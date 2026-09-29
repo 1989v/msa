@@ -6,6 +6,7 @@ import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.application.queryvector.usecase.ResolveQueryVectorUseCase
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 import com.kgd.search.application.attraction.usecase.SuggestAttractionUseCase
+import com.kgd.search.domain.attraction.model.AttractionAttributeCodes
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.query.model.QueryIntent
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
@@ -174,5 +175,22 @@ class SearchAttractionService(
         distanceKm = distanceKm,
         position = position,
         modifiedAt = modifiedAt,
+        closureState = attributes?.let { AttractionAttributeCodes.closureState(it.regularClosure).name },
+        closedWeekdays = attributes?.let { AttractionAttributeCodes.closedWeekdays(it.regularClosure) },
+        attrParking = attributes?.parking?.name,
+        attrCreditCard = attributes?.creditCard?.name,
+        attrStrollerRental = attributes?.strollerRental?.name,
+        petPolicy = attributes?.petPolicy?.name,
+        attrAdmission = attributes?.freeAdmission?.name,
+        region = if (summarize) null else region?.let { r ->
+            SearchAttractionUseCase.Region(
+                ldongSignguCd = ldongSignguCd,
+                sigunguName = r.sigunguName,
+                typeCount = r.typeCount,
+                categoryCount = r.categoryCount,
+                categoryName = r.categoryName,
+                sameCategoryNearby = r.sameCategoryNearby.map { SearchAttractionUseCase.Nearby(it.id, it.title, it.distanceMeters) },
+            )
+        },
     )
 }

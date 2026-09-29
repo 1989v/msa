@@ -1,0 +1,488 @@
+{
+  "cases": [
+    {
+      "name": "ko-weekly-free",
+      "input": {
+        "contentId": "126508",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "latitude": 37.5796,
+        "longitude": 126.977,
+        "imageUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+        "tel": "02-3700-3900",
+        "sidoCode": "11",
+        "sidoName": "서울특별시",
+        "id": "1001",
+        "lang": "ko",
+        "title": "경복궁",
+        "titleLocal": null,
+        "overview": "조선 왕조 제일의 법궁이다.<br />북으로 북악산을 기대어 자리 잡았고 정문인 광화문 앞으로는 넓은 육조거리가 펼쳐져 있었다. &lt;script&gt;alert(1)&lt;/script&gt; 같은 원문도 글자로만 남아야 한다. 요금은 $1 이 아니라 3,000원이다. 태조 이성계가 한양으로 도읍을 옮긴 뒤 1395년에 지었으며, 임진왜란 때 불탄 뒤 고종 때 다시 지었다. 근정전·경회루·향원정 같은 건물이 남아 있고, 국립고궁박물관과 국립민속박물관이 궁 안팎에 있다. 수문장 교대 의식은 매일 정해진 시각에 광화문 앞에서 열린다.",
+        "closureState": "WEEKLY",
+        "closedWeekdays": [
+          "TUE"
+        ],
+        "attrAdmission": "FREE"
+      },
+      "jsonLd": [
+        {
+          "@context": "https://schema.org",
+          "@type": "TouristAttraction",
+          "name": "경복궁",
+          "description": "조선 왕조 제일의 법궁이다. 북으로 북악산을 기대어 자리 잡았고 정문인 광화문 앞으로는 넓은 육조거리가 펼쳐져 있었다. <script>alert(1)</script> 같은 원문도 글자로만 남아야 한다. 요금은 $1 이 아니라 3,000원이다. 태조 이성계가 한양으로 도읍을 옮긴 뒤 1395년에 지었으며, 임진왜란 때 불탄 뒤 고종 때 다시 지었다. 근정전·경회루·향원정 같은 건물이 남아 있고, 국립고궁박물관과 국립민속박물관이 궁 안팎에 있다. 수문장 교대 의식은 매일 정해진 시각에 광화문 앞에서 열린다.",
+          "url": "https://place.1989v.com/attractions/1001",
+          "inLanguage": "ko",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "K-관광",
+            "url": "https://place.1989v.com"
+          },
+          "image": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+          "telephone": "02-3700-3900",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "서울특별시 종로구 사직로 161",
+            "addressCountry": "KR"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 37.5796,
+            "longitude": 126.977
+          },
+          "openingHoursSpecification": {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": [
+              "https://schema.org/Monday",
+              "https://schema.org/Wednesday",
+              "https://schema.org/Thursday",
+              "https://schema.org/Friday",
+              "https://schema.org/Saturday",
+              "https://schema.org/Sunday"
+            ]
+          },
+          "isAccessibleForFree": true
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "한국 관광지 탐색",
+              "item": "https://place.1989v.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "서울특별시",
+              "item": "https://place.1989v.com/regions/11"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "경복궁",
+              "item": "https://place.1989v.com/attractions/1001"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ko-always-open-paid",
+      "input": {
+        "contentId": "126508",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "latitude": 37.5796,
+        "longitude": 126.977,
+        "imageUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+        "tel": "02-3700-3900",
+        "sidoCode": "11",
+        "sidoName": "서울특별시",
+        "id": "1002",
+        "lang": "ko",
+        "title": "남산서울타워",
+        "titleLocal": "N서울타워",
+        "overview": "서울의 전망대.\n\n\n\n야경이 좋다 &middot; 연중무휴",
+        "closureState": "ALWAYS_OPEN",
+        "closedWeekdays": null,
+        "attrAdmission": "PAID"
+      },
+      "jsonLd": [
+        {
+          "@context": "https://schema.org",
+          "@type": "TouristAttraction",
+          "name": "남산서울타워",
+          "description": "서울의 전망대. 야경이 좋다 · 연중무휴",
+          "url": "https://place.1989v.com/attractions/1002",
+          "inLanguage": "ko",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "K-관광",
+            "url": "https://place.1989v.com"
+          },
+          "alternateName": "N서울타워",
+          "image": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+          "telephone": "02-3700-3900",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "서울특별시 종로구 사직로 161",
+            "addressCountry": "KR"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 37.5796,
+            "longitude": 126.977
+          },
+          "openingHoursSpecification": {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": [
+              "https://schema.org/Monday",
+              "https://schema.org/Tuesday",
+              "https://schema.org/Wednesday",
+              "https://schema.org/Thursday",
+              "https://schema.org/Friday",
+              "https://schema.org/Saturday",
+              "https://schema.org/Sunday"
+            ]
+          },
+          "isAccessibleForFree": false
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "한국 관광지 탐색",
+              "item": "https://place.1989v.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "서울특별시",
+              "item": "https://place.1989v.com/regions/11"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "남산서울타워",
+              "item": "https://place.1989v.com/attractions/1002"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ko-unknown-no-overview-no-sido",
+      "input": {
+        "contentId": "126508",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "latitude": 37.5796,
+        "longitude": 126.977,
+        "imageUrl": null,
+        "tel": null,
+        "sidoCode": null,
+        "sidoName": null,
+        "id": "1003",
+        "lang": "ko",
+        "title": "이름만 있는 곳",
+        "titleLocal": null,
+        "overview": null,
+        "closureState": "UNKNOWN",
+        "closedWeekdays": null,
+        "attrAdmission": "UNKNOWN"
+      },
+      "jsonLd": [
+        {
+          "@context": "https://schema.org",
+          "@type": "TouristAttraction",
+          "name": "이름만 있는 곳",
+          "description": "이름만 있는 곳 — 서울특별시 종로구 사직로 161에 있는 역사 관광지입니다. 주소·지도·사진과 가는 길, 주변 가볼 만한 곳을 함께 확인하세요.",
+          "url": "https://place.1989v.com/attractions/1003",
+          "inLanguage": "ko",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "K-관광",
+            "url": "https://place.1989v.com"
+          },
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "서울특별시 종로구 사직로 161",
+            "addressCountry": "KR"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 37.5796,
+            "longitude": 126.977
+          }
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "한국 관광지 탐색",
+              "item": "https://place.1989v.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "이름만 있는 곳",
+              "item": "https://place.1989v.com/attractions/1003"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "en-no-weekly-free",
+      "input": {
+        "contentId": "126508",
+        "category": "nature",
+        "address": "20, Dosan-daero 45-gil, Gangnam-gu, Seoul",
+        "latitude": 37.5796,
+        "longitude": 126.977,
+        "imageUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+        "tel": "02-3700-3900",
+        "sidoCode": "11",
+        "sidoName": "서울특별시",
+        "id": "2001",
+        "lang": "en",
+        "title": "Dosan Park",
+        "titleLocal": "도산공원",
+        "overview": "Dosan Park honors Ahn Chang-ho&rsquo;s legacy.<br>It&#8217;s quiet&nbsp;and green.",
+        "closureState": "NO_WEEKLY",
+        "closedWeekdays": null,
+        "attrAdmission": "FREE"
+      },
+      "jsonLd": [
+        {
+          "@context": "https://schema.org",
+          "@type": "TouristAttraction",
+          "name": "Dosan Park",
+          "description": "Dosan Park honors Ahn Chang-ho’s legacy. It’s quiet and green.",
+          "url": "https://place.1989v.com/en/attractions/2001",
+          "inLanguage": "en",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "K-Tour",
+            "url": "https://place.1989v.com"
+          },
+          "alternateName": "도산공원",
+          "image": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+          "telephone": "02-3700-3900",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "20, Dosan-daero 45-gil, Gangnam-gu, Seoul",
+            "addressCountry": "KR"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 37.5796,
+            "longitude": 126.977
+          },
+          "openingHoursSpecification": {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": [
+              "https://schema.org/Monday",
+              "https://schema.org/Tuesday",
+              "https://schema.org/Wednesday",
+              "https://schema.org/Thursday",
+              "https://schema.org/Friday",
+              "https://schema.org/Saturday",
+              "https://schema.org/Sunday"
+            ]
+          },
+          "isAccessibleForFree": true
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Explore Korea",
+              "item": "https://place.1989v.com/en"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "서울특별시",
+              "item": "https://place.1989v.com/en/regions/11"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Dosan Park",
+              "item": "https://place.1989v.com/en/attractions/2001"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "en-weekend-closed-paid",
+      "input": {
+        "contentId": "126508",
+        "category": "culture",
+        "address": "29, Itaewon-ro, Yongsan-gu, Seoul",
+        "latitude": 37.5796,
+        "longitude": 126.977,
+        "imageUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+        "tel": "02-3700-3900",
+        "sidoCode": "11",
+        "sidoName": "서울특별시",
+        "id": "2002",
+        "lang": "en",
+        "title": "War Memorial of Korea",
+        "titleLocal": null,
+        "overview": "Short.",
+        "closureState": "WEEKLY",
+        "closedWeekdays": [
+          "MON",
+          "SUN"
+        ],
+        "attrAdmission": "PAID"
+      },
+      "jsonLd": [
+        {
+          "@context": "https://schema.org",
+          "@type": "TouristAttraction",
+          "name": "War Memorial of Korea",
+          "description": "Short.",
+          "url": "https://place.1989v.com/en/attractions/2002",
+          "inLanguage": "en",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "K-Tour",
+            "url": "https://place.1989v.com"
+          },
+          "image": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+          "telephone": "02-3700-3900",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "29, Itaewon-ro, Yongsan-gu, Seoul",
+            "addressCountry": "KR"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 37.5796,
+            "longitude": 126.977
+          },
+          "openingHoursSpecification": {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": [
+              "https://schema.org/Tuesday",
+              "https://schema.org/Wednesday",
+              "https://schema.org/Thursday",
+              "https://schema.org/Friday",
+              "https://schema.org/Saturday"
+            ]
+          },
+          "isAccessibleForFree": false
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Explore Korea",
+              "item": "https://place.1989v.com/en"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "서울특별시",
+              "item": "https://place.1989v.com/en/regions/11"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "War Memorial of Korea",
+              "item": "https://place.1989v.com/en/attractions/2002"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "en-legacy-without-attributes",
+      "input": {
+        "contentId": "126508",
+        "category": "culture",
+        "address": "37, Gyedong-gil, Jongno-gu, Seoul",
+        "latitude": 37.5796,
+        "longitude": 126.977,
+        "imageUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+        "tel": "02-3700-3900",
+        "sidoCode": "11",
+        "sidoName": "서울특별시",
+        "id": "2003",
+        "lang": "en",
+        "title": "Bukchon Hanok Village",
+        "titleLocal": "북촌한옥마을",
+        "overview": null
+      },
+      "jsonLd": [
+        {
+          "@context": "https://schema.org",
+          "@type": "TouristAttraction",
+          "name": "Bukchon Hanok Village",
+          "description": "Bukchon Hanok Village is a culture attraction at 37, Gyedong-gil, Jongno-gu, Seoul. See the map, photos, directions and things to do nearby.",
+          "url": "https://place.1989v.com/en/attractions/2003",
+          "inLanguage": "en",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "K-Tour",
+            "url": "https://place.1989v.com"
+          },
+          "alternateName": "북촌한옥마을",
+          "image": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+          "telephone": "02-3700-3900",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "37, Gyedong-gil, Jongno-gu, Seoul",
+            "addressCountry": "KR"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 37.5796,
+            "longitude": 126.977
+          }
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Explore Korea",
+              "item": "https://place.1989v.com/en"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "서울특별시",
+              "item": "https://place.1989v.com/en/regions/11"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Bukchon Hanok Village",
+              "item": "https://place.1989v.com/en/attractions/2003"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

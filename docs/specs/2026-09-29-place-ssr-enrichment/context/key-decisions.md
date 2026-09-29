@@ -7,3 +7,8 @@
 - **분류 이름 원천** (TG2): place `/api/places/attractions/category-codes?lang=` (TourAPI 코드표, sync_lcls_codes.py). 회차당 언어별 한 번.
 - **attributes·region null = 옛 색인 문서** (TG2): 「모두 UNKNOWN」과 구분한다.
 - **발견(미수정)**: `fetchSidoNames` 가 영문 문서에도 국문 이름을 넣어 영문 `sidoName` 이 한글이다.
+- **`X-Render: shell-fallback`** (TG3): 색인 조회 실패로 셸을 낸 응답은 `ssr` 이 아니다 — 운영 확인이 실패를 성공으로 세지 않게.
+- **openingHoursSpecification 은 요일만** (TG3): ALWAYS_OPEN·NO_WEEKLY 는 7일, WEEKLY 는 휴무 제외, UNKNOWN·옛 문서는 생략. 시각은 싣지 않는다.
+- **서버 본문에 반경 주변·편의시설은 없음** (TG3): 관광지당 조회 한 번 규칙. 화면이 그린다.
+- **유형 라벨 표 출처** (TG3): portal-fe 에 표가 없어 place-ingest `sync_tour.py` CONTENT_TYPES + TourAPI 코드표.
+- **상세 응답에 속성(색인 표기)·지역(단건만)** (TG3): 하이드레이션이 서버 JSON-LD 를 다시 쓰므로 화면도 같은 값을 받아야 한다.

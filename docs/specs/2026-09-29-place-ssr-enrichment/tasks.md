@@ -37,13 +37,13 @@ Total Task Groups: 10
 **Dependencies:** Task Group 2
 **Phase:** P2-ssr
 **Required Skills:** Spring MVC, HTML 렌더, 캐시
-- [ ] 3.0 Complete 서버 렌더
-  - [ ] 3.1 Write tests: `AttractionPageRendererTest`(T1) · `AttractionPageControllerTest`(T3) · `AttractionShellProviderTest`(T4) · `AttractionPageServiceTest`(T5) · `AttractionJsonLdParityTest`(T2)
-  - [ ] 3.2 vitest 픽스처 생성기: `copy.mjs` 실제 함수로 `touristAttractionJsonLd`·breadcrumb 골든 JSON 생성(해석됨/UNKNOWN) → search 테스트 리소스, CI 에서 재생성 + `git diff --exit-code`
-  - [ ] 3.3 UseCase 인터페이스 `RenderAttractionPageUseCase` + 포트(`AttractionPageRenderPort`, 셸 포트) + 어댑터 — 블로그 패턴 복사(셸 받기 시간 초과 1초 · 실패 백오프 30초 · 마지막 정상본 · 헬스 표시기)
-  - [ ] 3.4 컨트롤러 `GET /internal/render/attractions/{id}` · `/internal/render/en/attractions/{id}`, id `\d{1,12}`, `X-Render: ssr`, `no-cache, must-revalidate`
-  - [ ] 3.5 본문: 프리렌더 `renderAttractionDetail` 과 같은 구조 + 속성 배지 · 지역 안 위치 · 같은 분류 가까운 곳 · (있으면) 비슷한 곳 · 허브 링크. 이스케이프 순서, `<`, 치환 문자열 비해석
-  - [ ] 3.6 Verify: `./gradlew :search:app:test --tests '*AttractionPage*' --tests '*AttractionShellProviderTest' --tests '*AttractionJsonLdParityTest' && ./gradlew verifyArchitecture`
+- [x] 3.0 Complete 서버 렌더
+  - [x] 3.1 Write tests: `AttractionPageRendererTest`(T1) · `AttractionPageControllerTest`(T3) · `AttractionShellProviderTest`(T4) · `AttractionPageServiceTest`(T5) · `AttractionJsonLdParityTest`(T2)
+  - [x] 3.2 vitest 픽스처 생성기: `copy.mjs` 실제 함수로 `touristAttractionJsonLd`·breadcrumb 골든 JSON 생성(해석됨/UNKNOWN) → search 테스트 리소스, CI 에서 재생성 + `git diff --exit-code`
+  - [x] 3.3 UseCase 인터페이스 `RenderAttractionPageUseCase` + 포트(`AttractionPageRenderPort`, 셸 포트) + 어댑터 — 블로그 패턴 복사(셸 받기 시간 초과 1초 · 실패 백오프 30초 · 마지막 정상본 · 헬스 표시기)
+  - [x] 3.4 컨트롤러 `GET /internal/render/attractions/{id}` · `/internal/render/en/attractions/{id}`, id `\d{1,12}`, `X-Render: ssr`, `no-cache, must-revalidate`
+  - [x] 3.5 본문: 프리렌더 `renderAttractionDetail` 과 같은 구조 + 속성 배지 · 지역 안 위치 · 같은 분류 가까운 곳 · (있으면) 비슷한 곳 · 허브 링크. 이스케이프 순서, `<`, 치환 문자열 비해석
+  - [x] 3.6 Verify: `./gradlew :search:app:test --tests '*AttractionPage*' --tests '*AttractionShellProviderTest' --tests '*AttractionJsonLdParityTest' && ./gradlew verifyArchitecture`
 **Acceptance Criteria:** T1~T5 초록 · 패리티 픽스처 CI 재생성 · 회귀 주입(이스케이프 제거 · data-seo-multi 제거) 빨간불
 
 ### Task Group 4: 배선 · 운영 전환 (portal-fe nginx · k8s)

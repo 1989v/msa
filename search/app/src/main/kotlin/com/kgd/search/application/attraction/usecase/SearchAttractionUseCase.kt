@@ -71,7 +71,33 @@ interface SearchAttractionUseCase {
          * 갱신 여부를 알릴 방법이 없어 크롤러가 전량을 같은 우선순위로 다시 훑는다.
          */
         val modifiedAt: java.time.LocalDateTime? = null,
+        /**
+         * 방문 속성 — 색인 표기 그대로(`ALWAYS_OPEN`·`YES`·`FREE` …). 화면 JSON-LD(`copy.mjs`)가 이 이름으로
+         * 읽는다. 서버 렌더가 심은 JSON-LD 를 하이드레이션이 이 값으로 다시 쓰므로, 여기 빠지면 구글이 JS 를
+         * 실행해 보는 최종 화면에서 영업 요일·무료 여부가 사라진다. 속성이 없던 옛 색인 문서는 null.
+         */
+        val closureState: String? = null,
+        val closedWeekdays: List<String>? = null,
+        val attrParking: String? = null,
+        val attrCreditCard: String? = null,
+        val attrStrollerRental: String? = null,
+        val petPolicy: String? = null,
+        val attrAdmission: String? = null,
+        /** 지역 안 위치 — 단건 조회에만 싣는다(목록 응답을 무겁게 하지 않는다). */
+        val region: Region? = null,
     )
+
+    /** 허브 링크는 `/regions/{sidoCode}{ldongSignguCd}`. */
+    data class Region(
+        val ldongSignguCd: String?,
+        val sigunguName: String?,
+        val typeCount: Int,
+        val categoryCount: Int?,
+        val categoryName: String?,
+        val sameCategoryNearby: List<Nearby>,
+    )
+
+    data class Nearby(val id: String, val title: String, val distanceMeters: Int)
 
     data class Result(
         val searchId: String,

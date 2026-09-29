@@ -620,7 +620,56 @@ export function touristAttractionJsonLd(lang, attraction) {
       longitude: attraction.longitude,
     };
   }
+  // 원문에서 해석된 방문 속성만 싣는다 — 모르는 값을 「무료 아님」「매일 연다」로 바꾸지 않는다.
+  // 서버 렌더(search AttractionPageRenderer)가 같은 규칙으로 같은 필드를 만든다.
+  const openDays = attractionOpenDays(attraction);
+  if (openDays) {
+    // 시각은 해석하지 않는다(복잡한 영업시간은 범위 밖) — 여는 요일만 알린다
+    json.openingHoursSpecification = {
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: openDays.map((day) => `https://schema.org/${day}`),
+    };
+  }
+  if (attraction.attrAdmission === 'FREE') json.isAccessibleForFree = true;
+  else if (attraction.attrAdmission === 'PAID') json.isAccessibleForFree = false;
   return json;
+}
+
+/** 색인 요일 코드(MON…SUN) → schema.org 요일 이름. 순서가 곧 출력 순서다. */
+const SCHEMA_WEEKDAYS = [
+  ['MON', 'Monday'], ['TUE', 'Tuesday'], ['WED', 'Wednesday'], ['THU', 'Thursday'],
+  ['FRI', 'Friday'], ['SAT', 'Saturday'], ['SUN', 'Sunday'],
+];
+
+/**
+ * 정기휴무 상태(`closureState`·`closedWeekdays`, 색인 표기) → 여는 요일. 모르면 null.
+ * `NO_WEEKLY` 는 명절·공휴일만 쉬는 곳이라 요일로는 매일 연다. 휴무 요일이 없는 `WEEKLY` 는
+ * 색인 규칙상 모르는 값이다.
+ */
+function attractionOpenDays(attraction) {
+  const state = attraction.closureState;
+  if (state === 'ALWAYS_OPEN' || state === 'NO_WEEKLY') return SCHEMA_WEEKDAYS.map(([, name]) => name);
+  if (state !== 'WEEKLY') return null;
+  const closed = new Set(
+    (attraction.closedWeekdays ?? []).filter((code) => SCHEMA_WEEKDAYS.some(([c]) => c === code)),
+  );
+  if (closed.size === 0) return null;
+  const open = SCHEMA_WEEKDAYS.filter(([code]) => !closed.has(code)).map(([, name]) => name);
+  return open.length ? open : null;
+}
+
+/**
+ * 관광지 상세 breadcrumb — 허브 › 시도 › 관광지. 화면(AttractionPage)과 서버 렌더가 같은
+ * 세 칸을 심어야 한다: 하이드레이션이 서버가 심은 것을 갈아끼우므로, 어긋나면 렌더 전후로
+ * 지역 단계가 생겼다 사라진다. 시도는 색인이 들고 있는 이름(`sidoName`)을 쓴다 (ADR-0095).
+ */
+export function attractionBreadcrumbJsonLd(lang, attraction) {
+  const sido = attraction.sidoName ? { code: attraction.sidoCode ?? '', name: attraction.sidoName } : null;
+  return breadcrumbJsonLd(lang, [
+    { name: lang === 'en' ? 'Explore Korea' : '한국 관광지 탐색', url: placeUrl(lang) },
+    ...(sido ? [{ name: regionDisplayName(lang, sido), url: regionUrl(lang, sido.code) }] : []),
+    { name: attraction.title, url: attractionUrl(lang, attraction.id) },
+  ]);
 }
 
 /* ─── 개요 본문 정리 ────────────────────────────────────────────────────────

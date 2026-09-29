@@ -2,9 +2,11 @@
 
 - 작업 위치: 워크트리 `<scratchpad>/wt2` (detached, origin/main 기준). 공유 트리는 건드리지 않는다.
 - 커밋: `git commit -- <경로>` 로 경로만. 푸시는 `gh auth switch --user 1989v` → push → `kwongd` 복귀를 한 명령 안에서.
-- 현재: TG2 (재색인 확장)
+- 현재: TG4 (배선 · 운영 전환)
 - 완료: 스펙·ADR·tasks (75ee25fa) · TG1 파서·집계기 (테스트 23 · 회귀 주입 3)
-- 다음: TG2 → 배포 ①
+- 완료 추가: TG2 재색인 확장 (푸시 695556c5, 배포 ① 재색인 수동 실행) · 영문 시도 이름 · TG3 서버 렌더 + 상세 응답 필드
+- 다음: TG4 → 배포 ② (nginx 프록시·네트워크 정책)
+- TG4 연결: `GET http://search:8083/internal/render/attractions/{id}` · `/internal/render/en/attractions/{id}` · id `\d{1,12}` · 헤더 `X-Render: ssr|shell-fallback` · 셸 `http://portal-fe/index.html`
 - TG1 인계: 파서 입력 `AttractionAttributeSource(restDate, parking, useFee, petAcmpyType, intro: Map)` — introRaw JSON 파싱은 batch. `RegionAggregator.aggregate(List<RegionProjection>)` → id 키 `RegionPlacement`. 「오늘 정기휴무 아님」 필터에는 closure 상태 keyword 가 필요.
 
 ## 실측 원문 (implementation/attr-raw-values.json, 국·영 각 2,000건 표본)

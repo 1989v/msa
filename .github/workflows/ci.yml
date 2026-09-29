@@ -278,6 +278,11 @@ jobs:
         working-directory: portal-fe
         run: npx vitest run
 
+      # 위 vitest 가 copy.mjs 로 관광지 JSON-LD 골든 픽스처를 다시 쓴다. 커밋된 것과 다르면
+      # search 의 패리티 테스트(AttractionJsonLdParityTest)가 옛 사본과 비교하고 있다는 뜻이다.
+      - name: JSON-LD golden fixture is current
+        run: git diff --exit-code -- search/app/src/test/resources/render/jsonld-golden.json
+
   yaml-validate:
     name: application*.yml syntax check
     runs-on: ubuntu-latest

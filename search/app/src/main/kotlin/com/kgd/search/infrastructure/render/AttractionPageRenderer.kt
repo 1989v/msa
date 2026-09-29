@@ -1,0 +1,475 @@
+package com.kgd.search.infrastructure.render
+
+import com.kgd.search.application.attraction.port.AttractionPageRenderPort
+import com.kgd.search.domain.attraction.model.Admission
+import com.kgd.search.domain.attraction.model.AttractionAttributes
+import com.kgd.search.domain.attraction.model.AttractionDocument
+import com.kgd.search.domain.attraction.model.AttractionRegion
+import com.kgd.search.domain.attraction.model.Availability
+import com.kgd.search.domain.attraction.model.PetPolicy
+import com.kgd.search.domain.attraction.model.RegularClosure
+import com.kgd.search.infrastructure.config.AttractionRenderProperties
+import com.kgd.search.infrastructure.render.AttractionSeoText.clampDescription
+import com.kgd.search.infrastructure.render.AttractionSeoText.escapeHtml
+import com.kgd.search.infrastructure.render.AttractionSeoText.jsTrim
+import com.kgd.search.infrastructure.render.AttractionSeoText.sourceText
+import org.springframework.stereotype.Component
+import tools.jackson.databind.ObjectMapper
+import java.time.DayOfWeek
+import java.util.Locale
+
+/**
+ * 관광지 상세 HTML 을 조립한다 (ADR-0103).
+ *
+ * 관광지 프리렌더(`portal-fe/scripts/prerender-seo.mjs` `renderAttractionDetail`)·블로그 서버 렌더와
+ * **같은 셸 계약**이다 — `<!--seo:start-->…<!--seo:end-->` 를 메타로 갈고 `#root` 에 크롤러용 본문을 넣는다.
+ * 메타·JSON-LD 는 화면(`AttractionPage` + `useSeo`)이 하이드레이션 때 같은 규칙으로 다시 만들므로,
+ * 규칙의 원본은 `portal-fe/src/seo/copy.mjs` 다(`attractionMeta`·`touristAttractionJsonLd`·
+ * `attractionBreadcrumbJsonLd`). JSON-LD 가 같은지는 `AttractionJsonLdParityTest` 가 본다.
+ *
+ * 원문은 모두 [sourceText](태그 제거 → 디코드) 뒤 [escapeHtml] 을 거쳐 나간다. 링크는 내부 경로만 만든다.
+ */
+@Component
+class AttractionPageRenderer(
+    properties: AttractionRenderProperties,
+    private val objectMapper: ObjectMapper,
+) : AttractionPageRenderPort {
+    private val origin = properties.origin.trimEnd('/')
+
+    override fun attractionPage(shell: String?, doc: AttractionDocument): String {
+        val lang = if (doc.lang == EN) EN else KO
+        val meta = attractionMeta(lang, doc)
+        val canonical = attractionUrl(lang, doc.id)
+        val image = doc.imageUrl?.takeIf { PHOTO.containsMatchIn(it) } ?: "$origin/og/place.png"
+        val head = metaTags(
+            lang = lang,
+            title = meta.title,
+            description = meta.description,
+            canonical = canonical,
+            image = image,
+            imageAlt = meta.heading,
+            // 개요가 없으면 제목·주소·좌표뿐인 얇은 문서다 — 화면(useSeo)과 같은 규칙(`!attraction.overview`)
+            noindex = doc.overview.isNullOrEmpty(),
+            // hreflang 없음 — TourAPI 국문/영문은 별도 콘텐츠라 짝을 모른다 (ADR-0062 §8)
+            jsonLd = listOf(touristAttractionJsonLd(lang, doc, meta), breadcrumbJsonLd(lang, doc)),
+        )
+        return compose(shell, lang, head, shellBody(attractionBody(lang, doc, meta)))
+    }
+
+    /** 요청 id 를 쓰지 않는다 — 경로에서 온 값을 페이지에 되돌리지 않는다. */
+    override fun notFoundPage(shell: String?, lang: String): String {
+        val l = if (lang == EN) EN else KO
+        val hub = placeUrl(l)
+        val title = if (l == EN) "Attraction not found | ${brand(l)}" else "찾을 수 없는 관광지 | ${brand(l)}"
+        val head = metaTags(
+            lang = l,
+            title = title,
+            description = if (l == EN) "The attraction you requested could not be found." else "요청한 관광지를 찾을 수 없습니다.",
+            canonical = hub,
+            image = null,
+            imageAlt = null,
+            noindex = true,
+            jsonLd = emptyList(),
+        )
+        val heading = if (l == EN) "Attraction not found" else "찾을 수 없는 관광지"
+        val back = if (l == EN) "Explore Korea" else "한국 관광지 탐색으로"
+        return compose(shell, l, head, shellBody("<h1>$heading</h1><p><a href=\"${placePath(l)}\">$back</a></p>"))
+    }
+
+    override fun fallbackPage(shell: String?): String = shell ?: MINIMAL_SHELL
+
+    // ─── 조립 ──────────────────────────────────────────────────────────────
+
+    private fun compose(shell: String?, lang: String, head: String, body: String): String {
+        if (shell == null) return minimalHtml(lang, head, body)
+        // 치환 문자열을 해석하지 않는 방식만 쓴다 — 원문의 `$1` 이 그룹 참조가 되면 예외나 내용 변형이 난다
+        val withMeta = SEO_BLOCK.replace(shell) { "<!--seo:server-->\n    $head" }
+        return withMeta
+            .replaceFirst(HTML_KO, "<html lang=\"$lang\">")
+            .replaceFirst(ROOT_DIV, "<div id=\"root\">$body</div>")
+    }
+
+    /** 셸을 한 번도 받지 못했을 때(콜드 스타트 + portal-fe 미기동). SPA 는 없지만 본문은 읽힌다. */
+    private fun minimalHtml(lang: String, head: String, body: String) = """
+        <!doctype html>
+        <html lang="$lang">
+          <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            $head
+          </head>
+          <body><div id="root">$body</div></body>
+        </html>
+    """.trimIndent()
+
+    /** prerender-seo.mjs `metaTags` 와 같은 줄·순서 (hreflang 없음). 속성값도 모두 이스케이프한다. */
+    private fun metaTags(
+        lang: String,
+        title: String,
+        description: String,
+        canonical: String,
+        image: String?,
+        imageAlt: String?,
+        noindex: Boolean,
+        jsonLd: List<Map<String, Any?>>,
+    ): String {
+        val lines = mutableListOf(
+            "<title>${escapeHtml(title)}</title>",
+            """<meta name="description" content="${escapeHtml(description)}" />""",
+            """<link rel="canonical" href="${escapeHtml(canonical)}" />""",
+            """<meta property="og:type" content="website" />""",
+            """<meta property="og:site_name" content="${escapeHtml(brand(lang))}" />""",
+            """<meta property="og:title" content="${escapeHtml(title)}" />""",
+            """<meta property="og:description" content="${escapeHtml(description)}" />""",
+            """<meta property="og:url" content="${escapeHtml(canonical)}" />""",
+            """<meta property="og:locale" content="${if (lang == EN) "en_US" else "ko_KR"}" />""",
+            """<meta name="twitter:card" content="${if (image != null) "summary_large_image" else "summary"}" />""",
+            """<meta name="twitter:title" content="${escapeHtml(title)}" />""",
+            """<meta name="twitter:description" content="${escapeHtml(description)}" />""",
+        )
+        if (noindex) lines += """<meta name="robots" content="noindex, follow" />"""
+        if (image != null) {
+            val src = escapeHtml(image)
+            lines += """<meta property="og:image" content="$src" />"""
+            lines += """<meta property="og:image:secure_url" content="$src" />"""
+            imageMimeType(image)?.let { lines += """<meta property="og:image:type" content="$it" />""" }
+            lines += """<meta property="og:image:width" content="$OG_IMAGE_W" />"""
+            lines += """<meta property="og:image:height" content="$OG_IMAGE_H" />"""
+            imageAlt?.let { lines += """<meta property="og:image:alt" content="${escapeHtml(it)}" />""" }
+            lines += """<meta name="twitter:image" content="$src" />"""
+            imageAlt?.let { lines += """<meta name="twitter:image:alt" content="${escapeHtml(it)}" />""" }
+        }
+        jsonLd.forEach {
+            // </script> 가 JSON 문자열에 섞이면 파서가 조기 종료된다
+            val json = objectMapper.writeValueAsString(it).replace("<", "\\u003c")
+            // useSeo 가 「내가 관리하는 태그」를 고르는 표시 — 없으면 하이드레이션이 같은 블록을 한 벌 더 붙인다
+            lines += """<script type="application/ld+json" $SEO_MULTI>$json</script>"""
+        }
+        return lines.joinToString("\n    ")
+    }
+
+    // ─── 메타 · 구조화 데이터 (copy.mjs 규칙) ─────────────────────────────
+
+    private data class Meta(val title: String, val description: String, val heading: String)
+
+    /** copy.mjs `attractionMeta` */
+    private fun attractionMeta(lang: String, doc: AttractionDocument): Meta {
+        val name = doc.title
+        val label = categoryLabel(doc.category, lang)
+        val where = doc.address.orEmpty()
+        val overview = sourceText(doc.overview)
+        val fallback = if (lang == EN) {
+            "$name is a ${label.lowercase(Locale.ROOT)} attraction${if (where.isNotEmpty()) " at $where" else " in South Korea"}. " +
+                "See the map, photos, directions and things to do nearby."
+        } else {
+            "$name${if (where.isNotEmpty()) " — $where" else ""}에 있는 $label 관광지입니다. " +
+                "주소·지도·사진과 가는 길, 주변 가볼 만한 곳을 함께 확인하세요."
+        }
+        return Meta(
+            title = if (lang == EN) {
+                "Visit $name — Map, Photos & Things to Do Nearby | $BRAND_EN"
+            } else {
+                "$name 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | $BRAND_KO"
+            },
+            description = clampDescription(if (overview.length >= 60) overview else fallback),
+            heading = name,
+        )
+    }
+
+    /** copy.mjs `touristAttractionJsonLd` — 키 순서까지 같게 둔다 */
+    private fun touristAttractionJsonLd(lang: String, doc: AttractionDocument, meta: Meta): Map<String, Any?> = buildMap {
+        put("@context", "https://schema.org")
+        put("@type", "TouristAttraction")
+        put("name", doc.title)
+        put("description", clampDescription(sourceText(doc.overview).ifEmpty { meta.description }, 300))
+        put("url", attractionUrl(lang, doc.id))
+        put("inLanguage", lang)
+        put("isPartOf", mapOf("@type" to "WebSite", "name" to brand(lang), "url" to origin))
+        val local = jsTrim(doc.titleLocal.orEmpty())
+        if (local.isNotEmpty() && local != doc.title) put("alternateName", local)
+        if (!doc.imageUrl.isNullOrEmpty()) put("image", doc.imageUrl)
+        if (!doc.tel.isNullOrEmpty()) put("telephone", doc.tel)
+        if (!doc.address.isNullOrEmpty()) {
+            put("address", mapOf("@type" to "PostalAddress", "streetAddress" to doc.address, "addressCountry" to "KR"))
+        }
+        if (isTruthy(doc.latitude) && isTruthy(doc.longitude)) {
+            put("geo", mapOf("@type" to "GeoCoordinates", "latitude" to doc.latitude, "longitude" to doc.longitude))
+        }
+        // 해석된 속성만 — 모르는 값을 「매일 연다」「유료」로 바꾸지 않는다
+        openDays(doc.attributes)?.let { days ->
+            put(
+                "openingHoursSpecification",
+                mapOf(
+                    "@type" to "OpeningHoursSpecification",
+                    "dayOfWeek" to days.map { "https://schema.org/${schemaDayName(it)}" },
+                ),
+            )
+        }
+        when (doc.attributes?.freeAdmission) {
+            Admission.FREE -> put("isAccessibleForFree", true)
+            Admission.PAID -> put("isAccessibleForFree", false)
+            Admission.UNKNOWN, null -> Unit
+        }
+    }
+
+    /** copy.mjs `attractionBreadcrumbJsonLd` — 허브 › 시도 › 관광지 */
+    private fun breadcrumbJsonLd(lang: String, doc: AttractionDocument): Map<String, Any?> {
+        val trail = buildList {
+            add(hubName(lang) to placeUrl(lang))
+            if (!doc.sidoName.isNullOrEmpty()) add(doc.sidoName to regionUrl(lang, doc.ldongRegnCd.orEmpty()))
+            add(doc.title to attractionUrl(lang, doc.id))
+        }
+        return mapOf(
+            "@context" to "https://schema.org",
+            "@type" to "BreadcrumbList",
+            "itemListElement" to trail.mapIndexed { index, (name, url) ->
+                mapOf("@type" to "ListItem", "position" to index + 1, "name" to name, "item" to url)
+            },
+        )
+    }
+
+    /**
+     * 여는 요일(월→일). 시각은 해석하지 않으므로 요일만 알린다. 매주 쉬는 요일이 없는 곳
+     * (연중무휴 · 명절만 휴무)은 7일 전부, 모르면 null.
+     */
+    private fun openDays(attributes: AttractionAttributes?): List<DayOfWeek>? =
+        when (val closure = attributes?.regularClosure) {
+            RegularClosure.AlwaysOpen -> DayOfWeek.entries
+            is RegularClosure.Weekly -> DayOfWeek.entries.filterNot { it in closure.closedDays }.ifEmpty { null }
+            RegularClosure.Unknown, null -> null
+        }
+
+    // ─── 크롤러용 본문 ──────────────────────────────────────────────────────
+
+    /**
+     * prerender `renderAttractionDetail` 과 같은 뼈대에 스펙 순서대로 새 절을 잇는다:
+     * 개요 · 방문 정보 원문 → 방문 정보 배지 → 지역 안 위치 → 같은 분류 가까운 곳.
+     * 반경 주변 관광지·편의시설은 조회가 더 필요해 SPA 가 그린다(관광지당 색인 조회는 한 번).
+     */
+    private fun attractionBody(lang: String, doc: AttractionDocument, meta: Meta): String = buildString {
+        val hub = hubName(lang)
+        append("<nav><a href=\"${placePath(lang)}\">${escapeHtml(hub)}</a>")
+        if (!doc.sidoName.isNullOrEmpty()) {
+            append(" › <a href=\"${escapeHtml(regionPath(lang, doc.ldongRegnCd.orEmpty()))}\">${escapeHtml(doc.sidoName)}</a>")
+        }
+        append("</nav>")
+        append("<h1>${escapeHtml(meta.heading)}</h1>")
+        val local = jsTrim(doc.titleLocal.orEmpty())
+        if (local.isNotEmpty() && local != doc.title) append("<p>${escapeHtml(local)}</p>")
+        append("<p>${escapeHtml(listOfNotNull(categoryLabel(doc.category, lang), doc.address?.takeIf { it.isNotEmpty() }).joinToString(" · "))}</p>")
+        if (!doc.tel.isNullOrEmpty()) append("<p>${escapeHtml(doc.tel)}</p>")
+        append("<p>${escapeHtml(sourceText(doc.overview))}</p>")
+        append(visitorInfo(lang, doc))
+        append(badges(lang, doc.attributes))
+        doc.region?.let { append(regionSection(lang, doc, it)) }
+    }
+
+    /** prerender `visitorInfoHtml` — 원천이 안 준 줄은 그리지 않는다 */
+    private fun visitorInfo(lang: String, doc: AttractionDocument): String {
+        val labels = if (lang == EN) {
+            listOf("Hours" to doc.useTime, "Closed" to doc.restDate, "Admission" to doc.useFee, "Parking" to doc.parking)
+        } else {
+            listOf("이용시간" to doc.useTime, "쉬는날" to doc.restDate, "이용요금" to doc.useFee, "주차" to doc.parking)
+        }
+        val rows = labels
+            .map { (label, raw) -> label to sourceText(raw) }
+            .filter { (_, value) -> value.isNotEmpty() }
+            .joinToString("") { (label, value) -> "<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>" }
+        if (rows.isEmpty()) return ""
+        return "<h2>${if (lang == EN) "Visitor info" else "이용 안내"}</h2><dl>$rows</dl>"
+    }
+
+    /** 해석된 값만 배지로. UNKNOWN 은 그리지 않는다 — 「모른다」를 「아니다」로 읽히게 하지 않는다. */
+    private fun badges(lang: String, attributes: AttractionAttributes?): String {
+        if (attributes == null) return ""
+        val en = lang == EN
+        val items = buildList {
+            when (val closure = attributes.regularClosure) {
+                RegularClosure.AlwaysOpen -> add(if (en) "Open every day" else "연중무휴")
+                is RegularClosure.Weekly -> add(weeklyClosureLabel(en, closure.closedDays))
+                RegularClosure.Unknown -> Unit
+            }
+            availability(attributes.parking, if (en) "Parking available" else "주차 가능", if (en) "No parking" else "주차 불가")
+                ?.let(::add)
+            when (attributes.petPolicy) {
+                PetPolicy.ALLOWED -> add(if (en) "Pets allowed" else "반려동물 동반 가능")
+                PetPolicy.PARTIAL -> add(if (en) "Pets allowed in some areas" else "반려동물 일부 구역 동반 가능")
+                PetPolicy.UNKNOWN -> Unit
+            }
+            availability(
+                attributes.creditCard,
+                if (en) "Credit cards accepted" else "신용카드 가능",
+                if (en) "Credit cards not accepted" else "신용카드 불가",
+            )?.let(::add)
+            availability(
+                attributes.strollerRental,
+                if (en) "Stroller rental" else "유모차 대여",
+                if (en) "No stroller rental" else "유모차 대여 없음",
+            )?.let(::add)
+            when (attributes.freeAdmission) {
+                Admission.FREE -> add(if (en) "Free admission" else "입장 무료")
+                Admission.PAID -> add(if (en) "Paid admission" else "입장 유료")
+                Admission.UNKNOWN -> Unit
+            }
+        }
+        if (items.isEmpty()) return ""
+        val list = items.joinToString("") { "<li>${escapeHtml(it)}</li>" }
+        return "<h2>${if (en) "At a glance" else "방문 정보 요약"}</h2><ul>$list</ul>"
+    }
+
+    private fun availability(value: Availability, yes: String, no: String): String? = when (value) {
+        Availability.YES -> yes
+        Availability.NO -> no
+        Availability.UNKNOWN -> null
+    }
+
+    private fun weeklyClosureLabel(en: Boolean, days: Set<DayOfWeek>): String {
+        if (days.isEmpty()) return if (en) "No weekly closing day" else "매주 쉬는 요일 없음"
+        val sorted = days.sorted()
+        return if (en) {
+            "Closed on " + sorted.joinToString(", ") { schemaDayName(it) + "s" }
+        } else {
+            "매주 " + sorted.joinToString("·") { KO_DAY.getValue(it) } + "요일 휴무"
+        }
+    }
+
+    /**
+     * 지역 안 위치 — 「{시군구} {유형} N곳 중 {분류} M곳」 / 「{분류} {M} of {N} {유형} in {시군구}」 +
+     * 시군구 허브 링크 + 같은 분류 가까운 곳.
+     */
+    private fun regionSection(lang: String, doc: AttractionDocument, region: AttractionRegion): String = buildString {
+        val en = lang == EN
+        val place = region.sigunguName?.takeIf { it.isNotBlank() } ?: if (en) "this district" else "이 지역"
+        val type = contentTypeLabel(doc.contentTypeId, lang)
+        val category = region.categoryName?.takeIf { it.isNotBlank() }
+        val phrase = when {
+            category != null && region.categoryCount != null && en ->
+                "$category ${region.categoryCount} of ${region.typeCount} $type in $place"
+            category != null && region.categoryCount != null ->
+                "$place $type ${region.typeCount}곳 중 $category ${region.categoryCount}곳"
+            en -> "${region.typeCount} $type in $place"
+            else -> "$place $type ${region.typeCount}곳"
+        }
+        append("<h2>${if (en) "In the area" else "지역 안 위치"}</h2>")
+        append("<p>${escapeHtml(phrase)}</p>")
+        val regn = doc.ldongRegnCd?.takeIf { it.isNotBlank() }
+        val signgu = doc.ldongSignguCd?.takeIf { it.isNotBlank() }
+        if (regn != null && signgu != null) {
+            val label = if (en) "Explore $place" else "$place 둘러보기"
+            append("<p><a href=\"${escapeHtml(regionPath(lang, regn + signgu))}\">${escapeHtml(label)}</a></p>")
+        }
+        if (region.sameCategoryNearby.isNotEmpty()) {
+            val items = region.sameCategoryNearby.joinToString("") { near ->
+                "<li><a href=\"${escapeHtml(attractionPath(lang, near.id))}\">${escapeHtml(near.title)}</a> · ${distance(near.distanceMeters)}</li>"
+            }
+            append("<h2>${if (en) "Similar places nearby" else "같은 분류 가까운 곳"}</h2><ul>$items</ul>")
+        }
+    }
+
+    private fun distance(meters: Int): String =
+        if (meters < 1_000) "${meters}m" else String.format(Locale.ROOT, "%.1fkm", meters / 1_000.0)
+
+    /** prerender `shellBody` — SPA 가 마운트되면 통째로 교체되는 임시 본문. 바닥글은 호스트 사이를 잇는다 */
+    private fun shellBody(inner: String): String {
+        val footer = siteLinks().joinToString(" · ") { (href, label) -> "<a href=\"$href\">${escapeHtml(label)}</a>" }
+        return "<div style=\"max-width:1080px;margin:0 auto;padding:32px 20px;color:#dce4f5;" +
+            "font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif\">" +
+            "$inner<footer><nav>$footer</nav></footer></div>"
+    }
+
+    /** prerender `SITE_LINKS` */
+    private fun siteLinks() = listOf(
+        "https://1989v.com" to "1989v",
+        "https://game.1989v.com" to "무료 웹게임",
+        origin to "한국 관광지 검색",
+        "https://blog.1989v.com" to "블로그",
+        "https://rank.1989v.com" to "랭킹 리더보드",
+        "https://deal.1989v.com" to "혜택 링크 허브",
+    )
+
+    // ─── 주소 (copy.mjs placePath·attractionPath·regionPath) ────────────────
+
+    private fun placePath(lang: String, sub: String = ""): String = "${if (lang == EN) "/en" else ""}$sub".ifEmpty { "/" }
+    private fun placeUrl(lang: String) = origin + placePath(lang)
+    private fun attractionPath(lang: String, id: String) = placePath(lang, "/attractions/$id")
+    private fun attractionUrl(lang: String, id: String) = origin + attractionPath(lang, id)
+    private fun regionPath(lang: String, code: String) = placePath(lang, "/regions/$code")
+    private fun regionUrl(lang: String, code: String) = origin + regionPath(lang, code)
+
+    private fun brand(lang: String) = if (lang == EN) BRAND_EN else BRAND_KO
+    private fun hubName(lang: String) = if (lang == EN) "Explore Korea" else "한국 관광지 탐색"
+
+    /** copy.mjs `placeCategoryLabel` */
+    private fun categoryLabel(category: String?, lang: String): String =
+        (if (lang == EN) CATEGORY_EN else CATEGORY_KO)[category] ?: if (lang == EN) "Attraction" else "관광지"
+
+    private fun contentTypeLabel(contentTypeId: String?, lang: String): String =
+        (if (lang == EN) CONTENT_TYPE_EN else CONTENT_TYPE_KO)[contentTypeId] ?: if (lang == EN) "places" else "관광지"
+
+    private fun schemaDayName(day: DayOfWeek) = day.getDisplayName(java.time.format.TextStyle.FULL, Locale.ENGLISH)
+
+    /** JS 의 `x && …` 판정 — 0 과 NaN 은 거짓 */
+    private fun isTruthy(value: Double) = value != 0.0 && !value.isNaN()
+
+    /** prerender `imageMimeType` — 확장자에서 읽는다 */
+    private fun imageMimeType(url: String): String? {
+        val ext = MIME_EXT.find(url.substringBefore('?'))?.groupValues?.get(1)?.lowercase(Locale.ROOT) ?: return null
+        return when (ext) {
+            "jpg", "jpeg" -> "image/jpeg"
+            "png", "webp", "gif" -> "image/$ext"
+            else -> null
+        }
+    }
+
+    private companion object {
+        const val KO = "ko"
+        const val EN = "en"
+        const val BRAND_KO = "K-관광"
+        const val BRAND_EN = "K-Tour"
+
+        /** portal-fe `copy.mjs` 의 SEO_MULTI_ATTR 과 같은 값이어야 한다 */
+        const val SEO_MULTI = "data-seo-multi"
+        const val OG_IMAGE_W = 1200
+        const val OG_IMAGE_H = 630
+
+        val SEO_BLOCK = Regex("<!--seo:start-->[\\s\\S]*?<!--seo:end-->")
+        const val HTML_KO = "<html lang=\"ko\">"
+        const val ROOT_DIV = "<div id=\"root\"></div>"
+        val PHOTO = Regex("\\.(png|jpe?g|webp)$", RegexOption.IGNORE_CASE)
+        val MIME_EXT = Regex("\\.([a-z0-9]+)$", RegexOption.IGNORE_CASE)
+
+        const val MINIMAL_SHELL =
+            "<!doctype html>\n<html lang=\"ko\"><head><meta charset=\"UTF-8\" /><title>1989v</title></head>" +
+                "<body><div id=\"root\"></div></body></html>"
+
+        /** copy.mjs `PLACE_CATEGORY_KO` · `PLACE_CATEGORY_EN` */
+        val CATEGORY_KO = mapOf(
+            "nature" to "자연", "history" to "역사", "culture" to "문화", "leisure" to "레포츠",
+            "shopping" to "쇼핑", "food" to "음식", "stay" to "숙박", "etc" to "기타",
+        )
+        val CATEGORY_EN = mapOf(
+            "nature" to "Nature", "history" to "History", "culture" to "Culture", "leisure" to "Leisure",
+            "shopping" to "Shopping", "food" to "Food", "stay" to "Stay", "etc" to "Etc",
+        )
+
+        /**
+         * 원천 관광 유형(contentTypeId) 이름 — 지역 안 위치 문구의 「{유형}」.
+         * 코드는 TourAPI 가 고정한 값이고 국문·영문 서비스의 체계가 다르다
+         * (`place/ingest/src/sync_tour.py` 의 CONTENT_TYPES: 관광지 12/76 · 문화시설 14/78 · 레포츠 28/75 ·
+         * 쇼핑 38/79 · 음식 39/82). 화면(portal-fe)에는 아직 같은 표가 없다.
+         */
+        val CONTENT_TYPE_KO = mapOf(
+            "12" to "관광지", "14" to "문화시설", "15" to "축제·행사", "25" to "여행코스",
+            "28" to "레포츠", "32" to "숙박", "38" to "쇼핑", "39" to "음식점",
+        )
+        val CONTENT_TYPE_EN = mapOf(
+            "76" to "attractions", "78" to "cultural sites", "85" to "festivals", "75" to "leisure spots",
+            "80" to "places to stay", "79" to "shopping spots", "82" to "restaurants", "77" to "transport hubs",
+        )
+
+        val KO_DAY = mapOf(
+            DayOfWeek.MONDAY to "월", DayOfWeek.TUESDAY to "화", DayOfWeek.WEDNESDAY to "수",
+            DayOfWeek.THURSDAY to "목", DayOfWeek.FRIDAY to "금", DayOfWeek.SATURDAY to "토", DayOfWeek.SUNDAY to "일",
+        )
+    }
+}

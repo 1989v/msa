@@ -12,14 +12,11 @@ import {
   PLACE_ORIGIN,
   attractionMeta,
   attractionPath,
+  attractionBreadcrumbJsonLd,
   attractionUrl,
-  breadcrumbJsonLd,
   placeBrand,
   placeCategoryLabel,
   placePath,
-  placeUrl,
-  regionDisplayName,
-  regionUrl,
   touristAttractionJsonLd,
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
@@ -132,14 +129,6 @@ export default function AttractionPage() {
   // 같은 어긋난 주소가 들어올 수 있고, 그때 canonical 이 올바른 쪽을 가리켜야 한다.
   const docLang: PlaceLang = attraction?.lang ?? lang;
 
-  /*
-   * breadcrumb 의 지역 단계. 예전에는 시도 285행 목록을 받아 코드 하나를 이름으로 바꿨다 —
-   * 검색에서 상세로 바로 들어오는 방문마다 DB 를 한 번 쳤다. 이제 색인이 이름을 들고 있다
-   * (ADR-0095).
-   */
-  const sido = attraction?.sidoName
-    ? { code: attraction.sidoCode ?? '', name: attraction.sidoName }
-    : null;
   const meta = attraction ? attractionMeta(docLang, attraction) : null;
   useSeo(
     attraction && meta
@@ -158,16 +147,10 @@ export default function AttractionPage() {
           // 잘못된 대체 주소를 선언하느니 걸지 않는다. 허브(/ ↔ /en)만 진짜 번역쌍이다.
           jsonLd: [
             touristAttractionJsonLd(docLang, attraction),
-            // 지역 단계는 프리렌더(renderAttractionDetail)와 같은 세 칸이어야 한다.
-            // 하이드레이션이 프리렌더가 심은 breadcrumb 을 갈아끼우므로, 여기서 빠뜨리면
-            // 정적 HTML 에 있던 지역 단계가 렌더 후 사라진다.
-            breadcrumbJsonLd(docLang, [
-              { name: docLang === 'en' ? 'Explore Korea' : '한국 관광지 탐색', url: placeUrl(docLang) },
-              ...(sido
-                ? [{ name: regionDisplayName(docLang, sido), url: regionUrl(docLang, sido.code) }]
-                : []),
-              { name: meta.heading, url: attractionUrl(docLang, attraction.id) },
-            ]),
+            // 세 칸(허브 › 시도 › 관광지)은 서버 렌더와 같은 함수가 만든다 — 하이드레이션이
+            // 서버가 심은 breadcrumb 을 갈아끼우므로 어긋나면 렌더 전후로 지역 단계가 바뀐다.
+            // 시도 이름은 색인이 들고 있다 (ADR-0095).
+            attractionBreadcrumbJsonLd(docLang, attraction),
           ],
         }
       : // 조회 실패·로딩 중에는 메타를 건드리지 않는다. 실패에 noindex 를 심으면 게이트웨이가

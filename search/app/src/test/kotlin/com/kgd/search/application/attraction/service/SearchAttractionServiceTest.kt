@@ -6,6 +6,13 @@ import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.application.queryvector.usecase.ResolveQueryVectorUseCase
 import com.kgd.search.domain.attraction.model.AttractionDocument
+import com.kgd.search.domain.attraction.model.Admission
+import com.kgd.search.domain.attraction.model.AttractionAttributes
+import com.kgd.search.domain.attraction.model.AttractionRegion
+import com.kgd.search.domain.attraction.model.Availability
+import com.kgd.search.domain.attraction.model.NearbyPlace
+import com.kgd.search.domain.attraction.model.PetPolicy
+import com.kgd.search.domain.attraction.model.RegularClosure
 import com.kgd.search.domain.query.model.QueryIntent
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
 import io.kotest.core.spec.style.BehaviorSpec
@@ -174,6 +181,34 @@ class SearchAttractionServiceTest : BehaviorSpec({
             then("overview 전문을 그대로 반환해야 한다") {
                 every { searchPort.findById("1") } returns document(overview = "가".repeat(300))
                 service.findById("1")!!.overview!!.length shouldBe 300
+            }
+        }
+        // 화면 JSON-LD 가 이 필드로 영업 요일·무료 여부를 만든다 — 빠지면 하이드레이션이 서버 렌더의 값을 지운다
+        `when`("속성·지역이 색인된 문서면") {
+            then("색인 표기 그대로의 속성과 지역 안 위치를 싣는다") {
+                every { searchPort.findById("1") } returns document().copy(
+                    ldongRegnCd = "11", ldongSignguCd = "110",
+                    attributes = AttractionAttributes(
+                        regularClosure = RegularClosure.Weekly(setOf(java.time.DayOfWeek.MONDAY)),
+                        parking = Availability.YES, petPolicy = PetPolicy.PARTIAL,
+                        creditCard = Availability.UNKNOWN, strollerRental = Availability.NO,
+                        freeAdmission = Admission.FREE,
+                    ),
+                    region = AttractionRegion(
+                        sigunguName = "종로구", typeCount = 40, categoryCount = 6, categoryName = "고궁",
+                        sameCategoryNearby = listOf(NearbyPlace("2", "창덕궁", 1200)),
+                    ),
+                )
+                val r = service.findById("1")!!
+                r.closureState shouldBe "WEEKLY"
+                r.closedWeekdays shouldBe listOf("MON")
+                r.attrParking shouldBe "YES"
+                r.petPolicy shouldBe "PARTIAL"
+                r.attrCreditCard shouldBe "UNKNOWN"
+                r.attrAdmission shouldBe "FREE"
+                r.region!!.ldongSignguCd shouldBe "110"
+                r.region!!.categoryCount shouldBe 6
+                r.region!!.sameCategoryNearby.single().title shouldBe "창덕궁"
             }
         }
     }
