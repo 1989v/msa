@@ -128,6 +128,28 @@ class PlaceApiClientTest : BehaviorSpec({
         }
     }
 
+    Given("place 가 시도 목록을 돌려줄 때 (name 은 언어와 무관하게 국문)") {
+        val body = """
+            {"success":true,"data":{"regions":[
+              {"code":"11","name":"서울특별시","nameEn":"Seoul"},
+              {"code":"26","name":"부산광역시","nameEn":""}
+            ]}}
+            """.trimIndent()
+
+        When("영문 이름표를 만들면") {
+            val names = kotlinx.coroutines.runBlocking { clientReturning(body).fetchSidoNames("en") }
+            Then("nameEn 을 쓰고, 영문명이 없으면 국문명이어야 한다") {
+                names shouldBe mapOf("11" to "Seoul", "26" to "부산광역시")
+            }
+        }
+        When("국문 이름표를 만들면") {
+            val names = kotlinx.coroutines.runBlocking { clientReturning(body).fetchSidoNames("ko") }
+            Then("name 을 써야 한다") {
+                names shouldBe mapOf("11" to "서울특별시", "26" to "부산광역시")
+            }
+        }
+    }
+
     Given("place 가 분류 코드표를 돌려줄 때") {
         val client = clientReturning(
             """

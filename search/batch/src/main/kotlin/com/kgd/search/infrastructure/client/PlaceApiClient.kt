@@ -206,7 +206,10 @@ class PlaceApiClient(
         return items.mapNotNull { r ->
             val code = r["code"] as? String ?: return@mapNotNull null
             val name = (r["name"] as? String)?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
-            code to name
+            // place 는 lang 과 무관하게 국문 name 을 준다. 영문 문서는 시군구와 같은 규칙(`nameEn || name`)으로
+            // 고른다 — 국문을 그대로 쓰면 영문 상세에 시도 이름만 한글로 남는다.
+            val localized = if (lang == "en") (r["nameEn"] as? String)?.takeIf { it.isNotBlank() } ?: name else name
+            code to localized
         }.toMap()
     }
 
