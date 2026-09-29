@@ -1,0 +1,2508 @@
+{
+ "ko": {
+  "petAcmpyType": {
+   "filled": 429,
+   "distinct": 2,
+   "top": [
+    [
+     "전구역 동반가능",
+     404
+    ],
+    [
+     "일부구역 동반가능",
+     25
+    ]
+   ]
+  },
+  "restDate": {
+   "filled": 1642,
+   "distinct": 276,
+   "top": [
+    [
+     "연중무휴",
+     839
+    ],
+    [
+     "명절",
+     188
+    ],
+    [
+     "매주 월요일",
+     93
+    ],
+    [
+     "매주 일요일",
+     45
+    ],
+    [
+     "매주 화요일",
+     38
+    ],
+    [
+     "매주 수요일",
+     16
+    ],
+    [
+     "명절, 월1회",
+     15
+    ],
+    [
+     "연중 무휴",
+     12
+    ],
+    [
+     "점포 별로 상이함",
+     11
+    ],
+    [
+     "설·추석 연휴",
+     11
+    ],
+    [
+     "설·추석 당일",
+     8
+    ],
+    [
+     "2,4주 일요일",
+     7
+    ],
+    [
+     "월1회",
+     6
+    ],
+    [
+     "매주 월요일~화요일",
+     6
+    ],
+    [
+     "매주 월요일 / 1월 1일 / 설·추석 당일",
+     6
+    ],
+    [
+     "※ 점포 별로 상이함",
+     6
+    ],
+    [
+     "매주 목요일",
+     5
+    ],
+    [
+     "매주 월요일 / 1월 1일 / 설·추석 연휴",
+     5
+    ],
+    [
+     "명절, 월 1회",
+     5
+    ],
+    [
+     "전화 문의",
+     4
+    ],
+    [
+     "명절, 월1회 월요일",
+     4
+    ],
+    [
+     "※ 자세한 사항은 전화문의 요망",
+     4
+    ],
+    [
+     "매주 일요일, 월요일",
+     4
+    ],
+    [
+     "점포별로 상이함",
+     4
+    ],
+    [
+     "점포별 상이",
+     3
+    ],
+    [
+     "매주 토요일~일요일 / 법정공휴일",
+     3
+    ],
+    [
+     "매주 월요일 / 화요일",
+     3
+    ],
+    [
+     "명절, 정기휴무일",
+     3
+    ],
+    [
+     "매주 화요일 / 설·추석 당일",
+     3
+    ],
+    [
+     "매주 월요일 / 1월 1일",
+     3
+    ],
+    [
+     "명절 당일",
+     3
+    ],
+    [
+     "매주 토요일~일요일",
+     3
+    ],
+    [
+     "연중무휴<br>※ 자세한 사항은 전화문의 요망",
+     3
+    ],
+    [
+     "명절, 월2회 일요일",
+     3
+    ],
+    [
+     "공휴일",
+     3
+    ],
+    [
+     "공연 별로 상이함",
+     3
+    ],
+    [
+     "매주 월요일 / 설·추석 연휴",
+     2
+    ],
+    [
+     "연중개방",
+     2
+    ],
+    [
+     "매주 월요일 / 1월 1일 / 설·추석",
+     2
+    ],
+    [
+     "점포별 상이함",
+     2
+    ]
+   ]
+  },
+  "parking": {
+   "filled": 1651,
+   "distinct": 88,
+   "top": [
+    [
+     "가능",
+     1248
+    ],
+    [
+     "불가능",
+     196
+    ],
+    [
+     "가능<br>요금 (무료)",
+     38
+    ],
+    [
+     "가능요금 (무료)",
+     34
+    ],
+    [
+     "있음",
+     22
+    ],
+    [
+     "가능 <br>요금 (무료)",
+     10
+    ],
+    [
+     "가능 요금 (무료)",
+     5
+    ],
+    [
+     "가능<br>요금(무료)",
+     5
+    ],
+    [
+     "없음",
+     4
+    ],
+    [
+     "가능 <br> 요금 (무료)",
+     4
+    ],
+    [
+     "가능요금(무료)",
+     3
+    ],
+    [
+     "가능 (약 소형 100대)",
+     2
+    ],
+    [
+     "가능 (약 소형 50대)",
+     2
+    ],
+    [
+     "가능 (10대)",
+     2
+    ],
+    [
+     "가능 (소형 30대)",
+     2
+    ],
+    [
+     "불가",
+     2
+    ],
+    [
+     "가능(약 300대)",
+     1
+    ],
+    [
+     "가능(소형 10대)",
+     1
+    ],
+    [
+     "있음, 장애인 주차장 1개",
+     1
+    ],
+    [
+     "가능 (약 소형 268대 / 대형 65대)",
+     1
+    ],
+    [
+     "가능<br>요금 (최초 2시간 무료 / 10분 초과 200원 / 30분 초과 500원 / 1일 주차 5,000원)",
+     1
+    ],
+    [
+     "주차장 있음",
+     1
+    ],
+    [
+     "가능 (211대)",
+     1
+    ],
+    [
+     "가능 (발레파킹)",
+     1
+    ],
+    [
+     "가능 (인근 공영주차장)",
+     1
+    ],
+    [
+     "가능(힐링쉼터 더섬 주차시설 이용)",
+     1
+    ],
+    [
+     "가능(무료)",
+     1
+    ],
+    [
+     "가능 (공영주차장)<br>요금 (무료)",
+     1
+    ],
+    [
+     "가능요금 (1시간 30분 무료)",
+     1
+    ],
+    [
+     "가능 (소형 4대)",
+     1
+    ],
+    [
+     "가능<br>요금 (최초 30분 무료 / 이후 10분당 1,000원)<br>※ 구매금액 별로 무료주차 상이함",
+     1
+    ],
+    [
+     "가능 (소형 430대)",
+     1
+    ],
+    [
+     "가능<br>요금 (최초 30분 무료, 초과 15분당 500원)",
+     1
+    ],
+    [
+     "가능 (약 5,400대)",
+     1
+    ],
+    [
+     "가능 (소형 100대 / 대형20대)",
+     1
+    ],
+    [
+     "가능요금 3.000원",
+     1
+    ],
+    [
+     "가능 (중앙유료주차장)<br>요금 (1시간 무료)",
+     1
+    ],
+    [
+     "아이파크몰의 주차장을 이용하실 수 있습니다.",
+     1
+    ],
+    [
+     "가능 (약 180대)",
+     1
+    ],
+    [
+     "가능 (무료)",
+     1
+    ]
+   ]
+  },
+  "useFee": {
+   "filled": 105,
+   "distinct": 46,
+   "top": [
+    [
+     "무료",
+     53
+    ],
+    [
+     "공연 별로 상이함",
+     7
+    ],
+    [
+     "공연별로 상이함",
+     2
+    ],
+    [
+     "- 일반 2,500원- 청소년 2,000원- 어린이 1,000원※ 무료- 24개월 이하 영유아",
+     1
+    ],
+    [
+     "[큐비스트: 시각의 혁신가들]\n- 성인(만 19세~64세) 28,000원\n- 청소년(만 13세~18세) 19,600원\n- 어린이(만 4세~12세) 16,800원\n- 시니어(만 65세 이상) 19,600원\n- 예술인패스 소지자 19,600원\n- 문화가 있는 날 14,000원\n- 영유아(48개월 미만) 무료\n※ 단체 20인 이상 및 자세한 이용요금은 홈페이지 참조",
+     1
+    ],
+    [
+     "※ 공연에 따라 상이하므로 전화문의 요망",
+     1
+    ],
+    [
+     "무료(1층 ~ 4층) <br>※ 5층 기획전시실 2,000원",
+     1
+    ],
+    [
+     "- 쪽배타기 5,000원- 미꾸라지 잡기 5,000원- 물속생물 채집 5,000원※ 자세한 사항은 전화문의 요망",
+     1
+    ],
+    [
+     "체험별로 상이함",
+     1
+    ],
+    [
+     "- 어른 3,000원<br>- 청소년·군인 2,000원<br>- 초등학생 1,000원<br>※ 단체(20인이상)는 각 요금의 50%<br>※ 자세한 사항은 홈페이지 참조",
+     1
+    ],
+    [
+     "- 어른 3,000원<br>- 학생 2,000원 <br>※무료<br>만65세이상 /  6세 이하",
+     1
+    ],
+    [
+     "공연 및 전시 별로 상이함",
+     1
+    ],
+    [
+     "[개인]<br>- 어른 3,000원<br>- 청소년/군인 2,000원<br>- 어린이 1,000원<br>[단체 (20명 이상)]<br>- 어른 1,500원<br>- 청소년/군인 1,000원<br>- 어린이 500원",
+     1
+    ],
+    [
+     "무료※ 일부 프로그램의 경우 재료비가 발생할 수 있으므로 홈페이지 참조 및 전화 문의 요망",
+     1
+    ],
+    [
+     "전통체험 30,000원",
+     1
+    ],
+    [
+     "전시별 상이",
+     1
+    ],
+    [
+     "- 대인(19세 이상) 37,900원\n- 청소년(13세~18세)/경로(만 65세 이상) 34,900원\n- 소인(12세 이하) 32,900원\n※ 무료 : 36개월 미만\n※ 중·고등학생은 확인을 위해 학생증, 청소년증 지참 필수\n※ 경로(만 65세 이상)은 확인을 위해 신분증 지참 필수\n※ 자세한 사항은 홈페이지 확인",
+     1
+    ],
+    [
+     "※ 행사 및 전시마다 상이하므로 홈페이지 참조",
+     1
+    ],
+    [
+     "[개인]\n- 어른 1,000원\n- 청소년/군인 500원\n[단체 (20인 이상)]\n- 어른 700원\n- 청소년/군인 300원\n[상주시민]\n- 어른 500원\n- 청소년/군인 300원\n※ 무료 :  6세 이하 / 65세 이상 / 장애인(장애인 수첩 소지자)",
+     1
+    ],
+    [
+     "[개인]<br>- 일반 5,000원<br>- 중·고등학생, 경로 4,000원<br>- 어린이 3,000원<br>[단체(20인 이상)]<br>- 일반 4,000원<br>- 중·고등학생, 경로 3,000원<br>- 어린이 2,000원",
+     1
+    ],
+    [
+     "리얼월드 20,000원\n※ 자세한 사항은 홈페이지 참조",
+     1
+    ],
+    [
+     "※ 공연에 따라 상이하므로 홈페이지 참고",
+     1
+    ],
+    [
+     "- 어른 1,000원\n- 학생/군인 500원\n- 어린이 300원\n※ 자세한 사항은 전화 문의 요망",
+     1
+    ],
+    [
+     "공연마다 상이하므로 전화문의",
+     1
+    ],
+    [
+     "전시 별로 상이함",
+     1
+    ],
+    [
+     "[전시관(기본입장료)]\n- 성인 3,000원\n- 청소년/군인 2,500원\n- 초등학생 2,000원\n[4D특수영상관/플라네타륨]\n- 성인 2,000원\n- 청소년/군인 1,500원\n- 초등학생 1,500원\n※ 전시관 무료 : 미취학 아동 및 영유아\n※ 자세한 사항은 홈페이지 참조 및 전화 문의 요망",
+     1
+    ],
+    [
+     "공연마다 상이함",
+     1
+    ],
+    [
+     "[개인]- 어른 1,100원- 청소년 500원[단체 (10인 이상)]- 어른 800원- 청소년 300원※ 자세한 할인정보 및 이용요금은 홈페이지 참조",
+     1
+    ],
+    [
+     "- 성인(20세~64세) 2,000원<br>- 어린이·청소년(6세~19세) 1,000원",
+     1
+    ],
+    [
+     "15,000원",
+     1
+    ],
+    [
+     "[입장료] - 무료 [체험 프로그램]- 원예 체험 7,000원~10,000원- 야외체험 7,000원~15,000원 - 목공예체험 6,000원",
+     1
+    ],
+    [
+     "강좌 별로 상이함",
+     1
+    ],
+    [
+     "[일반]<br>- 성인 1,000원<br>- 청소년 / 군인 500원<br>- 구미시민 성인 500원<br>- 구미시민 청소년 / 군인 300원<br>[단체(20명 이상)] <br>- 성인 700원<br>- 청소년 / 군인 400원<br>- 구미시민 성인 400원<br>- 구미시민 청소년 / 군인 200원<br>※ 자세한 사항은 홈페이지 참조",
+     1
+    ],
+    [
+     "[당항포 관광지 입장료 개인]- 성인(19세~64세) 7,000원- 경로(65세 이상) 3,500원- 청소년(13세~18세) / 군인 5,000원- 어린이(3세~12세) 4,000원- 고성군민 1,000원[당항포 관광지 입장료 단체(20인 이상)]- 성인(19세~64세) 6,000원- 경로(65세 이상) 3,000원- 청소년(13세~18세) / 군인 4,000원- 어린이(3세~12세) 3,000원※ 무료- 만 3세 미만 / 국가기관에서 요양 중인 상이군경 / 장애인 / 국가유공자 / 국민기초생활수급자 / 한부모가정※ 당항포 관광지 입장료 결제 후 박물관 무료 입장 가능※ 이용요금은 변동될 수 있으므로 자세한 사항은 홈페이지 참조 또는 전화 문의 요망",
+     1
+    ],
+    [
+     "[공연장]- 1일 145,000원- 오전(9:00~12:00) 40,000원- 오후(13:00 ~ 17:00) 45,000원- 야간(18:00 ~ 22:00) 60,000원[전시실]- 1일 28,000원[야외 공연장]- 1회(2시간) 20,000원",
+     1
+    ],
+    [
+     "- 성인 30,000원- 13세 이하·65세 이상 27,000원※ 무료 : 36개월 미만 영유아※ 자세한 사항은 홈페이지 참조",
+     1
+    ],
+    [
+     "[개인]- 성인 2,000원- 청소년 1,000원- 어린이 1,000원[단체(30명 이상)]- 성인 1,500원- 청소년 500원- 어린이 500원[무료] : 미취학 아동, 65세 이상, 국가유공자, 장애인, 현역군경, 기초생활수급자, 구례군민, ‘문화가 있는 날(매월 마지막 주 수요일’※ 순천 시민 50% 할인",
+     1
+    ],
+    [
+     "[하절기(2월~11월)]- 대인 8,000원- 소인 7,000원[동절기(11월~1월)]- 대인 12,000원- 소인 10,000원※ 무료 : 24개월 미만 (단, 보호자와 가족 동반에 한함 / 단체적용불가)※ 11월 요금은 매번 상이할 수 있으므로 자세한 이용요금은 홈페이지 참조",
+     1
+    ],
+    [
+     "- 성인 (만 19세 이상) 25,000원\n- 청소년 (만 13-18세 이하) 21,000원\n- 어린이 (36개월~만 12세 이하) 17,000원\n※ 무료\n- 36개월 미만 유아\n※ 자세한 사항은 홈페이지 참조 또는 전화 문의 요망",
+     1
+    ],
+    [
+     "무료※ 관람료가 발생할 수 있으므로 홈페이지 참조",
+     1
+    ]
+   ]
+  },
+  "introKeys": [
+   "12:chkbabycarriage",
+   "12:chkcreditcard",
+   "12:chkpet",
+   "12:parking",
+   "12:restdate",
+   "14:chkbabycarriageculture",
+   "14:chkcreditcardculture",
+   "14:chkpetculture",
+   "14:parkingculture",
+   "14:parkingfee",
+   "14:restdateculture",
+   "14:usefee",
+   "28:chkbabycarriageleports",
+   "28:chkcreditcardleports",
+   "28:chkpetleports",
+   "28:parkingfeeleports",
+   "28:parkingleports",
+   "28:restdateleports",
+   "28:usefeeleports",
+   "38:chkbabycarriageshopping",
+   "38:chkcreditcardshopping",
+   "38:chkpetshopping",
+   "38:parkingshopping",
+   "38:restdateshopping",
+   "39:chkcreditcardfood",
+   "39:parkingfood",
+   "39:restdatefood"
+  ],
+  "introValues": {
+   "parkingfood": [
+    [
+     "가능",
+     402
+    ],
+    [
+     "불가능",
+     57
+    ],
+    [
+     "있음",
+     21
+    ],
+    [
+     "가능<br>요금 (무료)",
+     21
+    ],
+    [
+     "가능요금 (무료)",
+     20
+    ],
+    [
+     "가능 <br>요금 (무료)",
+     10
+    ],
+    [
+     "가능 요금 (무료)",
+     3
+    ],
+    [
+     "가능<br>요금(무료)",
+     3
+    ],
+    [
+     "없음",
+     2
+    ],
+    [
+     "가능 <br> 요금 (무료)",
+     2
+    ],
+    [
+     "있음, 장애인 주차장 1개",
+     1
+    ],
+    [
+     "가능 (발레파킹)",
+     1
+    ],
+    [
+     "가능 (인근 공영주차장)",
+     1
+    ],
+    [
+     "가능(무료)",
+     1
+    ],
+    [
+     "가능요금 (1시간 30분 무료)",
+     1
+    ]
+   ],
+   "restdatefood": [
+    [
+     "연중무휴",
+     323
+    ],
+    [
+     "매주 월요일",
+     66
+    ],
+    [
+     "매주 일요일",
+     40
+    ],
+    [
+     "매주 화요일",
+     30
+    ],
+    [
+     "매주 수요일",
+     16
+    ],
+    [
+     "설·추석 연휴",
+     11
+    ],
+    [
+     "설·추석 당일",
+     7
+    ],
+    [
+     "매주 목요일",
+     5
+    ],
+    [
+     "연중 무휴",
+     3
+    ],
+    [
+     "매주 월요일~화요일",
+     3
+    ],
+    [
+     "매주 월요일 / 화요일",
+     3
+    ],
+    [
+     "명절",
+     3
+    ],
+    [
+     "매주 월요일 / 설·추석 연휴",
+     2
+    ],
+    [
+     "매주 일요일 / 설·추석 연휴",
+     2
+    ],
+    [
+     "매주 토요일",
+     2
+    ]
+   ],
+   "parking": [
+    [
+     "가능",
+     392
+    ],
+    [
+     "불가능",
+     49
+    ],
+    [
+     "가능<br>요금 (무료)",
+     16
+    ],
+    [
+     "가능요금 (무료)",
+     13
+    ],
+    [
+     "없음",
+     2
+    ],
+    [
+     "가능 (약 소형 50대)",
+     2
+    ],
+    [
+     "가능 (소형 30대)",
+     2
+    ],
+    [
+     "가능 요금 (무료)",
+     2
+    ],
+    [
+     "가능 <br> 요금 (무료)",
+     2
+    ],
+    [
+     "가능요금(무료)",
+     2
+    ],
+    [
+     "가능(소형 10대)",
+     1
+    ],
+    [
+     "가능 (약 소형 268대 / 대형 65대)",
+     1
+    ],
+    [
+     "주차장 있음",
+     1
+    ],
+    [
+     "가능 (211대)",
+     1
+    ],
+    [
+     "가능 (약 소형 100대)",
+     1
+    ]
+   ],
+   "restdate": [
+    [
+     "연중무휴",
+     436
+    ],
+    [
+     "매주 월요일",
+     15
+    ],
+    [
+     "매주 화요일",
+     8
+    ],
+    [
+     "연중 무휴",
+     8
+    ],
+    [
+     "매주 일요일",
+     3
+    ],
+    [
+     "연중개방",
+     2
+    ],
+    [
+     "전화 문의",
+     2
+    ],
+    [
+     "매주 월요일 / 1월 1일 / 설·추석 연휴",
+     2
+    ],
+    [
+     "매주 월요일 / 1월 1일",
+     2
+    ],
+    [
+     "매주 월요일~화요일",
+     2
+    ],
+    [
+     "연중 무휴 <br> ※산불방지 기간과 기상악화 시 통제 가능",
+     1
+    ],
+    [
+     "프로그램별 상이하므로 홈페이지 참조",
+     1
+    ],
+    [
+     "1월 1일 / 설·추석",
+     1
+    ],
+    [
+     "연중무휴※ 기상에 따라 통제될 수 있으므로 전화문의 요망",
+     1
+    ],
+    [
+     "동절기 (12월~2월)",
+     1
+    ]
+   ],
+   "parkingshopping": [
+    [
+     "가능",
+     420
+    ],
+    [
+     "불가능",
+     89
+    ],
+    [
+     "가능(약 300대)",
+     1
+    ],
+    [
+     "가능요금 (무료)",
+     1
+    ],
+    [
+     "가능<br>요금 (최초 30분 무료 / 이후 10분당 1,000원)<br>※ 구매금액 별로 무료주차 상이함",
+     1
+    ],
+    [
+     "가능 (무료)",
+     1
+    ],
+    [
+     "가능 (약 소형 100대 / 대형 20대)요금 (무료)",
+     1
+    ],
+    [
+     "가능<br>요금 (무료)",
+     1
+    ],
+    [
+     "가능 <br>요금 (30분 1,500원 / 60분 3,000원 / 120분 6,000원 / 240분 12,0",
+     1
+    ],
+    [
+     "매장별로 상이함",
+     1
+    ]
+   ],
+   "chkcreditcardshopping": [
+    [
+     "가능",
+     481
+    ],
+    [
+     "없음",
+     3
+    ],
+    [
+     "불가능",
+     3
+    ],
+    [
+     "매장마다 상이",
+     1
+    ],
+    [
+     "가능(점포마다 상이함)",
+     1
+    ],
+    [
+     "가능(점포마다 다름)",
+     1
+    ],
+    [
+     "일부 매장 가능",
+     1
+    ]
+   ],
+   "restdateleports": [
+    [
+     "연중무휴",
+     60
+    ],
+    [
+     "매주 월요일",
+     3
+    ],
+    [
+     "※ 자세한 사항은 전화문의 요망",
+     2
+    ],
+    [
+     "매주 월요일~화요일 / 일요일을 제외한 법정공휴일",
+     1
+    ],
+    [
+     "연중무휴 <br>※ 휴장시 공지",
+     1
+    ],
+    [
+     "매주 월요일 (단, 월요일이 공휴일인 경우 그 다음날 휴무) / 1월 1일 / 설·추석 당일 / 우천 시",
+     1
+    ],
+    [
+     "매달 첫째·셋째 일요일",
+     1
+    ],
+    [
+     "연중무휴※ 설·추석 연휴에는 홈페이지 참조 및 전화 문의 후 방문 요망",
+     1
+    ],
+    [
+     "시즌 시 연중무휴",
+     1
+    ],
+    [
+     "연중무휴<br>※ 자세한 사항은 전화문의 요망",
+     1
+    ],
+    [
+     "운영기간 중 무휴",
+     1
+    ],
+    [
+     "매주 토요일~일요일 / 법정공휴일",
+     1
+    ],
+    [
+     "※ 자세한 사항은 홈페이지 참조",
+     1
+    ],
+    [
+     "매주 월요일※ 변동가능성 있으므로 홈페이지 참조 및 전화 문의 요망",
+     1
+    ],
+    [
+     "동절기",
+     1
+    ]
+   ],
+   "parkingfeeleports": [
+    [
+     "무료",
+     16
+    ],
+    [
+     "없음",
+     1
+    ],
+    [
+     "3시간 무료",
+     1
+    ]
+   ],
+   "restdateshopping": [
+    [
+     "명절",
+     185
+    ],
+    [
+     "명절, 월1회",
+     15
+    ],
+    [
+     "점포 별로 상이함",
+     10
+    ],
+    [
+     "연중무휴",
+     8
+    ],
+    [
+     "2,4주 일요일",
+     7
+    ],
+    [
+     "월1회",
+     6
+    ],
+    [
+     "※ 점포 별로 상이함",
+     6
+    ],
+    [
+     "명절, 월 1회",
+     5
+    ],
+    [
+     "명절, 월1회 월요일",
+     4
+    ],
+    [
+     "점포별 상이",
+     3
+    ],
+    [
+     "명절, 정기휴무일",
+     3
+    ],
+    [
+     "점포별로 상이함",
+     3
+    ],
+    [
+     "명절, 월2회 일요일",
+     3
+    ],
+    [
+     "점포별 상이함",
+     2
+    ],
+    [
+     "명절, 격월 1회",
+     2
+    ]
+   ],
+   "chkcreditcardfood": [
+    [
+     "가능",
+     200
+    ],
+    [
+     "없음",
+     13
+    ],
+    [
+     "모든 카드 사용 가능",
+     9
+    ],
+    [
+     "모든카드 사용가능",
+     1
+    ]
+   ],
+   "chkbabycarriage": [
+    [
+     "없음",
+     194
+    ],
+    [
+     "불가",
+     20
+    ],
+    [
+     "가능",
+     1
+    ]
+   ],
+   "usefee": [
+    [
+     "무료",
+     53
+    ],
+    [
+     "공연 별로 상이함",
+     7
+    ],
+    [
+     "공연별로 상이함",
+     2
+    ],
+    [
+     "- 일반 2,500원- 청소년 2,000원- 어린이 1,000원※ 무료- 24개월 이하 영유아",
+     1
+    ],
+    [
+     "[큐비스트: 시각의 혁신가들]\n- 성인(만 19세~64세) 28,000원\n- 청소년(만 13세~18세) 19",
+     1
+    ],
+    [
+     "※ 공연에 따라 상이하므로 전화문의 요망",
+     1
+    ],
+    [
+     "무료(1층 ~ 4층) <br>※ 5층 기획전시실 2,000원",
+     1
+    ],
+    [
+     "- 쪽배타기 5,000원- 미꾸라지 잡기 5,000원- 물속생물 채집 5,000원※ 자세한 사항은 전화문의 ",
+     1
+    ],
+    [
+     "체험별로 상이함",
+     1
+    ],
+    [
+     "- 어른 3,000원<br>- 청소년·군인 2,000원<br>- 초등학생 1,000원<br>※ 단체(20인이",
+     1
+    ],
+    [
+     "- 어른 3,000원<br>- 학생 2,000원 <br>※무료<br>만65세이상 /  6세 이하",
+     1
+    ],
+    [
+     "공연 및 전시 별로 상이함",
+     1
+    ],
+    [
+     "[개인]<br>- 어른 3,000원<br>- 청소년/군인 2,000원<br>- 어린이 1,000원<br>[단",
+     1
+    ],
+    [
+     "무료※ 일부 프로그램의 경우 재료비가 발생할 수 있으므로 홈페이지 참조 및 전화 문의 요망",
+     1
+    ],
+    [
+     "전통체험 30,000원",
+     1
+    ]
+   ],
+   "restdateculture": [
+    [
+     "연중무휴",
+     12
+    ],
+    [
+     "매주 월요일",
+     9
+    ],
+    [
+     "매주 월요일 / 1월 1일 / 설·추석 당일",
+     6
+    ],
+    [
+     "매주 월요일 / 1월 1일 / 설·추석 연휴",
+     3
+    ],
+    [
+     "공연 별로 상이함",
+     3
+    ],
+    [
+     "매주 월요일 / 1월 1일 / 설·추석",
+     2
+    ],
+    [
+     "매주 토요일~일요일 / 법정공휴일",
+     2
+    ],
+    [
+     "매주 토요일, 일요일 / 법정 공휴일",
+     2
+    ],
+    [
+     "매주 일요일, 월요일",
+     2
+    ],
+    [
+     "주말 / 공휴일",
+     2
+    ],
+    [
+     "매주 일요일",
+     2
+    ],
+    [
+     "매주 일요일 / 1월 1일 / 설·추석 연휴 / 공휴일",
+     1
+    ],
+    [
+     "※ 기상상황에 따라 변동되므로 전화문의 요망",
+     1
+    ],
+    [
+     "매주 월요일/1월 1일/설날·추석 당일",
+     1
+    ],
+    [
+     "매주 월요일 / 법정공휴일 (토요일·일요일과 겹치는 경우는 휴관)",
+     1
+    ]
+   ],
+   "chkcreditcard": [
+    [
+     "없음",
+     99
+    ],
+    [
+     "가능",
+     22
+    ],
+    [
+     "불가",
+     2
+    ],
+    [
+     "불가 (현금만 가능)",
+     1
+    ]
+   ],
+   "parkingculture": [
+    [
+     "가능",
+     29
+    ],
+    [
+     "가능<br>요금 (최초 2시간 무료 / 10분 초과 200원 / 30분 초과 500원 / 1일 주차 5,00",
+     1
+    ],
+    [
+     "가능 (소형 100대 / 대형20대)",
+     1
+    ],
+    [
+     "불가능",
+     1
+    ],
+    [
+     "가능<br>요금(무료)",
+     1
+    ],
+    [
+     "가능 (약 15대)",
+     1
+    ]
+   ],
+   "chkcreditcardculture": [
+    [
+     "없음",
+     13
+    ],
+    [
+     "가능",
+     8
+    ],
+    [
+     "불가",
+     1
+    ]
+   ],
+   "chkbabycarriageculture": [
+    [
+     "없음",
+     34
+    ],
+    [
+     "불가",
+     4
+    ],
+    [
+     "가능",
+     2
+    ]
+   ],
+   "usefeeleports": [
+    [
+     "무료",
+     1
+    ]
+   ],
+   "parkingleports": [
+    [
+     "가능",
+     5
+    ],
+    [
+     "가능 (약 소형 100대)",
+     1
+    ]
+   ],
+   "parkingfee": [
+    [
+     "무료",
+     22
+    ],
+    [
+     "전시 티켓 소지 시 평일 1시간, 주말 2시간 무료 / 이후 시간당 6,000원",
+     1
+    ],
+    [
+     "10분당 400원",
+     1
+    ],
+    [
+     "최초 60분 1,000원 / 이후 10분 당 200원씩 추가 요금 발생",
+     1
+    ],
+    [
+     "2,000원",
+     1
+    ],
+    [
+     "시간 별로 상이하므로 홈페이지 참조",
+     1
+    ],
+    [
+     "관람 시 4시간 무료",
+     1
+    ]
+   ],
+   "chkpetshopping": [
+    [
+     "없음",
+     2
+    ]
+   ],
+   "chkbabycarriageshopping": [
+    [
+     "없음",
+     18
+    ]
+   ],
+   "chkcreditcardleports": [
+    [
+     "가능",
+     2
+    ],
+    [
+     "모든 카드 사용 가능",
+     1
+    ]
+   ],
+   "chkpet": [
+    [
+     "없음",
+     7
+    ],
+    [
+     "불가",
+     3
+    ]
+   ],
+   "chkpetculture": [
+    [
+     "불가",
+     2
+    ]
+   ]
+  }
+ },
+ "en": {
+  "petAcmpyType": {
+   "filled": 0,
+   "distinct": 0,
+   "top": []
+  },
+  "restDate": {
+   "filled": 1179,
+   "distinct": 173,
+   "top": [
+    [
+     "Seollal (Lunar New Year's Day) & Chuseok (Korean Thanksgiving Day) holidays",
+     573
+    ],
+    [
+     "N/A (Open all year round)",
+     163
+    ],
+    [
+     "Seollal (Lunar New Year's Day) & Chuseok (Korean Thanksgiving Day) holidays, Once a month",
+     74
+    ],
+    [
+     "Every 2nd and 4th Sunday",
+     30
+    ],
+    [
+     "Seollal (Lunar New Year's Day) & Chuseok (Korean Thanksgiving Day) holidays, Once a month on Mondays",
+     27
+    ],
+    [
+     "Mondays",
+     24
+    ],
+    [
+     "Once a month",
+     17
+    ],
+    [
+     "Seollal (Lunar New Year's Day) & Chuseok (Korean Thanksgiving Day) holidays , Once every other month",
+     10
+    ],
+    [
+     "Varies by store",
+     10
+    ],
+    [
+     "Public Holidays",
+     9
+    ],
+    [
+     "Designated closing day, Seollal (Lunar New Year's Day) & Chuseok (Korean Thanksgiving Day) holidays",
+     9
+    ],
+    [
+     "Twice a month",
+     8
+    ],
+    [
+     "Seollal (Lunar New Year's Day) & Chuseok (Korean Thanksgiving Day) holidays, Twice a month on Sundays",
+     8
+    ],
+    [
+     "Seollal (Lunar New Year's Day) & Chuseok (Korean Thanksgiving Day) holidays, Designated Closing Day",
+     6
+    ],
+    [
+     "Open 24/7",
+     6
+    ],
+    [
+     "Public Holidays, Seollal (Lunar New Year's Day) & Chuseok (Korean Thanksgiving Day) holidays",
+     6
+    ],
+    [
+     "Tuesdays",
+     6
+    ],
+    [
+     "Mondays, January 1",
+     5
+    ],
+    [
+     "Designated closing day",
+     4
+    ],
+    [
+     "January 1, the day of Seollal (Lunar New Year's Day) & Chuseok (Korean Thanksgiving Day)",
+     4
+    ],
+    [
+     "Once a month on Mondays",
+     4
+    ],
+    [
+     "Seollal (Lunar New Year's Day) & Chuseok (Korean Thanksgiving Day) holidays , Once a year",
+     3
+    ],
+    [
+     "Regular closing day once a month",
+     3
+    ],
+    [
+     "Seollal (Lunar New Year's Day) & Chuseok (Korean Thanksgiving Day) holidays, New Year’s Day",
+     3
+    ],
+    [
+     "Seollal (Lunar New Year's Day) & Chuseok (Korean Thanksgiving Day) holidays,  Wednesday, twice a month",
+     3
+    ],
+    [
+     "Once every other month",
+     3
+    ],
+    [
+     "Mondays, January 1, the day of Seollal (Lunar New Year's Day) & Chuseok (Korean Thanksgiving Day)",
+     3
+    ],
+    [
+     "Mondays, January 1, Seollal (Lunar New Year's Day) & Chuseok (Korean Thanksgiving Day) holidays",
+     3
+    ],
+    [
+     "Sunday",
+     2
+    ],
+    [
+     "Not available",
+     2
+    ],
+    [
+     "Open all year round",
+     2
+    ],
+    [
+     "N/A (open all year round)",
+     2
+    ],
+    [
+     "Wednesdays",
+     2
+    ],
+    [
+     "Public Holidays, Seollal (Lunar New Year's Day) & Chuseok (Korean Thanksgiving Day) holidays , Sunday",
+     2
+    ],
+    [
+     "* Subject to abrupt closure due to adverse weather conditions.",
+     2
+    ],
+    [
+     "연중무휴",
+     2
+    ],
+    [
+     "Twice a month on Sundays",
+     2
+    ],
+    [
+     "Sundays",
+     2
+    ],
+    [
+     "Tuesdays (open if Tuesday is a national holiday and will be closed on the following weekday instead), January 1",
+     1
+    ],
+    [
+     "First Wednesday of every month <br> * Except during national holidays and April-June, August-October",
+     1
+    ]
+   ]
+  },
+  "parking": {
+   "filled": 1863,
+   "distinct": 58,
+   "top": [
+    [
+     "Available",
+     1436
+    ],
+    [
+     "Not available",
+     349
+    ],
+    [
+     "available",
+     13
+    ],
+    [
+     "Available (Free)",
+     8
+    ],
+    [
+     "Not available (use Chinatown public parking lot)",
+     2
+    ],
+    [
+     "Available (50 spaces)",
+     2
+    ],
+    [
+     "Available (15 spaces)",
+     2
+    ],
+    [
+     "Available (20 spaces)",
+     1
+    ],
+    [
+     "AvailableFee (KRW 500 for 30 minutes / KRW 200 per additional 10 minutes / Maximum KRW 10,000 per day)",
+     1
+    ],
+    [
+     "Available (800 parking spaces)",
+     1
+    ],
+    [
+     "Total of \n74 slots (Basement Level: 54, Ground Level: 20)<br />\n※ Special designated slots for the disabled (Basement Level: 2, Ground Level: \n4)",
+     1
+    ],
+    [
+     "Available(Paid)",
+     1
+    ],
+    [
+     "Available (Daegu Samung Changjo Campus Paying Parking Lot)",
+     1
+    ],
+    [
+     "Available (small vehicles only)",
+     1
+    ],
+    [
+     "Available (8 parking spaces)",
+     1
+    ],
+    [
+     "Available (approx. 50 parking spaces)",
+     1
+    ],
+    [
+     "Available (Bus 30 parking spaces / Sedan 300 parking spaces)",
+     1
+    ],
+    [
+     "Available (Public parking lot)",
+     1
+    ],
+    [
+     "Parking lots are available at tourist sites and attractions, museums, arts galleries.",
+     1
+    ],
+    [
+     "Available  *Use parking lots 1 & 2",
+     1
+    ],
+    [
+     "Not available (Use nearby paid parking lot)",
+     1
+    ],
+    [
+     "Parking lot at Sinjang shopping mall and public parking spaces on Seojeong Culture Street",
+     1
+    ],
+    [
+     "Available (1,000 parking spaces)",
+     1
+    ],
+    [
+     "Available (253 parking spaces)",
+     1
+    ],
+    [
+     "Available (210 spaces)",
+     1
+    ],
+    [
+     "Available (B2-B5, 150 parking slots)",
+     1
+    ],
+    [
+     "Available (parking fee applies)",
+     1
+    ],
+    [
+     "Y (use parking lot at the entrance to the Muhak Market)",
+     1
+    ],
+    [
+     "Available (10 spaces)",
+     1
+    ],
+    [
+     "가능",
+     1
+    ],
+    [
+     "Available (Approx. 150 spaces for sedans)",
+     1
+    ],
+    [
+     "N/A (Please use nearby parking facilities)",
+     1
+    ],
+    [
+     "Public parking available",
+     1
+    ],
+    [
+     "Available (184 spaces)",
+     1
+    ],
+    [
+     "Parking lot nearby (before the entrance of going to the village)",
+     1
+    ],
+    [
+     "Available (※Fee (free))",
+     1
+    ],
+    [
+     "Available (80 spaces)",
+     1
+    ],
+    [
+     "Available (23 small cars, 2 large cars, and 2 handicap spots)",
+     1
+    ],
+    [
+     "free",
+     1
+    ],
+    [
+     "Available (Jeonju Hanok Village public parking lot 301 parking spaces)",
+     1
+    ]
+   ]
+  },
+  "useFee": {
+   "filled": 62,
+   "distinct": 38,
+   "top": [
+    [
+     "Free",
+     22
+    ],
+    [
+     "Varies by performance",
+     4
+    ],
+    [
+     "Individuals: Adults 1,000 won / Children & Teenagers 600 won<br>Groups: Adults 800 won / Children & Teenagers 400 won<br><BR>* Adults (ages 25-64)<BR>* Groups: 20 people or more<br>* Free: Senior citizens (ages 65 or more) & preschoolers (ages 6 or under)<br>* Free admission on Culture Day (last Wednesday of each month)<br>* Separate admission fee applies for special exhibitions or planned exhibitions.",
+     1
+    ],
+    [
+     "Admission 3,000 won (Free for children ages 7 and younger and senior citizens ages 65 and older)\nExperience programs 15,000~20,000 won\n* Refer to website for more details",
+     1
+    ],
+    [
+     "Adults 27,000 won / Teenagers 23,000 won / Children 19,000 won",
+     1
+    ],
+    [
+     "* Varies by exhibition; please refer to the official website for details.",
+     1
+    ],
+    [
+     "Adults 6,000 won / Children & Senior citizens 5,000 won\n* Adults  (ages 19-64) / Children (ages 18 & under) / Senior citizens (ages 65 & over)",
+     1
+    ],
+    [
+     "3,000 won",
+     1
+    ],
+    [
+     "Varies by performance and exhibition",
+     1
+    ],
+    [
+     "Adults 10,000 won / Teenagers 6,000 won<br> Childre 4,000 won<br>* Subject to vary by exhibition",
+     1
+    ],
+    [
+     "Adults 2,000 won / Teenagers 1,000 won",
+     1
+    ],
+    [
+     "Adults 3,000 won / Children 1,500 won<br><br>\n\n* Free admission: Preschoolers (ages 4 and under), Senior citizens (ages 65 and over)",
+     1
+    ],
+    [
+     "Adults 13,000 won / Teenagers 11,000 won / Children 10,000 won\n* Refer to website for details",
+     1
+    ],
+    [
+     "Adults 6,000 won / Children 5,000 won",
+     1
+    ],
+    [
+     "Individuals - Adults 3,000 won / Teenagers 2,000 won / Children 1,000 won\n * Free admission applies to preschoolers (ages 6 & under), senior citizens (ages 65 & older), and on the last Wednesday of the month",
+     1
+    ],
+    [
+     "Real World 20,000 won\n* Refer to the website for more information",
+     1
+    ],
+    [
+     "Varies by program",
+     1
+    ],
+    [
+     "7,000 won",
+     1
+    ],
+    [
+     "Varies by exhibition",
+     1
+    ],
+    [
+     "General admission 5,000 wonSenior citizens (65 years old & over) 4,000 won* Free admission: Children under age 5 and after 18:00 (Cafe visitors only)",
+     1
+    ],
+    [
+     "Adults 17,000 won / Children 12,000 won",
+     1
+    ],
+    [
+     "Adults & teenagers 15,000 won / Children 7,500 won",
+     1
+    ],
+    [
+     "Individuals: Adults 2,000 won / Teenagers 1,500 won / Children 700 won<br>\nGroups: Adults 1,500 won / Teenagers 1,000 won / Children 500 won<br><br>\n\n* Groups - 30 people or more\n* Free admission applies to preschoolers (ages 6 & under) and senior citizens (ages 65 & over)<br>\n* Free admission to all visitors on Children's Day (May 5)",
+     1
+    ],
+    [
+     "free",
+     1
+    ],
+    [
+     "Vary by show",
+     1
+    ],
+    [
+     "[Permanent exhibition] Free* Refer to the official website for special exhibitons",
+     1
+    ],
+    [
+     "Individuals: Adults 7,000 won / Teenagers 6,000 won / Children 5,000 won <BR>* Price subject to change, check the official website or call ahead for confirmation",
+     1
+    ],
+    [
+     "Varies by event",
+     1
+    ],
+    [
+     "[Permanent Exhibition]<br />\nIndividuals - Adults 3,000 won / Children 2,000 won<br />\nGroups - Adults 2,000 won / Children 1,000 won<br />\n* Free admission: Preschoolers and senior citizens <br><br>\n\n[4D Theater/Planetarium]<br />\nIndividuals - Adults 2,000 won / Children & Senior citizens 1,000 won <br />\nGroups - Adults 1,000 won / Children & Senior citizens 500 won <br />\n* Adults (ages 20 & over) / Children (ages 7-19) / Preschoolers (ages 6 & under) / Senior citizens (ages 65 & over) <br /><br />\n\n* Fees are subject to change. Please check the official website before visiting.",
+     1
+    ],
+    [
+     "Free (Separate fees may apply for some special exhibitions)",
+     1
+    ],
+    [
+     "- Adult 20,000원<br> - Teenager & Children 17,000원",
+     1
+    ],
+    [
+     "Performance: 10,000-20,000 won",
+     1
+    ],
+    [
+     "Varies by performances",
+     1
+    ],
+    [
+     "Integrated ticket (Bucheon Bow Museum, Bucheon City Museum): Adult 2,400 won / Children 1,440 won\n<BR>Bucheon City Museum: Adult 2,000 won / Children 1,200 won<BR>\nBucheon Bow Museum: Adult 1,000 won / Children 600 won",
+     1
+    ],
+    [
+     "Free (Separate fees may apply)",
+     1
+    ],
+    [
+     "Individuals: Adults 2,000 won / Teenagers 1,000 won<br>  Groups: Adults 1,000 won / Teenagers 500 won<br> * Refer to the website for more details",
+     1
+    ],
+    [
+     "Individuals - Adults 2,000 won / Children 1,500 won<br>Groups - Adults 1,800 won / Children 1,200 won",
+     1
+    ],
+    [
+     "Adults 19,000 won / Teenagers 14,000 won / Children 11,000 won / Preschoolers 9,000 won",
+     1
+    ]
+   ]
+  },
+  "introKeys": [
+   "75:parkingfeeleports",
+   "75:parkingleports",
+   "75:restdateleports",
+   "75:usefeeleports",
+   "76:parking",
+   "76:restdate",
+   "78:parkingculture",
+   "78:parkingfee",
+   "78:restdateculture",
+   "78:usefee",
+   "79:parkingshopping",
+   "79:restdateshopping",
+   "82:parkingfood",
+   "82:restdatefood"
+  ],
+  "introValues": {
+   "parkingshopping": [
+    [
+     "Available",
+     1186
+    ],
+    [
+     "Not available",
+     306
+    ],
+    [
+     "Available (800 parking spaces)",
+     1
+    ],
+    [
+     "Available (Public parking lot)",
+     1
+    ],
+    [
+     "Available (parking fee applies)",
+     1
+    ],
+    [
+     "Available (2,100 won for 30 min, additional 700 won for ever",
+     1
+    ]
+   ],
+   "restdateshopping": [
+    [
+     "Seollal (Lunar New Year's Day) & Chuseok (Korean Thanksgivin",
+     709
+    ],
+    [
+     "Every 2nd and 4th Sunday",
+     30
+    ],
+    [
+     "Once a month",
+     17
+    ],
+    [
+     "Public Holidays",
+     9
+    ],
+    [
+     "Designated closing day, Seollal (Lunar New Year's Day) & Chu",
+     9
+    ],
+    [
+     "Twice a month",
+     8
+    ],
+    [
+     "Public Holidays, Seollal (Lunar New Year's Day) & Chuseok (K",
+     8
+    ],
+    [
+     "Varies by store",
+     5
+    ],
+    [
+     "Designated closing day",
+     4
+    ],
+    [
+     "N/A (Open all year round)",
+     4
+    ],
+    [
+     "Once a month on Mondays",
+     4
+    ],
+    [
+     "Regular closing day once a month",
+     3
+    ],
+    [
+     "Once every other month",
+     3
+    ],
+    [
+     "Twice a month on Sundays",
+     2
+    ],
+    [
+     "Sunday",
+     1
+    ]
+   ],
+   "parkingfee": [
+    [
+     "Free",
+     15
+    ],
+    [
+     "400 won for each 5 minute",
+     1
+    ],
+    [
+     "300 won for every 5 minutes (Cheongwadae Sarangchae public p",
+     1
+    ],
+    [
+     "[Hourly parking fee]<br>\nFirst 10 min free / 700 won for eve",
+     1
+    ],
+    [
+     "무료",
+     1
+    ],
+    [
+     "300 won for every 10-minute",
+     1
+    ],
+    [
+     "2-Hour free parking for performance audience (register at In",
+     1
+    ],
+    [
+     "Sedan: 1,000 won / Van: 2,000 won / Medium-sized cars: 3,000",
+     1
+    ],
+    [
+     "No charge for museum visitors",
+     1
+    ],
+    [
+     "[Events and performances offering admission ticket]<br>\nAdmi",
+     1
+    ],
+    [
+     "2 hours free for performance or exhibition visitors<BR>\n1,00",
+     1
+    ],
+    [
+     "Free of charge",
+     1
+    ],
+    [
+     "Free within 30 minutes after entering / Free within 1 hour a",
+     1
+    ],
+    [
+     "3,000 won for two hours (additional 500 won for every 30 min",
+     1
+    ],
+    [
+     "Parking hours 08:00-22:00<br />\n/ First 1 hr: Small & mid-si",
+     1
+    ]
+   ],
+   "parkingculture": [
+    [
+     "Available",
+     32
+    ],
+    [
+     "Not available",
+     5
+    ],
+    [
+     "Total of \n74 slots (Basement Level: 54, Ground Level: 20)<br",
+     1
+    ],
+    [
+     "Available (Daegu Samung Changjo Campus Paying Parking Lot)",
+     1
+    ],
+    [
+     "Available (small vehicles only)",
+     1
+    ],
+    [
+     "Available (approx. 50 parking spaces)",
+     1
+    ],
+    [
+     "Available (210 spaces)",
+     1
+    ],
+    [
+     "Available (B2-B5, 150 parking slots)",
+     1
+    ],
+    [
+     "Available (80 spaces)",
+     1
+    ],
+    [
+     "Available (Jeonju Hanok Village public parking lot 301 parki",
+     1
+    ],
+    [
+     "Available (small-sized cars only)",
+     1
+    ],
+    [
+     "Available (15 spaces)",
+     1
+    ],
+    [
+     "Available (Underground parking lot of Lotte World Complex)",
+     1
+    ],
+    [
+     "Available (2,000 won for 30 minutes, 1,000 won for every 10 ",
+     1
+    ],
+    [
+     "Available (Free)",
+     1
+    ]
+   ],
+   "usefee": [
+    [
+     "Free",
+     22
+    ],
+    [
+     "Varies by performance",
+     4
+    ],
+    [
+     "Individuals: Adults 1,000 won / Children & Teenagers 600 won",
+     1
+    ],
+    [
+     "Admission 3,000 won (Free for children ages 7 and younger an",
+     1
+    ],
+    [
+     "Adults 27,000 won / Teenagers 23,000 won / Children 19,000 w",
+     1
+    ],
+    [
+     "* Varies by exhibition; please refer to the official website",
+     1
+    ],
+    [
+     "Adults 6,000 won / Children & Senior citizens 5,000 won\n* Ad",
+     1
+    ],
+    [
+     "3,000 won",
+     1
+    ],
+    [
+     "Varies by performance and exhibition",
+     1
+    ],
+    [
+     "Adults 10,000 won / Teenagers 6,000 won<br> Childre 4,000 wo",
+     1
+    ],
+    [
+     "Adults 2,000 won / Teenagers 1,000 won",
+     1
+    ],
+    [
+     "Adults 3,000 won / Children 1,500 won<br><br>\n\n* Free admiss",
+     1
+    ],
+    [
+     "Adults 13,000 won / Teenagers 11,000 won / Children 10,000 w",
+     1
+    ],
+    [
+     "Adults 6,000 won / Children 5,000 won",
+     1
+    ],
+    [
+     "Individuals - Adults 3,000 won / Teenagers 2,000 won / Child",
+     1
+    ]
+   ],
+   "restdateculture": [
+    [
+     "Mondays",
+     8
+    ],
+    [
+     "N/A (Open all year round)",
+     7
+    ],
+    [
+     "Mondays, January 1",
+     3
+    ],
+    [
+     "Mondays, January 1, the day of Seollal (Lunar New Year's Day",
+     3
+    ],
+    [
+     "Mondays, January 1, Seollal (Lunar New Year's Day) & Chuseok",
+     3
+    ],
+    [
+     "January 1, the day of Seollal (Lunar New Year's Day) & Chuse",
+     3
+    ],
+    [
+     "Tuesdays (open if Tuesday is a national holiday and will be ",
+     1
+    ],
+    [
+     "Mondays (if Monday is a public holiday, it will close the ne",
+     1
+    ],
+    [
+     "Mondays, Janualry 1, Seollal (Lunar New Year’s Day) & Chuseo",
+     1
+    ],
+    [
+     "Mondays (open when Monday is a public holiday), January 1, m",
+     1
+    ],
+    [
+     "[Sang Sang Tok Tok Gallery/ Dream Gallery]\nEvery Monday <br>",
+     1
+    ],
+    [
+     "Mondays, New Year’s Day, the morning of Seollal (Lunar New Y",
+     1
+    ],
+    [
+     "Weekends, public holidays",
+     1
+    ],
+    [
+     "N/A (open all year round)",
+     1
+    ],
+    [
+     "Tuesdays",
+     1
+    ]
+   ],
+   "parking": [
+    [
+     "Available",
+     175
+    ],
+    [
+     "Not available",
+     30
+    ],
+    [
+     "Available (Free)",
+     7
+    ],
+    [
+     "Not available (use Chinatown public parking lot)",
+     2
+    ],
+    [
+     "Available (50 spaces)",
+     2
+    ],
+    [
+     "Available (20 spaces)",
+     1
+    ],
+    [
+     "AvailableFee (KRW 500 for 30 minutes / KRW 200 per additiona",
+     1
+    ],
+    [
+     "Available(Paid)",
+     1
+    ],
+    [
+     "Available (8 parking spaces)",
+     1
+    ],
+    [
+     "Available (Bus 30 parking spaces / Sedan 300 parking spaces)",
+     1
+    ],
+    [
+     "Parking lots are available at tourist sites and attractions,",
+     1
+    ],
+    [
+     "Available  *Use parking lots 1 & 2",
+     1
+    ],
+    [
+     "Not available (Use nearby paid parking lot)",
+     1
+    ],
+    [
+     "Parking lot at Sinjang shopping mall and public parking spac",
+     1
+    ],
+    [
+     "Available (1,000 parking spaces)",
+     1
+    ]
+   ],
+   "restdate": [
+    [
+     "N/A (Open all year round)",
+     123
+    ],
+    [
+     "Mondays",
+     11
+    ],
+    [
+     "Varies by store",
+     5
+    ],
+    [
+     "Tuesdays",
+     3
+    ],
+    [
+     "Not available",
+     2
+    ],
+    [
+     "Open all year round",
+     2
+    ],
+    [
+     "Mondays, Seollal (Lunar New Year's Day) & Chuseok (Korean Th",
+     2
+    ],
+    [
+     "* Subject to abrupt closure due to adverse weather condition",
+     2
+    ],
+    [
+     "Mondays, January 1",
+     2
+    ],
+    [
+     "First Wednesday of every month <br> * Except during national",
+     1
+    ],
+    [
+     "Mondays  <br>* June-Septemebr: Flexible operation",
+     1
+    ],
+    [
+     "Closed on Mondays, Tuesdays, the day before and on the day o",
+     1
+    ],
+    [
+     "Mondays (the following business day if Monday is a holiday),",
+     1
+    ],
+    [
+     "Mondays (If Monday is a holiday, closed the following weekda",
+     1
+    ],
+    [
+     "[Filial Piety Museum] Closed on Mondays",
+     1
+    ]
+   ],
+   "restdateleports": [
+    [
+     "N/A (Open all year round)",
+     13
+    ],
+    [
+     "Mondays",
+     2
+    ],
+    [
+     "N/A (Open all year round)* Varies by weather condition",
+     1
+    ],
+    [
+     "Sunday",
+     1
+    ],
+    [
+     "Every other Monday (excluding public holiday and peak season",
+     1
+    ],
+    [
+     "Varies by sports events",
+     1
+    ],
+    [
+     "Vary based on fishing conditions",
+     1
+    ],
+    [
+     "Vary according to fishing circumstances",
+     1
+    ],
+    [
+     "Seollal (Lunar New Year’s Day) and Chuseok (Korean Thanksgiv",
+     1
+    ],
+    [
+     "N/A (Open 24 hr)",
+     1
+    ],
+    [
+     "January 1, day of Seollal (Lunar New Year's Day) & Chuseok (",
+     1
+    ],
+    [
+     "During the period of group lessons, onsite classes or ski ca",
+     1
+    ],
+    [
+     "Seollal (Lunar New Year's Day) & Chuseok (Korean Thanksgivin",
+     1
+    ]
+   ],
+   "parkingfeeleports": [
+    [
+     "Free",
+     4
+    ],
+    [
+     "free",
+     1
+    ],
+    [
+     "Small vehicles: 200 won for every 5 minutes <br>Large vehicl",
+     1
+    ]
+   ],
+   "parkingleports": [
+    [
+     "Available",
+     21
+    ],
+    [
+     "Not available",
+     2
+    ],
+    [
+     "Available (※Fee (free))",
+     1
+    ],
+    [
+     "Available (approx. 50 spaces)",
+     1
+    ]
+   ],
+   "parkingfood": [
+    [
+     "Available",
+     22
+    ],
+    [
+     "available",
+     13
+    ],
+    [
+     "Not available",
+     6
+    ],
+    [
+     "Y (use parking lot at the entrance to the Muhak Market)",
+     1
+    ],
+    [
+     "No on-site parking",
+     1
+    ],
+    [
+     "Available (15 spaces)",
+     1
+    ]
+   ],
+   "restdatefood": [
+    [
+     "N/A (Open all year round)",
+     16
+    ],
+    [
+     "Open 24/7",
+     6
+    ],
+    [
+     "Mondays",
+     3
+    ],
+    [
+     "Closed the day before and the day of major holidays",
+     1
+    ],
+    [
+     "January 1",
+     1
+    ],
+    [
+     "Open All Year Round",
+     1
+    ],
+    [
+     "Sunday22:00-the next day of Sunday09:00",
+     1
+    ],
+    [
+     "Wednesdays",
+     1
+    ],
+    [
+     "Tuesdays",
+     1
+    ],
+    [
+     "National holiday",
+     1
+    ],
+    [
+     "MON",
+     1
+    ],
+    [
+     "Mondays, Tuesdays",
+     1
+    ],
+    [
+     "Tuesdays, Seollal (Lunar New Year's Day) & Chuseok (Korean T",
+     1
+    ],
+    [
+     "연중무휴",
+     1
+    ],
+    [
+     "명절연휴(전화문의)",
+     1
+    ]
+   ],
+   "usefeeleports": [
+    [
+     "Free",
+     3
+    ],
+    [
+     "Adults 25,000 won / Teenagers 20,000 won / Children 10,000 w",
+     1
+    ],
+    [
+     "[Admission] 20,000 won",
+     1
+    ],
+    [
+     "General admission 2,000 won / Senior citizens 1,000 won",
+     1
+    ],
+    [
+     "- Ski / Snowboard 15,000~25,000 won- Inline ski / Short ski ",
+     1
+    ],
+    [
+     "one time: 40,000 won<br> * Refer to the website for more det",
+     1
+    ],
+    [
+     "Standard Caravan (4 persons) 90,000-130,000 won / Character ",
+     1
+    ],
+    [
+     "Refer to the official website",
+     1
+    ],
+    [
+     "[Admission] 25,000 won<br> [Floating bungalow] 50,000-140,00",
+     1
+    ],
+    [
+     "[Admission] Adults 2,000 won, Teenagers·Soldiers 1,000 won, ",
+     1
+    ]
+   ]
+  }
+ }
+}

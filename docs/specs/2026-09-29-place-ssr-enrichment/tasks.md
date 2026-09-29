@@ -11,13 +11,13 @@ Total Task Groups: 10
 **Dependencies:** None
 **Phase:** P1-enrichment
 **Required Skills:** Kotlin, 순수 도메인
-- [ ] 1.0 Complete 파서·집계기
-  - [ ] 1.1 운영 원문 픽스처 추출(국·영, 속성별 대표 표기 · 조건부 휴무 · 원문 없음) → `search/domain/src/test/resources/attributes/`
-  - [ ] 1.2 Write tests: `AttractionAttributeParserTest`(T6 · 8개 안팎), `ClosedTodayTest`(T9 · KST 경계 2개), `RegionAggregatorTest`(T10 · 6개)
-  - [ ] 1.3 `AttractionAttributes`(정기휴무 · 주차 · `petPolicy` · 카드 · 유모차 대여 · 입장 무료, 각 `UNKNOWN` 명시) + `attributeParserVersion`
-  - [ ] 1.4 `petAcmpyType` 원문 값 전부 → `petPolicy` 대응 표(운영에서 distinct 추출해 표로 기록 `implementation/pet-policy-map.md`)
-  - [ ] 1.5 `RegionAggregator`: 5자리 시군구 축 · 언어별 · 유형 N · 유형·분류 M(M ≤ N) · 같은 유형·분류 가까운 곳 5(자기 제외)
-  - [ ] 1.6 Verify: `./gradlew :search:domain:test --tests '*AttractionAttributeParserTest' --tests '*ClosedTodayTest' --tests '*RegionAggregatorTest'`
+- [x] 1.0 Complete 파서·집계기
+  - [x] 1.1 운영 원문 픽스처 추출(국·영, 속성별 대표 표기 · 조건부 휴무 · 원문 없음) → `search/domain/src/test/resources/attributes/`
+  - [x] 1.2 Write tests: `AttractionAttributeParserTest`(T6 · 8개 안팎), `ClosedTodayTest`(T9 · KST 경계 2개), `RegionAggregatorTest`(T10 · 6개)
+  - [x] 1.3 `AttractionAttributes`(정기휴무 · 주차 · `petPolicy` · 카드 · 유모차 대여 · 입장 무료, 각 `UNKNOWN` 명시) + `attributeParserVersion`
+  - [x] 1.4 `petAcmpyType` 원문 값 전부 → `petPolicy` 대응 표(운영에서 distinct 추출해 표로 기록 `implementation/pet-policy-map.md`)
+  - [x] 1.5 `RegionAggregator`: 5자리 시군구 축 · 언어별 · 유형 N · 유형·분류 M(M ≤ N) · 같은 유형·분류 가까운 곳 5(자기 제외)
+  - [x] 1.6 Verify: `./gradlew :search:domain:test --tests '*AttractionAttributeParserTest' --tests '*ClosedTodayTest' --tests '*RegionAggregatorTest'`
 **Acceptance Criteria:** 조건부 휴무·원문 없음이 `UNKNOWN` · 다른 시도 같은 3자리 코드가 섞이지 않음 · M ≤ N · 회귀 주입 빨간불 기록
 
 ### Task Group 2: 재색인 확장 (search:batch)
