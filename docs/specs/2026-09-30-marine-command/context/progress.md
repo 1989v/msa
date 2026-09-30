@@ -7,3 +7,6 @@
 - 모바일 strict lint exit1: Claude Design URL 없는 W6 1건. 도구 미제공으로 imagegen 제작, 가짜 URL 금지.
 - 남은 작업: 실제 브라우저 화면/입력/터치/성능, 실기기 발열 검증 및 사용자 난이도 플레이.
 - 배포/카탈로그 등록 수행하지 않음. 특정 원본 맵 완전 동일 구현 주장하지 않음.
+
+<!-- source: portal-fe/public/games/marine-command/js/sim.js -->
+<!-- source: portal-fe/public/games/marine-command/js/main.js -->

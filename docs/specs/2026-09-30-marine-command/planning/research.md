@@ -18,3 +18,6 @@
 
 ## 확정 진행
 초기 거점 방어 → 사냥 포인트 환전 → 일꾼 배치/병종 고용/공방업 → 영웅 유인 공략 → 병력 승급·조합 → 외곽 주둔지 파괴 및 역습 방어 → 두 던전 공략/중간보스 → 최종 주둔지·최종보스. 병력 손실이 실제 전력 손실이고 일꾼/본진이 살아 있으면 재모집한다. RTS 클릭 노동은 파티 이동/명령/일꾼업무 UI로 단순화한다.
+
+<!-- source: portal-fe/public/games/marine-command/js/sim.js -->
+<!-- source: portal-fe/public/games/marine-command/js/main.js -->

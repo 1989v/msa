@@ -27,3 +27,6 @@ Standalone portal-fe/public/games/marine-command/ only; backend/catalog/deploy n
 - 고용 신병은 언제나 field 본진에 생성. 던전중인 원정에 자동순간이동하지 않음. 던전진입은 field의 follow전투원만 이동, 본진defend/worker유지. exit/recall은 현재던전follow를 field기지로 이동. 던전에서 defend배치 명령은 기지로 복귀시키고 반환이후만 공격.
 - 퇴각/전멸/저장재개 모두 완료된방과1회보상여부보존, 미완료방만 초기화. 완료던전 재보상없음. 현장재입장은미완료방부터.
 - 모든 전투/충돌/수리/탄알에location동일성검사. 저장은 allowlist재구성+ID중복/직업/위치/진행불변식검증.
+
+<!-- source: portal-fe/public/games/marine-command/js/sim.js -->
+<!-- source: portal-fe/public/games/marine-command/js/main.js -->

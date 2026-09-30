@@ -5,3 +5,6 @@
 - 서비스 모듈/DB/인증/통신 변경 없음: ADR 불필요.
 - 2026-09-30 사용자 정정으로 기존 RTS 사양을 폐기: 게임성만 계승하는 1인 직접조작 2D 액션 RPG. 원본 수치/기지/부대조작/제한시간 재현 불필요. 전용 atlas와 Three.js 선택은 유지.
 - 2026-09-30 두 번째 정정: 한 병사 액션 RPG 폐기. 다수유닛 고용/일꾼업무/환전/영웅조합/방어와진출 분담/몬스터·웨이브·주둔지·중간/최종보스·던전 필수. research.md 근거로 설계 재작성. 원작 출처로 확인된 것과 사용자요구 추가를 구분.
+
+<!-- source: portal-fe/public/games/marine-command/js/sim.js -->
+<!-- source: portal-fe/public/games/marine-command/js/main.js -->

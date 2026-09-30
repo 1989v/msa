@@ -1,2 +1,5 @@
 # Requirements
 최신사용자: 몬스터, 몬스터웨이브, 적주둔지, 중간보스, 최종보스, 던전 전부 포함. 일꾼·마린·고스트 고용과 돈벌기·강화·조합의 원작구조. 한병사RPG아님. RTS조작UI의복사는불필요. spec.md G1–G7 및 research.md 정본.
+
+<!-- source: portal-fe/public/games/marine-command/js/sim.js -->
+<!-- source: portal-fe/public/games/marine-command/js/main.js -->

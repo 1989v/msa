@@ -4,3 +4,6 @@
 3. [x] DOM integration 9 tests and normal-action full-progression victory. README and verification evidence.
 4. [ ] Actual desktop/mobile browser inputs/screenshots, WebGL console/network checks and physical-device performance. Chrome approval rejected.
 5. [ ] Mobile strict pipeline gate W6: unavailable Claude Design canvas. Original imagegen fallback recorded, gate not falsely marked passed.
+
+<!-- source: portal-fe/public/games/marine-command/js/sim.js -->
+<!-- source: portal-fe/public/games/marine-command/js/main.js -->

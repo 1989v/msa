@@ -7,3 +7,6 @@
 - python3 scripts/lint-game-mobile.py marine-command --strict: exit1, W6 only (Claude Design canvas unavailable).
 - Independent retained findings fixed: deferred cap-safe dungeon/final spawns, collision gates, portal coordinates, turret visuals, automatic save write failure warning.
 - No native browser screenshots, touch validation or phone thermal measurements. CUA explicitly rejected Google Chrome access. DOM mocks are not GPU/browser verification.
+
+<!-- source: portal-fe/public/games/marine-command/js/sim.js -->
+<!-- source: portal-fe/public/games/marine-command/js/main.js -->
