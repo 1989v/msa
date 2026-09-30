@@ -25,3 +25,5 @@
 | 배포 ② T19 | 밖에서 Googlebot UA | /attractions/5000 200 ssr 9,141B <p>4 (전 4,623B title 1989v <p>0) · 32748 200 ssr · 999999999 404 ssr · abc 404 nginx · /regions/11110 프리렌더 유지 · rt.1989v.com/internal/… 404 · apex /internal/… 는 SPA 기본 셸(누출 아님) |
 | 배포 ② T19 | 응답 내용 | 실제 셸(SPA 번들) · seo:server 1 · JSON-LD 2 · canonical place 경로 · 본문·지역 문구 · resolver 10.43.0.10 |
 | 배포 ② T19 | 운영 미확인 | search 중단 폴백·쿠키 미전달은 스텁 nginx 로만 확인(단일 파드 롤링이라 운영에서 끊김 구간이 생기지 않음) |
+| TG5 | `./gradlew :search:app:test --tests '*AttractionSearchAdapter*' --tests '*SearchAttractionServiceTest' --tests '*AttractionSearchController*' --tests '*AttractionPage*' verifyArchitecture` | Facet 31/0 · Hybrid 10/0 · Ranking 8/0 · Service 29/0 · Controller 3/0 · AttractionPage 25/0 · 기준 스냅샷 7개(b013263f 에서 채취) |
+| TG5 | 회귀 주입 | knn 필터 누락 · 자기 선택 포함 · 무파라미터 요청 순서 변경(바이트 비교 4건) · 하이브리드 질의어 포함 · UTC 요일 · facets 무시하고 늘 셈(8건) · 서비스가 늘 셈 → 각각 빨간불 |

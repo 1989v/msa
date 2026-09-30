@@ -9,6 +9,8 @@ import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.Admission
 import com.kgd.search.domain.attraction.model.AttractionAttributes
 import com.kgd.search.domain.attraction.model.AttractionRegion
+import com.kgd.search.domain.attraction.model.AttributeFacetCounts
+import com.kgd.search.domain.attraction.model.AttributeSelection
 import com.kgd.search.domain.attraction.model.Availability
 import com.kgd.search.domain.attraction.model.NearbyPlace
 import com.kgd.search.domain.attraction.model.PetPolicy
@@ -25,6 +27,10 @@ import io.mockk.slot
 import io.mockk.verify
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.springframework.data.domain.PageImpl
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.ZoneOffset
 
 class SearchAttractionServiceTest : BehaviorSpec({
     val searchPort = mockk<AttractionSearchPort>()
@@ -36,6 +42,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
         hybridEnabled: Boolean = false,
         modelRef: String = MODEL_REF,
         lexicon: QueryIntent.Lexicon = QueryIntent.Lexicon.EMPTY,
+        clock: Clock = Clock.systemUTC(),
     ) = SearchAttractionService(
         searchPort, resolveQueryVector,
         object : CategoryLexiconPort {
@@ -44,6 +51,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
         AttractionHybridProperties(enabled = hybridEnabled),
         QueryVectorProperties(modelRef = modelRef),
         SimpleMeterRegistry(),
+        clock,
     )
     val service = serviceWith()
 
@@ -55,6 +63,8 @@ class SearchAttractionServiceTest : BehaviorSpec({
         every { searchPort.correct(any(), any()) } returns null
     }
 
+    fun found(hits: List<AttractionSearchPort.AttractionHit>) = AttractionSearchPort.SearchResult(PageImpl(hits))
+
     fun document(id: String = "1", overview: String? = null) = AttractionDocument(
         id = id, contentId = "126508", lang = "ko", title = "경복궁",
         latitude = 37.5788, longitude = 126.977, category = "history", overview = overview,
@@ -65,7 +75,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
             then("고친 검색어로 찾고 응답에 알린다") {
                 val captured = slot<AttractionSearchPort.SearchQuery>()
                 every { searchPort.correct("경복굼 야경", "ko") } returns "경복궁 야경"
-                every { searchPort.search(capture(captured), any()) } returns PageImpl(emptyList())
+                every { searchPort.search(capture(captured), any()) } returns found(emptyList())
 
                 val result = service.execute(SearchAttractionUseCase.Query(keyword = "경복굼 야경", lang = "ko"))
 
@@ -76,7 +86,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
         `when`("고칠 것이 없으면") {
             then("원문으로 찾고 교정 표시는 비운다") {
                 val captured = slot<AttractionSearchPort.SearchQuery>()
-                every { searchPort.search(capture(captured), any()) } returns PageImpl(emptyList())
+                every { searchPort.search(capture(captured), any()) } returns found(emptyList())
 
                 val result = service.execute(SearchAttractionUseCase.Query(keyword = "해운대", lang = "ko"))
 
@@ -86,7 +96,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
         }
         `when`("검색어가 없으면") {
             then("교정을 부르지 않는다") {
-                every { searchPort.search(any(), any()) } returns PageImpl(emptyList())
+                every { searchPort.search(any(), any()) } returns found(emptyList())
 
                 service.execute(SearchAttractionUseCase.Query(lat = 37.0, lng = 127.0))
 
@@ -100,7 +110,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
             then("geo 필터가 거리순 정렬로 포트에 전달되어야 한다") {
                 val captured = slot<AttractionSearchPort.SearchQuery>()
                 every { searchPort.search(capture(captured), any()) } returns
-                    PageImpl(listOf(AttractionSearchPort.AttractionHit(document(), 1.0, distanceKm = 0.4)))
+                    found(listOf(AttractionSearchPort.AttractionHit(document(), 1.0, distanceKm = 0.4)))
 
                 val result = service.execute(
                     SearchAttractionUseCase.Query(
@@ -118,7 +128,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
         `when`("radiusKm 가 범위를 벗어나면") {
             then("0.1~50 으로 보정되어야 한다") {
                 val captured = slot<AttractionSearchPort.SearchQuery>()
-                every { searchPort.search(capture(captured), any()) } returns PageImpl(emptyList())
+                every { searchPort.search(capture(captured), any()) } returns found(emptyList())
 
                 service.execute(SearchAttractionUseCase.Query(lat = 37.0, lng = 127.0, radiusKm = 500.0))
 
@@ -128,7 +138,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
         `when`("빈 keyword 가 주어지면") {
             then("keyword 없이(필터-only) 포트에 전달되어야 한다") {
                 val captured = slot<AttractionSearchPort.SearchQuery>()
-                every { searchPort.search(capture(captured), any()) } returns PageImpl(emptyList())
+                every { searchPort.search(capture(captured), any()) } returns found(emptyList())
 
                 service.execute(SearchAttractionUseCase.Query(keyword = " ", lang = "en"))
 
@@ -138,7 +148,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
         }
         `when`("overview 가 200자를 넘으면") {
             then("목록 응답에서 요약되어야 한다") {
-                every { searchPort.search(any(), any()) } returns PageImpl(
+                every { searchPort.search(any(), any()) } returns found(
                     listOf(AttractionSearchPort.AttractionHit(document(overview = "가".repeat(300)), 1.0))
                 )
 
@@ -217,7 +227,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
         `when`("사전이 질의를 알면") {
             then("벡터가 포트로 넘어가야 한다 — 벡터 레그를 켜는 것이 이 필드다") {
                 val captured = slot<AttractionSearchPort.SearchQuery>()
-                every { searchPort.search(capture(captured), any()) } returns PageImpl(emptyList())
+                every { searchPort.search(capture(captured), any()) } returns found(emptyList())
                 every { resolveQueryVector.resolve("한옥", MODEL_REF) } returns listOf(0.6f, 0.8f)
 
                 serviceWith(hybridEnabled = true).execute(SearchAttractionUseCase.Query(keyword = "한옥"))
@@ -229,7 +239,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
         `when`("사전이 모르는 질의면") {
             then("벡터 없이 넘겨야 한다 — 미적중은 BM25 경로다") {
                 val captured = slot<AttractionSearchPort.SearchQuery>()
-                every { searchPort.search(capture(captured), any()) } returns PageImpl(emptyList())
+                every { searchPort.search(capture(captured), any()) } returns found(emptyList())
                 every { resolveQueryVector.resolve(any(), any()) } returns null
 
                 serviceWith(hybridEnabled = true).execute(SearchAttractionUseCase.Query(keyword = "처음 보는 말"))
@@ -241,7 +251,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
         `when`("거리순 정렬이면") {
             then("사전을 보지도 않아야 한다 — 정렬이 점수를 무시해 얻는 것이 없다") {
                 val captured = slot<AttractionSearchPort.SearchQuery>()
-                every { searchPort.search(capture(captured), any()) } returns PageImpl(emptyList())
+                every { searchPort.search(capture(captured), any()) } returns found(emptyList())
 
                 serviceWith(hybridEnabled = true).execute(
                     SearchAttractionUseCase.Query(keyword = "한옥", lat = 37.5, lng = 127.0, sort = "distance"),
@@ -255,7 +265,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
         `when`("키워드가 없으면(목록 탐색)") {
             then("사전을 보지 않아야 한다 — 벡터로 비길 질의가 없다") {
                 val captured = slot<AttractionSearchPort.SearchQuery>()
-                every { searchPort.search(capture(captured), any()) } returns PageImpl(emptyList())
+                every { searchPort.search(capture(captured), any()) } returns found(emptyList())
 
                 serviceWith(hybridEnabled = true).execute(SearchAttractionUseCase.Query(keyword = " "))
 
@@ -267,7 +277,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
         `when`("스탬프가 비어 있으면") {
             then("켜져 있어도 사전을 보지 않아야 한다 — 첫 채움 전 정상 상태다") {
                 val captured = slot<AttractionSearchPort.SearchQuery>()
-                every { searchPort.search(capture(captured), any()) } returns PageImpl(emptyList())
+                every { searchPort.search(capture(captured), any()) } returns found(emptyList())
 
                 serviceWith(hybridEnabled = true, modelRef = "").execute(SearchAttractionUseCase.Query(keyword = "한옥"))
 
@@ -283,7 +293,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
         `when`("「아이와 갈만한 관광지」로 검색하면") {
             then("의도어는 필터가 되고 검색어에서 빠진다") {
                 val captured = slot<AttractionSearchPort.SearchQuery>()
-                every { searchPort.search(capture(captured), any()) } returns PageImpl(emptyList())
+                every { searchPort.search(capture(captured), any()) } returns found(emptyList())
 
                 serviceWith(lexicon = lexicon)
                     .execute(SearchAttractionUseCase.Query(keyword = "아이와 갈만한 관광지"))
@@ -296,7 +306,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
         `when`("분류 이름만 치면") {
             then("검색어 없이 분류 필터만 남는다") {
                 val captured = slot<AttractionSearchPort.SearchQuery>()
-                every { searchPort.search(capture(captured), any()) } returns PageImpl(emptyList())
+                every { searchPort.search(capture(captured), any()) } returns found(emptyList())
 
                 serviceWith(lexicon = lexicon)
                     .execute(SearchAttractionUseCase.Query(keyword = "해수욕장"))
@@ -308,7 +318,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
 
         `when`("벡터 레그에 넘길 질의는") {
             then("잔여가 아니라 **원문**이어야 한다 — 문장의 뜻이 벡터의 전부다") {
-                every { searchPort.search(any(), any()) } returns PageImpl(emptyList())
+                every { searchPort.search(any(), any()) } returns found(emptyList())
                 every { resolveQueryVector.resolve(any(), any()) } returns listOf(0.1f, 0.2f)
 
                 serviceWith(hybridEnabled = true, lexicon = lexicon)
@@ -322,7 +332,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
     given("검색어 없는 목록 조회") {
         `when`("빈 키워드로 부르면") {
             then("사전도 인코더도 보지 않는다") {
-                every { searchPort.search(any(), any()) } returns PageImpl(emptyList())
+                every { searchPort.search(any(), any()) } returns found(emptyList())
 
                 serviceWith(hybridEnabled = true).execute(SearchAttractionUseCase.Query(keyword = ""))
 
@@ -331,10 +341,122 @@ class SearchAttractionServiceTest : BehaviorSpec({
         }
     }
 
+    given("「오늘 정기휴무 아님」의 오늘") {
+        // 파드는 UTC 다. KST 로 세지 않으면 한국 월요일 00:00~08:59 가 일요일로 잡힌다.
+        fun todayAt(instant: String): DayOfWeek {
+            val captured = slot<AttractionSearchPort.SearchQuery>()
+            every { searchPort.search(capture(captured), any()) } returns found(emptyList())
+            serviceWith(clock = Clock.fixed(Instant.parse(instant), ZoneOffset.UTC))
+                .execute(SearchAttractionUseCase.Query(openToday = true))
+            return captured.captured.attributes!!.today
+        }
+        `when`("KST 일요일 23:59 (UTC 14:59)") {
+            then("일요일이다") { todayAt("2026-10-04T14:59:00Z") shouldBe DayOfWeek.SUNDAY }
+        }
+        `when`("KST 월요일 00:00 (UTC 로는 아직 일요일 15:00)") {
+            then("월요일이다") { todayAt("2026-10-04T15:00:00Z") shouldBe DayOfWeek.MONDAY }
+        }
+    }
+
+    given("속성 패싯 건수 요청 여부") {
+        `when`("facets 를 주지 않으면") {
+            then("세지 않는다 — 선택(빈 선택)은 그대로 넘긴다") {
+                val captured = slot<AttractionSearchPort.SearchQuery>()
+                every { searchPort.search(capture(captured), any()) } returns found(emptyList())
+
+                service.execute(SearchAttractionUseCase.Query(parking = "YES"))
+
+                captured.captured.countAttributeFacets shouldBe false
+                captured.captured.attributes!!.parking shouldBe true
+            }
+        }
+        `when`("facets=true 면") {
+            then("아무것도 고르지 않아도 센다") {
+                val captured = slot<AttractionSearchPort.SearchQuery>()
+                every { searchPort.search(capture(captured), any()) } returns found(emptyList())
+
+                service.execute(SearchAttractionUseCase.Query(attributeFacets = true))
+
+                captured.captured.countAttributeFacets shouldBe true
+                captured.captured.attributes shouldBe AttributeSelection(today = captured.captured.attributes!!.today)
+            }
+        }
+    }
+
+    given("속성 패싯 파라미터") {
+        `when`("긍정 값을 주면") {
+            then("선택이 되어 포트에 간다 — 반려동물은 쉼표로 둘 다") {
+                val captured = slot<AttractionSearchPort.SearchQuery>()
+                every { searchPort.search(capture(captured), any()) } returns found(emptyList())
+
+                service.execute(
+                    SearchAttractionUseCase.Query(
+                        openToday = true, parking = "YES", creditCard = "YES", strollerRental = "YES",
+                        pet = "ALLOWED, PARTIAL", admission = "FREE",
+                    ),
+                )
+
+                val selection = captured.captured.attributes!!
+                selection.openToday shouldBe true
+                selection.parking shouldBe true
+                selection.creditCard shouldBe true
+                selection.strollerRental shouldBe true
+                selection.pet shouldBe setOf(PetPolicy.ALLOWED, PetPolicy.PARTIAL)
+                selection.freeAdmission shouldBe true
+            }
+        }
+        `when`("부정·UNKNOWN·모르는 값을 주면") {
+            then("오류 없이 무시하고 그 속성은 거르지 않는다") {
+                val captured = slot<AttractionSearchPort.SearchQuery>()
+                every { searchPort.search(capture(captured), any()) } returns found(emptyList())
+
+                service.execute(
+                    SearchAttractionUseCase.Query(
+                        parking = "NO", creditCard = "UNKNOWN", strollerRental = "yes",
+                        pet = "UNKNOWN,foo", admission = "PAID",
+                    ),
+                )
+
+                captured.captured.attributes shouldBe AttributeSelection(today = captured.captured.attributes!!.today)
+            }
+        }
+        `when`("포트가 건수를 주면") {
+            then("파라미터 값과 같은 표기를 키로 응답에 싣는다") {
+                every { searchPort.search(any(), any()) } returns AttractionSearchPort.SearchResult(
+                    PageImpl(emptyList()),
+                    AttributeFacetCounts(
+                        openToday = 18534, parking = 31605, creditCard = 15864, strollerRental = 12,
+                        pet = mapOf(PetPolicy.ALLOWED to 9070L, PetPolicy.PARTIAL to 503L), freeAdmission = 1127,
+                    ),
+                )
+
+                val facets = service.execute(SearchAttractionUseCase.Query()).attributeFacets!!
+
+                facets.openToday shouldBe 18534
+                facets.parking shouldBe mapOf("YES" to 31605L)
+                facets.creditCard shouldBe mapOf("YES" to 15864L)
+                facets.strollerRental shouldBe mapOf("YES" to 12L)
+                facets.pet shouldBe mapOf("ALLOWED" to 9070L, "PARTIAL" to 503L)
+                facets.admission shouldBe mapOf("FREE" to 1127L)
+            }
+        }
+        `when`("포트가 건수 없이 결과만 주면") {
+            then("결과는 그대로, 건수는 null") {
+                every { searchPort.search(any(), any()) } returns
+                    found(listOf(AttractionSearchPort.AttractionHit(document(), 1.0)))
+
+                val result = service.execute(SearchAttractionUseCase.Query(parking = "YES"))
+
+                result.attractions.size shouldBe 1
+                result.attributeFacets shouldBe null
+            }
+        }
+    }
+
     given("하이브리드가 꺼져 있을 때") {
         `when`("키워드 검색을 하면") {
             then("사전을 보지 않아야 한다") {
-                every { searchPort.search(any(), any()) } returns PageImpl(emptyList())
+                every { searchPort.search(any(), any()) } returns found(emptyList())
 
                 service.execute(SearchAttractionUseCase.Query(keyword = "한옥"))
 

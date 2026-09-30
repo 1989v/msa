@@ -47,6 +47,16 @@ class AttractionSearchController(
         @RequestParam(defaultValue = "relevance") sort: String,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
+        // 속성 패싯 — 긍정 값만 필터가 된다(openToday=true · parking|creditCard|strollerRental=YES ·
+        // pet=ALLOWED,PARTIAL · admission=FREE). 다른 값은 무시하고 그 속성은 거르지 않는다.
+        @RequestParam(defaultValue = "false") openToday: Boolean,
+        @RequestParam(required = false) parking: String?,
+        @RequestParam(required = false) creditCard: String?,
+        @RequestParam(required = false) strollerRental: String?,
+        @RequestParam(required = false) pet: String?,
+        @RequestParam(required = false) admission: String?,
+        // 건수는 요청할 때만 센다 — 상세의 주변·편의시설·지도가 같은 API 를 부른다. 필터 적용과는 무관하다.
+        @RequestParam(defaultValue = "false") facets: Boolean,
     ): ApiResponse<SearchAttractionUseCase.Result> {
         val result = searchAttractionUseCase.execute(
             SearchAttractionUseCase.Query(
@@ -62,6 +72,13 @@ class AttractionSearchController(
                 sort = sort,
                 page = page,
                 size = size,
+                openToday = openToday,
+                parking = parking,
+                creditCard = creditCard,
+                strollerRental = strollerRental,
+                pet = pet,
+                admission = admission,
+                attributeFacets = facets,
             )
         )
         return ApiResponse.success(result)

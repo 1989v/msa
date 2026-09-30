@@ -3,7 +3,7 @@ questions:
     phase: pre-impl
     status: closed
     question: 하이브리드·벡터 경로와 속성 패싯 집계
-    decision: 필터는 본 질의(모든 레그)에 넣고, 하이브리드·벡터 경로에서는 같은 필터의 텍스트 전용 size:0 집계 요청을 하나 더 낸다 (SR-3)
+    decision: 필터는 본 질의(모든 레그)에 넣는다. 건수는 facets=true 일 때 병렬 size:0 집계 요청이 세고, 하이브리드·벡터 경로에서는 질의어를 빼고 구조 필터(질의 이해 분류 포함)만 반영한다 (SR-3)
   - id: Q2
     phase: pre-impl
     status: closed

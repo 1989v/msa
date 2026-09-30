@@ -21,6 +21,23 @@ interface SearchAttractionUseCase {
         val sort: String = "relevance",
         val page: Int = 0,
         val size: Int = 20,
+        /**
+         * 속성 패싯 필터 — **긍정 값만** 필터가 된다. 그 밖의 값(`NO`·`UNKNOWN`·`PAID`·오타)은 오류 없이
+         * 무시하고 그 속성은 거르지 않는다. 「정보 없음」이나 부정으로 거르는 길은 두지 않는다.
+         */
+        val openToday: Boolean = false,
+        /** `YES` 만 */
+        val parking: String? = null,
+        /** `YES` 만 */
+        val creditCard: String? = null,
+        /** `YES` 만 */
+        val strollerRental: String? = null,
+        /** 쉼표로 여러 개 — `ALLOWED`·`PARTIAL` 중 하나라도(OR) */
+        val pet: String? = null,
+        /** `FREE` 만 */
+        val admission: String? = null,
+        /** true 면 속성 패싯 건수를 센다(집계 요청 하나 더). 목록 첫 쪽만 보낸다. 필터 적용과는 무관하다. */
+        val attributeFacets: Boolean = false,
     )
 
     data class AttractionSearchResult(
@@ -107,5 +124,20 @@ interface SearchAttractionUseCase {
         val currentPage: Int,
         /** 오타 교정으로 바꿔 검색했으면 바꾼 검색어. 화면이 「OO(으)로 검색한 결과」를 알린다 */
         val correctedKeyword: String? = null,
+        /** 속성 패싯 건수. 건수 요청이 실패하면 null — 결과는 그대로 온다. */
+        val attributeFacets: AttributeFacets? = null,
+    )
+
+    /**
+     * 속성 값별 건수 — 키는 요청 파라미터 값과 같은 표기다(`parking.YES` ↔ `parking=YES`).
+     * 각 건수는 자기 속성의 선택만 빼고 나머지 선택·구조 필터를 반영한다. `UNKNOWN`·부정 값은 싣지 않는다.
+     */
+    data class AttributeFacets(
+        val openToday: Long,
+        val parking: Map<String, Long>,
+        val creditCard: Map<String, Long>,
+        val strollerRental: Map<String, Long>,
+        val pet: Map<String, Long>,
+        val admission: Map<String, Long>,
     )
 }

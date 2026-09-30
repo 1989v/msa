@@ -1,13 +1,15 @@
 package com.kgd.search.domain.attraction.port
 
 import com.kgd.search.domain.attraction.model.AttractionDocument
+import com.kgd.search.domain.attraction.model.AttributeFacetCounts
+import com.kgd.search.domain.attraction.model.AttributeSelection
 import com.kgd.search.domain.attraction.model.SuggestHit
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 
 interface AttractionSearchPort {
 
-    fun search(query: SearchQuery, pageable: Pageable): Page<AttractionHit>
+    fun search(query: SearchQuery, pageable: Pageable): SearchResult
 
     fun findById(id: String): AttractionDocument?
 
@@ -57,6 +59,27 @@ interface AttractionSearchPort {
          * 레그를 하나 더 얹을 뿐이라, 이 필드가 곧 「벡터 레그 on/off」다.
          */
         val embedding: List<Float>? = null,
+        /**
+         * 속성 패싯 선택. 고른 속성은 본 질의의 모든 레그에 필터로 들어간다 — [countAttributeFacets] 와 무관하다.
+         * 아무것도 고르지 않았으면 null 이 아니라 빈 선택이다(오늘 요일은 건수에도 필요하다).
+         */
+        val attributes: AttributeSelection? = null,
+        /**
+         * true 일 때만 속성 패싯 건수 요청을 본 질의와 병렬로 낸다. 같은 API 를 상세의 주변·편의시설과 지도가
+         * 부르므로 기본은 세지 않는다 — 목록 첫 쪽만 센다.
+         */
+        val countAttributeFacets: Boolean = false,
+    ) {
+        init {
+            // 건수는 오늘 요일(「오늘 정기휴무 아님」)이 있어야 셀 수 있다. 요일은 선택이 갖는다.
+            require(!countAttributeFacets || attributes != null) { "속성 패싯을 세려면 선택(빈 선택 포함)이 필요하다" }
+        }
+    }
+
+    /** [attributeFacets] 는 건수 요청을 내지 않았거나 그 요청이 실패하면 null — 결과는 그래도 돌려준다. */
+    data class SearchResult(
+        val page: Page<AttractionHit>,
+        val attributeFacets: AttributeFacetCounts? = null,
     )
 
     data class GeoFilter(

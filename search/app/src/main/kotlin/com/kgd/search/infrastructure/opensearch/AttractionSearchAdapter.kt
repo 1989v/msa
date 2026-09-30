@@ -2,14 +2,24 @@ package com.kgd.search.infrastructure.opensearch
 
 import com.kgd.search.application.attraction.config.AttractionHybridProperties
 import com.kgd.search.application.queryvector.config.QueryVectorProperties
+import com.kgd.search.domain.attraction.model.Admission
+import com.kgd.search.domain.attraction.model.AttractionAttributeCodes
 import com.kgd.search.domain.attraction.model.AttractionDocument
+import com.kgd.search.domain.attraction.model.AttributeFacetCounts
+import com.kgd.search.domain.attraction.model.AttributeSelection
+import com.kgd.search.domain.attraction.model.Availability
+import com.kgd.search.domain.attraction.model.ClosureState
 import com.kgd.search.domain.attraction.model.Jamo
+import com.kgd.search.domain.attraction.model.PetPolicy
 import com.kgd.search.domain.attraction.model.SuggestHit
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
+import io.github.oshai.kotlinlogging.KotlinLogging
+import org.opensearch.client.json.JsonData
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.opensearch.client.opensearch._types.FieldValue
 import org.opensearch.client.opensearch._types.SortOrder
 import org.opensearch.client.opensearch._types.SuggestMode
+import org.opensearch.client.opensearch._types.aggregations.Aggregation
 import org.opensearch.client.opensearch._types.mapping.FieldType
 import org.opensearch.client.opensearch._types.query_dsl.FieldValueFactorModifier
 import org.opensearch.client.opensearch._types.query_dsl.FunctionBoostMode
@@ -23,10 +33,19 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Component
+import java.time.DayOfWeek
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import kotlin.math.asin
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
+
+private val log = KotlinLogging.logger {}
 
 @Component
 class AttractionSearchAdapter(
@@ -68,12 +87,40 @@ class AttractionSearchAdapter(
         /** 제안 유사도 하한. 실측: 경복굼→경복궁 0.89 · haeundea→haeundae 0.88, 엉뚱한 제안은 0.6~0.8 */
         private const val SPELL_MIN_SCORE = 0.85
         private val WHITESPACE = Regex("\\s+")
+
+        /**
+         * 속성 패싯 건수를 기다리는 한도. 본 질의가 끝난 뒤부터 잰다 — 건수가 늦으면 건수 없이 결과를 낸다.
+         * 건수는 칩 옆 숫자일 뿐이라 결과를 붙잡아 둘 값이 아니다.
+         */
+        private const val FACET_WAIT_MS = 1_000L
+
+        /** 건수 요청은 블로킹 IO 한 번이라 가상 스레드로 낸다 — 풀 크기를 정할 일이 없다. */
+        private val facetExecutor = Executors.newVirtualThreadPerTaskExecutor()
+
+        // 속성 필드 이름은 읽기 문서의 속성 이름을 그대로 쓴다 — 색인 계약 게이트가 그 이름을 매핑과 대조한다.
+        private val CLOSURE_STATE = AttractionSearchDocument::closureState.name
+        private val CLOSED_WEEKDAYS = AttractionSearchDocument::closedWeekdays.name
+        private val PARKING = AttractionSearchDocument::attrParking.name
+        private val CREDIT_CARD = AttractionSearchDocument::attrCreditCard.name
+        private val STROLLER_RENTAL = AttractionSearchDocument::attrStrollerRental.name
+        private val PET_POLICY = AttractionSearchDocument::petPolicy.name
+        private val ADMISSION = AttractionSearchDocument::attrAdmission.name
     }
+
+    /** 속성 패싯의 속성 — 건수에서 「자기 선택만 뺀다」의 단위다. 반려동물 두 값은 한 속성이다. */
+    private enum class Facet { OPEN_TODAY, PARKING, CREDIT_CARD, STROLLER_RENTAL, PET, ADMISSION }
+
+    /** 건수 버킷 하나 — 집계 이름 · 속한 속성 · 그 값의 조건. */
+    private class Bucket(val name: String, val facet: Facet, val condition: Query)
 
     override fun search(
         query: AttractionSearchPort.SearchQuery,
         pageable: Pageable,
-    ): Page<AttractionSearchPort.AttractionHit> {
+    ): AttractionSearchPort.SearchResult {
+        // 건수 요청을 먼저 띄우고 본 질의를 낸다 — 둘이 병렬로 돈다.
+        val facets = query.attributes?.takeIf { query.countAttributeFacets }?.let { selection ->
+            CompletableFuture.supplyAsync({ countFacets(query, selection) }, facetExecutor)
+        }
         val request = buildRequest(query, pageable)
         val response = client.search(request, AttractionSearchDocument::class.java)
         val content = response.hits().hits().mapNotNull { hit ->
@@ -88,8 +135,118 @@ class AttractionSearchAdapter(
                 )
             }
         }
-        return PageImpl(content, pageable, response.hits().total()?.value() ?: 0L)
+        return AttractionSearchPort.SearchResult(
+            page = PageImpl(content, pageable, response.hits().total()?.value() ?: 0L),
+            attributeFacets = facets?.let(::awaitFacets),
+        )
     }
+
+    /** 건수는 결과의 부속이다 — 실패·지연은 경고만 남기고 건수 없이 간다. */
+    private fun awaitFacets(future: Future<AttributeFacetCounts>): AttributeFacetCounts? =
+        try {
+            future.get(FACET_WAIT_MS, TimeUnit.MILLISECONDS)
+        } catch (e: TimeoutException) {
+            future.cancel(true)
+            log.warn { "속성 패싯 건수가 ${FACET_WAIT_MS}ms 안에 오지 않아 건수 없이 결과를 낸다" }
+            null
+        } catch (e: ExecutionException) {
+            log.warn(e.cause ?: e) { "속성 패싯 건수 요청 실패 — 건수 없이 결과를 낸다" }
+            null
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+            null
+        }
+
+    /**
+     * 속성 패싯 건수 — 결과 0건 요청 하나에 값마다 `filter` 집계를 둔다.
+     *
+     * 최상위 질의는 구조 필터(언어·지역·분류·반경·질의 이해 분류)다. 텍스트 경로는 질의어도 넣고,
+     * 벡터 레그가 있는 경로(하이브리드·벡터 단독)는 질의어를 뺀다 — 벡터 결과는 텍스트 일치로 셀 수 없다.
+     * 각 버킷은 **자기 속성의 선택만 빼고** 나머지 선택을 건다(「이 조건을 더하면 몇 곳」).
+     */
+    private fun countFacets(query: AttractionSearchPort.SearchQuery, selection: AttributeSelection): AttributeFacetCounts {
+        val selected = selectedAttributeFilters(selection)
+        val buckets = facetBuckets(selection.today)
+        val request = SearchRequest.Builder()
+            .index(INDEX)
+            .size(0)
+            .query(matchedQuery(query, keyword = query.keyword.takeIf { query.embedding == null }, attributeFilters = emptyList()))
+            .aggregations(
+                buckets.associate { bucket ->
+                    val others = selected.filterKeys { it != bucket.facet }.values.toList()
+                    bucket.name to Aggregation.of { a -> a.filter { f -> f.bool { b -> b.filter(others + bucket.condition) } } }
+                },
+            )
+            .build()
+        val aggregations = client.search(request, JsonData::class.java).aggregations()
+        val counts = buckets.associate { bucket ->
+            bucket.name to requireNotNull(aggregations[bucket.name]) { "건수 응답에 ${bucket.name} 집계가 없다" }.filter().docCount()
+        }
+        return AttributeFacetCounts(
+            openToday = counts.getValue(buckets.single { it.facet == Facet.OPEN_TODAY }.name),
+            parking = counts.getValue(buckets.single { it.facet == Facet.PARKING }.name),
+            creditCard = counts.getValue(buckets.single { it.facet == Facet.CREDIT_CARD }.name),
+            strollerRental = counts.getValue(buckets.single { it.facet == Facet.STROLLER_RENTAL }.name),
+            pet = AttributeSelection.PET_CHOICES.associateWith { counts.getValue(petBucketName(it)) },
+            freeAdmission = counts.getValue(buckets.single { it.facet == Facet.ADMISSION }.name),
+        )
+    }
+
+    /** 고른 속성 → 본 질의에 거는 필터(속성 사이 AND). 긍정 값만 만든다 — 부정·`UNKNOWN` 필터는 여기서 나올 수 없다. */
+    private fun selectedAttributeFilters(selection: AttributeSelection): Map<Facet, Query> = buildMap {
+        if (selection.openToday) put(Facet.OPEN_TODAY, openTodayFilter(selection.today))
+        if (selection.parking) put(Facet.PARKING, termFilter(PARKING, Availability.YES.name))
+        if (selection.creditCard) put(Facet.CREDIT_CARD, termFilter(CREDIT_CARD, Availability.YES.name))
+        if (selection.strollerRental) put(Facet.STROLLER_RENTAL, termFilter(STROLLER_RENTAL, Availability.YES.name))
+        if (selection.pet.isNotEmpty()) {
+            val values = AttributeSelection.PET_CHOICES.filter { it in selection.pet }.map { FieldValue.of(it.name) }
+            put(Facet.PET, Query.of { q -> q.terms { t -> t.field(PET_POLICY).terms { tv -> tv.value(values) } } })
+        }
+        if (selection.freeAdmission) put(Facet.ADMISSION, termFilter(ADMISSION, Admission.FREE.name))
+    }
+
+    /** 건수를 내는 값 — 긍정 값뿐이다(`UNKNOWN` 버킷은 없다). 이름은 `{속성}_{값}`. */
+    private fun facetBuckets(today: DayOfWeek): List<Bucket> =
+        listOf(
+            Bucket("openToday", Facet.OPEN_TODAY, openTodayFilter(today)),
+            Bucket("parking_${Availability.YES.name}", Facet.PARKING, termFilter(PARKING, Availability.YES.name)),
+            Bucket("creditCard_${Availability.YES.name}", Facet.CREDIT_CARD, termFilter(CREDIT_CARD, Availability.YES.name)),
+            Bucket(
+                "strollerRental_${Availability.YES.name}",
+                Facet.STROLLER_RENTAL,
+                termFilter(STROLLER_RENTAL, Availability.YES.name),
+            ),
+        ) +
+            AttributeSelection.PET_CHOICES.map { Bucket(petBucketName(it), Facet.PET, termFilter(PET_POLICY, it.name)) } +
+            Bucket("admission_${Admission.FREE.name}", Facet.ADMISSION, termFilter(ADMISSION, Admission.FREE.name))
+
+    private fun petBucketName(policy: PetPolicy) = "pet_${policy.name}"
+
+    /**
+     * 「오늘 정기휴무 아님」 — 연중무휴 · 매주 쉬는 요일 없음 · 매주 휴무이되 오늘(KST)이 휴무 요일에 없음.
+     * `UNKNOWN` 은 어느 쪽에도 걸리지 않아 빠진다.
+     */
+    private fun openTodayFilter(today: DayOfWeek): Query = Query.of { q ->
+        q.bool { b ->
+            b.should { s ->
+                s.terms { t ->
+                    t.field(CLOSURE_STATE).terms { tv ->
+                        tv.value(listOf(ClosureState.ALWAYS_OPEN, ClosureState.NO_WEEKLY).map { FieldValue.of(it.name) })
+                    }
+                }
+            }
+            b.should { s ->
+                s.bool { weekly ->
+                    weekly.filter(termFilter(CLOSURE_STATE, ClosureState.WEEKLY.name))
+                    weekly.mustNot(termFilter(CLOSED_WEEKDAYS, AttractionAttributeCodes.weekdayCode(today)))
+                }
+            }
+            b.minimumShouldMatch("1")
+        }
+    }
+
+    private fun termFilter(field: String, value: String): Query =
+        Query.of { q -> q.term { it.field(field).value(FieldValue.of(value)) } }
 
     override fun findById(id: String): AttractionDocument? {
         val response = client.get({ g -> g.index(INDEX).id(id) }, AttractionSearchDocument::class.java)
@@ -259,53 +416,65 @@ class AttractionSearchAdapter(
         }
     }
 
-    private fun buildRequest(query: AttractionSearchPort.SearchQuery, pageable: Pageable): SearchRequest {
-        val matched = Query.of { q ->
-            q.bool { b ->
-                    val keyword = query.keyword
-                    if (keyword != null) {
-                        b.must { m -> m.multiMatch { mm -> mm.query(keyword).fields(KEYWORD_FIELDS) } }
-                    } else {
-                        b.must { m -> m.matchAll { it } }
-                    }
-                    query.lang?.let { lang ->
-                        b.filter { f -> f.term { it.field("lang").value(FieldValue.of(lang)) } }
-                    }
-                    query.areaCode?.let { area ->
-                        b.filter { f -> f.term { it.field("areaCode").value(FieldValue.of(area)) } }
-                    }
-                    // 법정동 축 (ADR-0071). 시군구를 주면 시도는 그 앞 2자리라 따로 걸 필요가 없다.
-                    query.sidoCode?.let { sido ->
-                        b.filter { f -> f.term { it.field("ldongRegnCd").value(FieldValue.of(sido)) } }
-                    }
-                    query.sigunguCode?.let { sigungu ->
-                        b.filter { f -> f.term { it.field("ldongSignguCd").value(FieldValue.of(sigungu)) } }
-                    }
-                    query.categories.takeIf { it.isNotEmpty() }?.let { categories ->
-                        b.filter { f ->
-                            f.terms { t ->
-                                t.field("category").terms { tv ->
-                                    tv.value(categories.map { FieldValue.of(it) })
-                                }
-                            }
-                        }
-                    }
-                    // 쿼리 언더스탠딩이 유도한 원천 분류 축 (ADR-0090 개정). 코드는 토큰이 아니라 값이라 term 이다.
-                    query.facets.forEach { (field, value) ->
-                        b.filter { f -> f.term { it.field(field).value(FieldValue.of(value)) } }
-                    }
-                    query.geo?.let { geo ->
-                        b.filter { f ->
-                            f.geoDistance { g ->
-                                g.field("location")
-                                    .distance("${geo.radiusKm}km")
-                                    .location { loc -> loc.latlon { ll -> ll.lat(geo.latitude).lon(geo.longitude) } }
-                            }
-                        }
-                    }
-                b
+    /**
+     * 검색어 + 구조 필터(언어·지역·분류·질의 이해 분류·반경) + 속성 필터. 속성 필터는 **맨 뒤에** 붙는다 —
+     * 속성이 없는 요청이 패싯 이전과 바이트 단위로 같은 요청을 내게 하기 위해서다.
+     */
+    private fun matchedQuery(
+        query: AttractionSearchPort.SearchQuery,
+        keyword: String?,
+        attributeFilters: List<Query>,
+    ): Query = Query.of { q ->
+        q.bool { b ->
+            if (keyword != null) {
+                b.must { m -> m.multiMatch { mm -> mm.query(keyword).fields(KEYWORD_FIELDS) } }
+            } else {
+                b.must { m -> m.matchAll { it } }
             }
+            query.lang?.let { lang ->
+                b.filter { f -> f.term { it.field("lang").value(FieldValue.of(lang)) } }
+            }
+            query.areaCode?.let { area ->
+                b.filter { f -> f.term { it.field("areaCode").value(FieldValue.of(area)) } }
+            }
+            // 법정동 축 (ADR-0071). 시군구를 주면 시도는 그 앞 2자리라 따로 걸 필요가 없다.
+            query.sidoCode?.let { sido ->
+                b.filter { f -> f.term { it.field("ldongRegnCd").value(FieldValue.of(sido)) } }
+            }
+            query.sigunguCode?.let { sigungu ->
+                b.filter { f -> f.term { it.field("ldongSignguCd").value(FieldValue.of(sigungu)) } }
+            }
+            query.categories.takeIf { it.isNotEmpty() }?.let { categories ->
+                b.filter { f ->
+                    f.terms { t ->
+                        t.field("category").terms { tv ->
+                            tv.value(categories.map { FieldValue.of(it) })
+                        }
+                    }
+                }
+            }
+            // 쿼리 언더스탠딩이 유도한 원천 분류 축 (ADR-0090 개정). 코드는 토큰이 아니라 값이라 term 이다.
+            query.facets.forEach { (field, value) ->
+                b.filter { f -> f.term { it.field(field).value(FieldValue.of(value)) } }
+            }
+            query.geo?.let { geo ->
+                b.filter { f ->
+                    f.geoDistance { g ->
+                        g.field("location")
+                            .distance("${geo.radiusKm}km")
+                            .location { loc -> loc.latlon { ll -> ll.lat(geo.latitude).lon(geo.longitude) } }
+                    }
+                }
+            }
+            attributeFilters.forEach { b.filter(it) }
+            b
         }
+    }
+
+    private fun buildRequest(query: AttractionSearchPort.SearchQuery, pageable: Pageable): SearchRequest {
+        // 속성 필터는 이 bool 에 들어가므로 키워드 레그와 벡터 레그(knn filter) 양쪽에 걸린다.
+        val attributeFilters = query.attributes?.let { selectedAttributeFilters(it).values.toList() }.orEmpty()
+        val matched = matchedQuery(query, query.keyword, attributeFilters)
         val keywordLeg = withCategoryWeights(matched, query.commerceIntent)
         val embedding = query.embedding
 

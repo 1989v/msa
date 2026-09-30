@@ -6,13 +6,19 @@ import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.application.queryvector.usecase.ResolveQueryVectorUseCase
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 import com.kgd.search.application.attraction.usecase.SuggestAttractionUseCase
+import com.kgd.search.domain.attraction.model.Admission
 import com.kgd.search.domain.attraction.model.AttractionAttributeCodes
 import com.kgd.search.domain.attraction.model.AttractionDocument
+import com.kgd.search.domain.attraction.model.AttributeFacetCounts
+import com.kgd.search.domain.attraction.model.AttributeSelection
+import com.kgd.search.domain.attraction.model.Availability
+import com.kgd.search.domain.attraction.model.ClosedToday
 import com.kgd.search.domain.query.model.QueryIntent
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
 import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
+import java.time.Clock
 import java.util.UUID
 
 /**
@@ -27,6 +33,8 @@ class SearchAttractionService(
     private val hybrid: AttractionHybridProperties,
     private val queryVector: QueryVectorProperties,
     meterRegistry: MeterRegistry,
+    /** 「오늘 정기휴무 아님」의 오늘. 요일은 [ClosedToday] 가 KST 로 센다. */
+    private val clock: Clock = Clock.systemUTC(),
 ) : SearchAttractionUseCase, SuggestAttractionUseCase {
 
     /** 벡터 레그가 실제로 켜진 요청 수. 사전 적중률(`search.qvec.*`)과 나눠 본다 — 여기가 낮으면 사전이 얇다. */
@@ -76,7 +84,7 @@ class SearchAttractionService(
             ?.map { it.trim() }
             ?.filter { it.isNotBlank() }
             .orEmpty()
-        val page = attractionSearchPort.search(
+        val found = attractionSearchPort.search(
             AttractionSearchPort.SearchQuery(
                 // `?:` 를 쓰면 안 된다 — 잔여가 null 인 것은 「값이 없다」가 아니라
                 // **「의도어만이라 검색어가 남지 않았다」**는 결과다. 엘비스로 원문을 되살리면
@@ -91,9 +99,12 @@ class SearchAttractionService(
                 commerceIntent = understood?.commerceIntent ?: false,
                 geo = geo,
                 embedding = embedding,
+                attributes = toAttributeSelection(query),
+                countAttributeFacets = query.attributeFacets,
             ),
             pageable,
         )
+        val page = found.page
         return SearchAttractionUseCase.Result(
             searchId = UUID.randomUUID().toString(),
             attractions = page.content.mapIndexed { index, hit ->
@@ -103,8 +114,36 @@ class SearchAttractionService(
             totalPages = page.totalPages,
             currentPage = page.number,
             correctedKeyword = corrected,
+            attributeFacets = found.attributeFacets?.toResult(),
         )
     }
+
+    /**
+     * 속성 파라미터 → 선택. **긍정 값만** 선택이 되고 나머지 값(`NO`·`UNKNOWN`·`PAID`·오타)은 조용히 버린다 —
+     * 그 속성은 거르지 않는다. 부정·「정보 없음」으로 거르는 길을 열지 않기 위해서다.
+     */
+    private fun toAttributeSelection(query: SearchAttractionUseCase.Query) = AttributeSelection(
+        today = ClosedToday.todayKst(clock),
+        openToday = query.openToday,
+        parking = query.parking.isCode(Availability.YES.name),
+        creditCard = query.creditCard.isCode(Availability.YES.name),
+        strollerRental = query.strollerRental.isCode(Availability.YES.name),
+        pet = query.pet?.split(",")?.map { it.trim() }
+            ?.let { codes -> AttributeSelection.PET_CHOICES.filter { it.name in codes }.toSet() }
+            .orEmpty(),
+        freeAdmission = query.admission.isCode(Admission.FREE.name),
+    )
+
+    private fun String?.isCode(code: String) = this?.trim() == code
+
+    private fun AttributeFacetCounts.toResult() = SearchAttractionUseCase.AttributeFacets(
+        openToday = openToday,
+        parking = mapOf(Availability.YES.name to parking),
+        creditCard = mapOf(Availability.YES.name to creditCard),
+        strollerRental = mapOf(Availability.YES.name to strollerRental),
+        pet = pet.mapKeys { (policy, _) -> policy.name },
+        admission = mapOf(Admission.FREE.name to freeAdmission),
+    )
 
     override fun findById(id: String): SearchAttractionUseCase.AttractionSearchResult? =
         attractionSearchPort.findById(id)?.toResult(distanceKm = null, position = 0, summarize = false)

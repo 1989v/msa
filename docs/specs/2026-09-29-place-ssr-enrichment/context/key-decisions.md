@@ -18,3 +18,6 @@
 - **nginx 설정은 템플릿** (TG4): resolver 를 기동 때 /etc/resolv.conf 에서 읽는다(클러스터마다 DNS IP 가 다름). 치환 대상은 NGINX_LOCAL_RESOLVERS 하나. 이미지 밖에서 `nginx -t` 할 때는 templates 경로 + env 두 개가 필요하다.
 - **`X-Render: proxy-fallback`** (TG4): nginx 폴백 표지. search 쪽 `shell-fallback` 과 헤더로 가른다.
 - **비숫자 id 는 nginx 기본 404** (TG4): 잘못 만든 링크에서만 생긴다. SPA NotFound 화면은 두지 않는다.
+- **속성 값 검증은 무시 방식** (TG5): NO·UNKNOWN·PAID·오타는 400 대신 필터 없음. openToday 비불리언만 400.
+- **건수는 opt-in (`facets=true`)** (TG5): 상세 주변·편의시설·지도 오버레이가 같은 API 를 불러 매번 세면 상세 1회에 집계 2회가 는다. 목록 첫 쪽만 요청.
+- **질의 이해 분류는 건수에 포함** (TG5): 빼면 「해수욕장」 같은 질의에서 건수가 결과와 무관한 전체 규모가 된다.
