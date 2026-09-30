@@ -50,11 +50,11 @@ Total Task Groups: 10
 **Dependencies:** Task Group 3 (search 이미지가 운영에 뜬 뒤)
 **Phase:** P2-ssr
 **Required Skills:** nginx, Kubernetes NetworkPolicy
-- [ ] 4.0 Complete 배선
+- [x] 4.0 Complete 배선
   - [x] 4.1 nginx: 관광지 숫자 id location 분리 · `proxy_pass` 변수 upstream(요청 시 해석) · 연결 0.5초/읽기 3초 · Cookie/Authorization 제거 · 5xx/시간 초과만 셸로 · 404 통과 · 숫자 아닌 id 404 · 기존 주석 정정
   - [x] 4.2 NetworkPolicy 두 파일(search←portal-fe, portal-fe←search), `kgd.io/host-of` 없음
   - [x] 4.3 Verify(로컬): `kubectl kustomize k8s/overlays/oci-arm >/dev/null && ./gradlew verifyArchitecture` + nginx 설정 문법(`docker run --rm -v … nginx -t`)
-  - [ ] 4.4 Verify(운영, T19): 프리렌더 밖 표본 id Googlebot UA → `X-Render: ssr` + 제목·개요 · 없는 id 404 · `rt.1989v.com/internal/render/...` 404 ↔ 클러스터 안 200 · search 재기동 중 셸 200 · `/regions/*` 프리렌더 유지
+  - [x] 4.4 Verify(운영, T19): 프리렌더 밖 표본 id Googlebot UA → `X-Render: ssr` + 제목·개요 · 없는 id 404 · `rt.1989v.com/internal/render/...` 404 ↔ 클러스터 안 200 · search 재기동 중 셸 200 · `/regions/*` 프리렌더 유지
 **Acceptance Criteria:** T19 전 항목 운영 증거
 
 ### Task Group 5: 속성 패싯 API (search:app)

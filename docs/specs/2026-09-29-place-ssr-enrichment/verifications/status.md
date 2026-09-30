@@ -22,3 +22,6 @@
 | TG4 | 운영 파드 전제 | command 덮어쓰기 없음 · root · 쓰기 가능 · /docker-entrypoint.d 에 15-local-resolvers·20-envsubst · nameserver 10.43.0.10 |
 | 배포 ① | 04:30 정기 재색인(a0a78ea) | 5분 1초 · 별칭 전환 · 283→296.2MB · 속성 필드 59,735/59,735 · 경복궁 WEEKLY·종로구·고궁 10 · 영문 Seoul/Jongno-gu/Royal Palaces |
 | 배포 ② 전 | 클러스터 안 `search:8083/internal/render/attractions/5000` | 200 · X-Render: ssr · 7,631B · title/h1 남원향교 · data-seo-multi 2 · 지역 문구 1 · 없는 id·비숫자 id 404 |
+| 배포 ② T19 | 밖에서 Googlebot UA | /attractions/5000 200 ssr 9,141B <p>4 (전 4,623B title 1989v <p>0) · 32748 200 ssr · 999999999 404 ssr · abc 404 nginx · /regions/11110 프리렌더 유지 · rt.1989v.com/internal/… 404 · apex /internal/… 는 SPA 기본 셸(누출 아님) |
+| 배포 ② T19 | 응답 내용 | 실제 셸(SPA 번들) · seo:server 1 · JSON-LD 2 · canonical place 경로 · 본문·지역 문구 · resolver 10.43.0.10 |
+| 배포 ② T19 | 운영 미확인 | search 중단 폴백·쿠키 미전달은 스텁 nginx 로만 확인(단일 파드 롤링이라 운영에서 끊김 구간이 생기지 않음) |
