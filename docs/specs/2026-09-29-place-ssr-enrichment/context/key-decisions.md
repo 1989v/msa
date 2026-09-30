@@ -26,3 +26,7 @@
 - **상세 응답에 contentTypeId** (TG6): 화면이 「{시군구} {유형} N곳 중 …」 을 서버 렌더와 같게 그리려면 유형이 필요하다.
 - **계약 게이트의 한계** (TG7): 읽기 제외에 사유가 적혀 있으면 게이트는 통과시킨다. 응답에 필요한 필드를 제외해 둔 실수는 실제 역직렬화 테스트만 잡는다(contentTypeId null 사고).
 - **유사 목록 적재는 PUT 통째 교체** (TG7): 임베딩과 같은 방식. 옛 모델 행 정리 경로는 없음(읽히지 않음).
+- **T16 하한** (TG8): 순서가 바뀐 질의 10개 미만이면 보류(2). 신호가 없으면 Δ=0 이 「켬」으로 헛통과한다.
+- **집계 날짜 KST** (TG8): ClickHouse 가 UTC 라 기존 toDate(timestamp) 는 03:30 KST 에 접는 「어제」에서 KST 마지막 몇 시간이 빠졌다. toDate(timestamp,'Asia/Seoul') 로. place-ingest 가 읽는 합계에도 적용.
+- **clickBoost 는 검색어 있는 키워드 레그만** (TG8): 벡터 단독·상업 의도·브라우즈 목록·자동완성 제외. 스위치 기본 꺼짐, 켤 env 는 아직 미배선.
+- **ClickHouse 계정 평문** (TG8): 기존 analytics·recommendation 과 같은 방식. Secret 화는 범위 밖.

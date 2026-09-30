@@ -3,6 +3,7 @@ package com.kgd.search.infrastructure.render
 import com.kgd.search.application.attraction.port.AttractionPageRenderPort
 import com.kgd.search.domain.attraction.model.Admission
 import com.kgd.search.domain.attraction.model.AttractionAttributes
+import com.kgd.search.domain.attraction.model.AttractionClickSignal
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionRegion
 import com.kgd.search.domain.attraction.model.Availability
@@ -261,7 +262,7 @@ class AttractionPageRenderer(
         if (!doc.tel.isNullOrEmpty()) append("<p>${escapeHtml(doc.tel)}</p>")
         append("<p>${escapeHtml(sourceText(doc.overview))}</p>")
         append(visitorInfo(lang, doc))
-        append(badges(lang, doc.attributes))
+        append(badges(lang, doc.attributes, doc.uniqueClickers14d))
         doc.region?.let { append(regionSection(lang, doc, it)) }
         append(similarSection(lang, doc.similarElsewhere))
     }
@@ -281,11 +282,23 @@ class AttractionPageRenderer(
         return "<h2>${if (lang == EN) "Visitor info" else "이용 안내"}</h2><dl>$rows</dl>"
     }
 
-    /** 해석된 값만 배지로. UNKNOWN 은 그리지 않는다 — 「모른다」를 「아니다」로 읽히게 하지 않는다. */
-    private fun badges(lang: String, attributes: AttractionAttributes?): String {
-        if (attributes == null) return ""
+    /**
+     * 해석된 값만 배지로. UNKNOWN 은 그리지 않는다 — 「모른다」를 「아니다」로 읽히게 하지 않는다.
+     * 「많이 클릭한 곳」은 속성과 별개라 맨 끝에, 최소 표본 이상일 때만 붙는다(화면 `visitorBadges` 와 같은 순서).
+     */
+    private fun badges(lang: String, attributes: AttractionAttributes?, uniqueClickers14d: Int?): String {
         val en = lang == EN
         val items = buildList {
+            if (attributes != null) addAll(attributeBadges(en, attributes))
+            if (AttractionClickSignal.isFrequentlyClicked(uniqueClickers14d)) add(if (en) "Frequently clicked" else "많이 클릭한 곳")
+        }
+        if (items.isEmpty()) return ""
+        val list = items.joinToString("") { "<li>${escapeHtml(it)}</li>" }
+        return "<h2>${if (en) "At a glance" else "방문 정보 요약"}</h2><ul>$list</ul>"
+    }
+
+    private fun attributeBadges(en: Boolean, attributes: AttractionAttributes): List<String> =
+        buildList {
             when (val closure = attributes.regularClosure) {
                 RegularClosure.AlwaysOpen -> add(if (en) "Open every day" else "연중무휴")
                 is RegularClosure.Weekly -> add(weeklyClosureLabel(en, closure.closedDays))
@@ -314,10 +327,6 @@ class AttractionPageRenderer(
                 Admission.UNKNOWN -> Unit
             }
         }
-        if (items.isEmpty()) return ""
-        val list = items.joinToString("") { "<li>${escapeHtml(it)}</li>" }
-        return "<h2>${if (en) "At a glance" else "방문 정보 요약"}</h2><ul>$list</ul>"
-    }
 
     private fun availability(value: Availability, yes: String, no: String): String? = when (value) {
         Availability.YES -> yes

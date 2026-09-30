@@ -113,6 +113,26 @@ describe('AttractionPage 새 섹션', () => {
     ]);
   });
 
+  it('14일 고유 클릭 방문자가 최소 표본(5)에 닿으면 배지 끝에 「많이 클릭한 곳」을 붙인다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, uniqueClickers14d: 5 });
+    renderAt('/attractions/100');
+    const badges = await screen.findByRole('region', { name: '방문 정보 요약' });
+
+    expect(within(badges).getAllByRole('listitem').map((li) => li.textContent)).toEqual([
+      '매주 화요일 휴무', '주차 가능', '유모차 대여 없음', '입장 유료', '많이 클릭한 곳',
+    ]);
+  });
+
+  it('최소 표본 미만이거나 값이 없으면 「많이 클릭한 곳」을 붙이지 않는다', async () => {
+    for (const n of [4, 0, null]) {
+      vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, uniqueClickers14d: n });
+      const { unmount } = renderAt('/attractions/100');
+      const badges = await screen.findByRole('region', { name: '방문 정보 요약' });
+      expect(within(badges).queryByText('많이 클릭한 곳')).toBeNull();
+      unmount();
+    }
+  });
+
   it('지역 문구와 시군구 허브 링크, 같은 분류 가까운 곳을 그린다', async () => {
     vi.mocked(fetchAttraction).mockResolvedValue(enriched);
     renderAt('/attractions/100');

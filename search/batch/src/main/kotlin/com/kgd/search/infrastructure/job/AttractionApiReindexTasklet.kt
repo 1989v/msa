@@ -2,6 +2,7 @@ package com.kgd.search.infrastructure.job
 
 import com.kgd.search.domain.attraction.model.AttractionAttributeParser
 import com.kgd.search.domain.attraction.model.AttractionAttributeSource
+import com.kgd.search.domain.attraction.model.AttractionClickSignal
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionRegion
 import com.kgd.search.domain.attraction.model.RegionAggregator
@@ -9,6 +10,7 @@ import com.kgd.search.domain.attraction.model.RegionPlacement
 import com.kgd.search.domain.attraction.model.RegionProjection
 import com.kgd.search.domain.attraction.model.SimilarPlace
 import com.kgd.search.infrastructure.client.PlaceApiClient
+import com.kgd.search.infrastructure.clicksignal.ClickHouseClickSignalReader
 import com.kgd.search.infrastructure.indexing.AttractionIndexDocument
 import com.kgd.search.infrastructure.indexing.IndexAliasManager
 import com.kgd.search.infrastructure.indexing.OsBulkDocumentProcessor
@@ -22,6 +24,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import tools.jackson.databind.ObjectMapper
+import java.time.Instant
 
 /**
  * 관광지 전체 재색인 (ADR-0065) — place API 풀스캔 → attractions alias swap.
@@ -45,7 +48,8 @@ import tools.jackson.databind.ObjectMapper
 class AttractionApiReindexTasklet(
     private val placeApiClient: PlaceApiClient,
     private val bulkProcessor: OsBulkDocumentProcessor,
-    private val aliasManager: IndexAliasManager
+    private val aliasManager: IndexAliasManager,
+    private val clickSignalReader: ClickHouseClickSignalReader,
 ) : Tasklet {
 
     private val log = KotlinLogging.logger {}
@@ -91,6 +95,8 @@ class AttractionApiReindexTasklet(
                     emptyMap()
                 }
             }
+
+            val uniqueClickers = loadClickSignal()
 
             val (projections, placements) = collectRegionPlacements()
 
@@ -220,6 +226,8 @@ class AttractionApiReindexTasklet(
                             attributes = attributes,
                             region = region,
                             similarElsewhere = similarElsewhere,
+                            // 신호를 읽었으면 없는 관광지는 0(클릭 없음), 못 읽었으면 비운다(모름)
+                            uniqueClickers14d = uniqueClickers?.let { it[attraction.id.toString()] ?: 0 },
                         ),
                         embedding,
                     )
@@ -249,6 +257,30 @@ class AttractionApiReindexTasklet(
 
             RepeatStatus.FINISHED
         }
+
+    /**
+     * 클릭 신호 — 회차당 한 번, analytics 집계 표에서 14일 고유 클릭 방문자 수를 읽는다 (ADR-0095 §6).
+     * 못 읽으면 null 을 돌려 필드를 비우고 색인은 이어 간다 — 부가 신호 하나로 재색인을 멈추지 않는다.
+     *
+     * 사람 이벤트가 아직 적어 0곳이 정상값처럼 보일 수 있다. 그래서 실패(WARN)와 0곳(INFO)을 다른 줄로 남긴다 —
+     * 접속 설정이 빠진 채 매일 조용히 빈 값이 되는 것을 로그로 가를 수 있어야 한다.
+     */
+    private fun loadClickSignal(): Map<String, Int>? {
+        val window = AttractionClickSignal.windowOf(Instant.now())
+        return runCatching { clickSignalReader.loadUniqueClickers(window) }
+            .onSuccess { loaded ->
+                if (loaded.isEmpty()) {
+                    log.info { "클릭 신호 0곳 — ClickHouse 는 읽었지만 $window 에 고유 클릭 방문자가 있는 관광지가 없다" }
+                } else {
+                    log.info {
+                        "클릭 신호 ${loaded.size}곳 적재 ($window), " +
+                            "최소 표본(${AttractionClickSignal.MIN_SAMPLE}) 이상 ${loaded.values.count { it >= AttractionClickSignal.MIN_SAMPLE }}곳"
+                    }
+                }
+            }
+            .onFailure { e -> log.warn(e) { "클릭 신호를 못 읽어 uniqueClickers14d 없이 색인한다 (clickBoost 1.0)" } }
+            .getOrNull()
+    }
 
     /**
      * 1차 훑기 — 색인할 문서(ACTIVE)의 투영만 모아 지역 안 위치를 센다. 벡터·링크는 부르지 않는다.

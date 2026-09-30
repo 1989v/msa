@@ -527,6 +527,7 @@ val searchReadOmitted = mapOf(
         "lclsSystm3" to "위와 같음 (소분류)",
         "petAcmpyType" to "반려동물 동반 — 테마 필터 축이지 응답 필드가 아니다",
         "setting" to "실내·실외 — 질의 이해가 거는 필터 축이지 응답 필드가 아니다",
+        "clickBoost" to "순위 계수 — 키워드 레그 점수 함수가 색인에서 곱하는 값이지 응답 필드가 아니다(원값은 uniqueClickers14d)",
     ),
 )
 

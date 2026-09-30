@@ -45,7 +45,7 @@ class EventCollectController(
         if (CrawlerUserAgents.isCrawler(servletRequest.getHeader("User-Agent"))) {
             return ApiResponse.success(CollectEventsResponse(accepted = 0))
         }
-        val visitorId = visitorHeader?.takeIf { it.isNotBlank() } ?: ANONYMOUS
+        val visitorId = visitorHeader?.takeIf { it.isNotBlank() } ?: CollectEventsUseCase.ANONYMOUS_VISITOR
         val sessionId = sessionHeader?.takeIf { it.isNotBlank() } ?: visitorId
         val userId = servletRequest.getHeader(USER_HEADER)?.toLongOrNull()
 
@@ -60,6 +60,5 @@ class EventCollectController(
         const val USER_HEADER = "X-User-Id"
         const val VISITOR_HEADER = "X-Visitor-Id"
         const val SESSION_HEADER = "X-Session-Id"
-        private const val ANONYMOUS = "anonymous"
     }
 }

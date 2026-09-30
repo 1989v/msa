@@ -58,6 +58,15 @@ spec:
                 # search:app 의 search.query-vector.model-ref 와 **한 글자도 달라선 안 된다.**
                 - name: SEARCH_EMBEDDING_MODEL_REF
                   value: "microsoft/harrier-oss-v1-270m@31de22b#d640"
+                # 클릭 신호 — analytics 집계 표를 직접 읽는다(ADR-0095 §6, 네트워크 정책 09 가 search-batch 를 허용).
+                # 빠지면 기본값 localhost 로 가서 매일 「읽기 실패 → 필드 비움」이 된다 — 로그의 「클릭 신호」 줄로 확인한다.
+                # 계정은 analytics Deployment 와 같은 값이다(ClickHouse 계정은 Secret 없이 평문으로 배포돼 있다).
+                - name: CLICKHOUSE_JDBC_URL
+                  value: "jdbc:clickhouse://clickhouse:8123/analytics"
+                - name: CLICKHOUSE_USER
+                  value: "analytics"
+                - name: CLICKHOUSE_PASSWORD
+                  value: "analytics"
               resources:
                 requests: { cpu: 100m, memory: 512Mi }
                 limits:   { memory: 1Gi }

@@ -94,6 +94,8 @@ export interface Attraction {
   region?: AttractionRegion | null;
   /** 다른 시도의 비슷한 곳(같은 언어·유형) — 단건 조회에만 온다. 목록이 없으면 null. */
   similarElsewhere?: Array<{ id: string; title: string; sidoName: string | null }> | null;
+  /** 최근 14일 클릭한 고유 방문자 수 — 단건 조회에만 온다. 신호를 못 읽은 회차·옛 문서는 null. */
+  uniqueClickers14d?: number | null;
 }
 
 export type AttributeAvailability = 'YES' | 'NO' | 'UNKNOWN';

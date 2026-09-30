@@ -66,4 +66,14 @@ class AttractionsIndexMappingTest : BehaviorSpec({
             }
         }
     }
+
+    given("관광지 색인 정의의 클릭 신호 필드") {
+        then("방문자 수는 표시 전용이라 색인하지 않고, 계수는 점수 함수가 읽는 숫자 필드다") {
+            properties.path("uniqueClickers14d").path("type").asString() shouldBe "integer"
+            properties.path("uniqueClickers14d").path("index").asBoolean(true) shouldBe false
+            // fvf 는 doc_values 를 읽는다 — index:false 는 괜찮지만 doc_values 를 끄면 점수 함수가 실패한다
+            properties.path("clickBoost").path("type").asString() shouldBe "float"
+            properties.path("clickBoost").path("doc_values").asBoolean(true) shouldBe true
+        }
+    }
 })

@@ -62,7 +62,7 @@ data class AttractionDocument(
     /**
      * 완결성 기반 정렬 신호 — 위 필드들에서 파생한다 ([AttractionPopularity]).
      * 색인 경로는 기본값(계산)을 쓰고, 읽기 경로는 인덱스에 저장된 값을 그대로 넘긴다.
-     * 방문자 지표가 생기면 이 자리를 그 값으로 바꾼다.
+     * 방문자 지표로 바꾸지 않는다 — 방문자 신호는 [uniqueClickers14d] 가 따로 갖고, 이름·의미·사용처가 다르다.
      */
     val popularityScore: Double = AttractionPopularity.score(imageUrl = imageUrl, overview = overview, tel = tel),
     val modifiedAt: LocalDateTime? = null,
@@ -75,4 +75,9 @@ data class AttractionDocument(
     val region: AttractionRegion? = null,
     /** 다른 시도의 비슷한 곳(같은 언어·유형, 임베딩 코사인 순). 목록이 없거나 옛 색인 문서면 null. */
     val similarElsewhere: List<SimilarPlace>? = null,
+    /**
+     * 최근 14일(KST) 클릭한 고유 방문자 수 ([AttractionClickSignal]). 재색인이 analytics 집계 표에서 읽어 싣는다.
+     * null 은 그 회차에 신호를 못 읽었거나 이 필드가 생기기 전 문서다 — 0(읽었는데 클릭 없음)과 다르다.
+     */
+    val uniqueClickers14d: Int? = null,
 )

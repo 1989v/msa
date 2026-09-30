@@ -106,6 +106,11 @@ interface SearchAttractionUseCase {
         val region: Region? = null,
         /** 다른 시도의 비슷한 곳 — 단건 조회에만. 목록이 없는 문서는 null. */
         val similarElsewhere: List<Similar>? = null,
+        /**
+         * 최근 14일 고유 클릭 방문자 수 — 단건 조회에만. 화면은 최소 표본 이상일 때 「많이 클릭한 곳」을 그린다
+         * (기준은 [com.kgd.search.domain.attraction.model.AttractionClickSignal.MIN_SAMPLE]).
+         */
+        val uniqueClickers14d: Int? = null,
     )
 
     /** 허브 링크는 `/regions/{sidoCode}{ldongSignguCd}`. */

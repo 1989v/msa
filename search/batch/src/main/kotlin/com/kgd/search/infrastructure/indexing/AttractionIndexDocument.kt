@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.kgd.search.domain.attraction.model.AttractionAttributeCodes
+import com.kgd.search.domain.attraction.model.AttractionClickSignal
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.Jamo
 import java.time.LocalDateTime
@@ -109,6 +110,13 @@ data class AttractionIndexDocument(
     val sameCategoryNearby: List<Nearby>? = null,
     /** 다른 시도의 비슷한 곳 — 표시 전용(mapping: enabled=false). 목록이 없으면 필드가 빈다. */
     val similarElsewhere: List<Similar>? = null,
+    /** 최근 14일 고유 클릭 방문자 수 — 상세 배지 표시용(mapping: index=false). 신호를 못 읽은 회차면 빈다. */
+    val uniqueClickers14d: Int? = null,
+    /**
+     * 순위 계수 — 키워드 레그 점수 함수가 곱한다(스위치 기본 꺼짐). 상한·최소 표본은 fvf 로 못 걸어
+     * 재색인이 미리 계산한다([com.kgd.search.domain.attraction.model.AttractionClickSignal]). 신호가 없으면 1.0.
+     */
+    val clickBoost: Double,
 ) {
     /** OpenSearch geo_point object 표기 — 필드명 lat/lon 고정. */
 
@@ -182,6 +190,8 @@ data class AttractionIndexDocument(
                 lclsSystm3Name = region?.categoryName,
                 sameCategoryNearby = region?.sameCategoryNearby?.map { Nearby(it.id, it.title, it.distanceMeters) },
                 similarElsewhere = doc.similarElsewhere?.takeIf { it.isNotEmpty() }?.map { Similar(it.id, it.title, it.sidoName) },
+                uniqueClickers14d = doc.uniqueClickers14d,
+                clickBoost = AttractionClickSignal.boost(doc.uniqueClickers14d),
             )
         }
     }

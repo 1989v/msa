@@ -40,3 +40,8 @@
 | 배포 ④ | 이미지 실패(아틀라스 해시) → 그래프 재내보내기 f112a070 → content/search/search-batch 수동 재빌드 | V22 success · attraction_similar 존재 · 상세 contentTypeId=12 |
 | 배포 ④ | 적재 · 재색인 · 상세 · 서버 렌더 | 298,370행 · 재색인 316s similar 59,674/59,735 · 경복궁·북촌한옥마을 목록 · 서버 렌더에 비슷한 곳 절 |
 | T23 | 표본 50 | 대분류 86.0% · 소분류 61.2% (verifications/similar-quality.md) |
+| TG8 | Gradle 16 클래스(analytics·search domain/batch/app) + verifyArchitecture | 176 tests · failures 0 |
+| TG8 | vitest 3 파일 · tsc | 23 passed · exit 0 |
+| TG8 | 회귀 주입 | 익명 제외 삭제 · 벡터 레그 계수 · 스위치 무시 · 배지 경계 Kotlin/FE · 무클릭 null → 각각 빨간불 |
+| TG8 T16 로직 | 가짜 OpenSearch 네 경우 | 개선 0 · 과대 1 · 판정 없음 80% 2 · 순서 거의 안 바뀜(3개) 2 |
+| 배포 ⑤ 전 기준 | analytics.attraction_popularity_daily | 행 25 · 노출 27 · 클릭 0 · 09-17~09-27 · ClickHouse timezone UTC |

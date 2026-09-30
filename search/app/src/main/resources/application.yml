@@ -71,6 +71,11 @@ search:
   attraction-ranking:
     sight-weight: 3.0
     commerce-weight: 0.35
+  # 클릭 계수(clickBoost) — 키워드 레그 점수에 곱한다. **기본은 꺼짐**: 짝지은 nDCG 판정
+  # (search-batch eval/live-eval.py --click-boost-pair)이 「켬」일 때만 켠다.
+  attraction:
+    click-boost:
+      enabled: ${SEARCH_ATTRACTION_CLICK_BOOST_ENABLED:false}
   # ADR-0090 — 질의 사전. **비어 있으면 사전을 쓰지 않는다**(첫 채움 전 정상 상태).
   # 값은 search:batch 의 `search.embedding.model-ref` 와 한 글자도 달라선 안 된다 —
   # 다르면 사전이 적중해도 문서 벡터의 스탬프가 달라 벡터 레그가 꺼진다.

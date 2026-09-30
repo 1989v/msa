@@ -51,7 +51,7 @@ class ClickHouseSchemaInitializerTest : BehaviorSpec({
                 val scripts = PathMatchingResourcePatternResolver()
                     .getResources("classpath*:clickhouse/analytics/*.sql")
                     .sortedBy { it.filename }
-                scripts.size shouldBe 6
+                scripts.size shouldBe 7
                 scripts.forEach { script ->
                     val stmts = ClickHouseSchemaInitializer.statementsOf(
                         script.inputStream.bufferedReader().readText(),
@@ -78,6 +78,20 @@ class ClickHouseSchemaInitializerTest : BehaviorSpec({
                        "view_id").forEach { sql shouldContain it }
                 sql shouldNotContain "event_type"      // 대상×동작을 누른 옛 축
                 sql shouldNotContain "product_id"      // 대상별 nullable 컬럼
+            }
+        }
+    }
+
+    given("고유 클릭 방문자 컬럼 (V007)") {
+        `when`("파일을 문장으로 가르면") {
+            then("기존 표에 컬럼만 더한다 — 표를 다시 만들지 않아 기존 행이 남는다") {
+                val sql = PathMatchingResourcePatternResolver()
+                    .getResource("classpath:clickhouse/analytics/V007__attraction_unique_clickers.sql")
+                    .inputStream.bufferedReader().readText()
+                val stmts = ClickHouseSchemaInitializer.statementsOf(sql).map { it.replace(Regex("\\s+"), " ") }
+                stmts shouldHaveSize 1
+                stmts[0] shouldBe "ALTER TABLE analytics.attraction_popularity_daily " +
+                    "ADD COLUMN IF NOT EXISTS unique_clickers AggregateFunction(uniq, String)"
             }
         }
     }
@@ -111,7 +125,7 @@ class ClickHouseSchemaInitializerRunOnceTest : io.kotest.core.spec.style.Behavio
 
         Then("스크립트를 전부 돌리고 각각 이력에 남긴다") {
             val inserts = db.executed.filter { it.startsWith("INSERT INTO analytics.schema_migrations") }
-            inserts.size shouldBe 6
+            inserts.size shouldBe 7
             inserts.any { "V005__events_two_axis.sql" in it } shouldBe true
         }
         Then("V005 의 DROP 이 실행된다 — 옛 표를 새 표로 바꾸는 일회성 작업이다") {
@@ -124,6 +138,7 @@ class ClickHouseSchemaInitializerRunOnceTest : io.kotest.core.spec.style.Behavio
             "V001__product_scores.sql", "V002__product_scores_smoothing_gmv.sql",
             "V003__search_judgments_and_eval.sql", "V004__events.sql",
             "V005__events_two_axis.sql", "V006__attraction_popularity_daily.sql",
+            "V007__attraction_unique_clickers.sql",
         ))
         ClickHouseSchemaInitializer(db.dataSource).apply()
 
@@ -146,7 +161,10 @@ class ClickHouseSchemaInitializerRunOnceTest : io.kotest.core.spec.style.Behavio
         Then("안 된 것만 돌린다") {
             val inserts = db.executed.filter { it.startsWith("INSERT INTO analytics.schema_migrations") }
             inserts.map { Regex("V\\d+__[a-z_]+\\.sql").find(it)!!.value } shouldBe
-                listOf("V005__events_two_axis.sql", "V006__attraction_popularity_daily.sql")
+                listOf(
+                    "V005__events_two_axis.sql", "V006__attraction_popularity_daily.sql",
+                    "V007__attraction_unique_clickers.sql",
+                )
         }
     }
 })

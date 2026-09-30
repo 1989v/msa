@@ -233,5 +233,6 @@ class SearchAttractionService(
             )
         },
         similarElsewhere = if (summarize) null else similarElsewhere?.map { SearchAttractionUseCase.Similar(it.id, it.title, it.sidoName) },
+        uniqueClickers14d = if (summarize) null else uniqueClickers14d,
     )
 }

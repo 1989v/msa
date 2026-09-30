@@ -74,6 +74,8 @@ data class AttractionSearchDocument(
     val lclsSystm3Name: String? = null,
     val sameCategoryNearby: List<Nearby>? = null,
     val similarElsewhere: List<Similar>? = null,
+    /** 14일 고유 클릭 방문자 수 — 상세 「많이 클릭한 곳」 배지용. 신호를 못 읽은 회차·옛 문서는 없다. */
+    val uniqueClickers14d: Int? = null,
 ) {
     @JsonIgnoreProperties(ignoreUnknown = true)
     data class Nearby(val id: String, val title: String, val distanceMeters: Int)
@@ -141,5 +143,6 @@ data class AttractionSearchDocument(
         attributes = attributes(),
         region = region(),
         similarElsewhere = similarElsewhere?.map { SimilarPlace(it.id, it.title, it.sidoName) },
+        uniqueClickers14d = uniqueClickers14d,
     )
 }

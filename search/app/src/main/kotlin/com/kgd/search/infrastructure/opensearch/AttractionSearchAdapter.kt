@@ -53,6 +53,7 @@ class AttractionSearchAdapter(
     private val ranking: AttractionRankingProperties,
     private val hybrid: AttractionHybridProperties,
     private val queryVector: QueryVectorProperties,
+    private val clickBoost: AttractionClickBoostProperties = AttractionClickBoostProperties(),
 ) : AttractionSearchPort {
 
     companion object {
@@ -105,6 +106,9 @@ class AttractionSearchAdapter(
         private val STROLLER_RENTAL = AttractionSearchDocument::attrStrollerRental.name
         private val PET_POLICY = AttractionSearchDocument::petPolicy.name
         private val ADMISSION = AttractionSearchDocument::attrAdmission.name
+
+        /** 읽기 문서는 이 필드를 읽지 않는다(순위 전용) — 이름은 쓰기 문서·매핑과 같다. */
+        private const val CLICK_BOOST = "clickBoost"
     }
 
     /** 속성 패싯의 속성 — 건수에서 「자기 선택만 뺀다」의 단위다. 반려동물 두 값은 한 속성이다. */
@@ -475,7 +479,12 @@ class AttractionSearchAdapter(
         // 속성 필터는 이 bool 에 들어가므로 키워드 레그와 벡터 레그(knn filter) 양쪽에 걸린다.
         val attributeFilters = query.attributes?.let { selectedAttributeFilters(it).values.toList() }.orEmpty()
         val matched = matchedQuery(query, query.keyword, attributeFilters)
-        val keywordLeg = withCategoryWeights(matched, query.commerceIntent)
+        // 클릭 계수는 관련도에 곱하는 값이라 검색어가 있을 때만 붙는다 — 검색어 없는 목록은 완결성 순서 그대로다
+        val keywordLeg = withCategoryWeights(
+            matched,
+            query.commerceIntent,
+            withClickBoost = clickBoost.enabled && query.keyword != null,
+        )
         val embedding = query.embedding
 
         val builder = SearchRequest.Builder()
@@ -603,8 +612,11 @@ class AttractionSearchAdapter(
      * 묶는다 — 브라우즈(동점)에선 순서를 정하기에 충분하고, 키워드 모드에선 텍스트
      * 적합도가 지배적으로 남는다. `missing = 1.0` 은 재색인 전 옛 인덱스(필드 없음)에서도
      * 중립(상수 배)으로 동작하게 한다.
+     *
+     * [withClickBoost] 면 클릭 계수(`clickBoost`, 1.0~1.3)를 한 번 더 곱한다. 스위치
+     * ([AttractionClickBoostProperties]) 가 꺼져 있으면 함수 자체를 넣지 않아 요청이 이전과 같다.
      */
-    private fun withCategoryWeights(matched: Query, commerceIntent: Boolean): Query {
+    private fun withCategoryWeights(matched: Query, commerceIntent: Boolean, withClickBoost: Boolean = false): Query {
         // 질의가 상업 시설을 직접 찾으면 하향을 걸지 않는다 — 「야시장」의 정답은 전부 shopping 이다
         if (!ranking.enabled || commerceIntent) return matched
         return Query.of { q ->
@@ -618,6 +630,12 @@ class AttractionSearchAdapter(
                             .factor(1.0f)
                             .modifier(FieldValueFactorModifier.Ln1p)
                             .missing(1.0)
+                    }
+                }
+                // 클릭 계수 — 재색인이 상한·최소 표본을 적용해 둔 값이라 그대로 곱한다. 없는 옛 문서는 중립(1.0).
+                if (withClickBoost) {
+                    fs.functions { fn ->
+                        fn.fieldValueFactor { fvf -> fvf.field(CLICK_BOOST).factor(1.0f).missing(1.0) }
                     }
                 }
                 fs.scoreMode(FunctionScoreMode.Multiply)

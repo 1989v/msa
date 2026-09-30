@@ -98,8 +98,14 @@ function availability(value: string | null | undefined, yes: string, no: string)
 }
 
 /**
+ * 「많이 클릭한 곳」 최소 표본 — 14일 고유 클릭 방문자가 이 수 이상일 때만 배지를 붙인다.
+ * search `AttractionClickSignal.MIN_SAMPLE`(search/domain) 과 같은 값이어야 한다 — 서버 렌더가 그 상수로 판단한다.
+ */
+export const FREQUENTLY_CLICKED_MIN = 5;
+
+/**
  * 방문 정보 배지 — 해석된 값만. `UNKNOWN` 은 그리지 않는다(「모른다」가 「아니다」로 읽히지 않게).
- * 순서: 정기휴무 · 주차 · 반려동물 · 신용카드 · 유모차 대여 · 입장료.
+ * 순서: 정기휴무 · 주차 · 반려동물 · 신용카드 · 유모차 대여 · 입장료 · 많이 클릭한 곳.
  */
 export function visitorBadges(a: Attraction, lang: PlaceLang): string[] {
   const en = lang === 'en';
@@ -118,6 +124,7 @@ export function visitorBadges(a: Attraction, lang: PlaceLang): string[] {
     availability(a.attrCreditCard, en ? 'Credit cards accepted' : '신용카드 가능', en ? 'Credit cards not accepted' : '신용카드 불가'),
     availability(a.attrStrollerRental, en ? 'Stroller rental' : '유모차 대여', en ? 'No stroller rental' : '유모차 대여 없음'),
     admission,
+    (a.uniqueClickers14d ?? 0) >= FREQUENTLY_CLICKED_MIN ? (en ? 'Frequently clicked' : '많이 클릭한 곳') : null,
   ].filter((s): s is string => s != null);
 }
 

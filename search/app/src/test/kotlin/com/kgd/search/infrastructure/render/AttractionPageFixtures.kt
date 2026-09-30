@@ -40,6 +40,7 @@ object AttractionPageFixtures {
         region: AttractionRegion? = null,
         sidoName: String? = "서울특별시",
         similarElsewhere: List<SimilarPlace>? = null,
+        uniqueClickers14d: Int? = null,
     ) = AttractionDocument(
         id = id,
         contentId = "126508",
@@ -63,6 +64,7 @@ object AttractionPageFixtures {
         attributes = attributes,
         region = region,
         similarElsewhere = similarElsewhere,
+        uniqueClickers14d = uniqueClickers14d,
     )
 
     val SIMILAR = listOf(

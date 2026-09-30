@@ -172,6 +172,23 @@ class SearchAttractionServiceTest : BehaviorSpec({
         }
     }
 
+    given("14일 고유 클릭 방문자 수가 색인된 문서") {
+        `when`("목록으로 검색하면") {
+            then("싣지 않는다 — 상세 배지 전용이다") {
+                every { searchPort.search(any(), any()) } returns found(
+                    listOf(AttractionSearchPort.AttractionHit(document().copy(uniqueClickers14d = 12), 1.0)),
+                )
+                service.execute(SearchAttractionUseCase.Query(keyword = "경복궁")).attractions.first().uniqueClickers14d shouldBe null
+            }
+        }
+        `when`("단건 조회하면") {
+            then("값을 그대로 싣는다 — 배지 기준은 화면이 같은 상수로 판단한다") {
+                every { searchPort.findById("1") } returns document().copy(uniqueClickers14d = 12)
+                service.findById("1")!!.uniqueClickers14d shouldBe 12
+            }
+        }
+    }
+
     given("통합 자동완성 시") {
         `when`("지역과 관광지가 섞여 반환되면") {
             then("타입·좌표·레벨이 보존되어야 한다") {

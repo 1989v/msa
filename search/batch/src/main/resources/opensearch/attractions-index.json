@@ -309,6 +309,13 @@
       "similarElsewhere": {
         "type": "object",
         "enabled": false
+      },
+      "uniqueClickers14d": {
+        "type": "integer",
+        "index": false
+      },
+      "clickBoost": {
+        "type": "float"
       }
     }
   }

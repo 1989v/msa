@@ -11,4 +11,12 @@ import com.kgd.common.analytics.AnalyticsEvent
 interface CollectEventsUseCase {
     /** @return 실제로 발행된 건수 */
     fun collect(events: List<AnalyticsEvent>): Int
+
+    companion object {
+        /**
+         * 방문자 헤더가 없을 때 원장의 `visitor_id` 에 넣는 값. 고유 방문자 집계가 이 값을 빼고 센다 —
+         * 수집과 집계가 같은 상수를 봐야 익명 전체가 한 사람으로 섞이지 않는다.
+         */
+        const val ANONYMOUS_VISITOR = "anonymous"
+    }
 }

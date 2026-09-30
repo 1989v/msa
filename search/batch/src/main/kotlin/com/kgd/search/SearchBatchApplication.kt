@@ -1,5 +1,6 @@
 package com.kgd.search
 
+import com.kgd.search.infrastructure.clicksignal.ClickSignalProperties
 import com.kgd.search.infrastructure.eval.EvalProperties
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
@@ -11,7 +12,7 @@ import kotlin.system.exitProcess
 // ADR-0055 — OsBulkDocumentProcessor 의 주기 flush (@Scheduled) 활성화
 @EnableScheduling
 @SpringBootApplication
-@EnableConfigurationProperties(EvalProperties::class)
+@EnableConfigurationProperties(EvalProperties::class, ClickSignalProperties::class)
 class SearchBatchApplication
 
 fun main(args: Array<String>) {

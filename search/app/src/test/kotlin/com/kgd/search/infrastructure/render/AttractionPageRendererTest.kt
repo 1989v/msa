@@ -1,5 +1,6 @@
 package com.kgd.search.infrastructure.render
 
+import com.kgd.search.domain.attraction.model.AttractionClickSignal
 import com.kgd.search.domain.attraction.model.AttractionRegion
 import com.kgd.search.domain.attraction.model.SimilarPlace
 import com.kgd.search.infrastructure.config.AttractionRenderProperties
@@ -162,6 +163,32 @@ class AttractionPageRendererTest : BehaviorSpec({
                 root shouldNotContain "/regions/11110"
                 root shouldContain "<h1>경복궁</h1>"
             }
+        }
+    }
+
+    given("14일 고유 클릭 방문자 수") {
+        val min = AttractionClickSignal.MIN_SAMPLE
+
+        then("최소 표본에 닿으면 배지 목록 끝에 「많이 클릭한 곳」이 붙는다") {
+            val root = rootOf(renderer.attractionPage(SHELL, doc(attributes = PARSED, uniqueClickers14d = min)))
+            root shouldContain "<li>많이 클릭한 곳</li>"
+            (root.indexOf("입장 무료") < root.indexOf("많이 클릭한 곳")) shouldBe true
+        }
+
+        then("최소 표본 미만이거나 신호가 없으면 붙지 않는다") {
+            listOf(min - 1, 0, null).forEach { n ->
+                rootOf(renderer.attractionPage(SHELL, doc(attributes = PARSED, uniqueClickers14d = n))) shouldNotContain "많이 클릭한 곳"
+            }
+        }
+
+        then("속성이 없는 옛 문서여도 이 배지 하나로 요약 절을 그린다") {
+            val root = rootOf(renderer.attractionPage(SHELL, doc(uniqueClickers14d = min)))
+            root shouldContain "<h2>방문 정보 요약</h2><ul><li>많이 클릭한 곳</li></ul>"
+        }
+
+        then("영문 문구") {
+            val root = rootOf(renderer.attractionPage(SHELL, doc(id = "2001", lang = "en", uniqueClickers14d = min)))
+            root shouldContain "<li>Frequently clicked</li>"
         }
     }
 

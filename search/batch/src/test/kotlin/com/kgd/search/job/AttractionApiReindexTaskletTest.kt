@@ -1,6 +1,11 @@
 package com.kgd.search.infrastructure.job
 
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
+import com.kgd.search.domain.attraction.model.AttractionClickSignal
 import com.kgd.search.infrastructure.client.PlaceApiClient
+import com.kgd.search.infrastructure.clicksignal.ClickHouseClickSignalReader
 import com.kgd.search.infrastructure.indexing.AttractionIndexDocument
 import com.kgd.search.infrastructure.indexing.IndexAliasManager
 import com.kgd.search.infrastructure.indexing.OsBulkDocumentProcessor
@@ -11,6 +16,8 @@ import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import org.slf4j.LoggerFactory
 import io.mockk.Runs
 import io.mockk.clearMocks
 import io.mockk.coEvery
@@ -19,6 +26,7 @@ import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import org.springframework.batch.core.step.StepContribution
 import org.springframework.batch.core.scope.context.ChunkContext
@@ -27,6 +35,8 @@ import org.springframework.test.util.ReflectionTestUtils
 import tools.jackson.databind.cfg.DateTimeFeature
 import tools.jackson.module.kotlin.jacksonMapperBuilder
 import tools.jackson.module.kotlin.readValue
+import java.sql.SQLException
+import java.time.LocalDate
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicLong
 
@@ -34,7 +44,8 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
     val placeApiClient = mockk<PlaceApiClient>()
     val bulkProcessor = mockk<OsBulkDocumentProcessor>(relaxed = true)
     val aliasManager = mockk<IndexAliasManager>()
-    val tasklet = AttractionApiReindexTasklet(placeApiClient, bulkProcessor, aliasManager).also {
+    val clickReader = mockk<ClickHouseClickSignalReader>()
+    val tasklet = AttractionApiReindexTasklet(placeApiClient, bulkProcessor, aliasManager, clickReader).also {
         ReflectionTestUtils.setField(it, "indexAlias", "attractions")
         ReflectionTestUtils.setField(it, "pageSize", 100)
         // 기본은 빈 값 = 벡터 없이 색인. 첫 채움 전 운영이 실제로 이 상태다.
@@ -76,6 +87,7 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
         every { aliasManager.createIndex("attractions_1", IndexAliasManager.ATTRACTIONS_INDEX_DEFINITION) } just Runs
         every { aliasManager.updateAliasAndCleanup("attractions", "attractions_1", maxRetention = 1) } just Runs
         every { bulkProcessor.errorCount } returns AtomicLong(0)
+        every { clickReader.loadUniqueClickers(any()) } returns emptyMap()
     }
 
     given("관광지 재색인 실행 시") {
@@ -436,6 +448,69 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                 source["regionCategoryCount"] shouldBe 2
                 source.keys shouldNotContain "sigunguName"
                 source.keys shouldNotContain "lclsSystm3Name"
+            }
+        }
+    }
+
+    given("재색인이 클릭 신호를 붙일 때") {
+        fun capturedLogs(): ListAppender<ILoggingEvent> =
+            ListAppender<ILoggingEvent>().also { appender ->
+                appender.start()
+                (LoggerFactory.getLogger(AttractionApiReindexTasklet::class.java) as Logger).addAppender(appender)
+            }
+        fun ListAppender<ILoggingEvent>.messages() = list.map { it.formattedMessage }
+
+        `when`("ClickHouse 가 14일 고유 클릭 방문자 수를 주면") {
+            then("있는 문서는 값과 계수가, 없는 문서는 0 과 1.0 이 bulk 문서에 실려야 한다") {
+                val documents = captureDocuments()
+                onePage(dto(1, "ko"), dto(2, "ko"))
+                val window = slot<ClosedRange<LocalDate>>()
+                every { clickReader.loadUniqueClickers(capture(window)) } returns mapOf("1" to 12)
+                val logs = capturedLogs()
+
+                tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+
+                val clicked = bulkSource(documents.single { it.id == "1" })
+                clicked["uniqueClickers14d"] shouldBe 12
+                (clicked["clickBoost"] as Number).toDouble() shouldBe AttractionClickSignal.boost(12)
+                val quiet = bulkSource(documents.single { it.id == "2" })
+                quiet["uniqueClickers14d"] shouldBe 0
+                (quiet["clickBoost"] as Number).toDouble() shouldBe 1.0
+                // 창은 오늘(KST)을 뺀 14일이다
+                (window.captured.endInclusive.toEpochDay() - window.captured.start.toEpochDay()) shouldBe 13L
+                logs.messages().single { it.startsWith("클릭 신호") } shouldContain "1곳"
+            }
+        }
+
+        `when`("접속은 되는데 14일 클릭이 하나도 없으면") {
+            then("0곳이라고 따로 적는다 — 실패와 구분한다") {
+                captureDocuments()
+                onePage(dto(1, "ko"))
+                val logs = capturedLogs()
+
+                tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+
+                logs.messages().single { it.startsWith("클릭 신호") } shouldContain "0곳"
+            }
+        }
+
+        `when`("ClickHouse 조회가 실패하면") {
+            then("필드를 비우고 계수 1.0 으로 끝까지 색인하며 경고를 남긴다") {
+                val documents = captureDocuments()
+                onePage(dto(1, "ko"), dto(2, "ko"))
+                every { clickReader.loadUniqueClickers(any()) } throws SQLException("Connection refused")
+                val logs = capturedLogs()
+
+                val result = tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+
+                result shouldBe RepeatStatus.FINISHED
+                documents.size shouldBe 2
+                documents.forEach { doc ->
+                    bulkSource(doc).keys shouldNotContain "uniqueClickers14d"
+                    (bulkSource(doc)["clickBoost"] as Number).toDouble() shouldBe 1.0
+                }
+                verify { aliasManager.updateAliasAndCleanup("attractions", "attractions_1", maxRetention = 1) }
+                logs.list.single { it.formattedMessage.startsWith("클릭 신호") }.level.toString() shouldBe "WARN"
             }
         }
     }

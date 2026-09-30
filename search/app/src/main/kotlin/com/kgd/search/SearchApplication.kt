@@ -7,6 +7,7 @@ import com.kgd.search.application.ranking.config.DiversityProperties
 import com.kgd.search.infrastructure.client.QueryEncoderProperties
 import com.kgd.search.infrastructure.config.AttractionRenderProperties
 import com.kgd.search.infrastructure.client.SearchExperimentProperties
+import com.kgd.search.infrastructure.opensearch.AttractionClickBoostProperties
 import com.kgd.search.infrastructure.opensearch.AttractionRankingProperties
 import com.kgd.search.infrastructure.opensearch.RankingProperties
 import com.kgd.search.infrastructure.opensearch.RankingVariantsProperties
@@ -26,6 +27,7 @@ import org.springframework.scheduling.annotation.EnableScheduling
     DiversityProperties::class,
     SearchExperimentProperties::class,
     AttractionRankingProperties::class,
+    AttractionClickBoostProperties::class,
     QueryVectorProperties::class,
     QueryEncoderProperties::class,
     AttractionHybridProperties::class,
