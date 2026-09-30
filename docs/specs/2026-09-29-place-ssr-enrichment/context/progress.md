@@ -29,4 +29,4 @@
 - 클릭 신호 경로 연결, 사람 클릭 0 이라 값 0 · T16 보류. 켜기: 클릭이 쌓인 뒤 T16 재실행 → exit 0 이면 search 에 SEARCH_ATTRACTION_CLICK_BOOST_ENABLED=true(env 미배선).
 
 ## 단계 ⑥ 커밋 (2026-09-30)
-- 관광지 상세 프리렌더 제거 · ADR-0103 채택 · 문서. 남은 것: 9.3 배포 뒤 확인(이미지 크기 · X-Render ssr · /regions 프리렌더) → 최종 검증.
+- 관광지 상세 프리렌더 제거 · ADR-0103 채택 · 문서. 9.3 확인 완료 · 최종 검증 PASS WITH ISSUES(verifications/final-verification.md). 남은 것: T7 사람 라벨 · 10.3 doc_map 기존 drift · 클릭 신호 T16 재판정.

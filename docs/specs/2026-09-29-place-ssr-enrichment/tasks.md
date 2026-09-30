@@ -30,7 +30,7 @@ Total Task Groups: 10
   - [x] 2.3 시군구 이름 조회(SIGUNGU 이름표, sidoNames 와 같은 방식)
   - [x] 2.4 매핑: 필터 대상 keyword, 표시용 `index:false`/색인 안 하는 객체 · 쓰기·읽기 문서 클래스 · `searchIndexContracts`·`searchReadOmitted`
   - [x] 2.5 Verify: `./gradlew :search:batch:test --tests '*AttractionApiReindexTaskletTest' && ./gradlew verifyArchitecture`
-  - [ ] 2.6 배포 뒤: 재색인 1회 · 색인 크기 전후 기록 · 표본 문서에 속성·지역 필드 존재 확인
+  - [x] 2.6 배포 뒤: 재색인 1회 · 색인 크기 전후 기록 · 표본 문서에 속성·지역 필드 존재 확인
 **Acceptance Criteria:** 계약 게이트 통과 · bulk 문서에 새 값 · 재색인 1800초 안 · 색인 크기 기록
 
 ### Task Group 3: 서버 렌더 (search:app)
@@ -112,10 +112,10 @@ Total Task Groups: 10
 **Dependencies:** Task Group 4 (운영 확인 완료)
 **Phase:** P6-cleanup
 **Required Skills:** Node 스크립트, nginx
-- [ ] 9.0 Complete 제거
-  - [ ] 9.1 `prerender-seo.mjs` 관광지 상세 프리렌더·`PLACE_DETAIL_CAP` 제거, 지역 유지 · 관련 vitest 정리
-  - [ ] 9.2 Verify: `cd portal-fe && npx vitest run src/seo && node scripts/prerender-seo.mjs --dry-run 2>/dev/null | tail -3`
-  - [ ] 9.3 배포 뒤: 이미지 크기 전후 · 관광지 상세 여전히 `X-Render: ssr` · `/regions/*` 프리렌더 유지
+- [x] 9.0 Complete 제거
+  - [x] 9.1 `prerender-seo.mjs` 관광지 상세 프리렌더·`PLACE_DETAIL_CAP` 제거, 지역 유지 · 관련 vitest 정리
+  - [x] 9.2 Verify: `cd portal-fe && npx vitest run src/seo && node scripts/prerender-seo.mjs --dry-run 2>/dev/null | tail -3`
+  - [x] 9.3 배포 뒤: 이미지 크기 전후 · 관광지 상세 여전히 `X-Render: ssr` · `/regions/*` 프리렌더 유지
 **Acceptance Criteria:** 이미지 감소 기록 · T19 재통과
 
 ### Task Group 10: 문서 · 사전
@@ -123,8 +123,8 @@ Total Task Groups: 10
 **Phase:** P6-cleanup
 **Required Skills:** 문서
 - [x] 10.0 Complete 문서
-  - [ ] 10.1 ADR-0103 상태 → 채택 · ADR-0062 상태 줄(§8 대체) · ADR-0072 §6 · ADR-0095 §6 소비자 · 네트워크 정책 09 주석 · `package-structure.md` · `search/CLAUDE.md` · `place/CLAUDE.md`(syncFrom 보존 설명 정정)
-  - [ ] 10.2 `/hns:glossary` 로 속성 패싯 · `petPolicy` · `clickBoost` · 서버 렌더 등재
+  - [x] 10.1 ADR-0103 상태 → 채택 · ADR-0062 상태 줄(§8 대체) · ADR-0072 §6 · ADR-0095 §6 소비자 · 네트워크 정책 09 주석 · `package-structure.md` · `search/CLAUDE.md` · `place/CLAUDE.md`(syncFrom 보존 설명 정정)
+  - [x] 10.2 `/hns:glossary` 로 속성 패싯 · `petPolicy` · `clickBoost` · 서버 렌더 등재
   - [ ] 10.3 Verify: `./gradlew verifyArchitecture && python3 scripts/doc_scan.py 2>/dev/null | tail -3`
 **Acceptance Criteria:** 문서 게이트 통과
 

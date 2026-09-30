@@ -51,3 +51,7 @@
 | TG9 | 회귀 주입(관광지 상세 경로 되살림) | 2 failed → 원복 13 passed |
 | TG10 | verifyArchitecture · doc_map --check | exit 0 · exit 1(HEAD 에서도 같은 기존 drift) |
 | 배포 ⑥ 전 기준 | 노드 portal-fe 이미지 | 97.2~97.6MB |
+| 배포 ⑥ (9.3) | portal-fe 31913f7 롤아웃 | 이미지 109MB(직전 981e71f) → 106MB · 앞 줄의 97MB 기준선은 태그 정렬로 옛 이미지를 잡은 것이라 무효 |
+| 배포 ⑥ (9.3) | 관광지 상세 | /attractions/5000 200 ssr 11,964B · /attractions/40000 200 ssr 10,356B · /en/attractions/21 200 ssr 11,162B lang=en |
+| 배포 ⑥ (9.3) | 지역 허브 프리렌더 | /regions/11 11,008B「서울특별시 가볼 만한 곳 1,475곳」· /regions/11110 8,160B · /en/regions/11 10,985B lang=en |
+| 관찰 | /en/attractions/{국문 id} | 국문 본문을 내되 canonical 이 국문 URL — sitemap 밖 경로, 중복 색인 없음 |
