@@ -37,3 +37,6 @@
 | TG7 | 파이썬 유사도 테스트(tools/embed tests/test_similar.py) | 에이전트 실행 5 passed. 재실행은 test-scope 훅 정규식 결함으로 막힘 — 운영 --dry-run 으로 대신 확인 |
 | TG7 | 회귀 주입 | 같은 시도 허용 · 비활성 미필터 · model_ref 비교 제거 · FE 순서 교환 · 존재 검사 생략 → 각각 빨간불 |
 | 결함 수정 | contentTypeId 읽기 경로 | SearchDocument 5/0 · 주입(필드 제거+읽기 제외 복원) → 게이트 통과, 테스트가 Expected 12 but was null 로 잡음 |
+| 배포 ④ | 이미지 실패(아틀라스 해시) → 그래프 재내보내기 f112a070 → content/search/search-batch 수동 재빌드 | V22 success · attraction_similar 존재 · 상세 contentTypeId=12 |
+| 배포 ④ | 적재 · 재색인 · 상세 · 서버 렌더 | 298,370행 · 재색인 316s similar 59,674/59,735 · 경복궁·북촌한옥마을 목록 · 서버 렌더에 비슷한 곳 절 |
+| T23 | 표본 50 | 대분류 86.0% · 소분류 61.2% (verifications/similar-quality.md) |
