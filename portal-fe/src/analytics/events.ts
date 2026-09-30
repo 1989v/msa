@@ -26,6 +26,8 @@ export type SectionId =
   | 'AMENITY_CAROUSEL'
   /** 관광지 상세 — 같은 시군구·유형·분류의 가까운 곳 (색인이 미리 계산해 둔 목록) */
   | 'SAME_CATEGORY_NEARBY'
+  /** 관광지 상세 — 다른 시도의 비슷한 곳 (오프라인 임베딩 유사도, 색인이 싣는 목록) */
+  | 'SIMILAR_ELSEWHERE'
   /** 통합 검색의 타입 묶음. 어느 타입인지는 `entityType`, 묶음 순서는 `sectionIndex` 가 갖는다 */
   | 'SEARCH_GROUP';
 

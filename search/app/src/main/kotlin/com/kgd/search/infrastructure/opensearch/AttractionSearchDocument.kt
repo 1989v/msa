@@ -11,6 +11,7 @@ import com.kgd.search.domain.attraction.model.AttractionRegion
 import com.kgd.search.domain.attraction.model.Availability
 import com.kgd.search.domain.attraction.model.NearbyPlace
 import com.kgd.search.domain.attraction.model.PetPolicy
+import com.kgd.search.domain.attraction.model.SimilarPlace
 import java.time.LocalDateTime
 
 /**
@@ -31,6 +32,8 @@ data class AttractionSearchDocument(
     val ldongRegnCd: String? = null,
     val ldongSignguCd: String? = null,
     val category: String? = null,
+    /** 원천 관광 유형 — 상세 지역 문구 「{시군구} {유형} N곳 중 …」 이 쓴다. 없으면 화면이 문구를 짐작하지 않는다. */
+    val contentTypeId: String? = null,
     val imageUrl: String? = null,
     /** 재색인 전 옛 인덱스 문서에는 없다 — null 이면 FE 가 imageUrl 을 쓴다. */
     val thumbnailUrl: String? = null,
@@ -70,9 +73,13 @@ data class AttractionSearchDocument(
     val regionCategoryCount: Int? = null,
     val lclsSystm3Name: String? = null,
     val sameCategoryNearby: List<Nearby>? = null,
+    val similarElsewhere: List<Similar>? = null,
 ) {
     @JsonIgnoreProperties(ignoreUnknown = true)
     data class Nearby(val id: String, val title: String, val distanceMeters: Int)
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class Similar(val id: String, val title: String, val sidoName: String? = null)
 
     // 속성 필드는 재색인이 한 벌로 싣는다 — closureState 가 있으면 나머지도 있다.
     private fun attributes(): AttractionAttributes? = closureState?.let { state ->
@@ -112,6 +119,7 @@ data class AttractionSearchDocument(
         ldongRegnCd = ldongRegnCd,
         ldongSignguCd = ldongSignguCd,
         category = category,
+        contentTypeId = contentTypeId,
         imageUrl = imageUrl,
         thumbnailUrl = thumbnailUrl,
         tel = tel,
@@ -132,5 +140,6 @@ data class AttractionSearchDocument(
         modifiedAt = modifiedAt,
         attributes = attributes(),
         region = region(),
+        similarElsewhere = similarElsewhere?.map { SimilarPlace(it.id, it.title, it.sidoName) },
     )
 }

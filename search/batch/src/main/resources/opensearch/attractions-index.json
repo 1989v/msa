@@ -305,6 +305,10 @@
       "sameCategoryNearby": {
         "type": "object",
         "enabled": false
+      },
+      "similarElsewhere": {
+        "type": "object",
+        "enabled": false
       }
     }
   }

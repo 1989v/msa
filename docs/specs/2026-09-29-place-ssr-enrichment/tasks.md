@@ -86,11 +86,11 @@ Total Task Groups: 10
 **Phase:** P4-similar
 **Required Skills:** Flyway, Python, numpy
 - [ ] 7.0 Complete 비슷한 곳
-  - [ ] 7.1 Write tests: place 적재·조회 API + 스키마(T13) · tools/embed 유사 계산 pytest(T12) · 재색인 합류(비활성 제외 · model_ref 불일치 제외)
-  - [ ] 7.2 place `V22__create_attraction_similar.sql` + `/internal/attractions/similar/bulk`·`/lookup`
-  - [ ] 7.3 tools/embed: 같은 언어·다른 시도·같은 유형 상위 5 계산 · 적재 명령
-  - [ ] 7.4 재색인 조회 합류
-  - [ ] 7.5 Verify: `./gradlew :place:feature:test --tests '*AttractionSimilar*' --tests '*PlaceSchemaIntegrationSpec' && ./gradlew :search:batch:test --tests '*AttractionApiReindexTaskletTest' && (cd tools/embed && python -m pytest -q tests -k similar)`
+  - [x] 7.1 Write tests: place 적재·조회 API + 스키마(T13) · tools/embed 유사 계산 pytest(T12) · 재색인 합류(비활성 제외 · model_ref 불일치 제외)
+  - [x] 7.2 place `V22__create_attraction_similar.sql` + `/internal/attractions/similar/bulk`·`/lookup`
+  - [x] 7.3 tools/embed: 같은 언어·다른 시도·같은 유형 상위 5 계산 · 적재 명령
+  - [x] 7.4 재색인 조회 합류
+  - [x] 7.5 Verify: `./gradlew :place:feature:test --tests '*AttractionSimilar*' --tests '*PlaceSchemaIntegrationSpec' && ./gradlew :search:batch:test --tests '*AttractionApiReindexTaskletTest' && (cd tools/embed && python -m pytest -q tests -k similar)`
   - [ ] 7.6 배포 뒤: 적재 → 재색인 → T23 품질 표본 50건 기록
 **Acceptance Criteria:** 문서에 유사 목록 · 품질 기록
 

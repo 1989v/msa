@@ -149,6 +149,22 @@ python -m embed.push --file vectors_ko.parquet --internal http://localhost:8096 
 보내기 전에 도구가 먼저 검사한다(해시·차원·정규화·중복 id·단일 스탬프) — 업서트는 요청 단위 all-or-nothing 이라
 500건 중 한 건이 틀리면 나머지 499건도 거부된다.
 
+## 비슷한 곳 (`python -m embed.similar`)
+
+place 에 이미 있는 문서 벡터로 **같은 언어·같은 유형·다른 시도**에서 코사인 상위 5를 계산해
+`/internal/attractions/similar/bulk` 로 올린다. 모델을 부르지 않는다(GPU 불필요). 재색인이 그 목록을 읽어 상세의 「비슷한 곳」에 싣는다.
+
+```bash
+tools/embed/tunnel.sh place
+python -m embed.similar run --model-ref 'microsoft/harrier-oss-v1-270m@31de22b#d640' --internal http://localhost:8096 --dry-run
+python -m embed.similar run --model-ref 'microsoft/harrier-oss-v1-270m@31de22b#d640' --internal http://localhost:8096
+```
+
+- `--model-ref` 는 search 의 `SEARCH_EMBEDDING_MODEL_REF` 와 **같은 문자열**이어야 한다. 재색인은 설정의 스탬프로 조회하고, 행의 스탬프가 다르면 싣지 않는다.
+- 문서마다 목록을 **통째로** 바꾼다. 후보가 없는 문서도 빈 목록을 보내 옛 목록을 지운다. 같은 명령을 다시 돌려도 결과가 같다.
+- 시도(`ldongRegnCd`)나 유형(`contentTypeId`)이 없는 문서는 「다른 시도·같은 유형」을 판정할 수 없어 질의에서도 후보에서도 빠진다.
+- 계산은 유형 묶음 안에서 1,024행씩 곱한다. 합성 6만 건 × 640차원에서 4.3초(M 시리즈 CPU)였다. 시간 대부분은 목록·벡터를 받는 왕복이다.
+
 ## 서버와 같아야 하는 두 가지
 
 `text_hash`(sha256) 와 벡터 표현(float32 little-endian 의 base64)은 서버와 **바이트 단위로 같아야** 한다.

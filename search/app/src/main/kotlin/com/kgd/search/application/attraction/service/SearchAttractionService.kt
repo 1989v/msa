@@ -232,5 +232,6 @@ class SearchAttractionService(
                 sameCategoryNearby = r.sameCategoryNearby.map { SearchAttractionUseCase.Nearby(it.id, it.title, it.distanceMeters) },
             )
         },
+        similarElsewhere = if (summarize) null else similarElsewhere?.map { SearchAttractionUseCase.Similar(it.id, it.title, it.sidoName) },
     )
 }

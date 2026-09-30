@@ -52,8 +52,8 @@ import { newViewId } from '../../analytics/identity';
 import { installFlushOnLeave } from '../../analytics/tracker';
 
 const UI = {
-  ko: { badges: '방문 정보 요약', region: '지역 안 위치', explore: (p: string) => `${p} 둘러보기`, sameCategory: '같은 분류 가까운 곳', back: '← 관광지 탐색', nearby: '주변 명소', amenities: '주변 편의시설', info: '이용 안내', photos: '사진', mapAria: '위치 지도', mapBadCoords: '원천 좌표가 정확하지 않아 지도를 표시하지 않습니다', mapKeyMissing: '지도 키가 설정되지 않아 위치 링크만 표시합니다', useTime: '이용시간', restDate: '쉬는날', useFee: '이용요금', parking: '주차', parkingFee: '주차요금', infoCenter: '문의', map: '구글 지도에서 보기', notFound: '관광지를 찾을 수 없습니다.', failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', loading: '불러오는 중…' },
-  en: { badges: 'At a glance', region: 'In the area', explore: (p: string) => `Explore ${p}`, sameCategory: 'Similar places nearby', back: '← Explore Korea', nearby: 'Nearby places', amenities: 'Nearby amenities', info: 'Visitor info', photos: 'Photos', mapAria: 'Location map', mapBadCoords: 'Source coordinates look wrong, so the map is hidden.', mapKeyMissing: 'Map key is not configured — showing the link only.', useTime: 'Hours', restDate: 'Closed', useFee: 'Admission', parking: 'Parking', parkingFee: 'Parking fee', infoCenter: 'Contact', map: 'Open in Google Maps', notFound: 'Attraction not found.', failed: 'Could not load this page. Please try again in a moment.', loading: 'Loading…' },
+  ko: { badges: '방문 정보 요약', region: '지역 안 위치', explore: (p: string) => `${p} 둘러보기`, sameCategory: '같은 분류 가까운 곳', similar: '비슷한 곳', back: '← 관광지 탐색', nearby: '주변 명소', amenities: '주변 편의시설', info: '이용 안내', photos: '사진', mapAria: '위치 지도', mapBadCoords: '원천 좌표가 정확하지 않아 지도를 표시하지 않습니다', mapKeyMissing: '지도 키가 설정되지 않아 위치 링크만 표시합니다', useTime: '이용시간', restDate: '쉬는날', useFee: '이용요금', parking: '주차', parkingFee: '주차요금', infoCenter: '문의', map: '구글 지도에서 보기', notFound: '관광지를 찾을 수 없습니다.', failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', loading: '불러오는 중…' },
+  en: { badges: 'At a glance', region: 'In the area', explore: (p: string) => `Explore ${p}`, sameCategory: 'Similar places nearby', similar: 'Similar places in other regions', back: '← Explore Korea', nearby: 'Nearby places', amenities: 'Nearby amenities', info: 'Visitor info', photos: 'Photos', mapAria: 'Location map', mapBadCoords: 'Source coordinates look wrong, so the map is hidden.', mapKeyMissing: 'Map key is not configured — showing the link only.', useTime: 'Hours', restDate: 'Closed', useFee: 'Admission', parking: 'Parking', parkingFee: 'Parking fee', infoCenter: 'Contact', map: 'Open in Google Maps', notFound: 'Attraction not found.', failed: 'Could not load this page. Please try again in a moment.', loading: 'Loading…' },
 } as const;
 
 /** 주변 검색 반경 — 명소 목록과 편의시설 캐로셀이 같은 값을 쓴다. */
@@ -62,8 +62,9 @@ const UI = {
  * 나중에 「그때 몇 번째였나」를 복원하는 근거가 된다.
  */
 const SAME_CATEGORY_SECTION_INDEX = 0;
-const NEARBY_SECTION_INDEX = 1;
-const AMENITY_SECTION_INDEX = 2;
+const SIMILAR_SECTION_INDEX = 1;
+const NEARBY_SECTION_INDEX = 2;
+const AMENITY_SECTION_INDEX = 3;
 
 const NEARBY_RADIUS_KM = 5;
 /** 주변 명소는 6곳을 보인다. 자기 자신과 위 「같은 분류 가까운 곳」(최대 5)에 나온 곳을 빼고 남는 만큼. */
@@ -239,6 +240,7 @@ export default function AttractionPage() {
 
   // 같은 분류 가까운 곳에 이미 나온 곳은 주변 명소에서 뺀다 — 한 화면에 같은 카드가 두 번 뜬다
   const sameCategory = attraction?.region?.sameCategoryNearby ?? [];
+  const similar = attraction?.similarElsewhere ?? [];
   const shownAbove = new Set(sameCategory.map((n) => n.id));
   const others = (nearby?.attractions ?? [])
     .filter((a) => a.id !== id && !shownAbove.has(a.id))
@@ -373,7 +375,7 @@ export default function AttractionPage() {
             </div>
 
             {/* 아래 셋은 서버 렌더(AttractionPageRenderer)와 같은 문구·같은 순서다 — 개요·이용 안내
-                원문 → 방문 정보 요약 → 지역 안 위치 → 같은 분류 가까운 곳. 해석된 값만 그린다. */}
+                원문 → 방문 정보 요약 → 지역 안 위치 → 같은 분류 가까운 곳 → 비슷한 곳. 해석된 값만 그린다. */}
             {badges.length > 0 && (
               <section className="place-detail-badges" aria-label={L.badges}>
                 <h2 className="place-detail-info-title">{L.badges}</h2>
@@ -417,6 +419,35 @@ export default function AttractionPage() {
                       >
                         <span className="place-near-title">{n.title}</span>
                         <span className="place-near-distance">{distanceLabel(n.distanceMeters)}</span>
+                      </TrackedLink>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+            {/* 다른 시도의 비슷한 곳 — 거리는 뜻이 없어 시도 이름을 둔다(서버 렌더 「{제목} · {시도}」) */}
+            {similar.length > 0 && (
+              <section className="place-detail-same" aria-label={L.similar}>
+                <h2 className="place-detail-info-title">{L.similar}</h2>
+                <ul className="place-near-list">
+                  {similar.map((n, i) => (
+                    <li key={n.id}>
+                      <TrackedLink
+                        className="place-near-link"
+                        to={attractionPath(lang, n.id)}
+                        viewId={viewId}
+                        item={{
+                          entityType: 'ATTRACTION',
+                          entityId: n.id,
+                          screenType: 'ATTRACTION_DETAIL',
+                          screenRef: id,
+                          sectionId: 'SIMILAR_ELSEWHERE',
+                          sectionIndex: SIMILAR_SECTION_INDEX,
+                          itemIndex: i,
+                        }}
+                      >
+                        <span className="place-near-title">{n.title}</span>
+                        {n.sidoName && <span className="place-near-distance">{n.sidoName}</span>}
                       </TrackedLink>
                     </li>
                   ))}

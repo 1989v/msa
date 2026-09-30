@@ -149,6 +149,27 @@ class PlaceApiClientTest : BehaviorSpec({
         }
     }
 
+    Given("place 가 비슷한 곳 조회에 응답하면") {
+        val client = clientReturning(
+            """
+            {"success":true,"data":{"modelRef":"m@abc1234#d2","items":[
+              {"attractionId":11,"modelRef":"m@abc1234#d2","similar":[{"id":31,"score":0.91},{"id":32,"score":0.88}]}
+            ]}}
+            """.trimIndent(),
+        )
+        requestedUris.clear()
+        val found = kotlinx.coroutines.runBlocking { client.lookupSimilar("m@abc1234#d2", listOf(11L, 12L)) }
+
+        When("목록을 읽는다") {
+            Then("순위 순서와 행의 스탬프가 그대로 나와야 한다") {
+                found.getValue(11L).ids shouldBe listOf(31L, 32L)
+                found.getValue(11L).modelRef shouldBe "m@abc1234#d2"
+                found.containsKey(12L) shouldBe false
+                requestedUris.single() shouldBe "/internal/attractions/similar/lookup"
+            }
+        }
+    }
+
     Given("place 가 시군구 목록을 돌려줄 때") {
         // place 행정구역 응답 그대로 — code 는 시도 2 + 시군구 3 의 5자리다
         val client = clientReturning(

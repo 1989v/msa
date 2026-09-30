@@ -107,6 +107,8 @@ data class AttractionIndexDocument(
     val regionCategoryCount: Int? = null,
     val lclsSystm3Name: String? = null,
     val sameCategoryNearby: List<Nearby>? = null,
+    /** 다른 시도의 비슷한 곳 — 표시 전용(mapping: enabled=false). 목록이 없으면 필드가 빈다. */
+    val similarElsewhere: List<Similar>? = null,
 ) {
     /** OpenSearch geo_point object 표기 — 필드명 lat/lon 고정. */
 
@@ -115,6 +117,9 @@ data class AttractionIndexDocument(
 
     /** 같은 시군구·유형·분류의 가까운 곳 한 건. */
     data class Nearby(val id: String, val title: String, val distanceMeters: Int)
+
+    /** 다른 시도의 비슷한 곳 한 건. */
+    data class Similar(val id: String, val title: String, val sidoName: String? = null)
 
     companion object {
         /** 속성은 재색인이 계산해 [AttractionDocument.attributes] 로 넘긴다 — 없으면 UNKNOWN 을 싣지 못하므로 거부한다. */
@@ -176,6 +181,7 @@ data class AttractionIndexDocument(
                 regionCategoryCount = region?.categoryCount,
                 lclsSystm3Name = region?.categoryName,
                 sameCategoryNearby = region?.sameCategoryNearby?.map { Nearby(it.id, it.title, it.distanceMeters) },
+                similarElsewhere = doc.similarElsewhere?.takeIf { it.isNotEmpty() }?.map { Similar(it.id, it.title, it.sidoName) },
             )
         }
     }

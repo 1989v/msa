@@ -57,5 +57,13 @@ class AttractionsIndexMappingTest : BehaviorSpec({
                 nearby.path("enabled").asBoolean(true) shouldBe false
             }
         }
+
+        `when`("다른 시도의 비슷한 곳 목록을 보면") {
+            then("하위 필드를 만들지 않는 객체여야 한다") {
+                val similar = properties.path("similarElsewhere")
+                similar.path("type").asString() shouldBe "object"
+                similar.path("enabled").asBoolean(true) shouldBe false
+            }
+        }
     }
 })

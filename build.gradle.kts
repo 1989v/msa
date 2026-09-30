@@ -525,7 +525,6 @@ val searchReadOmitted = mapOf(
         "lclsSystm1" to "원천 분류체계 — 필터 축이지 응답 필드가 아니다 (표시 이름은 place category-codes 가 갖는다)",
         "lclsSystm2" to "위와 같음 (중분류)",
         "lclsSystm3" to "위와 같음 (소분류)",
-        "contentTypeId" to "원천 관광 유형(12=관광지) — 질의 의도를 옮기는 필터 축, 응답 필드가 아니다",
         "petAcmpyType" to "반려동물 동반 — 테마 필터 축이지 응답 필드가 아니다",
         "setting" to "실내·실외 — 질의 이해가 거는 필터 축이지 응답 필드가 아니다",
     ),

@@ -1,11 +1,15 @@
 package com.kgd.place.infrastructure.persistence
 
 import com.kgd.place.domain.attraction.model.Attraction
+import com.kgd.place.domain.attraction.model.EmbeddingModelRef
+import com.kgd.place.domain.attraction.model.SimilarAttractions
 import com.kgd.place.infrastructure.config.PlaceDataSourceConfig
 import com.kgd.place.infrastructure.persistence.attraction.adapter.AttractionRepositoryAdapter
+import com.kgd.place.infrastructure.persistence.attraction.adapter.AttractionSimilarRepositoryAdapter
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionCategoryCodeJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionLinkJpaRepository
+import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionSimilarJpaRepository
 import com.kgd.place.infrastructure.persistence.poi.repository.PoiJpaRepository
 import com.kgd.place.infrastructure.persistence.region.repository.AdministrativeRegionJpaRepository
 import com.kgd.place.infrastructure.persistence.region.repository.RegionJpaRepository
@@ -21,6 +25,8 @@ import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.MySQLContainer
 import org.testcontainers.utility.DockerImageName
+import org.springframework.transaction.support.TransactionTemplate
+import java.time.LocalDateTime
 
 /**
  * ADR-0093 ① — place 전용 스키마(`place_db`)와 JPA 엔티티가 일치하는지.
@@ -57,6 +63,8 @@ class PlaceSchemaIntegrationSpec(
     @Autowired private val r3: AttractionJpaRepository,
     @Autowired private val r4: AttractionCategoryCodeJpaRepository,
     @Autowired private val r5: AttractionLinkJpaRepository,
+    @Autowired private val r6: AttractionSimilarJpaRepository,
+    @Autowired private val tx: TransactionTemplate,
 ) : BehaviorSpec({
 
     Given("place 전용 Flyway 가 적용된 place_db") {
@@ -64,7 +72,7 @@ class PlaceSchemaIntegrationSpec(
             .config(enabledIf = { dockerAvailable }) {
                 // count() 는 엔티티마다 실제 SQL 을 MySQL 로 보낸다 — 컬럼이 어긋나면
                 // validate 에서 컨텍스트가 아예 안 뜨고, 뜬 뒤에도 매핑이 틀리면 여기서 터진다.
-                listOf(r0, r1, r2, r3, r4, r5).map { it.count() }.size shouldBe 6
+                listOf(r0, r1, r2, r3, r4, r5, r6).map { it.count() }.size shouldBe 7
             }
     }
 
@@ -89,6 +97,35 @@ class PlaceSchemaIntegrationSpec(
                 val ko = adapter.findAfter("ko", all[1], 10)
                 ko.map { it.lang }.distinct() shouldBe listOf("ko")
                 ko.map { it.id!! }.all { it > all[1] } shouldBe true
+            }
+    }
+
+    Given("비슷한 곳 목록을 V22 표에 두 번 적재할 때") {
+        Then("문서·스탬프 단위로 통째로 바뀌고, 다른 스탬프 목록은 남으며, 조회는 순위 순이어야 한다")
+            .config(enabledIf = { dockerAvailable }) {
+                val attractions = AttractionRepositoryAdapter(r3)
+                attractions.upsertAll(
+                    (1..5).map { n -> Attraction.create(contentId = "similar-$n", lang = "ko", title = "s$n", latitude = 37.0, longitude = 127.0) },
+                )
+                val (a, b, c, d, e) = r3.findAll().filter { it.contentId.startsWith("similar-") }.map { it.id!! }.sorted()
+                val adapter = AttractionSimilarRepositoryAdapter(r6)
+                val current = EmbeddingModelRef("microsoft/harrier-oss-v1-270m", "31de22b", 640)
+                val old = EmbeddingModelRef("microsoft/harrier-oss-v1-270m", "0000000", 640)
+                fun list(ref: EmbeddingModelRef, vararg ids: Long) =
+                    SimilarAttractions.create(a, ref, ids.mapIndexed { i, id -> SimilarAttractions.Item(id, 0.9 - i * 0.1) })
+                val at = LocalDateTime.of(2026, 9, 30, 0, 0)
+
+                // 트랜잭션 안에서 지우고 곧바로 같은 (문서, 스탬프, 순위) 로 넣는다 — 유니크 키에 걸리면 안 된다
+                tx.execute { adapter.replace(listOf(list(current, b, c, d), list(old, e)), at) }
+                tx.execute { adapter.replace(listOf(list(current, e, b)), at) }
+
+                adapter.findByModelAndIds(current.value, listOf(a)).single().items.map { it.similarId } shouldBe listOf(e, b)
+                adapter.findByModelAndIds(old.value, listOf(a)).single().items.map { it.similarId } shouldBe listOf(e)
+
+                // 빈 목록 = 그 스탬프의 목록을 지운다
+                tx.execute { adapter.replace(listOf(list(current)), at) }
+                adapter.findByModelAndIds(current.value, listOf(a)) shouldBe emptyList()
+                adapter.existingAttractionIds(listOf(a, Long.MAX_VALUE)) shouldBe setOf(a)
             }
     }
 }) {

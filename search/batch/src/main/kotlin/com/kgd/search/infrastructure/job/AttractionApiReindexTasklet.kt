@@ -7,6 +7,7 @@ import com.kgd.search.domain.attraction.model.AttractionRegion
 import com.kgd.search.domain.attraction.model.RegionAggregator
 import com.kgd.search.domain.attraction.model.RegionPlacement
 import com.kgd.search.domain.attraction.model.RegionProjection
+import com.kgd.search.domain.attraction.model.SimilarPlace
 import com.kgd.search.infrastructure.client.PlaceApiClient
 import com.kgd.search.infrastructure.indexing.AttractionIndexDocument
 import com.kgd.search.infrastructure.indexing.IndexAliasManager
@@ -32,6 +33,9 @@ import tools.jackson.databind.ObjectMapper
  * place 를 **두 번 훑는다.** 지역 안 위치(같은 시군구·유형 수, 같은 분류 가까운 곳)는 전체를 봐야 셀 수 있는데
  * 문서 전체를 메모리에 들면 배치 힙(약 256MB)을 넘는다. 1차는 가벼운 투영만 모아 집계하고, 2차가 지금처럼
  * 페이지 단위로 색인하면서 집계 결과와 원문에서 뽑은 방문 속성을 붙인다.
+ *
+ * 1차 투영은 「비슷한 곳」에도 쓴다 — place 목록의 id 가 이번 회차에 활성인지, 그 제목·시도가 무엇인지를
+ * 추가 호출 없이 안다. 비활성·삭제 문서를 가리키는 목록 항목은 여기서 빠진다.
  *
  * 두 번 다 id 키셋으로 읽는다(`afterId`). OFFSET 페이지는 건너뛸 행을 전부 읽어 뒤로 갈수록 느려졌고
  * (0쪽 0.5초 → 590쪽 18초), 그대로 두 번 훑으면 CronJob 기한 30분을 넘긴다.
@@ -88,7 +92,7 @@ class AttractionApiReindexTasklet(
                 }
             }
 
-            val placements = collectRegionPlacements()
+            val (projections, placements) = collectRegionPlacements()
 
             val indexStartedAt = System.nanoTime()
 
@@ -98,6 +102,9 @@ class AttractionApiReindexTasklet(
             var withVector = 0L
             var withRegion = 0L
             var unreadableIntro = 0L
+            var withSimilar = 0L
+            var similarModelMismatch = 0L
+            var similarLookupFailures = 0L
 
             while (afterId != null) {
                 val response = placeApiClient.fetchPageAfter(afterId, pageSize)
@@ -111,6 +118,21 @@ class AttractionApiReindexTasklet(
                     active.map { it.id }.chunked(PlaceApiClient.LOOKUP_MAX_BATCH)
                         .fold(emptyMap<Long, PlaceApiClient.EmbeddingDto>()) { acc, ids ->
                             acc + placeApiClient.lookupEmbeddings(modelRef, ids)
+                        }
+                }
+
+                // 비슷한 곳도 페이지 단위. 목록은 벡터 스탬프에 묶여 있어 스탬프가 없으면 부르지 않는다.
+                // 못 받으면 그 쪽의 목록만 비고 색인은 이어 간다 — 부가 섹션 하나로 재색인을 멈추지 않는다.
+                val similar = if (modelRef.isEmpty()) {
+                    emptyMap()
+                } else {
+                    active.map { it.id }.chunked(PlaceApiClient.LOOKUP_MAX_BATCH)
+                        .fold(emptyMap<Long, PlaceApiClient.SimilarDto>()) { acc, ids ->
+                            acc + runCatching { placeApiClient.lookupSimilar(modelRef, ids) }.getOrElse { e ->
+                                similarLookupFailures++
+                                log.warn(e) { "비슷한 곳 조회 실패(${ids.size}건) — 이 묶음은 목록 없이 색인한다" }
+                                emptyMap()
+                            }
                         }
                 }
 
@@ -144,6 +166,15 @@ class AttractionApiReindexTasklet(
                         withRegion++
                         regionOf(attraction, placement, sigunguNames, categoryNames)
                     }
+                    val similarElsewhere = similar[attraction.id]
+                        ?.takeIf { dto ->
+                            (dto.modelRef == modelRef).also { same -> if (!same) similarModelMismatch++ }
+                        }
+                        ?.ids
+                        ?.mapNotNull { projections[it.toString()] }
+                        ?.map { p -> SimilarPlace(p.id, p.title, p.ldongRegnCd?.let { sidoNames[p.lang]?.get(it) }) }
+                        ?.takeIf { it.isNotEmpty() }
+                    if (similarElsewhere != null) withSimilar++
                     val document = AttractionIndexDocument.fromDomain(
                         AttractionDocument(
                             id = attraction.id.toString(),
@@ -188,6 +219,7 @@ class AttractionApiReindexTasklet(
                             modifiedAt = attraction.sourceModifiedAt,
                             attributes = attributes,
                             region = region,
+                            similarElsewhere = similarElsewhere,
                         ),
                         embedding,
                     )
@@ -209,7 +241,9 @@ class AttractionApiReindexTasklet(
             log.info {
                 "Attraction reindex complete: $totalIndexed docs, ${bulkProcessor.errorCount.get()} errors, " +
                     "vectors $withVector/$totalIndexed" + (if (modelRef.isEmpty()) " (model-ref 미설정)" else " ($modelRef)") +
-                    ", region $withRegion/$totalIndexed, unreadable introRaw $unreadableIntro, " +
+                    ", region $withRegion/$totalIndexed, similar $withSimilar/$totalIndexed " +
+                    "(model_ref mismatch $similarModelMismatch, lookup failures $similarLookupFailures), " +
+                    "unreadable introRaw $unreadableIntro, " +
                     "attribute parser v${AttractionAttributeParser.VERSION}, index pass ${elapsedMs(indexStartedAt)}ms"
             }
 
@@ -222,7 +256,7 @@ class AttractionApiReindexTasklet(
      * 투영은 문서당 약 200B 다: 언어·시도·시군구·유형·분류 코드는 종류가 수백 개뿐이라 intern 으로 한 벌만 두고,
      * 문서마다 새로 드는 것은 id·제목·좌표뿐이다. 6만 건이면 약 12MB, 집계 결과(가까운 곳 5건씩)까지 약 30MB.
      */
-    private suspend fun collectRegionPlacements(): Map<String, RegionPlacement> {
+    private suspend fun collectRegionPlacements(): RegionPass {
         val startedAt = System.nanoTime()
         val projections = ArrayList<RegionProjection>()
         var page = 0
@@ -239,8 +273,14 @@ class AttractionApiReindexTasklet(
             "Region pass: ${projections.size} projections over $page pages → ${placements.size} placements " +
                 "(${projections.size - placements.size} without sigungu/type), ${elapsedMs(startedAt)}ms"
         }
-        return placements
+        return RegionPass(projections.associateBy { it.id }, placements)
     }
+
+    /** 1차 훑기 결과 — 활성 문서의 투영(id 키)과 지역 집계. */
+    private data class RegionPass(
+        val projections: Map<String, RegionProjection>,
+        val placements: Map<String, RegionPlacement>,
+    )
 
     private fun PlaceApiClient.AttractionDto.toProjection() = RegionProjection(
         id = id.toString(),

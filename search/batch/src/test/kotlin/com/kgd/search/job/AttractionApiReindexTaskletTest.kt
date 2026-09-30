@@ -179,6 +179,86 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
         }
     }
 
+    given("재색인이 비슷한 곳을 붙일 때") {
+        /** 서울(11) 관광지 하나와 다른 시도 관광지들. */
+        fun seoul(id: Long) = jongno(id, "VE030100", 37.5)
+        fun elsewhere(id: Long, sido: String, status: String = "ACTIVE") =
+            jongno(id, "VE030100", 35.1).copy(ldongRegnCd = sido, title = "먼곳$id", status = status)
+
+        `when`("place 가 준 목록에 비활성 문서가 섞여 있으면") {
+            then("활성 문서만 순위 순서대로 제목·시도 이름과 함께 실려야 한다") {
+                useModelRef(MODEL_REF)
+                val documents = captureDocuments()
+                onePage(seoul(1), elsewhere(21, "26"), elsewhere(22, "26", status = "INACTIVE"), elsewhere(23, "41"))
+                coEvery { placeApiClient.fetchSidoNames("ko") } returns mapOf("26" to "부산광역시", "41" to "경기도")
+                coEvery { placeApiClient.lookupEmbeddings(any(), any()) } returns emptyMap()
+                coEvery { placeApiClient.lookupSimilar(MODEL_REF, listOf(1L, 21L, 23L)) } returns mapOf(
+                    1L to PlaceApiClient.SimilarDto(MODEL_REF, listOf(23L, 22L, 21L, 999L)),
+                )
+
+                tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+
+                @Suppress("UNCHECKED_CAST")
+                val similar = bulkSource(documents.single { it.id == "1" })["similarElsewhere"] as List<Map<String, Any?>>
+                // 22 는 비활성, 999 는 이번 회차에 없는 문서 — 둘 다 상세에서 깨진 링크가 된다
+                similar.map { it["id"] } shouldContainExactly listOf("23", "21")
+                similar.first()["title"] shouldBe "먼곳23"
+                similar.first()["sidoName"] shouldBe "경기도"
+                bulkSource(documents.single { it.id == "21" }).keys shouldNotContain "similarElsewhere"
+
+                useModelRef("")
+            }
+        }
+
+        `when`("목록의 스탬프가 설정과 다르면") {
+            then("그 목록은 싣지 않아야 한다 — 다른 벡터 공간에서 계산한 순위다") {
+                useModelRef(MODEL_REF)
+                val documents = captureDocuments()
+                onePage(seoul(1), elsewhere(21, "26"))
+                coEvery { placeApiClient.lookupEmbeddings(any(), any()) } returns emptyMap()
+                coEvery { placeApiClient.lookupSimilar(MODEL_REF, any()) } returns mapOf(
+                    1L to PlaceApiClient.SimilarDto("microsoft/harrier-oss-v1-270m@0000000#d640", listOf(21L)),
+                )
+
+                tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+
+                bulkSource(documents.single { it.id == "1" }).keys shouldNotContain "similarElsewhere"
+                useModelRef("")
+            }
+        }
+
+        `when`("비슷한 곳 조회가 실패하면") {
+            then("필드만 비고 색인과 별칭 교체는 끝까지 가야 한다") {
+                useModelRef(MODEL_REF)
+                clearMocks(aliasManager, answers = false)
+                val documents = captureDocuments()
+                onePage(seoul(1), elsewhere(21, "26"))
+                coEvery { placeApiClient.lookupEmbeddings(any(), any()) } returns emptyMap()
+                coEvery { placeApiClient.lookupSimilar(any(), any()) } throws IllegalStateException("place down")
+
+                val result = tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+
+                result shouldBe RepeatStatus.FINISHED
+                documents.map { it.id } shouldContainExactly listOf("1", "21")
+                documents.forEach { bulkSource(it).keys shouldNotContain "similarElsewhere" }
+                verify { aliasManager.updateAliasAndCleanup("attractions", "attractions_1", maxRetention = 1) }
+                useModelRef("")
+            }
+        }
+
+        `when`("스탬프 설정이 비어 있으면") {
+            then("비슷한 곳을 조회하지 않아야 한다 — 목록은 스탬프에 묶여 있다") {
+                clearMocks(placeApiClient, answers = false)
+                captureDocuments()
+                onePage(seoul(1))
+
+                tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+
+                coVerify(exactly = 0) { placeApiClient.lookupSimilar(any(), any()) }
+            }
+        }
+    }
+
     given("재색인이 속성과 지역 안 위치를 붙일 때") {
         `when`("원천 문구가 해석되는 관광지면") {
             then("bulk 문서에 정규화한 속성과 파서 판이 실려야 한다") {

@@ -93,6 +93,9 @@ class PlaceApiClient(
     /** `/internal/attractions/embeddings/lookup` 한 건. 벡터는 이미 float 리스트로 풀어 둔다. */
     data class EmbeddingDto(val attractionId: Long, val textHash: String, val vector: List<Float>)
 
+    /** `/internal/attractions/similar/lookup` 한 건 — 순위 순 id 와 그 목록을 계산한 벡터의 스탬프. */
+    data class SimilarDto(val modelRef: String, val ids: List<Long>)
+
     data class RegionPageResponse(
         val regions: List<RegionDto>,
         val totalElements: Long,
@@ -321,6 +324,34 @@ class PlaceApiClient(
                 attractionId = id,
                 textHash = item["textHash"] as String,
                 vector = decodeVector(item["vector"] as String),
+            )
+        }
+    }
+
+    /**
+     * 비슷한 곳(다른 시도) 목록 조회. 목록이 없는 id 는 응답에 오지 않는다. 한 번에 [LOOKUP_MAX_BATCH] 건까지.
+     * 점수는 싣지 않는다 — 상세는 순서만 쓴다.
+     */
+    suspend fun lookupSimilar(modelRef: String, ids: List<Long>): Map<Long, SimilarDto> {
+        if (ids.isEmpty()) return emptyMap()
+        require(ids.size <= LOOKUP_MAX_BATCH) { "한 번에 ${LOOKUP_MAX_BATCH}건까지입니다: ${ids.size}" }
+
+        val response = webClient.post()
+            .uri("/internal/attractions/similar/lookup")
+            .bodyValue(mapOf("modelRef" to modelRef, "ids" to ids))
+            .retrieve()
+            .bodyToMono(object : ParameterizedTypeReference<Map<String, Any>>() {})
+            .awaitWithinTimeout()
+
+        @Suppress("UNCHECKED_CAST")
+        val items = (response["data"] as? Map<String, Any>)?.get("items") as? List<Map<String, Any>>
+            ?: throw IllegalStateException("No data field in place similar lookup response")
+        return items.associate { item ->
+            @Suppress("UNCHECKED_CAST")
+            val similar = item["similar"] as? List<Map<String, Any>> ?: emptyList()
+            (item["attractionId"] as Number).toLong() to SimilarDto(
+                modelRef = item["modelRef"] as String,
+                ids = similar.map { (it["id"] as Number).toLong() },
             )
         }
     }

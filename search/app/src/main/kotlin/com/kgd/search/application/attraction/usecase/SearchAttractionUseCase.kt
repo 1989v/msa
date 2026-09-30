@@ -104,6 +104,8 @@ interface SearchAttractionUseCase {
         val attrAdmission: String? = null,
         /** 지역 안 위치 — 단건 조회에만 싣는다(목록 응답을 무겁게 하지 않는다). */
         val region: Region? = null,
+        /** 다른 시도의 비슷한 곳 — 단건 조회에만. 목록이 없는 문서는 null. */
+        val similarElsewhere: List<Similar>? = null,
     )
 
     /** 허브 링크는 `/regions/{sidoCode}{ldongSignguCd}`. */
@@ -117,6 +119,8 @@ interface SearchAttractionUseCase {
     )
 
     data class Nearby(val id: String, val title: String, val distanceMeters: Int)
+
+    data class Similar(val id: String, val title: String, val sidoName: String?)
 
     data class Result(
         val searchId: String,

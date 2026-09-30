@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -11,8 +11,13 @@ vi.mock('../../../api/placeApi', async (importOriginal) => ({
 }));
 vi.mock('../../../components/favorite/FavoriteButton', () => ({ default: () => null }));
 vi.mock('../../../components/ads/AdSlot', () => ({ default: () => null }));
+vi.mock('../../../analytics/tracker', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../analytics/tracker')>()),
+  track: vi.fn(),
+}));
 
 import { fetchAttraction, searchAttractions } from '../../../api/placeApi';
+import { track } from '../../../analytics/tracker';
 import AttractionPage from '../AttractionPage';
 
 const card = (id: string, category = 'history'): Attraction => ({
@@ -46,6 +51,10 @@ const enriched: Attraction = {
       { id: '202', title: '경희궁', distanceMeters: 800 },
     ],
   },
+  similarElsewhere: [
+    { id: '501', title: '경기전', sidoName: '전북특별자치도' },
+    { id: '502', title: '화성행궁', sidoName: null },
+  ],
 };
 
 function renderAt(path: string) {
@@ -80,13 +89,13 @@ describe('AttractionPage 새 섹션', () => {
   });
   afterEach(() => vi.clearAllMocks());
 
-  it('개요·이용 안내 → 방문 정보 요약 → 지역 안 위치 → 같은 분류 가까운 곳 → 주변 명소 → 편의시설 순서다', async () => {
+  it('개요·이용 안내 → 방문 정보 요약 → 지역 안 위치 → 같은 분류 가까운 곳 → 비슷한 곳 → 주변 명소 → 편의시설 순서다', async () => {
     vi.mocked(fetchAttraction).mockResolvedValue(enriched);
     renderAt('/attractions/100');
     await screen.findByText('명소 301');
     await screen.findByText('명소 401');
 
-    const order = ['이용 안내', '방문 정보 요약', '지역 안 위치', '같은 분류 가까운 곳', '주변 명소', '주변 편의시설'];
+    const order = ['이용 안내', '방문 정보 요약', '지역 안 위치', '같은 분류 가까운 곳', '비슷한 곳', '주변 명소', '주변 편의시설'];
     const seen = h2Texts().filter((t) => order.includes(t ?? ''));
     expect(seen).toEqual(order);
     const overview = screen.getByText('조선의 법궁이다.');
@@ -115,6 +124,38 @@ describe('AttractionPage 새 섹션', () => {
     const links = within(same).getAllByRole('link');
     expect(links.map((a) => a.textContent)).toEqual(['창덕궁1.5km', '경희궁800m']);
     expect(links[0]).toHaveAttribute('href', '/attractions/201');
+  });
+
+  it('비슷한 곳은 상세 링크와 시도 이름으로 그린다 — 서버 렌더와 같은 제목', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue(enriched);
+    renderAt('/attractions/100');
+    const similar = await screen.findByRole('region', { name: '비슷한 곳' });
+
+    const links = within(similar).getAllByRole('link');
+    expect(links.map((a) => a.textContent)).toEqual(['경기전전북특별자치도', '화성행궁']);
+    expect(links[0]).toHaveAttribute('href', '/attractions/501');
+  });
+
+  it('노출 섹션 번호는 같은 분류 0 · 비슷한 곳 1 · 주변 명소 2 · 편의시설 3 이다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue(enriched);
+    const sections: Array<[string, string]> = [
+      ['같은 분류 가까운 곳', '창덕궁'], ['비슷한 곳', '경기전'], ['주변 명소', '명소 301'], ['주변 편의시설', '명소 401'],
+    ];
+    const clicked: Array<[string | undefined, number | undefined]> = [];
+    for (const [name, title] of sections) {
+      renderAt('/attractions/100');
+      const section = await screen.findByRole('region', { name });
+      const link = (await within(section).findByText(title)).closest('a')!;
+      vi.mocked(track).mockClear();
+      fireEvent.click(link);
+      const click = vi.mocked(track).mock.calls.find(([action]) => action === 'CLICK')!;
+      clicked.push([click[1].sectionId, click[1].sectionIndex]);
+      cleanup();
+    }
+
+    expect(clicked).toEqual([
+      ['SAME_CATEGORY_NEARBY', 0], ['SIMILAR_ELSEWHERE', 1], ['NEARBY_ATTRACTIONS', 2], ['AMENITY_CAROUSEL', 3],
+    ]);
   });
 
   it('같은 분류 가까운 곳에 나온 곳은 주변 명소에서 뺀다', async () => {
@@ -152,6 +193,7 @@ describe('AttractionPage 새 섹션', () => {
     const badges = screen.getByRole('region', { name: 'At a glance' });
     expect(within(badges).getByText('Closed on Tuesdays')).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Similar places nearby' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Similar places in other regions' })).toBeInTheDocument();
   });
 
   it('유형 코드가 없으면 지역 문구를 짐작하지 않는다 — 허브 링크만 둔다', async () => {
@@ -171,6 +213,7 @@ describe('AttractionPage 새 섹션', () => {
     expect(screen.queryByRole('region', { name: '방문 정보 요약' })).toBeNull();
     expect(screen.queryByRole('region', { name: '지역 안 위치' })).toBeNull();
     expect(screen.queryByRole('region', { name: '같은 분류 가까운 곳' })).toBeNull();
+    expect(screen.queryByRole('region', { name: '비슷한 곳' })).toBeNull();
     expect(h2Texts()).toEqual(expect.arrayContaining(['주변 명소', '주변 편의시설']));
   });
 });

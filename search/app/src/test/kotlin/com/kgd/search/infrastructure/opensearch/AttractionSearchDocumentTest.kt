@@ -28,13 +28,24 @@ class AttractionSearchDocumentTest : BehaviorSpec({
 
     val base = """"id":"1","contentId":"126508","lang":"ko","title":"경복궁","location":{"lat":37.5,"lon":126.9}"""
 
+    given("색인 문서에 원천 관광 유형이 있을 때") {
+        `when`("도메인으로 바꾸면") {
+            val doc = mapper.readValue<AttractionSearchDocument>("""{$base,"contentTypeId":"12"}""").toDomain()
+
+            then("contentTypeId 가 살아 있어야 한다 — 상세 지역 문구의 유형 이름이 이 값에서 나온다") {
+                doc.contentTypeId shouldBe "12"
+            }
+        }
+    }
+
     given("재색인이 속성·지역 필드를 실은 문서를 읽을 때") {
         val source = """{$base,
             "closureState":"WEEKLY","closedWeekdays":["MON","TUE"],
             "attrParking":"YES","attrCreditCard":"NO","attrStrollerRental":"UNKNOWN",
             "petPolicy":"PARTIAL","attrAdmission":"PAID","attributeParserVersion":1,
             "sigunguName":"종로구","regionTypeCount":42,"regionCategoryCount":5,"lclsSystm3Name":"고궁",
-            "sameCategoryNearby":[{"id":"2","title":"창덕궁","distanceMeters":1234}]}"""
+            "sameCategoryNearby":[{"id":"2","title":"창덕궁","distanceMeters":1234}],
+            "similarElsewhere":[{"id":"9","title":"경기전","sidoName":"전북특별자치도"},{"id":"8","title":"화성행궁"}]}"""
 
         `when`("도메인으로 바꾸면") {
             val doc = mapper.readValue<AttractionSearchDocument>(source).toDomain()
@@ -58,6 +69,13 @@ class AttractionSearchDocumentTest : BehaviorSpec({
                 region.categoryName shouldBe "고궁"
                 region.sameCategoryNearby shouldBe listOf(NearbyPlace("2", "창덕궁", 1234))
             }
+
+            then("다른 시도의 비슷한 곳이 순서대로 실린다 — 시도 이름이 없던 항목은 null") {
+                doc.similarElsewhere shouldBe listOf(
+                    com.kgd.search.domain.attraction.model.SimilarPlace("9", "경기전", "전북특별자치도"),
+                    com.kgd.search.domain.attraction.model.SimilarPlace("8", "화성행궁", null),
+                )
+            }
         }
     }
 
@@ -68,6 +86,7 @@ class AttractionSearchDocumentTest : BehaviorSpec({
             then("속성·지역은 「모름」이 아니라 「없음」(null)이어야 한다") {
                 doc.attributes.shouldBeNull()
                 doc.region.shouldBeNull()
+                doc.similarElsewhere.shouldBeNull()
             }
         }
     }

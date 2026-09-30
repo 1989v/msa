@@ -8,6 +8,7 @@ import com.kgd.search.domain.attraction.model.Availability
 import com.kgd.search.domain.attraction.model.NearbyPlace
 import com.kgd.search.domain.attraction.model.PetPolicy
 import com.kgd.search.domain.attraction.model.RegularClosure
+import com.kgd.search.domain.attraction.model.SimilarPlace
 import java.time.DayOfWeek
 
 /** 렌더 테스트가 함께 쓰는 셸·문서. 셸은 portal-fe index.html 의 마커 구조를 그대로 따른다. */
@@ -38,6 +39,7 @@ object AttractionPageFixtures {
         attributes: AttractionAttributes? = null,
         region: AttractionRegion? = null,
         sidoName: String? = "서울특별시",
+        similarElsewhere: List<SimilarPlace>? = null,
     ) = AttractionDocument(
         id = id,
         contentId = "126508",
@@ -60,6 +62,12 @@ object AttractionPageFixtures {
         sidoName = sidoName,
         attributes = attributes,
         region = region,
+        similarElsewhere = similarElsewhere,
+    )
+
+    val SIMILAR = listOf(
+        SimilarPlace("3001", "경기전", "전북특별자치도"),
+        SimilarPlace("3002", "화성행궁 <정조>", null),
     )
 
     val PARSED = AttractionAttributes(

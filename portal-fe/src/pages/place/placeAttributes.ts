@@ -8,7 +8,7 @@ import type {
 /*
  * 속성 패싯 — 검색 화면의 속성 칩과 상세의 방문 정보 배지.
  *
- * 배지·지역 문구는 서버 렌더(search `AttractionPageRenderer` 의 badges · regionSection)와
+ * 배지·지역 문구·섹션 제목은 서버 렌더(search `AttractionPageRenderer` 의 badges · regionSection · similarSection)와
  * **같은 문구·같은 순서**다. 크롤러가 읽은 본문과 하이드레이션 뒤 화면이 달라지지 않게 한다 —
  * 한쪽 문구를 고치면 다른 쪽도 고친다.
  */

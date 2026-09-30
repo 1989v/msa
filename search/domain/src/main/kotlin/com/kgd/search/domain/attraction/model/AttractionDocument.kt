@@ -73,4 +73,6 @@ data class AttractionDocument(
     val attributes: AttractionAttributes? = null,
     /** 지역 안 위치. 시군구 코드나 유형이 없는 문서는 null. */
     val region: AttractionRegion? = null,
+    /** 다른 시도의 비슷한 곳(같은 언어·유형, 임베딩 코사인 순). 목록이 없거나 옛 색인 문서면 null. */
+    val similarElsewhere: List<SimilarPlace>? = null,
 )

@@ -92,6 +92,8 @@ export interface Attraction {
   contentTypeId?: string | null;
   /** 지역 안 위치 — 단건 조회에만 온다. 옛 문서·목록 응답은 null. */
   region?: AttractionRegion | null;
+  /** 다른 시도의 비슷한 곳(같은 언어·유형) — 단건 조회에만 온다. 목록이 없으면 null. */
+  similarElsewhere?: Array<{ id: string; title: string; sidoName: string | null }> | null;
 }
 
 export type AttributeAvailability = 'YES' | 'NO' | 'UNKNOWN';

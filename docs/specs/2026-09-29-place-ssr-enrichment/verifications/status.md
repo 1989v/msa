@@ -32,3 +32,8 @@
 | TG6 | 회귀 주입 | 0건 칩 숨김 4 fail · 모든 쪽 facets 1 · 뒷장 건수 버림 1 · 선택 0 흐림 1 · 중복 제거 삭제 1 · 상세 검색 facets 1 |
 | TG6 T20 | CDP 세로 390×844 · 가로 844×390 (실제 터치) | 칩 줄 48.8px 한 줄 · 페이지 가로 넘침 없음 · 탭 직후·새 건수 뒤 칩 x/y/폭 변화 0 · 0건 칩 opacity 0.4 자리 유지 · 크롭 확인 |
 | TG6+ | 상세 응답 contentTypeId | SearchAttractionServiceTest 29/0 · 회귀 주입(매핑 삭제) failures=1 |
+| TG7 | Gradle(place·search 대상 클래스) + verifyArchitecture + content 컴파일 | exit 0 · SimilarAttractions 5 · AttractionSimilarService 4 · Controller 2 · PlaceSchemaIntegration 3(skip 0) · Tasklet 15 · PlaceApiClient 16 · Mapping 4 · Renderer 19 · PageService 3 · PageController 5 · SearchAttractionService 30 · SearchDocument 5 — failures 0 |
+| TG7 | vitest 3 파일 · tsc | 21 passed · exit 0 |
+| TG7 | 파이썬 유사도 테스트(tools/embed tests/test_similar.py) | 에이전트 실행 5 passed. 재실행은 test-scope 훅 정규식 결함으로 막힘 — 운영 --dry-run 으로 대신 확인 |
+| TG7 | 회귀 주입 | 같은 시도 허용 · 비활성 미필터 · model_ref 비교 제거 · FE 순서 교환 · 존재 검사 생략 → 각각 빨간불 |
+| 결함 수정 | contentTypeId 읽기 경로 | SearchDocument 5/0 · 주입(필드 제거+읽기 제외 복원) → 게이트 통과, 테스트가 Expected 12 but was null 로 잡음 |

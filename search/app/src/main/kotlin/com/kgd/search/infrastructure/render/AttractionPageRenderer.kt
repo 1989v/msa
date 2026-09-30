@@ -8,6 +8,7 @@ import com.kgd.search.domain.attraction.model.AttractionRegion
 import com.kgd.search.domain.attraction.model.Availability
 import com.kgd.search.domain.attraction.model.PetPolicy
 import com.kgd.search.domain.attraction.model.RegularClosure
+import com.kgd.search.domain.attraction.model.SimilarPlace
 import com.kgd.search.infrastructure.config.AttractionRenderProperties
 import com.kgd.search.infrastructure.render.AttractionSeoText.clampDescription
 import com.kgd.search.infrastructure.render.AttractionSeoText.escapeHtml
@@ -243,7 +244,7 @@ class AttractionPageRenderer(
 
     /**
      * prerender `renderAttractionDetail` 과 같은 뼈대에 스펙 순서대로 새 절을 잇는다:
-     * 개요 · 방문 정보 원문 → 방문 정보 배지 → 지역 안 위치 → 같은 분류 가까운 곳.
+     * 개요 · 방문 정보 원문 → 방문 정보 배지 → 지역 안 위치 → 같은 분류 가까운 곳 → 비슷한 곳(다른 시도).
      * 반경 주변 관광지·편의시설은 조회가 더 필요해 SPA 가 그린다(관광지당 색인 조회는 한 번).
      */
     private fun attractionBody(lang: String, doc: AttractionDocument, meta: Meta): String = buildString {
@@ -262,6 +263,7 @@ class AttractionPageRenderer(
         append(visitorInfo(lang, doc))
         append(badges(lang, doc.attributes))
         doc.region?.let { append(regionSection(lang, doc, it)) }
+        append(similarSection(lang, doc.similarElsewhere))
     }
 
     /** prerender `visitorInfoHtml` — 원천이 안 준 줄은 그리지 않는다 */
@@ -364,6 +366,16 @@ class AttractionPageRenderer(
             }
             append("<h2>${if (en) "Similar places nearby" else "같은 분류 가까운 곳"}</h2><ul>$items</ul>")
         }
+    }
+
+    /** 다른 시도의 비슷한 곳 — 「{제목} · {시도}」. 시도 이름이 없으면 제목만. */
+    private fun similarSection(lang: String, similar: List<SimilarPlace>?): String {
+        if (similar.isNullOrEmpty()) return ""
+        val items = similar.joinToString("") { s ->
+            val sido = s.sidoName?.takeIf { it.isNotBlank() }?.let { " · ${escapeHtml(it)}" }.orEmpty()
+            "<li><a href=\"${escapeHtml(attractionPath(lang, s.id))}\">${escapeHtml(s.title)}</a>$sido</li>"
+        }
+        return "<h2>${if (lang == EN) "Similar places in other regions" else "비슷한 곳"}</h2><ul>$items</ul>"
     }
 
     private fun distance(meters: Int): String =

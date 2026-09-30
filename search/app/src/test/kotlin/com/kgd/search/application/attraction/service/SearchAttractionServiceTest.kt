@@ -156,6 +156,20 @@ class SearchAttractionServiceTest : BehaviorSpec({
                 result.attractions.first().overview!!.length shouldBe 201
             }
         }
+        `when`("문서에 비슷한 곳 목록이 있어도") {
+            then("목록 응답에는 싣지 않는다 — 단건 조회 전용이다") {
+                every { searchPort.search(any(), any()) } returns found(
+                    listOf(
+                        AttractionSearchPort.AttractionHit(
+                            document().copy(similarElsewhere = listOf(com.kgd.search.domain.attraction.model.SimilarPlace("9", "경기전", null))),
+                            1.0,
+                        ),
+                    ),
+                )
+
+                service.execute(SearchAttractionUseCase.Query(keyword = "경복궁")).attractions.first().similarElsewhere shouldBe null
+            }
+        }
     }
 
     given("통합 자동완성 시") {
@@ -208,8 +222,10 @@ class SearchAttractionServiceTest : BehaviorSpec({
                         sigunguName = "종로구", typeCount = 40, categoryCount = 6, categoryName = "고궁",
                         sameCategoryNearby = listOf(NearbyPlace("2", "창덕궁", 1200)),
                     ),
+                    similarElsewhere = listOf(com.kgd.search.domain.attraction.model.SimilarPlace("9", "경기전", "전북특별자치도")),
                 )
                 val r = service.findById("1")!!
+                r.similarElsewhere!!.single() shouldBe SearchAttractionUseCase.Similar("9", "경기전", "전북특별자치도")
                 r.closureState shouldBe "WEEKLY"
                 r.closedWeekdays shouldBe listOf("MON")
                 r.attrParking shouldBe "YES"

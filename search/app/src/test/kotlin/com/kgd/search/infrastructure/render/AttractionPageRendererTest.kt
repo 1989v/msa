@@ -1,11 +1,13 @@
 package com.kgd.search.infrastructure.render
 
 import com.kgd.search.domain.attraction.model.AttractionRegion
+import com.kgd.search.domain.attraction.model.SimilarPlace
 import com.kgd.search.infrastructure.config.AttractionRenderProperties
 import com.kgd.search.infrastructure.render.AttractionPageFixtures.ALL_UNKNOWN
 import com.kgd.search.infrastructure.render.AttractionPageFixtures.PARSED
 import com.kgd.search.infrastructure.render.AttractionPageFixtures.REGION
 import com.kgd.search.infrastructure.render.AttractionPageFixtures.SHELL
+import com.kgd.search.infrastructure.render.AttractionPageFixtures.SIMILAR
 import com.kgd.search.infrastructure.render.AttractionPageFixtures.doc
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldHaveSize
@@ -92,7 +94,7 @@ class AttractionPageRendererTest : BehaviorSpec({
     }
 
     given("속성이 해석된 문서") {
-        val html = renderer.attractionPage(SHELL, doc(attributes = PARSED, region = REGION))
+        val html = renderer.attractionPage(SHELL, doc(attributes = PARSED, region = REGION, similarElsewhere = SIMILAR))
         val root = rootOf(html)
 
         then("아는 값만 배지로 나간다 — UNKNOWN 인 반려동물·카드는 없다") {
@@ -114,8 +116,14 @@ class AttractionPageRendererTest : BehaviorSpec({
             root shouldContain "덕수궁 &lt;별관&gt;"
         }
 
-        then("섹션 순서는 개요 → 방문 정보 원문 → 배지 → 지역 안 위치 → 같은 분류 가까운 곳") {
-            val order = listOf("조선 왕조의 법궁", "이용 안내", "매주 화요일 휴무", "종로구 관광지 120곳", "창덕궁")
+        then("다른 시도의 비슷한 곳이 상세 링크와 시도 이름으로 나간다 — 시도를 모르면 이름만") {
+            root shouldContain "<h2>비슷한 곳</h2>"
+            root shouldContain "<li><a href=\"/attractions/3001\">경기전</a> · 전북특별자치도</li>"
+            root shouldContain "<li><a href=\"/attractions/3002\">화성행궁 &lt;정조&gt;</a></li>"
+        }
+
+        then("섹션 순서는 개요 → 방문 정보 원문 → 배지 → 지역 안 위치 → 같은 분류 가까운 곳 → 비슷한 곳") {
+            val order = listOf("조선 왕조의 법궁", "이용 안내", "매주 화요일 휴무", "종로구 관광지 120곳", "창덕궁", "비슷한 곳", "경기전")
                 .map { root.indexOf(it) }
             order.none { it < 0 } shouldBe true
             order shouldBe order.sorted()
@@ -123,6 +131,16 @@ class AttractionPageRendererTest : BehaviorSpec({
 
         then("방문 정보 원문의 <br> 은 줄바꿈으로 평문화된다") {
             root shouldContain "<dt>이용시간</dt><dd>09:00~18:00\n입장 마감 17:00</dd>"
+        }
+    }
+
+    given("영문 문서의 비슷한 곳") {
+        val html = renderer.attractionPage(SHELL, doc(id = "2001", lang = "en", similarElsewhere = listOf(SimilarPlace("4001", "Gyeonggijeon Shrine", "Jeonbuk"))))
+
+        then("영문 제목과 영문 상세 경로") {
+            val root = rootOf(html)
+            root shouldContain "<h2>Similar places in other regions</h2>"
+            root shouldContain "<li><a href=\"/en/attractions/4001\">Gyeonggijeon Shrine</a> · Jeonbuk</li>"
         }
     }
 
