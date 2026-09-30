@@ -47,3 +47,7 @@
 | 배포 ⑤ 전 기준 | analytics.attraction_popularity_daily | 행 25 · 노출 27 · 클릭 0 · 09-17~09-27 · ClickHouse timezone UTC |
 | 배포 ⑤ | 롤아웃 · V007 · 보존 · 재집계 · 재색인 · 상세 | analytics/search/cronjob 981e71f · V007 1개 새로 적용(6개 기존) · 25/27/0 보존 · unique_clickers 컬럼 · KST 재집계 후 표 = 원장(09-17:3 · 09-23:20 · 09-27:4 · 09-28:8) · 「클릭 신호 0곳」 · uniqueClickers14d=0 |
 | T16 운영 | live-eval.py --click-boost-pair | 짝 48 · 순서 바뀐 질의 0 · ΔnDCG +0.0000 · 판정 없는 문서 1.7% · exit 2 보류 — 스위치 꺼진 채 유지 |
+| TG9 | vitest prerenderPlace·attractionJsonLdGolden·prerenderDeal · tsc -b --force · node --check | 24 passed · exit 0 · ok |
+| TG9 | 회귀 주입(관광지 상세 경로 되살림) | 2 failed → 원복 13 passed |
+| TG10 | verifyArchitecture · doc_map --check | exit 0 · exit 1(HEAD 에서도 같은 기존 drift) |
+| 배포 ⑥ 전 기준 | 노드 portal-fe 이미지 | 97.2~97.6MB |

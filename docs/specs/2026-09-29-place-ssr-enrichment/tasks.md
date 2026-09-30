@@ -122,7 +122,7 @@ Total Task Groups: 10
 **Dependencies:** Task Group 4, 8
 **Phase:** P6-cleanup
 **Required Skills:** 문서
-- [ ] 10.0 Complete 문서
+- [x] 10.0 Complete 문서
   - [ ] 10.1 ADR-0103 상태 → 채택 · ADR-0062 상태 줄(§8 대체) · ADR-0072 §6 · ADR-0095 §6 소비자 · 네트워크 정책 09 주석 · `package-structure.md` · `search/CLAUDE.md` · `place/CLAUDE.md`(syncFrom 보존 설명 정정)
   - [ ] 10.2 `/hns:glossary` 로 속성 패싯 · `petPolicy` · `clickBoost` · 서버 렌더 등재
   - [ ] 10.3 Verify: `./gradlew verifyArchitecture && python3 scripts/doc_scan.py 2>/dev/null | tail -3`

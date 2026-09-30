@@ -92,6 +92,21 @@ OpenSearch 기반 읽기 전용 검색 모델 서비스 (ADR-0055 로 ES 에서 
 - 파이프라인은 앱이 기동 시 PUT 으로 만든다(`rrf` 만). 다른 융합 방식은 운영이 만든 것을 쓴다 —
   융합 방식이 미확정(D5-1)이라 코드가 종류를 늘리지 않는다.
 
+## 관광지 상세 서버 렌더 · 속성 · 클릭 신호 (ADR-0103)
+
+- **서버 렌더**: place 호스트 `/(en/)attractions/{id}` 는 portal-fe nginx 가 `/internal/render/(en/)attractions/{id}` 로 프록시하고
+  search:app 이 셸(`http://portal-fe/index.html`, 5분 캐시 · 받기 1초 · 실패 뒤 30초 억제)에 메타·JSON-LD·본문을 넣어 낸다.
+  `/internal/**` 은 게이트웨이 라우트가 없다. 응답 표지 `X-Render`: `ssr` · `shell-fallback`(색인 조회 실패) · nginx 의 `proxy-fallback`.
+  JSON-LD 는 클라이언트(`copy.mjs`)와 **같은 내용**이어야 한다 — `AttractionJsonLdParityTest` 가 portal-fe 골든 픽스처와 대조한다.
+  관광지 상세 프리렌더는 없다(지역만 프리렌더).
+- **속성 패싯**: 재색인 때 search:domain 순수 함수가 휴무·주차·반려동물(`petPolicy`)·신용카드·유모차·무료 입장을 계산해 싣는다(`UNKNOWN` 은 명시값).
+  목록 API 필터 `openToday`·`parking`·`creditCard`·`strollerRental`·`pet`·`admission` — 모르는 값은 400 이 아니라 무시한다.
+  건수는 `facets=true` 일 때만 센다(목록 첫 쪽만 요청).
+- **클릭 신호**: 재색인이 analytics `attraction_popularity_daily` 에서 14일 고유 클릭 방문자(`uniqueClickers14d`)를 읽어 `clickBoost` 를 싣는다.
+  순위 반영은 `search.attraction.click-boost.enabled`(env `SEARCH_ATTRACTION_CLICK_BOOST_ENABLED`, **기본 꺼짐**)이고
+  검색어 있는 키워드 레그에만 곱한다. 켜기 전에 `live-eval.py --click-boost-pair` 판정이 「켬」이어야 한다.
+- **비슷한 곳**: 재색인이 place `/internal/attractions/similar/lookup` 에서 받아 싣는다 — 재색인 중 kNN 을 돌리지 않는다.
+
 ## Key Rules
 
 - **읽기 전용** — OpenSearch 는 Product DB의 읽기 모델, 직접 쓰기 금지

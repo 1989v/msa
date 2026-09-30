@@ -4,8 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   SIDO_CODES,
   indexDoc,
-  pickPrerenderDetails,
-  renderAttractionDetail,
+  placeDetailPages,
   renderRegionDetail,
   robotsTxt,
 } from '../../../scripts/prerender-seo.mjs';
@@ -61,16 +60,10 @@ describe('indexDoc — 슬라이스 항목 변환', () => {
     longitude: 2,
   };
 
-  it('개요 있는 문서는 원본 필드 + 훑은 시도 샤드를 들고 간다', () => {
+  it('개요 있는 문서는 이름·사진 + 훑은 시도 샤드만 들고 간다 — 본문은 서버 렌더 몫이다', () => {
     const item = indexDoc(raw, '11');
-    expect(item).toMatchObject({
-      id: 'a1',
-      hasOverview: true,
-      sidoCode: '11',
-      title: 'Dosan Park',
-      titleLocal: '도산공원',
-      overview: 'A park.',
-    });
+    expect(item).toMatchObject({ id: 'a1', hasOverview: true, sidoCode: '11', title: 'Dosan Park', imageUrl: 'x.jpg' });
+    expect(item).not.toHaveProperty('overview');
   });
 
   it('개요 없는 문서는 sitemap 용 스켈레톤만 — 6만 건 본문을 메모리에 얹지 않는다', () => {
@@ -79,48 +72,37 @@ describe('indexDoc — 슬라이스 항목 변환', () => {
   });
 });
 
-describe('pickPrerenderDetails', () => {
-  it('개요 있는 문서만, 사진 있는 쪽 먼저, 상한까지만 고른다', () => {
-    const docs = [
+describe('placeDetailPages — place 상세 단계의 산출물', () => {
+  const places = {
+    ko: [
+      { ...doc, id: 'no-image', imageUrl: null },
+      doc,
       { id: 'no-overview', hasOverview: false },
-      { id: 'no-image', hasOverview: true, title: 'a', imageUrl: null },
-      { id: 'with-image', hasOverview: true, title: 'b', imageUrl: 'x.jpg' },
-    ];
-    expect(pickPrerenderDetails(docs, 2).map((d) => d.id)).toEqual(['with-image', 'no-image']);
-    expect(pickPrerenderDetails(docs, 1).map((d) => d.id)).toEqual(['with-image']);
-  });
-});
+    ],
+    en: [doc],
+  };
+  const regions = { ko: [seoul, gangnam], en: [seoul] };
+  const pages = placeDetailPages(SHELL, places, regions);
 
-describe('renderAttractionDetail', () => {
-  const html = renderAttractionDetail(SHELL, 'en', doc, {
-    region: seoul,
-    nearby: [{ id: '7', title: 'Bongeunsa' }],
+  it('관광지 상세 파일은 만들지 않는다 — search 가 서버 렌더한다 (ADR-0103)', () => {
+    expect(pages.length).toBeGreaterThan(0);
+    for (const { path } of pages) expect(path).not.toMatch(/attractions/);
   });
 
-  it('canonical 은 place 호스트의 상세 주소다', () => {
-    expect(html).toContain('<link rel="canonical" href="https://place.1989v.com/en/attractions/42" />');
+  it('지역 파일은 언어별로 그대로 만든다', () => {
+    expect(pages.map((p) => p.path).sort()).toEqual([
+      'prerender/en/regions/11.html',
+      'prerender/regions/11.html',
+      'prerender/regions/11680.html',
+    ]);
   });
 
-  it('본문에 h1·주소·개요·주변 링크가 있다 (무 JS 크롤러가 읽는 내용)', () => {
-    expect(html).toContain('<h1>Dosan Park</h1>');
-    expect(html).toContain('도산대로45길');
-    expect(html).toContain('quiet memorial park');
-    expect(html).toContain('href="/en/attractions/7"');
-    expect(html).toContain('href="/en/regions/11"');
-  });
-
-  it('원어 병기명은 별도 요소다 — 제목에 괄호로 합치지 않는다', () => {
-    expect(html).toContain('<p>도산공원</p>');
-    expect(html).not.toContain('Dosan Park (도산공원)');
-  });
-
-  it('TouristAttraction 구조화 데이터와 alternateName 이 실린다', () => {
-    expect(html).toContain('"@type":"TouristAttraction"');
-    expect(html).toContain('"alternateName":"도산공원"');
-  });
-
-  it('관광지 상세에는 hreflang 을 걸지 않는다 — ko/en 은 짝을 모르는 별도 문서다', () => {
-    expect(html).not.toContain('hreflang');
+  it('시도 대표 관광지는 사진 있는 문서 먼저, 개요 없는 문서는 빼고 링크한다', () => {
+    const html = pages.find((p) => p.path === 'prerender/regions/11.html')!.html;
+    expect(html).toContain('href="/regions/11680"');
+    expect(html.indexOf('href="/attractions/42"')).toBeGreaterThan(-1);
+    expect(html.indexOf('href="/attractions/42"')).toBeLessThan(html.indexOf('href="/attractions/no-image"'));
+    expect(html).not.toContain('href="/attractions/no-overview"');
   });
 });
 
@@ -153,7 +135,7 @@ describe('하이드레이션 인계 표시 — data-seo-multi', () => {
   // 두 breadcrumb 의 내용까지 달라(`…›서울특별시›경복궁` vs `…›경복궁`) 검색엔진이
   // 어느 쪽을 쓸지 임의로 골랐다.
   it('JSON-LD 는 전부 표시를 달고 나간다 — 표시 없는 ld+json 이 하나도 없어야 한다', () => {
-    const html = renderAttractionDetail(SHELL, 'ko', doc, { region: seoul });
+    const html = renderRegionDetail(SHELL, 'ko', seoul, { top: [doc] });
     const scripts = html.match(/<script type="application\/ld\+json"[^>]*>/g) ?? [];
     expect(scripts.length).toBeGreaterThan(0);
     for (const tag of scripts) expect(tag).toContain('data-seo-multi');
@@ -164,40 +146,6 @@ describe('하이드레이션 인계 표시 — data-seo-multi', () => {
     const links = html.match(/<link rel="alternate"[^>]*>/g) ?? [];
     expect(links.length).toBeGreaterThan(0);
     for (const tag of links) expect(tag).toContain('data-seo-multi');
-  });
-});
-
-describe('이용 안내와 원천 마크업 정리', () => {
-  // 원천(TourAPI)은 평문을 주지 않는다 — 표본 182개 중 21개에 `<br>` 이 섞여 있었고,
-  // 화면만 sourceText 를 거치고 프리렌더는 안 거쳐 크롤러가 보는 본문에 `It&rsquo;s` 가
-  // 글자로 남아 있었다 (2026-09-10 실측: 프리렌더 3/800).
-  const dirty = {
-    ...doc,
-    overview: 'It&rsquo;s a park.<br />Open all year.',
-    useTime: '09:00~18:00<br>(입장마감 17:00)',
-    restDate: '매주 월요일',
-    useFee: '',
-    parking: null,
-  };
-
-  it('개요의 태그·엔티티가 본문에 글자로 남지 않는다', () => {
-    const html = renderAttractionDetail(SHELL, 'ko', dirty, { region: seoul });
-    expect(html).not.toContain('&lt;br');
-    expect(html).not.toContain('&amp;rsquo;');
-    expect(html).toContain('It’s a park.');
-  });
-
-  it('이용 안내가 정의 목록으로 본문에 들어간다 — 원천이 안 준 줄은 그리지 않는다', () => {
-    const html = renderAttractionDetail(SHELL, 'ko', dirty, { region: seoul });
-    expect(html).toContain('<dt>이용시간</dt>');
-    expect(html).toContain('<dt>쉬는날</dt>');
-    expect(html).not.toContain('<dt>이용요금</dt>');
-    expect(html).not.toContain('<dt>주차</dt>');
-  });
-
-  it('이용 안내가 하나도 없으면 절 자체를 만들지 않는다', () => {
-    const html = renderAttractionDetail(SHELL, 'ko', doc, { region: seoul });
-    expect(html).not.toContain('이용 안내');
   });
 });
 

@@ -120,6 +120,12 @@ place-ingest 가 이 표를 읽는 이유는 `links` 잡 하나 때문이다. Yo
 어디에 그 100건을 쓸지가 이 잡의 핵심 결정이고, 그 근거가 인기 집계다.
 TourAPI 운영계정 승인은 여기에 영향이 없다 — 링크는 data.go.kr 이 아니다.
 
+**두 번째 소비자 — search-batch (2026-09-30, ADR-0103 §6)**: 관광지 재색인이 이 표에서 14일
+고유 클릭 방문자 수(`unique_clickers` 컬럼, `uniqState`/`uniqMerge`, `anonymous` 제외)를 읽어
+문서의 `uniqueClickers14d`·`clickBoost` 로 싣는다. 이 컬럼은 ClickHouse `V007` 이 더했다.
+집계 날짜는 **KST** 다(`toDate(timestamp, 'Asia/Seoul')`) — ClickHouse 가 UTC 라 전에는 03:30 KST 에
+접는 「어제」에서 KST 마지막 몇 시간이 빠졌고, place-ingest 가 읽는 합계에도 같이 적용된다.
+
 ### 7) 밴딧 토픽을 원장으로 흡수한다
 
 `search.impression.logged`·`search.click.logged` 는 발행자가 없어 사실상 죽어 있다.

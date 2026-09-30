@@ -9,6 +9,8 @@
 #   - recommendation ADR-0045 Phase 1 — analytics DB 의 recommendation_events MV read + raw insert
 #   - place-ingest   ADR-0095 — links 잡이 attraction_popularity_daily 를 읽어 예산을 인기순으로 쓴다.
 #                    전용 집계 표만 읽는다(공용 원장 아님). HTTP 8123 만 쓰므로 드라이버가 없다.
+#   - search-batch   검색 평가 잡의 클릭 로그 read + ADR-0103 — 관광지 재색인(attraction-reindex)이
+#                    attraction_popularity_daily 의 14일 고유 클릭 방문자 수를 읽어 문서에 싣는다.
 # 다른 서비스가 추가로 필요해지면 ingress.from.podSelector matchExpressions 에 추가.
 #
 # 라벨 선택 근거:

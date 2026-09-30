@@ -113,6 +113,6 @@ search 는 3개의 app-level 서브모듈을 가진다:
 
 | Gradle path | Role | 배포 |
 |---|---|---|
-| `:search:app` | REST API (읽기 전용) | Deployment |
+| `:search:app` | REST API (읽기 전용) + 관광지 상세 서버 렌더(`/internal/render/attractions/{id}`, ADR-0103) | Deployment |
 | `:search:consumer` | Kafka 증분 색인 | Deployment (Worker tier, ADR-0058) |
 | `:search:batch` | Spring Batch 전체 색인 | CronJob (상주 Deployment 제거, ADR-0058) |

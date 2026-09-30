@@ -84,12 +84,15 @@
 **2. `POST /api/places/attractions/bulk` 은 전체 동기화다 — 부분 레코드는 나머지를 지운다**
 
 `Attraction.syncFrom` 이라 **보내지 않은 필드는 유지가 아니라 null 로 덮인다.**
-예외는 개요 하나뿐(`overview = source.overview ?: overview` — 목록 재동기화가 며칠치 수집을
-날리던 걸 막으려 2026-08-17 추가).
+예외는 목록 원천에 없는 **보강 필드**뿐이다 — `?: existing` 으로 들어온 값이 있을 때만 바꾼다:
+개요(`overview`, 목록 재동기화가 며칠치 수집을 날리던 걸 막으려 2026-08-17 추가) · `googlePlaceId` ·
+이용정보(`introRaw`·`useTime`·`restDate`·`useFee`·`parking`·`parkingFee`·`infoCenter`·`introSyncedAt`) ·
+반려동물(`petAcmpyType`·`petRaw`·`petSyncedAt`) · `setting` · 부가 사진·반복정보(`imagesRaw`·`infoRaw`·`extraSyncedAt`).
+주소·이미지·분류·좌표·전화 같은 목록 필드는 전부 덮인다. 보강 필드를 새로 더하면 여기 한 줄이 같이 가야 한다.
 
 - 실측 사고: 검증용으로 `{contentId, lang, title, lat, lng}` 만 보냈다가 **경복궁 행의
   주소·이미지·분류·지역코드를 실제로 날렸다** (`detailCommon2` 로 복구).
-  **개요만 예외라서 "개요가 남았으니 안전하다"는 착각을 하기 쉽다**
+  **보강 필드만 예외라서 "개요가 남았으니 안전하다"는 착각을 하기 쉽다**
 - upsert 할 때는 **항상 전체 레코드**를 보낸다. 한 필드만 고치고 싶으면 place API 로 현재
   레코드를 읽어 그 위에 덮어써서 보낸다(`backfill_overview.py` 의 `UPSERT_FIELDS` 방식).
   **운영 데이터로 실험하지 않는다** — 꼭 해야 하면 살아있는 레코드에서 페이로드를 만든다
@@ -105,7 +108,8 @@
 | GET | `/api/places/nearby?lat&lng&radiusKm&category&keyword` | public | 반경 내 POI 거리순 |
 | POST | `/api/places/regions`(+`/bulk`), `/api/places/pois`(+`/bulk`) | ADMIN | 적재 |
 | POST | `/api/places/attractions/bulk` | ADMIN | 관광지 멱등 upsert — (contentId, lang) 자연키 (ADR-0065) |
-| GET | `/api/places/attractions?lang=&page=&size=` (+`/{id}`) | public | 페이지 조회 — search-batch 재색인 풀스캔용 |
+| GET | `/api/places/attractions?lang=&page=&size=&afterId=` (+`/{id}`) | public | 페이지 조회 — search-batch 재색인 풀스캔은 **키셋**(`afterId` → 응답 `nextAfterId`, 합계 필드는 -1). OFFSET(`page`)은 파이썬 호출자용으로 남고, 뒤쪽 쪽은 수 초가 걸린다 |
+| PUT/POST | `/internal/attractions/similar/{bulk,lookup}` | 클러스터 내부 | 비슷한 곳 목록 `attraction_similar`(V22) — `tools/embed` 가 관광지 단위로 통째 교체 적재, search:batch 재색인이 조회 (ADR-0103) |
 | GET | `/api/places/attractions/{id}/links` | public | 관광지 외부 링크 — 수집형(유튜브) + 조립 딥링크 (ADR-0070) |
 | GET/POST | `/internal/attractions/links/**` | 클러스터 내부 | 수집 큐 조회 / 결과 적재 — 게이트웨이가 라우팅하지 않는다 |
 | GET/POST | `/internal/attractions/google-place-ids/**` | 클러스터 내부 | 구글 place_id 미보강분 조회 / 반영 (data-sources.md §7, ID-only 무과금 SKU) |
