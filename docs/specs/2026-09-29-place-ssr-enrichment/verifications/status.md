@@ -45,3 +45,5 @@
 | TG8 | 회귀 주입 | 익명 제외 삭제 · 벡터 레그 계수 · 스위치 무시 · 배지 경계 Kotlin/FE · 무클릭 null → 각각 빨간불 |
 | TG8 T16 로직 | 가짜 OpenSearch 네 경우 | 개선 0 · 과대 1 · 판정 없음 80% 2 · 순서 거의 안 바뀜(3개) 2 |
 | 배포 ⑤ 전 기준 | analytics.attraction_popularity_daily | 행 25 · 노출 27 · 클릭 0 · 09-17~09-27 · ClickHouse timezone UTC |
+| 배포 ⑤ | 롤아웃 · V007 · 보존 · 재집계 · 재색인 · 상세 | analytics/search/cronjob 981e71f · V007 1개 새로 적용(6개 기존) · 25/27/0 보존 · unique_clickers 컬럼 · KST 재집계 후 표 = 원장(09-17:3 · 09-23:20 · 09-27:4 · 09-28:8) · 「클릭 신호 0곳」 · uniqueClickers14d=0 |
+| T16 운영 | live-eval.py --click-boost-pair | 짝 48 · 순서 바뀐 질의 0 · ΔnDCG +0.0000 · 판정 없는 문서 1.7% · exit 2 보류 — 스위치 꺼진 채 유지 |

@@ -2,7 +2,7 @@
 
 - 작업 위치: 워크트리 `<scratchpad>/wt2` (detached, origin/main 기준). 공유 트리는 건드리지 않는다.
 - 커밋: `git commit -- <경로>` 로 경로만. 푸시는 `gh auth switch --user 1989v` → push → `kwongd` 복귀를 한 명령 안에서.
-- 현재: TG8 (클릭 신호)
+- 현재: TG9 (프리렌더 제거) · TG10 (문서)
 - 완료: 스펙·ADR·tasks (75ee25fa) · TG1 파서·집계기 (테스트 23 · 회귀 주입 3)
 - 완료 추가: TG2 재색인 확장 (푸시 695556c5, 배포 ① 재색인 수동 실행) · 영문 시도 이름 · TG3 서버 렌더 + 상세 응답 필드
 - 다음: TG4 → 배포 ② (nginx 프록시·네트워크 정책)
@@ -24,3 +24,6 @@
 ## 배포 ③·④ 완료 (2026-09-30)
 - 속성 패싯·화면 칩(T22 일치) · 비슷한 곳(T23 대분류 86%). 남은 단계 ⑤ 클릭 신호 · ⑥ 프리렌더 제거·문서.
 - 도구 실행: tunnel.sh 대신 `ssh -N -L 18096:<content ClusterIP>:8097 msa-oci` (로컬 kubectl 컨텍스트는 회사 클러스터). venv 는 `uv` 로 만든 tools/embed/.venv + PYTHONPATH=src.
+
+## 배포 ⑤ 완료 (2026-09-30)
+- 클릭 신호 경로 연결, 사람 클릭 0 이라 값 0 · T16 보류. 켜기: 클릭이 쌓인 뒤 T16 재실행 → exit 0 이면 search 에 SEARCH_ATTRACTION_CLICK_BOOST_ENABLED=true(env 미배선).

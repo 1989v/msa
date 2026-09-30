@@ -98,14 +98,14 @@ Total Task Groups: 10
 **Dependencies:** Task Group 2
 **Phase:** P5-clicks
 **Required Skills:** ClickHouse, Spring Batch, 평가
-- [ ] 8.0 Complete 클릭 신호
+- [x] 8.0 Complete 클릭 신호
   - [x] 8.1 Write tests: 집계 SQL(T14) · clickBoost(T15) · 재색인 ClickHouse 합류 실패 시 진행
   - [x] 8.2 analytics `V007` — 고유 클릭 방문자 상태 컬럼(`uniqState`, `anonymous` 제외), `ADD COLUMN IF NOT EXISTS`, 하루 한 행 불변식 주석 · 집계기 수정
   - [x] 8.3 search-batch ClickHouse 접속 설정(properties + CronJob env·Secret) · 14일 `uniqMerge` 조회 · `uniqueClickers14d`·`clickBoost` · 적재 수 로그
   - [x] 8.4 키워드 레그 점수 함수에 `clickBoost` (스위치 기본 꺼짐) · `AttractionDocument` 주석 정정
   - [x] 8.5 평가 스크립트: 스위치 on/off 짝 비교 · 판정 수치(T16) · 회귀 주입
   - [x] 8.6 Verify: `./gradlew :analytics:app:test --tests '*AttractionPopularity*' && ./gradlew :search:batch:test --tests '*AttractionApiReindexTaskletTest' && ./gradlew :search:app:test --tests '*ClickBoost*'`
-  - [ ] 8.7 배포 뒤: 14일 재집계 → 재색인 → 적재 수 로그 확인 → T16 실행 결과 기록(켤지 판단은 결과로)
+  - [x] 8.7 배포 뒤: 14일 재집계 → 재색인 → 적재 수 로그 확인 → T16 실행 결과 기록(켤지 판단은 결과로)
 **Acceptance Criteria:** 기존 행 보존 · 적재 수 > 0 · T16 기록
 
 ### Task Group 9: 프리렌더 제거
