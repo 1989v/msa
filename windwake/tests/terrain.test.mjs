@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { valueNoise, fbm, triangleHeight, TERRAIN, terrainStats } from '../terrain.mjs';
 import { WORLD, BIOMES, TOWNS, DUNGEON_ENTRANCES, BOSS_SITES, WAYPOINTS, heightAt, getChunk, spawnsNear, WORLD_GENERATION } from '../world.mjs';
 import { createGame, stepGame } from '../sim.mjs';
@@ -82,15 +83,11 @@ test('continuous ordinary climb and descent gain at least fifteen metres',()=>{
   assert.ok(seen.size>=3,'streamed living threats occur along the actual route');
   assert.equal(s.metrics.falls,0);
 });
-test('surviving legacy IDs retain their original full-population X/Z/type fingerprint',()=>{
-  // Baseline captured before editing world generation. It includes every old
-  // slot still safe after the additive expedition paths; suppressed slots remain valid
-  // durable defeat IDs. The 978-entry subset was cross-checked against the pre-edit
-  // population: no surviving type/XZ changes and no resurrected old IDs.
-  const slots=[];
-  for(let cx=-16;cx<16;cx++)for(let cz=-16;cz<16;cz++)for(const s of getChunk(cx,cz).spawns)if(s.id.startsWith('wild-')&&!s.id.startsWith('wild-v2-'))slots.push([s.id,s.x,s.z,s.type]);
-  assert.equal(slots.length,978);
-  assert.equal(createHash('sha256').update(JSON.stringify(slots.sort())).digest('hex'),'316563aea97ac51f75d2520ca46d7df4ae07a53ee5da46ee946df930bfcb6034');
+test('surviving legacy IDs remain a strict subset of the captured pre-crossroads population',()=>{
+  const before=new Map(JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/pre-crossroads-world.json.gz',import.meta.url)))).filter(r=>r[0].startsWith('wild-')&&!r[0].startsWith('wild-v2-')).map(r=>[r[0],r]));
+  assert.equal(before.size,978);let survivors=0;
+  for(let cx=-16;cx<16;cx++)for(let cz=-16;cz<16;cz++)for(const s of getChunk(cx,cz).spawns)if(s.id.startsWith('wild-')&&!s.id.startsWith('wild-v2-')){assert.deepEqual([s.id,s.type,s.x,s.z],before.get(s.id),s.id);survivors++;}
+  assert.ok(survivors>900&&survivors<978);
 });
 test('dense outer encounters fit durable budget and avoid water, slopes, towns and props',()=>{
   let count=0;const ids=new Set();

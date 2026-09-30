@@ -1,4 +1,4 @@
-import {WORLD,LANDMARKS,RUNES,REGIONS,PLATE,VILLAGE,WAYPOINTS,TOWNS,DUNGEON_ENTRANCES,EXPEDITIONS,worldStats,heightAt,terrainColor,regionAt,distance,clamp} from './world.mjs';
+import {WORLD,LANDMARKS,RUNES,REGIONS,PLATE,VILLAGE,WAYPOINTS,TOWNS,DUNGEON_ENTRANCES,EXPEDITIONS,CORRIDORS,RUIN_APPROACHES,worldStats,heightAt,terrainColor,regionAt,distance,clamp} from './world.mjs';
 import {DT,createGame,stepGame,snapshot,restoreSnapshot,spawnEnemy,awardSigil,interaction,upgrade,respawn,fastTravel,exportSave,loadSave,useAbility,floorAt,enterExpedition,exitExpedition,expeditionAction} from './sim.mjs';
 import {Renderer} from './render.mjs';
 import {AudioSystem} from './audio.mjs';
@@ -9,7 +9,7 @@ import {skillsPanel,villagePanel,frontierJournal} from './frontier-ui.mjs';
 import {InputBuffer} from './input.mjs';
 import {townPanel,journeyJournal,relicPanel} from './journey-ui.mjs';
 import {townAction,journeyObjective,trackQuest,equipRelic} from './settlements.mjs';
-import {DUNGEONS,dungeonGeometry,dungeonObjective,dungeonCleared} from './dungeons.mjs';
+import {DUNGEONS,dungeonGeometry,dungeonObjective,dungeonCleared,dungeonFloor} from './dungeons.mjs';
 
 const $=id=>document.getElementById(id);
 const canvas=$('world'),audio=new AudioSystem(),input=new InputBuffer();
@@ -80,6 +80,21 @@ function openPanel(kind){
       text.textContent=`${start.name}에서 출발 · ${route.biomeId==='alpine'?'동쪽 산길로 정상에 오르고 남쪽 능선으로 귀환':'남쪽 능선을 거쳐 골짜기로 내려가고 남쪽 우회로로 귀환'}. ${done?'보급함 획득 완료':discovered?'중간 전망대 발견 · 보급함을 찾아보세요':'이정표와 전망대를 따라 보급함을 찾아보세요'}.`;
       row.append(heading,text);journal.append(row);
     }
+    for(const route of CORRIDORS){
+      const done=state.progress.chests.includes(route.cacheId),row=document.createElement('article');row.className=`journal-item ${done?'done':''}`;
+      const heading=document.createElement('h3');heading.textContent=`${done?'◆':'◇'} ${route.name}`;
+      const text=document.createElement('p'),discovered=route.landmarkIds.filter(id=>state.progress.discovered.includes(id)).length;
+      text.textContent=`${TOWNS.find(t=>t.id===route.fromTownId)?.name} ↔ ${TOWNS.find(t=>t.id===route.toTownId)?.name} · 발견 ${discovered}/${route.landmarkIds.length} · ${done?'보급함 획득 완료':'두 경비병을 쓰러뜨리고 보급함을 여세요'}`;
+      row.append(heading,text);journal.append(row);
+    }
+    for(const id of ['dungeon-tide','dungeon-canopy']){
+      const dungeon=DUNGEONS.find(d=>d.id===id);if(!dungeon)continue;
+      const row=document.createElement('article');row.className='journal-item';
+      const heading=document.createElement('h3');heading.textContent=`${dungeonCleared(state,id)?'◆':'▣'} ${dungeon.name}`;
+      const text=document.createElement('p');text.textContent=id==='dungeon-tide'?'해안 마을에서 수문으로 · 시작 → 중간 → 끝 시간 릴레이.':'가을 마을에서 수관으로 · 높이가 다른 장치 세 곳을 비문 순서대로.';
+      const reward=document.createElement('p');reward.textContent='주 퍼즐과 주 수호자를 완료하면 유물 획득 · 선택 보물과 완료 후 기록 보급함도 찾아보세요.';
+      row.append(heading,text,reward);journal.append(row);
+    }
     for(const cave of DUNGEON_ENTRANCES.filter(e=>e.natural)){
       const done=dungeonCleared(state,cave.id),row=document.createElement('article');row.className=`journal-item ${done?'done':''}`;
       const heading=document.createElement('h3');heading.textContent=`${done?'◆':'▣'} ${cave.name}`;
@@ -87,7 +102,7 @@ function openPanel(kind){
       row.append(heading,text);journal.append(row);
     }
     journeyJournal(journal,state,{travel:id=>{if(fastTravel(state,id)){save();closePanel();}else{state.toastTime=5;updateHUD();}},track:id=>{trackQuest(state,id);save();updateHUD();},openRelics:()=>openPanel('relics')});
-    content.querySelector('.save-status').textContent=state.expedition?.active?'실내 지도 · 방과 복도를 직접 걸어서 탐험하세요. ▣ 잠긴 문 · ◇ 장치 · △ 귀환문.':'⌂ 마을 · ◎ 등대 · ▣ 던전/동굴 · ♜ 수호자 · ▲ 내 위치. 탐험 실선은 가는 길, 점선은 돌아오는 길이며 ◆는 보급함 획득을 뜻합니다.';
+    content.querySelector('.save-status').textContent=state.expedition?.active?'실내 지도 · 방과 복도를 직접 걸어서 탐험하세요. ▣ 잠긴 문 · ◇ 장치 · △ 귀환문.':'⌂ 마을 · ◎ 등대 · ▣ 던전/동굴 · ♜ 수호자 · ▲ 내 위치. 네 연결길은 기존 여덟 마을을 잇습니다. 탐험 실선은 가는 길, 점선은 돌아오는 길이며 ◆는 보급함 획득을 뜻합니다.';
     frontierJournal(journal,state,id=>{if(fastTravel(state,id)){save();closePanel();}else {const reason=document.createElement('p');reason.className='action-feedback';reason.textContent=state.toast;journal.prepend(reason);}});
 
     for(const id of ['quarry','forest','ruins']){
@@ -221,6 +236,15 @@ function drawMap(target,mini=true){
     ctx.setLineDash([]);
     if(!mini){const end=route.points.at(-1),pos=at(end.x,end.z);ctx.fillStyle=done?COLORS.wind:COLORS.amber;ctx.font='11px system-ui';ctx.textAlign='center';ctx.fillText(`${done?'◆':'◇'} ${route.biomeId==='alpine'?'하늘마루':'메아리 바닥길'}`,pos.x,pos.y-12);}
   }
+  for(const route of CORRIDORS){
+    const done=state.progress.chests.includes(route.cacheId);ctx.strokeStyle=done?COLORS.wind:COLORS.amber;ctx.lineWidth=mini?3:2;
+    ctx.beginPath();route.points.forEach((point,i)=>{const pos=at(point.x,point.z);if(i===0)ctx.moveTo(pos.x,pos.y);else ctx.lineTo(pos.x,pos.y);});ctx.stroke();
+    if(!mini){const point=route.points[Math.floor(route.points.length/2)],pos=at(point.x,point.z);ctx.fillStyle=done?COLORS.wind:COLORS.amber;ctx.font='10px system-ui';ctx.textAlign='center';ctx.fillText(`${done?'◆':'◇'} ${route.name}`,pos.x,pos.y-9);}
+  }
+  for(const route of RUIN_APPROACHES){
+    ctx.strokeStyle=dungeonCleared(state,route.entranceId)?COLORS.wind:COLORS.amber;ctx.lineWidth=mini?2:1.5;ctx.setLineDash([2,3]);ctx.beginPath();
+    route.points.forEach((point,i)=>{const pos=at(point.x,point.z);if(i===0)ctx.moveTo(pos.x,pos.y);else ctx.lineTo(pos.x,pos.y);});ctx.stroke();ctx.setLineDash([]);
+  }
   ctx.textAlign='center';
   for(const l of LANDMARKS){
     if(mini&&distance(l,p)>55)continue;
@@ -231,7 +255,7 @@ function drawMap(target,mini=true){
     if(l.kind==='dungeon'&&dungeonCleared(state,l.id))ctx.fillStyle=COLORS.wind;
     if(l.expeditionId&&state.progress.discovered.includes(l.id))ctx.fillStyle=COLORS.wind;
     ctx.font=`${mini?13:16}px system-ui`;const symbol={camp:'△',wind:'◎',chest:'·',waypoint:'◎',boss:'♜',resource:'✦',trial:'◇',village:'⌂',town:'⌂',dungeon:'▣',clue:'!',discovery:'◇'}[l.kind]||(state.progress.sigils.includes(l.id)?'◆':'◇');ctx.fillText(symbol,pos.x,pos.y+4);
-    if(!mini&&l.natural){ctx.font='10px system-ui';ctx.fillText(l.name,pos.x,pos.y+16);}
+    if(!mini&&(l.natural||['dungeon-tide','dungeon-canopy'].includes(l.id))){ctx.font='10px system-ui';ctx.fillText(l.name,pos.x,pos.y+16);}
     if(!mini&&['town','village'].includes(l.kind)){ctx.font='10px system-ui';ctx.fillText(l.name,pos.x,pos.y+17);}
   }
   if(mini)for(const npc of TOWNS.flatMap(t=>t.npcs)){if(distance(npc,p)>45)continue;const pos=at(npc.x,npc.z);ctx.fillStyle=COLORS.wind;ctx.fillText(npc.role==='guide'?'!':'·',pos.x,pos.y);}
@@ -252,10 +276,10 @@ function drawDungeonMap(ctx,w,h,mini){
   for(const wall of geometry.walls)if(wall.kind!=='ceiling')rect(wall,COLORS.muted);
   for(const door of geometry.doors)rect(door,door.open?COLORS.wind:COLORS.danger);
   ctx.textAlign='center';ctx.font=`${mini?10:12}px system-ui`;
-  if(!mini)for(const room of geometry.rooms){const pos=at(room.x,room.z);ctx.fillStyle=COLORS.paper;ctx.fillText(room.name,pos.x,pos.y);}
+  for(const room of geometry.rooms){if(mini&&Math.hypot(room.x-p.x,room.z-p.z)>35)continue;const pos=at(room.x,room.z);ctx.fillStyle=COLORS.paper;ctx.fillText(`${room.name} · ${Math.round(dungeonFloor(state,room.x,room.z))}m`,pos.x,pos.y);}
   for(const landmark of geometry.landmarks){if(mini&&distance(landmark,p)>43)continue;const pos=at(landmark.x,landmark.z);ctx.fillStyle=landmark.kind==='exit'?COLORS.wind:COLORS.amber;ctx.fillText({exit:'△',chest:'◆',rune:'◇',lever:'◇',plate:'○',reset:'↺',clue:'?'}[landmark.kind]||'·',pos.x,pos.y+3);}
   const pos=at(p.x,p.z);ctx.translate(pos.x,pos.y);ctx.rotate(p.yaw);ctx.fillStyle=COLORS.paper;ctx.beginPath();ctx.moveTo(0,-7);ctx.lineTo(5,6);ctx.lineTo(-5,6);ctx.closePath();ctx.fill();ctx.restore();
-  ctx.fillStyle=COLORS.amber;ctx.textAlign='center';ctx.font='12px system-ui';ctx.fillText('N',w/2,15);
+  ctx.fillStyle=COLORS.amber;ctx.textAlign='center';ctx.font='12px system-ui';ctx.fillText(`N · ${Math.round(p.y)}m`,w/2,15);
 }
 function updateHUD(){
   const p=state.player;

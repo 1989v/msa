@@ -29,7 +29,7 @@ test('all expedition and natural cave approaches share the mesh and clear one-me
   }
 });
 test('six cave entrances preserve old identities and new entrances connect to towns or a valley',()=>{
-  assert.deepEqual(DUNGEON_ENTRANCES.filter(e=>!e.natural).map(e=>e.id),['dungeon-sunfields','dungeon-alpine','dungeon-mistwood','dungeon-canyon']);
+  assert.deepEqual(DUNGEON_ENTRANCES.filter(e=>!e.natural&&!e.ruin).map(e=>e.id),['dungeon-sunfields','dungeon-alpine','dungeon-mistwood','dungeon-canyon']);
   for(const approach of CAVE_APPROACHES){const e=DUNGEON_ENTRANCES.find(e=>e.id===approach.entranceId),p=approach.points.at(-1);assert.ok(e.natural);assert.equal(e.x,p.x);assert.equal(e.z,p.z);assert.equal(e.y,heightAt(e.x,e.z));}
 });
 test('eight town layouts have regional nonblocking decoration and clear NPC access',()=>{

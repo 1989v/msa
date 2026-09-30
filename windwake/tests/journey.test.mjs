@@ -26,7 +26,8 @@ function localClaim(s,biome){fulfil(s,`quest-${biome}-local`);assert.equal(comma
 
 test('eight authored towns expose twenty-four resident roles, sixteen stages and eight unique relic sources',()=>{
   assert.equal(TOWNS.length,8);assert.equal(TOWNS.flatMap(t=>t.npcs).length,24);assert.equal(QUESTS.length,16);assert.equal(new Set(QUESTS.map(q=>q.id)).size,16);
-  assert.equal(Object.keys(RELICS).length,8);assert.equal(Object.values(RELICS).filter(r=>r.sourceId.startsWith('dungeon-')).length,4);
+  const legacy=Object.values(RELICS).filter(r=>!['relic-tide','relic-canopy'].includes(r.id));
+  assert.equal(legacy.length,8);assert.equal(legacy.filter(r=>r.sourceId.startsWith('dungeon-')).length,4);
   for(const t of TOWNS){assert.ok(SERVICES[t.service]);assert.deepEqual(t.npcs.map(n=>n.role).sort(),['guide','keeper','merchant']);assert.equal(QUESTS.filter(q=>q.townId===t.id).length,2);}
 });
 test('NPC interaction and talking enforce actual distance, height, scene, known IDs and mode',()=>{

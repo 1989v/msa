@@ -1,4 +1,4 @@
-import {TOWNS,LANDMARKS} from './world.mjs';
+import {TOWNS,LANDMARKS,CORRIDORS} from './world.mjs';
 import {QUESTS,SERVICES,townAction,questStatus,trackQuest,journeyObjective} from './settlements.mjs';
 import {RESIDENTS,residentEligible,housingCapacity,villageAction} from './village.mjs';
 import {RELICS,equipRelic,allianceBenefits} from './relics.mjs';
@@ -10,6 +10,13 @@ const names={wood:'목재',stone:'돌',food:'식량',crystals:'결정'};
 const states={unavailable:'아직 열리지 않음',available:'받을 수 있는 의뢰',active:'진행 중',ready:'돌아가 보상 받기',claimed:'보상 수령 완료'};
 const costs=value=>Object.entries(value||{}).map(([id,n])=>`${names[id]||id} ${n}`).join(' · ');
 const destination=id=>LANDMARKS.find(l=>l.id===id)?.name||TOWNS.find(t=>t.id===id)?.name||id;
+export function regionalGuidance(townId){
+  const route=CORRIDORS.find(r=>r.fromTownId===townId||r.toTownId===townId);
+  if(!route)return '';
+  const other=route.fromTownId===townId?route.toTownId:route.fromTownId;
+  const ruin=townId==='town-coast'?' 해안 수문 유적에서는 시작 → 중간 → 끝 순서로 시간 안에 릴레이를 잇습니다.':townId==='town-autumn'?' 수관 유적에서는 비문의 순서를 읽고 서로 다른 높이의 세 장치를 잇습니다.':'';
+  return `${route.name}을 따라 ${destination(other)}까지 걸을 수 있습니다. 길의 세 발견 지점과 보급함을 찾고 두 경비병을 쓰러뜨리세요.${ruin}`;
+}
 function rewardText(q){return [`경험치 ${q.reward.xp}`,q.reward.food?`식량 ${q.reward.food}`:null,q.reward.reputation?`마을 평판 ${q.reward.reputation} · 도시 동맹`:null,q.reward.relic?`유물 ${RELICS[q.reward.relic].name}`:null].filter(Boolean).join(' · ');}
 function near(s,npc){return !s.expedition?.active&&Math.hypot(s.player.x-npc.x,s.player.z-npc.z)<=4.2&&Math.abs(s.player.y-npc.y)<=2.5;}
 function feedbackLine(text){const line=element('p',text,'action-feedback');line.setAttribute('role','status');return line;}
@@ -26,6 +33,7 @@ export function townPanel(root,s,townId,changed=()=>{}){
       section.append(element('h3',npc.name),element('p',`${roles[npc.role]} · ${Math.round(Math.hypot(s.player.x-npc.x,s.player.z-npc.z))}m`));
       if(!available)section.append(element('p',s.expedition?.active?'던전 밖에서 만날 수 있습니다.':`${npc.name}에게 가까이 가면 이용할 수 있습니다.`,'save-status'));
       if(npc.role==='guide'){
+        section.append(element('p',regionalGuidance(town.id),'hint-box'));
         const resident=Object.values(RESIDENTS).find(r=>r.townId===town.id),eligible=resident&&residentEligible(s,resident.id),invited=resident&&s.village.residents.some(r=>r.id===resident.id);
         if(resident){section.append(element('p',`${resident.name} · 두 의뢰를 보고하여 동맹을 맺으면 바람뜰에 초대할 수 있습니다. 온전한 작은 집 한 채가 필요합니다.`));
           section.append(button(invited?'마을에 합류함':'바람뜰 주민으로 초대',()=>{const result=villageAction(s,'invite',{id:resident.id});feedback=result.ok?'주민이 바람뜰에 합류했습니다.':result.reason;changed(result);render();},!available||!eligible||invited||s.village.residents.length>=housingCapacity(s)));}
@@ -61,10 +69,11 @@ export function journeyJournal(root,s,callbacks={}){
   root.append(element('h3','도시와 약속한 여정'),objectiveLine);
   root.append(element('p',`도시 방문 ${s.journey.visited.length}/8 · 의뢰 ${Object.values(s.journey.quests).filter(n=>n===2).length}/16 · 동맹 ${benefit.count}/8`));
   root.append(element('p',`동맹 혜택: 마을 방어탑 +${Math.round(benefit.towerDamage*100)}%, 귀환 휴식 회복약 +${benefit.flasks}병 (최대 6병)`,'save-status'));
-  if(callbacks.openRelics)root.append(button(`유물 살펴보기 · ${s.journey.relics.length}/8`,callbacks.openRelics));
+  if(callbacks.openRelics)root.append(button(`유물 살펴보기 · ${s.journey.relics.length}/${Object.keys(RELICS).length}`,callbacks.openRelics));
   for(const town of TOWNS){
     const section=element('section',undefined,'journal-item');section.dataset.town=town.id;
     section.append(element('h3',`${s.journey.allies.includes(town.id)?'동맹 · ':''}${town.name}`),element('p',`${town.description} · ${SERVICES[town.service].name}`));
+    section.append(element('p',regionalGuidance(town.id),'hint-box'));
     for(const q of QUESTS.filter(q=>q.townId===town.id)){
       const info=questStatus(s,q.id),row=element('div',undefined,'quest-row');row.dataset.quest=q.id;
       row.append(element('strong',`${q.stage}. ${q.name} · ${states[info.status]}`),element('p',info.objectiveText),element('small',`목적지: ${destination(info.destinationId)} · ${rewardText(q)}`));

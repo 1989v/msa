@@ -1,0 +1,375 @@
+{
+  "url": "http://127.0.0.1:8791/",
+  "status": "passed",
+  "fixtures": "All four corridor roundtrips, both ruin clears and combined journey start from fresh unmodified games. Checkpoint images restore earned snapshots; only camera changes. Timer expiry/retry is separately labeled presentation fixture replaying an earned active timer with normal simulation steps and positioning at its start node for retry.",
+  "errors": [],
+  "trustedInput": {
+    "jumps": 1,
+    "distance": 2.786666666666619,
+    "camera": {
+      "yaw": 0.36,
+      "pitch": 0.44999999999999996,
+      "distance": 9,
+      "shake": 0,
+      "reducedMotion": false
+    }
+  },
+  "corridors": [
+    {
+      "forward": {
+        "id": "corridor-sunfields-dunes",
+        "reverse": false,
+        "frames": 7422,
+        "distance": 1025.8844027683374,
+        "falls": 0,
+        "hp": 84
+      },
+      "reverse": {
+        "id": "corridor-sunfields-dunes",
+        "reverse": true,
+        "frames": 11724,
+        "distance": 1610.2600973384988,
+        "falls": 0,
+        "hp": 68
+      }
+    },
+    {
+      "forward": {
+        "id": "corridor-coast-autumn",
+        "reverse": false,
+        "frames": 10594,
+        "distance": 1457.3846662191959,
+        "falls": 0,
+        "hp": 82
+      },
+      "reverse": {
+        "id": "corridor-coast-autumn",
+        "reverse": true,
+        "frames": 15306,
+        "distance": 2084.7371193693252,
+        "falls": 0,
+        "hp": 64
+      }
+    },
+    {
+      "forward": {
+        "id": "corridor-alpine-mistwood",
+        "reverse": false,
+        "frames": 13188,
+        "distance": 1749.841964102277,
+        "falls": 0,
+        "hp": 82
+      },
+      "reverse": {
+        "id": "corridor-alpine-mistwood",
+        "reverse": true,
+        "frames": 18158,
+        "distance": 2390.322088875288,
+        "falls": 0,
+        "hp": 66
+      }
+    },
+    {
+      "forward": {
+        "id": "corridor-canyon-lavender",
+        "reverse": false,
+        "frames": 10810,
+        "distance": 1431.619202693516,
+        "falls": 0,
+        "hp": 100
+      },
+      "reverse": {
+        "id": "corridor-canyon-lavender",
+        "reverse": true,
+        "frames": 15294,
+        "distance": 2024.1433177758904,
+        "falls": 0,
+        "hp": 82
+      }
+    }
+  ],
+  "cacheCombat": [
+    {
+      "id": "corridor-sunfields-dunes",
+      "frame": 5849,
+      "distance": 784.4228762933316,
+      "hp": 68,
+      "falls": 0,
+      "guardIds": [
+        "corridor-sunfields-dunes-guard-0",
+        "corridor-sunfields-dunes-guard-1"
+      ],
+      "cacheId": "cache-corridor-sunfields-dunes",
+      "kills": 2
+    },
+    {
+      "id": "corridor-coast-autumn",
+      "frame": 9393,
+      "distance": 1260.0733079584602,
+      "hp": 82,
+      "falls": 0,
+      "guardIds": [
+        "corridor-coast-autumn-guard-0",
+        "corridor-coast-autumn-guard-1"
+      ],
+      "cacheId": "cache-corridor-coast-autumn",
+      "kills": 2
+    },
+    {
+      "id": "corridor-alpine-mistwood",
+      "frame": 11501,
+      "distance": 1556.9347530500777,
+      "hp": 82,
+      "falls": 0,
+      "guardIds": [
+        "corridor-alpine-mistwood-guard-0",
+        "corridor-alpine-mistwood-guard-1"
+      ],
+      "cacheId": "cache-corridor-alpine-mistwood",
+      "kills": 2
+    },
+    {
+      "id": "corridor-canyon-lavender",
+      "frame": 9396,
+      "distance": 1255.591594214438,
+      "hp": 84,
+      "falls": 0,
+      "guardIds": [
+        "corridor-canyon-lavender-guard-0",
+        "corridor-canyon-lavender-guard-1"
+      ],
+      "cacheId": "cache-corridor-canyon-lavender",
+      "kills": 2
+    }
+  ],
+  "ruins": [
+    {
+      "returned": {
+        "stage": "dungeon-tide-returned",
+        "frame": 11270,
+        "seconds": 187.83,
+        "position": [
+          605,
+          11.6,
+          101
+        ],
+        "hp": 100,
+        "flasks": 3,
+        "distance": 1279.21,
+        "jumps": 0,
+        "falls": 0,
+        "kills": 3,
+        "parries": 1,
+        "dungeon": null,
+        "room": null,
+        "progress": null,
+        "openDoors": [],
+        "relics": [
+          "relic-tide"
+        ]
+      },
+      "proof": {
+        "killed": [
+          "dungeon-tide:lower-guard",
+          "dungeon-tide:guardian",
+          "dungeon-tide:optional-guard"
+        ],
+        "solved": [
+          "dungeon-tide:seal"
+        ],
+        "opened": [
+          "dungeon-tide:optional-cache",
+          "dungeon-tide:archive-cache"
+        ],
+        "claimed": true
+      }
+    },
+    {
+      "returned": {
+        "stage": "dungeon-canopy-returned",
+        "frame": 14220,
+        "seconds": 237,
+        "position": [
+          363.23,
+          21.63,
+          508.13
+        ],
+        "hp": 100,
+        "flasks": 3,
+        "distance": 1573.63,
+        "jumps": 12,
+        "falls": 0,
+        "kills": 4,
+        "parries": 1,
+        "dungeon": null,
+        "room": null,
+        "progress": null,
+        "openDoors": [],
+        "relics": [
+          "relic-canopy"
+        ]
+      },
+      "proof": {
+        "killed": [
+          "dungeon-canopy:lower-guard",
+          "dungeon-canopy:guardian",
+          "dungeon-canopy:optional-guard"
+        ],
+        "solved": [
+          "dungeon-canopy:seal"
+        ],
+        "opened": [
+          "dungeon-canopy:optional-cache",
+          "dungeon-canopy:archive-cache"
+        ],
+        "claimed": true
+      }
+    }
+  ],
+  "combined": {
+    "corridor": {
+      "id": "corridor-coast-autumn",
+      "reverse": false,
+      "frames": 10594,
+      "distance": 1457.3846662191959,
+      "falls": 0,
+      "hp": 82
+    },
+    "ruin": {
+      "stage": "dungeon-canopy-returned",
+      "frame": 17750,
+      "seconds": 295.83,
+      "position": [
+        363.23,
+        21.63,
+        508.13
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 2061.9,
+      "jumps": 12,
+      "falls": 0,
+      "kills": 4,
+      "parries": 1,
+      "dungeon": null,
+      "room": null,
+      "progress": null,
+      "openDoors": [],
+      "relics": [
+        "relic-canopy"
+      ]
+    },
+    "finish": {
+      "stage": "crossroads-reloaded",
+      "frame": 18265,
+      "seconds": 304.42,
+      "position": [
+        0,
+        0.34,
+        -71
+      ],
+      "hp": 100,
+      "flasks": 3,
+      "distance": 2123.99,
+      "falls": 0,
+      "kills": 4,
+      "parries": 1,
+      "waypoints": [
+        "home",
+        "waypoint-coast"
+      ],
+      "bosses": [],
+      "xp": 310,
+      "villageTasks": [],
+      "villageLevel": 1,
+      "reputation": 0,
+      "materials": {
+        "wood": 66,
+        "stone": 48,
+        "food": 14
+      },
+      "day": 1,
+      "clock": 285.22,
+      "raid": "idle",
+      "raidWave": 0,
+      "beaconHp": 180,
+      "finalDefeated": false
+    },
+    "saveReloads": 2,
+    "relic": "relic-canopy",
+    "proof": {
+      "killed": [
+        "dungeon-canopy:lower-guard",
+        "dungeon-canopy:guardian",
+        "dungeon-canopy:optional-guard"
+      ],
+      "solved": [
+        "dungeon-canopy:seal"
+      ],
+      "opened": [
+        "dungeon-canopy:optional-cache",
+        "dungeon-canopy:archive-cache"
+      ],
+      "claimed": true
+    }
+  },
+  "timerFixture": {
+    "label": "timer presentation fixture",
+    "expiryToast": "물길 시간이 끝났습니다. 시작 장치에서 무료로 다시 시도하세요.",
+    "retried": true,
+    "remaining": "밀물빛 수문 유적 · 물길 1 / 3 · 30.0초 남음"
+  },
+  "metrics": {
+    "frames": 16,
+    "samples": 16,
+    "fps": 14.771048744460822,
+    "frameP95": 200,
+    "frameP99": 200,
+    "renderAverage": 5.375000029802322,
+    "droppedTime": 0.2833000000000002,
+    "renderer": {
+      "drawCalls": 20,
+      "triangles": 28725,
+      "staticTriangles": 79032,
+      "dynamicTriangles": 6499,
+      "frameMs": 0.5,
+      "width": 1280,
+      "height": 800,
+      "pixelRatio": 1,
+      "residentChunks": 49,
+      "maxResidentChunks": 64,
+      "residentBytes": 10432224,
+      "chunkBuilds": 676,
+      "chunkEvictions": 627,
+      "disposedChunks": 627,
+      "activeScene": "world",
+      "dungeonBuffers": 0,
+      "dungeonBytes": 0,
+      "sceneTransitions": 6,
+      "visibleNPCs": 3,
+      "chunkBuildsThisFrame": 0,
+      "cameraDistance": 10,
+      "cameraEye": [
+        410.1708679199219,
+        25.64853858947754,
+        465.0284423828125
+      ],
+      "cameraTarget": [
+        403.9795837402344,
+        22.884981155395508,
+        472.3789978027344
+      ],
+      "closedDungeonDoors": 0
+    },
+    "world": {
+      "cachedChunks": 96,
+      "maxCachedChunks": 96,
+      "generatedChunks": 1720,
+      "evictedChunks": 1624,
+      "lastQueryCells": 2,
+      "lastQueryCandidates": 20
+    },
+    "actors": 40,
+    "audioVoices": 1
+  }
+}

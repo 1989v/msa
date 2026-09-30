@@ -314,7 +314,7 @@ test('sigil rewards are unique and the final sigil improves resonance damage', (
 });
 
 test('caches grant rewards once and camp upgrades spend only available crystals', () => {
-  const s = isolated(), chest = LANDMARKS.find(l => l.kind === 'chest');
+  const s = isolated(), chest = LANDMARKS.find(l => l.id === 'chest-expedition-alpine');
   place(s, chest.x, chest.z, chest.y); interact(s);
   const crystals = s.player.crystals; interact(s); assert.equal(s.player.crystals, crystals);
   assert.equal(s.progress.chests.length, 1);

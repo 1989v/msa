@@ -5,7 +5,7 @@ import {ENEMY_STATS,updateExpandedEnemy} from './combat.mjs';
 import {initAdventure,awardXP,modifiers,validateAdventure,ACTIVE_SKILLS} from './progression.mjs';
 import {initVillage,tickVillage,villageAction,villageInteraction,villageSolids,captureRaid,restoreRaid,validateVillage,normalizeResidents} from './village.mjs';
 import {initJourney,validateJourney,townInteraction,townAction,grantRelic} from './settlements.mjs';
-import {DUNGEONS,initExpedition,validateExpedition,dungeonFloor,dungeonSolids,dungeonBounds,dungeonInteraction,dungeonAction,tickDungeon,enterDungeon,leaveDungeon,recordDungeonKill,dungeonObjective} from './dungeons.mjs';
+import {DUNGEONS,normalizeCrossroadsExpeditionSnapshot,initExpedition,validateExpedition,dungeonFloor,dungeonSolids,dungeonBounds,dungeonInteraction,dungeonAction,tickDungeon,enterDungeon,leaveDungeon,recordDungeonKill,dungeonObjective} from './dungeons.mjs';
 
 export const DT=1/60;
 const TAU=Math.PI*2;
@@ -17,7 +17,7 @@ function random(s){s.rng=(Math.imul(s.rng,1664525)+1013904223)>>>0;return s.rng/
 function emit(s,type,text,at=s.player,extra={}){s.events.push({type,text,x:at.x,y:at.y,z:at.z,...extra});}
 function fx(s,type,at,extra={}){s.effects.push({type,x:at.x,y:at.y,z:at.z,age:0,life:.45,yaw:at.yaw||0,...extra});if(s.effects.length>100)s.effects.splice(0,s.effects.length-100);}
 function replaceableAmbient(e,p,minDistance=40){
-  return e.frontier&&!e.raid&&!e.trialId&&!e.dungeonId&&!e.bossId&&!e.summonedBy&&
+  return e.frontier&&!e.raid&&!e.trialId&&!e.dungeonId&&!e.bossId&&!e.corridorId&&!e.summonedBy&&
     (e.hp<=0||e.state==='idle'&&e.hp===e.maxHp&&distance(e,p)>minDistance);
 }
 export function spawnEnemy(s,type='stalker',x=s.player.x+6,z=s.player.z+6,y,extra={}) {
@@ -25,7 +25,7 @@ export function spawnEnemy(s,type='stalker',x=s.player.x+6,z=s.player.z+6,y,extr
   if(s.enemies.length>=64){
     // Reserve admission for authored encounters even with an old saturated save.
     // Only untouched, idle, distant ambient actors are eligible for eviction.
-    const priority=extra.raid||extra.trialId||extra.dungeonId||extra.bossId;
+    const priority=extra.raid||extra.trialId||extra.dungeonId||extra.bossId||extra.corridorId;
     const candidate=priority?s.enemies.filter(e=>replaceableAmbient(e,s.player))
       .sort((a,b)=>distance(b,s.player)-distance(a,s.player))[0]:null;
     if(!candidate)return null;
@@ -47,6 +47,8 @@ export const snapshot=s=>structuredClone(s);
 export function restoreSnapshot(data){
   if(!data||![1,2,3].includes(data.version)||!Number.isFinite(data.frame)||!data.player||!Number.isFinite(data.player.x))throw new Error('Invalid simulation snapshot');
   const next=structuredClone(data);next.adventure??=initAdventure();next.village??=initVillage();next.player.abilityCooldowns??={};next.player.dashTimer??=0;next.player.slowTimer??=0;next.expedition??=initExpedition();next.journey??=initJourney();next.version=3;if(next.expedition.active)next.blocks=next.expedition.active.blocks;
+  normalizeCrossroadsExpeditionSnapshot(next);
+  normalizeCrossroadsRewards(next);
   const community=validateVillage(next.village);
   Object.assign(next.village,{produce:community.produce,items:community.items,residents:community.residents});
   normalizeResidents(next,{...next,adventure:validateAdventure(next.adventure),village:community,expedition:validateExpedition(next.expedition)});
@@ -54,6 +56,15 @@ export function restoreSnapshot(data){
   if(p.grounded||p.y<floor){p.y=floor;p.vy=0;p.grounded=true;}
   p.safeY=supportFor(next,p.safeX,p.safeZ,p.safeY);
   return next;
+}
+function worldCacheReady(s,chest){return !chest.corridorId||(chest.requires||[]).every(id=>s.adventure?.worldDefeated?.[id]===true);}
+function normalizeCrossroadsRewards(s,expedition=s.expedition){
+  const caches=new Map(LANDMARKS.filter(l=>l.kind==='chest'&&l.corridorId).map(l=>[l.id,l]));
+  s.progress.chests=(s.progress.chests||[]).filter(id=>!caches.has(id)||worldCacheReady(s,caches.get(id)));
+  const added=new Set(['relic-tide','relic-canopy']);
+  const valid=new Set(validateJourney(s.journey,{...s,expedition:validateExpedition(expedition)}).relics);
+  s.journey.relics=(s.journey.relics||[]).filter(id=>!added.has(id)||valid.has(id));
+  s.journey.equipped=(s.journey.equipped||[null,null]).map(id=>added.has(id)&&!s.journey.relics.includes(id)?null:id);
 }
 function toast(s,text,type='notice'){s.toast=text;s.toastTime=4;emit(s,type,text);}
 export function floorAt(s,x,z){return s?.expedition?.active?dungeonFloor(s,x,z):heightAt(x,z);}
@@ -245,6 +256,7 @@ export function interact(s){
     if(!s.progress.discovered.includes(near.id))s.progress.discovered.push(near.id);
     toast(s,'모닥불의 온기 · 체력과 회복약을 보충했습니다. 강화는 모닥불 메뉴에서.','rest');
   }else if(near.kind==='chest'){
+    if(!worldCacheReady(s,near)){toast(s,'길목 보급함 · 두 수비대를 먼저 물리치세요.');return near;}
     s.progress.chests.push(near.id);p.crystals+=5;p.flasks=Math.min(6,p.flasks+1);s.metrics.secrets++;awardXP(s,35);payoutMaterials(s,4);
     toast(s,`${near.name} · 결정 5개와 회복약을 발견했습니다.`,'reward');fx(s,'reward',near,{life:1.2,power:4});
   }else if(near.kind==='rune'){
@@ -490,6 +502,7 @@ export function loadSave(data){
   if(data.version>=2){s.adventure=validateAdventure(data.adventure);s.village=validateVillage(data.village);}
   const expedition=data.version===3?validateExpedition(data.expedition):initExpedition();
   s.journey=data.version===3?validateJourney(data.journey,{...s,expedition}):initJourney();
+  normalizeCrossroadsRewards(s,expedition);
   normalizeResidents(s,{...s,expedition});
   if(s.village.level<3)s.adventure.finalDefeated=false;
   const mods=modifiers(s);
@@ -536,7 +549,7 @@ function dungeonHooks(s){return {
   ground:(b,dt)=>{b.vy=(b.vy||0)-25*dt;verticalMove(b,dt,solidsFor(s,b.x,b.z,5,b.id),s);},
   rewardXP:n=>awardXP(s,n),grantRelic:id=>grantRelic(s,id),
   rewardMaterials:reward=>{for(const key of ['wood','stone','food'])s.village.materials[key]=Math.min(99999,s.village.materials[key]+(reward[key]||0));s.player.crystals=Math.min(9999,s.player.crystals+(reward.crystals||0));},
-  effect:(type,at,extra)=>fx(s,type,at,extra),toast:text=>toast(s,text,'reward'),
+  effect:(type,at,extra)=>fx(s,type,at,extra),sound:type=>emit(s,type),toast:text=>toast(s,text,'reward'),
 };}
 export function enterExpedition(s,id){return enterDungeon(s,id,dungeonHooks(s));}
 export function exitExpedition(s){return leaveDungeon(s,dungeonHooks(s));}
@@ -582,7 +595,7 @@ function streamEnemies(s,force=false){
   if(!force&&cell===s.streamCell&&s.frame%90!==0)return;s.streamCell=cell;
   s.enemies=s.enemies.filter(e=>!e.frontier||e.raid||e.trialId||distance(e,p)<145||e.hp>0&&e.state!=='idle');
   const original=new Set(ENEMY_SPAWNS.map(e=>e.id));
-  const nearby=spawnsNear(p.x,p.z,110).sort((a,b)=>(b.type==='boss')-(a.type==='boss')||distance(a,p)-distance(b,p));
+  const nearby=spawnsNear(p.x,p.z,110).sort((a,b)=>(b.type==='boss')-(a.type==='boss')||Number(!!b.corridorId)-Number(!!a.corridorId)||distance(a,p)-distance(b,p));
   for(const spec of nearby){
     if(original.has(spec.id)||s.enemies.some(e=>e.id===spec.id)||s.adventure.worldDefeated[spec.id])continue;
     const site=BOSS_SITES.find(b=>b.id===spec.id);
@@ -591,7 +604,7 @@ function streamEnemies(s,force=false){
     if(!site){
       const incomingDistance=distance(spec,p);
       if(incomingDistance<9)continue;
-      if(s.enemies.length>=40){
+      if(!spec.corridorId&&s.enemies.length>=40){
         // Walking into a new cell must refresh the nearest encounters, even
         // before the 145 m unload boundary. A 12 m distance advantage prevents
         // residency churn; actors within 40 m and every engaged actor stay.

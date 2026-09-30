@@ -17,7 +17,7 @@ function interact(s,hooks,l){Object.assign(s.player,{x:l.x,y:l.y,z:l.z});return 
 
 test('each authored layout has connected real chambers, sealed corridors, cover and a base-jump ascent',()=>{
   const shapes=new Set();
-  for(const d of DUNGEONS.filter(d=>!d.natural)){
+  for(const d of DUNGEONS.filter(d=>!d.natural&&!d.expansion)){
     const {s}=fixture(d.id);assert.ok(d.rooms.length>=5);assert.ok(Object.isFrozen(d.rooms));
     const reached=new Set([d.rooms[0].id]);for(let i=0;i<d.rooms.length;i++)for(const [a,b] of d.links){if(reached.has(a))reached.add(b);if(reached.has(b))reached.add(a);}
     assert.equal(reached.size,d.rooms.length);
@@ -125,7 +125,7 @@ test('render geometry is read-only and exposes partial puzzle lights without pre
   assert.equal(dungeonGeometry(s).landmarks.find(l=>l.id===first.id).solved,false);
 });
 
-for(const dungeon of DUNGEONS.filter(d=>!d.natural))test(`natural ${dungeon.id} adventure walks every chamber, earns its relic and returns without state writes`,()=>{
+for(const dungeon of DUNGEONS.filter(d=>!d.natural&&!d.expansion))test(`natural ${dungeon.id} adventure walks every chamber, earns its relic and returns without state writes`,()=>{
   const s=createGame(),checkpoints=[];
   const driver={state:()=>structuredClone(s),step(n,input){for(let i=0;i<n;i++)stepGame(s,input);return structuredClone(s);},
     learn:id=>learnSkill(s,id),equip:(id,slot)=>equipSkill(s,id,slot),town:(action,payload)=>townAction(s,action,payload),onCheckpoint:r=>checkpoints.push(r)};

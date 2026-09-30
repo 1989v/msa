@@ -8,6 +8,8 @@ export const RELICS=Object.freeze(Object.fromEntries([
   relic('coast','푸른 조개','최대 기력 +25','quest-coast-regional',{stamina:25}),
   relic('autumn','붉은잎 등불','마을 방어탑 공격력 +25%','quest-autumn-regional',{towerDamage:.25}),
   relic('lavender','별꽃 반지','검 공격력 +2 · 최대 에너지 +10','quest-lavender-regional',{bladeDamage:2,energy:10}),
+  relic('tide','밀물의 나침반','최대 기력 +15 · 이동 속도 +4%','dungeon-tide',{stamina:15,speed:.04}),
+  relic('canopy','수관의 씨앗','최대 에너지 +10 · 수확 식량 +15%','dungeon-canopy',{energy:10,harvest:.15}),
 ].map(r=>[r.id,r])));
 const known=id=>typeof id==='string'&&Object.hasOwn(RELICS,id);
 const fail=reason=>({ok:false,reason});

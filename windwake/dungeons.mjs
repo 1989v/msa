@@ -1,5 +1,6 @@
 import { DUNGEON_ENTRANCES } from './world.mjs';
 import {CAVES,floorSurface} from './caves.mjs';
+import {RUINS} from './ruins.mjs';
 
 // Authored scene data and durable facts only. The simulation supplies physics,
 // actors and rewards; both collision and rendering consume this same geometry.
@@ -86,6 +87,7 @@ export const DUNGEONS=freeze([
   layout({biome:'mistwood',name:'뿌리의 기억전당',description:'갈라진 뿌리 회랑에서 역순의 기억과 두 돌의 균형을 찾으세요.',family:'thorn',sequence:[2,0,1],plates:2,jumpAxis:'x',positions:{entry:[0,0],runes:[0,32],guard:[32,32],weights:[64,32],ascent:[96,32],boss:[128,32],treasure:[0,64]},links:[['entry','runes'],['runes','guard','lights'],['guard','weights','guard'],['weights','ascent','weights'],['ascent','boss'],['runes','treasure']]}),
   layout({biome:'alpine',name:'서리별 관측소',description:'엇갈린 등불과 얼어붙은 돌단 너머 별의 봉인을 지키는 곳.',family:'tide',relays:[true,false,true],plates:1,positions:{entry:[0,0],weights:[32,0],guard:[64,0],ascent:[64,32],runes:[64,64],boss:[32,64],treasure:[96,0]},links:[['entry','weights'],['weights','guard','weights'],['guard','ascent','guard'],['ascent','runes'],['runes','boss','lights'],['guard','treasure']]}),
   ...CAVES,
+  ...RUINS,
 ]);
 
 const catalog=id=>DUNGEONS.find(d=>d.id===id);
@@ -94,7 +96,7 @@ const newProgress=()=>({killed:[],solved:[],opened:[],claimed:false});
 const progress=(s,d)=>s.expedition.progress[d.id]??=newProgress();
 const has=(p,id)=>p.killed.includes(id)||p.solved.includes(id);
 const completed=(d,p)=>d.spawns.filter(e=>e.required).every(e=>p.killed.includes(e.id))&&d.puzzles.filter(q=>q.required).every(q=>p.solved.includes(q.id));
-const activeFor=d=>({id:d.id,roomId:d.rooms[0].id,sequenceSteps:{},relayStates:{},plateCharges:{},blocks:d.blocks.map(b=>({...b}))});
+const activeFor=d=>({id:d.id,roomId:d.rooms[0].id,sequenceSteps:{},timedCircuits:{},relayStates:{},plateCharges:{},blocks:d.blocks.map(b=>({...b}))});
 export const initExpedition=()=>({active:null,progress:{}});
 
 export function validateExpedition(raw){
@@ -103,8 +105,9 @@ export function validateExpedition(raw){
   for(const d of DUNGEONS){
     const saved=raw.progress?.[d.id];if(!saved||typeof saved!=='object')continue;
     const p={killed:allow(saved.killed,d.spawns.map(e=>e.id)),solved:allow(saved.solved,d.puzzles.map(q=>q.id)),opened:allow(saved.opened,d.landmarks.filter(l=>l.kind==='chest').map(l=>l.id)),claimed:false};
-    p.opened=p.opened.filter(id=>d.landmarks.find(l=>l.id===id).requires.every(required=>has(p,required)));
-    p.claimed=saved.claimed===true&&completed(d,p);result.progress[d.id]=p;
+    p.claimed=saved.claimed===true&&completed(d,p);
+    p.opened=p.opened.filter(id=>{const l=d.landmarks.find(l=>l.id===id);return (!l.afterClear||p.claimed)&&l.requires.every(required=>has(p,required));});
+    result.progress[d.id]=p;
   }
   const d=catalog(raw.active?.id);if(d){result.active=activeFor(d);result.progress[d.id]??=newProgress();}
   return result;
@@ -116,9 +119,10 @@ export function dungeonGeometry(s){
     const q=d.puzzles.find(q=>q.id===l.puzzleId),solved=!!q&&p.solved.includes(q.id);
     const lit=solved||(q?.type==='sequence'&&q.order.indexOf(l.index)<(active.sequenceSteps?.[q.id]||0)&&q.order.includes(l.index))||
       (q?.type==='relays'&&!!active.relayStates?.[q.id]?.[l.index])||(q?.type==='plate'&&active.plateCharges?.[q.id]>0);
-    return {...l,solved,active:!!lit,opened:p.opened.includes(l.id)};
+    const timer=active.timedCircuits?.[q?.id];
+    return {...l,solved,active:!!lit||(q?.type==='timed-relay'&&q.order.indexOf(l.index)<(timer?.step||0)),remainingSeconds:q?.type==='timed-relay'?Math.max(0,((timer?.deadline||s.frame)-s.frame)/60):undefined,opened:p.opened.includes(l.id)};
   });
-  return {id:d.id,name:d.name,natural:!!d.natural,rooms:d.rooms,floors:d.floors,walls:d.walls,props:d.props,landmarks,doors:d.doors.map(door=>({...door,open:door.requires.every(id=>has(p,id))}))};
+  return {id:d.id,name:d.name,natural:!!d.natural,theme:d.theme,rooms:d.rooms,floors:d.floors,walls:d.walls,props:d.props,landmarks,doors:d.doors.map(door=>({...door,open:door.requires.every(id=>has(p,id))}))};
 }
 export function dungeonFloor(s,x,z){const d=current(s);return d?d.floors.filter(f=>inside({x,z},f)).reduce((floor,f)=>Math.max(floor,floorSurface(f,x,z)),-12):-12;}
 export const dungeonBounds=s=>current(s)?.bounds||{minX:-150,maxX:150,minZ:-150,maxZ:150};
@@ -161,7 +165,7 @@ export function dungeonInteraction(s){
 }
 function solve(s,d,q,hooks){
   const p=progress(s,d);if(p.solved.includes(q.id))return;
-  p.solved.push(q.id);hooks.toast?.('봉인이 풀렸습니다. 연결된 문이 열립니다.');
+  p.solved.push(q.id);hooks.sound?.('solve');hooks.toast?.('봉인이 풀렸습니다. 연결된 문이 열립니다.');
   hooks.effect?.('reward',s.player,{power:3,life:1});
 }
 export function dungeonAction(s,action,payload={},hooks={}){
@@ -185,7 +189,17 @@ export function dungeonAction(s,action,payload={},hooks={}){
     active.plateCharges[q.id]=0;hooks.toast?.(l.description);return {ok:true,reset:true};
   }
   if(p.solved.includes(q.id))return {ok:true,solved:true};
-  if(q.type==='sequence'){
+  if(q.type==='timed-relay'){
+    expireCircuit(s,d,q,hooks);
+    const timers=active.timedCircuits??={},timer=timers[q.id];
+    const step=timer?.step||0;
+    if(q.order[step]!==l.index){delete timers[q.id];hooks.sound?.('wrong');hooks.toast?.('순서가 어긋났습니다. 시작 장치에서 다시 시도하세요.');return {ok:true,reset:true};}
+    if(!timer)timers[q.id]={step:1,deadline:s.frame+q.limitFrames};
+    else timer.step++;
+    hooks.sound?.('rune');
+    if(timers[q.id].step===q.order.length){solve(s,d,q,hooks);delete timers[q.id];}
+    else hooks.toast?.(`물길 ${timers[q.id].step} / ${q.order.length} · ${Math.max(0,(timers[q.id].deadline-s.frame)/60).toFixed(1)}초`);
+  }else if(q.type==='sequence'){
     const step=active.sequenceSteps[q.id]||0;
     active.sequenceSteps[q.id]=q.order[step]===l.index?step+1:0;
     if(active.sequenceSteps[q.id]===q.order.length)solve(s,d,q,hooks);
@@ -230,6 +244,7 @@ function updateBlocks(s,d,dt,hooks){
 export function tickDungeon(s,dt,hooks={}){
   const d=current(s);if(!d||s.mode!=='playing'||!Number.isFinite(dt)||dt<=0||dt>1)return;
   const p=progress(s,d);for(const e of s.enemies||[])if(e.hp<=0)recordDungeonKill(s,e,hooks);
+  for(const q of d.puzzles.filter(q=>q.type==='timed-relay'))expireCircuit(s,d,q,hooks);
   updateBlocks(s,d,dt,hooks);
   const room=d.rooms.find(r=>inside(s.player,r));if(room)s.expedition.active.roomId=room.id;
   const reached=reachableRooms(d,p);
@@ -246,10 +261,39 @@ export function tickDungeon(s,dt,hooks={}){
 export function dungeonObjective(s){
   const d=current(s);if(!d)return null;const p=progress(s,d);
   if(p.claimed)return `${d.name} 완료 · 보관실을 탐험하거나 귀환의 빛에서 E`;
+  const timed=d.puzzles.find(q=>q.type==='timed-relay'&&!p.solved.includes(q.id)),timer=s.expedition.active.timedCircuits?.[timed?.id];
+  if(timer)return `${d.name} · 물길 ${timer.step} / ${timed.order.length} · ${Math.max(0,(timer.deadline-s.frame)/60).toFixed(1)}초 남음`;
   const room=d.rooms.find(r=>r.id===s.expedition.active.roomId);
   const living=d.spawns.filter(e=>e.roomId===room?.id&&!p.killed.includes(e.id));
   if(living.length)return `${room.name} · 남은 수호자 ${living.length}마리`;
   const q=d.puzzles.find(q=>q.roomId===room?.id&&!p.solved.includes(q.id));
   if(q)return `${room.name} · ${q.type==='plate'?'돌의 서쪽에서 Q로 받침에 밀기 · 입구 장치에서 무료 초기화':'비문의 지시에 따라 장치에서 E'}`;
   return `${d.name} · ${room?.name||'연결 회랑'} · 열린 문을 따라 다음 방으로 이동`;
+}
+
+function expireCircuit(s,d,q,hooks={}){
+  const timer=s.expedition.active.timedCircuits?.[q.id];
+  if(!progress(s,d).solved.includes(q.id)&&timer&&s.frame>=timer.deadline){
+    delete s.expedition.active.timedCircuits[q.id];hooks.sound?.('wrong');hooks.toast?.('물길 시간이 끝났습니다. 시작 장치에서 무료로 다시 시도하세요.');hooks.effect?.('pulse',s.player,{power:1,life:.3});
+  }
+}
+// Snapshot restore keeps actors, blocks and valid timer continuation intact.
+// Only new authored durable proofs and bounded transient circuit fields change.
+export function normalizeCrossroadsExpeditionSnapshot(s){
+  if(!s.expedition||typeof s.expedition!=='object')s.expedition=initExpedition();
+  const valid=validateExpedition(s.expedition);s.expedition.progress??={};
+  for(const d of RUINS){
+    if(valid.progress[d.id])s.expedition.progress[d.id]=valid.progress[d.id];
+    else delete s.expedition.progress[d.id];
+  }
+  const a=s.expedition.active,d=RUINS.find(d=>d.id===a?.id);
+  if(d){
+    const saved=a.timedCircuits,aTimers={};
+    for(const q of d.puzzles.filter(q=>q.type==='timed-relay')){
+      const t=saved?.[q.id];
+      if(!s.expedition.progress[d.id]?.solved.includes(q.id)&&Number.isSafeInteger(s.frame)&&Number.isSafeInteger(t?.step)&&t.step>0&&t.step<q.order.length&&Number.isSafeInteger(t.deadline)&&t.deadline>s.frame&&t.deadline<=s.frame+q.limitFrames)aTimers[q.id]={step:t.step,deadline:t.deadline};
+    }
+    a.timedCircuits=aTimers;
+  }
+  return s;
 }

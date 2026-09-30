@@ -13,7 +13,7 @@ test('64× world keeps original puzzle IDs and finite authored destinations', ()
   assert.equal(BOSS_SITES.filter(b => !b.final).length, 8);
   assert.equal(new Set(BOSS_SITES.map(b => b.family)).size, 4);
   assert.equal(RESOURCE_NODES.length, 11);
-  assert.equal(LANDMARKS.filter(l => l.biomeId && ['resource', 'trial', 'chest'].includes(l.kind) && !l.expeditionId).length, 24);
+  assert.equal(LANDMARKS.filter(l => l.biomeId && ['resource', 'trial', 'chest'].includes(l.kind) && !l.expeditionId && !l.corridorId).length, 24);
   for (const id of ['camp', 'quarry', 'forest', 'ruins', 'wind', 'chest-lake']) assert.ok(LANDMARKS.some(l => l.id === id));
   assert.equal(new Set(LANDMARKS.map(l => l.id)).size, LANDMARKS.length);
   for (const l of LANDMARKS) for (const axis of ['x', 'y', 'z']) assert.ok(Number.isFinite(l[axis]), `${l.id}.${axis}`);
@@ -156,7 +156,7 @@ test('new creature and village schemas produce finite dynamic geometry with lega
 
 test('eight populated towns have physical services, clear residents and no ambient spawns', () => {
   assert.equal(TOWNS.length, 8);
-  assert.equal(DUNGEON_ENTRANCES.filter(e=>!e.natural).length, 4);
+  assert.equal(DUNGEON_ENTRANCES.filter(e=>!e.natural&&!e.ruin).length, 4);
   assert.equal(DUNGEON_ENTRANCES.filter(e=>e.natural).length, 2);
   assert.equal(new Set(TOWNS.map(t => t.name)).size, 8);
   assert.equal(new Set(TOWNS.map(t => t.style)).size, 8);

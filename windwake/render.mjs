@@ -1,4 +1,4 @@
-import { WORLD, VILLAGE, TOWNS, EXPEDITIONS, LANDMARKS, RUNES, PLATE, heightAt, terrainColor, getChunk, querySolids } from './world.mjs';
+import { WORLD, VILLAGE, TOWNS, EXPEDITIONS, CORRIDORS, CORRIDOR_FEATURES, LANDMARKS, RUNES, PLATE, heightAt, terrainColor, getChunk, querySolids } from './world.mjs';
 import { dungeonGeometry, dungeonFloor, dungeonSolids, dungeonCleared } from './dungeons.mjs';
 import {floorSurface} from './caves.mjs';
 import {residentActors} from './village.mjs';
@@ -378,6 +378,21 @@ export class Renderer {
       const y=heightAt(p.x,p.z);mesh.cone(p.x+2,y,p.z,.45,.5,PALETTE.stone,5,.27);
       mesh.cone(p.x+2,y+.5,p.z,.26,.32,PALETTE.stone,5,.12);mesh.box(p.x+2,y+.66,p.z+.15,.18,.12,.04,PALETTE.amber);
     }
+    // Modest edge cairns repeat along every corridor segment, not only its vertices.
+    for(const route of CORRIDORS)for(let i=1;i<route.points.length;i++){
+      const a=route.points[i-1],b=route.points[i],length=Math.hypot(b.x-a.x,b.z-a.z),dx=(b.x-a.x)/length,dz=(b.z-a.z)/length;
+      for(let along=12;along<length;along+=24){const x=a.x+dx*along-dz*3.8,z=a.z+dz*along+dx*3.8;if(!owns({x,z}))continue;
+        const y=heightAt(x,z);mesh.cone(x,y,z,.25,.28,PALETTE.stone,5,.17);mesh.cone(x,y+.28,z,.15,.2,PALETTE.stone,5,.08);
+        mesh.box(x,y+.35,z,.12,.07,.12,PALETTE.amber);
+      }
+    }
+    // Regional motifs are small sign silhouettes, never fake climbable rocks.
+    for(const feature of CORRIDOR_FEATURES)if(owns(feature)){
+      const x=feature.x,z=feature.z,y=heightAt(x,z),col=feature.type==='bluff-arch'?PALETTE.wind:feature.type==='forest-spire'?PALETTE.alpine:feature.type==='basin-rock'?PALETTE.lavender:PALETTE.amber;
+      mesh.box(x,y,z,.10,1.45,.10,PALETTE.trunk);mesh.box(x,y+1.05,z,1.0,.36,.06,PALETTE.trunk);
+      mesh.beam(x-.3,y+1.2,z+.04,x+.3,y+1.2,z+.04,.035,.035,col);
+      mesh.jewel(x+.35,y+1.2,z+.04,.10,.16,col);
+    }
     for (const landmark of LANDMARKS) if (owns(landmark)) this.staticLandmark(landmark);
     for (const rune of RUNES) if (owns(rune)) {
       mesh.cone(rune.x,rune.y,rune.z,.66,1.45,PALETTE.stone,6,.5);
@@ -424,7 +439,8 @@ export class Renderer {
     else {
       const geometry=dungeonGeometry(state);if(!geometry)return;
       const mesh=new Mesh(6000);this.buildingMesh=mesh;
-      const theme=geometry.id.endsWith('sunfields')?PALETTE.dune:geometry.id.endsWith('canyon')?PALETTE.rock:geometry.id.endsWith('mistwood')?tint(PALETTE.pine,1.65):PALETTE.alpine;
+      const tide=geometry.theme==='tide',canopy=geometry.theme==='canopy';
+      const theme=tide?PALETTE.paper:canopy?PALETTE.autumn:geometry.id.endsWith('sunfields')?PALETTE.dune:geometry.id.endsWith('canyon')?PALETTE.rock:geometry.id.endsWith('mistwood')?tint(PALETTE.pine,1.65):PALETTE.alpine;
       for(const floor of geometry.floors){
         if(floor.kind==='ramp'){
           const x0=floor.x-floor.w/2,x1=floor.x+floor.w/2,z0=floor.z-floor.d/2,z1=floor.z+floor.d/2;
@@ -439,6 +455,16 @@ export class Renderer {
         mesh.box(floor.x,floor.y,floor.z,floor.w,floor.h,floor.d,PALETTE.stoneDark);
         // Surface tiles follow the exact collision cuboid; never create a hidden floor.
         const y=floor.y+floor.h+.008;
+        if(tide||canopy){
+          mesh.quad(floor.x-floor.w/2,y,floor.z-floor.d/2,floor.x-floor.w/2,y,floor.z+floor.d/2,floor.x+floor.w/2,y,floor.z+floor.d/2,floor.x+floor.w/2,y,floor.z-floor.d/2,tide?PALETTE.stone:PALETTE.trunk);
+          if(canopy){
+            for(let z=floor.z-floor.d/2+.5;z<floor.z+floor.d/2;z+=1)mesh.beam(floor.x-floor.w/2,y+.004,z,floor.x+floor.w/2,y+.004,z,.025,.008,PALETTE.dune);
+          }else{
+            for(const side of [-1,1])mesh.beam(floor.x+side*(floor.w/2-.45),y+.004,floor.z-floor.d/2,floor.x+side*(floor.w/2-.45),y+.004,floor.z+floor.d/2,.20,.008,PALETTE.water);
+            for(let z=floor.z-floor.d/2+2;z<floor.z+floor.d/2;z+=4)mesh.beam(floor.x-floor.w/2,y+.004,z,floor.x+floor.w/2,y+.004,z,.035,.008,PALETTE.paper);
+          }
+          continue;
+        }
         if(geometry.natural){
           const x0=floor.x-floor.w/2,z0=floor.z-floor.d/2;
           for(let x=x0;x<x0+floor.w;x+=3)for(let z=z0;z<z0+floor.d;z+=3){
@@ -451,7 +477,7 @@ export class Renderer {
         for(let z=floor.z-floor.d/2+2;z<floor.z+floor.d/2;z+=4)mesh.beam(floor.x-floor.w/2,y,z,floor.x+floor.w/2,y,z,.025,.016,PALETTE.stone);
       }
       for(const wall of geometry.walls){
-        const col=wall.kind==='ceiling'?PALETTE.stoneDark:theme;
+        const col=wall.kind==='ceiling'?PALETTE.stoneDark:canopy?PALETTE.trunk:theme;
         mesh.box(wall.x,wall.y,wall.z,wall.w,wall.h,wall.d,col);
         if(geometry.natural&&wall.kind==='rockwall'){
           const alongX=wall.w>wall.d,length=Math.max(wall.w,wall.d);
@@ -467,11 +493,22 @@ export class Renderer {
             }
           }
         }
-        if(!geometry.natural&&wall.kind!=='ceiling')mesh.box(wall.x,wall.y+wall.h-.16,wall.z,wall.w+.04,.16,wall.d+.04,PALETTE.stoneDark);
+        if(tide||canopy){
+          mesh.box(wall.x,wall.y+wall.h-.14,wall.z,wall.w,.14,wall.d,tide?PALETTE.water:PALETTE.autumn);
+          if(tide)mesh.box(wall.x,wall.y+.25,wall.z,wall.w,.10,wall.d,PALETTE.stoneDark);
+        }
+        if(!geometry.natural&&!geometry.theme&&wall.kind!=='ceiling')mesh.box(wall.x,wall.y+wall.h-.16,wall.z,wall.w+.04,.16,wall.d+.04,PALETTE.stoneDark);
       }
       for(const prop of geometry.props||[]){
         if(prop.kind==='crystal'){mesh.jewel(prop.x,prop.y+.5,prop.z,.5,1.2,PALETTE.crystal,.3,1);mesh.jewel(prop.x+.55,prop.y+.2,prop.z+.2,.25,.7,PALETTE.wind,-.5,1);}
         else if(prop.kind==='cave-lamp'){mesh.box(prop.x,prop.y,prop.z,.4,.6,.4,PALETTE.trunk);mesh.jewel(prop.x,prop.y+.85,prop.z,.22,.45,PALETTE.amber,0,1);}
+        else if(prop.kind==='sluice-pillar'||prop.kind==='canopy-post'){
+          const coastal=prop.kind==='sluice-pillar';
+          mesh.box(prop.x,prop.y,prop.z,prop.w,prop.h,prop.d,coastal?PALETTE.paper:PALETTE.trunk);
+          for(const portion of [.12,.75,.96])mesh.box(prop.x,prop.y+prop.h*portion,prop.z,prop.w,Math.min(.12,prop.h*(1-portion)),prop.d,coastal?PALETTE.water:PALETTE.autumn);
+          // Decorative inset has no overhang beyond the authored solid.
+          mesh.box(prop.x,prop.y+prop.h*.35,prop.z+prop.d/2-.015,prop.w*.5,prop.h*.24,.025,coastal?PALETTE.amber:PALETTE.leafLight);
+        }
         else if([prop.w,prop.h,prop.d,prop.y].every(Number.isFinite))mesh.box(prop.x,prop.y,prop.z,prop.w,prop.h,prop.d,theme);
         else this.staticProp(prop);
       }
@@ -508,6 +545,13 @@ export class Renderer {
         m.box(0,0,0,.6,.7,.6,PALETTE.stoneDark);m.beam(0,.55,0,lit?.45:-.45,1.4,0,.12,.12,PALETTE.trunk);m.jewel(lit?.45:-.45,1.4,0,.14,.24,col,0,1);
       }else if(l.kind==='rune'){
         m.box(0,0,0,.9,1.45,.6,PALETTE.stoneDark);m.jewel(0,1.9,0,.22,.55,col,time*.3,1);
+        if(Number.isFinite(l.remainingSeconds)){
+          const remaining=clamp(l.remainingSeconds/30,0,1),timerColor=l.remainingSeconds>5?PALETTE.wind:PALETTE.danger;
+          m.box(0,2.45,0,1.5,.12,.08,PALETTE.ink);
+          if(remaining>0)m.box((remaining-1)*.75,2.47,-.05,1.5*remaining,.08,.035,timerColor,0,1,1);
+          // Six separate marks make elapsed time readable without color alone.
+          for(let k=0;k<6;k++)m.box((k-2.5)*.24,2.70,0,.12,.10,.06,l.solved||remaining>(k/6)?PALETTE.wind:PALETTE.stoneDark,0,1,1);
+        }
         const count=(l.index??0)+1;for(let i=0;i<Math.min(count,5);i++)m.box((i-(count-1)/2)*.12,.6,.315,.04,.4,.035,col,0,1,1);
       }else if(l.kind==='clue'){
         m.box(0,0,0,1.6,1.4,.3,PALETTE.stone);for(let i=0;i<3;i++)m.box(0,.35+i*.25,.17,1.1-i*.17,.06,.02,PALETTE.amber,0,1,1);
@@ -683,6 +727,15 @@ export class Renderer {
       m.jewel(0,4.6,0,2.1,1.4,PALETTE.rock);m.cone(-3.3,0,1.2,.5,1.1,PALETTE.stone,5,.2);
       m.box(3.3,0,1.2,.12,1.7,.12,PALETTE.trunk);m.jewel(3.3,1.8,1.2,.22,.45,PALETTE.amber,0,1);
       m.ring(0,.08,1,2.3,.10,PALETTE.wind,.8);
+    }else if(kind==='dungeon'&&(l.id==='dungeon-tide'||l.id==='dungeon-canopy')){
+      m.origin(l.x,y,l.z,l.yaw||0);const tide=l.id==='dungeon-tide';
+      for(const side of [-1,1]){
+        m.box(side*2.4,0,0,.8,tide?4.6:5.2,1, tide?PALETTE.paper:PALETTE.trunk);
+        for(const h of [1,3.8])m.box(side*2.4,h,0,.82,.18,1.02,tide?PALETTE.water:PALETTE.autumn);
+      }
+      if(tide){m.box(0,4,0,5.5,.65,1.1,PALETTE.paper);for(const x of [-1.1,0,1.1])m.box(x,4.65,0,.55,.35,.9,PALETTE.water);}
+      else{m.beam(-2.5,4.4,0,0,5.6,0,.4,.5,PALETTE.trunk);m.beam(0,5.6,0,2.5,4.4,0,.4,.5,PALETTE.trunk);for(const x of [-1.2,0,1.2])m.jewel(x,4.6,0,.32,.65,PALETTE.autumn);}
+      m.box(0,0,-.12,3.9,3.95,.20,PALETTE.ink);m.ring(0,.08,1,2.5,.10,tide?PALETTE.wind:PALETTE.amber,.8);
     }else if(kind==='dungeon'){
       m.origin(l.x,y,l.z,l.yaw||0);
       for(const side of [-1,1]){m.box(side*2.4,0,0,.9,4.5,1.2,PALETTE.stoneDark);m.cone(side*2.4,4.5,0,.7,.6,PALETTE.stone,5);}
@@ -742,7 +795,7 @@ export class Renderer {
     this.target[1] = mix(this.target[1], targetY, smoothing * 0.85);
     this.target[2] = mix(this.target[2], targetZ, smoothing);
     const dx = -Math.sin(yaw) * Math.cos(pitch), dy = Math.sin(pitch), dz = -Math.cos(yaw) * Math.cos(pitch);
-    const indoors=Boolean(state.expedition?.active);
+    const indoors=Boolean(state.expedition?.active),openSky=!!dungeonGeometry(state)?.theme;
     const solids=[...(indoors?dungeonSolids(state,targetX,targetZ,distance+2):querySolids(targetX,targetZ,distance+2)),...(state.blocks||[])];
     for(const structure of indoors?[]:state.village?.structures||[]){
       const size=STRUCTURE_SIZE[structure.type];if(!size||structure.hp<=0)continue;
@@ -1359,13 +1412,13 @@ export class Renderer {
     if (Math.abs(this.canvas.clientWidth - this.cssWidth) > 1 || Math.abs(this.canvas.clientHeight - this.cssHeight) > 1) this.resize();
     this.time += Math.min(dt || 1 / 60, 0.1); this.stats.drawCalls = 0; this.stats.triangles = 0;
     this.syncScene(state);
-    const indoors=Boolean(state.expedition?.active);
+    const indoors=Boolean(state.expedition?.active),openSky=!!dungeonGeometry(state)?.theme;
     if(!indoors)this.streamWorld(state.player.x,state.player.z);else this.stats.chunkBuildsThisFrame=0;
     this.updateCamera(state, camera, dt);
-    const daylight=indoors?.92:daylightAt(state.village?.clock), fog=indoors?PALETTE.ink:PALETTE.sky.map((v,i)=>mix(PALETTE.nightSky[i],v,(daylight-.55)/.45));
+    const daylight=openSky?1:indoors?.92:daylightAt(state.village?.clock), fog=indoors&&!openSky?PALETTE.ink:PALETTE.sky.map((v,i)=>mix(PALETTE.nightSky[i],v,(daylight-.55)/.45));
     gl.clearColor(...fog, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.disable(gl.BLEND);
-    if(!indoors){
+    if(!indoors||openSky){
     gl.disable(gl.DEPTH_TEST); gl.depthMask(false);
     gl.useProgram(this.skyProgram); gl.bindBuffer(gl.ARRAY_BUFFER, this.skyBuffer);
     for (const attribute of this.attributes) gl.disableVertexAttribArray(attribute);

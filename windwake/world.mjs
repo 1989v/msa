@@ -141,7 +141,7 @@ const expeditionTrails=[...EXPEDITIONS.flatMap(e=>[{id:e.id,points:e.points},{id
 const expeditionSegments=expeditionTrails.flatMap(t=>t.points.slice(1).map((b,i)=>({a:t.points[i],b})));
 function expeditionSample(x,z){let distance=Infinity,y=0;for(const {a,b} of expeditionSegments){const dx=b.x-a.x,dz=b.z-a.z,t=clamp(((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz||1),0,1),d=Math.hypot(x-a.x-dx*t,z-a.z-dz*t);if(d<distance){distance=d;y=mix(a.y,b.y,t);}}return{distance,y};}
 TRAILS.push(...expeditionTrails);
-function terrainVertex(x,z){
+function previousTerrainVertex(x,z){
   const original=originalTerrainVertex(x,z);let h=original;
   // Broad authored massifs and an incised valley make silhouettes, not merely a painted road.
   if(x>45&&z>485){const mask=smooth((x-45)/65)*smooth((z-485)/65);h+=hill(x,z,270,780,100,70)*mask;}
@@ -153,6 +153,34 @@ function terrainVertex(x,z){
   for(const e of entrancePositions){const d=distance({x,z},e);if(d<27)h=mix(original,h,smooth((d-10)/17));}
   for(const w of waypointPositions){const d=distance({x,z},w);if(d<25)h=mix(original,h,smooth((d-10)/15));}
   for(const b of bossPositions){const d=distance({x,z},b);if(d<48)h=mix(original,h,smooth((d-28)/20));}
+  return h;
+}
+// Crossroads is additive: neither legacy road reservations nor original noise change.
+const previousHeightfield=createHeightfield(previousTerrainVertex);
+const corridorDefinitions=[
+  ['sunfields','dunes','이삭 상인의 능선',[branch(110,-560,35),branch(240,-540,42)]],
+  ['coast','autumn','청옥 절벽 물길',[branch(540,40,18),branch(600,140,38),branch(530,290,36)]],
+  ['alpine','mistwood','별빛 숲 고개',[branch(0,555,previousHeightfield.heightAt(0,555)),branch(-120,550,65),branch(-290,530,57)]],
+  ['canyon','lavender','꽃분지 바위길',[branch(-615,-100,baseHeight(-615,0)),branch(-600,-180,38),branch(-520,-320,50)]],
+];
+export const CORRIDORS=corridorDefinitions.map(([from,to,name,interior])=>{
+  const a=townPositions.find(t=>t.biomeId===from),b=townPositions.find(t=>t.biomeId===to),wa=waypointPositions.find(w=>w.id===a.waypointId),wb=waypointPositions.find(w=>w.id===b.waypointId),id=`corridor-${from}-${to}`;
+  return{id,name,biomeId:from,fromTownId:a.id,toTownId:b.id,points:[localPoint(a,0,0),branch(wa.x,wa.z,a.floor),...interior,branch(wb.x,wb.z,b.floor),localPoint(b,0,0)],landmarkIds:[`${id}-clue`,`${id}-view`,`${id}-discovery`],cacheId:`cache-${id}`,guardIds:[`${id}-guard-0`,`${id}-guard-1`]};
+});
+const ruinPositions=[['tide','coast','청옥 조수 수문'],['canopy','autumn','단풍 수관 회랑']].map(([id,biomeId,name])=>{const t=townPositions.find(t=>t.biomeId===biomeId);return{id:`dungeon-${id}`,kind:'dungeon',ruin:true,biomeId,townId:t.id,name,...localPoint(t,0,58),floor:t.floor,yaw:t.yaw,description:'E 유적 입장 · 길의 단서를 따라 수호자의 유물을 찾으세요.'};});
+export const RUIN_APPROACHES=ruinPositions.map(e=>({id:`approach-${e.id}`,entranceId:e.id,points:[localPoint(townPositions.find(t=>t.id===e.townId),0,0),branch(e.x,e.z,e.floor)]}));
+const crossroadsTrails=[...CORRIDORS,...RUIN_APPROACHES];
+const crossroadsSegments=crossroadsTrails.flatMap(t=>t.points.slice(1).map((b,i)=>({a:t.points[i],b})));
+function crossroadsSample(x,z){let distance=Infinity,y=0;for(const {a,b} of crossroadsSegments){const dx=b.x-a.x,dz=b.z-a.z,t=clamp(((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz||1),0,1),d=Math.hypot(x-a.x-dx*t,z-a.z-dz*t);if(d<distance){distance=d;y=mix(a.y,b.y,t);}}return{distance,y};}
+TRAILS.push(...crossroadsTrails);
+function terrainVertex(x,z){
+  const previous=previousTerrainVertex(x,z),route=crossroadsSample(x,z);let h=previous;
+  if(route.distance<38)h=mix(h,route.y,1-smooth((route.distance-10)/28));
+  // Old walking lanes retain their exact support, including expedition crossings.
+  const old=trailSample(x,z),expedition=expeditionSample(x,z),protect=Math.min(old.distance,expedition.distance);
+  if(protect<20)h=mix(previous,h,smooth((protect-7)/13));
+  for(const e of ruinPositions){const d=distance({x,z},e);if(d<27)h=mix(e.floor,h,smooth((d-10)/17));}
+  for(const t of townPositions){const d=distance({x,z},t);if(d<50)h=mix(previous,h,smooth((d-31)/19));}
   return h;
 }
 const heightfield=createHeightfield(terrainVertex);
@@ -171,7 +199,7 @@ export function terrainColor(x,z){
   if(x>140&&x<420&&z>560&&z<900&&h>65)c=PALETTE.alpine.map((v,i)=>mix(v,PALETTE.stone[i],.65));
   if(x< -750&&z< -80&&z> -310&&h>12)c=PALETTE.sand.map((v,i)=>mix(v,PALETTE.stone[i],.7));
   if(h<-2)c=PALETTE.sand;
-  if((Math.abs(x)<2.1&&z<3&&z>-125)||edge<120&&Math.abs(z+21-Math.sin(x*.055)*5)<1.7||edge>120&&(trailSample(x,z).distance<2.3||expeditionSample(x,z).distance<2.3))c=PALETTE.path;
+  if((Math.abs(x)<2.1&&z<3&&z>-125)||edge<120&&Math.abs(z+21-Math.sin(x*.055)*5)<1.7||edge>120&&(trailSample(x,z).distance<2.3||expeditionSample(x,z).distance<2.3||crossroadsSample(x,z).distance<2.3))c=PALETTE.path;
   if(distance({x,z},VILLAGE)<29)c=PALETTE.grass;
   return c.map(v=>v+m);
 }
@@ -194,7 +222,7 @@ export const TOWNS=townPositions.map((t,i)=>({
   decorations:decorationTypes[t.style].map((type,j)=>({id:`decoration-${t.biomeId}-${j}`,type,style:t.style,...localPoint(t,...[[-23,-7],[23,7],[0,23]][j]),yaw:t.yaw,blocking:false})),
   buildings:Array.from({length:6},(_,j)=>({id:`building-${t.biomeId}-${j}`,type:j===1?'service':'house',style:t.style,...localPoint(t,...townLayouts[i][j]),w:6,d:6,h:j===1&&['mill','observatory','forge'].includes(t.style)?8:5,yaw:t.yaw})),
 }));
-export const DUNGEON_ENTRANCES=[...entrancePositions,...cavePositions].map(e=>({...e,y:ground(e.x,e.z)}));
+export const DUNGEON_ENTRANCES=[...entrancePositions,...cavePositions,...ruinPositions].map(e=>({...e,y:ground(e.x,e.z)}));
 export const WAYPOINTS=[{id:'home',kind:'waypoint',name:'바람이 머무는 마을',x:VILLAGE.x,z:VILLAGE.z,description:'E 마을 · 집으로 돌아오는 등불'},...waypointPositions.map(w=>({...w,kind:'waypoint',description:'E 등대 활성화 · 활성화한 등대는 지도에서 이동할 수 있습니다.'}))].map(w=>({...w,y:ground(w.x,w.z)}));
 export const BOSS_SITES=bossPositions.map(b=>({...b,kind:'boss',y:ground(b.x,b.z),description:b.final?'네 변방의 승리와 마을3단계가 먼 바람의 왕을 깨웁니다.':`${b.name} · 첫 승리: ${b.reward}`}));
 export const RESOURCE_NODES=[
@@ -218,7 +246,14 @@ export const EXPEDITION_LANDMARKS=EXPEDITIONS.flatMap(e=>[
   {id:e.discoveryId,kind:'discovery',name:e.biomeId==='alpine'?'구름 위 돌마루':'메아리 층벽 전망대',...e.points[1],description:'길을 따라 도착한 탐험 기록. 돌표지 너머 다음 목적지가 보입니다.'},
   {id:e.rewardId,kind:'chest',name:e.biomeId==='alpine'?'하늘마루의 보급함':'협곡 탐험가의 보급함',...(e.biomeId==='canyon'?{x:-849,z:-168}:e.points.at(-1)),description:'긴 순환길을 마친 여행자를 위한 재료와 경험치.'},
 ].map(l=>({...l,biomeId:e.biomeId,expeditionId:e.id,y:ground(l.x,l.z)})));
+export const CORRIDOR_LANDMARKS=CORRIDORS.flatMap(c=>{
+  const inner=c.points.slice(2,-2),a=inner[0],b=inner.at(-1),middle=inner.length>2?inner[Math.floor(inner.length/2)]:branch((a.x+b.x)/2,(a.z+b.z)/2,0),next=c.points.at(-2),span=distance(b,next),cache=branch(b.x+(next.x-b.x)*7/span,b.z+(next.z-b.z)*7/span,0);
+  return [...c.landmarkIds.map((id,i)=>({id,kind:i===0?'clue':'discovery',name:`${c.name} · ${['길잡이','바람 전망대','오래된 길표'][i]}`,...[a,middle,b][i],description:`${c.name}을 따라 이웃 마을로. 보급함은 두 길목 파수꾼이 지키고 있습니다.`})),{id:c.cacheId,kind:'chest',name:`${c.name} 보급함`,...cache,requires:[...c.guardIds],description:'두 길목 파수꾼을 쓰러뜨린 여행자를 위한 보급품.'}].map(l=>({...l,corridorId:c.id,biomeId:c.biomeId,y:ground(l.x,l.z)}));
+});
+export const CORRIDOR_FEATURES=CORRIDORS.flatMap((c,i)=>c.points.slice(2,-2).map((p,j)=>({id:`${c.id}-feature-${j}`,corridorId:c.id,type:['ridge-marker','bluff-arch','forest-spire','basin-rock'][i],x:p.x+15,z:p.z+12,y:ground(p.x+15,p.z+12),yaw:i*.7,dimensions:{w:5+i,d:4,h:9+i*2},blocking:false})));
+export const CORRIDOR_GUARDS=CORRIDORS.flatMap(c=>{const p=c.points.at(-3);return c.guardIds.map((id,i)=>({id,type:i?'ranger':'stalker',x:p.x+(i?4:-4),z:p.z+3,y:ground(p.x+(i?4:-4),p.z+3),biomeId:c.biomeId,corridorId:c.id}));});
 export const LANDMARKS = [
+  ...CORRIDOR_LANDMARKS,
   ...EXPEDITION_LANDMARKS,
   ...TOWNS, ...DUNGEON_ENTRANCES, ...WAYPOINTS, ...BOSS_SITES, ...RESOURCE_NODES, ...outerLocations.filter(l=>l.kind!=='resource').map(l=>({...l,y:ground(l.x,l.z)})),
   {id:'camp',kind:'camp',name:'여행자의 모닥불',x:0,z:-69,y:ground(0,-69),description:'E 휴식 · 5 결정으로 체력 / 7 결정으로 검 강화'},
@@ -300,7 +335,7 @@ for(const box of [...SOLIDS,...townSolids]){
   }
 }
 function randomFor(cx,cz){let n=(WORLD.seed^Math.imul(cx,374761393)^Math.imul(cz,668265263))>>>0;return()=>{n=(Math.imul(n,1664525)+1013904223)>>>0;return n/4294967296;};}
-const legacyLandmarks=LANDMARKS.filter(l=>!l.expeditionId&&!l.natural);
+const legacyLandmarks=LANDMARKS.filter(l=>!l.expeditionId&&!l.natural&&!l.corridorId&&!l.ruin);
 function reserved(x,z,padding=0){
   if(TOWNS.some(t=>Math.hypot(x-t.x,z-t.z)<t.radius+7+padding))return true;
   if(Math.hypot(x-VILLAGE.x,z-VILLAGE.z)<VILLAGE.radius+6+padding)return true;
@@ -364,7 +399,11 @@ function newChunk(cx,cz){
     if(entrancePositions.some(e=>Math.hypot(s.x-e.x,s.z-e.z)<42)||[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dz])=>Math.abs(originalHeightfield.heightAt(s.x+dx,s.z+dz)-originalHeightfield.heightAt(s.x,s.z))>.72)||solids.some(p=>Math.abs(s.x-p.x)<p.w/2+1.2&&Math.abs(s.z-p.z)<p.d/2+1.2))spawns.splice(i,1);
   }
   for(let i=props.length-1;i>=0;i--)if(expeditionSample(props[i].x,props[i].z).distance<7||cavePositions.some(e=>distance(e,props[i])<17)){const id=props[i].id;props.splice(i,1);const j=solids.findIndex(s=>s.id===`solid-${id}`);if(j>=0)solids.splice(j,1);}
-  for(let i=spawns.length-1;i>=0;i--){const s=spawns[i];if(s.id.startsWith('wild-')&&(s.y<WORLD.waterLevel+1||expeditionSample(s.x,s.z).distance<13||cavePositions.some(e=>distance(e,s)<42)||[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dz])=>Math.abs(ground(s.x+dx,s.z+dz)-s.y)>.72)))spawns.splice(i,1);}
+  for(let i=spawns.length-1;i>=0;i--){const s=spawns[i];if(s.id.startsWith('wild-')&&(previousHeightfield.heightAt(s.x,s.z)<WORLD.waterLevel+1||expeditionSample(s.x,s.z).distance<13||cavePositions.some(e=>distance(e,s)<42)||[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dz])=>Math.abs(previousHeightfield.heightAt(s.x+dx,s.z+dz)-previousHeightfield.heightAt(s.x,s.z))>.72)))spawns.splice(i,1);}
+  // New reservations are a post-generation filter: never perturb a PRNG stream.
+  for(let i=props.length-1;i>=0;i--)if(crossroadsSample(props[i].x,props[i].z).distance<8||ruinPositions.some(e=>distance(e,props[i])<17)){const id=props[i].id;props.splice(i,1);const j=solids.findIndex(s=>s.id===`solid-${id}`);if(j>=0)solids.splice(j,1);}
+  for(let i=spawns.length-1;i>=0;i--){const s=spawns[i];if(s.id.startsWith('wild-')&&(crossroadsSample(s.x,s.z).distance<13||ruinPositions.some(e=>distance(e,s)<42)||ground(s.x,s.z)<WORLD.waterLevel+1||[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dz])=>Math.abs(ground(s.x+dx,s.z+dz)-ground(s.x,s.z))>.72)))spawns.splice(i,1);}
+  spawns.push(...CORRIDOR_GUARDS.filter(g=>cell(g.x,g.z)===id));
   spawns.push(...BOSS_SITES.filter(b=>cell(b.x,b.z)===id));
   return{id,cx,cz,props,solids,spawns};
 }

@@ -145,7 +145,7 @@ export function runDungeonRoute(driver,id='dungeon-sunfields',{freshStart=true}=
 
 if(typeof process!=='undefined'&&process.argv?.[1]&&import.meta.url===new URL(`file://${process.argv[1]}`).href){
   const {createGame,stepGame}=await import('../sim.mjs'),{learnSkill,equipSkill}=await import('../progression.mjs'),{townAction}=await import('../settlements.mjs');
-  const names=process.argv.slice(2).length?process.argv.slice(2):DUNGEONS.filter(d=>!d.natural).map(d=>d.id);
+  const names=process.argv.slice(2).length?process.argv.slice(2):DUNGEONS.filter(d=>!d.natural&&!d.expansion).map(d=>d.id);
   for(const id of names){const s=createGame(),driver={state:()=>s,step(n,input){for(let i=0;i<n;i++)stepGame(s,input);return s;},learn:id=>learnSkill(s,id),equip:(id,slot)=>equipSkill(s,id,slot),town:(action,payload)=>townAction(s,action,payload),onCheckpoint:r=>console.log(JSON.stringify(r))};
     try{runDungeonRoute(driver,id);}catch(error){console.error(`DUNGEON ROUTE FAIL ${id}: ${error.stack}`);process.exitCode=1;}
   }
