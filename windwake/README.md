@@ -189,3 +189,13 @@ node windwake/tests/deployed.mjs https://game.1989v.com/games/windwake/index.htm
 해안의 수문 유적은 시작 → 중간 → 끝 장치를 제한 시간 안에 잇는 릴레이입니다. 남은 시간은 실내 목표에 표시되며 메뉴를 열면 멈춥니다. 실패하면 무료로 다시 시작하고, 미완료 상태에서 저장 후 불러오면 타이머가 초기화됩니다. 가을의 수관 유적은 비문 순서대로 서로 다른 높이의 장치를 잇는 탐험입니다. 두 유적 모두 기본 이동과 점프로 진행할 수 있으며 주 퍼즐과 주 수호자를 완료해야 보상을 받습니다. 선택 보물과 완료 후 열리는 기록 보급함은 같은 방문이나 재방문 때 회수할 수 있습니다.
 
 해안 유물은 최대 기력 +15·이동 속도 +4%, 수관 유물은 최대 에너지 +10·수확 식량 +15%입니다. 총 열 유물 중 두 개를 I에서 장착하세요. 기존 여덟 마을과 열여섯 의뢰는 유지됩니다.
+
+Crossroads 재현 검증:
+
+```sh
+node --test windwake/tests/*.test.mjs
+node windwake/tests/crossroads-routes.mjs
+node windwake/tests/crossroads-browser.mjs http://127.0.0.1:8791/
+```
+
+연결길의 실제 수비대 전투·보급함, 두 유적의 새 게임 공략, 유물 장착·귀환·저장과 브라우저 증거는 [Crossroads 검증](../docs/specs/2026-09-30-windwake-crossroads/status.md)에 기록합니다. 마을은8곳이며 이번 확장은 마을 사이의 길과 유적을 보강합니다. 유적은 별도 로컬 장면이고 중첩된 동굴 지층을 지원하지 않습니다.

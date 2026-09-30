@@ -13,7 +13,7 @@
 | Chrome first pass | PASS | Trusted keyboard jump/mouse orbit; four bidirectional corridors; two fresh ruins; combined route;0 console errors |
 | Independent review | SHIP | Fixed nested corridorId defect; new real-stream40/64 admission tests pass; no other blocking findings |
 | Chrome visual improvement | PASS | local-reviewed/report.json:4roundtrips,4fresh guard-cache combats,2fresh ruins,combined route;0errors. Screenshots inspected:bright canopy,coastal timer,road relief,altitude map |
-| Public delivery | PENDING | Publish21-file manifest, compare all hashes, replay public critical routes |
+| Public delivery | PASS | Workflow36729210095 success;21/21 hashes match; public-core and public-crossroads Chrome PASS,each0errors;portal ready1 |
 
 No Java/portal TypeScript code changed. Standalone vanilla modules run directly without a build system. Hardware/mobile loading optimization remains deferred by user priority.
 

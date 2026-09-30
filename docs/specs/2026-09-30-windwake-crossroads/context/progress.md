@@ -1,5 +1,8 @@
-<!-- source: windwake/tests/world.test.mjs -->
-# Progress
-Location: /Users/gideok-kwon/IdeaProjects/msa. Baseline244/244 passed (~10sec, /private/tmp/windwake-crossroads-baseline.log). Scope clean; unrelated root work/staged EventType deletion and games gitlink must remain.
-Six-dimension spec review SHIP after revisions. Groups1–3 verified by full282/282 test gate. Integration includes actual40/64-cap streaming and four fresh combat/cache/reload routes. First Chrome passed4corridor roundtrips,2fresh ruins and combined route, console0. Visual review prompted bright open sky and lower slope-following canopy rails; final Chrome rerun PASS (including all4 actualcachecombats),screenshots inspected. Independent code review SHIP after correcting authored guard metadata. Next scoped commit and isolated release/publicverification. No blocking unknowns.
-Sandbox now workspace-write; Chrome/git operations may require existing permission rules or explicit escalation. Do not bypass sandbox. Prior deployment authorization remains.
+<!-- source: windwake/tests/crossroads-browser.mjs -->
+# Progress — COMPLETE 2026-09-30
+
+Groups1–4 complete. Full282/282 tests passed; Chrome local and public both pass. Four fresh corridor roundtrips, four actualguard/cache fights, two fresh ruins, combined journey and bothrestore tests verified. Independent reviewer SHIP after correcting requiredguard metadata; canopy rail/open-sky visual improvement retested.
+
+Localimplementation4a41e2e8 → publishedsourcef384547e → gamesbae141b5 → deploymentf73264ee → manifest2f9e9299. Workflow36729210095success. Public21runtimehashesexact; portalready1; publiccore and Crossroads errors0. Public URL https://game.1989v.com/games/windwake/index.html
+
+No remaining Crossroads implementation or release gate. Initialloading/deviceperformance remains user-deferred. Future scope needs a new task; currenteighttowns/singlelocalscene limitations documented. Unrelated root stagedEventType deletion and gamesgitlink preserved. TemporaryChromeprofiles self-terminated; ownlocalHTTPserver stopped afterpublic verification. See release-verification.md for evidence.

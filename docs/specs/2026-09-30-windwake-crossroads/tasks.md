@@ -23,5 +23,5 @@ Acceptance:SR3/4, existing8town16quests unchanged.
 Dependencies:1–3. Phase:integration. Skills:hns:verify,hns:validate.
 - [x] sim.mjs priority guards/cache proof/both restore paths; render.mjs motifs/routes/timed nodes; publish manifests.
 - [x] Full244+suite, combined ordinary corridor→ruin→equip→return→reload; Chrome real input/screenshots/console, improve and rerun.
-- [ ] Fresh independent review/verdict, docs synchronization, scoped commit/release, public hashes/play.
+- [x] Fresh independent review/verdict, docs synchronization, scoped commit/release, public hashes/play.
 Acceptance:SR5 and all cross-layer contracts; deferred loading/hardware tasks remain deferred.
