@@ -190,6 +190,7 @@ class SearchAttractionService(
         title = title,
         titleLocal = titleLocal,
         category = category,
+        contentTypeId = contentTypeId,
         areaCode = areaCode,
         sidoCode = ldongRegnCd,
         address = address,

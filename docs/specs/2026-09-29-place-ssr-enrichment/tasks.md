@@ -73,12 +73,12 @@ Total Task Groups: 10
 **Dependencies:** Task Group 5
 **Phase:** P3-facets
 **Required Skills:** React, vitest, CDP
-- [ ] 6.0 Complete 화면
-  - [ ] 6.1 Write tests: `PlacePage` 속성 칩(T17) · `AttractionPage` 새 섹션·순서·중복 제거·영문 문구
-  - [ ] 6.2 검색 화면 속성 칩 한 줄 가로 스크롤 · 건수 · 흐림(자리 유지) · 「정보가 있는 곳만 거릅니다」 · 필터 변경 시 누적 초기화
-  - [ ] 6.3 상세: 방문 정보 배지 · 지역 안 위치 · 같은 분류 가까운 곳(`SAME_CATEGORY_NEARBY`) · 비슷한 곳(`SIMILAR_ELSEWHERE`) · 「많이 클릭한 곳」(표본 기준) · JSON-LD 속성 필드(`copy.mjs`, 서버와 같은 규칙)
-  - [ ] 6.4 Verify: `cd portal-fe && npx vitest run src/pages/place src/seo && npx tsc --noEmit -p .`
-  - [ ] 6.5 T20 모바일 세로·가로 CDP 실측(start·측정·stop 한 명령)
+- [x] 6.0 Complete 화면
+  - [x] 6.1 Write tests: `PlacePage` 속성 칩(T17) · `AttractionPage` 새 섹션·순서·중복 제거·영문 문구
+  - [x] 6.2 검색 화면 속성 칩 한 줄 가로 스크롤 · 건수 · 흐림(자리 유지) · 「정보가 있는 곳만 거릅니다」 · 필터 변경 시 누적 초기화
+  - [x] 6.3 상세: 방문 정보 배지 · 지역 안 위치 · 같은 분류 가까운 곳(`SAME_CATEGORY_NEARBY`) · 비슷한 곳(`SIMILAR_ELSEWHERE`) · 「많이 클릭한 곳」(표본 기준) · JSON-LD 속성 필드(`copy.mjs`, 서버와 같은 규칙)
+  - [x] 6.4 Verify: `cd portal-fe && npx vitest run src/pages/place src/seo && npx tsc --noEmit -p .`
+  - [x] 6.5 T20 모바일 세로·가로 CDP 실측(start·측정·stop 한 명령)
 **Acceptance Criteria:** vitest 초록 · 칩 위치 불변 CDP 측정 · 크롭 스크린샷 확인
 
 ### Task Group 7: 비슷한 곳 (place V22 · tools/embed · 재색인)

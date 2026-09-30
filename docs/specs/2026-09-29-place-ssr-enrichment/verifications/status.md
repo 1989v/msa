@@ -28,3 +28,7 @@
 | TG5 | `./gradlew :search:app:test --tests '*AttractionSearchAdapter*' --tests '*SearchAttractionServiceTest' --tests '*AttractionSearchController*' --tests '*AttractionPage*' verifyArchitecture` | Facet 31/0 · Hybrid 10/0 · Ranking 8/0 · Service 29/0 · Controller 3/0 · AttractionPage 25/0 · 기준 스냅샷 7개(b013263f 에서 채취) |
 | TG5 | 회귀 주입 | knn 필터 누락 · 자기 선택 포함 · 무파라미터 요청 순서 변경(바이트 비교 4건) · 하이브리드 질의어 포함 · UTC 요일 · facets 무시하고 늘 셈(8건) · 서비스가 늘 셈 → 각각 빨간불 |
 | 배포 ③(API) T22 | 운영 API facets=true vs OpenSearch _count (ko, 검색어 없음) | parking YES 31,605=31,605 · admission FREE 1,127=1,127 · pet ALLOWED 9,070=9,070 · parking=YES 선택 시 pet ALLOWED 7,189 = ES(parking∧pet) 7,189 · openToday 30,120 |
+| TG6 | `npx vitest run src/pages/place src/seo src/analytics` · `npx tsc -b --force` | 12 files · 172 passed · tsc exit 0 · 골든 픽스처 변화 없음 |
+| TG6 | 회귀 주입 | 0건 칩 숨김 4 fail · 모든 쪽 facets 1 · 뒷장 건수 버림 1 · 선택 0 흐림 1 · 중복 제거 삭제 1 · 상세 검색 facets 1 |
+| TG6 T20 | CDP 세로 390×844 · 가로 844×390 (실제 터치) | 칩 줄 48.8px 한 줄 · 페이지 가로 넘침 없음 · 탭 직후·새 건수 뒤 칩 x/y/폭 변화 0 · 0건 칩 opacity 0.4 자리 유지 · 크롭 확인 |
+| TG6+ | 상세 응답 contentTypeId | SearchAttractionServiceTest 29/0 · 회귀 주입(매핑 삭제) failures=1 |

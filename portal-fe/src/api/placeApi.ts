@@ -73,6 +73,53 @@ export interface Attraction {
   googlePlaceId?: string | null;
   distanceKm: number | null;
   position: number;
+  /**
+   * 방문 속성 — 색인 표기 그대로. 화면 JSON-LD(`copy.mjs`)가 이 이름으로 읽어 서버 렌더와 같은
+   * 구조화 데이터를 만든다. 속성이 없던 옛 색인 문서에는 없다(「모두 모름」과 다른 뜻).
+   */
+  closureState?: 'ALWAYS_OPEN' | 'WEEKLY' | 'NO_WEEKLY' | 'UNKNOWN' | null;
+  /** WEEKLY 일 때만 — MON · TUE · … · SUN (월→일 순) */
+  closedWeekdays?: string[] | null;
+  attrParking?: AttributeAvailability | null;
+  attrCreditCard?: AttributeAvailability | null;
+  attrStrollerRental?: AttributeAvailability | null;
+  petPolicy?: 'ALLOWED' | 'PARTIAL' | 'UNKNOWN' | null;
+  attrAdmission?: 'FREE' | 'PAID' | 'UNKNOWN' | null;
+  /**
+   * 원천 관광 유형 코드 — 지역 안 위치 문구의 「{유형}」. 상세 응답이 아직 싣지 않는다 —
+   * 없으면 그 문구를 그리지 않는다(유형을 짐작해 넣으면 N 의 뜻이 틀린다).
+   */
+  contentTypeId?: string | null;
+  /** 지역 안 위치 — 단건 조회에만 온다. 옛 문서·목록 응답은 null. */
+  region?: AttractionRegion | null;
+}
+
+export type AttributeAvailability = 'YES' | 'NO' | 'UNKNOWN';
+
+/** 허브 링크는 `/regions/{sidoCode}{ldongSignguCd}`. */
+export interface AttractionRegion {
+  ldongSignguCd: string | null;
+  sigunguName: string | null;
+  /** 같은 시군구·같은 유형 수 */
+  typeCount: number;
+  /** 그중 같은 분류(lclsSystm3) 수 — 항상 typeCount 이하 */
+  categoryCount: number | null;
+  categoryName: string | null;
+  /** 같은 시군구·유형·분류의 가까운 곳(자기 제외, 최대 5) */
+  sameCategoryNearby: Array<{ id: string; title: string; distanceMeters: number }>;
+}
+
+/**
+ * 속성 패싯 건수 — 키는 요청 파라미터 값과 같은 표기다. 각 건수는 **자기 속성의 선택만 빼고**
+ * 나머지 선택·구조 필터를 반영한 「이 조건을 더하면」의 규모다. `UNKNOWN`·부정 값은 오지 않는다.
+ */
+export interface AttributeFacets {
+  openToday: number;
+  parking: Partial<Record<'YES', number>>;
+  creditCard: Partial<Record<'YES', number>>;
+  strollerRental: Partial<Record<'YES', number>>;
+  pet: Partial<Record<'ALLOWED' | 'PARTIAL', number>>;
+  admission: Partial<Record<'FREE', number>>;
 }
 
 export interface AttractionSearchResult {
@@ -83,6 +130,8 @@ export interface AttractionSearchResult {
   currentPage: number;
   /** 오타 교정으로 바꿔 검색했으면 바꾼 검색어 */
   correctedKeyword?: string | null;
+  /** `facets=true` 로 요청했을 때만. 건수 요청이 실패·시간 초과면 null — 결과는 그대로 온다. */
+  attributeFacets?: AttributeFacets | null;
 }
 
 /**
@@ -156,6 +205,21 @@ export interface AttractionQuery {
   sort?: 'relevance' | 'distance';
   page?: number;
   size?: number;
+  /**
+   * 속성 필터 — 긍정 값만 받는다(서버가 `UNKNOWN`·부정은 무시한다). 속성끼리는 AND,
+   * 반려동물 값끼리는 OR.
+   */
+  openToday?: boolean;
+  parking?: 'YES';
+  creditCard?: 'YES';
+  strollerRental?: 'YES';
+  pet?: Array<'ALLOWED' | 'PARTIAL'>;
+  admission?: 'FREE';
+  /**
+   * 속성 패싯 건수 요청. 목록의 **첫 쪽만** 켠다 — 건수는 병렬 집계 요청 한 번이라,
+   * 상세의 주변·편의시설 검색이나 지도 오버레이, 다음 쪽까지 켜면 조회마다 집계가 는다.
+   */
+  facets?: boolean;
 }
 
 export const searchAttractions = async (query: AttractionQuery): Promise<AttractionSearchResult> => {
@@ -171,6 +235,13 @@ export const searchAttractions = async (query: AttractionQuery): Promise<Attract
     if (query.radiusKm != null) params.set('radiusKm', String(query.radiusKm));
   }
   if (query.sort) params.set('sort', query.sort);
+  if (query.openToday) params.set('openToday', 'true');
+  if (query.parking) params.set('parking', query.parking);
+  if (query.creditCard) params.set('creditCard', query.creditCard);
+  if (query.strollerRental) params.set('strollerRental', query.strollerRental);
+  if (query.pet && query.pet.length > 0) params.set('pet', query.pet.join(','));
+  if (query.admission) params.set('admission', query.admission);
+  if (query.facets) params.set('facets', 'true');
   params.set('page', String(query.page ?? 0));
   params.set('size', String(query.size ?? 30));
   const res = await api.get<ApiResponse<AttractionSearchResult>>(`/api/search/attractions?${params}`);

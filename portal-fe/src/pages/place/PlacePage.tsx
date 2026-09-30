@@ -13,6 +13,7 @@ import {
   type Attraction,
   type AttractionQuery,
   type AttractionSearchResult,
+  type AttributeFacets,
   type PlaceLang,
   type Suggestion,
 } from '../../api/placeApi';
@@ -34,6 +35,13 @@ import Footer from '../../components/Footer';
 import ThemeToggle from '../../components/ThemeToggle';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
 import { isPlottable, mergePages, nextPage, titleParts } from './placeView';
+import {
+  ATTRIBUTE_CAPTION,
+  ATTRIBUTE_CHIPS,
+  attributeQuery,
+  chipCount,
+  type AttributeChipId,
+} from './placeAttributes';
 import { useMediaQuery } from './useMediaQuery';
 import './PlacePage.css';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
@@ -222,6 +230,8 @@ export default function PlacePage() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showSuggest, setShowSuggest] = useState(false);
   const [category, setCategory] = useState<string | null>(null);
+  // 속성 칩 — 화면 상태일 뿐 주소를 만들지 않는다(새 색인 URL 금지). 속성끼리 AND.
+  const [attributes, setAttributes] = useState<ReadonlySet<AttributeChipId>>(() => new Set());
   const [areaCode, setAreaCode] = useState<string | null>(null);
   const [sidoCode, setSidoCode] = useState<string | null>(null);
   const [sigunguCode, setSigunguCode] = useState<string | null>(null);
@@ -264,15 +274,18 @@ export default function PlacePage() {
       lng: geo?.lng,
       radiusKm: geo?.radiusKm,
       sort: geo ? 'distance' : 'relevance',
+      ...attributeQuery(attributes),
       page,
       size: 30,
     }),
-    [keyword, lang, areaCode, sidoCode, sigunguCode, category, geo, page],
+    [keyword, lang, areaCode, sidoCode, sigunguCode, category, geo, attributes, page],
   );
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['place-attractions', query],
-    queryFn: () => searchAttractions(query),
+    // 건수는 첫 쪽만 센다 — 다음 쪽은 조건이 같아 건수도 같고, 세면 쪽마다 집계 요청이 는다.
+    // query 에 넣지 않는 이유: 뽑기가 query 를 그대로 펼쳐 쓰는데 거기서는 건수가 필요 없다.
+    queryFn: () => searchAttractions(query.page === 0 ? { ...query, facets: true } : query),
     staleTime: 60_000,
     // 이 목록이 이 페이지의 본문이다. 한 번 실패했다고 '결과 없음' 을 띄우면 200 응답에
     // '찾을 수 없음' 문구가 실려 크롤러에게 Soft 404 로 읽힌다 (2026-08-22 구글 실측:
@@ -295,6 +308,28 @@ export default function PlacePage() {
     const prev = store.key === baseKey ? store.items : [];
     setStore({ key: baseKey, data, items: mergePages(prev, data.attractions, data.currentPage) });
   }
+
+  /*
+   * 속성 칩 건수 — 첫 쪽 응답에만 온다. 다음 쪽(건수 없이 요청)을 받아도 앞 값을 둔다.
+   * 조건을 바꾼 뒤 새 첫 쪽이 오기 전까지도 앞 값을 둔다 — 칩 숫자가 비었다 찼다 하면
+   * 칩 폭이 흔들린다. 새 첫 쪽이 건수 없이 오면(집계 실패·시간 초과) 숫자 없이 그린다.
+   */
+  const [facetStore, setFacetStore] = useState<{ data: AttractionSearchResult | null; facets: AttributeFacets | null }>(
+    { data: null, facets: null },
+  );
+  if (data && data.currentPage === 0 && facetStore.data !== data) {
+    setFacetStore({ data, facets: data.attributeFacets ?? null });
+  }
+  const facets = facetStore.facets;
+  const toggleAttribute = (id: AttributeChipId) => {
+    setAttributes((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+    setPage(0);
+  };
   // 목록·마커의 단일 원본 — 모바일은 누적분, 데스크톱은 현재 페이지.
   // useMemo — 매 렌더 새 배열이면 마커 동기화 effect 가 키 입력마다 돈다.
   const attractions = useMemo(
@@ -1021,6 +1056,37 @@ export default function PlacePage() {
               ))}
             </select>
           )}
+        </div>
+
+        {/* 속성 칩 — 분류 칩과 다른 축이라 따로 한 묶음(모바일은 한 줄 가로 스크롤).
+            칩은 숨기지 않는다: 안 고른 칩이 0 이면 흐리게 두고 자리를 지킨다 — 빠지면 옆 칩이
+            밀려 누르려던 자리에 다른 칩이 온다. 고른 칩은 0 이어도 활성이다(풀 수 있어야 한다). */}
+        <div className="place-attr-group" role="group" aria-label={lang === 'en' ? 'Visitor info filters' : '방문 정보 필터'}>
+          <div className="place-attr-chips">
+            {ATTRIBUTE_CHIPS.map((chip) => {
+              const selected = attributes.has(chip.id);
+              const count = chipCount(facets, chip.id);
+              const empty = !selected && count === 0;
+              return (
+                <button
+                  key={chip.id}
+                  type="button"
+                  className={['place-chip', 'place-attr-chip', selected ? 'active' : '', empty ? 'is-empty' : '']
+                    .filter(Boolean)
+                    .join(' ')}
+                  aria-pressed={selected}
+                  data-attr={chip.id}
+                  onClick={() => toggleAttribute(chip.id)}
+                >
+                  {chip[lang]}
+                  {count != null && (
+                    <span className="place-attr-count">{count.toLocaleString(lang === 'en' ? 'en' : 'ko')}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <p className="place-attr-caption">{ATTRIBUTE_CAPTION[lang]}</p>
         </div>
 
         {/* 데스크톱은 기존 칩 드릴다운 그대로 — 화면이 넓으면 펼쳐 보이는 쪽이 한 탭 덜 든다 */}

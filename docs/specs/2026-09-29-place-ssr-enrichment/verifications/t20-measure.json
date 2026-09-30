@@ -1,0 +1,532 @@
+{
+  "portrait": {
+    "viewport": "390x844",
+    "pointerCoarse": true,
+    "tapTarget": {
+      "x": 277.125,
+      "y": 204.546875,
+      "hit": "parking"
+    },
+    "before": {
+      "bundleHasAttrChips": 7,
+      "innerWidth": 390,
+      "docScrollWidth": 390,
+      "rowHeight": 48.8,
+      "rowClientWidth": 390,
+      "rowScrollWidth": 1137,
+      "overflowX": "auto",
+      "flexWrap": "nowrap",
+      "group": {
+        "x": 16,
+        "y": 180.15625,
+        "width": 358,
+        "height": 70.78125
+      },
+      "chips": [
+        {
+          "id": "openToday",
+          "left": 16,
+          "top": 183,
+          "width": 186.5,
+          "height": 44,
+          "text": "오늘 정기휴무 아님1,840",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip",
+          "opacity": "1"
+        },
+        {
+          "id": "parking",
+          "left": 209,
+          "top": 183,
+          "width": 136.5,
+          "height": 44,
+          "text": "주차 가능12,345",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip",
+          "opacity": "1"
+        },
+        {
+          "id": "creditCard",
+          "left": 352,
+          "top": 183,
+          "width": 124.6,
+          "height": 44,
+          "text": "신용카드0",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip is-empty",
+          "opacity": "0.4"
+        },
+        {
+          "id": "strollerRental",
+          "left": 483,
+          "top": 183,
+          "width": 144.1,
+          "height": 44,
+          "text": "유모차 대여7",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip",
+          "opacity": "1"
+        },
+        {
+          "id": "petAllowed",
+          "left": 633,
+          "top": 183,
+          "width": 155.5,
+          "height": 44,
+          "text": "반려동물 동반42",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip",
+          "opacity": "1"
+        },
+        {
+          "id": "petPartial",
+          "left": 795,
+          "top": 183,
+          "width": 186.5,
+          "height": 44,
+          "text": "반려동물 일부 구역0",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip is-empty",
+          "opacity": "0.4"
+        },
+        {
+          "id": "admissionFree",
+          "left": 988,
+          "top": 183,
+          "width": 132.7,
+          "height": 44,
+          "text": "입장 무료318",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip",
+          "opacity": "1"
+        }
+      ],
+      "caption": "정보가 있는 곳만 거릅니다"
+    },
+    "immediateDiff": [
+      {
+        "id": "openToday",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "parking",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "creditCard",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "strollerRental",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "petAllowed",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "petPartial",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "admissionFree",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      }
+    ],
+    "afterDiff": [
+      {
+        "id": "openToday",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "parking",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "creditCard",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "strollerRental",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "petAllowed",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "petPartial",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "admissionFree",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      }
+    ],
+    "after": {
+      "chips": [
+        {
+          "id": "openToday",
+          "text": "오늘 정기휴무 아님96",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip",
+          "opacity": "1"
+        },
+        {
+          "id": "parking",
+          "text": "주차 가능12,345",
+          "pressed": "true",
+          "cls": "place-chip place-attr-chip active",
+          "opacity": "1"
+        },
+        {
+          "id": "creditCard",
+          "text": "신용카드0",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip is-empty",
+          "opacity": "0.4"
+        },
+        {
+          "id": "strollerRental",
+          "text": "유모차 대여0",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip is-empty",
+          "opacity": "0.4"
+        },
+        {
+          "id": "petAllowed",
+          "text": "반려동물 동반3",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip",
+          "opacity": "1"
+        },
+        {
+          "id": "petPartial",
+          "text": "반려동물 일부 구역0",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip is-empty",
+          "opacity": "0.4"
+        },
+        {
+          "id": "admissionFree",
+          "text": "입장 무료12",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip",
+          "opacity": "1"
+        }
+      ]
+    },
+    "requestsLog": [
+      {
+        "lang": "ko",
+        "category": "nature,history,culture,leisure",
+        "sort": "relevance",
+        "facets": "true",
+        "page": "0",
+        "size": "30"
+      },
+      {
+        "lang": "ko",
+        "category": "nature,history,culture,leisure",
+        "sort": "relevance",
+        "parking": "YES",
+        "facets": "true",
+        "page": "0",
+        "size": "30"
+      }
+    ]
+  },
+  "landscape": {
+    "viewport": "844x390",
+    "pointerCoarse": true,
+    "tapTarget": {
+      "x": 294.875,
+      "y": 230.375,
+      "hit": "parking"
+    },
+    "before": {
+      "bundleHasAttrChips": 7,
+      "innerWidth": 844,
+      "docScrollWidth": 844,
+      "rowHeight": 48.8,
+      "rowClientWidth": 844,
+      "rowScrollWidth": 1172,
+      "overflowX": "auto",
+      "flexWrap": "nowrap",
+      "group": {
+        "x": 33.75,
+        "y": 205.984375,
+        "width": 776.5,
+        "height": 70.78125
+      },
+      "chips": [
+        {
+          "id": "openToday",
+          "left": 34,
+          "top": 208,
+          "width": 186.5,
+          "height": 44,
+          "text": "오늘 정기휴무 아님1,840",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip",
+          "opacity": "1"
+        },
+        {
+          "id": "parking",
+          "left": 227,
+          "top": 208,
+          "width": 136.5,
+          "height": 44,
+          "text": "주차 가능12,345",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip",
+          "opacity": "1"
+        },
+        {
+          "id": "creditCard",
+          "left": 370,
+          "top": 208,
+          "width": 124.6,
+          "height": 44,
+          "text": "신용카드0",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip is-empty",
+          "opacity": "0.4"
+        },
+        {
+          "id": "strollerRental",
+          "left": 500,
+          "top": 208,
+          "width": 144.1,
+          "height": 44,
+          "text": "유모차 대여7",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip",
+          "opacity": "1"
+        },
+        {
+          "id": "petAllowed",
+          "left": 651,
+          "top": 208,
+          "width": 155.5,
+          "height": 44,
+          "text": "반려동물 동반42",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip",
+          "opacity": "1"
+        },
+        {
+          "id": "petPartial",
+          "left": 813,
+          "top": 208,
+          "width": 186.5,
+          "height": 44,
+          "text": "반려동물 일부 구역0",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip is-empty",
+          "opacity": "0.4"
+        },
+        {
+          "id": "admissionFree",
+          "left": 1006,
+          "top": 208,
+          "width": 132.7,
+          "height": 44,
+          "text": "입장 무료318",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip",
+          "opacity": "1"
+        }
+      ],
+      "caption": "정보가 있는 곳만 거릅니다"
+    },
+    "immediateDiff": [
+      {
+        "id": "openToday",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "parking",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "creditCard",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "strollerRental",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "petAllowed",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "petPartial",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "admissionFree",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      }
+    ],
+    "afterDiff": [
+      {
+        "id": "openToday",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "parking",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "creditCard",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "strollerRental",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "petAllowed",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "petPartial",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      },
+      {
+        "id": "admissionFree",
+        "dLeft": 0,
+        "dTop": 0,
+        "dWidth": 0
+      }
+    ],
+    "after": {
+      "chips": [
+        {
+          "id": "openToday",
+          "text": "오늘 정기휴무 아님96",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip",
+          "opacity": "1"
+        },
+        {
+          "id": "parking",
+          "text": "주차 가능12,345",
+          "pressed": "true",
+          "cls": "place-chip place-attr-chip active",
+          "opacity": "1"
+        },
+        {
+          "id": "creditCard",
+          "text": "신용카드0",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip is-empty",
+          "opacity": "0.4"
+        },
+        {
+          "id": "strollerRental",
+          "text": "유모차 대여0",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip is-empty",
+          "opacity": "0.4"
+        },
+        {
+          "id": "petAllowed",
+          "text": "반려동물 동반3",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip",
+          "opacity": "1"
+        },
+        {
+          "id": "petPartial",
+          "text": "반려동물 일부 구역0",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip is-empty",
+          "opacity": "0.4"
+        },
+        {
+          "id": "admissionFree",
+          "text": "입장 무료12",
+          "pressed": "false",
+          "cls": "place-chip place-attr-chip",
+          "opacity": "1"
+        }
+      ]
+    },
+    "requestsLog": [
+      {
+        "lang": "ko",
+        "category": "nature,history,culture,leisure",
+        "sort": "relevance",
+        "facets": "true",
+        "page": "0",
+        "size": "30"
+      },
+      {
+        "lang": "ko",
+        "category": "nature,history,culture,leisure",
+        "sort": "relevance",
+        "parking": "YES",
+        "facets": "true",
+        "page": "0",
+        "size": "30"
+      }
+    ]
+  }
+}

@@ -197,7 +197,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
         `when`("속성·지역이 색인된 문서면") {
             then("색인 표기 그대로의 속성과 지역 안 위치를 싣는다") {
                 every { searchPort.findById("1") } returns document().copy(
-                    ldongRegnCd = "11", ldongSignguCd = "110",
+                    ldongRegnCd = "11", ldongSignguCd = "110", contentTypeId = "12",
                     attributes = AttractionAttributes(
                         regularClosure = RegularClosure.Weekly(setOf(java.time.DayOfWeek.MONDAY)),
                         parking = Availability.YES, petPolicy = PetPolicy.PARTIAL,
@@ -216,6 +216,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
                 r.petPolicy shouldBe "PARTIAL"
                 r.attrCreditCard shouldBe "UNKNOWN"
                 r.attrAdmission shouldBe "FREE"
+                r.contentTypeId shouldBe "12"
                 r.region!!.ldongSignguCd shouldBe "110"
                 r.region!!.categoryCount shouldBe 6
                 r.region!!.sameCategoryNearby.single().title shouldBe "창덕궁"

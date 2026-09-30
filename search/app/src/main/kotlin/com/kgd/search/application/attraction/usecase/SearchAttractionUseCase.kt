@@ -49,6 +49,8 @@ interface SearchAttractionUseCase {
         /** 다른 표기 (영문 행: 국문명, 국문 행: 지역 구분자). 없으면 null */
         val titleLocal: String? = null,
         val category: String? = null,
+        /** TourAPI 유형 코드(12 관광지 · 39 음식점 …). 상세의 「{시군구} {유형} N곳 중 …」 문장이 유형 이름을 여기서 얻는다 — 서버 렌더와 같은 문장을 화면도 그리게. */
+        val contentTypeId: String? = null,
         val areaCode: String? = null,
         /**
          * 법정동 시도코드 (ADR-0071 의 지역 축).
