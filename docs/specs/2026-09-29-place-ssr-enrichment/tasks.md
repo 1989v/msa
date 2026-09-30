@@ -61,12 +61,12 @@ Total Task Groups: 10
 **Dependencies:** Task Group 2
 **Phase:** P3-facets
 **Required Skills:** OpenSearch 질의·집계
-- [ ] 5.0 Complete 패싯 API
+- [x] 5.0 Complete 패싯 API
   - [x] 5.1 **먼저** 현재 커밋에서 기존 요청 JSON 스냅샷 저장(T8 기준)
   - [x] 5.2 Write tests: `AttractionSearchAdapterFacetTest`(T8 · 6개)
   - [x] 5.3 필터 파라미터(긍정 값만) · 본 질의 모든 레그에 필터 · 병렬 집계 요청(속성별 자기 제외 필터, 하이브리드면 질의어 제외) · 포트 반환형에 속성 패싯 건수 · 이름 `attributeFacets`
   - [x] 5.4 Verify: `./gradlew :search:app:test --tests '*AttractionSearchAdapterFacetTest' --tests '*AttractionSearchAdapterTest'`
-  - [ ] 5.5 배포 뒤 T22: API 건수 = 같은 필터 `_count`
+  - [x] 5.5 배포 뒤 T22: API 건수 = 같은 필터 `_count`
 **Acceptance Criteria:** 파라미터 없는 요청 바이트 동일 · T22 일치
 
 ### Task Group 6: 화면 (portal-fe)

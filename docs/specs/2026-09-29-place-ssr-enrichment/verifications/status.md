@@ -27,3 +27,4 @@
 | 배포 ② T19 | 운영 미확인 | search 중단 폴백·쿠키 미전달은 스텁 nginx 로만 확인(단일 파드 롤링이라 운영에서 끊김 구간이 생기지 않음) |
 | TG5 | `./gradlew :search:app:test --tests '*AttractionSearchAdapter*' --tests '*SearchAttractionServiceTest' --tests '*AttractionSearchController*' --tests '*AttractionPage*' verifyArchitecture` | Facet 31/0 · Hybrid 10/0 · Ranking 8/0 · Service 29/0 · Controller 3/0 · AttractionPage 25/0 · 기준 스냅샷 7개(b013263f 에서 채취) |
 | TG5 | 회귀 주입 | knn 필터 누락 · 자기 선택 포함 · 무파라미터 요청 순서 변경(바이트 비교 4건) · 하이브리드 질의어 포함 · UTC 요일 · facets 무시하고 늘 셈(8건) · 서비스가 늘 셈 → 각각 빨간불 |
+| 배포 ③(API) T22 | 운영 API facets=true vs OpenSearch _count (ko, 검색어 없음) | parking YES 31,605=31,605 · admission FREE 1,127=1,127 · pet ALLOWED 9,070=9,070 · parking=YES 선택 시 pet ALLOWED 7,189 = ES(parking∧pet) 7,189 · openToday 30,120 |
