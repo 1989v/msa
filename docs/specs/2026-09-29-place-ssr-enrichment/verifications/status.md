@@ -20,3 +20,5 @@
 | TG4 | 스텁 search + 실제 nginx:1.27-alpine | 숫자 id 만 전달 · Cookie/Authorization 미전달 · upstream 404 통과 · 500/5초 지연/중지 → 셸 200 `proxy-fallback` (3.02초 · 1.01초) · 비숫자 id 404 · /regions 프리렌더 유지 |
 | TG4 | 회귀 주입(스크래치 사본) | Cookie 제거 줄 삭제 → cookie 전달됨 · error_page 에 404 추가 → 404 가 200 셸 · netpol 라벨 오타 → verifyPodTopology FAILED |
 | TG4 | 운영 파드 전제 | command 덮어쓰기 없음 · root · 쓰기 가능 · /docker-entrypoint.d 에 15-local-resolvers·20-envsubst · nameserver 10.43.0.10 |
+| 배포 ① | 04:30 정기 재색인(a0a78ea) | 5분 1초 · 별칭 전환 · 283→296.2MB · 속성 필드 59,735/59,735 · 경복궁 WEEKLY·종로구·고궁 10 · 영문 Seoul/Jongno-gu/Royal Palaces |
+| 배포 ② 전 | 클러스터 안 `search:8083/internal/render/attractions/5000` | 200 · X-Render: ssr · 7,631B · title/h1 남원향교 · data-seo-multi 2 · 지역 문구 1 · 없는 id·비숫자 id 404 |
