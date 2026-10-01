@@ -1,21 +1,50 @@
-# 구현 상태 — 2026-10-02
+# 구현·검증 상태 — 2026-10-02
 
-전체 9개 그룹(T0~T8), 이번 작업은 **T3 시뮬레이션 한 그룹 완료**.
-게임 서브모듈 커밋: `3a0fcf01`.
-T1/T2는 기초 모듈이 존재하지만 UI/원본 지도 통합까지 완료한 것이 아니다.
+전체 9개 그룹(T0~T8)의 게임 코드를 새 실행 화면에 통합했다. T8의 실제 브라우저·실제 서버 검증은 환경 제약으로 남아 있다. 새 로컬 플레이: http://127.0.0.1:8138/marine-command/ (games 루트 서버).
 
-| 검증 | 실행 주체 | 결과 |
-|---|---|---|
-| 시작: `node --test tests/economy.test.mjs tests/world.test.mjs` | 루트 | 31 pass / 0 fail |
-| T3: `node --test --test-reporter=dot tests/economy.test.mjs tests/workers-towers.test.mjs` | 구현 담당 | exit0, 29 pass / 0 fail |
-| `node --check marine-command/js/origin/sim.js` | 루트 | exit0 |
-| games `git diff --check` | 루트 | exit0 |
+## 구현 결과
 
-사용자 요청으로 태스크마다 전체 코드 탐색·전체 회귀·독립 리뷰를 반복하지 않는다.
-실제 캠페인 지도, 새 화면, 브라우저 플레이, 저장·온라인 통합은 미검증/미완료다.
-기존 프로토타입 링크를 이번 새 기능의 플레이 링크로 제시하지 않는다.
-커밋 훅은 실행했다. games 서브모듈의 기존 문서 인덱스/CLAUDE 부재와 Unity 패키지 문서 링크에 대한 Doctor FAIL 진단이 출력됐지만 커밋 훅 자체는 exit0이었다. 게임 기능 테스트 실패로 취급하거나 전체 품질 통과로 숨기지 않는다.
+- 원본 SCM에서 확인한 지형/고저차/램프를 4배 확대한 12288² 필드, 실제 5개 목표와 북부 왕복 전이. 영상과 같은 판인지는 미확정이다.
+- 활잡이1/목수0/금화0 시작, 처치 수입→목수 고용→왕복 채집, 건설/수리/4인 주둔, 고용/공방업/3기 합성.
+- 적6종·보스3종, 본진 웨이브·역습·거점 리젠, 3방 던전2개, 최종 보스 승리. 던전과 필드 동시 진행.
+- 작은 2D 애니메이션 캐릭터, 고저차 지형·시야/탐색안개, 실제 타격 모양의 보스 경고, 조작/병력/작업/던전 UI.
+- 싱글·협동 저장 분리, 구버전 보존, 저장 실패/클라우드 상태 표시. 협동 handshake/소유권/의도 검증/완전 체크포인트/재개/싱글 분기.
+- 카탈로그 V103 작성. migration 실행·배포·push는 하지 않았다.
 
-<!-- source: portal-fe/public/games/marine-command/js/origin/sim.js -->
-<!-- source: portal-fe/public/games/marine-command/js/origin/world.js -->
-<!-- source: portal-fe/public/games/marine-command/tests/workers-towers.test.mjs -->
+## 최종 통합 검증 증거
+
+사용자 요청대로 최초 분석을 재사용하고 전체 통합 후 검증했다. 초기 실패 수정에 필요한 검증만 재실행했으며, 루트가 담당자 테스트를 반복하지 않았다.
+
+| 실행 | 실제 결과 |
+|---|---|
+| 전체 `npm test` 최초 통합 | 135개 중125통과/10실패. 실패는 실제 섬 접근1개와 옛 UI 계약9개 |
+| 원본 지도 관련 재검증 | 5/5 통과: 실제 섬 사격점과 원본 통로 기준으로 수정 |
+| UI/저장/협동/전송/최대부하/플랫폼 관련 재검증 | 39/39 통과, exit0 |
+| 북부 통로 UI 추가 후 UI 재검증 | 9/9 통과, exit0 |
+| 비정렬 방어탑 입구 버그 수정 후 목수·탑 | 14/14 통과 (회귀1개 추가) |
+| 최종 캠페인 영향 검증 | 14/14 통과 |
+| 정상 명령 자동 완주 | seed1989, phase=won,3001.43초,24유닛,본진HP4000,182개 성공 명령 |
+| 모든 origin JS 문법 | `node --check` exit0 |
+| 로컬 HTML/새main/monsters/platform/relay HTTP | 전부200 |
+| 스킬 frontmatter/소스·설치본 일치 | YAML 파싱 및 byte 일치 확인 |
+
+정상 완주는 자원·능력치 주입 없이 act/step만 사용한다. 5거점→2던전→북부 통로→최종 보스를 공략했으며 고용10540G/강화15315G/건설440G를 지출했다. 로그 관측상 첫 목수60초 이내, 첫 완공탑840초 이내, C1 1079.1초, C2 1228.7초다. 이는 봇 전략 결과이며 사람 플레이 시간·적정 난이도 증명이 아니다.
+
+최대 저장 fixture: 적260+아군64+탑12+스폰예약128+전체 탐색안개+지연공격40. 완전 체크포인트24260B/9청크, 두 슬롯49099B(<60KiB), 표시8752B/3청크, 첫1초20메시지(<30/s). 무손실 roundtrip 확인.
+
+## 미검증·도구 한계
+
+- CUA의 Chrome 접근이 승인되지 않아 실제 브라우저 화면/스프라이트 체감 크기/모바일 입력/성능을 검증하지 못했다. DOM 테스트는 렌더러·오디오를 대체한다. 다른 브라우저 자동화로 우회하지 않았다.
+- 실제 gateway/relay를 통한 2기기 협동, 계정/게스트 클라우드 이어하기 미검증. 정적 로컬 링크는 싱글/기기 저장 용도다.
+- 모바일 strict lint exit1: W4는 HTML만 검사하여 모듈의 `PlatformAdapter.init`을 찾지 못한 경고, W6는 Claude Design URL 부재다. 실제 초기화는 origin/main.js에 있고 시안은 imagegen으로 제작했다. 가짜 URL/가짜 통과를 기록하지 않는다.
+- 범용 skill-creator 검증기는 기존 hns의 `user-invocable` 키를 허용하지 않아 exit1. YAML 문법과 이름/설명 및 설치본 일치는 별도로 통과했다.
+- 승인된 콘셉트 커버는 실제 게임 스크린샷이 아니다. 던전 구조·보스 패턴·경제 수치는 판타지 각색이며 원작 전체 동일 복제를 주장하지 않는다.
+
+<!-- source: portal-fe/public/games/marine-command/js/origin/main.js -->
+<!-- source: portal-fe/public/games/marine-command/tests/origin-progression.mjs -->
+<!-- source: portal-fe/public/games/marine-command/tests/max-payload.test.mjs -->
+
+## 작업 보존
+- games 구현 커밋 `1147c317`, ai 스킬 커밋 `143634f`. 스킬 설치 캐시에도 동일 내용 반영.
+- 두 커밋의 훅은 실행되었고 exit0. Doctor는 기존 서브모듈 문서 인덱스/가이드 누락 등을 FAIL로 출력했다. 이를 전체 품질 통과로 취급하지 않는다.
+- msa에 이미 staged된 games 포인터와 다른 작업 변경은 포함하지 않는다. 배포 시에는 이 게임 커밋을 가리키도록 별도 통합해야 한다.
