@@ -1,5 +1,20 @@
-# Implementation task handoff — 이번 세션 실행 금지
-모든 항목은 미구현. 각 그룹이 끝나면 해당 검증 출력·시각 증거·리뷰를 남기고 커밋한다.
+# Implementation task handoff — 총 9개 그룹 (T0~T8)
+2026-10-02 사용자가 구현 재개를 명시했고 이번에는 한 그룹(T3)을 진행한다.
+전체 코드 탐색·전체 테스트는 시작과 최종 통합 때 수행하며 매 그룹마다 반복하지 않는다.
+중간 그룹은 구현에 집중한다. 실패·새 오류가 나타난 경우 해당 부분만 확인하고, 변경 범위에 필요한 최소 검증 결과를 기록한다. 각 Verify 명령은 검증 위치 안내이며 매 태스크 전체 회귀 반복 지시가 아니다.
+기존 상태: T1 경제 코어 커밋 존재, T2 지형 기초 코드 존재. 실제 화면/원본 지도 통합은 아직 미완료다.
+
+| 그룹 | 현재 상태 |
+|---|---|
+| T0 참조·환경 | 진행 중: 원본 파일 확보, 영상판 대조·전체 지형 분석 남음 |
+| T1 초반 경제·병력 | 코어 구현, 실제 UI 교체 남음 |
+| T2 고저차·시야·탐색 | 지형 기초 구현, 원본 캠페인 지도와 표시 통합 남음 |
+| T3 목수 채집·건설·주둔 | 시뮬레이션 완료 (2026-10-02), 아래 검증 범위 참조 |
+| T4 적·웨이브·캠페인 | 미완료 |
+| T5 시각·아트 통합 | 시안/스프라이트 초안 존재, 플레이 화면 미통합 |
+| T6 저장·플랫폼 | 미완료 |
+| T7 온라인 2인 | 통신 초안 존재, 미완료 |
+| T8 통합·플레이 검증 | 미완료 |
 고정 세션 문서부터 읽고 작은 그룹 하나씩 구현. 전체 기능을 한 번에 생성하거나 옛tests를 그대로 통과 기준으로 쓰지 않는다.
 
 ## T0 — 참조/환경/기반 고정
@@ -27,11 +42,12 @@
 **Acceptance:** 원본비교동선과collision 일치,안개에적정보 누출0.
 
 ## T3 — 목수 채집/건설/주둔
-**Dependencies:** T1,T2 · **Phase:** economy-defense · **Required skills:** hns:implement-tasks
-- [ ] 왕복채집/운반/목수전환/건설중단/4주둔/탑파괴 테스트6개.
-- [ ] 작업state machine,탑owner/occupants/진행도,입장예약·강제퇴각.
-- [ ] Verify: `node --test tests/workers-towers.test.mjs`.
+**Dependencies:** T1 경제 코어,T2 지형 기초(확인된 테스트 지형 사용; 원본 캠페인 배치와 분리) · **Phase:** economy-defense · **Required skills:** hns:implement-tasks
+- [x] 왕복채집/운반/목수전환/건설중단/4주둔/탑파괴: 기존 작성한 13개 시나리오로 검증.
+- [x] 작업state machine,탑owner/occupants/진행도,입장예약·강제퇴각.
+- [x] Verify: `node --test --test-reporter=dot tests/economy.test.mjs tests/workers-towers.test.mjs` — 29 pass, 0 fail (구현 담당 실행; 루트 중복 재실행 생략).
 **Acceptance:** 빈탑공격0,짐/합성/퇴각 중복개체0.
+**Boundary:** fixture 지형에서 검증한 순수 시뮬레이션이다. 원본 캠페인 맵·실제 플레이 UI 연결·온라인·브라우저 검증은 이 그룹 완료에 포함하지 않는다.
 
 ## T4 — 적/웨이브/캠페인
 **Dependencies:** T1,T2,T3 · **Phase:** content · **Required skills:** hns:implement-tasks

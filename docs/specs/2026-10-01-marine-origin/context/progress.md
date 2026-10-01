@@ -24,3 +24,19 @@
 - 근거는 planning/original-map-findings.md. 원본 파일이나 원본 그래픽은 게임 에셋에 추가하지 않음.
 - 현재 범위는 기획·디자인. 구현 에이전트 중지. 이미 작성된 origin 모듈·아트 초안은 삭제하지 않고 보존하며, 플레이 가능한 통합 결과로 보고하지 않음.
 - 후속 구현자는 games 커밋 8cc4bbca와 미커밋 origin 변경을 먼저 점검. transport 리뷰의 delta 의존 순서 손실 및 ACK 후 checkpoint ID 재전송 지적은 아직 미수정.
+
+## 2026-10-02 — 명시적 구현 재개, 한 그룹
+- 사용자: 구현 진행, 총 태스크 수 안내, 그중 하나 수행. 전체 9그룹(T0~T8), 이번 T3.
+- 작업 위치: 동일 msa/games 서브모듈. 기존 원본 지도 조사 제약은 유지하며 fixture 지형으로 기능 구현.
+- 사용자 추가 지시: 코드확인·전체 테스트는 처음/마지막에만, 태스크마다 반복 금지. 초기 경제+지형 baseline 31 pass / 0 fail 확인 후 추가 광범위 탐색·리뷰 중지.
+- T3 구현 담당: 기존 spec_review_b 에이전트, sim.js + workers-towers.test.mjs. 루트는 상태 문서·국소 최종 확인·커밋 담당.
+- 게임 화면은 기존 프로토타입이며 이번 T3가 바로 새 플레이 화면을 제공하는 것은 아니다. 진행률과 링크에서 혼동 금지.
+
+### T3 완료
+- `js/origin/sim.js`: 목수 왕복 채집/운반/노드당3명, 건설220G/20초/취소환급/일시정지/수리, 최대4명 실제 주둔/개별 사격/퇴각/파괴 피해 구현.
+- `act(s,command,worldContext=null)`, `step(s,dt,inputsByOwner={},worldContext=null)`로 기존 호출부 호환 유지. worldContext는 terrain/resourceNodes, 경로 캐시는 저장 상태 밖에 보관.
+- T3에 필요한 기존 `js/origin/world.js`, `tests/world.test.mjs`도 함께 추적한다. 원본 캠페인 지도는 생성하지 않음.
+- 구현 담당 최종 확인: `node --test --test-reporter=dot tests/economy.test.mjs tests/workers-towers.test.mjs`, exit0 / 29 pass / 0 fail (경제16, 목수·탑13). 사용자 요청에 따라 루트는 동일 테스트 재실행 생략.
+- 루트 직접 확인: `node --check marine-command/js/origin/sim.js`, `git diff --check`, 각각 exit0. 전체 회귀·브라우저 검증은 수행하지 않음.
+- 다음: 원본 맵의 미확인 연결/고도/진출 구조 조사 완료 후 T2 실제 맵 배치. T4 캠페인과 T5 화면 통합이 되어야 새 버전 플레이 링크를 안내할 수 있음.
+- 별도 미완료 origin 스프라이트/통신 초안은 이번 커밋에 포함하지 않음. 기존 staged games 서브모듈 포인터 및 타 작업 변경 유지.
