@@ -12,3 +12,15 @@
 
 <!-- source: portal-fe/public/games/lib/relay.js -->
 <!-- source: portal-fe/public/games/lib/platform.js -->
+
+## Implementation resumed
+- 이전 진행 과정에서 구현을 시작했으나, 계획 전용 제한이 종료되었다는 해석은 최신 대화의 명시적인 기획·디자인 범위 제한과 맞지 않아 철회한다.
+- 지도 재구성 범위는 사용자에게 비동기 확인 중. 지도와 무관한 T1 경제부터 진행.
+- 기존 프로토타입 baseline npm test 실행, 새 규칙 검증으로 혼동하지 않음.
+
+## 최신 결정 반영
+- 사용자 답변: 원본 지도 확인 후 맵 구현. 추가 지시: 지도 사이즈·규모는 더 커도 됨.
+- world.md 임의 배치 보류. 블로그 SCM 확보/정상 CHK 추출, 96×96 타일과 SE 리메이크 정체 확인. 영상 동일판 여부·램프 의미·트리거 연결은 미확인.
+- 근거는 planning/original-map-findings.md. 원본 파일이나 원본 그래픽은 게임 에셋에 추가하지 않음.
+- 현재 범위는 기획·디자인. 구현 에이전트 중지. 이미 작성된 origin 모듈·아트 초안은 삭제하지 않고 보존하며, 플레이 가능한 통합 결과로 보고하지 않음.
+- 후속 구현자는 games 커밋 8cc4bbca와 미커밋 origin 변경을 먼저 점검. transport 리뷰의 delta 의존 순서 손실 및 ACK 후 checkpoint ID 재전송 지적은 아직 미수정.

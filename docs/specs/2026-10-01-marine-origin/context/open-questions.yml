@@ -1,10 +1,11 @@
 questions:
   - id: map_fidelity
     stage: pre-map-implementation
-    status: open
-    question: 원본 전체 지도와 구간별 플레이를 확인할 자료가 부족하다.
-    default: world.md는 참조에 맞춘 재구성 초안이며 정확복제라고 부르지 않는다.
-    resolution: T0에서 전체지도 근거 확보 또는 사용자에게 근사 허용범위를 확인한다.
+    status: evidence_pending
+    question: 블로그 SE판과 영상판의 전체 지도 및 진행 구조 대조가 필요하다.
+    default: 원본 지도 확인 전 world.md의 임의 배치를 구현하지 않는다.
+    resolution: 사용자가 원본 지도 확인 후 맵 구현을 선택했다. 이후 지도 사이즈와 규모는 더 커도 된다고 명시했다. 원본의 연결·진행 구조를 먼저 확인하고 확대 설계한다.
+    evidence: planning/original-map-findings.md
   - id: gameplay_numbers
     stage: tuning
     status: proposed
@@ -25,6 +26,3 @@ questions:
     status: proposed
     question: 새 3종 디자인보드는 검토용이다.
     default: 기존 approved-tone은 미술기준, 실제sprite제작전 새로운역할실루엣을 확인한다.
-
-<!-- source: portal-fe/public/games/lib/relay.js -->
-<!-- source: portal-fe/public/games/lib/platform.js -->
