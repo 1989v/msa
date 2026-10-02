@@ -141,7 +141,8 @@ def _short_name(name: str) -> str:
     return head
 
 
-def _distance_km(a: tuple[float, float], b: tuple[float, float]) -> float:
+def distance_km(a: tuple[float, float], b: tuple[float, float]) -> float:
+    """두 (위도, 경도) 사이 대권 거리(km). 대기 측정소 최근접(`air`)도 이것을 쓴다."""
     la1, lo1, la2, lo2 = (math.radians(v) for v in (*a, *b))
     h = math.sin((la2 - la1) / 2) ** 2 + math.cos(la1) * math.cos(la2) * math.sin((lo2 - lo1) / 2) ** 2
     return 6371.0 * 2 * math.asin(math.sqrt(h))
@@ -192,7 +193,7 @@ def assign(regions: list[dict]) -> list[dict]:
         if r["code"] not in ta:
             near = [c for c, _ in MID_TA if land_of(c) in SIDO_LANDS[sido] and c in centers]
             if near:
-                ta[r["code"]] = (min(near, key=lambda c: _distance_km(here, centers[c])), "NEAREST")
+                ta[r["code"]] = (min(near, key=lambda c: distance_km(here, centers[c])), "NEAREST")
         reg, how = ta.get(r["code"], (None, None))
         nx, ny = to_grid(*here)
         out.append({"sigunguCode": r["code"], "nx": nx, "ny": ny,

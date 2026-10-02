@@ -34,6 +34,8 @@ TourAPI(KorService2/EngService2)
 | `weather-mid` | 기상청 중기예보 06시 발표 — 육상 권역 10 + 기온 regId 163 → `weather_mid_forecast` + 날씨 캐시 덮기 | `place-ingest-weather-mid` 매일 KST 06:25 |
 | `related` | 연관 관광지(한국관광공사 빅데이터, 월) — 전달 `baseYm` 을 시군구마다 1콜, 출발은 자기 시군구 · 대상은 대상 시군구 국문 관광지에 이름 매칭(`name_match`) → `attraction_related` 시군구 단위 교체. 받은 달이면 0콜, 공개 전이면 1콜로 끝나 다음 날 다시 묻는다. `--base-ym=YYYYMM` 이면 그 달 1회 | `place-ingest-related` 매월 KST 12~28일 02:20 |
 | `congestion` | 관광지 집중률(한국관광공사 빅데이터) 앞 30일 — 시군구 269 마다 1콜, 이름+시군구로 국문 관광지에 매칭(`name_match`, 연관 관광지와 공용) → `attraction_congestion` 시군구 단위 교체. 0건 시군구 목록을 로그에 남긴다 | `place-ingest-congestion` 매일 KST 02:00 |
+| `air` | 에어코리아 실시간 측정 — `sidoName=전국` 1콜에 측정소 672 → `air_measurement` 측정소마다 원문 한 행(측정 시각이 같거나 새로울 때만 덮기) + 그 측정소를 쓰는 시군구 대기 캐시 덮기. 시간 초과는 2번까지 다시 부른다 | `place-ingest-air` 매시 40분 |
+| `air-stations` | 에어코리아 측정소 목록 전국 1콜(좌표 dmX=위도 · dmY=경도, 한반도 범위 검사) → `air_station` + 시군구 대표점 → 최근접 측정소 `air_station_sigungu` | `place-ingest-air-stations` 매주 월 KST 01:50 |
 
 재색인은 이 이미지가 트리거하지 않는다 — Job 생성 RBAC 을 얻는 대신 `attraction-reindex`
 CronJob 이 30분 뒤(KST 04:30)에 돈다.

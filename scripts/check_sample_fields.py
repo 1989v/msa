@@ -26,7 +26,7 @@ REPO = Path(__file__).resolve().parents[1]
 SAMPLE = REPO / "docs/specs/2026-10-02-place-tour-portal-expansion/implementation/sample-phase2-apis.json"
 sys.path.insert(0, str(REPO / "place" / "ingest"))
 
-from src import barrier_free, congestion, name_match, related, visitors, weather, wellness  # noqa: E402
+from src import air, barrier_free, congestion, name_match, related, visitors, weather, wellness  # noqa: E402
 
 Recorder = Callable[[dict], dict]
 
@@ -44,6 +44,8 @@ REGISTRY: dict[str, Recorder] = {
     "10 단기예보": lambda row: weather.short_record([row]),
     "11 중기 육상": lambda row: weather.mid_record("LAND", datetime(2026, 10, 2, 6), row),
     "11 중기 기온": lambda row: weather.mid_record("TA", datetime(2026, 10, 2, 6), row),
+    "12 대기": air.measurement_record,
+    "12 측정소": air.station_record,
 }
 
 #: 안 하기로 한 API — 대장에도 넣지 않는다 (phase2-design §0).
@@ -106,11 +108,14 @@ def self_test(sample: dict) -> bool:
         "10 단기예보": lambda row: {"nx": row["nx"], "ny": row["ny"], "baseDate": row["baseDate"]},
         "2 집중률": lambda row: {"tAtsNm": row["tAtsNm"], "signguCd": row["signguCd"], "areaCd": row["areaCd"]},
         "3 연관 202608": lambda row: {"tAtsCd": row["tAtsCd"], "tAtsNm": row["tAtsNm"], "signguCd": row["signguCd"]},
+        "12 대기": lambda row: {"stationName": row["stationName"], "sidoName": row["sidoName"], "dataTime": row["dataTime"]},
+        "12 측정소": lambda row: {"stationName": row["stationName"], "latitude": float(row["dmX"]), "longitude": float(row["dmY"])},
     }
     missing, _ = check(sample, column_only)
     caught = (set(missing) == set(column_only) and "title" in missing["1 무장애 목록"] and "mapX" in missing["7 웰니스"]
               and "fcstValue" in missing["10 단기예보"] and "cnctrRate" in missing["2 집중률"]
-              and "rlteRank" in missing["3 연관 202608"])
+              and "rlteRank" in missing["3 연관 202608"] and "pm10Value" in missing["12 대기"]
+              and {"dmX", "dmY", "addr"} <= set(missing["12 측정소"]))
     print(f"self-test: 원문을 버리는 레코드 함수 → {'빨간불(정상)' if caught else '초록불 — 판정이 아무것도 안 잰다'}")
     return caught
 

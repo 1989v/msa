@@ -62,7 +62,7 @@ function dayLabel(date: string, today: string, lang: PlaceLang): string {
 }
 
 /** 발표 시각 `yyyy-MM-ddTHH:mm` → 「10월 2일 17:00」 · 「Oct 2, 17:00」. */
-function issuedAt(at: string, lang: PlaceLang): string {
+export function issuedAt(at: string, lang: PlaceLang): string {
   const [date, time] = at.split('T');
   const [, m, d] = date.split('-').map(Number);
   const hm = (time ?? '').slice(0, 5);

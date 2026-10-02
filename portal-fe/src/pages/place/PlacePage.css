@@ -1731,6 +1731,52 @@ button.place-card {
   white-space: nowrap;
 }
 
+/* 관광지 상세 「대기질」 — 측정소 하나의 원천 값·등급 그대로. 색은 토큰만 쓴다(DESIGN.md) */
+.place-air {
+  margin-top: 1rem;
+}
+
+.place-air-station,
+.place-air-source {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--ko-text-muted);
+}
+
+.place-air-list {
+  list-style: none;
+  margin: 0.25rem 0;
+  padding: 0;
+  font-size: 0.85rem;
+}
+
+.place-air-row {
+  display: grid;
+  grid-template-columns: 9.5rem max-content max-content;
+  gap: 0.75rem;
+  align-items: baseline;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+.place-air-label {
+  color: var(--ko-text-secondary);
+}
+
+.place-air-grade {
+  color: var(--ko-text-primary);
+}
+
+.place-air-value {
+  font-family: var(--kh-font-mono);
+  color: var(--ko-text-primary);
+}
+
+.place-air-flag {
+  grid-column: 2 / -1;
+  color: var(--ko-text-secondary);
+}
+
 @media (max-width: 480px) {
   .place-weather-day {
     grid-template-columns: minmax(0, 1fr) max-content;

@@ -9,6 +9,7 @@ vi.mock('../../../api/placeApi', async (importOriginal) => ({
   searchAttractions: vi.fn(),
   fetchAttraction: vi.fn(),
   fetchWeather: vi.fn(),
+  fetchAirQuality: vi.fn(),
 }));
 vi.mock('../../../components/favorite/FavoriteButton', () => ({ default: () => null }));
 // 지면은 자리 표시만 남긴다 — 어느 상세에 attraction-end 가 그려지는지 본다
@@ -20,13 +21,15 @@ vi.mock('../../../analytics/tracker', async (importOriginal) => ({
   track: vi.fn(),
 }));
 
-import { fetchAttraction, fetchWeather, searchAttractions, type WeatherOutlook } from '../../../api/placeApi';
+import { fetchAirQuality, fetchAttraction, fetchWeather, searchAttractions, type AirQuality, type WeatherOutlook } from '../../../api/placeApi';
 import { track } from '../../../analytics/tracker';
 import { todayKst } from '../../../seo/eventSchedule';
 import AttractionPage from '../AttractionPage';
 
 // 날씨는 따로 다루는 묶음 밖에서는 빈 응답 — 절이 없다
 vi.mocked(fetchWeather).mockResolvedValue({ sigunguCode: '11110', shortBaseAt: null, midTmFc: null, days: [] });
+const NO_AIR: AirQuality = { sigunguCode: '11110', stations: [] };
+vi.mocked(fetchAirQuality).mockResolvedValue(NO_AIR);
 
 const card = (id: string, category = 'history'): Attraction => ({
   id, contentId: id, lang: 'ko', title: `명소 ${id}`, category, areaCode: null,
@@ -648,6 +651,73 @@ describe('AttractionPage 날씨', () => {
     expect(section.textContent).toContain('Cloudy, rain');
     expect(section.textContent).toContain('안개');
     expect(section.textContent).toContain('Korea Meteorological Administration');
+  });
+});
+
+describe('AttractionPage 대기질', () => {
+  // 관광지는 (37.5, 127) — 후보 셋 중 「종로」가 약 2.2km 로 가장 가깝다. 값·등급·Flag 는 세종 조치원읍 운영 응답(2026-10-02 21:00) 모양
+  const jongno = {
+    name: '종로',
+    latitude: 37.52,
+    longitude: 127.0,
+    measurement: {
+      sidoName: '서울',
+      dataTime: '2026-10-02T21:00',
+      pm10: { value: '34', grade: '2', flag: null },
+      pm25: { value: '-', grade: null, flag: '통신장애' },
+    },
+  };
+  const far = { ...jongno, name: '중구', latitude: 37.564639, longitude: 126.975961,
+    measurement: { ...jongno.measurement, pm10: { value: '99', grade: '4', flag: null } } };
+  const air: AirQuality = { sigunguCode: '11110', stations: [far, jongno, { ...jongno, name: '평창', latitude: 37.37, longitude: 128.39 }] };
+
+  beforeEach(() => {
+    vi.mocked(searchAttractions).mockResolvedValue({ searchId: 's', attractions: [], totalElements: 0, totalPages: 0, currentPage: 0 });
+    vi.mocked(fetchAttraction).mockResolvedValue(enriched);
+  });
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+    vi.mocked(fetchWeather).mockResolvedValue({ sigunguCode: '11110', shortBaseAt: null, midTmFc: null, days: [] });
+    vi.mocked(fetchAirQuality).mockResolvedValue(NO_AIR);
+  });
+
+  it('시군구 코드로 부르고 — 측정소 이름 · 이 장소에서의 거리 · 원천 등급과 값 그대로 · Flag 면 값 대신 원천 표시 · 출처와 측정 시각', async () => {
+    vi.mocked(fetchAirQuality).mockResolvedValue(air);
+    renderAt('/attractions/100');
+    const section = await screen.findByRole('region', { name: '대기질' });
+
+    expect(fetchAirQuality).toHaveBeenCalledWith('11110');
+    // 후보 중 가장 가까운 측정소 하나만 — 다른 후보의 값(중구 99 · 매우나쁨)을 섞지 않는다
+    expect(within(section).getByText('종로 측정소 · 이 장소에서 2.2km')).toBeInTheDocument();
+    expect(section.textContent).not.toContain('99');
+    const rows = within(section).getAllByRole('listitem');
+    expect(rows[0].textContent).toBe('미세먼지(PM10)보통34㎍/㎥');
+    // 통신장애 — 값 「-」 를 0 이나 빈 등급으로 그리지 않고 원천 표시만
+    expect(rows[1].textContent).toBe('초미세먼지(PM2.5)통신장애');
+    expect(within(section).getByText(/출처: 한국환경공단 에어코리아 — 실시간 측정값으로 확정 전 자료/).textContent).toContain('10월 2일 21:00 측정');
+  });
+
+  it.each([
+    ['가장 가까운 측정소에 측정이 없으면(3시간 초과는 서버가 뺀다) — 더 먼 측정소로 넘어가지 않는다', { ...air, stations: [far, { ...jongno, measurement: null }] }],
+    ['후보 전이면', NO_AIR],
+    ['가장 가까운 측정소가 20km 를 넘게 멀면', { ...air, stations: [{ ...jongno, latitude: 37.9 }] }],
+  ])('%s 절을 그리지 않는다', async (_, value) => {
+    vi.mocked(fetchAirQuality).mockResolvedValue(value as AirQuality);
+    renderAt('/attractions/100');
+    await screen.findByRole('region', { name: '지역 안 위치' });
+    await vi.waitFor(() => expect(fetchAirQuality).toHaveBeenCalled());
+    expect(screen.queryByRole('region', { name: '대기질' })).toBeNull();
+  });
+
+  it('영문 화면 — 등급은 영문으로, Flag 는 원천 표기 그대로', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, lang: 'en' });
+    vi.mocked(fetchAirQuality).mockResolvedValue(air);
+    renderAt('/en/attractions/100');
+    const section = await screen.findByRole('region', { name: 'Air quality' });
+    expect(section.textContent).toContain('Moderate');
+    expect(section.textContent).toContain('통신장애');
+    expect(section.textContent).toContain('AirKorea');
   });
 });
 

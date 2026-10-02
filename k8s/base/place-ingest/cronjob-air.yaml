@@ -1,0 +1,52 @@
+# 대기 실시간 측정 수집 CronJob — 에어코리아 ArpltnInforInqireSvc getCtprvnRltmMesureDnsty (data.go.kr 15073861).
+#
+# sidoName=전국 한 콜에 측정소 672곳(2026-10-02). 매시 1콜 = 하루 24콜(한도 500). 원천 시간 초과(SERVICETIMEOUT_ERROR 05 · 504)는
+# 그 자리에서 2번까지 다시 부른다 — 회차 예산 상수 src/air.py MEASURE_BUDGET=3, 하루 상한 72.
+# 측정소마다 원문 한 행을 바꾼다(측정 시각이 같거나 새로울 때만). 이용허락 공공누리 제3유형(변경금지) — 평균·보간하지 않는다.
+# place 가 받은 측정소를 쓰는 시군구의 대기 캐시(레디스 placeAir)를 다시 채운다. 화면은 측정 3시간이 지난 값을 그리지 않는다.
+# 정각 자료는 측정소마다 늦게 실린다(2026-10-02 22:04 에 22시 자료 54/672) — 40분에 받는다. 매시 17분 링크 수집과 겹치지 않는다.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: place-ingest-air
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: place-ingest
+    app.kubernetes.io/part-of: commerce-platform
+    place.kgd.io/job: "air"
+spec:
+  # 매시 40분 (UTC·KST 같은 분).
+  schedule: "40 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 300
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: place-ingest
+            app.kubernetes.io/part-of: commerce-platform
+            place.kgd.io/job: "air"
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: ingest
+              image: commerce/place-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--job=air"]
+              env:
+                - name: PLACE_API
+                  value: "http://content:8097"
+                - name: TOUR_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: place-ingest-secrets
+                      key: tour-api-key
+                      optional: true
+              resources:
+                requests: { cpu: 100m, memory: 256Mi }
+                limits:   { memory: 512Mi }

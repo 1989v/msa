@@ -1124,5 +1124,38 @@
     "o3Value": "0.044"
    }
   ]
+ },
+ "12 측정소": {
+  "status": "00",
+  "total": 672,
+  "keys": [
+   "addr",
+   "dmX",
+   "dmY",
+   "item",
+   "mangName",
+   "stationName",
+   "year"
+  ],
+  "sample": [
+   {
+    "dmX": "37.564639",
+    "item": "SO2, CO, O3, NO2, PM10, PM2.5",
+    "mangName": "도시대기",
+    "year": "1995",
+    "addr": "서울 중구 덕수궁길 15 시청서소문별관 3동",
+    "stationName": "중구",
+    "dmY": "126.975961"
+   },
+   {
+    "dmX": "35.973333",
+    "item": "SO2, CO, O3, NO2, PM10, PM2.5",
+    "mangName": "도시대기",
+    "year": "2008",
+    "addr": "전북특별자치도 군산시 외항1길 222. (롯데주류) 3층옥상 롯데주류",
+    "stationName": "소룡동",
+    "dmY": "126.651417"
+   }
+  ]
  }
 }

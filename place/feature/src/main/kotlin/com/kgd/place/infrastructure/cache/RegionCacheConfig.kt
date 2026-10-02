@@ -1,5 +1,6 @@
 package com.kgd.place.infrastructure.cache
 
+import com.kgd.place.application.air.usecase.AirQualityUseCase
 import com.kgd.place.application.region.service.RegionCaches
 import com.kgd.place.application.region.usecase.AdministrativeRegionUseCase
 import com.kgd.place.application.region.usecase.GetRegionUseCase
@@ -63,6 +64,12 @@ class RegionCacheConfig : CachingConfigurer {
          * 시군구도 다음 회차 안에 캐시를 놓친 요청이 새로 채운다. 신선도(발표 24시간)는 캐시와 별개로 읽을 때 거른다.
          */
         val WEATHER_TTL: Duration = Duration.ofHours(13)
+
+        /**
+         * 대기도 적재가 덮는다. 측정 수집이 매시라 TTL 은 다음 회차 + 한 시간 — 덮기가 실패한 시군구도 다음 회차 안에
+         * 캐시를 놓친 요청이 새로 채운다. 신선도(측정 3시간)는 캐시와 별개로 읽을 때 거른다.
+         */
+        val AIR_TTL: Duration = Duration.ofHours(2)
         private const val SCAN_BATCH = 100
 
         fun cacheManager(writer: RedisCacheWriter): RedisCacheManager {
@@ -81,6 +88,7 @@ class RegionCacheConfig : CachingConfigurer {
                 .withCacheConfiguration(RegionCaches.GEONAMES, config(listSerializer(GetRegionUseCase.RegionView::class.java)))
                 .withCacheConfiguration(RegionCaches.VISITORS, config(valueSerializer(RegionVisitorUseCase.Trend::class.java), VISITORS_TTL))
                 .withCacheConfiguration(RegionCaches.WEATHER, config(valueSerializer(WeatherUseCase.Outlook::class.java), WEATHER_TTL))
+                .withCacheConfiguration(RegionCaches.AIR, config(valueSerializer(AirQualityUseCase.Air::class.java), AIR_TTL))
                 // 이름을 모르는 캐시는 만들지 않는다 — 기본 설정(JDK 직렬화)으로 조용히 생기면 값이 깨진다
                 .disableCreateOnMissingCache()
                 .build()

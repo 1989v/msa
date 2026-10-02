@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   AMENITY_CATEGORIES,
   EVENT_CATEGORY,
+  fetchAirQuality,
   fetchAttraction,
   fetchWeather,
   searchAttractions,
@@ -36,6 +37,7 @@ import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import AttractionLinks from './AttractionLinks';
 import EventLine from './EventLine';
 import AttractionWeather from './AttractionWeather';
+import AttractionAir from './AttractionAir';
 import AttractionCongestion from './AttractionCongestion';
 import { googleMapsSearchUrl, loadGoogleMaps, mapsApiKey } from './googleMaps';
 import Footer from '../../components/Footer';
@@ -212,6 +214,13 @@ export default function AttractionPage() {
     queryFn: () => fetchWeather(weatherCode!),
     enabled: weatherCode != null && weatherCode.length === 5,
     staleTime: 30 * 60_000,
+  });
+  // 대기 — 같은 시군구의 최근접 측정소(에어코리아, 매시). 같은 캐시 경로 · 같은 실패 처리
+  const { data: air } = useQuery({
+    queryKey: ['attraction-air', weatherCode],
+    queryFn: () => fetchAirQuality(weatherCode!),
+    enabled: weatherCode != null && weatherCode.length === 5,
+    staleTime: 10 * 60_000,
   });
 
   // 문서 자신의 언어를 SEO 기준으로 삼는다 — id 는 언어별로 다르므로 /en/attractions/{ko-id}
@@ -610,6 +619,7 @@ export default function AttractionPage() {
             {weather && (
               <AttractionWeather outlook={weather} place={regionPlaceName(attraction, lang)} today={today} lang={lang} />
             )}
+            {air && <AttractionAir air={air} latitude={attraction.latitude} longitude={attraction.longitude} lang={lang} />}
 
             {/* 혼잡 예측 — 색인에 실린 값(하루 한 번). 서버 렌더에는 없는 절이라 날씨 옆에 둔다 */}
             {attraction.congestion && attraction.congestion.length > 0 && (

@@ -8,7 +8,7 @@
 #   - deal-linkcheck  혜택 링크 생존 점검 CronJob (ADR-0069) — 주 1회 HEAD/GET.
 #                     상시 파드인 atlas 에는 열지 않는다: 배치가 필요로 하는
 #                     외부 접근 때문에 상시 노출면을 늘리지 않기 위해서다.
-#   - place-ingest    TourAPI(목록·개요·축제·숙박·여행코스) + 관광공사 무장애·웰니스·빅데이터 방문자·집중률·연관 관광지 · 기상청 단기·중기예보(data.go.kr) + YouTube/네이버 콘텐츠 + Google Places(place_id) 수집
+#   - place-ingest    TourAPI(목록·개요·축제·숙박·여행코스) + 관광공사 무장애·웰니스·빅데이터 방문자·집중률·연관 관광지 · 기상청 단기·중기예보 · 에어코리아 대기(data.go.kr) + YouTube/네이버 콘텐츠 + Google Places(place_id) 수집
 #                     CronJob (ADR-0070, data-sources.md §7).
 #                     상시 파드인 place 에는 열지 않는다 — deal 과 같은 이유.
 #   - ranking-ingest  오피넷 주유소·가격 수집 CronJob (ADR-0081).

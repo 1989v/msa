@@ -22,4 +22,10 @@ object RegionCaches {
      * (write-through) — 비우지 않는다. 값은 신선도로 거르기 전이고, 거르기는 읽을 때 한다.
      */
     const val WEATHER = "placeWeather"
+
+    /**
+     * 시군구 대기(최근접 측정소의 실시간 측정). 키는 시군구 법정동 코드 5자리. 측정 적재가 받은 측정소를 쓰는 시군구, 측정소 적재가
+     * 매핑을 받은 시군구의 키를 덮는다(write-through) — 비우지 않는다. 값은 신선도(측정 3시간)로 거르기 전이고, 거르기는 읽을 때 한다.
+     */
+    const val AIR = "placeAir"
 }

@@ -252,6 +252,45 @@ export const fetchWeather = async (sigunguCode: string): Promise<WeatherOutlook>
   return res.data.data;
 };
 
+/** 오염물질 하나 — 원천(에어코리아) 문자열 그대로. grade 는 1 좋음 · 2 보통 · 3 나쁨 · 4 매우나쁨, flag 는 원천 상태 표시(통신장애 · 점검및교정 …). */
+export interface AirPollutant {
+  value: string | null;
+  grade: string | null;
+  flag: string | null;
+}
+
+/** 측정소 자신의 측정 — 측정 시각이 측정소마다 다를 수 있다. */
+export interface AirMeasurement {
+  sidoName: string;
+  dataTime: string; // yyyy-MM-ddTHH:mm (KST)
+  pm10: AirPollutant;
+  pm25: AirPollutant;
+}
+
+/** 측정소 후보 하나. 좌표는 화면이 관광지에서 가장 가까운 후보를 고르는 데 쓴다. */
+export interface AirStation {
+  name: string;
+  latitude: number;
+  longitude: number;
+  /** 측정 없음 · 3시간 초과면 서버가 null 로 낸다 */
+  measurement: AirMeasurement | null;
+}
+
+export interface AirQuality {
+  sigunguCode: string;
+  /** 시군구 측정소 후보 — 그 시군구 관광지마다의 최근접 측정소를 다 품는다. 비면(후보 전) 절을 그리지 않는다 */
+  stations: AirStation[];
+}
+
+/**
+ * 시군구 측정소 후보의 실시간 대기(에어코리아). place 의 레디스 캐시 경로다 — 매시 수집이 쓰면서 캐시를 채우고,
+ * 이 요청은 캐시를 놓칠 때만 MySQL 에 닿는다 (ADR-0071 §10).
+ */
+export const fetchAirQuality = async (sigunguCode: string): Promise<AirQuality> => {
+  const res = await api.get<ApiResponse<AirQuality>>(`/api/places/air?sigungu=${encodeURIComponent(sigunguCode)}`);
+  return res.data.data;
+};
+
 /** 지역 방문자 월 합계 — 현지인 · 외지인 · 외국인(원천 touDivCd 1·2·3). 다 받은 달만 온다. */
 export interface RegionVisitorMonth {
   month: string; // yyyy-MM

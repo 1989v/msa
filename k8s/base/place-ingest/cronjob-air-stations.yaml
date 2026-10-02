@@ -1,0 +1,52 @@
+# 대기 측정소 목록 CronJob — 에어코리아 MsrstnInfoInqireSvc getMsrstnList (data.go.kr 15073877).
+#
+# addr 를 빼면 전국 672곳이 한 콜에 온다. 주 1회 1콜(+ 시간 초과 재시도 2, 예산 src/air.py STATION_BUDGET=3).
+# 좌표는 필드 이름과 반대로 dmX=위도 · dmY=경도다. 한반도 범위를 벗어나는 행은 버리고, 하나도 안 남으면 보내지 않고 실패한다.
+# 받은 목록으로 시군구 대표점(날씨와 같은 점) → 가장 가까운 측정소를 다시 정해 함께 보낸다(PUT /internal/air/stations).
+# 첫 배포 뒤 한 번은 손으로 돌린다 — 매핑이 없으면 대기 절이 그려지지 않는다:
+#   kubectl -n commerce create job --from=cronjob/place-ingest-air-stations place-ingest-air-stations-init
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: place-ingest-air-stations
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: place-ingest
+    app.kubernetes.io/part-of: commerce-platform
+    place.kgd.io/job: "air-stations"
+spec:
+  # 매주 월 KST 01:50 = 일 UTC 16:50. 02:00 집중률 앞, 다른 data.go.kr API 라 한도가 따로다.
+  schedule: "50 16 * * 0"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 600
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: place-ingest
+            app.kubernetes.io/part-of: commerce-platform
+            place.kgd.io/job: "air-stations"
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: ingest
+              image: commerce/place-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--job=air-stations"]
+              env:
+                - name: PLACE_API
+                  value: "http://content:8097"
+                - name: TOUR_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: place-ingest-secrets
+                      key: tour-api-key
+                      optional: true
+              resources:
+                requests: { cpu: 100m, memory: 256Mi }
+                limits:   { memory: 512Mi }

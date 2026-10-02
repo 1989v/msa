@@ -33,6 +33,8 @@ const links = JSON.stringify({
 function respond(url: string): unknown {
   const weather = url.match(/^\/api\/places\/weather\?sigungu=(\d{5})$/);
   if (weather) return { sigunguCode: weather[1], shortBaseAt: null, midTmFc: null, days: [] };
+  const air = url.match(/^\/api\/places\/air\?sigungu=(\d{5})$/);
+  if (air) return { sigunguCode: air[1], stations: [] };
   const visitors = url.match(/^\/api\/places\/administrative-regions\/(\d+)\/visitors$/);
   if (visitors) {
     return { code: visitors[1], level: 'SIDO', latestDate: '2026-09-02', months: [{ month: '2026-08', local: 5000000, outsider: 800000, foreigner: 12000 }] };
@@ -85,11 +87,14 @@ import AttractionPage from '../AttractionPage';
  *  - 시군구 날씨: 단기·중기 수집이 쓰면서 그 격자·구역을 쓰는 시군구 캐시를 덮는다(write-through). 캐시를 놓친 요청만
  *    PK 행 넷(매핑 · 단기 · 육상 · 기온)을 읽는다(`WeatherCacheTest`). 하루 두세 번 바뀌는 값이라 하루 한 번 도는
  *    재색인 문서에 실을 수 없다(설계 §4).
+ *  - 시군구 대기: 매시 측정 수집이 쓰면서 그 측정소를 쓰는 시군구 캐시를 덮는다(write-through). 캐시를 놓친 요청만
+ *    PK 행 셋(매핑 · 측정소 · 측정)을 읽는다(`AirQualityCacheTest`). 매시 바뀌는 값이라 색인에 실을 수 없다(설계 §4).
  */
 const CACHED_PLACE_GETS = [
   /^\/api\/places\/administrative-regions\?/,
   /^\/api\/places\/administrative-regions\/\d{2}(\d{3})?\/visitors$/,
   /^\/api\/places\/weather\?sigungu=\d{5}$/,
+  /^\/api\/places\/air\?sigungu=\d{5}$/,
 ];
 const isCachedPlaceGet = (url: string) => CACHED_PLACE_GETS.some((re) => re.test(url));
 
@@ -153,7 +158,7 @@ describe('관광지 화면의 읽기 경로', () => {
     placeGets().forEach((url) => expect(isCachedPlaceGet(url), url).toBe(true));
   });
 
-  it('관광지 상세 — place 는 캐시 경로(시군구 날씨)만 부르고, 링크 절은 상세 응답의 원문으로 그린다', async () => {
+  it('관광지 상세 — place 는 캐시 경로(시군구 날씨 · 대기)만 부르고, 링크 절은 상세 응답의 원문으로 그린다', async () => {
     renderAt('/attractions/100');
     await screen.findByText('경복궁 야경 영상');
     await waitFor(() => expect(searchGets().length).toBeGreaterThan(1));
@@ -161,7 +166,8 @@ describe('관광지 화면의 읽기 경로', () => {
 
     expect(screen.getByText(/조회수 12만회/)).toBeInTheDocument();
     expect(searchGets()).toContain('/api/search/attractions/100');
-    expect(placeGets()).toEqual(['/api/places/weather?sigungu=11110']);
+    await waitFor(() => expect(placeGets().length).toBe(2));
+    expect(placeGets().sort()).toEqual(['/api/places/air?sigungu=11110', '/api/places/weather?sigungu=11110']);
     placeGets().forEach((url) => expect(isCachedPlaceGet(url), url).toBe(true));
   });
 });

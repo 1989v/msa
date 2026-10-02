@@ -62,3 +62,5 @@
 | 12.F | pytest 4파일 · check_sample_fields · Gradle(place domain·feature·search batch·app·content 대상) + 게이트 · vitest 2 · tsc(app) | 34 passed · exit 0 · 216 tests 0 실패 · BUILD SUCCESSFUL · 41 passed · exit 0 |
 | 12.F | 노출 규칙(우리 행으로 이어진 대상만, 분류 무관) | 출발 176 중 160(91%) 노출 · 앞 6곳 828건 = 관광지 659 · 음식 114 · 숙박 55 |
 | 12.E 운영 | 배포 8bc6111 · V28 · 첫 수집 · 재색인 | 123초 · 호출 269 · 받은 시군구 222 · 관광지 7,481 · 정확 5,910 · 정규화 451(노출 85%) · 포함 255(저장만) · 경복궁 30일 · 0건 시군구 47(광주·전남 27 + 구가 있는 시 등 20 — 원천이 구 단위 코드로 주는지 확인 필요) |
+| 12.G | pytest 9파일 · check_sample_fields · place domain·feature(통합) · ContentContextLoadSpec · 게이트 · vitest 2 · tsc(app) | 102 passed · exit 0 · 4·8·11·8·5·4·8 tests 0 실패 · BUILD SUCCESSFUL · 46 passed · exit 0 |
+| 12.G | 측정소 매핑 실측(672곳 · 관광지 48,725) · 사고 기록 | 관광지→최근접 중앙값 2.2km · 20km 초과 1.7% · 구현 중 로컬 kubectl 이 회사 EKS(prod-common)에 시크릿 읽기 요청 1건(출력 없음) — 이후 OCI 접근은 ssh msa-oci 로만 |

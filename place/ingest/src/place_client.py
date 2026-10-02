@@ -149,6 +149,17 @@ def put_weather_mid(records: list[dict]) -> dict:
     return _request("PUT", "/internal/weather/mid", {"items": records}, timeout=300)["data"]
 
 
+def put_air_stations(stations: list[dict], mappings: list[dict]) -> dict:
+    """대기 측정소(좌표 · 원문)와 시군구 → 최근접 측정소 매핑. 받은 것만 덮고 보내지 않은 측정소·시군구는 지우지 않는다.
+    place 가 매핑을 받은 시군구의 대기 캐시를 다시 채운다."""
+    return _request("PUT", "/internal/air/stations", {"stations": stations, "mappings": mappings}, timeout=300)["data"]
+
+
+def put_air_measurements(records: list[dict]) -> dict:
+    """대기 실시간 측정 — 측정소마다 행 하나(원문). place 가 측정 시각이 같거나 새로울 때만 덮고, 그 측정소를 쓰는 시군구 캐시를 다시 채운다."""
+    return _request("PUT", "/internal/air/measurements", {"items": records}, timeout=300)["data"]
+
+
 def put_region_visitors(records: list[dict]) -> dict:
     """지역 방문자 일자 행 — (수준, 지역, 날짜, 구분) 키로 upsert. place 가 받은 지역의 허브 캐시를 다시 채운다."""
     total = {"applied": 0, "regions": 0}

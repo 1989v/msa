@@ -28,7 +28,14 @@ import com.kgd.place.infrastructure.persistence.region.repository.Administrative
 import com.kgd.place.infrastructure.persistence.region.repository.RegionJpaRepository
 import com.kgd.place.infrastructure.persistence.region.repository.RegionVisitorDailyJpaRepository
 import com.kgd.place.infrastructure.persistence.region.adapter.RegionVisitorRepositoryAdapter
+import com.kgd.place.application.air.port.AirQualityRepositoryPort
 import com.kgd.place.application.weather.port.WeatherRepositoryPort
+import com.kgd.place.domain.air.model.AirStation
+import com.kgd.place.domain.air.model.AirStationMapping
+import com.kgd.place.infrastructure.persistence.air.adapter.AirQualityRepositoryAdapter
+import com.kgd.place.infrastructure.persistence.air.repository.AirMeasurementJpaRepository
+import com.kgd.place.infrastructure.persistence.air.repository.AirStationJpaRepository
+import com.kgd.place.infrastructure.persistence.air.repository.AirStationSigunguJpaRepository
 import com.kgd.place.domain.weather.model.MidKind
 import com.kgd.place.domain.weather.model.MidRegion
 import com.kgd.place.domain.weather.model.WeatherArea
@@ -102,6 +109,9 @@ class PlaceSchemaIntegrationSpec(
     @Autowired private val w3: WeatherMidForecastJpaRepository,
     @Autowired private val c0: AttractionCongestionJpaRepository,
     @Autowired private val c1: AttractionRelatedJpaRepository,
+    @Autowired private val a0: AirStationJpaRepository,
+    @Autowired private val a1: AirMeasurementJpaRepository,
+    @Autowired private val a2: AirStationSigunguJpaRepository,
     @Autowired private val tx: TransactionTemplate,
 ) : BehaviorSpec({
 
@@ -110,7 +120,7 @@ class PlaceSchemaIntegrationSpec(
             .config(enabledIf = { dockerAvailable }) {
                 // count() 는 엔티티마다 실제 SQL 을 MySQL 로 보낸다 — 컬럼이 어긋나면
                 // validate 에서 컨텍스트가 아예 안 뜨고, 뜬 뒤에도 매핑이 틀리면 여기서 터진다.
-                listOf(r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, w0, w1, w2, w3, c0, c1).map { it.count() }.size shouldBe 16
+                listOf(r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, w0, w1, w2, w3, c0, c1, a0, a1, a2).map { it.count() }.size shouldBe 19
             }
     }
 
@@ -298,6 +308,49 @@ class PlaceSchemaIntegrationSpec(
                     listOf(Triple(2, 602L, NameMatch.EXACT), Triple(1, 601L, NameMatch.NORMALIZED))
                 served.getValue(501L).targets.first().scls shouldBe "자연경관(하천/해양)"
                 served.getValue(701L).targets shouldBe emptyList()
+            }
+    }
+
+    Given("대기를 V30 표에 적재할 때") {
+        Then("측정소는 키로 덮이고 후보는 받은 시군구만 통째로 바뀌며, 측정은 같거나 새 측정만 덮으며(늦게 온 옛 회차·측정 없음은 무시), 원문이 그대로 읽혀야 한다")
+            .config(enabledIf = { dockerAvailable }) {
+                val adapter = AirQualityRepositoryAdapter(a0, a1, a2)
+                val at = LocalDateTime.of(2026, 10, 2, 22, 40)
+                // 운영 표본(2026-10-02) 서울 중구 — dmX 가 위도다
+                val stationRaw = """{"dmX":"37.564639","dmY":"126.975961","stationName":"중구","addr":"서울 중구 덕수궁길 15 시청서소문별관 3동"}"""
+                tx.execute {
+                    adapter.upsertStations(listOf(AirQualityRepositoryPort.StationRaw(AirStation("중구", 37.564639, 126.975961), stationRaw)), at)
+                    adapter.replaceMappings(
+                        listOf(
+                            AirStationMapping("11140", "중구", 820, 310),
+                            AirStationMapping("11110", "종로", 1310, 500), AirStationMapping("11110", "중구", 2100, 40),
+                        ),
+                        at,
+                    )
+                }
+                // 다음 주 종로구만 다시 — 그 시군구 후보는 통째로 바뀌고(같은 행을 지웠다 다시 넣어도 키에 걸리지 않는다), 중구는 남는다
+                tx.execute {
+                    adapter.replaceMappings(listOf(AirStationMapping("11110", "중구", 2100, 41), AirStationMapping("11110", "서대문구", null, 3)), at.plusDays(7))
+                } shouldBe 2
+                adapter.findMappings("11110").sortedBy { it.stationName } shouldBe
+                    listOf(AirStationMapping("11110", "서대문구", null, 3), AirStationMapping("11110", "중구", 2100, 41))
+                adapter.findMappings("11140") shouldBe listOf(AirStationMapping("11140", "중구", 820, 310))
+                adapter.findStations(listOf("중구", "없는측정소")) shouldBe listOf(AirStation("중구", 37.564639, 126.975961))
+                adapter.findSigunguByStations(listOf("중구")).toSet() shouldBe setOf("11110", "11140")
+
+                fun raw(time: String, pm10: String) = """{"stationName":"중구","sidoName":"서울","dataTime":"$time","pm10Value":"$pm10","pm10Grade":"1","pm10Flag":null}"""
+                val t21 = LocalDateTime.of(2026, 10, 2, 21, 0)
+                tx.execute { adapter.upsertMeasurements(listOf(AirQualityRepositoryPort.MeasurementRaw("서울", "중구", t21.plusHours(1), raw("2026-10-02 22:00", "16"))), at) }
+                // 늦게 도착한 21시 회차(재실행)와 측정 없는 회차는 22시 측정을 덮지 않는다
+                tx.execute { adapter.upsertMeasurements(listOf(AirQualityRepositoryPort.MeasurementRaw("서울", "중구", t21, raw("2026-10-02 21:00", "99"))), at) }
+                tx.execute { adapter.upsertMeasurements(listOf(AirQualityRepositoryPort.MeasurementRaw("서울", "중구", null, """{"stationName":"중구"}""")), at) }
+                adapter.findMeasurements(listOf("중구")).single().let { (it.dataTime to it.fields["pm10Value"]) } shouldBe (t21.plusHours(1) to "16")
+                adapter.findMeasurements(listOf("중구")).single().fields["pm10Flag"] shouldBe null
+                // 측정이 없던 측정소의 첫 행은 측정 없음이라도 원문을 남기고, 다음 측정이 덮는다
+                tx.execute { adapter.upsertMeasurements(listOf(AirQualityRepositoryPort.MeasurementRaw("경기", "새측정소", null, """{"stationName":"새측정소"}""")), at) }
+                tx.execute { adapter.upsertMeasurements(listOf(AirQualityRepositoryPort.MeasurementRaw("경기", "새측정소", t21, """{"stationName":"새측정소","pm10Value":"20"}""")), at) }
+                adapter.findMeasurements(listOf("새측정소")).single().let { (it.dataTime to it.fields["pm10Value"]) } shouldBe (t21 to "20")
+                a1.count() shouldBe 2
             }
     }
 
