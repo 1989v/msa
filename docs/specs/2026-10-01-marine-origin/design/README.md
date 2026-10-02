@@ -44,3 +44,6 @@ built-in image_gen 사용, CLI/API fallback 없음. 2026-10-01. 기준 이미지
 
 <!-- source: portal-fe/public/games/lib/relay.js -->
 <!-- source: portal-fe/public/games/lib/platform.js -->
+
+## 가시 공격 이미지 자산
+`portal-fe/public/games/marine-command/assets/origin/ground-spike-v1.png` — 뼈 가시·균열·파편을 가진 투명 단일 이펙트. built-in image_gen, 시안05의 미술 톤 참조, 원문 `prompts/09-ground-spike.txt`. 실제 렌더러에서 밑동을 고정하고 돌출/유지/소멸을 애니메이션한다. 자산 미리보기는 실제 플레이 캡처가 아니다.
