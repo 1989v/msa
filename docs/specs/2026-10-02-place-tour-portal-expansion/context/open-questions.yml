@@ -1,0 +1,92 @@
+questions:
+  - id: Q1
+    phase: pre-impl
+    status: open
+    question: searchFestival2 의 조회 시작일 파라미터가 시작일 기준인지, 진행 중인 장기 행사(시작이 기준일 이전)가 포함되는지, 그리고 −365 창의 건수·쪽수·좌표 제외 건수
+    default: KST 오늘 − 365일을 넘긴다 (SR-1). 첫 호출에서 기준일을 오늘·−365 두 번 불러 건수·겹침·쪽수를 비교해 implementation/ 에 남기고, SR-1b 호출 수와 SR-10b 대조 규모를 그 값으로 고친다. 국·영 합 60쪽을 넘으면 창을 −180일로 줄인다(SR-1b). 표본 전에는 수집 코드를 머지하지 않는다(SR-10)
+  - id: Q2
+    phase: pre-impl
+    status: open
+    question: 옛 행 영문 2건(detailCommon2 가 유형 76 으로 답함)이 searchStay2(80) 목록에 나오는지
+    default: 나오지 않으면 영문 관광지(76) 목록 동기화를 한 번 수동 실행해 채운다. 그래도 없으면 detailCommon2 단건 응답으로 유형·법정동만 보정하는 일회성 스크립트를 SR-1 에 포함한다
+  - id: Q3
+    phase: pre-impl
+    status: open
+    question: searchStay2 목록 행이 areaBasedList2 와 다른 필드를 주는지
+    default: 다른 필드는 목록 행 원문 컬럼에 보존된다(SR-1). 화면이 쓸 필드가 생기면 파생 컬럼은 새 V 로 더한다
+  - id: Q4
+    phase: pre-impl
+    status: open
+    question: 종료일 또는 시작일이 비어 있거나, 시작일 > 종료일이거나, 날짜 변환에 실패한 행사 건수
+    default: S 만 → (S,S), E 만 → (E,E), S>E·둘 다 없음 → 날짜 없음(UNKNOWN, 필터·근처 행사·행사 sitemap 제외) (SR-3). 변환 실패는 그 값만 None 으로 두므로(SR-1) 남은 쪽으로 위 규칙을 탄다. 수집 로그와 재색인 완료 로그의 건수를 첫 적재에서 implementation/ 에 남기고, UNKNOWN 이 행사의 1% 를 넘으면 규칙을 다시 본다
+  - id: Q5
+    phase: pre-impl
+    status: open
+    question: 숙박 상세에도 수집형 「방문 후기」(네이버 블로그 등)를 붙일지 — 숙박 후기는 협찬 글 비중이 높다
+    default: 숙박(32·80)에는 방문 후기 절을 그리지 않는다. 숙박 표본 20곳의 후기에서 협찬 표기 비율을 재 본 뒤 결정을 이 항목에 적는다
+  - id: Q-P2-KORWITH
+    phase: pre-impl
+    status: open
+    question: 무장애 여행 KorWithService2(15101897) 응답 필드와 접근성 속성 패싯의 값 체계
+    default: 승인 뒤 첫 호출 표본 → 전부 적재 → 긍정 값만 필터(속성 패싯 규칙), 라벨 정밀도 95% 미만이면 필터를 열지 않는다
+  - id: Q-P2-CONGESTION
+    phase: pre-impl
+    status: open
+    question: 관광지 집중률 TatsCnctrRateService(15128555)의 대상 범위·예측 기간·관광지 식별자 매칭
+    default: 표본 확인 뒤 상세 「혼잡 예측」 화면 확정
+  - id: Q-P2-RELATED
+    phase: pre-impl
+    status: open
+    question: 연관 관광지 TarRlteTarService1(15128560)의 식별자가 TourAPI contentId 와 이어지는지
+    default: 이어지면 상세 「여기 온 사람들이 함께 간 곳」(비슷한 곳과 별개 절), 이어지지 않으면 이름·좌표 매칭 정확도를 재고 결정
+  - id: Q-P2-DURUNUBI
+    phase: pre-impl
+    status: open
+    question: 두루누비 걷기길(15101974) 필드와 코스 경로(GPX 등) 제공 형태
+    default: 새 콘텐츠 유형으로 저장, 화면은 표본 확인 뒤
+  - id: Q-P2-CAMPING
+    phase: pre-impl
+    status: open
+    question: 고캠핑(15101933) 필드와 기존 TourAPI 캠핑장 행(레포츠 분류)과의 중복
+    default: 새 콘텐츠 유형, 중복은 이름·좌표로 재고 결정
+  - id: Q-P2-PHOTO
+    phase: pre-impl
+    status: open
+    question: 관광사진(15101914)의 공공누리 유형(변경 금지·상업 이용 금지 여부)
+    default: 유형 확인 전에는 화면에 내지 않는다. 변경 금지 유형이면 자르기·리사이즈 없이 원본 표시만
+  - id: Q-P2-WELLNESS
+    phase: pre-impl
+    status: open
+    question: 웰니스관광(15144030) 필드와 쓰임(새 유형 또는 기존 관광지 태그)
+    default: 표본 확인 뒤
+  - id: Q-P2-VISITORS
+    phase: pre-impl
+    status: open
+    question: 빅데이터 지역별 방문자수(15101972)의 지역 단위가 법정동 시군구와 맞는지
+    default: 맞으면 지역 허브의 방문자 추이, 아니면 시도 단위로만
+  - id: Q-P2-WEATHER
+    phase: pre-impl
+    status: open
+    question: 기상청 단기예보(15084084)·중기예보(15059468)의 수집 주기와 하루 호출 수, 중기예보 구역과 시군구 대응
+    default: 단기는 시군구 좌표 → 격자 변환으로 시군구 단위 선수집, 중기는 예보구역 단위. 하루 호출 수가 계정 한도 안인지 확인 뒤 주기 확정
+  - id: Q-P2-AIR
+    phase: pre-impl
+    status: open
+    question: 에어코리아 대기오염(15073861) 측정소 단위와 상세에 붙일 단위(시도·측정소 최근접)
+    default: 시도별 실시간 조회를 선수집, 상세는 가장 가까운 측정소 값
+  - id: Q-P2-PET
+    phase: pre-impl
+    status: open
+    question: 반려동물 동반여행 서비스(15135102)가 기존 detailPetTour2 와 겹치는 범위
+    default: 별개 원천으로 적재(기존 petRaw 를 덮지 않음), 화면 합류 방식은 표본 확인 뒤
+  - id: Q-P2-KEY
+    phase: pre-impl
+    status: open
+    question: 걷기길·캠핑·웰니스처럼 TourAPI 가 아닌 원천을 attractions 행으로 넣을 때 자연키(contentId, lang) 충돌
+    default: 행으로 넣는다면 원천 구분 컬럼을 자연키에 더하는 새 V 가 먼저다. 별도 표가 더 단순하면 그쪽으로 — 첫 API 착수 시 ADR-0104 에 결정을 덧붙인다
+  - id: Q-LEGACY
+    phase: out-of-scope
+    status: open
+    owner: 사용자
+    question: TourAPI 에 없는 옛 시드 행 53건 삭제
+    default: 사용자 확인 전에는 지우지 않는다. 이 스펙은 다루지 않는다

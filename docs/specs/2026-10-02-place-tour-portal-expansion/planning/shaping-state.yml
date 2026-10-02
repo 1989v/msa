@@ -1,0 +1,11 @@
+threshold: 0.2
+rounds: 0
+ambiguity: 0.15
+interview: skipped  # 사용자와 범위·만료 규칙·배포 순서가 이미 확정됨 (initialization.md)
+topology: [수집(R1), 저장(R2), 상태 판정·만료(R3), 노출(R4), 2단계 API(R5)]
+answers:
+  expiry: "저장 플래그 없이 시작일·종료일을 KST 로 조회·렌더 시점 판정, 종료 30일 뒤 noindex + sitemap 제외, 서버 렌더가 정본"
+  collection: "별도 place-ingest CronJob 매일, 재색인과 합치지 않음"
+  stay: "정보만 노출, 예약·제휴 링크 없음"
+  phase2: "활용신청 승인 순서대로 API 마다 독립 배포, 필드는 첫 호출 표본으로 확정"
+  deploy: "① 수집·저장 ② 색인·서버 렌더·지역 허브·필터 ③ 근처 행사·숙소 + sitemap/noindex ④ 2단계"

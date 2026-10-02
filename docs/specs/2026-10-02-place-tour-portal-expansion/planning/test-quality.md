@@ -1,0 +1,35 @@
+# 테스트 전략
+
+원칙: 검사는 **대상이 내놓은 값**을 본다. 기대값을 손으로 복사하지 않는다. ★ 검사는 대상 코드를 되돌려 빨간불을 본 뒤에만 켰다고 기록한다.
+날짜가 들어간 검사는 전부 시계(또는 오늘 날짜 인자)를 주입한다 — 실행 시각에 따라 결과가 바뀌는 검사는 두지 않는다.
+「없음」을 확인하는 검사는 같은 실행에 양성 대조군(대상이 입력에 실제로 있다 · 같은 출력에 다른 것은 있다)을 둔다. 대조군 없이는 출력이 통째로 비어도 초록불이다.
+첫 운영 호출 표본(Q1·Q3) 전에 합성 픽스처로 짠 수집 검사는 표본으로 바꾼 뒤에만 ★ 를 단다(spec SR-10 머지 조건).
+
+| # | 시나리오 | 층 · 파일 | 판정 근거 | ★ |
+|---|---|---|---|---|
+| T1 | **유효 기간·상태 경계**: S·E 정상 · S 만 → (S,S) · E 만 → (E,E) · S>E → `UNKNOWN` · 둘 다 없음 → `UNKNOWN` · 시작일 당일 = 진행 중 · 종료일 당일 = 진행 중 · 종료일 다음 날 = 종료 · 시작일 전날 = 예정 · **KST 자정**(UTC 14:59 / 15:00 두 시각을 호출자가 오늘로 바꿔 넘김) | unit `EventScheduleTest`(search:domain) | `EventSchedule` 반환값 | ★ |
+| T2 | 필터 범위: 이번 주말 — 월~일 각 요일을 오늘로 두고 겹침(오늘 포함 · 일요일은 그날 하루 · 금요일 종료 행사 제외) · 이번 달 — 월말·월초 걸친 행사 · `NOT_ENDED` · 정렬 `eventStart`(동률 id) | unit 같은 파일 | 범위·정렬 함수 반환값 | ★ |
+| T2b | **범위 ⇔ 상태 동치**: 날짜 격자(월말 걸친 2주 × 요일 7 × S/E 조합 5종)에서 모든 필터 f 에 대해 「범위(f) 포함 ⇔ 상태 조건(f)」, `WEEKEND`·`THIS_MONTH` 결과에 ENDED·UNKNOWN 없음. 회귀 주입: 범위 함수의 경계 하나를 `>`→`>=` 로 | unit 같은 파일 | 두 함수의 출력 대조 | ★ |
+| T3 | **robots 합성**: 개요 없음 + 진행 중 → noindex · 개요 있음 + 종료 +30일 → index · +31일 → `noindex, follow` · 개요 있음 + `UNKNOWN` → index · 오늘은 서비스가 넘긴 인자(렌더러는 시계 없음) | unit `AttractionPageRendererTest` + `AttractionPageServiceTest`(고정 `Clock` → 렌더 포트 인자) | 렌더 출력 · 포트에 넘어간 날짜 | ★ |
+| T4 | **동기화·보강이 기존 필드를 지우지 않는다**: ① `syncFrom` — 행사 날짜·목록 원문이 있는 행에 개요·이용정보·부가 사진·반려동물 왕복 레코드(날짜 없음) → 값 유지, 유형 12 목록 동기화가 개요·introRaw·petRaw·setting·infoRaw 를 지우지 않음 ② 엔티티 왕복 `fromDomain(toDomain(e))` 가 새 세 컬럼 보존 ③ `saveAll`(구글 보강) 경로 뒤 새 컬럼 유지 | unit `AttractionTest.syncFrom` · `AttractionJpaEntityTest` · `AttractionRepositoryAdapter` 저장소 대역 / integration 은 보조 — Docker 가 있는 환경에서 실제로 돈 출력 줄을 증거로 남긴다(없으면 건너뛰어 통과로 보이므로 ★ 근거로 쓰지 않는다) | 다시 읽은 도메인·엔티티 값 | ★ |
+| T4b | `AttractionDtoRoundTripTest` 가 새 세 필드를 포함해 통과(적재 가능한 필드 ⊆ 조회로 되읽는 필드) | unit place:feature | 리플렉션 대조 | ★ |
+| T5 | 파이썬 왕복: `UPSERT_FIELDS` 로 만든 레코드에 새 필드가 실린다 · `fetch_attractions` 응답에 새 필드가 있다 | pytest `place/ingest/tests` | 만든 레코드 dict | ★ |
+| T6 | 분류: 유형 15/85 → `festival` · 32/80 → `stay` · 25 → `course` · 그 밖은 기존 결과와 같음(기존 표본 픽스처 전량 비교, 레포츠 `AC05` → `stay` 유지 포함) · `EV` 행사가 `culture` 로 가지 않음 | pytest `categorize` | 함수 반환값 | ★ |
+| T7 | 수집: `normalize_row` 로 바꾼 뒤 기존 `--job=sync` 정규화 결과가 같음(기존 표본 전량) · 행사 조회 시작일 = KST 오늘 − 365 · 페이징 끝 · 코스는 국문만(영문 키 없음에서 오류 없음) · 날짜 변환 — `20261005` → `2026-10-05`, 빈 값·`0`·7자리·`20261340` → None 이고 **행은 남는다** + 실패 건수 · 좌표 없는 행 제외 + 제외 건수 · 행 원문 보존 · 한 유형·언어 실패 시 나머지 계속 | pytest(응답 픽스처는 첫 운영 호출 표본) | 정규화 결과·호출 기록·로그 건수 | ★ |
+| T7b | 보강 우선순위: `backfill_media.pick` 이 코스(25)를 관광 분류와 같은 순위로 고름 · `backfill_overview.pick`·이용정보 pick 이 종료 아닌 행사를 맨 앞에 시작일 오름차순으로 · 종료 행사는 앞에 오지 않음 | pytest | `pick` 반환 순서 | ★ |
+| T8 | **코스 구성 순서**: `subnum` 수 정렬(1,2,10) · 1건이면 dict 로 오는 응답 · 매칭 안 되는 `subcontentid` 는 이름만 · 빈 `infoRaw` → 필드 없음 · 언어가 다른 관광지와 매칭하지 않음 | unit `CourseStopsParserTest`(search:domain) | 파서 반환값 | ★ |
+| T9 | **재색인 왕복**: 태스클릿이 만든 bulk 문서(캡처본)를 `AttractionSearchDocument` 로 역직렬화 → `toDomain()` 값이 유효 날짜·코스 순서와 같다(손으로 만든 문서 금지) · 1차 투영의 `(lang, contentId) → id` 매칭 · 매칭 실패 건수 로그 · 재색인일 기준 종료 행사가 가까운 곳·비슷한 곳·지역 건수에서 빠짐. · 가까운 곳·비슷한 곳 항목의 유효 종료일이 쓰기→읽기→UseCase 결과까지 값으로 남음(하위 필드 회귀 주입: 읽기 항목 클래스에서 필드 삭제 → 빨간불). 회귀 주입: 읽기 클래스에서 필드를 지우고 `searchReadOmitted` 에 사유를 적는다 → 게이트 실패 + T9 빨간불 | unit `AttractionApiReindexTaskletTest`(bulk 캡처) + `verifySearchIndexContract` | 역직렬화한 캡처 문서 · 게이트 출력 | ★ |
+| T9b | `PlaceApiClient`: 응답 JSON 의 행사 시작·종료일·목록 원문이 DTO 에 실린다(없으면 null) | unit `PlaceApiClientTest` | DTO 값 | ★ |
+| T10 | 검색 필터: 다섯 값이 만드는 범위 질의 · 「행사가 아니거나 범위 안」 모양 · `sort=eventStart` · 모르는 값 무시 · 서비스가 `Clock` 으로 범위를 정하고 어댑터는 받은 범위만 씀 · 같은 고정 시계에서 질의의 양 끝 날짜를 `EventSchedule` 판정에 넣어 포함·제외가 맞는지 교차 단언 · **파라미터 없으면 기존 요청 JSON 과 바이트 동일 — 기준 스냅샷은 어댑터를 고치기 전 커밋에서 패싯·랭킹·하이브리드 경로마다 뜬다** · 자동완성 질의에 「행사가 아니거나 NOT_ENDED」 | unit `AttractionSearchAdapterEventTest` · `SearchAttractionServiceTest` | 어댑터가 만든 요청 · 서비스가 넘긴 범위 | ★ |
+| T11 | **서버 렌더 셸 계약 골든**: 유형별(행사 진행 중·종료·`UNKNOWN` · 숙박 · 코스, 국문·영문) 렌더 HTML 이 셸 seo 블록 교체 · `#root` 본문 · 유형별 절 · 상태 문구(국·영) · 출처 문구 · 코스 순서 보존 · 오늘 이전에 끝난 가까운 곳·비슷한 곳 항목 제외. **숙박 예약 URL 없음** — 숙박 픽스처 `introRaw` 에 예약 URL 키가 들어 있다는 전제를 먼저 단언 | unit `AttractionPageRendererTest`(골든 HTML 파일, 갱신은 명시 플래그로만) | 렌더 출력 | ★ |
+| T11b | 딥링크: 숙박(32·80) → `MYREALTRIP`·`KLOOK` 없음, 같은 실행의 관광지(12) → 둘 다 있음(양성 대조) | unit `AttractionDeepLinksTest`(place:domain) | 함수 반환 목록 | ★ |
+| T12 | JSON-LD 서버·클라이언트 동일(`Event`·`LodgingBusiness`·`TouristTrip`) — vitest 가 `copy.mjs` 실제 함수로 픽스처 생성(고정 시각), Kotlin 이 비교, CI 가 픽스처 재생성 후 `git diff --exit-code`. 골든의 `@type` 집합 ⊇ {Event, LodgingBusiness, TouristTrip} · 행사 진행 중·종료 사례가 각각 있음 · Kotlin 입력은 픽스처 JSON 을 `AttractionSearchDocument` 로 **역직렬화**(손 사본 `documentOf` 대체) | vitest + Kotlin `AttractionJsonLdParityTest` | 양쪽 실제 함수 출력 | ★ |
+| T12b | **서버·화면 판정 동일**: Kotlin `EventSchedule` 이 만든 날짜 격자 골든(경계일·KST 자정·주말 요일·월말·만료 +30/+31) → TS 상태 판정·상태 문구·`useSeo` robots 가 같은 입력으로 비교. CI 가 골든 재생성 후 `git diff --exit-code`. 회귀 주입: TS 경계 `<`→`<=` | Kotlin 생성기 + vitest | 양쪽 실제 함수 출력 | ★ |
+| T13 | **정적 sitemap**: 입력 픽스처에 행사 문서가 **있다**는 단언 → 출력의 행사 URL 0 · 같은 출력에 관광·코스 URL ≥ 1 · 숙박은 개요+사진 둘 다 있을 때만(하나만 있는 숙박 제외) · 대조: 사진 없는 레포츠 캠핑장(category=stay, 유형 28)은 개요만으로 계속 실림 · 인덱스가 `sitemap-places-events.xml` 을 가리킴 · 상세 0건 분기는 가리키지 않음 · 시도 조각 10,000 초과 시 빌드 실패 | vitest `prerender-seo`(`indexDoc`·조각 함수·`writePlaceSitemaps`) | 생성된 항목 | ★ |
+| T14 | **행사 sitemap**: 종료 +30일 포함 · +31일 제외 · 개요 없는 행사 제외 · `UNKNOWN` 제외 · 조회 실패 → 503 · XML 이스케이프 · `lastmod` W3C 날짜(없으면 생략) · 서비스가 `Clock` 으로 범위를 정함 | unit `EventSitemapRendererTest` · `EventSitemapServiceTest` + MockMvc | 응답 본문·상태 | ★ |
+| T15 | nginx: `/sitemap-places-events.xml` 정확 일치가 sitemap 정규식 location 보다 먼저 잡힌다 · place 외 호스트 404 · 스텁 search 503 → 503 그대로(SPA 셸 200 아님) · upstream 에 Cookie·Authorization 이 가지 않음 · `Cache-Control` 헤더. 회귀 주입: `=` 를 빼거나 정규식 뒤로 옮김 → 빨간불 | 스텁 search + 실제 nginx(ADR-0103 T19 방식) | 응답 상태·헤더·스텁이 받은 요청 | ★ |
+| T16 | 화면: 행사 칩 · 국문만 코스 칩(`/en` 없음) · 상태 칩 기본 `NOT_ENDED` · 키워드 있는 「전체」가 `festival`+`NOT_ENDED` 를 보냄(키워드 없으면 관광 분류만) · 숙박 오버레이 토글 · 편의시설 캐로셀에 `stay` 없음 + 근처 숙소 · 근처 행사(0건이면 없음 · 자기 제외) · 지역 허브 이번 달 행사 · 카드·바텀시트에 기간·상태 · 섹션 식별자 셋으로 노출 기록 호출 · 새 유형 상세에 `attraction-end` 지면 없음(관광지 상세는 기존 그대로 — 대조) · 숙박 원문 키 허용 목록(예약 키가 입력에 있어도 안 그림) | vitest `PlacePage`·`AttractionPage`·`RegionPage`·`placeApi` | 렌더 결과·호출 인자 | |
+| T17 | 모바일 세로·가로 CDP 실측: 상태 칩 줄 · 근처 절 카드 · 코스 순서 목록 · 행사 카드·바텀시트의 기간 줄 | e2e (CDP) | 측정값·크롭 스크린샷 | |
+| T18 | 운영 ①: 배포 **직전** 보강 필드 비공백 건수를 `verifications/ops-before.txt` 로 저장 → 배포 뒤 같은 쿼리와 diff · 유형별 적재 = totalCount − 좌표 제외 · SR-1 4건의 유형·지역 | 읽기 전용 SQL(키셋) | 두 파일 diff · 로그 값 | ★ |
+| T19 | 운영 ②③: 먼저 응답에 새 유형별 절 마커가 있는지 확인(없으면 측정 폐기) → Googlebot UA 로 유형별 표본 `X-Render: ssr` + 유형별 절 · 종료 31일 지난 행사 `noindex` · 행사 sitemap 에 그 URL 없음 **그리고** 진행 중 표본 URL 있음(URL 수 > 0, 개요 있는 비종료 행사 `_count` 와 대조) · apex·blog 의 같은 경로 404 · 필터 건수 = `_count` · 재색인 소요 전후 | e2e (curl, 캐시 우회) | 운영 응답 | ★ |
+| T20 | 2단계 API 마다: 첫 호출 표본 파일 존재 · 표본의 모든 필드가 적재 경로에 있다(표본 키 집합 ⊆ 적재 필드 집합, 스크립트로 판정) · 요청 경로가 외부 호스트를 부르지 않음(place·search 파드에 egress 가 없어 구조적으로 불가 — 정책 파일로 확인) | pytest + 정책 파일 대조 | 표본 키 집합 · 정책 | ★ |
