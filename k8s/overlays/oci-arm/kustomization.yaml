@@ -408,7 +408,7 @@ images:
     newTag: 31913f7
   - name: commerce/search-batch
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-batch
-    newTag: 981e71f
+    newTag: d3ff791
   - name: commerce/search-consumer
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-consumer
     newTag: f8d2ad7
