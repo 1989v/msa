@@ -13,11 +13,11 @@ from __future__ import annotations
 
 import json
 import time
-from datetime import datetime
+from datetime import date, datetime
 
 from src import place_client
-from src.backfill_overview import REQUEST_GAP_SEC, UPSERT_FIELDS, log, run_collect
-from src.sync_tour import SERVICES, tour_get
+from src.backfill_overview import REQUEST_GAP_SEC, UPSERT_FIELDS, festival_first, log, run_collect
+from src.sync_tour import SERVICES, kst_today, tour_get
 
 # 파생 컬럼 ← 원천 키 후보. 유형별 접미사(culture/leports/…)가 붙은 것을 한 자리로 모은다.
 # 순서대로 찾아 **처음 값이 있는 것**을 쓴다.
@@ -56,15 +56,17 @@ def has_payload(item: dict) -> bool:
     return any(str(v or "").strip() for k, v in item.items() if k not in _META_KEYS)
 
 
-def pick(rows: list[dict], lang: str, budget: int) -> list[dict]:
+def pick(rows: list[dict], lang: str, budget: int, today: date | None = None) -> list[dict]:
     """아직 안 받은 것부터. `introSyncedAt` 이 없는 레코드가 대상이다.
 
     값이 아니라 **받은 시각**으로 판정한다 — 원천이 빈 응답을 준 레코드를 값으로 재면
     매일 같은 것을 다시 부르게 된다.
     """
+    today = today or kst_today()
     todo = [r for r in rows if r.get("lang") == lang and not r.get("introSyncedAt")]
-    # 관광 분류 → 사진 있는 것 순. 화면에 먼저 보이는 것부터 채운다.
+    # 종료 안 된 행사 → 관광 분류 → 사진 있는 것 순. 화면에 먼저 보이는 것부터 채운다.
     todo.sort(key=lambda r: (
+        festival_first(r, today),
         0 if r.get("category") in ("nature", "history", "culture", "leisure") else 1,
         0 if (r.get("imageUrl") or "").strip() else 1,
         r["contentId"],

@@ -33,6 +33,7 @@ import json
 import os
 import sys
 import time
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import urlopen
@@ -43,14 +44,37 @@ SAMPLE = HERE / "attractions.sample.jsonl"
 BASE = "https://apis.data.go.kr/B551011"
 SERVICES = {"kor": ("KorService2", "ko"), "eng": ("EngService2", "en")}
 
-# 관광 타입 → 서비스별 contentTypeId (국문/영문 코드 체계가 다르다)
+# 관광 타입 → 서비스별 contentTypeId (국문/영문 코드 체계가 다르다).
+# 언어 키가 없을 수 있다 — 여행코스는 영문 서비스에 유형이 없다.
 CONTENT_TYPES = {
     "attraction": {"kor": "12", "eng": "76"},
     "culture": {"kor": "14", "eng": "78"},
     "leisure": {"kor": "28", "eng": "75"},
     "shopping": {"kor": "38", "eng": "79"},
     "food": {"kor": "39", "eng": "82"},
+    "festival": {"kor": "15", "eng": "85"},
+    "stay": {"kor": "32", "eng": "80"},
+    "course": {"kor": "25"},
 }
+
+# 행사·숙박·코스는 `--job=sync`(areaBasedList2) 가 아니라 `--job=tour-portal-sync` 가 받는다.
+# 행사·숙박은 전용 오퍼레이션이 있고, 셋 다 행 원문(listRaw)을 함께 싣는다.
+PORTAL_OPERATIONS = {
+    "festival": "searchFestival2",
+    "stay": "searchStay2",
+    "course": "areaBasedList2",
+}
+LIST_SYNC_TYPES = tuple(t for t in CONTENT_TYPES if t not in PORTAL_OPERATIONS)
+
+#: 행사 조회 시작일 = KST 오늘 − 이 일수. 원천은 이 값을 「종료일 ≥ 값」으로 거른다 —
+#: 지난 1년 안에 끝난 행사까지 행으로 남는다 (2026-10-02 실측: 국 897 · 영 262건, 합 12쪽).
+FESTIVAL_WINDOW_DAYS = 365
+
+KST = timezone(timedelta(hours=9))
+
+# 유형 코드가 정하는 분류 — 신분류보다 앞선다. 행사의 신분류 `EV` 가 `culture` 로 접혀
+# 문화시설 목록·지역 건수에 섞이는 것을 막는다. 레포츠(28) 캠핑장 `AC05` → `stay` 는 그대로다.
+CONTENT_TYPE_CATEGORY = {"15": "festival", "85": "festival", "32": "stay", "80": "stay", "25": "course"}
 
 # TourAPI cat1/cat2 → 자체 카테고리 슬러그 (언어 중립 — FE 가 로케일 라벨 렌더)
 CAT2_OVERRIDE = {"A0201": "history", "A0202": "nature"}
@@ -84,7 +108,8 @@ LCLS2_MAP = {
 NON_TOURISM_LCLS3 = {"EX050800"}
 
 
-def categorize(cat1: str, cat2: str, lcls1: str = "", lcls2: str = "", lcls3: str = "") -> str:
+def categorize(cat1: str, cat2: str, lcls1: str = "", lcls2: str = "", lcls3: str = "",
+               content_type_id: str = "") -> str:
     """**더 구체적인 코드가 이긴다** — 신/구 어느 체계인지가 아니라 얼마나 좁게 말하는지로 고른다.
 
     원천은 한 레코드에 두 체계를 같이 준다. 신 체계를 통째로 앞세우면 캠핑장 1,335건이
@@ -98,7 +123,12 @@ def categorize(cat1: str, cat2: str, lcls1: str = "", lcls2: str = "", lcls3: st
 
     관광지가 아닌 것(의료관광)은 앞단에서 걸러 `etc` 로 보낸다 — 어느 코드가 뭐라 하든
     병원은 관광지가 아니다.
+
+    행사·숙박·코스는 유형 코드(`CONTENT_TYPE_CATEGORY`)가 분류 코드보다 먼저 정한다.
     """
+    by_type = CONTENT_TYPE_CATEGORY.get(content_type_id)
+    if by_type:
+        return by_type
     if lcls3 in NON_TOURISM_LCLS3:
         return "etc"
     return (LCLS2_MAP.get(lcls2)
@@ -194,6 +224,65 @@ def parse_modified(raw: str) -> str | None:
     return f"{raw[0:4]}-{raw[4:6]}-{raw[6:8]}T{raw[8:10]}:{raw[10:12]}:{raw[12:14]}"
 
 
+def _item_list(body: dict) -> list[dict]:
+    """원천은 0건이면 빈 문자열, 1건이면 dict, 여러 건이면 list 로 준다."""
+    items = body.get("items") or {}
+    item_list = items.get("item") if isinstance(items, dict) else None
+    if not item_list:
+        return []
+    return [item_list] if isinstance(item_list, dict) else item_list
+
+
+def has_coordinates(item: dict) -> bool:
+    """좌표 없는 행은 지도·근방검색에 못 쓴다.
+    무지정 조회에는 문자열 "null" 로 오는 레코드가 섞여 있어 값으로도 걸러낸다."""
+    lat, lng = str(item.get("mapy") or "").strip(), str(item.get("mapx") or "").strip()
+    return not (lat in ("", "null", "0") or lng in ("", "null", "0"))
+
+
+def normalize_row(it: dict, lang: str) -> dict:
+    """목록 행 하나 → bulk 레코드. 좌표가 있는 행만 넘긴다(`has_coordinates`)."""
+    lat, lng = str(it.get("mapy") or "").strip(), str(it.get("mapx") or "").strip()
+    content_type_id = str(it.get("contenttypeid") or "").strip() or None
+    return {
+        "contentId": str(it["contentid"]),
+        "lang": lang,
+        "title": (it.get("title") or "").strip(),
+        "address": " ".join(x for x in (it.get("addr1"), it.get("addr2")) if x).strip() or None,
+        # 구 코드가 있으면 그대로, 없으면 법정동 코드에서 역산 (무지정 조회 대응)
+        "areaCode": (str(it.get("areacode") or "").strip()
+                     or LDONG_TO_AREA.get(str(it.get("lDongRegnCd") or "").strip())),
+        "sigunguCode": (str(it.get("sigungucode") or "").strip()
+                        or str(it.get("lDongSignguCd") or "").strip() or None),
+        # ADR-0071 — 지역 축은 법정동 코드로만 세운다. 위 sigunguCode 는 구 코드와
+        # 법정동 코드를 대체해 담아 두 체계가 섞였다(실측: 486쌍, 실제 시군구는 269개).
+        **_ldong(it),
+        "category": categorize(it.get("cat1") or "", it.get("cat2") or "",
+                               it.get("lclsSystm1") or "", it.get("lclsSystm2") or "",
+                               it.get("lclsSystm3") or "", content_type_id or ""),
+        "cat1": it.get("cat1") or None,
+        "cat2": it.get("cat2") or None,
+        "cat3": it.get("cat3") or None,
+        "latitude": float(lat),
+        "longitude": float(lng),
+        "imageUrl": it.get("firstimage") or None,
+        "thumbnailUrl": it.get("firstimage2") or None,
+        # 원천이 주는 값은 **가공 없이 그대로** 싣는다 (ADR-0065).
+        # category 는 이 값들에서 계산한 파생 컬럼이라, 그루핑 규칙이 바뀌어도
+        # 원천 재호출(일일 한도가 있는 자원) 없이 DB 안에서 다시 계산할 수 있다.
+        "lclsSystm1": it.get("lclsSystm1") or None,
+        "lclsSystm2": it.get("lclsSystm2") or None,
+        "lclsSystm3": it.get("lclsSystm3") or None,
+        "contentTypeId": content_type_id,
+        "copyrightDivCd": it.get("cpyrhtDivCd") or None,
+        "mapLevel": int(it["mlevel"]) if str(it.get("mlevel") or "").strip().isdigit() else None,
+        "zipcode": str(it.get("zipcode") or "").strip() or None,
+        "sourceCreatedAt": parse_modified(it.get("createdtime") or ""),
+        "tel": (it.get("tel") or "").strip() or None,
+        "sourceModifiedAt": parse_modified(str(it.get("modifiedtime") or "")),
+    }
+
+
 def fetch_area_based(key: str, svc_key: str, content_type: str, area: str | None,
                      limit: int, dump_keys: bool) -> list[dict]:
     service, lang = SERVICES[svc_key]
@@ -205,64 +294,102 @@ def fetch_area_based(key: str, svc_key: str, content_type: str, area: str | None
         if area:
             params["areaCode"] = area
         body = tour_get(key, service, "areaBasedList2", params)
-        items = body.get("items") or {}
-        item_list = items.get("item") if isinstance(items, dict) else None
+        item_list = _item_list(body)
         if not item_list:
             break
-        if isinstance(item_list, dict):
-            item_list = [item_list]
         if dump_keys:
             print(json.dumps(item_list[0], ensure_ascii=False, indent=2))
             return []
-        for it in item_list:
-            # 좌표 없는 행은 지도·근방검색에 못 쓴다 — 제외.
-            # 무지정 조회에는 문자열 "null" 로 오는 레코드가 섞여 있어 값으로도 걸러낸다.
-            lat, lng = str(it.get("mapy") or "").strip(), str(it.get("mapx") or "").strip()
-            if lat in ("", "null", "0") or lng in ("", "null", "0"):
-                continue
-            rows.append({
-                "contentId": str(it["contentid"]),
-                "lang": lang,
-                "title": (it.get("title") or "").strip(),
-                "address": " ".join(x for x in (it.get("addr1"), it.get("addr2")) if x).strip() or None,
-                # 구 코드가 있으면 그대로, 없으면 법정동 코드에서 역산 (무지정 조회 대응)
-                "areaCode": (str(it.get("areacode") or "").strip()
-                             or LDONG_TO_AREA.get(str(it.get("lDongRegnCd") or "").strip())),
-                "sigunguCode": (str(it.get("sigungucode") or "").strip()
-                                or str(it.get("lDongSignguCd") or "").strip() or None),
-                # ADR-0071 — 지역 축은 법정동 코드로만 세운다. 위 sigunguCode 는 구 코드와
-                # 법정동 코드를 대체해 담아 두 체계가 섞였다(실측: 486쌍, 실제 시군구는 269개).
-                **_ldong(it),
-                "category": categorize(it.get("cat1") or "", it.get("cat2") or "",
-                                       it.get("lclsSystm1") or "", it.get("lclsSystm2") or "",
-                                       it.get("lclsSystm3") or ""),
-                "cat1": it.get("cat1") or None,
-                "cat2": it.get("cat2") or None,
-                "cat3": it.get("cat3") or None,
-                "latitude": float(lat),
-                "longitude": float(lng),
-                "imageUrl": it.get("firstimage") or None,
-                "thumbnailUrl": it.get("firstimage2") or None,
-                # 원천이 주는 값은 **가공 없이 그대로** 싣는다 (ADR-0065).
-                # category 는 이 값들에서 계산한 파생 컬럼이라, 그루핑 규칙이 바뀌어도
-                # 원천 재호출(일일 한도가 있는 자원) 없이 DB 안에서 다시 계산할 수 있다.
-                "lclsSystm1": it.get("lclsSystm1") or None,
-                "lclsSystm2": it.get("lclsSystm2") or None,
-                "lclsSystm3": it.get("lclsSystm3") or None,
-                "contentTypeId": str(it.get("contenttypeid") or "").strip() or None,
-                "copyrightDivCd": it.get("cpyrhtDivCd") or None,
-                "mapLevel": int(it["mlevel"]) if str(it.get("mlevel") or "").strip().isdigit() else None,
-                "zipcode": str(it.get("zipcode") or "").strip() or None,
-                "sourceCreatedAt": parse_modified(it.get("createdtime") or ""),
-                "tel": (it.get("tel") or "").strip() or None,
-                "sourceModifiedAt": parse_modified(str(it.get("modifiedtime") or "")),
-            })
+        rows.extend(normalize_row(it, lang) for it in item_list if has_coordinates(it))
         total = int(body.get("totalCount") or 0)
         if page * 100 >= total:
             break
         page += 1
         time.sleep(0.2)  # 호출량 예의
     return [r for r in rows if r["title"]][:limit]
+
+
+def parse_event_date(raw) -> str | None:
+    """행사 날짜 `yyyyMMdd` → ISO `yyyy-MM-dd`. 8자리 숫자가 아니거나 달력에 없는 날이면 None.
+
+    값 하나가 형식을 어기면 그 값만 버린다 — bulk 는 2,000건이 요청 하나라 한 행의 형식 오류가
+    묶음 전체를 400 으로 떨어뜨린다. 원문은 listRaw 에 남는다.
+    """
+    text = str(raw or "").strip()
+    if len(text) != 8 or not text.isdigit():
+        return None
+    try:
+        return datetime.strptime(text, "%Y%m%d").date().isoformat()
+    except ValueError:
+        return None
+
+
+def festival_window_start(today: date) -> str:
+    return (today - timedelta(days=FESTIVAL_WINDOW_DAYS)).strftime("%Y%m%d")
+
+
+def kst_today() -> date:
+    return datetime.now(KST).date()
+
+
+def fetch_portal(key: str, svc_key: str, content_type: str,
+                 today: date | None = None) -> tuple[list[dict], dict]:
+    """행사·숙박·코스 목록 전량(무지정 전국 페이징) → (bulk 레코드, 건수 기록).
+
+    셋 다 행 원문 전체를 `listRaw` 에 싣는다(§0 ①). 행을 버리는 경우는 셋이고 각각 센다:
+      - contentid 가 빈 행 — 그대로 보내면 @NotBlank 로 bulk 묶음 전체가 400 이 된다.
+      - 이 유형이 아닌 행 — searchStay2 에 관광지·레포츠가 섞여 온다. 그 행은 자기 목록 동기화가
+        이미 갖고 있고, 받으면 이 경로가 그 행의 목록 원문을 덮는다.
+      - 좌표 없는 행 — §0 ①「대상 전부」의 명시 예외. 도메인이 좌표를 요구하고 지도에 못 쓴다.
+    """
+    service, lang = SERVICES[svc_key]
+    type_id = CONTENT_TYPES[content_type][svc_key]
+    op = PORTAL_OPERATIONS[content_type]
+    params: dict = {"arrange": "C"}
+    if op == "areaBasedList2":
+        params["contentTypeId"] = type_id
+    if content_type == "festival":
+        params["eventStartDate"] = festival_window_start(today or kst_today())
+
+    counts = {"calls": 0, "received": 0, "loaded": 0, "noContentId": 0, "otherType": 0,
+              "noCoordinates": 0, "noTitle": 0, "dateFailures": 0}
+    records: list[dict] = []
+    page = 1
+    while True:
+        body = tour_get(key, service, op, {**params, "numOfRows": 100, "pageNo": page})
+        counts["calls"] += 1
+        item_list = _item_list(body)
+        counts["received"] += len(item_list)
+        for it in item_list:
+            if not str(it.get("contentid") or "").strip():
+                counts["noContentId"] += 1
+                continue
+            if str(it.get("contenttypeid") or "").strip() != type_id:
+                counts["otherType"] += 1
+                continue
+            if not has_coordinates(it):
+                counts["noCoordinates"] += 1
+                continue
+            rec = normalize_row(it, lang)
+            if not rec["title"]:
+                counts["noTitle"] += 1
+                continue
+            if content_type == "festival":
+                start, end = it.get("eventstartdate"), it.get("eventenddate")
+                rec["eventStartDate"] = parse_event_date(start)
+                rec["eventEndDate"] = parse_event_date(end)
+                if ((str(start or "").strip() and rec["eventStartDate"] is None)
+                        or (str(end or "").strip() and rec["eventEndDate"] is None)):
+                    counts["dateFailures"] += 1
+            rec["listRaw"] = json.dumps(it, ensure_ascii=False, separators=(",", ":"))
+            records.append(rec)
+        total = int(body.get("totalCount") or 0)
+        if not item_list or page * 100 >= total:
+            break
+        page += 1
+        time.sleep(0.2)  # 호출량 예의
+    counts["loaded"] = len(records)
+    return records, counts
 
 
 def join_overview(key: str, svc_key: str, rows: list[dict], cap: int) -> None:
@@ -292,7 +419,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="attractions.jsonl")
     ap.add_argument("--service", choices=["kor", "eng"], default="kor")
-    ap.add_argument("--content-type", choices=list(CONTENT_TYPES), default="attraction")
+    ap.add_argument("--content-type", choices=list(LIST_SYNC_TYPES), default="attraction")
     ap.add_argument("--area", help="TourAPI areaCode (1 서울, 6 부산, 39 제주 ...). 미지정 시 전국")
     ap.add_argument("--limit", type=int, default=2000)
     ap.add_argument("--with-overview", action="store_true", help="detailCommon2 개요 조인 (건당 1콜)")

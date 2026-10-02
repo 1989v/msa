@@ -7,6 +7,7 @@ K8s CronJob 이 본 모듈을 --job 으로 분기해 호출한다:
     python -m src.main --job=media --budget=1000   # 부가 사진·반복정보 (레코드당 2콜)
     python -m src.main --job=stats            # 잔량만 (TourAPI 호출 0)
     python -m src.main --job=sync --content-type=attraction
+    python -m src.main --job=tour-portal-sync      # 행사·숙박·여행코스 목록 (국·영, 하루 약 56콜)
     python -m src.main --job=administrative-regions --file 법정동코드_전체자료.txt
     python -m src.main --job=lcls-codes            # 분류체계 코드→이름 (호출 400회 미만)
     python -m src.main --job=pet-tour              # 반려동물 동반 (목록형, 약 100회)
@@ -93,6 +94,41 @@ def _job_sync(content_type: str, limit: int) -> int:
                               f"(신규 {created} · 갱신 {updated})")
         total += len(rows)
     backfill_overview.log(f"목록 동기화 {total:,}건 — 개요는 목록 동기화로 지워지지 않는다")
+    return 0
+
+
+#: 행사·숙박·여행코스 — 이 순서로 국·영을 받는다. 코스는 영문 서비스에 유형이 없다.
+PORTAL_TYPES = ("festival", "stay", "course")
+
+
+def _job_tour_portal_sync(key: str | None = None, today=None) -> int:
+    """행사·숙박·여행코스 목록 동기화. `_job_sync` 를 거치지 않는다 — 오퍼레이션이 다르고 행 원문을 싣는다.
+
+    **한 유형·한 언어가 실패해도 나머지는 받는다**(sync_pet_tour 와 같다). 대신 하나라도 실패했으면
+    끝까지 받은 뒤 1 을 돌려준다 — 0 으로 끝나면 CronJob 이 성공으로 남아 빠진 유형을 아무도 모른다.
+    """
+    key = key or _api_key()
+    failed = []
+    for content_type in PORTAL_TYPES:
+        for service in ("kor", "eng"):
+            if service not in sync_tour.CONTENT_TYPES[content_type]:
+                continue
+            label = f"[{service}/{content_type}]"
+            try:
+                rows, counts = sync_tour.fetch_portal(key, service, content_type, today)
+                created, updated = place_client.bulk_upsert(rows) if rows else (0, 0)
+            except Exception as e:                          # noqa: BLE001 — 유형·언어별 격리
+                backfill_overview.log(f"{label} 실패 — 나머지는 계속 받는다: {e}")
+                failed.append(label)
+                continue
+            backfill_overview.log(
+                f"{label} 호출 {counts['calls']} · 수신 {counts['received']:,} · 적재 {counts['loaded']:,} "
+                f"(신규 {created} · 갱신 {updated}) · 좌표 제외 {counts['noCoordinates']} · "
+                f"날짜 변환 실패 {counts['dateFailures']} · 다른 유형 제외 {counts['otherType']} · "
+                f"contentid 없음 {counts['noContentId']} · 제목 없음 {counts['noTitle']}")
+    if failed:
+        backfill_overview.log(f"행사·숙박·코스 동기화 실패 {len(failed)}건: {' '.join(failed)}")
+        return 1
     return 0
 
 
@@ -248,12 +284,12 @@ def _print_english_names(regions: list[dict]) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--job", required=True,
-                    choices=["overview", "intro", "media", "stats", "sync", "links",
+                    choices=["overview", "intro", "media", "stats", "sync", "tour-portal-sync", "links",
                              "administrative-regions", "google-places", "lcls-codes", "pet-tour"])
     ap.add_argument("--budget", type=int, default=int(os.environ.get("BUDGET", "1000")),
                     help="개요 수집 일일 예산 (언어별, detailCommon2 호출 상한)")
     ap.add_argument("--lang", choices=["ko", "en"], help="미지정 시 ko·en 둘 다")
-    ap.add_argument("--content-type", default="attraction", choices=list(sync_tour.CONTENT_TYPES))
+    ap.add_argument("--content-type", default="attraction", choices=list(sync_tour.LIST_SYNC_TYPES))
     ap.add_argument("--limit", type=int, default=200000, help="목록 동기화 상한 (사실상 무제한)")
     ap.add_argument("--file", help="법정동코드 전체자료 경로 (--job=administrative-regions)")
     ap.add_argument("--link-limit", type=int, default=int(os.environ.get("LINK_LIMIT", "10")),
@@ -282,6 +318,8 @@ def main() -> int:
         return _job_lcls_codes(langs)
     if args.job == "pet-tour":
         return _job_pet_tour(langs)
+    if args.job == "tour-portal-sync":
+        return _job_tour_portal_sync()
     return _job_sync(args.content_type, args.limit)
 
 

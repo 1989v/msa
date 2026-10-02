@@ -23,14 +23,18 @@ from src.sync_tour import SERVICES, tour_get
 #: 한 레코드가 가질 수 있는 최대 건수. 기본값(10)으로 부르면 17장짜리가 10장으로 잘린다.
 PAGE_ROWS = "100"
 
+COURSE_TYPE = "25"
+
 
 def pick(rows: list[dict], lang: str, budget: int) -> list[dict]:
     """아직 안 받은 것부터. 값이 아니라 **받은 시각**(`extraSyncedAt`)으로 판정한다 —
     값으로 재면 원천이 빈 응답을 준 레코드를 매일 다시 부르게 된다."""
     todo = [r for r in rows if r.get("lang") == lang and not r.get("extraSyncedAt")]
-    # 관광 분류 → 사진 있는 것 순. 화면에 먼저 보이는 것부터 채운다 (intro 와 같은 기준).
+    # 관광 분류·여행코스 → 사진 있는 것 순. 화면에 먼저 보이는 것부터 채운다 (intro 와 같은 기준).
+    # 코스(25)는 구성 순서의 원천이 detailInfo2 라 관광 분류와 같은 순위로 받는다.
     todo.sort(key=lambda r: (
-        0 if r.get("category") in ("nature", "history", "culture", "leisure") else 1,
+        0 if (r.get("category") in ("nature", "history", "culture", "leisure")
+              or str(r.get("contentTypeId") or "") == COURSE_TYPE) else 1,
         0 if (r.get("imageUrl") or "").strip() else 1,
         r["contentId"],
     ))

@@ -18,10 +18,10 @@ import os
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from src import place_client
-from src.sync_tour import SERVICES, tour_get
+from src.sync_tour import SERVICES, kst_today, tour_get
 
 # 관광 성격의 분류 — 음식/쇼핑/숙박보다 먼저 채운다.
 # 건수로는 음식·쇼핑이 절반을 넘어서, 이미지 유무로만 정렬하면 첫 배치가 통째로
@@ -39,7 +39,33 @@ UPSERT_FIELDS = ("contentId", "lang", "title", "latitude", "longitude", "address
                  # detailIntro2 보강분 — 왕복에서 빠지면 다음 배치가 null 로 덮는다 (§0 ③)
                  "introRaw", "useTime", "restDate", "useFee", "parking", "parkingFee",
                  "infoCenter", "introSyncedAt",
+                 # 행사·숙박·코스 목록이 싣는 값 (searchFestival2 · searchStay2 · areaBasedList2 코스)
+                 "eventStartDate", "eventEndDate", "listRaw",
                  "sourceModifiedAt", "sourceCreatedAt")
+
+FESTIVAL_TYPES = ("15", "85")
+
+
+def _iso_date(value) -> date | None:
+    try:
+        return date.fromisoformat(str(value)) if value else None
+    except ValueError:
+        return None
+
+
+def festival_first(row: dict, today: date) -> tuple:
+    """종료되지 않은 행사를 맨 앞에, 그 안에서는 시작일 오름차순. 나머지는 (1,) 로 뒤에 둔다.
+
+    짧은 행사가 개요 없이(= 색인·sitemap 대상 아님) 끝나는 것을 막는 **보강 우선순위**다 —
+    표시 규칙이 아니라서 원천 날짜(종료일, 없으면 시작일)와 KST 오늘만 본다. 날짜가 없는 행사는 앞에 오지 않는다.
+    """
+    if str(row.get("contentTypeId") or "") not in FESTIVAL_TYPES:
+        return (1,)
+    start, end = _iso_date(row.get("eventStartDate")), _iso_date(row.get("eventEndDate"))
+    last = end or start
+    if last is None or last < today:
+        return (1,)
+    return (0, start or last)
 
 
 def log(msg: str) -> None:
@@ -56,13 +82,16 @@ def stats(rows: list[dict]) -> None:
             f"(관광지 {sight:,} · 이미지보유 {with_img:,})")
 
 
-def pick(rows: list[dict], lang: str, budget: int, known_empty: set[str]) -> list[dict]:
-    """개요가 빈 것만 — 관광지 우선, 그 안에서 이미지 보유분 우선."""
+def pick(rows: list[dict], lang: str, budget: int, known_empty: set[str],
+         today: date | None = None) -> list[dict]:
+    """개요가 빈 것만 — 종료 안 된 행사 먼저, 그다음 관광지, 그 안에서 이미지 보유분 우선."""
+    today = today or kst_today()
     missing = [r for r in rows
                if not (r.get("overview") or "").strip()
                and r.get("lang") == lang
                and f"{r.get('lang')}:{r['contentId']}" not in known_empty]
     missing.sort(key=lambda r: (
+        festival_first(r, today),
         0 if r.get("category") in SIGHT_CATEGORIES else 1,
         0 if (r.get("imageUrl") or "").strip() else 1,
         r["contentId"],

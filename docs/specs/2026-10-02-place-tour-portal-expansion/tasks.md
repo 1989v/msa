@@ -48,18 +48,18 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
 **Dependencies:** Task Group 1 (표본), Task Group 2 (bulk 필드)
 **Phase:** ①
 **Required Skills:** Python, pytest, TourAPI
-- [ ] 3.0 Complete 수집기
-  - [ ] 3.1 Write tests: `tests/categorize_test.py`(T6 — 15/85 → `festival` · 32/80 → `stay` · 25 → `course` · 기존 표본 전량 결과 동일 · 레포츠 `AC05` → `stay` 유지 · `EV` → `culture` 아님) · `tests/sync_tour_portal_test.py`(T7 — 응답 픽스처는 TG1 표본) · `tests/backfill_pick_test.py`(T7b) · `tests/upsert_fields_test.py`(T5)
-  - [ ] 3.2 `CONTENT_TYPES` 를 언어 키가 없을 수 있는 형태로(행사 ko 15/en 85 · 숙박 ko 32/en 80 · 코스 ko 25) · 기존 5유형 값 불변
-  - [ ] 3.3 `normalize_row(item, lang)` 분리 — `fetch_area_based` 도 이것을 쓴다. 기존 `--job=sync` 정규화 결과 전량 비교(T7)
-  - [ ] 3.4 `searchFestival2`(시작일 = KST 오늘 − 365, TG1 결정 반영) · `searchStay2` · `areaBasedList2`(25) 무지정 전국 페이징
-  - [ ] 3.5 행사 날짜 `yyyyMMdd` → ISO, 8자리 숫자 아님·달력에 없는 날짜는 그 값만 None(행은 남김) + 유형·언어별 「날짜 변환 실패 n건」 로그
-  - [ ] 3.6 행 원문 전체를 목록 행 원문 필드에 · 좌표 없는 행 제외 + 유형·언어별 제외 건수 로그(§0 ① 명시 예외)
-  - [ ] 3.7 `main.py` 새 잡 `--job=tour-portal-sync`(`_job_sync` 를 거치지 않음) — 유형·언어 하나가 실패해도 나머지 계속(`sync_pet_tour` 방식), 유형·언어별 호출 수 · 적재 · 좌표 제외 · 날짜 변환 실패 로그
-  - [ ] 3.8 `UPSERT_FIELDS`(`backfill_overview`) · `fetch_attractions` 응답에 새 필드 — 전체 동기화 필드 목록 함께 갱신(§0 ③)
-  - [ ] 3.9 `backfill_media.pick` 이 코스(25)를 관광 분류와 같은 순위로 · `backfill_overview.pick`·이용정보 pick 이 종료 아닌 행사를 맨 앞에 시작일 오름차순(원천 날짜 + KST 오늘만으로 거름)
-  - [ ] 3.10 Q2 결과가 「목록에 없음」이면 채움 경로(수동 76 동기화 또는 일회성 보정 스크립트)를 여기 포함
-  - [ ] 3.11 Verify: `cd place/ingest && python -m pytest -q tests/categorize_test.py tests/sync_tour_portal_test.py tests/backfill_pick_test.py tests/upsert_fields_test.py`
+- [x] 3.0 Complete 수집기
+  - [x] 3.1 Write tests: `tests/categorize_test.py`(T6 — 15/85 → `festival` · 32/80 → `stay` · 25 → `course` · 기존 표본 전량 결과 동일 · 레포츠 `AC05` → `stay` 유지 · `EV` → `culture` 아님) · `tests/sync_tour_portal_test.py`(T7 — 응답 픽스처는 TG1 표본) · `tests/backfill_pick_test.py`(T7b) · `tests/upsert_fields_test.py`(T5)
+  - [x] 3.2 `CONTENT_TYPES` 를 언어 키가 없을 수 있는 형태로(행사 ko 15/en 85 · 숙박 ko 32/en 80 · 코스 ko 25) · 기존 5유형 값 불변
+  - [x] 3.3 `normalize_row(item, lang)` 분리 — `fetch_area_based` 도 이것을 쓴다. 기존 `--job=sync` 정규화 결과 전량 비교(T7)
+  - [x] 3.4 `searchFestival2`(시작일 = KST 오늘 − 365, TG1 결정 반영) · `searchStay2` · `areaBasedList2`(25) 무지정 전국 페이징
+  - [x] 3.5 행사 날짜 `yyyyMMdd` → ISO, 8자리 숫자 아님·달력에 없는 날짜는 그 값만 None(행은 남김) + 유형·언어별 「날짜 변환 실패 n건」 로그
+  - [x] 3.6 행 원문 전체를 목록 행 원문 필드에 · 좌표 없는 행 제외 + 유형·언어별 제외 건수 로그(§0 ① 명시 예외)
+  - [x] 3.7 `main.py` 새 잡 `--job=tour-portal-sync`(`_job_sync` 를 거치지 않음) — 유형·언어 하나가 실패해도 나머지 계속(`sync_pet_tour` 방식), 유형·언어별 호출 수 · 적재 · 좌표 제외 · 날짜 변환 실패 로그
+  - [x] 3.8 `UPSERT_FIELDS`(`backfill_overview`) · `fetch_attractions` 응답에 새 필드 — 전체 동기화 필드 목록 함께 갱신(§0 ③)
+  - [x] 3.9 `backfill_media.pick` 이 코스(25)를 관광 분류와 같은 순위로 · `backfill_overview.pick`·이용정보 pick 이 종료 아닌 행사를 맨 앞에 시작일 오름차순(원천 날짜 + KST 오늘만으로 거름)
+  - [x] 3.10 Q2 결과가 「목록에 없음」이면 채움 경로(수동 76 동기화 또는 일회성 보정 스크립트)를 여기 포함
+  - [x] 3.11 Verify: `cd place/ingest && python -m pytest -q tests/categorize_test.py tests/sync_tour_portal_test.py tests/backfill_pick_test.py tests/upsert_fields_test.py`
 **Acceptance Criteria:** T5·T6·T7·T7b 초록 · 픽스처가 TG1 운영 표본으로 바뀐 뒤에만 ★ · 회귀 주입(날짜 변환 실패 시 행 버리기 · 실패 격리 제거) 빨간불
 
 ### Task Group 4: CronJob · 대장 · 배포 ① · 운영 확인
