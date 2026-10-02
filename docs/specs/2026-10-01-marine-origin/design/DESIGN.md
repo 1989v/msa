@@ -59,3 +59,8 @@ reduced-motion: 흔들림/강한 hit zoom/왕복 캐릭터 bob 억제, 공격예
 
 <!-- source: portal-fe/public/games/lib/relay.js -->
 <!-- source: portal-fe/public/games/lib/platform.js -->
+
+## 플레이 피드백 구현
+- 인간 본진과 적 소굴의 외형을 분리: 적은 검은 묘실·비석·죽은나무·붉은 오염지. 인간 오두막 재사용 금지.
+- 본진에 고용소/훈련장 표시와 클릭 기능. 초반 목표는 HUD에서 사냥→목수→채집→증원·강화→주둔 순서로 이어진다.
+- 걷기는 이동거리 기준 프레임, 발사는 실제 shot tick과 방향 기준 프레임·활시위·화살촉. 캐릭터 및 추적 카메라는 화면 보간하고 게임 판정 좌표는 유지한다.

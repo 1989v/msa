@@ -111,3 +111,7 @@ restore는 반복 호출해도 이미 열린 문을 다시 갱신하지 않는�
 <!-- source: portal-fe/public/games/marine-command/js/origin/map.js -->
 <!-- source: portal-fe/public/games/marine-command/js/origin/world.js -->
 <!-- source: portal-fe/public/games/marine-command/js/origin/campaign.js -->
+
+## 실제 플레이 피드백 보정
+좌하단 본진 좌표를 유지한 채 주변 x1568–3168/y7744–8928에 절벽 고도를 강조했다. 본진에서 원본 목표·자원·전이지점으로 이어지는 기존 경로와 양옆 셀은 보존한다. 북동 사냥길 출구(3024,8112)를 표시한다.
+시야는 활잡이420/영웅460/장궁620/목수300/본진560/완공탑480으로 넓혔다. 논리적LOS·적 숨김은 유지하며 화면의 안개 불투명도만 약0.13초에 걸쳐 보간하고 경계를 부드럽게 그린다.
