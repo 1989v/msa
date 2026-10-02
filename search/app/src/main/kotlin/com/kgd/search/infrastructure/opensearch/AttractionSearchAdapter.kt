@@ -10,6 +10,7 @@ import com.kgd.search.domain.attraction.model.AttributeSelection
 import com.kgd.search.domain.attraction.model.Availability
 import com.kgd.search.domain.attraction.model.EventDateRange
 import com.kgd.search.domain.attraction.model.EventSchedule
+import com.kgd.search.domain.attraction.model.EventSitemapEntry
 import com.kgd.search.domain.attraction.model.ClosureState
 import com.kgd.search.domain.attraction.model.Jamo
 import com.kgd.search.domain.attraction.model.PetPolicy
@@ -115,6 +116,20 @@ class AttractionSearchAdapter(
         private val CONTENT_TYPE_ID = AttractionSearchDocument::contentTypeId.name
         private val EVENT_START = AttractionSearchDocument::eventStartEffective.name
         private val EVENT_END = AttractionSearchDocument::eventEndEffective.name
+        private val OVERVIEW = AttractionSearchDocument::overview.name
+
+        /**
+         * 행사 sitemap 한 번에 받는 상한 — from+size 창(10,000)이다. 지금 범위 안 행사는 1천 건대라 한참 아래고,
+         * 넘으면 경고를 남기고 앞 10,000건만 싣는다(sitemap 파일 상한 50,000 보다도 작다).
+         */
+        private const val EVENT_SITEMAP_MAX = 10_000
+
+        /** 행사 sitemap 이 읽는 필드. 읽기 문서의 필수 필드(id·contentId·lang·title·location)는 역직렬화에 필요해 함께 받는다. */
+        private val EVENT_SITEMAP_SOURCE = listOf(
+            AttractionSearchDocument::id.name, AttractionSearchDocument::contentId.name, AttractionSearchDocument::lang.name,
+            AttractionSearchDocument::title.name, AttractionSearchDocument::location.name, CONTENT_TYPE_ID, OVERVIEW,
+            AttractionSearchDocument::modifiedAt.name, EVENT_START, EVENT_END,
+        )
     }
 
     /** 속성 패싯의 속성 — 건수에서 「자기 선택만 뺀다」의 단위다. 반려동물 두 값은 한 속성이다. */
@@ -329,6 +344,40 @@ class AttractionSearchAdapter(
             .toMap()
         if (fixes.isEmpty()) return null
         return words.joinToString(" ") { fixes[it] ?: it }
+    }
+
+    override fun findEvents(range: EventDateRange): List<EventSitemapEntry> {
+        val request = SearchRequest.of { s ->
+            s.index(INDEX)
+                .size(EVENT_SITEMAP_MAX)
+                .trackTotalHits { t -> t.enabled(true) }
+                .source { src -> src.filter { f -> f.includes(EVENT_SITEMAP_SOURCE) } }
+                .query { q ->
+                    q.bool { b ->
+                        b.filter { f ->
+                            f.terms { t ->
+                                t.field(CONTENT_TYPE_ID).terms { tv -> tv.value(EventSchedule.EVENT_CONTENT_TYPES.sorted().map { FieldValue.of(it) }) }
+                            }
+                        }
+                        b.filter { f -> f.exists { e -> e.field(OVERVIEW) } }
+                        b.filter(eventFilter(range))
+                    }
+                }
+        }
+        val response = client.search(request, AttractionSearchDocument::class.java)
+        val total = response.hits().total()?.value() ?: 0L
+        if (total > EVENT_SITEMAP_MAX) log.warn { "행사 sitemap 후보가 조회 상한을 넘었다 — 앞 ${EVENT_SITEMAP_MAX}건만 싣는다: total=$total" }
+        return response.hits().hits().mapNotNull { hit ->
+            hit.source()?.toDomain()?.let { doc ->
+                EventSitemapEntry(
+                    id = doc.id,
+                    lang = doc.lang,
+                    period = doc.eventPeriod,
+                    hasOverview = !doc.overview.isNullOrEmpty(),
+                    modifiedAt = doc.modifiedAt,
+                )
+            }
+        }
     }
 
     private fun countMatches(word: String, lang: String?): Long {

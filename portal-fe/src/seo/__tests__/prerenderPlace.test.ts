@@ -9,6 +9,7 @@ import {
   indexDoc,
   placeDetailPages,
   placeDetailSitemapEntries,
+  placeSitemapFiles,
   renderRegionDetail,
   robotsTxt,
 } from '../../../scripts/prerender-seo.mjs';
@@ -230,6 +231,33 @@ describe('정적 sitemap — 행사 제외 · 숙박 등재 조건', () => {
 
   it('대조: 사진 없는 레포츠 캠핑장(분류 stay · 유형 28)은 개요만으로 계속 실린다', () => {
     expect(has('/attractions/camping')).toBe(true);
+  });
+});
+
+describe('place sitemap 인덱스 — 행사 sitemap(동적) 연결', () => {
+  const hub = [{ loc: 'https://place.1989v.com/', priority: '1.0' }];
+  const detail = [{ loc: 'https://place.1989v.com/attractions/1', priority: '0.7' }];
+  const fileOf = (files: Array<[string, string]>, name: string) => files.find(([n]) => n === name)?.[1];
+  const sitemapLocs = (xml: string | undefined) =>
+    [...(xml ?? '').matchAll(/<sitemap>\s*<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+
+  it('상세가 있으면 인덱스가 sitemap-places-events.xml 을 가리키고, 그 파일은 정적으로 만들지 않는다', () => {
+    const files = placeSitemapFiles(hub, detail);
+    expect(sitemapLocs(fileOf(files, 'sitemap.xml'))).toEqual([
+      'https://place.1989v.com/sitemap-places-hub.xml',
+      'https://place.1989v.com/sitemap-places-1.xml',
+      'https://place.1989v.com/sitemap-places-events.xml',
+    ]);
+    expect(fileOf(files, 'sitemap-places-events.xml')).toBeUndefined();
+  });
+
+  it('상세 0건 분기는 인덱스가 아닌 urlset 하나이고 행사 sitemap 을 가리키지 않는다', () => {
+    const files = placeSitemapFiles(hub, []);
+    expect(files.map(([n]) => n)).toEqual(['sitemap.xml']);
+    const xml = fileOf(files, 'sitemap.xml');
+    expect(xml).toContain('<urlset');
+    expect(xml).toContain('<loc>https://place.1989v.com/</loc>');
+    expect(xml).not.toContain('sitemap-places-events');
   });
 });
 

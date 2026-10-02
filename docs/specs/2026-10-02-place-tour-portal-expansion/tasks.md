@@ -175,16 +175,16 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
 **Dependencies:** Task Group 9 (운영 확인 완료)
 **Phase:** ③
 **Required Skills:** Spring MVC, nginx, vitest
-- [ ] 11.0 Complete 만료
-  - [ ] 11.1 Write tests: `AttractionPageRendererTest`(T3 — 개요 없음+진행 중 → noindex · 종료 +30 → index · +31 → `noindex, follow` · `UNKNOWN`+개요 → index) · `useSeo` robots(T12b — Kotlin 골든 만료 +30/+31 사례 대조) · `EventSitemapRendererTest`·`EventSitemapServiceTest` + MockMvc(T14 — +30 포함 · +31 제외 · 개요 없음·`UNKNOWN` 제외 · 실패 503 · XML 이스케이프 · `lastmod` W3C · `Clock` 범위) · `prerenderPlace.test.ts`(T13 — 인덱스가 `sitemap-places-events.xml` 을 가리킴 · 상세 0건 분기는 안 가리킴) · nginx 검사(T15)
-  - [ ] 11.2 렌더러 robots `noindex = 개요 없음 OR (행사 ∧ 유효 종료일 + 31 ≤ 오늘)` · 클라이언트 `useSeo` 같은 판정
-  - [ ] 11.3 레이어(ADR-0083): presentation `/internal/render/sitemap/events.xml`(실패 → 503 매핑) → `RenderEventSitemapUseCase` → 서비스(`Clock`, 범위) → `AttractionSearchPort` 행사 조회 메서드 → infrastructure 어댑터 · XML 은 렌더 포트 뒤 infrastructure 렌더러 · 캐시 없음 · URL 수·생성 시간 로그
-  - [ ] 11.4 `prerender-seo.mjs` `writePlaceSitemaps` 인덱스에 행사 sitemap 추가(상세 0건 분기 제외)
-  - [ ] 11.5 `portal-fe/nginx.conf` 정확 일치 `= /sitemap-places-events.xml` — place 호스트 외 404 · 고정 upstream 경로(쿼리 미전달) · Cookie·Authorization 제거 · 폴백·`error_page`·`proxy_intercept_errors` 없음 · `Cache-Control: public, max-age=300, must-revalidate` · `X-Robots-Tag $host_robots_tag`. 상세 렌더 location 을 베끼지 않는다(`@attraction_shell` 폴백)
-  - [ ] 11.6 T15 검사 스크립트: 스텁 search(503·헤더 기록) + 실제 nginx 컨테이너(ADR-0103 방식) — 회귀 주입 `=` 제거 / 정규식 뒤로 이동 → 빨간불
-  - [ ] 11.7 Verify: `./gradlew :search:app:test --tests '*AttractionPageRendererTest' --tests '*EventSitemap*' && ./gradlew verifyArchitecture && (cd portal-fe && npx vitest run src/seo/__tests__/prerenderPlace.test.ts src/seo/__tests__/eventSchedule.test.ts) && bash portal-fe/scripts/check-nginx-events-sitemap.sh`
-  - [ ] 11.8 네트워크 정책 19·20 재사용 확인(새 정책 없음): `kubectl kustomize k8s/overlays/oci-arm >/dev/null`
-  - [ ] 11.9 배포 순서: search → portal-fe(TG10 과 같은 portal-fe 이미지로 묶어도 된다)
+- [x] 11.0 Complete 만료
+  - [x] 11.1 Write tests: `AttractionPageRendererTest`(T3 — 개요 없음+진행 중 → noindex · 종료 +30 → index · +31 → `noindex, follow` · `UNKNOWN`+개요 → index) · `useSeo` robots(T12b — Kotlin 골든 만료 +30/+31 사례 대조) · `EventSitemapRendererTest`·`EventSitemapServiceTest` + MockMvc(T14 — +30 포함 · +31 제외 · 개요 없음·`UNKNOWN` 제외 · 실패 503 · XML 이스케이프 · `lastmod` W3C · `Clock` 범위) · `prerenderPlace.test.ts`(T13 — 인덱스가 `sitemap-places-events.xml` 을 가리킴 · 상세 0건 분기는 안 가리킴) · nginx 검사(T15)
+  - [x] 11.2 렌더러 robots `noindex = 개요 없음 OR (행사 ∧ 유효 종료일 + 31 ≤ 오늘)` · 클라이언트 `useSeo` 같은 판정
+  - [x] 11.3 레이어(ADR-0083): presentation `/internal/render/sitemap/events.xml`(실패 → 503 매핑) → `RenderEventSitemapUseCase` → 서비스(`Clock`, 범위) → `AttractionSearchPort` 행사 조회 메서드 → infrastructure 어댑터 · XML 은 렌더 포트 뒤 infrastructure 렌더러 · 캐시 없음 · URL 수·생성 시간 로그
+  - [x] 11.4 `prerender-seo.mjs` `writePlaceSitemaps` 인덱스에 행사 sitemap 추가(상세 0건 분기 제외)
+  - [x] 11.5 `portal-fe/nginx.conf` 정확 일치 `= /sitemap-places-events.xml` — place 호스트 외 404 · 고정 upstream 경로(쿼리 미전달) · Cookie·Authorization 제거 · 폴백·`error_page`·`proxy_intercept_errors` 없음 · `Cache-Control: public, max-age=300, must-revalidate` · `X-Robots-Tag $host_robots_tag`. 상세 렌더 location 을 베끼지 않는다(`@attraction_shell` 폴백)
+  - [x] 11.6 T15 검사 스크립트: 스텁 search(503·헤더 기록) + 실제 nginx 컨테이너(ADR-0103 방식) — 회귀 주입 `=` 제거 / 정규식 뒤로 이동 → 빨간불
+  - [x] 11.7 Verify: `./gradlew :search:app:test --tests '*AttractionPageRendererTest' --tests '*EventSitemap*' && ./gradlew verifyArchitecture && (cd portal-fe && npx vitest run src/seo/__tests__/prerenderPlace.test.ts src/seo/__tests__/eventSchedule.test.ts) && bash portal-fe/scripts/check-nginx-events-sitemap.sh`
+  - [x] 11.8 네트워크 정책 19·20 재사용 확인(새 정책 없음): `kubectl kustomize k8s/overlays/oci-arm >/dev/null`
+  - [x] 11.9 배포 순서: search → portal-fe(TG10 과 같은 portal-fe 이미지로 묶어도 된다)
   - [ ] 11.10 **배포 ③ 뒤 운영 확인(SR-10b · T19):**
     - [ ] 11.10.1 새 이미지 확인 — 응답에 행사 sitemap 경로가 있고 사이트맵 인덱스에 새 파일명이 있는지 먼저(없으면 측정 폐기)
     - [ ] 11.10.2 종료 31일 지난 표본 행사 → `noindex, follow`

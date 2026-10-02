@@ -4,6 +4,7 @@ import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttributeFacetCounts
 import com.kgd.search.domain.attraction.model.AttributeSelection
 import com.kgd.search.domain.attraction.model.EventDateRange
+import com.kgd.search.domain.attraction.model.EventSitemapEntry
 import com.kgd.search.domain.attraction.model.SuggestHit
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -26,6 +27,12 @@ interface AttractionSearchPort {
      * 고칠 단어가 없으면 null. 제대로 친 질의는 건드리지 않는 것이 이 함수의 첫째 조건이다.
      */
     fun correct(keyword: String, lang: String?): String?
+
+    /**
+     * 행사 sitemap 후보 — 행사 유형(15·85) ∧ 개요 필드 있음 ∧ 유효 기간이 [range] 안. 날짜 없는 행사는 범위 필드가 없어 오지 않는다.
+     * 빈 개요(`""`)는 색인에서 「있음」으로 잡히므로 [EventSitemapEntry.hasOverview] 로 한 번 더 가른다.
+     */
+    fun findEvents(range: EventDateRange): List<EventSitemapEntry>
 
     /**
      * 키워드가 null/blank 면 필터-only 탐색 (지도 영역 브라우징).

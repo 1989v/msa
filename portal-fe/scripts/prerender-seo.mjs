@@ -805,25 +805,43 @@ export function placeDetailSitemapEntries(places) {
 /** sitemap 은 파일당 50,000 URL 상한이 있다. 넘치면 쪼개고 인덱스로 묶는다. */
 const SITEMAP_CHUNK = 20_000;
 
-async function writePlaceSitemaps(hubEntries, detailEntries) {
+/**
+ * 행사 sitemap — 정적 파일이 아니다. nginx 가 이 경로를 search 로 넘기고 search 가 요청 시점의 오늘(KST)로 만든다
+ * (행사는 빌드 사이에 끝나서 정적 sitemap 에 싣지 않는다). 인덱스는 이 이름을 가리키기만 한다.
+ */
+export const PLACE_EVENT_SITEMAP = 'sitemap-places-events.xml';
+
+/**
+ * place sitemap 파일들 — `seo/{place 호스트}/` 아래 이름 → 내용.
+ *
+ * 상세가 0건이면 인덱스 대신 urlset 하나(허브·지역)만 내고 행사 sitemap 도 가리키지 않는다 —
+ * 상세 URL 이 전부 빠진 실패 빌드라 행사만 살릴 이유가 없다.
+ * @returns {Array<[string, string]>}
+ */
+export function placeSitemapFiles(hubEntries, detailEntries) {
   const chunks = [];
   for (let i = 0; i < detailEntries.length; i += SITEMAP_CHUNK) {
     chunks.push(detailEntries.slice(i, i + SITEMAP_CHUNK));
   }
   if (chunks.length === 0) {
-    await emit(`seo/${PLACE_HOST}/sitemap.xml`, sitemapXml(hubEntries));
-    return;
+    return [['sitemap.xml', sitemapXml(hubEntries)]];
   }
 
-  const files = ['sitemap-places-hub.xml'];
-  await emit(`seo/${PLACE_HOST}/sitemap-places-hub.xml`, sitemapXml(hubEntries));
+  const files = [['sitemap-places-hub.xml', sitemapXml(hubEntries)]];
   for (let i = 0; i < chunks.length; i += 1) {
-    const name = `sitemap-places-${i + 1}.xml`;
-    files.push(name);
-    await emit(`seo/${PLACE_HOST}/${name}`, sitemapXml(chunks[i]));
+    files.push([`sitemap-places-${i + 1}.xml`, sitemapXml(chunks[i])]);
   }
-  await emit(`seo/${PLACE_HOST}/sitemap.xml`, sitemapIndexXml(files.map((f) => `${PLACE_ORIGIN}/${f}`)));
-  console.log(`[seo] place sitemap ${detailEntries.length} URL · ${files.length} 파일`);
+  const indexed = [...files.map(([name]) => name), PLACE_EVENT_SITEMAP];
+  files.push(['sitemap.xml', sitemapIndexXml(indexed.map((f) => `${PLACE_ORIGIN}/${f}`))]);
+  return files;
+}
+
+async function writePlaceSitemaps(hubEntries, detailEntries) {
+  const files = placeSitemapFiles(hubEntries, detailEntries);
+  for (const [name, content] of files) {
+    await emit(`seo/${PLACE_HOST}/${name}`, content);
+  }
+  if (detailEntries.length > 0) console.log(`[seo] place sitemap ${detailEntries.length} URL · 정적 ${files.length - 1} 파일 + 행사 동적 1`);
 }
 
 function sitemapIndexXml(locs) {

@@ -1,5 +1,6 @@
 package com.kgd.search.infrastructure.opensearch
 
+import com.kgd.search.domain.attraction.model.EventDateRange
 import com.kgd.search.domain.attraction.model.EventPeriod
 import com.kgd.search.domain.attraction.model.EventSchedule
 import com.kgd.search.domain.attraction.model.EventStatus
@@ -8,6 +9,8 @@ import com.kgd.search.domain.attraction.port.AttractionSearchPort
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainAll
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -262,6 +265,33 @@ class AttractionSearchAdapterEventTest : BehaviorSpec({
             bool["filter"].size() shouldBe 1
             bool.remove("filter")
             sent.toString() shouldBe json.readTree(baseline("attraction-search-baseline-event", "unified-attraction")).toString()
+        }
+    }
+
+    given("행사 sitemap 조회 — 서비스가 넘긴 범위(유효 종료일 ≥ 오늘 − 30일)") {
+        val (a, captured) = AttractionSearchRequestSnapshots.adapter()
+        a.findEvents(EventDateRange(startGte = null, startLte = null, endGte = today.minusDays(30)))
+        val sent = json.readTree(captured.main.single().toJsonString())
+        val filters = sent["query"]["bool"]["filter"]
+
+        then("행사 유형(15·85)만 · 개요 필드가 있는 문서만 묻는다") {
+            filters.mapNotNull { it["terms"]?.get("contentTypeId") }.single().toList().map { it.asString() } shouldBe listOf("15", "85")
+            filters.mapNotNull { it["exists"]?.get("field")?.asString() } shouldBe listOf("overview")
+        }
+
+        then("범위는 종료 +30일을 들이고 +31일·날짜 없는 행사는 들이지 않는다") {
+            val filter = eventFilters(sent).single()
+            fun endedDaysAgo(n: Long) = EventPeriod(today.minusDays(n + 2), today.minusDays(n))
+            admits(filter, "15", endedDaysAgo(30)) shouldBe true
+            admits(filter, "15", endedDaysAgo(31)) shouldBe false
+            admits(filter, "15", null) shouldBe false
+        }
+
+        then("필요한 필드만 받는다 — 본문·벡터를 행사 수만큼 싣지 않는다") {
+            val includes = sent["_source"]["includes"].toList().map { it.asString() }
+            includes.shouldContainAll("overview", "modifiedAt", "eventStartEffective", "eventEndEffective")
+            includes shouldNotContain "embedding"
+            includes shouldNotContain "introRaw"
         }
     }
 })

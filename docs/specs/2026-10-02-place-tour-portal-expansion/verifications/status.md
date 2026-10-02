@@ -31,3 +31,7 @@
 | TG10 | vitest 5파일(AttractionPage·RegionPage·placeApi·PlacePage·prerenderPlace) · tsc -p tsconfig.app.json | 68 passed · exit 0 |
 | TG10 | 회귀 주입 8종(구현 에이전트) | 전부 빨간불 · 10.6 CDP 는 배포 뒤 |
 | 배포 ② 1차 | images 36963993854 | 실패 — code-dictionary OntologyFilesSpec(내 search-consumer 수정이 온톨로지 심볼 2개를 지움) → 참조 이동·revision 12·graph 재내보내기, 3 specs 0 실패 |
+| TG11 | search:app EventSitemap 3클래스·AdapterEvent·PageRenderer + 게이트 | 4·4·2·42·57 · 0 실패 · BUILD SUCCESSFUL |
+| TG11 | vitest prerenderPlace·eventSchedule · tsc(app) · check-nginx-events-sitemap.sh(nginx:1.27-alpine) | 26 passed · exit 0 · 18 checks PASSED |
+| TG11 | 회귀 주입(Kotlin 7 · prerender 2 · nginx 7) | `=` 를 둔 채 순서만 바꾼 것 외 전부 빨간불(그건 nginx 정의상 회귀 아님 → T15 문구 정정) |
+| CI | ci.yml 7141846 | success — 02:33 이후 실패 원인은 온톨로지 참조(a9ab03e5 로 해소) |
