@@ -269,6 +269,23 @@ const cases = [
       ],
     },
   },
+  {
+    // 이름이 「코스」로 끝나지 않는 코스 — 제목·설명에 「여행코스」를 붙인다
+    name: 'ko-course-plain-name',
+    input: {
+      ...base,
+      id: '5202',
+      contentId: '1965838',
+      lang: 'ko',
+      contentTypeId: '25',
+      title: '남해 바래길 드라이브',
+      titleLocal: null,
+      category: 'etc',
+      overview: '해안 도로.',
+      introRaw: '{"distance":"40km","taketime":"반나절"}',
+      courseStops: [{ order: 0, contentId: '126081', name: '해운대해수욕장', attractionId: 7001 }],
+    },
+  },
 ];
 
 describe('관광지 JSON-LD 골든 픽스처 (서버 렌더 패리티)', () => {
@@ -340,7 +357,12 @@ describe('관광지 JSON-LD 골든 픽스처 (서버 렌더 패리티)', () => {
     expect(title('en-event-unknown-dates')).toBe('Lantern Festival — Dates, Venue & Things to Do Nearby | K-Tour');
     expect(title('ko-stay')).toBe('한옥 스테이 숙박 정보 — 입실·퇴실 · 주변 가볼 만한 곳 | K-관광');
     expect(title('en-stay-no-geo-fields')).toBe('Seoul Guesthouse — Stay Info, Check-in & Things to Do Nearby | K-Tour');
-    expect(title('ko-course')).toBe('부산 바다 하루 코스 여행코스 — 코스 구성 · 거리 · 소요 시간 | K-관광');
+    // 이름이 이미 「코스」로 끝나면 「여행코스」를 덧붙이지 않는다(「… 코스 여행코스」 중복)
+    expect(title('ko-course')).toBe('부산 바다 하루 코스 — 코스 구성 · 거리 · 소요 시간 | K-관광');
+    expect(title('ko-course-plain-name')).toBe('남해 바래길 드라이브 여행코스 — 코스 구성 · 거리 · 소요 시간 | K-관광');
+    const description = (name: string) => rendered.find((c) => c.name === name)!.meta.description;
+    expect(description('ko-course')).toMatch(/^부산 바다 하루 코스입니다\. /);
+    expect(description('ko-course-plain-name')).toMatch(/^남해 바래길 드라이브 여행코스입니다\. /);
     expect(title('ko-weekly-free')).toBe('경복궁 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | K-관광');
     expect(title('en-no-weekly-free')).toBe('Visit Dosan Park — Map, Photos & Things to Do Nearby | K-Tour');
     // 개요가 짧은 행사는 유형 설명으로 채운다

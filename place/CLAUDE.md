@@ -87,7 +87,8 @@
 예외는 목록 원천에 없는 **보강 필드**뿐이다 — `?: existing` 으로 들어온 값이 있을 때만 바꾼다:
 개요(`overview`, 목록 재동기화가 며칠치 수집을 날리던 걸 막으려 2026-08-17 추가) · `googlePlaceId` ·
 이용정보(`introRaw`·`useTime`·`restDate`·`useFee`·`parking`·`parkingFee`·`infoCenter`·`introSyncedAt`) ·
-반려동물(`petAcmpyType`·`petRaw`·`petSyncedAt`) · `setting` · 부가 사진·반복정보(`imagesRaw`·`infoRaw`·`extraSyncedAt`).
+반려동물(`petAcmpyType`·`petRaw`·`petSyncedAt`) · `setting` · 부가 사진·반복정보(`imagesRaw`·`infoRaw`·`extraSyncedAt`) ·
+행사 날짜·목록 행 원문(`eventStartDate`·`eventEndDate`·`listRaw` — 행사·숙박·코스 목록만 싣고 보강 왕복은 안 싣는다).
 주소·이미지·분류·좌표·전화 같은 목록 필드는 전부 덮인다. 보강 필드를 새로 더하면 여기 한 줄이 같이 가야 한다.
 
 - 실측 사고: 검증용으로 `{contentId, lang, title, lat, lng}` 만 보냈다가 **경복궁 행의
@@ -97,6 +98,21 @@
   레코드를 읽어 그 위에 덮어써서 보낸다(`backfill_overview.py` 의 `UPSERT_FIELDS` 방식).
   **운영 데이터로 실험하지 않는다** — 꼭 해야 하면 살아있는 레코드에서 페이로드를 만든다
 
+
+### 행사 · 숙박 · 여행코스 (ADR-0104)
+
+같은 `attractions` 행이다 — 유형 코드가 분류를 먼저 정한다(행사 15·85 → `festival` · 숙박 32·80 → `stay` · 코스 25 → `course`).
+수집은 `place-ingest-tour-sync` CronJob(`--job=tour-portal-sync`, **매일 KST 03:10**, 마감 540초)이 `searchFestival2`·`searchStay2`·
+`areaBasedList2`(유형 25)를 받아 bulk 로 올린다. 구글 place_id 보강(03:20)과 겹치지 않는 자리다 — 두 경로 사이에 잠금이 없어 겹치면 한쪽이 덮는다.
+첫 수집은 41초, 행사 국 897 · 영 262 · 숙박 국 2,925 · 영 207 · 코스 1,000건이었다(2026-10-02).
+
+- **숙박 목록에는 숙박이 아닌 유형이 섞여 온다**(국문 2,990건 중 관광지 61 · 레포츠 3 · 문화시설 1, 영문엔 contentid 빈 행).
+  유형 32·80 만 싣고 나머지는 건수만 로그에 남긴다. 그 행들은 원래 유형 목록 동기화가 맡는다.
+- **`tel` 은 `VARCHAR(300)`(V24)** 다. 행사 문의처는 번호 여럿을 이어 붙여 와서(최대 123자) 100자일 때 bulk 묶음 전체가
+  `Data too long` 으로 실패했다. 원천 문자열 컬럼은 형제 컬럼과 같은 너비로 둔다.
+- 좌표가 없는 행은 싣지 않는다(코스 1,068 중 68). 코스는 영문 서비스에 없고 대부분 법정동 코드가 없어 지역 허브에 안 잡힌다 — 원천 그대로 둔다.
+- 행사 상태는 저장하지 않는다. 원천 날짜만 두고 상태는 search 가 조회 시점에 판정한다(`search/CLAUDE.md`).
+- 롤백은 수집 잡 suspend 가 먼저다 — 옛 bulk DTO 가 모르는 필드를 받지 않게.
 
 ## API
 
@@ -149,5 +165,5 @@
 
 ## Docs
 
-- ADR: `docs/adr/ADR-0056-geo-poi-and-product-ingestion.md`, `docs/adr/ADR-0065-k-tour-search.md`, `docs/adr/ADR-0070-attraction-content-enrichment.md`
+- ADR: `docs/adr/ADR-0056-geo-poi-and-product-ingestion.md`, `docs/adr/ADR-0065-k-tour-search.md`, `docs/adr/ADR-0070-attraction-content-enrichment.md`, `docs/adr/ADR-0104-place-tour-portal-expansion.md`
 - Plan: `docs/plans/2026-06-15-product-ingestion-and-geo-poi.md`

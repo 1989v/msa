@@ -136,6 +136,27 @@ describe('PlacePage 속성 칩', () => {
     await waitFor(() => expect(calls().at(-1)).toMatchObject({ pet: ['ALLOWED', 'PARTIAL'], page: 0, facets: true }));
   });
 
+  it('행사 칩을 고르면 속성 칩 줄을 그리지 않고 속성 조건·건수 요청도 보내지 않는다 — 풀면 고른 칩이 돌아온다', async () => {
+    renderPage();
+    await screen.findByText('관광지 a0-1');
+    fireEvent.click(chip(/^주차 가능/));
+    await screen.findByText('관광지 p0-1');
+
+    fireEvent.click(screen.getByRole('button', { name: '행사' }));
+    await waitFor(() => expect(calls().at(-1)).toMatchObject({ category: 'festival', page: 0 }));
+    expect(screen.queryByRole('group', { name: '방문 정보 필터' })).toBeNull();
+    expect(document.querySelector('.place-attr-chip')).toBeNull();
+    const eventCall = calls().at(-1)!;
+    expect(eventCall.facets).toBeFalsy();
+    expect(eventCall.parking).toBeUndefined();
+
+    // 풀면 앞의 주차 조건 그대로 — 같은 조건은 캐시에서 나와 새 요청이 없을 수 있어 칩·목록으로 본다
+    fireEvent.click(screen.getByRole('button', { name: '행사' }));
+    expect(await screen.findByRole('group', { name: '방문 정보 필터' })).toBeInTheDocument();
+    expect(chip(/^주차 가능/)).toHaveAttribute('aria-pressed', 'true');
+    expect(await screen.findByText('관광지 p0-1')).toBeInTheDocument();
+  });
+
   it('다음 쪽은 건수를 요청하지 않고, 앞서 받은 건수를 그대로 보인다', async () => {
     renderPage();
     await screen.findByText('관광지 a0-1');

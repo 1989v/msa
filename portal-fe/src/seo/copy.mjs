@@ -616,14 +616,16 @@ function attractionMetaCopy(lang, attraction, name, where) {
         };
   }
   if (PLACE_COURSE_TYPES.includes(type)) {
+    // 원천 코스 이름은 「… 코스」로 끝나는 것이 많다 — 그때 「여행코스」를 또 붙이면 「… 코스 여행코스」가 된다
+    const course = name.trimEnd().endsWith('코스') ? name : `${name} 여행코스`;
     return en
       ? {
           title: `${name} — Travel Course, Stops & Time Needed | ${PLACE_BRAND_EN}`,
           fallback: `${name} is a travel course in South Korea. See the stops in order, total distance and time needed.`,
         }
       : {
-          title: `${name} 여행코스 — 코스 구성 · 거리 · 소요 시간 | ${PLACE_BRAND_KO}`,
-          fallback: `${name} 여행코스입니다. 코스를 이루는 관광지를 순서대로 보고 총 거리와 소요 시간을 확인하세요.`,
+          title: `${course} — 코스 구성 · 거리 · 소요 시간 | ${PLACE_BRAND_KO}`,
+          fallback: `${course}입니다. 코스를 이루는 관광지를 순서대로 보고 총 거리와 소요 시간을 확인하세요.`,
         };
   }
   const label = placeCategoryLabel(attraction.category, lang);

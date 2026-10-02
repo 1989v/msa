@@ -224,11 +224,11 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
 **Dependencies:** Task Group 11
 **Phase:** ③ 마감
 **Required Skills:** 문서
-- [ ] 13.0 Complete 문서
-  - [ ] 13.1 Write checks: 대장 표에 세 오퍼레이션·`place-ingest-tour-sync` 가 있음(grep) · ADR-0104 상태 줄 갱신 · 문서 게이트(`doc_scan.py`) 통과
-  - [ ] 13.2 ADR-0104 상태 → 채택 · ADR-0071 §5(행사 칩 · 국문 전용 코스 칩 · 숙박 오버레이 · 키워드 「전체」 행사 합류) · ADR-0103(유형별 본문 · 출처 문구 · 행사 sitemap) · ADR-0076(새 유형 지면 제외)
-  - [ ] 13.3 `place/CLAUDE.md`(새 유형 · CronJob · `syncFrom` 보존 규칙) · `search/CLAUDE.md`(`EventSchedule` · `eventStatus` · 행사 sitemap)
-  - [ ] 13.4 Verify: `grep -n 'searchFestival2\|place-ingest-tour-sync' docs/architecture/data-sources.md && ./gradlew verifyArchitecture && python3 scripts/doc_scan.py 2>/dev/null | tail -3`
+- [x] 13.0 Complete 문서
+  - [x] 13.1 Write checks: 대장 표에 세 오퍼레이션·`place-ingest-tour-sync` 가 있음(grep) · ADR-0104 상태 줄 갱신 · 문서 게이트(`doc_scan.py`) 통과
+  - [x] 13.2 ADR-0104 상태 → 채택 · ADR-0071 §5(행사 칩 · 국문 전용 코스 칩 · 숙박 오버레이 · 키워드 「전체」 행사 합류) · ADR-0103(유형별 본문 · 출처 문구 · 행사 sitemap) · ADR-0076(새 유형 지면 제외)
+  - [x] 13.3 `place/CLAUDE.md`(새 유형 · CronJob · `syncFrom` 보존 규칙) · `search/CLAUDE.md`(`EventSchedule` · `eventStatus` · 행사 sitemap)
+  - [x] 13.4 Verify: `grep -n 'searchFestival2\|place-ingest-tour-sync' docs/architecture/data-sources.md && ./gradlew verifyArchitecture && python3 scripts/doc_scan.py 2>/dev/null | tail -3`
 **Acceptance Criteria:** 문서 게이트 통과 · 대장·ADR·서비스 CLAUDE.md 가 코드와 일치
 
 ## Execution Order

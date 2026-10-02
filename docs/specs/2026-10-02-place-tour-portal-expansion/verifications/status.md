@@ -42,3 +42,5 @@
 | 배포 ② | 정적 sitemap | 행사 1,159 중 sitemap 0 · 양성 대조 관광지(12·76) 13,445 |
 | 배포 ② | CDP 4조합(세로·가로 × 라이트·다크) | 상태 칩 3개 1줄 · 행사 기간 줄 30 · 가로 스크롤 없음 · 상태 문구 대비 9.63/6.08 · 해운대 근처 숙소 6 · 근처 행사 6 · 편의시설에 숙박 없음 · 스크린샷 verifications/cdp-deploy2/ |
 | 배포 ② 남은 것 | 보강 대기 | 새 행 개요·이용정보(매일 잡) · 옮겨 온 숙박 4건 intro 재수집 · 코스 제목 「코스 여행코스」 중복 · 행사 칩에서 속성 칩 숨기기 → TG13 |
+| TG13 | vitest 2파일 · tsc(app 273 files) · search:app Parity 29 · Renderer 57 · Service 4 · Controller 5 · verifyArchitecture | 23 passed · exit 0 · 0 실패 · BUILD SUCCESSFUL |
+| TG13 | 회귀 주입 6종(코스 제목 접미 · 행사일 때 속성 조건·facets·칩 줄) | 전부 빨간불 · doc_map --check exit 1 은 HEAD 에서도 같은 기존 드리프트 |

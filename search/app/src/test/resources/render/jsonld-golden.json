@@ -963,8 +963,8 @@
         ]
       },
       "meta": {
-        "title": "부산 바다 하루 코스 여행코스 — 코스 구성 · 거리 · 소요 시간 | K-관광",
-        "description": "부산 바다 하루 코스 여행코스입니다. 코스를 이루는 관광지를 순서대로 보고 총 거리와 소요 시간을 확인하세요."
+        "title": "부산 바다 하루 코스 — 코스 구성 · 거리 · 소요 시간 | K-관광",
+        "description": "부산 바다 하루 코스입니다. 코스를 이루는 관광지를 순서대로 보고 총 거리와 소요 시간을 확인하세요."
       },
       "jsonLd": [
         {
@@ -1034,6 +1034,96 @@
               "position": 3,
               "name": "부산 바다 하루 코스",
               "item": "https://place.1989v.com/attractions/5201"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ko-course-plain-name",
+      "input": {
+        "contentId": "1965838",
+        "category": "etc",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "imageUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+        "tel": "02-3700-3900",
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "5202",
+        "lang": "ko",
+        "contentTypeId": "25",
+        "title": "남해 바래길 드라이브",
+        "titleLocal": null,
+        "overview": "해안 도로.",
+        "introRaw": "{\"distance\":\"40km\",\"taketime\":\"반나절\"}",
+        "courseStops": [
+          {
+            "order": 0,
+            "contentId": "126081",
+            "name": "해운대해수욕장",
+            "attractionId": 7001
+          }
+        ]
+      },
+      "meta": {
+        "title": "남해 바래길 드라이브 여행코스 — 코스 구성 · 거리 · 소요 시간 | K-관광",
+        "description": "남해 바래길 드라이브 여행코스입니다. 코스를 이루는 관광지를 순서대로 보고 총 거리와 소요 시간을 확인하세요."
+      },
+      "jsonLd": [
+        {
+          "@context": "https://schema.org",
+          "@type": "TouristTrip",
+          "name": "남해 바래길 드라이브",
+          "description": "해안 도로.",
+          "url": "https://place.1989v.com/attractions/5202",
+          "inLanguage": "ko",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "K-관광",
+            "url": "https://place.1989v.com"
+          },
+          "image": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+          "itinerary": {
+            "@type": "ItemList",
+            "numberOfItems": 1,
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "item": {
+                  "@type": "TouristAttraction",
+                  "name": "해운대해수욕장",
+                  "url": "https://place.1989v.com/attractions/7001"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "한국 관광지 탐색",
+              "item": "https://place.1989v.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "서울특별시",
+              "item": "https://place.1989v.com/regions/11"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "남해 바래길 드라이브",
+              "item": "https://place.1989v.com/attractions/5202"
             }
           ]
         }

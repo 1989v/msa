@@ -38,6 +38,8 @@ OpenSearch 기반 읽기 전용 검색 모델 서비스 (ADR-0055 로 ES 에서 
 읽기 클래스는 `ignoreUnknown = true` 라 필드를 빠뜨려도 컴파일이 통과하고 값만 조용히 빈다 —
 `verifyArchitecture` 의 `verifySearchIndexContract` 가 매핑 키와 클래스 필드를 맞춰본다
 (쓰기는 정확히 일치, 읽기는 부분집합 + 빠진 이유를 루트 `build.gradle.kts` 의 `searchReadOmitted` 에).
+**`searchReadRequired` 에 든 필드는 사유를 적어도 빠질 수 없다** — 지금은 `attractions` 의 `eventStartEffective`·`eventEndEffective`·`courseStops`.
+읽기에서 빠지면 진행 중 행사가 「날짜 없음」으로 보이고 코스 절이 사라지는데, 컴파일도 사유 목록도 그걸 못 막는다.
 
 | 인덱스 | 쓰기 | 읽기 | 필드 |
 |---|---|---|---|
@@ -106,6 +108,18 @@ OpenSearch 기반 읽기 전용 검색 모델 서비스 (ADR-0055 로 ES 에서 
   순위 반영은 `search.attraction.click-boost.enabled`(env `SEARCH_ATTRACTION_CLICK_BOOST_ENABLED`, **기본 꺼짐**)이고
   검색어 있는 키워드 레그에만 곱한다. 켜기 전에 `live-eval.py --click-boost-pair` 판정이 「켬」이어야 한다.
 - **비슷한 곳**: 재색인이 place `/internal/attractions/similar/lookup` 에서 받아 싣는다 — 재색인 중 kNN 을 돌리지 않는다.
+
+## 행사 상태 · 행사 sitemap (ADR-0104)
+
+- **행사 상태는 저장하지 않는다.** 재색인이 원천 시작일·종료일을 유효 기간으로 정규화해 `eventStartEffective`·`eventEndEffective`(`date`)로 싣고,
+  상태(`ONGOING`·`UPCOMING`·`ENDED`·`UNKNOWN`)와 필터 범위(`eventStatus` 다섯)는 search:domain `EventSchedule` 하나가 함께 판정한다.
+  범위로 고른 문서에 상태를 다시 매기면 같은 답이 나오는지를 날짜 격자 픽스처가 묶는다. 오늘(KST)은 application 서비스가 `Clock` 으로 넘기고
+  렌더러·어댑터는 시계를 읽지 않는다. 만료 `noindex`(종료 + 31일)와 sitemap 유예(종료 + 30일)도 같은 객체가 정한다 — 경계가 두 곳에 있으면 sitemap 의 URL 이 noindex 로 나간다.
+- **행사 URL 은 정적 sitemap 에 없다.** place 호스트 `/sitemap-places-events.xml` 을 portal-fe nginx 가 `/internal/render/sitemap/events.xml` 로 넘기고,
+  `RenderEventSitemapUseCase`(`EventSitemapService`)가 요청 시점의 오늘로 「행사 ∧ 개요 있음 ∧ 날짜 있음 ∧ 종료 + 30일 ≥ 오늘」만 싣는다.
+  **색인 조회 실패는 503 + `no-store`** — 빈 200 은 크롤러에게 행사 URL 이 전부 사라졌다는 뜻이 된다. 메모리 캐시는 두지 않는다.
+- 상세 서버 렌더는 유형별 본문(행사 일정·상태 · 숙박 입실·퇴실 · 코스 구성)과 출처 절을 그린다. 제목·설명·JSON-LD 는 `copy.mjs` 와 같은 문자열이어야 하고
+  `AttractionJsonLdParityTest` 가 대조한다(코스 이름이 「코스」로 끝나면 「여행코스」 접미를 붙이지 않는 규칙도 양쪽에 있다).
 
 ## Key Rules
 

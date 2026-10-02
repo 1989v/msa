@@ -198,8 +198,10 @@ class AttractionPageRenderer(
                 "$name — Travel Course, Stops & Time Needed | $BRAND_EN" to
                     "$name is a travel course in South Korea. See the stops in order, total distance and time needed."
             } else {
-                "$name 여행코스 — 코스 구성 · 거리 · 소요 시간 | $BRAND_KO" to
-                    "$name 여행코스입니다. 코스를 이루는 관광지를 순서대로 보고 총 거리와 소요 시간을 확인하세요."
+                // 원천 코스 이름은 「… 코스」로 끝나는 것이 많다 — 그때 「여행코스」를 또 붙이면 「… 코스 여행코스」가 된다
+                val course = if (name.trimEnd().endsWith("코스")) name else "$name 여행코스"
+                "$course — 코스 구성 · 거리 · 소요 시간 | $BRAND_KO" to
+                    "${course}입니다. 코스를 이루는 관광지를 순서대로 보고 총 거리와 소요 시간을 확인하세요."
             }
             else -> {
                 val label = categoryLabel(doc.category, lang)

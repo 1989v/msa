@@ -296,7 +296,9 @@ export default function PlacePage() {
           : category == null && keyword
             ? 'NOT_ENDED'
             : undefined,
-      ...attributeQuery(attributes),
+      // 속성(휴무·주차·반려동물 등)은 관광지 축이라 행사에는 뜻이 없다 — 행사 목록에서는 칩도 조건도 뺀다.
+      // 고른 칩은 남겨 두어 행사 칩을 풀면 다시 걸린다
+      ...(category === EVENT_CATEGORY ? {} : attributeQuery(attributes)),
       page,
       size: 30,
     }),
@@ -307,7 +309,8 @@ export default function PlacePage() {
     queryKey: ['place-attractions', query],
     // 건수는 첫 쪽만 센다 — 다음 쪽은 조건이 같아 건수도 같고, 세면 쪽마다 집계 요청이 는다.
     // query 에 넣지 않는 이유: 뽑기가 query 를 그대로 펼쳐 쓰는데 거기서는 건수가 필요 없다.
-    queryFn: () => searchAttractions(query.page === 0 ? { ...query, facets: true } : query),
+    queryFn: () =>
+      searchAttractions(query.page === 0 && query.category !== EVENT_CATEGORY ? { ...query, facets: true } : query),
     staleTime: 60_000,
     // 이 목록이 이 페이지의 본문이다. 한 번 실패했다고 '결과 없음' 을 띄우면 200 응답에
     // '찾을 수 없음' 문구가 실려 크롤러에게 Soft 404 로 읽힌다 (2026-08-22 구글 실측:
@@ -1106,34 +1109,37 @@ export default function PlacePage() {
 
         {/* 속성 칩 — 분류 칩과 다른 축이라 따로 한 묶음(모바일은 한 줄 가로 스크롤).
             칩은 숨기지 않는다: 안 고른 칩이 0 이면 흐리게 두고 자리를 지킨다 — 빠지면 옆 칩이
-            밀려 누르려던 자리에 다른 칩이 온다. 고른 칩은 0 이어도 활성이다(풀 수 있어야 한다). */}
-        <div className="place-attr-group" role="group" aria-label={lang === 'en' ? 'Visitor info filters' : '방문 정보 필터'}>
-          <div className="place-attr-chips">
-            {ATTRIBUTE_CHIPS.map((chip) => {
-              const selected = attributes.has(chip.id);
-              const count = chipCount(facets, chip.id);
-              const empty = !selected && count === 0;
-              return (
-                <button
-                  key={chip.id}
-                  type="button"
-                  className={['place-chip', 'place-attr-chip', selected ? 'active' : '', empty ? 'is-empty' : '']
-                    .filter(Boolean)
-                    .join(' ')}
-                  aria-pressed={selected}
-                  data-attr={chip.id}
-                  onClick={() => toggleAttribute(chip.id)}
-                >
-                  {chip[lang]}
-                  {count != null && (
-                    <span className="place-attr-count">{count.toLocaleString(lang === 'en' ? 'en' : 'ko')}</span>
-                  )}
-                </button>
-              );
-            })}
+            밀려 누르려던 자리에 다른 칩이 온다. 고른 칩은 0 이어도 활성이다(풀 수 있어야 한다).
+            행사 칩을 골랐을 때만 줄째 뺀다 — 관광지 속성이라 행사에는 전부 0 이다. */}
+        {category !== EVENT_CATEGORY && (
+          <div className="place-attr-group" role="group" aria-label={lang === 'en' ? 'Visitor info filters' : '방문 정보 필터'}>
+            <div className="place-attr-chips">
+              {ATTRIBUTE_CHIPS.map((chip) => {
+                const selected = attributes.has(chip.id);
+                const count = chipCount(facets, chip.id);
+                const empty = !selected && count === 0;
+                return (
+                  <button
+                    key={chip.id}
+                    type="button"
+                    className={['place-chip', 'place-attr-chip', selected ? 'active' : '', empty ? 'is-empty' : '']
+                      .filter(Boolean)
+                      .join(' ')}
+                    aria-pressed={selected}
+                    data-attr={chip.id}
+                    onClick={() => toggleAttribute(chip.id)}
+                  >
+                    {chip[lang]}
+                    {count != null && (
+                      <span className="place-attr-count">{count.toLocaleString(lang === 'en' ? 'en' : 'ko')}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="place-attr-caption">{ATTRIBUTE_CAPTION[lang]}</p>
           </div>
-          <p className="place-attr-caption">{ATTRIBUTE_CAPTION[lang]}</p>
-        </div>
+        )}
 
         {/* 데스크톱은 기존 칩 드릴다운 그대로 — 화면이 넓으면 펼쳐 보이는 쪽이 한 탭 덜 든다 */}
         {hasRegionAxis && !isMobile && (
