@@ -180,7 +180,7 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
   `attraction_wellness`(목록 행 원문 + 테마 코드). **관광지 bulk upsert(전체 동기화) 경로 밖이라 다른 잡의 왕복이 지우지 않는다** (§0 ③).
 - 파생 코드는 긍정 값만이다 — 빈 값·「없음」「없으」「불가」「미설치」가 든 값은 코드가 없다. 목록 필터로는 라벨 정밀도 95% 이상인
   휠체어·엘리베이터·장애인 화장실만 연다(표본 100건 손 확인: `implementation/phase2-barrierfree-labels.md`).
-- 서빙: 04:30 재색인이 `/internal/attractions/extras/lookup` 으로 읽어 색인 문서(`barrierFree` · `barrierFreeDetail` · `wellnessTheme` ·
+- 서빙: 06:30 재색인이 `/internal/attractions/extras/lookup` 으로 읽어 색인 문서(`barrierFree` · `barrierFreeDetail` · `wellnessTheme` ·
   `wellnessThemeName`)에 싣는다. 화면은 place DB 를 읽지 않는다(ADR-0071 §10).
 
 **관광지 집중률(앞 30일 예측)은 이름 매칭으로 관광지에 붙어 별도 표에 쌓이고, 재색인이 색인 문서로 옮긴다** (2단계, CronJob `place-ingest-congestion` · `--job=congestion`, 매일 KST 02:00).
@@ -193,7 +193,7 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
   단계마다 후보가 둘 이상이면 잇지 않는다. 실측 376곳: 정확 284 · 정규화 22 · 포함 21 · 모호 5 · 못 맞춤 44. **화면(색인)에는 정확·정규화만 싣는다** — 포함은 정밀도 확인 전(Q-P2-MATCH).
 - 저장(V28): `attraction_congestion` — (시군구, 원천 이름)당 한 행에 원천 30행 원문 JSON(`rates_raw`) + 파생(예측일 범위 · 이은 관광지 id · 매칭 방법). 못 이은 이름도 저장한다.
   수집기가 받은 시군구의 행을 통째로 바꾸고(새 예측이 옛 예측을 대체), 0건·실패 시군구는 건드리지 않는다. 관광지 bulk upsert 경로 밖이다(§0 ③).
-- 서빙: 04:30 재색인이 `/internal/attractions/extras/lookup` 으로 읽어 색인 문서 `congestion`(날짜·값 배열, 색인하지 않는 객체)에 싣는다.
+- 서빙: 06:30 재색인이 `/internal/attractions/extras/lookup` 으로 읽어 색인 문서 `congestion`(날짜·값 배열, 색인하지 않는 객체)에 싣는다.
   화면이 오늘 이후 날짜만 「혼잡 예측」으로 그린다. 서버 렌더 본문에는 넣지 않는다.
 
 **연관 관광지(「여기 온 사람들이 함께 간 곳」)는 이름 매칭으로 출발·대상 관광지에 붙어 별도 표에 쌓이고, 재색인이 관광지로 이어진 대상만 색인 문서로 옮긴다** (2단계, CronJob `place-ingest-related` · `--job=related`, 매월 KST 12~28일 02:20).
@@ -211,7 +211,7 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
   원천 분류는 보지 않는다 — 음식·숙박 대상도 우리 음식점·숙박 행으로 이어지면 내고, 화면이 원천 소분류로 그것을 밝힌다.
 - 저장(V29): `attraction_related` — (시군구, 출발)당 한 행에 원천 행 원문 JSON(`related_raw`) + 파생(출발 매칭 · 대상별 매칭 `targets`). 못 이은 출발·대상도 저장한다.
   수집기가 받은 시군구의 행을 그 달로 통째로 바꾸고(최신 달만), 0건·실패 시군구는 건드리지 않는다. 더 옛 달로는 바꾸지 않는다. 관광지 bulk upsert 경로 밖이다(§0 ③).
-- 서빙: 04:30 재색인이 `/internal/attractions/extras/lookup` 으로 읽어 색인 문서 `relatedPlaces`(순위·id·지금 제목·시도·원천 소분류, 색인하지 않는 객체, 최대 6)에 싣는다.
+- 서빙: 06:30 재색인이 `/internal/attractions/extras/lookup` 으로 읽어 색인 문서 `relatedPlaces`(순위·id·지금 제목·시도·원천 소분류, 색인하지 않는 객체, 최대 6)에 싣는다.
   자기 자신·출발과 같은 이름·비활성 문서는 뺀다. 상세 화면과 서버 렌더 본문이 같은 목록을 그린다(「비슷한 곳」과 별개 절).
 
 **지역 방문자 수는 지역 단위 값이라 관광지 색인이 아니라 place 레디스 캐시 경로로 나간다** (2단계, CronJob `place-ingest-visitors` · `--job=visitors`, 매일 KST 02:30).

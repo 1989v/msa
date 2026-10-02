@@ -12,11 +12,13 @@ spec:
   # 페이지네이션 풀-스캔하여 attractions 인덱스를 재구축한다.
   #
   # ADR-0070 — place-ingest-overview(KST 04:00) 가 매일 개요를 채우므로 재색인도 매일 돈다.
-  # 30분 간격을 두는 이유: 개요 잡이 외부 API 한도에 걸려 느려져도 재색인이 앞지르지 않게 한다.
+  # 새벽 수집이 전부 끝난 뒤에 돈다 — 마지막 수집은 사진·반복정보(media, KST 06:00, 실측 6분)다.
+  # 04:30 에 돌던 때는 이용정보(05:00)·사진(06:00)이 하루 늦게 화면에 올라갔다. 30분 여유는 수집이 한도에 걸려 느려져도
+  # 재색인이 앞지르지 않게 둔 것이다.
   #   온디맨드:  kubectl -n commerce create job --from=cronjob/attraction-reindex attraction-reindex-manual
   suspend: false
-  # 매일 UTC 19:30 = KST 04:30
-  schedule: "30 19 * * *"
+  # 매일 UTC 21:30 = KST 06:30
+  schedule: "30 21 * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 5
