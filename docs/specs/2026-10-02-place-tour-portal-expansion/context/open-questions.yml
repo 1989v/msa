@@ -1,29 +1,76 @@
 questions:
   - id: Q1
     phase: pre-impl
-    status: open
+    status: resolved
+    answer: >-
+      2026-10-02 첫 호출(implementation/q1-festival-window.md). eventStartDate 는 「종료일 ≥ 값」으로 거른다 — 두 창 모두 종료일이 값보다 앞선 행 0건,
+      오늘 창에 시작일이 오늘 이전인 진행 중 행사 국 75 · 영 28건. 오늘 창 국 294(3쪽) · 영 94(1쪽), −365 창 국 897(9쪽) · 영 262(3쪽),
+      오늘 창은 −365 창에 전부 포함(−365 에만 국 603 · 영 168 = 지난 1년 안에 끝난 행사). 좌표 없는 행 0.
+      국·영 합 12쪽 ≤ 60 이라 −365 유지(ADR-0104 덧붙임). SR-1 의 근거 문구 「진행 중 장기 행사를 놓치지 않게」는 오늘 창으로도 충족되므로,
+      −365 의 실제 역할은 끝난 행사를 행으로 남기는 것이다 — SR-1 문구 정정 여부는 메인 판단. 하루 호출 56콜(SR-1b 갱신).
     question: searchFestival2 의 조회 시작일 파라미터가 시작일 기준인지, 진행 중인 장기 행사(시작이 기준일 이전)가 포함되는지, 그리고 −365 창의 건수·쪽수·좌표 제외 건수
     default: KST 오늘 − 365일을 넘긴다 (SR-1). 첫 호출에서 기준일을 오늘·−365 두 번 불러 건수·겹침·쪽수를 비교해 implementation/ 에 남기고, SR-1b 호출 수와 SR-10b 대조 규모를 그 값으로 고친다. 국·영 합 60쪽을 넘으면 창을 −180일로 줄인다(SR-1b). 표본 전에는 수집 코드를 머지하지 않는다(SR-10)
   - id: Q2
     phase: pre-impl
-    status: open
+    status: resolved
+    answer: >-
+      implementation/q2-legacy-en.md. 국문 2건(1891566 · 2775576)은 searchStay2 ko 목록에 유형 32 로 있어 첫 동기화가 채운다.
+      영문 2건은 searchStay2 en 211건에 없고, detailCommon2 의 좌표가 "0" 이라 영문 76 목록 동기화도 좌표 제외로 버린다 →
+      기본안 2단계(detailCommon2 단건으로 유형·법정동만 보정하는 일회성 스크립트) 확정: 2948191 → 76 · 28/155, 3112217 → 76 · 51/720.
     question: 옛 행 영문 2건(detailCommon2 가 유형 76 으로 답함)이 searchStay2(80) 목록에 나오는지
     default: 나오지 않으면 영문 관광지(76) 목록 동기화를 한 번 수동 실행해 채운다. 그래도 없으면 detailCommon2 단건 응답으로 유형·법정동만 보정하는 일회성 스크립트를 SR-1 에 포함한다
   - id: Q3
     phase: pre-impl
-    status: open
+    status: resolved
+    answer: >-
+      implementation/q3-stay-course-fields.md. searchStay2 · areaBasedList2(25) 목록 행 키 집합은 areaBasedList2 와 같다(25키) — 다른 필드 없음,
+      목록 행 원문 컬럼으로 충분. 필드 밖의 발견 두 가지는 Q6(숙박 응답에 다른 유형 섞임) · Q7(코스 법정동 없음)로 올렸다.
     question: searchStay2 목록 행이 areaBasedList2 와 다른 필드를 주는지
     default: 다른 필드는 목록 행 원문 컬럼에 보존된다(SR-1). 화면이 쓸 필드가 생기면 파생 컬럼은 새 V 로 더한다
   - id: Q4
     phase: pre-impl
-    status: open
+    status: resolved
+    answer: >-
+      implementation/q4-event-dates.md. −365 창 전량 1,159행(국 897 · 영 262)에서 S 만 0 · E 만 0 · 둘 다 없음 0 · S>E 0 · 변환 실패 0.
+      UNKNOWN 0% 라 기본 규칙 유지. 첫 적재 로그 건수는 같은 파일에 덧붙인다.
     question: 종료일 또는 시작일이 비어 있거나, 시작일 > 종료일이거나, 날짜 변환에 실패한 행사 건수
     default: S 만 → (S,S), E 만 → (E,E), S>E·둘 다 없음 → 날짜 없음(UNKNOWN, 필터·근처 행사·행사 sitemap 제외) (SR-3). 변환 실패는 그 값만 None 으로 두므로(SR-1) 남은 쪽으로 위 규칙을 탄다. 수집 로그와 재색인 완료 로그의 건수를 첫 적재에서 implementation/ 에 남기고, UNKNOWN 이 행사의 1% 를 넘으면 규칙을 다시 본다
   - id: Q5
     phase: pre-impl
-    status: open
+    status: resolved
+    answer: >-
+      기본안 유지 — 숙박(32·80)에는 방문 후기 절을 그리지 않는다. 협찬 비율은 재지 못했다: 후기 수집원인 네이버 블로그 검색 키
+      (place-ingest-secrets 의 naver-client-id/secret)가 운영 Secret 에 없고(키 목록: google-places-api-key · tour-api-key · youtube-api-key),
+      새 외부 키 없이 잴 경로가 없다. 또 블로그 검색 응답은 본문 앞부분 요약만 주어 글 끝에 붙는 협찬 표기를 원문 없이 판정할 수 없다.
+      키가 생기고 숙박 후기 절을 다시 검토할 때 표본 20곳을 원문으로 잰다.
     question: 숙박 상세에도 수집형 「방문 후기」(네이버 블로그 등)를 붙일지 — 숙박 후기는 협찬 글 비중이 높다
     default: 숙박(32·80)에는 방문 후기 절을 그리지 않는다. 숙박 표본 20곳의 후기에서 협찬 표기 비율을 재 본 뒤 결정을 이 항목에 적는다
+  - id: Q6
+    phase: pre-impl
+    status: resolved
+    answer: 기본안 채택(2026-10-02) — 숙박 목록은 유형 32·80 만 싣고, contentid 가 빈 행은 버리며 건수를 로그에 남긴다
+    question: searchStay2 응답에 숙박이 아닌 유형이 섞인다 — ko 2,990건 중 12 61 · 28 3 · 14 1, en 211건 중 76 2 · 85 1(이 85 행은 contentid 가 빈 문자열)
+    default: >-
+      수집기가 searchStay2 행 중 contenttypeid 가 32(ko)·80(en) 인 것만 싣는다. 다른 유형은 각자의 목록 동기화가 이미 갖고 있고(표본 7건 모두 DB 에 있음),
+      받으면 숙박 경로가 그 행의 목록 행 원문을 덮는다. contentid 가 빈 행은 유형과 무관하게 버리고 건수를 로그에 남긴다 —
+      그대로 보내면 @NotBlank 로 bulk 묶음(최대 2,000건) 전체가 400 이 된다. 근거: implementation/q3-stay-course-fields.md
+  - id: Q7
+    phase: pre-impl
+    status: resolved
+    answer: 기본안 채택(2026-10-02) — 원천 그대로 둔다. 법정동 없는 코스는 지역 허브에 안 잡히고 코스 칩·검색으로만 닿는다. 좌표로 지역을 파생할지는 배포 ② 뒤 코스 노출을 보고 다시 본다
+    question: 여행코스(25) 1,068건 중 1,016건이 lDongRegnCd 가 비어 지역 드릴다운·지역 허브의 지역 축에 들지 못한다(좌표 없음 68 · 대표 이미지 없음 1,025)
+    default: >-
+      이번 범위에서는 원천 그대로 둔다(법정동을 지어내지 않는다). 코스는 반경 검색·키워드 검색과 상세로 노출되고 지역 축에는 법정동이 있는 52건만 든다.
+      좌표 역산이나 코스 구성 첫 지점의 지역을 파생 컬럼으로 둘지는 TG3 착수 전에 메인이 정한다. 근거: implementation/q3-stay-course-fields.md
+  - id: Q8
+    phase: pre-impl
+    status: resolved
+    answer: 채택(2026-10-02) — 패턴에 [A-Za-z0-9+/%]{60,} 추가, 대상을 implementation/*.json 으로. 88자 base64 주입 exit 1 · 원복 exit 0 확인, tasks.md 1.10 갱신
+    question: 표본 정제 게이트(tasks 1.10 의 grep `servicekey|[0-9a-f]{64}`)가 실제 키 모양을 못 잡는다 — 운영 키는 디코드 88자 base64 · URL 인코딩 100자라 hex 64 가 아니다
+    default: >-
+      1.10 의 grep 에 긴 키 모양 토큰 `[A-Za-z0-9+/%]{60,}` 을 더하고 대상을 `implementation/*.json` 으로 좁힌다(디렉토리 전체에 걸면 .md 의 긴 파일 경로가 걸린다).
+      회귀 주입 결과(2026-10-02): 지금 패턴은 hex 64 주입에 빨간불, base64 88자·URL 인코딩 키 모양 주입에는 초록불(놓침).
+      바꾼 형태는 세 주입 모두 빨간불이고 지금 표본 다섯에는 초록불. 표본에 운영 키 원값이 없는 것은 노드에서 키 원값(인코딩·디코딩 둘)으로 grep -F 해 0건을 따로 확인했다.
   - id: Q-P2-KORWITH
     phase: pre-impl
     status: open

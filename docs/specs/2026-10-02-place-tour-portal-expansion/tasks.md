@@ -17,17 +17,17 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
 **Dependencies:** None
 **Phase:** ① 착수 전
 **Required Skills:** TourAPI 호출, 읽기 전용 SQL, 문서
-- [ ] 1.0 Complete 사전 확인
-  - [ ] 1.1 Write checks: 표본 정제 게이트 — `implementation/*.json` 에 `serviceKey`·키 값·개인 정보 문자열이 없다(grep, 회귀 주입: 키 한 줄을 넣어 실패 확인) · T18 기준선 쿼리가 키셋(OFFSET 없음)인지 로컬 DB 에서 실행 확인
-  - [ ] 1.2 Q1: `searchFestival2` 를 기준일 오늘·오늘 − 365 두 번 호출(국·영) → 건수 · 겹침 · 쪽수 · 좌표 없는 행 수를 `implementation/q1-festival-window.md` 에, 응답 표본을 `implementation/sample-searchFestival2-{ko,en}.json` 에
-  - [ ] 1.3 Q1 결과로 창 결정 — 국·영 합 60쪽 초과면 −180일, 결정을 ADR-0104 에 덧붙이고 SR-1b 호출 수 갱신
-  - [ ] 1.4 Q3: `searchStay2`(32·80)·`areaBasedList2`(25) 표본 → `implementation/sample-searchStay2-{ko,en}.json` · `sample-course-ko.json`, `areaBasedList2` 와 다른 필드 목록 기록
-  - [ ] 1.5 Q2: 옛 영문 2건이 `searchStay2`(80) 목록에 있는지 확인 → 없으면 채움 경로(SR-1 Q2 default)를 `implementation/q2-legacy-en.md` 에
-  - [ ] 1.6 Q4: 표본에서 S 만 · E 만 · S>E · 변환 실패 건수 → `implementation/q4-event-dates.md`
-  - [ ] 1.7 Q5: 숙박 표본 20곳 후기의 협찬 표기 비율 → 결정을 `context/open-questions.yml` Q5 에
-  - [ ] 1.8 롤백 확인: 옛 content 이미지의 bulk DTO 가 모르는 필드를 무시하는지 거부하는지 → `implementation/rollback-bulk-unknown-field.md`
-  - [ ] 1.9 `/hns:glossary` — `search/glossary.md` §3-1 에 행사 상태 넷 · 유효 시작일·유효 종료일 · `eventStatus` 다섯 · 이번 주말 · 이번 달 · 만료 noindex · 코스 구성 · 근처 행사 · 근처 숙소 · `festival`·`course`, 반경 절 표기 「주변 명소」
-  - [ ] 1.10 Verify: `ls docs/specs/2026-10-02-place-tour-portal-expansion/implementation/sample-*.json && ! grep -rniE 'servicekey|[0-9a-f]{64}' docs/specs/2026-10-02-place-tour-portal-expansion/implementation/`
+- [x] 1.0 Complete 사전 확인
+  - [x] 1.1 Write checks: 표본 정제 게이트 — `implementation/*.json` 에 `serviceKey`·키 값·개인 정보 문자열이 없다(grep, 회귀 주입: 키 한 줄을 넣어 실패 확인) · T18 기준선 쿼리가 키셋(OFFSET 없음)인지 로컬 DB 에서 실행 확인
+  - [x] 1.2 Q1: `searchFestival2` 를 기준일 오늘·오늘 − 365 두 번 호출(국·영) → 건수 · 겹침 · 쪽수 · 좌표 없는 행 수를 `implementation/q1-festival-window.md` 에, 응답 표본을 `implementation/sample-searchFestival2-{ko,en}.json` 에
+  - [x] 1.3 Q1 결과로 창 결정 — 국·영 합 60쪽 초과면 −180일, 결정을 ADR-0104 에 덧붙이고 SR-1b 호출 수 갱신
+  - [x] 1.4 Q3: `searchStay2`(32·80)·`areaBasedList2`(25) 표본 → `implementation/sample-searchStay2-{ko,en}.json` · `sample-course-ko.json`, `areaBasedList2` 와 다른 필드 목록 기록
+  - [x] 1.5 Q2: 옛 영문 2건이 `searchStay2`(80) 목록에 있는지 확인 → 없으면 채움 경로(SR-1 Q2 default)를 `implementation/q2-legacy-en.md` 에
+  - [x] 1.6 Q4: 표본에서 S 만 · E 만 · S>E · 변환 실패 건수 → `implementation/q4-event-dates.md`
+  - [x] 1.7 Q5: 숙박 표본 20곳 후기의 협찬 표기 비율 → 결정을 `context/open-questions.yml` Q5 에
+  - [x] 1.8 롤백 확인: 옛 content 이미지의 bulk DTO 가 모르는 필드를 무시하는지 거부하는지 → `implementation/rollback-bulk-unknown-field.md`
+  - [x] 1.9 `/hns:glossary` — `search/glossary.md` §3-1 에 행사 상태 넷 · 유효 시작일·유효 종료일 · `eventStatus` 다섯 · 이번 주말 · 이번 달 · 만료 noindex · 코스 구성 · 근처 행사 · 근처 숙소 · `festival`·`course`, 반경 절 표기 「주변 명소」
+  - [x] 1.10 Verify: `ls docs/specs/2026-10-02-place-tour-portal-expansion/implementation/sample-*.json && ! grep -rniE 'servicekey|[0-9a-f]{64}|[A-Za-z0-9+/%]{60,}' docs/specs/2026-10-02-place-tour-portal-expansion/implementation/*.json`
 **Acceptance Criteria:** Q1~Q4 표본·기록 존재 · 창 결정이 ADR-0104 에 · 정제 게이트 회귀 주입 빨간불 · 용어 등재
 
 ### Task Group 2: place 저장 — V23 · 왕복 경로 · 딥링크 (place:domain · place:feature)
