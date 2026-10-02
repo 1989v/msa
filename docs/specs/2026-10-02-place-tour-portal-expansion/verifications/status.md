@@ -44,3 +44,6 @@
 | 배포 ② 남은 것 | 보강 대기 | 새 행 개요·이용정보(매일 잡) · 옮겨 온 숙박 4건 intro 재수집 · 코스 제목 「코스 여행코스」 중복 · 행사 칩에서 속성 칩 숨기기 → TG13 |
 | TG13 | vitest 2파일 · tsc(app 273 files) · search:app Parity 29 · Renderer 57 · Service 4 · Controller 5 · verifyArchitecture | 23 passed · exit 0 · 0 실패 · BUILD SUCCESSFUL |
 | TG13 | 회귀 주입 6종(코스 제목 접미 · 행사일 때 속성 조건·facets·칩 줄) | 전부 빨간불 · doc_map --check exit 1 은 HEAD 에서도 같은 기존 드리프트 |
+| 배포 ③ | 이미지·롤아웃 | search·portal-fe c943faf · rolled out |
+| 배포 ③ | 행사 sitemap 계약 | place 200 · application/xml · Cache-Control public, max-age=300, must-revalidate · apex·blog·resume 404 · 인덱스에 등재 |
+| 배포 ③ | 양성 대조(개요 보강 수동 856초 → 재색인) | 행사 개요 국 896 · 영 227 · sitemap urls 514 = DB 기대값 514 · 진행 중 행사 robots 없음(61735 noindex 해제) · 종료 33일 61969 noindex, follow · sitemap 0 |

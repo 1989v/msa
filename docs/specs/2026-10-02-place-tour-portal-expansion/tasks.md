@@ -185,12 +185,12 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
   - [x] 11.7 Verify: `./gradlew :search:app:test --tests '*AttractionPageRendererTest' --tests '*EventSitemap*' && ./gradlew verifyArchitecture && (cd portal-fe && npx vitest run src/seo/__tests__/prerenderPlace.test.ts src/seo/__tests__/eventSchedule.test.ts) && bash portal-fe/scripts/check-nginx-events-sitemap.sh`
   - [x] 11.8 네트워크 정책 19·20 재사용 확인(새 정책 없음): `kubectl kustomize k8s/overlays/oci-arm >/dev/null`
   - [x] 11.9 배포 순서: search → portal-fe(TG10 과 같은 portal-fe 이미지로 묶어도 된다)
-  - [ ] 11.10 **배포 ③ 뒤 운영 확인(SR-10b · T19):**
-    - [ ] 11.10.1 새 이미지 확인 — 응답에 행사 sitemap 경로가 있고 사이트맵 인덱스에 새 파일명이 있는지 먼저(없으면 측정 폐기)
-    - [ ] 11.10.2 종료 31일 지난 표본 행사 → `noindex, follow`
-    - [ ] 11.10.3 `place.1989v.com/sitemap-places-events.xml` 에 그 URL 없음 **그리고** 진행 중 표본 URL 있음 · URL 수 > 0 이고 개요 있는 비종료 행사 `_count` 와 대조
-    - [ ] 11.10.4 apex·blog 호스트 같은 경로 404 · 응답 `Cache-Control` 헤더
-    - [ ] 11.10.5 근처 행사·숙소·지역 허브 절이 표본 상세·허브에 뜸(TG10)
+  - [x] 11.10 **배포 ③ 뒤 운영 확인(SR-10b · T19):**
+    - [x] 11.10.1 새 이미지 확인 — 응답에 행사 sitemap 경로가 있고 사이트맵 인덱스에 새 파일명이 있는지 먼저(없으면 측정 폐기)
+    - [x] 11.10.2 종료 31일 지난 표본 행사 → `noindex, follow`
+    - [x] 11.10.3 `place.1989v.com/sitemap-places-events.xml` 에 그 URL 없음 **그리고** 진행 중 표본 URL 있음 · URL 수 > 0 이고 개요 있는 비종료 행사 `_count` 와 대조
+    - [x] 11.10.4 apex·blog 호스트 같은 경로 404 · 응답 `Cache-Control` 헤더
+    - [x] 11.10.5 근처 행사·숙소·지역 허브 절이 표본 상세·허브에 뜸(TG10)
 **Acceptance Criteria:** T3·T12b(robots)·T13(인덱스분)·T14·T15 초록 · 운영 확인 전 항목 증거
 
 ### Task Group 12: 2단계 공공데이터 — 승인된 API 부터 하나씩
