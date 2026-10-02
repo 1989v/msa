@@ -47,3 +47,4 @@
 | 배포 ③ | 이미지·롤아웃 | search·portal-fe c943faf · rolled out |
 | 배포 ③ | 행사 sitemap 계약 | place 200 · application/xml · Cache-Control public, max-age=300, must-revalidate · apex·blog·resume 404 · 인덱스에 등재 |
 | 배포 ③ | 양성 대조(개요 보강 수동 856초 → 재색인) | 행사 개요 국 896 · 영 227 · sitemap urls 514 = DB 기대값 514 · 진행 중 행사 robots 없음(61735 noindex 해제) · 종료 33일 61969 noindex, follow · sitemap 0 |
+| TG13 배포 | search·portal-fe b0020c3 | 코스 61687 제목 「… 여행 코스 — 코스 구성 · 거리 · 소요 시간」 (중복 제거 확인) |
