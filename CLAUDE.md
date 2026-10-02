@@ -127,6 +127,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 - 탐색 우선, 증거 기반 → `docs/standards/agent-behavior.md`
 - 컴팩션 복구 → `docs/standards/agent-behavior.md`
 - ADR 검토 후 구현, 충돌 시 중단 후 확인 요청
+- **OCI 클러스터는 `ssh msa-oci 'sudo k3s kubectl …'` 로만 — 로컬 `kubectl` 금지.** 이 맥의 기본 kube 컨텍스트는 회사 운영 EKS 라 로컬 kubectl 은 개인 클러스터가 아니라 회사 운영을 부른다. 서브에이전트·Codex 에 OCI 작업을 넘길 때 프롬프트에 이 줄을 그대로 넣는다 — 서브에이전트는 메모리를 읽지 않아, 메모리 4곳에 있던 규칙을 건너뛰고 회사 EKS 에 시크릿 읽기를 보낸 적이 있다(2026-10-02)
 
 ---
 
