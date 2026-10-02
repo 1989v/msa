@@ -12,7 +12,7 @@ import urllib.parse
 import urllib.request
 
 BASE = os.environ.get("PLACE_API", "http://place:8096").rstrip("/")
-PAGE_SIZE = 1000
+PAGE_SIZE = 200           # place 가 목록 size 를 200 으로 자른다 — 더 크게 보내도 200건씩 온다
 BULK_CHUNK = 2000          # place 가 요청당 2000건으로 제한한다
 
 # 엣지(Cloudflare)가 기본 urllib UA 를 403 으로 막는다 — 로컬에서 프록시를 거칠 때만 필요하지만
@@ -61,17 +61,26 @@ def _request(method: str, path: str, body: dict | None = None, timeout: int = 12
 
 
 def fetch_attractions() -> list[dict]:
-    """전량 페이지 스캔. 재색인 배치와 같은 경로를 쓴다."""
+    """전량 스캔 — id 키셋(`afterId`)으로 id 오름차순. 재색인 배치와 같은 경로를 쓴다.
+
+    OFFSET 페이지는 건너뛸 행을 전부 읽어 뒤로 갈수록 느려졌다(6만 건 끝에서 4.9초, 키셋 0.3초).
+    키셋 응답은 전체 건수를 모르므로(-1) 끝은 `nextAfterId` 가 없거나 빈 페이지로만 판정한다.
+    """
     rows: list[dict] = []
-    page = 0
+    after_id = 0
     while True:
-        qs = urllib.parse.urlencode({"page": page, "size": PAGE_SIZE})
+        qs = urllib.parse.urlencode({"afterId": after_id, "size": PAGE_SIZE})
         data = _request("GET", f"/api/places/attractions?{qs}")["data"]
         got = data.get("attractions") or []
+        # 이미 받은 id 가 다시 오면 커서가 앞으로 가지 않는 것이다 — 무한히 되읽기 전에 멈춘다.
+        last_id = int(rows[-1]["id"]) if rows else 0
+        if got and int(got[0]["id"]) <= last_id:
+            raise RuntimeError(f"[place] 키셋이 앞으로 가지 않는다: afterId={after_id}, 첫 id={got[0]['id']}")
         rows.extend(got)
-        if not got or len(rows) >= int(data.get("totalElements") or 0):
+        next_after = data.get("nextAfterId")
+        if not got or next_after is None:
             break
-        page += 1
+        after_id = int(next_after)
     return rows
 
 
