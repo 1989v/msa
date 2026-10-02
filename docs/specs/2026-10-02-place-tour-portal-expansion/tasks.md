@@ -27,7 +27,7 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
   - [x] 1.7 Q5: 숙박 표본 20곳 후기의 협찬 표기 비율 → 결정을 `context/open-questions.yml` Q5 에
   - [x] 1.8 롤백 확인: 옛 content 이미지의 bulk DTO 가 모르는 필드를 무시하는지 거부하는지 → `implementation/rollback-bulk-unknown-field.md`
   - [x] 1.9 `/hns:glossary` — `search/glossary.md` §3-1 에 행사 상태 넷 · 유효 시작일·유효 종료일 · `eventStatus` 다섯 · 이번 주말 · 이번 달 · 만료 noindex · 코스 구성 · 근처 행사 · 근처 숙소 · `festival`·`course`, 반경 절 표기 「주변 명소」
-  - [x] 1.10 Verify: `ls docs/specs/2026-10-02-place-tour-portal-expansion/implementation/sample-*.json && ! grep -rniE 'servicekey|[0-9a-f]{64}|[A-Za-z0-9+/%]{60,}' docs/specs/2026-10-02-place-tour-portal-expansion/implementation/*.json`
+  - [x] 1.10 Verify: `ls docs/specs/2026-10-02-place-tour-portal-expansion/implementation/sample-*.json && ! sed -E 's#https?://[^"]*##g' docs/specs/2026-10-02-place-tour-portal-expansion/implementation/*.json | grep -qiE 'servicekey|[0-9a-f]{64}|[A-Za-z0-9+/%]{60,}'`
 **Acceptance Criteria:** Q1~Q4 표본·기록 존재 · 창 결정이 ADR-0104 에 · 정제 게이트 회귀 주입 빨간불 · 용어 등재
 
 ### Task Group 2: place 저장 — V23 · 왕복 경로 · 딥링크 (place:domain · place:feature)
@@ -193,32 +193,61 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
     - [x] 11.10.5 근처 행사·숙소·지역 허브 절이 표본 상세·허브에 뜸(TG10)
 **Acceptance Criteria:** T3·T12b(robots)·T13(인덱스분)·T14·T15 초록 · 운영 확인 전 항목 증거
 
-### Task Group 12: 2단계 공공데이터 — 승인된 API 부터 하나씩
-**Dependencies:** Task Group 4 (수집 틀), API 별 활용신청 승인
+### Task Group 12: 2단계 공공데이터 — API 별 하위 그룹 (설계: `implementation/phase2-design.md`)
+**Dependencies:** Task Group 4 (수집 틀). 하위 그룹은 12.A 뒤 설계 §8 순서이고, 앞 그룹이 막혀도 뒤 그룹은 독립 진행한다(12.D 는 12.B 의 캐시 경로를, 12.F 는 12.E 의 매칭 함수를 재사용)
 **Phase:** ④ (구현 순서 맨 끝)
-**Required Skills:** Python, TourAPI 외 공공데이터, Flyway, 화면은 표본 뒤
-- [ ] 12.0 Complete 2단계(승인된 것만)
-  - [ ] 12.1 Write tests(API 마다, T20): 표본 파일 존재 · 표본 키 집합 ⊆ 적재 필드 집합(스크립트 판정) · place·search 파드에 외부 egress 없음(정책 파일 대조) · 수집 잡 실패 격리
-  - [ ] 12.2 **API 별 템플릿 — 이 순서를 지키고 미승인 API 는 건너뛴다(다른 API 의 승인을 기다리지 않는다):**
-    1. 승인 확인 — 응답이 `SERVICE_KEY_IS_NOT_REGISTERED` 가 아님(아니면 이 API 는 건너뜀)
-    2. 필드 표본 — `implementation/phase2-<API>-sample.json`(키·개인 정보 없이, TG1 정제 게이트 통과) · open-questions 해당 항목 갱신
-    3. 적재 — §0 3규칙대로 표본 필드 전부(새 V 마이그레이션 또는 원문 컬럼) · place-ingest CronJob · 하루 호출 수를 CronJob 주석과 대장에, 계정 한도 안(`quota.py`) · 대장(`data-sources.md`) 행 추가 — 없으면 배포 안 함
-    4. 노출 — 표본을 본 뒤 open-questions 에서 확정한 화면만 · 출처 표시 없는 원천은 노출하지 않음
-  - [ ] 12.3 무장애 여행 `KorWithService2`(15101897) — Q-P2-KORWITH · 속성 패싯에 접근성 속성(긍정 값만, 라벨 정밀도 95% 미만이면 필터 미개방)
-  - [ ] 12.4 관광지 집중률 `TatsCnctrRateService`(15128555) — Q-P2-CONGESTION · 상세 「혼잡 예측」
-  - [ ] 12.5 연관 관광지 `TarRlteTarService1`(15128560) — Q-P2-RELATED · 상세 「여기 온 사람들이 함께 간 곳」(비슷한 곳과 별개)
-  - [ ] 12.6 두루누비 걷기길(15101974) — Q-P2-DURUNUBI · **착수 전 Q-P2-KEY 결정을 ADR-0104 에**
-  - [ ] 12.7 고캠핑(15101933) — Q-P2-CAMPING · Q-P2-KEY 선행 · 기존 레포츠 캠핑장과 중복 측정
-  - [ ] 12.8 관광사진(15101914) — Q-P2-PHOTO · 공공누리 유형 확인 전 화면 미노출
-  - [ ] 12.9 웰니스관광(15144030) — Q-P2-WELLNESS · Q-P2-KEY 선행
-  - [ ] 12.10 빅데이터 지역별 방문자수(15101972) — Q-P2-VISITORS · 지역 단위 대응 확인
-  - [ ] 12.11 기상청 단기예보(15084084) — Q-P2-WEATHER · 시군구 좌표 → 격자 선수집, 상세는 저장값만
-  - [ ] 12.12 기상청 중기예보(15059468) — Q-P2-WEATHER · 예보구역 단위
-  - [ ] 12.13 에어코리아 대기오염(15073861) — Q-P2-AIR · 시도별 선수집, 상세는 최근접 측정소
-  - [ ] 12.14 반려동물 동반여행(15135102) — Q-P2-PET · 기존 `petRaw` 를 덮지 않는 별개 원천
-  - [ ] 12.15 Verify(API 마다): `cd place/ingest && python -m pytest -q tests/phase2_<api>_test.py && python3 scripts/check_sample_fields.py docs/specs/2026-10-02-place-tour-portal-expansion/implementation/phase2-<API>-sample.json`
-  - [ ] 12.16 **배포 ④ 뒤 운영 확인(API 마다):** 새 이미지 확인 → 첫 수집 적재 건수 = 응답 건수 − 명시 예외 · 하루 호출 수 = 주석 값 · 화면 절이 있는 API 는 Googlebot UA 표본에 절 마커
-**Acceptance Criteria:** 승인된 API 마다 T20 초록 · 표본·대장·ADR(Q-P2-KEY) 기록 · 미승인 API 는 「건너뜀(사유: 미승인)」으로 남김
+**Required Skills:** Python(place-ingest), Flyway, Kotlin(place·search-batch·search), 레디스, React
+각 하위 그룹은 **테스트 → 구현 → 범위 지정 검증 → 배포 → 운영 확인** 순서다. V 번호는 설계 §3 의 제안이고 그때의 다음 빈 번호를 쓴다. 배포 전 대장(`data-sources.md` §1·§2)에 줄이 없으면 배포하지 않는다(SR-9).
+- [ ] 12.0 Complete 2단계 — 채택 9 · 보류 1(두루누비) · 안 함 2(관광사진 · 반려동물, `implementation/phase2-design.md` §0)
+  - [ ] 12.A 공통 틀
+    - [ ] 12.A.1 Write tests(T20): `scripts/check_sample_fields.py` — `sample-phase2-apis.json` 의 API 별 키 집합 ⊆ 적재 필드 집합(원문 JSON 컬럼이면 통과, 정규 컬럼만 고르면 빠진 키 목록으로 실패) · 한도 초과(429 · `resultCode=22`) 응답에 그 API 를 멈추고 받은 몫을 반환 · 한 단위 실패가 다음 단위를 막지 않음 · place·search 파드 egress 없음(정책 파일 대조)
+    - [ ] 12.A.2 구현: place-ingest `datagokr.py` — data.go.kr GET(예산 상수 · 한도 초과 판정 · 단위별 실패 격리 · 호출 수 로그), 표본 키 판정 스크립트
+    - [ ] 12.A.3 Verify: `cd place/ingest && python -m pytest -q tests/datagokr_test.py && python3 ../../scripts/check_sample_fields.py --self-test`
+  - [ ] 12.B 무장애 + 웰니스 (V25 · `place-ingest-attraction-attrs` 매일 02:40 · 하루 ≤ 902콜 · 상세 백필 11일)
+    - [ ] 12.B.1 Write tests: 플래그 파생 규칙(실측 상세 원문 → 긍정 코드만, 「없음/불가/미설치」 제외) · 상세 대상 선택(`detail_synced_at IS NULL` 먼저 → 목록 수정 시각 변경) · lookup 왕복(`/internal/attractions/extras/lookup` → 재색인 캡처 → `AttractionSearchDocument` 의 `barrierFree`·`wellnessTheme` 가 같음, T9 방식) · `verifySearchIndexContract` 새 필드 · 서버 렌더 「무장애 정보」 절
+    - [ ] 12.B.2 구현: V25 두 표 · 내부 bulk/lookup 엔드포인트(ADR-0083 레이어) · 수집 잡 · search-batch lookup · 색인 필드 · 렌더 절 · 목록 필터(라벨 정밀도 95% 이상 키만, 표본 100건 손 확인을 `implementation/phase2-barrierfree-labels.md` 에)
+    - [ ] 12.B.3 Verify: `cd place/ingest && python -m pytest -q tests/barrier_free_test.py tests/wellness_test.py && cd ../.. && ./gradlew :place:feature:test --tests '*AttractionExtras*' && ./gradlew :search:batch:test --tests '*AttractionApiReindexTaskletTest' && ./gradlew verifySearchIndexContract && ./gradlew :search:app:test --tests '*AttractionPageRendererTest'`
+    - [ ] 12.B.4 배포: content(V25) → place-ingest(잡) → search-batch → search → portal-fe
+    - [ ] 12.B.5 운영 확인: 새 이미지 확인 → 첫 실행 목록 9,630 · 매칭 ≈ 9,623 · 상세 899건/일 · 웰니스 국 168 · 영 92 · 재색인 뒤 `barrierFree` 있는 문서 `_count` · Googlebot UA 표본 상세에 절 마커
+  - [ ] 12.C 지역 방문자 (V26 · `place-ingest-visitors` 매일 02:30 · 하루 2콜 · 12개월 백필 약 32콜)
+    - [ ] 12.C.1 Write tests: 시군구 코드 269 전부가 `administrative_regions` 에 있음(실측 표본) · 일자 PK 재수집이 중복을 만들지 않음 · 레디스 write-through(적재 뒤 GET 이 DB 를 안 침, 미스면 PK 한 행) · `placeServingPaths.test.tsx` 허용 목록에 방문자 경로
+    - [ ] 12.C.2 구현: V26 · 내부 bulk · `GET /api/places/administrative-regions/{code}/visitors` 캐시 · 공개 지연 탐색(Q-P2-VISITORS-LAG) · 지역 허브 「방문 추이」
+    - [ ] 12.C.3 Verify: `cd place/ingest && python -m pytest -q tests/visitors_test.py && cd ../.. && ./gradlew :place:feature:test --tests '*RegionVisitor*' && (cd portal-fe && npx vitest run src/pages/place/__tests__/placeServingPaths.test.tsx src/pages/place/__tests__/RegionPage.test.tsx)`
+    - [ ] 12.C.4 배포: content(V26) → place-ingest → portal-fe
+    - [ ] 12.C.5 운영 확인: 하루 적재 = 기초 807 + 광역 행 · 공개 지연 값 기록 · 허브 응답 두 번째 호출이 레디스 적중(place 로그)
+  - [ ] 12.D 단기·중기 날씨 (V27 · 단기 05:25·17:25 486콜/일 · 중기 06:25 ≤ 200콜/일)
+    - [ ] 12.D.1 Write tests: 격자 변환(서울 시청 → (60,127) 등 기상청 표 검산점) · 시군구 269 → 고유 격자 243(운영 대표점 픽스처) · 중기 regId 매핑(시드 표 → 시군구 전부 매핑, Q-P2-MIDREG) · 신선도(발표 24시간 초과 → 응답에서 빠짐) · 서빙 경로 허용 목록
+    - [ ] 12.D.2 구현: V27 · 구역코드표 시드 · 잡 둘 · `GET /api/places/weather?sigungu=` 캐시 · 상세 「○○구 날씨」(3일 + 4~10일), 출처 「기상청」
+    - [ ] 12.D.3 Verify: `cd place/ingest && python -m pytest -q tests/weather_grid_test.py tests/weather_test.py && cd ../.. && ./gradlew :place:feature:test --tests '*Weather*' && (cd portal-fe && npx vitest run src/pages/place/__tests__/placeServingPaths.test.tsx src/pages/place/__tests__/AttractionPage.test.tsx)`
+    - [ ] 12.D.4 배포: content(V27) → place-ingest → portal-fe
+    - [ ] 12.D.5 운영 확인: 회차당 호출 = 고유 격자 수 · 하루 합 ≤ 1,000 · 표본 상세 날씨 절과 원천 값 대조 · CDP 4조합
+  - [ ] 12.E 집중률 (V28 · `place-ingest-congestion` 매일 02:00 · 하루 269콜)
+    - [ ] 12.E.1 Write tests: 이름 매칭 순수 함수 — 실측 세 시군구 원천 행 픽스처에서 정확 284 · 정규화 306 · 모호 4(설계 §2.1 수치) · 시군구 단위 교체가 받지 못한 시군구를 지우지 않음 · 색인 `congestion` 왕복 · 화면이 오늘 이전 날짜를 그리지 않음
+    - [ ] 12.E.2 구현: V28 · 매칭 함수(연관과 공용) · 잡 · lookup 확장 · 색인 필드 · 상세 「혼잡 예측」 · 0건 시군구 로그(Q-P2-CODE12)
+    - [ ] 12.E.3 Verify: `cd place/ingest && python -m pytest -q tests/name_match_test.py tests/congestion_test.py && cd ../.. && ./gradlew :search:batch:test --tests '*AttractionApiReindexTaskletTest' && ./gradlew verifySearchIndexContract && (cd portal-fe && npx vitest run src/pages/place/__tests__/AttractionPage.test.tsx)`
+    - [ ] 12.E.4 배포: content(V28) → place-ingest → search-batch → portal-fe
+    - [ ] 12.E.5 운영 확인: 269콜 · 매칭 방법별 건수(전국) · Q-P2-CODE12 결론 · 재색인 뒤 `congestion` 문서 수
+  - [ ] 12.F 연관 관광지 (V29 · `place-ingest-related` 매월 12일 02:20 · 월 269콜)
+    - [ ] 12.F.1 Write tests: 출발·대상 매칭(실측 픽스처: 출발 정규화 178/236 · 대상 관광지 448/867) · 관광지로 링크된 대상만 최대 6 · 서버 렌더·화면 같은 목록 · 비슷한 곳과 겹쳐도 각 절 유지
+    - [ ] 12.F.2 구현: V29 · 잡 · lookup 확장 · `relatedPlaces` · 상세 절 · 0건이면 다음 날 재시도(Q-P2-RELATED-LAG)
+    - [ ] 12.F.3 Verify: `cd place/ingest && python -m pytest -q tests/name_match_test.py tests/related_test.py && cd ../.. && ./gradlew :search:batch:test --tests '*AttractionApiReindexTaskletTest' && ./gradlew verifySearchIndexContract && ./gradlew :search:app:test --tests '*AttractionPageRendererTest'`
+    - [ ] 12.F.4 배포: content(V29) → place-ingest → search-batch → search → portal-fe
+    - [ ] 12.F.5 운영 확인: 출발·대상 매칭 건수 · Googlebot UA 표본 상세 절 마커
+  - [ ] 12.G 대기오염 (V30 · `place-ingest-air` 매시 40분 · 24콜/일) — **화면은 Q-P2-AIRSTATION 해결 뒤**
+    - [ ] 12.G.1 Write tests: 전국 한 응답 672행 적재 · 측정소별 `dataTime` 보존(혼재) · 측정 3시간 초과 제외 · `NAME` 매핑만인 시군구는 응답 없음 · 값·등급 변형 없음(원문 그대로, 평균 계산 함수 없음)
+    - [ ] 12.G.2 구현: V30 · 잡 · 측정소 좌표 확보 뒤 최근접 매핑 · `GET /api/places/air?sigungu=` 캐시 · 상세 대기 등급(측정소 · 측정 시각 · 제3유형 문구)
+    - [ ] 12.G.3 Verify: `cd place/ingest && python -m pytest -q tests/air_test.py && cd ../.. && ./gradlew :place:feature:test --tests '*AirQuality*' && (cd portal-fe && npx vitest run src/pages/place/__tests__/placeServingPaths.test.tsx)`
+    - [ ] 12.G.4 배포: content(V30) → place-ingest(수집 먼저) → 좌표 매핑 뒤 portal-fe
+    - [ ] 12.G.5 운영 확인: 하루 24콜(한도 500) · 측정소 672 · 매핑된 시군구 수 · 표본 상세 값 = 원천 값
+  - [ ] 12.H 고캠핑 (V31 · `place-ingest-gocamping` 매주 수 02:50 · 주 1콜) — Q-P2-KEY 결정 선행(ADR-0104 덧붙임)
+    - [ ] 12.H.1 Write tests: 보강 잡 `pick` 이 `source != TOURAPI` 행을 고르지 않음(회귀 주입: 조건 삭제 → 빨간불) · bulk upsert 자연키 `(source, content_id, lang)` — 같은 번호 다른 원천이 덮이지 않음 · 겹침 판정(300m + 이름) 실측 픽스처 705 · 겹친 곳은 새 행 없음 · 원문 82키 보존
+    - [ ] 12.H.2 구현: 보강 잡 `source` 필터 먼저 배포 → V31(자연키 변경 + `gocamping_site`) · 잡 · 상세 「캠핑장 정보」(허용 키, 예약 URL 미표시) · 지도 숙박 토글에 합류
+    - [ ] 12.H.3 Verify: `cd place/ingest && python -m pytest -q tests/backfill_pick_test.py tests/gocamping_test.py && cd ../.. && ./gradlew :place:feature:test --tests '*AttractionRepositoryAdapter*' --tests '*AttractionDtoRoundTripTest' && ./gradlew :search:app:test --tests '*AttractionPageRendererTest'`
+    - [ ] 12.H.4 배포: place-ingest(`source` 필터) → content(V31, 수집 잡이 없는 시간) → place-ingest(잡) → search-batch → search → portal-fe
+    - [ ] 12.H.5 운영 확인: 새 행 = 3,115 − 겹침 − 좌표 없음 · TourAPI 보강 잡 다음 회차가 GOCAMPING 행을 0건 고름(로그) · 기존 보강 필드 비공백 건수가 줄지 않음(T18 쿼리)
+  - [ ] 12.I 두루누비 (V32 · 보류) — Q-P2-DURUNUBI-RANGE 확인 뒤 착수, 그 전에는 「보류(사유: 원천 범위 미확인)」로 남긴다
+  - [ ] 12.J 안 함 기록: 관광사진(사용자 결정) · 반려동물(겹침, 설계 §2.10) — 대장에 넣지 않는다. 범위 밖 발견 Q-P2-PET-STALE 은 보고만
+**Acceptance Criteria:** 하위 그룹마다 T20 초록 · 검증 명령 출력 · 운영 확인 수치 기록 · 대장 줄 · 보류·안 함은 사유와 함께 남김
 
 ### Task Group 13: 문서 정리
 **Dependencies:** Task Group 11
@@ -235,4 +264,4 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
 1. TG1 사전 확인 → TG2 place 저장 → TG3 수집기(표본 반영 뒤 머지) → TG4 CronJob·배포 ①·운영 확인
 2. TG5 일정 규칙 → TG6 재색인 → TG7 검색 API ∥ TG8 서버 렌더 본문 → TG9 화면·배포 ②·운영 확인
 3. TG10 근처 절 ∥ TG11 만료·행사 sitemap → 배포 ③·운영 확인(TG11.10) → TG13 문서
-4. TG12 2단계 — 승인된 API 순서대로 하나씩, 미승인은 건너뜀(맨 끝, 다른 단계를 막지 않는다)
+4. TG12 2단계 — 12.A → 12.B 무장애+웰니스 → 12.C 방문자 → 12.D 날씨 → 12.E 집중률 → 12.F 연관 → 12.G 대기 → 12.H 고캠핑 → 12.I 두루누비(보류). 맨 끝이고 다른 단계를 막지 않는다

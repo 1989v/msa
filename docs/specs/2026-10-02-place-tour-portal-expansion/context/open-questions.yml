@@ -73,64 +73,137 @@ questions:
       바꾼 형태는 세 주입 모두 빨간불이고 지금 표본 다섯에는 초록불. 표본에 운영 키 원값이 없는 것은 노드에서 키 원값(인코딩·디코딩 둘)으로 grep -F 해 0건을 따로 확인했다.
   - id: Q-P2-KORWITH
     phase: pre-impl
-    status: open
+    status: resolved
+    answer: >-
+      채택(2026-10-02 실측, implementation/phase2-design.md §2.3). 목록 areaBasedList2 한 콜(numOfRows=10000)에 9,630 전량, 9,623(99.9%)이 국문 contentId 로 기존 행에 붙는다(영문 0).
+      상세 detailWithTour2 는 29키 자유 문장 · 관광지당 1콜 → 하루 899건 백필 11일. 별도 표 attraction_barrier_free(원문 JSON + 파생 플래그), 색인 barrierFree/barrierFreeDetail.
+      플래그는 긍정 값만, 키별 라벨 정밀도 95% 미만이면 필터 미개방(기본안 유지)
     question: 무장애 여행 KorWithService2(15101897) 응답 필드와 접근성 속성 패싯의 값 체계
-    default: 승인 뒤 첫 호출 표본 → 전부 적재 → 긍정 값만 필터(속성 패싯 규칙), 라벨 정밀도 95% 미만이면 필터를 열지 않는다
   - id: Q-P2-CONGESTION
     phase: pre-impl
-    status: open
+    status: resolved
+    answer: >-
+      채택(phase2-design §2.1). 행 = (관광지 × 예측일), 오늘부터 30일. signguCd 필수(빼면 0건) → 하루 269콜, 시군구당 최대 7,320행 한 콜.
+      contentId 없음 — 이름+시군구 매칭 376곳 실측: 정확 75.5% · 정규화 81.4% · 포함 88.3%. 화면은 정확·정규화만, 색인하지 않는 객체 congestion 으로 상세 「혼잡 예측」
     question: 관광지 집중률 TatsCnctrRateService(15128555)의 대상 범위·예측 기간·관광지 식별자 매칭
-    default: 표본 확인 뒤 상세 「혼잡 예측」 화면 확정
   - id: Q-P2-RELATED
     phase: pre-impl
-    status: open
+    status: resolved
+    answer: >-
+      이어지지 않는다(phase2-design §2.2) — tAtsCd 는 32자 해시. 출발 관광지 이름 매칭 정확 56.8% · 정규화 75.4% · 포함 85.6%(236곳).
+      대상은 관광지 51.7% · 음식 18.1% · 숙박 24.1% 매칭. 채택 — 관광지로 링크되는 대상만 「함께 간 곳」 최대 6건, 월 1회 269콜
     question: 연관 관광지 TarRlteTarService1(15128560)의 식별자가 TourAPI contentId 와 이어지는지
-    default: 이어지면 상세 「여기 온 사람들이 함께 간 곳」(비슷한 곳과 별개 절), 이어지지 않으면 이름·좌표 매칭 정확도를 재고 결정
   - id: Q-P2-DURUNUBI
     phase: pre-impl
-    status: open
+    status: resolved
+    answer: >-
+      보류 — 구현 순서 맨 끝(phase2-design §2.7). courseList 139코스(4길)·routeList 4, 좌표 없이 gpxpath(durunubi.kr 파일, 표본 108~594KB · 트랙점 482~5,226). 이용허락 제한 없음.
+      착수 시 GPX 원본 gzip + 간략화 경로 파생, 첫 트랙점이 좌표. 원천 범위는 Q-P2-DURUNUBI-RANGE
     question: 두루누비 걷기길(15101974) 필드와 코스 경로(GPX 등) 제공 형태
-    default: 새 콘텐츠 유형으로 저장, 화면은 표본 확인 뒤
   - id: Q-P2-CAMPING
     phase: pre-impl
-    status: open
+    status: resolved
+    answer: >-
+      채택(phase2-design §2.6). 3,115 한 콜(82키). 기존 레포츠 AC05 1,986행과 300m 안 + 이름 겹침 705(22.6%) → 그 곳은 새 행 없이 매칭만, 나머지 약 2,400 이 source=GOCAMPING 행(분류 stay, 유형 이름 「캠핑장」). Q-P2-KEY 결정이 선행
     question: 고캠핑(15101933) 필드와 기존 TourAPI 캠핑장 행(레포츠 분류)과의 중복
-    default: 새 콘텐츠 유형, 중복은 이름·좌표로 재고 결정
   - id: Q-P2-PHOTO
     phase: pre-impl
-    status: open
+    status: resolved
+    answer: >-
+      안 함 — 사용자 결정(2026-10-02, 이번 범위에서 제외). 추가 실측 없음
     question: 관광사진(15101914)의 공공누리 유형(변경 금지·상업 이용 금지 여부)
-    default: 유형 확인 전에는 화면에 내지 않는다. 변경 금지 유형이면 자르기·리사이즈 없이 원본 표시만
   - id: Q-P2-WELLNESS
     phase: pre-impl
-    status: open
+    status: resolved
+    answer: >-
+      기존 관광지 태그(phase2-design §2.8). 국 170 중 168(유형 12) · 영 92 전부(유형 76)가 기존 contentId. 별도 표 attraction_wellness, 색인 wellnessTheme, 목록 필터 칩. 주 1회 2콜
     question: 웰니스관광(15144030) 필드와 쓰임(새 유형 또는 기존 관광지 태그)
-    default: 표본 확인 뒤
   - id: Q-P2-VISITORS
     phase: pre-impl
-    status: open
+    status: resolved
+    answer: >-
+      맞는다(phase2-design §2.9) — 시군구 코드 269개가 administrative_regions 269개와 100% 같다(통합 코드 12 포함). 하루 807행 = 269 × 현지인/외지인/외국인.
+      채택 — 지역 허브 「방문 추이」, place 레디스 캐시 경로. 하루 2콜(기초·광역), 12개월 백필 약 32콜
     question: 빅데이터 지역별 방문자수(15101972)의 지역 단위가 법정동 시군구와 맞는지
-    default: 맞으면 지역 허브의 방문자 추이, 아니면 시도 단위로만
   - id: Q-P2-WEATHER
     phase: pre-impl
-    status: open
+    status: resolved
+    answer: >-
+      채택(phase2-design §2.4). 관광지 좌표 그대로면 고유 격자 3,671(한도 초과), 시군구 대표점이면 269 → 243 격자. 단기 05·17시 발표 두 번 = 486콜/일(1콜 = 격자 하나 3일치 약 900행).
+      중기는 시군구 → 육상 권역(10) · 기온 regId 매핑(기상청 활용가이드 구역코드표 시드), 하루 1번 ≤ 200콜. 포털 표기 한도는 10,000 이지만 1,000 기준으로 설계.
+      레디스 캐시 경로(place GET), 서버 렌더 본문에는 넣지 않는다
     question: 기상청 단기예보(15084084)·중기예보(15059468)의 수집 주기와 하루 호출 수, 중기예보 구역과 시군구 대응
-    default: 단기는 시군구 좌표 → 격자 변환으로 시군구 단위 선수집, 중기는 예보구역 단위. 하루 호출 수가 계정 한도 안인지 확인 뒤 주기 확정
   - id: Q-P2-AIR
     phase: pre-impl
-    status: open
+    status: resolved
+    answer: >-
+      측정소 최근접, 단 좌표 확보 뒤 노출(phase2-design §2.5). sidoName=전국 한 콜에 672곳 → 매시 24콜. 측정소 이름 = 시군구 이름 48/269 · 앞부분 137/269 라 이름으로는 쓸 수 없다.
+      공공누리 제3유형(변경금지)이라 시도 평균 대표값은 만들지 않는다. 좌표 원천은 Q-P2-AIRSTATION
     question: 에어코리아 대기오염(15073861) 측정소 단위와 상세에 붙일 단위(시도·측정소 최근접)
-    default: 시도별 실시간 조회를 선수집, 상세는 가장 가까운 측정소 값
   - id: Q-P2-PET
     phase: pre-impl
-    status: open
+    status: resolved
+    answer: >-
+      안 함(phase2-design §2.10). 목록 9,674 ⊂ 지금 원천 KorService2 detailPetTour2 9,680, 상세 키 10개·값이 pet_raw 와 같고, 새 대상 0(pet_raw 없는 103건은 10-02 새 숙박으로 지금 원천에도 있다).
+      petTourSyncList2 비노출 462건 중 우리 행 3건은 지금 원천 목록에서도 빠져 있어 새 신호가 아니다
     question: 반려동물 동반여행 서비스(15135102)가 기존 detailPetTour2 와 겹치는 범위
-    default: 별개 원천으로 적재(기존 petRaw 를 덮지 않음), 화면 합류 방식은 표본 확인 뒤
   - id: Q-P2-KEY
     phase: pre-impl
-    status: open
+    status: resolved
+    answer: >-
+      웰니스·무장애는 TourAPI contentId 라 행이 아니라 별도 표로 붙는다. 고캠핑·두루누비는 자연키를 (source, content_id, lang) 으로 바꾸는 새 V 가 먼저다(기본값 TOURAPI).
+      그보다 앞서 TourAPI 보강 잡 pick 에 source=TOURAPI 조건(다른 원천 번호로 detailCommon2 를 부르지 않게). ADR-0104 덧붙임에 기록
     question: 걷기길·캠핑·웰니스처럼 TourAPI 가 아닌 원천을 attractions 행으로 넣을 때 자연키(contentId, lang) 충돌
-    default: 행으로 넣는다면 원천 구분 컬럼을 자연키에 더하는 새 V 가 먼저다. 별도 표가 더 단순하면 그쪽으로 — 첫 API 착수 시 ADR-0104 에 결정을 덧붙인다
+  - id: Q-P2-CODE12
+    phase: pre-impl
+    status: open
+    question: 집중률·연관 API 가 광주·전남 통합 코드 12xxx 로 답하는지(실측은 11·26·50 만)
+    default: >-
+      첫 수집이 시군구 269 전부를 부르고 0건 시군구 목록을 로그에 남긴다. 12xxx 가 0건이면 옛 29·46 코드 매핑표를 시드로 두고 다시 부른다
+  - id: Q-P2-MATCH
+    phase: pre-impl
+    status: open
+    question: 이름 매칭 3단계 「포함」의 정밀도
+    default: >-
+      표본 50쌍 손 확인에서 정밀도 95% 이상이면 화면에 연다. 그 전에는 정확·정규화 매칭만 쓴다
+  - id: Q-P2-MIDREG
+    phase: pre-impl
+    status: open
+    question: 중기 기온 regId 목록 규모와 시군구 매핑 일치율
+    default: >-
+      기상청 활용가이드 구역코드표를 시드로 적재하고 이름 일치 → 같은 권역 최근접 도시 순서로 잇는다. 일치율을 시드 적재 때 implementation/ 에 남긴다
+  - id: Q-P2-AIRSTATION
+    phase: pre-impl
+    status: open
+    owner: 사용자(활용신청)
+    question: 대기 측정소 좌표 원천(측정소↔시군구 최근접 연결용)
+    default: >-
+      에어코리아 측정소정보 API(15073877) 활용신청 또는 공개 측정소 목록 파일. 확보 전에는 대기 절을 그리지 않는다(수집·저장은 먼저 해도 된다)
+  - id: Q-P2-VISITORS-LAG
+    phase: pre-impl
+    status: open
+    question: 지역 방문자 일자 자료의 공개 지연(며칠 전 자료까지 나오나)
+    default: >-
+      첫 수집이 D-1 부터 거꾸로 0건이 아닌 첫 날을 찾아 로그에 남기고, 잡의 조회일을 그 값으로 고정한다
+  - id: Q-P2-RELATED-LAG
+    phase: pre-impl
+    status: open
+    question: 연관 관광지 월 자료(baseYm=전달)의 공개 시점
+    default: >-
+      매월 12일 수집으로 시작하고, 0건이면 다음 날 재시도한다. 공개일이 확인되면 일정을 옮긴다
+  - id: Q-P2-DURUNUBI-RANGE
+    phase: pre-impl
+    status: open
+    question: 두루누비 courseList 139 가 코리아둘레길 전 코스가 아닌 이유
+    default: >-
+      두루누비 착수 전에 brdDiv·다른 오퍼레이션을 확인한다. 원천이 일부만 주면 받은 범위만 싣고 화면이 범위를 밝힌다
+  - id: Q-P2-PET-STALE
+    phase: out-of-scope
+    status: open
+    owner: 사용자
+    question: 반려동물 잡이 원천 목록에서 빠진 행의 pet_raw 를 지우지 않는다(6건, 3건은 showflag=0)
+    default: >-
+      이 스펙 범위 밖 — 보고만. 고칠지는 사용자 결정
   - id: Q-LEGACY
     phase: out-of-scope
     status: open
