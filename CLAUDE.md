@@ -184,8 +184,8 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | quant | `quant/CLAUDE.md` | `:quant:feature` 로 sideapp:app 에 폴드 (ADR-0093). 통합 트레이딩 플랫폼 — sealed Strategy(Tranche/Signal/Hybrid) + 차트 분석 + 입문자 지표 학습 CMS + Phase 3 실매매 (ADR-0033/0036/0037, Phase 3 코어 구현 완료, 거래소 어댑터 4종 wire-up 후 Beta) |
 | auth | `auth/CLAUDE.md` | OAuth 인증, RBAC (ROLE_USER/SELLER/ADMIN) — 서비스 코드 존재 |
 | gifticon | `gifticon/CLAUDE.md` | `:gifticon:feature` 로 sideapp:app 에 폴드 (ADR-0093). 기프티콘 보관·공유·만료 알림. **별도 레포 서브모듈**(`1989v/msa-gifticon`) — 서브모듈 먼저 푸시 후 본체 |
-| code-dictionary | `code-dictionary/CLAUDE.md` | IT 개념 사전, OpenSearch 검색, 트리맵/그래프 시각화, 어드민 CRUD + 포트폴리오 카드. FE 는 portal-fe 단일 SPA 의 메인 콘텐츠로 통합 (2026-05-05, scroll anchor 기반). **game:feature 호스트** (ADR-0059) |
-| game | `game/CLAUDE.md` | 게임 플랫폼 — 카탈로그(태그/큐레이션/평점) + 플레이 세션 + **개선 제안**(상태 있는 공개 피드백, ADR-0087). 광고는 ads 가 흡수(ADR-0098). `:game:domain`+`:game:feature` 라이브러리로 code-dictionary:app 에 폴드, FE 는 portal-fe `/games/*` (ADR-0059) |
+| code-dictionary | `code-dictionary/CLAUDE.md` | IT 개념 사전, OpenSearch 검색, 트리맵/그래프 시각화, 어드민 CRUD + 포트폴리오 카드. FE 는 portal-fe 단일 SPA 의 메인 콘텐츠로 통합 (2026-05-05, scroll anchor 기반). 파드는 `atlas` — game · blog · ranking 은 2026-09 에 content 로 옮겨 갔다 (ADR-0093) |
+| game | `game/CLAUDE.md` | 게임 플랫폼 — 카탈로그(태그/큐레이션/평점) + 플레이 세션 + **개선 제안**(상태 있는 공개 피드백, ADR-0087). 광고는 ads 가 흡수(ADR-0098). `:game:domain`+`:game:feature` 라이브러리로 content:app 에 폴드(전용 `game_db`, ADR-0093), FE 는 portal-fe `/games/*` (ADR-0059) |
 | inventory | `inventory/CLAUDE.md` | 재고 예약/차감/복구 — **재고 SSOT** (ADR-0013). commerce:app 폴드. **레이어 표준 견본** (ADR-0083) |
 | fulfillment | `fulfillment/CLAUDE.md` | 출고 상태 머신 (FulfillmentOrder), 주문 사가의 이행 참여자(`fulfillment.command.*`). commerce:app 폴드 |
 | warehouse | `warehouse/CLAUDE.md` | 창고 마스터. commerce:app 폴드. Kafka 없음 |
@@ -202,8 +202,8 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | sideapp | — | **폴드 호스트** (ADR-0093) — quant·chatbot·gifticon. 어느 축에도 안 붙는 사이드앱 |
 | admin | `admin/CLAUDE.md` | 백오피스 (**FE 전용** — 어드민 API 는 각 서비스가 `/api/v1/admin/**` 로 제공) |
 | place | `place/CLAUDE.md` | 행정 지리 계층(대륙/국가/광역/도시) + POI + **관광지(Attraction) SSOT**, OpenSearch geo_distance 근처검색. 오픈데이터(GeoNames/상가정보/TourAPI) 적재 (ADR-0056/0065). 수집은 `place/ingest` CronJob 이 매일 자동 (ADR-0070) — 외부 :443 을 부르는 유일한 place 계열 파드. 운영 활성 (2026-08-09) |
-| blog | `blog/CLAUDE.md` | 블로그 플랫폼 — 계층 카테고리(3단) + 다중 저자(등록제) + 댓글·평점·좋아요·조회수 + 글 상세 서버 meta 주입. `:blog:domain`+`:blog:feature` 라이브러리로 code-dictionary:app 에 폴드(스키마 공유), FE 는 portal-fe `blog.1989v.com` (ADR-0072) |
-| ranking | `ranking/CLAUDE.md` | 랭킹 리더보드 — 무엇이든 줄세워 보여주는 곳. P1 은 주유소 유가(시군구 × 유종 최저가 TOP20, 오피넷) + 각 주유소 **구글맵 길찾기 링크**. `:ranking:domain`+`:ranking:feature` 라이브러리로 code-dictionary:app 에 폴드(스키마 공유), 수집은 `ranking/ingest` CronJob, FE 는 portal-fe `rank.1989v.com` (ADR-0081) |
+| blog | `blog/CLAUDE.md` | 블로그 플랫폼 — 계층 카테고리(3단) + 다중 저자(등록제) + 댓글·평점·좋아요·조회수 + 글 상세 서버 meta 주입. `:blog:domain`+`:blog:feature` 라이브러리로 content:app 에 폴드(전용 `blog_db`, ADR-0093), FE 는 portal-fe `blog.1989v.com` (ADR-0072) |
+| ranking | `ranking/CLAUDE.md` | 랭킹 리더보드 — 무엇이든 줄세워 보여주는 곳. P1 은 주유소 유가(시군구 × 유종 최저가 TOP20, 오피넷) + 각 주유소 **구글맵 길찾기 링크**. `:ranking:domain`+`:ranking:feature` 라이브러리로 content:app 에 폴드(전용 `ranking_db`, ADR-0093), 수집은 `ranking/ingest` CronJob, FE 는 portal-fe `rank.1989v.com` (ADR-0081) |
 | deal | `deal/CLAUDE.md` | 혜택 링크 허브 — 카테고리별 제휴/일반 혜택 링크 큐레이션 + `/go/{slug}` 리다이렉터 + 클릭 계측. `:deal:domain`+`:deal:feature` 라이브러리로 commerce:app 에 폴드(전용 `deal_db`, ADR-0093 ②), FE 는 portal-fe `deal.1989v.com` (ADR-0069) |
 
 > charting 은 ADR-0036 P2-T20 에서 quant 로 통합 + Hard remove 완료 (2026-05-02). 서비스 특화 ADR 은 해당 서비스의 `docs/adr/`에 위치.
