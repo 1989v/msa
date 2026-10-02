@@ -411,7 +411,7 @@ images:
     newTag: 981e71f
   - name: commerce/search-consumer
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-consumer
-    newTag: 981e71f
+    newTag: f8d2ad7
   - name: commerce/search-embed
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-embed
     newTag: 8f325ca
