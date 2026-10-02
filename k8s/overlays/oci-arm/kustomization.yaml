@@ -372,7 +372,7 @@ images:
     newTag: 055aa4d
   - name: commerce/content
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/content
-    newTag: 65d15d3
+    newTag: ecd1dba
   - name: commerce/engagement
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/engagement
     newTag: 055aa4d
