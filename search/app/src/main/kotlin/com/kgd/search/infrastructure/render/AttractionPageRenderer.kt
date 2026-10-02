@@ -164,25 +164,54 @@ class AttractionPageRenderer(
     /** copy.mjs `attractionMeta` */
     private fun attractionMeta(lang: String, doc: AttractionDocument): Meta {
         val name = doc.title
-        val label = categoryLabel(doc.category, lang)
         val where = doc.address.orEmpty()
         val overview = sourceText(doc.overview)
-        val fallback = if (lang == EN) {
-            "$name is a ${label.lowercase(Locale.ROOT)} attraction${if (where.isNotEmpty()) " at $where" else " in South Korea"}. " +
-                "See the map, photos, directions and things to do nearby."
-        } else {
-            "$name${if (where.isNotEmpty()) " — $where" else ""}에 있는 $label 관광지입니다. " +
-                "주소·지도·사진과 가는 길, 주변 가볼 만한 곳을 함께 확인하세요."
-        }
+        val (title, fallback) = attractionMetaCopy(lang, doc, name, where)
         return Meta(
-            title = if (lang == EN) {
-                "Visit $name — Map, Photos & Things to Do Nearby | $BRAND_EN"
-            } else {
-                "$name 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | $BRAND_KO"
-            },
+            title = title,
             description = clampDescription(if (overview.length >= 60) overview else fallback),
             heading = name,
         )
+    }
+
+    /** copy.mjs `attractionMetaCopy` — 유형별 (제목, 개요가 짧을 때의 설명). 유형은 원천 유형 코드로 고른다. */
+    private fun attractionMetaCopy(lang: String, doc: AttractionDocument, name: String, where: String): Pair<String, String> {
+        val en = lang == EN
+        val at = if (where.isNotEmpty()) " at $where" else " in South Korea"
+        val dash = if (where.isNotEmpty()) " — $where" else ""
+        return when {
+            EventSchedule.isEvent(doc.contentTypeId) -> if (en) {
+                "$name — Dates, Venue & Things to Do Nearby | $BRAND_EN" to
+                    "$name is a festival or event$at. See the dates, venue, map and things to do nearby."
+            } else {
+                "$name 행사 정보 — 일정 · 장소 · 주변 가볼 만한 곳 | $BRAND_KO" to
+                    "$name${dash}에서 열리는 축제·행사입니다. 일정·장소와 지도, 주변 가볼 만한 곳을 함께 확인하세요."
+            }
+            doc.contentTypeId in STAY_CONTENT_TYPES -> if (en) {
+                "$name — Stay Info, Check-in & Things to Do Nearby | $BRAND_EN" to
+                    "$name is a place to stay$at. See check-in times, the map and things to do nearby."
+            } else {
+                "$name 숙박 정보 — 입실·퇴실 · 주변 가볼 만한 곳 | $BRAND_KO" to
+                    "$name${dash}에 있는 숙소입니다. 입실·퇴실 시간과 지도, 주변 가볼 만한 곳을 함께 확인하세요."
+            }
+            doc.contentTypeId in COURSE_CONTENT_TYPES -> if (en) {
+                "$name — Travel Course, Stops & Time Needed | $BRAND_EN" to
+                    "$name is a travel course in South Korea. See the stops in order, total distance and time needed."
+            } else {
+                "$name 여행코스 — 코스 구성 · 거리 · 소요 시간 | $BRAND_KO" to
+                    "$name 여행코스입니다. 코스를 이루는 관광지를 순서대로 보고 총 거리와 소요 시간을 확인하세요."
+            }
+            else -> {
+                val label = categoryLabel(doc.category, lang)
+                if (en) {
+                    "Visit $name — Map, Photos & Things to Do Nearby | $BRAND_EN" to
+                        "$name is a ${label.lowercase(Locale.ROOT)} attraction$at. See the map, photos, directions and things to do nearby."
+                } else {
+                    "$name 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | $BRAND_KO" to
+                        "$name${dash}에 있는 $label 관광지입니다. 주소·지도·사진과 가는 길, 주변 가볼 만한 곳을 함께 확인하세요."
+                }
+            }
+        }
     }
 
     /** copy.mjs `attractionJsonLd` — 유형별 주 구조화 데이터 */
@@ -639,10 +668,12 @@ class AttractionPageRenderer(
         val CATEGORY_KO = mapOf(
             "nature" to "자연", "history" to "역사", "culture" to "문화", "leisure" to "레포츠",
             "shopping" to "쇼핑", "food" to "음식", "stay" to "숙박", "etc" to "기타",
+            "festival" to "행사", "course" to "여행코스",
         )
         val CATEGORY_EN = mapOf(
             "nature" to "Nature", "history" to "History", "culture" to "Culture", "leisure" to "Leisure",
             "shopping" to "Shopping", "food" to "Food", "stay" to "Stay", "etc" to "Etc",
+            "festival" to "Events", "course" to "Courses",
         )
 
         /**

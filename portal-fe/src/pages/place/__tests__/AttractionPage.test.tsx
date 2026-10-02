@@ -10,7 +10,10 @@ vi.mock('../../../api/placeApi', async (importOriginal) => ({
   fetchAttraction: vi.fn(),
 }));
 vi.mock('../../../components/favorite/FavoriteButton', () => ({ default: () => null }));
-vi.mock('../../../components/ads/AdSlot', () => ({ default: () => null }));
+// 지면은 자리 표시만 남긴다 — 어느 상세에 attraction-end 가 그려지는지 본다
+vi.mock('../../../components/ads/AdSlot', () => ({
+  default: ({ placement }: { placement: string }) => <div data-ad-placement={placement} />,
+}));
 vi.mock('../../../analytics/tracker', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../analytics/tracker')>()),
   track: vi.fn(),
@@ -235,5 +238,164 @@ describe('AttractionPage 새 섹션', () => {
     expect(screen.queryByRole('region', { name: '같은 분류 가까운 곳' })).toBeNull();
     expect(screen.queryByRole('region', { name: '비슷한 곳' })).toBeNull();
     expect(h2Texts()).toEqual(expect.arrayContaining(['주변 명소', '주변 편의시설']));
+  });
+});
+
+describe('AttractionPage 유형별 본문 — 행사 · 숙박 · 여행코스', () => {
+  // 오늘 = 2026-10-26(월) KST. Date 만 고정한다.
+  const NOW = new Date('2026-10-26T03:00:00Z');
+  const event: Attraction = {
+    ...card('300', 'festival'),
+    title: '불꽃축제',
+    overview: '가을 밤 불꽃 축제다.',
+    contentTypeId: '15',
+    eventStart: '2026-10-30',
+    eventEnd: '2026-11-02',
+    useTime: '19:00',
+    introRaw: JSON.stringify({ eventplace: '여의도 <b>한강공원</b>', playtime: '19:00~21:00', sponsor1: '한화', eventhomepage: 'x' }),
+  };
+  const stay: Attraction = {
+    ...card('310', 'stay'),
+    title: '한옥 스테이',
+    overview: '한옥 숙소.',
+    contentTypeId: '32',
+    introRaw: JSON.stringify({
+      checkintime: '15:00', checkouttime: '11:00', roomcount: '5',
+      reservationurl: 'https://booking.example.com/r', reservationlodging: '예약 안내 02-000-0000',
+    }),
+  };
+  const course: Attraction = {
+    ...card('320', 'course'),
+    title: '바다 하루 코스',
+    overview: '바다를 따라 걷는다.',
+    contentTypeId: '25',
+    introRaw: '{"distance":"12.5km","taketime":"당일"}',
+    infoRaw: '[{"subname":"원문 코스 줄"}]',
+    courseStops: [
+      { order: 0, contentId: '1', name: '해운대해수욕장', attractionId: 7001 },
+      { order: 1, contentId: '2', name: '광안리 카페거리', attractionId: null },
+      { order: 2, contentId: '3', name: '감천문화마을', attractionId: 7003 },
+    ],
+  };
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(NOW);
+    vi.mocked(searchAttractions).mockResolvedValue({ searchId: 's', attractions: [], totalElements: 0, totalPages: 0, currentPage: 0 });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.clearAllMocks();
+    document.head.innerHTML = '';
+  });
+
+  const rows = (section: HTMLElement) =>
+    Array.from(section.querySelectorAll('.place-detail-info-row')).map((r) => [
+      r.querySelector('dt')!.textContent, r.querySelector('dd')!.textContent,
+    ]);
+  const adPlacements = () => Array.from(document.querySelectorAll('[data-ad-placement]')).map((e) => e.getAttribute('data-ad-placement'));
+
+  it('행사 — 상태 문구와 기간·장소·시간·주최를 서버와 같은 라벨로 그리고, 일반 이용 안내는 그리지 않는다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue(event);
+    renderAt('/attractions/300');
+    const section = await screen.findByRole('region', { name: '행사 정보' });
+
+    expect(within(section).getByText('D-4 시작')).toBeInTheDocument();
+    expect(rows(section)).toEqual([
+      ['기간', '2026-10-30 ~ 2026-11-02'], ['행사 장소', '여의도 한강공원'], ['공연 시간', '19:00~21:00'], ['주최', '한화'],
+    ]);
+    expect(screen.queryByRole('region', { name: '이용 안내' })).toBeNull();
+    expect(section).toHaveAttribute('data-place-section', 'event');
+  });
+
+  it('행사 영문 — Event info · Starts in n days', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...event, lang: 'en', contentTypeId: '85' });
+    renderAt('/en/attractions/300');
+    const section = await screen.findByRole('region', { name: 'Event info' });
+    expect(within(section).getByText('Starts in 4 days')).toBeInTheDocument();
+    expect(rows(section)[0]).toEqual(['Dates', '2026-10-30 ~ 2026-11-02']);
+  });
+
+  it('숙박 — 허용 목록 키만 그린다. 예약 URL·예약 안내는 입력에 있어도 나가지 않는다', async () => {
+    expect(JSON.parse(stay.introRaw!)).toHaveProperty('reservationurl');
+    vi.mocked(fetchAttraction).mockResolvedValue(stay);
+    renderAt('/attractions/310');
+    const section = await screen.findByRole('region', { name: '숙박 정보' });
+
+    expect(rows(section)).toEqual([['입실', '15:00'], ['퇴실', '11:00'], ['객실 수', '5']]);
+    expect(document.body.textContent).not.toContain('booking.example.com');
+    expect(document.body.textContent).not.toContain('예약 안내 02-000-0000');
+  });
+
+  it('여행코스 — 원천 순서 그대로, 이어진 지점만 상세로 링크한다. 반복정보 원문 줄은 그리지 않는다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue(course);
+    renderAt('/attractions/320');
+    const section = await screen.findByRole('region', { name: '코스 구성' });
+
+    expect(rows(section)).toEqual([['총 거리', '12.5km'], ['소요 시간', '당일']]);
+    const items = within(section).getAllByRole('listitem');
+    expect(items.map((li) => li.textContent)).toEqual(['해운대해수욕장', '광안리 카페거리', '감천문화마을']);
+    expect(within(items[0]).getByRole('link')).toHaveAttribute('href', '/attractions/7001');
+    expect(within(items[1]).queryByRole('link')).toBeNull();
+    expect(screen.queryByText('원문 코스 줄')).toBeNull();
+  });
+
+  it('새 유형 상세에는 attraction-end 지면이 없다 — 관광지 상세는 그대로 있다(대조)', async () => {
+    for (const [doc, path] of [[event, '/attractions/300'], [stay, '/attractions/310'], [course, '/attractions/320']] as const) {
+      vi.mocked(fetchAttraction).mockResolvedValue(doc);
+      renderAt(path);
+      await screen.findByRole('heading', { level: 1, name: doc.title });
+      expect(adPlacements(), doc.contentTypeId!).toEqual([]);
+      cleanup();
+    }
+    vi.mocked(fetchAttraction).mockResolvedValue(enriched);
+    renderAt('/attractions/100');
+    await screen.findByRole('heading', { level: 1, name: '경복궁' });
+    expect(adPlacements()).toEqual(['attraction-end']);
+  });
+
+  it('유형별 JSON-LD 와 제목을 심고, 끝난 지 31일이 지난 행사는 noindex 다(서버 렌더와 같은 판정)', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue(event);
+    renderAt('/attractions/300');
+    await screen.findByRole('region', { name: '행사 정보' });
+    const types = () =>
+      Array.from(document.head.querySelectorAll('script[type="application/ld+json"]')).map((el) => JSON.parse(el.textContent!)['@type']);
+    expect(types()).toContain('Event');
+    expect(document.title).toBe('불꽃축제 행사 정보 — 일정 · 장소 · 주변 가볼 만한 곳 | K-관광');
+    expect(document.head.querySelector('meta[name="robots"]')).toBeNull();
+    cleanup();
+
+    // 종료 2026-09-25 + 31일 = 10-26(오늘) → 만료. 하루 늦게 끝난 행사(+30)는 아직 색인 대상
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...event, id: '301', eventStart: '2026-09-20', eventEnd: '2026-09-25' });
+    renderAt('/attractions/301');
+    await screen.findByText('종료된 행사');
+    expect(document.head.querySelector('meta[name="robots"]')).toHaveAttribute('content', 'noindex, follow');
+    cleanup();
+
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...event, id: '302', eventStart: '2026-09-20', eventEnd: '2026-09-26' });
+    renderAt('/attractions/302');
+    await screen.findByText('종료된 행사');
+    expect(document.head.querySelector('meta[name="robots"]')).toBeNull();
+  });
+
+  it('같은 분류 가까운 곳·비슷한 곳에서 오늘 이전에 끝난 행사 항목은 거른다 — 오늘 끝나는 항목은 남긴다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({
+      ...enriched,
+      region: {
+        ...enriched.region!,
+        sameCategoryNearby: [
+          { id: '201', title: '어제 끝난 축제', distanceMeters: 500, eventEndEffective: '2026-10-25' },
+          { id: '202', title: '오늘 끝나는 축제', distanceMeters: 600, eventEndEffective: '2026-10-26' },
+          { id: '203', title: '창덕궁', distanceMeters: 700, eventEndEffective: null },
+        ],
+      },
+      similarElsewhere: [{ id: '501', title: '끝난 행사', sidoName: null, eventEndEffective: '2026-01-01' }],
+    });
+    renderAt('/attractions/100');
+    const same = await screen.findByRole('region', { name: '같은 분류 가까운 곳' });
+    expect(within(same).getAllByRole('link').map((a) => a.querySelector('.place-near-title')!.textContent)).toEqual([
+      '오늘 끝나는 축제', '창덕궁',
+    ]);
+    expect(screen.queryByRole('region', { name: '비슷한 곳' })).toBeNull();
   });
 });

@@ -83,6 +83,14 @@ class AttractionJsonLdParityTest : BehaviorSpec({
                     val html = renderer.attractionPage(AttractionPageFixtures.SHELL, documentOf(case["input"]), today)
                     serverJsonLd(html).map(::normalize) shouldBe case["jsonLd"].items().map(::normalize)
                 }
+                then("서버가 렌더한 제목·설명이 같다") {
+                    val html = renderer.attractionPage(AttractionPageFixtures.SHELL, documentOf(case["input"]), today)
+                    val meta = case["meta"]
+                    Regex("<title>([^<]*)</title>").find(html)!!.groupValues[1] shouldBe
+                        AttractionSeoText.escapeHtml(meta.text("title"))
+                    Regex("""<meta name="description" content="([^"]*)" />""").find(html)!!.groupValues[1] shouldBe
+                        AttractionSeoText.escapeHtml(meta.text("description"))
+                }
             }
         }
     }

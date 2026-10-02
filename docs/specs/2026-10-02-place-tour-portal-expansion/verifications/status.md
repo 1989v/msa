@@ -25,3 +25,6 @@
 | 배포 ① 4.8.4 | ops-before/after 필드 합계 | 보강 필드 8종 합계 동일 · 법정동 59,675→63,998 · 이미지 52,771→55,857 · 관광지(12) 4행이 원천 숙박 목록 기준 32 로 이동(보강 값 유지) |
 | 배포 ① 4.8.5 | 수집 소요 | 41초(마감 540초) |
 | 배포 ① 4.8.6 | Q4 날짜 이상값 | 날짜 변환 실패 0 · UNKNOWN 0% |
+| 정정 | portal-fe `npx tsc --noEmit -p .` | **검사 파일 0개**(tsconfig.json 은 references 껍데기). TG8 에 적은 「tsc exit 0」은 근거가 아니었다. 이후 `-p tsconfig.app.json`(270개 파일) 으로 판정, tasks.md 명령 교체 |
+| TG9 | vitest 9파일 · tsc -p tsconfig.app.json(270 files) · search:app AttractionPage·JsonLd + 게이트 | 173 passed · exit 0 · Parity 27 · Renderer 57 · Service 4 · Controller 5 · 0 실패 · BUILD SUCCESSFUL |
+| TG9 | 회귀 주입 15종(구현 에이전트) | 전부 빨간불 |

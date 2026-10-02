@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { attractionBreadcrumbJsonLd, attractionJsonLd } from '../copy.mjs';
+import { attractionBreadcrumbJsonLd, attractionJsonLd, attractionMeta } from '../copy.mjs';
 
 /**
  * 관광지 JSON-LD 골든 픽스처 생성기.
@@ -25,7 +25,7 @@ const GOLDEN = resolve(__dirname, '../../../../search/app/src/test/resources/ren
 
 const TODAY = '2026-10-02';
 
-type IndexDoc = Record<string, unknown> & { location: { lat: number; lon: number } };
+type IndexDoc = Record<string, unknown> & { lang: string; location: { lat: number; lon: number } };
 
 /** 색인 문서 → 검색 API 응답 모양(`SearchAttractionService` 의 결과 이름). 나머지 필드는 이름이 같다. */
 function toApi({ location, ldongRegnCd, eventStartEffective, eventEndEffective, ...rest }: IndexDoc) {
@@ -274,9 +274,12 @@ const cases = [
 describe('관광지 JSON-LD 골든 픽스처 (서버 렌더 패리티)', () => {
   const rendered = cases.map(({ name, input }) => {
     const api = toApi(input as IndexDoc);
+    const meta = attractionMeta(api.lang, api);
     return {
       name,
       input,
+      // 제목·설명도 서버가 같은 문자열을 내야 한다 — 하이드레이션이 <title>·description 을 덮는다
+      meta: { title: meta.title, description: meta.description },
       jsonLd: [attractionJsonLd(api.lang, api), attractionBreadcrumbJsonLd(api.lang, api)],
     };
   });
@@ -329,6 +332,19 @@ describe('관광지 JSON-LD 골든 픽스처 (서버 렌더 패리티)', () => {
     expect(items.map((i) => i.position)).toEqual([1, 2, 3]);
     expect(items[0].item.url).toBe('https://place.1989v.com/attractions/7001');
     expect(items[1].item).not.toHaveProperty('url');
+  });
+
+  it('제목은 유형에 맞춘다 — 행사는 일정·장소, 숙박은 입실, 코스는 코스 구성, 관광지는 기존 그대로', () => {
+    const title = (name: string) => rendered.find((c) => c.name === name)!.meta.title;
+    expect(title('ko-event-ongoing')).toBe('서울세계불꽃축제 행사 정보 — 일정 · 장소 · 주변 가볼 만한 곳 | K-관광');
+    expect(title('en-event-unknown-dates')).toBe('Lantern Festival — Dates, Venue & Things to Do Nearby | K-Tour');
+    expect(title('ko-stay')).toBe('한옥 스테이 숙박 정보 — 입실·퇴실 · 주변 가볼 만한 곳 | K-관광');
+    expect(title('en-stay-no-geo-fields')).toBe('Seoul Guesthouse — Stay Info, Check-in & Things to Do Nearby | K-Tour');
+    expect(title('ko-course')).toBe('부산 바다 하루 코스 여행코스 — 코스 구성 · 거리 · 소요 시간 | K-관광');
+    expect(title('ko-weekly-free')).toBe('경복궁 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | K-관광');
+    expect(title('en-no-weekly-free')).toBe('Visit Dosan Park — Map, Photos & Things to Do Nearby | K-Tour');
+    // 개요가 짧은 행사는 유형 설명으로 채운다
+    expect(rendered.find((c) => c.name === 'ko-event-ended-no-place')!.meta.description).toContain('에서 열리는 축제·행사입니다');
   });
 
   it('골든 파일을 쓴다 — CI 가 git diff 로 최신인지 본다', () => {

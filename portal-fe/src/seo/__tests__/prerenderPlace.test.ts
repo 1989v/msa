@@ -3,8 +3,12 @@ import { describe, expect, it } from 'vitest';
 // 운영 API 를 치지 않고 렌더 함수를 그대로 검증한다 (dry-verify).
 import {
   SIDO_CODES,
+  SLICE_CATEGORIES,
+  SLICE_WINDOW,
+  fetchSidoSlice,
   indexDoc,
   placeDetailPages,
+  placeDetailSitemapEntries,
   renderRegionDetail,
   robotsTxt,
 } from '../../../scripts/prerender-seo.mjs';
@@ -171,5 +175,109 @@ describe('robots — 크롤러 정책', () => {
   it('링크 미리보기(facebookexternalhit)는 막지 않는다 — 공유 카드가 깨진다', () => {
     const robots = robotsTxt('https://place.1989v.com');
     expect(robots).not.toMatch(/User-agent: facebookexternalhit\s+Disallow/i);
+  });
+});
+
+describe('정적 sitemap — 행사 제외 · 숙박 등재 조건', () => {
+  // 검색 응답 모양 그대로 — indexDoc 을 거친 뒤 sitemap 항목이 된다
+  const api = (id: string, over: Record<string, unknown>) => ({
+    id, title: `문서 ${id}`, category: 'nature', contentTypeId: '12', overview: '개요가 있다', imageUrl: 'p.jpg', ...over,
+  });
+  const raw = {
+    ko: [
+      api('sight', {}),
+      api('course', { category: 'course', contentTypeId: '25', imageUrl: null }),
+      api('event', { category: 'festival', contentTypeId: '15' }),
+      api('stay-full', { category: 'stay', contentTypeId: '32' }),
+      api('stay-no-photo', { category: 'stay', contentTypeId: '32', imageUrl: null }),
+      api('stay-no-overview', { category: 'stay', contentTypeId: '32', overview: '' }),
+      // 분류는 stay 지만 유형은 레포츠 — 기존 조건(개요만) 그대로
+      api('camping', { category: 'stay', contentTypeId: '28', imageUrl: null }),
+    ],
+    en: [
+      api('event-en', { category: 'festival', contentTypeId: '85' }),
+      api('stay-en-no-photo', { category: 'stay', contentTypeId: '80', imageUrl: null }),
+      api('sight-en', { contentTypeId: '76' }),
+    ],
+  };
+  const docs = (list: Array<Record<string, unknown>>) =>
+    list.map((a) => indexDoc(a, '11')).filter((d): d is Record<string, unknown> & { id: string } => d != null);
+  const places = { ko: docs(raw.ko), en: docs(raw.en) };
+  const locs = placeDetailSitemapEntries(places).map((e: { loc: string }) => e.loc);
+  const has = (path: string) => locs.includes(`https://place.1989v.com${path}`);
+
+  it('입력에 행사가 있어도 출력에는 행사 URL 이 없다 — 같은 출력에 관광지·코스는 있다', () => {
+    expect(raw.ko.some((a) => a.contentTypeId === '15')).toBe(true);
+    expect(raw.en.some((a) => a.contentTypeId === '85')).toBe(true);
+    expect(has('/attractions/event')).toBe(false);
+    expect(has('/en/attractions/event-en')).toBe(false);
+    expect(has('/attractions/sight')).toBe(true);
+    expect(has('/attractions/course')).toBe(true);
+    expect(has('/en/attractions/sight-en')).toBe(true);
+  });
+
+  it('행사는 허브 링크·지역 대표 재료에도 남지 않는다(indexDoc 이 뺀다)', () => {
+    expect(indexDoc(raw.ko[2], '11')).toBeNull();
+    expect(places.ko.map((d) => d.id)).not.toContain('event');
+  });
+
+  it('숙박(32·80)은 개요와 대표 사진이 둘 다 있을 때만 싣는다', () => {
+    expect(has('/attractions/stay-full')).toBe(true);
+    expect(has('/attractions/stay-no-photo')).toBe(false);
+    expect(has('/attractions/stay-no-overview')).toBe(false);
+    expect(has('/en/attractions/stay-en-no-photo')).toBe(false);
+  });
+
+  it('대조: 사진 없는 레포츠 캠핑장(분류 stay · 유형 28)은 개요만으로 계속 실린다', () => {
+    expect(has('/attractions/camping')).toBe(true);
+  });
+});
+
+describe('fetchSidoSlice — 조회 창(10,000) 초과', () => {
+  const page = (n: number, total: number, from = 0) => ({
+    totalElements: total,
+    attractions: Array.from({ length: n }, (_, i) => ({ id: `d${from + i}`, contentTypeId: '12', overview: '개요' })),
+  });
+  /** 경로의 category·page 를 보고 응답을 만든다 — 분류마다 건수를 정한다 */
+  function fakeGet(totals: Record<string, number>, whole: number) {
+    const calls: string[] = [];
+    const get = async (path: string) => {
+      calls.push(path);
+      const url = new URL(path, 'http://x');
+      const category = url.searchParams.get('category');
+      const p = Number(url.searchParams.get('page'));
+      const total = category ? (totals[category] ?? 0) : whole;
+      const left = Math.max(0, Math.min(100, total - p * 100));
+      return page(left, total, p * 100);
+    };
+    return { get, calls };
+  }
+
+  it('창 안이면 한 번에 받고 분류로 쪼개지 않는다', async () => {
+    const { get, calls } = fakeGet({}, 250);
+    const items = await fetchSidoSlice('ko', '11', get);
+    expect(items).toHaveLength(250);
+    expect(calls.every((c) => !c.includes('category='))).toBe(true);
+  });
+
+  it('창을 넘으면 분류별로 다시 받는다 — 넘는 조각을 첫 쪽에서 멈추고 나머지를 분류로 채운다', async () => {
+    const totals = Object.fromEntries(SLICE_CATEGORIES.map((c: string) => [c, 1_100]));
+    const whole = 1_100 * SLICE_CATEGORIES.length;
+    expect(whole).toBeGreaterThan(SLICE_WINDOW);
+    const { get, calls } = fakeGet(totals, whole);
+    const items = await fetchSidoSlice('ko', '11', get);
+    expect(items).toHaveLength(whole);
+    expect(calls.filter((c) => !c.includes('category='))).toHaveLength(1);
+  });
+
+  it('분류로 쪼개도 한 분류가 창을 넘으면 빌드를 세운다', async () => {
+    const { get } = fakeGet({ food: SLICE_WINDOW + 1 }, SLICE_WINDOW + 1);
+    await expect(fetchSidoSlice('ko', '11', get)).rejects.toThrow(/조회 창 10,000건을 넘습니다/);
+  });
+
+  it('분류별 합이 조각 건수와 다르면(빠진 분류가 있다) 빌드를 세운다', async () => {
+    const totals = { nature: 6_000, food: 5_000 };
+    const { get } = fakeGet(totals, 11_500);
+    await expect(fetchSidoSlice('ko', '11', get)).rejects.toThrow(/합이 11000건으로 조각 11500건과 다릅니다/);
   });
 });

@@ -233,6 +233,51 @@
   }
 }
 
+/* 행사 상태 칩 — 행사 칩 아래 한 줄. 세 칩이라 모바일에서도 접히지 않는다. */
+.place-event-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+/* 행사 기간·상태 — 목록 카드·상세 본문 공용. 끝난 행사는 상태를 흐리게 둔다. */
+.place-event-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.5rem;
+  margin: 0.15rem 0 0;
+  font-family: var(--kh-font-mono);
+  letter-spacing: var(--kh-tracking-mono);
+  font-size: 0.75rem;
+  color: var(--ko-text-secondary);
+}
+
+.place-event-status {
+  font-weight: 600;
+  /* 글씨용 토큰 — 황토 원색은 한지 위 글씨로 2.89:1 이라 AA 에 못 미친다 (DESIGN.md) */
+  color: var(--ko-accent-text, var(--ko-accent-primary));
+}
+
+[data-event-status='ENDED'] .place-event-status,
+.place-event-line[data-event-status='ENDED'] .place-event-status {
+  color: var(--ko-text-muted);
+}
+
+/* 여행코스 구성 — 원천 순서 그대로의 번호 목록 */
+.place-course-stops {
+  margin: 0.5rem 0 0;
+  padding-left: 1.4rem;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.place-course-stops a {
+  color: var(--ko-text-primary);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
 .place-area-select {
   margin-left: auto;
   padding: 0.35rem 0.6rem;

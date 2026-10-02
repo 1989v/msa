@@ -15,6 +15,8 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   attractionPath,
+  PLACE_EVENT_TYPES,
+  PLACE_STAY_TYPES,
   placeItemListJsonLd,
   regionMeta,
   touristDestinationJsonLd,
@@ -180,6 +182,8 @@ async function main() {
     regions = await fetchRegionIndex();
     fetched.push('places');
   } catch (err) {
+    // 조각이 조회 창을 넘은 것은 일시 장애가 아니라 sitemap 이 조용히 잘리는 상태다 — 그대로 빌드를 세운다
+    if (err instanceof PartialSeoFailure) throw err;
     failed.push('places');
     console.warn(`[seo] 관광지 색인 조회 실패: ${err.message}`);
   }
@@ -698,19 +702,7 @@ async function writeRobotsAndSitemaps(
         : {}),
     })),
   );
-  // 개요가 없는 관광지는 싣지 않는다. 제목·주소·좌표만 있는 페이지라 본문이 없고,
-  // 그런 URL 이 도메인의 대다수가 되면 사이트 전체가 '가치가 별로 없는 콘텐츠' 로 읽힌다
-  // (2026-08-31 AdSense 반려 사유). 개요 수집 배치가 채우면 조건이 저절로 참이 되어
-  // 다시 실린다 — 지운 것이 아니라 문을 조건부로 만든 것이다.
-  const placeDetailEntries = LANGS.flatMap((lang) =>
-    (places[lang] ?? [])
-      .filter((a) => a.hasOverview)
-      .map((a) => ({
-        loc: placeUrl(lang, `/attractions/${a.id}`),
-        lastmod: isoDate(a.modifiedAt),
-        priority: '0.7',
-      })),
-  );
+  const placeDetailEntries = placeDetailSitemapEntries(places);
 
   await emit(`seo/${GAME_HOST}/sitemap.xml`, sitemapXml(gameEntries));
   await emit(`seo/${PORTAL_HOST}/sitemap.xml`, sitemapXml(portalEntries));
@@ -783,6 +775,31 @@ function blogSitemapEntries(blog) {
 
 function blogAuthorHandles(blog) {
   return [...new Set((blog.posts ?? []).map((p) => p.author?.handle).filter(Boolean))];
+}
+
+/**
+ * 관광지 상세의 정적 sitemap 항목.
+ *
+ * 개요가 없는 관광지는 싣지 않는다. 제목·주소·좌표만 있는 페이지라 본문이 없고,
+ * 그런 URL 이 도메인의 대다수가 되면 사이트 전체가 '가치가 별로 없는 콘텐츠' 로 읽힌다
+ * (2026-08-31 AdSense 반려 사유). 개요 수집 배치가 채우면 조건이 저절로 참이 되어
+ * 다시 실린다 — 지운 것이 아니라 문을 조건부로 만든 것이다.
+ *
+ * 숙박(유형 32·80)은 개요와 대표 사진이 둘 다 있을 때만 싣는다 — 본문이 개요와 입·퇴실 원문뿐인 얇은 페이지다.
+ * 기준은 유형 코드다: 분류 stay 인 레포츠 캠핑장(유형 28) 등 기존 행의 조건은 그대로 개요뿐이다.
+ * 행사는 여기 오지 않는다 — indexDoc 이 뺀다(빌드 사이에 낡는다. 행사 URL 은 동적 sitemap 몫).
+ * @param {{ ko?: Array<Record<string, any>>, en?: Array<Record<string, any>> }} places indexDoc 결과
+ */
+export function placeDetailSitemapEntries(places) {
+  return LANGS.flatMap((lang) =>
+    (places[lang] ?? [])
+      .filter((a) => a.hasOverview && (!PLACE_STAY_TYPES.includes(a.contentTypeId) || a.imageUrl))
+      .map((a) => ({
+        loc: placeUrl(lang, `/attractions/${a.id}`),
+        lastmod: isoDate(a.modifiedAt),
+        priority: '0.7',
+      })),
+  );
 }
 
 /** sitemap 은 파일당 50,000 URL 상한이 있다. 넘치면 쪼개고 인덱스로 묶는다. */
@@ -935,10 +952,15 @@ async function fetchAttractionIndex() {
  * 색인 항목 하나 — 개요 있는 문서는 허브 링크·지역 대표 관광지에 쓸 이름·사진과
  * 어느 시도 샤드에서 왔는지를 들고 가고, 나머지는 sitemap 에 id 만 필요하다.
  * 본문(개요·이용 안내)은 싣지 않는다 — 상세는 search 가 서버 렌더한다(ADR-0103).
+ *
+ * 행사(유형 15·85)는 null 이다 — 정적 산출물(sitemap·허브 링크·지역 대표)은 빌드 사이에 낡는데
+ * 행사는 날짜가 지나면 끝난다. 행사 URL 은 search 가 요청 때 만드는 동적 sitemap 이 갖는다.
  * @param {Record<string, any>} a 검색 응답의 관광지 문서
  * @param {string} sidoCode 이 문서를 가져온 샤드의 법정동 시도코드
+ * @returns {Record<string, any> | null}
  */
 export function indexDoc(a, sidoCode) {
+  if (PLACE_EVENT_TYPES.includes(a.contentTypeId)) return null;
   const overview = (a.overview || '').trim();
   if (!overview) return { id: a.id, hasOverview: false };
   return {
@@ -947,28 +969,87 @@ export function indexDoc(a, sidoCode) {
     sidoCode,
     title: a.title,
     imageUrl: a.imageUrl ?? null,
+    // 숙박의 sitemap 조건(개요 + 대표 사진)이 유형으로 갈린다
+    contentTypeId: a.contentTypeId ?? null,
     // sitemap 의 lastmod. 원천 수정일이 없는 문서는 그냥 비운다 — 빌드일을 대신 적으면
     // 6만 URL 이 배포마다 전부 "갱신됨"이 되어 신호가 신호이길 그만둔다.
     modifiedAt: a.modifiedAt ?? null,
   };
 }
 
-async function fetchSidoSlice(lang, sidoCode) {
+/** 검색 조회 창 — OpenSearch from+size 상한. 한 조각은 100건 × 100쪽까지만 받을 수 있다. */
+export const SLICE_WINDOW = 10_000;
+const SLICE_PAGE = 100;
+/**
+ * 조각이 창을 넘을 때 다시 쪼개는 축 — place 파생 분류 전체(`categorize` 가 내는 값).
+ * 여기 없는 분류가 생기면 분류별 합이 조각 건수와 어긋나 빌드가 선다(아래 합 검사).
+ */
+export const SLICE_CATEGORIES = [
+  'nature', 'history', 'culture', 'leisure', 'shopping', 'food', 'stay', 'etc', 'festival', 'course',
+];
+
+/**
+ * 시도 조각 하나. 조각이 조회 창(10,000)을 넘으면 넘는 부분이 sitemap 에서 **조용히** 빠진다 —
+ * 경고로 두면 아무도 안 본다. 그래서 넘으면 분류별로 한 번 더 쪼개고, 그래도 넘거나 분류별 합이
+ * 조각 건수와 다르면(빠진 분류가 있다) 빌드를 세운다. 일시 조회 실패는 지금처럼 그 조각만 줄인다.
+ * @param {(path: string) => Promise<any>} [get] 조회 함수 — 테스트가 주입한다
+ */
+export async function fetchSidoSlice(lang, sidoCode, get = getJson) {
+  const whole = await fetchSlicePages(lang, sidoCode, null, get);
+  if (whole.items) return whole.items;
+
+  const items = [];
+  let sum = 0;
+  for (const category of SLICE_CATEGORIES) {
+    const part = await fetchSlicePages(lang, sidoCode, category, get);
+    if (!part.items) {
+      throw new PartialSeoFailure(
+        `관광지 조각 ${lang}/sido=${sidoCode}/category=${category} 가 ${part.total.toLocaleString('en')}건으로 ` +
+          `조회 창 ${SLICE_WINDOW.toLocaleString('en')}건을 넘습니다 — 넘는 부분이 sitemap 에서 빠집니다. 조각을 더 쪼개야 합니다.`,
+      );
+    }
+    sum += part.total ?? 0;
+    items.push(...part.items);
+  }
+  if (sum !== whole.total) {
+    throw new PartialSeoFailure(
+      `관광지 조각 ${lang}/sido=${sidoCode} 를 분류별로 다시 쪼갰더니 합이 ${sum}건으로 조각 ${whole.total}건과 다릅니다 — ` +
+        'SLICE_CATEGORIES 에 없는 분류가 있습니다.',
+    );
+  }
+  console.log(`[seo] 관광지 ${lang}/sido=${sidoCode}: ${whole.total}건 — 조회 창을 넘어 분류별로 나눠 받음`);
+  return items;
+}
+
+/**
+ * 한 조각을 쪽 단위로 받는다. 첫 쪽의 전체 건수가 창을 넘으면 더 받지 않고 `items: null` 을 돌려준다.
+ * 첫 쪽부터 실패하면 건수를 모르므로 빈 목록이다(일시 장애 — 지금까지와 같이 그 조각만 빠진다).
+ * @returns {Promise<{ total: number | null, items: Array<Record<string, any>> | null }>}
+ */
+async function fetchSlicePages(lang, sidoCode, category, get) {
   const found = [];
-  // from+size 창(10,000) 안에서만 페이징된다 — 100건 × 100페이지
-  for (let page = 0; page < 100; page += 1) {
+  let total = null;
+  const filter = category ? `&category=${category}` : '';
+  for (let page = 0; page < SLICE_WINDOW / SLICE_PAGE; page += 1) {
     let data;
     try {
-      data = await getJson(`/api/search/attractions?lang=${lang}&sidoCode=${sidoCode}&size=100&page=${page}`);
+      data = await get(`/api/search/attractions?lang=${lang}&sidoCode=${sidoCode}${filter}&size=${SLICE_PAGE}&page=${page}`);
     } catch (err) {
-      console.warn(`[seo] 관광지 ${lang}/sido=${sidoCode}/p${page} 실패: ${err.message}`);
+      console.warn(`[seo] 관광지 ${lang}/sido=${sidoCode}${filter}/p${page} 실패: ${err.message}`);
       break;
     }
+    if (page === 0) {
+      total = data.totalElements ?? 0;
+      if (total > SLICE_WINDOW) return { total, items: null };
+    }
     const items = data.attractions ?? [];
-    for (const a of items) found.push(indexDoc(a, sidoCode));
-    if (items.length < 100) break;
+    for (const a of items) {
+      const doc = indexDoc(a, sidoCode);
+      if (doc) found.push(doc);
+    }
+    if (items.length < SLICE_PAGE) break;
   }
-  return found;
+  return { total, items: found };
 }
 
 // ─── place · 포털 허브 프리렌더 ──────────────────────────────────────────────

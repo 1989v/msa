@@ -26,6 +26,10 @@
         ],
         "attrAdmission": "FREE"
       },
+      "meta": {
+        "title": "경복궁 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | K-관광",
+        "description": "조선 왕조 제일의 법궁이다. 북으로 북악산을 기대어 자리 잡았고 정문인 광화문 앞으로는 넓은 육조거리가 펼쳐져 있었다. <script>alert(1)</script> 같은 원문도 글자로만 남아야 한다. 요금은 $1 이 아니라 3,000원이다. 태조 이성계가 한양으로 도읍을…"
+      },
       "jsonLd": [
         {
           "@context": "https://schema.org",
@@ -112,6 +116,10 @@
         "closureState": "ALWAYS_OPEN",
         "closedWeekdays": null,
         "attrAdmission": "PAID"
+      },
+      "meta": {
+        "title": "남산서울타워 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | K-관광",
+        "description": "남산서울타워 — 서울특별시 종로구 사직로 161에 있는 역사 관광지입니다. 주소·지도·사진과 가는 길, 주변 가볼 만한 곳을 함께 확인하세요."
       },
       "jsonLd": [
         {
@@ -202,6 +210,10 @@
         "closedWeekdays": null,
         "attrAdmission": "UNKNOWN"
       },
+      "meta": {
+        "title": "이름만 있는 곳 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | K-관광",
+        "description": "이름만 있는 곳 — 서울특별시 종로구 사직로 161에 있는 역사 관광지입니다. 주소·지도·사진과 가는 길, 주변 가볼 만한 곳을 함께 확인하세요."
+      },
       "jsonLd": [
         {
           "@context": "https://schema.org",
@@ -268,6 +280,10 @@
         "closureState": "NO_WEEKLY",
         "closedWeekdays": null,
         "attrAdmission": "FREE"
+      },
+      "meta": {
+        "title": "Visit Dosan Park — Map, Photos & Things to Do Nearby | K-Tour",
+        "description": "Dosan Park honors Ahn Chang-ho’s legacy. It’s quiet and green."
       },
       "jsonLd": [
         {
@@ -361,6 +377,10 @@
         ],
         "attrAdmission": "PAID"
       },
+      "meta": {
+        "title": "Visit War Memorial of Korea — Map, Photos & Things to Do Nearby | K-Tour",
+        "description": "War Memorial of Korea is a culture attraction at 29, Itaewon-ro, Yongsan-gu, Seoul. See the map, photos, directions and things to do nearby."
+      },
       "jsonLd": [
         {
           "@context": "https://schema.org",
@@ -444,6 +464,10 @@
         "titleLocal": "북촌한옥마을",
         "overview": null
       },
+      "meta": {
+        "title": "Visit Bukchon Hanok Village — Map, Photos & Things to Do Nearby | K-Tour",
+        "description": "Bukchon Hanok Village is a culture attraction at 37, Gyedong-gil, Jongno-gu, Seoul. See the map, photos, directions and things to do nearby."
+      },
       "jsonLd": [
         {
           "@context": "https://schema.org",
@@ -520,6 +544,10 @@
         "eventStartEffective": "2026-09-28",
         "eventEndEffective": "2026-10-05",
         "introRaw": "{\"contentid\":\"3113671\",\"eventplace\":\"여의도 한강공원 <b>일대</b>\",\"playtime\":\"19:00~21:00\",\"usetimefestival\":\"무료\",\"sponsor1\":\"한화\",\"eventhomepage\":\"<a href=\\\"https://example.com\\\">홈페이지</a>\"}"
+      },
+      "meta": {
+        "title": "서울세계불꽃축제 행사 정보 — 일정 · 장소 · 주변 가볼 만한 곳 | K-관광",
+        "description": "서울세계불꽃축제 — 서울특별시 영등포구 여의동로 330에서 열리는 축제·행사입니다. 일정·장소와 지도, 주변 가볼 만한 곳을 함께 확인하세요."
       },
       "jsonLd": [
         {
@@ -602,12 +630,16 @@
         "eventEndEffective": "2026-08-10",
         "introRaw": null
       },
+      "meta": {
+        "title": "지난 여름 축제 행사 정보 — 일정 · 장소 · 주변 가볼 만한 곳 | K-관광",
+        "description": "지난 여름 축제 — 서울특별시 종로구 사직로 161에서 열리는 축제·행사입니다. 일정·장소와 지도, 주변 가볼 만한 곳을 함께 확인하세요."
+      },
       "jsonLd": [
         {
           "@context": "https://schema.org",
           "@type": "Event",
           "name": "지난 여름 축제",
-          "description": "지난 여름 축제 — 서울특별시 종로구 사직로 161에 있는 문화 관광지입니다. 주소·지도·사진과 가는 길, 주변 가볼 만한 곳을 함께 확인하세요.",
+          "description": "지난 여름 축제 — 서울특별시 종로구 사직로 161에서 열리는 축제·행사입니다. 일정·장소와 지도, 주변 가볼 만한 곳을 함께 확인하세요.",
           "url": "https://place.1989v.com/attractions/5002",
           "inLanguage": "ko",
           "isPartOf": {
@@ -680,6 +712,10 @@
         "titleLocal": null,
         "overview": "Lanterns float along the stream.",
         "introRaw": "{\"eventplace\":\"Cheonggyecheon Stream\"}"
+      },
+      "meta": {
+        "title": "Lantern Festival — Dates, Venue & Things to Do Nearby | K-Tour",
+        "description": "Lantern Festival is a festival or event at 1, Cheonggyecheon-ro, Jung-gu, Seoul. See the dates, venue, map and things to do nearby."
       },
       "jsonLd": [
         {
@@ -758,6 +794,10 @@
         "overview": "북촌의 한옥 숙소.",
         "introRaw": "{\"checkintime\":\"15:00\",\"checkouttime\":\"11:00\",\"roomcount\":\"5\",\"reservationurl\":\"https://booking.example.com/r?id=1\",\"reservationlodging\":\"02-000-0000\"}"
       },
+      "meta": {
+        "title": "한옥 스테이 숙박 정보 — 입실·퇴실 · 주변 가볼 만한 곳 | K-관광",
+        "description": "한옥 스테이 — 서울특별시 종로구 사직로 161에 있는 숙소입니다. 입실·퇴실 시간과 지도, 주변 가볼 만한 곳을 함께 확인하세요."
+      },
       "jsonLd": [
         {
           "@context": "https://schema.org",
@@ -831,12 +871,16 @@
         "titleLocal": null,
         "overview": null
       },
+      "meta": {
+        "title": "Seoul Guesthouse — Stay Info, Check-in & Things to Do Nearby | K-Tour",
+        "description": "Seoul Guesthouse is a place to stay in South Korea. See check-in times, the map and things to do nearby."
+      },
       "jsonLd": [
         {
           "@context": "https://schema.org",
           "@type": "LodgingBusiness",
           "name": "Seoul Guesthouse",
-          "description": "Seoul Guesthouse is a stay attraction in South Korea. See the map, photos, directions and things to do nearby.",
+          "description": "Seoul Guesthouse is a place to stay in South Korea. See check-in times, the map and things to do nearby.",
           "url": "https://place.1989v.com/en/attractions/6101",
           "inLanguage": "en",
           "isPartOf": {
@@ -917,6 +961,10 @@
             "attractionId": 7003
           }
         ]
+      },
+      "meta": {
+        "title": "부산 바다 하루 코스 여행코스 — 코스 구성 · 거리 · 소요 시간 | K-관광",
+        "description": "부산 바다 하루 코스 여행코스입니다. 코스를 이루는 관광지를 순서대로 보고 총 거리와 소요 시간을 확인하세요."
       },
       "jsonLd": [
         {

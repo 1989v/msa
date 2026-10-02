@@ -4,6 +4,7 @@ import type {
   AttributeFacets,
   PlaceLang,
 } from '../../api/placeApi';
+import { PLACE_COURSE_TYPES, PLACE_EVENT_TYPES, PLACE_STAY_TYPES, placeIntroText } from '../../seo/copy.mjs';
 
 /*
  * 속성 패싯 — 검색 화면의 속성 칩과 상세의 방문 정보 배지.
@@ -153,9 +154,11 @@ export function regionPhrase(a: Attraction, lang: PlaceLang): string | null {
   const en = lang === 'en';
   const type = a.contentTypeId ? (en ? CONTENT_TYPE_EN : CONTENT_TYPE_KO)[a.contentTypeId] : undefined;
   if (!type) return null;
+  // 끝난 행사 자기 문서는 후보에서 빠져 건수가 0 일 수 있다 — 「0곳」은 그리지 않는다(서버 렌더와 같은 규칙)
+  if (region.typeCount <= 0) return null;
   const place = regionPlaceName(a, lang);
   const category = region.categoryName?.trim() || null;
-  if (category != null && region.categoryCount != null) {
+  if (category != null && region.categoryCount != null && region.categoryCount > 0) {
     return en
       ? `${category} ${region.categoryCount} of ${region.typeCount} ${type} in ${place}`
       : `${place} ${type} ${region.typeCount}곳 중 ${category} ${region.categoryCount}곳`;
@@ -177,4 +180,58 @@ export function regionHubCode(a: Attraction): string | null {
 /** 서버 렌더 `distance` 와 같은 표기 — 1km 미만은 m, 이상은 소수 한 자리 km. */
 export function distanceLabel(meters: number): string {
   return meters < 1000 ? `${meters}m` : `${(meters / 1000).toFixed(1)}km`;
+}
+
+/*
+ * 유형별 본문 — 행사 · 숙박 · 여행코스는 일반 「이용 안내」 대신 자기 절을 그린다(서버 렌더 `typeSection` 과
+ * 같은 제목·라벨·순서). 원문 키는 허용 목록으로만 고른다 — 숙박의 예약 URL·예약 안내는 목록에 없어 나가지 않는다.
+ */
+export type PlaceKind = 'event' | 'stay' | 'course';
+
+export function placeKind(contentTypeId: string | null | undefined): PlaceKind | null {
+  if (contentTypeId == null) return null;
+  if ((PLACE_EVENT_TYPES as string[]).includes(contentTypeId)) return 'event';
+  if ((PLACE_STAY_TYPES as string[]).includes(contentTypeId)) return 'stay';
+  if ((PLACE_COURSE_TYPES as string[]).includes(contentTypeId)) return 'course';
+  return null;
+}
+
+export const KIND_SECTION_TITLE: Record<PlaceKind, Record<PlaceLang, string>> = {
+  event: { ko: '행사 정보', en: 'Event info' },
+  stay: { ko: '숙박 정보', en: 'Stay info' },
+  course: { ko: '코스 구성', en: 'Course' },
+};
+
+export const EVENT_PERIOD_LABEL: Record<PlaceLang, string> = { ko: '기간', en: 'Dates' };
+
+const KIND_INTRO: Record<PlaceKind, ReadonlyArray<{ key: string; ko: string; en: string }>> = {
+  event: [
+    { key: 'eventplace', ko: '행사 장소', en: 'Venue' },
+    { key: 'playtime', ko: '공연 시간', en: 'Hours' },
+    { key: 'usetimefestival', ko: '이용 요금', en: 'Admission' },
+    { key: 'sponsor1', ko: '주최', en: 'Organizer' },
+  ],
+  stay: [
+    { key: 'checkintime', ko: '입실', en: 'Check-in' },
+    { key: 'checkouttime', ko: '퇴실', en: 'Check-out' },
+    { key: 'roomcount', ko: '객실 수', en: 'Rooms' },
+    { key: 'roomtype', ko: '객실 유형', en: 'Room types' },
+    { key: 'parkinglodging', ko: '주차', en: 'Parking' },
+    { key: 'subfacility', ko: '부대시설', en: 'Facilities' },
+  ],
+  course: [
+    { key: 'distance', ko: '총 거리', en: 'Total distance' },
+    { key: 'taketime', ko: '소요 시간', en: 'Time needed' },
+  ],
+};
+
+/** 허용 목록 순서대로, 원문에 값이 있는 키만 (라벨, 평문) */
+export function kindIntroRows(
+  introRaw: string | null | undefined,
+  kind: PlaceKind,
+  lang: PlaceLang,
+): Array<{ key: string; label: string; value: string }> {
+  return KIND_INTRO[kind]
+    .map((k) => ({ key: k.key, label: k[lang], value: placeIntroText(introRaw ?? null, k.key) }))
+    .filter((r) => r.value.length > 0);
 }

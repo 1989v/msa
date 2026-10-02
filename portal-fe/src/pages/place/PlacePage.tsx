@@ -3,6 +3,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
+  COURSE_CATEGORY,
+  EVENT_CATEGORY,
   fetchAdministrativeRegions,
   fetchAttraction,
   OVERLAY_CATEGORIES,
@@ -55,10 +57,22 @@ import {
   placeUrl,
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
+import {
+  effectivePeriod,
+  eventPeriodLabel,
+  eventStatus as eventStatusOf,
+  eventStatusText,
+  isEventType,
+  todayKst,
+} from '../../seo/eventSchedule';
 
 // ADR-0065 K-관광/지리 탐색 — 관광지 지도 검색. 데이터 출처: 한국관광공사 TourAPI.
 // place.<domain> 서브도메인이 정규 주소 (game 과 동일한 host 인식 루트 라우팅):
 //   place 호스트: /(ko) · /en(en) — apex/개발: /place · /en/place (ADR-0062 언어 URL 규칙)
+
+/** 행사 목록의 상태 칩 — 아무것도 안 고르면 끝나지 않은 행사 전부(NOT_ENDED)다. */
+type ListEventStatus = 'ONGOING' | 'WEEKEND' | 'UPCOMING';
+const LIST_EVENT_STATUSES: ListEventStatus[] = ['ONGOING', 'WEEKEND', 'UPCOMING'];
 
 const UI = {
   ko: {
@@ -88,7 +102,10 @@ const UI = {
     categories: {
       nature: '자연', history: '역사', culture: '문화', leisure: '레포츠',
       shopping: '쇼핑', food: '음식', stay: '숙박', etc: '기타',
+      festival: '행사', course: '여행코스',
     } as Record<string, string>,
+    eventStatusGroup: '행사 상태',
+    eventStatuses: { ONGOING: '진행 중', WEEKEND: '이번 주말', UPCOMING: '예정' } as Record<ListEventStatus, string>,
     regionLabel: '지역',
     attractionLabel: '관광지',
     regionLevels: {
@@ -122,7 +139,10 @@ const UI = {
     categories: {
       nature: 'Nature', history: 'History', culture: 'Culture', leisure: 'Leisure',
       shopping: 'Shopping', food: 'Food', stay: 'Stay', etc: 'Etc',
+      festival: 'Events', course: 'Courses',
     } as Record<string, string>,
+    eventStatusGroup: 'Event status',
+    eventStatuses: { ONGOING: 'Ongoing', WEEKEND: 'This weekend', UPCOMING: 'Upcoming' } as Record<ListEventStatus, string>,
     regionLabel: 'Region',
     attractionLabel: 'Attraction',
     regionLevels: {
@@ -230,6 +250,8 @@ export default function PlacePage() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showSuggest, setShowSuggest] = useState(false);
   const [category, setCategory] = useState<string | null>(null);
+  // 행사 칩을 골랐을 때만 쓰는 상태 칩. null 이면 NOT_ENDED.
+  const [listEventStatus, setListEventStatus] = useState<ListEventStatus | null>(null);
   // 속성 칩 — 화면 상태일 뿐 주소를 만들지 않는다(새 색인 URL 금지). 속성끼리 AND.
   const [attributes, setAttributes] = useState<ReadonlySet<AttributeChipId>>(() => new Set());
   const [areaCode, setAreaCode] = useState<string | null>(null);
@@ -268,17 +290,24 @@ export default function PlacePage() {
       areaCode: sidoCode ? undefined : (areaCode ?? undefined),
       sidoCode: sidoCode ?? undefined,
       sigunguCode: sigunguCode ?? undefined,
-      // 분류를 안 고르면 관광 분류 전체 — 음식·쇼핑은 목록에 올리지 않는다
-      category: category ?? SIGHT_CATEGORIES.join(','),
+      // 분류를 안 고르면 관광 분류 전체 — 음식·쇼핑은 목록에 올리지 않는다.
+      // 검색어가 있으면 끝나지 않은 행사도 더한다 — 「보령 머드축제」를 친 사람이 0건을 받지 않게 (ADR-0071 §5)
+      category: category ?? (keyword ? [...SIGHT_CATEGORIES, EVENT_CATEGORY] : SIGHT_CATEGORIES).join(','),
       lat: geo?.lat,
       lng: geo?.lng,
       radiusKm: geo?.radiusKm,
-      sort: geo ? 'distance' : 'relevance',
+      sort: category === EVENT_CATEGORY ? 'eventStart' : geo ? 'distance' : 'relevance',
+      eventStatus:
+        category === EVENT_CATEGORY
+          ? (listEventStatus ?? 'NOT_ENDED')
+          : category == null && keyword
+            ? 'NOT_ENDED'
+            : undefined,
       ...attributeQuery(attributes),
       page,
       size: 30,
     }),
-    [keyword, lang, areaCode, sidoCode, sigunguCode, category, geo, attributes, page],
+    [keyword, lang, areaCode, sidoCode, sigunguCode, category, listEventStatus, geo, attributes, page],
   );
 
   const { data, isLoading, isError } = useQuery({
@@ -1012,12 +1041,15 @@ export default function PlacePage() {
           >
             {L.all}
           </button>
-          {SIGHT_CATEGORIES.map((c) => (
+          {/* 행사는 모든 언어, 여행코스는 국문만 — 영문 서비스에는 코스 유형이 없어 0건 칩이 된다 */}
+          {[...SIGHT_CATEGORIES, EVENT_CATEGORY, ...(lang === 'ko' ? [COURSE_CATEGORY] : [])].map((c) => (
             <button
               key={c}
               className={`place-chip ${category === c ? 'active' : ''}`}
+              data-category={c}
               onClick={() => {
                 setCategory(category === c ? null : c);
+                setListEventStatus(null);
                 setPage(0);
               }}
             >
@@ -1057,6 +1089,27 @@ export default function PlacePage() {
             </select>
           )}
         </div>
+
+        {/* 행사 상태 칩 — 행사 칩을 골랐을 때만. 안 고르면 끝나지 않은 행사 전부, 고른 칩을 다시 누르면 풀린다. */}
+        {category === EVENT_CATEGORY && (
+          <div className="place-event-filter" role="group" aria-label={L.eventStatusGroup}>
+            {LIST_EVENT_STATUSES.map((s) => (
+              <button
+                key={s}
+                type="button"
+                className={`place-chip ${listEventStatus === s ? 'active' : ''}`}
+                aria-pressed={listEventStatus === s}
+                data-event-filter={s}
+                onClick={() => {
+                  setListEventStatus(listEventStatus === s ? null : s);
+                  setPage(0);
+                }}
+              >
+                {L.eventStatuses[s]}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* 속성 칩 — 분류 칩과 다른 축이라 따로 한 묶음(모바일은 한 줄 가로 스크롤).
             칩은 숨기지 않는다: 안 고른 칩이 0 이면 흐리게 두고 자리를 지킨다 — 빠지면 옆 칩이
@@ -1253,6 +1306,7 @@ function AttractionDetailBody({ attraction, lang }: { attraction: Attraction; la
       {attraction.category && (
         <span className="place-chip active">{L.categories[attraction.category] ?? attraction.category}</span>
       )}
+      <EventLine attraction={attraction} lang={lang} />
       {attraction.address && <p className="place-detail-addr">{attraction.address}</p>}
       {attraction.tel && <p className="place-detail-tel">{attraction.tel}</p>}
       {attraction.overview && <p className="place-detail-overview">{attraction.overview}</p>}
@@ -1319,9 +1373,28 @@ function PlaceCard({
           {attraction.category && <span>{L.categories[attraction.category] ?? attraction.category}</span>}
           {attraction.distanceKm != null && <span>{attraction.distanceKm.toFixed(1)}km</span>}
         </p>
+        <EventLine attraction={attraction} lang={lang} />
         {attraction.address && <p className="place-card-addr">{attraction.address}</p>}
         {attraction.overview && <p className="place-card-overview">{attraction.overview}</p>}
       </div>
     </a>
+  );
+}
+
+/**
+ * 행사의 기간·상태 줄 — 목록 카드와 상세 본문(데스크톱 열·모바일 시트)이 같이 쓴다.
+ * 문구는 서버 렌더와 같은 판정(`eventSchedule`)이고 오늘은 렌더 시점의 KST 날짜다. 날짜를 모르는 행사는 그리지 않는다.
+ */
+function EventLine({ attraction, lang }: { attraction: Attraction; lang: PlaceLang }) {
+  if (!isEventType(attraction.contentTypeId)) return null;
+  const today = todayKst();
+  const period = effectivePeriod(attraction.eventStart, attraction.eventEnd);
+  const status = eventStatusText(period, today, lang);
+  if (!period || !status) return null;
+  return (
+    <p className="place-event-line" data-event-status={eventStatusOf(period, today)}>
+      <span className="place-event-period">{eventPeriodLabel(period)}</span>
+      <span className="place-event-status">{status}</span>
+    </p>
   );
 }

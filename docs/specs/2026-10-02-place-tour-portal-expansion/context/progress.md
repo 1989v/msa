@@ -17,3 +17,5 @@
 - 2026-10-02 03:05 UTC: ops-baseline.sh 첫 실행이 MySQL 을 재시작시킴(liveness 5초 × 3). 파생 테이블에 TEXT 를 담는 모양 금지 — id 범위 직접 집계 + 덩어리 사이 1초.
 - TG8 결정: 새 유형은 일반 「이용 안내」를 대체 · 지역 건수 0 이면 「N곳 중 0곳」 대신 유형 건수만 · Event JSON-LD 에 날짜 의존 값 없음. TG9 에서 행사·숙박 메타 제목을 유형별로(copy.mjs), AttractionPage.tsx 의 touristAttractionJsonLd → attractionJsonLd, 화면 attraction-end 지면 제외.
 - 배포 ① 재수집(V24 뒤): 행사 국 897·영 262, 숙박 국 2,925·영 207, 코스 1,000 — 41초. 국문 옛 숙박 2건 정상화. 영문 2건은 fix_legacy_en_type 미리보기 중(전량 OFFSET 스캔이라 느림).
+- 함정: portal-fe `tsc --noEmit -p .` 는 0개 파일 검사. 반드시 `-p tsconfig.app.json`.
+- 관찰(범위 밖): 광주(29)·전남(46) 행 0건 — 원천이 법정동 12 로 준다(통합특별시 추정). /regions/29·46 은 아직 200. 별도 보고.

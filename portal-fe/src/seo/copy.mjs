@@ -404,11 +404,13 @@ export const PLACE_BRAND_EN = 'K-Tour';
 export const PLACE_CATEGORY_KO = {
   nature: '자연', history: '역사', culture: '문화', leisure: '레포츠',
   shopping: '쇼핑', food: '음식', stay: '숙박', etc: '기타',
+  festival: '행사', course: '여행코스',
 };
 
 export const PLACE_CATEGORY_EN = {
   nature: 'Nature', history: 'History', culture: 'Culture', leisure: 'Leisure',
   shopping: 'Shopping', food: 'Food', stay: 'Stay', etc: 'Etc',
+  festival: 'Events', course: 'Courses',
 };
 
 export function placeBrand(lang) {
@@ -571,23 +573,69 @@ export function placeHubMeta(lang) {
  */
 export function attractionMeta(lang, attraction) {
   const name = attraction.title;
-  const label = placeCategoryLabel(attraction.category, lang);
   const where = attraction.address || '';
   // 원천 개요는 평문이 아니다 — `<br />`·`&rsquo;` 가 섞여 온다. 스니펫에 그대로 실리면
   // 검색결과에 태그가 글자로 보인다.
   const overview = sourceText(attraction.overview);
-  const fallback =
-    lang === 'en'
-      ? `${name} is a ${label.toLowerCase()} attraction${where ? ` at ${where}` : ' in South Korea'}. See the map, photos, directions and things to do nearby.`
-      : `${name}${where ? ` — ${where}` : ''}에 있는 ${label} 관광지입니다. 주소·지도·사진과 가는 길, 주변 가볼 만한 곳을 함께 확인하세요.`;
+  const { title, fallback } = attractionMetaCopy(lang, attraction, name, where);
   return {
-    title:
-      lang === 'en'
-        ? `Visit ${name} — Map, Photos & Things to Do Nearby | ${PLACE_BRAND_EN}`
-        : `${name} 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | ${PLACE_BRAND_KO}`,
+    title,
     description: clampDescription(overview.length >= 60 ? overview : fallback),
     heading: name,
   };
+}
+
+/**
+ * 유형별 제목과 개요가 짧을 때의 설명. 행사·숙박·여행코스는 검색 의도가 관광지와 달라(일정·장소 / 입실·위치 /
+ * 코스 순서) 제목의 의도 키워드를 유형에 맞춘다. 유형은 원천 유형 코드로 고른다(구조화 데이터와 같은 축).
+ * 서버 렌더(search `AttractionPageRenderer.attractionMeta`)가 같은 문자열을 만든다 — 골든 픽스처로 대조한다.
+ */
+function attractionMetaCopy(lang, attraction, name, where) {
+  const type = attraction.contentTypeId;
+  const en = lang === 'en';
+  if (PLACE_EVENT_TYPES.includes(type)) {
+    return en
+      ? {
+          title: `${name} — Dates, Venue & Things to Do Nearby | ${PLACE_BRAND_EN}`,
+          fallback: `${name} is a festival or event${where ? ` at ${where}` : ' in South Korea'}. See the dates, venue, map and things to do nearby.`,
+        }
+      : {
+          title: `${name} 행사 정보 — 일정 · 장소 · 주변 가볼 만한 곳 | ${PLACE_BRAND_KO}`,
+          fallback: `${name}${where ? ` — ${where}` : ''}에서 열리는 축제·행사입니다. 일정·장소와 지도, 주변 가볼 만한 곳을 함께 확인하세요.`,
+        };
+  }
+  if (PLACE_STAY_TYPES.includes(type)) {
+    return en
+      ? {
+          title: `${name} — Stay Info, Check-in & Things to Do Nearby | ${PLACE_BRAND_EN}`,
+          fallback: `${name} is a place to stay${where ? ` at ${where}` : ' in South Korea'}. See check-in times, the map and things to do nearby.`,
+        }
+      : {
+          title: `${name} 숙박 정보 — 입실·퇴실 · 주변 가볼 만한 곳 | ${PLACE_BRAND_KO}`,
+          fallback: `${name}${where ? ` — ${where}` : ''}에 있는 숙소입니다. 입실·퇴실 시간과 지도, 주변 가볼 만한 곳을 함께 확인하세요.`,
+        };
+  }
+  if (PLACE_COURSE_TYPES.includes(type)) {
+    return en
+      ? {
+          title: `${name} — Travel Course, Stops & Time Needed | ${PLACE_BRAND_EN}`,
+          fallback: `${name} is a travel course in South Korea. See the stops in order, total distance and time needed.`,
+        }
+      : {
+          title: `${name} 여행코스 — 코스 구성 · 거리 · 소요 시간 | ${PLACE_BRAND_KO}`,
+          fallback: `${name} 여행코스입니다. 코스를 이루는 관광지를 순서대로 보고 총 거리와 소요 시간을 확인하세요.`,
+        };
+  }
+  const label = placeCategoryLabel(attraction.category, lang);
+  return en
+    ? {
+        title: `Visit ${name} — Map, Photos & Things to Do Nearby | ${PLACE_BRAND_EN}`,
+        fallback: `${name} is a ${label.toLowerCase()} attraction${where ? ` at ${where}` : ' in South Korea'}. See the map, photos, directions and things to do nearby.`,
+      }
+    : {
+        title: `${name} 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | ${PLACE_BRAND_KO}`,
+        fallback: `${name}${where ? ` — ${where}` : ''}에 있는 ${label} 관광지입니다. 주소·지도·사진과 가는 길, 주변 가볼 만한 곳을 함께 확인하세요.`,
+      };
 }
 
 /** 원천 관광 유형 — 상세가 유형별 본문·구조화 데이터를 고르는 축. 국문·영문 코드 체계가 다르다. */

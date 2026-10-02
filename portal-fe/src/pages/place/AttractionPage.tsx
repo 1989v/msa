@@ -6,6 +6,7 @@ import {
   fetchAttraction,
   searchAttractions,
   SIGHT_CATEGORIES,
+  type Attraction,
   type PlaceLang,
 } from '../../api/placeApi';
 import {
@@ -18,8 +19,15 @@ import {
   placeCategoryLabel,
   placePath,
   regionPath,
-  touristAttractionJsonLd,
+  attractionJsonLd,
 } from '../../seo/copy.mjs';
+import {
+  attractionNoindex,
+  effectivePeriod,
+  eventPeriodLabel,
+  eventStatusText,
+  todayKst,
+} from '../../seo/eventSchedule';
 import { useSeo } from '../../seo/useSeo';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import AttractionLinks from './AttractionLinks';
@@ -40,10 +48,15 @@ import {
 } from './placeView';
 import {
   distanceLabel,
+  EVENT_PERIOD_LABEL,
+  KIND_SECTION_TITLE,
+  kindIntroRows,
+  placeKind,
   regionHubCode,
   regionPhrase,
   regionPlaceName,
   visitorBadges,
+  type PlaceKind,
 } from './placeAttributes';
 import './PlacePage.css';
 import AdSlot from '../../components/ads/AdSlot';
@@ -144,6 +157,9 @@ export default function AttractionPage() {
   const docLang: PlaceLang = attraction?.lang ?? lang;
 
   const meta = attraction ? attractionMeta(docLang, attraction) : null;
+  // 행사 상태·만료는 렌더 시점의 KST 오늘로 판정한다(서버 렌더와 같은 규칙)
+  const today = todayKst();
+  const kind = placeKind(attraction?.contentTypeId);
   useSeo(
     attraction && meta
       ? {
@@ -155,12 +171,14 @@ export default function AttractionPage() {
           // 개요가 없으면 제목·주소·좌표뿐이라 본문이 없는 문서다. 사이트맵도 이런 문서를
           // 싣지 않지만(prerender-seo.mjs) 이미 색인된 것은 사이트맵에서 빠져도 남는다 —
           // 빼는 일은 noindex 가 한다. 수집 배치가 개요를 채우면 저절로 풀린다.
-          noindex: !attraction.overview,
+          // 끝난 지 31일이 지난 행사도 뺀다 — 서버 렌더와 같은 판정이라 하이드레이션이 robots 를 뒤집지 않는다.
+          noindex: attractionNoindex(attraction, today),
           // hreflang 없음 — TourAPI 는 국문/영문을 별도 콘텐츠로 관리해 같은 장소라도
           // id·contentId 가 다르다(경복궁 ko 126508 / en 264337). 짝을 알 수 없으므로
           // 잘못된 대체 주소를 선언하느니 걸지 않는다. 허브(/ ↔ /en)만 진짜 번역쌍이다.
           jsonLd: [
-            touristAttractionJsonLd(docLang, attraction),
+            // 유형별(행사 Event · 숙박 LodgingBusiness · 코스 TouristTrip) — 서버가 심은 것과 같은 함수다
+            attractionJsonLd(docLang, attraction),
             // 세 칸(허브 › 시도 › 관광지)은 서버 렌더와 같은 함수가 만든다 — 하이드레이션이
             // 서버가 심은 breadcrumb 을 갈아끼우므로 어긋나면 렌더 전후로 지역 단계가 바뀐다.
             // 시도 이름은 색인이 들고 있다 (ADR-0095).
@@ -239,8 +257,10 @@ export default function AttractionPage() {
   }, [hasMapKey, plottable, lat, lng]);
 
   // 같은 분류 가까운 곳에 이미 나온 곳은 주변 명소에서 뺀다 — 한 화면에 같은 카드가 두 번 뜬다
-  const sameCategory = attraction?.region?.sameCategoryNearby ?? [];
-  const similar = attraction?.similarElsewhere ?? [];
+  // 재색인 뒤 끝난 행사 항목은 오늘 기준으로 한 번 더 거른다(서버 렌더와 같은 규칙 — 오늘 끝나는 것은 남긴다)
+  const notEnded = (n: { eventEndEffective?: string | null }) => !n.eventEndEffective || n.eventEndEffective >= today;
+  const sameCategory = (attraction?.region?.sameCategoryNearby ?? []).filter(notEnded);
+  const similar = (attraction?.similarElsewhere ?? []).filter(notEnded);
   const shownAbove = new Set(sameCategory.map((n) => n.id));
   const others = (nearby?.attractions ?? [])
     .filter((a) => a.id !== id && !shownAbove.has(a.id))
@@ -334,10 +354,14 @@ export default function AttractionPage() {
                 <p className="place-detail-overview">{overviewText(attraction.overview)}</p>
               )}
 
+              {/* 행사 · 숙박 · 여행코스는 일반 이용 안내 대신 유형별 절이다 — 파생 값(이용시간·요금·주차)이
+                  같은 원문 키에서 와서 두 번 나가기 때문이다. 서버 렌더와 같은 제목·라벨·순서. */}
+              {kind && <KindSection attraction={attraction} kind={kind} lang={lang} today={today} />}
+
               {/* 이용 안내 (detailIntro2). 원천이 유형마다 다른 키로 주는 것을 서버가 모아 준다.
                   점진 보강이라 아직 안 받은 관광지가 있다 — 값이 없는 줄은 그리지 않고,
                   다 없으면 블록 자체를 내지 않는다(빈 표는 "정보 없음"보다 나쁘다). */}
-              {(() => {
+              {!kind && (() => {
                 // 파생 6개(유형별 키를 서버가 모은 것) → 그 다음 원문에만 있는 나머지.
                 // 원천이 준 것을 다 보여준다 — 상세는 이 관광지에 대해 아는 전부를 내는 자리다.
                 const derived: IntroRow[] = [
@@ -565,13 +589,16 @@ export default function AttractionPage() {
         )}
       </div>
 
-      {/* 지도와 주변 목록을 다 본 뒤 (ADR-0076) */}
-      <AdSlot
-        placement="attraction-end"
-        contextKey={attraction?.sidoCode ? `place:${attraction.sidoCode}` : ''}
-        shape="horizontal"
-        minHeight={90}
-      />
+      {/* 지도와 주변 목록을 다 본 뒤 (ADR-0076). 행사·숙박·코스 상세에는 지면을 두지 않는다 —
+          원천 개요를 그대로 쓰는 페이지가 반려 사유였고, 지면을 다시 켜는 재심사 뒤에도 유지한다. */}
+      {!kind && (
+        <AdSlot
+          placement="attraction-end"
+          contextKey={attraction?.sidoCode ? `place:${attraction.sidoCode}` : ''}
+          shape="horizontal"
+          minHeight={90}
+        />
+      )}
 
       {/* 통합 푸터 + 출처표시 의무 슬롯 — 허브(PlacePage)와 동일 구성 (data-sources.md §0) */}
       <Footer lang={lang}>
@@ -583,5 +610,61 @@ export default function AttractionPage() {
         </p>
       </Footer>
     </div>
+  );
+}
+
+/** 유형별 절 — 서버 렌더 `typeSection` 과 같은 구성. 그릴 것이 없으면 절을 내지 않는다. */
+function KindSection({
+  attraction,
+  kind,
+  lang,
+  today,
+}: {
+  attraction: Attraction;
+  kind: PlaceKind;
+  lang: PlaceLang;
+  today: string;
+}) {
+  const period = kind === 'event' ? effectivePeriod(attraction.eventStart, attraction.eventEnd) : null;
+  const status = kind === 'event' ? eventStatusText(period, today, lang) : null;
+  const rows = [
+    ...(period ? [{ key: 'period', label: EVENT_PERIOD_LABEL[lang], value: eventPeriodLabel(period) }] : []),
+    ...kindIntroRows(attraction.introRaw, kind, lang),
+  ];
+  const stops = kind === 'course' ? (attraction.courseStops ?? []) : [];
+  if (!status && rows.length === 0 && stops.length === 0) return null;
+  const title = KIND_SECTION_TITLE[kind][lang];
+  return (
+    <section className="place-detail-info" aria-label={title} data-place-section={kind}>
+      <h2 className="place-detail-info-title">{title}</h2>
+      {status && (
+        <p className="place-event-status" data-event-status>
+          {status}
+        </p>
+      )}
+      {rows.length > 0 && (
+        <dl className="place-detail-info-list">
+          {rows.map((row) => (
+            <div className="place-detail-info-row" key={row.key}>
+              <dt>{row.label}</dt>
+              <dd>{row.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {stops.length > 0 && (
+        <ol className="place-course-stops">
+          {stops.map((stop, i) => (
+            <li key={`${i}-${stop.contentId ?? stop.name}`}>
+              {stop.attractionId != null ? (
+                <Link to={attractionPath(lang, String(stop.attractionId))}>{stop.name}</Link>
+              ) : (
+                stop.name
+              )}
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
   );
 }

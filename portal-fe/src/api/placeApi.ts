@@ -86,19 +86,31 @@ export interface Attraction {
   petPolicy?: 'ALLOWED' | 'PARTIAL' | 'UNKNOWN' | null;
   attrAdmission?: 'FREE' | 'PAID' | 'UNKNOWN' | null;
   /**
-   * 원천 관광 유형 코드 — 지역 안 위치 문구의 「{유형}」. 상세 응답이 아직 싣지 않는다 —
-   * 없으면 그 문구를 그리지 않는다(유형을 짐작해 넣으면 N 의 뜻이 틀린다).
+   * 원천 관광 유형 코드 — 지역 안 위치 문구의 「{유형}」과 유형별 본문(행사 15·85 · 숙박 32·80 · 코스 25)의 축.
+   * 옛 문서에는 없다 — 없으면 그 문구를 그리지 않는다(유형을 짐작해 넣으면 N 의 뜻이 틀린다).
    */
   contentTypeId?: string | null;
+  /** 행사의 유효 시작일·종료일(`YYYY-MM-DD`, 양 끝 포함). 행사가 아니거나 날짜를 모르면 null. */
+  eventStart?: string | null;
+  eventEnd?: string | null;
+  /** 여행코스 구성 — 원천 순서. `attractionId` 가 null 이면 같은 언어 관광지와 이어지지 않아 링크하지 않는다. */
+  courseStops?: CourseStop[] | null;
   /** 지역 안 위치 — 단건 조회에만 온다. 옛 문서·목록 응답은 null. */
   region?: AttractionRegion | null;
   /** 다른 시도의 비슷한 곳(같은 언어·유형) — 단건 조회에만 온다. 목록이 없으면 null. */
-  similarElsewhere?: Array<{ id: string; title: string; sidoName: string | null }> | null;
+  similarElsewhere?: Array<{ id: string; title: string; sidoName: string | null; eventEndEffective?: string | null }> | null;
   /** 최근 14일 클릭한 고유 방문자 수 — 단건 조회에만 온다. 신호를 못 읽은 회차·옛 문서는 null. */
   uniqueClickers14d?: number | null;
 }
 
 export type AttributeAvailability = 'YES' | 'NO' | 'UNKNOWN';
+
+export interface CourseStop {
+  order: number;
+  contentId: string | null;
+  name: string;
+  attractionId: number | null;
+}
 
 /** 허브 링크는 `/regions/{sidoCode}{ldongSignguCd}`. */
 export interface AttractionRegion {
@@ -109,8 +121,8 @@ export interface AttractionRegion {
   /** 그중 같은 분류(lclsSystm3) 수 — 항상 typeCount 이하 */
   categoryCount: number | null;
   categoryName: string | null;
-  /** 같은 시군구·유형·분류의 가까운 곳(자기 제외, 최대 5) */
-  sameCategoryNearby: Array<{ id: string; title: string; distanceMeters: number }>;
+  /** 같은 시군구·유형·분류의 가까운 곳(자기 제외, 최대 5). 행사 항목은 유효 종료일을 함께 싣는다. */
+  sameCategoryNearby: Array<{ id: string; title: string; distanceMeters: number; eventEndEffective?: string | null }>;
 }
 
 /**
@@ -176,8 +188,13 @@ export const fetchAdministrativeRegions = async (
  */
 export const SIGHT_CATEGORIES = ['nature', 'history', 'culture', 'leisure'] as const;
 
-/** 지도 위 토글로만 켜는 편의·식음 — 목록에는 올리지 않는다. */
-export const OVERLAY_CATEGORIES = ['food', 'shopping'] as const;
+/** 지도 위 토글로만 켜는 편의·식음·숙박 — 목록에는 올리지 않는다(숙박은 목록 칩이 아니라 여기다, ADR-0071 §5). */
+export const OVERLAY_CATEGORIES = ['food', 'shopping', 'stay'] as const;
+
+/** 목록 분류 칩의 행사 — 고르면 상태 칩이 나오고 시작일 순으로 받는다. */
+export const EVENT_CATEGORY = 'festival';
+/** 목록 분류 칩의 여행코스 — 국문 전용(영문 서비스에는 코스 유형이 없다). */
+export const COURSE_CATEGORY = 'course';
 
 /**
  * 관광지 상세 아래 "주변 편의시설" 캐로셀에 올리는 분류.
@@ -206,7 +223,8 @@ export interface AttractionQuery {
   lat?: number;
   lng?: number;
   radiusKm?: number;
-  sort?: 'relevance' | 'distance';
+  /** eventStart — 유효 시작일 오름차순(같으면 id). 행사 목록이 쓴다. */
+  sort?: 'relevance' | 'distance' | 'eventStart';
   page?: number;
   size?: number;
   /**
@@ -224,6 +242,11 @@ export interface AttractionQuery {
    * 상세의 주변·편의시설 검색이나 지도 오버레이, 다음 쪽까지 켜면 조회마다 집계가 는다.
    */
   facets?: boolean;
+  /**
+   * 행사 상태 필터 — 「행사가 아니거나 이 범위 안」으로 걸린다(행사 아닌 문서는 영향 없음).
+   * 범위는 서버가 KST 오늘로 정한다.
+   */
+  eventStatus?: 'ONGOING' | 'WEEKEND' | 'UPCOMING' | 'THIS_MONTH' | 'NOT_ENDED';
 }
 
 export const searchAttractions = async (query: AttractionQuery): Promise<AttractionSearchResult> => {
@@ -246,6 +269,7 @@ export const searchAttractions = async (query: AttractionQuery): Promise<Attract
   if (query.pet && query.pet.length > 0) params.set('pet', query.pet.join(','));
   if (query.admission) params.set('admission', query.admission);
   if (query.facets) params.set('facets', 'true');
+  if (query.eventStatus) params.set('eventStatus', query.eventStatus);
   params.set('page', String(query.page ?? 0));
   params.set('size', String(query.size ?? 30));
   const res = await api.get<ApiResponse<AttractionSearchResult>>(`/api/search/attractions?${params}`);
