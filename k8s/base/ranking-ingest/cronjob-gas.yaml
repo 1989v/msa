@@ -16,9 +16,9 @@ metadata:
     app.kubernetes.io/part-of: commerce-platform
     ranking.kgd.io/job: "gas"
 spec:
-  # 키(opinet-api-key)가 아직 없어도 suspend 하지 않는다 — 키 없는 실행은 즉시 종료하고,
-  # Secret 에 키를 넣는 날부터 스스로 돌기 시작한다 (place-ingest 와 같은 태도).
-  suspend: false
+  # 오피넷 키(opinet-api-key)를 받기 전까지 멈춰 둔다. 키 없는 실행은 오류로 끝나
+  # 매일 실패 파드가 쌓인다. 키를 Secret 에 넣을 때 false 로 바꾼다.
+  suspend: true
   schedule: "0 20 * * *"        # 매일 UTC 20:00 = KST 05:00
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1
