@@ -66,7 +66,7 @@ class IndexAliasManagerTest : BehaviorSpec({
 
     given("createIndex 시") {
         `when`("관광지 정의로 만들면") {
-            then("정의 JSON 을 고치지 않고 PUT /{index} 로 보낸다 — 클라이언트 모델에 없는 키도 남는다") {
+            then("정의 JSON 을 고치지 않고 PUT /{index} 로 보낸다 — 키 하나라도 빠지거나 바뀌면 실패한다") {
                 val sent = captureCreate()
 
                 manager.createIndex("attractions_test", IndexAliasManager.ATTRACTIONS_INDEX_DEFINITION)
@@ -75,8 +75,6 @@ class IndexAliasManagerTest : BehaviorSpec({
                 sent.captured.endpoint shouldBe "/attractions_test"
                 val body = bodyOf(sent.captured)
                 body shouldBe resource(IndexAliasManager.ATTRACTIONS_INDEX_DEFINITION)
-                body.at("/settings/analysis/filter/tourism_synonyms/synonym_analyzer").asString() shouldBe "nori_synonym_parse"
-                body.at("/settings/analysis/tokenizer/nori_user/decompound_mode").asString() shouldBe "mixed"
             }
         }
         `when`("서버가 거부하면") {
