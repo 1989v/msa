@@ -238,7 +238,7 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
     - [x] 12.G.2 구현: V30 · 잡 · 측정소 좌표 확보 뒤 최근접 매핑 · `GET /api/places/air?sigungu=` 캐시 · 상세 대기 등급(측정소 · 측정 시각 · 제3유형 문구)
     - [x] 12.G.3 Verify: `cd place/ingest && python -m pytest -q tests/air_test.py && cd ../.. && ./gradlew :place:feature:test --tests '*AirQuality*' && (cd portal-fe && npx vitest run src/pages/place/__tests__/placeServingPaths.test.tsx)`
     - [x] 12.G.4 배포: content(V30) → place-ingest(수집 먼저) → 좌표 매핑 뒤 portal-fe
-    - [ ] 12.G.5 운영 확인: 하루 24콜(한도 500) · 측정소 672 · 매핑된 시군구 수 · 표본 상세 값 = 원천 값
+    - [x] 12.G.5 운영 확인: 하루 24콜(한도 500) · 측정소 672 · 매핑된 시군구 수 · 표본 상세 값 = 원천 값
   - [ ] 12.H 고캠핑 (V31 · `place-ingest-gocamping` 매주 수 02:50 · 주 1콜) — Q-P2-KEY 결정 선행(ADR-0104 덧붙임)
     - [ ] 12.H.1 Write tests: 보강 잡 `pick` 이 `source != TOURAPI` 행을 고르지 않음(회귀 주입: 조건 삭제 → 빨간불) · bulk upsert 자연키 `(source, content_id, lang)` — 같은 번호 다른 원천이 덮이지 않음 · 겹침 판정(300m + 이름) 실측 픽스처 705 · 겹친 곳은 새 행 없음 · 원문 82키 보존
     - [ ] 12.H.2 구현: 보강 잡 `source` 필터 먼저 배포 → V31(자연키 변경 + `gocamping_site`) · 잡 · 상세 「캠핑장 정보」(허용 키, 예약 URL 미표시) · 지도 숙박 토글에 합류
