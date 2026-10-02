@@ -47,6 +47,12 @@ export default function Footer({
           <a className="site-footer-policy" href="/privacy">
             개인정보처리방침
           </a>
+          <a className="site-footer-policy" href="/about">
+            사이트 소개
+          </a>
+          <a className="site-footer-policy" href="/contact">
+            연락처
+          </a>
         </p>
       </div>
 

@@ -672,7 +672,7 @@ async function writeRobotsAndSitemaps(
   }
 
   const portalEntries = [
-    ...['/', '/tech', '/portfolio', '/shop', '/privacy'].map((path) => ({
+    ...['/', '/tech', '/portfolio', '/shop', '/privacy', '/about', '/contact'].map((path) => ({
       loc: `${PORTAL_ORIGIN}${path}`,
       priority: path === '/' ? '1.0' : '0.6',
     })),

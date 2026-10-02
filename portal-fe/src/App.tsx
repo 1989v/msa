@@ -56,6 +56,8 @@ const FavoritesPage = lazy(() => import('./components/favorite/FavoritesPage'));
 // ADR-0076 — 개인정보처리방침. 광고·분석의 전제 문서이고 모든 호스트의 푸터가 이 주소를
 // 건다. 읽으러 오는 사람만 받으면 되므로 lazy 로 뺀다.
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
 const ResumePage = lazy(() => import('./pages/resume/ResumePage'));
 const ResumeDetailPage = lazy(() => import('./pages/resume/ResumeDetailPage'));
 const ResumePrintPage = lazy(() => import('./pages/resume/ResumePrintPage'));
@@ -239,6 +241,9 @@ function App() {
           {/* 개인정보처리방침 — 호스트를 가리지 않는다. 서브도메인마다 방침을 따로 두면
               한 곳만 고쳐진 채로 남는다 (ADR-0076) */}
           <Route path="/privacy" element={<PrivacyPage />} />
+          {/* 사이트 소개·연락처 — 방침과 같이 호스트를 가리지 않는다 */}
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
           <Route path="/portfolio" element={<PortfolioPage />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/shop/products/:id" element={<ShopProductDetailPage />} />
