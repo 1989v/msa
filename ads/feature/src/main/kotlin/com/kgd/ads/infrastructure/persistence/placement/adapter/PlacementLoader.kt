@@ -30,7 +30,7 @@ class PlacementLoader(
         assemble(placementRepository.findAllByActiveTrue(), onInvalid)
 
     /**
-     * 지면 행(옛 컬럼에는 대표 규격)과 형태 규격 행을 도메인 값으로 맞춘다 — 빠진 규격은 지우고 나머지는 덮어쓴다.
+     * 지면 행과 형태 규격 행을 도메인 값으로 맞춘다 — 빠진 규격은 지우고 나머지는 덮어쓴다.
      * 부모 행의 `updated_at` 과 같은 트랜잭션에서 부른다.
      */
     fun save(placement: AdPlacement, createdAt: LocalDateTime, now: LocalDateTime) {

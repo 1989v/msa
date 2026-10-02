@@ -49,9 +49,6 @@ class AdPlacement private constructor(
     /** 이미지가 어느 규격에든 맞는지 — 형태가 없는 HOUSE 소재의 판정. */
     fun fitsAnyFormat(width: Int, height: Int): Boolean = formats.any { it.fits(width, height) }
 
-    /** 형태 하나만 적을 수 있는 곳(옛 지면 컬럼·옛 응답 필드)에 쓰는 규격 — 카드가 있으면 카드, 없으면 첫 규격. */
-    fun representative(): FormatSpec = spec(PlacementFormat.CARD) ?: formats.first()
-
     fun addFormat(spec: FormatSpec) {
         if (spec(spec.format) != null) throw InvalidPlacementException("지면 $key 에 이미 ${spec.format.label} 규격이 있습니다")
         formats = sorted(formats + spec)

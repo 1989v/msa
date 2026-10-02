@@ -26,7 +26,6 @@ const strip: FormatSpec = { format: 'BANNER', aspectRatios: ['6.4:1'], floorMicr
 const placement = (key: string, formats: FormatSpec[], over: Partial<AdPlacement> = {}): AdPlacement => ({
   key,
   host: 'blog.1989v.com',
-  ...formats[0],
   formats,
   active: true,
   paidAllowed: true,
@@ -93,16 +92,5 @@ describe('AdsPlacementsPage — 형태 규격', () => {
     await userEvent.click(screen.getByRole('button', { name: 'blog-post-end 띠배너 빼기' }));
     expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('시작·재개도 거절됩니다'));
     await waitFor(() => expect(adsApi.removePlacementFormat).toHaveBeenCalledWith('blog-post-end', 'BANNER'));
-  });
-
-  it('규격 목록이 없는 옛 응답은 옛 필드 셋을 규격 하나로 그린다', async () => {
-    const legacy = placement('attraction-end', [card]);
-    delete legacy.formats;
-    vi.mocked(adsApi.listPlacements).mockResolvedValue([legacy]);
-    render(<AdsPlacementsPage />);
-
-    const cell = await screen.findByTestId('specs-attraction-end');
-    expect(cell).toHaveTextContent('카드');
-    expect(cell).toHaveTextContent('1.91:1');
   });
 });

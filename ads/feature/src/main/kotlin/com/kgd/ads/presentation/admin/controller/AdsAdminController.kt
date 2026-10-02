@@ -155,7 +155,6 @@ class AdsAdminController(
         placements.update(
             ManagePlacementUseCase.Update(
                 key = placementKey,
-                floorMicros = request.floorMicros,
                 active = request.active,
                 paidAllowed = request.paidAllowed,
                 description = request.description,

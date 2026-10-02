@@ -11,7 +11,6 @@ import {
   formatCredits,
   listPlacements,
   listUnregisteredPlacements,
-  placementSpecs,
   removePlacementFormat,
   updatePlacement,
   updatePlacementFormatFloor,
@@ -286,7 +285,7 @@ function SpecCell({
   onDraft: (draft: SpecDraft) => void;
   onAdd: (draft: SpecDraft) => void;
 }) {
-  const specs = placementSpecs(placement);
+  const specs = placement.formats;
   const missing = FORMATS.filter((f) => !specs.some((s) => s.format === f));
   const last = specs.length === 1;
   const next: SpecDraft = draft ?? {

@@ -48,12 +48,8 @@ data class FormatSpecRequest(
 
 data class ChangeFormatFloorRequest(val floorMicros: Long)
 
-/**
- * 비운 필드는 바꾸지 않는다. [floorMicros] 는 형태 규격 이전 화면의 요청 모양이라 대표 규격(카드가 있으면 카드)에 적용한다 —
- * 형태별 최저가는 `PATCH /placements/{key}/formats/{format}` 으로 바꾼다.
- */
+/** 비운 필드는 바꾸지 않는다. 형태별 최저가는 `PATCH /placements/{key}/formats/{format}` 으로 바꾼다. */
 data class UpdatePlacementRequest(
-    val floorMicros: Long? = null,
     val active: Boolean? = null,
     val paidAllowed: Boolean? = null,
     @field:Size(min = 1, max = 255)

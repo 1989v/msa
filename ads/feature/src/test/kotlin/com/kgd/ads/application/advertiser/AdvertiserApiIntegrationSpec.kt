@@ -370,7 +370,7 @@ class AdvertiserApiIntegrationSpec(
             catalog["hourlyCapPercent"].asLong() shouldBe 25L
             mutableClock.set(NOON_HALF)
         }
-        then("지면마다 형태 규격 목록과, 옛 화면용 옛 필드(대표 규격 값)를 함께 싣는다 — 업로드 규칙도 서버 상수로") {
+        then("지면마다 형태 규격 목록만 싣는다(옛 필드 format·aspectRatios·floorMicros 없음) — 업로드 규칙도 서버 상수로") {
             fixtures.placement("a-api-cat-dual", formats = listOf(AdsFixtures.CARD, AdsFixtures.BANNER))
             fixtures.placement("a-api-cat-strip", formats = listOf(AdsFixtures.BANNER))
             register(12_210)
@@ -381,15 +381,8 @@ class AdvertiserApiIntegrationSpec(
             }
 
             formats("a-api-cat-dual") shouldBe listOf(Triple("CARD", listOf("1.91:1"), 100_000L), Triple("BANNER", listOf("6.4:1"), 50_000L))
-            entry("a-api-cat-dual").let {
-                it["format"].asString() shouldBe "CARD"
-                it["aspectRatios"].items().map { r -> r.asString() } shouldBe listOf("1.91:1")
-                it["floorMicros"].asLong() shouldBe 100_000L
-            }
-            entry("a-api-cat-strip").let {
-                it["format"].asString() shouldBe "BANNER"
-                it["aspectRatios"].items().map { r -> r.asString() } shouldBe listOf("6.4:1")
-                it["floorMicros"].asLong() shouldBe 50_000L
+            listOf("a-api-cat-dual", "a-api-cat-strip").forEach { key ->
+                listOf("format", "aspectRatios", "floorMicros").filter { entry(key).has(it) } shouldBe emptyList()
             }
             val rules = catalog["uploadRules"]
             rules["fileTypes"].items().map { it.asString() } shouldBe listOf("image/png", "image/jpeg")

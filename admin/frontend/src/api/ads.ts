@@ -77,24 +77,13 @@ export interface PlacementInput {
   description: string;
 }
 
-/**
- * 지면. `formats` 가 규격 목록의 원본이고, `format`·`aspectRatios`·`floorMicros` 는 옛 화면을 위한 대표 규격이다.
- * 규격 목록을 싣기 전의 응답에는 `formats` 가 없다 — 그때는 옛 필드 셋이 규격 하나다.
- */
-export interface AdPlacement extends PlacementInput {
-  formats?: FormatSpec[];
+/** 지면. `formats` 가 형태별 규격이다 */
+export interface AdPlacement extends Omit<PlacementInput, keyof FormatSpec> {
+  formats: FormatSpec[];
 }
 
-export function placementSpecs(placement: AdPlacement): FormatSpec[] {
-  return (
-    placement.formats ?? [
-      { format: placement.format, aspectRatios: placement.aspectRatios, floorMicros: placement.floorMicros },
-    ]
-  );
-}
-
+/** 형태별 최저가는 `updatePlacementFormatFloor` 로 바꾼다 */
 export interface PlacementPatch {
-  floorMicros?: number;
   active?: boolean;
   paidAllowed?: boolean;
   description?: string;

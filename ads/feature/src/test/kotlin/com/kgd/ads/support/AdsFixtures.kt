@@ -29,11 +29,11 @@ class AdsFixtures(private val jdbc: JdbcTemplate) {
         ratios: String = "1.91:1",
         formats: List<Spec> = listOf(Spec("CARD", ratios, floorMicros)),
     ) {
-        val representative = formats.firstOrNull { it.format == "CARD" } ?: formats.first()
+        // 옛 지면 컬럼(format·aspect_ratios·floor_micros)은 새 코드처럼 비워 둔다(V5 부터 NULL 허용)
         jdbc.update(
-            "INSERT INTO ad_placement (placement_key, host, format, aspect_ratios, floor_micros, active, paid_allowed, description, created_at, updated_at) " +
-                "VALUES (?, ?, ?, ?, ?, TRUE, ?, '테스트 지면', ?, ?)",
-            key, host, representative.format, representative.ratios, representative.floorMicros, paidAllowed, T0, T0,
+            "INSERT INTO ad_placement (placement_key, host, active, paid_allowed, description, created_at, updated_at) " +
+                "VALUES (?, ?, TRUE, ?, '테스트 지면', ?, ?)",
+            key, host, paidAllowed, T0, T0,
         )
         formats.forEach {
             jdbc.update(

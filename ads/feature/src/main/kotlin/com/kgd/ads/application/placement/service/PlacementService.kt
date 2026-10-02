@@ -39,16 +39,12 @@ class PlacementService(
             .filter { it.active && it.paidAllowed }
             .sortedBy { it.key }
             .map {
-                val representative = FormatSpecView.from(it.representative())
                 GetAdCatalogUseCase.CatalogPlacement(
                     key = it.key,
                     host = it.host,
                     formats = it.formats.map(FormatSpecView::from),
                     description = it.description,
                     averageDailyRequests = (requests[it.key] ?: 0) / CATALOG_DAYS,
-                    format = representative.format,
-                    aspectRatios = representative.aspectRatios,
-                    floorMicros = representative.floorMicros,
                 )
             }
         val categories = categoryPort.categories().map { GetAdCatalogUseCase.CatalogCategory(it.code, it.label) }
@@ -78,7 +74,6 @@ class PlacementService(
     @Transactional("adsTransactionManager")
     override fun update(command: ManagePlacementUseCase.Update): PlacementView {
         val placement = find(command.key)
-        command.floorMicros?.let { placement.changeFloor(placement.representative().format, it) }
         command.active?.let(placement::changeActive)
         command.paidAllowed?.let(placement::changePaidAllowed)
         command.description?.let { placement.changeDescription(it.trim()) }

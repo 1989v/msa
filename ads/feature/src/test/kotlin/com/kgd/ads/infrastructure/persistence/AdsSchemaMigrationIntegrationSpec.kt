@@ -13,9 +13,10 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource
 import java.io.File
 
 /**
- * 광고 형태 마이그레이션(V4) — 운영처럼 V3 까지 적용된 스키마에 운영자가 만든 지면이 있는 상태에서 V4 를 올린다.
+ * 광고 형태 마이그레이션(V4) — 운영처럼 V3 까지 적용된 스키마에 운영자가 만든 지면이 있는 상태에서 V4 이후를 올린다.
  * 판정 근거: V4 뒤의 `ad_placement_format`·`ad_placement`·`ad_campaign` 행, 그리고 `ads/CLAUDE.md` 의 되돌리기 SQL 을
  * **그 파일에서 읽어** 실행한 뒤의 `ad_creative` 행. 사본을 두지 않는다 — 문서의 SQL 이 바뀌면 이 검사가 그것을 잰다.
+ * V5(옛 지면 컬럼 NULL 허용)는 `information_schema` 의 컬럼·제약과, 옛 파드·새 코드 모양의 INSERT 가 둘 다 들어가는지로 본다.
  *
  * 다른 스펙과 같은 MySQL 컨테이너를 쓰되 별도 스키마(`ads_v4_check`)를 만들어 Flyway 를 처음부터 돌린다.
  */
@@ -76,6 +77,38 @@ class AdsSchemaMigrationIntegrationSpec : BehaviorSpec({
         }
         then("기존 캠페인(시드 HOUSE)은 형태 기본값 카드를 갖는다") {
             jdbc.queryForList("SELECT DISTINCT creative_format FROM ad_campaign", String::class.java) shouldBe listOf("CARD")
+        }
+    }
+
+    given("V5 — 옛 지면 컬럼 NULL 허용") {
+        then("V5 가 성공으로 기록되고, 세 컬럼이 NULL 을 허용하며 옛 최저가 검사가 없다 — 기존 행의 값은 그대로다") {
+            jdbc.queryForObject("SELECT success FROM flyway_schema_history WHERE version = '5'", Boolean::class.java) shouldBe true
+            jdbc.queryForList(
+                "SELECT column_name AS col, is_nullable AS nullable FROM information_schema.columns " +
+                    "WHERE table_schema = ? AND table_name = 'ad_placement' AND column_name IN ('format', 'aspect_ratios', 'floor_micros')",
+                schema,
+            ).associate { it["col"] to it["nullable"] } shouldBe
+                mapOf("format" to "YES", "aspect_ratios" to "YES", "floor_micros" to "YES")
+            jdbc.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.table_constraints WHERE table_schema = ? AND constraint_name = 'chk_ad_placement_floor'",
+                Long::class.java, schema,
+            ) shouldBe 0L
+            legacy("v4-admin-made") shouldBe listOf("CARD", "1.91:1,1:1", 70_000L, true)
+        }
+        then("옛 파드처럼 세 컬럼을 채운 INSERT 도, 새 코드처럼 비운 INSERT 도 들어간다") {
+            val t = "2026-10-01 00:00:00"
+            jdbc.update(
+                "INSERT INTO ad_placement (placement_key, host, format, aspect_ratios, floor_micros, active, paid_allowed, description, created_at, updated_at) " +
+                    "VALUES ('v5-old-pod', 'blog.1989v.com', 'CARD', '1.91:1', 100000, TRUE, TRUE, '옛 파드 지면', ?, ?)",
+                t, t,
+            ) shouldBe 1
+            jdbc.update(
+                "INSERT INTO ad_placement (placement_key, host, active, paid_allowed, description, created_at, updated_at) " +
+                    "VALUES ('v5-new-code', 'blog.1989v.com', TRUE, TRUE, '새 코드 지면', ?, ?)",
+                t, t,
+            ) shouldBe 1
+            jdbc.queryForMap("SELECT format, aspect_ratios, floor_micros FROM ad_placement WHERE placement_key = 'v5-new-code'").values
+                .toList() shouldBe listOf(null, null, null)
         }
     }
 

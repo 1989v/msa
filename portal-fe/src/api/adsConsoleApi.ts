@@ -111,11 +111,8 @@ export interface FormatSpec {
 export interface CatalogPlacement {
   key: string;
   host: string;
-  /** 형태 규격 목록. 싣기 전의 응답에는 없고, 그때는 아래 옛 필드 셋이 규격 하나다 */
-  formats?: FormatSpec[];
-  format: AdFormat;
-  aspectRatios: string[];
-  floorMicros: number;
+  /** 이 지면이 받는 형태별 규격 */
+  formats: FormatSpec[];
   description: string;
   averageDailyRequests: number;
 }
@@ -140,18 +137,9 @@ export interface Catalog {
   uploadRules?: UploadRules;
 }
 
-/** 지면의 형태 규격 목록. 옛 응답은 옛 필드 셋을 규격 하나로 읽는다 */
-export function placementSpecs(placement: CatalogPlacement): FormatSpec[] {
-  return (
-    placement.formats ?? [
-      { format: placement.format, aspectRatios: placement.aspectRatios, floorMicros: placement.floorMicros },
-    ]
-  );
-}
-
 /** 지면이 이 형태를 받으면 그 규격, 아니면 null */
 export function specFor(placement: CatalogPlacement, format: AdFormat): FormatSpec | null {
-  return placementSpecs(placement).find((spec) => spec.format === format) ?? null;
+  return placement.formats.find((spec) => spec.format === format) ?? null;
 }
 
 export function campaignFormat(campaign: Campaign): AdFormat {

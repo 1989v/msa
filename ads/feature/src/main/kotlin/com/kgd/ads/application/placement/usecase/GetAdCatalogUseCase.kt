@@ -1,7 +1,6 @@
 package com.kgd.ads.application.placement.usecase
 
 import com.kgd.ads.application.placement.dto.FormatSpecView
-import com.kgd.ads.domain.placement.model.PlacementFormat
 
 /** 광고주 카탈로그 — 유료를 받는 활성 지면과 문맥 카테고리. 캠페인 편집 화면이 여기서 고른다. */
 interface GetAdCatalogUseCase {
@@ -21,7 +20,6 @@ interface GetAdCatalogUseCase {
     /**
      * @param formats 이 지면이 받는 광고 형태별 규격(비율·최저가)
      * @param averageDailyRequests 최근 7일(오늘 제외) 일평균 요청 수
-     * @param format 옛 화면용 — 대표 규격(카드가 있으면 카드)의 형태. [aspectRatios]·[floorMicros] 도 같은 규격 값이다
      */
     data class CatalogPlacement(
         val key: String,
@@ -29,9 +27,6 @@ interface GetAdCatalogUseCase {
         val formats: List<FormatSpecView>,
         val description: String,
         val averageDailyRequests: Long,
-        val format: PlacementFormat,
-        val aspectRatios: List<String>,
-        val floorMicros: Long,
     )
 
     data class CatalogCategory(val code: String, val label: String)

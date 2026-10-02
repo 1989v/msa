@@ -148,9 +148,8 @@ class AdminApiIntegrationSpec(
         then("등록·수정이 반영되고 변경마다 행위자가 남는다 — 유료를 끈 지면은 광고주가 고를 수 없다") {
             createPlacement("a-adm-new").status shouldBe 200
             createPlacement("a-adm-new").status shouldBe 400 // 같은 키
-            api.patch("/api/v1/admin/ads/placements/a-adm-new", admin, mapOf("floorMicros" to 150_000, "paidAllowed" to false)).status shouldBe 200
+            api.patch("/api/v1/admin/ads/placements/a-adm-new", admin, mapOf("paidAllowed" to false)).status shouldBe 200
             val listed = api.get("/api/v1/admin/ads/placements", admin).data.items().first { it["key"].asString() == "a-adm-new" }
-            listed["floorMicros"].asLong() shouldBe 150_000L
             listed["paidAllowed"].asBoolean() shouldBe false
             audit("PLACEMENT_CREATE", "a-adm-new") shouldBe listOf(11_299L)
             audit("PLACEMENT_UPDATE", "a-adm-new") shouldBe listOf(11_299L)
@@ -161,7 +160,7 @@ class AdminApiIntegrationSpec(
             ).status shouldBe 400
         }
         then("최저가 하한(1,000) 아래는 거절") {
-            api.patch("/api/v1/admin/ads/placements/a-adm-new", admin, mapOf("floorMicros" to 999)).status shouldBe 400
+            api.patch("/api/v1/admin/ads/placements/a-adm-new/formats/CARD", admin, mapOf("floorMicros" to 999)).status shouldBe 400
         }
         then("미등록 지면 키 목록을 요청 수와 함께 준다") {
             jdbc.update(
@@ -191,12 +190,11 @@ class AdminApiIntegrationSpec(
             ),
         )
 
-        then("규격을 추가·최저가 변경하면 응답·감사 요약이 형태별 최저가를 모두 싣고, 옛 컬럼에는 대표 규격(카드)이 남는다") {
+        then("규격을 추가·최저가 변경하면 응답·감사 요약이 형태별 최저가를 모두 싣고, 옛 지면 컬럼은 비어 있다") {
             createPlacement("a-adm-fmt").status shouldBe 200
             val added = api.post("/api/v1/admin/ads/placements/a-adm-fmt/formats", admin, FormatSpecRequest(PlacementFormat.BANNER, listOf("6.4:1"), 50_000))
             added.status shouldBe 200
             added.data["formats"].items().map { it["format"].asString() } shouldBe listOf("CARD", "BANNER")
-            added.data["floorMicros"].asLong() shouldBe 100_000L
             api.post("/api/v1/admin/ads/placements/a-adm-fmt/formats", admin, FormatSpecRequest(PlacementFormat.BANNER, listOf("6.4:1"), 50_000))
                 .status shouldBe 400
 
@@ -207,18 +205,15 @@ class AdminApiIntegrationSpec(
                 it shouldContain "BANNER:60000"
             }
             lastAudit("PLACEMENT_FORMAT_ADD", "a-adm-fmt") shouldContain "BANNER:50000"
-            jdbc.queryForMap("SELECT format, aspect_ratios, floor_micros FROM ad_placement WHERE placement_key = 'a-adm-fmt'").let {
-                listOf(it["format"], it["aspect_ratios"], (it["floor_micros"] as Number).toLong()) shouldBe listOf("CARD", "1.91:1", 100_000L)
-            }
+            jdbc.queryForMap("SELECT format, aspect_ratios, floor_micros FROM ad_placement WHERE placement_key = 'a-adm-fmt'").values
+                .toList() shouldBe listOf(null, null, null)
         }
-        then("옛 모양의 최저가 PATCH 는 대표 규격(카드)에 적용된다 — 띠배너는 그대로") {
-            api.patch("/api/v1/admin/ads/placements/a-adm-fmt", admin, mapOf("floorMicros" to 120_000)).status shouldBe 200
+        then("지면 응답에는 형태 규격만 있다 — 옛 필드(format·aspectRatios·floorMicros)가 없다") {
+            api.patch("/api/v1/admin/ads/placements/a-adm-fmt/formats/CARD", admin, mapOf("floorMicros" to 120_000)).status shouldBe 200
             spec("a-adm-fmt", "CARD")!!["floorMicros"].asLong() shouldBe 120_000L
             spec("a-adm-fmt", "BANNER")!!["floorMicros"].asLong() shouldBe 60_000L
             val listed = api.get("/api/v1/admin/ads/placements", admin).data.items().first { it["key"].asString() == "a-adm-fmt" }
-            listed["floorMicros"].asLong() shouldBe 120_000L
-            listed["format"].asString() shouldBe "CARD"
-            listed["aspectRatios"].items().map { it.asString() } shouldBe listOf("1.91:1")
+            listOf("format", "aspectRatios", "floorMicros").filter { listed.has(it) } shouldBe emptyList()
         }
         then("옛 컬럼을 다른 값으로 바꿔도 검사는 규격 값을 따른다") {
             jdbc.update("UPDATE ad_placement SET format = 'CARD', aspect_ratios = '1:1', floor_micros = 9000000 WHERE placement_key = 'a-adm-fmt'")

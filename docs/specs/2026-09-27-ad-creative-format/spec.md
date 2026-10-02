@@ -70,6 +70,7 @@
 ### SR-8 스키마와 릴리스
 - **V4** (V1~V3 불변): 새 표 `ad_placement_format(placement_key, format, aspect_ratios, floor_micros CHECK ≥ 1000, PK(placement_key, format))` 을 기존 `ad_placement` 의 세 컬럼으로 백필. `ad_campaign.creative_format VARCHAR(16) NOT NULL DEFAULT 'CARD'`. `ad_creative.body` 는 **그대로 NOT NULL**. 시드 변경(SR-1)과 함께 `game-list-banner` 의 옛 컬럼도 `BANNER`·`6.4:1`·`50000` 으로 맞춘다
 - 옛 컬럼 `ad_placement.format`·`aspect_ratios`·`floor_micros` 는 V5(다음 릴리스)까지 남긴다. 그때까지 새 코드는 **대표 규격**(CARD 가 있으면 CARD, 없으면 첫 규격)을 옛 컬럼에 계속 쓰고, 읽지는 않는다
+- **걷어내기는 두 단계**(replicas 1 롤링 배포라 옛 파드가 새 스키마 위에서 함께 돈다): **V5** 세 컬럼 NULL 허용·옛 최저가 CHECK 제거(데이터 그대로) + 코드는 세 컬럼 매핑·대표 규격 쓰기·응답 옛 필드·옛 모양 최저가 PATCH 를 뺀다 → V5 가 운영에 나간 뒤의 릴리스에서 **V6** 세 컬럼 삭제
 - **릴리스 순서**: ① engagement(V4 + `format` 응답 + 카탈로그) 푸시·운영 확인 → ② portal-fe·admin-fe 를 **별도 푸시**·운영 확인 → ②' 어드민에서 `game-list-banner` 유료 켬 → ③ 다음 릴리스 V5. ①이 롤아웃되는 동안 어드민 지면 생성은 하지 않는다
 - **①~② 호환**(선례 `ads/CLAUDE.md:89`): V5 까지 카탈로그·어드민 지면 응답은 옛 필드 `format`·`aspectRatios`·`floorMicros` 를 대표 규격 값으로 함께 싣고, 옛 모양의 최저가 PATCH 는 대표 규격에 적용한다. 이 창에 API 로 BANNER 캠페인이 생기면 옛 번들의 `parseAd` 는 빈 설명도 받아(`adsApi.ts:137` 은 문자열인지만 본다) `blog-post-end`·`attraction-end` 에서 띠배너를 카드 틀로 그리고 노출이 과금된다 — ②를 ① 확인 직후 내 창을 짧게 두고 받아들인다(`game-list-banner` 는 ②' 전까지 유료가 꺼져 해당 없음)
 - **되돌리기**: ②만 되돌리는 것은 안전하다. ①을 되돌려야 하면 BANNER 캠페인의 소재를 ARCHIVED 로 돌리면서 **같은 SQL 에서 `body = title`** 로 채운다(옛 코드의 소재 목록은 상태로 거르지 않고 빈 설명을 거절한다). 롤백 뒤 V4 이후 바꾼 최저가는 옛 컬럼의 대표 값으로 보인다
@@ -88,7 +89,7 @@
 
 ## Out of Scope
 
-동영상·GIF·HTML5, 기기별 두 장, 형태별 할인 배율, 새 지면 위치, 형태별 리포트, 캠페인 형태 변경, 규격 제거 영향 캠페인 수 표시, 결정 대기 중 게임 목록 위 높이 예약, 옛 지면 컬럼 삭제(V5).
+동영상·GIF·HTML5, 기기별 두 장, 형태별 할인 배율, 새 지면 위치, 형태별 리포트, 캠페인 형태 변경, 규격 제거 영향 캠페인 수 표시, 결정 대기 중 게임 목록 위 높이 예약, 옛 지면 컬럼 삭제(V6 — V5 배포 뒤).
 
 ## Open Questions
 

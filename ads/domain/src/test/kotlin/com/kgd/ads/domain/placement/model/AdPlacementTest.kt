@@ -24,12 +24,6 @@ class AdPlacementTest : BehaviorSpec({
                 dual.fitsImage(PlacementFormat.BANNER, 1200, 628) shouldBe false
             }
         }
-        `when`("대표 규격을 물으면") {
-            then("카드가 있으면 카드, 없으면 첫 규격") {
-                dual.representative().format shouldBe PlacementFormat.CARD
-                AdsDomainFixtures.bannerOnlyPlacement().representative().format shouldBe PlacementFormat.BANNER
-            }
-        }
         `when`("규격이 없는 형태를 물으면") {
             then("규격 없음 — 비율 판정도 맞지 않는다") {
                 val cardOnly = AdsDomainFixtures.placement()

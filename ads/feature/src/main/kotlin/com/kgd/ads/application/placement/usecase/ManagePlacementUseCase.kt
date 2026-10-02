@@ -29,12 +29,9 @@ interface ManagePlacementUseCase {
         val actorMemberId: Long,
     )
 
-    /**
-     * null 인 값은 바꾸지 않는다. [floorMicros] 는 형태 규격 이전 화면의 요청 모양이라 대표 규격(카드가 있으면 카드)에 적용한다.
-     */
+    /** null 인 값은 바꾸지 않는다. 형태별 최저가는 [ChangeFormatFloor] 로 바꾼다. */
     data class Update(
         val key: String,
-        val floorMicros: Long?,
         val active: Boolean?,
         val paidAllowed: Boolean?,
         val description: String?,

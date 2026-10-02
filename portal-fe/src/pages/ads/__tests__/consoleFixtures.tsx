@@ -27,9 +27,9 @@ const strip = { format: 'BANNER' as const, aspectRatios: ['6.4:1'], floorMicros:
 export function catalogWith(uploadRules: UploadRules = RULES): Catalog {
   return {
     placements: [
-      { key: 'blog-post-end', host: 'blog.1989v.com', formats: [card, strip], ...card, description: '블로그 글 끝', averageDailyRequests: 1200 },
-      { key: 'game-hub-end', host: 'game.1989v.com', formats: [card], ...card, description: '게임 목록 끝', averageDailyRequests: 800 },
-      { key: 'game-list-banner', host: 'game.1989v.com', formats: [strip], ...strip, description: '게임 목록 위', averageDailyRequests: 900 },
+      { key: 'blog-post-end', host: 'blog.1989v.com', formats: [card, strip], description: '블로그 글 끝', averageDailyRequests: 1200 },
+      { key: 'game-hub-end', host: 'game.1989v.com', formats: [card], description: '게임 목록 끝', averageDailyRequests: 800 },
+      { key: 'game-list-banner', host: 'game.1989v.com', formats: [strip], description: '게임 목록 위', averageDailyRequests: 900 },
     ],
     categories: [],
     hourlyCapPercent: 25,

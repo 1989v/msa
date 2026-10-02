@@ -80,9 +80,7 @@ const catalog: Catalog = {
     {
       key: 'blog-post-end',
       host: 'blog.1989v.com',
-      format: 'CARD',
-      aspectRatios: ['1.91:1'],
-      floorMicros: 2_000_000,
+      formats: [{ format: 'CARD', aspectRatios: ['1.91:1'], floorMicros: 2_000_000 }],
       description: '블로그 글 끝',
       averageDailyRequests: 1200,
     },
