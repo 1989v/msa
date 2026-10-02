@@ -28,6 +28,7 @@ class GameSaveService(
 ) : LoadGameSaveUseCase, StoreGameSaveUseCase {
     companion object {
         private const val MAX_SAVE_BYTES = 64 * 1024
+        private const val MARINE_COMMAND_MAX_SAVE_BYTES = 128 * 1024
     }
 
     /** 로그인 사용자는 memberId 로, 게스트는 이어하기 코드로 자기 세이브를 찾는다. 신원이 없으면 null */
@@ -45,7 +46,8 @@ class GameSaveService(
         val (slug, memberId, code, data, expectedVersion) = command
         val gameId = resolveGameId(slug)
         val size = data.toByteArray(Charsets.UTF_8).size
-        if (size > MAX_SAVE_BYTES) throw SaveTooLargeException(size = size, limit = MAX_SAVE_BYTES)
+        val limit = if (slug == "marine-command") MARINE_COMMAND_MAX_SAVE_BYTES else MAX_SAVE_BYTES
+        if (size > limit) throw SaveTooLargeException(size = size, limit = limit)
         return saveCommand.upsert(gameId, memberId, code, data, expectedVersion)
     }
 

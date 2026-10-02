@@ -21,9 +21,9 @@ import io.mockk.verify
 
 class GameSaveServiceTest : BehaviorSpec({
 
-    fun publishedGame(): Game = Game.restore(
+    fun publishedGame(slug: String = "roguelike"): Game = Game.restore(
         id = 1L,
-        slug = "roguelike",
+        slug = slug,
         title = "Roguelike",
         description = "d",
         thumbnailUrl = "/t.png",
@@ -44,9 +44,10 @@ class GameSaveServiceTest : BehaviorSpec({
 
     fun serviceWith(
         saveRepository: GameSaveRepositoryPort = mockk(relaxed = true),
+        slug: String = "roguelike",
     ): GameSaveService {
         val gameRepository = mockk<GameRepositoryPort>()
-        every { gameRepository.findBySlug("roguelike") } returns publishedGame()
+        every { gameRepository.findBySlug(slug) } returns publishedGame(slug)
         return GameSaveService(gameRepository, GameSaveCommand(saveRepository))
     }
 
@@ -120,6 +121,26 @@ class GameSaveServiceTest : BehaviorSpec({
             then("SaveTooLargeException이 발생해야 한다") {
                 shouldThrow<SaveTooLargeException> {
                     serviceWith().execute(StoreGameSaveUseCase.Command("roguelike", 7L, null, "x".repeat(64 * 1024 + 1), 0))
+                }
+            }
+        }
+
+        `when`("Marine Command 세이브가128KiB 이하면") {
+            then("다른 게임 상한을 바꾸지 않고128KiB까지 보존해야 한다") {
+                val repository = mockk<GameSaveRepositoryPort>()
+                val data = "x".repeat(128 * 1024)
+                every { repository.upsert(1L, 7L, null, data, 0L) } returns SaveSnapshot(data, 1L, "MARINECODE12")
+                serviceWith(repository, "marine-command")
+                    .execute(StoreGameSaveUseCase.Command("marine-command", 7L, null, data, 0L)).data shouldBe data
+            }
+        }
+        `when`("Marine Command의UTF8바이트가128KiB를 넘으면") {
+            then("문자 수가 적어도 기존 예외로 거부해야 한다") {
+                val data = "한".repeat(43_691)
+                data.toByteArray(Charsets.UTF_8).size shouldBe 131_073
+                shouldThrow<SaveTooLargeException> {
+                    serviceWith(slug = "marine-command")
+                        .execute(StoreGameSaveUseCase.Command("marine-command", 7L, null, data, 0L))
                 }
             }
         }
