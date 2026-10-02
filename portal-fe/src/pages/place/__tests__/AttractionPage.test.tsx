@@ -83,9 +83,12 @@ describe('AttractionPage 새 섹션', () => {
       Promise.resolve({
         searchId: 's',
         // 주변 명소 응답에 자기 자신과 같은 분류 가까운 곳(201)이 섞여 온다
+        // 근처 행사·숙소 검색(festival·stay)은 이 묶음에서 0건이다
         attractions: q.category?.includes('history')
           ? [card('100'), card('201'), card('301'), card('302')]
-          : [card('401', 'food')],
+          : q.category?.includes('food')
+            ? [card('401', 'food')]
+            : [],
         totalElements: 4, totalPages: 1, currentPage: 0,
       }),
     );
@@ -192,12 +195,12 @@ describe('AttractionPage 새 섹션', () => {
     expect(within(nearby).getByText('명소 302')).toBeInTheDocument();
   });
 
-  it('상세의 주변·편의시설 검색은 건수를 요청하지 않는다', async () => {
+  it('상세의 주변·편의시설·근처 행사·근처 숙소 검색은 건수를 요청하지 않는다', async () => {
     vi.mocked(fetchAttraction).mockResolvedValue(enriched);
     renderAt('/attractions/100');
     await screen.findByText('명소 401');
 
-    expect(searchCalls()).toHaveLength(2);
+    expect(searchCalls()).toHaveLength(4);
     for (const q of searchCalls()) expect(q.facets).toBeFalsy();
   });
 
@@ -397,5 +400,126 @@ describe('AttractionPage 유형별 본문 — 행사 · 숙박 · 여행코스',
       '오늘 끝나는 축제', '창덕궁',
     ]);
     expect(screen.queryByRole('region', { name: '비슷한 곳' })).toBeNull();
+  });
+});
+
+describe('AttractionPage 근처 행사 · 근처 숙소', () => {
+  const NOW = new Date('2026-10-26T03:00:00Z');
+  const ev = (id: string, start: string, end: string, km = 3): Attraction => ({
+    ...card(id, 'festival'), title: `행사 ${id}`, contentTypeId: '15', eventStart: start, eventEnd: end, distanceKm: km,
+  });
+  const st = (id: string, km = 1): Attraction => ({ ...card(id, 'stay'), title: `숙소 ${id}`, contentTypeId: '32', distanceKm: km });
+
+  /** 분류 조건을 실제로 따르는 가짜 검색 — 편의시설 분류에 stay 가 다시 들어가면 숙소가 거기에도 온다. */
+  function respond(byCategory: Record<string, Attraction[]>) {
+    vi.mocked(searchAttractions).mockImplementation((q) => {
+      const cats = (q.category ?? '').split(',');
+      const attractions = cats.flatMap((c) => byCategory[c] ?? []);
+      return Promise.resolve({ searchId: 's', attractions, totalElements: attractions.length, totalPages: 1, currentPage: 0 });
+    });
+  }
+  const callFor = (category: string) => searchCalls().find((q) => q.category === category);
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(NOW);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it('근처 행사 — 반경 20km · 끝나지 않은 행사 · 시작일 순으로 받고, 자기 자신을 빼고 최대 6건을 거리·기간과 그린다', async () => {
+    const events = [ev('300', '2026-10-20', '2026-10-30'), ...['601', '602', '603', '604', '605', '606', '607'].map((id, i) => ev(id, `2026-11-0${i + 1}`, `2026-11-0${i + 2}`, 2.5))];
+    respond({ festival: events, history: [card('301')] });
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...ev('300', '2026-10-20', '2026-10-30'), title: '불꽃축제', overview: '개요' });
+    renderAt('/attractions/300');
+    const section = await screen.findByRole('region', { name: '근처 행사' });
+
+    expect(callFor('festival')).toMatchObject({
+      lat: 37.5, lng: 127, radiusKm: 20, category: 'festival', eventStatus: 'NOT_ENDED', sort: 'eventStart',
+    });
+    const titles = within(section).getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
+    expect(titles).toEqual(['행사 601', '행사 602', '행사 603', '행사 604', '행사 605', '행사 606']);
+    const first = within(section).getAllByRole('link')[0];
+    expect(first).toHaveAttribute('href', '/attractions/601');
+    expect(within(first).getByText('2.5km')).toBeInTheDocument();
+    expect(within(first).getByText('2026-11-01 ~ 2026-11-02')).toBeInTheDocument();
+  });
+
+  it('근처 숙소 — 반경 5km · 거리순으로 받고 자기 자신을 빼고 최대 6건이다', async () => {
+    const stays = [st('310', 0), ...['701', '702', '703', '704', '705', '706', '707'].map((id, i) => st(id, 0.3 + i / 10))];
+    respond({ stay: stays });
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...st('310', 0), title: '한옥 스테이' });
+    renderAt('/attractions/310');
+    const section = await screen.findByRole('region', { name: '근처 숙소' });
+
+    expect(callFor('stay')).toMatchObject({ lat: 37.5, lng: 127, radiusKm: 5, category: 'stay', sort: 'distance' });
+    expect(within(section).getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual([
+      '숙소 701', '숙소 702', '숙소 703', '숙소 704', '숙소 705', '숙소 706',
+    ]);
+    expect(within(within(section).getAllByRole('link')[0]).getByText('300m')).toBeInTheDocument();
+  });
+
+  it('편의시설 캐로셀에는 숙박이 없고, 같은 숙소 카드는 한 화면에 한 번만 뜬다', async () => {
+    respond({ food: [card('401', 'food')], shopping: [card('402', 'shopping')], stay: [st('701')] });
+    vi.mocked(fetchAttraction).mockResolvedValue(enriched);
+    renderAt('/attractions/100');
+    await screen.findByRole('region', { name: '근처 숙소' });
+    const amenities = await screen.findByRole('region', { name: '주변 편의시설' });
+
+    const amenityCall = searchCalls().find((q) => q.category.includes('food'))!;
+    expect(amenityCall.category.split(',')).not.toContain('stay');
+    expect(within(amenities).queryByText('숙소 701')).toBeNull();
+    expect(screen.getAllByText('숙소 701')).toHaveLength(1);
+  });
+
+  it('숙박 상세 — 위 「같은 분류 가까운 곳」에 나온 숙소는 근처 숙소에서 뺀다', async () => {
+    respond({ stay: [st('310', 0), st('701'), st('702')] });
+    vi.mocked(fetchAttraction).mockResolvedValue({
+      ...st('310', 0),
+      title: '한옥 스테이',
+      region: { ...enriched.region!, sameCategoryNearby: [{ id: '701', title: '숙소 701', distanceMeters: 1000 }] },
+    });
+    renderAt('/attractions/310');
+    const section = await screen.findByRole('region', { name: '근처 숙소' });
+
+    expect(within(section).getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual(['숙소 702']);
+  });
+
+  it('결과가 0건이거나 자기 자신뿐이면 근처 행사·근처 숙소 절을 그리지 않는다', async () => {
+    respond({ festival: [ev('300', '2026-10-20', '2026-10-30')], history: [card('301')] });
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...ev('300', '2026-10-20', '2026-10-30'), title: '불꽃축제' });
+    renderAt('/attractions/300');
+    await screen.findByText('명소 301');
+
+    expect(screen.queryByRole('region', { name: '근처 행사' })).toBeNull();
+    expect(screen.queryByRole('region', { name: '근처 숙소' })).toBeNull();
+    expect(screen.queryByText('근처 행사')).toBeNull();
+  });
+
+  it('영문 화면 제목 — Nearby events · Nearby stays', async () => {
+    respond({ festival: [ev('601', '2026-11-01', '2026-11-02')], stay: [st('701')] });
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, lang: 'en' });
+    renderAt('/en/attractions/100');
+    expect(await screen.findByRole('region', { name: 'Nearby events' })).toBeInTheDocument();
+    expect(await screen.findByRole('region', { name: 'Nearby stays' })).toBeInTheDocument();
+  });
+
+  it('노출 기록 섹션 식별자는 NEARBY_EVENTS · NEARBY_STAYS 이고 화면 번호는 기존 넷 다음이다', async () => {
+    respond({ festival: [ev('601', '2026-11-01', '2026-11-02')], stay: [st('701')] });
+    vi.mocked(fetchAttraction).mockResolvedValue(enriched);
+    const clicked: Array<[string | undefined, number | undefined, string | undefined]> = [];
+    for (const [name, title] of [['근처 행사', '행사 601'], ['근처 숙소', '숙소 701']] as const) {
+      renderAt('/attractions/100');
+      const section = await screen.findByRole('region', { name });
+      const link = (await within(section).findByText(title)).closest('a')!;
+      vi.mocked(track).mockClear();
+      fireEvent.click(link);
+      const click = vi.mocked(track).mock.calls.find(([action]) => action === 'CLICK')!;
+      clicked.push([click[1].sectionId, click[1].sectionIndex, click[1].entityId]);
+      cleanup();
+    }
+    expect(clicked).toEqual([['NEARBY_EVENTS', 5, '601'], ['NEARBY_STAYS', 4, '701']]);
   });
 });

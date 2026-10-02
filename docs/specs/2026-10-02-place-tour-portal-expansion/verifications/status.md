@@ -28,3 +28,6 @@
 | 정정 | portal-fe `npx tsc --noEmit -p .` | **검사 파일 0개**(tsconfig.json 은 references 껍데기). TG8 에 적은 「tsc exit 0」은 근거가 아니었다. 이후 `-p tsconfig.app.json`(270개 파일) 으로 판정, tasks.md 명령 교체 |
 | TG9 | vitest 9파일 · tsc -p tsconfig.app.json(270 files) · search:app AttractionPage·JsonLd + 게이트 | 173 passed · exit 0 · Parity 27 · Renderer 57 · Service 4 · Controller 5 · 0 실패 · BUILD SUCCESSFUL |
 | TG9 | 회귀 주입 15종(구현 에이전트) | 전부 빨간불 |
+| TG10 | vitest 5파일(AttractionPage·RegionPage·placeApi·PlacePage·prerenderPlace) · tsc -p tsconfig.app.json | 68 passed · exit 0 |
+| TG10 | 회귀 주입 8종(구현 에이전트) | 전부 빨간불 · 10.6 CDP 는 배포 뒤 |
+| 배포 ② 1차 | images 36963993854 | 실패 — code-dictionary OntologyFilesSpec(내 search-consumer 수정이 온톨로지 심볼 2개를 지움) → 참조 이동·revision 12·graph 재내보내기, 3 specs 0 실패 |

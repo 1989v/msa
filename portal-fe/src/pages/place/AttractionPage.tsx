@@ -3,9 +3,11 @@ import { Link, useParams, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   AMENITY_CATEGORIES,
+  EVENT_CATEGORY,
   fetchAttraction,
   searchAttractions,
   SIGHT_CATEGORIES,
+  STAY_CATEGORY,
   type Attraction,
   type PlaceLang,
 } from '../../api/placeApi';
@@ -31,6 +33,7 @@ import {
 import { useSeo } from '../../seo/useSeo';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import AttractionLinks from './AttractionLinks';
+import EventLine from './EventLine';
 import { googleMapsSearchUrl, loadGoogleMaps, mapsApiKey } from './googleMaps';
 import Footer from '../../components/Footer';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
@@ -65,8 +68,8 @@ import { newViewId } from '../../analytics/identity';
 import { installFlushOnLeave } from '../../analytics/tracker';
 
 const UI = {
-  ko: { badges: '방문 정보 요약', region: '지역 안 위치', explore: (p: string) => `${p} 둘러보기`, sameCategory: '같은 분류 가까운 곳', similar: '비슷한 곳', back: '← 관광지 탐색', nearby: '주변 명소', amenities: '주변 편의시설', info: '이용 안내', photos: '사진', mapAria: '위치 지도', mapBadCoords: '원천 좌표가 정확하지 않아 지도를 표시하지 않습니다', mapKeyMissing: '지도 키가 설정되지 않아 위치 링크만 표시합니다', useTime: '이용시간', restDate: '쉬는날', useFee: '이용요금', parking: '주차', parkingFee: '주차요금', infoCenter: '문의', map: '구글 지도에서 보기', notFound: '관광지를 찾을 수 없습니다.', failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', loading: '불러오는 중…' },
-  en: { badges: 'At a glance', region: 'In the area', explore: (p: string) => `Explore ${p}`, sameCategory: 'Similar places nearby', similar: 'Similar places in other regions', back: '← Explore Korea', nearby: 'Nearby places', amenities: 'Nearby amenities', info: 'Visitor info', photos: 'Photos', mapAria: 'Location map', mapBadCoords: 'Source coordinates look wrong, so the map is hidden.', mapKeyMissing: 'Map key is not configured — showing the link only.', useTime: 'Hours', restDate: 'Closed', useFee: 'Admission', parking: 'Parking', parkingFee: 'Parking fee', infoCenter: 'Contact', map: 'Open in Google Maps', notFound: 'Attraction not found.', failed: 'Could not load this page. Please try again in a moment.', loading: 'Loading…' },
+  ko: { badges: '방문 정보 요약', region: '지역 안 위치', explore: (p: string) => `${p} 둘러보기`, sameCategory: '같은 분류 가까운 곳', similar: '비슷한 곳', back: '← 관광지 탐색', nearby: '주변 명소', amenities: '주변 편의시설', nearbyEvents: '근처 행사', nearbyStays: '근처 숙소', info: '이용 안내', photos: '사진', mapAria: '위치 지도', mapBadCoords: '원천 좌표가 정확하지 않아 지도를 표시하지 않습니다', mapKeyMissing: '지도 키가 설정되지 않아 위치 링크만 표시합니다', useTime: '이용시간', restDate: '쉬는날', useFee: '이용요금', parking: '주차', parkingFee: '주차요금', infoCenter: '문의', map: '구글 지도에서 보기', notFound: '관광지를 찾을 수 없습니다.', failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', loading: '불러오는 중…' },
+  en: { badges: 'At a glance', region: 'In the area', explore: (p: string) => `Explore ${p}`, sameCategory: 'Similar places nearby', similar: 'Similar places in other regions', back: '← Explore Korea', nearby: 'Nearby places', amenities: 'Nearby amenities', nearbyEvents: 'Nearby events', nearbyStays: 'Nearby stays', info: 'Visitor info', photos: 'Photos', mapAria: 'Location map', mapBadCoords: 'Source coordinates look wrong, so the map is hidden.', mapKeyMissing: 'Map key is not configured — showing the link only.', useTime: 'Hours', restDate: 'Closed', useFee: 'Admission', parking: 'Parking', parkingFee: 'Parking fee', infoCenter: 'Contact', map: 'Open in Google Maps', notFound: 'Attraction not found.', failed: 'Could not load this page. Please try again in a moment.', loading: 'Loading…' },
 } as const;
 
 /** 주변 검색 반경 — 명소 목록과 편의시설 캐로셀이 같은 값을 쓴다. */
@@ -78,6 +81,8 @@ const SAME_CATEGORY_SECTION_INDEX = 0;
 const SIMILAR_SECTION_INDEX = 1;
 const NEARBY_SECTION_INDEX = 2;
 const AMENITY_SECTION_INDEX = 3;
+const NEARBY_STAYS_SECTION_INDEX = 4;
+const NEARBY_EVENTS_SECTION_INDEX = 5;
 
 const NEARBY_RADIUS_KM = 5;
 /** 주변 명소는 6곳을 보인다. 자기 자신과 위 「같은 분류 가까운 곳」(최대 5)에 나온 곳을 빼고 남는 만큼. */
@@ -98,6 +103,11 @@ const DETAIL_ZOOM = 16;
 const AMENITY_FETCH = 60;
 /** 유형당 최대 — 한 유형이 캐로셀을 다 먹지 않게 한다. 적으면 있는 만큼만 나온다. */
 const AMENITY_PER_KIND = 6;
+/** 근처 행사 — 축제는 하루 나들이 거리까지 본다. 숙소·명소(5km)보다 넓다. */
+const NEARBY_EVENTS_RADIUS_KM = 20;
+/** 근처 행사·근처 숙소는 6건까지. 자기 자신과 위 「같은 분류 가까운 곳」(최대 5)을 걸러도 남는 크기로 받는다. */
+const NEARBY_KIND_SHOWN = 6;
+const NEARBY_KIND_FETCH = NEARBY_KIND_SHOWN + 1 + 5;
 
 
 /**
@@ -148,6 +158,38 @@ export default function AttractionPage() {
         sort: 'distance',
         category: AMENITY_CATEGORIES.join(','),
         size: AMENITY_FETCH,
+      }),
+    enabled: attraction?.latitude != null && attraction?.longitude != null,
+  });
+
+  // 근처 행사·근처 숙소 — 「주변 명소」처럼 화면이 그린다. 서버 렌더 본문에는 넣지 않는다(관광지당 조회 한 번 규칙).
+  const { data: nearbyEvents } = useQuery({
+    queryKey: ['attraction-nearby-events', id, attraction?.latitude, attraction?.longitude],
+    queryFn: () =>
+      searchAttractions({
+        lang,
+        lat: attraction!.latitude,
+        lng: attraction!.longitude,
+        radiusKm: NEARBY_EVENTS_RADIUS_KM,
+        category: EVENT_CATEGORY,
+        eventStatus: 'NOT_ENDED',
+        sort: 'eventStart',
+        size: NEARBY_KIND_FETCH,
+      }),
+    enabled: attraction?.latitude != null && attraction?.longitude != null,
+  });
+
+  const { data: nearbyStays } = useQuery({
+    queryKey: ['attraction-nearby-stays', id, attraction?.latitude, attraction?.longitude],
+    queryFn: () =>
+      searchAttractions({
+        lang,
+        lat: attraction!.latitude,
+        lng: attraction!.longitude,
+        radiusKm: NEARBY_RADIUS_KM,
+        sort: 'distance',
+        category: STAY_CATEGORY,
+        size: NEARBY_KIND_FETCH,
       }),
     enabled: attraction?.latitude != null && attraction?.longitude != null,
   });
@@ -268,6 +310,10 @@ export default function AttractionPage() {
   const badges = attraction ? visitorBadges(attraction, lang) : [];
   const phrase = attraction ? regionPhrase(attraction, lang) : null;
   const hubCode = attraction ? regionHubCode(attraction) : null;
+  // 자기 자신과 위에 이미 나온 곳은 뺀다 — 행사 상세의 「같은 분류 가까운 곳」은 행사, 숙박 상세는 숙소다
+  const notShown = (a: Attraction) => a.id !== id && !shownAbove.has(a.id);
+  const events = (nearbyEvents?.attractions ?? []).filter(notShown).slice(0, NEARBY_KIND_SHOWN);
+  const stays = (nearbyStays?.attractions ?? []).filter(notShown).slice(0, NEARBY_KIND_SHOWN);
   const amenities = groupByCategory(
     (nearbyAmenities?.attractions ?? []).filter((a) => a.id !== id),
     AMENITY_PER_KIND,
@@ -587,6 +633,26 @@ export default function AttractionPage() {
             </ul>
           </section>
         )}
+
+        {/* 편의시설 캐로셀에서 옮겨 온 숙박 몫 — 같은 자리(바로 아래)에 같은 카드로 둔다 */}
+        <NearbyCarousel
+          title={L.nearbyStays}
+          items={stays}
+          lang={lang}
+          viewId={viewId}
+          screenRef={id}
+          sectionId="NEARBY_STAYS"
+          sectionIndex={NEARBY_STAYS_SECTION_INDEX}
+        />
+        <NearbyCarousel
+          title={L.nearbyEvents}
+          items={events}
+          lang={lang}
+          viewId={viewId}
+          screenRef={id}
+          sectionId="NEARBY_EVENTS"
+          sectionIndex={NEARBY_EVENTS_SECTION_INDEX}
+        />
       </div>
 
       {/* 지도와 주변 목록을 다 본 뒤 (ADR-0076). 행사·숙박·코스 상세에는 지면을 두지 않는다 —
@@ -610,6 +676,69 @@ export default function AttractionPage() {
         </p>
       </Footer>
     </div>
+  );
+}
+
+/**
+ * 근처 행사·근처 숙소 캐로셀 — 편의시설 캐로셀과 같은 카드·같은 가로 줄이다. 카드에 거리(행사는 기간·상태도)를 붙인다.
+ * 0건이면 절을 그리지 않는다 — 영문 숙박은 211건뿐이라 대부분 0건이 정상이다.
+ */
+function NearbyCarousel({
+  title,
+  items,
+  lang,
+  viewId,
+  screenRef,
+  sectionId,
+  sectionIndex,
+}: {
+  title: string;
+  items: Attraction[];
+  lang: PlaceLang;
+  viewId: string;
+  screenRef: string;
+  sectionId: 'NEARBY_EVENTS' | 'NEARBY_STAYS';
+  sectionIndex: number;
+}) {
+  if (items.length === 0) return null;
+  return (
+    <section className="place-amenities" aria-label={title} data-place-section={sectionId}>
+      <h2 className="place-subtitle">{title}</h2>
+      <ul className="place-amenity-row">
+        {items.map((a, i) => (
+          <li key={a.id} className="place-amenity-slide">
+            <TrackedLink
+              className="place-card"
+              to={attractionPath(lang, a.id)}
+              viewId={viewId}
+              item={{
+                entityType: 'ATTRACTION',
+                entityId: a.id,
+                screenType: 'ATTRACTION_DETAIL',
+                screenRef,
+                sectionId,
+                sectionIndex,
+                itemIndex: i,
+              }}
+            >
+              {a.imageUrl ? (
+                <img className="place-card-img" src={a.imageUrl} alt="" loading="lazy" />
+              ) : (
+                <div className="place-card-img place-card-img-empty" aria-hidden />
+              )}
+              <div className="place-card-body">
+                <h3 className="place-card-title">{titleParts(a).primary}</h3>
+                {a.distanceKm != null && (
+                  <span className="place-near-distance">{distanceLabel(Math.round(a.distanceKm * 1000))}</span>
+                )}
+                <EventLine attraction={a} lang={lang} />
+                {a.address && <p className="place-card-addr">{a.address}</p>}
+              </div>
+            </TrackedLink>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

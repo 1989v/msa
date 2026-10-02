@@ -28,6 +28,12 @@ export type SectionId =
   | 'SAME_CATEGORY_NEARBY'
   /** 관광지 상세 — 다른 시도의 비슷한 곳 (오프라인 임베딩 유사도, 색인이 싣는 목록) */
   | 'SIMILAR_ELSEWHERE'
+  /** 관광지 상세 — 반경 안 끝나지 않은 행사 (화면이 검색 API 로 그린다) */
+  | 'NEARBY_EVENTS'
+  /** 관광지 상세 — 반경 안 숙박. 편의시설 캐로셀에서 옮겨 온 몫이다 */
+  | 'NEARBY_STAYS'
+  /** 지역 허브 — 그 지역의 이번 달 행사 */
+  | 'REGION_EVENTS_THIS_MONTH'
   /** 통합 검색의 타입 묶음. 어느 타입인지는 `entityType`, 묶음 순서는 `sectionIndex` 가 갖는다 */
   | 'SEARCH_GROUP';
 

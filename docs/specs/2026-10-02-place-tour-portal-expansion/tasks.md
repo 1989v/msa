@@ -162,12 +162,12 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
 **Dependencies:** Task Group 9 (운영 확인 완료)
 **Phase:** ③
 **Required Skills:** React, vitest, CDP
-- [ ] 10.0 Complete 근처 절
-  - [ ] 10.1 Write tests: `AttractionPage`(T16 일부 — 근처 행사 반경 20km·`NOT_ENDED`·`eventStart`·6건 · 0건이면 절 없음 · 자기 제외 · 근처 숙소 5km·거리순·6건 · 편의시설 캐로셀에 `stay` 없음 · 같은 숙소 카드 중복 없음) · `RegionPage`(이번 달 행사 `THIS_MONTH`·8건 · 프리렌더 본문에 없음) · `placeApi`(섹션 식별자 `NEARBY_EVENTS`·`NEARBY_STAYS`·`REGION_EVENTS_THIS_MONTH` 로 노출 기록 호출)
-  - [ ] 10.2 `AMENITY_CATEGORIES` 에서 `stay` 제거 · 「근처 숙소」가 그 자리
-  - [ ] 10.3 상세 「근처 행사」·「근처 숙소」 — 검색 API 로 화면이 그림(서버 렌더 본문 아님)
-  - [ ] 10.4 `RegionPage` 「이번 달 행사」 — 조회 시점에 그림
-  - [ ] 10.5 Verify: `cd portal-fe && npx vitest run src/pages/place/__tests__/AttractionPage.test.tsx src/pages/place/__tests__/RegionPage.test.tsx src/api/__tests__/placeApi.test.ts && npx tsc --noEmit -p tsconfig.app.json`
+- [x] 10.0 Complete 근처 절
+  - [x] 10.1 Write tests: `AttractionPage`(T16 일부 — 근처 행사 반경 20km·`NOT_ENDED`·`eventStart`·6건 · 0건이면 절 없음 · 자기 제외 · 근처 숙소 5km·거리순·6건 · 편의시설 캐로셀에 `stay` 없음 · 같은 숙소 카드 중복 없음) · `RegionPage`(이번 달 행사 `THIS_MONTH`·8건 · 프리렌더 본문에 없음) · `placeApi`(섹션 식별자 `NEARBY_EVENTS`·`NEARBY_STAYS`·`REGION_EVENTS_THIS_MONTH` 로 노출 기록 호출)
+  - [x] 10.2 `AMENITY_CATEGORIES` 에서 `stay` 제거 · 「근처 숙소」가 그 자리
+  - [x] 10.3 상세 「근처 행사」·「근처 숙소」 — 검색 API 로 화면이 그림(서버 렌더 본문 아님)
+  - [x] 10.4 `RegionPage` 「이번 달 행사」 — 조회 시점에 그림
+  - [x] 10.5 Verify: `cd portal-fe && npx vitest run src/pages/place/__tests__/AttractionPage.test.tsx src/pages/place/__tests__/RegionPage.test.tsx src/api/__tests__/placeApi.test.ts && npx tsc --noEmit -p tsconfig.app.json`
   - [ ] 10.6 T17 일부: 근처 절 카드 모바일 세로·가로 CDP(start·측정·stop 한 명령)
 **Acceptance Criteria:** T16(③분) 초록 · 0건 대조(영문 숙박 상세) 와 양성 대조(국문 숙박 많은 지역) 둘 다 기록
 

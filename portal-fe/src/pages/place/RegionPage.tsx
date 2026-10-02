@@ -1,6 +1,8 @@
+import { useEffect, useMemo } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
+  EVENT_CATEGORY,
   fetchAdministrativeRegions,
   searchAttractions,
   SIGHT_CATEGORIES,
@@ -26,6 +28,10 @@ import { useSeo } from '../../seo/useSeo';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import Footer from '../../components/Footer';
 import { titleParts } from './placeView';
+import EventLine from './EventLine';
+import TrackedLink from '../../analytics/TrackedLink';
+import { newViewId } from '../../analytics/identity';
+import { installFlushOnLeave } from '../../analytics/tracker';
 import './PlacePage.css';
 
 const UI = {
@@ -33,6 +39,7 @@ const UI = {
     back: '← 관광지 탐색',
     districts: '시·군·구별로 보기',
     top: '대표 관광지',
+    events: '이번 달 행사',
     all: '지도에서 전체 보기',
     notFound: '지역을 찾을 수 없습니다.',
     failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
@@ -42,6 +49,7 @@ const UI = {
     back: '← Explore Korea',
     districts: 'Browse by district',
     top: 'Top attractions',
+    events: 'Events this month',
     all: 'View all on the map',
     notFound: 'Region not found.',
     failed: 'Could not load this page. Please try again in a moment.',
@@ -51,6 +59,10 @@ const UI = {
 
 /** 지역 페이지가 대표로 보여주는 관광지 수 — 목록 전체는 지도(허브)의 몫이다 */
 const TOP_ATTRACTIONS = 12;
+/** 이번 달 행사 — 시작일 순 최대 8건 */
+const MONTH_EVENTS = 8;
+/** 화면 안 섹션 순서 (ADR-0095) — 시·군·구 0 · 대표 관광지 1 · 이번 달 행사 2. 배치를 바꾸면 같이 바꾼다. */
+const REGION_EVENTS_SECTION_INDEX = 2;
 
 /**
  * 지역 페이지 (ADR-0071 §9). "제주 가볼 만한 곳" 류 질의의 착지점 — 지역 단위 URL 이 없으면
@@ -109,6 +121,28 @@ export default function RegionPage() {
     staleTime: 10 * 60_000,
   });
   const top = attractions?.attractions ?? [];
+
+  // 이번 달 행사 — 조회 시점에 화면이 그린다. 지역 프리렌더 본문에는 넣지 않는다(빌드 사이에 낡는다).
+  const { data: monthEvents } = useQuery({
+    queryKey: ['region-events-this-month', code, lang],
+    queryFn: () =>
+      searchAttractions({
+        lang,
+        ...(isSido ? { sidoCode: code } : { sidoCode: parentCode!, sigunguCode: code.slice(2) }),
+        category: EVENT_CATEGORY,
+        eventStatus: 'THIS_MONTH',
+        sort: 'eventStart',
+        size: MONTH_EVENTS,
+      }),
+    enabled: region != null,
+    staleTime: 10 * 60_000,
+  });
+  const events = monthEvents?.attractions ?? [];
+
+  // 노출 기록용 화면 식별자 (ADR-0095) — 지역이 바뀌면 새 한 벌이다
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- code 가 바뀔 때만 새 한 벌이다
+  const viewId = useMemo(() => newViewId(), [code]);
+  useEffect(installFlushOnLeave, []);
 
   const meta = region ? regionMeta(lang, region, region.attractionCount) : null;
   useSeo(
@@ -213,6 +247,40 @@ export default function RegionPage() {
                     {a.address && <p className="place-card-addr">{a.address}</p>}
                   </div>
                 </Link>
+              ))}
+            </section>
+          )}
+
+          {events.length > 0 && (
+            <section className="place-list place-region-events" aria-label={L.events} data-place-section="REGION_EVENTS_THIS_MONTH">
+              <h2 className="place-subtitle">{L.events}</h2>
+              {events.map((a, i) => (
+                <TrackedLink
+                  key={a.id}
+                  className="place-card"
+                  to={attractionPath(lang, a.id)}
+                  viewId={viewId}
+                  item={{
+                    entityType: 'ATTRACTION',
+                    entityId: a.id,
+                    screenType: 'PLACE_REGION',
+                    screenRef: code,
+                    sectionId: 'REGION_EVENTS_THIS_MONTH',
+                    sectionIndex: REGION_EVENTS_SECTION_INDEX,
+                    itemIndex: i,
+                  }}
+                >
+                  {a.imageUrl ? (
+                    <img className="place-card-img" src={a.imageUrl} alt="" loading="lazy" />
+                  ) : (
+                    <div className="place-card-img place-card-img-empty" aria-hidden />
+                  )}
+                  <div className="place-card-body">
+                    <h3 className="place-card-title">{titleParts(a).primary}</h3>
+                    <EventLine attraction={a} lang={lang} />
+                    {a.address && <p className="place-card-addr">{a.address}</p>}
+                  </div>
+                </TrackedLink>
               ))}
             </section>
           )}

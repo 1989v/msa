@@ -196,14 +196,19 @@ export const EVENT_CATEGORY = 'festival';
 /** 목록 분류 칩의 여행코스 — 국문 전용(영문 서비스에는 코스 유형이 없다). */
 export const COURSE_CATEGORY = 'course';
 
+/** 숙박 분류 — 상세의 「근처 숙소」가 이 분류만 받는다. */
+export const STAY_CATEGORY = 'stay';
+
 /**
  * 관광지 상세 아래 "주변 편의시설" 캐로셀에 올리는 분류.
  *
  * `etc` 는 **뺀다** — 그 안은 전량이 병원·성형외과·한의원(신 분류 `EX05` 의료관광)이라
  * 관광지 옆에 붙이면 목록에서 걷어낸 것을 캐로셀로 되돌려 놓는 셈이다.
- * 그래서 "관광 분류가 아닌 전부" 가 아니라 이 셋을 명시한다.
+ * 그래서 "관광 분류가 아닌 전부" 가 아니라 명시한다.
+ *
+ * 숙박(`stay`)은 여기 없다 — 「근처 숙소」 절이 그 몫을 갖는다. 둘 다에 두면 같은 숙소 카드가 한 화면에 두 번 뜬다.
  */
-export const AMENITY_CATEGORIES = ['shopping', 'food', 'stay'] as const;
+export const AMENITY_CATEGORIES = ['shopping', 'food'] as const;
 
 export interface AttractionQuery {
   keyword?: string;

@@ -57,14 +57,7 @@ import {
   placeUrl,
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
-import {
-  effectivePeriod,
-  eventPeriodLabel,
-  eventStatus as eventStatusOf,
-  eventStatusText,
-  isEventType,
-  todayKst,
-} from '../../seo/eventSchedule';
+import EventLine from './EventLine';
 
 // ADR-0065 K-관광/지리 탐색 — 관광지 지도 검색. 데이터 출처: 한국관광공사 TourAPI.
 // place.<domain> 서브도메인이 정규 주소 (game 과 동일한 host 인식 루트 라우팅):
@@ -1378,23 +1371,5 @@ function PlaceCard({
         {attraction.overview && <p className="place-card-overview">{attraction.overview}</p>}
       </div>
     </a>
-  );
-}
-
-/**
- * 행사의 기간·상태 줄 — 목록 카드와 상세 본문(데스크톱 열·모바일 시트)이 같이 쓴다.
- * 문구는 서버 렌더와 같은 판정(`eventSchedule`)이고 오늘은 렌더 시점의 KST 날짜다. 날짜를 모르는 행사는 그리지 않는다.
- */
-function EventLine({ attraction, lang }: { attraction: Attraction; lang: PlaceLang }) {
-  if (!isEventType(attraction.contentTypeId)) return null;
-  const today = todayKst();
-  const period = effectivePeriod(attraction.eventStart, attraction.eventEnd);
-  const status = eventStatusText(period, today, lang);
-  if (!period || !status) return null;
-  return (
-    <p className="place-event-line" data-event-status={eventStatusOf(period, today)}>
-      <span className="place-event-period">{eventPeriodLabel(period)}</span>
-      <span className="place-event-status">{status}</span>
-    </p>
   );
 }

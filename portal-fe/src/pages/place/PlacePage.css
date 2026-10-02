@@ -651,6 +651,11 @@
     grid-column: 2;
   }
 
+  /* 지역 허브의 이번 달 행사도 같은 이유로 대표 관광지 열(2열) 아래에 붙인다 — 안 그러면 22rem 첫 칸에 떨어진다 */
+  .place-body:not(.place-body-stacked) .place-region-events {
+    grid-column: 2;
+  }
+
   .place-body {
     /* 상한을 두는 이유: 세로로 긴 화면에서 지도만 끝없이 커지면 목록이 딸려 올라간다 */
     --place-col-h: clamp(24rem, calc(100vh - 16rem), 60rem);
