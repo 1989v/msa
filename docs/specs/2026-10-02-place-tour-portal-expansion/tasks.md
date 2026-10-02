@@ -127,14 +127,14 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
 **Dependencies:** Task Group 6
 **Phase:** ②
 **Required Skills:** HTML 렌더, JSON-LD, vitest
-- [ ] 8.0 Complete 유형별 본문
-  - [ ] 8.1 Write tests: `AttractionPageRendererTest`(T11 골든 HTML — 행사 진행 중·종료·`UNKNOWN` · 숙박 · 코스, 국·영 · 상태 문구 · 출처 문구 · 코스 순서 · 오늘 이전에 끝난 가까운 곳·비슷한 곳 제외 · 숙박 픽스처에 예약 URL 키가 있다는 전제 단언 후 출력에 없음) · `AttractionPageServiceTest`(T3 일부 — 고정 `Clock` → 렌더 포트에 넘어간 날짜) · `AttractionJsonLdParityTest` + vitest `attractionJsonLdGolden.test.ts`(T12 — `@type` ⊇ {Event, LodgingBusiness, TouristTrip}, Kotlin 입력은 픽스처 역직렬화)
-  - [ ] 8.2 `AttractionPageService` 가 `Clock` 으로 KST 오늘 → `AttractionPageRenderPort.attractionPage` 인자 · 렌더러는 시계 없음
-  - [ ] 8.3 행사 절(기간 · 장소 · 상태 문구 국 「진행 중」「D-n 시작」「종료된 행사」/ 영 「Ongoing」「Starts in n days」「Starts tomorrow」「Ended」 · `introRaw` 행사 원문 키) + JSON-LD `Event`
-  - [ ] 8.4 숙박 절(허용 목록: 입실 · 퇴실 · 객실 수 · 객실 유형 · 주차 · 부대시설, 예약 키 미표시) + `LodgingBusiness` · 코스 절(순서 목록, 매칭 지점만 링크 · 총 거리 · 소요 시간) + `TouristTrip`/`itinerary`
-  - [ ] 8.5 서버 렌더 본문 끝 출처 문구(국·영) · 새 유형에 `attraction-end` 지면 없음 · 응답 `no-cache` 유지
-  - [ ] 8.6 `copy.mjs` 에 같은 JSON-LD 함수(고정 시각) → 골든 재생성, CI `git diff --exit-code`
-  - [ ] 8.7 Verify: `./gradlew :search:app:test --tests '*AttractionPageRendererTest' --tests '*AttractionPageServiceTest' --tests '*AttractionJsonLdParityTest' && (cd portal-fe && npx vitest run src/seo/__tests__/attractionJsonLdGolden.test.ts)`
+- [x] 8.0 Complete 유형별 본문
+  - [x] 8.1 Write tests: `AttractionPageRendererTest`(T11 골든 HTML — 행사 진행 중·종료·`UNKNOWN` · 숙박 · 코스, 국·영 · 상태 문구 · 출처 문구 · 코스 순서 · 오늘 이전에 끝난 가까운 곳·비슷한 곳 제외 · 숙박 픽스처에 예약 URL 키가 있다는 전제 단언 후 출력에 없음) · `AttractionPageServiceTest`(T3 일부 — 고정 `Clock` → 렌더 포트에 넘어간 날짜) · `AttractionJsonLdParityTest` + vitest `attractionJsonLdGolden.test.ts`(T12 — `@type` ⊇ {Event, LodgingBusiness, TouristTrip}, Kotlin 입력은 픽스처 역직렬화)
+  - [x] 8.2 `AttractionPageService` 가 `Clock` 으로 KST 오늘 → `AttractionPageRenderPort.attractionPage` 인자 · 렌더러는 시계 없음
+  - [x] 8.3 행사 절(기간 · 장소 · 상태 문구 국 「진행 중」「D-n 시작」「종료된 행사」/ 영 「Ongoing」「Starts in n days」「Starts tomorrow」「Ended」 · `introRaw` 행사 원문 키) + JSON-LD `Event`
+  - [x] 8.4 숙박 절(허용 목록: 입실 · 퇴실 · 객실 수 · 객실 유형 · 주차 · 부대시설, 예약 키 미표시) + `LodgingBusiness` · 코스 절(순서 목록, 매칭 지점만 링크 · 총 거리 · 소요 시간) + `TouristTrip`/`itinerary`
+  - [x] 8.5 서버 렌더 본문 끝 출처 문구(국·영) · 새 유형에 `attraction-end` 지면 없음 · 응답 `no-cache` 유지
+  - [x] 8.6 `copy.mjs` 에 같은 JSON-LD 함수(고정 시각) → 골든 재생성, CI `git diff --exit-code`
+  - [x] 8.7 Verify: `./gradlew :search:app:test --tests '*AttractionPageRendererTest' --tests '*AttractionPageServiceTest' --tests '*AttractionJsonLdParityTest' && (cd portal-fe && npx vitest run src/seo/__tests__/attractionJsonLdGolden.test.ts)`
 **Acceptance Criteria:** T11·T12 초록 · 회귀 주입(숙박 허용 목록 해제 · 코스 문자열 정렬) 빨간불 · 관광지당 OpenSearch 조회 한 번 유지
 
 ### Task Group 9: 목록 화면 · 상세 본문 · 정적 sitemap · 배포 ② (portal-fe)

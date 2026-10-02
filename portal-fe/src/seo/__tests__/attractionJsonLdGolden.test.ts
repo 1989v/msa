@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { attractionBreadcrumbJsonLd, touristAttractionJsonLd } from '../copy.mjs';
+import { attractionBreadcrumbJsonLd, attractionJsonLd } from '../copy.mjs';
 
 /**
  * 관광지 JSON-LD 골든 픽스처 생성기.
@@ -13,19 +13,40 @@ import { attractionBreadcrumbJsonLd, touristAttractionJsonLd } from '../copy.mjs
  * CI 는 이 테스트를 돌린 뒤 `git diff --exit-code` 로 픽스처가 최신인지 확인한다 —
  * copy.mjs 만 고치고 픽스처를 안 올리면 거기서 막힌다.
  *
- * 입력 필드 이름은 검색 색인 표기다(`closureState` · `closedWeekdays` · `attrAdmission`, `sidoCode` = 법정동 시도).
+ * 입력은 **색인 문서(`_source`) 그대로**다 — Kotlin 은 이것을 `AttractionSearchDocument` 로 역직렬화해
+ * 앱의 읽기 경로를 그대로 탄다(필드를 손으로 옮기지 않으므로 새 필드가 조용히 빠지지 않는다).
+ * 화면이 받는 검색 API 응답과 이름이 다른 필드만 [toApi] 가 바꾼다 — 여기서 하나를 빠뜨리면
+ * 이쪽 JSON-LD 에서 그 값이 사라져 Kotlin 비교가 빨개진다.
+ *
+ * 행사 상태는 `TODAY` 기준이다. JSON-LD 자체는 오늘에 따라 바뀌지 않지만, Kotlin 이 같은 날로
+ * 진행 중·종료 사례가 실제로 있는지 판정한다.
  */
 const GOLDEN = resolve(__dirname, '../../../../search/app/src/test/resources/render/jsonld-golden.json');
+
+const TODAY = '2026-10-02';
+
+type IndexDoc = Record<string, unknown> & { location: { lat: number; lon: number } };
+
+/** 색인 문서 → 검색 API 응답 모양(`SearchAttractionService` 의 결과 이름). 나머지 필드는 이름이 같다. */
+function toApi({ location, ldongRegnCd, eventStartEffective, eventEndEffective, ...rest }: IndexDoc) {
+  return {
+    ...rest,
+    latitude: location.lat,
+    longitude: location.lon,
+    sidoCode: ldongRegnCd ?? null,
+    eventStart: eventStartEffective ?? null,
+    eventEnd: eventEndEffective ?? null,
+  };
+}
 
 const base = {
   contentId: '126508',
   category: 'history',
   address: '서울특별시 종로구 사직로 161',
-  latitude: 37.5796,
-  longitude: 126.977,
+  location: { lat: 37.5796, lon: 126.977 },
   imageUrl: 'https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg',
   tel: '02-3700-3900',
-  sidoCode: '11',
+  ldongRegnCd: '11',
   sidoName: '서울특별시',
 };
 
@@ -75,7 +96,7 @@ const cases = [
       titleLocal: null,
       tel: null,
       imageUrl: null,
-      sidoCode: null,
+      ldongRegnCd: null,
       sidoName: null,
       overview: null,
       closureState: 'UNKNOWN',
@@ -129,17 +150,140 @@ const cases = [
       overview: null,
     },
   },
+  {
+    name: 'ko-event-ongoing',
+    input: {
+      ...base,
+      id: '5001',
+      contentId: '3113671',
+      lang: 'ko',
+      contentTypeId: '15',
+      title: '서울세계불꽃축제',
+      titleLocal: null,
+      category: 'culture',
+      address: '서울특별시 영등포구 여의동로 330',
+      overview: '가을 밤하늘을 수놓는 불꽃 축제다.<br>한강공원 일대에서 열린다.',
+      eventStartEffective: '2026-09-28',
+      eventEndEffective: '2026-10-05',
+      introRaw: JSON.stringify({
+        contentid: '3113671',
+        eventplace: '여의도 한강공원 <b>일대</b>',
+        playtime: '19:00~21:00',
+        usetimefestival: '무료',
+        sponsor1: '한화',
+        eventhomepage: '<a href="https://example.com">홈페이지</a>',
+      }),
+    },
+  },
+  {
+    name: 'ko-event-ended-no-place',
+    input: {
+      ...base,
+      id: '5002',
+      contentId: '2990001',
+      lang: 'ko',
+      contentTypeId: '15',
+      title: '지난 여름 축제',
+      titleLocal: null,
+      category: 'culture',
+      tel: null,
+      overview: null,
+      eventStartEffective: '2026-08-01',
+      eventEndEffective: '2026-08-10',
+      introRaw: null,
+    },
+  },
+  {
+    // 날짜가 없는 행사(UNKNOWN) — 기간 없이 장소만
+    name: 'en-event-unknown-dates',
+    input: {
+      ...base,
+      id: '6001',
+      contentId: '3001001',
+      lang: 'en',
+      contentTypeId: '85',
+      title: 'Lantern Festival',
+      titleLocal: null,
+      category: 'culture',
+      address: '1, Cheonggyecheon-ro, Jung-gu, Seoul',
+      overview: 'Lanterns float along the stream.',
+      introRaw: '{"eventplace":"Cheonggyecheon Stream"}',
+    },
+  },
+  {
+    name: 'ko-stay',
+    input: {
+      ...base,
+      id: '5101',
+      contentId: '142785',
+      lang: 'ko',
+      contentTypeId: '32',
+      title: '한옥 스테이',
+      titleLocal: null,
+      category: 'stay',
+      overview: '북촌의 한옥 숙소.',
+      introRaw: JSON.stringify({
+        checkintime: '15:00',
+        checkouttime: '11:00',
+        roomcount: '5',
+        reservationurl: 'https://booking.example.com/r?id=1',
+        reservationlodging: '02-000-0000',
+      }),
+    },
+  },
+  {
+    name: 'en-stay-no-geo-fields',
+    input: {
+      ...base,
+      id: '6101',
+      contentId: '2700001',
+      lang: 'en',
+      contentTypeId: '80',
+      title: 'Seoul Guesthouse',
+      titleLocal: null,
+      category: 'stay',
+      address: null,
+      tel: null,
+      imageUrl: null,
+      overview: null,
+    },
+  },
+  {
+    name: 'ko-course',
+    input: {
+      ...base,
+      id: '5201',
+      contentId: '1965837',
+      lang: 'ko',
+      contentTypeId: '25',
+      title: '부산 바다 하루 코스',
+      titleLocal: null,
+      category: 'etc',
+      overview: '바다를 따라 걷는 코스.',
+      introRaw: '{"distance":"12.5km","taketime":"당일"}',
+      // 이름 순과 다른 순서 — 원천 순서가 그대로 나가야 한다
+      courseStops: [
+        { order: 0, contentId: '126081', name: '해운대해수욕장', attractionId: 7001 },
+        { order: 1, contentId: '999999', name: '광안리 카페거리', attractionId: null },
+        { order: 2, contentId: '126101', name: '감천문화마을', attractionId: 7003 },
+      ],
+    },
+  },
 ];
 
 describe('관광지 JSON-LD 골든 픽스처 (서버 렌더 패리티)', () => {
-  const rendered = cases.map(({ name, input }) => ({
-    name,
-    input,
-    jsonLd: [touristAttractionJsonLd(input.lang, input), attractionBreadcrumbJsonLd(input.lang, input)],
-  }));
+  const rendered = cases.map(({ name, input }) => {
+    const api = toApi(input as IndexDoc);
+    return {
+      name,
+      input,
+      jsonLd: [attractionJsonLd(api.lang, api), attractionBreadcrumbJsonLd(api.lang, api)],
+    };
+  });
+  const primary = (name: string) => rendered.find((c) => c.name === name)!.jsonLd[0] as Record<string, any>;
 
   it('해석된 정기휴무는 여는 요일로, 해석된 요금은 isAccessibleForFree 로 나간다', () => {
-    const weekly = rendered.find((c) => c.name === 'ko-weekly-free')!.jsonLd[0] as Record<string, unknown>;
+    const weekly = primary('ko-weekly-free');
     expect(weekly.isAccessibleForFree).toBe(true);
     expect((weekly.openingHoursSpecification as { dayOfWeek: string[] }).dayOfWeek).not.toContain(
       'https://schema.org/Tuesday',
@@ -148,15 +292,48 @@ describe('관광지 JSON-LD 골든 픽스처 (서버 렌더 패리티)', () => {
 
   it('모르는 값은 필드를 싣지 않는다 — 「무료 아님」「매일 연다」로 바꾸지 않는다', () => {
     for (const name of ['ko-unknown-no-overview-no-sido', 'en-legacy-without-attributes']) {
-      const json = rendered.find((c) => c.name === name)!.jsonLd[0] as Record<string, unknown>;
+      const json = primary(name);
       expect(json).not.toHaveProperty('openingHoursSpecification');
       expect(json).not.toHaveProperty('isAccessibleForFree');
     }
   });
 
+  it('유형별 @type — 행사 Event · 숙박 LodgingBusiness · 코스 TouristTrip, 나머지는 TouristAttraction', () => {
+    const types = new Set(rendered.map((c) => (c.jsonLd[0] as Record<string, unknown>)['@type']));
+    for (const t of ['Event', 'LodgingBusiness', 'TouristTrip', 'TouristAttraction']) expect(types).toContain(t);
+    expect(primary('ko-event-ongoing')['@type']).toBe('Event');
+    expect(primary('en-stay-no-geo-fields')['@type']).toBe('LodgingBusiness');
+  });
+
+  it('행사는 기간과 장소를 싣고, 날짜를 모르면 기간을 싣지 않는다', () => {
+    const ongoing = primary('ko-event-ongoing');
+    expect(ongoing.startDate).toBe('2026-09-28');
+    expect(ongoing.endDate).toBe('2026-10-05');
+    expect(ongoing.location.name).toBe('여의도 한강공원 일대');
+    const unknown = primary('en-event-unknown-dates');
+    expect(unknown).not.toHaveProperty('startDate');
+    expect(unknown.location.name).toBe('Cheonggyecheon Stream');
+    // 장소 원문이 없으면 행사 이름
+    expect(primary('ko-event-ended-no-place').location.name).toBe('지난 여름 축제');
+  });
+
+  it('숙박 JSON-LD 에 예약 원문이 실리지 않는다', () => {
+    const stayInput = cases.find((c) => c.name === 'ko-stay')!.input as { introRaw: string };
+    expect(JSON.parse(stayInput.introRaw)).toHaveProperty('reservationurl');
+    expect(JSON.stringify(primary('ko-stay'))).not.toContain('booking.example.com');
+  });
+
+  it('코스 itinerary 는 원천 순서 그대로, 매칭된 지점만 주소를 갖는다', () => {
+    const items = primary('ko-course').itinerary.itemListElement as Array<{ position: number; item: Record<string, unknown> }>;
+    expect(items.map((i) => i.item.name)).toEqual(['해운대해수욕장', '광안리 카페거리', '감천문화마을']);
+    expect(items.map((i) => i.position)).toEqual([1, 2, 3]);
+    expect(items[0].item.url).toBe('https://place.1989v.com/attractions/7001');
+    expect(items[1].item).not.toHaveProperty('url');
+  });
+
   it('골든 파일을 쓴다 — CI 가 git diff 로 최신인지 본다', () => {
     mkdirSync(dirname(GOLDEN), { recursive: true });
-    writeFileSync(GOLDEN, `${JSON.stringify({ cases: rendered }, null, 2)}\n`);
+    writeFileSync(GOLDEN, `${JSON.stringify({ today: TODAY, cases: rendered }, null, 2)}\n`);
     expect(rendered).toHaveLength(cases.length);
   });
 });

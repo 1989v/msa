@@ -1,6 +1,7 @@
 package com.kgd.search.application.attraction.port
 
 import com.kgd.search.domain.attraction.model.AttractionDocument
+import java.time.LocalDate
 
 /**
  * 관광지 상세 서버 렌더의 두 조각 (ADR-0103, 블로그 서버 렌더와 같은 셸 계약 — ADR-0072 §6).
@@ -13,7 +14,11 @@ interface AttractionShellPort {
 }
 
 interface AttractionPageRenderPort {
-    fun attractionPage(shell: String?, doc: AttractionDocument): String
+    /**
+     * @param today 렌더 시점의 KST 날짜 — 행사 상태 문구 · 색인 만료 · 끝난 항목 거름의 기준.
+     *   렌더러는 시계를 갖지 않는다(호출자가 계산해 넘긴다).
+     */
+    fun attractionPage(shell: String?, doc: AttractionDocument, today: LocalDate): String
     fun notFoundPage(shell: String?, lang: String): String
 
     /** 렌더 없이 셸 그대로. 셸도 없으면 메타 없는 최소 HTML */

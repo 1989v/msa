@@ -1,4 +1,5 @@
 {
+  "today": "2026-10-02",
   "cases": [
     {
       "name": "ko-weekly-free",
@@ -6,11 +7,13 @@
         "contentId": "126508",
         "category": "history",
         "address": "서울특별시 종로구 사직로 161",
-        "latitude": 37.5796,
-        "longitude": 126.977,
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
         "imageUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
         "tel": "02-3700-3900",
-        "sidoCode": "11",
+        "ldongRegnCd": "11",
         "sidoName": "서울특별시",
         "id": "1001",
         "lang": "ko",
@@ -93,11 +96,13 @@
         "contentId": "126508",
         "category": "history",
         "address": "서울특별시 종로구 사직로 161",
-        "latitude": 37.5796,
-        "longitude": 126.977,
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
         "imageUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
         "tel": "02-3700-3900",
-        "sidoCode": "11",
+        "ldongRegnCd": "11",
         "sidoName": "서울특별시",
         "id": "1002",
         "lang": "ko",
@@ -180,11 +185,13 @@
         "contentId": "126508",
         "category": "history",
         "address": "서울특별시 종로구 사직로 161",
-        "latitude": 37.5796,
-        "longitude": 126.977,
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
         "imageUrl": null,
         "tel": null,
-        "sidoCode": null,
+        "ldongRegnCd": null,
         "sidoName": null,
         "id": "1003",
         "lang": "ko",
@@ -245,11 +252,13 @@
         "contentId": "126508",
         "category": "nature",
         "address": "20, Dosan-daero 45-gil, Gangnam-gu, Seoul",
-        "latitude": 37.5796,
-        "longitude": 126.977,
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
         "imageUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
         "tel": "02-3700-3900",
-        "sidoCode": "11",
+        "ldongRegnCd": "11",
         "sidoName": "서울특별시",
         "id": "2001",
         "lang": "en",
@@ -332,11 +341,13 @@
         "contentId": "126508",
         "category": "culture",
         "address": "29, Itaewon-ro, Yongsan-gu, Seoul",
-        "latitude": 37.5796,
-        "longitude": 126.977,
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
         "imageUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
         "tel": "02-3700-3900",
-        "sidoCode": "11",
+        "ldongRegnCd": "11",
         "sidoName": "서울특별시",
         "id": "2002",
         "lang": "en",
@@ -419,11 +430,13 @@
         "contentId": "126508",
         "category": "culture",
         "address": "37, Gyedong-gil, Jongno-gu, Seoul",
-        "latitude": 37.5796,
-        "longitude": 126.977,
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
         "imageUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
         "tel": "02-3700-3900",
-        "sidoCode": "11",
+        "ldongRegnCd": "11",
         "sidoName": "서울특별시",
         "id": "2003",
         "lang": "en",
@@ -479,6 +492,500 @@
               "position": 3,
               "name": "Bukchon Hanok Village",
               "item": "https://place.1989v.com/en/attractions/2003"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ko-event-ongoing",
+      "input": {
+        "contentId": "3113671",
+        "category": "culture",
+        "address": "서울특별시 영등포구 여의동로 330",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "imageUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+        "tel": "02-3700-3900",
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "5001",
+        "lang": "ko",
+        "contentTypeId": "15",
+        "title": "서울세계불꽃축제",
+        "titleLocal": null,
+        "overview": "가을 밤하늘을 수놓는 불꽃 축제다.<br>한강공원 일대에서 열린다.",
+        "eventStartEffective": "2026-09-28",
+        "eventEndEffective": "2026-10-05",
+        "introRaw": "{\"contentid\":\"3113671\",\"eventplace\":\"여의도 한강공원 <b>일대</b>\",\"playtime\":\"19:00~21:00\",\"usetimefestival\":\"무료\",\"sponsor1\":\"한화\",\"eventhomepage\":\"<a href=\\\"https://example.com\\\">홈페이지</a>\"}"
+      },
+      "jsonLd": [
+        {
+          "@context": "https://schema.org",
+          "@type": "Event",
+          "name": "서울세계불꽃축제",
+          "description": "가을 밤하늘을 수놓는 불꽃 축제다. 한강공원 일대에서 열린다.",
+          "url": "https://place.1989v.com/attractions/5001",
+          "inLanguage": "ko",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "K-관광",
+            "url": "https://place.1989v.com"
+          },
+          "image": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+          "startDate": "2026-09-28",
+          "endDate": "2026-10-05",
+          "location": {
+            "@type": "Place",
+            "name": "여의도 한강공원 일대",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "서울특별시 영등포구 여의동로 330",
+              "addressCountry": "KR"
+            },
+            "geo": {
+              "@type": "GeoCoordinates",
+              "latitude": 37.5796,
+              "longitude": 126.977
+            }
+          }
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "한국 관광지 탐색",
+              "item": "https://place.1989v.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "서울특별시",
+              "item": "https://place.1989v.com/regions/11"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "서울세계불꽃축제",
+              "item": "https://place.1989v.com/attractions/5001"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ko-event-ended-no-place",
+      "input": {
+        "contentId": "2990001",
+        "category": "culture",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "imageUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+        "tel": null,
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "5002",
+        "lang": "ko",
+        "contentTypeId": "15",
+        "title": "지난 여름 축제",
+        "titleLocal": null,
+        "overview": null,
+        "eventStartEffective": "2026-08-01",
+        "eventEndEffective": "2026-08-10",
+        "introRaw": null
+      },
+      "jsonLd": [
+        {
+          "@context": "https://schema.org",
+          "@type": "Event",
+          "name": "지난 여름 축제",
+          "description": "지난 여름 축제 — 서울특별시 종로구 사직로 161에 있는 문화 관광지입니다. 주소·지도·사진과 가는 길, 주변 가볼 만한 곳을 함께 확인하세요.",
+          "url": "https://place.1989v.com/attractions/5002",
+          "inLanguage": "ko",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "K-관광",
+            "url": "https://place.1989v.com"
+          },
+          "image": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+          "startDate": "2026-08-01",
+          "endDate": "2026-08-10",
+          "location": {
+            "@type": "Place",
+            "name": "지난 여름 축제",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "서울특별시 종로구 사직로 161",
+              "addressCountry": "KR"
+            },
+            "geo": {
+              "@type": "GeoCoordinates",
+              "latitude": 37.5796,
+              "longitude": 126.977
+            }
+          }
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "한국 관광지 탐색",
+              "item": "https://place.1989v.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "서울특별시",
+              "item": "https://place.1989v.com/regions/11"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "지난 여름 축제",
+              "item": "https://place.1989v.com/attractions/5002"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "en-event-unknown-dates",
+      "input": {
+        "contentId": "3001001",
+        "category": "culture",
+        "address": "1, Cheonggyecheon-ro, Jung-gu, Seoul",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "imageUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+        "tel": "02-3700-3900",
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "6001",
+        "lang": "en",
+        "contentTypeId": "85",
+        "title": "Lantern Festival",
+        "titleLocal": null,
+        "overview": "Lanterns float along the stream.",
+        "introRaw": "{\"eventplace\":\"Cheonggyecheon Stream\"}"
+      },
+      "jsonLd": [
+        {
+          "@context": "https://schema.org",
+          "@type": "Event",
+          "name": "Lantern Festival",
+          "description": "Lanterns float along the stream.",
+          "url": "https://place.1989v.com/en/attractions/6001",
+          "inLanguage": "en",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "K-Tour",
+            "url": "https://place.1989v.com"
+          },
+          "image": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+          "location": {
+            "@type": "Place",
+            "name": "Cheonggyecheon Stream",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "1, Cheonggyecheon-ro, Jung-gu, Seoul",
+              "addressCountry": "KR"
+            },
+            "geo": {
+              "@type": "GeoCoordinates",
+              "latitude": 37.5796,
+              "longitude": 126.977
+            }
+          }
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Explore Korea",
+              "item": "https://place.1989v.com/en"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "서울특별시",
+              "item": "https://place.1989v.com/en/regions/11"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Lantern Festival",
+              "item": "https://place.1989v.com/en/attractions/6001"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ko-stay",
+      "input": {
+        "contentId": "142785",
+        "category": "stay",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "imageUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+        "tel": "02-3700-3900",
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "5101",
+        "lang": "ko",
+        "contentTypeId": "32",
+        "title": "한옥 스테이",
+        "titleLocal": null,
+        "overview": "북촌의 한옥 숙소.",
+        "introRaw": "{\"checkintime\":\"15:00\",\"checkouttime\":\"11:00\",\"roomcount\":\"5\",\"reservationurl\":\"https://booking.example.com/r?id=1\",\"reservationlodging\":\"02-000-0000\"}"
+      },
+      "jsonLd": [
+        {
+          "@context": "https://schema.org",
+          "@type": "LodgingBusiness",
+          "name": "한옥 스테이",
+          "description": "북촌의 한옥 숙소.",
+          "url": "https://place.1989v.com/attractions/5101",
+          "inLanguage": "ko",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "K-관광",
+            "url": "https://place.1989v.com"
+          },
+          "image": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+          "telephone": "02-3700-3900",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "서울특별시 종로구 사직로 161",
+            "addressCountry": "KR"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 37.5796,
+            "longitude": 126.977
+          }
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "한국 관광지 탐색",
+              "item": "https://place.1989v.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "서울특별시",
+              "item": "https://place.1989v.com/regions/11"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "한옥 스테이",
+              "item": "https://place.1989v.com/attractions/5101"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "en-stay-no-geo-fields",
+      "input": {
+        "contentId": "2700001",
+        "category": "stay",
+        "address": null,
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "imageUrl": null,
+        "tel": null,
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "6101",
+        "lang": "en",
+        "contentTypeId": "80",
+        "title": "Seoul Guesthouse",
+        "titleLocal": null,
+        "overview": null
+      },
+      "jsonLd": [
+        {
+          "@context": "https://schema.org",
+          "@type": "LodgingBusiness",
+          "name": "Seoul Guesthouse",
+          "description": "Seoul Guesthouse is a stay attraction in South Korea. See the map, photos, directions and things to do nearby.",
+          "url": "https://place.1989v.com/en/attractions/6101",
+          "inLanguage": "en",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "K-Tour",
+            "url": "https://place.1989v.com"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 37.5796,
+            "longitude": 126.977
+          }
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Explore Korea",
+              "item": "https://place.1989v.com/en"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "서울특별시",
+              "item": "https://place.1989v.com/en/regions/11"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Seoul Guesthouse",
+              "item": "https://place.1989v.com/en/attractions/6101"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ko-course",
+      "input": {
+        "contentId": "1965837",
+        "category": "etc",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "imageUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+        "tel": "02-3700-3900",
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "5201",
+        "lang": "ko",
+        "contentTypeId": "25",
+        "title": "부산 바다 하루 코스",
+        "titleLocal": null,
+        "overview": "바다를 따라 걷는 코스.",
+        "introRaw": "{\"distance\":\"12.5km\",\"taketime\":\"당일\"}",
+        "courseStops": [
+          {
+            "order": 0,
+            "contentId": "126081",
+            "name": "해운대해수욕장",
+            "attractionId": 7001
+          },
+          {
+            "order": 1,
+            "contentId": "999999",
+            "name": "광안리 카페거리",
+            "attractionId": null
+          },
+          {
+            "order": 2,
+            "contentId": "126101",
+            "name": "감천문화마을",
+            "attractionId": 7003
+          }
+        ]
+      },
+      "jsonLd": [
+        {
+          "@context": "https://schema.org",
+          "@type": "TouristTrip",
+          "name": "부산 바다 하루 코스",
+          "description": "바다를 따라 걷는 코스.",
+          "url": "https://place.1989v.com/attractions/5201",
+          "inLanguage": "ko",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "K-관광",
+            "url": "https://place.1989v.com"
+          },
+          "image": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+          "itinerary": {
+            "@type": "ItemList",
+            "numberOfItems": 3,
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "item": {
+                  "@type": "TouristAttraction",
+                  "name": "해운대해수욕장",
+                  "url": "https://place.1989v.com/attractions/7001"
+                }
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "item": {
+                  "@type": "TouristAttraction",
+                  "name": "광안리 카페거리"
+                }
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "item": {
+                  "@type": "TouristAttraction",
+                  "name": "감천문화마을",
+                  "url": "https://place.1989v.com/attractions/7003"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "한국 관광지 탐색",
+              "item": "https://place.1989v.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "서울특별시",
+              "item": "https://place.1989v.com/regions/11"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "부산 바다 하루 코스",
+              "item": "https://place.1989v.com/attractions/5201"
             }
           ]
         }

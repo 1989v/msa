@@ -590,10 +590,29 @@ export function attractionMeta(lang, attraction) {
   };
 }
 
-export function touristAttractionJsonLd(lang, attraction) {
+/** 원천 관광 유형 — 상세가 유형별 본문·구조화 데이터를 고르는 축. 국문·영문 코드 체계가 다르다. */
+export const PLACE_EVENT_TYPES = ['15', '85'];
+export const PLACE_STAY_TYPES = ['32', '80'];
+export const PLACE_COURSE_TYPES = ['25'];
+
+/**
+ * 관광지 상세의 주 구조화 데이터 — 유형에 따라 행사 `Event` · 숙박 `LodgingBusiness` ·
+ * 여행코스 `TouristTrip`, 나머지는 `TouristAttraction`. 서버 렌더(search `AttractionPageRenderer`)가
+ * 같은 규칙으로 같은 필드를 만들고 `AttractionJsonLdParityTest` 가 이 함수의 출력과 비교한다.
+ */
+export function attractionJsonLd(lang, attraction) {
+  const type = attraction.contentTypeId;
+  if (PLACE_EVENT_TYPES.includes(type)) return eventJsonLd(lang, attraction);
+  if (PLACE_STAY_TYPES.includes(type)) return lodgingJsonLd(lang, attraction);
+  if (PLACE_COURSE_TYPES.includes(type)) return touristTripJsonLd(lang, attraction);
+  return touristAttractionJsonLd(lang, attraction);
+}
+
+/** 유형과 무관하게 같은 앞부분 — 이름 · 설명 · 주소(URL) · 언어 · 사이트 · 원어 병기명 · 대표 사진 */
+function placeJsonLdBase(lang, attraction, type) {
   const json = {
     '@context': 'https://schema.org',
-    '@type': 'TouristAttraction',
+    '@type': type,
     name: attraction.title,
     description: clampDescription(sourceText(attraction.overview) || attractionMeta(lang, attraction).description, 300),
     url: attractionUrl(lang, attraction.id),
@@ -605,21 +624,87 @@ export function touristAttractionJsonLd(lang, attraction) {
   const local = (attraction.titleLocal || '').trim();
   if (local && local !== attraction.title) json.alternateName = local;
   if (attraction.imageUrl) json.image = attraction.imageUrl;
+  return json;
+}
+
+function placePostalAddress(attraction) {
+  return { '@type': 'PostalAddress', streetAddress: attraction.address, addressCountry: 'KR' };
+}
+
+function placeGeo(attraction) {
+  return { '@type': 'GeoCoordinates', latitude: attraction.latitude, longitude: attraction.longitude };
+}
+
+/** 전화 · 주소 · 좌표 — 관광지와 숙박이 같은 필드를 싣는다 */
+function addContactAndPlace(json, attraction) {
   if (attraction.tel) json.telephone = attraction.tel;
-  if (attraction.address) {
-    json.address = {
-      '@type': 'PostalAddress',
-      streetAddress: attraction.address,
-      addressCountry: 'KR',
+  if (attraction.address) json.address = placePostalAddress(attraction);
+  if (attraction.latitude && attraction.longitude) json.geo = placeGeo(attraction);
+}
+
+/** TourAPI 소개 원문(introRaw, JSON 객체 문자열)의 한 키 → 평문. 없거나 깨졌으면 빈 문자열. */
+export function placeIntroText(introRaw, key) {
+  if (!introRaw) return '';
+  let parsed;
+  try {
+    parsed = JSON.parse(introRaw);
+  } catch {
+    return '';
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return '';
+  const value = parsed[key];
+  return value == null || typeof value === 'object' ? '' : sourceText(String(value));
+}
+
+/**
+ * 행사 — 유효 기간(양 끝 포함, `YYYY-MM-DD`)과 장소. 날짜를 모르는 행사(UNKNOWN)는 기간을 싣지 않는다.
+ * 장소 이름은 원문 「행사 장소」(`eventplace`), 없으면 행사 이름. 오늘에 따라 바뀌는 값은 싣지 않는다.
+ */
+export function eventJsonLd(lang, attraction) {
+  const json = placeJsonLdBase(lang, attraction, 'Event');
+  if (attraction.eventStart && attraction.eventEnd) {
+    json.startDate = attraction.eventStart;
+    json.endDate = attraction.eventEnd;
+  }
+  const location = { '@type': 'Place', name: placeIntroText(attraction.introRaw, 'eventplace') || attraction.title };
+  if (attraction.address) location.address = placePostalAddress(attraction);
+  if (attraction.latitude && attraction.longitude) location.geo = placeGeo(attraction);
+  json.location = location;
+  return json;
+}
+
+/** 숙박 — 예약 URL·예약 안내는 싣지 않는다(제휴 승인 전 예약 경로를 내지 않는다). */
+export function lodgingJsonLd(lang, attraction) {
+  const json = placeJsonLdBase(lang, attraction, 'LodgingBusiness');
+  addContactAndPlace(json, attraction);
+  return json;
+}
+
+/** 여행코스 — 구성 지점을 원천 순서 그대로 itinerary 로. 같은 언어 관광지로 이어진 지점만 주소를 갖는다. */
+export function touristTripJsonLd(lang, attraction) {
+  const json = placeJsonLdBase(lang, attraction, 'TouristTrip');
+  const stops = attraction.courseStops ?? [];
+  if (stops.length > 0) {
+    json.itinerary = {
+      '@type': 'ItemList',
+      numberOfItems: stops.length,
+      itemListElement: stops.map((stop, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        item: {
+          '@type': 'TouristAttraction',
+          name: stop.name,
+          ...(stop.attractionId != null ? { url: attractionUrl(lang, String(stop.attractionId)) } : {}),
+        },
+      })),
     };
   }
-  if (attraction.latitude && attraction.longitude) {
-    json.geo = {
-      '@type': 'GeoCoordinates',
-      latitude: attraction.latitude,
-      longitude: attraction.longitude,
-    };
-  }
+  return json;
+}
+
+export function touristAttractionJsonLd(lang, attraction) {
+  const json = placeJsonLdBase(lang, attraction, 'TouristAttraction');
+  addContactAndPlace(json, attraction);
   // 원문에서 해석된 방문 속성만 싣는다 — 모르는 값을 「무료 아님」「매일 연다」로 바꾸지 않는다.
   // 서버 렌더(search AttractionPageRenderer)가 같은 규칙으로 같은 필드를 만든다.
   const openDays = attractionOpenDays(attraction);

@@ -3,15 +3,18 @@ package com.kgd.search.application.attraction.service
 import com.kgd.search.application.attraction.port.AttractionPageRenderPort
 import com.kgd.search.application.attraction.port.AttractionShellPort
 import com.kgd.search.application.attraction.usecase.RenderAttractionPageUseCase
+import com.kgd.search.domain.attraction.model.EventSchedule
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
+import java.time.Clock
 
 @Service
 class AttractionPageService(
     private val searchPort: AttractionSearchPort,
     private val shellPort: AttractionShellPort,
     private val renderPort: AttractionPageRenderPort,
+    private val clock: Clock = Clock.systemUTC(),
 ) : RenderAttractionPageUseCase {
     private val log = KotlinLogging.logger {}
 
@@ -29,7 +32,8 @@ class AttractionPageService(
             log.warn(e) { "관광지 조회 실패 — 셸로 대체: id=${query.id}, elapsedMs=$elapsedMs" }
             return RenderAttractionPageUseCase.Page.Fallback(renderPort.fallbackPage(shell))
         } ?: return RenderAttractionPageUseCase.Page.NotFound(renderPort.notFoundPage(shell, query.pathLang))
-        return RenderAttractionPageUseCase.Page.Found(renderPort.attractionPage(shell, doc))
+        val today = EventSchedule.todayKst(clock.instant())
+        return RenderAttractionPageUseCase.Page.Found(renderPort.attractionPage(shell, doc, today))
     }
 
     override fun notFound(pathLang: String): RenderAttractionPageUseCase.Page.NotFound =

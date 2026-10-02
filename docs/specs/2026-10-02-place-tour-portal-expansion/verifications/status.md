@@ -16,3 +16,6 @@
 | TG6 | 회귀 주입 8종 + 끝난 행사 placement 비우기 | 전부 빨간불 |
 | TG7 | search:app '*Attraction*'·'*Unified*' + verifyArchitecture·verifySearchIndexContract | 205 tests · 0 실패 · exit 0 |
 | TG7 | 회귀 주입 5종 + 통합 검색 NOT_ENDED 제거 · 바이트 동일 기준은 변경 전 HEAD 8162d149 에서 뜸 | 전부 빨간불 |
+| TG8 | search:app AttractionPage·JsonLd·Render + verifyArchitecture·verifySearchIndexContract | Service 4 · Parity 15 · Renderer 57 · Controller 5 · 0 실패 |
+| TG8 | portal-fe vitest 4파일 · tsc | 59 passed · exit 0 |
+| TG8 | 회귀 주입 10종(구현 에이전트) | 전부 빨간불 |

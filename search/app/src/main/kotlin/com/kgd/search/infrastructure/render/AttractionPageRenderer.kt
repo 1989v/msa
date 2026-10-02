@@ -7,6 +7,9 @@ import com.kgd.search.domain.attraction.model.AttractionClickSignal
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionRegion
 import com.kgd.search.domain.attraction.model.Availability
+import com.kgd.search.domain.attraction.model.CourseStop
+import com.kgd.search.domain.attraction.model.EventSchedule
+import com.kgd.search.domain.attraction.model.EventStatusText
 import com.kgd.search.domain.attraction.model.PetPolicy
 import com.kgd.search.domain.attraction.model.RegularClosure
 import com.kgd.search.domain.attraction.model.SimilarPlace
@@ -18,6 +21,7 @@ import com.kgd.search.infrastructure.render.AttractionSeoText.sourceText
 import org.springframework.stereotype.Component
 import tools.jackson.databind.ObjectMapper
 import java.time.DayOfWeek
+import java.time.LocalDate
 import java.util.Locale
 
 /**
@@ -27,7 +31,9 @@ import java.util.Locale
  * **같은 셸 계약**이다 — `<!--seo:start-->…<!--seo:end-->` 를 메타로 갈고 `#root` 에 크롤러용 본문을 넣는다.
  * 메타·JSON-LD 는 화면(`AttractionPage` + `useSeo`)이 하이드레이션 때 같은 규칙으로 다시 만들므로,
  * 규칙의 원본은 `portal-fe/src/seo/copy.mjs` 다(`attractionMeta`·`touristAttractionJsonLd`·
- * `attractionBreadcrumbJsonLd`). JSON-LD 가 같은지는 `AttractionJsonLdParityTest` 가 본다.
+ * `attractionBreadcrumbJsonLd`·`attractionJsonLd`). JSON-LD 가 같은지는 `AttractionJsonLdParityTest` 가 본다.
+ *
+ * 행사 상태·색인 만료·끝난 항목 거름은 호출자가 넘긴 KST 오늘로 판정한다 — 이 객체는 시계를 읽지 않는다.
  *
  * 원문은 모두 [sourceText](태그 제거 → 디코드) 뒤 [escapeHtml] 을 거쳐 나간다. 링크는 내부 경로만 만든다.
  */
@@ -38,7 +44,7 @@ class AttractionPageRenderer(
 ) : AttractionPageRenderPort {
     private val origin = properties.origin.trimEnd('/')
 
-    override fun attractionPage(shell: String?, doc: AttractionDocument): String {
+    override fun attractionPage(shell: String?, doc: AttractionDocument, today: LocalDate): String {
         val lang = if (doc.lang == EN) EN else KO
         val meta = attractionMeta(lang, doc)
         val canonical = attractionUrl(lang, doc.id)
@@ -50,12 +56,13 @@ class AttractionPageRenderer(
             canonical = canonical,
             image = image,
             imageAlt = meta.heading,
-            // 개요가 없으면 제목·주소·좌표뿐인 얇은 문서다 — 화면(useSeo)과 같은 규칙(`!attraction.overview`)
-            noindex = doc.overview.isNullOrEmpty(),
+            // 개요가 없으면 제목·주소·좌표뿐인 얇은 문서다. 끝난 지 31일이 지난 행사도 색인에서 뺀다(30일까지는 대상).
+            noindex = doc.overview.isNullOrEmpty() ||
+                (EventSchedule.isEvent(doc.contentTypeId) && EventSchedule.indexExpired(doc.eventPeriod, today)),
             // hreflang 없음 — TourAPI 국문/영문은 별도 콘텐츠라 짝을 모른다 (ADR-0062 §8)
-            jsonLd = listOf(touristAttractionJsonLd(lang, doc, meta), breadcrumbJsonLd(lang, doc)),
+            jsonLd = listOf(primaryJsonLd(lang, doc, meta), breadcrumbJsonLd(lang, doc)),
         )
-        return compose(shell, lang, head, shellBody(attractionBody(lang, doc, meta)))
+        return compose(shell, lang, head, shellBody(attractionBody(lang, doc, meta, today)))
     }
 
     /** 요청 id 를 쓰지 않는다 — 경로에서 온 값을 페이지에 되돌리지 않는다. */
@@ -178,10 +185,18 @@ class AttractionPageRenderer(
         )
     }
 
-    /** copy.mjs `touristAttractionJsonLd` — 키 순서까지 같게 둔다 */
-    private fun touristAttractionJsonLd(lang: String, doc: AttractionDocument, meta: Meta): Map<String, Any?> = buildMap {
+    /** copy.mjs `attractionJsonLd` — 유형별 주 구조화 데이터 */
+    private fun primaryJsonLd(lang: String, doc: AttractionDocument, meta: Meta): Map<String, Any?> = when {
+        EventSchedule.isEvent(doc.contentTypeId) -> eventJsonLd(lang, doc, meta)
+        doc.contentTypeId in STAY_CONTENT_TYPES -> lodgingJsonLd(lang, doc, meta)
+        doc.contentTypeId in COURSE_CONTENT_TYPES -> touristTripJsonLd(lang, doc, meta)
+        else -> touristAttractionJsonLd(lang, doc, meta)
+    }
+
+    /** copy.mjs `placeJsonLdBase` — 키 순서까지 같게 둔다 */
+    private fun MutableMap<String, Any?>.putBase(lang: String, doc: AttractionDocument, meta: Meta, type: String) {
         put("@context", "https://schema.org")
-        put("@type", "TouristAttraction")
+        put("@type", type)
         put("name", doc.title)
         put("description", clampDescription(sourceText(doc.overview).ifEmpty { meta.description }, 300))
         put("url", attractionUrl(lang, doc.id))
@@ -190,13 +205,25 @@ class AttractionPageRenderer(
         val local = jsTrim(doc.titleLocal.orEmpty())
         if (local.isNotEmpty() && local != doc.title) put("alternateName", local)
         if (!doc.imageUrl.isNullOrEmpty()) put("image", doc.imageUrl)
+    }
+
+    private fun postalAddress(doc: AttractionDocument) =
+        mapOf("@type" to "PostalAddress", "streetAddress" to doc.address, "addressCountry" to "KR")
+
+    private fun geo(doc: AttractionDocument) =
+        mapOf("@type" to "GeoCoordinates", "latitude" to doc.latitude, "longitude" to doc.longitude)
+
+    /** copy.mjs `addContactAndPlace` */
+    private fun MutableMap<String, Any?>.putContactAndPlace(doc: AttractionDocument) {
         if (!doc.tel.isNullOrEmpty()) put("telephone", doc.tel)
-        if (!doc.address.isNullOrEmpty()) {
-            put("address", mapOf("@type" to "PostalAddress", "streetAddress" to doc.address, "addressCountry" to "KR"))
-        }
-        if (isTruthy(doc.latitude) && isTruthy(doc.longitude)) {
-            put("geo", mapOf("@type" to "GeoCoordinates", "latitude" to doc.latitude, "longitude" to doc.longitude))
-        }
+        if (!doc.address.isNullOrEmpty()) put("address", postalAddress(doc))
+        if (isTruthy(doc.latitude) && isTruthy(doc.longitude)) put("geo", geo(doc))
+    }
+
+    /** copy.mjs `touristAttractionJsonLd` */
+    private fun touristAttractionJsonLd(lang: String, doc: AttractionDocument, meta: Meta): Map<String, Any?> = buildMap {
+        putBase(lang, doc, meta, "TouristAttraction")
+        putContactAndPlace(doc)
         // 해석된 속성만 — 모르는 값을 「매일 연다」「유료」로 바꾸지 않는다
         openDays(doc.attributes)?.let { days ->
             put(
@@ -211,6 +238,57 @@ class AttractionPageRenderer(
             Admission.FREE -> put("isAccessibleForFree", true)
             Admission.PAID -> put("isAccessibleForFree", false)
             Admission.UNKNOWN, null -> Unit
+        }
+    }
+
+    /** copy.mjs `eventJsonLd` — 기간(날짜 없으면 생략)과 장소. 오늘에 따라 바뀌는 값은 싣지 않는다 */
+    private fun eventJsonLd(lang: String, doc: AttractionDocument, meta: Meta): Map<String, Any?> = buildMap {
+        putBase(lang, doc, meta, "Event")
+        doc.eventPeriod?.let {
+            put("startDate", it.start.toString())
+            put("endDate", it.end.toString())
+        }
+        val place = introText(introValues(doc.introRaw), "eventplace").ifEmpty { doc.title }
+        put(
+            "location",
+            buildMap {
+                put("@type", "Place")
+                put("name", place)
+                if (!doc.address.isNullOrEmpty()) put("address", postalAddress(doc))
+                if (isTruthy(doc.latitude) && isTruthy(doc.longitude)) put("geo", geo(doc))
+            },
+        )
+    }
+
+    /** copy.mjs `lodgingJsonLd` — 예약 원문은 싣지 않는다 */
+    private fun lodgingJsonLd(lang: String, doc: AttractionDocument, meta: Meta): Map<String, Any?> = buildMap {
+        putBase(lang, doc, meta, "LodgingBusiness")
+        putContactAndPlace(doc)
+    }
+
+    /** copy.mjs `touristTripJsonLd` — 구성 지점을 받은 순서 그대로 */
+    private fun touristTripJsonLd(lang: String, doc: AttractionDocument, meta: Meta): Map<String, Any?> = buildMap {
+        putBase(lang, doc, meta, "TouristTrip")
+        val stops = doc.courseStops.orEmpty()
+        if (stops.isNotEmpty()) {
+            put(
+                "itinerary",
+                mapOf(
+                    "@type" to "ItemList",
+                    "numberOfItems" to stops.size,
+                    "itemListElement" to stops.mapIndexed { index, stop ->
+                        mapOf(
+                            "@type" to "ListItem",
+                            "position" to index + 1,
+                            "item" to buildMap {
+                                put("@type", "TouristAttraction")
+                                put("name", stop.name)
+                                stop.attractionId?.let { put("url", attractionUrl(lang, it.toString())) }
+                            },
+                        )
+                    },
+                ),
+            )
         }
     }
 
@@ -245,10 +323,11 @@ class AttractionPageRenderer(
 
     /**
      * prerender `renderAttractionDetail` 과 같은 뼈대에 스펙 순서대로 새 절을 잇는다:
-     * 개요 · 방문 정보 원문 → 방문 정보 배지 → 지역 안 위치 → 같은 분류 가까운 곳 → 비슷한 곳(다른 시도).
-     * 반경 주변 관광지·편의시설은 조회가 더 필요해 SPA 가 그린다(관광지당 색인 조회는 한 번).
+     * 개요 · 방문 정보 원문(행사·숙박·코스는 유형별 절) → 방문 정보 배지 → 지역 안 위치 → 같은 분류 가까운 곳 →
+     * 비슷한 곳(다른 시도) → 출처. 반경 주변 관광지·편의시설·근처 행사·숙소는 조회가 더 필요해 SPA 가 그린다
+     * (관광지당 색인 조회는 한 번).
      */
-    private fun attractionBody(lang: String, doc: AttractionDocument, meta: Meta): String = buildString {
+    private fun attractionBody(lang: String, doc: AttractionDocument, meta: Meta, today: LocalDate): String = buildString {
         val hub = hubName(lang)
         append("<nav><a href=\"${placePath(lang)}\">${escapeHtml(hub)}</a>")
         if (!doc.sidoName.isNullOrEmpty()) {
@@ -261,11 +340,70 @@ class AttractionPageRenderer(
         append("<p>${escapeHtml(listOfNotNull(categoryLabel(doc.category, lang), doc.address?.takeIf { it.isNotEmpty() }).joinToString(" · "))}</p>")
         if (!doc.tel.isNullOrEmpty()) append("<p>${escapeHtml(doc.tel)}</p>")
         append("<p>${escapeHtml(sourceText(doc.overview))}</p>")
-        append(visitorInfo(lang, doc))
+        append(typeSection(lang, doc, today) ?: visitorInfo(lang, doc))
         append(badges(lang, doc.attributes, doc.uniqueClickers14d))
-        doc.region?.let { append(regionSection(lang, doc, it)) }
-        append(similarSection(lang, doc.similarElsewhere))
+        doc.region?.let { append(regionSection(lang, doc, it, today)) }
+        append(similarSection(lang, doc.similarElsewhere?.filterNot { ended(it.eventEndEffective, today) }))
+        // 출처표시 의무 (data-sources.md §0) — 화면 바닥글과 같은 문구
+        append("<p data-place-section=\"source\">${if (lang == EN) SOURCE_EN else SOURCE_KO}</p>")
     }
+
+    /** 재색인 뒤 끝난 행사 항목 — 유효 종료일이 오늘보다 앞이다(오늘 끝나는 행사는 남긴다) */
+    private fun ended(eventEnd: LocalDate?, today: LocalDate) = eventEnd != null && eventEnd.isBefore(today)
+
+    /**
+     * 행사 · 숙박 · 여행코스의 유형별 절. 이 유형들은 일반 「이용 안내」 대신 이것을 그린다 — 일반 절의 파생 값
+     * (이용시간·요금·주차)이 같은 원문 키에서 와서 두 번 나가기 때문이다. 다른 유형이면 null.
+     * 원문 키는 허용 목록으로만 고른다 — 숙박의 예약 URL·예약 안내는 목록에 없어서 나가지 않는다.
+     */
+    private fun typeSection(lang: String, doc: AttractionDocument, today: LocalDate): String? {
+        val en = lang == EN
+        val intro = introValues(doc.introRaw)
+        return when {
+            EventSchedule.isEvent(doc.contentTypeId) -> {
+                val period = doc.eventPeriod?.let { listOf((if (en) "Dates" else "기간") to "${it.start} ~ ${it.end}") }.orEmpty()
+                val status = EventStatusText.of(doc.eventPeriod, today, lang)
+                    ?.let { "<p data-event-status>${escapeHtml(it)}</p>" }.orEmpty()
+                section("event", if (en) "Event info" else "행사 정보", status + definitionList(period + introRows(intro, EVENT_INTRO, en)))
+            }
+            doc.contentTypeId in STAY_CONTENT_TYPES ->
+                section("stay", if (en) "Stay info" else "숙박 정보", definitionList(introRows(intro, STAY_INTRO, en)))
+            doc.contentTypeId in COURSE_CONTENT_TYPES ->
+                section("course", if (en) "Course" else "코스 구성", definitionList(introRows(intro, COURSE_INTRO, en)) + courseList(lang, doc.courseStops))
+            else -> null
+        }
+    }
+
+    private fun section(name: String, heading: String, inner: String): String =
+        if (inner.isEmpty()) "" else "<section data-place-section=\"$name\"><h2>${escapeHtml(heading)}</h2>$inner</section>"
+
+    private fun definitionList(rows: List<Pair<String, String>>): String =
+        if (rows.isEmpty()) "" else "<dl>" + rows.joinToString("") { (label, value) -> "<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>" } + "</dl>"
+
+    /** 허용 목록 순서대로, 원문에 값이 있는 키만 (라벨, 평문) */
+    private fun introRows(intro: Map<String, String>, allowed: List<IntroKey>, en: Boolean): List<Pair<String, String>> =
+        allowed.mapNotNull { key -> introText(intro, key.key).takeIf { it.isNotEmpty() }?.let { (if (en) key.en else key.ko) to it } }
+
+    /** 코스 구성 — 받은 순서 그대로. 같은 언어 관광지로 이어진 지점만 상세 링크 */
+    private fun courseList(lang: String, stops: List<CourseStop>?): String {
+        if (stops.isNullOrEmpty()) return ""
+        return "<ol>" + stops.joinToString("") { stop ->
+            val name = escapeHtml(stop.name)
+            val item = stop.attractionId?.let { "<a href=\"${escapeHtml(attractionPath(lang, it.toString()))}\">$name</a>" } ?: name
+            "<li>$item</li>"
+        } + "</ol>"
+    }
+
+    /** introRaw(TourAPI 소개 원문 JSON 객체) → 키·값 원문. 없거나 깨졌으면 빈 맵 — copy.mjs `placeIntroText` 와 같은 판정 */
+    private fun introValues(raw: String?): Map<String, String> {
+        if (raw.isNullOrBlank()) return emptyMap()
+        val node = runCatching { objectMapper.readTree(raw) }.getOrNull()?.takeIf { it.isObject } ?: return emptyMap()
+        return node.properties()
+            .filter { (_, value) -> value.isValueNode && !value.isNull }
+            .associate { (key, value) -> key to value.asString() }
+    }
+
+    private fun introText(intro: Map<String, String>, key: String): String = sourceText(intro[key])
 
     /** prerender `visitorInfoHtml` — 원천이 안 준 줄은 그리지 않는다 */
     private fun visitorInfo(lang: String, doc: AttractionDocument): String {
@@ -348,29 +486,33 @@ class AttractionPageRenderer(
      * 지역 안 위치 — 「{시군구} {유형} N곳 중 {분류} M곳」 / 「{분류} {M} of {N} {유형} in {시군구}」 +
      * 시군구 허브 링크 + 같은 분류 가까운 곳.
      */
-    private fun regionSection(lang: String, doc: AttractionDocument, region: AttractionRegion): String = buildString {
+    private fun regionSection(lang: String, doc: AttractionDocument, region: AttractionRegion, today: LocalDate): String = buildString {
         val en = lang == EN
         val place = region.sigunguName?.takeIf { it.isNotBlank() } ?: if (en) "this district" else "이 지역"
         val type = contentTypeLabel(doc.contentTypeId, lang)
         val category = region.categoryName?.takeIf { it.isNotBlank() }
+        // 끝난 행사 자기 문서는 후보에서 빠져 건수가 0 일 수 있다 — 「0곳」은 그리지 않는다
+        val categoryCount = region.categoryCount?.takeIf { it > 0 }
         val phrase = when {
-            category != null && region.categoryCount != null && en ->
-                "$category ${region.categoryCount} of ${region.typeCount} $type in $place"
-            category != null && region.categoryCount != null ->
-                "$place $type ${region.typeCount}곳 중 $category ${region.categoryCount}곳"
+            region.typeCount <= 0 -> null
+            category != null && categoryCount != null && en ->
+                "$category $categoryCount of ${region.typeCount} $type in $place"
+            category != null && categoryCount != null ->
+                "$place $type ${region.typeCount}곳 중 $category ${categoryCount}곳"
             en -> "${region.typeCount} $type in $place"
             else -> "$place $type ${region.typeCount}곳"
         }
         append("<h2>${if (en) "In the area" else "지역 안 위치"}</h2>")
-        append("<p>${escapeHtml(phrase)}</p>")
+        phrase?.let { append("<p>${escapeHtml(it)}</p>") }
         val regn = doc.ldongRegnCd?.takeIf { it.isNotBlank() }
         val signgu = doc.ldongSignguCd?.takeIf { it.isNotBlank() }
         if (regn != null && signgu != null) {
             val label = if (en) "Explore $place" else "$place 둘러보기"
             append("<p><a href=\"${escapeHtml(regionPath(lang, regn + signgu))}\">${escapeHtml(label)}</a></p>")
         }
-        if (region.sameCategoryNearby.isNotEmpty()) {
-            val items = region.sameCategoryNearby.joinToString("") { near ->
+        val nearby = region.sameCategoryNearby.filterNot { ended(it.eventEndEffective, today) }
+        if (nearby.isNotEmpty()) {
+            val items = nearby.joinToString("") { near ->
                 "<li><a href=\"${escapeHtml(attractionPath(lang, near.id))}\">${escapeHtml(near.title)}</a> · ${distance(near.distanceMeters)}</li>"
             }
             append("<h2>${if (en) "Similar places nearby" else "같은 분류 가까운 곳"}</h2><ul>$items</ul>")
@@ -458,6 +600,36 @@ class AttractionPageRenderer(
         const val ROOT_DIV = "<div id=\"root\"></div>"
         val PHOTO = Regex("\\.(png|jpe?g|webp)$", RegexOption.IGNORE_CASE)
         val MIME_EXT = Regex("\\.([a-z0-9]+)$", RegexOption.IGNORE_CASE)
+
+        /** 원천 관광 유형 — copy.mjs `PLACE_STAY_TYPES`·`PLACE_COURSE_TYPES`. 행사는 [EventSchedule.isEvent] */
+        val STAY_CONTENT_TYPES = setOf("32", "80")
+        val COURSE_CONTENT_TYPES = setOf("25")
+
+        /** 화면 바닥글의 출처 문구와 같다 */
+        const val SOURCE_KO = "출처: 한국관광공사 TourAPI"
+        const val SOURCE_EN = "Source: Korea Tourism Organization TourAPI"
+
+        /** 유형별 절에 그리는 소개 원문 키 — 허용 목록. 여기에 없는 키(예약 URL·예약 안내 등)는 나가지 않는다 */
+        data class IntroKey(val key: String, val ko: String, val en: String)
+
+        val EVENT_INTRO = listOf(
+            IntroKey("eventplace", "행사 장소", "Venue"),
+            IntroKey("playtime", "공연 시간", "Hours"),
+            IntroKey("usetimefestival", "이용 요금", "Admission"),
+            IntroKey("sponsor1", "주최", "Organizer"),
+        )
+        val STAY_INTRO = listOf(
+            IntroKey("checkintime", "입실", "Check-in"),
+            IntroKey("checkouttime", "퇴실", "Check-out"),
+            IntroKey("roomcount", "객실 수", "Rooms"),
+            IntroKey("roomtype", "객실 유형", "Room types"),
+            IntroKey("parkinglodging", "주차", "Parking"),
+            IntroKey("subfacility", "부대시설", "Facilities"),
+        )
+        val COURSE_INTRO = listOf(
+            IntroKey("distance", "총 거리", "Total distance"),
+            IntroKey("taketime", "소요 시간", "Time needed"),
+        )
 
         const val MINIMAL_SHELL =
             "<!doctype html>\n<html lang=\"ko\"><head><meta charset=\"UTF-8\" /><title>1989v</title></head>" +
