@@ -53,7 +53,7 @@ The Percona Operator does not natively create application-level
 databases and users. `init-databases-job.yaml` is a one-shot Job that
 connects with the root Secret (issued by the operator) and
 
-1. creates the 13 per-service databases (mirrors
+1. creates the per-service databases listed in `init.sql` (mirrors
    `k8s/infra/local/mysql/configmap-init.yaml`), then
 2. creates each application user + grant, taking **passwords from the
    sealed `commerce-app-db-secrets` Secret** — local's plaintext
@@ -79,23 +79,29 @@ kubectl -n commerce logs job/mysql-init-databases
 ```bash
 kubectl -n commerce create secret generic commerce-app-db-secrets \
     --from-literal=PRODUCT_PASSWORD='...' \
-    --from-literal=ORDER_PASSWORD='...' \
-    --from-literal=AUTH_PASSWORD='...' \
-    --from-literal=CHATBOT_PASSWORD='...' \
-    --from-literal=MEMBER_PASSWORD='...' \
-    --from-literal=WISHLIST_PASSWORD='...' \
-    --from-literal=GIFTICON_PASSWORD='...' \
     --from-literal=INVENTORY_PASSWORD='...' \
+    --from-literal=ORDER_PASSWORD='...' \
     --from-literal=FULFILLMENT_PASSWORD='...' \
     --from-literal=WAREHOUSE_PASSWORD='...' \
-    --from-literal=CODE_DICTIONARY_PASSWORD='...' \
-    --from-literal=GAME_PASSWORD='...' \
-    --from-literal=EXPERIMENT_PASSWORD='...' \
-    --from-literal=ADS_PASSWORD='...' \
+    --from-literal=DEAL_PASSWORD='...' \
     --from-literal=SELLER_PASSWORD='...' \
     --from-literal=PAYMENT_PASSWORD='...' \
     --from-literal=PROMOTION_PASSWORD='...' \
     --from-literal=SETTLEMENT_PASSWORD='...' \
+    --from-literal=MEMBER_PASSWORD='...' \
+    --from-literal=WISHLIST_PASSWORD='...' \
+    --from-literal=AUTH_PASSWORD='...' \
+    --from-literal=CODE_DICTIONARY_PASSWORD='...' \
+    --from-literal=PLACE_PASSWORD='...' \
+    --from-literal=GAME_PASSWORD='...' \
+    --from-literal=RANKING_PASSWORD='...' \
+    --from-literal=BLOG_PASSWORD='...' \
+    --from-literal=EXPERIMENT_PASSWORD='...' \
+    --from-literal=ADS_PASSWORD='...' \
+    --from-literal=SEARCH_PASSWORD='...' \
+    --from-literal=CHATBOT_PASSWORD='...' \
+    --from-literal=GIFTICON_PASSWORD='...' \
+    --from-literal=QUANT_PASSWORD='...' \
     --dry-run=client -o yaml \
   | kubeseal --format=yaml \
   > k8s/infra/prod/sealed-secrets/commerce-app-db-secrets-sealed.yaml
@@ -103,24 +109,30 @@ kubectl -n commerce create secret generic commerce-app-db-secrets \
 
 | 키 | DB | 사용자 | 사용하는 Deployment |
 |---|---|---|---|
-| `PRODUCT_PASSWORD` | `product_db` | `product_user` | product |
+| `PRODUCT_PASSWORD` | `product_db` | `product_user` | commerce (product 폴드) |
 | `INVENTORY_PASSWORD` | `inventory_db` | `inventory_user` | commerce |
 | `ORDER_PASSWORD` | `order_db` | `order_user` | commerce |
 | `FULFILLMENT_PASSWORD` | `fulfillment_db` | `fulfillment_user` | commerce |
 | `WAREHOUSE_PASSWORD` | `warehouse_db` | `warehouse_user` | commerce |
-| `MEMBER_PASSWORD` | `member_db` | `member_user` | commerce |
-| `WISHLIST_PASSWORD` | `wishlist_db` | `wishlist_user` | commerce |
-| `AUTH_PASSWORD` | `auth_db` | `auth_user` | auth |
-| `CHATBOT_PASSWORD` | `chatbot_db` | `commerce_user` | chatbot |
-| `GIFTICON_PASSWORD` | `gifticon_db` | `gifticon_user` | gifticon |
-| `CODE_DICTIONARY_PASSWORD` | `code_dictionary_db` | `code_dictionary_user` | code-dictionary |
-| `GAME_PASSWORD` | `game_db` | `game_user` | code-dictionary (ADR-0059 폴드) |
-| `EXPERIMENT_PASSWORD` | `experiment_db` | `commerce` | experiment |
-| `ADS_PASSWORD` | `ads_db` | `ads_user` | engagement (ADR-0098 폴드) |
+| `DEAL_PASSWORD` | `deal_db` | `deal_user` | commerce |
 | `SELLER_PASSWORD` | `seller_db` | `seller_user` | commerce (ADR-0099 폴드) |
 | `PAYMENT_PASSWORD` | `payment_db` | `payment_user` | commerce (ADR-0099 폴드) |
 | `PROMOTION_PASSWORD` | `promotion_db` | `promotion_user` | commerce (ADR-0099 폴드) |
 | `SETTLEMENT_PASSWORD` | `settlement_db` | `settlement_user` | commerce (ADR-0099 폴드) |
+| `MEMBER_PASSWORD` | `member_db` | `member_user` | account |
+| `WISHLIST_PASSWORD` | `wishlist_db` | `wishlist_user` | account |
+| `AUTH_PASSWORD` | `auth_db` | `auth_user` | auth |
+| `CODE_DICTIONARY_PASSWORD` | `code_dictionary_db` | `code_dictionary_user` | atlas |
+| `PLACE_PASSWORD` | `place_db` | `place_user` | content (`MYSQL_PASSWORD`) |
+| `GAME_PASSWORD` | `game_db` | `game_user` | content |
+| `RANKING_PASSWORD` | `ranking_db` | `ranking_user` | content |
+| `BLOG_PASSWORD` | `blog_db` | `blog_user` | content |
+| `EXPERIMENT_PASSWORD` | `experiment_db` | `commerce` | engagement |
+| `ADS_PASSWORD` | `ads_db` | `ads_user` | engagement (ADR-0098 폴드) |
+| `SEARCH_PASSWORD` | `search_db` | `search_user` | search |
+| `CHATBOT_PASSWORD` | `chatbot_db` | `commerce_user` | sideapp |
+| `GIFTICON_PASSWORD` | `gifticon_db` | `gifticon_user` | sideapp |
+| `QUANT_PASSWORD` | `quant` | `quant` | sideapp (`DB_PASSWORD`) |
 
 새 서비스를 추가할 때는 ① `init.sql` 의 DB ② `users.txt` 의
 `db:user:ENV` ③ 이 Secret 키 ④ overlay 의 `db-password-*.yaml` 4곳을

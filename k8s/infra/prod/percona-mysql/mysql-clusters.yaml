@@ -231,3 +231,59 @@ spec:
     app.kubernetes.io/component: router
     app.kubernetes.io/instance: commerce-mysql
   ports: [{ name: mysql, port: 3306, targetPort: 6446 }]
+# 앱 설정(application-kubernetes.yml)이 접속하는 이름 중 위에 없던 것 — 폴드 뒤 호스트가 쓰는 별칭
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-member-replica
+  namespace: commerce
+spec:
+  selector:
+    app.kubernetes.io/component: router
+    app.kubernetes.io/instance: commerce-mysql
+  ports: [{ name: mysql, port: 3306, targetPort: 6447 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-wishlist-replica
+  namespace: commerce
+spec:
+  selector:
+    app.kubernetes.io/component: router
+    app.kubernetes.io/instance: commerce-mysql
+  ports: [{ name: mysql, port: 3306, targetPort: 6447 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-search
+  namespace: commerce
+spec:
+  selector:
+    app.kubernetes.io/component: router
+    app.kubernetes.io/instance: commerce-mysql
+  ports: [{ name: mysql, port: 3306, targetPort: 6446 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-place
+  namespace: commerce
+spec:
+  selector:
+    app.kubernetes.io/component: router
+    app.kubernetes.io/instance: commerce-mysql
+  ports: [{ name: mysql, port: 3306, targetPort: 6446 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-quant-master
+  namespace: commerce
+spec:
+  selector:
+    app.kubernetes.io/component: router
+    app.kubernetes.io/instance: commerce-mysql
+  ports: [{ name: mysql, port: 3306, targetPort: 6446 }]
