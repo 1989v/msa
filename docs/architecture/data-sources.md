@@ -72,6 +72,9 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | 관광지 반려동물 동반 | TourAPI `detailPetTour2` | 필요 | 〃 | `place/ingest --job=pet-tour` (주 1회) |
 | 관광지 부가 사진 | TourAPI `detailImage2` | 필요 | 〃 | `place/ingest --job=media` (매일) |
 | 관광지 반복정보 | TourAPI `detailInfo2` | 필요 | 〃 | `place/ingest --job=media` (매일) |
+| 축제·공연·행사 | TourAPI `searchFestival2` (국·영) | 필요 | 〃 (행마다 `cpyrhtDivCd`) | `place/ingest --job=tour-portal-sync` (매일 KST 03:10) |
+| 숙박 | TourAPI `searchStay2` (국·영) | 필요 | 〃 (행마다 `cpyrhtDivCd`) | 〃 |
+| 여행코스 | TourAPI `areaBasedList2` `contentTypeId=25` (국문만) | 필요 | 〃 (행마다 `cpyrhtDivCd`) | 〃 |
 | **행정구역(법정동)** | 행정안전부 행정표준코드관리시스템 | **불필요** | 공공누리 제1유형 | `place/ingest --job=administrative-regions` |
 | 세계 지명 계층 | GeoNames | 불필요 | **CC BY 4.0** | `tools/seed/place/normalize_regions.py` |
 | POI(상가) | 소상공인시장진흥공단 상가(상권)정보 | 필요 | 이용허락범위 제한없음 | `tools/seed/place/normalize_pois.py` |
@@ -140,7 +143,22 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 원천이 이 축을 `detailPetTour2` 로 옮겼다. 그쪽은 **contentId 없이 목록으로** 9,691건을 준다 —
 건당 1콜이 아니라 100건 페이징이라 약 100콜이면 전량이다.
 
+**축제·숙박·여행코스는 별도 오퍼레이션으로 받는다** (ADR-0104, `--job=tour-portal-sync`, 매일 KST 03:10).
+- 행사 `searchFestival2` 의 `eventStartDate` 는 이름과 달리 **「종료일 ≥ 값」** 으로 거른다. 그래서 오늘 − 365일을 주면
+  진행 중·예정 행사와 지난 1년 안에 끝난 행사가 함께 온다(국 897 · 영 262건, 2026-10-02). 목록 행에 `eventstartdate`·
+  `eventenddate`·`progresstype`·`festivaltype` 네 필드가 더 있고, 날짜는 `yyyyMMdd` 라 수집기가 ISO 로 바꿔 싣는다.
+- 숙박 `searchStay2` 목록에는 **숙박이 아닌 유형이 섞여 온다**(국문 2,990건 중 관광지 61 · 레포츠 3 · 문화시설 1,
+  영문에는 contentid 가 빈 행). 유형 32·80 만 싣고 나머지는 건수만 로그에 남긴다.
+- 여행코스는 영문 서비스에 없다. 국문 1,068건 중 1,016건에 법정동 코드가 없어 지역 허브에 안 잡힌다(원천 그대로 둔다).
+- **좌표가 없는 행은 싣지 않는다** — §0 ① 의 예외다. 지도·거리·근처 계산이 전부 좌표를 전제로 하고 모델이 좌표를
+  필수로 갖는다. 대신 유형·언어마다 「좌표 제외 n건」을 로그에 남겨, 원천 건수와 적재 건수의 차이를 설명할 수 있게 한다.
+- 공공누리 유형은 **행마다 다르다**(`cpyrhtDivCd`, 표본은 `Type3` = 출처표시·변경금지). 목록 행 원문(`list_raw`)에
+  그대로 남는다.
+
 > 원천 raw 응답은 레포에 커밋하지 않는다. 정규화 산출물만 적재한다.
+> 예외: 테스트 픽스처와 스펙 표본(`place/ingest/tests/fixtures/sample-*.json`, `docs/specs/2026-10-02-place-tour-portal-expansion/implementation/sample-*.json`)은
+> 응답 **몇 행**을 둔다 — 수집기가 실제 응답 모양을 다루는지는 지어낸 값으로 검사할 수 없어서다. 키·요청 URL 은 지우고
+> 휴대전화 번호는 가린다(검사: 키 모양 문자열 grep, tasks 1.10).
 
 ---
 

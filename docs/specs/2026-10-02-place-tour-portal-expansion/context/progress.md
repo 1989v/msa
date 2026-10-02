@@ -14,3 +14,4 @@
 - 2026-10-02 관광지 재색인 두 개가 겹쳐 attractions 별칭이 5분 사라짐 → IndexAliasManager 정리 수정(b2ced8fb). 수동 재색인 전 다른 잡이 도는지 확인.
 - search/* 변경은 search-batch 이미지를 자동 빌드하지 않는다 → images.yml 수동 dispatch(push run 끝난 뒤).
 - oci-mysql --write 확인 입력은 `yes`.
+- 2026-10-02 03:05 UTC: ops-baseline.sh 첫 실행이 MySQL 을 재시작시킴(liveness 5초 × 3). 파생 테이블에 TEXT 를 담는 모양 금지 — id 범위 직접 집계 + 덩어리 사이 1초.

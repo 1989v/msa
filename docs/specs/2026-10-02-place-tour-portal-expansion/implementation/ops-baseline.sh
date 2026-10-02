@@ -14,14 +14,18 @@
 set -euo pipefail
 
 MYSQL="${MYSQL:-$HOME/.local/bin/oci-mysql place_db}"
-CHUNK="${CHUNK:-5000}"
+CHUNK="${CHUNK:-2000}"
+PAUSE="${PAUSE:-1}"
+# 운영 MySQL(버퍼 풀 128MB · liveness 5초)에서 파생 테이블로 TEXT 를 담으면 덩어리마다 디스크 임시 테이블이
+# 생겨 ping 이 늦고 재시작된다(2026-10-02 실제). 파생 테이블 없이 id 범위로 바로 집계하고 덩어리 사이에 쉰다.
+max_id=$($MYSQL "SELECT MAX(id) FROM attractions" | grep -oE '[0-9]+' | tail -1)
 
 after=0
 acc=$(mktemp)
 trap 'rm -f "$acc"' EXIT
 
 while :; do
-    sql="SELECT lang, IFNULL(content_type_id,'-') ct, MAX(id) last_id, COUNT(*) n,
+    sql="SELECT lang, IFNULL(content_type_id,'-') ct, COUNT(*) n,
   SUM(overview IS NOT NULL AND overview <> '') overview,
   SUM(intro_raw IS NOT NULL) intro_raw,
   SUM(info_raw IS NOT NULL) info_raw,
@@ -31,18 +35,17 @@ while :; do
   SUM(google_place_id IS NOT NULL) google_place_id,
   SUM(ldong_regn_cd IS NOT NULL) ldong_regn_cd,
   SUM(image_url IS NOT NULL AND image_url <> '') image_url
-FROM (SELECT id, lang, content_type_id, overview, intro_raw, info_raw, images_raw, pet_raw,
-             setting, google_place_id, ldong_regn_cd, image_url
-      FROM attractions WHERE id > ${after} ORDER BY id LIMIT ${CHUNK}) c
+FROM attractions WHERE id > ${after} AND id <= $((after + CHUNK))
 GROUP BY lang, ct"
     # 표 테두리(--table)와 탭(-B) 출력 둘 다 받아 탭 구분 데이터 행만 남긴다.
     rows=$($MYSQL "$sql" | grep -v '^+' | sed -e 's/^| *//' -e 's/ *|$//' -e 's/ *| */\t/g' \
            | awk -F'\t' 'NF > 3 && $1 != "lang"' || true)
-    [[ -z "$rows" ]] && break
-    printf '%s\n' "$rows" >> "$acc"
-    after=$(printf '%s\n' "$rows" | awk -F'\t' 'BEGIN{m=0} $3+0 > m {m=$3+0} END{print m}')
+    [[ -n "$rows" ]] && printf '%s\n' "$rows" >> "$acc"
+    after=$((after + CHUNK))
+    (( after >= max_id )) && break
+    sleep "$PAUSE"
 done
 
 printf 'lang\tct\tn\toverview\tintro_raw\tinfo_raw\timages_raw\tpet_raw\tsetting\tgoogle_place_id\tldong_regn_cd\timage_url\n'
-awk -F'\t' -v OFS='\t' '{k=$1 OFS $2; keys[k]=1; for (i=4; i<=13; i++) s[k,i]+=$i}
-  END {for (k in keys) {line=k; for (i=4; i<=13; i++) line=line OFS s[k,i]+0; print line}}' "$acc" | sort
+awk -F'\t' -v OFS='\t' '{k=$1 OFS $2; keys[k]=1; for (i=3; i<=12; i++) s[k,i]+=$i}
+  END {for (k in keys) {line=k; for (i=3; i<=12; i++) line=line OFS s[k,i]+0; print line}}' "$acc" | sort

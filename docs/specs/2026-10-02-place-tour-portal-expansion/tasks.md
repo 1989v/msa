@@ -67,12 +67,12 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
 **Phase:** ①
 **Required Skills:** Kubernetes CronJob, 운영 SQL
 - [ ] 4.0 Complete 배포 ①
-  - [ ] 4.1 Write checks: `kubectl kustomize k8s/overlays/oci-arm` 렌더에 `place-ingest-tour-sync` 가 있고 `schedule: "10 18 * * *"` · `activeDeadlineSeconds: 540` · `timeZone` 없이 UTC 기준(grep 판정, 회귀 주입: 540 → 900 이면 실패) · 네트워크 정책 수 불변(새 egress 정책 없음)
-  - [ ] 4.2 `k8s/base/place-ingest/cronjob-tour-sync.yaml`(견본 `cronjob-pet-tour.yaml`) + `kustomization.yaml` · 주석에 하루 호출 수(행사 쪽수 + 숙박 33 + 코스 11)
-  - [ ] 4.3 `11-allow-egress-https-public.yaml` 주석의 place-ingest 설명만 갱신
-  - [ ] 4.4 `docs/architecture/data-sources.md` §1·§2 — 세 오퍼레이션 · 새 CronJob · 좌표 제외 예외 · 행 단위 공공누리 유형(`cpyrhtDivCd`). 대장에 없으면 배포하지 않는다
-  - [ ] 4.5 Verify: `kubectl kustomize k8s/overlays/oci-arm | grep -A30 'name: place-ingest-tour-sync' | grep -E 'schedule|activeDeadlineSeconds' && ./gradlew verifyArchitecture`
-  - [ ] 4.6 배포 직전: T18 기준선 — 보강 필드 비공백 건수(키셋) → `verifications/ops-before.txt`
+  - [x] 4.1 Write checks: `kubectl kustomize k8s/overlays/oci-arm` 렌더에 `place-ingest-tour-sync` 가 있고 `schedule: "10 18 * * *"` · `activeDeadlineSeconds: 540` · `timeZone` 없이 UTC 기준(grep 판정, 회귀 주입: 540 → 900 이면 실패) · 네트워크 정책 수 불변(새 egress 정책 없음)
+  - [x] 4.2 `k8s/base/place-ingest/cronjob-tour-sync.yaml`(견본 `cronjob-pet-tour.yaml`) + `kustomization.yaml` · 주석에 하루 호출 수(행사 쪽수 + 숙박 33 + 코스 11)
+  - [x] 4.3 `11-allow-egress-https-public.yaml` 주석의 place-ingest 설명만 갱신
+  - [x] 4.4 `docs/architecture/data-sources.md` §1·§2 — 세 오퍼레이션 · 새 CronJob · 좌표 제외 예외 · 행 단위 공공누리 유형(`cpyrhtDivCd`). 대장에 없으면 배포하지 않는다
+  - [x] 4.5 Verify: `kubectl kustomize k8s/overlays/oci-arm | grep -A30 'name: place-ingest-tour-sync' | grep -E 'schedule|activeDeadlineSeconds' && ./gradlew verifyArchitecture`
+  - [x] 4.6 배포 직전: T18 기준선 — 보강 필드 비공백 건수(키셋) → `verifications/ops-before.txt`
   - [ ] 4.7 배포 순서: content(JVM) → place-ingest 이미지 + CronJob → 첫 수집(수동 Job). 한 번에 한 이미지(`k8s/CLAUDE.md`)
   - [ ] 4.8 **배포 ① 뒤 운영 확인(SR-10b):**
     - [ ] 4.8.1 응답·로그가 새 이미지에서 나왔는지 먼저 확인(잡 로그에 새 로그 문구 「날짜 변환 실패」가 있는지) — 없으면 측정 폐기
