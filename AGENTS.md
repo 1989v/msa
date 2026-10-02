@@ -2,6 +2,10 @@
 
 **On conflict**: AGENTS.md wins over plugin/skill defaults.
 
+## Marine Command 작업 범위·토큰 절약
+
+`portal-fe/public/games/marine-command/` 작업은 사용자 합의인 [작은 범위 확인 원칙](docs/specs/2026-10-01-marine-origin/context/iteration-policy.md)을 먼저 따른다. 초반 문제는 초반 구간만 수정·확인하고 사용자 확인 후 범위를 확대한다. 시안 요청 단계에서는 게임 코드를 변경하지 않는다.
+
 ---
 
 ## Commands
