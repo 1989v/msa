@@ -35,9 +35,7 @@ import {
 import { useSeo } from '../../seo/useSeo';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import AttractionLinks from './AttractionLinks';
-import AttractionWeather from './AttractionWeather';
-import AttractionAir from './AttractionAir';
-import AttractionCongestion from './AttractionCongestion';
+import AttractionConditions from './AttractionConditions';
 import { googleMapsSearchUrl, mapsApiKey } from './googleMaps';
 import NearbyExplore from './NearbyExplore';
 import { EXPLORE_SIGHTS_SHOWN, exploreItems, type ExploreKind } from './exploreItems';
@@ -567,17 +565,6 @@ export default function AttractionPage() {
                 )}
               </section>
             )}
-            {/* 날씨 — 서버 렌더에는 없는 절이라 위의 서버 렌더와 같은 순서 묶음 뒤에 둔다 */}
-            {weather && (
-              <AttractionWeather outlook={weather} place={regionPlaceName(attraction, lang)} today={today} lang={lang} />
-            )}
-            {air && <AttractionAir air={air} latitude={attraction.latitude} longitude={attraction.longitude} lang={lang} />}
-
-            {/* 혼잡 예측 — 색인에 실린 값(하루 한 번). 서버 렌더에는 없는 절이라 날씨 옆에 둔다 */}
-            {attraction.congestion && attraction.congestion.length > 0 && (
-              <AttractionCongestion days={attraction.congestion} today={today} lang={lang} />
-            )}
-
             {/* 주변 탐색 — 같은 분류 가까운 곳 · 주변 명소 · 숙소 · 행사 · 편의시설을 지도 한 장과 목록 하나로.
                 지도를 못 그리면(키 없음 · 좌표 이상 · 로더 실패) 목록만 남고 아래 링크가 위치를 대신한다. */}
             <NearbyExplore
@@ -597,6 +584,17 @@ export default function AttractionPage() {
             >
               {L.map}
             </a>
+            {/* 날씨·대기질·혼잡 — 주변 탐색(지도) 아래, 탭 하나로. 서버 렌더에는 없는 절이다 */}
+            <AttractionConditions
+              weather={weather}
+              place={regionPlaceName(attraction, lang)}
+              air={air}
+              congestion={attraction.congestion}
+              latitude={attraction.latitude}
+              longitude={attraction.longitude}
+              today={today}
+              lang={lang}
+            />
             <AttractionLinks links={attraction.links} lang={lang} />
             {/* 거리와 무관한 추천 둘 — 주변 탐색과 따로, 탭으로 묶는다 */}
             <RecommendTabs similar={similar} related={related} lang={lang} viewId={viewId} screenRef={id} />

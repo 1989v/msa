@@ -75,11 +75,13 @@ export default function AttractionAir({
   latitude,
   longitude,
   lang,
+  showTitle = true,
 }: {
   air: AirQuality;
   latitude: number | null;
   longitude: number | null;
   lang: PlaceLang;
+  showTitle?: boolean;
 }) {
   const L = UI[lang];
   if (latitude == null || longitude == null) return null;
@@ -89,7 +91,7 @@ export default function AttractionAir({
   const measurement = nearest.station.measurement;
   return (
     <section className="place-detail-info place-air" aria-label={L.title} data-place-section="air">
-      <h2 className="place-detail-info-title">{L.title}</h2>
+      {showTitle && <h2 className="place-detail-info-title">{L.title}</h2>}
       <p className="place-air-station">{L.station(station.name, distanceLabel(Math.round(km * 1000)))}</p>
       <ul className="place-air-list">
         <Row label={L.pm10} pollutant={measurement.pm10} lang={lang} />

@@ -802,7 +802,7 @@ describe('AttractionPage 혼잡 예측', () => {
     vi.mocked(fetchWeather).mockResolvedValue({ sigunguCode: '11110', shortBaseAt: null, midTmFc: null, days: [] });
   });
 
-  it('오늘부터 막대로 그리고(어제는 그리지 않는다), 높이는 집중률 그대로 · 오늘 표시 · 예측 안내와 출처를 단다', async () => {
+  it('오늘부터 막대로 그리고(어제는 그리지 않는다), 높이는 집중률 그대로 · 오늘 단계와 가장 붐비는 날을 말로 · 안내와 출처를 단다', async () => {
     // 해운대해수욕장 운영 응답(2026-10-02) 앞 사흘 값 — 색인이 자정을 넘겨 어제 날이 남은 모양
     vi.mocked(fetchAttraction).mockResolvedValue({
       ...enriched,
@@ -815,16 +815,53 @@ describe('AttractionPage 혼잡 예측', () => {
     renderAt('/attractions/100');
     const section = await screen.findByRole('region', { name: '혼잡 예측' });
 
-    const bars = within(section).getAllByRole('listitem');
+    const bars = Array.from(section.querySelectorAll('.place-congestion-day'));
     expect(bars).toHaveLength(2);
     expect(bars[0].getAttribute('aria-current')).toBe('date');
-    expect(bars[0].getAttribute('aria-label')).toMatch(/^오늘 \d+월 \d+일 \(.\) — 집중률 84\.2$/);
-    expect(bars[1].getAttribute('aria-label')).toContain('집중률 98.1');
+    expect(bars[0].getAttribute('aria-label')).toMatch(/^오늘 \d+월 \d+일 \(.\) — 붐빔 \(집중률 84\.2\)$/);
+    expect(bars[1].getAttribute('aria-label')).toContain('매우 붐빔 (집중률 98.1)');
     expect((bars[1].querySelector('.place-congestion-fill') as HTMLElement).style.height).toBe('98.14%');
     expect(section.textContent).not.toContain('집중률 50');
-    expect(within(section).getByText(/오늘 집중률 84\.2 · 가장 높은 날/)).toBeInTheDocument();
-    expect(within(section).getByText(/예측값/)).toBeInTheDocument();
+    expect(section.querySelector('.place-congestion-today')!.textContent).toBe('오늘 예상붐빔집중률 84.2');
+    expect(within(section).getByText(/^가장 붐비는 날 \d+월 \d+일 \(.\) · 매우 붐빔$/)).toBeInTheDocument();
+    expect(within(section).getByText(/네 단계로 나눴습니다/)).toBeInTheDocument();
     expect(within(section).getByText('출처: 한국관광공사 빅데이터 서비스(관광지 집중률 예측)')).toBeInTheDocument();
+  });
+
+  it('단계 경계 — 40 미만 한산 · 40 보통 · 70 붐빔 · 90 매우 붐빔, 이번 주 가장 한산한 날을 알린다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({
+      ...enriched,
+      congestion: [
+        { date: today, rate: 40 },
+        { date: plus(1), rate: 39.9 },
+        { date: plus(2), rate: 70 },
+        { date: plus(3), rate: 90 },
+      ],
+    });
+    renderAt('/attractions/100');
+    const section = await screen.findByRole('region', { name: '혼잡 예측' });
+    expect(Array.from(section.querySelectorAll('.place-congestion-day')).map((b) => b.getAttribute('data-level'))).toEqual([
+      'normal', 'calm', 'busy', 'packed',
+    ]);
+    expect(within(section).getByText(/^이번 주 가장 한산한 날 \d+월 \d+일 \(.\) · 한산$/)).toBeInTheDocument();
+  });
+
+  it('날씨와 함께 있으면 탭으로 묶이고, 혼잡도 탭을 눌러야 보인다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, congestion: [{ date: today, rate: 50 }] });
+    vi.mocked(fetchWeather).mockResolvedValue({
+      sigunguCode: '11110', shortBaseAt: `${today}T05:00`, midTmFc: null,
+      days: [{ date: today, source: 'SHORT', min: 10, max: 20, am: { sky: '맑음', pop: 0 }, pm: { sky: '맑음', pop: 0 }, allDay: null }],
+    });
+    renderAt('/attractions/100');
+    const tabs = await screen.findByRole('region', { name: '날씨 · 대기질 · 혼잡' });
+    // 날씨는 관광지보다 늦게 올 수 있다 — 탭은 그릴 것이 생기는 대로 붙는다
+    await within(tabs).findByRole('tab', { name: '날씨' });
+    expect(within(tabs).getAllByRole('tab').map((t) => t.textContent)).toEqual(['날씨', '혼잡도']);
+    expect(within(tabs).getByRole('region', { name: '종로구 날씨' })).toBeInTheDocument();
+    expect(within(tabs).queryByRole('region', { name: '혼잡 예측' })).toBeNull();
+    fireEvent.click(within(tabs).getByRole('tab', { name: '혼잡도' }));
+    expect(within(tabs).getByRole('region', { name: '혼잡 예측' })).toBeInTheDocument();
+    expect(within(tabs).queryByRole('region', { name: '종로구 날씨' })).toBeNull();
   });
 
   it('남은 날이 모두 오늘 이전이면 절을 그리지 않는다(0 으로 그리지 않는다)', async () => {
