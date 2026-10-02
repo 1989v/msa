@@ -55,3 +55,5 @@
 | 12.C 운영 | 배포 361870c · V26 · 백필 --from=2025-09 | 258초 · 호출 52 · 시군구 293,425 · 시도 18,675행 · API 11110 200(12개월, latestDate 2026-09-02) · 레디스 키 생성 |
 | 12.D | pytest 6파일 · check_sample_fields · place domain·feature(통합) · ContentContextLoadSpec --rerun · 게이트 · vitest 3 · tsc(app) · kustomize | 69 passed · exit 0 · 8·8·5·8·4·5·8 tests 0 실패 · BUILD SUCCESSFUL · 44 passed · exit 0 · 단기 25 8,20 / 중기 25 21 (UTC) |
 | 12.D | 회귀 주입 13종 + 광역시 소속 군 규칙 | 전부 빨간불 · 격자 243 · 변환식 기상청 표 274행 중 270 일치 |
+| 12.D 운영 | 배포 45d187f · V27(flyway 27 success) · 단기 1회(17:00 발표) · 중기 1회(06:00 발표) | 단기 호출 243 · 격자 243/243 · 중기 호출 173 · 캐시 갱신 시군구 267 · API 11110 200 11일치 · 테이블 243/173/267 |
+| 12.C·12.D CDP 4조합 | 경복궁 상세 날씨 절 · 종로구 허브 방문 추이 | 날씨 11일·출처 기상청·가로 넘침 없음 · 방문 추이 12개월 막대·출처 빅데이터 · 스크린샷 verifications/cdp-phase2/ (방문 추이 막대 수는 선택자 결함으로 스크린샷으로 판정) |

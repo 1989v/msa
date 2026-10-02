@@ -1,0 +1,82 @@
+[
+ {
+  "combo": "portrait/light",
+  "weather": {
+   "title": "종로구 날씨",
+   "days": 11,
+   "width": 327,
+   "overflowX": false,
+   "hScroll": false,
+   "source": true
+  },
+  "weatherShot": true,
+  "visitors": {
+   "title": "방문 추이",
+   "bars": 18,
+   "firstLabel": "탐색 경로",
+   "hScroll": false,
+   "source": true
+  },
+  "visitorsShot": true
+ },
+ {
+  "combo": "portrait/dark",
+  "weather": {
+   "title": "종로구 날씨",
+   "days": 11,
+   "width": 327,
+   "overflowX": false,
+   "hScroll": false,
+   "source": true
+  },
+  "weatherShot": true,
+  "visitors": {
+   "title": "방문 추이",
+   "bars": 18,
+   "firstLabel": "탐색 경로",
+   "hScroll": false,
+   "source": true
+  },
+  "visitorsShot": true
+ },
+ {
+  "combo": "landscape/light",
+  "weather": {
+   "title": "종로구 날씨",
+   "days": 11,
+   "width": 746,
+   "overflowX": false,
+   "hScroll": false,
+   "source": true
+  },
+  "weatherShot": true,
+  "visitors": {
+   "title": "방문 추이",
+   "bars": 18,
+   "firstLabel": "탐색 경로",
+   "hScroll": false,
+   "source": true
+  },
+  "visitorsShot": true
+ },
+ {
+  "combo": "landscape/dark",
+  "weather": {
+   "title": "종로구 날씨",
+   "days": 11,
+   "width": 746,
+   "overflowX": false,
+   "hScroll": false,
+   "source": true
+  },
+  "weatherShot": true,
+  "visitors": {
+   "title": "방문 추이",
+   "bars": 18,
+   "firstLabel": "탐색 경로",
+   "hScroll": false,
+   "source": true
+  },
+  "visitorsShot": true
+ }
+]

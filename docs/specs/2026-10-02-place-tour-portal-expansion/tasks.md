@@ -214,7 +214,7 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
     - [x] 12.C.2 구현: V26 · 내부 bulk · `GET /api/places/administrative-regions/{code}/visitors` 캐시 · 공개 지연 탐색(Q-P2-VISITORS-LAG) · 지역 허브 「방문 추이」
     - [x] 12.C.3 Verify: `cd place/ingest && python -m pytest -q tests/visitors_test.py && cd ../.. && ./gradlew :place:feature:test --tests '*RegionVisitor*' && (cd portal-fe && npx vitest run src/pages/place/__tests__/placeServingPaths.test.tsx src/pages/place/__tests__/RegionPage.test.tsx)`
     - [x] 12.C.4 배포: content(V26) → place-ingest → portal-fe
-    - [ ] 12.C.5 운영 확인: 하루 적재 = 기초 807 + 광역 행 · 공개 지연 값 기록 · 허브 응답 두 번째 호출이 레디스 적중(place 로그)
+    - [x] 12.C.5 운영 확인: 하루 적재 = 기초 807 + 광역 행 · 공개 지연 값 기록 · 허브 응답 두 번째 호출이 레디스 적중(place 로그)
   - [x] 12.D 단기·중기 날씨 (V27 · 단기 05:25·17:25 486콜/일 · 중기 06:25 ≤ 200콜/일)
     - [x] 12.D.1 Write tests: 격자 변환(서울 시청 → (60,127) 등 기상청 표 검산점) · 시군구 269 → 고유 격자 243(운영 대표점 픽스처) · 중기 regId 매핑(시드 표 → 시군구 전부 매핑, Q-P2-MIDREG) · 신선도(발표 24시간 초과 → 응답에서 빠짐) · 서빙 경로 허용 목록
     - [x] 12.D.2 구현: V27 · 구역코드표 시드 · 잡 둘 · `GET /api/places/weather?sigungu=` 캐시 · 상세 「○○구 날씨」(3일 + 4~10일), 출처 「기상청」
