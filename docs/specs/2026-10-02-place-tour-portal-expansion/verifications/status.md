@@ -19,3 +19,9 @@
 | TG8 | search:app AttractionPage·JsonLd·Render + verifyArchitecture·verifySearchIndexContract | Service 4 · Parity 15 · Renderer 57 · Controller 5 · 0 실패 |
 | TG8 | portal-fe vitest 4파일 · tsc | 59 passed · exit 0 |
 | TG8 | 회귀 주입 10종(구현 에이전트) | 전부 빨간불 |
+| 배포 ① 4.8.1 | 새 이미지 확인 | content:fe95281 (V24 적용 로그) · place-ingest:eb4cda8 · 잡 로그에 「날짜 변환 실패」 문구 있음 |
+| 배포 ① 4.8.2 | 유형·언어별 수신 − 제외 = 적재 | 행사 국 897=897 · 영 262=262 · 숙박 국 2,990−65=2,925 · 영 211−1−2−1=207 · 코스 1,068−68=1,000 |
+| 배포 ① 4.8.3 | 옛 숙박 4건 | ko 2775576·1891566 → 32 (44/825·50/130), en 2948191·3112217 → 76 (28/155·51/720, fix_legacy_en_type --apply 갱신 2) · 유형 없는 행 0 |
+| 배포 ① 4.8.4 | ops-before/after 필드 합계 | 보강 필드 8종 합계 동일 · 법정동 59,675→63,998 · 이미지 52,771→55,857 · 관광지(12) 4행이 원천 숙박 목록 기준 32 로 이동(보강 값 유지) |
+| 배포 ① 4.8.5 | 수집 소요 | 41초(마감 540초) |
+| 배포 ① 4.8.6 | Q4 날짜 이상값 | 날짜 변환 실패 0 · UNKNOWN 0% |

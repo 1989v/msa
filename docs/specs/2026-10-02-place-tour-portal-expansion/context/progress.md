@@ -2,7 +2,7 @@
 
 ## 현재
 - 작업 위치: scratchpad/wt3 (공유 트리 금지). 커밋은 kgd/1989v@naver.com, 푸시는 gh auth 1989v → push → kwongd.
-- 완료: TG1 사전 확인(2026-10-02). TG2 완료(V23·왕복 경로·숙박 딥링크 제외, 57 tests). TG3 완료(--job=tour-portal-sync, 24 tests). 다음: TG4 CronJob(KST 03:10 · deadline 540 · backoffLimit 0) · 대장 · 배포 ① · Q2 보정(fix_legacy_en_type 미리보기 → --apply).
+- 완료: TG1~8 (TG1~5·V24 원격 반영, TG6~8 로컬). 배포 ① 운영 확인 끝. 다음: TG9 portal-fe → 배포 ②.
 
 ## TG1 결과 요약
 - 행사 조회 창 −365일 유지(국·영 합 12쪽). eventStartDate 는 「종료일 ≥ 값」 필터.
