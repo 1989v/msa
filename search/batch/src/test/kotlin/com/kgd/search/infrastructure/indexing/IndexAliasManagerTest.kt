@@ -120,7 +120,7 @@ class IndexAliasManagerTest : BehaviorSpec({
     // 별칭 교체 게이트 — 판정 근거는 이 관리자가 OpenSearch 에 실제로 보내는 요청(updateAliases · delete)이다.
     // 색인 도중 OOM 으로 벌크가 수천 건 죽은 반쪽 색인(45,535 / 59,735)이 라이브가 된 사고의 재현.
     given("별칭 교체 게이트") {
-        fun wire(live: Map<String, Long>, newIndex: String, newCount: Long): OpenSearchIndicesClient {
+        fun wire(live: Map<String, Long>, newIndex: String, newCount: Long, others: List<String> = emptyList()): OpenSearchIndicesClient {
             val indices = mockk<OpenSearchIndicesClient>(relaxed = true)
             every { osClient.indices() } returns indices
             val aliasResp = mockk<GetAliasResponse>()
@@ -131,7 +131,7 @@ class IndexAliasManagerTest : BehaviorSpec({
                 every { indices.getAlias(any<java.util.function.Function<org.opensearch.client.opensearch.indices.GetAliasRequest.Builder, org.opensearch.client.util.ObjectBuilder<org.opensearch.client.opensearch.indices.GetAliasRequest>>>()) } returns aliasResp
             }
             val getResp = mockk<GetIndexResponse>()
-            every { getResp.result() } returns (live.keys + newIndex).associateWith { mockk(relaxed = true) }
+            every { getResp.result() } returns (live.keys + newIndex + others).associateWith { mockk(relaxed = true) }
             every { indices.get(any<java.util.function.Function<org.opensearch.client.opensearch.indices.GetIndexRequest.Builder, org.opensearch.client.util.ObjectBuilder<org.opensearch.client.opensearch.indices.GetIndexRequest>>>()) } returns getResp
             val counts = live + (newIndex to newCount)
             every { osClient.count(any<CountRequest>()) } answers {
@@ -164,6 +164,28 @@ class IndexAliasManagerTest : BehaviorSpec({
                 val indices = wire(emptyMap(), "unified_new", 351L)
                 manager.updateAliasAndCleanup("unified", "unified_new")
                 verify(exactly = 1) { indices.updateAliases(any<java.util.function.Function<org.opensearch.client.opensearch.indices.UpdateAliasesRequest.Builder, org.opensearch.client.util.ObjectBuilder<org.opensearch.client.opensearch.indices.UpdateAliasesRequest>>>()) }
+            }
+        }
+        `when`("겹쳐 돈 다른 재색인이 더 늦은 이름의 색인을 만들고 있으면") {
+            then("별칭을 붙인 자기 색인과 더 늦은 색인은 지우지 않고 앞선 색인만 지운다") {
+                val indices = wire(
+                    mapOf("attractions_20261002021936" to 59_735L),
+                    "attractions_20261002023143",
+                    59_682L,
+                    others = listOf("attractions_20261002023441"),
+                )
+                val deleted = mutableListOf<String>()
+                every {
+                    indices.delete(any<java.util.function.Function<org.opensearch.client.opensearch.indices.DeleteIndexRequest.Builder, org.opensearch.client.util.ObjectBuilder<org.opensearch.client.opensearch.indices.DeleteIndexRequest>>>())
+                } answers {
+                    val fn = firstArg<java.util.function.Function<org.opensearch.client.opensearch.indices.DeleteIndexRequest.Builder, org.opensearch.client.util.ObjectBuilder<org.opensearch.client.opensearch.indices.DeleteIndexRequest>>>()
+                    deleted += fn.apply(org.opensearch.client.opensearch.indices.DeleteIndexRequest.Builder()).build().index()
+                    mockk(relaxed = true)
+                }
+
+                manager.updateAliasAndCleanup("attractions", "attractions_20261002023143", maxRetention = 1)
+
+                deleted shouldBe listOf("attractions_20261002021936")
             }
         }
         `when`("새 색인이 비어 있으면") {

@@ -83,11 +83,14 @@ class IndexAliasManager(private val osClient: OpenSearchClient) {
         }
         log.info { "Alias '$alias' → '$newIndexName' (removed ${aliasedIndices.size} old)" }
 
-        // 이름 prefix 기반 전체 스캔 — alias 가 빠진 옛 인덱스도 retention 정리
-        val allTimestamped = listIndicesByPrefix("${alias}_")
-        allTimestamped
+        // 이름 prefix 기반 전체 스캔 — alias 가 빠진 옛 인덱스도 retention 정리.
+        // 지울 후보는 새 색인보다 이름(=생성 시각)이 앞선 것뿐이다. 새 색인 자신은 방금 별칭을 붙인 라이브이고,
+        // 뒤에 만든 색인은 겹쳐 돈 다른 재색인이 채우는 중일 수 있다. 이름순 최신 N개만 남기던 때는
+        // 늦게 시작한 실행의 색인이 있으면 별칭을 막 붙인 자기 색인을 지워 별칭이 사라졌다.
+        listIndicesByPrefix("${alias}_")
+            .filter { it < newIndexName }
             .sortedDescending()
-            .drop(maxRetention)
+            .drop((maxRetention - 1).coerceAtLeast(0))
             .forEach { oldIndex ->
                 osClient.indices().delete { d -> d.index(oldIndex) }
                 log.info { "Deleted old index: $oldIndex" }
