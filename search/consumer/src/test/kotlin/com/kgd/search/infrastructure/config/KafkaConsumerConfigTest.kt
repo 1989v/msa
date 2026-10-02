@@ -5,6 +5,7 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.mockk.mockk
 import org.springframework.kafka.config.AbstractKafkaListenerContainerFactory
 import org.springframework.kafka.listener.DefaultErrorHandler
 
@@ -28,7 +29,7 @@ class KafkaConsumerConfigTest : BehaviorSpec({
                 it.set(this, "search-indexer-test")
             }
         }
-        val factory = config.productEventListenerContainerFactory()
+        val factory = config.productEventListenerContainerFactory(mockk(relaxed = true))
         val field = AbstractKafkaListenerContainerFactory::class.java
             .getDeclaredField("commonErrorHandler")
             .apply { isAccessible = true }

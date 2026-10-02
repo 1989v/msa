@@ -48,7 +48,7 @@ class ProductIndexingConsumer(
             )
         } catch (e: Exception) {
             log.error(e) { "Failed to enqueue product: productId=${event.productId}" }
-            throw e  // Spring Kafka ExponentialBackOff retry
+            throw e  // 오류 처리기가 몇 번 다시 시도한 뒤 DLT 로 보낸다
         }
     }
 }

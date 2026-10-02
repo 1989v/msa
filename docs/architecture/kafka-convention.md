@@ -67,7 +67,9 @@ Spring Kafka 4 의 `DeadLetterPublishingRecoverer` 기본값은 `-dlt` 라 규�
 - commerce: 도메인마다 `{domain}-dlt-ops` 그룹이 `.*\.DLT` 를 패턴 구독하고, **원 컨슈머 그룹 헤더가 자기 도메인 것인 레코드만**
   그 도메인 `ops_issue` 에 `DLT` 이슈로 적재한다. 어드민 재시도 = 원 토픽으로 재발행. DLT 리스너에는 DLT 발행기를 붙이지 않는다(`x.DLT.DLT` 순환 방지)
 - 이름을 바꾸기 전에 `<원 토픽>-dlt` 로 들어간 레코드는 새 리스너가 보지 않는다 — 점검·재발행·정리는 `docs/runbooks/legacy-dlt-topics.md`
-- search-consumer·analytics 는 지금 DLT 발행기를 두지 않는다(예전 표에 있던 `search.*.DLT` 는 배선된 적이 없다)
+- search-consumer 는 `DltKafka.deadLetterRecoverer` 로 `product.item.*.DLT` 에 보낸다. 역직렬화 실패는 `ErrorHandlingDeserializer` 가 받아 재시도 없이 DLT 로 간다.
+  search 는 RDB 가 없어 `ops_issue` 적재·어드민 재처리는 두지 않는다 — DLT 토픽이 기록이고, 재처리는 원 토픽으로 재발행(`docs/runbooks/legacy-dlt-topics.md` 의 절차)
+- analytics 는 지금 DLT 발행기를 두지 않는다
 - 업무상 실패(재고 부족·만료·거절)는 DLT 가 아니라 `…failed{reason}` 답 이벤트다. DLT 는 계약 위반(필드 누락·금액 불일치)과 인프라 오류만
 
 DLT 토픽은 원 토픽 이름에서 기계적으로 나온다 — 원 토픽 하나마다 하나. 운영 클러스터가 토픽 자동 생성을 끈 환경이면
