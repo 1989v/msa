@@ -16,4 +16,10 @@ object RegionCaches {
      * 적재가 받은 지역의 키를 덮는다(write-through) — 비우지 않는다.
      */
     const val VISITORS = "placeRegionVisitors"
+
+    /**
+     * 시군구 날씨(기상청 단기·중기). 키는 시군구 법정동 코드 5자리. 적재가 받은 격자·구역을 쓰는 시군구의 키를 덮는다
+     * (write-through) — 비우지 않는다. 값은 신선도로 거르기 전이고, 거르기는 읽을 때 한다.
+     */
+    const val WEATHER = "placeWeather"
 }

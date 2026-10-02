@@ -168,7 +168,8 @@ questions:
       표본 50쌍 손 확인에서 정밀도 95% 이상이면 화면에 연다. 그 전에는 정확·정규화 매칭만 쓴다
   - id: Q-P2-MIDREG
     phase: pre-impl
-    status: open
+    status: resolved
+    answer: 시군구 267 전부 매핑 — 이름 193 · 자치구 70 · 광역시 소속 군 4 · 최근접 0, 기온 regId 163(중기 하루 173콜). 원천 활용가이드 241128 + 구역코드 2025.12
     question: 중기 기온 regId 목록 규모와 시군구 매핑 일치율
     default: >-
       기상청 활용가이드 구역코드표를 시드로 적재하고 이름 일치 → 같은 권역 최근접 도시 순서로 잇는다. 일치율을 시드 적재 때 implementation/ 에 남긴다

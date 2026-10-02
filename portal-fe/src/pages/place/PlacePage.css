@@ -1596,3 +1596,81 @@ button.place-card {
   font-size: 0.75rem;
   color: var(--ko-text-muted);
 }
+
+/* 관광지 상세 「○○구 날씨」 — 오늘 ~ 10일 한 줄씩. 색은 토큰만 쓴다(DESIGN.md) */
+.place-weather {
+  margin-top: 1rem;
+}
+
+.place-weather-note,
+.place-weather-source {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--ko-text-muted);
+}
+
+.place-weather-list {
+  list-style: none;
+  margin: 0.25rem 0;
+  padding: 0;
+  font-size: 0.85rem;
+}
+
+.place-weather-day {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr) max-content;
+  gap: 0.75rem;
+  align-items: baseline;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+.place-weather-date {
+  color: var(--ko-text-secondary);
+  white-space: nowrap;
+}
+
+.place-weather-halves {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.9rem;
+  min-width: 0;
+}
+
+.place-weather-half {
+  display: inline-flex;
+  gap: 0.3rem;
+  align-items: baseline;
+}
+
+.place-weather-half-label {
+  font-size: 0.75rem;
+  color: var(--ko-text-muted);
+}
+
+.place-weather-sky {
+  color: var(--ko-text-primary);
+}
+
+.place-weather-pop {
+  font-family: var(--kh-font-mono);
+  font-size: 0.75rem;
+  color: var(--ko-text-secondary);
+}
+
+.place-weather-temp {
+  font-family: var(--kh-font-mono);
+  color: var(--ko-text-primary);
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .place-weather-day {
+    grid-template-columns: minmax(0, 1fr) max-content;
+  }
+
+  .place-weather-halves {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}

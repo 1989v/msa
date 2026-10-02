@@ -129,6 +129,26 @@ def put_wellness(lang: str, items: list[dict]) -> dict:
     return _request("PUT", "/internal/attractions/wellness", {"lang": lang, "items": items}, timeout=300)["data"]
 
 
+def fetch_sigungu_regions() -> list[dict]:
+    """시군구 전부(약 270) — code · parentCode · name · 대표점 좌표. 날씨 단위 계산의 입력이다."""
+    return _request("GET", "/api/places/administrative-regions?level=SIGUNGU")["data"]["regions"]
+
+
+def put_weather_areas(mid_regions: list[dict], areas: list[dict]) -> dict:
+    """시군구 → 격자 · 중기 구역 매핑과 중기 구역 시드. 받은 행만 덮고 보내지 않은 시군구는 지우지 않는다."""
+    return _request("PUT", "/internal/weather/areas", {"midRegions": mid_regions, "areas": areas}, timeout=300)["data"]
+
+
+def put_weather_short(records: list[dict]) -> dict:
+    """단기예보 — 격자마다 발표본 하나. place 가 그 격자를 쓰는 시군구의 날씨 캐시를 다시 채운다."""
+    return _request("PUT", "/internal/weather/short", {"items": records}, timeout=300)["data"]
+
+
+def put_weather_mid(records: list[dict]) -> dict:
+    """중기예보 — (구역, 종류)마다 발표본 하나. place 가 그 구역을 쓰는 시군구의 날씨 캐시를 다시 채운다."""
+    return _request("PUT", "/internal/weather/mid", {"items": records}, timeout=300)["data"]
+
+
 def put_region_visitors(records: list[dict]) -> dict:
     """지역 방문자 일자 행 — (수준, 지역, 날짜, 구분) 키로 upsert. place 가 받은 지역의 허브 캐시를 다시 채운다."""
     total = {"applied": 0, "regions": 0}

@@ -1,0 +1,51 @@
+# 중기예보 수집 CronJob — 기상청 MidFcstInfoService getMidLandFcst · getMidTa (data.go.kr 15059468).
+#
+# 06시 발표 하루 한 번 — 06시 발표만 4일 뒤 값을 준다(18시 발표는 5일 뒤부터, 활용가이드 2024-11-28 개정).
+# 하루 호출: 육상 권역 10 + 시군구가 쓰는 기온 regId 163 = 173 (2026-10-02 매핑 실측, 한도 1,000, 예산 상수 MID_BUDGET=200).
+# 구역은 기상청 활용가이드 육상 권역 표 + 첨부 중기기온예보구역코드(2025.12) — src/weather_grid.py.
+# 한도 초과면 받은 몫만 보낸다. place 가 받은 구역을 쓰는 시군구의 날씨 캐시를 다시 채운다.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: place-ingest-weather-mid
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: place-ingest
+    app.kubernetes.io/part-of: commerce-platform
+    place.kgd.io/job: "weather-mid"
+spec:
+  # 매일 UTC 21:25 = KST 06:25. 06:00 사진 수집(TourAPI) 과 오퍼레이션·한도가 다르다.
+  schedule: "25 21 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 900
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: place-ingest
+            app.kubernetes.io/part-of: commerce-platform
+            place.kgd.io/job: "weather-mid"
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: ingest
+              image: commerce/place-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--job=weather-mid"]
+              env:
+                - name: PLACE_API
+                  value: "http://content:8097"
+                - name: TOUR_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: place-ingest-secrets
+                      key: tour-api-key
+                      optional: true
+              resources:
+                requests: { cpu: 100m, memory: 256Mi }
+                limits:   { memory: 512Mi }

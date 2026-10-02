@@ -192,6 +192,41 @@ export const fetchAdministrativeRegions = async (
   return res.data.data.regions;
 };
 
+/** 반나절(또는 하루) 날씨 — sky 는 기상청 중기예보 표현(맑음 · 구름많음 · 흐리고 비 …), pop 은 강수확률(%). */
+export interface WeatherHalf {
+  sky: string;
+  pop: number | null;
+}
+
+/** 하루 날씨. 단기(SHORT)와 중기 4~7일은 am/pm, 중기 8~10일은 allDay 하나. 원천에 없는 칸은 null. */
+export interface WeatherDay {
+  date: string; // yyyy-MM-dd
+  source: 'SHORT' | 'MID';
+  min: number | null;
+  max: number | null;
+  am: WeatherHalf | null;
+  pm: WeatherHalf | null;
+  allDay: WeatherHalf | null;
+}
+
+export interface WeatherOutlook {
+  sigunguCode: string;
+  /** 단기·중기 발표 시각(yyyy-MM-ddTHH:mm, KST). 그 출처의 날이 없으면 null */
+  shortBaseAt: string | null;
+  midTmFc: string | null;
+  /** 오늘부터, 신선도 기준을 넘긴 발표본의 날은 서버가 뺀다. 비면 절을 그리지 않는다 */
+  days: WeatherDay[];
+}
+
+/**
+ * 시군구 날씨(기상청 단기·중기예보). place 의 레디스 캐시 경로다 — 수집이 쓰면서 캐시를 채우고,
+ * 이 요청은 캐시를 놓칠 때만 MySQL 에 닿는다 (ADR-0071 §10).
+ */
+export const fetchWeather = async (sigunguCode: string): Promise<WeatherOutlook> => {
+  const res = await api.get<ApiResponse<WeatherOutlook>>(`/api/places/weather?sigungu=${encodeURIComponent(sigunguCode)}`);
+  return res.data.data;
+};
+
 /** 지역 방문자 월 합계 — 현지인 · 외지인 · 외국인(원천 touDivCd 1·2·3). 다 받은 달만 온다. */
 export interface RegionVisitorMonth {
   month: string; // yyyy-MM

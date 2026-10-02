@@ -12,3 +12,5 @@ resources:
   - cronjob-tour-sync.yaml
   - cronjob-attraction-attrs.yaml
   - cronjob-visitors.yaml
+  - cronjob-weather-short.yaml
+  - cronjob-weather-mid.yaml

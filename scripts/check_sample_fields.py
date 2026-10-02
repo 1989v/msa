@@ -4,6 +4,7 @@
 판정 근거는 **수집기 자신이 만든 레코드**다. 표본(`implementation/sample-phase2-apis.json`)의 행을 수집기의
 레코드 함수(place-ingest `src/*.py`)에 넣고, 나온 레코드에서 원천 키·값을 되찾는다:
   - 레코드 값 중 JSON 객체 문자열(원문 컬럼)을 풀어 같은 키·같은 값이 있으면 남은 것이다
+    (원문이 행 배열이면 — 단기예보는 격자 하나의 행 전부를 한 컬럼에 담는다 — 배열 안의 객체를 본다)
   - 레코드에 같은 이름·같은 값으로 편 키도 남은 것이다
 표본의 키 집합(`keys`) 중 되찾지 못한 키가 있으면 그 API 는 실패다 — 정규 컬럼만 골라 싣는 레코드 함수가 여기서 걸린다.
 
@@ -17,6 +18,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
@@ -24,7 +26,7 @@ REPO = Path(__file__).resolve().parents[1]
 SAMPLE = REPO / "docs/specs/2026-10-02-place-tour-portal-expansion/implementation/sample-phase2-apis.json"
 sys.path.insert(0, str(REPO / "place" / "ingest"))
 
-from src import barrier_free, visitors, wellness  # noqa: E402
+from src import barrier_free, visitors, weather, wellness  # noqa: E402
 
 Recorder = Callable[[dict], dict]
 
@@ -37,6 +39,9 @@ REGISTRY: dict[str, Recorder] = {
     "8 기초 20260801": lambda row: visitors.record("SIGUNGU", row),
     "8 광역 20260901": lambda row: visitors.record("SIDO", row),
     "8 광역 20260801": lambda row: visitors.record("SIDO", row),
+    "10 단기예보": lambda row: weather.short_record([row]),
+    "11 중기 육상": lambda row: weather.mid_record("LAND", datetime(2026, 10, 2, 6), row),
+    "11 중기 기온": lambda row: weather.mid_record("TA", datetime(2026, 10, 2, 6), row),
 }
 
 #: 안 하기로 한 API — 대장에도 넣지 않는다 (phase2-design §0).
@@ -48,13 +53,14 @@ def recovered_keys(row: dict, record: dict) -> set[str]:
     for name, value in record.items():
         if name in row and value == row[name]:
             found.add(name)
-        if isinstance(value, str) and value.lstrip().startswith("{"):
+        if isinstance(value, str) and value.lstrip().startswith(("{", "[")):
             try:
                 raw = json.loads(value)
             except json.JSONDecodeError:
                 continue
-            if isinstance(raw, dict):
-                found |= {k for k, v in raw.items() if k in row and v == row[k]}
+            for obj in (raw if isinstance(raw, list) else [raw]):
+                if isinstance(obj, dict):
+                    found |= {k for k, v in obj.items() if k in row and v == row[k]}
     return found
 
 
@@ -95,9 +101,11 @@ def self_test(sample: dict) -> bool:
     column_only: dict[str, Recorder] = {
         "1 무장애 목록": lambda row: {"contentId": row["contentid"], "listModifiedAt": row.get("modifiedtime")},
         "7 웰니스": lambda row: {"contentId": row["contentId"], "themaCd": row.get("wellnessThemaCd")},
+        "10 단기예보": lambda row: {"nx": row["nx"], "ny": row["ny"], "baseDate": row["baseDate"]},
     }
     missing, _ = check(sample, column_only)
-    caught = set(missing) == set(column_only) and "title" in missing["1 무장애 목록"] and "mapX" in missing["7 웰니스"]
+    caught = (set(missing) == set(column_only) and "title" in missing["1 무장애 목록"] and "mapX" in missing["7 웰니스"]
+              and "fcstValue" in missing["10 단기예보"])
     print(f"self-test: 원문을 버리는 레코드 함수 → {'빨간불(정상)' if caught else '초록불 — 판정이 아무것도 안 잰다'}")
     return caught
 

@@ -8,6 +8,7 @@ vi.mock('../../../api/placeApi', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../api/placeApi')>()),
   searchAttractions: vi.fn(),
   fetchAttraction: vi.fn(),
+  fetchWeather: vi.fn(),
 }));
 vi.mock('../../../components/favorite/FavoriteButton', () => ({ default: () => null }));
 // 지면은 자리 표시만 남긴다 — 어느 상세에 attraction-end 가 그려지는지 본다
@@ -19,9 +20,13 @@ vi.mock('../../../analytics/tracker', async (importOriginal) => ({
   track: vi.fn(),
 }));
 
-import { fetchAttraction, searchAttractions } from '../../../api/placeApi';
+import { fetchAttraction, fetchWeather, searchAttractions, type WeatherOutlook } from '../../../api/placeApi';
 import { track } from '../../../analytics/tracker';
+import { todayKst } from '../../../seo/eventSchedule';
 import AttractionPage from '../AttractionPage';
+
+// 날씨는 따로 다루는 묶음 밖에서는 빈 응답 — 절이 없다
+vi.mocked(fetchWeather).mockResolvedValue({ sigunguCode: '11110', shortBaseAt: null, midTmFc: null, days: [] });
 
 const card = (id: string, category = 'history'): Attraction => ({
   id, contentId: id, lang: 'ko', title: `명소 ${id}`, category, areaCode: null,
@@ -565,5 +570,83 @@ describe('AttractionPage 근처 행사 · 근처 숙소', () => {
       cleanup();
     }
     expect(clicked).toEqual([['NEARBY_EVENTS', 5, '601'], ['NEARBY_STAYS', 4, '701']]);
+  });
+});
+
+describe('AttractionPage 날씨', () => {
+  const today = todayKst();
+  const plus = (n: number) => new Date(Date.parse(`${today}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
+  const outlook: WeatherOutlook = {
+    sigunguCode: '11110',
+    shortBaseAt: `${today}T05:00`,
+    midTmFc: `${today}T06:00`,
+    days: [
+      // 서버가 이미 거른 뒤지만, 자정을 넘겨 화면에 남은 어제 날은 화면도 그리지 않는다
+      { date: plus(-1), source: 'SHORT', min: 1, max: 2, am: null, pm: { sky: '맑음', pop: 0 }, allDay: null },
+      { date: today, source: 'SHORT', min: null, max: 22, am: { sky: '맑음', pop: 0 }, pm: { sky: '흐리고 비', pop: 60 }, allDay: null },
+      { date: plus(1), source: 'SHORT', min: 11, max: 23, am: { sky: '구름많음', pop: 20 }, pm: { sky: '구름많음', pop: 30 }, allDay: null },
+      { date: plus(10), source: 'MID', min: 15, max: 24, am: null, pm: null, allDay: { sky: '구름많음', pop: 20 } },
+    ],
+  };
+
+  beforeEach(() => {
+    vi.mocked(searchAttractions).mockResolvedValue({ searchId: 's', attractions: [], totalElements: 0, totalPages: 0, currentPage: 0 });
+  });
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+    vi.mocked(fetchWeather).mockResolvedValue({ sigunguCode: '11110', shortBaseAt: null, midTmFc: null, days: [] });
+  });
+
+  it('「종로구 날씨」 — 시군구 코드로 부르고, 시군구 단위임을 밝히고, 오늘부터 그리며 출처 「기상청」과 발표 시각을 단다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue(enriched);
+    vi.mocked(fetchWeather).mockResolvedValue(outlook);
+    renderAt('/attractions/100');
+    const section = await screen.findByRole('region', { name: '종로구 날씨' });
+
+    expect(fetchWeather).toHaveBeenCalledWith('11110');
+    expect(within(section).getByText(/종로구 단위 예보/)).toBeInTheDocument();
+    const days = within(section).getAllByRole('listitem');
+    expect(days).toHaveLength(3);
+    expect(days[0].textContent).toContain('오늘');
+    expect(days[0].textContent).toContain('흐리고 비');
+    expect(days[0].textContent).toContain('60%');
+    // 원천에 없는 최저는 0 이 아니라 빈칸
+    expect(days[0].textContent).toContain('– / 22°');
+    expect(days[1].textContent).toContain('내일');
+    // 중기 8~10일은 하루 하나
+    expect(days[2].getAttribute('data-weather-source')).toBe('MID');
+    expect(days[2].textContent).not.toContain('오전');
+    expect(days[2].textContent).toContain('15° / 24°');
+    expect(within(section).getByText(/출처: 기상청 단기예보·중기예보/).textContent).toMatch(/단기 \d+월 \d+일 05:00 발표 · 중기 \d+월 \d+일 06:00 발표/);
+  });
+
+  it('날이 하나도 없으면(신선도 초과 · 매핑 없는 시군구) 절을 그리지 않는다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue(enriched);
+    renderAt('/attractions/100');
+    await screen.findByRole('region', { name: '지역 안 위치' });
+    await vi.waitFor(() => expect(fetchWeather).toHaveBeenCalled());
+    expect(screen.queryByRole('region', { name: '종로구 날씨' })).toBeNull();
+  });
+
+  it('시군구를 모르는 문서는 날씨를 부르지 않는다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, region: undefined });
+    renderAt('/attractions/100');
+    await screen.findByText('조선의 법궁이다.');
+    expect(fetchWeather).not.toHaveBeenCalled();
+  });
+
+  it('영문 화면 — Weather in … · 기상청 표현을 영문으로, 모르는 표현은 원문 그대로', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, lang: 'en', region: { ...enriched.region!, sigunguName: 'Jongno-gu' } });
+    vi.mocked(fetchWeather).mockResolvedValue({
+      ...outlook,
+      days: [{ ...outlook.days[1], pm: { sky: '흐리고 비', pop: 60 }, am: { sky: '안개', pop: null } }],
+    });
+    renderAt('/en/attractions/100');
+    const section = await screen.findByRole('region', { name: 'Weather in Jongno-gu' });
+    expect(section.textContent).toContain('Today');
+    expect(section.textContent).toContain('Cloudy, rain');
+    expect(section.textContent).toContain('안개');
+    expect(section.textContent).toContain('Korea Meteorological Administration');
   });
 });

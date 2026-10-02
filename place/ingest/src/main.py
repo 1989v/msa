@@ -14,6 +14,8 @@ K8s CronJob 이 본 모듈을 --job 으로 분기해 호출한다:
     python -m src.main --job=attraction-attrs      # 무장애(목록 1 + 상세 ≤ 899) · 웰니스(월요일만 2콜)
     python -m src.main --job=visitors              # 지역 방문자 열흘 창 (기초·광역 하루 2콜)
     python -m src.main --job=visitors --from=2025-09   # 지역 방문자 백필 1회 (달마다 4콜)
+    python -m src.main --job=weather-short         # 단기예보 최근 발표(05·17시) — 고유 격자마다 1콜 (회차당 243)
+    python -m src.main --job=weather-mid           # 중기예보 06시 발표 — 육상 10 + 기온 regId (하루 약 173콜)
 
 외부 :443 을 부르는 것은 이 CronJob 파드뿐이다 — 상시 파드인 place 에는 egress 를 열지 않는다
 (ADR-0031 §5.10 화이트리스트에 place-ingest 만 추가).
@@ -26,13 +28,14 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+from datetime import datetime
 
 from pathlib import Path
 
 from src import (administrative_region, backfill_intro, backfill_overview, barrier_free, google_place, naver, place_client,
                  backfill_media, popularity, quota, sync_lcls_codes, sync_pet_tour,
                  sync_tour,
-                 visitors, wellness, youtube)
+                 visitors, weather, wellness, youtube)
 
 
 def _api_key() -> str:
@@ -113,6 +116,14 @@ def _job_visitors(from_month: str | None, key: str | None = None, today=None) ->
     key = key or _api_key()
     today = today or sync_tour.kst_today()
     summary = visitors.run_backfill(key, from_month, today) if from_month else visitors.run_daily(key, today)
+    return 1 if summary["failed"] else 0
+
+
+def _job_weather(kind: str, key: str | None = None, now=None) -> int:
+    """날씨 — 단기(회차마다 최근 발표) 또는 중기(06시 발표). 한도 초과로 멈춘 것은 실패가 아니다."""
+    key = key or _api_key()
+    now = now or datetime.now(sync_tour.KST).replace(tzinfo=None)
+    summary = weather.run_short(key, now) if kind == "short" else weather.run_mid(key, now)
     return 1 if summary["failed"] else 0
 
 
@@ -328,7 +339,7 @@ def main() -> int:
     ap.add_argument("--job", required=True,
                     choices=["overview", "intro", "media", "stats", "sync", "tour-portal-sync", "links",
                              "administrative-regions", "google-places", "lcls-codes", "pet-tour",
-                             "attraction-attrs", "visitors"])
+                             "attraction-attrs", "visitors", "weather-short", "weather-mid"])
     ap.add_argument("--budget", type=int, default=int(os.environ.get("BUDGET", "1000")),
                     help="개요 수집 일일 예산 (언어별, detailCommon2 호출 상한)")
     ap.add_argument("--lang", choices=["ko", "en"], help="미지정 시 ko·en 둘 다")
@@ -370,6 +381,8 @@ def main() -> int:
         return _job_attraction_attrs(barrier_free.DAILY_BUDGET, True if args.wellness else None)
     if args.job == "visitors":
         return _job_visitors(args.from_month)
+    if args.job in ("weather-short", "weather-mid"):
+        return _job_weather(args.job.removeprefix("weather-"))
     if args.job == "tour-portal-sync":
         return _job_tour_portal_sync()
     return _job_sync(args.content_type, args.limit)

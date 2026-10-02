@@ -215,12 +215,12 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
     - [x] 12.C.3 Verify: `cd place/ingest && python -m pytest -q tests/visitors_test.py && cd ../.. && ./gradlew :place:feature:test --tests '*RegionVisitor*' && (cd portal-fe && npx vitest run src/pages/place/__tests__/placeServingPaths.test.tsx src/pages/place/__tests__/RegionPage.test.tsx)`
     - [x] 12.C.4 배포: content(V26) → place-ingest → portal-fe
     - [ ] 12.C.5 운영 확인: 하루 적재 = 기초 807 + 광역 행 · 공개 지연 값 기록 · 허브 응답 두 번째 호출이 레디스 적중(place 로그)
-  - [ ] 12.D 단기·중기 날씨 (V27 · 단기 05:25·17:25 486콜/일 · 중기 06:25 ≤ 200콜/일)
-    - [ ] 12.D.1 Write tests: 격자 변환(서울 시청 → (60,127) 등 기상청 표 검산점) · 시군구 269 → 고유 격자 243(운영 대표점 픽스처) · 중기 regId 매핑(시드 표 → 시군구 전부 매핑, Q-P2-MIDREG) · 신선도(발표 24시간 초과 → 응답에서 빠짐) · 서빙 경로 허용 목록
-    - [ ] 12.D.2 구현: V27 · 구역코드표 시드 · 잡 둘 · `GET /api/places/weather?sigungu=` 캐시 · 상세 「○○구 날씨」(3일 + 4~10일), 출처 「기상청」
-    - [ ] 12.D.3 Verify: `cd place/ingest && python -m pytest -q tests/weather_grid_test.py tests/weather_test.py && cd ../.. && ./gradlew :place:feature:test --tests '*Weather*' && (cd portal-fe && npx vitest run src/pages/place/__tests__/placeServingPaths.test.tsx src/pages/place/__tests__/AttractionPage.test.tsx)`
-    - [ ] 12.D.4 배포: content(V27) → place-ingest → portal-fe
-    - [ ] 12.D.5 운영 확인: 회차당 호출 = 고유 격자 수 · 하루 합 ≤ 1,000 · 표본 상세 날씨 절과 원천 값 대조 · CDP 4조합
+  - [x] 12.D 단기·중기 날씨 (V27 · 단기 05:25·17:25 486콜/일 · 중기 06:25 ≤ 200콜/일)
+    - [x] 12.D.1 Write tests: 격자 변환(서울 시청 → (60,127) 등 기상청 표 검산점) · 시군구 269 → 고유 격자 243(운영 대표점 픽스처) · 중기 regId 매핑(시드 표 → 시군구 전부 매핑, Q-P2-MIDREG) · 신선도(발표 24시간 초과 → 응답에서 빠짐) · 서빙 경로 허용 목록
+    - [x] 12.D.2 구현: V27 · 구역코드표 시드 · 잡 둘 · `GET /api/places/weather?sigungu=` 캐시 · 상세 「○○구 날씨」(3일 + 4~10일), 출처 「기상청」
+    - [x] 12.D.3 Verify: `cd place/ingest && python -m pytest -q tests/weather_grid_test.py tests/weather_test.py && cd ../.. && ./gradlew :place:feature:test --tests '*Weather*' && (cd portal-fe && npx vitest run src/pages/place/__tests__/placeServingPaths.test.tsx src/pages/place/__tests__/AttractionPage.test.tsx)`
+    - [x] 12.D.4 배포: content(V27) → place-ingest → portal-fe
+    - [x] 12.D.5 운영 확인: 회차당 호출 = 고유 격자 수 · 하루 합 ≤ 1,000 · 표본 상세 날씨 절과 원천 값 대조 · CDP 4조합
   - [ ] 12.E 집중률 (V28 · `place-ingest-congestion` 매일 02:00 · 하루 269콜)
     - [ ] 12.E.1 Write tests: 이름 매칭 순수 함수 — 실측 세 시군구 원천 행 픽스처에서 정확 284 · 정규화 306 · 모호 4(설계 §2.1 수치) · 시군구 단위 교체가 받지 못한 시군구를 지우지 않음 · 색인 `congestion` 왕복 · 화면이 오늘 이전 날짜를 그리지 않음
     - [ ] 12.E.2 구현: V28 · 매칭 함수(연관과 공용) · 잡 · lookup 확장 · 색인 필드 · 상세 「혼잡 예측」 · 0건 시군구 로그(Q-P2-CODE12)

@@ -20,6 +20,15 @@ import com.kgd.place.infrastructure.persistence.region.repository.Administrative
 import com.kgd.place.infrastructure.persistence.region.repository.RegionJpaRepository
 import com.kgd.place.infrastructure.persistence.region.repository.RegionVisitorDailyJpaRepository
 import com.kgd.place.infrastructure.persistence.region.adapter.RegionVisitorRepositoryAdapter
+import com.kgd.place.application.weather.port.WeatherRepositoryPort
+import com.kgd.place.domain.weather.model.MidKind
+import com.kgd.place.domain.weather.model.MidRegion
+import com.kgd.place.domain.weather.model.WeatherArea
+import com.kgd.place.infrastructure.persistence.weather.adapter.WeatherRepositoryAdapter
+import com.kgd.place.infrastructure.persistence.weather.repository.WeatherMidForecastJpaRepository
+import com.kgd.place.infrastructure.persistence.weather.repository.WeatherMidRegionJpaRepository
+import com.kgd.place.infrastructure.persistence.weather.repository.WeatherShortForecastJpaRepository
+import com.kgd.place.infrastructure.persistence.weather.repository.WeatherSigunguGridJpaRepository
 import com.kgd.place.domain.region.model.AdministrativeRegionLevel
 import com.kgd.place.domain.region.model.RegionVisitorDaily
 import java.math.BigDecimal
@@ -79,6 +88,10 @@ class PlaceSchemaIntegrationSpec(
     @Autowired private val r7: AttractionBarrierFreeJpaRepository,
     @Autowired private val r8: AttractionWellnessJpaRepository,
     @Autowired private val r9: RegionVisitorDailyJpaRepository,
+    @Autowired private val w0: WeatherSigunguGridJpaRepository,
+    @Autowired private val w1: WeatherShortForecastJpaRepository,
+    @Autowired private val w2: WeatherMidRegionJpaRepository,
+    @Autowired private val w3: WeatherMidForecastJpaRepository,
     @Autowired private val tx: TransactionTemplate,
 ) : BehaviorSpec({
 
@@ -87,7 +100,7 @@ class PlaceSchemaIntegrationSpec(
             .config(enabledIf = { dockerAvailable }) {
                 // count() 는 엔티티마다 실제 SQL 을 MySQL 로 보낸다 — 컬럼이 어긋나면
                 // validate 에서 컨텍스트가 아예 안 뜨고, 뜬 뒤에도 매핑이 틀리면 여기서 터진다.
-                listOf(r0, r1, r2, r3, r4, r5, r6, r7, r8, r9).map { it.count() }.size shouldBe 10
+                listOf(r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, w0, w1, w2, w3).map { it.count() }.size shouldBe 14
             }
     }
 
@@ -199,6 +212,52 @@ class PlaceSchemaIntegrationSpec(
                 tx.execute { adapter.replaceWellness("ko", listOf(tag("2994116")), synced) } shouldBe
                     setOf(ids.getValue("2994116"), ids.getValue("127956"))
                 adapter.findWellnessByAttractionIds(ids.values).map { it.contentId } shouldBe listOf("2994116")
+            }
+    }
+
+    Given("날씨를 V27 표에 적재할 때") {
+        Then("매핑·구역은 키로 덮이고, 예보는 같거나 새 발표만 덮으며(늦게 온 옛 발표는 무시), 원문이 그대로 읽혀야 한다")
+            .config(enabledIf = { dockerAvailable }) {
+                val adapter = WeatherRepositoryAdapter(w0, w1, w2, w3)
+                val at = LocalDateTime.of(2026, 10, 2, 17, 30)
+                tx.execute {
+                    adapter.upsertMidRegions(listOf(MidRegion("11B00000", MidKind.LAND, "서울, 인천, 경기도"), MidRegion("11B10101", MidKind.TA, "서울")))
+                    adapter.upsertAreas(
+                        listOf(
+                            WeatherArea("11110", 60, 127, "11B00000", "11B10101", "NAME"),
+                            WeatherArea("11140", 60, 127, "11B00000", "11B10101", "METRO"),
+                            WeatherArea("26350", 99, 75, "11H20000", "11H20201", "METRO"),
+                        ),
+                        at,
+                    )
+                }
+                // 대표점이 옮겨 가면 매핑이 덮인다
+                tx.execute { adapter.upsertAreas(listOf(WeatherArea("26350", 98, 76, "11H20000", "11H20201", "METRO")), at.plusHours(12)) }
+                adapter.findArea("26350") shouldBe WeatherArea("26350", 98, 76, "11H20000", "11H20201", "METRO")
+                w2.findById("11B10101").get().name shouldBe "서울"
+
+                val raw0500 = """[{"baseDate":"20261002","baseTime":"0500","category":"TMX","fcstDate":"20261002","fcstTime":"1500","fcstValue":"22.0","nx":60,"ny":127}]"""
+                val raw1700 = """[{"baseDate":"20261002","baseTime":"1700","category":"TMN","fcstDate":"20261003","fcstTime":"0600","fcstValue":"12.0","nx":60,"ny":127}]"""
+                val base0500 = LocalDateTime.of(2026, 10, 2, 5, 0)
+                val base1700 = LocalDateTime.of(2026, 10, 2, 17, 0)
+                tx.execute { adapter.upsertShort(listOf(WeatherRepositoryPort.ShortRaw(60, 127, base1700, raw1700)), at) }
+                // 늦게 도착한 05시 발표본(재실행)은 17시 발표본을 덮지 않는다
+                tx.execute { adapter.upsertShort(listOf(WeatherRepositoryPort.ShortRaw(60, 127, base0500, raw0500)), at.plusHours(1)) }
+                val short = adapter.findShort(60, 127)!!
+                short.baseAt shouldBe base1700
+                short.items.single().category shouldBe "TMN"
+                w1.count() shouldBe 1
+
+                val tmFc = LocalDateTime.of(2026, 10, 2, 6, 0)
+                tx.execute { adapter.upsertMid(listOf(WeatherRepositoryPort.MidRaw("11B10101", MidKind.TA, tmFc, """{"regId":"11B10101","taMin4":10}""")), at) }
+                tx.execute { adapter.upsertMid(listOf(WeatherRepositoryPort.MidRaw("11B10101", MidKind.TA, tmFc.minusDays(1), """{"regId":"11B10101","taMin4":3}""")), at) }
+                tx.execute { adapter.upsertMid(listOf(WeatherRepositoryPort.MidRaw("11B10101", MidKind.TA, tmFc.plusDays(1), """{"regId":"11B10101","taMin4":11}""")), at) }
+                adapter.findMid("11B10101", MidKind.TA)!!.let { (it.tmFc to it.fields["taMin4"]) } shouldBe (tmFc.plusDays(1) to "11")
+                adapter.findMid("11B10101", MidKind.LAND) shouldBe null
+
+                adapter.findSigunguByGrids(listOf(60 to 127)).toSet() shouldBe setOf("11110", "11140")
+                adapter.findSigunguByMidRegions(listOf("11H20201")) shouldBe listOf("26350")
+                adapter.findSigunguByMidRegions(listOf("11B00000")).toSet() shouldBe setOf("11110", "11140")
             }
     }
 

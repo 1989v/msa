@@ -4,6 +4,7 @@ import com.kgd.place.application.region.service.RegionCaches
 import com.kgd.place.application.region.usecase.AdministrativeRegionUseCase
 import com.kgd.place.application.region.usecase.GetRegionUseCase
 import com.kgd.place.application.region.usecase.RegionVisitorUseCase
+import com.kgd.place.application.weather.usecase.WeatherUseCase
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.cache.Cache
 import org.springframework.cache.annotation.CachingConfigurer
@@ -56,6 +57,12 @@ class RegionCacheConfig : CachingConfigurer {
          * 지역(레디스 장애 중 적재)도 다음 날 안에 캐시를 놓친 요청이 새로 채운다.
          */
         val VISITORS_TTL: Duration = Duration.ofHours(26)
+
+        /**
+         * 날씨도 적재가 덮는다. 단기 수집이 05:25 · 17:25 로 12시간 간격이라 TTL 은 다음 회차 + 한 시간 — 덮기가 실패한
+         * 시군구도 다음 회차 안에 캐시를 놓친 요청이 새로 채운다. 신선도(발표 24시간)는 캐시와 별개로 읽을 때 거른다.
+         */
+        val WEATHER_TTL: Duration = Duration.ofHours(13)
         private const val SCAN_BATCH = 100
 
         fun cacheManager(writer: RedisCacheWriter): RedisCacheManager {
@@ -73,6 +80,7 @@ class RegionCacheConfig : CachingConfigurer {
                 .withCacheConfiguration(RegionCaches.ADMINISTRATIVE, config(listSerializer(AdministrativeRegionUseCase.View::class.java)))
                 .withCacheConfiguration(RegionCaches.GEONAMES, config(listSerializer(GetRegionUseCase.RegionView::class.java)))
                 .withCacheConfiguration(RegionCaches.VISITORS, config(valueSerializer(RegionVisitorUseCase.Trend::class.java), VISITORS_TTL))
+                .withCacheConfiguration(RegionCaches.WEATHER, config(valueSerializer(WeatherUseCase.Outlook::class.java), WEATHER_TTL))
                 // 이름을 모르는 캐시는 만들지 않는다 — 기본 설정(JDK 직렬화)으로 조용히 생기면 값이 깨진다
                 .disableCreateOnMissingCache()
                 .build()

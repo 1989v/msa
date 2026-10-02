@@ -52,3 +52,6 @@
 | 12.A+B | 회귀 주입 16종 + 의료관광 제외(EX0508xx) | 전부 빨간불 · 운영 호출 101콜(정밀도 표본) |
 | 12.A+B 운영 | 배포 cff5116 · V25 · 첫 수집(--wellness) · 재색인 | 무장애 목록 9,630 → 붙음 9,623 · 상세 899 · 실패 0 · 호출 900 · 웰니스 국 168/170 · 영 92/92 · 패싯 국 휠체어 265 · 엘리베이터 88 · 장애인 화장실 782 · 웰니스 168 · 경복궁 SSR barrier-free 절·출처 줄 |
 | 12.C | pytest 4파일 · place domain·feature(통합 포함) · ContentContextLoadSpec --rerun · 게이트 · vitest 2 · tsc(app) | 30 passed · 6·4·5·7·8 tests 0 실패 · BUILD SUCCESSFUL · 12 passed · exit 0 |
+| 12.C 운영 | 배포 361870c · V26 · 백필 --from=2025-09 | 258초 · 호출 52 · 시군구 293,425 · 시도 18,675행 · API 11110 200(12개월, latestDate 2026-09-02) · 레디스 키 생성 |
+| 12.D | pytest 6파일 · check_sample_fields · place domain·feature(통합) · ContentContextLoadSpec --rerun · 게이트 · vitest 3 · tsc(app) · kustomize | 69 passed · exit 0 · 8·8·5·8·4·5·8 tests 0 실패 · BUILD SUCCESSFUL · 44 passed · exit 0 · 단기 25 8,20 / 중기 25 21 (UTC) |
+| 12.D | 회귀 주입 13종 + 광역시 소속 군 규칙 | 전부 빨간불 · 격자 243 · 변환식 기상청 표 274행 중 270 일치 |

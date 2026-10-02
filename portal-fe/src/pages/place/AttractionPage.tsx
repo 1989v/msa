@@ -5,6 +5,7 @@ import {
   AMENITY_CATEGORIES,
   EVENT_CATEGORY,
   fetchAttraction,
+  fetchWeather,
   searchAttractions,
   SIGHT_CATEGORIES,
   STAY_CATEGORY,
@@ -34,6 +35,7 @@ import { useSeo } from '../../seo/useSeo';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import AttractionLinks from './AttractionLinks';
 import EventLine from './EventLine';
+import AttractionWeather from './AttractionWeather';
 import { googleMapsSearchUrl, loadGoogleMaps, mapsApiKey } from './googleMaps';
 import Footer from '../../components/Footer';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
@@ -197,6 +199,16 @@ export default function AttractionPage() {
         size: NEARBY_KIND_FETCH,
       }),
     enabled: attraction?.latitude != null && attraction?.longitude != null,
+  });
+
+  // 시군구 날씨 — place 레디스 캐시 경로(ADR-0071 §10). 조회 시점에 그리고 서버 렌더 본문에는 넣지 않는다.
+  // 실패하면 절만 빠진다 — 상세의 나머지를 막지 않는다.
+  const weatherCode = attraction ? regionHubCode(attraction) : null;
+  const { data: weather } = useQuery({
+    queryKey: ['attraction-weather', weatherCode],
+    queryFn: () => fetchWeather(weatherCode!),
+    enabled: weatherCode != null && weatherCode.length === 5,
+    staleTime: 30 * 60_000,
   });
 
   // 문서 자신의 언어를 SEO 기준으로 삼는다 — id 는 언어별로 다르므로 /en/attractions/{ko-id}
@@ -558,6 +570,11 @@ export default function AttractionPage() {
                   ))}
                 </ul>
               </section>
+            )}
+
+            {/* 날씨 — 서버 렌더에는 없는 절이라 위의 서버 렌더와 같은 순서 묶음 뒤에 둔다 */}
+            {weather && (
+              <AttractionWeather outlook={weather} place={regionPlaceName(attraction, lang)} today={today} lang={lang} />
             )}
 
             {/* 지도 — 링크만으로는 "어디쯤인지" 를 이 화면에서 알 수 없다.

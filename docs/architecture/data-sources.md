@@ -78,6 +78,9 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | 관광지 무장애 정보 | 관광공사 무장애 여행 `KorWithService2` (15101897) `areaBasedList2` · `detailWithTour2` (국문만) | 필요 (`TOUR_API_KEY` 재사용) | 이용허락범위 제한 없음 | `place/ingest --job=attraction-attrs` (매일 KST 02:40, 하루 ≤ 900콜) |
 | 관광지 웰니스 테마 | 관광공사 웰니스관광 `WellnessTursmService` (15144030) `areaBasedList` (국·영) | 필요 (〃) | 이용허락범위 제한 없음 | 〃 (월요일만, 주 2콜) |
 | 지역 방문자 수 | 관광공사 빅데이터 `DataLabService` (15101972) `locgoRegnVisitrDDList`(시군구) · `metcoRegnVisitrDDList`(시도) | 필요 (〃) | 이용허락범위 제한 없음 | `place/ingest --job=visitors` (매일 KST 02:30, 하루 2콜 · 백필 `--from=YYYY-MM` 1회 약 48콜) |
+| 단기예보(날씨) | 기상청 `VilageFcstInfoService_2.0` (15084084) `getVilageFcst` | 필요 (`TOUR_API_KEY` 재사용 — 같은 data.go.kr 계정 키) | **공공누리 제1유형(출처표시)** | `place/ingest --job=weather-short` (매일 KST 05:25 · 17:25, 회차당 고유 격자 243콜 · 하루 486) |
+| 중기예보(날씨) | 기상청 `MidFcstInfoService` (15059468) `getMidLandFcst` · `getMidTa` | 필요 (〃) | **공공누리 제1유형(출처표시)** | `place/ingest --job=weather-mid` (매일 KST 06:25, 육상 10 + 기온 163 = 하루 173콜) |
+| 중기 구역코드표 | 기상청 「중기예보 조회서비스 오픈API활용가이드」(241128) 육상 권역 표 + 첨부 「중기기온예보구역코드」(2025.12) | 불필요(포털 참고문서) | 공공누리 제1유형 | `place/ingest/src/weather_grid.py` 상수(남한 도시 176 + 육상 10) |
 | **행정구역(법정동)** | 행정안전부 행정표준코드관리시스템 | **불필요** | 공공누리 제1유형 | `place/ingest --job=administrative-regions` |
 | 세계 지명 계층 | GeoNames | 불필요 | **CC BY 4.0** | `tools/seed/place/normalize_regions.py` |
 | POI(상가) | 소상공인시장진흥공단 상가(상권)정보 | 필요 | 이용허락범위 제한없음 | `tools/seed/place/normalize_pois.py` |
@@ -188,10 +191,29 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 - 서빙: `GET /api/places/administrative-regions/{code}/visitors` → 레디스 `placeRegionVisitors::{code}`(TTL 26시간). 수집기가 `PUT /internal/regions/visitors` 로 보내면
   place 가 저장한 뒤 받은 지역의 키를 다시 계산해 덮는다(write-through). 다 받은 달만 월 합계로 낸다(공개 지연 때문에 최근 달은 늘 일부라서). 지역 프리렌더 본문에는 넣지 않는다.
 
+**날씨(기상청 단기·중기예보)는 시군구 단위 값이라 관광지 색인이 아니라 place 레디스 캐시 경로로 나간다** (2단계, CronJob `place-ingest-weather-short` · `place-ingest-weather-mid`).
+설계·실측: `docs/specs/2026-10-02-place-tour-portal-expansion/implementation/phase2-design.md` §2.4 · §4.
+- 원천: `apis.data.go.kr/1360000/VilageFcstInfoService_2.0` · `/1360000/MidFcstInfoService`. 키는 `TOUR_API_KEY`(같은 계정 키), 한도는 API 하나당 하루 1,000 으로 잡는다
+  (포털 표기 10,000 — 화면 값과 실제가 갈린 전례가 있어 확인 전까지 1,000). **이용허락 공공누리 제1유형** — 화면은 날씨 절 안에
+  「출처: 기상청 단기예보·중기예보」와 발표 시각을 단다.
+- 단위: 관광지 좌표 그대로면 고유 격자 3,671 이라 한 회차가 한도를 넘는다. 시군구 대표점(`administrative_regions` 좌표 = 그 시군구 관광지 좌표 평균)
+  269 중 좌표 있는 267 → 격자 243(2026-10-02). 부천시·안산시 행은 좌표가 없다(자치구 행이 따로 있다). 격자 변환은 기상청 활용가이드 식이고
+  같은 자료의 격자_위경도 표(2607) 1·2단계 274행 중 270행과 같다(다른 4행은 표 자신의 좌표·격자가 어긋난 행). 화면 제목은 「종로구 날씨」처럼 단위를 밝힌다.
+- 중기 구역: 육상 권역 10 은 활용가이드 표, 기온 regId 는 첨부 구역코드표의 도시(C) 코드 중 남한 176. 시군구 → 기온 regId 는 이름 일치(같은 권역 안) 193 ·
+  광역시 자치구 → 그 도시 70 · 광역시 소속 군 → 그 광역시 4(기장군 → 부산, 달성군 → 대구, 옹진군 → 인천, 울주군 → 울산) · 같은 권역 최근접 도시 0
+  (규칙은 남겨 둔다 — 새 시군구가 앞 세 단계에 안 걸리면 쓴다). 육상 권역은 기온 regId 앞자리가 정한다.
+- **단기 17시 발표는 격자 하나에 1,052행**이다(05시 발표는 907행) — 쪽 크기를 1,500 으로 둬 격자당 한 콜이다(1,000 이면 두 콜).
+- 발표: 단기는 05시·17시(예보 기간이 가장 긴 둘), 중기는 06시(18시 발표는 4일 뒤 값이 없다). 새 발표본이 옛 발표본을 바꾸고, 늦게 도착한 옛 발표본은 덮지 않는다.
+- 저장(V27): `weather_sigungu_grid`(시군구 → 격자 · 육상 · 기온 · 매핑 근거) · `weather_short_forecast`(격자당 발표본 하나, item 전부 원문 JSON) ·
+  `weather_mid_region`(구역코드표) · `weather_mid_forecast`((구역, 종류)당 발표본 하나, 항목 원문 JSON). 화면의 일별 값(최저·최고·오전/오후 하늘·강수확률)은 원문에서 읽을 때 만든다.
+- 서빙: `GET /api/places/weather?sigungu=` → 레디스 `placeWeather::{시군구}`(TTL 13시간). 수집기가 `PUT /internal/weather/short`·`/mid` 로 보내면 place 가 저장한 뒤
+  받은 격자·구역을 쓰는 시군구의 키를 다시 만들어 덮는다(write-through). 단기는 발표 24시간, 중기는 30시간이 지나면 응답에서 그 날들을 빼고(읽는 시각 기준),
+  남는 날이 없으면 화면이 절을 숨긴다. 검색 색인·서버 렌더 본문에는 넣지 않는다.
+
 > 원천 raw 응답은 레포에 커밋하지 않는다. 정규화 산출물만 적재한다.
 > 예외: 테스트 픽스처와 스펙 표본(`place/ingest/tests/fixtures/sample-*.json`, `place/ingest/tests/fixtures/phase2-*.json`,
 > `docs/specs/2026-10-02-place-tour-portal-expansion/implementation/sample-*.json`)은 응답 **몇 행**을 둔다
-> (무장애는 라벨 정밀도를 재려고 목록 100행 · 상세 100건을, 방문자는 시군구 코드 269개를 대조하려고 기초 한 날의 현지인 269행을 둔다) — 수집기가 실제 응답 모양을 다루는지는 지어낸 값으로 검사할 수 없어서다. 키·요청 URL 은 지우고
+> (무장애는 라벨 정밀도를 재려고 목록 100행 · 상세 100건을, 방문자는 시군구 코드 269개를 대조하려고 기초 한 날의 현지인 269행을, 날씨는 행 수·쪽 크기를 재려고 한 격자의 단기 발표 둘 전량(907 · 1,052행)과 기상청 격자표 1·2단계 274행을 둔다) — 수집기가 실제 응답 모양을 다루는지는 지어낸 값으로 검사할 수 없어서다. 키·요청 URL 은 지우고
 > 휴대전화 번호는 가린다(검사: 키 모양 문자열 grep, tasks 1.10).
 
 ---
