@@ -190,7 +190,7 @@ class AdminApiIntegrationSpec(
             ),
         )
 
-        then("규격을 추가·최저가 변경하면 응답·감사 요약이 형태별 최저가를 모두 싣고, 옛 지면 컬럼은 비어 있다") {
+        then("규격을 추가·최저가 변경하면 응답·감사 요약이 형태별 최저가를 모두 싣는다") {
             createPlacement("a-adm-fmt").status shouldBe 200
             val added = api.post("/api/v1/admin/ads/placements/a-adm-fmt/formats", admin, FormatSpecRequest(PlacementFormat.BANNER, listOf("6.4:1"), 50_000))
             added.status shouldBe 200
@@ -205,8 +205,6 @@ class AdminApiIntegrationSpec(
                 it shouldContain "BANNER:60000"
             }
             lastAudit("PLACEMENT_FORMAT_ADD", "a-adm-fmt") shouldContain "BANNER:50000"
-            jdbc.queryForMap("SELECT format, aspect_ratios, floor_micros FROM ad_placement WHERE placement_key = 'a-adm-fmt'").values
-                .toList() shouldBe listOf(null, null, null)
         }
         then("지면 응답에는 형태 규격만 있다 — 옛 필드(format·aspectRatios·floorMicros)가 없다") {
             api.patch("/api/v1/admin/ads/placements/a-adm-fmt/formats/CARD", admin, mapOf("floorMicros" to 120_000)).status shouldBe 200
@@ -215,8 +213,7 @@ class AdminApiIntegrationSpec(
             val listed = api.get("/api/v1/admin/ads/placements", admin).data.items().first { it["key"].asString() == "a-adm-fmt" }
             listOf("format", "aspectRatios", "floorMicros").filter { listed.has(it) } shouldBe emptyList()
         }
-        then("옛 컬럼을 다른 값으로 바꿔도 검사는 규격 값을 따른다") {
-            jdbc.update("UPDATE ad_placement SET format = 'CARD', aspect_ratios = '1:1', floor_micros = 9000000 WHERE placement_key = 'a-adm-fmt'")
+        then("캠페인 검사는 형태 규격의 최저가를 따른다") {
             bannerCampaign(59_999).status shouldBe 400
             bannerCampaign(60_000).status shouldBe 200
             spec("a-adm-fmt", "CARD")!!["floorMicros"].asLong() shouldBe 120_000L

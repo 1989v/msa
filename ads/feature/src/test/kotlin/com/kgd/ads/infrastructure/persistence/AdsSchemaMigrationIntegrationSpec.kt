@@ -17,6 +17,7 @@ import java.io.File
  * 판정 근거: V4 뒤의 `ad_placement_format`·`ad_placement`·`ad_campaign` 행, 그리고 `ads/CLAUDE.md` 의 되돌리기 SQL 을
  * **그 파일에서 읽어** 실행한 뒤의 `ad_creative` 행. 사본을 두지 않는다 — 문서의 SQL 이 바뀌면 이 검사가 그것을 잰다.
  * V5(옛 지면 컬럼 NULL 허용)는 `information_schema` 의 컬럼·제약과, 옛 파드·새 코드 모양의 INSERT 가 둘 다 들어가는지로 본다.
+ * V4·V5 는 옛 컬럼을 읽어야 해서 V5 까지 올려 두고 검사하고, V6(옛 컬럼 삭제)은 마지막 블록에서 올린다.
  *
  * 다른 스펙과 같은 MySQL 컨테이너를 쓰되 별도 스키마(`ads_v4_check`)를 만들어 Flyway 를 처음부터 돌린다.
  */
@@ -43,7 +44,7 @@ class AdsSchemaMigrationIntegrationSpec : BehaviorSpec({
         "INSERT INTO ad_placement (placement_key, host, format, aspect_ratios, floor_micros, active, paid_allowed, description, created_at, updated_at) " +
             "VALUES ('v4-admin-made', 'blog.1989v.com', 'CARD', '1.91:1,1:1', 70000, TRUE, TRUE, '운영자 지면', '2026-09-25 00:00:00', '2026-09-25 00:00:00')",
     )
-    flyway(null).migrate()
+    flyway("5").migrate()
 
     fun specs(key: String): List<Triple<String, String, Long>> = jdbc.query(
         "SELECT format, aspect_ratios, floor_micros FROM ad_placement_format WHERE placement_key = ? ORDER BY format",
@@ -155,6 +156,29 @@ class AdsSchemaMigrationIntegrationSpec : BehaviorSpec({
             val houseAfter = jdbc.queryForList("SELECT id, status, title, body FROM ad_creative WHERE advertiser_id <> ?", advertiserId)
             houseAfter shouldContainExactlyInAnyOrder houseBefore
             houseAfter.size shouldNotBe 0
+        }
+    }
+
+    given("V6 — 옛 지면 컬럼 삭제") {
+        flyway(null).migrate()
+
+        then("V6 이 성공으로 기록되고 세 컬럼이 없다 — 지면의 비율·최저가는 형태 규격 표에 그대로 있다") {
+            jdbc.queryForObject("SELECT success FROM flyway_schema_history WHERE version = '6'", Boolean::class.java) shouldBe true
+            jdbc.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.columns " +
+                    "WHERE table_schema = ? AND table_name = 'ad_placement' AND column_name IN ('format', 'aspect_ratios', 'floor_micros')",
+                Long::class.java, schema,
+            ) shouldBe 0L
+            specs("v4-admin-made") shouldBe listOf(Triple("CARD", "1.91:1,1:1", 70_000L))
+            specs("game-list-banner") shouldBe listOf(Triple("BANNER", "6.4:1", 50_000L))
+        }
+        then("새 코드 모양의 지면 INSERT 가 들어간다") {
+            val t = "2026-10-02 00:00:00"
+            jdbc.update(
+                "INSERT INTO ad_placement (placement_key, host, active, paid_allowed, description, created_at, updated_at) " +
+                    "VALUES ('v6-new-code', 'blog.1989v.com', TRUE, TRUE, '새 코드 지면', ?, ?)",
+                t, t,
+            ) shouldBe 1
         }
     }
 })

@@ -9,10 +9,7 @@ import jakarta.persistence.Table
 import java.time.LocalDateTime
 
 /**
- * 지면 행. 형태 규격은 [PlacementFormatJpaEntity] 가 따로 갖는다.
- *
- * 표에 남은 옛 컬럼 `format`·`aspect_ratios`·`floor_micros` 는 매핑하지 않는다 — NULL 허용(V5)이라 새 행에는 NULL 이 들어가고,
- * 다음 마이그레이션에서 지운다.
+ * 지면 행. 형태 규격(비율·최저가)은 [PlacementFormatJpaEntity] 가 따로 갖는다.
  */
 @Entity
 @Table(name = "ad_placement")

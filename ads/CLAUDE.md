@@ -106,10 +106,10 @@ recommendation·experiment 도 같은 파드라 **함께 멈춘다.** 이미지�
 3. 어드민에서 `game-list-banner` 의 유료를 켠다 (V4 는 끈 채로 둔다)
 4. 옛 지면 컬럼 `ad_placement.format`·`aspect_ratios`·`floor_micros` 걷어내기 — 두 릴리스로 나눈다.
    replicas 1 롤링 배포라 새 스키마 위에서 옛 파드가 함께 돈다.
-   - **V5 (이번 릴리스)**: 세 컬럼 NULL 허용 + 옛 최저가 검사 `chk_ad_placement_floor` 제거, 데이터 그대로. 코드는 세 컬럼을 매핑하지 않고
+   - **V5 (운영 반영 2026-10-02)**: 세 컬럼 NULL 허용 + 옛 최저가 검사 `chk_ad_placement_floor` 제거, 데이터 그대로. 코드는 세 컬럼을 매핑하지 않고
      (새 지면 행은 NULL), 카탈로그·어드민 지면 응답의 옛 필드와 옛 모양 최저가 PATCH(`PATCH /placements/{key}` 의 `floorMicros`)를 뺐다.
      옛 파드는 세 컬럼을 채워 INSERT 하고 읽지 않으므로 겹쳐 돌아도 된다
-   - **V6 (다음)**: V5 가 운영에 나간 **뒤의** 릴리스에서 세 컬럼을 지운다. V5 와 같은 릴리스로 내면 겹치는 동안 옛 파드의 INSERT 가 없는 컬럼에 걸린다
+   - **V6 (V5 확인 뒤 별도 릴리스)**: 세 컬럼을 지운다. V5 와 같은 릴리스로 내면 겹치는 동안 옛 파드의 INSERT 가 없는 컬럼에 걸린다
    - FE 는 `formats` 만 읽는다 — 옛 필드로 되돌아가는 분기를 지웠다. 운영 번들(②)도 `formats` 가 있으면 그것만 써서 V5 와 같은 푸시로 나가도 된다
 
 남아 있는 호환:
