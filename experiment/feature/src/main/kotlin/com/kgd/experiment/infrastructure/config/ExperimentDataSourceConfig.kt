@@ -2,6 +2,7 @@ package com.kgd.experiment.infrastructure.config
 
 import jakarta.persistence.EntityManagerFactory
 import com.kgd.common.persistence.ScopedFlywayMigrator
+import com.zaxxer.hikari.HikariDataSource
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -52,11 +53,13 @@ class ExperimentDataSourceConfig {
     @ConfigurationProperties(prefix = "spring.datasource")
     fun experimentDataSourceProperties(): DataSourceProperties = DataSourceProperties()
 
+    // DataSourceProperties 는 풀 키를 옮기지 않는다 — `spring.datasource.hikari` 를 만들어진 풀에 따로 바인딩한다.
     @Bean
     @Primary
+    @ConfigurationProperties(prefix = "spring.datasource.hikari")
     fun experimentDataSource(
         @Qualifier("experimentDataSourceProperties") properties: DataSourceProperties,
-    ): DataSource = properties.initializeDataSourceBuilder().build()
+    ): HikariDataSource = properties.initializeDataSourceBuilder().type(HikariDataSource::class.java).build()
 
     /**
      * experiment_db 는 Flyway 없이 Hibernate 가 만든 스키마다. V1 은 운영 DDL 을 그대로 옮긴 기준선이라

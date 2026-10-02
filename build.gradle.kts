@@ -532,10 +532,11 @@ val searchReadOmitted = mapOf(
 )
 
 // 읽기 클래스가 반드시 읽어야 하는 필드 — searchReadOmitted 에 사유를 적어도 통과시키지 않는다.
-// 행사 유효 기간은 상세 상태 문구·만료 robots·행사 sitemap 이, 코스 구성은 상세 순서 목록이 읽는다.
-// 읽기에서 빠지면 값이 조용히 null 이 되어 진행 중 행사가 「날짜 없음」으로 보이고 코스 절이 사라진다.
+// 행사 유효 기간은 상세 상태 문구·만료 robots·행사 sitemap 이, 코스 구성은 상세 순서 목록이, 링크는 상세의
+// 영상·블로그·딥링크 절이 읽는다(관광지 화면은 place DB 를 읽지 않으므로 색인 말고는 출처가 없다).
+// 읽기에서 빠지면 값이 조용히 null 이 되어 진행 중 행사가 「날짜 없음」으로 보이고 코스·링크 절이 사라진다.
 val searchReadRequired = mapOf(
-    "attractions" to setOf("eventStartEffective", "eventEndEffective", "courseStops"),
+    "attractions" to setOf("eventStartEffective", "eventEndEffective", "courseStops", "links"),
 )
 
 val verifySearchIndexContract by tasks.registering {
@@ -985,6 +986,106 @@ val verifyTransactionQualifiers by tasks.registering {
 
 subprojects { plugins.withId("java") { tasks.named("check") { dependsOn(verifyTransactionQualifiers) } } }
 
+/**
+ * 설정 파일의 풀 키(maximum-pool-size · minimum-idle)가 실제 풀에 바인딩되는 경로에 있는지 검증한다.
+ *
+ * 풀 키가 들어가는 경로는 datasource 를 만드는 방식이 정한다:
+ *   - `@ConfigurationProperties("P") fun x(): DataSource = DataSourceBuilder.create().build()` → `P.maximum-pool-size`
+ *   - `@ConfigurationProperties("P.hikari") fun x(...): HikariDataSource = ...`              → `P.hikari.maximum-pool-size`
+ *   - DataSource 빈이 하나도 없어 Boot 자동 구성이 만들 때                                    → `spring.datasource.hikari.*`
+ * `DataSourceProperties` 만 바인딩한 풀은 풀 키를 받는 경로가 없다. 어느 경로에도 안 맞는 키는 오류 없이
+ * 무시되고 풀은 기본값(최대 10 · 유휴 최소 10)으로 뜬다 — 2026-10-02 운영 MySQL 접속 204개 중
+ * 180개가 이렇게 뜬 풀이었다. 판정 근거는 앱과 그 프로젝트 의존 모듈의 빈 선언이고, 런타임 값은
+ * 각 호스트의 컨텍스트 로드 spec 이 따로 확인한다.
+ */
+val verifyDataSourcePoolKeys by tasks.registering {
+    group = "verification"
+    description = "풀 키가 런타임 HikariDataSource 에 바인딩되는 경로에 있는지 확인"
+    doLast {
+        val params = """\((?:[^()]|\([^()]*\))*\)"""
+        val boundProps = Regex(
+            """@ConfigurationProperties\(\s*(?:prefix\s*=\s*)?"([^"]+)"\s*\)\s*\n(?:\s*@[^\n]*\n)*\s*fun\s+\w+\s*$params\s*:\s*(\w+)\s*=\s*([^\n]*)""",
+        )
+        val dataSourceBean = Regex("""@Bean[^\n]*\n(?:\s*@[^\n]*\n)*\s*fun\s+\w+\s*$params\s*:\s*(?:Hikari)?DataSource\b""")
+        val poolKeys = setOf("maximumpoolsize", "minimumidle")
+
+        fun projectDeps(p: Project, seen: MutableSet<Project> = mutableSetOf()): Set<Project> {
+            if (!seen.add(p)) return seen
+            p.configurations.findByName("runtimeClasspath")?.allDependencies
+                ?.withType(ProjectDependency::class.java)
+                ?.forEach { projectDeps(project(it.path), seen) }
+            return seen
+        }
+
+        /** 들여쓰기로 YAML 키를 펼친다 — 풀 키 판정에는 목록·흐름 표기가 필요 없다. */
+        fun flatten(file: File): List<Pair<Int, String>> {
+            val stack = ArrayList<Pair<Int, String>>()
+            val out = ArrayList<Pair<Int, String>>()
+            val keyLine = Regex("""^(\s*)([A-Za-z0-9_.\-]+):(?:\s|$)""")
+            file.readLines().forEachIndexed { i, line ->
+                if (line.isBlank() || line.trimStart().startsWith("#")) return@forEachIndexed
+                if (line.trimStart().startsWith("---")) { stack.clear(); return@forEachIndexed }
+                val m = keyLine.find(line) ?: return@forEachIndexed
+                val indent = m.groupValues[1].length
+                while (stack.isNotEmpty() && stack.last().first >= indent) stack.removeAt(stack.size - 1)
+                stack += indent to m.groupValues[2]
+                out += (i + 1) to stack.joinToString(".") { it.second }
+            }
+            return out
+        }
+
+        val failures = mutableListOf<String>()
+        // 실행 JAR 을 만드는 모듈만 본다 — bootJar 를 끈 라이브러리의 application.yml 은 호스트의 것에 가려 읽히지 않는다.
+        subprojects.filter { it.plugins.hasPlugin("org.springframework.boot") && it.tasks.findByName("bootJar")?.enabled == true }
+            .sortedBy { it.path }.forEach { app ->
+            val ymls = app.file("src/main/resources").listFiles { f -> f.name.matches(Regex("""application.*\.ya?ml""")) }
+                ?.sortedBy { it.name }.orEmpty()
+            if (ymls.isEmpty()) return@forEach
+
+            val bound = mutableSetOf<String>()
+            var customDataSource = false
+            projectDeps(app).forEach { p ->
+                p.file("src/main/kotlin").walkTopDown().filter { it.isFile && it.extension == "kt" }.forEach { src ->
+                    val text = src.readText()
+                    boundProps.findAll(text).forEach { m ->
+                        val (prefix, returnType, body) = m.destructured
+                        if (returnType == "HikariDataSource" || body.contains("DataSourceBuilder.create()")) bound += prefix
+                    }
+                    if (dataSourceBean.containsMatchIn(text)) customDataSource = true
+                }
+            }
+            // DataSource 빈이 하나라도 있으면 자동 구성(@ConditionalOnMissingBean)이 물러나 이 경로는 죽는다.
+            if (!customDataSource) bound += "spring.datasource.hikari"
+
+            ymls.forEach { yml ->
+                flatten(yml).forEach { (line, key) ->
+                    val leaf = key.substringAfterLast('.')
+                    if (leaf.replace("-", "").lowercase() !in poolKeys) return@forEach
+                    val parent = key.substringBeforeLast('.')
+                    if (parent !in bound) {
+                        val domain = parent.split('.').take(3).joinToString(".")
+                        val near = bound.filter { it == domain || it.startsWith("$domain.") }.sorted()
+                        failures += "${yml.relativeTo(rootProject.projectDir)}:$line: $key — 바인딩되지 않는 경로. " +
+                            if (near.isEmpty()) "이 앱에 $domain 아래 풀 키를 받는 빈이 없다(DataSourceProperties 만 바인딩했거나 쓰지 않는 블록)"
+                            else "이 풀의 경로: ${near.joinToString(", ")}"
+                    }
+                }
+            }
+        }
+
+        if (failures.isNotEmpty()) {
+            throw GradleException(
+                failures.joinToString(
+                    prefix = "풀 키 위치 위반 — 키가 무시되고 풀이 기본값(최대 10 · 유휴 최소 10)으로 뜬다:\n  ",
+                    separator = "\n  ",
+                    postfix = "\n\nDataSourceBuilder 로 만든 풀은 키를 master/replica 바로 아래에, " +
+                        "DataSourceProperties 로 만든 풀은 `{prefix}.hikari` 를 HikariDataSource 빈에 바인딩하고 그 아래에 둘 것.",
+                ),
+            )
+        }
+    }
+}
+
 /** 생성물이 놓이는 자리. 커밋되며, 게이트가 재생성해 커밋본과 대조한다. */
 val topologyShell = "scripts/ci/topology.sh"
 val topologyProps = "gradle/topology.properties"
@@ -1120,6 +1221,7 @@ val verifyArchitecture by tasks.registering {
         verifyIndexShardDeclaration,
         verifyPodTopology,
         verifyTransactionQualifiers,
+        verifyDataSourcePoolKeys,
         verifyTopologyGenerated,
         verifyTestConventions,
     )

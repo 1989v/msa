@@ -86,6 +86,18 @@ class ContentContextLoadSpec(
             schemaOf(blogDs) shouldBe "blog_db"
         }
 
+        // 설정 파일이 아니라 떠 있는 HikariDataSource 의 값을 읽는다. 풀 키가 바인딩되지 않는
+        // 경로에 있으면 설정은 5 인데 풀은 기본값(최대 10 · 유휴 최소 10)으로 뜬다.
+        Then("MySQL 풀은 place 최대 3, 나머지 최대 5, 전부 유휴 최소 1 이다") {
+            val pools = ctx.getBeansOfType(com.zaxxer.hikari.HikariDataSource::class.java)
+                .filterValues { it.jdbcUrl.startsWith("jdbc:mysql:") }
+            pools.mapValues { it.value.maximumPoolSize to it.value.minimumIdle } shouldBe mapOf(
+                "placeDataSource" to (3 to 1),
+                "gameMasterDataSource" to (5 to 1), "gameReplicaDataSource" to (5 to 1),
+                "rankingDataSource" to (5 to 1), "blogDataSource" to (5 to 1),
+            )
+        }
+
         Then("두 도메인의 컨트롤러가 전부 빈으로 등록된다") {
             // scanBasePackages 에서 패키지를 빠뜨리면 컨텍스트는 멀쩡히 뜨고 Flyway 도 돌지만
             // 그 도메인의 API 만 조용히 404 가 된다 — 기동 실패가 아니라 배포 후에야 드러난다.

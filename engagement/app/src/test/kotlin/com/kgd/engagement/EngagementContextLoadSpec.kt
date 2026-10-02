@@ -98,6 +98,16 @@ class EngagementContextLoadSpec(
                 val repo = ctx.getBean(com.kgd.experiment.infrastructure.persistence.ExperimentJpaRepository::class.java)
                 (repo.count() >= 0L) shouldBe true
             }
+
+        // 설정 파일이 아니라 떠 있는 HikariDataSource 의 값을 읽는다. DataSourceProperties 는 풀 키를
+        // 옮기지 않아서, `hikari` 하위를 풀에 따로 바인딩하지 않으면 기본값(최대 10 · 유휴 최소 10)으로 뜬다.
+        Then("MySQL 풀이 전부 최대 3 · 유휴 최소 1 이다")
+            .config(enabledIf = { dockerAvailable }) {
+                val pools = ctx.getBeansOfType(com.zaxxer.hikari.HikariDataSource::class.java)
+                    .filterValues { it.jdbcUrl.startsWith("jdbc:mysql:") }
+                pools.mapValues { it.value.maximumPoolSize to it.value.minimumIdle } shouldBe
+                    listOf("experimentDataSource", "adsDataSource").associateWith { 3 to 1 }
+            }
     }
 
     Given("ads 폴드 (ADR-0098)") {

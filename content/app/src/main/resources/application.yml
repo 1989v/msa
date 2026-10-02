@@ -19,27 +19,30 @@ spring:
       username: ${MYSQL_USER:place_user}
       password: ${MYSQL_PASSWORD:place_password}
       driver-class-name: com.mysql.cj.jdbc.Driver
+      # PlaceDataSourceConfig 가 이 하위를 HikariDataSource 에 바인딩한다(DataSourceProperties 는 풀 키를 모른다).
+      # 사용자 화면은 place MySQL 을 읽지 않는다(관광지는 검색 색인, 지역 계층은 레디스 캐시 — ADR-0071 §10).
+      # 남는 것은 수집 bulk 쓰기와 재색인 페이지 조회라 동시 접속이 적다.
       hikari:
-        maximum-pool-size: 5
-        minimum-idle: 2
+        maximum-pool-size: 3
+        minimum-idle: 1
     # game 전용 (스키마 격리). Flyway 는 GameDataSourceConfig 의 전용 빈(classpath:gamedb/migration).
+    # 풀 키는 hikari. 하위가 아니라 master/replica 바로 아래에 둔다 — GameDataSourceConfig 가 DataSourceBuilder 로
+    # 만든 풀에 이 경로를 직접 바인딩하므로 hikari. 하위 키는 조용히 무시된다(ContentContextLoadSpec 이 런타임 값을 확인).
     game:
       master:
         jdbc-url: jdbc:mysql://${GAME_DB_MASTER:localhost:3338}/game_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
         username: ${GAME_MYSQL_USER:game_user}
         password: ${GAME_MYSQL_PASSWORD:game_password}
         driver-class-name: com.mysql.cj.jdbc.Driver
-        hikari:
-          maximum-pool-size: 3
-          minimum-idle: 1
+        maximum-pool-size: 5
+        minimum-idle: 1
       replica:
         jdbc-url: jdbc:mysql://${GAME_DB_REPLICA:localhost:3338}/game_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
         username: ${GAME_MYSQL_USER:game_user}
         password: ${GAME_MYSQL_PASSWORD:game_password}
         driver-class-name: com.mysql.cj.jdbc.Driver
-        hikari:
-          maximum-pool-size: 3
-          minimum-idle: 1
+        maximum-pool-size: 5
+        minimum-idle: 1
 
     # ADR-0093 ②b — ranking 전용 datasource(ranking_db). 이 키가 있으면
     # RankingDataSourceConfig 가 켜진다 — code-dictionary 에는 없어 거기서는 호스트 EMF 를 쓴다.
@@ -48,16 +51,19 @@ spring:
       username: ${RANKING_MYSQL_USER:ranking_user}
       password: ${RANKING_MYSQL_PASSWORD:ranking_password}
       driver-class-name: com.mysql.cj.jdbc.Driver
+      # RankingDataSourceConfig 가 이 하위를 HikariDataSource 에 바인딩한다.
       hikari:
-        maximum-pool-size: 3
-        minimum-idle: 1    # ADR-0093 ③ — blog 전용 datasource(blog_db).
+        maximum-pool-size: 5
+        minimum-idle: 1
+    # ADR-0093 ③ — blog 전용 datasource(blog_db).
     blog:
       url: jdbc:mysql://${BLOG_DB_HOST:localhost:3338}/blog_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
       username: ${BLOG_MYSQL_USER:blog_user}
       password: ${BLOG_MYSQL_PASSWORD:blog_password}
       driver-class-name: com.mysql.cj.jdbc.Driver
+      # BlogDataSourceConfig 가 이 하위를 HikariDataSource 에 바인딩한다.
       hikari:
-        maximum-pool-size: 3
+        maximum-pool-size: 5
         minimum-idle: 1
 
   jpa:
@@ -77,12 +83,16 @@ spring:
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
 
-  # game 아케이드 — 리더보드 ZSET / 세션 / 리플레이 저장소
+  # game 아케이드 — 리더보드 ZSET / 세션 / 리플레이 저장소 + place 지역 계층 캐시(ADR-0071)
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
+      # 기본 명령 타임아웃은 60초다 — 레디스가 멎으면 캐시 조회가 그만큼 붙잡혀 DB 로 내려가기 전에
+      # 게이트웨이가 먼저 끊는다. 짧게 끊어야 캐시 오류 처리(저장소로 내려감)가 응답 안에 끝난다.
+      timeout: 1s
+      connect-timeout: 1s
 
 opensearch:
   uris: ${OPENSEARCH_URIS:http://localhost:9200}

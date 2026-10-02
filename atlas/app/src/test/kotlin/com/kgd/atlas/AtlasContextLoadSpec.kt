@@ -55,6 +55,16 @@ class AtlasContextLoadSpec(
                 ).forEach { ctx.containsBean(it).shouldBeTrue() }
             }
 
+        // 설정 파일이 아니라 떠 있는 HikariDataSource 의 값을 읽는다. 풀 키가 `hikari.` 하위에 있으면
+        // DataSourceBuilder 로 만든 풀에 바인딩되지 않아 기본값(최대 10 · 유휴 최소 10)으로 뜬다.
+        Then("MySQL 풀이 전부 최대 5 · 유휴 최소 1 이다")
+            .config(enabledIf = { dockerAvailable }) {
+                val pools = ctx.getBeansOfType(com.zaxxer.hikari.HikariDataSource::class.java)
+                    .filterValues { it.jdbcUrl.startsWith("jdbc:mysql:") }
+                pools.mapValues { it.value.maximumPoolSize to it.value.minimumIdle } shouldBe
+                    listOf("masterDataSource", "replicaDataSource").associateWith { 5 to 1 }
+            }
+
         // ADR-0093 회귀 방어 — game 이 content 로 떠난 뒤 여기 남아 있으면 안 된다.
         Then("game 의 빈은 더 이상 이 컨텍스트에 없다")
             .config(enabledIf = { dockerAvailable }) {

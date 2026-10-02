@@ -95,6 +95,17 @@ class SideappContextLoadSpec(
             schemaOf(gifticonDs) shouldBe "gifticon_db"
         }
 
+        // 설정 파일이 아니라 떠 있는 HikariDataSource 의 값을 읽는다. 풀 키가 바인딩되지 않는
+        // 경로에 있으면 설정은 3 인데 풀은 기본값(최대 10 · 유휴 최소 10)으로 뜬다.
+        Then("MySQL 풀이 전부 최대 3 · 유휴 최소 1 이다") {
+            val pools = ctx.getBeansOfType(com.zaxxer.hikari.HikariDataSource::class.java)
+                .filterValues { it.jdbcUrl.startsWith("jdbc:mysql:") }
+            pools.mapValues { it.value.maximumPoolSize to it.value.minimumIdle } shouldBe listOf(
+                "quantDataSource", "chatbotDataSource",
+                "gifticonMasterDataSource", "gifticonReplicaDataSource",
+            ).associateWith { 3 to 1 }
+        }
+
         Then("gifticon Querydsl 이 gifticon EMF 에 묶여 있다") {
             // 총칭 jpaQueryFactory 로 두면 primary(quant) EM 에 붙어 gifticon 질의가 quant 로 나간다.
             ctx.containsBean("gifticonJpaQueryFactory").shouldBeTrue()

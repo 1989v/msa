@@ -17,6 +17,10 @@ spring:
     username: ${MYSQL_USER:commerce}
     password: ${MYSQL_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    # ExperimentDataSourceConfig 가 이 하위를 HikariDataSource 에 바인딩한다(DataSourceProperties 는 풀 키를 모른다).
+    hikari:
+      maximum-pool-size: 3
+      minimum-idle: 1
     # ADR-0098 — ads 전용 스키마(ads_db). 비-primary 라 AdsDataSourceConfig 가 직접 배선한다.
     ads:
       url: jdbc:mysql://localhost:3348/ads_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true

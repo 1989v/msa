@@ -11,6 +11,9 @@ spring:
     timeout-per-shutdown-phase: 30s
 
   datasource:
+    # 풀 키(maximum-pool-size·minimum-idle)는 hikari. 하위가 아니라 master/replica 바로 아래에 둔다 —
+    # 각 도메인 설정이 DataSourceBuilder 로 만든 HikariDataSource 에 이 경로를 직접 바인딩하므로
+    # hikari. 하위 키는 조용히 무시되고 기본값(최대 10 · 유휴 최소 10)으로 뜬다(AccountContextLoadSpec 이 런타임 값을 확인).
     # member 전용 (스키마 격리). 이 호스트에서는 member 가 primary 다.
     member:
       master:
@@ -18,17 +21,15 @@ spring:
         username: ${MEMBER_MYSQL_USER:member_user}
         password: ${MEMBER_MYSQL_PASSWORD:member_password}
         driver-class-name: com.mysql.cj.jdbc.Driver
-        hikari:
-          maximum-pool-size: 3
-          minimum-idle: 1
+        maximum-pool-size: 5
+        minimum-idle: 1
       replica:
         jdbc-url: jdbc:mysql://${MEMBER_DB_REPLICA:localhost:3357}/member_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
         username: ${MEMBER_MYSQL_USER:member_user}
         password: ${MEMBER_MYSQL_PASSWORD:member_password}
         driver-class-name: com.mysql.cj.jdbc.Driver
-        hikari:
-          maximum-pool-size: 3
-          minimum-idle: 1
+        maximum-pool-size: 5
+        minimum-idle: 1
     # wishlist 전용 (스키마 격리, Kafka consumer)
     wishlist:
       master:
@@ -36,17 +37,15 @@ spring:
         username: ${WISHLIST_MYSQL_USER:wishlist_user}
         password: ${WISHLIST_MYSQL_PASSWORD:wishlist_password}
         driver-class-name: com.mysql.cj.jdbc.Driver
-        hikari:
-          maximum-pool-size: 3
-          minimum-idle: 1
+        maximum-pool-size: 5
+        minimum-idle: 1
       replica:
         jdbc-url: jdbc:mysql://${WISHLIST_DB_REPLICA:localhost:3367}/wishlist_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
         username: ${WISHLIST_MYSQL_USER:wishlist_user}
         password: ${WISHLIST_MYSQL_PASSWORD:wishlist_password}
         driver-class-name: com.mysql.cj.jdbc.Driver
-        hikari:
-          maximum-pool-size: 3
-          minimum-idle: 1
+        maximum-pool-size: 5
+        minimum-idle: 1
 
   jpa:
     hibernate:

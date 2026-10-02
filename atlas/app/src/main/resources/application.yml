@@ -4,22 +4,23 @@ spring:
   lifecycle:
     timeout-per-shutdown-phase: 30s
   datasource:
+    # 풀 키(maximum-pool-size·minimum-idle)는 hikari. 하위가 아니라 master/replica 바로 아래에 둔다 —
+    # DataSourceConfig 가 DataSourceBuilder 로 만든 HikariDataSource 에 이 경로를 직접 바인딩하므로
+    # hikari. 하위 키는 조용히 무시되고 기본값(최대 10 · 유휴 최소 10)으로 뜬다(AtlasContextLoadSpec 가 런타임 값을 확인).
     master:
       jdbc-url: jdbc:mysql://localhost:3338/code_dictionary_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
       username: ${MYSQL_USER:code_dictionary_user}
       password: ${MYSQL_PASSWORD:code_dictionary_password}
       driver-class-name: com.mysql.cj.jdbc.Driver
-      hikari:
-        maximum-pool-size: 5
-        minimum-idle: 2
+      maximum-pool-size: 5
+      minimum-idle: 1
     replica:
       jdbc-url: jdbc:mysql://localhost:3338/code_dictionary_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
       username: ${MYSQL_USER:code_dictionary_user}
       password: ${MYSQL_PASSWORD:code_dictionary_password}
       driver-class-name: com.mysql.cj.jdbc.Driver
-      hikari:
-        maximum-pool-size: 5
-        minimum-idle: 2
+      maximum-pool-size: 5
+      minimum-idle: 1
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
   # #23 아케이드 흡수 — 리더보드 ZSET / 세션 / 리플레이 저장소 (k3s-lite 는 오버레이가 standalone 주입)

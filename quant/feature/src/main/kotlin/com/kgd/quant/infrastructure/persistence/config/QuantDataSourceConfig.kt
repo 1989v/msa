@@ -1,6 +1,7 @@
 package com.kgd.quant.infrastructure.persistence.config
 
 import com.kgd.common.persistence.ScopedFlywayMigrator
+import com.zaxxer.hikari.HikariDataSource
 import jakarta.persistence.EntityManagerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
@@ -51,11 +52,13 @@ class QuantDataSourceConfig {
     @ConfigurationProperties(prefix = "spring.datasource.quant")
     fun quantDataSourceProperties(): DataSourceProperties = DataSourceProperties()
 
+    // DataSourceProperties 는 풀 키를 옮기지 않는다 — `spring.datasource.quant.hikari` 를 만들어진 풀에 따로 바인딩한다.
     @Bean
     @Primary
+    @ConfigurationProperties(prefix = "spring.datasource.quant.hikari")
     fun quantDataSource(
         @Qualifier("quantDataSourceProperties") properties: DataSourceProperties,
-    ): DataSource = properties.initializeDataSourceBuilder().build()
+    ): HikariDataSource = properties.initializeDataSourceBuilder().type(HikariDataSource::class.java).build()
 
     /** quant 전용 Flyway — 호스트 기본(`classpath:db/migration`) 재귀 스캔과 분리한다 */
     @Bean

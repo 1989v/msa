@@ -76,6 +76,17 @@ class AccountContextLoadSpec(
             schemaOf(wishlistDs) shouldBe "wishlist_db"
         }
 
+        // 설정 파일이 아니라 떠 있는 HikariDataSource 의 값을 읽는다. 풀 키가 `hikari.` 하위에 있으면
+        // DataSourceBuilder 로 만든 풀에 바인딩되지 않아 기본값(최대 10 · 유휴 최소 10)으로 뜬다.
+        Then("MySQL 풀이 전부 최대 5 · 유휴 최소 1 이다") {
+            val pools = ctx.getBeansOfType(com.zaxxer.hikari.HikariDataSource::class.java)
+                .filterValues { it.jdbcUrl.startsWith("jdbc:mysql:") }
+            pools.mapValues { it.value.maximumPoolSize to it.value.minimumIdle } shouldBe listOf(
+                "memberMasterDataSource", "memberReplicaDataSource",
+                "wishlistMasterDataSource", "wishlistReplicaDataSource",
+            ).associateWith { 5 to 1 }
+        }
+
         // 컨텍스트가 뜨는 것은 배선만 증명한다. 한정자가 빠진 @Transactional 은 호스트의
         // primary TM(member)에 붙어 @Modifying 삭제가 조용히 실패하므로 값으로 본다.
         Then("상품 삭제 이벤트가 찜을 실제로 지운다 — 한정자 없는 @Transactional 이면 조용히 실패한다")
