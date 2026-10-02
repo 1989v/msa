@@ -51,6 +51,23 @@ class CreativeTest : BehaviorSpec({
                 shouldThrow<InvalidCreativeException> { creative.approve(9, at) }
             }
         }
+        `when`("반려된 소재를 보관하면") {
+            then("반려 사유가 지워져 저장 뒤 다시 읽을 수 있다") {
+                val creative = Creative.submit(campaign(), content()).apply {
+                    reject(CreativeRejectReason.GAMBLING, actorMemberId = 9, at = at)
+                    archive()
+                }
+                creative.status shouldBe CreativeStatus.ARCHIVED
+                creative.rejectReason.shouldBeNull()
+                val reloaded = Creative.restore(
+                    id = 1, campaignId = creative.campaignId, advertiserId = creative.advertiserId,
+                    content = creative.content, status = creative.status, rejectReason = creative.rejectReason,
+                    reviewedBy = creative.reviewedBy, reviewedAt = creative.reviewedAt,
+                )
+                reloaded.status shouldBe CreativeStatus.ARCHIVED
+                reloaded.rejectReason.shouldBeNull()
+            }
+        }
     }
 
     given("revise()") {

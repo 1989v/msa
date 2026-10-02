@@ -61,6 +61,9 @@ class Creative private constructor(
     fun archive() {
         if (status == CreativeStatus.ARCHIVED) throw InvalidCreativeException("이미 보관된 소재입니다")
         status = CreativeStatus.ARCHIVED
+        // 반려 사유는 REJECTED 에만 있다 — 남기면 저장한 행을 다시 읽을 때 불변식에 걸린다.
+        // 심사자·시각은 불변식과 무관한 이력이라 그대로 둔다.
+        rejectReason = null
     }
 
     private fun requirePending(action: String) {

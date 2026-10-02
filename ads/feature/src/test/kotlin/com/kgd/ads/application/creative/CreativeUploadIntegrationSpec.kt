@@ -170,4 +170,23 @@ class CreativeUploadIntegrationSpec(
             assets.asset(hash).statusCode() shouldBe 200
         }
     }
+
+    given("반려된 소재를 보관하면") {
+        then("반려 사유가 지워지고 그 캠페인의 소재 목록이 보관 행을 읽는다(500 없음)") {
+            val archiveCampaignId = fixtures.paidCampaign(advertiserId, listOf("a-upload"))
+            val creativeId = api.multipart(
+                "POST", "/api/v1/ads/advertiser/campaigns/$archiveCampaignId/creatives", member,
+                mapOf("title" to "반려될 소재", "body" to "지금 확인하세요", "landingUrl" to "https://example.com/rejected"),
+                FilePart("rejected.png", "image/png", TestImages.png(1200, 628, shade = 112)),
+            ).data["id"].asLong()
+            fixtures.reject(creativeId)
+
+            api.delete("/api/v1/ads/advertiser/creatives/$creativeId", member).status shouldBe 200
+            jdbc.queryForMap("SELECT status, reject_reason FROM ad_creative WHERE id = ?", creativeId).let {
+                it["status"] shouldBe "ARCHIVED"
+                it["reject_reason"] shouldBe null
+            }
+            api.get("/api/v1/ads/advertiser/campaigns/$archiveCampaignId/creatives", member).status shouldBe 200
+        }
+    }
 })
