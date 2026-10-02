@@ -232,7 +232,7 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
     - [x] 12.F.2 구현: V29 · 잡 · lookup 확장 · `relatedPlaces` · 상세 절 · 0건이면 다음 날 재시도(Q-P2-RELATED-LAG)
     - [x] 12.F.3 Verify: `cd place/ingest && python -m pytest -q tests/name_match_test.py tests/related_test.py && cd ../.. && ./gradlew :search:batch:test --tests '*AttractionApiReindexTaskletTest' && ./gradlew verifySearchIndexContract && ./gradlew :search:app:test --tests '*AttractionPageRendererTest'`
     - [x] 12.F.4 배포: content(V29) → place-ingest → search-batch → search → portal-fe
-    - [ ] 12.F.5 운영 확인: 출발·대상 매칭 건수 · Googlebot UA 표본 상세 절 마커
+    - [x] 12.F.5 운영 확인: 출발·대상 매칭 건수 · Googlebot UA 표본 상세 절 마커
   - [x] 12.G 대기오염 (V30 · `place-ingest-air` 매시 40분 · 24콜/일) — **화면은 Q-P2-AIRSTATION 해결 뒤**
     - [x] 12.G.1 Write tests: 전국 한 응답 672행 적재 · 측정소별 `dataTime` 보존(혼재) · 측정 3시간 초과 제외 · `NAME` 매핑만인 시군구는 응답 없음 · 값·등급 변형 없음(원문 그대로, 평균 계산 함수 없음)
     - [x] 12.G.2 구현: V30 · 잡 · 측정소 좌표 확보 뒤 최근접 매핑 · `GET /api/places/air?sigungu=` 캐시 · 상세 대기 등급(측정소 · 측정 시각 · 제3유형 문구)
