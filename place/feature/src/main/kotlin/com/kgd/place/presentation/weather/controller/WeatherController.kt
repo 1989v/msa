@@ -8,11 +8,14 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
+import org.springframework.http.CacheControl
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneId
 
@@ -29,9 +32,15 @@ class WeatherController(
     private val sync: SyncWeatherUseCase,
 ) {
 
+    /** 단기 하루 2회 · 중기 1회 발표라 엣지가 30분 쥔다 (ADR-0105) */
     @GetMapping("/api/places/weather")
-    fun outlook(@RequestParam sigungu: String): ApiResponse<WeatherUseCase.Outlook> =
-        ApiResponse.success(weather.outlook(sigungu, LocalDateTime.now(KST)))
+    fun outlook(@RequestParam sigungu: String): ResponseEntity<ApiResponse<WeatherUseCase.Outlook>> =
+        ResponseEntity.ok()
+            .cacheControl(
+                CacheControl.maxAge(Duration.ofSeconds(60)).cachePublic()
+                    .sMaxAge(Duration.ofMinutes(30)).staleWhileRevalidate(Duration.ofMinutes(10)),
+            )
+            .body(ApiResponse.success(weather.outlook(sigungu, LocalDateTime.now(KST))))
 
     @PutMapping("/internal/weather/areas")
     fun areas(@Valid @RequestBody request: WeatherAreasRequest): ApiResponse<SyncWeatherUseCase.AreasApplied> =

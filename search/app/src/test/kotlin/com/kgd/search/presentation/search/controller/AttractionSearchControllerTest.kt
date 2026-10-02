@@ -1,5 +1,6 @@
 package com.kgd.search.presentation.search.controller
 
+import com.kgd.search.application.attraction.usecase.NearbyAttractionsUseCase
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 import com.kgd.search.application.attraction.usecase.SuggestAttractionUseCase
 import io.kotest.core.spec.style.BehaviorSpec
@@ -16,7 +17,10 @@ import tools.jackson.databind.ObjectMapper
 class AttractionSearchControllerTest : BehaviorSpec({
     val search = mockk<SearchAttractionUseCase>()
     val suggest = mockk<SuggestAttractionUseCase>()
-    val mvc = MockMvcBuilders.standaloneSetup(AttractionSearchController(search, suggest)).build()
+    val nearby = mockk<NearbyAttractionsUseCase>()
+    val mvc = MockMvcBuilders.standaloneSetup(AttractionSearchController(search, suggest, nearby))
+        .setControllerAdvice(com.kgd.common.exception.GlobalExceptionHandler())
+        .build()
     val json = ObjectMapper()
 
     fun result(facets: SearchAttractionUseCase.AttributeFacets? = null) = SearchAttractionUseCase.Result(
@@ -25,6 +29,41 @@ class AttractionSearchControllerTest : BehaviorSpec({
     )
 
     beforeTest { clearMocks(search) }
+
+    given("상세 · 주변 탐색 (ADR-0105)") {
+        val doc = SearchAttractionUseCase.AttractionSearchResult(
+            id = "6", contentId = "126081", lang = "ko", title = "해운대해수욕장", latitude = 35.16, longitude = 129.16,
+        )
+        `when`("상세를 찾으면") {
+            then("엣지가 1시간 쥐는 공개 캐시 헤더가 붙는다") {
+                every { search.findById("6") } returns doc
+                val res = mvc.perform(get("/api/search/attractions/6")).andReturn().response
+                res.status shouldBe 200
+                res.getHeader("Cache-Control") shouldBe "max-age=60, public, s-maxage=3600, stale-while-revalidate=600"
+            }
+        }
+        `when`("주변을 찾으면") {
+            then("네 묶음을 같은 캐시 헤더로 낸다") {
+                every { nearby.nearby("6") } returns NearbyAttractionsUseCase.Nearby(listOf(doc), emptyList(), emptyList(), emptyList())
+                val res = mvc.perform(get("/api/search/attractions/6/nearby")).andReturn().response
+                res.status shouldBe 200
+                res.getHeader("Cache-Control") shouldBe "max-age=60, public, s-maxage=3600, stale-while-revalidate=600"
+                val body = json.readTree(res.contentAsString)
+                body["data"]["sights"][0]["id"].asText() shouldBe "6"
+            }
+        }
+        `when`("없는 관광지면") {
+            then("404 이고 캐시 헤더를 붙이지 않는다 — 엣지가 「없음」을 쥐지 않게") {
+                every { search.findById("404") } returns null
+                every { nearby.nearby("404") } returns null
+                for (path in listOf("/api/search/attractions/404", "/api/search/attractions/404/nearby")) {
+                    val res = mvc.perform(get(path)).andReturn().response
+                    res.status shouldBe 404
+                    res.getHeader("Cache-Control") shouldBe null
+                }
+            }
+        }
+    }
 
     given("속성 패싯 파라미터") {
         `when`("전부 주면") {

@@ -9,11 +9,14 @@ import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.PositiveOrZero
 import jakarta.validation.constraints.Size
+import org.springframework.http.CacheControl
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneId
 
@@ -30,9 +33,15 @@ class AirQualityController(
     private val sync: SyncAirQualityUseCase,
 ) {
 
+    /** 매시 측정이라 엣지가 10분 쥔다 (ADR-0105). 화면이 측정 시각을 함께 보인다 */
     @GetMapping("/api/places/air")
-    fun air(@RequestParam sigungu: String): ApiResponse<AirQualityUseCase.Air> =
-        ApiResponse.success(air.air(sigungu, LocalDateTime.now(KST)))
+    fun air(@RequestParam sigungu: String): ResponseEntity<ApiResponse<AirQualityUseCase.Air>> =
+        ResponseEntity.ok()
+            .cacheControl(
+                CacheControl.maxAge(Duration.ofSeconds(60)).cachePublic()
+                    .sMaxAge(Duration.ofMinutes(10)).staleWhileRevalidate(Duration.ofMinutes(5)),
+            )
+            .body(ApiResponse.success(air.air(sigungu, LocalDateTime.now(KST))))
 
     @PutMapping("/internal/air/stations")
     fun stations(@Valid @RequestBody request: AirStationsRequest): ApiResponse<SyncAirQualityUseCase.StationsApplied> =

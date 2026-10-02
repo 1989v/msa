@@ -131,6 +131,13 @@ class AirQualityCacheTest : BehaviorSpec({
         }
     }
 
+    given("대기 조회 응답") {
+        then("엣지가 10분 쥐는 공개 캐시 헤더가 붙는다 (ADR-0105)") {
+            mvc.perform(get("/api/places/air?sigungu=36110")).andReturn().response.getHeader("Cache-Control") shouldBe
+                "max-age=60, public, s-maxage=600, stale-while-revalidate=300"
+        }
+    }
+
     given("Flag(통신장애 등)가 있는 측정이면") {
         then("값 대신 원천 표시를 그대로 낸다") {
             val raw = jochiwonRaw.replace("\"pm10Flag\":null", "\"pm10Flag\":\"점검및교정\"").replace("\"pm10Value\":\"34\"", "\"pm10Value\":\"-\"")

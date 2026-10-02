@@ -2,14 +2,10 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
-  AMENITY_CATEGORIES,
-  EVENT_CATEGORY,
   fetchAirQuality,
   fetchAttraction,
+  fetchAttractionNearby,
   fetchWeather,
-  searchAttractions,
-  SIGHT_CATEGORIES,
-  STAY_CATEGORY,
   type Attraction,
   type PlaceLang,
 } from '../../api/placeApi';
@@ -38,7 +34,7 @@ import AttractionLinks from './AttractionLinks';
 import AttractionConditions from './AttractionConditions';
 import { googleMapsSearchUrl, mapsApiKey } from './googleMaps';
 import NearbyExplore from './NearbyExplore';
-import { EXPLORE_SIGHTS_SHOWN, exploreItems, type ExploreKind } from './exploreItems';
+import { exploreItems, type ExploreKind } from './exploreItems';
 import Footer from '../../components/Footer';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
 import {
@@ -95,24 +91,14 @@ const NEARBY_EVENTS_SECTION_INDEX = 5;
 /** 화면에서는 비슷한 곳 바로 아래지만 번호는 붙인 순서다 — 이미 쌓인 원장의 번호를 바꾸지 않는다 */
 const RELATED_SECTION_INDEX = 6;
 
-const NEARBY_RADIUS_KM = 5;
-/** 주변 명소 — 「주변 탐색」이 8곳을 보인다. 자기 자신이 섞여 와도 남는 크기 */
-const NEARBY_FETCH = EXPLORE_SIGHTS_SHOWN + 1;
-/**
- * 편의시설은 넉넉히 받아 **유형마다 몫을 잘라** 담는다.
- *
- * 거리순 상위만 그대로 쓰면 상점가에서는 전부 쇼핑이 된다 — 명동 영문은 18건 전부,
- * 100건을 받아도 음식이 1건뿐이었다. 그러면 유형별로 묶은 의미가 없다.
- * 60건은 지도 오버레이(OVERLAY_SIZE)와 같은 크기라 이 화면 계열에서 새 숫자가 아니다.
+/*
+ * 주변 검색 조건(반경·분류·받는 수)은 서버(search NearbyAttractionsService)가 갖는다. 화면은 받은 목록을 자른다.
+ * 편의시설은 유형마다 몫을 잘라 담는다 — 거리순 상위만 그대로 쓰면 상점가에서는 전부 쇼핑이 된다.
  */
-const AMENITY_FETCH = 60;
-/** 유형당 최대 — 한 유형이 캐로셀을 다 먹지 않게 한다. 적으면 있는 만큼만 나온다. */
+/** 편의시설 유형당 최대 — 한 유형이 목록을 다 먹지 않게 한다. 적으면 있는 만큼만 나온다. */
 const AMENITY_PER_KIND = 6;
-/** 근처 행사 — 축제는 하루 나들이 거리까지 본다. 숙소·명소(5km)보다 넓다. */
-const NEARBY_EVENTS_RADIUS_KM = 20;
-/** 근처 행사·근처 숙소는 6건까지. 자기 자신과 같은 분류에 이미 든 곳을 걸러도 남는 크기로 받는다. */
+/** 숙소·행사는 6건까지 */
 const NEARBY_KIND_SHOWN = 6;
-const NEARBY_KIND_FETCH = NEARBY_KIND_SHOWN + 1 + 5;
 
 
 /**
@@ -132,70 +118,12 @@ export default function AttractionPage() {
     enabled: id !== '',
   });
 
+  // 주변 탐색 — 명소·숙소·행사·편의시설을 서버가 한 번에 찾는다(ADR-0105, 관광지 id 키라 엣지 캐시). 처음 받은 목록만 쓴다.
   const { data: nearby } = useQuery({
-    queryKey: ['attraction-nearby', id, attraction?.latitude, attraction?.longitude],
-    queryFn: () =>
-      searchAttractions({
-        lang,
-        lat: attraction!.latitude,
-        lng: attraction!.longitude,
-        radiusKm: NEARBY_RADIUS_KM,
-        sort: 'distance',
-        // 이 절을 빠뜨리면 "주변 명소" 가 주변 상점이 된다 — 적재의 절반 이상이 음식·쇼핑이라
-        // 반경 5km 거리순은 상점이 먼저 걸린다 (명동에서 국문·영문 모두 7/7 이 쇼핑이었다).
-        category: SIGHT_CATEGORIES.join(','),
-        size: NEARBY_FETCH,
-      }),
+    queryKey: ['attraction-nearby', id],
+    queryFn: () => fetchAttractionNearby(id),
     enabled: attraction?.latitude != null && attraction?.longitude != null,
-  });
-
-  // 명소에서 걷어낸 상점·음식점은 버리지 않고 아래 캐로셀로 따로 보여준다 —
-  // 목록에 섞이면 관광지를 덮지만, 유형이 붙은 채 따로 있으면 그 자리에서 쓸 정보다.
-  const { data: nearbyAmenities } = useQuery({
-    queryKey: ['attraction-amenities', id, attraction?.latitude, attraction?.longitude],
-    queryFn: () =>
-      searchAttractions({
-        lang,
-        lat: attraction!.latitude,
-        lng: attraction!.longitude,
-        radiusKm: NEARBY_RADIUS_KM,
-        sort: 'distance',
-        category: AMENITY_CATEGORIES.join(','),
-        size: AMENITY_FETCH,
-      }),
-    enabled: attraction?.latitude != null && attraction?.longitude != null,
-  });
-
-  // 근처 행사·근처 숙소 — 「주변 명소」처럼 화면이 그린다. 서버 렌더 본문에는 넣지 않는다(관광지당 조회 한 번 규칙).
-  const { data: nearbyEvents } = useQuery({
-    queryKey: ['attraction-nearby-events', id, attraction?.latitude, attraction?.longitude],
-    queryFn: () =>
-      searchAttractions({
-        lang,
-        lat: attraction!.latitude,
-        lng: attraction!.longitude,
-        radiusKm: NEARBY_EVENTS_RADIUS_KM,
-        category: EVENT_CATEGORY,
-        eventStatus: 'NOT_ENDED',
-        sort: 'eventStart',
-        size: NEARBY_KIND_FETCH,
-      }),
-    enabled: attraction?.latitude != null && attraction?.longitude != null,
-  });
-
-  const { data: nearbyStays } = useQuery({
-    queryKey: ['attraction-nearby-stays', id, attraction?.latitude, attraction?.longitude],
-    queryFn: () =>
-      searchAttractions({
-        lang,
-        lat: attraction!.latitude,
-        lng: attraction!.longitude,
-        radiusKm: NEARBY_RADIUS_KM,
-        sort: 'distance',
-        category: STAY_CATEGORY,
-        size: NEARBY_KIND_FETCH,
-      }),
-    enabled: attraction?.latitude != null && attraction?.longitude != null,
+    staleTime: 10 * 60_000,
   });
 
   // 시군구 날씨 — place 레디스 캐시 경로(ADR-0071 §10). 조회 시점에 그리고 서버 렌더 본문에는 넣지 않는다.
@@ -330,12 +258,12 @@ export default function AttractionPage() {
     () =>
       exploreItems({
         selfId: id,
-        sights: nearby?.attractions ?? [],
+        sights: nearby?.sights ?? [],
         sameCategory,
         sameCategoryKind: (kind === 'event' ? 'event' : kind === 'stay' ? 'stay' : 'sight') as ExploreKind,
-        stays: (nearbyStays?.attractions ?? []).filter((a) => a.id !== id).slice(0, NEARBY_KIND_SHOWN),
-        events: (nearbyEvents?.attractions ?? []).filter((a) => a.id !== id).slice(0, NEARBY_KIND_SHOWN),
-        amenities: groupByCategory((nearbyAmenities?.attractions ?? []).filter((a) => a.id !== id), AMENITY_PER_KIND),
+        stays: (nearby?.stays ?? []).filter((a) => a.id !== id).slice(0, NEARBY_KIND_SHOWN),
+        events: (nearby?.events ?? []).filter((a) => a.id !== id).slice(0, NEARBY_KIND_SHOWN),
+        amenities: groupByCategory((nearby?.amenities ?? []).filter((a) => a.id !== id), AMENITY_PER_KIND),
         index: {
           NEARBY_ATTRACTIONS: NEARBY_SECTION_INDEX,
           SAME_CATEGORY_NEARBY: SAME_CATEGORY_SECTION_INDEX,
@@ -346,7 +274,7 @@ export default function AttractionPage() {
       }),
     // sameCategory 는 attraction 에서 나온다 — 같은 문서면 같은 목록이다
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [id, kind, today, attraction?.region, nearby, nearbyStays, nearbyEvents, nearbyAmenities],
+    [id, kind, today, attraction?.region, nearby],
   );
   const center = useMemo(
     () => (plottable && lat != null && lng != null ? { lat, lng } : null),

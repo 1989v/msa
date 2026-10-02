@@ -431,6 +431,23 @@ export const fetchAttraction = async (id: string): Promise<Attraction> => {
   return res.data.data;
 };
 
+/** 관광지 상세 「주변 탐색」의 네 묶음 — 서버가 문서 좌표로 한 번에 찾는다. 자기 자신은 섞여 올 수 있다(화면이 뺀다). */
+export interface AttractionNearby {
+  sights: Attraction[];
+  stays: Attraction[];
+  events: Attraction[];
+  amenities: Attraction[];
+}
+
+/**
+ * 주변 탐색 — 명소(관광 분류 5km) · 숙소(5km) · 행사(20km, 끝나지 않은 것, 시작일 순) · 편의시설(음식·쇼핑 5km).
+ * 키가 관광지 id 하나라 엣지가 캐시한다(ADR-0105). 조건은 search `NearbyAttractionsService` 가 갖는다.
+ */
+export const fetchAttractionNearby = async (id: string): Promise<AttractionNearby> => {
+  const res = await api.get<ApiResponse<AttractionNearby>>(`/api/search/attractions/${id}/nearby`);
+  return res.data.data;
+};
+
 /**
  * 관광지 외부 링크 (ADR-0070). 원천은 place 지만 화면은 place 를 부르지 않는다 — 재색인이 링크 행을
  * 관광지 문서에 싣고, 상세 응답(`Attraction.links`, 원문 JSON)을 `placeView.parseLinks` 가 이 모양으로 푼다

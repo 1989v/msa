@@ -3,13 +3,17 @@ package com.kgd.search.presentation.search.controller
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
 import com.kgd.common.response.ApiResponse
+import com.kgd.search.application.attraction.usecase.NearbyAttractionsUseCase
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 import com.kgd.search.application.attraction.usecase.SuggestAttractionUseCase
+import org.springframework.http.CacheControl
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import java.time.Duration
 
 /**
  * 관광지 검색 (ADR-0065) — 키워드/카테고리/지역 필터 + geo 반경/거리순.
@@ -20,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController
 class AttractionSearchController(
     private val searchAttractionUseCase: SearchAttractionUseCase,
     private val suggestAttractionUseCase: SuggestAttractionUseCase,
+    private val nearbyAttractionsUseCase: NearbyAttractionsUseCase,
 ) {
 
     /** 통합 자동완성 — 지역(도시/광역, 인구 부스트 상단) + 관광지 prefix (ADR-0065). */
@@ -92,10 +97,27 @@ class AttractionSearchController(
         return ApiResponse.success(result)
     }
 
+    /** 상세 — 색인은 하루 한 번 바뀌므로 엣지가 1시간 쥔다 (ADR-0105). 404 에는 붙이지 않는다(예외 경로). */
     @GetMapping("/{id}")
-    fun findById(@PathVariable id: String): ApiResponse<SearchAttractionUseCase.AttractionSearchResult> {
+    fun findById(@PathVariable id: String): ResponseEntity<ApiResponse<SearchAttractionUseCase.AttractionSearchResult>> {
         val result = searchAttractionUseCase.findById(id)
             ?: throw BusinessException(ErrorCode.NOT_FOUND, "관광지를 찾을 수 없습니다: id=$id")
-        return ApiResponse.success(result)
+        return ResponseEntity.ok().cacheControl(INDEX_CACHE).body(ApiResponse.success(result))
+    }
+
+    /** 상세 「주변 탐색」 — 명소·숙소·행사·편의시설을 한 번에. 키가 관광지 id 라 상세와 같은 주기로 캐시한다 (ADR-0105). */
+    @GetMapping("/{id}/nearby")
+    fun nearby(@PathVariable id: String): ResponseEntity<ApiResponse<NearbyAttractionsUseCase.Nearby>> {
+        val result = nearbyAttractionsUseCase.nearby(id)
+            ?: throw BusinessException(ErrorCode.NOT_FOUND, "관광지를 찾을 수 없습니다: id=$id")
+        return ResponseEntity.ok().cacheControl(INDEX_CACHE).body(ApiResponse.success(result))
+    }
+
+    companion object {
+        /** 브라우저 60초 · 엣지 1시간 · 만료 뒤 10분은 옛 값을 내주며 뒤에서 갱신 */
+        private val INDEX_CACHE: CacheControl = CacheControl.maxAge(Duration.ofSeconds(60))
+            .cachePublic()
+            .sMaxAge(Duration.ofHours(1))
+            .staleWhileRevalidate(Duration.ofMinutes(10))
     }
 }

@@ -159,6 +159,10 @@ class WeatherCacheTest : BehaviorSpec({
             }
         }
         `when`("매핑이 없는 시군구면(좌표 없는 부천시 등)") {
+            then("엣지가 30분 쥐는 공개 캐시 헤더가 붙는다 (ADR-0105)") {
+                mvc.perform(get("/api/places/weather?sigungu=41190")).andReturn().response.getHeader("Cache-Control") shouldBe
+                    "max-age=60, public, s-maxage=1800, stale-while-revalidate=600"
+            }
             then("빈 날씨를 낸다 — 화면은 절을 그리지 않는다") {
                 every { repo.findArea("41190") } returns null
                 body("/api/places/weather?sigungu=41190") shouldContain "\"days\":[]"

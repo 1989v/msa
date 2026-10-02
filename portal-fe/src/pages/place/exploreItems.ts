@@ -41,7 +41,7 @@ export interface ExploreSources {
 }
 
 /** 명소는 8곳 — 지도 한 장에서 번호를 읽을 수 있는 수 */
-export const EXPLORE_SIGHTS_SHOWN = 8;
+const EXPLORE_SIGHTS_SHOWN = 8;
 
 /**
  * 주변 목록 다섯(명소 · 같은 분류 · 숙소 · 행사 · 편의시설)을 한 줄로 합친다.

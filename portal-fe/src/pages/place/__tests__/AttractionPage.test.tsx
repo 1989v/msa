@@ -2,11 +2,12 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Attraction, AttractionQuery } from '../../../api/placeApi';
+import type { Attraction } from '../../../api/placeApi';
 
 vi.mock('../../../api/placeApi', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../api/placeApi')>()),
   searchAttractions: vi.fn(),
+  fetchAttractionNearby: vi.fn(),
   fetchAttraction: vi.fn(),
   fetchWeather: vi.fn(),
   fetchAirQuality: vi.fn(),
@@ -21,7 +22,7 @@ vi.mock('../../../analytics/tracker', async (importOriginal) => ({
   track: vi.fn(),
 }));
 
-import { fetchAirQuality, fetchAttraction, fetchWeather, searchAttractions, type AirQuality, type WeatherOutlook } from '../../../api/placeApi';
+import { fetchAirQuality, fetchAttraction, fetchAttractionNearby, fetchWeather, searchAttractions, type AirQuality, type WeatherOutlook } from '../../../api/placeApi';
 import { track } from '../../../analytics/tracker';
 import { todayKst } from '../../../seo/eventSchedule';
 import AttractionPage from '../AttractionPage';
@@ -95,22 +96,26 @@ const h2Texts = () => screen.getAllByRole('heading', { level: 2 }).map((h) => h.
 /** 주변 탐색 목록의 줄 — 이름(표시 포함)만 */
 const exploreNames = (section: HTMLElement) =>
   Array.from(section.querySelectorAll('.place-explore-name')).map((n) => n.textContent);
-const searchCalls = () => vi.mocked(searchAttractions).mock.calls.map(([q]) => q as AttractionQuery);
+/** 주변 탐색 응답 — 분류별로 무엇이 오는지 정한다. 서버가 명소·숙소·행사·편의시설 네 묶음으로 나눠 준다 */
+function nearbyFrom(byCategory: (category: string) => Attraction[]) {
+  vi.mocked(fetchAttractionNearby).mockImplementation(async () => ({
+    sights: byCategory('nature,history,culture,leisure'),
+    stays: byCategory('stay'),
+    events: byCategory('festival'),
+    amenities: byCategory('shopping,food'),
+  }));
+}
 
 describe('AttractionPage 새 섹션', () => {
   beforeEach(() => {
-    vi.mocked(searchAttractions).mockImplementation((q) =>
-      Promise.resolve({
-        searchId: 's',
-        // 주변 명소 응답에 자기 자신과 같은 분류 가까운 곳(201)이 섞여 온다
+            // 주변 명소 응답에 자기 자신과 같은 분류 가까운 곳(201)이 섞여 온다
         // 근처 행사·숙소 검색(festival·stay)은 이 묶음에서 0건이다
-        attractions: q.category?.includes('history')
+    nearbyFrom((c) =>
+      c.includes('history')
           ? [card('100'), card('201'), card('301'), card('302')]
-          : q.category?.includes('food')
+          : c.includes('food')
             ? [card('401', 'food')]
             : [],
-        totalElements: 4, totalPages: 1, currentPage: 0,
-      }),
     );
   });
   afterEach(() => vi.clearAllMocks());
@@ -234,12 +239,8 @@ describe('AttractionPage 새 섹션', () => {
   it('좁은 화면 목록은 처음 8줄과 「목록 더 보기」, 넓은 화면은 전부다', async () => {
     // 편의시설은 종류당 6곳까지라 음식 6 · 쇼핑 6 으로 12곳
     const many = Array.from({ length: 12 }, (_, i) => card(String(600 + i), i < 6 ? 'food' : 'shopping'));
-    vi.mocked(searchAttractions).mockImplementation((q) =>
-      Promise.resolve({
-        searchId: 's',
-        attractions: q.category?.includes('food') ? many : [],
-        totalElements: 12, totalPages: 1, currentPage: 0,
-      }),
+    nearbyFrom((c) =>
+      c.includes('food') ? many : [],
     );
     vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, region: undefined });
     renderAt('/attractions/100');
@@ -286,16 +287,12 @@ describe('AttractionPage 새 섹션', () => {
 
   it('주변 탐색 — 자기 자신은 없고 같은 곳은 한 번만, 번호는 거리순이며 칩이 목록을 거른다', async () => {
     // 편의시설 응답에도 자기 자신(100)과 명소에 이미 온 곳(301)이 섞여 온다 — 목록 사이 중복
-    vi.mocked(searchAttractions).mockImplementation((q) =>
-      Promise.resolve({
-        searchId: 's',
-        attractions: q.category?.includes('history')
+    nearbyFrom((c) =>
+      c.includes('history')
           ? [card('100'), card('201'), card('301'), card('302')]
-          : q.category?.includes('food')
+          : c.includes('food')
             ? [card('100', 'food'), card('301', 'food'), card('401', 'food')]
             : [],
-        totalElements: 4, totalPages: 1, currentPage: 0,
-      }),
     );
     vi.mocked(fetchAttraction).mockResolvedValue(enriched);
     renderAt('/attractions/100');
@@ -315,13 +312,14 @@ describe('AttractionPage 새 섹션', () => {
     expect(exploreNames(explore)).toEqual(['경희궁같은 분류', '명소 201같은 분류', '명소 301', '명소 302']);
   });
 
-  it('상세의 주변·편의시설·근처 행사·근처 숙소 검색은 건수를 요청하지 않는다', async () => {
+  it('주변은 관광지 id 로 한 번만 부르고, 위치 검색을 직접 부르지 않는다 — 엣지가 id 로 캐시한다(ADR-0105)', async () => {
     vi.mocked(fetchAttraction).mockResolvedValue(enriched);
     renderAt('/attractions/100');
     await screen.findByText('명소 401');
 
-    expect(searchCalls()).toHaveLength(4);
-    for (const q of searchCalls()) expect(q.facets).toBeFalsy();
+    expect(fetchAttractionNearby).toHaveBeenCalledTimes(1);
+    expect(fetchAttractionNearby).toHaveBeenCalledWith('100');
+    expect(searchAttractions).not.toHaveBeenCalled();
   });
 
   it('영문 화면은 영문 제목·문구를 쓴다', async () => {
@@ -404,7 +402,7 @@ describe('AttractionPage 유형별 본문 — 행사 · 숙박 · 여행코스',
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(NOW);
-    vi.mocked(searchAttractions).mockResolvedValue({ searchId: 's', attractions: [], totalElements: 0, totalPages: 0, currentPage: 0 });
+    nearbyFrom(() => []);
   });
   afterEach(() => {
     vi.useRealTimers();
@@ -528,15 +526,10 @@ describe('AttractionPage 근처 행사 · 근처 숙소', () => {
   });
   const st = (id: string, km = 1): Attraction => ({ ...card(id, 'stay'), title: `숙소 ${id}`, contentTypeId: '32', distanceKm: km });
 
-  /** 분류 조건을 실제로 따르는 가짜 검색 — 편의시설 분류에 stay 가 다시 들어가면 숙소가 거기에도 온다. */
+  /** 분류별 응답 — 서버가 묶음마다 그 분류만 찾는다 */
   function respond(byCategory: Record<string, Attraction[]>) {
-    vi.mocked(searchAttractions).mockImplementation((q) => {
-      const cats = (q.category ?? '').split(',');
-      const attractions = cats.flatMap((c) => byCategory[c] ?? []);
-      return Promise.resolve({ searchId: 's', attractions, totalElements: attractions.length, totalPages: 1, currentPage: 0 });
-    });
+    nearbyFrom((c) => c.split(',').flatMap((x) => byCategory[x] ?? []));
   }
-  const callFor = (category: string) => searchCalls().find((q) => q.category === category);
 
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] });
@@ -547,7 +540,7 @@ describe('AttractionPage 근처 행사 · 근처 숙소', () => {
     vi.clearAllMocks();
   });
 
-  it('근처 행사 — 반경 20km · 끝나지 않은 행사 · 시작일 순으로 받고, 자기 자신을 빼고 최대 6건을 거리·기간과 그린다', async () => {
+  it('근처 행사 — 자기 자신을 빼고 최대 6건을 거리·기간과 그린다(찾는 조건은 서버 몫)', async () => {
     const events = [ev('300', '2026-10-20', '2026-10-30'), ...['601', '602', '603', '604', '605', '606', '607'].map((id, i) => ev(id, `2026-11-0${i + 1}`, `2026-11-0${i + 2}`, 2.5))];
     respond({ festival: events, history: [card('301')] });
     vi.mocked(fetchAttraction).mockResolvedValue({ ...ev('300', '2026-10-20', '2026-10-30'), title: '불꽃축제', overview: '개요' });
@@ -555,9 +548,6 @@ describe('AttractionPage 근처 행사 · 근처 숙소', () => {
     const explore = await screen.findByRole('region', { name: '주변 탐색' });
     await within(explore).findByText('행사 601');
 
-    expect(callFor('festival')).toMatchObject({
-      lat: 37.5, lng: 127, radiusKm: 20, category: 'festival', eventStatus: 'NOT_ENDED', sort: 'eventStart',
-    });
     fireEvent.click(within(explore).getByRole('button', { name: /행사 6/ }));
     expect(exploreNames(explore)).toEqual(['행사 601', '행사 602', '행사 603', '행사 604', '행사 605', '행사 606']);
     const first = within(explore).getByText('행사 601').closest('a')!;
@@ -566,7 +556,7 @@ describe('AttractionPage 근처 행사 · 근처 숙소', () => {
     expect(within(first).getByText('2026-11-01 ~ 2026-11-02')).toBeInTheDocument();
   });
 
-  it('근처 숙소 — 반경 5km · 거리순으로 받고 자기 자신을 빼고 최대 6건이다', async () => {
+  it('근처 숙소 — 자기 자신을 빼고 최대 6건이다(찾는 조건은 서버 몫)', async () => {
     const stays = [st('310', 0), ...['701', '702', '703', '704', '705', '706', '707'].map((id, i) => st(id, 0.3 + i / 10))];
     respond({ stay: stays });
     vi.mocked(fetchAttraction).mockResolvedValue({ ...st('310', 0), title: '한옥 스테이' });
@@ -574,12 +564,11 @@ describe('AttractionPage 근처 행사 · 근처 숙소', () => {
     const explore = await screen.findByRole('region', { name: '주변 탐색' });
     await within(explore).findByText('숙소 701');
 
-    expect(callFor('stay')).toMatchObject({ lat: 37.5, lng: 127, radiusKm: 5, category: 'stay', sort: 'distance' });
     expect(exploreNames(explore)).toEqual(['숙소 701', '숙소 702', '숙소 703', '숙소 704', '숙소 705', '숙소 706']);
     expect(within(within(explore).getByText('숙소 701').closest('a')!).getByText('300m')).toBeInTheDocument();
   });
 
-  it('편의시설 검색에는 숙박이 없고, 같은 숙소는 한 화면에 한 번만 뜬다', async () => {
+  it('같은 숙소는 한 화면에 한 번만 뜬다', async () => {
     respond({ food: [card('401', 'food')], shopping: [card('402', 'shopping')], stay: [st('701')] });
     vi.mocked(fetchAttraction).mockResolvedValue(enriched);
     renderAt('/attractions/100');
@@ -587,8 +576,6 @@ describe('AttractionPage 근처 행사 · 근처 숙소', () => {
     await within(explore).findByText('숙소 701');
     await within(explore).findByText('명소 401');
 
-    const amenityCall = searchCalls().find((q) => q.category.includes('food'))!;
-    expect(amenityCall.category.split(',')).not.toContain('stay');
     expect(screen.getAllByText('숙소 701')).toHaveLength(1);
   });
 
@@ -661,7 +648,7 @@ describe('AttractionPage 날씨', () => {
   };
 
   beforeEach(() => {
-    vi.mocked(searchAttractions).mockResolvedValue({ searchId: 's', attractions: [], totalElements: 0, totalPages: 0, currentPage: 0 });
+    nearbyFrom(() => []);
   });
   afterEach(() => {
     cleanup();
@@ -740,7 +727,7 @@ describe('AttractionPage 대기질', () => {
   const air: AirQuality = { sigunguCode: '11110', stations: [far, jongno, { ...jongno, name: '평창', latitude: 37.37, longitude: 128.39 }] };
 
   beforeEach(() => {
-    vi.mocked(searchAttractions).mockResolvedValue({ searchId: 's', attractions: [], totalElements: 0, totalPages: 0, currentPage: 0 });
+    nearbyFrom(() => []);
     vi.mocked(fetchAttraction).mockResolvedValue(enriched);
   });
   afterEach(() => {
@@ -794,7 +781,7 @@ describe('AttractionPage 혼잡 예측', () => {
   const plus = (n: number) => new Date(Date.parse(`${today}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
 
   beforeEach(() => {
-    vi.mocked(searchAttractions).mockResolvedValue({ searchId: 's', attractions: [], totalElements: 0, totalPages: 0, currentPage: 0 });
+    nearbyFrom(() => []);
   });
   afterEach(() => {
     cleanup();
@@ -893,7 +880,7 @@ describe('AttractionPage 여기 온 사람들이 함께 간 곳', () => {
   };
 
   beforeEach(() => {
-    vi.mocked(searchAttractions).mockResolvedValue({ searchId: 's', attractions: [], totalElements: 0, totalPages: 0, currentPage: 0 });
+    nearbyFrom(() => []);
   });
   afterEach(() => {
     cleanup();

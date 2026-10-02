@@ -1,0 +1,64 @@
+# ADR-0105 — 관광지 공개 조회는 값이 바뀌는 주기만큼 엣지에서 캐시한다
+
+- 상태: 채택 (2026-10-03)
+- 관련: ADR-0061(엣지 하드닝 · Cloudflare), ADR-0071(지역 드릴다운, §10 서빙 경로), ADR-0103(관광지 서버 렌더),
+  ADR-0104(관광 정보 포털 확장)
+- 그림: 「관광정보 데이터 흐름」 아티팩트 (볼트 `1989v/claude/artifact/place-data-flow`)
+
+## 맥락
+
+관광지 상세 한 번에 서버로 가는 호출은 8개다(2026-10-03 해운대 실측). 서버 렌더 HTML, 상세 데이터, 주변 검색
+4개(명소·편의시설·행사·숙소, OpenSearch 위치 검색), 날씨·대기질(place 레디스)이고, 로그인 확인·광고가 더 붙는다.
+MySQL 과 외부 API 에는 닿지 않는다. 그런데 응답 전부에 `Cache-Control: no-store` 가 붙어 Cloudflare 가
+하나도 캐시하지 못한다(`cf-cache-status: DYNAMIC`). 같은 관광지를 100명이 열면 위치 검색이 400번 돈다.
+
+`no-store` 는 서비스가 정한 값이 아니다. 게이트웨이의 Spring Security(WebFlux) 기본 헤더가 `Cache-Control` 이
+없는 응답에 붙인다 — 서비스가 헤더를 정하면 그 값이 그대로 나간다.
+
+OCI 무료 단일 노드라 서버 부하가 방문자 수를 따라가면 안 된다. 다만 모든 값을 검색 색인에 미리 넣는 방식은 맞지 않는다.
+
+- 날씨·대기질은 시군구 250개가 공유하고 하루 여러 번 바뀐다. 관광지 문서 6만 5천 개에 넣으면 그때마다 전부 재색인해야 한다.
+- 주변 목록을 문서에 넣으면 문서가 커진다. 검색 노드는 색인이 페이지 캐시에 다 있어야 벡터 검색이 빠르다.
+
+## 결정
+
+1. **값은 지금 자리에서 미리 만든다.** 관광지 문서는 검색 색인(하루 1회 재색인), 날씨·대기·방문자는 place 레디스
+   (수집이 쓰면서 갱신)다. 새 저장소를 두지 않는다.
+2. **공개 GET 응답에 캐시 헤더를 서비스가 붙인다.** 브라우저는 짧게, 엣지(`s-maxage`)는 값이 바뀌는 주기만큼:
+
+   | 응답 | 브라우저 | 엣지 | 근거 |
+   |---|---|---|---|
+   | `GET /api/search/attractions/{id}` | 60초 | 1시간 | 색인은 하루 1회 바뀐다 |
+   | `GET /api/search/attractions/{id}/nearby` | 60초 | 1시간 | 같다 |
+   | `GET /api/places/weather?sigungu=` | 60초 | 30분 | 단기 하루 2회 · 중기 1회 발표 |
+   | `GET /api/places/air?sigungu=` | 60초 | 10분 | 매시 측정 |
+
+   모두 `stale-while-revalidate` 를 둬서 만료 직후 요청이 원본을 기다리지 않게 한다. 오류 응답(404 등)에는 붙이지 않는다.
+3. **주변 검색 4개는 관광지 id 하나의 API 로 묶는다** (`/api/search/attractions/{id}/nearby`). 서버가 문서의 좌표·언어로
+   네 번 검색한다. 요청이 1개가 되고, 캐시 키가 좌표 문자열이 아니라 관광지 id 가 된다.
+4. **Cloudflare 는 위 경로만 캐시하고, 원본 헤더를 따른다.** 규칙은 대시보드에 있으므로 이 ADR 아래 「엣지 규칙」에 문안을 둔다.
+5. **사용자별 응답(로그인·찜·광고)과 HTML 은 캐시하지 않는다.** HTML 은 그 배포의 번들 파일명을 담고 있어, 엣지가 쥐고 있으면
+   배포 직후 없는 번들을 가리킨다.
+
+## 결과
+
+- 같은 관광지를 다시 열 때 서버로 가는 호출이 8개에서 사용자별 2개(로그인·광고)로 준다. 원본 부하는 방문자 수가 아니라
+  「관광지 수 × 만료 횟수」를 따라간다.
+- 값이 바뀐 뒤 최대 캐시 시간만큼 옛 값이 보인다. 재색인이 하루 1회라 1시간은 의미가 없고, 대기질은 측정 시각을 함께 보인다.
+- 지역 허브 목록·지도 검색처럼 조건이 많은 검색은 이번에 캐시하지 않는다 — 키가 조건 조합만큼 늘어 적중률이 낮다.
+
+## 엣지 규칙 (Cloudflare 대시보드 → Caching → Cache Rules)
+
+- 이름: `place-public-read`
+- 조건: 호스트가 `place.1989v.com` 이고 경로가 다음으로 시작 — `/api/search/attractions/` 중 `/{id}` · `/{id}/nearby`,
+  `/api/places/weather`, `/api/places/air`
+  (식: `(http.host eq "place.1989v.com" and (http.request.uri.path matches "^/api/search/attractions/[0-9]+(/nearby)?$"
+  or http.request.uri.path eq "/api/places/weather" or http.request.uri.path eq "/api/places/air"))`)
+- 동작: Eligible for cache · Edge TTL = 「Use cache-control header if present」 · Browser TTL = 「Respect origin」
+- 확인: 같은 주소를 두 번 부르면 두 번째 응답의 `cf-cache-status` 가 `HIT` 다.
+
+## 대안
+
+- **모든 값을 색인 문서에 넣기** — 위 「맥락」의 이유로 하지 않는다.
+- **주변 목록을 재색인 때 문서에 미리 계산해 넣기** — 엣지 캐시로 반복 호출이 사라진다. 문서를 키울 실측 근거(병목)가 없어 미룬다.
+- **게이트웨이에서 경로별로 헤더 덮어쓰기** — 값의 주기를 아는 쪽은 서비스다. 게이트웨이에 두면 주기 지식이 두 곳에 갈린다.
