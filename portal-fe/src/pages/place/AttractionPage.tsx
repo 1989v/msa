@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -35,11 +35,12 @@ import {
 import { useSeo } from '../../seo/useSeo';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import AttractionLinks from './AttractionLinks';
-import EventLine from './EventLine';
 import AttractionWeather from './AttractionWeather';
 import AttractionAir from './AttractionAir';
 import AttractionCongestion from './AttractionCongestion';
-import { googleMapsSearchUrl, loadGoogleMaps, mapsApiKey } from './googleMaps';
+import { googleMapsSearchUrl, mapsApiKey } from './googleMaps';
+import NearbyExplore from './NearbyExplore';
+import { EXPLORE_SIGHTS_SHOWN, exploreItems, type ExploreKind } from './exploreItems';
 import Footer from '../../components/Footer';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
 import {
@@ -55,10 +56,10 @@ import {
   type IntroRow,
 } from './placeView';
 import {
+  BARRIER_FREE_DETAILS,
   BARRIER_FREE_TITLE,
   barrierFreeIcons,
   barrierFreeRows,
-  distanceLabel,
   EVENT_PERIOD_LABEL,
   KIND_SECTION_TITLE,
   kindIntroRows,
@@ -78,8 +79,8 @@ import { newViewId } from '../../analytics/identity';
 import { installFlushOnLeave } from '../../analytics/tracker';
 
 const UI = {
-  ko: { badges: '방문 정보 요약', region: '지역 안 위치', explore: (p: string) => `${p} 둘러보기`, sameCategory: '같은 분류 가까운 곳', similar: '비슷한 곳', related: '여기 온 사람들이 함께 간 곳', back: '← 관광지 탐색', nearby: '주변 명소', amenities: '주변 편의시설', nearbyEvents: '근처 행사', nearbyStays: '근처 숙소', info: '이용 안내', photos: '사진', mapAria: '위치 지도', mapBadCoords: '원천 좌표가 정확하지 않아 지도를 표시하지 않습니다', mapKeyMissing: '지도 키가 설정되지 않아 위치 링크만 표시합니다', useTime: '이용시간', restDate: '쉬는날', useFee: '이용요금', parking: '주차', parkingFee: '주차요금', infoCenter: '문의', map: '구글 지도에서 보기', notFound: '관광지를 찾을 수 없습니다.', failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', loading: '불러오는 중…' },
-  en: { badges: 'At a glance', region: 'In the area', explore: (p: string) => `Explore ${p}`, sameCategory: 'Similar places nearby', similar: 'Similar places in other regions', related: 'Where visitors also went', back: '← Explore Korea', nearby: 'Nearby places', amenities: 'Nearby amenities', nearbyEvents: 'Nearby events', nearbyStays: 'Nearby stays', info: 'Visitor info', photos: 'Photos', mapAria: 'Location map', mapBadCoords: 'Source coordinates look wrong, so the map is hidden.', mapKeyMissing: 'Map key is not configured — showing the link only.', useTime: 'Hours', restDate: 'Closed', useFee: 'Admission', parking: 'Parking', parkingFee: 'Parking fee', infoCenter: 'Contact', map: 'Open in Google Maps', notFound: 'Attraction not found.', failed: 'Could not load this page. Please try again in a moment.', loading: 'Loading…' },
+  ko: { badges: '방문 정보 요약', region: '지역 안 위치', explore: (p: string) => `${p} 둘러보기`, similar: '비슷한 곳', related: '여기 온 사람들이 함께 간 곳', back: '← 관광지 탐색', info: '이용 안내', photos: '사진', more: '본문 전체 보기', useTime: '이용시간', restDate: '쉬는날', useFee: '이용요금', parking: '주차', parkingFee: '주차요금', infoCenter: '문의', map: '구글 지도에서 보기', notFound: '관광지를 찾을 수 없습니다.', failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', loading: '불러오는 중…' },
+  en: { badges: 'At a glance', region: 'In the area', explore: (p: string) => `Explore ${p}`, similar: 'Similar places in other regions', related: 'Where visitors also went', back: '← Explore Korea', info: 'Visitor info', photos: 'Photos', more: 'Read the full description', useTime: 'Hours', restDate: 'Closed', useFee: 'Admission', parking: 'Parking', parkingFee: 'Parking fee', infoCenter: 'Contact', map: 'Open in Google Maps', notFound: 'Attraction not found.', failed: 'Could not load this page. Please try again in a moment.', loading: 'Loading…' },
 } as const;
 
 /** 주변 검색 반경 — 명소 목록과 편의시설 캐로셀이 같은 값을 쓴다. */
@@ -97,14 +98,8 @@ const NEARBY_EVENTS_SECTION_INDEX = 5;
 const RELATED_SECTION_INDEX = 6;
 
 const NEARBY_RADIUS_KM = 5;
-/** 주변 명소는 6곳을 보인다. 자기 자신과 위 「같은 분류 가까운 곳」(최대 5)에 나온 곳을 빼고 남는 만큼. */
-const NEARBY_SHOWN = 6;
-const NEARBY_FETCH = NEARBY_SHOWN + 1 + 5;
-/**
- * 상세 지도의 줌. 허브에서 관광지를 고를 때와 같은 상한이다 (ADR-0071 §4) —
- * 건물 단위까지 당기면 "이 근처가 어디인지" 라는 주변 감각이 사라진다.
- */
-const DETAIL_ZOOM = 16;
+/** 주변 명소 — 「주변 탐색」이 8곳을 보인다. 자기 자신이 섞여 와도 남는 크기 */
+const NEARBY_FETCH = EXPLORE_SIGHTS_SHOWN + 1;
 /**
  * 편의시설은 넉넉히 받아 **유형마다 몫을 잘라** 담는다.
  *
@@ -117,7 +112,7 @@ const AMENITY_FETCH = 60;
 const AMENITY_PER_KIND = 6;
 /** 근처 행사 — 축제는 하루 나들이 거리까지 본다. 숙소·명소(5km)보다 넓다. */
 const NEARBY_EVENTS_RADIUS_KM = 20;
-/** 근처 행사·근처 숙소는 6건까지. 자기 자신과 위 「같은 분류 가까운 곳」(최대 5)을 걸러도 남는 크기로 받는다. */
+/** 근처 행사·근처 숙소는 6건까지. 자기 자신과 같은 분류에 이미 든 곳을 걸러도 남는 크기로 받는다. */
 const NEARBY_KIND_SHOWN = 6;
 const NEARBY_KIND_FETCH = NEARBY_KIND_SHOWN + 1 + 5;
 
@@ -151,7 +146,6 @@ export default function AttractionPage() {
         // 이 절을 빠뜨리면 "주변 명소" 가 주변 상점이 된다 — 적재의 절반 이상이 음식·쇼핑이라
         // 반경 5km 거리순은 상점이 먼저 걸린다 (명동에서 국문·영문 모두 7/7 이 쇼핑이었다).
         category: SIGHT_CATEGORIES.join(','),
-        // 자기 자신 + 같은 분류 가까운 곳(최대 5)을 걸러도 6곳이 남는 크기
         size: NEARBY_FETCH,
       }),
     enabled: attraction?.latitude != null && attraction?.longitude != null,
@@ -293,64 +287,72 @@ export default function AttractionPage() {
   // 화면을 떠날 때 아직 안 보낸 노출을 흘린다 — 그 순간의 fetch 는 취소된다.
   useEffect(installFlushOnLeave, []);
 
-  const mapDivRef = useRef<HTMLDivElement | null>(null);
-  const [mapFailed, setMapFailed] = useState(false);
   const hasMapKey = mapsApiKey() !== '';
   const lat = attraction?.latitude;
   const lng = attraction?.longitude;
   // 원천이 한반도 밖 좌표를 주는 레코드가 있다 — 그대로 찍으면 바다에 핀이 선다
   const plottable = isPlottable(lat, lng);
 
-  useEffect(() => {
-    if (!hasMapKey || !plottable || lat == null || lng == null) return;
-    let cancelled = false;
-    loadGoogleMaps()
-      .then((maps) => {
-        if (cancelled || !mapDivRef.current) return;
-        const map = new maps.Map(mapDivRef.current, {
-          center: { lat, lng },
-          zoom: DETAIL_ZOOM,
-          clickableIcons: false,
-          streetViewControl: false,
-          mapTypeControl: false,
-          fullscreenControl: false,
-        });
-        new maps.Marker({ map, position: { lat, lng }, title: attraction?.title });
-      })
-      .catch(() => {
-        if (!cancelled) setMapFailed(true);
-      });
-    return () => {
-      cancelled = true;
+  /*
+   * 개요 접기 — 좁은 화면에서만 높이를 자르고(CSS) 「본문 전체 보기」로 편다. 넓은 화면은
+   * 자르지 않으니 넘침이 없고 버튼도 안 나온다. 글은 DOM 에 그대로 있어 색인에서 빠지지 않는다.
+   */
+  const overviewRef = useRef<HTMLParagraphElement | null>(null);
+  const [overviewOpen, setOverviewOpen] = useState(false);
+  const [overviewClipped, setOverviewClipped] = useState(false);
+  useEffect(() => setOverviewOpen(false), [attraction?.contentId]);
+  useLayoutEffect(() => {
+    const measure = () => {
+      const el = overviewRef.current;
+      setOverviewClipped(!!el && el.scrollHeight > el.clientHeight + 4);
     };
-    // 제목은 마커 툴팁일 뿐이라 바뀌어도 지도를 다시 그리지 않는다
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasMapKey, plottable, lat, lng]);
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [attraction?.overview, overviewOpen]);
 
-  // 같은 분류 가까운 곳에 이미 나온 곳은 주변 명소에서 뺀다 — 한 화면에 같은 카드가 두 번 뜬다
   // 재색인 뒤 끝난 행사 항목은 오늘 기준으로 한 번 더 거른다(서버 렌더와 같은 규칙 — 오늘 끝나는 것은 남긴다)
   const notEnded = (n: { eventEndEffective?: string | null }) => !n.eventEndEffective || n.eventEndEffective >= today;
   const sameCategory = (attraction?.region?.sameCategoryNearby ?? []).filter(notEnded);
   const similar = (attraction?.similarElsewhere ?? []).filter(notEnded);
   // 함께 간 곳은 색인에 실린 목록 그대로 — 비슷한 곳과 겹쳐도 거르지 않는다(근거가 다른 두 목록, 서버 렌더와 같은 규칙)
   const related = attraction?.relatedPlaces ?? [];
-  const shownAbove = new Set(sameCategory.map((n) => n.id));
-  const others = (nearby?.attractions ?? [])
-    .filter((a) => a.id !== id && !shownAbove.has(a.id))
-    .slice(0, NEARBY_SHOWN);
   const badges = attraction ? visitorBadges(attraction, lang) : [];
   const accessIcons = attraction ? barrierFreeIcons(attraction, lang) : [];
   const accessRows = attraction ? barrierFreeRows(attraction, lang) : [];
   const wellness = attraction ? wellnessLine(attraction, lang) : null;
   const phrase = attraction ? regionPhrase(attraction, lang) : null;
   const hubCode = attraction ? regionHubCode(attraction) : null;
-  // 자기 자신과 위에 이미 나온 곳은 뺀다 — 행사 상세의 「같은 분류 가까운 곳」은 행사, 숙박 상세는 숙소다
-  const notShown = (a: Attraction) => a.id !== id && !shownAbove.has(a.id);
-  const events = (nearbyEvents?.attractions ?? []).filter(notShown).slice(0, NEARBY_KIND_SHOWN);
-  const stays = (nearbyStays?.attractions ?? []).filter(notShown).slice(0, NEARBY_KIND_SHOWN);
-  const amenities = groupByCategory(
-    (nearbyAmenities?.attractions ?? []).filter((a) => a.id !== id),
-    AMENITY_PER_KIND,
+
+  /*
+   * 주변 목록 다섯을 「주변 탐색」 한 줄로. 처음 받은 목록만 쓴다 — 지도를 옮겨도 다시 부르지 않는다.
+   * 배열을 고정해 둬야 지도가 렌더마다 다시 그려지지 않는다.
+   */
+  const explore = useMemo(
+    () =>
+      exploreItems({
+        selfId: id,
+        sights: nearby?.attractions ?? [],
+        sameCategory,
+        sameCategoryKind: (kind === 'event' ? 'event' : kind === 'stay' ? 'stay' : 'sight') as ExploreKind,
+        stays: (nearbyStays?.attractions ?? []).filter((a) => a.id !== id).slice(0, NEARBY_KIND_SHOWN),
+        events: (nearbyEvents?.attractions ?? []).filter((a) => a.id !== id).slice(0, NEARBY_KIND_SHOWN),
+        amenities: groupByCategory((nearbyAmenities?.attractions ?? []).filter((a) => a.id !== id), AMENITY_PER_KIND),
+        index: {
+          NEARBY_ATTRACTIONS: NEARBY_SECTION_INDEX,
+          SAME_CATEGORY_NEARBY: SAME_CATEGORY_SECTION_INDEX,
+          NEARBY_STAYS: NEARBY_STAYS_SECTION_INDEX,
+          NEARBY_EVENTS: NEARBY_EVENTS_SECTION_INDEX,
+          AMENITY_CAROUSEL: AMENITY_SECTION_INDEX,
+        },
+      }),
+    // sameCategory 는 attraction 에서 나온다 — 같은 문서면 같은 목록이다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [id, kind, today, attraction?.region, nearby, nearbyStays, nearbyEvents, nearbyAmenities],
+  );
+  const center = useMemo(
+    () => (plottable && lat != null && lng != null ? { lat, lng } : null),
+    [plottable, lat, lng],
   );
 
   return (
@@ -381,20 +383,43 @@ export default function AttractionPage() {
                 두고 높이만 고정하며, 남는 옆 공간은 같은 사진을 흐리게 깔아 메운다. */}
             {shown && (
               <>
-                <div
-                  className="place-detail-hero"
-                  style={{ backgroundImage: `url(${JSON.stringify(shown.url).slice(1, -1)})` }}
-                >
-                  <img
-                    className="place-detail-img"
-                    src={shown.url}
-                    alt={shown.name || `${attraction.title}${lang === 'en' ? ' photo' : ' 사진'}`}
-                  />
+                {/* 넓은 화면은 큰 사진 + 다른 사진 넷의 격자, 좁은 화면은 큰 사진 + 썸네일 줄이다(CSS). */}
+                <div className="place-detail-photos" data-tiles={Math.min(gallery.length - 1, 4)}>
+                  <div
+                    className="place-detail-hero"
+                    style={{ backgroundImage: `url(${JSON.stringify(shown.url).slice(1, -1)})` }}
+                  >
+                    <img
+                      className="place-detail-img"
+                      src={shown.url}
+                      alt={shown.name || `${attraction.title}${lang === 'en' ? ' photo' : ' 사진'}`}
+                    />
+                    {gallery.length > 1 && (
+                      <span className="place-detail-photo-count">
+                        {shownIndex + 1} / {gallery.length}
+                      </span>
+                    )}
+                  </div>
+                  {gallery
+                    .map((img, i) => ({ img, i }))
+                    .filter(({ i }) => i !== shownIndex)
+                    .slice(0, 4)
+                    .map(({ img, i }) => (
+                      <button
+                        type="button"
+                        key={img.url}
+                        className="place-detail-tile"
+                        aria-label={img.name || `${L.photos} ${i + 1}`}
+                        onClick={() => setShownIndex(i)}
+                      >
+                        <img src={img.url} alt="" loading="lazy" />
+                      </button>
+                    ))}
                 </div>
-                {/* 썸네일 줄 — 사진이 하나뿐이면 고를 것이 없으니 그리지 않는다.
-                    원천이 24장까지 주는 곳이 있어 가로 스크롤로 둔다. */}
+                {/* 썸네일 줄 — 사진이 하나뿐이면 고를 것이 없으니 그리지 않는다. 넓은 화면은
+                    격자가 다섯 장을 보이므로 그보다 많을 때만 나온다(CSS data-many). */}
                 {gallery.length > 1 && (
-                  <div className="place-gallery" role="group" aria-label={L.photos}>
+                  <div className="place-gallery" role="group" aria-label={L.photos} data-many={gallery.length > 5 || undefined}>
                     {gallery.map((img, i) => (
                       <button
                         type="button"
@@ -431,7 +456,21 @@ export default function AttractionPage() {
               {/* 원천 개요는 평문이 아니다 — <br>·HTML 엔티티가 섞여 오고 국문은 \n 이 온다.
                   overviewText 가 태그·엔티티를 풀고 줄바꿈만 남기며, CSS 가 그것을 살린다. */}
               {overviewText(attraction.overview) && (
-                <p className="place-detail-overview">{overviewText(attraction.overview)}</p>
+                <div className="place-detail-overview-box">
+                  <p
+                    ref={overviewRef}
+                    className="place-detail-overview"
+                    data-clamped={!overviewOpen || undefined}
+                    data-overflow={overviewClipped || undefined}
+                  >
+                    {overviewText(attraction.overview)}
+                  </p>
+                  {overviewClipped && !overviewOpen && (
+                    <button type="button" className="place-detail-more" onClick={() => setOverviewOpen(true)}>
+                      {L.more}
+                    </button>
+                  )}
+                </div>
               )}
 
               {/* 행사 · 숙박 · 여행코스는 일반 이용 안내 대신 유형별 절이다 — 파생 값(이용시간·요금·주차)이
@@ -490,7 +529,7 @@ export default function AttractionPage() {
                 </ul>
               </section>
             )}
-            {/* 무장애 정보 — 긍정 아이콘 줄 + 펼치면 원천 문장(고치지 않는다). 서버 렌더와 같은 표·순서 */}
+            {/* 접근성 정보 — 긍정 아이콘 줄 + 펼치면 원천 문장(고치지 않는다). 서버 렌더와 같은 표·순서 */}
             {(accessIcons.length > 0 || accessRows.length > 0) && (
               <section className="place-detail-badges" aria-label={BARRIER_FREE_TITLE[lang]} data-place-section="barrier-free">
                 <h2 className="place-detail-info-title">{BARRIER_FREE_TITLE[lang]}</h2>
@@ -502,8 +541,8 @@ export default function AttractionPage() {
                   </ul>
                 )}
                 {accessRows.length > 0 && (
-                  <details>
-                    <summary>{lang === 'en' ? 'Details' : '자세히'}</summary>
+                  <details className="place-detail-disclosure">
+                    <summary>{BARRIER_FREE_DETAILS[lang](accessRows.length)}</summary>
                     <dl className="place-detail-info-list">
                       {accessRows.map((r) => (
                         <div className="place-detail-info-row" key={r.key}>
@@ -528,93 +567,6 @@ export default function AttractionPage() {
                 )}
               </section>
             )}
-            {sameCategory.length > 0 && (
-              <section className="place-detail-same" aria-label={L.sameCategory}>
-                <h2 className="place-detail-info-title">{L.sameCategory}</h2>
-                <ul className="place-near-list">
-                  {sameCategory.map((n, i) => (
-                    <li key={n.id}>
-                      <TrackedLink
-                        className="place-near-link"
-                        to={attractionPath(lang, n.id)}
-                        viewId={viewId}
-                        item={{
-                          entityType: 'ATTRACTION',
-                          entityId: n.id,
-                          screenType: 'ATTRACTION_DETAIL',
-                          screenRef: id,
-                          sectionId: 'SAME_CATEGORY_NEARBY',
-                          sectionIndex: SAME_CATEGORY_SECTION_INDEX,
-                          itemIndex: i,
-                        }}
-                      >
-                        <span className="place-near-title">{n.title}</span>
-                        <span className="place-near-distance">{distanceLabel(n.distanceMeters)}</span>
-                      </TrackedLink>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-            {/* 다른 시도의 비슷한 곳 — 거리는 뜻이 없어 시도 이름을 둔다(서버 렌더 「{제목} · {시도}」) */}
-            {similar.length > 0 && (
-              <section className="place-detail-same" aria-label={L.similar}>
-                <h2 className="place-detail-info-title">{L.similar}</h2>
-                <ul className="place-near-list">
-                  {similar.map((n, i) => (
-                    <li key={n.id}>
-                      <TrackedLink
-                        className="place-near-link"
-                        to={attractionPath(lang, n.id)}
-                        viewId={viewId}
-                        item={{
-                          entityType: 'ATTRACTION',
-                          entityId: n.id,
-                          screenType: 'ATTRACTION_DETAIL',
-                          screenRef: id,
-                          sectionId: 'SIMILAR_ELSEWHERE',
-                          sectionIndex: SIMILAR_SECTION_INDEX,
-                          itemIndex: i,
-                        }}
-                      >
-                        <span className="place-near-title">{n.title}</span>
-                        {n.sidoName && <span className="place-near-distance">{n.sidoName}</span>}
-                      </TrackedLink>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-            {/* 여기 온 사람들이 함께 간 곳 — 관광공사 연관 관광지(이동 기반) 중 우리 관광지로 이어진 곳, 원천 순위 순(서버 렌더 「{제목} · {분류}」) */}
-            {related.length > 0 && (
-              <section className="place-detail-same" aria-label={L.related}>
-                <h2 className="place-detail-info-title">{L.related}</h2>
-                <ul className="place-near-list">
-                  {related.map((n, i) => (
-                    <li key={n.id}>
-                      <TrackedLink
-                        className="place-near-link"
-                        to={attractionPath(lang, n.id)}
-                        viewId={viewId}
-                        item={{
-                          entityType: 'ATTRACTION',
-                          entityId: n.id,
-                          screenType: 'ATTRACTION_DETAIL',
-                          screenRef: id,
-                          sectionId: 'RELATED_PLACES',
-                          sectionIndex: RELATED_SECTION_INDEX,
-                          itemIndex: i,
-                        }}
-                      >
-                        <span className="place-near-title">{n.title}</span>
-                        {n.category && <span className="place-near-distance">{n.category}</span>}
-                      </TrackedLink>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
             {/* 날씨 — 서버 렌더에는 없는 절이라 위의 서버 렌더와 같은 순서 묶음 뒤에 둔다 */}
             {weather && (
               <AttractionWeather outlook={weather} place={regionPlaceName(attraction, lang)} today={today} lang={lang} />
@@ -626,24 +578,17 @@ export default function AttractionPage() {
               <AttractionCongestion days={attraction.congestion} today={today} lang={lang} />
             )}
 
-            {/* 지도 — 링크만으로는 "어디쯤인지" 를 이 화면에서 알 수 없다.
-                키가 없거나 로더가 실패하면 아래 링크가 그대로 그 역할을 한다. */}
-            {!plottable ? (
-              <div className="place-map place-detail-map place-map-placeholder">
-                {L.mapBadCoords}
-              </div>
-            ) : hasMapKey && !mapFailed ? (
-              <div
-                ref={mapDivRef}
-                className="place-map place-detail-map"
-                role="application"
-                aria-label={`${attraction.title} ${L.mapAria}`}
-              />
-            ) : (
-              <div className="place-map place-detail-map place-map-placeholder">
-                {L.mapKeyMissing}
-              </div>
-            )}
+            {/* 주변 탐색 — 같은 분류 가까운 곳 · 주변 명소 · 숙소 · 행사 · 편의시설을 지도 한 장과 목록 하나로.
+                지도를 못 그리면(키 없음 · 좌표 이상 · 로더 실패) 목록만 남고 아래 링크가 위치를 대신한다. */}
+            <NearbyExplore
+              items={explore}
+              center={center}
+              centerTitle={attraction.title}
+              showMap={hasMapKey && plottable}
+              lang={lang}
+              viewId={viewId}
+              screenRef={id}
+            />
             <a
               className="place-btn"
               href={googleMapsSearchUrl(attraction)}
@@ -653,107 +598,11 @@ export default function AttractionPage() {
               {L.map}
             </a>
             <AttractionLinks links={attraction.links} lang={lang} />
+            {/* 거리와 무관한 추천 둘 — 주변 탐색과 따로, 탭으로 묶는다 */}
+            <RecommendTabs similar={similar} related={related} lang={lang} viewId={viewId} screenRef={id} />
           </article>
         )}
 
-        {others.length > 0 && (
-          <section className="place-list" aria-label={L.nearby}>
-            <h2 className="place-subtitle">{L.nearby}</h2>
-            {others.map((a, i) => (
-              <TrackedLink
-                key={a.id}
-                className="place-card"
-                to={attractionPath(lang, a.id)}
-                viewId={viewId}
-                item={{
-                  entityType: 'ATTRACTION',
-                  entityId: a.id,
-                  screenType: 'ATTRACTION_DETAIL',
-                  screenRef: id,
-                  sectionId: 'NEARBY_ATTRACTIONS',
-                  sectionIndex: NEARBY_SECTION_INDEX,
-                  itemIndex: i,
-                }}
-              >
-                {a.imageUrl ? (
-                  <img className="place-card-img" src={a.imageUrl} alt="" loading="lazy" />
-                ) : (
-                  <div className="place-card-img place-card-img-empty" aria-hidden />
-                )}
-                <div className="place-card-body">
-                  <h3 className="place-card-title">{a.title}</h3>
-                  {titleParts(a).secondary && <p className="place-card-local">{titleParts(a).secondary}</p>}
-                  {a.address && <p className="place-card-addr">{a.address}</p>}
-                </div>
-              </TrackedLink>
-            ))}
-          </section>
-        )}
-
-        {amenities.length > 0 && (
-          <section className="place-amenities" aria-label={L.amenities}>
-            <h2 className="place-subtitle">{L.amenities}</h2>
-            {/* 카드는 위 "주변 명소" 와 같은 .place-card 를 쓴다 — 같은 화면에서 크기가 다르면
-                아래쪽이 덤처럼 보인다. 다른 것은 가로로 이어진다는 점뿐이다. */}
-            <ul className="place-amenity-row">
-              {amenities.map((a, i) => (
-                <li key={a.id} className="place-amenity-slide">
-                  {/* 캐로셀 안 순서(itemIndex)를 섹션 순서(sectionIndex)와 따로 남긴다 —
-                      한 칸으로 누르면 「캐로셀 3번째」와 「3번째 섹션」이 구분되지 않는다 */}
-                  <TrackedLink
-                    className="place-card"
-                    to={attractionPath(lang, a.id)}
-                    viewId={viewId}
-                    item={{
-                      entityType: 'ATTRACTION',
-                      entityId: a.id,
-                      screenType: 'ATTRACTION_DETAIL',
-                      screenRef: id,
-                      sectionId: 'AMENITY_CAROUSEL',
-                      sectionIndex: AMENITY_SECTION_INDEX,
-                      itemIndex: i,
-                    }}
-                  >
-                    {a.imageUrl ? (
-                      <img className="place-card-img" src={a.imageUrl} alt="" loading="lazy" />
-                    ) : (
-                      <div className="place-card-img place-card-img-empty" aria-hidden />
-                    )}
-                    <div className="place-card-body">
-                      {a.category && (
-                        <span className="place-amenity-kind">
-                          {placeCategoryLabel(a.category, lang)}
-                        </span>
-                      )}
-                      <h3 className="place-card-title">{titleParts(a).primary}</h3>
-                      {a.address && <p className="place-card-addr">{a.address}</p>}
-                    </div>
-                  </TrackedLink>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {/* 편의시설 캐로셀에서 옮겨 온 숙박 몫 — 같은 자리(바로 아래)에 같은 카드로 둔다 */}
-        <NearbyCarousel
-          title={L.nearbyStays}
-          items={stays}
-          lang={lang}
-          viewId={viewId}
-          screenRef={id}
-          sectionId="NEARBY_STAYS"
-          sectionIndex={NEARBY_STAYS_SECTION_INDEX}
-        />
-        <NearbyCarousel
-          title={L.nearbyEvents}
-          items={events}
-          lang={lang}
-          viewId={viewId}
-          screenRef={id}
-          sectionId="NEARBY_EVENTS"
-          sectionIndex={NEARBY_EVENTS_SECTION_INDEX}
-        />
       </div>
 
       {/* 지도와 주변 목록을 다 본 뒤 (ADR-0076). 행사·숙박·코스 상세에는 지면을 두지 않는다 —
@@ -781,40 +630,62 @@ export default function AttractionPage() {
 }
 
 /**
- * 근처 행사·근처 숙소 캐로셀 — 편의시설 캐로셀과 같은 카드·같은 가로 줄이다. 카드에 거리(행사는 기간·상태도)를 붙인다.
- * 0건이면 절을 그리지 않는다 — 영문 숙박은 211건뿐이라 대부분 0건이 정상이다.
+ * 비슷한 곳 · 함께 간 곳 — 거리와 무관한 두 추천을 탭으로 묶는다. 하나만 있으면 탭 없이 그 목록이다.
+ * 클릭 기록 섹션은 각자 그대로(SIMILAR_ELSEWHERE · RELATED_PLACES).
  */
-function NearbyCarousel({
-  title,
-  items,
+function RecommendTabs({
+  similar,
+  related,
   lang,
   viewId,
   screenRef,
-  sectionId,
-  sectionIndex,
 }: {
-  title: string;
-  items: Attraction[];
+  similar: Array<{ id: string; title: string; sidoName?: string | null }>;
+  related: Array<{ id: string; title: string; category?: string | null }>;
   lang: PlaceLang;
   viewId: string;
   screenRef: string;
-  sectionId: 'NEARBY_EVENTS' | 'NEARBY_STAYS';
-  sectionIndex: number;
 }) {
-  if (items.length === 0) return null;
+  const L = UI[lang];
+  const tabs = [
+    { key: 'similar' as const, title: L.similar, items: similar.map((n) => ({ id: n.id, title: n.title, note: n.sidoName ?? null })) },
+    { key: 'related' as const, title: L.related, items: related.map((n) => ({ id: n.id, title: n.title, note: n.category ?? null })) },
+  ].filter((t) => t.items.length > 0);
+  const [picked, setPicked] = useState<'similar' | 'related'>('similar');
+  if (tabs.length === 0) return null;
+  const current = tabs.find((t) => t.key === picked) ?? tabs[0];
+  const sectionId = current.key === 'similar' ? 'SIMILAR_ELSEWHERE' : 'RELATED_PLACES';
+  const sectionIndex = current.key === 'similar' ? SIMILAR_SECTION_INDEX : RELATED_SECTION_INDEX;
   return (
-    <section className="place-amenities" aria-label={title} data-place-section={sectionId}>
-      <h2 className="place-subtitle">{title}</h2>
-      <ul className="place-amenity-row">
-        {items.map((a, i) => (
-          <li key={a.id} className="place-amenity-slide">
+    <section className="place-detail-same" aria-label={current.title} data-place-section="recommend">
+      {tabs.length > 1 ? (
+        <div className="place-tabs" role="tablist">
+          {tabs.map((t) => (
+            <button
+              type="button"
+              role="tab"
+              key={t.key}
+              className="place-tab"
+              aria-selected={t.key === current.key}
+              onClick={() => setPicked(t.key)}
+            >
+              {t.title}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <h2 className="place-detail-info-title">{current.title}</h2>
+      )}
+      <ul className="place-near-list" role={tabs.length > 1 ? 'tabpanel' : undefined}>
+        {current.items.map((n, i) => (
+          <li key={n.id}>
             <TrackedLink
-              className="place-card"
-              to={attractionPath(lang, a.id)}
+              className="place-near-link"
+              to={attractionPath(lang, n.id)}
               viewId={viewId}
               item={{
                 entityType: 'ATTRACTION',
-                entityId: a.id,
+                entityId: n.id,
                 screenType: 'ATTRACTION_DETAIL',
                 screenRef,
                 sectionId,
@@ -822,19 +693,8 @@ function NearbyCarousel({
                 itemIndex: i,
               }}
             >
-              {a.imageUrl ? (
-                <img className="place-card-img" src={a.imageUrl} alt="" loading="lazy" />
-              ) : (
-                <div className="place-card-img place-card-img-empty" aria-hidden />
-              )}
-              <div className="place-card-body">
-                <h3 className="place-card-title">{titleParts(a).primary}</h3>
-                {a.distanceKm != null && (
-                  <span className="place-near-distance">{distanceLabel(Math.round(a.distanceKm * 1000))}</span>
-                )}
-                <EventLine attraction={a} lang={lang} />
-                {a.address && <p className="place-card-addr">{a.address}</p>}
-              </div>
+              <span className="place-near-title">{n.title}</span>
+              {n.note && <span className="place-near-distance">{n.note}</span>}
             </TrackedLink>
           </li>
         ))}

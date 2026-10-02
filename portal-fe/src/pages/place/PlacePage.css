@@ -978,13 +978,6 @@
   line-height: 1.45;
 }
 
-/* 상세의 위치 지도 — 허브 지도(.place-map)와 같은 규격을 쓰되 높이만 본문에 맞춘다.
-   허브는 화면을 채우는 물건이고 여기서는 본문 안 한 블록이다. */
-.place-detail-map {
-  min-height: 16rem;
-  height: 16rem;
-}
-
 /* 원천 개요의 줄바꿈을 살린다. overviewText 가 <br> 과 엔티티를 풀어 \n 만 남기고,
    여기서 그 \n 을 줄로 만든다 — 안 주면 브라우저가 공백으로 접어 문단 구분이 사라진다. */
 .place-detail-overview {
@@ -1009,14 +1002,15 @@
   }
 
   /* 글은 남는 폭을 갖되 글줄 상한(75ch)이 먼저 걸린다 */
-  .place-detail-read > .place-detail-overview {
+  .place-detail-read > .place-detail-overview-box {
     flex: 1 1 auto;
     min-width: 0;
   }
 
-  /* 이용 안내는 내용만큼만 — 라벨+값 두 칸이라 그 이상 넓어져도 빈칸만 는다 */
+  /* 이용 안내는 내용만큼만 — 라벨+값 두 칸이라 그 이상 넓어져도 빈칸만 는다.
+     줄어들지 않게 둔다: 개요 글줄 상한을 푼 넓은 화면에서 개요가 폭을 다 가져가 값이 한 글자 폭이 됐다 */
   .place-detail-read > .place-detail-info {
-    flex: 0 1 24rem;
+    flex: 0 0 22rem;
     min-width: 0;
     padding: 0.8rem 1rem;
     border: 1px solid var(--ko-border-subtle);
@@ -1786,4 +1780,409 @@ button.place-card {
     grid-column: 1 / -1;
     grid-row: 2;
   }
+}
+
+/* ─── 관광지 상세 개편 — 사진 격자 · 개요 접기 · 접근성 펼침 · 주변 탐색 · 추천 탭 ─────────────
+   상세는 카드 안에 가두지 않는다. 테두리·안쪽 여백만큼 글과 사진이 좁아져 보였다. */
+.place-body-stacked .place-detail {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  gap: 0.75rem;
+}
+
+.place-body-stacked .place-detail-title {
+  font-size: 1.4rem;
+}
+
+/* 사진 — 좁은 화면은 큰 사진 한 장(+ 썸네일 줄), 넓은 화면은 큰 사진 + 넷의 격자 */
+.place-detail-photos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+}
+
+.place-detail-tile {
+  display: none;
+  padding: 0;
+  border: 0;
+  background: var(--ko-surface-2);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.place-detail-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.place-detail-photo-count {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.6rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  color: var(--kh-hanji);
+  background: color-mix(in srgb, var(--kh-ink) 65%, transparent);
+}
+
+@media (max-width: 40rem) {
+  .place-detail-hero {
+    height: 16rem;
+  }
+}
+
+/* 개요 — 좁은 화면만 높이를 자르고 아래를 흐리게 한다. 글은 DOM 에 그대로 있다. */
+.place-body-stacked .place-detail-overview {
+  font-size: 0.95rem;
+  line-height: 1.75;
+}
+
+.place-detail-overview-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.place-detail-more {
+  align-self: stretch;
+  padding: 0.65rem;
+  border: 1px solid var(--ko-border-default);
+  border-radius: 0.6rem;
+  background: transparent;
+  color: var(--ko-text-primary);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.place-detail-more:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: 2px;
+}
+
+@media (max-width: 63.99rem) {
+  .place-detail-overview[data-clamped] {
+    max-height: 20rem;
+    overflow: hidden;
+  }
+
+  /* 흐림은 실제로 잘렸을 때만 — 짧은 개요의 끝줄까지 흐리면 글이 덜 끝난 것처럼 보인다 */
+  .place-detail-overview[data-clamped][data-overflow] {
+    -webkit-mask-image: linear-gradient(to bottom, #000 75%, transparent);
+    mask-image: linear-gradient(to bottom, #000 75%, transparent);
+  }
+}
+
+/* 접근성 상세 — 브라우저 기본 삼각형 대신 한 줄짜리 펼침 */
+.place-detail-disclosure {
+  border-radius: 0.6rem;
+  background: var(--ko-surface-2);
+}
+
+.place-detail-disclosure > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.9rem;
+  color: var(--ko-text-primary);
+  cursor: pointer;
+  list-style: none;
+}
+
+.place-detail-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.place-detail-disclosure > summary::after {
+  content: '';
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform var(--kh-dur-state, 0.2s) ease;
+}
+
+.place-detail-disclosure[open] > summary::after {
+  transform: rotate(-135deg);
+}
+
+.place-detail-disclosure > .place-detail-info-list {
+  padding: 0 0.85rem 0.8rem;
+}
+
+/* 주변 탐색 — 좁은 화면은 지도 위 · 목록 아래, 넓은 화면은 지도 6.5 : 목록 3.5 */
+.place-explore {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.place-explore-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.place-explore-map {
+  height: 18rem;
+  min-height: 18rem;
+  border-radius: 0.75rem;
+}
+
+.place-explore-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  min-height: 0;
+}
+
+.place-explore-filters {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.place-explore-filter {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--ko-border-default);
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--ko-text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.place-explore-filter[aria-pressed='true'] {
+  background: var(--ko-text-primary);
+  border-color: var(--ko-text-primary);
+  color: var(--ko-surface-0);
+}
+
+.place-explore-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+}
+
+/* 종류 색 — 지도 마커(NearbyExplore KIND_TOKEN)와 같은 표 */
+[data-kind='sight'] { --explore-kind: var(--kh-pine); }
+[data-kind='stay'] { --explore-kind: var(--kh-celadon); }
+[data-kind='event'] { --explore-kind: var(--kh-ocher); }
+[data-kind='amenity'] { --explore-kind: var(--kh-giwa); }
+
+.place-explore-dot,
+.place-explore-num {
+  background: var(--explore-kind);
+}
+
+.place-explore-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.place-explore-row {
+  border-radius: 0.6rem;
+}
+
+.place-explore-row[data-active] {
+  background: var(--ko-surface-2);
+}
+
+.place-explore-link {
+  display: grid;
+  grid-template-columns: 1.5rem 3.25rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.place-explore-num {
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 9999px;
+  display: grid;
+  place-items: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--kh-hanji);
+}
+
+/* 기와색은 다크 바탕에서 묻힌다 — 테두리로 원의 경계를 세운다(지도 위 마커는 밝은 지도라 그대로 둔다) */
+.place-explore-num[data-kind='amenity'] {
+  box-shadow: 0 0 0 1px var(--ko-border-strong);
+}
+
+/* 좌표를 몰라 지도에 없는 항목 — 번호를 비워 지도에서 찾지 않게 한다 */
+.place-explore-num[data-unmapped] {
+  background: transparent;
+  border: 1px dashed var(--ko-border-strong);
+  color: var(--ko-text-muted);
+}
+
+.place-explore-thumb {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 0.4rem;
+  object-fit: cover;
+  display: block;
+}
+
+.place-explore-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.place-explore-name {
+  font-size: 0.95rem;
+  color: var(--ko-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.place-explore-tag {
+  margin-left: 0.35rem;
+  padding: 0 0.3rem;
+  border: 1px solid var(--kh-ocher);
+  border-radius: 0.25rem;
+  font-size: 0.7rem;
+  color: var(--kh-ocher-text, var(--kh-ocher));
+  vertical-align: 0.1em;
+}
+
+.place-explore-sub {
+  font-size: 0.8rem;
+  color: var(--ko-text-muted);
+}
+
+.place-explore-dist {
+  font-size: 0.85rem;
+  color: var(--ko-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 추천 탭 — 비슷한 곳 · 함께 간 곳 */
+.place-tabs {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+.place-tab {
+  padding: 0.4rem 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--ko-text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.place-tab[aria-selected='true'] {
+  color: var(--ko-text-primary);
+  border-bottom-color: var(--ko-text-primary);
+}
+
+/* 넓은 화면(PC) — 사진 격자 · 개요는 자르지 않음 · 지도와 목록을 나란히 */
+@media (min-width: 64rem) {
+  .place-detail-photos {
+    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-rows: 12.5rem 12.5rem;
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+
+  .place-detail-photos[data-tiles='0'] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 25.5rem;
+  }
+
+  .place-detail-photos .place-detail-hero {
+    grid-row: 1 / 3;
+    height: auto;
+    border-radius: 0;
+  }
+
+  .place-detail-photos[data-tiles='0'] .place-detail-hero {
+    grid-row: auto;
+  }
+
+  /* 사진이 적으면 빈 칸이 남지 않게 칸 수를 줄인다 */
+  .place-detail-photos[data-tiles='1'] {
+    grid-template-columns: 2fr 1fr;
+    grid-template-rows: 25.5rem;
+  }
+
+  .place-detail-photos[data-tiles='1'] .place-detail-hero {
+    grid-row: auto;
+  }
+
+  .place-detail-photos[data-tiles='2'] {
+    grid-template-columns: 2fr 1fr;
+  }
+
+  .place-detail-photos[data-tiles='3'] .place-detail-tile:nth-of-type(3) {
+    grid-column: 2 / 4;
+  }
+
+  .place-detail-tile {
+    display: block;
+  }
+
+  /* 격자가 다섯 장을 보이니 그보다 많을 때만 썸네일 줄이 남는다 */
+  .place-gallery:not([data-many]) {
+    display: none;
+  }
+
+  .place-body-stacked .place-detail-overview {
+    max-width: none;
+  }
+
+  .place-explore-body {
+    display: grid;
+    grid-template-columns: minmax(0, 6.5fr) minmax(0, 3.5fr);
+    gap: 1rem;
+    height: 32rem;
+  }
+
+  .place-explore-map {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .place-explore-filters {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .place-explore-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .place-detail-disclosure > summary::after { transition: none; }
 }

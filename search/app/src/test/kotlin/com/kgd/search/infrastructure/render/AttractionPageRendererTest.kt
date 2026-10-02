@@ -166,8 +166,8 @@ class AttractionPageRendererTest : BehaviorSpec({
         val root = rootOf(html)
         val section = root.substringAfter("<section data-place-section=\"barrier-free\">").substringBefore("</section>")
 
-        then("「무장애 정보」 절에 긍정 아이콘 줄이 정해진 순서로 나간다 — 값이 없는 엘리베이터는 없다") {
-            section shouldContain "<h2>무장애 정보</h2>"
+        then("「접근성 정보」 절에 긍정 아이콘 줄이 정해진 순서로 나간다 — 값이 없는 엘리베이터는 없다") {
+            section shouldContain "<h2>접근성 정보</h2>"
             section.substringAfter("<ul>").substringBefore("</ul>") shouldBe
                 "<li>휠체어</li><li>장애인 화장실</li><li>장애인 주차</li><li>유모차</li><li>수유실</li>"
         }
@@ -189,7 +189,7 @@ class AttractionPageRendererTest : BehaviorSpec({
         then("웰니스 한 줄과 출처의 원천 이름이 붙고, 절은 배지 뒤 · 지역 안 위치 앞이다") {
             root shouldContain "<p data-place-section=\"wellness\">웰니스 관광 · 온천 / 사우나 / 스파</p>"
             root shouldContain "<p data-place-section=\"source\">출처: 한국관광공사 TourAPI · 무장애 여행 정보 · 웰니스관광 정보</p>"
-            val order = listOf("매주 화요일 휴무", "무장애 정보", "웰니스 관광", "종로구 관광지 120곳").map { root.indexOf(it) }
+            val order = listOf("매주 화요일 휴무", "접근성 정보", "웰니스 관광", "종로구 관광지 120곳").map { root.indexOf(it) }
             order.none { it < 0 } shouldBe true
             order shouldBe order.sorted()
         }

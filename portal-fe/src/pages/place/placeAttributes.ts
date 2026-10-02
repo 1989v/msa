@@ -99,7 +99,7 @@ export function chipCount(facets: AttributeFacets | null | undefined, id: Attrib
 }
 
 /*
- * 무장애 정보 — 서버 렌더(search `AttractionPageRenderer.barrierFreeSection`)와 같은 표 · 같은 순서 · 같은 문구.
+ * 접근성 정보(원천: 무장애 여행) — 서버 렌더(search `AttractionPageRenderer.barrierFreeSection`)와 같은 표 · 같은 순서 · 같은 문구.
  * 키 표는 search `BarrierFreeInfo.KEYS` 와 같다(원천 키 이름의 오타 `braile` 은 원천 그대로).
  */
 const BARRIER_FREE_KEYS: ReadonlyArray<{ key: string; ko: string; en: string }> = [
@@ -143,7 +143,12 @@ const BARRIER_FREE_ICONS: ReadonlyArray<{ code: string; ko: string; en: string }
   { code: 'LACTATION_ROOM', ko: '수유실', en: 'Nursing room' },
 ];
 
-export const BARRIER_FREE_TITLE: Record<PlaceLang, string> = { ko: '무장애 정보', en: 'Accessibility' };
+export const BARRIER_FREE_TITLE: Record<PlaceLang, string> = { ko: '접근성 정보', en: 'Accessibility' };
+/** 원천 문장을 펼치는 줄 — 몇 항목인지 미리 보인다 */
+export const BARRIER_FREE_DETAILS: Record<PlaceLang, (n: number) => string> = {
+  ko: (n) => `접근성 상세 ${n}항목`,
+  en: (n) => `Accessibility details (${n})`,
+};
 
 export function barrierFreeIcons(a: Attraction, lang: PlaceLang): string[] {
   const flags = a.barrierFree ?? [];

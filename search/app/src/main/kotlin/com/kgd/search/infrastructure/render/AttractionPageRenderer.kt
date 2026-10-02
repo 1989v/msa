@@ -558,7 +558,7 @@ class AttractionPageRenderer(
     }
 
     /**
-     * 무장애 정보 — 긍정 아이콘 줄(휠체어 · 엘리베이터 · 장애인 화장실 · 주차 · 유모차 · 수유실) 다음에 원천 문장을
+     * 접근성 정보(원천: 무장애 여행) — 긍정 아이콘 줄(휠체어 · 엘리베이터 · 장애인 화장실 · 주차 · 유모차 · 수유실) 다음에 원천 문장을
      * 원천 키 순서대로. 문장은 고치지 않는다(화면 `barrierFreeRows` 와 같은 표 · 같은 순서).
      */
     private fun barrierFreeSection(lang: String, info: BarrierFreeInfo): String {
@@ -569,7 +569,7 @@ class AttractionPageRenderer(
             .filter { (_, value) -> value.isNotEmpty() }
         return section(
             "barrier-free",
-            if (en) "Accessibility" else "무장애 정보",
+            if (en) "Accessibility" else "접근성 정보",
             (if (icons.isEmpty()) "" else "<ul>$icons</ul>") + definitionList(rows),
         )
     }
