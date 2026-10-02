@@ -309,6 +309,10 @@ jobs:
         env:
           REGISTRY: ${{ steps.meta.outputs.registry }}
           TAG: ${{ steps.meta.outputs.tag }}
+          OCIR_REGION: ${{ secrets.OCIR_REGION }}
+          OCIR_NAMESPACE: ${{ secrets.OCIR_NAMESPACE }}
+          OCIR_USERNAME: ${{ secrets.OCIR_USERNAME }}
+          OCIR_TOKEN: ${{ secrets.OCIR_TOKEN }}
         run: |
           set -euo pipefail
           # 서비스 이름 → context 경로 매핑
@@ -369,6 +373,8 @@ jobs:
             # ignore-error 는 캐시 내보내기 실패가 빌드를 깨지 않게 한다 — 실패하면
             # 이미지는 push 된 채 스텝만 죽어 뒤의 kustomization 갱신이 건너뛰어진다.
             CACHE_REF="$REGISTRY/$svc:buildcache"
+            # 밀려난 캐시 매니페스트가 레이어를 붙잡지 않게 빌드 뒤 지운다(scripts/ocir-prune.py --drop).
+            OLD_CACHE=$(python3 scripts/ocir-prune.py --cache-digest "$svc" 2>/dev/null || true)
             docker buildx build \
               --platform linux/arm64 \
               -f "$ctx/Dockerfile" \
@@ -378,6 +384,10 @@ jobs:
               --cache-to "type=registry,ref=$CACHE_REF,mode=min,image-manifest=true,oci-mediatypes=true,ignore-error=true" \
               --push \
               "$ctx"
+            NEW_CACHE=$(python3 scripts/ocir-prune.py --cache-digest "$svc" 2>/dev/null || true)
+            if [ -n "$OLD_CACHE" ] && [ -n "$NEW_CACHE" ] && [ "$OLD_CACHE" != "$NEW_CACHE" ]; then
+              python3 scripts/ocir-prune.py --drop "$svc" "$OLD_CACHE" || true
+            fi
           done
 
       # ───── kustomization.yaml 의 images: 섹션 부분 갱신 ─────────────────────

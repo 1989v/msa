@@ -119,6 +119,10 @@ def main():
     ap.add_argument("--keep", type=int, default=20, help="repo 당 남길 빌드 태그 수")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--repo", action="append", help="특정 repo 만 (반복 지정)")
+    ap.add_argument("--cache-digest", metavar="REPO",
+                    help="REPO:buildcache 의 지금 digest 를 출력하고 끝낸다(없으면 빈 줄)")
+    ap.add_argument("--drop", nargs=2, metavar=("REPO", "DIGEST"),
+                    help="밀려난 캐시 매니페스트 하나를 digest 로 지우고 끝낸다")
     a = ap.parse_args()
 
     need = ["OCIR_REGION", "OCIR_NAMESPACE", "OCIR_USERNAME", "OCIR_TOKEN"]
@@ -128,6 +132,20 @@ def main():
 
     reg = Registry(os.environ["OCIR_REGION"], os.environ["OCIR_NAMESPACE"],
                    os.environ["OCIR_USERNAME"], os.environ["OCIR_TOKEN"])
+    # buildcache 태그는 빌드마다 새 캐시로 바뀌고, 밀려난 매니페스트는 태그 없이 남아 그 빌드의 레이어를
+    # 계속 붙잡는다 — 옛 sha 태그를 지워도 레이어가 회수되지 않아 portal-fe 하나가 246개 · 15GB 를 쌓았다
+    # (2026-10-02). 태그 없는 매니페스트는 Registry v2 로 목록을 볼 수 없으니, 빌드 직전 digest 를 적어 두고
+    # 빌드 뒤 바뀌었으면 그 하나를 지운다.
+    if a.cache_digest:
+        digest, _ = reg.manifest(a.cache_digest, "buildcache")
+        print(digest or "")
+        return
+    if a.drop:
+        repo, digest = a.drop
+        ok, st, body = reg.delete(repo, digest)
+        print(f"[{repo}] 밀려난 캐시 {digest[:19]} 삭제 {'완료' if ok else '실패'} ({st})")
+        return
+
     order, dep = git_order(), deployed_tags()
     repos = a.repo or reg.repos()
 
