@@ -36,7 +36,7 @@ class AttractionLinkService(
             collected = collected,
             // 표시명으로 조립한다 — 원천 제목은 꼬리 괄호에 다른 표기를 얹어 와서
             // (`Dosan Park(도산공원)`), 그대로 실으면 태그·검색어가 어디에도 없는 질의가 된다.
-            deepLinks = AttractionDeepLinks.of(attraction.titleDisplay),
+            deepLinks = AttractionDeepLinks.of(attraction.titleDisplay, attraction.contentTypeId),
             pending = pending,
         )
     }
@@ -46,7 +46,7 @@ class AttractionLinkService(
             val id = attraction.id ?: return@mapNotNull null
             id to GetAttractionLinksUseCase.Links(
                 collected = linkRepository.findLinks(id),
-                deepLinks = AttractionDeepLinks.of(attraction.titleDisplay),
+                deepLinks = AttractionDeepLinks.of(attraction.titleDisplay, attraction.contentTypeId),
                 // 색인 시점에는 대기 여부가 의미 없다 — 화면이 그 상태를 그리지 않는다.
                 pending = false,
             )

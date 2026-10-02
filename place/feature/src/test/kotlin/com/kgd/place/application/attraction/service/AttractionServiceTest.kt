@@ -74,6 +74,7 @@ class AttractionServiceTest : BehaviorSpec({
                     imagesRaw = """[{"originimgurl":"https://tong.visitkorea.or.kr/a.jpg"}]""",
                     infoRaw = """[{"infoname":"내국인예약안내","infotext":"가능"}]""",
                     extraSyncedAt = java.time.LocalDateTime.of(2026, 9, 13, 4, 0),
+                    eventStartDate = null, eventEndDate = null, listRaw = null,
                     googlePlaceId = "ChIJod7tSseifDUR9hXHLFNGMIs",
                     sourceModifiedAt = null, status = "ACTIVE",
                     createdAt = java.time.LocalDateTime.now(),
@@ -111,7 +112,8 @@ class AttractionServiceTest : BehaviorSpec({
             introRaw = null, useTime = null, restDate = null, useFee = null,
             parking = null, parkingFee = null, infoCenter = null, introSyncedAt = null,
             petAcmpyType = null, petRaw = null, petSyncedAt = null, setting = null,
-            imagesRaw = null, infoRaw = null, extraSyncedAt = null, googlePlaceId = null,
+            imagesRaw = null, infoRaw = null, extraSyncedAt = null,
+            eventStartDate = null, eventEndDate = null, listRaw = null, googlePlaceId = null,
             sourceModifiedAt = null, status = "ACTIVE", createdAt = java.time.LocalDateTime.now(),
         )
 
@@ -135,6 +137,68 @@ class AttractionServiceTest : BehaviorSpec({
 
                 slice.items.map { it.id } shouldBe listOf(15L, 16L)
                 slice.nextAfterId shouldBe null
+            }
+        }
+    }
+    given("행사 날짜·목록 행 원문이 실린 커맨드") {
+        // searchFestival2 운영 표본(2026-10-02) 첫 행. 날짜는 수집기가 yyyyMMdd → ISO 로 바꿔 싣는다.
+        val start = java.time.LocalDate.of(2026, 11, 7)
+        val end = java.time.LocalDate.of(2026, 11, 8)
+        val raw = """{"contentid":"4116982","contenttypeid":"15","eventstartdate":"20261107","eventenddate":"20261108"}"""
+
+        `when`("bulk upsert 하면") {
+            then("도메인까지 값이 건너간다") {
+                val captured = slot<List<Attraction>>()
+                every { repository.upsertAll(capture(captured)) } returns
+                    AttractionRepositoryPort.UpsertSummary(created = 1, updated = 0)
+                every { repository.count() } returns 1
+
+                service.executeBulk(
+                    listOf(
+                        UpsertAttractionUseCase.Command(
+                            contentId = "4116982", lang = "ko", title = "산북AI김장문화축제",
+                            latitude = 37.4008741346, longitude = 127.4451502631, contentTypeId = "15",
+                            eventStartDate = start, eventEndDate = end, listRaw = raw,
+                        ),
+                    ),
+                )
+
+                val domain = captured.captured.single()
+                domain.eventStartDate shouldBe start
+                domain.eventEndDate shouldBe end
+                domain.listRaw shouldBe raw
+            }
+        }
+
+        `when`("저장된 행을 조회하면") {
+            then("뷰로 되읽힌다 — 못 읽으면 개요 배치 왕복이 지운다") {
+                val stored = Attraction.create(
+                    contentId = "4116982", lang = "ko", title = "산북AI김장문화축제",
+                    latitude = 37.4008741346, longitude = 127.4451502631, contentTypeId = "15",
+                    eventStartDate = start, eventEndDate = end, listRaw = raw,
+                )
+                val withId = Attraction.restore(
+                    id = 7L, contentId = stored.contentId, lang = stored.lang, title = stored.title,
+                    address = null, areaCode = null, sigunguCode = null, ldongRegnCd = null, ldongSignguCd = null,
+                    category = null, cat1 = null, cat2 = null, cat3 = null,
+                    lclsSystm1 = null, lclsSystm2 = null, lclsSystm3 = null,
+                    contentTypeId = "15", copyrightDivCd = null, thumbnailUrl = null,
+                    mapLevel = null, zipcode = null, sourceCreatedAt = null,
+                    latitude = stored.latitude, longitude = stored.longitude, imageUrl = null, tel = null, overview = null,
+                    introRaw = null, useTime = null, restDate = null, useFee = null,
+                    parking = null, parkingFee = null, infoCenter = null, introSyncedAt = null,
+                    petAcmpyType = null, petRaw = null, petSyncedAt = null, setting = null,
+                    imagesRaw = null, infoRaw = null, extraSyncedAt = null,
+                    eventStartDate = stored.eventStartDate, eventEndDate = stored.eventEndDate, listRaw = stored.listRaw,
+                    googlePlaceId = null, sourceModifiedAt = null, status = "ACTIVE",
+                    createdAt = java.time.LocalDateTime.now(),
+                )
+                every { repository.findById(7L) } returns withId
+
+                val view = service.findById(7L)
+                view.eventStartDate shouldBe start
+                view.eventEndDate shouldBe end
+                view.listRaw shouldBe raw
             }
         }
     }

@@ -26,6 +26,7 @@ import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.MySQLContainer
 import org.testcontainers.utility.DockerImageName
 import org.springframework.transaction.support.TransactionTemplate
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 /**
@@ -97,6 +98,34 @@ class PlaceSchemaIntegrationSpec(
                 val ko = adapter.findAfter("ko", all[1], 10)
                 ko.map { it.lang }.distinct() shouldBe listOf("ko")
                 ko.map { it.id!! }.all { it > all[1] } shouldBe true
+            }
+    }
+
+    Given("행사 날짜·목록 원문이 있는 행을 V23 컬럼에 적재할 때") {
+        Then("개요 왕복 upsert 와 구글 보강 saveAll 을 지난 뒤에도 값이 남아야 한다")
+            .config(enabledIf = { dockerAvailable }) {
+                // searchFestival2 운영 표본(2026-10-02) 첫 행
+                val raw = """{"contentid":"4116982","contenttypeid":"15","eventstartdate":"20261107","eventenddate":"20261108"}"""
+                val adapter = AttractionRepositoryAdapter(r3)
+                fun festival(withList: Boolean, overview: String? = null) = Attraction.create(
+                    contentId = "4116982", lang = "ko", title = "산북AI김장문화축제",
+                    latitude = 37.4008741346, longitude = 127.4451502631, contentTypeId = "15",
+                    eventStartDate = if (withList) LocalDate.of(2026, 11, 7) else null,
+                    eventEndDate = if (withList) LocalDate.of(2026, 11, 8) else null,
+                    listRaw = if (withList) raw else null,
+                    overview = overview,
+                )
+                adapter.upsertAll(listOf(festival(withList = true)))
+                adapter.upsertAll(listOf(festival(withList = false, overview = "김장 문화 축제")))
+                val id = r3.findByContentIdIn(setOf("4116982")).single().id!!
+                adapter.saveAll(adapter.findAllByIds(listOf(id)).onEach { it.enrichGooglePlaceId("ChIJod7tSseifDUR9hXHLFNGMIs") })
+
+                val back = adapter.findById(id)!!
+                back.overview shouldBe "김장 문화 축제"
+                back.googlePlaceId shouldBe "ChIJod7tSseifDUR9hXHLFNGMIs"
+                back.eventStartDate shouldBe LocalDate.of(2026, 11, 7)
+                back.eventEndDate shouldBe LocalDate.of(2026, 11, 8)
+                back.listRaw shouldBe raw
             }
     }
 

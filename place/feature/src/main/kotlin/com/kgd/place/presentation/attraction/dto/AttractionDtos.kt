@@ -8,6 +8,7 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.Size
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 data class BulkUpsertAttractionRequest(
@@ -59,6 +60,11 @@ data class UpsertAttractionItem(
     val imagesRaw: String? = null,
     val infoRaw: String? = null,
     val extraSyncedAt: LocalDateTime? = null,
+    /** 행사 시작일·종료일 — 수집기가 원천 yyyyMMdd 를 ISO(yyyy-MM-dd)로 바꿔 싣는다. */
+    val eventStartDate: LocalDate? = null,
+    val eventEndDate: LocalDate? = null,
+    /** 목록 행 원문 (행사·숙박·코스 목록). */
+    val listRaw: String? = null,
     val googlePlaceId: String? = null,
     val sourceModifiedAt: LocalDateTime? = null,
 ) {
@@ -103,6 +109,9 @@ data class UpsertAttractionItem(
         imagesRaw = imagesRaw,
         infoRaw = infoRaw,
         extraSyncedAt = extraSyncedAt,
+        eventStartDate = eventStartDate,
+        eventEndDate = eventEndDate,
+        listRaw = listRaw,
         googlePlaceId = googlePlaceId,
         sourceModifiedAt = sourceModifiedAt,
     )
@@ -168,6 +177,9 @@ data class AttractionResponse(
     val imagesRaw: String?,
     val infoRaw: String?,
     val extraSyncedAt: LocalDateTime?,
+    val eventStartDate: LocalDate?,
+    val eventEndDate: LocalDate?,
+    val listRaw: String?,
     val googlePlaceId: String?,
     val sourceModifiedAt: LocalDateTime?,
     val status: String,
@@ -218,6 +230,9 @@ data class AttractionResponse(
             imagesRaw = view.imagesRaw,
             infoRaw = view.infoRaw,
             extraSyncedAt = view.extraSyncedAt,
+            eventStartDate = view.eventStartDate,
+            eventEndDate = view.eventEndDate,
+            listRaw = view.listRaw,
             googlePlaceId = view.googlePlaceId,
             sourceModifiedAt = view.sourceModifiedAt,
             status = view.status,

@@ -1,5 +1,6 @@
 package com.kgd.place.application.attraction.usecase
 
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 interface UpsertAttractionUseCase {
@@ -46,6 +47,9 @@ interface UpsertAttractionUseCase {
         val imagesRaw: String? = null,
         val infoRaw: String? = null,
         val extraSyncedAt: LocalDateTime? = null,
+        val eventStartDate: LocalDate? = null,
+        val eventEndDate: LocalDate? = null,
+        val listRaw: String? = null,
         val googlePlaceId: String? = null,
         val sourceModifiedAt: LocalDateTime? = null,
     )

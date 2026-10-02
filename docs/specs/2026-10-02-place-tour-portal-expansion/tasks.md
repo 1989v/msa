@@ -34,14 +34,14 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
 **Dependencies:** Task Group 1
 **Phase:** ①
 **Required Skills:** Kotlin, JPA, Flyway
-- [ ] 2.0 Complete place 저장
-  - [ ] 2.1 Write tests: `AttractionTest.syncFrom`(T4 ① — 날짜 없는 개요·이용정보·사진·반려동물 왕복이 행사 날짜·목록 원문을 지우지 않음, 유형 12 목록 동기화가 개요·introRaw·petRaw·setting·infoRaw 유지) · `AttractionJpaEntityTest`(T4 ② `fromDomain(toDomain(e))` 새 세 컬럼 보존) · `AttractionRepositoryAdapter` 저장소 대역(T4 ③ `saveAll` 뒤 유지) · `AttractionDtoRoundTripTest`(T4b) · `AttractionDeepLinkTest`(T11b — 32·80 은 `MYREALTRIP`·`KLOOK` 없음, 같은 실행의 12 는 둘 다 있음)
-  - [ ] 2.2 `placedb/migration/V23__add_attraction_event_dates_and_list_raw.sql` — 행사 시작일·종료일 `DATE` · 목록 행 원문 `TEXT`, 모두 nullable
-  - [ ] 2.3 도메인 `Attraction`(`create`·`restore`·`syncFrom` — 들어온 값이 있을 때만 갱신) · `SIGHT_CATEGORIES` 는 그대로
-  - [ ] 2.4 새 컬럼이 지나가는 자리 전부: JPA 엔티티(`fromDomain`·`toDomain`) · bulk 요청 DTO → 도메인 · `UpsertAttractionUseCase` 커맨드 · `GetAttractionUseCase.AttractionView` · `AttractionService` 두 매핑 · 목록 응답 DTO
-  - [ ] 2.5 `AttractionDeepLinks.of` 가 유형을 받아 숙박(32·80)의 `TOUR_PRODUCT` 를 제외 — 호출부(`AttractionLinkService`) 갱신
-  - [ ] 2.6 Verify: `./gradlew :place:domain:test --tests '*AttractionTest' --tests '*AttractionDeepLinkTest' && ./gradlew :place:feature:test --tests '*AttractionDtoRoundTripTest' --tests '*AttractionJpaEntityTest' --tests '*AttractionRepositoryAdapter*'`
-  - [ ] 2.7 보조(Docker 있는 환경만): `./gradlew :place:feature:test --tests '*PlaceSchemaIntegrationSpec'` — 실제로 돈 출력 줄을 증거로, 건너뛴 실행은 ★ 근거로 쓰지 않는다
+- [x] 2.0 Complete place 저장
+  - [x] 2.1 Write tests: `AttractionTest.syncFrom`(T4 ① — 날짜 없는 개요·이용정보·사진·반려동물 왕복이 행사 날짜·목록 원문을 지우지 않음, 유형 12 목록 동기화가 개요·introRaw·petRaw·setting·infoRaw 유지) · `AttractionJpaEntityTest`(T4 ② `fromDomain(toDomain(e))` 새 세 컬럼 보존) · `AttractionRepositoryAdapter` 저장소 대역(T4 ③ `saveAll` 뒤 유지) · `AttractionDtoRoundTripTest`(T4b) · `AttractionDeepLinkTest`(T11b — 32·80 은 `MYREALTRIP`·`KLOOK` 없음, 같은 실행의 12 는 둘 다 있음)
+  - [x] 2.2 `placedb/migration/V23__add_attraction_event_dates_and_list_raw.sql` — 행사 시작일·종료일 `DATE` · 목록 행 원문 `TEXT`, 모두 nullable
+  - [x] 2.3 도메인 `Attraction`(`create`·`restore`·`syncFrom` — 들어온 값이 있을 때만 갱신) · `SIGHT_CATEGORIES` 는 그대로
+  - [x] 2.4 새 컬럼이 지나가는 자리 전부: JPA 엔티티(`fromDomain`·`toDomain`) · bulk 요청 DTO → 도메인 · `UpsertAttractionUseCase` 커맨드 · `GetAttractionUseCase.AttractionView` · `AttractionService` 두 매핑 · 목록 응답 DTO
+  - [x] 2.5 `AttractionDeepLinks.of` 가 유형을 받아 숙박(32·80)의 `TOUR_PRODUCT` 를 제외 — 호출부(`AttractionLinkService`) 갱신
+  - [x] 2.6 Verify: `./gradlew :place:domain:test --tests '*AttractionTest' --tests '*AttractionSyncFromTest' --tests '*AttractionDeepLinkTest' && ./gradlew :place:feature:test --tests '*AttractionDtoRoundTripTest' --tests '*AttractionJpaEntityTest' --tests '*AttractionRepositoryAdapter*'`
+  - [x] 2.7 보조(Docker 있는 환경만): `./gradlew :place:feature:test --tests '*PlaceSchemaIntegrationSpec'` — 실제로 돈 출력 줄을 증거로, 건너뛴 실행은 ★ 근거로 쓰지 않는다
 **Acceptance Criteria:** T4 ①②③ · T4b · T11b 초록 + 회귀 주입(엔티티 매핑에서 컬럼 하나 삭제 · `syncFrom` 무조건 덮어쓰기) 빨간불
 
 ### Task Group 3: 수집기 — 정규화 · 세 오퍼레이션 · 보강 우선순위 (place-ingest)

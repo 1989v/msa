@@ -2,7 +2,7 @@
 
 ## 현재
 - 작업 위치: scratchpad/wt3 (공유 트리 금지). 커밋은 kgd/1989v@naver.com, 푸시는 gh auth 1989v → push → kwongd.
-- 완료: TG1 사전 확인(2026-10-02). 다음: TG2 place 저장(V23 · 왕복 경로 · 숙박 딥링크 제외).
+- 완료: TG1 사전 확인(2026-10-02). TG2 완료(V23·왕복 경로·숙박 딥링크 제외, 57 tests). 다음: TG3 수집기(normalize_row · 세 오퍼레이션 · UPSERT_FIELDS 에 eventStartDate·eventEndDate·listRaw).
 
 ## TG1 결과 요약
 - 행사 조회 창 −365일 유지(국·영 합 12쪽). eventStartDate 는 「종료일 ≥ 값」 필터.

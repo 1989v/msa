@@ -2,6 +2,7 @@ package com.kgd.place.application.attraction.usecase
 
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 interface GetAttractionUseCase {
@@ -65,6 +66,10 @@ interface GetAttractionUseCase {
         val imagesRaw: String?,
         val infoRaw: String?,
         val extraSyncedAt: LocalDateTime?,
+        /** 행사 시작일·종료일 (원천 값 그대로) · 목록 행 원문 */
+        val eventStartDate: LocalDate?,
+        val eventEndDate: LocalDate?,
+        val listRaw: String?,
         val googlePlaceId: String?,
         val sourceModifiedAt: LocalDateTime?,
         val status: String,

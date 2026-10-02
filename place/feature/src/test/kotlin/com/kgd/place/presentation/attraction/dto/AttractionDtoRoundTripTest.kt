@@ -2,6 +2,7 @@ package com.kgd.place.presentation.attraction.dto
 
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
@@ -32,6 +33,8 @@ class AttractionDtoRoundTripTest : BehaviorSpec({
                 // 못 읽는 필드 = 다음 개요 배치가 null 로 덮을 필드
                 // 리플렉션이 빈 집합을 돌려주면 아래 비교가 공허하게 통과한다
                 requestFields.size shouldBeGreaterThan 20
+                // 행사·숙박·코스 목록이 싣는 세 필드 — 요청에 없으면 수집기가 보내도 버려진다
+                requestFields shouldContainAll listOf("eventStartDate", "eventEndDate", "listRaw")
                 (requestFields - responseFields).toList().shouldBeEmpty()
             }
         }

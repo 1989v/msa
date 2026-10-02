@@ -37,8 +37,12 @@ object AttractionDeepLinks {
      *
      * [title] 은 원천 제목이 아니라 **표시명([Attraction.titleDisplay])** 이어야 한다 —
      * `Dosan Park(도산공원)` 을 그대로 넣으면 검색어·태그에 두 표기가 통째로 실린다.
+     *
+     * [contentTypeId] 가 숙박(32·80)이면 투어 상품 링크를 내지 않는다 — 숙박 제휴 승인이 나도
+     * 스펙을 바꾸지 않고는 숙박 제휴 링크가 생기지 않게 막는다 (ADR-0104). 유형을 빠뜨린 호출이
+     * 숙박에 링크를 붙이지 않도록 기본값을 두지 않는다.
      */
-    fun of(title: String): List<AttractionDeepLink> {
+    fun of(title: String, contentTypeId: String?): List<AttractionDeepLink> {
         val tag = instagramTag(title)
         val query = encode(title)
         return buildList {
@@ -52,6 +56,7 @@ object AttractionDeepLinks {
             // API 호출 0 이라 키 없이도 동작하고, 카드가 5개뿐인 한계를 사용자가 스스로 넘게 한다.
             add(AttractionDeepLink("YOUTUBE", DeepLinkKind.SOCIAL,
                 "https://www.youtube.com/results?search_query=$query", LinkRevenueType.PLAIN))
+            if (contentTypeId in LODGING_CONTENT_TYPES) return@buildList
             // 마이리얼트립 — 공개 제휴 프로그램·오픈 API 가 확인되지 않아 상품 데이터는 긁지 않는다
             // (ADR-0070 §6). 검색 딥링크만 건다.
             add(AttractionDeepLink("MYREALTRIP", DeepLinkKind.TOUR_PRODUCT,
@@ -61,6 +66,9 @@ object AttractionDeepLinks {
                 "https://www.klook.com/search/?query=$query", LinkRevenueType.PLAIN))
         }
     }
+
+    /** 숙박 유형 코드 — 국문 서비스 32, 영문 서비스 80. `category = stay`(캠핑장 포함)와 범위가 다르다. */
+    private val LODGING_CONTENT_TYPES = setOf("32", "80")
 
     /** 해시태그는 구분자를 갖지 못한다 — 공백·문장부호를 떨어내고 붙인다. */
     fun instagramTag(title: String): String =

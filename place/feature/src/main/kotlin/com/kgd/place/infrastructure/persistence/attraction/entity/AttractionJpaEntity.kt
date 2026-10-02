@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Entity
@@ -150,6 +151,17 @@ class AttractionJpaEntity(
     @Column(name = "extra_synced_at")
     val extraSyncedAt: java.time.LocalDateTime? = null,
 
+    // 행사 시작일·종료일 — 원천 값 그대로 (V23). 유효 기간 정규화는 색인 쪽 규칙이 한다.
+    @Column(name = "event_start_date")
+    val eventStartDate: LocalDate? = null,
+
+    @Column(name = "event_end_date")
+    val eventEndDate: LocalDate? = null,
+
+    /** 목록 행 원문 (행사·숙박·코스 목록). intro_raw 와 같은 이유로 문자열이다. */
+    @Column(name = "list_raw", columnDefinition = "TEXT")
+    val listRaw: String? = null,
+
 
     // Places Text Search 로 채우는 보강 필드 — id 외에는 저장하지 않는다 (data-sources.md §7)
     @Column(name = "google_place_id", length = 128)
@@ -206,6 +218,9 @@ class AttractionJpaEntity(
         imagesRaw = imagesRaw,
         infoRaw = infoRaw,
         extraSyncedAt = extraSyncedAt,
+        eventStartDate = eventStartDate,
+        eventEndDate = eventEndDate,
+        listRaw = listRaw,
         googlePlaceId = googlePlaceId,
         sourceModifiedAt = sourceModifiedAt,
         status = status,
@@ -257,6 +272,9 @@ class AttractionJpaEntity(
             imagesRaw = attraction.imagesRaw,
             infoRaw = attraction.infoRaw,
             extraSyncedAt = attraction.extraSyncedAt,
+            eventStartDate = attraction.eventStartDate,
+            eventEndDate = attraction.eventEndDate,
+            listRaw = attraction.listRaw,
             introSyncedAt = attraction.introSyncedAt,
             googlePlaceId = attraction.googlePlaceId,
             sourceModifiedAt = attraction.sourceModifiedAt,

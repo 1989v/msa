@@ -1,5 +1,6 @@
 package com.kgd.place.domain.attraction.model
 
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 /**
@@ -64,6 +65,14 @@ class Attraction private constructor(
     var imagesRaw: String? = null,
     var infoRaw: String? = null,
     var extraSyncedAt: LocalDateTime? = null,
+    /**
+     * 행사 시작일·종료일 (searchFestival2 `eventstartdate`·`eventenddate`, 원천 값 그대로).
+     * 비거나 앞뒤가 바뀐 값도 고치지 않는다 — 유효 기간 정규화는 색인 쪽 규칙이 한다.
+     */
+    var eventStartDate: LocalDate? = null,
+    var eventEndDate: LocalDate? = null,
+    /** 목록 행 원문 (searchFestival2 · searchStay2 · areaBasedList2 코스) — 컬럼으로 펴지 않은 키까지 남긴다. */
+    var listRaw: String? = null,
     var googlePlaceId: String? = null,
     var sourceModifiedAt: LocalDateTime? = null,
     var status: String = "ACTIVE",
@@ -132,6 +141,9 @@ class Attraction private constructor(
             imagesRaw: String? = null,
             infoRaw: String? = null,
             extraSyncedAt: LocalDateTime? = null,
+            eventStartDate: LocalDate? = null,
+            eventEndDate: LocalDate? = null,
+            listRaw: String? = null,
             googlePlaceId: String? = null,
             sourceModifiedAt: LocalDateTime? = null,
         ): Attraction {
@@ -181,6 +193,9 @@ class Attraction private constructor(
                 imagesRaw = imagesRaw?.takeIf { it.isNotBlank() },
                 infoRaw = infoRaw?.takeIf { it.isNotBlank() },
                 extraSyncedAt = extraSyncedAt,
+                eventStartDate = eventStartDate,
+                eventEndDate = eventEndDate,
+                listRaw = listRaw?.takeIf { it.isNotBlank() },
                 googlePlaceId = googlePlaceId?.takeIf { it.isNotBlank() },
                 sourceModifiedAt = sourceModifiedAt,
                 status = "ACTIVE",
@@ -231,6 +246,9 @@ class Attraction private constructor(
             imagesRaw: String?,
             infoRaw: String?,
             extraSyncedAt: LocalDateTime?,
+            eventStartDate: LocalDate?,
+            eventEndDate: LocalDate?,
+            listRaw: String?,
             googlePlaceId: String?,
             sourceModifiedAt: LocalDateTime?,
             status: String,
@@ -278,6 +296,9 @@ class Attraction private constructor(
             imagesRaw = imagesRaw,
             infoRaw = infoRaw,
             extraSyncedAt = extraSyncedAt,
+            eventStartDate = eventStartDate,
+            eventEndDate = eventEndDate,
+            listRaw = listRaw,
             googlePlaceId = googlePlaceId,
             sourceModifiedAt = sourceModifiedAt,
             status = status,
@@ -362,6 +383,14 @@ class Attraction private constructor(
         imagesRaw = source.imagesRaw ?: imagesRaw
         infoRaw = source.infoRaw ?: infoRaw
         extraSyncedAt = source.extraSyncedAt ?: extraSyncedAt
+        /*
+         * 행사 날짜·목록 행 원문은 행사·숙박·코스 목록만 싣는다. 같은 bulk 를 쓰는 개요·이용정보·부가 사진·반려동물
+         * 왕복은 이 값을 안 실어 보내므로 들어온 값이 있을 때만 갱신한다. 그 대가로 원천이 날짜를 지워도
+         * DB 값은 남는다 — 원문 컬럼에 최신 행이 남아 정정 경로가 있다.
+         */
+        eventStartDate = source.eventStartDate ?: eventStartDate
+        eventEndDate = source.eventEndDate ?: eventEndDate
+        listRaw = source.listRaw ?: listRaw
         sourceModifiedAt = source.sourceModifiedAt
         status = source.status
     }
