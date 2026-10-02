@@ -1,6 +1,13 @@
 # Image concepts
 **실제 게임 캡처가 아니라 imagegen으로 제작한 설계 시안.**
 
+## 실제 사용 이미지 자산 — 2026-10-03
+사용자가 도형 기반 구현의 품질 차이를 지적하여, 승인 시안05의 재질을 참조한 투명 PNG3종을 built-in image_gen으로 별도 제작했다. 아래는 실행용 개별 자산이며 실제 게임 화면 캡처가 아니다.
+- `portal-fe/public/games/marine-command/assets/origin/opening-hill-v1.png`: 고지·짧은 경사로. 통행 영역에 맞춘 소스 밴드/기준점으로 렌더링.
+- `portal-fe/public/games/marine-command/assets/origin/thorn-tower-v1.png`: 검은 석재·뼈·붉은 천·화로의 가시 타워.
+- `portal-fe/public/games/marine-command/assets/origin/enemy-crypt-v1.png`: 같은 재질의 적 묘실.
+원문 프롬프트는 `prompts/06-hill-raster.txt`, `07-tower-sprite.txt`, `08-crypt-sprite.txt`. 원본 PNG를 보존하며 생성 시안을 게임 전체 배경 한 장으로 붙이지 않는다.
+
 ## 고지·경사로 수정 시안 — 2026-10-03, 사용자 확인 대기
 ![넓은 경사로와 돌출된 고지면](images/05-hill-ramp.png)
 저지대→넓은 경사로→고지 윗면의 연속성, 밝은 윗면/어두운 절벽 단면과 접지 그림자로 높이를 표현한다. 활잡이3명은 높이 단계 설명용이며 시작 병력 변경이 아니다. 주변 인물·시설은 분위기 참고이며 신규 구현 범위가 아니다. 게임 코드 미변경. 프랙탈 생성은 보류한다.
