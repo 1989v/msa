@@ -149,3 +149,6 @@ origin 모듈 문법 검사와 변경분 공백 검사 통과. 실제 브라우�
 games19828054, gpt-6.1-sol 단일 담당.1차zombie100%,2차ghoul약10%,3차ghoul15%/plague10%,첫3차비행없음.4차부터bat3%,차수당2%증가최대15%,후반6종유지. 개체수/주기/상한/codec/protocol변경없음.
 본진옆world.neutralHealer=(464,11904),walkable검증. 반경180,전투중포함초당maxHP5%회복. 기존본진회복과max(rate)만적용해합산하지않는다. 협동양측아군치료,적미치료. 정적NPC는HP/owner/id가없으며선택·고용·피격·병력상한·패배조건에미참여한다. 고유투명healer-v1.png를40worldpx로렌더링,범위·라벨표시.
 관련15/15통과:초반구성/범위경계/전투회복/중복방지/협동·정확저장다음tick/실제Canvas이미지호출·라벨·기존고지. southwest4유지,기존저장이어하기가능. 실제브라우저화면미검증. hooks기존warn-only경고는그대로기록,skip없음.
+
+## 베타 공개 배포 완료
+https://game.1989v.com/games/marine-command/index.html 에BETA공개배포완료. games386bc590/backendecd1dba/frontendd2cacba,최종manifestad16fc3. content/portal-fe양쪽rolloutsuccess. 공개API BETA,31리소스HTTP/MIME,11PNG원본해시일치. 이전 '저장서버미배포'제약은이번서버배포로해소되었으나운영저장쓰기·실브라우저플레이는미검증. 상세verifications/beta-deployment.md및증거JSON참조.

@@ -1,0 +1,4 @@
+deployment "portal-fe" successfully rolled out
+deployment "content" successfully rolled out
+SYNC     HEALTH     REVISION                                   PHASE
+Synced   Degraded   ad16fc3d8c88201b836edd0408d859064dde327b   Succeeded

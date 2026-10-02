@@ -1,0 +1,317 @@
+{
+  "checkedAt": "2026-10-02T21:44:47.110922+00:00",
+  "publicPlay": "https://game.1989v.com/games/marine-command/index.html",
+  "catalog": {
+    "id": 88,
+    "slug": "marine-command",
+    "title": "전초선: 활잡이 원정",
+    "description": "활잡이로 사냥해 목수를 고용하고, 채집과 주둔 탑으로 경제와 거점을 키우는 2D 부대 RPG. 다섯 거점과 두 던전의 수문장을 넘어 혈월 백작을 공략하세요.",
+    "titleEn": "Frontline: Archer Expedition",
+    "descriptionEn": "Hunt, hire carpenters, gather resources and garrison your archers in towers. Grow an army through five strongholds and two dungeons in a solo or cooperative expedition.",
+    "thumbnailUrl": "/games/marine-command/assets/cover.png",
+    "coverUrl": null,
+    "engineType": "HTML5",
+    "loadType": "IFRAME",
+    "entryUrl": "/games/marine-command/index.html",
+    "orientation": "BOTH",
+    "supportsMobile": true,
+    "startFullscreen": false,
+    "developerName": "kgd",
+    "sdkIntegrated": true,
+    "status": "BETA",
+    "genre": "RPG",
+    "tags": [
+      "rpg",
+      "strategy",
+      "defense"
+    ],
+    "scoreBoards": [],
+    "releasedAt": "2026-10-02T21:29:01.650573Z",
+    "contentUpdatedAt": "2026-10-02T21:29:01.650573Z",
+    "playCount": 0,
+    "ratingAvg": 0.0,
+    "ratingCount": 0,
+    "estimatedMinutes": null,
+    "playerMode": "SINGLE"
+  },
+  "resources": [
+    {
+      "path": "marine-command/index.html",
+      "status": 200,
+      "mime": "text/html",
+      "bytes": 3563,
+      "cacheControl": "no-cache, must-revalidate",
+      "cfCacheStatus": "DYNAMIC"
+    },
+    {
+      "path": "marine-command/origin.css",
+      "status": 200,
+      "mime": "text/css",
+      "bytes": 9309,
+      "cacheControl": "max-age=14400, must-revalidate",
+      "cfCacheStatus": "MISS"
+    },
+    {
+      "path": "lib/platform.js?v=d2cacba",
+      "status": 200,
+      "mime": "application/javascript",
+      "bytes": 5645,
+      "cacheControl": "max-age=14400, must-revalidate",
+      "cfCacheStatus": "MISS"
+    },
+    {
+      "path": "marine-command/js/origin/opening-art.js",
+      "status": 200,
+      "mime": "application/javascript",
+      "bytes": 552,
+      "cacheControl": "max-age=14400, must-revalidate",
+      "cfCacheStatus": "MISS"
+    },
+    {
+      "path": "marine-command/js/origin/wave-ai.js",
+      "status": 200,
+      "mime": "application/javascript",
+      "bytes": 2197,
+      "cacheControl": "max-age=14400, must-revalidate",
+      "cfCacheStatus": "MISS"
+    },
+    {
+      "path": "marine-command/js/origin/session.js",
+      "status": 200,
+      "mime": "application/javascript",
+      "bytes": 8677,
+      "cacheControl": "max-age=14400, must-revalidate",
+      "cfCacheStatus": "MISS"
+    },
+    {
+      "path": "marine-command/js/origin/enemy-limits.js",
+      "status": 200,
+      "mime": "application/javascript",
+      "bytes": 107,
+      "cacheControl": "max-age=14400, must-revalidate",
+      "cfCacheStatus": "MISS"
+    },
+    {
+      "path": "marine-command/js/origin/world.js",
+      "status": 200,
+      "mime": "application/javascript",
+      "bytes": 7655,
+      "cacheControl": "max-age=14400, must-revalidate",
+      "cfCacheStatus": "MISS"
+    },
+    {
+      "path": "marine-command/js/origin/sim.js",
+      "status": 200,
+      "mime": "application/javascript",
+      "bytes": 29675,
+      "cacheControl": "max-age=14400, must-revalidate",
+      "cfCacheStatus": "MISS"
+    },
+    {
+      "path": "marine-command/js/origin/save.js",
+      "status": 200,
+      "mime": "application/javascript",
+      "bytes": 13952,
+      "cacheControl": "max-age=14400, must-revalidate",
+      "cfCacheStatus": "MISS"
+    },
+    {
+      "path": "marine-command/js/origin/transport.js",
+      "status": 200,
+      "mime": "application/javascript",
+      "bytes": 10900,
+      "cacheControl": "max-age=14400, must-revalidate",
+      "cfCacheStatus": "MISS"
+    },
+    {
+      "path": "marine-command/js/origin/packed-text.js",
+      "status": 200,
+      "mime": "application/javascript",
+      "bytes": 932,
+      "cacheControl": "max-age=14400, must-revalidate",
+      "cfCacheStatus": "MISS"
+    },
+    {
+      "path": "marine-command/js/origin/main.js",
+      "status": 200,
+      "mime": "application/javascript",
+      "bytes": 25278,
+      "cacheControl": "max-age=14400, must-revalidate",
+      "cfCacheStatus": "MISS"
+    },
+    {
+      "path": "marine-command/js/origin/sprites.js",
+      "status": 200,
+      "mime": "application/javascript",
+      "bytes": 2798,
+      "cacheControl": "max-age=14400, must-revalidate",
+      "cfCacheStatus": "MISS"
+    },
+    {
+      "path": "marine-command/js/origin/view.js",
+      "status": 200,
+      "mime": "application/javascript",
+      "bytes": 16212,
+      "cacheControl": "max-age=14400, must-revalidate",
+      "cfCacheStatus": "MISS"
+    },
+    {
+      "path": "marine-command/js/origin/campaign.js",
+      "status": 200,
+      "mime": "application/javascript",
+      "bytes": 12894,
+      "cacheControl": "max-age=14400, must-revalidate",
+      "cfCacheStatus": "MISS"
+    },
+    {
+      "path": "marine-command/js/origin/map.js",
+      "status": 200,
+      "mime": "application/javascript",
+      "bytes": 29236,
+      "cacheControl": "max-age=14400, must-revalidate",
+      "cfCacheStatus": "MISS"
+    },
+    {
+      "path": "marine-command/js/origin/opening-surface.js",
+      "status": 200,
+      "mime": "application/javascript",
+      "bytes": 543,
+      "cacheControl": "max-age=14400, must-revalidate",
+      "cfCacheStatus": "MISS"
+    },
+    {
+      "path": "marine-command/vendor/three.module.min.js",
+      "status": 200,
+      "mime": "application/javascript",
+      "bytes": 352144,
+      "cacheControl": "max-age=14400, must-revalidate",
+      "cfCacheStatus": "MISS"
+    },
+    {
+      "path": "marine-command/vendor/three.core.min.js",
+      "status": 200,
+      "mime": "application/javascript",
+      "bytes": 381889,
+      "cacheControl": "max-age=14400, must-revalidate",
+      "cfCacheStatus": "MISS"
+    },
+    {
+      "path": "marine-command/assets/origin/healer-v1.png",
+      "status": 200,
+      "mime": "image/png",
+      "bytes": 544848,
+      "cacheControl": "max-age=14400",
+      "cfCacheStatus": "MISS",
+      "sha256": "853b3b87d65d8787893a973b8645b2183cf1164c6a55ba60adb0511d075deaaa"
+    },
+    {
+      "path": "marine-command/assets/origin/ground-spike-v1.png",
+      "status": 200,
+      "mime": "image/png",
+      "bytes": 1106171,
+      "cacheControl": "max-age=14400",
+      "cfCacheStatus": "MISS",
+      "sha256": "4041402072b363036d36ed8918d5dc84202e0c0d0c3db8f7526ea90148a7aca3"
+    },
+    {
+      "path": "marine-command/assets/origin/monsters.png",
+      "status": 200,
+      "mime": "image/png",
+      "bytes": 1733595,
+      "cacheControl": "max-age=14400",
+      "cfCacheStatus": "MISS",
+      "sha256": "2c8c4d01ccc07eca3394e95e1e3318da7139c5f9187f7f30945a84fec36b0963"
+    },
+    {
+      "path": "marine-command/assets/origin/archer.png",
+      "status": 200,
+      "mime": "image/png",
+      "bytes": 1664571,
+      "cacheControl": "max-age=14400",
+      "cfCacheStatus": "MISS",
+      "sha256": "e428b3016b627b3ff1ebfdd87046b698c47b4586827cdd61da460a03855fd52f"
+    },
+    {
+      "path": "marine-command/assets/origin/zombie.png",
+      "status": 200,
+      "mime": "image/png",
+      "bytes": 1397868,
+      "cacheControl": "max-age=14400",
+      "cfCacheStatus": "MISS",
+      "sha256": "1cfbd15beec9413255d26d69f45cba85644a3f0e0b8b54357a8e3860b68dc5ad"
+    },
+    {
+      "path": "marine-command/assets/origin/thorn-tower-v1.png",
+      "status": 200,
+      "mime": "image/png",
+      "bytes": 1629822,
+      "cacheControl": "max-age=14400",
+      "cfCacheStatus": "MISS",
+      "sha256": "11865c21980595f9ae723438e0d1c40030e60df63c28800c158758899df1ebb0"
+    },
+    {
+      "path": "marine-command/assets/origin/opening-hill-v1.png",
+      "status": 200,
+      "mime": "image/png",
+      "bytes": 2744877,
+      "cacheControl": "max-age=14400",
+      "cfCacheStatus": "MISS",
+      "sha256": "332ef5fc988697526cd6fb7970a9c9de828dc562d5e6be52e42bd0d660e36d85"
+    },
+    {
+      "path": "marine-command/assets/origin/carpenter.png",
+      "status": 200,
+      "mime": "image/png",
+      "bytes": 1625048,
+      "cacheControl": "max-age=14400",
+      "cfCacheStatus": "MISS",
+      "sha256": "33e38c1cca096157366a415f86927f520821f0c2f5929dfc0af5bb66c3e5ca81"
+    },
+    {
+      "path": "marine-command/assets/origin/enemy-crypt-v1.png",
+      "status": 200,
+      "mime": "image/png",
+      "bytes": 1604663,
+      "cacheControl": "max-age=14400",
+      "cfCacheStatus": "MISS",
+      "sha256": "010f888a0a227e8bc9fe45874c78cba01ef358eac92a062f24d1c8e72e671c63"
+    },
+    {
+      "path": "marine-command/assets/origin/props.png",
+      "status": 200,
+      "mime": "image/png",
+      "bytes": 2080791,
+      "cacheControl": "max-age=14400",
+      "cfCacheStatus": "MISS",
+      "sha256": "82b60f47b7509c8adaea68ca8db95a23caa94ca845426f0bceddce7f1cae7f0b"
+    },
+    {
+      "path": "marine-command/assets/cover.png",
+      "status": 200,
+      "mime": "image/png",
+      "bytes": 3089274,
+      "cacheControl": "max-age=14400",
+      "cfCacheStatus": "MISS",
+      "sha256": "67701fd66bee9aacdab093ee5c6aed80a198d682feda0720bd01e1c6cc92b73a"
+    }
+  ],
+  "resourceCount": 31,
+  "pixelBrowserVerified": false,
+  "deployment": {
+    "gamesSource": "386bc590b5c100e5e2d5fb19e22c2e8a448e1084",
+    "backendRelease": "ecd1dba411bec04596ae9c1857eead0c57a98c7b",
+    "frontendRelease": "d2cacba429b37daf8d6e9b8ffe2a87f7f00a0ae0",
+    "manifest": "ad16fc3d8c88201b836edd0408d859064dde327b",
+    "backendWorkflow": "https://github.com/1989v/msa/actions/runs/37066060784",
+    "frontendWorkflow": "https://github.com/1989v/msa/actions/runs/37067190708",
+    "workflowConclusions": "success / success",
+    "frontendImage": "ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe:d2cacba",
+    "backendImage": "ap-chuncheon-1.ocir.io/axyooxbyk5yv/content:aad7089",
+    "backendImageNote": "Subsequent independent place release includes backendRelease in ancestry; no unrelated work added by this release.",
+    "readiness": "portal-fe and content Ready1 Updated1 Available1; both successfully rolled out",
+    "argo": "Synced / operation Succeeded / existing aggregate health Degraded",
+    "saveVerification": "GameSaveServiceTest 11 passed; no production save writes",
+    "httpClientNote": "Default Python urllib blocked by Cloudflare1010; standard curl verification succeeded.",
+    "workspaceStagedGamesPointer": "15cf171c49ce44901e5d2486ed124e716e7863dd unchanged"
+  }
+}

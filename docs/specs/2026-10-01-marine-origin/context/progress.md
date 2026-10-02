@@ -85,3 +85,6 @@
 
 ## 최신: 초반 단계화·치료사
 games19828054. 첫3wave지상전용,4차부터박쥐소수. 기지옆무적중립치료사반경180/초당5%,병력아님. 관련15통과,지도/저장호환유지. 세부status.md피드백10차.
+
+## 최신: 베타 배포 완료
+공개플레이 https://game.1989v.com/games/marine-command/index.html . 카탈로그BETA/저장한도서버수정/게임화면모두배포. 두서비스Ready,공개31리소스검증및11PNG해시일치. 기존localstaged포인터변경없이격리remote-main릴리스. 증거verifications/beta-deployment.md.
