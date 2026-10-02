@@ -22,6 +22,9 @@ data class CourseStopsParse(val stops: List<CourseStop>, val warning: String?)
  */
 object CourseStopsParser {
 
+    /** 여행코스 유형 — 국문만 있다(영문 서비스에 코스 유형이 없다). 다른 유형의 infoRaw 는 반복정보라 이 파서의 대상이 아니다. */
+    const val COURSE_CONTENT_TYPE = "25"
+
     fun parse(info: Any?, lang: String, attractionIds: Map<AttractionKey, Long>): CourseStopsParse {
         val rows = when (info) {
             null -> return EMPTY

@@ -4,7 +4,13 @@ import com.kgd.search.domain.attraction.model.AttractionAttributeParser
 import com.kgd.search.domain.attraction.model.AttractionAttributeSource
 import com.kgd.search.domain.attraction.model.AttractionClickSignal
 import com.kgd.search.domain.attraction.model.AttractionDocument
+import com.kgd.search.domain.attraction.model.AttractionKey
 import com.kgd.search.domain.attraction.model.AttractionRegion
+import com.kgd.search.domain.attraction.model.CourseStopsParse
+import com.kgd.search.domain.attraction.model.CourseStopsParser
+import com.kgd.search.domain.attraction.model.EventDateIssue
+import com.kgd.search.domain.attraction.model.EventPeriod
+import com.kgd.search.domain.attraction.model.EventSchedule
 import com.kgd.search.domain.attraction.model.RegionAggregator
 import com.kgd.search.domain.attraction.model.RegionPlacement
 import com.kgd.search.domain.attraction.model.RegionProjection
@@ -24,7 +30,9 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import tools.jackson.databind.ObjectMapper
+import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 
 /**
  * 관광지 전체 재색인 (ADR-0065) — place API 풀스캔 → attractions alias swap.
@@ -40,6 +48,10 @@ import java.time.Instant
  * 1차 투영은 「비슷한 곳」에도 쓴다 — place 목록의 id 가 이번 회차에 활성인지, 그 제목·시도가 무엇인지를
  * 추가 호출 없이 안다. 비활성·삭제 문서를 가리키는 목록 항목은 여기서 빠진다.
  *
+ * 1차 투영은 코스 구성 매칭에도 쓴다 — `(lang, contentId) → id` 지도를 만들어 2차가 추가 조회 없이 지점을 잇는다.
+ * 행사는 재색인일(KST) 기준으로 끝났거나 날짜가 없으면 가까운 곳·비슷한 곳 후보와 지역 건수에서 빠진다
+ * ([EventSchedule.listable]). 항목에는 유효 종료일을 실어 렌더·화면이 그 뒤 끝난 항목을 한 번 더 거른다.
+ *
  * 두 번 다 id 키셋으로 읽는다(`afterId`). OFFSET 페이지는 건너뛸 행을 전부 읽어 뒤로 갈수록 느려졌고
  * (0쪽 0.5초 → 590쪽 18초), 그대로 두 번 훑으면 CronJob 기한 30분을 넘긴다.
  */
@@ -50,6 +62,8 @@ class AttractionApiReindexTasklet(
     private val bulkProcessor: OsBulkDocumentProcessor,
     private val aliasManager: IndexAliasManager,
     private val clickSignalReader: ClickHouseClickSignalReader,
+    /** 재색인일(KST) — 끝난 행사를 후보·건수에서 거르는 기준. */
+    private val clock: Clock = Clock.systemUTC(),
 ) : Tasklet {
 
     private val log = KotlinLogging.logger {}
@@ -98,7 +112,8 @@ class AttractionApiReindexTasklet(
 
             val uniqueClickers = loadClickSignal()
 
-            val (projections, placements) = collectRegionPlacements()
+            val today = EventSchedule.todayKst(clock.instant())
+            val (projections, placements, attractionIds) = collectRegionPlacements(today)
 
             val indexStartedAt = System.nanoTime()
 
@@ -111,6 +126,12 @@ class AttractionApiReindexTasklet(
             var withSimilar = 0L
             var similarModelMismatch = 0L
             var similarLookupFailures = 0L
+            var withEventPeriod = 0L
+            var eventDatesInverted = 0L
+            var eventDatesMissing = 0L
+            var withCourseStops = 0L
+            var unreadableCourse = 0L
+            var unmatchedCourseStops = 0L
 
             while (afterId != null) {
                 val response = placeApiClient.fetchPageAfter(afterId, pageSize)
@@ -178,9 +199,29 @@ class AttractionApiReindexTasklet(
                         }
                         ?.ids
                         ?.mapNotNull { projections[it.toString()] }
-                        ?.map { p -> SimilarPlace(p.id, p.title, p.ldongRegnCd?.let { sidoNames[p.lang]?.get(it) }) }
+                        ?.map { p ->
+                            SimilarPlace(p.id, p.title, p.ldongRegnCd?.let { sidoNames[p.lang]?.get(it) }, p.eventPeriod?.end)
+                        }
                         ?.takeIf { it.isNotEmpty() }
                     if (similarElsewhere != null) withSimilar++
+                    val eventPeriod = attraction.eventPeriod()
+                    if (EventSchedule.isEvent(attraction.contentTypeId)) {
+                        when (EventSchedule.dateIssue(attraction.eventStartDate, attraction.eventEndDate)) {
+                            EventDateIssue.INVERTED -> eventDatesInverted++
+                            EventDateIssue.MISSING -> eventDatesMissing++
+                            null -> withEventPeriod++
+                        }
+                    }
+                    val course = if (attraction.contentTypeId == CourseStopsParser.COURSE_CONTENT_TYPE) {
+                        courseStopsOf(attraction, attractionIds)
+                    } else {
+                        null
+                    }
+                    if (course?.warning != null) unreadableCourse++
+                    val courseStops = course?.stops?.takeIf { it.isNotEmpty() }?.also { stops ->
+                        withCourseStops++
+                        unmatchedCourseStops += stops.count { it.attractionId == null }
+                    }
                     val document = AttractionIndexDocument.fromDomain(
                         AttractionDocument(
                             id = attraction.id.toString(),
@@ -228,6 +269,8 @@ class AttractionApiReindexTasklet(
                             similarElsewhere = similarElsewhere,
                             // 신호를 읽었으면 없는 관광지는 0(클릭 없음), 못 읽었으면 비운다(모름)
                             uniqueClickers14d = uniqueClickers?.let { it[attraction.id.toString()] ?: 0 },
+                            eventPeriod = eventPeriod,
+                            courseStops = courseStops,
                         ),
                         embedding,
                     )
@@ -252,6 +295,9 @@ class AttractionApiReindexTasklet(
                     ", region $withRegion/$totalIndexed, similar $withSimilar/$totalIndexed " +
                     "(model_ref mismatch $similarModelMismatch, lookup failures $similarLookupFailures), " +
                     "unreadable introRaw $unreadableIntro, " +
+                    // 행사: 유효 기간 적재 · 원천 S>E · 날짜 없음(둘 다 UNKNOWN). 코스: 구성 적재 · 원문 해석 실패 · 링크 못 단 지점
+                    "events (today $today) period $withEventPeriod, S>E $eventDatesInverted, no date $eventDatesMissing, " +
+                    "courses stops $withCourseStops, unreadable infoRaw $unreadableCourse, unmatched stops $unmatchedCourseStops, " +
                     "attribute parser v${AttractionAttributeParser.VERSION}, index pass ${elapsedMs(indexStartedAt)}ms"
             }
 
@@ -288,7 +334,7 @@ class AttractionApiReindexTasklet(
      * 투영은 문서당 약 200B 다: 언어·시도·시군구·유형·분류 코드는 종류가 수백 개뿐이라 intern 으로 한 벌만 두고,
      * 문서마다 새로 드는 것은 id·제목·좌표뿐이다. 6만 건이면 약 12MB, 집계 결과(가까운 곳 5건씩)까지 약 30MB.
      */
-    private suspend fun collectRegionPlacements(): RegionPass {
+    private suspend fun collectRegionPlacements(today: LocalDate): RegionPass {
         val startedAt = System.nanoTime()
         val projections = ArrayList<RegionProjection>()
         var page = 0
@@ -300,22 +346,52 @@ class AttractionApiReindexTasklet(
             page++
         }
 
-        val placements = RegionAggregator.aggregate(projections)
+        // 코스 지점은 끝난 행사여도 같은 관광지 문서라 잇는다 — 거르는 것은 후보·건수뿐이다.
+        val attractionIds = HashMap<AttractionKey, Long>(projections.size * 2)
+        projections.forEach { attractionIds[AttractionKey(it.lang, it.contentId)] = it.id.toLong() }
+        val listed = projections.filter { EventSchedule.listable(it.contentTypeId, it.eventPeriod, today) }
+        // 끝난 행사 자신도 지역 안 위치(허브 링크·수·가까운 곳)는 갖는다 — 다만 수와 후보는 listed 로만 센다
+        val placements = RegionAggregator.aggregate(candidates = listed, targets = projections)
         log.info {
             "Region pass: ${projections.size} projections over $page pages → ${placements.size} placements " +
-                "(${projections.size - placements.size} without sigungu/type), ${elapsedMs(startedAt)}ms"
+                "(${projections.size - placements.size} without sigungu/type, " +
+                "${projections.size - listed.size} ended/undated events left out as of $today), ${elapsedMs(startedAt)}ms"
         }
-        return RegionPass(projections.associateBy { it.id }, placements)
+        return RegionPass(listed.associateBy { it.id }, placements, attractionIds)
     }
 
-    /** 1차 훑기 결과 — 활성 문서의 투영(id 키)과 지역 집계. */
+    /**
+     * 1차 훑기 결과 — 후보가 될 수 있는 활성 문서의 투영(id 키), 지역 집계, 코스 매칭 지도.
+     * 끝난 행사는 [projections] 에 없어 비슷한 곳 항목에서도 빠진다.
+     */
     private data class RegionPass(
         val projections: Map<String, RegionProjection>,
         val placements: Map<String, RegionPlacement>,
+        val attractionIds: Map<AttractionKey, Long>,
     )
+
+    /** 행사만 유효 기간을 갖는다 — 다른 유형에 날짜가 실려 와도 행사 규칙을 적용하지 않는다. */
+    private fun PlaceApiClient.AttractionDto.eventPeriod(): EventPeriod? =
+        if (EventSchedule.isEvent(contentTypeId)) EventSchedule.effectivePeriod(eventStartDate, eventEndDate) else null
+
+    /**
+     * 여행코스 infoRaw → 구성 지점. 원문이 비었으면 null. 해석하지 못하면 경고가 있고 지점은 비어 있다 —
+     * 일부만 읽힌 순서를 맞는 코스처럼 싣지 않는다.
+     */
+    private fun courseStopsOf(attraction: PlaceApiClient.AttractionDto, attractionIds: Map<AttractionKey, Long>): CourseStopsParse? {
+        val raw = attraction.infoRaw?.takeIf { it.isNotBlank() } ?: return null
+        val parsed = runCatching { introReader.readValue(raw, Any::class.java) }
+            .fold(
+                onSuccess = { CourseStopsParser.parse(it, attraction.lang, attractionIds) },
+                onFailure = { e -> CourseStopsParse(emptyList(), "JSON 이 아니다: ${e.message}") },
+            )
+        parsed.warning?.let { log.warn { "코스 구성 해석 실패 (id=${attraction.id}): $it" } }
+        return parsed
+    }
 
     private fun PlaceApiClient.AttractionDto.toProjection() = RegionProjection(
         id = id.toString(),
+        contentId = contentId,
         lang = lang.intern(),
         ldongRegnCd = ldongRegnCd?.intern(),
         ldongSignguCd = ldongSignguCd?.intern(),
@@ -325,6 +401,7 @@ class AttractionApiReindexTasklet(
         longitude = longitude,
         // 가까운 곳 목록에 나가는 이름이라 색인 문서 title 과 같은 표시명을 쓴다
         title = titleDisplay ?: title,
+        eventPeriod = eventPeriod(),
     )
 
     private fun regionOf(

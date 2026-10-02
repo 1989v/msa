@@ -19,10 +19,40 @@ class RegionAggregatorTest : BehaviorSpec({
         lat: Double = 37.5,
         lon: Double = 127.0,
         lang: String = "ko",
+        eventPeriod: EventPeriod? = null,
     ) = RegionProjection(
-        id = id, lang = lang, ldongRegnCd = regn, ldongSignguCd = signgu,
-        contentTypeId = type, lclsSystm3 = cat, latitude = lat, longitude = lon, title = "t$id",
+        id = id, contentId = "c$id", lang = lang, ldongRegnCd = regn, ldongSignguCd = signgu,
+        contentTypeId = type, lclsSystm3 = cat, latitude = lat, longitude = lon, title = "t$id", eventPeriod = eventPeriod,
     )
+
+    given("후보에서 뺀 문서에도 결과를 붙일 때") {
+        val live = listOf(doc("a"), doc("b", lat = 37.501))
+        val ended = doc("x", lat = 37.5001)
+        `when`("후보는 live, 대상은 전체로 집계하면") {
+            val result = RegionAggregator.aggregate(candidates = live, targets = live + ended)
+            then("뺀 문서도 지역 안 위치를 갖되 수에 자기가 들지 않고, 남의 가까운 곳에도 없다") {
+                result.getValue("x").typeCount shouldBe 2
+                result.getValue("x").nearest.map { it.id } shouldContainExactly listOf("a", "b")
+                result.getValue("a").typeCount shouldBe 2
+                result.getValue("a").nearest.map { it.id } shouldContainExactly listOf("b")
+            }
+        }
+    }
+
+    given("가까운 곳 후보가 행사일 때") {
+        val end = java.time.LocalDate.parse("2026-10-12")
+        val docs = listOf(
+            doc("a", type = "15"),
+            doc("b", type = "15", lat = 37.501, eventPeriod = EventPeriod(java.time.LocalDate.parse("2026-10-01"), end)),
+        )
+        `when`("집계하면") {
+            val result = RegionAggregator.aggregate(docs)
+            then("항목에 그 행사의 유효 종료일이 실린다 — 렌더가 재색인 뒤 끝난 항목을 거르는 근거다") {
+                result.getValue("a").nearest.single().eventEndEffective shouldBe end
+                result.getValue("b").nearest.single().eventEndEffective shouldBe null
+            }
+        }
+    }
 
     given("다른 시도에 같은 3자리 시군구 코드가 있을 때") {
         // 법정동 시군구 코드는 시도 안에서만 유일하다 — 서울 110(종로구)과 부산 110(중구)은 다른 곳이다

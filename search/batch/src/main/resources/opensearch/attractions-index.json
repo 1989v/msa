@@ -522,6 +522,18 @@
       },
       "clickBoost": {
         "type": "float"
+      },
+      "eventStartEffective": {
+        "type": "date",
+        "format": "yyyy-MM-dd"
+      },
+      "eventEndEffective": {
+        "type": "date",
+        "format": "yyyy-MM-dd"
+      },
+      "courseStops": {
+        "type": "object",
+        "enabled": false
       }
     }
   }

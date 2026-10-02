@@ -101,6 +101,35 @@ class PlaceApiClientTest : BehaviorSpec({
         }
     }
 
+    Given("place 가 행사 한 건과 날짜 없는 관광지 한 건을 돌려줄 때") {
+        // place 는 DATE 컬럼을 ISO 날짜 문자열로, 목록 행 원문을 JSON 문자열로 낸다
+        val body = """
+            {"success":true,"data":{"attractions":[{
+              "id":3,"contentId":"3112217","lang":"ko","title":"보령머드축제","latitude":36.3,"longitude":126.5,
+              "contentTypeId":"15","eventStartDate":"2026-07-24","eventEndDate":"2026-08-09",
+              "listRaw":"{\"contentid\":\"3112217\",\"eventstartdate\":\"20260724\"}","status":"ACTIVE"
+            },{
+              "id":4,"contentId":"126508","lang":"ko","title":"경복궁","latitude":37.5,"longitude":126.9,
+              "contentTypeId":"12","eventStartDate":null,"status":"ACTIVE"
+            }],"nextAfterId":null}}
+        """.trimIndent()
+
+        When("한 페이지를 받으면") {
+            val (event, sight) = clientReturning(body).fetchPageAfter(0L, 100).attractions
+
+            Then("행사 시작·종료일과 목록 원문이 DTO 에 실린다 — 빠지면 null 이 조용히 이긴다") {
+                event.eventStartDate shouldBe java.time.LocalDate.parse("2026-07-24")
+                event.eventEndDate shouldBe java.time.LocalDate.parse("2026-08-09")
+                event.listRaw shouldBe """{"contentid":"3112217","eventstartdate":"20260724"}"""
+            }
+            Then("값이 없거나 키가 없으면 null 이다") {
+                sight.eventStartDate shouldBe null
+                sight.eventEndDate shouldBe null
+                sight.listRaw shouldBe null
+            }
+        }
+    }
+
     Given("place 가 응답을 제한 시간 넘게 주지 않을 때") {
         // 실제 소켓 — 헤더도 본문도 보내지 않고 붙들고 있는다. 운영에서 재색인이 14분 넘게 한 호출을 기다렸다
         val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0).apply {

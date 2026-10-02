@@ -136,7 +136,7 @@ class AttractionPageRendererTest : BehaviorSpec({
     }
 
     given("영문 문서의 비슷한 곳") {
-        val html = renderer.attractionPage(SHELL, doc(id = "2001", lang = "en", similarElsewhere = listOf(SimilarPlace("4001", "Gyeonggijeon Shrine", "Jeonbuk"))))
+        val html = renderer.attractionPage(SHELL, doc(id = "2001", lang = "en", similarElsewhere = listOf(SimilarPlace("4001", "Gyeonggijeon Shrine", "Jeonbuk", null))))
 
         then("영문 제목과 영문 상세 경로") {
             val root = rootOf(html)

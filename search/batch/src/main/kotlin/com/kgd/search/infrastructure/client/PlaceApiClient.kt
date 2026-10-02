@@ -11,6 +11,7 @@ import com.kgd.search.domain.embedding.VectorCodec
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
 import java.time.Duration
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Component
@@ -70,6 +71,11 @@ class PlaceApiClient(
         val infoRaw: String? = null,
         val googlePlaceId: String? = null,
         val sourceModifiedAt: LocalDateTime? = null,
+        /** 행사 원천 시작일·종료일(유형 15·85) — place 컬럼 값 그대로. 유효 기간 정규화는 재색인이 한다. */
+        val eventStartDate: LocalDate? = null,
+        val eventEndDate: LocalDate? = null,
+        /** 목록 행 원문(TourAPI 목록 오퍼레이션 행 JSON) — 지금은 색인에 싣지 않는다. */
+        val listRaw: String? = null,
         val status: String,
     )
 
@@ -188,6 +194,9 @@ class PlaceApiClient(
                 infoRaw = a["infoRaw"] as? String,
                 googlePlaceId = a["googlePlaceId"] as? String,
                 sourceModifiedAt = (a["sourceModifiedAt"] as? String)?.let { LocalDateTime.parse(it) },
+                eventStartDate = (a["eventStartDate"] as? String)?.let { LocalDate.parse(it) },
+                eventEndDate = (a["eventEndDate"] as? String)?.let { LocalDate.parse(it) },
+                listRaw = a["listRaw"] as? String,
                 status = a["status"] as String,
             )
         }

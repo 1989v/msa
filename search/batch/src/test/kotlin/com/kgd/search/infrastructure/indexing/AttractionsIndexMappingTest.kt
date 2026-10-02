@@ -67,6 +67,21 @@ class AttractionsIndexMappingTest : BehaviorSpec({
         }
     }
 
+    given("관광지 색인 정의의 행사·코스 필드") {
+        then("유효 기간 둘은 범위 질의가 거는 색인되는 날짜이고, 형식은 쓰기 문서가 내는 yyyy-MM-dd 다") {
+            listOf("eventStartEffective", "eventEndEffective").forEach { field ->
+                val mapping = properties.path(field)
+                (field to mapping.path("type").asString()) shouldBe (field to "date")
+                (field to mapping.path("format").asString()) shouldBe (field to "yyyy-MM-dd")
+                (field to mapping.path("index").asBoolean(true)) shouldBe (field to true)
+            }
+        }
+        then("코스 구성은 하위 필드를 만들지 않는 객체다") {
+            properties.path("courseStops").path("type").asString() shouldBe "object"
+            properties.path("courseStops").path("enabled").asBoolean(true) shouldBe false
+        }
+    }
+
     given("관광지 색인 정의의 클릭 신호 필드") {
         then("방문자 수는 표시 전용이라 색인하지 않고, 계수는 점수 함수가 읽는 숫자 필드다") {
             properties.path("uniqueClickers14d").path("type").asString() shouldBe "integer"

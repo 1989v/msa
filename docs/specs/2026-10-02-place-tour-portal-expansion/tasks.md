@@ -100,15 +100,15 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
 **Dependencies:** Task Group 5
 **Phase:** ②
 **Required Skills:** Spring Batch, OpenSearch 매핑
-- [ ] 6.0 Complete 재색인
-  - [ ] 6.1 Write tests: `PlaceApiClientTest`(T9b — 응답 JSON 의 시작·종료일·목록 원문이 DTO 에, 없으면 null) · `AttractionApiReindexTaskletTest`(T9 — bulk 캡처 → `AttractionSearchDocument` 역직렬화 → `toDomain()` 이 유효 날짜·코스 순서와 같음 · `(lang, contentId) → id` 매칭 · 매칭 실패 로그 · 재색인일 기준 종료 행사가 가까운 곳·비슷한 곳·지역 건수에서 빠짐 · 항목 유효 종료일이 쓰기→읽기→UseCase 결과까지)
-  - [ ] 6.2 `PlaceApiClient.AttractionDto` · `fetchPageAfter` 손 매핑에 새 세 필드(빠지면 null 이 조용히 이긴다)
-  - [ ] 6.3 1차 투영 `RegionProjection` 에 contentId · 유효 시작·종료일 → 1차 훑기가 `(lang, contentId) → id` 지도 · 2차 훑기가 매칭(추가 조회 없음)
-  - [ ] 6.4 문서에 `eventStartEffective`·`eventEndEffective`(`date`) · `courseStops`(색인 안 하는 객체) — 해석 실패는 그 필드만 비움
-  - [ ] 6.5 `ENDED`·`UNKNOWN` 행사를 가까운 곳·비슷한 곳 후보와 지역 문구 건수에서 제외 · 항목 하위 필드(유효 종료일)를 다섯 자리에: `RegionAggregator` · `SimilarPlace` · `AttractionIndexDocument` · `AttractionSearchDocument` · `SearchAttractionUseCase` 결과
-  - [ ] 6.6 매핑 `attractions-index.json` · 쓰기·읽기 문서 · `searchIndexContracts` — 새 세 필드를 `searchReadOmitted` 에 넣으면 실패하는 금지 목록을 게이트에
-  - [ ] 6.7 완료 로그: 새 필드 적재 · 코스 매칭 실패 · S>E · 날짜 없음 건수
-  - [ ] 6.8 Verify: `./gradlew :search:batch:test --tests '*AttractionApiReindexTaskletTest' --tests '*PlaceApiClientTest' && ./gradlew verifySearchIndexContract`
+- [x] 6.0 Complete 재색인
+  - [x] 6.1 Write tests: `PlaceApiClientTest`(T9b — 응답 JSON 의 시작·종료일·목록 원문이 DTO 에, 없으면 null) · `AttractionApiReindexTaskletTest`(T9 — bulk 캡처 → `AttractionSearchDocument` 역직렬화 → `toDomain()` 이 유효 날짜·코스 순서와 같음 · `(lang, contentId) → id` 매칭 · 매칭 실패 로그 · 재색인일 기준 종료 행사가 가까운 곳·비슷한 곳·지역 건수에서 빠짐 · 항목 유효 종료일이 쓰기→읽기→UseCase 결과까지)
+  - [x] 6.2 `PlaceApiClient.AttractionDto` · `fetchPageAfter` 손 매핑에 새 세 필드(빠지면 null 이 조용히 이긴다)
+  - [x] 6.3 1차 투영 `RegionProjection` 에 contentId · 유효 시작·종료일 → 1차 훑기가 `(lang, contentId) → id` 지도 · 2차 훑기가 매칭(추가 조회 없음)
+  - [x] 6.4 문서에 `eventStartEffective`·`eventEndEffective`(`date`) · `courseStops`(색인 안 하는 객체) — 해석 실패는 그 필드만 비움
+  - [x] 6.5 `ENDED`·`UNKNOWN` 행사를 가까운 곳·비슷한 곳 후보와 지역 문구 건수에서 제외 · 항목 하위 필드(유효 종료일)를 다섯 자리에: `RegionAggregator` · `SimilarPlace` · `AttractionIndexDocument` · `AttractionSearchDocument` · `SearchAttractionUseCase` 결과
+  - [x] 6.6 매핑 `attractions-index.json` · 쓰기·읽기 문서 · `searchIndexContracts` — 새 세 필드를 `searchReadOmitted` 에 넣으면 실패하는 금지 목록을 게이트에
+  - [x] 6.7 완료 로그: 새 필드 적재 · 코스 매칭 실패 · S>E · 날짜 없음 건수
+  - [x] 6.8 Verify: `./gradlew :search:batch:test --tests '*AttractionApiReindexTaskletTest' --tests '*PlaceApiClientTest' && ./gradlew verifySearchIndexContract`
 **Acceptance Criteria:** T9·T9b 초록 · 회귀 주입(읽기 클래스 필드 삭제 + `searchReadOmitted` 사유 기재 → 게이트 실패 + T9 빨간불 · 하위 필드 삭제 → T9 빨간불)
 
 ### Task Group 7: 검색 API — `eventStatus` · `sort=eventStart` (search:app)

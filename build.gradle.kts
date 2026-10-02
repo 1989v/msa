@@ -531,6 +531,13 @@ val searchReadOmitted = mapOf(
     ),
 )
 
+// 읽기 클래스가 반드시 읽어야 하는 필드 — searchReadOmitted 에 사유를 적어도 통과시키지 않는다.
+// 행사 유효 기간은 상세 상태 문구·만료 robots·행사 sitemap 이, 코스 구성은 상세 순서 목록이 읽는다.
+// 읽기에서 빠지면 값이 조용히 null 이 되어 진행 중 행사가 「날짜 없음」으로 보이고 코스 절이 사라진다.
+val searchReadRequired = mapOf(
+    "attractions" to setOf("eventStartEffective", "eventEndEffective", "courseStops"),
+)
+
 val verifySearchIndexContract by tasks.registering {
     group = "verification"
     description = "OpenSearch 매핑 JSON 과 문서 클래스 필드가 일치하는지 확인 (ADR-0055/0065)"
@@ -574,7 +581,17 @@ val verifySearchIndexContract by tasks.registering {
                         failures += "[$index/write] $name 이 매핑 필드를 안 채운다: ${missing.joinToString(", ")}"
                     }
                     "read" -> {
-                        val allowed = searchReadOmitted[index].orEmpty().keys
+                        val required = searchReadRequired[index].orEmpty()
+                        val forbiddenOmissions = required.intersect(searchReadOmitted[index].orEmpty().keys)
+                        if (forbiddenOmissions.isNotEmpty()) {
+                            failures += "[$index/read] searchReadOmitted 에 넣을 수 없는 필드(searchReadRequired): " +
+                                forbiddenOmissions.joinToString(", ")
+                        }
+                        val requiredMissing = required.intersect(missing) + (required - mappingKeys)
+                        if (requiredMissing.isNotEmpty()) {
+                            failures += "[$index/read] $name 이 반드시 읽어야 할 필드를 안 읽는다: ${requiredMissing.joinToString(", ")}"
+                        }
+                        val allowed = searchReadOmitted[index].orEmpty().keys - required
                         val unexplained = missing - allowed
                         if (unexplained.isNotEmpty()) {
                             failures += "[$index/read] $name 이 매핑 필드를 안 읽는다(이유 미기재): ${unexplained.joinToString(", ")}"

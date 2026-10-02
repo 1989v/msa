@@ -80,4 +80,8 @@ data class AttractionDocument(
      * null 은 그 회차에 신호를 못 읽었거나 이 필드가 생기기 전 문서다 — 0(읽었는데 클릭 없음)과 다르다.
      */
     val uniqueClickers14d: Int? = null,
+    /** 행사(유형 15·85)의 유효 기간 ([EventSchedule.effectivePeriod]). 행사가 아니거나 날짜가 없으면 null(UNKNOWN). */
+    val eventPeriod: EventPeriod? = null,
+    /** 여행코스(유형 25)의 구성 지점, `subnum` 순서. 코스가 아니거나 원문을 못 읽었으면 null. */
+    val courseStops: List<CourseStop>? = null,
 )

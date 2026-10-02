@@ -161,7 +161,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
                 every { searchPort.search(any(), any()) } returns found(
                     listOf(
                         AttractionSearchPort.AttractionHit(
-                            document().copy(similarElsewhere = listOf(com.kgd.search.domain.attraction.model.SimilarPlace("9", "경기전", null))),
+                            document().copy(similarElsewhere = listOf(com.kgd.search.domain.attraction.model.SimilarPlace("9", "경기전", null, null))),
                             1.0,
                         ),
                     ),
@@ -237,12 +237,12 @@ class SearchAttractionServiceTest : BehaviorSpec({
                     ),
                     region = AttractionRegion(
                         sigunguName = "종로구", typeCount = 40, categoryCount = 6, categoryName = "고궁",
-                        sameCategoryNearby = listOf(NearbyPlace("2", "창덕궁", 1200)),
+                        sameCategoryNearby = listOf(NearbyPlace("2", "창덕궁", 1200, null)),
                     ),
-                    similarElsewhere = listOf(com.kgd.search.domain.attraction.model.SimilarPlace("9", "경기전", "전북특별자치도")),
+                    similarElsewhere = listOf(com.kgd.search.domain.attraction.model.SimilarPlace("9", "경기전", "전북특별자치도", null)),
                 )
                 val r = service.findById("1")!!
-                r.similarElsewhere!!.single() shouldBe SearchAttractionUseCase.Similar("9", "경기전", "전북특별자치도")
+                r.similarElsewhere!!.single() shouldBe SearchAttractionUseCase.Similar("9", "경기전", "전북특별자치도", null)
                 r.closureState shouldBe "WEEKLY"
                 r.closedWeekdays shouldBe listOf("MON")
                 r.attrParking shouldBe "YES"

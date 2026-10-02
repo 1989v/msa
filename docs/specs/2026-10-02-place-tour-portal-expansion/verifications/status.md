@@ -10,3 +10,7 @@
 | TG4 4.6 | 기준선(ops-before.txt) | 59,682행 합계. 첫 실행이 파생 테이블+TEXT 로 MySQL liveness 실패 → 03:05 UTC 재시작 1회(약 1분). 범위 집계로 고쳐 재실행, ping 최대 1.08s, 재시작 없음 |
 | TG5 | search:domain EventScheduleTest·CourseStopsParserTest·EventScheduleGoldenTest + verifyArchitecture | 18/0 · 7/0 · 1/0 · exit 0 |
 | TG5 | 회귀 주입 11종 + 문구 변경 시 골든 해시 변화(구현 에이전트) | 전부 빨간불 · 7b72ff01 → 255e2221 |
+| 배포 ① 첫 수집 | tour-portal-sync 1회차 | 코스 1,000 · 영문 숙박 207 적재. 행사 국·영 bulk 500(tel 123자 > varchar 100) · 국문 숙박 TourAPI SSL 시간 초과 → V24(fe952815) |
+| V24 | PlaceSchemaIntegrationSpec(실제 MySQL v24) | 5/0 · V24 제거 시 Data too long for column 'tel' 로 1 실패 |
+| TG6 | search batch·domain·app 14클래스 + verifyArchitecture·verifySearchIndexContract | 160 tests · 0 실패 · exit 0 |
+| TG6 | 회귀 주입 8종 + 끝난 행사 placement 비우기 | 전부 빨간불 |

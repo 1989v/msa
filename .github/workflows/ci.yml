@@ -100,6 +100,14 @@ jobs:
           git diff --exit-code -- portal-fe/src/seo/__tests__/fixtures/event-schedule-golden.json
           test -z "$(git status --porcelain -- portal-fe/src/seo/__tests__/fixtures/event-schedule-golden.json)"
 
+      # 관광지 재색인 bulk 캡처를 search:batch 가 다시 쓰고 search:app 이 그것을 읽어 왕복을 본다.
+      # 쓰기 쪽만 바뀌고 캡처를 안 올리면 읽기 검사가 옛 문서를 재고 있게 된다.
+      - name: 재색인 bulk 캡처가 최신인지
+        run: |
+          ./gradlew :search:batch:test --tests '*AttractionApiReindexTaskletTest' --no-daemon
+          git diff --exit-code -- search/app/src/test/resources/attraction/reindex-capture.json
+          test -z "$(git status --porcelain -- search/app/src/test/resources/attraction/reindex-capture.json)"
+
       # 개념 온톨로지의 코드 참조는 레포 전체의 파일 · 심볼을 가리킨다 — 그래서 **어느 경로를 바꾼 푸시든**
       # 여기서 본다. 이미지 게이트는 code-dictionary 가 바뀔 때만 이 스펙을 돌려, 다른 모듈의 리팩터가 참조를
       # 깨면 한참 뒤 code-dictionary 를 건드린 커밋의 이미지 전체가 막혔다(2026-09-26 HttpOnly 전환이 참조 셋을

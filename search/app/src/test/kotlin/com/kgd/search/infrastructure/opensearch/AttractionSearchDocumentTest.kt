@@ -67,13 +67,13 @@ class AttractionSearchDocumentTest : BehaviorSpec({
                 region.typeCount shouldBe 42
                 region.categoryCount shouldBe 5
                 region.categoryName shouldBe "고궁"
-                region.sameCategoryNearby shouldBe listOf(NearbyPlace("2", "창덕궁", 1234))
+                region.sameCategoryNearby shouldBe listOf(NearbyPlace("2", "창덕궁", 1234, null))
             }
 
             then("다른 시도의 비슷한 곳이 순서대로 실린다 — 시도 이름이 없던 항목은 null") {
                 doc.similarElsewhere shouldBe listOf(
-                    com.kgd.search.domain.attraction.model.SimilarPlace("9", "경기전", "전북특별자치도"),
-                    com.kgd.search.domain.attraction.model.SimilarPlace("8", "화성행궁", null),
+                    com.kgd.search.domain.attraction.model.SimilarPlace("9", "경기전", "전북특별자치도", null),
+                    com.kgd.search.domain.attraction.model.SimilarPlace("8", "화성행궁", null, null),
                 )
             }
         }

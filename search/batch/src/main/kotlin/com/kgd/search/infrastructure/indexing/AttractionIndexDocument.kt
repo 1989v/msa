@@ -7,6 +7,7 @@ import com.kgd.search.domain.attraction.model.AttractionAttributeCodes
 import com.kgd.search.domain.attraction.model.AttractionClickSignal
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.Jamo
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 /**
@@ -117,6 +118,16 @@ data class AttractionIndexDocument(
      * 재색인이 미리 계산한다([com.kgd.search.domain.attraction.model.AttractionClickSignal]). 신호가 없으면 1.0.
      */
     val clickBoost: Double,
+    /**
+     * 행사 유효 기간 ([com.kgd.search.domain.attraction.model.EventSchedule.effectivePeriod]) — 행사 필터의 범위 질의가
+     * 이 둘만 본다. 원천 날짜는 place 컬럼에 그대로 있다. 행사가 아니거나 날짜가 없으면(UNKNOWN) 둘 다 빈다.
+     */
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    val eventStartEffective: LocalDate? = null,
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    val eventEndEffective: LocalDate? = null,
+    /** 여행코스 구성 지점(순서대로) — 표시 전용(mapping: enabled=false). 코스가 아니거나 원문을 못 읽었으면 빈다. */
+    val courseStops: List<CourseStopEntry>? = null,
 ) {
     /** OpenSearch geo_point object 표기 — 필드명 lat/lon 고정. */
 
@@ -124,10 +135,26 @@ data class AttractionIndexDocument(
     data class Embedding(val vector: List<Float>, val modelRef: String, val textHash: String)
 
     /** 같은 시군구·유형·분류의 가까운 곳 한 건. */
-    data class Nearby(val id: String, val title: String, val distanceMeters: Int)
+    data class Nearby(
+        val id: String,
+        val title: String,
+        val distanceMeters: Int,
+        /** 항목이 행사일 때의 유효 종료일 — 렌더·화면이 재색인 뒤 끝난 항목을 거른다. */
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        val eventEndEffective: LocalDate? = null,
+    )
 
     /** 다른 시도의 비슷한 곳 한 건. */
-    data class Similar(val id: String, val title: String, val sidoName: String? = null)
+    data class Similar(
+        val id: String,
+        val title: String,
+        val sidoName: String? = null,
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        val eventEndEffective: LocalDate? = null,
+    )
+
+    /** 코스 구성 지점 한 건. [attractionId] 는 같은 언어 관광지가 있을 때만 — 없으면 이름만 그린다. */
+    data class CourseStopEntry(val order: Int, val contentId: String? = null, val name: String, val attractionId: Long? = null)
 
     companion object {
         /** 속성은 재색인이 계산해 [AttractionDocument.attributes] 로 넘긴다 — 없으면 UNKNOWN 을 싣지 못하므로 거부한다. */
@@ -188,10 +215,15 @@ data class AttractionIndexDocument(
                 regionTypeCount = region?.typeCount,
                 regionCategoryCount = region?.categoryCount,
                 lclsSystm3Name = region?.categoryName,
-                sameCategoryNearby = region?.sameCategoryNearby?.map { Nearby(it.id, it.title, it.distanceMeters) },
-                similarElsewhere = doc.similarElsewhere?.takeIf { it.isNotEmpty() }?.map { Similar(it.id, it.title, it.sidoName) },
+                sameCategoryNearby = region?.sameCategoryNearby?.map { Nearby(it.id, it.title, it.distanceMeters, it.eventEndEffective) },
+                similarElsewhere = doc.similarElsewhere?.takeIf { it.isNotEmpty() }
+                    ?.map { Similar(it.id, it.title, it.sidoName, it.eventEndEffective) },
                 uniqueClickers14d = doc.uniqueClickers14d,
                 clickBoost = AttractionClickSignal.boost(doc.uniqueClickers14d),
+                eventStartEffective = doc.eventPeriod?.start,
+                eventEndEffective = doc.eventPeriod?.end,
+                courseStops = doc.courseStops?.takeIf { it.isNotEmpty() }
+                    ?.map { CourseStopEntry(it.order, it.contentId, it.name, it.attractionId) },
             )
         }
     }

@@ -51,6 +51,18 @@ object EventSchedule {
 
     val KST: ZoneId = ZoneId.of("Asia/Seoul")
 
+    /** 행사 유형 — 국문 15 · 영문 85. */
+    val EVENT_CONTENT_TYPES: Set<String> = setOf("15", "85")
+
+    fun isEvent(contentTypeId: String?): Boolean = contentTypeId in EVENT_CONTENT_TYPES
+
+    /**
+     * 가까운 곳·비슷한 곳 후보와 지역 건수에 넣는가. 행사가 아니면 늘 넣고, 행사는 [today] 기준 진행 중·예정만 넣는다
+     * (끝난 행사와 날짜 없는 행사는 뺀다).
+     */
+    fun listable(contentTypeId: String?, period: EventPeriod?, today: LocalDate): Boolean =
+        !isEvent(contentTypeId) || status(period, today).let { it == EventStatus.ONGOING || it == EventStatus.UPCOMING }
+
     /** 색인 유지 기간. 종료 + 이 일수까지는 색인 대상이고, 그 다음 날부터 noindex · 행사 sitemap 제외다. */
     const val INDEX_GRACE_DAYS = 30L
 

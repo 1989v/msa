@@ -36,7 +36,11 @@ import tools.jackson.databind.cfg.DateTimeFeature
 import tools.jackson.module.kotlin.jacksonMapperBuilder
 import tools.jackson.module.kotlin.readValue
 import java.sql.SQLException
+import java.io.File
+import java.time.Clock
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneOffset
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicLong
 
@@ -452,6 +456,128 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
         }
     }
 
+    given("재색인이 행사 유효 기간·코스 구성을 싣고 끝난 행사를 후보에서 뺄 때") {
+        // 재색인일은 KST 2026-10-02 00:30 — UTC 날짜(10-01)로 판정하면 어제 끝난 행사가 진행 중으로 남는다
+        val clock = Clock.fixed(Instant.parse("2026-10-01T15:30:00Z"), ZoneOffset.UTC)
+        val timedTasklet = AttractionApiReindexTasklet(placeApiClient, bulkProcessor, aliasManager, clickReader, clock).also {
+            ReflectionTestUtils.setField(it, "indexAlias", "attractions")
+            ReflectionTestUtils.setField(it, "pageSize", 100)
+            ReflectionTestUtils.setField(it, "embeddingModelRef", MODEL_REF)
+        }
+        fun date(value: String) = LocalDate.parse(value)
+        fun event(id: Long, start: String?, end: String?, lat: Double) = jongno(id, "EV010100", lat).copy(
+            title = "행사$id", contentTypeId = "15", eventStartDate = start?.let(::date), eventEndDate = end?.let(::date),
+        )
+        val courseRaw = repoRoot().resolve("search/domain/src/test/resources/course/info-raw-1965837-ko.json").readText()
+        val inputs = listOf(
+            event(101, "2026-09-25", "2026-10-05", 37.5001), // 진행 중
+            event(102, "2026-10-10", null, 37.5002), // 시작일만 — 하루짜리 예정 행사
+            event(103, "2026-09-01", "2026-10-01", 37.50005), // 어제(KST) 끝남 — 가장 가깝지만 후보가 아니다
+            event(104, "2026-10-20", "2026-10-03", 37.50003), // S>E — 날짜 없음
+            event(105, null, null, 37.50004), // 날짜 없음
+            jongno(201, "VE030100", 37.5), // 행사가 아닌 대조군 — 끝난 행사 규칙의 영향을 받지 않는다
+            jongno(202, "VE030100", 37.501),
+            // 같은 시군구·유형에 날짜가 실려 와도 행사가 아니면 행사 규칙을 적용하지 않는다
+            jongno(203, "VE030100", 37.502).copy(eventStartDate = date("2026-01-01"), eventEndDate = date("2026-01-02")),
+            dto(301, "ko").copy(contentId = "1965837", contentTypeId = "25", title = "코스301", infoRaw = courseRaw),
+            dto(302, "ko").copy(contentId = "2000001", contentTypeId = "25", title = "코스302", infoRaw = "{not json"),
+            // 코스 지점의 같은 언어 관광지 — 128138 · 128168 은 국문, 1870538 은 영문뿐이라 잇지 않는다
+            dto(401, "ko").copy(contentId = "128138"),
+            dto(402, "ko").copy(contentId = "128168"),
+            dto(403, "en").copy(contentId = "1870538"),
+        )
+
+        `when`("재색인하면") {
+            clearMocks(placeApiClient, answers = false)
+            val documents = captureDocuments()
+            onePage(*inputs.toTypedArray())
+            coEvery { placeApiClient.lookupEmbeddings(any(), any()) } returns emptyMap()
+            coEvery { placeApiClient.lookupSimilar(MODEL_REF, any()) } returns mapOf(
+                // 103 은 끝난 행사, 105 는 날짜 없는 행사 — 둘 다 빠지고 순위 순서는 남는다
+                201L to PlaceApiClient.SimilarDto(MODEL_REF, listOf(103L, 101L, 105L, 202L)),
+            )
+            val logs = ListAppender<ILoggingEvent>().also { appender ->
+                appender.start()
+                (LoggerFactory.getLogger(AttractionApiReindexTasklet::class.java) as Logger).addAppender(appender)
+            }
+
+            timedTasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+            val sources = documents.associate { it.id to bulkSource(it) }
+            writeReindexCapture(documents, inputs)
+
+            then("행사는 정규화한 유효 기간을 yyyy-MM-dd 로 싣고, 날짜 없는 행사와 행사 아닌 문서는 필드가 없다") {
+                sources.getValue("101")["eventStartEffective"] shouldBe "2026-09-25"
+                sources.getValue("101")["eventEndEffective"] shouldBe "2026-10-05"
+                sources.getValue("102")["eventStartEffective"] shouldBe "2026-10-10"
+                sources.getValue("102")["eventEndEffective"] shouldBe "2026-10-10"
+                // 끝난 행사도 문서는 색인된다 — 상세는 「종료된 행사」로 그린다
+                sources.getValue("103")["eventEndEffective"] shouldBe "2026-10-01"
+                listOf("104", "105", "201", "203").forEach { id ->
+                    sources.getValue(id).keys shouldNotContain "eventStartEffective"
+                    sources.getValue(id).keys shouldNotContain "eventEndEffective"
+                }
+            }
+
+            then("끝난 행사·날짜 없는 행사는 가까운 곳 후보와 지역 건수에서 빠지고, 항목에 유효 종료일이 실린다") {
+                val ongoing = sources.getValue("101")
+                ongoing["regionTypeCount"] shouldBe 2
+                @Suppress("UNCHECKED_CAST")
+                val nearby = ongoing["sameCategoryNearby"] as List<Map<String, Any?>>
+                nearby.map { it["id"] } shouldContainExactly listOf("102")
+                nearby.single()["eventEndEffective"] shouldBe "2026-10-10"
+                // 끝난·날짜 없는 행사 자신도 지역 안 위치를 갖는다 — 수와 가까운 곳은 진행 중·예정 후보로만 센다
+                listOf("103", "104", "105").forEach { id ->
+                    val excluded = sources.getValue(id)
+                    (id to excluded["regionTypeCount"]) shouldBe (id to 2)
+                    (id to excluded["regionCategoryCount"]) shouldBe (id to 2)
+                    @Suppress("UNCHECKED_CAST")
+                    (id to (excluded["sameCategoryNearby"] as List<Map<String, Any?>>).map { it["id"] }.toSet()) shouldBe
+                        (id to setOf("101", "102"))
+                }
+                // 그러나 어느 문서의 후보에도 들지 않는다 (103 은 101 바로 옆이라 섞이면 첫 자리에 온다)
+                sources.values.forEach { source ->
+                    @Suppress("UNCHECKED_CAST")
+                    val ids = (source["sameCategoryNearby"] as List<Map<String, Any?>>?).orEmpty().map { it["id"] }
+                    listOf("103", "104", "105").forEach { ids shouldNotContain it }
+                }
+                // 대조군: 행사가 아닌 문서는 날짜가 실려 와도 그대로 센다
+                sources.getValue("201")["regionTypeCount"] shouldBe 3
+                @Suppress("UNCHECKED_CAST")
+                (sources.getValue("201")["sameCategoryNearby"] as List<Map<String, Any?>>)
+                    .forEach { it["eventEndEffective"] shouldBe null }
+            }
+
+            then("비슷한 곳에서도 끝난 행사·날짜 없는 행사가 빠지고, 남은 행사 항목에 유효 종료일이 실린다") {
+                @Suppress("UNCHECKED_CAST")
+                val similar = sources.getValue("201")["similarElsewhere"] as List<Map<String, Any?>>
+                similar.map { it["id"] } shouldContainExactly listOf("101", "202")
+                similar[0]["eventEndEffective"] shouldBe "2026-10-05"
+                similar[1]["eventEndEffective"] shouldBe null
+            }
+
+            then("코스 구성은 subnum 순서로 실리고, 같은 언어 관광지가 있는 지점만 id 가 붙는다") {
+                @Suppress("UNCHECKED_CAST")
+                val stops = sources.getValue("301")["courseStops"] as List<Map<String, Any?>>
+                stops.map { it["order"] } shouldContainExactly listOf(0, 1, 2, 3, 3, 4, 4, 5)
+                stops.map { it["contentId"] } shouldContainExactly
+                    listOf("128138", "125551", "129195", "128168", "1870538", "128168", "129196", "129196")
+                stops.map { (it["attractionId"] as Number?)?.toLong() } shouldContainExactly
+                    listOf(401L, null, null, 402L, null, 402L, null, null)
+                // 원문을 못 읽은 코스와 코스가 아닌 문서는 필드가 없다
+                sources.getValue("302").keys shouldNotContain "courseStops"
+                sources.getValue("401").keys shouldNotContain "courseStops"
+            }
+
+            then("완료 로그에 유효 기간 적재 · S>E · 날짜 없음 · 코스 적재 · 해석 실패 · 링크 못 단 지점 수가 남는다") {
+                val complete = logs.list.map { it.formattedMessage }.single { it.startsWith("Attraction reindex complete") }
+                complete shouldContain "events (today 2026-10-02) period 3, S>E 1, no date 1"
+                complete shouldContain "courses stops 1, unreadable infoRaw 1, unmatched stops 5"
+                logs.list.map { it.formattedMessage }.single { it.startsWith("Region pass") } shouldContain
+                    "3 ended/undated events left out as of 2026-10-02"
+            }
+        }
+    }
+
     given("재색인이 클릭 신호를 붙일 때") {
         fun capturedLogs(): ListAppender<ILoggingEvent> =
             ListAppender<ILoggingEvent>().also { appender ->
@@ -517,3 +643,27 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
 })
 
 private const val MODEL_REF = "microsoft/harrier-oss-v1-270m@abc1234#d640"
+
+/**
+ * 태스클릿이 만든 bulk 문서 캡처본. search:app 의 `AttractionReindexCaptureTest` 가 이 파일을 읽기 문서로 역직렬화해
+ * `toDomain()` → 검색 결과까지 값이 남는지 본다(손으로 만든 문서가 아니라 쓰기 쪽 산출물). 원천 날짜는 색인에 없어
+ * 같은 파일에 함께 둔다 — 읽기 쪽이 [com.kgd.search.domain.attraction.model.EventSchedule] 로 기대값을 다시 계산한다.
+ * CI 가 이 테스트를 돌린 뒤 `git diff --exit-code` 로 캡처가 최신인지 본다.
+ */
+private const val REINDEX_CAPTURE_PATH = "search/app/src/test/resources/attraction/reindex-capture.json"
+
+private fun repoRoot(): File = generateSequence(File("").absoluteFile) { it.parentFile }
+    .first { File(it, "settings.gradle.kts").isFile }
+
+private fun writeReindexCapture(documents: List<AttractionIndexDocument>, inputs: List<PlaceApiClient.AttractionDto>) {
+    val mapper = jacksonMapperBuilder().disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS).build()
+    val capture = mapOf(
+        "documents" to documents.sortedBy { it.idSort },
+        "sourceDates" to inputs.filter { it.eventStartDate != null || it.eventEndDate != null }.associate {
+            it.id.toString() to mapOf("start" to it.eventStartDate?.toString(), "end" to it.eventEndDate?.toString())
+        },
+    )
+    val file = repoRoot().resolve(REINDEX_CAPTURE_PATH)
+    file.parentFile.mkdirs()
+    file.writeText(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(capture) + "\n")
+}

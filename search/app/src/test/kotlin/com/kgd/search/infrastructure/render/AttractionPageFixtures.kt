@@ -68,8 +68,8 @@ object AttractionPageFixtures {
     )
 
     val SIMILAR = listOf(
-        SimilarPlace("3001", "경기전", "전북특별자치도"),
-        SimilarPlace("3002", "화성행궁 <정조>", null),
+        SimilarPlace("3001", "경기전", "전북특별자치도", null),
+        SimilarPlace("3002", "화성행궁 <정조>", null, null),
     )
 
     val PARSED = AttractionAttributes(
@@ -96,8 +96,8 @@ object AttractionPageFixtures {
         categoryCount = 5,
         categoryName = "고궁",
         sameCategoryNearby = listOf(
-            NearbyPlace("1002", "창덕궁", 1450),
-            NearbyPlace("1003", "덕수궁 <별관>", 820),
+            NearbyPlace("1002", "창덕궁", 1450, null),
+            NearbyPlace("1003", "덕수궁 <별관>", 820, null),
         ),
     )
 }

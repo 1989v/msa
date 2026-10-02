@@ -229,10 +229,14 @@ class SearchAttractionService(
                 typeCount = r.typeCount,
                 categoryCount = r.categoryCount,
                 categoryName = r.categoryName,
-                sameCategoryNearby = r.sameCategoryNearby.map { SearchAttractionUseCase.Nearby(it.id, it.title, it.distanceMeters) },
+                sameCategoryNearby = r.sameCategoryNearby.map {
+                    SearchAttractionUseCase.Nearby(it.id, it.title, it.distanceMeters, it.eventEndEffective)
+                },
             )
         },
-        similarElsewhere = if (summarize) null else similarElsewhere?.map { SearchAttractionUseCase.Similar(it.id, it.title, it.sidoName) },
+        similarElsewhere = if (summarize) null else similarElsewhere?.map {
+            SearchAttractionUseCase.Similar(it.id, it.title, it.sidoName, it.eventEndEffective)
+        },
         uniqueClickers14d = if (summarize) null else uniqueClickers14d,
     )
 }

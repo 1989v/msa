@@ -123,9 +123,10 @@ interface SearchAttractionUseCase {
         val sameCategoryNearby: List<Nearby>,
     )
 
-    data class Nearby(val id: String, val title: String, val distanceMeters: Int)
+    /** [eventEndEffective] 는 항목이 행사일 때의 유효 종료일 — 화면이 오늘 기준으로 끝난 항목을 거른다. */
+    data class Nearby(val id: String, val title: String, val distanceMeters: Int, val eventEndEffective: java.time.LocalDate?)
 
-    data class Similar(val id: String, val title: String, val sidoName: String?)
+    data class Similar(val id: String, val title: String, val sidoName: String?, val eventEndEffective: java.time.LocalDate?)
 
     data class Result(
         val searchId: String,

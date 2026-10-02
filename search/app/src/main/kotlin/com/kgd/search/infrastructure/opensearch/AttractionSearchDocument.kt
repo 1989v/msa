@@ -9,9 +9,12 @@ import com.kgd.search.domain.attraction.model.AttractionAttributes
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionRegion
 import com.kgd.search.domain.attraction.model.Availability
+import com.kgd.search.domain.attraction.model.CourseStop
+import com.kgd.search.domain.attraction.model.EventSchedule
 import com.kgd.search.domain.attraction.model.NearbyPlace
 import com.kgd.search.domain.attraction.model.PetPolicy
 import com.kgd.search.domain.attraction.model.SimilarPlace
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 /**
@@ -76,12 +79,35 @@ data class AttractionSearchDocument(
     val similarElsewhere: List<Similar>? = null,
     /** 14일 고유 클릭 방문자 수 — 상세 「많이 클릭한 곳」 배지용. 신호를 못 읽은 회차·옛 문서는 없다. */
     val uniqueClickers14d: Int? = null,
+    /** 행사 유효 기간 — 재색인이 정규화해 싣는다. 행사가 아니거나 날짜가 없으면(UNKNOWN) 둘 다 없다. */
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    val eventStartEffective: LocalDate? = null,
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    val eventEndEffective: LocalDate? = null,
+    /** 여행코스 구성 지점(순서대로). 코스가 아니거나 원문을 못 읽은 회차면 없다. */
+    val courseStops: List<CourseStopEntry>? = null,
 ) {
+    /** [eventEndEffective] 는 항목이 행사일 때의 유효 종료일 — 이 필드가 생기기 전 문서에는 없다. */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    data class Nearby(val id: String, val title: String, val distanceMeters: Int)
+    data class Nearby(
+        val id: String,
+        val title: String,
+        val distanceMeters: Int,
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        val eventEndEffective: LocalDate? = null,
+    )
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    data class Similar(val id: String, val title: String, val sidoName: String? = null)
+    data class Similar(
+        val id: String,
+        val title: String,
+        val sidoName: String? = null,
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        val eventEndEffective: LocalDate? = null,
+    )
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class CourseStopEntry(val order: Int, val contentId: String? = null, val name: String, val attractionId: Long? = null)
 
     // 속성 필드는 재색인이 한 벌로 싣는다 — closureState 가 있으면 나머지도 있다.
     private fun attributes(): AttractionAttributes? = closureState?.let { state ->
@@ -102,7 +128,8 @@ data class AttractionSearchDocument(
             typeCount = typeCount,
             categoryCount = regionCategoryCount,
             categoryName = lclsSystm3Name,
-            sameCategoryNearby = sameCategoryNearby.orEmpty().map { NearbyPlace(it.id, it.title, it.distanceMeters) },
+            sameCategoryNearby = sameCategoryNearby.orEmpty()
+                .map { NearbyPlace(it.id, it.title, it.distanceMeters, it.eventEndEffective) },
         )
     }
 
@@ -142,7 +169,10 @@ data class AttractionSearchDocument(
         modifiedAt = modifiedAt,
         attributes = attributes(),
         region = region(),
-        similarElsewhere = similarElsewhere?.map { SimilarPlace(it.id, it.title, it.sidoName) },
+        similarElsewhere = similarElsewhere?.map { SimilarPlace(it.id, it.title, it.sidoName, it.eventEndEffective) },
         uniqueClickers14d = uniqueClickers14d,
+        // 재색인이 이미 정규화한 값이라 같은 함수에 다시 넣어도 (s, e) 그대로다. 한쪽만 있는 문서는 생기지 않는다.
+        eventPeriod = EventSchedule.effectivePeriod(eventStartEffective, eventEndEffective),
+        courseStops = courseStops?.map { CourseStop(it.order, it.contentId, it.name, it.attractionId) },
     )
 }
