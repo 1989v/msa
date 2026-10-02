@@ -147,3 +147,6 @@ DB 적용·공개 전환·배포는 별도 실행 범위이며, 이번 문서의
 
 ## 플레이 피드백 이후 wire/codec
 protocolVersion2: binary-v2 코덱과 아군 발사 시각/방향 표시를 지원한다. 구 peer와 lobby에서 버전 불일치를 표시한다. 저장키는 유지하며 binary-v1/JSON-v1 저장을 계속 읽는다. 표시에서 적의 shot메타데이터는 생략하되 기존 bullets/effects를 사용하고, 완전 저장에서는 보존한다. 새 최대 측정 checkpoint27928B/10청크, 두슬롯56435B, display8324B/3청크, 첫1초20메시지.
+
+## 필드 무리 상태 추가
+protocolVersion3,checkpoint상한29KiB. 두슬롯총60KiB,표시3청크,전체30msg/s제한유지. fieldPacks/fieldPackId포함최대실측checkpoint28740B/두슬롯58059B/표시8676B. 기존codec/저장키와v1읽기는유지.
