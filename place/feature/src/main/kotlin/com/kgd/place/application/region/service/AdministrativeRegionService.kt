@@ -6,6 +6,8 @@ import com.kgd.place.application.region.usecase.AdministrativeRegionUseCase
 import com.kgd.place.domain.attraction.model.Attraction
 import com.kgd.place.domain.region.model.AdministrativeRegion
 import com.kgd.place.domain.region.model.AdministrativeRegionLevel
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 
 @Service
@@ -14,6 +16,7 @@ class AdministrativeRegionService(
     private val attractionRepository: AttractionRepositoryPort,
 ) : AdministrativeRegionUseCase {
 
+    @CacheEvict(RegionCaches.ADMINISTRATIVE, allEntries = true)
     override fun upsertAll(commands: List<AdministrativeRegionUseCase.Command>): AdministrativeRegionUseCase.Result {
         val summary = administrativeRegionRepository.upsertAll(
             commands.map {
@@ -31,6 +34,7 @@ class AdministrativeRegionService(
         return AdministrativeRegionUseCase.Result(summary.created, summary.updated)
     }
 
+    @Cacheable(RegionCaches.ADMINISTRATIVE, key = "#level.name() + ':' + #parentCode + ':' + #countLang")
     override fun find(
         level: AdministrativeRegionLevel,
         parentCode: String?,

@@ -119,12 +119,24 @@ class AttractionReindexCaptureTest : BehaviorSpec({
                 }
                 checked shouldNotBe 0
             }
+
+            then("place 가 준 링크 원문이 상세 결과까지 값 그대로 남고, 링크 없는 문서는 null 이다") {
+                val json = ObjectMapper()
+                documents.keys.forEach { id ->
+                    val expected = capture.sourceLinks[id]?.let { json.readTree(it) }
+                    (id to service.findById(id)!!.links?.let { json.readTree(it) }) shouldBe (id to expected)
+                }
+                // 대조군: 링크가 실린 문서가 있어야 위 비교가 무언가를 잰다 — 수집 링크(조회수 포함)와 딥링크 둘 다
+                capture.sourceLinks.keys.size shouldBe 2
+                json.readTree(service.findById("201")!!.links).path("collected").path(0).path("viewCount").asLong() shouldBe 123456L
+            }
         }
     }
 }) {
     private data class Capture(
         val documents: List<AttractionSearchDocument>,
         val sourceDates: Map<String, SourceDates>,
+        val sourceLinks: Map<String, String> = emptyMap(),
     )
 
     private data class SourceDates(val start: LocalDate?, val end: LocalDate?)

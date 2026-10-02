@@ -3,8 +3,10 @@ package com.kgd.place.application.attraction.service
 import com.kgd.place.application.attraction.port.AttractionRepositoryPort
 import com.kgd.place.application.attraction.usecase.GetAttractionUseCase
 import com.kgd.place.application.attraction.usecase.UpsertAttractionUseCase
+import com.kgd.place.application.region.service.RegionCaches
 import com.kgd.place.domain.attraction.exception.AttractionNotFoundException
 import com.kgd.place.domain.attraction.model.Attraction
+import org.springframework.cache.annotation.CacheEvict
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -18,6 +20,8 @@ class AttractionService(
     private val attractionRepository: AttractionRepositoryPort,
 ) : UpsertAttractionUseCase, GetAttractionUseCase {
 
+    /** 행정구역 응답의 관광 분류 건수가 이 적재로 바뀐다 — 지역 캐시를 비운다. */
+    @CacheEvict(RegionCaches.ADMINISTRATIVE, allEntries = true)
     override fun executeBulk(commands: List<UpsertAttractionUseCase.Command>): UpsertAttractionUseCase.Result {
         val summary = attractionRepository.upsertAll(commands.map { it.toDomain() })
         return UpsertAttractionUseCase.Result(

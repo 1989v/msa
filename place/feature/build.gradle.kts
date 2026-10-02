@@ -11,6 +11,8 @@ dependencies {
     implementation(project(":common"))
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.jpa)
+    // 지역 계층 조회 캐시 (ADR-0071 §서빙 경로) — content 의 레디스를 game 과 함께 쓴다
+    implementation(libs.spring.boot.starter.data.redis)
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.boot.starter.actuator)
     implementation("io.micrometer:micrometer-registry-prometheus")

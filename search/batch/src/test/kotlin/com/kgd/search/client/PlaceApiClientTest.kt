@@ -199,6 +199,27 @@ class PlaceApiClientTest : BehaviorSpec({
         }
     }
 
+    Given("place 가 링크 벌크 조회에 응답하면") {
+        val collected = """{"source":"YOUTUBE","externalId":"v1","title":"경복궁 야경","url":"https://youtu.be/v1",""" +
+            """"thumbnailUrl":"https://i.ytimg.com/v1.jpg","author":"서울여행","publishedAt":"2026-09-01T12:30:00","viewCount":123456}"""
+        val deepLink = """{"provider":"INSTAGRAM","kind":"SOCIAL","url":"https://www.instagram.com/explore/tags/경복궁","revenueType":"PLAIN"}"""
+        val client = clientReturning(
+            """{"success":true,"data":{"items":[{"attractionId":11,"collected":[$collected],"deepLinks":[$deepLink]}]}}""",
+        )
+        requestedUris.clear()
+        val found = kotlinx.coroutines.runBlocking { client.lookupLinks(listOf(11L, 12L)) }
+
+        When("색인에 실을 원문을 만들면") {
+            Then("place 가 준 링크 행의 필드가 하나도 빠지지 않는다 — 화면은 이 원문을 그대로 푼다") {
+                val mapper = ObjectMapper()
+                mapper.readTree(found.getValue(11L)) shouldBe
+                    mapper.readTree("""{"collected":[$collected],"deepLinks":[$deepLink]}""")
+                found.containsKey(12L) shouldBe false
+                requestedUris.single() shouldBe "/internal/attractions/links/lookup"
+            }
+        }
+    }
+
     Given("place 가 시군구 목록을 돌려줄 때") {
         // place 행정구역 응답 그대로 — code 는 시도 2 + 시군구 3 의 5자리다
         val client = clientReturning(

@@ -287,9 +287,9 @@ export const fetchAttraction = async (id: string): Promise<Attraction> => {
 };
 
 /**
- * 관광지 외부 링크 (ADR-0070). 검색이 아니라 place SSOT 에서 읽는다 — 링크는 검색 조건이
- * 아니라 상세 표시물이라 attractions 인덱스에 넣지 않았다. 문서 id 와 place PK 가 같은 값이라
- * 같은 id 로 부르면 된다.
+ * 관광지 외부 링크 (ADR-0070). 원천은 place 지만 화면은 place 를 부르지 않는다 — 재색인이 링크 행을
+ * 관광지 문서에 싣고, 상세 응답(`Attraction.links`, 원문 JSON)을 `placeView.parseLinks` 가 이 모양으로 푼다
+ * (ADR-0071 §서빙 경로).
  */
 export type LinkRevenueType = 'PLAIN' | 'AFFILIATE';
 
@@ -317,11 +317,6 @@ export interface AttractionLinks {
   /** 수집 대기 — 오류가 아니다. 조회가 큐를 채우고 CronJob 이 비운다. */
   pending: boolean;
 }
-
-export const fetchAttractionLinks = async (id: string): Promise<AttractionLinks> => {
-  const res = await api.get<ApiResponse<AttractionLinks>>(`/api/places/attractions/${id}/links`);
-  return res.data.data;
-};
 
 // 통합 자동완성 — 지역(행정 계층, 인구 부스트 상단) + 관광지 prefix (ADR-0065)
 export interface Suggestion {

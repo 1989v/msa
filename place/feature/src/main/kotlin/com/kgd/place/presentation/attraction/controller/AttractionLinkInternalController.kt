@@ -60,7 +60,10 @@ class AttractionLinkInternalController(
                     LookupLinksItem(
                         attractionId = id,
                         collected = links.collected.map {
-                            LookupLink(it.source.name, it.title, it.url, it.thumbnailUrl, it.author)
+                            LookupLink(
+                                it.source.name, it.externalId, it.title, it.url, it.thumbnailUrl, it.author,
+                                it.publishedAt, it.viewCount,
+                            )
                         },
                         deepLinks = links.deepLinks.map {
                             LookupDeepLink(it.provider, it.kind.name, it.url, it.revenueType.name)
@@ -101,9 +104,11 @@ data class LookupLinksItem(
     val deepLinks: List<LookupDeepLink>,
 )
 
+/** 링크 행의 표시·식별 필드 전부 — 색인 문서에 그대로 실려 상세 화면까지 가므로 여기서 빠지면 화면에서 사라진다. */
 data class LookupLink(
-    val source: String, val title: String, val url: String,
+    val source: String, val externalId: String, val title: String, val url: String,
     val thumbnailUrl: String?, val author: String?,
+    val publishedAt: LocalDateTime?, val viewCount: Long?,
 )
 
 data class LookupDeepLink(

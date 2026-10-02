@@ -6,6 +6,8 @@ import com.kgd.place.application.region.usecase.GetRegionUseCase
 import com.kgd.place.domain.region.exception.RegionNotFoundException
 import com.kgd.place.domain.region.model.Region
 import com.kgd.place.domain.region.model.RegionLevel
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -15,6 +17,7 @@ class RegionService(
     private val regionRepository: RegionRepositoryPort,
 ) : CreateRegionUseCase, GetRegionUseCase {
 
+    @CacheEvict(RegionCaches.GEONAMES, allEntries = true)
     override fun execute(command: CreateRegionUseCase.Command): CreateRegionUseCase.Result =
         regionRepository.save(command.toDomain()).toResult()
 
@@ -23,6 +26,7 @@ class RegionService(
      * 배치 안에 부모-자식이 섞여 있어도 레벨 순서(CONTINENT→…→CITY)로 처리해
      * geonamesId→id 맵으로 부모를 연결한다 (PlaceSeedRunner 와 동일 규칙).
      */
+    @CacheEvict(RegionCaches.GEONAMES, allEntries = true)
     override fun executeBulk(commands: List<CreateRegionUseCase.Command>): List<CreateRegionUseCase.Result> {
         val existingByGeonames = regionRepository
             .findByGeonamesIdIn(commands.mapNotNull { it.geonamesId } + commands.mapNotNull { it.parentGeonamesId })
@@ -54,10 +58,12 @@ class RegionService(
     override fun findById(id: Long): GetRegionUseCase.RegionView =
         (regionRepository.findById(id) ?: throw RegionNotFoundException(id)).toView()
 
+    @Cacheable(RegionCaches.GEONAMES, key = "'level:' + #level.name()")
     @Transactional(readOnly = true)
     override fun findByLevel(level: RegionLevel): List<GetRegionUseCase.RegionView> =
         regionRepository.findByLevel(level).map { it.toView() }
 
+    @Cacheable(RegionCaches.GEONAMES, key = "'parent:' + #parentId")
     @Transactional(readOnly = true)
     override fun findChildren(parentId: Long): List<GetRegionUseCase.RegionView> =
         regionRepository.findByParentId(parentId).map { it.toView() }

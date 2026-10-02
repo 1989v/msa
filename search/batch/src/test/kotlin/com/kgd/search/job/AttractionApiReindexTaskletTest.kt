@@ -487,11 +487,20 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
             dto(403, "en").copy(contentId = "1870538"),
         )
 
+        // place 링크 벌크 조회가 준 원문 — 상세 화면은 색인에 실린 이 원문을 그대로 푼다
+        val sourceLinks = mapOf(
+            201L to """{"collected":[{"source":"YOUTUBE","externalId":"v1","title":"경복궁 야경","url":"https://youtu.be/v1",""" +
+                """"thumbnailUrl":"https://i.ytimg.com/v1.jpg","author":"서울여행","publishedAt":"2026-09-01T12:30:00","viewCount":123456}],""" +
+                """"deepLinks":[{"provider":"INSTAGRAM","kind":"SOCIAL","url":"https://www.instagram.com/explore/tags/a","revenueType":"PLAIN"}]}""",
+            301L to """{"collected":[],"deepLinks":[{"provider":"MYREALTRIP","kind":"TOUR_PRODUCT","url":"https://example.com/t","revenueType":"AFFILIATE"}]}""",
+        )
+
         `when`("재색인하면") {
             clearMocks(placeApiClient, answers = false)
             val documents = captureDocuments()
             onePage(*inputs.toTypedArray())
             coEvery { placeApiClient.lookupEmbeddings(any(), any()) } returns emptyMap()
+            coEvery { placeApiClient.lookupLinks(any()) } answers { sourceLinks.filterKeys { it in firstArg<List<Long>>() } }
             coEvery { placeApiClient.lookupSimilar(MODEL_REF, any()) } returns mapOf(
                 // 103 은 끝난 행사, 105 는 날짜 없는 행사 — 둘 다 빠지고 순위 순서는 남는다
                 201L to PlaceApiClient.SimilarDto(MODEL_REF, listOf(103L, 101L, 105L, 202L)),
@@ -503,7 +512,7 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
 
             timedTasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
             val sources = documents.associate { it.id to bulkSource(it) }
-            writeReindexCapture(documents, inputs)
+            writeReindexCapture(documents, inputs, sourceLinks)
 
             then("행사는 정규화한 유효 기간을 yyyy-MM-dd 로 싣고, 날짜 없는 행사와 행사 아닌 문서는 필드가 없다") {
                 sources.getValue("101")["eventStartEffective"] shouldBe "2026-09-25"
@@ -553,6 +562,12 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                 similar.map { it["id"] } shouldContainExactly listOf("101", "202")
                 similar[0]["eventEndEffective"] shouldBe "2026-10-05"
                 similar[1]["eventEndEffective"] shouldBe null
+            }
+
+            then("place 가 준 링크 원문이 그 문서에 그대로 실리고, 링크 없는 문서는 필드가 없다") {
+                sources.getValue("201")["links"] shouldBe sourceLinks.getValue(201L)
+                sources.getValue("301")["links"] shouldBe sourceLinks.getValue(301L)
+                sources.getValue("202").keys shouldNotContain "links"
             }
 
             then("코스 구성은 subnum 순서로 실리고, 같은 언어 관광지가 있는 지점만 id 가 붙는다") {
@@ -655,13 +670,19 @@ private const val REINDEX_CAPTURE_PATH = "search/app/src/test/resources/attracti
 private fun repoRoot(): File = generateSequence(File("").absoluteFile) { it.parentFile }
     .first { File(it, "settings.gradle.kts").isFile }
 
-private fun writeReindexCapture(documents: List<AttractionIndexDocument>, inputs: List<PlaceApiClient.AttractionDto>) {
+private fun writeReindexCapture(
+    documents: List<AttractionIndexDocument>,
+    inputs: List<PlaceApiClient.AttractionDto>,
+    sourceLinks: Map<Long, String>,
+) {
     val mapper = jacksonMapperBuilder().disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS).build()
     val capture = mapOf(
         "documents" to documents.sortedBy { it.idSort },
         "sourceDates" to inputs.filter { it.eventStartDate != null || it.eventEndDate != null }.associate {
             it.id.toString() to mapOf("start" to it.eventStartDate?.toString(), "end" to it.eventEndDate?.toString())
         },
+        // place 링크 벌크 조회가 준 원문 — 읽기 쪽이 상세 결과의 링크와 견준다
+        "sourceLinks" to sourceLinks.mapKeys { it.key.toString() },
     )
     val file = repoRoot().resolve(REINDEX_CAPTURE_PATH)
     file.parentFile.mkdirs()
