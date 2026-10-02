@@ -8,6 +8,7 @@ import com.kgd.search.domain.attraction.model.EventSchedule
 import com.kgd.search.domain.attraction.model.EventStatus
 import com.kgd.search.domain.attraction.model.EventStatusText
 import com.kgd.search.domain.attraction.model.NearbyPlace
+import com.kgd.search.domain.attraction.model.RelatedPlace
 import com.kgd.search.domain.attraction.model.SimilarPlace
 import com.kgd.search.domain.attraction.model.WellnessTheme
 import com.kgd.search.infrastructure.config.AttractionRenderProperties
@@ -198,6 +199,47 @@ class AttractionPageRendererTest : BehaviorSpec({
             plain shouldNotContain "barrier-free"
             plain shouldNotContain "data-place-section=\"wellness\""
             plain shouldContain "<p data-place-section=\"source\">출처: 한국관광공사 TourAPI</p>"
+        }
+    }
+
+    given("연관 관광지(함께 간 곳)가 실린 문서") {
+        // 해운대해수욕장(id 6) 202608 운영 응답에서 place 가 고른 앞의 세 곳(순위 1 · 2 · 4) — 광안리해수욕장은 비슷한 곳에도 있다
+        val related = listOf(
+            RelatedPlace(1, "3063", "광안리해수욕장", "부산광역시", "자연경관(하천/해양)"),
+            RelatedPlace(2, "8", "해동용궁사", "부산광역시", "종교성지"),
+            RelatedPlace(4, "7670", "송정해수욕장", "부산광역시", null),
+        )
+        val similar = listOf(SimilarPlace("3063", "광안리해수욕장", "부산광역시", null), SimilarPlace("4001", "경포해수욕장", "강원특별자치도", null))
+        val root = rootOf(render(SHELL, doc(attributes = PARSED, region = REGION, similarElsewhere = similar).copy(relatedPlaces = related)))
+        val section = root.substringAfter("<section data-place-section=\"related\">").substringBefore("</section>")
+
+        then("색인에 실린 목록을 그 순서 그대로 상세 링크와 원천 분류로 그린다 — 분류가 없으면 이름만") {
+            section shouldContain "<h2>여기 온 사람들이 함께 간 곳</h2>"
+            Regex("<li><a href=\"([^\"]+)\">([^<]+)</a>").findAll(section).map { it.groupValues[1] to it.groupValues[2] }.toList() shouldBe
+                related.map { "/attractions/${it.id}" to it.title }
+            section shouldContain "<li><a href=\"/attractions/3063\">광안리해수욕장</a> · 자연경관(하천/해양)</li>"
+            section shouldContain "<li><a href=\"/attractions/7670\">송정해수욕장</a></li>"
+        }
+
+        then("비슷한 곳과 겹쳐도 두 절이 각자 그 곳을 그린다 — 절 순서는 비슷한 곳 → 함께 간 곳 → 출처") {
+            val similarSection = root.substringAfter("<h2>비슷한 곳</h2>").substringBefore("</ul>")
+            similarSection shouldContain "광안리해수욕장"
+            section shouldContain "광안리해수욕장"
+            val order = listOf("<h2>비슷한 곳</h2>", "여기 온 사람들이 함께 간 곳", "data-place-section=\"source\"").map { root.indexOf(it) }
+            order.none { it < 0 } shouldBe true
+            order shouldBe order.sorted()
+        }
+
+        then("출처에 원천 이름이 붙고, 목록이 없는 문서는 절도 원천 이름도 없다") {
+            root shouldContain "<p data-place-section=\"source\">출처: 한국관광공사 TourAPI · 빅데이터 서비스(연관 관광지)</p>"
+            val plain = rootOf(render(SHELL, doc(attributes = PARSED)))
+            plain shouldNotContain "data-place-section=\"related\""
+            plain shouldNotContain "연관 관광지"
+        }
+
+        then("영문 문서는 영문 제목과 영문 경로") {
+            val en = rootOf(render(SHELL, doc(id = "2001", lang = "en").copy(relatedPlaces = listOf(RelatedPlace(1, "4001", "Gwangalli Beach", null, null)))))
+            en shouldContain "<h2>Where visitors also went</h2><ul><li><a href=\"/en/attractions/4001\">Gwangalli Beach</a></li></ul>"
         }
     }
 

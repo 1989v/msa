@@ -90,4 +90,6 @@ data class AttractionDocument(
     val wellness: WellnessTheme? = null,
     /** 집중률 예측(예측일 순, 국문). 이름 매칭으로 이어지지 않은 곳·옛 색인 문서는 null. */
     val congestion: List<CongestionDay>? = null,
+    /** 여기 온 사람들이 함께 간 곳(원천 순위 순, 국문, 최대 [RelatedPlace.MAX]). 이어진 곳이 없거나 옛 색인 문서는 null. */
+    val relatedPlaces: List<RelatedPlace>? = null,
 )

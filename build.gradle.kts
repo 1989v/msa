@@ -542,6 +542,8 @@ val searchReadRequired = mapOf(
         "barrierFree", "barrierFreeDetail", "wellnessTheme", "wellnessThemeName",
         // 집중률 — 상세 「혼잡 예측」이 읽는다. 빠지면 절이 조용히 사라진다
         "congestion",
+        // 연관 관광지 — 상세 「여기 온 사람들이 함께 간 곳」과 서버 렌더 본문이 읽는다
+        "relatedPlaces",
     ),
 )
 

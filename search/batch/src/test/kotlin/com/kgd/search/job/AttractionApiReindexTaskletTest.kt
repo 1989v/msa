@@ -509,8 +509,13 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
             ),
             // 웰니스 국문 표본의 테마 코드 — 이름은 운영 분류 코드표 값
             202L to PlaceApiClient.ExtrasDto(null, null, "EX050100"),
-            // 상세 원문을 못 읽으면 코드만 싣는다
-            401L to PlaceApiClient.ExtrasDto(listOf("WHEELCHAIR"), "{not json", null),
+            // 상세 원문을 못 읽으면 코드만 싣는다. 연관 관광지 — place 가 고른 순위 순 그대로 온다. 자기 자신(401) · 끝난 행사(103) ·
+            // 영문 문서(403) · 겹친 id(202) 는 빠지고, 남는 앞의 6곳만 실린다(302 · 402 는 잘린다)
+            401L to PlaceApiClient.ExtrasDto(
+                listOf("WHEELCHAIR"), "{not json", null,
+                relatedPlaces = listOf(1 to 401L, 2 to 103L, 3 to 202L, 4 to 403L, 5 to 201L, 6 to 202L, 7 to 101L, 8 to 102L, 9 to 203L, 10 to 301L, 11 to 302L, 12 to 402L)
+                    .map { (rank, id) -> PlaceApiClient.RelatedPlaceDto(rank, id, if (rank == 3) "자연경관(하천/해양)" else null) },
+            ),
             // 집중률 — 해운대해수욕장 운영 응답(2026-10-02) 앞 사흘을 순서를 섞어서, 날짜를 못 읽는 날 하나를 끼워서
             402L to PlaceApiClient.ExtrasDto(
                 null, null, null,
@@ -570,6 +575,16 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                     mapOf("date" to "2026-10-03", "rate" to 98.14),
                 )
                 listOf("101", "201", "202", "401").forEach { id -> sources.getValue(id).keys shouldNotContain "congestion" }
+            }
+
+            then("연관 관광지는 같은 언어 활성 문서만 place 순서(원천 순위)대로 최대 6곳, 지금 제목·시도·원천 소분류를 싣고, 없는 문서는 필드가 없다") {
+                @Suppress("UNCHECKED_CAST")
+                val related = sources.getValue("401")["relatedPlaces"] as List<Map<String, Any?>>
+                related.map { it["rank"] to it["id"] } shouldContainExactly
+                    listOf(3 to "202", 5 to "201", 7 to "101", 8 to "102", 9 to "203", 10 to "301")
+                related.map { it["title"] } shouldContainExactly listOf("종로202", "종로201", "행사101", "행사102", "종로203", "코스301")
+                related.first()["category"] shouldBe "자연경관(하천/해양)"
+                listOf("101", "201", "202", "402").forEach { id -> sources.getValue(id).keys shouldNotContain "relatedPlaces" }
             }
 
             then("행사는 정규화한 유효 기간을 yyyy-MM-dd 로 싣고, 날짜 없는 행사와 행사 아닌 문서는 필드가 없다") {
@@ -645,7 +660,8 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                 val complete = logs.list.map { it.formattedMessage }.single { it.startsWith("Attraction reindex complete") }
                 complete shouldContain "events (today 2026-10-02) period 3, S>E 1, no date 1"
                 complete shouldContain "courses stops 1, unreadable infoRaw 1, unmatched stops 5"
-                complete shouldContain "barrier-free 2 (unreadable 1), wellness 1, congestion 1 (unreadable days 1), extras lookup failures 0"
+                complete shouldContain "barrier-free 2 (unreadable 1), wellness 1, congestion 1 (unreadable days 1), " +
+                    "related 1 (not active 2), extras lookup failures 0"
                 logs.list.map { it.formattedMessage }.single { it.startsWith("Region pass") } shouldContain
                     "3 ended/undated events left out as of 2026-10-02"
             }

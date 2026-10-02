@@ -86,4 +86,20 @@ class AttractionExtrasInternalControllerTest : BehaviorSpec({
             item.path("congestion").path("days").path(0).path("rate").asDouble() shouldBe 47.16
         }
     }
+
+    Given("연관 관광지가 있는 곳의 묶음 조회") {
+        Then("search-batch 가 읽는 이름(relatedPlaces[].rank · attractionId · category)으로 나간다") {
+            every { lookup.lookup(listOf(41L)) } returns listOf(
+                LookupAttractionExtrasUseCase.Found(
+                    41L, null, null, null,
+                    listOf(LookupAttractionExtrasUseCase.RelatedPlace(2, 601L, "자연경관(하천/해양)")),
+                ),
+            )
+            val item = json.readTree(json.writeValueAsString(controller.lookup(ExtrasLookupRequest(listOf(41L))).data)).path("items").path(0)
+            item.path("relatedPlaces").path(0).path("rank").asInt() shouldBe 2
+            item.path("relatedPlaces").path(0).path("attractionId").asLong() shouldBe 601L
+            item.path("relatedPlaces").path(0).path("category").asString() shouldBe "자연경관(하천/해양)"
+        }
+    }
 })
+

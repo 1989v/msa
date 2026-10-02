@@ -174,6 +174,7 @@ export function placeSourceLine(a: Attraction | null | undefined, lang: PlaceLan
     en ? 'Source: Korea Tourism Organization TourAPI' : '출처: 한국관광공사 TourAPI',
     hasBarrierFree ? (en ? 'Barrier-free travel' : '무장애 여행 정보') : null,
     a?.wellnessTheme ? (en ? 'Wellness tourism' : '웰니스관광 정보') : null,
+    (a?.relatedPlaces?.length ?? 0) > 0 ? (en ? 'Big Data (related attractions)' : '빅데이터 서비스(연관 관광지)') : null,
   ].filter((s): s is string => s != null).join(' · ');
 }
 

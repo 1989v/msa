@@ -53,6 +53,13 @@ class AttractionsIndexMappingTest : BehaviorSpec({
         }
     }
 
+    given("관광지 색인 정의의 연관 관광지 필드") {
+        then("순위·id·제목·분류 배열은 표시 전용이라 색인하지 않는 객체다") {
+            properties.path("relatedPlaces").path("type").asString() shouldBe "object"
+            properties.path("relatedPlaces").path("enabled").asBoolean(true) shouldBe false
+        }
+    }
+
     given("관광지 색인 정의의 지역 안 위치 필드") {
         `when`("표시에만 쓰는 값을 보면") {
             then("색인하지 않아야 한다") {

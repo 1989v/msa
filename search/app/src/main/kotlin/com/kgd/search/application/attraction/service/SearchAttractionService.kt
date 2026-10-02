@@ -270,5 +270,8 @@ class SearchAttractionService(
         wellnessTheme = wellness?.code,
         wellnessThemeName = wellness?.name,
         congestion = if (summarize) null else congestion?.map { SearchAttractionUseCase.CongestionDay(it.date, it.rate) },
+        relatedPlaces = if (summarize) null else relatedPlaces?.map {
+            SearchAttractionUseCase.Related(it.rank, it.id, it.title, it.sidoName, it.category)
+        },
     )
 }

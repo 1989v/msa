@@ -3,7 +3,7 @@ package com.kgd.place.application.attraction.service
 import com.kgd.place.application.attraction.port.AttractionCongestionRepositoryPort
 import com.kgd.place.application.attraction.usecase.SyncAttractionCongestionUseCase
 import com.kgd.place.domain.attraction.model.AttractionCongestion
-import com.kgd.place.domain.attraction.model.CongestionMatch
+import com.kgd.place.domain.attraction.model.NameMatch
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -24,7 +24,7 @@ class AttractionCongestionService(
         val names = items.map { it.tAtsNm.trim() }
         require(names.toSet().size == names.size) { "한 시군구에 같은 관광지 이름이 두 번 왔습니다: $signguCd" }
         val rows = items.map {
-            val method = runCatching { CongestionMatch.valueOf(it.matchMethod) }
+            val method = runCatching { NameMatch.valueOf(it.matchMethod) }
                 .getOrElse { _ -> throw IllegalArgumentException("모르는 매칭 방법입니다: ${it.matchMethod}") }
             AttractionCongestion(
                 signguCd = signguCd, tAtsNm = it.tAtsNm.trim(), areaCd = it.areaCd.trim(), areaNm = it.areaNm, signguNm = it.signguNm,

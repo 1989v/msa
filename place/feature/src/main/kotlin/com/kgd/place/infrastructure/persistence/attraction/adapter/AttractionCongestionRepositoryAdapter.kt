@@ -4,7 +4,7 @@ import com.kgd.place.application.attraction.port.AttractionCongestionRepositoryP
 import com.kgd.place.domain.attraction.model.AttractionCongestion
 import com.kgd.place.domain.attraction.model.CongestionDay
 import com.kgd.place.domain.attraction.model.CongestionForecast
-import com.kgd.place.domain.attraction.model.CongestionMatch
+import com.kgd.place.domain.attraction.model.NameMatch
 import com.kgd.place.infrastructure.persistence.attraction.entity.AttractionCongestionJpaEntity
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionCongestionJpaRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -35,7 +35,7 @@ class AttractionCongestionRepositoryAdapter(
         return removed
     }
 
-    override fun findForecasts(attractionIds: Collection<Long>, methods: Set<CongestionMatch>): List<CongestionForecast> {
+    override fun findForecasts(attractionIds: Collection<Long>, methods: Set<NameMatch>): List<CongestionForecast> {
         if (attractionIds.isEmpty() || methods.isEmpty()) return emptyList()
         return attractionIds.chunked(IN_CHUNK)
             .flatMap { repository.findByAttractionIdInAndMatchMethodIn(it, methods.map { m -> m.name }) }
@@ -45,7 +45,7 @@ class AttractionCongestionRepositoryAdapter(
                     log.warn { "집중률 원문을 못 읽었다: ${row.signguCd} ${row.tAtsNm}" }
                     null
                 } else {
-                    CongestionForecast(row.attractionId!!, CongestionMatch.valueOf(row.matchMethod!!), row.lastYmd, days)
+                    CongestionForecast(row.attractionId!!, NameMatch.valueOf(row.matchMethod!!), row.lastYmd, days)
                 }
             }
     }

@@ -19,7 +19,7 @@ data class AttractionCongestion(
     val firstYmd: LocalDate,
     val lastYmd: LocalDate,
     val attractionId: Long?,
-    val matchMethod: CongestionMatch,
+    val matchMethod: NameMatch,
 ) {
     init {
         require(SIGUNGU_CODE.matches(signguCd)) { "시군구 코드는 5자리 숫자여야 합니다: $signguCd" }
@@ -33,31 +33,13 @@ data class AttractionCongestion(
     }
 }
 
-/** 이름 매칭 방법. 앞의 셋만 관광지 id 를 갖는다. */
-enum class CongestionMatch(val linked: Boolean) {
-    EXACT(true),
-    NORMALIZED(true),
-    CONTAINS(true),
-    AMBIGUOUS(false),
-    NONE(false),
-    ;
-
-    companion object {
-        /**
-         * 화면(색인)에 쓰는 방법 — 정확 · 정규화. 포함은 정밀도를 표본으로 확인한 뒤 연다(Q-P2-MATCH):
-         * 2026-10-02 실측 21쌍 중 「동거문오름」→「거문오름」처럼 다른 곳에 붙은 것이 있었다.
-         */
-        val SERVED: Set<CongestionMatch> = setOf(EXACT, NORMALIZED)
-    }
-}
-
 /** 예측일 하루 — [rate] 는 원천 `cnctrRate` 값 그대로(0~100). */
 data class CongestionDay(val date: LocalDate, val rate: Double)
 
 /** 한 관광지의 집중률 예측(읽기 모델). [days] 는 예측일 순이다. */
 data class CongestionForecast(
     val attractionId: Long,
-    val matchMethod: CongestionMatch,
+    val matchMethod: NameMatch,
     val lastYmd: LocalDate,
     val days: List<CongestionDay>,
 ) {

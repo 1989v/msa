@@ -143,7 +143,12 @@ interface SearchAttractionUseCase {
          * 행사 상태와 같은 이유). 이름 매칭이 안 된 곳은 null.
          */
         val congestion: List<CongestionDay>? = null,
+        /** 여기 온 사람들이 함께 간 곳(원천 순위 순, 최대 6) — 단건 조회에만. 「비슷한 곳」과 겹쳐도 거르지 않는다(각 절이 따로 그린다). */
+        val relatedPlaces: List<Related>? = null,
     )
+
+    /** [category] 는 원천 소분류 이름 그대로. */
+    data class Related(val rank: Int, val id: String, val title: String, val sidoName: String?, val category: String?)
 
     /** [rate] 는 원천 집중률 그대로(0~100). */
     data class CongestionDay(val date: java.time.LocalDate, val rate: Double)

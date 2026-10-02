@@ -166,6 +166,18 @@ def put_congestion(sigungu: str, records: list[dict]) -> dict:
                     {"items": records}, timeout=300)["data"]
 
 
+def related_state() -> dict[str, str]:
+    """연관 관광지 — 시군구별로 가진 최신 `baseYm`. 받은 적 없는 시군구는 없다."""
+    return _request("GET", "/internal/attractions/related/state")["data"]["sigungu"]
+
+
+def put_related(sigungu: str, base_ym: str, records: list[dict]) -> dict:
+    """연관 관광지 — 그 시군구의 행을 [base_ym] 달로 통째로 바꾼다(새 달이 옛 달을 대체). 보내지 않은 시군구는 건드리지 않는다.
+    한 시군구는 최대 155곳(제주시, 202608 실측)이라 한 요청이다."""
+    return _request("PUT", f"/internal/attractions/related/{urllib.parse.quote(sigungu)}",
+                    {"baseYm": base_ym, "items": records}, timeout=300)["data"]
+
+
 def upsert_category_codes(rows: list[dict]) -> int:
     """분류체계 코드표 — (lang, code) 멱등 upsert. 표가 작아 한 번에 보낸다."""
     if not rows:

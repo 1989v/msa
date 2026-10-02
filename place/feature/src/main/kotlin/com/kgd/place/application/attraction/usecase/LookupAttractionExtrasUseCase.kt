@@ -1,7 +1,7 @@
 package com.kgd.place.application.attraction.usecase
 
 /**
- * 재색인(search-batch)이 쓰는 경로 — 페이지마다 id 묶음의 부가 정보(무장애 · 웰니스 · 집중률)를 **한 번에** 받는다.
+ * 재색인(search-batch)이 쓰는 경로 — 페이지마다 id 묶음의 부가 정보(무장애 · 웰니스 · 집중률 · 연관 관광지)를 **한 번에** 받는다.
  * 표마다 따로 부르면 페이지당 왕복이 표 수만큼 는다. 아무것도 없는 id 는 응답에 없다.
  */
 interface LookupAttractionExtrasUseCase {
@@ -12,6 +12,7 @@ interface LookupAttractionExtrasUseCase {
         val barrierFree: BarrierFree?,
         val wellness: Wellness?,
         val congestion: Congestion? = null,
+        val relatedPlaces: List<RelatedPlace>? = null,
     )
 
     /** [detailRaw] 는 상세 응답 원문 그대로 — 받는 쪽이 줄을 고른다. 상세를 아직 안 받았으면 null. */
@@ -27,4 +28,10 @@ interface LookupAttractionExtrasUseCase {
 
     /** [date] 는 `yyyy-MM-dd`, [rate] 는 원천 집중률 그대로. */
     data class Day(val date: String, val rate: Double)
+
+    /**
+     * 「여기 온 사람들이 함께 간 곳」 한 건 — 화면에 쓰는 매칭(정확 · 정규화)으로 우리 관광지 행에 이은 대상만(원천 분류 무관), 원천 순위 순.
+     * [category] 는 원천 소분류 이름(`rlteCtgrySclsNm`) 그대로. 이름은 싣지 않는다 — 재색인이 그 관광지의 지금 제목을 쓴다.
+     */
+    data class RelatedPlace(val rank: Int, val attractionId: Long, val category: String?)
 }

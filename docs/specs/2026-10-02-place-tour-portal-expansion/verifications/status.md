@@ -59,3 +59,5 @@
 | 12.C·12.D CDP 4조합 | 경복궁 상세 날씨 절 · 종로구 허브 방문 추이 | 날씨 11일·출처 기상청·가로 넘침 없음 · 방문 추이 12개월 막대·출처 빅데이터 · 스크린샷 verifications/cdp-phase2/ (방문 추이 막대 수는 선택자 결함으로 스크린샷으로 판정) |
 | 12.E | pytest 5파일 · check_sample_fields · Gradle(place·search batch·app·content 대상) + 게이트 · vitest 2 · tsc(app) | 50 passed · exit 0 · 196 tests 0 실패 · BUILD SUCCESSFUL · 38 passed · exit 0 |
 | 12.E | 매칭 실측(종로·제주·해운대 376) · 정밀도 · CODE12 | 정확 75.5% · 정규화 포함 81.4% · 포함 단계는 저장만(정밀도 90~95%) · 광주·전남 0건 |
+| 12.F | pytest 4파일 · check_sample_fields · Gradle(place domain·feature·search batch·app·content 대상) + 게이트 · vitest 2 · tsc(app) | 34 passed · exit 0 · 216 tests 0 실패 · BUILD SUCCESSFUL · 41 passed · exit 0 |
+| 12.F | 노출 규칙(우리 행으로 이어진 대상만, 분류 무관) | 출발 176 중 160(91%) 노출 · 앞 6곳 828건 = 관광지 659 · 음식 114 · 숙박 55 |

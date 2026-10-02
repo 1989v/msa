@@ -227,11 +227,11 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
     - [x] 12.E.3 Verify: `cd place/ingest && python -m pytest -q tests/name_match_test.py tests/congestion_test.py && cd ../.. && ./gradlew :search:batch:test --tests '*AttractionApiReindexTaskletTest' && ./gradlew verifySearchIndexContract && (cd portal-fe && npx vitest run src/pages/place/__tests__/AttractionPage.test.tsx)`
     - [x] 12.E.4 배포: content(V28) → place-ingest → search-batch → portal-fe
     - [ ] 12.E.5 운영 확인: 269콜 · 매칭 방법별 건수(전국) · Q-P2-CODE12 결론 · 재색인 뒤 `congestion` 문서 수
-  - [ ] 12.F 연관 관광지 (V29 · `place-ingest-related` 매월 12일 02:20 · 월 269콜)
-    - [ ] 12.F.1 Write tests: 출발·대상 매칭(실측 픽스처: 출발 정규화 178/236 · 대상 관광지 448/867) · 관광지로 링크된 대상만 최대 6 · 서버 렌더·화면 같은 목록 · 비슷한 곳과 겹쳐도 각 절 유지
-    - [ ] 12.F.2 구현: V29 · 잡 · lookup 확장 · `relatedPlaces` · 상세 절 · 0건이면 다음 날 재시도(Q-P2-RELATED-LAG)
-    - [ ] 12.F.3 Verify: `cd place/ingest && python -m pytest -q tests/name_match_test.py tests/related_test.py && cd ../.. && ./gradlew :search:batch:test --tests '*AttractionApiReindexTaskletTest' && ./gradlew verifySearchIndexContract && ./gradlew :search:app:test --tests '*AttractionPageRendererTest'`
-    - [ ] 12.F.4 배포: content(V29) → place-ingest → search-batch → search → portal-fe
+  - [x] 12.F 연관 관광지 (V29 · `place-ingest-related` 매월 12일 02:20 · 월 269콜)
+    - [x] 12.F.1 Write tests: 출발·대상 매칭(실측 픽스처: 출발 정규화 178/236 · 대상 관광지 448/867) · 관광지로 링크된 대상만 최대 6 · 서버 렌더·화면 같은 목록 · 비슷한 곳과 겹쳐도 각 절 유지
+    - [x] 12.F.2 구현: V29 · 잡 · lookup 확장 · `relatedPlaces` · 상세 절 · 0건이면 다음 날 재시도(Q-P2-RELATED-LAG)
+    - [x] 12.F.3 Verify: `cd place/ingest && python -m pytest -q tests/name_match_test.py tests/related_test.py && cd ../.. && ./gradlew :search:batch:test --tests '*AttractionApiReindexTaskletTest' && ./gradlew verifySearchIndexContract && ./gradlew :search:app:test --tests '*AttractionPageRendererTest'`
+    - [x] 12.F.4 배포: content(V29) → place-ingest → search-batch → search → portal-fe
     - [ ] 12.F.5 운영 확인: 출발·대상 매칭 건수 · Googlebot UA 표본 상세 절 마커
   - [ ] 12.G 대기오염 (V30 · `place-ingest-air` 매시 40분 · 24콜/일) — **화면은 Q-P2-AIRSTATION 해결 뒤**
     - [ ] 12.G.1 Write tests: 전국 한 응답 672행 적재 · 측정소별 `dataTime` 보존(혼재) · 측정 3시간 초과 제외 · `NAME` 매핑만인 시군구는 응답 없음 · 값·등급 변형 없음(원문 그대로, 평균 계산 함수 없음)

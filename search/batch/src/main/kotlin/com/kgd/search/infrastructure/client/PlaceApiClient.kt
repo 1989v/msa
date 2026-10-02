@@ -102,13 +102,17 @@ class PlaceApiClient(
     /** `/internal/attractions/similar/lookup` 한 건 — 순위 순 id 와 그 목록을 계산한 벡터의 스탬프. */
     data class SimilarDto(val modelRef: String, val ids: List<Long>)
 
-    /** 관광지에 붙는 부가 정보 한 건 — 무장애(긍정 코드 · 상세 원문) · 웰니스 테마 코드 · 집중률 예측. 다 없을 수 있다. */
+    /** 관광지에 붙는 부가 정보 한 건 — 무장애(긍정 코드 · 상세 원문) · 웰니스 테마 코드 · 집중률 예측 · 연관 관광지. 다 없을 수 있다. */
     data class ExtrasDto(
         val barrierFreeFlags: List<String>?,
         val barrierFreeDetailRaw: String?,
         val wellnessThemeCode: String?,
         val congestion: List<CongestionDayDto>? = null,
+        val relatedPlaces: List<RelatedPlaceDto>? = null,
     )
+
+    /** 연관 관광지 한 건 — place 가 고른 순서(원천 순위 순) 그대로. [category] 는 원천 소분류 이름. */
+    data class RelatedPlaceDto(val rank: Int, val attractionId: Long, val category: String?)
 
     /** 집중률 하루 — [date] 는 place 가 준 `yyyy-MM-dd` 문자열 그대로, [rate] 는 원천 값. */
     data class CongestionDayDto(val date: String, val rate: Double)
@@ -377,7 +381,7 @@ class PlaceApiClient(
     }
 
     /**
-     * 부가 정보(무장애 · 웰니스 · 집중률) 묶음 조회 — 표마다 따로 부르지 않고 한 번에 받는다. 아무것도 없는 id 는 응답에 없다.
+     * 부가 정보(무장애 · 웰니스 · 집중률 · 연관 관광지) 묶음 조회 — 표마다 따로 부르지 않고 한 번에 받는다. 아무것도 없는 id 는 응답에 없다.
      * 무장애 상세는 원문 문자열 그대로 받는다 — 줄을 고르는 규칙은 도메인([com.kgd.search.domain.attraction.model.BarrierFreeInfo])이 갖는다.
      */
     suspend fun lookupExtras(ids: List<Long>): Map<Long, ExtrasDto> {
@@ -411,6 +415,13 @@ class PlaceApiClient(
                     val date = d["date"] as? String ?: return@mapNotNull null
                     val rate = (d["rate"] as? Number)?.toDouble() ?: return@mapNotNull null
                     CongestionDayDto(date, rate)
+                },
+                // 순위·id 가 빠진 항목은 건너뛴다 — 순위를 지어내지 않는다
+                relatedPlaces = (item["relatedPlaces"] as? List<*>)?.mapNotNull { place ->
+                    val p = place as? Map<*, *> ?: return@mapNotNull null
+                    val rank = (p["rank"] as? Number)?.toInt() ?: return@mapNotNull null
+                    val id = (p["attractionId"] as? Number)?.toLong() ?: return@mapNotNull null
+                    RelatedPlaceDto(rank, id, p["category"] as? String)
                 },
             )
         }

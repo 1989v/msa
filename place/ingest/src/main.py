@@ -17,6 +17,8 @@ K8s CronJob 이 본 모듈을 --job 으로 분기해 호출한다:
     python -m src.main --job=weather-short         # 단기예보 최근 발표(05·17시) — 고유 격자마다 1콜 (회차당 243)
     python -m src.main --job=weather-mid           # 중기예보 06시 발표 — 육상 10 + 기온 regId (하루 약 173콜)
     python -m src.main --job=congestion            # 관광지 집중률 앞 30일 — 시군구마다 1콜 (하루 269콜)
+    python -m src.main --job=related               # 연관 관광지 전달 — 받은 달이면 0콜, 공개 전이면 1콜, 받는 날 269콜
+    python -m src.main --job=related --base-ym=202608   # 그 달을 1회 받는다
 
 외부 :443 을 부르는 것은 이 CronJob 파드뿐이다 — 상시 파드인 place 에는 egress 를 열지 않는다
 (ADR-0031 §5.10 화이트리스트에 place-ingest 만 추가).
@@ -34,7 +36,7 @@ from datetime import datetime
 from pathlib import Path
 
 from src import (administrative_region, backfill_intro, backfill_overview, barrier_free, congestion, google_place, naver,
-                 place_client,
+                 place_client, related,
                  backfill_media, popularity, quota, sync_lcls_codes, sync_pet_tour,
                  sync_tour,
                  visitors, weather, wellness, youtube)
@@ -132,6 +134,12 @@ def _job_weather(kind: str, key: str | None = None, now=None) -> int:
 def _job_congestion(key: str | None = None) -> int:
     """관광지 집중률 — 시군구 전부. 한도 초과로 멈춘 것은 실패가 아니다. 실패한 시군구가 있거나 전부 0건이면 1."""
     summary = congestion.run(key or _api_key())
+    return 1 if summary["failed"] else 0
+
+
+def _job_related(base_ym: str | None, key: str | None = None, today=None) -> int:
+    """연관 관광지 — 전달(또는 --base-ym) 을 아직 안 받은 시군구만. 공개 전이면 다음 날 다시 묻는다(창 마지막 날이면 1)."""
+    summary = related.run(key or _api_key(), today or datetime.now(sync_tour.KST).date(), base_ym)
     return 1 if summary["failed"] else 0
 
 
@@ -347,7 +355,7 @@ def main() -> int:
     ap.add_argument("--job", required=True,
                     choices=["overview", "intro", "media", "stats", "sync", "tour-portal-sync", "links",
                              "administrative-regions", "google-places", "lcls-codes", "pet-tour",
-                             "attraction-attrs", "visitors", "weather-short", "weather-mid", "congestion"])
+                             "attraction-attrs", "visitors", "weather-short", "weather-mid", "congestion", "related"])
     ap.add_argument("--budget", type=int, default=int(os.environ.get("BUDGET", "1000")),
                     help="개요 수집 일일 예산 (언어별, detailCommon2 호출 상한)")
     ap.add_argument("--lang", choices=["ko", "en"], help="미지정 시 ko·en 둘 다")
@@ -363,6 +371,7 @@ def main() -> int:
                     help="--job=attraction-attrs 에서 요일과 무관하게 웰니스를 받는다 (기본: 월요일 KST 만)")
     ap.add_argument("--from", dest="from_month",
                     help="--job=visitors 백필 시작 달 YYYY-MM (없으면 매일 창)")
+    ap.add_argument("--base-ym", help="--job=related 에서 전달 대신 받을 달 YYYYMM (수동 1회)")
     args = ap.parse_args()
 
     langs = (args.lang,) if args.lang else ("ko", "en")
@@ -393,6 +402,10 @@ def main() -> int:
         return _job_weather(args.job.removeprefix("weather-"))
     if args.job == "congestion":
         return _job_congestion()
+    if args.job == "related":
+        if args.base_ym and not (len(args.base_ym) == 6 and args.base_ym.isdigit()):
+            raise SystemExit(f"--base-ym 은 YYYYMM 이다: {args.base_ym}")
+        return _job_related(args.base_ym)
     if args.job == "tour-portal-sync":
         return _job_tour_portal_sync()
     return _job_sync(args.content_type, args.limit)

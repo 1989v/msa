@@ -13,6 +13,7 @@ import com.kgd.search.domain.attraction.model.EventSchedule
 import com.kgd.search.domain.attraction.model.EventStatusText
 import com.kgd.search.domain.attraction.model.PetPolicy
 import com.kgd.search.domain.attraction.model.RegularClosure
+import com.kgd.search.domain.attraction.model.RelatedPlace
 import com.kgd.search.domain.attraction.model.SimilarPlace
 import com.kgd.search.domain.attraction.model.WellnessTheme
 import com.kgd.search.infrastructure.config.AttractionRenderProperties
@@ -357,7 +358,7 @@ class AttractionPageRenderer(
     /**
      * prerender `renderAttractionDetail` 과 같은 뼈대에 스펙 순서대로 새 절을 잇는다:
      * 개요 · 방문 정보 원문(행사·숙박·코스는 유형별 절) → 방문 정보 배지 → 지역 안 위치 → 같은 분류 가까운 곳 →
-     * 비슷한 곳(다른 시도) → 출처. 반경 주변 관광지·편의시설·근처 행사·숙소는 조회가 더 필요해 SPA 가 그린다
+     * 비슷한 곳(다른 시도) → 함께 간 곳 → 출처. 반경 주변 관광지·편의시설·근처 행사·숙소는 조회가 더 필요해 SPA 가 그린다
      * (관광지당 색인 조회는 한 번).
      */
     private fun attractionBody(lang: String, doc: AttractionDocument, meta: Meta, today: LocalDate): String = buildString {
@@ -379,6 +380,8 @@ class AttractionPageRenderer(
         doc.wellness?.let { append(wellnessLine(lang, it)) }
         doc.region?.let { append(regionSection(lang, doc, it, today)) }
         append(similarSection(lang, doc.similarElsewhere?.filterNot { ended(it.eventEndEffective, today) }))
+        // 함께 간 곳 — 비슷한 곳과 겹쳐도 거르지 않는다(근거가 다른 두 목록이다). 색인에 실린 목록 그대로, 화면과 같은 순서
+        append(relatedSection(lang, doc.relatedPlaces))
         // 출처표시 의무 (data-sources.md §0) — 화면 바닥글과 같은 문구
         append("<p data-place-section=\"source\">${escapeHtml(sourceLine(lang, doc))}</p>")
     }
@@ -584,6 +587,7 @@ class AttractionPageRenderer(
         val extra = listOfNotNull(
             doc.barrierFree?.let { if (en) "Barrier-free travel" else "무장애 여행 정보" },
             doc.wellness?.let { if (en) "Wellness tourism" else "웰니스관광 정보" },
+            doc.relatedPlaces?.takeIf { it.isNotEmpty() }?.let { if (en) "Big Data (related attractions)" else "빅데이터 서비스(연관 관광지)" },
         )
         return (listOf(if (en) SOURCE_EN else SOURCE_KO) + extra).joinToString(" · ")
     }
@@ -596,6 +600,19 @@ class AttractionPageRenderer(
             "<li><a href=\"${escapeHtml(attractionPath(lang, s.id))}\">${escapeHtml(s.title)}</a>$sido</li>"
         }
         return "<h2>${if (lang == EN) "Similar places in other regions" else "비슷한 곳"}</h2><ul>$items</ul>"
+    }
+
+    /**
+     * 여기 온 사람들이 함께 간 곳 — 「{제목} · {원천 소분류}」, 원천 순위 순. 링크는 우리 관광지 상세뿐이다
+     * (원천이 준 대상 중 우리 관광지로 이어진 것만 색인에 실린다).
+     */
+    private fun relatedSection(lang: String, related: List<RelatedPlace>?): String {
+        if (related.isNullOrEmpty()) return ""
+        val items = related.joinToString("") { r ->
+            val category = r.category?.takeIf { it.isNotBlank() }?.let { " · ${escapeHtml(it)}" }.orEmpty()
+            "<li><a href=\"${escapeHtml(attractionPath(lang, r.id))}\">${escapeHtml(r.title)}</a>$category</li>"
+        }
+        return section("related", if (lang == EN) "Where visitors also went" else "여기 온 사람들이 함께 간 곳", "<ul>$items</ul>")
     }
 
     private fun distance(meters: Int): String =

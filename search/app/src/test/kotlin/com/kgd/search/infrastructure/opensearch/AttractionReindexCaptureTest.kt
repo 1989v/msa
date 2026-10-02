@@ -12,6 +12,7 @@ import com.kgd.search.domain.attraction.model.CongestionDay
 import com.kgd.search.domain.attraction.model.CourseStopsParser
 import com.kgd.search.domain.attraction.model.EventPeriod
 import com.kgd.search.domain.attraction.model.EventSchedule
+import com.kgd.search.domain.attraction.model.RelatedPlace
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
 import com.kgd.search.domain.query.model.QueryIntent
 import io.kotest.core.spec.style.BehaviorSpec
@@ -74,7 +75,38 @@ class AttractionReindexCaptureTest : BehaviorSpec({
             ?.sortedBy { it.date }
             ?.takeIf { it.isNotEmpty() }
 
+    /**
+     * 캡처의 place 연관 관광지(place 가 고른 순서)를 재색인 규칙에 다시 넣은 기대값 — 자기 자신·겹친 id 를 빼고, 캡처 안에 있는 같은 언어의
+     * 목록에 오를 수 있는 문서(끝났거나 날짜 없는 행사는 아니다)만 그 제목으로, 앞의 [RelatedPlace.MAX] 건. 남는 것이 없으면 null.
+     */
+    fun expectedRelated(id: String): List<Triple<Int, String, String>>? {
+        val self = documents.getValue(id)
+        val today = LocalDate.of(2026, 10, 2)
+        return capture.sourceExtras[id]?.relatedPlaces.orEmpty()
+            .filter { it.attractionId.toString() != id }
+            .distinctBy { it.attractionId }
+            .mapNotNull { r ->
+                documents[r.attractionId.toString()]
+                    ?.takeIf { it.lang == self.lang && EventSchedule.listable(it.contentTypeId, expectedPeriod(it.id), today) }
+                    ?.let { Triple(r.rank, it.id, it.title) }
+            }
+            .take(RelatedPlace.MAX)
+            .takeIf { it.isNotEmpty() }
+    }
+
     given("태스클릿이 만든 bulk 문서를 읽기 문서로 읽으면") {
+        `when`("연관 관광지를 보면") {
+            then("place 가 준 순서·순위를 재색인 규칙에 넣은 값과 같다 — 없는 문서는 null 이다") {
+                documents.keys.forEach { id ->
+                    (id to documents.getValue(id).relatedPlaces?.map { Triple(it.rank, it.id, it.title) }) shouldBe (id to expectedRelated(id))
+                }
+                // 대조군: 목록이 실린 문서가 있고, 잘린 것(최대 6)과 빠진 것(자기 자신·끝난 행사·영문)이 있어야 위 비교가 무언가를 잰다
+                documents.values.count { it.relatedPlaces != null } shouldBe 1
+                capture.sourceExtras.getValue("401").relatedPlaces!!.size shouldBe 12
+                documents.getValue("401").relatedPlaces!!.size shouldBe RelatedPlace.MAX
+            }
+        }
+
         `when`("집중률을 보면") {
             then("place 가 준 날짜·값을 예측일 순으로 읽은 값과 같다 — 없는 문서는 null 이다") {
                 documents.keys.forEach { id -> (id to documents.getValue(id).congestion) shouldBe (id to expectedCongestion(id)) }
@@ -172,6 +204,13 @@ class AttractionReindexCaptureTest : BehaviorSpec({
                 service.findById("202")!!.wellnessThemeName shouldBe "온천 / 사우나 / 스파"
             }
 
+            then("연관 관광지 순위·id·제목·분류가 상세 결과까지 남는다") {
+                documents.keys.forEach { id ->
+                    (id to service.findById(id)!!.relatedPlaces?.map { Triple(it.rank, it.id, it.title) }) shouldBe (id to expectedRelated(id))
+                }
+                service.findById("401")!!.relatedPlaces!!.first().category shouldBe "자연경관(하천/해양)"
+            }
+
             then("집중률 날짜·값이 상세 결과까지 남는다") {
                 documents.keys.forEach { id ->
                     (id to service.findById(id)!!.congestion?.map { it.date to it.rate }) shouldBe
@@ -205,7 +244,10 @@ class AttractionReindexCaptureTest : BehaviorSpec({
         val barrierFreeDetailRaw: String? = null,
         val wellnessThemeCode: String? = null,
         val congestion: List<SourceCongestionDay>? = null,
+        val relatedPlaces: List<SourceRelated>? = null,
     )
+
+    private data class SourceRelated(val rank: Int, val attractionId: Long, val category: String? = null)
 
     private data class SourceCongestionDay(val date: String, val rate: Double)
 

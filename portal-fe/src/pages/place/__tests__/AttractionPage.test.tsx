@@ -703,3 +703,58 @@ describe('AttractionPage 혼잡 예측', () => {
     expect(screen.queryByRole('region', { name: '혼잡 예측' })).toBeNull();
   });
 });
+
+describe('AttractionPage 여기 온 사람들이 함께 간 곳', () => {
+  // 해운대해수욕장 202608 운영 응답에서 place 가 고른 앞의 세 곳(순위 1 · 2 · 4) — 광안리해수욕장은 비슷한 곳에도 있다
+  const related = [
+    { rank: 1, id: '3063', title: '광안리해수욕장', sidoName: '부산광역시', category: '자연경관(하천/해양)' },
+    { rank: 2, id: '8', title: '해동용궁사', sidoName: '부산광역시', category: '종교성지' },
+    { rank: 4, id: '7670', title: '송정해수욕장', sidoName: '부산광역시', category: null },
+  ];
+  const withRelated: Attraction = {
+    ...enriched,
+    similarElsewhere: [{ id: '3063', title: '광안리해수욕장', sidoName: '부산광역시' }, ...(enriched.similarElsewhere ?? [])],
+    relatedPlaces: related,
+  };
+
+  beforeEach(() => {
+    vi.mocked(searchAttractions).mockResolvedValue({ searchId: 's', attractions: [], totalElements: 0, totalPages: 0, currentPage: 0 });
+  });
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
+
+  it('응답 목록을 그 순서 그대로 상세 링크와 원천 분류로 그린다(서버 렌더와 같은 목록) · 출처에 원천 이름', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue(withRelated);
+    renderAt('/attractions/100');
+    const section = await screen.findByRole('region', { name: '여기 온 사람들이 함께 간 곳' });
+
+    const links = within(section).getAllByRole('link');
+    expect(links.map((a) => a.getAttribute('href'))).toEqual(related.map((r) => `/attractions/${r.id}`));
+    expect(links.map((a) => a.textContent)).toEqual(['광안리해수욕장자연경관(하천/해양)', '해동용궁사종교성지', '송정해수욕장']);
+    expect(screen.getByText(/출처: 한국관광공사 TourAPI · 빅데이터 서비스\(연관 관광지\)/)).toBeInTheDocument();
+  });
+
+  it('비슷한 곳과 겹쳐도 두 절이 각자 그린다 · 클릭은 RELATED_PLACES 섹션으로 남는다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue(withRelated);
+    renderAt('/attractions/100');
+    const section = await screen.findByRole('region', { name: '여기 온 사람들이 함께 간 곳' });
+    const similar = screen.getByRole('region', { name: '비슷한 곳' });
+    expect(within(similar).getByText('광안리해수욕장')).toBeInTheDocument();
+    expect(within(section).getByText('광안리해수욕장')).toBeInTheDocument();
+
+    vi.mocked(track).mockClear();
+    fireEvent.click(within(section).getByText('해동용궁사').closest('a')!);
+    const click = vi.mocked(track).mock.calls.find(([action]) => action === 'CLICK')!;
+    expect([click[1].sectionId, click[1].itemIndex, click[1].entityId]).toEqual(['RELATED_PLACES', 1, '8']);
+  });
+
+  it('목록이 없는 문서는 절이 없다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue(enriched);
+    renderAt('/attractions/100');
+    await screen.findByText('조선의 법궁이다.');
+    expect(screen.queryByRole('region', { name: '여기 온 사람들이 함께 간 곳' })).toBeNull();
+    expect(screen.queryByText(/빅데이터 서비스/)).toBeNull();
+  });
+});

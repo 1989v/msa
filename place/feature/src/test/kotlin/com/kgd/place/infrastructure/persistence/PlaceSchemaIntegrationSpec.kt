@@ -7,9 +7,12 @@ import com.kgd.place.domain.attraction.model.EmbeddingModelRef
 import com.kgd.place.domain.attraction.model.SimilarAttractions
 import com.kgd.place.infrastructure.config.PlaceDataSourceConfig
 import com.kgd.place.domain.attraction.model.AttractionCongestion
-import com.kgd.place.domain.attraction.model.CongestionMatch
+import com.kgd.place.domain.attraction.model.AttractionRelated
+import com.kgd.place.domain.attraction.model.NameMatch
+import com.kgd.place.domain.attraction.model.RelatedTarget
 import com.kgd.place.infrastructure.persistence.attraction.adapter.AttractionCongestionRepositoryAdapter
 import com.kgd.place.infrastructure.persistence.attraction.adapter.AttractionExtrasRepositoryAdapter
+import com.kgd.place.infrastructure.persistence.attraction.adapter.AttractionRelatedRepositoryAdapter
 import com.kgd.place.infrastructure.persistence.attraction.adapter.AttractionRepositoryAdapter
 import com.kgd.place.infrastructure.persistence.attraction.adapter.AttractionSimilarRepositoryAdapter
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionBarrierFreeJpaRepository
@@ -17,6 +20,7 @@ import com.kgd.place.infrastructure.persistence.attraction.repository.Attraction
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionCongestionJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionLinkJpaRepository
+import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionRelatedJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionSimilarJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionWellnessJpaRepository
 import com.kgd.place.infrastructure.persistence.poi.repository.PoiJpaRepository
@@ -97,6 +101,7 @@ class PlaceSchemaIntegrationSpec(
     @Autowired private val w2: WeatherMidRegionJpaRepository,
     @Autowired private val w3: WeatherMidForecastJpaRepository,
     @Autowired private val c0: AttractionCongestionJpaRepository,
+    @Autowired private val c1: AttractionRelatedJpaRepository,
     @Autowired private val tx: TransactionTemplate,
 ) : BehaviorSpec({
 
@@ -105,7 +110,7 @@ class PlaceSchemaIntegrationSpec(
             .config(enabledIf = { dockerAvailable }) {
                 // count() 는 엔티티마다 실제 SQL 을 MySQL 로 보낸다 — 컬럼이 어긋나면
                 // validate 에서 컨텍스트가 아예 안 뜨고, 뜬 뒤에도 매핑이 틀리면 여기서 터진다.
-                listOf(r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, w0, w1, w2, w3, c0).map { it.count() }.size shouldBe 15
+                listOf(r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, w0, w1, w2, w3, c0, c1).map { it.count() }.size shouldBe 16
             }
     }
 
@@ -228,33 +233,71 @@ class PlaceSchemaIntegrationSpec(
                 fun raw(name: String, signgu: String, vararg days: Pair<String, String>) = days.joinToString(",", "[", "]") { (ymd, rate) ->
                     """{"baseYmd":"$ymd","areaCd":"${signgu.take(2)}","signguCd":"$signgu","tAtsNm":"$name","cnctrRate":"$rate"}"""
                 }
-                fun row(signgu: String, name: String, id: Long?, method: CongestionMatch, vararg days: Pair<String, String>) =
+                fun row(signgu: String, name: String, id: Long?, method: NameMatch, vararg days: Pair<String, String>) =
                     AttractionCongestion(signgu, name, signgu.take(2), null, null, raw(name, signgu, *days),
                         LocalDate.of(2026, 10, 2), LocalDate.of(2026, 10, 3), id, method)
                 val at = LocalDateTime.of(2026, 10, 3, 2, 0)
 
                 tx.execute {
                     adapter.replaceSigungu("26350", listOf(
-                        row("26350", "해운대해수욕장", 501L, CongestionMatch.EXACT, "20261003" to "52.5", "20261002" to "47.16"),
-                        row("26350", "부산 해운대시장", 502L, CongestionMatch.CONTAINS, "20261002" to "30"),
-                        row("26350", "SEA LIFE 부산아쿠아리움", null, CongestionMatch.NONE, "20261002" to "10"),
+                        row("26350", "해운대해수욕장", 501L, NameMatch.EXACT, "20261003" to "52.5", "20261002" to "47.16"),
+                        row("26350", "부산 해운대시장", 502L, NameMatch.CONTAINS, "20261002" to "30"),
+                        row("26350", "SEA LIFE 부산아쿠아리움", null, NameMatch.NONE, "20261002" to "10"),
                     ), at)
                 }
-                tx.execute { adapter.replaceSigungu("11110", listOf(row("11110", "경복궁", 601L, CongestionMatch.EXACT, "20261002" to "99.24")), at) }
+                tx.execute { adapter.replaceSigungu("11110", listOf(row("11110", "경복궁", 601L, NameMatch.EXACT, "20261002" to "99.24")), at) }
                 // 다음 날 해운대구만 다시 — 같은 이름이 같은 트랜잭션에서 지워졌다 들어가도 유니크 키에 걸리지 않고, 종로구는 남는다
                 tx.execute {
                     adapter.replaceSigungu("26350", listOf(
-                        row("26350", "해운대해수욕장", 501L, CongestionMatch.EXACT, "20261003" to "60"),
-                        row("26350", "부산 해운대시장", 502L, CongestionMatch.CONTAINS, "20261002" to "30"),
+                        row("26350", "해운대해수욕장", 501L, NameMatch.EXACT, "20261003" to "60"),
+                        row("26350", "부산 해운대시장", 502L, NameMatch.CONTAINS, "20261002" to "30"),
                     ), at)
                 } shouldBe 3
 
                 c0.findAll().map { it.signguCd to it.tAtsNm }.sortedBy { it.second } shouldBe
                     listOf("11110" to "경복궁", "26350" to "부산 해운대시장", "26350" to "해운대해수욕장")
-                val served = adapter.findForecasts(listOf(501L, 502L, 601L), CongestionMatch.SERVED).associateBy { it.attractionId }
+                val served = adapter.findForecasts(listOf(501L, 502L, 601L), NameMatch.SERVED).associateBy { it.attractionId }
                 served.keys shouldBe setOf(501L, 601L)
                 served.getValue(501L).days.map { it.date to it.rate } shouldBe listOf(LocalDate.of(2026, 10, 3) to 60.0)
                 served.getValue(601L).days.single().rate shouldBe 99.24
+            }
+    }
+
+    Given("연관 관광지를 V29 표에 시군구 단위로 적재할 때") {
+        Then("받은 시군구만 그 달로 통째로 바뀌고, 시군구별 최신 달이 읽히며, 대상 파생 값이 순위·매칭 그대로 돌아오고 화면에 쓰는 출발만 나온다")
+            .config(enabledIf = { dockerAvailable }) {
+                val adapter = AttractionRelatedRepositoryAdapter(c1)
+                // 해운대구·종로구 202608 운영 표본(2026-10-02) 모양
+                fun target(rank: Int, name: String, lcls: String, id: Long?, method: NameMatch) =
+                    RelatedTarget(rank, name, lcls, "자연관광", "자연경관(하천/해양)", "26350", id, method)
+                fun row(signgu: String, code: String, name: String, ym: String, id: Long?, method: NameMatch, vararg targets: RelatedTarget) =
+                    AttractionRelated(code, name, signgu, ym, """[{"tAtsCd":"$code","rlteRank":"1"}]""", id, method, targets.toList())
+                val at = LocalDateTime.of(2026, 10, 12, 2, 20)
+
+                tx.execute {
+                    adapter.replaceSigungu("26350", listOf(
+                        row("26350", "d123", "해운대해수욕장", "202607", 501L, NameMatch.EXACT,
+                            target(1, "동백섬", "관광지", 601L, NameMatch.NORMALIZED), target(2, "화로구이/마장점", "음식", null, NameMatch.NONE)),
+                        row("26350", "e456", "부산 해운대시장", "202607", 502L, NameMatch.CONTAINS),
+                    ), at)
+                }
+                tx.execute { adapter.replaceSigungu("11110", listOf(row("11110", "f789", "경복궁", "202608", 701L, NameMatch.EXACT)), at) }
+                // 다음 달 해운대구만 다시 — 같은 출발이 같은 트랜잭션에서 지워졌다 들어가도 유니크 키에 걸리지 않고, 종로구는 남는다
+                tx.execute {
+                    adapter.replaceSigungu("26350", listOf(
+                        row("26350", "d123", "해운대해수욕장", "202608", 501L, NameMatch.EXACT,
+                            target(2, "누리마루 APEC하우스", "관광지", 602L, NameMatch.EXACT), target(1, "동백섬", "관광지", 601L, NameMatch.NORMALIZED)),
+                        row("26350", "e456", "부산 해운대시장", "202608", 502L, NameMatch.CONTAINS),
+                    ), at)
+                } shouldBe 2
+
+                adapter.latestBaseYmBySigungu() shouldBe mapOf("11110" to "202608", "26350" to "202608")
+                val served = adapter.findLinked(listOf(501L, 502L, 701L), NameMatch.SERVED).associateBy { it.attractionId }
+                served.keys shouldBe setOf(501L, 701L)
+                served.getValue(501L).targets.map { Triple(it.rank, it.attractionId, it.matchMethod) } shouldBe
+                    listOf(Triple(2, 602L, NameMatch.EXACT), Triple(1, 601L, NameMatch.NORMALIZED))
+                served.getValue(501L).targets.first().scls shouldBe "자연경관(하천/해양)"
+                served.getValue(701L).targets shouldBe emptyList()
             }
     }
 

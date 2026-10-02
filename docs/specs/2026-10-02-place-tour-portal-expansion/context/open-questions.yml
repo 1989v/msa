@@ -193,6 +193,7 @@ questions:
     phase: pre-impl
     status: open
     question: 연관 관광지 월 자료(baseYm=전달)의 공개 시점
+    note: 2026-10-02 21:30 KST 에 baseYm=202609 는 0건(202608 은 있음) — 전달 자료가 다음 달 2일 밤까지 미공개. 잡이 12~28일 매일 1콜로 공개를 확인한다
     default: >-
       매월 12일 수집으로 시작하고, 0건이면 다음 날 재시도한다. 공개일이 확인되면 일정을 옮긴다
   - id: Q-P2-DURUNUBI-RANGE

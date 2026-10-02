@@ -2,14 +2,17 @@ package com.kgd.place.application.attraction.service
 
 import com.kgd.place.application.attraction.port.AttractionCongestionRepositoryPort
 import com.kgd.place.application.attraction.port.AttractionExtrasRepositoryPort
+import com.kgd.place.application.attraction.port.AttractionRelatedRepositoryPort
 import com.kgd.place.application.attraction.usecase.LookupAttractionExtrasUseCase
 import com.kgd.place.application.attraction.usecase.SyncAttractionBarrierFreeUseCase
 import com.kgd.place.application.attraction.usecase.SyncAttractionWellnessUseCase
 import com.kgd.place.domain.attraction.model.AttractionBarrierFree
+import com.kgd.place.domain.attraction.model.AttractionRelated
 import com.kgd.place.domain.attraction.model.AttractionWellness
 import com.kgd.place.domain.attraction.model.CongestionDay
 import com.kgd.place.domain.attraction.model.CongestionForecast
-import com.kgd.place.domain.attraction.model.CongestionMatch
+import com.kgd.place.domain.attraction.model.NameMatch
+import com.kgd.place.domain.attraction.model.RelatedTarget
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -28,7 +31,8 @@ import java.time.LocalDateTime
 class AttractionExtrasServiceTest : BehaviorSpec({
     val repository = mockk<AttractionExtrasRepositoryPort>()
     val congestion = mockk<AttractionCongestionRepositoryPort>()
-    val service = AttractionExtrasService(repository, congestion)
+    val related = mockk<AttractionRelatedRepositoryPort>()
+    val service = AttractionExtrasService(repository, congestion, related)
 
     val listRaw = """{"contentid":"125894","contenttypeid":"12","title":"마곡사 [유네스코 세계유산]","modifiedtime":"20251224171858"}"""
     val detailRaw = """{"contentid":"126508","wheelchair":"대여가능","restroom":"장애인 화장실 있음","elevator":""}"""
@@ -36,8 +40,9 @@ class AttractionExtrasServiceTest : BehaviorSpec({
     val synced = LocalDateTime.of(2026, 10, 3, 2, 41)
 
     beforeTest {
-        clearMocks(repository, congestion)
+        clearMocks(repository, congestion, related)
         every { congestion.findForecasts(any(), any()) } returns emptyList()
+        every { related.findLinked(any(), any()) } returns emptyList()
         every { repository.saveBarrierFree(any()) } answers { firstArg<List<AttractionBarrierFree>>().size }
     }
 
@@ -149,12 +154,12 @@ class AttractionExtrasServiceTest : BehaviorSpec({
         val oct2 = LocalDate.of(2026, 10, 2)
         fun days(vararg rates: Double) = rates.mapIndexed { i, r -> CongestionDay(oct2.plusDays(i.toLong()), r) }
         Then("화면에 쓰는 매칭(정확·정규화)만 묻고, 한 관광지에 둘이 이어졌으면 정확 쪽을 날짜 순으로 싣는다") {
-            val asked = slot<Set<CongestionMatch>>()
+            val asked = slot<Set<NameMatch>>()
             every { repository.findBarrierFreeByAttractionIds(any()) } returns emptyList()
             every { repository.findWellnessByAttractionIds(any()) } returns emptyList()
             every { congestion.findForecasts(listOf(31L, 32L), capture(asked)) } returns listOf(
-                CongestionForecast(31L, CongestionMatch.NORMALIZED, oct2.plusDays(29), days(10.0, 20.0)),
-                CongestionForecast(31L, CongestionMatch.EXACT, oct2.plusDays(29), days(47.16, 52.5)),
+                CongestionForecast(31L, NameMatch.NORMALIZED, oct2.plusDays(29), days(10.0, 20.0)),
+                CongestionForecast(31L, NameMatch.EXACT, oct2.plusDays(29), days(47.16, 52.5)),
             )
 
             service.lookup(listOf(31L, 32L)) shouldBe listOf(
@@ -167,7 +172,40 @@ class AttractionExtrasServiceTest : BehaviorSpec({
                 ),
             )
             // 포함 매칭은 정밀도 확인 전(Q-P2-MATCH)이라 묻지도 않는다
-            asked.captured shouldBe setOf(CongestionMatch.EXACT, CongestionMatch.NORMALIZED)
+            asked.captured shouldBe setOf(NameMatch.EXACT, NameMatch.NORMALIZED)
+        }
+    }
+
+    Given("재색인이 연관 관광지가 있는 id 묶음을 조회할 때") {
+        // 해운대구 202608 운영 표본 모양: 「해운대해수욕장」 출발(정확) — 관광지·음식 대상이 순위 순으로 섞여 있다
+        fun target(rank: Int, lcls: String, id: Long?, method: NameMatch) =
+            RelatedTarget(rank, "대상 $rank", lcls, null, "자연경관(하천/해양)", "26350", id, method)
+        Then("화면에 쓰는 매칭(정확·정규화)으로 이은 출발만 묻고, 우리 행으로 이어진 대상만(분류 무관) 순위 · 원천 소분류로 싣는다 — 이어진 대상이 없으면 항목이 없다") {
+            val asked = slot<Set<NameMatch>>()
+            every { repository.findBarrierFreeByAttractionIds(any()) } returns emptyList()
+            every { repository.findWellnessByAttractionIds(any()) } returns emptyList()
+            every { related.findLinked(listOf(41L, 42L, 43L), capture(asked)) } returns listOf(
+                AttractionRelated(
+                    "d123", "해운대해수욕장", "26350", "202608", "[]", 41L, NameMatch.EXACT,
+                    listOf(target(1, "음식", 701L, NameMatch.EXACT), target(2, "관광지", 601L, NameMatch.NORMALIZED), target(3, "관광지", 602L, NameMatch.CONTAINS)),
+                ),
+                // 우리 음식점 행으로 이어진 음식 대상은 낸다
+                AttractionRelated("e456", "해운대시장", "26350", "202608", "[]", 42L, NameMatch.EXACT, listOf(target(1, "음식", 702L, NameMatch.EXACT))),
+                // 대상이 우리 행으로 이어지지 않은 출발 — 링크할 곳이 없어 항목이 없다
+                AttractionRelated("f789", "동백섬", "26350", "202608", "[]", 43L, NameMatch.EXACT, listOf(target(1, "음식", null, NameMatch.NONE))),
+            )
+
+            service.lookup(listOf(41L, 42L, 43L)) shouldBe listOf(
+                LookupAttractionExtrasUseCase.Found(
+                    41L, null, null, null,
+                    listOf(
+                        LookupAttractionExtrasUseCase.RelatedPlace(1, 701L, "자연경관(하천/해양)"),
+                        LookupAttractionExtrasUseCase.RelatedPlace(2, 601L, "자연경관(하천/해양)"),
+                    ),
+                ),
+                LookupAttractionExtrasUseCase.Found(42L, null, null, null, listOf(LookupAttractionExtrasUseCase.RelatedPlace(1, 702L, "자연경관(하천/해양)"))),
+            )
+            asked.captured shouldBe setOf(NameMatch.EXACT, NameMatch.NORMALIZED)
         }
     }
 })

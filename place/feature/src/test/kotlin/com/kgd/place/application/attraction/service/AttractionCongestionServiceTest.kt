@@ -3,7 +3,7 @@ package com.kgd.place.application.attraction.service
 import com.kgd.place.application.attraction.port.AttractionCongestionRepositoryPort
 import com.kgd.place.application.attraction.usecase.SyncAttractionCongestionUseCase
 import com.kgd.place.domain.attraction.model.AttractionCongestion
-import com.kgd.place.domain.attraction.model.CongestionMatch
+import com.kgd.place.domain.attraction.model.NameMatch
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -36,7 +36,7 @@ class AttractionCongestionServiceTest : BehaviorSpec({
                 listOf(item("해운대해수욕장", 501L, "EXACT"), item("SEA LIFE 부산아쿠아리움", null, "NONE")),
             ) shouldBe SyncAttractionCongestionUseCase.Applied(applied = 2, linked = 1, removed = 19)
 
-            rows.captured.map { it.matchMethod } shouldBe listOf(CongestionMatch.EXACT, CongestionMatch.NONE)
+            rows.captured.map { it.matchMethod } shouldBe listOf(NameMatch.EXACT, NameMatch.NONE)
             rows.captured.first().ratesRaw shouldBe raw
             rows.captured.all { it.signguCd == "26350" } shouldBe true
         }

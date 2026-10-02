@@ -16,6 +16,7 @@ import com.kgd.search.domain.attraction.model.EventSchedule
 import com.kgd.search.domain.attraction.model.RegionAggregator
 import com.kgd.search.domain.attraction.model.RegionPlacement
 import com.kgd.search.domain.attraction.model.RegionProjection
+import com.kgd.search.domain.attraction.model.RelatedPlace
 import com.kgd.search.domain.attraction.model.SimilarPlace
 import com.kgd.search.domain.attraction.model.WellnessTheme
 import com.kgd.search.infrastructure.client.PlaceApiClient
@@ -140,6 +141,8 @@ class AttractionApiReindexTasklet(
             var withWellness = 0L
             var withCongestion = 0L
             var unreadableCongestionDays = 0L
+            var withRelated = 0L
+            var relatedNotActive = 0L
             var extrasLookupFailures = 0L
 
             while (afterId != null) {
@@ -232,6 +235,10 @@ class AttractionApiReindexTasklet(
                         }
                         ?.takeIf { it.isNotEmpty() }
                     if (similarElsewhere != null) withSimilar++
+                    // 함께 간 곳 — 비슷한 곳과 같은 이름표(projections)로 지금 제목·시도를 붙이고, 활성 문서가 아닌 대상은 뺀다
+                    val relatedPlaces = extra?.relatedPlaces
+                        ?.let { relatedOf(attraction.id, attraction.lang, it, projections, sidoNames) { relatedNotActive++ } }
+                    if (relatedPlaces != null) withRelated++
                     val eventPeriod = attraction.eventPeriod()
                     if (EventSchedule.isEvent(attraction.contentTypeId)) {
                         when (EventSchedule.dateIssue(attraction.eventStartDate, attraction.eventEndDate)) {
@@ -302,6 +309,7 @@ class AttractionApiReindexTasklet(
                             barrierFree = barrierFree,
                             wellness = wellness,
                             congestion = congestion,
+                            relatedPlaces = relatedPlaces,
                         ),
                         embedding,
                     )
@@ -332,6 +340,7 @@ class AttractionApiReindexTasklet(
                     // 부가 정보: 무장애 적재 · 상세 원문 해석 실패 · 웰니스 적재 · 조회 실패 묶음
                     "barrier-free $withBarrierFree (unreadable $unreadableBarrierFree), wellness $withWellness, " +
                     "congestion $withCongestion (unreadable days $unreadableCongestionDays), " +
+                    "related $withRelated (not active $relatedNotActive), " +
                     "extras lookup failures $extrasLookupFailures, " +
                     "attribute parser v${AttractionAttributeParser.VERSION}, index pass ${elapsedMs(indexStartedAt)}ms"
             }
@@ -486,6 +495,34 @@ class AttractionApiReindexTasklet(
                 null
             }
         }.sortedBy { it.date }.takeIf { it.isNotEmpty() }
+
+    /**
+     * 연관 관광지 → 도메인. place 가 고른 순서(원천 순위 순)를 지키고, 이름표에 없는(비활성·삭제·끝난 행사) 대상과 다른 언어 문서는
+     * 빼며 [onNotActive] 로 센다. 자기 자신·겹친 id 도 뺀다. 남는 앞의 [RelatedPlace.MAX] 건만, 하나도 없으면 null.
+     */
+    private fun relatedOf(
+        selfId: Long,
+        lang: String,
+        places: List<PlaceApiClient.RelatedPlaceDto>,
+        projections: Map<String, RegionProjection>,
+        sidoNames: Map<String, Map<String, String>>,
+        onNotActive: () -> Unit,
+    ): List<RelatedPlace>? =
+        places.asSequence()
+            .filter { it.attractionId != selfId }
+            .distinctBy { it.attractionId }
+            .mapNotNull { dto ->
+                projections[dto.attractionId.toString()]
+                    ?.takeIf { it.lang == lang }
+                    ?.let { p -> RelatedPlace(dto.rank, p.id, p.title, p.ldongRegnCd?.let { sidoNames[p.lang]?.get(it) }, dto.category) }
+                    ?: run {
+                        onNotActive()
+                        null
+                    }
+            }
+            .take(RelatedPlace.MAX)
+            .toList()
+            .takeIf { it.isNotEmpty() }
 
     private fun elapsedMs(startedAt: Long) = (System.nanoTime() - startedAt) / 1_000_000
 

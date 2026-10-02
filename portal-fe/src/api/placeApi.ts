@@ -113,6 +113,20 @@ export interface Attraction {
    * 오늘 이전 날은 화면이 거른다. 이름 매칭이 안 된 곳은 null.
    */
   congestion?: CongestionDay[] | null;
+  /**
+   * 여기 온 사람들이 함께 간 곳(원천 순위 순, 최대 6, 국문 문서만) — 단건 조회에만 온다. 한국관광공사 연관 관광지 중
+   * 우리 관광지로 이어진 것만 색인에 실린다. 「비슷한 곳」과 겹쳐도 걸러져 오지 않는다(각 절이 따로 그린다).
+   */
+  relatedPlaces?: RelatedPlace[] | null;
+}
+
+/** 함께 간 곳 한 건 — `rank` 는 원천 순위, `category` 는 원천 소분류 이름 그대로. */
+export interface RelatedPlace {
+  rank: number;
+  id: string;
+  title: string;
+  sidoName: string | null;
+  category: string | null;
 }
 
 /** 집중률 예측 하루 — `date` 는 `YYYY-MM-DD`, `rate` 는 원천 값 그대로(0~100). */

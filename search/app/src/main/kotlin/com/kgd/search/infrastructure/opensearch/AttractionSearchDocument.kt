@@ -14,6 +14,7 @@ import com.kgd.search.domain.attraction.model.CongestionDay
 import com.kgd.search.domain.attraction.model.CourseStop
 import com.kgd.search.domain.attraction.model.EventSchedule
 import com.kgd.search.domain.attraction.model.NearbyPlace
+import com.kgd.search.domain.attraction.model.RelatedPlace
 import com.kgd.search.domain.attraction.model.PetPolicy
 import com.kgd.search.domain.attraction.model.SimilarPlace
 import com.kgd.search.domain.attraction.model.WellnessTheme
@@ -97,6 +98,8 @@ data class AttractionSearchDocument(
     val wellnessThemeName: String? = null,
     /** 집중률 앞 30일 — 상세 「혼잡 예측」이 읽는다. 이름 매칭이 안 된 곳·옛 문서는 없다. */
     val congestion: List<CongestionEntry>? = null,
+    /** 여기 온 사람들이 함께 간 곳(원천 순위 순) — 상세 절과 서버 렌더가 읽는다. 이어진 곳이 없거나 옛 문서는 없다. */
+    val relatedPlaces: List<RelatedPlaceEntry>? = null,
 ) {
     /** [eventEndEffective] 는 항목이 행사일 때의 유효 종료일 — 이 필드가 생기기 전 문서에는 없다. */
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -116,6 +119,9 @@ data class AttractionSearchDocument(
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
         val eventEndEffective: LocalDate? = null,
     )
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class RelatedPlaceEntry(val rank: Int, val id: String, val title: String, val sidoName: String? = null, val category: String? = null)
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     data class CongestionEntry(
@@ -200,5 +206,6 @@ data class AttractionSearchDocument(
         },
         wellness = wellnessTheme?.let { WellnessTheme(it, wellnessThemeName) },
         congestion = congestion?.takeIf { it.isNotEmpty() }?.map { CongestionDay(it.date, it.rate) },
+        relatedPlaces = relatedPlaces?.takeIf { it.isNotEmpty() }?.map { RelatedPlace(it.rank, it.id, it.title, it.sidoName, it.category) },
     )
 }

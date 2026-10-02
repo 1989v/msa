@@ -1,0 +1,24 @@
+package com.kgd.place.infrastructure.persistence.attraction.repository
+
+import com.kgd.place.infrastructure.persistence.attraction.entity.AttractionRelatedJpaEntity
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
+
+interface AttractionRelatedJpaRepository : JpaRepository<AttractionRelatedJpaEntity, Long> {
+
+    /**
+     * 그 시군구의 행을 지운다. 벌크 DELETE 라 바로 실행된다 — `deleteAll(엔티티)` 는 flush 때 INSERT 를 먼저 보내
+     * 같은 (시군구, 출발) 유니크 키에 걸린다(집중률과 같은 이유).
+     */
+    @Modifying
+    @Query("DELETE FROM AttractionRelatedJpaEntity r WHERE r.signguCd = :signguCd")
+    fun deleteBySignguCd(@Param("signguCd") signguCd: String): Int
+
+    /** 시군구별 최신 기준 월 — [0] 시군구 코드, [1] 기준 월. */
+    @Query("SELECT r.signguCd, MAX(r.baseYm) FROM AttractionRelatedJpaEntity r GROUP BY r.signguCd")
+    fun findLatestBaseYmBySigungu(): List<Array<Any>>
+
+    fun findByAttractionIdInAndMatchMethodIn(attractionIds: Collection<Long>, matchMethods: Collection<String>): List<AttractionRelatedJpaEntity>
+}

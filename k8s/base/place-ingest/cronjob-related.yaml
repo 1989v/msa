@@ -1,0 +1,57 @@
+# 연관 관광지 수집 CronJob — 한국관광공사 빅데이터 TarRlteTarService1 areaBasedList1 (내비게이션 이동 기반, 월 단위).
+#
+# 원천 행은 (출발 관광지 × 연관 대상) 최대 50, 대상 분류는 관광지·음식·숙박. 시군구를 주지 않으면 0건이라 시군구마다 1콜(numOfRows=10000) —
+# 한 달치 269콜(한도 하루 1,000, 예산 상수 DAILY_BUDGET=290 은 src/related.py).
+# contentId 가 없어 출발은 자기 시군구, 대상은 대상 시군구의 국문 관광지에 이름으로 매칭한다(src/name_match.py, 집중률과 공용).
+# 값은 attractions 컬럼이 아니라 별도 표(attraction_related)에 시군구 단위로 통째로 바뀐다 — 0건·실패 시군구는 보내지 않아 지난달 값이 남는다.
+#
+# 받을 달은 전달(baseYm). 2026-10-02 KST 에 202609 는 0건, 202608 은 있었다(Q-P2-RELATED-LAG) — 공개일을 몰라 매달 12~28일 매일 돈다:
+#   이미 받은 달이면 호출 0 · 아직 공개 전이면 지난달 행이 있던 시군구 하나만 묻고(1콜) 다음 날로 · 공개됐으면 받지 않은 시군구 전부(≤ 269콜).
+#   28일까지 안 나오면 exit 1(알림). 한도 초과(429 · resultCode=22)는 받은 몫만 반영하고 실패로 치지 않는다 — 다음 날 남은 시군구만 다시 묻는다.
+#
+# 04:30 재색인(attraction-reindex)이 정확·정규화로 이은 출발의, 우리 관광지 행으로 이어진 대상만(분류 무관) 색인 문서(relatedPlaces)로 옮긴다.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: place-ingest-related
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: place-ingest
+    app.kubernetes.io/part-of: commerce-platform
+    place.kgd.io/job: "related"
+spec:
+  # 매월 UTC 11~27일 17:20 = KST 12~28일 02:20. 02:00 집중률 · 02:30 방문자 · 02:40 무장애 · 04:30 재색인 사이다.
+  schedule: "20 17 11-27 * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 1200
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: place-ingest
+            app.kubernetes.io/part-of: commerce-platform
+            place.kgd.io/job: "related"
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: ingest
+              image: commerce/place-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--job=related"]
+              env:
+                - name: PLACE_API
+                  value: "http://content:8097"
+                - name: TOUR_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: place-ingest-secrets
+                      key: tour-api-key
+                      optional: true
+              resources:
+                requests: { cpu: 100m, memory: 256Mi }
+                limits:   { memory: 768Mi }

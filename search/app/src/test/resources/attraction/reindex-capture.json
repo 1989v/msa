@@ -444,7 +444,44 @@
     "attributeParserVersion" : 1,
     "uniqueClickers14d" : 0,
     "clickBoost" : 1.0,
-    "barrierFree" : [ "WHEELCHAIR" ]
+    "barrierFree" : [ "WHEELCHAIR" ],
+    "relatedPlaces" : [ {
+      "rank" : 3,
+      "id" : "202",
+      "title" : "종로202",
+      "sidoName" : null,
+      "category" : "자연경관(하천/해양)"
+    }, {
+      "rank" : 5,
+      "id" : "201",
+      "title" : "종로201",
+      "sidoName" : null,
+      "category" : null
+    }, {
+      "rank" : 7,
+      "id" : "101",
+      "title" : "행사101",
+      "sidoName" : null,
+      "category" : null
+    }, {
+      "rank" : 8,
+      "id" : "102",
+      "title" : "행사102",
+      "sidoName" : null,
+      "category" : null
+    }, {
+      "rank" : 9,
+      "id" : "203",
+      "title" : "종로203",
+      "sidoName" : null,
+      "category" : null
+    }, {
+      "rank" : 10,
+      "id" : "301",
+      "title" : "코스301",
+      "sidoName" : null,
+      "category" : null
+    } ]
   }, {
     "id" : "402",
     "idSort" : 402,
@@ -528,19 +565,70 @@
       "barrierFreeFlags" : [ "PARKING", "WHEELCHAIR", "EXIT", "RESTROOM", "AUDIO_GUIDE", "STROLLER", "LACTATION_ROOM", "INFANT_ETC" ],
       "barrierFreeDetailRaw" : "{\"contentid\":\"126508\",\"parking\":\"장애인 주차장 있음(광화문 우측 옥외 주차장에 9개)_무장애 편의시설\",\"publictransport\":\"\",\"route\":\"\",\"ticketoffice\":\"\",\"promotion\":\"\",\"wheelchair\":\"대여가능\",\"exit\":\"주출입구는 경사로가 있어 휠체어 접근 가능함\",\"elevator\":\"\",\"restroom\":\"장애인 화장실 있음\",\"auditorium\":\"\",\"room\":\"\",\"handicapetc\":\"\",\"braileblock\":\"\",\"helpdog\":\"\",\"guidehuman\":\"\",\"audioguide\":\"음성안내 가이드 있음(티켓박스에서 음성안내기기와 PDA 대여가능)\",\"bigprint\":\"\",\"brailepromotion\":\"\",\"guidesystem\":\"\",\"blindhandicapetc\":\"\",\"signguide\":\"\",\"videoguide\":\"\",\"hearingroom\":\"\",\"hearinghandicapetc\":\"\",\"stroller\":\"대여가능\",\"lactationroom\":\"수유실 있음(흥례문, 주차장 여자화장실 내부)\",\"babysparechair\":\"\",\"infantsfamilyetc\":\"기저귀교환대 있음(수유실, 일반화장실 내부)\"}",
       "wellnessThemeCode" : null,
-      "congestion" : null
+      "congestion" : null,
+      "relatedPlaces" : null
     },
     "202" : {
       "barrierFreeFlags" : null,
       "barrierFreeDetailRaw" : null,
       "wellnessThemeCode" : "EX050100",
-      "congestion" : null
+      "congestion" : null,
+      "relatedPlaces" : null
     },
     "401" : {
       "barrierFreeFlags" : [ "WHEELCHAIR" ],
       "barrierFreeDetailRaw" : "{not json",
       "wellnessThemeCode" : null,
-      "congestion" : null
+      "congestion" : null,
+      "relatedPlaces" : [ {
+        "rank" : 1,
+        "attractionId" : 401,
+        "category" : null
+      }, {
+        "rank" : 2,
+        "attractionId" : 103,
+        "category" : null
+      }, {
+        "rank" : 3,
+        "attractionId" : 202,
+        "category" : "자연경관(하천/해양)"
+      }, {
+        "rank" : 4,
+        "attractionId" : 403,
+        "category" : null
+      }, {
+        "rank" : 5,
+        "attractionId" : 201,
+        "category" : null
+      }, {
+        "rank" : 6,
+        "attractionId" : 202,
+        "category" : null
+      }, {
+        "rank" : 7,
+        "attractionId" : 101,
+        "category" : null
+      }, {
+        "rank" : 8,
+        "attractionId" : 102,
+        "category" : null
+      }, {
+        "rank" : 9,
+        "attractionId" : 203,
+        "category" : null
+      }, {
+        "rank" : 10,
+        "attractionId" : 301,
+        "category" : null
+      }, {
+        "rank" : 11,
+        "attractionId" : 302,
+        "category" : null
+      }, {
+        "rank" : 12,
+        "attractionId" : 402,
+        "category" : null
+      } ]
     },
     "402" : {
       "barrierFreeFlags" : null,
@@ -555,7 +643,8 @@
       }, {
         "date" : "20261004",
         "rate" : 93.41
-      } ]
+      } ],
+      "relatedPlaces" : null
     }
   }
 }

@@ -209,7 +209,9 @@ class PlaceApiClientTest : BehaviorSpec({
               {"attractionId":11,"barrierFree":{"flags":["WHEELCHAIR"],"detailRaw":"$detailRaw"},"wellness":null},
               {"attractionId":21,"barrierFree":null,"wellness":{"themaCd":"EX050100"}},
               {"attractionId":31,"barrierFree":null,"wellness":null,
-               "congestion":{"matchMethod":"EXACT","days":[{"date":"2026-10-02","rate":47.16},{"date":"2026-10-03","rate":52}]}}
+               "congestion":{"matchMethod":"EXACT","days":[{"date":"2026-10-02","rate":47.16},{"date":"2026-10-03","rate":52}]}},
+              {"attractionId":41,"barrierFree":null,"wellness":null,"congestion":null,
+               "relatedPlaces":[{"rank":2,"attractionId":601,"category":"자연경관(하천/해양)"},{"rank":4,"attractionId":602,"category":null},{"rank":5}]}
             ]}}
             """.trimIndent(),
         )
@@ -227,6 +229,12 @@ class PlaceApiClientTest : BehaviorSpec({
                     PlaceApiClient.CongestionDayDto("2026-10-02", 47.16),
                     PlaceApiClient.CongestionDayDto("2026-10-03", 52.0),
                 )
+                // 연관 관광지 — place 순서 그대로, 순위·id 가 빠진 항목은 건너뛴다
+                found.getValue(41L).relatedPlaces shouldBe listOf(
+                    PlaceApiClient.RelatedPlaceDto(2, 601L, "자연경관(하천/해양)"),
+                    PlaceApiClient.RelatedPlaceDto(4, 602L, null),
+                )
+                found.getValue(31L).relatedPlaces shouldBe null
                 found.containsKey(30L) shouldBe false
                 requestedUris.single() shouldBe "/internal/attractions/extras/lookup"
             }

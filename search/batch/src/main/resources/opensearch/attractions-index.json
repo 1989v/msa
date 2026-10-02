@@ -552,6 +552,10 @@
       "congestion": {
         "type": "object",
         "enabled": false
+      },
+      "relatedPlaces": {
+        "type": "object",
+        "enabled": false
       }
     }
   }
