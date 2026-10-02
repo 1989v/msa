@@ -1,0 +1,82 @@
+[
+ {
+  "combo": "portrait/light",
+  "bundleNew": {},
+  "clicked": true,
+  "list": {
+   "statusChips": 3,
+   "statusChipRows": 1,
+   "eventLines": 30,
+   "eventLineMaxH": 38,
+   "firstLine": "2022-11-01 ~ 2026-12-31진행 중",
+   "hScroll": false
+  },
+  "statusContrast": 9.63,
+  "detail": {
+   "nearbyStays": 6,
+   "nearbyEvents": 6,
+   "amenityHasStay": false,
+   "hScroll": false
+  }
+ },
+ {
+  "combo": "portrait/dark",
+  "bundleNew": {},
+  "clicked": true,
+  "list": {
+   "statusChips": 3,
+   "statusChipRows": 1,
+   "eventLines": 30,
+   "eventLineMaxH": 38,
+   "firstLine": "2022-11-01 ~ 2026-12-31진행 중",
+   "hScroll": false
+  },
+  "statusContrast": 6.08,
+  "detail": {
+   "nearbyStays": 6,
+   "nearbyEvents": 6,
+   "amenityHasStay": false,
+   "hScroll": false
+  }
+ },
+ {
+  "combo": "landscape/light",
+  "bundleNew": {},
+  "clicked": true,
+  "list": {
+   "statusChips": 3,
+   "statusChipRows": 1,
+   "eventLines": 30,
+   "eventLineMaxH": 18,
+   "firstLine": "2022-11-01 ~ 2026-12-31진행 중",
+   "hScroll": false
+  },
+  "statusContrast": 9.63,
+  "detail": {
+   "nearbyStays": 6,
+   "nearbyEvents": 6,
+   "amenityHasStay": false,
+   "hScroll": false
+  }
+ },
+ {
+  "combo": "landscape/dark",
+  "bundleNew": {},
+  "clicked": true,
+  "list": {
+   "statusChips": 3,
+   "statusChipRows": 1,
+   "eventLines": 30,
+   "eventLineMaxH": 18,
+   "firstLine": "2022-11-01 ~ 2026-12-31진행 중",
+   "hScroll": false
+  },
+  "statusContrast": 6.08,
+  "detail": {
+   "nearbyStays": 6,
+   "nearbyEvents": 6,
+   "amenityHasStay": false,
+   "hScroll": false
+  }
+ }
+]

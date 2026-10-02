@@ -141,21 +141,21 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
 **Dependencies:** Task Group 7, 8
 **Phase:** ②
 **Required Skills:** React, vitest, CDP
-- [ ] 9.0 Complete 화면 ②
+- [x] 9.0 Complete 화면 ②
   - [x] 9.1 Write tests: `eventSchedule.test.ts`(T12b — TS 상태 판정·상태 문구를 Kotlin 골든과 비교, 회귀 주입 `<`→`<=`) · `PlacePage` (T16 일부 — 행사 칩 · 국문만 코스 칩 · 상태 칩 기본 `NOT_ENDED` · 키워드 「전체」의 `festival`+`NOT_ENDED` vs 키워드 없음 관광 분류만 · 숙박 오버레이 · 카드·바텀시트 기간·상태 · 새 유형 상세 `attraction-end` 없음 + 관광지 대조 · 숙박 키 허용 목록) · `prerenderPlace.test.ts`(T13 — 입력에 행사 **있음** 단언 → 출력 행사 URL 0 · 관광·코스 ≥ 1 · 숙박 개요+사진 · 레포츠 캠핑장 대조 · 시도 조각 10,000 초과 빌드 실패)
   - [x] 9.2 TS `eventSchedule.ts`(상태 · 문구) — Kotlin 과 같은 규칙, `placeAttributes.ts` 의 기존 `CONTENT_TYPE_KO/EN` 재사용
   - [x] 9.3 `PlacePage`: 분류 칩 「행사」(+ 상태 칩 진행 중·이번 주말·예정, 정렬 `eventStart`) · 국문만 「여행코스」 · 숙박 오버레이 토글 · 키워드 「전체」 행사 합류 · `PlaceCard`·`AttractionDetailBody` 기간·상태
   - [x] 9.4 `placeApi.ts` `eventStatus`·`sort` 파라미터
   - [x] 9.5 `prerender-seo.mjs`: `indexDoc` 행사 제외 · 숙박(32·80) 개요+사진 조건 · `fetchSidoSlice` 10,000 초과 실패 + 유형별 재분할
   - [x] 9.6 Verify: `cd portal-fe && npx vitest run src/seo/__tests__/eventSchedule.test.ts src/seo/__tests__/prerenderPlace.test.ts src/pages/place && npx tsc --noEmit -p tsconfig.app.json`
-  - [ ] 9.7 T17 일부: 모바일 세로·가로 CDP — 상태 칩 줄 · 행사 카드·바텀시트 기간 줄 · 코스 순서 목록(start·측정·stop 한 명령)
-  - [ ] 9.8 배포 순서: search-batch → 재색인 1회 → search → portal-fe(한 번에 한 이미지)
-  - [ ] 9.9 **배포 ② 뒤 운영 확인(SR-10b · T19 일부):**
-    - [ ] 9.9.1 응답에 이번에 넣은 유형별 절 마커가 있는지 먼저 확인 — 없으면 측정 폐기
-    - [ ] 9.9.2 재색인 소요를 직전 회차와 비교(1800초 안) · 완료 로그의 새 필드 적재 · 코스 매칭 실패 · S>E · 날짜 없음 건수 기록
-    - [ ] 9.9.3 Googlebot UA 로 행사·숙박·코스 표본 상세 → `X-Render: ssr` + 유형별 절 · 숙박에 예약 링크·OTA 딥링크 없음
-    - [ ] 9.9.4 필터 다섯 값의 API 건수 = 같은 범위 OpenSearch `_count`
-    - [ ] 9.9.5 새 정적 sitemap 에 행사 URL 0
+  - [x] 9.7 T17 일부: 모바일 세로·가로 CDP — 상태 칩 줄 · 행사 카드·바텀시트 기간 줄 · 코스 순서 목록(start·측정·stop 한 명령)
+  - [x] 9.8 배포 순서: search-batch → 재색인 1회 → search → portal-fe(한 번에 한 이미지)
+  - [x] 9.9 **배포 ② 뒤 운영 확인(SR-10b · T19 일부):**
+    - [x] 9.9.1 응답에 이번에 넣은 유형별 절 마커가 있는지 먼저 확인 — 없으면 측정 폐기
+    - [x] 9.9.2 재색인 소요를 직전 회차와 비교(1800초 안) · 완료 로그의 새 필드 적재 · 코스 매칭 실패 · S>E · 날짜 없음 건수 기록
+    - [x] 9.9.3 Googlebot UA 로 행사·숙박·코스 표본 상세 → `X-Render: ssr` + 유형별 절 · 숙박에 예약 링크·OTA 딥링크 없음
+    - [x] 9.9.4 필터 다섯 값의 API 건수 = 같은 범위 OpenSearch `_count`
+    - [x] 9.9.5 새 정적 sitemap 에 행사 URL 0
 **Acceptance Criteria:** T12b·T13·T16(②분) 초록 · 운영 확인 전 항목 증거 · CDP 측정값 기록
 
 ### Task Group 10: 근처 행사·숙소 · 지역 허브 「이번 달 행사」 (portal-fe)
@@ -168,7 +168,7 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
   - [x] 10.3 상세 「근처 행사」·「근처 숙소」 — 검색 API 로 화면이 그림(서버 렌더 본문 아님)
   - [x] 10.4 `RegionPage` 「이번 달 행사」 — 조회 시점에 그림
   - [x] 10.5 Verify: `cd portal-fe && npx vitest run src/pages/place/__tests__/AttractionPage.test.tsx src/pages/place/__tests__/RegionPage.test.tsx src/api/__tests__/placeApi.test.ts && npx tsc --noEmit -p tsconfig.app.json`
-  - [ ] 10.6 T17 일부: 근처 절 카드 모바일 세로·가로 CDP(start·측정·stop 한 명령)
+  - [x] 10.6 T17 일부: 근처 절 카드 모바일 세로·가로 CDP(start·측정·stop 한 명령)
 **Acceptance Criteria:** T16(③분) 초록 · 0건 대조(영문 숙박 상세) 와 양성 대조(국문 숙박 많은 지역) 둘 다 기록
 
 ### Task Group 11: 행사 만료 — robots · 행사 sitemap · nginx · 배포 ③ (search:app · portal-fe)

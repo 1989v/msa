@@ -35,3 +35,10 @@
 | TG11 | vitest prerenderPlace·eventSchedule · tsc(app) · check-nginx-events-sitemap.sh(nginx:1.27-alpine) | 26 passed · exit 0 · 18 checks PASSED |
 | TG11 | 회귀 주입(Kotlin 7 · prerender 2 · nginx 7) | `=` 를 둔 채 순서만 바꾼 것 외 전부 빨간불(그건 nginx 정의상 회귀 아님 → T15 문구 정정) |
 | CI | ci.yml 7141846 | success — 02:33 이후 실패 원인은 온톨로지 참조(a9ab03e5 로 해소) |
+| 배포 ② | 이미지 | portal-fe 7141846 · search·search-batch 091d9a8(수동 dispatch — 실패한 5705225 빌드의 search 변경을 다음 push 가 안 잡음) |
+| 배포 ② | 재색인 | 256초 · 64,967건 · 행사 기간 1,159 · S>E 0 · 날짜 없음 0 · 종료/날짜 없음 771 후보 제외 · 벡터 59,682/64,967(새 행은 임베딩 잡 대기) · 코스 구성 0(반복정보 보강 대기) |
+| 배포 ② | 행사 필터 API | ONGOING 96 + UPCOMING 198 = NOT_ENDED 294 · WEEKEND 117 · stay 3,590 · course 1,000 · eventStart/eventEnd 응답 |
+| 배포 ② | 서버 렌더 | 행사 61735 「… 행사 정보 — 일정 · 장소」 Event · 진행 중 · noindex(개요 없음) · 숙박 12835 LodgingBusiness · 코스 61687 TouristTrip · 기존 114·en 21 그대로 · 출처 절 전부 |
+| 배포 ② | 정적 sitemap | 행사 1,159 중 sitemap 0 · 양성 대조 관광지(12·76) 13,445 |
+| 배포 ② | CDP 4조합(세로·가로 × 라이트·다크) | 상태 칩 3개 1줄 · 행사 기간 줄 30 · 가로 스크롤 없음 · 상태 문구 대비 9.63/6.08 · 해운대 근처 숙소 6 · 근처 행사 6 · 편의시설에 숙박 없음 · 스크린샷 verifications/cdp-deploy2/ |
+| 배포 ② 남은 것 | 보강 대기 | 새 행 개요·이용정보(매일 잡) · 옮겨 온 숙박 4건 intro 재수집 · 코스 제목 「코스 여행코스」 중복 · 행사 칩에서 속성 칩 숨기기 → TG13 |
