@@ -119,6 +119,50 @@ describe('AttractionPage 새 섹션', () => {
     ]);
   });
 
+  it('무장애 정보는 배지 뒤에 긍정 아이콘 줄과 원천 문장(원천 키 순서)으로, 웰니스는 한 줄로, 출처에 원천 이름을 붙인다', async () => {
+    // 경복궁(126508) 운영 응답 원문(2026-10-02)의 값 있는 키 — 서버 렌더 테스트와 같은 원문
+    vi.mocked(fetchAttraction).mockResolvedValue({
+      ...enriched,
+      barrierFree: ['PARKING', 'WHEELCHAIR', 'EXIT', 'RESTROOM', 'AUDIO_GUIDE', 'STROLLER', 'LACTATION_ROOM', 'INFANT_ETC'],
+      barrierFreeDetail: {
+        parking: '장애인 주차장 있음(광화문 우측 옥외 주차장에 9개)_무장애 편의시설',
+        wheelchair: '대여가능',
+        exit: '주출입구는 경사로가 있어 휠체어 접근 가능함',
+        restroom: '장애인 화장실 있음',
+        audioguide: '음성안내 가이드 있음(티켓박스에서 음성안내기기와 PDA 대여가능)',
+        stroller: '대여가능',
+        lactationroom: '수유실 있음(흥례문, 주차장 여자화장실 내부)',
+        infantsfamilyetc: '기저귀교환대 있음(수유실, 일반화장실 내부)',
+      },
+      wellnessTheme: 'EX050100',
+      wellnessThemeName: '온천 / 사우나 / 스파',
+    });
+    renderAt('/attractions/100');
+    const section = await screen.findByRole('region', { name: '무장애 정보' });
+
+    expect(within(section).getAllByRole('listitem').map((li) => li.textContent)).toEqual([
+      '휠체어', '장애인 화장실', '장애인 주차', '유모차', '수유실',
+    ]);
+    expect(Array.from(section.querySelectorAll('dt')).map((dt) => dt.textContent)).toEqual([
+      '주차', '휠체어', '출입통로', '화장실', '오디오가이드', '유모차', '수유실', '영유아 가족 기타',
+    ]);
+    expect(within(section).getByText('주출입구는 경사로가 있어 휠체어 접근 가능함')).toBeInTheDocument();
+    expect(screen.getByText('웰니스 관광 · 온천 / 사우나 / 스파')).toBeInTheDocument();
+    expect(screen.getByText(/출처: 한국관광공사 TourAPI · 무장애 여행 정보 · 웰니스관광 정보/)).toBeInTheDocument();
+    const order = ['방문 정보 요약', '무장애 정보', '지역 안 위치'];
+    expect(h2Texts().filter((t) => order.includes(t ?? ''))).toEqual(order);
+  });
+
+  it('무장애·웰니스 정보가 없으면 절이 없고 출처는 TourAPI 만이다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue(enriched);
+    renderAt('/attractions/100');
+    await screen.findByRole('region', { name: '방문 정보 요약' });
+
+    expect(screen.queryByRole('region', { name: '무장애 정보' })).toBeNull();
+    expect(document.querySelector('[data-place-section="wellness"]')).toBeNull();
+    expect(screen.getByText(/출처: 한국관광공사 TourAPI · GeoNames/)).toBeInTheDocument();
+  });
+
   it('14일 고유 클릭 방문자가 최소 표본(5)에 닿으면 배지 끝에 「많이 클릭한 곳」을 붙인다', async () => {
     vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, uniqueClickers14d: 5 });
     renderAt('/attractions/100');

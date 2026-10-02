@@ -75,6 +75,8 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | 축제·공연·행사 | TourAPI `searchFestival2` (국·영) | 필요 | 〃 (행마다 `cpyrhtDivCd`) | `place/ingest --job=tour-portal-sync` (매일 KST 03:10) |
 | 숙박 | TourAPI `searchStay2` (국·영) | 필요 | 〃 (행마다 `cpyrhtDivCd`) | 〃 |
 | 여행코스 | TourAPI `areaBasedList2` `contentTypeId=25` (국문만) | 필요 | 〃 (행마다 `cpyrhtDivCd`) | 〃 |
+| 관광지 무장애 정보 | 관광공사 무장애 여행 `KorWithService2` (15101897) `areaBasedList2` · `detailWithTour2` (국문만) | 필요 (`TOUR_API_KEY` 재사용) | 이용허락범위 제한 없음 | `place/ingest --job=attraction-attrs` (매일 KST 02:40, 하루 ≤ 900콜) |
+| 관광지 웰니스 테마 | 관광공사 웰니스관광 `WellnessTursmService` (15144030) `areaBasedList` (국·영) | 필요 (〃) | 이용허락범위 제한 없음 | 〃 (월요일만, 주 2콜) |
 | **행정구역(법정동)** | 행정안전부 행정표준코드관리시스템 | **불필요** | 공공누리 제1유형 | `place/ingest --job=administrative-regions` |
 | 세계 지명 계층 | GeoNames | 불필요 | **CC BY 4.0** | `tools/seed/place/normalize_regions.py` |
 | POI(상가) | 소상공인시장진흥공단 상가(상권)정보 | 필요 | 이용허락범위 제한없음 | `tools/seed/place/normalize_pois.py` |
@@ -157,9 +159,26 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 - 공공누리 유형은 **행마다 다르다**(`cpyrhtDivCd`, 표본은 `Type3` = 출처표시·변경금지). 목록 행 원문(`list_raw`)에
   그대로 남는다.
 
+**무장애 여행·웰니스관광은 관광지 행이 아니라 별도 표로 붙는다** (2단계, CronJob `place-ingest-attraction-attrs` · `--job=attraction-attrs`, 매일 KST 02:40).
+설계·실측: `docs/specs/2026-10-02-place-tour-portal-expansion/implementation/phase2-design.md` §2.3 · §2.8.
+- 원천: `apis.data.go.kr/B551011/KorWithService2` · `/B551011/WellnessTursmService`. 키는 TourAPI 와 같은 `TOUR_API_KEY` 이고
+  한도는 API(오퍼레이션) 하나당 하루 1,000 으로 잡는다. 이용허락범위는 둘 다 「제한 없음」이다(출처 의무 없음, 화면은 출처 줄에 원천 이름을 함께 단다).
+- 무장애 목록 `areaBasedList2` 는 `numOfRows=10000` 한 콜에 9,630 전량이고 9,623 이 국문 contentId 와 같다(영문 0, 2026-10-02).
+  상세 `detailWithTour2` 는 관광지당 1콜·29키 자유 문장이라 하루 899건씩 받는다 — 전량 백필 약 11일, 그 뒤는 목록 `modifiedtime` 이 바뀐 곳만.
+- 웰니스 `areaBasedList` 는 언어(`langDivCd` KOR·ENG)마다 한 콜 — 국 170 중 168 · 영 92 전부가 기존 contentId 다. 언어마다 받은 목록으로 통째로 바꾼다.
+- **의료관광 계열 테마(`EX0508xx`, 「기타의료관광」)는 적재·노출하지 않는다** — 규제 업권(의료)은 노출 대상이 아니다(의료법 27조).
+  수집기가 걸러 「의료관광 제외 n건」만 로그에 남기고, 통째 교체라 이미 적재된 그 태그도 다음 회차에 빠진다.
+- 저장: `attraction_barrier_free`(목록 행 · 상세 응답 원문 JSON + 파생 긍정 코드 `flags` · 규칙 판 `flags_rule_ver`) ·
+  `attraction_wellness`(목록 행 원문 + 테마 코드). **관광지 bulk upsert(전체 동기화) 경로 밖이라 다른 잡의 왕복이 지우지 않는다** (§0 ③).
+- 파생 코드는 긍정 값만이다 — 빈 값·「없음」「없으」「불가」「미설치」가 든 값은 코드가 없다. 목록 필터로는 라벨 정밀도 95% 이상인
+  휠체어·엘리베이터·장애인 화장실만 연다(표본 100건 손 확인: `implementation/phase2-barrierfree-labels.md`).
+- 서빙: 04:30 재색인이 `/internal/attractions/extras/lookup` 으로 읽어 색인 문서(`barrierFree` · `barrierFreeDetail` · `wellnessTheme` ·
+  `wellnessThemeName`)에 싣는다. 화면은 place DB 를 읽지 않는다(ADR-0071 §10).
+
 > 원천 raw 응답은 레포에 커밋하지 않는다. 정규화 산출물만 적재한다.
-> 예외: 테스트 픽스처와 스펙 표본(`place/ingest/tests/fixtures/sample-*.json`, `docs/specs/2026-10-02-place-tour-portal-expansion/implementation/sample-*.json`)은
-> 응답 **몇 행**을 둔다 — 수집기가 실제 응답 모양을 다루는지는 지어낸 값으로 검사할 수 없어서다. 키·요청 URL 은 지우고
+> 예외: 테스트 픽스처와 스펙 표본(`place/ingest/tests/fixtures/sample-*.json`, `place/ingest/tests/fixtures/phase2-*.json`,
+> `docs/specs/2026-10-02-place-tour-portal-expansion/implementation/sample-*.json`)은 응답 **몇 행**을 둔다
+> (무장애는 라벨 정밀도를 재려고 목록 100행 · 상세 100건을 둔다) — 수집기가 실제 응답 모양을 다루는지는 지어낸 값으로 검사할 수 없어서다. 키·요청 URL 은 지우고
 > 휴대전화 번호는 가린다(검사: 키 모양 문자열 grep, tasks 1.10).
 
 ---

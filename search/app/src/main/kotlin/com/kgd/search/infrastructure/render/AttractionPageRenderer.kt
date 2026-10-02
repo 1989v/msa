@@ -7,12 +7,14 @@ import com.kgd.search.domain.attraction.model.AttractionClickSignal
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionRegion
 import com.kgd.search.domain.attraction.model.Availability
+import com.kgd.search.domain.attraction.model.BarrierFreeInfo
 import com.kgd.search.domain.attraction.model.CourseStop
 import com.kgd.search.domain.attraction.model.EventSchedule
 import com.kgd.search.domain.attraction.model.EventStatusText
 import com.kgd.search.domain.attraction.model.PetPolicy
 import com.kgd.search.domain.attraction.model.RegularClosure
 import com.kgd.search.domain.attraction.model.SimilarPlace
+import com.kgd.search.domain.attraction.model.WellnessTheme
 import com.kgd.search.infrastructure.config.AttractionRenderProperties
 import com.kgd.search.infrastructure.render.AttractionSeoText.clampDescription
 import com.kgd.search.infrastructure.render.AttractionSeoText.escapeHtml
@@ -373,10 +375,12 @@ class AttractionPageRenderer(
         append("<p>${escapeHtml(sourceText(doc.overview))}</p>")
         append(typeSection(lang, doc, today) ?: visitorInfo(lang, doc))
         append(badges(lang, doc.attributes, doc.uniqueClickers14d))
+        doc.barrierFree?.let { append(barrierFreeSection(lang, it)) }
+        doc.wellness?.let { append(wellnessLine(lang, it)) }
         doc.region?.let { append(regionSection(lang, doc, it, today)) }
         append(similarSection(lang, doc.similarElsewhere?.filterNot { ended(it.eventEndEffective, today) }))
         // 출처표시 의무 (data-sources.md §0) — 화면 바닥글과 같은 문구
-        append("<p data-place-section=\"source\">${if (lang == EN) SOURCE_EN else SOURCE_KO}</p>")
+        append("<p data-place-section=\"source\">${escapeHtml(sourceLine(lang, doc))}</p>")
     }
 
     /** 재색인 뒤 끝난 행사 항목 — 유효 종료일이 오늘보다 앞이다(오늘 끝나는 행사는 남긴다) */
@@ -548,6 +552,40 @@ class AttractionPageRenderer(
             }
             append("<h2>${if (en) "Similar places nearby" else "같은 분류 가까운 곳"}</h2><ul>$items</ul>")
         }
+    }
+
+    /**
+     * 무장애 정보 — 긍정 아이콘 줄(휠체어 · 엘리베이터 · 장애인 화장실 · 주차 · 유모차 · 수유실) 다음에 원천 문장을
+     * 원천 키 순서대로. 문장은 고치지 않는다(화면 `barrierFreeRows` 와 같은 표 · 같은 순서).
+     */
+    private fun barrierFreeSection(lang: String, info: BarrierFreeInfo): String {
+        val en = lang == EN
+        val icons = BarrierFreeInfo.ICONS.filter { (code, _) -> code in info.flags }
+            .joinToString("") { (_, label) -> "<li>${escapeHtml(if (en) label.second else label.first)}</li>" }
+        val rows = BarrierFreeInfo.KEYS.mapNotNull { key -> info.detail[key.key]?.let { (if (en) key.en else key.ko) to sourceText(it) } }
+            .filter { (_, value) -> value.isNotEmpty() }
+        return section(
+            "barrier-free",
+            if (en) "Accessibility" else "무장애 정보",
+            (if (icons.isEmpty()) "" else "<ul>$icons</ul>") + definitionList(rows),
+        )
+    }
+
+    /** 웰니스관광 테마 한 줄 — 「웰니스 관광 · {테마 이름}」. 이름이 없으면 앞말만. */
+    private fun wellnessLine(lang: String, theme: WellnessTheme): String {
+        val head = if (lang == EN) "Wellness tourism" else "웰니스 관광"
+        val text = theme.name?.takeIf { it.isNotBlank() }?.let { "$head · $it" } ?: head
+        return "<p data-place-section=\"wellness\">${escapeHtml(text)}</p>"
+    }
+
+    /** 출처 — TourAPI 에 이 문서가 실제로 쓴 관광공사 원천 이름을 잇는다(화면 `placeSourceLine` 과 같은 문구). */
+    private fun sourceLine(lang: String, doc: AttractionDocument): String {
+        val en = lang == EN
+        val extra = listOfNotNull(
+            doc.barrierFree?.let { if (en) "Barrier-free travel" else "무장애 여행 정보" },
+            doc.wellness?.let { if (en) "Wellness tourism" else "웰니스관광 정보" },
+        )
+        return (listOf(if (en) SOURCE_EN else SOURCE_KO) + extra).joinToString(" · ")
     }
 
     /** 다른 시도의 비슷한 곳 — 「{제목} · {시도}」. 시도 이름이 없으면 제목만. */

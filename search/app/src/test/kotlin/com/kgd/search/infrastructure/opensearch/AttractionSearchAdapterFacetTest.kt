@@ -5,6 +5,7 @@ import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.domain.attraction.model.AttributeSelection
 import com.kgd.search.domain.attraction.model.PetPolicy
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
@@ -196,6 +197,7 @@ class AttractionSearchAdapterFacetTest : BehaviorSpec({
                 count["aggregations"].propertyNames().toList() shouldContainExactlyInAnyOrder listOf(
                     "openToday", "parking_YES", "creditCard_YES", "strollerRental_YES",
                     "pet_ALLOWED", "pet_PARTIAL", "admission_FREE",
+                    "barrierFree_WHEELCHAIR", "barrierFree_ELEVATOR", "barrierFree_RESTROOM", "wellness",
                 )
                 for (request in captured.main + captured.count) {
                     val body = request.toJsonString()
@@ -204,6 +206,40 @@ class AttractionSearchAdapterFacetTest : BehaviorSpec({
                     body shouldNotContain "\"PAID\""
                 }
             }
+        }
+    }
+
+    given("무장애 칩 둘과 웰니스를 고른 검색") {
+        val selection = none.copy(barrierFree = setOf("WHEELCHAIR", "RESTROOM"), wellness = true)
+        val query = AttractionSearchPort.SearchQuery(keyword = "궁", lang = "ko", attributes = selection, countAttributeFacets = true)
+
+        then("본 질의에 무장애 코드마다 term 하나(AND)와 웰니스 테마 exists 가 걸린다") {
+            val (a, captured) = adapter()
+
+            a.search(query, PageRequest.of(0, 20))
+
+            val filters = tree(captured.main.single()).findValue("bool")["filter"]
+            filters.mapNotNull { it["term"] }.filter { it.has("barrierFree") }
+                .map { it["barrierFree"]["value"].asString() } shouldContainExactlyInAnyOrder listOf("WHEELCHAIR", "RESTROOM")
+            filters.mapNotNull { it["exists"] }.map { it["field"].asString() } shouldContain "wellnessTheme"
+        }
+
+        then("휠체어 건수는 자기 선택만 빼고 화장실·웰니스 선택을 반영한다") {
+            val (a, captured) = adapter()
+
+            a.search(query, PageRequest.of(0, 20))
+
+            val aggs = tree(captured.count.single())["aggregations"]
+            val wheelchair = aggs["barrierFree_WHEELCHAIR"].toString()
+            ("\"RESTROOM\"" in wheelchair) shouldBe true
+            ("wellnessTheme" in wheelchair) shouldBe true
+            // 대조군: 자기 코드는 자기 버킷 조건에 한 번만 나온다(선택으로 한 번 더 걸리지 않는다)
+            Regex("\"WHEELCHAIR\"").findAll(wheelchair).count() shouldBe 1
+            ("\"WHEELCHAIR\"" in aggs["wellness"].toString()) shouldBe true
+        }
+
+        then("열지 않은 코드는 선택이 될 수 없다") {
+            shouldThrow<IllegalArgumentException> { none.copy(barrierFree = setOf("PARKING")) }
         }
     }
 
@@ -286,6 +322,8 @@ class AttractionSearchAdapterFacetTest : BehaviorSpec({
                         "openToday" to agg(7), "parking_YES" to agg(31605), "creditCard_YES" to agg(15864),
                         "strollerRental_YES" to agg(3), "pet_ALLOWED" to agg(9070), "pet_PARTIAL" to agg(503),
                         "admission_FREE" to agg(1127),
+                        "barrierFree_WHEELCHAIR" to agg(11), "barrierFree_ELEVATOR" to agg(12), "barrierFree_RESTROOM" to agg(13),
+                        "wellness" to agg(14),
                     ),
                 )
 
@@ -298,6 +336,8 @@ class AttractionSearchAdapterFacetTest : BehaviorSpec({
                 facets.strollerRental shouldBe 3
                 facets.pet shouldBe mapOf(PetPolicy.ALLOWED to 9070L, PetPolicy.PARTIAL to 503L)
                 facets.freeAdmission shouldBe 1127
+                facets.barrierFree shouldBe mapOf("WHEELCHAIR" to 11L, "ELEVATOR" to 12L, "RESTROOM" to 13L)
+                facets.wellness shouldBe 14
             }
         }
         `when`("건수 요청이 실패하면") {

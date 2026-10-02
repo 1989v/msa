@@ -28,6 +28,7 @@ TourAPI(KorService2/EngService2)
 | `links` | 유튜브·네이버 블로그 수집 → 적재 (우선순위 큐에서 N건) | `place-ingest-links` 매시 17분 |
 | `administrative-regions` | 법정동코드 자료 → 행정구역 적재 (+시군구 좌표 계산) | 수동 (자료가 갱신될 때) |
 | `google-places` | 구글 place_id 보강 — Places Text Search **ID-only(무과금)**, 일 `GOOGLE_PLACES_DAILY_BUDGET`(기본 1,000)건. 키(`GOOGLE_PLACES_API_KEY`) 없으면 건너뜀 | `place-ingest-google-places` 매일 KST 03:20 (04:30 재색인 앞) |
+| `attraction-attrs` | 무장애 여행(목록 1콜 + 상세 하루 ≤ 899) · 웰니스관광(월요일, 국·영 2콜) → 관광지에 붙는 별도 표. 한도 초과면 그 API 만 멈추고 받은 몫 반영 | `place-ingest-attraction-attrs` 매일 KST 02:40 |
 
 재색인은 이 이미지가 트리거하지 않는다 — Job 생성 RBAC 을 얻는 대신 `attraction-reindex`
 CronJob 이 30분 뒤(KST 04:30)에 돈다.

@@ -18,6 +18,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  * 행사 필터를 넣기 **전** 커밋에서 이 함수들로 뜬 결과가 `attraction-search-baseline-event/{name}.json` 이다.
  * 본 질의 7종은 `attraction-search-baseline/` 이 이미 갖고 있어 여기서 다시 뜨지 않는다.
  * 항목을 고치면 기준을 새로 떠야 하므로 고치지 않는다.
+ * 건수 요청 7종(`count-*`)은 무장애·웰니스 버킷을 더할 때 다시 떴다 — 옛 기준에서 바뀐 것은 끝에 붙은 버킷 넷뿐이다.
  */
 object AttractionSearchRequestSnapshots {
 

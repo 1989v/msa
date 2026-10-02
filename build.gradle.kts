@@ -536,7 +536,11 @@ val searchReadOmitted = mapOf(
 // 영상·블로그·딥링크 절이 읽는다(관광지 화면은 place DB 를 읽지 않으므로 색인 말고는 출처가 없다).
 // 읽기에서 빠지면 값이 조용히 null 이 되어 진행 중 행사가 「날짜 없음」으로 보이고 코스·링크 절이 사라진다.
 val searchReadRequired = mapOf(
-    "attractions" to setOf("eventStartEffective", "eventEndEffective", "courseStops", "links"),
+    "attractions" to setOf(
+        "eventStartEffective", "eventEndEffective", "courseStops", "links",
+        // 무장애·웰니스 — 상세 절·서버 렌더·목록 칩이 읽는다. 관광지 화면은 place DB 를 읽지 않아 색인 말고는 출처가 없다
+        "barrierFree", "barrierFreeDetail", "wellnessTheme", "wellnessThemeName",
+    ),
 )
 
 val verifySearchIndexContract by tasks.registering {

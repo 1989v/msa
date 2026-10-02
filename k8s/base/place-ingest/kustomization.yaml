@@ -10,3 +10,4 @@ resources:
   - cronjob-lcls-codes.yaml
   - cronjob-pet-tour.yaml
   - cronjob-tour-sync.yaml
+  - cronjob-attraction-attrs.yaml

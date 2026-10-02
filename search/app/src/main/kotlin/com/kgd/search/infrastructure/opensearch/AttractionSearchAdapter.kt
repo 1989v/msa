@@ -8,6 +8,7 @@ import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttributeFacetCounts
 import com.kgd.search.domain.attraction.model.AttributeSelection
 import com.kgd.search.domain.attraction.model.Availability
+import com.kgd.search.domain.attraction.model.BarrierFreeInfo
 import com.kgd.search.domain.attraction.model.EventDateRange
 import com.kgd.search.domain.attraction.model.EventSchedule
 import com.kgd.search.domain.attraction.model.EventSitemapEntry
@@ -109,6 +110,8 @@ class AttractionSearchAdapter(
         private val STROLLER_RENTAL = AttractionSearchDocument::attrStrollerRental.name
         private val PET_POLICY = AttractionSearchDocument::petPolicy.name
         private val ADMISSION = AttractionSearchDocument::attrAdmission.name
+        private val BARRIER_FREE = AttractionSearchDocument::barrierFree.name
+        private val WELLNESS_THEME = AttractionSearchDocument::wellnessTheme.name
 
         /** 읽기 문서는 이 필드를 읽지 않는다(순위 전용) — 이름은 쓰기 문서·매핑과 같다. */
         private const val CLICK_BOOST = "clickBoost"
@@ -132,8 +135,23 @@ class AttractionSearchAdapter(
         )
     }
 
-    /** 속성 패싯의 속성 — 건수에서 「자기 선택만 뺀다」의 단위다. 반려동물 두 값은 한 속성이다. */
-    private enum class Facet { OPEN_TODAY, PARKING, CREDIT_CARD, STROLLER_RENTAL, PET, ADMISSION }
+    /**
+     * 속성 패싯의 속성 — 건수에서 「자기 선택만 뺀다」의 단위다. 반려동물 두 값은 한 속성이다.
+     * 무장애는 코드 하나가 한 속성이다(칩 사이 AND) — 연 코드 목록이 데이터라 열거형 대신 이름으로 가른다.
+     */
+    private data class Facet(val id: String) {
+        companion object {
+            val OPEN_TODAY = Facet("openToday")
+            val PARKING = Facet("parking")
+            val CREDIT_CARD = Facet("creditCard")
+            val STROLLER_RENTAL = Facet("strollerRental")
+            val PET = Facet("pet")
+            val ADMISSION = Facet("admission")
+            val WELLNESS = Facet("wellness")
+
+            fun barrierFree(code: String) = Facet("barrierFree_$code")
+        }
+    }
 
     /** 건수 버킷 하나 — 집계 이름 · 속한 속성 · 그 값의 조건. */
     private class Bucket(val name: String, val facet: Facet, val condition: Query)
@@ -214,6 +232,8 @@ class AttractionSearchAdapter(
             strollerRental = counts.getValue(buckets.single { it.facet == Facet.STROLLER_RENTAL }.name),
             pet = AttributeSelection.PET_CHOICES.associateWith { counts.getValue(petBucketName(it)) },
             freeAdmission = counts.getValue(buckets.single { it.facet == Facet.ADMISSION }.name),
+            barrierFree = BarrierFreeInfo.FILTER_CODES.associateWith { counts.getValue(Facet.barrierFree(it).id) },
+            wellness = counts.getValue(Facet.WELLNESS.id),
         )
     }
 
@@ -228,7 +248,12 @@ class AttractionSearchAdapter(
             put(Facet.PET, Query.of { q -> q.terms { t -> t.field(PET_POLICY).terms { tv -> tv.value(values) } } })
         }
         if (selection.freeAdmission) put(Facet.ADMISSION, termFilter(ADMISSION, Admission.FREE.name))
+        BarrierFreeInfo.FILTER_CODES.filter { it in selection.barrierFree }
+            .forEach { code -> put(Facet.barrierFree(code), termFilter(BARRIER_FREE, code)) }
+        if (selection.wellness) put(Facet.WELLNESS, wellnessFilter())
     }
+
+    private fun wellnessFilter(): Query = Query.of { q -> q.exists { it.field(WELLNESS_THEME) } }
 
     /** 건수를 내는 값 — 긍정 값뿐이다(`UNKNOWN` 버킷은 없다). 이름은 `{속성}_{값}`. */
     private fun facetBuckets(today: DayOfWeek): List<Bucket> =
@@ -243,7 +268,10 @@ class AttractionSearchAdapter(
             ),
         ) +
             AttributeSelection.PET_CHOICES.map { Bucket(petBucketName(it), Facet.PET, termFilter(PET_POLICY, it.name)) } +
-            Bucket("admission_${Admission.FREE.name}", Facet.ADMISSION, termFilter(ADMISSION, Admission.FREE.name))
+            Bucket("admission_${Admission.FREE.name}", Facet.ADMISSION, termFilter(ADMISSION, Admission.FREE.name)) +
+            // 버킷 이름 = 속성 이름(무장애는 코드마다 하나, 웰니스는 하나)
+            BarrierFreeInfo.FILTER_CODES.map { Bucket(Facet.barrierFree(it).id, Facet.barrierFree(it), termFilter(BARRIER_FREE, it)) } +
+            Bucket(Facet.WELLNESS.id, Facet.WELLNESS, wellnessFilter())
 
     private fun petBucketName(policy: PetPolicy) = "pet_${policy.name}"
 

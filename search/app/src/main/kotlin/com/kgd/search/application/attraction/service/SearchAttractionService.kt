@@ -11,6 +11,7 @@ import com.kgd.search.domain.attraction.model.AttractionAttributeCodes
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttributeFacetCounts
 import com.kgd.search.domain.attraction.model.AttributeSelection
+import com.kgd.search.domain.attraction.model.BarrierFreeInfo
 import com.kgd.search.domain.attraction.model.Availability
 import com.kgd.search.domain.attraction.model.ClosedToday
 import com.kgd.search.domain.attraction.model.EventSchedule
@@ -145,6 +146,10 @@ class SearchAttractionService(
             ?.let { codes -> AttributeSelection.PET_CHOICES.filter { it.name in codes }.toSet() }
             .orEmpty(),
         freeAdmission = query.admission.isCode(Admission.FREE.name),
+        barrierFree = query.barrierFree?.split(",")?.map { it.trim() }
+            ?.let { codes -> BarrierFreeInfo.FILTER_CODES.filter { it in codes }.toSet() }
+            .orEmpty(),
+        wellness = query.wellness,
     )
 
     private fun String?.isCode(code: String) = this?.trim() == code
@@ -156,6 +161,8 @@ class SearchAttractionService(
         strollerRental = mapOf(Availability.YES.name to strollerRental),
         pet = pet.mapKeys { (policy, _) -> policy.name },
         admission = mapOf(Admission.FREE.name to freeAdmission),
+        barrierFree = barrierFree,
+        wellness = wellness,
     )
 
     override fun findById(id: String): SearchAttractionUseCase.AttractionSearchResult? =
@@ -258,5 +265,9 @@ class SearchAttractionService(
         eventStart = eventPeriod?.start,
         eventEnd = eventPeriod?.end,
         courseStops = courseStops?.map { SearchAttractionUseCase.CourseStop(it.order, it.contentId, it.name, it.attractionId) },
+        barrierFree = barrierFree?.flags?.takeIf { it.isNotEmpty() },
+        barrierFreeDetail = if (summarize) null else barrierFree?.detail?.takeIf { it.isNotEmpty() },
+        wellnessTheme = wellness?.code,
+        wellnessThemeName = wellness?.name,
     )
 }

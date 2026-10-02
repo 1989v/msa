@@ -9,9 +9,11 @@ import com.kgd.search.domain.attraction.model.EventStatus
 import com.kgd.search.domain.attraction.model.EventStatusText
 import com.kgd.search.domain.attraction.model.NearbyPlace
 import com.kgd.search.domain.attraction.model.SimilarPlace
+import com.kgd.search.domain.attraction.model.WellnessTheme
 import com.kgd.search.infrastructure.config.AttractionRenderProperties
 import com.kgd.search.infrastructure.render.AttractionPageFixtures.ALL_UNKNOWN
 import com.kgd.search.infrastructure.render.AttractionPageFixtures.COURSE_STOPS
+import com.kgd.search.infrastructure.render.AttractionPageFixtures.GYEONGBOKGUNG_BARRIER_FREE
 import com.kgd.search.infrastructure.render.AttractionPageFixtures.STAY_INTRO
 import com.kgd.search.infrastructure.render.AttractionPageFixtures.TODAY
 import com.kgd.search.infrastructure.render.AttractionPageFixtures.course
@@ -148,6 +150,54 @@ class AttractionPageRendererTest : BehaviorSpec({
 
         then("방문 정보 원문의 <br> 은 줄바꿈으로 평문화된다") {
             root shouldContain "<dt>이용시간</dt><dd>09:00~18:00\n입장 마감 17:00</dd>"
+        }
+    }
+
+    given("무장애 정보·웰니스 테마가 실린 문서") {
+        val html = render(
+            SHELL,
+            doc(attributes = PARSED, region = REGION).copy(
+                barrierFree = GYEONGBOKGUNG_BARRIER_FREE,
+                // 이름은 운영 분류 코드표(attraction_category_codes, ko)의 EX050100 값
+                wellness = WellnessTheme("EX050100", "온천 / 사우나 / 스파"),
+            ),
+        )
+        val root = rootOf(html)
+        val section = root.substringAfter("<section data-place-section=\"barrier-free\">").substringBefore("</section>")
+
+        then("「무장애 정보」 절에 긍정 아이콘 줄이 정해진 순서로 나간다 — 값이 없는 엘리베이터는 없다") {
+            section shouldContain "<h2>무장애 정보</h2>"
+            section.substringAfter("<ul>").substringBefore("</ul>") shouldBe
+                "<li>휠체어</li><li>장애인 화장실</li><li>장애인 주차</li><li>유모차</li><li>수유실</li>"
+        }
+
+        then("원천 문장은 원천 키 순서대로 고치지 않고 나간다") {
+            val rows = Regex("<dt>([^<]*)</dt><dd>([^<]*)</dd>").findAll(section).map { it.groupValues[1] to it.groupValues[2] }.toList()
+            rows shouldBe listOf(
+                "주차" to "장애인 주차장 있음(광화문 우측 옥외 주차장에 9개)_무장애 편의시설",
+                "휠체어" to "대여가능",
+                "출입통로" to "주출입구는 경사로가 있어 휠체어 접근 가능함",
+                "화장실" to "장애인 화장실 있음",
+                "오디오가이드" to "음성안내 가이드 있음(티켓박스에서 음성안내기기와 PDA 대여가능)",
+                "유모차" to "대여가능",
+                "수유실" to "수유실 있음(흥례문, 주차장 여자화장실 내부)",
+                "영유아 가족 기타" to "기저귀교환대 있음(수유실, 일반화장실 내부)",
+            )
+        }
+
+        then("웰니스 한 줄과 출처의 원천 이름이 붙고, 절은 배지 뒤 · 지역 안 위치 앞이다") {
+            root shouldContain "<p data-place-section=\"wellness\">웰니스 관광 · 온천 / 사우나 / 스파</p>"
+            root shouldContain "<p data-place-section=\"source\">출처: 한국관광공사 TourAPI · 무장애 여행 정보 · 웰니스관광 정보</p>"
+            val order = listOf("매주 화요일 휴무", "무장애 정보", "웰니스 관광", "종로구 관광지 120곳").map { root.indexOf(it) }
+            order.none { it < 0 } shouldBe true
+            order shouldBe order.sorted()
+        }
+
+        then("정보가 없는 문서는 절이 없고 출처는 TourAPI 만이다") {
+            val plain = rootOf(render(SHELL, doc(attributes = PARSED)))
+            plain shouldNotContain "barrier-free"
+            plain shouldNotContain "data-place-section=\"wellness\""
+            plain shouldContain "<p data-place-section=\"source\">출처: 한국관광공사 TourAPI</p>"
         }
     }
 

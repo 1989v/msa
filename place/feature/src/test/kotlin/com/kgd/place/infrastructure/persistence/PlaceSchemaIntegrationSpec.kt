@@ -1,15 +1,20 @@
 package com.kgd.place.infrastructure.persistence
 
 import com.kgd.place.domain.attraction.model.Attraction
+import com.kgd.place.domain.attraction.model.AttractionBarrierFree
+import com.kgd.place.domain.attraction.model.AttractionWellness
 import com.kgd.place.domain.attraction.model.EmbeddingModelRef
 import com.kgd.place.domain.attraction.model.SimilarAttractions
 import com.kgd.place.infrastructure.config.PlaceDataSourceConfig
+import com.kgd.place.infrastructure.persistence.attraction.adapter.AttractionExtrasRepositoryAdapter
 import com.kgd.place.infrastructure.persistence.attraction.adapter.AttractionRepositoryAdapter
 import com.kgd.place.infrastructure.persistence.attraction.adapter.AttractionSimilarRepositoryAdapter
+import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionBarrierFreeJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionCategoryCodeJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionLinkJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionSimilarJpaRepository
+import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionWellnessJpaRepository
 import com.kgd.place.infrastructure.persistence.poi.repository.PoiJpaRepository
 import com.kgd.place.infrastructure.persistence.region.repository.AdministrativeRegionJpaRepository
 import com.kgd.place.infrastructure.persistence.region.repository.RegionJpaRepository
@@ -65,6 +70,8 @@ class PlaceSchemaIntegrationSpec(
     @Autowired private val r4: AttractionCategoryCodeJpaRepository,
     @Autowired private val r5: AttractionLinkJpaRepository,
     @Autowired private val r6: AttractionSimilarJpaRepository,
+    @Autowired private val r7: AttractionBarrierFreeJpaRepository,
+    @Autowired private val r8: AttractionWellnessJpaRepository,
     @Autowired private val tx: TransactionTemplate,
 ) : BehaviorSpec({
 
@@ -73,7 +80,7 @@ class PlaceSchemaIntegrationSpec(
             .config(enabledIf = { dockerAvailable }) {
                 // count() 는 엔티티마다 실제 SQL 을 MySQL 로 보낸다 — 컬럼이 어긋나면
                 // validate 에서 컨텍스트가 아예 안 뜨고, 뜬 뒤에도 매핑이 틀리면 여기서 터진다.
-                listOf(r0, r1, r2, r3, r4, r5, r6).map { it.count() }.size shouldBe 7
+                listOf(r0, r1, r2, r3, r4, r5, r6, r7, r8).map { it.count() }.size shouldBe 9
             }
     }
 
@@ -144,6 +151,47 @@ class PlaceSchemaIntegrationSpec(
                     ),
                 )
                 adapter.findById(r3.findByContentIdIn(setOf("long-tel")).single().id!!)!!.tel shouldBe tel
+            }
+    }
+
+    Given("무장애·웰니스를 V25 표에 적재할 때") {
+        Then("contentId 로 그 언어 관광지에 붙고, 목록 재적재가 상세를 지우지 않으며, 웰니스는 언어별로 통째로 바뀐다")
+            .config(enabledIf = { dockerAvailable }) {
+                // 운영 표본(2026-10-02): 경복궁 126508 상세 · 웰니스 국문 2994116 · 127956
+                val attractions = AttractionRepositoryAdapter(r3)
+                attractions.upsertAll(
+                    listOf("126508" to "ko", "2994116" to "ko", "127956" to "ko", "126508" to "en").map { (cid, lang) ->
+                        Attraction.create(contentId = cid, lang = lang, title = "t$cid", latitude = 37.0, longitude = 127.0)
+                    },
+                )
+                val adapter = AttractionExtrasRepositoryAdapter(r7, r8)
+                val ids = adapter.findAttractionIds("ko", listOf("126508", "2994116", "127956", "3305925"))
+                ids.keys shouldBe setOf("126508", "2994116", "127956")
+                val gyeongbokgung = ids.getValue("126508")
+                val detail = """{"contentid":"126508","wheelchair":"대여가능","restroom":"장애인 화장실 있음"}"""
+                val synced = LocalDateTime.of(2026, 10, 3, 2, 41)
+
+                tx.execute {
+                    adapter.saveBarrierFree(
+                        listOf(AttractionBarrierFree(gyeongbokgung, "126508", """{"contentid":"126508"}""", null, detail, synced, listOf("WHEELCHAIR", "RESTROOM"), 1)),
+                    )
+                }
+                // 목록만 다시 들어와도(서비스가 기존 상세를 실어 보낸다) 상세·플래그가 남는다
+                val stored = adapter.findBarrierFreeByContentIds(listOf("126508")).single()
+                tx.execute { adapter.saveBarrierFree(listOf(stored.copy(listModifiedAt = LocalDateTime.of(2026, 10, 2, 0, 0)))) }
+                val back = adapter.findBarrierFreeByAttractionIds(listOf(gyeongbokgung)).single()
+                // MySQL JSON 은 공백·키 순서를 바꿔 저장한다 — 값으로 견준다
+                val json = tools.jackson.module.kotlin.jacksonObjectMapper()
+                json.readTree(back.detailRaw) shouldBe json.readTree(detail)
+                back.flags shouldBe listOf("WHEELCHAIR", "RESTROOM")
+                back.flagsRuleVer shouldBe 1
+                adapter.findBarrierFreeStates().single { it.contentId == "126508" }.detailSyncedAt shouldBe synced
+
+                fun tag(cid: String) = AttractionWellness(ids.getValue(cid), cid, "ko", "EX050100", """{"contentId":"$cid"}""")
+                tx.execute { adapter.replaceWellness("ko", listOf(tag("2994116"), tag("127956")), synced) } shouldBe emptySet()
+                tx.execute { adapter.replaceWellness("ko", listOf(tag("2994116")), synced) } shouldBe
+                    setOf(ids.getValue("2994116"), ids.getValue("127956"))
+                adapter.findWellnessByAttractionIds(ids.values).map { it.contentId } shouldBe listOf("2994116")
             }
     }
 

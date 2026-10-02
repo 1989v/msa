@@ -240,7 +240,18 @@
       "eventEndEffective" : null
     } ],
     "uniqueClickers14d" : 0,
-    "clickBoost" : 1.0
+    "clickBoost" : 1.0,
+    "barrierFree" : [ "PARKING", "WHEELCHAIR", "EXIT", "RESTROOM", "AUDIO_GUIDE", "STROLLER", "LACTATION_ROOM", "INFANT_ETC" ],
+    "barrierFreeDetail" : {
+      "parking" : "장애인 주차장 있음(광화문 우측 옥외 주차장에 9개)_무장애 편의시설",
+      "wheelchair" : "대여가능",
+      "exit" : "주출입구는 경사로가 있어 휠체어 접근 가능함",
+      "restroom" : "장애인 화장실 있음",
+      "audioguide" : "음성안내 가이드 있음(티켓박스에서 음성안내기기와 PDA 대여가능)",
+      "stroller" : "대여가능",
+      "lactationroom" : "수유실 있음(흥례문, 주차장 여자화장실 내부)",
+      "infantsfamilyetc" : "기저귀교환대 있음(수유실, 일반화장실 내부)"
+    }
   }, {
     "id" : "202",
     "idSort" : 202,
@@ -279,7 +290,9 @@
       "eventEndEffective" : null
     } ],
     "uniqueClickers14d" : 0,
-    "clickBoost" : 1.0
+    "clickBoost" : 1.0,
+    "wellnessTheme" : "EX050100",
+    "wellnessThemeName" : "온천 / 사우나 / 스파"
   }, {
     "id" : "203",
     "idSort" : 203,
@@ -430,7 +443,8 @@
     "attrAdmission" : "UNKNOWN",
     "attributeParserVersion" : 1,
     "uniqueClickers14d" : 0,
-    "clickBoost" : 1.0
+    "clickBoost" : 1.0,
+    "barrierFree" : [ "WHEELCHAIR" ]
   }, {
     "id" : "402",
     "idSort" : 402,
@@ -501,5 +515,22 @@
   "sourceLinks" : {
     "201" : "{\"collected\":[{\"source\":\"YOUTUBE\",\"externalId\":\"v1\",\"title\":\"경복궁 야경\",\"url\":\"https://youtu.be/v1\",\"thumbnailUrl\":\"https://i.ytimg.com/v1.jpg\",\"author\":\"서울여행\",\"publishedAt\":\"2026-09-01T12:30:00\",\"viewCount\":123456}],\"deepLinks\":[{\"provider\":\"INSTAGRAM\",\"kind\":\"SOCIAL\",\"url\":\"https://www.instagram.com/explore/tags/a\",\"revenueType\":\"PLAIN\"}]}",
     "301" : "{\"collected\":[],\"deepLinks\":[{\"provider\":\"MYREALTRIP\",\"kind\":\"TOUR_PRODUCT\",\"url\":\"https://example.com/t\",\"revenueType\":\"AFFILIATE\"}]}"
+  },
+  "sourceExtras" : {
+    "201" : {
+      "barrierFreeFlags" : [ "PARKING", "WHEELCHAIR", "EXIT", "RESTROOM", "AUDIO_GUIDE", "STROLLER", "LACTATION_ROOM", "INFANT_ETC" ],
+      "barrierFreeDetailRaw" : "{\"contentid\":\"126508\",\"parking\":\"장애인 주차장 있음(광화문 우측 옥외 주차장에 9개)_무장애 편의시설\",\"publictransport\":\"\",\"route\":\"\",\"ticketoffice\":\"\",\"promotion\":\"\",\"wheelchair\":\"대여가능\",\"exit\":\"주출입구는 경사로가 있어 휠체어 접근 가능함\",\"elevator\":\"\",\"restroom\":\"장애인 화장실 있음\",\"auditorium\":\"\",\"room\":\"\",\"handicapetc\":\"\",\"braileblock\":\"\",\"helpdog\":\"\",\"guidehuman\":\"\",\"audioguide\":\"음성안내 가이드 있음(티켓박스에서 음성안내기기와 PDA 대여가능)\",\"bigprint\":\"\",\"brailepromotion\":\"\",\"guidesystem\":\"\",\"blindhandicapetc\":\"\",\"signguide\":\"\",\"videoguide\":\"\",\"hearingroom\":\"\",\"hearinghandicapetc\":\"\",\"stroller\":\"대여가능\",\"lactationroom\":\"수유실 있음(흥례문, 주차장 여자화장실 내부)\",\"babysparechair\":\"\",\"infantsfamilyetc\":\"기저귀교환대 있음(수유실, 일반화장실 내부)\"}",
+      "wellnessThemeCode" : null
+    },
+    "202" : {
+      "barrierFreeFlags" : null,
+      "barrierFreeDetailRaw" : null,
+      "wellnessThemeCode" : "EX050100"
+    },
+    "401" : {
+      "barrierFreeFlags" : [ "WHEELCHAIR" ],
+      "barrierFreeDetailRaw" : "{not json",
+      "wellnessThemeCode" : null
+    }
   }
 }

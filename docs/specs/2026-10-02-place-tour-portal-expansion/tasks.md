@@ -199,16 +199,16 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
 **Required Skills:** Python(place-ingest), Flyway, Kotlin(place·search-batch·search), 레디스, React
 각 하위 그룹은 **테스트 → 구현 → 범위 지정 검증 → 배포 → 운영 확인** 순서다. V 번호는 설계 §3 의 제안이고 그때의 다음 빈 번호를 쓴다. 배포 전 대장(`data-sources.md` §1·§2)에 줄이 없으면 배포하지 않는다(SR-9).
 - [ ] 12.0 Complete 2단계 — 채택 9 · 보류 1(두루누비) · 안 함 2(관광사진 · 반려동물, `implementation/phase2-design.md` §0)
-  - [ ] 12.A 공통 틀
-    - [ ] 12.A.1 Write tests(T20): `scripts/check_sample_fields.py` — `sample-phase2-apis.json` 의 API 별 키 집합 ⊆ 적재 필드 집합(원문 JSON 컬럼이면 통과, 정규 컬럼만 고르면 빠진 키 목록으로 실패) · 한도 초과(429 · `resultCode=22`) 응답에 그 API 를 멈추고 받은 몫을 반환 · 한 단위 실패가 다음 단위를 막지 않음 · place·search 파드 egress 없음(정책 파일 대조)
-    - [ ] 12.A.2 구현: place-ingest `datagokr.py` — data.go.kr GET(예산 상수 · 한도 초과 판정 · 단위별 실패 격리 · 호출 수 로그), 표본 키 판정 스크립트
-    - [ ] 12.A.3 Verify: `cd place/ingest && python -m pytest -q tests/datagokr_test.py && python3 ../../scripts/check_sample_fields.py --self-test`
-  - [ ] 12.B 무장애 + 웰니스 (V25 · `place-ingest-attraction-attrs` 매일 02:40 · 하루 ≤ 902콜 · 상세 백필 11일)
-    - [ ] 12.B.1 Write tests: 플래그 파생 규칙(실측 상세 원문 → 긍정 코드만, 「없음/불가/미설치」 제외) · 상세 대상 선택(`detail_synced_at IS NULL` 먼저 → 목록 수정 시각 변경) · lookup 왕복(`/internal/attractions/extras/lookup` → 재색인 캡처 → `AttractionSearchDocument` 의 `barrierFree`·`wellnessTheme` 가 같음, T9 방식) · `verifySearchIndexContract` 새 필드 · 서버 렌더 「무장애 정보」 절
-    - [ ] 12.B.2 구현: V25 두 표 · 내부 bulk/lookup 엔드포인트(ADR-0083 레이어) · 수집 잡 · search-batch lookup · 색인 필드 · 렌더 절 · 목록 필터(라벨 정밀도 95% 이상 키만, 표본 100건 손 확인을 `implementation/phase2-barrierfree-labels.md` 에)
-    - [ ] 12.B.3 Verify: `cd place/ingest && python -m pytest -q tests/barrier_free_test.py tests/wellness_test.py && cd ../.. && ./gradlew :place:feature:test --tests '*AttractionExtras*' && ./gradlew :search:batch:test --tests '*AttractionApiReindexTaskletTest' && ./gradlew verifySearchIndexContract && ./gradlew :search:app:test --tests '*AttractionPageRendererTest'`
-    - [ ] 12.B.4 배포: content(V25) → place-ingest(잡) → search-batch → search → portal-fe
-    - [ ] 12.B.5 운영 확인: 새 이미지 확인 → 첫 실행 목록 9,630 · 매칭 ≈ 9,623 · 상세 899건/일 · 웰니스 국 168 · 영 92 · 재색인 뒤 `barrierFree` 있는 문서 `_count` · Googlebot UA 표본 상세에 절 마커
+  - [x] 12.A 공통 틀
+    - [x] 12.A.1 Write tests(T20): `scripts/check_sample_fields.py` — `sample-phase2-apis.json` 의 API 별 키 집합 ⊆ 적재 필드 집합(원문 JSON 컬럼이면 통과, 정규 컬럼만 고르면 빠진 키 목록으로 실패) · 한도 초과(429 · `resultCode=22`) 응답에 그 API 를 멈추고 받은 몫을 반환 · 한 단위 실패가 다음 단위를 막지 않음 · place·search 파드 egress 없음(정책 파일 대조)
+    - [x] 12.A.2 구현: place-ingest `datagokr.py` — data.go.kr GET(예산 상수 · 한도 초과 판정 · 단위별 실패 격리 · 호출 수 로그), 표본 키 판정 스크립트
+    - [x] 12.A.3 Verify: `cd place/ingest && python -m pytest -q tests/datagokr_test.py && python3 ../../scripts/check_sample_fields.py --self-test`
+  - [x] 12.B 무장애 + 웰니스 (V25 · `place-ingest-attraction-attrs` 매일 02:40 · 하루 ≤ 902콜 · 상세 백필 11일)
+    - [x] 12.B.1 Write tests: 플래그 파생 규칙(실측 상세 원문 → 긍정 코드만, 「없음/불가/미설치」 제외) · 상세 대상 선택(`detail_synced_at IS NULL` 먼저 → 목록 수정 시각 변경) · lookup 왕복(`/internal/attractions/extras/lookup` → 재색인 캡처 → `AttractionSearchDocument` 의 `barrierFree`·`wellnessTheme` 가 같음, T9 방식) · `verifySearchIndexContract` 새 필드 · 서버 렌더 「무장애 정보」 절
+    - [x] 12.B.2 구현: V25 두 표 · 내부 bulk/lookup 엔드포인트(ADR-0083 레이어) · 수집 잡 · search-batch lookup · 색인 필드 · 렌더 절 · 목록 필터(라벨 정밀도 95% 이상 키만, 표본 100건 손 확인을 `implementation/phase2-barrierfree-labels.md` 에)
+    - [x] 12.B.3 Verify: `cd place/ingest && python -m pytest -q tests/barrier_free_test.py tests/wellness_test.py && cd ../.. && ./gradlew :place:feature:test --tests '*AttractionExtras*' && ./gradlew :search:batch:test --tests '*AttractionApiReindexTaskletTest' && ./gradlew verifySearchIndexContract && ./gradlew :search:app:test --tests '*AttractionPageRendererTest'`
+    - [x] 12.B.4 배포: content(V25) → place-ingest(잡) → search-batch → search → portal-fe
+    - [x] 12.B.5 운영 확인: 새 이미지 확인 → 첫 실행 목록 9,630 · 매칭 ≈ 9,623 · 상세 899건/일 · 웰니스 국 168 · 영 92 · 재색인 뒤 `barrierFree` 있는 문서 `_count` · Googlebot UA 표본 상세에 절 마커
   - [ ] 12.C 지역 방문자 (V26 · `place-ingest-visitors` 매일 02:30 · 하루 2콜 · 12개월 백필 약 32콜)
     - [ ] 12.C.1 Write tests: 시군구 코드 269 전부가 `administrative_regions` 에 있음(실측 표본) · 일자 PK 재수집이 중복을 만들지 않음 · 레디스 write-through(적재 뒤 GET 이 DB 를 안 침, 미스면 PK 한 행) · `placeServingPaths.test.tsx` 허용 목록에 방문자 경로
     - [ ] 12.C.2 구현: V26 · 내부 bulk · `GET /api/places/administrative-regions/{code}/visitors` 캐시 · 공개 지연 탐색(Q-P2-VISITORS-LAG) · 지역 허브 「방문 추이」

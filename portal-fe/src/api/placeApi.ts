@@ -101,6 +101,13 @@ export interface Attraction {
   similarElsewhere?: Array<{ id: string; title: string; sidoName: string | null; eventEndEffective?: string | null }> | null;
   /** 최근 14일 클릭한 고유 방문자 수 — 단건 조회에만 온다. 신호를 못 읽은 회차·옛 문서는 null. */
   uniqueClickers14d?: number | null;
+  /** 무장애 긍정 코드(`WHEELCHAIR` …) — 정보가 없으면 null. 「없음」 코드는 없다. */
+  barrierFree?: string[] | null;
+  /** 무장애 원천 키 → 원문 문장 — 단건 조회에만 온다. */
+  barrierFreeDetail?: Record<string, string> | null;
+  /** 웰니스관광 테마 코드(EX05xxxx)·이름(분류 코드표) */
+  wellnessTheme?: string | null;
+  wellnessThemeName?: string | null;
 }
 
 export type AttributeAvailability = 'YES' | 'NO' | 'UNKNOWN';
@@ -136,7 +143,13 @@ export interface AttributeFacets {
   strollerRental: Partial<Record<'YES', number>>;
   pet: Partial<Record<'ALLOWED' | 'PARTIAL', number>>;
   admission: Partial<Record<'FREE', number>>;
+  /** 무장애 코드별 건수 — 서버가 연 코드만 */
+  barrierFree?: Partial<Record<BarrierFreeFilterCode, number>>;
+  wellness?: number;
 }
+
+/** 목록 필터로 연 무장애 코드 — search `BarrierFreeInfo.FILTER_CODES` 와 같은 목록 */
+export type BarrierFreeFilterCode = 'WHEELCHAIR' | 'ELEVATOR' | 'RESTROOM';
 
 export interface AttractionSearchResult {
   searchId: string;
@@ -242,6 +255,10 @@ export interface AttractionQuery {
   strollerRental?: 'YES';
   pet?: Array<'ALLOWED' | 'PARTIAL'>;
   admission?: 'FREE';
+  /** 무장애 코드 — 코드 사이는 AND */
+  barrierFree?: BarrierFreeFilterCode[];
+  /** 웰니스 테마가 있는 곳만 */
+  wellness?: boolean;
   /**
    * 속성 패싯 건수 요청. 목록의 **첫 쪽만** 켠다 — 건수는 병렬 집계 요청 한 번이라,
    * 상세의 주변·편의시설 검색이나 지도 오버레이, 다음 쪽까지 켜면 조회마다 집계가 는다.
@@ -273,6 +290,8 @@ export const searchAttractions = async (query: AttractionQuery): Promise<Attract
   if (query.strollerRental) params.set('strollerRental', query.strollerRental);
   if (query.pet && query.pet.length > 0) params.set('pet', query.pet.join(','));
   if (query.admission) params.set('admission', query.admission);
+  if (query.barrierFree && query.barrierFree.length > 0) params.set('barrierFree', query.barrierFree.join(','));
+  if (query.wellness) params.set('wellness', 'true');
   if (query.facets) params.set('facets', 'true');
   if (query.eventStatus) params.set('eventStatus', query.eventStatus);
   params.set('page', String(query.page ?? 0));

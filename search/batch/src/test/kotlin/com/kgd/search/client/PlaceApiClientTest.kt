@@ -199,6 +199,33 @@ class PlaceApiClientTest : BehaviorSpec({
         }
     }
 
+    Given("place 가 부가 정보 묶음 조회에 응답하면") {
+        // place `AttractionExtrasInternalController.lookup` 응답 모양(LookupAttractionExtrasUseCase.Found 직렬화) —
+        // 상세 원문은 경복궁(126508) 운영 응답의 일부, 웰니스는 국문 표본 2994116 의 테마 코드
+        val detailRaw = """{\"contentid\":\"126508\",\"wheelchair\":\"대여가능\",\"elevator\":\"\"}"""
+        val client = clientReturning(
+            """
+            {"success":true,"data":{"items":[
+              {"attractionId":11,"barrierFree":{"flags":["WHEELCHAIR"],"detailRaw":"$detailRaw"},"wellness":null},
+              {"attractionId":21,"barrierFree":null,"wellness":{"themaCd":"EX050100"}}
+            ]}}
+            """.trimIndent(),
+        )
+        requestedUris.clear()
+        val found = kotlinx.coroutines.runBlocking { client.lookupExtras(listOf(11L, 21L, 30L)) }
+
+        When("항목을 읽는다") {
+            Then("무장애 코드·원문과 웰니스 코드가 그대로 나오고, 없는 쪽은 null 이다") {
+                found.getValue(11L) shouldBe PlaceApiClient.ExtrasDto(
+                    listOf("WHEELCHAIR"), """{"contentid":"126508","wheelchair":"대여가능","elevator":""}""", null,
+                )
+                found.getValue(21L) shouldBe PlaceApiClient.ExtrasDto(null, null, "EX050100")
+                found.containsKey(30L) shouldBe false
+                requestedUris.single() shouldBe "/internal/attractions/extras/lookup"
+            }
+        }
+    }
+
     Given("place 가 링크 벌크 조회에 응답하면") {
         val collected = """{"source":"YOUTUBE","externalId":"v1","title":"경복궁 야경","url":"https://youtu.be/v1",""" +
             """"thumbnailUrl":"https://i.ytimg.com/v1.jpg","author":"서울여행","publishedAt":"2026-09-01T12:30:00","viewCount":123456}"""

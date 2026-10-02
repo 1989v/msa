@@ -102,6 +102,9 @@ class PlaceApiClient(
     /** `/internal/attractions/similar/lookup` 한 건 — 순위 순 id 와 그 목록을 계산한 벡터의 스탬프. */
     data class SimilarDto(val modelRef: String, val ids: List<Long>)
 
+    /** 관광지에 붙는 부가 정보 한 건 — 무장애(긍정 코드 · 상세 원문)와 웰니스 테마 코드. 둘 다 없을 수 있다. */
+    data class ExtrasDto(val barrierFreeFlags: List<String>?, val barrierFreeDetailRaw: String?, val wellnessThemeCode: String?)
+
     data class RegionPageResponse(
         val regions: List<RegionDto>,
         val totalElements: Long,
@@ -361,6 +364,37 @@ class PlaceApiClient(
             (item["attractionId"] as Number).toLong() to SimilarDto(
                 modelRef = item["modelRef"] as String,
                 ids = similar.map { (it["id"] as Number).toLong() },
+            )
+        }
+    }
+
+    /**
+     * 부가 정보(무장애 · 웰니스) 묶음 조회 — 표마다 따로 부르지 않고 한 번에 받는다. 아무것도 없는 id 는 응답에 없다.
+     * 무장애 상세는 원문 문자열 그대로 받는다 — 줄을 고르는 규칙은 도메인([com.kgd.search.domain.attraction.model.BarrierFreeInfo])이 갖는다.
+     */
+    suspend fun lookupExtras(ids: List<Long>): Map<Long, ExtrasDto> {
+        if (ids.isEmpty()) return emptyMap()
+        require(ids.size <= LOOKUP_MAX_BATCH) { "한 번에 ${LOOKUP_MAX_BATCH}건까지입니다: ${ids.size}" }
+
+        val response = webClient.post()
+            .uri("/internal/attractions/extras/lookup")
+            .bodyValue(mapOf("ids" to ids))
+            .retrieve()
+            .bodyToMono(object : ParameterizedTypeReference<Map<String, Any>>() {})
+            .awaitWithinTimeout()
+
+        @Suppress("UNCHECKED_CAST")
+        val items = (response["data"] as? Map<String, Any>)?.get("items") as? List<Map<String, Any?>>
+            ?: throw IllegalStateException("No data field in place extras lookup response")
+        return items.associate { item ->
+            @Suppress("UNCHECKED_CAST")
+            val barrierFree = item["barrierFree"] as? Map<String, Any?>
+            @Suppress("UNCHECKED_CAST")
+            val wellness = item["wellness"] as? Map<String, Any?>
+            (item["attractionId"] as Number).toLong() to ExtrasDto(
+                barrierFreeFlags = (barrierFree?.get("flags") as? List<*>)?.map { it.toString() },
+                barrierFreeDetailRaw = barrierFree?.get("detailRaw") as? String,
+                wellnessThemeCode = wellness?.get("themaCd") as? String,
             )
         }
     }

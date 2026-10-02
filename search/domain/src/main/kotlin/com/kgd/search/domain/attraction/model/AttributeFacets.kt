@@ -15,9 +15,14 @@ data class AttributeSelection(
     val strollerRental: Boolean = false,
     val pet: Set<PetPolicy> = emptySet(),
     val freeAdmission: Boolean = false,
+    /** 무장애 긍정 코드 — [BarrierFreeInfo.FILTER_CODES] 안에서만. 코드 사이는 AND(각 칩이 한 속성이다). */
+    val barrierFree: Set<String> = emptySet(),
+    /** 웰니스 테마가 있는 곳. */
+    val wellness: Boolean = false,
 ) {
     init {
         require(PetPolicy.UNKNOWN !in pet) { "반려동물 필터는 긍정 값만 받는다" }
+        require(barrierFree.all { it in BarrierFreeInfo.FILTER_CODES }) { "무장애 필터는 연 코드만 받는다: $barrierFree" }
     }
 
     companion object {
@@ -37,4 +42,7 @@ data class AttributeFacetCounts(
     val strollerRental: Long,
     val pet: Map<PetPolicy, Long>,
     val freeAdmission: Long,
+    /** 무장애 코드별 건수 — [BarrierFreeInfo.FILTER_CODES] 순서. */
+    val barrierFree: Map<String, Long> = emptyMap(),
+    val wellness: Long = 0,
 )

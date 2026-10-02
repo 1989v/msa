@@ -7,6 +7,7 @@ import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.application.queryvector.usecase.ResolveQueryVectorUseCase
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionKey
+import com.kgd.search.domain.attraction.model.BarrierFreeInfo
 import com.kgd.search.domain.attraction.model.CourseStopsParser
 import com.kgd.search.domain.attraction.model.EventPeriod
 import com.kgd.search.domain.attraction.model.EventSchedule
@@ -54,7 +55,31 @@ class AttractionReindexCaptureTest : BehaviorSpec({
         return EventSchedule.effectivePeriod(source.start, source.end)
     }
 
+    /** 캡처의 place 부가 정보를 도메인 규칙에 다시 넣은 기대 무장애. 코드도 문장도 없으면 null. */
+    fun expectedBarrierFree(id: String): BarrierFreeInfo? {
+        val source = capture.sourceExtras[id] ?: return null
+        val raw = source.barrierFreeDetailRaw
+            ?.let { runCatching { ObjectMapper().readValue(it, Map::class.java) }.getOrNull() }
+            ?.entries?.associate { (k, v) -> k.toString() to v?.toString() }
+            .orEmpty()
+        return BarrierFreeInfo(source.barrierFreeFlags.orEmpty(), BarrierFreeInfo.detailOf(raw))
+            .takeIf { it.flags.isNotEmpty() || it.detail.isNotEmpty() }
+    }
+
     given("태스클릿이 만든 bulk 문서를 읽기 문서로 읽으면") {
+        `when`("무장애·웰니스를 보면") {
+            then("place 가 준 코드·원문을 도메인 규칙에 다시 넣은 값과 같다 — 없는 문서는 null 이다") {
+                documents.keys.forEach { id ->
+                    (id to documents.getValue(id).barrierFree) shouldBe (id to expectedBarrierFree(id))
+                    (id to documents.getValue(id).wellness?.code) shouldBe (id to capture.sourceExtras[id]?.wellnessThemeCode)
+                }
+                // 대조군: 문장까지 있는 문서 · 코드만 있는 문서 · 웰니스 문서가 다 있어야 위 비교가 무언가를 잰다
+                documents.values.count { it.barrierFree?.detail?.isNotEmpty() == true } shouldBe 1
+                documents.values.count { it.barrierFree != null && it.barrierFree!!.detail.isEmpty() } shouldBe 1
+                documents.values.count { it.wellness != null } shouldBe 1
+            }
+        }
+
         `when`("행사 유효 기간을 보면") {
             then("원천 날짜를 정규화한 값과 같다 — 진행 중·예정·종료는 기간이, S>E·날짜 없음은 null 이다") {
                 documents.keys.forEach { id -> (id to documents.getValue(id).eventPeriod) shouldBe (id to expectedPeriod(id)) }
@@ -120,6 +145,17 @@ class AttractionReindexCaptureTest : BehaviorSpec({
                 checked shouldNotBe 0
             }
 
+            then("무장애 코드·문장과 웰니스 코드·이름이 상세 결과까지 남는다") {
+                documents.keys.forEach { id ->
+                    val result = service.findById(id)!!
+                    val expected = expectedBarrierFree(id)
+                    (id to result.barrierFree) shouldBe (id to expected?.flags?.takeIf { it.isNotEmpty() })
+                    (id to result.barrierFreeDetail) shouldBe (id to expected?.detail?.takeIf { it.isNotEmpty() })
+                    (id to result.wellnessTheme) shouldBe (id to capture.sourceExtras[id]?.wellnessThemeCode)
+                }
+                service.findById("202")!!.wellnessThemeName shouldBe "온천 / 사우나 / 스파"
+            }
+
             then("place 가 준 링크 원문이 상세 결과까지 값 그대로 남고, 링크 없는 문서는 null 이다") {
                 val json = ObjectMapper()
                 documents.keys.forEach { id ->
@@ -137,6 +173,13 @@ class AttractionReindexCaptureTest : BehaviorSpec({
         val documents: List<AttractionSearchDocument>,
         val sourceDates: Map<String, SourceDates>,
         val sourceLinks: Map<String, String> = emptyMap(),
+        val sourceExtras: Map<String, SourceExtras> = emptyMap(),
+    )
+
+    private data class SourceExtras(
+        val barrierFreeFlags: List<String>? = null,
+        val barrierFreeDetailRaw: String? = null,
+        val wellnessThemeCode: String? = null,
     )
 
     private data class SourceDates(val start: LocalDate?, val end: LocalDate?)

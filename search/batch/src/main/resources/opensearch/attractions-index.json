@@ -534,6 +534,20 @@
       "courseStops": {
         "type": "object",
         "enabled": false
+      },
+      "barrierFree": {
+        "type": "keyword"
+      },
+      "barrierFreeDetail": {
+        "type": "object",
+        "enabled": false
+      },
+      "wellnessTheme": {
+        "type": "keyword"
+      },
+      "wellnessThemeName": {
+        "type": "keyword",
+        "index": false
       }
     }
   }

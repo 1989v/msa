@@ -50,6 +50,9 @@ import {
   type IntroRow,
 } from './placeView';
 import {
+  BARRIER_FREE_TITLE,
+  barrierFreeIcons,
+  barrierFreeRows,
   distanceLabel,
   EVENT_PERIOD_LABEL,
   KIND_SECTION_TITLE,
@@ -57,8 +60,10 @@ import {
   placeKind,
   regionHubCode,
   regionPhrase,
+  placeSourceLine,
   regionPlaceName,
   visitorBadges,
+  wellnessLine,
   type PlaceKind,
 } from './placeAttributes';
 import './PlacePage.css';
@@ -308,6 +313,9 @@ export default function AttractionPage() {
     .filter((a) => a.id !== id && !shownAbove.has(a.id))
     .slice(0, NEARBY_SHOWN);
   const badges = attraction ? visitorBadges(attraction, lang) : [];
+  const accessIcons = attraction ? barrierFreeIcons(attraction, lang) : [];
+  const accessRows = attraction ? barrierFreeRows(attraction, lang) : [];
+  const wellness = attraction ? wellnessLine(attraction, lang) : null;
   const phrase = attraction ? regionPhrase(attraction, lang) : null;
   const hubCode = attraction ? regionHubCode(attraction) : null;
   // 자기 자신과 위에 이미 나온 곳은 뺀다 — 행사 상세의 「같은 분류 가까운 곳」은 행사, 숙박 상세는 숙소다
@@ -456,6 +464,33 @@ export default function AttractionPage() {
                 </ul>
               </section>
             )}
+            {/* 무장애 정보 — 긍정 아이콘 줄 + 펼치면 원천 문장(고치지 않는다). 서버 렌더와 같은 표·순서 */}
+            {(accessIcons.length > 0 || accessRows.length > 0) && (
+              <section className="place-detail-badges" aria-label={BARRIER_FREE_TITLE[lang]} data-place-section="barrier-free">
+                <h2 className="place-detail-info-title">{BARRIER_FREE_TITLE[lang]}</h2>
+                {accessIcons.length > 0 && (
+                  <ul className="place-badge-list">
+                    {accessIcons.map((b) => (
+                      <li key={b} className="place-badge">{b}</li>
+                    ))}
+                  </ul>
+                )}
+                {accessRows.length > 0 && (
+                  <details>
+                    <summary>{lang === 'en' ? 'Details' : '자세히'}</summary>
+                    <dl className="place-detail-info-list">
+                      {accessRows.map((r) => (
+                        <div className="place-detail-info-row" key={r.key}>
+                          <dt>{r.label}</dt>
+                          <dd>{r.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </details>
+                )}
+              </section>
+            )}
+            {wellness && <p className="place-region-phrase" data-place-section="wellness">{wellness}</p>}
             {attraction.region && (
               <section className="place-detail-region" aria-label={L.region}>
                 <h2 className="place-detail-info-title">{L.region}</h2>
@@ -671,7 +706,7 @@ export default function AttractionPage() {
         <p>
           <a href={PLACE_ORIGIN}>{placeBrand(lang)}</a>
           {' · '}
-          {lang === 'en' ? 'Source: Korea Tourism Organization TourAPI' : '출처: 한국관광공사 TourAPI'}
+          {placeSourceLine(attraction, lang)}
           {' · GeoNames (CC BY 4.0)'}
         </p>
       </Footer>

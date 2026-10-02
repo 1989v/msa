@@ -84,4 +84,8 @@ data class AttractionDocument(
     val eventPeriod: EventPeriod? = null,
     /** 여행코스(유형 25)의 구성 지점, `subnum` 순서. 코스가 아니거나 원문을 못 읽었으면 null. */
     val courseStops: List<CourseStop>? = null,
+    /** 무장애 여행 정보(국문). 상세를 아직 안 받았거나 원천에 없는 곳·옛 색인 문서는 null. */
+    val barrierFree: BarrierFreeInfo? = null,
+    /** 웰니스관광 테마. 웰니스 목록에 없는 곳·옛 색인 문서는 null. */
+    val wellness: WellnessTheme? = null,
 )

@@ -174,7 +174,8 @@ questions:
       기상청 활용가이드 구역코드표를 시드로 적재하고 이름 일치 → 같은 권역 최근접 도시 순서로 잇는다. 일치율을 시드 적재 때 implementation/ 에 남긴다
   - id: Q-P2-AIRSTATION
     phase: pre-impl
-    status: open
+    status: resolved
+    answer: 측정소정보 API(15073877) 승인(2026-10-02). getMsrstnList 가 측정소 좌표를 준다 — 필드 이름과 반대로 dmX=위도, dmY=경도(서울 중구 37.564639/126.975961). 원천 시간 초과(SERVICETIMEOUT_ERROR)가 잦아 재시도·긴 시간 제한 필요
     owner: 사용자(활용신청)
     question: 대기 측정소 좌표 원천(측정소↔시군구 최근접 연결용)
     default: >-

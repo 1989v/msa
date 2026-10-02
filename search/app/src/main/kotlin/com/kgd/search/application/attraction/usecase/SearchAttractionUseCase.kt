@@ -39,6 +39,10 @@ interface SearchAttractionUseCase {
         val pet: String? = null,
         /** `FREE` 만 */
         val admission: String? = null,
+        /** 쉼표로 여러 개 — 연 무장애 코드(`WHEELCHAIR`·`ELEVATOR`·`RESTROOM`)만, 코드 사이는 AND. 다른 값은 버린다 */
+        val barrierFree: String? = null,
+        /** true 면 웰니스 테마가 있는 곳만 */
+        val wellness: Boolean = false,
         /** true 면 속성 패싯 건수를 센다(집계 요청 하나 더). 목록 첫 쪽만 보낸다. 필터 적용과는 무관하다. */
         val attributeFacets: Boolean = false,
         /**
@@ -127,6 +131,13 @@ interface SearchAttractionUseCase {
         val eventEnd: java.time.LocalDate? = null,
         /** 여행코스 구성 지점(순서대로). 코스가 아니거나 재색인이 원문을 읽지 못했으면 null. */
         val courseStops: List<CourseStop>? = null,
+        /** 무장애 긍정 코드 — 목록·단건 모두. 정보가 없으면 null. */
+        val barrierFree: List<String>? = null,
+        /** 무장애 원천 키 → 원문 문장(원천 순서) — 단건 조회에만. */
+        val barrierFreeDetail: Map<String, String>? = null,
+        /** 웰니스 테마 코드·이름. */
+        val wellnessTheme: String? = null,
+        val wellnessThemeName: String? = null,
     )
 
     /** [attractionId] 는 같은 언어 관광지가 있을 때만 — 없으면 화면이 이름만 그리고 링크하지 않는다. */
@@ -170,5 +181,8 @@ interface SearchAttractionUseCase {
         val strollerRental: Map<String, Long>,
         val pet: Map<String, Long>,
         val admission: Map<String, Long>,
+        /** 무장애 코드별 건수(`barrierFree.WHEELCHAIR` ↔ `barrierFree=WHEELCHAIR`). */
+        val barrierFree: Map<String, Long> = emptyMap(),
+        val wellness: Long = 0,
     )
 }

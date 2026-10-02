@@ -96,6 +96,39 @@ def bulk_upsert(records: list[dict]) -> tuple[int, int]:
     return created, updated
 
 
+def put_barrier_free_list(records: list[dict]) -> dict:
+    """무장애 목록 행 — contentId(국문)로 관광지에 붙여 upsert. 상세 값은 건드리지 않는다.
+    반환: matched · unmatched 합계와 못 붙은 contentId 표본."""
+    total = {"matched": 0, "unmatched": 0, "unmatchedSample": []}
+    for i in range(0, len(records), BULK_CHUNK):
+        data = _request("PUT", "/internal/attractions/barrier-free/list",
+                        {"items": records[i:i + BULK_CHUNK]}, timeout=300)["data"]
+        total["matched"] += int(data.get("matched") or 0)
+        total["unmatched"] += int(data.get("unmatched") or 0)
+        total["unmatchedSample"] += list(data.get("unmatchedSample") or [])
+    total["unmatchedSample"] = total["unmatchedSample"][:20]
+    return total
+
+
+def fetch_barrier_free_state() -> list[dict]:
+    """상세 대상 선택에 쓰는 행 상태 — contentId · listModifiedAt · detailSyncedAt (약 1만 행, 원문 없음)."""
+    return _request("GET", "/internal/attractions/barrier-free/state")["data"]["items"]
+
+
+def put_barrier_free_details(records: list[dict]) -> int:
+    """상세 원문 + 파생 플래그. 관광지에 붙지 않은 contentId 는 서버가 건너뛴다."""
+    applied = 0
+    for i in range(0, len(records), BULK_CHUNK):
+        applied += int(_request("PUT", "/internal/attractions/barrier-free/details",
+                                {"items": records[i:i + BULK_CHUNK]}, timeout=300)["data"]["applied"])
+    return applied
+
+
+def put_wellness(lang: str, items: list[dict]) -> dict:
+    """웰니스 태그 — 그 언어의 목록을 통째로 바꾼다(요청에 없는 그 언어의 태그는 지운다)."""
+    return _request("PUT", "/internal/attractions/wellness", {"lang": lang, "items": items}, timeout=300)["data"]
+
+
 def upsert_category_codes(rows: list[dict]) -> int:
     """분류체계 코드표 — (lang, code) 멱등 upsert. 표가 작아 한 번에 보낸다."""
     if not rows:

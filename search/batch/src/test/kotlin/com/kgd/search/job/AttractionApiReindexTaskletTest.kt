@@ -495,12 +495,32 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
             301L to """{"collected":[],"deepLinks":[{"provider":"MYREALTRIP","kind":"TOUR_PRODUCT","url":"https://example.com/t","revenueType":"AFFILIATE"}]}""",
         )
 
+        // place 부가 정보 묶음 조회가 준 값 — 상세 원문은 경복궁(126508) 운영 응답, 코드는 수집기가 같은 원문에서 낸 값
+        val gyeongbokgungDetail = tools.jackson.databind.ObjectMapper().let { json ->
+            json.writeValueAsString(
+                json.readTree(repoRoot().resolve(PHASE2_SAMPLE_PATH).readText()).path("1 무장애 상세").path("sample").path(0),
+            )
+        }
+        val sourceExtras = mapOf(
+            201L to PlaceApiClient.ExtrasDto(
+                listOf("PARKING", "WHEELCHAIR", "EXIT", "RESTROOM", "AUDIO_GUIDE", "STROLLER", "LACTATION_ROOM", "INFANT_ETC"),
+                gyeongbokgungDetail,
+                null,
+            ),
+            // 웰니스 국문 표본의 테마 코드 — 이름은 운영 분류 코드표 값
+            202L to PlaceApiClient.ExtrasDto(null, null, "EX050100"),
+            // 상세 원문을 못 읽으면 코드만 싣는다
+            401L to PlaceApiClient.ExtrasDto(listOf("WHEELCHAIR"), "{not json", null),
+        )
+
         `when`("재색인하면") {
             clearMocks(placeApiClient, answers = false)
             val documents = captureDocuments()
             onePage(*inputs.toTypedArray())
             coEvery { placeApiClient.lookupEmbeddings(any(), any()) } returns emptyMap()
             coEvery { placeApiClient.lookupLinks(any()) } answers { sourceLinks.filterKeys { it in firstArg<List<Long>>() } }
+            coEvery { placeApiClient.lookupExtras(any()) } answers { sourceExtras.filterKeys { it in firstArg<List<Long>>() } }
+            coEvery { placeApiClient.fetchCategoryNames("ko") } returns mapOf("EX050100" to "온천 / 사우나 / 스파")
             coEvery { placeApiClient.lookupSimilar(MODEL_REF, any()) } returns mapOf(
                 // 103 은 끝난 행사, 105 는 날짜 없는 행사 — 둘 다 빠지고 순위 순서는 남는다
                 201L to PlaceApiClient.SimilarDto(MODEL_REF, listOf(103L, 101L, 105L, 202L)),
@@ -512,7 +532,28 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
 
             timedTasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
             val sources = documents.associate { it.id to bulkSource(it) }
-            writeReindexCapture(documents, inputs, sourceLinks)
+            writeReindexCapture(documents, inputs, sourceLinks, sourceExtras)
+
+            then("무장애는 코드와 값 있는 원천 문장(원천 키 순서)을, 웰니스는 코드와 분류 이름을 싣는다") {
+                sources.getValue("201")["barrierFree"] shouldBe sourceExtras.getValue(201L).barrierFreeFlags
+                @Suppress("UNCHECKED_CAST")
+                val detail = sources.getValue("201")["barrierFreeDetail"] as Map<String, String>
+                detail.keys.toList() shouldContainExactly listOf(
+                    "parking", "wheelchair", "exit", "restroom", "audioguide", "stroller", "lactationroom", "infantsfamilyetc",
+                )
+                detail["wheelchair"] shouldBe "대여가능"
+                sources.getValue("201").keys shouldNotContain "wellnessTheme"
+                sources.getValue("202")["wellnessTheme"] shouldBe "EX050100"
+                sources.getValue("202")["wellnessThemeName"] shouldBe "온천 / 사우나 / 스파"
+                sources.getValue("202").keys shouldNotContain "barrierFree"
+                // 상세 원문을 못 읽은 곳은 코드만 남는다
+                sources.getValue("401")["barrierFree"] shouldBe listOf("WHEELCHAIR")
+                sources.getValue("401").keys shouldNotContain "barrierFreeDetail"
+                listOf("101", "301", "402").forEach { id ->
+                    sources.getValue(id).keys shouldNotContain "barrierFree"
+                    sources.getValue(id).keys shouldNotContain "wellnessTheme"
+                }
+            }
 
             then("행사는 정규화한 유효 기간을 yyyy-MM-dd 로 싣고, 날짜 없는 행사와 행사 아닌 문서는 필드가 없다") {
                 sources.getValue("101")["eventStartEffective"] shouldBe "2026-09-25"
@@ -587,6 +628,7 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                 val complete = logs.list.map { it.formattedMessage }.single { it.startsWith("Attraction reindex complete") }
                 complete shouldContain "events (today 2026-10-02) period 3, S>E 1, no date 1"
                 complete shouldContain "courses stops 1, unreadable infoRaw 1, unmatched stops 5"
+                complete shouldContain "barrier-free 2 (unreadable 1), wellness 1, extras lookup failures 0"
                 logs.list.map { it.formattedMessage }.single { it.startsWith("Region pass") } shouldContain
                     "3 ended/undated events left out as of 2026-10-02"
             }
@@ -670,10 +712,14 @@ private const val REINDEX_CAPTURE_PATH = "search/app/src/test/resources/attracti
 private fun repoRoot(): File = generateSequence(File("").absoluteFile) { it.parentFile }
     .first { File(it, "settings.gradle.kts").isFile }
 
+/** 2단계 공공데이터 실호출 표본(2026-10-02) — 무장애 상세 원문을 여기서 읽는다. */
+private const val PHASE2_SAMPLE_PATH = "docs/specs/2026-10-02-place-tour-portal-expansion/implementation/sample-phase2-apis.json"
+
 private fun writeReindexCapture(
     documents: List<AttractionIndexDocument>,
     inputs: List<PlaceApiClient.AttractionDto>,
     sourceLinks: Map<Long, String>,
+    sourceExtras: Map<Long, PlaceApiClient.ExtrasDto>,
 ) {
     val mapper = jacksonMapperBuilder().disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS).build()
     val capture = mapOf(
@@ -683,6 +729,8 @@ private fun writeReindexCapture(
         },
         // place 링크 벌크 조회가 준 원문 — 읽기 쪽이 상세 결과의 링크와 견준다
         "sourceLinks" to sourceLinks.mapKeys { it.key.toString() },
+        // place 부가 정보 묶음 조회가 준 값 — 읽기 쪽이 도메인 규칙(BarrierFreeInfo.detailOf)으로 기대값을 다시 만든다
+        "sourceExtras" to sourceExtras.mapKeys { it.key.toString() },
     )
     val file = repoRoot().resolve(REINDEX_CAPTURE_PATH)
     file.parentFile.mkdirs()

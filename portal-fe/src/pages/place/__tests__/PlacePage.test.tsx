@@ -23,6 +23,8 @@ const facets = (over: Partial<AttributeFacets> = {}): AttributeFacets => ({
   strollerRental: { YES: 3 },
   pet: { ALLOWED: 5, PARTIAL: 0 },
   admission: { FREE: 1234 },
+  barrierFree: { WHEELCHAIR: 18, ELEVATOR: 0, RESTROOM: 57 },
+  wellness: 168,
   ...over,
 });
 
@@ -84,12 +86,12 @@ describe('PlacePage 속성 칩', () => {
   });
   afterEach(() => vi.clearAllMocks());
 
-  it('일곱 칩을 분류 칩과 다른 묶음에 그리고, 첫 쪽 응답의 건수를 붙인다', async () => {
+  it('열한 칩(방문 속성 7 · 무장애 3 · 웰니스 1)을 분류 칩과 다른 묶음에 그리고, 첫 쪽 응답의 건수를 붙인다', async () => {
     renderPage();
     await screen.findByText('관광지 a0-1');
 
     const group = screen.getByRole('group', { name: '방문 정보 필터' });
-    expect(group.querySelectorAll('.place-attr-chip')).toHaveLength(7);
+    expect(group.querySelectorAll('.place-attr-chip')).toHaveLength(11);
     expect(group.closest('.place-filters')).toBeNull();
     expect(within(group).getByText('정보가 있는 곳만 거릅니다')).toBeInTheDocument();
 
@@ -105,6 +107,7 @@ describe('PlacePage 속성 칩', () => {
 
     expect(chipLabels()).toEqual([
       'openToday', 'parking', 'creditCard', 'strollerRental', 'petAllowed', 'petPartial', 'admissionFree',
+      'bfWheelchair', 'bfElevator', 'bfRestroom', 'wellness',
     ]);
     expect(chip(/^신용카드/)).toHaveClass('is-empty');
     expect(chip(/^반려동물 일부 구역/)).toHaveClass('is-empty');
@@ -195,7 +198,7 @@ describe('PlacePage 속성 칩', () => {
 
     expect(document.querySelectorAll('.place-attr-count')).toHaveLength(0);
     expect(document.querySelectorAll('.place-attr-chip.is-empty')).toHaveLength(0);
-    expect(document.querySelectorAll('.place-attr-chip')).toHaveLength(7);
+    expect(document.querySelectorAll('.place-attr-chip')).toHaveLength(11);
   });
 
   it('영문 화면은 영문 칩·안내 문구를 쓴다', async () => {
@@ -206,6 +209,25 @@ describe('PlacePage 속성 칩', () => {
     expect(within(group).getByRole('button', { name: /^Not closed today/ })).toBeInTheDocument();
     expect(within(group).getByRole('button', { name: /^Pets in some areas/ })).toBeInTheDocument();
     expect(within(group).getByText('Filters only places that list this information')).toBeInTheDocument();
+    // 무장애 원천은 국문뿐이다 — 영문에서는 늘 0 인 칩을 두지 않는다. 웰니스는 영문 92곳이 있다
+    expect(within(group).queryByRole('button', { name: /^Wheelchairs/ })).toBeNull();
+    expect(within(group).getByRole('button', { name: /^Wellness tourism/ })).toBeInTheDocument();
+  });
+
+  it('무장애 칩은 코드 목록(AND)으로, 웰니스 칩은 참으로 요청하고 건수를 붙인다', async () => {
+    renderPage();
+    await screen.findByText('관광지 a0-1');
+    await waitFor(() => expect(chip(/^장애인 화장실/)).toHaveTextContent('57'));
+    expect(chip(/^엘리베이터/)).toHaveClass('is-empty');
+    expect(chip(/^웰니스 관광/)).toHaveTextContent('168');
+
+    fireEvent.click(chip(/^휠체어/));
+    fireEvent.click(chip(/^장애인 화장실/));
+    fireEvent.click(chip(/^웰니스 관광/));
+
+    await waitFor(() =>
+      expect(calls().at(-1)).toMatchObject({ barrierFree: ['WHEELCHAIR', 'RESTROOM'], wellness: true, page: 0, facets: true }),
+    );
   });
 });
 

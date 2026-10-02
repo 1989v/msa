@@ -128,6 +128,14 @@ data class AttractionIndexDocument(
     val eventEndEffective: LocalDate? = null,
     /** 여행코스 구성 지점(순서대로) — 표시 전용(mapping: enabled=false). 코스가 아니거나 원문을 못 읽었으면 빈다. */
     val courseStops: List<CourseStopEntry>? = null,
+    /** 무장애 긍정 코드 — 목록 필터가 term 으로 건다. 정보가 없으면 빈다(「없음」 코드는 없다). */
+    val barrierFree: List<String>? = null,
+    /** 무장애 원천 키 → 원문 문장 — 상세 「무장애 정보」 절 표시 전용(mapping: enabled=false). */
+    val barrierFreeDetail: Map<String, String>? = null,
+    /** 웰니스 테마 코드(EX05xxxx) — 목록 필터 축. */
+    val wellnessTheme: String? = null,
+    /** 웰니스 테마 이름(분류 코드표) — 표시 전용(mapping: index=false). */
+    val wellnessThemeName: String? = null,
 ) {
     /** OpenSearch geo_point object 표기 — 필드명 lat/lon 고정. */
 
@@ -224,6 +232,10 @@ data class AttractionIndexDocument(
                 eventEndEffective = doc.eventPeriod?.end,
                 courseStops = doc.courseStops?.takeIf { it.isNotEmpty() }
                     ?.map { CourseStopEntry(it.order, it.contentId, it.name, it.attractionId) },
+                barrierFree = doc.barrierFree?.flags?.takeIf { it.isNotEmpty() },
+                barrierFreeDetail = doc.barrierFree?.detail?.takeIf { it.isNotEmpty() },
+                wellnessTheme = doc.wellness?.code,
+                wellnessThemeName = doc.wellness?.name,
             )
         }
     }

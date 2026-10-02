@@ -9,11 +9,13 @@ import com.kgd.search.domain.attraction.model.AttractionAttributes
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionRegion
 import com.kgd.search.domain.attraction.model.Availability
+import com.kgd.search.domain.attraction.model.BarrierFreeInfo
 import com.kgd.search.domain.attraction.model.CourseStop
 import com.kgd.search.domain.attraction.model.EventSchedule
 import com.kgd.search.domain.attraction.model.NearbyPlace
 import com.kgd.search.domain.attraction.model.PetPolicy
 import com.kgd.search.domain.attraction.model.SimilarPlace
+import com.kgd.search.domain.attraction.model.WellnessTheme
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -86,6 +88,12 @@ data class AttractionSearchDocument(
     val eventEndEffective: LocalDate? = null,
     /** 여행코스 구성 지점(순서대로). 코스가 아니거나 원문을 못 읽은 회차면 없다. */
     val courseStops: List<CourseStopEntry>? = null,
+    /** 무장애 긍정 코드 · 원천 문장 — 상세 「무장애 정보」 절과 목록 필터가 읽는다. 정보 없는 곳·옛 문서는 없다. */
+    val barrierFree: List<String>? = null,
+    val barrierFreeDetail: Map<String, String>? = null,
+    /** 웰니스 테마 코드·이름. 웰니스 목록에 없는 곳·옛 문서는 없다. */
+    val wellnessTheme: String? = null,
+    val wellnessThemeName: String? = null,
 ) {
     /** [eventEndEffective] 는 항목이 행사일 때의 유효 종료일 — 이 필드가 생기기 전 문서에는 없다. */
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -174,5 +182,12 @@ data class AttractionSearchDocument(
         // 재색인이 이미 정규화한 값이라 같은 함수에 다시 넣어도 (s, e) 그대로다. 한쪽만 있는 문서는 생기지 않는다.
         eventPeriod = EventSchedule.effectivePeriod(eventStartEffective, eventEndEffective),
         courseStops = courseStops?.map { CourseStop(it.order, it.contentId, it.name, it.attractionId) },
+        // 상세 문장이 하나도 없고 코드도 없으면 정보가 없는 것이다 — 빈 객체를 만들지 않는다
+        barrierFree = if (barrierFree.isNullOrEmpty() && barrierFreeDetail.isNullOrEmpty()) {
+            null
+        } else {
+            BarrierFreeInfo(barrierFree.orEmpty(), BarrierFreeInfo.detailOf(barrierFreeDetail.orEmpty()))
+        },
+        wellness = wellnessTheme?.let { WellnessTheme(it, wellnessThemeName) },
     )
 }

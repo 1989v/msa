@@ -39,7 +39,7 @@ import FavoriteButton from '../../components/favorite/FavoriteButton';
 import { isPlottable, mergePages, nextPage, titleParts } from './placeView';
 import {
   ATTRIBUTE_CAPTION,
-  ATTRIBUTE_CHIPS,
+  attributeChips,
   attributeQuery,
   chipCount,
   type AttributeChipId,
@@ -1114,7 +1114,7 @@ export default function PlacePage() {
         {category !== EVENT_CATEGORY && (
           <div className="place-attr-group" role="group" aria-label={lang === 'en' ? 'Visitor info filters' : '방문 정보 필터'}>
             <div className="place-attr-chips">
-              {ATTRIBUTE_CHIPS.map((chip) => {
+              {attributeChips(lang).map((chip) => {
                 const selected = attributes.has(chip.id);
                 const count = chipCount(facets, chip.id);
                 const empty = !selected && count === 0;

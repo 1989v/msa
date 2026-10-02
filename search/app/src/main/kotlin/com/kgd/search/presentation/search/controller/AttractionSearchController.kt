@@ -55,6 +55,9 @@ class AttractionSearchController(
         @RequestParam(required = false) strollerRental: String?,
         @RequestParam(required = false) pet: String?,
         @RequestParam(required = false) admission: String?,
+        // 무장애(WHEELCHAIR·ELEVATOR·RESTROOM, 쉼표 AND) · 웰니스 테마 있음 — 연 코드 밖의 값은 무시한다
+        @RequestParam(required = false) barrierFree: String?,
+        @RequestParam(defaultValue = "false") wellness: Boolean,
         // 건수는 요청할 때만 센다 — 상세의 주변·편의시설·지도가 같은 API 를 부른다. 필터 적용과는 무관하다.
         @RequestParam(defaultValue = "false") facets: Boolean,
         // 행사 상태 ONGOING·WEEKEND·UPCOMING·THIS_MONTH·NOT_ENDED — 행사가 아닌 곳은 거르지 않는다. 다른 값은 무시.
@@ -80,6 +83,8 @@ class AttractionSearchController(
                 strollerRental = strollerRental,
                 pet = pet,
                 admission = admission,
+                barrierFree = barrierFree,
+                wellness = wellness,
                 attributeFacets = facets,
                 eventStatus = eventStatus,
             )

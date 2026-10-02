@@ -34,6 +34,18 @@ class AttractionsIndexMappingTest : BehaviorSpec({
         }
     }
 
+    given("관광지 색인 정의의 무장애·웰니스 필드") {
+        then("필터 축(무장애 코드 · 웰니스 테마)은 색인되는 keyword, 원천 문장·테마 이름은 색인하지 않는다") {
+            listOf("barrierFree", "wellnessTheme").forEach { field ->
+                (field to properties.path(field).path("type").asString()) shouldBe (field to "keyword")
+                (field to properties.path(field).path("index").isMissingNode) shouldBe (field to true)
+            }
+            properties.path("barrierFreeDetail").path("type").asString() shouldBe "object"
+            properties.path("barrierFreeDetail").path("enabled").asBoolean(true) shouldBe false
+            properties.path("wellnessThemeName").path("index").asBoolean(true) shouldBe false
+        }
+    }
+
     given("관광지 색인 정의의 지역 안 위치 필드") {
         `when`("표시에만 쓰는 값을 보면") {
             then("색인하지 않아야 한다") {

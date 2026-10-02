@@ -442,6 +442,16 @@ class SearchAttractionServiceTest : BehaviorSpec({
                 selection.pet shouldBe setOf(PetPolicy.ALLOWED, PetPolicy.PARTIAL)
                 selection.freeAdmission shouldBe true
             }
+            then("무장애는 연 코드만 쉼표로 받고, 웰니스는 참일 때만 선택이 된다") {
+                val captured = slot<AttractionSearchPort.SearchQuery>()
+                every { searchPort.search(capture(captured), any()) } returns found(emptyList())
+
+                // PARKING 은 원천 코드지만 필터로 열지 않았다 — 버린다
+                service.execute(SearchAttractionUseCase.Query(barrierFree = "WHEELCHAIR, PARKING,RESTROOM,foo", wellness = true))
+
+                captured.captured.attributes!!.barrierFree shouldBe setOf("WHEELCHAIR", "RESTROOM")
+                captured.captured.attributes!!.wellness shouldBe true
+            }
         }
         `when`("부정·UNKNOWN·모르는 값을 주면") {
             then("오류 없이 무시하고 그 속성은 거르지 않는다") {

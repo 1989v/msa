@@ -5,6 +5,7 @@ import com.kgd.search.domain.attraction.model.AttractionAttributes
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionRegion
 import com.kgd.search.domain.attraction.model.Availability
+import com.kgd.search.domain.attraction.model.BarrierFreeInfo
 import com.kgd.search.domain.attraction.model.CourseStop
 import com.kgd.search.domain.attraction.model.EventPeriod
 import com.kgd.search.domain.attraction.model.NearbyPlace
@@ -163,4 +164,27 @@ object AttractionPageFixtures {
                 restDate = null,
                 parking = null,
             )
+
+    /**
+     * 경복궁(126508) 무장애 상세 — 운영 응답 원문(2026-10-02, `implementation/sample-phase2-apis.json` 「1 무장애 상세」)의
+     * 값이 있는 키. 코드는 place-ingest `barrier_free.derive_flags` 가 같은 원문에서 낸 값이다(`barrier_free_test.py`).
+     */
+    val GYEONGBOKGUNG_BARRIER_FREE = BarrierFreeInfo(
+        flags = listOf("PARKING", "WHEELCHAIR", "EXIT", "RESTROOM", "AUDIO_GUIDE", "STROLLER", "LACTATION_ROOM", "INFANT_ETC"),
+        detail = BarrierFreeInfo.detailOf(
+            mapOf(
+                "contentid" to "126508",
+                "parking" to "장애인 주차장 있음(광화문 우측 옥외 주차장에 9개)_무장애 편의시설",
+                "publictransport" to "",
+                "wheelchair" to "대여가능",
+                "exit" to "주출입구는 경사로가 있어 휠체어 접근 가능함",
+                "elevator" to "",
+                "restroom" to "장애인 화장실 있음",
+                "audioguide" to "음성안내 가이드 있음(티켓박스에서 음성안내기기와 PDA 대여가능)",
+                "stroller" to "대여가능",
+                "lactationroom" to "수유실 있음(흥례문, 주차장 여자화장실 내부)",
+                "infantsfamilyetc" to "기저귀교환대 있음(수유실, 일반화장실 내부)",
+            ),
+        ),
+    )
 }

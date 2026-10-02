@@ -6,6 +6,7 @@ import com.kgd.search.domain.attraction.model.AttractionClickSignal
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionKey
 import com.kgd.search.domain.attraction.model.AttractionRegion
+import com.kgd.search.domain.attraction.model.BarrierFreeInfo
 import com.kgd.search.domain.attraction.model.CourseStopsParse
 import com.kgd.search.domain.attraction.model.CourseStopsParser
 import com.kgd.search.domain.attraction.model.EventDateIssue
@@ -15,6 +16,7 @@ import com.kgd.search.domain.attraction.model.RegionAggregator
 import com.kgd.search.domain.attraction.model.RegionPlacement
 import com.kgd.search.domain.attraction.model.RegionProjection
 import com.kgd.search.domain.attraction.model.SimilarPlace
+import com.kgd.search.domain.attraction.model.WellnessTheme
 import com.kgd.search.infrastructure.client.PlaceApiClient
 import com.kgd.search.infrastructure.clicksignal.ClickHouseClickSignalReader
 import com.kgd.search.infrastructure.indexing.AttractionIndexDocument
@@ -132,6 +134,10 @@ class AttractionApiReindexTasklet(
             var withCourseStops = 0L
             var unreadableCourse = 0L
             var unmatchedCourseStops = 0L
+            var withBarrierFree = 0L
+            var unreadableBarrierFree = 0L
+            var withWellness = 0L
+            var extrasLookupFailures = 0L
 
             while (afterId != null) {
                 val response = placeApiClient.fetchPageAfter(afterId, pageSize)
@@ -169,7 +175,24 @@ class AttractionApiReindexTasklet(
                         acc + runCatching { placeApiClient.lookupLinks(ids) }.getOrElse { emptyMap() }
                     }
 
+                // 부가 정보(무장애 · 웰니스)도 페이지 단위로 한 번에. 못 받으면 그 묶음만 비고 색인은 이어 간다.
+                val extras = active.map { it.id }.chunked(PlaceApiClient.LOOKUP_MAX_BATCH)
+                    .fold(emptyMap<Long, PlaceApiClient.ExtrasDto>()) { acc, ids ->
+                        acc + runCatching { placeApiClient.lookupExtras(ids) }.getOrElse { e ->
+                            extrasLookupFailures++
+                            log.warn(e) { "부가 정보 조회 실패(${ids.size}건) — 이 묶음은 무장애·웰니스 없이 색인한다" }
+                            emptyMap()
+                        }
+                    }
+
                 active.forEach { attraction ->
+                    val extra = extras[attraction.id]
+                    val barrierFree = extra?.let { barrierFreeOf(it) { unreadableBarrierFree++ } }
+                    if (barrierFree != null) withBarrierFree++
+                    val wellness = extra?.wellnessThemeCode?.takeIf { it.isNotBlank() }?.let { code ->
+                        withWellness++
+                        WellnessTheme(code, categoryNames[attraction.lang]?.get(code))
+                    }
                     val embedding = embeddings[attraction.id]?.let {
                         AttractionIndexDocument.Embedding(
                             vector = it.vector,
@@ -271,6 +294,8 @@ class AttractionApiReindexTasklet(
                             uniqueClickers14d = uniqueClickers?.let { it[attraction.id.toString()] ?: 0 },
                             eventPeriod = eventPeriod,
                             courseStops = courseStops,
+                            barrierFree = barrierFree,
+                            wellness = wellness,
                         ),
                         embedding,
                     )
@@ -298,6 +323,9 @@ class AttractionApiReindexTasklet(
                     // 행사: 유효 기간 적재 · 원천 S>E · 날짜 없음(둘 다 UNKNOWN). 코스: 구성 적재 · 원문 해석 실패 · 링크 못 단 지점
                     "events (today $today) period $withEventPeriod, S>E $eventDatesInverted, no date $eventDatesMissing, " +
                     "courses stops $withCourseStops, unreadable infoRaw $unreadableCourse, unmatched stops $unmatchedCourseStops, " +
+                    // 부가 정보: 무장애 적재 · 상세 원문 해석 실패 · 웰니스 적재 · 조회 실패 묶음
+                    "barrier-free $withBarrierFree (unreadable $unreadableBarrierFree), wellness $withWellness, " +
+                    "extras lookup failures $extrasLookupFailures, " +
                     "attribute parser v${AttractionAttributeParser.VERSION}, index pass ${elapsedMs(indexStartedAt)}ms"
             }
 
@@ -426,6 +454,21 @@ class AttractionApiReindexTasklet(
         if (raw.isNullOrBlank()) return emptyMap()
         val node = runCatching { introReader.readTree(raw) }.getOrNull()?.takeIf { it.isObject } ?: return null
         return node.properties().associate { (key, value) -> key to value.takeIf { it.isValueNode && !it.isNull }?.asString() }
+    }
+
+    /**
+     * 무장애 원천 → 도메인. 코드도 문장도 없으면 null. 상세 원문을 못 읽으면 코드만 싣고 [onUnreadable] 로 센다 —
+     * 코드는 수집기가 같은 원문에서 만든 값이라 남길 수 있다.
+     */
+    private fun barrierFreeOf(dto: PlaceApiClient.ExtrasDto, onUnreadable: () -> Unit): BarrierFreeInfo? {
+        val detail = dto.barrierFreeDetailRaw?.takeIf { it.isNotBlank() }?.let { raw ->
+            readIntro(raw) ?: run {
+                onUnreadable()
+                emptyMap()
+            }
+        }.orEmpty()
+        val info = BarrierFreeInfo(dto.barrierFreeFlags.orEmpty(), BarrierFreeInfo.detailOf(detail))
+        return info.takeIf { it.flags.isNotEmpty() || it.detail.isNotEmpty() }
     }
 
     private fun elapsedMs(startedAt: Long) = (System.nanoTime() - startedAt) / 1_000_000

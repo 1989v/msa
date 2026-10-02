@@ -11,6 +11,7 @@ K8s CronJob 이 본 모듈을 --job 으로 분기해 호출한다:
     python -m src.main --job=administrative-regions --file 법정동코드_전체자료.txt
     python -m src.main --job=lcls-codes            # 분류체계 코드→이름 (호출 400회 미만)
     python -m src.main --job=pet-tour              # 반려동물 동반 (목록형, 약 100회)
+    python -m src.main --job=attraction-attrs      # 무장애(목록 1 + 상세 ≤ 899) · 웰니스(월요일만 2콜)
 
 외부 :443 을 부르는 것은 이 CronJob 파드뿐이다 — 상시 파드인 place 에는 egress 를 열지 않는다
 (ADR-0031 §5.10 화이트리스트에 place-ingest 만 추가).
@@ -26,10 +27,10 @@ import sys
 
 from pathlib import Path
 
-from src import (administrative_region, backfill_intro, backfill_overview, google_place, naver, place_client,
+from src import (administrative_region, backfill_intro, backfill_overview, barrier_free, google_place, naver, place_client,
                  backfill_media, popularity, quota, sync_lcls_codes, sync_pet_tour,
                  sync_tour,
-                 youtube)
+                 wellness, youtube)
 
 
 def _api_key() -> str:
@@ -71,6 +72,37 @@ def _job_pet_tour(langs: tuple[str, ...]) -> int:
     """반려동물 동반. 목록형이라 건당 1콜이 아니고 약 100콜이면 전량이라 예산이 없다."""
     loaded = sync_pet_tour.run(_api_key(), langs)
     sync_pet_tour.log("적재 없음 — 재색인 불필요" if not loaded else "전량 반영")
+    return 0
+
+
+def _job_attraction_attrs(budget: int, with_wellness: bool | None = None, key: str | None = None, today=None) -> int:
+    """관광지에 붙는 값 — 무장애(매일) · 웰니스(주 1회, 월요일 KST). 둘은 API 가 달라 한도도 따로다.
+
+    한 API 가 실패해도 다른 쪽은 받는다. 하나라도 실패했으면 1 로 끝난다(빠진 것이 성공 기록에 묻히지 않게).
+    한도 초과·예산 소진으로 멈춘 것은 실패가 아니다 — 받은 몫을 반영했고 다음 날 이어 받는다.
+    """
+    key = key or _api_key()
+    failed = []
+    try:
+        if barrier_free.run(key, budget)["failed"]:
+            failed.append(barrier_free.API)
+    except Exception as e:                                  # noqa: BLE001 — API 별 격리
+        backfill_overview.log(f"[{barrier_free.API}] 실패 — 웰니스는 계속 받는다: {e}")
+        failed.append(barrier_free.API)
+    if with_wellness is None:
+        with_wellness = (today or sync_tour.kst_today()).weekday() == 0
+    if with_wellness:
+        try:
+            if wellness.run(key)["failed"]:
+                failed.append(wellness.API)
+        except Exception as e:                              # noqa: BLE001
+            backfill_overview.log(f"[{wellness.API}] 실패: {e}")
+            failed.append(wellness.API)
+    else:
+        backfill_overview.log(f"[{wellness.API}] 월요일만 받는다 — 건너뜀")
+    if failed:
+        backfill_overview.log(f"관광지 부가 정보 실패: {' '.join(failed)}")
+        return 1
     return 0
 
 
@@ -285,7 +317,8 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--job", required=True,
                     choices=["overview", "intro", "media", "stats", "sync", "tour-portal-sync", "links",
-                             "administrative-regions", "google-places", "lcls-codes", "pet-tour"])
+                             "administrative-regions", "google-places", "lcls-codes", "pet-tour",
+                             "attraction-attrs"])
     ap.add_argument("--budget", type=int, default=int(os.environ.get("BUDGET", "1000")),
                     help="개요 수집 일일 예산 (언어별, detailCommon2 호출 상한)")
     ap.add_argument("--lang", choices=["ko", "en"], help="미지정 시 ko·en 둘 다")
@@ -297,6 +330,8 @@ def main() -> int:
     ap.add_argument("--google-places-budget", type=int,
                     default=int(os.environ.get("GOOGLE_PLACES_DAILY_BUDGET", "1000")),
                     help="구글 place_id 보강 일일 상한 (Text Search ID-only 호출 수)")
+    ap.add_argument("--wellness", action="store_true",
+                    help="--job=attraction-attrs 에서 요일과 무관하게 웰니스를 받는다 (기본: 월요일 KST 만)")
     args = ap.parse_args()
 
     langs = (args.lang,) if args.lang else ("ko", "en")
@@ -318,6 +353,9 @@ def main() -> int:
         return _job_lcls_codes(langs)
     if args.job == "pet-tour":
         return _job_pet_tour(langs)
+    if args.job == "attraction-attrs":
+        # BUDGET 환경변수는 개요 잡의 일일 예산이다 — 무장애는 자기 예산 상수를 쓴다(원천 한도가 API 마다 따로다)
+        return _job_attraction_attrs(barrier_free.DAILY_BUDGET, True if args.wellness else None)
     if args.job == "tour-portal-sync":
         return _job_tour_portal_sync()
     return _job_sync(args.content_type, args.limit)

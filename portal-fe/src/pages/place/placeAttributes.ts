@@ -2,9 +2,10 @@ import type {
   Attraction,
   AttractionQuery,
   AttributeFacets,
+  BarrierFreeFilterCode,
   PlaceLang,
 } from '../../api/placeApi';
-import { PLACE_COURSE_TYPES, PLACE_EVENT_TYPES, PLACE_STAY_TYPES, placeIntroText } from '../../seo/copy.mjs';
+import { PLACE_COURSE_TYPES, PLACE_EVENT_TYPES, PLACE_STAY_TYPES, placeIntroText, sourceText } from '../../seo/copy.mjs';
 
 /*
  * 속성 패싯 — 검색 화면의 속성 칩과 상세의 방문 정보 배지.
@@ -21,9 +22,21 @@ export type AttributeChipId =
   | 'strollerRental'
   | 'petAllowed'
   | 'petPartial'
-  | 'admissionFree';
+  | 'admissionFree'
+  | 'bfWheelchair'
+  | 'bfElevator'
+  | 'bfRestroom'
+  | 'wellness';
 
-export const ATTRIBUTE_CHIPS: ReadonlyArray<{ id: AttributeChipId; ko: string; en: string }> = [
+/** 무장애 칩 → 서버 코드. 라벨 정밀도 95% 이상인 키만 연다(search `BarrierFreeInfo.FILTER_CODES`). */
+const BARRIER_FREE_CHIPS: ReadonlyArray<[AttributeChipId, BarrierFreeFilterCode]> = [
+  ['bfWheelchair', 'WHEELCHAIR'],
+  ['bfElevator', 'ELEVATOR'],
+  ['bfRestroom', 'RESTROOM'],
+];
+
+/** `only` 가 있으면 그 언어 목록에만 칩을 둔다 — 무장애 원천은 국문뿐이라 영문에서는 늘 0 이다. */
+export const ATTRIBUTE_CHIPS: ReadonlyArray<{ id: AttributeChipId; ko: string; en: string; only?: PlaceLang }> = [
   { id: 'openToday', ko: '오늘 정기휴무 아님', en: 'Not closed today' },
   { id: 'parking', ko: '주차 가능', en: 'Parking' },
   { id: 'creditCard', ko: '신용카드', en: 'Credit cards' },
@@ -31,7 +44,15 @@ export const ATTRIBUTE_CHIPS: ReadonlyArray<{ id: AttributeChipId; ko: string; e
   { id: 'petAllowed', ko: '반려동물 동반', en: 'Pets allowed' },
   { id: 'petPartial', ko: '반려동물 일부 구역', en: 'Pets in some areas' },
   { id: 'admissionFree', ko: '입장 무료', en: 'Free admission' },
+  { id: 'bfWheelchair', ko: '휠체어', en: 'Wheelchairs', only: 'ko' },
+  { id: 'bfElevator', ko: '엘리베이터', en: 'Elevator', only: 'ko' },
+  { id: 'bfRestroom', ko: '장애인 화장실', en: 'Accessible restroom', only: 'ko' },
+  { id: 'wellness', ko: '웰니스 관광', en: 'Wellness tourism' },
 ];
+
+export function attributeChips(lang: PlaceLang) {
+  return ATTRIBUTE_CHIPS.filter((chip) => chip.only == null || chip.only === lang);
+}
 
 export const ATTRIBUTE_CAPTION: Record<PlaceLang, string> = {
   ko: '정보가 있는 곳만 거릅니다',
@@ -41,8 +62,9 @@ export const ATTRIBUTE_CAPTION: Record<PlaceLang, string> = {
 /** 고른 칩 → 검색 파라미터. 반려동물 두 칩은 한 파라미터(CSV, OR)로 합친다. */
 export function attributeQuery(selected: ReadonlySet<AttributeChipId>): Pick<
   AttractionQuery,
-  'openToday' | 'parking' | 'creditCard' | 'strollerRental' | 'pet' | 'admission'
+  'openToday' | 'parking' | 'creditCard' | 'strollerRental' | 'pet' | 'admission' | 'barrierFree' | 'wellness'
 > {
+  const barrierFree = BARRIER_FREE_CHIPS.filter(([chip]) => selected.has(chip)).map(([, code]) => code);
   const pet: Array<'ALLOWED' | 'PARTIAL'> = [];
   if (selected.has('petAllowed')) pet.push('ALLOWED');
   if (selected.has('petPartial')) pet.push('PARTIAL');
@@ -53,6 +75,8 @@ export function attributeQuery(selected: ReadonlySet<AttributeChipId>): Pick<
     strollerRental: selected.has('strollerRental') ? 'YES' : undefined,
     pet: pet.length > 0 ? pet : undefined,
     admission: selected.has('admissionFree') ? 'FREE' : undefined,
+    barrierFree: barrierFree.length > 0 ? barrierFree : undefined,
+    wellness: selected.has('wellness') || undefined,
   };
 }
 
@@ -67,7 +91,90 @@ export function chipCount(facets: AttributeFacets | null | undefined, id: Attrib
     case 'petAllowed': return facets.pet?.ALLOWED ?? 0;
     case 'petPartial': return facets.pet?.PARTIAL ?? 0;
     case 'admissionFree': return facets.admission?.FREE ?? 0;
+    case 'bfWheelchair': return facets.barrierFree?.WHEELCHAIR ?? 0;
+    case 'bfElevator': return facets.barrierFree?.ELEVATOR ?? 0;
+    case 'bfRestroom': return facets.barrierFree?.RESTROOM ?? 0;
+    case 'wellness': return facets.wellness ?? 0;
   }
+}
+
+/*
+ * 무장애 정보 — 서버 렌더(search `AttractionPageRenderer.barrierFreeSection`)와 같은 표 · 같은 순서 · 같은 문구.
+ * 키 표는 search `BarrierFreeInfo.KEYS` 와 같다(원천 키 이름의 오타 `braile` 은 원천 그대로).
+ */
+const BARRIER_FREE_KEYS: ReadonlyArray<{ key: string; ko: string; en: string }> = [
+  { key: 'parking', ko: '주차', en: 'Parking' },
+  { key: 'publictransport', ko: '대중교통', en: 'Public transport' },
+  { key: 'route', ko: '접근로', en: 'Access route' },
+  { key: 'ticketoffice', ko: '매표소', en: 'Ticket office' },
+  { key: 'promotion', ko: '홍보물', en: 'Brochures' },
+  { key: 'wheelchair', ko: '휠체어', en: 'Wheelchairs' },
+  { key: 'exit', ko: '출입통로', en: 'Entrance' },
+  { key: 'elevator', ko: '엘리베이터', en: 'Elevator' },
+  { key: 'restroom', ko: '화장실', en: 'Restrooms' },
+  { key: 'auditorium', ko: '관람석', en: 'Seating' },
+  { key: 'room', ko: '객실', en: 'Rooms' },
+  { key: 'handicapetc', ko: '지체장애 기타', en: 'Mobility, other' },
+  { key: 'braileblock', ko: '점자블록', en: 'Tactile paving' },
+  { key: 'helpdog', ko: '보조견 동반', en: 'Assistance dogs' },
+  { key: 'guidehuman', ko: '안내요원', en: 'Guide staff' },
+  { key: 'audioguide', ko: '오디오가이드', en: 'Audio guide' },
+  { key: 'bigprint', ko: '큰활자 홍보물', en: 'Large print' },
+  { key: 'brailepromotion', ko: '점자 홍보물', en: 'Braille materials' },
+  { key: 'guidesystem', ko: '유도안내설비', en: 'Guidance system' },
+  { key: 'blindhandicapetc', ko: '시각장애 기타', en: 'Vision, other' },
+  { key: 'signguide', ko: '수어 안내', en: 'Sign language' },
+  { key: 'videoguide', ko: '자막 영상 안내', en: 'Captioned video' },
+  { key: 'hearingroom', ko: '청각장애 객실', en: 'Rooms for hearing impaired' },
+  { key: 'hearinghandicapetc', ko: '청각장애 기타', en: 'Hearing, other' },
+  { key: 'stroller', ko: '유모차', en: 'Strollers' },
+  { key: 'lactationroom', ko: '수유실', en: 'Nursing room' },
+  { key: 'babysparechair', ko: '유아용 의자', en: 'Baby chairs' },
+  { key: 'infantsfamilyetc', ko: '영유아 가족 기타', en: 'Families with infants, other' },
+];
+
+/** 상세 위쪽 아이콘 줄 — 긍정 코드만, 이 순서(search `BarrierFreeInfo.ICONS`) */
+const BARRIER_FREE_ICONS: ReadonlyArray<{ code: string; ko: string; en: string }> = [
+  { code: 'WHEELCHAIR', ko: '휠체어', en: 'Wheelchairs' },
+  { code: 'ELEVATOR', ko: '엘리베이터', en: 'Elevator' },
+  { code: 'RESTROOM', ko: '장애인 화장실', en: 'Accessible restroom' },
+  { code: 'PARKING', ko: '장애인 주차', en: 'Accessible parking' },
+  { code: 'STROLLER', ko: '유모차', en: 'Strollers' },
+  { code: 'LACTATION_ROOM', ko: '수유실', en: 'Nursing room' },
+];
+
+export const BARRIER_FREE_TITLE: Record<PlaceLang, string> = { ko: '무장애 정보', en: 'Accessibility' };
+
+export function barrierFreeIcons(a: Attraction, lang: PlaceLang): string[] {
+  const flags = a.barrierFree ?? [];
+  return BARRIER_FREE_ICONS.filter((i) => flags.includes(i.code)).map((i) => i[lang]);
+}
+
+/** 원천 키 순서대로, 값이 있는 줄만 (라벨, 원문 평문) — 문장은 고치지 않는다 */
+export function barrierFreeRows(a: Attraction, lang: PlaceLang): Array<{ key: string; label: string; value: string }> {
+  const detail = a.barrierFreeDetail ?? {};
+  return BARRIER_FREE_KEYS
+    .map((k) => ({ key: k.key, label: k[lang], value: detail[k.key] == null ? '' : sourceText(String(detail[k.key])) }))
+    .filter((r) => r.value.length > 0);
+}
+
+/** 「웰니스 관광 · {테마 이름}」 — 테마가 없으면 null, 이름을 모르면 앞말만 */
+export function wellnessLine(a: Attraction, lang: PlaceLang): string | null {
+  if (!a.wellnessTheme) return null;
+  const head = lang === 'en' ? 'Wellness tourism' : '웰니스 관광';
+  const name = a.wellnessThemeName?.trim();
+  return name ? `${head} · ${name}` : head;
+}
+
+/** 출처 — TourAPI 에 이 관광지가 실제로 쓴 관광공사 원천 이름을 잇는다(서버 렌더 `sourceLine` 과 같은 문구) */
+export function placeSourceLine(a: Attraction | null | undefined, lang: PlaceLang): string {
+  const en = lang === 'en';
+  const hasBarrierFree = (a?.barrierFree?.length ?? 0) > 0 || Object.keys(a?.barrierFreeDetail ?? {}).length > 0;
+  return [
+    en ? 'Source: Korea Tourism Organization TourAPI' : '출처: 한국관광공사 TourAPI',
+    hasBarrierFree ? (en ? 'Barrier-free travel' : '무장애 여행 정보') : null,
+    a?.wellnessTheme ? (en ? 'Wellness tourism' : '웰니스관광 정보') : null,
+  ].filter((s): s is string => s != null).join(' · ');
 }
 
 const KO_DAY: Record<string, string> = { MON: '월', TUE: '화', WED: '수', THU: '목', FRI: '금', SAT: '토', SUN: '일' };

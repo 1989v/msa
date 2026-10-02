@@ -1,0 +1,59 @@
+# 관광지에 붙는 2단계 공공데이터 수집 CronJob — 무장애 여행(KorWithService2) · 웰니스관광(WellnessTursmService).
+#
+# 둘 다 TourAPI contentId 로 기존 관광지에 붙어 별도 표(attraction_barrier_free · attraction_wellness)에 쌓인다.
+# 관광지 bulk upsert(전체 동기화)를 타지 않으므로 다른 잡의 왕복이 이 값을 지우지 않는다.
+#   무장애  목록 areaBasedList2 numOfRows=10000 한 콜(9,630 전량) + 상세 detailWithTour2 하루 ≤ 899콜
+#           (아직 안 받은 곳 → 목록 수정 시각이 바뀐 곳 순). 백필 약 11일, 그 뒤에는 바뀐 곳만.
+#   웰니스  areaBasedList 국문·영문 각 1콜(500건 쪽) — 월요일(KST)만. 언어마다 받은 목록으로 통째로 바꾼다.
+# 하루 호출: 무장애 ≤ 900(한도 1,000) · 웰니스 주 2. 예산 상수는 src/barrier_free.py · src/wellness.py.
+# 한도 초과(429 · resultCode=22)를 받으면 그 API 를 그날 멈추고 받은 몫만 반영한다 — 실패로 치지 않는다.
+# 한 API 가 실패해도 다른 쪽은 받고 exit 1 로 끝난다.
+#
+# 04:30 재색인(attraction-reindex)이 이 값을 색인 문서(barrierFree · wellnessTheme)로 옮긴다.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: place-ingest-attraction-attrs
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: place-ingest
+    app.kubernetes.io/part-of: commerce-platform
+    place.kgd.io/job: "attraction-attrs"
+spec:
+  # 매일 UTC 17:40 = KST 02:40. 03:10 행사·숙박 목록, 04:30 재색인보다 앞이다.
+  schedule: "40 17 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 3000
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: place-ingest
+            app.kubernetes.io/part-of: commerce-platform
+            place.kgd.io/job: "attraction-attrs"
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: ingest
+              image: commerce/place-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--job=attraction-attrs"]
+              env:
+                - name: PLACE_API
+                  value: "http://content:8097"
+                - name: REDIS_HOST
+                  value: "redis"
+                - name: TOUR_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: place-ingest-secrets
+                      key: tour-api-key
+                      optional: true
+              resources:
+                requests: { cpu: 100m, memory: 256Mi }
+                limits:   { memory: 768Mi }
