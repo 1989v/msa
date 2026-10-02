@@ -144,6 +144,7 @@ class AttractionApiReindexTasklet(
             var withRelated = 0L
             var relatedNotActive = 0L
             var extrasLookupFailures = 0L
+            var linksLookupFailures = 0L
 
             while (afterId != null) {
                 val response = placeApiClient.fetchPageAfter(afterId, pageSize)
@@ -178,7 +179,11 @@ class AttractionApiReindexTasklet(
                 // 링크도 페이지 단위로 한 번에 받는다 — 관광지마다 부르면 6만 번이다.
                 val links = active.map { it.id }.chunked(PlaceApiClient.LOOKUP_MAX_BATCH)
                     .fold(emptyMap<Long, String>()) { acc, ids ->
-                        acc + runCatching { placeApiClient.lookupLinks(ids) }.getOrElse { emptyMap() }
+                        acc + runCatching { placeApiClient.lookupLinks(ids) }.getOrElse { e ->
+                            linksLookupFailures++
+                            log.warn(e) { "링크 조회 실패(${ids.size}건) — 이 묶음은 링크 없이 색인한다" }
+                            emptyMap()
+                        }
                     }
 
                 // 부가 정보(무장애 · 웰니스)도 페이지 단위로 한 번에. 못 받으면 그 묶음만 비고 색인은 이어 간다.
@@ -342,6 +347,7 @@ class AttractionApiReindexTasklet(
                     "congestion $withCongestion (unreadable days $unreadableCongestionDays), " +
                     "related $withRelated (not active $relatedNotActive), " +
                     "extras lookup failures $extrasLookupFailures, " +
+                    "links lookup failures $linksLookupFailures, " +
                     "attribute parser v${AttractionAttributeParser.VERSION}, index pass ${elapsedMs(indexStartedAt)}ms"
             }
 
