@@ -150,3 +150,6 @@ protocolVersion2: binary-v2 코덱과 아군 발사 시각/방향 표시를 지�
 
 ## 필드 무리 상태 추가
 protocolVersion3,checkpoint상한29KiB. 두슬롯총60KiB,표시3청크,전체30msg/s제한유지. fieldPacks/fieldPackId포함최대실측checkpoint28740B/두슬롯58059B/표시8676B. 기존codec/저장키와v1읽기는유지.
+
+## southwest-2 지도 호환
+새 MAP_VERSION=origin-se-southwest-2. 이전지도save/recovery는원본바이트를보존하며읽기를거부하고,새게임의명시적덮어쓰기만허용한다. 협동HELLO도지도버전불일치를거부한다. enemy_tower2개/siteId/enemyTowerSites/tier포함최대실측checkpoint28884B/두슬롯58353B/표시8748B3청크,기존상한이내.
