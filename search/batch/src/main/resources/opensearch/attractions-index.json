@@ -548,6 +548,10 @@
       "wellnessThemeName": {
         "type": "keyword",
         "index": false
+      },
+      "congestion": {
+        "type": "object",
+        "enabled": false
       }
     }
   }

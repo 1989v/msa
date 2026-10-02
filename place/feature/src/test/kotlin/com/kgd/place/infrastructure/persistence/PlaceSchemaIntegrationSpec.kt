@@ -6,11 +6,15 @@ import com.kgd.place.domain.attraction.model.AttractionWellness
 import com.kgd.place.domain.attraction.model.EmbeddingModelRef
 import com.kgd.place.domain.attraction.model.SimilarAttractions
 import com.kgd.place.infrastructure.config.PlaceDataSourceConfig
+import com.kgd.place.domain.attraction.model.AttractionCongestion
+import com.kgd.place.domain.attraction.model.CongestionMatch
+import com.kgd.place.infrastructure.persistence.attraction.adapter.AttractionCongestionRepositoryAdapter
 import com.kgd.place.infrastructure.persistence.attraction.adapter.AttractionExtrasRepositoryAdapter
 import com.kgd.place.infrastructure.persistence.attraction.adapter.AttractionRepositoryAdapter
 import com.kgd.place.infrastructure.persistence.attraction.adapter.AttractionSimilarRepositoryAdapter
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionBarrierFreeJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionCategoryCodeJpaRepository
+import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionCongestionJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionLinkJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionSimilarJpaRepository
@@ -92,6 +96,7 @@ class PlaceSchemaIntegrationSpec(
     @Autowired private val w1: WeatherShortForecastJpaRepository,
     @Autowired private val w2: WeatherMidRegionJpaRepository,
     @Autowired private val w3: WeatherMidForecastJpaRepository,
+    @Autowired private val c0: AttractionCongestionJpaRepository,
     @Autowired private val tx: TransactionTemplate,
 ) : BehaviorSpec({
 
@@ -100,7 +105,7 @@ class PlaceSchemaIntegrationSpec(
             .config(enabledIf = { dockerAvailable }) {
                 // count() 는 엔티티마다 실제 SQL 을 MySQL 로 보낸다 — 컬럼이 어긋나면
                 // validate 에서 컨텍스트가 아예 안 뜨고, 뜬 뒤에도 매핑이 틀리면 여기서 터진다.
-                listOf(r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, w0, w1, w2, w3).map { it.count() }.size shouldBe 14
+                listOf(r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, w0, w1, w2, w3, c0).map { it.count() }.size shouldBe 15
             }
     }
 
@@ -212,6 +217,44 @@ class PlaceSchemaIntegrationSpec(
                 tx.execute { adapter.replaceWellness("ko", listOf(tag("2994116")), synced) } shouldBe
                     setOf(ids.getValue("2994116"), ids.getValue("127956"))
                 adapter.findWellnessByAttractionIds(ids.values).map { it.contentId } shouldBe listOf("2994116")
+            }
+    }
+
+    Given("집중률을 V28 표에 시군구 단위로 적재할 때") {
+        Then("받은 시군구만 통째로 바뀌고 다른 시군구는 남으며, 원문에서 예측일 순 값이 읽히고 화면에 쓰는 매칭만 나온다")
+            .config(enabledIf = { dockerAvailable }) {
+                val adapter = AttractionCongestionRepositoryAdapter(c0)
+                // 해운대구·종로구 운영 표본(2026-10-02) 모양 — 원문은 예측일 순서를 일부러 섞는다
+                fun raw(name: String, signgu: String, vararg days: Pair<String, String>) = days.joinToString(",", "[", "]") { (ymd, rate) ->
+                    """{"baseYmd":"$ymd","areaCd":"${signgu.take(2)}","signguCd":"$signgu","tAtsNm":"$name","cnctrRate":"$rate"}"""
+                }
+                fun row(signgu: String, name: String, id: Long?, method: CongestionMatch, vararg days: Pair<String, String>) =
+                    AttractionCongestion(signgu, name, signgu.take(2), null, null, raw(name, signgu, *days),
+                        LocalDate.of(2026, 10, 2), LocalDate.of(2026, 10, 3), id, method)
+                val at = LocalDateTime.of(2026, 10, 3, 2, 0)
+
+                tx.execute {
+                    adapter.replaceSigungu("26350", listOf(
+                        row("26350", "해운대해수욕장", 501L, CongestionMatch.EXACT, "20261003" to "52.5", "20261002" to "47.16"),
+                        row("26350", "부산 해운대시장", 502L, CongestionMatch.CONTAINS, "20261002" to "30"),
+                        row("26350", "SEA LIFE 부산아쿠아리움", null, CongestionMatch.NONE, "20261002" to "10"),
+                    ), at)
+                }
+                tx.execute { adapter.replaceSigungu("11110", listOf(row("11110", "경복궁", 601L, CongestionMatch.EXACT, "20261002" to "99.24")), at) }
+                // 다음 날 해운대구만 다시 — 같은 이름이 같은 트랜잭션에서 지워졌다 들어가도 유니크 키에 걸리지 않고, 종로구는 남는다
+                tx.execute {
+                    adapter.replaceSigungu("26350", listOf(
+                        row("26350", "해운대해수욕장", 501L, CongestionMatch.EXACT, "20261003" to "60"),
+                        row("26350", "부산 해운대시장", 502L, CongestionMatch.CONTAINS, "20261002" to "30"),
+                    ), at)
+                } shouldBe 3
+
+                c0.findAll().map { it.signguCd to it.tAtsNm }.sortedBy { it.second } shouldBe
+                    listOf("11110" to "경복궁", "26350" to "부산 해운대시장", "26350" to "해운대해수욕장")
+                val served = adapter.findForecasts(listOf(501L, 502L, 601L), CongestionMatch.SERVED).associateBy { it.attractionId }
+                served.keys shouldBe setOf(501L, 601L)
+                served.getValue(501L).days.map { it.date to it.rate } shouldBe listOf(LocalDate.of(2026, 10, 3) to 60.0)
+                served.getValue(601L).days.single().rate shouldBe 99.24
             }
     }
 

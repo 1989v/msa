@@ -540,6 +540,8 @@ val searchReadRequired = mapOf(
         "eventStartEffective", "eventEndEffective", "courseStops", "links",
         // 무장애·웰니스 — 상세 절·서버 렌더·목록 칩이 읽는다. 관광지 화면은 place DB 를 읽지 않아 색인 말고는 출처가 없다
         "barrierFree", "barrierFreeDetail", "wellnessTheme", "wellnessThemeName",
+        // 집중률 — 상세 「혼잡 예측」이 읽는다. 빠지면 절이 조용히 사라진다
+        "congestion",
     ),
 )
 

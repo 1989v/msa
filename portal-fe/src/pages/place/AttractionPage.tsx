@@ -36,6 +36,7 @@ import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import AttractionLinks from './AttractionLinks';
 import EventLine from './EventLine';
 import AttractionWeather from './AttractionWeather';
+import AttractionCongestion from './AttractionCongestion';
 import { googleMapsSearchUrl, loadGoogleMaps, mapsApiKey } from './googleMaps';
 import Footer from '../../components/Footer';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
@@ -575,6 +576,11 @@ export default function AttractionPage() {
             {/* 날씨 — 서버 렌더에는 없는 절이라 위의 서버 렌더와 같은 순서 묶음 뒤에 둔다 */}
             {weather && (
               <AttractionWeather outlook={weather} place={regionPlaceName(attraction, lang)} today={today} lang={lang} />
+            )}
+
+            {/* 혼잡 예측 — 색인에 실린 값(하루 한 번). 서버 렌더에는 없는 절이라 날씨 옆에 둔다 */}
+            {attraction.congestion && attraction.congestion.length > 0 && (
+              <AttractionCongestion days={attraction.congestion} today={today} lang={lang} />
             )}
 
             {/* 지도 — 링크만으로는 "어디쯤인지" 를 이 화면에서 알 수 없다.

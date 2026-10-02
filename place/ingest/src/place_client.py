@@ -159,6 +159,13 @@ def put_region_visitors(records: list[dict]) -> dict:
     return total
 
 
+def put_congestion(sigungu: str, records: list[dict]) -> dict:
+    """관광지 집중률 — 그 시군구의 행을 통째로 바꾼다(새 예측이 옛 예측을 대체). 보내지 않은 시군구는 건드리지 않는다.
+    한 시군구는 최대 244곳(제주시, 실측)이라 한 요청이다."""
+    return _request("PUT", f"/internal/attractions/congestion/{urllib.parse.quote(sigungu)}",
+                    {"items": records}, timeout=300)["data"]
+
+
 def upsert_category_codes(rows: list[dict]) -> int:
     """분류체계 코드표 — (lang, code) 멱등 upsert. 표가 작아 한 번에 보낸다."""
     if not rows:

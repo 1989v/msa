@@ -102,8 +102,16 @@ class PlaceApiClient(
     /** `/internal/attractions/similar/lookup` 한 건 — 순위 순 id 와 그 목록을 계산한 벡터의 스탬프. */
     data class SimilarDto(val modelRef: String, val ids: List<Long>)
 
-    /** 관광지에 붙는 부가 정보 한 건 — 무장애(긍정 코드 · 상세 원문)와 웰니스 테마 코드. 둘 다 없을 수 있다. */
-    data class ExtrasDto(val barrierFreeFlags: List<String>?, val barrierFreeDetailRaw: String?, val wellnessThemeCode: String?)
+    /** 관광지에 붙는 부가 정보 한 건 — 무장애(긍정 코드 · 상세 원문) · 웰니스 테마 코드 · 집중률 예측. 다 없을 수 있다. */
+    data class ExtrasDto(
+        val barrierFreeFlags: List<String>?,
+        val barrierFreeDetailRaw: String?,
+        val wellnessThemeCode: String?,
+        val congestion: List<CongestionDayDto>? = null,
+    )
+
+    /** 집중률 하루 — [date] 는 place 가 준 `yyyy-MM-dd` 문자열 그대로, [rate] 는 원천 값. */
+    data class CongestionDayDto(val date: String, val rate: Double)
 
     data class RegionPageResponse(
         val regions: List<RegionDto>,
@@ -369,7 +377,7 @@ class PlaceApiClient(
     }
 
     /**
-     * 부가 정보(무장애 · 웰니스) 묶음 조회 — 표마다 따로 부르지 않고 한 번에 받는다. 아무것도 없는 id 는 응답에 없다.
+     * 부가 정보(무장애 · 웰니스 · 집중률) 묶음 조회 — 표마다 따로 부르지 않고 한 번에 받는다. 아무것도 없는 id 는 응답에 없다.
      * 무장애 상세는 원문 문자열 그대로 받는다 — 줄을 고르는 규칙은 도메인([com.kgd.search.domain.attraction.model.BarrierFreeInfo])이 갖는다.
      */
     suspend fun lookupExtras(ids: List<Long>): Map<Long, ExtrasDto> {
@@ -391,10 +399,19 @@ class PlaceApiClient(
             val barrierFree = item["barrierFree"] as? Map<String, Any?>
             @Suppress("UNCHECKED_CAST")
             val wellness = item["wellness"] as? Map<String, Any?>
+            @Suppress("UNCHECKED_CAST")
+            val congestion = item["congestion"] as? Map<String, Any?>
             (item["attractionId"] as Number).toLong() to ExtrasDto(
                 barrierFreeFlags = (barrierFree?.get("flags") as? List<*>)?.map { it.toString() },
                 barrierFreeDetailRaw = barrierFree?.get("detailRaw") as? String,
                 wellnessThemeCode = wellness?.get("themaCd") as? String,
+                // 날짜·값이 빠진 날은 건너뛴다 — 0 으로 채우지 않는다
+                congestion = (congestion?.get("days") as? List<*>)?.mapNotNull { day ->
+                    val d = day as? Map<*, *> ?: return@mapNotNull null
+                    val date = d["date"] as? String ?: return@mapNotNull null
+                    val rate = (d["rate"] as? Number)?.toDouble() ?: return@mapNotNull null
+                    CongestionDayDto(date, rate)
+                },
             )
         }
     }

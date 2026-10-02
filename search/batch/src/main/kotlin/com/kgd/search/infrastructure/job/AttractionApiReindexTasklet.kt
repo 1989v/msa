@@ -7,6 +7,7 @@ import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionKey
 import com.kgd.search.domain.attraction.model.AttractionRegion
 import com.kgd.search.domain.attraction.model.BarrierFreeInfo
+import com.kgd.search.domain.attraction.model.CongestionDay
 import com.kgd.search.domain.attraction.model.CourseStopsParse
 import com.kgd.search.domain.attraction.model.CourseStopsParser
 import com.kgd.search.domain.attraction.model.EventDateIssue
@@ -137,6 +138,8 @@ class AttractionApiReindexTasklet(
             var withBarrierFree = 0L
             var unreadableBarrierFree = 0L
             var withWellness = 0L
+            var withCongestion = 0L
+            var unreadableCongestionDays = 0L
             var extrasLookupFailures = 0L
 
             while (afterId != null) {
@@ -193,6 +196,8 @@ class AttractionApiReindexTasklet(
                         withWellness++
                         WellnessTheme(code, categoryNames[attraction.lang]?.get(code))
                     }
+                    val congestion = extra?.congestion?.let { congestionOf(it) { unreadableCongestionDays++ } }
+                    if (congestion != null) withCongestion++
                     val embedding = embeddings[attraction.id]?.let {
                         AttractionIndexDocument.Embedding(
                             vector = it.vector,
@@ -296,6 +301,7 @@ class AttractionApiReindexTasklet(
                             courseStops = courseStops,
                             barrierFree = barrierFree,
                             wellness = wellness,
+                            congestion = congestion,
                         ),
                         embedding,
                     )
@@ -325,6 +331,7 @@ class AttractionApiReindexTasklet(
                     "courses stops $withCourseStops, unreadable infoRaw $unreadableCourse, unmatched stops $unmatchedCourseStops, " +
                     // 부가 정보: 무장애 적재 · 상세 원문 해석 실패 · 웰니스 적재 · 조회 실패 묶음
                     "barrier-free $withBarrierFree (unreadable $unreadableBarrierFree), wellness $withWellness, " +
+                    "congestion $withCongestion (unreadable days $unreadableCongestionDays), " +
                     "extras lookup failures $extrasLookupFailures, " +
                     "attribute parser v${AttractionAttributeParser.VERSION}, index pass ${elapsedMs(indexStartedAt)}ms"
             }
@@ -470,6 +477,15 @@ class AttractionApiReindexTasklet(
         val info = BarrierFreeInfo(dto.barrierFreeFlags.orEmpty(), BarrierFreeInfo.detailOf(detail))
         return info.takeIf { it.flags.isNotEmpty() || it.detail.isNotEmpty() }
     }
+
+    /** 집중률 원천 → 도메인(예측일 순). 날짜를 못 읽는 날은 빼고 [onUnreadable] 로 센다. 남는 날이 없으면 null. */
+    private fun congestionOf(days: List<PlaceApiClient.CongestionDayDto>, onUnreadable: () -> Unit): List<CongestionDay>? =
+        days.mapNotNull { day ->
+            runCatching { LocalDate.parse(day.date) }.getOrNull()?.let { CongestionDay(it, day.rate) } ?: run {
+                onUnreadable()
+                null
+            }
+        }.sortedBy { it.date }.takeIf { it.isNotEmpty() }
 
     private fun elapsedMs(startedAt: Long) = (System.nanoTime() - startedAt) / 1_000_000
 

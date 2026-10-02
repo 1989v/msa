@@ -88,4 +88,6 @@ data class AttractionDocument(
     val barrierFree: BarrierFreeInfo? = null,
     /** 웰니스관광 테마. 웰니스 목록에 없는 곳·옛 색인 문서는 null. */
     val wellness: WellnessTheme? = null,
+    /** 집중률 예측(예측일 순, 국문). 이름 매칭으로 이어지지 않은 곳·옛 색인 문서는 null. */
+    val congestion: List<CongestionDay>? = null,
 )

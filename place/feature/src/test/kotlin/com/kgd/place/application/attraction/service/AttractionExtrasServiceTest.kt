@@ -1,11 +1,15 @@
 package com.kgd.place.application.attraction.service
 
+import com.kgd.place.application.attraction.port.AttractionCongestionRepositoryPort
 import com.kgd.place.application.attraction.port.AttractionExtrasRepositoryPort
 import com.kgd.place.application.attraction.usecase.LookupAttractionExtrasUseCase
 import com.kgd.place.application.attraction.usecase.SyncAttractionBarrierFreeUseCase
 import com.kgd.place.application.attraction.usecase.SyncAttractionWellnessUseCase
 import com.kgd.place.domain.attraction.model.AttractionBarrierFree
 import com.kgd.place.domain.attraction.model.AttractionWellness
+import com.kgd.place.domain.attraction.model.CongestionDay
+import com.kgd.place.domain.attraction.model.CongestionForecast
+import com.kgd.place.domain.attraction.model.CongestionMatch
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -14,6 +18,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 /**
@@ -22,7 +27,8 @@ import java.time.LocalDateTime
  */
 class AttractionExtrasServiceTest : BehaviorSpec({
     val repository = mockk<AttractionExtrasRepositoryPort>()
-    val service = AttractionExtrasService(repository)
+    val congestion = mockk<AttractionCongestionRepositoryPort>()
+    val service = AttractionExtrasService(repository, congestion)
 
     val listRaw = """{"contentid":"125894","contenttypeid":"12","title":"마곡사 [유네스코 세계유산]","modifiedtime":"20251224171858"}"""
     val detailRaw = """{"contentid":"126508","wheelchair":"대여가능","restroom":"장애인 화장실 있음","elevator":""}"""
@@ -30,7 +36,8 @@ class AttractionExtrasServiceTest : BehaviorSpec({
     val synced = LocalDateTime.of(2026, 10, 3, 2, 41)
 
     beforeTest {
-        clearMocks(repository)
+        clearMocks(repository, congestion)
+        every { congestion.findForecasts(any(), any()) } returns emptyList()
         every { repository.saveBarrierFree(any()) } answers { firstArg<List<AttractionBarrierFree>>().size }
     }
 
@@ -134,6 +141,33 @@ class AttractionExtrasServiceTest : BehaviorSpec({
                 ),
                 LookupAttractionExtrasUseCase.Found(21L, null, LookupAttractionExtrasUseCase.Wellness("EX050100")),
             )
+        }
+    }
+
+    Given("재색인이 집중률이 있는 id 묶음을 조회할 때") {
+        // 해운대구 운영 표본(2026-10-02): 「해운대해수욕장」 정확 일치. 같은 관광지에 정규화로 이은 다른 이름이 하나 더 있다고 둔다
+        val oct2 = LocalDate.of(2026, 10, 2)
+        fun days(vararg rates: Double) = rates.mapIndexed { i, r -> CongestionDay(oct2.plusDays(i.toLong()), r) }
+        Then("화면에 쓰는 매칭(정확·정규화)만 묻고, 한 관광지에 둘이 이어졌으면 정확 쪽을 날짜 순으로 싣는다") {
+            val asked = slot<Set<CongestionMatch>>()
+            every { repository.findBarrierFreeByAttractionIds(any()) } returns emptyList()
+            every { repository.findWellnessByAttractionIds(any()) } returns emptyList()
+            every { congestion.findForecasts(listOf(31L, 32L), capture(asked)) } returns listOf(
+                CongestionForecast(31L, CongestionMatch.NORMALIZED, oct2.plusDays(29), days(10.0, 20.0)),
+                CongestionForecast(31L, CongestionMatch.EXACT, oct2.plusDays(29), days(47.16, 52.5)),
+            )
+
+            service.lookup(listOf(31L, 32L)) shouldBe listOf(
+                LookupAttractionExtrasUseCase.Found(
+                    31L, null, null,
+                    LookupAttractionExtrasUseCase.Congestion(
+                        "EXACT",
+                        listOf(LookupAttractionExtrasUseCase.Day("2026-10-02", 47.16), LookupAttractionExtrasUseCase.Day("2026-10-03", 52.5)),
+                    ),
+                ),
+            )
+            // 포함 매칭은 정밀도 확인 전(Q-P2-MATCH)이라 묻지도 않는다
+            asked.captured shouldBe setOf(CongestionMatch.EXACT, CongestionMatch.NORMALIZED)
         }
     }
 })

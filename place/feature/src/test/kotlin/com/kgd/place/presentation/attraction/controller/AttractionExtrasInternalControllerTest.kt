@@ -71,4 +71,19 @@ class AttractionExtrasInternalControllerTest : BehaviorSpec({
             out.path("items").path(0).path("wellness").isNull shouldBe true
         }
     }
+
+    Given("집중률이 있는 곳의 묶음 조회") {
+        Then("search-batch 가 읽는 이름(congestion.matchMethod · days[].date · days[].rate)으로 나간다") {
+            every { lookup.lookup(listOf(31L)) } returns listOf(
+                LookupAttractionExtrasUseCase.Found(
+                    31L, null, null,
+                    LookupAttractionExtrasUseCase.Congestion("EXACT", listOf(LookupAttractionExtrasUseCase.Day("2026-10-02", 47.16))),
+                ),
+            )
+            val item = json.readTree(json.writeValueAsString(controller.lookup(ExtrasLookupRequest(listOf(31L))).data)).path("items").path(0)
+            item.path("congestion").path("matchMethod").asString() shouldBe "EXACT"
+            item.path("congestion").path("days").path(0).path("date").asString() shouldBe "2026-10-02"
+            item.path("congestion").path("days").path(0).path("rate").asDouble() shouldBe 47.16
+        }
+    }
 })

@@ -269,5 +269,6 @@ class SearchAttractionService(
         barrierFreeDetail = if (summarize) null else barrierFree?.detail?.takeIf { it.isNotEmpty() },
         wellnessTheme = wellness?.code,
         wellnessThemeName = wellness?.name,
+        congestion = if (summarize) null else congestion?.map { SearchAttractionUseCase.CongestionDay(it.date, it.rate) },
     )
 }

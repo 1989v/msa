@@ -1,0 +1,55 @@
+# 관광지 집중률 수집 CronJob — 한국관광공사 빅데이터 TatsCnctrRateService tatsCnctrRatedList.
+#
+# 원천 행은 (관광지 이름 × 예측일), 오늘부터 앞 30일. 시군구를 주지 않으면 0건이라 시군구마다 1콜(numOfRows=10000) —
+# 하루 269콜(한도 1,000, 예산 상수 DAILY_BUDGET=290 은 src/congestion.py).
+# contentId 가 없어 이름 + 시군구로 같은 시군구 국문 관광지에 매칭한다(src/name_match.py, 연관 관광지와 공용).
+# 값은 attractions 컬럼이 아니라 별도 표(attraction_congestion)에 시군구 단위로 통째로 바뀐다 — 0건·실패 시군구는 보내지 않아 이전 값이 남는다.
+# 0건 시군구 목록을 로그에 남긴다(2026-10-02 실측: 광주·전남은 통합 12xxx · 옛 29·46 모두 0건, Q-P2-CODE12).
+# 한도 초과(429 · resultCode=22)면 받은 몫만 반영하고 실패로 치지 않는다. 실패한 시군구가 있거나 전부 0건이면 exit 1.
+#
+# 04:30 재색인(attraction-reindex)이 정확·정규화로 이은 관광지만 색인 문서(congestion)로 옮긴다.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: place-ingest-congestion
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: place-ingest
+    app.kubernetes.io/part-of: commerce-platform
+    place.kgd.io/job: "congestion"
+spec:
+  # 매일 UTC 17:00 = KST 02:00. 02:30 방문자 · 02:40 무장애 · 04:30 재색인보다 앞이다.
+  schedule: "0 17 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 1200
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: place-ingest
+            app.kubernetes.io/part-of: commerce-platform
+            place.kgd.io/job: "congestion"
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: ingest
+              image: commerce/place-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--job=congestion"]
+              env:
+                - name: PLACE_API
+                  value: "http://content:8097"
+                - name: TOUR_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: place-ingest-secrets
+                      key: tour-api-key
+                      optional: true
+              resources:
+                requests: { cpu: 100m, memory: 256Mi }
+                limits:   { memory: 768Mi }

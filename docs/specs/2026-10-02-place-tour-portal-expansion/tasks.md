@@ -221,11 +221,11 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
     - [x] 12.D.3 Verify: `cd place/ingest && python -m pytest -q tests/weather_grid_test.py tests/weather_test.py && cd ../.. && ./gradlew :place:feature:test --tests '*Weather*' && (cd portal-fe && npx vitest run src/pages/place/__tests__/placeServingPaths.test.tsx src/pages/place/__tests__/AttractionPage.test.tsx)`
     - [x] 12.D.4 배포: content(V27) → place-ingest → portal-fe
     - [x] 12.D.5 운영 확인: 회차당 호출 = 고유 격자 수 · 하루 합 ≤ 1,000 · 표본 상세 날씨 절과 원천 값 대조 · CDP 4조합
-  - [ ] 12.E 집중률 (V28 · `place-ingest-congestion` 매일 02:00 · 하루 269콜)
-    - [ ] 12.E.1 Write tests: 이름 매칭 순수 함수 — 실측 세 시군구 원천 행 픽스처에서 정확 284 · 정규화 306 · 모호 4(설계 §2.1 수치) · 시군구 단위 교체가 받지 못한 시군구를 지우지 않음 · 색인 `congestion` 왕복 · 화면이 오늘 이전 날짜를 그리지 않음
-    - [ ] 12.E.2 구현: V28 · 매칭 함수(연관과 공용) · 잡 · lookup 확장 · 색인 필드 · 상세 「혼잡 예측」 · 0건 시군구 로그(Q-P2-CODE12)
-    - [ ] 12.E.3 Verify: `cd place/ingest && python -m pytest -q tests/name_match_test.py tests/congestion_test.py && cd ../.. && ./gradlew :search:batch:test --tests '*AttractionApiReindexTaskletTest' && ./gradlew verifySearchIndexContract && (cd portal-fe && npx vitest run src/pages/place/__tests__/AttractionPage.test.tsx)`
-    - [ ] 12.E.4 배포: content(V28) → place-ingest → search-batch → portal-fe
+  - [x] 12.E 집중률 (V28 · `place-ingest-congestion` 매일 02:00 · 하루 269콜)
+    - [x] 12.E.1 Write tests: 이름 매칭 순수 함수 — 실측 세 시군구 원천 행 픽스처에서 정확 284 · 정규화 306 · 모호 4(설계 §2.1 수치) · 시군구 단위 교체가 받지 못한 시군구를 지우지 않음 · 색인 `congestion` 왕복 · 화면이 오늘 이전 날짜를 그리지 않음
+    - [x] 12.E.2 구현: V28 · 매칭 함수(연관과 공용) · 잡 · lookup 확장 · 색인 필드 · 상세 「혼잡 예측」 · 0건 시군구 로그(Q-P2-CODE12)
+    - [x] 12.E.3 Verify: `cd place/ingest && python -m pytest -q tests/name_match_test.py tests/congestion_test.py && cd ../.. && ./gradlew :search:batch:test --tests '*AttractionApiReindexTaskletTest' && ./gradlew verifySearchIndexContract && (cd portal-fe && npx vitest run src/pages/place/__tests__/AttractionPage.test.tsx)`
+    - [x] 12.E.4 배포: content(V28) → place-ingest → search-batch → portal-fe
     - [ ] 12.E.5 운영 확인: 269콜 · 매칭 방법별 건수(전국) · Q-P2-CODE12 결론 · 재색인 뒤 `congestion` 문서 수
   - [ ] 12.F 연관 관광지 (V29 · `place-ingest-related` 매월 12일 02:20 · 월 269콜)
     - [ ] 12.F.1 Write tests: 출발·대상 매칭(실측 픽스처: 출발 정규화 178/236 · 대상 관광지 448/867) · 관광지로 링크된 대상만 최대 6 · 서버 렌더·화면 같은 목록 · 비슷한 곳과 겹쳐도 각 절 유지

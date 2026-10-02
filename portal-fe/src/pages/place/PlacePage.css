@@ -1597,6 +1597,73 @@ button.place-card {
   color: var(--ko-text-muted);
 }
 
+/* 관광지 상세 「혼잡 예측」 — 앞 30일 막대, 높이는 집중률 그대로(0~100). 색은 토큰만 쓴다(DESIGN.md) */
+.place-congestion {
+  margin-top: 1rem;
+}
+
+.place-congestion-summary {
+  margin: 0 0 0.4rem;
+  font-size: 0.85rem;
+  color: var(--ko-text-secondary);
+}
+
+.place-congestion-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.place-congestion-day {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.place-congestion-bar {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: 6rem;
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+.place-congestion-fill {
+  display: block;
+  width: 100%;
+  min-height: 1px;
+  border-radius: 2px 2px 0 0;
+  background: var(--ko-border-strong);
+}
+
+.place-congestion-day.is-today .place-congestion-fill {
+  background: var(--ko-accent-primary);
+}
+
+.place-congestion-label {
+  min-height: 1em;
+  font-family: var(--kh-font-mono);
+  font-size: 0.65rem;
+  color: var(--ko-text-muted);
+  white-space: nowrap;
+}
+
+.place-congestion-day.is-today .place-congestion-label {
+  color: var(--ko-text-primary);
+}
+
+.place-congestion-note {
+  margin: 0.4rem 0 0;
+  font-size: 0.75rem;
+  color: var(--ko-text-muted);
+}
+
 /* 관광지 상세 「○○구 날씨」 — 오늘 ~ 10일 한 줄씩. 색은 토큰만 쓴다(DESIGN.md) */
 .place-weather {
   margin-top: 1rem;

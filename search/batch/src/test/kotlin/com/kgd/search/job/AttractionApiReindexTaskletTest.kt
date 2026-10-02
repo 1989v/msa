@@ -511,6 +511,15 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
             202L to PlaceApiClient.ExtrasDto(null, null, "EX050100"),
             // 상세 원문을 못 읽으면 코드만 싣는다
             401L to PlaceApiClient.ExtrasDto(listOf("WHEELCHAIR"), "{not json", null),
+            // 집중률 — 해운대해수욕장 운영 응답(2026-10-02) 앞 사흘을 순서를 섞어서, 날짜를 못 읽는 날 하나를 끼워서
+            402L to PlaceApiClient.ExtrasDto(
+                null, null, null,
+                listOf(
+                    PlaceApiClient.CongestionDayDto("2026-10-03", 98.14),
+                    PlaceApiClient.CongestionDayDto("2026-10-02", 84.23),
+                    PlaceApiClient.CongestionDayDto("20261004", 93.41),
+                ),
+            ),
         )
 
         `when`("재색인하면") {
@@ -553,6 +562,14 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                     sources.getValue(id).keys shouldNotContain "barrierFree"
                     sources.getValue(id).keys shouldNotContain "wellnessTheme"
                 }
+            }
+
+            then("집중률은 읽을 수 있는 날만 예측일 순으로 yyyy-MM-dd · 원천 값 그대로 싣고, 없는 문서는 필드가 없다") {
+                sources.getValue("402")["congestion"] shouldBe listOf(
+                    mapOf("date" to "2026-10-02", "rate" to 84.23),
+                    mapOf("date" to "2026-10-03", "rate" to 98.14),
+                )
+                listOf("101", "201", "202", "401").forEach { id -> sources.getValue(id).keys shouldNotContain "congestion" }
             }
 
             then("행사는 정규화한 유효 기간을 yyyy-MM-dd 로 싣고, 날짜 없는 행사와 행사 아닌 문서는 필드가 없다") {
@@ -628,7 +645,7 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                 val complete = logs.list.map { it.formattedMessage }.single { it.startsWith("Attraction reindex complete") }
                 complete shouldContain "events (today 2026-10-02) period 3, S>E 1, no date 1"
                 complete shouldContain "courses stops 1, unreadable infoRaw 1, unmatched stops 5"
-                complete shouldContain "barrier-free 2 (unreadable 1), wellness 1, extras lookup failures 0"
+                complete shouldContain "barrier-free 2 (unreadable 1), wellness 1, congestion 1 (unreadable days 1), extras lookup failures 0"
                 logs.list.map { it.formattedMessage }.single { it.startsWith("Region pass") } shouldContain
                     "3 ended/undated events left out as of 2026-10-02"
             }

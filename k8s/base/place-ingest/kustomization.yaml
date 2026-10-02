@@ -14,3 +14,4 @@ resources:
   - cronjob-visitors.yaml
   - cronjob-weather-short.yaml
   - cronjob-weather-mid.yaml
+  - cronjob-congestion.yaml

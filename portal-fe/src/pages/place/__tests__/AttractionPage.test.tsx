@@ -650,3 +650,56 @@ describe('AttractionPage 날씨', () => {
     expect(section.textContent).toContain('Korea Meteorological Administration');
   });
 });
+
+describe('AttractionPage 혼잡 예측', () => {
+  const today = todayKst();
+  const plus = (n: number) => new Date(Date.parse(`${today}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
+
+  beforeEach(() => {
+    vi.mocked(searchAttractions).mockResolvedValue({ searchId: 's', attractions: [], totalElements: 0, totalPages: 0, currentPage: 0 });
+  });
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+    vi.mocked(fetchWeather).mockResolvedValue({ sigunguCode: '11110', shortBaseAt: null, midTmFc: null, days: [] });
+  });
+
+  it('오늘부터 막대로 그리고(어제는 그리지 않는다), 높이는 집중률 그대로 · 오늘 표시 · 예측 안내와 출처를 단다', async () => {
+    // 해운대해수욕장 운영 응답(2026-10-02) 앞 사흘 값 — 색인이 자정을 넘겨 어제 날이 남은 모양
+    vi.mocked(fetchAttraction).mockResolvedValue({
+      ...enriched,
+      congestion: [
+        { date: plus(-1), rate: 50 },
+        { date: today, rate: 84.23 },
+        { date: plus(1), rate: 98.14 },
+      ],
+    });
+    renderAt('/attractions/100');
+    const section = await screen.findByRole('region', { name: '혼잡 예측' });
+
+    const bars = within(section).getAllByRole('listitem');
+    expect(bars).toHaveLength(2);
+    expect(bars[0].getAttribute('aria-current')).toBe('date');
+    expect(bars[0].getAttribute('aria-label')).toMatch(/^오늘 \d+월 \d+일 \(.\) — 집중률 84\.2$/);
+    expect(bars[1].getAttribute('aria-label')).toContain('집중률 98.1');
+    expect((bars[1].querySelector('.place-congestion-fill') as HTMLElement).style.height).toBe('98.14%');
+    expect(section.textContent).not.toContain('집중률 50');
+    expect(within(section).getByText(/오늘 집중률 84\.2 · 가장 높은 날/)).toBeInTheDocument();
+    expect(within(section).getByText(/예측값/)).toBeInTheDocument();
+    expect(within(section).getByText('출처: 한국관광공사 빅데이터 서비스(관광지 집중률 예측)')).toBeInTheDocument();
+  });
+
+  it('남은 날이 모두 오늘 이전이면 절을 그리지 않는다(0 으로 그리지 않는다)', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, congestion: [{ date: plus(-2), rate: 40 }, { date: plus(-1), rate: 60 }] });
+    renderAt('/attractions/100');
+    await screen.findByText('조선의 법궁이다.');
+    expect(screen.queryByRole('region', { name: '혼잡 예측' })).toBeNull();
+  });
+
+  it('집중률이 없는 문서는 절이 없다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue(enriched);
+    renderAt('/attractions/100');
+    await screen.findByText('조선의 법궁이다.');
+    expect(screen.queryByRole('region', { name: '혼잡 예측' })).toBeNull();
+  });
+});

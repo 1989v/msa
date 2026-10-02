@@ -156,7 +156,8 @@ questions:
     question: 걷기길·캠핑·웰니스처럼 TourAPI 가 아닌 원천을 attractions 행으로 넣을 때 자연키(contentId, lang) 충돌
   - id: Q-P2-CODE12
     phase: pre-impl
-    status: open
+    status: resolved
+    answer: 집중률은 광주·전남을 통합 코드 12xxx 로도 옛 29·46 으로도 주지 않는다(여수·순천·목포·광주 동구, 섞은 조합까지 0건, 대조 강릉 51150 은 2,880행). 옛 코드 매핑표 시드안은 무효 — 0건 로그로 지켜본다(implementation/phase2-congestion-match.md)
     question: 집중률·연관 API 가 광주·전남 통합 코드 12xxx 로 답하는지(실측은 11·26·50 만)
     default: >-
       첫 수집이 시군구 269 전부를 부르고 0건 시군구 목록을 로그에 남긴다. 12xxx 가 0건이면 옛 29·46 코드 매핑표를 시드로 두고 다시 부른다

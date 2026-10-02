@@ -32,6 +32,7 @@ TourAPI(KorService2/EngService2)
 | `visitors` | 지역 방문자(관광공사 빅데이터) — 기초·광역 열흘 창(D-37~D-28, 공개 지연 30일) 하루 2콜 → `region_visitor_daily` + 허브 캐시 덮기. `--from=YYYY-MM` 이면 그 달부터 백필 1회(달마다 4콜) | `place-ingest-visitors` 매일 KST 02:30 |
 | `weather-short` | 기상청 단기예보 — 시군구 대표점 → 고유 격자 243 마다 최근 발표(05·17시) 1콜 → `weather_short_forecast` + 그 격자를 쓰는 시군구 날씨 캐시 덮기. 회차 시작에 격자·중기 구역 매핑을 다시 보낸다 | `place-ingest-weather-short` 매일 KST 05:25 · 17:25 |
 | `weather-mid` | 기상청 중기예보 06시 발표 — 육상 권역 10 + 기온 regId 163 → `weather_mid_forecast` + 날씨 캐시 덮기 | `place-ingest-weather-mid` 매일 KST 06:25 |
+| `congestion` | 관광지 집중률(한국관광공사 빅데이터) 앞 30일 — 시군구 269 마다 1콜, 이름+시군구로 국문 관광지에 매칭(`name_match`, 연관 관광지와 공용) → `attraction_congestion` 시군구 단위 교체. 0건 시군구 목록을 로그에 남긴다 | `place-ingest-congestion` 매일 KST 02:00 |
 
 재색인은 이 이미지가 트리거하지 않는다 — Job 생성 RBAC 을 얻는 대신 `attraction-reindex`
 CronJob 이 30분 뒤(KST 04:30)에 돈다.

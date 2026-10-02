@@ -138,7 +138,15 @@ interface SearchAttractionUseCase {
         /** 웰니스 테마 코드·이름. */
         val wellnessTheme: String? = null,
         val wellnessThemeName: String? = null,
+        /**
+         * 집중률 앞 30일(예측일 순) — 단건 조회에만. 지난 날도 들어 있다 — 오늘을 거르는 것은 화면이다(응답이 캐시돼도 낡지 않게,
+         * 행사 상태와 같은 이유). 이름 매칭이 안 된 곳은 null.
+         */
+        val congestion: List<CongestionDay>? = null,
     )
+
+    /** [rate] 는 원천 집중률 그대로(0~100). */
+    data class CongestionDay(val date: java.time.LocalDate, val rate: Double)
 
     /** [attractionId] 는 같은 언어 관광지가 있을 때만 — 없으면 화면이 이름만 그리고 링크하지 않는다. */
     data class CourseStop(val order: Int, val contentId: String?, val name: String, val attractionId: Long?)

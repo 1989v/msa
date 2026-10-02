@@ -1,11 +1,14 @@
 package com.kgd.place.application.attraction.service
 
+import com.kgd.place.application.attraction.port.AttractionCongestionRepositoryPort
 import com.kgd.place.application.attraction.port.AttractionExtrasRepositoryPort
 import com.kgd.place.application.attraction.usecase.LookupAttractionExtrasUseCase
 import com.kgd.place.application.attraction.usecase.SyncAttractionBarrierFreeUseCase
 import com.kgd.place.application.attraction.usecase.SyncAttractionWellnessUseCase
 import com.kgd.place.domain.attraction.model.AttractionBarrierFree
 import com.kgd.place.domain.attraction.model.AttractionWellness
+import com.kgd.place.domain.attraction.model.CongestionForecast
+import com.kgd.place.domain.attraction.model.CongestionMatch
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -14,7 +17,7 @@ import java.time.LocalDateTime
 private val log = KotlinLogging.logger {}
 
 /**
- * 관광지에 붙는 2단계 공공데이터(무장애 · 웰니스)의 저장·조회.
+ * 관광지에 붙는 2단계 공공데이터(무장애 · 웰니스)의 저장과, 재색인 묶음 조회(무장애 · 웰니스 · 집중률).
  *
  * 관광지 행(attractions)에는 쓰지 않는다 — bulk upsert(전체 동기화) 경로와 갈라 두어야 매일 밤 지워지지 않는다.
  * 원천 contentId 는 그 언어의 관광지 행에 붙을 때만 저장한다. 못 붙은 것은 건수와 표본만 돌려준다.
@@ -22,6 +25,7 @@ private val log = KotlinLogging.logger {}
 @Service
 class AttractionExtrasService(
     private val repository: AttractionExtrasRepositoryPort,
+    private val congestion: AttractionCongestionRepositoryPort,
 ) : SyncAttractionBarrierFreeUseCase, SyncAttractionWellnessUseCase, LookupAttractionExtrasUseCase {
 
     @Transactional
@@ -97,16 +101,25 @@ class AttractionExtrasService(
             .filter { it.detailRaw != null || it.flags.isNotEmpty() }
             .associateBy { it.attractionId }
         val wellness = repository.findWellnessByAttractionIds(attractionIds).associateBy { it.attractionId }
+        // 포함 매칭은 정밀도 확인 전이라 싣지 않는다(Q-P2-MATCH) — 저장은 돼 있어 SERVED 만 넓히면 열린다
+        val forecasts = CongestionForecast.preferred(congestion.findForecasts(attractionIds, CongestionMatch.SERVED))
         return attractionIds.distinct().mapNotNull { id ->
             val bf = barrierFree[id]
             val wl = wellness[id]
-            if (bf == null && wl == null) {
+            val cg = forecasts[id]
+            if (bf == null && wl == null && cg == null) {
                 null
             } else {
                 LookupAttractionExtrasUseCase.Found(
                     attractionId = id,
                     barrierFree = bf?.let { LookupAttractionExtrasUseCase.BarrierFree(it.flags, it.detailRaw) },
                     wellness = wl?.let { LookupAttractionExtrasUseCase.Wellness(it.themaCd) },
+                    congestion = cg?.let { f ->
+                        LookupAttractionExtrasUseCase.Congestion(
+                            f.matchMethod.name,
+                            f.days.map { LookupAttractionExtrasUseCase.Day(it.date.toString(), it.rate) },
+                        )
+                    },
                 )
             }
         }

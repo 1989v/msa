@@ -207,7 +207,9 @@ class PlaceApiClientTest : BehaviorSpec({
             """
             {"success":true,"data":{"items":[
               {"attractionId":11,"barrierFree":{"flags":["WHEELCHAIR"],"detailRaw":"$detailRaw"},"wellness":null},
-              {"attractionId":21,"barrierFree":null,"wellness":{"themaCd":"EX050100"}}
+              {"attractionId":21,"barrierFree":null,"wellness":{"themaCd":"EX050100"}},
+              {"attractionId":31,"barrierFree":null,"wellness":null,
+               "congestion":{"matchMethod":"EXACT","days":[{"date":"2026-10-02","rate":47.16},{"date":"2026-10-03","rate":52}]}}
             ]}}
             """.trimIndent(),
         )
@@ -220,6 +222,11 @@ class PlaceApiClientTest : BehaviorSpec({
                     listOf("WHEELCHAIR"), """{"contentid":"126508","wheelchair":"대여가능","elevator":""}""", null,
                 )
                 found.getValue(21L) shouldBe PlaceApiClient.ExtrasDto(null, null, "EX050100")
+                // 집중률 — 정수로 온 값(52)도 실수로 읽는다(원천 cnctrRate 는 소수 둘째 자리까지)
+                found.getValue(31L).congestion shouldBe listOf(
+                    PlaceApiClient.CongestionDayDto("2026-10-02", 47.16),
+                    PlaceApiClient.CongestionDayDto("2026-10-03", 52.0),
+                )
                 found.containsKey(30L) shouldBe false
                 requestedUris.single() shouldBe "/internal/attractions/extras/lookup"
             }

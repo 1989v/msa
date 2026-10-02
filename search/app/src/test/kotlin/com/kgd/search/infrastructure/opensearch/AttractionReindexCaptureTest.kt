@@ -8,6 +8,7 @@ import com.kgd.search.application.queryvector.usecase.ResolveQueryVectorUseCase
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionKey
 import com.kgd.search.domain.attraction.model.BarrierFreeInfo
+import com.kgd.search.domain.attraction.model.CongestionDay
 import com.kgd.search.domain.attraction.model.CourseStopsParser
 import com.kgd.search.domain.attraction.model.EventPeriod
 import com.kgd.search.domain.attraction.model.EventSchedule
@@ -66,7 +67,22 @@ class AttractionReindexCaptureTest : BehaviorSpec({
             .takeIf { it.flags.isNotEmpty() || it.detail.isNotEmpty() }
     }
 
+    /** 캡처의 place 집중률을 날짜로 읽어 예측일 순으로 둔 기대값. 못 읽는 날은 빠지고, 남는 날이 없으면 null. */
+    fun expectedCongestion(id: String): List<CongestionDay>? =
+        capture.sourceExtras[id]?.congestion
+            ?.mapNotNull { day -> runCatching { LocalDate.parse(day.date) }.getOrNull()?.let { CongestionDay(it, day.rate) } }
+            ?.sortedBy { it.date }
+            ?.takeIf { it.isNotEmpty() }
+
     given("태스클릿이 만든 bulk 문서를 읽기 문서로 읽으면") {
+        `when`("집중률을 보면") {
+            then("place 가 준 날짜·값을 예측일 순으로 읽은 값과 같다 — 없는 문서는 null 이다") {
+                documents.keys.forEach { id -> (id to documents.getValue(id).congestion) shouldBe (id to expectedCongestion(id)) }
+                // 대조군: 집중률이 실린 문서가 있어야 위 비교가 무언가를 잰다
+                documents.values.count { it.congestion != null } shouldBe 1
+            }
+        }
+
         `when`("무장애·웰니스를 보면") {
             then("place 가 준 코드·원문을 도메인 규칙에 다시 넣은 값과 같다 — 없는 문서는 null 이다") {
                 documents.keys.forEach { id ->
@@ -156,6 +172,14 @@ class AttractionReindexCaptureTest : BehaviorSpec({
                 service.findById("202")!!.wellnessThemeName shouldBe "온천 / 사우나 / 스파"
             }
 
+            then("집중률 날짜·값이 상세 결과까지 남는다") {
+                documents.keys.forEach { id ->
+                    (id to service.findById(id)!!.congestion?.map { it.date to it.rate }) shouldBe
+                        (id to expectedCongestion(id)?.map { it.date to it.rate })
+                }
+                service.findById("402")!!.congestion!!.first().date shouldBe LocalDate.of(2026, 10, 2)
+            }
+
             then("place 가 준 링크 원문이 상세 결과까지 값 그대로 남고, 링크 없는 문서는 null 이다") {
                 val json = ObjectMapper()
                 documents.keys.forEach { id ->
@@ -180,7 +204,10 @@ class AttractionReindexCaptureTest : BehaviorSpec({
         val barrierFreeFlags: List<String>? = null,
         val barrierFreeDetailRaw: String? = null,
         val wellnessThemeCode: String? = null,
+        val congestion: List<SourceCongestionDay>? = null,
     )
+
+    private data class SourceCongestionDay(val date: String, val rate: Double)
 
     private data class SourceDates(val start: LocalDate?, val end: LocalDate?)
 }

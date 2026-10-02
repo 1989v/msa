@@ -46,6 +46,13 @@ class AttractionsIndexMappingTest : BehaviorSpec({
         }
     }
 
+    given("관광지 색인 정의의 집중률 필드") {
+        then("날짜·값 배열은 표시 전용이라 색인하지 않는 객체다 — 하루 한 번 30개가 바뀌는 값으로 필드 수를 늘리지 않는다") {
+            properties.path("congestion").path("type").asString() shouldBe "object"
+            properties.path("congestion").path("enabled").asBoolean(true) shouldBe false
+        }
+    }
+
     given("관광지 색인 정의의 지역 안 위치 필드") {
         `when`("표시에만 쓰는 값을 보면") {
             then("색인하지 않아야 한다") {

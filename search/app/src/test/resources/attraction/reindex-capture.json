@@ -466,7 +466,14 @@
     "attrAdmission" : "UNKNOWN",
     "attributeParserVersion" : 1,
     "uniqueClickers14d" : 0,
-    "clickBoost" : 1.0
+    "clickBoost" : 1.0,
+    "congestion" : [ {
+      "date" : "2026-10-02",
+      "rate" : 84.23
+    }, {
+      "date" : "2026-10-03",
+      "rate" : 98.14
+    } ]
   }, {
     "id" : "403",
     "idSort" : 403,
@@ -520,17 +527,35 @@
     "201" : {
       "barrierFreeFlags" : [ "PARKING", "WHEELCHAIR", "EXIT", "RESTROOM", "AUDIO_GUIDE", "STROLLER", "LACTATION_ROOM", "INFANT_ETC" ],
       "barrierFreeDetailRaw" : "{\"contentid\":\"126508\",\"parking\":\"장애인 주차장 있음(광화문 우측 옥외 주차장에 9개)_무장애 편의시설\",\"publictransport\":\"\",\"route\":\"\",\"ticketoffice\":\"\",\"promotion\":\"\",\"wheelchair\":\"대여가능\",\"exit\":\"주출입구는 경사로가 있어 휠체어 접근 가능함\",\"elevator\":\"\",\"restroom\":\"장애인 화장실 있음\",\"auditorium\":\"\",\"room\":\"\",\"handicapetc\":\"\",\"braileblock\":\"\",\"helpdog\":\"\",\"guidehuman\":\"\",\"audioguide\":\"음성안내 가이드 있음(티켓박스에서 음성안내기기와 PDA 대여가능)\",\"bigprint\":\"\",\"brailepromotion\":\"\",\"guidesystem\":\"\",\"blindhandicapetc\":\"\",\"signguide\":\"\",\"videoguide\":\"\",\"hearingroom\":\"\",\"hearinghandicapetc\":\"\",\"stroller\":\"대여가능\",\"lactationroom\":\"수유실 있음(흥례문, 주차장 여자화장실 내부)\",\"babysparechair\":\"\",\"infantsfamilyetc\":\"기저귀교환대 있음(수유실, 일반화장실 내부)\"}",
-      "wellnessThemeCode" : null
+      "wellnessThemeCode" : null,
+      "congestion" : null
     },
     "202" : {
       "barrierFreeFlags" : null,
       "barrierFreeDetailRaw" : null,
-      "wellnessThemeCode" : "EX050100"
+      "wellnessThemeCode" : "EX050100",
+      "congestion" : null
     },
     "401" : {
       "barrierFreeFlags" : [ "WHEELCHAIR" ],
       "barrierFreeDetailRaw" : "{not json",
-      "wellnessThemeCode" : null
+      "wellnessThemeCode" : null,
+      "congestion" : null
+    },
+    "402" : {
+      "barrierFreeFlags" : null,
+      "barrierFreeDetailRaw" : null,
+      "wellnessThemeCode" : null,
+      "congestion" : [ {
+        "date" : "2026-10-03",
+        "rate" : 98.14
+      }, {
+        "date" : "2026-10-02",
+        "rate" : 84.23
+      }, {
+        "date" : "20261004",
+        "rate" : 93.41
+      } ]
     }
   }
 }

@@ -136,6 +136,8 @@ data class AttractionIndexDocument(
     val wellnessTheme: String? = null,
     /** 웰니스 테마 이름(분류 코드표) — 표시 전용(mapping: index=false). */
     val wellnessThemeName: String? = null,
+    /** 집중률 앞 30일(예측일 순) — 상세 「혼잡 예측」 표시 전용(mapping: enabled=false). 이름 매칭이 안 된 곳은 빈다. */
+    val congestion: List<CongestionEntry>? = null,
 ) {
     /** OpenSearch geo_point object 표기 — 필드명 lat/lon 고정. */
 
@@ -163,6 +165,13 @@ data class AttractionIndexDocument(
 
     /** 코스 구성 지점 한 건. [attractionId] 는 같은 언어 관광지가 있을 때만 — 없으면 이름만 그린다. */
     data class CourseStopEntry(val order: Int, val contentId: String? = null, val name: String, val attractionId: Long? = null)
+
+    /** 집중률 예측 하루 — [rate] 는 원천 값 그대로(0~100). */
+    data class CongestionEntry(
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        val date: LocalDate,
+        val rate: Double,
+    )
 
     companion object {
         /** 속성은 재색인이 계산해 [AttractionDocument.attributes] 로 넘긴다 — 없으면 UNKNOWN 을 싣지 못하므로 거부한다. */
@@ -236,6 +245,7 @@ data class AttractionIndexDocument(
                 barrierFreeDetail = doc.barrierFree?.detail?.takeIf { it.isNotEmpty() },
                 wellnessTheme = doc.wellness?.code,
                 wellnessThemeName = doc.wellness?.name,
+                congestion = doc.congestion?.takeIf { it.isNotEmpty() }?.map { CongestionEntry(it.date, it.rate) },
             )
         }
     }

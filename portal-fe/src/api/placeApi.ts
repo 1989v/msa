@@ -108,6 +108,17 @@ export interface Attraction {
   /** 웰니스관광 테마 코드(EX05xxxx)·이름(분류 코드표) */
   wellnessTheme?: string | null;
   wellnessThemeName?: string | null;
+  /**
+   * 관광지 집중률 앞 30일(예측일 순, 국문 문서만) — 단건 조회에만 온다. 색인은 하루 한 번 바뀌어 지난 날이 섞일 수 있다 —
+   * 오늘 이전 날은 화면이 거른다. 이름 매칭이 안 된 곳은 null.
+   */
+  congestion?: CongestionDay[] | null;
+}
+
+/** 집중률 예측 하루 — `date` 는 `YYYY-MM-DD`, `rate` 는 원천 값 그대로(0~100). */
+export interface CongestionDay {
+  date: string;
+  rate: number;
 }
 
 export type AttributeAvailability = 'YES' | 'NO' | 'UNKNOWN';
