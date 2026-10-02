@@ -44,7 +44,7 @@ OpenSearch 기반 읽기 전용 검색 모델 서비스 (ADR-0055 로 ES 에서 
 | 인덱스 | 쓰기 | 읽기 | 필드 |
 |---|---|---|---|
 | `regions` | `RegionIndexDocument` (batch) | `RegionSearchDocument` (app) | 7 / 7 |
-| `attractions` | `AttractionIndexDocument` (batch) | `AttractionSearchDocument` (app) | 24 / 19 — `idSort`·`titleJamo` + 벡터 3필드가 쓰기 전용 |
+| `attractions` | `AttractionIndexDocument` (batch) | `AttractionSearchDocument` (app) | 60 / 49 — 읽기가 안 읽는 11개: 정렬·검색 전용(`idSort`·`titleJamo`), 벡터 3필드, 필터 축(`lclsSystm1~3`·`petAcmpyType`·`setting`), 순위 계수(`clickBoost`). 사유는 `searchReadOmitted` |
 | `products` | `ProductIndexDocument` (batch·consumer 2벌) | `ProductSearchDocument` (app) | 26 / 26 |
 | `unified` | `UnifiedIndexDocument` (batch) | `UnifiedSearchDocument` (app) | 15 / 14 — `body`(평문)는 검색 전용. **관광지는 안 싣는다** — 6만 벡터를 두 번 실으면 k-NN 메모리가 두 배. 통합 API(`/api/search/unified`)가 `attractions` 와 둘을 부른다 (ADR-0090 D6) |
 

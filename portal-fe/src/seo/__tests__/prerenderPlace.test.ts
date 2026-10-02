@@ -40,14 +40,18 @@ const seoul = { code: '11', level: 'SIDO', name: '서울특별시', nameEn: 'Seo
 const gangnam = { code: '11680', level: 'SIGUNGU', name: '강남구', nameEn: 'Gangnam-gu', latitude: 37.51, longitude: 127.04, attractionCount: 321 };
 
 describe('열거 샤드 — 법정동 시도코드', () => {
-  it('시도 17개, 전부 유일한 2자리 코드다 — 구 areaCode 축은 43% 가 비어 있어 쓰지 않는다', () => {
-    expect(SIDO_CODES).toHaveLength(17);
-    expect(new Set(SIDO_CODES).size).toBe(17);
+  it('시도 16개, 전부 유일한 2자리 코드다 — 구 areaCode 축은 43% 가 비어 있어 쓰지 않는다', () => {
+    expect(SIDO_CODES).toHaveLength(16);
+    expect(new Set(SIDO_CODES).size).toBe(16);
     for (const code of SIDO_CODES) expect(code).toMatch(/^\d{2}$/);
     // 특별자치도 승격 후 코드 — administrative_regions 와 어긋나면 지역 링크가 전부 죽는다
     expect(SIDO_CODES).toContain('51'); // 강원
     expect(SIDO_CODES).toContain('52'); // 전북
     expect(SIDO_CODES).toContain('50'); // 제주
+    // 광주·전남은 통합특별시 12 — 옛 코드로 훑으면 원천에 행이 없어 그 지역 관광지가 sitemap 에서 빠진다
+    expect(SIDO_CODES).toContain('12');
+    expect(SIDO_CODES).not.toContain('29');
+    expect(SIDO_CODES).not.toContain('46');
   });
 });
 
