@@ -17,7 +17,10 @@ interface SearchAttractionUseCase {
         val lat: Double? = null,
         val lng: Double? = null,
         val radiusKm: Double? = null,
-        /** relevance(기본) | distance — distance 는 lat/lng 지정 시에만 유효 */
+        /**
+         * relevance(기본) | distance | eventStart — distance 는 lat/lng 지정 시에만 유효.
+         * eventStart 는 유효 시작일 오름차순(날짜 없음은 뒤, 같으면 id 순)이고 벡터 레그를 쓰지 않는다.
+         */
         val sort: String = "relevance",
         val page: Int = 0,
         val size: Int = 20,
@@ -38,6 +41,11 @@ interface SearchAttractionUseCase {
         val admission: String? = null,
         /** true 면 속성 패싯 건수를 센다(집계 요청 하나 더). 목록 첫 쪽만 보낸다. 필터 적용과는 무관하다. */
         val attributeFacets: Boolean = false,
+        /**
+         * 행사 상태 필터 `ONGOING`·`WEEKEND`·`UPCOMING`·`THIS_MONTH`·`NOT_ENDED`. 행사가 아닌 문서는 거르지 않는다.
+         * 그 밖의 값은 무시한다(조건 없음).
+         */
+        val eventStatus: String? = null,
     )
 
     data class AttractionSearchResult(
@@ -111,7 +119,18 @@ interface SearchAttractionUseCase {
          * (기준은 [com.kgd.search.domain.attraction.model.AttractionClickSignal.MIN_SAMPLE]).
          */
         val uniqueClickers14d: Int? = null,
+        /**
+         * 행사의 유효 기간(원천 시작·종료일을 정규화한 값, 양 끝 포함). 행사가 아니거나 날짜가 없으면 둘 다 null.
+         * 상태 문구는 화면이 오늘 기준으로 같은 규칙으로 판정한다 — 응답에 상태를 싣지 않는 것은 캐시된 응답이 낡지 않게.
+         */
+        val eventStart: java.time.LocalDate? = null,
+        val eventEnd: java.time.LocalDate? = null,
+        /** 여행코스 구성 지점(순서대로). 코스가 아니거나 재색인이 원문을 읽지 못했으면 null. */
+        val courseStops: List<CourseStop>? = null,
     )
+
+    /** [attractionId] 는 같은 언어 관광지가 있을 때만 — 없으면 화면이 이름만 그리고 링크하지 않는다. */
+    data class CourseStop(val order: Int, val contentId: String?, val name: String, val attractionId: Long?)
 
     /** 허브 링크는 `/regions/{sidoCode}{ldongSignguCd}`. */
     data class Region(

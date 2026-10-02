@@ -12,6 +12,9 @@ import com.kgd.search.domain.attraction.model.AttractionRegion
 import com.kgd.search.domain.attraction.model.AttributeFacetCounts
 import com.kgd.search.domain.attraction.model.AttributeSelection
 import com.kgd.search.domain.attraction.model.Availability
+import com.kgd.search.domain.attraction.model.CourseStop
+import com.kgd.search.domain.attraction.model.EventDateRange
+import com.kgd.search.domain.attraction.model.EventPeriod
 import com.kgd.search.domain.attraction.model.NearbyPlace
 import com.kgd.search.domain.attraction.model.PetPolicy
 import com.kgd.search.domain.attraction.model.RegularClosure
@@ -30,6 +33,7 @@ import org.springframework.data.domain.PageImpl
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneOffset
 
 class SearchAttractionServiceTest : BehaviorSpec({
@@ -192,7 +196,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
     given("통합 자동완성 시") {
         `when`("지역과 관광지가 섞여 반환되면") {
             then("타입·좌표·레벨이 보존되어야 한다") {
-                every { searchPort.suggest("서울", "ko", 8) } returns listOf(
+                every { searchPort.suggest("서울", "ko", 8, any()) } returns listOf(
                     com.kgd.search.domain.attraction.model.SuggestHit(
                         type = com.kgd.search.domain.attraction.model.SuggestHit.Type.REGION,
                         id = "10", title = "서울특별시", latitude = 37.56, longitude = 126.99, regionLevel = "CITY",
@@ -495,6 +499,88 @@ class SearchAttractionServiceTest : BehaviorSpec({
                 service.execute(SearchAttractionUseCase.Query(keyword = "한옥"))
 
                 verify(exactly = 0) { resolveQueryVector.resolve(any(), any()) }
+            }
+        }
+    }
+    given("행사 필터·정렬 — 고정 시계 2026-10-02T15:30Z (KST 10-03 토요일 00:30)") {
+        val kstSaturday = Clock.fixed(Instant.parse("2026-10-02T15:30:00Z"), ZoneOffset.UTC)
+
+        fun sentQuery(query: SearchAttractionUseCase.Query, hybridEnabled: Boolean = false): AttractionSearchPort.SearchQuery {
+            val captured = slot<AttractionSearchPort.SearchQuery>()
+            every { searchPort.search(capture(captured), any()) } returns found(emptyList())
+            serviceWith(hybridEnabled = hybridEnabled, clock = kstSaturday).execute(query)
+            return captured.captured
+        }
+
+        then("NOT_ENDED 는 KST 오늘(UTC 날짜가 아니라 10-03)부터 끝나지 않은 범위를 넘긴다") {
+            sentQuery(SearchAttractionUseCase.Query(eventStatus = "NOT_ENDED")).eventRange shouldBe
+                EventDateRange(startGte = null, startLte = null, endGte = LocalDate.of(2026, 10, 3))
+        }
+        then("WEEKEND 는 토요일 당일이면 [토, 일] 과 겹치는 범위를 넘긴다") {
+            sentQuery(SearchAttractionUseCase.Query(eventStatus = "WEEKEND")).eventRange shouldBe
+                EventDateRange(startGte = null, startLte = LocalDate.of(2026, 10, 4), endGte = LocalDate.of(2026, 10, 3))
+        }
+        then("모르는 값·소문자·빈 값·없음은 조건 없이 간다") {
+            listOf("FOO", "ongoing", "", null).forEach { value ->
+                sentQuery(SearchAttractionUseCase.Query(eventStatus = value)).eventRange shouldBe null
+            }
+        }
+        then("sort=eventStart 면 시작일 정렬을 넘기고 하이브리드가 켜져 있어도 벡터를 만들지 않는다") {
+            every { resolveQueryVector.resolve(any(), any()) } returns listOf(0.6f, 0.8f)
+
+            val sent = sentQuery(
+                SearchAttractionUseCase.Query(keyword = "축제", eventStatus = "NOT_ENDED", sort = "eventStart"),
+                hybridEnabled = true,
+            )
+
+            sent.sortByEventStart shouldBe true
+            sent.embedding shouldBe null
+            verify(exactly = 0) { resolveQueryVector.resolve(any(), any()) }
+        }
+        then("다른 정렬은 시작일 정렬이 아니다") {
+            sentQuery(SearchAttractionUseCase.Query(sort = "relevance")).sortByEventStart shouldBe false
+        }
+        then("자동완성은 늘 KST 오늘 기준 NOT_ENDED 범위를 넘긴다") {
+            val range = slot<EventDateRange>()
+            every { searchPort.suggest("머드", "ko", 8, capture(range)) } returns emptyList()
+
+            serviceWith(clock = kstSaturday).execute("머드", "ko", 8)
+
+            range.captured shouldBe EventDateRange(startGte = null, startLte = null, endGte = LocalDate.of(2026, 10, 3))
+        }
+        then("결과에 행사 유효 기간과 코스 구성이 실린다") {
+            every { searchPort.search(any(), any()) } returns found(
+                listOf(
+                    AttractionSearchPort.AttractionHit(
+                        document().copy(
+                            contentTypeId = "15",
+                            eventPeriod = EventPeriod(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 12)),
+                        ),
+                        score = 1.0,
+                    ),
+                    AttractionSearchPort.AttractionHit(
+                        document(id = "2").copy(
+                            contentTypeId = "25",
+                            courseStops = listOf(CourseStop(0, "126508", "경복궁", 1L), CourseStop(1, null, "광화문", null)),
+                        ),
+                        score = 1.0,
+                    ),
+                ),
+            )
+
+            val result = serviceWith(clock = kstSaturday).execute(SearchAttractionUseCase.Query(eventStatus = "NOT_ENDED"))
+
+            with(result.attractions[0]) {
+                eventStart shouldBe LocalDate.of(2026, 10, 1)
+                eventEnd shouldBe LocalDate.of(2026, 10, 12)
+                courseStops shouldBe null
+            }
+            with(result.attractions[1]) {
+                eventStart shouldBe null
+                courseStops shouldBe listOf(
+                    SearchAttractionUseCase.CourseStop(0, "126508", "경복궁", 1L),
+                    SearchAttractionUseCase.CourseStop(1, null, "광화문", null),
+                )
             }
         }
     }

@@ -1,0 +1,1 @@
+{"_source":{"excludes":["embedding"]},"from":0,"query":{"bool":{"filter":[{"term":{"lang":{"value":"ko"}}}],"must":[{"multi_match":{"fields":["title^3","title.en^3","titleLocal^3","overview","overview.en","address","address.en"],"query":"한옥"}}]}},"size":20,"sort":[{"_score":{"order":"desc"}},{"idSort":{"order":"asc","unmapped_type":"long"}},{"id":{"order":"asc"}}]}

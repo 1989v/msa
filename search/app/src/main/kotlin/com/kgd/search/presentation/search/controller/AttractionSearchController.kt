@@ -57,6 +57,8 @@ class AttractionSearchController(
         @RequestParam(required = false) admission: String?,
         // 건수는 요청할 때만 센다 — 상세의 주변·편의시설·지도가 같은 API 를 부른다. 필터 적용과는 무관하다.
         @RequestParam(defaultValue = "false") facets: Boolean,
+        // 행사 상태 ONGOING·WEEKEND·UPCOMING·THIS_MONTH·NOT_ENDED — 행사가 아닌 곳은 거르지 않는다. 다른 값은 무시.
+        @RequestParam(required = false) eventStatus: String?,
     ): ApiResponse<SearchAttractionUseCase.Result> {
         val result = searchAttractionUseCase.execute(
             SearchAttractionUseCase.Query(
@@ -79,6 +81,7 @@ class AttractionSearchController(
                 pet = pet,
                 admission = admission,
                 attributeFacets = facets,
+                eventStatus = eventStatus,
             )
         )
         return ApiResponse.success(result)

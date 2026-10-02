@@ -93,4 +93,41 @@ class AttractionSearchControllerTest : BehaviorSpec({
             }
         }
     }
+    given("행사 파라미터") {
+        `when`("eventStatus·sort=eventStart 를 주면") {
+            then("값 그대로 질의로 묶인다 — 판정·무시는 서비스가 한다") {
+                val captured = slot<SearchAttractionUseCase.Query>()
+                every { search.execute(capture(captured)) } returns result()
+
+                mvc.perform(
+                    get("/api/search/attractions").param("category", "festival")
+                        .param("eventStatus", "WEEKEND").param("sort", "eventStart"),
+                ).andReturn()
+
+                captured.captured.eventStatus shouldBe "WEEKEND"
+                captured.captured.sort shouldBe "eventStart"
+            }
+        }
+        `when`("결과에 행사 기간·코스 구성이 있으면") {
+            then("eventStart·eventEnd 는 yyyy-MM-dd, courseStops 는 순서 목록으로 나간다") {
+                val base = SearchAttractionUseCase.AttractionSearchResult(
+                    id = "1", contentId = "c", lang = "ko", title = "t", latitude = 0.0, longitude = 0.0,
+                )
+                every { search.execute(any()) } returns result().copy(
+                    attractions = listOf(
+                        base.copy(eventStart = java.time.LocalDate.of(2026, 10, 1), eventEnd = java.time.LocalDate.of(2026, 10, 12)),
+                        base.copy(id = "2", courseStops = listOf(SearchAttractionUseCase.CourseStop(0, "9", "경복궁", 7L))),
+                    ),
+                )
+
+                val body = mvc.perform(get("/api/search/attractions")).andReturn().response.getContentAsString(Charsets.UTF_8)
+
+                val items = json.readTree(body)["data"]["attractions"]
+                items[0]["eventStart"].asString() shouldBe "2026-10-01"
+                items[0]["eventEnd"].asString() shouldBe "2026-10-12"
+                items[1]["courseStops"][0]["name"].asString() shouldBe "경복궁"
+                items[1]["courseStops"][0]["attractionId"].asLong() shouldBe 7
+            }
+        }
+    }
 })

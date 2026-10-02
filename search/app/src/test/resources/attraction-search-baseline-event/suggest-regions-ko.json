@@ -1,0 +1,1 @@
+{"query":{"function_score":{"boost_mode":"sum","functions":[{"weight":1.0,"field_value_factor":{"factor":1.0,"field":"population","missing":0.0,"modifier":"log1p"}}],"query":{"bool":{"minimum_should_match":"1","should":[{"match_bool_prefix":{"nameKo":{"query":"경복"}}},{"match_bool_prefix":{"name":{"query":"경복"}}}]}}}},"size":3}

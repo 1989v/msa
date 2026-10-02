@@ -4,6 +4,7 @@ import com.kgd.search.application.attraction.port.CategoryLexiconPort
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 import com.kgd.search.application.unified.port.UnifiedSearchPort
 import com.kgd.search.application.unified.usecase.SearchUnifiedUseCase
+import com.kgd.search.domain.attraction.model.EventStatusFilter
 import com.kgd.search.domain.query.model.QueryIntent
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
@@ -52,9 +53,14 @@ class SearchUnifiedService(
         )
     }
 
-    /** 관광지는 원문을 그대로 넘긴다 — 그쪽 서비스가 자기 사전으로 필터·잔여를 다시 만든다 */
+    /**
+     * 관광지는 원문을 그대로 넘긴다 — 그쪽 서비스가 자기 사전으로 필터·잔여를 다시 만든다.
+     * 끝난 행사는 뺀다(목록 키워드 검색과 같은 기준). 오늘은 관광지 서비스가 자기 시계로 KST 로 센다.
+     */
     private fun attractions(q: String, lang: String?, size: Int): SearchUnifiedUseCase.Group {
-        val result = searchAttraction.execute(SearchAttractionUseCase.Query(keyword = q, lang = lang, size = size))
+        val result = searchAttraction.execute(
+            SearchAttractionUseCase.Query(keyword = q, lang = lang, size = size, eventStatus = EventStatusFilter.NOT_ENDED.name),
+        )
         return SearchUnifiedUseCase.Group(
             type = QueryIntent.Types.ATTRACTION,
             total = result.totalElements,

@@ -8,6 +8,8 @@ import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttributeFacetCounts
 import com.kgd.search.domain.attraction.model.AttributeSelection
 import com.kgd.search.domain.attraction.model.Availability
+import com.kgd.search.domain.attraction.model.EventDateRange
+import com.kgd.search.domain.attraction.model.EventSchedule
 import com.kgd.search.domain.attraction.model.ClosureState
 import com.kgd.search.domain.attraction.model.Jamo
 import com.kgd.search.domain.attraction.model.PetPolicy
@@ -109,6 +111,10 @@ class AttractionSearchAdapter(
 
         /** 읽기 문서는 이 필드를 읽지 않는다(순위 전용) — 이름은 쓰기 문서·매핑과 같다. */
         private const val CLICK_BOOST = "clickBoost"
+
+        private val CONTENT_TYPE_ID = AttractionSearchDocument::contentTypeId.name
+        private val EVENT_START = AttractionSearchDocument::eventStartEffective.name
+        private val EVENT_END = AttractionSearchDocument::eventEndEffective.name
     }
 
     /** 속성 패싯의 속성 — 건수에서 「자기 선택만 뺀다」의 단위다. 반려동물 두 값은 한 속성이다. */
@@ -261,10 +267,10 @@ class AttractionSearchAdapter(
      * 통합 자동완성 — 지역(상단 슬롯, 인구 log1p 부스트) + 관광지(prefix, lang 필터).
      * match_bool_prefix 라 별도 completion 매핑 없이 동작한다 (products suggest 패턴).
      */
-    override fun suggest(prefix: String, lang: String?, size: Int): List<SuggestHit> {
+    override fun suggest(prefix: String, lang: String?, size: Int, eventRange: EventDateRange): List<SuggestHit> {
         val regionSlots = minOf(SUGGEST_REGION_SLOTS, size)
         val regions = suggestRegions(prefix, lang, regionSlots)
-        val attractions = suggestAttractions(prefix, lang, size - regions.size)
+        val attractions = suggestAttractions(prefix, lang, size - regions.size, eventRange)
         return regions + attractions
     }
 
@@ -361,7 +367,7 @@ class AttractionSearchAdapter(
             ?.takeIf { it != word }
     }.getOrNull()
 
-    private fun suggestAttractions(prefix: String, lang: String?, size: Int): List<SuggestHit> {
+    private fun suggestAttractions(prefix: String, lang: String?, size: Int, eventRange: EventDateRange): List<SuggestHit> {
         if (size <= 0) return emptyList()
         val titleField = if (lang == "en") "title.en" else "title"
         /*
@@ -396,6 +402,7 @@ class AttractionSearchAdapter(
                 }
                 b.minimumShouldMatch("1")
                 lang?.let { l -> b.filter { f -> f.term { it.field("lang").value(FieldValue.of(l)) } } }
+                b.filter(eventFilter(eventRange))
                 b
             }
         }
@@ -471,7 +478,47 @@ class AttractionSearchAdapter(
                 }
             }
             attributeFilters.forEach { b.filter(it) }
+            // 속성 필터와 같은 이유로 맨 뒤 — 조건이 없는 요청은 이 필드가 생기기 전과 바이트 단위로 같다.
+            query.eventRange?.let { b.filter(eventFilter(it)) }
             b
+        }
+    }
+
+    /**
+     * 「행사가 아니거나 범위 안」. 행사가 아닌 문서는 첫 절로 늘 통과하고, 행사는 유효 기간 필드가 범위에 들어야 한다.
+     * 날짜 없는 행사는 필드가 없어 범위 질의에 걸리지 않으므로 빠진다(UNKNOWN 은 어느 행사 필터에도 들지 않는다).
+     * 범위 경계는 [EventDateRange] 의 날짜를 그대로 gte·lte 로 옮긴다 — 여기서 날짜를 계산하지 않는다.
+     */
+    private fun eventFilter(range: EventDateRange): Query = Query.of { q ->
+        q.bool { b ->
+            b.should { s ->
+                s.bool { notEvent ->
+                    notEvent.mustNot { m ->
+                        m.terms { t ->
+                            t.field(CONTENT_TYPE_ID).terms { tv -> tv.value(EventSchedule.EVENT_CONTENT_TYPES.sorted().map { FieldValue.of(it) }) }
+                        }
+                    }
+                }
+            }
+            b.should { s ->
+                s.bool { inRange ->
+                    if (range.startGte != null || range.startLte != null) {
+                        inRange.filter { f ->
+                            f.range { r ->
+                                r.field(EVENT_START)
+                                range.startGte?.let { r.gte(JsonData.of(it.toString())) }
+                                range.startLte?.let { r.lte(JsonData.of(it.toString())) }
+                                r
+                            }
+                        }
+                    }
+                    range.endGte?.let { endGte ->
+                        inRange.filter { f -> f.range { r -> r.field(EVENT_END).gte(JsonData.of(endGte.toString())) } }
+                    }
+                    inRange
+                }
+            }
+            b.minimumShouldMatch("1")
         }
     }
 
@@ -508,7 +555,13 @@ class AttractionSearchAdapter(
         }
 
         val geo = query.geo
-        if (geo != null && geo.sortByDistance) {
+        if (query.sortByEventStart) {
+            // 시작일이 같은 행사끼리는 id 순 — 날짜 없는 문서는 맨 뒤. 재색인 전 옛 인덱스에서도 정렬이 깨지지 않게 unmappedType.
+            builder.sort { s ->
+                s.field { f -> f.field(EVENT_START).order(SortOrder.Asc).unmappedType(FieldType.Date).missing(FieldValue.of("_last")) }
+            }
+            addTiebreakers(builder)
+        } else if (geo != null && geo.sortByDistance) {
             builder.sort { s ->
                 s.geoDistance { g ->
                     g.field("location")

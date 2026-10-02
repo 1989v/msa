@@ -14,3 +14,5 @@
 | V24 | PlaceSchemaIntegrationSpec(실제 MySQL v24) | 5/0 · V24 제거 시 Data too long for column 'tel' 로 1 실패 |
 | TG6 | search batch·domain·app 14클래스 + verifyArchitecture·verifySearchIndexContract | 160 tests · 0 실패 · exit 0 |
 | TG6 | 회귀 주입 8종 + 끝난 행사 placement 비우기 | 전부 빨간불 |
+| TG7 | search:app '*Attraction*'·'*Unified*' + verifyArchitecture·verifySearchIndexContract | 205 tests · 0 실패 · exit 0 |
+| TG7 | 회귀 주입 5종 + 통합 검색 NOT_ENDED 제거 · 바이트 동일 기준은 변경 전 HEAD 8162d149 에서 뜸 | 전부 빨간불 |

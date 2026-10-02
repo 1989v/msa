@@ -107,7 +107,7 @@ class AttractionSearchAdapterRankingTest : BehaviorSpec({
             then("같은 가중치가 걸려야 한다 — '경복' 이 밀린 곳이 바로 여기다") {
                 val (adapter, captured) = adapterWith(AttractionRankingProperties())
 
-                adapter.suggest("경보", "ko", 8)   // 조합 중간 상태
+                adapter.suggest("경보", "ko", 8, com.kgd.search.domain.attraction.model.EventDateRange(null, null, java.time.LocalDate.of(2026, 10, 7)))   // 조합 중간 상태
 
                 // 마지막 호출이 관광지 자동완성 (앞은 지역 슬롯)
                 val query = captured.captured.query()
@@ -204,7 +204,7 @@ class AttractionSearchAdapterRankingTest : BehaviorSpec({
             then("질의 이해를 안 거치므로 하향은 그대로 건다") {
                 val (adapter, captured) = adapterWith(AttractionRankingProperties())
 
-                adapter.suggest("야시", "ko", 5)
+                adapter.suggest("야시", "ko", 5, com.kgd.search.domain.attraction.model.EventDateRange(null, null, java.time.LocalDate.of(2026, 10, 7)))
 
                 captured.captured.query()?.isFunctionScore shouldBe true
             }

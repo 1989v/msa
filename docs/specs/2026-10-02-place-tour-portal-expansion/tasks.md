@@ -115,12 +115,12 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
 **Dependencies:** Task Group 6
 **Phase:** ②
 **Required Skills:** OpenSearch 질의, Spring MVC
-- [ ] 7.0 Complete 검색 API
-  - [ ] 7.1 **먼저** 어댑터를 고치기 전 커밋에서 패싯·랭킹·하이브리드 경로별 요청 JSON 기준 스냅샷 저장(T10 기준)
-  - [ ] 7.2 Write tests: `AttractionSearchAdapterEventTest`(T10 — 다섯 값의 범위 질의 · 「행사가 아니거나 범위 안」 모양 · `sort=eventStart` · 모르는 값 무시 · 질의 양 끝 날짜를 `EventSchedule` 판정에 넣어 교차 단언 · 파라미터 없으면 바이트 동일 · 자동완성에 「행사가 아니거나 NOT_ENDED」) · `SearchAttractionServiceTest`(고정 `Clock` → 넘긴 범위)
-  - [ ] 7.3 `SearchAttractionUseCase` 파라미터 · `SearchAttractionService` 가 `Clock` 으로 KST 오늘 → `EventSchedule` 범위를 `SearchQuery` 에 · 어댑터는 받은 범위만(ADR-0083 방향)
-  - [ ] 7.4 자동완성 질의에 행사 조건 상시 적용
-  - [ ] 7.5 Verify: `./gradlew :search:app:test --tests '*AttractionSearchAdapterEventTest' --tests '*SearchAttractionServiceTest' --tests '*AttractionSearchAdapterFacetTest' --tests '*AttractionSearchAdapterRankingTest' --tests '*AttractionSearchAdapterHybridTest' && ./gradlew verifyArchitecture`
+- [x] 7.0 Complete 검색 API
+  - [x] 7.1 **먼저** 어댑터를 고치기 전 커밋에서 패싯·랭킹·하이브리드 경로별 요청 JSON 기준 스냅샷 저장(T10 기준)
+  - [x] 7.2 Write tests: `AttractionSearchAdapterEventTest`(T10 — 다섯 값의 범위 질의 · 「행사가 아니거나 범위 안」 모양 · `sort=eventStart` · 모르는 값 무시 · 질의 양 끝 날짜를 `EventSchedule` 판정에 넣어 교차 단언 · 파라미터 없으면 바이트 동일 · 자동완성에 「행사가 아니거나 NOT_ENDED」) · `SearchAttractionServiceTest`(고정 `Clock` → 넘긴 범위)
+  - [x] 7.3 `SearchAttractionUseCase` 파라미터 · `SearchAttractionService` 가 `Clock` 으로 KST 오늘 → `EventSchedule` 범위를 `SearchQuery` 에 · 어댑터는 받은 범위만(ADR-0083 방향)
+  - [x] 7.4 자동완성 질의에 행사 조건 상시 적용
+  - [x] 7.5 Verify: `./gradlew :search:app:test --tests '*AttractionSearchAdapterEventTest' --tests '*SearchAttractionServiceTest' --tests '*AttractionSearchAdapterFacetTest' --tests '*AttractionSearchAdapterRankingTest' --tests '*AttractionSearchAdapterHybridTest' && ./gradlew verifyArchitecture`
 **Acceptance Criteria:** T10 초록 · 기존 경로 스냅샷 바이트 동일 · 회귀 주입(범위 경계 한 칸) 빨간불
 
 ### Task Group 8: 서버 렌더 유형별 본문 · JSON-LD (search:app render · copy.mjs)

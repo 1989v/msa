@@ -3,6 +3,7 @@ package com.kgd.search.domain.attraction.port
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttributeFacetCounts
 import com.kgd.search.domain.attraction.model.AttributeSelection
+import com.kgd.search.domain.attraction.model.EventDateRange
 import com.kgd.search.domain.attraction.model.SuggestHit
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -16,8 +17,9 @@ interface AttractionSearchPort {
     /**
      * 통합 자동완성 — 지역(인구 부스트, 상위 고정) + 관광지 prefix 매칭.
      * [lang] 은 관광지 문서 필터이자 지역 표기 언어 선택(ko→nameKo 우선).
+     * [eventRange] 는 관광지 쪽에 「행사가 아니거나 범위 안」으로 늘 건다 — 끝난 행사를 제안하지 않는다.
      */
-    fun suggest(prefix: String, lang: String?, size: Int): List<SuggestHit>
+    fun suggest(prefix: String, lang: String?, size: Int, eventRange: EventDateRange): List<SuggestHit>
 
     /**
      * 오타 교정 — 어느 검색 필드에도 없는 단어만 관광지 제목에서 가까운 표기로 바꾼다.
@@ -69,8 +71,17 @@ interface AttractionSearchPort {
          * 부르므로 기본은 세지 않는다 — 목록 첫 쪽만 센다.
          */
         val countAttributeFacets: Boolean = false,
+        /**
+         * 행사 기간 조건. 「행사가 아니거나 범위 안」으로 걸려 행사가 아닌 문서는 영향을 받지 않는다.
+         * null 이면 조건이 없고 요청은 이 필드가 생기기 전과 같다.
+         */
+        val eventRange: EventDateRange? = null,
+        /** 유효 시작일 오름차순(날짜 없음은 뒤), 같으면 id 오름차순. 거리순보다 우선한다. */
+        val sortByEventStart: Boolean = false,
     ) {
         init {
+            // 정렬이 점수를 버리므로 벡터 레그는 값만 치르고, 하이브리드 질의는 정렬을 아예 받지 않는다.
+            require(!sortByEventStart || embedding == null) { "시작일 정렬에는 벡터를 실지 않는다" }
             // 건수는 오늘 요일(「오늘 정기휴무 아님」)이 있어야 셀 수 있다. 요일은 선택이 갖는다.
             require(!countAttributeFacets || attributes != null) { "속성 패싯을 세려면 선택(빈 선택 포함)이 필요하다" }
         }

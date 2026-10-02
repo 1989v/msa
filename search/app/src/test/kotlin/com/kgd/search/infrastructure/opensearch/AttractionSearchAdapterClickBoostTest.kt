@@ -98,7 +98,7 @@ class AttractionSearchAdapterClickBoostTest : BehaviorSpec({
 
         then("자동완성에는 붙지 않는다 — 입력 중인 접두어에는 관련도라 할 것이 없다") {
             val (a, sent) = adapter(enabled = true)
-            a.suggest("경복", "ko", 5)
+            a.suggest("경복", "ko", 5, com.kgd.search.domain.attraction.model.EventDateRange(null, null, java.time.LocalDate.of(2026, 10, 7)))
             // 지역 자동완성은 다른 문서 타입이라 여기 안 잡힌다 — 잡힌 것은 관광지 자동완성 요청이다
             factorFields(json.readTree(sent.single().toJsonString())) shouldNotContain "clickBoost"
         }
