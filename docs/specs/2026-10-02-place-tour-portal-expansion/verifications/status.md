@@ -8,3 +8,5 @@
 | TG4 | kustomize 렌더: schedule `10 18 * * *` · deadline 540 · backoff 0 · timeZone 없음 · NP 28 불변 | 일치 · 540→900 주입 시 판정 exit 1 |
 | TG4 | verifyArchitecture | exit 0 |
 | TG4 4.6 | 기준선(ops-before.txt) | 59,682행 합계. 첫 실행이 파생 테이블+TEXT 로 MySQL liveness 실패 → 03:05 UTC 재시작 1회(약 1분). 범위 집계로 고쳐 재실행, ping 최대 1.08s, 재시작 없음 |
+| TG5 | search:domain EventScheduleTest·CourseStopsParserTest·EventScheduleGoldenTest + verifyArchitecture | 18/0 · 7/0 · 1/0 · exit 0 |
+| TG5 | 회귀 주입 11종 + 문구 변경 시 골든 해시 변화(구현 에이전트) | 전부 빨간불 · 7b72ff01 → 255e2221 |

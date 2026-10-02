@@ -1,0 +1,98 @@
+{
+  "_meta": {
+    "service": "KorService2",
+    "operation": "detailInfo2",
+    "params": {
+      "MobileOS": "ETC",
+      "MobileApp": "k-tour",
+      "_type": "json",
+      "contentId": "1965837",
+      "contentTypeId": "25",
+      "numOfRows": "100"
+    },
+    "totalCount": 8,
+    "note": "운영 키로 2026-10-02(KST) 호출한 응답 원문. 인증키 파라미터·요청 URL 은 싣지 않았다. 코스 구성 파서(CourseStopsParser) 입력 모양의 근거 — subnum 이 0 부터 시작하고 같은 값이 두 번 나오며(3·4), 같은 subcontentid 가 다시 나오고, subname 끝에 공백이 있다."
+  },
+  "items": [
+    {
+      "contentid": "1965837",
+      "contenttypeid": "25",
+      "subnum": "0",
+      "subcontentid": "128138",
+      "subname": "원당종마목장",
+      "subdetailoverview": "원당목장은 인기있었던 드라마 촬영지로 자주 이용되면서 일반에 널리 알려지게 되었다. 위험시설이 많아 개방지역을 제한하고 있으며 내부에는 특별한 볼거리보다는 말이 방목되어 있는 목가적인 풍경을 산책하면서 즐길 수 있다. 하지만 원당목장 자체가 '관광'을 목적으로 지어진 것이 아니기 때문에 주차 시설 및 화장실, 벤치 등의 쉴 공간은 부족하다는 사실을 꼭 숙지할 필요가 있다.\\n",
+      "subdetailimg": "https://tong.visitkorea.or.kr/cms/resource/83/1148983_image2_1.jpg",
+      "subdetailalt": "경마교육장(원당종마목장)_76"
+    },
+    {
+      "contentid": "1965837",
+      "contenttypeid": "25",
+      "subnum": "1",
+      "subcontentid": "125551",
+      "subname": "서삼릉",
+      "subdetailoverview": "사적 제 200호인 서삼릉은 희릉, 효릉, 예릉의 3릉이 서울 서쪽에 있다하여 붙여진 칭호이다. 희릉은 조선조 제 11대 중종의 계비인 장경 왕후 윤씨의 릉이고, 효릉은 조선조 제 12대 인종과 그 비인 인성왕후 박씨의 릉이며, 예릉은 조선조 제 25대 철종과 그 비인 철인왕후 김씨의 릉이다. 또한 역대 3세자의 묘인 의령원(사도세자의 장자인 의소세손), 효창원(정조의 장자인 문효세자), 소경원(인조의 장자인 소현세자)이 있고, 역대의 후궁, 왕자, 공주, 옹주등의 묘 51기와 역대 왕의 태가 안장되어 있는 태실이 있다. \\n",
+      "subdetailimg": "https://tong.visitkorea.or.kr/cms/resource/85/1150385_image2_1.jpg",
+      "subdetailalt": "서삼릉_01"
+    },
+    {
+      "contentid": "1965837",
+      "contenttypeid": "25",
+      "subnum": "2",
+      "subcontentid": "129195",
+      "subname": "경기영어마을 파주캠프",
+      "subdetailoverview": "모든 시설과 교육프로그램이 수강생의 적극적인 참여를 유도하고 있어 생활 속에서 자연스러운 영어 체험학습이 가능하다. 영어권 국가의 마을과 유사한 환경에서 세계의 다양한 문화를 체험하면서 세계시민의식을 배우고, 영어가 목적이 아닌 의사소통을 위한 수단이라는 것을 느끼게 한다. 친절하고 자세한 원어민 선생님의 지도로 영어에 대한 흥미와 외국인과의 대화에 대한 자신감을 심어 주어 수강생 스스로가 퇴소 후 즐겁게 학습에 임할 수 있도록 한다. \\n",
+      "subdetailimg": "",
+      "subdetailalt": "경기영어마을 파주캠프_35"
+    },
+    {
+      "contentid": "1965837",
+      "contenttypeid": "25",
+      "subnum": "3",
+      "subcontentid": "128168",
+      "subname": "헤이리 예술마을",
+      "subdetailoverview": "헤이리 문화예술마을은 문화와 예술의 창작, 전시, 공연, 축제, 교육이 모두 한 곳에서 이루어지는 종합적인 예술문화의 마을이다. 1997년 파주출판도시와 연계한 '책마을'을 구상하는 과정에서 다른 분야의 문화 예술인들이 참여하면서 '문화예술마을'로 개념이 확장되었다. 가수 윤도현, 소설가 박범신, 방송인 황인용, 영화감독 강제규, 강우석 등 문화 예술계의 저명한 인사들을 포함하여 다양한 예술분야에 걸쳐 총 370여 회원들이 있다.\\n",
+      "subdetailimg": "https://tong.visitkorea.or.kr/cms/resource/36/1913936_image2_1.jpg",
+      "subdetailalt": "경기_파주_헤이리 문화예술마을01"
+    },
+    {
+      "contentid": "1965837",
+      "contenttypeid": "25",
+      "subnum": "3",
+      "subcontentid": "1870538",
+      "subname": "점심(파머스테이블) ",
+      "subdetailoverview": "파주 헤이리 입구 쪽에 있는 파머스테이블은 싱싱한 채소를 이용하여 요리를 제공한다. 파머스테이블에서는 감베르티 벨루, 푸르티 디 마레, 루꼴라피자 등 다양한 메뉴를 제공한다. 주말과 공휴일에는 예약을 받지 않으며 30여 분 정도 기다려야 식사가 가능하다. \\n",
+      "subdetailimg": "https://tong.visitkorea.or.kr/cms/resource/99/1869999_image2_1.jpg",
+      "subdetailalt": "경기_파주 파머스테이블과 국수집 5 (헤이리 파머스테이블)"
+    },
+    {
+      "contentid": "1965837",
+      "contenttypeid": "25",
+      "subnum": "4",
+      "subcontentid": "128168",
+      "subname": "헤이리 예술마을",
+      "subdetailoverview": "헤이리 문화예술마을은 문화와 예술의 창작, 전시, 공연, 축제, 교육이 모두 한 곳에서 이루어지는 종합적인 예술문화의 마을이다. 1997년 파주출판도시와 연계한 '책마을'을 구상하는 과정에서 다른 분야의 문화 예술인들이 참여하면서 '문화예술마을'로 개념이 확장되었다. 가수 윤도현, 소설가 박범신, 방송인 황인용, 영화감독 강제규, 강우석 등 문화 예술계의 저명한 인사들을 포함하여 다양한 예술분야에 걸쳐 총 370여 회원들이 있다.\\n",
+      "subdetailimg": "https://tong.visitkorea.or.kr/cms/resource/36/1913936_image2_1.jpg",
+      "subdetailalt": "경기_파주_헤이리 문화예술마을01"
+    },
+    {
+      "contentid": "1965837",
+      "contenttypeid": "25",
+      "subnum": "4",
+      "subcontentid": "129196",
+      "subname": "프로방스 마을",
+      "subdetailoverview": "1996년 품격 높은 프랑스 레스토랑을 시작으로 한국적인 해석이 가미된 샤브샤브 레스토랑, 지상에서 가장 아름다운 고기집 가든 레스토랑, 생활을 윤택하게 하는 디자인 공간인 프로방스 리빙관, 아름다운 향기 공간인 허브관과 감각 공간인 패션관, 유럽풍 베이커리와 카페로 구성되어진 테마형 마을이다.\\n",
+      "subdetailimg": "",
+      "subdetailalt": "프로방스 마을"
+    },
+    {
+      "contentid": "1965837",
+      "contenttypeid": "25",
+      "subnum": "5",
+      "subcontentid": "129196",
+      "subname": "프로방스 마을",
+      "subdetailoverview": "1996년 품격 높은 프랑스 레스토랑을 시작으로 한국적인 해석이 가미된 샤브샤브 레스토랑, 지상에서 가장 아름다운 고기집 가든 레스토랑, 생활을 윤택하게 하는 디자인 공간인 프로방스 리빙관, 아름다운 향기 공간인 허브관과 감각 공간인 패션관, 유럽풍 베이커리와 카페로 구성되어진 테마형 마을이다.\\n",
+      "subdetailimg": "",
+      "subdetailalt": "프로방스 마을"
+    }
+  ]
+}

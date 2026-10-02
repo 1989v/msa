@@ -87,13 +87,13 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
 **Dependencies:** Task Group 4 (운영 확인 완료)
 **Phase:** ②
 **Required Skills:** Kotlin, 순수 도메인
-- [ ] 5.0 Complete 일정 규칙
-  - [ ] 5.1 Write tests: `EventScheduleTest`(T1 경계 · KST 자정 UTC 14:59/15:00 · T2 주말·이번 달·`NOT_ENDED`·정렬 · T2b 날짜 격자 범위 ⇔ 상태 동치, 회귀 주입 `>`→`>=`) · `CourseStopsParserTest`(T8 — `subnum` 수 정렬 1,2,10 · dict 단건 · 매칭 실패 이름만 · 빈 `infoRaw` · 언어 불일치)
-  - [ ] 5.2 `EventSchedule`: 유효 기간 정규화(S/E 다섯 조합) · 상태(`UPCOMING`·`ONGOING`·`ENDED`·`UNKNOWN`) · 필터 → 범위 다섯 · `eventStart` 정렬 — 오늘(`LocalDate`)은 인자, 시계를 읽지 않는다
-  - [ ] 5.3 `CourseStopsParser` — `infoRaw` → (순서 · 원천 contentId · 이름), 실패는 빈 결과 + 경고 사유
-  - [ ] 5.4 T12b 골든 생성기: `EventSchedule` 날짜 격자(경계일 · KST 자정 · 주말 요일 · 월말 · 만료 +30/+31) → `portal-fe/src/seo/__tests__/fixtures/event-schedule-golden.json`, CI 재생성 + `git diff --exit-code`
-  - [ ] 5.5 Verify: `./gradlew :search:domain:test --tests '*EventScheduleTest' --tests '*CourseStopsParserTest' --tests '*EventScheduleGolden*'`
-  - [ ] 5.6 배포 메모: `search/domain` 만 바뀐 커밋은 `search` 만 다시 굽는다 — `images.yml` 을 `services=search-batch` 로 수동 실행(SR-10)
+- [x] 5.0 Complete 일정 규칙
+  - [x] 5.1 Write tests: `EventScheduleTest`(T1 경계 · KST 자정 UTC 14:59/15:00 · T2 주말·이번 달·`NOT_ENDED`·정렬 · T2b 날짜 격자 범위 ⇔ 상태 동치, 회귀 주입 `>`→`>=`) · `CourseStopsParserTest`(T8 — `subnum` 수 정렬 1,2,10 · dict 단건 · 매칭 실패 이름만 · 빈 `infoRaw` · 언어 불일치)
+  - [x] 5.2 `EventSchedule`: 유효 기간 정규화(S/E 다섯 조합) · 상태(`UPCOMING`·`ONGOING`·`ENDED`·`UNKNOWN`) · 필터 → 범위 다섯 · `eventStart` 정렬 — 오늘(`LocalDate`)은 인자, 시계를 읽지 않는다
+  - [x] 5.3 `CourseStopsParser` — `infoRaw` → (순서 · 원천 contentId · 이름), 실패는 빈 결과 + 경고 사유
+  - [x] 5.4 T12b 골든 생성기: `EventSchedule` 날짜 격자(경계일 · KST 자정 · 주말 요일 · 월말 · 만료 +30/+31) → `portal-fe/src/seo/__tests__/fixtures/event-schedule-golden.json`, CI 재생성 + `git diff --exit-code`
+  - [x] 5.5 Verify: `./gradlew :search:domain:test --tests '*EventScheduleTest' --tests '*CourseStopsParserTest' --tests '*EventScheduleGolden*'`
+  - [x] 5.6 배포 메모: `search/domain` 만 바뀐 커밋은 `search` 만 다시 굽는다 — `images.yml` 을 `services=search-batch` 로 수동 실행(SR-10)
 **Acceptance Criteria:** T1·T2·T2b·T8 초록 · 격자 동치 회귀 주입 빨간불 · 골든 파일 생성
 
 ### Task Group 6: 재색인 — 유효 날짜 · 코스 구성 · 종료 행사 제외 (search:batch)

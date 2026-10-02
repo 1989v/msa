@@ -92,6 +92,14 @@ jobs:
       - name: ./gradlew compileTestKotlin
         run: ./gradlew compileTestKotlin --no-daemon
 
+      # 행사 상태·문구·색인 만료의 날짜 격자 골든을 search:domain 이 다시 쓴다. 커밋된 것과 다르면
+      # 화면(portal-fe) 판정이 옛 규칙과 비교하고 있다는 뜻이다. 새로 생긴(추적 안 된) 파일도 잡도록 status 로 본다.
+      - name: 행사 일정 골든 픽스처가 최신인지
+        run: |
+          ./gradlew :search:domain:test --tests '*EventScheduleGoldenTest' --no-daemon
+          git diff --exit-code -- portal-fe/src/seo/__tests__/fixtures/event-schedule-golden.json
+          test -z "$(git status --porcelain -- portal-fe/src/seo/__tests__/fixtures/event-schedule-golden.json)"
+
       # 개념 온톨로지의 코드 참조는 레포 전체의 파일 · 심볼을 가리킨다 — 그래서 **어느 경로를 바꾼 푸시든**
       # 여기서 본다. 이미지 게이트는 code-dictionary 가 바뀔 때만 이 스펙을 돌려, 다른 모듈의 리팩터가 참조를
       # 깨면 한참 뒤 code-dictionary 를 건드린 커밋의 이미지 전체가 막혔다(2026-09-26 HttpOnly 전환이 참조 셋을

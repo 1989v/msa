@@ -75,7 +75,7 @@ place 에 축제·공연·행사, 숙박, 여행코스 세 유형을 더해 「�
 ### SR-4 색인 — 재색인
 - 재색인이 `EventSchedule` 로 정규화한 유효 시작일·유효 종료일을 `date` 필드 둘(`eventStartEffective`·`eventEndEffective`)로 싣는다. 원천 날짜는 place 컬럼에 그대로 있다(§0 ②). 범위 질의는 이 두 필드만 본다.
 - search-batch `PlaceApiClient.AttractionDto` 와 `fetchPageAfter` 의 손 매핑에 행사 시작일·종료일·목록 행 원문을 더한다 — 매핑을 빼먹으면 기본값 null 이 조용히 이긴다(2026-09-04 썸네일 사고). `PlaceApiClientTest` 에 「응답 JSON 의 날짜가 DTO 에 실린다」를 더한다.
-- 여행코스는 `infoRaw` 를 순수 함수로 풀어 코스 구성(순서 · 원천 contentId · 이름 · 같은 언어 관광지 id)을 색인하지 않는 객체 `courseStops` 로 싣는다. 해석 실패는 그 필드만 비우고 경고 건수를 남긴다.
+- 여행코스는 `infoRaw` 를 순수 함수로 풀어 코스 구성(순서 · 원천 contentId · 이름 · 같은 언어 관광지 id)을 색인하지 않는 객체 `courseStops` 로 싣는다. 해석 실패는 그 필드만 비우고 경고 건수를 남긴다(한 행이라도 못 읽으면 일부가 빠진 순서를 싣지 않고 전체를 비운다). 원천 `subnum` 은 0부터이고 같은 값이 겹쳐 오므로 숫자 오름차순·같은 값은 원천 순서를 유지한다.
 - 코스 순서는 `subnum` 의 수 값 오름차순이다(문자열 정렬 금지 — 10 이 2 앞에 오지 않는다). id 가 매칭되지 않는 구성 지점은 이름만 싣고 링크하지 않는다.
 - id 매칭: 1차 투영(`RegionProjection`)에 contentId 와 유효 시작일·유효 종료일을 더하고(종료 행사를 후보에서 거르는 근거) 1차 훑기가 `(lang, contentId) → id` 지도를 만든다. 2차 훑기가 이 지도로 매칭하며 추가 조회는 없다(6만 건 × 문자열 하나, 수 MB 로 배치 힙 약 256MB 안). 완료 로그에 「코스 매칭 실패 n건」을 남긴다.
 - 새 필드는 매핑 · 쓰기 문서 · 읽기 문서에 모두 반영해 `verifySearchIndexContract` 를 통과한다. `eventStartEffective`·`eventEndEffective`·`courseStops` 는 읽기 제외(`searchReadOmitted`)에 넣을 수 없다 — 게이트에 금지 목록을 두어 사유를 적어도 실패하게 한다.
