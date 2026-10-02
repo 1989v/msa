@@ -12,6 +12,8 @@ K8s CronJob 이 본 모듈을 --job 으로 분기해 호출한다:
     python -m src.main --job=lcls-codes            # 분류체계 코드→이름 (호출 400회 미만)
     python -m src.main --job=pet-tour              # 반려동물 동반 (목록형, 약 100회)
     python -m src.main --job=attraction-attrs      # 무장애(목록 1 + 상세 ≤ 899) · 웰니스(월요일만 2콜)
+    python -m src.main --job=visitors              # 지역 방문자 열흘 창 (기초·광역 하루 2콜)
+    python -m src.main --job=visitors --from=2025-09   # 지역 방문자 백필 1회 (달마다 4콜)
 
 외부 :443 을 부르는 것은 이 CronJob 파드뿐이다 — 상시 파드인 place 에는 egress 를 열지 않는다
 (ADR-0031 §5.10 화이트리스트에 place-ingest 만 추가).
@@ -30,7 +32,7 @@ from pathlib import Path
 from src import (administrative_region, backfill_intro, backfill_overview, barrier_free, google_place, naver, place_client,
                  backfill_media, popularity, quota, sync_lcls_codes, sync_pet_tour,
                  sync_tour,
-                 wellness, youtube)
+                 visitors, wellness, youtube)
 
 
 def _api_key() -> str:
@@ -104,6 +106,14 @@ def _job_attraction_attrs(budget: int, with_wellness: bool | None = None, key: s
         backfill_overview.log(f"관광지 부가 정보 실패: {' '.join(failed)}")
         return 1
     return 0
+
+
+def _job_visitors(from_month: str | None, key: str | None = None, today=None) -> int:
+    """지역 방문자 — 매일 열흘 창, `--from` 이 있으면 그 달부터 백필 한 번. 한도 초과로 멈춘 것은 실패가 아니다."""
+    key = key or _api_key()
+    today = today or sync_tour.kst_today()
+    summary = visitors.run_backfill(key, from_month, today) if from_month else visitors.run_daily(key, today)
+    return 1 if summary["failed"] else 0
 
 
 def _job_media(budget: int, langs: tuple[str, ...]) -> int:
@@ -318,7 +328,7 @@ def main() -> int:
     ap.add_argument("--job", required=True,
                     choices=["overview", "intro", "media", "stats", "sync", "tour-portal-sync", "links",
                              "administrative-regions", "google-places", "lcls-codes", "pet-tour",
-                             "attraction-attrs"])
+                             "attraction-attrs", "visitors"])
     ap.add_argument("--budget", type=int, default=int(os.environ.get("BUDGET", "1000")),
                     help="개요 수집 일일 예산 (언어별, detailCommon2 호출 상한)")
     ap.add_argument("--lang", choices=["ko", "en"], help="미지정 시 ko·en 둘 다")
@@ -332,6 +342,8 @@ def main() -> int:
                     help="구글 place_id 보강 일일 상한 (Text Search ID-only 호출 수)")
     ap.add_argument("--wellness", action="store_true",
                     help="--job=attraction-attrs 에서 요일과 무관하게 웰니스를 받는다 (기본: 월요일 KST 만)")
+    ap.add_argument("--from", dest="from_month",
+                    help="--job=visitors 백필 시작 달 YYYY-MM (없으면 매일 창)")
     args = ap.parse_args()
 
     langs = (args.lang,) if args.lang else ("ko", "en")
@@ -356,6 +368,8 @@ def main() -> int:
     if args.job == "attraction-attrs":
         # BUDGET 환경변수는 개요 잡의 일일 예산이다 — 무장애는 자기 예산 상수를 쓴다(원천 한도가 API 마다 따로다)
         return _job_attraction_attrs(barrier_free.DAILY_BUDGET, True if args.wellness else None)
+    if args.job == "visitors":
+        return _job_visitors(args.from_month)
     if args.job == "tour-portal-sync":
         return _job_tour_portal_sync()
     return _job_sync(args.content_type, args.limit)

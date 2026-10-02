@@ -1,0 +1,4441 @@
+{
+ "_meta": {
+  "note": "운영 키로 2026-10-02 18:05(KST) 호출한 DataLabService 응답 행 원문(2콜). 기초 locgoRegnVisitrDDList startYmd=endYmd=20260901 numOfRows=1000(전량 807) 중 현지인 269행 전부 + 외지인·외국인 6행, 광역 metcoRegnVisitrDDList startYmd=20260801 endYmd=20261001 numOfRows=10000(전량 1,672) 중 20260801 한 날 50행(시도 16 × 3 + 옛 광주 29·전남 46 각 1행 — 이 두 코드는 20260818 까지만 온다). administrativeRegions 는 같은 시각 운영 place_db.administrative_regions(285행)의 code·level. 인증키·요청 URL 은 싣지 않았다(원천 응답에 휴대전화 번호 없음).",
+  "calls": 2,
+  "basicTotal": 807,
+  "metroTotal": 1672,
+  "metroRowsPerDate": {
+   "20260801": 50,
+   "20260802": 50,
+   "20260803": 50,
+   "20260804": 50,
+   "20260805": 50,
+   "20260806": 54,
+   "20260807": 54,
+   "20260808": 54,
+   "20260809": 54,
+   "20260810": 54,
+   "20260811": 54,
+   "20260812": 54,
+   "20260813": 54,
+   "20260814": 54,
+   "20260815": 54,
+   "20260816": 54,
+   "20260817": 54,
+   "20260818": 54,
+   "20260819": 48,
+   "20260820": 48,
+   "20260821": 48,
+   "20260822": 48,
+   "20260823": 48,
+   "20260824": 48,
+   "20260825": 48,
+   "20260826": 48,
+   "20260827": 48,
+   "20260828": 48,
+   "20260829": 48,
+   "20260830": 48,
+   "20260831": 48,
+   "20260901": 48,
+   "20260902": 48
+  },
+  "metroLatestDate": "20260902",
+  "measuredAt": "2026-10-02T18:05+09:00"
+ },
+ "basicRows": [
+  {
+   "signguCode": "11110",
+   "signguNm": "종로구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "187029.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11140",
+   "signguNm": "중구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "169932.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11170",
+   "signguNm": "용산구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "174233.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11200",
+   "signguNm": "성동구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "203598.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11215",
+   "signguNm": "광진구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "208929.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11230",
+   "signguNm": "동대문구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "194733.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11260",
+   "signguNm": "중랑구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "179308.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11290",
+   "signguNm": "성북구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "268467.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11305",
+   "signguNm": "강북구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "137294.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11320",
+   "signguNm": "도봉구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "145953.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11350",
+   "signguNm": "노원구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "309851.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11380",
+   "signguNm": "은평구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "187817.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11410",
+   "signguNm": "서대문구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "177355.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11440",
+   "signguNm": "마포구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "269426.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11470",
+   "signguNm": "양천구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "184107.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11500",
+   "signguNm": "강서구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "330536.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11530",
+   "signguNm": "구로구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "206038.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11545",
+   "signguNm": "금천구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "96897.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11560",
+   "signguNm": "영등포구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "336952.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11590",
+   "signguNm": "동작구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "189262.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11620",
+   "signguNm": "관악구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "265650.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11650",
+   "signguNm": "서초구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "416136.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11680",
+   "signguNm": "강남구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "632611.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11710",
+   "signguNm": "송파구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "485156.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11740",
+   "signguNm": "강동구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "300366.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12110",
+   "signguNm": "목포시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "177954.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12130",
+   "signguNm": "여수시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "171276.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12150",
+   "signguNm": "순천시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "193893.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12170",
+   "signguNm": "나주시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "86506.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12190",
+   "signguNm": "광양시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "89936.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12210",
+   "signguNm": "동구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "84430.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12240",
+   "signguNm": "서구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "196787.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12270",
+   "signguNm": "남구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "63994.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12300",
+   "signguNm": "북구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "278988.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12330",
+   "signguNm": "광산구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "263763.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12710",
+   "signguNm": "담양군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "31706.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12720",
+   "signguNm": "곡성군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "15655.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12730",
+   "signguNm": "구례군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "16849.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12740",
+   "signguNm": "고흥군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "31314.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12750",
+   "signguNm": "보성군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "23499.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12760",
+   "signguNm": "화순군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "46046.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12770",
+   "signguNm": "장흥군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "28892.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12780",
+   "signguNm": "강진군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "25931.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12790",
+   "signguNm": "해남군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "39914.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12800",
+   "signguNm": "영암군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "43771.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12810",
+   "signguNm": "무안군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "72422.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12820",
+   "signguNm": "함평군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "14654.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12830",
+   "signguNm": "영광군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "37537.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12840",
+   "signguNm": "장성군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "28707.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12850",
+   "signguNm": "완도군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "37975.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12860",
+   "signguNm": "진도군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "19467.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "12870",
+   "signguNm": "신안군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "22512.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "26110",
+   "signguNm": "중구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "42724.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "26140",
+   "signguNm": "서구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "59286.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "26170",
+   "signguNm": "동구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "55989.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "26200",
+   "signguNm": "영도구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "65457.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "26230",
+   "signguNm": "부산진구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "224238.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "26260",
+   "signguNm": "동래구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "146583.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "26290",
+   "signguNm": "남구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "149926.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "26320",
+   "signguNm": "북구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "157986.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "26350",
+   "signguNm": "해운대구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "257873.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "26380",
+   "signguNm": "사하구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "157878.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "26410",
+   "signguNm": "금정구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "127186.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "26440",
+   "signguNm": "강서구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "113662.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "26470",
+   "signguNm": "연제구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "78319.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "26500",
+   "signguNm": "수영구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "109560.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "26530",
+   "signguNm": "사상구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "98343.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "26710",
+   "signguNm": "기장군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "111671.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "27110",
+   "signguNm": "중구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "94255.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "27140",
+   "signguNm": "동구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "197659.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "27170",
+   "signguNm": "서구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "67287.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "27200",
+   "signguNm": "남구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "74651.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "27230",
+   "signguNm": "북구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "262409.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "27260",
+   "signguNm": "수성구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "252129.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "27290",
+   "signguNm": "달서구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "316680.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "27710",
+   "signguNm": "달성군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "130287.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "27720",
+   "signguNm": "군위군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "12418.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "28125",
+   "signguNm": "제물포구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "65436.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "28155",
+   "signguNm": "영종구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "119780.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "28177",
+   "signguNm": "미추홀구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "218071.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "28185",
+   "signguNm": "연수구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "267683.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "28200",
+   "signguNm": "남동구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "248430.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "28237",
+   "signguNm": "부평구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "245738.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "28245",
+   "signguNm": "계양구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "138547.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "28275",
+   "signguNm": "서해구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "235539.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "28290",
+   "signguNm": "검단구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "121635.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "28710",
+   "signguNm": "강화군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "62247.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "28720",
+   "signguNm": "옹진군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "13275.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "30110",
+   "signguNm": "동구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "98381.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "30140",
+   "signguNm": "중구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "132545.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "30170",
+   "signguNm": "서구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "294367.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "30200",
+   "signguNm": "유성구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "277907.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "30230",
+   "signguNm": "대덕구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "84406.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "31110",
+   "signguNm": "중구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "113743.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "31140",
+   "signguNm": "남구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "222792.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "31170",
+   "signguNm": "동구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "104923.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "31200",
+   "signguNm": "북구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "129321.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "31710",
+   "signguNm": "울주군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "151497.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "36110",
+   "signguNm": "세종특별자치시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "246963.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41110",
+   "signguNm": "수원시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "659519.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41111",
+   "signguNm": "수원시 장안구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "167135.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41113",
+   "signguNm": "수원시 권선구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "170303.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41115",
+   "signguNm": "수원시 팔달구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "129682.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41117",
+   "signguNm": "수원시 영통구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "212761.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41130",
+   "signguNm": "성남시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "611866.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41131",
+   "signguNm": "성남시 수정구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "134036.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41133",
+   "signguNm": "성남시 중원구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "78956.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41135",
+   "signguNm": "성남시 분당구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "408632.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41150",
+   "signguNm": "의정부시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "268523.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41170",
+   "signguNm": "안양시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "317765.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41171",
+   "signguNm": "안양시 만안구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "127848.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41173",
+   "signguNm": "안양시 동안구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "193728.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41190",
+   "signguNm": "부천시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "433646.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41192",
+   "signguNm": "부천시 원미구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "278068.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41194",
+   "signguNm": "부천시 소사구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "104303.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41196",
+   "signguNm": "부천시 오정구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "60630.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41210",
+   "signguNm": "광명시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "168094.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41220",
+   "signguNm": "평택시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "396403.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41250",
+   "signguNm": "동두천시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "55580.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41270",
+   "signguNm": "안산시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "348096.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41271",
+   "signguNm": "안산시 상록구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "139559.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41273",
+   "signguNm": "안산시 단원구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "216244.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41280",
+   "signguNm": "고양시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "594853.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41281",
+   "signguNm": "고양시 덕양구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "259696.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41285",
+   "signguNm": "고양시 일산동구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "187761.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41287",
+   "signguNm": "고양시 일산서구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "158837.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41290",
+   "signguNm": "과천시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "72152.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41310",
+   "signguNm": "구리시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "138225.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41360",
+   "signguNm": "남양주시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "403970.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41370",
+   "signguNm": "오산시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "154612.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41390",
+   "signguNm": "시흥시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "259154.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41410",
+   "signguNm": "군포시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "152589.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41430",
+   "signguNm": "의왕시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "80671.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41450",
+   "signguNm": "하남시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "210140.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41460",
+   "signguNm": "용인시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "648844.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41461",
+   "signguNm": "용인시 처인구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "206069.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41463",
+   "signguNm": "용인시 기흥구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "257957.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41465",
+   "signguNm": "용인시 수지구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "191961.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41480",
+   "signguNm": "파주시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "284483.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41500",
+   "signguNm": "이천시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "170534.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41550",
+   "signguNm": "안성시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "145400.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41570",
+   "signguNm": "김포시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "337823.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41590",
+   "signguNm": "화성시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "533067.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41591",
+   "signguNm": "화성시 만세구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "187848.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41593",
+   "signguNm": "화성시 효행구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "71452.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41595",
+   "signguNm": "화성시 병점구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "40603.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41597",
+   "signguNm": "화성시 동탄구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "239386.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41610",
+   "signguNm": "광주시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "250799.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41630",
+   "signguNm": "양주시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "178437.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41650",
+   "signguNm": "포천시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "107887.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41670",
+   "signguNm": "여주시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "89799.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41800",
+   "signguNm": "연천군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "31342.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41820",
+   "signguNm": "가평군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "48650.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "41830",
+   "signguNm": "양평군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "89712.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "43110",
+   "signguNm": "청주시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "421207.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "43111",
+   "signguNm": "청주시 상당구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "103243.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "43112",
+   "signguNm": "청주시 서원구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "69601.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "43113",
+   "signguNm": "청주시 흥덕구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "155365.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "43114",
+   "signguNm": "청주시 청원구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "106183.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "43130",
+   "signguNm": "충주시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "181342.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "43150",
+   "signguNm": "제천시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "75565.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "43720",
+   "signguNm": "보은군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "24346.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "43730",
+   "signguNm": "옥천군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "40285.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "43740",
+   "signguNm": "영동군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "35287.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "43745",
+   "signguNm": "증평군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "29750.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "43750",
+   "signguNm": "진천군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "60802.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "43760",
+   "signguNm": "괴산군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "23425.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "43770",
+   "signguNm": "음성군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "77584.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "43800",
+   "signguNm": "단양군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "20205.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "44130",
+   "signguNm": "천안시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "331565.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "44131",
+   "signguNm": "천안시 동남구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "158350.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "44133",
+   "signguNm": "천안시 서북구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "180708.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "44150",
+   "signguNm": "공주시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "61148.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "44180",
+   "signguNm": "보령시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "87458.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "44200",
+   "signguNm": "아산시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "235196.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "44210",
+   "signguNm": "서산시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "113876.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "44230",
+   "signguNm": "논산시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "81147.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "44250",
+   "signguNm": "계룡시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "29795.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "44270",
+   "signguNm": "당진시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "136066.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "44710",
+   "signguNm": "금산군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "41695.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "44760",
+   "signguNm": "부여군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "53945.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "44770",
+   "signguNm": "서천군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "42619.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "44790",
+   "signguNm": "청양군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "17969.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "44800",
+   "signguNm": "홍성군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "73769.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "44810",
+   "signguNm": "예산군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "60938.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "44825",
+   "signguNm": "태안군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "58089.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47110",
+   "signguNm": "포항시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "314125.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47111",
+   "signguNm": "포항시 남구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "135345.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47113",
+   "signguNm": "포항시 북구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "189339.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47130",
+   "signguNm": "경주시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "194404.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47150",
+   "signguNm": "김천시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "89246.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47170",
+   "signguNm": "안동시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "128453.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47190",
+   "signguNm": "구미시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "238007.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47210",
+   "signguNm": "영주시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "78375.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47230",
+   "signguNm": "영천시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "57169.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47250",
+   "signguNm": "상주시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "63549.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47280",
+   "signguNm": "문경시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "39011.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47290",
+   "signguNm": "경산시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "157829.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47730",
+   "signguNm": "의성군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "31391.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47750",
+   "signguNm": "청송군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "18217.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47760",
+   "signguNm": "영양군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "9772.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47770",
+   "signguNm": "영덕군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "28945.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47820",
+   "signguNm": "청도군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "24916.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47830",
+   "signguNm": "고령군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "17482.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47840",
+   "signguNm": "성주군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "28213.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47850",
+   "signguNm": "칠곡군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "58674.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47900",
+   "signguNm": "예천군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "35672.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47920",
+   "signguNm": "봉화군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "13562.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47930",
+   "signguNm": "울진군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "41734.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "47940",
+   "signguNm": "울릉군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "7598.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "48120",
+   "signguNm": "창원시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "609759.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "48121",
+   "signguNm": "창원시 의창구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "142957.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "48123",
+   "signguNm": "창원시 성산구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "180365.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "48125",
+   "signguNm": "창원시 마산합포구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "112567.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "48127",
+   "signguNm": "창원시 마산회원구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "99578.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "48129",
+   "signguNm": "창원시 진해구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "97394.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "48170",
+   "signguNm": "진주시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "180929.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "48220",
+   "signguNm": "통영시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "81417.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "48240",
+   "signguNm": "사천시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "68824.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "48250",
+   "signguNm": "김해시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "340375.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "48270",
+   "signguNm": "밀양시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "71004.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "48310",
+   "signguNm": "거제시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "262496.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "48330",
+   "signguNm": "양산시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "226964.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "48720",
+   "signguNm": "의령군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "18154.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "48730",
+   "signguNm": "함안군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "40057.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "48740",
+   "signguNm": "창녕군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "36312.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "48820",
+   "signguNm": "고성군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "31969.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "48840",
+   "signguNm": "남해군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "29582.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "48850",
+   "signguNm": "하동군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "21220.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "48860",
+   "signguNm": "산청군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "19264.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "48870",
+   "signguNm": "함양군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "27639.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "48880",
+   "signguNm": "거창군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "42952.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "48890",
+   "signguNm": "합천군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "25291.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "50110",
+   "signguNm": "제주시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "499513.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "50130",
+   "signguNm": "서귀포시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "161269.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "51110",
+   "signguNm": "춘천시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "243096.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "51130",
+   "signguNm": "원주시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "280364.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "51150",
+   "signguNm": "강릉시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "201460.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "51170",
+   "signguNm": "동해시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "74609.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "51190",
+   "signguNm": "태백시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "38146.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "51210",
+   "signguNm": "속초시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "79768.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "51230",
+   "signguNm": "삼척시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "50022.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "51720",
+   "signguNm": "홍천군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "45699.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "51730",
+   "signguNm": "횡성군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "30870.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "51750",
+   "signguNm": "영월군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "22802.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "51760",
+   "signguNm": "평창군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "36760.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "51770",
+   "signguNm": "정선군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "29606.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "51780",
+   "signguNm": "철원군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "32441.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "51790",
+   "signguNm": "화천군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "18018.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "51800",
+   "signguNm": "양구군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "19309.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "51810",
+   "signguNm": "인제군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "26379.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "51820",
+   "signguNm": "고성군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "26845.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "51830",
+   "signguNm": "양양군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "32147.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "52110",
+   "signguNm": "전주시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "410182.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "52111",
+   "signguNm": "전주시 완산구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "213979.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "52113",
+   "signguNm": "전주시 덕진구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "207721.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "52130",
+   "signguNm": "군산시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "215715.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "52140",
+   "signguNm": "익산시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "221693.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "52180",
+   "signguNm": "정읍시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "69153.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "52190",
+   "signguNm": "남원시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "57778.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "52210",
+   "signguNm": "김제시",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "46998.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "52710",
+   "signguNm": "완주군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "53035.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "52720",
+   "signguNm": "진안군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "12432.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "52730",
+   "signguNm": "무주군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "17370.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "52740",
+   "signguNm": "장수군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "12908.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "52750",
+   "signguNm": "임실군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "13727.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "52770",
+   "signguNm": "순창군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "13471.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "52790",
+   "signguNm": "고창군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "37614.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "52800",
+   "signguNm": "부안군",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "37520.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11110",
+   "signguNm": "종로구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "2",
+   "touDivNm": "외지인(b)",
+   "touNum": "363468.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11110",
+   "signguNm": "종로구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "3",
+   "touDivNm": "외국인(c)",
+   "touNum": "24814.549999999996",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11140",
+   "signguNm": "중구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "2",
+   "touDivNm": "외지인(b)",
+   "touNum": "356937.0",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11140",
+   "signguNm": "중구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "3",
+   "touDivNm": "외국인(c)",
+   "touNum": "51939.670000000006",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11170",
+   "signguNm": "용산구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "2",
+   "touDivNm": "외지인(b)",
+   "touNum": "259808.5",
+   "baseYmd": "20260901"
+  },
+  {
+   "signguCode": "11170",
+   "signguNm": "용산구",
+   "daywkDivCd": "2",
+   "daywkDivNm": "화요일",
+   "touDivCd": "3",
+   "touDivNm": "외국인(c)",
+   "touNum": "20628.869999999988",
+   "baseYmd": "20260901"
+  }
+ ],
+ "metroRows": [
+  {
+   "areaCode": "11",
+   "areaNm": "서울특별시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "4216285.5",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "11",
+   "areaNm": "서울특별시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "2",
+   "touDivNm": "외지인(b)",
+   "touNum": "1747819.5",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "11",
+   "areaNm": "서울특별시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "3",
+   "touDivNm": "외국인(c)",
+   "touNum": "182982.54",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "12",
+   "areaNm": "전남광주통합특별시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "1636271.0",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "12",
+   "areaNm": "전남광주통합특별시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "2",
+   "touDivNm": "외지인(b)",
+   "touNum": "486675.0",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "12",
+   "areaNm": "전남광주통합특별시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "3",
+   "touDivNm": "외국인(c)",
+   "touNum": "33200.549999999996",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "26",
+   "areaNm": "부산광역시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "1425851.0",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "26",
+   "areaNm": "부산광역시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "2",
+   "touDivNm": "외지인(b)",
+   "touNum": "594132.0",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "26",
+   "areaNm": "부산광역시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "3",
+   "touDivNm": "외국인(c)",
+   "touNum": "58259.299999999974",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "27",
+   "areaNm": "대구광역시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "1122250.5",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "27",
+   "areaNm": "대구광역시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "2",
+   "touDivNm": "외지인(b)",
+   "touNum": "344274.0",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "27",
+   "areaNm": "대구광역시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "3",
+   "touDivNm": "외국인(c)",
+   "touNum": "6265.5",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "28",
+   "areaNm": "인천광역시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "1333990.0",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "28",
+   "areaNm": "인천광역시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "2",
+   "touDivNm": "외지인(b)",
+   "touNum": "649334.0",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "28",
+   "areaNm": "인천광역시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "3",
+   "touDivNm": "외국인(c)",
+   "touNum": "114241.00000000003",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "29",
+   "areaNm": "광주광역시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "3",
+   "touDivNm": "외국인(c)",
+   "touNum": "2958.5299999999997",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "30",
+   "areaNm": "대전광역시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "687456.0",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "30",
+   "areaNm": "대전광역시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "2",
+   "touDivNm": "외지인(b)",
+   "touNum": "304738.0",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "30",
+   "areaNm": "대전광역시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "3",
+   "touDivNm": "외국인(c)",
+   "touNum": "3826.6999999999994",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "31",
+   "areaNm": "울산광역시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "516880.0",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "31",
+   "areaNm": "울산광역시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "2",
+   "touDivNm": "외지인(b)",
+   "touNum": "168658.0",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "31",
+   "areaNm": "울산광역시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "3",
+   "touDivNm": "외국인(c)",
+   "touNum": "9224.9",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "36",
+   "areaNm": "세종특별자치시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "200392.5",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "36",
+   "areaNm": "세종특별자치시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "2",
+   "touDivNm": "외지인(b)",
+   "touNum": "93674.0",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "36",
+   "areaNm": "세종특별자치시",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "3",
+   "touDivNm": "외국인(c)",
+   "touNum": "1255.75",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "41",
+   "areaNm": "경기도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "6381438.0",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "41",
+   "areaNm": "경기도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "2",
+   "touDivNm": "외지인(b)",
+   "touNum": "2037903.0",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "41",
+   "areaNm": "경기도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "3",
+   "touDivNm": "외국인(c)",
+   "touNum": "84755.09000000004",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "43",
+   "areaNm": "충청북도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "787244.5",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "43",
+   "areaNm": "충청북도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "2",
+   "touDivNm": "외지인(b)",
+   "touNum": "488579.0",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "43",
+   "areaNm": "충청북도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "3",
+   "touDivNm": "외국인(c)",
+   "touNum": "11233.460000000001",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "44",
+   "areaNm": "충청남도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "1128725.5",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "44",
+   "areaNm": "충청남도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "2",
+   "touDivNm": "외지인(b)",
+   "touNum": "714619.5",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "44",
+   "areaNm": "충청남도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "3",
+   "touDivNm": "외국인(c)",
+   "touNum": "19054.980000000007",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "46",
+   "areaNm": "전라남도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "3",
+   "touDivNm": "외국인(c)",
+   "touNum": "30757.399999999998",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "47",
+   "areaNm": "경상북도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "1342729.5",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "47",
+   "areaNm": "경상북도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "2",
+   "touDivNm": "외지인(b)",
+   "touNum": "795893.0",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "47",
+   "areaNm": "경상북도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "3",
+   "touDivNm": "외국인(c)",
+   "touNum": "19114.040000000005",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "48",
+   "areaNm": "경상남도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "1630846.0",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "48",
+   "areaNm": "경상남도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "2",
+   "touDivNm": "외지인(b)",
+   "touNum": "641539.5",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "48",
+   "areaNm": "경상남도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "3",
+   "touDivNm": "외국인(c)",
+   "touNum": "31872.34000000001",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "50",
+   "areaNm": "제주특별자치도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "577213.0",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "50",
+   "areaNm": "제주특별자치도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "2",
+   "touDivNm": "외지인(b)",
+   "touNum": "201432.0",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "50",
+   "areaNm": "제주특별자치도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "3",
+   "touDivNm": "외국인(c)",
+   "touNum": "67359.47",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "51",
+   "areaNm": "강원특별자치도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "995116.5",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "51",
+   "areaNm": "강원특별자치도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "2",
+   "touDivNm": "외지인(b)",
+   "touNum": "908131.0",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "51",
+   "areaNm": "강원특별자치도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "3",
+   "touDivNm": "외국인(c)",
+   "touNum": "11247.150000000001",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "52",
+   "areaNm": "전북특별자치도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "1",
+   "touDivNm": "현지인(a)",
+   "touNum": "988039.5",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "52",
+   "areaNm": "전북특별자치도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "2",
+   "touDivNm": "외지인(b)",
+   "touNum": "440244.0",
+   "baseYmd": "20260801"
+  },
+  {
+   "areaCode": "52",
+   "areaNm": "전북특별자치도",
+   "daywkDivCd": "6",
+   "daywkDivNm": "토요일",
+   "touDivCd": "3",
+   "touDivNm": "외국인(c)",
+   "touNum": "11412.499999999998",
+   "baseYmd": "20260801"
+  }
+ ],
+ "administrativeRegions": [
+  {
+   "code": "11",
+   "level": "SIDO"
+  },
+  {
+   "code": "11110",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11140",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11170",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11200",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11215",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11230",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11260",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11290",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11305",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11320",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11350",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11380",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11410",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11440",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11470",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11500",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11530",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11545",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11560",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11590",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11620",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11650",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11680",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11710",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "11740",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12",
+   "level": "SIDO"
+  },
+  {
+   "code": "12110",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12130",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12150",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12170",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12190",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12210",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12240",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12270",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12300",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12330",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12710",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12720",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12730",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12740",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12750",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12760",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12770",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12780",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12790",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12800",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12810",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12820",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12830",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12840",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12850",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12860",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "12870",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "26",
+   "level": "SIDO"
+  },
+  {
+   "code": "26110",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "26140",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "26170",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "26200",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "26230",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "26260",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "26290",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "26320",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "26350",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "26380",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "26410",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "26440",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "26470",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "26500",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "26530",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "26710",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "27",
+   "level": "SIDO"
+  },
+  {
+   "code": "27110",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "27140",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "27170",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "27200",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "27230",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "27260",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "27290",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "27710",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "27720",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "28",
+   "level": "SIDO"
+  },
+  {
+   "code": "28125",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "28155",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "28177",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "28185",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "28200",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "28237",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "28245",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "28275",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "28290",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "28710",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "28720",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "30",
+   "level": "SIDO"
+  },
+  {
+   "code": "30110",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "30140",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "30170",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "30200",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "30230",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "31",
+   "level": "SIDO"
+  },
+  {
+   "code": "31110",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "31140",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "31170",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "31200",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "31710",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "36",
+   "level": "SIDO"
+  },
+  {
+   "code": "36110",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41",
+   "level": "SIDO"
+  },
+  {
+   "code": "41110",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41111",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41113",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41115",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41117",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41130",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41131",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41133",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41135",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41150",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41170",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41171",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41173",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41190",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41192",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41194",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41196",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41210",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41220",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41250",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41270",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41271",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41273",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41280",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41281",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41285",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41287",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41290",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41310",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41360",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41370",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41390",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41410",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41430",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41450",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41460",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41461",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41463",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41465",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41480",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41500",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41550",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41570",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41590",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41591",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41593",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41595",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41597",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41610",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41630",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41650",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41670",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41800",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41820",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "41830",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "43",
+   "level": "SIDO"
+  },
+  {
+   "code": "43110",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "43111",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "43112",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "43113",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "43114",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "43130",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "43150",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "43720",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "43730",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "43740",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "43745",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "43750",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "43760",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "43770",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "43800",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "44",
+   "level": "SIDO"
+  },
+  {
+   "code": "44130",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "44131",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "44133",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "44150",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "44180",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "44200",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "44210",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "44230",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "44250",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "44270",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "44710",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "44760",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "44770",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "44790",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "44800",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "44810",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "44825",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47",
+   "level": "SIDO"
+  },
+  {
+   "code": "47110",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47111",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47113",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47130",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47150",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47170",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47190",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47210",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47230",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47250",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47280",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47290",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47730",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47750",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47760",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47770",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47820",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47830",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47840",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47850",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47900",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47920",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47930",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "47940",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "48",
+   "level": "SIDO"
+  },
+  {
+   "code": "48120",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "48121",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "48123",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "48125",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "48127",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "48129",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "48170",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "48220",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "48240",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "48250",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "48270",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "48310",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "48330",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "48720",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "48730",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "48740",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "48820",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "48840",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "48850",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "48860",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "48870",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "48880",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "48890",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "50",
+   "level": "SIDO"
+  },
+  {
+   "code": "50110",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "50130",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "51",
+   "level": "SIDO"
+  },
+  {
+   "code": "51110",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "51130",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "51150",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "51170",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "51190",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "51210",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "51230",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "51720",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "51730",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "51750",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "51760",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "51770",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "51780",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "51790",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "51800",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "51810",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "51820",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "51830",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "52",
+   "level": "SIDO"
+  },
+  {
+   "code": "52110",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "52111",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "52113",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "52130",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "52140",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "52180",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "52190",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "52210",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "52710",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "52720",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "52730",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "52740",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "52750",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "52770",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "52790",
+   "level": "SIGUNGU"
+  },
+  {
+   "code": "52800",
+   "level": "SIGUNGU"
+  }
+ ]
+}

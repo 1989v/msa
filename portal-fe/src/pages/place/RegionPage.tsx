@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   EVENT_CATEGORY,
   fetchAdministrativeRegions,
+  fetchRegionVisitors,
   searchAttractions,
   SIGHT_CATEGORIES,
   type AdministrativeRegion,
@@ -29,6 +30,7 @@ import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import Footer from '../../components/Footer';
 import { titleParts } from './placeView';
 import EventLine from './EventLine';
+import RegionVisitorTrend from './RegionVisitorTrend';
 import TrackedLink from '../../analytics/TrackedLink';
 import { newViewId } from '../../analytics/identity';
 import { installFlushOnLeave } from '../../analytics/tracker';
@@ -139,6 +141,15 @@ export default function RegionPage() {
   });
   const events = monthEvents?.attractions ?? [];
 
+  // 방문 추이 — place 레디스 캐시 경로(ADR-0071 §10). 조회 시점에 그리고 프리렌더 본문에는 넣지 않는다.
+  // 실패하면 절만 빠진다 — 허브의 나머지를 막지 않는다.
+  const { data: visitorTrend } = useQuery({
+    queryKey: ['region-visitors', code],
+    queryFn: () => fetchRegionVisitors(code),
+    enabled: region != null,
+    staleTime: 60 * 60_000,
+  });
+
   // 노출 기록용 화면 식별자 (ADR-0095) — 지역이 바뀌면 새 한 벌이다
   // eslint-disable-next-line react-hooks/exhaustive-deps -- code 가 바뀔 때만 새 한 벌이다
   const viewId = useMemo(() => newViewId(), [code]);
@@ -220,6 +231,8 @@ export default function RegionPage() {
                 </div>
               </section>
             )}
+
+            {visitorTrend && visitorTrend.months.length > 0 && <RegionVisitorTrend trend={visitorTrend} lang={lang} />}
 
             <Link className="place-btn primary" to={placePath(lang)}>
               {L.all}

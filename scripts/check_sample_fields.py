@@ -24,7 +24,7 @@ REPO = Path(__file__).resolve().parents[1]
 SAMPLE = REPO / "docs/specs/2026-10-02-place-tour-portal-expansion/implementation/sample-phase2-apis.json"
 sys.path.insert(0, str(REPO / "place" / "ingest"))
 
-from src import barrier_free, wellness  # noqa: E402
+from src import barrier_free, visitors, wellness  # noqa: E402
 
 Recorder = Callable[[dict], dict]
 
@@ -33,6 +33,10 @@ REGISTRY: dict[str, Recorder] = {
     "1 무장애 목록": barrier_free.list_record,
     "1 무장애 상세": lambda row: barrier_free.detail_record(str(row["contentid"]), row),
     "7 웰니스": wellness.record,
+    "8 기초 20260901": lambda row: visitors.record("SIGUNGU", row),
+    "8 기초 20260801": lambda row: visitors.record("SIGUNGU", row),
+    "8 광역 20260901": lambda row: visitors.record("SIDO", row),
+    "8 광역 20260801": lambda row: visitors.record("SIDO", row),
 }
 
 #: 안 하기로 한 API — 대장에도 넣지 않는다 (phase2-design §0).

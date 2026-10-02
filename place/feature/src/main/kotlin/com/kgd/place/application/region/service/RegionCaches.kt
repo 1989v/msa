@@ -10,4 +10,10 @@ object RegionCaches {
 
     /** GeoNames 지명 계층. 키는 `level:X` 또는 `parent:N`. */
     const val GEONAMES = "placeRegions"
+
+    /**
+     * 지역 허브 「방문 추이」. 키는 법정동 코드(시도 2자리 · 시군구 5자리 — 길이가 수준이라 겹치지 않는다).
+     * 적재가 받은 지역의 키를 덮는다(write-through) — 비우지 않는다.
+     */
+    const val VISITORS = "placeRegionVisitors"
 }

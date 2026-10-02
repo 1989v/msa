@@ -3,6 +3,7 @@ package com.kgd.place.infrastructure.cache
 import com.kgd.place.application.region.service.RegionCaches
 import com.kgd.place.application.region.usecase.AdministrativeRegionUseCase
 import com.kgd.place.application.region.usecase.GetRegionUseCase
+import com.kgd.place.application.region.usecase.RegionVisitorUseCase
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.cache.Cache
 import org.springframework.cache.annotation.CachingConfigurer
@@ -49,6 +50,12 @@ class RegionCacheConfig : CachingConfigurer {
     companion object {
         /** 적재가 비우므로 TTL 은 놓친 비우기(레디스 장애 중 적재)의 상한이다. 수집이 하루 한 번이라 하루. */
         val TTL: Duration = Duration.ofDays(1)
+
+        /**
+         * 방문 추이는 적재가 덮는다(write-through). 수집이 매일 02:30 이라 TTL 은 다음 회차 + 두 시간 — 덮기가 실패한
+         * 지역(레디스 장애 중 적재)도 다음 날 안에 캐시를 놓친 요청이 새로 채운다.
+         */
+        val VISITORS_TTL: Duration = Duration.ofHours(26)
         private const val SCAN_BATCH = 100
 
         fun cacheManager(writer: RedisCacheWriter): RedisCacheManager {
@@ -57,13 +64,15 @@ class RegionCacheConfig : CachingConfigurer {
                 mapper,
                 mapper.typeFactory.constructCollectionType(List::class.java, type),
             )
-            fun config(serializer: JacksonJsonRedisSerializer<*>) = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(TTL)
+            fun <T : Any> valueSerializer(type: Class<T>) = JacksonJsonRedisSerializer(mapper, type)
+            fun config(serializer: JacksonJsonRedisSerializer<*>, ttl: Duration = TTL) = RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(ttl)
                 .disableCachingNullValues()
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer))
             return RedisCacheManager.builder(writer)
                 .withCacheConfiguration(RegionCaches.ADMINISTRATIVE, config(listSerializer(AdministrativeRegionUseCase.View::class.java)))
                 .withCacheConfiguration(RegionCaches.GEONAMES, config(listSerializer(GetRegionUseCase.RegionView::class.java)))
+                .withCacheConfiguration(RegionCaches.VISITORS, config(valueSerializer(RegionVisitorUseCase.Trend::class.java), VISITORS_TTL))
                 // 이름을 모르는 캐시는 만들지 않는다 — 기본 설정(JDK 직렬화)으로 조용히 생기면 값이 깨진다
                 .disableCreateOnMissingCache()
                 .build()

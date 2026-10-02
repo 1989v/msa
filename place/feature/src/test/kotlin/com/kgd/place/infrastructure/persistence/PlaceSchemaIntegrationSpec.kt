@@ -18,6 +18,12 @@ import com.kgd.place.infrastructure.persistence.attraction.repository.Attraction
 import com.kgd.place.infrastructure.persistence.poi.repository.PoiJpaRepository
 import com.kgd.place.infrastructure.persistence.region.repository.AdministrativeRegionJpaRepository
 import com.kgd.place.infrastructure.persistence.region.repository.RegionJpaRepository
+import com.kgd.place.infrastructure.persistence.region.repository.RegionVisitorDailyJpaRepository
+import com.kgd.place.infrastructure.persistence.region.adapter.RegionVisitorRepositoryAdapter
+import com.kgd.place.domain.region.model.AdministrativeRegionLevel
+import com.kgd.place.domain.region.model.RegionVisitorDaily
+import java.math.BigDecimal
+import java.time.YearMonth
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.shouldBe
@@ -72,6 +78,7 @@ class PlaceSchemaIntegrationSpec(
     @Autowired private val r6: AttractionSimilarJpaRepository,
     @Autowired private val r7: AttractionBarrierFreeJpaRepository,
     @Autowired private val r8: AttractionWellnessJpaRepository,
+    @Autowired private val r9: RegionVisitorDailyJpaRepository,
     @Autowired private val tx: TransactionTemplate,
 ) : BehaviorSpec({
 
@@ -80,7 +87,7 @@ class PlaceSchemaIntegrationSpec(
             .config(enabledIf = { dockerAvailable }) {
                 // count() 는 엔티티마다 실제 SQL 을 MySQL 로 보낸다 — 컬럼이 어긋나면
                 // validate 에서 컨텍스트가 아예 안 뜨고, 뜬 뒤에도 매핑이 틀리면 여기서 터진다.
-                listOf(r0, r1, r2, r3, r4, r5, r6, r7, r8).map { it.count() }.size shouldBe 9
+                listOf(r0, r1, r2, r3, r4, r5, r6, r7, r8, r9).map { it.count() }.size shouldBe 10
             }
     }
 
@@ -192,6 +199,39 @@ class PlaceSchemaIntegrationSpec(
                 tx.execute { adapter.replaceWellness("ko", listOf(tag("2994116")), synced) } shouldBe
                     setOf(ids.getValue("2994116"), ids.getValue("127956"))
                 adapter.findWellnessByAttractionIds(ids.values).map { it.contentId } shouldBe listOf("2994116")
+            }
+    }
+
+    Given("지역 방문자를 V26 표에 같은 날 두 번 적재할 때") {
+        Then("키가 같은 행은 덮이고(행이 늘지 않는다), 원문은 그대로, 월 합계는 파생값으로 나와야 한다")
+            .config(enabledIf = { dockerAvailable }) {
+                val adapter = RegionVisitorRepositoryAdapter(r9)
+                // 운영 표본(2026-10-02) 종로구 2026-09-01 — 외지인 값은 원천의 부동소수 표기 그대로
+                fun row(div: String, num: String, day: Int = 1) = RegionVisitorDaily(
+                    AdministrativeRegionLevel.SIGUNGU, "11110", LocalDate.of(2026, 9, day), div, num,
+                    regionName = "종로구", touDivNm = "외지인(b)", daywkDivCd = "2", daywkDivNm = "화요일",
+                )
+                val at = LocalDateTime.of(2026, 10, 3, 2, 30)
+                // 운영은 어댑터의 @Transactional 프록시가 감싼다 — 여기서는 어댑터를 직접 만들어 트랜잭션을 직접 연다
+                tx.execute { adapter.upsertAll(listOf(row("1", "187029.5"), row("2", "24814.549999999996")), at) }
+                tx.execute { adapter.upsertAll(listOf(row("1", "187030.0"), row("2", "24814.549999999996"), row("2", "100.25", day = 2)), at.plusDays(1)) }
+
+                r9.findAll().filter { it.id.regionCode == "11110" }.size shouldBe 3
+                val outsider = r9.findAll().single { it.id.regionCode == "11110" && it.id.touDivCd == "2" && it.id.baseYmd.dayOfMonth == 1 }
+                outsider.touNum shouldBe "24814.549999999996"
+                outsider.touNumValue.compareTo(BigDecimal("24814.550")) shouldBe 0
+                outsider.syncedAt shouldBe at.plusDays(1)
+                // 다시 받은 값이 원문까지 덮는다(원천이 고친 날)
+                r9.findAll().single { it.id.regionCode == "11110" && it.id.touDivCd == "1" }.touNum shouldBe "187030.0"
+
+                adapter.findLatestDate(AdministrativeRegionLevel.SIGUNGU, "11110") shouldBe LocalDate.of(2026, 9, 2)
+                adapter.findLatestDate(AdministrativeRegionLevel.SIDO, "11") shouldBe null
+                val totals = adapter.findMonthlyTotals(AdministrativeRegionLevel.SIGUNGU, "11110", LocalDate.of(2025, 9, 1))
+                    .associateBy { it.touDivCd }
+                totals.getValue("1").month shouldBe YearMonth.of(2026, 9)
+                totals.getValue("1").total.compareTo(BigDecimal("187030.0")) shouldBe 0
+                totals.getValue("2").days shouldBe 2
+                totals.getValue("2").total.compareTo(BigDecimal("24914.800")) shouldBe 0
             }
     }
 

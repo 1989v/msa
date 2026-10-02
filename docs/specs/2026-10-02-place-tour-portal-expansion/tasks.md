@@ -209,11 +209,11 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
     - [x] 12.B.3 Verify: `cd place/ingest && python -m pytest -q tests/barrier_free_test.py tests/wellness_test.py && cd ../.. && ./gradlew :place:feature:test --tests '*AttractionExtras*' && ./gradlew :search:batch:test --tests '*AttractionApiReindexTaskletTest' && ./gradlew verifySearchIndexContract && ./gradlew :search:app:test --tests '*AttractionPageRendererTest'`
     - [x] 12.B.4 배포: content(V25) → place-ingest(잡) → search-batch → search → portal-fe
     - [x] 12.B.5 운영 확인: 새 이미지 확인 → 첫 실행 목록 9,630 · 매칭 ≈ 9,623 · 상세 899건/일 · 웰니스 국 168 · 영 92 · 재색인 뒤 `barrierFree` 있는 문서 `_count` · Googlebot UA 표본 상세에 절 마커
-  - [ ] 12.C 지역 방문자 (V26 · `place-ingest-visitors` 매일 02:30 · 하루 2콜 · 12개월 백필 약 32콜)
-    - [ ] 12.C.1 Write tests: 시군구 코드 269 전부가 `administrative_regions` 에 있음(실측 표본) · 일자 PK 재수집이 중복을 만들지 않음 · 레디스 write-through(적재 뒤 GET 이 DB 를 안 침, 미스면 PK 한 행) · `placeServingPaths.test.tsx` 허용 목록에 방문자 경로
-    - [ ] 12.C.2 구현: V26 · 내부 bulk · `GET /api/places/administrative-regions/{code}/visitors` 캐시 · 공개 지연 탐색(Q-P2-VISITORS-LAG) · 지역 허브 「방문 추이」
-    - [ ] 12.C.3 Verify: `cd place/ingest && python -m pytest -q tests/visitors_test.py && cd ../.. && ./gradlew :place:feature:test --tests '*RegionVisitor*' && (cd portal-fe && npx vitest run src/pages/place/__tests__/placeServingPaths.test.tsx src/pages/place/__tests__/RegionPage.test.tsx)`
-    - [ ] 12.C.4 배포: content(V26) → place-ingest → portal-fe
+  - [x] 12.C 지역 방문자 (V26 · `place-ingest-visitors` 매일 02:30 · 하루 2콜 · 12개월 백필 약 32콜)
+    - [x] 12.C.1 Write tests: 시군구 코드 269 전부가 `administrative_regions` 에 있음(실측 표본) · 일자 PK 재수집이 중복을 만들지 않음 · 레디스 write-through(적재 뒤 GET 이 DB 를 안 침, 미스면 PK 한 행) · `placeServingPaths.test.tsx` 허용 목록에 방문자 경로
+    - [x] 12.C.2 구현: V26 · 내부 bulk · `GET /api/places/administrative-regions/{code}/visitors` 캐시 · 공개 지연 탐색(Q-P2-VISITORS-LAG) · 지역 허브 「방문 추이」
+    - [x] 12.C.3 Verify: `cd place/ingest && python -m pytest -q tests/visitors_test.py && cd ../.. && ./gradlew :place:feature:test --tests '*RegionVisitor*' && (cd portal-fe && npx vitest run src/pages/place/__tests__/placeServingPaths.test.tsx src/pages/place/__tests__/RegionPage.test.tsx)`
+    - [x] 12.C.4 배포: content(V26) → place-ingest → portal-fe
     - [ ] 12.C.5 운영 확인: 하루 적재 = 기초 807 + 광역 행 · 공개 지연 값 기록 · 허브 응답 두 번째 호출이 레디스 적중(place 로그)
   - [ ] 12.D 단기·중기 날씨 (V27 · 단기 05:25·17:25 486콜/일 · 중기 06:25 ≤ 200콜/일)
     - [ ] 12.D.1 Write tests: 격자 변환(서울 시청 → (60,127) 등 기상청 표 검산점) · 시군구 269 → 고유 격자 243(운영 대표점 픽스처) · 중기 regId 매핑(시드 표 → 시군구 전부 매핑, Q-P2-MIDREG) · 신선도(발표 24시간 초과 → 응답에서 빠짐) · 서빙 경로 허용 목록

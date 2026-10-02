@@ -50,3 +50,5 @@
 | TG13 배포 | search·portal-fe b0020c3 | 코스 61687 제목 「… 여행 코스 — 코스 구성 · 거리 · 소요 시간」 (중복 제거 확인) |
 | 12.A+B | pytest 6파일 · check_sample_fields --self-test · Gradle(place·search batch·app 대상) + verifySearchIndexContract·verifyArchitecture·verifyDataSourcePoolKeys · vitest 3 · tsc(app) · kustomize | 30 passed · exit 0 · 289 tests 0 실패 · BUILD SUCCESSFUL · 47 passed · exit 0 · schedule 40 17 * * * |
 | 12.A+B | 회귀 주입 16종 + 의료관광 제외(EX0508xx) | 전부 빨간불 · 운영 호출 101콜(정밀도 표본) |
+| 12.A+B 운영 | 배포 cff5116 · V25 · 첫 수집(--wellness) · 재색인 | 무장애 목록 9,630 → 붙음 9,623 · 상세 899 · 실패 0 · 호출 900 · 웰니스 국 168/170 · 영 92/92 · 패싯 국 휠체어 265 · 엘리베이터 88 · 장애인 화장실 782 · 웰니스 168 · 경복궁 SSR barrier-free 절·출처 줄 |
+| 12.C | pytest 4파일 · place domain·feature(통합 포함) · ContentContextLoadSpec --rerun · 게이트 · vitest 2 · tsc(app) | 30 passed · 6·4·5·7·8 tests 0 실패 · BUILD SUCCESSFUL · 12 passed · exit 0 |

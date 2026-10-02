@@ -8,13 +8,14 @@ vi.mock('../../../api/placeApi', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../api/placeApi')>()),
   searchAttractions: vi.fn(),
   fetchAdministrativeRegions: vi.fn(),
+  fetchRegionVisitors: vi.fn(),
 }));
 vi.mock('../../../analytics/tracker', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../analytics/tracker')>()),
   track: vi.fn(),
 }));
 
-import { fetchAdministrativeRegions, searchAttractions } from '../../../api/placeApi';
+import { fetchAdministrativeRegions, fetchRegionVisitors, searchAttractions } from '../../../api/placeApi';
 import { track } from '../../../analytics/tracker';
 import { renderRegionDetail } from '../../../../scripts/prerender-seo.mjs';
 import RegionPage from '../RegionPage';
@@ -58,6 +59,7 @@ describe('RegionPage 이번 달 행사', () => {
     vi.mocked(fetchAdministrativeRegions).mockImplementation(({ level }) =>
       Promise.resolve(level === 'SIDO' ? [seoul] : [jongno]),
     );
+    vi.mocked(fetchRegionVisitors).mockResolvedValue({ code: '11', level: 'SIDO', latestDate: null, months: [] });
   });
   afterEach(() => {
     vi.useRealTimers();
@@ -114,5 +116,63 @@ describe('RegionPage 이번 달 행사', () => {
     });
     expect(html).toContain('대표 관광지');
     expect(html).not.toContain('이번 달 행사');
+  });
+});
+
+describe('RegionPage 방문 추이', () => {
+  const trend = {
+    code: '11110', level: 'SIGUNGU' as const, latestDate: '2026-09-02',
+    months: [
+      { month: '2026-07', local: 4_000_000, outsider: 600_000, foreigner: 10_000 },
+      { month: '2026-08', local: 5_000_000, outsider: 800_000, foreigner: 12_000 },
+    ],
+  };
+  beforeEach(() => {
+    vi.mocked(fetchAdministrativeRegions).mockImplementation(({ level }) =>
+      Promise.resolve(level === 'SIDO' ? [seoul] : [jongno]),
+    );
+    respond([]);
+  });
+  afterEach(() => {
+    vi.clearAllMocks();
+    cleanup();
+  });
+
+  it('그 지역 코드로 부르고, 달마다 현지인·외지인·외국인을 그린 뒤 출처와 기준일을 단다', async () => {
+    vi.mocked(fetchRegionVisitors).mockResolvedValue(trend);
+    renderAt('/regions/11110');
+    const section = await screen.findByRole('region', { name: '방문 추이' });
+
+    expect(fetchRegionVisitors).toHaveBeenCalledWith('11110');
+    const bars = within(section).getAllByRole('listitem');
+    expect(bars.map((b) => b.getAttribute('aria-label'))).toEqual([
+      '2026년 7월 — 현지인 4,000,000명 · 외지인 600,000명 · 외국인 10,000명',
+      '2026년 8월 — 현지인 5,000,000명 · 외지인 800,000명 · 외국인 12,000명',
+    ]);
+    // 막대 높이는 가장 큰 달 합계 대비 — 8월이 100%
+    expect((bars[1].querySelector('.place-visitor-stack') as HTMLElement).style.height).toBe('100%');
+    expect(within(section).getByText(/출처: 한국관광공사 빅데이터/)).toBeInTheDocument();
+    expect(within(section).getByText(/2026-09-02/)).toBeInTheDocument();
+  });
+
+  it('다 받은 달이 없으면 절을 그리지 않는다', async () => {
+    vi.mocked(fetchRegionVisitors).mockResolvedValue({ ...trend, months: [] });
+    renderAt('/regions/11110');
+    await screen.findByText('명소 201');
+    expect(screen.queryByRole('region', { name: '방문 추이' })).toBeNull();
+  });
+
+  it('조회가 실패해도 나머지 허브는 그대로다', async () => {
+    vi.mocked(fetchRegionVisitors).mockRejectedValue(new Error('down'));
+    renderAt('/regions/11110');
+    await screen.findByText('명소 201');
+    expect(screen.queryByRole('region', { name: '방문 추이' })).toBeNull();
+  });
+
+  it('지역 프리렌더 본문에는 방문 추이가 없다 — 조회 시점에 그린다', () => {
+    const html = renderRegionDetail('<html><head><!--seo:start--><!--seo:end--></head><body><div id="root"></div></body></html>', 'ko', jongno, {
+      top: [{ id: '42', title: '경복궁', hasOverview: true }],
+    });
+    expect(html).not.toContain('방문 추이');
   });
 });

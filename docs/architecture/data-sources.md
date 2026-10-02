@@ -77,6 +77,7 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | 여행코스 | TourAPI `areaBasedList2` `contentTypeId=25` (국문만) | 필요 | 〃 (행마다 `cpyrhtDivCd`) | 〃 |
 | 관광지 무장애 정보 | 관광공사 무장애 여행 `KorWithService2` (15101897) `areaBasedList2` · `detailWithTour2` (국문만) | 필요 (`TOUR_API_KEY` 재사용) | 이용허락범위 제한 없음 | `place/ingest --job=attraction-attrs` (매일 KST 02:40, 하루 ≤ 900콜) |
 | 관광지 웰니스 테마 | 관광공사 웰니스관광 `WellnessTursmService` (15144030) `areaBasedList` (국·영) | 필요 (〃) | 이용허락범위 제한 없음 | 〃 (월요일만, 주 2콜) |
+| 지역 방문자 수 | 관광공사 빅데이터 `DataLabService` (15101972) `locgoRegnVisitrDDList`(시군구) · `metcoRegnVisitrDDList`(시도) | 필요 (〃) | 이용허락범위 제한 없음 | `place/ingest --job=visitors` (매일 KST 02:30, 하루 2콜 · 백필 `--from=YYYY-MM` 1회 약 48콜) |
 | **행정구역(법정동)** | 행정안전부 행정표준코드관리시스템 | **불필요** | 공공누리 제1유형 | `place/ingest --job=administrative-regions` |
 | 세계 지명 계층 | GeoNames | 불필요 | **CC BY 4.0** | `tools/seed/place/normalize_regions.py` |
 | POI(상가) | 소상공인시장진흥공단 상가(상권)정보 | 필요 | 이용허락범위 제한없음 | `tools/seed/place/normalize_pois.py` |
@@ -175,10 +176,22 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 - 서빙: 04:30 재색인이 `/internal/attractions/extras/lookup` 으로 읽어 색인 문서(`barrierFree` · `barrierFreeDetail` · `wellnessTheme` ·
   `wellnessThemeName`)에 싣는다. 화면은 place DB 를 읽지 않는다(ADR-0071 §10).
 
+**지역 방문자 수는 지역 단위 값이라 관광지 색인이 아니라 place 레디스 캐시 경로로 나간다** (2단계, CronJob `place-ingest-visitors` · `--job=visitors`, 매일 KST 02:30).
+설계·실측: `docs/specs/2026-10-02-place-tour-portal-expansion/implementation/phase2-design.md` §2.9 · §4.
+- 원천: `apis.data.go.kr/B551011/DataLabService`. 키는 `TOUR_API_KEY`, 한도는 하루 1,000, 이용허락범위 「제한 없음」(화면은 「출처: 한국관광공사 빅데이터 서비스」를 단다).
+- 기초는 시군구 269 × 현지인·외지인·외국인 = 하루 807행, 광역은 시도 16 × 3 = 48행이다. **시군구 코드 269개가 `administrative_regions` 시군구 269개와 전부 같다**(2026-10-02).
+  광역은 2026-08-18 까지 옛 광주(29)·전남(46) 코드 행이 하루 한 행씩 더 온다 — 원천 전부 적재라 저장하고, 허브는 그 코드를 묻지 않는다.
+- **공개 지연 30일** — 2026-10-02 18시에 받은 가장 최근 날이 2026-09-02 였다. 잡은 매일 D-37 ~ D-28 열흘 창을 기초·광역 한 콜씩(기초 열흘 8,070행 < 쪽 10,000) 받는다.
+  한 날을 여러 번 다시 받으므로 하루이틀 실패해도 메워진다. 창 안에 공개된 날이 없으면 exit 1(지연이 창보다 길어졌다는 신호), 로그에 회차마다 가장 최근 날과 지연 일수를 남긴다.
+- 저장: `region_visitor_daily` — 키 (수준, 지역, 날짜, 구분) upsert 라 다시 받아도 행이 늘지 않는다. 연 약 31만 행. 원천 8키 전부 컬럼이고,
+  `touNum` 은 원천이 부동소수 표기(`24814.549999999996`, 소수 10~14자리가 절반)로 주므로 **원문 문자열(`tou_num`)과 합산용 파생값(`tou_num_value`, 소수 셋째 자리)** 을 따로 둔다.
+- 서빙: `GET /api/places/administrative-regions/{code}/visitors` → 레디스 `placeRegionVisitors::{code}`(TTL 26시간). 수집기가 `PUT /internal/regions/visitors` 로 보내면
+  place 가 저장한 뒤 받은 지역의 키를 다시 계산해 덮는다(write-through). 다 받은 달만 월 합계로 낸다(공개 지연 때문에 최근 달은 늘 일부라서). 지역 프리렌더 본문에는 넣지 않는다.
+
 > 원천 raw 응답은 레포에 커밋하지 않는다. 정규화 산출물만 적재한다.
 > 예외: 테스트 픽스처와 스펙 표본(`place/ingest/tests/fixtures/sample-*.json`, `place/ingest/tests/fixtures/phase2-*.json`,
 > `docs/specs/2026-10-02-place-tour-portal-expansion/implementation/sample-*.json`)은 응답 **몇 행**을 둔다
-> (무장애는 라벨 정밀도를 재려고 목록 100행 · 상세 100건을 둔다) — 수집기가 실제 응답 모양을 다루는지는 지어낸 값으로 검사할 수 없어서다. 키·요청 URL 은 지우고
+> (무장애는 라벨 정밀도를 재려고 목록 100행 · 상세 100건을, 방문자는 시군구 코드 269개를 대조하려고 기초 한 날의 현지인 269행을 둔다) — 수집기가 실제 응답 모양을 다루는지는 지어낸 값으로 검사할 수 없어서다. 키·요청 URL 은 지우고
 > 휴대전화 번호는 가린다(검사: 키 모양 문자열 grep, tasks 1.10).
 
 ---

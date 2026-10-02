@@ -192,6 +192,33 @@ export const fetchAdministrativeRegions = async (
   return res.data.data.regions;
 };
 
+/** 지역 방문자 월 합계 — 현지인 · 외지인 · 외국인(원천 touDivCd 1·2·3). 다 받은 달만 온다. */
+export interface RegionVisitorMonth {
+  month: string; // yyyy-MM
+  local: number;
+  outsider: number;
+  foreigner: number;
+}
+
+export interface RegionVisitorTrend {
+  code: string;
+  level: 'SIDO' | 'SIGUNGU';
+  /** 받은 가장 최근 날(yyyy-MM-dd). 받은 적이 없으면 null */
+  latestDate: string | null;
+  months: RegionVisitorMonth[];
+}
+
+/**
+ * 지역 허브 「방문 추이」(한국관광공사 빅데이터). place 의 레디스 캐시 경로다 — 수집이 쓰면서 캐시를 채우고,
+ * 이 요청은 캐시를 놓칠 때만 MySQL 에 닿는다 (ADR-0071 §10).
+ */
+export const fetchRegionVisitors = async (code: string): Promise<RegionVisitorTrend> => {
+  const res = await api.get<ApiResponse<RegionVisitorTrend>>(
+    `/api/places/administrative-regions/${encodeURIComponent(code)}/visitors`,
+  );
+  return res.data.data;
+};
+
 /**
  * 관광 성격의 분류 — 목록·주변목록에 올리는 것 (place `Attraction.SIGHT_CATEGORIES` 와 같다).
  *

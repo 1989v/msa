@@ -11,3 +11,4 @@ resources:
   - cronjob-pet-tour.yaml
   - cronjob-tour-sync.yaml
   - cronjob-attraction-attrs.yaml
+  - cronjob-visitors.yaml

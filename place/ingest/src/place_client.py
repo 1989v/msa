@@ -129,6 +129,16 @@ def put_wellness(lang: str, items: list[dict]) -> dict:
     return _request("PUT", "/internal/attractions/wellness", {"lang": lang, "items": items}, timeout=300)["data"]
 
 
+def put_region_visitors(records: list[dict]) -> dict:
+    """지역 방문자 일자 행 — (수준, 지역, 날짜, 구분) 키로 upsert. place 가 받은 지역의 허브 캐시를 다시 채운다."""
+    total = {"applied": 0, "regions": 0}
+    for i in range(0, len(records), BULK_CHUNK):
+        data = _request("PUT", "/internal/regions/visitors", {"items": records[i:i + BULK_CHUNK]}, timeout=300)["data"]
+        total["applied"] += int(data.get("applied") or 0)
+        total["regions"] += int(data.get("regions") or 0)
+    return total
+
+
 def upsert_category_codes(rows: list[dict]) -> int:
     """분류체계 코드표 — (lang, code) 멱등 upsert. 표가 작아 한 번에 보낸다."""
     if not rows:

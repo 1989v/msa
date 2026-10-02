@@ -1504,3 +1504,95 @@ button.place-card {
 @media (prefers-reduced-motion: reduce) {
   .place-gallery-thumb { transition: none; }
 }
+
+/* 지역 허브 「방문 추이」 — 월별 쌓은 막대. 색은 토큰만 쓴다(DESIGN.md) */
+.place-visitors {
+  margin-top: 1rem;
+}
+
+.place-visitor-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  font-size: 0.8rem;
+  color: var(--ko-text-secondary);
+}
+
+.place-visitor-key::before {
+  content: '';
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.65rem;
+  margin-right: 0.3rem;
+  border-radius: 2px;
+  vertical-align: -0.05rem;
+  background: var(--place-visitor-color);
+}
+
+.place-visitor-local {
+  --place-visitor-color: var(--ko-accent-primary);
+}
+
+.place-visitor-outsider {
+  --place-visitor-color: var(--ko-text-secondary);
+}
+
+.place-visitor-foreigner {
+  --place-visitor-color: var(--ko-border-strong);
+}
+
+.place-visitor-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.3rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.place-visitor-month {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.place-visitor-bar {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: 8rem;
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+.place-visitor-stack {
+  display: flex;
+  flex-direction: column-reverse;
+  width: 100%;
+  border-radius: 2px 2px 0 0;
+  overflow: hidden;
+}
+
+.place-visitor-seg {
+  display: block;
+  min-height: 1px;
+  flex-basis: 0;
+  background: var(--place-visitor-color);
+}
+
+.place-visitor-label {
+  font-family: var(--kh-font-mono);
+  font-size: 0.7rem;
+  color: var(--ko-text-muted);
+}
+
+.place-visitor-note {
+  margin: 0.4rem 0 0;
+  font-size: 0.75rem;
+  color: var(--ko-text-muted);
+}
