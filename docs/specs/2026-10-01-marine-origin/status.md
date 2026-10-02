@@ -135,3 +135,12 @@ origin 모듈 문법 검사와 변경분 공백 검사 통과. 실제 브라우�
 -910개체 최대fixture: checkpoint28,086B/10청크(여유1610B),두슬롯56,753B,표시8312B/3청크,초당20메시지. 최대fixture범위의증거이며임의추가상태무제한보장아님.
 - southwest-4지도기하유지,이번변경만으로새원정필수아님. 같은지도기존저장은다음주둔지보충시새목표수까지복구된다. 더이전지도저장은기존버전정책대로거부. 실제브라우저픽셀/대군성능은미검증,사용자플레이확인후추가확대.
 - 구현커밋a35283c8,협동호환성후속95c080c0. writer gzip-binary-v4-base91,protocol4 HELLO에서구protocol3를version-mismatch로거부. 해당handshake회귀1/1추가통과,광범위재실행없음. 협동양쪽새로고침필요. games작업트리clean,root기존staged포인터유지.
+
+## 피드백9차 — 웨이브 타깃 AI와5배 병력
+- games b748ee0b, backend19b001d5. gpt-6.1-sol 단일 구현. 근접 아군 spatialgrid검색/도달가능판정/10tick목표유지,대상죽음·이탈·절벽경로실패시본진fallback. 본진진군은공유reverseflow로개별waveA*제거,경로캐시정리O(N²)제거.
+- 웨이브초반120~440/15초,후반320~670/35초,협동ceil×1.4로최대938. 초반근접/돌격/원거리/비행형,후반철갑/흡혈귀추가. wave동시1000/camp525/ambient65/던전80:field1590/global1670. 겹친웨이브가동시상한에차면정상대기하며무한개체는아니다.
+- 기존29KiB예산은무손실전체상태최대1670을담지못해checkpoint48KiB/두슬롯100KiB/group64KiB로최소확대. 무손실v4-base91유지. backend는marine-command만128KiB,다른게임64KiB유지. 서버배포는하지않았으므로원격클라우드의기존64KiB제약은아직남는다.
+- 초기국소47/47통과후발견한display3청크제한을4청크로수정. 영향26/26,최대paced전송1/1통과. 최대협동938실제방출/4종이상검증. backend GameSaveServiceTest11tests/0fail,BUILD SUCCESSFUL(12s). 전체캠페인반복없음.
+-1670최대checkpoint45,060B/16청크,실제paced2550ms완전복원. 두슬롯90,698B,표시11,938B/4청크완전복원. display5Hz×4=20msg/s,checkpoint6포함26msg/s로relay30내유지.
+- 지도southwest-4유지,직전저장새원정불필요. HELLOprotocol5로구protocol4혼용거부,협동양측새로고침필요. 기존codec읽기유지. 실제브라우저대군FPS/미술체감과배포환경검증은미수행.
+- 훅실행완료(games기존doctorFAIL27warn-only/root기존WARN93),훅우회없음. root기존stagedgames포인터는변경전후동일,타작업보존.
