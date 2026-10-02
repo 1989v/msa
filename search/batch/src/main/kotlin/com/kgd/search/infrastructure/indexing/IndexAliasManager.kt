@@ -3,14 +3,10 @@ package com.kgd.search.infrastructure.indexing
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.ObjectMapper
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.opensearch.client.json.JsonpDeserializer
 import org.opensearch.client.opensearch.OpenSearchClient
-import org.opensearch.client.opensearch._types.mapping.TypeMapping
 import org.opensearch.client.opensearch.core.CountRequest
-import org.opensearch.client.opensearch.indices.CreateIndexRequest
-import org.opensearch.client.opensearch.indices.IndexSettings
+import org.opensearch.client.opensearch.generic.Requests
 import org.springframework.stereotype.Component
-import java.io.StringReader
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -20,11 +16,8 @@ class IndexAliasManager(private val osClient: OpenSearchClient) {
     private val log = KotlinLogging.logger {}
     private val timestampFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
 
-    // 리소스 JSON 을 settings/mappings 로 쪼개기 위한 로컬 파서.
-    // 클라이언트 mapper 의 jsonProvider().createReader(DOM) 는 opensearch-java 3.8 의
-    // JacksonJsonProvider 가 UnsupportedOperationException 을 던져 사용 불가 (로컬 E2E 확인)
-    // — 스트리밍 createParser 경로만 지원되므로 분해는 Jackson 트리로 수행한다.
-    private val jsonSplitter = ObjectMapper()
+    /** 정의 리소스에 settings·mappings 가 있는지만 본다 — 보내는 것은 원문 그대로다. */
+    private val jsonChecker = ObjectMapper()
 
     companion object {
         /** settings/mappings 의 SSOT (ADR-0055) — nori 분석기 + 필드 매핑 전체. */
@@ -50,21 +43,18 @@ class IndexAliasManager(private val osClient: OpenSearchClient) {
     /**
      * OpenSearch에 새 색인 생성 (nori 분석기 + 기본 매핑).
      *
-     * ADR-0055 — 정의는 `opensearch/products-index.json` 단일 JSON 리소스.
-     * opensearch-java 3.x 의 `CreateIndexRequest.Builder` 에는 withJson 이 없어
-     * settings/mappings 를 각각 `_DESERIALIZER` 로 파싱해 typed builder 에 주입한다.
+     * ADR-0055 — 정의는 `opensearch/` 아래 색인별 JSON 리소스 하나이고, **원문 그대로** 보낸다.
+     * typed `IndexSettings` 로 파싱해 보내면 클라이언트 모델에 없는 키가 말없이 빠진다 —
+     * `synonym_graph.synonym_analyzer` 가 빠져 서버에서 동의어 해석이 실패했다(색인 생성 400).
      */
     fun createIndex(indexName: String, definitionResource: String = PRODUCTS_INDEX_DEFINITION) {
         val definition = loadIndexDefinition(definitionResource)
-        val settings = definition.required("settings").parseAs(IndexSettings._DESERIALIZER)
-        val mappings = definition.required("mappings").parseAs(TypeMapping._DESERIALIZER)
-
-        val request = CreateIndexRequest.Builder()
-            .index(indexName)
-            .settings(settings)
-            .mappings(mappings)
-            .build()
-        osClient.indices().create(request)
+        val request = Requests.builder().method("PUT").endpoint("/$indexName").json(definition).build()
+        osClient.generic().execute(request).use { response ->
+            check(response.status in 200..299) {
+                "색인 생성 실패 $indexName — ${response.status} ${response.body.map { it.bodyAsString() }.orElse("")}"
+            }
+        }
         log.info { "Created index: $indexName" }
     }
 
@@ -132,20 +122,15 @@ class IndexAliasManager(private val osClient: OpenSearchClient) {
             osClient.indices().get { it.index("${prefix}*") }.result().keys.toList()
         }.getOrElse { emptyList() }
 
-    private fun loadIndexDefinition(definitionResource: String): JsonNode {
+    private fun loadIndexDefinition(definitionResource: String): String {
         val stream = requireNotNull(javaClass.getResourceAsStream(definitionResource)) {
             "Index definition resource not found: $definitionResource"
         }
-        return stream.use { jsonSplitter.readTree(it) }
-    }
-
-    private fun JsonNode.required(key: String): JsonNode =
-        requireNotNull(get(key)) { "'$key' 누락 — 인덱스 정의 리소스 확인" }
-
-    private fun <T> JsonNode.parseAs(deserializer: JsonpDeserializer<T>): T {
-        val mapper = osClient._transport().jsonpMapper()
-        return mapper.jsonProvider().createParser(StringReader(toString())).use { parser ->
-            deserializer.deserialize(parser, mapper)
+        val text = stream.use { it.readBytes().toString(Charsets.UTF_8) }
+        val tree: JsonNode = jsonChecker.readTree(text)
+        listOf("settings", "mappings").forEach { key ->
+            requireNotNull(tree.get(key)) { "'$key' 누락 — 인덱스 정의 리소스 확인" }
         }
+        return text
     }
 }

@@ -2,8 +2,6 @@ package com.kgd.search.infrastructure.indexing
 
 import tools.jackson.databind.ObjectMapper
 import io.kotest.core.spec.style.BehaviorSpec
-import io.kotest.matchers.maps.shouldContainKey
-import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
 import io.mockk.clearMocks
@@ -17,12 +15,12 @@ import org.opensearch.client.opensearch.core.CountRequest
 import org.opensearch.client.opensearch.core.CountResponse
 import org.opensearch.client.opensearch.indices.GetAliasResponse
 import org.opensearch.client.opensearch.indices.GetIndexResponse
-import org.opensearch.client.json.jackson3.JacksonJsonpMapper
 import org.opensearch.client.opensearch.OpenSearchClient
-import org.opensearch.client.opensearch._types.mapping.Property
-import org.opensearch.client.opensearch.indices.CreateIndexRequest
+import org.opensearch.client.opensearch.generic.Body
+import org.opensearch.client.opensearch.generic.OpenSearchGenericClient
+import org.opensearch.client.opensearch.generic.Request
+import org.opensearch.client.opensearch.generic.Response
 import org.opensearch.client.opensearch.indices.OpenSearchIndicesClient
-import org.opensearch.client.transport.OpenSearchTransport
 
 class IndexAliasManagerTest : BehaviorSpec({
     val osClient = mockk<OpenSearchClient>(relaxed = true)
@@ -52,34 +50,47 @@ class IndexAliasManagerTest : BehaviorSpec({
         }
     }
 
-    // 회귀: opensearch-java 3.8 의 JacksonJsonProvider.createReader 는
-    // UnsupportedOperationException — DOM reader 기반 구현이면 본 테스트가 그 예외로 실패한다.
-    given("createIndex 시 (실제 JacksonJsonpMapper 파싱)") {
-        `when`("products-index.json 정의를 로드하면") {
-            then("settings(nori)/mappings(영양 포함)가 typed 로 파싱되어 요청에 실려야 한다") {
-                val transport = mockk<OpenSearchTransport>()
-                every { osClient._transport() } returns transport
-                every { transport.jsonpMapper() } returns JacksonJsonpMapper()
-                val indices = mockk<OpenSearchIndicesClient>()
-                every { osClient.indices() } returns indices
-                val requestSlot = slot<CreateIndexRequest>()
-                every { indices.create(capture(requestSlot)) } returns mockk(relaxed = true)
+    // 판정 근거는 관리자가 OpenSearch 에 실제로 보내는 요청 본문이다.
+    // typed 모델로 파싱해 보내던 때는 모델에 없는 `synonym_analyzer` 가 말없이 빠져 색인 생성이 400 으로 죽었다.
+    fun captureCreate(): io.mockk.CapturingSlot<Request> {
+        val generic = mockk<OpenSearchGenericClient>()
+        every { osClient.generic() } returns generic
+        val sent = slot<Request>()
+        val ok = mockk<Response>(relaxed = true)
+        every { ok.status } returns 200
+        every { generic.execute(capture(sent)) } returns ok
+        return sent
+    }
+    fun bodyOf(request: Request) = ObjectMapper().readTree(request.body.get().bodyAsString())
+    fun resource(path: String) = ObjectMapper().readTree(IndexAliasManager::class.java.getResourceAsStream(path))
 
-                manager.createIndex("products_test")
+    given("createIndex 시") {
+        `when`("관광지 정의로 만들면") {
+            then("정의 JSON 을 고치지 않고 PUT /{index} 로 보낸다 — 클라이언트 모델에 없는 키도 남는다") {
+                val sent = captureCreate()
 
-                val request = requestSlot.captured
-                request.index() shouldBe "products_test"
+                manager.createIndex("attractions_test", IndexAliasManager.ATTRACTIONS_INDEX_DEFINITION)
 
-                val props = request.mappings().shouldNotBeNull().properties()
-                props shouldContainKey "name"
-                props shouldContainKey "energyKcal"
-                props shouldContainKey "ingredients"
-                props["energyKcal"]!!._kind() shouldBe Property.Kind.Double
-                props["itemReportNo"]!!._kind() shouldBe Property.Kind.Keyword
+                sent.captured.method shouldBe "PUT"
+                sent.captured.endpoint shouldBe "/attractions_test"
+                val body = bodyOf(sent.captured)
+                body shouldBe resource(IndexAliasManager.ATTRACTIONS_INDEX_DEFINITION)
+                body.at("/settings/analysis/filter/tourism_synonyms/synonym_analyzer").asString() shouldBe "nori_synonym_parse"
+                body.at("/settings/analysis/tokenizer/nori_user/decompound_mode").asString() shouldBe "mixed"
+            }
+        }
+        `when`("서버가 거부하면") {
+            then("상태와 사유를 담아 실패한다 — 반쪽 색인으로 진행하지 않는다") {
+                val generic = mockk<OpenSearchGenericClient>()
+                every { osClient.generic() } returns generic
+                val bad = mockk<Response>(relaxed = true)
+                every { bad.status } returns 400
+                every { bad.body } returns java.util.Optional.of<Body>(Body.from("Failed to build analyzers".toByteArray(), "application/json")!!)
+                every { generic.execute(any()) } returns bad
 
-                val analyzers = request.settings().shouldNotBeNull()
-                    .analysis().shouldNotBeNull().analyzer()
-                analyzers shouldContainKey "nori_analyzer"
+                val e = shouldThrow<IllegalStateException> { manager.createIndex("attractions_test", IndexAliasManager.ATTRACTIONS_INDEX_DEFINITION) }
+                e.message shouldContain "400"
+                e.message shouldContain "Failed to build analyzers"
             }
         }
     }
@@ -96,20 +107,13 @@ class IndexAliasManagerTest : BehaviorSpec({
         ).forEach { definition ->
             `when`("$definition 으로 createIndex 하면") {
                 then("프라이머리 1 · 레플리카 0 이 요청에 명시되어야 한다") {
-                    val transport = mockk<OpenSearchTransport>()
-                    every { osClient._transport() } returns transport
-                    every { transport.jsonpMapper() } returns JacksonJsonpMapper()
-                    val indices = mockk<OpenSearchIndicesClient>()
-                    every { osClient.indices() } returns indices
-                    val requestSlot = slot<CreateIndexRequest>()
-                    every { indices.create(capture(requestSlot)) } returns mockk(relaxed = true)
+                    val sent = captureCreate()
 
                     manager.createIndex("contract_test", definition)
 
-                    // 정의 JSON 은 settings.index.* 중첩형이라 typed 로는 settings().index() 에 실린다
-                    val index = requestSlot.captured.settings().shouldNotBeNull().index().shouldNotBeNull()
-                    index.numberOfShards() shouldBe 1
-                    index.numberOfReplicas() shouldBe 0
+                    val index = bodyOf(sent.captured).at("/settings/index")
+                    index.get("number_of_shards").asInt() shouldBe 1
+                    index.get("number_of_replicas").asInt() shouldBe 0
                 }
             }
         }
