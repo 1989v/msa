@@ -97,7 +97,7 @@ class AttractionJpaEntity(
     @Column(length = 500)
     val imageUrl: String? = null,
 
-    @Column(length = 100)
+    @Column(length = 300)
     val tel: String? = null,
 
     @Column(columnDefinition = "TEXT")

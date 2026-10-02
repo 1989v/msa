@@ -129,6 +129,24 @@ class PlaceSchemaIntegrationSpec(
             }
     }
 
+    Given("문의처 번호가 100자를 넘는 행사를 적재할 때") {
+        Then("V24 로 넓힌 tel 컬럼에 잘리지 않고 들어가야 한다")
+            .config(enabledIf = { dockerAvailable }) {
+                // searchFestival2 의 tel 최대 길이는 123자였다(2026-10-02). 그보다 긴 값으로 여유를 본다
+                val tel = (1..12).joinToString(" / ") { "063-$it${it}0-$it$it$it$it" }.padEnd(150, '0')
+                val adapter = AttractionRepositoryAdapter(r3)
+                adapter.upsertAll(
+                    listOf(
+                        Attraction.create(
+                            contentId = "long-tel", lang = "ko", title = "긴 문의처 행사",
+                            latitude = 37.0, longitude = 127.0, contentTypeId = "15", tel = tel,
+                        ),
+                    ),
+                )
+                adapter.findById(r3.findByContentIdIn(setOf("long-tel")).single().id!!)!!.tel shouldBe tel
+            }
+    }
+
     Given("비슷한 곳 목록을 V22 표에 두 번 적재할 때") {
         Then("문서·스탬프 단위로 통째로 바뀌고, 다른 스탬프 목록은 남으며, 조회는 순위 순이어야 한다")
             .config(enabledIf = { dockerAvailable }) {
