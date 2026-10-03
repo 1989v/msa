@@ -1,4 +1,4 @@
-import type { Attraction } from '../../api/placeApi';
+import type { NearbyPlace } from '../../api/placeApi';
 import { isPlottable, titleParts } from './placeView';
 
 export type ExploreKind = 'sight' | 'stay' | 'event' | 'amenity';
@@ -18,7 +18,7 @@ export interface ExploreItem {
   /** 줄의 둘째 줄 — 분류 이름 */
   category: string | null;
   /** 행사 줄의 기간·상태를 그리는 원본 문서. 같은 분류에서만 온 항목은 없다 */
-  source: Attraction | null;
+  source: NearbyPlace | null;
   /** 노출 기록 — 출처 목록의 섹션 그대로 남긴다(이미 쌓인 원장과 이어지게) */
   sectionId: SectionId;
   sectionIndex: number;
@@ -29,13 +29,13 @@ export interface ExploreItem {
 
 export interface ExploreSources {
   selfId: string;
-  sights: Attraction[];
+  sights: NearbyPlace[];
   sameCategory: Array<{ id: string; title: string; distanceMeters: number }>;
   /** 같은 분류만 있고 아래 목록에 없는 항목의 종류 — 행사 상세의 같은 분류는 행사, 숙박 상세는 숙소다 */
   sameCategoryKind: ExploreKind;
-  stays: Attraction[];
-  events: Attraction[];
-  amenities: Attraction[];
+  stays: NearbyPlace[];
+  events: NearbyPlace[];
+  amenities: NearbyPlace[];
   /** 섹션 번호 — 화면 배치가 아니라 섹션 식별 번호라 바뀌지 않는다 */
   index: Record<SectionId, number>;
 }
@@ -52,7 +52,7 @@ export function exploreItems(src: ExploreSources): ExploreItem[] {
   const same = new Set(src.sameCategory.map((n) => n.id));
   const seen = new Set<string>([src.selfId]);
   const out: Omit<ExploreItem, 'number'>[] = [];
-  const add = (a: Attraction, kind: ExploreKind, sectionId: SectionId, itemIndex: number) => {
+  const add = (a: NearbyPlace, kind: ExploreKind, sectionId: SectionId, itemIndex: number) => {
     if (seen.has(a.id)) return;
     seen.add(a.id);
     const isSame = same.has(a.id);

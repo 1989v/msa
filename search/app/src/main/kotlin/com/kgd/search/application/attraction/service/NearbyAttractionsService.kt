@@ -27,7 +27,7 @@ class NearbyAttractionsService(
                     size = size,
                     eventStatus = eventStatus,
                 ),
-            ).attractions
+            ).attractions.map(NearbyAttractionsUseCase.NearbyPlace::of)
         return NearbyAttractionsUseCase.Nearby(
             // 관광 분류만 — 거리순 상위를 그대로 쓰면 상점가에서는 전부 상점이 된다
             sights = around(SIGHT_CATEGORIES, NEARBY_RADIUS_KM, SIGHTS_SIZE),

@@ -43,13 +43,17 @@ class AttractionSearchControllerTest : BehaviorSpec({
             }
         }
         `when`("주변을 찾으면") {
-            then("네 묶음을 같은 캐시 헤더로 낸다") {
-                every { nearby.nearby("6") } returns NearbyAttractionsUseCase.Nearby(listOf(doc), emptyList(), emptyList(), emptyList())
+            then("네 묶음을 같은 캐시 헤더로 낸다 — 줄마다 지도·목록에 쓰는 필드만") {
+                val heavy = doc.copy(imagesRaw = "[{\"originimgurl\":\"x\"}]", links = "[]", introRaw = "{}", overview = "소개")
+                every { nearby.nearby("6") } returns NearbyAttractionsUseCase.Nearby(listOf(NearbyAttractionsUseCase.NearbyPlace.of(heavy)), emptyList(), emptyList(), emptyList())
                 val res = mvc.perform(get("/api/search/attractions/6/nearby")).andReturn().response
                 res.status shouldBe 200
                 res.getHeader("Cache-Control") shouldBe "max-age=60, public, s-maxage=3600, stale-while-revalidate=600"
                 val body = json.readTree(res.contentAsString)
                 body["data"]["sights"][0]["id"].asText() shouldBe "6"
+                val row = body["data"]["sights"][0]
+                row["title"].asText() shouldBe "해운대해수욕장"
+                listOf("imagesRaw", "links", "introRaw", "overview").forEach { row.has(it) shouldBe false }
             }
         }
         `when`("없는 관광지면") {

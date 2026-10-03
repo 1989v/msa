@@ -435,11 +435,28 @@ export const fetchAttraction = async (id: string): Promise<Attraction> => {
 
 /** 관광지 상세 「주변 탐색」의 네 묶음 — 서버가 문서 좌표로 한 번에 찾는다. 자기 자신은 섞여 올 수 있다(화면이 뺀다). */
 export interface AttractionNearby {
-  sights: Attraction[];
-  stays: Attraction[];
-  events: Attraction[];
-  amenities: Attraction[];
+  sights: NearbyPlace[];
+  stays: NearbyPlace[];
+  events: NearbyPlace[];
+  amenities: NearbyPlace[];
 }
+
+/** 주변 목록 한 줄 — 지도 핀과 목록 줄을 그리는 필드만 온다(search `NearbyPlace`). */
+export type NearbyPlace = Pick<
+  Attraction,
+  | 'id'
+  | 'lang'
+  | 'title'
+  | 'titleLocal'
+  | 'category'
+  | 'contentTypeId'
+  | 'latitude'
+  | 'longitude'
+  | 'distanceKm'
+  | 'imageUrl'
+  | 'eventStart'
+  | 'eventEnd'
+>;
 
 /**
  * 주변 탐색 — 명소(관광 분류 5km) · 숙소(5km) · 행사(20km, 끝나지 않은 것, 시작일 순) · 편의시설(음식·쇼핑 5km).

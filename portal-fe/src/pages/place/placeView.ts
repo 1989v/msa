@@ -1,5 +1,4 @@
 import type {
-  Attraction,
   AttractionDeepLink,
   AttractionLinks,
   CollectedLink,
@@ -60,8 +59,8 @@ export function isNotFoundError(error: unknown): boolean {
  * 순서를 고정해 두면 해운대에서도 쇼핑이 음식 앞에 온다.
  * 각 유형은 거리순 앞에서부터 `perKind` 개만 가져간다.
  */
-export function groupByCategory(items: Attraction[], perKind: number): Attraction[] {
-  const byCategory = new Map<string, Attraction[]>();
+export function groupByCategory<T extends { category?: string | null }>(items: T[], perKind: number): T[] {
+  const byCategory = new Map<string, T[]>();
   for (const item of items) {
     const key = item.category ?? '';
     const bucket = byCategory.get(key);
