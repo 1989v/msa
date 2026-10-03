@@ -485,6 +485,9 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
             dto(401, "ko").copy(contentId = "128138"),
             dto(402, "ko").copy(contentId = "128168"),
             dto(403, "en").copy(contentId = "1870538"),
+            // 같은 장소의 두 등록 — 부산타워 운영 행처럼 관광지(12)·쇼핑(38)이 같은 자리에. 종로 집계에 섞이지 않게 부산 중구에 둔다
+            jongno(501, "HS020100", 35.10120).copy(ldongRegnCd = "26", ldongSignguCd = "110", title = "부산타워"),
+            jongno(502, "SH040300", 35.10121).copy(ldongRegnCd = "26", ldongSignguCd = "110", title = "부산타워", contentTypeId = "38"),
         )
 
         // place 링크 벌크 조회가 준 원문 — 상세 화면은 색인에 실린 이 원문을 그대로 푼다
@@ -585,6 +588,12 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                 related.map { it["title"] } shouldContainExactly listOf("종로202", "종로201", "행사101", "행사102", "종로203", "코스301")
                 related.first()["category"] shouldBe "자연경관(하천/해양)"
                 listOf("101", "201", "202", "402").forEach { id -> sources.getValue(id).keys shouldNotContain "relatedPlaces" }
+            }
+
+            then("같은 시군구·제목·1km 안의 다른 등록을 서로 싣고(제목 없이 id·유형만), 없는 문서는 필드가 없다") {
+                sources.getValue("501")["samePlace"] shouldBe listOf(mapOf("id" to "502", "contentTypeId" to "38"))
+                sources.getValue("502")["samePlace"] shouldBe listOf(mapOf("id" to "501", "contentTypeId" to "12"))
+                listOf("101", "201", "202", "401").forEach { id -> sources.getValue(id).keys shouldNotContain "samePlace" }
             }
 
             then("행사는 정규화한 유효 기간을 yyyy-MM-dd 로 싣고, 날짜 없는 행사와 행사 아닌 문서는 필드가 없다") {

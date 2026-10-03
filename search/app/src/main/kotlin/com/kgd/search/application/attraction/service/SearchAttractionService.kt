@@ -273,5 +273,6 @@ class SearchAttractionService(
         relatedPlaces = if (summarize) null else relatedPlaces?.map {
             SearchAttractionUseCase.Related(it.rank, it.id, it.title, it.sidoName, it.category)
         },
+        samePlace = if (summarize) null else samePlace?.map { SearchAttractionUseCase.SamePlaceRef(it.id, it.contentTypeId) },
     )
 }

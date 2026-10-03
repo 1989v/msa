@@ -101,7 +101,7 @@ object RegionAggregator {
 
     private const val EARTH_RADIUS_M = 6_371_000.0
 
-    private fun distanceMeters(a: RegionProjection, b: RegionProjection): Int {
+    internal fun distanceMeters(a: RegionProjection, b: RegionProjection): Int {
         val lat1 = Math.toRadians(a.latitude)
         val lat2 = Math.toRadians(b.latitude)
         val dLat = lat2 - lat1

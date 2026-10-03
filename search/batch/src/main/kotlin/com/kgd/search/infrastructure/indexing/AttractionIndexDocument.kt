@@ -140,6 +140,8 @@ data class AttractionIndexDocument(
     val congestion: List<CongestionEntry>? = null,
     /** 여기 온 사람들이 함께 간 곳(원천 순위 순, 최대 6) — 상세 절 표시 전용(mapping: enabled=false). 이어진 곳이 없으면 빈다. */
     val relatedPlaces: List<RelatedPlaceEntry>? = null,
+    /** 같은 장소의 다른 등록 — 상세 「복합공간」 표시 전용(mapping: enabled=false). 없으면 빈다. */
+    val samePlace: List<SamePlaceEntry>? = null,
 ) {
     /** OpenSearch geo_point object 표기 — 필드명 lat/lon 고정. */
 
@@ -170,6 +172,9 @@ data class AttractionIndexDocument(
 
     /** 함께 간 곳 한 건 — [rank] 는 원천 순위, [category] 는 원천 소분류 이름. */
     data class RelatedPlaceEntry(val rank: Int, val id: String, val title: String, val sidoName: String? = null, val category: String? = null)
+
+    /** 같은 장소의 다른 등록 한 건 — 제목은 자기와 같아 싣지 않는다. */
+    data class SamePlaceEntry(val id: String, val contentTypeId: String? = null)
 
     /** 집중률 예측 하루 — [rate] 는 원천 값 그대로(0~100). */
     data class CongestionEntry(
@@ -253,6 +258,7 @@ data class AttractionIndexDocument(
                 congestion = doc.congestion?.takeIf { it.isNotEmpty() }?.map { CongestionEntry(it.date, it.rate) },
                 relatedPlaces = doc.relatedPlaces?.takeIf { it.isNotEmpty() }
                     ?.map { RelatedPlaceEntry(it.rank, it.id, it.title, it.sidoName, it.category) },
+                samePlace = doc.samePlace?.takeIf { it.isNotEmpty() }?.map { SamePlaceEntry(it.id, it.contentTypeId) },
             )
         }
     }

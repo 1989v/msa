@@ -1,5 +1,7 @@
 package com.kgd.search.infrastructure.opensearch
 
+import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
+
 import com.kgd.search.application.attraction.config.AttractionHybridProperties
 import com.kgd.search.application.attraction.port.CategoryLexiconPort
 import com.kgd.search.application.attraction.service.SearchAttractionService
@@ -13,6 +15,7 @@ import com.kgd.search.domain.attraction.model.CourseStopsParser
 import com.kgd.search.domain.attraction.model.EventPeriod
 import com.kgd.search.domain.attraction.model.EventSchedule
 import com.kgd.search.domain.attraction.model.RelatedPlace
+import com.kgd.search.domain.attraction.model.SamePlace
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
 import com.kgd.search.domain.query.model.QueryIntent
 import io.kotest.core.spec.style.BehaviorSpec
@@ -104,6 +107,14 @@ class AttractionReindexCaptureTest : BehaviorSpec({
                 documents.values.count { it.relatedPlaces != null } shouldBe 1
                 capture.sourceExtras.getValue("401").relatedPlaces!!.size shouldBe 12
                 documents.getValue("401").relatedPlaces!!.size shouldBe RelatedPlace.MAX
+            }
+        }
+
+        `when`("같은 장소의 다른 등록을 보면") {
+            then("쓰기 쪽이 실은 id·유형이 읽기 문서까지 남고, 없는 문서는 null 이다") {
+                documents.getValue("501").samePlace shouldBe listOf(SamePlace("502", "38"))
+                documents.getValue("502").samePlace shouldBe listOf(SamePlace("501", "12"))
+                documents.values.count { it.samePlace != null } shouldBe 2
             }
         }
 
@@ -202,6 +213,11 @@ class AttractionReindexCaptureTest : BehaviorSpec({
                     (id to result.wellnessTheme) shouldBe (id to capture.sourceExtras[id]?.wellnessThemeCode)
                 }
                 service.findById("202")!!.wellnessThemeName shouldBe "온천 / 사우나 / 스파"
+            }
+
+            then("같은 장소의 다른 등록이 상세 결과까지 남는다") {
+                service.findById("501")!!.samePlace shouldBe listOf(SearchAttractionUseCase.SamePlaceRef("502", "38"))
+                service.findById("201")!!.samePlace shouldBe null
             }
 
             then("연관 관광지 순위·id·제목·분류가 상세 결과까지 남는다") {

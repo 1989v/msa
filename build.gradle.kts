@@ -544,6 +544,8 @@ val searchReadRequired = mapOf(
         "congestion",
         // 연관 관광지 — 상세 「여기 온 사람들이 함께 간 곳」과 서버 렌더 본문이 읽는다
         "relatedPlaces",
+        // 같은 장소의 다른 등록 — 상세 「복합공간」이 읽는다. 빠지면 표시가 조용히 사라진다
+        "samePlace",
     ),
 )
 

@@ -92,4 +92,6 @@ data class AttractionDocument(
     val congestion: List<CongestionDay>? = null,
     /** 여기 온 사람들이 함께 간 곳(원천 순위 순, 국문, 최대 [RelatedPlace.MAX]). 이어진 곳이 없거나 옛 색인 문서는 null. */
     val relatedPlaces: List<RelatedPlace>? = null,
+    /** 같은 장소의 다른 등록(관광지·쇼핑 등) — 있으면 상세가 「복합공간」으로 알린다. 없거나 옛 색인 문서는 null. */
+    val samePlace: List<SamePlace>? = null,
 )

@@ -533,6 +533,74 @@
     "attributeParserVersion" : 1,
     "uniqueClickers14d" : 0,
     "clickBoost" : 1.0
+  }, {
+    "id" : "501",
+    "idSort" : 501,
+    "contentId" : "c501",
+    "lang" : "ko",
+    "title" : "부산타워",
+    "titleJamo" : "ㅂㅜㅅㅏㄴㅌㅏㅇㅝ",
+    "location" : {
+      "lat" : 35.1012,
+      "lon" : 127.0
+    },
+    "ldongRegnCd" : "26",
+    "ldongSignguCd" : "110",
+    "category" : "history",
+    "lclsSystm3" : "HS020100",
+    "contentTypeId" : "12",
+    "sidoName" : "부산광역시",
+    "popularityScore" : 1.0,
+    "closureState" : "UNKNOWN",
+    "attrParking" : "UNKNOWN",
+    "attrCreditCard" : "UNKNOWN",
+    "attrStrollerRental" : "UNKNOWN",
+    "petPolicy" : "UNKNOWN",
+    "attrAdmission" : "UNKNOWN",
+    "attributeParserVersion" : 1,
+    "regionTypeCount" : 1,
+    "regionCategoryCount" : 1,
+    "sameCategoryNearby" : [ ],
+    "uniqueClickers14d" : 0,
+    "clickBoost" : 1.0,
+    "samePlace" : [ {
+      "id" : "502",
+      "contentTypeId" : "38"
+    } ]
+  }, {
+    "id" : "502",
+    "idSort" : 502,
+    "contentId" : "c502",
+    "lang" : "ko",
+    "title" : "부산타워",
+    "titleJamo" : "ㅂㅜㅅㅏㄴㅌㅏㅇㅝ",
+    "location" : {
+      "lat" : 35.10121,
+      "lon" : 127.0
+    },
+    "ldongRegnCd" : "26",
+    "ldongSignguCd" : "110",
+    "category" : "history",
+    "lclsSystm3" : "SH040300",
+    "contentTypeId" : "38",
+    "sidoName" : "부산광역시",
+    "popularityScore" : 1.0,
+    "closureState" : "UNKNOWN",
+    "attrParking" : "UNKNOWN",
+    "attrCreditCard" : "UNKNOWN",
+    "attrStrollerRental" : "UNKNOWN",
+    "petPolicy" : "UNKNOWN",
+    "attrAdmission" : "UNKNOWN",
+    "attributeParserVersion" : 1,
+    "regionTypeCount" : 1,
+    "regionCategoryCount" : 1,
+    "sameCategoryNearby" : [ ],
+    "uniqueClickers14d" : 0,
+    "clickBoost" : 1.0,
+    "samePlace" : [ {
+      "id" : "501",
+      "contentTypeId" : "12"
+    } ]
   } ],
   "sourceDates" : {
     "101" : {

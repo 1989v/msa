@@ -17,6 +17,8 @@ import com.kgd.search.domain.attraction.model.RegionAggregator
 import com.kgd.search.domain.attraction.model.RegionPlacement
 import com.kgd.search.domain.attraction.model.RegionProjection
 import com.kgd.search.domain.attraction.model.RelatedPlace
+import com.kgd.search.domain.attraction.model.SamePlace
+import com.kgd.search.domain.attraction.model.SamePlaceGrouper
 import com.kgd.search.domain.attraction.model.SimilarPlace
 import com.kgd.search.domain.attraction.model.WellnessTheme
 import com.kgd.search.infrastructure.client.PlaceApiClient
@@ -117,7 +119,7 @@ class AttractionApiReindexTasklet(
             val uniqueClickers = loadClickSignal()
 
             val today = EventSchedule.todayKst(clock.instant())
-            val (projections, placements, attractionIds) = collectRegionPlacements(today)
+            val (projections, placements, attractionIds, samePlaces) = collectRegionPlacements(today)
 
             val indexStartedAt = System.nanoTime()
 
@@ -315,6 +317,7 @@ class AttractionApiReindexTasklet(
                             wellness = wellness,
                             congestion = congestion,
                             relatedPlaces = relatedPlaces,
+                            samePlace = samePlaces[attraction.id.toString()],
                         ),
                         embedding,
                     )
@@ -407,7 +410,10 @@ class AttractionApiReindexTasklet(
                 "(${projections.size - placements.size} without sigungu/type, " +
                 "${projections.size - listed.size} ended/undated events left out as of $today), ${elapsedMs(startedAt)}ms"
         }
-        return RegionPass(listed.associateBy { it.id }, placements, attractionIds)
+        // 같은 장소의 다른 등록 — 끝난 행사는 잇지 않는다(listed 만)
+        val samePlaces = SamePlaceGrouper.group(listed)
+        log.info { "Same place: ${samePlaces.size} documents have another listing of the same place" }
+        return RegionPass(listed.associateBy { it.id }, placements, attractionIds, samePlaces)
     }
 
     /**
@@ -418,6 +424,7 @@ class AttractionApiReindexTasklet(
         val projections: Map<String, RegionProjection>,
         val placements: Map<String, RegionPlacement>,
         val attractionIds: Map<AttractionKey, Long>,
+        val samePlaces: Map<String, List<SamePlace>>,
     )
 
     /** 행사만 유효 기간을 갖는다 — 다른 유형에 날짜가 실려 와도 행사 규칙을 적용하지 않는다. */

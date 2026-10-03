@@ -145,7 +145,12 @@ interface SearchAttractionUseCase {
         val congestion: List<CongestionDay>? = null,
         /** 여기 온 사람들이 함께 간 곳(원천 순위 순, 최대 6) — 단건 조회에만. 「비슷한 곳」과 겹쳐도 거르지 않는다(각 절이 따로 그린다). */
         val relatedPlaces: List<Related>? = null,
+        /** 같은 장소의 다른 등록(관광지·쇼핑 등) — 단건 조회에만. 있으면 화면이 「복합공간」으로 알리고 잇는다. */
+        val samePlace: List<SamePlaceRef>? = null,
     )
+
+    /** 같은 장소의 다른 등록 — 제목은 이 관광지와 같다. [contentTypeId] 로 화면이 「쇼핑」 등을 붙인다. */
+    data class SamePlaceRef(val id: String, val contentTypeId: String?)
 
     /** [category] 는 원천 소분류 이름 그대로. */
     data class Related(val rank: Int, val id: String, val title: String, val sidoName: String?, val category: String?)

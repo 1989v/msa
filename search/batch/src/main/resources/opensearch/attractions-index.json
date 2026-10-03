@@ -556,6 +556,10 @@
       "relatedPlaces": {
         "type": "object",
         "enabled": false
+      },
+      "samePlace": {
+        "type": "object",
+        "enabled": false
       }
     }
   }
