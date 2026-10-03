@@ -60,9 +60,14 @@ RUN find dist/games -name '*.html' -type f -exec \
 # 산출물 HTML 주석 제거 — 반드시 마지막이다. index.html 주석은 미니파이 대상이 아니라
 # 내부 설계 메모가 그대로 배포된다. 프리렌더의 seo 마커 교체와 위 sed 가 끝난 뒤 돈다.
 RUN node scripts/strip-html-comments.mjs
+# 직전 이미지의 해시 자산을 최근 릴리스 몇 개 몫만 합친다 — 배포 순간 옛 파일이 사라지면 5분 캐시된 셸,
+# 롤링 중 섞인 파드, 배포 전에 열어 둔 탭이 404 를 받는다. CI 가 직전 이미지에서 .prev-release/ 로 풀어 둔다
+# (없으면 이번 것만 남긴다). 목록은 서빙 루트 밖에 둔다.
+RUN node scripts/retain-assets.mjs .prev-release dist/assets dist-releases "${GIT_SHA}"
 
 FROM nginx:1.27-alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /app/dist-releases /usr/share/nginx/asset-releases
 # 설정은 템플릿으로 넣는다. 관광지 서버 렌더 프록시는 search 이름을 요청 때 풀어서 resolver
 # 주소가 필요한데, 클러스터 DNS 주소는 클러스터마다 달라 기동 때 /etc/resolv.conf 에서 읽는다
 # (이미지 엔트리포인트의 15-local-resolvers → 20-envsubst). 치환 대상은 그 변수 하나로 좁힌다 —

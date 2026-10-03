@@ -363,6 +363,22 @@ jobs:
               # CDN/브라우저가 구버전을 붙들고 있었다 (portal-fe/Dockerfile 주석 참조)
               BUILD_ARGS+=(--build-arg "GIT_SHA=$TAG")
             fi
+            # 직전 이미지의 해시 자산을 컨텍스트에 풀어 둔다 — Dockerfile 이 최근 릴리스 몫만 합친다
+            # (portal-fe/scripts/retain-assets.mjs). 직전 = 지금 배포된 태그(이 커밋의 매니페스트).
+            # 못 받아도 빌드는 진행한다 — 옛 자산이 없을 뿐 새 이미지는 온전하다.
+            if [[ "$svc" == "portal-fe" ]]; then
+              PREV_TAG=$(awk '/name: commerce\/portal-fe$/{f=1} f&&/newTag:/{print $2; exit}' k8s/overlays/oci-arm/kustomization.yaml)
+              rm -rf "$ctx/.prev-release" && mkdir -p "$ctx/.prev-release"
+              if [[ -n "$PREV_TAG" ]] && docker pull -q --platform linux/arm64 "$REGISTRY/portal-fe:$PREV_TAG" >/dev/null; then
+                cid=$(docker create --platform linux/arm64 "$REGISTRY/portal-fe:$PREV_TAG")
+                docker cp "$cid:/usr/share/nginx/html/assets" "$ctx/.prev-release/assets"
+                docker cp "$cid:/usr/share/nginx/asset-releases" "$ctx/.prev-release/asset-releases" 2>/dev/null || true
+                docker rm "$cid" >/dev/null
+                echo "직전 portal-fe:$PREV_TAG 자산 $(ls "$ctx/.prev-release/assets" | wc -l)개를 컨텍스트에 풀었다"
+              else
+                echo "::warning::직전 portal-fe 이미지(${PREV_TAG:-태그 없음})를 받지 못해 옛 자산 없이 빌드한다"
+              fi
+            fi
             # 러너가 매번 새로 떠 레이어 캐시가 없다. 의존성이 그대로여도 pip/npm
             # 레이어가 새 digest 로 다시 생겨 빌드마다 레지스트리에 쌓였다
             # (recommendation-ml 은 태그 5개가 각자 227 MiB 레이어를 갖고 있었다).

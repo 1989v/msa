@@ -15,10 +15,14 @@ import { refreshAccessToken } from './auth/refresh';
 import { bootstrapTheme } from './hooks/useHeritageSurface';
 import { queryClient } from './shell/queryClient';
 import { AuthProvider } from './shell/AuthContext';
+import { installStaleChunkReload } from './shell/staleChunkReload';
 
 // 렌더 전에 톤을 정한다 — 훅은 effect 에서 돌아서, 여기서 칠하지 않으면
 // 라이트를 고른 사람도 다크가 한 번 번쩍인 뒤 바뀐다.
 bootstrapTheme();
+
+// 배포 전에 열어 둔 탭이 사라진 청크를 부르면 한 번 새로고침해 새 셸을 받는다
+installStaleChunkReload();
 
 // HttpOnly 전환 전 세션을 끊지 않고 옮긴다 — 읽히는 옛 토큰 쿠키가 있으면 한 번 갱신해 서버가 바꿔 끼우게 한다(ADR-0101)
 void upgradeLegacySession(refreshAccessToken);
