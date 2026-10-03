@@ -7,8 +7,11 @@
   ② 정규화 — 괄호 안 · 공백 · 구두점을 지운 두 이름이 같다
   ③ 포함 — 정규화한 두 이름 중 한쪽이 다른 쪽을 품고, 짧은 쪽이 3자 이상
 
-단계마다 후보(서로 다른 관광지 id)가 하나일 때만 잇는다. 둘 이상이면 그 자리에서 `AMBIGUOUS` 로 멈춘다 —
-다음 단계로 넘어가 엉뚱한 하나를 고르지 않는다. 정확 단계를 먼저 하는 이유: 「열안지오름(봉개동)」·「열안지오름(오라동)」은
+단계마다 후보(서로 다른 관광지 id)가 하나일 때만 잇는다. 둘 이상이면 같은 장소의 중복 등록인지 먼저 가린다 —
+원천(TourAPI)이 한 장소를 관광지와 쇼핑으로 따로 올리거나(부산타워 12 · 38), 같은 유형으로 두 번 올린 곳이 있다(익선동 한옥거리).
+  ⓐ 쇼핑·음식점·행사·숙박이 아닌 후보가 하나만 남으면 그것 — 원천 이름은 관광지 집중률·이동 기반이라 관광 쪽이 맞다
+  ⓑ 남은 후보가 모두 같은 유형이면 개요가 가장 긴 하나 — 두 번 올라온 같은 곳 중 내용이 많은 쪽
+그래도 가려지지 않으면 `AMBIGUOUS` 로 멈춘다 — 다음 단계로 넘어가 엉뚱한 하나를 고르지 않는다. 정확 단계를 먼저 하는 이유: 「열안지오름(봉개동)」·「열안지오름(오라동)」은
 정규화하면 같은 이름이 되지만 정확 단계에서 각자 자기 행에 붙는다.
 
 실측(2026-10-02, 종로구 · 제주시 · 해운대구 376곳): 정확 284 · 정규화까지 306 · 포함 21(+모호 5) · 못 맞춤 44.
@@ -36,6 +39,14 @@ class Candidate:
 
     attraction_id: int
     title: str
+    #: 겹친 후보를 가릴 때만 쓴다 — 없으면(옛 픽스처) 가리지 않는다
+    content_type_id: str | None = None
+    overview_len: int = 0
+
+
+#: 원천 이름이 관광지를 가리킬 때 뒤로 미는 유형 — 쇼핑 · 음식점 · 행사 · 숙박
+#: (국문 38 · 39 · 15 · 32, 영문 79 · 82 · 85 · 80). 같은 이름의 축제·숙소가 관광지와 겹쳐 올라온다(삼랑성 12 · 15).
+SECONDARY_TYPES = frozenset({"38", "39", "15", "32", "79", "82", "85", "80"})
 
 
 @dataclass(frozen=True)
@@ -60,15 +71,38 @@ def candidates_by_sigungu(rows: Iterable[dict]) -> dict[str, list[Candidate]]:
         regn, signgu = row.get("ldongRegnCd"), row.get("ldongSignguCd")
         if row.get("lang") != "ko" or not regn or not signgu or not row.get("title"):
             continue
-        out.setdefault(f"{regn}{signgu}", []).append(Candidate(int(row["id"]), str(row["title"])))
+        out.setdefault(f"{regn}{signgu}", []).append(Candidate(
+            int(row["id"]), str(row["title"]),
+            content_type_id=str(row.get("contentTypeId") or "") or None,
+            overview_len=len(row.get("overview") or ""),
+        ))
     return out
 
 
-def _decide(ids: set[int], method: str) -> Match | None:
-    if not ids:
+def _settle(found: list[Candidate]) -> int | None:
+    """같은 이름으로 걸린 서로 다른 행 중 하나를 고른다(위 ⓐ · ⓑ). 못 고르면 None."""
+    primary = [c for c in found if c.content_type_id and c.content_type_id not in SECONDARY_TYPES]
+    if len(primary) == 1 and any(c.content_type_id in SECONDARY_TYPES for c in found):
+        return primary[0].attraction_id
+    pool = primary or found
+    types = {c.content_type_id for c in pool}
+    if len(types) == 1 and None not in types:
+        longest = max(c.overview_len for c in pool)
+        top = [c for c in pool if c.overview_len == longest]
+        if len(top) == 1 and longest > 0:
+            return top[0].attraction_id
+    return None
+
+
+def _decide(found: list[Candidate], method: str) -> Match | None:
+    by_id = {c.attraction_id: c for c in found}
+    if not by_id:
         return None
-    ordered = tuple(sorted(ids))
-    return Match(ordered[0], method, ordered) if len(ordered) == 1 else Match(None, "AMBIGUOUS", ordered)
+    ordered = tuple(sorted(by_id))
+    if len(ordered) == 1:
+        return Match(ordered[0], method, ordered)
+    picked = _settle(list(by_id.values()))
+    return Match(picked, method, ordered) if picked is not None else Match(None, "AMBIGUOUS", ordered)
 
 
 def _contains(a: str, b: str) -> bool:
@@ -78,15 +112,15 @@ def _contains(a: str, b: str) -> bool:
 
 def match(name: str, candidates: list[Candidate]) -> Match:
     """원천 이름 하나를 같은 시군구 후보에 견준다."""
-    exact = _decide({c.attraction_id for c in candidates if c.title == name}, "EXACT")
+    exact = _decide([c for c in candidates if c.title == name], "EXACT")
     if exact:
         return exact
     key = normalize(name)
     if not key:
         return Match(None, "NONE", ())
     keyed = [(c, normalize(c.title)) for c in candidates]
-    normalized = _decide({c.attraction_id for c, k in keyed if k == key}, "NORMALIZED")
+    normalized = _decide([c for c, k in keyed if k == key], "NORMALIZED")
     if normalized:
         return normalized
-    contains = _decide({c.attraction_id for c, k in keyed if k and _contains(k, key)}, "CONTAINS")
+    contains = _decide([c for c, k in keyed if k and _contains(k, key)], "CONTAINS")
     return contains or Match(None, "NONE", ())

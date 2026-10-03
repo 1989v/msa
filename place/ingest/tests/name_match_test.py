@@ -86,3 +86,39 @@ def test_candidates_are_korean_rows_keyed_by_the_legal_dong_sigungu_code():
         {"id": 3, "title": "시군구 없음", "lang": "ko", "ldongRegnCd": "11", "ldongSignguCd": None},
     ]
     assert name_match.candidates_by_sigungu(rows) == {"11110": [name_match.Candidate(1, "경복궁")]}
+
+
+def C(i, title, type_id, overview_len):  # noqa: N802 — 겹친 후보 픽스처
+    return name_match.Candidate(i, title, content_type_id=type_id, overview_len=overview_len)
+
+
+def test_same_place_listed_as_sight_and_shop_resolves_to_the_sight():
+    # 부산타워 운영 행(2026-10-03): 관광지 12 · 개요 317자 / 쇼핑 38 · 개요 118자
+    cands = [C(2558, "부산타워", "12", 317), C(29692, "부산타워", "38", 118)]
+    assert name_match.match("부산타워", cands) == name_match.Match(2558, "EXACT", (2558, 29692))
+
+
+def test_same_type_listed_twice_resolves_to_the_longer_overview():
+    # 익선동 한옥거리 운영 행: 둘 다 관광지 12 · 개요 301자 / 230자
+    cands = [C(7535, "익선동 한옥거리", "12", 301), C(13391, "익선동 한옥거리", "12", 230)]
+    assert name_match.match("익선동 한옥거리", cands) == name_match.Match(7535, "EXACT", (7535, 13391))
+
+
+def test_two_sights_of_different_types_or_equal_overviews_stay_ambiguous():
+    mixed = [C(1, "전시관", "12", 300), C(2, "전시관", "14", 100)]
+    assert name_match.match("전시관", mixed) == name_match.Match(None, "AMBIGUOUS", (1, 2))
+    tie = [C(1, "시장", "12", 200), C(2, "시장", "12", 200)]
+    assert name_match.match("시장", tie) == name_match.Match(None, "AMBIGUOUS", (1, 2))
+
+
+def test_two_shops_with_one_longer_overview_resolve_and_a_sight_beats_two_shops():
+    shops = [C(1, "몰", "38", 120), C(2, "몰", "38", 430)]
+    assert name_match.match("몰", shops).attraction_id == 2
+    sight_and_shops = [C(1, "타워", "38", 900), C(2, "타워", "38", 100), C(3, "타워", "12", 50)]
+    assert name_match.match("타워", sight_and_shops).attraction_id == 3
+
+
+def test_candidates_carry_type_and_overview_length_for_settling():
+    rows = [{"id": "5", "lang": "ko", "title": "부산타워", "ldongRegnCd": "26", "ldongSignguCd": "110",
+             "contentTypeId": "38", "overview": "가" * 118}]
+    assert name_match.candidates_by_sigungu(rows) == {"26110": [C(5, "부산타워", "38", 118)]}
