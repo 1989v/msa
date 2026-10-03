@@ -50,12 +50,22 @@ OCI 무료 단일 노드라 서버 부하가 방문자 수를 따라가면 안 �
 ## 엣지 규칙 (Cloudflare 대시보드 → Caching → Cache Rules)
 
 - 이름: `place-public-read`
-- 조건: 호스트가 `place.1989v.com` 이고 경로가 다음으로 시작 — `/api/search/attractions/` 중 `/{id}` · `/{id}/nearby`,
-  `/api/places/weather`, `/api/places/air`
-  (식: `(http.host eq "place.1989v.com" and (http.request.uri.path matches "^/api/search/attractions/[0-9]+(/nearby)?$"
-  or http.request.uri.path eq "/api/places/weather" or http.request.uri.path eq "/api/places/air"))`)
-- 동작: Eligible for cache · Edge TTL = 「Use cache-control header if present」 · Browser TTL = 「Respect origin」
+- 식: `(http.host eq "place.1989v.com" and (starts_with(http.request.uri.path, "/api/search/attractions/")
+  or http.request.uri.path eq "/api/places/weather" or http.request.uri.path eq "/api/places/air"))`
+  - 정규식(`matches`)은 무료 요금제에서 저장이 거부된다("not entitled"). 그래서 접두어로 넓게 잡는다.
+  - 접두어 아래의 목록 검색·자동완성도 규칙에 들지만 캐시 헤더가 없어 바이패스된다. 실제로 캐시되는 것은 헤더를
+    붙인 상세·주변뿐이다. 무엇을 캐시할지는 대시보드가 아니라 서비스 헤더가 정한다.
+- 동작: Eligible for cache · Edge TTL = 「Use cache-control header if present, bypass cache if not」 ·
+  Browser TTL = 「Respect origin」
 - 확인: 같은 주소를 두 번 부르면 두 번째 응답의 `cf-cache-status` 가 `HIT` 다.
+
+### 응답에 `Set-Cookie` 가 있으면 엣지가 캐시하지 않는다
+
+- 규칙을 켠 뒤에도 전부 `BYPASS` 였다. 원인은 게이트웨이 `VisitorIdFilter` 가 모든 응답에 방문자 쿠키
+  `vid` 를 심은 것이다. Cloudflare 는 `Set-Cookie` 가 붙은 응답을 캐시하지 않는다.
+- 그래서 게이트웨이는 응답을 내보내기 직전에 `Cache-Control` 을 보고, `public` 이면 쿠키를 심지 않는다.
+- 방문자 식별은 사용자별 응답(로그인 확인·광고·원장 기록)이 계속 쿠키를 심는 것으로 유지된다. 상세를 처음 연
+  방문자도 같은 화면에서 그 응답들을 받는다.
 
 ## 대안
 
