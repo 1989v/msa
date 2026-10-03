@@ -1,0 +1,6 @@
+Waiting for deployment "content" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "content" rollout to finish: 1 old replicas are pending termination...
+deployment "content" successfully rolled out
+ap-chuncheon-1.ocir.io/axyooxbyk5yv/content:46e127a ready=1 updated=1 available=1
+SYNC     REVISION                                   PHASE
+Synced   f77e3006f7c502b9cf9614703bb6e409bdbfc9d3   Succeeded

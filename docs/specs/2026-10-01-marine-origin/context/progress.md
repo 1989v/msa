@@ -94,3 +94,6 @@ games19828054. 첫3wave지상전용,4차부터박쥐소수. 기지옆무적중�
 
 ## 최신: 간격 있는 웨이브 행렬·우측 출발 유지·치료 강화 베타 완료
 3열 순차 방출/비전투 최소 32px, 현재 차수 전량 출발 후 다음 차수 타이머. 우측 전초 타워와 파수꾼 모두 처치 전까지 우측에서만 웨이브 출발. 치료 초당 최대 HP 7%. 관련 13건 최종 통과(실패 영향만 재검증), SW4 저장 유지/protocol7. games ec4eb40d → release b0a719dc, portal5bcaec8/manifest68610ae, CI37085638787 SUCCESS 및 공개 파일 확인. 실제 브라우저 픽셀/FPS 미검증. 상세 status.md 최신절과 verifications/procession-beta-evidence.json.
+
+## 최신: 궁수 키우기 이름·불규칙한 난입 베타 완료
+게임/카탈로그 이름을 궁수 키우기로 통일, URL/저장 키 유지. 고정 대열 대신 2~4마리 무리별 불규칙 출발과 지형 안전한 좌우 진군·회피. 실제40초73명 출발/최소32.0001px, 관련7건 통과. local907b0b7e/release035b9f1, content46e127a/portal73563df/manifest9ad2a0e, 양쪽CI SUCCESS 및 공개 파일 확인. protocol8/incursion-8, 기존 저장 유지·협동 새로고침. 실제 시각적 체감은 미검증. status.md 최신절과 verifications/incursion-beta-evidence.json 참조.

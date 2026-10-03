@@ -1,0 +1,16 @@
+deployment "portal-fe" successfully rolled out
+ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe:73563df ready=1 updated=1 available=1
+NAME                            DESIRED   CURRENT   READY
+portal-fe-59db5c9495            0         0         <none>
+portal-fe-5cbc8f455f            1         1         1
+portal-fe-5f4f74848b            0         0         <none>
+portal-fe-67f7476d7f            0         0         <none>
+portal-fe-6946d6b9c7            0         0         <none>
+portal-fe-6bc97d9bcb            0         0         <none>
+portal-fe-6d64f9896f            0         0         <none>
+portal-fe-758c7d7d79            0         0         <none>
+portal-fe-7c95d85ffc            0         0         <none>
+portal-fe-7fb48d5c45            0         0         <none>
+portal-fe-d99546c               0         0         <none>
+SYNC     HEALTH     REVISION                                   PHASE
+Synced   Degraded   9ad2a0ecbf59242334652da2d2b070d31fa91b31   Succeeded
