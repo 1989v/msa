@@ -100,3 +100,6 @@ games19828054. 첫3wave지상전용,4차부터박쥐소수. 기지옆무적중�
 
 ## 최신: 중간보스 추격·귀환회복/웨이브 목표 안정화 베타 완료
 우측파수꾼 인식320/추격한계360/속도126, 귀환상태20%HP초회복·복귀완료전재추격금지. 기본zombie123(궁수110), 경로예산부족과차단구분·타깃유지1.5초. 관련8건최종통과, locald87e9329/release6ee93b72/portalf90912f/manifest5b6ff9c, CI37127276568SUCCESS와공개파일확인. protocol9/pursuit-9, SW4저장유지. planning/unit-progression-preview.md에현재고용/합성/강화및미구현영웅스킬초안작성, 스킬구현은사용자확인후. 상세status.md최신절.
+
+## 최신: 영웅 Q/E 스킬 베타 완료
+2026-10-04 승인명세대로다중사격최대6명/14초·구르기최대120/9tick/10초 구현. HUD/키·내영웅1명·주둔금지·저장/협동연결, 고유10건최종PASS. 최대checkpoint46879B/display12042B4청크(표시조각3072, 기존envelope내). localbace2f97/releasee6a59897/portal95a9459/manifest481b383e, CI37141368540SUCCESS 및공개파일확인. protocol10/hero-skills-10, 새원정불필요·협동재접속. 스킬문서4절은이제구현명세. 실제브라우저픽셀/체감미검증.

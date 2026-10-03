@@ -6,7 +6,7 @@
 3. [플랫폼/온라인/저장 계약](planning/platform.md) · [구현 작업 순서](tasks.md)
 4. [화면·캐릭터·몬스터 시안](design/README.md) · [디자인 규격](design/DESIGN.md) · [에셋 제작 규격](design/asset-manifest.md)
 5. [출처와 사실/가정 구분](planning/research.md) · [검증 계획](planning/test-quality.md)
-6. [유닛 고용·승급·영웅 스킬 미리보기](planning/unit-progression-preview.md) — 현재 구현과 미구현 스킬 제안 구분
+6. [유닛 고용·승급·영웅 스킬 미리보기](planning/unit-progression-preview.md) — 고용·합성 구조와 구현된 영웅 Q/E 스킬
 
 전작 프로토타입의 초기 목수·거액 자원·유료 1기 승급·수동 환전 구조를 계승하지 않는다.
 원작의 사냥→경제 확장→주둔 거점→병력 성장→지역 공략 흐름을 기준으로 다시 설계한다.
