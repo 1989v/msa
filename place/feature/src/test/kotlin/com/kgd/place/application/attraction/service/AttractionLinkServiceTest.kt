@@ -5,12 +5,10 @@ import com.kgd.common.quota.ExternalApiQuotaLedger
 import com.kgd.place.application.attraction.port.AttractionLinkRepositoryPort
 import com.kgd.place.application.attraction.port.AttractionRepositoryPort
 import com.kgd.place.application.attraction.usecase.CollectAttractionLinksUseCase
-import com.kgd.place.domain.attraction.exception.AttractionNotFoundException
 import com.kgd.place.domain.attraction.model.Attraction
 import com.kgd.place.domain.attraction.model.AttractionLink
 import com.kgd.place.domain.attraction.model.AttractionLinkRequest
 import com.kgd.place.domain.attraction.model.AttractionLinkSource
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -28,61 +26,31 @@ class AttractionLinkServiceTest : BehaviorSpec({
     val service = AttractionLinkService(attractionRepository, linkRepository, quotaLedger)
     val youtube = AttractionLinkSource.YOUTUBE
 
-    fun gyeongbokgung() = Attraction.create(
-        contentId = "126508", lang = "ko", title = "경복궁",
-        latitude = 37.5788, longitude = 126.9770,
-    )
-
     beforeContainer { clearMocks(attractionRepository, linkRepository, answers = false) }
 
-    given("관광지 링크 조회 시") {
-        `when`("관광지가 없으면") {
-            then("AttractionNotFoundException 이어야 한다") {
-                every { attractionRepository.findById(9L) } returns null
-                shouldThrow<AttractionNotFoundException> { service.findByAttractionId(9L) }
-            }
-        }
-
-        `when`("수집된 링크가 아직 없으면") {
-            then("딥링크는 즉시 나가고 pending 으로 수집 대기를 알려야 한다") {
-                every { attractionRepository.findById(1L) } returns gyeongbokgung()
-                every { linkRepository.findLinks(1L) } returns emptyList()
-                every { linkRepository.findRequest(1L, youtube) } returns null
-
-                val links = service.findByAttractionId(1L)
-
-                links.collected shouldHaveSize 0
-                links.deepLinks shouldHaveSize 4
-                links.pending shouldBe true
-                verify { linkRepository.saveRequest(any()) }
-            }
-        }
-
-        `when`("최근에 수집을 마쳤으면") {
-            then("다시 큐에 올리지 않고 pending 도 아니어야 한다") {
-                val request = AttractionLinkRequest.create(1L, youtube).apply { markCollected() }
-                every { attractionRepository.findById(1L) } returns gyeongbokgung()
-                every { linkRepository.findLinks(1L) } returns listOf(
-                    AttractionLink.create(1L, youtube, "v1", "경복궁 브이로그", "https://youtu.be/v1"),
-                )
-                every { linkRepository.findRequest(1L, youtube) } returns request
-
-                val links = service.findByAttractionId(1L)
-
-                links.collected shouldHaveSize 1
-                links.pending shouldBe false
-            }
-        }
+    given("재색인이 링크를 묶음으로 읽을 때") {
+        fun stored(id: Long, title: String, lang: String = "ko") = Attraction.restore(
+            id = id, contentId = "c$id", lang = lang, title = title,
+            address = null, areaCode = null, sigunguCode = null, ldongRegnCd = null, ldongSignguCd = null,
+            category = null, cat1 = null, cat2 = null, cat3 = null,
+            lclsSystm1 = null, lclsSystm2 = null, lclsSystm3 = null,
+            contentTypeId = null, copyrightDivCd = null, thumbnailUrl = null,
+            mapLevel = null, zipcode = null, sourceCreatedAt = null,
+            latitude = 37.5, longitude = 127.0, imageUrl = null, tel = null, overview = null,
+            introRaw = null, useTime = null, restDate = null, useFee = null,
+            parking = null, parkingFee = null, infoCenter = null, introSyncedAt = null,
+            petAcmpyType = null, petRaw = null, petSyncedAt = null, setting = null,
+            imagesRaw = null, infoRaw = null, extraSyncedAt = null,
+            eventStartDate = null, eventEndDate = null, listRaw = null, googlePlaceId = null,
+            sourceModifiedAt = null, status = "ACTIVE", createdAt = java.time.LocalDateTime.now(),
+        )
 
         `when`("원천 제목에 꼬리 괄호가 붙어 있으면") {
             then("딥링크는 표시명으로 조립되어야 한다 — 원문 그대로면 불가능한 질의가 된다") {
-                every { attractionRepository.findById(2L) } returns Attraction.create(
-                    contentId = "3113200", lang = "en", title = "Dosan Park(도산공원)",
-                    latitude = 37.524, longitude = 127.035,
-                )
+                every { attractionRepository.findAllByIds(listOf(2L)) } returns listOf(stored(2L, "Dosan Park(도산공원)", "en"))
                 every { linkRepository.findLinks(2L) } returns emptyList()
 
-                val links = service.findByAttractionId(2L)
+                val links = service.findByAttractionIds(listOf(2L)).getValue(2L)
 
                 links.deepLinks.first { it.provider == "YOUTUBE" }.url shouldBe
                     "https://www.youtube.com/results?search_query=Dosan+Park"
@@ -91,16 +59,18 @@ class AttractionLinkServiceTest : BehaviorSpec({
             }
         }
 
-        `when`("큐 적재가 실패하면") {
-            then("조회는 그대로 성공해야 한다 — 링크는 부수 정보고 상세가 본질이다") {
-                every { attractionRepository.findById(1L) } returns gyeongbokgung()
-                every { linkRepository.findLinks(1L) } returns emptyList()
-                every { linkRepository.findRequest(1L, youtube) } throws RuntimeException("DB 장애")
+        `when`("수집된 링크가 있으면") {
+            then("수집형과 딥링크를 함께 주고, 수집 큐에는 올리지 않는다 — 6만 곳을 훑을 때마다 큐가 차면 안 된다") {
+                every { attractionRepository.findAllByIds(listOf(1L)) } returns listOf(stored(1L, "경복궁"))
+                every { linkRepository.findLinks(1L) } returns listOf(
+                    AttractionLink.create(1L, youtube, "v1", "경복궁 브이로그", "https://youtu.be/v1"),
+                )
 
-                val links = service.findByAttractionId(1L)
+                val links = service.findByAttractionIds(listOf(1L)).getValue(1L)
 
+                links.collected shouldHaveSize 1
                 links.deepLinks shouldHaveSize 4
-                links.pending shouldBe false
+                verify(exactly = 0) { linkRepository.saveRequest(any()) }
             }
         }
     }

@@ -4,15 +4,13 @@ import com.kgd.place.domain.attraction.model.AttractionDeepLink
 import com.kgd.place.domain.attraction.model.AttractionLink
 
 /**
- * 관광지 외부 링크 (ADR-0070).
+ * 관광지 외부 링크 (ADR-0070) — 재색인이 묶음으로 읽어 색인 문서에 싣는다. 화면은 place 를 부르지 않는다.
  *
- * 조립되는 딥링크는 항상 즉시 나가고, 수집형은 있으면 나간다. **조회 경로에서 외부 API 를
- * 동기로 부르지 않는다** — P99 가 외부 지연에 묶이고(ADR-0025) 트랜잭션 안 외부 IO 금지와도
- * 충돌한다. 없으면 큐에 적고 [Links.pending] 으로 알린다.
+ * 조립되는 딥링크는 항상 나가고, 수집형은 있으면 나간다. 조회 경로에서 외부 API 를 부르지 않는다.
+ * 관광지 하나를 읽는 공개 조회(`GET /api/places/attractions/{id}/links`)는 없앴다 — 읽으면서 수집 큐에 쓰는
+ * 부수효과가 있었고, 화면이 색인으로 옮긴 뒤 부르는 곳이 없었다.
  */
 interface GetAttractionLinksUseCase {
-    fun findByAttractionId(id: Long): Links
-
     /**
      * 색인용 벌크 조회 (ADR-0095). **큐에 올리지 않는다** — 재색인이 6만 곳을 훑는데
      * 그때마다 수집 요청이 생기면 인기와 무관하게 큐가 가득 찬다.
@@ -22,7 +20,5 @@ interface GetAttractionLinksUseCase {
     data class Links(
         val collected: List<AttractionLink>,
         val deepLinks: List<AttractionDeepLink>,
-        /** 수집 대기 중 — 화면은 오류가 아니라 "곧 채워짐"으로 그린다. */
-        val pending: Boolean,
     )
 }

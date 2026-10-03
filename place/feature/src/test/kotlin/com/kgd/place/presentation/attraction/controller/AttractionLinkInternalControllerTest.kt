@@ -37,7 +37,6 @@ class AttractionLinkInternalControllerTest : BehaviorSpec({
                 1L to GetAttractionLinksUseCase.Links(
                     collected = listOf(video),
                     deepLinks = AttractionDeepLinks.of("경복궁", "12").take(1),
-                    pending = false,
                 ),
             )
 

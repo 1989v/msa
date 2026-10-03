@@ -13,7 +13,7 @@ import org.springframework.data.domain.Pageable
 
 class AttractionControllerTest : BehaviorSpec({
     val getAttractionUseCase = mockk<GetAttractionUseCase>()
-    val controller = AttractionController(mockk(), getAttractionUseCase, mockk(), mockk())
+    val controller = AttractionController(mockk(), getAttractionUseCase, mockk())
 
     beforeEach { clearMocks(getAttractionUseCase) }
 

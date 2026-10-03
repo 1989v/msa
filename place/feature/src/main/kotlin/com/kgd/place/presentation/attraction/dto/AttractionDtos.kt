@@ -1,7 +1,6 @@
 package com.kgd.place.presentation.attraction.dto
 
 import com.kgd.place.application.attraction.usecase.AttractionOverviewProbeUseCase
-import com.kgd.place.application.attraction.usecase.GetAttractionLinksUseCase
 import com.kgd.place.application.attraction.usecase.GetAttractionUseCase
 import com.kgd.place.application.attraction.usecase.UpsertAttractionUseCase
 import jakarta.validation.Valid
@@ -271,55 +270,3 @@ data class RecordOverviewProbeRequest(
 data class OverviewProbeListResponse(val keys: List<String>, val total: Int)
 
 data class RecordOverviewProbeResponse(val recorded: Int)
-
-/**
- * 관광지 외부 링크 (ADR-0070). `revenueType` 이 AFFILIATE 인 것만 화면이 배지·고지와
- * `rel="sponsored"` 를 붙인다 — 표시 규칙은 화면 한 곳에서만 판단한다.
- */
-data class AttractionLinksResponse(
-    val collected: List<CollectedLinkResponse>,
-    val deepLinks: List<DeepLinkResponse>,
-    val pending: Boolean,
-) {
-    companion object {
-        fun from(links: GetAttractionLinksUseCase.Links) = AttractionLinksResponse(
-            collected = links.collected.map {
-                CollectedLinkResponse(
-                    source = it.source.name,
-                    title = it.title,
-                    url = it.url,
-                    thumbnailUrl = it.thumbnailUrl,
-                    author = it.author,
-                    publishedAt = it.publishedAt,
-                    viewCount = it.viewCount,
-                )
-            },
-            deepLinks = links.deepLinks.map {
-                DeepLinkResponse(
-                    provider = it.provider,
-                    kind = it.kind.name,
-                    url = it.url,
-                    revenueType = it.revenueType.name,
-                )
-            },
-            pending = links.pending,
-        )
-    }
-}
-
-data class CollectedLinkResponse(
-    val source: String,
-    val title: String,
-    val url: String,
-    val thumbnailUrl: String?,
-    val author: String?,
-    val publishedAt: LocalDateTime?,
-    val viewCount: Long?,
-)
-
-data class DeepLinkResponse(
-    val provider: String,
-    val kind: String,
-    val url: String,
-    val revenueType: String,
-)

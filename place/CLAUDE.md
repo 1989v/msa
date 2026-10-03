@@ -126,7 +126,6 @@
 | POST | `/api/places/attractions/bulk` | ADMIN | 관광지 멱등 upsert — (contentId, lang) 자연키 (ADR-0065) |
 | GET | `/api/places/attractions?lang=&page=&size=&afterId=` (+`/{id}`) | public | 페이지 조회 — search-batch 재색인 풀스캔은 **키셋**(`afterId` → 응답 `nextAfterId`, 합계 필드는 -1). OFFSET(`page`)은 파이썬 호출자용으로 남고, 뒤쪽 쪽은 수 초가 걸린다 |
 | PUT/POST | `/internal/attractions/similar/{bulk,lookup}` | 클러스터 내부 | 비슷한 곳 목록 `attraction_similar`(V22) — `tools/embed` 가 관광지 단위로 통째 교체 적재, search:batch 재색인이 조회 (ADR-0103) |
-| GET | `/api/places/attractions/{id}/links` | public | 관광지 외부 링크 — 수집형(유튜브) + 조립 딥링크 (ADR-0070) |
 | GET/POST | `/internal/attractions/links/**` | 클러스터 내부 | 수집 큐 조회 / 결과 적재 — 게이트웨이가 라우팅하지 않는다 |
 | GET/POST | `/internal/attractions/google-place-ids/**` | 클러스터 내부 | 구글 place_id 미보강분 조회 / 반영 (data-sources.md §7, ID-only 무과금 SKU) |
 | GET | `/api/places/attractions/overview-probes?lang=` | public | 개요 negative cache 조회 — 수집기 제외 목록 (ADR-0070) |
