@@ -118,6 +118,8 @@ export interface Attraction {
    * 우리 관광지로 이어진 것만 색인에 실린다. 「비슷한 곳」과 겹쳐도 걸러져 오지 않는다(각 절이 따로 그린다).
    */
   relatedPlaces?: RelatedPlace[] | null;
+  /** 같은 장소의 다른 등록(관광지·쇼핑 등) — 있으면 상세가 「복합공간」으로 알리고 잇는다. 단건 조회에만. */
+  samePlace?: Array<{ id: string; contentTypeId?: string | null }> | null;
 }
 
 /** 함께 간 곳 한 건 — `rank` 는 원천 순위, `category` 는 원천 소분류 이름 그대로. */

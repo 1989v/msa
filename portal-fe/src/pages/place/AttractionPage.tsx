@@ -32,6 +32,7 @@ import { useSeo } from '../../seo/useSeo';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import AttractionLinks from './AttractionLinks';
 import AttractionConditions from './AttractionConditions';
+import AttractionInfoTabs from './AttractionInfoTabs';
 import { googleMapsSearchUrl, mapsApiKey } from './googleMaps';
 import NearbyExplore from './NearbyExplore';
 import { exploreItems, type ExploreKind } from './exploreItems';
@@ -50,8 +51,6 @@ import {
   type IntroRow,
 } from './placeView';
 import {
-  BARRIER_FREE_DETAILS,
-  BARRIER_FREE_TITLE,
   barrierFreeIcons,
   barrierFreeRows,
   EVENT_PERIOD_LABEL,
@@ -99,6 +98,8 @@ const RELATED_SECTION_INDEX = 6;
 const AMENITY_PER_KIND = 6;
 /** 숙소·행사는 6건까지 */
 const NEARBY_KIND_SHOWN = 6;
+/** 사진 타일을 처음에 몇 장 두나 — 넓은 화면 2열 × 3줄, 좁은 화면 한 줄 6칸 */
+const PHOTO_TILES = 6;
 
 
 /**
@@ -203,6 +204,9 @@ export default function AttractionPage() {
   // 사진이 1장뿐인 관광지로 넘어가 아무것도 안 보이게 된다.
   useEffect(() => setShownIndex(0), [attraction?.contentId]);
   const shown = gallery[shownIndex] ?? gallery[0];
+  // 타일 목록을 다 폈는지 — 다른 관광지로 넘어가면 다시 접는다
+  const [tilesOpen, setTilesOpen] = useState(false);
+  useEffect(() => setTilesOpen(false), [attraction?.contentId]);
 
   /*
    * 노출 기록용 화면 식별자 (ADR-0095). 관광지가 바뀌면 새 한 벌이다 —
@@ -309,8 +313,9 @@ export default function AttractionPage() {
                 두고 높이만 고정하며, 남는 옆 공간은 같은 사진을 흐리게 깔아 메운다. */}
             {shown && (
               <>
-                {/* 넓은 화면은 큰 사진 + 다른 사진 넷의 격자, 좁은 화면은 큰 사진 + 썸네일 줄이다(CSS). */}
-                <div className="place-detail-photos" data-tiles={Math.min(gallery.length - 1, 4)}>
+                {/* 큰 사진 + 다른 사진 타일 목록. 넓은 화면은 오른쪽(2열, 영역 안에서 스크롤), 좁은 화면은 아래 한 줄(6칸).
+                    처음에는 [PHOTO_TILES] 장만 두고 마지막 칸에 남은 수를 얹는다 — 누르면 전부 편다. */}
+                <div className="place-detail-photos" data-single={gallery.length <= 1 || undefined}>
                   <div
                     className="place-detail-hero"
                     style={{ backgroundImage: `url(${JSON.stringify(shown.url).slice(1, -1)})` }}
@@ -326,40 +331,31 @@ export default function AttractionPage() {
                       </span>
                     )}
                   </div>
-                  {gallery
-                    .map((img, i) => ({ img, i }))
-                    .filter(({ i }) => i !== shownIndex)
-                    .slice(0, 4)
-                    .map(({ img, i }) => (
-                      <button
-                        type="button"
-                        key={img.url}
-                        className="place-detail-tile"
-                        aria-label={img.name || `${L.photos} ${i + 1}`}
-                        onClick={() => setShownIndex(i)}
-                      >
-                        <img src={img.url} alt="" loading="lazy" />
-                      </button>
-                    ))}
+                  {gallery.length > 1 && (() => {
+                    const others = gallery.map((img, i) => ({ img, i })).filter(({ i }) => i !== shownIndex);
+                    const tiles = tilesOpen ? others : others.slice(0, PHOTO_TILES);
+                    const rest = others.length - tiles.length;
+                    return (
+                      <div className="place-detail-tiles" role="group" aria-label={L.photos}>
+                        {tiles.map(({ img, i }, k) => {
+                          const last = k === tiles.length - 1 && rest > 0;
+                          return (
+                            <button
+                              type="button"
+                              key={img.url}
+                              className="place-detail-tile"
+                              aria-label={last ? `${L.photos} +${rest}` : img.name || `${L.photos} ${i + 1}`}
+                              onClick={() => (last ? setTilesOpen(true) : setShownIndex(i))}
+                            >
+                              <img src={img.url} alt="" loading="lazy" />
+                              {last && <span className="place-detail-tile-more">+{rest}</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                 </div>
-                {/* 썸네일 줄 — 사진이 하나뿐이면 고를 것이 없으니 그리지 않는다. 넓은 화면은
-                    격자가 다섯 장을 보이므로 그보다 많을 때만 나온다(CSS data-many). */}
-                {gallery.length > 1 && (
-                  <div className="place-gallery" role="group" aria-label={L.photos} data-many={gallery.length > 5 || undefined}>
-                    {gallery.map((img, i) => (
-                      <button
-                        type="button"
-                        key={img.url}
-                        className="place-gallery-thumb"
-                        aria-current={i === shownIndex}
-                        aria-label={img.name || `${L.photos} ${i + 1}`}
-                        onClick={() => setShownIndex(i)}
-                      >
-                        <img src={img.url} alt="" loading="lazy" />
-                      </button>
-                    ))}
-                  </div>
-                )}
               </>
             )}
             <h1 className="place-detail-title">{attraction.title}</h1>
@@ -443,56 +439,17 @@ export default function AttractionPage() {
               })()}
             </div>
 
-            {/* 아래 셋은 서버 렌더(AttractionPageRenderer)와 같은 문구·같은 순서다 — 개요·이용 안내
-                원문 → 방문 정보 요약 → 지역 안 위치 → 같은 분류 가까운 곳 → 비슷한 곳. 해석된 값만 그린다. */}
-            {badges.length > 0 && (
-              <section className="place-detail-badges" aria-label={L.badges}>
-                <h2 className="place-detail-info-title">{L.badges}</h2>
-                <ul className="place-badge-list">
-                  {badges.map((b) => (
-                    <li key={b} className="place-badge">{b}</li>
-                  ))}
-                </ul>
-              </section>
-            )}
-            {/* 접근성 정보 — 긍정 아이콘 줄 + 펼치면 원천 문장(고치지 않는다). 서버 렌더와 같은 표·순서 */}
-            {(accessIcons.length > 0 || accessRows.length > 0) && (
-              <section className="place-detail-badges" aria-label={BARRIER_FREE_TITLE[lang]} data-place-section="barrier-free">
-                <h2 className="place-detail-info-title">{BARRIER_FREE_TITLE[lang]}</h2>
-                {accessIcons.length > 0 && (
-                  <ul className="place-badge-list">
-                    {accessIcons.map((b) => (
-                      <li key={b} className="place-badge">{b}</li>
-                    ))}
-                  </ul>
-                )}
-                {accessRows.length > 0 && (
-                  <details className="place-detail-disclosure">
-                    <summary>{BARRIER_FREE_DETAILS[lang](accessRows.length)}</summary>
-                    <dl className="place-detail-info-list">
-                      {accessRows.map((r) => (
-                        <div className="place-detail-info-row" key={r.key}>
-                          <dt>{r.label}</dt>
-                          <dd>{r.value}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </details>
-                )}
-              </section>
-            )}
-            {wellness && <p className="place-region-phrase" data-place-section="wellness">{wellness}</p>}
-            {attraction.region && (
-              <section className="place-detail-region" aria-label={L.region}>
-                <h2 className="place-detail-info-title">{L.region}</h2>
-                {phrase && <p className="place-region-phrase">{phrase}</p>}
-                {hubCode && (
-                  <Link className="place-region-hub" to={regionPath(lang, hubCode)}>
-                    {L.explore(regionPlaceName(attraction, lang))}
-                  </Link>
-                )}
-              </section>
-            )}
+            {/* 방문 정보 · 접근성 · 지역 안 위치 — 지도 위에 탭 하나로, 내용은 칩. 서버 렌더는 세 절을 그대로 쌓는다(색인용) */}
+            <AttractionInfoTabs
+              badges={badges}
+              wellness={wellness}
+              accessIcons={accessIcons}
+              accessRows={accessRows}
+              phrase={attraction.region ? phrase : null}
+              hub={attraction.region && hubCode ? { to: regionPath(lang, hubCode), label: L.explore(regionPlaceName(attraction, lang)) } : null}
+              samePlace={attraction.samePlace ?? []}
+              lang={lang}
+            />
             {/* 주변 탐색 — 같은 분류 가까운 곳 · 주변 명소 · 숙소 · 행사 · 편의시설을 지도 한 장과 목록 하나로.
                 지도를 못 그리면(키 없음 · 좌표 이상 · 로더 실패) 목록만 남고 아래 링크가 위치를 대신한다. */}
             <NearbyExplore

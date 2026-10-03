@@ -1808,14 +1808,9 @@ button.place-card {
 }
 
 @media (min-width: 64rem) {
-  .place-weather-list {
-    display: grid;
-    grid-template-columns: repeat(10, minmax(0, 1fr));
-    overflow: visible;
-  }
-
+  /* 넓은 화면도 한 줄로 — 판 높이를 고정했으니 넘치는 날은 옆으로 넘긴다 */
   .place-weather-day {
-    flex: none;
+    flex-basis: 6.5rem;
   }
 
   .place-weather-summary {
@@ -1900,17 +1895,33 @@ button.place-card {
   font-size: 1.4rem;
 }
 
-/* 사진 — 좁은 화면은 큰 사진 한 장(+ 썸네일 줄), 넓은 화면은 큰 사진 + 넷의 격자 */
+/* 사진 — 큰 사진 + 다른 사진 타일 목록. 좁은 화면은 큰 사진(12.5rem) 아래 한 줄 6칸, 넓은 화면은 65 : 35 로
+   오른쪽에 2열(영역 높이 25rem 안에서 스크롤). 아래 썸네일 캐러셀은 두지 않는다 — 같은 사진이 두 번 나와 헷갈렸다. */
 .place-detail-photos {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0.5rem;
 }
 
+.place-detail-photos .place-detail-hero {
+  height: 12.5rem;
+}
+
+.place-detail-tiles {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  /* 줄 높이는 타일(4:3) 그대로 — 영역 높이가 고정이면 auto 줄이 남는 높이를 나눠 가져 타일이 겹친다 */
+  grid-auto-rows: max-content;
+  gap: 0.5rem;
+  align-content: start;
+}
+
 .place-detail-tile {
-  display: none;
+  position: relative;
+  aspect-ratio: 4 / 3;
   padding: 0;
   border: 0;
+  border-radius: 0.4rem;
   background: var(--ko-surface-2);
   cursor: pointer;
   overflow: hidden;
@@ -1923,6 +1934,22 @@ button.place-card {
   display: block;
 }
 
+.place-detail-tile:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: 2px;
+}
+
+/* 마지막 칸 — 남은 사진 수. 누르면 전부 편다 */
+.place-detail-tile-more {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: var(--kh-hanji);
+  background: color-mix(in srgb, var(--kh-ink) 60%, transparent);
+}
+
 .place-detail-photo-count {
   position: absolute;
   right: 0.6rem;
@@ -1932,12 +1959,6 @@ button.place-card {
   font-size: 0.75rem;
   color: var(--kh-hanji);
   background: color-mix(in srgb, var(--kh-ink) 65%, transparent);
-}
-
-@media (max-width: 40rem) {
-  .place-detail-hero {
-    height: 16rem;
-  }
 }
 
 /* 개요 — 좁은 화면만 높이를 자르고 아래를 흐리게 한다. 글은 DOM 에 그대로 있다. */
@@ -2212,52 +2233,23 @@ button.place-card {
 /* 넓은 화면(PC) — 사진 격자 · 개요는 자르지 않음 · 지도와 목록을 나란히 */
 @media (min-width: 64rem) {
   .place-detail-photos {
-    grid-template-columns: 2fr 1fr 1fr;
-    grid-template-rows: 12.5rem 12.5rem;
-    border-radius: 0.75rem;
-    overflow: hidden;
+    grid-template-columns: minmax(0, 65fr) minmax(0, 35fr);
+    height: 25rem;
   }
 
-  .place-detail-photos[data-tiles='0'] {
+  .place-detail-photos[data-single] {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 25.5rem;
   }
 
   .place-detail-photos .place-detail-hero {
-    grid-row: 1 / 3;
-    height: auto;
-    border-radius: 0;
+    height: 100%;
   }
 
-  .place-detail-photos[data-tiles='0'] .place-detail-hero {
-    grid-row: auto;
-  }
-
-  /* 사진이 적으면 빈 칸이 남지 않게 칸 수를 줄인다 */
-  .place-detail-photos[data-tiles='1'] {
-    grid-template-columns: 2fr 1fr;
-    grid-template-rows: 25.5rem;
-  }
-
-  .place-detail-photos[data-tiles='1'] .place-detail-hero {
-    grid-row: auto;
-  }
-
-  .place-detail-photos[data-tiles='2'] {
-    grid-template-columns: 2fr 1fr;
-  }
-
-  .place-detail-photos[data-tiles='3'] .place-detail-tile:nth-of-type(3) {
-    grid-column: 2 / 4;
-  }
-
-  .place-detail-tile {
-    display: block;
-  }
-
-  /* 격자가 다섯 장을 보이니 그보다 많을 때만 썸네일 줄이 남는다 */
-  .place-gallery:not([data-many]) {
-    display: none;
+  .place-detail-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 2px;
   }
 
   .place-body-stacked .place-detail-overview {
@@ -2293,7 +2285,8 @@ button.place-card {
 }
 
 /* 상세의 절 사이 — 구분선과 여백으로 끊는다. 절이 많아 붙여 쌓으면 어디서 끝나는지 안 보였다 */
-.place-body-stacked .place-detail > section {
+.place-body-stacked .place-detail > section,
+.place-body-stacked .place-detail > .place-info-tabs {
   border-top: 1px solid var(--ko-border-subtle);
   padding-top: 1.25rem;
   margin-top: 0.75rem;
@@ -2376,4 +2369,162 @@ button.place-card {
   border: 1px solid var(--ko-border-subtle);
   border-radius: 0.6rem;
   background: var(--ko-surface-2);
+}
+
+/* 지도 위 정보 탭 — 방문 정보 · 접근성 · 지역 안 위치를 칩으로. 판 높이를 고정해 탭을 바꿔도 아래가 움직이지 않는다 */
+.place-info-panel {
+  height: 5.9375rem;
+  overflow-y: auto;
+  padding-top: 0.75rem;
+}
+
+/* 접근성 원천 문장을 펼쳤을 때만 판이 자란다 */
+.place-info-panel[data-open] {
+  height: auto;
+}
+
+.place-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.place-info-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--ko-border-default);
+  border-radius: 9999px;
+  background: var(--ko-surface-1);
+  font-size: 0.875rem;
+  color: var(--ko-text-primary);
+  text-decoration: none;
+}
+
+.place-info-chip-button {
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--ko-text-secondary);
+  cursor: pointer;
+}
+
+.place-info-chip-link {
+  color: var(--ko-accent-text);
+  border-color: color-mix(in srgb, var(--ko-accent-text) 45%, transparent);
+}
+
+.place-info-chip-mark {
+  border-color: var(--kh-ocher);
+  color: var(--kh-ocher-text, var(--kh-ocher));
+}
+
+.place-info-chip-button:focus-visible,
+.place-info-chip-link:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: 2px;
+}
+
+.place-info-detail {
+  margin-top: 0.75rem;
+}
+
+/* 날씨 · 대기질 · 혼잡 — 판 높이 고정(탭을 바꿔도 아래가 그대로), 내용은 한 줄로 두고 옆으로 넘긴다 */
+.place-conditions-panel {
+  height: 12.5rem;
+  overflow-y: auto;
+}
+
+.place-conditions .place-air-list {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+}
+
+.place-conditions .place-air-row {
+  flex: 0 0 auto;
+  min-width: 10rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: 0.75rem;
+  background: var(--ko-surface-1);
+}
+
+.place-conditions .place-air-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+/* 혼잡 — 막대 폭 고정 · 가로 스크롤, 날짜는 막대 바닥 안쪽에 겹친다(막대 아래 줄에 두면 차트가 솟아 보였다) */
+.place-conditions .place-congestion-chart {
+  overflow-x: auto;
+  overflow-y: hidden;
+  gap: 3px;
+}
+
+.place-conditions .place-congestion-day {
+  position: relative;
+  flex: 0 0 2.5rem;
+}
+
+.place-conditions .place-congestion-bar {
+  height: 3.5rem;
+}
+
+.place-conditions-panel > .place-detail-info {
+  gap: 0.25rem;
+}
+
+/* 판 높이(12.5rem) 안에 다 들어가게 — 오늘 단계 · 안내 · 막대 · 범례 · 출처가 각 한 줄 */
+.place-conditions .place-congestion-today {
+  margin: 0;
+}
+
+.place-conditions .place-congestion-today-level {
+  font-size: 1.1rem;
+}
+
+.place-conditions .place-congestion-hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1rem;
+  margin: 0 0 0.4rem;
+  font-size: 0.8rem;
+}
+
+.place-conditions .place-congestion-legend {
+  margin-top: 0.3rem;
+}
+
+.place-conditions .place-congestion-note {
+  display: inline;
+  margin: 0 0.5rem 0 0;
+  font-size: 0.7rem;
+}
+
+.place-conditions .place-congestion-label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.35rem;
+  min-height: 0;
+  text-align: center;
+  font-weight: 600;
+  color: var(--kh-hanji);
+  text-shadow: 0 1px 2px color-mix(in srgb, var(--kh-ink) 85%, transparent);
+  pointer-events: none;
+}
+
+.place-conditions .place-congestion-day.is-today .place-congestion-label {
+  left: 0.2rem;
+  right: 0.2rem;
+  border-radius: 0.25rem;
+  background: var(--ko-text-primary);
+  color: var(--ko-surface-0);
+  text-shadow: none;
 }
