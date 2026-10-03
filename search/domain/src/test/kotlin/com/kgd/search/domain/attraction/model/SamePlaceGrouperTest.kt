@@ -37,6 +37,14 @@ class SamePlaceGrouperTest : BehaviorSpec({
         }
     }
 
+    given("표시명은 같고 원천 제목의 괄호만 다르면 — 같은 백화점 안의 다른 매장") {
+        val men = doc("1", "Dior - Gangnam", "79", 37.50, 127.00).copy(sourceTitle = "Dior - Gangnam (디올 남성)")
+        val women = doc("2", "Dior - Gangnam", "79", 37.50, 127.00).copy(sourceTitle = "Dior - Gangnam (디올 여성)")
+        then("묶지 않는다") {
+            SamePlaceGrouper.group(listOf(men, women)).shouldBeEmpty()
+        }
+    }
+
     given("이름은 같아도 언어나 시군구가 다르면") {
         val ko = doc("1", "남산", "12", 37.55, 126.99)
         val en = doc("2", "남산", "76", 37.55, 126.99, lang = "en")

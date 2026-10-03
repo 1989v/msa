@@ -458,6 +458,7 @@ class AttractionApiReindexTasklet(
         longitude = longitude,
         // 가까운 곳 목록에 나가는 이름이라 색인 문서 title 과 같은 표시명을 쓴다
         title = titleDisplay ?: title,
+        sourceTitle = title,
         eventPeriod = eventPeriod(),
     )
 

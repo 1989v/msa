@@ -7,7 +7,9 @@ package com.kgd.search.domain.attraction.model
 data class SamePlace(val id: String, val contentTypeId: String?)
 
 /**
- * 같은 언어 · 같은 법정동 시군구 · 같은 제목이면서 [MAX_METERS] 안에 있는 다른 활성 문서끼리 묶는다.
+ * 같은 언어 · 같은 법정동 시군구 · 같은 **원천 제목**이면서 [MAX_METERS] 안에 있는 다른 활성 문서끼리 묶는다.
+ * 표시명(괄호를 뗀 제목)으로 묶지 않는다 — 운영에서 괄호로만 갈리는 별개 매장·시설 29쌍이 같은 장소로 묶였다
+ * (디올 남성 · 여성 매장, ABC마트 GS · KM 매장, 돌배야영장 제1 · 제2 야영장).
  * 제목만 같은 다른 곳(같은 구의 동명 공원 등)은 거리로 거른다. 결과는 id → 자기를 뺀 다른 등록(id 순).
  */
 object SamePlaceGrouper {
@@ -20,8 +22,8 @@ object SamePlaceGrouper {
     fun group(projections: List<RegionProjection>): Map<String, List<SamePlace>> {
         val out = HashMap<String, List<SamePlace>>()
         projections
-            .filter { it.ldongRegnCd != null && it.ldongSignguCd != null && it.title.isNotBlank() }
-            .groupBy { listOf(it.lang, it.ldongRegnCd, it.ldongSignguCd, it.title) }
+            .filter { it.ldongRegnCd != null && it.ldongSignguCd != null && (it.sourceTitle ?: it.title).isNotBlank() }
+            .groupBy { listOf(it.lang, it.ldongRegnCd, it.ldongSignguCd, it.sourceTitle ?: it.title) }
             .values
             .filter { it.size > 1 }
             .forEach { same ->

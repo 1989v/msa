@@ -24,6 +24,8 @@ data class RegionProjection(
     val longitude: Double,
     val title: String,
     val eventPeriod: EventPeriod?,
+    /** 원천 제목 그대로 — [title] 은 꼬리 괄호를 뗀 표시명이라 괄호로만 갈리는 다른 곳(디올 남성·여성 매장)이 같아진다 */
+    val sourceTitle: String? = null,
 )
 
 /**
