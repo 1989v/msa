@@ -1,3 +1,4 @@
+import { useId, useState } from 'react';
 import type { CongestionDay, PlaceLang } from '../../api/placeApi';
 
 type Level = 'calm' | 'normal' | 'busy' | 'packed';
@@ -11,6 +12,8 @@ const UI = {
     todayIs: '오늘 예상',
     calmest: (date: string, level: string) => `이번 주 가장 한산한 날 ${date} · ${level}`,
     busiest: (date: string, level: string) => `가장 붐비는 날 ${date} · ${level}`,
+    brief: '예측값 · 실제 혼잡과 다를 수 있음',
+    more: '혼잡도 기준 보기',
     note: '관광공사가 예측한 앞으로 30일의 관광지 집중률(0~100)을 네 단계로 나눴습니다. 값이 클수록 사람이 몰릴 것으로 예측된 날이며, 실제 혼잡과 다를 수 있습니다.',
     source: '출처: 한국관광공사 빅데이터 서비스(관광지 집중률 예측)',
   },
@@ -22,6 +25,8 @@ const UI = {
     todayIs: 'Today',
     calmest: (date: string, level: string) => `Quietest day this week: ${date} · ${level}`,
     busiest: (date: string, level: string) => `Busiest day: ${date} · ${level}`,
+    brief: 'Forecast · actual crowds may differ',
+    more: 'How this is measured',
     note: 'Forecast tourist concentration (0–100) for the next 30 days, grouped into four levels. Higher means more visitors are expected; actual crowds may differ.',
     source: 'Source: Korea Tourism Organization Big Data Service (tourist spot concentration forecast)',
   },
@@ -75,6 +80,8 @@ export default function AttractionCongestion({
   showTitle?: boolean;
 }) {
   const L = UI[lang];
+  const noteId = useId();
+  const [noteOpen, setNoteOpen] = useState(false);
   const upcoming = days.filter((d) => d.date >= today).sort((a, b) => a.date.localeCompare(b.date));
   if (upcoming.length === 0) return null;
   const todayDay = upcoming[0].date === today ? upcoming[0] : null;
@@ -130,7 +137,23 @@ export default function AttractionCongestion({
           </li>
         ))}
       </ul>
-      <p className="place-congestion-note">{L.note}</p>
+      {/* 좁은 화면은 한 줄 요약 + ⓘ 로 기준 설명을 연다 — 판 높이 안에 차트가 다 보이게. 넓은 화면은 설명을 그대로 */}
+      <p className="place-congestion-note place-congestion-brief">
+        {L.brief}
+        <button
+          type="button"
+          className="place-congestion-info"
+          aria-label={L.more}
+          aria-expanded={noteOpen}
+          aria-controls={noteId}
+          onClick={() => setNoteOpen((v) => !v)}
+        >
+          ⓘ
+        </button>
+      </p>
+      <p id={noteId} className="place-congestion-note place-congestion-note-detail" data-open={noteOpen || undefined}>
+        {L.note}
+      </p>
       <p className="place-congestion-note">{L.source}</p>
     </section>
   );

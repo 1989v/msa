@@ -856,6 +856,16 @@ describe('AttractionPage 혼잡 예측', () => {
     expect(within(section).getByText(/^가장 붐비는 날 \d+월 \d+일 \(.\) · 매우 붐빔$/)).toBeInTheDocument();
     expect(within(section).getByText(/네 단계로 나눴습니다/)).toBeInTheDocument();
     expect(within(section).getByText('출처: 한국관광공사 빅데이터 서비스(관광지 집중률 예측)')).toBeInTheDocument();
+
+    // 좁은 화면은 한 줄 요약 + ⓘ — 누르면 기준 설명이 열린다(설명은 닫혀 있어도 DOM 에 있다)
+    const info = within(section).getByRole('button', { name: '혼잡도 기준 보기' });
+    const detail = within(section).getByText(/네 단계로 나눴습니다/);
+    expect(info.getAttribute('aria-controls')).toBe(detail.id);
+    expect(info.getAttribute('aria-expanded')).toBe('false');
+    expect(detail.hasAttribute('data-open')).toBe(false);
+    fireEvent.click(info);
+    expect(info.getAttribute('aria-expanded')).toBe('true');
+    expect(detail.hasAttribute('data-open')).toBe(true);
   });
 
   it('단계 경계 — 40 미만 한산 · 40 보통 · 70 붐빔 · 90 매우 붐빔, 이번 주 가장 한산한 날을 알린다', async () => {

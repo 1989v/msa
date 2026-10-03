@@ -2507,6 +2507,48 @@ button.place-card {
   font-size: 0.7rem;
 }
 
+.place-congestion-info {
+  margin-left: 0.25rem;
+  padding: 0 0.2rem;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.place-congestion-info:focus-visible {
+  outline: 2px solid var(--ko-text-primary);
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+@media (max-width: 63.99rem) {
+  .place-congestion .place-congestion-note-detail:not([data-open]) {
+    display: none;
+  }
+
+  .place-congestion .place-congestion-note-detail[data-open] {
+    display: block;
+    margin-top: 0.25rem;
+  }
+
+  /* 좁은 화면은 안내 두 줄이 접혀 두 줄씩 된다 — 막대를 낮춰 출처까지 판(12.5rem) 안에 */
+  .place-conditions .place-congestion-bar {
+    height: 2.5rem;
+  }
+
+  .place-conditions .place-congestion-legend {
+    margin-top: 0;
+  }
+}
+
+@media (min-width: 64rem) {
+  .place-congestion .place-congestion-brief {
+    display: none;
+  }
+}
+
 .place-conditions .place-congestion-label {
   position: absolute;
   left: 0;
