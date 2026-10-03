@@ -88,3 +88,6 @@ games19828054. 첫3wave지상전용,4차부터박쥐소수. 기지옆무적중�
 
 ## 최신: 베타 배포 완료
 공개플레이 https://game.1989v.com/games/marine-command/index.html . 카탈로그BETA/저장한도서버수정/게임화면모두배포. 두서비스Ready,공개31리소스검증및11PNG해시일치. 기존localstaged포인터변경없이격리remote-main릴리스. 증거verifications/beta-deployment.md.
+
+## 최신: 우측 전초기지 베타 패치 완료
+첫wave가본진오른쪽새전초기지에서출발,타워+지역수비중간보스추가. 강화전후초반정상명령비교검증. gamesrelease9e1f8c2/portal1b28009/manifestd14ba1f,CI37081837959SUCCESS. SW4save유지/protocol6협동재접속. 첫wave이미지났으면새원정으로초반확인. 상세status.md최신절과verifications/outpost-beta-evidence.json.

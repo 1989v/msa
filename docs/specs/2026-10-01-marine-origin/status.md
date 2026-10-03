@@ -152,3 +152,15 @@ games19828054, gpt-6.1-sol 단일 담당.1차zombie100%,2차ghoul약10%,3차ghou
 
 ## 베타 공개 배포 완료
 https://game.1989v.com/games/marine-command/index.html 에BETA공개배포완료. games386bc590/backendecd1dba/frontendd2cacba,최종manifestad16fc3. content/portal-fe양쪽rolloutsuccess. 공개API BETA,31리소스HTTP/MIME,11PNG원본해시일치. 이전 '저장서버미배포'제약은이번서버배포로해소되었으나운영저장쓰기·실브라우저플레이는미검증. 상세verifications/beta-deployment.md및증거JSON참조.
+
+## 우측 초반 전초기지·첫 웨이브 근접화 및 베타 패치
+- world.openingOutpost: 묘실(1120,11808),첫wave출발(960,11808),가시탑(1152,11680),전초파수꾼(1216,11808). 기존C1~C5/gating유지,첫wave만새source. 이후기존waveEntry사용. first-outpost wave에만최소거리640예외,일반근접spawn보호유지.
+- 파수꾼600HP/공격14/1.4초/속도50/방어2/보상180,aggro180/leash128. wave=false로지역수비,기지까지추격하지않음. tower기존350HP/공12/1.6초/사거리340/보상150. 처치보상1회와사망저장후부활없음검증.
+- 전용outpost2예약추가,global1672/field1592;기존wave/ambient/camp예산유지. outpostSpawned없는구저장에누락된2actors각1회보충. SW4기하/기존저장유지. 첫wave이미지났으면rewind안함.
+- 실제기지첫피해신규21.37s/기존42.43s. 동일seed·동일40초고정이동·정상act강화검증:신규수입478G/유료강화400G/첫수입14.07s/첫강화15.2s/공3방4/HP87.3/base4000/playing. 기존remote수입112G/강화105G/첫수입36.17s. 신규무강화동일이동은21.07s경제패배. 자원주입/반복수치조정없음;사람플레이난이도보장아님.
+- 초기국소12통과후outpost추가회귀의import·시계fixture및fortsize인자오류를해결,실패영향만재검증. 경계수비/가시예고0.55s후12피해/보상1회/구save시드/사망보존/실제Canvas시설·55px보스·fog통과.
+- 표시전용guardStats는렌더러용boolean만보내고fullcheckpoint는정확한스탯전체보존. 최종영향2/2통과:checkpoint45818B16청크/두슬롯92216B/표시11986B4청크/26msgsec/2550ms복구. protocol6에서구peer거부.
+- 브라우저JS4h캐시문제방지:entry와origin내부23import/export에?v=outpost-6. RELEASE.md에차후릴리스태그동시갱신규칙명시. Node문법/모듈graph정합통과.
+- 로컬gamesc7c74945/001ed802/8a33b15e,격리gamesmain릴리스9e1f8c2,rootpointer릴리스1b280093,manifestd14ba1f. portal-only배포,backend/DB무변경. CI37081837959 SUCCESS.
+- 공개API BETA/31리소스HTTP·MIME/11PNGbyteSHA/변경runtime6개minifySHA일치. portal1b28009Ready1Updated1Available1/oldRS0. HTMLno-cache,새queryJS CF MISS로구캐시우회. 원본stagedgames15cf171c보존. 실제브라우저픽셀미검증.
+- 공개링크 https://game.1989v.com/games/marine-command/index.html . 기존저장이어하기가능,새첫wave확인은새원정. 근거verifications/outpost-beta-evidence.json 및 outpost-beta-rollout.txt.
