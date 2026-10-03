@@ -164,3 +164,12 @@ https://game.1989v.com/games/marine-command/index.html 에BETA공개배포완료
 - 로컬gamesc7c74945/001ed802/8a33b15e,격리gamesmain릴리스9e1f8c2,rootpointer릴리스1b280093,manifestd14ba1f. portal-only배포,backend/DB무변경. CI37081837959 SUCCESS.
 - 공개API BETA/31리소스HTTP·MIME/11PNGbyteSHA/변경runtime6개minifySHA일치. portal1b28009Ready1Updated1Available1/oldRS0. HTMLno-cache,새queryJS CF MISS로구캐시우회. 원본stagedgames15cf171c보존. 실제브라우저픽셀미검증.
 - 공개링크 https://game.1989v.com/games/marine-command/index.html . 기존저장이어하기가능,새첫wave확인은새원정. 근거verifications/outpost-beta-evidence.json 및 outpost-beta-rollout.txt.
+
+## 웨이브 행렬·우측 전초기지 출발 유지·치료 강화
+- 로컬 구현 ec4eb40d, gpt-6.1-sol 단일 담당. 3개 출발 열을 40px 간격으로 배치하고 0.30초마다 1명씩 교대로 방출한다. 같은 열은 최소 0.90초 간격이며 출발점이 막히면 기다린다. 비전투 이동 분리 반경 32px, 이웃 검사는 유닛당 최대 48개로 제한한다. 교전 중에는 공격 타깃 행동을 유지한다.
+- 실제 40초 좌표 검증에서 58명 출발/62명 대기, 비전투 최소 간격 32.006px. 혼잡하면 방출 시간이 더 길어진다. 개체수는 줄이지 않았으며 현재 차수의 전량 출발 후 다음 차수까지 초반 15초/후반 35초를 센다. HUD는 출발 중 남은 수와 완료 후 카운트다운을 구분한다.
+- 우측 전초기지 타워와 파수꾼이 모두 처치될 때까지 웨이브는 우측 출발점만 사용한다. 둘 다 처치한 이후 기존 먼 출발지로 전환한다. 기존 저장의 대기 중 웨이브는 진행 커서를 보존하고 새 출발 규칙을 적용하며 이미 필드에 나온 적은 이동시키지 않는다.
+- 중립 치료사는 초당 최대 체력 5%→7% 회복. 기존 본진 회복과 높은 비율 하나만 적용하며 중첩하지 않는다. 지도 southwest-4 및 저장 codec 유지, 협동 protocol 7과 entry/내부 23개 import의 캐시 태그 procession-7 적용.
+- 국소 13건 중 최초 9통과/4실패 후 실패 영향 4건만 수정·재검증하여 4/4 통과. 저장 중인 행렬의 복원 후 다음 tick, 모듈 문법/쿼리 정합도 확인했다. 938명 전량 방출 후 35초, 동시 상한 1000에서 다음 차수 62명 출발/876명 단일 대기열 보존 검증.
+- 최대 fixture checkpoint 45,983B/16청크, 두 슬롯 92,545B, 표시 11,994B/4청크, 복구 2550ms. 출발 중 표시 데이터는 사용하지 않는 다음 차수 시간 대신 잔여 출발 수를 보내며 전체 checkpoint는 원래 상태를 보존한다. 저장 예산/개체 상한/backend/DB 변경 없음. 실제 브라우저 픽셀·대군 FPS는 미검증.
+- 베타 배포 완료: games b0a719dc, root gitlink 5bcaec8, manifest 68610ae, portal image 5bcaec8. CI [37085638787](https://github.com/1989v/msa/actions/runs/37085638787) SUCCESS. portal Ready/Updated/Available 1, 이전 replica 0. Argo Synced/Succeeded이며 기존 전체 Degraded 상태는 별도다. 공개 31개 파일 HTTP/MIME, PNG 11개 원본 SHA, 변경 runtime 7개 minify SHA 일치. 새 query CF MISS 확인. 근거: verifications/procession-beta-evidence.json 및 procession-beta-rollout.txt. 원본 staged games 15cf171c 보존. 기존 저장 이어하기 가능, 협동 양쪽 새로고침 필요.

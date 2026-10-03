@@ -91,3 +91,6 @@ games19828054. 첫3wave지상전용,4차부터박쥐소수. 기지옆무적중�
 
 ## 최신: 우측 전초기지 베타 패치 완료
 첫wave가본진오른쪽새전초기지에서출발,타워+지역수비중간보스추가. 강화전후초반정상명령비교검증. gamesrelease9e1f8c2/portal1b28009/manifestd14ba1f,CI37081837959SUCCESS. SW4save유지/protocol6협동재접속. 첫wave이미지났으면새원정으로초반확인. 상세status.md최신절과verifications/outpost-beta-evidence.json.
+
+## 최신: 간격 있는 웨이브 행렬·우측 출발 유지·치료 강화 베타 완료
+3열 순차 방출/비전투 최소 32px, 현재 차수 전량 출발 후 다음 차수 타이머. 우측 전초 타워와 파수꾼 모두 처치 전까지 우측에서만 웨이브 출발. 치료 초당 최대 HP 7%. 관련 13건 최종 통과(실패 영향만 재검증), SW4 저장 유지/protocol7. games ec4eb40d → release b0a719dc, portal5bcaec8/manifest68610ae, CI37085638787 SUCCESS 및 공개 파일 확인. 실제 브라우저 픽셀/FPS 미검증. 상세 status.md 최신절과 verifications/procession-beta-evidence.json.
