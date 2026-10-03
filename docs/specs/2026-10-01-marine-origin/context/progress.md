@@ -97,3 +97,6 @@ games19828054. 첫3wave지상전용,4차부터박쥐소수. 기지옆무적중�
 
 ## 최신: 궁수 키우기 이름·불규칙한 난입 베타 완료
 게임/카탈로그 이름을 궁수 키우기로 통일, URL/저장 키 유지. 고정 대열 대신 2~4마리 무리별 불규칙 출발과 지형 안전한 좌우 진군·회피. 실제40초73명 출발/최소32.0001px, 관련7건 통과. local907b0b7e/release035b9f1, content46e127a/portal73563df/manifest9ad2a0e, 양쪽CI SUCCESS 및 공개 파일 확인. protocol8/incursion-8, 기존 저장 유지·협동 새로고침. 실제 시각적 체감은 미검증. status.md 최신절과 verifications/incursion-beta-evidence.json 참조.
+
+## 최신: 중간보스 추격·귀환회복/웨이브 목표 안정화 베타 완료
+우측파수꾼 인식320/추격한계360/속도126, 귀환상태20%HP초회복·복귀완료전재추격금지. 기본zombie123(궁수110), 경로예산부족과차단구분·타깃유지1.5초. 관련8건최종통과, locald87e9329/release6ee93b72/portalf90912f/manifest5b6ff9c, CI37127276568SUCCESS와공개파일확인. protocol9/pursuit-9, SW4저장유지. planning/unit-progression-preview.md에현재고용/합성/강화및미구현영웅스킬초안작성, 스킬구현은사용자확인후. 상세status.md최신절.
