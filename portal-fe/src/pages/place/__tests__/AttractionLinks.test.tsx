@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import AttractionLinks from '../AttractionLinks';
 
@@ -8,35 +8,41 @@ const video = (id: string, format: 'LONG' | 'SHORT' | null) => ({
   duration: null, format,
 });
 
-/** 그룹 제목으로 그 그룹의 카드 링크를 찾는다 */
-function group(title: string) {
-  const heading = screen.getByText(title, { selector: '.place-links-group-title' });
+/** 영상 절의 카드 링크 */
+function videoLinks() {
+  const heading = screen.getByText(/^(영상|Videos)$/, { selector: '.place-links-group-title' });
   return within(heading.closest('.place-links-group') as HTMLElement).getAllByRole('link');
 }
 
-describe('AttractionLinks — 일반 영상과 쇼츠를 나눠 그린다', () => {
-  it('일반 영상은 5개까지, 쇼츠는 따로 모아 쇼츠 주소로 열고 왼쪽 위에 쇼츠 표시를 얹는다', () => {
-    // 수집 순서(인기순)에 쇼츠가 섞여 온다. 형태를 아직 모르는 영상(null)은 일반 쪽이다
+describe('AttractionLinks — 영상 절 하나에서 롱폼과 쇼츠를 전환한다', () => {
+  it('처음은 롱폼 5개, 쇼츠로 바꾸면 쇼츠 주소·쇼츠 표시로 그린다', () => {
+    // 수집 순서(인기순)에 쇼츠가 섞여 온다. 형태를 아직 모르는 영상(null)은 롱폼 쪽이다
     const collected = [
       video('s1', 'SHORT'), video('l1', 'LONG'), video('s2', 'SHORT'), video('u1', null),
       video('l2', 'LONG'), video('l3', 'LONG'), video('l4', 'LONG'), video('l5', 'LONG'),
     ];
     const { container } = render(<AttractionLinks links={JSON.stringify({ collected, deepLinks: [] })} lang="ko" />);
 
-    expect(group('영상').map((a) => a.getAttribute('href'))).toEqual(
+    const long = screen.getByRole('button', { name: '롱폼 5' });
+    const shorts = screen.getByRole('button', { name: '쇼츠 2' });
+    expect(long).toHaveAttribute('aria-pressed', 'true');
+    expect(videoLinks().map((a) => a.getAttribute('href'))).toEqual(
       ['l1', 'u1', 'l2', 'l3', 'l4'].map((id) => `https://www.youtube.com/watch?v=${id}`),
     );
-    expect(group('쇼츠').map((a) => a.getAttribute('href'))).toEqual([
+    expect(container.querySelectorAll('.place-links-short-mark')).toHaveLength(0);
+
+    fireEvent.click(shorts);
+    expect(shorts).toHaveAttribute('aria-pressed', 'true');
+    expect(videoLinks().map((a) => a.getAttribute('href'))).toEqual([
       'https://www.youtube.com/shorts/s1',
       'https://www.youtube.com/shorts/s2',
     ]);
     expect(container.querySelectorAll('.place-links-short-mark')).toHaveLength(2);
-    group('영상').forEach((a) => expect(a.querySelector('.place-links-short-mark')).toBeNull());
   });
 
-  it('쇼츠만 있어도 절을 그리고, 일반 영상 그룹은 그리지 않는다', () => {
+  it('한 종류만 있으면 전환 없이 그것만 그린다', () => {
     render(<AttractionLinks links={JSON.stringify({ collected: [video('s1', 'SHORT')], deepLinks: [] })} lang="en" />);
-    expect(group('Shorts')).toHaveLength(1);
-    expect(screen.queryByText('Videos', { selector: '.place-links-group-title' })).toBeNull();
+    expect(videoLinks()).toHaveLength(1);
+    expect(screen.queryByRole('group', { name: 'Videos' })).toBeNull();
   });
 });

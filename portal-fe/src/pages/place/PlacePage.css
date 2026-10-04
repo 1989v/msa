@@ -1030,6 +1030,40 @@
   gap: 0.3rem;
 }
 
+.place-links-group-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* 영상 절의 롱폼/쇼츠 전환 — 작은 두 칸 단추 */
+.place-links-switch {
+  display: inline-flex;
+  border: 1px solid var(--ko-border-default);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.place-links-switch button {
+  padding: 0.2rem 0.7rem;
+  border: 0;
+  background: transparent;
+  color: var(--ko-text-secondary);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.place-links-switch button[aria-pressed='true'] {
+  background: var(--ko-text-primary);
+  color: var(--ko-surface-0);
+}
+
+.place-links-switch button:focus-visible {
+  outline: 2px solid var(--ko-text-primary);
+  outline-offset: -2px;
+}
+
 .place-links-group-title {
   font-size: 0.75rem;
   /* muted 는 이 면에서 4.09:1 이라 작은 글자 하한(4.5)에 못 미친다 — 실측값 */

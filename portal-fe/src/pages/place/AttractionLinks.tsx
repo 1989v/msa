@@ -3,6 +3,7 @@ import {
   type CollectedLink,
   type PlaceLang,
 } from '../../api/placeApi';
+import { useState } from 'react';
 import { parseLinks } from './placeView';
 
 /**
@@ -16,6 +17,7 @@ const UI = {
   ko: {
     heading: '더 찾아보기',
     videos: '영상',
+    long: '롱폼',
     shorts: '쇼츠',
     blogs: '방문 후기',
     social: 'SNS',
@@ -26,6 +28,7 @@ const UI = {
   en: {
     heading: 'Explore more',
     videos: 'Videos',
+    long: 'Videos',
     shorts: 'Shorts',
     blogs: 'Blog posts',
     social: 'Social',
@@ -142,6 +145,8 @@ function VideoCard({ link, lang, short = false }: { link: CollectedLink; lang: P
 
 export default function AttractionLinks({ links, lang }: { links: string | null | undefined; lang: PlaceLang }) {
   const L = UI[lang];
+  // 영상 절의 롱폼/쇼츠 전환 — 고르기 전에는 롱폼(없으면 쇼츠)
+  const [picked, setPicked] = useState<'long' | 'short' | null>(null);
   /*
    * 링크는 색인이 들고 온다 (ADR-0095). 예전에는 상세마다 place DB 를 쳤고, 그 호출에는
    * 수집 큐에 행을 올리는 **쓰기 부수효과**까지 있었다.
@@ -184,29 +189,34 @@ export default function AttractionLinks({ links, lang }: { links: string | null 
     return null;
   }
 
+  // 한 절 안에서 롱폼·쇼츠를 전환한다. 한 종류만 있으면 전환 없이 그것만
+  const kind = picked === 'short' && shorts.length > 0 ? 'short' : videos.length > 0 ? 'long' : 'short';
+  const shown = kind === 'short' ? shorts : videos;
+
   return (
     <section className="place-links" aria-label={L.heading}>
       <h3 className="place-links-heading">{L.heading}</h3>
 
       {/* 영상이 실제로 있을 때만 그룹을 그린다 — 수집 대기(pending) 는 빈 그룹의 근거가 아니다 */}
-      {videos.length > 0 && (
+      {shown.length > 0 && (
         <div className="place-links-group">
-          <span className="place-links-group-title">{L.videos}</span>
+          <div className="place-links-group-head">
+            <span className="place-links-group-title">{L.videos}</span>
+            {videos.length > 0 && shorts.length > 0 && (
+              <div className="place-links-switch" role="group" aria-label={L.videos}>
+                <button type="button" aria-pressed={kind === 'long'} onClick={() => setPicked('long')}>
+                  {L.long} {videos.length}
+                </button>
+                <button type="button" aria-pressed={kind === 'short'} onClick={() => setPicked('short')}>
+                  {L.shorts} {shorts.length}
+                </button>
+              </div>
+            )}
+          </div>
           {/* 좁은 패널에서 넘치면 가로로 민다 */}
-          <ul className="place-links-carousel">
-            {videos.map((video) => (
-              <VideoCard key={video.url} link={video} lang={lang} />
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {shorts.length > 0 && (
-        <div className="place-links-group">
-          <span className="place-links-group-title">{L.shorts}</span>
-          <ul className="place-links-carousel">
-            {shorts.map((video) => (
-              <VideoCard key={video.url} link={video} lang={lang} short />
+          <ul className="place-links-carousel" data-kind={kind}>
+            {shown.map((video) => (
+              <VideoCard key={video.url} link={video} lang={lang} short={kind === 'short'} />
             ))}
           </ul>
         </div>
