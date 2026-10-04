@@ -196,3 +196,8 @@ https://game.1989v.com/games/marine-command/index.html 에BETA공개배포완료
 - 관련고유10건최종PASS: 스킬5/표시복원1/조각경계1/최대전송1/HUD키버튼1/구protocol거부1. 최초검증의fixture보정과표시5청크초과는영향만재검증. 기본영웅구필드없음·진행중roll정확nexttick·협동처치보상·장애물경계검증. entry내부23queryedge/문법정합통과. 실제브라우저픽셀·조작감/사람밸런스미검증.
 - 최대협동48hero+16목수/24roll/상이한cooldown: checkpoint46879B16청크, 두슬롯94338B, display12042B4청크. 표시스킬숫자열·적kind/location고정enum을무손실복원(unknown원값유지). 추가codec실험대신display조각만3000→3072자로조정승인, 총직렬화3226<기존3800. checkpoint3000/저장상한/4청크5Hz유지, 첫1초26msg(화면20)+2550mscheckpoint완전복원. protocol10/queryhero-skills-10.
 - localgamesbace2f97/releasegamese6a59897/root95a94591/manifest481b383e. CI [37141368540](https://github.com/1989v/msa/actions/runs/37141368540) SUCCESS. Portal95a9459 Ready/Updated/Available1/이전RS0, ArgoSynced/Succeeded(기존전체Degraded별도). 공개31파일HTTP/MIME, runtime15개minify정확해시/PNG11원본일치, 실제HTMLQ/E버튼·protocol10·캐시태그확인. Backend/DB변경없음, 원본staged15cf171c보존. 새원정불필요/협동양쪽새로고침·재접속. 근거 verifications/hero-skills-beta-evidence.json 및 hero-skills-beta-rollout.txt.
+
+## 첫 웨이브 물량 2/3 조정 — 2026-10-04
+- 첫 생성 wave.number===0만 기본120→80, 협동 ceil×1.4로168→112. 둘째160/224 및 이후수식·구성·위치·간격·AI·가격·스킬유지. 기존필드적/대기queue소급삭제없음. 새원정 또는 첫wave미생성저장부터적용.
+- gpt-6.1-sol 단일담당, count분기주변만확인. 첫solo/coop·둘째불변·기존queue120/cursor19보존1건과구protocol거부1건PASS. 23query정합/문법통과, 전체게임테스트반복없음. protocol11/queryopening-wave-11.
+- local0c59d822/releasegames46f0c04f/rootportalf194543/manifest58b0156a. CI [37166049509](https://github.com/1989v/msa/actions/runs/37166049509) SUCCESS, portal Ready/Updated/Available1/이전RS0, ArgoSynced/Succeeded(기존전체Degraded별도). 공개31HTTP/MIME·runtime15정확해시·PNG11원본일치. backend/DB변경없음, 원본staged15cf보존. 실제브라우저픽셀미검증. 근거verifications/first-wave-beta-evidence.json 및 first-wave-beta-rollout.txt.

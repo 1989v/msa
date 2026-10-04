@@ -103,3 +103,6 @@ games19828054. 첫3wave지상전용,4차부터박쥐소수. 기지옆무적중�
 
 ## 최신: 영웅 Q/E 스킬 베타 완료
 2026-10-04 승인명세대로다중사격최대6명/14초·구르기최대120/9tick/10초 구현. HUD/키·내영웅1명·주둔금지·저장/협동연결, 고유10건최종PASS. 최대checkpoint46879B/display12042B4청크(표시조각3072, 기존envelope내). localbace2f97/releasee6a59897/portal95a9459/manifest481b383e, CI37141368540SUCCESS 및공개파일확인. protocol10/hero-skills-10, 새원정불필요·협동재접속. 스킬문서4절은이제구현명세. 실제브라우저픽셀/체감미검증.
+
+## 최신: 첫 웨이브 2/3 베타 반영
+첫solo120→80/coop168→112, 둘째160/224이후불변·기존queue보존. 관련2건PASS. local0c59d822/release46f0c04f/portalf194543/manifest58b0156a, CI37166049509SUCCESS 및공개파일확인. protocol11/opening-wave-11, 새원정또는첫wave미생성save부터적용. 상세status.md최신절.
