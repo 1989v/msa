@@ -245,6 +245,20 @@ def apply_link_results(source: str, results: list[dict]) -> dict:
                     {"source": source, "results": results}, timeout=300)["data"]
 
 
+def fetch_videos_missing_details(limit: int) -> list[str]:
+    """길이·비율을 아직 모르는 영상 id(중복 없이). 빈 목록 = 전부 채워졌다는 뜻이다."""
+    qs = urllib.parse.urlencode({"limit": limit})
+    return _request("GET", f"/internal/attractions/links/video-details/pending?{qs}")["data"]["externalIds"]
+
+
+def put_video_details(items: list[dict]) -> int:
+    """같은 영상이 붙은 행 전부를 채운다. 반환은 바뀐 행 수."""
+    if not items:
+        return 0
+    return int(_request("POST", "/internal/attractions/links/video-details",
+                        {"items": items}, timeout=300)["data"]["updated"])
+
+
 def fetch_pending_google_place_ids(limit: int) -> list[dict]:
     """구글 place_id 미보강분 (id 순). 빈 목록 = 전부 채워졌다는 뜻이다."""
     qs = urllib.parse.urlencode({"limit": limit})

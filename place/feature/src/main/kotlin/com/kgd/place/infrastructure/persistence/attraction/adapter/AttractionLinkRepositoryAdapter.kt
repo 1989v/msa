@@ -4,6 +4,7 @@ import com.kgd.place.application.attraction.port.AttractionLinkRepositoryPort
 import com.kgd.place.domain.attraction.model.AttractionLink
 import com.kgd.place.domain.attraction.model.AttractionLinkRequest
 import com.kgd.place.domain.attraction.model.AttractionLinkSource
+import com.kgd.place.domain.attraction.model.VideoDetails
 import com.kgd.place.infrastructure.persistence.attraction.entity.AttractionLinkJpaEntity
 import com.kgd.place.infrastructure.persistence.attraction.entity.AttractionLinkRequestJpaEntity
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionLinkJpaRepository
@@ -52,6 +53,15 @@ class AttractionLinkRepositoryAdapter(
         limit: Int,
     ): List<AttractionLinkRequest> =
         requestRepository.findDue(source, now, PageRequest.of(0, limit)).map { it.toDomain() }
+
+    override fun findVideoIdsMissingDetails(limit: Int): List<String> =
+        linkRepository.findVideoIdsMissingDetails(PageRequest.of(0, limit))
+
+    @Transactional
+    override fun updateVideoDetails(details: List<VideoDetails>): Int =
+        details.sumOf {
+            linkRepository.updateVideoDetails(it.externalId, it.duration, it.embedWidth, it.embedHeight, it.format)
+        }
 
     override fun countAttemptsSince(source: AttractionLinkSource, since: LocalDateTime): Long =
         requestRepository.countBySourceAndLastAttemptAtGreaterThanEqual(source, since)

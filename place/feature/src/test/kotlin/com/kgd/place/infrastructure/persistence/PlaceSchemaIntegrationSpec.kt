@@ -20,6 +20,12 @@ import com.kgd.place.infrastructure.persistence.attraction.repository.Attraction
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionCongestionJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionLinkJpaRepository
+import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionLinkRequestJpaRepository
+import com.kgd.place.infrastructure.persistence.attraction.adapter.AttractionLinkRepositoryAdapter
+import com.kgd.place.domain.attraction.model.AttractionLink
+import com.kgd.place.domain.attraction.model.AttractionLinkSource
+import com.kgd.place.domain.attraction.model.VideoDetails
+import com.kgd.place.domain.attraction.model.VideoFormat
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionRelatedJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionSimilarJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionWellnessJpaRepository
@@ -99,6 +105,7 @@ class PlaceSchemaIntegrationSpec(
     @Autowired private val r3: AttractionJpaRepository,
     @Autowired private val r4: AttractionCategoryCodeJpaRepository,
     @Autowired private val r5: AttractionLinkJpaRepository,
+    @Autowired private val r5q: AttractionLinkRequestJpaRepository,
     @Autowired private val r6: AttractionSimilarJpaRepository,
     @Autowired private val r7: AttractionBarrierFreeJpaRepository,
     @Autowired private val r8: AttractionWellnessJpaRepository,
@@ -121,6 +128,31 @@ class PlaceSchemaIntegrationSpec(
                 // count() 는 엔티티마다 실제 SQL 을 MySQL 로 보낸다 — 컬럼이 어긋나면
                 // validate 에서 컨텍스트가 아예 안 뜨고, 뜬 뒤에도 매핑이 틀리면 여기서 터진다.
                 listOf(r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, w0, w1, w2, w3, c0, c1, a0, a1, a2).map { it.count() }.size shouldBe 19
+            }
+    }
+
+    Given("길이·비율을 모르는 영상에 나중에 채울 때") {
+        Then("같은 영상이 붙은 행 전부가 채워지고 형태(파생)가 함께 저장된다")
+            .config(enabledIf = { dockerAvailable }) {
+                val adapter = AttractionLinkRepositoryAdapter(r5, r5q)
+                val link = { attractionId: Long, id: String ->
+                    AttractionLink.create(attractionId, AttractionLinkSource.YOUTUBE, id, "제목 $id", "https://youtu.be/$id")
+                }
+                adapter.replaceLinks(9001L, AttractionLinkSource.YOUTUBE, listOf(link(9001L, "vd-short"), link(9001L, "vd-long")))
+                adapter.replaceLinks(9002L, AttractionLinkSource.YOUTUBE, listOf(link(9002L, "vd-short")))
+
+                adapter.findVideoIdsMissingDetails(100).filter { it.startsWith("vd-") }.sorted() shouldBe listOf("vd-long", "vd-short")
+
+                // 운영에서는 어댑터의 @Transactional 프록시가 감싼다 — 여기서는 직접 만든 어댑터라 템플릿으로 감싼다
+                tx.execute {
+                    adapter.updateVideoDetails(
+                        listOf(VideoDetails("vd-short", "PT30S", 360, 640), VideoDetails("vd-long", "PT12M", 640, 360)),
+                    )
+                } shouldBe 3
+                adapter.findVideoIdsMissingDetails(100).filter { it.startsWith("vd-") } shouldBe emptyList()
+                r5.findAll().filter { it.externalId == "vd-short" }.map { it.videoFormat } shouldBe listOf(VideoFormat.SHORT, VideoFormat.SHORT)
+                adapter.findLinks(9001L).associate { it.externalId to it.format } shouldBe
+                    mapOf("vd-short" to VideoFormat.SHORT, "vd-long" to VideoFormat.LONG)
             }
     }
 

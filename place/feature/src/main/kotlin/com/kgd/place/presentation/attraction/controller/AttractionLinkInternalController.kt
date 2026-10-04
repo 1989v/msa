@@ -4,6 +4,7 @@ import com.kgd.common.response.ApiResponse
 import com.kgd.place.application.attraction.usecase.CollectAttractionLinksUseCase
 import com.kgd.place.application.attraction.usecase.GetAttractionLinksUseCase
 import com.kgd.place.domain.attraction.model.AttractionLinkSource
+import com.kgd.place.domain.attraction.model.VideoDetails
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotEmpty
 import org.springframework.web.bind.annotation.GetMapping
@@ -62,7 +63,7 @@ class AttractionLinkInternalController(
                         collected = links.collected.map {
                             LookupLink(
                                 it.source.name, it.externalId, it.title, it.url, it.thumbnailUrl, it.author,
-                                it.publishedAt, it.viewCount,
+                                it.publishedAt, it.viewCount, it.duration, it.format?.name,
                             )
                         },
                         deepLinks = links.deepLinks.map {
@@ -73,6 +74,25 @@ class AttractionLinkInternalController(
             ),
         )
     }
+
+    /** 길이·비율을 아직 모르는 영상 id. 수집기가 videos.list 로 채워 아래로 돌려준다. */
+    @GetMapping("/video-details/pending")
+    fun findVideosMissingDetails(
+        @RequestParam(defaultValue = "500") limit: Int,
+    ): ApiResponse<PendingVideoDetailsResponse> {
+        val ids = collectAttractionLinksUseCase.findVideosMissingDetails(limit.coerceIn(1, 5000))
+        return ApiResponse.success(PendingVideoDetailsResponse(ids))
+    }
+
+    @PostMapping("/video-details")
+    fun applyVideoDetails(@Valid @RequestBody request: VideoDetailsRequest): ApiResponse<VideoDetailsResponse> =
+        ApiResponse.success(
+            VideoDetailsResponse(
+                collectAttractionLinksUseCase.applyVideoDetails(
+                    request.items.map { VideoDetails(it.externalId, it.duration, it.embedWidth, it.embedHeight) },
+                ),
+            ),
+        )
 
     @PostMapping("/enqueue")
     fun enqueue(@Valid @RequestBody request: EnqueueLinksRequest): ApiResponse<EnqueueLinksResponse> =
@@ -109,7 +129,24 @@ data class LookupLink(
     val source: String, val externalId: String, val title: String, val url: String,
     val thumbnailUrl: String?, val author: String?,
     val publishedAt: LocalDateTime?, val viewCount: Long?,
+    /** 영상 길이 원문(ISO-8601)과 형태(SHORT/LONG) — 화면이 쇼츠를 따로 모은다. 모르면 null */
+    val duration: String?, val format: String?,
 )
+
+data class PendingVideoDetailsResponse(val externalIds: List<String>)
+
+data class VideoDetailsRequest(
+    @field:NotEmpty val items: List<Item> = emptyList(),
+) {
+    data class Item(
+        val externalId: String,
+        val duration: String? = null,
+        val embedWidth: Int? = null,
+        val embedHeight: Int? = null,
+    )
+}
+
+data class VideoDetailsResponse(val updated: Int)
 
 data class LookupDeepLink(
     val provider: String, val kind: String, val url: String, val revenueType: String,
@@ -156,6 +193,9 @@ data class ApplyLinkResultsRequest(
                     author = it.author,
                     publishedAt = it.publishedAt,
                     viewCount = it.viewCount,
+                    duration = it.duration,
+                    embedWidth = it.embedWidth,
+                    embedHeight = it.embedHeight,
                 )
             },
             failed = failed,
@@ -170,6 +210,9 @@ data class ApplyLinkResultsRequest(
         val author: String? = null,
         val publishedAt: LocalDateTime? = null,
         val viewCount: Long? = null,
+        val duration: String? = null,
+        val embedWidth: Int? = null,
+        val embedHeight: Int? = null,
     )
 }
 

@@ -3,6 +3,7 @@ package com.kgd.place.application.attraction.port
 import com.kgd.place.domain.attraction.model.AttractionLink
 import com.kgd.place.domain.attraction.model.AttractionLinkRequest
 import com.kgd.place.domain.attraction.model.AttractionLinkSource
+import com.kgd.place.domain.attraction.model.VideoDetails
 import java.time.LocalDateTime
 
 interface AttractionLinkRepositoryPort {
@@ -16,6 +17,12 @@ interface AttractionLinkRepositoryPort {
     fun saveRequest(request: AttractionLinkRequest): AttractionLinkRequest
 
     fun findDueRequests(source: AttractionLinkSource, now: LocalDateTime, limit: Int): List<AttractionLinkRequest>
+
+    /** 길이·비율을 아직 모르는 영상 id(중복 없이). */
+    fun findVideoIdsMissingDetails(limit: Int): List<String>
+
+    /** 같은 영상이 붙은 행 전부에 길이·비율을 채운다. 반환은 바뀐 행 수. */
+    fun updateVideoDetails(details: List<VideoDetails>): Int
 
     /** 그날 소진한 외부 API 호출 수 (성공·빈결과·실패 모두 포함). */
     fun countAttemptsSince(source: AttractionLinkSource, since: LocalDateTime): Long

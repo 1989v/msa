@@ -23,9 +23,17 @@ class AttractionLink private constructor(
     val publishedAt: LocalDateTime? = null,
     /** 인기 신호. `search.list` 는 관련성 순이라 이것 없이는 "인기 영상"이 아니다. */
     val viewCount: Long? = null,
+    /** 원천 길이 원문(ISO-8601, `PT58S`). 영상만 — 형태 판정의 근거라 원문으로 둔다. */
+    val duration: String? = null,
+    /** 원천 플레이어 크기(`player.embedWidth/Height`). 비율만 의미가 있다. */
+    val embedWidth: Int? = null,
+    val embedHeight: Int? = null,
     val sortOrder: Int = 0,
     val collectedAt: LocalDateTime = LocalDateTime.now(),
 ) {
+    /** 원천 값에서 파생한 형태. 모르면 null. */
+    val format: VideoFormat? get() = VideoFormat.classify(duration, embedWidth, embedHeight)
+
     companion object {
         @Suppress("LongParameterList")
         fun create(
@@ -38,6 +46,9 @@ class AttractionLink private constructor(
             author: String? = null,
             publishedAt: LocalDateTime? = null,
             viewCount: Long? = null,
+            duration: String? = null,
+            embedWidth: Int? = null,
+            embedHeight: Int? = null,
             sortOrder: Int = 0,
             collectedAt: LocalDateTime = LocalDateTime.now(),
         ): AttractionLink {
@@ -55,6 +66,9 @@ class AttractionLink private constructor(
                 author = author?.takeIf { it.isNotBlank() },
                 publishedAt = publishedAt,
                 viewCount = viewCount?.takeIf { it >= 0 },
+                duration = duration?.takeIf { it.isNotBlank() },
+                embedWidth = embedWidth,
+                embedHeight = embedHeight,
                 sortOrder = sortOrder,
                 collectedAt = collectedAt,
             )
@@ -72,11 +86,14 @@ class AttractionLink private constructor(
             author: String?,
             publishedAt: LocalDateTime?,
             viewCount: Long?,
+            duration: String?,
+            embedWidth: Int?,
+            embedHeight: Int?,
             sortOrder: Int,
             collectedAt: LocalDateTime,
         ) = AttractionLink(
             id, attractionId, source, externalId, title, url,
-            thumbnailUrl, author, publishedAt, viewCount, sortOrder, collectedAt,
+            thumbnailUrl, author, publishedAt, viewCount, duration, embedWidth, embedHeight, sortOrder, collectedAt,
         )
     }
 }

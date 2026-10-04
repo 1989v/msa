@@ -349,16 +349,19 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | | |
 |---|---|
 | 발급 | Google Cloud Console → API 및 서비스 → 라이브러리 → `YouTube Data API v3` 사용 설정 → 사용자 인증 정보 → API 키 |
-| 호출 ① | `youtube/v3/search` — `part=snippet`, `type=video`, `maxResults=10`, `regionCode=KR`, `relevanceLanguage`, `safeSearch=strict`, `videoCategoryId=19`(여행·이벤트), 좌표 있으면 `location`+`locationRadius=10km`. 검색어는 표시명(`title_display`). 여행 카테고리 결과 3건 미만이면 일반 검색 **1콜 보충**(건당 100 units — 최악엔 하루 예산이 절반) |
-| 호출 ② | `youtube/v3/videos` — `part=statistics`, `id=` (최대 50개 묶음) |
+| 호출 ① | `youtube/v3/search` — `part=snippet`, `type=video`, `maxResults=25`, `regionCode=KR`, `relevanceLanguage`, `safeSearch=strict`, `videoCategoryId=19`(여행·이벤트), 좌표 있으면 `location`+`locationRadius=10km`. 검색어는 표시명(`title_display`). 여행 카테고리 결과 3건 미만이면 일반 검색 **1콜 보충**(건당 100 units — 최악엔 하루 예산이 절반) |
+| 호출 ② | `youtube/v3/videos` — `part=statistics,contentDetails,player`, `maxWidth=640`, `id=` (최대 50개 묶음). 수집 직후 + `links` 잡 끝에 길이·비율이 빈 영상 채우기(한 실행 5,000개 = 100 units) |
 | 쿼터 | 일 10,000 units · `search.list` **100 units** + `videos.list` **1 unit** → **하루 100 관광지** |
-| 저장 | videoId · 제목 · URL · 썸네일 **URL** · 채널명 · 게시일 · **조회수** |
+| 저장 | videoId · 제목 · URL · 썸네일 **URL** · 채널명 · 게시일 · **조회수** · **길이**(ISO-8601 원문) · **플레이어 폭·높이**. 파생: `video_format`(세로·3분 이하 = SHORT) |
 | 저장 안 함 | 설명, 좋아요·댓글 수, 채널 ID, 영상 파일. 썸네일 이미지도 내려받지 않는다 |
 | 보관 | **30일** — 약관이 그보다 오래 보관하려면 갱신을 요구한다 |
 
 `search.list` 는 **관련성 순**이라 그것만으로는 "인기 영상"이 아니다. `videos.list` 로 조회수를
 받아 내림차순 정렬한다 — 50개를 묶어 1 unit 이라 100 units 짜리 search 옆에서는 사실상 공짜다.
 **조회수를 못 받아도 영상은 버리지 않는다** — 정렬 근거가 없을 뿐이다.
+
+쇼츠 여부 필드는 API 에 없다. 길이와 플레이어 비율로 가른다 — **플레이어 크기는 `maxWidth` 를 줘야
+영상 비율대로 온다.** `maxHeight` 만 주면 전부 360×640(세로)으로 와서 44분짜리도 세로였다(2026-10-04).
 
 쿼터 소진은 **403 `quotaExceeded`** 이지 429 가 아니다. 만나면 그 실행을 즉시 멈춘다.
 

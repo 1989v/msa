@@ -16,6 +16,7 @@ const UI = {
   ko: {
     heading: '더 찾아보기',
     videos: '영상',
+    shorts: '쇼츠',
     blogs: '방문 후기',
     social: 'SNS',
     tour: '여행 상품',
@@ -25,6 +26,7 @@ const UI = {
   en: {
     heading: 'Explore more',
     videos: 'Videos',
+    shorts: 'Shorts',
     blogs: 'Blog posts',
     social: 'Social',
     tour: 'Tours & tickets',
@@ -34,6 +36,21 @@ const UI = {
 } as const;
 
 const VISIBLE_VIDEOS = 5;
+/** 쇼츠는 세로 카드라 폭이 좁다 — 같은 줄 길이에 더 들어간다 */
+const VISIBLE_SHORTS = 8;
+
+/** 쇼츠 표시 — 썸네일 왼쪽 위에 얹는다. 모양으로 알아보게 하고 이름은 접근성 문구가 말한다 */
+function ShortsMark() {
+  return (
+    <svg className="place-links-short-mark" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        className="place-links-short-mark-body"
+        d="M15.6 2.4a4.3 4.3 0 0 1 4.1 7.5l-1.5.8 1 .5a4.3 4.3 0 0 1 .2 7.6l-8.3 4.4a4.3 4.3 0 0 1-4.1-7.5l1.5-.8-1-.5a4.3 4.3 0 0 1-.2-7.6z"
+      />
+      <path className="place-links-short-mark-play" d="M10 9.2v5.6l4.8-2.8z" />
+    </svg>
+  );
+}
 
 const PROVIDER_LABEL: Record<string, { ko: string; en: string }> = {
   INSTAGRAM: { ko: '인스타그램', en: 'Instagram' },
@@ -98,12 +115,17 @@ function views(count: number, lang: PlaceLang): string {
   return `조회수 ${count.toLocaleString()}회`;
 }
 
-function VideoCard({ link, lang }: { link: CollectedLink; lang: PlaceLang }) {
+function VideoCard({ link, lang, short = false }: { link: CollectedLink; lang: PlaceLang; short?: boolean }) {
+  // 쇼츠는 쇼츠 주소로 연다 — 일반 주소로 열면 가로 플레이어에 세로 영상이 작게 뜬다
+  const href = short && link.externalId ? `https://www.youtube.com/shorts/${link.externalId}` : link.url;
   return (
-    <li className="place-links-slide">
-      <a className="place-links-card" href={link.url} target="_blank" rel="nofollow noopener">
+    <li className={`place-links-slide${short ? ' is-short' : ''}`}>
+      <a className="place-links-card" href={href} target="_blank" rel="nofollow noopener">
         {link.thumbnailUrl && (
-          <img className="place-links-thumb" src={link.thumbnailUrl} alt="" loading="lazy" />
+          <span className="place-links-thumb-wrap">
+            <img className="place-links-thumb" src={link.thumbnailUrl} alt="" loading="lazy" />
+            {short && <ShortsMark />}
+          </span>
         )}
         <span className="place-links-card-title">{link.title}</span>
         {(link.author || link.viewCount != null) && (
@@ -148,14 +170,17 @@ export default function AttractionLinks({ links, lang }: { links: string | null 
 
   // 저장은 관광지당 최대 10개(수집기 MAX_RESULTS), 노출은 5개 — 캐로셀이 길어지면
   // 아래 SNS·여행 상품 줄이 밀린다. 저장분이 있으니 노출을 늘리는 건 이 숫자 하나다.
-  const videos = data.collected.filter((l) => l.source === 'YOUTUBE').slice(0, VISIBLE_VIDEOS);
+  // 일반 영상 위주로 보이고 쇼츠는 따로 모은다. 형태를 아직 모르는 영상(null)은 일반 영상 쪽에 둔다
+  const youtube = data.collected.filter((l) => l.source === 'YOUTUBE');
+  const videos = youtube.filter((l) => l.format !== 'SHORT').slice(0, VISIBLE_VIDEOS);
+  const shorts = youtube.filter((l) => l.format === 'SHORT').slice(0, VISIBLE_SHORTS);
   const blogs = data.collected.filter((l) => l.source === 'NAVER_BLOG');
   const social = data.deepLinks.filter((l) => l.kind === 'SOCIAL');
   const tour = data.deepLinks.filter((l) => l.kind === 'TOUR_PRODUCT');
   const hasAffiliate = data.deepLinks.some((l) => l.revenueType === 'AFFILIATE');
 
   // 딥링크는 서버가 항상 조립하지만 타입은 빈 응답을 허용한다 — 전부 비면 섹션 자체를 접는다
-  if (videos.length === 0 && blogs.length === 0 && social.length === 0 && tour.length === 0) {
+  if (videos.length === 0 && shorts.length === 0 && blogs.length === 0 && social.length === 0 && tour.length === 0) {
     return null;
   }
 
@@ -171,6 +196,17 @@ export default function AttractionLinks({ links, lang }: { links: string | null 
           <ul className="place-links-carousel">
             {videos.map((video) => (
               <VideoCard key={video.url} link={video} lang={lang} />
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {shorts.length > 0 && (
+        <div className="place-links-group">
+          <span className="place-links-group-title">{L.shorts}</span>
+          <ul className="place-links-carousel">
+            {shorts.map((video) => (
+              <VideoCard key={video.url} link={video} lang={lang} short />
             ))}
           </ul>
         </div>

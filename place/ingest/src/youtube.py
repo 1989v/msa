@@ -1,6 +1,7 @@
 """YouTube Data API v3 커넥터 (ADR-0070).
 
-`search.list`(관련성 순)로 후보를 찾고 `videos.list`로 조회수를 받아 **인기순으로 정렬**한다.
+`search.list`(관련성 순)로 후보를 찾고 `videos.list`로 조회수·길이·플레이어 비율을 받아 **인기순으로 정렬**한다.
+길이와 비율은 쇼츠/일반 영상을 가르는 원천 값이다 — 판정은 place 도메인(`VideoFormat`)이 한다.
 
 `search.list` 는 **건당 100 units** 이고 일일 쿼터가 10,000 units 라 하루 100 관광지가 상한이다.
 그래서 전량 사전수집을 하지 않고, 실제로 열어본 곳부터(place 의 우선순위 큐) 채운다.
@@ -21,13 +22,16 @@ from src.title_parse import parse_title
 SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 VIDEOS_URL = "https://www.googleapis.com/youtube/v3/videos"
 WATCH_URL = "https://www.youtube.com/watch?v="
-# 후보 10개를 받는다 — search.list 는 1개를 받든 50개를 받든 같은 100 units 라 공짜이고,
-# 이름 매칭 필터가 후보를 걸러낸 뒤에도 화면 몫(5개)이 실제로 남으려면 여유가 필요하다.
-# 화면 노출 수는 FE 가 정한다(현재 5) — 저장분이 있으면 노출을 늘릴 때 재수집이 필요 없다.
-MAX_RESULTS = 10
-# videos.list 는 id 를 50개까지 묶어 **1 unit** 이다. search.list(건당 100 units) 옆에서는
-# 사실상 공짜라 조회수를 받아 정렬한다 — 안 받으면 관련성 순이지 '인기 영상'이 아니다.
+# 후보 25개를 받는다 — search.list 는 1개를 받든 50개를 받든 같은 100 units 라 공짜다.
+# 인기 결과의 약 4할이 쇼츠라(2026-10-04 표본 30건 중 12건) 10개로는 화면이 일반 영상 5개와
+# 쇼츠 줄을 따로 채우지 못한다. 이름 매칭 필터가 후보를 걸러낸 뒤에도 남게 넉넉히 받는다.
+MAX_RESULTS = 25
+# videos.list 는 id 를 50개까지 묶어 **1 unit** 이다(받는 part 수와 무관). search.list(건당 100 units)
+# 옆에서는 사실상 공짜라 조회수를 받아 정렬한다 — 안 받으면 관련성 순이지 '인기 영상'이 아니다.
 STATS_BATCH = 50
+# 플레이어 크기는 maxWidth 를 줘야 영상 비율대로 온다. maxHeight 만 주면 전부 세로(360×640)로 와서
+# 쇼츠를 가를 수 없었다(2026-10-04 운영 표본 49건 전부 세로, 44분짜리 포함).
+EMBED_MAX_WIDTH = 640
 # Travel & Events. "도산공원" 일반 검색 1위가 재테크 영상이던 문제의 1차 방어선 —
 # 이름 매칭 필터는 이름이 스친 무관 영상까지는 못 거르므로, 후보군 자체를 여행으로 좁힌다.
 TRAVEL_CATEGORY_ID = "19"
@@ -74,9 +78,13 @@ def search(
 
     if not links:
         return links
-    counts = _view_counts(api_key, [l["externalId"] for l in links])
+    details = video_details(api_key, [l["externalId"] for l in links])
     for link in links:
-        link["viewCount"] = counts.get(link["externalId"])
+        found = details.get(link["externalId"]) or {}
+        link["viewCount"] = found.get("viewCount")
+        link["duration"] = found.get("duration")
+        link["embedWidth"] = found.get("embedWidth")
+        link["embedHeight"] = found.get("embedHeight")
     # 조회수 내림차순. 못 받은 것(None)은 뒤로 — 순서를 뒤집을 근거가 없다.
     links.sort(key=lambda l: (l["viewCount"] is None, -(l["viewCount"] or 0)))
     return links
@@ -144,11 +152,15 @@ def _search_page(api_key: str, params: dict, title: str) -> list[dict]:
     return links
 
 
-def _view_counts(api_key: str, video_ids: list[str]) -> dict[str, int]:
-    """영상별 조회수. **조회수를 못 받아도 영상은 버리지 않는다** — 정렬 근거가 없을 뿐이다."""
-    counts: dict[str, int] = {}
+def video_details(api_key: str, video_ids: list[str]) -> dict[str, dict]:
+    """영상별 조회수·길이·플레이어 크기. **못 받아도 영상은 버리지 않는다** — 정렬·형태 근거가 없을 뿐이다.
+
+    지워진 영상은 응답에서 빠진다 — 빠진 id 는 결과에 없다.
+    """
+    found: dict[str, dict] = {}
     for i in range(0, len(video_ids), STATS_BATCH):
-        params = {"part": "statistics", "id": ",".join(video_ids[i:i + STATS_BATCH]), "key": api_key}
+        params = {"part": "statistics,contentDetails,player", "maxWidth": EMBED_MAX_WIDTH,
+                  "id": ",".join(video_ids[i:i + STATS_BATCH]), "key": api_key}
         req = urllib.request.Request(
             f"{VIDEOS_URL}?{urllib.parse.urlencode(params)}",
             headers={"Accept": "application/json"},
@@ -160,10 +172,32 @@ def _view_counts(api_key: str, video_ids: list[str]) -> dict[str, int]:
             detail = e.read().decode(errors="replace")
             if e.code == 403 and "quotaExceeded" in detail:
                 raise QuotaExceeded(detail[:200]) from e
-            # 통계는 부수 정보다. 못 받으면 정렬만 포기하고 영상은 그대로 쓴다.
-            return counts
-        for item in body.get("items") or []:
-            raw = ((item.get("statistics") or {}).get("viewCount") or "").strip()
-            if raw.isdigit():
-                counts[item.get("id")] = int(raw)
-    return counts
+            # 부수 정보다. 못 받으면 정렬·형태만 포기하고 영상은 그대로 쓴다.
+            return found
+        found.update(details_from_items(body.get("items") or []))
+    return found
+
+
+def details_from_items(items: list[dict]) -> dict[str, dict]:
+    """`videos.list` 항목 → id 별 원천 값. 길이는 원문(ISO-8601) 그대로 둔다."""
+    out: dict[str, dict] = {}
+    for item in items:
+        video_id = item.get("id")
+        if not video_id:
+            continue
+        raw = ((item.get("statistics") or {}).get("viewCount") or "").strip()
+        player = item.get("player") or {}
+        out[video_id] = {
+            "viewCount": int(raw) if raw.isdigit() else None,
+            "duration": ((item.get("contentDetails") or {}).get("duration") or "").strip() or None,
+            "embedWidth": _int(player.get("embedWidth")),
+            "embedHeight": _int(player.get("embedHeight")),
+        }
+    return out
+
+
+def _int(value) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None

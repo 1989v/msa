@@ -1,6 +1,7 @@
 package com.kgd.place.application.attraction.usecase
 
 import com.kgd.place.domain.attraction.model.AttractionLinkSource
+import com.kgd.place.domain.attraction.model.VideoDetails
 import java.time.LocalDateTime
 
 /**
@@ -23,6 +24,12 @@ interface CollectAttractionLinksUseCase {
     fun enqueue(attractionIds: List<Long>): Int
 
     fun apply(source: AttractionLinkSource, results: List<Result>): Applied
+
+    /** 길이·비율을 아직 모르는 영상 id. 이 값이 생기기 전에 받은 영상을 수집기가 채운다(videos.list, 50개 1 unit). */
+    fun findVideosMissingDetails(limit: Int): List<String>
+
+    /** @return 바뀐 행 수 — 같은 영상이 여러 관광지에 붙어 있으면 그만큼 */
+    fun applyVideoDetails(details: List<VideoDetails>): Int
 
     data class DueItem(
         val attractionId: Long,
@@ -50,6 +57,9 @@ interface CollectAttractionLinksUseCase {
         val author: String? = null,
         val publishedAt: LocalDateTime? = null,
         val viewCount: Long? = null,
+        val duration: String? = null,
+        val embedWidth: Int? = null,
+        val embedHeight: Int? = null,
     )
 
     data class Applied(val collected: Int, val empty: Int, val failed: Int)

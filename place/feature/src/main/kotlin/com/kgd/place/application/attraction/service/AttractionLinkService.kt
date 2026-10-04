@@ -8,6 +8,7 @@ import com.kgd.place.domain.attraction.model.AttractionDeepLinks
 import com.kgd.place.domain.attraction.model.AttractionLink
 import com.kgd.place.domain.attraction.model.AttractionLinkRequest
 import com.kgd.place.domain.attraction.model.AttractionLinkSource
+import com.kgd.place.domain.attraction.model.VideoDetails
 import com.kgd.common.quota.ExternalApiProvider
 import com.kgd.common.quota.ExternalApiQuotaLedger
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -110,6 +111,15 @@ class AttractionLinkService(
         return CollectAttractionLinksUseCase.Applied(collected, empty, failed)
     }
 
+    override fun findVideosMissingDetails(limit: Int): List<String> =
+        linkRepository.findVideoIdsMissingDetails(limit)
+
+    override fun applyVideoDetails(details: List<VideoDetails>): Int {
+        val updated = linkRepository.updateVideoDetails(details)
+        log.info { "[YOUTUBE] 영상 길이·비율 채움 — 영상 ${details.size}개 · 행 $updated" }
+        return updated
+    }
+
     /**
      * 조회가 큐를 채운다. **적재 실패가 조회를 막지 않는다** — 링크는 부수 정보고 상세는 본질이다.
      * 반환값은 "이 소스를 기다리는 중인가".
@@ -159,6 +169,9 @@ class AttractionLinkService(
         author = author,
         publishedAt = publishedAt,
         viewCount = viewCount,
+        duration = duration,
+        embedWidth = embedWidth,
+        embedHeight = embedHeight,
         sortOrder = index,
         collectedAt = now,
     )

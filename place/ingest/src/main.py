@@ -241,7 +241,30 @@ def _job_links(limit: int) -> int:
 
     for source, fetch in sources:
         _collect_source(source, fetch, limit)
+    if youtube_key:
+        _fill_video_details(youtube_key)
     return 0
+
+
+#: 한 실행에 채울 영상 수 상한 — videos.list 50개 1 unit 이라 100 units. 길이·비율이 생기기 전에 받은
+#: 영상(약 6천 개)을 첫 실행에 다 채우고, 그 뒤로는 응답에서 빠진(지워진) 영상만 남는다.
+VIDEO_DETAILS_PER_RUN = 5000
+
+
+def _fill_video_details(api_key: str) -> None:
+    """길이·비율을 모르는 영상을 채운다 — 쇼츠/일반 판정의 원천 값(ADR-0070 개정)."""
+    ids = place_client.fetch_videos_missing_details(VIDEO_DETAILS_PER_RUN)
+    if not ids:
+        return
+    try:
+        found = youtube.video_details(api_key, ids)
+    except youtube.QuotaExceeded as e:
+        backfill_overview.log(f"[YOUTUBE] 영상 정보 — 쿼터 소진, 내일 다시 ({e})")
+        return
+    items = [{"externalId": vid, **{k: v for k, v in d.items() if k != "viewCount"}} for vid, d in found.items()]
+    updated = place_client.put_video_details(items)
+    backfill_overview.log(f"[YOUTUBE] 영상 정보 채움 — 대상 {len(ids)} · 받음 {len(found)} · 행 {updated}"
+                          f" · 응답에 없음(지워진 영상) {len(ids) - len(found)}")
 
 
 def _collect_source(source: str, fetch, limit: int) -> None:

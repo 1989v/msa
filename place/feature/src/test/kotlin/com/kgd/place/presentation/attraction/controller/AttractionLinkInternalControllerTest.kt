@@ -9,6 +9,8 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
+import com.kgd.place.domain.attraction.model.VideoDetails
 import tools.jackson.databind.cfg.DateTimeFeature
 import tools.jackson.module.kotlin.jacksonMapperBuilder
 import tools.jackson.module.kotlin.readValue
@@ -32,6 +34,7 @@ class AttractionLinkInternalControllerTest : BehaviorSpec({
                 title = "경복궁 야간개장", url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
                 thumbnailUrl = "https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg", author = "서울여행",
                 publishedAt = LocalDateTime.of(2026, 9, 1, 12, 30), viewCount = 123_456L,
+                duration = "PT45S", embedWidth = 360, embedHeight = 640,
             )
             every { get.findByAttractionIds(listOf(1L)) } returns mapOf(
                 1L to GetAttractionLinksUseCase.Links(
@@ -44,7 +47,7 @@ class AttractionLinkInternalControllerTest : BehaviorSpec({
                 mapper.writeValueAsString(controller.lookup(LookupLinksRequest(listOf(1L))).data!!),
             )
 
-            then("수집 링크는 화면이 그리는 필드(조회수·게시일 포함)와 원천 식별자를 모두 싣는다") {
+            then("수집 링크는 화면이 그리는 필드(조회수·게시일·형태 포함)와 원천 식별자를 모두 싣는다") {
                 @Suppress("UNCHECKED_CAST")
                 val item = (wire["items"] as List<Map<String, Any?>>).single()
                 item["attractionId"] shouldBe 1
@@ -58,10 +61,32 @@ class AttractionLinkInternalControllerTest : BehaviorSpec({
                     "author" to "서울여행",
                     "publishedAt" to "2026-09-01T12:30:00",
                     "viewCount" to 123456,
+                    "duration" to "PT45S",
+                    "format" to "SHORT",
                 )
                 @Suppress("UNCHECKED_CAST")
                 (item["deepLinks"] as List<Map<String, Any?>>).single().keys shouldBe
                     setOf("provider", "kind", "url", "revenueType")
+            }
+        }
+    }
+
+    given("영상 길이·비율 채우기") {
+        `when`("수집기가 videos.list 로 받은 값을 돌려주면") {
+            val sent = slot<List<VideoDetails>>()
+            every { collect.applyVideoDetails(capture(sent)) } returns 3
+            val res = controller.applyVideoDetails(
+                VideoDetailsRequest(listOf(VideoDetailsRequest.Item("v1", "PT30S", 360, 640))),
+            ).data!!
+            then("원천 값 그대로 넘기고 바뀐 행 수를 돌려준다") {
+                sent.captured shouldBe listOf(VideoDetails("v1", "PT30S", 360, 640))
+                res.updated shouldBe 3
+            }
+        }
+        `when`("채울 영상을 물으면") {
+            every { collect.findVideosMissingDetails(5000) } returns listOf("v1", "v2")
+            then("상한을 넘는 limit 은 5000 으로 자른다") {
+                controller.findVideosMissingDetails(100_000).data!!.externalIds shouldBe listOf("v1", "v2")
             }
         }
     }

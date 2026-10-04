@@ -490,6 +490,10 @@ export interface CollectedLink {
   publishedAt: string | null;
   /** 영상 조회수. 인기순 정렬의 근거이자 카드에 보이는 값. */
   viewCount: number | null;
+  /** 원천 식별자(영상 id). 쇼츠는 이것으로 쇼츠 주소를 만든다 */
+  externalId?: string;
+  /** 영상 형태 — 세로·3분 이하면 SHORT(place `VideoFormat`). 길이·비율을 아직 모르면 null */
+  format?: 'LONG' | 'SHORT' | null;
 }
 
 export interface AttractionLinks {

@@ -1217,6 +1217,40 @@
   background: var(--ko-surface-1);
 }
 
+/* 쇼츠 — 세로 카드. 원천 썸네일(16:9)은 세로 화면을 가운데 두고 양옆을 흐리게 채운 그림이라
+   가운데를 9:16 으로 잘라 내면 세로 화면만 남는다 */
+.place-links-thumb-wrap {
+  position: relative;
+  display: block;
+}
+
+.place-links-slide.is-short {
+  flex-basis: 6.5rem;
+}
+
+.place-links-slide.is-short .place-links-thumb {
+  aspect-ratio: 9 / 16;
+}
+
+.place-links-short-mark {
+  position: absolute;
+  top: 0.35rem;
+  left: 0.35rem;
+  width: 1.15rem;
+  height: 1.15rem;
+  pointer-events: none;
+}
+
+.place-links-short-mark-body {
+  fill: var(--kh-yeonji);
+  stroke: var(--kh-hanji);
+  stroke-width: 1;
+}
+
+.place-links-short-mark-play {
+  fill: var(--kh-hanji);
+}
+
 .place-links-card-title {
   font-size: 0.8rem;
   font-weight: 600;

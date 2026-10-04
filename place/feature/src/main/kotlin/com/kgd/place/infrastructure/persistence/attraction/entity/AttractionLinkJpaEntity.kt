@@ -2,6 +2,7 @@ package com.kgd.place.infrastructure.persistence.attraction.entity
 
 import com.kgd.place.domain.attraction.model.AttractionLink
 import com.kgd.place.domain.attraction.model.AttractionLinkSource
+import com.kgd.place.domain.attraction.model.VideoFormat
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -47,6 +48,20 @@ class AttractionLinkJpaEntity(
     @Column(name = "view_count")
     val viewCount: Long? = null,
 
+    @Column(length = 32)
+    val duration: String? = null,
+
+    @Column(name = "embed_width")
+    val embedWidth: Int? = null,
+
+    @Column(name = "embed_height")
+    val embedHeight: Int? = null,
+
+    /** 파생 — 원천 값에서 도메인이 판정한 것을 운영 조회용으로 남긴다. 읽을 때는 도메인이 다시 판정한다 */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "video_format", length = 10)
+    val videoFormat: VideoFormat? = null,
+
     @Column(name = "sort_order", nullable = false)
     val sortOrder: Int = 0,
 
@@ -64,6 +79,9 @@ class AttractionLinkJpaEntity(
         author = author,
         publishedAt = publishedAt,
         viewCount = viewCount,
+        duration = duration,
+        embedWidth = embedWidth,
+        embedHeight = embedHeight,
         sortOrder = sortOrder,
         collectedAt = collectedAt,
     )
@@ -80,6 +98,10 @@ class AttractionLinkJpaEntity(
             author = link.author,
             publishedAt = link.publishedAt,
             viewCount = link.viewCount,
+            duration = link.duration,
+            embedWidth = link.embedWidth,
+            embedHeight = link.embedHeight,
+            videoFormat = link.format,
             sortOrder = link.sortOrder,
             collectedAt = link.collectedAt,
         )
