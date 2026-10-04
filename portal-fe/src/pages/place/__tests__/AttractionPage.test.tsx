@@ -126,7 +126,7 @@ describe('AttractionPage 새 섹션', () => {
   });
   afterEach(() => vi.clearAllMocks());
 
-  it('개요·이용 안내 → 정보 탭(방문 정보 · 지역 안 위치) → 주변 탐색 → 비슷한 곳 순서다', async () => {
+  it('개요·이용 안내 → 정보 탭(방문 정보) → 주변 탐색 → 비슷한 곳 순서다', async () => {
     vi.mocked(fetchAttraction).mockResolvedValue(enriched);
     renderAt('/attractions/100');
     await screen.findByText('명소 301');
@@ -135,7 +135,7 @@ describe('AttractionPage 새 섹션', () => {
     // 같은 분류 가까운 곳 · 주변 명소 · 편의시설은 따로 절을 갖지 않는다 — 주변 탐색 하나로 합쳤다
     const order = ['이용 안내', '주변 탐색', '비슷한 곳'];
     expect(h2Texts().filter((t) => order.includes(t ?? ''))).toEqual(order);
-    expect(infoTabs()).toEqual(['방문 정보', '지역 안 위치']);
+    expect(infoTabs()).toEqual(['방문 정보']);
     const explore = screen.getByRole('region', { name: '주변 탐색' });
     const tabs = document.querySelector('.place-info-tabs')!;
     expect(tabs.compareDocumentPosition(explore) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -150,7 +150,7 @@ describe('AttractionPage 새 섹션', () => {
     renderAt('/attractions/100');
     const badges = await screen.findByRole('tabpanel', { name: '방문 정보' });
 
-    expect(within(badges).getAllByRole('listitem').map((li) => li.textContent)).toEqual([
+    expect(within(within(badges).getAllByRole('list')[0]).getAllByRole('listitem').map((li) => li.textContent)).toEqual([
       '매주 화요일 휴무', '주차 가능', '유모차 대여 없음', '입장 유료',
     ]);
   });
@@ -191,7 +191,7 @@ describe('AttractionPage 새 섹션', () => {
     expect(within(section).getByText('주출입구는 경사로가 있어 휠체어 접근 가능함')).toBeInTheDocument();
     expect(within(await openInfoTab('방문 정보')).getByText('웰니스 관광 · 온천 / 사우나 / 스파')).toBeInTheDocument();
     expect(screen.getByText(/출처: 한국관광공사 TourAPI · 무장애 여행 정보 · 웰니스관광 정보/)).toBeInTheDocument();
-    expect(infoTabs()).toEqual(['방문 정보', '접근성 정보', '지역 안 위치']);
+    expect(infoTabs()).toEqual(['방문 정보', '접근성 정보']);
   });
 
   it('접근성·웰니스 정보가 없으면 절이 없고 출처는 TourAPI 만이다', async () => {
@@ -209,7 +209,7 @@ describe('AttractionPage 새 섹션', () => {
     renderAt('/attractions/100');
     const badges = await screen.findByRole('tabpanel', { name: '방문 정보' });
 
-    expect(within(badges).getAllByRole('listitem').map((li) => li.textContent)).toEqual([
+    expect(within(within(badges).getAllByRole('list')[0]).getAllByRole('listitem').map((li) => li.textContent)).toEqual([
       '매주 화요일 휴무', '주차 가능', '유모차 대여 없음', '입장 유료', '많이 클릭한 곳',
     ]);
   });
@@ -245,19 +245,29 @@ describe('AttractionPage 새 섹션', () => {
     expect(screen.getByText('5 / 10')).toBeInTheDocument();
   });
 
-  it('같은 장소의 다른 등록이 있으면 지역 탭에 「복합공간」과 그 등록으로 가는 칩을 둔다', async () => {
+  it('같은 장소의 다른 등록이 있으면 방문 정보에 「복합공간」과 그 등록으로 가는 칩을 둔다', async () => {
     vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, samePlace: [{ id: '29692', contentTypeId: '38' }] });
     renderAt('/attractions/100');
-    const region = await openInfoTab('지역 안 위치');
+    const region = await openInfoTab('방문 정보');
 
     expect(within(region).getByText('복합공간')).toBeInTheDocument();
     expect(within(region).getByRole('link', { name: '같은 장소의 쇼핑 정보' })).toHaveAttribute('href', '/attractions/29692');
   });
 
+  it('주소는 제목 아래가 아니라 방문 정보 첫 줄이다 — 지역 안 위치와 같은 판에 둔다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, address: '서울특별시 종로구 사직로 161' });
+    renderAt('/attractions/100');
+    const visit = await openInfoTab('방문 정보');
+
+    expect(visit.querySelector('.place-info-addr')?.textContent).toBe('서울특별시 종로구 사직로 161');
+    expect(within(visit).getByText('종로구 관광지 40곳 중 고궁 7곳')).toBeInTheDocument();
+    expect(screen.getAllByText('서울특별시 종로구 사직로 161')).toHaveLength(1);
+  });
+
   it('지역 문구와 시군구 허브 링크를 그리고, 같은 분류 가까운 곳은 주변 탐색 줄에 표시로 남긴다', async () => {
     vi.mocked(fetchAttraction).mockResolvedValue(enriched);
     renderAt('/attractions/100');
-    const region = await openInfoTab('지역 안 위치');
+    const region = await openInfoTab('방문 정보');
 
     expect(within(region).getByText('종로구 관광지 40곳 중 고궁 7곳')).toBeInTheDocument();
     expect(within(region).getByRole('link', { name: '종로구 둘러보기' })).toHaveAttribute('href', '/regions/11110');
@@ -304,6 +314,30 @@ describe('AttractionPage 새 섹션', () => {
       expect(within(explore).queryByRole('button', { name: /목록 더 보기/ })).toBeNull();
     } finally {
       wide = false;
+    }
+  });
+
+  it('줄에 마우스를 올려도 목록은 움직이지 않는다 — 넘기면 커서 아래 줄이 바뀌어 목록이 계속 흘렀다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue(enriched);
+    nearbyFrom((c) => (c.includes('history') ? Array.from({ length: 8 }, (_, i) => card(String(600 + i))) : []));
+    // 넓은 화면 목록은 칸 안에서 스크롤된다 — jsdom 은 크기를 재지 않으므로 넘칠 만큼 크다고 둔다
+    const sh = vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(1000);
+    const ch = vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(100);
+    const scrollTo = vi.fn();
+    (HTMLElement.prototype as unknown as { scrollTo: unknown }).scrollTo = scrollTo;
+    wide = true;
+    try {
+      renderAt('/attractions/100');
+      const explore = await screen.findByRole('region', { name: '주변 탐색' });
+      const row = (await within(explore).findByText('명소 605')).closest('li')!;
+      fireEvent.mouseEnter(row);
+      expect(row.getAttribute('data-active')).toBe('true');
+      expect(scrollTo).not.toHaveBeenCalled();
+    } finally {
+      wide = false;
+      sh.mockRestore();
+      ch.mockRestore();
+      delete (HTMLElement.prototype as unknown as { scrollTo?: unknown }).scrollTo;
     }
   });
 
@@ -374,7 +408,7 @@ describe('AttractionPage 새 섹션', () => {
       region: { ...enriched.region!, sigunguName: 'Jongno-gu', categoryName: 'Palaces' },
     });
     renderAt('/en/attractions/100');
-    const region = await openInfoTab('In the area');
+    const region = await openInfoTab('At a glance');
 
     expect(within(region).getByText('Palaces 7 of 40 attractions in Jongno-gu')).toBeInTheDocument();
     expect(within(region).getByRole('link', { name: 'Explore Jongno-gu' })).toBeInTheDocument();
@@ -387,7 +421,7 @@ describe('AttractionPage 새 섹션', () => {
   it('유형 코드가 없으면 지역 문구를 짐작하지 않는다 — 허브 링크만 둔다', async () => {
     vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, contentTypeId: undefined });
     renderAt('/attractions/100');
-    const region = await openInfoTab('지역 안 위치');
+    const region = await openInfoTab('방문 정보');
 
     expect(within(region).queryByText(/곳 중/)).toBeNull();
     expect(within(region).getByRole('link', { name: '종로구 둘러보기' })).toBeInTheDocument();
@@ -725,7 +759,7 @@ describe('AttractionPage 날씨', () => {
   it('날이 하나도 없으면(신선도 초과 · 매핑 없는 시군구) 절을 그리지 않는다', async () => {
     vi.mocked(fetchAttraction).mockResolvedValue(enriched);
     renderAt('/attractions/100');
-    await screen.findByRole('tab', { name: '지역 안 위치' });
+    await screen.findByRole('tab', { name: '방문 정보' });
     await vi.waitFor(() => expect(fetchWeather).toHaveBeenCalled());
     expect(screen.queryByRole('region', { name: '종로구 날씨' })).toBeNull();
   });
@@ -803,7 +837,7 @@ describe('AttractionPage 대기질', () => {
   ])('%s 절을 그리지 않는다', async (_, value) => {
     vi.mocked(fetchAirQuality).mockResolvedValue(value as AirQuality);
     renderAt('/attractions/100');
-    await screen.findByRole('tab', { name: '지역 안 위치' });
+    await screen.findByRole('tab', { name: '방문 정보' });
     await vi.waitFor(() => expect(fetchAirQuality).toHaveBeenCalled());
     expect(screen.queryByRole('region', { name: '대기질' })).toBeNull();
   });

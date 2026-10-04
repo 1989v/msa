@@ -105,6 +105,9 @@ export default function NearbyExplore({
   const listRef = useRef<HTMLUListElement | null>(null);
   const mapRef = useRef<any>(null);
   const markersRef = useRef<Map<string, any>>(new Map());
+  // 목록을 그 줄로 넘기는 것은 마커를 눌렀을 때만이다. 줄에 마우스를 올려 강조할 때도 넘기면 목록이 움직여
+  // 커서 아래에 다른 줄이 오고, 그 줄이 또 강조돼 목록이 계속 흘러간다.
+  const scrollToActive = useRef(false);
 
   const counts = useMemo(() => {
     const c: Record<ExploreKind, number> = { sight: 0, stay: 0, event: 0, amenity: 0 };
@@ -143,7 +146,10 @@ export default function NearbyExplore({
             icon: markerIcon(maps, item.kind, false),
             zIndex: 10,
           });
-          marker.addListener('click', () => setActiveId(item.id));
+          marker.addListener('click', () => {
+            scrollToActive.current = true;
+            setActiveId(item.id);
+          });
           markersRef.current.set(item.id, marker);
         });
         setMapFailed(false);
@@ -171,7 +177,7 @@ export default function NearbyExplore({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
-  // 강조 — 마커를 키우고, 목록이 따로 스크롤되는 넓은 화면이면 그 줄을 보이게 한다
+  // 강조 — 마커를 키우고, 마커를 눌렀으면 목록이 따로 스크롤되는 넓은 화면에서 그 줄을 보이게 한다
   useEffect(() => {
     const maps = (window as any).google?.maps;
     if (maps) {
@@ -183,6 +189,8 @@ export default function NearbyExplore({
         marker.setZIndex(on ? 999 : 10);
       });
     }
+    if (!scrollToActive.current) return;
+    scrollToActive.current = false;
     const list = listRef.current;
     if (!activeId || !list || list.scrollHeight <= list.clientHeight) return;
     const row = list.querySelector<HTMLElement>(`[data-explore-id="${CSS.escape(activeId)}"]`);

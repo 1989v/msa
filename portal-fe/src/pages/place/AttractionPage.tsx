@@ -368,7 +368,6 @@ export default function AttractionPage() {
             {attraction.category && (
               <span className="place-chip active">{placeCategoryLabel(attraction.category, lang)}</span>
             )}
-            {attraction.address && <p className="place-detail-addr">{attraction.address}</p>}
             {attraction.tel && <p className="place-detail-tel">{attraction.tel}</p>}
             {/* 넓은 화면에서 개요와 이용 안내를 나란히 둔다. 세로로 쌓으면 개요가 긴
                 관광지(1,400자가 넘는 것도 있다)에서 이용 안내가 화면 밖으로 밀려
@@ -439,12 +438,13 @@ export default function AttractionPage() {
               })()}
             </div>
 
-            {/* 방문 정보 · 접근성 · 지역 안 위치 — 지도 위에 탭 하나로, 내용은 칩. 서버 렌더는 세 절을 그대로 쌓는다(색인용) */}
+            {/* 방문 정보(주소·속성·지역 안 위치) · 접근성 — 지도 위에 탭으로, 내용은 칩. 서버 렌더는 절을 그대로 쌓는다(색인용) */}
             <AttractionInfoTabs
               badges={badges}
               wellness={wellness}
               accessIcons={accessIcons}
               accessRows={accessRows}
+              address={attraction.address ?? null}
               phrase={attraction.region ? phrase : null}
               hub={attraction.region && hubCode ? { to: regionPath(lang, hubCode), label: L.explore(regionPlaceName(attraction, lang)) } : null}
               samePlace={attraction.samePlace ?? []}

@@ -2373,9 +2373,16 @@ button.place-card {
 
 /* 지도 위 정보 탭 — 방문 정보 · 접근성 · 지역 안 위치를 칩으로. 판 높이를 고정해 탭을 바꿔도 아래가 움직이지 않는다 */
 .place-info-panel {
-  height: 5.9375rem;
+  /* 방문 정보(주소 · 속성 · 지역 안 위치)가 다 보이는 높이 — 좁은 화면 해운대 201px · 넓은 화면 117px 실측 */
+  height: 12.75rem;
   overflow-y: auto;
   padding-top: 0.75rem;
+}
+
+@media (min-width: 64rem) {
+  .place-info-panel {
+    height: 7.5rem;
+  }
 }
 
 /* 접근성 원천 문장을 펼쳤을 때만 판이 자란다 */
@@ -2429,6 +2436,20 @@ button.place-card {
 
 .place-info-detail {
   margin-top: 0.75rem;
+}
+
+/* 방문 정보 — 주소 한 줄 · 속성 칩 · 지역 안 위치 칩 */
+.place-info-addr {
+  margin: 0 0 0.5rem;
+}
+
+.place-info-region {
+  margin-top: 0.5rem;
+}
+
+/* 접힌 원천 문장 — `.place-detail-info-list` 의 display:grid 가 hidden 을 이겨 접힌 채로 그려졌다 */
+.place-info-detail[hidden] {
+  display: none;
 }
 
 /* 날씨 · 대기질 · 혼잡 — 판 높이 고정(탭을 바꿔도 아래가 그대로), 내용은 한 줄로 두고 옆으로 넘긴다 */

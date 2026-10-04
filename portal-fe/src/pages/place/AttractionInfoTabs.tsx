@@ -4,12 +4,11 @@ import type { PlaceLang } from '../../api/placeApi';
 import { attractionPath } from '../../seo/copy.mjs';
 import { BARRIER_FREE_DETAILS, BARRIER_FREE_TITLE } from './placeAttributes';
 
-type Tab = 'visit' | 'access' | 'region';
+type Tab = 'visit' | 'access';
 
 const UI = {
   ko: {
     visit: '방문 정보',
-    region: '지역 안 위치',
     group: '관광지 정보',
     fold: '접근성 상세 접기',
     composite: '복합공간',
@@ -19,7 +18,6 @@ const UI = {
   },
   en: {
     visit: 'At a glance',
-    region: 'In the area',
     group: 'About this place',
     fold: 'Hide accessibility details',
     composite: 'Multi-use place',
@@ -30,11 +28,13 @@ const UI = {
 } as const;
 
 /**
- * 지도 위 정보 묶음 — 방문 정보 · 접근성 · 지역 안 위치를 탭 하나로, 내용은 칩으로.
- * 그릴 것이 있는 탭만 둔다. 같은 장소가 다른 유형으로도 올라와 있으면(복합공간) 지역 탭에서 그 등록으로 잇는다.
+ * 지도 위 정보 묶음 — 방문 정보 · 접근성을 탭 둘로, 내용은 칩으로.
+ * 방문 정보는 주소 · 휴무·주차 같은 속성 · 지역 안 위치를 함께 둔다. 지역 안 위치는 칩 한두 개라 탭 하나를
+ * 따로 열게 하면 누르는 수만 는다. 같은 장소가 다른 유형으로도 올라와 있으면(복합공간) 그 등록으로 잇는다.
  * 서버 렌더 본문은 세 절을 그대로 쌓아 둔다(색인용) — 탭은 화면에서만 접는다.
  */
 export default function AttractionInfoTabs({
+  address,
   badges,
   wellness,
   accessIcons,
@@ -44,6 +44,7 @@ export default function AttractionInfoTabs({
   samePlace,
   lang,
 }: {
+  address: string | null;
   badges: string[];
   wellness: string | null;
   accessIcons: string[];
@@ -56,13 +57,13 @@ export default function AttractionInfoTabs({
   const L = UI[lang];
   const [picked, setPicked] = useState<Tab>('visit');
   const [accessOpen, setAccessOpen] = useState(false);
-  const title: Record<Tab, string> = { visit: L.visit, access: BARRIER_FREE_TITLE[lang], region: L.region };
+  const title: Record<Tab, string> = { visit: L.visit, access: BARRIER_FREE_TITLE[lang] };
+  const hasRegion = phrase != null || hub != null || samePlace.length > 0;
   const has: Record<Tab, boolean> = {
-    visit: badges.length > 0 || wellness != null,
+    visit: address != null || badges.length > 0 || wellness != null || hasRegion,
     access: accessIcons.length > 0 || accessRows.length > 0,
-    region: phrase != null || hub != null || samePlace.length > 0,
   };
-  const tabs = (['visit', 'access', 'region'] as const).filter((t) => has[t]);
+  const tabs = (['visit', 'access'] as const).filter((t) => has[t]);
   if (tabs.length === 0) return null;
   const current = tabs.includes(picked) ? picked : tabs[0];
 
@@ -90,12 +91,37 @@ export default function AttractionInfoTabs({
         data-open={accessOpen || undefined}
       >
         {current === 'visit' && (
-          <ul className="place-chip-list">
-            {badges.map((b) => (
-              <li key={b} className="place-info-chip">{b}</li>
-            ))}
-            {wellness && <li className="place-info-chip" data-place-section="wellness">{wellness}</li>}
-          </ul>
+          <>
+            {address && <p className="place-detail-addr place-info-addr">{address}</p>}
+            {(badges.length > 0 || wellness) && (
+              <ul className="place-chip-list">
+                {badges.map((b) => (
+                  <li key={b} className="place-info-chip">{b}</li>
+                ))}
+                {wellness && <li className="place-info-chip" data-place-section="wellness">{wellness}</li>}
+              </ul>
+            )}
+            {hasRegion && (
+              <ul className="place-chip-list place-info-region" data-place-section="region">
+                {phrase && <li className="place-info-chip">{phrase}</li>}
+                {hub && (
+                  <li>
+                    <Link className="place-info-chip place-info-chip-link" to={hub.to}>
+                      {hub.label}
+                    </Link>
+                  </li>
+                )}
+                {samePlace.length > 0 && <li className="place-info-chip place-info-chip-mark">{L.composite}</li>}
+                {samePlace.map((s) => (
+                  <li key={s.id}>
+                    <Link className="place-info-chip place-info-chip-link" to={attractionPath(lang, s.id)}>
+                      {L.sameAs((s.contentTypeId && L.kind[s.contentTypeId]) || L.other)}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
         )}
         {current === 'access' && (
           <>
@@ -126,26 +152,6 @@ export default function AttractionInfoTabs({
               ))}
             </dl>
           </>
-        )}
-        {current === 'region' && (
-          <ul className="place-chip-list">
-            {phrase && <li className="place-info-chip">{phrase}</li>}
-            {hub && (
-              <li>
-                <Link className="place-info-chip place-info-chip-link" to={hub.to}>
-                  {hub.label}
-                </Link>
-              </li>
-            )}
-            {samePlace.length > 0 && <li className="place-info-chip place-info-chip-mark">{L.composite}</li>}
-            {samePlace.map((s) => (
-              <li key={s.id}>
-                <Link className="place-info-chip place-info-chip-link" to={attractionPath(lang, s.id)}>
-                  {L.sameAs((s.contentTypeId && L.kind[s.contentTypeId]) || L.other)}
-                </Link>
-              </li>
-            ))}
-          </ul>
         )}
       </section>
     </div>
