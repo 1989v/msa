@@ -1,5 +1,6 @@
-status: concept-draft
-implementation_authorized: false
+status: p1-implementation
+implementation_authorized: true
+authorization: '2026-10-05 사용자: 이제 구현시작. 현행 P1 기획으로 진행, 온라인은 후속.'
 questions:
   - id: Q6
     subject: 최종 게임 이름
@@ -22,17 +23,20 @@ questions:
     subject: 화풍과 전투 화면
     proposal: 기존 협동 원화 계승, 독립 성문, 내 전장 중심 가로 화면
     confirmed_constraints: 양측 5×5 타일, 작은 전장 캐릭터, 고해상도 시안 요청
-    status: open
+    status: closed
+    answer: 현행 원화·5×5 수정 시안을 기준으로 P1 구현 진행
     gate: pre-impl
   - id: Q3
     subject: 첫 구현 범위
     proposal: 신규 게임 경로에서 로컬 AI와 첫 5스테이지부터 검증
-    status: open
+    status: closed
+    answer: 신규 duel-defense 경로, 로컬 AI 상대 첫 5스테이지
     gate: pre-impl
   - id: Q4
     subject: 진법 실패 의미
     proposal: 편성 불충족은 초기화, 성문 체력 0은 즉시 패배, 작은 누수는 허용
-    status: open
+    status: closed
+    answer: 현행 제안대로 편성 불충족은 초기화, 체력0 즉시 패배, 작은 누수 허용
     gate: pre-impl
   - id: Q5
     subject: 온라인 판정과 연결 끊김 정책

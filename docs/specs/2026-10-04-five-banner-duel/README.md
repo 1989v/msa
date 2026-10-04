@@ -1,6 +1,15 @@
 # 대전 디펜스 — 1:1 대전 타워디펜스 기획·시안
 
-상태: **컨셉 검토용 초안 / 구현 미승인**. 2026-10-04.
+상태: **P1 구현·통합 검증 완료 — AI 상대 첫 5스테이지**. 사용자 구현 승인: 2026-10-05. 구현 정본은 [spec.md](spec.md), 진행 항목은 [tasks.md](tasks.md).
+
+## 플레이
+
+로컬 서버: `node portal-fe/public/games/duel-defense/tools/serve.mjs`, 주소 `http://127.0.0.1:4179`.
+초기 군량160으로 타워 배치 → 초기 배치 완료 → 스테이지마다 공용 군량으로 수비 증원·공격 편성 → 출진 확정. 두 공격 조합을 선택할 수 있고, 상대는 AI다. 온라인·20스테이지 전체 경기는 아직 포함하지 않는다.
+
+[게임 실행 안내](../../../portal-fe/public/games/duel-defense/README.md), [통합 검증 증거](verifications/final-verification.md), [독립 리뷰 SHIP](verifications/fresh-review.md).
+
+![실제 구현 화면 — 5×5와 공용 군량, 배치 패드](verifications/shots/final-layout-1440.png)
 
 한 줄: **내 성문을 지키며 다섯 번의 출진을 이어, 상대 성문을 무너뜨릴 진법을 완성한다.**
 
@@ -34,10 +43,11 @@
 ## 문서
 
 - [게임 기획·경제·진법·개발 순서](planning/game-plan.md)
+- [승인된 P1 구현 명세](spec.md), [구현 태스크](tasks.md)
 - [사용자 요구사항과 제안 구분](planning/requirements.md)
 - [아트·화면 기준](DESIGN.md)
 - [플레이 검증 계획](planning/test-quality.md)
 - [결정할 항목](context/open-questions.yml)
 - [원문](planning/initialization.md), [생성 프롬프트](planning/visuals/prompts.md)
 
-현재 생산물은 문서와 생성 이미지뿐이다. 기존 게임 코드·에셋·배포에는 변경이 없다. 온라인 구조는 기존 협동 게임을 그대로 사용한다고 가정하지 않으며, 후속 단계에서 별도 검토한다.
+신규 `portal-fe/public/games/duel-defense/`에 로컬 AI 상대와 첫 5단계를 구현했다. 기존 협동 게임은 보존했다. 온라인 구조는 기존 협동 게임을 그대로 사용한다고 가정하지 않으며, 후속 단계에서 별도 검토한다. 운영 배포·카탈로그 등록은 이번 범위 밖이다. 원화는 실제 sprite로 추출해 고정 스텝 전투에 연결하며 시안 통이미지가 게임을 대체하지 않는다.
