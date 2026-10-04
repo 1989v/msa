@@ -52,6 +52,24 @@ interface AttractionJpaRepository : JpaRepository<AttractionJpaEntity, Long> {
         @Param("categories") categories: Collection<String>,
     ): List<LdongCountProjection>
 
+    /** 같은 표시명·언어의 운영 관광지 수 — 이름이 겹치는 곳을 가린다 */
+    @Query(
+        """
+        SELECT a.titleDisplay AS titleDisplay, a.lang AS lang, COUNT(a.id) AS total
+        FROM AttractionJpaEntity a
+        WHERE a.titleDisplay IN :titles
+          AND a.status = 'ACTIVE'
+        GROUP BY a.titleDisplay, a.lang
+        """,
+    )
+    fun countByTitleDisplay(@Param("titles") titles: Collection<String>): List<TitleCountProjection>
+
+    interface TitleCountProjection {
+        fun getTitleDisplay(): String
+        fun getLang(): String
+        fun getTotal(): Long
+    }
+
     interface LdongCountProjection {
         fun getRegnCode(): String
         fun getSignguCode(): String?

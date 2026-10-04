@@ -32,5 +32,10 @@ interface AttractionRepositoryPort {
 
     data class UpsertSummary(val created: Int, val updated: Int)
 
+    /** 같은 표시명·언어의 운영 관광지 수 — 이름이 겹치는 곳을 가린다(영상 검색어에 지역을 붙인다). */
+    fun countByTitleDisplay(titles: Collection<String>): List<TitleCount>
+
     data class LdongCount(val regnCode: String, val signguCode: String?, val total: Long)
+
+    data class TitleCount(val titleDisplay: String, val lang: String, val total: Long)
 }

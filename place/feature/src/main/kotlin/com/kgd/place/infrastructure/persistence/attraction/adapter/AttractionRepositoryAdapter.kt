@@ -71,6 +71,15 @@ class AttractionRepositoryAdapter(
             AttractionRepositoryPort.LdongCount(it.getRegnCode(), it.getSignguCode(), it.getTotal())
         }
 
+    override fun countByTitleDisplay(titles: Collection<String>): List<AttractionRepositoryPort.TitleCount> =
+        if (titles.isEmpty()) {
+            emptyList()
+        } else {
+            jpaRepository.countByTitleDisplay(titles).map {
+                AttractionRepositoryPort.TitleCount(it.getTitleDisplay(), it.getLang(), it.getTotal())
+            }
+        }
+
     override fun findMissingGooglePlaceId(lang: String?, limit: Int): List<Attraction> {
         val pageable = PageRequest.of(0, limit, Sort.by("id"))
         val page = lang

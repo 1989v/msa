@@ -90,8 +90,37 @@ def test_search_records_100_units_per_call_in_ledger(monkeypatch):
 
     monkeypatch.setattr(youtube.urllib.request, "urlopen", lambda req, timeout=0: Reply())
     youtube.search("k", "경복궁", "ko")
-    # 여행 카테고리 결과가 모자라 일반 검색 1콜을 보충했다 — 두 콜 모두 100 units
-    assert ledger.costs == [100, 100]
+    # 1관광지 1콜 — 결과가 없으면 영상 정보 조회도 없다
+    assert ledger.costs == [100]
+
+
+def test_search_has_no_location_or_category_and_uses_place_query(monkeypatch):
+    # 반경 검색은 촬영 위치를 적은 영상만 돌려줘 방송사·교양 채널 대표 영상이 빠졌다(경복궁 151만 회)
+    monkeypatch.setattr(youtube, "_ledger", _Ledger())
+    sent = []
+
+    class Reply:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def read(self):
+            return json.dumps({"items": []}).encode()
+
+    def fake_urlopen(req, timeout=0):
+        sent.append(parse_qs(urlparse(req.full_url).query))
+        return Reply()
+
+    monkeypatch.setattr(youtube.urllib.request, "urlopen", fake_urlopen)
+    youtube.search("k", "중앙공원", "ko", "중앙공원 종로구")
+    youtube.search("k", "Dosan Park(도산공원)", "en")
+
+    assert [q["q"][0] for q in sent] == ["중앙공원 종로구", "Dosan Park"]
+    for q in sent:
+        assert not {"location", "locationRadius", "videoCategoryId"} & q.keys()
+        assert q["maxResults"] == ["50"]
 
 
 def test_exhausted_ledger_stops_before_calling(monkeypatch):

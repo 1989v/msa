@@ -37,6 +37,8 @@ interface CollectAttractionLinksUseCase {
         val lang: String,
         val latitude: Double,
         val longitude: Double,
+        /** 영상 검색어 — 표시명, 이름이 겹치는 곳은 표시명 + 시군구 */
+        val query: String,
     )
 
     /**

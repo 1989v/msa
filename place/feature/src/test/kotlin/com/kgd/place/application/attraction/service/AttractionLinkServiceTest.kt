@@ -5,6 +5,9 @@ import com.kgd.common.quota.ExternalApiQuotaLedger
 import com.kgd.place.application.attraction.port.AttractionLinkRepositoryPort
 import com.kgd.place.application.attraction.port.AttractionRepositoryPort
 import com.kgd.place.application.attraction.usecase.CollectAttractionLinksUseCase
+import com.kgd.place.application.region.port.AdministrativeRegionRepositoryPort
+import com.kgd.place.domain.region.model.AdministrativeRegion
+import com.kgd.place.domain.region.model.AdministrativeRegionLevel
 import com.kgd.place.domain.attraction.model.Attraction
 import com.kgd.place.domain.attraction.model.AttractionLink
 import com.kgd.place.domain.attraction.model.AttractionLinkRequest
@@ -23,27 +26,29 @@ class AttractionLinkServiceTest : BehaviorSpec({
     val attractionRepository = mockk<AttractionRepositoryPort>()
     val linkRepository = mockk<AttractionLinkRepositoryPort>(relaxed = true)
     val quotaLedger = mockk<ExternalApiQuotaLedger>(relaxed = true)
-    val service = AttractionLinkService(attractionRepository, linkRepository, quotaLedger)
+    val regionRepository = mockk<AdministrativeRegionRepositoryPort>()
+    val service = AttractionLinkService(attractionRepository, linkRepository, quotaLedger, regionRepository)
     val youtube = AttractionLinkSource.YOUTUBE
+
+    fun stored(id: Long, title: String, lang: String = "ko", regn: String? = null, signgu: String? = null) = Attraction.restore(
+        id = id, contentId = "c$id", lang = lang, title = title,
+        address = null, areaCode = null, sigunguCode = null, ldongRegnCd = regn, ldongSignguCd = signgu,
+        category = null, cat1 = null, cat2 = null, cat3 = null,
+        lclsSystm1 = null, lclsSystm2 = null, lclsSystm3 = null,
+        contentTypeId = null, copyrightDivCd = null, thumbnailUrl = null,
+        mapLevel = null, zipcode = null, sourceCreatedAt = null,
+        latitude = 37.5, longitude = 127.0, imageUrl = null, tel = null, overview = null,
+        introRaw = null, useTime = null, restDate = null, useFee = null,
+        parking = null, parkingFee = null, infoCenter = null, introSyncedAt = null,
+        petAcmpyType = null, petRaw = null, petSyncedAt = null, setting = null,
+        imagesRaw = null, infoRaw = null, extraSyncedAt = null,
+        eventStartDate = null, eventEndDate = null, listRaw = null, googlePlaceId = null,
+        sourceModifiedAt = null, status = "ACTIVE", createdAt = java.time.LocalDateTime.now(),
+    )
 
     beforeContainer { clearMocks(attractionRepository, linkRepository, answers = false) }
 
     given("재색인이 링크를 묶음으로 읽을 때") {
-        fun stored(id: Long, title: String, lang: String = "ko") = Attraction.restore(
-            id = id, contentId = "c$id", lang = lang, title = title,
-            address = null, areaCode = null, sigunguCode = null, ldongRegnCd = null, ldongSignguCd = null,
-            category = null, cat1 = null, cat2 = null, cat3 = null,
-            lclsSystm1 = null, lclsSystm2 = null, lclsSystm3 = null,
-            contentTypeId = null, copyrightDivCd = null, thumbnailUrl = null,
-            mapLevel = null, zipcode = null, sourceCreatedAt = null,
-            latitude = 37.5, longitude = 127.0, imageUrl = null, tel = null, overview = null,
-            introRaw = null, useTime = null, restDate = null, useFee = null,
-            parking = null, parkingFee = null, infoCenter = null, introSyncedAt = null,
-            petAcmpyType = null, petRaw = null, petSyncedAt = null, setting = null,
-            imagesRaw = null, infoRaw = null, extraSyncedAt = null,
-            eventStartDate = null, eventEndDate = null, listRaw = null, googlePlaceId = null,
-            sourceModifiedAt = null, status = "ACTIVE", createdAt = java.time.LocalDateTime.now(),
-        )
 
         `when`("원천 제목에 꼬리 괄호가 붙어 있으면") {
             then("딥링크는 표시명으로 조립되어야 한다 — 원문 그대로면 불가능한 질의가 된다") {
@@ -98,6 +103,35 @@ class AttractionLinkServiceTest : BehaviorSpec({
                 service.findDue(youtube, 50)
 
                 limit.captured shouldBe 3
+            }
+        }
+
+        `when`("이름이 같은 관광지가 여럿이면") {
+            then("영상 검색어에 시군구 이름을 붙이고, 하나뿐인 이름은 표시명 그대로 둔다 — 영문은 영문 시군구") {
+                every { quotaLedger.remaining(ExternalApiProvider.YOUTUBE_DATA) } returns null
+                every { linkRepository.findDueRequests(youtube, any(), any()) } returns listOf(
+                    AttractionLinkRequest.create(1L, youtube), AttractionLinkRequest.create(2L, youtube),
+                    AttractionLinkRequest.create(3L, youtube),
+                )
+                every { attractionRepository.findAllByIds(any()) } returns listOf(
+                    stored(1L, "경복궁", regn = "11", signgu = "110"),
+                    stored(2L, "중앙공원", regn = "11", signgu = "110"),
+                    stored(3L, "Jungang Park(중앙공원)", "en", regn = "11", signgu = "110"),
+                )
+                every { attractionRepository.countByTitleDisplay(any()) } returns listOf(
+                    AttractionRepositoryPort.TitleCount("경복궁", "ko", 1),
+                    AttractionRepositoryPort.TitleCount("중앙공원", "ko", 7),
+                    AttractionRepositoryPort.TitleCount("Jungang Park", "en", 3),
+                )
+                every { regionRepository.findByLevel(AdministrativeRegionLevel.SIGUNGU) } returns listOf(
+                    AdministrativeRegion.create("11110", AdministrativeRegionLevel.SIGUNGU, "종로구", parentCode = "11", nameEn = "Jongno-gu"),
+                )
+
+                service.findDue(youtube, 10).associate { it.attractionId to it.query } shouldBe mapOf(
+                    1L to "경복궁",
+                    2L to "중앙공원 종로구",
+                    3L to "Jungang Park Jongno-gu",
+                )
             }
         }
 

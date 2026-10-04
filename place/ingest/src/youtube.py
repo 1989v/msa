@@ -25,22 +25,19 @@ from src.title_parse import parse_title
 SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 VIDEOS_URL = "https://www.googleapis.com/youtube/v3/videos"
 WATCH_URL = "https://www.youtube.com/watch?v="
-# 후보 25개를 받는다 — search.list 는 1개를 받든 50개를 받든 같은 100 units 라 공짜다.
-# 인기 결과의 약 4할이 쇼츠라(2026-10-04 표본 30건 중 12건) 10개로는 화면이 일반 영상 5개와
-# 쇼츠 줄을 따로 채우지 못한다. 이름 매칭 필터가 후보를 걸러낸 뒤에도 남게 넉넉히 받는다.
-MAX_RESULTS = 25
+# 후보 50개(상한)를 받는다 — search.list 는 1개를 받든 50개를 받든 같은 100 units 라 공짜다.
+# 인기 결과의 약 4할이 쇼츠라(2026-10-04 표본 30건 중 12건) 롱폼·쇼츠를 함께 채우려면 넉넉해야 하고,
+# 이름 매칭 필터가 후보를 걸러낸 뒤 조회수로 다시 줄 세운다.
+MAX_RESULTS = 50
 # videos.list 는 id 를 50개까지 묶어 **1 unit** 이다(받는 part 수와 무관). search.list(건당 100 units)
 # 옆에서는 사실상 공짜라 조회수를 받아 정렬한다 — 안 받으면 관련성 순이지 '인기 영상'이 아니다.
 STATS_BATCH = 50
 # 플레이어 크기는 maxWidth 를 줘야 영상 비율대로 온다. maxHeight 만 주면 전부 세로(360×640)로 와서
 # 쇼츠를 가를 수 없었다(2026-10-04 운영 표본 49건 전부 세로, 44분짜리 포함).
 EMBED_MAX_WIDTH = 640
-# Travel & Events. "도산공원" 일반 검색 1위가 재테크 영상이던 문제의 1차 방어선 —
-# 이름 매칭 필터는 이름이 스친 무관 영상까지는 못 거르므로, 후보군 자체를 여행으로 좁힌다.
-TRAVEL_CATEGORY_ID = "19"
-# 여행 카테고리 결과가 이보다 적을 때만 일반 검색 1콜을 보충한다.
-BACKFILL_THRESHOLD = 3
-LOCATION_RADIUS = "10km"
+# 좌표 반경(location)·여행 카테고리(videoCategoryId=19)는 쓰지 않는다. 반경 검색은 **촬영 위치를 적은 영상만**
+# 돌려줘 방송사·교양 채널의 대표 영상이 빠졌고(경복궁: 151만 회 교양 영상·85만 회 KBS 다큐가 없고 브이로그만),
+# 여행 카테고리도 그 영상들을 뺐다. 이름이 같은 다른 지역 영상은 place 가 검색어에 시군구를 붙여 가린다.
 
 
 #: search.list 1콜 = 100 units, videos.list 1콜(50개 묶음) = 1 unit
@@ -68,38 +65,15 @@ def _raise_if_quota(e: urllib.error.HTTPError, detail: str) -> None:
         raise QuotaExceeded(f"HTTP {e.code} {detail[:200]}") from e
 
 
-def search(
-    api_key: str,
-    title: str,
-    lang: str,
-    latitude: float | None = None,
-    longitude: float | None = None,
-) -> list[dict]:
-    """관광지명으로 영상을 찾는다. 반환은 place `/internal/.../bulk` 의 link 스키마.
+def search(api_key: str, title: str, lang: str, query: str | None = None) -> list[dict]:
+    """관광지 영상을 찾는다. 반환은 place `/internal/.../bulk` 의 link 스키마.
 
-    검색어는 원천 제목이 아니라 **표시명**이다 — `Dosan Park(도산공원)` 을 그대로 물으면
-    두 표기가 붙은 질의가 되어 관련성이 무너진다 (이름 매칭도 title_parse 기준으로 한다).
-
-    쿼터 트레이드오프: search.list 는 건당 100 units 라 무조건 2콜(여행 + 일반)이면
-    하루 100곳 예산이 50곳으로 준다. 그래서 보충 콜은 여행 카테고리 결과가
-    BACKFILL_THRESHOLD 미만일 때만 나간다 — 대부분의 관광지는 1콜로 끝난다.
-    최악(전부 보충)엔 쿼터가 실행 중간에 끝나지만, QuotaExceeded 는 그때까지의 수집분을
-    적재하고 멈추는 신호라 남은 큐는 내일로 넘어간다 (main._collect_source).
+    검색어는 place 가 준 `query`(표시명, 이름이 겹치는 곳은 표시명 + 시군구)다. 없으면 표시명 —
+    원천 제목 `Dosan Park(도산공원)` 을 그대로 물으면 두 표기가 붙은 질의가 되어 관련성이 무너진다.
+    이름 매칭은 원천 제목 기준으로 한다(title_parse). 1관광지 1콜(100 units).
     """
     display, _ = parse_title(title)
-    links = _search_page(
-        api_key, _params(api_key, display, lang, latitude, longitude, TRAVEL_CATEGORY_ID), title,
-    )
-    if len(links) < BACKFILL_THRESHOLD:
-        try:
-            extra = _search_page(
-                api_key, _params(api_key, display, lang, latitude, longitude, None), title,
-            )
-        except QuotaExceeded:
-            extra = []   # 1차 결과는 이미 100 units 를 냈다 — 버리지 않는다
-        seen = {link["externalId"] for link in links}
-        links += [link for link in extra if link["externalId"] not in seen]
-
+    links = _search_page(api_key, _params(api_key, query or display, lang), title)
     if not links:
         return links
     details = video_details(api_key, [l["externalId"] for l in links])
@@ -114,15 +88,8 @@ def search(
     return links
 
 
-def _params(
-    api_key: str,
-    query: str,
-    lang: str,
-    latitude: float | None,
-    longitude: float | None,
-    category_id: str | None,
-) -> dict:
-    params = {
+def _params(api_key: str, query: str, lang: str) -> dict:
+    return {
         "part": "snippet",
         "q": query,
         "type": "video",
@@ -132,14 +99,6 @@ def _params(
         "safeSearch": "strict",
         "key": api_key,
     }
-    if category_id:
-        params["videoCategoryId"] = category_id
-    # 좌표가 있으면 그 근방으로 치우친다 — 동명이지·무관 지역 영상을 내린다.
-    # 큐가 좌표를 항상 실어 준다 (PendingLinkItem.latitude/longitude).
-    if latitude is not None and longitude is not None:
-        params["location"] = f"{latitude},{longitude}"
-        params["locationRadius"] = LOCATION_RADIUS
-    return params
 
 
 def _search_page(api_key: str, params: dict, title: str) -> list[dict]:

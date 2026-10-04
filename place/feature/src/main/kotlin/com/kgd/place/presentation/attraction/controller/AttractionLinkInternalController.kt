@@ -39,7 +39,7 @@ class AttractionLinkInternalController(
         return ApiResponse.success(
             PendingLinksResponse(
                 items = items.map {
-                    PendingLinkItem(it.attractionId, it.title, it.lang, it.latitude, it.longitude)
+                    PendingLinkItem(it.attractionId, it.title, it.lang, it.latitude, it.longitude, it.query)
                 },
             ),
         )
@@ -166,6 +166,8 @@ data class PendingLinkItem(
     val lang: String,
     val latitude: Double,
     val longitude: Double,
+    /** 영상 검색어 — 이름이 겹치는 관광지는 시군구 이름이 붙어 있다 */
+    val query: String,
 )
 
 data class ApplyLinkResultsRequest(

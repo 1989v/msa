@@ -4,7 +4,10 @@ import com.kgd.place.application.attraction.port.AttractionLinkRepositoryPort
 import com.kgd.place.application.attraction.port.AttractionRepositoryPort
 import com.kgd.place.application.attraction.usecase.CollectAttractionLinksUseCase
 import com.kgd.place.application.attraction.usecase.GetAttractionLinksUseCase
+import com.kgd.place.application.region.port.AdministrativeRegionRepositoryPort
+import com.kgd.place.domain.attraction.model.Attraction
 import com.kgd.place.domain.attraction.model.AttractionDeepLinks
+import com.kgd.place.domain.region.model.AdministrativeRegionLevel
 import com.kgd.place.domain.attraction.model.AttractionLink
 import com.kgd.place.domain.attraction.model.AttractionLinkRequest
 import com.kgd.place.domain.attraction.model.AttractionLinkSource
@@ -26,6 +29,7 @@ class AttractionLinkService(
     private val attractionRepository: AttractionRepositoryPort,
     private val linkRepository: AttractionLinkRepositoryPort,
     private val quotaLedger: ExternalApiQuotaLedger,
+    private val regionRepository: AdministrativeRegionRepositoryPort,
 ) : GetAttractionLinksUseCase, CollectAttractionLinksUseCase {
 
     override fun findByAttractionIds(ids: List<Long>): Map<Long, GetAttractionLinksUseCase.Links> =
@@ -59,6 +63,7 @@ class AttractionLinkService(
         if (requests.isEmpty()) return emptyList()
 
         val byId = attractionRepository.findAllByIds(requests.map { it.attractionId }).associateBy { it.id }
+        val queries = searchQueries(byId.values)
         return requests.mapNotNull { request ->
             byId[request.attractionId]?.let {
                 CollectAttractionLinksUseCase.DueItem(
@@ -67,6 +72,7 @@ class AttractionLinkService(
                     lang = it.lang,
                     latitude = it.latitude,
                     longitude = it.longitude,
+                    query = queries[request.attractionId] ?: it.titleDisplay,
                 )
             }
         }
@@ -148,6 +154,28 @@ class AttractionLinkService(
      * 장부는 **단위(unit)** 로 세므로 호출 수로 환산한다 — YouTube 는 1콜이 100 units 다.
      * 실제 증가는 호출하는 쪽(`place/ingest`, Python)이 같은 Redis 키에 한다.
      */
+    /**
+     * 영상 검색어 — 표시명 그대로, 같은 표시명·언어의 관광지가 둘 이상이면 시군구 이름을 붙인다.
+     * 좌표 반경 검색은 촬영 위치를 적은 영상만 돌려줘 방송사·교양 채널의 대표 영상이 빠졌다(경복궁 151만 회 영상).
+     * 반경을 빼면 이름이 같은 다른 지역 영상이 섞이므로, 이름이 겹치는 곳에만 지역을 붙여 가린다.
+     */
+    private fun searchQueries(attractions: Collection<Attraction>): Map<Long, String> {
+        val shared = attractionRepository.countByTitleDisplay(attractions.map { it.titleDisplay }.toSet())
+            .filter { it.total > 1 }
+            .map { it.titleDisplay to it.lang }
+            .toSet()
+        if (shared.isEmpty()) return emptyMap()
+        val sigungu = regionRepository.findByLevel(AdministrativeRegionLevel.SIGUNGU).associateBy { it.code }
+        return attractions.mapNotNull { a ->
+            val id = a.id ?: return@mapNotNull null
+            if ((a.titleDisplay to a.lang) !in shared) return@mapNotNull null
+            val region = a.ldongRegnCd?.let { regn -> a.ldongSignguCd?.let { sigungu[regn + it] } }
+                ?: return@mapNotNull null
+            val name = if (a.lang == "en") region.nameEn ?: region.name else region.name
+            id to "${a.titleDisplay} $name"
+        }.toMap()
+    }
+
     private fun remainingBudget(source: AttractionLinkSource): Int {
         val provider = providerOf(source)
         val remainingUnits = quotaLedger.remaining(provider) ?: return Int.MAX_VALUE

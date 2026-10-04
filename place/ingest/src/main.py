@@ -222,11 +222,10 @@ def _job_links(limit: int) -> int:
     naver_secret = os.environ.get("NAVER_CLIENT_SECRET")
 
     sources = []
-    # 큐 항목을 통째로 넘긴다 — 좌표(latitude/longitude)까지 소스가 쓴다 (유튜브 location 편향).
+    # 유튜브 검색어는 place 가 정한다(이름이 겹치는 곳은 시군구를 붙인다).
     if youtube_key:
         sources.append(("YOUTUBE", lambda item: youtube.search(
-            youtube_key, item["title"], item.get("lang") or "ko",
-            item.get("latitude"), item.get("longitude"))))
+            youtube_key, item["title"], item.get("lang") or "ko", item.get("query"))))
     if naver_id and naver_secret:
         sources.append(("NAVER_BLOG", lambda item: naver.search(
             naver_id, naver_secret, item["title"], item.get("lang") or "ko")))
