@@ -364,10 +364,8 @@ button.shop-product-card {
 
 /* 상품명 + 찜 버튼 한 줄 (ADR-0074) */
 .shop-detail-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  margin-bottom: 4px;
+  --favorite-nudge: -8px;
 }
 
 .shop-detail-name {

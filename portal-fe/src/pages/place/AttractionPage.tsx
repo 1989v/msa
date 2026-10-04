@@ -358,13 +358,15 @@ export default function AttractionPage() {
                 </div>
               </>
             )}
-            <h1 className="place-detail-title">{attraction.title}</h1>
+            {/* 찜 (ADR-0074) — 제목 바로 오른쪽 별. 로그인 전용, 게스트는 로그인으로 복귀 유도 */}
+            <div className="favorite-title-row">
+              <h1 className="place-detail-title">{attraction.title}</h1>
+              <FavoriteButton type="ATTRACTION" targetKey={attraction.id} lang={lang} />
+            </div>
             {/* 원어 병기명은 별도 요소다 — 제목에 괄호로 다시 붙이지 않는다 (t2 백엔드 계약) */}
             {titleParts(attraction).secondary && (
               <p className="place-detail-local">{titleParts(attraction).secondary}</p>
             )}
-            {/* 찜 (ADR-0074) — 로그인 전용, 게스트는 로그인으로 복귀 유도 */}
-            <FavoriteButton type="ATTRACTION" targetKey={attraction.id} lang={lang} />
             {attraction.category && (
               <span className="place-chip active">{placeCategoryLabel(attraction.category, lang)}</span>
             )}

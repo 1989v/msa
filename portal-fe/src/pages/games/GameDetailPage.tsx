@@ -379,11 +379,13 @@ export default function GameDetailPage() {
 
       <div className="game-detail-head">
         <div>
-          <h1 className="games-title">
-            {displayTitle(game, lang)}
-            {isBeta(game) && <span className="game-badge-beta inline">BETA</span>}
-          </h1>
-          <FavoriteButton type="GAME" targetKey={slug} />
+          <div className="favorite-title-row">
+            <h1 className="games-title">
+              {displayTitle(game, lang)}
+              {isBeta(game) && <span className="game-badge-beta inline">BETA</span>}
+            </h1>
+            <FavoriteButton type="GAME" targetKey={slug} />
+          </div>
           {isBeta(game) && (
             <p className="game-detail-beta-note">
               {lang === 'en'

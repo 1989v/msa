@@ -116,7 +116,7 @@ export default function ShopProductDetailPage() {
 
         {!loading && !error && product && (
           <section className="shop-detail-card">
-            <div className="shop-detail-head">
+            <div className="shop-detail-head favorite-title-row">
               <h1 className="shop-detail-name">{product.name}</h1>
               {/* 찜 (ADR-0074) — 목록 카드는 <button> 이라 중첩이 안 돼 상세에만 둔다 */}
               {id && <FavoriteButton type="PRODUCT" targetKey={id} />}

@@ -404,6 +404,11 @@
   letter-spacing: -0.02em;
 }
 
+/* 찜 별(44px 칸)을 제목 첫 줄 가운데에 — 제목 줄 높이 = 크기 × 1.2 */
+.blog-article .favorite-title-row {
+  --favorite-nudge: calc((clamp(1.7rem, 4vw, 2.4rem) * 1.2 - 44px) / 2);
+}
+
 .blog-article__meta {
   display: flex;
   flex-wrap: wrap;
@@ -416,10 +421,6 @@
 }
 
 /* 메타 줄 끝의 찜 버튼 — 텍스트 메타 오른쪽으로 밀어낸다 (ADR-0074) */
-.blog-article__meta .favorite-btn {
-  margin-left: auto;
-}
-
 .blog-article__meta a {
   color: var(--ko-text-secondary);
   text-decoration: none;

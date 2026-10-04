@@ -159,7 +159,11 @@ export default function BlogPostPage() {
           ))}
         </nav>
 
-        <h1 className="blog-article__title">{detail.post.title}</h1>
+        {/* 찜 — 다른 서비스와 같이 제목 바로 오른쪽 별 (ADR-0074) */}
+        <div className="favorite-title-row">
+          <h1 className="blog-article__title">{detail.post.title}</h1>
+          <FavoriteButton type="BLOG_POST" targetKey={detail.post.slug} />
+        </div>
 
         <div className="blog-article__meta kh-mono">
           {detail.post.author.handle ? (
@@ -170,8 +174,6 @@ export default function BlogPostPage() {
           <span>{formatDate(detail.post.publishedAt)}</span>
           <span>{detail.post.readingMinutes}분</span>
           <span>조회 {detail.post.viewCount}</span>
-          {/* 찜 — 좋아요(공감)와 달리 내 목록에 담는 행위라 메타 줄에 둔다 (ADR-0074) */}
-          <FavoriteButton type="BLOG_POST" targetKey={detail.post.slug} />
         </div>
 
         {detail.post.coverImageUrl && (

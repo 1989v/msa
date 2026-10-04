@@ -24,22 +24,27 @@ const NOUNS: Record<FavoriteLang, Record<FavoriteTargetType, string>> = {
 const UI: Record<FavoriteLang, {
   label: (noun: string) => string;
   undoLabel: (noun: string) => string;
-  on: string; off: string; title: string; undoTitle: string;
+  title: string; undoTitle: string;
 }> = {
   ko: {
     label: (n) => `${n} 찜`,
     undoLabel: (n) => `${n} 찜 해제`,
-    on: '찜함', off: '찜', title: '찜하기', undoTitle: '찜 해제',
+    title: '찜하기', undoTitle: '찜 해제',
   },
   en: {
     label: (n) => `Save ${n}`,
     undoLabel: (n) => `Remove ${n} from saved`,
-    on: 'Saved', off: 'Save', title: 'Save', undoTitle: 'Remove from saved',
+    title: 'Save', undoTitle: 'Remove from saved',
   },
 };
 
+/** 별 꼭짓점 — 찜 안 함은 점선 윤곽, 찜 함은 채운 별(Favorite.css) */
+const STAR = '12 2.6 14.85 8.6 21.4 9.35 16.5 13.85 17.9 20.35 12 17.05 6.1 20.35 7.5 13.85 2.6 9.35 9.15 8.6';
+
 /**
- * 찜하기 하트 (ADR-0074) — 로그인 전용. 게스트에게도 보이고, 누르면 로그인으로 보낸다
+ * 찜하기 별 (ADR-0074) — 로그인 전용. 모든 서비스(장소·게임·블로그·상점·찜 목록)가 이것 하나를 쓴다.
+ * 상세에서는 제목 바로 오른쪽(`.favorite-title-row`), 카드에서는 모서리(compact)에 앉는다.
+ * 글자 없이 별만 그리고, 이름은 접근성 문구가 말한다. 게스트에게도 보이고, 누르면 로그인으로 보낸다
  * (`next` 로 현재 화면 복귀). 토글은 낙관적 — 실패 시 useFavorites 가 되돌린다.
  *
  * compact: 카드 모서리용. 카드 전체가 <a>/<button> 이라 클릭이 링크로 새지 않게
@@ -81,10 +86,9 @@ export default function FavoriteButton({
       title={active ? L.undoTitle : L.title}
       onClick={handleClick}
     >
-      <span className="favorite-btn__heart" aria-hidden="true">
-        {active ? '♥' : '♡'}
-      </span>
-      {!compact && <span className="favorite-btn__label">{active ? L.on : L.off}</span>}
+      <svg className="favorite-btn__star" viewBox="0 0 24 24" aria-hidden="true">
+        <polygon points={STAR} />
+      </svg>
     </button>
   );
 }

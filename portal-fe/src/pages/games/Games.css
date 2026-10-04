@@ -466,6 +466,8 @@
 
 .game-detail-head {
   margin-bottom: 24px;
+  /* 찜 별(44px 칸)을 제목 첫 줄 가운데에 — 제목 줄 높이 = 크기 × 1.14 */
+  --favorite-nudge: calc((var(--kh-display, 1.875rem) * 1.14 - 44px) / 2);
 }
 
 .game-detail-meta {

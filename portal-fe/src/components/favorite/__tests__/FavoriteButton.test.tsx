@@ -125,7 +125,9 @@ describe('FavoriteButton 문구', () => {
   it('영문은 어순이 달라 문장을 따로 만든다 — 명사만 갈아끼우면 어색해진다', async () => {
     renderButton('abyssal-crown', 'en');
     const btn = await screen.findByRole('button', { name: 'Save game' });
-    expect(btn.textContent).toContain('Save');
-    expect(btn.textContent).not.toContain('찜');
+    // 글자 없이 별만 그린다 — 문구는 접근성 이름과 툴팁이 갖는다
+    expect(btn.textContent).toBe('');
+    expect(btn.getAttribute('title')).toBe('Save');
+    expect(btn.querySelector('svg polygon')).not.toBeNull();
   });
 });

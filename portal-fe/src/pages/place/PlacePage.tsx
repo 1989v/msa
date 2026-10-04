@@ -1298,10 +1298,12 @@ function AttractionDetailBody({ attraction, lang }: { attraction: Attraction; la
       {attraction.imageUrl && (
         <img className="place-detail-img" src={attraction.imageUrl} alt={primary} loading="lazy" />
       )}
-      <h2 className="place-detail-title">{primary}</h2>
+      {/* 찜 (ADR-0074) — 제목 오른쪽 별. 데스크톱 열·모바일 시트가 이 본문을 공유하므로 여기 한 번만 둔다 */}
+      <div className="favorite-title-row">
+        <h2 className="place-detail-title">{primary}</h2>
+        <FavoriteButton type="ATTRACTION" targetKey={attraction.id} lang={lang} />
+      </div>
       {secondary && <p className="place-detail-local">{secondary}</p>}
-      {/* 찜 (ADR-0074) — 데스크톱 열·모바일 시트가 이 본문을 공유하므로 여기 한 번만 둔다 */}
-      <FavoriteButton type="ATTRACTION" targetKey={attraction.id} lang={lang} />
       {attraction.category && (
         <span className="place-chip active">{L.categories[attraction.category] ?? attraction.category}</span>
       )}
