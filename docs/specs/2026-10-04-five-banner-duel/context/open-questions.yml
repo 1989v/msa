@@ -1,11 +1,20 @@
 status: concept-draft
 implementation_authorized: false
 questions:
+  - id: Q6
+    subject: 최종 게임 이름
+    proposal: 타워 라이벌
+    alternatives: [타워 듀얼, 성문 겨루기]
+    constraint: 낯선 한자 조합 대신 익숙한 영어의 한글 발음 또는 쉬운 한국어
+    status: open
+    gate: pre-release
   - id: Q1
     subject: 군량 지급 구조
     proposal: 공용 군량을 수비와 공격에 분배
     alternative: 수비·공격 자원을 분리 지급
-    status: open
+    status: closed
+    answer: 공용 군량을 수비·공격에 분배 (추천)
+    resolved_on: '2026-10-04'
     gate: pre-impl
   - id: Q2
     subject: 화풍과 전투 화면
