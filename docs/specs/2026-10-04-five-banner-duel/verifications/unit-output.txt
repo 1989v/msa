@@ -1,0 +1,82 @@
+TAP version 13
+# Subtest: startup budget is separate; new cancellation refunds, old removal does not; movement ownership
+ok 1 - startup budget is separate; new cancellation refunds, old removal does not; movement ownership
+  ---
+  duration_ms: 0.836292
+  type: 'test'
+  ...
+# Subtest: economic rejects are atomic; cart decrement refunds; paid limit; phase lock
+ok 2 - economic rejects are atomic; cart decrement refunds; paid limit; phase lock
+  ---
+  duration_ms: 0.245959
+  type: 'test'
+  ...
+# Subtest: 25-cell ceiling and occupied movement reject without spending
+ok 3 - 25-cell ceiling and occupied movement reject without spending
+  ---
+  duration_ms: 0.07325
+  type: 'test'
+  ...
+# Subtest: carry capped by NEXT grant, no kills/interest income
+ok 4 - carry capped by NEXT grant, no kills/interest income
+  ---
+  duration_ms: 3.627417
+  type: 'test'
+  ...
+# Subtest: strike consecutive sequence one reward, insufficient reset without retroactive first step
+ok 5 - strike consecutive sequence one reward, insufficient reset without retroactive first step
+  ---
+  duration_ms: 0.310458
+  type: 'test'
+  ...
+# Subtest: combo switching resets, basic wave never progresses combo, launch cannot repeat reward
+ok 6 - combo switching resets, basic wave never progresses combo, launch cannot repeat reward
+  ---
+  duration_ms: 0.143584
+  type: 'test'
+  ...
+# Subtest: general fifth stage reward spawned last with gate damage 6
+ok 7 - general fifth stage reward spawned last with gate damage 6
+  ---
+  duration_ms: 2.011291
+  type: 'test'
+  ...
+# Subtest: losing before combo immediately cancels all pending attacks and does not accrue progress
+ok 8 - losing before combo immediately cancels all pending attacks and does not accrue progress
+  ---
+  duration_ms: 0.076125
+  type: 'test'
+  ...
+# Subtest: same simulation tick accumulates both gate deaths as draw
+ok 9 - same simulation tick accumulates both gate deaths as draw
+  ---
+  duration_ms: 0.338083
+  type: 'test'
+  ...
+# Subtest: stage5 living gates get explicit prototype result; pause and elapsed clamp
+ok 10 - stage5 living gates get explicit prototype result; pause and elapsed clamp
+  ---
+  duration_ms: 0.226791
+  type: 'test'
+  ...
+# Subtest: tower roles armor piercing, nonstacking support, combat both boards
+ok 11 - tower roles armor piercing, nonstacking support, combat both boards
+  ---
+  duration_ms: 0.123541
+  type: 'test'
+  ...
+# Subtest: AI deterministic plan respects shared budget and previous snapshot
+ok 12 - AI deterministic plan respects shared budget and previous snapshot
+  ---
+  duration_ms: 0.063833
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 50.199667

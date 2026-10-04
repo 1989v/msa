@@ -1,0 +1,10 @@
+Actual CDP clicks: title → four initial archers (160 paid), 25 cells + 6-frame sprites PASS
+Actual UI stage 1: {"scout":4}, defense40, remaining 20, gates 20,20 PASS
+Actual UI stage 2: {"shield":3}, defense40, remaining 40, gates 20,20 PASS
+Actual UI stage 3: {"heavy":2}, defense40, remaining 48, gates 20,20 PASS
+Actual UI stage 4: {"heavy":1,"music":2}, defense40, remaining 72, gates 20,20 PASS
+Actual UI stage 5: {"heavy":2,"shield":2}, defense40, remaining 56, gates 20,20 PASS
+Actual 5-stage general route, no synthetic budget/time/damage, result 5스테이지 검증 종료, gates 20,20 PASS
+Paused → help close/Escape preserves pause; 25 numbered input targets44×44 PASS
+390×844 actual controls, pause/resume, build/cart, no horizontal overflow PASS
+Chrome E2E PASS · 0 console/page errors

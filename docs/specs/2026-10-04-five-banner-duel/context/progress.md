@@ -1,16 +1,24 @@
 # 진행 상태
 
-2026-10-04. 위치: `/Users/gideok-kwon/IdeaProjects/msa`.
+2026-10-05. 작업 위치 `/Users/gideok-kwon/IdeaProjects/msa` 공유 트리. 사용자 "이제 구현시작" 승인에 따른 P1 완료·부모 최종 리뷰 대기.
 
-범위: 부모 세션에서 컨셉·시안·기획만 작성. 기존 게임 구현 변경 없음.
-기존 `twin-banner-defense` 승인 아트·데이터·실행 화면을 조사했고, 내장 image_gen으로 컨셉아트와 전투 시안을 생성한다. 프롬프트·선택 이미지는 `planning/visuals/`에 보존한다. 이미지 재생성에는 생성 도구 대기 시간이 필요하므로 기존 출력 사용을 우선한다.
+## 구현·검증
 
-사용자 확정(2026-10-04): 공용 군량을 수비·공격에 분배. Q1 종료. 수치·이월 정책은 제안 상태.
+- T1~T5 구현 및 통합 검증 완료. 신규 `portal-fe/public/games/duel-defense/` 정적 ES modules 게임. 양측 독립 성문20, 5×5, AI, 공용 군량, 3/5단계 조합, 첫5단계 검증 결과.
+- Node 초기12개와 추가 비중첩 support1개·30초 deadline1개 통과. 원화5개 및 browser frame extraction 검증. `npx tsc -b` exit0.
+- 실제 CDP 입력으로 초기160 지불→5단계 조합 편성/수비 구매→대장군1 출진→5스테이지 검증 종료→재시작. 런타임에 예산/시간/피해 테스트 편법 없음. 마지막 성문20/20, 내 보상1회.
+- 실제 Chrome desktop1440×900/1280×800은 전장·장부·컨트롤 동시 접근 및 page scroll 없음. 900×900/390×844는 번호44px 선택판을 전장 아래로 배치해 스크롤 접근. 모든 번호 버튼을 스크롤 후 실제 viewport 안으로 확인. Console/page errors0.
+- 리뷰에서 발견한 도움말 close/Escape의 pause 해제, 작은/중간폭 배치 target 결함 수정·관련 UI 검증 완료.
+- 자세한 명령과 출력·스크린샷: `verifications/final-verification.md`.
 
-사용자 네이밍 확정: **대전 디펜스**. Q6 종료. 낯선 한자 조합을 피하고 익숙한 영어 발음 또는 쉬운 한국어를 쓰는 기준 유지. 컨셉아트의 제목 수정본은 `planning/visuals/01-concept-v2.png`, 최초 원본은 이력으로 보존한다.
+## Git 소유권·주의
 
-다음: 사용자 피드백으로 시안·진법 위험·첫 구현 범위 확정. 이후 상세 spec/tasks와 승인된 구현을 gpt-6.1-sol 한 명에게 인계. 현재 구현 승인 없음.
+게임 경로는 `portal-fe/public/games` 서브모듈. 기존 현재 HEAD `36bcf951`은 marine-command 작업 분기였고 root가 추적한 pointer는 `58dd81be`. 이번 게임만 커밋한 결과는 `37abce08`(prototype) + `cbf9b5e3`(최종 layout geometry/deadline regression). 부모 결정에 따라 root pointer는 갱신하지 않는다(기존 다른 변경 이력 혼입 방지). 부모가 향후 별도 통합을 결정해야 한다. Push/배포 없음. 다른 contributors' staged/dirty 변경은 보존.
 
-사용자 화면 수정 반영: 양측 5×5(25칸), 전장 캐릭터를 작게 만든 현행 시안은 `planning/visuals/02-gameplay-v2.png`. 내장 image_gen으로 생성, 두 격자는 눈으로 확인했다. 실제 출력 1672×940으로 픽셀 해상도 증가는 달성하지 못했다. 고해상도 요청과 결과 한계는 `planning/visuals/grid-revision-prompt.md`에 보존. CLI/API 폴백·단순 확대는 수행하지 않았다.
+## 다음
 
-주의: 공유 워킹트리에 다른 작업의 다수 변경과 기존 staged 삭제가 있다. 이번 폴더만 추가·검증하고 다른 변경은 커밋하지 않는다. 기존 협동 게임의 공동 성문·무작위 소환·relay를 대전 규칙으로 그대로 재사용하지 않는다. 이미지의 격자·경로·텍스트는 정확한 구현 근거가 아니다.
+부모가 T6 fresh-context 리뷰 verdict를 확인하고 이 docs/specs 슬라이스를 최종 정리한다. 기능 범위 확대·온라인·카탈로그·20단계는 이번에 포함하지 않는다.
+
+로컬 preview는 `http://127.0.0.1:4179`, 서버 재시작: `node portal-fe/public/games/duel-defense/tools/serve.mjs`. 모든 게임 데이터는 `js/data.mjs`. 대형 산출물은 승인 아틀라스 복사5개(약10MB)와 `planning/visuals/03-empty-battlefield.png` 원본이며 재생성하지 않는다.
+
+검증 중 함정: phase 전환 후150ms DOM 갱신 전에 버튼 disabled를 읽으면 CDP가 Not clickable을 낸다. E2E가 refresh를 기다리도록 수정. DOM 번호 pad는 canvas cell 좌표 자체를 확대하지 않으며 공통 cell handler를 호출한다. 보이지 않는44px 겹침 targets를 만들지 않는다.

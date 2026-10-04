@@ -1,0 +1,7 @@
+1440 900 {"scroll":900,"view":900,"confirm":809.25,"padVisible":true,"controls":true}
+1280 800 {"scroll":800,"view":800,"confirm":709.25,"padVisible":true,"controls":true}
+1200 1000 {"scroll":1000,"view":1000,"confirm":809.640625,"padVisible":true,"controls":true}
+900 1100 {"scroll":1232,"view":1100,"confirm":1145.640625,"padVisible":true,"controls":true}
+900 900 {"scroll":1160,"view":900,"confirm":1073.25,"padVisible":true,"controls":true}
+390 844 {"scroll":1961,"view":844,"confirm":1897,"padVisible":true,"controls":true}
+44px visible pad/input movement+refund,wide no-scroll,all aspect ratios no clipping; 0 browser errors PASS

@@ -1,0 +1,3 @@
+900 900 {"scroll":1160,"view":900,"confirm":1073.25,"padVisible":true,"controls":true}
+390 844 {"scroll":1961,"view":844,"confirm":1897,"padVisible":true,"controls":true}
+44px visible pad/input movement+refund,1440/1280 no-scroll,900/390 no clipping; 0 browser errors PASS
