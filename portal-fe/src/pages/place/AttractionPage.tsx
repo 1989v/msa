@@ -35,6 +35,7 @@ import AttractionConditions from './AttractionConditions';
 import AttractionInfoTabs from './AttractionInfoTabs';
 import { googleMapsSearchUrl, mapsApiKey } from './googleMaps';
 import NearbyExplore from './NearbyExplore';
+import PhotoViewer from './PhotoViewer';
 import { exploreItems, type ExploreKind } from './exploreItems';
 import Footer from '../../components/Footer';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
@@ -207,6 +208,9 @@ export default function AttractionPage() {
   // 타일 목록을 다 폈는지 — 다른 관광지로 넘어가면 다시 접는다
   const [tilesOpen, setTilesOpen] = useState(false);
   useEffect(() => setTilesOpen(false), [attraction?.contentId]);
+  // 큰 사진 크게 보기
+  const [viewerOpen, setViewerOpen] = useState(false);
+  useEffect(() => setViewerOpen(false), [attraction?.contentId]);
 
   /*
    * 노출 기록용 화면 식별자 (ADR-0095). 관광지가 바뀌면 새 한 벌이다 —
@@ -330,7 +334,24 @@ export default function AttractionPage() {
                         {shownIndex + 1} / {gallery.length}
                       </span>
                     )}
+                    {/* 사진 전체를 덮는 단추 — 누르면 크게 보기를 연다 */}
+                    <button
+                      type="button"
+                      className="place-detail-hero-open"
+                      aria-label={lang === 'en' ? 'View photo larger' : '사진 크게 보기'}
+                      onClick={() => setViewerOpen(true)}
+                    />
                   </div>
+                  {viewerOpen && (
+                    <PhotoViewer
+                      images={gallery}
+                      index={shownIndex}
+                      onIndex={setShownIndex}
+                      onClose={() => setViewerOpen(false)}
+                      title={attraction.title}
+                      lang={lang}
+                    />
+                  )}
                   {gallery.length > 1 && (() => {
                     const others = gallery.map((img, i) => ({ img, i })).filter(({ i }) => i !== shownIndex);
                     const tiles = tilesOpen ? others : others.slice(0, PHOTO_TILES);

@@ -556,6 +556,93 @@
 
 /* 배경은 사진 자체라 그대로 두면 뒤가 시끄럽다 — 흐리게 눌러 사진이 앞에 서게 한다.
    ::before 에 거는 이유: filter 를 컨테이너에 걸면 안의 <img> 까지 흐려진다. */
+/* 큰 사진 위 투명 단추 — 누르면 크게 보기(PhotoViewer) */
+.place-detail-hero-open {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.place-detail-hero-open:focus-visible {
+  outline: 2px solid var(--kh-hanji);
+  outline-offset: -4px;
+  border-radius: 0.5rem;
+}
+
+/* 사진 크게 보기 — 화면을 덮는 먹빛 판 위에 사진을 비율 그대로 */
+.place-photo-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 3.5rem 0.75rem;
+  background: color-mix(in srgb, var(--kh-ink) 92%, transparent);
+}
+
+.place-photo-viewer-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 0.25rem;
+}
+
+.place-photo-viewer-close,
+.place-photo-viewer-nav {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--kh-ink) 55%, transparent);
+  color: var(--kh-hanji);
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.place-photo-viewer-close {
+  top: 0.5rem;
+  right: 0.5rem;
+  font-size: 1.75rem;
+}
+
+.place-photo-viewer-nav {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.place-photo-viewer-nav[data-dir='prev'] {
+  left: 0.5rem;
+}
+
+.place-photo-viewer-nav[data-dir='next'] {
+  right: 0.5rem;
+}
+
+.place-photo-viewer-close:focus-visible,
+.place-photo-viewer-nav:focus-visible {
+  outline: 2px solid var(--kh-hanji);
+  outline-offset: 2px;
+}
+
+.place-photo-viewer-count {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--kh-hanji);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
 .place-detail-hero::before {
   content: '';
   position: absolute;

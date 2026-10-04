@@ -245,6 +245,38 @@ describe('AttractionPage 새 섹션', () => {
     expect(screen.getByText('5 / 10')).toBeInTheDocument();
   });
 
+  it('큰 사진을 누르면 크게 보기가 열리고, 좌우 버튼·방향키로 넘기며(끝에서 돈다) Esc 로 닫는다', async () => {
+    const urls = Array.from({ length: 3 }, (_, i) => `https://img.example/${i}.jpg`);
+    vi.mocked(fetchAttraction).mockResolvedValue({
+      ...enriched,
+      imageUrl: urls[0],
+      imagesRaw: JSON.stringify(urls.slice(1).map((u, i) => ({ originimgurl: u, imgname: `사진${i + 1}` }))),
+    });
+    renderAt('/attractions/100');
+    fireEvent.click(await screen.findByRole('button', { name: '사진 크게 보기' }));
+    const viewer = screen.getByRole('dialog', { name: '사진 크게 보기' });
+    const img = () => viewer.querySelector('.place-photo-viewer-img');
+
+    expect(img()).toHaveAttribute('src', urls[0]);
+    expect(within(viewer).getByRole('button', { name: '닫기' })).toHaveFocus();
+    fireEvent.click(within(viewer).getByRole('button', { name: '다음 사진' }));
+    expect(img()).toHaveAttribute('src', urls[1]);
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(img()).toHaveAttribute('src', urls[2]);
+    expect(within(viewer).getByText('3 / 3')).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(img()).toHaveAttribute('src', urls[0]);
+    fireEvent.keyDown(window, { key: 'ArrowLeft' });
+    expect(img()).toHaveAttribute('src', urls[2]);
+    fireEvent.click(within(viewer).getByRole('button', { name: '이전 사진' }));
+    expect(img()).toHaveAttribute('src', urls[1]);
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    // 넘긴 장이 상세의 큰 사진에도 남는다
+    expect(document.querySelector('.place-detail-img')).toHaveAttribute('src', urls[1]);
+  });
+
   it('같은 장소의 다른 등록이 있으면 방문 정보에 「복합공간」과 그 등록으로 가는 칩을 둔다', async () => {
     vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, samePlace: [{ id: '29692', contentTypeId: '38' }] });
     renderAt('/attractions/100');
