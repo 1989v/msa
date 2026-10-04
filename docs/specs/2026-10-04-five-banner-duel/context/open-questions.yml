@@ -21,6 +21,7 @@ questions:
   - id: Q2
     subject: 화풍과 전투 화면
     proposal: 기존 협동 원화 계승, 독립 성문, 내 전장 중심 가로 화면
+    confirmed_constraints: 양측 5×5 타일, 작은 전장 캐릭터, 고해상도 시안 요청
     status: open
     gate: pre-impl
   - id: Q3
