@@ -7,6 +7,7 @@ import com.kgd.place.application.attraction.usecase.GetAttractionLinksUseCase
 import com.kgd.place.application.region.port.AdministrativeRegionRepositoryPort
 import com.kgd.place.domain.attraction.model.Attraction
 import com.kgd.place.domain.attraction.model.AttractionDeepLinks
+import com.kgd.place.domain.attraction.model.AttractionTitle
 import com.kgd.place.domain.region.model.AdministrativeRegionLevel
 import com.kgd.place.domain.attraction.model.AttractionLink
 import com.kgd.place.domain.attraction.model.AttractionLinkRequest
@@ -155,7 +156,8 @@ class AttractionLinkService(
      * 실제 증가는 호출하는 쪽(`place/ingest`, Python)이 같은 Redis 키에 한다.
      */
     /**
-     * 영상 검색어 — 표시명 그대로, 같은 표시명·언어의 관광지가 둘 이상이면 시군구 이름을 붙인다.
+     * 영상 검색어 — 표시명 그대로. 국문 원천 제목이 꼬리 괄호에 지역 구분자를 달았으면(`용궁사(인천)`) 그것을,
+     * 아니면 같은 표시명·언어의 관광지가 둘 이상일 때 시군구 이름을 붙인다.
      * 좌표 반경 검색은 촬영 위치를 적은 영상만 돌려줘 방송사·교양 채널의 대표 영상이 빠졌다(경복궁 151만 회 영상).
      * 반경을 빼면 이름이 같은 다른 지역 영상이 섞이므로, 이름이 겹치는 곳에만 지역을 붙여 가린다.
      */
@@ -164,10 +166,12 @@ class AttractionLinkService(
             .filter { it.total > 1 }
             .map { it.titleDisplay to it.lang }
             .toSet()
-        if (shared.isEmpty()) return emptyMap()
-        val sigungu = regionRepository.findByLevel(AdministrativeRegionLevel.SIGUNGU).associateBy { it.code }
+        val sigungu by lazy { regionRepository.findByLevel(AdministrativeRegionLevel.SIGUNGU).associateBy { it.code } }
         return attractions.mapNotNull { a ->
             val id = a.id ?: return@mapNotNull null
+            // 원천이 이미 지역으로 갈라 둔 이름 — 이것이 가장 정확한 구분이다(국문 행의 꼬리 괄호는 지역 구분자)
+            val qualifier = AttractionTitle.parse(a.title).local?.takeIf { a.lang == "ko" }
+            if (qualifier != null) return@mapNotNull id to "${a.titleDisplay} $qualifier"
             if ((a.titleDisplay to a.lang) !in shared) return@mapNotNull null
             val region = a.ldongRegnCd?.let { regn -> a.ldongSignguCd?.let { sigungu[regn + it] } }
                 ?: return@mapNotNull null
