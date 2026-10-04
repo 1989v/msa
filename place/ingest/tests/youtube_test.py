@@ -1,7 +1,11 @@
 """유튜브 영상 정보 — videos.list 항목에서 조회수·길이·플레이어 크기를 원문대로 꺼낸다."""
 from __future__ import annotations
 
+import io
 import json
+import urllib.error
+
+import pytest
 from urllib.parse import parse_qs, urlparse
 
 from src import youtube
@@ -54,3 +58,60 @@ def test_video_details_asks_player_size_by_width(monkeypatch):
     assert sent[0]["maxWidth"] == ["640"] and "maxHeight" not in sent[0]
     assert set(sent[0]["part"][0].split(",")) == {"statistics", "contentDetails", "player"}
     assert found["v1"]["embedHeight"] == 640
+
+
+class _Ledger:
+    """쿼터 장부 대역 — 몇 단위를 적었는지와 허용 여부만 본다."""
+
+    def __init__(self, allow: bool = True):
+        self.allow = allow
+        self.costs: list[int] = []
+
+    def try_acquire(self, provider, cost=1):
+        assert provider == "youtube-data"
+        self.costs.append(cost)
+        return self.allow
+
+
+def test_search_records_100_units_per_call_in_ledger(monkeypatch):
+    # 장부에 안 적으면 place 가 매시 10곳씩 하루 240번을 내준다(2026-10-03 한도 초과)
+    ledger = _Ledger()
+    monkeypatch.setattr(youtube, "_ledger", ledger)
+
+    class Reply:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def read(self):
+            return json.dumps({"items": []}).encode()
+
+    monkeypatch.setattr(youtube.urllib.request, "urlopen", lambda req, timeout=0: Reply())
+    youtube.search("k", "경복궁", "ko")
+    # 여행 카테고리 결과가 모자라 일반 검색 1콜을 보충했다 — 두 콜 모두 100 units
+    assert ledger.costs == [100, 100]
+
+
+def test_exhausted_ledger_stops_before_calling(monkeypatch):
+    monkeypatch.setattr(youtube, "_ledger", _Ledger(allow=False))
+    called = []
+    monkeypatch.setattr(youtube.urllib.request, "urlopen", lambda *a, **k: called.append(1))
+    with pytest.raises(youtube.QuotaExceeded):
+        youtube.search("k", "경복궁", "ko")
+    assert called == []
+
+
+def test_daily_search_limit_429_stops_the_run(monkeypatch):
+    # 프로젝트의 「Search Queries per day」 한도는 403 이 아니라 429 로 온다(2026-10-04 운영 응답)
+    monkeypatch.setattr(youtube, "_ledger", _Ledger())
+    body = json.dumps({"error": {"code": 429, "errors": [{"reason": "rateLimitExceeded"}],
+                                 "message": "Quota exceeded for quota metric 'Search Queries'"}})
+
+    def fake_urlopen(req, timeout=0):
+        raise urllib.error.HTTPError(req.full_url, 429, "Too Many Requests", {}, io.BytesIO(body.encode()))
+
+    monkeypatch.setattr(youtube.urllib.request, "urlopen", fake_urlopen)
+    with pytest.raises(youtube.QuotaExceeded):
+        youtube.search("k", "경복궁", "ko")

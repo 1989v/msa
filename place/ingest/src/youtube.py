@@ -6,8 +6,10 @@
 `search.list` 는 **건당 100 units** 이고 일일 쿼터가 10,000 units 라 하루 100 관광지가 상한이다.
 그래서 전량 사전수집을 하지 않고, 실제로 열어본 곳부터(place 의 우선순위 큐) 채운다.
 
-**쿼터 소진은 403(reason=quotaExceeded)이지 429 가 아니다.** 이걸 일반 실패로 흘리면 남은
-큐를 계속 두드리며 로그만 쌓이므로, 만나는 즉시 그 실행을 멈춘다.
+**쿼터 소진은 둘로 온다** — 단위 한도는 403(quotaExceeded), 프로젝트의 「Search Queries per day」 한도는
+429(rateLimitExceeded)다. 둘 다 일반 실패로 흘리면 남은 큐를 계속 두드리며 로그만 쌓이므로, 만나는 즉시 그
+실행을 멈춘다. 호출 직전에는 공용 쿼터 장부(ADR-0082)에 단위를 적는다 — place 가 이 장부로 하루 몫을 정하므로,
+안 적으면 장부가 늘 비어 보여 매시 10곳씩 하루 240번을 부르게 된다(2026-10-03 한도 초과).
 """
 from __future__ import annotations
 
@@ -16,6 +18,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+from src import quota
 from src.linkmatch import matches
 from src.title_parse import parse_title
 
@@ -40,8 +43,29 @@ BACKFILL_THRESHOLD = 3
 LOCATION_RADIUS = "10km"
 
 
+#: search.list 1콜 = 100 units, videos.list 1콜(50개 묶음) = 1 unit
+SEARCH_COST = 100
+VIDEOS_COST = 1
+
+_ledger: quota.QuotaLedger | None = None
+
+
 class QuotaExceeded(RuntimeError):
     """일일 쿼터 소진 — 남은 큐를 더 두드려도 답이 같다."""
+
+
+def _acquire(cost: int) -> None:
+    """호출 직전에 장부에 적는다. 오늘 몫을 넘으면 부르지 않고 멈춘다."""
+    global _ledger
+    if _ledger is None:
+        _ledger = quota.QuotaLedger()
+    if not _ledger.try_acquire(quota.YOUTUBE_DATA, cost):
+        raise QuotaExceeded("쿼터 장부 — 오늘 몫 소진")
+
+
+def _raise_if_quota(e: urllib.error.HTTPError, detail: str) -> None:
+    if (e.code == 403 and "quotaExceeded" in detail) or e.code == 429:
+        raise QuotaExceeded(f"HTTP {e.code} {detail[:200]}") from e
 
 
 def search(
@@ -119,6 +143,7 @@ def _params(
 
 
 def _search_page(api_key: str, params: dict, title: str) -> list[dict]:
+    _acquire(SEARCH_COST)
     req = urllib.request.Request(
         f"{SEARCH_URL}?{urllib.parse.urlencode(params)}",
         headers={"Accept": "application/json"},
@@ -127,9 +152,7 @@ def _search_page(api_key: str, params: dict, title: str) -> list[dict]:
         with urllib.request.urlopen(req, timeout=30) as r:
             body = json.loads(r.read().decode())
     except urllib.error.HTTPError as e:
-        detail = e.read().decode(errors="replace")
-        if e.code == 403 and "quotaExceeded" in detail:
-            raise QuotaExceeded(detail[:200]) from e
+        _raise_if_quota(e, e.read().decode(errors="replace"))
         raise
 
     links = []
@@ -161,6 +184,7 @@ def video_details(api_key: str, video_ids: list[str]) -> dict[str, dict]:
     for i in range(0, len(video_ids), STATS_BATCH):
         params = {"part": "statistics,contentDetails,player", "maxWidth": EMBED_MAX_WIDTH,
                   "id": ",".join(video_ids[i:i + STATS_BATCH]), "key": api_key}
+        _acquire(VIDEOS_COST)
         req = urllib.request.Request(
             f"{VIDEOS_URL}?{urllib.parse.urlencode(params)}",
             headers={"Accept": "application/json"},
@@ -169,9 +193,7 @@ def video_details(api_key: str, video_ids: list[str]) -> dict[str, dict]:
             with urllib.request.urlopen(req, timeout=30) as r:
                 body = json.loads(r.read().decode())
         except urllib.error.HTTPError as e:
-            detail = e.read().decode(errors="replace")
-            if e.code == 403 and "quotaExceeded" in detail:
-                raise QuotaExceeded(detail[:200]) from e
+            _raise_if_quota(e, e.read().decode(errors="replace"))
             # 부수 정보다. 못 받으면 정렬·형태만 포기하고 영상은 그대로 쓴다.
             return found
         found.update(details_from_items(body.get("items") or []))

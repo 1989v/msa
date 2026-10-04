@@ -137,13 +137,13 @@ class AttractionPageRendererTest : BehaviorSpec({
         }
 
         then("다른 시도의 비슷한 곳이 상세 링크와 시도 이름으로 나간다 — 시도를 모르면 이름만") {
-            root shouldContain "<h2>비슷한 곳</h2>"
+            root shouldContain "<h2>다른 지역의 비슷한 곳</h2>"
             root shouldContain "<li><a href=\"/attractions/3001\">경기전</a> · 전북특별자치도</li>"
             root shouldContain "<li><a href=\"/attractions/3002\">화성행궁 &lt;정조&gt;</a></li>"
         }
 
         then("섹션 순서는 개요 → 방문 정보 원문 → 배지 → 지역 안 위치 → 같은 분류 가까운 곳 → 비슷한 곳") {
-            val order = listOf("조선 왕조의 법궁", "이용 안내", "매주 화요일 휴무", "종로구 관광지 120곳", "창덕궁", "비슷한 곳", "경기전")
+            val order = listOf("조선 왕조의 법궁", "이용 안내", "매주 화요일 휴무", "종로구 관광지 120곳", "창덕궁", "다른 지역의 비슷한 곳", "경기전")
                 .map { root.indexOf(it) }
             order.none { it < 0 } shouldBe true
             order shouldBe order.sorted()
@@ -222,10 +222,10 @@ class AttractionPageRendererTest : BehaviorSpec({
         }
 
         then("비슷한 곳과 겹쳐도 두 절이 각자 그 곳을 그린다 — 절 순서는 비슷한 곳 → 함께 간 곳 → 출처") {
-            val similarSection = root.substringAfter("<h2>비슷한 곳</h2>").substringBefore("</ul>")
+            val similarSection = root.substringAfter("<h2>다른 지역의 비슷한 곳</h2>").substringBefore("</ul>")
             similarSection shouldContain "광안리해수욕장"
             section shouldContain "광안리해수욕장"
-            val order = listOf("<h2>비슷한 곳</h2>", "여기 온 사람들이 함께 간 곳", "data-place-section=\"source\"").map { root.indexOf(it) }
+            val order = listOf("<h2>다른 지역의 비슷한 곳</h2>", "여기 온 사람들이 함께 간 곳", "data-place-section=\"source\"").map { root.indexOf(it) }
             order.none { it < 0 } shouldBe true
             order shouldBe order.sorted()
         }
@@ -437,7 +437,7 @@ class AttractionPageRendererTest : BehaviorSpec({
             val allEnded = region.copy(sameCategoryNearby = listOf(NearbyPlace("5101", "어제 끝난 축제", 900, TODAY.minusDays(1))))
             val r = rootOf(render(SHELL, event(region = allEnded, similarElsewhere = similar.take(1))))
             r shouldNotContain "같은 분류 가까운 곳"
-            r shouldNotContain "<h2>비슷한 곳</h2>"
+            r shouldNotContain "<h2>다른 지역의 비슷한 곳</h2>"
         }
     }
 

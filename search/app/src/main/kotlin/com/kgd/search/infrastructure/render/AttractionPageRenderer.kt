@@ -599,7 +599,7 @@ class AttractionPageRenderer(
             val sido = s.sidoName?.takeIf { it.isNotBlank() }?.let { " · ${escapeHtml(it)}" }.orEmpty()
             "<li><a href=\"${escapeHtml(attractionPath(lang, s.id))}\">${escapeHtml(s.title)}</a>$sido</li>"
         }
-        return "<h2>${if (lang == EN) "Similar places in other regions" else "비슷한 곳"}</h2><ul>$items</ul>"
+        return "<h2>${if (lang == EN) "Similar places in other regions" else "다른 지역의 비슷한 곳"}</h2><ul>$items</ul>"
     }
 
     /**
