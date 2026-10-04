@@ -201,3 +201,11 @@ https://game.1989v.com/games/marine-command/index.html 에BETA공개배포완료
 - 첫 생성 wave.number===0만 기본120→80, 협동 ceil×1.4로168→112. 둘째160/224 및 이후수식·구성·위치·간격·AI·가격·스킬유지. 기존필드적/대기queue소급삭제없음. 새원정 또는 첫wave미생성저장부터적용.
 - gpt-6.1-sol 단일담당, count분기주변만확인. 첫solo/coop·둘째불변·기존queue120/cursor19보존1건과구protocol거부1건PASS. 23query정합/문법통과, 전체게임테스트반복없음. protocol11/queryopening-wave-11.
 - local0c59d822/releasegames46f0c04f/rootportalf194543/manifest58b0156a. CI [37166049509](https://github.com/1989v/msa/actions/runs/37166049509) SUCCESS, portal Ready/Updated/Available1/이전RS0, ArgoSynced/Succeeded(기존전체Degraded별도). 공개31HTTP/MIME·runtime15정확해시·PNG11원본일치. backend/DB변경없음, 원본staged15cf보존. 실제브라우저픽셀미검증. 근거verifications/first-wave-beta-evidence.json 및 first-wave-beta-rollout.txt.
+
+## 몬스터 도감·적 선택·강화 판단 — 2026-10-04
+- 사용자가첫웨이브방업목표를알수없다고지적. 실제첫정찰형은공격2/HP12(solo)·18(coop), 기본좀비데이터는공격4/HP24이므로변형을구분해야한다. 초기궁수방0피해2→방1피해1, 비용25G. 일반형은방3/누적150G에서피해1. 최소피해1이며다수공격생존보장아님을사용자에게먼저설명했다.
+- gpt-6.1-sol 단일구현. 현재보이는같은지역의살아있는적클릭/탭→별도정보카드, 아군선택유지·클릭이동명령미발행. 사망/시야이탈/지역이탈시닫기. 현재HP/maxHP·실효공격/간격/방어/사거리/지상비행/근원거리/변형표시, 보스특수패턴과기본피해구분.
+- 내선택전투유닛고정ID1명기준현재공방·받는피해·주는일반공격피해·남은HP처치타수, 최소피해1에도달할총/추가방업·누적비용/상한불가표시. 선택없으면일반궁수예시라벨. 주둔은탑이피격됨을알리고유닛비교는지상가정으로분리한다. 실제sim과공용stats/피해/비용helper사용, 전투밸런스무변경.
+- HUD몬스터도감: 기본10+정찰6+전초파수꾼=17정적프로필, 기존sprites썸네일. 숨겨진적좌표/현재상태노출없음. 반응형버튼배치정리. 협동표시scout를없음/false/true숫자열로정확복원해guest공격력도2로유지. canonicalcheckpoint변경/상한확대없음.
+- 관련고유8건최종PASS: stats/비교2, 실제guardtick·guestflag1, maxpayload1, 클릭/시야/도감1, 실제사망닫힘1, 구protocol1, helper영향Q6타격1. 최초maxdisplay5청크초과는scout표현수정후영향만재검증. 실제HP피해scout2/normal4/guard14 및Q75/73/70유지확인. 최대checkpoint46949B16청크/두슬롯94478B/display12097B4청크, maxenvelope3226<3800, 26msgsec/2550ms복원. 23query/문법정합PASS, protocol12/monster-info-12. 실제브라우저픽셀·조작감미검증.
+- 베타 배포 완료: local9be80711+CSSfix5c98f189/releasegamesaca0481a/rootd49b40e8/manifest6136460a. CSS4h캐시문제방지로stylesheet도?v=monster-info-12, RELEASE.md에동시태그갱신명시. 구중복자체CI만승인취소, 타기여자배포미중단. 최신CI [37169612524](https://github.com/1989v/msa/actions/runs/37169612524) SUCCESS. Portal Ready/Updated/Available1/이전RS0, ArgoSynced/Succeeded(전체기존Degraded별도). 공개31HTTP/MIME·15JSminify정확해시·CSS원본해시·PNG11일치, 궁수키우기/BETA확인. Backend/DB변경없음, originalstaged15cf보존. 기존save유지/협동새로고침. 증거verifications/monster-info-beta-evidence.json 및 monster-info-beta-rollout.txt.

@@ -1,0 +1,16 @@
+deployment "portal-fe" successfully rolled out
+NAME        READY   UP-TO-DATE   AVAILABLE   AGE    CONTAINERS   IMAGES                                                  SELECTOR
+portal-fe   1/1     1            1           139d   app          ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe:d49b40e   app.kubernetes.io/name=portal-fe
+NAME                   DESIRED   CURRENT   READY   AGE
+portal-fe-5564d8cb57   1         1         1       3m52s
+portal-fe-5cbc8f455f   0         0         0       13h
+portal-fe-6545bbc5d4   0         0         0       12h
+portal-fe-66595fdb46   0         0         0       8h
+portal-fe-7847c6f444   0         0         0       9m36s
+portal-fe-78d486b5c5   0         0         0       45m
+portal-fe-7b8b7cb845   0         0         0       8h
+portal-fe-7cc98f7fd7   0         0         0       59m
+portal-fe-86894677c7   0         0         0       75m
+portal-fe-bc5c49f94    0         0         0       11h
+portal-fe-c6686fbd5    0         0         0       12h
+Synced 6136460a5c14fda31afb900d40336c577acbef7e Degraded Succeeded

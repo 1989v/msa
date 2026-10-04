@@ -106,3 +106,6 @@ games19828054. 첫3wave지상전용,4차부터박쥐소수. 기지옆무적중�
 
 ## 최신: 첫 웨이브 2/3 베타 반영
 첫solo120→80/coop168→112, 둘째160/224이후불변·기존queue보존. 관련2건PASS. local0c59d822/release46f0c04f/portalf194543/manifest58b0156a, CI37166049509SUCCESS 및공개파일확인. protocol11/opening-wave-11, 새원정또는첫wave미생성save부터적용. 상세status.md최신절.
+
+## 최신: 몬스터 도감·적 선택 정보 베타 완료
+보이는적클릭→실제HP/공격/방어·내아군피해/타수/최소피해방업비용. 기본·정찰·파수꾼17정적도감. 첫정찰공2는초기궁수방1(25G)로피해1, 일반공4는방3(누적150G); 동시공격생존보장아님. 관련8PASS, protocol12/JS·CSSmonster-info-12. local5c98f189/releaseaca0481a/portald49b40e/manifest6136460a, CI37169612524SUCCESS/공개파일확인. planning/monster-info.md 참조. 새원정불필요, 실제브라우저픽셀미검증.
