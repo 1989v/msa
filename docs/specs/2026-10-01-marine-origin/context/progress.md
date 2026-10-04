@@ -109,3 +109,6 @@ games19828054. 첫3wave지상전용,4차부터박쥐소수. 기지옆무적중�
 
 ## 최신: 몬스터 도감·적 선택 정보 베타 완료
 보이는적클릭→실제HP/공격/방어·내아군피해/타수/최소피해방업비용. 기본·정찰·파수꾼17정적도감. 첫정찰공2는초기궁수방1(25G)로피해1, 일반공4는방3(누적150G); 동시공격생존보장아님. 관련8PASS, protocol12/JS·CSSmonster-info-12. local5c98f189/releaseaca0481a/portald49b40e/manifest6136460a, CI37169612524SUCCESS/공개파일확인. planning/monster-info.md 참조. 새원정불필요, 실제브라우저픽셀미검증.
+
+## 최신: 아군 능력치·치유 거점 수치 베타 반영, 정지 수비 목표 확인 대기
+선택아군HP/공방/사거리/간격/속도/강화표시, 기본좀비공11·힐50%HP초/반경180. 일반방10·영웅강화8 최소피해1. 관련8건PASS·공개배포확인(local36bcf951/releasebc58c11/portalafb3312/manifestdf3f0550, CI37171686970SUCCESS). protocol13/unit-defense-13. 다만제자리방어구매정책은방4·29.13초사망으로첫wave완주실패. 사용자에게async목표질문(정지강화완주vs범위내이동수비), 답전추가튜닝없음. planning/healer-defense-balance.md 상세관찰·status.md최신절참조.
