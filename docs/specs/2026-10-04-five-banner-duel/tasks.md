@@ -7,8 +7,8 @@
 - [x] T3 기존 승인 sprite 아틀라스 추출/animation, 독립 성문·5×5·작은 유닛 렌더링
 - [x] T4 타이틀·도움말·배치·공격 카트·장부·관찰·결과·재시작·소리/일시정지
 - [x] T5 로컬 실행 도구·README·브라우저 E2E/asset check, 최종 통합 검증 및 증거
-- [ ] T6 부모 보고 확인 후 fresh-context 구현 리뷰, 유효 결함 수정·관련 재검증
+- [x] T6 부모 보고 확인 후 fresh-context 구현 리뷰, 유효 결함 수정·관련 재검증
 
 그룹 중간에 같은 테스트/전체 빌드를 반복하지 않는다. 구현 완료와 검증 완료는 구분한다. 기존 협동 게임·타 작업 변경을 보존한다. 커밋은 이 작업의 파일만 포함하며 훅 우회 금지. 온라인 배포는 수행하지 않는다.
 
-2026-10-05 구현·통합 검증 완료: games 서브모듈 `cbf9b5e3`. 증거는 `verifications/final-verification.md`. T6 독립 리뷰는 부모에서 마무리하며 확인된 pause/44px/intermediate 폭 결함은 수정·관련 브라우저 재검증 완료.
+2026-10-05 구현·통합 검증 완료: games 서브모듈 `cbf9b5e3`. 증거는 `verifications/final-verification.md`. T6 부모 독립 리뷰 최종 SHIP 확인. pause/44px/모든 aspect 폭 결함은 수정·관련 브라우저 재검증 완료.

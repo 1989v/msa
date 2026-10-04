@@ -1,6 +1,7 @@
+<!-- source: portal-fe/public/games/duel-defense/js/core.mjs, portal-fe/public/games/duel-defense/tests/core.test.mjs, portal-fe/public/games/duel-defense/tools/e2e.mjs, portal-fe/public/games/duel-defense/tools/layout.mjs -->
 # P1 통합 검증 — 2026-10-05
 
-구현 games commits `37abce08`(prototype), `cbf9b5e3`(aspect geometry/deadline regression), 최종 HEAD `cbf9b5e3`. 검증 담당은 구현자 gpt-6.1-sol 한 명. 부모는 같은 테스트를 반복하지 않는다. T1~T5 완료, 부모 fresh-context 최종 verdict 대기. 온라인·배포·카탈로그 변경 없음.
+구현 games commits `37abce08`(prototype), `cbf9b5e3`(aspect geometry/deadline regression), 최종 HEAD `cbf9b5e3`. 검증 담당은 구현자 gpt-6.1-sol 한 명. 부모는 같은 테스트를 반복하지 않는다. T1~T6 완료, 부모 fresh-context 최종 verdict **SHIP**. [독립 리뷰 기록](fresh-review.md). 온라인·배포·카탈로그 변경 없음.
 
 ## 명령·실제 증거
 
@@ -51,3 +52,5 @@ CDP mouse events로 타이틀 시작, 초기 궁수4명(160 지불), 단계마�
 정적 독립 game만 변경. root DESIGN.md 승인 상수7종 사용, 추가 임의 hex 없음. 기존 협동 게임 파일/서비스/DB/온라인·운영 배포 변경 없음. UI는 DOM 텍스트, Canvas simulation/sprites이고 시안 통이미지 버튼 오버레이가 아니다. 원본 아틀라스4개 복사, 새1254×1254 빈 전장만 독립 반복 렌더링.
 
 Root games pointer는 이번에 갱신하지 않음: 기존 root58dd81be→worktree36bcf951 차이에 타 작업 이력이 있어서 부모가 별도 통합해야 한다. 이번 game commitcbf9b5e3만 보존. 로컬 preview는 정상이다.
+
+총 Core 사례14개: 초기12 +추가 support1 +추가30초 deadline1, 각 명령 출력으로 통과 확인. 정상 git commit 훅 실행, root warn-only doctor의 기존 uncited-doc208건은 비차단 경고로 남겼다(훅 우회 없음).
