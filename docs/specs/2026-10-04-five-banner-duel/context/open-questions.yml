@@ -6,7 +6,9 @@ questions:
     proposal: 타워 라이벌
     alternatives: [타워 듀얼, 성문 겨루기]
     constraint: 낯선 한자 조합 대신 익숙한 영어의 한글 발음 또는 쉬운 한국어
-    status: open
+    status: closed
+    answer: 대전 디펜스
+    resolved_on: '2026-10-04'
     gate: pre-release
   - id: Q1
     subject: 군량 지급 구조
