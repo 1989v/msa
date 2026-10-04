@@ -13,6 +13,7 @@
 """
 from __future__ import annotations
 
+import html
 import json
 import urllib.error
 import urllib.parse
@@ -118,16 +119,19 @@ def _search_page(api_key: str, params: dict, title: str) -> list[dict]:
     for item in body.get("items") or []:
         video_id = ((item.get("id") or {}).get("videoId") or "").strip()
         snippet = item.get("snippet") or {}
-        if not video_id or not matches(title, snippet.get("title", ""), snippet.get("description", "")):
+        # search.list 는 snippet 문자열을 HTML 이스케이프해서 준다(&quot; &#39; &amp;) — 화면에 글자 그대로 찍혔다
+        video_title = html.unescape(snippet.get("title") or "")
+        description = html.unescape(snippet.get("description") or "")
+        if not video_id or not matches(title, video_title, description):
             continue
         thumbnails = snippet.get("thumbnails") or {}
         thumb = (thumbnails.get("medium") or thumbnails.get("default") or {}).get("url")
         links.append({
             "externalId": video_id,
-            "title": (snippet.get("title") or "").strip()[:300],
+            "title": video_title.strip()[:300],
             "url": f"{WATCH_URL}{video_id}",
             "thumbnailUrl": thumb,
-            "author": (snippet.get("channelTitle") or "").strip()[:100] or None,
+            "author": html.unescape(snippet.get("channelTitle") or "").strip()[:100] or None,
             # RFC3339(Z) → place 가 받는 LocalDateTime
             "publishedAt": (snippet.get("publishedAt") or "").rstrip("Z") or None,
         })

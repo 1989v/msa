@@ -144,3 +144,30 @@ def test_daily_search_limit_429_stops_the_run(monkeypatch):
     monkeypatch.setattr(youtube.urllib.request, "urlopen", fake_urlopen)
     with pytest.raises(youtube.QuotaExceeded):
         youtube.search("k", "경복궁", "ko")
+
+
+def test_search_snippet_text_is_unescaped(monkeypatch):
+    # search.list 는 제목·채널명을 HTML 이스케이프해서 준다 — 그대로 저장하면 화면에 &quot; 가 찍힌다(2026-10-05 경복궁)
+    monkeypatch.setattr(youtube, "_ledger", _Ledger())
+    body = {"items": [{"id": {"videoId": "v1"}, "snippet": {
+        "title": "&quot;일본이 최고라더니...&quot; 한국 경복궁 보자마자 말문", "description": "",
+        "channelTitle": "Tom &amp; Jerry&#39;s", "thumbnails": {}}}]}
+
+    class Reply:
+        def __init__(self, data):
+            self.data = data
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def read(self):
+            return json.dumps(self.data).encode()
+
+    monkeypatch.setattr(youtube.urllib.request, "urlopen",
+                        lambda req, timeout=0: Reply(body if "search" in req.full_url else {"items": []}))
+    [link] = youtube.search("k", "경복궁", "ko")
+    assert link["title"] == '"일본이 최고라더니..." 한국 경복궁 보자마자 말문'
+    assert link["author"] == "Tom & Jerry's"
