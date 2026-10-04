@@ -1,0 +1,29 @@
+status: concept-draft
+implementation_authorized: false
+questions:
+  - id: Q1
+    subject: 군량 지급 구조
+    proposal: 공용 군량을 수비와 공격에 분배
+    alternative: 수비·공격 자원을 분리 지급
+    status: open
+    gate: pre-impl
+  - id: Q2
+    subject: 화풍과 전투 화면
+    proposal: 기존 협동 원화 계승, 독립 성문, 내 전장 중심 가로 화면
+    status: open
+    gate: pre-impl
+  - id: Q3
+    subject: 첫 구현 범위
+    proposal: 신규 게임 경로에서 로컬 AI와 첫 5스테이지부터 검증
+    status: open
+    gate: pre-impl
+  - id: Q4
+    subject: 진법 실패 의미
+    proposal: 편성 불충족은 초기화, 성문 체력 0은 즉시 패배, 작은 누수는 허용
+    status: open
+    gate: pre-impl
+  - id: Q5
+    subject: 온라인 판정과 연결 끊김 정책
+    proposal: 로컬 플레이 검증 후 경쟁 대전 요구에 맞춰 별도 기술 설계
+    status: deferred
+    gate: pre-online
