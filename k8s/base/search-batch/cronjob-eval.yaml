@@ -12,8 +12,9 @@ spec:
   # 하이브리드+쿼리 언더스탠딩(C, 라이브 API) 이 기준선보다 EVAL_TOLERANCE 넘게 떨어지면 Job 이 Failed 로 남는다.
   # 기록 표와 결과는 scripts/search-eval/README.md.
   #   온디맨드:  kubectl -n commerce create job --from=cronjob/search-eval search-eval-manual
-  # 매일 UTC 20:30 = KST 05:30 — attraction-reindex(KST 04:30, 5~10분) 가 끝난 색인을 잰다
-  schedule: "30 20 * * *"
+  # 매일 UTC 22:30 = KST 07:30 — attraction-reindex(KST 06:30, 5~10분) 가 끝난 색인을 잰다.
+  # 재색인 시각을 옮기면 이것도 옮긴다 — 앞서 돌면 전날 색인을 재고 통과한다.
+  schedule: "30 22 * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 5
