@@ -1,17 +1,19 @@
 # 대전 디펜스 — 1:1 대전 타워디펜스 기획·시안
 
-상태: **R4 확장 구현 중 — 20스테이지·병과 성장·걷기 교정**. 사용자 요청: 2026-10-05. 설계 정본은 [R4 확장](iterations/04-twenty-stage-balance.md), 기존 [R3 입력](iterations/03-placement-timer-tooltips.md)과 [R2 경제](iterations/02-direct-purchase.md)를 유지한다. 진행 항목은 [tasks.md](tasks.md). 현재 완료된 검증은 R3까지이며, R4 수치는 플레이 검증 전 초안이다.
+상태: **R4 구현·검증 완료 — 20스테이지·병과 성장·걷기 교정**. 사용자 요청: 2026-10-05. 현행 정본은 [R4 확장](iterations/04-twenty-stage-balance.md), 기존 클릭/드래그 입력과 공용군량을 유지한다. 진행 항목은 [tasks.md](tasks.md). 수치는 플레이 가능한 첫 밸런스이며 최종 난이도 확정은 아니다.
 
 ## 플레이
 
 로컬 서버: `node portal-fe/public/games/duel-defense/tools/serve.mjs`, 주소 `http://127.0.0.1:4179`.
-첫 준비 군량260 → 수비 카드를 클릭해 커서 배치 또는 드래그 → 남은 군량으로 공격 부대 구매 → 우측 상단 바로 시작. 첫 준비45초/이후30초, 자동 출진 지원. 병과 툴팁·터치 상세에 기본 연사와 특성을 표시한다. 이후120/140/160/180 지급. 대장군은160 군량에 직접 구매한다. 상대는 AI이며 히든 공격 조합은 보류했다. 온라인·20스테이지 전체 경기는 아직 포함하지 않는다.
+첫 준비 군량280 → 수비 카드를 클릭해 커서 배치 또는 드래그 → 남은 군량으로 공격 부대 구매 → 우측 상단 바로 시작. 20단계에서 경장/빠른 적/방패/중갑/공성 혼합과I~IV 등급에 대응한다. 준비는 첫45/2~5단계30/6~10단계20/11~20단계15초. 수비Lv2는4단계/Lv3는9단계, 병종 연구Lv2는6단계/Lv3는11단계부터 같은 군량으로 구매한다. 병과 상세에 기본 연사·관통·방어력·강화 후 변화를 표시한다. 유료 공격7종과 대장군180을 직접 구매한다. 상대는 AI이며 히든 조합·온라인은 후속이다.
 
 [게임 실행 안내](../../../portal-fe/public/games/duel-defense/README.md). 이전 [P1 통합 검증](verifications/final-verification.md)과 [P1 리뷰](verifications/fresh-review.md)는 이전 구현 이력이다.
 
 R2 [통합 검증 보고서](verifications/r2-final-verification.md), [규칙12개 통과](verifications/r2-unit-output.txt), [실제 드래그·유료 부대·5단계 Chrome 검증](verifications/r2-e2e-output.txt), [독립 리뷰 SHIP](verifications/r2-review.md).
 
 R3 [통합 검증 보고서](verifications/r3-final-verification.md), [규칙13개 통과](verifications/r3-unit-output.txt), [실제 입력·준비 시간](verifications/r3-e2e-output.txt), [독립 리뷰 SHIP](verifications/r3-review.md). [최종 데스크톱](verifications/shots/r3-final-timer-1440.png), [최종 모바일](verifications/shots/r3-final-timer-390.png).
+
+R4 [통합 검증](verifications/r4-final-verification.md), [독립 리뷰](verifications/r4-review.md), [새 분리 파츠 원화/프롬프트](planning/visuals/03-rig-parts-r4.md), [실제 걷기 필름스트립](verifications/r4-actual-footplant-filmstrip.png). Core19개 통과, 전체20 domain simulation 완료13.17분, 실제 입력·성장 UI·6병과 이펙트·6화면 확인. 성장 UI 일부는 테스트 clock을 가속했고 걷기 녹화는 실제15초이며, 전체20을 실제 wall-clock으로 반복 플레이했다고 주장하지 않는다.
 
 ![R2 실제 드래그 — 타일과 사거리 미리보기, 단일 군량, 출진](verifications/shots/r2-drag-range-desktop.png)
 
