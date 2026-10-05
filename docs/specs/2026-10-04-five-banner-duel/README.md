@@ -2,6 +2,8 @@
 
 상태: **R4 구현·검증 완료 — 20스테이지·병과 성장·걷기 교정**. 사용자 요청: 2026-10-05. 현행 정본은 [R4 확장](iterations/04-twenty-stage-balance.md), 기존 클릭/드래그 입력과 공용군량을 유지한다. 진행 항목은 [tasks.md](tasks.md). 수치는 플레이 가능한 첫 밸런스이며 최종 난이도 확정은 아니다.
 
+2026-10-06 [R5 관통 순서](iterations/05-pierce-order.md)가 해당 수치를 갱신한다: 창병22 > 화차18 > 총통12 > 포수10 > 궁수0. 강화 추가+4/+8은 유지하며 같은 레벨의 순서도 유지한다.
+
 ## 플레이
 
 로컬 서버: `node portal-fe/public/games/duel-defense/tools/serve.mjs`, 주소 `http://127.0.0.1:4179`.
