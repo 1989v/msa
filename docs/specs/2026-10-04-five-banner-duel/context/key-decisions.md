@@ -67,3 +67,9 @@
 - 최초 기존 PNG mask 리그의 확대 연속 장면에서 허벅지 연결부가 비어 보여 부모가 기각했다. 기존 원화에서 가려진 다리를 복원할 수 없는 source 한계를 확인했다.
 - 결정: imagegen built-in으로 기존 화풍·4병종을 참조한 투명9열×4행 분리 파츠 원화를 생성. 원본은 보존하고 game에 `enemy-rig-parts-r4.png`로 복사, decoder/pivot/foot-contact를 재확인한다.
 - 기록: `planning/visuals/03-rig-parts-r4.md`에 prompt·크기1881×836·alpha·source·적용 주의점 저장. 생성 결과는2D texture이며3D 리깅/완성 walk clip이라 부르지 않는다.
+
+### 2026-10-06 — R5 관통 순서 변경
+
+- 사용자 지시: 창병 > 화차 > 총통 > 포수 > 궁병.
+- 결정: 기본22/18/12/10/0, 기존 강화 추가+4/+8 유지. 같은 레벨에서 순서 유지, 기타 전투/경제 수치 보존.
+- 정본: `iterations/05-pierce-order.md`. 기존 gpt-6.1-sol 담당자에게 작은 수정·관련 검증을 위임한다.
