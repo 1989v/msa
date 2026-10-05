@@ -38,9 +38,10 @@ const UI = {
   },
 } as const;
 
-const VISIBLE_VIDEOS = 5;
+/** 수집기가 롱폼 · 쇼츠를 각각 10개까지 채운다(place-ingest youtube.TARGET) — 다 보인다. 캐로셀이라 옆으로 민다 */
+const VISIBLE_VIDEOS = 10;
 /** 쇼츠는 세로 카드라 폭이 좁다 — 같은 줄 길이에 더 들어간다 */
-const VISIBLE_SHORTS = 8;
+const VISIBLE_SHORTS = 10;
 
 /** 쇼츠 표시 — 썸네일 왼쪽 위에 얹는다. 모양으로 알아보게 하고 이름은 접근성 문구가 말한다 */
 function ShortsMark() {
@@ -173,8 +174,6 @@ export default function AttractionLinks({ links, lang }: { links: string | null 
 
   if (!data) return null; // 실패는 조용히 — 링크는 부수 정보다
 
-  // 저장은 관광지당 최대 10개(수집기 MAX_RESULTS), 노출은 5개 — 캐로셀이 길어지면
-  // 아래 SNS·여행 상품 줄이 밀린다. 저장분이 있으니 노출을 늘리는 건 이 숫자 하나다.
   // 일반 영상 위주로 보이고 쇼츠는 따로 모은다. 형태를 아직 모르는 영상(null)은 일반 영상 쪽에 둔다
   const youtube = data.collected.filter((l) => l.source === 'YOUTUBE');
   const videos = youtube.filter((l) => l.format !== 'SHORT').slice(0, VISIBLE_VIDEOS);

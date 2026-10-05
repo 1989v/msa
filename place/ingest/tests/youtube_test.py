@@ -98,8 +98,8 @@ def _item(vid: str) -> dict:
     return {"id": {"videoId": vid}, "snippet": {"title": f"경복궁 {vid}", "description": "", "channelTitle": "c", "thumbnails": {}}}
 
 
-def _fake_youtube(monkeypatch, first: list[str], second: list[str], views: dict[str, int]):
-    """1순위(카테고리+반경)·보충 검색 응답과 조회수를 정해 두고, 보낸 검색 요청을 모은다."""
+def _fake_youtube(monkeypatch, first: list[str], second: list[str], views: dict[str, int], shorts: set[str] = frozenset()):
+    """1순위(카테고리+반경)·보충 검색 응답, 조회수, 쇼츠 여부를 정해 두고 보낸 검색 요청을 모은다."""
     monkeypatch.setattr(youtube, "_ledger", _Ledger())
     sent = []
 
@@ -116,39 +116,70 @@ def _fake_youtube(monkeypatch, first: list[str], second: list[str], views: dict[
         def read(self):
             return json.dumps(self.data).encode()
 
+    def video(i):
+        short = i in shorts
+        return {"id": i, "statistics": {"viewCount": str(views.get(i, 0))},
+                "contentDetails": {"duration": "PT40S" if short else "PT12M"},
+                "player": {"embedWidth": 360 if short else 640, "embedHeight": 640 if short else 360}}
+
     def fake_urlopen(req, timeout=0):
         q = parse_qs(urlparse(req.full_url).query)
         if "/search" in req.full_url:
             sent.append(q)
             ids = first if "videoCategoryId" in q else second
             return Reply({"items": [_item(i) for i in ids]})
-        ids = q["id"][0].split(",")
-        return Reply({"items": [{"id": i, "statistics": {"viewCount": str(views.get(i, 0))}} for i in ids]})
+        return Reply({"items": [video(i) for i in q["id"][0].split(",")]})
 
     monkeypatch.setattr(youtube.urllib.request, "urlopen", fake_urlopen)
     return sent
 
 
-def test_travel_category_near_the_place_first_then_fill_to_ten(monkeypatch):
-    # 제한 없는 검색만 쓰면 이름만 스친 1,090만 회 영상이 맨 앞에 섰다(2026-10-05) — 그 장소의 여행 영상이 앞선다
-    sent = _fake_youtube(monkeypatch, first=["a1", "a2"], second=["a2", "b1", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "b9"],
-                         views={"a1": 10, "a2": 500, "b1": 9_000_000, "b9": 100})
+def test_each_format_fills_to_ten_travel_near_first(monkeypatch):
+    # 1순위는 거의 쇼츠라 합쳐서 10개를 세면 롱폼이 비었다(경복궁 쇼츠 9 · 롱폼 1) — 형태마다 10개를 채운다.
+    # 제한 없는 검색만 쓰면 이름만 스친 1,090만 회 영상이 맨 앞에 섰다 — 형태 안에서 1순위가 앞선다
+    first = ["s1", "s2", "l1"]
+    second = ["s2", "big"] + [f"l{i}" for i in range(2, 14)] + [f"s{i}" for i in range(3, 6)]
+    sent = _fake_youtube(monkeypatch, first, second, views={"l1": 10, "big": 9_000_000, "l2": 500, "s1": 5, "s2": 7},
+                         shorts={"s1", "s2", "s3", "s4", "s5"})
     links = youtube.search("k", "경복궁", "ko", "경복궁", 37.58, 126.97)
+    longs = [l["externalId"] for l in links if not youtube.is_short(l)]
+    shorts = [l["externalId"] for l in links if youtube.is_short(l)]
 
-    assert [l["externalId"] for l in links] == ["a2", "a1", "b1", "b9", "b2", "b3", "b4", "b5", "b6", "b7"]
-    first, second = sent
-    assert first["videoCategoryId"] == ["19"] and first["location"] == ["37.58,126.97"] and first["locationRadius"] == ["10km"]
-    assert not {"videoCategoryId", "location", "locationRadius"} & second.keys()
-    assert [q["q"][0] for q in sent] == ["경복궁", "경복궁"]
+    assert longs[:3] == ["l1", "big", "l2"] and len(longs) == 10
+    assert shorts == ["s2", "s1", "s3", "s4", "s5"]
+    first_q, second_q = sent
+    assert first_q["videoCategoryId"] == ["19"] and first_q["location"] == ["37.58,126.97"] and first_q["locationRadius"] == ["10km"]
+    assert not {"videoCategoryId", "location", "locationRadius"} & second_q.keys()
 
 
-def test_no_fill_search_when_first_pass_has_ten(monkeypatch):
-    sent = _fake_youtube(monkeypatch, first=[f"a{i}" for i in range(12)], second=["b1"], views={})
+def test_no_fill_search_when_both_formats_have_ten(monkeypatch):
+    ids = [f"l{i}" for i in range(12)] + [f"s{i}" for i in range(11)]
+    sent = _fake_youtube(monkeypatch, first=ids, second=["x"], views={}, shorts={f"s{i}" for i in range(11)})
     links = youtube.search("k", "경복궁", "ko", None, 37.58, 126.97)
 
     assert len(sent) == 1
-    assert len(links) == 10 and all(l["externalId"].startswith("a") for l in links)
+    assert len(links) == 20
 
+
+def test_fills_long_form_even_when_first_pass_has_ten_shorts(monkeypatch):
+    # 경복궁 모양: 1순위가 쇼츠 12 · 롱폼 1 — 합쳐 10개가 넘어도 롱폼이 모자라 보충 검색을 한다
+    first = [f"s{i}" for i in range(12)] + ["l0"]
+    sent = _fake_youtube(monkeypatch, first, second=[f"l{i}" for i in range(1, 12)], views={},
+                         shorts={f"s{i}" for i in range(12)})
+    links = youtube.search("k", "경복궁", "ko", None, 37.58, 126.97)
+
+    assert len(sent) == 2
+    assert sum(1 for l in links if not youtube.is_short(l)) == 10
+    assert sum(1 for l in links if youtube.is_short(l)) == 10
+
+
+def test_short_rule_matches_place_video_format():
+    # place VideoFormatTest 와 같은 값 — 두 언어의 규칙이 갈리면 보충 판단과 저장되는 형태가 어긋난다
+    case = lambda d, w, h: youtube.is_short({"duration": d, "embedWidth": w, "embedHeight": h})  # noqa: E731
+    assert case("PT58S", 360, 640) and case("PT3M", 360, 640)
+    assert not case("PT3M1S", 360, 640)
+    assert not case("PT45S", 640, 360) and not case("PT44M15S", 640, 360)
+    assert not case(None, 360, 640) and not case("PT58S", None, 640) and not case("58초", 360, 640)
 
 
 def test_exhausted_ledger_stops_before_calling(monkeypatch):

@@ -15,19 +15,20 @@ function videoLinks() {
 }
 
 describe('AttractionLinks — 영상 절 하나에서 롱폼과 쇼츠를 전환한다', () => {
-  it('처음은 롱폼 5개, 쇼츠로 바꾸면 쇼츠 주소·쇼츠 표시로 그린다', () => {
+  it('처음은 롱폼(10개까지), 쇼츠로 바꾸면 쇼츠 주소·쇼츠 표시로 그린다', () => {
     // 수집 순서(인기순)에 쇼츠가 섞여 온다. 형태를 아직 모르는 영상(null)은 롱폼 쪽이다
     const collected = [
       video('s1', 'SHORT'), video('l1', 'LONG'), video('s2', 'SHORT'), video('u1', null),
       video('l2', 'LONG'), video('l3', 'LONG'), video('l4', 'LONG'), video('l5', 'LONG'),
+      ...[6, 7, 8, 9, 10, 11].map((n) => video(`l${n}`, 'LONG')),
     ];
     const { container } = render(<AttractionLinks links={JSON.stringify({ collected, deepLinks: [] })} lang="ko" />);
 
-    const long = screen.getByRole('button', { name: '롱폼 5' });
+    const long = screen.getByRole('button', { name: '롱폼 10' });
     const shorts = screen.getByRole('button', { name: '쇼츠 2' });
     expect(long).toHaveAttribute('aria-pressed', 'true');
     expect(videoLinks().map((a) => a.getAttribute('href'))).toEqual(
-      ['l1', 'u1', 'l2', 'l3', 'l4'].map((id) => `https://www.youtube.com/watch?v=${id}`),
+      ['l1', 'u1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8', 'l9'].map((id) => `https://www.youtube.com/watch?v=${id}`),
     );
     expect(container.querySelectorAll('.place-links-short-mark')).toHaveLength(0);
 

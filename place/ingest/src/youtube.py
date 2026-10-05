@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import html
 import json
+import re
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -42,8 +43,12 @@ EMBED_MAX_WIDTH = 640
 # 이름이 같은 다른 지역 영상은 place 가 검색어에 시군구를 붙여 가린다.
 TRAVEL_CATEGORY_ID = "19"
 LOCATION_RADIUS = "10km"
-#: 관광지당 영상 수 — 1순위로 이만큼 차면 보충 검색(100 units)을 하지 않는다
+#: 관광지당 형태별 영상 수(롱폼 · 쇼츠 각각) — 둘 다 1순위로 차면 보충 검색(100 units)을 하지 않는다.
+#: 합쳐서 세면 1순위(여행 카테고리 + 반경)가 거의 쇼츠라 롱폼이 비었다(경복궁 쇼츠 9 · 롱폼 1, 2026-10-06)
 TARGET = 10
+#: 쇼츠 판정 — place 도메인 `VideoFormat` 과 같은 규칙(세로 · 3분 이하). 저장되는 형태는 place 가 판정하고,
+#: 여기서는 보충 검색이 필요한지와 형태별 몫을 자르는 데만 쓴다
+SHORT_MAX_SECONDS = 180
 
 
 #: search.list 1콜 = 100 units, videos.list 1콜(50개 묶음) = 1 unit
@@ -79,24 +84,57 @@ def search(
     latitude: float | None = None,
     longitude: float | None = None,
 ) -> list[dict]:
-    """관광지 영상을 찾는다. 반환은 place `/internal/.../bulk` 의 link 스키마, 최대 [TARGET] 개.
+    """관광지 영상을 찾는다. 반환은 place `/internal/.../bulk` 의 link 스키마 — 롱폼 · 쇼츠 각각 최대 [TARGET] 개.
 
-    1순위: 여행 카테고리 + 좌표 반경 결과(조회수 순). 모자라면 2순위: 제한 없는 검색(조회수 순)으로 채운다.
-    1순위가 앞에 선다 — 조회수가 더 높아도 2순위가 1순위를 밀어내지 않는다. 1관광지 1~2콜(100~200 units).
+    1순위: 여행 카테고리 + 좌표 반경 결과. 롱폼이나 쇼츠가 [TARGET] 개에 못 미치면 2순위: 제한 없는 검색으로 채운다.
+    형태마다 1순위가 앞에 서고, 각 순위 안은 조회수 순이다. 1관광지 1~2콜(100~200 units).
     검색어는 place 가 준 `query`(표시명, 이름이 겹치는 곳은 표시명 + 시군구), 없으면 표시명.
     이름 매칭은 원천 제목 기준으로 한다(title_parse).
     """
     display, _ = parse_title(title)
     q = query or display
-    first = _search_page(api_key, _params(api_key, q, lang, latitude, longitude, TRAVEL_CATEGORY_ID), title)
+    first = _with_details(api_key, _search_page(
+        api_key, _params(api_key, q, lang, latitude, longitude, TRAVEL_CATEGORY_ID), title))
     second: list[dict] = []
-    if len(first) < TARGET:
+    if min(_count(first, short=False), _count(first, short=True)) < TARGET:
         try:
             seen = {l["externalId"] for l in first}
-            second = [l for l in _search_page(api_key, _params(api_key, q, lang), title) if l["externalId"] not in seen]
+            second = _with_details(api_key, [
+                l for l in _search_page(api_key, _params(api_key, q, lang), title) if l["externalId"] not in seen
+            ])
         except QuotaExceeded:
             second = []   # 1순위는 이미 100 units 를 냈다 — 버리지 않는다
-    links = first + second
+    by_views = lambda l: (l["viewCount"] is None, -(l["viewCount"] or 0))  # noqa: E731
+
+    def pick(short: bool) -> list[dict]:
+        tier = lambda links: sorted([l for l in links if is_short(l) == short], key=by_views)  # noqa: E731
+        return (tier(first) + tier(second))[:TARGET]
+
+    return pick(short=False) + pick(short=True)
+
+
+def is_short(link: dict) -> bool:
+    """세로이고 3분 이하 — place `VideoFormat` 과 같은 규칙. 길이·비율을 모르면 롱폼 쪽(화면도 그렇게 둔다)."""
+    seconds = _seconds(link.get("duration"))
+    w, h = link.get("embedWidth"), link.get("embedHeight")
+    if seconds is None or not w or not h:
+        return False
+    return h > w and seconds <= SHORT_MAX_SECONDS
+
+
+def _seconds(duration: str | None) -> int | None:
+    m = re.fullmatch(r"P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?", duration or "")
+    if not m or not duration or duration in ("P", "PT"):
+        return None
+    d, h, mi, s = (int(x or 0) for x in m.groups())
+    return ((d * 24 + h) * 60 + mi) * 60 + s
+
+
+def _count(links: list[dict], short: bool) -> int:
+    return sum(1 for l in links if is_short(l) == short)
+
+
+def _with_details(api_key: str, links: list[dict]) -> list[dict]:
     if not links:
         return links
     details = video_details(api_key, [l["externalId"] for l in links])
@@ -106,9 +144,7 @@ def search(
         link["duration"] = found.get("duration")
         link["embedWidth"] = found.get("embedWidth")
         link["embedHeight"] = found.get("embedHeight")
-    # 순위 안에서 조회수 내림차순. 못 받은 것(None)은 뒤로 — 순서를 뒤집을 근거가 없다.
-    by_views = lambda l: (l["viewCount"] is None, -(l["viewCount"] or 0))  # noqa: E731
-    return (sorted(first, key=by_views) + sorted(second, key=by_views))[:TARGET]
+    return links
 
 
 def _params(
