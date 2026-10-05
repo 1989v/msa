@@ -1,0 +1,6 @@
+assets/battlefield.png: 1254×1254 PNG OK
+assets/infantry.png: 1448×1086 PNG OK
+assets/support.png: 1448×1086 PNG OK
+assets/siege.png: 1254×1254 PNG OK
+assets/enemies.png: 1254×1254 PNG OK
+5 approved raster assets + chroma-key checks PASS

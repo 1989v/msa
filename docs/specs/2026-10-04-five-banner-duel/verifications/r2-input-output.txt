@@ -1,0 +1,5 @@
+Actual mouse drag: valid purchase40, occupied/outside/opponent no charge, placed move no charge, range240/selected stats PASS
+Actual shared budget:2 archers80 +general160 =20 remainder, general850HP/0.63cell/s/gate6 visible +opponent spawn, insufficient/combat drops reject PASS
+Actual touch drag+edge scroll purchase, touchCancel nocharge, modal44px fallback purchase, paused-help close/Escape preserve;390px nooverflow PASS
+Persisted mute reload label/aria and firstclickunmute PASS
+R2 Chrome E2E PASS ·0 console/page errors

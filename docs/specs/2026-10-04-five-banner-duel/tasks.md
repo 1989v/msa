@@ -12,3 +12,14 @@
 그룹 중간에 같은 테스트/전체 빌드를 반복하지 않는다. 구현 완료와 검증 완료는 구분한다. 기존 협동 게임·타 작업 변경을 보존한다. 커밋은 이 작업의 파일만 포함하며 훅 우회 금지. 온라인 배포는 수행하지 않는다.
 
 2026-10-05 구현·통합 검증 완료: games 서브모듈 `cbf9b5e3`. 증거는 `verifications/final-verification.md`. T6 부모 독립 리뷰 최종 SHIP 확인. pause/44px/모든 aspect 폭 결함은 수정·관련 브라우저 재검증 완료.
+
+## R2 — 직접 구매·드래그 배치 (2026-10-05 승인)
+
+- [x] R2-T1 공용260 직접 시작, paid general160, 활성 조합/initial phase 제거, 같은 예산 AI
+- [x] R2-T2 단순 header/두 전장/수비·공격 카드/출진, 실제 공격력·사거리·HP·속도 표시
+- [x] R2-T3 Pointer Events mouse/touch 구매·이동, ghost/range preview, invalid/cancel/phase atomicity
+- [x] R2-T4 선택 병사 range/표식/철거, 클릭·키보드·44px modal 도움, pause/help와 persisted sound
+- [x] R2-T5 R2 Core12·asset5·Chrome 실제 드래그/일반5단계·six viewport 통합 검증
+- [x] R2-T6 부모 fresh-context 리뷰 SHIP, 확인된 sound초기화 수정·focused regression
+
+R2 games `70b818c1`, 증거 `verifications/r2-final-verification.md`. P1 체크/출력은 이력.

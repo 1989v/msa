@@ -1,5 +1,13 @@
 # 진행 상태
 
+## 현행 R2 (2026-10-05)
+
+사용자 승인 단순화·직접 유료 공격 수정 완료. `iterations/02-direct-purchase.md`가 정본. games commit `70b818c1`. 초기 phase/활성 조합/장부 제거, stage1 공용260, paid general160, mouse/touch drag·range·실제 unit stats, 숨긴44px modal 도움. Core12/asset5/tsc-b/실제5단계 AI match/6viewport browser PASS, console0. 부모 fresh-context 최종 SHIP. `verifications/r2-final-verification.md` 및 모든 `r2-*` 로그/화면 참조. P1 아래 기록은 이력으로 보존.
+
+미리보기4179, 기존 서버 session28669 유지. Rootgames pointer는 여전히 건드리지 않으며 다른 marine/lib/platform 작업 보존. 다음은 부모의 root명세/디자인 문서 commit; 구현 블로커 없음.
+
+주의: R2 native Enter 검증은 실제 CDP keyDown text `\r`가 있어야 버튼 activation된다. 카드 가격 부족 때에도 정보를 선택할 수 있으며 드롭 core가 purchase를 거절한다. 화면 공간은 공격 카드 높이까지 reserve365px, modal은 viewport 안44px 입력. 재생성 필요 없는 art와 P1증거는 유지.
+
 2026-10-05. 작업 위치 `/Users/gideok-kwon/IdeaProjects/msa` 공유 트리. 사용자 "이제 구현시작" 승인에 따른 P1 완료·부모 독립 리뷰 SHIP(2026-10-05).
 
 ## 구현·검증
