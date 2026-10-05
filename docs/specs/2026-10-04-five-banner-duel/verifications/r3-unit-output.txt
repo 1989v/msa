@@ -1,0 +1,88 @@
+TAP version 13
+# Subtest: title begins directly stage1 with one common260 budget; no startup/combo state
+ok 1 - title begins directly stage1 with one common260 budget; no startup/combo state
+  ---
+  duration_ms: 1.010667
+  type: 'test'
+  ...
+# Subtest: direct general costs160; defense shares remainder; cart decrement returns same budget
+ok 2 - direct general costs160; defense shares remainder; cart decrement returns same budget
+  ---
+  duration_ms: 0.271875
+  type: 'test'
+  ...
+# Subtest: economic rejects and occupied/outside/movement are atomic, max paid24 includes general
+ok 3 - economic rejects and occupied/outside/movement are atomic, max paid24 includes general
+  ---
+  duration_ms: 0.153916
+  type: 'test'
+  ...
+# Subtest: new tower cancellation refunds, prior-stage removal does not; exact next-grant carry
+ok 4 - new tower cancellation refunds, prior-stage removal does not; exact next-grant carry
+  ---
+  duration_ms: 2.85425
+  type: 'test'
+  ...
+# Subtest: all editing locks during combat and pause, title buy rejects
+ok 5 - all editing locks during combat and pause, title buy rejects
+  ---
+  duration_ms: 0.144833
+  type: 'test'
+  ...
+# Subtest: paid general spawns on opponent board last, costs160, cannot be free or repeated launch
+ok 6 - paid general spawns on opponent board last, costs160, cannot be free or repeated launch
+  ---
+  duration_ms: 0.431541
+  type: 'test'
+  ...
+# Subtest: same tick gate deaths draw and queued attacks stop
+ok 7 - same tick gate deaths draw and queued attacks stop
+  ---
+  duration_ms: 0.247792
+  type: 'test'
+  ...
+# Subtest: zeroHP before launching denies paid army and stops match
+ok 8 - zeroHP before launching denies paid army and stops match
+  ---
+  duration_ms: 0.06
+  type: 'test'
+  ...
+# Subtest: 30-second deadline damages once and advances, stage5 living gates explicit prototype result
+ok 9 - 30-second deadline damages once and advances, stage5 living gates explicit prototype result
+  ---
+  duration_ms: 0.240458
+  type: 'test'
+  ...
+# Subtest: time clamp and pause preserve preparation; armor-piercing attacks are distinct
+ok 10 - time clamp and pause preserve preparation; armor-piercing attacks are distinct
+  ---
+  duration_ms: 0.268
+  type: 'test'
+  ...
+# Subtest: defensive support30% is nonstacking and has real radius
+ok 11 - defensive support30% is nonstacking and has real radius
+  ---
+  duration_ms: 0.121375
+  type: 'test'
+  ...
+# Subtest: AI same budget deterministic; never reads hidden player cart and may purchase general
+ok 12 - AI same budget deterministic; never reads hidden player cart and may purchase general
+  ---
+  duration_ms: 0.307083
+  type: 'test'
+  ...
+# Subtest: R3 first preparation45, later30; early/manual and timeout share locked combat; pause freezes
+ok 13 - R3 first preparation45, later30; early/manual and timeout share locked combat; pause freezes
+  ---
+  duration_ms: 0.194666
+  type: 'test'
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 55.204458

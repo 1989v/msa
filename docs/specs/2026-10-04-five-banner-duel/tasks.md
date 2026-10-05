@@ -23,3 +23,13 @@
 - [x] R2-T6 부모 fresh-context 리뷰 SHIP, 확인된 sound초기화 수정·focused regression
 
 R2 games `70b818c1`, 증거 `verifications/r2-final-verification.md`. P1 체크/출력은 이력.
+
+## R3 — 클릭 배치·타이머·툴팁
+
+- [x] R3-T1 one-shot click carry·cursor/range·invalid nocharge, drag/move/cancel lifecycle
+- [x] R3-T2 첫45/이후30, single top-right 바로시작, 빨간 숫자/paper 대비, help/README 동기화
+- [x] R3-T3 실제 base rate/traits hover/focus tooltip 및 touch persistent 상세/군악 지원 note
+- [x] R3-T4 Core13·scoped real-browser 입력/45s자동/30s다음 준비·6viewport·native touch/red computedcolor
+- [x] R3-T5 fresh-context 리뷰 SHIP, 기록/정상 owned commit
+
+게임 `b26b580f`, 증거 `verifications/r3-final-verification.md`. P1/R2는 이력으로 유지.

@@ -1,5 +1,11 @@
 # 진행 상태
 
+## 현행 R3 (2026-10-05)
+
+`iterations/03-placement-timer-tooltips.md` 승인 범위 완료. games `b26b580f`: 클릭 carry/한 번 성공 배치 종료·기존 드래그/이동/취소, 첫45/이후30, 상단 single바로시작/빨간 숫자, actual BASE 연사·traits hover/focus/touch detail. Core13pass0fail, 실제45초 자동·다음30초·취소/drag/touch/tooltip 및sixviewport PASS, console0. Red numeral rgb(162,35,29)와native tap 별도PASS. 부모 fresh-context 최종 SHIP. 증거 `verifications/r3-final-verification.md`, 모든 `r3-*` 로그/화면.
+
+로컬4179 server session28669 유지. Root games pointer 및 타 staged EventType/lib/marine 변경 손대지 않음. 부모 iteration/spec/design/review는 부모 commit. 다음은 부모 최종 보고; 구현 블로커 없음. Art/decode는 변경 없어 다시 생성/검사하지 않으며 browser load로 확인. R2 실제5단계 PASS는 재실행하지 않음. 이전R2/P1 아래 기록은 이력.
+
 ## 현행 R2 (2026-10-05)
 
 사용자 승인 단순화·직접 유료 공격 수정 완료. `iterations/02-direct-purchase.md`가 정본. games commit `70b818c1`. 초기 phase/활성 조합/장부 제거, stage1 공용260, paid general160, mouse/touch drag·range·실제 unit stats, 숨긴44px modal 도움. Core12/asset5/tsc-b/실제5단계 AI match/6viewport browser PASS, console0. 부모 fresh-context 최종 SHIP. `verifications/r2-final-verification.md` 및 모든 `r2-*` 로그/화면 참조. P1 아래 기록은 이력으로 보존.

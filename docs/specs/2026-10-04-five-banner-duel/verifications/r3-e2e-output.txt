@@ -1,0 +1,8 @@
+Actual click→cursor→singlecharge40, secondempty nocharge, invalidoccupied/opponent preservescarry, cardreplace gunner70 PASS
+Escape/rightclick/tab/help/pause cancellation atomic+ghost cleanup PASS
+Mouse drag and placedmove preserved; synthesizedclick never rearm/doublecharge PASS
+Six real-data hover tooltips +keyboardfocus: base1/interval, interval/range/traits/splash/armor/support distinction PASS
+Actual 바로 시작 earlylaunch; nextprep30seconds PASS
+Actual45sec timeout automaticlaunch cancelscarry without purchase PASS
+390px touchclick detail +one-shot44pad/Enter +touchdrag, pausedhelp timer preserved, tooltipbounds PASS
+R3 Chrome E2E PASS ·0 console/page errors

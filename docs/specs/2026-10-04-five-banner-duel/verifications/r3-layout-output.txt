@@ -1,0 +1,7 @@
+1440 900 {"height":900,"viewport":900,"width":1440,"confirm":131.1875,"controls":true,"padClosed":true}
+1280 800 {"height":800,"viewport":800,"width":1280,"confirm":131.1875,"controls":true,"padClosed":true}
+1200 1000 {"height":1000,"viewport":1000,"width":1200,"confirm":131.1875,"controls":true,"padClosed":true}
+900 1100 {"height":1100,"viewport":1100,"width":900,"confirm":131.1875,"controls":true,"padClosed":true}
+900 900 {"height":903,"viewport":900,"width":900,"confirm":131.1875,"controls":true,"padClosed":true}
+390 844 {"height":1219,"viewport":844,"width":390,"confirm":175.1875,"controls":true,"padClosed":true}
+R3 six viewports: no clipping,wide no-scroll,modal44px allbounds,purchase/move/refund/keyboard,attackstats nooverflow;0 browser errors PASS
