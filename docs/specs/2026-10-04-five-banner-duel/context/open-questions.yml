@@ -1,6 +1,6 @@
-status: p1-implementation
+status: r4-implementation
 implementation_authorized: true
-authorization: '2026-10-05 사용자: 이제 구현시작. 현행 P1 기획으로 진행, 온라인은 후속.'
+authorization: '2026-10-05 사용자: 구현 시작 및 R4 요청10항목(병과/방어력/성장/모션/20단계). 온라인은 후속.'
 questions:
   - id: Q6
     subject: 최종 게임 이름
@@ -43,3 +43,11 @@ questions:
     proposal: 로컬 플레이 검증 후 경쟁 대전 요구에 맞춰 별도 기술 설계
     status: deferred
     gate: pre-online
+  - id: Q7
+    subject: 20스테이지 목표 플레이 시간
+    proposal: 준비 첫45초/이후30초 유지, 목표18~25분
+    alternative: 후반 준비 단축, 목표12~15분
+    status: closed
+    answer: '사용자 선택:12~15분·후반 준비 단축. 첫45/2~5단계30/6~10단계20/11~20단계15초'
+    resolved_on: '2026-10-05'
+    gate: pre-release
