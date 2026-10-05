@@ -5,7 +5,7 @@ namespace: commerce
 resources:
   - serviceaccount.yaml
   # search-eval-daily(상품 기준선 평가)는 2026-09-27 제거 — 판정 0행으로 매일 건너뛰기만 했다.
-  # 검색 품질 평가는 search-eval (관광지 판정 2,141건 · 3구성 nDCG@10, 스크립트·판정은 eval/).
+  # 검색 품질 평가는 search-eval (관광지 판정 150쿼리 · 6,530쌍 · 3구성 nDCG@10, 스크립트·판정은 eval/).
   - cronjob-eval.yaml
   - cronjob-reindex.yaml
   - cronjob-attraction-reindex.yaml
@@ -17,4 +17,4 @@ configMapGenerator:
   - name: search-eval
     files:
       - eval/live-eval.py
-      - eval/judgments-attractions-2026-09-13.json
+      - eval/judgments-attractions-2026-10-05.json
