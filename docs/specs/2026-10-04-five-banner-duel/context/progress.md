@@ -46,3 +46,7 @@ R4가 앞선 P1/R2/R3 활성 계약을 대체한다. 게임 `e5dddaa8`:20단계�
 Core19/19·asset6·tsc exit0·6viewport·실제 mouse/native touch·강화/연구2/3·cartlock·6FX관찰0console·실제4FX화면 PASS. 성장 E2E만 테스트 RAF×8, 상태/군량/단계 주입 없음; 전체20은 seeded domain. Final seed7 defense/AI18 HP20/0=13.07min, mixed/AI18 HP6/0=13.86min, attack/AI3=2.85min, defense양측20 HP20/20=13.17min. 승인 전투/군량 수치 변경 없음. AI 연구는16단계 수비8개 이상에서 예산을 먼저 확보해 실제 사용되게 했다.
 
 Fresh independent static review SHIP·부모 actual motion 승인. 정확한 명령/출력/제약은 `verifications/r4-final-verification.md`. Preview `http://127.0.0.1:4179/`, 기존 세션28669. Root games pointer를 갱신하지 않고 다른 staged/dirty 상태 보존, 정상 owned commit·push/배포 없음.
+
+## R5 완료 — 2026-10-06
+
+게임 `71edb3d4`. 사용자 순서에 맞춰 기본 관통 창병22 >화차18 >총통12 >포수10 >궁수0만 변경, Lv2+4/Lv3+8 유지. 공통 core/UI stat 그대로 연동, 실제 숫자 피해·AoE 기대값/세 레벨 ranking 검증 갱신. Core20/20,390px 실제5종 hover/click detail·browser shared Lv1~3·0console PASS. Lv3 실제9단계 플레이는 반복하지 않았다. 별도20경기/원화/모션 검사를 반복하지 않았으며 다른 수치 변경 없음. Fresh static review SHIP(부모 iteration 기록). 증거 `verifications/r5-final-verification.md`, live preview4179/기존 세션28669. 타 staged/dirty 상태와 root games pointer 보존, 정확한 owned files 정상 commit.

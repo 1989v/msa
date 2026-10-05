@@ -1,0 +1,8 @@
+PASS actual hover +click selection spear pierce 22
+PASS actual hover +click selection hwacha pierce 18
+PASS actual hover +click selection cannon pierce 12
+PASS actual hover +click selection gunner pierce 10
+PASS actual hover +click selection archer pierce 0
+PASS real loaded browser shared stats Lv1..3 [[22,18,12,10,0],[26,22,16,14,4],[30,26,20,18,8]]
+Lv3 was module-data verified; actual upgraded stage9 UI was not replayed.
+R5 browser PASS ·0 console/page errors ·no state/time/grain injection

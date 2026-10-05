@@ -44,3 +44,12 @@ R2 games `70b818c1`, 증거 `verifications/r2-final-verification.md`. P1 체크/
 - [x] R4-T6 fresh static SHIP·부모 실제 모션 승인·gameREADME/증거·정확한 owned commit
 
 게임 `e5dddaa8`, 증거 `verifications/r4-final-verification.md`. 초기 standalone PNG 절단/발 미끄러짐을 출하하지 않고 전용 부품·world contact로 수정했다. P1~R3 출력은 역사 보존. Root games pointer/타 작업 파일 변경 없음.
+
+## R5 — 관통 순서
+
+- [x] R5-T1 base 창병22 >화차18 >총통12 >포수10 >궁수0, 강화+4/+8 유지
+- [x] R5-T2 변경된 numeric/AoE 기대값·모든 레벨 strict ranking·기존 browser assertion source 연동
+- [x] R5-T3 Core20/20·390px 실제5종 tooltip/선택·shared Lv3·0console, fresh static SHIP
+- [x] R5-T4 게임README·증거·정상 exact-owned commit, root games pointer 보존
+
+게임 `71edb3d4`, 증거 `verifications/r5-final-verification.md`. 다른 밸런스/원화/전체 경기 재검증은 확대하지 않았다.

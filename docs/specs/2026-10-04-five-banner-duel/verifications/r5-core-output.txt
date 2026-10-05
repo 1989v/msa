@@ -1,0 +1,130 @@
+TAP version 13
+# Subtest: 20 authored waves, grants, tiers and shortening prep are exact
+ok 1 - 20 authored waves, grants, tiers and shortening prep are exact
+  ---
+  duration_ms: 0.716708
+  type: 'test'
+  ...
+# Subtest: numeric armor subtraction, pierce cap, minimum1 and updated roles
+ok 2 - numeric armor subtraction, pierce cap, minimum1 and updated roles
+  ---
+  duration_ms: 0.119375
+  type: 'test'
+  ...
+# Subtest: requested pierce order and exact values hold at every equal level
+ok 3 - requested pierce order and exact values hold at every equal level
+  ---
+  duration_ms: 0.138208
+  type: 'test'
+  ...
+# Subtest: levels share integer attack/cost and range/cadence/support data
+ok 4 - levels share integer attack/cost and range/cadence/support data
+  ---
+  duration_ms: 0.059042
+  type: 'test'
+  ...
+# Subtest: purchase/move locks and atomic rejections preserve budget
+ok 5 - purchase/move locks and atomic rejections preserve budget
+  ---
+  duration_ms: 0.31
+  type: 'test'
+  ...
+# Subtest: upgrade unlock and current-stage-only spending refund once
+ok 6 - upgrade unlock and current-stage-only spending refund once
+  ---
+  duration_ms: 0.101792
+  type: 'test'
+  ...
+# Subtest: research cart lock, repricing and once-only cart refunds
+ok 7 - research cart lock, repricing and once-only cart refunds
+  ---
+  duration_ms: 0.146041
+  type: 'test'
+  ...
+# Subtest: shared budget and 24 paid limit reject insufficient amounts
+ok 8 - shared budget and 24 paid limit reject insufficient amounts
+  ---
+  duration_ms: 0.222625
+  type: 'test'
+  ...
+# Subtest: drummer strongest range support is not stacked
+ok 9 - drummer strongest range support is not stacked
+  ---
+  duration_ms: 0.727666
+  type: 'test'
+  ...
+# Subtest: spear selects forward width28, closest3, in-range only
+ok 10 - spear selects forward width28, closest3, in-range only
+  ---
+  duration_ms: 0.491042
+  type: 'test'
+  ...
+# Subtest: spear impact rechecks captured axis/range and adds no new targets
+ok 11 - spear impact rechecks captured axis/range and adds no new targets
+  ---
+  duration_ms: 0.477042
+  type: 'test'
+  ...
+# Subtest: AoE scales base first and subtracts armor separately once at impact
+ok 12 - AoE scales base first and subtracts armor separately once at impact
+  ---
+  duration_ms: 0.319333
+  type: 'test'
+  ...
+# Subtest: baseline grade and paid research snapshot are separate, general paid
+ok 13 - baseline grade and paid research snapshot are separate, general paid
+  ---
+  duration_ms: 0.096333
+  type: 'test'
+  ...
+# Subtest: no 30-second forced gate hit; queues and actual route settle
+ok 14 - no 30-second forced gate hit; queues and actual route settle
+  ---
+  duration_ms: 1.010375
+  type: 'test'
+  ...
+# Subtest: same-tick zero draw, stage20 winner/equal and no next grant
+ok 15 - same-tick zero draw, stage20 winner/equal and no next grant
+  ---
+  duration_ms: 0.225167
+  type: 'test'
+  ...
+# Subtest: pause freezes game and distance-driven gait, reduced motion stable
+ok 16 - pause freezes game and distance-driven gait, reduced motion stable
+  ---
+  duration_ms: 0.233083
+  type: 'test'
+  ...
+# Subtest: AI never observes hidden player cart or research
+ok 17 - AI never observes hidden player cart or research
+  ---
+  duration_ms: 0.162792
+  type: 'test'
+  ...
+# Subtest: seeded defense completes all20 and strategic spending has consequences
+ok 18 - seeded defense completes all20 and strategic spending has consequences
+  ---
+  duration_ms: 98.536625
+  type: 'test'
+  ...
+# Subtest: planted world feet stay fixed across distance/speed and route corner
+ok 19 - planted world feet stay fixed across distance/speed and route corner
+  ---
+  duration_ms: 0.24325
+  type: 'test'
+  ...
+# Subtest: AI allocates eligible research before routine upgrades without hidden inputs
+ok 20 - AI allocates eligible research before routine upgrades without hidden inputs
+  ---
+  duration_ms: 0.079708
+  type: 'test'
+  ...
+1..20
+# tests 20
+# suites 0
+# pass 20
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 157.731458
