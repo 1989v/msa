@@ -79,7 +79,7 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | 관광지 웰니스 테마 | 관광공사 웰니스관광 `WellnessTursmService` (15144030) `areaBasedList` (국·영) | 필요 (〃) | 이용허락범위 제한 없음 | 〃 (월요일만, 주 2콜) |
 | 지역 방문자 수 | 관광공사 빅데이터 `DataLabService` (15101972) `locgoRegnVisitrDDList`(시군구) · `metcoRegnVisitrDDList`(시도) | 필요 (〃) | 이용허락범위 제한 없음 | `place/ingest --job=visitors` (매일 KST 02:30, 하루 2콜 · 백필 `--from=YYYY-MM` 1회 약 48콜) |
 | 관광지 집중률 예측 | 관광공사 빅데이터 `TatsCnctrRateService` `tatsCnctrRatedList` (시군구별, 앞 30일) | 필요 (〃) | 이용허락범위 제한 없음 | `place/ingest --job=congestion` (매일 KST 02:00, 시군구마다 1콜 = 하루 269콜) |
-| 연관 관광지 | 관광공사 빅데이터 `TarRlteTarService1` `areaBasedList1` (시군구별, 월 `baseYm`) | 필요 (〃) | 이용허락범위 제한 없음 | `place/ingest --job=related` (매월 KST 12~28일 02:20 — 받은 달이면 0콜, 공개 전이면 1콜, 받는 날 시군구마다 1콜 = 269콜) |
+| 연관 관광지 | 관광공사 빅데이터 `TarRlteTarService1` `areaBasedList1` (시군구별, 월 `baseYm`) | 필요 (〃) | 이용허락범위 제한 없음 | `place/ingest --job=related` (매월 KST 3~28일 02:20 — 받은 달이면 0콜, 공개 전이면 1콜, 받는 날 시군구마다 1콜 = 269콜) |
 | 단기예보(날씨) | 기상청 `VilageFcstInfoService_2.0` (15084084) `getVilageFcst` | 필요 (`TOUR_API_KEY` 재사용 — 같은 data.go.kr 계정 키) | **공공누리 제1유형(출처표시)** | `place/ingest --job=weather-short` (매일 KST 05:25 · 17:25, 회차당 고유 격자 243콜 · 하루 486) |
 | 중기예보(날씨) | 기상청 `MidFcstInfoService` (15059468) `getMidLandFcst` · `getMidTa` | 필요 (〃) | **공공누리 제1유형(출처표시)** | `place/ingest --job=weather-mid` (매일 KST 06:25, 육상 10 + 기온 163 = 하루 173콜) |
 | 중기 구역코드표 | 기상청 「중기예보 조회서비스 오픈API활용가이드」(241128) 육상 권역 표 + 첨부 「중기기온예보구역코드」(2025.12) | 불필요(포털 참고문서) | 공공누리 제1유형 | `place/ingest/src/weather_grid.py` 상수(남한 도시 176 + 육상 10) |
@@ -196,14 +196,14 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 - 서빙: 06:30 재색인이 `/internal/attractions/extras/lookup` 으로 읽어 색인 문서 `congestion`(날짜·값 배열, 색인하지 않는 객체)에 싣는다.
   화면이 오늘 이후 날짜만 「혼잡 예측」으로 그린다. 서버 렌더 본문에는 넣지 않는다.
 
-**연관 관광지(「여기 온 사람들이 함께 간 곳」)는 이름 매칭으로 출발·대상 관광지에 붙어 별도 표에 쌓이고, 재색인이 관광지로 이어진 대상만 색인 문서로 옮긴다** (2단계, CronJob `place-ingest-related` · `--job=related`, 매월 KST 12~28일 02:20).
+**연관 관광지(「여기 온 사람들이 함께 간 곳」)는 이름 매칭으로 출발·대상 관광지에 붙어 별도 표에 쌓이고, 재색인이 관광지로 이어진 대상만 색인 문서로 옮긴다** (2단계, CronJob `place-ingest-related` · `--job=related`, 매월 KST 3~28일 02:20).
 설계·실측: `docs/specs/2026-10-02-place-tour-portal-expansion/implementation/phase2-design.md` §2.2 · `implementation/phase2-related-match.md`.
 - 원천: `apis.data.go.kr/B551011/TarRlteTarService1/areaBasedList1`. 키는 `TOUR_API_KEY`, 한도는 하루 1,000, 이용허락범위 「제한 없음」
   (상세 출처 줄에 「빅데이터 서비스(연관 관광지)」를 더한다). 행은 (출발 관광지 × 연관 대상)이고 출발당 최대 50, 키는 17개
   (`baseYm`·`areaCd`·`areaNm`·`signguCd`·`signguNm`·`tAtsCd`·`tAtsNm`·`rlteTatsCd`·`rlteTatsNm`·`rlteRegnCd`·`rlteRegnNm`·`rlteSignguCd`·`rlteSignguNm`·`rlteCtgryLclsNm`·`rlteCtgryMclsNm`·`rlteCtgrySclsNm`·`rlteRank`).
   식별자 `tAtsCd`·`rlteTatsCd` 는 32자 해시라 contentId 와 이어지지 않는다.
 - **시군구를 주지 않으면 0건**이라 `baseYm`+`areaCd`+`signguCd` 로 시군구마다 1콜이다(`numOfRows=10000` — 제주시 5,786행도 한 콜).
-  **전달 자료의 공개일을 모른다**(Q-P2-RELATED-LAG): 2026-10-02 KST 에 `202609` 는 0건, `202608` 은 있었다. 그래서 매달 12~28일 매일 돌며
+  **전달 자료의 공개일을 모른다**(Q-P2-RELATED-LAG): 2026-10-02 · 10-06 KST 에 `202609` 는 0건, `202608` 은 있었다. 그래서 매달 3~28일 매일 돌며
   이미 받은 달이면 호출하지 않고, 공개 전이면 지난달 행이 있던 시군구 하나만 묻는다. 28일까지 안 나오면 Job 이 실패한다.
 - 매칭은 집중률과 같은 `name_match` — 출발은 자기 시군구, 대상은 **대상 시군구**의 국문 행. 실측(종로·제주시·해운대 202608, 7,869행):
   출발 236 중 정확 134 · 정규화까지 176(같은 이름 행이 둘인 모호 2 포함 시 178) · 대상 관광지 867 중 정확·정규화 434(모호 포함 448) · 음식 270/1,494 · 숙박 121/503.
