@@ -28,6 +28,8 @@ import {
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import { shouldEnterFullStage } from './stageOrientation';
+import { enterGameFullscreen } from './browserHelp';
+import GameBrowserHelp from './GameBrowserHelp';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
 import { useStageFit } from './useStageFit';
 import { fetchGraphData } from '../../api/searchApi';
@@ -100,6 +102,7 @@ export default function GameDetailPage() {
   const sessionRef = useRef<{ slug: string; key: string } | null>(null);
   const stageRef = useRef<HTMLElement | null>(null);
   const immersive = playing && stageFit.immersive;
+  const [fullscreenStatus, setFullscreenStatus] = useState('');
   const side = useGameSideData(slug, boardToken);
   /* 좁은 화면에서만 쓰는 탭. 넓은 화면은 둘 다 펴므로 이 값이 화면을 바꾸지 않는다
      (CSS 가 미디어쿼리로 무시한다) — 상태를 폭에 따라 갈라 두면 회전할 때마다 튄다. */
@@ -123,25 +126,22 @@ export default function GameDetailPage() {
     };
   }, [immersive]);
 
-  /** 무대를 전체화면으로. 가로 잠금은 가로 전용 게임·수동 ⛶ 에서만 — 양방향 게임은 기기 방향을 그대로 둔다 */
-  const enterFullStage = useCallback((lockLandscape: boolean) => {
+  const enterFullStage = useCallback((manualLandscape = false) => {
     const el = stageRef.current;
     if (!el || document.fullscreenElement) return;
-    el.requestFullscreen?.()
-      .then(() =>
-        lockLandscape
-          ? (screen.orientation as unknown as { lock?: (o: string) => Promise<void> })
-              ?.lock?.('landscape')
-              ?.catch(() => undefined)
-          : undefined,
-      )
-      .catch(() => undefined);
+    void enterGameFullscreen(el, manualLandscape && orientationRef.current !== 'PORTRAIT' ? 'LANDSCAPE' : orientationRef.current, screen.orientation).then(setFullscreenStatus);
+  }, []);
+
+  useEffect(() => {
+    const exited = () => { if (!document.fullscreenElement) (screen.orientation as { unlock?: () => void } | undefined)?.unlock?.(); };
+    document.addEventListener('fullscreenchange', exited);
+    return () => { document.removeEventListener('fullscreenchange', exited); if (document.fullscreenElement === stageRef.current) (screen.orientation as { unlock?: () => void } | undefined)?.unlock?.(); };
   }, []);
 
   const toggleFullscreen = () => {
     if (document.fullscreenElement) {
       (screen.orientation as { unlock?: () => void } | undefined)?.unlock?.();
-      document.exitFullscreen().catch(() => undefined);
+      document.exitFullscreen().then(() => setFullscreenStatus('전체화면을 종료했습니다.'), () => setFullscreenStatus('전체화면 종료 요청이 거부되었습니다. 브라우저 뒤로가기 또는 종료 메뉴를 이용하세요.'));
       return;
     }
     enterFullStage(true);
@@ -156,7 +156,7 @@ export default function GameDetailPage() {
    *
    * 전환은 **사용자 제스처(플레이 버튼) 안에서만** 허용되므로 재생 시작 직후에 부른다.
    * 실패해도(iOS Safari 는 임의 요소 전체화면이 없다) 몰입 오버레이가 뷰포트를 채우므로
-   * 기기를 돌리면 그대로 가로가 된다 — 그래서 실패를 삼킨다.
+   * 기기를 돌리면 그대로 가로가 된다 — 실패 시 도움말에서 결과와 수동 회전 방법을 안내한다.
    */
   /* 방향 값을 **ref 로** 들고 있는다 — `handlePlay` 가 이 값에 의존하면 안 되기 때문이다.
      `handlePlay` 는 상세 로드 effect 의 의존성이라, 정체성이 바뀌면 그 effect 가 다시 돌고
@@ -234,7 +234,7 @@ export default function GameDetailPage() {
   }, [slug]);
 
   const handleClose = () => {
-    if (document.fullscreenElement) document.exitFullscreen().catch(() => undefined);
+    if (document.fullscreenElement) { (screen.orientation as { unlock?: () => void } | undefined)?.unlock?.(); void document.exitFullscreen().catch(() => setFullscreenStatus('전체화면 종료 요청이 거부되었습니다.')); }
     setPlaying(false);
     setBoardToken((token) => token + 1);
   };
@@ -429,12 +429,13 @@ export default function GameDetailPage() {
             <button
               className={`game-stage-chip${stageFit.portrait ? ' is-wide' : ''}`}
               onClick={toggleFullscreen}
-              aria-label="전체화면 가로 전환"
+              aria-label={game.orientation === 'PORTRAIT' ? '전체화면' : '전체화면 가로 전환'}
             >
               {stageFit.portrait ? '⛶ 크게' : '⛶'}
             </button>
           </div>
         )}
+        <GameBrowserHelp status={fullscreenStatus} />
         {!playing ? (
           <div className="game-stage-idle">
             {/* 스크린샷이 없는 게임이 절반이라 썸네일로 대체한다 — 빈 자리를 남기지 않는다 */}

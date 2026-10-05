@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen as uiScreen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -112,3 +112,5 @@ describe('게임 상세 — 상세 조회 루프 방지', () => {
     expect(vi.mocked(fetchSimilarGames)).toHaveBeenCalledTimes(1);
   });
 });
+
+ it('BOTH manual landscape click keeps gesture, reports lock rejection and unlocks on fullscreen exit', async()=>{vi.mocked(fetchGameDetail).mockResolvedValue({...DETAIL,orientation:'BOTH'} as never);vi.mocked(fetchSimilarGames).mockResolvedValue([] as never);vi.mocked(fetchLeaderboard).mockResolvedValue([] as never);const lock=vi.fn().mockRejectedValue(Error('denied')),unlock=vi.fn(),request=vi.fn().mockResolvedValue(undefined);vi.stubGlobal('matchMedia',(query:string)=>({matches:query.includes('pointer: coarse'),addEventListener(){},removeEventListener(){}}));vi.stubGlobal('innerWidth',390);vi.stubGlobal('innerHeight',844);const prior=Object.getOwnPropertyDescriptor(globalThis.screen,'orientation');Object.defineProperty(globalThis.screen,'orientation',{configurable:true,value:{lock,unlock}});const previous=HTMLElement.prototype.requestFullscreen;HTMLElement.prototype.requestFullscreen=request;try{const view=renderPage();await waitFor(()=>expect(uiScreen.getByText(/플레이$/)).toBeTruthy());fireEvent.click(uiScreen.getByText(/플레이$/));const button=await uiScreen.findByLabelText('전체화면 가로 전환');fireEvent.click(button);expect(request).toHaveBeenCalledTimes(1);await waitFor(()=>expect(lock).toHaveBeenCalledWith('landscape'));await waitFor(()=>expect(uiScreen.getByText(/방향 잠금이 거부/)).toBeTruthy());document.dispatchEvent(new Event('fullscreenchange'));expect(unlock).toHaveBeenCalled();view.unmount();expect(fetchGameDetail).toHaveBeenCalledTimes(1);}finally{HTMLElement.prototype.requestFullscreen=previous;if(prior)Object.defineProperty(globalThis.screen,'orientation',prior);else Reflect.deleteProperty(globalThis.screen,'orientation');vi.unstubAllGlobals();}});
