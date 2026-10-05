@@ -1,15 +1,17 @@
 # 대전 디펜스 — 1:1 대전 타워디펜스 기획·시안
 
-상태: **R2 구현·검증 완료 — 단순 UI·드래그 수비·직접 유료 공격**. 사용자 구현 승인: 2026-10-05. 현행 정본은 [R2 변경](iterations/02-direct-purchase.md), 진행 항목은 [tasks.md](tasks.md). P1 구현·검증은 이력이다.
+상태: **R3 구현·검증 완료 — 클릭 배치·큰 타이머·병과 툴팁**. 사용자 구현 승인: 2026-10-05. 현행 정본은 [R3 변경](iterations/03-placement-timer-tooltips.md)과 [R2 경제·공격](iterations/02-direct-purchase.md), 진행 항목은 [tasks.md](tasks.md). 이전 구현·검증은 이력이다.
 
 ## 플레이
 
 로컬 서버: `node portal-fe/public/games/duel-defense/tools/serve.mjs`, 주소 `http://127.0.0.1:4179`.
-첫 준비 군량260 → 수비 카드를 내 타일에 드래그 → 남은 군량으로 공격 부대 구매 → 출진. 이후120/140/160/180 지급. 대장군은160 군량에 직접 구매한다. 상대는 AI이며 히든 공격 조합은 보류했다. 온라인·20스테이지 전체 경기는 아직 포함하지 않는다.
+첫 준비 군량260 → 수비 카드를 클릭해 커서 배치 또는 드래그 → 남은 군량으로 공격 부대 구매 → 우측 상단 바로 시작. 첫 준비45초/이후30초, 자동 출진 지원. 병과 툴팁·터치 상세에 기본 연사와 특성을 표시한다. 이후120/140/160/180 지급. 대장군은160 군량에 직접 구매한다. 상대는 AI이며 히든 공격 조합은 보류했다. 온라인·20스테이지 전체 경기는 아직 포함하지 않는다.
 
 [게임 실행 안내](../../../portal-fe/public/games/duel-defense/README.md). 이전 [P1 통합 검증](verifications/final-verification.md)과 [P1 리뷰](verifications/fresh-review.md)는 이전 구현 이력이다.
 
 R2 [통합 검증 보고서](verifications/r2-final-verification.md), [규칙12개 통과](verifications/r2-unit-output.txt), [실제 드래그·유료 부대·5단계 Chrome 검증](verifications/r2-e2e-output.txt), [독립 리뷰 SHIP](verifications/r2-review.md).
+
+R3 [통합 검증 보고서](verifications/r3-final-verification.md), [규칙13개 통과](verifications/r3-unit-output.txt), [실제 입력·준비 시간](verifications/r3-e2e-output.txt), [독립 리뷰 SHIP](verifications/r3-review.md). [최종 데스크톱](verifications/shots/r3-final-timer-1440.png), [최종 모바일](verifications/shots/r3-final-timer-390.png).
 
 ![R2 실제 드래그 — 타일과 사거리 미리보기, 단일 군량, 출진](verifications/shots/r2-drag-range-desktop.png)
 
