@@ -216,3 +216,7 @@ https://game.1989v.com/games/marine-command/index.html 에BETA공개배포완료
 - 최초25%안실제첫wave정지inside무강화접촉후8.97초사망이거점수비여유에부족해부모가50%로1회수정승인·사용자알림. 최종동일seed무강화안12.433초/밖6.4초, 방10안120초생존최저97/종료100/80처치800G. 고정3몹3초안HP85.333/밖1. 관련고유8건최종PASS(실패UIfixture및50%영향만재검증); 새로운데이터필드없으므로전체최대payload반복안함.
 - **밸런스한계**: 같은seed/제자리/자동사격/돈이되면방어만정상act구매정책1회는방4(250G지출/잔금50)에서29.133초사망, 첫접촉후16.933초. 28생존적/22대기, 첫wave완주실패. 수치/전략반복튜닝없음. 사용자에게실패를명확히전달하고‘정지강화완주’인지‘범위내이동수비’인지async선호질문; 답변전추가밸런스변경없음. 정지첫wave완주달성이라고주장하지않는다.
 - local36bcf951/releasegamesbc58c11/rootafb3312/manifestdf3f0550, CI [37171686970](https://github.com/1989v/msa/actions/runs/37171686970) SUCCESS. 최종50%만root배포(25%중간코드는gamescommit만). PortalReady/Updated/Available1/oldRS0/ArgoSyncedSucceeded(기존전체Degraded별도). 공개31HTTP/MIME·15JS정확해시·CSS원본·11PNG일치. protocol13/unit-defense-13. backend/DB변경없음, staged15cf보존. 기존저장사용가능/협동새로고침, 실제브라우저픽셀미검증. 근거verifications/unit-defense-beta-evidence.json 및 unit-defense-beta-rollout.txt.
+
+## 튜토리얼 접기·공통 모바일 전체화면 도움말 — 2026-10-05
+튜토리얼내용감추기/다시보기·aria-expanded·별도UIlocalStorage선호추가, storage차단시세션작동/진행보존. 공통portal+공유platform의모바일전체화면/가로오류안내·Kakao→Chromeuserintent/복사/수동안내추가. 사용자Android폰확인. 일반카카오상하바제거강제불가·파트너게임웹뷰등록필요함을공식문서근거로설명.
+고유10건+FE타입검사PASS, 격리최신원격충돌의영향부분재검증. gamesreleasea45353da/roota7c053d4/manifestd038fd35, CI37270562688SUCCESS 및공개31리소스/대표타게임확인. protocol13유지/mobile-help-13. 실제카카오실기기앱전환/픽셀미검증. 상세 [공통 모바일 명세·검증](../2026-10-05-game-mobile-browser/spec.md). 기존전투수치변경없음.

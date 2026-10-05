@@ -112,3 +112,6 @@ games19828054. 첫3wave지상전용,4차부터박쥐소수. 기지옆무적중�
 
 ## 최신: 아군 능력치·치유 거점 수치 베타 반영, 정지 수비 목표 확인 대기
 선택아군HP/공방/사거리/간격/속도/강화표시, 기본좀비공11·힐50%HP초/반경180. 일반방10·영웅강화8 최소피해1. 관련8건PASS·공개배포확인(local36bcf951/releasebc58c11/portalafb3312/manifestdf3f0550, CI37171686970SUCCESS). protocol13/unit-defense-13. 다만제자리방어구매정책은방4·29.13초사망으로첫wave완주실패. 사용자에게async목표질문(정지강화완주vs범위내이동수비), 답전추가튜닝없음. planning/healer-defense-balance.md 상세관찰·status.md최신절참조.
+
+## 최신: 튜토리얼 접기·게임 공통 모바일 도움말 배포
+사용자AndroidKakao화면문제: tutorial감추기/다시보기, portal과직접SDK모바일fullscreen/명시가로지원·실패안내·Chromeintent시도/복사. 고유10건+tscPASS, releasegamesa45353da/roota7c053d4/manifestd038fd35 CI37270562688SUCCESS. protocol13유지/mobile-help-13. 실기기앱전환/바숨김미검증, 웹으로Kakao바강제제거보장없음. ../2026-10-05-game-mobile-browser/spec.md 상세. 앞선치유정지완주선호질문은답변없음/밸런스추가변경없음.
