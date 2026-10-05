@@ -58,3 +58,5 @@
 튜토리얼버튼은‘튜토리얼 감추기/튜토리얼 다시 보기’. 직접모바일SDK는safe-area아래중앙에기본접힌‘큰 화면 도움말’(카카오일때‘카카오 큰 화면 도움말’), ‘전체화면/Chrome에서 열기/현재 링크 복사’를제공한다. portal도움말은stage우상단기존컨트롤아래52px에접는형태이며실패안내가게임을중단하지않는다.
 
 protocol13유지/querymobile-help-13, canonical저장·지도·전투변경없음. 기존rootstaged15cf와다른담당duel-defense변경미수정. Backend/DB변경없음. 브라우저를옮기면로그인/로컬저장환경이다를수있음을UI에안내한다. Android/iPhone실기기·intent실행·실제픽셀미검증.
+
+공통 플레이 주소 검증 정정: 최초 `/marine-command`, `/neon-drifter`의 HTTP200은 SPA fallback이어서 상세 화면 매칭 증거가 아니었다. 실제 React `App.tsx`의 `/games/:slug`와 `seo/copy.mjs` 주소 생성 기준으로 `/games/marine-command`, `/games/neon-drifter`가 올바르다. 두 URL HTTP200을 다시 확인했고 앞선 결과는 evidence.previousFallbackRoutes에 정정 사유와 함께 남겼다. 실제 브라우저 화면 렌더 확인을 의미하지 않는다. [궁수 키우기 공통 플레이 화면](https://game.1989v.com/games/marine-command).

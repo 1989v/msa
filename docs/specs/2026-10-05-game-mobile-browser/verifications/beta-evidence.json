@@ -314,18 +314,6 @@
   ],
   "resourceCount": 31,
   "pixelBrowserVerified": false,
-  "portalRoutes": {
-    "/marine-command": {
-      "status": 200,
-      "mime": "text/html",
-      "bytes": 4886
-    },
-    "/neon-drifter": {
-      "status": 200,
-      "mime": "text/html",
-      "bytes": 4886
-    }
-  },
   "detailBundle": {
     "file": "GameDetailPage-F2fEpve9.js",
     "bytes": 35347,
@@ -414,5 +402,34 @@
     "portalHelp": "collapsible, stage upper right below controls at 52px; outcome does not pause game",
     "rotation": "Explicit landscape button tries landscape for BOTH; PORTRAIT stays portrait; BOTH automatic fullscreen does not lock",
     "externalStateWarning": "브라우저를 바꾸면 다시 로그인하거나 저장을 불러와야 할 수 있습니다."
+  },
+  "previousFallbackRoutes": {
+    "results": {
+      "/marine-command": {
+        "status": 200,
+        "mime": "text/html",
+        "bytes": 4886
+      },
+      "/neon-drifter": {
+        "status": 200,
+        "mime": "text/html",
+        "bytes": 4886
+      }
+    },
+    "correction": "These HTTP 200 responses were SPA fallbacks, not evidence of GameDetailPage route matching."
+  },
+  "portalRoutes": {
+    "/games/marine-command": {
+      "status": 200,
+      "title": "궁수 키우기 — 무료 온라인 플레이 | 1989v 게임",
+      "routeSource": "App.tsx /games/:slug -> GameDetailPage; seo/copy.mjs gameDetailUrl",
+      "browserRendered": false
+    },
+    "/games/neon-drifter": {
+      "status": 200,
+      "title": "1989v",
+      "routeSource": "App.tsx /games/:slug -> GameDetailPage; seo/copy.mjs gameDetailUrl",
+      "browserRendered": false
+    }
   }
 }
