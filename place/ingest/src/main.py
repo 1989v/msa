@@ -225,7 +225,8 @@ def _job_links(limit: int) -> int:
     # 유튜브 검색어는 place 가 정한다(이름이 겹치는 곳은 시군구를 붙인다).
     if youtube_key:
         sources.append(("YOUTUBE", lambda item: youtube.search(
-            youtube_key, item["title"], item.get("lang") or "ko", item.get("query"))))
+            youtube_key, item["title"], item.get("lang") or "ko", item.get("query"),
+            item.get("latitude"), item.get("longitude"))))
     if naver_id and naver_secret:
         sources.append(("NAVER_BLOG", lambda item: naver.search(
             naver_id, naver_secret, item["title"], item.get("lang") or "ko")))

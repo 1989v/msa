@@ -350,7 +350,7 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | | |
 |---|---|
 | 발급 | Google Cloud Console → API 및 서비스 → 라이브러리 → `YouTube Data API v3` 사용 설정 → 사용자 인증 정보 → API 키 |
-| 호출 ① | `youtube/v3/search` — `part=snippet`, `type=video`, `maxResults=50`, `regionCode=KR`, `relevanceLanguage`, `safeSearch=strict`. **좌표 반경·카테고리 제한 없음**(2026-10-04 — 반경 검색은 촬영 위치를 적은 영상만 돌려줘 대표 영상이 빠졌다). 검색어는 place 가 준다: 표시명, 같은 표시명·언어의 관광지가 둘 이상이면 표시명 + 시군구. 1관광지 1콜 |
+| 호출 ① | `youtube/v3/search` — `part=snippet`, `type=video`, `maxResults=50`, `regionCode=KR`, `relevanceLanguage`, `safeSearch=strict`. **1순위: `videoCategoryId=19`(여행) + `location`·`locationRadius=10km`**, 이름 매칭 뒤 10개가 안 되면 **보충: 제한 없는 검색**으로 10개까지(1순위가 앞, 각 순위 안은 조회수 순). 검색어는 place 가 준다(표시명, 이름이 겹치면 + 시군구). 1관광지 1~2콜 |
 | 호출 ② | `youtube/v3/videos` — `part=statistics,contentDetails,player`, `maxWidth=640`, `id=` (최대 50개 묶음). 수집 직후 + `links` 잡 끝에 길이·비율이 빈 영상 채우기(한 실행 5,000개 = 100 units) |
 | 쿼터 | 일 10,000 units · `search.list` **100 units** + `videos.list` **1 unit** → **하루 100 관광지** |
 | 저장 | videoId · 제목 · URL · 썸네일 **URL** · 채널명 · 게시일 · **조회수** · **길이**(ISO-8601 원문) · **플레이어 폭·높이**. 파생: `video_format`(세로·3분 이하 = SHORT) |

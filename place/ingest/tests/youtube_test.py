@@ -90,16 +90,23 @@ def test_search_records_100_units_per_call_in_ledger(monkeypatch):
 
     monkeypatch.setattr(youtube.urllib.request, "urlopen", lambda req, timeout=0: Reply())
     youtube.search("k", "경복궁", "ko")
-    # 1관광지 1콜 — 결과가 없으면 영상 정보 조회도 없다
-    assert ledger.costs == [100]
+    # 1순위가 비어 보충 검색까지 2콜 — 결과가 없으면 영상 정보 조회는 없다
+    assert ledger.costs == [100, 100]
 
 
-def test_search_has_no_location_or_category_and_uses_place_query(monkeypatch):
-    # 반경 검색은 촬영 위치를 적은 영상만 돌려줘 방송사·교양 채널 대표 영상이 빠졌다(경복궁 151만 회)
+def _item(vid: str) -> dict:
+    return {"id": {"videoId": vid}, "snippet": {"title": f"경복궁 {vid}", "description": "", "channelTitle": "c", "thumbnails": {}}}
+
+
+def _fake_youtube(monkeypatch, first: list[str], second: list[str], views: dict[str, int]):
+    """1순위(카테고리+반경)·보충 검색 응답과 조회수를 정해 두고, 보낸 검색 요청을 모은다."""
     monkeypatch.setattr(youtube, "_ledger", _Ledger())
     sent = []
 
     class Reply:
+        def __init__(self, data):
+            self.data = data
+
         def __enter__(self):
             return self
 
@@ -107,20 +114,41 @@ def test_search_has_no_location_or_category_and_uses_place_query(monkeypatch):
             return False
 
         def read(self):
-            return json.dumps({"items": []}).encode()
+            return json.dumps(self.data).encode()
 
     def fake_urlopen(req, timeout=0):
-        sent.append(parse_qs(urlparse(req.full_url).query))
-        return Reply()
+        q = parse_qs(urlparse(req.full_url).query)
+        if "/search" in req.full_url:
+            sent.append(q)
+            ids = first if "videoCategoryId" in q else second
+            return Reply({"items": [_item(i) for i in ids]})
+        ids = q["id"][0].split(",")
+        return Reply({"items": [{"id": i, "statistics": {"viewCount": str(views.get(i, 0))}} for i in ids]})
 
     monkeypatch.setattr(youtube.urllib.request, "urlopen", fake_urlopen)
-    youtube.search("k", "중앙공원", "ko", "중앙공원 종로구")
-    youtube.search("k", "Dosan Park(도산공원)", "en")
+    return sent
 
-    assert [q["q"][0] for q in sent] == ["중앙공원 종로구", "Dosan Park"]
-    for q in sent:
-        assert not {"location", "locationRadius", "videoCategoryId"} & q.keys()
-        assert q["maxResults"] == ["50"]
+
+def test_travel_category_near_the_place_first_then_fill_to_ten(monkeypatch):
+    # 제한 없는 검색만 쓰면 이름만 스친 1,090만 회 영상이 맨 앞에 섰다(2026-10-05) — 그 장소의 여행 영상이 앞선다
+    sent = _fake_youtube(monkeypatch, first=["a1", "a2"], second=["a2", "b1", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "b9"],
+                         views={"a1": 10, "a2": 500, "b1": 9_000_000, "b9": 100})
+    links = youtube.search("k", "경복궁", "ko", "경복궁", 37.58, 126.97)
+
+    assert [l["externalId"] for l in links] == ["a2", "a1", "b1", "b9", "b2", "b3", "b4", "b5", "b6", "b7"]
+    first, second = sent
+    assert first["videoCategoryId"] == ["19"] and first["location"] == ["37.58,126.97"] and first["locationRadius"] == ["10km"]
+    assert not {"videoCategoryId", "location", "locationRadius"} & second.keys()
+    assert [q["q"][0] for q in sent] == ["경복궁", "경복궁"]
+
+
+def test_no_fill_search_when_first_pass_has_ten(monkeypatch):
+    sent = _fake_youtube(monkeypatch, first=[f"a{i}" for i in range(12)], second=["b1"], views={})
+    links = youtube.search("k", "경복궁", "ko", None, 37.58, 126.97)
+
+    assert len(sent) == 1
+    assert len(links) == 10 and all(l["externalId"].startswith("a") for l in links)
+
 
 
 def test_exhausted_ledger_stops_before_calling(monkeypatch):

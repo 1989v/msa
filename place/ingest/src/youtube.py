@@ -36,9 +36,14 @@ STATS_BATCH = 50
 # 플레이어 크기는 maxWidth 를 줘야 영상 비율대로 온다. maxHeight 만 주면 전부 세로(360×640)로 와서
 # 쇼츠를 가를 수 없었다(2026-10-04 운영 표본 49건 전부 세로, 44분짜리 포함).
 EMBED_MAX_WIDTH = 640
-# 좌표 반경(location)·여행 카테고리(videoCategoryId=19)는 쓰지 않는다. 반경 검색은 **촬영 위치를 적은 영상만**
-# 돌려줘 방송사·교양 채널의 대표 영상이 빠졌고(경복궁: 151만 회 교양 영상·85만 회 KBS 다큐가 없고 브이로그만),
-# 여행 카테고리도 그 영상들을 뺐다. 이름이 같은 다른 지역 영상은 place 가 검색어에 시군구를 붙여 가린다.
+# 1순위는 **여행 카테고리(videoCategoryId=19) + 좌표 반경 10km** — 그 장소에서 찍은 여행 영상이다. 이것만으로는
+# 촬영 위치를 적은 영상만 돌아와 모자란 곳이 많아(경복궁: 브이로그 몇 개), 모자라면 제한 없는 검색으로 [TARGET] 개까지 채운다.
+# 제한 없는 검색만 쓰면 이름만 스친 무관 영상(1,090만 회 공연 영상)이 맨 앞에 섰다(2026-10-05).
+# 이름이 같은 다른 지역 영상은 place 가 검색어에 시군구를 붙여 가린다.
+TRAVEL_CATEGORY_ID = "19"
+LOCATION_RADIUS = "10km"
+#: 관광지당 영상 수 — 1순위로 이만큼 차면 보충 검색(100 units)을 하지 않는다
+TARGET = 10
 
 
 #: search.list 1콜 = 100 units, videos.list 1콜(50개 묶음) = 1 unit
@@ -66,15 +71,32 @@ def _raise_if_quota(e: urllib.error.HTTPError, detail: str) -> None:
         raise QuotaExceeded(f"HTTP {e.code} {detail[:200]}") from e
 
 
-def search(api_key: str, title: str, lang: str, query: str | None = None) -> list[dict]:
-    """관광지 영상을 찾는다. 반환은 place `/internal/.../bulk` 의 link 스키마.
+def search(
+    api_key: str,
+    title: str,
+    lang: str,
+    query: str | None = None,
+    latitude: float | None = None,
+    longitude: float | None = None,
+) -> list[dict]:
+    """관광지 영상을 찾는다. 반환은 place `/internal/.../bulk` 의 link 스키마, 최대 [TARGET] 개.
 
-    검색어는 place 가 준 `query`(표시명, 이름이 겹치는 곳은 표시명 + 시군구)다. 없으면 표시명 —
-    원천 제목 `Dosan Park(도산공원)` 을 그대로 물으면 두 표기가 붙은 질의가 되어 관련성이 무너진다.
-    이름 매칭은 원천 제목 기준으로 한다(title_parse). 1관광지 1콜(100 units).
+    1순위: 여행 카테고리 + 좌표 반경 결과(조회수 순). 모자라면 2순위: 제한 없는 검색(조회수 순)으로 채운다.
+    1순위가 앞에 선다 — 조회수가 더 높아도 2순위가 1순위를 밀어내지 않는다. 1관광지 1~2콜(100~200 units).
+    검색어는 place 가 준 `query`(표시명, 이름이 겹치는 곳은 표시명 + 시군구), 없으면 표시명.
+    이름 매칭은 원천 제목 기준으로 한다(title_parse).
     """
     display, _ = parse_title(title)
-    links = _search_page(api_key, _params(api_key, query or display, lang), title)
+    q = query or display
+    first = _search_page(api_key, _params(api_key, q, lang, latitude, longitude, TRAVEL_CATEGORY_ID), title)
+    second: list[dict] = []
+    if len(first) < TARGET:
+        try:
+            seen = {l["externalId"] for l in first}
+            second = [l for l in _search_page(api_key, _params(api_key, q, lang), title) if l["externalId"] not in seen]
+        except QuotaExceeded:
+            second = []   # 1순위는 이미 100 units 를 냈다 — 버리지 않는다
+    links = first + second
     if not links:
         return links
     details = video_details(api_key, [l["externalId"] for l in links])
@@ -84,13 +106,20 @@ def search(api_key: str, title: str, lang: str, query: str | None = None) -> lis
         link["duration"] = found.get("duration")
         link["embedWidth"] = found.get("embedWidth")
         link["embedHeight"] = found.get("embedHeight")
-    # 조회수 내림차순. 못 받은 것(None)은 뒤로 — 순서를 뒤집을 근거가 없다.
-    links.sort(key=lambda l: (l["viewCount"] is None, -(l["viewCount"] or 0)))
-    return links
+    # 순위 안에서 조회수 내림차순. 못 받은 것(None)은 뒤로 — 순서를 뒤집을 근거가 없다.
+    by_views = lambda l: (l["viewCount"] is None, -(l["viewCount"] or 0))  # noqa: E731
+    return (sorted(first, key=by_views) + sorted(second, key=by_views))[:TARGET]
 
 
-def _params(api_key: str, query: str, lang: str) -> dict:
-    return {
+def _params(
+    api_key: str,
+    query: str,
+    lang: str,
+    latitude: float | None = None,
+    longitude: float | None = None,
+    category_id: str | None = None,
+) -> dict:
+    params = {
         "part": "snippet",
         "q": query,
         "type": "video",
@@ -100,6 +129,13 @@ def _params(api_key: str, query: str, lang: str) -> dict:
         "safeSearch": "strict",
         "key": api_key,
     }
+    if category_id:
+        params["videoCategoryId"] = category_id
+    # 좌표가 있으면 그 반경의 영상만 — 촬영 위치를 적은 영상만 돌아온다(그래서 모자라면 보충한다)
+    if category_id and latitude is not None and longitude is not None:
+        params["location"] = f"{latitude},{longitude}"
+        params["locationRadius"] = LOCATION_RADIUS
+    return params
 
 
 def _search_page(api_key: str, params: dict, title: str) -> list[dict]:
