@@ -1,0 +1,158 @@
+{
+  "url": "https://game.1989v.com/games/duel-defense/index.html",
+  "checkedAt": "2026-10-05T16:36:20.720Z",
+  "network": [
+    {
+      "url": "https://game.1989v.com/games/duel-defense/index.html",
+      "status": 200,
+      "mime": "text/html"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/js/main.mjs",
+      "status": 200,
+      "mime": "text/javascript"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/style.css",
+      "status": 200,
+      "mime": "text/css"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/js/data.mjs",
+      "status": 200,
+      "mime": "text/javascript"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/js/core.mjs",
+      "status": 200,
+      "mime": "text/javascript"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/js/audio.mjs",
+      "status": 200,
+      "mime": "text/javascript"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/js/renderer.mjs",
+      "status": 200,
+      "mime": "text/javascript"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/js/assets.mjs",
+      "status": 200,
+      "mime": "text/javascript"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/js/rig.mjs",
+      "status": 200,
+      "mime": "text/javascript"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/assets/battlefield.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/assets/infantry.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/assets/support.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/assets/siege.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/assets/enemies.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/assets/enemy-rig-parts-r4.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/index.html",
+      "status": 200,
+      "mime": "text/html"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/style.css",
+      "status": 200,
+      "mime": "text/css"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/js/main.mjs",
+      "status": 200,
+      "mime": "text/javascript"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/js/assets.mjs",
+      "status": 200,
+      "mime": "text/javascript"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/assets/battlefield.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/js/data.mjs",
+      "status": 200,
+      "mime": "text/javascript"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/js/renderer.mjs",
+      "status": 200,
+      "mime": "text/javascript"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/js/audio.mjs",
+      "status": 200,
+      "mime": "text/javascript"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/js/core.mjs",
+      "status": 200,
+      "mime": "text/javascript"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/js/rig.mjs",
+      "status": 200,
+      "mime": "text/javascript"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/assets/infantry.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/assets/support.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/assets/siege.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/assets/enemies.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://game.1989v.com/games/duel-defense/assets/enemy-rig-parts-r4.png",
+      "status": 200,
+      "mime": "image/png"
+    }
+  ],
+  "failed": [],
+  "errors": []
+}
