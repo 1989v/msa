@@ -1,0 +1,125 @@
+{
+  "baseUrl": "https://game.1989v.com/games/duel-defense/",
+  "resources": [
+    {
+      "path": "index.html",
+      "status": 200,
+      "mime": "text/html",
+      "bytes": 4842,
+      "sha256": "613be844f3d0ac36d27009150ac5c5f7dcd593343d60857cc58ae9f0da0b44b6",
+      "exactOriginal": true
+    },
+    {
+      "path": "style.css",
+      "status": 200,
+      "mime": "text/css",
+      "bytes": 8441,
+      "sha256": "36ee467002cb4904cb09951632bf0604831a07ef674eb299723fc5f3ae7b78c7",
+      "exactOriginal": true
+    },
+    {
+      "path": "js/assets.mjs",
+      "status": 200,
+      "mime": "text/javascript",
+      "bytes": 9423,
+      "sha256": "6d64a4d593e2070a6b4d94df1cf250691dfb00a12ef70482c498f8dee3d5c6cf",
+      "exactOriginal": true
+    },
+    {
+      "path": "js/audio.mjs",
+      "status": 200,
+      "mime": "text/javascript",
+      "bytes": 4288,
+      "sha256": "46707eae9843836e8c9db8689c6cbc20cd19aed4ec48a11bcf02b92a40faaeef",
+      "exactOriginal": true
+    },
+    {
+      "path": "js/core.mjs",
+      "status": 200,
+      "mime": "text/javascript",
+      "bytes": 9551,
+      "sha256": "a3cbf3152ce7069962eb5c68ed59f070c5510025c436fab867c07ab0205be0b8",
+      "exactOriginal": true
+    },
+    {
+      "path": "js/data.mjs",
+      "status": 200,
+      "mime": "text/javascript",
+      "bytes": 3442,
+      "sha256": "31bd181a2ec25661686e53bb886de0abe70b5d0a3f5effe8a28ca05713aaffbe",
+      "exactOriginal": true
+    },
+    {
+      "path": "js/main.mjs",
+      "status": 200,
+      "mime": "text/javascript",
+      "bytes": 17896,
+      "sha256": "1ffbb6a1f1e15de4d8dbc269663e2ef1a0a9c5d8e8a1f135e645594e49658785",
+      "exactOriginal": true
+    },
+    {
+      "path": "js/renderer.mjs",
+      "status": 200,
+      "mime": "text/javascript",
+      "bytes": 6821,
+      "sha256": "e28fc05b8fc1f4d459a552af1a654c4164dc75b3150625056df452bcfd578729",
+      "exactOriginal": true
+    },
+    {
+      "path": "js/rig.mjs",
+      "status": 200,
+      "mime": "text/javascript",
+      "bytes": 3094,
+      "sha256": "e16cf90d2e42a71e356d763b822f844483ea9d9983755667d648b25c2a7e1af9",
+      "exactOriginal": true
+    },
+    {
+      "path": "assets/battlefield.png",
+      "status": 200,
+      "mime": "image/png",
+      "bytes": 3358790,
+      "sha256": "47cc51d2721efa324478c6bd25ba47e5864d0038c9dd8d451a718c80932d0051",
+      "exactOriginal": true
+    },
+    {
+      "path": "assets/enemies.png",
+      "status": 200,
+      "mime": "image/png",
+      "bytes": 1988927,
+      "sha256": "7b3731f37840c5323661d040be7430abf80b2facfe9a6a6f91ebac8bfeecea83",
+      "exactOriginal": true
+    },
+    {
+      "path": "assets/enemy-rig-parts-r4.png",
+      "status": 200,
+      "mime": "image/png",
+      "bytes": 1027583,
+      "sha256": "6cce6065c9a5e650bc467cf8d8adacdef24f418a592772834b7774d43e0923d5",
+      "exactOriginal": true
+    },
+    {
+      "path": "assets/infantry.png",
+      "status": 200,
+      "mime": "image/png",
+      "bytes": 1621910,
+      "sha256": "e7fefea327fc133a2a042a42785be16aadcf54e3310297736d152fa52153ecc6",
+      "exactOriginal": true
+    },
+    {
+      "path": "assets/siege.png",
+      "status": 200,
+      "mime": "image/png",
+      "bytes": 1841583,
+      "sha256": "48ab7b1c9e1e44b2373aba9f75549bba6954c760bc56c7bf0c1275849129fd08",
+      "exactOriginal": true
+    },
+    {
+      "path": "assets/support.png",
+      "status": 200,
+      "mime": "image/png",
+      "bytes": 1798903,
+      "sha256": "3a335d083e49bdc830bebdda7893848a314d978004075f95666393b15e9399f5",
+      "exactOriginal": true
+    }
+  ]
+}

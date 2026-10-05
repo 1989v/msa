@@ -56,3 +56,7 @@ Fresh independent static review SHIP·부모 actual motion 승인. 정확한 명
 게임 `8b2bc8c0`. 첫15wave/grants만 유지, 끝/표시/마지막 AI연구는 WAVES.length 참조. 연구 두 단계round(old*.9), 척후81/149·대장군378/594. 수비 강화/유료 가격·전투·원화 그대로. Core21/21, browser15labels/7종 버튼값/두 단계module가격/실제6단계 연구81차감·cartlock·0console PASS. 연구 UI 진행만 테스트RAF×8, 군량/단계/상태 주입 없음. Full15 도메인은HP20/20 무승부·추가지급없음·9.1min(이전12~15min 조건 폐기). 증거 `verifications/r6-final-verification.md`,4179/세션28669.
 
 게임·관련검증만 정상 exact-owned commit; root games pointer/다른 staged 파일 보존. Fresh static review SHIP 확인. 사용자 승인 BETA 배포/카탈로그/공개 URL 검증은 부모가 별도 이어간다.
+
+## R6 BETA 공개 완료 — 2026-10-06
+
+플레이 https://game.1989v.com/games/duel-defense/index.html . games 격리 릴리스bf2c5243, 카탈로그94378f059, 화면f0779a148, portal-fe 전용 CI 성공 후 manifest23497aca4. 공개 BETA/AI15 설명, 양쪽롤아웃/Ready1, 공개15리소스 정상응답과 mjs/PNG 원본일치, 실제 공개 브라우저 배치·출진·이동·pause·연구비81/378·390px·0오류 PASS. 전체15 실제 wall-clock 재플레이 주장 없음. 사람온라인·히든콤보 미구현/보류, 구체 원작맵 일치도 미검증. 배포·범위·취소큐 복구 상세 `verifications/r6-beta-deployment.md`. 공유폴더의 staged pointer·타 작업 보존.

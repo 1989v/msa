@@ -61,6 +61,6 @@ R2 games `70b818c1`, 증거 `verifications/r2-final-verification.md`. P1 체크/
 - [x] R6-T3 Core21/21·실제 연구81 차감/cartlock·15labels·전체15 도메인·0errors
 - [x] R6-T4 gameREADME·검증 기록·normal exact-owned game commit `8b2bc8c0`
 - [x] R6-T5 부모 fresh static review SHIP
-- [ ] R6-T6 부모 BETA 배포·카탈로그·공개 URL 확인
+- [x] R6-T6 부모 BETA 배포·카탈로그·공개 URL 확인
 
 로컬 증거 `verifications/r6-final-verification.md`. 카탈로그/BETA 공개는 부모 소유이며 이 구현자의 배포 완료 주장에 포함하지 않는다.
