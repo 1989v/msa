@@ -1,0 +1,4 @@
+PASS actual15 header/phase/help,7research button prices +loaded module bothsteps [["scout",81,149],["runner",90,162],["shield",108,189],["heavy",153,257],["charger",117,203],["siege",216,351],["general",378,594]]
+PASS genuine stage6 UI research charge81 and cartlock,normal economy
+PASS full15 domain {"stage":15,"result":"15스테이지 생존 · 무승부","hp":[20,20],"totalMinutes":9.1,"grants":15}
+R6 browser PASS ·0 console errors ·stage6 only accelerated RAF clock; no state/grain/stage injection

@@ -53,3 +53,14 @@ R2 games `70b818c1`, 증거 `verifications/r2-final-verification.md`. P1 체크/
 - [x] R5-T4 게임README·증거·정상 exact-owned commit, root games pointer 보존
 
 게임 `71edb3d4`, 증거 `verifications/r5-final-verification.md`. 다른 밸런스/원화/전체 경기 재검증은 확대하지 않았다.
+
+## R6 — 15웨이브·연구10% 인하·BETA
+
+- [x] R6-T1 첫15wave/grants 유지, 실제 length로 최종/AI연구/UI/help/result
+- [x] R6-T2 두 단계 연구비round(old*.9), 유료/수비 가격과 경제 잠금 유지
+- [x] R6-T3 Core21/21·실제 연구81 차감/cartlock·15labels·전체15 도메인·0errors
+- [x] R6-T4 gameREADME·검증 기록·normal exact-owned game commit `8b2bc8c0`
+- [x] R6-T5 부모 fresh static review SHIP
+- [ ] R6-T6 부모 BETA 배포·카탈로그·공개 URL 확인
+
+로컬 증거 `verifications/r6-final-verification.md`. 카탈로그/BETA 공개는 부모 소유이며 이 구현자의 배포 완료 주장에 포함하지 않는다.

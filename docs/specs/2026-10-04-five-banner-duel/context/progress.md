@@ -50,3 +50,9 @@ Fresh independent static review SHIP·부모 actual motion 승인. 정확한 명
 ## R5 완료 — 2026-10-06
 
 게임 `71edb3d4`. 사용자 순서에 맞춰 기본 관통 창병22 >화차18 >총통12 >포수10 >궁수0만 변경, Lv2+4/Lv3+8 유지. 공통 core/UI stat 그대로 연동, 실제 숫자 피해·AoE 기대값/세 레벨 ranking 검증 갱신. Core20/20,390px 실제5종 hover/click detail·browser shared Lv1~3·0console PASS. Lv3 실제9단계 플레이는 반복하지 않았다. 별도20경기/원화/모션 검사를 반복하지 않았으며 다른 수치 변경 없음. Fresh static review SHIP(부모 iteration 기록). 증거 `verifications/r5-final-verification.md`, live preview4179/기존 세션28669. 타 staged/dirty 상태와 root games pointer 보존, 정확한 owned files 정상 commit.
+
+## R6 로컬 완료 — 2026-10-06
+
+게임 `8b2bc8c0`. 첫15wave/grants만 유지, 끝/표시/마지막 AI연구는 WAVES.length 참조. 연구 두 단계round(old*.9), 척후81/149·대장군378/594. 수비 강화/유료 가격·전투·원화 그대로. Core21/21, browser15labels/7종 버튼값/두 단계module가격/실제6단계 연구81차감·cartlock·0console PASS. 연구 UI 진행만 테스트RAF×8, 군량/단계/상태 주입 없음. Full15 도메인은HP20/20 무승부·추가지급없음·9.1min(이전12~15min 조건 폐기). 증거 `verifications/r6-final-verification.md`,4179/세션28669.
+
+게임·관련검증만 정상 exact-owned commit; root games pointer/다른 staged 파일 보존. Fresh static review SHIP 확인. 사용자 승인 BETA 배포/카탈로그/공개 URL 검증은 부모가 별도 이어간다.

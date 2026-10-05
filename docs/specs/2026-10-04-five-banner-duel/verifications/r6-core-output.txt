@@ -1,0 +1,136 @@
+TAP version 13
+# Subtest: 15 authored waves, grants, tiers and shortening prep are exact
+ok 1 - 15 authored waves, grants, tiers and shortening prep are exact
+  ---
+  duration_ms: 0.761375
+  type: 'test'
+  ...
+# Subtest: numeric armor subtraction, pierce cap, minimum1 and updated roles
+ok 2 - numeric armor subtraction, pierce cap, minimum1 and updated roles
+  ---
+  duration_ms: 0.14975
+  type: 'test'
+  ...
+# Subtest: requested pierce order and exact values hold at every equal level
+ok 3 - requested pierce order and exact values hold at every equal level
+  ---
+  duration_ms: 0.165791
+  type: 'test'
+  ...
+# Subtest: levels share integer attack/cost and range/cadence/support data
+ok 4 - levels share integer attack/cost and range/cadence/support data
+  ---
+  duration_ms: 0.069667
+  type: 'test'
+  ...
+# Subtest: purchase/move locks and atomic rejections preserve budget
+ok 5 - purchase/move locks and atomic rejections preserve budget
+  ---
+  duration_ms: 0.375042
+  type: 'test'
+  ...
+# Subtest: upgrade unlock and current-stage-only spending refund once
+ok 6 - upgrade unlock and current-stage-only spending refund once
+  ---
+  duration_ms: 0.101459
+  type: 'test'
+  ...
+# Subtest: research cart lock, repricing and once-only cart refunds
+ok 7 - research cart lock, repricing and once-only cart refunds
+  ---
+  duration_ms: 0.171916
+  type: 'test'
+  ...
+# Subtest: shared budget and 24 paid limit reject insufficient amounts
+ok 8 - shared budget and 24 paid limit reject insufficient amounts
+  ---
+  duration_ms: 0.112875
+  type: 'test'
+  ...
+# Subtest: drummer strongest range support is not stacked
+ok 9 - drummer strongest range support is not stacked
+  ---
+  duration_ms: 0.627
+  type: 'test'
+  ...
+# Subtest: spear selects forward width28, closest3, in-range only
+ok 10 - spear selects forward width28, closest3, in-range only
+  ---
+  duration_ms: 0.401375
+  type: 'test'
+  ...
+# Subtest: spear impact rechecks captured axis/range and adds no new targets
+ok 11 - spear impact rechecks captured axis/range and adds no new targets
+  ---
+  duration_ms: 0.4515
+  type: 'test'
+  ...
+# Subtest: AoE scales base first and subtracts armor separately once at impact
+ok 12 - AoE scales base first and subtracts armor separately once at impact
+  ---
+  duration_ms: 0.25775
+  type: 'test'
+  ...
+# Subtest: baseline grade and paid research snapshot are separate, general paid
+ok 13 - baseline grade and paid research snapshot are separate, general paid
+  ---
+  duration_ms: 0.079042
+  type: 'test'
+  ...
+# Subtest: no 30-second forced gate hit; queues and actual route settle
+ok 14 - no 30-second forced gate hit; queues and actual route settle
+  ---
+  duration_ms: 1.240541
+  type: 'test'
+  ...
+# Subtest: same-tick zero draw, stage15 winner/equal and no next grant
+ok 15 - same-tick zero draw, stage15 winner/equal and no next grant
+  ---
+  duration_ms: 0.249792
+  type: 'test'
+  ...
+# Subtest: pause freezes game and distance-driven gait, reduced motion stable
+ok 16 - pause freezes game and distance-driven gait, reduced motion stable
+  ---
+  duration_ms: 0.260833
+  type: 'test'
+  ...
+# Subtest: AI never observes hidden player cart or research
+ok 17 - AI never observes hidden player cart or research
+  ---
+  duration_ms: 0.172708
+  type: 'test'
+  ...
+# Subtest: seeded defense completes all15 and strategic spending has consequences
+ok 18 - seeded defense completes all15 and strategic spending has consequences
+  ---
+  duration_ms: 49.016459
+  type: 'test'
+  ...
+# Subtest: planted world feet stay fixed across distance/speed and route corner
+ok 19 - planted world feet stay fixed across distance/speed and route corner
+  ---
+  duration_ms: 0.272541
+  type: 'test'
+  ...
+# Subtest: AI allocates eligible research before routine upgrades without hidden inputs
+ok 20 - AI allocates eligible research before routine upgrades without hidden inputs
+  ---
+  duration_ms: 0.078375
+  type: 'test'
+  ...
+# Subtest: both research steps discount every type while paid and defense prices stay invariant
+ok 21 - both research steps discount every type while paid and defense prices stay invariant
+  ---
+  duration_ms: 0.115875
+  type: 'test'
+  ...
+1..21
+# tests 21
+# suites 0
+# pass 21
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 103.79025
