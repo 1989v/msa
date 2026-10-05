@@ -3,6 +3,7 @@ package com.kgd.place.application.attraction.service
 import com.kgd.place.application.attraction.port.AttractionCongestionRepositoryPort
 import com.kgd.place.application.attraction.port.AttractionExtrasRepositoryPort
 import com.kgd.place.application.attraction.port.AttractionRelatedRepositoryPort
+import com.kgd.place.application.attraction.port.AttractionRepositoryPort
 import com.kgd.place.application.attraction.usecase.LookupAttractionExtrasUseCase
 import com.kgd.place.application.attraction.usecase.SyncAttractionBarrierFreeUseCase
 import com.kgd.place.application.attraction.usecase.SyncAttractionWellnessUseCase
@@ -29,6 +30,7 @@ class AttractionExtrasService(
     private val repository: AttractionExtrasRepositoryPort,
     private val congestion: AttractionCongestionRepositoryPort,
     private val related: AttractionRelatedRepositoryPort,
+    private val attractions: AttractionRepositoryPort,
 ) : SyncAttractionBarrierFreeUseCase, SyncAttractionWellnessUseCase, LookupAttractionExtrasUseCase {
 
     @Transactional
@@ -104,10 +106,22 @@ class AttractionExtrasService(
             .filter { it.detailRaw != null || it.flags.isNotEmpty() }
             .associateBy { it.attractionId }
         val wellness = repository.findWellnessByAttractionIds(attractionIds).associateBy { it.attractionId }
-        // 포함 매칭은 정밀도 확인 전이라 싣지 않는다(Q-P2-MATCH) — 저장은 돼 있어 SERVED 만 넓히면 열린다
+        // 집중률 포함 매칭은 표본 정밀도가 모자라 싣지 않는다(Q-P2-MATCH, NameMatch.RELATED_START 주석)
         val forecasts = CongestionForecast.preferred(congestion.findForecasts(attractionIds, NameMatch.SERVED))
-        // 연관도 같은 기준 — 출발이 정확·정규화로 이어진 곳만 묻고, 대상도 그 기준으로 고른다(servedTargets)
-        val relatedPlaces = AttractionRelated.preferred(related.findLinked(attractionIds, NameMatch.SERVED))
+        // 연관 출발은 포함 매칭까지 — 단 우리 행이 음식점·숙박·캠핑 시설이면 뺀다. 대상은 정확·정규화만(servedTargets)
+        val relatedRows = related.findLinked(attractionIds, NameMatch.RELATED_START)
+        val containsIds = relatedRows.filter { it.matchMethod == NameMatch.CONTAINS }.mapNotNull { it.attractionId }.distinct()
+        val blocked = if (containsIds.isEmpty()) {
+            emptySet()
+        } else {
+            attractions.findAllByIds(containsIds)
+                .filterNot { AttractionRelated.containsStartAllowed(it.category, it.titleDisplay) }
+                .mapNotNull { it.id }
+                .toSet()
+        }
+        val relatedPlaces = AttractionRelated.preferred(
+            relatedRows.filterNot { it.matchMethod == NameMatch.CONTAINS && it.attractionId in blocked },
+        )
             .mapValues { (_, row) ->
                 row.servedTargets().map { LookupAttractionExtrasUseCase.RelatedPlace(it.rank, it.attractionId!!, it.scls) }
             }

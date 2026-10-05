@@ -3,6 +3,8 @@ package com.kgd.place.application.attraction.service
 import com.kgd.place.application.attraction.port.AttractionCongestionRepositoryPort
 import com.kgd.place.application.attraction.port.AttractionExtrasRepositoryPort
 import com.kgd.place.application.attraction.port.AttractionRelatedRepositoryPort
+import com.kgd.place.application.attraction.port.AttractionRepositoryPort
+import com.kgd.place.domain.attraction.model.Attraction
 import com.kgd.place.application.attraction.usecase.LookupAttractionExtrasUseCase
 import com.kgd.place.application.attraction.usecase.SyncAttractionBarrierFreeUseCase
 import com.kgd.place.application.attraction.usecase.SyncAttractionWellnessUseCase
@@ -32,7 +34,8 @@ class AttractionExtrasServiceTest : BehaviorSpec({
     val repository = mockk<AttractionExtrasRepositoryPort>()
     val congestion = mockk<AttractionCongestionRepositoryPort>()
     val related = mockk<AttractionRelatedRepositoryPort>()
-    val service = AttractionExtrasService(repository, congestion, related)
+    val attractions = mockk<AttractionRepositoryPort>()
+    val service = AttractionExtrasService(repository, congestion, related, attractions)
 
     val listRaw = """{"contentid":"125894","contenttypeid":"12","title":"마곡사 [유네스코 세계유산]","modifiedtime":"20251224171858"}"""
     val detailRaw = """{"contentid":"126508","wheelchair":"대여가능","restroom":"장애인 화장실 있음","elevator":""}"""
@@ -40,7 +43,7 @@ class AttractionExtrasServiceTest : BehaviorSpec({
     val synced = LocalDateTime.of(2026, 10, 3, 2, 41)
 
     beforeTest {
-        clearMocks(repository, congestion, related)
+        clearMocks(repository, congestion, related, attractions)
         every { congestion.findForecasts(any(), any()) } returns emptyList()
         every { related.findLinked(any(), any()) } returns emptyList()
         every { repository.saveBarrierFree(any()) } answers { firstArg<List<AttractionBarrierFree>>().size }
@@ -205,7 +208,26 @@ class AttractionExtrasServiceTest : BehaviorSpec({
                 ),
                 LookupAttractionExtrasUseCase.Found(42L, null, null, null, listOf(LookupAttractionExtrasUseCase.RelatedPlace(1, 702L, "자연경관(하천/해양)"))),
             )
-            asked.captured shouldBe setOf(NameMatch.EXACT, NameMatch.NORMALIZED)
+            asked.captured shouldBe setOf(NameMatch.EXACT, NameMatch.NORMALIZED, NameMatch.CONTAINS)
+        }
+        Then("포함 매칭 출발은 우리 행이 관광 분류일 때만 낸다 — 캠핑장·음식점에 붙은 것은 뺀다") {
+            every { repository.findBarrierFreeByAttractionIds(any()) } returns emptyList()
+            every { repository.findWellnessByAttractionIds(any()) } returns emptyList()
+            every { related.findLinked(listOf(44L, 45L), any()) } returns listOf(
+                AttractionRelated("g1", "고려청자박물관", "46810", "202608", "[]", 44L, NameMatch.CONTAINS, listOf(target(1, "관광지", 703L, NameMatch.EXACT))),
+                AttractionRelated("g2", "운문사", "47820", "202608", "[]", 45L, NameMatch.CONTAINS, listOf(target(1, "관광지", 704L, NameMatch.EXACT))),
+            )
+            fun ours(id: Long, cat: String, title: String) = mockk<Attraction> {
+                every { this@mockk.id } returns id
+                every { category } returns cat
+                every { titleDisplay } returns title
+            }
+            every { attractions.findAllByIds(listOf(44L, 45L)) } returns listOf(
+                ours(44L, "culture", "강진 고려청자박물관"),
+                ours(45L, "stay", "운문사계절 캠핑장"),
+            )
+
+            service.lookup(listOf(44L, 45L)).map { it.attractionId } shouldBe listOf(44L)
         }
     }
 })

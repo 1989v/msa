@@ -20,5 +20,13 @@ enum class NameMatch(val linked: Boolean) {
          * 2026-10-02 집중률 실측 21쌍 중 「동거문오름」→「거문오름」처럼 다른 곳에 붙은 것이 있었다.
          */
         val SERVED: Set<NameMatch> = setOf(EXACT, NORMALIZED)
+
+        /**
+         * 연관 관광지 **출발**에 쓰는 방법 — [SERVED] + 포함. 2026-10-06 손 확인 두 표본에서 연관 출발 포함 매칭은 49/50 이 맞았다
+         * (틀린 1건은 「장경리해변」→「장경리해변야영장」, 우리 행이 야영장 — [AttractionRelated.containsStartAllowed] 로 뺀다).
+         * 집중률 포함 매칭은 20/25 · 22/25 라 열지 않는다(「동거문오름」→「거문오름」 · 「운문사」→「운문사계절 캠핑장」).
+         * 연관 **대상**의 포함 매칭은 표본이 없어 그대로 [SERVED] 만 쓴다.
+         */
+        val RELATED_START: Set<NameMatch> = SERVED + CONTAINS
     }
 }

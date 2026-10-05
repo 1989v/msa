@@ -36,9 +36,19 @@ class AttractionRelatedTest : BehaviorSpec({
     }
 
     Given("출발이 포함 매칭이거나 못 이은 경우") {
-        Then("대상이 이어져 있어도 아무것도 내지 않는다 — 출발 관광지가 틀리면 남의 상세에 목록이 붙는다") {
-            start(501L, NameMatch.CONTAINS, target(1, "동백섬", "관광지", 601L, NameMatch.EXACT)).servedTargets() shouldBe emptyList()
+        Then("포함 출발은 대상을 낸다(표본 49/50) — 대상의 포함 매칭은 여전히 뺀다. 못 이은 출발은 아무것도 내지 않는다") {
+            start(
+                501L, NameMatch.CONTAINS,
+                target(1, "동백섬", "관광지", 601L, NameMatch.EXACT),
+                target(2, "부산 해운대시장", "관광지", 603L, NameMatch.CONTAINS),
+            ).servedTargets().map { it.attractionId } shouldBe listOf(601L)
             start(null, NameMatch.NONE, target(1, "동백섬", "관광지", 601L, NameMatch.EXACT)).servedTargets() shouldBe emptyList()
+        }
+        Then("포함 출발은 우리 행이 음식점·숙박·캠핑 시설이면 내지 않는다 — 원천 관광지 근처의 다른 곳이다") {
+            AttractionRelated.containsStartAllowed("history", "강진 고려청자박물관") shouldBe true
+            AttractionRelated.containsStartAllowed("leisure", "장경리해변야영장") shouldBe false
+            AttractionRelated.containsStartAllowed("stay", "운문사계절 캠핑장") shouldBe false
+            AttractionRelated.containsStartAllowed("food", "소령원숲속") shouldBe false
         }
     }
 

@@ -26,13 +26,14 @@ data class AttractionRelated(
     }
 
     /**
-     * 화면에 내는 대상(순위 순) — 출발이 [NameMatch.SERVED] 로 이어졌을 때만, 우리 관광지 행(상세 페이지가 있는 것)에
+     * 화면에 내는 대상(순위 순) — 출발이 [NameMatch.RELATED_START] 로 이어졌을 때만(포함 매칭 출발은 호출하는 쪽이
+     * [containsStartAllowed] 로 거른다), 우리 관광지 행(상세 페이지가 있는 것)에
      * [NameMatch.SERVED] 로 이어진 대상. 원천 분류(관광지 · 음식 · 숙박)는 보지 않는다 — 우리 음식점·숙박 행으로 이어지면 링크할
      * 곳이 있으니 낸다(화면은 원천 소분류로 음식점·숙박임을 밝힌다). 이어지지 않은 대상은 링크할 곳이 없어 내지 않는다.
      * 자기 자신 · 출발과 같은 이름 · 이미 나온 관광지는 뺀다. 개수는 자르지 않는다 — 재색인이 활성 문서만 남긴 뒤 자른다.
      */
     fun servedTargets(): List<RelatedTarget> {
-        if (attractionId == null || matchMethod !in NameMatch.SERVED) return emptyList()
+        if (attractionId == null || matchMethod !in NameMatch.RELATED_START) return emptyList()
         val startName = squash(tAtsNm)
         val seen = mutableSetOf(attractionId)
         return targets.sortedBy { it.rank }.filter { t ->
@@ -46,6 +47,16 @@ data class AttractionRelated(
         private val BASE_YM = Regex("\\d{4}(0[1-9]|1[0-2])")
 
         private fun squash(name: String) = name.filterNot { it.isWhitespace() }
+
+        /** 캠핑·야영 시설 — 원천 관광지 이름을 품은 우리 행이 그 근처 숙박 시설인 경우(「운문사」→「운문사계절 캠핑장」) */
+        private val CAMPING = Regex("캠핑|야영장|글램핑|카라반")
+
+        /**
+         * 포함 매칭으로 이어진 출발을 화면에 내도 되는 우리 행인가 — 음식점·숙박·캠핑 시설은 아니다.
+         * 원천(관광공사 빅데이터)의 출발은 관광지인데, 이름을 품은 우리 행이 그 근처 식당·숙소·야영장이면 다른 곳이다.
+         */
+        fun containsStartAllowed(category: String?, titleDisplay: String): Boolean =
+            category !in setOf("food", "stay") && !CAMPING.containsMatchIn(titleDisplay)
 
         /**
          * 원천 출발 이름 둘 이상이 한 관광지에 이어졌을 때 하나만 고른다 — 매칭이 더 확실한 쪽(정확 > 정규화 > 포함),
