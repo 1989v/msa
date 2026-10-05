@@ -1,6 +1,6 @@
 # 대전 디펜스 — 1:1 대전 타워디펜스 기획·시안
 
-상태: **R3 구현·검증 완료 — 클릭 배치·큰 타이머·병과 툴팁**. 사용자 구현 승인: 2026-10-05. 현행 정본은 [R3 변경](iterations/03-placement-timer-tooltips.md)과 [R2 경제·공격](iterations/02-direct-purchase.md), 진행 항목은 [tasks.md](tasks.md). 이전 구현·검증은 이력이다.
+상태: **R4 확장 구현 중 — 20스테이지·병과 성장·걷기 교정**. 사용자 요청: 2026-10-05. 설계 정본은 [R4 확장](iterations/04-twenty-stage-balance.md), 기존 [R3 입력](iterations/03-placement-timer-tooltips.md)과 [R2 경제](iterations/02-direct-purchase.md)를 유지한다. 진행 항목은 [tasks.md](tasks.md). 현재 완료된 검증은 R3까지이며, R4 수치는 플레이 검증 전 초안이다.
 
 ## 플레이
 
