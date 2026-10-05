@@ -1,0 +1,124 @@
+TAP version 13
+# Subtest: 20 authored waves, grants, tiers and shortening prep are exact
+ok 1 - 20 authored waves, grants, tiers and shortening prep are exact
+  ---
+  duration_ms: 0.611959
+  type: 'test'
+  ...
+# Subtest: numeric armor subtraction, pierce cap, minimum1 and light/heavy merit
+ok 2 - numeric armor subtraction, pierce cap, minimum1 and light/heavy merit
+  ---
+  duration_ms: 0.09225
+  type: 'test'
+  ...
+# Subtest: levels share integer attack/cost and range/cadence/support data
+ok 3 - levels share integer attack/cost and range/cadence/support data
+  ---
+  duration_ms: 0.064042
+  type: 'test'
+  ...
+# Subtest: purchase/move locks and atomic rejections preserve budget
+ok 4 - purchase/move locks and atomic rejections preserve budget
+  ---
+  duration_ms: 0.257667
+  type: 'test'
+  ...
+# Subtest: upgrade unlock and current-stage-only spending refund once
+ok 5 - upgrade unlock and current-stage-only spending refund once
+  ---
+  duration_ms: 0.126208
+  type: 'test'
+  ...
+# Subtest: research cart lock, repricing and once-only cart refunds
+ok 6 - research cart lock, repricing and once-only cart refunds
+  ---
+  duration_ms: 0.0775
+  type: 'test'
+  ...
+# Subtest: shared budget and 24 paid limit reject insufficient amounts
+ok 7 - shared budget and 24 paid limit reject insufficient amounts
+  ---
+  duration_ms: 0.136917
+  type: 'test'
+  ...
+# Subtest: drummer strongest range support is not stacked
+ok 8 - drummer strongest range support is not stacked
+  ---
+  duration_ms: 0.078917
+  type: 'test'
+  ...
+# Subtest: spear selects forward width28, closest3, in-range only
+ok 9 - spear selects forward width28, closest3, in-range only
+  ---
+  duration_ms: 0.572292
+  type: 'test'
+  ...
+# Subtest: spear impact rechecks captured axis/range and adds no new targets
+ok 10 - spear impact rechecks captured axis/range and adds no new targets
+  ---
+  duration_ms: 0.4975
+  type: 'test'
+  ...
+# Subtest: AoE scales base first and subtracts armor separately once at impact
+ok 11 - AoE scales base first and subtracts armor separately once at impact
+  ---
+  duration_ms: 0.226584
+  type: 'test'
+  ...
+# Subtest: baseline grade and paid research snapshot are separate, general paid
+ok 12 - baseline grade and paid research snapshot are separate, general paid
+  ---
+  duration_ms: 0.064416
+  type: 'test'
+  ...
+# Subtest: no 30-second forced gate hit; queues and actual route settle
+ok 13 - no 30-second forced gate hit; queues and actual route settle
+  ---
+  duration_ms: 0.950458
+  type: 'test'
+  ...
+# Subtest: same-tick zero draw, stage20 winner/equal and no next grant
+ok 14 - same-tick zero draw, stage20 winner/equal and no next grant
+  ---
+  duration_ms: 0.213625
+  type: 'test'
+  ...
+# Subtest: pause freezes game and distance-driven gait, reduced motion stable
+ok 15 - pause freezes game and distance-driven gait, reduced motion stable
+  ---
+  duration_ms: 0.352458
+  type: 'test'
+  ...
+# Subtest: AI never observes hidden player cart or research
+ok 16 - AI never observes hidden player cart or research
+  ---
+  duration_ms: 0.212917
+  type: 'test'
+  ...
+# Subtest: seeded defense completes all20 and strategic spending has consequences
+ok 17 - seeded defense completes all20 and strategic spending has consequences
+  ---
+  duration_ms: 86.304791
+  type: 'test'
+  ...
+# Subtest: planted world feet stay fixed across distance/speed and route corner
+ok 18 - planted world feet stay fixed across distance/speed and route corner
+  ---
+  duration_ms: 0.202916
+  type: 'test'
+  ...
+# Subtest: AI allocates eligible research before routine upgrades without hidden inputs
+ok 19 - AI allocates eligible research before routine upgrades without hidden inputs
+  ---
+  duration_ms: 0.058042
+  type: 'test'
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 137.448458

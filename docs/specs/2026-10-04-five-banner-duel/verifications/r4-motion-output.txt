@@ -1,0 +1,31 @@
+Real route frame 0 [
+  { d: 266.3333333333336, board: 0 },
+  { d: 232.3333333333336, board: 0 },
+  { d: 232.3333333333336, board: 1 },
+  { d: 198.33333333333348, board: 0 }
+]
+Real route frame 1 [
+  { d: 532.6666666666656, board: 0 },
+  { d: 498.6666666666654, board: 0 },
+  { d: 464.6666666666656, board: 0 },
+  { d: 464.6666666666656, board: 1 }
+]
+Real route frame 2 [
+  { d: 799.0000000000025, board: 0 },
+  { d: 765.000000000002, board: 0 },
+  { d: 731.0000000000016, board: 0 },
+  { d: 699.8333333333345, board: 0 }
+]
+Real route frame 3 [
+  { d: 1062.5000000000045, board: 0 },
+  { d: 1028.5000000000055, board: 0 },
+  { d: 994.5000000000051, board: 0 },
+  { d: 963.333333333338, board: 0 }
+]
+Real route frame 4 [
+  { d: 1260.8333333333326, board: 0 },
+  { d: 1229.6666666666667, board: 0 },
+  { d: 1195.6666666666677, board: 0 },
+  { d: 820, board: 0 }
+]
+PASS actual15-second canvas30fps WebM left/corner/vertical/right, no state/time injection

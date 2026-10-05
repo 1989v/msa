@@ -38,3 +38,11 @@
 검증 중 함정: phase 전환 후150ms DOM 갱신 전에 버튼 disabled를 읽으면 CDP가 Not clickable을 낸다. E2E가 refresh를 기다리도록 수정. DOM 번호 pad는 canvas cell 좌표 자체를 확대하지 않으며 공통 cell handler를 호출한다. 보이지 않는44px 겹침 targets를 만들지 않는다.
 
 최종 focused layout은1440×900/1280×800/1200×1000/900×1100/900×900/390×844 여섯종 PASS. root evidence commit `3f54a3392`; normal precommit 실행, warn-only doctor의 기존 uncited-doc208건 경고는 비차단이며 다른 문서를 변경하지 않았다.
+
+## R4 완료 — 2026-10-05
+
+R4가 앞선 P1/R2/R3 활성 계약을 대체한다. 게임 `e5dddaa8`:20단계·6수비3레벨·7공격/연구·숫자 방어력·공개 정보 AI·독립 projectile impact·접지2D cutout. 사용자12~15분 선호로 준비45/30/20/15 적용. 기존 PNG는 가려진 허벅지를 복원할 수 없어 부모 전용9×4 투명 부품을 추가했고, 초기 detached thigh/boot와 sliding 발견을 수정한 뒤 실제15초 WebM/8 recorded frames를 부모가 승인했다. 원본 아틀라스 보존,3D 주장 없음.
+
+Core19/19·asset6·tsc exit0·6viewport·실제 mouse/native touch·강화/연구2/3·cartlock·6FX관찰0console·실제4FX화면 PASS. 성장 E2E만 테스트 RAF×8, 상태/군량/단계 주입 없음; 전체20은 seeded domain. Final seed7 defense/AI18 HP20/0=13.07min, mixed/AI18 HP6/0=13.86min, attack/AI3=2.85min, defense양측20 HP20/20=13.17min. 승인 전투/군량 수치 변경 없음. AI 연구는16단계 수비8개 이상에서 예산을 먼저 확보해 실제 사용되게 했다.
+
+Fresh independent static review SHIP·부모 actual motion 승인. 정확한 명령/출력/제약은 `verifications/r4-final-verification.md`. Preview `http://127.0.0.1:4179/`, 기존 세션28669. Root games pointer를 갱신하지 않고 다른 staged/dirty 상태 보존, 정상 owned commit·push/배포 없음.

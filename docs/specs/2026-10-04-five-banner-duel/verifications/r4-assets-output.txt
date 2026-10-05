@@ -1,0 +1,7 @@
+assets/battlefield.png: 1254×1254 PNG OK
+assets/infantry.png: 1448×1086 PNG OK
+assets/support.png: 1448×1086 PNG OK
+assets/siege.png: 1254×1254 PNG OK
+assets/enemies.png: 1254×1254 PNG OK
+assets/enemy-rig-parts-r4.png: 1881×836 PNG OK
+6 approved raster assets (36 dedicated rig parts) + chroma-key checks PASS

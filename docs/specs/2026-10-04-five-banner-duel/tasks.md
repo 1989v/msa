@@ -33,3 +33,14 @@ R2 games `70b818c1`, 증거 `verifications/r2-final-verification.md`. P1 체크/
 - [x] R3-T5 fresh-context 리뷰 SHIP, 기록/정상 owned commit
 
 게임 `b26b580f`, 증거 `verifications/r3-final-verification.md`. P1/R2는 이력으로 유지.
+
+## R4 — 20단계·성장·병과·접지 걷기
+
+- [x] R4-T1 20 authored waves/군량/등급,45/30/20/15 준비, 실제 경로 종료·20결과
+- [x] R4-T2 숫자 방어력/관통/최대3 창/개별 AoE/최고 support,6역할·7공격
+- [x] R4-T3 Lv1~3 강화·병종 연구·공통 stats·현재 준비만 환급·공개 정보 AI 연구
+- [x] R4-T4 투명9×4 부품·팔/무릎/발목·PATH 접지·서로 다른 synchronized projectile/support FX
+- [x] R4-T5 Core19·asset6·seeded20·실제 UI/touch/6viewport/FX/15초 WebM 통합·focused 재검증
+- [x] R4-T6 fresh static SHIP·부모 실제 모션 승인·gameREADME/증거·정확한 owned commit
+
+게임 `e5dddaa8`, 증거 `verifications/r4-final-verification.md`. 초기 standalone PNG 절단/발 미끄러짐을 출하하지 않고 전용 부품·world contact로 수정했다. P1~R3 출력은 역사 보존. Root games pointer/타 작업 파일 변경 없음.

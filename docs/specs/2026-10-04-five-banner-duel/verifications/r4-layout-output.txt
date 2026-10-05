@@ -1,0 +1,90 @@
+PASS 1440 900 {
+  overflow: false,
+  scroll: 0,
+  confirm: {
+    x: 1316,
+    y: 76.1875,
+    width: 112,
+    height: 56,
+    top: 76.1875,
+    right: 1428,
+    bottom: 132.1875,
+    left: 1316
+  },
+  color: 'rgb(162, 35, 29)'
+}
+PASS 1280 800 {
+  overflow: false,
+  scroll: 0,
+  confirm: {
+    x: 1156,
+    y: 76.1875,
+    width: 112,
+    height: 56,
+    top: 76.1875,
+    right: 1268,
+    bottom: 132.1875,
+    left: 1156
+  },
+  color: 'rgb(162, 35, 29)'
+}
+PASS 1200 1000 {
+  overflow: false,
+  scroll: 0,
+  confirm: {
+    x: 1076,
+    y: 76.1875,
+    width: 112,
+    height: 56,
+    top: 76.1875,
+    right: 1188,
+    bottom: 132.1875,
+    left: 1076
+  },
+  color: 'rgb(162, 35, 29)'
+}
+PASS 900 1100 {
+  overflow: false,
+  scroll: 0,
+  confirm: {
+    x: 776,
+    y: 76.1875,
+    width: 112,
+    height: 56,
+    top: 76.1875,
+    right: 888,
+    bottom: 132.1875,
+    left: 776
+  },
+  color: 'rgb(162, 35, 29)'
+}
+PASS 900 900 {
+  overflow: false,
+  scroll: 0,
+  confirm: {
+    x: 776,
+    y: 76.1875,
+    width: 112,
+    height: 56,
+    top: 76.1875,
+    right: 888,
+    bottom: 132.1875,
+    left: 776
+  },
+  color: 'rgb(162, 35, 29)'
+}
+PASS 390 844 {
+  overflow: false,
+  scroll: 399,
+  confirm: {
+    x: 266,
+    y: 120.1875,
+    width: 112,
+    height: 56,
+    top: 120.1875,
+    right: 378,
+    bottom: 176.1875,
+    left: 266
+  },
+  color: 'rgb(162, 35, 29)'
+}

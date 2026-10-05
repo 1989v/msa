@@ -1,0 +1,3 @@
+PASS actual pointer carry/drag occupied reject/cancel/pausehelp/7stats/general180 spawn
+PASS accelerated-frame-clock genuine UI stages1..11, upgrade Lv2/Lv3 range, research2/3 and cartlock, FX [ 'gunner', 'spear', 'archer', 'hwacha', 'cannon', 'drummer' ]
+PASS native touch card +persistent stats +44px deployment +desktop/narrow ·0 console errors
