@@ -6,12 +6,15 @@ import java.time.LocalDateTime
 /**
  * 관광지 — MySQL SSOT, OpenSearch(attractions 인덱스)는 search-batch 가 일괄 재색인 (ADR-0065).
  * 출처: 한국관광공사 TourAPI 4.0 (KorService2 국문 / EngService2 영문).
- * 국문·영문은 TourAPI contentId 체계가 달라 언어별 별도 레코드로 적재한다 — (contentId, lang) 이 자연키.
+ * 국문·영문은 TourAPI contentId 체계가 달라 언어별 별도 레코드로 적재한다. 자연키는 (source, contentId, lang) —
+ * 고캠핑처럼 자기 번호 체계를 가진 원천이 있어 번호만으로는 같은 곳이 아니다(ADR-0104 Q-P2-KEY).
  */
 class Attraction private constructor(
     val id: Long? = null,
     val contentId: String,
     val lang: String,
+    /** 원천 — 자연키는 (source, contentId, lang). 원천마다 번호 체계가 달라 번호만으로는 같은 곳이 아니다 (Q-P2-KEY) */
+    val source: String = TOURAPI,
     var title: String,
     var address: String? = null,
     var areaCode: String? = null,
@@ -90,6 +93,10 @@ class Attraction private constructor(
     companion object {
         val SUPPORTED_LANGS = setOf("ko", "en")
 
+        const val TOURAPI = "TOURAPI"
+        const val GOCAMPING = "GOCAMPING"
+        val SOURCES = setOf(TOURAPI, GOCAMPING)
+
         /** V10 컬럼 폭. 구글이 place_id 길이를 보장하지 않아 여유를 둔다 (관측치는 27~40자). */
         const val GOOGLE_PLACE_ID_MAX_LENGTH = 128
 
@@ -103,6 +110,7 @@ class Attraction private constructor(
         fun create(
             contentId: String,
             lang: String,
+            source: String = TOURAPI,
             title: String,
             latitude: Double,
             longitude: Double,
@@ -149,12 +157,14 @@ class Attraction private constructor(
         ): Attraction {
             require(contentId.isNotBlank()) { "contentId 는 비어있을 수 없습니다" }
             require(lang in SUPPORTED_LANGS) { "지원하지 않는 언어입니다: $lang (지원: $SUPPORTED_LANGS)" }
+            require(source in SOURCES) { "모르는 원천입니다: $source (지원: $SOURCES)" }
             require(title.isNotBlank()) { "관광지명은 비어있을 수 없습니다" }
             require(latitude in -90.0..90.0) { "위도는 -90~90 범위여야 합니다: $latitude" }
             require(longitude in -180.0..180.0) { "경도는 -180~180 범위여야 합니다: $longitude" }
             return Attraction(
                 contentId = contentId,
                 lang = lang,
+                source = source,
                 title = title,
                 latitude = latitude,
                 longitude = longitude,
@@ -253,10 +263,12 @@ class Attraction private constructor(
             sourceModifiedAt: LocalDateTime?,
             status: String,
             createdAt: LocalDateTime,
+            source: String = TOURAPI,
         ): Attraction = Attraction(
             id = id,
             contentId = contentId,
             lang = lang,
+            source = source,
             title = title,
             address = address,
             areaCode = areaCode,

@@ -22,6 +22,10 @@ class AttractionJpaEntity(
     @Column(nullable = false, length = 8)
     val lang: String,
 
+    /** 원천 — 자연키 (source, content_id, lang) 의 첫 칸 (V32) */
+    @Column(nullable = false, length = 16)
+    val source: String = Attraction.TOURAPI,
+
     @Column(nullable = false, length = 300)
     val title: String,
 
@@ -177,6 +181,7 @@ class AttractionJpaEntity(
 ) {
     fun toDomain(): Attraction = Attraction.restore(
         id = id,
+        source = source,
         contentId = contentId,
         lang = lang,
         title = title,
@@ -232,6 +237,7 @@ class AttractionJpaEntity(
             id = attraction.id,
             contentId = attraction.contentId,
             lang = attraction.lang,
+            source = attraction.source,
             title = attraction.title,
             titleDisplay = attraction.titleDisplay,
             titleLocal = attraction.titleLocal,

@@ -9,6 +9,8 @@ interface UpsertAttractionUseCase {
     data class Command(
         val contentId: String,
         val lang: String,
+        /** 원천 — 없으면 TourAPI(옛 요청 모양 그대로) */
+        val source: String? = null,
         val title: String,
         val latitude: Double,
         val longitude: Double,

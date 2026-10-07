@@ -15,10 +15,11 @@ interface AttractionBarrierFreeJpaRepository : JpaRepository<AttractionBarrierFr
     fun findStates(): List<StateRow>
 
     /**
-     * 원천 contentId → 관광지 id. 같은 언어 안에서만 잇는다 — 국문·영문은 contentId 체계가 다르다.
+     * 원천 contentId → 관광지 id. 같은 언어 안의 TourAPI 행에만 잇는다 — 국문·영문은 contentId 체계가 다르고,
+     * 다른 원천(고캠핑)은 번호 체계가 달라 같은 번호여도 다른 곳이다.
      * attractions 를 직접 읽는 것은 같은 스키마 안의 조인 키 조회라서다(비슷한 곳의 존재 확인과 같은 방식).
      */
-    @Query(value = "SELECT id AS id, content_id AS contentId FROM attractions WHERE lang = :lang AND content_id IN (:contentIds)", nativeQuery = true)
+    @Query(value = "SELECT id AS id, content_id AS contentId FROM attractions WHERE lang = :lang AND source = 'TOURAPI' AND content_id IN (:contentIds)", nativeQuery = true)
     fun findAttractionIds(@Param("lang") lang: String, @Param("contentIds") contentIds: Collection<String>): List<IdRow>
 
     interface StateRow {

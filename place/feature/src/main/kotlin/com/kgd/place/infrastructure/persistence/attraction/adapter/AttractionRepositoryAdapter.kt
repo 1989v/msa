@@ -18,20 +18,20 @@ class AttractionRepositoryAdapter(
 ) : AttractionRepositoryPort {
 
     /**
-     * (contentId, lang) 기준 멱등 upsert. 배치(청크 ≤2000)로 들어오므로
-     * 기존 행을 contentId IN 으로 한 번에 조회해 자연키 매칭 후 id 를 승계한다.
+     * (source, contentId, lang) 기준 멱등 upsert. 배치(청크 ≤2000)로 들어오므로
+     * 기존 행을 contentId IN 으로 한 번에 조회해 자연키 매칭 후 id 를 승계한다 — 번호가 같아도 원천이 다르면 다른 곳이다.
      */
     @Transactional
     override fun upsertAll(attractions: List<Attraction>): AttractionRepositoryPort.UpsertSummary {
         if (attractions.isEmpty()) return AttractionRepositoryPort.UpsertSummary(0, 0)
 
         val existingByKey = jpaRepository.findByContentIdIn(attractions.map { it.contentId }.toSet())
-            .associateBy { it.contentId to it.lang }
+            .associateBy { Triple(it.source, it.contentId, it.lang) }
 
         var created = 0
         var updated = 0
         val entities = attractions.map { incoming ->
-            val existing = existingByKey[incoming.contentId to incoming.lang]
+            val existing = existingByKey[Triple(incoming.source, incoming.contentId, incoming.lang)]
             if (existing == null) {
                 created++
                 AttractionJpaEntity.fromDomain(incoming)

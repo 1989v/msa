@@ -20,6 +20,8 @@ data class BulkUpsertAttractionRequest(
 data class UpsertAttractionItem(
     @field:NotBlank val contentId: String,
     @field:NotBlank val lang: String,
+    /** 원천 — 없으면 TourAPI. 고캠핑 수집기는 GOCAMPING 을 준다 (자연키 (source, contentId, lang)) */
+    val source: String? = null,
     @field:NotBlank val title: String,
     val latitude: Double,
     val longitude: Double,
@@ -70,6 +72,7 @@ data class UpsertAttractionItem(
     fun toCommand(): UpsertAttractionUseCase.Command = UpsertAttractionUseCase.Command(
         contentId = contentId,
         lang = lang,
+        source = source,
         title = title,
         latitude = latitude,
         longitude = longitude,
@@ -134,6 +137,7 @@ data class AttractionResponse(
     val id: Long,
     val contentId: String,
     val lang: String,
+    val source: String,
     val title: String,
     /** title 파생 (조회 전용 — 적재 요청에는 없다, 서버가 저장 때마다 다시 계산한다) */
     val titleDisplay: String,
@@ -188,6 +192,7 @@ data class AttractionResponse(
             id = view.id,
             contentId = view.contentId,
             lang = view.lang,
+            source = view.source,
             title = view.title,
             titleDisplay = view.titleDisplay,
             titleLocal = view.titleLocal,

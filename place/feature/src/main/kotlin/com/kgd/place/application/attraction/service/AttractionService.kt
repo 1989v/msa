@@ -50,6 +50,7 @@ class AttractionService(
     private fun UpsertAttractionUseCase.Command.toDomain(): Attraction = Attraction.create(
         contentId = contentId,
         lang = lang,
+        source = source ?: Attraction.TOURAPI,
         title = title,
         latitude = latitude,
         longitude = longitude,
@@ -99,6 +100,7 @@ class AttractionService(
         id = requireNotNull(id) { "저장된 관광지에 ID가 없습니다" },
         contentId = contentId,
         lang = lang,
+        source = source,
         title = title,
         titleDisplay = titleDisplay,
         titleLocal = titleLocal,

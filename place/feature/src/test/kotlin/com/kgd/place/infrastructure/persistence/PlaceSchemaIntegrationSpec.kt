@@ -493,6 +493,26 @@ class PlaceSchemaIntegrationSpec(
                 adapter.existingAttractionIds(listOf(a, Long.MAX_VALUE)) shouldBe setOf(a)
             }
     }
+
+    Given("번호가 같고 원천이 다른 관광지를 넣을 때 (자연키 source, contentId, lang)") {
+        Then("다른 행이 되고, 다시 넣으면 제 원천 행만 갱신된다 — 접근성 매칭은 TourAPI 행에만 붙는다")
+            .config(enabledIf = { dockerAvailable }) {
+                val adapter = AttractionRepositoryAdapter(r3)
+                val tour = Attraction.create(contentId = "key-777", lang = "ko", title = "투어 캠핑장", latitude = 37.0, longitude = 127.0)
+                val camp = Attraction.create(contentId = "key-777", lang = "ko", source = Attraction.GOCAMPING, title = "고캠핑 캠핑장", latitude = 37.1, longitude = 127.1)
+                adapter.upsertAll(listOf(tour, camp)).created shouldBe 2
+
+                // 어느 쪽을 먼저 넣든 제 원천 행만 바뀌어야 한다 — 원천을 빼고 찾으면 둘 중 하나에 엉뚱하게 덮인다
+                adapter.upsertAll(listOf(Attraction.create(contentId = "key-777", lang = "ko", source = Attraction.GOCAMPING, title = "고캠핑 캠핑장(갱신)", latitude = 37.1, longitude = 127.1)))
+                    .updated shouldBe 1
+                adapter.upsertAll(listOf(Attraction.create(contentId = "key-777", lang = "ko", title = "투어 캠핑장(갱신)", latitude = 37.0, longitude = 127.0)))
+                    .updated shouldBe 1
+                r3.findAll().filter { it.contentId == "key-777" }.associate { it.source to it.title } shouldBe
+                    mapOf("TOURAPI" to "투어 캠핑장(갱신)", "GOCAMPING" to "고캠핑 캠핑장(갱신)")
+                r7.findAttractionIds("ko", listOf("key-777")).map { it.getId() } shouldBe
+                    r3.findAll().filter { it.contentId == "key-777" && it.source == "TOURAPI" }.map { it.id }
+            }
+    }
 }) {
 
     override fun extensions() = listOf(SpringExtension)

@@ -23,6 +23,7 @@ interface GetAttractionUseCase {
         val id: Long,
         val contentId: String,
         val lang: String,
+        val source: String = "TOURAPI",
         val title: String,
         /** title 파생 표기 (AttractionTitle) — 화면·외부 검색은 display, 병기는 local. */
         val titleDisplay: String,
