@@ -1,0 +1,48 @@
+# 고캠핑 캠핑장 (data.go.kr 15101933, GoCamping basedList) — 주 1회 전량 1콜(약 3,100곳 · 7MB).
+# 원문 82키는 place gocamping_site 에, 우리 TourAPI 캠핑장(야영장 AC05)과 300m 안 + 이름이 겹치지 않는 곳만
+# source=GOCAMPING 관광지 행이 된다(ADR-0104 Q-P2-KEY). 06:30 재색인이 그 행을 색인한다.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: place-ingest-gocamping
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: place-ingest
+    app.kubernetes.io/part-of: commerce-platform
+    place.kgd.io/job: "gocamping"
+spec:
+  # 매주 화 UTC 17:50 = 수 KST 02:50 — 02:20 연관 · 02:30 방문자 · 02:40 무장애 뒤, 06:30 재색인 전
+  schedule: "50 17 * * 2"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 1200
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: place-ingest
+            app.kubernetes.io/part-of: commerce-platform
+            place.kgd.io/job: "gocamping"
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: ingest
+              image: commerce/place-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--job=gocamping"]
+              env:
+                - name: PLACE_API
+                  value: "http://content:8097"
+                - name: TOUR_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: place-ingest-secrets
+                      key: tour-api-key
+                      optional: true
+              resources:
+                requests: { cpu: 100m, memory: 256Mi }
+                limits:   { memory: 768Mi }

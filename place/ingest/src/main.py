@@ -37,7 +37,7 @@ from datetime import datetime
 
 from pathlib import Path
 
-from src import (administrative_region, air, backfill_intro, backfill_overview, barrier_free, congestion, google_place, naver,
+from src import (gocamping, administrative_region, air, backfill_intro, backfill_overview, barrier_free, congestion, google_place, naver,
                  place_client, related,
                  backfill_media, popularity, quota, sync_lcls_codes, sync_pet_tour,
                  sync_tour,
@@ -143,6 +143,11 @@ def _job_related(base_ym: str | None, key: str | None = None, today=None) -> int
     """연관 관광지 — 전달(또는 --base-ym) 을 아직 안 받은 시군구만. 공개 전이면 다음 날 다시 묻는다(창 마지막 날이면 1)."""
     summary = related.run(key or _api_key(), today or datetime.now(sync_tour.KST).date(), base_ym)
     return 1 if summary["failed"] else 0
+
+
+def _job_gocamping(key: str | None = None) -> int:
+    """고캠핑 — 주 1회 전량(1콜). 겹치지 않는 캠핑장만 관광지 행(source=GOCAMPING)이 된다."""
+    return 1 if gocamping.run(key or _api_key())["failed"] else 0
 
 
 def _job_air(kind: str, key: str | None = None) -> int:
@@ -388,7 +393,7 @@ def main() -> int:
                     choices=["overview", "intro", "media", "stats", "sync", "tour-portal-sync", "links",
                              "administrative-regions", "google-places", "lcls-codes", "pet-tour",
                              "attraction-attrs", "visitors", "weather-short", "weather-mid", "congestion", "related",
-                             "air", "air-stations"])
+                             "air", "air-stations", "gocamping"])
     ap.add_argument("--budget", type=int, default=int(os.environ.get("BUDGET", "1000")),
                     help="개요 수집 일일 예산 (언어별, detailCommon2 호출 상한)")
     ap.add_argument("--lang", choices=["ko", "en"], help="미지정 시 ko·en 둘 다")
@@ -437,6 +442,8 @@ def main() -> int:
         return _job_congestion()
     if args.job in ("air", "air-stations"):
         return _job_air("stations" if args.job == "air-stations" else "measurements")
+    if args.job == "gocamping":
+        return _job_gocamping()
     if args.job == "related":
         if args.base_ym and not (len(args.base_ym) == 6 and args.base_ym.isdigit()):
             raise SystemExit(f"--base-ym 은 YYYYMM 이다: {args.base_ym}")

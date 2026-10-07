@@ -48,6 +48,11 @@ class AttractionRepositoryAdapter(
     override fun findById(id: Long): Attraction? =
         jpaRepository.findById(id).orElse(null)?.toDomain()
 
+    override fun findIdsBySource(source: String, lang: String, contentIds: Collection<String>): Map<String, Long> =
+        contentIds.chunked(IN_CHUNK)
+            .flatMap { jpaRepository.findBySourceAndLangAndContentIdIn(source, lang, it) }
+            .associate { it.contentId to it.id!! }
+
     override fun findAllByIds(ids: Collection<Long>): List<Attraction> =
         if (ids.isEmpty()) emptyList() else jpaRepository.findAllById(ids).map { it.toDomain() }
 
@@ -90,5 +95,10 @@ class AttractionRepositoryAdapter(
 
     override fun saveAll(attractions: List<Attraction>) {
         jpaRepository.saveAll(attractions.map { AttractionJpaEntity.fromDomain(it) })
+    }
+
+    private companion object {
+        /** IN 목록 상한 — 한 쿼리에 수천 개를 싣지 않는다 */
+        const val IN_CHUNK = 1000
     }
 }

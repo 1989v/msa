@@ -21,6 +21,10 @@ import com.kgd.place.infrastructure.persistence.attraction.repository.Attraction
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionLinkJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionLinkRequestJpaRepository
+import com.kgd.place.infrastructure.persistence.attraction.repository.GocampingSiteJpaRepository
+import com.kgd.place.infrastructure.persistence.attraction.adapter.GocampingSiteRepositoryAdapter
+import com.kgd.place.application.attraction.service.GocampingService
+import com.kgd.place.application.attraction.usecase.SyncGocampingUseCase
 import com.kgd.place.infrastructure.persistence.attraction.adapter.AttractionLinkRepositoryAdapter
 import com.kgd.place.domain.attraction.model.AttractionLink
 import com.kgd.place.domain.attraction.model.AttractionLinkSource
@@ -106,6 +110,7 @@ class PlaceSchemaIntegrationSpec(
     @Autowired private val r4: AttractionCategoryCodeJpaRepository,
     @Autowired private val r5: AttractionLinkJpaRepository,
     @Autowired private val r5q: AttractionLinkRequestJpaRepository,
+    @Autowired private val gc: GocampingSiteJpaRepository,
     @Autowired private val r6: AttractionSimilarJpaRepository,
     @Autowired private val r7: AttractionBarrierFreeJpaRepository,
     @Autowired private val r8: AttractionWellnessJpaRepository,
@@ -511,6 +516,31 @@ class PlaceSchemaIntegrationSpec(
                     mapOf("TOURAPI" to "투어 캠핑장(갱신)", "GOCAMPING" to "고캠핑 캠핑장(갱신)")
                 r7.findAttractionIds("ko", listOf("key-777")).map { it.getId() } shouldBe
                     r3.findAll().filter { it.contentId == "key-777" && it.source == "TOURAPI" }.map { it.id }
+            }
+    }
+
+    Given("고캠핑 원천 표를 올릴 때") {
+        Then("원문을 그대로 두고, 관광지 행(source=GOCAMPING)이 된 곳은 그 id 에 잇고 겹친 곳은 우리 캠핑장 id 만 남긴다")
+            .config(enabledIf = { dockerAvailable }) {
+                val attractions = AttractionRepositoryAdapter(r3)
+                attractions.upsertAll(listOf(Attraction.create(contentId = "gc-1", lang = "ko", source = Attraction.GOCAMPING, title = "새 캠핑장", latitude = 36.1, longitude = 128.2)))
+                val service = GocampingService(GocampingSiteRepositoryAdapter(gc), attractions)
+                val now = LocalDateTime.of(2026, 10, 7, 2, 50)
+                val raw = """{"contentId": "gc-1", "facltNm": "새 캠핑장", "animalCmgCl": "가능"}"""
+                val applied = tx.execute {
+                    service.upsert(
+                        listOf(
+                            SyncGocampingUseCase.Item("gc-1", "새 캠핑장", "운영", 36.1, 128.2, raw, null, "NONE", now),
+                            SyncGocampingUseCase.Item("gc-2", "겹친 캠핑장", "운영", 36.2, 128.3, "{}", 42L, "NEAR_NAME", now),
+                        ),
+                    )
+                }!!
+                applied.applied shouldBe 2
+                applied.linked shouldBe 1
+                val rows = gc.findAllById(listOf("gc-1", "gc-2")).associateBy { it.contentId }
+                rows.getValue("gc-1").attractionId shouldBe r3.findAll().single { it.contentId == "gc-1" && it.source == "GOCAMPING" }.id
+                rows.getValue("gc-2").matchedAttractionId shouldBe 42L
+                rows.getValue("gc-2").attractionId shouldBe null
             }
     }
 }) {

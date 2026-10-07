@@ -138,6 +138,15 @@ def put_wellness(lang: str, items: list[dict]) -> dict:
     return _request("PUT", "/internal/attractions/wellness", {"lang": lang, "items": items}, timeout=300)["data"]
 
 
+def put_gocamping_sites(rows: list[dict]) -> int:
+    """고캠핑 원천 표 — 받은 곳만 덮는다(원천에서 빠진 곳은 지우지 않는다). 반환은 반영한 행 수."""
+    applied = 0
+    for i in range(0, len(rows), BULK_CHUNK):
+        applied += int(_request("PUT", "/internal/attractions/gocamping",
+                                {"items": rows[i:i + BULK_CHUNK]}, timeout=300)["data"]["applied"])
+    return applied
+
+
 def fetch_sigungu_regions() -> list[dict]:
     """시군구 전부(약 270) — code · parentCode · name · 대표점 좌표. 날씨 단위 계산의 입력이다."""
     return _request("GET", "/api/places/administrative-regions?level=SIGUNGU")["data"]["regions"]

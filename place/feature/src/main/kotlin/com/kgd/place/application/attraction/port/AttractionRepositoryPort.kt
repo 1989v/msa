@@ -13,6 +13,9 @@ interface AttractionRepositoryPort {
     /** 수집 큐가 관광지명을 한 번에 가져올 때 — 건별 조회를 100번 하지 않는다. */
     fun findAllByIds(ids: Collection<Long>): List<Attraction>
 
+    /** 원천 번호 → 관광지 id. 원천마다 번호 체계가 달라 원천을 함께 준다 */
+    fun findIdsBySource(source: String, lang: String, contentIds: Collection<String>): Map<String, Long>
+
     /** lang 미지정 시 전체 — search-batch 재색인 풀스캔용. */
     fun findPage(lang: String?, pageable: Pageable): Page<Attraction>
 

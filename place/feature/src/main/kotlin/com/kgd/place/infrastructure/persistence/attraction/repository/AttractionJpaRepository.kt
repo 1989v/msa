@@ -16,6 +16,8 @@ interface AttractionJpaRepository : JpaRepository<AttractionJpaEntity, Long> {
 
     fun findByContentIdIn(contentIds: Collection<String>): List<AttractionJpaEntity>
 
+    fun findBySourceAndLangAndContentIdIn(source: String, lang: String, contentIds: Collection<String>): List<AttractionJpaEntity>
+
     fun findByLang(lang: String, pageable: Pageable): Page<AttractionJpaEntity>
 
     /** 키셋 풀스캔 — PK 범위 스캔이라 뒤 페이지도 첫 페이지만큼 빠르고, List 반환이라 count 쿼리가 없다. */

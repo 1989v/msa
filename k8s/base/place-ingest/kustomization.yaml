@@ -16,5 +16,6 @@ resources:
   - cronjob-weather-mid.yaml
   - cronjob-congestion.yaml
   - cronjob-related.yaml
+  - cronjob-gocamping.yaml
   - cronjob-air.yaml
   - cronjob-air-stations.yaml
