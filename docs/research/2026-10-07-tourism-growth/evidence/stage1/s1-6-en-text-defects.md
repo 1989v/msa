@@ -126,7 +126,7 @@ UI 열은 지정 패턴의 서버 `<body>` 텍스트 노출 총합이며, API �
 ## 재현·검증 증거와 한계
 
 - [수집 스크립트](s1-6-measure.py): sitemap 목록, 30개 표본, 직렬·UA 요청, 파서 및 패턴 규칙.
-- [최초 원시 증거](s1-6-measurement.jsonl): 첫 줄 메타데이터 다음 JSON 객체에 전체 모집단·상세 HTML/API 원문·요청 시각/상태/응답 SHA-256·허브 HTML을 저장했다.
+- 최초 원시 증거 (`s1-6-measurement.jsonl`, 1.3MB 원시 덤프, 레포 밖 스크래치패드 raw-archive/ 보관): 첫 줄 메타데이터 다음 JSON 객체에 전체 모집단·상세 HTML/API 원문·요청 시각/상태/응답 SHA-256·허브 HTML을 저장했다.
 - [동일 표본 재시도 스크립트](s1-6-retry.py) / [재시도 원시 증거](s1-6-retry.jsonl): 최초 실패 5요청 보완. 기존 파일은 변경하지 않았다.
 - [보고서 집계 스크립트](s1-6-report.py): 재시도 보완 후 30개 id/lang 검증 및 infoRaw 집계를 포함하여 이 보고서를 생성한다. 파일 생성은 exclusive mode(`x`)로 기존 산출물을 덮어쓰지 않는다.
 - 원시 JSONL은 첫 메타데이터 줄을 건너뛰고 JSON 객체를 파싱한다. JSON 문자열의 유니코드 줄 구분자 때문에 Python `splitlines()` 대신 첫 `\n`으로만 나눈다.

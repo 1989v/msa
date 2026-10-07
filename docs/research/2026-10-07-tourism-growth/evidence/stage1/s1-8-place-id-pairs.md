@@ -113,8 +113,8 @@
 
 ## 6. 산출물·한계
 
-- [최종 짝 후보 및 판정 JSON](s1-8-place-id-pairs.json): 언어별 300 표본, 영문별 상위 5 후보, q/keyword 분리, 기준별 boolean·거리·수동 근거.
-- [최초 수집 원본](s1-8-place-id-pairs-raw.json), [같은 ID 재시도 병합](s1-8-place-id-pairs-recovered.json): 응답 핵심 필드, 모집단 URL, 요청 시간·HTTP 상태·실패 로그. 최초 수집에는 응답 본문 SHA-256도 저장.
+- 최종 짝 후보 및 판정 JSON (`s1-8-place-id-pairs.json`, 10~14MB 원시 덤프, 레포 밖 스크래치패드 raw-archive/ 보관): 언어별 300 표본, 영문별 상위 5 후보, q/keyword 분리, 기준별 boolean·거리·수동 근거.
+- 최초 수집 원본 (`s1-8-place-id-pairs-raw.json`, 10~14MB 원시 덤프, 레포 밖 스크래치패드 raw-archive/ 보관), 같은 ID 재시도 병합 (`s1-8-place-id-pairs-recovered.json`, 10~14MB 원시 덤프, 레포 밖 스크래치패드 raw-archive/ 보관): 응답 핵심 필드, 모집단 URL, 요청 시간·HTTP 상태·실패 로그. 최초 수집에는 응답 본문 SHA-256도 저장.
 - [공개 HTML 57개 증거](s1-8-review-pages.json): 읽은 본문 텍스트·metadata·HTTP 상태·SHA-256 및 30쌍 선택 목록. 브라우저 렌더링 화면 비교는 수행하지 않았으며 공개 SSR 본문을 직접 읽어 판단.
 - [본수집 재현 스크립트](s1-8-collect.py): 고정 시드와 요청 제한 포함. 이미 있는 raw 파일에 덮어쓰기하지 않는 `open("x")` 사용. 후속 재시도·HTML 수집·최종 판정은 도구 실행 기록의 `python3 -` 명령으로 수행.
 - **「미확인」**: 상위 5개 밖 누락, 전역 placeId 유일성, 미검토 엄격 후보 17쌍, 실제 서비스 엔터티 원본·배포 커밋, 검색엔진의 hreflang 처리, JS 실행 이후 태그, 영인산 제목 내부 범위 충돌.
