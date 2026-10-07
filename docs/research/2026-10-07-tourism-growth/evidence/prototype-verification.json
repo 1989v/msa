@@ -1,0 +1,51 @@
+{
+  "checks": [
+    {
+      "name": "1440 desktop: six matching cards/pins, 46/54 split, no horizontal overflow",
+      "status": "pass"
+    },
+    {
+      "name": "search suggestions: keyboard selection and Korean composition Enter guard",
+      "status": "pass"
+    },
+    {
+      "name": "filter draft: Escape cancels and restores focus; apply/reset change results only on apply",
+      "status": "pass"
+    },
+    {
+      "name": "category OR + facility AND: history/culture yields 4, wheelchair narrows to 3",
+      "status": "pass"
+    },
+    {
+      "name": "pin/card synchronization and detail/back restore query, filters, selection and scroll",
+      "status": "pass"
+    },
+    {
+      "name": "save/count/saved view, order change, session note, share preview and removal",
+      "status": "pass"
+    },
+    {
+      "name": "loading, zero results, search error/retry, map error/list fallback",
+      "status": "pass"
+    },
+    {
+      "name": "desktop phone frame uses genuine single-column cards; dialog is outside frame",
+      "status": "pass"
+    },
+    {
+      "name": "390px: results/map/detail/saved/discovery have no document overflow; mobile dialog and list/map work",
+      "status": "pass"
+    },
+    {
+      "name": "320px: results/map/detail/saved/discovery have no document overflow; mobile dialog and list/map work",
+      "status": "pass"
+    }
+  ],
+  "runtimeErrors": [],
+  "screenshots": [
+    "evidence/prototype-desktop-search.png",
+    "evidence/prototype-mobile-search.png"
+  ],
+  "browser": "isolated headless Chrome / existing native CDP helper",
+  "status": "pass"
+}
