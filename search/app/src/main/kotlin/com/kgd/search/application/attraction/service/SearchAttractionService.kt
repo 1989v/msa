@@ -235,6 +235,7 @@ class SearchAttractionService(
         infoRaw = infoRaw,
         sidoName = sidoName,
         links = links,
+        camping = camping,
         googlePlaceId = googlePlaceId,
         distanceKm = distanceKm,
         position = position,

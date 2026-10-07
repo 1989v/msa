@@ -541,6 +541,10 @@ class PlaceSchemaIntegrationSpec(
                 rows.getValue("gc-1").attractionId shouldBe r3.findAll().single { it.contentId == "gc-1" && it.source == "GOCAMPING" }.id
                 rows.getValue("gc-2").matchedAttractionId shouldBe 42L
                 rows.getValue("gc-2").attractionId shouldBe null
+                // 화면에는 허용 키만 — 이름(facltNm)·예약 URL 은 빠지고, 원문이 빈 겹침 행은 정보가 없다
+                val ownId = rows.getValue("gc-1").attractionId!!
+                GocampingSiteRepositoryAdapter(gc).findCampingInfo(listOf(ownId, 42L)) shouldBe
+                    mapOf(ownId to """{"animalCmgCl":"가능"}""")
             }
     }
 }) {

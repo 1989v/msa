@@ -179,8 +179,51 @@ export function placeSourceLine(a: Attraction | null | undefined, lang: PlaceLan
     en ? 'Source: Korea Tourism Organization TourAPI' : '출처: 한국관광공사 TourAPI',
     hasBarrierFree ? (en ? 'Barrier-free travel' : '무장애 여행 정보') : null,
     a?.wellnessTheme ? (en ? 'Wellness tourism' : '웰니스관광 정보') : null,
+    a?.camping ? (en ? 'GoCamping' : '고캠핑') : null,
     (a?.relatedPlaces?.length ?? 0) > 0 ? (en ? 'Big Data (related attractions)' : '빅데이터 서비스(연관 관광지)') : null,
   ].filter((s): s is string => s != null).join(' · ');
+}
+
+/** 고캠핑 사이트 수 키 — (원문 키, 국문, 영문). 서버 렌더 `CAMPING_SITES` 와 같은 순서 */
+const CAMPING_SITES: Array<[string, string, string]> = [
+  ['gnrlSiteCo', '일반', 'Tent'],
+  ['autoSiteCo', '자동차', 'Auto'],
+  ['glampSiteCo', '글램핑', 'Glamping'],
+  ['caravSiteCo', '카라반', 'Caravan'],
+  ['indvdlCaravSiteCo', '개인 카라반', 'Own caravan'],
+];
+
+/**
+ * 「캠핑장 정보」 줄 — 고캠핑 원문 중 place 가 고른 키(JSON 객체 문자열). 서버 렌더 `campingSection` 과 같은 줄·순서·문구.
+ * 사이트 수는 0 인 종류를 뺀다. 원문을 못 읽으면 빈 목록.
+ */
+export function campingRows(raw: string | null | undefined, lang: PlaceLang): Array<{ label: string; value: string }> {
+  if (!raw) return [];
+  let node: Record<string, unknown>;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return [];
+    node = parsed as Record<string, unknown>;
+  } catch {
+    return [];
+  }
+  const en = lang === 'en';
+  const v = (key: string) => (typeof node[key] === 'string' ? (node[key] as string).trim() : '') || null;
+  const sites = CAMPING_SITES.flatMap(([key, ko, enLabel]) => {
+    const n = Number.parseInt(v(key) ?? '', 10);
+    return Number.isFinite(n) && n > 0 ? [`${en ? enLabel : ko} ${n}`] : [];
+  }).join(' · ');
+  const comma = (s: string) => s.replace(/,/g, ', ');
+  const rows: Array<[string, string | null]> = [
+    [en ? 'Type' : '업종', v('induty') && comma(v('induty')!)],
+    [en ? 'Sites' : '사이트', sites || null],
+    [en ? 'Facilities' : '부대시설', v('sbrsCl') && comma(v('sbrsCl')!)],
+    [en ? 'Pets' : '반려동물 동반', v('animalCmgCl')],
+    [en ? 'Season' : '운영 기간', v('operPdCl') && comma(v('operPdCl')!)],
+    [en ? 'Days' : '운영일', v('operDeCl')],
+    [en ? 'Status' : '운영 상태', v('manageSttus')],
+  ];
+  return rows.flatMap(([label, value]) => (value ? [{ label, value }] : []));
 }
 
 const KO_DAY: Record<string, string> = { MON: '월', TUE: '화', WED: '수', THU: '목', FRI: '금', SAT: '토', SUN: '일' };

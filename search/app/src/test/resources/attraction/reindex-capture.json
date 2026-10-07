@@ -634,14 +634,16 @@
       "barrierFreeDetailRaw" : "{\"contentid\":\"126508\",\"parking\":\"장애인 주차장 있음(광화문 우측 옥외 주차장에 9개)_무장애 편의시설\",\"publictransport\":\"\",\"route\":\"\",\"ticketoffice\":\"\",\"promotion\":\"\",\"wheelchair\":\"대여가능\",\"exit\":\"주출입구는 경사로가 있어 휠체어 접근 가능함\",\"elevator\":\"\",\"restroom\":\"장애인 화장실 있음\",\"auditorium\":\"\",\"room\":\"\",\"handicapetc\":\"\",\"braileblock\":\"\",\"helpdog\":\"\",\"guidehuman\":\"\",\"audioguide\":\"음성안내 가이드 있음(티켓박스에서 음성안내기기와 PDA 대여가능)\",\"bigprint\":\"\",\"brailepromotion\":\"\",\"guidesystem\":\"\",\"blindhandicapetc\":\"\",\"signguide\":\"\",\"videoguide\":\"\",\"hearingroom\":\"\",\"hearinghandicapetc\":\"\",\"stroller\":\"대여가능\",\"lactationroom\":\"수유실 있음(흥례문, 주차장 여자화장실 내부)\",\"babysparechair\":\"\",\"infantsfamilyetc\":\"기저귀교환대 있음(수유실, 일반화장실 내부)\"}",
       "wellnessThemeCode" : null,
       "congestion" : null,
-      "relatedPlaces" : null
+      "relatedPlaces" : null,
+      "camping" : null
     },
     "202" : {
       "barrierFreeFlags" : null,
       "barrierFreeDetailRaw" : null,
       "wellnessThemeCode" : "EX050100",
       "congestion" : null,
-      "relatedPlaces" : null
+      "relatedPlaces" : null,
+      "camping" : "{\"induty\":\"일반야영장\",\"gnrlSiteCo\":\"25\",\"sbrsCl\":\"전기,무선인터넷,장작판매\",\"animalCmgCl\":\"가능\",\"operPdCl\":\"봄,여름,가을,겨울\"}"
     },
     "401" : {
       "barrierFreeFlags" : [ "WHEELCHAIR" ],
@@ -696,7 +698,8 @@
         "rank" : 12,
         "attractionId" : 402,
         "category" : null
-      } ]
+      } ],
+      "camping" : null
     },
     "402" : {
       "barrierFreeFlags" : null,
@@ -712,7 +715,8 @@
         "date" : "20261004",
         "rate" : 93.41
       } ],
-      "relatedPlaces" : null
+      "relatedPlaces" : null,
+      "camping" : null
     }
   }
 }

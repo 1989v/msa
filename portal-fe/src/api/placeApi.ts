@@ -120,6 +120,8 @@ export interface Attraction {
   relatedPlaces?: RelatedPlace[] | null;
   /** 같은 장소의 다른 등록(관광지·쇼핑 등) — 있으면 상세가 「복합공간」으로 알리고 잇는다. 단건 조회에만. */
   samePlace?: Array<{ id: string; contentTypeId?: string | null }> | null;
+  /** 「캠핑장 정보」 — 고캠핑 원문 중 화면에 내는 키만 담은 JSON 객체 문자열(place 가 고른다). 캠핑장이 아니면 없다 */
+  camping?: string | null;
 }
 
 /** 함께 간 곳 한 건 — `rank` 는 원천 순위, `category` 는 원천 소분류 이름 그대로. */

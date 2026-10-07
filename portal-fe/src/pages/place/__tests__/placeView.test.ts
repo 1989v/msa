@@ -1,4 +1,5 @@
 import type { Attraction } from '../../../api/placeApi';
+import { campingRows } from '../placeAttributes';
 import { describe, expect, it } from 'vitest';
 import {
   INTRO_DERIVED_CONCEPTS,
@@ -378,5 +379,30 @@ describe('parseLinks — 색인이 실어 온 링크', () => {
     expect(parseLinks('{not json')).toBeNull();
     expect(parseLinks(null)).toBeNull();
     expect(parseLinks(undefined)).toBeNull();
+  });
+});
+
+describe('campingRows — 고캠핑 원문 중 화면용 키, 서버 렌더 「캠핑장 정보」와 같은 줄', () => {
+  it('업종·사이트(0 인 종류 제외)·부대시설·반려동물·운영 기간·운영일·상태 순서로, 쉼표는 띄어 쓴다', () => {
+    // 고캠핑 운영 응답(2026-10-07, contentId 8031)에서 place 가 고른 키 — 서버 렌더 테스트와 같은 값
+    const raw = JSON.stringify({
+      induty: '일반야영장,자동차야영장', gnrlSiteCo: '25', autoSiteCo: '0', glampSiteCo: '3', sbrsCl: '전기,무선인터넷,장작판매',
+      animalCmgCl: '가능', operPdCl: '봄,여름,가을,겨울', operDeCl: '평일+주말', manageSttus: '운영',
+    });
+    expect(campingRows(raw, 'ko')).toEqual([
+      { label: '업종', value: '일반야영장, 자동차야영장' },
+      { label: '사이트', value: '일반 25 · 글램핑 3' },
+      { label: '부대시설', value: '전기, 무선인터넷, 장작판매' },
+      { label: '반려동물 동반', value: '가능' },
+      { label: '운영 기간', value: '봄, 여름, 가을, 겨울' },
+      { label: '운영일', value: '평일+주말' },
+      { label: '운영 상태', value: '운영' },
+    ]);
+  });
+
+  it('없거나 못 읽으면 빈 목록', () => {
+    expect(campingRows(null, 'ko')).toEqual([]);
+    expect(campingRows('{not json', 'ko')).toEqual([]);
+    expect(campingRows('[]', 'ko')).toEqual([]);
   });
 });

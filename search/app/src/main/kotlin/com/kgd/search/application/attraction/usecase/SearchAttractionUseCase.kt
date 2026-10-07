@@ -94,6 +94,8 @@ interface SearchAttractionUseCase {
         val infoRaw: String? = null,
         val sidoName: String? = null,
         val links: String? = null,
+        /** 「캠핑장 정보」 — 고캠핑 원문 중 화면에 내는 키만 담은 JSON 객체 문자열. 캠핑장이 아니면 null */
+        val camping: String? = null,
         val googlePlaceId: String? = null,
         val distanceKm: Double? = null,
         val position: Int = 0,

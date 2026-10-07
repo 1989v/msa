@@ -375,6 +375,7 @@ class AttractionPageRenderer(
         if (!doc.tel.isNullOrEmpty()) append("<p>${escapeHtml(doc.tel)}</p>")
         append("<p>${escapeHtml(sourceText(doc.overview))}</p>")
         append(typeSection(lang, doc, today) ?: visitorInfo(lang, doc))
+        append(campingSection(lang, doc.camping))
         append(badges(lang, doc.attributes, doc.uniqueClickers14d))
         doc.barrierFree?.let { append(barrierFreeSection(lang, it)) }
         doc.wellness?.let { append(wellnessLine(lang, it)) }
@@ -574,6 +575,30 @@ class AttractionPageRenderer(
         )
     }
 
+    /**
+     * 「캠핑장 정보」 — 고캠핑 원문 중 place 가 고른 키만(예약 URL 은 애초에 오지 않는다). 화면 `CampingInfo` 와 같은 줄·순서·문구.
+     * 사이트 수는 0 인 종류를 뺀다. 원문을 못 읽거나 줄이 없으면 절을 내지 않는다.
+     */
+    private fun campingSection(lang: String, raw: String?): String {
+        val node = raw?.let { runCatching { objectMapper.readTree(it) }.getOrNull() }?.takeIf { it.isObject } ?: return ""
+        val en = lang == EN
+        fun v(key: String) = node.get(key)?.asString()?.trim()?.takeIf { it.isNotEmpty() }
+        val sites = CAMPING_SITES.mapNotNull { (key, ko, enLabel) ->
+            v(key)?.toIntOrNull()?.takeIf { it > 0 }?.let { "${if (en) enLabel else ko} $it" }
+        }.joinToString(" · ")
+        val rows = listOfNotNull(
+            v("induty")?.let { (if (en) "Type" else "업종") to it.replace(",", ", ") },
+            sites.takeIf { it.isNotEmpty() }?.let { (if (en) "Sites" else "사이트") to it },
+            v("sbrsCl")?.let { (if (en) "Facilities" else "부대시설") to it.replace(",", ", ") },
+            v("animalCmgCl")?.let { (if (en) "Pets" else "반려동물 동반") to it },
+            v("operPdCl")?.let { (if (en) "Season" else "운영 기간") to it.replace(",", ", ") },
+            v("operDeCl")?.let { (if (en) "Days" else "운영일") to it },
+            v("manageSttus")?.let { (if (en) "Status" else "운영 상태") to it },
+        )
+        if (rows.isEmpty()) return ""
+        return section("camping", if (en) "Campsite" else "캠핑장 정보", definitionList(rows))
+    }
+
     /** 웰니스관광 테마 한 줄 — 「웰니스 관광 · {테마 이름}」. 이름이 없으면 앞말만. */
     private fun wellnessLine(lang: String, theme: WellnessTheme): String {
         val head = if (lang == EN) "Wellness tourism" else "웰니스 관광"
@@ -587,6 +612,7 @@ class AttractionPageRenderer(
         val extra = listOfNotNull(
             doc.barrierFree?.let { if (en) "Barrier-free travel" else "무장애 여행 정보" },
             doc.wellness?.let { if (en) "Wellness tourism" else "웰니스관광 정보" },
+            doc.camping?.let { if (en) "GoCamping" else "고캠핑" },
             doc.relatedPlaces?.takeIf { it.isNotEmpty() }?.let { if (en) "Big Data (related attractions)" else "빅데이터 서비스(연관 관광지)" },
         )
         return (listOf(if (en) SOURCE_EN else SOURCE_KO) + extra).joinToString(" · ")
@@ -671,6 +697,15 @@ class AttractionPageRenderer(
     }
 
     private companion object {
+        /** 고캠핑 사이트 수 키 — (원문 키, 국문, 영문). 화면 `CampingInfo` 와 같은 순서 */
+        private val CAMPING_SITES = listOf(
+            Triple("gnrlSiteCo", "일반", "Tent"),
+            Triple("autoSiteCo", "자동차", "Auto"),
+            Triple("glampSiteCo", "글램핑", "Glamping"),
+            Triple("caravSiteCo", "카라반", "Caravan"),
+            Triple("indvdlCaravSiteCo", "개인 카라반", "Own caravan"),
+        )
+
         const val KO = "ko"
         const val EN = "en"
         const val BRAND_KO = "K-관광"

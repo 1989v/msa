@@ -61,6 +61,7 @@ import {
   regionHubCode,
   regionPhrase,
   placeSourceLine,
+  campingRows,
   regionPlaceName,
   visitorBadges,
   wellnessLine,
@@ -451,6 +452,25 @@ export default function AttractionPage() {
                     <dl className="place-detail-info-list">
                       {rows.map((row) => (
                         <div className="place-detail-info-row" key={row.key}>
+                          <dt>{row.label}</dt>
+                          <dd>{row.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </section>
+                );
+              })()}
+              {(() => {
+                // 캠핑장 정보 — 고캠핑 원문 중 place 가 고른 키(예약 URL 은 오지 않는다). 서버 렌더 「캠핑장 정보」 절과 같은 줄
+                const rows = campingRows(attraction.camping, lang);
+                if (rows.length === 0) return null;
+                const title = lang === 'en' ? 'Campsite' : '캠핑장 정보';
+                return (
+                  <section className="place-detail-info" aria-label={title} data-place-section="camping">
+                    <h2 className="place-detail-info-title">{title}</h2>
+                    <dl className="place-detail-info-list">
+                      {rows.map((row) => (
+                        <div className="place-detail-info-row" key={row.label}>
                           <dt>{row.label}</dt>
                           <dd>{row.value}</dd>
                         </div>

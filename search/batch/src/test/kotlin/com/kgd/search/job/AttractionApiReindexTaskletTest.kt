@@ -44,6 +44,9 @@ import java.time.ZoneOffset
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicLong
 
+/** 고캠핑 운영 응답(2026-10-07, contentId 8031)에서 place 가 고른 화면용 키 */
+private const val CAMPING = """{"induty":"일반야영장","gnrlSiteCo":"25","sbrsCl":"전기,무선인터넷,장작판매","animalCmgCl":"가능","operPdCl":"봄,여름,가을,겨울"}"""
+
 class AttractionApiReindexTaskletTest : BehaviorSpec({
     val placeApiClient = mockk<PlaceApiClient>()
     val bulkProcessor = mockk<OsBulkDocumentProcessor>(relaxed = true)
@@ -511,7 +514,7 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                 null,
             ),
             // 웰니스 국문 표본의 테마 코드 — 이름은 운영 분류 코드표 값
-            202L to PlaceApiClient.ExtrasDto(null, null, "EX050100"),
+            202L to PlaceApiClient.ExtrasDto(null, null, "EX050100", camping = CAMPING),
             // 상세 원문을 못 읽으면 코드만 싣는다. 연관 관광지 — place 가 고른 순위 순 그대로 온다. 자기 자신(401) · 끝난 행사(103) ·
             // 영문 문서(403) · 겹친 id(202) 는 빠지고, 남는 앞의 6곳만 실린다(302 · 402 는 잘린다)
             401L to PlaceApiClient.ExtrasDto(
@@ -570,6 +573,11 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                     sources.getValue(id).keys shouldNotContain "barrierFree"
                     sources.getValue(id).keys shouldNotContain "wellnessTheme"
                 }
+            }
+
+            then("캠핑장 정보는 place 가 고른 JSON 문자열을 그대로 싣고, 캠핑장이 아니면 필드가 없다") {
+                sources.getValue("202")["camping"] shouldBe CAMPING
+                listOf("101", "201", "401").forEach { id -> sources.getValue(id).keys shouldNotContain "camping" }
             }
 
             then("집중률은 읽을 수 있는 날만 예측일 순으로 yyyy-MM-dd · 원천 값 그대로 싣고, 없는 문서는 필드가 없다") {

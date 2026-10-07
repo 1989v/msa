@@ -4,6 +4,7 @@ import com.kgd.place.application.attraction.port.AttractionCongestionRepositoryP
 import com.kgd.place.application.attraction.port.AttractionExtrasRepositoryPort
 import com.kgd.place.application.attraction.port.AttractionRelatedRepositoryPort
 import com.kgd.place.application.attraction.port.AttractionRepositoryPort
+import com.kgd.place.application.attraction.port.GocampingSiteRepositoryPort
 import com.kgd.place.domain.attraction.model.Attraction
 import com.kgd.place.application.attraction.usecase.LookupAttractionExtrasUseCase
 import com.kgd.place.application.attraction.usecase.SyncAttractionBarrierFreeUseCase
@@ -35,7 +36,8 @@ class AttractionExtrasServiceTest : BehaviorSpec({
     val congestion = mockk<AttractionCongestionRepositoryPort>()
     val related = mockk<AttractionRelatedRepositoryPort>()
     val attractions = mockk<AttractionRepositoryPort>()
-    val service = AttractionExtrasService(repository, congestion, related, attractions)
+    val gocamping = mockk<GocampingSiteRepositoryPort>()
+    val service = AttractionExtrasService(repository, congestion, related, attractions, gocamping)
 
     val listRaw = """{"contentid":"125894","contenttypeid":"12","title":"마곡사 [유네스코 세계유산]","modifiedtime":"20251224171858"}"""
     val detailRaw = """{"contentid":"126508","wheelchair":"대여가능","restroom":"장애인 화장실 있음","elevator":""}"""
@@ -43,9 +45,10 @@ class AttractionExtrasServiceTest : BehaviorSpec({
     val synced = LocalDateTime.of(2026, 10, 3, 2, 41)
 
     beforeTest {
-        clearMocks(repository, congestion, related, attractions)
+        clearMocks(repository, congestion, related, attractions, gocamping)
         every { congestion.findForecasts(any(), any()) } returns emptyList()
         every { related.findLinked(any(), any()) } returns emptyList()
+        every { gocamping.findCampingInfo(any()) } returns emptyMap()
         every { repository.saveBarrierFree(any()) } answers { firstArg<List<AttractionBarrierFree>>().size }
     }
 
@@ -228,6 +231,17 @@ class AttractionExtrasServiceTest : BehaviorSpec({
             )
 
             service.lookup(listOf(44L, 45L)).map { it.attractionId } shouldBe listOf(44L)
+        }
+    }
+
+    Given("캠핑장 정보가 있는 id 를 조회할 때") {
+        Then("고캠핑 원문 중 화면에 내는 키만 담아 싣고, 다른 부가 정보가 없어도 항목이 생긴다") {
+            every { repository.findBarrierFreeByAttractionIds(any()) } returns emptyList()
+            every { repository.findWellnessByAttractionIds(any()) } returns emptyList()
+            every { gocamping.findCampingInfo(listOf(51L, 52L)) } returns mapOf(51L to """{"induty":"일반야영장","animalCmgCl":"가능"}""")
+
+            service.lookup(listOf(51L, 52L)).map { it.attractionId to it.camping } shouldBe
+                listOf(51L to """{"induty":"일반야영장","animalCmgCl":"가능"}""")
         }
     }
 })

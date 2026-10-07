@@ -109,6 +109,8 @@ class PlaceApiClient(
         val wellnessThemeCode: String?,
         val congestion: List<CongestionDayDto>? = null,
         val relatedPlaces: List<RelatedPlaceDto>? = null,
+        /** 「캠핑장 정보」 JSON 객체 문자열 그대로 — place 가 고캠핑 원문에서 화면용 키만 골라 준다 */
+        val camping: String? = null,
     )
 
     /** 연관 관광지 한 건 — place 가 고른 순서(원천 순위 순) 그대로. [category] 는 원천 소분류 이름. */
@@ -409,6 +411,7 @@ class PlaceApiClient(
                 barrierFreeFlags = (barrierFree?.get("flags") as? List<*>)?.map { it.toString() },
                 barrierFreeDetailRaw = barrierFree?.get("detailRaw") as? String,
                 wellnessThemeCode = wellness?.get("themaCd") as? String,
+                camping = item["camping"] as? String,
                 // 날짜·값이 빠진 날은 건너뛴다 — 0 으로 채우지 않는다
                 congestion = (congestion?.get("days") as? List<*>)?.mapNotNull { day ->
                     val d = day as? Map<*, *> ?: return@mapNotNull null

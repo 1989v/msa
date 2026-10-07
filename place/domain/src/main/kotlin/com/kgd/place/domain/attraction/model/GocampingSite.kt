@@ -23,4 +23,15 @@ data class GocampingSite(
         require(facilityName.isNotBlank()) { "캠핑장 이름은 비어있을 수 없습니다: $contentId" }
         require(itemRaw.isNotBlank()) { "원문은 비어있을 수 없습니다: $contentId" }
     }
+
+    companion object {
+        /**
+         * 상세 「캠핑장 정보」에 내는 원문 키 — 업종 · 사이트 수 · 부대시설 · 애견 동반 · 운영 기간·요일 · 운영 상태.
+         * 예약 URL(`resveUrl`)·홈페이지는 내지 않는다(ADR-0104 결정 6). 원문 값 그대로 — 고르는 것만 한다.
+         */
+        val DISPLAY_KEYS = listOf(
+            "induty", "gnrlSiteCo", "autoSiteCo", "glampSiteCo", "caravSiteCo", "indvdlCaravSiteCo",
+            "sbrsCl", "animalCmgCl", "operPdCl", "operDeCl", "manageSttus",
+        )
+    }
 }

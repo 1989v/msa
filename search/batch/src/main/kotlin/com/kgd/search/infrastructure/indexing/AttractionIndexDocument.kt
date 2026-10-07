@@ -63,6 +63,8 @@ data class AttractionIndexDocument(
     val infoRaw: String? = null,
     val sidoName: String? = null,
     val links: String? = null,
+    /** 「캠핑장 정보」 — 고캠핑 원문 중 화면에 내는 키만 담은 JSON 객체 문자열(place 가 고른다). 캠핑장이 아니면 null */
+    val camping: String? = null,
     /** 구글맵 딥링크용 place_id — 표시 전용이라 색인하지 않는다 (mapping: index=false). */
     val googlePlaceId: String? = null,
     /** 완결성 기반 브라우즈 정렬 신호 — 도메인이 계산한다 (AttractionPopularity). */
@@ -224,6 +226,7 @@ data class AttractionIndexDocument(
                 infoRaw = doc.infoRaw,
                 sidoName = doc.sidoName,
                 links = doc.links,
+                camping = doc.camping,
                 googlePlaceId = doc.googlePlaceId,
                 popularityScore = doc.popularityScore,
                 embedding = embedding?.vector,

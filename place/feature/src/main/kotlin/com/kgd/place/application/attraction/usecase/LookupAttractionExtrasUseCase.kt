@@ -13,6 +13,8 @@ interface LookupAttractionExtrasUseCase {
         val wellness: Wellness?,
         val congestion: Congestion? = null,
         val relatedPlaces: List<RelatedPlace>? = null,
+        /** 「캠핑장 정보」 — 고캠핑 원문 중 화면에 내는 키만 담은 JSON 객체 문자열(GocampingSite.DISPLAY_KEYS). 캠핑장이 아니면 null */
+        val camping: String? = null,
     )
 
     /** [detailRaw] 는 상세 응답 원문 그대로 — 받는 쪽이 줄을 고른다. 상세를 아직 안 받았으면 null. */

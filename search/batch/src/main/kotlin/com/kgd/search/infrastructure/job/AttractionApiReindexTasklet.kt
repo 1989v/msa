@@ -304,6 +304,7 @@ class AttractionApiReindexTasklet(
                             sidoName = attraction.ldongRegnCd
                                 ?.let { sidoNames[attraction.lang]?.get(it) },
                             links = links[attraction.id],
+                            camping = extra?.camping,
                             googlePlaceId = attraction.googlePlaceId,
                             modifiedAt = attraction.sourceModifiedAt,
                             attributes = attributes,

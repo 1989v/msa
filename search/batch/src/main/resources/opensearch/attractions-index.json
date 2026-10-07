@@ -431,6 +431,9 @@
       "links": {
         "type": "text",
         "index": false},
+      "camping": {
+        "type": "text",
+        "index": false},
       "googlePlaceId": {
         "type": "keyword",
         "index": false

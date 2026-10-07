@@ -202,6 +202,32 @@ class AttractionPageRendererTest : BehaviorSpec({
         }
     }
 
+    given("고캠핑 캠핑장 정보가 실린 문서") {
+        // 고캠핑 운영 응답(2026-10-07, contentId 8031)에서 place 가 고른 키
+        val camping = """{"induty":"일반야영장,자동차야영장","gnrlSiteCo":"25","autoSiteCo":"0","glampSiteCo":"3","sbrsCl":"전기,무선인터넷,장작판매","animalCmgCl":"가능","operPdCl":"봄,여름,가을,겨울","operDeCl":"평일+주말","manageSttus":"운영"}"""
+        val root = rootOf(render(SHELL, doc(attributes = PARSED).copy(camping = camping)))
+        val section = root.substringAfter("<section data-place-section=\"camping\">").substringBefore("</section>")
+
+        then("「캠핑장 정보」 절에 업종·사이트(0 인 종류 제외)·부대시설·반려동물·운영 기간·운영일·상태가 나가고 출처에 고캠핑이 붙는다") {
+            section shouldContain "<h2>캠핑장 정보</h2>"
+            Regex("<dt>([^<]*)</dt><dd>([^<]*)</dd>").findAll(section).map { it.groupValues[1] to it.groupValues[2] }.toList() shouldBe listOf(
+                "업종" to "일반야영장, 자동차야영장",
+                "사이트" to "일반 25 · 글램핑 3",
+                "부대시설" to "전기, 무선인터넷, 장작판매",
+                "반려동물 동반" to "가능",
+                "운영 기간" to "봄, 여름, 가을, 겨울",
+                "운영일" to "평일+주말",
+                "운영 상태" to "운영",
+            )
+            root shouldContain "<p data-place-section=\"source\">출처: 한국관광공사 TourAPI · 고캠핑</p>"
+        }
+
+        then("캠핑장 정보가 없거나 원문을 못 읽으면 절이 없다") {
+            rootOf(render(SHELL, doc(attributes = PARSED))) shouldNotContain "data-place-section=\"camping\""
+            rootOf(render(SHELL, doc(attributes = PARSED).copy(camping = "{not json"))) shouldNotContain "data-place-section=\"camping\""
+        }
+    }
+
     given("연관 관광지(함께 간 곳)가 실린 문서") {
         // 해운대해수욕장(id 6) 202608 운영 응답에서 place 가 고른 앞의 세 곳(순위 1 · 2 · 4) — 광안리해수욕장은 비슷한 곳에도 있다
         val related = listOf(

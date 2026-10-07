@@ -4,6 +4,7 @@ import com.kgd.place.application.attraction.port.AttractionCongestionRepositoryP
 import com.kgd.place.application.attraction.port.AttractionExtrasRepositoryPort
 import com.kgd.place.application.attraction.port.AttractionRelatedRepositoryPort
 import com.kgd.place.application.attraction.port.AttractionRepositoryPort
+import com.kgd.place.application.attraction.port.GocampingSiteRepositoryPort
 import com.kgd.place.application.attraction.usecase.LookupAttractionExtrasUseCase
 import com.kgd.place.application.attraction.usecase.SyncAttractionBarrierFreeUseCase
 import com.kgd.place.application.attraction.usecase.SyncAttractionWellnessUseCase
@@ -31,6 +32,7 @@ class AttractionExtrasService(
     private val congestion: AttractionCongestionRepositoryPort,
     private val related: AttractionRelatedRepositoryPort,
     private val attractions: AttractionRepositoryPort,
+    private val gocamping: GocampingSiteRepositoryPort,
 ) : SyncAttractionBarrierFreeUseCase, SyncAttractionWellnessUseCase, LookupAttractionExtrasUseCase {
 
     @Transactional
@@ -126,12 +128,14 @@ class AttractionExtrasService(
                 row.servedTargets().map { LookupAttractionExtrasUseCase.RelatedPlace(it.rank, it.attractionId!!, it.scls) }
             }
             .filterValues { it.isNotEmpty() }
+        val camping = gocamping.findCampingInfo(attractionIds)
         return attractionIds.distinct().mapNotNull { id ->
             val bf = barrierFree[id]
             val wl = wellness[id]
             val cg = forecasts[id]
             val rp = relatedPlaces[id]
-            if (bf == null && wl == null && cg == null && rp == null) {
+            val cp = camping[id]
+            if (bf == null && wl == null && cg == null && rp == null && cp == null) {
                 null
             } else {
                 LookupAttractionExtrasUseCase.Found(
@@ -145,6 +149,7 @@ class AttractionExtrasService(
                         )
                     },
                     relatedPlaces = rp,
+                    camping = cp,
                 )
             }
         }

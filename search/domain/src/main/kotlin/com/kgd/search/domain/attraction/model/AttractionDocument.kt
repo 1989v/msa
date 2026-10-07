@@ -58,6 +58,8 @@ data class AttractionDocument(
     val sidoName: String? = null,
     /** 외부 링크(수집분 + 조립 딥링크) 원문 JSON. 상세에서 DB 를 안 부르게 한다. */
     val links: String? = null,
+    /** 「캠핑장 정보」 — 고캠핑 원문 중 화면에 내는 키만 담은 JSON 객체 문자열(place 가 고른다). 캠핑장이 아니면 null */
+    val camping: String? = null,
     val googlePlaceId: String? = null,
     /**
      * 완결성 기반 정렬 신호 — 위 필드들에서 파생한다 ([AttractionPopularity]).
