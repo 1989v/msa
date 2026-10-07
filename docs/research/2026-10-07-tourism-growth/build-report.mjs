@@ -37,7 +37,9 @@ for (let i = 1; i < parts.length; i += 2) {
   }).replace(/<\/table>/g, '</table></div>');
   sections.push({ number, heading, html: `<section id="section-${number}" aria-labelledby="heading-${number}"><h2 id="heading-${number}">${heading}</h2>${content}</section>` });
 }
-if (sections.length !== 12) throw new Error(`Expected 12 sections, got ${sections.length}`);
+if (!sections.length || sections.some((section, index) => Number(section.number) !== index + 1)) {
+  throw new Error('Expected non-empty, sequentially numbered sections starting at 1');
+}
 const intro = parts[0].replace('<h1>', '<h1 id="report-title">');
 const toc = sections.map(({ number, heading }) => `<li><a href="#section-${number}">${heading}</a></li>`).join('\n');
 
@@ -153,7 +155,7 @@ pre code { background: transparent; padding: 0; border-radius: 0; font-size: inh
 <a class="skip" href="#report-title">본문으로 건너뛰기</a>
 <header class="masthead"><div class="masthead-inner"><span class="wordmark">K-관광 / RESEARCH</span><div class="tools"><a href="README.md">Markdown 원문</a><a href="https://place.1989v.com/">대상 서비스</a><button id="print" type="button" hidden>인쇄 / PDF 저장</button></div></div></header>
 <div class="layout">
-<nav class="toc" aria-label="보고서 목차"><h2>목차 · 12개 장</h2><ol>${toc}</ol></nav>
+<nav class="toc" aria-label="보고서 목차"><h2>목차 · ${sections.length}개 장</h2><ol>${toc}</ol></nav>
 <main aria-labelledby="report-title"><div class="hero"><p class="eyebrow">PRODUCT · CONTENT · SEO · DISTRIBUTION</p>${intro}</div>${sections.map(s => s.html).join('\n')}</main>
 </div>
 <footer class="footer">2026-10-07 조사 · 의사결정용 제안 · <a href="README.md">전체 원문</a> · 근거 자료와 외부 출처는 해당 주장 가까이에 연결했습니다.</footer>
