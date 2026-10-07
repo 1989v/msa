@@ -60,6 +60,15 @@ def _request(method: str, path: str, body: dict | None = None, timeout: int = 12
     raise AssertionError("unreachable")
 
 
+#: TourAPI 가 아닌 원천(고캠핑 등)의 행은 자기 번호 체계를 갖는다 — 그 번호로 TourAPI 를 부르면 엉뚱한 콘텐츠가 붙는다
+TOURAPI = "TOURAPI"
+
+
+def is_tourapi(row: dict) -> bool:
+    """TourAPI 원천 행인가. `source` 가 없던 옛 응답은 전부 TourAPI 다."""
+    return (row.get("source") or TOURAPI) == TOURAPI
+
+
 def fetch_attractions() -> list[dict]:
     """전량 스캔 — id 키셋(`afterId`)으로 id 오름차순. 재색인 배치와 같은 경로를 쓴다.
 

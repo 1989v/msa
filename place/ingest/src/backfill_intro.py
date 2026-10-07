@@ -63,7 +63,7 @@ def pick(rows: list[dict], lang: str, budget: int, today: date | None = None) ->
     매일 같은 것을 다시 부르게 된다.
     """
     today = today or kst_today()
-    todo = [r for r in rows if r.get("lang") == lang and not r.get("introSyncedAt")]
+    todo = [r for r in rows if r.get("lang") == lang and not r.get("introSyncedAt") and place_client.is_tourapi(r)]
     # 종료 안 된 행사 → 관광 분류 → 사진 있는 것 순. 화면에 먼저 보이는 것부터 채운다.
     todo.sort(key=lambda r: (
         festival_first(r, today),

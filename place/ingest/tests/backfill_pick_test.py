@@ -60,3 +60,16 @@ def test_media_pick_ranks_course_with_sight_categories():
     head = picked[:len(courses) + len(sights)]
     assert {r["contentId"] for r in courses} <= {r["contentId"] for r in head}
     assert all(r["category"] == "stay" and r["contentTypeId"] == "32" for r in picked[len(head):])
+
+
+def test_backfill_jobs_pick_tourapi_rows_only():
+    # 고캠핑 행은 자기 번호 체계다 — 그 번호로 detailCommon2 를 부르면 엉뚱한 TourAPI 콘텐츠의 개요가 붙는다(Q-P2-KEY)
+    base = _sample()
+    camp = [dict(r, source="GOCAMPING") for r in base]
+    old = [{k: v for k, v in r.items() if k != "source"} for r in base]   # source 가 없던 옛 응답 = TourAPI
+    for picked in (
+        backfill_intro.pick(camp + old, "ko", 10_000, today=TODAY),
+        backfill_media.pick(camp + old, "ko", 10_000),
+        backfill_overview.pick(camp + old, "ko", 10_000, set(), today=TODAY),
+    ):
+        assert picked and all("source" not in r for r in picked)

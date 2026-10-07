@@ -70,7 +70,7 @@ def run(key: str, langs: tuple[str, ...] = ("ko", "en")) -> bool:
 
         records = []
         for rec in rows:
-            if rec.get("lang") != lang:
+            if rec.get("lang") != lang or not place_client.is_tourapi(rec):
                 continue
             hit = pet.get(str(rec.get("contentId")))
             if not hit:

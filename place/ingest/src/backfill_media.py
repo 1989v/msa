@@ -29,7 +29,7 @@ COURSE_TYPE = "25"
 def pick(rows: list[dict], lang: str, budget: int) -> list[dict]:
     """아직 안 받은 것부터. 값이 아니라 **받은 시각**(`extraSyncedAt`)으로 판정한다 —
     값으로 재면 원천이 빈 응답을 준 레코드를 매일 다시 부르게 된다."""
-    todo = [r for r in rows if r.get("lang") == lang and not r.get("extraSyncedAt")]
+    todo = [r for r in rows if r.get("lang") == lang and not r.get("extraSyncedAt") and place_client.is_tourapi(r)]
     # 관광 분류·여행코스 → 사진 있는 것 순. 화면에 먼저 보이는 것부터 채운다 (intro 와 같은 기준).
     # 코스(25)는 구성 순서의 원천이 detailInfo2 라 관광 분류와 같은 순위로 받는다.
     todo.sort(key=lambda r: (

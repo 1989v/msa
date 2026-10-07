@@ -89,6 +89,7 @@ def pick(rows: list[dict], lang: str, budget: int, known_empty: set[str],
     missing = [r for r in rows
                if not (r.get("overview") or "").strip()
                and r.get("lang") == lang
+               and place_client.is_tourapi(r)
                and f"{r.get('lang')}:{r['contentId']}" not in known_empty]
     missing.sort(key=lambda r: (
         festival_first(r, today),
