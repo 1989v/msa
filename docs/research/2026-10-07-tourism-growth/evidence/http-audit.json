@@ -1,0 +1,223 @@
+[
+  {
+    "path": "/",
+    "status": 200,
+    "canonical": [
+      "https://place.1989v.com/"
+    ],
+    "alternates": [
+      {
+        "rel": "alternate",
+        "hreflang": "ko",
+        "href": "https://place.1989v.com/",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://place.1989v.com/en",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://place.1989v.com/en",
+        "data-seo-multi": null
+      }
+    ],
+    "robots": [],
+    "xRobots": null,
+    "title": [
+      "한국 관광지 검색 — 지역별 가볼 만한 곳·여행지 지도 | K-관광"
+    ],
+    "h1": 1,
+    "jsonLdTypes": [
+      "CollectionPage",
+      "ItemList"
+    ],
+    "textChars": 792,
+    "textPreview": "            한국 관광지 검색 — 지역별 가볼 만한 곳·여행지 지도 | K-관광                                             한국 관광지 탐색 전국 가볼 만한 곳을 지역·테마·내 주변으로 검색합니다. 한국관광공사 공식 데이터로 주소·지도·사진과 가는 길을 함께 확인하세요. 서울특별시 전남광주통합특별시 부산광역시 대구광역시 인천광역시 대전광역시 울산광역시 세종특별자치시 경기도 충청북도 충청남도 경상북도 경상남도 제주특별자치도 강원특별자치도 전북특별자치도 경복궁 남산공원 사육신공원 청계산 관악산 서대문독립공원 충무공 이순신 동상 세종대왕 동상 북악산 신당동 떡볶이타운 삼천사 장충동"
+  },
+  {
+    "path": "/en",
+    "status": 200,
+    "canonical": [
+      "https://place.1989v.com/en"
+    ],
+    "alternates": [
+      {
+        "rel": "alternate",
+        "hreflang": "ko",
+        "href": "https://place.1989v.com/",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://place.1989v.com/en",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://place.1989v.com/en",
+        "data-seo-multi": null
+      }
+    ],
+    "robots": [],
+    "xRobots": null,
+    "title": [
+      "Things to Do in Korea — Attractions by Region &amp; Map | K-Tour"
+    ],
+    "h1": 1,
+    "jsonLdTypes": [
+      "CollectionPage",
+      "ItemList"
+    ],
+    "textChars": 2214,
+    "textPreview": "            Things to Do in Korea — Attractions by Region & Map | K-Tour                                             Explore Korea Find things to do across South Korea — search tourist attractions by region, theme, or your current location. Official Korea Tourism Organization data… Seoul Jeonnam-Gwangju Special Metropolitan City Busan Daegu Incheon"
+  },
+  {
+    "path": "/regions/11",
+    "status": 200,
+    "canonical": [
+      "https://place.1989v.com/regions/11"
+    ],
+    "alternates": [
+      {
+        "rel": "alternate",
+        "hreflang": "ko",
+        "href": "https://place.1989v.com/regions/11",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://place.1989v.com/en/regions/11",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://place.1989v.com/en/regions/11",
+        "data-seo-multi": null
+      }
+    ],
+    "robots": [],
+    "xRobots": null,
+    "title": [
+      "서울특별시 가볼 만한 곳 1,474곳 — 관광지 지도·여행 명소 | K-관광"
+    ],
+    "h1": 1,
+    "jsonLdTypes": [
+      "TouristDestination",
+      "BreadcrumbList"
+    ],
+    "textChars": 455,
+    "textPreview": "            서울특별시 가볼 만한 곳 1,474곳 — 관광지 지도·여행 명소 | K-관광                                             한국 관광지 탐색 서울특별시 가볼 만한 곳 서울특별시 여행에서 가볼 만한 자연·역사·문화·레포츠 관광지 1,474곳을 시·군·구별로 모았습니다. 한국관광공사 공식 데이터로 지도·사진과 가는 길을 확인하세요. 시·군·구별로 보기 종로구 중구 용산구 성동구 광진구 동대문구 중랑구 성북구 강북구 도봉구 노원구 은평구 서대문구 마포구 양천구 강서구 구로구 금천구 영등포구 동작구 관악구 서초구 강남구 송파구 강동구 대표 관광지 경복궁 남산공원 사육신공원 "
+  },
+  {
+    "path": "/en/regions/11",
+    "status": 200,
+    "canonical": [
+      "https://place.1989v.com/en/regions/11"
+    ],
+    "alternates": [
+      {
+        "rel": "alternate",
+        "hreflang": "ko",
+        "href": "https://place.1989v.com/regions/11",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://place.1989v.com/en/regions/11",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://place.1989v.com/en/regions/11",
+        "data-seo-multi": null
+      }
+    ],
+    "robots": [],
+    "xRobots": null,
+    "title": [
+      "Things to Do in Seoul — 395 Attractions &amp; Map | K-Tour"
+    ],
+    "h1": 1,
+    "jsonLdTypes": [
+      "TouristDestination",
+      "BreadcrumbList"
+    ],
+    "textChars": 932,
+    "textPreview": "            Things to Do in Seoul — 395 Attractions & Map | K-Tour                                             Explore Korea Things to do in Seoul Visit Seoul, South Korea: 395 tourist attractions by district — nature, history, culture and leisure spots with maps, photos and directions from official… Browse by district Jongno-gu Jung-gu Yongsan-gu "
+  },
+  {
+    "path": "/attractions/1",
+    "status": 200,
+    "canonical": [
+      "https://place.1989v.com/attractions/1"
+    ],
+    "alternates": [],
+    "robots": [],
+    "xRobots": null,
+    "title": [
+      "경복궁 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | K-관광"
+    ],
+    "h1": 1,
+    "jsonLdTypes": [
+      "TouristAttraction",
+      "BreadcrumbList"
+    ],
+    "textChars": 2186,
+    "textPreview": "            경복궁 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | K-관광                                          한국 관광지 탐색 › 서울특별시 경복궁 역사 · 서울특별시 종로구 사직로 161 (세종로) 경복궁은 1392년 조선 건국 후 1395년(태조 4)에 창건한 조선왕조 제일의 법궁이다. 경복궁은 백악산(북악산)을 주산으로 넓은 지형에 건물을 배치하였고 정문인 광화문 앞으로 넓은 육조거리가 펼쳐진 한양의 중심이었다. ‘경복’의 이름은 ‘새 왕조가 큰 복을 누려 번영할 것’이라는 의미가 담겨있으며, 이곳에서 세종 대에 훈민정음이 창제되어 반포되기도 하였다. 또한, 동궐"
+  },
+  {
+    "path": "/attractions/999999999",
+    "status": 404,
+    "canonical": [
+      "https://place.1989v.com/"
+    ],
+    "alternates": [],
+    "robots": [
+      "noindex, follow"
+    ],
+    "xRobots": null,
+    "title": [
+      "찾을 수 없는 관광지 | K-관광"
+    ],
+    "h1": 1,
+    "jsonLdTypes": [],
+    "textChars": 143,
+    "textPreview": "            찾을 수 없는 관광지 | K-관광                                 찾을 수 없는 관광지 한국 관광지 탐색으로 1989v · 무료 웹게임 · 한국 관광지 검색 · 블로그 · 랭킹 리더보드 · 혜택 링크 허브   "
+  },
+  {
+    "path": "/robots.txt",
+    "status": 200,
+    "canonical": [],
+    "alternates": [],
+    "robots": [],
+    "xRobots": null,
+    "title": [],
+    "h1": 0,
+    "jsonLdTypes": [],
+    "textChars": 1152,
+    "textPreview": "User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /oauth/\nDisallow: /admin/\nDisallow: /shop/login\nDisallow: /shop/orders\n\n# /games/ /index.html 은 상세 페이지가 iframe 으로 물고 있는 원시 게임 프레임이다.\n# nginx 가 X-Robots-Tag: noindex 를 붙이므로 크롤은 열어둬야 그 헤더를 읽을 수 있다.\n\nUser-agent: Yeti\nAllow: /\n\nUser-agent: Daumoa\nAllow: /\n\n# 답변형 검색(AEO) — 인용되는 쪽이 이득이라 명시적으로 연다.\n# llms.tx"
+  },
+  {
+    "path": "/sitemap.xml",
+    "status": 200,
+    "canonical": [],
+    "alternates": [],
+    "robots": [],
+    "xRobots": null,
+    "title": [],
+    "h1": 0,
+    "jsonLdTypes": [],
+    "textChars": 297,
+    "textPreview": "   https://place.1989v.com/sitemap-places-hub.xml    https://place.1989v.com/sitemap-places-1.xml    https://place.1989v.com/sitemap-places-2.xml    https://place.1989v.com/sitemap-places-3.xml    https://place.1989v.com/sitemap-places-4.xml    https://place.1989v.com/sitemap-places-events.xml   "
+  }
+]

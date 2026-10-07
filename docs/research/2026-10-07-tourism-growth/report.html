@@ -1,0 +1,938 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="K-관광 운영 관찰과 공식 자료를 바탕으로 한 제품, 콘텐츠, 검색 노출, 유통 전략의 의사결정용 성장 분석. 조사일 2026-10-07.">
+<title>K-관광 성장 분석 — place.1989v.com</title>
+<style>
+/* Source: DESIGN.md §12 and portal-fe/src/styles/k-heritage.css light tokens. */
+:root {
+  --kh-hanji: rgb(249 248 242);
+  --kh-giwa: rgb(29 29 31);
+  --kh-pine: rgb(26 71 42);
+  --kh-ocher-text: rgb(138 99 70);
+  --ko-surface-1: rgb(245 244 238);
+  --ko-surface-2: rgb(239 238 232);
+  --ko-text-secondary: rgb(70 70 74);
+  --paper: var(--kh-hanji); --ink: var(--kh-giwa); --secondary: var(--ko-text-secondary);
+  --line: color-mix(in srgb, var(--kh-giwa) 16%, transparent);
+  --line-strong: color-mix(in srgb, var(--kh-giwa) 28%, transparent);
+  --font: Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --mono: "SF Mono", "JetBrains Mono", Monaco, Consolas, monospace;
+  color-scheme: only light;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 24px; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.8 var(--font); -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; }
+a { color: var(--kh-pine); text-underline-offset: 4px; overflow-wrap: anywhere; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--kh-pine); outline-offset: 4px; }
+.skip { position: absolute; top: 8px; left: 16px; transform: translateY(-160%); padding: 8px 16px; background: var(--paper); z-index: 3; }
+.skip:focus { transform: none; }
+.masthead { border-top: 4px solid var(--ink); border-bottom: 1px solid var(--line-strong); }
+.masthead-inner { max-width: 1280px; margin: auto; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.wordmark { font-size: 14px; font-weight: 700; letter-spacing: .04em; }
+.tools { display: flex; align-items: center; gap: 16px; font-size: 14px; }
+.tools a { display: inline-flex; align-items: center; min-height: 44px; }
+button { min-height: 44px; padding: 8px 16px; border: 1px solid var(--line-strong); border-radius: 4px; background: transparent; color: var(--ink); font: inherit; cursor: pointer; }
+button:hover { background: var(--ko-surface-2); }
+.layout { max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 64px; padding: 48px 32px 96px; }
+.toc { position: sticky; top: 24px; align-self: start; max-height: calc(100vh - 48px); overflow: auto; }
+.toc h2 { font-size: 14px; margin: 0 0 16px; padding-bottom: 12px; border-bottom: 1px solid var(--line-strong); }
+.toc ol { list-style: none; margin: 0; padding: 0; }
+.toc li { border-bottom: 1px solid var(--line); }
+.toc a { display: block; min-height: 44px; padding: 8px 0; color: var(--secondary); font-size: 14px; line-height: 1.5; text-decoration: none; }
+.toc a:hover, .toc a:focus { color: var(--kh-pine); text-decoration: underline; }
+main { min-width: 0; }
+.hero { padding-bottom: 32px; }
+.eyebrow { margin: 0 0 20px; font: 12px/1.5 var(--mono); letter-spacing: .08em; color: var(--kh-ocher-text); }
+h1 { font-size: clamp(30px, 4vw, 48px); line-height: 1.3; letter-spacing: -.04em; margin: 0 0 24px; max-width: 24ch; word-break: keep-all; }
+.hero blockquote { margin: 0; padding: 16px 0; border: 0; background: transparent; color: var(--secondary); font-size: 14px; }
+.hero blockquote p { margin: 0; max-width: none; }
+section { padding: 40px 0 16px; border-top: 1px solid var(--line-strong); scroll-margin-top: 24px; }
+section h2 { margin: 0 0 24px; font-size: 24px; line-height: 1.5; letter-spacing: -.025em; word-break: keep-all; }
+h3 { font-size: 18px; line-height: 1.6; margin: 32px 0 12px; word-break: keep-all; }
+p { margin: 16px 0; max-width: 76ch; overflow-wrap: anywhere; }
+strong { font-weight: 700; }
+ul, ol { padding-left: 24px; margin: 16px 0 24px; }
+li { margin: 8px 0; overflow-wrap: anywhere; }
+blockquote { padding: 12px 20px; margin: 24px 0; border-left: 3px solid var(--kh-pine); background: var(--ko-surface-1); }
+blockquote p { margin: 8px 0; }
+.table-wrap { max-width: 100%; overflow-x: auto; margin: 24px 0; border: 1px solid var(--line-strong); border-radius: 4px; }
+table { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 14px; line-height: 1.7; }
+th, td { text-align: left; vertical-align: top; padding: 12px 16px; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+th { background: var(--ko-surface-2); font-weight: 600; }
+tbody tr:last-child td { border-bottom: 0; }
+td:first-child { min-width: 112px; }
+code { font-family: var(--mono); font-size: .875em; padding: 2px 4px; background: var(--ko-surface-2); border-radius: 4px; overflow-wrap: anywhere; }
+pre { overflow-x: auto; background: var(--ko-surface-1); border: 1px solid var(--line); padding: 20px; border-radius: 4px; font-size: 14px; line-height: 1.7; }
+pre code { background: transparent; padding: 0; border-radius: 0; font-size: inherit; white-space: pre; }
+.footer { max-width: 1280px; margin: auto; padding: 24px 32px 48px; border-top: 1px solid var(--line-strong); color: var(--secondary); font-size: 14px; }
+@media (max-width: 1023px) {
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 32px; max-width: 880px; padding-top: 32px; }
+  .toc { position: static; max-height: none; }
+  .toc ol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; }
+  .hero { padding-bottom: 24px; }
+}
+@media (max-width: 639px) {
+  .masthead-inner { padding: 12px 20px; gap: 4px; }
+  .tools { gap: 12px; }
+  .layout { padding: 24px 20px 64px; gap: 24px; }
+  .toc ol { grid-template-columns: minmax(0, 1fr); }
+  .toc a { font-size: 14px; }
+  h1 { font-size: 30px; }
+  section { padding-top: 32px; }
+  section h2 { font-size: 24px; }
+  th, td { padding: 12px; }
+  .footer { padding-inline: 20px; }
+}
+@media print {
+  @page { size: A4; margin: 18mm 16mm; }
+  body { font-size: 10pt; line-height: 1.6; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .skip, .tools, .toc { display: none; }
+  .masthead-inner { padding: 8px 0; }
+  .layout { display: block; max-width: none; padding: 24px 0 0; }
+  h1 { font-size: 24pt; max-width: none; }
+  section { padding: 20px 0 8px; }
+  section h2 { font-size: 16pt; }
+  h3 { font-size: 12pt; }
+  h1, h2, h3 { break-after: avoid; }
+  p, li { orphans: 3; widows: 3; }
+  .table-wrap { overflow: visible; border: 0; }
+  table { min-width: 0; font-size: 8pt; table-layout: fixed; }
+  thead { display: table-header-group; }
+  tr { break-inside: avoid; }
+  th, td { padding: 6px 8px; border: 1px solid var(--line); }
+  td:first-child { min-width: 0; }
+  pre { white-space: pre-wrap; overflow: visible; padding: 12px; font-size: 8pt; }
+  pre code { white-space: pre-wrap; }
+  a { text-decoration: underline; }
+  .footer { padding: 16px 0 0; font-size: 9pt; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#report-title">본문으로 건너뛰기</a>
+<header class="masthead"><div class="masthead-inner"><span class="wordmark">K-관광 / RESEARCH</span><div class="tools"><a href="README.md">Markdown 원문</a><a href="https://place.1989v.com/">대상 서비스</a><button id="print" type="button" hidden>인쇄 / PDF 저장</button></div></div></header>
+<div class="layout">
+<nav class="toc" aria-label="보고서 목차"><h2>목차 · 12개 장</h2><ol><li><a href="#section-1">1. 판단: 데이터의 양에서 ‘방문 결정을 돕는 정보’로</a></li>
+<li><a href="#section-2">2. 조사 범위와 증거의 한계</a></li>
+<li><a href="#section-3">3. 현재 서비스: 유지할 강점과 실제 마찰</a></li>
+<li><a href="#section-4">4. 글로벌 벤치마크 6개</a></li>
+<li><a href="#section-5">5. UI/UX 개선안</a></li>
+<li><a href="#section-6">6. 콘텐츠·데이터 확장 전략</a></li>
+<li><a href="#section-7">7. 구글 검색 노출: 새 SEO 설비보다 현재 상태의 측정</a></li>
+<li><a href="#section-8">8. 홍보·유통 채널: 게시 가능한 곳과 고객이 있는 곳을 구분</a></li>
+<li><a href="#section-9">9. 30·60·90일 실행안과 비용 판단</a></li>
+<li><a href="#section-10">10. 성과 측정과 수익화</a></li>
+<li><a href="#section-11">11. 실행 전에 남은 결정</a></li>
+<li><a href="#section-12">12. 코드·자료 위치</a></li></ol></nav>
+<main aria-labelledby="report-title"><div class="hero"><p class="eyebrow">PRODUCT · CONTENT · SEO · DISTRIBUTION</p><h1 id="report-title">K-관광 성장 분석 — place.1989v.com</h1>
+<blockquote>
+<p>조사일: 2026-10-07 · 상태: 의사결정용 제안 · 대상: <a href="https://place.1989v.com/">https://place.1989v.com/</a>
+운영 화면·HTTP 응답·현재 작업 트리·공식 외부 자료를 교차 확인했다. 서비스 구현이나 배포를 변경하는 문서가 아니다.</p>
+</blockquote>
+</div><section id="section-1" aria-labelledby="heading-1"><h2 id="heading-1">1. 판단: 데이터의 양에서 ‘방문 결정을 돕는 정보’로</h2>
+<p><strong>추천 방향은 한국 여행에 특화된 ‘조건별 관광지 발견 + 믿을 수 있는 방문 정보 + 저장·공유’ 서비스다.</strong> 세계 전체 관광지 확장보다, 한국의 몇 개 지역에서 방문 결정을 가장 잘 돕는 경험을 먼저 만든다. 글로벌 사이트는 범위를 그대로 따라갈 대상이 아니라 정보 설계의 벤치마크다.</p>
+<p>현재 서비스는 지도 검색만 있는 초기 제품이 아니다. 한·영 정보, 관광지 상세, 지역별 탐색, 무료·주차·반려동물·접근성 필터, 찜, 주변 장소, 행사, 날씨, 영상, 외부 여행 상품 링크까지 있다. <strong>핵심 문제는 기능 부족보다 우선순위·정보 정제·신뢰·검색 유입 후의 행동 연결이다.</strong></p>
+<p>바로 결정할 세 가지:</p>
+<ol>
+<li><strong>첫 사용자:</strong> 우선 국내 자유여행자의 ‘주말/당일 여행지 고르기’를 90일 가설로 삼는다. 외국인 대상 서울 핵심 명소는 별도 소규모 실험으로 검증한다. 타깃을 확정한 사용자 답변은 없으므로 이는 제안이다.</li>
+<li><strong>첫 상품 가치:</strong> “어디가 유명한가”에 더해 “내 조건에 맞고, 방문 전에 무엇을 확인해야 하는가”를 답한다. 무료·주차·동반 조건이라는 기존 자산을 활용한다.</li>
+<li><strong>첫 투자:</strong> 화면 재배치와 신뢰 정보 → 지역·상황별 편집 콘텐츠 → 공유·유통 → 검증된 범위 확대 순서다. 전면 프레임워크 교체와 자체 예약 엔진은 후순위다.</li>
+</ol>
+<h3>최우선 5개</h3>
+<div class="table-wrap" role="region" aria-label="1장 표 1" tabindex="0"><table>
+<thead>
+<tr>
+<th>순서</th>
+<th>개선</th>
+<th>이유</th>
+<th>완료 기준 예시</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>영문 원문 정제·정보 없음 표시</td>
+<td>실제 영문 카드에 태그/엔티티 노출, 0건 필터 오해 가능</td>
+<td>선정 30개 영문 페이지에서 태그·엔티티 노출 0건, 미확인과 불가를 구분</td>
+</tr>
+<tr>
+<td>2</td>
+<td>상단 필터 압축·선택 조건 요약</td>
+<td>1440×900에서 첫 카드 y≈441px</td>
+<td>같은 조건·뷰포트에서 첫 결과 y≤320px를 설계 목표로 검증</td>
+</tr>
+<tr>
+<td>3</td>
+<td>상세 첫 화면에 방문 요약·출처·확인일</td>
+<td>경복궁은 긴 역사 설명 뒤에 이용 안내 등장</td>
+<td>제목 다음에 요금·휴무·이동·저장, 원문은 접기 가능</td>
+</tr>
+<tr>
+<td>4</td>
+<td>지역 × 상황의 편집 페이지 6개</td>
+<td>현재 지역 페이지는 명소 목록 중심</td>
+<td>각 페이지에 선정 이유·비교·방문 주의·내부 링크·검수자</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Search Console 기준선 + 유입 실험</td>
+<td>기술적 준비와 실제 검색 노출은 별개</td>
+<td>대표 URL 검사, 28일 기준선, 채널별 유효 행동 측정</td>
+</tr>
+</tbody></table></div>
+<p>위 수치는 현재 성과가 아닌 <strong>제안된 내부 완료 기준</strong>이다. 검색 순위·트래픽 상승을 보장하는 수치가 아니다.</p>
+</section>
+<section id="section-2" aria-labelledby="heading-2"><h2 id="heading-2">2. 조사 범위와 증거의 한계</h2>
+<div class="table-wrap" role="region" aria-label="2장 표 1" tabindex="0"><table>
+<thead>
+<tr>
+<th>구분</th>
+<th>확인한 것</th>
+<th>확인하지 못한 것</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>운영 UI</td>
+<td>국문/영문 홈, 경복궁 상세의 렌더링 DOM·텍스트·링크, 1440×900 좌표</td>
+<td>모바일 실제 렌더링, 터치 사용성, 시각적 스크린샷 비교, 로그인 후 찜 완주</td>
+</tr>
+<tr>
+<td>HTTP</td>
+<td>홈 2개, 서울 지역 2개, 상세 6개, 없는 상세 1개, robots·사이트맵</td>
+<td>전 URL 전수검사, Googlebot 실제 수신 응답, 모든 응답 헤더</td>
+</tr>
+<tr>
+<td>검색</td>
+<td>공식 Google 지침, 공개 검색 보조 조회</td>
+<td>Search Console, GA/자체 집계 대시보드, 실제 검색량·순위·전환율</td>
+</tr>
+<tr>
+<td>코드</td>
+<td>PlacePage·AttractionPage·RegionPage·FavoriteButton·SEO 생성기 등</td>
+<td>현재 작업 트리와 운영 배포의 동일성</td>
+</tr>
+<tr>
+<td>외부 비교</td>
+<td>글로벌 6개 서비스의 공식 페이지/도움말, 국내 공식 관광 사이트</td>
+<td>동일 조건의 전체 예약·회원가입 여정, 유료 트래픽 통계</td>
+</tr>
+</tbody></table></div>
+<p>운영 화면에 있는 필터·주변 탐색·행사 등 일부가 현재 로컬 파일보다 확장되어 있었다. 따라서 <strong>운영에서 확인한 기능을 우선</strong>하며, 로컬에 없다는 이유로 운영에도 없다고 판정하지 않았다. 작업 트리는 다른 변경이 다수 있어 분석 산출물만 별도 디렉터리에 작성했다.</p>
+<p>스크린샷·모바일 에뮬레이션 도구는 자동 승인 검토에서 거절되었다(<code>approval policy is never</code>). 픽셀 단위 시각 검수와 모바일 평가를 완료했다고 주장하지 않는다. 초기 Python 기본 HTTP 클라이언트는 403/1010을 받았으나 일반 브라우저와 curl은 정상 응답했다. 이것만으로 Googlebot 차단을 단정할 수 없다.</p>
+<p>증거: <a href="evidence/http-audit.json">HTTP 기본 표본</a>, <a href="evidence/http-tail-sample.json">상세 후반 표본</a>, <a href="evidence/sitemap-counts.json">사이트맵 항목 집계</a>, <a href="evidence/ui-observations.md">운영 UI 관찰 기록</a>. HTTP의 <code>textChars</code>는 title 등을 포함한 단순 텍스트 추출 길이이며 본문 품질 점수가 아니다. <code>xRobots</code>는 헤더 미수집으로 판정하지 않는다.</p>
+</section>
+<section id="section-3" aria-labelledby="heading-3"><h2 id="heading-3">3. 현재 서비스: 유지할 강점과 실제 마찰</h2>
+<h3>이미 있는 강점</h3>
+<ul>
+<li><strong>탐색 기반:</strong> 지도/목록, 지역 드릴다운, 내 주변, 자연·역사·문화·레포츠·행사·코스, 지도 위 음식·쇼핑·숙박.</li>
+<li><strong>조건 필터:</strong> 무료입장, 주차, 반려동물, 휠체어·엘리베이터·장애인 화장실 등. “정보가 있는 곳만 거릅니다”라는 한계 안내도 있다.</li>
+<li><strong>방문 보조:</strong> 경복궁 상세에 사진 7장, 이용시간·휴무·요금·주차, 주변 탐색, 지역 날씨·대기질·혼잡도 탭, 영상, 외부 링크가 있다. 탭 존재와 각 데이터 정확성은 다른 문제다.</li>
+<li><strong>재방문 기반:</strong> 카드 찜과 <code>/favorites</code> 진입이 있다. 찜 기능을 새로 만들라는 권고는 부정확하다.</li>
+<li><strong>검색 기반:</strong> 원본 HTML 본문, 고유 title/description/canonical, 지역 링크, 한·영 허브/지역 hreflang, BreadcrumbList, TouristAttraction, 행사 Event, 분할 사이트맵.</li>
+</ul>
+<p>근거: <a href="https://place.1989v.com/">국문 홈</a>, <a href="https://place.1989v.com/en">영문 홈</a>, <a href="https://place.1989v.com/attractions/1">경복궁 상세</a>, <a href="https://place.1989v.com/regions/11">서울 지역</a>.</p>
+<h3>관찰 → 사용자 영향 → 개선</h3>
+<div class="table-wrap" role="region" aria-label="3장 표 1" tabindex="0"><table>
+<thead>
+<tr>
+<th>관찰</th>
+<th>해석/영향 가설</th>
+<th>권고</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>홈 상단에 유형·시설·서울 25개 구 선택이 연속 노출. 첫 카드 y=441px</td>
+<td>탐색 시작 전 선택 부담, 작은 화면에서는 더 클 가능성</td>
+<td>지역 1개 + 주요 테마 + ‘필터’로 압축. 선택한 조건만 항상 노출</td>
+</tr>
+<tr>
+<td>카드가 주소와 긴 역사/설명 발췌 중심</td>
+<td>여러 후보의 차이와 적합성을 비교하기 어려움</td>
+<td>‘추천 이유 1줄 + 확인된 실용 속성 2~3개’로 재편</td>
+</tr>
+<tr>
+<td>경복궁의 긴 역사 설명 다음에 이용 안내</td>
+<td>당일 방문자가 필요한 요금·휴무를 늦게 찾음</td>
+<td>제목·사진 → 방문 요약 → 길찾기·저장 → 설명·주변 순서</td>
+</tr>
+<tr>
+<td>영문 카드에 <code>&amp;rsquo;</code>, <code>&lt;br /&gt;</code>, <code>&amp;lt;PARASITE&amp;gt;</code> 노출</td>
+<td>신뢰와 가독성 저하</td>
+<td>원천 문자열 decode + 허용된 마크업 처리 + 카드용 plain text 일관화</td>
+</tr>
+<tr>
+<td>영문 서울 필터에 Credit cards·Stroller·Pets 0건</td>
+<td>‘불가능’과 ‘정보 없음’을 혼동할 수 있음</td>
+<td>0건 선택의 설명, 확인된 데이터 범위 표시, 조건 완화 제안</td>
+</tr>
+<tr>
+<td>‘오늘 정기휴무 아님’/‘Not closed today’</td>
+<td>영문은 현재 영업 중으로 읽힐 가능성</td>
+<td>‘정기휴무 기준’ 표시. 특별휴무·영업시간 미검증이면 ‘Open now’ 금지</td>
+</tr>
+<tr>
+<td>주변 장소에 광화문·건청궁 모두 6m 표시</td>
+<td>원천 대표 좌표의 중복 가능성, 이동거리로 오해</td>
+<td>‘직선거리·대표 좌표’ 표시, 입구 좌표/도보 시간은 별도 검증</td>
+</tr>
+<tr>
+<td>로컬 FavoriteButton은 비로그인 시 apex 로그인 이동</td>
+<td>첫 저장에 서비스 맥락 이탈 가능성</td>
+<td>게스트 로컬 저장 후 동기화 제안. 운영 완주를 먼저 확인</td>
+</tr>
+<tr>
+<td>지역 원본 HTML은 제목·소개·행정구역·명소 링크 중심</td>
+<td>지역 고유의 여행 판단 정보가 적음</td>
+<td>일정 길이·여행 목적별 추천과 편집 근거를 추가</td>
+</tr>
+</tbody></table></div>
+<p><strong>관찰된 UI 문제와 전환 저하의 인과관계는 아직 사용자 실험으로 검증되지 않았다.</strong> 카드에 즉시 임의 평점·소요시간·혼잡도를 채워 넣는 방식으로 해결하지 않는다.</p>
+</section>
+<section id="section-4" aria-labelledby="heading-4"><h2 id="heading-4">4. 글로벌 벤치마크 6개</h2>
+<p>대중적 글로벌 서비스와 전문 발견형 서비스를 역할별로 선정했다. 아래 순서는 방문자 수 순위가 아니다. 트래픽/시장점유율은 이번 조사에서 검증하지 않았다. 동일한 서울 목적지 페이지를 우선 비교했다.</p>
+<div class="table-wrap" role="region" aria-label="4장 표 1" tabindex="0"><table>
+<thead>
+<tr>
+<th>서비스·역할</th>
+<th>공식 페이지에서 확인한 구조</th>
+<th>K-관광과의 차이</th>
+<th>가져올 패턴과 비용</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Tripadvisor — 후기 기반 선택</strong></td>
+<td>명소 순위, 평점·리뷰 수, 여행자 의견, 지도, 체험 연결</td>
+<td>K-관광은 공식 정보 중심으로 확인된 여행자 검증 신호가 약함</td>
+<td>초기에는 ‘왜 추천하는지’ 편집 근거부터. 자체 리뷰는 신고·조작 방지 운영 비용 필요</td>
+</tr>
+<tr>
+<td><strong>Google Maps — 장소 저장과 실행</strong></td>
+<td>장소 리스트 생성·저장·공유·팔로우</td>
+<td>단건 찜 이후 동행자와 함께 고르는 경험을 더 키울 여지</td>
+<td>게스트 저장, 이름 붙인 목록, 공유 링크, 지도 앱 인계. 지도 자체 재구현은 불필요</td>
+</tr>
+<tr>
+<td><strong>Lonely Planet — 편집형 여행 안내</strong></td>
+<td>명소 외 방문 시기·교통·무료 활동·동네·당일 여행 가이드, 저자</td>
+<td>현재 지역 페이지는 장소 목록 중심</td>
+<td>지역당 ‘처음 가는 사람의 선택 기준’과 현장 팁. 꾸준한 검수 필요</td>
+</tr>
+<tr>
+<td><strong>Atlas Obscura — 취향 기반 발견</strong></td>
+<td>숨은 장소의 이야기, 테마, 지도, 가고 싶은/다녀온 곳 활동</td>
+<td>현재 넓은 분류와 원천 소개에서 발견의 이유가 약함</td>
+<td>‘서울 오래된 골목’, ‘비 오는 날 박물관’ 같은 선명한 편집 관점</td>
+</tr>
+<tr>
+<td><strong>GetYourGuide — 의도별 활동 선택</strong></td>
+<td>관심사, 가족/커플/휠체어 접근성, 비 오는 날·야간·숨은 명소, 목적지 가이드</td>
+<td>기존 시설 필터를 여행 상황과 연결할 여지</td>
+<td>실제 속성으로 뒷받침한 상황별 진입. 투어 재고·예약 운영은 별도 사업</td>
+</tr>
+<tr>
+<td><strong>Klook — 목적지에서 상품 실행까지</strong></td>
+<td>명소·체험·교통 묶음, 이용 가능일·취소 조건·가격·평점</td>
+<td>현재 상품 검색 링크는 있으나 선택한 장소와 상품 관계 설명이 약함</td>
+<td>검증된 상품만 문맥 연결하고 외부 이동 명시. 가격/재고 동기화 비용 고려</td>
+</tr>
+</tbody></table></div>
+<p>출처: <a href="https://www.tripadvisor.com/Attractions-g294197-Activities-Seoul.html">Tripadvisor 서울</a>, <a href="https://support.google.com/maps/answer/7280933?co=GENIE.Platform%3DDesktop&hl=en">Google Maps 리스트 도움말</a>, <a href="https://www.lonelyplanet.com/destinations/south-korea/seoul/">Lonely Planet 서울</a>, <a href="https://www.atlasobscura.com/things-to-do/seoul-south-korea">Atlas Obscura 서울</a>, <a href="https://www.getyourguide.com/seoul-l197/">GetYourGuide 서울</a>, <a href="https://www.klook.com/destination/c13-seoul/">Klook 서울</a>.</p>
+<p><strong>국내 직접 비교도 필요하다.</strong> <a href="https://korean.visitkorea.or.kr/main/cr_main.do">대한민국 구석구석</a>은 공식 명소, 추천 기사, 여행 정보를 제공한다. 같은 공공데이터를 더 많이 보여주는 것만으로 차별화하기는 어렵다는 판단이다. K-관광의 차이는 ‘조건 비교의 속도’, ‘정보 근거의 명확성’, ‘실제로 쓸 저장·공유 경험’에서 만들어야 한다.</p>
+<h3>벤치마크에서 도출한 제품 가설</h3>
+<div class="table-wrap" role="region" aria-label="4장 표 2" tabindex="0"><table>
+<thead>
+<tr>
+<th>사용자 질문</th>
+<th>현재 주로 제공하는 답</th>
+<th>확장할 답</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>어디에 있나?</td>
+<td>지도·주소·지역</td>
+<td>현재 기반 유지</td>
+</tr>
+<tr>
+<td>나에게 맞나?</td>
+<td>유형·시설 필터·개요</td>
+<td>동행/목적/시간 제약에 맞는 이유와 제외 사유</td>
+</tr>
+<tr>
+<td>오늘 갈 수 있나?</td>
+<td>이용시간·정기휴무·행사 기간</td>
+<td>정보 확인 시각, 예외 휴무, 공식 확인 경로</td>
+</tr>
+<tr>
+<td>함께 어디를 가나?</td>
+<td>주변 장소와 직선거리</td>
+<td>같은 지역에서 함께 고를 2~3개 후보와 이동 수단</td>
+</tr>
+<tr>
+<td>친구에게 어떻게 보여주나?</td>
+<td>상세 URL·개인 찜</td>
+<td>이름 붙인 후보 목록·공유 미리보기·동행자 열람</td>
+</tr>
+</tbody></table></div>
+</section>
+<section id="section-5" aria-labelledby="heading-5"><h2 id="heading-5">5. UI/UX 개선안</h2>
+<h3>A. 홈과 검색 결과: ‘모든 옵션’보다 다음 선택을 명확하게</h3>
+<p>현재 지도 경험을 유지하며 상단을 다음 순서로 재배치한다. 별도 홍보용 홈을 먼저 만들 필요는 없다.</p>
+<pre><code class="language-text">K-관광                    한국어 / English   저장한 곳
+어디로 가볼까요? [지역·관광지 검색________________] [검색]
+[서울 ▾] [무료] [아이와 함께*] [실내*] [필터 · 2]
+서울 · 무료 · 주차 가능             결과 N곳  [정렬 ▾]
+데스크톱: 비교하기 쉬운 카드 목록 | 지도
+모바일:   목록 기본 + [지도 보기] / 지도에서는 결과 시트
+</code></pre>
+<p><code>*</code> 아이 동반/실내는 제안된 새 편집 분류다. 데이터 검증 전에 기능이 있는 것처럼 노출하지 않는다. 지역·분류·시설을 서로 다른 조작 목적에 맞게 묶고, 선택 해제와 전체 초기화는 항상 찾을 수 있게 한다.</p>
+<p><strong>카드 정보 순서:</strong> 사진 → 장소명/동네 → 추천 이유 한 줄 → 확인된 요금/동반/주차 속성 → 저장. 긴 원문은 상세에서 읽게 한다. 확인하지 못한 속성은 생략하거나 ‘정보 확인 필요’로 표시한다. 주소 전체는 상세 또는 복사 액션으로 넘긴다.</p>
+<p><strong>정렬:</strong> 처음에는 관련도·거리 등 검증 가능한 기준만 제공한다. ‘인기’는 노출량 보정·집계 기간·표본 기준을 정한 후 제공한다. 클릭 수를 평점으로 표현하지 않는다. 선택한 지도 범위와 목록 범위를 한 문장으로 표시한다.</p>
+<p><strong>빈 결과:</strong> 실패와 0건을 구분하고, 어떤 조건 때문에 좁아졌는지 보여준다. ‘반려동물 정보가 확인된 곳이 없습니다 → 이 조건 해제’처럼 사용자가 선택해 완화하게 한다. 반경을 몰래 넓히거나 조건을 조용히 무시하지 않는다.</p>
+<p><strong>검색 품질:</strong> <code>경복궁</code>, <code>Gyeongbokgung</code>, <code>궁궐</code>, <code>제주 무료</code>, <code>비 오는 날 서울</code> 등 30개 평가 질의를 만든다. 지원하지 않는 자연어 조건은 해석했다고 가장하지 않고 사용 가능한 필터로 안내한다. 잘못된 지역·동명이인·별칭·오타·0건을 별도로 평가한다.</p>
+<h3>B. 상세: 역사 소개보다 방문 결정을 먼저</h3>
+<pre><code class="language-text">서울 &gt; 종로구 &gt; 경복궁
+사진 · 장소명 · 한 줄 특징                       [저장] [공유]
+방문 전 확인: 요금 | 이용시간 | 휴무 | 주차 | 출처·확인일
+[길찾기] [공식 방문 안내]
+이런 여행에 적합 / 주의할 점 / 주변에서 함께 볼 곳
+소개 더 읽기 → 사진 → 상세 이용 안내 → 날씨/주변/영상
+</code></pre>
+<ul>
+<li>경복궁의 실제 요금·휴무를 이 문서에서 재검증한 것은 아니다. 화면에 있는 값을 요약할 때도 조건·계절·공휴일 예외를 보존한다.</li>
+<li>지금 있는 날씨·영상·상품 링크는 보조 정보로 배치한다. 방문 핵심 정보가 아래로 밀리지 않게 한다.</li>
+<li>데이터의 <strong>원천 수정일, 수집일, 운영자 검수일</strong>을 구분한다. 수집일을 현장 확인일처럼 표시하지 않는다.</li>
+<li>‘정보 수정 제안’을 도입하면 항목·근거 링크·검토 상태를 수집한다. 초기에 무제한 자유게시판을 운영할 필요는 없다.</li>
+<li>공식 사이트로 가는 링크와 상품 예약 링크를 구분한다. 단순 검색 딥링크를 확정 예약 가능 상품처럼 표현하지 않는다.</li>
+</ul>
+<h3>C. 저장·공유: 기존 찜에서 작은 여행 계획으로</h3>
+<p>제안 흐름은 <code>검색 → 후보 3곳 저장 → 목록 이름 설정 → 링크 공유 → 동행자 열람 → 길찾기</code>다. 게스트 저장은 로컬 브라우저 범위임을 알려주고 로그인 시 계정에 합친다. 공유 목록은 사용자가 명시적으로 공유할 때 생성하며, 기본 공개 SEO 페이지로 만들지 않는다.</p>
+<p>첫 버전은 후보 목록과 간단한 메모면 충분하다. 경로 최적화·실시간 협업·AI 일정 자동 생성은 실제 저장/공유 사용을 확인한 다음 결정한다.</p>
+<h3>D. 시각·접근성 원칙</h3>
+<p>사진이 목적지를 설명하고 타이포그래피가 정보 중요도를 드러내도록 한다. 새 브랜드 팔레트를 즉흥적으로 추가하기보다 root <code>DESIGN.md</code>의 k-heritage 관련 토큰과 기존 컴포넌트를 우선 사용한다. 지도 위 텍스트, 사진 위 라벨, 버튼 상태의 명도 대비는 실측한다.</p>
+<p>모바일 검증 계획: 390px·360px·320px, 목록/지도 전환, 필터 시트 열고 닫기, 뒤로 가기 시 검색 조건·스크롤 복원, 키보드 노출, 느린 네트워크, 지도 실패 폴백. 이미지 대체 텍스트는 장식인지 정보 전달인지 구분하고, 지도 없이도 목록과 주소로 탐색 가능하게 한다. 이번 조사에서 모바일 검증을 수행한 것은 아니다.</p>
+</section>
+<section id="section-6" aria-labelledby="heading-6"><h2 id="heading-6">6. 콘텐츠·데이터 확장 전략</h2>
+<h3>단계적으로 넓힐 범위</h3>
+<ol>
+<li><strong>서울·부산·제주 × 2개 상황, 편집 페이지 6개:</strong> 팀이 실제 검수할 수 있는 지역부터. 콘텐츠 예산이 작으면 서울 2개부터 시작한다.</li>
+<li><strong>핵심 상세 30개:</strong> 원문 정제, 방문 요약, 공식 링크, 출처/시각, 사진·언어 품질을 검수한다.</li>
+<li><strong>영문 서울 핵심 10개:</strong> 영문 데이터의 현지명·교통·결제·예약 안내를 검증한다. 성공한 한국어 글을 기계번역해 전량 발행하지 않는다.</li>
+<li><strong>성공한 조건/지역만 확대:</strong> 검색 노출보다 저장·길찾기·수정 제안 등 실제 사용까지 확인한다.</li>
+</ol>
+<h3>초기 콘텐츠 후보 — 검색량 검증 전 가설</h3>
+<div class="table-wrap" role="region" aria-label="6장 표 1" tabindex="0"><table>
+<thead>
+<tr>
+<th>페이지 아이디어</th>
+<th>사용자의 결정</th>
+<th>필요한 고유 정보</th>
+<th>연결</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>서울 무료 실내 여행지</td>
+<td>비/더위에도 예산 내 방문</td>
+<td>실제 무료 범위, 유료 특별전, 휴관, 위치</td>
+<td>서울 지역 ↔ 검수된 상세</td>
+</tr>
+<tr>
+<td>서울 고궁 반나절 후보</td>
+<td>제한된 시간에 어디를 갈지</td>
+<td>선택 기준, 운영 예외, 입구·이동</td>
+<td>고궁 상세·주변 후보</td>
+</tr>
+<tr>
+<td>부산 부모님과 방문할 곳</td>
+<td>이동 부담이 적은지</td>
+<td>경사·계단·주차·휴식 공간</td>
+<td>접근성 정보가 확인된 상세</td>
+</tr>
+<tr>
+<td>부산 비 오는 날 후보</td>
+<td>실내 대안</td>
+<td>실내/야외 구분·입장 정책</td>
+<td>실내 후보 목록</td>
+</tr>
+<tr>
+<td>제주 무료 자연 명소</td>
+<td>요금·주차·걷기 부담</td>
+<td>주차비 별도 여부, 접근로, 날씨 영향</td>
+<td>제주 지역·명소</td>
+</tr>
+<tr>
+<td>제주 반려동물 동반 후보</td>
+<td>실제 허용 조건</td>
+<td>제한 구역·목줄·실내 허용·출처</td>
+<td>동반 조건 상세</td>
+</tr>
+<tr>
+<td>First time in Seoul: palace choices</td>
+<td>궁궐 간 차이와 방문 준비</td>
+<td>검수된 영문 비교·현지명·공식 링크</td>
+<td>영문 상세 10개</td>
+</tr>
+</tbody></table></div>
+<p>‘부모님과’, ‘무료’, ‘접근 가능’ 등은 제목만 바꿔 만드는 분류가 아니다. <strong>선정 기준을 확인할 수 없으면 발행하지 않는다.</strong> Google은 자체 경험·독창성·충분한 도움을 강조하고, 검색 순위 조작을 목적으로 한 대량 콘텐츠 생성을 문제 삼는다. <a href="https://developers.google.com/search/docs/fundamentals/creating-helpful-content">유용한 콘텐츠 지침</a>, <a href="https://developers.google.com/search/docs/essentials/spam-policies">스팸 정책</a>.</p>
+<h3>운영에 필요한 정보</h3>
+<p>장소별 정규 식별자와 언어별 문서를 구분한다. 필드마다 <code>값 / 출처 URL / 원천 갱신일 / 수집일 / 검수일 / 상태(확인·미확인·상충)</code>를 관리하는 설계를 검토한다. 이는 제안이며 현재 스키마를 변경한 것이 아니다.</p>
+<p>국·영문 경복궁 ID는 운영에서 <code>/attractions/1</code>, <code>/en/attractions/21</code>로 다르다. 동일 장소 매칭이 확인된 쌍부터 연결한다. 이름 문자열만으로 자동 통합하면 동명이인·분관을 잘못 합칠 수 있다.</p>
+<p>동적 정보는 신선도 정책을 다르게 둔다: 주소·역사, 요금·휴무, 행사 일정, 날씨·혼잡도. 날씨 갱신 성공이 요금 최신성을 보장하지 않는다. 사진·영상·후기를 늘릴 때는 원천별 재사용 조건과 표시 의무를 확인하고, 경쟁 사이트의 후기·평점을 복사해 자체 데이터처럼 만들지 않는다.</p>
+</section>
+<section id="section-7" aria-labelledby="heading-7"><h2 id="heading-7">7. 구글 검색 노출: 새 SEO 설비보다 현재 상태의 측정</h2>
+<h3>운영 응답 점검 결과</h3>
+<div class="table-wrap" role="region" aria-label="7장 표 1" tabindex="0"><table>
+<thead>
+<tr>
+<th>항목</th>
+<th>직접 확인</th>
+<th>판단</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>HTTPS 주요 문서</td>
+<td>홈·지역·상세 표본 200</td>
+<td>기본 접근 경로 정상</td>
+</tr>
+<tr>
+<td>원본 HTML 본문</td>
+<td>허브·지역·상세와 후반 ID 표본에 H1·본문</td>
+<td>‘React라 색인 불가’ 또는 ‘SSR 전면 교체 필요’ 근거 없음</td>
+</tr>
+<tr>
+<td>title/canonical</td>
+<td>표본마다 대상 URL에 맞는 값</td>
+<td>기존 기반 유지, 대량 품질 검사로 확장</td>
+</tr>
+<tr>
+<td>hreflang</td>
+<td>홈·서울 지역 ko/en/x-default</td>
+<td>상세는 없음. 언어별 ID 매칭 후 정확한 쌍에만 추가</td>
+</tr>
+<tr>
+<td>구조화 데이터</td>
+<td>CollectionPage/ItemList, TouristDestination, TouristAttraction, BreadcrumbList</td>
+<td>문법 존재와 Google 검색 표시 자격은 별도</td>
+</tr>
+<tr>
+<td>행사 상세</td>
+<td><code>/attractions/65811</code>에 Event</td>
+<td>이미 구현됨. 날짜·상태·장소·지원 지역/언어 조건 검증 필요</td>
+</tr>
+<tr>
+<td>없는 상세</td>
+<td><code>/attractions/999999999</code> 404 + noindex</td>
+<td>soft 404라고 진단할 근거 없음</td>
+</tr>
+<tr>
+<td>robots</td>
+<td>일반 봇 허용, <code>/api/</code> 차단, sitemap 선언</td>
+<td>핵심 내용은 HTML에 있으나 JS 추가 정보의 렌더 가능성은 URL 검사 필요</td>
+</tr>
+<tr>
+<td>sitemap</td>
+<td>6개 하위 파일, 총 <strong>62,607 URL 항목</strong></td>
+<td>제출 대상 양이다. 고유 관광지 수·색인 수·유입 수가 아님</td>
+</tr>
+</tbody></table></div>
+<p>사이트맵 세부: 허브/지역 541 + 상세 20,000 + 20,000 + 20,000 + 1,559 + 행사 507. 언어와 유형이 섞여 있으며 중복 제거 수를 측정한 것은 아니다. 사이트맵이 크다는 사실만으로 저품질·패널티를 판단하지 않는다. <a href="https://place.1989v.com/sitemap.xml">운영 사이트맵</a>.</p>
+<h3>1주차: 색인 진단을 재현 가능하게 만들기</h3>
+<ol>
+<li>Search Console에서 <code>https://place.1989v.com/</code> URL-prefix 속성 또는 해당 하위 도메인을 포함하는 DNS 검증 Domain 속성의 소유권/권한을 확인한다. 이미 등록했다면 새로 만들지 않는다.</li>
+<li><code>https://place.1989v.com/sitemap.xml</code> 제출/최근 읽기/처리 오류를 확인한다.</li>
+<li>홈 ko/en, 서울 지역 ko/en, 경복궁 ko/en, 후반 상세, 행사, 의도적 404를 URL 검사한다. <strong>실시간 테스트와 Google에 저장된 색인 상태를 구분</strong>한다.</li>
+<li>Google 선택 canonical, 마지막 크롤링, 렌더링 HTML, robots/리소스 차단, 발견됨/크롤링됨-현재 색인 안 됨을 URL 유형별로 기록한다.</li>
+<li>최근 28일의 페이지·검색어·국가·기기별 노출/클릭을 저장한다. <code>site:</code> 공개 검색은 정밀 색인 수 측정에 쓰지 않는다.</li>
+</ol>
+<p>사이트맵 제출은 발견을 돕는 신호이고 색인 보장이 아니다. 공개 검색 노출에는 비용을 낼 필요가 없으며, 기본 조건 충족도 크롤링·색인·순위를 보장하지 않는다. <a href="https://developers.google.com/search/docs/monitor-debug/search-console-start">Search Console 시작</a>, <a href="https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap">사이트맵 제출</a>, <a href="https://developers.google.com/search/docs/essentials">Search Essentials</a>.</p>
+<h3>페이지 종류별 색인 정책 제안</h3>
+<div class="table-wrap" role="region" aria-label="7장 표 2" tabindex="0"><table>
+<thead>
+<tr>
+<th>페이지</th>
+<th>권장 처리</th>
+<th>이유</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>검수된 장소 상세</td>
+<td>self-canonical·사이트맵·지역 내부 링크</td>
+<td>고유명사와 방문 질문에 답함</td>
+</tr>
+<tr>
+<td>지역 허브</td>
+<td>고유한 소개/추천 이유 보강 후 유지</td>
+<td>단순 목록 이상으로 지역 의도를 충족</td>
+</tr>
+<tr>
+<td>편집된 상황별 가이드</td>
+<td>안정적인 URL, 수동 품질 게이트</td>
+<td>검색 의도에 맞는 독립 콘텐츠</td>
+</tr>
+<tr>
+<td>임의 검색어·지도 좌표·필터 조합</td>
+<td>원칙적으로 색인 확대 대상에서 제외</td>
+<td>조합 폭증·중복·빈 결과 관리</td>
+</tr>
+<tr>
+<td>개인 찜/공유 목록</td>
+<td>기본 비공개 또는 noindex 정책</td>
+<td>사용자가 공개를 선택한 편집 콘텐츠와 분리</td>
+</tr>
+<tr>
+<td>삭제된 장소</td>
+<td>대체 장소가 동일한 경우만 적절한 이동, 그 외 404/410 검토</td>
+<td>모든 삭제를 홈으로 보내지 않음</td>
+</tr>
+<tr>
+<td>일시 API 장애</td>
+<td>정상 콘텐츠 유지/적절한 장애 응답</td>
+<td>일시 실패를 영구 noindex로 바꾸지 않음</td>
+</tr>
+</tbody></table></div>
+<p><code>noindex</code>를 읽히게 하려면 해당 URL의 크롤링을 막지 않아야 한다. robots 차단과 색인 제거는 다르다. canonical도 모든 필터 페이지를 홈으로 보내는 만능 해법이 아니다. 유사하지 않은 페이지를 한 canonical로 뭉치지 않는다. 현재 URL 동작과 GSC 결과를 확인한 뒤 적용한다. <a href="https://developers.google.com/crawling/docs/faceted-navigation">필터 URL 크롤링 관리</a>, <a href="https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics">JavaScript SEO</a>.</p>
+<h3>구조화 데이터·다국어·성능</h3>
+<ul>
+<li><code>TouristAttraction</code> 존재만으로 관광지 전용 리치 결과나 별점을 보장하지 않는다. Google의 지원 검색 기능과 schema.org 의미 표현을 구분한다. Breadcrumb 및 실제 Event를 해당 기준에 맞게 검증한다. 허구 리뷰를 생성하지 않는다. <a href="https://developers.google.com/search/docs/appearance/structured-data/search-gallery">지원 기능 목록</a>, <a href="https://developers.google.com/search/docs/appearance/structured-data/event">Event 지침</a>.</li>
+<li>국문과 영문은 각각 self-canonical을 유지한다. 정확한 번역 쌍에만 양방향 hreflang을 선언하고, 영문 전체를 국문 canonical로 합치지 않는다. <a href="https://developers.google.com/search/docs/specialty/international/localized-versions">언어별 페이지 지침</a>.</li>
+<li>사이트맵 <code>lastmod</code>는 실제 중요한 내용 갱신을 반영한다. 빌드할 때 모든 문서의 날짜만 새로 찍지 않는다. 제목의 연도도 실제 갱신과 맞춘다.</li>
+<li>Core Web Vitals 목표는 실제 방문의 75백분위에서 LCP ≤2.5초, INP ≤200ms, CLS ≤0.1이다. 현재 점수는 측정하지 않았다. 모바일/데스크톱과 페이지 종류를 나눠 측정하고 지도·영상 지연 로드, 이미지 크기, 광고 공간 예약을 진단한다. <a href="https://web.dev/articles/vitals">Web Vitals</a>.</li>
+<li><code>llms.txt</code>나 AI 봇 허용을 구글 순위 개선 작업의 대체물로 삼지 않는다. 우선순위는 사용자에게 보이는 내용, 읽을 수 있는 링크, 정확한 응답과 실제 검색 실적이다.</li>
+</ul>
+<p><strong>프레임워크 결정:</strong> 표본에서 원본 HTML이 이미 제공되므로 Next.js 전면 이전을 우선 과제로 제안하지 않는다. 로컬 프리렌더 상한 설정을 운영 전체 커버리지로 오해하지 않는다. 정적 생성/동적 응답 여부보다 배포된 URL의 실제 결과를 검사한다.</p>
+</section>
+<section id="section-8" aria-labelledby="heading-8"><h2 id="heading-8">8. 홍보·유통 채널: 게시 가능한 곳과 고객이 있는 곳을 구분</h2>
+<div class="table-wrap" role="region" aria-label="8장 표 1" tabindex="0"><table>
+<thead>
+<tr>
+<th>채널</th>
+<th>목적·적합도</th>
+<th>실행 콘텐츠</th>
+<th>규칙/현재 확인 수준</th>
+<th>우선순위</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>GeekNews Show GN</strong></td>
+<td>한국 개발자 초기 사용성 피드백</td>
+<td>만든 이유 + 서울 무료/주차 탐색 예시 + 실제 서비스 링크</td>
+<td>직접 만든 사용 가능한 제품, 제목 형식 준수, 반복 등록·투표 요청 제한</td>
+<td>첫 공개 피드백</td>
+</tr>
+<tr>
+<td><strong>Hacker News Show HN</strong></td>
+<td>영어 사용자·기술 피드백</td>
+<td>직접 사용 가능한 한국 여행 도구와 데이터 설계 이야기</td>
+<td>제작자가 직접 만든 사용 가능한 제품, 가입 장벽 최소화, 투표 요청 금지</td>
+<td>영문 정제 후</td>
+</tr>
+<tr>
+<td><strong>Product Hunt</strong></td>
+<td>글로벌 제품 관심층의 발견</td>
+<td>선명한 영문 가치 제안, 실제 화면, 사용 시나리오</td>
+<td>공식 게시 가이드 확인. 노출/여행객 전환 보장 없음</td>
+<td>반복 사용 확인 후</td>
+</tr>
+<tr>
+<td><strong>r/KoreaTravel</strong></td>
+<td>한국 방문 여행자 질문 이해</td>
+<td>규칙을 지키는 기여, 운영진이 허용한 경우만 소개</td>
+<td>최근 검색 결과에 홍보·설문·시장조사 제한 명시. 현재 규칙 전문은 로딩 제한</td>
+<td>무단 홍보 제외</td>
+</tr>
+<tr>
+<td><strong>국내 여행 카페·지역/반려동물 커뮤니티</strong></td>
+<td>실제 타깃의 문제 검증</td>
+<td>‘무료 장소’보다 주차/동반 조건을 검증한 소규모 목록</td>
+<td>개별 게시판/카페 규칙은 미확인. 운영자 허용 범위 확인 후 선정</td>
+<td>조건부 실험</td>
+</tr>
+<tr>
+<td><strong>숙소·로컬 가이드·관광 콘텐츠 제작자</strong></td>
+<td>방문 의도가 높은 이용자</td>
+<td>숙소 주변 검수된 장소 목록·영문 가이드 공유</td>
+<td>이번 조사에서 개별 제휴처/연락 동의 미확인</td>
+<td>준비 후 소규모 제휴</td>
+</tr>
+<tr>
+<td><strong>자체 블로그·짧은 영상·SNS 계정</strong></td>
+<td>주제별 검색/저장 유입</td>
+<td>한 주제 5~8곳 + 원문 가이드/지도 링크</td>
+<td>플랫폼 계정별 링크/홍보 정책을 게시 전 확인</td>
+<td>콘텐츠와 병행</td>
+</tr>
+</tbody></table></div>
+<p>공식 확인: <a href="https://news.hada.io/show">Show GN 게시판</a>, <a href="https://news.hada.io/blog/show">Show GN 사용 가이드라인</a>, <a href="https://news.ycombinator.com/showhn.html">Show HN 규칙</a>, <a href="https://help.producthunt.com/en/articles/479557-how-to-post-a-product">Product Hunt 게시 안내</a>. Reddit 근거: <a href="https://www.reddit.com/r/koreatravel/about/rules">현재 규칙 경로</a>, <a href="https://www.reddit.com/r/koreatravel/comments/1v3cvw3/removed/">최근 자동 규칙 안내가 노출된 게시물</a>. 오래된 ‘일요일 셀프 홍보 허용’ 글을 현재 허가로 해석하지 않는다.</p>
+<p><strong>우선 추천은 Show GN 1회 + 허용된 타깃 커뮤니티 1곳 + 가이드 콘텐츠 2개다.</strong> 개발자 커뮤니티에서 받은 호응을 관광객 수요 검증으로 합산하지 않는다. 여행 카페/파트너 목록은 실제 규칙을 확인한 뒤 좁힌다. 이번 작업에서는 게시·연락·계정 생성·광고 집행을 하지 않았다.</p>
+<h3>소개글 초안 — 실제 게시 전 기능·규칙 재확인</h3>
+<p><strong>Show GN 제목:</strong> K-관광 - 한국 관광지를 무료입장·주차·동반 조건으로 찾는 지도</p>
+<p>등록 유형에서 Show를 선택하면 <code>Show GN:</code> 접두어가 자동으로 붙는다. 같은 프로젝트의 과거 등록 여부와 재등록 제한을 먼저 확인한다.</p>
+<blockquote>
+<p>여행지를 고를 때 지도, 운영 정보, 주변 장소를 여러 페이지에서 확인하는 일이 번거로워 K-관광을 만들었습니다. 한국관광공사 데이터를 바탕으로 지역별 관광지와 확인된 무료입장·주차·동반 조건을 찾고 주변 장소를 볼 수 있습니다. 정보가 없는 장소는 조건에 맞는다고 추정하지 않습니다. 직접 만든 서비스이며, 검색 결과에서 장소를 고르는 과정이 이해하기 쉬운지 피드백을 받고 싶습니다. <a href="https://place.1989v.com/">https://place.1989v.com/</a></p>
+</blockquote>
+<p><strong>영문 제품 소개:</strong> Find places to visit in Korea, with practical visitor information and a map of nearby options.</p>
+<p>영문 홍보에서 ‘실시간 영업’, ‘검증된 모든 접근성’, ‘완벽한 한국 전체 데이터’처럼 확인하지 못한 약속을 하지 않는다. 조회수보다 소개글을 본 사람이 실제 후보를 저장/공유/길찾기 했는지를 측정한다.</p>
+<h3>4주 유통 실험</h3>
+<div class="table-wrap" role="region" aria-label="8장 표 2" tabindex="0"><table>
+<thead>
+<tr>
+<th>주</th>
+<th>실행</th>
+<th>얻을 신호</th>
+<th>다음 결정</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>국내 사용자 5명에게 여행지 선택 과제 관찰</td>
+<td>막히는 단계, 잘못 이해한 필터</td>
+<td>기본 UX 수정</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Show GN 1회, 가이드 2개 공개 준비</td>
+<td>기술/사용성 의견과 실제 행동</td>
+<td>기술 호응과 여행 수요 분리</td>
+</tr>
+<tr>
+<td>3</td>
+<td>규칙 확인된 타깃 채널 1곳, 주제별 착지 URL</td>
+<td>채널별 유효 세션·저장·길찾기</td>
+<td>잘 맞는 주제 선택</td>
+</tr>
+<tr>
+<td>4</td>
+<td>반응 좋은 주제 후속 가이드, 영문 5명 관찰</td>
+<td>재사용/공유 및 영문 정보 이해</td>
+<td>국내/인바운드 투자 비중 결정</td>
+</tr>
+</tbody></table></div>
+<p>표는 향후 실험 계획이며 이번에 콘텐츠를 외부 공개했다는 뜻이 아니다. 커뮤니티 허가가 없다면 해당 실험은 자체 채널이나 동의한 테스트 참여자로 대체한다.</p>
+</section>
+<section id="section-9" aria-labelledby="heading-9"><h2 id="heading-9">9. 30·60·90일 실행안과 비용 판단</h2>
+<p>1인 개발 + 주당 제한된 콘텐츠 검수 시간을 가정한 순서 제안이다. 상세 일정 추정은 실제 가용 시간 확인 후 조정한다.</p>
+<div class="table-wrap" role="region" aria-label="9장 표 1" tabindex="0"><table>
+<thead>
+<tr>
+<th>기간</th>
+<th>결과물</th>
+<th>의존성</th>
+<th>통과 기준</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>0~14일</strong></td>
+<td>영문 텍스트 정제, 필터 재배치 시안, 상세 요약 시안, GSC 기준선</td>
+<td>배포 소스 확인, 이벤트 정의</td>
+<td>주요 UX 과제 관찰, 대표 URL 검사 기록</td>
+</tr>
+<tr>
+<td><strong>15~30일</strong></td>
+<td>승인된 홈/상세 개선 구현, 핵심 상세 30개 검수, 가이드 2개</td>
+<td>시안 선택, 데이터 확인</td>
+<td>5명 중 4명이 도움 없이 2분 내 조건에 맞는 후보 3곳 선택</td>
+</tr>
+<tr>
+<td><strong>31~60일</strong></td>
+<td>가이드 총 6개, 게스트 저장·공유 목록 실험, 채널 2개 실험</td>
+<td>저장 정책·공유 범위 결정</td>
+<td>채널별 유효 방문, 저장/공유/길찾기 기준선과 비교</td>
+</tr>
+<tr>
+<td><strong>61~90일</strong></td>
+<td>성과 있는 지역/주제 확장, 영문 서울 10개, 제한적 제휴 실험</td>
+<td>국내/인바운드 신호, 운영 여력</td>
+<td>유지/수정/중단 결정을 수치와 인터뷰로 기록</td>
+</tr>
+</tbody></table></div>
+<p>‘5명 중 4명·2분’은 사용성 목표이며 통계적 전환 검정이 아니다. 검색은 반영이 지연될 수 있어 90일 내 상위 노출을 약속하지 않는다.</p>
+<h3>우선순위 백로그</h3>
+<div class="table-wrap" role="region" aria-label="9장 표 2" tabindex="0"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>우선</th>
+<th>작업</th>
+<th>규모 추정</th>
+<th>검증</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>UX-01</td>
+<td>P0</td>
+<td>영문 카드 원문 정제</td>
+<td>S</td>
+<td>엔티티/태그/깨진 문장 표본</td>
+</tr>
+<tr>
+<td>UX-02</td>
+<td>P0</td>
+<td>핵심 필터·지역 조작 압축</td>
+<td>M</td>
+<td>첫 결과 위치, 조건 선택 과제</td>
+</tr>
+<tr>
+<td>UX-03</td>
+<td>P0</td>
+<td>상세 방문 요약·공식 확인 경로</td>
+<td>M</td>
+<td>이용정보 찾기 시간·예외 보존</td>
+</tr>
+<tr>
+<td>DATA-01</td>
+<td>P0</td>
+<td>미확인/불가/예외 상태 규칙</td>
+<td>M</td>
+<td>0건·null·정기휴무 오해 여부</td>
+</tr>
+<tr>
+<td>SEO-01</td>
+<td>P0</td>
+<td>GSC·URL 유형별 진단</td>
+<td>S</td>
+<td>검사 기록과 28일 기준선</td>
+</tr>
+<tr>
+<td>DATA-02</td>
+<td>P1</td>
+<td>핵심 30곳 검수·출처/시각</td>
+<td>지속</td>
+<td>최신성·정확성 표본 감사</td>
+</tr>
+<tr>
+<td>CONTENT-01</td>
+<td>P1</td>
+<td>상황별 가이드 6개</td>
+<td>지속</td>
+<td>선정 이유·고유 내용·내부 링크</td>
+</tr>
+<tr>
+<td>SAVE-01</td>
+<td>P1</td>
+<td>게스트 저장·목록 공유</td>
+<td>M/L</td>
+<td>이탈·동기화·공개 범위·재방문</td>
+</tr>
+<tr>
+<td>SEARCH-01</td>
+<td>P1</td>
+<td>평가 질의 30개·별칭/필터 해석</td>
+<td>M</td>
+<td>의도별 상위 결과·0건율</td>
+</tr>
+<tr>
+<td>SEO-02</td>
+<td>P1</td>
+<td>검증된 언어 쌍 매핑·hreflang</td>
+<td>M/L</td>
+<td>동일 장소·양방향 링크</td>
+</tr>
+<tr>
+<td>GROWTH-01</td>
+<td>P1</td>
+<td>허용 채널별 착지/UTM 실험</td>
+<td>S + 운영</td>
+<td>사람 유입·의미 있는 행동</td>
+</tr>
+<tr>
+<td>CONTENT-02</td>
+<td>P2</td>
+<td>검수된 짧은 코스·제휴 상품</td>
+<td>L + 운영</td>
+<td>저장에서 실행으로 전환</td>
+</tr>
+</tbody></table></div>
+<p>S/M/L은 상대 규모이며 확정 견적이 아니다. 콘텐츠 검수·오류 수정·이미지 관리가 계속 드는 운영비다. 신규 스키마·서비스 경계·인증 변경이 필요하면 기존 ADR과 충돌을 확인하고 별도 설계를 승인받는다.</p>
+<h3>초기에 보류할 투자</h3>
+<ul>
+<li>전 세계 관광지 전량 수집: 언어·운영시간·지도·콘텐츠 관리 범위를 크게 늘린다.</li>
+<li>모든 장소 자체 리뷰: 초기 빈 리뷰 화면과 검수 비용이 먼저 생긴다.</li>
+<li>예약/결제 직접 운영: 고객지원·환불·재고·정산 책임까지 확장된다.</li>
+<li>기본 검색 품질 검증 전 AI 챗봇/일정 자동 생성: 데이터의 오류와 정보 부족을 가릴 수 있다.</li>
+<li>SEO 명목의 대량 번역·지역×필터 자동 페이지: 고유한 가치와 검수 가능성이 선행되어야 한다.</li>
+</ul>
+</section>
+<section id="section-10" aria-labelledby="heading-10"><h2 id="heading-10">10. 성과 측정과 수익화</h2>
+<p><strong>대표 제품 지표 제안:</strong> 유입 세션 중 ‘유효한 관광지 결정 행동’에 도달한 비율. 방문이 실제로 일어났다고 단정하지 않고, 후보 저장·목록 공유·길찾기 클릭을 행동별로 나눠 본다.</p>
+<div class="table-wrap" role="region" aria-label="10장 표 1" tabindex="0"><table>
+<thead>
+<tr>
+<th>지표</th>
+<th>정의</th>
+<th>주의</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>검색→상세</td>
+<td>결과를 받은 검색 중 상세를 연 검색 비율</td>
+<td>상위 노출 순위·페이지 종류로 분해</td>
+</tr>
+<tr>
+<td>상세→실행</td>
+<td>상세 방문 세션 중 저장/공유/길찾기 각 행동 비율</td>
+<td>중복 클릭 제거, 클릭은 실제 방문 아님</td>
+</tr>
+<tr>
+<td>공유 유효성</td>
+<td>공유 링크를 연 별도 세션의 상세/저장 행동</td>
+<td>공유 버튼 클릭과 수신자 사용을 구분</td>
+</tr>
+<tr>
+<td>검색 품질</td>
+<td>의도별 평가 질의의 적합 결과·0건율</td>
+<td>단순 전체 평균으로 지역/언어 격차를 숨기지 않음</td>
+</tr>
+<tr>
+<td>SEO</td>
+<td>비브랜드 노출·클릭, 유효 페이지 색인, 검색어별 CTR</td>
+<td>CTR은 순위·기기·국가·질의 변화와 함께 해석</td>
+</tr>
+<tr>
+<td>콘텐츠 건강</td>
+<td>필수 정보 확인율, 오래된 정보 비율, 수정 처리 시간</td>
+<td>없는 정보를 부정값으로 채우지 않음</td>
+</tr>
+<tr>
+<td>재방문</td>
+<td>저장 이용자의 7일/28일 재방문</td>
+<td>여행 주기가 길므로 DAU만 최적화하지 않음</td>
+</tr>
+</tbody></table></div>
+<p>이벤트 예: <code>search_submitted</code>, <code>filter_applied</code>, <code>result_clicked</code>, <code>save_completed</code>, <code>collection_shared</code>, <code>directions_clicked</code>. 현재 analytics 구현과 이름/중복 방지를 맞춘 후 도입한다. 검색어에는 개인정보가 섞일 수 있으므로 수집 범위·보관 기간을 정하고, 정밀 위치를 필요 이상 남기지 않는다.</p>
+<p>초기 광고는 결정 정보의 가독성·레이아웃 안정성을 먼저 검증한다. 제휴 수익은 단순 외부 링크 존재로 발생하지 않는다. 실제 제휴 계약·추적·공시·상품 적합성이 필요하며 수수료율은 이번 조사에서 확인하지 않았다. 수익 계산은 <code>유효 상세 세션 × 외부 상품 클릭률 × 제휴사 구매전환율 × 확인된 순수수료</code>로 하고, 추정치를 실적으로 제시하지 않는다.</p>
+</section>
+<section id="section-11" aria-labelledby="heading-11"><h2 id="heading-11">11. 실행 전에 남은 결정</h2>
+<ul>
+<li>국내 여행자 중심인지, 방한 외국인 중심인지. 후자라면 영문 정보 정제·교통/결제 안내·언어 쌍 연결이 P0로 올라간다.</li>
+<li>실제 Search Console 권한/현황과 28일 유입 데이터. 미색인 원인을 현재 공개 표본만으로 단정할 수 없다.</li>
+<li>주당 콘텐츠 검수 시간과 처음 집중할 지역. 운영 여력이 30곳을 감당하지 못하면 10곳으로 줄인다.</li>
+<li>현재 배포된 소스 버전/브랜치. 운영과 로컬 차이를 정리한 뒤 구현 범위를 확정한다.</li>
+<li>게스트 저장과 공유 공개 범위, 오류 제보 검토 담당자.</li>
+</ul>
+<p><strong>다음 구현의 작은 범위 제안:</strong> ‘홈 필터 압축 + 경복궁 상세 방문 요약 + 영문 카드 정제’의 시안/명세를 먼저 확정한다. 그다음 지정된 Codex 구현 에이전트로 구현·검증하고, 결과를 본 뒤 지역 가이드와 저장·공유로 넓힌다.</p>
+</section>
+<section id="section-12" aria-labelledby="heading-12"><h2 id="heading-12">12. 코드·자료 위치</h2>
+<p>아래는 조사 당시의 로컬 근거이며 운영과 차이가 있다.</p>
+<ul>
+<li><a href="../../../portal-fe/src/pages/place/PlacePage.tsx">홈 검색 구성</a></li>
+<li><a href="../../../portal-fe/src/pages/place/AttractionPage.tsx">상세 정보와 SEO</a></li>
+<li><a href="../../../portal-fe/src/pages/place/RegionPage.tsx">지역 페이지</a></li>
+<li><a href="../../../portal-fe/src/components/favorite/FavoriteButton.tsx">찜 로그인 동작</a></li>
+<li><a href="../../../portal-fe/scripts/prerender-seo.mjs">SEO 생성</a></li>
+<li><a href="../../../portal-fe/src/seo/copy.mjs">SEO 카피/구조화 데이터</a></li>
+<li><a href="../../../place/CLAUDE.md">Place 데이터 계약</a></li>
+<li><a href="../../../DESIGN.md">디자인 토큰</a></li>
+</ul>
+<p>외부 출처는 각 주장·비교 표 근처에 링크했다. 동적 페이지의 가격·평점·리뷰 수·순위는 변하므로 본 분석의 KPI나 시장 규모 근거로 사용하지 않았다.</p>
+</section></main>
+</div>
+<footer class="footer">2026-10-07 조사 · 의사결정용 제안 · <a href="README.md">전체 원문</a> · 근거 자료와 외부 출처는 해당 주장 가까이에 연결했습니다.</footer>
+<script>
+const printButton = document.getElementById('print');
+printButton.hidden = false;
+printButton.addEventListener('click', () => window.print());
+</script>
+</body>
+</html>

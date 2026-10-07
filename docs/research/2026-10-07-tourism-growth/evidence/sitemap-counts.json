@@ -1,0 +1,74 @@
+[
+  {
+    "sitemap": "https://place.1989v.com/sitemap-places-hub.xml",
+    "count": 541,
+    "first": [
+      "https://place.1989v.com/",
+      "https://place.1989v.com/en"
+    ],
+    "last": [
+      "https://place.1989v.com/en/regions/52790",
+      "https://place.1989v.com/en/regions/52800"
+    ]
+  },
+  {
+    "sitemap": "https://place.1989v.com/sitemap-places-1.xml",
+    "count": 20000,
+    "first": [
+      "https://place.1989v.com/attractions/1",
+      "https://place.1989v.com/attractions/9"
+    ],
+    "last": [
+      "https://place.1989v.com/attractions/20829",
+      "https://place.1989v.com/attractions/20830"
+    ]
+  },
+  {
+    "sitemap": "https://place.1989v.com/sitemap-places-2.xml",
+    "count": 20000,
+    "first": [
+      "https://place.1989v.com/attractions/20831",
+      "https://place.1989v.com/attractions/20838"
+    ],
+    "last": [
+      "https://place.1989v.com/attractions/5259",
+      "https://place.1989v.com/attractions/5374"
+    ]
+  },
+  {
+    "sitemap": "https://place.1989v.com/sitemap-places-3.xml",
+    "count": 20000,
+    "first": [
+      "https://place.1989v.com/attractions/5391",
+      "https://place.1989v.com/attractions/5397"
+    ],
+    "last": [
+      "https://place.1989v.com/en/attractions/44666",
+      "https://place.1989v.com/en/attractions/44668"
+    ]
+  },
+  {
+    "sitemap": "https://place.1989v.com/sitemap-places-4.xml",
+    "count": 1559,
+    "first": [
+      "https://place.1989v.com/en/attractions/44762",
+      "https://place.1989v.com/en/attractions/44927"
+    ],
+    "last": [
+      "https://place.1989v.com/en/attractions/59341",
+      "https://place.1989v.com/en/attractions/59456"
+    ]
+  },
+  {
+    "sitemap": "https://place.1989v.com/sitemap-places-events.xml",
+    "count": 507,
+    "first": [
+      "https://place.1989v.com/en/attractions/62621",
+      "https://place.1989v.com/en/attractions/62622"
+    ],
+    "last": [
+      "https://place.1989v.com/attractions/65810",
+      "https://place.1989v.com/attractions/65811"
+    ]
+  }
+]

@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    
+    <script>
+      (function () {
+        var host = location.hostname;
+        // 개발 중 클릭이 실제 리포트에 섞이면 유입 분석이 흐려진다
+        if (host === "localhost" || host === "127.0.0.1") return;
+        if (host.split(".")[0] === "resume") return;
+        var id = "G-5EE8XW7JHN";
+        var tag = document.createElement("script");
+        tag.async = true;
+        tag.src = "https://www.googletagmanager.com/gtag/js?id=" + id;
+        document.head.appendChild(tag);
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () {
+          window.dataLayer.push(arguments);
+        };
+        window.gtag("js", new Date());
+        window.gtag("config", id);
+      })();
+    </script>
+
+    
+
+    
+    <meta name="google-adsense-account" content="ca-pub-4627924728297793" />
+
+    
+    <meta name="theme-color" content="#0a0a0a" />
+
+    
+    <meta name="color-scheme" content="only light" />
+
+    
+    <script>
+      (function () {
+        var KEY = "kh-theme";
+        function stored() {
+          var hit = document.cookie.split("; ").find(function (c) {
+            return c.indexOf(KEY + "=") === 0;
+          });
+          var v = hit && hit.slice(KEY.length + 1);
+          if (v === "light" || v === "dark") return v;
+          try {
+            v = localStorage.getItem(KEY);
+          } catch (e) {
+            v = null;
+          }
+          return v === "light" || v === "dark" ? v : null;
+        }
+        var root = document.documentElement;
+        var theme;
+        // /tech 만 브랜드 면이 아니다 — dark-trading 팔레트를 전제로 그려진 화면이라 다크 고정.
+        if (location.pathname === "/tech") {
+          theme = "dark";
+        } else {
+          theme =
+            stored() ||
+            (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light");
+          root.setAttribute("data-surface", "heritage");
+        }
+        root.setAttribute("data-theme", theme);
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute("content", theme === "dark" ? "#131313" : "#f9f8f2");
+        var scheme = document.querySelector('meta[name="color-scheme"]');
+        if (scheme) scheme.setAttribute("content", "only " + theme);
+      })();
+    </script>
+
+    
+    <!--seo:prerendered-->
+    <title>한국 관광지 검색 — 지역별 가볼 만한 곳·여행지 지도 | K-관광</title>
+    <meta name="description" content="전국 가볼 만한 곳을 지역·테마·내 주변으로 검색합니다. 한국관광공사 공식 데이터로 주소·지도·사진과 가는 길을 함께 확인하세요." />
+    <link rel="canonical" href="https://place.1989v.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="K-관광" />
+    <meta property="og:title" content="한국 관광지 검색 — 지역별 가볼 만한 곳·여행지 지도 | K-관광" />
+    <meta property="og:description" content="전국 가볼 만한 곳을 지역·테마·내 주변으로 검색합니다. 한국관광공사 공식 데이터로 주소·지도·사진과 가는 길을 함께 확인하세요." />
+    <meta property="og:url" content="https://place.1989v.com/" />
+    <meta property="og:locale" content="ko_KR" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="한국 관광지 검색 — 지역별 가볼 만한 곳·여행지 지도 | K-관광" />
+    <meta name="twitter:description" content="전국 가볼 만한 곳을 지역·테마·내 주변으로 검색합니다. 한국관광공사 공식 데이터로 주소·지도·사진과 가는 길을 함께 확인하세요." />
+    <meta property="og:image" content="https://place.1989v.com/og/place.png" />
+    <meta property="og:image:secure_url" content="https://place.1989v.com/og/place.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="한국 관광지 탐색" />
+    <meta name="twitter:image" content="https://place.1989v.com/og/place.png" />
+    <meta name="twitter:image:alt" content="한국 관광지 탐색" />
+    <link rel="alternate" hreflang="ko" href="https://place.1989v.com/" data-seo-multi />
+    <link rel="alternate" hreflang="en" href="https://place.1989v.com/en" data-seo-multi />
+    <link rel="alternate" hreflang="x-default" href="https://place.1989v.com/en" data-seo-multi />
+    <script type="application/ld+json" data-seo-multi>{"@context":"https://schema.org","@type":"CollectionPage","name":"한국 관광지 검색 — 지역별 가볼 만한 곳·여행지 지도 | K-관광","description":"전국 가볼 만한 곳을 지역·테마·내 주변으로 검색합니다. 한국관광공사 공식 데이터로 주소·지도·사진과 가는 길을 함께 확인하세요.","url":"https://place.1989v.com/","inLanguage":"ko","isPartOf":{"@type":"WebSite","name":"K-관광","url":"https://place.1989v.com"}}</script>
+    <script type="application/ld+json" data-seo-multi>{"@context":"https://schema.org","@type":"ItemList","numberOfItems":30,"itemListElement":[{"@type":"ListItem","position":1,"url":"https://place.1989v.com/attractions/1","name":"경복궁"},{"@type":"ListItem","position":2,"url":"https://place.1989v.com/attractions/9","name":"남산공원"},{"@type":"ListItem","position":3,"url":"https://place.1989v.com/attractions/12","name":"사육신공원"},{"@type":"ListItem","position":4,"url":"https://place.1989v.com/attractions/17","name":"청계산"},{"@type":"ListItem","position":5,"url":"https://place.1989v.com/attractions/32","name":"관악산"},{"@type":"ListItem","position":6,"url":"https://place.1989v.com/attractions/37","name":"서대문독립공원"},{"@type":"ListItem","position":7,"url":"https://place.1989v.com/attractions/39","name":"충무공 이순신 동상"},{"@type":"ListItem","position":8,"url":"https://place.1989v.com/attractions/40","name":"세종대왕 동상"},{"@type":"ListItem","position":9,"url":"https://place.1989v.com/attractions/41","name":"북악산"},{"@type":"ListItem","position":10,"url":"https://place.1989v.com/attractions/42","name":"신당동 떡볶이타운"},{"@type":"ListItem","position":11,"url":"https://place.1989v.com/attractions/43","name":"삼천사"},{"@type":"ListItem","position":12,"url":"https://place.1989v.com/attractions/46","name":"장충동 족발 골목"},{"@type":"ListItem","position":13,"url":"https://place.1989v.com/attractions/49","name":"낙원동 아구찜 거리"},{"@type":"ListItem","position":14,"url":"https://place.1989v.com/attractions/55","name":"양천나눔누리타운"},{"@type":"ListItem","position":15,"url":"https://place.1989v.com/attractions/58","name":"강남 마이스 관광특구"},{"@type":"ListItem","position":16,"url":"https://place.1989v.com/attractions/59","name":"응암동 감자국 거리"},{"@type":"ListItem","position":17,"url":"https://place.1989v.com/attractions/60","name":"백범광장"},{"@type":"ListItem","position":18,"url":"https://place.1989v.com/attractions/64","name":"서울 암사동 유적"},{"@type":"ListItem","position":19,"url":"https://place.1989v.com/attractions/65","name":"세운상가"},{"@type":"ListItem","position":20,"url":"https://place.1989v.com/attractions/66","name":"조계사"},{"@type":"ListItem","position":21,"url":"https://place.1989v.com/attractions/67","name":"여의도한강공원"},{"@type":"ListItem","position":22,"url":"https://place.1989v.com/attractions/68","name":"위라이드 서울전차"},{"@type":"ListItem","position":23,"url":"https://place.1989v.com/attractions/69","name":"서울창포원"},{"@type":"ListItem","position":24,"url":"https://place.1989v.com/attractions/70","name":"계남근린공원"},{"@type":"ListItem","position":25,"url":"https://place.1989v.com/attractions/72","name":"중명전"},{"@type":"ListItem","position":26,"url":"https://place.1989v.com/attractions/73","name":"방화대교"},{"@type":"ListItem","position":27,"url":"https://place.1989v.com/attractions/74","name":"정선옹주 묘역"},{"@type":"ListItem","position":28,"url":"https://place.1989v.com/attractions/77","name":"서울 운현궁"},{"@type":"ListItem","position":29,"url":"https://place.1989v.com/attractions/78","name":"호암산성"},{"@type":"ListItem","position":30,"url":"https://place.1989v.com/attractions/79","name":"여의도샛강생태공원"}]}</script>
+    <script type="module" crossorigin src="/assets/index-TT_WSj2q.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/jsx-runtime-D-oznMWL.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-DcCgrBX5.js">
+    <link rel="modulepreload" crossorigin href="/assets/axios-C70Mh1lV.js">
+    <link rel="modulepreload" crossorigin href="/assets/useQuery-Ck_Sa3Qn.js">
+    <link rel="modulepreload" crossorigin href="/assets/useMutation-ZbKdggdq.js">
+    <link rel="modulepreload" crossorigin href="/assets/purify.es-BtrNsLqV.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-dom-DNNtxExO.js">
+    <link rel="modulepreload" crossorigin href="/assets/ServiceExplorer-BGbMeQYr.js">
+    <link rel="modulepreload" crossorigin href="/assets/auth-Dv6UG-Jl.js">
+    <link rel="modulepreload" crossorigin href="/assets/refresh-SIYgZwXh.js">
+    <link rel="modulepreload" crossorigin href="/assets/gameApi-BXY8hCvE.js">
+    <link rel="modulepreload" crossorigin href="/assets/shopApi-nUb1jSCe.js">
+    <link rel="modulepreload" crossorigin href="/assets/useAuth-DTG2WxeQ.js">
+    <link rel="modulepreload" crossorigin href="/assets/useSeo-BCyPmtRD.js">
+    <link rel="stylesheet" crossorigin href="/assets/ServiceExplorer-D3NAtV-o.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-C-CuT2s7.css">
+  </head>
+  <body>
+    <div id="root"><div style="max-width:1080px;margin:0 auto;padding:32px 20px;color:#dce4f5;font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif"><h1>한국 관광지 탐색</h1><p>전국 가볼 만한 곳을 지역·테마·내 주변으로 검색합니다. 한국관광공사 공식 데이터로 주소·지도·사진과 가는 길을 함께 확인하세요.</p><ul><li><a href="/regions/11">서울특별시</a></li><li><a href="/regions/12">전남광주통합특별시</a></li><li><a href="/regions/26">부산광역시</a></li><li><a href="/regions/27">대구광역시</a></li><li><a href="/regions/28">인천광역시</a></li><li><a href="/regions/30">대전광역시</a></li><li><a href="/regions/31">울산광역시</a></li><li><a href="/regions/36">세종특별자치시</a></li><li><a href="/regions/41">경기도</a></li><li><a href="/regions/43">충청북도</a></li><li><a href="/regions/44">충청남도</a></li><li><a href="/regions/47">경상북도</a></li><li><a href="/regions/48">경상남도</a></li><li><a href="/regions/50">제주특별자치도</a></li><li><a href="/regions/51">강원특별자치도</a></li><li><a href="/regions/52">전북특별자치도</a></li></ul><ul><li><a href="/attractions/1">경복궁</a></li><li><a href="/attractions/9">남산공원</a></li><li><a href="/attractions/12">사육신공원</a></li><li><a href="/attractions/17">청계산</a></li><li><a href="/attractions/32">관악산</a></li><li><a href="/attractions/37">서대문독립공원</a></li><li><a href="/attractions/39">충무공 이순신 동상</a></li><li><a href="/attractions/40">세종대왕 동상</a></li><li><a href="/attractions/41">북악산</a></li><li><a href="/attractions/42">신당동 떡볶이타운</a></li><li><a href="/attractions/43">삼천사</a></li><li><a href="/attractions/46">장충동 족발 골목</a></li><li><a href="/attractions/49">낙원동 아구찜 거리</a></li><li><a href="/attractions/55">양천나눔누리타운</a></li><li><a href="/attractions/58">강남 마이스 관광특구</a></li><li><a href="/attractions/59">응암동 감자국 거리</a></li><li><a href="/attractions/60">백범광장</a></li><li><a href="/attractions/64">서울 암사동 유적</a></li><li><a href="/attractions/65">세운상가</a></li><li><a href="/attractions/66">조계사</a></li><li><a href="/attractions/67">여의도한강공원</a></li><li><a href="/attractions/68">위라이드 서울전차</a></li><li><a href="/attractions/69">서울창포원</a></li><li><a href="/attractions/70">계남근린공원</a></li><li><a href="/attractions/72">중명전</a></li><li><a href="/attractions/73">방화대교</a></li><li><a href="/attractions/74">정선옹주 묘역</a></li><li><a href="/attractions/77">서울 운현궁</a></li><li><a href="/attractions/78">호암산성</a></li><li><a href="/attractions/79">여의도샛강생태공원</a></li><li><a href="/attractions/81">유관순동상</a></li><li><a href="/attractions/82">우이동계곡</a></li><li><a href="/attractions/84">성덕사</a></li><li><a href="/attractions/87">보신각터</a></li><li><a href="/attractions/89">반공순국용사 위령탑</a></li><li><a href="/attractions/92">매헌시민의 숲</a></li><li><a href="/attractions/93">봉화산</a></li><li><a href="/attractions/95">내원사</a></li><li><a href="/attractions/99">인사동</a></li><li><a href="/attractions/101">윌리엄해밀턴쇼 동상</a></li><li><a href="/attractions/103">국회의사당</a></li><li><a href="/attractions/105">경국사</a></li><li><a href="/attractions/108">난지한강공원</a></li><li><a href="/attractions/113">중앙고등학교</a></li><li><a href="/attractions/114">북촌한옥마을</a></li><li><a href="/attractions/116">헌인릉 생태경관보전지역</a></li><li><a href="/attractions/117">한강</a></li><li><a href="/attractions/120">신기한놀이터 떼굴떼굴</a></li><li><a href="/attractions/121">서울 삼각지 대구탕 골목</a></li><li><a href="/attractions/122">당고개순교성지</a></li><li><a href="/attractions/127">파크하비오 워터킹덤&amp;스파</a></li><li><a href="/attractions/129">옥천암</a></li><li><a href="/attractions/2511">서울퓨처랩</a></li><li><a href="/attractions/2565">생명보험교육문화센터</a></li><li><a href="/attractions/2573">을지로 노가리골목</a></li><li><a href="/attractions/2582">키자니아 서울</a></li><li><a href="/attractions/2598">서울 구 러시아공사관</a></li><li><a href="/attractions/2603">망우산</a></li><li><a href="/attractions/2783">코코리색채연구소(연희본점)</a></li><li><a href="/attractions/2784">코코리색채연구소(홍대점)</a></li></ul><footer><nav><a href="https://1989v.com">1989v</a> · <a href="https://game.1989v.com">무료 웹게임</a> · <a href="https://place.1989v.com">한국 관광지 검색</a> · <a href="https://blog.1989v.com">블로그</a> · <a href="https://rank.1989v.com">랭킹 리더보드</a> · <a href="https://deal.1989v.com">혜택 링크 허브</a></nav></footer></div></div>
+  </body>
+</html>
