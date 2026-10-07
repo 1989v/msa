@@ -239,12 +239,13 @@ FE `DESIGN.md` 토큰, `docs/standards/fe-visual-verification.md`.
     - [x] 12.G.3 Verify: `cd place/ingest && python -m pytest -q tests/air_test.py && cd ../.. && ./gradlew :place:feature:test --tests '*AirQuality*' && (cd portal-fe && npx vitest run src/pages/place/__tests__/placeServingPaths.test.tsx)`
     - [x] 12.G.4 배포: content(V30) → place-ingest(수집 먼저) → 좌표 매핑 뒤 portal-fe
     - [x] 12.G.5 운영 확인: 하루 24콜(한도 500) · 측정소 672 · 매핑된 시군구 수 · 표본 상세 값 = 원천 값
-  - [ ] 12.H 고캠핑 (V31 · `place-ingest-gocamping` 매주 수 02:50 · 주 1콜) — Q-P2-KEY 결정 선행(ADR-0104 덧붙임)
-    - [ ] 12.H.1 Write tests: 보강 잡 `pick` 이 `source != TOURAPI` 행을 고르지 않음(회귀 주입: 조건 삭제 → 빨간불) · bulk upsert 자연키 `(source, content_id, lang)` — 같은 번호 다른 원천이 덮이지 않음 · 겹침 판정(300m + 이름) 실측 픽스처 705 · 겹친 곳은 새 행 없음 · 원문 82키 보존
-    - [ ] 12.H.2 구현: 보강 잡 `source` 필터 먼저 배포 → V31(자연키 변경 + `gocamping_site`) · 잡 · 상세 「캠핑장 정보」(허용 키, 예약 URL 미표시) · 지도 숙박 토글에 합류
-    - [ ] 12.H.3 Verify: `cd place/ingest && python -m pytest -q tests/backfill_pick_test.py tests/gocamping_test.py && cd ../.. && ./gradlew :place:feature:test --tests '*AttractionRepositoryAdapter*' --tests '*AttractionDtoRoundTripTest' && ./gradlew :search:app:test --tests '*AttractionPageRendererTest'`
-    - [ ] 12.H.4 배포: place-ingest(`source` 필터) → content(V31, 수집 잡이 없는 시간) → place-ingest(잡) → search-batch → search → portal-fe
+  - [x] 12.H 고캠핑 (V31 · `place-ingest-gocamping` 매주 수 02:50 · 주 1콜) — Q-P2-KEY 결정 선행(ADR-0104 덧붙임)
+    - [x] 12.H.1 Write tests: 보강 잡 `pick` 이 `source != TOURAPI` 행을 고르지 않음(회귀 주입: 조건 삭제 → 빨간불) · bulk upsert 자연키 `(source, content_id, lang)` — 같은 번호 다른 원천이 덮이지 않음 · 겹침 판정(300m + 이름) 실측 픽스처 705 · 겹친 곳은 새 행 없음 · 원문 82키 보존
+    - [x] 12.H.2 구현: 보강 잡 `source` 필터 먼저 배포 → V31(자연키 변경 + `gocamping_site`) · 잡 · 상세 「캠핑장 정보」(허용 키, 예약 URL 미표시) · 지도 숙박 토글에 합류
+    - [x] 12.H.3 Verify: `cd place/ingest && python -m pytest -q tests/backfill_pick_test.py tests/gocamping_test.py && cd ../.. && ./gradlew :place:feature:test --tests '*AttractionRepositoryAdapter*' --tests '*AttractionDtoRoundTripTest' && ./gradlew :search:app:test --tests '*AttractionPageRendererTest'`
+    - [x] 12.H.4 배포: place-ingest(`source` 필터) → content(V31, 수집 잡이 없는 시간) → place-ingest(잡) → search-batch → search → portal-fe
     - [ ] 12.H.5 운영 확인: 새 행 = 3,115 − 겹침 − 좌표 없음 · TourAPI 보강 잡 다음 회차가 GOCAMPING 행을 0건 고름(로그) · 기존 보강 필드 비공백 건수가 줄지 않음(T18 쿼리)
+      - 2026-10-07: V32 운영 적용(uk_attractions_source_content_lang) · 수집 3,113 → 겹침 701 · 새 행 2,402(시군구 2,396) · 좌표 없음 10 · 재색인 67,385 문서 · 「캠핑장 정보」 API·서버 렌더 확인(66240 고캠핑 행 · 21009 겹친 TourAPI 캠핑장). 남은 확인: 다음 보강 잡 회차 로그에서 GOCAMPING 행 0건(T18)
   - [ ] 12.I 두루누비 (V32 · 보류) — Q-P2-DURUNUBI-RANGE 확인 뒤 착수, 그 전에는 「보류(사유: 원천 범위 미확인)」로 남긴다
   - [ ] 12.J 안 함 기록: 관광사진(사용자 결정) · 반려동물(겹침, 설계 §2.10) — 대장에 넣지 않는다. 범위 밖 발견 Q-P2-PET-STALE 은 보고만
 **Acceptance Criteria:** 하위 그룹마다 T20 초록 · 검증 명령 출력 · 운영 확인 수치 기록 · 대장 줄 · 보류·안 함은 사유와 함께 남김
