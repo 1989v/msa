@@ -103,13 +103,13 @@ Total Task Groups: 8
 **Dependencies:** Task Group 2, 3, 4, 5
 **Phase:** frontend
 **Required Skills:** React, TypeScript, vitest
-- [ ] 7.0 Complete frontend
-  - [ ] 7.1 테스트 작성: 공용 `SharePanel` 이 `shortUrl` 을 복사·공유하고 없으면 현재 주소 · 기존 `browserHelp.test.ts`(현재 주소 복사) 그대로 통과 · `privacyRetention.test.ts` 에 새 러너(Place·각 원장 상수) 대조
-  - [ ] 7.2 `SharePanel` 을 공용 컴포넌트로 이동, 블로그·게임·관광지 상세에 배치(`DESIGN.md` 토큰, `docs/design/k-heritage.html` 규칙) — SR-5
-  - [ ] 7.3 FE API 타입에 `shortUrl?` 추가(game·blog·place)
-  - [ ] 7.4 admin-fe 이력서 링크 복사 → `shortUrl`(없으면 기존 주소) — SR-3
-  - [ ] 7.5 `PrivacyPage.tsx` §2 「단축 주소 클릭」 행(이력서 제외) · §6 보존기간 — SR-6
-  - [ ] 7.6 Verify: `cd portal-fe && npx vitest run src/pages/__tests__/privacyRetention.test.ts src/pages/games/__tests__/browserHelp.test.ts src/components/share && npx tsc -b` · `cd admin/frontend && npx tsc -b`
+- [x] 7.0 Complete frontend
+  - [x] 7.1 테스트 작성: 공용 `SharePanel` 이 `shortUrl` 을 복사·공유하고 없으면 현재 주소 · 기존 `browserHelp.test.ts`(현재 주소 복사) 그대로 통과 · `privacyRetention.test.ts` 에 새 러너(Place·각 원장 상수) 대조
+  - [x] 7.2 `SharePanel` 을 공용 컴포넌트로 이동, 블로그·게임·관광지 상세에 배치(`DESIGN.md` 토큰, `docs/design/k-heritage.html` 규칙) — SR-5
+  - [x] 7.3 FE API 타입에 `shortUrl?` 추가(game·blog·place)
+  - [x] 7.4 admin-fe 이력서 링크 복사 → `shortUrl`(없으면 기존 주소) — SR-3
+  - [x] 7.5 `PrivacyPage.tsx` §2 「단축 주소 클릭」 행(이력서 제외) · §6 보존기간 — SR-6
+  - [x] 7.6 Verify: `cd portal-fe && npx vitest run src/pages/__tests__/privacyRetention.test.ts src/pages/games/__tests__/browserHelp.test.ts src/components/share && npx tsc -b` · `cd admin/frontend && npx tsc -b`
 **Acceptance Criteria:**
 - 개인정보처리방침의 숫자와 러너 상수가 테스트로 대조된다.
 - 세 상세에서 공유 패널이 보인다(CDP 측정은 Group 8).

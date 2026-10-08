@@ -7,7 +7,7 @@ import { useReveal } from '../hooks/useReveal';
 import './PrivacyPage.css';
 
 /** 개정일 — 본문을 고치면 반드시 함께 올린다. 방침은 '언제부터의 약속인지'가 내용의 일부다. */
-const EFFECTIVE_DATE = '2026-09-24';
+const EFFECTIVE_DATE = '2026-10-08';
 const CONTACT_EMAIL = '1989v@naver.com';
 
 /**
@@ -92,6 +92,14 @@ export default function PrivacyPage() {
                     <td>혜택 링크 클릭</td>
                     <td>어떤 링크를 언제, 들어온 사이트 주소, 브라우저 종류(예: Chrome)</td>
                     <td>어떤 혜택이 실제로 쓰이는지 파악</td>
+                  </tr>
+                  <tr>
+                    <td>단축 주소 클릭</td>
+                    <td>
+                      어떤 글·게임·관광지를 언제, 들어온 사이트 주소, 브라우저 종류(예: Chrome).
+                      이력서 단축 주소는 언제 열렸는지만
+                    </td>
+                    <td>공유한 주소가 실제로 쓰이는지 파악</td>
                   </tr>
                   <tr>
                     <td>소셜 로그인</td>
@@ -274,6 +282,12 @@ export default function PrivacyPage() {
                   <strong>이력서 열람 기록</strong> — <strong>1년</strong> 보관 후 자동으로
                   삭제합니다. 어떤 공유 링크가 언제 열렸는지만 남고, 열람한 사람을 식별하는
                   정보는 기록하지 않습니다.
+                </li>
+                <li>
+                  <strong>단축 주소 클릭 기록</strong> — 글·게임·관광지 단축 주소는{' '}
+                  <strong>90일</strong>, 이력서 단축 주소는 <strong>1년</strong> 보관 후 매주
+                  도는 정리 작업이 자동으로 삭제합니다. 링크 미리보기를 만드는 봇의 접속은
+                  기록하지 않습니다.
                 </li>
                 <li>
                   <strong>친구 그룹(별칭)</strong> — 게임에서 여럿이 모일 때 쓰는 참가자 명부입니다.

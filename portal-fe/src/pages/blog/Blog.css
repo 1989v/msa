@@ -671,26 +671,9 @@
   color: var(--ko-accent-text);
 }
 
+/* 공유 패널 모양은 components/share 가 갖는다 — 여기는 반응 줄 안의 자리만 */
 .blog-share {
-  display: inline-flex;
-  gap: var(--ko-space-2);
   margin-left: auto;
-}
-
-.blog-share__btn {
-  border: 1px solid var(--ko-border-subtle);
-  background: transparent;
-  color: var(--ko-text-secondary);
-  border-radius: var(--kh-radius, 4px);
-  padding: var(--ko-space-2) var(--ko-space-3);
-  font-size: 0.8rem;
-  cursor: pointer;
-  text-decoration: none;
-}
-
-.blog-share__btn:hover {
-  border-color: var(--ko-border-strong);
-  color: var(--ko-text-primary);
 }
 
 /* ─── 댓글 ─── */
@@ -1031,13 +1014,6 @@
   .blog-share {
     margin-left: 0;
     width: 100%;
-    flex-wrap: wrap;
-  }
-
-  .blog-share__btn {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
   }
 
   .blog-linkbtn {

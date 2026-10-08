@@ -72,7 +72,7 @@
   search 문서 id 와 place 관광지 id 가 같다는 전제를 쓴다.
 - FE 는 코드를 계산하지 않는다.
 - 블로그 `SharePanel` 을 공용 컴포넌트로 옮기고 블로그·게임·관광지 상세가 같이 쓴다.
-  복사·`navigator.share`·외부 공유 링크가 모두 `shortUrl` 을 쓰고, 값이 없으면 현재 페이지 주소로 대신한다.
+  복사·`navigator.share`·외부 공유 링크가 모두 `shortUrl` 을 쓰고, 값이 없으면 그 대상의 canonical 주소로 대신한다(게임 화면 주소에는 방 초대 `?room=…#join` 이 섞일 수 있다).
 - 게임의 「현재 링크 복사」(`copyGameLink`, 카카오 인앱 안내)는 바꾸지 않는다. 방 코드가 든 초대 주소를 그대로 복사해야 한다(`online-versus-lobby.md` §4).
 - 공유 패널은 `DESIGN.md` 토큰만 쓰고 브랜드 면 규칙(`docs/design/k-heritage.html`)을 따른다.
 

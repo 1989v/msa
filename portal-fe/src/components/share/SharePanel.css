@@ -1,0 +1,36 @@
+/* 공유 패널 — 유령 버튼(테두리만) 넷. k-heritage 정경 토큰만 쓴다 (DESIGN.md §12). */
+
+.share-panel {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-2);
+}
+
+.share-panel__btn {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--ko-border-subtle);
+  background: transparent;
+  color: var(--ko-text-secondary);
+  border-radius: var(--kh-radius, 4px);
+  padding: var(--ko-space-2) var(--ko-space-3);
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.share-panel__btn:hover {
+  border-color: var(--ko-border-strong);
+  color: var(--ko-text-primary);
+}
+
+.share-panel__btn:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: 2px;
+}
+
+@media (max-width: 767.98px) {
+  .share-panel__btn {
+    min-height: 44px;
+  }
+}

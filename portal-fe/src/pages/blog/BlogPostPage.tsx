@@ -196,6 +196,7 @@ export default function BlogPostPage() {
           <ReactionBar
             reaction={reaction}
             canonical={canonical}
+            shortUrl={detail.shortUrl}
             title={detail.post.title}
             busy={likeMutation.isPending || rateMutation.isPending}
             onToggleLike={() => likeMutation.mutate()}

@@ -15,3 +15,5 @@
 | 6 | `./gradlew :gateway:test --tests '*ShortLinkRouteSpec' --tests '*GatewayRoutingSpec'` | exit 0 · ShortLinkRouteSpec 5/0 · GatewayRoutingSpec 19/0 (메인 세션) |
 | 6 | 리미터 키 배선 — 한정자 없이 `ipKeyResolver` 생성자 인자만 둔 첫 구현 | ShortLinkRouteSpec 「두 요청 모두 ipKeyResolver 를 거친다」 FAILED(`@Primary` userKeyResolver 가 주입됨) → `@Qualifier` 후 통과. 검사가 실제 결함을 잡음 |
 | 6 | `kubectl kustomize k8s/overlays/oci-arm` | exit 0 · apex 경로 `/api /ws /sse /svc /r /p /g /b → gateway`, `/ → portal-fe` |
+| 7 | `cd portal-fe && npx vitest run src/pages/__tests__/privacyRetention.test.ts src/pages/games/__tests__/browserHelp.test.ts src/components/share src/pages/games/__tests__/GameDetailPage.loop.test.tsx src/pages/blog` · `npx tsc -b`(portal-fe·admin/frontend) | Test Files 11 passed · Tests 77 passed · tsc exit 0 ×2 (메인 세션) |
+| 7 | 회귀 주입: PlaceRetentionRunner 90→30, 방침 이력서 1년→2년, url‖shortUrl 역순, 대신 주소 제거 | 각각 FAILED — 구현자 보고 |

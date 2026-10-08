@@ -16,3 +16,6 @@ SEED=0x5A3C96E1F0, M1=0xC2B2AE3D27, M2=0x165667B19F, xorshift20 3회. 골든: 0�
 
 ### 2026-10-08 — 게이트웨이 리미터 키는 `@Qualifier("ipKeyResolver")` 로 고정
 `KeyResolver` 후보가 둘(ipKeyResolver, @Primary userKeyResolver)이면 생성자 인자 이름보다 @Primary 가 먼저 이긴다. 한정자 없이 `ipKeyResolver` 인자를 두면 조용히 userKeyResolver 가 주입되어 헤더 우회가 열린다. ShortLinkRouteSpec 이 실제 요청으로 이를 잡았다.
+
+### 2026-10-08 — shortUrl 이 없을 때의 대신 주소는 canonical
+스펙은 「현재 페이지 주소」였다. 게임 화면 주소에 방 초대(`?room=…#join`)가 섞일 수 있고 블로그는 원래 canonical 을 공유했으므로 canonical 로 바꿨다. 아무 주소도 넘기지 않으면 컴포넌트가 현재 주소를 쓴다.

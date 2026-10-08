@@ -28,6 +28,8 @@ export interface ResumeShareLink {
   visitCount: number;
   firstVisitedAt: string | null;
   lastVisitedAt: string | null;
+  /** 단축 주소(`https://1989v.com/r/{code}`). 서버 노출 설정이 꺼져 있으면 null 이고, 그때는 `shareUrl(token)` 을 쓴다 */
+  shortUrl: string | null;
 }
 
 export interface ResumeVisit {
@@ -100,6 +102,11 @@ export const RESUME_ORIGIN = 'https://resume.1989v.com';
 
 export function shareUrl(token: string): string {
   return `${RESUME_ORIGIN}/?k=${token}`;
+}
+
+/** 제출처에 건넬 주소 — 단축 주소가 있으면 그것, 없으면 토큰 주소 */
+export function linkUrl(link: ResumeShareLink): string {
+  return link.shortUrl ?? shareUrl(link.token);
 }
 
 // ─── 구조화 영역 (회사 · 프로젝트 · 카테고리 · 기술스택) ─────────────────────

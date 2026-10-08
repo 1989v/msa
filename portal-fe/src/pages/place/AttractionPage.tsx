@@ -39,6 +39,7 @@ import PhotoViewer from './PhotoViewer';
 import { exploreItems, type ExploreKind } from './exploreItems';
 import Footer from '../../components/Footer';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
+import SharePanel from '../../components/share/SharePanel';
 import {
   galleryImages,
   groupByCategory,
@@ -394,6 +395,12 @@ export default function AttractionPage() {
             {titleParts(attraction).secondary && (
               <p className="place-detail-local">{titleParts(attraction).secondary}</p>
             )}
+            <SharePanel
+              shortUrl={attraction.shortUrl}
+              url={attractionUrl(docLang, attraction.id)}
+              title={attraction.title}
+              lang={lang}
+            />
             {attraction.category && (
               <span className="place-chip active">{placeCategoryLabel(attraction.category, lang)}</span>
             )}

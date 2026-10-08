@@ -92,6 +92,8 @@ export interface BlogPostDetail {
   myScore: number | null;
   /** 작성자가 고른 개념 id — 고른 순서 그대로 */
   conceptIds?: string[];
+  /** 공유용 단축 주소. 서버 노출 설정이 꺼져 있으면 null — 공유 패널이 canonical 로 대신한다 */
+  shortUrl?: string | null;
 }
 
 export interface BlogPage<T> {

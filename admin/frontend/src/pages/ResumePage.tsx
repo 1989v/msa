@@ -9,6 +9,7 @@ import {
   getDocument,
   listDocuments,
   listShareLinks,
+  linkUrl,
   listVisits,
   revokeShareLink,
   shareUrl,
@@ -278,10 +279,10 @@ export function ResumePage() {
                     <button
                       type="button"
                       className="font-mono text-xs text-blue-500 hover:underline"
-                      onClick={() => navigator.clipboard.writeText(shareUrl(link.token))}
-                      title="클릭하면 복사됩니다"
+                      onClick={() => navigator.clipboard.writeText(linkUrl(link))}
+                      title={link.shortUrl ? `클릭하면 복사됩니다 (원래 주소 ${shareUrl(link.token)})` : '클릭하면 복사됩니다'}
                     >
-                      {shareUrl(link.token)}
+                      {linkUrl(link)}
                     </button>
                   </td>
                   <td className="py-2 pr-3 font-medium">{link.visitCount}</td>

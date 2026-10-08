@@ -151,6 +151,8 @@ export interface GameDetail extends GameSummary {
   scoreBoards: ScoreBoardDef[];
   releasedAt: string | null;
   contentUpdatedAt: string | null;
+  /** 공유용 단축 주소. 서버 노출 설정이 꺼져 있으면 null — 공유 패널이 canonical 로 대신한다 */
+  shortUrl?: string | null;
 }
 
 export interface GameTag {

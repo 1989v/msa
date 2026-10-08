@@ -20,6 +20,8 @@ const RETENTION_RUNNERS = [
   'code-dictionary/feature/src/main/kotlin/com/kgd/codedictionary/infrastructure/retention/RetentionRunner.kt',
   'game/feature/src/main/kotlin/com/kgd/game/infrastructure/retention/GameRetentionRunner.kt',
   'ads/feature/src/main/kotlin/com/kgd/ads/infrastructure/redis/AdsRedisKeys.kt',
+  'blog/feature/src/main/kotlin/com/kgd/blog/infrastructure/retention/BlogRetentionRunner.kt',
+  'place/feature/src/main/kotlin/com/kgd/place/infrastructure/retention/PlaceRetentionRunner.kt',
 ];
 
 /** 상수 값. 단위는 이름 끝(`_DAYS`·`_HOURS`)이 말한다 — [retentionUnit] 이 방침의 단위 낱말로 바꾼다. */
@@ -39,6 +41,22 @@ function retentionUnit(constName: string): string {
 }
 
 const privacyText = () => readFileSync(resolve(REPO, 'portal-fe/src/pages/PrivacyPage.tsx'), 'utf-8');
+
+/**
+ * 방침 §6 에서 보존기간을 읽는다 — `label` 뒤 가장 가까운 `<strong>N일|N년</strong>` 을 일수로.
+ * 기대값을 테스트에 적지 않고 방침이 말하는 숫자를 그대로 코드 상수와 맞춘다.
+ * §2 표에도 같은 낱말이 나오므로 §6 제목 뒤에서만 찾는다.
+ */
+function retentionDaysFromPolicy(label: string): number {
+  const text = privacyText();
+  const section = text.indexOf('보관과 파기');
+  expect(section, '방침에 §6 보관과 파기가 없다').toBeGreaterThan(0);
+  const at = text.indexOf(label, section);
+  expect(at, `방침에 「${label}」 문구가 없다`).toBeGreaterThan(0);
+  const m = text.slice(at, at + 160).match(/<strong>(\d+)(일|년)<\/strong>/);
+  if (!m) throw new Error(`「${label}」 뒤에 보존기간이 없다`);
+  return m[2] === '년' ? Number(m[1]) * 365 : Number(m[1]);
+}
 
 const friendGroupSection = () => {
   const text = privacyText();
@@ -66,6 +84,23 @@ describe('보존기간 — 방침과 코드가 같은 숫자를 말한다', () =
   it('이력서 열람 기록: 기존 값도 여전히 맞다 — 한 항목만 보는 검사가 아니다', () => {
     expect(retentionFromCode('RESUME_ACCESS_RETENTION_DAYS')).toBe(365);
     expect(privacyText()).toMatch(/이력서 열람 기록[\s\S]{0,140}1년/);
+  });
+
+  it('단축 주소 클릭 원장: 도메인 셋의 상수가 방침의 글·게임·관광지 기간과 같다', () => {
+    const policy = retentionDaysFromPolicy('글·게임·관광지 단축 주소는');
+    for (const name of [
+      'GAME_SHORT_LINK_CLICK_RETENTION_DAYS',
+      'BLOG_SHORT_LINK_CLICK_RETENTION_DAYS',
+      'ATTRACTION_SHORT_LINK_CLICK_RETENTION_DAYS',
+    ]) {
+      expect(retentionDaysFromCode(name), name).toBe(policy);
+    }
+  });
+
+  it('이력서 단축 주소 클릭 원장: 상수가 방침의 기간과 같다', () => {
+    expect(retentionDaysFromCode('RESUME_SHORT_LINK_CLICK_RETENTION_DAYS')).toBe(
+      retentionDaysFromPolicy('이력서 단축 주소는'),
+    );
   });
 });
 

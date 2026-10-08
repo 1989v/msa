@@ -430,8 +430,14 @@ export const searchAttractions = async (query: AttractionQuery): Promise<Attract
   return res.data.data;
 };
 
-export const fetchAttraction = async (id: string): Promise<Attraction> => {
-  const res = await api.get<ApiResponse<Attraction>>(`/api/search/attractions/${id}`);
+/** 상세 응답 — 검색 결과 필드에 공유용 단축 주소를 더한다. 목록 응답에는 없다 */
+export interface AttractionDetail extends Attraction {
+  /** 서버 노출 설정이 꺼져 있으면 null — 공유 패널이 canonical 로 대신한다 */
+  shortUrl?: string | null;
+}
+
+export const fetchAttraction = async (id: string): Promise<AttractionDetail> => {
+  const res = await api.get<ApiResponse<AttractionDetail>>(`/api/search/attractions/${id}`);
   return res.data.data;
 };
 

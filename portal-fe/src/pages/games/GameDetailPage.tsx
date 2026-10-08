@@ -31,6 +31,7 @@ import { shouldEnterFullStage } from './stageOrientation';
 import { enterGameFullscreen } from './browserHelp';
 import GameBrowserHelp from './GameBrowserHelp';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
+import SharePanel from '../../components/share/SharePanel';
 import { useStageFit } from './useStageFit';
 import { fetchGraphData } from '../../api/searchApi';
 import type { GraphNode } from '../../types/graph';
@@ -386,6 +387,8 @@ export default function GameDetailPage() {
             </h1>
             <FavoriteButton type="GAME" targetKey={slug} />
           </div>
+          {/* 공유는 단축 주소를 쓴다. 방 초대 주소(?room=)는 로비의 「현재 링크 복사」 몫이다 */}
+          <SharePanel shortUrl={game.shortUrl} url={canonical} title={displayTitle(game, lang)} lang={lang} />
           {isBeta(game) && (
             <p className="game-detail-beta-note">
               {lang === 'en'

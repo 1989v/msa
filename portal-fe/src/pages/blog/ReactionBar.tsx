@@ -1,9 +1,10 @@
 import type { BlogReaction } from '../../api/blogApi';
-import SharePanel from './SharePanel';
+import SharePanel from '../../components/share/SharePanel';
 
 interface Props {
   reaction: BlogReaction;
   canonical: string;
+  shortUrl?: string | null;
   title: string;
   busy: boolean;
   onToggleLike: () => void;
@@ -19,6 +20,7 @@ interface Props {
 export default function ReactionBar({
   reaction,
   canonical,
+  shortUrl,
   title,
   busy,
   onToggleLike,
@@ -59,7 +61,7 @@ export default function ReactionBar({
         </span>
       </div>
 
-      <SharePanel url={canonical} title={title} />
+      <SharePanel shortUrl={shortUrl} url={canonical} title={title} className="blog-share" />
     </div>
   );
 }
