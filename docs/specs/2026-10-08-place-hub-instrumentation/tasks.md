@@ -15,11 +15,11 @@ Total Task Groups: 6
 **Dependencies:** None
 **Phase:** fe-foundation
 **Required Skills:** TypeScript, vitest
-- [ ] 1.0 Complete FE 타입·트래커
-  - [ ] 1.1 `portal-fe/src/analytics/__tests__/tracker.test.ts` 에 4개 테스트: ① 같은 대상·같은 action·다른 `sectionId` 두 건이 모두 큐에 남는다 ② 같은 섹션은 한 번 ③ `PageItem`(`entityType:'PAGE'`, `sectionId` 없음)이 큐에 들어가고 큐의 이벤트 객체에 `sectionId` 키가 없다(문자열 `'undefined'` 가 키에 박히지 않음 — `pendingForTest()` 로 본다) ④ `// @ts-expect-error — 목록 대상은 sectionId 필수` 로 `track('CLICK', { entityType:'ATTRACTION', entityId:'1', screenType:'PLACE_HUB' }, 'v')` 한 줄(PAGE+sectionId 둘째 줄은 넣지 않는다 — 기준선에서 Unused)
-  - [ ] 1.2 `events.ts`: `SectionId` 에 `MAP_LINK`·`FAVORITE`(주석 「선택 뒤 후속 행동 — 관심 신호가 아니라 인기 집계에서 뺀다. 노출을 보내지 않는다. 서버 `AggregateAttractionPopularityUseCase.POST_SELECTION_SECTIONS` 와 한 몸」)·`MAP_OVERLAY`(주석 「지도 레이어 핀 — 노출 없는 클릭, 인기 집계 포함」); `EventAction` 에 `SESSION_START`; `TrackedItem` 을 `PlacedItem | PageItem` 판별 합집합으로 — `PlacedItem` 은 지금 interface 그대로(이름만), `PageItem` 은 `{ entityType:'PAGE'; entityId; screenType; screenRef?; sectionId?: never; sectionIndex?: never; itemIndex?: never; payload? }`; `TrackedEvent` 는 `TrackedItem & { action: EventAction; viewId: string; occurredAt: number }` 타입 별칭(선례 `src/api/shopApi.ts:110-111`)
-  - [ ] 1.3 `tracker.ts`: `keyOf` 를 `` `${e.viewId}|${e.entityType}|${e.entityId}|${e.sectionId ?? ''}|${e.action}` `` 로, `:20` 주석을 「같은 (viewId, entityType, entityId, sectionId, action) 은 한 번만」으로. `track`·`useImpression`·`TrackedLink` 시그니처 불변
-  - [ ] 1.4 Verify: `cd portal-fe && npx vitest run src/analytics/__tests__/tracker.test.ts && npx tsc -b`
+- [x] 1.0 Complete FE 타입·트래커
+  - [x] 1.1 `portal-fe/src/analytics/__tests__/tracker.test.ts` 에 4개 테스트: ① 같은 대상·같은 action·다른 `sectionId` 두 건이 모두 큐에 남는다 ② 같은 섹션은 한 번 ③ `PageItem`(`entityType:'PAGE'`, `sectionId` 없음)이 큐에 들어가고 큐의 이벤트 객체에 `sectionId` 키가 없다(문자열 `'undefined'` 가 키에 박히지 않음 — `pendingForTest()` 로 본다) ④ `// @ts-expect-error — 목록 대상은 sectionId 필수` 로 `track('CLICK', { entityType:'ATTRACTION', entityId:'1', screenType:'PLACE_HUB' }, 'v')` 한 줄(PAGE+sectionId 둘째 줄은 넣지 않는다 — 기준선에서 Unused)
+  - [x] 1.2 `events.ts`: `SectionId` 에 `MAP_LINK`·`FAVORITE`(주석 「선택 뒤 후속 행동 — 관심 신호가 아니라 인기 집계에서 뺀다. 노출을 보내지 않는다. 서버 `AggregateAttractionPopularityUseCase.POST_SELECTION_SECTIONS` 와 한 몸」)·`MAP_OVERLAY`(주석 「지도 레이어 핀 — 노출 없는 클릭, 인기 집계 포함」); `EventAction` 에 `SESSION_START`; `TrackedItem` 을 `PlacedItem | PageItem` 판별 합집합으로 — `PlacedItem` 은 지금 interface 그대로(이름만), `PageItem` 은 `{ entityType:'PAGE'; entityId; screenType; screenRef?; sectionId?: never; sectionIndex?: never; itemIndex?: never; payload? }`; `TrackedEvent` 는 `TrackedItem & { action: EventAction; viewId: string; occurredAt: number }` 타입 별칭(선례 `src/api/shopApi.ts:110-111`)
+  - [x] 1.3 `tracker.ts`: `keyOf` 를 `` `${e.viewId}|${e.entityType}|${e.entityId}|${e.sectionId ?? ''}|${e.action}` `` 로, `:20` 주석을 「같은 (viewId, entityType, entityId, sectionId, action) 은 한 번만」으로. `track`·`useImpression`·`TrackedLink` 시그니처 불변
+  - [x] 1.4 Verify: `cd portal-fe && npx vitest run src/analytics/__tests__/tracker.test.ts && npx tsc -b`
 **Acceptance Criteria:**
 - tracker 테스트 14건(기존 10 + 4) 통과, `tsc -b` exit 0
 - `git status` 변경 파일이 `events.ts`·`tracker.ts`·`tracker.test.ts` 셋뿐(기존 호출처 수정 0 — `entityType:'PAGE'` 기존 호출처 0건)

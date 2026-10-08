@@ -17,11 +17,14 @@ const ENDPOINT = '/api/v1/events';
 
 let queue: TrackedEvent[] = [];
 let timer: ReturnType<typeof setTimeout> | null = null;
-/** 같은 (viewId, entityId, action) 은 한 번만 — 스크롤로 오가도 노출이 늘면 안 된다. */
+/**
+ * 같은 (viewId, entityType, entityId, sectionId, action) 은 한 번만 — 스크롤로 오가도 노출이 늘면 안 된다.
+ * 같은 관광지라도 카드 선택·지도 열기·찜은 다른 섹션이라 각각 남는다.
+ */
 const seen = new Set<string>();
 
 function keyOf(e: TrackedEvent): string {
-  return `${e.viewId}|${e.entityType}|${e.entityId}|${e.action}`;
+  return `${e.viewId}|${e.entityType}|${e.entityId}|${e.sectionId ?? ''}|${e.action}`;
 }
 
 export function track(action: EventAction, item: TrackedItem, viewId: string): void {

@@ -10,7 +10,7 @@ export type EntityType =
   | 'CONCEPT'
   | 'DEAL_OFFER'
   | 'SERVICE';
-export type EventAction = 'IMPRESSION' | 'CLICK' | 'SEARCH';
+export type EventAction = 'IMPRESSION' | 'CLICK' | 'SEARCH' | 'SESSION_START';
 
 /** 화면 종류 — 화면마다 고유한 상수. 새 화면을 붙이면 여기에 추가한다. */
 export type ScreenType =
@@ -37,9 +37,18 @@ export type SectionId =
   /** 지역 허브 — 그 지역의 이번 달 행사 */
   | 'REGION_EVENTS_THIS_MONTH'
   /** 통합 검색의 타입 묶음. 어느 타입인지는 `entityType`, 묶음 순서는 `sectionIndex` 가 갖는다 */
-  | 'SEARCH_GROUP';
+  | 'SEARCH_GROUP'
+  /**
+   * 선택 뒤 후속 행동 — 관심 신호가 아니라 인기 집계에서 뺀다. 노출을 보내지 않는다.
+   * 서버 `AggregateAttractionPopularityUseCase.POST_SELECTION_SECTIONS` 와 한 몸
+   */
+  | 'MAP_LINK'
+  | 'FAVORITE'
+  /** 지도 레이어 핀 — 노출 없는 클릭, 인기 집계 포함 */
+  | 'MAP_OVERLAY';
 
-export interface TrackedItem {
+/** 화면 안 어느 섹션에 놓인 대상 — 섹션을 빠뜨리면 컴파일이 막는다. */
+export interface PlacedItem {
   entityType: EntityType;
   entityId: string;
   screenType: ScreenType;
@@ -57,8 +66,22 @@ export interface TrackedItem {
   payload?: Record<string, unknown>;
 }
 
-export interface TrackedEvent extends TrackedItem {
+/** 화면 그 자체가 대상 — 세션 시작처럼 섹션이 없다. 섹션 키를 주면 컴파일이 막는다. */
+export interface PageItem {
+  entityType: 'PAGE';
+  entityId: string;
+  screenType: ScreenType;
+  screenRef?: string;
+  sectionId?: never;
+  sectionIndex?: never;
+  itemIndex?: never;
+  payload?: Record<string, unknown>;
+}
+
+export type TrackedItem = PlacedItem | PageItem;
+
+export type TrackedEvent = TrackedItem & {
   action: EventAction;
   viewId: string;
   occurredAt: number;
-}
+};

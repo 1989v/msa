@@ -113,4 +113,32 @@ describe('tracker — 노출·클릭 전송', () => {
     track('IMPRESSION', item('a', 0), 'v1');
     expect(() => flush()).not.toThrow();
   });
+
+  it('같은 대상이라도 섹션이 다르면 각각 남는다 — 카드 선택·지도 열기·찜은 다른 행동이다', () => {
+    track('CLICK', { ...item('a', 0), sectionId: 'ATTRACTION_LIST' }, 'v1');
+    track('CLICK', { ...item('a', 0), sectionId: 'MAP_LINK' }, 'v1');
+    expect(pendingForTest().map((e) => e.sectionId)).toEqual(['ATTRACTION_LIST', 'MAP_LINK']);
+  });
+
+  it('같은 섹션에서 같은 대상·같은 행동은 한 번만', () => {
+    track('CLICK', { ...item('a', 0), sectionId: 'MAP_LINK' }, 'v1');
+    track('CLICK', { ...item('a', 0), sectionId: 'MAP_LINK' }, 'v1');
+    expect(pendingForTest()).toHaveLength(1);
+  });
+
+  it('PAGE 대상은 섹션 없이 들어가고 이벤트에 sectionId 키가 생기지 않는다', () => {
+    track('SESSION_START', {
+      entityType: 'PAGE', entityId: 'place-hub', screenType: 'PLACE_HUB', screenRef: '',
+    }, 'v1');
+    const pending = pendingForTest();
+    expect(pending).toHaveLength(1);
+    expect(pending[0]).toMatchObject({ action: 'SESSION_START', entityType: 'PAGE', entityId: 'place-hub' });
+    expect('sectionId' in pending[0]).toBe(false);
+  });
+
+  it('목록 대상에서 섹션을 빠뜨리면 컴파일이 막는다', () => {
+    // @ts-expect-error — 목록 대상은 sectionId 필수
+    track('CLICK', { entityType: 'ATTRACTION', entityId: '1', screenType: 'PLACE_HUB' }, 'v');
+    expect(pendingForTest()).toHaveLength(1);
+  });
 });
