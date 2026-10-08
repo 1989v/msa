@@ -42,6 +42,11 @@ restDate	ko	UNKNOWN	매주 월요일 (단, 월요일이 공휴일인 경우 그 
 restDate	ko	UNKNOWN	매주 월요일~화요일 / 일요일을 제외한 법정공휴일
 restDate	ko	UNKNOWN	매주 월요일 / 법정공휴일 (토요일·일요일과 겹치는 경우는 휴관)
 restDate	ko	UNKNOWN	
+# 아래 셋은 2026-10-09 운영 상세 API(/api/search/attractions/{id}) 원문 — 77 운현궁 · 4811 서오릉 · 16151 국립고궁박물관.
+# 괄호 안에 여는 말만 있으면 요일을 읽고, 휴무가 옮겨 가는 말이 있거나 매주가 아닌 문장은 UNKNOWN 이다.
+restDate	ko	WEEKLY:MON	매주 월요일 (단, 월요일이 공휴일인 경우 정상 개장)
+restDate	ko	UNKNOWN	매주 월요일(단, 월요일이 공휴일인 경우 개방하며 그 다음 첫 번째 평일에 휴관)
+restDate	ko	UNKNOWN	매월 마지막 월요일 (단, 공휴일일 경우 공휴일이 끝난 다음날) / 1월 1일 / 설·추석 당일
 restDate	en	ALWAYS_OPEN	N/A (Open all year round)
 restDate	en	ALWAYS_OPEN	N/A (open all year round)
 restDate	en	ALWAYS_OPEN	Open all year round

@@ -46,6 +46,16 @@ class AttractionsIndexMappingTest : BehaviorSpec({
         }
     }
 
+    given("관광지 색인 정의의 출처·요금 텍스트 필드") {
+        then("출처·공공누리 유형은 keyword, 요금 텍스트는 표시 전용이라 색인하지 않는 text 다") {
+            listOf("source", "copyrightDivCd").forEach { field ->
+                (field to properties.path(field).path("type").asString()) shouldBe (field to "keyword")
+            }
+            properties.path("feeText").path("type").asString() shouldBe "text"
+            properties.path("feeText").path("index").asBoolean(true) shouldBe false
+        }
+    }
+
     given("관광지 색인 정의의 집중률 필드") {
         then("날짜·값 배열은 표시 전용이라 색인하지 않는 객체다 — 하루 한 번 30개가 바뀌는 값으로 필드 수를 늘리지 않는다") {
             properties.path("congestion").path("type").asString() shouldBe "object"

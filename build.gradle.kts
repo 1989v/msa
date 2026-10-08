@@ -525,7 +525,6 @@ val searchReadOmitted = mapOf(
         "lclsSystm1" to "원천 분류체계 — 필터 축이지 응답 필드가 아니다 (표시 이름은 place category-codes 가 갖는다)",
         "lclsSystm2" to "위와 같음 (중분류)",
         "lclsSystm3" to "위와 같음 (소분류)",
-        "petAcmpyType" to "반려동물 동반 — 테마 필터 축이지 응답 필드가 아니다",
         "setting" to "실내·실외 — 질의 이해가 거는 필터 축이지 응답 필드가 아니다",
         "clickBoost" to "순위 계수 — 키워드 레그 점수 함수가 색인에서 곱하는 값이지 응답 필드가 아니다(원값은 uniqueClickers14d)",
     ),
@@ -546,6 +545,8 @@ val searchReadRequired = mapOf(
         "relatedPlaces",
         // 같은 장소의 다른 등록 — 상세 「복합공간」이 읽는다. 빠지면 표시가 조용히 사라진다
         "samePlace",
+        // 출처·공공누리 유형·요금 평문·반려동물 원문 — 상세 방문 요약·확인 상태·JSON-LD license 가 읽는다
+        "source", "copyrightDivCd", "feeText", "petAcmpyType",
     ),
 )
 

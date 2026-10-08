@@ -402,6 +402,16 @@
         "type": "text",
         "index": false
       },
+      "feeText": {
+        "type": "text",
+        "index": false
+      },
+      "source": {
+        "type": "keyword"
+      },
+      "copyrightDivCd": {
+        "type": "keyword"
+      },
       "parking": {
         "type": "text",
         "index": false

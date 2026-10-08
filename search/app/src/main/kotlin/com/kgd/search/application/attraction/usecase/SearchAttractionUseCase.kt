@@ -109,6 +109,13 @@ interface SearchAttractionUseCase {
          * 갱신 여부를 알릴 방법이 없어 크롤러가 전량을 같은 우선순위로 다시 훑는다.
          */
         val modifiedAt: java.time.LocalDateTime? = null,
+        /** 원천 출처(TOURAPI · GOCAMPING …)·공공누리 유형 — 색인 값 그대로. 없으면 null(추정하지 않는다). */
+        val source: String? = null,
+        val copyrightDivCd: String? = null,
+        /** 요금 평문 — 이미 정규화돼 있어 다시 `sourceText` 하지 않는다. 없으면 화면이 useFee 를 쓴다. */
+        val feeText: String? = null,
+        /** 반려동물 동반 원문 — petPolicy 가 UNKNOWN 일 때 상세가 그대로 보여 준다. */
+        val petAcmpyType: String? = null,
         /**
          * 방문 속성 — 색인 표기 그대로(`ALWAYS_OPEN`·`YES`·`FREE` …). 화면 JSON-LD(`copy.mjs`)가 이 이름으로
          * 읽는다. 서버 렌더가 심은 JSON-LD 를 하이드레이션이 이 값으로 다시 쓰므로, 여기 빠지면 구글이 JS 를

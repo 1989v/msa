@@ -479,8 +479,12 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
             event(103, "2026-09-01", "2026-10-01", 37.50005), // 어제(KST) 끝남 — 가장 가깝지만 후보가 아니다
             event(104, "2026-10-20", "2026-10-03", 37.50003), // S>E — 날짜 없음
             event(105, null, null, 37.50004), // 날짜 없음
-            jongno(201, "VE030100", 37.5), // 행사가 아닌 대조군 — 끝난 행사 규칙의 영향을 받지 않는다
-            jongno(202, "VE030100", 37.501),
+            // 출처·공공누리 유형·요금은 읽기 쪽 왕복용 — 201 은 use_fee, 202 는 반복정보 요금 행에서 요금 텍스트가 나온다
+            jongno(201, "VE030100", 37.5).copy(source = "TOURAPI", copyrightDivCd = "Type1", useFee = "무료"), // 행사가 아닌 대조군 — 끝난 행사 규칙의 영향을 받지 않는다
+            jongno(202, "VE030100", 37.501).copy(
+                source = "GOCAMPING", copyrightDivCd = "Type3",
+                infoRaw = """[{"fldgubun":"1","infoname":"입 장 료","infotext":"&lt;어린이&gt; 무료<br>어른 2,000원","serialnum":"0"}]""",
+            ),
             // 같은 시군구·유형에 날짜가 실려 와도 행사가 아니면 행사 규칙을 적용하지 않는다
             jongno(203, "VE030100", 37.502).copy(eventStartDate = date("2026-01-01"), eventEndDate = date("2026-01-02")),
             dto(301, "ko").copy(contentId = "1965837", contentTypeId = "25", title = "코스301", infoRaw = courseRaw),
@@ -682,6 +686,90 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                     "related 1 (not active 2), extras lookup failures 0"
                 logs.list.map { it.formattedMessage }.single { it.startsWith("Region pass") } shouldContain
                     "3 ended/undated events left out as of 2026-10-02"
+            }
+        }
+    }
+
+    given("재색인이 요금 텍스트와 원천 출처를 실을 때") {
+        // 운영 반복정보 행 모양(detailInfo2) — 요금이 접힌 컬럼(use_fee)이 아니라 여기에만 있는 관광지가 많다
+        fun infoRaw(vararg rows: Pair<String, String>) = tools.jackson.databind.ObjectMapper().writeValueAsString(
+            rows.mapIndexed { i, (name, text) ->
+                mapOf("fldgubun" to "1", "infoname" to name, "infotext" to text, "serialnum" to "$i", "contenttypeid" to "12")
+            },
+        )
+
+        `when`("use_fee 가 비고 반복정보 요금 행이 「무료」면") {
+            then("요금 텍스트가 그 행에서 채워지고, 입장 판정도 같은 값으로 FREE 다 — 원천 두 필드는 그대로 남는다") {
+                val documents = captureDocuments()
+                val raw = infoRaw("화장실" to "있음", "입장료" to "무료")
+                onePage(dto(1, "ko").copy(useFee = null, infoRaw = raw))
+
+                tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+
+                val source = bulkSource(documents.single())
+                source["feeText"] shouldBe "무료"
+                source["attrAdmission"] shouldBe "FREE"
+                source["attributeParserVersion"] shouldBe AttractionAttributeParser.VERSION
+                source.keys shouldNotContain "useFee"
+                source["infoRaw"] shouldBe raw
+            }
+        }
+
+        `when`("반복정보 요금 행에 금액이 있으면") {
+            then("요금 텍스트에 금액이 실리고 입장 판정은 PAID 다") {
+                val documents = captureDocuments()
+                onePage(dto(1, "ko").copy(infoRaw = infoRaw("관람료" to "어른 3,000원<br>어린이 1,000원")))
+
+                tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+
+                val source = bulkSource(documents.single())
+                source["feeText"] shouldBe "어른 3,000원\n어린이 1,000원"
+                source["attrAdmission"] shouldBe "PAID"
+            }
+        }
+
+        `when`("코스의 infoRaw 가 JSON 이 아니면") {
+            then("요금 텍스트는 use_fee 로 채워지고, 코스 구성은 지금처럼 비고 경고가 남는다") {
+                val documents = captureDocuments()
+                onePage(
+                    dto(1, "ko").copy(contentTypeId = "25", useFee = "성인 1,000원", infoRaw = "{not json"),
+                    dto(2, "ko").copy(infoRaw = "{not json"),
+                )
+                val logs = ListAppender<ILoggingEvent>().also { appender ->
+                    appender.start()
+                    (LoggerFactory.getLogger(AttractionApiReindexTasklet::class.java) as Logger).addAppender(appender)
+                }
+
+                tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+
+                val course = bulkSource(documents.single { it.id == "1" })
+                course["feeText"] shouldBe "성인 1,000원"
+                course["attrAdmission"] shouldBe "PAID"
+                course.keys shouldNotContain "courseStops"
+                logs.list.map { it.formattedMessage }.single { it.startsWith("코스 구성 해석 실패 (id=1)") } shouldContain "JSON 이 아니다"
+                // use_fee 도 읽히는 요금 행도 없으면 필드가 없다 — 빈 문자열로 싣지 않는다
+                bulkSource(documents.single { it.id == "2" }).keys shouldNotContain "feeText"
+                // 코스가 아닌 문서는 코스 경고를 남기지 않는다
+                logs.list.none { it.formattedMessage.startsWith("코스 구성 해석 실패 (id=2)") } shouldBe true
+            }
+        }
+
+        `when`("place 가 출처와 공공누리 유형을 주면") {
+            then("bulk 문서에 같은 값이 실리고, 없는 문서는 필드가 없다") {
+                val documents = captureDocuments()
+                onePage(
+                    dto(1, "ko").copy(source = "GOCAMPING", copyrightDivCd = "Type3"),
+                    dto(2, "ko"),
+                )
+
+                tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+
+                val given = bulkSource(documents.single { it.id == "1" })
+                given["source"] shouldBe "GOCAMPING"
+                given["copyrightDivCd"] shouldBe "Type3"
+                val missing = bulkSource(documents.single { it.id == "2" })
+                missing.keys shouldNotContain "source"
+                missing.keys shouldNotContain "copyrightDivCd"
             }
         }
     }

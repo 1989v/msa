@@ -290,6 +290,18 @@ class SearchAttractionServiceTest : BehaviorSpec({
                 service.findById("1")!!.overview shouldBe "K-movie &lt;PARASITE&gt; - 촬영지"
             }
         }
+        `when`("출처·공공누리 유형·요금 텍스트·반려동물 원문이 색인된 문서면") {
+            then("네 값을 결과에 그대로 싣는다 — 요금 텍스트는 이미 평문이라 다시 정규화하지 않는다") {
+                every { searchPort.findById("1") } returns document().copy(
+                    source = "TOURAPI", copyrightDivCd = "Type1", feeText = "<어린이> 무료", petAcmpyType = "전구역 동반가능",
+                )
+                val r = service.findById("1")!!
+                r.source shouldBe "TOURAPI"
+                r.copyrightDivCd shouldBe "Type1"
+                r.feeText shouldBe "<어린이> 무료"
+                r.petAcmpyType shouldBe "전구역 동반가능"
+            }
+        }
         // 화면 JSON-LD 가 이 필드로 영업 요일·무료 여부를 만든다 — 빠지면 하이드레이션이 서버 렌더의 값을 지운다
         `when`("속성·지역이 색인된 문서면") {
             then("색인 표기 그대로의 속성과 지역 안 위치를 싣는다") {

@@ -68,6 +68,15 @@ data class AttractionDocument(
      */
     val popularityScore: Double = AttractionPopularity.score(imageUrl = imageUrl, overview = overview, tel = tel),
     val modifiedAt: LocalDateTime? = null,
+    /** 원천 출처(TOURAPI · GOCAMPING …). 없으면 null — TourAPI 로 추정하지 않는다. */
+    val source: String? = null,
+    /** 공공누리 유형(Type1 · Type3 …) — 원천 값 그대로. */
+    val copyrightDivCd: String? = null,
+    /**
+     * 요금 평문 ([AttractionFee.text]) — use_fee 우선, 비면 반복정보 요금 행. 원천 [useFee]·[infoRaw] 에서 파생하고 원천은 그대로 둔다.
+     * 이미 정규화된 평문이라 다시 `sourceText` 하지 않는다. 없거나 옛 색인 문서면 null.
+     */
+    val feeText: String? = null,
     /**
      * 원문에서 뽑은 방문 속성 ([AttractionAttributeParser]). 재색인이 계산해 싣는다.
      * null 은 이 필드가 생기기 전에 색인된 문서다 — 「모두 UNKNOWN」과 다르다.

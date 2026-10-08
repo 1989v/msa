@@ -84,8 +84,13 @@ data class AttractionIndexDocument(
     val embeddingHash: String? = null,
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     val modifiedAt: LocalDateTime? = null,
+    /** 원천 출처(TOURAPI · GOCAMPING …)와 공공누리 유형 — place 값 그대로. */
+    val source: String? = null,
+    val copyrightDivCd: String? = null,
+    /** 요금 평문 — 원천 useFee·infoRaw 에서 파생([com.kgd.search.domain.attraction.model.AttractionFee]). 표시 전용(mapping: index=false). */
+    val feeText: String? = null,
     /*
-     * 방문 속성 — 원문(restDate·parking·useFee·petAcmpyType·introRaw)에서 뽑은 파생 값이고 원문은 위에 그대로 있다.
+     * 방문 속성 — 원문(restDate·parking·feeText·petAcmpyType·introRaw)에서 뽑은 파생 값이고 원문은 위에 그대로 있다.
      * 값을 모르면 UNKNOWN 을 **싣는다**. 비워 두면 「정보 없음」과 「아직 계산 안 함」이 구분되지 않는다.
      */
     /** ALWAYS_OPEN · WEEKLY · NO_WEEKLY · UNKNOWN ([com.kgd.search.domain.attraction.model.ClosureState]). */
@@ -233,6 +238,9 @@ data class AttractionIndexDocument(
                 embeddingModel = embedding?.modelRef,
                 embeddingHash = embedding?.textHash,
                 modifiedAt = doc.modifiedAt,
+                source = doc.source,
+                copyrightDivCd = doc.copyrightDivCd,
+                feeText = doc.feeText,
                 closureState = AttractionAttributeCodes.closureState(attributes.regularClosure).name,
                 closedWeekdays = AttractionAttributeCodes.closedWeekdays(attributes.regularClosure),
                 attrParking = attributes.parking.name,

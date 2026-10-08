@@ -71,6 +71,9 @@ class PlaceApiClient(
         val infoRaw: String? = null,
         val googlePlaceId: String? = null,
         val sourceModifiedAt: LocalDateTime? = null,
+        /** 원천 출처(TOURAPI · GOCAMPING …)와 공공누리 유형(Type1 · Type3 …) — place 값 그대로. 없으면 추정하지 않고 null. */
+        val source: String? = null,
+        val copyrightDivCd: String? = null,
         /** 행사 원천 시작일·종료일(유형 15·85) — place 컬럼 값 그대로. 유효 기간 정규화는 재색인이 한다. */
         val eventStartDate: LocalDate? = null,
         val eventEndDate: LocalDate? = null,
@@ -211,6 +214,8 @@ class PlaceApiClient(
                 infoRaw = a["infoRaw"] as? String,
                 googlePlaceId = a["googlePlaceId"] as? String,
                 sourceModifiedAt = (a["sourceModifiedAt"] as? String)?.let { LocalDateTime.parse(it) },
+                source = a["source"] as? String,
+                copyrightDivCd = a["copyrightDivCd"] as? String,
                 eventStartDate = (a["eventStartDate"] as? String)?.let { LocalDate.parse(it) },
                 eventEndDate = (a["eventEndDate"] as? String)?.let { LocalDate.parse(it) },
                 listRaw = a["listRaw"] as? String,

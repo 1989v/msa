@@ -8,34 +8,34 @@ Total Task Groups: 6. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
 
 ### Task Group 1: 요금 규칙 + 파서 v3 (SR-2.2 · SR-2.3 · SR-2.4)
 **Dependencies:** None · **Phase:** search:domain · **Required Skills:** Kotlin, Kotest BehaviorSpec
-- [ ] 1.1 테스트 먼저
+- [x] 1.1 테스트 먼저
   - 새 `search/domain/src/test/kotlin/com/kgd/search/domain/attraction/model/AttractionFeeTest.kt` — SR-5.1 `AttractionFee.text` 11사례를 given/then 개별 케이스로(픽스처 표 아님): useFee 있음 · 「무료」+반복정보 금액 → 「무료」 · 공백뿐 → 반복정보 · 요금 행 둘 serialnum 순 「 / 」 · 「입장 료」 일치 · 「주차요금」 제외 · `Map` 단일 행 · 수 아닌 serialnum → 원천 위치 · `info` null+useFee 없음 → null · `&lt;어린이&gt; 무료` → 「<어린이> 무료」(정규화 한 번) · 둘 다 없음 → null
   - `AttractionAttributeParserTest.kt` 증보: 77 → MON, 4811 → UNKNOWN(U1), 16151 → UNKNOWN, 「매주 화요일(공휴일 정상 개장)」 → TUE, 닫히지 않은 괄호 → UNKNOWN, tsv:41·79 기대값 유지, `feeText` 「<어린이> 무료」 → 입장 UNKNOWN, 반복정보만 「무료」 → FREE · 금액 → PAID(`AttractionFee.text(null, info)` 결과를 `feeText` 로)
   - 헬퍼(`AttractionAttributeParserTest.kt:159-173`)의 `useFee` 인자를 `feeText` 로. tsv `useFee` 행은 `parse(feeText = AttractionFee.text(row.raw, null))`. 기존 19행 기대값 유지 — 바뀌는 행은 원문·이유를 테스트 주석에 적고 기대값을 고친다
   - `raw-fixtures.tsv` 새 행 추가 + `fixtures.size` 단언을 새 행 수로
-- [ ] 1.2 `search/domain/.../domain/attraction/model/AttractionFee.kt` — `object AttractionFee { fun text(useFee: String?, info: Any?): String? }`. JSON 을 풀지 않는다(`CourseStops.kt:18` 선례). 이름 3종(「입장료」「관람료」「이용요금」, 공백 제거 비교), serialnum 수 정렬 + 원천 위치 폴백(`placeView.ts:324` 와 같은 규칙), `AttractionSeoText.sourceText` 한 번 → 빈 것 버림 → 「 / 」. 결과는 정규화된 평문이라는 KDoc
-- [ ] 1.3 파서 v3
+- [x] 1.2 `search/domain/.../domain/attraction/model/AttractionFee.kt` — `object AttractionFee { fun text(useFee: String?, info: Any?): String? }`. JSON 을 풀지 않는다(`CourseStops.kt:18` 선례). 이름 3종(「입장료」「관람료」「이용요금」, 공백 제거 비교), serialnum 수 정렬 + 원천 위치 폴백(`placeView.ts:324` 와 같은 규칙), `AttractionSeoText.sourceText` 한 번 → 빈 것 버림 → 「 / 」. 결과는 정규화된 평문이라는 KDoc
+- [x] 1.3 파서 v3
   - `AttractionAttributeSource.useFee` → `feeText` 로 **교체**(필드 추가 아님), `admission()` 은 `source.feeText` 그대로 — `:176` 의 `stripTags` 호출 삭제
   - 휴무: 쉼표·빗금 분할(`:65`) 전에 괄호 단서 처리 — 이동 말(「다음날」「다음 평일」「그 다음」「전날」「대신」) → UNKNOWN, 여는 말만 → 괄호 떼고 요일 읽기, 미닫힘 → UNKNOWN, 매주가 아닌 문장 → UNKNOWN, 영문 괄호는 지금 동작 유지
   - KDoc(`:6-8`) 「요금은 place `use_fee` + 반복정보 요금 행 폴백, 규칙은 `AttractionFee` 한 곳」, `VERSION` 2 → 3
-- [ ] 1.4 Verify: `./gradlew :search:domain:test --tests '*AttractionFeeTest' --tests '*AttractionAttributeParserTest' --rerun`
+- [x] 1.4 Verify: `./gradlew :search:domain:test --tests '*AttractionFeeTest' --tests '*AttractionAttributeParserTest' --rerun`
 
 ### Task Group 2: 색인 필드 전달 + 읽기 경로 (SR-2.2 태스클릿 · SR-4.1)
 **Dependencies:** TG1 · **Phase:** search:batch · search:app · portal-fe 타입 · **Required Skills:** Kotlin, Spring Batch, OpenSearch 매핑, TS
-- [ ] 2.1 테스트 먼저
+- [x] 2.1 테스트 먼저
   - `search/batch/src/test/kotlin/com/kgd/search/client/PlaceApiClientTest.kt`: `source`·`copyrightDivCd` 역직렬화(손 매핑 `fetchPageAfter` 경유)
   - `search/batch/src/test/kotlin/com/kgd/search/job/AttractionApiReindexTaskletTest.kt`: `useFee=null`+`infoRaw` 무료 행 → bulk `attrAdmission=FREE`·`feeText` · 금액 행 → PAID · `infoRaw` 깨진 JSON → `feeText` 는 useFee 기준, 코스 경고 동작 그대로 · `source`·`copyrightDivCd` 단 dto → bulk 같은 값 · `attributeParserVersion` 단언은 `VERSION` 참조
   - `search/batch/src/test/kotlin/com/kgd/search/infrastructure/indexing/AttractionsIndexMappingTest.kt`: `source`·`copyrightDivCd` keyword, `feeText` text `index: false`
   - `search/app/src/test/kotlin/com/kgd/search/application/attraction/service/SearchAttractionServiceTest.kt`: API 결과에 `source`·`copyrightDivCd`·`feeText`·`petAcmpyType` 네 필드
   - `search/app/src/test/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchDocumentTest.kt`: 네 필드 `toDomain()` 왕복
   - `AttractionReindexCaptureTest`: 캡처(`reindex-capture.json`, 배치 테스트가 다시 씀)에 세 필드가 실리고 읽기 문서까지 남는지
-- [ ] 2.2 batch: `PlaceApiClient.AttractionDto` 필드 + `fetchPageAfter` 손 매핑(`PlaceApiClient.kt:32-33, 177-218` — 데이터 클래스에만 넣으면 null 색인)
-- [ ] 2.3 batch 태스클릿: `infoRaw` 를 `introReader.readValue(raw, Any::class.java)` 로 한 번 풀기(빈 값·실패 → null), `AttractionFee.text(attraction.useFee, info)` 한 번 계산 → 파서 `feeText` 와 문서 `feeText` 에 같은 값(`:221-229`, 문서 조립 `:267-322`). `courseStopsOf` 경로는 그대로, 원천 `useFee`·`infoRaw` 는 그대로 적재
-- [ ] 2.4 문서·매핑: search:domain `AttractionDocument`, batch `AttractionIndexDocument`(필드·변환), `attractions-index.json` 세 필드
-- [ ] 2.5 읽기 경로: app `AttractionSearchDocument`(세 필드 + `petAcmpyType`, 변환), `SearchAttractionUseCase` 결과, `SearchAttractionService` 매핑(`:240`)
-- [ ] 2.6 루트 `build.gradle.kts`: `searchReadRequired`(`:538`)에 `source`·`copyrightDivCd`·`feeText`·`petAcmpyType`, `searchReadOmitted` 의 `petAcmpyType`(`:528`) 삭제
-- [ ] 2.7 FE 타입: `portal-fe/src/api/placeApi.ts` `Attraction` 에 `source`·`copyrightDivCd`·`feeText`·`modifiedAt`·`petAcmpyType`(모두 optional·nullable)
-- [ ] 2.8 Verify:
+- [x] 2.2 batch: `PlaceApiClient.AttractionDto` 필드 + `fetchPageAfter` 손 매핑(`PlaceApiClient.kt:32-33, 177-218` — 데이터 클래스에만 넣으면 null 색인)
+- [x] 2.3 batch 태스클릿: `infoRaw` 를 `introReader.readValue(raw, Any::class.java)` 로 한 번 풀기(빈 값·실패 → null), `AttractionFee.text(attraction.useFee, info)` 한 번 계산 → 파서 `feeText` 와 문서 `feeText` 에 같은 값(`:221-229`, 문서 조립 `:267-322`). `courseStopsOf` 경로는 그대로, 원천 `useFee`·`infoRaw` 는 그대로 적재
+- [x] 2.4 문서·매핑: search:domain `AttractionDocument`, batch `AttractionIndexDocument`(필드·변환), `attractions-index.json` 세 필드
+- [x] 2.5 읽기 경로: app `AttractionSearchDocument`(세 필드 + `petAcmpyType`, 변환), `SearchAttractionUseCase` 결과, `SearchAttractionService` 매핑(`:240`)
+- [x] 2.6 루트 `build.gradle.kts`: `searchReadRequired`(`:538`)에 `source`·`copyrightDivCd`·`feeText`·`petAcmpyType`, `searchReadOmitted` 의 `petAcmpyType`(`:528`) 삭제
+- [x] 2.7 FE 타입: `portal-fe/src/api/placeApi.ts` `Attraction` 에 `source`·`copyrightDivCd`·`feeText`·`modifiedAt`·`petAcmpyType`(모두 optional·nullable)
+- [x] 2.8 Verify:
   - `./gradlew :search:batch:test --tests '*PlaceApiClientTest' --tests '*AttractionApiReindexTaskletTest' --tests '*AttractionsIndexMappingTest' --rerun`
   - `./gradlew :search:app:test --tests '*SearchAttractionServiceTest' --tests '*AttractionSearchDocumentTest' --tests '*AttractionReindexCaptureTest' --rerun`
   - `./gradlew verifySearchIndexContract`

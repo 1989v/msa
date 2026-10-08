@@ -42,6 +42,8 @@ data class AttractionSearchDocument(
     val category: String? = null,
     /** 원천 관광 유형 — 상세 지역 문구 「{시군구} {유형} N곳 중 …」 이 쓴다. 없으면 화면이 문구를 짐작하지 않는다. */
     val contentTypeId: String? = null,
+    /** 반려동물 동반 원문 — 상세 반려동물 칸이 petPolicy UNKNOWN 일 때 그대로 보여 준다. */
+    val petAcmpyType: String? = null,
     val imageUrl: String? = null,
     /** 재색인 전 옛 인덱스 문서에는 없다 — null 이면 FE 가 imageUrl 을 쓴다. */
     val thumbnailUrl: String? = null,
@@ -65,6 +67,11 @@ data class AttractionSearchDocument(
     val popularityScore: Double = 1.0,
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     val modifiedAt: LocalDateTime? = null,
+    /** 원천 출처·공공누리 유형 — 상세 확인 상태·출처 줄·JSON-LD license 가 읽는다. 옛 색인 문서에는 없다. */
+    val source: String? = null,
+    val copyrightDivCd: String? = null,
+    /** 요금 평문(재색인 파생). 옛 색인 문서에는 없다 — 그때 화면은 useFee 를 쓴다. */
+    val feeText: String? = null,
     /*
      * 방문 속성·지역 안 위치 — 재색인 전 옛 인덱스 문서에는 없다. 그때는 도메인 값이 null 로 남아
      * 「모두 UNKNOWN」과 구별된다. 표기는 [AttractionAttributeCodes] 가 정한다.
@@ -180,6 +187,7 @@ data class AttractionSearchDocument(
         ldongSignguCd = ldongSignguCd,
         category = category,
         contentTypeId = contentTypeId,
+        petAcmpyType = petAcmpyType,
         imageUrl = imageUrl,
         thumbnailUrl = thumbnailUrl,
         tel = tel,
@@ -199,6 +207,9 @@ data class AttractionSearchDocument(
         googlePlaceId = googlePlaceId,
         popularityScore = popularityScore,
         modifiedAt = modifiedAt,
+        source = source,
+        copyrightDivCd = copyrightDivCd,
+        feeText = feeText,
         attributes = attributes(),
         region = region(),
         similarElsewhere = similarElsewhere?.map { SimilarPlace(it.id, it.title, it.sidoName, it.eventEndEffective) },

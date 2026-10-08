@@ -38,6 +38,21 @@ class AttractionSearchDocumentTest : BehaviorSpec({
         }
     }
 
+    given("색인 문서에 출처·공공누리 유형·요금 텍스트·반려동물 원문이 있을 때") {
+        `when`("도메인으로 바꾸면") {
+            val doc = mapper.readValue<AttractionSearchDocument>(
+                """{$base,"source":"GOCAMPING","copyrightDivCd":"Type3","feeText":"<어린이> 무료","petAcmpyType":"일부구역 동반가능"}""",
+            ).toDomain()
+
+            then("네 값이 그대로 살아 있다 — 상세 확인 상태·license·요금 칸·반려동물 칸이 읽는다") {
+                doc.source shouldBe "GOCAMPING"
+                doc.copyrightDivCd shouldBe "Type3"
+                doc.feeText shouldBe "<어린이> 무료"
+                doc.petAcmpyType shouldBe "일부구역 동반가능"
+            }
+        }
+    }
+
     given("재색인이 속성·지역 필드를 실은 문서를 읽을 때") {
         val source = """{$base,
             "closureState":"WEEKLY","closedWeekdays":["MON","TUE"],
@@ -87,6 +102,9 @@ class AttractionSearchDocumentTest : BehaviorSpec({
                 doc.attributes.shouldBeNull()
                 doc.region.shouldBeNull()
                 doc.similarElsewhere.shouldBeNull()
+                doc.source.shouldBeNull()
+                doc.copyrightDivCd.shouldBeNull()
+                doc.feeText.shouldBeNull()
             }
         }
     }

@@ -4,6 +4,7 @@ import com.kgd.search.domain.attraction.model.AttractionAttributeParser
 import com.kgd.search.domain.attraction.model.AttractionAttributeSource
 import com.kgd.search.domain.attraction.model.AttractionClickSignal
 import com.kgd.search.domain.attraction.model.AttractionDocument
+import com.kgd.search.domain.attraction.model.AttractionFee
 import com.kgd.search.domain.attraction.model.AttractionKey
 import com.kgd.search.domain.attraction.model.AttractionRegion
 import com.kgd.search.domain.attraction.model.BarrierFreeInfo
@@ -218,11 +219,13 @@ class AttractionApiReindexTasklet(
                     if (embedding != null) withVector++
                     val intro = readIntro(attraction.introRaw)
                     if (intro == null) unreadableIntro++
+                    // 요금 텍스트는 한 번만 계산해 입장 판정과 문서에 같은 값을 넘긴다 — 둘이 다르면 표시와 필터가 갈린다
+                    val feeText = AttractionFee.text(attraction.useFee, readInfo(attraction.infoRaw))
                     val attributes = AttractionAttributeParser.parse(
                         AttractionAttributeSource(
                             restDate = attraction.restDate,
                             parking = attraction.parking,
-                            useFee = attraction.useFee,
+                            feeText = feeText,
                             petAcmpyType = attraction.petAcmpyType,
                             intro = intro.orEmpty(),
                         ),
@@ -307,6 +310,9 @@ class AttractionApiReindexTasklet(
                             camping = extra?.camping,
                             googlePlaceId = attraction.googlePlaceId,
                             modifiedAt = attraction.sourceModifiedAt,
+                            source = attraction.source,
+                            copyrightDivCd = attraction.copyrightDivCd,
+                            feeText = feeText,
                             attributes = attributes,
                             region = region,
                             similarElsewhere = similarElsewhere,
@@ -476,6 +482,10 @@ class AttractionApiReindexTasklet(
         categoryName = placement.categoryCount?.let { attraction.lclsSystm3?.let { categoryNames[attraction.lang]?.get(it) } },
         sameCategoryNearby = placement.nearest,
     )
+
+    /** infoRaw(반복정보 원문 JSON) → 푼 값. 비었거나 JSON 이 아니면 null — 요금은 use_fee 만으로 정한다. */
+    private fun readInfo(raw: String?): Any? =
+        raw?.takeIf { it.isNotBlank() }?.let { runCatching { introReader.readValue(it, Any::class.java) }.getOrNull() }
 
     /**
      * introRaw(TourAPI 소개 원문 JSON) → 키·값. 신용카드·유모차 대여 키만 쓴다.

@@ -4,13 +4,15 @@ import java.time.DayOfWeek
 
 /**
  * 파서 입력. place 가 유형별 키를 이미 한 자리로 접어 둔 컬럼을 그대로 받는다.
- * [intro] 는 introRaw 를 펼친 것이고 신용카드·유모차 대여 키에만 쓴다 — 요금·주차·휴무를
+ * [intro] 는 introRaw 를 펼친 것이고 신용카드·유모차 대여 키에만 쓴다 — 주차·휴무를
  * 여기서 다시 찾으면 place 의 접기 규칙과 두 벌이 된다.
+ * 요금은 place `use_fee` + 반복정보 요금 행 폴백이고, 규칙은 [AttractionFee] 한 곳이다 —
+ * [feeText] 는 그 결과(화면에 나가는 값과 같은 평문)다.
  */
 data class AttractionAttributeSource(
     val restDate: String?,
     val parking: String?,
-    val useFee: String?,
+    val feeText: String?,
     val petAcmpyType: String?,
     val intro: Map<String, String?> = emptyMap(),
 )
@@ -23,7 +25,7 @@ data class AttractionAttributeSource(
  */
 object AttractionAttributeParser {
 
-    const val VERSION = 2
+    const val VERSION = 3
 
     fun parse(source: AttractionAttributeSource): AttractionAttributes = AttractionAttributes(
         regularClosure = regularClosure(source.restDate),
@@ -31,7 +33,7 @@ object AttractionAttributeParser {
         petPolicy = petPolicy(source.petAcmpyType),
         creditCard = check(firstValue(source.intro, CREDIT_CARD_KEYS)),
         strollerRental = check(firstValue(source.intro, STROLLER_KEYS)),
-        freeAdmission = admission(source.useFee),
+        freeAdmission = admission(source.feeText),
     )
 
     // ── 정기휴무 ──────────────────────────────────────────────
@@ -57,9 +59,11 @@ object AttractionAttributeParser {
     )
 
     private fun regularClosure(raw: String?): RegularClosure {
-        val main = mainText(raw) ?: return RegularClosure.Unknown
+        val text = mainText(raw) ?: return RegularClosure.Unknown
         // 「N/A (Open all year round)」「Open 24/7」은 빗금을 품고 있어 쪼개기 전에 통째로 본다
-        if (KO_ALWAYS_OPEN.matches(main) || EN_ALWAYS_OPEN.matches(main)) return RegularClosure.AlwaysOpen
+        if (KO_ALWAYS_OPEN.matches(text) || EN_ALWAYS_OPEN.matches(text)) return RegularClosure.AlwaysOpen
+        // 괄호 안 「단, …」의 쉼표가 문장을 가르지 않도록 쪼개기 전에 괄호 단서를 본다
+        val main = withoutKoreanOpeningNotes(text) ?: return RegularClosure.Unknown
 
         val days = mutableSetOf<DayOfWeek>()
         for (segment in main.split(',', '/', '\n').map { it.trim() }.filter { it.isNotEmpty() }) {
@@ -80,6 +84,34 @@ object AttractionAttributeParser {
     private fun mainText(raw: String?): String? {
         val text = stripTags(raw ?: return null).substringBefore('※').substringBefore('*')
         return text.trim().lowercase().takeIf { it.isNotEmpty() }
+    }
+
+    private val PAREN = Regex("""\(([^()]*)\)""")
+    private val HANGUL = Regex("""[가-힣]""")
+
+    // 휴무가 다른 날로 옮겨 가는 말 — 요일이 정해지지 않는다
+    private val KO_MOVED_CLOSURE = Regex("""다음\s*날|다음\s*평일|그\s*다음|전\s*날|대신""")
+
+    // 쉬는 날에 문을 연다는 말 — 요일은 그대로다. 단서는 쉬는 날 원문에 그대로 보인다
+    private val KO_OPENING = Regex("""개장|개방|개관|정상\s*운영""")
+
+    /**
+     * 국문 괄호 단서 처리. 휴무가 옮겨 가는 말이 있거나 괄호가 닫히지 않으면 null(UNKNOWN),
+     * 여는 말만 있으면 괄호를 뗀다. 그 밖의 괄호(국문 아님 포함)는 그대로 두어 지금 규칙이 읽는다.
+     */
+    private fun withoutKoreanOpeningNotes(text: String): String? {
+        val notes = PAREN.findAll(text).map { it.groupValues[1] }.filter { HANGUL.containsMatchIn(it) }.toList()
+        if (notes.any { KO_MOVED_CLOSURE.containsMatchIn(it) }) return null
+        val rest = PAREN.replace(text, "")
+        if ('(' in rest || ')' in rest) {
+            // 닫히지 않은 괄호 — 국문 단서면 범위를 알 수 없다. 영문은 지금 동작을 유지한다
+            if (HANGUL.containsMatchIn(rest.substringAfter('(', ""))) return null
+            return text
+        }
+        return PAREN.replace(text) { m ->
+            val note = m.groupValues[1]
+            if (HANGUL.containsMatchIn(note) && KO_OPENING.containsMatchIn(note)) "" else m.value
+        }
     }
 
     private fun weekdays(segment: String): Set<DayOfWeek>? {
@@ -170,10 +202,12 @@ object AttractionAttributeParser {
     /**
      * 금액이 없는 무료만 FREE. 「어른 3,000원 … ※ 무료: 6세 이하」처럼 감면 대상만 무료인 원문이
      * 흔해서, 무료로 시작하지 않으면 금액이 이긴다. 무료로 시작하는데 금액도 있으면(층별 유료 등) 모른다.
-     * 관광지(12)·레포츠(28)는 접힌 요금 컬럼이 비어 여기로 오기 전에 UNKNOWN 이 된다.
+     * 관광지(12)는 접힌 요금 컬럼이 비면 반복정보 요금 행이 [AttractionFee] 에서 채운다.
+     * 레포츠(28)의 introRaw `usefeeleports` 는 읽지 않는다.
      */
-    private fun admission(raw: String?): Admission {
-        val text = stripTags(raw ?: return Admission.UNKNOWN).trim().lowercase()
+    private fun admission(feeText: String?): Admission {
+        // feeText 는 이미 평문이다 — 태그를 다시 지우면 디코드된 「<어린이> 무료」가 「무료」로 줄어 FREE 가 된다
+        val text = (feeText ?: return Admission.UNKNOWN).trim().lowercase()
         val startsFree = STARTS_FREE.containsMatchIn(text)
         val hasAmount = AMOUNT.containsMatchIn(text)
         return when {

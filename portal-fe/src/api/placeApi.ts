@@ -122,6 +122,16 @@ export interface Attraction {
   samePlace?: Array<{ id: string; contentTypeId?: string | null }> | null;
   /** 「캠핑장 정보」 — 고캠핑 원문 중 화면에 내는 키만 담은 JSON 객체 문자열(place 가 고른다). 캠핑장이 아니면 없다 */
   camping?: string | null;
+  /** 원천 출처(TOURAPI · GOCAMPING …) — 없으면 「출처: 정보 없음」. TourAPI 로 추정하지 않는다. */
+  source?: string | null;
+  /** 공공누리 유형(Type1 · Type3 …) — 원천 값 그대로. */
+  copyrightDivCd?: string | null;
+  /** 요금 평문(색인 파생) — 이미 정규화돼 있어 sourceText 를 다시 걸지 않는다. 없으면 useFee 를 쓴다. */
+  feeText?: string | null;
+  /** 원천 최종 수정일(`yyyy-MM-ddTHH:mm:ss`). 없으면 「원천 갱신일: 정보 없음」. */
+  modifiedAt?: string | null;
+  /** 반려동물 동반 원문 — petPolicy 가 UNKNOWN 일 때 그대로 보여 준다. */
+  petAcmpyType?: string | null;
 }
 
 /** 함께 간 곳 한 건 — `rank` 는 원천 순위, `category` 는 원천 소분류 이름 그대로. */

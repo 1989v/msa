@@ -8,6 +8,7 @@ import com.kgd.search.application.attraction.service.SearchAttractionService
 import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.application.queryvector.usecase.ResolveQueryVectorUseCase
 import com.kgd.search.domain.attraction.model.AttractionDocument
+import com.kgd.search.domain.attraction.model.AttractionFee
 import com.kgd.search.domain.attraction.model.AttractionKey
 import com.kgd.search.domain.attraction.model.BarrierFreeInfo
 import com.kgd.search.domain.attraction.model.CongestionDay
@@ -175,6 +176,30 @@ class AttractionReindexCaptureTest : BehaviorSpec({
             }
         }
 
+        `when`("출처·공공누리 유형·요금 텍스트를 보면") {
+            // 출처 두 값은 쓰기 쪽 bulk 문서(캡처 원문)의 값과, 요금 텍스트는 캡처의 원천 두 필드를 규칙에 다시 넣은 값과 견준다
+            val written = ObjectMapper().readTree(
+                AttractionReindexCaptureTest::class.java.getResource("/attraction/reindex-capture.json")!!.readText(),
+            ).path("documents").associate { it.path("id").asString() to it }
+            fun writtenText(id: String, field: String) = written.getValue(id).path(field).takeIf { it.isString }?.asString()
+            fun expectedFee(id: String) = documents.getValue(id).let { doc ->
+                AttractionFee.text(doc.useFee, doc.infoRaw?.let { runCatching { ObjectMapper().readValue(it, Any::class.java) }.getOrNull() })
+            }
+
+            then("읽기 문서까지 값이 남는다 — 없는 문서는 null 이다") {
+                documents.keys.forEach { id ->
+                    val doc = documents.getValue(id)
+                    (id to doc.source) shouldBe (id to writtenText(id, "source"))
+                    (id to doc.copyrightDivCd) shouldBe (id to writtenText(id, "copyrightDivCd"))
+                    (id to doc.feeText) shouldBe (id to expectedFee(id))
+                }
+                // 대조군: 값이 실린 문서가 있어야 위 비교가 무언가를 잰다 — use_fee 경로와 반복정보 경로 둘 다
+                documents.values.count { it.source != null } shouldBe 2
+                documents.getValue("201").feeText shouldBe "무료"
+                documents.getValue("202").feeText shouldBe "<어린이> 무료\n어른 2,000원"
+            }
+        }
+
         `when`("단건 조회 결과로 내보내면") {
             val port = mockk<AttractionSearchPort>()
             documents.forEach { (id, doc) -> every { port.findById(id) } returns doc }
@@ -213,6 +238,16 @@ class AttractionReindexCaptureTest : BehaviorSpec({
                     (id to result.wellnessTheme) shouldBe (id to capture.sourceExtras[id]?.wellnessThemeCode)
                 }
                 service.findById("202")!!.wellnessThemeName shouldBe "온천 / 사우나 / 스파"
+            }
+
+            then("출처·공공누리 유형·요금 텍스트·반려동물 원문이 상세 결과까지 남는다") {
+                documents.keys.forEach { id ->
+                    val doc = documents.getValue(id)
+                    val result = service.findById(id)!!
+                    (id to listOf(result.source, result.copyrightDivCd, result.feeText, result.petAcmpyType)) shouldBe
+                        (id to listOf(doc.source, doc.copyrightDivCd, doc.feeText, doc.petAcmpyType))
+                }
+                service.findById("202")!!.copyrightDivCd shouldBe "Type3"
             }
 
             then("같은 장소의 다른 등록이 상세 결과까지 남는다") {
