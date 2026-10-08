@@ -1,0 +1,11 @@
+questions:
+  - id: Q1
+    stage: post-impl
+    status: open
+    question: 속성 칩 정밀도 게이트(원 스펙 2026-09-29 T7, 정밀도 95% 미만 속성은 열지 않음)가 보류된 채 칩이 열려 있다 — 사람 라벨 측정을 언제 할지.
+    answer: 이번 범위 밖. 사용자 검수(S2-7)와 함께.
+  - id: Q2
+    stage: post-impl
+    status: open
+    question: 명절 당일을 실제 휴무로 판정할 공휴일 달력을 둘지(지금은 문구로만 명절 제외를 밝힌다).
+    answer: 후속.

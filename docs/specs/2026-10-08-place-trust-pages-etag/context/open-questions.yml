@@ -1,0 +1,6 @@
+questions:
+  - id: Q1
+    stage: post-impl
+    status: open
+    question: Cloudflare 가 origin ETag 를 그대로 넘기는지(압축 시 약화·제거) — 레포 기록 없음, 배포 뒤 라이브 1회로 확정.
+    answer: SR-4.4 에서 origin 직접 vs 공개 주소를 비교해 기록.
