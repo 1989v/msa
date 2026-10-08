@@ -213,4 +213,32 @@ class RecommendationEventConsumerTest : BehaviorSpec({
             }
         }
     }
+    given("상품 축이지만 추천 신호로 매핑하지 않는 action (검색·세션, 그리고 앞으로 늘 값)") {
+        val mapped = setOf(EventAction.IMPRESSION, EventAction.CLICK, EventAction.ADD_TO_CART, EventAction.ORDER_COMPLETE)
+        val others = EventAction.entries.filterNot { it in mapped }
+        `when`("productId 가 있는 상품 이벤트로 handle 호출") {
+            val writer6 = mockk<ClickHouseEventWriter>(relaxed = true)
+            val consumer6 = RecommendationEventConsumer(writer6)
+            others.forEach { action ->
+                consumer6.handle(
+                    AnalyticsEvent(
+                        eventId = "evt-6-$action",
+                        entityType = EntityType.PRODUCT,
+                        entityId = "6006",
+                        action = action,
+                        userId = 100L,
+                        visitorId = "v-6",
+                        sessionId = "s-6",
+                        timestamp = Instant.now(),
+                        experimentAssignments = null,
+                        payload = mapOf("productId" to 6006),
+                    ),
+                )
+            }
+            then("예외 없이 무시하고 insert 하지 않는다") {
+                others.isNotEmpty() shouldBe true
+                verify(exactly = 0) { writer6.insertBatch(any()) }
+            }
+        }
+    }
 })

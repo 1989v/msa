@@ -2,12 +2,15 @@ package com.kgd.analytics.presentation.event
 
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.KotlinModule
+import com.kgd.analytics.presentation.event.dto.CollectEventItem
 import com.kgd.analytics.presentation.event.dto.CollectEventsRequest
 import com.kgd.common.analytics.EntityType
 import com.kgd.common.analytics.EventAction
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.maps.shouldContainExactly
 import io.kotest.matchers.shouldBe
+import java.time.Duration
+import java.time.Instant
 
 /**
  * 화면이 보내는 본문을 **그대로** 읽어 본다 — 계측은 실패해도 화면이 안 깨지도록 설계돼 있어,
@@ -67,6 +70,32 @@ class CollectEventItemTest : BehaviorSpec({
                 mapper.readValue(json, CollectEventsRequest::class.java)
                     .events.first().toEvent("visitor", "session", null)
                     .eventId shouldBe "v1:PAGE:place-hub::SESSION_START"
+            }
+        }
+    }
+    Given("occurredAt — 화면이 준 발생 시각") {
+        val now = Instant.parse("2026-10-08T03:00:00Z")
+        fun item(occurredAt: Instant) = CollectEventItem(
+            entityType = EntityType.PAGE, entityId = "place-hub", action = EventAction.SESSION_START,
+            occurredAt = occurredAt.toEpochMilli(),
+        )
+
+        When("허용 범위 안이면 (조금 전·조금 뒤)") {
+            Then("그대로 쓴다 — 이탈 직전에 모아 보내므로 서버 시각보다 이르다") {
+                val earlier = now.minus(Duration.ofHours(23))
+                item(earlier).toEvent("visitor", "session", null, now).timestamp shouldBe earlier
+                val skewed = now.plus(Duration.ofMinutes(4))
+                item(skewed).toEvent("visitor", "session", null, now).timestamp shouldBe skewed
+            }
+        }
+        When("미래로 5분을 넘으면") {
+            Then("서버 시각으로 바꾼다") {
+                item(now.plus(Duration.ofMinutes(6))).toEvent("visitor", "session", null, now).timestamp shouldBe now
+            }
+        }
+        When("과거로 1일을 넘으면") {
+            Then("서버 시각으로 바꾼다 — 보존기간(TTL)을 앞당겨 원장을 우회하거나 지난 집계를 바꾸지 못하게") {
+                item(now.minus(Duration.ofDays(1)).minusSeconds(1)).toEvent("visitor", "session", null, now).timestamp shouldBe now
             }
         }
     }

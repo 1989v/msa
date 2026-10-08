@@ -8,6 +8,7 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
+import java.time.Duration
 import java.time.Instant
 import java.util.UUID
 
@@ -61,7 +62,7 @@ data class CollectEventItem(
      * 있다. 서버에서 UUID 를 새로 만들면 재전송이 전부 다른 행이 되어 CTR 분모가 부푼다.
      * 섹션이 키에 들어가는 이유: 같은 관광지의 카드 선택·지도 열기·찜은 섹션이 달라 다른 행이다.
      */
-    fun toEvent(visitorId: String, sessionId: String, userId: Long?): AnalyticsEvent {
+    fun toEvent(visitorId: String, sessionId: String, userId: Long?, now: Instant = Instant.now()): AnalyticsEvent {
         val view = viewId.orEmpty()
         val eventId = if (view.isBlank()) UUID.randomUUID().toString()
         else "$view:${entityType!!.name}:$entityId:${sectionId.orEmpty()}:${action!!.name}"
@@ -83,10 +84,25 @@ data class CollectEventItem(
             userId = userId,
             visitorId = visitorId,
             sessionId = sessionId,
-            timestamp = occurredAt?.let(Instant::ofEpochMilli) ?: Instant.now(),
+            timestamp = occurredAt?.let(Instant::ofEpochMilli)?.takeIf { it.isPlausibleAt(now) } ?: now,
             experimentAssignments = null,
             payload = payload.orEmpty().filterValues { it != null }.mapValues { it.value!! },
         )
+    }
+
+    /**
+     * 화면이 준 시각을 그대로 믿을 수 있는 범위. 밖이면 서버 시각으로 바꾼다 — 먼 과거로 적으면 원장 보존기간(TTL)을
+     * 앞당겨 지우거나 지난 집계를 바꿀 수 있고, 먼 미래로 적으면 TTL 을 늘려 보존기간을 우회한다.
+     */
+    private fun Instant.isPlausibleAt(now: Instant): Boolean =
+        !isAfter(now.plus(MAX_FUTURE_SKEW)) && !isBefore(now.minus(MAX_PAST_AGE))
+
+    companion object {
+        /** 기기 시계가 앞서 있는 정도의 허용치. */
+        val MAX_FUTURE_SKEW: Duration = Duration.ofMinutes(5)
+
+        /** 브라우저가 모아 두었다 늦게 보내는 정도의 허용치. */
+        val MAX_PAST_AGE: Duration = Duration.ofDays(1)
     }
 }
 

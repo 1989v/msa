@@ -67,7 +67,10 @@ class RecommendationEventConsumer(
         EventAction.CLICK -> "click"
         EventAction.ADD_TO_CART -> "addwish"
         EventAction.ORDER_COMPLETE -> "reservation"
-        EventAction.SEARCH -> null                                   // item-aware 신호 아님
-        EventAction.SESSION_START, EventAction.SESSION_END -> null    // 세션은 상품 추천 신호 아님
+        // 검색·세션, 그리고 common 에 새로 더해지는 값은 상품 추천 신호가 아니다 — 무시한다
+        else -> {
+            logger.debug { "추천 신호가 아닌 action 무시: $action" }
+            null
+        }
     }
 }

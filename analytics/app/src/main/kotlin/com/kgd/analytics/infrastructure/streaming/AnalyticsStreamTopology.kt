@@ -44,6 +44,19 @@ class AnalyticsStreamTopology(
         const val INPUT_TOPIC = "analytics.event.collected"
         const val SCORE_OUTPUT_TOPIC = "analytics.score.updated"
         val WINDOW_SIZE: Duration = Duration.ofHours(1)
+
+        /** 검색 대상(entityType=SEARCH)의 entityId 가 이 값이면 검색어 없이 고른 목록이다. */
+        private const val ALL_KEYWORD = "*"
+
+        /**
+         * 키워드 지표의 키. 검색 대상 이벤트는 검색어를 entityId 에 싣고, 상품 축은 `payload.keyword` 에 싣는다.
+         * 검색어가 없으면 null — 「unknown」 하나로 모으면 의미 없는 키워드 점수가 생긴다.
+         */
+        internal fun keywordOf(event: AnalyticsEvent): String? {
+            val keyword = if (event.entityType == EntityType.SEARCH) event.entityId
+            else event.payload["keyword"]?.toString()
+            return keyword?.takeIf { it.isNotBlank() && it != ALL_KEYWORD }
+        }
     }
 
     @Autowired
@@ -120,15 +133,16 @@ class AnalyticsStreamTopology(
                 }
             }
 
-        // Branch 2: 키워드 지표 — 검색, 그리고 키워드를 달고 온 상품 클릭
+        // Branch 2: 키워드 지표 — 검색, 그리고 키워드를 달고 온 상품 클릭. 검색어가 없는 이벤트는 건너뛴다
         events
             .filter { _, event ->
-                event.action == EventAction.SEARCH ||
+                (event.action == EventAction.SEARCH ||
                     (event.entityType == EntityType.PRODUCT &&
                         event.action == EventAction.CLICK &&
-                        event.payload.containsKey("keyword"))
+                        event.payload.containsKey("keyword"))) &&
+                    keywordOf(event) != null
             }
-            .selectKey { _, event -> event.payload["keyword"]?.toString() ?: "unknown" }
+            .selectKey { _, event -> keywordOf(event)!! }
             .groupByKey(Grouped.with(Serdes.String(), eventSerde))
             .windowedBy(TimeWindows.ofSizeWithNoGrace(WINDOW_SIZE))
             .aggregate(

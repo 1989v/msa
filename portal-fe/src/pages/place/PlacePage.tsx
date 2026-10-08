@@ -421,8 +421,8 @@ export default function PlacePage() {
         screenType: 'PLACE_HUB',
         screenRef,
         sectionId: 'ATTRACTION_LIST',
-        // 기기 좌표(lat·lng)는 싣지 않는다. 검색어 키는 `keyword` 가 아니라 `term` — Streams 키워드 지표가
-        // `payload.keyword` 로 상품 키워드 점수를 만들므로 허브 검색어가 거기 섞이지 않게 한다.
+        // 기기 좌표(lat·lng)는 싣지 않는다. 검색어는 entityId 가 원본이고 payload 에는 `term` 으로 한 번 더 —
+        // Streams 키워드 지표는 SEARCH 대상이면 entityId 로 묶는다(`AnalyticsStreamTopology.keywordOf`).
         payload: {
           trigger,
           changed,
