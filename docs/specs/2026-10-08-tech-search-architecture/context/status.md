@@ -35,3 +35,11 @@ $ npm run build → BUILD=0, 「프리렌더 184개 페이지」
 dist/prerender/tech/search.html: role="img" 5 · <h1 1 · kh-table 8 · 목차 1 · sitemap/llms 각 1
 ```
 - 구현자가 PartialSeoFailure 경로(JSON 없음·빈 html → exit 1)와 분기 제거 주입(role="img" 0)을 프리렌더 단계만 돌려 확인.
+
+## TG5 문서 연결·회귀 주입·통합 — PASS (메인 재실행)
+```
+$ rm generated && render && npx vitest run src/content src/pages/tech src/seo src/__tests__/routes.test.tsx src/pages/atlas → 14 files, 133 passed
+$ npx tsc -b → 0 · npm run build → 0 · prerender/tech/search.html svg=5 h1=1
+verifications/regression-injection.md: 13행 전부 빨강 → 되돌림 → 초록
+```
+- doc-index.lock.json 은 이 워크트리에서 doc_map.py 를 못 돌려 재생성하지 않음(ai 서브모듈 미초기화) — 보고만.

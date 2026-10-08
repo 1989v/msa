@@ -124,6 +124,12 @@
         "*/src/main/kotlin/*JpaEntity.kt",
         "*/src/main/kotlin/*QueryRepository.kt"
       ]
+    },
+    {
+      "doc": "portal-fe/src/content/search-architecture.md",
+      "sources": [
+        "search/app/src/main/kotlin/com/kgd/search/*"
+      ]
     }
   ],
   "_pattern_rules_note": "1회 정의로 N개 소스 → 서비스 CLAUDE.md 매핑. fnmatch 기반. {service} 는 doc 경로에서만 치환.",

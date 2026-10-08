@@ -23,7 +23,7 @@ questions:
     stage: post-impl
     status: open
     question: gateway/README.md:25 「검색 API JWT 필요」가 코드(공개)와 불일치, ServiceCatalogPage 고아 — 정리할 것인가?
-    answer: 보고만. 별도. ADR-0090 D4(두 레그 가중치)·D6(region 타입)과 코드 불일치도 같이.
+    answer: 보고만. 별도. ADR-0090 D4(두 레그 가중치)·D6(region 타입)과 코드 불일치도 같이. ADR-0090:61·search/CLAUDE.md 의 query_vectors 인덱스 설명 낡음(쿼리 벡터 캐시는 MySQL `query_vector` 표 — key-decisions TG2) · scripts/search-eval/README.md:10 KST 05:30 낡음(매니페스트 07:30).
   - id: Q6
     stage: post-impl
     status: open

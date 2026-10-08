@@ -115,6 +115,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
   `portal-fe/public/games/lib/auth.js` 하나가 읽는다
 - **회원 식별 최소화**: 소셜에서 **이메일·실명을 받지 않는다**(스코프 `openid` 뿐), 제공자 `sub` 은 auth 가 HMAC 으로 가려 member 로 넘긴다 → `docs/adr/ADR-0078-identity-minimization.md`. **`AUTH_SUBJECT_HASH_KEY` 가 없으면 auth 가 기동하지 않고, 키를 잃으면 전 회원 로그인 불가**(해시 재생성 불가) — 백업 대상. 어드민 부트스트랩은 제거됐고 역할은 `member_roles` 행에만 있다(복구 절차: `auth/CLAUDE.md`)
 - **원장 보존기간**: 조회·클릭 90일 / 이력서 열람 365일, 주 1회 `retention` CronJob 이 정리 → `docs/adr/ADR-0077-ledger-retention.md`. **방침(`/privacy` §6)에 적은 숫자와 상수가 같아야 한다** — 한쪽만 고치면 개인정보처리방침이 거짓이 된다. `deal-linkcheck` 에 얹지 않는 이유는 그것이 외부 `:443` egress 가 열린 유일한 배치라서다
+- **검색 아키텍처 문서**: 검색 기법을 바꾸면 `portal-fe/src/content/search-architecture.md` 를 같이 고친다 — 드리프트 테스트가 9값을 잡는다. 공개면은 `/tech/search`, 그림·나머지 행은 사람이 고친다 → `docs/architecture/search-overview.md`
 - **SEO / AEO / 검색 유입**: 빌드타임 프리렌더(호스트별), 언어(`/en`)·장르(`/games/genre/*`)·관광지(`/attractions/:id`) URL 승격, 호스트별 robots/sitemap/llms.txt, 구조화 데이터 → `docs/adr/ADR-0062-seo-and-organic-discovery.md`. 카피 SSOT 는 `portal-fe/src/seo/copy.mjs` — 타이틀/설명 문구는 여기서만 고친다. **호스트로 갈리는 경로(`/`, `/en`)는 프리렌더도 반드시 `_hosts/$host` 키를 써야 한다** (경로만 보면 다른 서비스 페이지가 샌다). **SPA 셸(`index.html`)에 canonical·og:url 같은 고정 주소를 두지 않는다** — 그 블록은 프리렌더가 없는 폴백에서만 나가므로 적힌 값은 항상 틀린다(2026-08-24: apex 를 적어 둔 탓에 관광지 5만 URL 이 「대체 페이지」 판정). 모르는 것은 비워 둔다
 
 ---
@@ -215,6 +216,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 |------|----|------|
 | `/` (root catch-all) | `portal-fe` | **서비스 런처** (ADR-0066, 2026-09-03 개정) — 브랜드 히어로(시스템 코어 캔버스) + 공개 API 카운터 + 서비스 섹션 넷(글 옆에 실제 데이터가 꽂힌 카드 디스펜서) + 전시 서비스 색인 격자(DB `display_service`, OPEN/PREOPEN) + 타임라인(재직 막대) + 오픈소스 + About |
 | `/tech` | `portal-fe` | 코드딕셔너리 — 트리맵/그래프/히트맵/검색 + 서비스 카탈로그. 옛 `/` 내용이 그대로 옮겨왔다 (lazy chunk) |
+| `/tech/search` | `portal-fe` | 검색 아키텍처 — 관광지 검색·통합 검색의 구조 그림·시퀀스·지금 쓰는 기법 표. 원본은 `portal-fe/src/content/search-architecture.md`, 빌드 때 렌더(생성물 미커밋)하고 프리렌더에도 실린다 |
 | `place.1989v.com` | `portal-fe` | K-관광/지리 탐색 (ADR-0065) — TourAPI 관광지 국문(`/`)·영문(`/en`) + 구글맵. game 과 같은 host 인식 루트 라우팅, apex `/place` 는 서브도메인으로 리다이렉트. 데이터: place SSOT → search attractions 인덱스 |
 | `resume.1989v.com` | `portal-fe` | 이력서 — 같은 번들·같은 Service, 호스트로 분기. 공개 여부는 DB 설정 + 제출처별 토큰 게이트 (ADR-0064). 색인 대상 아님 |
 | `deal.1989v.com` | `portal-fe` | 혜택 링크 허브 — 같은 번들·호스트 분기. `/go/{slug}` 는 gateway(아웃바운드 리다이렉터, `noindex` 유지). **색인 대상** (2026-08-24 개방) — 색인되는 주소는 허브 `/` 하나뿐이고 검색은 `?q=` 조차 만들지 않는다 (ADR-0069 개정) |

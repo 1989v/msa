@@ -60,10 +60,10 @@ Total Task Groups: 5
 **Dependencies:** Task Group 1~4
 **Phase:** verify
 **Required Skills:** git, vitest, shell
-- [ ] 5.0 Complete 검증
-  - [ ] 5.1 `docs/doc-index.json` `manual_links` 한 항목, `docs/architecture/search-overview.md` 3줄, 루트 `CLAUDE.md` Frontend 표·Key Conventions 각 한 줄.
-  - [ ] 5.2 회귀 주입 13건(SR-6.3, ⑫ 는 `CLAUDE_PROJECT_DIR="$PWD"` 접두와 순서 「지움 → 원본(exit 0) → 지움 → render 뺀 사본(TS2307)」) — 각각 빨간불 한 줄 → `git checkout --` 되돌림 → 초록. `verifications/regression-injection.md` 표.
-  - [ ] 5.3 통합: `cd portal-fe && node scripts/render-content.mjs && npx vitest run src/content src/pages/tech src/seo src/__tests__/routes.test.tsx src/pages/atlas && npx tsc -b && npm run build`, `git status --short` 가 의도한 파일만.
+- [x] 5.0 Complete 검증
+  - [x] 5.1 `docs/doc-index.json` `manual_links` 한 항목, `docs/architecture/search-overview.md` 3줄, 루트 `CLAUDE.md` Frontend 표·Key Conventions 각 한 줄.
+  - [x] 5.2 회귀 주입 13건(SR-6.3, ⑫ 는 `CLAUDE_PROJECT_DIR="$PWD"` 접두와 순서 「지움 → 원본(exit 0) → 지움 → render 뺀 사본(TS2307)」) — 각각 빨간불 한 줄 → `git checkout --` 되돌림 → 초록. `verifications/regression-injection.md` 표.
+  - [x] 5.3 통합: `cd portal-fe && node scripts/render-content.mjs && npx vitest run src/content src/pages/tech src/seo src/__tests__/routes.test.tsx src/pages/atlas && npx tsc -b && npm run build`, `git status --short` 가 의도한 파일만.
 **Acceptance Criteria:**
 - 13/13 빨간불 → 초록, 통합 명령 0.
 
