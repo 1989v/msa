@@ -34,7 +34,7 @@ class GameShortLinkService(
     private val shortLinks: ShortLinks,
 ) : ResolveGameShortLinkUseCase, RecordGameShortLinkClickUseCase, PurgeGameShortLinkClicksUseCase {
 
-    @Transactional(transactionManager = GAME_TM, readOnly = true)
+    @Transactional(transactionManager = "gameTransactionManager", readOnly = true)
     override fun execute(path: String): Resolution {
         val code = when (val parsed = ShortLinkPath.parse(path)) {
             ShortLinkPath.Home -> return home(Outcome.HOME)
@@ -49,7 +49,7 @@ class GameShortLinkService(
     }
 
     /** 조회 트랜잭션과 분리해 실패가 302 로 번지지 않게 한다. */
-    @Transactional(transactionManager = GAME_TM, propagation = Propagation.REQUIRES_NEW)
+    @Transactional(transactionManager = "gameTransactionManager", propagation = Propagation.REQUIRES_NEW)
     override fun execute(command: RecordGameShortLinkClickUseCase.Command) {
         clickRepository.record(
             GameShortLinkClick(
@@ -61,15 +61,13 @@ class GameShortLinkService(
         )
     }
 
-    @Transactional(transactionManager = GAME_TM)
+    @Transactional(transactionManager = "gameTransactionManager")
     override fun olderThan(days: Long): Int = clickRepository.purgeOlderThan(LocalDateTime.now().minusDays(days))
 
     private fun home(outcome: Outcome, gameId: Long? = null) =
         Resolution(outcome, gameId, shortLinks.home(ShortLinkPrefix.GAME))
 
     companion object {
-        private const val GAME_TM = "gameTransactionManager"
-
         /** game FE 의 상세 경로 첫 세그먼트 */
         private const val GAMES_PATH = "games"
     }

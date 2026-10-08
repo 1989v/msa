@@ -34,7 +34,7 @@ class BlogShortLinkService(
     private val shortLinks: ShortLinks,
 ) : ResolveBlogShortLinkUseCase, RecordBlogShortLinkClickUseCase, PurgeBlogShortLinkClicksUseCase {
 
-    @Transactional(transactionManager = BLOG_TM, readOnly = true)
+    @Transactional(transactionManager = "blogTransactionManager", readOnly = true)
     override fun execute(path: String): Resolution {
         val code = when (val parsed = ShortLinkPath.parse(path)) {
             ShortLinkPath.Home -> return home(Outcome.HOME)
@@ -48,7 +48,7 @@ class BlogShortLinkService(
     }
 
     /** 조회 트랜잭션과 분리해 실패가 302 로 번지지 않게 한다. */
-    @Transactional(transactionManager = BLOG_TM, propagation = Propagation.REQUIRES_NEW)
+    @Transactional(transactionManager = "blogTransactionManager", propagation = Propagation.REQUIRES_NEW)
     override fun execute(command: RecordBlogShortLinkClickUseCase.Command) {
         clickRepository.record(
             BlogShortLinkClick(
@@ -60,15 +60,13 @@ class BlogShortLinkService(
         )
     }
 
-    @Transactional(transactionManager = BLOG_TM)
+    @Transactional(transactionManager = "blogTransactionManager")
     override fun olderThan(days: Long): Int = clickRepository.purgeOlderThan(LocalDateTime.now().minusDays(days))
 
     private fun home(outcome: Outcome, postId: Long? = null) =
         Resolution(outcome, postId, shortLinks.home(ShortLinkPrefix.BLOG))
 
     companion object {
-        private const val BLOG_TM = "blogTransactionManager"
-
         /** blog FE 의 글 상세 경로 첫 세그먼트 */
         private const val POSTS_PATH = "posts"
     }
