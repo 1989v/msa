@@ -12,3 +12,4 @@
 - 사용자 확인: 건수 순 + 합산 20 이라 영문 free 0·국문 pet 1 — 균형을 원하면 Q4 재판단
 - 완료: TG1 상수·슬러그 표·랜딩 문구 — 메인 재실행: landingDecisions·landingMeta·placeApi 3 files / 20 passed, tsc exit 0
 - 구현자가 정한 문형(사용자 확인): title 「{heading} — 지도·가는 길 | K-관광」/「— Map & Directions | K-Tour」, 영문 sentence 형식. 「시도 약칭」 규칙은 없음 — 지금은 「부산광역시 중구 …」
+- 6.5 빌드 전 확인 05:53 KST: `npm run build` exit 0, `[seo] place 속성 랜딩 프리렌더 20장`, dist/prerender/regions/*/*.html 20 = 목록 20(모집단 밖 0), 중복 게이트 통과, 편집 페이지 3장

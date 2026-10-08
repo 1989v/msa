@@ -164,7 +164,7 @@ Total Task Groups: 6. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
   - 표지 id 형식 검사 제거 → 13자리 픽스처
 - [x] 6.3 nginx 계약 수동 실행(SR-5.2): `bash portal-fe/scripts/check-nginx-place-landings.sh` 와 회귀 대조로 `bash portal-fe/scripts/check-nginx-legacy-regions.sh`. 출력 전문을 `verifications/nginx-contract.md` 에 보존. **exit 2(도커 없음)는 통과가 아니다** — 그 경우 이 항목은 미완료로 보고한다
 - [x] 6.4 온톨로지 참조: `grep -nE "copy\.mjs|prerender-seo|render-content|nginx\.conf|placeApi|PlacePage|lint-blog-post|SIGHT_CATEGORIES" code-dictionary/feature/src/main/resources/ontology/*.yaml` — 걸린 `symbol` 문자열이 바뀐 파일에 그대로 남아 있는지 `grep -F` 로 하나씩 확인(현재 `ads.yaml:673` `export const ADSENSE_CLIENT`, `ads.yaml:493` `location = /ads.txt`, `cloud.yaml:434`·`network.yaml:786,813`·`security.yaml:1424` nginx 지시문). 깨진 것이 있으면 yaml 쪽 symbol 을 고친다
-- [ ] 6.5 빌드 전 확인: `cd portal-fe && npm run build` 성공(render-content → tsc → vite → prerender), 산출물 `dist/prerender/regions/*/*` 수 = 목록 항목 수(모집단 밖 제외), title·description 중복 게이트 통과 로그
+- [x] 6.5 빌드 전 확인: `cd portal-fe && npm run build` 성공(render-content → tsc → vite → prerender), 산출물 `dist/prerender/regions/*/*` 수 = 목록 항목 수(모집단 밖 제외), title·description 중복 게이트 통과 로그
 - [ ] 6.6 배포: 6.2·6.3·6.5 통과 뒤 main 푸시 → portal-fe 이미지 → Argo 동기화. OCI 조작은 `ssh msa-oci` 로만(로컬 kubectl 금지)
 - [ ] 6.7 배포 뒤 확인(SR-5.4) → `verifications/deploy-check.md`
   - 목록 각 주소 200·`<!--seo:prerendered-->`·`noindex`(스위치 false)
