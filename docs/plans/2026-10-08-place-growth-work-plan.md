@@ -9,7 +9,7 @@
   hns 파이프라인(shape → spec → review → tasks → implement)을 따로 탄다. 수치·기간은 조정 가능한 내부 가설이다.
 - 교차 비교 아티팩트의 앞부분(§2~§7)과 이 문서가 다르면 **이 문서가 이긴다**.
 
-## 진행 상태 (2026-10-08 05:00 KST)
+## 진행 상태 (2026-10-08 22:40 KST)
 
 | 항목 | 상태 | 결과 요약 → `docs/research/2026-10-07-tourism-growth/evidence/stage1/README.md` |
 |---|---|---|
@@ -22,6 +22,10 @@
 | S1-10 | 완료(로그인 뒤 구간 미확인) | 허브 next 는 `/` 만, 저장 의도 미보관. S3-3 범위 확정 |
 | S1-11 | 완료 | 출처 `source` 검색 미전달(TourAPI 고정 출력), 원천 갱신일 전달됨, 수집일·검수일 없음, dateModified 생략 |
 | S1-12 | 완료 | 허브 6종 행동 미계측 → **S1-12b 최소 계측 신설**(2단계 전 선행) |
+| S2-1 | 완료(운영 확인) | 목록 요약을 서버에서 평문화한 뒤 자름. 영문 허브 카드 30/30·패널 3/3·통합 검색 관광지 요약 25/25 에 엔티티·태그 0 (1단계 3/30) → `docs/specs/2026-10-08-place-text-and-states/verifications/deploy-check.md` |
+| S2-4 | 완료(파서 v2 는 2026-10-09 06:30 KST 정기 재색인 뒤 반영) | 영문 칩 4종(국문 전용 7종 영문 0건), 0건 화면 조건 해제, 교정 안내 0건에도 + `exact`, 「템플스테이」 0→74건·「temple stay」 0→397건 |
+| S2-8 | 완료(origin 기준) | 상세 SSR ETag — origin 강한 값·gzip `W/` 모두 304. 공개 주소는 Cloudflare 경유에서 ETag 가 사라짐(설정은 사용자 몫, 크롤 통계 304 비율은 배포 후 관찰). lastmod 는 S1-9 로 충족 → `docs/specs/2026-10-08-place-trust-pages-etag/verifications/deploy-check.md` |
+| S2-9 | 완료(운영 확인) | `/data-sources`(대장 §1 30행 + 게이트), 초기 HTML 바닥글 4링크(모든 호스트), `/about`·`/data-sources` 프리렌더 본문 |
 
 추가된 작업: **S1-12b** 최소 계측(허브 submit·filter·결과 선택·찜 성공·지도 링크·세션 시작, 중복 키, beacon 계약). S2-2 의존에 S1-11 결과(출처 `source` 전달)가 들어간다. S2-5 는 페이지별로 다른 병목(상세·지역 렌더 지연/TTFB, 허브 LCP 이미지 발견·CLS).
 
