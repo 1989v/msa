@@ -1,6 +1,6 @@
 import type { MouseEvent } from 'react';
 import type { FavoriteTargetType } from '../../api/wishlistApi';
-import { useFavorites } from './useFavorites';
+import { useFavorites, type FavoriteTracking } from './useFavorites';
 import './Favorite.css';
 import { buildLoginHref } from '../../auth/auth';
 
@@ -49,20 +49,24 @@ const STAR = '12 2.6 14.85 8.6 21.4 9.35 16.5 13.85 17.9 20.35 12 17.05 6.1 20.3
  *
  * compact: 카드 모서리용. 카드 전체가 <a>/<button> 이라 클릭이 링크로 새지 않게
  * preventDefault + stopPropagation 을 건다.
+ *
+ * `tracking` 을 주는 호출처만 찜 완료를 원장에 남긴다(place 화면 셋).
  */
 export default function FavoriteButton({
   type,
   targetKey,
   compact = false,
   lang = 'ko',
+  tracking,
 }: {
   type: FavoriteTargetType;
   targetKey: string;
   compact?: boolean;
   lang?: FavoriteLang;
+  tracking?: FavoriteTracking;
 }) {
   const L = UI[lang];
-  const { loggedIn, isFavorite, toggle } = useFavorites(type);
+  const { loggedIn, isFavorite, toggle } = useFavorites(type, tracking);
   const active = loggedIn && isFavorite(targetKey);
 
   const handleClick = (e: MouseEvent<HTMLButtonElement>) => {

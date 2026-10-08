@@ -3,7 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { FavoriteItem, FavoriteTargetType } from '../../../api/wishlistApi';
 import FavoriteButton from '../FavoriteButton';
+import type { FavoriteTracking } from '../useFavorites';
 
 vi.mock('../../../api/wishlistApi', () => ({
   addFavorite: vi.fn(),
@@ -11,10 +13,19 @@ vi.mock('../../../api/wishlistApi', () => ({
   fetchFavoriteKeys: vi.fn(),
   fetchFavorites: vi.fn(),
 }));
+vi.mock('../../../analytics/tracker', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../analytics/tracker')>()),
+  track: vi.fn(),
+}));
 
 import { addFavorite, fetchFavoriteKeys, removeFavorite } from '../../../api/wishlistApi';
+import { track } from '../../../analytics/tracker';
 
-function renderButton(targetKey = 'abyssal-crown', lang?: 'ko' | 'en') {
+function renderButton(
+  targetKey = 'abyssal-crown',
+  lang?: 'ko' | 'en',
+  opts: { type?: FavoriteTargetType; tracking?: FavoriteTracking } = {},
+) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
@@ -22,7 +33,14 @@ function renderButton(targetKey = 'abyssal-crown', lang?: 'ko' | 'en') {
         <Routes>
           <Route
             path="/"
-            element={<FavoriteButton type="GAME" targetKey={targetKey} lang={lang} />}
+            element={
+              <FavoriteButton
+                type={opts.type ?? 'GAME'}
+                targetKey={targetKey}
+                lang={lang}
+                tracking={opts.tracking}
+              />
+            }
           />
         </Routes>
       </MemoryRouter>
@@ -129,5 +147,133 @@ describe('FavoriteButton 문구', () => {
     expect(btn.textContent).toBe('');
     expect(btn.getAttribute('title')).toBe('Save');
     expect(btn.querySelector('svg polygon')).not.toBeNull();
+  });
+});
+
+/**
+ * 찜 완료 계측 — 서버 성공 뒤에만 CLICK/FAVORITE 한 건. `tracking` prop 을 주는
+ * place 화면 셋만 원장에 남고, 낙관 반전·롤백·게스트·pending 은 보내지 않는다.
+ */
+describe('FavoriteButton 계측 (ATTRACTION)', () => {
+  const targetKey = 'A-12345';
+  const tracking: FavoriteTracking = { screenType: 'PLACE_HUB', screenRef: '11', viewId: 'v1' };
+  /** `null` 이 「prop 없음」 — `undefined` 를 넘기면 기본 인자가 끼어든다 */
+  const renderTracked = (t: FavoriteTracking | null = tracking) =>
+    renderButton(targetKey, undefined, { type: 'ATTRACTION', tracking: t ?? undefined });
+  const impressionCalls = () => vi.mocked(track).mock.calls.filter((c) => c[0] === 'IMPRESSION');
+  /** PUT 응답 — 계측은 응답 본문을 보지 않으므로 모양만 맞춘다 */
+  const savedItem: FavoriteItem = {
+    id: 1, targetType: 'ATTRACTION', targetKey, collectionId: null, createdAt: '2026-10-08T00:00:00Z',
+  };
+
+  beforeEach(() => {
+    setSession('token');
+    vi.mocked(fetchFavoriteKeys).mockResolvedValue([]);
+  });
+
+  it('추가 성공 → CLICK/FAVORITE 한 건, payload.saved=true, viewId 는 prop 값', async () => {
+    vi.mocked(addFavorite).mockResolvedValue(savedItem);
+
+    renderTracked();
+    await userEvent.click(await screen.findByRole('button', { name: '관광지 찜' }));
+
+    await waitFor(() => expect(track).toHaveBeenCalledTimes(1));
+    expect(track).toHaveBeenCalledWith(
+      'CLICK',
+      {
+        entityType: 'ATTRACTION',
+        entityId: targetKey,
+        screenType: 'PLACE_HUB',
+        screenRef: '11',
+        sectionId: 'FAVORITE',
+        payload: { saved: true },
+      },
+      'v1',
+    );
+  });
+
+  it('이미 찜된 것을 해제 → payload.saved=false — 요청 종류가 방향을 정한다', async () => {
+    vi.mocked(fetchFavoriteKeys).mockResolvedValue([targetKey]);
+    vi.mocked(removeFavorite).mockResolvedValue(undefined);
+
+    renderTracked();
+    await userEvent.click(await screen.findByRole('button', { name: '관광지 찜 해제' }));
+
+    await waitFor(() => expect(track).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(track).mock.calls[0][1].payload).toEqual({ saved: false });
+    expect(removeFavorite).toHaveBeenCalledWith('ATTRACTION', targetKey);
+  });
+
+  it('실패(롤백)에는 보내지 않는다', async () => {
+    vi.mocked(addFavorite).mockRejectedValue(new Error('down'));
+
+    renderTracked();
+    const button = await screen.findByRole('button', { name: '관광지 찜' });
+    await userEvent.click(button);
+
+    // 낙관적으로 켜졌다가 롤백으로 다시 꺼진다 — 그 사이 어디서도 원장 호출이 없다
+    await waitFor(() => expect(button).toHaveAttribute('aria-pressed', 'false'));
+    expect(addFavorite).toHaveBeenCalledTimes(1);
+    expect(track).not.toHaveBeenCalled();
+  });
+
+  it('게스트 클릭(로그인 이동)에는 보내지 않는다', async () => {
+    setSession(null);
+
+    renderTracked();
+    const button = screen.getByRole('button', { name: '관광지 찜' });
+
+    const assigned: string[] = [];
+    const original = Object.getOwnPropertyDescriptor(window, 'location');
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...window.location, get href() { return ''; }, set href(v: string) { assigned.push(v); } },
+    });
+    await userEvent.click(button);
+    if (original) Object.defineProperty(window, 'location', original);
+
+    expect(assigned.at(-1)).toContain('/login?next=');
+    expect(track).not.toHaveBeenCalled();
+  });
+
+  it('tracking prop 이 없으면 성공해도 보내지 않는다 — 비-place 호출처는 계측 밖', async () => {
+    vi.mocked(addFavorite).mockResolvedValue(savedItem);
+
+    renderTracked(null);
+    await userEvent.click(await screen.findByRole('button', { name: '관광지 찜' }));
+
+    await waitFor(() => expect(addFavorite).toHaveBeenCalledTimes(1));
+    expect(track).not.toHaveBeenCalled();
+  });
+
+  it('마운트 뒤·토글 뒤 어느 시점에도 IMPRESSION 을 보내지 않는다', async () => {
+    vi.mocked(addFavorite).mockResolvedValue(savedItem);
+
+    renderTracked();
+    const button = await screen.findByRole('button', { name: '관광지 찜' });
+    expect(impressionCalls()).toHaveLength(0);
+
+    await userEvent.click(button);
+    await waitFor(() => expect(track).toHaveBeenCalledTimes(1));
+    expect(impressionCalls()).toHaveLength(0);
+  });
+
+  it('응답이 pending 인 동안은 0, 서버가 성공을 돌려준 뒤에 1', async () => {
+    let resolveAdd: ((item: FavoriteItem) => void) | undefined;
+    vi.mocked(addFavorite).mockImplementation(
+      () => new Promise<FavoriteItem>((resolve) => { resolveAdd = resolve; }),
+    );
+
+    renderTracked();
+    const button = await screen.findByRole('button', { name: '관광지 찜' });
+    await userEvent.click(button);
+
+    // 낙관 반전은 끝났지만 서버는 아직 — 원장은 비어 있어야 한다
+    expect(button).toHaveAttribute('aria-pressed', 'true');
+    expect(track).not.toHaveBeenCalled();
+
+    resolveAdd?.(savedItem);
+    await waitFor(() => expect(track).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(track).mock.calls[0][0]).toBe('CLICK');
   });
 });

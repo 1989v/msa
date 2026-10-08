@@ -30,11 +30,11 @@ Total Task Groups: 6
 **Dependencies:** Task Group 1
 **Phase:** fe-favorite
 **Required Skills:** React, @tanstack/react-query, vitest
-- [ ] 2.0 Complete 찜 계측
-  - [ ] 2.1 `portal-fe/src/components/favorite/__tests__/FavoriteButton.test.tsx` 에 `vi.mock('../../../analytics/tracker', …track: vi.fn())` 를 두고 7개 테스트: ① 로그인 + `tracking` prop + `addFavorite` 성공 → `track('CLICK', { entityType:'ATTRACTION', entityId: targetKey, screenType, screenRef, sectionId:'FAVORITE', payload:{ saved:true } }, viewId)` 정확히 1회 ② 이미 찜(`fetchFavoriteKeys` → [targetKey]) → `removeFavorite` 성공 → `saved:false` ③ `addFavorite` reject(롤백) → track 0 ④ 게스트 → track 0 ⑤ `tracking` 없음 → track 0 ⑥ 마운트·토글 어느 시점에도 `track('IMPRESSION', …)` 0 ⑦ pending(해결 안 된 promise) 동안 0, resolve 뒤 1 — `type` 은 `ATTRACTION` 으로 돌린다
-  - [ ] 2.2 `useFavorites(type, tracking?)`: `mutationFn` 이 요청 종류를 반환(`{ saved: boolean }` — 추가면 true, 삭제면 false; 캐시 재독 금지), `onSuccess: (result, targetKey) => tracking && type === 'ATTRACTION' && track('CLICK', { entityType:'ATTRACTION', entityId: targetKey, screenType: tracking.screenType, screenRef: tracking.screenRef, sectionId:'FAVORITE', payload:{ saved: result.saved } }, tracking.viewId)`. `onMutate`·`onError`·`onSettled` 불변. 다른 `type` 은 계측하지 않는다(Out of Scope)
-  - [ ] 2.3 `FavoriteButton` 에 선택 prop `tracking?: { screenType: ScreenType; screenRef?: string; viewId: string }` → `useFavorites(type, tracking)`. 다른 호출처(블로그·게임·상점) 변경 없음
-  - [ ] 2.4 Verify: `cd portal-fe && npx vitest run src/components/favorite/__tests__/FavoriteButton.test.tsx && npx tsc -b`
+- [x] 2.0 Complete 찜 계측
+  - [x] 2.1 `portal-fe/src/components/favorite/__tests__/FavoriteButton.test.tsx` 에 `vi.mock('../../../analytics/tracker', …track: vi.fn())` 를 두고 7개 테스트: ① 로그인 + `tracking` prop + `addFavorite` 성공 → `track('CLICK', { entityType:'ATTRACTION', entityId: targetKey, screenType, screenRef, sectionId:'FAVORITE', payload:{ saved:true } }, viewId)` 정확히 1회 ② 이미 찜(`fetchFavoriteKeys` → [targetKey]) → `removeFavorite` 성공 → `saved:false` ③ `addFavorite` reject(롤백) → track 0 ④ 게스트 → track 0 ⑤ `tracking` 없음 → track 0 ⑥ 마운트·토글 어느 시점에도 `track('IMPRESSION', …)` 0 ⑦ pending(해결 안 된 promise) 동안 0, resolve 뒤 1 — `type` 은 `ATTRACTION` 으로 돌린다
+  - [x] 2.2 `useFavorites(type, tracking?)`: `mutationFn` 이 요청 종류를 반환(`{ saved: boolean }` — 추가면 true, 삭제면 false; 캐시 재독 금지), `onSuccess: (result, targetKey) => tracking && type === 'ATTRACTION' && track('CLICK', { entityType:'ATTRACTION', entityId: targetKey, screenType: tracking.screenType, screenRef: tracking.screenRef, sectionId:'FAVORITE', payload:{ saved: result.saved } }, tracking.viewId)`. `onMutate`·`onError`·`onSettled` 불변. 다른 `type` 은 계측하지 않는다(Out of Scope)
+  - [x] 2.3 `FavoriteButton` 에 선택 prop `tracking?: { screenType: ScreenType; screenRef?: string; viewId: string }` → `useFavorites(type, tracking)`. 다른 호출처(블로그·게임·상점) 변경 없음
+  - [x] 2.4 Verify: `cd portal-fe && npx vitest run src/components/favorite/__tests__/FavoriteButton.test.tsx && npx tsc -b`
 **Acceptance Criteria:**
 - FavoriteButton 테스트 13건(기존 6 + 7) 통과
 - `grep -rn 'FavoriteButton' portal-fe/src --include='*.tsx' -l` 의 비-place 호출처 diff 0
