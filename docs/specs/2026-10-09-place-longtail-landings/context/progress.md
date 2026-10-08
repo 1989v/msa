@@ -1,6 +1,8 @@
 # 진행 상태
 
-- 현재 그룹: 5 (편집 페이지)
+- 현재 그룹: 6 (용어집·회귀 주입·nginx 계약·배포)
+- 완료: TG5 편집 페이지 — 메인 재실행 05:42 KST: render-content 편집 3장, vitest src/pages/place src/seo src/content src/pages/tech routes 39 files / 580 passed, tsc exit 0, 초안 3장 lint --body-only PASS. /tech/search 산출물 동일(cmp)
+- 초안 3장 전부 draft(검수·게시 사용자): 서울 무료 실내 · 서울 고궁 반나절(요금 전부 정보 없음 — 주제 재검토 권고) · 제주 반려동물
 - 완료: TG4 SPA 프리셋 화면 — 메인 재실행 05:27 KST: vitest src/pages/place src/seo routes 33 files / 518 passed, tsc exit 0
 - 결정(근거 보고): 프리셋이 로그인 복귀 상태를 이긴다(SR-2.5·2.6). 랜딩에서 로그인 복귀 시 조건은 초기 상태로 — 필요하면 상태를 주소에 묶는 스펙 필요
 - 완료: TG3 프리렌더·sitemap·llms·nginx — 메인 재실행 05:18 KST: prerenderPlaceLandings·prerenderPlace 54 passed, tsc exit 0, check-nginx-place-landings·legacy-regions·place-feed 모두 PASSED(실제 nginx)

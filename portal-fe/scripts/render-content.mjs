@@ -2,12 +2,14 @@
 //
 // 실행: node scripts/render-content.mjs
 //   src/content/search-architecture.md → src/pages/tech/generated/search-architecture.json
+//   src/content/guides/{slug}.md       → src/pages/place/generated/guides/{slug}.json (편집 페이지 — 본문·머리말·parts)
 //   생성물은 커밋하지 않는다(.gitignore). 그래서 build·dev·Dockerfile·CI·커밋 훅이 tsc 보다 먼저 이걸 돌린다.
+//   API 는 부르지 않는다 — 편집 페이지의 관광지 카드는 프리렌더(prerender-seo.mjs)와 SPA 가 채운다.
 //
 // 아래 검사는 sanitizer 가 아니라 출력 계약 트립와이어다 — 원본은 레포에 커밋된 md 뿐이고,
 // 어기면 빌드를 세운다. 이미지 빌드가 실패하면 Argo 가 직전 이미지를 유지한다.
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { renderDiagram } from 'fencesvg';
@@ -17,6 +19,9 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SOURCE = resolve(ROOT, 'src/content/search-architecture.md');
 const OUTPUT = resolve(ROOT, 'src/pages/tech/generated/search-architecture.json');
 const ID_PREFIX = 'ts-';
+const GUIDES_SOURCE = resolve(ROOT, 'src/content/guides');
+const GUIDES_OUTPUT = resolve(ROOT, 'src/pages/place/generated/guides');
+const PLACE_LANDINGS = resolve(ROOT, 'src/content/place-landings.json');
 
 const FENCE_RE = /^```mermaid[ \t]*\n([\s\S]*?)\n```[ \t]*$/gm;
 const placeholder = (i) => `@@fencesvg-${i}@@`;
@@ -181,7 +186,137 @@ function check(html, fenceCount) {
   }
 }
 
+
+// ─── 편집 페이지 ────────────────────────────────────────────────────────────
+
+/** 편집 페이지 slug — nginx `/guides/{slug}` location 과 같은 규칙 */
+export const GUIDE_SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
+/** 관광지 id — nginx 상세 location 과 같은 규칙(숫자 1~12자리) */
+const GUIDE_CARD_ID_RE = /^[0-9]{1,12}$/;
+/** 카드 표지의 정확한 형식. 값은 넓게 잡고 id 규칙은 따로 본다 — 형식과 id 를 각각 검사한다 */
+const GUIDE_CARD_RE = /<div data-guide-card="([^"]*)"><\/div>/g;
+const GUIDE_STATUSES = ['draft', 'published'];
+/** 본문 안 속성 랜딩 링크 — 같은 출처 경로나 place 절대 주소 */
+const LANDING_HREF_RE = /href="(?:https:\/\/place\.1989v\.com)?\/(en\/)?regions\/([^/"#?]+)\/([^/"#?]+)"/g;
+
+/**
+ * 머리말(`---` 사이) — `key: value` 한 줄씩. 값이 `[a, b]` 면 문자열 배열이다.
+ * @returns {{ meta: Record<string, string | string[]>, body: string }}
+ */
+function frontMatter(text) {
+  const m = text.match(/^---\n([\s\S]*?)\n---\n?/);
+  if (!m) fail('머리말(--- … ---)이 없다');
+  const meta = {};
+  for (const line of m[1].split('\n')) {
+    const kv = line.match(/^([A-Za-z]+)\s*:\s*(.*)$/);
+    if (!kv) continue;
+    const raw = kv[2].trim();
+    const list = raw.match(/^\[(.*)\]$/);
+    meta[kv[1]] = list
+      ? list[1].split(',').map((v) => v.trim().replace(/^["']|["']$/g, '')).filter(Boolean)
+      : raw.replace(/^["']|["']$/g, '');
+  }
+  return { meta, body: text.slice(m[0].length) };
+}
+
+/**
+ * 편집 페이지 원본 하나 → 생성 JSON 의 내용. 검사를 어기면 throw(빌드 실패).
+ *
+ * 본문 안 관광지 자리는 `<div data-guide-card="{id}"></div>` 표지다. 여기서 본문을 표지 경계로 잘라
+ * `parts` 로 싣는다 — 분할 규칙은 이 한 곳에만 있고, 프리렌더·SPA 는 parts 를 그리기만 한다.
+ * @param {string} source  md 원문(머리말 포함)
+ * @param {{ slug: string, file: string, landings: Array<Record<string, any>> }} opts  file 은 실패 메시지·JSON 에 싣는 원본 경로
+ */
+export function renderGuide(source, { slug, file, landings }) {
+  const where = (reason) => fail(`${file}: ${reason}`);
+  if (!GUIDE_SLUG_RE.test(slug)) where(`slug 「${slug}」 는 영소문자·숫자·하이픈만 쓴다`);
+  const { meta, body } = frontMatter(source);
+  const text = (key) => (typeof meta[key] === 'string' ? meta[key] : '');
+  for (const key of ['title', 'description']) if (!text(key)) where(`머리말 ${key} 가 비었다`);
+  const status = text('status');
+  if (!GUIDE_STATUSES.includes(status)) where(`머리말 status 는 draft | published — 「${status}」`);
+  // 게시는 검수 뒤다 — 검수자·검수일이 없는 published 는 세운다
+  if (status === 'published') {
+    for (const key of ['reviewedBy', 'reviewedAt']) if (!text(key)) where(`published 인데 머리말 ${key} 가 비었다`);
+  }
+  const attractionIds = Array.isArray(meta.attractionIds) ? meta.attractionIds : null;
+  if (!attractionIds || attractionIds.length === 0) where('머리말 attractionIds 가 비었다');
+
+  const { html, headings } = renderContent(body, { idPrefix: 'gd-' });
+
+  // 표지 — 출현 수 = 정확한 형식 일치 수, 값은 id 규칙, 집합은 attractionIds 와 같아야 한다
+  const appear = (html.match(/data-guide-card/g) ?? []).length;
+  const markers = [...html.matchAll(GUIDE_CARD_RE)].map((m) => m[1]);
+  if (appear !== markers.length) {
+    where(`카드 표지 출현 ${appear}회 중 정확한 형식(<div data-guide-card="{id}"></div>)은 ${markers.length}회`);
+  }
+  for (const id of [...markers, ...attractionIds]) {
+    if (!GUIDE_CARD_ID_RE.test(id)) where(`관광지 id 형식 위반(숫자 1~12자리): ${id}`);
+  }
+  const markerSet = [...new Set(markers)].sort().join(',');
+  const idSet = [...new Set(attractionIds)].sort().join(',');
+  if (markerSet !== idSet) where(`본문 카드 표지 {${markerSet}} ≠ 머리말 attractionIds {${idSet}}`);
+
+  // 속성 랜딩 링크 — 목록에 있고 은퇴하지 않은 것만
+  for (const m of html.matchAll(LANDING_HREF_RE)) {
+    const lang = m[1] ? 'en' : 'ko';
+    const entry = landings.find((e) => e.lang === lang && e.code === m[2] && e.attr === m[3]);
+    if (!entry) where(`목록(place-landings.json)에 없는 속성 랜딩 링크: ${m[0].slice(6, -1)}`);
+    if (entry.retired) where(`은퇴한 속성 랜딩 링크: ${m[0].slice(6, -1)}`);
+  }
+
+  const parts = [];
+  let last = 0;
+  const pushHtml = (chunk) => {
+    if (chunk.trim()) parts.push({ html: chunk });
+  };
+  for (const m of html.matchAll(GUIDE_CARD_RE)) {
+    pushHtml(html.slice(last, m.index));
+    parts.push({ cardId: m[1] });
+    last = m.index + m[0].length;
+  }
+  pushHtml(html.slice(last));
+
+  return {
+    slug,
+    title: text('title'),
+    description: text('description'),
+    status,
+    reviewedBy: text('reviewedBy') || null,
+    reviewedAt: text('reviewedAt') || null,
+    attractionIds,
+    source: file,
+    headings,
+    parts,
+  };
+}
+
+async function renderGuides() {
+  const landings = JSON.parse(await readFile(PLACE_LANDINGS, 'utf8'));
+  let files = [];
+  try {
+    files = (await readdir(GUIDES_SOURCE)).filter((f) => f.endsWith('.md')).sort();
+  } catch (err) {
+    if (err.code !== 'ENOENT') throw err;
+  }
+  // 지운 원본의 JSON 이 남지 않게 비우고 다시 만든다. 0장이어도 폴더는 만든다 — 프리렌더가 「렌더 단계가 빠진 빌드」와 구분한다
+  await rm(GUIDES_OUTPUT, { recursive: true, force: true });
+  await mkdir(GUIDES_OUTPUT, { recursive: true });
+  for (const name of files) {
+    const slug = name.slice(0, -3);
+    const file = `portal-fe/src/content/guides/${name}`;
+    const guide = renderGuide(await readFile(resolve(GUIDES_SOURCE, name), 'utf8'), { slug, file, landings });
+    await writeFile(resolve(GUIDES_OUTPUT, `${slug}.json`), `${JSON.stringify(guide, null, 2)}\n`);
+  }
+  console.log(`[render-content] ${GUIDES_OUTPUT} — 편집 페이지 ${files.length}장`);
+}
+
 async function main() {
+  await renderTechSearch();
+  await renderGuides();
+}
+
+async function renderTechSearch() {
   const markdown = await readFile(SOURCE, 'utf8');
   const updated = markdown.match(/문서 갱신일[^\n]*?(\d{4}-\d{2}-\d{2})/)?.[1];
   if (!updated) fail(`「문서 갱신일」 줄(YYYY-MM-DD)을 찾지 못했다: ${SOURCE}`);

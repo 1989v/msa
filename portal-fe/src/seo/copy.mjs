@@ -593,6 +593,81 @@ export function landingAsOf(attractions = []) {
   );
 }
 
+// ─── place 편집 페이지 (/guides) ─────────────────────────────────────────────
+//
+// 원본은 레포의 `src/content/guides/{slug}.md` 이고 국문만 있다. 색인 여부는 원본 머리말 `status` 가 정한다 —
+// published 만 색인·sitemap·llms·목록에 오르고, draft 는 noindex 로 나간다(속성 랜딩 스위치와 무관).
+
+/** 검수 전 원본(status: draft) 화면 위의 띠 — 프리렌더와 SPA 가 같은 문구를 쓴다 */
+export const GUIDE_DRAFT_BAND = '검수 전 초안';
+
+/** 편집 페이지 주소 — slug 가 없으면 목록 `/guides` */
+export function guidePath(slug = '') {
+  return placePath('ko', slug ? `/guides/${slug}` : '/guides');
+}
+
+export function guideUrl(slug = '') {
+  return `${PLACE_ORIGIN}${guidePath(slug)}`;
+}
+
+/** @param {{ title: string, description: string }} guide */
+export function guideMeta(guide) {
+  return {
+    title: `${guide.title} | ${PLACE_BRAND_KO}`,
+    description: clampDescription(guide.description),
+    heading: guide.title,
+  };
+}
+
+export const GUIDE_INDEX_META = {
+  title: `여행 가이드 — 조건으로 고른 관광지 | ${PLACE_BRAND_KO}`,
+  description: clampDescription('요금·휴무·주차·반려동물 조건으로 관광지를 골라 비교한 글 모음. 한국관광공사 공식 데이터 기준.'),
+  heading: '여행 가이드',
+};
+
+/**
+ * 카드 영역 기준일 문구. 카드 값은 그리는 시점의 색인값이라 글의 검수일(`reviewedAt`)과 다를 수 있다 —
+ * 프리렌더는 빌드 날짜, SPA 는 조회 날짜(둘 다 KST)를 넣는다.
+ */
+export function guideCardAsOf(date) {
+  return `색인 기준 ${date}`;
+}
+
+/** KST 날짜 `YYYY-MM-DD` */
+export function kstDate(now = new Date()) {
+  return new Date(now.getTime() + 9 * 3_600_000).toISOString().slice(0, 10);
+}
+
+/**
+ * 편집 페이지 관광지 카드 — 이름·주소·요금·휴무·주차·반려동물. 프리렌더(escapeHtml)와 SPA(React 텍스트)가
+ * 같은 함수의 평문을 그린다. 값이 없으면 「정보 없음」 — 「불가」로 바꾸지 않는다(모름 ≠ 없음).
+ * 문구는 상세 방문 요약(`placeAttributes.ts` visitSummary)의 주차·반려 표기를 따른다.
+ * @param {Record<string, any>} a  `GET /api/search/attractions/{id}` 응답
+ * @returns {{ id: string, name: string, address: string, rows: Array<{ label: string, value: string }> }}
+ */
+export function guideCard(a) {
+  const na = '정보 없음';
+  // 원문(「가능 (22대)」)이 있으면 원문, 없으면 해석값 — 둘을 이으면 「주차 가능 · 가능」처럼 겹친다
+  const parking = sourceText(a.parking) || (a.attrParking === 'YES' ? '주차 가능' : a.attrParking === 'NO' ? '주차 불가' : '');
+  const pet =
+    a.petPolicy === 'ALLOWED' ? '반려동물 동반 가능'
+      : a.petPolicy === 'PARTIAL' ? '반려동물 일부 구역 동반 가능'
+        : sourceText(a.petAcmpyType);
+  // feeText 는 색인이 정규화한 평문이라 sourceText 를 다시 걸지 않는다(디코드된 「<어린이>」가 태그로 지워진다)
+  const fee = a.feeText != null ? a.feeText : sourceText(a.useFee);
+  return {
+    id: String(a.id),
+    name: sourceText(a.title) || `#${a.id}`,
+    address: sourceText(a.address),
+    rows: [
+      { label: '요금', value: fee || na },
+      { label: '휴무', value: sourceText(a.restDate) || na },
+      { label: '주차', value: parking || na },
+      { label: '반려동물', value: pet || na },
+    ],
+  };
+}
+
 /** TouristDestination + 대표 관광지 ItemList — 지역 페이지의 구조화 데이터 (ADR-0071 §9) */
 export function touristDestinationJsonLd(lang, region, attractions = []) {
   const name = regionDisplayName(lang, region);

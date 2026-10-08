@@ -48,6 +48,9 @@ const AdsConsolePage = lazy(() => import('./pages/ads/AdsConsolePage'));
 const RegionPage = lazy(() => import('./pages/place/RegionPage'));
 // 속성 랜딩 — 「부산 중구 주차 가능 관광지」. 커밋된 목록(place-landings.json)의 조합만 열린다
 const PlaceLandingRoute = lazy(() => import('./pages/place/PlaceLandingRoute'));
+// 편집 페이지 — 레포 원본을 빌드 때 구운 JSON(src/content/guides → generated/guides)
+const GuidePage = lazy(() => import('./pages/place/GuidePage'));
+const GuideIndexPage = lazy(() => import('./pages/place/GuideIndexPage'));
 // ADR-0066 — IT(개념 사전·3D 그래프·트리맵). 메인이 런처가 되면서 three.js 를 쓰지 않게 됐다.
 // eager 로 두면 타일만 보는 방문자도 그래프 엔진을 통째로 받는다.
 const ConceptAtlasPage = lazy(() => import('./pages/atlas/ConceptAtlasPage'));
@@ -302,6 +305,8 @@ function App() {
           <Route path="/en/regions/:code" element={placeRoute(<RegionPage />)} />
           <Route path="/regions/:code/:attr" element={placeRoute(<PlaceLandingRoute />)} />
           <Route path="/en/regions/:code/:attr" element={placeRoute(<PlaceLandingRoute />)} />
+          <Route path="/guides" element={placeRoute(<GuideIndexPage />)} />
+          <Route path="/guides/:slug" element={placeRoute(<GuidePage />)} />
           <Route path="/place/regions/:code" element={placeRoute(<RegionPage />)} />
           <Route path="/en/place/regions/:code" element={placeRoute(<RegionPage />)} />
           <Route path="/attractions/:id" element={placeRoute(<AttractionPage />)} />

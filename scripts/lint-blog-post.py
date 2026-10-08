@@ -21,6 +21,7 @@ DB 에 넣기 전 이 단계가 유일한 게이트다.
 사용:
   scripts/lint-blog-post.py draft.md
   scripts/lint-blog-post.py draft.md --strict   # warn 도 실패로
+  scripts/lint-blog-post.py guide.md --body-only  # F1 생략 — 편집 페이지(place guides)는 머리말이 블로그와 다르다
 """
 
 from __future__ import annotations
@@ -365,7 +366,7 @@ def check_summary_first(body: str, r: Result) -> None:
         r.err("F8 결론 요약 없음 — 첫 h2 앞에 요약 표(또는 항목 2개 이상 목록)를 둔다")
 
 
-def lint(path: Path) -> Result:
+def lint(path: Path, body_only: bool = False) -> Result:
     r = Result()
     if not path.exists():
         r.err(f"파일 없음: {path}")
@@ -378,7 +379,8 @@ def lint(path: Path) -> Result:
         return r
 
     fm_raw, body = split
-    check_frontmatter(parse_frontmatter(fm_raw), r)
+    if not body_only:
+        check_frontmatter(parse_frontmatter(fm_raw), r)
     check_prose(body, r)
     check_banned(body, r)
     check_summary_first(body, r)
@@ -390,10 +392,11 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="블로그 글 초안 lint")
     ap.add_argument("path")
     ap.add_argument("--strict", action="store_true", help="warn 도 실패로")
+    ap.add_argument("--body-only", action="store_true", help="F1(블로그 머리말) 생략 — 본문 규칙만")
     args = ap.parse_args()
 
     target = Path(args.path)
-    r = lint(target)
+    r = lint(target, body_only=args.body_only)
 
     print(f"=== lint {target} ===")
     for w in r.warnings:

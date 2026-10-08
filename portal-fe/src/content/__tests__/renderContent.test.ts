@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 // 실제 fencesvg·marked 로 렌더한다 — 렌더 결과가 곧 페이지·프리렌더가 싣는 HTML 이다.
-import { renderContent, slugify } from '../../../scripts/render-content.mjs';
+import { renderContent, renderGuide, slugify } from '../../../scripts/render-content.mjs';
 
 const FENCE = '```';
 
@@ -115,5 +115,103 @@ describe('renderContent', () => {
     it.each(cases)('then %s 이면 원인을 담아 throw 한다', (_name, md, reason) => {
       expect(() => render(md)).toThrow(reason);
     });
+  });
+});
+
+// ─── 편집 페이지(guides/*.md) ────────────────────────────────────────────────
+
+const LANDINGS = [
+  { lang: 'ko', code: '11110', sidoCode: '11', attr: 'free', count: 68, jaccardMax: 0, selectedAt: '2026-10-09' },
+  { lang: 'ko', code: '11140', sidoCode: '11', attr: 'free', count: 20, jaccardMax: 0, selectedAt: '2026-10-09', retired: true, retiredAt: '2026-10-10' },
+];
+
+const guideSource = (
+  { status = 'draft', reviewedBy = '', reviewedAt = '', ids = '[101, 102]' }: Partial<Record<'status' | 'reviewedBy' | 'reviewedAt' | 'ids', string>> = {},
+  body = [
+    '| 후보 | 조건 |',
+    '|---|---|',
+    '| 가 | 무료 |',
+    '',
+    '## 후보',
+    '',
+    '첫 문단이다.',
+    '',
+    '<div data-guide-card="101"></div>',
+    '',
+    '가운데 문단이다.',
+    '',
+    '<div data-guide-card="102"></div>',
+    '',
+    '[종로구 무료 관광지](/regions/11110/free)',
+    '',
+  ].join('\n'),
+) =>
+  [
+    '---',
+    'title: 서울 무료 실내 관광지',
+    'description: 서울에서 입장료 없이 실내에서 볼 수 있는 곳',
+    `status: ${status}`,
+    `reviewedBy: ${reviewedBy}`,
+    `reviewedAt: ${reviewedAt}`,
+    `attractionIds: ${ids}`,
+    '---',
+    '',
+    body,
+  ].join('\n');
+
+const guide = (source: string) => renderGuide(source, { slug: 'seoul-free', file: 'src/content/guides/seoul-free.md', landings: LANDINGS });
+
+describe('renderGuide', () => {
+  it('정상 원본 → 머리말과 parts(html·cardId 순서 보존)', () => {
+    const g = guide(guideSource());
+    expect(g).toMatchObject({
+      slug: 'seoul-free',
+      title: '서울 무료 실내 관광지',
+      status: 'draft',
+      attractionIds: ['101', '102'],
+      source: 'src/content/guides/seoul-free.md',
+    });
+    expect(g.parts.map((p) => ('cardId' in p ? `card:${p.cardId}` : 'html'))).toEqual([
+      'html',
+      'card:101',
+      'html',
+      'card:102',
+      'html',
+    ]);
+    // 조각을 이으면 표지만 빠진 본문이다 — 분할이 내용을 잃지 않는다
+    const joined = g.parts.map((p) => ('html' in p ? p.html : '')).join('');
+    expect(joined).not.toContain('data-guide-card');
+    expect(joined).toContain('첫 문단이다.');
+    expect(joined).toContain('가운데 문단이다.');
+    expect(joined).toContain('href="/regions/11110/free"');
+  });
+
+  it('published 인데 검수자·검수일이 비면 실패', () => {
+    expect(() => guide(guideSource({ status: 'published' }))).toThrow(/reviewedBy/);
+    expect(() => guide(guideSource({ status: 'published', reviewedBy: '권기덕' }))).toThrow(/reviewedAt/);
+    expect(guide(guideSource({ status: 'published', reviewedBy: '권기덕', reviewedAt: '2026-10-10' })).status).toBe('published');
+  });
+
+  it('표지 id 가 13자리면(집합은 일치) 형식 위반으로 실패', () => {
+    const body = '| a | b |\n|---|---|\n| 1 | 2 |\n\n## x\n\n<div data-guide-card="1234567890123"></div>\n';
+    expect(() => guide(guideSource({ ids: '[1234567890123]' }, body))).toThrow(/형식/);
+  });
+
+  it('표지 집합이 attractionIds 와 다르면 실패', () => {
+    const body = '| a | b |\n|---|---|\n| 1 | 2 |\n\n## x\n\n<div data-guide-card="101"></div>\n';
+    expect(() => guide(guideSource({ ids: '[101, 102]' }, body))).toThrow(/attractionIds/);
+  });
+
+  it('홑따옴표 표지는 출현 수 ≠ 형식 일치 수로 실패', () => {
+    const body = "| a | b |\n|---|---|\n| 1 | 2 |\n\n## x\n\n<div data-guide-card='101'></div>\n";
+    expect(() => guide(guideSource({ ids: '[101]' }, body))).toThrow(/출현/);
+  });
+
+  it.each([
+    ['은퇴 랜딩', '/regions/11140/free'],
+    ['목록 밖 랜딩', '/regions/11110/parking'],
+  ])('%s 링크면 실패', (_name, href) => {
+    const body = `| a | b |\n|---|---|\n| 1 | 2 |\n\n## x\n\n<div data-guide-card="101"></div>\n\n[랜딩](${href})\n`;
+    expect(() => guide(guideSource({ ids: '[101]' }, body))).toThrow(/랜딩/);
   });
 });

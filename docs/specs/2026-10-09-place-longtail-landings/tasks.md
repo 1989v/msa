@@ -112,7 +112,7 @@ Total Task Groups: 6. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
 
 ### Task Group 5: 편집 페이지 — render-content `parts` · 프리렌더 카드 · SPA · 초안 3장 (SR-3)
 **Dependencies:** TG1, TG2(내부 링크 대조용 목록), TG3(nginx `/guides` location) · **Phase:** portal-fe `scripts/render-content.mjs` · `prerender-seo.mjs` · `src/pages/place` · `src/content/guides` · `scripts/lint-blog-post.py` · **Required Skills:** Node ESM, marked, React, Python 3, vitest
-- [ ] 5.1 테스트 먼저
+- [x] 5.1 테스트 먼저
   - `portal-fe/src/content/__tests__/renderContent.test.ts` 증보(편집 소스 픽스처)
     - published + `reviewedBy`/`reviewedAt` 비어 있음 → 실패
     - 형식 위반: 표지·`attractionIds` 둘 다 `1234567890123`(13자리, 집합 일치) → 실패
@@ -129,12 +129,12 @@ Total Task Groups: 6. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
     - N 하한 미만 랜딩 링크 → 빌드 경고
   - 새 `portal-fe/src/pages/place/__tests__/GuidePage.test.tsx`: `/guides/:slug` 렌더, draft 띠·noindex, 없는 slug → `NotFoundPage`, 카드 이스케이프(픽스처 `<script>` 가 요소로 생기지 않음)
   - 새 `portal-fe/src/content/__tests__/guidesLint.test.ts`: `src/content/guides/*.md` 마다 `python3 ../scripts/lint-blog-post.py --body-only` 종료 코드 0. python3 가 없으면 `skip`(통과로 세지 않는다)
-- [ ] 5.2 `render-content.mjs` 소스 목록 일반화: 기존 `search-architecture` 출력 계약 유지, `src/content/guides/*.md` → `src/pages/place/generated/guides/{slug}.json`(본문 HTML·머리말·`parts`). 표지 검사(`^[0-9]{1,12}$`, 집합 일치, 출현 수 = 형식 일치 수), published 검수자 게이트, `place-landings.json` 대조. API 호출 없음. 분할 규칙은 여기 한 곳. `portal-fe/.gitignore` 에 `/src/pages/place/generated/` 추가
-- [ ] 5.3 `scripts/lint-blog-post.py` 에 `--body-only`(F1 생략) 옵션 하나. 기존 호출 동작은 그대로
-- [ ] 5.4 `prerender-seo.mjs`: 카드 `GET /api/search/attractions/{id}`(부분 실패 가드 안), 고정 템플릿(이름·주소·요금·휴무·주차·반려) + 평문화 + `escapeHtml`, `prerender/guides/{slug}.html`, published ≥ 1 일 때만 `guides/index.html`·허브 하단 링크·sitemap·llms
-- [ ] 5.5 SPA: `GuidePage`·`GuideIndexPage`(`src/pages/place/`) — 같은 JSON·같은 엔드포인트, `html` 조각만 `dangerouslySetInnerHTML`, `cardId` 는 React 요소. `App.tsx` 에 `/guides/:slug`·`/guides`(placeRoute). 목록은 published 만
-- [ ] 5.6 초안 3장 `src/content/guides/`(서울 무료 실내 · 서울 고궁 반나절 · 제주 반려동물 동반), 전부 `status: draft`, `reviewedBy`·`reviewedAt` 비움. 각 장: 첫 h2 앞 요약 표 · 선정 이유(데이터 기준 문장) · 후보 5~8곳(운영 색인 조건 검색, 검색 조건을 본문에 적음) · 비교 표(요금·휴무·주차·반려) · 주의(「정보 없음」 칸 명시) · 내부 링크(상세·지역·비은퇴 랜딩). 목록·숫자는 색인 데이터에서만. 사용한 검색 조건과 결과 id 를 `verifications/guide-drafts.md` 에 남긴다
-- [ ] 5.7 Verify: `cd portal-fe && node scripts/render-content.mjs && npx vitest run src/content/__tests__/renderContent.test.ts src/content/__tests__/prerenderTechSearch.test.ts src/content/__tests__/guidesLint.test.ts src/seo/__tests__/prerenderGuides.test.ts src/pages/place/__tests__/GuidePage.test.tsx && npx tsc -b`
+- [x] 5.2 `render-content.mjs` 소스 목록 일반화: 기존 `search-architecture` 출력 계약 유지, `src/content/guides/*.md` → `src/pages/place/generated/guides/{slug}.json`(본문 HTML·머리말·`parts`). 표지 검사(`^[0-9]{1,12}$`, 집합 일치, 출현 수 = 형식 일치 수), published 검수자 게이트, `place-landings.json` 대조. API 호출 없음. 분할 규칙은 여기 한 곳. `portal-fe/.gitignore` 에 `/src/pages/place/generated/` 추가
+- [x] 5.3 `scripts/lint-blog-post.py` 에 `--body-only`(F1 생략) 옵션 하나. 기존 호출 동작은 그대로
+- [x] 5.4 `prerender-seo.mjs`: 카드 `GET /api/search/attractions/{id}`(부분 실패 가드 안), 고정 템플릿(이름·주소·요금·휴무·주차·반려) + 평문화 + `escapeHtml`, `prerender/guides/{slug}.html`, published ≥ 1 일 때만 `guides/index.html`·허브 하단 링크·sitemap·llms
+- [x] 5.5 SPA: `GuidePage`·`GuideIndexPage`(`src/pages/place/`) — 같은 JSON·같은 엔드포인트, `html` 조각만 `dangerouslySetInnerHTML`, `cardId` 는 React 요소. `App.tsx` 에 `/guides/:slug`·`/guides`(placeRoute). 목록은 published 만
+- [x] 5.6 초안 3장 `src/content/guides/`(서울 무료 실내 · 서울 고궁 반나절 · 제주 반려동물 동반), 전부 `status: draft`, `reviewedBy`·`reviewedAt` 비움. 각 장: 첫 h2 앞 요약 표 · 선정 이유(데이터 기준 문장) · 후보 5~8곳(운영 색인 조건 검색, 검색 조건을 본문에 적음) · 비교 표(요금·휴무·주차·반려) · 주의(「정보 없음」 칸 명시) · 내부 링크(상세·지역·비은퇴 랜딩). 목록·숫자는 색인 데이터에서만. 사용한 검색 조건과 결과 id 를 `verifications/guide-drafts.md` 에 남긴다
+- [x] 5.7 Verify: `cd portal-fe && node scripts/render-content.mjs && npx vitest run src/content/__tests__/renderContent.test.ts src/content/__tests__/prerenderTechSearch.test.ts src/content/__tests__/guidesLint.test.ts src/seo/__tests__/prerenderGuides.test.ts src/pages/place/__tests__/GuidePage.test.tsx && npx tsc -b`
 
 ### Task Group 6: 문서 · 회귀 주입 · nginx 계약 수동 실행 · 온톨로지 · 배포
 **Dependencies:** TG1–5

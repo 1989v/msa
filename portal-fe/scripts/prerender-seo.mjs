@@ -10,7 +10,7 @@
  * SEO 자산 때문에 이미지 빌드가 깨지면 안 된다.
  */
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
@@ -105,6 +105,14 @@ import {
   landingPath,
   placeCategoryLabel,
   sourceText,
+  GUIDE_DRAFT_BAND,
+  GUIDE_INDEX_META,
+  guideCard,
+  guideCardAsOf,
+  guideMeta,
+  guidePath,
+  guideUrl,
+  kstDate,
 } from '../src/seo/copy.mjs';
 import { DATA_SOURCES, DATA_SOURCE_NOTICES } from '../src/seo/dataSources.mjs';
 
@@ -116,6 +124,8 @@ const DIST = resolve(ROOT, 'dist');
 const TECH_SEARCH_JSON = resolve(ROOT, 'src/pages/tech/generated/search-architecture.json');
 // 속성 랜딩 목록 — select-place-landings.mjs 가 만들고 커밋한다. 빌드는 읽기만 한다
 const PLACE_LANDINGS_JSON = resolve(ROOT, 'src/content/place-landings.json');
+// 편집 페이지 생성 JSON — render-content 가 src/content/guides/*.md 에서 만든다(0장이어도 폴더는 있다)
+const GUIDES_JSON_DIR = resolve(ROOT, 'src/pages/place/generated/guides');
 const API_ORIGIN = process.env.SEO_API_ORIGIN || 'https://api.1989v.com';
 const LANGS = ['ko', 'en'];
 const GENRES = ['DEFENSE', 'ACTION', 'STRATEGY', 'RPG', 'ARCADE', 'PUZZLE', 'VERSUS', 'CASUAL'];
@@ -181,11 +191,14 @@ async function main() {
     throw new Error('index.html 에 <!--seo:start--> 마커가 없습니다');
   }
 
-  const { games, places, regions, landingList, landingResults, blog, concepts, dealSections, rankBoards } =
+  const { games, places, regions, landingList, landingResults, guides, guideCards, blog, concepts, dealSections, rankBoards } =
     await fetchSeoSections();
   // 속성 랜딩 — 산출물을 먼저 만들어 품질 게이트(title·description 중복)를 쓰기 전에 통과시킨다
   const landing = placeLandingPages(shell, { landings: landingList, regions, results: landingResults });
   for (const warning of landing.warnings) console.warn(`[seo] ${warning}`);
+  // 편집 페이지 — published 카드 404 는 여기서 빌드를 세운다(쓰기 전에)
+  const guidePages = placeGuidePages(shell, { guides, cards: guideCards, landingPages: landing.pages, buildDate: kstDate() });
+  for (const warning of guidePages.warnings) console.warn(`[seo] ${warning}`);
 
   // 검색 아키텍처 본문은 API 가 아니라 레포 md 에서 나온다 — 없으면 렌더 단계가 빠진 빌드라 세운다
   let searchArchitecture;
@@ -196,13 +209,15 @@ async function main() {
     throw new PartialSeoFailure(`검색 아키텍처 생성 JSON 을 쓸 수 없습니다 (${TECH_SEARCH_JSON}): ${err.message}`);
   }
 
-  await writeRobotsAndSitemaps(games, places, regions, blog, rankBoards, dealSections, concepts, landing.pages);
+  await writeRobotsAndSitemaps(games, places, regions, blog, rankBoards, dealSections, concepts, landing.pages, guidePages);
   await renderPortalPages(shell, concepts, { searchArchitecture });
   await renderTechGlossaries(shell, concepts);
-  await renderPlaceHubs(shell, places, regions);
+  await renderPlaceHubs(shell, places, regions, { guidesListed: guidePages.index != null });
   await renderPlaceDetails(shell, places, regions);
   for (const { path, html } of landing.pages) await emit(path, html);
   if (landing.pages.length > 0) console.log(`[seo] place 속성 랜딩 프리렌더 ${landing.pages.length}장`);
+  for (const { path, html } of [...guidePages.pages, ...(guidePages.index ? [guidePages.index] : [])]) await emit(path, html);
+  if (guidePages.pages.length > 0) console.log(`[seo] place 편집 페이지 프리렌더 ${guidePages.pages.length}장`);
   await renderDealHub(shell, dealSections);
   await renderRankHub(shell, rankBoards);
   await renderAdsConsoleShell(shell);
@@ -291,6 +306,20 @@ export async function fetchSeoSections(loaders = defaultSeoLoaders()) {
     }
   }
 
+  // 편집 페이지 — 원본은 레포(생성 JSON)이고 카드만 API 다. 관광지마다 상세 1회, 404 는 null 로 남겨
+  // 판단(draft 는 빼고 경고 · published 는 빌드 실패)은 placeGuidePages 가 한다. 그 밖의 실패는 섹션 실패다.
+  let guides = [];
+  let guideCards = new Map();
+  try {
+    guides = await loaders.guides();
+    guideCards = await loaders.guideCards(guides);
+    fetched.push('guides');
+  } catch (err) {
+    guides = [];
+    failed.push('guides');
+    console.warn(`[seo] 편집 페이지 카드 조회 실패: ${err.message}`);
+  }
+
   // 블로그는 색인 대상이다 (deal/resume 과 반대) — 목록·카테고리·작성자 URL 이 sitemap 에 들어간다
   let blog = { posts: [], categories: [] };
   try {
@@ -344,7 +373,7 @@ export async function fetchSeoSections(loaders = defaultSeoLoaders()) {
     );
   }
 
-  return { games, places, regions, landingList, landingResults, blog, concepts, dealSections, rankBoards };
+  return { games, places, regions, landingList, landingResults, guides, guideCards, blog, concepts, dealSections, rankBoards };
 }
 
 function defaultSeoLoaders() {
@@ -354,6 +383,8 @@ function defaultSeoLoaders() {
     regions: fetchRegionIndex,
     landingList: async () => JSON.parse(await readFile(PLACE_LANDINGS_JSON, 'utf8')),
     landings: (list, regions) => fetchPlaceLandings(list, regions),
+    guides: readGuides,
+    guideCards: (list) => fetchPlaceGuideCards(list),
     blog: fetchBlogIndex,
     concepts: fetchConcepts,
     deal: fetchDealSections,
@@ -363,8 +394,10 @@ function defaultSeoLoaders() {
 
 // ─── 카탈로그 ────────────────────────────────────────────────────────────────
 
-async function getJson(path) {
+/** @param {{ notFound?: boolean }} [opts] notFound 면 404 를 예외 대신 null 로 돌려준다 */
+async function getJson(path, { notFound = false } = {}) {
   const res = await fetch(`${API_ORIGIN}${path}`, { signal: AbortSignal.timeout(15_000) });
+  if (notFound && res.status === 404) return null;
   if (!res.ok) throw new Error(`GET ${path} → ${res.status}`);
   const body = await res.json();
   if (!body.success) throw new Error(`GET ${path} → ${body.error?.code}`);
@@ -734,6 +767,7 @@ async function writeRobotsAndSitemaps(
   dealSections = [],
   concepts = [],
   landingPages = [],
+  guidePages = { pages: [], index: null },
 ) {
   const gameEntries = [];
   for (const lang of LANGS) {
@@ -795,7 +829,10 @@ async function writeRobotsAndSitemaps(
 
   await emit(`seo/${GAME_HOST}/sitemap.xml`, sitemapXml(gameEntries));
   await emit(`seo/${PORTAL_HOST}/sitemap.xml`, sitemapXml(portalEntries));
-  await writePlaceSitemaps([...placeHubEntries, ...regionEntries, ...placeLandingSitemapEntries(landingPages)], placeDetailEntries);
+  await writePlaceSitemaps(
+    [...placeHubEntries, ...regionEntries, ...placeLandingSitemapEntries(landingPages), ...placeGuideSitemapEntries(guidePages)],
+    placeDetailEntries,
+  );
 
   await emit(`seo/${GAME_HOST}/robots.txt`, robotsTxt(GAME_ORIGIN));
   await emit(`seo/${PORTAL_HOST}/robots.txt`, robotsTxt(PORTAL_ORIGIN));
@@ -820,7 +857,7 @@ async function writeRobotsAndSitemaps(
 
   await emit(`seo/${GAME_HOST}/llms.txt`, gameLlmsTxt(games));
   await emit(`seo/${PORTAL_HOST}/llms.txt`, portalLlmsTxt());
-  await emit(`seo/${PLACE_HOST}/llms.txt`, placeLlmsTxt(places, landingPages));
+  await emit(`seo/${PLACE_HOST}/llms.txt`, placeLlmsTxt(places, landingPages, guidePages));
   await emit(`seo/${BLOG_HOST}/llms.txt`, blogLlmsTxt(blog));
   await emit(`seo/${DEAL_HOST}/llms.txt`, dealLlmsTxt(dealSections));
   await emit(`seo/${RANK_HOST}/llms.txt`, rankLlmsTxt(rankBoards));
@@ -1188,7 +1225,7 @@ const PLACE_PHOTO_PRECONNECT = '<link rel="preconnect" href="https://tong.visitk
  * place 허브(국·영) 파일 목록 — 쓰기와 분리해 산출물을 단위 검증한다.
  * @returns {Array<{ path: string, html: string }>}
  */
-export function placeHubPages(shell, places, regions) {
+export function placeHubPages(shell, places, regions, { guidesListed = false } = {}) {
   const pages = [];
   for (const lang of LANGS) {
     const meta = placeHubMeta(lang);
@@ -1223,7 +1260,11 @@ export function placeHubPages(shell, places, regions) {
       body: shellBody(
         `<h1>${escapeHtml(meta.heading)}</h1><p>${escapeHtml(meta.description)}</p>` +
           (regionLinks ? `<ul>${regionLinks}</ul>` : '') +
-          (links ? `<ul>${links}</ul>` : ''),
+          (links ? `<ul>${links}</ul>` : '') +
+          // 편집 페이지는 국문만이고 published 가 있을 때만 목록이 있다 — 없는 목록(404)으로 링크하지 않는다
+          (guidesListed && lang === 'ko'
+            ? `<p><a href="${guidePath()}">${escapeHtml(GUIDE_INDEX_META.heading)}</a></p>`
+            : ''),
       ),
     }).replace('</head>', `${PLACE_PHOTO_PRECONNECT}\n  </head>`);
     pages.push({ path: `prerender/_hosts/${PLACE_HOST}${lang === 'en' ? '.en' : ''}.html`, html });
@@ -1231,8 +1272,8 @@ export function placeHubPages(shell, places, regions) {
   return pages;
 }
 
-async function renderPlaceHubs(shell, places = { ko: [], en: [] }, regions = { ko: [], en: [] }) {
-  for (const { path, html } of placeHubPages(shell, places, regions)) await emit(path, html);
+async function renderPlaceHubs(shell, places = { ko: [], en: [] }, regions = { ko: [], en: [] }, opts = {}) {
+  for (const { path, html } of placeHubPages(shell, places, regions, opts)) await emit(path, html);
 }
 
 // ─── place 지역 상세 프리렌더 (ADR-0062 §8) ─────────────────────────────────
@@ -1551,6 +1592,150 @@ export function placeLandingSitemapEntries(pages = []) {
       priority: '0.5',
       ...(p.alternates ? { alternates: p.alternates } : {}),
     }));
+}
+
+// ─── place 편집 페이지 (/guides) ────────────────────────────────────────────
+//
+// 본문은 render-content 가 레포 md 에서 만든 생성 JSON 의 `parts` 다(분할은 그쪽 한 곳). 여기서는 html 조각을
+// 그대로 잇고, 카드 자리는 상세 응답을 고정 템플릿 + 평문화(guideCard) + escapeHtml 로 채운다.
+
+/** 생성 JSON 전부. 폴더가 없으면 render-content 단계가 빠진 빌드다 — 예외(섹션 실패) */
+async function readGuides() {
+  const names = (await readdir(GUIDES_JSON_DIR)).filter((n) => n.endsWith('.json')).sort();
+  return Promise.all(names.map(async (n) => JSON.parse(await readFile(resolve(GUIDES_JSON_DIR, n), 'utf8'))));
+}
+
+/**
+ * 편집 페이지 카드 조회 — 관광지마다 `GET /api/search/attractions/{id}` 1회. 404 는 null 로 남긴다.
+ * @returns {Promise<Map<string, Record<string, any> | null>>}
+ */
+export async function fetchPlaceGuideCards(guides, get = (path) => getJson(path, { notFound: true })) {
+  const cards = new Map();
+  for (const guide of guides) {
+    for (const id of guide.attractionIds) {
+      if (!cards.has(id)) cards.set(id, await get(`/api/search/attractions/${id}`));
+    }
+  }
+  return cards;
+}
+
+function guideCardHtml(attraction) {
+  const c = guideCard(attraction);
+  const rows = c.rows.map((r) => `<dt>${escapeHtml(r.label)}</dt><dd>${escapeHtml(r.value)}</dd>`).join('');
+  return (
+    `<section data-guide-card-id="${escapeHtml(c.id)}"><h3><a href="${attractionPath('ko', c.id)}">${escapeHtml(c.name)}</a></h3>` +
+    (c.address ? `<p>${escapeHtml(c.address)}</p>` : '') +
+    `<dl>${rows}</dl></section>`
+  );
+}
+
+/**
+ * 편집 페이지 산출물 — 쓰기와 분리해 단위 검증한다.
+ *
+ * - draft: noindex·「검수 전 초안」 띠, sitemap·llms·목록 제외. 카드 관광지가 404 면 그 카드만 빼고 경고.
+ * - published: 카드 관광지가 404 면 빌드를 세운다(원본 경로·id 를 메시지에). 복구는 그 id 를 본문 표지·attractionIds 에서
+ *   빼거나 draft 로 되돌리는 커밋 하나다.
+ * - 목록(`guides/index.html`)은 published 가 1장 이상일 때만 만든다 — 0장이면 nginx 가 404.
+ * - 본문의 속성 랜딩 링크가 이번 빌드에서 하한 미만이면 경고한다(목록 밖·은퇴는 render-content 가 이미 세웠다).
+ * @param {string} shell
+ * @param {{ guides: Array<Record<string, any>>, cards: Map<string, Record<string, any> | null>, buildDate: string,
+ *           landingPages?: Array<Record<string, any>> }} input
+ */
+export function placeGuidePages(shell, { guides = [], cards = new Map(), buildDate, landingPages = [] }) {
+  const warnings = [];
+  const landingCount = new Map(
+    landingPages.map((p) => [landingPath(p.entry.lang, p.entry.code, p.entry.attr), p.count]),
+  );
+  const pages = guides.map((guide) => {
+    const published = guide.status === 'published';
+    const missing = guide.attractionIds.filter((id) => cards.get(id) == null);
+    if (missing.length > 0 && published) {
+      throw new PartialSeoFailure(
+        `편집 페이지 ${guide.source} — 관광지 ${missing.join(', ')} 이(가) 404 입니다. ` +
+          '그 id 를 본문 표지·attractionIds 에서 빼거나 status: draft 로 되돌리세요.',
+      );
+    }
+    for (const id of missing) warnings.push(`편집 페이지 ${guide.source} — 관광지 ${id} 404, 그 카드를 빼고 냅니다(draft)`);
+
+    const content = guide.parts
+      .map((part) => {
+        if ('html' in part) return part.html; // render-content 검사를 통과한 레포 원본
+        const a = cards.get(part.cardId);
+        return a ? guideCardHtml(a) : '';
+      })
+      .join('');
+    for (const m of content.matchAll(/href="(\/(?:en\/)?regions\/[^/"]+\/[^/"]+)"/g)) {
+      const count = landingCount.get(m[1]);
+      if (count == null || count < PLACE_LANDING_MIN_RESULTS) {
+        warnings.push(`편집 페이지 ${guide.source} — 속성 랜딩 ${m[1]} 이 이번 빌드에서 ${count == null ? '건수 없음' : `${count}건`}으로 하한 ${PLACE_LANDING_MIN_RESULTS}건 미달`);
+      }
+    }
+
+    const meta = guideMeta(guide);
+    const url = guideUrl(guide.slug);
+    const html = compose(shell, {
+      lang: 'ko',
+      title: meta.title,
+      description: meta.description,
+      canonical: url,
+      siteName: placeBrand('ko'),
+      image: ogCardUrl(PLACE_ORIGIN, 'place'),
+      imageAlt: meta.heading,
+      noindex: !published,
+      body: shellBody(
+        `<nav><a href="${placePath('ko', '')}">한국 관광지 탐색</a>` +
+          (published ? ` › <a href="${guidePath()}">${escapeHtml(GUIDE_INDEX_META.heading)}</a>` : '') +
+          '</nav>' +
+          (published ? '' : `<p role="note"><strong>${escapeHtml(GUIDE_DRAFT_BAND)}</strong></p>`) +
+          `<h1>${escapeHtml(meta.heading)}</h1>` +
+          `<p>${escapeHtml(guideCardAsOf(buildDate))}</p>` +
+          `<article>${content}</article>`,
+      ),
+    });
+    return { path: `prerender/guides/${guide.slug}.html`, html, guide, url, indexed: published };
+  });
+
+  const listed = pages.filter((p) => p.indexed);
+  let index = null;
+  if (listed.length > 0) {
+    const url = guideUrl();
+    index = {
+      path: 'prerender/guides/index.html',
+      url,
+      html: compose(shell, {
+        lang: 'ko',
+        title: GUIDE_INDEX_META.title,
+        description: GUIDE_INDEX_META.description,
+        canonical: url,
+        siteName: placeBrand('ko'),
+        image: ogCardUrl(PLACE_ORIGIN, 'place'),
+        imageAlt: GUIDE_INDEX_META.heading,
+        body: shellBody(
+          `<nav><a href="${placePath('ko', '')}">한국 관광지 탐색</a></nav>` +
+            `<h1>${escapeHtml(GUIDE_INDEX_META.heading)}</h1><ul>` +
+            listed
+              .map((p) => `<li><a href="${guidePath(p.guide.slug)}">${escapeHtml(p.guide.title)}</a> — ${escapeHtml(p.guide.description)}</li>`)
+              .join('') +
+            '</ul>',
+        ),
+      }),
+    };
+  }
+  return { pages, index, warnings };
+}
+
+/**
+ * 편집 페이지의 place sitemap 항목 — published 와 목록만. lastmod 는 검수일
+ * @param {{ pages: Array<Record<string, any>>, index?: Record<string, any> | null }} [guidePages]
+ */
+export function placeGuideSitemapEntries(guidePages = { pages: [], index: null }) {
+  if (!guidePages.index) return [];
+  return [
+    { loc: guidePages.index.url, priority: '0.5' },
+    ...guidePages.pages
+      .filter((p) => p.indexed)
+      .map((p) => ({ loc: p.url, ...(isoDate(p.guide.reviewedAt) ? { lastmod: isoDate(p.guide.reviewedAt) } : {}), priority: '0.6' })),
+  ];
 }
 
 /**
@@ -2100,9 +2285,16 @@ function gameLlmsTxt(games) {
   return lines.join('\n');
 }
 
-export function placeLlmsTxt(places, landingPages = []) {
+/**
+ * @param {Record<string, Array<unknown>>} places
+ * @param {Array<Record<string, any>>} [landingPages]
+ * @param {{ pages: Array<Record<string, any>>, index?: Record<string, any> | null }} [guidePages]
+ */
+export function placeLlmsTxt(places, landingPages = [], guidePages = { pages: [] }) {
   // 속성 랜딩은 색인을 연 것만 싣는다(스위치 · 은퇴 · 하한) — sitemap 과 같은 조건
   const landings = landingPages.filter((p) => p.indexed);
+  // 편집 페이지는 published 만 — sitemap 과 같은 조건
+  const guides = guidePages.pages.filter((p) => p.indexed);
   return [
     `# ${PLACE_BRAND_EN} (${PLACE_BRAND_KO})`,
     '',
@@ -2125,6 +2317,9 @@ export function placeLlmsTxt(places, landingPages = []) {
     '',
     ...(landings.length > 0
       ? ['## 속성별 관광지', ...landings.map((p) => `- [${p.heading}](${p.url})`), '']
+      : []),
+    ...(guides.length > 0
+      ? [`## ${GUIDE_INDEX_META.heading}`, ...guides.map((p) => `- [${p.guide.title}](${p.url})`), '']
       : []),
   ].join('\n');
 }
