@@ -22,7 +22,7 @@ JWT 인증/인가, 요청 라우팅, 로깅 필터를 담당한다.
 | `/api/v1/orders/**` | commerce | JWT 필요 |
 | `/api/v1/admin/orders/**` | commerce | ROLE_ADMIN |
 | `/internal/**` | — | 라우트 없음 (클러스터 안 전용) |
-| `/api/search/**` | search-service | JWT 필요 |
+| `/api/search/**` | search-service | 불필요 (공개 검색 · 이벤트 수집, `userId` 는 선택 필드) |
 
 ## JWT 인증 흐름
 

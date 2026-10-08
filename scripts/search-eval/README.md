@@ -5,9 +5,10 @@ CronJob 이 ConfigMap 으로 싣도록 `k8s/base/search-batch/eval/` 에 있다.
 
 | 파일 | 무엇 |
 |---|---|
-| `k8s/base/search-batch/eval/judgments-attractions-2026-09-13.json` | 쿼리 48개(ko 24 · en 24) × 관광지 id 등급 0~3, 2,141건. 풀링은 세 구성의 top-10 합집합 |
+| `k8s/base/search-batch/eval/judgments-attractions-2026-10-05.json` | 매일 평가가 쓰는 세트 — 쿼리 150개(ko 90 · en 60) × 관광지 id 등급 0~3, 6,530건 |
+| `k8s/base/search-batch/eval/judgments-attractions-2026-09-13.json` | 이전 세트 — 쿼리 48개(ko 24 · en 24), 2,141건. 풀링은 세 구성의 top-10 합집합 |
 | `k8s/base/search-batch/eval/live-eval.py` | A. BM25 · B. 하이브리드(RRF) · C. 하이브리드 + 쿼리 언더스탠딩(라이브 API) 의 nDCG@10 + 회귀 판정 |
-| `k8s/base/search-batch/cronjob-eval.yaml` | 매일 KST 05:30(재색인 뒤) 실행. C 가 기준선 − 0.03 아래면 Job Failed |
+| `k8s/base/search-batch/cronjob-eval.yaml` | 매일 KST 07:30(재색인 뒤) 실행. C 가 기준선 − 0.03 아래면 Job Failed |
 | `results/<날짜>.json` | 남길 값이 있던 실행의 결과 |
 
 ## 돌리는 법

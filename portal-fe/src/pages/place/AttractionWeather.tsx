@@ -1,4 +1,5 @@
 import type { PlaceLang, WeatherDay, WeatherHalf, WeatherOutlook } from '../../api/placeApi';
+import { issuedAt } from './forecastTime';
 
 const UI = {
   ko: {
@@ -37,7 +38,7 @@ const SKY_EN: Record<string, string> = { 맑음: 'Clear', 구름많음: 'Mostly 
 const PRECIPITATION_EN: Record<string, string> = { 비: 'rain', '비/눈': 'rain/snow', 눈: 'snow', 소나기: 'showers' };
 
 /** 기상청 표현 → 영문. 모르는 표현은 원문 그대로 둔다(지어내지 않는다). */
-export function skyLabel(sky: string, lang: PlaceLang): string {
+function skyLabel(sky: string, lang: PlaceLang): string {
   if (lang === 'ko') return sky;
   for (const [prefix, base] of [['구름많고 ', 'Mostly cloudy'], ['흐리고 ', 'Cloudy']] as const) {
     if (sky.startsWith(prefix)) {
@@ -123,16 +124,6 @@ function Pop({ pop, lang }: { pop: number; lang: PlaceLang }) {
       {pop}%
     </span>
   );
-}
-
-/** 발표 시각 `yyyy-MM-ddTHH:mm` → 「10월 2일 17:00」 · 「Oct 2, 17:00」. */
-export function issuedAt(at: string, lang: PlaceLang): string {
-  const [date, time] = at.split('T');
-  const [, m, d] = date.split('-').map(Number);
-  const hm = (time ?? '').slice(0, 5);
-  if (lang === 'ko') return `${m}월 ${d}일 ${hm}`;
-  const month = new Date(Date.UTC(2000, m - 1, 1)).toLocaleDateString('en', { month: 'short', timeZone: 'UTC' });
-  return `${month} ${d}, ${hm}`;
 }
 
 function Half({ label, half, lang }: { label: string | null; half: WeatherHalf; lang: PlaceLang }) {

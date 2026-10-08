@@ -1,7 +1,7 @@
 # ADR-0090 통합 검색 하이브리드 — 임베딩은 서버 밖에서, 질의는 사전으로
 
 ## Status
-**Accepted (2026-09-06) · 개정 (2026-09-08)** — 질의는 **노드 상주 사이드카가 실시간 인코딩**하고, 모델은
+**Accepted (2026-09-06) · 개정 (2026-09-08) · 개정 (2026-10-08, 코드와 다른 서술 정정 — Decision 끝)** — 질의는 **노드 상주 사이드카가 실시간 인코딩**하고, 모델은
 **`microsoft/harrier-oss-v1-270m`**(268M · 640차원 · MIT)이다. 품질 1위인 Qwen3-4B 는 이 노드에 못 올린다(fp32 16.1GB > 여유 11.6GB).
 사전 방식은 적중률 62% 를 넘어야 라이브를 이기는데 자유 입력 서비스에서 그 값을 기대할 근거가 없다.
 
@@ -182,6 +182,20 @@ URL 은 굽지 않고 FE 가 `serviceHref.ts` 로 조립한다. 이력서(ADR-00
 넘으면 사이드카 CPU 를 먼저 늘린다. 모델을 내리는 것(e5-small, 44ms)은 마지막이다 —
 전량 재임베딩이고 영어 하이브리드가 0.6774 → 0.6544 로 떨어진다.
 `search.qvec.cache.hit` 은 비용 지표이지 가용성 지표가 아니다 — 미적중이어도 사이드카가 답한다.
+
+### 개정 (2026-10-08) — 코드와 다른 서술 정정
+
+위 D3·D4·D6 본문은 결정 당시 문장 그대로 둔다. 지금 코드는 아래와 같다.
+
+- **D3 쿼리 벡터 캐시는 OpenSearch `query_vectors` 인덱스가 아니다.** 프로세스 Caffeine 캐시 → MySQL `query_vector` 표
+  → `search-embed` 인코딩 순서로 본다(`search/app/.../queryvector/service/QueryVectorService.kt:56-83`,
+  `search/app/src/main/resources/db/migration/V1__create_query_vector.sql`). 표는 캐시가 아니라 원천이라 재기동해도 남고,
+  사이드카가 만든 벡터는 즉시 표에 쓴다. `query_vectors` 인덱스는 표가 원천이 되면서 제거됐다(커밋 `54fc37387`, 2026-09-08).
+  Redis ZSET `search:qmiss:{modelRef}` 은 인코딩까지 실패한 쿼리만 센다.
+- **D4 분류 가중치는 키워드 레그에만 건다.** 관광·상업 분류 가중치·완결성 계수·clickBoost 는 융합 전 키워드 레그 점수에만
+  곱하고, 벡터 레그는 k-NN 코사인 그대로다. 벡터 레그 조건도 「사전 적중」이 아니라 「쿼리 벡터를 구했음」이다.
+- **D6 통합 검색 타입에 `region` 은 없다.** 통합 검색이 다루는 타입은 `SearchUnifiedService.ALL_TYPES` 의 7종
+  (attraction · blog_post · game · concept · deal_offer · service · product)이고, 관광지는 `unified` 가 아니라 `attractions` 색인에서 찾는다.
 
 ## Alternatives Considered
 

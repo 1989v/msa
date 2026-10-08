@@ -7,7 +7,7 @@
 
 ## 1. Bounded Context Overview
 
-Search BC는 **Elasticsearch 기반 읽기 전용 검색 모델 서비스**. CDC + Kafka 로 product BC 변경을 비동기 인덱싱. 검색 결과는 ES native score + Bandit posterior 의 hybrid reranking 으로 최종 랭킹. multi-armed bandit (Thompson sampling) 으로 노출·클릭 피드백 기반 적응 학습. 무중단 리인덱스는 alias swap.
+Search BC는 **OpenSearch 기반 읽기 전용 검색 모델 서비스**. CDC + Kafka 로 product BC 변경을 비동기 인덱싱. 상품 검색 결과는 OpenSearch `_score` + Bandit posterior 의 reranking 으로 최종 랭킹. 관광지 검색은 키워드 레그와 벡터 레그를 RRF 로 합치는 하이브리드다(3-2절, ADR-0090). multi-armed bandit (Thompson sampling) 으로 노출·클릭 피드백 기반 적응 학습. 무중단 리인덱스는 alias swap.
 
 ---
 
@@ -15,10 +15,10 @@ Search BC는 **Elasticsearch 기반 읽기 전용 검색 모델 서비스**. CDC
 
 ### ProductDocument
 **Type.** Aggregate (data class — 검색 인덱스의 비정규화 표현)
-**Definition.** Product 의 검색 인덱스 표현. product BC 의 권위 모델을 CDC/Kafka 로 동기화한 **읽기 모델**. ES document 단위로 인덱스됨.
+**Definition.** Product 의 검색 인덱스 표현. product BC 의 권위 모델을 CDC/Kafka 로 동기화한 **읽기 모델**. OpenSearch 문서 단위로 인덱스됨.
 **Lifecycle.** `product.item.created` 수신 시 생성 → `product.item.updated` 수신 시 갱신 → `analytics.score.updated` 수신 시 score 필드 갱신
 **Invariants.**
-- ES 측 권위 (이중 권위 아님 — product BC가 카탈로그 SSOT)
+- OpenSearch 측 권위 (이중 권위 아님 — product BC가 카탈로그 SSOT)
 - `popularityScore / ctr / cvr / scoreUpdatedAt` 는 analytics BC 에서 주입된 외부 score 필드
 - `categoryId` 는 nullable — 미분류 상품 허용
 - `status: String` (enum 아님) — product BC의 ProductStatus 와 다른 표현 (Flagged: enum 동기화 검토)
@@ -41,7 +41,7 @@ Search BC는 **Elasticsearch 기반 읽기 전용 검색 모델 서비스**. CDC
 
 ### ScoredProductDocument
 **Type.** Value Object (data class)
-**Definition.** ProductDocument + ES native score(`esScore`). reranker 입력.
+**Definition.** ProductDocument + OpenSearch `_score`(`esScore`). reranker 입력.
 **Code.** `com.kgd.search.domain.product.model.ScoredProductDocument`
 
 ### BanditKey
@@ -92,6 +92,28 @@ Search BC는 **Elasticsearch 기반 읽기 전용 검색 모델 서비스**. CDC
 
 ---
 
+## 3-2. 하이브리드 검색 용어 (ADR-0090 · ADR-0065 · ADR-0095)
+
+정의는 `portal-fe/src/content/search-architecture.md` §2·§4 와 같다. 값이 바뀌면 그 문서의 §4 표가 먼저 바뀐다.
+
+| 용어 | 정의 | 피할 말 · 비고 |
+|---|---|---|
+| **하이브리드** | 관광지 검색에서 키워드 레그와 벡터 레그를 hybrid 질의 하나로 보내고, 검색 파이프라인이 RRF 로 순위를 합치는 방식. 쿼리 벡터가 없으면 키워드 레그만, 잔여 검색어가 비면 벡터 레그만 탄다. 스위치 `search.attraction-hybrid.enabled` | 상품 검색의 Bandit reranking 과 다르다. 통합 검색의 관광지 외 6종은 `unified` 색인 BM25 라 하이브리드가 아니다 |
+| **키워드 레그** | hybrid 질의의 BM25 쪽. 점수 = BM25 × 관광·상업 분류 가중치 × 완결성 가중치 × clickBoost. 쿼리 언더스탠딩의 잔여 검색어와 패싯 필터가 여기 걸린다 | 「BM25 레그」와 같은 말. 가중치는 융합 **전**, 이 레그 안에서만 곱한다 |
+| **벡터 레그** | hybrid 질의의 k-NN 쪽. 쿼리 벡터와 문서 `embedding` 의 코사인 근접, 1비트 양자화 근사 후 원본 벡터로 재채점. 필터는 키워드 레그의 bool 그대로(검색어 일치 포함) + `embeddingModel` 스탬프 | 분류 가중치·완결성·clickBoost 를 곱하지 않는다. 스탬프가 다른 문서는 이 레그에서 빠지고 키워드 레그로만 올라온다 |
+| **RRF** | Reciprocal Rank Fusion. 두 레그의 순위로 `1/(60+rank)` 를 더해 합친다(rank_constant 60). 점수 정규화가 필요 없다. 앱이 기동 때 검색 파이프라인을 PUT 으로 만든다 | 동점이 실제로 생기고 하이브리드 경로엔 정렬을 걸 수 없어 동점 순서는 보장되지 않는다 |
+| **쿼리 벡터 캐시** | 쿼리를 벡터로 바꾸는 세 층 — 프로세스 Caffeine 캐시 → MySQL `query_vector` 표(원천) → `search-embed` 사이드카 인코딩. 인코딩한 값은 즉시 표에 쓴다. 키는 `(model_ref, QueryNormalizer 결과)` | OpenSearch `query_vectors` 인덱스는 2026-09-08 에 없어졌다. 「질의 사전」은 옛 이름. 인코딩까지 실패한 쿼리만 Redis ZSET `search:qmiss:{modelRef}` 에 센다 |
+| **쿼리 언더스탠딩** | 검색어에서 의도어를 떼어 잔여 검색어·패싯 필터·타입 의도·상업 의도로 나누는 단계(`QueryIntent`). 키워드 레그에만 건다. 자동완성은 거치지 않는다 | 벡터 레그 입력은 의도어를 떼지 않은 (오타 교정된) 검색어다 |
+| **잔여 검색어** | 쿼리 언더스탠딩이 의도어를 떼고 남긴 검색어(`Understood.residual`). 키워드 레그와 통합 검색 6종의 `unified` 질의에 쓴다. 의도어만으로 된 질의면 비고, 그때 관광지는 벡터 레그만, `unified` 는 matchAll + 인기도순이다 | 「정제 검색어」로 쓰지 않는다 |
+| **상업 의도** | 질의가 상점·시장을 직접 가리킨다는 판정(`Understood.commerceIntent`). 필터가 아니라 랭킹 스위치라, 켜지면 키워드 레그에서 분류 가중치·완결성·clickBoost 를 빼고 BM25 그대로 채점한다. 음식어가 하나라도 있으면 상업 의도로 치지 않는다 | 「쇼핑 필터」 아님 — 결과를 거르지 않는다 |
+| **타입 의도** | 통합 검색에서 대상 타입을 가리키는 의도어(`Understood.type`, 예: 블로그·게임). 요청 `type` 이 없을 때 이것이 대상 타입을 정하고, 묶음 순서의 첫째가 된다. 없으면 `ALL_TYPES` 7종 전부 | 관광지의 `contentTypeId` 패싯과 다르다 |
+| **분류 가중치** | 키워드 레그 안에서 파생 분류 `category` 가 관광 분류(`nature`·`history`·`culture`·`leisure`)면 `3.0`, 상업 분류(`shopping`·`food`)면 `0.35` 를 곱한다. 상업 의도면 빠진다. 관광지 제안(자동완성)에도 건다 | 「카테고리 부스트」로 쓰지 않는다. 벡터 레그에는 없다 |
+| **완결성 가중치** | 키워드 레그에 곱하는 `ln1p(popularityScore)`. `popularityScore` 는 문서 정보 충실도이고 필드가 없으면 1.0. `unified` 색인에서는 ln1p 를 BM25 에 **더한다**(0 이면 곱이 점수를 지운다) | 「인기도」라는 필드 이름과 달리 방문·클릭 수가 아니다 — 그건 clickBoost |
+| **clickBoost** | 위 3-1절 `clickBoost` 와 같다. 키워드 레그에만 곱하고 상한 1.3, 운영 기본 꺼짐 | — |
+| **판정 세트** | 쿼리 × 관광지 id 등급(0~3) 목록. CronJob `search-eval` 이 매일 BM25 · 하이브리드 · 하이브리드 + 쿼리 언더스탠딩 세 구성의 nDCG@10 을 재고, 마지막 구성이 기준선 − 0.03 아래면 실패한다. 현재 파일 `k8s/base/search-batch/eval/judgments-attractions-2026-10-05.json`(150쿼리) | 풀링으로 만든 세트라 그것을 만든 구성에만 공정하다 — 새 모델을 비교하기 전에 후보의 top-10 을 합쳐 다시 채점한다 |
+
+---
+
 ## 4. Domain Services
 
 — (도메인 내부에 별도 Domain Service 없음. ThompsonReranker 는 app 레이어 — 도메인 의미상 Domain Service 로 재분류 가능, 그러나 코드 위치는 app)
@@ -124,7 +146,7 @@ Search BC는 **Elasticsearch 기반 읽기 전용 검색 모델 서비스**. CDC
 | `BanditKey.DEFAULT_CATEGORY` | "_default_" — 카테고리 미분류 시 폴백 |
 | `BanditPosterior.init` | alpha, beta > 0 (Beta 분포 정의역) |
 | `BanditState.init` | clicks ≥ 0, **impressions ≥ clicks** |
-| 읽기 전용 모델 | ES 는 product DB의 read model — 직접 쓰기 금지 (CLAUDE.md) |
+| 읽기 전용 모델 | OpenSearch 는 product DB의 read model — 직접 쓰기 금지 (CLAUDE.md) |
 | Kafka 소비 토픽 | `product.item.created`, `product.item.updated` (consumer group: `search-indexer`) |
 | Batch 리인덱싱 | alias swap 방식 — 무중단 전환 (CLAUDE.md) |
 | 멱등성 | ADR-0012 — 중복 이벤트 방어 필수 |
@@ -137,12 +159,12 @@ Search BC는 **Elasticsearch 기반 읽기 전용 검색 모델 서비스**. CDC
 ### Outbound
 
 #### ProductSearchPort
-**Definition.** ES 검색 추상화. `search(keyword, Pageable) → Page<ProductDocument>` + `searchScored` (esScore 동봉, reranker 입력용).
+**Definition.** OpenSearch 검색 추상화. `search(keyword, Pageable) → Page<ProductDocument>` + `searchScored` (esScore 동봉, reranker 입력용).
 **KDoc 인용.** "ES `_score` 를 동봉해 반환. application 레이어의 reranker (e.g. ThompsonReranker) 가 esScore 를 hybrid 계산에 사용한다."
-**Adapter.** `ProductSearchAdapter` (Elasticsearch RestClient)
+**Adapter.** `ProductSearchAdapter` (OpenSearch 클라이언트)
 
 #### ProductIndexPort
-**Definition.** ES 인덱싱 추상화 — `indexProduct(doc)`, `bulkIndex(docs)`.
+**Definition.** OpenSearch 인덱싱 추상화 — `indexProduct(doc)`, `bulkIndex(docs)`.
 **Adapter.** `ProductSearchAdapter` 또는 별도 indexing adapter
 
 #### BanditStatePort
@@ -178,7 +200,8 @@ Search BC는 **Elasticsearch 기반 읽기 전용 검색 모델 서비스**. CDC
 
 | 약어 | 풀이 |
 |---|---|
-| ES | Elasticsearch |
+| RRF | Reciprocal Rank Fusion — 순위 역수 합으로 두 레그 결과를 합친다 |
+| kNN | k-Nearest Neighbors — 벡터 레그의 근접 이웃 검색 |
 | MAB | Multi-Armed Bandit |
 | CTR | Click-Through Rate |
 | CVR | Conversion Rate |
@@ -203,7 +226,7 @@ Search BC는 **Elasticsearch 기반 읽기 전용 검색 모델 서비스**. CDC
 | 용어 | 본 BC | 다른 BC | 해결 |
 |---|---|---|---|
 | **Product** | ProductDocument (읽기 모델) | product BC: 권위 모델 | product가 SSOT, 본 BC는 비정규화 사본 |
-| **Score** | ES `_score` + bandit posterior | analytics BC의 ProductScore | **다른 개념** — 본 BC는 ranking signal, analytics는 raw aggregation |
+| **Score** | OpenSearch `_score` + bandit posterior | analytics BC의 ProductScore | **다른 개념** — 본 BC는 ranking signal, analytics는 raw aggregation |
 | **BanditKey** | 본 BC 전용 | experiment BC의 Variant 와 다른 패러다임 | Bandit=연속학습, Experiment=사전할당 |
 | **Variant / Arm** | bandit 용어로 "arm" | experiment BC의 Variant 와 다름 | 본 BC는 "arm" 단어 사용 자제 |
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { AirQuality, CongestionDay, PlaceLang, WeatherOutlook } from '../../api/placeApi';
-import AttractionAir, { MAX_STATION_KM, nearestStation } from './AttractionAir';
+import AttractionAir from './AttractionAir';
+import { MAX_STATION_KM, nearestStation } from './airStation';
 import AttractionCongestion from './AttractionCongestion';
 import AttractionWeather from './AttractionWeather';
 
