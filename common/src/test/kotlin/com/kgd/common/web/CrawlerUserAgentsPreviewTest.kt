@@ -1,9 +1,10 @@
-package com.kgd.common.crawler
+package com.kgd.common.web
 
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 
-class CrawlerUserAgentsTest : BehaviorSpec({
+/** 메신저 링크 미리보기 봇과 사람 브라우저(카카오톡 인앱 포함)를 실제 UA 문자열로 가른다. */
+class CrawlerUserAgentsPreviewTest : BehaviorSpec({
 
     val crawlers = mapOf(
         "카카오톡 링크 미리보기" to

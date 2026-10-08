@@ -1,7 +1,7 @@
 package com.kgd.game.presentation.shortlink.controller
 
-import com.kgd.common.crawler.CrawlerUserAgents
 import com.kgd.common.shortlink.ShortLinkRedirects
+import com.kgd.common.web.CrawlerUserAgents
 import com.kgd.game.application.shortlink.usecase.RecordGameShortLinkClickUseCase
 import com.kgd.game.application.shortlink.usecase.ResolveGameShortLinkUseCase
 import com.kgd.game.application.shortlink.usecase.ResolveGameShortLinkUseCase.Outcome

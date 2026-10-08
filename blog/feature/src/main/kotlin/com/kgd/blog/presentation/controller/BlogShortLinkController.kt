@@ -3,8 +3,8 @@ package com.kgd.blog.presentation.controller
 import com.kgd.blog.application.shortlink.usecase.RecordBlogShortLinkClickUseCase
 import com.kgd.blog.application.shortlink.usecase.ResolveBlogShortLinkUseCase
 import com.kgd.blog.application.shortlink.usecase.ResolveBlogShortLinkUseCase.Outcome
-import com.kgd.common.crawler.CrawlerUserAgents
 import com.kgd.common.shortlink.ShortLinkRedirects
+import com.kgd.common.web.CrawlerUserAgents
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpHeaders

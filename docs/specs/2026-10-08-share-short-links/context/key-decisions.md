@@ -23,3 +23,9 @@ SEED=0x5A3C96E1F0, M1=0xC2B2AE3D27, M2=0x165667B19F, xorshift20 3회. 골든: 0�
 ### 2026-10-08 — origin 재기반·번호 재지정
 origin/main 이 강제 푸시로 갈라져 내 커밋을 별도 워크트리에서 origin 위로 옮겼다. 마이그레이션은 각 DB 의 origin 최신 다음 번호(V31·V106·V4·V33), ADR 은 0106. 관광지 상세 응답은 origin 의 엣지 캐시(ADR-0105)를 그대로 두고 본문에만 shortUrl 을 싣는다 — shortUrl 은 id 로 결정되는 값이라 캐시돼도 맞다.
 게이트웨이에 origin 이 `adsClientIpKeyResolver`(CF-Connecting-IP)를 추가했다. 단축 경로는 그대로 `ipKeyResolver` — CF 헤더는 우회 호스트에서 위조되므로 Host 허용 목록과 함께 써야 하고, 그 배선은 이번 범위 밖. 후속 후보.
+
+### 2026-10-09 — 크롤러 판정은 기존 `com.kgd.common.web.CrawlerUserAgents` 하나로
+그룹 1 에서 같은 판정의 사본 `com.kgd.common.crawler.CrawlerUserAgents` 를 만들었다(스펙이 출발점으로 지목한 analytics 파일이 이미 common.web 으로 옮겨져 있던 것을 놓쳤다). fresh verifier 가 SR-6 「분류기 하나」 위반으로 잡았다. 미리보기 봇 마커 5개를 기존 클래스에 더하고 사본을 지웠다 — analytics 원장과 game 랭킹도 미리보기 봇을 거르게 된다(봇이므로 맞다).
+
+### 2026-10-09 — 이력서 코드 충돌 재시도는 「저장 전 존재 확인」
+스펙은 「유일 제약에 걸리면 다시 뽑는다」였다. 같은 트랜잭션에서 UNIQUE 위반을 잡으면 rollback-only 가 되어 재시도할 수 없어, `existsByShortCode` 로 확인한 뒤 최대 5회 다시 뽑는다. 확인과 저장 사이의 경합은 UNIQUE 가 막고 링크 생성이 실패한다(59비트 공간이라 확률 무시 수준).

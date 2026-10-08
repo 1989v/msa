@@ -3,7 +3,7 @@ package com.kgd.common.web
 /**
  * 크롤러 판별 (ADR-0095).
  *
- * analytics(노출·클릭 원장)와 game(랭킹 제출)이 같은 목록을 쓴다. 마커는 운영 관찰로 자라는 것이라
+ * analytics(노출·클릭 원장)·game(랭킹 제출)·공유 단축 주소 클릭 원장이 같은 목록을 쓴다. 마커는 운영 관찰로 자라는 것이라
  * 두 곳이 따로 들면 한쪽만 갱신되어 「원장은 거르는데 랭킹은 받는」 상태가 된다.
  *
  * **원장에 넣기 전에 거른다.** 관광지 상세 6만 URL 이 사이트맵에 있어 검색엔진이 JS 를
@@ -27,6 +27,9 @@ object CrawlerUserAgents {
         "ccbot", "bytespider", "amazonbot", "perplexitybot", "cohere-ai",
         "headlesschrome", "phantomjs", "lighthouse", "chrome-lighthouse",
         "bot/", "crawler", "spider",
+        // 메신저 링크 미리보기 — 공유된 주소를 사람보다 먼저 연다. 세면 「공유 1번 = 클릭 1번」이 된다.
+        // 카카오톡 인앱 브라우저(`KAKAOTALK x.y.z`)는 사람이고 미리보기 봇만 `kakaotalk-scrap` 을 붙인다.
+        "kakaotalk-scrap", "slackbot", "discordbot", "telegrambot", "whatsapp",
         // 「UA 없음」의 실제 모양. 이 서비스는 게이트웨이(Spring Cloud Gateway) 뒤에 있고,
         // Reactor Netty 는 들어온 요청에 UA 가 없으면 자기 이름을 기본값으로 붙여 넘긴다.
         // 그래서 아래 isNullOrBlank 분기는 여기서는 사실상 닿지 않고, 이 마커가 그 자리를 맡는다.

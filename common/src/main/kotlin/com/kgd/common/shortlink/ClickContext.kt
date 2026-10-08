@@ -5,7 +5,7 @@ import java.net.URI
 /**
  * 단축 주소 클릭 원장에 남길 요청 맥락. 원장은 리퍼러 호스트와 UA 계열만 갖는다 — IP 와 전체 URL 은 받지 않는다.
  *
- * 크롤러는 호출부가 [com.kgd.common.crawler.CrawlerUserAgents] 로 이미 걸렀다는 전제다.
+ * 크롤러는 호출부가 [com.kgd.common.web.CrawlerUserAgents] 로 이미 걸렀다는 전제다.
  */
 object ClickContext {
 

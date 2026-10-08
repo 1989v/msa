@@ -1,7 +1,7 @@
 package com.kgd.place.presentation.shortlink.controller
 
-import com.kgd.common.crawler.CrawlerUserAgents
 import com.kgd.common.shortlink.ShortLinkRedirects
+import com.kgd.common.web.CrawlerUserAgents
 import com.kgd.place.application.shortlink.usecase.RecordAttractionShortLinkClickUseCase
 import com.kgd.place.application.shortlink.usecase.ResolveAttractionShortLinkUseCase
 import com.kgd.place.application.shortlink.usecase.ResolveAttractionShortLinkUseCase.Outcome

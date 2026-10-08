@@ -3,8 +3,8 @@ package com.kgd.codedictionary.presentation.resume.controller
 import com.kgd.codedictionary.application.resume.usecase.RecordResumeShortLinkClickUseCase
 import com.kgd.codedictionary.application.resume.usecase.ResolveResumeShortLinkUseCase
 import com.kgd.codedictionary.application.resume.usecase.ResolveResumeShortLinkUseCase.Outcome
-import com.kgd.common.crawler.CrawlerUserAgents
 import com.kgd.common.shortlink.ShortLinkRedirects
+import com.kgd.common.web.CrawlerUserAgents
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpHeaders

@@ -121,7 +121,7 @@ Total Task Groups: 8
 - [ ] 8.0 Complete docs & validation
   - [x] 8.1 ADR-0077 표에 단축 링크 원장 4종(90일·이력서 365일) · ADR-0106 상태 「수용」 · `docs/changelog` 해당 없음 확인
   - [x] 8.2 각 서비스 `CLAUDE.md`(code-dictionary·game·blog·place) 에 단축 경로 한 줄
-  - [ ] 8.3 로컬 FE 화면 검증: 세 상세 공유 패널 — `docs/standards/fe-visual-verification.md` 4조합 CDP 측정(start·측정·stop 한 명령)
+  - [x] 8.3 로컬 FE 화면 검증: 세 상세 공유 패널 — `docs/standards/fe-visual-verification.md` 4조합 CDP 측정(start·측정·stop 한 명령)
   - [x] 8.4 Verify(최소 범위 — status.md 그룹 8 행): `./gradlew :common:test :gateway:test --tests '*GatewayRoute*'` 재실행 + `scripts/lint` 없음 확인, `git diff --stat` 에 범위 밖 파일 0
 **Acceptance Criteria:**
 - 배포 후 실측(SR-7)은 사용자 승인 배포 뒤 별도 수행: apex 단축 4종 + list 4종 `Location`, `expose` 켠 뒤 공유 버튼 단축 주소.

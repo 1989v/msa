@@ -28,7 +28,7 @@
 | `redis` | `CommonRedisAutoConfiguration` | Redis 클러스터 auto-configuration (`kgd.common.redis.enabled`) |
 | `webclient` | `CommonWebClientAutoConfiguration` | WebClient auto-configuration (`kgd.common.web-client.enabled`) |
 | `webclient` | `WebClientBuilderFactory` | 공통 정책 builder를 clone하여 서비스별 client 생성 |
-| `web` | `CrawlerUserAgents` | 자기소개형 크롤러·헤드리스 UA 판별 — analytics 원장(ADR-0095)과 game 랭킹 제출(ADR-0084 개정)이 같은 목록을 쓴다 |
+| `web` | `CrawlerUserAgents` | 자기소개형 크롤러·헤드리스·메신저 링크 미리보기 봇 UA 판별 — analytics 원장(ADR-0095)·game 랭킹 제출(ADR-0084 개정)·공유 단축 주소 클릭 원장(ADR-0106)이 같은 목록을 쓴다 |
 | `messaging` | `IdempotentEventHandler` | Kafka consumer 멱등 헬퍼 — `(eventId, consumerGroup)` dedup + race 흡수 (ADR-0029) |
 | `messaging` | `ProcessedEventRepositoryPort` | `processed_event` 영속화 추상화 (각 서비스가 JPA 어댑터 구현) |
 | `messaging` | `ProcessedEventRecord` | DTO (JPA 의존성 0) — Port 시그니처용 |
@@ -49,7 +49,6 @@
 | `shortlink` | `ShortLinkRedirects` | 302 응답(`no-store`, `X-Robots-Tag: noindex, nofollow`) 조립. 상태 없는 object — 컨트롤러가 주입 없이 부른다 |
 | `shortlink` | `ShortLinkPath` | 접두사 뒤 경로를 `Home`(빈 경로·`/`·`list`)·`Code`(세그먼트 1개)·`Invalid`(2개 이상)로 가른다. 코드 형식은 판정하지 않는다 |
 | `shortlink` | `ShortLinkAutoConfiguration` | `ShortLinks` 빈 등록 (조건 없음, `@ConditionalOnMissingBean`) |
-| `crawler` | `CrawlerUserAgents` | 스스로 밝히는 크롤러·메신저 미리보기 봇(카카오톡 스크랩·Slack·Discord 등) UA 판별. UA 없음도 크롤러 |
 
 ## Usage
 
