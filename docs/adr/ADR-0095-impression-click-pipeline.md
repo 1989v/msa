@@ -60,7 +60,7 @@ entity_id    String                                    체계가 대상마다 �
 
 ```
 screen_type    화면 종류 (상수)        PLACE_HUB · ATTRACTION_DETAIL · PLACE_REGION
-screen_ref     그 화면의 주체          상세면 그 관광지 id. 목록 화면이면 NULL
+screen_ref     그 화면의 주체          상세면 그 관광지 id. 목록 화면은 비우되, 지역을 축으로 고른 목록(허브·지역 허브)은 그 지역 코드
 section_id     섹션 고유 id            NEARBY_ATTRACTIONS · AMENITY_CAROUSEL · POPULAR_LIST
 section_index  화면 안 섹션 순서       섹션 배치는 바뀐다 — 그때 값으로 남아 있어야 비교가 된다
 item_index     섹션 안 순서            캐로셀 내 위치를 포함한다
@@ -80,8 +80,9 @@ CTR 은 지면마다·순서마다 다른 수치라, 섞으면 「노출은 많�
 같은 화면 한 벌을 식별하는 키다. 밴딧이 쓰던 `searchId` 를 검색 밖으로 일반화한 것이다
 (관광지는 검색이 아닌 경로로도 노출된다 — 허브·주변 명소·지역 드릴다운).
 
-같은 `view_id` + `entity_id` 는 **노출 1회로 센다.** 스크롤로 오갔다고 노출이 늘면 CTR 이
-분모부터 틀린다.
+같은 `view_id` + `entity_id` + `section_id` 는 **노출 1회로 센다.** 스크롤로 오갔다고 노출이 늘면 CTR 이
+분모부터 틀린다. 섹션을 키에 넣는 이유(2026-10-08): 같은 관광지의 카드 선택·지도 열기·찜은 섹션이 다른
+별개의 행동이라 접히면 안 되고, 상세에서 두 섹션에 겹쳐 보인 노출은 섹션마다 CTR 이 다른 수치이므로 2행이 맞다.
 
 ### 4) 스키마는 기동 시 멱등 적용한다
 
@@ -126,6 +127,11 @@ TourAPI 운영계정 승인은 여기에 영향이 없다 — 링크는 data.go.
 집계 날짜는 **KST** 다(`toDate(timestamp, 'Asia/Seoul')`) — ClickHouse 가 UTC 라 전에는 03:30 KST 에
 접는 「어제」에서 KST 마지막 몇 시간이 빠졌고, place-ingest 가 읽는 합계에도 같이 적용된다.
 
+**`clicks`·`unique_clickers` 의 뜻 (2026-10-08)**: 목록 선택(카드·목록 핀·오버레이 핀)만 센다 —
+선택 뒤 후속 행동인 `MAP_LINK`(지도 열기)·`FAVORITE`(찜) 섹션은 `POST_SELECTION_SECTIONS` 로 제외한다.
+노출은 그대로다. 노출 없는 클릭(핀)이 있어 한 관광지의 `clicks` 가 `impressions` 를 넘을 수 있고,
+두 소비자 모두 비율을 쓰지 않으므로 깨지지 않는다.
+
 ### 7) 밴딧 토픽을 원장으로 흡수한다
 
 `search.impression.logged`·`search.click.logged` 는 발행자가 없어 사실상 죽어 있다.
@@ -137,7 +143,7 @@ TourAPI 운영계정 승인은 여기에 영향이 없다 — 링크는 data.go.
 ```
 IntersectionObserver
   ├ 면적 50% 이상 · 연속 1초 이상          스쳐 지나간 것은 노출이 아니다
-  ├ (view_id, entity_id) 로 1회만          되돌아와도 다시 세지 않는다
+  ├ (view_id, entity_id, section_id) 로 1회만   되돌아와도 다시 세지 않는다
   └ 모아서 전송
        ├ 5초마다 또는 20건
        └ pagehide / visibilitychange 에 sendBeacon   이탈 직전 노출을 잃지 않게

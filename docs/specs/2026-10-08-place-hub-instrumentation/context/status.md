@@ -55,3 +55,15 @@ $ npx eslint src/pages/place/__tests__/PlacePage.tracking.test.tsx   ESLINT_EXIT
 $ grep -c "vi.mock('../../../analytics" / "FavoriteButton'" → 0 / 0  (실제 트래커·실제 FavoriteButton 경로)
 ```
 - 프로덕션 코드 변경 0. 구현자가 ⑦ 주입(keyOf 의 sectionId 제거 → ①②③ 빨강: 3건이 1건으로 접힘)을 본 뒤 되돌려 초록.
+
+## TG6 문서·회귀 주입·통합 검증 — PASS (2026-10-08 16:1x KST, 메인 직접)
+```
+회귀 주입 13회(①~⑫, ④ 두 형태): 전부 빨간불 → git checkout → diff 비어 있음 (verifications/regression-injection.md)
+$ cd portal-fe && npx vitest run src/analytics src/components/favorite src/pages/place
+ Test Files  10 passed (10)      Tests  208 passed (208)      VITEST_EXIT=0
+$ npx tsc -b                                                   TSC_EXIT=0
+$ ./gradlew :analytics:app:test --tests '*CollectEventItemTest' --tests '*EventCollectControllerTest' --tests '*ClickHouseAttractionPopularityAdapterTest' --offline -q
+ GRADLE_EXIT=0 · Adapter 6/0 · CollectEventItem 5/0 · Controller 6/0
+$ git status --short → M auth(미커밋 포인터, 담지 않음) · M ADR-0095 · ?? evidence/stage2 · ?? verifications
+```
+- ADR-0095 개정 4곳(`:63` screen_ref · §3 키에 section_id · §6 clicks/unique_clickers 뜻 · FE 노출 감지 키).

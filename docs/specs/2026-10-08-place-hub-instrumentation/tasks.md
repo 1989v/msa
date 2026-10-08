@@ -101,11 +101,11 @@ Total Task Groups: 6
 **Dependencies:** Task Group 1~5
 **Phase:** verify
 **Required Skills:** git, vitest, gradle
-- [ ] 6.0 Complete 검증
-  - [ ] 6.1 `docs/adr/ADR-0095-impression-click-pipeline.md`: `:63` screen_ref 행에 「목록 화면은 비우되, 지역을 축으로 고른 목록(허브·지역 허브)은 그 지역 코드」, `:83` 「같은 `view_id` + `entity_id` + `section_id` 는 노출 1회」, `:140` 「(view_id, entity_id, section_id) 로 1회만」, §6(`:106` 절)에 「`clicks`·`unique_clickers` 는 목록 선택(카드·목록 핀·오버레이 핀)만 센다 — `POST_SELECTION_SECTIONS`(MAP_LINK·FAVORITE) 제외, 노출은 그대로」 한 줄. `common` 주석은 건드리지 않는다(Q8)
-  - [ ] 6.2 회귀 주입 12건 — 하나씩 임시 적용 → 지정 테스트 **빨간불** 확인 → `git checkout -- <파일>` 로 되돌림 → 초록 재확인. 결과를 `docs/specs/2026-10-08-place-hub-instrumentation/verifications/regression-injection.md` 표(주입 · 명령 · 실패한 테스트 이름 · 되돌림 뒤 `git diff --stat` 빈 줄)로: ① SEARCH `track` 제거 ② 패널 `FavoriteButton` 의 `tracking` prop 제거 ③ 카드 `useImpression` ref 제거 ④ 어댑터 `NOT IN` 절 제거(countIf·uniqStateIf 각각) ⑤ `POST_SELECTION_SECTIONS = emptySet()` ⑥ 본문 `sessionId` 분기 제거 ⑦ `keyOf` 의 `sectionId` 제거 ⑧ payload 에 `keyword: keyword` 추가 ⑨ `runKeywordSearch` 의 ref 심기 제거(submit 케이스 + `other` 게이트 둘 다 빨강) ⑩ 허브 지도 링크를 `TrackedLink` 로 교체 ⑪ `PlacedItem.sectionId` 를 `sectionId?: SectionId` 로(Unused `@ts-expect-error` 로 `tsc -b` 빨강) ⑫ `screenRef` 합성에서 시도 접두 제거
-  - [ ] 6.3 통합: `cd portal-fe && npx vitest run src/analytics src/components/favorite src/pages/place && npx tsc -b` · `./gradlew :analytics:app:test --tests '*CollectEventItemTest' --tests '*EventCollectControllerTest' --tests '*ClickHouseAttractionPopularityAdapterTest' --offline -q` · `git status --short` 가 의도한 파일만
-  - [ ] 6.4 Verify: 위 세 명령의 결과 줄 + `regression-injection.md` 12행
+- [x] 6.0 Complete 검증
+  - [x] 6.1 `docs/adr/ADR-0095-impression-click-pipeline.md`: `:63` screen_ref 행에 「목록 화면은 비우되, 지역을 축으로 고른 목록(허브·지역 허브)은 그 지역 코드」, `:83` 「같은 `view_id` + `entity_id` + `section_id` 는 노출 1회」, `:140` 「(view_id, entity_id, section_id) 로 1회만」, §6(`:106` 절)에 「`clicks`·`unique_clickers` 는 목록 선택(카드·목록 핀·오버레이 핀)만 센다 — `POST_SELECTION_SECTIONS`(MAP_LINK·FAVORITE) 제외, 노출은 그대로」 한 줄. `common` 주석은 건드리지 않는다(Q8)
+  - [x] 6.2 회귀 주입 12건 — 하나씩 임시 적용 → 지정 테스트 **빨간불** 확인 → `git checkout -- <파일>` 로 되돌림 → 초록 재확인. 결과를 `docs/specs/2026-10-08-place-hub-instrumentation/verifications/regression-injection.md` 표(주입 · 명령 · 실패한 테스트 이름 · 되돌림 뒤 `git diff --stat` 빈 줄)로: ① SEARCH `track` 제거 ② 패널 `FavoriteButton` 의 `tracking` prop 제거 ③ 카드 `useImpression` ref 제거 ④ 어댑터 `NOT IN` 절 제거(countIf·uniqStateIf 각각) ⑤ `POST_SELECTION_SECTIONS = emptySet()` ⑥ 본문 `sessionId` 분기 제거 ⑦ `keyOf` 의 `sectionId` 제거 ⑧ payload 에 `keyword: keyword` 추가 ⑨ `runKeywordSearch` 의 ref 심기 제거(submit 케이스 + `other` 게이트 둘 다 빨강) ⑩ 허브 지도 링크를 `TrackedLink` 로 교체 ⑪ `PlacedItem.sectionId` 를 `sectionId?: SectionId` 로(Unused `@ts-expect-error` 로 `tsc -b` 빨강) ⑫ `screenRef` 합성에서 시도 접두 제거
+  - [x] 6.3 통합: `cd portal-fe && npx vitest run src/analytics src/components/favorite src/pages/place && npx tsc -b` · `./gradlew :analytics:app:test --tests '*CollectEventItemTest' --tests '*EventCollectControllerTest' --tests '*ClickHouseAttractionPopularityAdapterTest' --offline -q` · `git status --short` 가 의도한 파일만
+  - [x] 6.4 Verify: 위 세 명령의 결과 줄 + `regression-injection.md` 12행
 **Acceptance Criteria:**
 - 12/12 주입이 빨간불 → 되돌림 뒤 초록
 - 통합 명령 전부 exit 0, 변경 파일 목록이 스펙 범위(FE 7 + analytics 7 + ADR 1 + verifications 1)
