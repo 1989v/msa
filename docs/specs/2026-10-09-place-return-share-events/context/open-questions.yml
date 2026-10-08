@@ -1,0 +1,16 @@
+questions:
+  - id: Q1
+    stage: post-impl
+    status: open
+    question: ADR-0107 승인(사용자) — 승인 뒤 kgd.wishlist.share.enabled=true 로 켠다
+    answer: 승인 전에는 꺼둔 채 배포
+  - id: J10
+    stage: post-impl
+    status: open
+    question: 공유 토큰이 /login 의 GA 로 가는 경로(next 쿼리·같은 출처 리퍼러)를 어떻게 막을까
+    answer: GA 로더 조건을 셋으로 넓힌다 — 경로 /shared/, 쿼리 %2Fshared%2F, 리퍼러 경로 /shared/ (spec SR-2.10·SR-4.4, ADR-0107 Consequences)
+  - id: J11
+    stage: post-impl
+    status: open
+    question: 묶음 공유에 X·LinkedIn 버튼을 둘까
+    answer: 두지 않는다 — SharePanel channels prop 으로 복사·Web Share 만 (spec SR-2.9·SR-3.2·SR-4.1·SR-4.3, ADR-0107 §7)
