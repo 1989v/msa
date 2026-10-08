@@ -1,5 +1,8 @@
 package com.kgd.game.application.catalog.service
 
+import com.kgd.common.shortlink.ShortCode
+import com.kgd.common.shortlink.ShortLinkPrefix
+import com.kgd.common.shortlink.ShortLinks
 import com.kgd.game.application.catalog.dto.GameCollectionDto
 import com.kgd.game.application.catalog.dto.GameDetailDto
 import com.kgd.game.application.catalog.dto.GameSort
@@ -30,6 +33,7 @@ class GameQueryService(
     private val statsRepository: GameStatsRepositoryPort,
     private val collectionRepository: GameCollectionRepositoryPort,
     private val records: com.kgd.game.application.play.port.MemberGameRecordPort,
+    private val shortLinks: ShortLinks,
 ) : ListGamesUseCase, GetGameDetailUseCase, GetSimilarGamesUseCase, GetGameCollectionsUseCase {
     companion object {
         private const val COLLECTION_SIZE = 10
@@ -73,6 +77,7 @@ class GameQueryService(
         return base.copy(
             estimatedMinutes = gameId?.let { estimateMinutes(it) },
             playerMode = if (base.tags.any { it.equals("multiplayer", ignoreCase = true) }) "MULTI" else "SINGLE",
+            shortUrl = gameId?.let { shortLinks.exposedShortUrl(ShortLinkPrefix.GAME, ShortCode.encode(it)) },
         )
     }
 

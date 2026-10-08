@@ -10,3 +10,6 @@ SEED=0x5A3C96E1F0, M1=0xC2B2AE3D27, M2=0x165667B19F, xorshift20 3회. 골든: 0�
 ### 2026-10-08 — 302 응답 조립은 상태 없는 함수, UseCase 는 목적지 문자열만
 그룹 2 구현자의 열린 질문. 레이어 게이트 ⑤ 가 컨트롤러에 `com.kgd.common.shortlink` 타입 주입을 막아, 첫 구현은 UseCase 가 `ResponseEntity` 를 반환했다(application 이 웹 타입에 의존 — 레이어 위반).
 302 조립을 상태 없는 함수(`ShortLinkRedirects`)로 내려 컨트롤러가 주입 없이 부르고, UseCase 는 목적지 주소만 돌려준다. 그룹 3·4·5 가 같은 모양을 쓴다.
+
+### 2026-10-08 — UA 계열·리퍼러 호스트 추출을 common 으로 (Rule of Three)
+그룹 3·4 구현자의 열린 질문. deal·game·blog 에 같은 함수가 세 벌, place 가 네 번째. 그룹 5 에서 common 에 올리고 game·blog 는 그것을 쓰게 바꾼다. deal 은 이번 범위 밖이라 그대로 두고 통합 후보로 보고한다.

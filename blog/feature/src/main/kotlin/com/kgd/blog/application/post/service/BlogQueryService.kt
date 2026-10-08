@@ -26,6 +26,9 @@ import com.kgd.blog.domain.model.Paging
 import com.kgd.blog.domain.model.PostStatus
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
+import com.kgd.common.shortlink.ShortCode
+import com.kgd.common.shortlink.ShortLinkPrefix
+import com.kgd.common.shortlink.ShortLinks
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -44,6 +47,7 @@ class BlogQueryService(
     private val reactionRepository: BlogReactionRepositoryPort,
     private val assembler: BlogAssembler,
     private val conceptRepository: BlogPostConceptRepositoryPort,
+    private val shortLinks: ShortLinks,
 ) : GetBlogCategoryTreeUseCase, GetBlogPostsUseCase, GetBlogPostUseCase, GetBlogAuthorSpaceUseCase, GetBlogCommentsUseCase {
 
     /** 목록·네비용 카테고리 트리. 숨김(HIDDEN)은 빠진다 */
@@ -90,8 +94,12 @@ class BlogQueryService(
     }
 
     /** 공개 상세. 미발행 슬러그는 존재를 드러내지 않고 404 */
-    override fun execute(query: GetBlogPostUseCase.Query): BlogPostDetail =
-        detailOf(publishedOrThrow(query.slug), query.identity)
+    override fun execute(query: GetBlogPostUseCase.Query): BlogPostDetail {
+        val post = publishedOrThrow(query.slug)
+        return detailOf(post, query.identity).copy(
+            shortUrl = post.id?.let { shortLinks.exposedShortUrl(ShortLinkPrefix.BLOG, ShortCode.encode(it)) },
+        )
+    }
 
     override fun execute(query: GetBlogAuthorSpaceUseCase.Query): BlogAuthorSpace {
         val profile = profileRepository.findByHandle(query.handle)

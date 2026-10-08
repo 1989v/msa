@@ -45,6 +45,11 @@ data class BlogPostDetail(
     val myScore: Int?,
     /** 작성자가 고른 개념 id — `/tech/c/<id>` 로 잇는다 */
     val conceptIds: List<String> = emptyList(),
+    /**
+     * 공유용 단축 주소(`https://1989v.com/b/{code}`). 공개 상세에만 싣고, 노출 설정
+     * (`kgd.common.short-link.expose`)이 꺼져 있으면 null 이다 — FE 는 그때 canonical 주소를 쓴다.
+     */
+    val shortUrl: String? = null,
 )
 
 data class BlogPage<T>(

@@ -1,6 +1,7 @@
 package com.kgd.blog.infrastructure.retention
 
 import com.kgd.blog.application.interaction.usecase.PurgeBlogViewsUseCase
+import com.kgd.blog.application.shortlink.usecase.PurgeBlogShortLinkClicksUseCase
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Component
 private val log = KotlinLogging.logger {}
 
 /**
- * blog 원장(`blog_post_view`, 하루 1표 조회 원장) 보존기간 정리 배치 (ADR-0077).
+ * blog 원장(`blog_post_view` 하루 1표 조회 원장, `blog_short_link_click`) 보존기간 정리 배치 (ADR-0077).
  *
  * **code-dictionary 의 `RetentionRunner` 에서 갈라져 나왔다** (ADR-0093 ③). blog 가 content 로
  * 옮겨가 그쪽 클래스패스에서 이 원장을 볼 수 없기 때문이다.
@@ -25,17 +26,34 @@ private val log = KotlinLogging.logger {}
 @Profile("retention")
 class BlogRetentionRunner(
     private val purgeBlogViews: PurgeBlogViewsUseCase,
+    private val purgeShortLinkClicks: PurgeBlogShortLinkClicksUseCase,
 ) : ApplicationRunner {
 
+    /** 원장마다 따로 잡는다 — 하나가 실패해도 나머지는 돈다. */
     override fun run(args: ApplicationArguments) {
-        val result = runCatching { purgeBlogViews.execute() }
+        val results = listOf(
+            purge("blog_post_view") { purgeBlogViews.execute() },
+            purge("blog_short_link_click") { purgeShortLinkClicks.olderThan(BLOG_SHORT_LINK_CLICK_RETENTION_DAYS) },
+        )
+        log.info { "원장 정리 완료 — ${results.joinToString(", ")}" }
+    }
+
+    private fun purge(ledger: String, block: () -> Int): String =
+        runCatching(block)
             .fold(
-                onSuccess = { "blog_post_view ${it}행" },
+                onSuccess = { "$ledger ${it}행" },
                 onFailure = {
-                    log.error(it) { "원장 정리 실패 — blog_post_view" }
-                    "blog_post_view 실패"
+                    log.error(it) { "원장 정리 실패 — $ledger" }
+                    "$ledger 실패"
                 },
             )
-        log.info { "원장 정리 완료 — $result" }
+
+    companion object {
+        /**
+         * 단축 주소 클릭 원장 보존기간. 다른 조회·클릭 원장과 같은 90일이다 (ADR-0077).
+         * 글별 누적 수(`blog_short_link_stat`)는 지우지 않는다.
+         * **`/privacy` §6 의 숫자와 같아야 한다.**
+         */
+        const val BLOG_SHORT_LINK_CLICK_RETENTION_DAYS = 90L
     }
 }

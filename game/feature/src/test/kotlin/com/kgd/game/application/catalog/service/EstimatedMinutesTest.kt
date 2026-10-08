@@ -1,5 +1,7 @@
 package com.kgd.game.application.catalog.service
 
+import com.kgd.common.shortlink.ShortLinkProperties
+import com.kgd.common.shortlink.ShortLinks
 import com.kgd.game.application.catalog.port.GameCollectionRepositoryPort
 import com.kgd.game.application.catalog.port.GameRepositoryPort
 import com.kgd.game.application.catalog.port.GameStatsRepositoryPort
@@ -37,7 +39,7 @@ class EstimatedMinutesTest : BehaviorSpec({
         val records = mockk<MemberGameRecordPort>()
         every { records.recentDurations(any(), any()) } returns durations
         every { stats.findByGameId(any()) } returns null
-        return GameQueryService(games, stats, mockk<GameCollectionRepositoryPort>(), records) to games
+        return GameQueryService(games, stats, mockk<GameCollectionRepositoryPort>(), records, ShortLinks(ShortLinkProperties())) to games
     }
 
     Given("세션 표본이 모자라면") {

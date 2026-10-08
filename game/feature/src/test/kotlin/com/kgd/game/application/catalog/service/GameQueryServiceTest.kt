@@ -1,5 +1,8 @@
 package com.kgd.game.application.catalog.service
 
+import com.kgd.common.shortlink.ShortCode
+import com.kgd.common.shortlink.ShortLinkProperties
+import com.kgd.common.shortlink.ShortLinks
 import com.kgd.game.application.catalog.dto.GameSort
 import com.kgd.game.application.catalog.port.GameCollectionRepositoryPort
 import com.kgd.game.application.catalog.port.GameRepositoryPort
@@ -17,7 +20,9 @@ import com.kgd.game.domain.catalog.model.LoadType
 import com.kgd.game.domain.catalog.model.Orientation
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldStartWith
 import io.mockk.every
 import io.mockk.mockk
 import java.time.Instant
@@ -25,6 +30,8 @@ import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 
 class GameQueryServiceTest : BehaviorSpec({
+
+    val shortLinks = ShortLinks(ShortLinkProperties())
 
     fun gameWith(id: Long, slug: String, status: GameStatus): Game = Game.restore(
         id = id,
@@ -52,7 +59,7 @@ class GameQueryServiceTest : BehaviorSpec({
             then("통계와 함께 반환되어야 한다") {
                 val gameRepository = mockk<GameRepositoryPort>()
                 val statsRepository = mockk<GameStatsRepositoryPort>()
-                val service = GameQueryService(gameRepository, statsRepository, mockk(), mockk(relaxed = true))
+                val service = GameQueryService(gameRepository, statsRepository, mockk(), mockk(relaxed = true), shortLinks)
 
                 every { gameRepository.findBySlug("alpha") } returns gameWith(1L, "alpha", GameStatus.PUBLISHED)
                 every { statsRepository.findByGameId(1L) } returns
@@ -66,10 +73,38 @@ class GameQueryServiceTest : BehaviorSpec({
             }
         }
 
+        `when`("단축 주소 노출이 켜져 있으면") {
+            then("shortUrl 이 apex /g/ 로 시작하고, 코드를 디코딩하면 그 게임 id 다") {
+                val gameRepository = mockk<GameRepositoryPort>()
+                val statsRepository = mockk<GameStatsRepositoryPort>()
+                val exposed = ShortLinks(ShortLinkProperties(expose = true))
+                val service = GameQueryService(gameRepository, statsRepository, mockk(), mockk(relaxed = true), exposed)
+                every { gameRepository.findBySlug("alpha") } returns gameWith(4242L, "alpha", GameStatus.BETA)
+                every { statsRepository.findByGameId(4242L) } returns null
+
+                val shortUrl = requireNotNull(service.execute(GetGameDetailUseCase.Query("alpha")).shortUrl)
+
+                shortUrl shouldStartWith "https://1989v.com/g/"
+                ShortCode.decode(shortUrl.removePrefix("https://1989v.com/g/")) shouldBe 4242L
+            }
+        }
+
+        `when`("단축 주소 노출이 꺼져 있으면") {
+            then("shortUrl 을 싣지 않는다 — 해석 경로를 배포·실측하기 전에 주소가 퍼지지 않게") {
+                val gameRepository = mockk<GameRepositoryPort>()
+                val statsRepository = mockk<GameStatsRepositoryPort>()
+                val service = GameQueryService(gameRepository, statsRepository, mockk(), mockk(relaxed = true), shortLinks)
+                every { gameRepository.findBySlug("alpha") } returns gameWith(1L, "alpha", GameStatus.PUBLISHED)
+                every { statsRepository.findByGameId(1L) } returns null
+
+                service.execute(GetGameDetailUseCase.Query("alpha")).shortUrl.shouldBeNull()
+            }
+        }
+
         `when`("DRAFT 게임이면") {
             then("존재를 숨기고 GameNotFoundException 이어야 한다") {
                 val gameRepository = mockk<GameRepositoryPort>()
-                val service = GameQueryService(gameRepository, mockk(), mockk(), mockk(relaxed = true))
+                val service = GameQueryService(gameRepository, mockk(), mockk(), mockk(relaxed = true), shortLinks)
                 every { gameRepository.findBySlug("hidden") } returns gameWith(2L, "hidden", GameStatus.DRAFT)
 
                 shouldThrow<GameNotFoundException> { service.execute(GetGameDetailUseCase.Query("hidden")) }
@@ -79,7 +114,7 @@ class GameQueryServiceTest : BehaviorSpec({
         `when`("SUSPENDED 게임이면") {
             then("마찬가지로 GameNotFoundException 이어야 한다") {
                 val gameRepository = mockk<GameRepositoryPort>()
-                val service = GameQueryService(gameRepository, mockk(), mockk(), mockk(relaxed = true))
+                val service = GameQueryService(gameRepository, mockk(), mockk(), mockk(relaxed = true), shortLinks)
                 every { gameRepository.findBySlug("stopped") } returns gameWith(3L, "stopped", GameStatus.SUSPENDED)
 
                 shouldThrow<GameNotFoundException> { service.execute(GetGameDetailUseCase.Query("stopped")) }
@@ -93,7 +128,7 @@ class GameQueryServiceTest : BehaviorSpec({
                 val gameRepository = mockk<GameRepositoryPort>()
                 val statsRepository = mockk<GameStatsRepositoryPort>()
                 val collectionRepository = mockk<GameCollectionRepositoryPort>()
-                val service = GameQueryService(gameRepository, statsRepository, collectionRepository, mockk(relaxed = true))
+                val service = GameQueryService(gameRepository, statsRepository, collectionRepository, mockk(relaxed = true), shortLinks)
 
                 every { collectionRepository.findActive() } returns listOf(
                     GameCollection.restore(
@@ -126,7 +161,7 @@ class GameQueryServiceTest : BehaviorSpec({
                 val gameRepository = mockk<GameRepositoryPort>()
                 val statsRepository = mockk<GameStatsRepositoryPort>()
                 val collectionRepository = mockk<GameCollectionRepositoryPort>()
-                val service = GameQueryService(gameRepository, statsRepository, collectionRepository, mockk(relaxed = true))
+                val service = GameQueryService(gameRepository, statsRepository, collectionRepository, mockk(relaxed = true), shortLinks)
 
                 every { collectionRepository.findActive() } returns listOf(
                     GameCollection.restore(
@@ -150,7 +185,7 @@ class GameQueryServiceTest : BehaviorSpec({
                 val gameRepository = mockk<GameRepositoryPort>()
                 val statsRepository = mockk<GameStatsRepositoryPort>()
                 val collectionRepository = mockk<GameCollectionRepositoryPort>()
-                val service = GameQueryService(gameRepository, statsRepository, collectionRepository, mockk(relaxed = true))
+                val service = GameQueryService(gameRepository, statsRepository, collectionRepository, mockk(relaxed = true), shortLinks)
 
                 every { collectionRepository.findActive() } returns listOf(
                     GameCollection.restore(
@@ -194,7 +229,7 @@ class GameQueryServiceTest : BehaviorSpec({
                 val gameRepository = mockk<GameRepositoryPort>()
                 val statsRepository = mockk<GameStatsRepositoryPort>()
                 val collectionRepository = mockk<GameCollectionRepositoryPort>()
-                val service = GameQueryService(gameRepository, statsRepository, collectionRepository, mockk(relaxed = true))
+                val service = GameQueryService(gameRepository, statsRepository, collectionRepository, mockk(relaxed = true), shortLinks)
 
                 every { collectionRepository.findActive() } returns listOf(
                     collectionOf(1L, "trending", CollectionType.TRENDING, displayOrder = 1),
@@ -220,7 +255,7 @@ class GameQueryServiceTest : BehaviorSpec({
                 val gameRepository = mockk<GameRepositoryPort>()
                 val statsRepository = mockk<GameStatsRepositoryPort>()
                 val collectionRepository = mockk<GameCollectionRepositoryPort>()
-                val service = GameQueryService(gameRepository, statsRepository, collectionRepository, mockk(relaxed = true))
+                val service = GameQueryService(gameRepository, statsRepository, collectionRepository, mockk(relaxed = true), shortLinks)
 
                 val alpha = gameWith(1L, "alpha", GameStatus.PUBLISHED)
                 every { collectionRepository.findActive() } returns listOf(
@@ -250,7 +285,7 @@ class GameQueryServiceTest : BehaviorSpec({
                 val gameRepository = mockk<GameRepositoryPort>()
                 val statsRepository = mockk<GameStatsRepositoryPort>()
                 val collectionRepository = mockk<GameCollectionRepositoryPort>()
-                val service = GameQueryService(gameRepository, statsRepository, collectionRepository, mockk(relaxed = true))
+                val service = GameQueryService(gameRepository, statsRepository, collectionRepository, mockk(relaxed = true), shortLinks)
 
                 every { collectionRepository.findActive() } returns listOf(
                     collectionOf(1L, "trending", CollectionType.TRENDING, displayOrder = 1),
@@ -269,7 +304,7 @@ class GameQueryServiceTest : BehaviorSpec({
                 val gameRepository = mockk<GameRepositoryPort>()
                 val statsRepository = mockk<GameStatsRepositoryPort>()
                 val collectionRepository = mockk<GameCollectionRepositoryPort>()
-                val service = GameQueryService(gameRepository, statsRepository, collectionRepository, mockk(relaxed = true))
+                val service = GameQueryService(gameRepository, statsRepository, collectionRepository, mockk(relaxed = true), shortLinks)
 
                 every { collectionRepository.findActive() } returns listOf(
                     collectionOf(1L, "retro", CollectionType.TAG_BASED, displayOrder = 1, tagSlug = "retro"),

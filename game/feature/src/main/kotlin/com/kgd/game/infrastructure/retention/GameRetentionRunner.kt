@@ -1,6 +1,7 @@
 package com.kgd.game.infrastructure.retention
 
 import com.kgd.game.application.roster.usecase.PurgeRostersUseCase
+import com.kgd.game.application.shortlink.usecase.PurgeGameShortLinkClicksUseCase
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Component
 private val log = KotlinLogging.logger {}
 
 /**
- * game 원장(`party_friend_group`) 보존기간 정리 배치 (ADR-0077 / ADR-0092).
+ * game 원장(`party_friend_group`, `game_short_link_click`) 보존기간 정리 배치 (ADR-0077 / ADR-0092).
  *
  * 상주 파드도 새 이미지도 만들지 않는다 — content 이미지를 그대로 쓰고
  * `--spring.main.web-application-type=none --spring.profiles.active=kubernetes,retention`
@@ -29,19 +30,27 @@ private val log = KotlinLogging.logger {}
 @Profile("retention")
 class GameRetentionRunner(
     private val purgeRosters: PurgeRostersUseCase,
+    private val purgeShortLinkClicks: PurgeGameShortLinkClicksUseCase,
 ) : ApplicationRunner {
 
+    /** 원장마다 따로 잡는다 — 하나가 실패해도 나머지는 돈다. */
     override fun run(args: ApplicationArguments) {
-        val result = runCatching { purgeRosters.unusedFor(FRIEND_GROUP_RETENTION_DAYS) }
+        val results = listOf(
+            purge("party_friend_group") { purgeRosters.unusedFor(FRIEND_GROUP_RETENTION_DAYS) },
+            purge("game_short_link_click") { purgeShortLinkClicks.olderThan(GAME_SHORT_LINK_CLICK_RETENTION_DAYS) },
+        )
+        log.info { "원장 정리 완료 — ${results.joinToString(", ")}" }
+    }
+
+    private fun purge(ledger: String, block: () -> Int): String =
+        runCatching(block)
             .fold(
-                onSuccess = { "party_friend_group ${it}행" },
+                onSuccess = { "$ledger ${it}행" },
                 onFailure = {
-                    log.error(it) { "원장 정리 실패 — party_friend_group" }
-                    "party_friend_group 실패"
+                    log.error(it) { "원장 정리 실패 — $ledger" }
+                    "$ledger 실패"
                 },
             )
-        log.info { "원장 정리 완료 — $result" }
-    }
 
     companion object {
         /**
@@ -55,5 +64,12 @@ class GameRetentionRunner(
          * 실제로 그랬다. 그래서 이 상수는 위 `run()` 에서 반드시 소비된다.
          */
         const val FRIEND_GROUP_RETENTION_DAYS = 365L
+
+        /**
+         * 단축 주소 클릭 원장 보존기간. 다른 조회·클릭 원장과 같은 90일이다 (ADR-0077).
+         * 게임별 누적 수(`game_short_link_stat`)는 지우지 않는다.
+         * **`/privacy` §6 의 숫자와 같아야 한다.**
+         */
+        const val GAME_SHORT_LINK_CLICK_RETENTION_DAYS = 90L
     }
 }

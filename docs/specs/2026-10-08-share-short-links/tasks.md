@@ -48,13 +48,13 @@ Total Task Groups: 8
 **Dependencies:** Task Group 1
 **Phase:** backend
 **Required Skills:** Kotlin, Spring MVC, JPA, Flyway
-- [ ] 3.0 Complete game
-  - [ ] 3.1 테스트 작성: `GameStatus` 전수 × 유효 코드 — 리다이렉터가 여는 집합 == `isPlayable()` 참 집합 · 302 목적지 `game.1989v.com/games/{slug}`(slug 경로 인코딩) · 실패 → game 홈 · 기록 실패에도 302 · 상세 `shortUrl` 이 리터럴 `https://1989v.com/g/` 로 시작하고 디코딩하면 그 id
-  - [ ] 3.2 `V105__game_short_link_click.sql`: 원장(game_id, clicked_at, referrer_host, ua_family) + 집계(game_id PK, click_count) — Game 행 컬럼 금지(`game/CLAUDE.md`)
-  - [ ] 3.3 UseCase·Port·Adapter(`gameTransactionManager` 한정 + REQUIRES_NEW) + `GameShortLinkController` `GET /g/**`
-  - [ ] 3.4 `GameDetailDto.shortUrl`(expose 설정 따름)
-  - [ ] 3.5 `GameRetentionRunner` 에 원장 90일 항목
-  - [ ] 3.6 Verify: `./gradlew :game:feature:test --tests '*GameShortLink*' --tests '*GameRetentionRunner*' --tests '*GameQueryService*'`
+- [x] 3.0 Complete game
+  - [x] 3.1 테스트 작성: `GameStatus` 전수 × 유효 코드 — 리다이렉터가 여는 집합 == `isPlayable()` 참 집합 · 302 목적지 `game.1989v.com/games/{slug}`(slug 경로 인코딩) · 실패 → game 홈 · 기록 실패에도 302 · 상세 `shortUrl` 이 리터럴 `https://1989v.com/g/` 로 시작하고 디코딩하면 그 id
+  - [x] 3.2 `V105__game_short_link_click.sql`: 원장(game_id, clicked_at, referrer_host, ua_family) + 집계(game_id PK, click_count) — Game 행 컬럼 금지(`game/CLAUDE.md`)
+  - [x] 3.3 UseCase·Port·Adapter(`gameTransactionManager` 한정 + REQUIRES_NEW) + `GameShortLinkController` `GET /g/**`
+  - [x] 3.4 `GameDetailDto.shortUrl`(expose 설정 따름)
+  - [x] 3.5 `GameRetentionRunner` 에 원장 90일 항목
+  - [x] 3.6 Verify: `./gradlew :game:feature:test --tests '*GameShortLink*' --tests '*GameRetentionRunner*' --tests '*GameQueryService*'`
 **Acceptance Criteria:**
 - 공개 판정이 상세 API 와 같은 함수(`isPlayable()`)를 부른다(상태 목록 사본 없음).
 
@@ -62,13 +62,13 @@ Total Task Groups: 8
 **Dependencies:** Task Group 1
 **Phase:** backend
 **Required Skills:** Kotlin, Spring MVC, JPA, Flyway
-- [ ] 4.0 Complete blog
-  - [ ] 4.1 테스트 작성: `PostStatus` 전수 × 유효 코드 — 여는 집합 == `publiclyVisible` · 302 `blog.1989v.com/posts/{slug}` · 실패 → blog 홈 · 기록 실패에도 302 · 상세 `shortUrl` 리터럴 `/b/` + 디코딩 id
-  - [ ] 4.2 `V2__blog_short_link_click.sql`: 원장 + 집계
-  - [ ] 4.3 UseCase·Port·Adapter(`blogTransactionManager` 한정 + REQUIRES_NEW) + `BlogShortLinkController` `GET /b/**`
-  - [ ] 4.4 블로그 글 상세 응답 `shortUrl`
-  - [ ] 4.5 `BlogRetentionRunner` 에 원장 90일 항목
-  - [ ] 4.6 Verify: `./gradlew :blog:feature:test --tests '*BlogShortLink*' --tests '*BlogRetentionRunner*'`
+- [x] 4.0 Complete blog
+  - [x] 4.1 테스트 작성: `PostStatus` 전수 × 유효 코드 — 여는 집합 == `publiclyVisible` · 302 `blog.1989v.com/posts/{slug}` · 실패 → blog 홈 · 기록 실패에도 302 · 상세 `shortUrl` 리터럴 `/b/` + 디코딩 id
+  - [x] 4.2 `V2__blog_short_link_click.sql`: 원장 + 집계
+  - [x] 4.3 UseCase·Port·Adapter(`blogTransactionManager` 한정 + REQUIRES_NEW) + `BlogShortLinkController` `GET /b/**`
+  - [x] 4.4 블로그 글 상세 응답 `shortUrl`
+  - [x] 4.5 `BlogRetentionRunner` 에 원장 90일 항목
+  - [x] 4.6 Verify: `./gradlew :blog:feature:test --tests '*BlogShortLink*' --tests '*BlogRetentionRunner*'`
 **Acceptance Criteria:**
 - `PUBLISHED` 외 상태는 blog 홈으로 간다.
 
