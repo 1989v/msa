@@ -1,0 +1,15 @@
+# 공유용 단축 주소 노출(ADR-0106) — 상세 응답에 shortUrl 을 싣는다.
+# 해석 경로(/r /p /g /b)가 운영에서 302 로 실측된 뒤에 켰다. 끄면 공유 버튼이 canonical 로 돌아간다.
+# shortUrl 을 내는 곳: atlas(이력서 어드민 링크) · content(게임·글) · search(관광지 상세).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: short-link-expose
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          env:
+            - name: KGD_COMMON_SHORTLINK_EXPOSE
+              value: "true"

@@ -68,6 +68,9 @@ patches:
   # 세션 쿠키 도메인 — 서브도메인이 로그인을 공유한다 (ADR-0101)
   - path: patches/auth-cookie-domain.yaml
     target: {kind: Deployment, name: auth}
+  # 공유용 단축 주소 노출(ADR-0106) — 상세 응답에 shortUrl
+  - path: patches/short-link-expose.yaml
+    target: {kind: Deployment, name: "^(atlas|content|search)$"}
   # 모든 Deployment — 무중단: 새 파드 Ready 후 교체 (서지 예산은 sync-wave 가 묶는다, ADR-0075)
   - path: patches/rolling-surge-first.yaml
     target:
