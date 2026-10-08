@@ -1,0 +1,9 @@
+mode: no-interview
+ambiguity_threshold: 0.2
+rounds: 0
+decided_by_user:
+  - location: /tech/search
+  - source: repo markdown, build-time render
+  - scope: attractions search + unified search
+decided_by_session:
+  - markdown lives in portal-fe/src/content (Docker build context); docs/ gets a pointer

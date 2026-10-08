@@ -1,0 +1,31 @@
+questions:
+  - id: Q1
+    stage: pre-impl
+    status: closed
+    question: 생성물(`src/generated/search-architecture.json`)을 커밋할 것인가, 빌드마다 만들 것인가?
+    answer: 빌드마다 만든다(.gitignore). 아틀라스 `generated/graph.json` 은 커밋하지만 그쪽은 게이트가 대조하는 대상이고, 여기는 원본 md 가 레포에 있어 산출물을 둘 이유가 없다. 프리렌더·페이지 둘 다 빌드 체인 안에서 읽는다. 렌더 스텝은 package.json(build·dev)·Dockerfile:41·ci.yml Type check 앞 세 곳에 같은 순서로, `tsc -b` 앞(사용자 2026-10-08 승인 — OCI 비용 무관).
+  - id: Q2
+    stage: pre-impl
+    status: closed
+    question: 원본 마크다운 위치 — docs/architecture 인가 portal-fe 안인가?
+    answer: portal-fe/src/content/search-architecture.md. Docker context 가 portal-fe 뿐이고 재빌드 트리거도 portal-fe/* 뿐이라 docs/ 원본은 빌드가 못 읽고 고쳐도 재배포가 안 된다. docs/architecture/search-overview.md 는 3줄 포인터.
+  - id: Q3
+    stage: pre-impl
+    status: closed
+    question: 로컬 fencesvg 0.10.1 vs 락 0.11.2 — 로컬 검증을 어떻게?
+    answer: 작업 트리 npm ci 실설치 0.11.2(2026-10-08 확인) — CI 와 같다. 표기 제한(파이프 라벨)은 유지.
+  - id: Q4
+    stage: post-impl
+    status: open
+    question: ADR-0062 에 /tech/search 승격 결정 한 줄을 남길 것인가(개념당 얇은 URL 금지 원칙과의 관계)?
+    answer: 선적 뒤. 단일 페이지라 doorway 가 아니다.
+  - id: Q5
+    stage: post-impl
+    status: open
+    question: gateway/README.md:25 「검색 API JWT 필요」가 코드(공개)와 불일치, ServiceCatalogPage 고아 — 정리할 것인가?
+    answer: 보고만. 별도. ADR-0090 D4(두 레그 가중치)·D6(region 타입)과 코드 불일치도 같이.
+  - id: Q6
+    stage: post-impl
+    status: open
+    question: /hns:glossary(search BC) 갱신 — §4 표를 시드로. 글로서리는 2026-05-11 Elasticsearch 기준.
+    answer: 선적 뒤.
