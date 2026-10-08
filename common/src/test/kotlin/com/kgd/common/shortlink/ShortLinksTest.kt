@@ -4,8 +4,6 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import org.springframework.boot.autoconfigure.AutoConfigurations
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
-import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpStatus
 
 class ShortLinksTest : BehaviorSpec({
 
@@ -45,16 +43,6 @@ class ShortLinksTest : BehaviorSpec({
                 links.home(ShortLinkPrefix.BLOG) shouldBe "https://blog.1989v.com/"
             }
         }
-        `when`("302 응답을 만들면") {
-            val response = links.redirect("https://game.1989v.com/games/x")
-            then("Location 과 캐시·색인 금지 헤더를 싣는다") {
-                response.statusCode shouldBe HttpStatus.FOUND
-                response.headers.getFirst(HttpHeaders.LOCATION) shouldBe "https://game.1989v.com/games/x"
-                response.headers.getFirst(HttpHeaders.CACHE_CONTROL) shouldBe "no-store"
-                response.headers.getFirst("X-Robots-Tag") shouldBe "noindex, nofollow"
-                response.body shouldBe null
-            }
-        }
     }
 
     given("설정을 바꾼 origin") {
@@ -64,8 +52,7 @@ class ShortLinksTest : BehaviorSpec({
         `when`("단축 주소와 목적지를 만들면") {
             then("끝의 / 를 정리한 설정값만 쓴다") {
                 custom.exposedShortUrl(ShortLinkPrefix.GAME, "abc123") shouldBe "http://localhost:8080/g/abc123"
-                custom.redirect(custom.home(ShortLinkPrefix.GAME)).headers.location.toString() shouldBe
-                    "http://game.local/"
+                custom.home(ShortLinkPrefix.GAME) shouldBe "http://game.local/"
             }
         }
     }

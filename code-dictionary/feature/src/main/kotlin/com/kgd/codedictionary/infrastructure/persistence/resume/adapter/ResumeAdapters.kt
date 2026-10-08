@@ -4,6 +4,7 @@ import com.kgd.codedictionary.application.resume.port.ResumeAccessLogRepositoryP
 import com.kgd.codedictionary.application.resume.port.ResumeDocumentRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeSettingRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeShareLinkRepositoryPort
+import com.kgd.codedictionary.application.resume.port.ResumeShortLinkClickRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeVisitRecord
 import com.kgd.codedictionary.application.resume.port.ResumeVisitStats
 import com.kgd.codedictionary.domain.resume.model.ResumeDocument
@@ -13,10 +14,13 @@ import com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeAcc
 import com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeDocumentJpaEntity
 import com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeSettingJpaEntity
 import com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeShareLinkJpaEntity
+import com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeShortLinkClickJpaEntity
 import com.kgd.codedictionary.infrastructure.persistence.resume.repository.ResumeAccessLogJpaRepository
 import com.kgd.codedictionary.infrastructure.persistence.resume.repository.ResumeDocumentJpaRepository
 import com.kgd.codedictionary.infrastructure.persistence.resume.repository.ResumeSettingJpaRepository
 import com.kgd.codedictionary.infrastructure.persistence.resume.repository.ResumeShareLinkJpaRepository
+import com.kgd.codedictionary.infrastructure.persistence.resume.repository.ResumeShortLinkClickJpaRepository
+import com.kgd.codedictionary.infrastructure.persistence.resume.repository.ResumeShortLinkStatJpaRepository
 import com.kgd.common.exception.NotFoundException
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Component
@@ -57,6 +61,11 @@ class ResumeShareLinkRepositoryAdapter(
 
     override fun findByToken(token: String): ResumeShareLink? =
         jpaRepository.findByToken(token)?.toDomain()
+
+    override fun findByShortCode(shortCode: String): ResumeShareLink? =
+        jpaRepository.findByShortCode(shortCode)?.toDomain()
+
+    override fun existsByShortCode(shortCode: String): Boolean = jpaRepository.existsByShortCode(shortCode)
 
     override fun findAll(): List<ResumeShareLink> =
         jpaRepository.findAll().map(ResumeShareLinkJpaEntity::toDomain)
@@ -101,6 +110,21 @@ class ResumeAccessLogRepositoryAdapter(
 
     @Transactional
     override fun purgeOlderThan(cutoff: LocalDateTime): Int = jpaRepository.deleteOlderThan(cutoff)
+}
+
+@Component
+class ResumeShortLinkClickRepositoryAdapter(
+    private val clickRepository: ResumeShortLinkClickJpaRepository,
+    private val statRepository: ResumeShortLinkStatJpaRepository,
+) : ResumeShortLinkClickRepositoryPort {
+
+    override fun record(shareLinkId: Long, clickedAt: LocalDateTime) {
+        clickRepository.save(ResumeShortLinkClickJpaEntity(shareLinkId = shareLinkId, clickedAt = clickedAt))
+        statRepository.increment(shareLinkId)
+    }
+
+    @Transactional
+    override fun purgeOlderThan(cutoff: LocalDateTime): Int = clickRepository.deleteOlderThan(cutoff)
 }
 
 @Component

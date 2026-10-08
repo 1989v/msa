@@ -127,19 +127,104 @@ class AtlasContextLoadSpec(
             .config(enabledIf = { dockerAvailable }) {
                 listOf(
                     com.kgd.codedictionary.presentation.resume.controller.ResumeController::class.java,
+                    // `/r/**` 단축 주소 — 빠지면 배포 후 조용히 404 가 난다
+                    com.kgd.codedictionary.presentation.resume.controller.ResumeShortLinkController::class.java,
                     com.kgd.codedictionary.presentation.portfolio.controller.PortfolioCardController::class.java,
                     com.kgd.codedictionary.presentation.concept.controller.ConceptController::class.java,
                     com.kgd.codedictionary.presentation.display.controller.DisplayServiceController::class.java,
                     com.kgd.codedictionary.presentation.graph.controller.ConceptRelationsController::class.java,
                 ).forEach { ctx.getBeanNamesForType(it).size shouldBe 1 }
             }
+    }
 
+    /**
+     * 이력서 단축 주소를 실제 MySQL 에서 본다. 대소문자 구분은 컬럼 콜레이션(ascii_bin)이 정하고,
+     * 누적 수 증가는 네이티브 upsert 와 트랜잭션 관리자 배선이 정한다 — 둘 다 목으로는 확인할 수 없다.
+     */
+    Given("이력서 단축 주소 — 실제 MySQL") {
+        Then("단축 코드 마이그레이션이 적용돼 모든 링크가 형식에 맞는 코드를 갖는다")
+            .config(enabledIf = { dockerAvailable }) {
+                val jdbc = jdbc(ctx)
+                jdbc.queryForObject(
+                    "SELECT success FROM flyway_schema_history WHERE version = '22'",
+                    Boolean::class.java,
+                ) shouldBe true
+                jdbc.queryForObject(
+                    "SELECT COLLATION_NAME, IS_NULLABLE FROM information_schema.COLUMNS " +
+                        "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'resume_share_link' AND COLUMN_NAME = 'short_code'",
+                ) { rs, _ -> rs.getString(1) to rs.getString(2) } shouldBe ("ascii_bin" to "NO")
+                // 형식 CHECK 가 실제로 걸려 있다 — 9자 코드는 들어가지 않는다
+                runCatching {
+                    jdbc.update(
+                        "INSERT INTO resume_share_link (token, short_code, label) VALUES (?, ?, ?)",
+                        "checkcheckcheckcheck01", "Ab3dE6gH9", "형식 위반",
+                    )
+                }.isFailure.shouldBeTrue()
+                jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM resume_share_link " +
+                        "WHERE NOT REGEXP_LIKE(short_code, '^[0-9A-Za-z]{10}$', 'c')",
+                    Long::class.java,
+                ) shouldBe 0L
+            }
+
+        Then("링크를 만들면 코드가 붙고, 클릭을 적재하면 누적 수가 정확히 1 오른다")
+            .config(enabledIf = { dockerAvailable }) {
+                val jdbc = jdbc(ctx)
+                val manage = ctx.getBean(com.kgd.codedictionary.application.resume.usecase.ManageResumeUseCase::class.java)
+                val record = ctx.getBean(
+                    com.kgd.codedictionary.application.resume.usecase.RecordResumeShortLinkClickUseCase::class.java,
+                )
+                val created = manage.createShareLink(
+                    com.kgd.codedictionary.application.resume.dto.ResumeShareLinkCreateRequest(label = "컨텍스트 로드 검증"),
+                )
+                val code = jdbc.queryForObject(
+                    "SELECT short_code FROM resume_share_link WHERE id = ?", String::class.java, created.id,
+                )
+                Regex("^[0-9A-Za-z]{10}$").matches(code!!).shouldBeTrue()
+
+                fun clickCount(): Long = jdbc.queryForObject(
+                    "SELECT COALESCE(MAX(click_count), 0) FROM resume_short_link_stat WHERE share_link_id = ?",
+                    Long::class.java, created.id,
+                )!!
+                fun ledgerRows(): Long = jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM resume_short_link_click WHERE share_link_id = ?",
+                    Long::class.java, created.id,
+                )!!
+
+                val was = clickCount()
+                val wasRows = ledgerRows()
+                record.execute(created.id)
+                clickCount() shouldBe was + 1
+                ledgerRows() shouldBe wasRows + 1
+                // 두 번째 클릭은 upsert 의 UPDATE 갈래를 탄다
+                record.execute(created.id)
+                clickCount() shouldBe was + 2
+            }
+
+        Then("대소문자만 바꾼 코드는 해석에 실패한다")
+            .config(enabledIf = { dockerAvailable }) {
+                val jdbc = jdbc(ctx)
+                val resolve = ctx.getBean(
+                    com.kgd.codedictionary.application.resume.usecase.ResolveResumeShortLinkUseCase::class.java,
+                )
+                jdbc.update(
+                    "INSERT INTO resume_share_link (token, short_code, label) VALUES (?, ?, ?)",
+                    "casecasecasecasecase01", "Ab3dE6gH9k", "대소문자 검증",
+                )
+                resolve.execute("/Ab3dE6gH9k").outcome shouldBe
+                    com.kgd.codedictionary.application.resume.usecase.ResolveResumeShortLinkUseCase.Outcome.RESOLVED
+                resolve.execute("/aB3De6Gh9K").outcome shouldBe
+                    com.kgd.codedictionary.application.resume.usecase.ResolveResumeShortLinkUseCase.Outcome.NOT_FOUND
+            }
     }
 }) {
 
     override fun extensions() = listOf(SpringExtension)
 
     companion object {
+        private fun jdbc(ctx: ApplicationContext) =
+            org.springframework.jdbc.core.JdbcTemplate(ctx.getBean("masterDataSource", javax.sql.DataSource::class.java))
+
         @JvmStatic
         private val mysql: MySQLContainer<*>? = if (dockerAvailable) {
             MySQLContainer(DockerImageName.parse("mysql:8.0.33"))

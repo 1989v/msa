@@ -12,6 +12,7 @@ class ResumeAccessPolicyTest : BehaviorSpec({
     fun link(revokedAt: LocalDateTime? = null) = ResumeShareLink.restore(
         id = 1L,
         token = "abcdefghijklmnop",
+        shortCode = "Ab3dE6gH9k",
         label = "OO사 백엔드",
         note = null,
         createdAt = LocalDateTime.now(),

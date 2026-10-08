@@ -45,7 +45,8 @@
 | `shortlink` | `ShortCode` | 공개 콘텐츠 단축 코드 — id(0~2^40−1) 고정 순열 + base62 6~7자. 해석 실패는 `null`. **순열 상수 변경 금지**(퍼진 주소가 깨진다, ADR-0103) |
 | `shortlink` | `ShortLinkPrefix` | 단축 주소 접두사 `r`·`p`·`g`·`b` |
 | `shortlink` | `ShortLinkProperties` | `kgd.common.short-link.*` — `origin`(기본 `https://1989v.com`), `resume-origin`·`place-origin`·`game-origin`·`blog-origin`, `expose`(기본 `false`) |
-| `shortlink` | `ShortLinks` | 단축 주소·목적지(경로 세그먼트 인코딩)·서비스 홈·302 응답(`no-store`, `X-Robots-Tag: noindex, nofollow`) 조립. 호스트는 설정에서만 얻고 요청을 받지 않는다 |
+| `shortlink` | `ShortLinks` | 단축 주소·목적지(경로 세그먼트 인코딩)·서비스 홈 조립. 호스트는 설정에서만 얻고 요청을 받지 않는다 |
+| `shortlink` | `ShortLinkRedirects` | 302 응답(`no-store`, `X-Robots-Tag: noindex, nofollow`) 조립. 상태 없는 object — 컨트롤러가 주입 없이 부른다 |
 | `shortlink` | `ShortLinkPath` | 접두사 뒤 경로를 `Home`(빈 경로·`/`·`list`)·`Code`(세그먼트 1개)·`Invalid`(2개 이상)로 가른다. 코드 형식은 판정하지 않는다 |
 | `shortlink` | `ShortLinkAutoConfiguration` | `ShortLinks` 빈 등록 (조건 없음, `@ConditionalOnMissingBean`) |
 | `crawler` | `CrawlerUserAgents` | 스스로 밝히는 크롤러·메신저 미리보기 봇(카카오톡 스크랩·Slack·Discord 등) UA 판별. UA 없음도 크롤러 |

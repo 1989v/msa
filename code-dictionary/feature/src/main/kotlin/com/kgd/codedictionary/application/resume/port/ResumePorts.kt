@@ -16,6 +16,10 @@ interface ResumeDocumentRepositoryPort {
 
 interface ResumeShareLinkRepositoryPort {
     fun findByToken(token: String): ResumeShareLink?
+
+    /** 대소문자를 구분해 찾는다 — 저장 컬럼이 ascii_bin 이다. */
+    fun findByShortCode(shortCode: String): ResumeShareLink?
+    fun existsByShortCode(shortCode: String): Boolean
     fun findAll(): List<ResumeShareLink>
     fun save(link: ResumeShareLink): ResumeShareLink
     fun revoke(id: Long)

@@ -1,13 +1,10 @@
 package com.kgd.common.shortlink
 
-import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
 import org.springframework.web.util.UriUtils
 import java.nio.charset.StandardCharsets.UTF_8
 
 /**
- * 단축 주소·목적지·302 응답 조립. 도메인은 접두사와 목적지 경로만 넘긴다.
+ * 단축 주소·목적지 조립. 도메인은 접두사와 목적지 경로만 넘긴다. 302 응답은 [ShortLinkRedirects] 가 만든다.
  *
  * 요청 객체를 받지 않는다 — 호스트는 [ShortLinkProperties] 에서만 온다.
  */
@@ -44,13 +41,6 @@ class ShortLinks(properties: ShortLinkProperties) {
 
     /** `/{접두사}/list` 와 해석 실패가 가는 곳 — 서비스 홈. */
     fun home(prefix: ShortLinkPrefix): String = destination(prefix)
-
-    fun redirect(location: String): ResponseEntity<Void> =
-        ResponseEntity.status(HttpStatus.FOUND)
-            .header(HttpHeaders.LOCATION, location)
-            .header(HttpHeaders.CACHE_CONTROL, "no-store")
-            .header("X-Robots-Tag", "noindex, nofollow")
-            .build()
 
     // encodeQueryParam 은 `+`·`/`·`=` 를 그대로 두는데, 수신 측이 `+` 를 공백으로 읽으므로 값은 모두 인코딩한다.
     private fun encodeQueryValue(value: String): String = UriUtils.encode(value, UTF_8)

@@ -103,6 +103,9 @@ class ResumeShareLinkJpaEntity(
     @Column(nullable = false, length = 64, unique = true)
     val token: String = "",
 
+    @Column(name = "short_code", nullable = false, length = 10, unique = true, updatable = false)
+    val shortCode: String = "",
+
     @Column(nullable = false, length = 120)
     val label: String = "",
 
@@ -124,6 +127,7 @@ class ResumeShareLinkJpaEntity(
     fun toDomain(): ResumeShareLink = ResumeShareLink.restore(
         id = id,
         token = token,
+        shortCode = shortCode,
         label = label,
         note = note,
         createdAt = createdAt,
@@ -134,6 +138,7 @@ class ResumeShareLinkJpaEntity(
         fun fromDomain(link: ResumeShareLink) = ResumeShareLinkJpaEntity(
             id = link.id,
             token = link.token,
+            shortCode = link.shortCode,
             label = link.label,
             note = link.note,
         )
@@ -155,6 +160,32 @@ class ResumeAccessLogJpaEntity(
 
     @Column(name = "visited_at", nullable = false)
     val visitedAt: LocalDateTime = LocalDateTime.now(),
+)
+
+/** 단축 주소 클릭 원장. 링크 id 와 시각만 남긴다 — 리퍼러·UA 를 모으지 않는다 (ADR-0064). */
+@Entity
+@Table(name = "resume_short_link_click")
+class ResumeShortLinkClickJpaEntity(
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long? = null,
+
+    @Column(name = "share_link_id", nullable = false)
+    val shareLinkId: Long = 0,
+
+    @Column(name = "clicked_at", nullable = false)
+    val clickedAt: LocalDateTime = LocalDateTime.now(),
+)
+
+/** 링크별 단축 주소 누적 클릭 수. 증가는 원자적 upsert 로만 한다(`ResumeShortLinkStatJpaRepository`). */
+@Entity
+@Table(name = "resume_short_link_stat")
+class ResumeShortLinkStatJpaEntity(
+    @Id
+    @Column(name = "share_link_id")
+    val shareLinkId: Long = 0,
+
+    @Column(name = "click_count", nullable = false)
+    val clickCount: Long = 0,
 )
 
 @Entity

@@ -1,6 +1,7 @@
 package com.kgd.codedictionary.infrastructure.retention
 
 import com.kgd.codedictionary.application.resume.port.ResumeAccessLogRepositoryPort
+import com.kgd.codedictionary.application.resume.port.ResumeShortLinkClickRepositoryPort
 import io.kotest.core.spec.style.BehaviorSpec
 import io.mockk.every
 import io.mockk.mockk
@@ -22,36 +23,40 @@ import java.time.LocalDateTime
  */
 class RetentionRunnerSpec : BehaviorSpec({
 
-    Given("이력서 열람 원장이 정상일 때") {
+    // 365일 전후 — 테스트 실행 시각과 러너 호출 시각의 차이만 허용한다
+    fun aboutOneYearAgo(it: LocalDateTime) =
+        it.isBefore(LocalDateTime.now().minusDays(364)) && it.isAfter(LocalDateTime.now().minusDays(366))
+
+    Given("원장이 모두 정상일 때") {
         val resumeAccessLog = mockk<ResumeAccessLogRepositoryPort>()
+        val shortLinkClick = mockk<ResumeShortLinkClickRepositoryPort>()
         every { resumeAccessLog.purgeOlderThan(any()) } returns 3
+        every { shortLinkClick.purgeOlderThan(any()) } returns 2
 
         When("배치를 실행하면") {
-            RetentionRunner(resumeAccessLog).run(DefaultApplicationArguments())
+            RetentionRunner(resumeAccessLog, shortLinkClick).run(DefaultApplicationArguments())
 
-            Then("원장이 자기 보존기간으로 정리된다") {
-                verify(exactly = 1) {
-                    resumeAccessLog.purgeOlderThan(
-                        match<LocalDateTime> {
-                            // 365일 전후 — 테스트 실행 시각과 러너 호출 시각의 차이만 허용한다
-                            it.isBefore(LocalDateTime.now().minusDays(364)) &&
-                                it.isAfter(LocalDateTime.now().minusDays(366))
-                        },
-                    )
-                }
+            Then("이력서 열람 원장이 자기 보존기간으로 정리된다") {
+                verify(exactly = 1) { resumeAccessLog.purgeOlderThan(match<LocalDateTime> { aboutOneYearAgo(it) }) }
+            }
+
+            Then("단축 주소 클릭 원장도 365일로 정리된다") {
+                verify(exactly = 1) { shortLinkClick.purgeOlderThan(match<LocalDateTime> { aboutOneYearAgo(it) }) }
             }
         }
     }
 
-
     Given("이력서 원장 정리가 실패할 때") {
         val resumeAccessLog = mockk<ResumeAccessLogRepositoryPort>()
+        val shortLinkClick = mockk<ResumeShortLinkClickRepositoryPort>()
         every { resumeAccessLog.purgeOlderThan(any()) } throws IllegalStateException("락 대기 초과")
+        every { shortLinkClick.purgeOlderThan(any()) } returns 0
 
         When("배치를 실행하면") {
-            Then("예외를 삼켜 CronJob 이 비정상 종료하지 않는다") {
-                RetentionRunner(resumeAccessLog).run(DefaultApplicationArguments())
+            Then("예외를 삼켜 CronJob 이 비정상 종료하지 않고 다음 원장도 정리한다") {
+                RetentionRunner(resumeAccessLog, shortLinkClick).run(DefaultApplicationArguments())
                 verify(exactly = 1) { resumeAccessLog.purgeOlderThan(any()) }
+                verify(exactly = 1) { shortLinkClick.purgeOlderThan(any()) }
             }
         }
     }

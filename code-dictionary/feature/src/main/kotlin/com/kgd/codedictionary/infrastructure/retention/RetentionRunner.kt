@@ -1,6 +1,7 @@
 package com.kgd.codedictionary.infrastructure.retention
 
 import com.kgd.codedictionary.application.resume.port.ResumeAccessLogRepositoryPort
+import com.kgd.codedictionary.application.resume.port.ResumeShortLinkClickRepositoryPort
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
@@ -24,7 +25,7 @@ private val log = KotlinLogging.logger {}
  * ADR-0093 으로 `party_friend_group`(game)과 `blog_post_view`(blog)는 여기서 빠졌다 —
  * 둘 다 content 파드로 옮겨가 이 이미지의 클래스패스에서 안 보인다. 원장은 그것을 아는
  * 도메인 모듈이 정리한다(`GameRetentionRunner`·`BlogRetentionRunner`, content 이미지의 CronJob).
- * 여기 남는 것은 이 호스트가 소유한 `resume_access_log` 하나다.
+ * 여기 남는 것은 이 호스트가 소유한 `resume_access_log` 와 `resume_short_link_click` 이다.
  *
  * 원장마다 따로 잡는 이유는 보존기간의 근거가 다르기 때문이다 — 아래 상수 주석 참조.
  * 하나가 실패해도 나머지는 돈다. 정리 실패로 다른 원장까지 안 지워지면 다음 주까지
@@ -35,12 +36,18 @@ private val log = KotlinLogging.logger {}
 @Profile("retention")
 class RetentionRunner(
     private val resumeAccessLog: ResumeAccessLogRepositoryPort,
+    private val resumeShortLinkClick: ResumeShortLinkClickRepositoryPort,
 ) : ApplicationRunner {
 
     override fun run(args: ApplicationArguments) {
         val results = listOf(
             purge("resume_access_log") {
                 resumeAccessLog.purgeOlderThan(LocalDateTime.now().minusDays(RESUME_ACCESS_RETENTION_DAYS))
+            },
+            purge("resume_short_link_click") {
+                resumeShortLinkClick.purgeOlderThan(
+                    LocalDateTime.now().minusDays(RESUME_SHORT_LINK_CLICK_RETENTION_DAYS),
+                )
             },
         )
         log.info { "원장 정리 완료 — ${results.joinToString(", ")}" }
@@ -68,5 +75,12 @@ class RetentionRunner(
          * 압박도 조회수 원장보다 약하다.
          */
         const val RESUME_ACCESS_RETENTION_DAYS = 365L
+
+        /**
+         * 이력서 단축 주소 클릭 원장 보존기간. 열람 기록과 같은 이유로 같은 기간을 둔다 —
+         * 제출처가 단축 주소를 눌렀는지도 지원 결과가 나올 때까지 필요하다.
+         * 링크별 누적 수(`resume_short_link_stat`)는 지우지 않는다.
+         */
+        const val RESUME_SHORT_LINK_CLICK_RETENTION_DAYS = 365L
     }
 }

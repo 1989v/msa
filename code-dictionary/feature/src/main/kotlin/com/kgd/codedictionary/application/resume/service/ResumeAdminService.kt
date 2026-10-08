@@ -14,6 +14,10 @@ import com.kgd.codedictionary.domain.resume.model.ResumeDocument
 import com.kgd.codedictionary.domain.resume.model.ResumeDocumentKind
 import com.kgd.codedictionary.domain.resume.model.ResumeShareLink
 import com.kgd.codedictionary.domain.resume.model.ResumeVisibility
+import com.kgd.common.exception.BusinessException
+import com.kgd.common.exception.ErrorCode
+import com.kgd.common.shortlink.ShortLinkPrefix
+import com.kgd.common.shortlink.ShortLinks
 import java.security.SecureRandom
 import java.util.Base64
 import org.springframework.stereotype.Service
@@ -25,6 +29,7 @@ class ResumeAdminService(
     private val shareLinkRepository: ResumeShareLinkRepositoryPort,
     private val accessLogRepository: ResumeAccessLogRepositoryPort,
     private val settingRepository: ResumeSettingRepositoryPort,
+    private val shortLinks: ShortLinks,
 ) : ManageResumeUseCase {
     private val random = SecureRandom()
     private val encoder: Base64.Encoder = Base64.getUrlEncoder().withoutPadding()
@@ -70,6 +75,7 @@ class ResumeAdminService(
                     visitCount = stat?.visitCount ?: 0L,
                     firstVisitedAt = stat?.firstVisitedAt,
                     lastVisitedAt = stat?.lastVisitedAt,
+                    shortUrl = shortUrlOf(link),
                 )
             }
     }
@@ -77,9 +83,20 @@ class ResumeAdminService(
     @Transactional
     override fun createShareLink(request: ResumeShareLinkCreateRequest): ResumeShareLinkDto {
         val link = shareLinkRepository.save(
-            ResumeShareLink.create(token = generateToken(), label = request.label, note = request.note),
+            ResumeShareLink.create(
+                token = generateToken(),
+                shortCode = generateShortCode(),
+                label = request.label,
+                note = request.note,
+            ),
         )
-        return ResumeShareLinkDto.from(link, visitCount = 0L, firstVisitedAt = null, lastVisitedAt = null)
+        return ResumeShareLinkDto.from(
+            link,
+            visitCount = 0L,
+            firstVisitedAt = null,
+            lastVisitedAt = null,
+            shortUrl = shortUrlOf(link),
+        )
     }
 
     @Transactional
@@ -102,5 +119,28 @@ class ResumeAdminService(
         val bytes = ByteArray(24)
         random.nextBytes(bytes)
         return encoder.encodeToString(bytes).take(ResumeShareLink.TOKEN_LENGTH)
+    }
+
+    /**
+     * 10자 base62 무작위 코드. 이미 쓰인 코드면 다시 뽑는다 — 약 59비트라 겹칠 일은 사실상 없고,
+     * 확인과 저장 사이에 겹치는 경합은 유일 제약이 막는다(저장이 실패한다).
+     */
+    private fun generateShortCode(): String {
+        repeat(SHORT_CODE_MAX_ATTEMPTS) {
+            val code = buildString(ResumeShareLink.SHORT_CODE_LENGTH) {
+                repeat(ResumeShareLink.SHORT_CODE_LENGTH) {
+                    append(ResumeShareLink.SHORT_CODE_ALPHABET[random.nextInt(ResumeShareLink.SHORT_CODE_ALPHABET.length)])
+                }
+            }
+            if (!shareLinkRepository.existsByShortCode(code)) return code
+        }
+        throw BusinessException(ErrorCode.INTERNAL_ERROR, "단축 코드를 만들지 못했습니다")
+    }
+
+    private fun shortUrlOf(link: ResumeShareLink): String? =
+        shortLinks.exposedShortUrl(ShortLinkPrefix.RESUME, link.shortCode)
+
+    companion object {
+        private const val SHORT_CODE_MAX_ATTEMPTS = 5
     }
 }

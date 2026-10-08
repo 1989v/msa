@@ -31,15 +31,15 @@ Total Task Groups: 8
 **Dependencies:** Task Group 1
 **Phase:** backend
 **Required Skills:** Kotlin, Spring MVC, JPA, Flyway(MySQL 8)
-- [ ] 2.0 Complete resume
-  - [ ] 2.1 테스트 작성: `ResumeShareLink` 코드 형식 검사(생성·복원) · 생성 시 10자 코드 자동 부여 · 유일 충돌 시 재생성 · 리다이렉터 302/목적지 `resume.1989v.com/?k=` · 폐기·없음·형식 오류 → resume 홈 302 · 경로 엣지(쿼리 무시, `/r`·`/r/`·`/r/list` → 홈, 추가 세그먼트 실패) · 원장 행에 리퍼러·UA 없음 · 기록 실패에도 302 · 로그에 코드·토큰 없음 · 어드민 목록 `shortUrl`(expose 켜짐/꺼짐)
-  - [ ] 2.2 `V22__resume_short_code.sql`: `short_code` 컬럼(`ascii_bin`) → `RANDOM_BYTES()` 백필 → `NOT NULL`·`UNIQUE`·`CHECK(REGEXP_LIKE(...,'c'))`; 원장 `resume_short_link_click(share_link_id, clicked_at)`; 집계 `resume_short_link_stat(share_link_id PK, click_count)` — SR-3, SR-6
-  - [ ] 2.3 도메인·application: 코드 생성(SecureRandom), `ResolveResumeShortLinkUseCase`(`isUsable()`), `RecordResumeShortLinkClickUseCase`(REQUIRES_NEW, 원자적 증가) + Port/Adapter — SR-3, SR-4, SR-6
-  - [ ] 2.4 `ResumeShortLinkController` `GET /r/**` (common 헬퍼, 크롤러 미기록) — SR-4, SR-7
-  - [ ] 2.5 어드민 링크 응답에 `shortUrl` — SR-3
-  - [ ] 2.6 `RetentionRunner` 에 클릭 원장 365일 항목 — SR-6
-  - [ ] 2.7 `AtlasContextLoadSpec`: 새 컨트롤러 빈 등록 확인 + 실제 MySQL 에서 클릭 기록 후 `click_count == was + 1` · 대소문자만 바꾼 코드 해석 실패 · 백필 마이그레이션 적용 — SR-8
-  - [ ] 2.8 Verify: `./gradlew :code-dictionary:domain:test --tests '*ResumeShareLink*' :code-dictionary:feature:test --tests '*ResumeShortLink*' --tests '*RetentionRunner*' :atlas:app:test --tests '*AtlasContextLoadSpec'`
+- [x] 2.0 Complete resume
+  - [x] 2.1 테스트 작성: `ResumeShareLink` 코드 형식 검사(생성·복원) · 생성 시 10자 코드 자동 부여 · 유일 충돌 시 재생성 · 리다이렉터 302/목적지 `resume.1989v.com/?k=` · 폐기·없음·형식 오류 → resume 홈 302 · 경로 엣지(쿼리 무시, `/r`·`/r/`·`/r/list` → 홈, 추가 세그먼트 실패) · 원장 행에 리퍼러·UA 없음 · 기록 실패에도 302 · 로그에 코드·토큰 없음 · 어드민 목록 `shortUrl`(expose 켜짐/꺼짐)
+  - [x] 2.2 `V22__resume_short_code.sql`: `short_code` 컬럼(`ascii_bin`) → `RANDOM_BYTES()` 백필 → `NOT NULL`·`UNIQUE`·`CHECK(REGEXP_LIKE(...,'c'))`; 원장 `resume_short_link_click(share_link_id, clicked_at)`; 집계 `resume_short_link_stat(share_link_id PK, click_count)` — SR-3, SR-6
+  - [x] 2.3 도메인·application: 코드 생성(SecureRandom), `ResolveResumeShortLinkUseCase`(`isUsable()`), `RecordResumeShortLinkClickUseCase`(REQUIRES_NEW, 원자적 증가) + Port/Adapter — SR-3, SR-4, SR-6
+  - [x] 2.4 `ResumeShortLinkController` `GET /r/**` (common 헬퍼, 크롤러 미기록) — SR-4, SR-7
+  - [x] 2.5 어드민 링크 응답에 `shortUrl` — SR-3
+  - [x] 2.6 `RetentionRunner` 에 클릭 원장 365일 항목 — SR-6
+  - [x] 2.7 `AtlasContextLoadSpec`: 새 컨트롤러 빈 등록 확인 + 실제 MySQL 에서 클릭 기록 후 `click_count == was + 1` · 대소문자만 바꾼 코드 해석 실패 · 백필 마이그레이션 적용 — SR-8
+  - [x] 2.8 Verify: `./gradlew :code-dictionary:domain:test --tests '*ResumeShareLink*' :code-dictionary:feature:test --tests '*ResumeShortLink*' --tests '*RetentionRunner*' :atlas:app:test --tests '*AtlasContextLoadSpec'`
 **Acceptance Criteria:**
 - 마이그레이션 뒤 모든 기존 링크가 형식에 맞는 코드를 갖는다(제약이 보장).
 - 실제 MySQL 에서 누적 수가 1 오른다.

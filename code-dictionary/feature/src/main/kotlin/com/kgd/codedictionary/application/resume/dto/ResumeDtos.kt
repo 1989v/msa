@@ -67,6 +67,8 @@ data class ResumeShareLinkDto(
     val visitCount: Long,
     val firstVisitedAt: LocalDateTime?,
     val lastVisitedAt: LocalDateTime?,
+    /** 단축 주소. 노출 설정이 꺼져 있으면 null 이고, 어드민은 기존 주소를 복사한다. */
+    val shortUrl: String?,
 ) {
     companion object {
         fun from(
@@ -74,6 +76,7 @@ data class ResumeShareLinkDto(
             visitCount: Long,
             firstVisitedAt: LocalDateTime?,
             lastVisitedAt: LocalDateTime?,
+            shortUrl: String?,
         ) = ResumeShareLinkDto(
             id = requireNotNull(link.id) { "저장된 공유 링크여야 합니다" },
             token = link.token,
@@ -84,6 +87,7 @@ data class ResumeShareLinkDto(
             visitCount = visitCount,
             firstVisitedAt = firstVisitedAt,
             lastVisitedAt = lastVisitedAt,
+            shortUrl = shortUrl,
         )
     }
 }
