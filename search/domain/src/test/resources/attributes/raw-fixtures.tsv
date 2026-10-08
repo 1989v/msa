@@ -102,7 +102,7 @@ parking	en	YES	Y (use parking lot at the entrance to the Muhak Market)
 parking	en	YES	가능
 parking	en	NO	Not available
 parking	en	NO	Not available (use Chinatown public parking lot)
-parking	en	NO	N/A (Please use nearby parking facilities)
+parking	en	UNKNOWN	N/A (Please use nearby parking facilities)
 parking	en	NO	No on-site parking
 parking	en	UNKNOWN	Parking lots are available at tourist sites and attractions, museums, arts galleries.
 parking	en	UNKNOWN	free

@@ -3,6 +3,7 @@ package com.kgd.search.infrastructure.job
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
+import com.kgd.search.domain.attraction.model.AttractionAttributeParser
 import com.kgd.search.domain.attraction.model.AttractionClickSignal
 import com.kgd.search.infrastructure.client.PlaceApiClient
 import com.kgd.search.infrastructure.clicksignal.ClickHouseClickSignalReader
@@ -302,7 +303,7 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                 source["attrCreditCard"] shouldBe "YES"
                 source["attrStrollerRental"] shouldBe "NO"
                 source["attrAdmission"] shouldBe "FREE"
-                source["attributeParserVersion"] shouldBe 1
+                source["attributeParserVersion"] shouldBe AttractionAttributeParser.VERSION
                 // 원문은 그대로 남는다 — 파생이 원천을 덮지 않는다
                 source["restDate"] shouldBe "매주 월요일 / 1월 1일 / 설·추석 당일"
                 source["petAcmpyType"] shouldBe "전구역 동반가능"
@@ -326,7 +327,7 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                 source["attrCreditCard"] shouldBe "UNKNOWN"
                 source["attrStrollerRental"] shouldBe "UNKNOWN"
                 source["attrAdmission"] shouldBe "UNKNOWN"
-                source["attributeParserVersion"] shouldBe 1
+                source["attributeParserVersion"] shouldBe AttractionAttributeParser.VERSION
             }
         }
 

@@ -23,7 +23,7 @@ data class AttractionAttributeSource(
  */
 object AttractionAttributeParser {
 
-    const val VERSION = 1
+    const val VERSION = 2
 
     fun parse(source: AttractionAttributeSource): AttractionAttributes = AttractionAttributes(
         regularClosure = regularClosure(source.restDate),
@@ -110,7 +110,9 @@ object AttractionAttributeParser {
 
     // ── 주차 ─────────────────────────────────────────────────
 
-    private val PARKING_NO = Regex("""^(불가|없음|not available|no\s|n/a)""")
+    // 영문 「N/A」는 「해당 없음」과 「정보 없음」을 가르지 못하는 표기라 NO 로 읽지 않고 UNKNOWN 으로 둔다.
+    // 국문 「없음」은 「없다」는 진술이라 NO 로 읽는다.
+    private val PARKING_NO = Regex("""^(불가|없음|not available|no\s)""")
     private val PARKING_YES = Regex("""^(가능|있음|주차장\s*있음|available|y(\s|\(|$))""")
 
     private fun parking(raw: String?): Availability {
@@ -144,8 +146,8 @@ object AttractionAttributeParser {
 
     private val CHECK_YES = setOf("가능", "있음", "모든카드사용가능")
 
-    // 「없음」을 NO 로 읽는 것은 가정이다 — 원천이 「해당 없음」과 「정보 없음」을 가르지 않는다.
-    // 사람 라벨 정확도 측정에서 맞는지 확인한다.
+    // 국문 「없음」은 「없다」는 진술이라 NO 로 읽는다. 영문 「N/A」처럼 「해당 없음」과 「정보 없음」을
+    // 가르지 못하는 표기는 이 목록에 넣지 않는다(UNKNOWN).
     private val CHECK_NO = setOf("불가", "불가능", "없음", "불가(현금만가능)")
 
     private fun firstValue(intro: Map<String, String?>, keys: List<String>): String? =
