@@ -1,0 +1,6 @@
+mode: no-interview
+threshold: 0.2
+rounds: 0
+ambiguity: 0.0
+reason: 요청이 계획서·조사 보고서(S1-12)에 파일·심볼 단위로 구체화돼 있고 사용자가 「이어서 마지막까지 진행」을 지시했다. 미지수는 코드 지도(Explore, origin/main 8a61f0b)로 닫았다.
+visuals: none

@@ -1,0 +1,67 @@
+# 열린 질문 — 인터뷰 없이 가정으로 닫은 항목은 closed 로 두고 근거를 적는다.
+questions:
+  - id: Q1
+    stage: pre-impl
+    status: closed
+    question: 필터 적용(filter_applied)을 별도 EventAction 으로 둘 것인가?
+    answer: 아니오. SEARCH 의 payload.trigger/changed 로 구분한다. 서버 enum 추가는 소비자 포이즌 필·common 전면 재빌드 때문에 별도 슬라이스.
+  - id: Q2
+    stage: pre-impl
+    status: closed
+    question: 찜 완료(save_completed)의 action 은?
+    answer: CLICK + sectionId FAVORITE + payload.saved. 인기 집계에서 FAVORITE·MAP_LINK 섹션 클릭을 제외해 오염을 막는다.
+  - id: Q3
+    stage: pre-impl
+    status: closed
+    question: 세션 시작의 분모를 어디서 세나?
+    answer: 허브 마운트 시 세션당 1회 SESSION_START(PAGE/place-hub). 전체 사이트 세션이 아니라 「허브를 연 세션」이 분모다.
+  - id: Q4
+    stage: pre-impl
+    status: closed
+    question: 허브 카드 노출(IMPRESSION)도 보내나?
+    answer: 예. ADR-0095 의 지면별 CTR 질의(SR-10 이후)를 위해. 인기 집계 소비자는 비율을 쓰지 않으므로(place-ingest 는 clicks·impressions 정렬, search 는 unique_clickers 만) 노출 없는 섹션(MAP_OVERLAY)이 있어도 집계는 깨지지 않는다. (리뷰 2라운드 arch B5 로 근거 정정)
+  - id: Q5
+    stage: post-impl
+    status: open
+    question: EventAction 확장(FILTER·SAVE) 전에 analytics·recommendation 소비자에 ErrorHandlingDeserializer 를 넣을 것인가?
+    answer: 다음 슬라이스 후보. 이번 범위 밖.
+  - id: Q6
+    stage: post-impl
+    status: open
+    question: EventRepositoryAdapter.queryExperimentMetrics 가 V005 에서 사라진 event_type 컬럼을 조회한다(깨진 쿼리).
+    answer: 보고만. 별도 수정.
+  - id: Q7
+    stage: post-impl
+    status: open
+    question: Streams 키워드 지표 브랜치가 action==SEARCH 전부를 payload.keyword 로 묶는다(없으면 "unknown"). entityType==SEARCH 면 entityId 로 키를 잡고 빈 키워드는 건너뛰게 고칠 것인가?
+    answer: 다음 슬라이스 후보. 이번엔 허브 payload 필드명을 term 으로 두어 섞이지 않게만 했다.
+  - id: Q8
+    stage: post-impl
+    status: open
+    question: common AnalyticsEvent.kt 주석과 V005 주석의 「(viewId, entityId) 1회」를 「+ sectionId」로, Placement.kt:13 의 「목록 화면이면 빈 문자열」을 「지역을 축으로 고른 목록은 그 지역 코드」로 갱신할 것인가?
+    answer: common 은 이번 범위에서 불변. ADR-0095 두 줄만 개정하고 주석은 후속.
+  - id: Q9
+    stage: post-impl
+    status: open
+    question: 회원 귀속(user_id)이 필요해지면 /api/v1/events 를 GatewayRouteConfig 로 옮겨 인증 필터(required=false)를 거치게 할 것인가?
+    answer: 이번엔 X-User-Id 를 읽지 않는다(null 고정). 필요해질 때 결정.
+  - id: Q10
+    stage: post-impl
+    status: open
+    question: place glossary 생성 + trigger·changed·term·MAP_LINK·FAVORITE·MAP_OVERLAY·place-hub 등재, wishlist glossary 의 Favorite Avoid 해소(/hns:glossary)
+    answer: 선적 뒤.
+  - id: Q11
+    stage: pre-impl
+    status: closed
+    question: 리뷰 1라운드 BLOCK — 같은 관광지의 선택·지도·찜 CLICK 이 중복 키 하나로 접힌다. 키에 섹션을 넣을 것인가(노출까지) / 클릭만 / 범위 축소?
+    answer: 노출·클릭 모두 키에 sectionId 추가(선택지 a). 상세 두 섹션 겹침 노출이 2행이 되는 것은 ADR-0095 §2(지면별 CTR)와 같은 방향이라 받아들인다. 사용자 「이어서 마지막까지」 지시에 따라 세션이 결정, 최종 보고에 명시.
+  - id: Q12
+    stage: post-impl
+    status: open
+    question: occurredAt 클램프 없음(TTL 90일 우회 가능) · /api/v1/events 레이트리밋 없음 · ExperimentAssignmentFilter 의 클라이언트 X-User-Id 신뢰 · 방침 §2 에 검색어 행 추가(통합 검색·허브 SEARCH 의 entity_id·payload.term·correctedKeyword) — 보안 리뷰 범위 밖 보고.
+    answer: 별도 슬라이스.
+  - id: Q13
+    stage: post-impl
+    status: open
+    question: 오버레이 토글을 셀 것인가 — 어느 viewId·어느 섹션·지도 idle 재조회 중복 기준이 먼저 필요하다.
+    answer: 이번엔 지도 레이어로 보고 세지 않는다. MAP_OVERLAY 핀 CLICK 만 남긴다(리뷰 2라운드 심판 §2-①).
