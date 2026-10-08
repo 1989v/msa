@@ -105,6 +105,12 @@ function renderAt(path: string) {
   );
 }
 
+/** 방문 요약 칸 — [이름, 값] */
+const summaryRows = () =>
+  Array.from(document.querySelectorAll('[data-place-section="visit-summary"] dt')).map((dt) => [
+    dt.textContent, dt.nextElementSibling?.textContent,
+  ]);
+const badgeLine = () => document.querySelector('[data-place-section="visit-badges"]')?.textContent ?? null;
 const h2Texts = () => screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
 /** 지도 위 정보 탭 — 그 탭을 눌러 판을 연다(방문 정보가 처음 탭) */
 async function openInfoTab(name: string) {
@@ -139,8 +145,8 @@ describe('AttractionPage 새 섹션', () => {
   });
   afterEach(() => vi.clearAllMocks());
 
-  it('개요·이용 안내 → 정보 탭(방문 정보) → 주변 탐색 → 비슷한 곳 순서다', async () => {
-    vi.mocked(fetchAttraction).mockResolvedValue(enriched);
+  it('방문 요약 → 개요·이용 안내 → 정보 탭(방문 정보) → 주변 탐색 → 비슷한 곳 순서다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, parkingFee: '소형 2,000원' });
     renderAt('/attractions/100');
     await screen.findByText('명소 301');
     await screen.findByText('명소 401');
@@ -152,6 +158,9 @@ describe('AttractionPage 새 섹션', () => {
     const explore = screen.getByRole('region', { name: '주변 탐색' });
     const tabs = document.querySelector('.place-info-tabs')!;
     expect(tabs.compareDocumentPosition(explore) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const summary = document.querySelector('[data-place-section="visit-summary"]')!;
+    const info = screen.getByRole('region', { name: '이용 안내' });
+    expect(summary.compareDocumentPosition(info) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     for (const gone of ['같은 분류 가까운 곳', '주변 명소', '주변 편의시설']) expect(h2Texts()).not.toContain(gone);
     const overview = screen.getByText('조선의 법궁이다.');
     const badges = screen.getByRole('tabpanel', { name: '방문 정보' });
@@ -170,14 +179,17 @@ describe('AttractionPage 새 섹션', () => {
     expect(mains[0].querySelector('header, footer')).toBeNull();
   });
 
-  it('배지는 해석된 값만, 서버 렌더와 같은 문구로 그린다', async () => {
+  it('일반 유형의 배지는 방문 요약 칸과 배지 줄로 옮겨 가고 정보 탭에는 남지 않는다 — 서버 렌더와 같은 문구', async () => {
     vi.mocked(fetchAttraction).mockResolvedValue(enriched);
     renderAt('/attractions/100');
-    const badges = await screen.findByRole('tabpanel', { name: '방문 정보' });
+    const tab = await screen.findByRole('tabpanel', { name: '방문 정보' });
 
-    expect(within(within(badges).getAllByRole('list')[0]).getAllByRole('listitem').map((li) => li.textContent)).toEqual([
-      '매주 화요일 휴무', '주차 가능', '유모차 대여 없음', '입장 유료',
-    ]);
+    expect(summaryRows()).toContainEqual(['쉬는 날', '매주 화요일 휴무']);
+    expect(summaryRows()).toContainEqual(['주차', '주차 가능']);
+    expect(badgeLine()).toBe('유모차 대여 없음');
+    for (const moved of ['매주 화요일 휴무', '주차 가능', '유모차 대여 없음', '입장 유료']) {
+      expect(within(tab).queryByText(moved)).toBeNull();
+    }
   });
 
   it('접근성 정보(원천: 무장애 여행)는 배지 뒤에 긍정 아이콘 줄과 원천 문장(원천 키 순서)으로, 웰니스는 한 줄로, 출처에 원천 이름을 붙인다', async () => {
@@ -229,22 +241,20 @@ describe('AttractionPage 새 섹션', () => {
     expect(screen.getByText(/출처: 한국관광공사 TourAPI · GeoNames/)).toBeInTheDocument();
   });
 
-  it('14일 고유 클릭 방문자가 최소 표본(5)에 닿으면 배지 끝에 「많이 클릭한 곳」을 붙인다', async () => {
+  it('14일 고유 클릭 방문자가 최소 표본(5)에 닿으면 배지 줄 끝에 「많이 클릭한 곳」을 붙인다', async () => {
     vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, uniqueClickers14d: 5 });
     renderAt('/attractions/100');
-    const badges = await screen.findByRole('tabpanel', { name: '방문 정보' });
+    await screen.findByRole('tabpanel', { name: '방문 정보' });
 
-    expect(within(within(badges).getAllByRole('list')[0]).getAllByRole('listitem').map((li) => li.textContent)).toEqual([
-      '매주 화요일 휴무', '주차 가능', '유모차 대여 없음', '입장 유료', '많이 클릭한 곳',
-    ]);
+    expect(badgeLine()).toBe('유모차 대여 없음 · 많이 클릭한 곳');
   });
 
   it('최소 표본 미만이거나 값이 없으면 「많이 클릭한 곳」을 붙이지 않는다', async () => {
     for (const n of [4, 0, null]) {
       vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, uniqueClickers14d: n });
       const { unmount } = renderAt('/attractions/100');
-      const badges = await screen.findByRole('tabpanel', { name: '방문 정보' });
-      expect(within(badges).queryByText('많이 클릭한 곳')).toBeNull();
+      await screen.findByRole('tabpanel', { name: '방문 정보' });
+      expect(badgeLine()).toBe('유모차 대여 없음');
       unmount();
     }
   });
@@ -469,8 +479,7 @@ describe('AttractionPage 새 섹션', () => {
 
     expect(within(region).getByText('Palaces 7 of 40 attractions in Jongno-gu')).toBeInTheDocument();
     expect(within(region).getByRole('link', { name: 'Explore Jongno-gu' })).toBeInTheDocument();
-    const badges = await openInfoTab('At a glance');
-    expect(within(badges).getByText('Closed on Tuesdays')).toBeInTheDocument();
+    expect(summaryRows()).toContainEqual(['Closed', 'Closed on Tuesdays']);
     expect(await screen.findByRole('region', { name: 'Explore nearby' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Similar places in other regions' })).toBeInTheDocument();
   });
@@ -1201,5 +1210,189 @@ describe('AttractionPage 사진 주소 https', () => {
     const viewer = screen.getByRole('dialog', { name: '사진 크게 보기' });
     expect(viewer.querySelector('.place-photo-viewer-img')!.getAttribute('src')).toMatch(/^https:\/\/tong\./);
     expect(httpTong()).toBe(0);
+  });
+});
+
+/** 첫 화면 — 브레드크럼(시군구) → 제목 → 방문 요약 → 배지 줄 → 행동 줄 → 개요 → 사진. 서버 렌더와 같은 순서다 */
+describe('AttractionPage 첫 화면 — 방문 요약 · 행동 줄', () => {
+  beforeEach(() => nearbyFrom(() => []));
+  afterEach(() => vi.clearAllMocks());
+
+  const first: Attraction = {
+    ...enriched,
+    sidoName: '서울특별시',
+    imageUrl: 'https://img.example/hero.jpg',
+    feeText: '어른 3,000원',
+    infoCenter: '경복궁 관리소 02-3700-3900',
+    uniqueClickers14d: 5,
+  };
+  const at = (selector: string) => {
+    const el = document.querySelector(selector);
+    expect(el, selector).not.toBeNull();
+    return el!;
+  };
+  const isBefore = (a: Element, b: Element) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+  const actions = () => at('[data-place-section="actions"]') as HTMLElement;
+
+  it('일반 유형 — 브레드크럼(시도 › 시군구) → 제목·찜 → 방문 요약 → 배지 줄 → 행동 줄(길찾기·전화) → 개요 → 사진 히어로', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue(first);
+    renderAt('/attractions/100');
+    await screen.findByRole('heading', { level: 1, name: '경복궁' });
+
+    const nav = screen.getByRole('navigation', { name: '탐색 경로' });
+    expect(within(nav).getByRole('link', { name: '서울특별시' })).toHaveAttribute('href', '/regions/11');
+    expect(within(nav).getByRole('link', { name: '종로구' })).toHaveAttribute('href', '/regions/11110');
+    const order = [
+      within(nav).getByRole('link', { name: '종로구' }),
+      screen.getByRole('heading', { level: 1 }),
+      screen.getByTestId('fav'),
+      at('[data-place-section="visit-summary"]'),
+      at('[data-place-section="visit-badges"]'),
+      actions(),
+      screen.getByText('조선의 법궁이다.'),
+      at('.place-detail-hero'),
+    ];
+    order.slice(1).forEach((el, i) => expect(isBefore(order[i], el), `${i} → ${i + 1}`).toBe(true));
+    expect(within(actions()).getByRole('link', { name: '구글 지도에서 보기' })).toBeInTheDocument();
+    expect(within(actions()).getByRole('link', { name: '경복궁 관리소 02-3700-3900' })).toHaveAttribute('href', 'tel:0237003900');
+    // 길찾기는 요약 아래로 옮겼다 — 한 번만 있다
+    expect(screen.getAllByRole('link', { name: '구글 지도에서 보기' })).toHaveLength(1);
+  });
+
+  it('시군구 코드가 없으면 브레드크럼은 시도까지다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...first, region: { ...first.region!, ldongSignguCd: null } });
+    renderAt('/attractions/100');
+    const nav = await screen.findByRole('navigation', { name: '탐색 경로' });
+    await screen.findByRole('heading', { level: 1 });
+
+    expect(within(nav).getByRole('link', { name: '서울특별시' })).toBeInTheDocument();
+    expect(within(nav).queryByRole('link', { name: '종로구' })).toBeNull();
+  });
+
+  it('방문 요약은 일곱 칸을 표 순서로 — 값이 없는 칸은 「정보 없음」', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue(first);
+    renderAt('/attractions/100');
+    await screen.findByRole('heading', { level: 1 });
+
+    expect(summaryRows()).toEqual([
+      ['요금', '어른 3,000원'],
+      ['이용시간', '09:00~18:00'],
+      ['쉬는 날', '매주 화요일 휴무'],
+      ['주차', '주차 가능'],
+      ['반려동물', '정보 없음'],
+      ['무장애', '정보 없음'],
+      ['확인 상태', '출처: 정보 없음 · 원천 갱신일: 정보 없음 · 수집일: 정보 없음'],
+    ]);
+    expect(badgeLine()).toBe('유모차 대여 없음 · 많이 클릭한 곳');
+  });
+
+  it('배지 줄은 항목이 없으면 그리지 않는다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...first, attrStrollerRental: 'UNKNOWN', uniqueClickers14d: 0 });
+    renderAt('/attractions/100');
+    await screen.findByRole('heading', { level: 1 });
+
+    expect(document.querySelector('[data-place-section="visit-summary"]')).not.toBeNull();
+    expect(document.querySelector('[data-place-section="visit-badges"]')).toBeNull();
+  });
+
+  it('「이용 안내」(일반 유형) — 요약과 겹치는 다섯 행은 빼고 주차요금·intro·반복정보(요금 행 포함)는 원천 순서대로 남긴다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({
+      ...first,
+      useTime: '09:00~18:00',
+      restDate: '매주 화요일',
+      useFee: '어른 3,000원',
+      parking: '가능',
+      parkingFee: '소형 2,000원',
+      introRaw: JSON.stringify({ expguide: '수문장 교대식', usetime: '09:00~18:00' }),
+      infoRaw: JSON.stringify([
+        { serialnum: '1', infoname: '입장료', infotext: '어른 3,000원' },
+        { serialnum: '0', infoname: '화장실', infotext: '있음' },
+      ]),
+    });
+    renderAt('/attractions/100');
+    const info = await screen.findByRole('region', { name: '이용 안내' });
+
+    const rows = Array.from(info.querySelectorAll('.place-detail-info-row')).map((r) => [
+      r.querySelector('dt')!.textContent, r.querySelector('dd')!.textContent,
+    ]);
+    expect(rows).toEqual([
+      ['주차요금', '소형 2,000원'],
+      ['체험 안내', '수문장 교대식'],
+      ['화장실', '있음'],
+      ['입장료', '어른 3,000원'],
+    ]);
+  });
+
+  it('행사·숙박·코스는 방문 요약·배지 줄이 없고 정보 탭 배지는 그대로, 행동 줄은 붙는다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({
+      ...card('310', 'stay'),
+      title: '한옥 스테이',
+      contentTypeId: '32',
+      introRaw: JSON.stringify({ checkintime: '15:00' }),
+      attrParking: 'YES',
+      tel: '02-555-1234',
+    });
+    renderAt('/attractions/310');
+    const tab = await screen.findByRole('tabpanel', { name: '방문 정보' });
+
+    expect(document.querySelector('[data-place-section="visit-summary"]')).toBeNull();
+    expect(document.querySelector('[data-place-section="visit-badges"]')).toBeNull();
+    expect(within(tab).getByText('주차 가능')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: '숙박 정보' })).toBeInTheDocument();
+    expect(within(actions()).getByRole('link', { name: '구글 지도에서 보기' })).toBeInTheDocument();
+    expect(within(actions()).getByRole('link', { name: '02-555-1234' })).toHaveAttribute('href', 'tel:025551234');
+  });
+
+  it('문의(infoCenter)가 비면 제목 아래 전화 줄 없이 행동 줄이 tel 을 쓴다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...first, infoCenter: '', tel: '02-123-4567' });
+    renderAt('/attractions/100');
+    await screen.findByRole('heading', { level: 1 });
+
+    expect(document.querySelector('.place-detail-tel')).toBeNull();
+    expect(within(actions()).getByRole('link', { name: '02-123-4567' })).toHaveAttribute('href', 'tel:021234567');
+    expect(screen.getAllByText('02-123-4567')).toHaveLength(1);
+  });
+
+  it('문의와 tel 이 둘 다 있으면 둘 다 보인다 — 행동 줄은 문의, 제목 아래 줄은 tel', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...first, tel: '02-123-4567' });
+    renderAt('/attractions/100');
+    await screen.findByRole('heading', { level: 1 });
+
+    expect(at('.place-detail-tel')).toHaveTextContent('02-123-4567');
+    expect(within(actions()).getByRole('link', { name: '경복궁 관리소 02-3700-3900' })).toHaveAttribute('href', 'tel:0237003900');
+  });
+
+  it('번호 모양이 없는 원문은 링크 없이 글로만, 원문이 비면 전화 항목이 없다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...first, infoCenter: '문의: 없음' });
+    const { unmount } = renderAt('/attractions/100');
+    await screen.findByRole('heading', { level: 1 });
+    expect(within(actions()).getByText('문의: 없음')).toBeInTheDocument();
+    expect(within(actions()).getAllByRole('link').map((a) => a.textContent)).toEqual(['구글 지도에서 보기']);
+    unmount();
+
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...first, infoCenter: null, tel: null });
+    renderAt('/attractions/100');
+    await screen.findByRole('heading', { level: 1 });
+    expect(actions().querySelector('a[href^="tel:"]')).toBeNull();
+  });
+
+  it('XSS — 요금 원문의 태그 모양 글자는 글로만 보이고 방문 요약 안에 img 요소가 생기지 않는다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...first, feeText: '<img src=x onerror=alert(1)> "무료"' });
+    renderAt('/attractions/100');
+    await screen.findByRole('heading', { level: 1 });
+
+    const summary = at('[data-place-section="visit-summary"]');
+    expect(summary.querySelectorAll('img')).toHaveLength(0);
+    expect(summaryRows()[0]).toEqual(['요금', '<img src=x onerror=alert(1)> "무료"']);
+  });
+
+  it('영문 화면 — Admission · Closed 칸과 Open in Google Maps 행동 줄', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...first, lang: 'en', contentTypeId: '76' });
+    renderAt('/en/attractions/100');
+    await screen.findByRole('heading', { level: 1 });
+
+    expect(summaryRows().map(([label]) => label)).toEqual(['Admission', 'Hours', 'Closed', 'Parking', 'Pets', 'Accessibility', 'Data status']);
+    expect(within(actions()).getByRole('link', { name: 'Open in Google Maps' })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Breadcrumb' })).toBeInTheDocument();
   });
 });

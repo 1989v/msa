@@ -81,16 +81,16 @@ Total Task Groups: 6. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
 
 ### Task Group 5: FE 상세 화면 (SR-1 · SR-2 FE)
 **Dependencies:** TG3 · **Phase:** portal-fe `pages/place` · **Required Skills:** React/TS, vitest, DESIGN.md 토큰
-- [ ] 5.1 테스트 먼저 — `portal-fe/src/pages/place/__tests__/AttractionPage.test.tsx` 증보(DOM 순서 단언)
+- [x] 5.1 테스트 먼저 — `portal-fe/src/pages/place/__tests__/AttractionPage.test.tsx` 증보(DOM 순서 단언)
   - 일반 유형 순서: 브레드크럼(시군구) → h1·찜 → 방문 요약 → 배지 줄 → 행동 줄(길찾기·전화) → 개요 → 사진 히어로
   - 「이용 안내」(일반 유형): 주차요금·intro·반복정보(요금 행 포함) 남음, 이용시간·쉬는날·이용요금·주차·문의 행 없음. 행사·숙박·코스는 지금과 같음
   - `AttractionInfoTabs` 에 넘기는 `badges` 가 일반 유형에서 빈 목록
   - 전화 중복(`infoCenter` 빔+`tel` → 제목 아래 줄 없음·행동 줄 `tel:`, 둘 다 → 둘 다)
   - XSS: 방문 요약 안 `img` 요소 0, `<img src=x onerror=alert(1)>` 가 텍스트로
   - 기존 단언 갱신: `:134-153`(「이용 안내」 h2 순서), `:440-456`(At a glance 탭 「Closed on Tuesdays」 → 방문 요약 쉬는 날 칸)
-- [ ] 5.2 `AttractionPage.tsx`: 방문 요약·배지 줄은 `typeSection` null 유형만, 「이용 안내」 다섯 행 제외(`:443-449`), `badges` 빈 목록(`:256,498`), 행동 줄(`googleMapsSearchUrl` 링크를 요약 아래로 + `attractionPhone`), 제목 아래 전화 줄(`:407`) 조건부, 사진 히어로를 요약 아래로
-- [ ] 5.3 레이아웃: 데스크톱 2열(왼쪽 요약·행동, 오른쪽 히어로), 지금 높이 이하. 색·간격은 DESIGN.md 토큰만(hex 직접 입력 금지), `k-heritage.html` 견본 기준. 모바일 390 에서 요금·쉬는 날·길찾기가 폴드 안에 들어가는 밀도
-- [ ] 5.4 Verify: `cd portal-fe && npx vitest run src/pages/place src/seo && npx tsc -b`
+- [x] 5.2 `AttractionPage.tsx`: 방문 요약·배지 줄은 `typeSection` null 유형만, 「이용 안내」 다섯 행 제외(`:443-449`), `badges` 빈 목록(`:256,498`), 행동 줄(`googleMapsSearchUrl` 링크를 요약 아래로 + `attractionPhone`), 제목 아래 전화 줄(`:407`) 조건부, 사진 히어로를 요약 아래로
+- [x] 5.3 레이아웃: 데스크톱 2열(왼쪽 요약·행동, 오른쪽 히어로), 지금 높이 이하. 색·간격은 DESIGN.md 토큰만(hex 직접 입력 금지), `k-heritage.html` 견본 기준. 모바일 390 에서 요금·쉬는 날·길찾기가 폴드 안에 들어가는 밀도
+- [x] 5.4 Verify: `cd portal-fe && npx vitest run src/pages/place src/seo && npx tsc -b`
 
 ### Task Group 6: 회귀 주입 · 문서 · 배포 · 운영 확인
 **Dependencies:** TG1–5

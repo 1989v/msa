@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -14,6 +14,7 @@ import {
   attractionMeta,
   attractionPath,
   attractionBreadcrumbJsonLd,
+  attractionPhone,
   attractionUrl,
   placeBrand,
   placeCategoryLabel,
@@ -67,6 +68,7 @@ import {
   campingRows,
   regionPlaceName,
   visitorBadges,
+  visitSummary,
   wellnessLine,
   type PlaceKind,
 } from './placeAttributes';
@@ -77,8 +79,8 @@ import { newViewId } from '../../analytics/identity';
 import { installFlushOnLeave, track } from '../../analytics/tracker';
 
 const UI = {
-  ko: { badges: '방문 정보 요약', region: '지역 안 위치', explore: (p: string) => `${p} 둘러보기`, similar: '다른 지역의 비슷한 곳', related: '여기 온 사람들이 함께 간 곳', back: '← 관광지 탐색', info: '이용 안내', photos: '사진', more: '본문 전체 보기', useTime: '이용시간', restDate: '쉬는날', useFee: '이용요금', parking: '주차', parkingFee: '주차요금', infoCenter: '문의', map: '구글 지도에서 보기', notFound: '관광지를 찾을 수 없습니다.', failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', loading: '불러오는 중…' },
-  en: { badges: 'At a glance', region: 'In the area', explore: (p: string) => `Explore ${p}`, similar: 'Similar places in other regions', related: 'Where visitors also went', back: '← Explore Korea', info: 'Visitor info', photos: 'Photos', more: 'Read the full description', useTime: 'Hours', restDate: 'Closed', useFee: 'Admission', parking: 'Parking', parkingFee: 'Parking fee', infoCenter: 'Contact', map: 'Open in Google Maps', notFound: 'Attraction not found.', failed: 'Could not load this page. Please try again in a moment.', loading: 'Loading…' },
+  ko: { summary: '방문 요약', region: '지역 안 위치', explore: (p: string) => `${p} 둘러보기`, similar: '다른 지역의 비슷한 곳', related: '여기 온 사람들이 함께 간 곳', back: '← 관광지 탐색', info: '이용 안내', photos: '사진', more: '본문 전체 보기', parkingFee: '주차요금', map: '구글 지도에서 보기', notFound: '관광지를 찾을 수 없습니다.', failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', loading: '불러오는 중…' },
+  en: { summary: 'Visit summary', region: 'In the area', explore: (p: string) => `Explore ${p}`, similar: 'Similar places in other regions', related: 'Where visitors also went', back: '← Explore Korea', info: 'Visitor info', photos: 'Photos', more: 'Read the full description', parkingFee: 'Parking fee', map: 'Open in Google Maps', notFound: 'Attraction not found.', failed: 'Could not load this page. Please try again in a moment.', loading: 'Loading…' },
 } as const;
 
 /** 주변 검색 반경 — 명소 목록과 편의시설 캐로셀이 같은 값을 쓴다. */
@@ -257,7 +259,21 @@ export default function AttractionPage() {
   const similar = (attraction?.similarElsewhere ?? []).filter(notEnded);
   // 함께 간 곳은 색인에 실린 목록 그대로 — 비슷한 곳과 겹쳐도 거르지 않는다(근거가 다른 두 목록, 서버 렌더와 같은 규칙)
   const related = attraction?.relatedPlaces ?? [];
-  const badges = attraction ? visitorBadges(attraction, lang) : [];
+  // 일반 유형은 방문 요약(칸 + 배지 줄)이 배지를 대신한다 — 정보 탭에 같은 값을 두 번 두지 않는다
+  const summary = attraction && !kind ? visitSummary(attraction, lang) : null;
+  const badges = attraction && kind ? visitorBadges(attraction, lang) : [];
+  // 문의 원문이 있으면 그것을, 없으면 tel 을 행동 줄 전화로 — tel 을 쓸 때는 제목 아래 전화 줄을 빼서 한 번만 낸다
+  const infoCenterPhone = attraction ? attractionPhone(attraction.infoCenter) : null;
+  const phone = infoCenterPhone ?? (attraction ? attractionPhone(attraction.tel) : null);
+  /*
+   * 브레드크럼의 지역 단계(시도 · 시군구) — 구조화 데이터와 같은 함수에서 뽑는다. 단계 조건(시군구는 시도·두 코드·이름을
+   * 다 알 때만)을 화면에 따로 두면 화면과 BreadcrumbList 가 갈린다. 첫 칸(허브)·끝 칸(이 관광지)은 뺀다.
+   */
+  const crumbs = attraction
+    ? attractionBreadcrumbJsonLd(lang, attraction)
+        .itemListElement.slice(1, -1)
+        .map((c: { name: string; item: string }) => ({ name: c.name, to: new URL(c.item).pathname }))
+    : [];
   const accessIcons = attraction ? barrierFreeIcons(attraction, lang) : [];
   const accessRows = attraction ? barrierFreeRows(attraction, lang) : [];
   const wellness = attraction ? wellnessLine(attraction, lang) : null;
@@ -298,10 +314,18 @@ export default function AttractionPage() {
   return (
     <div className="place-page">
       <header className="place-header">
-        <nav aria-label={lang === 'en' ? 'Breadcrumb' : '탐색 경로'}>
+        <nav className="place-crumbs" aria-label={lang === 'en' ? 'Breadcrumb' : '탐색 경로'}>
           <Link className="place-btn" to={placePath(lang)}>
             {L.back}
           </Link>
+          {crumbs.map((c: { name: string; to: string }) => (
+            <Fragment key={c.to}>
+              <span className="place-crumb-sep" aria-hidden="true">›</span>
+              <Link className="place-crumb" to={c.to}>
+                {c.name}
+              </Link>
+            </Fragment>
+          ))}
         </nav>
       </header>
 
@@ -318,102 +342,87 @@ export default function AttractionPage() {
 
         {attraction && (
           <article className="place-detail" aria-label={attraction.title}>
-            {/* 원천 사진은 폭 940px · 대부분 3:2 다(표본 16장 중 15장이 1.4~1.8).
-                꽉 채워 자르면 위아래가 날아가고 1360px 로 늘리면 흐려진다. 비율 그대로
-                두고 높이만 고정하며, 남는 옆 공간은 같은 사진을 흐리게 깔아 메운다. */}
-            {shown && (
-              <>
-                {/* 큰 사진 + 다른 사진 타일 목록. 넓은 화면은 오른쪽(2열, 영역 안에서 스크롤), 좁은 화면은 아래 한 줄(6칸).
-                    처음에는 [PHOTO_TILES] 장만 두고 마지막 칸에 남은 수를 얹는다 — 누르면 전부 편다. */}
-                <div className="place-detail-photos" data-single={gallery.length <= 1 || undefined}>
-                  <div
-                    className="place-detail-hero"
-                    style={{ backgroundImage: `url(${JSON.stringify(shown.url).slice(1, -1)})` }}
-                  >
-                    <img
-                      className="place-detail-img"
-                      src={shown.url}
-                      alt={shown.name || `${attraction.title}${lang === 'en' ? ' photo' : ' 사진'}`}
-                    />
-                    {gallery.length > 1 && (
-                      <span className="place-detail-photo-count">
-                        {shownIndex + 1} / {gallery.length}
-                      </span>
-                    )}
-                    {/* 사진 전체를 덮는 단추 — 누르면 크게 보기를 연다 */}
-                    <button
-                      type="button"
-                      className="place-detail-hero-open"
-                      aria-label={lang === 'en' ? 'View photo larger' : '사진 크게 보기'}
-                      onClick={() => setViewerOpen(true)}
-                    />
-                  </div>
-                  {viewerOpen && (
-                    <PhotoViewer
-                      images={gallery}
-                      index={shownIndex}
-                      onIndex={setShownIndex}
-                      onClose={() => setViewerOpen(false)}
-                      title={attraction.title}
-                      lang={lang}
-                    />
-                  )}
-                  {gallery.length > 1 && (() => {
-                    const others = gallery.map((img, i) => ({ img, i })).filter(({ i }) => i !== shownIndex);
-                    const tiles = tilesOpen ? others : others.slice(0, PHOTO_TILES);
-                    const rest = others.length - tiles.length;
-                    return (
-                      <div className="place-detail-tiles" role="group" aria-label={L.photos}>
-                        {tiles.map(({ img, i }, k) => {
-                          const last = k === tiles.length - 1 && rest > 0;
-                          return (
-                            <button
-                              type="button"
-                              key={img.url}
-                              className="place-detail-tile"
-                              aria-label={last ? `${L.photos} +${rest}` : img.name || `${L.photos} ${i + 1}`}
-                              onClick={() => (last ? setTilesOpen(true) : setShownIndex(i))}
-                            >
-                              <img src={img.url} alt="" loading="lazy" />
-                              {last && <span className="place-detail-tile-more">+{rest}</span>}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    );
-                  })()}
+            {/* 첫 화면 — 제목 · 방문 요약 · 행동 줄 → 개요 → 사진 → 유형별 절 · 이용 안내. 서버 렌더와 같은 순서다.
+                넓은 화면은 위 줄이 「요약 | 사진」, 아래 줄이 「개요 | 이용 안내」인 격자다(PlacePage.css .place-detail-first). */}
+            <div className="place-detail-first">
+              <div className="place-detail-lead">
+                {/* 찜 (ADR-0074) — 제목 바로 오른쪽 별. 로그인 전용, 게스트는 로그인으로 복귀 유도 */}
+                <div className="favorite-title-row">
+                  <h1 className="place-detail-title">{attraction.title}</h1>
+                  <FavoriteButton
+                    type="ATTRACTION"
+                    targetKey={attraction.id}
+                    lang={lang}
+                    tracking={{ screenType: 'ATTRACTION_DETAIL', screenRef: id, viewId }}
+                  />
                 </div>
-              </>
-            )}
-            {/* 찜 (ADR-0074) — 제목 바로 오른쪽 별. 로그인 전용, 게스트는 로그인으로 복귀 유도 */}
-            <div className="favorite-title-row">
-              <h1 className="place-detail-title">{attraction.title}</h1>
-              <FavoriteButton
-                type="ATTRACTION"
-                targetKey={attraction.id}
-                lang={lang}
-                tracking={{ screenType: 'ATTRACTION_DETAIL', screenRef: id, viewId }}
-              />
-            </div>
-            {/* 원어 병기명은 별도 요소다 — 제목에 괄호로 다시 붙이지 않는다 (t2 백엔드 계약) */}
-            {titleParts(attraction).secondary && (
-              <p className="place-detail-local">{titleParts(attraction).secondary}</p>
-            )}
-            <SharePanel
-              shortUrl={attraction.shortUrl}
-              url={attractionUrl(docLang, attraction.id)}
-              title={attraction.title}
-              lang={lang}
-            />
-            {attraction.category && (
-              <span className="place-chip active">{placeCategoryLabel(attraction.category, lang)}</span>
-            )}
-            {attraction.tel && <p className="place-detail-tel">{attraction.tel}</p>}
-            {/* 넓은 화면에서 개요와 이용 안내를 나란히 둔다. 세로로 쌓으면 개요가 긴
-                관광지(1,400자가 넘는 것도 있다)에서 이용 안내가 화면 밖으로 밀려
-                "없는 것"처럼 보인다. 탭으로 감추지 않는 이유는 색인이다 — 이 페이지는
-                관광지 5만 건의 착지점이라 접힌 내용이 본문에서 빠지면 안 된다. */}
-            <div className="place-detail-read">
+                {/* 원어 병기명은 별도 요소다 — 제목에 괄호로 다시 붙이지 않는다 (t2 백엔드 계약) */}
+                {titleParts(attraction).secondary && (
+                  <p className="place-detail-local">{titleParts(attraction).secondary}</p>
+                )}
+                <SharePanel
+                  shortUrl={attraction.shortUrl}
+                  url={attractionUrl(docLang, attraction.id)}
+                  title={attraction.title}
+                  lang={lang}
+                />
+                {attraction.category && (
+                  <span className="place-chip active">{placeCategoryLabel(attraction.category, lang)}</span>
+                )}
+                {attraction.tel && infoCenterPhone && <p className="place-detail-tel">{attraction.tel}</p>}
+                {summary && (
+                  <section className="place-visit" aria-label={L.summary} data-place-section="visit-summary">
+                    <dl className="place-detail-info-list">
+                      {summary.rows.map((row) => (
+                        <div className="place-detail-info-row" key={row.label}>
+                          <dt>{row.label}</dt>
+                          <dd>{row.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </section>
+                )}
+                {summary?.badgeLine && (
+                  <p className="place-visit-badges" data-place-section="visit-badges">
+                    {summary.badgeLine}
+                  </p>
+                )}
+                {/* 행동 줄 — 길찾기(화면 전용)와 문의 전화. 번호 모양이 없으면 원문만 글로 둔다 */}
+                <div className="place-detail-actions" data-place-section="actions">
+                  {/* 지도 열기 — 선택 뒤 후속 행동이라 노출은 보내지 않는다(TrackedLink 를 쓰지 않는다).
+                      기본 동작(새 탭)은 그대로고, 계측이 이동을 막지 않는다 */}
+                  <a
+                    className="place-btn"
+                    href={googleMapsSearchUrl(attraction)}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() =>
+                      track(
+                        'CLICK',
+                        {
+                          entityType: 'ATTRACTION',
+                          entityId: attraction.id,
+                          screenType: 'ATTRACTION_DETAIL',
+                          screenRef: id,
+                          sectionId: 'MAP_LINK',
+                          payload: { kind: 'google_maps_search' },
+                        },
+                        viewId,
+                      )
+                    }
+                  >
+                    {L.map}
+                  </a>
+                  {phone &&
+                    (phone.href ? (
+                      <a className="place-btn place-detail-phone" href={phone.href}>
+                        {phone.text}
+                      </a>
+                    ) : (
+                      <span className="place-detail-phone">{phone.text}</span>
+                    ))}
+                </div>
+              </div>
               {/* 원천 개요는 평문이 아니다 — <br>·HTML 엔티티가 섞여 오고 국문은 \n 이 온다.
                   overviewText 가 태그·엔티티를 풀고 줄바꿈만 남기며, CSS 가 그것을 살린다. */}
               {overviewText(attraction.overview) && (
@@ -433,68 +442,132 @@ export default function AttractionPage() {
                   )}
                 </div>
               )}
-
-              {/* 행사 · 숙박 · 여행코스는 일반 이용 안내 대신 유형별 절이다 — 파생 값(이용시간·요금·주차)이
-                  같은 원문 키에서 와서 두 번 나가기 때문이다. 서버 렌더와 같은 제목·라벨·순서. */}
-              {kind && <KindSection attraction={attraction} kind={kind} lang={lang} today={today} />}
-
-              {/* 이용 안내 (detailIntro2). 원천이 유형마다 다른 키로 주는 것을 서버가 모아 준다.
-                  점진 보강이라 아직 안 받은 관광지가 있다 — 값이 없는 줄은 그리지 않고,
-                  다 없으면 블록 자체를 내지 않는다(빈 표는 "정보 없음"보다 나쁘다). */}
-              {!kind && (() => {
-                // 파생 6개(유형별 키를 서버가 모은 것) → 그 다음 원문에만 있는 나머지.
-                // 원천이 준 것을 다 보여준다 — 상세는 이 관광지에 대해 아는 전부를 내는 자리다.
-                const derived: IntroRow[] = [
-                  { key: 'useTime', label: L.useTime, value: attraction.useTime ?? '' },
-                  { key: 'restDate', label: L.restDate, value: attraction.restDate ?? '' },
-                  { key: 'useFee', label: L.useFee, value: attraction.useFee ?? '' },
-                  { key: 'parking', label: L.parking, value: attraction.parking ?? '' },
-                  { key: 'parkingFee', label: L.parkingFee, value: attraction.parkingFee ?? '' },
-                  { key: 'infoCenter', label: L.infoCenter, value: attraction.infoCenter ?? '' },
-                ];
-                // 이용정보에도 <br>·엔티티가 섞여 온다 — 개요와 같은 정리를 거친다
-                // 반복정보(detailInfo2)는 라벨을 원천이 준다 — 예약안내·코스안내 등
-                const rows = [
-                  ...derived,
-                  ...introRows(attraction.introRaw, lang),
-                  ...repeatInfoRows(attraction.infoRaw),
-                ]
-                  .map((r) => ({ ...r, value: sourceText(r.value) }))
-                  .filter((r) => r.value.trim().length > 0);
-                if (rows.length === 0) return null;
-                return (
-                  <section className="place-detail-info" aria-label={L.info}>
-                    <h2 className="place-detail-info-title">{L.info}</h2>
-                    <dl className="place-detail-info-list">
-                      {rows.map((row) => (
-                        <div className="place-detail-info-row" key={row.key}>
-                          <dt>{row.label}</dt>
-                          <dd>{row.value}</dd>
+              {/* 원천 사진은 폭 940px · 대부분 3:2 다(표본 16장 중 15장이 1.4~1.8).
+                  꽉 채워 자르면 위아래가 날아가고 1360px 로 늘리면 흐려진다. 비율 그대로
+                  두고 높이만 고정하며, 남는 옆 공간은 같은 사진을 흐리게 깔아 메운다. */}
+              {shown && (
+                <>
+                  {/* 큰 사진 + 다른 사진 타일 목록. 넓은 화면은 오른쪽(2열, 영역 안에서 스크롤), 좁은 화면은 아래 한 줄(6칸).
+                      처음에는 [PHOTO_TILES] 장만 두고 마지막 칸에 남은 수를 얹는다 — 누르면 전부 편다. */}
+                  <div className="place-detail-photos" data-single={gallery.length <= 1 || undefined}>
+                    <div
+                      className="place-detail-hero"
+                      style={{ backgroundImage: `url(${JSON.stringify(shown.url).slice(1, -1)})` }}
+                    >
+                      <img
+                        className="place-detail-img"
+                        src={shown.url}
+                        alt={shown.name || `${attraction.title}${lang === 'en' ? ' photo' : ' 사진'}`}
+                      />
+                      {gallery.length > 1 && (
+                        <span className="place-detail-photo-count">
+                          {shownIndex + 1} / {gallery.length}
+                        </span>
+                      )}
+                      {/* 사진 전체를 덮는 단추 — 누르면 크게 보기를 연다 */}
+                      <button
+                        type="button"
+                        className="place-detail-hero-open"
+                        aria-label={lang === 'en' ? 'View photo larger' : '사진 크게 보기'}
+                        onClick={() => setViewerOpen(true)}
+                      />
+                    </div>
+                    {viewerOpen && (
+                      <PhotoViewer
+                        images={gallery}
+                        index={shownIndex}
+                        onIndex={setShownIndex}
+                        onClose={() => setViewerOpen(false)}
+                        title={attraction.title}
+                        lang={lang}
+                      />
+                    )}
+                    {gallery.length > 1 && (() => {
+                      const others = gallery.map((img, i) => ({ img, i })).filter(({ i }) => i !== shownIndex);
+                      const tiles = tilesOpen ? others : others.slice(0, PHOTO_TILES);
+                      const rest = others.length - tiles.length;
+                      return (
+                        <div className="place-detail-tiles" role="group" aria-label={L.photos}>
+                          {tiles.map(({ img, i }, k) => {
+                            const last = k === tiles.length - 1 && rest > 0;
+                            return (
+                              <button
+                                type="button"
+                                key={img.url}
+                                className="place-detail-tile"
+                                aria-label={last ? `${L.photos} +${rest}` : img.name || `${L.photos} ${i + 1}`}
+                                onClick={() => (last ? setTilesOpen(true) : setShownIndex(i))}
+                              >
+                                <img src={img.url} alt="" loading="lazy" />
+                                {last && <span className="place-detail-tile-more">+{rest}</span>}
+                              </button>
+                            );
+                          })}
                         </div>
-                      ))}
-                    </dl>
-                  </section>
-                );
-              })()}
-              {(() => {
-                // 캠핑장 정보 — 고캠핑 원문 중 place 가 고른 키(예약 URL 은 오지 않는다). 서버 렌더 「캠핑장 정보」 절과 같은 줄
-                const rows = campingRows(attraction.camping, lang);
-                if (rows.length === 0) return null;
-                const title = lang === 'en' ? 'Campsite' : '캠핑장 정보';
-                return (
-                  <section className="place-detail-info" aria-label={title} data-place-section="camping">
-                    <h2 className="place-detail-info-title">{title}</h2>
-                    <dl className="place-detail-info-list">
-                      {rows.map((row) => (
-                        <div className="place-detail-info-row" key={row.label}>
-                          <dt>{row.label}</dt>
-                          <dd>{row.value}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </section>
-                );
-              })()}
+                      );
+                    })()}
+                  </div>
+                </>
+              )}
+              <div className="place-detail-side">
+                {/* 행사 · 숙박 · 여행코스는 일반 이용 안내 대신 유형별 절이다 — 파생 값(이용시간·요금·주차)이
+                    같은 원문 키에서 와서 두 번 나가기 때문이다. 서버 렌더와 같은 제목·라벨·순서. */}
+                {kind && <KindSection attraction={attraction} kind={kind} lang={lang} today={today} />}
+
+                {/* 이용 안내 (detailIntro2). 원천이 유형마다 다른 키로 주는 것을 서버가 모아 준다.
+                    점진 보강이라 아직 안 받은 관광지가 있다 — 값이 없는 줄은 그리지 않고,
+                    다 없으면 블록 자체를 내지 않는다(빈 표는 "정보 없음"보다 나쁘다). */}
+                {!kind && (() => {
+                  // 이용시간·쉬는날·이용요금·주차·문의는 방문 요약·행동 줄이 보여 주므로 뺀다 — 남는 파생 값은 주차요금뿐이다.
+                  // 그 다음 원문에만 있는 나머지. 반복정보의 요금 행도 남긴다(어느 행이 요금인지 고르는 규칙 사본을 두지 않는다).
+                  // 원천이 준 것을 다 보여준다 — 상세는 이 관광지에 대해 아는 전부를 내는 자리다.
+                  const derived: IntroRow[] = [
+                    { key: 'parkingFee', label: L.parkingFee, value: attraction.parkingFee ?? '' },
+                  ];
+                  // 이용정보에도 <br>·엔티티가 섞여 온다 — 개요와 같은 정리를 거친다
+                  // 반복정보(detailInfo2)는 라벨을 원천이 준다 — 예약안내·코스안내 등
+                  const rows = [
+                    ...derived,
+                    ...introRows(attraction.introRaw, lang),
+                    ...repeatInfoRows(attraction.infoRaw),
+                  ]
+                    .map((r) => ({ ...r, value: sourceText(r.value) }))
+                    .filter((r) => r.value.trim().length > 0);
+                  if (rows.length === 0) return null;
+                  return (
+                    <section className="place-detail-info" aria-label={L.info}>
+                      <h2 className="place-detail-info-title">{L.info}</h2>
+                      <dl className="place-detail-info-list">
+                        {rows.map((row) => (
+                          <div className="place-detail-info-row" key={row.key}>
+                            <dt>{row.label}</dt>
+                            <dd>{row.value}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </section>
+                  );
+                })()}
+                {(() => {
+                  // 캠핑장 정보 — 고캠핑 원문 중 place 가 고른 키(예약 URL 은 오지 않는다). 서버 렌더 「캠핑장 정보」 절과 같은 줄
+                  const rows = campingRows(attraction.camping, lang);
+                  if (rows.length === 0) return null;
+                  const title = lang === 'en' ? 'Campsite' : '캠핑장 정보';
+                  return (
+                    <section className="place-detail-info" aria-label={title} data-place-section="camping">
+                      <h2 className="place-detail-info-title">{title}</h2>
+                      <dl className="place-detail-info-list">
+                        {rows.map((row) => (
+                          <div className="place-detail-info-row" key={row.label}>
+                            <dt>{row.label}</dt>
+                            <dd>{row.value}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </section>
+                  );
+                })()}
+              </div>
             </div>
 
             {/* 방문 정보(주소·속성·지역 안 위치) · 접근성 — 지도 위에 탭으로, 내용은 칩. 서버 렌더는 절을 그대로 쌓는다(색인용) */}
@@ -520,30 +593,6 @@ export default function AttractionPage() {
               viewId={viewId}
               screenRef={id}
             />
-            {/* 지도 열기 — 선택 뒤 후속 행동이라 노출은 보내지 않는다(TrackedLink 를 쓰지 않는다).
-                기본 동작(새 탭)은 그대로고, 계측이 이동을 막지 않는다 */}
-            <a
-              className="place-btn"
-              href={googleMapsSearchUrl(attraction)}
-              target="_blank"
-              rel="noreferrer"
-              onClick={() =>
-                track(
-                  'CLICK',
-                  {
-                    entityType: 'ATTRACTION',
-                    entityId: attraction.id,
-                    screenType: 'ATTRACTION_DETAIL',
-                    screenRef: id,
-                    sectionId: 'MAP_LINK',
-                    payload: { kind: 'google_maps_search' },
-                  },
-                  viewId,
-                )
-              }
-            >
-              {L.map}
-            </a>
             {/* 날씨·대기질·혼잡 — 주변 탐색(지도) 아래, 탭 하나로. 서버 렌더에는 없는 절이다 */}
             <AttractionConditions
               weather={weather}
