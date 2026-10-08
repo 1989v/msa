@@ -3,9 +3,11 @@ package com.kgd.search.presentation.search.controller
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
 import com.kgd.common.response.ApiResponse
+import com.kgd.search.application.attraction.usecase.AttractionShortUrlUseCase
 import com.kgd.search.application.attraction.usecase.NearbyAttractionsUseCase
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 import com.kgd.search.application.attraction.usecase.SuggestAttractionUseCase
+import com.kgd.search.presentation.search.dto.AttractionDetailResponse
 import org.springframework.http.CacheControl
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -25,6 +27,7 @@ class AttractionSearchController(
     private val searchAttractionUseCase: SearchAttractionUseCase,
     private val suggestAttractionUseCase: SuggestAttractionUseCase,
     private val nearbyAttractionsUseCase: NearbyAttractionsUseCase,
+    private val attractionShortUrlUseCase: AttractionShortUrlUseCase,
 ) {
 
     /** 통합 자동완성 — 지역(도시/광역, 인구 부스트 상단) + 관광지 prefix (ADR-0065). */
@@ -99,10 +102,11 @@ class AttractionSearchController(
 
     /** 상세 — 색인은 하루 한 번 바뀌므로 엣지가 1시간 쥔다 (ADR-0105). 404 에는 붙이지 않는다(예외 경로). */
     @GetMapping("/{id}")
-    fun findById(@PathVariable id: String): ResponseEntity<ApiResponse<SearchAttractionUseCase.AttractionSearchResult>> {
+    fun findById(@PathVariable id: String): ResponseEntity<ApiResponse<AttractionDetailResponse>> {
         val result = searchAttractionUseCase.findById(id)
             ?: throw BusinessException(ErrorCode.NOT_FOUND, "관광지를 찾을 수 없습니다: id=$id")
-        return ResponseEntity.ok().cacheControl(INDEX_CACHE).body(ApiResponse.success(result))
+        val body = AttractionDetailResponse(result, attractionShortUrlUseCase.shortUrlOf(result.id))
+        return ResponseEntity.ok().cacheControl(INDEX_CACHE).body(ApiResponse.success(body))
     }
 
     /** 상세 「주변 탐색」 — 명소·숙소·행사·편의시설을 한 번에. 키가 관광지 id 라 상세와 같은 주기로 캐시한다 (ADR-0105). */

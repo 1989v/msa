@@ -9,6 +9,7 @@ import com.kgd.blog.application.shortlink.usecase.ResolveBlogShortLinkUseCase
 import com.kgd.blog.application.shortlink.usecase.ResolveBlogShortLinkUseCase.Outcome
 import com.kgd.blog.application.shortlink.usecase.ResolveBlogShortLinkUseCase.Resolution
 import com.kgd.blog.domain.model.PostStatus
+import com.kgd.common.shortlink.ClickContext
 import com.kgd.common.shortlink.ShortCode
 import com.kgd.common.shortlink.ShortLinkPath
 import com.kgd.common.shortlink.ShortLinkPrefix
@@ -16,7 +17,6 @@ import com.kgd.common.shortlink.ShortLinks
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
-import java.net.URI
 import java.time.LocalDateTime
 
 /**
@@ -54,8 +54,8 @@ class BlogShortLinkService(
             BlogShortLinkClick(
                 postId = command.postId,
                 clickedAt = LocalDateTime.now(),
-                referrerHost = referrerHost(command.referrer),
-                uaFamily = uaFamily(command.userAgent),
+                referrerHost = ClickContext.referrerHost(command.referrer),
+                uaFamily = ClickContext.uaFamily(command.userAgent),
             ),
         )
     }
@@ -71,15 +71,5 @@ class BlogShortLinkService(
 
         /** blog FE 의 글 상세 경로 첫 세그먼트 */
         private const val POSTS_PATH = "posts"
-
-        /** 리퍼러는 호스트만 남긴다 — 전체 URL 은 쿼리에 개인 식별자가 실려 올 때가 있다. */
-        internal fun referrerHost(referrer: String?): String? =
-            referrer?.takeIf { it.isNotBlank() }
-                ?.let { runCatching { URI(it).host }.getOrNull() }
-                ?.take(120)
-
-        /** 크롤러는 호출부에서 이미 걸렀다. 남는 것은 사람의 기기 계열뿐이다. */
-        internal fun uaFamily(userAgent: String?): String =
-            if (userAgent?.contains("Mobi", ignoreCase = true) == true) "mobile" else "desktop"
     }
 }

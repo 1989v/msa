@@ -109,6 +109,10 @@ class ContentContextLoadSpec(
                 com.kgd.ranking.presentation.controller.RankingController::class.java,
                 com.kgd.blog.presentation.controller.BlogPublicController::class.java,
                 com.kgd.blog.presentation.controller.BlogPageController::class.java,
+                // 단축 주소 해석(ADR-0103) — 빠지면 /g·/b·/p 가 배포 뒤에야 404 로 드러난다
+                com.kgd.game.presentation.shortlink.controller.GameShortLinkController::class.java,
+                com.kgd.blog.presentation.controller.BlogShortLinkController::class.java,
+                com.kgd.place.presentation.shortlink.controller.AttractionShortLinkController::class.java,
             ).forEach { ctx.getBeanNamesForType(it).size shouldBe 1 }
         }
 
@@ -144,6 +148,88 @@ class ContentContextLoadSpec(
                 )
 
             posts.findById(id).orElseThrow().viewCount shouldBe was + 1
+        }
+
+        // 단축 주소 클릭은 도메인 TM 한정자 + REQUIRES_NEW 로 쓴다. 한정자가 빠지면 primary(place) TM 에
+        // 붙어 game·blog 쓰기가 실패하거나 사라진다. 누적 수는 각 도메인 DB 를 JDBC 로 직접 읽어 판정한다.
+        fun clickCount(ds: DataSource, table: String, idColumn: String, id: Long): Long =
+            ds.connection.use { conn ->
+                conn.prepareStatement("SELECT click_count FROM $table WHERE $idColumn = ?").use { st ->
+                    st.setLong(1, id)
+                    st.executeQuery().use { rs -> if (rs.next()) rs.getLong(1) else 0L }
+                }
+            }
+
+        val probeUa = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/129.0.0.0 Safari/537.36"
+
+        Then("game 단축 주소 클릭이 game_db 의 누적 수를 1 올린다") {
+            val gameId = 910_001L
+            val was = clickCount(gameDs, "game_short_link_stat", "game_id", gameId)
+
+            ctx.getBean(com.kgd.game.application.shortlink.usecase.RecordGameShortLinkClickUseCase::class.java)
+                .execute(
+                    com.kgd.game.application.shortlink.usecase.RecordGameShortLinkClickUseCase.Command(
+                        gameId = gameId, referrer = "https://open.kakao.com/o/x", userAgent = probeUa,
+                    ),
+                )
+
+            clickCount(gameDs, "game_short_link_stat", "game_id", gameId) shouldBe was + 1
+        }
+
+        Then("blog 단축 주소 클릭이 blog_db 의 누적 수를 1 올린다") {
+            val postId = 910_002L
+            val was = clickCount(blogDs, "blog_short_link_stat", "post_id", postId)
+
+            ctx.getBean(com.kgd.blog.application.shortlink.usecase.RecordBlogShortLinkClickUseCase::class.java)
+                .execute(
+                    com.kgd.blog.application.shortlink.usecase.RecordBlogShortLinkClickUseCase.Command(
+                        postId = postId, referrer = null, userAgent = probeUa,
+                    ),
+                )
+
+            clickCount(blogDs, "blog_short_link_stat", "post_id", postId) shouldBe was + 1
+        }
+
+        Then("place 단축 주소 클릭이 place_db 의 누적 수를 1 올린다") {
+            val attractionId = 910_003L
+            val was = clickCount(placeDs, "attraction_short_link_stat", "attraction_id", attractionId)
+
+            ctx.getBean(com.kgd.place.application.shortlink.usecase.RecordAttractionShortLinkClickUseCase::class.java)
+                .execute(
+                    com.kgd.place.application.shortlink.usecase.RecordAttractionShortLinkClickUseCase.Command(
+                        attractionId = attractionId, referrer = null, userAgent = probeUa,
+                    ),
+                )
+
+            clickCount(placeDs, "attraction_short_link_stat", "attraction_id", attractionId) shouldBe was + 1
+        }
+
+        Then("place 클릭 원장 정리는 90일 넘은 행만 지우고 누적 수는 남긴다") {
+            val attractionId = 910_004L
+            placeDs.connection.use { conn ->
+                conn.createStatement().use {
+                    it.execute(
+                        "INSERT INTO attraction_short_link_click (attraction_id, clicked_at, ua_family) VALUES " +
+                            "($attractionId, NOW(3) - INTERVAL 91 DAY, 'desktop'), ($attractionId, NOW(3), 'desktop')",
+                    )
+                    it.execute(
+                        "INSERT INTO attraction_short_link_stat (attraction_id, click_count) VALUES ($attractionId, 2)",
+                    )
+                }
+            }
+            fun ledgerRows() = placeDs.connection.use { conn ->
+                conn.createStatement().use { st ->
+                    st.executeQuery(
+                        "SELECT COUNT(*) FROM attraction_short_link_click WHERE attraction_id = $attractionId",
+                    ).use { rs -> rs.next(); rs.getLong(1) }
+                }
+            }
+
+            ctx.getBean(com.kgd.place.application.shortlink.usecase.PurgeAttractionShortLinkClicksUseCase::class.java)
+                .olderThan(90L)
+
+            ledgerRows() shouldBe 1L
+            clickCount(placeDs, "attraction_short_link_stat", "attraction_id", attractionId) shouldBe 2L
         }
 
         Then("game 평점 집계가 실제로 반영된다 — 두 리포지토리 쓰기가 한 트랜잭션이어야 한다") {
