@@ -29,3 +29,8 @@ questions:
     status: open
     question: /hns:glossary(search BC) 갱신 — §4 표를 시드로. 글로서리는 2026-05-11 Elasticsearch 기준.
     answer: 선적 뒤.
+  - id: Q7
+    stage: post-impl
+    status: closed
+    question: 벡터 레그 knn filter 에 검색어 must 가 들어가는 것이 의도인가?
+    answer: 의도로 유지(2026-10-08). 판정 세트 150쿼리 A 0.7522 vs B 0.7574, 95% CI 가 0 포함 — docs/research/2026-10-08-vector-leg-filter/report.md, ADR-0090 개정 블록에 기록.

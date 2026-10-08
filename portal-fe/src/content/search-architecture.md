@@ -239,7 +239,7 @@ sequenceDiagram
 | 하이브리드 켜짐 | `true` | ● 운영 켜짐(deployment env) | `k8s/base/search/deployment.yaml:36`, `search/app/src/main/resources/application.yml:86` | ADR-0090 |
 | 융합 방식 | `rrf` | ● 앱이 기동 때 검색 파이프라인을 만든다 | `search/app/src/main/resources/application.yml:88` | ADR-0090 |
 | RRF rank_constant | `60` | ● 순위만 써서 점수 정규화가 필요 없다 | `search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/HybridSearchPipelineInitializer.kt:67` | ADR-0090 |
-| 필터 위치 | 두 레그 각각 | 벡터 레그도 검색어가 걸린 문서 안에서만 찾는다 | `search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt:693` | ADR-0090 |
+| 필터 위치 | 두 레그 각각 | 벡터 레그도 검색어가 걸린 문서 안에서만 찾는다 — 의도(구조 필터만 넣는 안과 판정 세트 비교, 차이 유의하지 않음) | `search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt:693` | ADR-0090 |
 | 임베딩 모델 ref | `microsoft/harrier-oss-v1-270m@31de22b#d640` | ● 검색 앱과 재색인이 같은 값이어야 벡터 레그가 돈다 | `k8s/base/search/deployment.yaml:34`, `k8s/base/search-batch/cronjob-attraction-reindex.yaml:62` | ADR-0090 |
 | 벡터 차원 | `640` | ● | `search/batch/src/main/resources/opensearch/attractions-index.json:446` | ADR-0090 |
 | HNSW m | `16` | ● Lucene 엔진, 코사인 | `search/batch/src/main/resources/opensearch/attractions-index.json:452` | ADR-0090 |

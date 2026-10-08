@@ -196,6 +196,12 @@ URL 은 굽지 않고 FE 가 `serviceHref.ts` 로 조립한다. 이력서(ADR-00
   곱하고, 벡터 레그는 k-NN 코사인 그대로다. 벡터 레그 조건도 「사전 적중」이 아니라 「쿼리 벡터를 구했음」이다.
 - **D6 통합 검색 타입에 `region` 은 없다.** 통합 검색이 다루는 타입은 `SearchUnifiedService.ALL_TYPES` 의 7종
   (attraction · blog_post · game · concept · deal_offer · service · product)이고, 관광지는 `unified` 가 아니라 `attractions` 색인에서 찾는다.
+- **D4 「같은 필터」는 검색어 일치까지 포함한다 — 의도로 유지.** 벡터 레그의 k-NN `filter` 는 키워드 레그의 bool(구조 필터 + 검색어
+  multi_match must)을 그대로 받아, 벡터 레그는 BM25 일치 집합 안에서 순서만 바꾸고 리콜을 보태지 않는다
+  (`AttractionSearchAdapter.kt` `vectorLeg`). 구조 필터만 넣는 안(B)과 판정 세트 150쿼리로 비교했다(2026-10-08,
+  `docs/research/2026-10-08-vector-leg-filter/report.md`): nDCG@10 A 0.7522 · B 0.7574, 차 +0.0052, 95% CI [−0.0021, +0.0135] —
+  0 을 포함해 바꿀 근거가 없다. B 는 어휘가 어긋나는 영문 의미 질의(stargazing +0.384)에서 이기고 고유명 질의
+  (seongsan ilchulbong −0.156, 불국사 −0.127)에서 진다. 바꾸려면 고유명 손실을 막는 장치와 함께 다시 잰다.
 
 ## Alternatives Considered
 
