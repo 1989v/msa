@@ -17,7 +17,9 @@ export type ScreenType =
   | 'PLACE_HUB'
   | 'PLACE_REGION'
   | 'ATTRACTION_DETAIL'
-  | 'UNIFIED_SEARCH';
+  | 'UNIFIED_SEARCH'
+  /** 내 찜 — 묶음 공유 계측만 보낸다 */
+  | 'FAVORITES';
 
 /** 섹션 고유 id — 같은 화면 안에서 유일해야 한다. */
 export type SectionId =
@@ -44,6 +46,13 @@ export type SectionId =
    */
   | 'MAP_LINK'
   | 'FAVORITE'
+  /** 구글맵 길찾기 링크 */
+  | 'DIRECTIONS'
+  /**
+   * 공유 채널 버튼(복사·Web Share·X·LinkedIn). 채널은 payload 가 갖는다 — 중복 키에 채널이 없어
+   * 같은 view·대상의 두 번째 채널은 버려진다(채널 분포는 view 당 첫 채널)
+   */
+  | 'SHARE'
   /** 지도 레이어 핀 — 노출 없는 클릭, 인기 집계 포함 */
   | 'MAP_OVERLAY';
 

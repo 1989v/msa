@@ -102,16 +102,16 @@ wishlist 최신은 `V3__collections.sql` → 이번은 **`wishlist/feature/src/m
 
 ### Task Group 7: 계측 — 길찾기 · 상세 공유 · FAVORITES 공유 이벤트 · POST_SELECTION (SR-3)
 **Dependencies:** TG6(묶음 막대), 스펙 D TG5(상세 행동 줄 — 길찾기만) · **Phase:** portal-fe + analytics:app · **Required Skills:** 이벤트 원장(ADR-0095), tracker 중복 키, ClickHouse SQL 리터럴
-- [ ] 7.1 테스트 먼저
+- [x] 7.1 테스트 먼저
   - `AttractionPage.test.tsx` 증보: 길찾기 링크 `href` = `googleMapsDirectionsUrl(...)`, 클릭 → `CLICK` + `sectionId:'DIRECTIONS'` + payload `kind:'google_maps_directions'`, 기존 지도 링크는 그대로 `MAP_LINK`. 상세 SharePanel 복사·Web Share·X·LinkedIn 각각 → `entityType:'ATTRACTION'`·`entityId`=관광지 id·`screenType:'ATTRACTION_DETAIL'`·`sectionId:'SHARE'`·payload `{kind:'attraction', channel}` 전부 단언
   - `FavoritesPage.share.test.tsx` 증보: 「공유 링크 만들기」 클릭 → track 0, 같은 view 의 이어진 복사 → track 1(`entityType:'PAGE'`·`entityId:'favorites'`·`screenType:'FAVORITES'`·`sectionId:'SHARE'`·payload `{kind:'collection', channel:'copy'}`, 묶음 id 없음), 묶음 칩 전환 → viewId 바뀜
   - `SharePanel.test.tsx` 증보: `onShare(channel)` 이 채널마다 1회
   - `analytics/app/src/test/kotlin/com/kgd/analytics/infrastructure/popularity/ClickHouseAttractionPopularityAdapterTest.kt`: 상수 기대값 `setOf("MAP_LINK", "FAVORITE", "DIRECTIONS", "SHARE")` + SQL 리터럴 네 곳(`:60`·`:72`·`:77`·`:79`)의 `NOT IN (...)` 갱신
-- [ ] 7.2 `events.ts`: SectionId 에 `DIRECTIONS`·`SHARE`(「선택 뒤 후속 행동」 주석 묶음 안), ScreenType 에 `FAVORITES`. EventAction·EntityType 은 늘리지 않는다. 중복 키는 바꾸지 않는다(두 번째 채널 유실 수용)
-- [ ] 7.3 `SharePanel.tsx` 선택 `onShare?(channel)`. AttractionPage 의 SharePanel 에 상세 공유 계측, 스펙 D 행동 줄에 길찾기 링크(`googleMapsDirectionsUrl` — rank 선례 `rankView.ts:63-69`. 재사용 위치는 착수 때 place 쪽 `googleMaps.ts` 와 비교해 한 곳으로)
-- [ ] 7.4 `FavoritesPage`: 묶음 칩 바뀔 때마다 `newViewId()`, 막대 SharePanel `onShare` → 위 형식 1건. 생성 버튼은 이벤트 없음
-- [ ] 7.5 `AggregateAttractionPopularityUseCase.POST_SELECTION_SECTIONS` 에 `DIRECTIONS`·`SHARE`(상수 한 줄 — 어댑터 SQL 은 상수에서 조립)
-- [ ] 7.6 Verify: `cd portal-fe && npx vitest run src/pages/place/__tests__/AttractionPage.test.tsx src/components/favorite/__tests__/FavoritesPage.share.test.tsx src/components/share src/analytics && npx tsc -b` + `./gradlew :analytics:app:test --tests '*ClickHouseAttractionPopularityAdapterTest' --rerun`
+- [x] 7.2 `events.ts`: SectionId 에 `DIRECTIONS`·`SHARE`(「선택 뒤 후속 행동」 주석 묶음 안), ScreenType 에 `FAVORITES`. EventAction·EntityType 은 늘리지 않는다. 중복 키는 바꾸지 않는다(두 번째 채널 유실 수용)
+- [x] 7.3 `SharePanel.tsx` 선택 `onShare?(channel)`. AttractionPage 의 SharePanel 에 상세 공유 계측, 스펙 D 행동 줄에 길찾기 링크(`googleMapsDirectionsUrl` — rank 선례 `rankView.ts:63-69`. 재사용 위치는 착수 때 place 쪽 `googleMaps.ts` 와 비교해 한 곳으로)
+- [x] 7.4 `FavoritesPage`: 묶음 칩 바뀔 때마다 `newViewId()`, 막대 SharePanel `onShare` → 위 형식 1건. 생성 버튼은 이벤트 없음
+- [x] 7.5 `AggregateAttractionPopularityUseCase.POST_SELECTION_SECTIONS` 에 `DIRECTIONS`·`SHARE`(상수 한 줄 — 어댑터 SQL 은 상수에서 조립)
+- [x] 7.6 Verify: `cd portal-fe && npx vitest run src/pages/place/__tests__/AttractionPage.test.tsx src/components/favorite/__tests__/FavoritesPage.share.test.tsx src/components/share src/analytics && npx tsc -b` + `./gradlew :analytics:app:test --tests '*ClickHouseAttractionPopularityAdapterTest' --rerun`
 
 ### Task Group 8: 회귀 주입 · 문서 · 온톨로지 참조 · 배포 · 운영 확인 (SR-4.3 · SR-4.4 · SR-2.12)
 **Dependencies:** TG1–7 · **Phase:** 검증 + 문서 + 배포 · **Required Skills:** 임시 워크트리 회귀 주입, CDP(독립 프로필 헤드리스 크롬), `ssh msa-oci`

@@ -1,6 +1,9 @@
 # 진행 상태
 
-- 현재 그룹: 7 (계측) — 스펙 D TG5 뒤
+- 현재 그룹: 8 (회귀 주입·문서·배포)
+- 완료: TG7 계측 — 메인 재실행 05:02 KST: vitest 5 files / 109 passed, tsc exit 0, ClickHouseAttractionPopularityAdapterTest 6/0
+- 사용자 확인: 관광지 길찾기가 rank 함수를 써서 travelmode=driving 고정
+- TG8 메모: 계측 문서에 DIRECTIONS·SHARE·FAVORITES
 - 완료: TG6 공유 막대·수신 화면·GA 로더 — 메인 재실행: vitest src/components/share src/components/favorite gaLoader 5 files / 42 passed, tsc exit 0. 수신 화면 5xx 문구·폐기 라벨 「공유 중단」은 스펙 밖에서 정함
 - 완료: TG5 로그인 복귀 — 메인 재실행: vitest src/pages/place src/components/favorite src/auth 17 files / 310 passed, tsc exit 0
 - 열린 질문: 상세 화면 resumed CLICK 의 viewId 가 관광지 응답 전 값일 수 있음(허브는 확인됨)

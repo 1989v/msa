@@ -3,6 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('../../../analytics/tracker', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../analytics/tracker')>()),
+  track: vi.fn(),
+}));
+
+import { track } from '../../../analytics/tracker';
 import FavoritesPage from '../FavoritesPage';
 import { installWishlistHttp, setSession, type Reply } from './wishlistHttpKit';
 
@@ -64,6 +71,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.mocked(track).mockClear();
   http.restore();
   setSession(null);
 });
@@ -127,5 +135,61 @@ describe('찜 화면 — 묶음 공유 막대', () => {
     await userEvent.click(screen.getByRole('button', { name: '공유 중단' }));
     expect(http.calls).toContain(`DELETE ${SHARE_PATH}`);
     expect(await screen.findByRole('button', { name: '공유 링크 만들기' })).toBeInTheDocument();
+  });
+});
+
+describe('찜 화면 — 묶음 공유 계측', () => {
+  const SHARE_EVENT = {
+    entityType: 'PAGE',
+    entityId: 'favorites',
+    screenType: 'FAVORITES',
+    sectionId: 'SHARE',
+  };
+
+  it('「공유 링크 만들기」는 이벤트가 없고, 이어진 복사가 CLICK SHARE 한 건 — 묶음 id 는 싣지 않는다', async () => {
+    serve({ get: { status: 200, data: { link: null } }, post: { status: 200, data: LINK } });
+    await openAttractionTab();
+    await pickCollection();
+
+    await userEvent.click(await screen.findByRole('button', { name: '공유 링크 만들기' }));
+    await screen.findByRole('button', { name: '링크 복사' });
+    expect(track).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole('button', { name: '링크 복사' }));
+    expect(track).toHaveBeenCalledTimes(1);
+    const [action, item] = vi.mocked(track).mock.calls[0];
+    expect(action).toBe('CLICK');
+    expect(item).toEqual({ ...SHARE_EVENT, payload: { kind: 'collection', channel: 'copy' } });
+    expect(JSON.stringify(item)).not.toContain(String(COLLECTION.id));
+  });
+
+  it('Web Share 는 channel share 로 남는다', async () => {
+    serve({ get: { status: 200, data: { link: LINK } } });
+    Object.defineProperty(navigator, 'share', { configurable: true, value: vi.fn().mockResolvedValue(undefined) });
+    await openAttractionTab();
+    await pickCollection();
+
+    await userEvent.click(await screen.findByRole('button', { name: '공유' }));
+
+    expect(vi.mocked(track).mock.calls.map(([, item]) => item)).toEqual([
+      { ...SHARE_EVENT, payload: { kind: 'collection', channel: 'share' } },
+    ]);
+    Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
+  });
+
+  it('묶음 칩을 바꿨다 돌아오면 새 view 다 — 다음 복사가 앞 복사와 다른 viewId 를 갖는다', async () => {
+    serve({ get: { status: 200, data: { link: LINK } } });
+    await openAttractionTab();
+    await pickCollection();
+    await userEvent.click(await screen.findByRole('button', { name: '링크 복사' }));
+
+    await userEvent.click(screen.getByRole('button', { name: '전체' }));
+    await userEvent.click(screen.getByRole('button', { name: /부산 2박/ }));
+    await userEvent.click(await screen.findByRole('button', { name: /링크 복사|복사됨/ }));
+
+    const views = vi.mocked(track).mock.calls.map(([, , viewId]) => viewId);
+    expect(views).toHaveLength(2);
+    expect(views[0]).toBeTruthy();
+    expect(views[1]).not.toBe(views[0]);
   });
 });

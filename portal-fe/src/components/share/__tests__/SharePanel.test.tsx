@@ -105,7 +105,7 @@ describe('SharePanel — 채널 고르기', () => {
     expect(screen.queryAllByRole('link')).toHaveLength(0);
   });
 
-  it('onShare 는 누른 채널 이름을 받는다', async () => {
+  it('onShare 는 누른 채널 이름을 채널마다 한 번 받는다', async () => {
     share = vi.fn().mockResolvedValue(undefined);
     const onShare = vi.fn();
     render(<SharePanel shortUrl={SHORT} title="심연의 왕관" onShare={onShare} />);
@@ -113,7 +113,8 @@ describe('SharePanel — 채널 고르기', () => {
     await userEvent.click(screen.getByRole('button', { name: '링크 복사' }));
     await userEvent.click(screen.getByRole('button', { name: '공유' }));
     await userEvent.click(screen.getByRole('link', { name: /^X/ }));
+    await userEvent.click(screen.getByRole('link', { name: /^LinkedIn/ }));
 
-    expect(onShare.mock.calls.map((c) => c[0])).toEqual(['copy', 'share', 'x']);
+    expect(onShare.mock.calls).toEqual([['copy'], ['share'], ['x'], ['linkedin']]);
   });
 });

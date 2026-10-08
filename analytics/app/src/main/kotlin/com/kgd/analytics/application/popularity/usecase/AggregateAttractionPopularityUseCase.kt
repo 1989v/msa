@@ -28,6 +28,6 @@ interface AggregateAttractionPopularityUseCase {
          * 제외하고, 노출은 그대로 센다. 기준은 「목록 밖」이 아니라 「선택 뒤」다: `MAP_OVERLAY` 도 노출 없는
          * 목록 밖 클릭이지만 집계에 넣는다. FE `portal-fe/src/analytics/events.ts` 의 같은 이름 주석과 한 몸이다.
          */
-        val POST_SELECTION_SECTIONS: Set<String> = setOf("MAP_LINK", "FAVORITE")
+        val POST_SELECTION_SECTIONS: Set<String> = setOf("MAP_LINK", "FAVORITE", "DIRECTIONS", "SHARE")
     }
 }

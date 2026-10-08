@@ -1,9 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { fetchFavorites, type FavoriteTargetType } from '../../api/wishlistApi';
 import { CollectionBar, MoveToCollection } from './FavoriteCollections';
 import CollectionShareBar from './CollectionShareBar';
+import { track } from '../../analytics/tracker';
+import { newViewId } from '../../analytics/identity';
 import { useCollections, type CollectionFilter } from './useCollections';
 import { buildLoginHref, isLoggedIn } from '../../auth/auth';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
@@ -76,6 +78,10 @@ export default function FavoritesPage() {
   const cards = useFavoriteCards(type, grouped ? filter : { kind: 'all' }, loggedIn);
   const sharedCollection =
     filter.kind === 'one' ? collections.data?.find((c) => c.id === filter.id) : undefined;
+  // 묶음 칩을 바꿀 때마다 새 view — 같은 view 안에서는 중복 키가 두 번째 공유를 버린다
+  const filterScope = filter.kind === 'one' ? `one:${filter.id}` : filter.kind;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const viewId = useMemo(() => newViewId(), [filterScope]);
 
   useSeo({
     title: lang === 'en' ? 'My favorites' : '내 찜',
@@ -120,7 +126,25 @@ export default function FavoritesPage() {
 
       {/* 공유는 묶음 하나를 골랐을 때만 — 「전체」·「미분류」는 공유 단위가 아니다 (ADR-0107) */}
       {loggedIn && grouped && filter.kind === 'one' && sharedCollection && (
-        <CollectionShareBar key={sharedCollection.id} collection={sharedCollection} lang={lang} />
+        <CollectionShareBar
+          key={sharedCollection.id}
+          collection={sharedCollection}
+          lang={lang}
+          onShare={(channel) =>
+            // 묶음 id 는 싣지 않는다 — 공유 기록은 collection_share 가 갖는다
+            track(
+              'CLICK',
+              {
+                entityType: 'PAGE',
+                entityId: 'favorites',
+                screenType: 'FAVORITES',
+                sectionId: 'SHARE',
+                payload: { kind: 'collection', channel },
+              },
+              viewId,
+            )
+          }
+        />
       )}
 
       {!loggedIn && (

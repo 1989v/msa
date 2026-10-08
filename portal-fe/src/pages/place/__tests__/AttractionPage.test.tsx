@@ -39,6 +39,7 @@ import { track } from '../../../analytics/tracker';
 import { addFavorite, fetchFavoriteKeys } from '../../../api/wishlistApi';
 import { todayKst } from '../../../seo/eventSchedule';
 import AttractionPage from '../AttractionPage';
+import { googleMapsDirectionsUrl } from '../../rank/rankView';
 
 // 날씨는 따로 다루는 묶음 밖에서는 빈 응답 — 절이 없다
 vi.mocked(fetchWeather).mockResolvedValue({ sigunguCode: '11110', shortBaseAt: null, midTmFc: null, days: [] });
@@ -1111,6 +1112,64 @@ describe('AttractionPage 계측 — 지도 열기 · 찜 배선', () => {
   });
 });
 
+describe('AttractionPage 계측 — 길찾기 · 공유', () => {
+  beforeEach(() => {
+    nearbyFrom(() => []);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: vi.fn().mockResolvedValue(undefined) } });
+  });
+  afterEach(() => vi.clearAllMocks());
+
+  const clicks = () => vi.mocked(track).mock.calls.filter(([action]) => action === 'CLICK');
+
+  it('행동 줄의 길찾기는 구글맵 경로 링크이고, 누르면 CLICK DIRECTIONS 하나 — 지도 링크는 MAP_LINK 그대로', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, address: '서울특별시 종로구 사직로 161' });
+    renderAt('/attractions/100');
+    const actions = (await screen.findByRole('link', { name: '길찾기' })).closest('[data-place-section="actions"]') as HTMLElement;
+    const directions = within(actions).getByRole('link', { name: '길찾기' });
+    expect(directions).toHaveAttribute(
+      'href',
+      googleMapsDirectionsUrl({ name: '경복궁', latitude: 37.5, longitude: 127, roadAddress: '서울특별시 종로구 사직로 161' }),
+    );
+    // 좌표로 도착지를 정한다 — 이름 검색은 같은 이름의 다른 곳으로 안내할 수 있다
+    expect(directions.getAttribute('href')).toContain('https://www.google.com/maps/dir/?api=1');
+    expect(directions.getAttribute('href')).toContain('destination=37.5,127');
+    vi.mocked(track).mockClear();
+
+    expect(fireEvent.click(directions)).toBe(true);
+    expect(clicks()).toHaveLength(1);
+    expect(clicks()[0][1]).toEqual({
+      entityType: 'ATTRACTION', entityId: '100', screenType: 'ATTRACTION_DETAIL', screenRef: '100',
+      sectionId: 'DIRECTIONS', payload: { kind: 'google_maps_directions' },
+    });
+
+    fireEvent.click(within(actions).getByRole('link', { name: '구글 지도에서 보기' }));
+    expect(clicks()[1][1]).toMatchObject({ sectionId: 'MAP_LINK', payload: { kind: 'google_maps_search' } });
+  });
+
+  it('공유 막대의 복사·Web Share·X·LinkedIn 은 채널마다 CLICK SHARE(ATTRACTION · 관광지 id · ATTRACTION_DETAIL)', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue(enriched);
+    renderAt('/attractions/100');
+    const panel = await screen.findByRole('group', { name: '공유' });
+    vi.mocked(track).mockClear();
+
+    fireEvent.click(within(panel).getByRole('button', { name: '링크 복사' }));
+    fireEvent.click(within(panel).getByRole('button', { name: '공유' }));
+    fireEvent.click(within(panel).getByRole('link', { name: /^X/ }));
+    fireEvent.click(within(panel).getByRole('link', { name: /^LinkedIn/ }));
+
+    const shares = clicks();
+    expect(shares.map(([, item]) => item)).toEqual(
+      (['copy', 'share', 'x', 'linkedin'] as const).map((channel) => ({
+        entityType: 'ATTRACTION', entityId: '100', screenType: 'ATTRACTION_DETAIL', screenRef: '100',
+        sectionId: 'SHARE', payload: { kind: 'attraction', channel },
+      })),
+    );
+    // 찜·지도 링크와 같은 화면 view 다
+    expect(new Set(shares.map(([, , viewId]) => viewId)).size).toBe(1);
+    expect(screen.getByTestId('fav').dataset.view).toBe(shares[0][2]);
+  });
+});
+
 /** 로그인 복귀 — 상세는 주소가 곧 상태라 찜 의도만 이어 받는다 */
 describe('AttractionPage 로그인 복귀', () => {
   const INTENT_KEY = 'kgd.favoriteIntent.v1';
@@ -1367,7 +1426,7 @@ describe('AttractionPage 첫 화면 — 방문 요약 · 행동 줄', () => {
     const { unmount } = renderAt('/attractions/100');
     await screen.findByRole('heading', { level: 1 });
     expect(within(actions()).getByText('문의: 없음')).toBeInTheDocument();
-    expect(within(actions()).getAllByRole('link').map((a) => a.textContent)).toEqual(['구글 지도에서 보기']);
+    expect(within(actions()).getAllByRole('link').map((a) => a.textContent)).toEqual(['구글 지도에서 보기', '길찾기']);
     unmount();
 
     vi.mocked(fetchAttraction).mockResolvedValue({ ...first, infoCenter: null, tel: null });

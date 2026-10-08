@@ -43,6 +43,7 @@ import Footer from '../../components/Footer';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
 import { useResumeFavoriteIntent } from '../../components/favorite/useResumeFavoriteIntent';
 import SharePanel from '../../components/share/SharePanel';
+import { googleMapsDirectionsUrl } from '../rank/rankView';
 import {
   galleryImages,
   groupByCategory,
@@ -80,8 +81,8 @@ import { newViewId } from '../../analytics/identity';
 import { installFlushOnLeave, track } from '../../analytics/tracker';
 
 const UI = {
-  ko: { summary: '방문 요약', region: '지역 안 위치', explore: (p: string) => `${p} 둘러보기`, similar: '다른 지역의 비슷한 곳', related: '여기 온 사람들이 함께 간 곳', back: '← 관광지 탐색', info: '이용 안내', photos: '사진', more: '본문 전체 보기', parkingFee: '주차요금', map: '구글 지도에서 보기', notFound: '관광지를 찾을 수 없습니다.', failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', loading: '불러오는 중…' },
-  en: { summary: 'Visit summary', region: 'In the area', explore: (p: string) => `Explore ${p}`, similar: 'Similar places in other regions', related: 'Where visitors also went', back: '← Explore Korea', info: 'Visitor info', photos: 'Photos', more: 'Read the full description', parkingFee: 'Parking fee', map: 'Open in Google Maps', notFound: 'Attraction not found.', failed: 'Could not load this page. Please try again in a moment.', loading: 'Loading…' },
+  ko: { summary: '방문 요약', region: '지역 안 위치', explore: (p: string) => `${p} 둘러보기`, similar: '다른 지역의 비슷한 곳', related: '여기 온 사람들이 함께 간 곳', back: '← 관광지 탐색', info: '이용 안내', photos: '사진', more: '본문 전체 보기', parkingFee: '주차요금', map: '구글 지도에서 보기', directions: '길찾기', notFound: '관광지를 찾을 수 없습니다.', failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', loading: '불러오는 중…' },
+  en: { summary: 'Visit summary', region: 'In the area', explore: (p: string) => `Explore ${p}`, similar: 'Similar places in other regions', related: 'Where visitors also went', back: '← Explore Korea', info: 'Visitor info', photos: 'Photos', more: 'Read the full description', parkingFee: 'Parking fee', map: 'Open in Google Maps', directions: 'Directions', notFound: 'Attraction not found.', failed: 'Could not load this page. Please try again in a moment.', loading: 'Loading…' },
 } as const;
 
 /** 주변 검색 반경 — 명소 목록과 편의시설 캐로셀이 같은 값을 쓴다. */
@@ -370,6 +371,20 @@ export default function AttractionPage() {
                   url={attractionUrl(docLang, attraction.id)}
                   title={attraction.title}
                   lang={lang}
+                  onShare={(channel) =>
+                    track(
+                      'CLICK',
+                      {
+                        entityType: 'ATTRACTION',
+                        entityId: attraction.id,
+                        screenType: 'ATTRACTION_DETAIL',
+                        screenRef: id,
+                        sectionId: 'SHARE',
+                        payload: { kind: 'attraction', channel },
+                      },
+                      viewId,
+                    )
+                  }
                 />
                 {attraction.category && (
                   <span className="place-chip active">{placeCategoryLabel(attraction.category, lang)}</span>
@@ -417,6 +432,33 @@ export default function AttractionPage() {
                     }
                   >
                     {L.map}
+                  </a>
+                  <a
+                    className="place-btn"
+                    href={googleMapsDirectionsUrl({
+                      name: attraction.title,
+                      latitude: attraction.latitude,
+                      longitude: attraction.longitude,
+                      roadAddress: attraction.address,
+                    })}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() =>
+                      track(
+                        'CLICK',
+                        {
+                          entityType: 'ATTRACTION',
+                          entityId: attraction.id,
+                          screenType: 'ATTRACTION_DETAIL',
+                          screenRef: id,
+                          sectionId: 'DIRECTIONS',
+                          payload: { kind: 'google_maps_directions' },
+                        },
+                        viewId,
+                      )
+                    }
+                  >
+                    {L.directions}
                   </a>
                   {phone &&
                     (phone.href ? (
