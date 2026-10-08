@@ -629,6 +629,23 @@ export function placeHreflangAlternates(sub = '') {
   ];
 }
 
+/**
+ * 관광지 상세의 hreflang — 국문 문서와 영문 문서가 **언어 대체 짝**(색인 `alternateId`)일 때만 부른다.
+ * TourAPI 국·영은 id 가 다른 별개 문서라 짝은 search 재색인이 판정해 싣고, 짝 스위치
+ * (`search.alternate-pairs.enabled`, 기본 꺼짐)가 꺼져 있으면 `alternateId` 가 늘 비어 여기까지 오지 않는다.
+ * 어느 쪽이 국문인지는 요청 경로가 아니라 문서 언어(docLang)로 정한다. 순서·x-default 는 허브와 같다.
+ * 서버 렌더(`AttractionPageRenderer`)와 같은지는 `AttractionHreflangParityTest` 가 골든으로 본다.
+ */
+export function attractionHreflangAlternates(docLang, id, alternateId) {
+  const koId = docLang === 'en' ? alternateId : id;
+  const enId = docLang === 'en' ? id : alternateId;
+  return [
+    { hreflang: 'ko', href: attractionUrl('ko', koId) },
+    { hreflang: 'en', href: attractionUrl('en', enId) },
+    { hreflang: 'x-default', href: attractionUrl('en', enId) },
+  ];
+}
+
 export function placeHubMeta(lang) {
   return lang === 'en'
     ? {

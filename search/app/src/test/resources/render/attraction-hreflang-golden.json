@@ -1,0 +1,44 @@
+{
+  "cases": [
+    {
+      "name": "ko-document",
+      "docLang": "ko",
+      "id": "1001",
+      "alternateId": "2001",
+      "output": [
+        {
+          "hreflang": "ko",
+          "href": "https://place.1989v.com/attractions/1001"
+        },
+        {
+          "hreflang": "en",
+          "href": "https://place.1989v.com/en/attractions/2001"
+        },
+        {
+          "hreflang": "x-default",
+          "href": "https://place.1989v.com/en/attractions/2001"
+        }
+      ]
+    },
+    {
+      "name": "en-document",
+      "docLang": "en",
+      "id": "2001",
+      "alternateId": "1001",
+      "output": [
+        {
+          "hreflang": "ko",
+          "href": "https://place.1989v.com/attractions/1001"
+        },
+        {
+          "hreflang": "en",
+          "href": "https://place.1989v.com/en/attractions/2001"
+        },
+        {
+          "hreflang": "x-default",
+          "href": "https://place.1989v.com/en/attractions/2001"
+        }
+      ]
+    }
+  ]
+}

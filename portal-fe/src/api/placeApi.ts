@@ -132,6 +132,13 @@ export interface Attraction {
   modifiedAt?: string | null;
   /** 반려동물 동반 원문 — petPolicy 가 UNKNOWN 일 때 그대로 보여 준다. */
   petAcmpyType?: string | null;
+  /**
+   * 언어 대체 짝 — 상대 언어 문서 id(국문 ↔ 영문). 짝이 없거나 짝 스위치가 꺼져 있으면 null.
+   * 같은 언어 안의 중복 등록(`samePlace`)과 다른 개념이다. 있으면 상세가 hreflang 을 단다.
+   */
+  alternateId?: string | null;
+  /** 본문이 실제로 바뀐 시각(place 가 정규화 해시로 판정). 원천 수정일 `modifiedAt` 과 다르다. */
+  contentUpdatedAt?: string | null;
 }
 
 /** 함께 간 곳 한 건 — `rank` 는 원천 순위, `category` 는 원천 소분류 이름 그대로. */

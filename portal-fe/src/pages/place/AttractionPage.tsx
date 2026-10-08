@@ -11,6 +11,7 @@ import {
 } from '../../api/placeApi';
 import {
   PLACE_ORIGIN,
+  attractionHreflangAlternates,
   attractionMeta,
   attractionPath,
   attractionBreadcrumbJsonLd,
@@ -159,6 +160,7 @@ export default function AttractionPage() {
   // 행사 상태·만료는 렌더 시점의 KST 오늘로 판정한다(서버 렌더와 같은 규칙)
   const today = todayKst();
   const kind = placeKind(attraction?.contentTypeId);
+  const seoNoindex = attraction ? attractionNoindex(attraction, today) : false;
   useSeo(
     attraction && meta
       ? {
@@ -171,10 +173,13 @@ export default function AttractionPage() {
           // 싣지 않지만(prerender-seo.mjs) 이미 색인된 것은 사이트맵에서 빠져도 남는다 —
           // 빼는 일은 noindex 가 한다. 수집 배치가 개요를 채우면 저절로 풀린다.
           // 끝난 지 31일이 지난 행사도 뺀다 — 서버 렌더와 같은 판정이라 하이드레이션이 robots 를 뒤집지 않는다.
-          noindex: attractionNoindex(attraction, today),
-          // hreflang 없음 — TourAPI 는 국문/영문을 별도 콘텐츠로 관리해 같은 장소라도
-          // id·contentId 가 다르다(경복궁 ko 126508 / en 264337). 짝을 알 수 없으므로
-          // 잘못된 대체 주소를 선언하느니 걸지 않는다. 허브(/ ↔ /en)만 진짜 번역쌍이다.
+          noindex: seoNoindex,
+          // 언어 대체 짝이고 짝 스위치(`search.alternate-pairs.enabled`, 기본 꺼짐)가 켜졌을 때만 hreflang
+          // (ADR-0062 §8 개정). TourAPI 국·영은 id 가 다른 별개 문서라 짝은 재색인이 판정해 `alternateId` 로 싣는다.
+          // 서버 렌더와 같은 조건 — 짝이 없거나 noindex 면 키를 넘기지 않는다.
+          ...(attraction.alternateId && !seoNoindex
+            ? { alternates: attractionHreflangAlternates(docLang, attraction.id, attraction.alternateId) }
+            : {}),
           jsonLd: [
             // 유형별(행사 Event · 숙박 LodgingBusiness · 코스 TouristTrip) — 서버가 심은 것과 같은 함수다
             attractionJsonLd(docLang, attraction),

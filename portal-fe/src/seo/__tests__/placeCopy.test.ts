@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  attractionHreflangAlternates,
   attractionMeta,
   placeHubMeta,
   placeItemListJsonLd,
@@ -93,5 +94,21 @@ describe('구조화 데이터', () => {
     expect(ld.numberOfItems).toBe(1);
     expect(ld.itemListElement[0].url).toBe('https://place.1989v.com/attractions/1');
     expect(ld.itemListElement[0].name).toBe('경복궁');
+  });
+});
+
+describe('관광지 상세 hreflang — 언어 대체 짝', () => {
+  const pair = [
+    { hreflang: 'ko', href: 'https://place.1989v.com/attractions/K' },
+    { hreflang: 'en', href: 'https://place.1989v.com/en/attractions/E' },
+    { hreflang: 'x-default', href: 'https://place.1989v.com/en/attractions/E' },
+  ];
+
+  it('국문 문서 — ko 는 자기, en 은 짝, x-default 는 영문 쪽', () => {
+    expect(attractionHreflangAlternates('ko', 'K', 'E')).toEqual(pair);
+  });
+
+  it('영문 문서 — 문서 언어로 어느 쪽이 국문인지 정하므로 같은 세 줄이 같은 순서로 나온다', () => {
+    expect(attractionHreflangAlternates('en', 'E', 'K')).toEqual(pair);
   });
 });

@@ -57,6 +57,9 @@ class AttractionPageRenderer(
         val meta = attractionMeta(lang, doc)
         val canonical = attractionUrl(lang, doc.id)
         val image = secureImageUrl(doc.imageUrl)?.takeIf { PHOTO.containsMatchIn(it) } ?: "$origin/og/place.png"
+        // 개요가 없으면 제목·주소·좌표뿐인 얇은 문서다. 끝난 지 31일이 지난 행사도 색인에서 뺀다(30일까지는 대상).
+        val noindex = doc.overview.isNullOrEmpty() ||
+            (EventSchedule.isEvent(doc.contentTypeId) && EventSchedule.indexExpired(doc.eventPeriod, today))
         val head = metaTags(
             lang = lang,
             title = meta.title,
@@ -64,10 +67,10 @@ class AttractionPageRenderer(
             canonical = canonical,
             image = image,
             imageAlt = meta.heading,
-            // 개요가 없으면 제목·주소·좌표뿐인 얇은 문서다. 끝난 지 31일이 지난 행사도 색인에서 뺀다(30일까지는 대상).
-            noindex = doc.overview.isNullOrEmpty() ||
-                (EventSchedule.isEvent(doc.contentTypeId) && EventSchedule.indexExpired(doc.eventPeriod, today)),
-            // hreflang 없음 — TourAPI 국문/영문은 별도 콘텐츠라 짝을 모른다 (ADR-0062 §8)
+            noindex = noindex,
+            // 언어 대체 짝이고 짝 스위치(`search.alternate-pairs.enabled`, 기본 꺼짐)가 켜졌을 때만 hreflang (ADR-0062 §8 개정).
+            // 스위치가 꺼져 있으면 색인 `alternateId` 가 늘 null 이다. noindex 문서는 대체 주소를 선언하지 않는다
+            alternates = doc.alternateId?.takeUnless { noindex }?.let { attractionHreflangAlternates(lang, doc.id, it) }.orEmpty(),
             jsonLd = listOf(primaryJsonLd(lang, doc, meta), breadcrumbJsonLd(lang, doc)),
         )
         return compose(shell, lang, head, shellBody(attractionBody(lang, doc, meta, today)))
@@ -119,7 +122,10 @@ class AttractionPageRenderer(
         </html>
     """.trimIndent()
 
-    /** prerender-seo.mjs `metaTags` 와 같은 줄·순서 (hreflang 없음). 속성값도 모두 이스케이프한다. */
+    /**
+     * prerender-seo.mjs `metaTags` 와 같은 줄·순서. hreflang 은 언어 대체 짝이고 짝 스위치
+     * (`search.alternate-pairs.enabled`, 기본 꺼짐)가 켜졌을 때만 (ADR-0062 §8 개정). 속성값도 모두 이스케이프한다.
+     */
     private fun metaTags(
         lang: String,
         title: String,
@@ -129,6 +135,7 @@ class AttractionPageRenderer(
         imageAlt: String?,
         noindex: Boolean,
         jsonLd: List<Map<String, Any?>>,
+        alternates: List<Pair<String, String>> = emptyList(),
     ): String {
         val lines = mutableListOf(
             "<title>${escapeHtml(title)}</title>",
@@ -155,6 +162,10 @@ class AttractionPageRenderer(
             imageAlt?.let { lines += """<meta property="og:image:alt" content="${escapeHtml(it)}" />""" }
             lines += """<meta name="twitter:image" content="$src" />"""
             imageAlt?.let { lines += """<meta name="twitter:image:alt" content="${escapeHtml(it)}" />""" }
+        }
+        // 하이드레이션(useSeo)이 지우고 다시 달 수 있게 JSON-LD 와 같은 표시를 단다
+        alternates.forEach { (hreflang, href) ->
+            lines += """<link rel="alternate" hreflang="${escapeHtml(hreflang)}" href="${escapeHtml(href)}" $SEO_MULTI />"""
         }
         jsonLd.forEach {
             // </script> 가 JSON 문자열에 섞이면 파서가 조기 종료된다
@@ -817,6 +828,17 @@ class AttractionPageRenderer(
     private fun placeUrl(lang: String) = origin + placePath(lang)
     private fun attractionPath(lang: String, id: String) = placePath(lang, "/attractions/$id")
     private fun attractionUrl(lang: String, id: String) = origin + attractionPath(lang, id)
+
+    /** copy.mjs `attractionHreflangAlternates` — (hreflang, href). 어느 쪽이 국문인지는 문서 언어로 정한다 */
+    private fun attractionHreflangAlternates(docLang: String, id: String, alternateId: String): List<Pair<String, String>> {
+        val koId = if (docLang == EN) alternateId else id
+        val enId = if (docLang == EN) id else alternateId
+        return listOf(
+            KO to attractionUrl(KO, koId),
+            EN to attractionUrl(EN, enId),
+            "x-default" to attractionUrl(EN, enId),
+        )
+    }
     private fun regionPath(lang: String, code: String) = placePath(lang, "/regions/$code")
     private fun regionUrl(lang: String, code: String) = origin + regionPath(lang, code)
 

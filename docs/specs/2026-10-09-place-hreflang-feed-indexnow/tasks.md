@@ -58,7 +58,7 @@ Total Task Groups: 8. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
 - [x] 3.5 문서·매핑: batch `AttractionIndexDocument`, `search/batch/src/main/resources/opensearch/attractions-index.json` 두 필드
 - [x] 3.6 읽기 경로: app `AttractionSearchDocument`(필드 + `toDomain`) · 도메인 모델 · `SearchAttractionUseCase` 결과 · `SearchAttractionService` 매핑
 - [x] 3.7 루트 `build.gradle.kts` `searchReadRequired`(`:538`)에 `alternateId`·`contentUpdatedAt`
-- [ ] 3.8 FE 타입: `portal-fe/src/api/placeApi.ts` `Attraction` 에 `alternateId?: string | null`·`contentUpdatedAt?: string | null`. `portal-fe/scripts/prerender-seo.mjs` `indexDoc` 투영에 `alternateId`
+- [x] 3.8 FE 타입: `portal-fe/src/api/placeApi.ts` `Attraction` 에 `alternateId?: string | null`·`contentUpdatedAt?: string | null`. `portal-fe/scripts/prerender-seo.mjs` `indexDoc` 투영에 `alternateId`
 - [x] 3.9 `k8s/base/search-batch/cronjob-attraction-reindex.yaml` env(`:54` 블록)에 `SEARCH_ALTERNATE_PAIRS_ENABLED: "false"`
 - [x] 3.10 Verify:
   - `./gradlew :search:domain:test --tests '*AlternateLanguagePairerTest' --tests '*ContentTypeLangTest' --rerun`
@@ -71,19 +71,19 @@ Total Task Groups: 8. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
 
 ### Task Group 4: hreflang 표시 — 헬퍼·SSR·하이드레이션·sitemap (SR-1.7)
 **Dependencies:** TG3(문서 `alternateId`) · **Phase:** portal-fe `copy.mjs`·`AttractionPage.tsx`·`prerender-seo.mjs`, search:app `AttractionPageRenderer` · **Required Skills:** TS/ESM, vitest, Kotlin, HTML
-- [ ] 4.1 테스트 먼저
+- [x] 4.1 테스트 먼저
   - `portal-fe/src/seo/__tests__/placeCopy.test.ts` 증보: `attractionHreflangAlternates('ko', 'K', 'E')` → `[ko /attractions/K, en /en/attractions/E, x-default = en]` · `('en', 'E', 'K')` → 같은 세 줄(docLang 기준) · 순서 고정
   - 새 `portal-fe/src/seo/__tests__/attractionHreflangGolden.test.ts`: 케이스(국문 문서·영문 문서) 출력을 `search/app/src/test/resources/render/attraction-hreflang-golden.json` 으로 쓴다(`footerLinksGolden.test.ts` 방식)
   - `portal-fe/src/pages/place/__tests__/AttractionPage.test.tsx`: `alternateId` 있음·noindex 아님 → `useSeo` 입력에 alternates · `alternateId` null → alternates 키 없음 · 개요 없음(noindex) → 없음
   - `portal-fe/src/seo/__tests__/prerenderPlace.test.ts`: `placeDetailSitemapEntries` — 상대 항목이 있으면 alternates · `alternateId` 는 있으나 상대 언어 항목 집합에 없음 → alternates 없음 · `alternateId` 없음 → 없음
   - 새 `search/app/src/test/kotlin/com/kgd/search/infrastructure/render/AttractionHreflangParityTest.kt`: 골든 JSON 의 입력 → 렌더 → `<link rel="alternate" hreflang>` 세 줄 추출 → 출력과 비교(`AttractionJsonLdParityTest` 선례)
   - `AttractionPageRendererTest.kt` 증보: 짝·자기 noindex 아님 → 세 줄 + `data-seo-multi` · 짝 없음 → 0줄 · 짝이지만 noindex → 0줄 · `/en/attractions/{국문id}` 요청 → docLang 기준 ko·en
-- [ ] 4.2 `copy.mjs`: `attractionHreflangAlternates(docLang, id, alternateId)` — `placeHreflangAlternates`(`:541-547`) 와 같은 규칙(x-default = en)
-- [ ] 4.3 `AttractionPageRenderer.kt`(`:50-70`): `alternateId != null && !noindex` 일 때만 세 줄, `data-seo-multi` 속성. 주석 `:65`·`:117` 교체(SR-1.7 문구)
-- [ ] 4.4 `AttractionPage.tsx`(`:150-173`): 같은 조건으로 `useSeo({ alternates })`, 아니면 키를 넘기지 않음. 주석 `:171-173` 교체
-- [ ] 4.5 `prerender-seo.mjs` `placeDetailSitemapEntries`(`:816-826`): 상대 언어 항목 집합에 있을 때만 `alternates`. 주석 `:707-708` 교체
-- [ ] 4.6 CI: `.github/workflows/ci.yml` vitest 뒤 「Attraction hreflang golden fixture is current」 단계(기존 골든 단계와 같은 모양 — `git diff --exit-code` + `git status --porcelain`)
-- [ ] 4.7 Verify:
+- [x] 4.2 `copy.mjs`: `attractionHreflangAlternates(docLang, id, alternateId)` — `placeHreflangAlternates`(`:541-547`) 와 같은 규칙(x-default = en)
+- [x] 4.3 `AttractionPageRenderer.kt`(`:50-70`): `alternateId != null && !noindex` 일 때만 세 줄, `data-seo-multi` 속성. 주석 `:65`·`:117` 교체(SR-1.7 문구)
+- [x] 4.4 `AttractionPage.tsx`(`:150-173`): 같은 조건으로 `useSeo({ alternates })`, 아니면 키를 넘기지 않음. 주석 `:171-173` 교체
+- [x] 4.5 `prerender-seo.mjs` `placeDetailSitemapEntries`(`:816-826`): 상대 언어 항목 집합에 있을 때만 `alternates`. 주석 `:707-708` 교체
+- [x] 4.6 CI: `.github/workflows/ci.yml` vitest 뒤 「Attraction hreflang golden fixture is current」 단계(기존 골든 단계와 같은 모양 — `git diff --exit-code` + `git status --porcelain`)
+- [x] 4.7 Verify:
   - `cd portal-fe && npx vitest run src/seo/__tests__/placeCopy.test.ts src/seo/__tests__/attractionHreflangGolden.test.ts src/seo/__tests__/prerenderPlace.test.ts src/pages/place/__tests__/AttractionPage.test.tsx && npx tsc -b`
   - `git status --porcelain search/app/src/test/resources/render/attraction-hreflang-golden.json` (생성 확인)
   - `./gradlew :search:app:test --tests '*AttractionHreflangParityTest' --tests '*AttractionPageRendererTest' --rerun`

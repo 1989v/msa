@@ -239,6 +239,53 @@ describe('정적 sitemap — 행사 제외 · 숙박 등재 조건', () => {
   });
 });
 
+describe('정적 sitemap — 관광지 상세 hreflang(언어 대체 짝)', () => {
+  // 검색 응답 모양 그대로 — indexDoc 이 alternateId 를 들고 와야 sitemap 이 짝을 안다
+  const api = (id: string, contentTypeId: string, over: Record<string, unknown> = {}) => ({
+    id, title: `문서 ${id}`, category: 'history', contentTypeId, overview: '개요가 있다', imageUrl: 'p.jpg', ...over,
+  });
+  const docs = (list: Array<Record<string, unknown>>) =>
+    list.map((a) => indexDoc(a, '11')).filter((d): d is Record<string, unknown> & { id: string } => d != null);
+  const places = {
+    ko: docs([
+      api('K1', '12', { alternateId: 'E1' }),
+      // 상대 영문 문서가 이번 빌드 항목에 없다(개요 없음 → sitemap 제외)
+      api('K2', '12', { alternateId: 'E2' }),
+      api('K3', '12', { alternateId: null }),
+    ]),
+    en: docs([
+      api('E1', '76', { alternateId: 'K1' }),
+      api('E2', '76', { alternateId: 'K2', overview: '' }),
+    ]),
+  };
+  const entries = placeDetailSitemapEntries(places);
+  const entryOf = (path: string) => entries.find((e: { loc: string }) => e.loc === `https://place.1989v.com${path}`);
+  const PAIR = [
+    { hreflang: 'ko', href: 'https://place.1989v.com/attractions/K1' },
+    { hreflang: 'en', href: 'https://place.1989v.com/en/attractions/E1' },
+    { hreflang: 'x-default', href: 'https://place.1989v.com/en/attractions/E1' },
+  ];
+
+  it('indexDoc 이 alternateId 를 투영한다', () => {
+    expect(places.ko[0]).toMatchObject({ id: 'K1', alternateId: 'E1' });
+  });
+
+  it('상대 언어 항목이 있으면 양쪽 항목에 같은 세 줄을 붙인다', () => {
+    expect(entryOf('/attractions/K1')?.alternates).toEqual(PAIR);
+    expect(entryOf('/en/attractions/E1')?.alternates).toEqual(PAIR);
+  });
+
+  it('alternateId 는 있으나 상대 언어 항목 집합에 없으면 붙이지 않는다', () => {
+    expect(entryOf('/attractions/K2')).toBeDefined();
+    expect(entryOf('/attractions/K2')).not.toHaveProperty('alternates');
+  });
+
+  it('alternateId 가 없으면 붙이지 않는다', () => {
+    expect(entryOf('/attractions/K3')).toBeDefined();
+    expect(entryOf('/attractions/K3')).not.toHaveProperty('alternates');
+  });
+});
+
 describe('place sitemap 인덱스 — 행사 sitemap(동적) 연결', () => {
   const hub = [{ loc: 'https://place.1989v.com/', priority: '1.0' }];
   const detail = [{ loc: 'https://place.1989v.com/attractions/1', priority: '0.7' }];

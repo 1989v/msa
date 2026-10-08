@@ -332,6 +332,13 @@ jobs:
           git diff --exit-code -- search/app/src/test/resources/render/phone-golden.json
           test -z "$(git status --porcelain -- search/app/src/test/resources/render/phone-golden.json)"
 
+      # 위 vitest 가 copy.mjs attractionHreflangAlternates 출력으로 관광지 상세 hreflang 골든을 다시 쓴다. 다르면
+      # search 의 AttractionHreflangParityTest 가 옛 규칙과 비교하고 있다는 뜻이다.
+      - name: Attraction hreflang golden fixture is current
+        run: |
+          git diff --exit-code -- search/app/src/test/resources/render/attraction-hreflang-golden.json
+          test -z "$(git status --porcelain -- search/app/src/test/resources/render/attraction-hreflang-golden.json)"
+
   yaml-validate:
     name: application*.yml syntax check
     runs-on: ubuntu-latest

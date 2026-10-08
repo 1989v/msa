@@ -113,6 +113,41 @@ class AttractionPageRendererTest : BehaviorSpec({
         }
     }
 
+    given("언어 대체 짝(alternateId)") {
+        val hreflang = Regex("""<link rel="alternate" hreflang="([^"]*)" href="([^"]*)"([^>]*)/>""")
+        fun linksOf(html: String) = hreflang.findAll(html).map { Triple(it.groupValues[1], it.groupValues[2], it.groupValues[3].trim()) }.toList()
+        val pair = listOf(
+            Triple("ko", "https://place.1989v.com/attractions/1001", "data-seo-multi"),
+            Triple("en", "https://place.1989v.com/en/attractions/2001", "data-seo-multi"),
+            Triple("x-default", "https://place.1989v.com/en/attractions/2001", "data-seo-multi"),
+        )
+
+        then("짝이 있고 색인 대상이면 ko · en · x-default 세 줄을 data-seo-multi 와 함께 낸다") {
+            linksOf(render(SHELL, doc().copy(alternateId = "2001"))) shouldBe pair
+        }
+
+        then("영문 문서도 같은 세 줄이다 — 문서 언어 기준") {
+            linksOf(render(SHELL, doc(id = "2001", lang = "en", title = "Gyeongbokgung Palace").copy(alternateId = "1001"))) shouldBe pair
+        }
+
+        then("짝이 없으면 0줄") {
+            linksOf(render(SHELL, doc())) shouldBe emptyList()
+        }
+
+        then("짝이어도 개요가 없어 noindex 면 0줄") {
+            val html = render(SHELL, doc(overview = null).copy(alternateId = "2001"))
+            html shouldContain """<meta name="robots" content="noindex, follow" />"""
+            linksOf(html) shouldBe emptyList()
+        }
+
+        then("/en/attractions/{국문 id} 요청도 렌더러는 문서 언어로 판정한다 — ko 쪽이 그 국문 id") {
+            // 렌더러는 요청 경로를 받지 않는다 — 어느 경로로 왔든 국문 문서를 넘기면 국문 기준 세 줄
+            val html = render(SHELL, doc(id = "1001", lang = "ko").copy(alternateId = "2001"))
+            html shouldContain "<html lang=\"ko\">"
+            linksOf(html) shouldBe pair
+        }
+    }
+
     given("속성이 해석된 문서") {
         val html = render(SHELL, doc(attributes = PARSED, region = REGION, similarElsewhere = SIMILAR))
         val root = rootOf(html)

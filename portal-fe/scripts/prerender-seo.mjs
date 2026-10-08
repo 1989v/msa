@@ -54,6 +54,7 @@ import {
   PORTAL_BRAND,
   PORTAL_PAGES,
   placeBrand,
+  attractionHreflangAlternates,
   placeHreflangAlternates,
   placeHubMeta,
   placePath,
@@ -704,8 +705,8 @@ async function writeRobotsAndSitemaps(
     })),
   ];
 
-  // place — 허브만 hreflang 쌍이다. 관광지 상세는 TourAPI 가 국문/영문을 별도 콘텐츠로
-  // 관리해 같은 장소라도 id 가 다르므로 짝을 지을 수 없다 (ADR-0062).
+  // place — 허브는 hreflang 쌍이다. 관광지 상세는 언어 대체 짝이고 짝 스위치
+  // (`search.alternate-pairs.enabled`, 기본 꺼짐)가 켜졌을 때만 hreflang (ADR-0062 §8 개정) — placeDetailSitemapEntries.
   const placeHubEntries = LANGS.map((lang) => ({
     loc: placeUrl(lang),
     priority: '1.0',
@@ -814,15 +815,26 @@ function blogAuthorHandles(blog) {
  * @param {{ ko?: Array<Record<string, any>>, en?: Array<Record<string, any>> }} places indexDoc 결과
  */
 export function placeDetailSitemapEntries(places) {
-  return LANGS.flatMap((lang) =>
-    (places[lang] ?? [])
-      .filter((a) => a.hasOverview && (!PLACE_STAY_TYPES.includes(a.contentTypeId) || a.imageUrl))
-      .map((a) => ({
-        loc: placeUrl(lang, `/attractions/${a.id}`),
-        lastmod: isoDate(a.modifiedAt),
-        priority: '0.7',
-      })),
+  const listed = Object.fromEntries(
+    LANGS.map((lang) => [
+      lang,
+      (places[lang] ?? []).filter((a) => a.hasOverview && (!PLACE_STAY_TYPES.includes(a.contentTypeId) || a.imageUrl)),
+    ]),
   );
+  const listedIds = Object.fromEntries(LANGS.map((lang) => [lang, new Set(listed[lang].map((a) => a.id))]));
+  return LANGS.flatMap((lang) => {
+    const other = lang === 'en' ? 'ko' : 'en';
+    return listed[lang].map((a) => ({
+      loc: placeUrl(lang, `/attractions/${a.id}`),
+      lastmod: isoDate(a.modifiedAt),
+      priority: '0.7',
+      // 언어 대체 짝은 상대 언어 항목도 이 sitemap 에 있을 때만 잇는다 — 없는 주소를 대체로 선언하지 않는다.
+      // 빌드 시점 값이라 다음 빌드까지 낡을 수 있다(기준은 상세 서버 렌더).
+      ...(a.alternateId && listedIds[other].has(a.alternateId)
+        ? { alternates: attractionHreflangAlternates(lang, a.id, a.alternateId) }
+        : {}),
+    }));
+  });
 }
 
 /** sitemap 은 파일당 50,000 URL 상한이 있다. 넘치면 쪼개고 인덱스로 묶는다. */
@@ -1015,6 +1027,8 @@ export function indexDoc(a, sidoCode) {
     // sitemap 의 lastmod. 원천 수정일이 없는 문서는 그냥 비운다 — 빌드일을 대신 적으면
     // 6만 URL 이 배포마다 전부 "갱신됨"이 되어 신호가 신호이길 그만둔다.
     modifiedAt: a.modifiedAt ?? null,
+    // 언어 대체 짝 — sitemap 항목의 hreflang. 짝이 없거나 짝 스위치가 꺼져 있으면 null
+    alternateId: a.alternateId ?? null,
   };
 }
 

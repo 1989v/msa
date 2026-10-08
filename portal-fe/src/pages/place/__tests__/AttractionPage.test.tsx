@@ -1396,3 +1396,51 @@ describe('AttractionPage 첫 화면 — 방문 요약 · 행동 줄', () => {
     expect(screen.getByRole('navigation', { name: 'Breadcrumb' })).toBeInTheDocument();
   });
 });
+
+describe('AttractionPage hreflang — 언어 대체 짝', () => {
+  beforeEach(() => nearbyFrom(() => []));
+  afterEach(() => {
+    vi.clearAllMocks();
+    document.head.innerHTML = '';
+  });
+
+  const hreflangs = () =>
+    Array.from(document.head.querySelectorAll('link[rel="alternate"][hreflang]')).map((l) => [
+      l.getAttribute('hreflang'), l.getAttribute('href'), l.hasAttribute('data-seo-multi'),
+    ]);
+  const PAIR = [
+    ['ko', 'https://place.1989v.com/attractions/100', true],
+    ['en', 'https://place.1989v.com/en/attractions/E100', true],
+    ['x-default', 'https://place.1989v.com/en/attractions/E100', true],
+  ];
+
+  it('짝이 있고 색인 대상이면 ko · en · x-default 세 줄을 단다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, alternateId: 'E100' });
+    renderAt('/attractions/100');
+    await screen.findByRole('heading', { level: 1, name: '경복궁' });
+    expect(hreflangs()).toEqual(PAIR);
+  });
+
+  it('어긋난 주소(/en/attractions/{국문 id})로 와도 문서 언어 기준으로 같은 세 줄이다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, alternateId: 'E100' });
+    renderAt('/en/attractions/100');
+    await screen.findByRole('heading', { level: 1, name: '경복궁' });
+    expect(hreflangs()).toEqual(PAIR);
+  });
+
+  it('짝이 없으면 hreflang 을 달지 않는다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, alternateId: null });
+    renderAt('/attractions/100');
+    await screen.findByRole('heading', { level: 1, name: '경복궁' });
+    expect(document.head.querySelector('link[rel="canonical"]')).not.toBeNull();
+    expect(hreflangs()).toEqual([]);
+  });
+
+  it('짝이 있어도 개요가 없어 noindex 면 달지 않는다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, overview: null, alternateId: 'E100' });
+    renderAt('/attractions/100');
+    await screen.findByRole('heading', { level: 1, name: '경복궁' });
+    expect(document.head.querySelector('meta[name="robots"]')).toHaveAttribute('content', 'noindex, follow');
+    expect(hreflangs()).toEqual([]);
+  });
+});
