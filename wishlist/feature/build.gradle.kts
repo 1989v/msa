@@ -29,6 +29,9 @@ dependencies {
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.spring.kafka.test)
     testImplementation(libs.kotest.extensions.spring)
+    // 스키마 검증 — 마이그레이션을 실제 MySQL 에 적용해 제약(유일·FK CASCADE)을 확인한다.
+    testImplementation(libs.testcontainers.junit)
+    testImplementation(libs.testcontainers.mysql)
 }
 
 // 라이브러리 — 실행 가능 JAR 아님.

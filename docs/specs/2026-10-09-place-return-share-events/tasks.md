@@ -25,13 +25,13 @@ wishlist 최신은 `V3__collections.sql` → 이번은 **`wishlist/feature/src/m
 
 ### Task Group 1: 도메인 모델 `CollectionShare` + 스키마 V4 (SR-2.1 · SR-2.2 domain)
 **Dependencies:** None · **Phase:** wishlist:domain + wishlist:feature(리소스·테스트 의존성) · **Required Skills:** Kotlin domain(프레임워크 의존 0), Flyway, Testcontainers MySQL
-- [ ] 1.1 테스트 먼저
+- [x] 1.1 테스트 먼저
   - `wishlist/domain/src/test/kotlin/com/kgd/wishlist/domain/model/CollectionShareTest.kt`: 토큰 10자·`^[A-Za-z0-9]{10}$`(SecureRandom, 생성 100회 모두 형식 일치), 고정 `Clock` 으로 기본 30일 `expiresAt`, 만료 없음(`null`), `isAlive(now)` — 만료 시각 경계(직전 살아 있음·같거나 뒤 죽음), 폐기 뒤 죽음, `revoke(now)` 두 번 멱등, 1~365 밖 일수 거부
   - `wishlist/feature/src/test/kotlin/com/kgd/wishlist/infrastructure/persistence/WishlistSchemaIntegrationSpec.kt`(`DealSchemaIntegrationSpec` 모양 — Testcontainers MySQL + `ScopedFlywayMigrator` 로 `wishlistdb/migration`): V4 적용 후 `collection_share` 컬럼·인덱스, 같은 토큰 두 번 삽입 → 유일 제약 위반, 묶음 삭제 → 공유 행 CASCADE
-- [ ] 1.2 `wishlist/domain/src/main/kotlin/com/kgd/wishlist/domain/model/CollectionShare.kt` — `WishlistCollection.kt` 와 같은 모양(팩토리 `create(collectionId, memberId, expiresInDays: Int?, clock)` · `revoke(now)` · `isAlive(now)` · `TOKEN_PATTERN` 상수). 시각은 인자로 받은 `Clock`/`Instant` 에서만 얻는다
-- [ ] 1.3 `V4__collection_share.sql` — `id` PK · `token CHAR(10) NOT NULL UNIQUE` · `collection_id BIGINT NOT NULL` FK → `wishlist_collection(id) ON DELETE CASCADE` · `member_id BIGINT NOT NULL` + 인덱스 · `created_at` · `expires_at NULL` · `revoked_at NULL`. 위 「Flyway 번호」 확인을 먼저 한다
-- [ ] 1.4 `wishlist/feature/build.gradle.kts` 에 `testImplementation(libs.testcontainers.junit)`·`testImplementation(libs.testcontainers.mysql)`(선례 `deal/feature/build.gradle.kts:37-38`). 락파일·다른 빌드 설정은 건드리지 않는다
-- [ ] 1.5 Verify: `./gradlew :wishlist:domain:test --tests '*CollectionShareTest' --rerun` + `./gradlew :wishlist:feature:test --tests '*WishlistSchemaIntegrationSpec' --rerun` + `./gradlew verifyFlywayWiring`. 스키마 스펙은 Docker 부재 시 skip 되므로 `wishlist/feature/build/test-results/test/TEST-*WishlistSchemaIntegrationSpec.xml` 의 `skipped="0"`·`tests>0` 을 증거로 남긴다(skip 된 실행은 통과로 치지 않는다)
+- [x] 1.2 `wishlist/domain/src/main/kotlin/com/kgd/wishlist/domain/model/CollectionShare.kt` — `WishlistCollection.kt` 와 같은 모양(팩토리 `create(collectionId, memberId, expiresInDays: Int?, clock)` · `revoke(now)` · `isAlive(now)` · `TOKEN_PATTERN` 상수). 시각은 인자로 받은 `Clock`/`Instant` 에서만 얻는다
+- [x] 1.3 `V4__collection_share.sql` — `id` PK · `token CHAR(10) NOT NULL UNIQUE` · `collection_id BIGINT NOT NULL` FK → `wishlist_collection(id) ON DELETE CASCADE` · `member_id BIGINT NOT NULL` + 인덱스 · `created_at` · `expires_at NULL` · `revoked_at NULL`. 위 「Flyway 번호」 확인을 먼저 한다
+- [x] 1.4 `wishlist/feature/build.gradle.kts` 에 `testImplementation(libs.testcontainers.junit)`·`testImplementation(libs.testcontainers.mysql)`(선례 `deal/feature/build.gradle.kts:37-38`). 락파일·다른 빌드 설정은 건드리지 않는다
+- [x] 1.5 Verify: `./gradlew :wishlist:domain:test --tests '*CollectionShareTest' --rerun` + `./gradlew :wishlist:feature:test --tests '*WishlistSchemaIntegrationSpec' --rerun` + `./gradlew verifyFlywayWiring`. 스키마 스펙은 Docker 부재 시 skip 되므로 `wishlist/feature/build/test-results/test/TEST-*WishlistSchemaIntegrationSpec.xml` 의 `skipped="0"`·`tests>0` 을 증거로 남긴다(skip 된 실행은 통과로 치지 않는다)
 
 ### Task Group 2: application — 포트·유스케이스·서비스·설정 (SR-2.2 · 2.3 · 2.4 · 2.5 · 2.8 · 2.9)
 **Dependencies:** TG1 · **Phase:** wishlist:feature application · **Required Skills:** ADR-0083 레이어, `@Transactional`(wishlist TM), Kotest + MockK
