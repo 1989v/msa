@@ -1,0 +1,16 @@
+questions:
+  - id: Q1
+    stage: post-impl
+    status: open
+    question: S2-7 공식 대조(사용자 검수)에서 틀린 값이 나오면 원천 정정 요청인지 표시 규칙 수정인지
+    answer: 검수 결과를 받아 표시 규칙 건은 후속 커밋으로 반영
+  - id: Q2
+    stage: post-impl
+    status: open
+    question: Google 리치 결과 테스트는 브라우저 수동 도구 — 사용자 몫으로 넘길지
+    answer: Schema.org 검증은 자동(validator.schema.org), Google 리치 결과 테스트는 표본 3개 URL 을 마지막 보고에 사용자 몫으로
+  - id: U8
+    stage: post-impl
+    status: open
+    question: 반려동물 칸이 UNKNOWN 일 때 원문(petAcmpyType)을 보여 줄지
+    answer: 권고 기본값 「원문을 보여 준다」 — 색인에 이미 있는 petAcmpyType 을 읽기 경로에 더한다(spec SR-4.1, 3라운드 심판 E3-2)

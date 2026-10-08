@@ -23,8 +23,8 @@ Total Task Groups: 5. 정본 `spec.md`(개정 3). 표준 `docs/standards/test-ru
 
 ### Task Group 4: 기준선 측정 (배포 전)
 **Dependencies:** None
-- [ ] 4.1 Lighthouse before 15회(`scratchpad/lh-stage2.sh before`) → `evidence/stage2/lh/before/`
-- [ ] 4.2 1440×900 첫 카드 y·390×844 폴드 안 카드 수(현재 운영)
+- [x] 4.1 Lighthouse before 15회(`scratchpad/lh-stage2.sh before`) → `evidence/stage2/lh/before/`
+- [x] 4.2 1440×900 첫 카드 y·390×844 폴드 안 카드 수(현재 운영)
 
 ### Task Group 5: 회귀 주입 · 배포 · 전후 비교
 **Dependencies:** TG1–4
