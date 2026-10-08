@@ -114,3 +114,19 @@
 :root[data-surface='heritage'][data-theme='dark'] .favorite-btn.is-compact.is-on .favorite-btn__star polygon {
   fill: var(--ko-accent-primary);
 }
+
+/* 로그인 복귀로 마저 한 찜의 알림 — 화면 아래 가운데에 잠깐(useResumeFavoriteIntent 가 3초 뒤 지운다) */
+.favorite-resume-notice {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 40;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 10px 16px;
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--kh-radius, 4px);
+  background: var(--ko-surface-1);
+  color: var(--ko-text-primary);
+  pointer-events: none;
+}

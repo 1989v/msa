@@ -39,6 +39,7 @@ import PhotoViewer from './PhotoViewer';
 import { exploreItems, type ExploreKind } from './exploreItems';
 import Footer from '../../components/Footer';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
+import { useResumeFavoriteIntent } from '../../components/favorite/useResumeFavoriteIntent';
 import SharePanel from '../../components/share/SharePanel';
 import {
   galleryImages,
@@ -223,6 +224,8 @@ export default function AttractionPage() {
   const viewId = useMemo(() => newViewId(), [attraction?.contentId]);
   // 화면을 떠날 때 아직 안 보낸 노출을 흘린다 — 그 순간의 fetch 는 취소된다.
   useEffect(installFlushOnLeave, []);
+  // 로그인 복귀의 찜 마저 하기 — 상세는 주소가 곧 상태라 의도만 이어 받는다
+  const resumeNotice = useResumeFavoriteIntent({ screenType: 'ATTRACTION_DETAIL', screenRef: id, viewId }, lang);
 
   const hasMapKey = mapsApiKey() !== '';
   const lat = attraction?.latitude;
@@ -569,6 +572,12 @@ export default function AttractionPage() {
           shape="horizontal"
           minHeight={90}
         />
+      )}
+
+      {resumeNotice && (
+        <p className="favorite-resume-notice" role="status">
+          {resumeNotice}
+        </p>
       )}
 
       {/* 통합 푸터 + 출처표시 의무 슬롯 — 허브(PlacePage)와 동일 구성 (data-sources.md §0) */}

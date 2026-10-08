@@ -8,6 +8,8 @@
  */
 
 import { PORTAL_ORIGIN } from '../seo/copy.mjs';
+import { clearFavoriteIntent } from '../components/favorite/favoriteIntent';
+import { clearPlaceHubState } from '../pages/place/placeHubState';
 
 const ACCESS_TOKEN_KEY = 'portal_access_token';
 const REFRESH_TOKEN_KEY = 'portal_refresh_token';
@@ -63,6 +65,9 @@ export function clearLocalSession(): void {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
   localStorage.removeItem(USER_ID_KEY);
+  // 로그인 복귀용 흔적 — 로그아웃한 탭에서 다음 사람의 로그인에 이어지지 않게
+  clearFavoriteIntent();
+  clearPlaceHubState();
   notifyAuthChanged();
 }
 

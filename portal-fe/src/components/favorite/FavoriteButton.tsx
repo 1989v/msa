@@ -3,6 +3,7 @@ import type { FavoriteTargetType } from '../../api/wishlistApi';
 import { useFavorites, type FavoriteTracking } from './useFavorites';
 import './Favorite.css';
 import { buildLoginHref } from '../../auth/auth';
+import { writeFavoriteIntent } from './favoriteIntent';
 
 
 /**
@@ -51,6 +52,10 @@ const STAR = '12 2.6 14.85 8.6 21.4 9.35 16.5 13.85 17.9 20.35 12 17.05 6.1 20.3
  * preventDefault + stopPropagation 을 건다.
  *
  * `tracking` 을 주는 호출처만 찜 완료를 원장에 남긴다(place 화면 셋).
+ *
+ * 로그인 복귀: 게스트가 관광지 별을 누르면 이동 전에 찜 의도를 남긴다(돌아온 화면의
+ * `useResumeFavoriteIntent` 가 마저 찜한다). 화면 상태를 따로 남겨야 하는 호출처(허브)는
+ * `onBeforeLogin` 을 준다 — 이동 직전에 한 번 불린다.
  */
 export default function FavoriteButton({
   type,
@@ -58,12 +63,14 @@ export default function FavoriteButton({
   compact = false,
   lang = 'ko',
   tracking,
+  onBeforeLogin,
 }: {
   type: FavoriteTargetType;
   targetKey: string;
   compact?: boolean;
   lang?: FavoriteLang;
   tracking?: FavoriteTracking;
+  onBeforeLogin?: () => void;
 }) {
   const L = UI[lang];
   const { loggedIn, isFavorite, toggle } = useFavorites(type, tracking);
@@ -74,6 +81,8 @@ export default function FavoriteButton({
     e.preventDefault();
     e.stopPropagation();
     if (!loggedIn) {
+      if (type === 'ATTRACTION') writeFavoriteIntent(targetKey);
+      onBeforeLogin?.();
       // 로그인은 apex 한 곳이라 호스트를 넘는 이동이다 (ADR-0079)
       window.location.href = buildLoginHref();
       return;

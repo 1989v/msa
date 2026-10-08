@@ -22,6 +22,13 @@ vi.mock('../../../components/favorite/FavoriteButton', () => ({
 vi.mock('../../../components/ads/AdSlot', () => ({
   default: ({ placement }: { placement: string }) => <div data-ad-placement={placement} />,
 }));
+// 로그인 복귀의 찜 완료가 부르는 API — 실제 요청이 나가지 않게 막는다
+vi.mock('../../../api/wishlistApi', () => ({
+  addFavorite: vi.fn(),
+  removeFavorite: vi.fn(),
+  fetchFavoriteKeys: vi.fn(),
+  fetchFavorites: vi.fn(),
+}));
 vi.mock('../../../analytics/tracker', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../analytics/tracker')>()),
   track: vi.fn(),
@@ -29,6 +36,7 @@ vi.mock('../../../analytics/tracker', async (importOriginal) => ({
 
 import { fetchAirQuality, fetchAttraction, fetchAttractionNearby, fetchWeather, searchAttractions, type AirQuality, type WeatherOutlook } from '../../../api/placeApi';
 import { track } from '../../../analytics/tracker';
+import { addFavorite, fetchFavoriteKeys } from '../../../api/wishlistApi';
 import { todayKst } from '../../../seo/eventSchedule';
 import AttractionPage from '../AttractionPage';
 
@@ -1091,6 +1099,59 @@ describe('AttractionPage 계측 — 지도 열기 · 찜 배선', () => {
     expect(fav.dataset.key).toBe('100');
     expect(fav.dataset.ref).toBe('100');
     expect(fav.dataset.view).toBe(mapClick[2]);
+  });
+});
+
+/** 로그인 복귀 — 상세는 주소가 곧 상태라 찜 의도만 이어 받는다 */
+describe('AttractionPage 로그인 복귀', () => {
+  const INTENT_KEY = 'kgd.favoriteIntent.v1';
+  const setSession = (memberId: string | null) => {
+    document.cookie = memberId ? `portal_user_id=${memberId}; Path=/` : 'portal_user_id=; Path=/; Max-Age=0';
+  };
+  const seedIntent = () =>
+    sessionStorage.setItem(INTENT_KEY, JSON.stringify({ targetType: 'ATTRACTION', targetKey: '100', createdAt: Date.now() }));
+  const favoriteClicks = () =>
+    vi.mocked(track).mock.calls.filter(([a, e]) => a === 'CLICK' && e.sectionId === 'FAVORITE').map(([, e]) => e);
+
+  beforeEach(() => {
+    nearbyFrom(() => []);
+    sessionStorage.clear();
+    vi.mocked(fetchAttraction).mockResolvedValue(enriched);
+    vi.mocked(fetchFavoriteKeys).mockResolvedValue([]);
+    vi.mocked(addFavorite).mockResolvedValue({
+      id: 1, targetType: 'ATTRACTION', targetKey: '100', collectionId: null, createdAt: '2026-10-09T00:00:00Z',
+    });
+  });
+  afterEach(() => {
+    setSession(null);
+    sessionStorage.clear();
+    vi.clearAllMocks();
+  });
+
+  it('로그인 마운트 + 유효 의도 → PUT 1회 · 「찜했습니다」 · resumed 계측 1건', async () => {
+    setSession('1');
+    seedIntent();
+    renderAt('/attractions/100');
+
+    expect(await screen.findByText('찜했습니다')).toHaveAttribute('role', 'status');
+    expect(addFavorite).toHaveBeenCalledTimes(1);
+    expect(addFavorite).toHaveBeenCalledWith('ATTRACTION', '100');
+    expect(sessionStorage.getItem(INTENT_KEY)).toBeNull();
+    expect(favoriteClicks()).toHaveLength(1);
+    expect(favoriteClicks()[0]).toMatchObject({
+      entityType: 'ATTRACTION', entityId: '100', screenType: 'ATTRACTION_DETAIL', screenRef: '100',
+      payload: { saved: true, resumed: true },
+    });
+  });
+
+  it('비로그인 마운트 → 의도를 소비하지도 지우지도 않는다', async () => {
+    seedIntent();
+    renderAt('/attractions/100');
+    await screen.findByRole('link', { name: '구글 지도에서 보기' });
+
+    expect(sessionStorage.getItem(INTENT_KEY)).not.toBeNull();
+    expect(fetchFavoriteKeys).not.toHaveBeenCalled();
+    expect(addFavorite).not.toHaveBeenCalled();
   });
 });
 

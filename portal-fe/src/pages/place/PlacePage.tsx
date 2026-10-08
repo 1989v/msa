@@ -36,6 +36,8 @@ import { escapeHtml } from 'card-dispenser';
 import Footer from '../../components/Footer';
 import ThemeToggle from '../../components/ThemeToggle';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
+import { useResumeFavoriteIntent } from '../../components/favorite/useResumeFavoriteIntent';
+import { clearPlaceHubState, readPlaceHubState, writePlaceHubState, type PlaceHubKnownValues } from './placeHubState';
 import {
   activeFilterConditions,
   isPlottable,
@@ -81,6 +83,12 @@ import { useImpression } from '../../analytics/useImpression';
 /** 행사 목록의 상태 칩 — 아무것도 안 고르면 끝나지 않은 행사 전부(NOT_ENDED)다. */
 type ListEventStatus = 'ONGOING' | 'WEEKEND' | 'UPCOMING';
 const LIST_EVENT_STATUSES: ListEventStatus[] = ['ONGOING', 'WEEKEND', 'UPCOMING'];
+/** 로그인 복귀로 되살릴 수 있는 값 — 화면이 고를 수 있는 것만 */
+const HUB_KNOWN: PlaceHubKnownValues = {
+  categories: [...SIGHT_CATEGORIES, EVENT_CATEGORY, COURSE_CATEGORY],
+  attributes: ATTRIBUTE_CHIPS.map((c) => c.id),
+  eventStatuses: LIST_EVENT_STATUSES,
+};
 
 const UI = {
   ko: {
@@ -274,7 +282,8 @@ interface GeoState {
  * SEARCH `payload.trigger` (ADR-0095 허브 계측) — 무엇이 질의를 바꿨는지. 조작 시점에 ref 로 남겼다가
  * 결과 도착 시 소비한다. `landing` 은 직전 조건이 없는 첫 질의, `other` 는 ref 가 빈 채 결과가 온
  * 안전망(= ref 를 안 심은 핸들러)이라 기준선에서 0 이어야 한다. `relax` 는 0건 화면의 조건 해제·「모두 해제」·
- * 「원래 검색어로 검색」 — 검색 제출·필터 적용 건수에서 빼고 결과 view 에는 넣는다.
+ * 「원래 검색어로 검색」 — 검색 제출·필터 적용 건수에서 빼고 결과 view 에는 넣는다. `restore` 는 로그인 뒤
+ * 돌아와 되살린 화면의 첫 질의 — 사람이 바꾼 조건이 아니라 같은 이유로 건수에서 빼고 결과 view 에는 넣는다.
  */
 type SearchTrigger =
   | 'submit'
@@ -290,6 +299,7 @@ type SearchTrigger =
   | 'landing'
   | 'lang'
   | 'relax'
+  | 'restore'
   | 'other';
 
 /*
@@ -339,25 +349,42 @@ export default function PlacePage() {
     jsonLd: [collectionPageJsonLd(lang, seoMeta, seoCanonical, { name: placeBrand(lang), url: PLACE_ORIGIN })],
   });
 
-  const [keywordInput, setKeywordInput] = useState('');
-  const [keyword, setKeyword] = useState('');
+  /*
+   * 로그인 복귀 — 게스트가 별을 눌러 로그인으로 가기 직전에 남긴 화면 상태(10분). 초기값 함수는 읽기만 하고
+   * (StrictMode 는 두 번 부른다) 지우는 것은 마운트 effect 다. 로그인 여부와 무관하게 되살린다.
+   * 모바일 목록은 0쪽부터 누적되고 지도 맞춤도 0쪽에서만 돌아 0쪽부터 다시 시작한다 — 그때 선택은 첫 쪽에
+   * 있을 때만 살린다(첫 쪽 도착까지 보류).
+   */
+  const [restored] = useState(() => readPlaceHubState(HUB_KNOWN));
+  const [restoredMobile] = useState(() => restored != null && window.matchMedia(MOBILE_QUERY).matches);
+  const [pendingSelectId, setPendingSelectId] = useState<string | null>(() =>
+    restoredMobile ? (restored?.selectedId ?? null) : null,
+  );
+  useEffect(() => clearPlaceHubState(), []);
+
+  const [keywordInput, setKeywordInput] = useState(restored?.keyword ?? '');
+  const [keyword, setKeyword] = useState(restored?.keyword ?? '');
   // 「원래 검색어로 검색」을 누른 순간의 검색어. 검색어가 바뀌면 질의에서 저절로 빠진다(불리언이면 남는다).
-  const [exactFor, setExactFor] = useState<string | null>(null);
+  const [exactFor, setExactFor] = useState<string | null>(restored?.exactFor ?? null);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showSuggest, setShowSuggest] = useState(false);
-  const [category, setCategory] = useState<string | null>(null);
+  const [category, setCategory] = useState<string | null>(restored?.category ?? null);
   // 행사 칩을 골랐을 때만 쓰는 상태 칩. null 이면 NOT_ENDED.
-  const [listEventStatus, setListEventStatus] = useState<ListEventStatus | null>(null);
+  const [listEventStatus, setListEventStatus] = useState<ListEventStatus | null>(
+    (restored?.listEventStatus as ListEventStatus | null | undefined) ?? null,
+  );
   // 속성 칩 — 화면 상태일 뿐 주소를 만들지 않는다(새 색인 URL 금지). 속성끼리 AND.
-  const [attributes, setAttributes] = useState<ReadonlySet<AttributeChipId>>(() => new Set());
-  const [areaCode, setAreaCode] = useState<string | null>(null);
-  const [sidoCode, setSidoCode] = useState<string | null>(null);
-  const [sigunguCode, setSigunguCode] = useState<string | null>(null);
+  const [attributes, setAttributes] = useState<ReadonlySet<AttributeChipId>>(
+    () => new Set((restored?.attributes ?? []) as AttributeChipId[]),
+  );
+  const [areaCode, setAreaCode] = useState<string | null>(restored?.areaCode ?? null);
+  const [sidoCode, setSidoCode] = useState<string | null>(restored?.sidoCode ?? null);
+  const [sigunguCode, setSigunguCode] = useState<string | null>(restored?.sigunguCode ?? null);
   const [overlay, setOverlay] = useState<string | null>(null);
   const [mapView, setMapView] = useState<{ lat: number; lng: number; radiusKm: number } | null>(null);
-  const [geo, setGeo] = useState<GeoState | null>(null);
-  const [page, setPage] = useState(0);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [geo, setGeo] = useState<GeoState | null>(restored?.geo ?? null);
+  const [page, setPage] = useState(restored && !restoredMobile ? restored.page : 0);
+  const [selectedId, setSelectedId] = useState<string | null>(restoredMobile ? null : (restored?.selectedId ?? null));
   const [mapMoved, setMapMoved] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   // 데스크톱 전용 — 목록 열을 접어 지도를 넓힌다. 모바일은 목록이 항상 지도 아래에 있다.
@@ -484,6 +511,14 @@ export default function PlacePage() {
     viewIdRef.current = viewId;
     screenRefRef.current = screenRef;
   }, [viewId, screenRef]);
+  // 로그인 복귀의 찜 마저 하기 — 화면에 한 번. 별마다 두지 않는다
+  const resumeNotice = useResumeFavoriteIntent({ screenType: 'PLACE_HUB', screenRef, viewId }, lang);
+  // 게스트 별이 로그인으로 가기 직전에 부른다 — 돌아오면 이 조건·선택으로 다시 그린다
+  const saveHubState = () =>
+    writePlaceHubState({
+      keyword, exactFor, category, attributes: [...attributes], areaCode, sidoCode, sigunguCode,
+      geo, listEventStatus, selectedId, page,
+    });
   // 화면을 떠날 때 아직 안 보낸 것을 흘린다 — 그 순간의 fetch 는 취소된다.
   useEffect(installFlushOnLeave, []);
   // 허브 세션 시작 — 세션당 한 번. 마운트 시점에는 시도가 없어(자동 선택은 지역 자료 도착 뒤) screenRef 가 빈 값이다.
@@ -499,7 +534,7 @@ export default function PlacePage() {
    * 이 effect 는 자동 시도 선택 effect 보다 앞에 둔다 — 같은 커밋에서 그쪽이 먼저 `initial` 을 심으면
    * 시도 없는 첫 질의(landing)가 그 값을 가져간다.
    */
-  const triggerRef = useRef<SearchTrigger | null>(null);
+  const triggerRef = useRef<SearchTrigger | null>(restored ? 'restore' : null);
   const changedRef = useRef<string[]>([]);
   const sentViewRef = useRef<string | null>(null);
   const hasSearchedRef = useRef(false);
@@ -565,6 +600,11 @@ export default function PlacePage() {
     setFacetStore({ data, facets: data.attributeFacets ?? null });
   }
   const facets = facetStore.facets;
+  // 모바일 복원의 보류한 선택 — 첫 쪽이 오면 그 안에 있을 때만 연다. 실패면 버린다
+  if (pendingSelectId != null && ((data && data.currentPage === 0) || isError)) {
+    setPendingSelectId(null);
+    if (data?.attractions.some((a) => a.id === pendingSelectId)) setSelectedId(pendingSelectId);
+  }
   const toggleAttribute = (id: AttributeChipId) => {
     triggerRef.current = 'attribute';
     changedRef.current = ['attributes', 'page'];
@@ -683,7 +723,8 @@ export default function PlacePage() {
    * 한 번만 돈다 — 사용자가 "전체"로 되돌린 뒤 다시 낚아채면 조작을 빼앗는 셈이다.
    * 검색어를 들고 들어온 경우(공유 링크 등)도 비켜준다. 그건 이미 명시된 의도다.
    */
-  const autoPickedRef = useRef(false);
+  // 되살린 화면은 사람이 고른 조건이다 — 자동 선택이 덮지 않는다
+  const autoPickedRef = useRef(restored != null);
   useEffect(() => {
     if (autoPickedRef.current || !hasRegionAxis || sidoCode || keyword || geo) return;
     const regions = sidoRegions ?? [];
@@ -1695,6 +1736,7 @@ export default function PlacePage() {
                   viewId={viewId}
                   screenRef={screenRef}
                   onSelect={() => setSelectedId(a.id)}
+                  onBeforeLogin={saveHubState}
                 />
               ))}
               {/* 다음 페이지를 기다리는 자리 — 정경 톤 opacity pulse (shimmer 금지) */}
@@ -1775,7 +1817,13 @@ export default function PlacePage() {
             <button className="place-detail-close" onClick={() => setSelectedId(null)}>
               {L.close}
             </button>
-            <AttractionDetailBody attraction={selected} lang={lang} viewId={viewId} screenRef={screenRef} />
+            <AttractionDetailBody
+              attraction={selected}
+              lang={lang}
+              viewId={viewId}
+              screenRef={screenRef}
+              onBeforeLogin={saveHubState}
+            />
           </aside>
         )}
       </main>
@@ -1796,10 +1844,22 @@ export default function PlacePage() {
       {selected && isMobile && (
         <KhSheet label={L.attractionLabel} onClose={() => setSelectedId(null)}>
           <div className="place-detail place-detail-sheet" aria-label={selected.title}>
-            <AttractionDetailBody attraction={selected} lang={lang} viewId={viewId} screenRef={screenRef} />
+            <AttractionDetailBody
+              attraction={selected}
+              lang={lang}
+              viewId={viewId}
+              screenRef={screenRef}
+              onBeforeLogin={saveHubState}
+            />
             <AttractionLinks links={selected.links} lang={lang} />
           </div>
         </KhSheet>
+      )}
+
+      {resumeNotice && (
+        <p className="favorite-resume-notice" role="status">
+          {resumeNotice}
+        </p>
       )}
 
       {/* 출처 고지는 공통 푸터의 슬롯으로 — TourAPI(공공누리)·GeoNames(CC BY 4.0) 는
@@ -1845,11 +1905,14 @@ function AttractionDetailBody({
   lang,
   viewId,
   screenRef,
+  onBeforeLogin,
 }: {
   attraction: Attraction;
   lang: PlaceLang;
   viewId: string;
   screenRef: string;
+  /** 게스트 별이 로그인으로 가기 직전 — 허브 화면 상태를 남긴다 */
+  onBeforeLogin: () => void;
 }) {
   const L = UI[lang];
   const { primary, secondary } = titleParts(attraction);
@@ -1867,6 +1930,7 @@ function AttractionDetailBody({
           targetKey={attraction.id}
           lang={lang}
           tracking={{ screenType: 'PLACE_HUB', screenRef, viewId }}
+          onBeforeLogin={onBeforeLogin}
         />
       </div>
       {secondary && <p className="place-detail-local">{secondary}</p>}
@@ -1917,6 +1981,7 @@ function PlaceCard({
   viewId,
   screenRef,
   onSelect,
+  onBeforeLogin,
 }: {
   attraction: Attraction;
   lang: PlaceLang;
@@ -1927,6 +1992,8 @@ function PlaceCard({
   viewId: string;
   screenRef: string;
   onSelect: () => void;
+  /** 게스트 별이 로그인으로 가기 직전 — 허브 화면 상태를 남긴다 */
+  onBeforeLogin: () => void;
 }) {
   const L = UI[lang];
   const { primary, secondary } = titleParts(attraction);
@@ -1995,6 +2062,7 @@ function PlaceCard({
           compact
           lang={lang}
           tracking={{ screenType: 'PLACE_HUB', screenRef, viewId }}
+          onBeforeLogin={onBeforeLogin}
         />
       </span>
       <div className="place-card-body">

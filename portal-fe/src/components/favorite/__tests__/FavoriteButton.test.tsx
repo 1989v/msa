@@ -24,7 +24,7 @@ import { track } from '../../../analytics/tracker';
 function renderButton(
   targetKey = 'abyssal-crown',
   lang?: 'ko' | 'en',
-  opts: { type?: FavoriteTargetType; tracking?: FavoriteTracking } = {},
+  opts: { type?: FavoriteTargetType; tracking?: FavoriteTracking; onBeforeLogin?: () => void } = {},
 ) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
@@ -39,6 +39,7 @@ function renderButton(
                 targetKey={targetKey}
                 lang={lang}
                 tracking={opts.tracking}
+                onBeforeLogin={opts.onBeforeLogin}
               />
             }
           />
@@ -275,5 +276,74 @@ describe('FavoriteButton 계측 (ATTRACTION)', () => {
     resolveAdd?.(savedItem);
     await waitFor(() => expect(track).toHaveBeenCalledTimes(1));
     expect(vi.mocked(track).mock.calls[0][0]).toBe('CLICK');
+  });
+});
+
+/**
+ * 로그인 복귀 — 게스트가 관광지 별을 누르면 이동 전에 찜 의도를 남기고, 호출처가 준 저장 함수를
+ * href 대입보다 먼저 부른다. 다른 타입은 의도를 남기지 않는다.
+ */
+describe('FavoriteButton 로그인 복귀 (게스트)', () => {
+  const INTENT_KEY = 'kgd.favoriteIntent.v1';
+  /** 일어난 순서 — 저장 함수와 href 대입이 같은 배열에 쌓인다 */
+  let order: string[];
+  let original: PropertyDescriptor | undefined;
+
+  beforeEach(() => {
+    sessionStorage.clear();
+    order = [];
+    original = Object.getOwnPropertyDescriptor(window, 'location');
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        ...window.location,
+        get href() { return 'http://localhost/'; },
+        set href(v: string) { order.push(`href:${v}`); },
+      },
+    });
+  });
+  afterEach(() => {
+    if (original) Object.defineProperty(window, 'location', original);
+    sessionStorage.clear();
+  });
+
+  it('ATTRACTION — 의도를 저장하고, onBeforeLogin 을 href 대입 전에 한 번 부른다', async () => {
+    const before = Date.now();
+    const onBeforeLogin = vi.fn(() => {
+      // 저장 함수가 불릴 때 의도는 이미 있다 — 같은 클릭 안에서 둘 다 끝난다
+      order.push(`before:${sessionStorage.getItem(INTENT_KEY) != null}`);
+    });
+    renderButton('126508', undefined, { type: 'ATTRACTION', onBeforeLogin });
+
+    await userEvent.click(screen.getByRole('button', { name: '관광지 찜' }));
+
+    expect(onBeforeLogin).toHaveBeenCalledTimes(1);
+    expect(order).toHaveLength(2);
+    expect(order[0]).toBe('before:true');
+    expect(order[1]).toMatch(/^href:.*\/login\?next=/);
+    const intent = JSON.parse(sessionStorage.getItem(INTENT_KEY)!);
+    expect(intent).toEqual({ targetType: 'ATTRACTION', targetKey: '126508', createdAt: expect.any(Number) });
+    expect(intent.createdAt).toBeGreaterThanOrEqual(before);
+    expect(intent.createdAt).toBeLessThanOrEqual(Date.now());
+  });
+
+  it.each<FavoriteTargetType>(['PRODUCT', 'GAME', 'BLOG_POST'])('%s — 의도를 남기지 않고 로그인으로만 보낸다', async (type) => {
+    renderButton('k-1', undefined, { type });
+
+    await userEvent.click(screen.getByRole('button'));
+
+    expect(sessionStorage.getItem(INTENT_KEY)).toBeNull();
+    expect(order).toHaveLength(1);
+    expect(order[0]).toMatch(/^href:.*\/login\?next=/);
+  });
+
+  it('onBeforeLogin 이 없으면 지금처럼 로그인으로 보낸다', async () => {
+    renderButton('126508', undefined, { type: 'ATTRACTION' });
+
+    await userEvent.click(screen.getByRole('button', { name: '관광지 찜' }));
+
+    expect(order).toHaveLength(1);
+    expect(order[0]).toMatch(/^href:.*\/login\?next=/);
+    expect(addFavorite).not.toHaveBeenCalled();
   });
 });
