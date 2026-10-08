@@ -93,7 +93,9 @@ import {
   techGlossaryPath,
   techGlossaryUrl,
   techArticleJsonLd,
+  ABOUT_SECTIONS,
 } from '../src/seo/copy.mjs';
+import { DATA_SOURCES, DATA_SOURCE_NOTICES } from '../src/seo/dataSources.mjs';
 
 const MULTI = SEO_MULTI_ATTR;
 
@@ -1612,6 +1614,14 @@ async function renderPortalPages(shell, concepts = [], { searchArchitecture } = 
       await emit(`prerender${path}.html`, renderTechSearchHtml(shell, searchArchitecture));
       continue;
     }
+    if (path === '/about') {
+      await emit(`prerender${path}.html`, renderAboutHtml(shell));
+      continue;
+    }
+    if (path === '/data-sources') {
+      await emit(`prerender${path}.html`, renderDataSourcesHtml(shell));
+      continue;
+    }
     const canonical = portalUrl(path);
     const html = compose(shell, {
       lang: 'ko',
@@ -1634,6 +1644,80 @@ async function renderPortalPages(shell, concepts = [], { searchArchitecture } = 
     // 루트만 호스트 키로 — 같은 번들이 game/place 호스트도 서빙하므로 / 는 호스트로 갈린다
     await emit(path === '/' ? `prerender/_hosts/${PORTAL_HOST}.html` : `prerender${path}.html`, html);
   }
+}
+
+/**
+ * 신뢰 문서(소개·데이터 출처)의 compose 메타. 광고 심사·크롤러가 초기 HTML 로 읽는 문서라
+ * 다른 포털 페이지처럼 요약 한 줄이 아니라 본문 전체를 싣는다.
+ */
+function trustPageMeta(path) {
+  const meta = PORTAL_PAGES[path];
+  return {
+    lang: 'ko',
+    title: meta.title,
+    description: meta.description,
+    canonical: portalUrl(path),
+    siteName: PORTAL_BRAND,
+    image: ogCardUrl(PORTAL_ORIGIN, 'portal'),
+    imageAlt: PORTAL_BRAND,
+    jsonLd: [],
+  };
+}
+
+/** About 문단 조각 — 문자열은 글, `{ href, label }` 은 링크. */
+function aboutInlineHtml(part) {
+  return typeof part === 'string'
+    ? escapeHtml(part)
+    : `<a href="${escapeHtml(part.href)}">${escapeHtml(part.label)}</a>`;
+}
+
+/** `/about` — 절은 페이지와 같은 상수 `ABOUT_SECTIONS` 에서 온다. */
+export function renderAboutHtml(shell) {
+  const sections = ABOUT_SECTIONS.map((section) => {
+    const paragraphs = section.paragraphs.map((parts) => `<p>${parts.map(aboutInlineHtml).join('')}</p>`).join('');
+    const items = section.items?.length
+      ? `<ul>${section.items
+          .map((it) => `<li><a href="${escapeHtml(it.href)}">${escapeHtml(it.label)}</a> — ${escapeHtml(it.desc)}</li>`)
+          .join('')}</ul>`
+      : '';
+    return `<section><h2>${escapeHtml(section.heading)}</h2>${paragraphs}${items}</section>`;
+  }).join('');
+  return compose(shell, {
+    ...trustPageMeta('/about'),
+    body: shellBody(`<h1>사이트 소개</h1>${sections}`),
+  });
+}
+
+/**
+ * `/data-sources` — 원천 표 전체와 라이선스 고지. `rows` 는 이스케이프를 시험하려고 인자로 받는다.
+ *
+ * @param {string} shell
+ * @param {{ data: string, source: string, license: string, note: string }[]} [rows]
+ */
+export function renderDataSourcesHtml(shell, rows = DATA_SOURCES) {
+  const meta = PORTAL_PAGES['/data-sources'];
+  const body = rows
+    .map(
+      (r) =>
+        `<tr><td>${escapeHtml(r.data)}</td><td>${escapeHtml(r.source)}</td>` +
+        `<td>${escapeHtml(r.license)}</td><td>${escapeHtml(r.note)}</td></tr>`,
+    )
+    .join('');
+  const notices = DATA_SOURCE_NOTICES.map(
+    (n) =>
+      `<li>${escapeHtml(n.text)}` +
+      (n.href ? ` <a href="${escapeHtml(n.href)}" rel="noopener noreferrer">${escapeHtml(n.label)}</a>` : '') +
+      '</li>',
+  ).join('');
+  return compose(shell, {
+    ...trustPageMeta('/data-sources'),
+    body: shellBody(
+      `<h1>데이터 출처</h1><p>${escapeHtml(meta.description)}</p>` +
+        '<table><thead><tr><th>데이터</th><th>원천</th><th>라이선스</th><th>비고</th></tr></thead>' +
+        `<tbody>${body}</tbody></table>` +
+        `<h2>라이선스 고지</h2><ul>${notices}</ul>`,
+    ),
+  });
 }
 
 function assertTechSearchGenerated(generated) {

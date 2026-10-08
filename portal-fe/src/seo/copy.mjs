@@ -1372,3 +1372,53 @@ export function adsTxt(client = ADSENSE_CLIENT) {
   // DIRECT = 게시자가 직접 계약한 판매자, 끝의 값은 Google 의 인증 기관 ID (고정)
   return `google.com, ${client.replace(/^ca-/, '')}, DIRECT, f08c47fec0942fa0\n`;
 }
+
+/**
+ * `/about` 의 절 — 페이지(AboutPage)와 프리렌더가 같은 상수로 그린다. 둘이 따로 글을 가지면
+ * 한쪽만 고쳐져 크롤러가 읽는 초기 HTML 과 화면이 어긋난다.
+ * 문단은 조각 배열이다: 문자열은 글, `{ href, label }` 은 그 자리의 링크. HTML 문자열은 담지 않는다.
+ *
+ * @typedef {string | { href: string, label: string }} AboutInline
+ * @typedef {{ heading: string, paragraphs: AboutInline[][], items?: { href: string, label: string, desc: string }[] }} AboutSection
+ * @type {AboutSection[]}
+ */
+export const ABOUT_SECTIONS = [
+  {
+    heading: '운영',
+    paragraphs: [
+      [
+        '1989v.com 과 하위 도메인은 백엔드 개발자 권기덕이 개인으로 운영합니다. 회사나 단체의 사이트가 아니며, 설계부터 운영까지 한 사람이 맡습니다.',
+      ],
+      ['문의는 ', { href: '/contact', label: '연락처' }, ' 페이지에 있습니다.'],
+    ],
+  },
+  {
+    heading: '서비스',
+    paragraphs: [],
+    items: [
+      { href: `${PLACE_ORIGIN}/`, label: '관광정보', desc: '전국 관광지·축제·숙박·여행코스와 날씨·대기질·혼잡 예측' },
+      { href: `${BLOG_ORIGIN}/`, label: '블로그', desc: '개발과 운영 기록' },
+      { href: '/games', label: '게임', desc: '브라우저에서 바로 하는 웹게임' },
+      { href: `${DEAL_ORIGIN}/`, label: '혜택 모음', desc: '분류별 혜택 링크' },
+      { href: `${RANK_ORIGIN}/`, label: '랭킹', desc: '공개 데이터로 줄 세운 순위' },
+      { href: '/tech', label: '기술 사전', desc: '개발 개념과 서비스 구조' },
+    ],
+  },
+  {
+    heading: '데이터 출처',
+    paragraphs: [
+      ['관광정보는 한국관광공사 등의 공공데이터를 매일 받아 값을 고치지 않고 보여 줍니다.'],
+      ['원천의 값이 바뀌면 다음 수집 때 함께 바뀝니다. 요금·운영 시간은 방문 전에 해당 기관에 확인해 주세요.'],
+      ['원천과 라이선스 전체 목록은 ', { href: '/data-sources', label: '데이터 출처' }, '에 있습니다.'],
+    ],
+  },
+  {
+    heading: '광고와 제휴',
+    paragraphs: [
+      [
+        '일부 페이지에 Google AdSense 광고가 실립니다. 혜택 모음의 일부 링크는 제휴 링크이며, 해당 링크에는 그 사실을 따로 표시합니다. 광고와 제휴는 관광정보의 내용과 순서에 영향을 주지 않습니다.',
+      ],
+      ['수집하는 정보와 쿠키는 ', { href: '/privacy', label: '개인정보처리방침' }, '에 있습니다.'],
+    ],
+  },
+];
