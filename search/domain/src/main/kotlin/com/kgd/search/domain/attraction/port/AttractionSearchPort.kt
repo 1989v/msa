@@ -35,6 +35,13 @@ interface AttractionSearchPort {
     fun findEvents(range: EventDateRange): List<EventSitemapEntry>
 
     /**
+     * 색인에 문서가 1건 이상인 분류 코드 — 언어(`lang`) → `lclsSystm1~3` 값을 합친 집합.
+     * [bucketSize] 는 받을 코드 수의 상한이고, 어느 버킷이든 `sum_other_doc_count > 0` 이면(잘렸으면) 예외를 던진다 —
+     * 잘린 집합으로 사전을 거르면 문서가 있는 코드까지 빠진다.
+     */
+    fun indexedCategoryCodes(bucketSize: Int): Map<String, Set<String>>
+
+    /**
      * 키워드가 null/blank 면 필터-only 탐색 (지도 영역 브라우징).
      * [geo] 지정 시 반경 필터가 걸리고, sortByDistance 면 거리 오름차순 정렬.
      */

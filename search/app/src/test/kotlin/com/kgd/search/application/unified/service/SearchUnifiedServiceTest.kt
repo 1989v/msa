@@ -1,6 +1,6 @@
 package com.kgd.search.application.unified.service
 
-import com.kgd.search.application.attraction.port.CategoryLexiconPort
+import com.kgd.search.application.attraction.usecase.CategoryLexiconUseCase
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 import com.kgd.search.application.unified.port.UnifiedSearchPort
 import com.kgd.search.application.unified.usecase.SearchUnifiedUseCase
@@ -35,7 +35,7 @@ class SearchUnifiedServiceTest : BehaviorSpec({
     fun fixture(): Triple<SearchUnifiedService, SearchAttractionUseCase, UnifiedSearchPort> {
         val attraction = mockk<SearchAttractionUseCase>()
         val port = mockk<UnifiedSearchPort>()
-        val lexicon = mockk<CategoryLexiconPort> { every { lexicon(any()) } returns QueryIntent.Lexicon.EMPTY }
+        val lexicon = mockk<CategoryLexiconUseCase> { every { lexicon(any()) } returns QueryIntent.Lexicon.EMPTY }
         return Triple(SearchUnifiedService(attraction, port, lexicon), attraction, port)
     }
 

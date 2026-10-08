@@ -1,6 +1,6 @@
 package com.kgd.search.application.unified.service
 
-import com.kgd.search.application.attraction.port.CategoryLexiconPort
+import com.kgd.search.application.attraction.usecase.CategoryLexiconUseCase
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 import com.kgd.search.application.unified.port.UnifiedSearchPort
 import com.kgd.search.application.unified.usecase.SearchUnifiedUseCase
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service
 class SearchUnifiedService(
     private val searchAttraction: SearchAttractionUseCase,
     private val unifiedSearchPort: UnifiedSearchPort,
-    private val categoryLexicon: CategoryLexiconPort,
+    private val categoryLexicon: CategoryLexiconUseCase,
 ) : SearchUnifiedUseCase {
 
     private val log = KotlinLogging.logger {}

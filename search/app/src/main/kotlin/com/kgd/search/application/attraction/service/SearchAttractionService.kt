@@ -1,9 +1,9 @@
 package com.kgd.search.application.attraction.service
 
 import com.kgd.search.application.attraction.config.AttractionHybridProperties
-import com.kgd.search.application.attraction.port.CategoryLexiconPort
 import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.application.queryvector.usecase.ResolveQueryVectorUseCase
+import com.kgd.search.application.attraction.usecase.CategoryLexiconUseCase
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 import com.kgd.search.application.attraction.usecase.SuggestAttractionUseCase
 import com.kgd.search.domain.attraction.model.Admission
@@ -33,7 +33,7 @@ import java.util.UUID
 class SearchAttractionService(
     private val attractionSearchPort: AttractionSearchPort,
     private val resolveQueryVector: ResolveQueryVectorUseCase,
-    private val categoryLexicon: CategoryLexiconPort,
+    private val categoryLexicon: CategoryLexiconUseCase,
     private val hybrid: AttractionHybridProperties,
     private val queryVector: QueryVectorProperties,
     meterRegistry: MeterRegistry,

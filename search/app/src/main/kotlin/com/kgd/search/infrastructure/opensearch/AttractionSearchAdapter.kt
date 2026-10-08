@@ -67,6 +67,10 @@ class AttractionSearchAdapter(
         /** 자동완성에서 지역이 차지하는 상단 슬롯 수 — "서울" 같은 지역 질의 우선 노출 */
         private const val SUGGEST_REGION_SLOTS = 3
 
+        /** 색인 분류 집합 집계 — 언어별로 세 깊이의 분류 필드를 센다 */
+        private const val CATEGORY_LANG_AGG = "lang"
+        private val CATEGORY_CODE_FIELDS = listOf("lclsSystm1", "lclsSystm2", "lclsSystm3")
+
         /**
          * 키워드 매칭 대상 — ko(nori)/en(english) 서브필드 동시 커버 (문서 단위 lang 분리, ADR-0065).
          * titleLocal 은 표시명에서 분리된 다른 표기(영문 문서의 국문명) — "도산공원" 질의가
@@ -407,6 +411,33 @@ class AttractionSearchAdapter(
             }
         }
     }
+
+    override fun indexedCategoryCodes(bucketSize: Int): Map<String, Set<String>> {
+        val request = SearchRequest.Builder()
+            .index(INDEX)
+            .size(0)
+            .aggregations(
+                CATEGORY_LANG_AGG,
+                Aggregation.of { a ->
+                    a.terms { t -> t.field("lang").size(bucketSize) }
+                        .aggregations(CATEGORY_CODE_FIELDS.associateWith { field -> Aggregation.of { s -> s.terms { t -> t.field(field).size(bucketSize) } } })
+                },
+            )
+            .build()
+        val aggregations = client.search(request, JsonData::class.java).aggregations()
+        val byLang = requireNotNull(aggregations[CATEGORY_LANG_AGG]) { "분류 집계 응답에 $CATEGORY_LANG_AGG 가 없다" }.sterms()
+        checkNotTruncated(byLang.sumOtherDocCount(), "lang")
+        return byLang.buckets().array().associate { bucket ->
+            bucket.key() to CATEGORY_CODE_FIELDS.flatMap { field ->
+                val terms = requireNotNull(bucket.aggregations()[field]) { "분류 집계 응답에 ${bucket.key()}.$field 가 없다" }.sterms()
+                checkNotTruncated(terms.sumOtherDocCount(), "${bucket.key()}.$field")
+                terms.buckets().array().map { it.key() }
+            }.toSet()
+        }
+    }
+
+    private fun checkNotTruncated(sumOtherDocCount: Long?, name: String) =
+        check((sumOtherDocCount ?: 0L) == 0L) { "분류 집계 $name 가 버킷 크기에서 잘렸다: sum_other_doc_count=$sumOtherDocCount" }
 
     private fun countMatches(word: String, lang: String?): Long {
         val query = Query.of { q ->

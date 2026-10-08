@@ -3,7 +3,7 @@ package com.kgd.search.infrastructure.opensearch
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 
 import com.kgd.search.application.attraction.config.AttractionHybridProperties
-import com.kgd.search.application.attraction.port.CategoryLexiconPort
+import com.kgd.search.application.attraction.usecase.CategoryLexiconUseCase
 import com.kgd.search.application.attraction.service.SearchAttractionService
 import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.application.queryvector.usecase.ResolveQueryVectorUseCase
@@ -180,7 +180,7 @@ class AttractionReindexCaptureTest : BehaviorSpec({
             documents.forEach { (id, doc) -> every { port.findById(id) } returns doc }
             val service = SearchAttractionService(
                 port, mockk<ResolveQueryVectorUseCase>(relaxed = true),
-                object : CategoryLexiconPort {
+                object : CategoryLexiconUseCase {
                     override fun lexicon(lang: String?) = QueryIntent.Lexicon.EMPTY
                 },
                 AttractionHybridProperties(enabled = false),

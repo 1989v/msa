@@ -1,7 +1,7 @@
 package com.kgd.search.infrastructure.opensearch
 
 import com.kgd.search.application.attraction.config.AttractionHybridProperties
-import com.kgd.search.application.attraction.port.CategoryLexiconPort
+import com.kgd.search.application.attraction.usecase.CategoryLexiconUseCase
 import com.kgd.search.application.attraction.service.SearchAttractionService
 import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.application.queryvector.usecase.ResolveQueryVectorUseCase
@@ -29,7 +29,7 @@ object UnifiedAttractionRequests {
 
     fun request(q: String = Q): String {
         val (adapter, captured) = AttractionSearchRequestSnapshots.adapter()
-        val lexicon = object : CategoryLexiconPort {
+        val lexicon = object : CategoryLexiconUseCase {
             override fun lexicon(lang: String?) = QueryIntent.Lexicon.EMPTY
         }
         val attraction = SearchAttractionService(

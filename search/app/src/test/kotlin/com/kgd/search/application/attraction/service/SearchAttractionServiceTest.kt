@@ -1,7 +1,7 @@
 package com.kgd.search.application.attraction.service
 
 import com.kgd.search.application.attraction.config.AttractionHybridProperties
-import com.kgd.search.application.attraction.port.CategoryLexiconPort
+import com.kgd.search.application.attraction.usecase.CategoryLexiconUseCase
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.application.queryvector.usecase.ResolveQueryVectorUseCase
@@ -49,7 +49,7 @@ class SearchAttractionServiceTest : BehaviorSpec({
         clock: Clock = Clock.systemUTC(),
     ) = SearchAttractionService(
         searchPort, resolveQueryVector,
-        object : CategoryLexiconPort {
+        object : CategoryLexiconUseCase {
             override fun lexicon(lang: String?) = lexicon
         },
         AttractionHybridProperties(enabled = hybridEnabled),
