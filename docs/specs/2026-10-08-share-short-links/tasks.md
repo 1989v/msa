@@ -119,8 +119,8 @@ Total Task Groups: 8
 **Phase:** validate
 **Required Skills:** docs, CDP
 - [ ] 8.0 Complete docs & validation
-  - [ ] 8.1 ADR-0077 표에 단축 링크 원장 4종(90일·이력서 365일) · ADR-0103 상태 「수용」 · `docs/changelog` 해당 없음 확인
-  - [ ] 8.2 각 서비스 `CLAUDE.md`(code-dictionary·game·blog·place) 에 단축 경로 한 줄
+  - [x] 8.1 ADR-0077 표에 단축 링크 원장 4종(90일·이력서 365일) · ADR-0103 상태 「수용」 · `docs/changelog` 해당 없음 확인
+  - [x] 8.2 각 서비스 `CLAUDE.md`(code-dictionary·game·blog·place) 에 단축 경로 한 줄
   - [ ] 8.3 로컬 FE 화면 검증: 세 상세 공유 패널 — `docs/standards/fe-visual-verification.md` 4조합 CDP 측정(start·측정·stop 한 명령)
   - [ ] 8.4 Verify: `./gradlew :common:test :gateway:test --tests '*GatewayRoute*'` 재실행 + `scripts/lint` 없음 확인, `git diff --stat` 에 범위 밖 파일 0
 **Acceptance Criteria:**

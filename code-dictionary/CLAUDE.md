@@ -102,6 +102,15 @@ main 이 곧 배포 브랜치라 커밋 몇 분 뒤 **이미 운영 DB 에 적�
   같은 번호를 동시에 잡은 적이 실제로 있다. 겹치면 Flyway 가 기동을 거부하고,
   그러면 테스트 게이트가 죽어 **그 커밋의 모든 서비스 이미지가 안 만들어진다**
 
+## 공유용 단축 주소 (ADR-0103)
+
+`1989v.com/r/{code}` → `resume.1989v.com/?k={token}` 로 302. `/r/list` 는 서비스 홈. 해석 실패(형식 오류·없음·폐기)도 홈으로 간다.
+- 코드는 링크마다 저장한 **10자 무작위**(`resume_share_link.short_code`, `ascii_bin`) — 토큰이 열람 권한이라 id 에서 계산하면 게이트가 무력해진다. 클릭 원장은 링크 id·시각만(ADR-0064 수집 범위), 365일.
+- 302 는 컨트롤러가 `ShortLinkRedirects` 로 만들고 use case 는 목적지 문자열만 돌려준다 — application 이 웹 타입을 반환하지 않게.
+- `shortUrl` 은 `kgd.common.short-link.expose` 가 켜질 때만 응답에 실린다(기본 꺼짐).
+- 로그에 코드·토큰·`Location` 을 남기지 않는다 — 링크 id 만.
+
+
 ## Related
 
 - seed: `docs/portfolio-seed.md`, `docs/portfolio-dummy-seed.sql`

@@ -18,6 +18,8 @@ ADR-0076 에서 개인정보처리방침을 쓰다가 **적을 수 있는 보관
 | `blog_post_view` | `visitor_key` = 게이트웨이 발급 무작위 UUID (`VisitorIdFilter`) | 하루 1표 중복 방지 + 일별 추이 |
 | `deal_offer_click` | 없음 (`referrer_host`, `ua_family`) | 클릭 통계 |
 | `resume_access_log` | 없음 (`share_link_id`, `slug`) | 제출처가 열었는지 확인 |
+| `{game,blog,attraction}_short_link_click` | 없음 (`referrer_host`, `ua_family`) | 단축 주소 클릭 통계 (ADR-0103) |
+| `resume_short_link_click` | 없음 (`share_link_id`) | 이력서 단축 주소로 들어온 횟수 (ADR-0103) |
 | `game_rating.device_id` | localStorage 무작위 UUID | 평점 본체 — 정리 대상 아님 |
 
 IP 는 `RateLimiterConfig` 의 Redis 키로만 쓰이고 TTL 로 만료된다. 서버 접속 로그는 컨테이너
@@ -44,6 +46,8 @@ IP 는 `RateLimiterConfig` 의 Redis 키로만 쓰이고 TTL 로 만료된다. �
 | `blog_post_view` | 90일 | 중복 방지에는 하루면 되고, 남기는 값은 일별 추이다. 분기 단위로 충분하다 |
 | `deal_offer_click` | 90일 | 위와 같음 (기존 값 유지) |
 | `resume_access_log` | 365일 | **통계가 아니다.** 지원부터 결과까지 몇 달씩 걸리므로 90일이면 진행 중인 건의 기록이 사라진다 |
+| `{game,blog,attraction}_short_link_click` | 90일 | `deal_offer_click` 과 같은 클릭 통계. 누적 수는 별도 집계 테이블이라 원장을 지워도 남는다 |
+| `resume_short_link_click` | 365일 | `resume_access_log` 와 같은 이유 — 지원 건이 몇 달 걸린다 |
 
 이력서 열람 기록을 길게 두는 데는 대가가 있다 — 이 원장이 링크별 방문 수 통계의 원본이라
 (별도 누계 컬럼이 없다) 정리한 만큼 어드민 화면의 방문 수가 줄어든다. 보존기간을 지원
@@ -114,5 +118,6 @@ IP 는 `RateLimiterConfig` 의 Redis 키로만 쓰이고 TTL 로 만료된다. �
 | 블로그 조회 원장 보존기간·정리 | `blog/feature/.../application/service/BlogViewService.kt` |
 | 이력서 열람 원장 정리 | `code-dictionary/app/.../resume/port/ResumePorts.kt` + 어댑터/JPA |
 | 혜택 클릭 원장 정리 (기존) | `deal/feature/.../linkcheck/DealLinkCheckRunner.kt` |
+| 단축 주소 클릭 원장 정리 | `{Game,Blog,Place}RetentionRunner` · code-dictionary `RetentionRunner` |
 | CronJob | `k8s/base/retention/` |
 | 방침 본문 | `portal-fe/src/pages/PrivacyPage.tsx` §6 |

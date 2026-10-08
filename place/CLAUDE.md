@@ -114,6 +114,14 @@
 - 행사 상태는 저장하지 않는다. 원천 날짜만 두고 상태는 search 가 조회 시점에 판정한다(`search/CLAUDE.md`).
 - 롤백은 수집 잡 suspend 가 먼저다 — 옛 bulk DTO 가 모르는 필드를 받지 않게.
 
+## 공유용 단축 주소 (ADR-0103)
+
+`1989v.com/p/{code}` → `place.1989v.com/attractions/{id}` (영문 행은 `/en/attractions/{id}`) 로 302. `/p/list` 는 서비스 홈. 해석 실패(형식 오류·없음·`ACTIVE` 아님)도 홈으로 간다.
+- 코드는 관광지 id 의 고정 순열(common `ShortCode`). 클릭은 `attraction_short_link_click`(90일, `PlaceRetentionRunner`) + `attraction_short_link_stat` — 관광지 행에 두면 일괄 수집이 행을 다시 써 덮인다. 공유 주소는 search 상세 응답(`/api/search/attractions/{id}`)이 조립 시점에 계산한다.
+- 302 는 컨트롤러가 `ShortLinkRedirects` 로 만들고 use case 는 목적지 문자열만 돌려준다 — application 이 웹 타입을 반환하지 않게.
+- `shortUrl` 은 `kgd.common.short-link.expose` 가 켜질 때만 응답에 실린다(기본 꺼짐).
+
+
 ## API
 
 | Method | Path | 인증 | 설명 |
