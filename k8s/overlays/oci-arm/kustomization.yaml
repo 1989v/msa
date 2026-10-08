@@ -360,7 +360,7 @@ images:
     newTag: bf0f1c4
   - name: commerce/analytics
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/analytics
-    newTag: bf0f1c4
+    newTag: ce4b7e5
   - name: commerce/atlas
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/atlas
     newTag: bf0f1c4
@@ -375,10 +375,10 @@ images:
     newTag: bf0f1c4
   - name: commerce/engagement
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/engagement
-    newTag: bf0f1c4
+    newTag: ce4b7e5
   - name: commerce/gateway
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gateway
-    newTag: bf0f1c4
+    newTag: ce4b7e5
   - name: commerce/gifticon-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon-fe
     newTag: 6a1889c
