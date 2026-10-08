@@ -158,3 +158,22 @@ describe('정산 기록 — 보존기간', () => {
     expect(text.slice(at, at + 200)).toContain(`<strong>${years}년</strong>`);
   });
 });
+
+describe('검색어 — 수집 항목과 보관기간', () => {
+  it('2항에 검색어 행이 있고, 원장 TTL 과 같은 일수·좌표 미저장을 밝힌다', () => {
+    const sql = readFileSync(
+      resolve(REPO, 'analytics/app/src/main/resources/clickhouse/analytics/V005__events_two_axis.sql'),
+      'utf-8',
+    );
+    const m = sql.match(/TTL toDateTime\(timestamp\) \+ INTERVAL (\d+) DAY/);
+    expect(m, '이벤트 원장 TTL 을 못 찾았다 — 표 정의가 옮겨졌으면 이 검사도 고친다').not.toBeNull();
+    const days = Number(m![1]);
+
+    const text = privacyText();
+    const at = text.indexOf('<td>통합 검색 · 관광지 검색</td>');
+    expect(at, '방침 2항에 검색어 행이 없다').toBeGreaterThan(0);
+    const row = text.slice(at, text.indexOf('</tr>', at));
+    expect(row, '보관 일수').toContain(`${days}일`);
+    expect(row, '좌표 미저장').toMatch(/좌표는 저장하지\s+않습니다/);
+  });
+});

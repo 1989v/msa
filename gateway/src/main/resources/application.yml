@@ -37,8 +37,9 @@ spring:
             - id: analytics-service
               uri: http://analytics:8090
               predicates:
-                # /api/v1/events — 화면 노출·클릭 수집 (ADR-0095). 익명 허용.
-                - Path=/api/v1/scores/**, /api/v1/analytics/**, /api/v1/search/judgments/**, /api/v1/events
+                # /api/v1/events(화면 노출·클릭 수집, ADR-0095)는 GatewayRouteConfig.kt 의 analytics-events 가
+                # 레이트리밋과 함께 받는다. 여기 겹쳐 두면 어느 쪽이 이길지 보장되지 않는다.
+                - Path=/api/v1/scores/**, /api/v1/analytics/**, /api/v1/search/judgments/**
             - id: experiment-service
               uri: http://engagement:8091 # ADR-0093: engagement 폴드
               predicates:

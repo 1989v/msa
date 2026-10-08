@@ -616,6 +616,20 @@ class GatewayRouteConfig(
                     }
                     .uri(ENGAGEMENT_URI)
             }
+            // 화면 노출·클릭 수집 (ADR-0095) — 익명 허용이라 방문자 IP 로 센다. 값은 ads-public 과 같은
+            // 공용 리미터(초당 100·버스트 200): 화면은 20건 또는 5초마다 한 번 보내므로 정상 탭 하나는 초당 1건 밑이다.
+            .route("analytics-events") { r ->
+                r.path("/api/v1/events")
+                    .filters { f ->
+                        f.requestRateLimiter { config ->
+                            config.setRateLimiter(redisRateLimiter)
+                            config.setKeyResolver(adsClientIpKeyResolver)
+                            config.setDenyEmptyKey(false)
+                        }
+                            .stripPrefix(0)
+                    }
+                    .uri("http://analytics:8090")
+            }
             // 포트폴리오 (code-dictionary 소유) — 공개 조회 + 로그인 시 스니펫 게이트 해제.
             // YAML 무인증 라우트에서 이동: 필터 없이는 X-User-Id 가 주입되지 않아 로그인 해제가
             // 죽고, 위조 신원 헤더도 그대로 통과했다 (필터가 익명 요청의 신원 헤더를 벗긴다).
