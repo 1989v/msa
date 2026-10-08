@@ -109,7 +109,7 @@ describe('PlacePage 속성 칩', () => {
 
     await waitFor(() => expect(chip(/^주차 가능/)).toHaveTextContent('80'));
     expect(chip(/^입장 무료/)).toHaveTextContent('1,234');
-    expect(chip(/^오늘 정기휴무 아님/)).toHaveTextContent('120');
+    expect(chip(/^오늘 정기휴무일 아님\(명절 제외\)/)).toHaveTextContent('120');
     expect(calls()[0]).toMatchObject({ page: 0, facets: true });
   });
 
@@ -218,12 +218,27 @@ describe('PlacePage 속성 칩', () => {
     await screen.findByText('관광지 a0-1');
 
     const group = screen.getByRole('group', { name: 'Visitor info filters' });
-    expect(within(group).getByRole('button', { name: /^Not closed today/ })).toBeInTheDocument();
-    expect(within(group).getByRole('button', { name: /^Pets in some areas/ })).toBeInTheDocument();
+    expect(within(group).getByRole('button', { name: /^Not a regular closing day today \(holidays excluded\)/ })).toBeInTheDocument();
+    // 영문 원천에 반려동물 값이 없다(petAcmpyType 영문 채움 0) — 늘 0 인 칩을 두지 않는다
+    expect(within(group).queryByRole('button', { name: /^Pets in some areas/ })).toBeNull();
     expect(within(group).getByText('Filters only places that list this information')).toBeInTheDocument();
     // 무장애 원천은 국문뿐이다 — 영문에서는 늘 0 인 칩을 두지 않는다. 웰니스는 영문 92곳이 있다
     expect(within(group).queryByRole('button', { name: /^Wheelchairs/ })).toBeNull();
     expect(within(group).getByRole('button', { name: /^Wellness tourism/ })).toBeInTheDocument();
+  });
+
+  it('영문 칩은 원천 값이 있는 네 종(정기휴무·주차·입장 무료·웰니스), 국문은 열한 종이다', async () => {
+    renderPage('/en/place');
+    await screen.findByText('관광지 a0-1');
+    expect(chipLabels()).toEqual(['openToday', 'parking', 'admissionFree', 'wellness']);
+    cleanup();
+
+    renderPage();
+    await screen.findByText('관광지 a0-1');
+    expect(chipLabels()).toEqual([
+      'openToday', 'parking', 'creditCard', 'strollerRental', 'petAllowed', 'petPartial', 'admissionFree',
+      'bfWheelchair', 'bfElevator', 'bfRestroom', 'wellness',
+    ]);
   });
 
   it('무장애 칩은 코드 목록(AND)으로, 웰니스 칩은 참으로 요청하고 건수를 붙인다', async () => {
@@ -240,6 +255,68 @@ describe('PlacePage 속성 칩', () => {
     await waitFor(() =>
       expect(calls().at(-1)).toMatchObject({ barrierFree: ['WHEELCHAIR', 'RESTROOM'], wellness: true, page: 0, facets: true }),
     );
+  });
+});
+
+/*
+ * 개요 정규화는 값 하나에 한 번, 원문을 받는 곳에서만 — 패널은 단건 조회 원문이라 화면이 정리하고,
+ * 카드는 서버가 이미 정리한 목록 요약이라 그대로 그린다. 판정은 그려진 DOM 텍스트다.
+ */
+describe('PlacePage 개요 표시', () => {
+  beforeEach(() => {
+    mobile = false;
+    stubMedia();
+    vi.mocked(fetchAdministrativeRegions).mockResolvedValue([]);
+    vi.mocked(suggestPlaces).mockResolvedValue([]);
+    vi.mocked(searchAttractions).mockReset();
+  });
+  afterEach(() => vi.clearAllMocks());
+
+  const listWith = (overview: string | null) =>
+    vi.mocked(searchAttractions).mockResolvedValue({
+      searchId: 's', attractions: [{ ...item('o1'), overview }], totalElements: 1, totalPages: 1, currentPage: 0,
+    });
+  const openPanel = async () => {
+    fireEvent.click(await screen.findByText('관광지 o1'));
+    return screen.findByRole('complementary', { name: '관광지 o1' });
+  };
+
+  it('패널은 단건 원문의 엔티티·태그를 정리해 그린다', async () => {
+    listWith(null);
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...item('o1'), overview: 'It&rsquo;s a palace.<br />Open daily.' });
+    renderPage();
+    const panel = await openPanel();
+    const overview = await waitFor(() => {
+      const el = panel.querySelector('.place-detail-overview');
+      expect(el).not.toBeNull();
+      return el!;
+    });
+    expect(overview.textContent).toBe('It\u2019s a palace.\nOpen daily.');
+    expect(panel.textContent).not.toMatch(/&rsquo;|<br/);
+  });
+
+  it('정리하고 나서 비는 개요는 요소를 그리지 않는다', async () => {
+    listWith(null);
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...item('o1'), overview: '<br /><br />' });
+    renderPage();
+    const panel = await openPanel();
+    await within(panel).findByRole('link', { name: '구글맵에서 보기' });
+    expect(panel.querySelector('.place-detail-overview')).toBeNull();
+  });
+
+  it('패널 원문 &lt;PARASITE&gt; 는 한 번만 풀려 <PARASITE> 로 보인다', async () => {
+    listWith(null);
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...item('o1'), overview: 'K-movie &lt;PARASITE&gt; - set' });
+    renderPage();
+    const panel = await openPanel();
+    await waitFor(() => expect(panel.querySelector('.place-detail-overview')?.textContent).toBe('K-movie <PARASITE> - set'));
+  });
+
+  it('카드는 서버가 정리한 목록 요약을 다시 정리하지 않는다 — <PARASITE> 가 그대로 남는다', async () => {
+    listWith('K-movie <PARASITE> - …');
+    renderPage();
+    const card = (await screen.findByText('관광지 o1')).closest('a')!;
+    expect(card.querySelector('.place-card-overview')?.textContent).toBe('K-movie <PARASITE> - …');
   });
 });
 

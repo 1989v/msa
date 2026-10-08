@@ -399,6 +399,8 @@ export interface AttractionQuery {
    * 범위는 서버가 KST 오늘로 정한다.
    */
   eventStatus?: 'ONGOING' | 'WEEKEND' | 'UPCOMING' | 'THIS_MONTH' | 'NOT_ENDED';
+  /** 원래 검색어 검색 — 참이면 서버가 오타 교정을 건너뛰고 응답의 `correctedKeyword` 는 null 이다. */
+  exact?: boolean;
 }
 
 export const searchAttractions = async (query: AttractionQuery): Promise<AttractionSearchResult> => {
@@ -424,6 +426,7 @@ export const searchAttractions = async (query: AttractionQuery): Promise<Attract
   if (query.wellness) params.set('wellness', 'true');
   if (query.facets) params.set('facets', 'true');
   if (query.eventStatus) params.set('eventStatus', query.eventStatus);
+  if (query.exact) params.set('exact', 'true');
   params.set('page', String(query.page ?? 0));
   params.set('size', String(query.size ?? 30));
   const res = await api.get<ApiResponse<AttractionSearchResult>>(`/api/search/attractions?${params}`);

@@ -3,6 +3,8 @@ import type {
   AttractionLinks,
   CollectedLink,
 } from '../../api/placeApi';
+import { EVENT_CATEGORY } from '../../api/placeApi';
+import type { AttributeChipId } from './placeAttributes';
 
 /**
  * PlacePage 의 화면 로직 중 DOM/지도 없이 검증 가능한 순수 함수.
@@ -24,6 +26,50 @@ export function mergePages<T extends { id: string }>(prev: T[], incoming: T[], p
   const seen = new Set(prev.map((item) => item.id));
   const fresh = incoming.filter((item) => !seen.has(item.id));
   return fresh.length === 0 ? prev : [...prev, ...fresh];
+}
+
+/** 0건 화면이 풀어 줄 수 있는 사용자 조건 하나. */
+export type RelaxCondition =
+  | { kind: 'keyword'; keyword: string }
+  | { kind: 'category'; category: string }
+  | { kind: 'eventStatus'; status: string }
+  | { kind: 'attribute'; id: AttributeChipId }
+  | { kind: 'region'; level: 'sigungu' | 'sido' | 'area'; code: string }
+  | { kind: 'geo'; radiusKm: number };
+
+/** 허브 질의를 만드는 사용자 상태 — 목록 질의와 같은 입력이다. */
+export interface HubFilterState {
+  keyword: string;
+  category: string | null;
+  listEventStatus: string | null;
+  attributes: ReadonlySet<AttributeChipId>;
+  areaCode: string | null;
+  sidoCode: string | null;
+  sigunguCode: string | null;
+  geo: { radiusKm: number } | null;
+}
+
+/**
+ * 0건 화면의 해제 후보 — **실제 질의에 실린 사용자 조건**만 낸다. 화면이 대신 붙인 조건(분류를 안 골랐을 때의
+ * 기본 분류, 행사 기본 상태, 검색어가 있을 때의 자동 NOT_ENDED)은 사용자가 풀 수 있는 것이 아니라서 뺀다.
+ * 규칙은 PlacePage 의 목록 질의와 같아야 한다: 행사 분류에서는 속성이 질의에 실리지 않고,
+ * `areaCode` 는 시도가 없을 때만 실린다. 지역은 가장 아래 단계 하나만 낸다.
+ */
+export function relaxConditions(s: HubFilterState): RelaxCondition[] {
+  const out: RelaxCondition[] = [];
+  if (s.keyword) out.push({ kind: 'keyword', keyword: s.keyword });
+  if (s.category != null) out.push({ kind: 'category', category: s.category });
+  if (s.category === EVENT_CATEGORY && s.listEventStatus != null) {
+    out.push({ kind: 'eventStatus', status: s.listEventStatus });
+  }
+  if (s.category !== EVENT_CATEGORY) {
+    for (const id of s.attributes) out.push({ kind: 'attribute', id });
+  }
+  if (s.sigunguCode) out.push({ kind: 'region', level: 'sigungu', code: s.sigunguCode });
+  else if (s.sidoCode) out.push({ kind: 'region', level: 'sido', code: s.sidoCode });
+  else if (s.areaCode) out.push({ kind: 'region', level: 'area', code: s.areaCode });
+  if (s.geo) out.push({ kind: 'geo', radiusKm: s.geo.radiusKm });
+  return out;
 }
 
 /**

@@ -13,6 +13,7 @@ import {
   nextPage,
   overviewText,
   parseLinks,
+  relaxConditions,
   repeatInfoRows,
   sourceText,
   titleParts,
@@ -404,5 +405,33 @@ describe('campingRows — 고캠핑 원문 중 화면용 키, 서버 렌더 「�
     expect(campingRows(null, 'ko')).toEqual([]);
     expect(campingRows('{not json', 'ko')).toEqual([]);
     expect(campingRows('[]', 'ko')).toEqual([]);
+  });
+});
+
+describe('relaxConditions — 0건 화면의 해제 후보', () => {
+  const base = {
+    keyword: '', category: null, listEventStatus: null, attributes: new Set<never>(),
+    areaCode: null, sidoCode: null, sigunguCode: null, geo: null,
+  };
+
+  it('광역(areaCode)과 시도가 둘 다 있으면 지역은 시도 하나 — 질의에 실리는 쪽', () => {
+    expect(relaxConditions({ ...base, areaCode: '1', sidoCode: '11' })).toEqual([{ kind: 'region', level: 'sido', code: '11' }]);
+    expect(relaxConditions({ ...base, areaCode: '1' })).toEqual([{ kind: 'region', level: 'area', code: '1' }]);
+    expect(relaxConditions({ ...base, sidoCode: '11', sigunguCode: '110' })).toEqual([
+      { kind: 'region', level: 'sigungu', code: '110' },
+    ]);
+  });
+
+  it('행사 분류면 속성은 후보가 아니고, 상태는 고른 것만', () => {
+    const attributes = new Set(['parking'] as const);
+    expect(relaxConditions({ ...base, category: 'festival', attributes })).toEqual([{ kind: 'category', category: 'festival' }]);
+    expect(relaxConditions({ ...base, category: 'festival', listEventStatus: 'ONGOING' })).toEqual([
+      { kind: 'category', category: 'festival' },
+      { kind: 'eventStatus', status: 'ONGOING' },
+    ]);
+    expect(relaxConditions({ ...base, category: 'nature', listEventStatus: 'ONGOING', attributes })).toEqual([
+      { kind: 'category', category: 'nature' },
+      { kind: 'attribute', id: 'parking' },
+    ]);
   });
 });

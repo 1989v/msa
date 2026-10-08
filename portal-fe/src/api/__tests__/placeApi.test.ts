@@ -29,3 +29,20 @@ describe('searchAttractions — 근처 행사·이번 달 행사 조건이 그�
     });
   });
 });
+
+describe('searchAttractions — 원래 검색어 검색(exact)', () => {
+  afterEach(() => get.mockReset());
+
+  it('exact 가 참이면 exact=true 를 싣는다', async () => {
+    get.mockResolvedValue({ data: { data: { attractions: [] } } });
+    await searchAttractions({ lang: 'ko', keyword: '경복궁ㅇ', category: 'nature', exact: true });
+    expect(sentParams().get('exact')).toBe('true');
+    expect(sentParams().get('keyword')).toBe('경복궁ㅇ');
+  });
+
+  it('exact 가 없거나 거짓이면 싣지 않는다', async () => {
+    get.mockResolvedValue({ data: { data: { attractions: [] } } });
+    await searchAttractions({ lang: 'ko', keyword: '경복궁', category: 'nature', exact: false });
+    expect(sentParams().has('exact')).toBe(false);
+  });
+});

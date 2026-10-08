@@ -36,9 +36,18 @@ import { escapeHtml } from 'card-dispenser';
 import Footer from '../../components/Footer';
 import ThemeToggle from '../../components/ThemeToggle';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
-import { isPlottable, mergePages, nextPage, titleParts } from './placeView';
+import {
+  isPlottable,
+  mergePages,
+  nextPage,
+  overviewText,
+  relaxConditions,
+  titleParts,
+  type RelaxCondition,
+} from './placeView';
 import {
   ATTRIBUTE_CAPTION,
+  ATTRIBUTE_CHIPS,
   attributeChips,
   attributeQuery,
   chipCount,
@@ -79,7 +88,20 @@ const UI = {
     searchArea: '이 지역 재검색',
     all: '전체',
     empty: '검색 결과가 없습니다',
+    emptyReason: '고른 조건을 모두 만족하는 관광지가 없습니다. 아래에서 조건을 풀면 결과가 넓어집니다.',
+    emptyNoFilter: '이 범위에 등록된 관광지가 없습니다.',
+    relaxGroup: '조건 해제',
+    relaxKeyword: (k: string) => `검색어 ‘${k}’ 해제`,
+    relaxCategory: (c: string) => `분류 ‘${c}’ 해제`,
+    relaxEventStatus: (st: string) => `행사 상태 ‘${st}’ 해제`,
+    relaxAttribute: (a: string) => `‘${a}’ 해제`,
+    relaxRegion: (r: string) => `지역 ‘${r}’ 해제`,
+    relaxGeo: (km: string) => `반경 ${km}km 해제`,
+    relaxAll: '모두 해제',
+    sigunguFallback: '시군구',
+    sidoFallback: '시·도',
     corrected: (k: string) => `‘${k}’(으)로 검색한 결과입니다`,
+    searchExact: (k: string) => `원래 검색어 ‘${k}’(으)로 검색`,
     failed: '목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
     mapKeyMissing: '지도 키가 설정되지 않아 목록만 표시합니다',
     openInGoogleMaps: '구글맵에서 보기',
@@ -116,7 +138,20 @@ const UI = {
     searchArea: 'Search this area',
     all: 'All',
     empty: 'No results found',
+    emptyReason: 'No attractions match all the selected filters. Removing a filter below widens the results.',
+    emptyNoFilter: 'No attractions are listed in this range.',
+    relaxGroup: 'Remove filters',
+    relaxKeyword: (k: string) => `Remove keyword “${k}”`,
+    relaxCategory: (c: string) => `Remove category “${c}”`,
+    relaxEventStatus: (st: string) => `Remove event status “${st}”`,
+    relaxAttribute: (a: string) => `Remove “${a}”`,
+    relaxRegion: (r: string) => `Remove region “${r}”`,
+    relaxGeo: (km: string) => `Remove ${km} km radius`,
+    relaxAll: 'Remove all',
+    sigunguFallback: 'district',
+    sidoFallback: 'province',
     corrected: (k: string) => `Showing results for “${k}”`,
+    searchExact: (k: string) => `Search for “${k}” instead`,
     failed: 'Could not load the list. Please try again in a moment.',
     mapKeyMissing: 'Map key not configured — showing list only',
     openInGoogleMaps: 'Open in Google Maps',
@@ -226,7 +261,8 @@ interface GeoState {
 /**
  * SEARCH `payload.trigger` (ADR-0095 허브 계측) — 무엇이 질의를 바꿨는지. 조작 시점에 ref 로 남겼다가
  * 결과 도착 시 소비한다. `landing` 은 직전 조건이 없는 첫 질의, `other` 는 ref 가 빈 채 결과가 온
- * 안전망(= ref 를 안 심은 핸들러)이라 기준선에서 0 이어야 한다.
+ * 안전망(= ref 를 안 심은 핸들러)이라 기준선에서 0 이어야 한다. `relax` 는 0건 화면의 조건 해제·「모두 해제」·
+ * 「원래 검색어로 검색」 — 검색 제출·필터 적용 건수에서 빼고 결과 view 에는 넣는다.
  */
 type SearchTrigger =
   | 'submit'
@@ -241,6 +277,7 @@ type SearchTrigger =
   | 'initial'
   | 'landing'
   | 'lang'
+  | 'relax'
   | 'other';
 
 /*
@@ -292,6 +329,8 @@ export default function PlacePage() {
 
   const [keywordInput, setKeywordInput] = useState('');
   const [keyword, setKeyword] = useState('');
+  // 「원래 검색어로 검색」을 누른 순간의 검색어. 검색어가 바뀌면 질의에서 저절로 빠진다(불리언이면 남는다).
+  const [exactFor, setExactFor] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showSuggest, setShowSuggest] = useState(false);
   const [category, setCategory] = useState<string | null>(null);
@@ -351,10 +390,11 @@ export default function PlacePage() {
       // 속성(휴무·주차·반려동물 등)은 관광지 축이라 행사에는 뜻이 없다 — 행사 목록에서는 칩도 조건도 뺀다.
       // 고른 칩은 남겨 두어 행사 칩을 풀면 다시 걸린다
       ...(category === EVENT_CATEGORY ? {} : attributeQuery(attributes)),
+      exact: (exactFor != null && exactFor === keyword) || undefined,
       page,
       size: 30,
     }),
-    [keyword, lang, areaCode, sidoCode, sigunguCode, category, listEventStatus, geo, attributes, page],
+    [keyword, exactFor, lang, areaCode, sidoCode, sigunguCode, category, listEventStatus, geo, attributes, page],
   );
 
   const { data, isLoading, isError } = useQuery({
@@ -515,11 +555,12 @@ export default function PlacePage() {
   // 자료가 들어오면 드릴다운으로, 아직이면 이전 광역 선택으로. 두 축을 동시에 노출하지 않는다.
   const hasRegionAxis = (sidoRegions?.length ?? 0) > 0;
 
-  // 모바일 지역 트리거 라벨("서울 · 강남구")용 시군구 이름 — RegionSheet 와 같은 캐시를 쓴다
+  // 시군구 이름 — 모바일 지역 트리거 라벨("서울 · 강남구")과 0건 화면의 지역 해제 문구가 쓴다.
+  // RegionSheet·RegionDrilldown 과 같은 캐시 키라 데스크톱에서 시군구를 골랐으면 요청이 늘지 않는다
   const { data: sigunguRegions } = useQuery({
     queryKey: ['administrative-regions', 'SIGUNGU', sidoCode, lang],
     queryFn: () => fetchAdministrativeRegions({ level: 'SIGUNGU', parent: sidoCode!, lang }),
-    enabled: isMobile && sidoCode != null,
+    enabled: sidoCode != null && (isMobile || sigunguCode != null),
     staleTime: 30 * 60_000,
   });
   const regionName = (r?: AdministrativeRegion | null) => (r ? (lang === 'en' && r.nameEn) || r.name : null);
@@ -600,6 +641,95 @@ export default function PlacePage() {
       { timeout: GEO_TIMEOUT_MS, maximumAge: 10 * 60_000 },
     );
   }, [hasRegionAxis, sidoCode, keyword, geo, sidoRegions, selectRegion]);
+
+  /*
+   * 0건 화면의 조건 해제. 후보는 상태가 아니라 실제 질의에 실린 사용자 조건(relaxConditions)이다.
+   * 지역 해제는 selectRegion 을 쓰지 않는다 — 그 함수는 반경까지 풀고 trigger 를 region 으로 덮는다.
+   * 상태를 바꾸기 전에 autoPickedRef 를 세운다: 해제로 시도가 비면 첫 진입 자동 선택이 다시 돌아
+   * 시도를 고르고 trigger 를 initial 로 덮는다.
+   */
+  const relaxable = relaxConditions({ keyword, category, listEventStatus, attributes, areaCode, sidoCode, sigunguCode, geo });
+  /** 조건 하나를 풀고 바꾼 상태 필드 이름(계측 changed)을 돌려준다. */
+  const releaseCondition = (c: RelaxCondition): string[] => {
+    switch (c.kind) {
+      case 'keyword':
+        setKeyword('');
+        setKeywordInput('');
+        setExactFor(null);
+        return ['keyword'];
+      case 'category':
+        // 분류 칩과 같다 — 행사에서 풀면 남아 있던 속성 칩이 다시 질의에 붙는다
+        setCategory(null);
+        setListEventStatus(null);
+        return ['category', 'listEventStatus'];
+      case 'eventStatus':
+        setListEventStatus(null);
+        return ['listEventStatus'];
+      case 'attribute':
+        setAttributes((prev) => {
+          const next = new Set(prev);
+          next.delete(c.id);
+          return next;
+        });
+        return ['attributes'];
+      case 'region':
+        // 한 단계 위로 — 반경(geo)과 지도는 그대로 둔다
+        if (c.level === 'sigungu') {
+          setSigunguCode(null);
+          return ['sigunguCode'];
+        }
+        if (c.level === 'sido') {
+          setSidoCode(null);
+          setSigunguCode(null);
+          setAreaCode(null);
+          return ['sidoCode', 'sigunguCode', 'areaCode'];
+        }
+        setAreaCode(null);
+        return ['areaCode'];
+      case 'geo':
+        setGeo(null);
+        return ['geo'];
+    }
+  };
+  /** 「모두 해제」는 후보를 하나씩 같은 규칙으로 풀고, 질의에 안 실리던 속성(행사 분류)까지 비운다. */
+  const relax = (targets: RelaxCondition[], clearAllAttributes = false) => {
+    autoPickedRef.current = true;
+    const changed = targets.flatMap(releaseCondition);
+    if (clearAllAttributes && attributes.size > 0) {
+      setAttributes(new Set());
+      changed.push('attributes');
+    }
+    triggerRef.current = 'relax';
+    changedRef.current = [...new Set(changed), 'page'];
+    setPage(0);
+  };
+  const searchExact = () => {
+    autoPickedRef.current = true;
+    triggerRef.current = 'relax';
+    changedRef.current = ['exact', 'page'];
+    setExactFor(keyword);
+    setPage(0);
+  };
+  const relaxLabel = (c: RelaxCondition): string => {
+    switch (c.kind) {
+      case 'keyword':
+        return L.relaxKeyword(c.keyword);
+      case 'category':
+        return L.relaxCategory(L.categories[c.category] ?? c.category);
+      case 'eventStatus':
+        return L.relaxEventStatus(L.eventStatuses[c.status as ListEventStatus] ?? c.status);
+      case 'attribute': {
+        const chip = ATTRIBUTE_CHIPS.find((a) => a.id === c.id);
+        return L.relaxAttribute(chip ? chip[lang] : c.id);
+      }
+      case 'region':
+        if (c.level === 'sigungu') return L.relaxRegion(selectedSigunguName ?? L.sigunguFallback);
+        if (c.level === 'sido') return L.relaxRegion(selectedSidoName ?? L.sidoFallback);
+        return L.relaxRegion(AREAS.find((a) => a.code === c.code)?.[lang] ?? c.code);
+      case 'geo':
+        return L.relaxGeo(String(Math.round(c.radiusKm * 10) / 10));
+    }
+  };
 
   const { data: selected } = useQuery({
     queryKey: ['place-attraction', selectedId],
@@ -1295,7 +1425,7 @@ export default function PlacePage() {
         {category !== EVENT_CATEGORY && (
           <div className="place-attr-group" role="group" aria-label={lang === 'en' ? 'Visitor info filters' : '방문 정보 필터'}>
             <div className="place-attr-chips">
-              {attributeChips(lang).map((chip) => {
+              {attributeChips(lang, attributes).map((chip) => {
                 const selected = attributes.has(chip.id);
                 const count = chipCount(facets, chip.id);
                 const empty = !selected && count === 0;
@@ -1372,11 +1502,44 @@ export default function PlacePage() {
           )}
           {(isMobile || listOpen) && !pickingRegion && (
             <section className="place-list" aria-busy={isLoading}>
-              {attractions.length === 0 && !isLoading && (
-                <p className="place-empty">{isError ? L.failed : L.empty}</p>
+              {/* 교정 안내는 0건에도 — 고친 검색어로 0건이면 무엇으로 찾았는지가 곧 0건의 이유다 */}
+              {data?.correctedKeyword && (
+                <p className="place-corrected" role="status">
+                  {L.corrected(data.correctedKeyword)}{' '}
+                  <button type="button" className="place-chip" onClick={searchExact}>
+                    {L.searchExact(keyword)}
+                  </button>
+                </p>
               )}
-              {data?.correctedKeyword && attractions.length > 0 && (
-                <p className="place-corrected" role="status">{L.corrected(data.correctedKeyword)}</p>
+              {attractions.length === 0 && !isLoading && (
+                isError ? (
+                  // 실패는 조건 탓이 아니다 — 해제를 권하지 않는다
+                  <p className="place-empty">{L.failed}</p>
+                ) : (
+                  <div className="place-empty">
+                    <p>{L.empty}</p>
+                    <p>{relaxable.length > 0 ? L.emptyReason : L.emptyNoFilter}</p>
+                    {relaxable.length > 0 && (
+                      <div role="group" aria-label={L.relaxGroup}>
+                        {relaxable.map((c) => (
+                          <button
+                            key={`${c.kind}:${relaxLabel(c)}`}
+                            type="button"
+                            className="place-chip"
+                            onClick={() => relax([c])}
+                          >
+                            {relaxLabel(c)}
+                          </button>
+                        ))}
+                        {relaxable.length >= 2 && (
+                          <button type="button" className="place-chip" onClick={() => relax(relaxable, true)}>
+                            {L.relaxAll}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
               )}
               {attractions.map((a, i) => (
                 <PlaceCard
@@ -1508,6 +1671,7 @@ function AttractionDetailBody({
 }) {
   const L = UI[lang];
   const { primary, secondary } = titleParts(attraction);
+  const overview = overviewText(attraction.overview);
   return (
     <>
       {attraction.imageUrl && (
@@ -1530,7 +1694,8 @@ function AttractionDetailBody({
       <EventLine attraction={attraction} lang={lang} />
       {attraction.address && <p className="place-detail-addr">{attraction.address}</p>}
       {attraction.tel && <p className="place-detail-tel">{attraction.tel}</p>}
-      {attraction.overview && <p className="place-detail-overview">{attraction.overview}</p>}
+      {/* 단건 조회는 원문이라 여기서 한 번 정리한다. 목록 카드는 서버가 정리한 요약이라 다시 정리하지 않는다 */}
+      {overview && <p className="place-detail-overview">{overview}</p>}
       <a className="place-btn" href={attractionPath(lang, attraction.id)}>
         {lang === 'en' ? 'Open detail page' : '상세 페이지 열기'}
       </a>

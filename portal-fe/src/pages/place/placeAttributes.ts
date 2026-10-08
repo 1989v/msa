@@ -35,14 +35,20 @@ const BARRIER_FREE_CHIPS: ReadonlyArray<[AttributeChipId, BarrierFreeFilterCode]
   ['bfRestroom', 'RESTROOM'],
 ];
 
-/** `only` 가 있으면 그 언어 목록에만 칩을 둔다 — 무장애 원천은 국문뿐이라 영문에서는 늘 0 이다. */
+/**
+ * `only` 가 있으면 그 언어 목록에만 칩을 둔다 — 그 언어 원천에 값이 없어 늘 0 인 칩은 두지 않는다.
+ * 근거는 원천 값 실측 `docs/specs/2026-09-29-place-ssr-enrichment/implementation/attr-raw-values.json`:
+ * 영문은 반려동물(`petAcmpyType`) 채움 0, 신용카드·유모차 대여는 영문 introKeys 에 키가 없고,
+ * 무장애 원천은 국문뿐이다. 그래서 영문 칩은 정기휴무·주차·입장 무료·웰니스 넷이다.
+ * 「오늘 정기휴무일 아님」은 요일 규칙만 보고 명절 휴무는 판정하지 않으므로 문구에 그 한계를 적는다.
+ */
 export const ATTRIBUTE_CHIPS: ReadonlyArray<{ id: AttributeChipId; ko: string; en: string; only?: PlaceLang }> = [
-  { id: 'openToday', ko: '오늘 정기휴무 아님', en: 'Not closed today' },
+  { id: 'openToday', ko: '오늘 정기휴무일 아님(명절 제외)', en: 'Not a regular closing day today (holidays excluded)' },
   { id: 'parking', ko: '주차 가능', en: 'Parking' },
-  { id: 'creditCard', ko: '신용카드', en: 'Credit cards' },
-  { id: 'strollerRental', ko: '유모차 대여', en: 'Stroller rental' },
-  { id: 'petAllowed', ko: '반려동물 동반', en: 'Pets allowed' },
-  { id: 'petPartial', ko: '반려동물 일부 구역', en: 'Pets in some areas' },
+  { id: 'creditCard', ko: '신용카드', en: 'Credit cards', only: 'ko' },
+  { id: 'strollerRental', ko: '유모차 대여', en: 'Stroller rental', only: 'ko' },
+  { id: 'petAllowed', ko: '반려동물 동반', en: 'Pets allowed', only: 'ko' },
+  { id: 'petPartial', ko: '반려동물 일부 구역', en: 'Pets in some areas', only: 'ko' },
   { id: 'admissionFree', ko: '입장 무료', en: 'Free admission' },
   { id: 'bfWheelchair', ko: '휠체어', en: 'Wheelchairs', only: 'ko' },
   { id: 'bfElevator', ko: '엘리베이터', en: 'Elevator', only: 'ko' },
@@ -50,8 +56,14 @@ export const ATTRIBUTE_CHIPS: ReadonlyArray<{ id: AttributeChipId; ko: string; e
   { id: 'wellness', ko: '웰니스 관광', en: 'Wellness tourism' },
 ];
 
-export function attributeChips(lang: PlaceLang) {
-  return ATTRIBUTE_CHIPS.filter((chip) => chip.only == null || chip.only === lang);
+/**
+ * 그 언어의 칩 목록. 고른 칩(`selected`)은 그 언어 목록에 없어도 끝에 붙인다 — 국문에서 고른 국문 전용 칩이
+ * 언어를 바꾼 뒤에도 질의에 걸려 있으므로 화면에서 보이고 풀 수 있어야 한다.
+ */
+export function attributeChips(lang: PlaceLang, selected: ReadonlySet<AttributeChipId> = new Set()) {
+  const listed = ATTRIBUTE_CHIPS.filter((chip) => chip.only == null || chip.only === lang);
+  const extra = ATTRIBUTE_CHIPS.filter((chip) => selected.has(chip.id) && !listed.includes(chip));
+  return [...listed, ...extra];
 }
 
 export const ATTRIBUTE_CAPTION: Record<PlaceLang, string> = {
