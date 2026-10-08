@@ -54,6 +54,7 @@ const SearchArchitecturePage = lazy(() => import('./pages/tech/SearchArchitectur
 const UnifiedSearchPage = lazy(() => import('./pages/search/UnifiedSearchPage'));
 // ADR-0074 — 내 찜 모아보기 (호스트 인식: game=GAME, place=ATTRACTION, blog=BLOG_POST, apex=탭)
 const FavoritesPage = lazy(() => import('./components/favorite/FavoritesPage'));
+const SharedCollectionPage = lazy(() => import('./components/favorite/SharedCollectionPage'));
 // ADR-0064 — 이력서 (resume.<domain>). 공개 포털 번들과 코드가 섞이지 않게 lazy 로 분리한다.
 // ADR-0076 — 개인정보처리방침. 광고·분석의 전제 문서이고 모든 호스트의 푸터가 이 주소를
 // 건다. 읽으러 오는 사람만 받으면 되므로 lazy 로 뺀다.
@@ -238,6 +239,8 @@ function App() {
           {/* 내 찜 (ADR-0074) — 개인 화면이라 모든 호스트에서 그 자리 그대로 연다 (리다이렉트 없음) */}
           <Route path="/favorites" element={<FavoritesPage />} />
           <Route path="/en/favorites" element={<FavoritesPage />} />
+          {/* 공유받은 여행 묶음 (ADR-0107) — 짧은 주소 /c/{token} 이 apex 로 보낸다. noindex, 프리렌더·sitemap 에 넣지 않는다 */}
+          <Route path="/shared/:token" element={<SharedCollectionPage />} />
           {/* 이력서 상세 — resume 호스트에만 둔다. apex 에 열어두면 전체공개 상태에서
               색인 대상인 1989v.com 경로로 이력서가 노출된다 (ADR-0064: 이력서는 noindex) */}
           {isResumeHost && <Route path="/d/:slug" element={<ResumeDetailPage />} />}

@@ -86,3 +86,34 @@ describe('SharePanel — 영문 화면', () => {
     expect(screen.getByRole('button', { name: 'Share' })).toBeInTheDocument();
   });
 });
+
+describe('SharePanel — 채널 고르기', () => {
+  it('channels 를 안 주면 넷 다 보인다 — 기존 호출처는 그대로다', () => {
+    render(<SharePanel shortUrl={SHORT} title="심연의 왕관" />);
+
+    expect(screen.getByRole('button', { name: '링크 복사' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '공유' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /^X/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /^LinkedIn/ })).toBeInTheDocument();
+  });
+
+  it("['copy','share'] 면 X·LinkedIn 링크가 없다", () => {
+    render(<SharePanel shortUrl={SHORT} title="부산 2박" channels={['copy', 'share']} />);
+
+    expect(screen.getByRole('button', { name: '링크 복사' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '공유' })).toBeInTheDocument();
+    expect(screen.queryAllByRole('link')).toHaveLength(0);
+  });
+
+  it('onShare 는 누른 채널 이름을 받는다', async () => {
+    share = vi.fn().mockResolvedValue(undefined);
+    const onShare = vi.fn();
+    render(<SharePanel shortUrl={SHORT} title="심연의 왕관" onShare={onShare} />);
+
+    await userEvent.click(screen.getByRole('button', { name: '링크 복사' }));
+    await userEvent.click(screen.getByRole('button', { name: '공유' }));
+    await userEvent.click(screen.getByRole('link', { name: /^X/ }));
+
+    expect(onShare.mock.calls.map((c) => c[0])).toEqual(['copy', 'share', 'x']);
+  });
+});

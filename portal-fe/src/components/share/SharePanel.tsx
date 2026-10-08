@@ -6,6 +6,10 @@ const LABELS = {
   en: { group: 'Share', copy: 'Copy link', copied: 'Copied', share: 'Share', newWindow: 'new window' },
 } as const;
 
+export type ShareChannel = 'copy' | 'share' | 'x' | 'linkedin';
+
+const ALL_CHANNELS: ReadonlyArray<ShareChannel> = ['copy', 'share', 'x', 'linkedin'];
+
 interface Props {
   /** 서버가 준 단축 주소. 노출 설정이 꺼져 있으면 null 이고, 그때는 `url` 을 쓴다 */
   shortUrl?: string | null;
@@ -15,6 +19,13 @@ interface Props {
   lang?: 'ko' | 'en';
   /** 놓이는 화면의 배치 규칙을 붙일 클래스 */
   className?: string;
+  /**
+   * 보일 채널. 기본은 넷 다. 비공개 자료(여행 묶음)는 1:1 채널(복사·Web Share)만 준다 —
+   * X·LinkedIn 은 링크를 공개 게시물로 만든다 (ADR-0107 §7)
+   */
+  channels?: ReadonlyArray<ShareChannel>;
+  /** 채널 버튼을 누를 때마다 그 채널 이름으로 불린다(계측용) */
+  onShare?: (channel: ShareChannel) => void;
 }
 
 /**
@@ -24,7 +35,15 @@ interface Props {
  * 없으면 호출자가 넘긴 canonical 주소다. 현재 주소를 그대로 복사하면 쿼리스트링·앵커가 섞여
  * 같은 글이 여러 주소로 돌아다니고, 그러면 색인도 공유 카드도 갈라진다.
  */
-export default function SharePanel({ shortUrl, url, title, lang = 'ko', className }: Props) {
+export default function SharePanel({
+  shortUrl,
+  url,
+  title,
+  lang = 'ko',
+  className,
+  channels = ALL_CHANNELS,
+  onShare,
+}: Props) {
   const [copied, setCopied] = useState(false);
   const L = LABELS[lang];
   const target = shortUrl || url || window.location.href;
@@ -59,30 +78,54 @@ export default function SharePanel({ shortUrl, url, title, lang = 'ko', classNam
 
   return (
     <div className={`share-panel${className ? ` ${className}` : ''}`} role="group" aria-label={L.group}>
-      <button type="button" className="share-panel__btn" onClick={copy}>
-        <span aria-live="polite">{copied ? L.copied : L.copy}</span>
-      </button>
-      <button type="button" className="share-panel__btn" onClick={share}>
-        {L.share}
-      </button>
-      <a
-        className="share-panel__btn"
-        href={`https://twitter.com/intent/tweet?url=${encoded}&text=${encodedTitle}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={`X (${L.newWindow})`}
-      >
-        X
-      </a>
-      <a
-        className="share-panel__btn"
-        href={`https://www.linkedin.com/sharing/share-offsite/?url=${encoded}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={`LinkedIn (${L.newWindow})`}
-      >
-        LinkedIn
-      </a>
+      {channels.includes('copy') && (
+        <button
+          type="button"
+          className="share-panel__btn"
+          onClick={() => {
+            onShare?.('copy');
+            void copy();
+          }}
+        >
+          <span aria-live="polite">{copied ? L.copied : L.copy}</span>
+        </button>
+      )}
+      {channels.includes('share') && (
+        <button
+          type="button"
+          className="share-panel__btn"
+          onClick={() => {
+            onShare?.('share');
+            void share();
+          }}
+        >
+          {L.share}
+        </button>
+      )}
+      {channels.includes('x') && (
+        <a
+          className="share-panel__btn"
+          href={`https://twitter.com/intent/tweet?url=${encoded}&text=${encodedTitle}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`X (${L.newWindow})`}
+          onClick={() => onShare?.('x')}
+        >
+          X
+        </a>
+      )}
+      {channels.includes('linkedin') && (
+        <a
+          className="share-panel__btn"
+          href={`https://www.linkedin.com/sharing/share-offsite/?url=${encoded}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`LinkedIn (${L.newWindow})`}
+          onClick={() => onShare?.('linkedin')}
+        >
+          LinkedIn
+        </a>
+      )}
     </div>
   );
 }

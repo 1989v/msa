@@ -21,6 +21,9 @@ const api = axios.create({ baseURL: BASE_URL, timeout: 10_000 });
 
 attachRefreshRetry(api);
 
+/** 테스트가 어댑터를 바꿔 끼운다 — 404 를 가르는 판단까지 실제 모듈로 돌리려고 */
+export { api as wishlistHttp };
+
 export type FavoriteTargetType = 'PRODUCT' | 'GAME' | 'ATTRACTION' | 'BLOG_POST';
 
 export interface FavoriteItem {
@@ -109,4 +112,71 @@ export async function moveFavorite(
   collectionId: number | null,
 ): Promise<void> {
   await api.patch(`/api/v1/wishlist/${type}/${encodeURIComponent(targetKey)}/collection`, { collectionId });
+}
+
+// ── 묶음 공유 링크 (ADR-0107) ────────────────────────────────────────────────
+
+export interface CollectionShareLink {
+  token: string;
+  /** 짧은 주소(`/c/{token}`) — 서버가 호스트까지 붙여 준다 */
+  url: string;
+  /** null 이면 만료 없음 */
+  expiresAt: string | null;
+}
+
+/**
+ * 묶음의 공유 상태. 404 는 「공유를 쓸 수 없음」(설정 꺼짐·없는 묶음)이라 오류가 아니라 값으로 돌려준다 —
+ * 화면은 그때 공유 버튼을 숨긴다. 그 밖의 오류(5xx·네트워크)는 던진다.
+ */
+export type CollectionShareState = { available: false } | { available: true; link: CollectionShareLink | null };
+
+function isNotFound(err: unknown): boolean {
+  return axios.isAxiosError(err) && err.response?.status === 404;
+}
+
+export async function fetchCollectionShare(id: number): Promise<CollectionShareState> {
+  try {
+    const res = await api.get<ApiResponse<{ link: CollectionShareLink | null }>>(
+      `/api/v1/wishlist/collections/${id}/share`,
+    );
+    return { available: true, link: res.data.data.link };
+  } catch (err) {
+    if (isNotFound(err)) return { available: false };
+    throw err;
+  }
+}
+
+/**
+ * 새 링크를 만든다 — 살아 있던 링크는 서버가 폐기한다(묶음당 하나).
+ * `expiresInDays` 를 생략하면 본문 없이 보내 서버 기본(30일)을, `null` 이면 만료 없음을 고른다.
+ */
+export async function createCollectionShare(id: number, expiresInDays?: number | null): Promise<CollectionShareLink> {
+  const res = await api.post<ApiResponse<CollectionShareLink>>(
+    `/api/v1/wishlist/collections/${id}/share`,
+    expiresInDays === undefined ? undefined : { expiresInDays },
+  );
+  return res.data.data;
+}
+
+/** 멱등 — 링크가 없어도 200 */
+export async function revokeCollectionShare(id: number): Promise<void> {
+  await api.delete(`/api/v1/wishlist/collections/${id}/share`);
+}
+
+export interface SharedCollection {
+  name: string;
+  items: { targetType: 'ATTRACTION'; targetKey: string }[];
+  /** 100건을 넘어 잘렸는지 */
+  truncated: boolean;
+}
+
+/** 로그인 없이 읽는 공개 묶음. 없음·폐기·만료·꺼짐은 모두 404 라 null 로 돌려준다 */
+export async function fetchSharedCollection(token: string): Promise<SharedCollection | null> {
+  try {
+    const res = await api.get<ApiResponse<SharedCollection>>(`/api/v1/wishlist/shared/${encodeURIComponent(token)}`);
+    return res.data.data;
+  } catch (err) {
+    if (isNotFound(err)) return null;
+    throw err;
+  }
 }

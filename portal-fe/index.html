@@ -11,13 +11,19 @@
          resume 호스트에서는 싣지 않는다. 이력서는 토큰 게이트로 닫고 noindex 로 둔 개인정보
          문서인데(ADR-0064), 열람 기록을 토큰·경로·시각으로 한정해 놓고 같은 페이지에서 GA 가
          기기·유입 정보를 내보내면 그 결정이 무의미해진다. 문서 경로(/d/<slug>)까지 리포트에
-         남는다. 한 벌의 index.html 이 모든 호스트를 서빙하므로 여기서 갈라야 한다. -->
+         남는다. 한 벌의 index.html 이 모든 호스트를 서빙하므로 여기서 갈라야 한다.
+
+         공유 묶음 토큰이 든 문서에서도 싣지 않는다(ADR-0107) — 수신 화면(/shared/…), 그 주소를 로그인
+         next 쿼리로 들고 온 화면, 그 화면에서 넘어와 리퍼러에 토큰이 남은 화면. 셋 중 하나라도 실으면 토큰이
+         page_location·page_referrer 로 외부 리포트에 남는다. GA 가 실린 문서에서는 SPA 전환도
+         page_view 로 집계되므로 앱 안에 /shared/ 로 가는 링크를 두지 않는다. -->
     <script>
       (function () {
         var host = location.hostname;
         // 개발 중 클릭이 실제 리포트에 섞이면 유입 분석이 흐려진다
         if (host === "localhost" || host === "127.0.0.1") return;
         if (host.split(".")[0] === "resume") return;
+        if (/^\/shared\//.test(location.pathname) || /%2Fshared%2F/i.test(location.search) || /^[a-z][a-z0-9+.-]*:\/\/[^\/?#]+\/shared\//i.test(document.referrer)) return;
         var id = "G-5EE8XW7JHN";
         var tag = document.createElement("script");
         tag.async = true;

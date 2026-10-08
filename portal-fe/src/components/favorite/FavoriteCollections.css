@@ -137,3 +137,17 @@
   white-space: nowrap;
   border: 0;
 }
+
+/* 선택한 묶음의 공유 막대 (ADR-0107) — 이름 변경·삭제 줄 아래, 같은 낮은 무게로 */
+.collection-share {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-3);
+  align-items: center;
+  margin-top: var(--ko-space-2);
+}
+
+.collection-share__expiry {
+  color: var(--ko-text-muted);
+  font-size: var(--ko-text-xs);
+}

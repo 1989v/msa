@@ -88,17 +88,17 @@ wishlist 최신은 `V3__collections.sql` → 이번은 **`wishlist/feature/src/m
 
 ### Task Group 6: FE 묶음 공유 막대 · SharePanel channels · 수신 화면 · GA 로더 조건 (SR-2.9 · 2.10)
 **Dependencies:** TG3(API 모양), TG5(수신 화면의 의도 소비 훅) · **Phase:** portal-fe · **Required Skills:** DESIGN.md 토큰, SharePanel, 라우팅(apex)
-- [ ] 6.1 테스트 먼저
+- [x] 6.1 테스트 먼저
   - `portal-fe/src/components/share/__tests__/SharePanel.test.tsx` 증보: `channels` 미지정 → 넷 다(기존 호출처 불변), `channels={['copy','share']}` → X·LinkedIn 앵커 0
   - `portal-fe/src/components/favorite/__tests__/FavoritesPage.share.test.tsx`(새 파일): 막대 세 칸(404 → 숨김 / `link:null` → 「공유 링크 만들기」 / `link` → 복사·Web Share·폐기) + 5xx·네트워크 → 숨김. 「전체」·「미분류」에서 `GET …/share` 0건·막대 없음, 묶음 칩 선택 시에만 1건. 묶음 막대 X·LinkedIn 앵커 0
   - `portal-fe/src/components/favorite/__tests__/SharedCollectionPage.test.tsx`(새 파일): 세 상태(404 → 「찾을 수 없거나 만료된 링크」, 토큰 `invalid` 도 같은 문구 / 항목 0·하이드레이션 전부 실패 → 빈 상태 / 정상 카드), `noindex`, 소유자 정보 텍스트 없음, 묶음 이름 `<img onerror>` 픽스처가 텍스트로만 렌더, 각 카드 별이 수신자 자신의 찜(PUT 대상 = 그 targetKey), 로그인 + 유효 의도 → 의도 소비 1회
   - `portal-fe/src/analytics/__tests__/gaLoader.test.ts`(새 파일): `portal-fe/index.html` 의 GA 로더 스크립트를 읽어 location·referrer 스텁으로 실행 — ① `/shared/x` ② `?next=https%3A%2F%2F1989v.com%2Fshared%2Fx`(대문자 `%2f` 변형 포함) ③ referrer `https://1989v.com/shared/x` 셋 다 `googletagmanager` 스크립트 0, 대조군 `/` 는 1, resume 호스트 제외 그대로
-- [ ] 6.2 `wishlistApi.ts`: `fetchCollectionShare(id)`(404 를 구분해 돌려준다)·`createCollectionShare(id, expiresInDays?)`·`revokeCollectionShare(id)`·`fetchSharedCollection(token)`
-- [ ] 6.3 `SharePanel.tsx`: 선택 prop `channels?: ReadonlyArray<'copy' | 'share' | 'x' | 'linkedin'>`(기본 넷 다)
-- [ ] 6.4 `FavoritesPage`/`FavoriteCollections`: `kind:'one'` 칩일 때만 공유 막대 + 그때만 `GET …/share`. 막대는 SharePanel 을 `channels={['copy','share']}` 로. FE 별도 플래그 없음 — 404 가 곧 꺼짐
-- [ ] 6.5 수신 화면 `portal-fe/src/components/favorite/SharedCollectionPage.tsx` + `App.tsx` apex 라우트 `/shared/:token`. 카드는 `FavoritesPage` 카드 재사용, 묶음 이름은 텍스트로만(`dangerouslySetInnerHTML` 금지), `noindex`, sitemap·llms·프리렌더 목록에 넣지 않는다. 앱 안에 `/shared/` 로 가는 SPA 링크를 두지 않는다
-- [ ] 6.6 `portal-fe/index.html` GA 로더: resume 호스트 제외(`:20`) 바로 다음 줄에 조건 셋(경로 `/shared/` 시작 · `location.search` 에 `%2Fshared%2F` 대소문자 무시 · `document.referrer` 경로 `/shared/` 시작)
-- [ ] 6.7 Verify: `cd portal-fe && npx vitest run src/components/share src/components/favorite src/analytics/__tests__/gaLoader.test.ts && npx tsc -b && npx vite build`(index.html 변경이 빌드 산출물에 그대로 들어가는지 `grep -c '%2Fshared%2F' dist/index.html`)
+- [x] 6.2 `wishlistApi.ts`: `fetchCollectionShare(id)`(404 를 구분해 돌려준다)·`createCollectionShare(id, expiresInDays?)`·`revokeCollectionShare(id)`·`fetchSharedCollection(token)`
+- [x] 6.3 `SharePanel.tsx`: 선택 prop `channels?: ReadonlyArray<'copy' | 'share' | 'x' | 'linkedin'>`(기본 넷 다)
+- [x] 6.4 `FavoritesPage`/`FavoriteCollections`: `kind:'one'` 칩일 때만 공유 막대 + 그때만 `GET …/share`. 막대는 SharePanel 을 `channels={['copy','share']}` 로. FE 별도 플래그 없음 — 404 가 곧 꺼짐
+- [x] 6.5 수신 화면 `portal-fe/src/components/favorite/SharedCollectionPage.tsx` + `App.tsx` apex 라우트 `/shared/:token`. 카드는 `FavoritesPage` 카드 재사용, 묶음 이름은 텍스트로만(`dangerouslySetInnerHTML` 금지), `noindex`, sitemap·llms·프리렌더 목록에 넣지 않는다. 앱 안에 `/shared/` 로 가는 SPA 링크를 두지 않는다
+- [x] 6.6 `portal-fe/index.html` GA 로더: resume 호스트 제외(`:20`) 바로 다음 줄에 조건 셋(경로 `/shared/` 시작 · `location.search` 에 `%2Fshared%2F` 대소문자 무시 · `document.referrer` 경로 `/shared/` 시작)
+- [x] 6.7 Verify: `cd portal-fe && npx vitest run src/components/share src/components/favorite src/analytics/__tests__/gaLoader.test.ts && npx tsc -b && npx vite build`(index.html 변경이 빌드 산출물에 그대로 들어가는지 `grep -c '%2Fshared%2F' dist/index.html`)
 
 ### Task Group 7: 계측 — 길찾기 · 상세 공유 · FAVORITES 공유 이벤트 · POST_SELECTION (SR-3)
 **Dependencies:** TG6(묶음 막대), 스펙 D TG5(상세 행동 줄 — 길찾기만) · **Phase:** portal-fe + analytics:app · **Required Skills:** 이벤트 원장(ADR-0095), tracker 중복 키, ClickHouse SQL 리터럴

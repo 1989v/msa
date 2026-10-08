@@ -1,6 +1,7 @@
 # 진행 상태
 
-- 현재 그룹: 6 (묶음 공유 막대·수신 화면·GA 로더)
+- 현재 그룹: 7 (계측) — 스펙 D TG5 뒤
+- 완료: TG6 공유 막대·수신 화면·GA 로더 — 메인 재실행: vitest src/components/share src/components/favorite gaLoader 5 files / 42 passed, tsc exit 0. 수신 화면 5xx 문구·폐기 라벨 「공유 중단」은 스펙 밖에서 정함
 - 완료: TG5 로그인 복귀 — 메인 재실행: vitest src/pages/place src/components/favorite src/auth 17 files / 310 passed, tsc exit 0
 - 열린 질문: 상세 화면 resumed CLICK 의 viewId 가 관광지 응답 전 값일 수 있음(허브는 확인됨)
 - 완료: TG4 게이트웨이·인그레스 — 메인 재실행: GatewayRouteAuthSpec 62/0, ShortLinkRouteSpec 9/0, oci-arm 렌더에 apex path /c 1건
