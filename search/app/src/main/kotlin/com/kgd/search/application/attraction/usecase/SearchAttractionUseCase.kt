@@ -50,6 +50,8 @@ interface SearchAttractionUseCase {
          * 그 밖의 값은 무시한다(조건 없음).
          */
         val eventStatus: String? = null,
+        /** true 면 오타 교정을 건너뛰고 받은 검색어 그대로 찾는다(「원래 검색어로 검색」). 응답 `correctedKeyword` 는 null. */
+        val exact: Boolean = false,
     )
 
     data class AttractionSearchResult(

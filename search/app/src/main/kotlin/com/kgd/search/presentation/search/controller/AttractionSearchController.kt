@@ -70,6 +70,8 @@ class AttractionSearchController(
         @RequestParam(defaultValue = "false") facets: Boolean,
         // 행사 상태 ONGOING·WEEKEND·UPCOMING·THIS_MONTH·NOT_ENDED — 행사가 아닌 곳은 거르지 않는다. 다른 값은 무시.
         @RequestParam(required = false) eventStatus: String?,
+        // true 면 오타 교정 없이 받은 검색어 그대로 찾는다 — 교정 안내의 「원래 검색어로 검색」
+        @RequestParam(defaultValue = "false") exact: Boolean,
     ): ApiResponse<SearchAttractionUseCase.Result> {
         val result = searchAttractionUseCase.execute(
             SearchAttractionUseCase.Query(
@@ -95,6 +97,7 @@ class AttractionSearchController(
                 wellness = wellness,
                 attributeFacets = facets,
                 eventStatus = eventStatus,
+                exact = exact,
             )
         )
         return ApiResponse.success(result)

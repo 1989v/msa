@@ -83,7 +83,9 @@ class SearchAttractionService(
         val pageable = PageRequest.of(query.page.coerceAtLeast(0), query.size.coerceIn(1, 100))
         val original = query.keyword?.takeIf { it.isNotBlank() }
         // 오타 교정은 두 레그 모두에 준다 — 오타가 섞인 문장은 벡터도 엉뚱한 곳을 가리킨다.
-        val corrected = original?.let { attractionSearchPort.correct(it, query.lang?.takeIf { l -> l.isNotBlank() }) }
+        // exact 는 사용자가 교정을 물린 검색이라 교정을 부르지 않는다.
+        val corrected = original?.takeUnless { query.exact }
+            ?.let { attractionSearchPort.correct(it, query.lang?.takeIf { l -> l.isNotBlank() }) }
         if (corrected != null) correctionCounter.increment()
         val keyword = corrected ?: original
         // 벡터 레그에는 **원문**을 준다 — 문장의 뜻이 그 레그의 전부라 잘라내면 안 된다 (ADR-0090 개정).

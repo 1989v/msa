@@ -107,6 +107,19 @@ class SearchAttractionServiceTest : BehaviorSpec({
                 verify(exactly = 0) { searchPort.correct(any(), any()) }
             }
         }
+        `when`("exact=true 로 원래 검색어 검색을 요청하면") {
+            then("교정을 부르지 않고 원문으로 찾으며 교정 표시는 비운다") {
+                val captured = slot<AttractionSearchPort.SearchQuery>()
+                every { searchPort.correct("경복굼 야경", "ko") } returns "경복궁 야경"
+                every { searchPort.search(capture(captured), any()) } returns found(emptyList())
+
+                val result = service.execute(SearchAttractionUseCase.Query(keyword = "경복굼 야경", lang = "ko", exact = true))
+
+                verify(exactly = 0) { searchPort.correct(any(), any()) }
+                captured.captured.keyword shouldBe "경복굼 야경"
+                result.correctedKeyword shouldBe null
+            }
+        }
     }
 
     given("관광지 검색 시") {

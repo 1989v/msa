@@ -9,6 +9,7 @@ import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import io.mockk.verify
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import tools.jackson.databind.ObjectMapper
@@ -107,6 +108,42 @@ class AttractionSearchControllerTest : BehaviorSpec({
                 mvc.perform(get("/api/search/attractions").param("keyword", "한옥")).andReturn()
 
                 captured.captured shouldBe SearchAttractionUseCase.Query(keyword = "한옥")
+            }
+        }
+    }
+
+    given("원래 검색어 검색 exact") {
+        `when`("exact=true 를 주면") {
+            then("질의의 exact 로 묶인다") {
+                val captured = slot<SearchAttractionUseCase.Query>()
+                every { search.execute(capture(captured)) } returns result()
+
+                val status = mvc.perform(
+                    get("/api/search/attractions").param("keyword", "경복굼").param("exact", "true"),
+                ).andReturn().response.status
+
+                status shouldBe 200
+                captured.captured.exact shouldBe true
+            }
+        }
+        `when`("exact 를 주지 않으면") {
+            then("false 로 간다 — 교정을 받는 기본 검색") {
+                val captured = slot<SearchAttractionUseCase.Query>()
+                every { search.execute(capture(captured)) } returns result()
+
+                mvc.perform(get("/api/search/attractions").param("keyword", "경복굼")).andReturn()
+
+                captured.captured.exact shouldBe false
+            }
+        }
+        `when`("불리언이 아닌 값을 주면") {
+            then("400 이고 유스케이스를 부르지 않는다") {
+                val status = mvc.perform(
+                    get("/api/search/attractions").param("keyword", "경복굼").param("exact", "maybe"),
+                ).andReturn().response.status
+
+                status shouldBe 400
+                verify(exactly = 0) { search.execute(any()) }
             }
         }
     }
