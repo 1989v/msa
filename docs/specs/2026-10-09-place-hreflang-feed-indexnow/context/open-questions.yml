@@ -1,0 +1,36 @@
+questions:
+  - id: Q1
+    stage: post-impl
+    status: open
+    question: IndexNow 실제 제출 켜기(사용자) — 키 파일은 배포, 제출은 설정 false
+    answer: 꺼둔 채 배포, 마지막에 사용자 확인
+  - id: Q2
+    stage: post-impl
+    status: open
+    question: ADR-0062 §8·ADR-0103 개정 승인과 search.alternate-pairs.enabled 켜기
+    answer: 꺼둔 채 배포(로그만), 승인 뒤 env true + 운영 짝 30쌍 수동 확인
+  - id: Q3
+    stage: post-impl
+    status: open
+    question: 심판 사용자 판단 2~8(일대일 기준·새 행 변경·24h 창·행사 제외·introRaw 포함·x-default=en)
+    answer: 권고 기본값
+  - id: Q4
+    stage: post-impl
+    status: open
+    question: ADR-0062 개정을 언제 커밋할지(2라운드 심판 판단 1)
+    answer: 구현 커밋에 함께 넣는다 — E11 문안(규칙·스위치 있음, 기본 꺼짐, 켜는 것은 사용자)이면 운영 상태(0건)와 ADR·주석이 어느 시점에도 맞는다
+  - id: Q5
+    stage: post-impl
+    status: open
+    question: /.txt·틀린 키를 404 로 막을지(2라운드 심판 판단 2)
+    answer: 막지 않는다 — 기대값은 「키 본문이 아님(SPA 셸)」(E5). 키는 공개값이고 셸 200 은 해가 없다
+  - id: Q6
+    stage: post-impl
+    status: open
+    question: Secret place-indexnow 생성 시점(2라운드 심판 판단 3)
+    answer: 배포 전에 사용자가 OCI 에서 만든다. optional true 라 늦어져도 배포는 안전하다
+  - id: Q7
+    stage: post-impl
+    status: open
+    question: IndexNow 조각에 X-Robots-Tag 헤더를 함께 둘지(3라운드 심판 사용자 판단 1)
+    answer: 넣지 않는다(최소 수정) — 조각의 add_header 때문에 server 레벨 X-Robots-Tag 가 상속되지 않지만 place 호스트에선 그 값이 빈 문자열이라 동작 차이가 없다
