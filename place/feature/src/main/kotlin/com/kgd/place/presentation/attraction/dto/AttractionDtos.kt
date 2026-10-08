@@ -185,6 +185,8 @@ data class AttractionResponse(
     val listRaw: String?,
     val googlePlaceId: String?,
     val sourceModifiedAt: LocalDateTime?,
+    /** 본문 변경 시각 — 서버 계산값이라 적재 요청([UpsertAttractionItem])에는 없다. RSS·IndexNow 의 기준 */
+    val contentUpdatedAt: LocalDateTime?,
     val status: String,
 ) {
     companion object {
@@ -239,6 +241,7 @@ data class AttractionResponse(
             listRaw = view.listRaw,
             googlePlaceId = view.googlePlaceId,
             sourceModifiedAt = view.sourceModifiedAt,
+            contentUpdatedAt = view.contentUpdatedAt,
             status = view.status,
         )
     }

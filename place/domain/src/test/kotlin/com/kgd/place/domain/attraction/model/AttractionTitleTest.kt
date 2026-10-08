@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.data.forAll
 import io.kotest.data.row
 import io.kotest.matchers.shouldBe
+import java.time.LocalDateTime
 
 class AttractionTitleTest : BehaviorSpec({
 
@@ -54,6 +55,7 @@ class AttractionTitleTest : BehaviorSpec({
                         contentId = "3113200", lang = "en", title = "Dosan Neighborhood Park",
                         latitude = 37.524, longitude = 127.035,
                     ),
+                    LocalDateTime.of(2026, 10, 9, 0, 0),
                 )
                 attraction.titleDisplay shouldBe "Dosan Neighborhood Park"
                 attraction.titleLocal shouldBe null

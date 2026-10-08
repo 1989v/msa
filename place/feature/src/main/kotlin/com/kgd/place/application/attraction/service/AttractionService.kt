@@ -147,6 +147,7 @@ class AttractionService(
         listRaw = listRaw,
         googlePlaceId = googlePlaceId,
         sourceModifiedAt = sourceModifiedAt,
+        contentUpdatedAt = contentUpdatedAt,
         status = status,
     )
 }

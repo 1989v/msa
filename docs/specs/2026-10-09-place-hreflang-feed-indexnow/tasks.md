@@ -12,19 +12,19 @@ Total Task Groups: 8. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
 
 ### Task Group 1: place 본문 변경 시각 (SR-2.1 · SR-2.2 · SR-2.3 · SR-2.4 place 쪽)
 **Dependencies:** None · **Phase:** place:domain · place:feature(영속·응답 DTO) · **Required Skills:** Kotlin, JPA, Flyway, Kotest BehaviorSpec
-- [ ] 1.1 테스트 먼저
+- [x] 1.1 테스트 먼저
   - 새 `place/domain/src/test/kotlin/com/kgd/place/domain/attraction/model/AttractionContentHashTest.kt`: 같은 본문 → 같은 해시 · 공백·태그만 다름 → 같음 · 유니코드 공백(U+00A0·U+3000) 연속 → 같음 · 요금(`useFee`) 변경 → 다름 · 행사 날짜만 변경 → 다름 · `introRaw` 변경 → 다름 · null 과 빈 문자열 → 같음 · 저장값이 `v1:` + 64자 hex · `HASH_FIELDS` 순서가 spec 목록과 같음
   - `AttractionSyncFromTest.kt` 증보(SR-2.3 표 다섯 행 각각 given/then): 새 행(`stampNew(now)`) → 해시 계산·시각 `now` · 이전 해시 null → 시각 = `sourceModifiedAt`(그것도 null 이면 null) · 이전 접두 `v0:` → 해시 재계산·시각 그대로(null 이면 `sourceModifiedAt`) · 같은 해시 → 둘 다 그대로 · 다른 해시 → 새 해시·`now`
   - 같은 파일: **개요 없는 목록 레코드가 들어와도 해시·시각 그대로**(병합이 기존 overview 를 지키는 경로) · source 에 `contentHash`·`contentUpdatedAt` 를 넣어 보내도 무시 · 해시는 **병합 뒤 자기 필드**로 계산(source 값이 아니라 병합 결과가 바뀔 때만 `now`)
   - `place/feature/src/test/kotlin/com/kgd/place/infrastructure/persistence/attraction/entity/AttractionJpaEntityTest.kt`: 두 열 왕복(도메인 → 엔티티 → 도메인)
   - `place/feature/src/test/kotlin/com/kgd/place/infrastructure/persistence/attraction/adapter/AttractionRepositoryAdapterTest.kt`: `existing == null` 경로가 `stampNew(now)` 를 거쳐 저장 · 기존 행 경로가 `syncFrom(source, now)` 에 어댑터 `now`(Asia/Seoul) 를 넘김
   - `place/feature/src/test/kotlin/com/kgd/place/presentation/attraction/dto/AttractionDtoRoundTripTest.kt`: 응답에 `contentUpdatedAt` · 요청(`UpsertAttractionItem`)에는 두 필드가 없음
-- [ ] 1.2 `place/domain/.../domain/attraction/model/AttractionContentHash.kt` — `object`, 상수 `HASH_FIELDS`(spec SR-2.2 순서 그대로), `VERSION = "v1"`, 필드별 정규화(null → "" · `<[^>]*>` 제거 · `\s` 와 유니코드 공백 연속 → 공백 하나 · trim · 날짜 ISO) → `필드명=값` 을 `\u001F` 로 이어 SHA-256 hex → `"v1:" + hex`. KDoc: search `sourceText` 와 일치를 요구하지 않는다(자기 이전 값과만 비교), 규칙을 바꾸면 접두를 올린다
-- [ ] 1.3 `Attraction.kt`: `contentHash: String?` · `contentUpdatedAt: LocalDateTime?` 필드 + `stampNew(now)` + `syncFrom(source, now)` 마지막 단계에서 SR-2.3 표 적용(`:325-407`). source 의 두 필드는 읽지 않는다. 호출부 시그니처 변경을 같은 커밋에서 전부 따라간다
-- [ ] 1.4 Flyway `place/feature/src/main/resources/placedb/migration/V34__attraction_content_hash.sql` — `ALTER TABLE attractions ADD COLUMN content_hash VARCHAR(80) NULL, ADD COLUMN content_updated_at DATETIME(6) NULL` + `CREATE INDEX idx_attractions_content_updated ON attractions (content_updated_at, id)`. 백필 없음(다음 동기화가 첫 채움 규칙으로 채운다)
-- [ ] 1.5 `AttractionJpaEntity.kt`(`:20-25,134-156,172`) 두 열 매핑 + 변환. `AttractionRepositoryAdapter.kt`(`:24-46`) — `existing == null` 이면 `stampNew(now)`, 아니면 `syncFrom(source, now)`, `now = LocalDateTime.now(ZoneId.of("Asia/Seoul"))`
-- [ ] 1.6 응답: `AttractionDtos.kt` 목록·단건 응답에 `contentUpdatedAt`(`sourceModifiedAt` 옆, `:187`·`:241` 근처). 요청 DTO 에는 넣지 않는다
-- [ ] 1.7 Verify:
+- [x] 1.2 `place/domain/.../domain/attraction/model/AttractionContentHash.kt` — `object`, 상수 `HASH_FIELDS`(spec SR-2.2 순서 그대로), `VERSION = "v1"`, 필드별 정규화(null → "" · `<[^>]*>` 제거 · `\s` 와 유니코드 공백 연속 → 공백 하나 · trim · 날짜 ISO) → `필드명=값` 을 `\u001F` 로 이어 SHA-256 hex → `"v1:" + hex`. KDoc: search `sourceText` 와 일치를 요구하지 않는다(자기 이전 값과만 비교), 규칙을 바꾸면 접두를 올린다
+- [x] 1.3 `Attraction.kt`: `contentHash: String?` · `contentUpdatedAt: LocalDateTime?` 필드 + `stampNew(now)` + `syncFrom(source, now)` 마지막 단계에서 SR-2.3 표 적용(`:325-407`). source 의 두 필드는 읽지 않는다. 호출부 시그니처 변경을 같은 커밋에서 전부 따라간다
+- [x] 1.4 Flyway `place/feature/src/main/resources/placedb/migration/V34__attraction_content_hash.sql` — `ALTER TABLE attractions ADD COLUMN content_hash VARCHAR(80) NULL, ADD COLUMN content_updated_at DATETIME(6) NULL` + `CREATE INDEX idx_attractions_content_updated ON attractions (content_updated_at, id)`. 백필 없음(다음 동기화가 첫 채움 규칙으로 채운다)
+- [x] 1.5 `AttractionJpaEntity.kt`(`:20-25,134-156,172`) 두 열 매핑 + 변환. `AttractionRepositoryAdapter.kt`(`:24-46`) — `existing == null` 이면 `stampNew(now)`, 아니면 `syncFrom(source, now)`, `now = LocalDateTime.now(ZoneId.of("Asia/Seoul"))`
+- [x] 1.6 응답: `AttractionDtos.kt` 목록·단건 응답에 `contentUpdatedAt`(`sourceModifiedAt` 옆, `:187`·`:241` 근처). 요청 DTO 에는 넣지 않는다
+- [x] 1.7 Verify:
   - `./gradlew :place:domain:test --tests '*AttractionContentHashTest' --tests '*AttractionSyncFromTest' --rerun`
   - `./gradlew :place:feature:test --tests '*AttractionJpaEntityTest' --tests '*AttractionRepositoryAdapterTest' --tests '*AttractionDtoRoundTripTest' --rerun`
   - `git diff --cached --name-only | grep -c 'V34__'` → 1 (커밋 직전, 위 Flyway 번호 재확인 포함)

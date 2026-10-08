@@ -2,7 +2,9 @@ package com.kgd.place.presentation.attraction.dto
 
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainAll
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
@@ -37,6 +39,16 @@ class AttractionDtoRoundTripTest : BehaviorSpec({
                 requestFields shouldContainAll listOf("eventStartDate", "eventEndDate", "listRaw")
                 (requestFields - responseFields).toList().shouldBeEmpty()
             }
+        }
+    }
+    Given("서버가 계산하는 본문 해시·본문 변경 시각") {
+        val requestFields = UpsertAttractionItem::class.primaryConstructor!!.parameters.mapNotNull { it.name }.toSet()
+        val responseFields = AttractionResponse::class.memberProperties.map { it.name }.toSet()
+
+        Then("응답에는 본문 변경 시각이 실리고, 적재 요청에는 두 값이 없다 — 수집기가 보내도 받을 자리가 없다") {
+            responseFields shouldContain "contentUpdatedAt"
+            requestFields shouldNotContain "contentUpdatedAt"
+            requestFields shouldNotContain "contentHash"
         }
     }
 })

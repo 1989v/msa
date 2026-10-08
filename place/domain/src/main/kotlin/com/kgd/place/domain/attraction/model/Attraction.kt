@@ -80,7 +80,23 @@ class Attraction private constructor(
     var sourceModifiedAt: LocalDateTime? = null,
     var status: String = "ACTIVE",
     val createdAt: LocalDateTime = LocalDateTime.now(),
+    contentHash: String? = null,
+    contentUpdatedAt: LocalDateTime? = null,
 ) {
+    /**
+     * 본문 해시 ([AttractionContentHash]) — 자기 계산값이라 [syncFrom] 의 source 에서 읽지 않고,
+     * [stampNew] · [syncFrom] 만 바꾼다.
+     */
+    var contentHash: String? = contentHash
+        private set
+
+    /**
+     * 본문 변경 시각 — 새 행이거나 본문 해시가 달라졌을 때 오른다. RSS·IndexNow 의 기준이고,
+     * 원천 수정일([sourceModifiedAt]) · 행 갱신 시각(updated_at)과 다른 값이다.
+     */
+    var contentUpdatedAt: LocalDateTime? = contentUpdatedAt
+        private set
+
     /**
      * 표시명 — 원천 [title] 에서 꼬리 한글 괄호를 뗀 파생 값 ([AttractionTitle]).
      * 저장 시점마다 title 로부터 다시 계산되므로 전체 동기화가 돌아도 어긋날 수 없다.
@@ -264,6 +280,8 @@ class Attraction private constructor(
             status: String,
             createdAt: LocalDateTime,
             source: String = TOURAPI,
+            contentHash: String? = null,
+            contentUpdatedAt: LocalDateTime? = null,
         ): Attraction = Attraction(
             id = id,
             contentId = contentId,
@@ -315,14 +333,17 @@ class Attraction private constructor(
             sourceModifiedAt = sourceModifiedAt,
             status = status,
             createdAt = createdAt,
+            contentHash = contentHash,
+            contentUpdatedAt = contentUpdatedAt,
         )
     }
 
     /**
      * 재적재(upsert) 시 원천 최신값으로 동기화 — 자연키(contentId, lang)와 id 는 불변 (entity-mutation.md).
      * 목록 원천에 없는 보강 필드(개요)는 덮어쓰지 않는다.
+     * 마지막에 병합된 자기 필드로 본문 해시를 다시 매긴다 — [now] 는 본문이 바뀌었을 때의 시각이다.
      */
-    fun syncFrom(source: Attraction) {
+    fun syncFrom(source: Attraction, now: LocalDateTime) {
         require(source.contentId == contentId && source.lang == lang) {
             "자연키가 다른 관광지로 동기화할 수 없습니다: ${source.contentId}/${source.lang} → $contentId/$lang"
         }
@@ -405,6 +426,28 @@ class Attraction private constructor(
         listRaw = source.listRaw ?: listRaw
         sourceModifiedAt = source.sourceModifiedAt
         status = source.status
+        restampContent(now)
+    }
+
+    /** 새 행의 본문 해시·시각. 새 주소는 변경으로 센다. */
+    fun stampNew(now: LocalDateTime) {
+        contentHash = AttractionContentHash.of(this)
+        contentUpdatedAt = now
+    }
+
+    /*
+     * 첫 채움(이전 해시 없음)과 규칙 버전 교체는 「변경」이 아니다 — 그날 전 행이 바뀐 것으로 잡히지 않게
+     * 시각은 원천 수정일로 시작하거나 그대로 둔다. 같은 버전에서 해시가 달라질 때만 now 다.
+     */
+    private fun restampContent(now: LocalDateTime) {
+        val previous = contentHash
+        val next = AttractionContentHash.of(this)
+        when {
+            previous == null -> contentUpdatedAt = sourceModifiedAt
+            !AttractionContentHash.isCurrentVersion(previous) -> contentUpdatedAt = contentUpdatedAt ?: sourceModifiedAt
+            previous != next -> contentUpdatedAt = now
+        }
+        contentHash = next
     }
 
     /**

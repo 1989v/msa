@@ -73,6 +73,8 @@ interface GetAttractionUseCase {
         val listRaw: String?,
         val googlePlaceId: String?,
         val sourceModifiedAt: LocalDateTime?,
+        /** 본문 변경 시각 — 서버 계산값(적재 요청에는 없다) */
+        val contentUpdatedAt: LocalDateTime?,
         val status: String,
     )
 }

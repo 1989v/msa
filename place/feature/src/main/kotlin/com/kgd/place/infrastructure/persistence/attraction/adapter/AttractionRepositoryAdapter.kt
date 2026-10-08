@@ -11,6 +11,8 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 @Component
 class AttractionRepositoryAdapter(
@@ -20,6 +22,7 @@ class AttractionRepositoryAdapter(
     /**
      * (source, contentId, lang) 기준 멱등 upsert. 배치(청크 ≤2000)로 들어오므로
      * 기존 행을 contentId IN 으로 한 번에 조회해 자연키 매칭 후 id 를 승계한다 — 번호가 같아도 원천이 다르면 다른 곳이다.
+     * 본문 변경 시각은 서울 기준 지금으로 매긴다 (새 행 `stampNew`, 기존 행 `syncFrom`).
      */
     @Transactional
     override fun upsertAll(attractions: List<Attraction>): AttractionRepositoryPort.UpsertSummary {
@@ -28,16 +31,17 @@ class AttractionRepositoryAdapter(
         val existingByKey = jpaRepository.findByContentIdIn(attractions.map { it.contentId }.toSet())
             .associateBy { Triple(it.source, it.contentId, it.lang) }
 
+        val now = LocalDateTime.now(SEOUL)
         var created = 0
         var updated = 0
         val entities = attractions.map { incoming ->
             val existing = existingByKey[Triple(incoming.source, incoming.contentId, incoming.lang)]
             if (existing == null) {
                 created++
-                AttractionJpaEntity.fromDomain(incoming)
+                AttractionJpaEntity.fromDomain(incoming.apply { stampNew(now) })
             } else {
                 updated++
-                val merged = existing.toDomain().apply { syncFrom(incoming) }
+                val merged = existing.toDomain().apply { syncFrom(incoming, now) }
                 AttractionJpaEntity.fromDomain(merged)
             }
         }
@@ -100,5 +104,7 @@ class AttractionRepositoryAdapter(
     private companion object {
         /** IN 목록 상한 — 한 쿼리에 수천 개를 싣지 않는다 */
         const val IN_CHUNK = 1000
+
+        val SEOUL: ZoneId = ZoneId.of("Asia/Seoul")
     }
 }

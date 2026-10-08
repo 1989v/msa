@@ -3,6 +3,7 @@ package com.kgd.place.domain.attraction.model
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
+import java.time.LocalDateTime
 
 class AttractionTest : BehaviorSpec({
     fun gyeongbokgung(lang: String = "ko") = Attraction.create(
@@ -59,7 +60,7 @@ class AttractionTest : BehaviorSpec({
                     contentId = "126508", lang = "ko", title = "경복궁(고궁)",
                     latitude = 37.5789, longitude = 126.9771, overview = "조선의 법궁",
                 )
-                existing.syncFrom(latest)
+                existing.syncFrom(latest, LocalDateTime.of(2026, 10, 9, 0, 0))
                 existing.title shouldBe "경복궁(고궁)"
                 existing.overview shouldBe "조선의 법궁"
                 existing.latitude shouldBe 37.5789
@@ -74,7 +75,8 @@ class AttractionTest : BehaviorSpec({
                         contentId = "126508", lang = "ko", title = "경복궁",
                         latitude = 37.5788, longitude = 126.977,
                         overview = "조선 왕조 제일의 법궁",
-                    )
+                    ),
+                    LocalDateTime.of(2026, 10, 9, 0, 0),
                 ) }
                 existing.overview shouldBe "조선 왕조 제일의 법궁"
 
@@ -82,7 +84,8 @@ class AttractionTest : BehaviorSpec({
                     Attraction.create(
                         contentId = "126508", lang = "ko", title = "경복궁",
                         latitude = 37.5788, longitude = 126.977,
-                    )
+                    ),
+                    LocalDateTime.of(2026, 10, 9, 0, 0),
                 )
                 existing.overview shouldBe "조선 왕조 제일의 법궁"
             }
@@ -90,7 +93,7 @@ class AttractionTest : BehaviorSpec({
         `when`("자연키가 다른 원천이 주어지면") {
             then("IllegalArgumentException 이 발생해야 한다") {
                 shouldThrow<IllegalArgumentException> {
-                    gyeongbokgung().syncFrom(gyeongbokgung(lang = "en"))
+                    gyeongbokgung().syncFrom(gyeongbokgung(lang = "en"), LocalDateTime.of(2026, 10, 9, 0, 0))
                 }
             }
         }
@@ -103,7 +106,8 @@ class AttractionTest : BehaviorSpec({
                     Attraction.create(
                         contentId = "126508", lang = "ko", title = "경복궁",
                         latitude = 37.5788, longitude = 126.977,
-                    )
+                    ),
+                    LocalDateTime.of(2026, 10, 9, 0, 0),
                 )
                 existing.googlePlaceId shouldBe "ChIJod7tSseifDUR9hXHLFNGMIs"
             }

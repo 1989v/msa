@@ -52,7 +52,7 @@ class AttractionOverviewProbeTest : BehaviorSpec({
                     contentId = "126508", lang = "ko", title = "경복궁",
                     latitude = 37.5788, longitude = 126.9770,
                 )
-                attraction.syncFrom(fromList)
+                attraction.syncFrom(fromList, LocalDateTime.of(2026, 10, 9, 0, 0))
                 attraction.overview shouldBe "조선의 법궁"
             }
         }

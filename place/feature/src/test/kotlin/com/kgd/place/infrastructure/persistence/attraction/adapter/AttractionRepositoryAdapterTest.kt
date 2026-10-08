@@ -1,9 +1,11 @@
 package com.kgd.place.infrastructure.persistence.attraction.adapter
 
 import com.kgd.place.domain.attraction.model.Attraction
+import com.kgd.place.domain.attraction.model.AttractionContentHash
 import com.kgd.place.infrastructure.persistence.attraction.entity.AttractionJpaEntity
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionJpaRepository
 import io.kotest.core.spec.style.BehaviorSpec
+import io.kotest.matchers.date.shouldBeBetween
 import io.kotest.matchers.shouldBe
 import io.mockk.clearMocks
 import io.mockk.every
@@ -11,6 +13,7 @@ import io.mockk.mockk
 import io.mockk.slot
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 /**
  * 저장 경로 둘이 행사 날짜·목록 행 원문을 지우지 않는지 — 저장소 대역에 실제로 넘어간 엔티티를 본다.
@@ -87,6 +90,53 @@ class AttractionRepositoryAdapterTest : BehaviorSpec({
                 row.eventStartDate shouldBe start
                 row.eventEndDate shouldBe end
                 row.listRaw shouldBe raw
+            }
+        }
+    }
+    Given("본문 변경 시각을 매기는 upsert") {
+        fun incoming(useFee: String? = null) = Attraction.create(
+            contentId = "126508", lang = "ko", title = "경복궁",
+            latitude = 37.5788, longitude = 126.977, useFee = useFee,
+        )
+        fun kstNow(): LocalDateTime = LocalDateTime.now(ZoneId.of("Asia/Seoul"))
+
+        When("기존 행이 없으면") {
+            val saved = slot<List<AttractionJpaEntity>>()
+            every { jpaRepository.findByContentIdIn(setOf("126508")) } returns emptyList()
+            every { jpaRepository.saveAll(capture(saved)) } answers { saved.captured }
+
+            val before = kstNow()
+            adapter.upsertAll(listOf(incoming()))
+            val after = kstNow()
+
+            Then("stampNew 를 거쳐 해시가 붙고 시각은 서울 기준 지금이다") {
+                val row = saved.captured.single()
+                row.contentHash shouldBe AttractionContentHash.of(incoming())
+                row.contentUpdatedAt!!.shouldBeBetween(before, after)
+            }
+        }
+
+        When("기존 행의 본문이 바뀌어 들어오면") {
+            val saved = slot<List<AttractionJpaEntity>>()
+            val stored = AttractionJpaEntity(
+                id = 7L, contentId = "126508", lang = "ko", title = "경복궁", titleDisplay = "경복궁",
+                latitude = 37.5788, longitude = 126.977,
+                contentHash = AttractionContentHash.of(incoming()),
+                contentUpdatedAt = LocalDateTime.of(2026, 9, 1, 12, 0),
+                status = "ACTIVE", createdAt = LocalDateTime.of(2026, 9, 1, 12, 0),
+            )
+            every { jpaRepository.findByContentIdIn(setOf("126508")) } returns listOf(stored)
+            every { jpaRepository.saveAll(capture(saved)) } answers { saved.captured }
+
+            val before = kstNow()
+            adapter.upsertAll(listOf(incoming(useFee = "성인 3,000원")))
+            val after = kstNow()
+
+            Then("syncFrom 에 서울 기준 지금을 넘겨 시각이 오른다") {
+                val row = saved.captured.single()
+                row.id shouldBe 7L
+                row.contentHash shouldBe AttractionContentHash.of(incoming(useFee = "성인 3,000원"))
+                row.contentUpdatedAt!!.shouldBeBetween(before, after)
             }
         }
     }

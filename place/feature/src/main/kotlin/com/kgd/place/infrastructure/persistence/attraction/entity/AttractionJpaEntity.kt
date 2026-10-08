@@ -173,6 +173,13 @@ class AttractionJpaEntity(
 
     val sourceModifiedAt: LocalDateTime? = null,
 
+    // 본문 해시·본문 변경 시각 — 도메인이 계산하는 값이라 적재 요청에서 받지 않는다 (V34)
+    @Column(name = "content_hash", length = 80)
+    val contentHash: String? = null,
+
+    @Column(name = "content_updated_at")
+    val contentUpdatedAt: LocalDateTime? = null,
+
     @Column(nullable = false, length = 20)
     val status: String,
 
@@ -230,6 +237,8 @@ class AttractionJpaEntity(
         sourceModifiedAt = sourceModifiedAt,
         status = status,
         createdAt = createdAt,
+        contentHash = contentHash,
+        contentUpdatedAt = contentUpdatedAt,
     )
 
     companion object {
@@ -284,6 +293,8 @@ class AttractionJpaEntity(
             introSyncedAt = attraction.introSyncedAt,
             googlePlaceId = attraction.googlePlaceId,
             sourceModifiedAt = attraction.sourceModifiedAt,
+            contentHash = attraction.contentHash,
+            contentUpdatedAt = attraction.contentUpdatedAt,
             status = attraction.status,
             createdAt = attraction.createdAt,
         )

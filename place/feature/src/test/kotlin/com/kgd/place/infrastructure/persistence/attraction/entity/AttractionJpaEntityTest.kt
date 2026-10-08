@@ -42,4 +42,28 @@ class AttractionJpaEntityTest : BehaviorSpec({
             }
         }
     }
+    Given("본문 해시와 본문 변경 시각이 있는 행") {
+        val entity = AttractionJpaEntity(
+            id = 7L,
+            contentId = "126508",
+            lang = "ko",
+            title = "경복궁",
+            titleDisplay = "경복궁",
+            latitude = 37.5788,
+            longitude = 126.977,
+            contentHash = "v1:" + "a".repeat(64),
+            contentUpdatedAt = LocalDateTime.of(2026, 10, 9, 7, 30, 1, 123_456_000),
+            status = "ACTIVE",
+            createdAt = LocalDateTime.of(2026, 10, 2, 3, 10),
+        )
+
+        When("도메인으로 읽었다가 다시 엔티티로 쓰면") {
+            val back = AttractionJpaEntity.fromDomain(entity.toDomain())
+
+            Then("두 열이 그대로 남는다 — 빠지면 구글 보강의 saveAll 한 번에 null 로 덮인다") {
+                back.contentHash shouldBe "v1:" + "a".repeat(64)
+                back.contentUpdatedAt shouldBe LocalDateTime.of(2026, 10, 9, 7, 30, 1, 123_456_000)
+            }
+        }
+    }
 })
