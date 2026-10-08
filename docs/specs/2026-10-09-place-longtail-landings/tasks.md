@@ -142,7 +142,7 @@ Total Task Groups: 6. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
 > **스위치는 꺼진 채 배포한다.** `PLACE_LANDINGS_INDEXABLE = false` 가 커밋에 그대로 있는지 배포 전에 확인한다. 켜는 것은 ADR-0062 §18 개정 수용과 함께 사용자가 한다. 편집 초안 3장도 draft 로 나간다 — 게시는 사용자 검수 뒤(SR-3.8).
 
 - [ ] 6.1 문서 동기화: `search/glossary.md` 에 「속성 랜딩」「편집 페이지(guide)」「프리셋」「색인 스위치」 네 행(「속성 랜딩」 행에 trigger 값 `landing` 과 구분된다는 주의). ADR-0062 는 손대지 않는다(초안만 `context/` 에)
-- [ ] 6.2 회귀 주입(SR-5.3) — 임시 사본 워크트리에서, 컴파일되는 회귀만(구문 오류 빨간불은 증거 아님). 각각 빨간불과 잡은 테스트(또는 nginx 계약 항목) 이름을 `verifications/regression-injection.md` 에 기록
+- [x] 6.2 회귀 주입(SR-5.3) — 임시 사본 워크트리에서, 컴파일되는 회귀만(구문 오류 빨간불은 증거 아님). 각각 빨간불과 잡은 테스트(또는 nginx 계약 항목) 이름을 `verifications/regression-injection.md` 에 기록
   - 하한 10→9 → `landingDecisions.test.ts` 만 빨강(경계 테스트는 상수로 계산해 초록인 것도 기록)
   - 선정 함수 `>=` → `>` → 경계 테스트
   - 속성당 상한 제거
@@ -162,8 +162,8 @@ Total Task Groups: 6. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
   - 프리셋 `sigunguCode` 5자리 → 3자리 단언
   - SPA 카드를 이스케이프 없이 HTML 문자열에 이어 `dangerouslySetInnerHTML` → `GuidePage` 이스케이프 테스트
   - 표지 id 형식 검사 제거 → 13자리 픽스처
-- [ ] 6.3 nginx 계약 수동 실행(SR-5.2): `bash portal-fe/scripts/check-nginx-place-landings.sh` 와 회귀 대조로 `bash portal-fe/scripts/check-nginx-legacy-regions.sh`. 출력 전문을 `verifications/nginx-contract.md` 에 보존. **exit 2(도커 없음)는 통과가 아니다** — 그 경우 이 항목은 미완료로 보고한다
-- [ ] 6.4 온톨로지 참조: `grep -nE "copy\.mjs|prerender-seo|render-content|nginx\.conf|placeApi|PlacePage|lint-blog-post|SIGHT_CATEGORIES" code-dictionary/feature/src/main/resources/ontology/*.yaml` — 걸린 `symbol` 문자열이 바뀐 파일에 그대로 남아 있는지 `grep -F` 로 하나씩 확인(현재 `ads.yaml:673` `export const ADSENSE_CLIENT`, `ads.yaml:493` `location = /ads.txt`, `cloud.yaml:434`·`network.yaml:786,813`·`security.yaml:1424` nginx 지시문). 깨진 것이 있으면 yaml 쪽 symbol 을 고친다
+- [x] 6.3 nginx 계약 수동 실행(SR-5.2): `bash portal-fe/scripts/check-nginx-place-landings.sh` 와 회귀 대조로 `bash portal-fe/scripts/check-nginx-legacy-regions.sh`. 출력 전문을 `verifications/nginx-contract.md` 에 보존. **exit 2(도커 없음)는 통과가 아니다** — 그 경우 이 항목은 미완료로 보고한다
+- [x] 6.4 온톨로지 참조: `grep -nE "copy\.mjs|prerender-seo|render-content|nginx\.conf|placeApi|PlacePage|lint-blog-post|SIGHT_CATEGORIES" code-dictionary/feature/src/main/resources/ontology/*.yaml` — 걸린 `symbol` 문자열이 바뀐 파일에 그대로 남아 있는지 `grep -F` 로 하나씩 확인(현재 `ads.yaml:673` `export const ADSENSE_CLIENT`, `ads.yaml:493` `location = /ads.txt`, `cloud.yaml:434`·`network.yaml:786,813`·`security.yaml:1424` nginx 지시문). 깨진 것이 있으면 yaml 쪽 symbol 을 고친다
 - [ ] 6.5 빌드 전 확인: `cd portal-fe && npm run build` 성공(render-content → tsc → vite → prerender), 산출물 `dist/prerender/regions/*/*` 수 = 목록 항목 수(모집단 밖 제외), title·description 중복 게이트 통과 로그
 - [ ] 6.6 배포: 6.2·6.3·6.5 통과 뒤 main 푸시 → portal-fe 이미지 → Argo 동기화. OCI 조작은 `ssh msa-oci` 로만(로컬 kubectl 금지)
 - [ ] 6.7 배포 뒤 확인(SR-5.4) → `verifications/deploy-check.md`

@@ -168,6 +168,17 @@ describe('placeLandingPages — 출력', () => {
   it('품질 게이트: 랜딩 간 title·description 이 겹치면 빌드를 세운다', () => {
     expect(() => build(false, [...LIST, entry('ko', '11110', 'parking')])).toThrow(PartialSeoFailure);
   });
+
+  it('품질 게이트: title 만 겹쳐도 세운다(description 은 건수가 달라 다르다)', () => {
+    // 이름이 같은 다른 시군구 — heading·title 은 같고 N 이 달라 description 은 다르다
+    const twin = { ...jongno, code: '11999' };
+    const regions = { ...REGIONS, ko: [...REGIONS.ko, twin] };
+    const results = new Map(RESULTS).set('ko/11999/parking', response(50, 30, { prefix: 't' }));
+    const list = [...LIST, entry('ko', '11999', 'parking')];
+    const run = () => placeLandingPages(SHELL, { landings: list, regions, results, indexable: false });
+    expect(run).toThrow(PartialSeoFailure);
+    expect(run).toThrow(/title 중복/);
+  });
 });
 
 describe('sitemap · llms', () => {
