@@ -160,6 +160,49 @@ class SearchAttractionServiceTest : BehaviorSpec({
                 result.attractions.first().overview!!.length shouldBe 201
             }
         }
+        // 요약은 원문을 평문화한 뒤 자른다 — 거꾸로면 잘린 엔티티·태그 조각이 카드에 그대로 보인다
+        `when`("엔티티·태그가 200자 경계에 걸친 원문이면") {
+            then("정규화한 뒤 200자에서 자른다") {
+                val raw = "가".repeat(198) + "&rsquo;<b>나다</b>" + "라".repeat(20)
+                every { searchPort.search(any(), any()) } returns found(
+                    listOf(AttractionSearchPort.AttractionHit(document(overview = raw), 1.0))
+                )
+
+                service.execute(SearchAttractionUseCase.Query(keyword = "경복궁")).attractions.first().overview shouldBe
+                    "가".repeat(198) + "’나" + "…"
+            }
+        }
+        `when`("원문 250자가 정규화로 150자가 되면") {
+            then("… 없이 정규화 결과 그대로다 — 길이는 원문이 아니라 정규화 결과로 잰다") {
+                val raw = "<span class=\"" + "x".repeat(78) + "\">" + "가".repeat(150) + "</span>"
+                raw.length shouldBe 250
+                every { searchPort.search(any(), any()) } returns found(
+                    listOf(AttractionSearchPort.AttractionHit(document(overview = raw), 1.0))
+                )
+
+                service.execute(SearchAttractionUseCase.Query(keyword = "경복궁")).attractions.first().overview shouldBe
+                    "가".repeat(150)
+            }
+        }
+        `when`("정규화하면 비는 원문이면") {
+            then("null 이다") {
+                every { searchPort.search(any(), any()) } returns found(
+                    listOf(AttractionSearchPort.AttractionHit(document(overview = "<p><br /></p>&nbsp;"), 1.0))
+                )
+
+                service.execute(SearchAttractionUseCase.Query(keyword = "경복궁")).attractions.first().overview shouldBe null
+            }
+        }
+        `when`("원문에 이스케이프된 꺾쇠(&lt;PARASITE&gt;)가 있으면") {
+            then("한 번만 정규화해 <PARASITE> 가 글자로 남는다") {
+                every { searchPort.search(any(), any()) } returns found(
+                    listOf(AttractionSearchPort.AttractionHit(document(overview = "K-movie &lt;PARASITE&gt; - 촬영지"), 1.0))
+                )
+
+                service.execute(SearchAttractionUseCase.Query(keyword = "경복궁")).attractions.first().overview shouldBe
+                    "K-movie <PARASITE> - 촬영지"
+            }
+        }
         `when`("문서에 비슷한 곳 목록이 있어도") {
             then("목록 응답에는 싣지 않는다 — 단건 조회 전용이다") {
                 every { searchPort.search(any(), any()) } returns found(
@@ -226,6 +269,12 @@ class SearchAttractionServiceTest : BehaviorSpec({
             then("overview 전문을 그대로 반환해야 한다") {
                 every { searchPort.findById("1") } returns document(overview = "가".repeat(300))
                 service.findById("1")!!.overview!!.length shouldBe 300
+            }
+        }
+        `when`("원문 overview 에 엔티티가 있으면") {
+            then("정규화하지 않고 원문 그대로 돌려준다 — 상세는 표시 시점에 정규화한다") {
+                every { searchPort.findById("1") } returns document(overview = "K-movie &lt;PARASITE&gt; - 촬영지")
+                service.findById("1")!!.overview shouldBe "K-movie &lt;PARASITE&gt; - 촬영지"
             }
         }
         // 화면 JSON-LD 가 이 필드로 영업 요일·무료 여부를 만든다 — 빠지면 하이드레이션이 서버 렌더의 값을 지운다

@@ -1,4 +1,4 @@
-package com.kgd.search.infrastructure.render
+package com.kgd.search.domain.attraction.model
 
 /**
  * portal-fe `src/seo/copy.mjs` 의 텍스트 규칙을 옮긴 것 — `sourceText`·`clampDescription`·`escapeHtml`.
@@ -8,8 +8,11 @@ package com.kgd.search.infrastructure.render
  * copy.mjs 의 실제 출력과 비교한다. copy.mjs 를 고치면 여기도 고친다.
  *
  * JS 와 뜻이 같아야 하는 곳: `\s`·`trim()` 은 JS 에서 유니코드 공백을 포함한다 — [JS_SPACE] 로 맞춘다.
+ *
+ * 서버 렌더 말고 목록 응답의 overview 요약도 [sourceText] 로 평문화한다. 값 하나에 정규화는 한 번만 —
+ * 태그 제거 → 엔티티 디코드 순서라 두 번 걸면 `&lt;PARASITE&gt;` 가 `<PARASITE>` 를 거쳐 지워진다.
  */
-internal object AttractionSeoText {
+object AttractionSeoText {
 
     /** JS 정규식 `\s` · `String.prototype.trim` 이 공백으로 보는 문자 */
     private const val JS_SPACE = "\\t\\n\\u000B\\f\\r \\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000\\uFEFF"
@@ -64,6 +67,10 @@ internal object AttractionSeoText {
         return (if (lastSpace > max * 0.6) cut.substring(0, lastSpace) else cut).let(::jsTrim) + "…"
     }
 
+    /**
+     * 큰따옴표 속성값·요소 본문 전용. `'` 는 이스케이프하지 않으므로 작은따옴표 속성값이나
+     * 스크립트 문자열 안에 넣으면 안전하지 않다.
+     */
     fun escapeHtml(value: String?): String = (value ?: "")
         .replace("&", "&amp;")
         .replace("<", "&lt;")

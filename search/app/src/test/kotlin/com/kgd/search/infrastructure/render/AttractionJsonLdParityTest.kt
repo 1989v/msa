@@ -1,5 +1,6 @@
 package com.kgd.search.infrastructure.render
 
+import com.kgd.search.domain.attraction.model.AttractionSeoText
 import com.kgd.search.domain.attraction.model.EventSchedule
 import com.kgd.search.domain.attraction.model.EventStatus
 import com.kgd.search.infrastructure.config.AttractionRenderProperties

@@ -143,6 +143,28 @@ class SearchUnifiedServiceTest : BehaviorSpec({
         }
     }
 
+    // 목록 overview 는 서버가 이미 정규화했다 — 여기서 다시 걸면 <PARASITE> 가 태그로 읽혀 지워진다
+    given("관광지 목록 overview 가 정규화된 값일 때") {
+        val (service, attraction, port) = fixture()
+        val base = attractionResult("기생충 촬영지", "주소만 있는 곳")
+        every { attraction.execute(any()) } returns base.copy(
+            attractions = listOf(
+                base.attractions[0].copy(overview = "K-movie <PARASITE> - …", address = "서울 마포구"),
+                base.attractions[1].copy(overview = null, address = "서울 종로구"),
+            ),
+        )
+        every { port.search(any()) } returns UnifiedSearchPort.Page(emptyList(), 0)
+
+        `when`("관광지를 검색하면") {
+            val result = service.execute(SearchUnifiedUseCase.Query(q = "기생충", type = "attraction"))
+
+            then("overview 를 그대로 summary 로 쓰고, 없으면 주소로 내려간다") {
+                result.groups.single().hits.map { it.summary } shouldContainExactly
+                    listOf("K-movie <PARASITE> - …", "서울 종로구")
+            }
+        }
+    }
+
     given("빈 검색어") {
         val (service, attraction, port) = fixture()
         then("아무것도 묻지 않고 빈 결과다") {

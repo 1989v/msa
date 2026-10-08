@@ -9,6 +9,7 @@ import com.kgd.search.application.attraction.usecase.SuggestAttractionUseCase
 import com.kgd.search.domain.attraction.model.Admission
 import com.kgd.search.domain.attraction.model.AttractionAttributeCodes
 import com.kgd.search.domain.attraction.model.AttractionDocument
+import com.kgd.search.domain.attraction.model.AttractionSeoText
 import com.kgd.search.domain.attraction.model.AttributeFacetCounts
 import com.kgd.search.domain.attraction.model.AttributeSelection
 import com.kgd.search.domain.attraction.model.BarrierFreeInfo
@@ -203,6 +204,12 @@ class SearchAttractionService(
         )
     }
 
+    /** 평문화한 뒤 자른다 — 원문을 먼저 자르면 잘린 엔티티·태그 조각(`&r`, `<b`)이 카드에 남는다. */
+    private fun summarizeOverview(raw: String?): String? {
+        val text = AttractionSeoText.sourceText(raw).ifEmpty { return null }
+        return if (text.length > OVERVIEW_SUMMARY_LENGTH) text.take(OVERVIEW_SUMMARY_LENGTH) + "…" else text
+    }
+
     private fun AttractionDocument.toResult(
         distanceKm: Double?,
         position: Int,
@@ -223,7 +230,7 @@ class SearchAttractionService(
         imageUrl = imageUrl,
         thumbnailUrl = thumbnailUrl,
         tel = tel,
-        overview = overview?.let { if (summarize && it.length > OVERVIEW_SUMMARY_LENGTH) it.take(OVERVIEW_SUMMARY_LENGTH) + "…" else it },
+        overview = if (summarize) summarizeOverview(overview) else overview,
         useTime = useTime,
         restDate = restDate,
         useFee = useFee,

@@ -80,7 +80,10 @@ interface SearchAttractionUseCase {
         /** 대표 이미지 썸네일(150×100). 카드 얼굴 같은 작은 자리용 — 없으면 FE 가 imageUrl 을 쓴다. */
         val thumbnailUrl: String? = null,
         val tel: String? = null,
-        /** 목록 응답은 200자 요약 — 전문은 단건 조회로 */
+        /**
+         * 목록 응답은 TourAPI 원문을 `sourceText` 로 평문화한 뒤 200자로 자른 요약. 이스케이프되지 않은
+         * 평문이라 HTML 로 내보내는 쪽이 escape 한다. 정규화 뒤 비면 null. 원문 전문은 단건 조회로.
+         */
         val overview: String? = null,
         /** 구글맵 딥링크용 place_id — 없으면 FE 가 주소/좌표 검색 링크로 폴백한다. */
         val useTime: String? = null,

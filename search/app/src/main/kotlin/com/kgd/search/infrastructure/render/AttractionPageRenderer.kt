@@ -17,10 +17,10 @@ import com.kgd.search.domain.attraction.model.RelatedPlace
 import com.kgd.search.domain.attraction.model.SimilarPlace
 import com.kgd.search.domain.attraction.model.WellnessTheme
 import com.kgd.search.infrastructure.config.AttractionRenderProperties
-import com.kgd.search.infrastructure.render.AttractionSeoText.clampDescription
-import com.kgd.search.infrastructure.render.AttractionSeoText.escapeHtml
-import com.kgd.search.infrastructure.render.AttractionSeoText.jsTrim
-import com.kgd.search.infrastructure.render.AttractionSeoText.sourceText
+import com.kgd.search.domain.attraction.model.AttractionSeoText.clampDescription
+import com.kgd.search.domain.attraction.model.AttractionSeoText.escapeHtml
+import com.kgd.search.domain.attraction.model.AttractionSeoText.jsTrim
+import com.kgd.search.domain.attraction.model.AttractionSeoText.sourceText
 import org.springframework.stereotype.Component
 import tools.jackson.databind.ObjectMapper
 import java.time.DayOfWeek
