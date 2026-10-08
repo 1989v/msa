@@ -67,3 +67,11 @@ $ ./gradlew :analytics:app:test --tests '*CollectEventItemTest' --tests '*EventC
 $ git status --short → M auth(미커밋 포인터, 담지 않음) · M ADR-0095 · ?? evidence/stage2 · ?? verifications
 ```
 - ADR-0095 개정 4곳(`:63` screen_ref · §3 키에 section_id · §6 clicks/unique_clickers 뜻 · FE 노출 감지 키).
+
+## SR-9.4 배포 뒤 검증 — PASS (2026-10-08 16:5x KST)
+```
+images.yml run 16090d4: completed success (06:29Z) · OCI analytics/portal-fe image :16090d4 READY 1 · Argo Synced
+CDP(UA Chrome/130) 1차 15건(세션·initial·submit·category·카드 CLICK·MAP_LINK·노출 9) · 2차 10건(오버레이 핀 CLICK·area) · 3차 6건(줌인 뒤 목록 핀 CLICK)
+ClickHouse PLACE_HUB 60분: 행 합계 31 = 보낸 31. SR-10: 세션 3 · 검색 제출 2 · 필터 1 · other 0 · 선택률 0.5 · 선택당 지도열기 0.333
+미확인: 찜(테스트 계정 없음). accepted 본문은 CDP 가 빈 값 — 202 + 행 수 일치로 대체.
+```
