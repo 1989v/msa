@@ -8,6 +8,7 @@ import {
   fetchSidoSlice,
   indexDoc,
   placeDetailPages,
+  placeHubPages,
   placeDetailSitemapEntries,
   placeSitemapFiles,
   renderRegionDetail,
@@ -311,5 +312,31 @@ describe('fetchSidoSlice — 조회 창(10,000) 초과', () => {
     const totals = { nature: 6_000, food: 5_000 };
     const { get } = fakeGet(totals, 11_500);
     await expect(fetchSidoSlice('ko', '11', get)).rejects.toThrow(/합이 11000건으로 조각 11500건과 다릅니다/);
+  });
+});
+
+describe('placeHubPages — 사진 원천 preconnect', () => {
+  const places = { ko: [doc], en: [doc] };
+  const regions = { ko: [seoul], en: [seoul] };
+  const PRECONNECT = '<link rel="preconnect" href="https://tong.visitkorea.or.kr" />';
+  const head = (html: string) => html.slice(0, html.indexOf('</head>'));
+
+  it('허브 두 파일(국·영)의 head 에 tong preconnect 가 한 번씩 — crossorigin·data-seo-multi 없이', () => {
+    const pages = placeHubPages(SHELL, places, regions);
+    expect(pages.map((p) => p.path)).toEqual([
+      'prerender/_hosts/place.1989v.com.html',
+      'prerender/_hosts/place.1989v.com.en.html',
+    ]);
+    for (const { html } of pages) {
+      expect(head(html).split(PRECONNECT)).toHaveLength(2);
+      expect(html.match(/rel="preconnect"/g)).toHaveLength(1);
+      expect(html).not.toMatch(/preconnect[^>]*(crossorigin|data-seo-multi)/);
+    }
+  });
+
+  it('지역 프리렌더에는 넣지 않는다', () => {
+    for (const { html } of placeDetailPages(SHELL, places, { ko: [seoul, gangnam], en: [seoul] })) {
+      expect(html).not.toContain('preconnect');
+    }
   });
 });

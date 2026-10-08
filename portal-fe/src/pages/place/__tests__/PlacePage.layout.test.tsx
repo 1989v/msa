@@ -367,3 +367,61 @@ describe('좁은 화면 필터 한 줄', () => {
     expect(document.activeElement).toBe(parking);
   });
 });
+
+describe('카드 사진 우선순위 · 랜드마크', () => {
+  const TONG = 'https://tong.visitkorea.or.kr/cms/resource/';
+  // 첫 카드는 사진이 없다 — eager 는 카드 순번이 아니라 사진 순번으로 센다
+  beforeEach(() => {
+    vi.mocked(searchAttractions).mockImplementation((q) =>
+      Promise.resolve({
+        searchId: 's',
+        attractions: [
+          item('n-0'),
+          { ...item('n-1'), imageUrl: `${TONG}1.jpg` },
+          { ...item('n-2'), thumbnailUrl: `${TONG}2-thumb.jpg`, imageUrl: `${TONG}2.jpg` },
+          { ...item('n-3'), imageUrl: `${TONG}3.jpg` },
+          { ...item('n-4'), imageUrl: `${TONG}4.jpg` },
+        ],
+        totalElements: 5,
+        totalPages: 1,
+        currentPage: q.page ?? 0,
+        attributeFacets: null,
+      }),
+    );
+  });
+
+  for (const mobile of [true, false]) {
+    it(`${mobile ? '좁은' : '넓은'} 화면 — 문서 전체 eager 는 사진 있는 앞 두 카드뿐이고 fetchpriority=high, 카드 사진은 전부 88×88`, async () => {
+      stubMedia(mobile);
+      renderPage();
+      await screen.findByText('관광지 n-4');
+
+      const eager = Array.from(document.querySelectorAll('img[loading="eager"]'));
+      expect(eager).toHaveLength(2);
+      expect(eager.map((img) => img.closest('a')?.id)).toEqual(['place-card-n-1', 'place-card-n-2']);
+      for (const img of eager) expect(img).toHaveAttribute('fetchpriority', 'high');
+      expect(document.querySelectorAll('img[fetchpriority]')).toHaveLength(2);
+
+      const cardImgs = Array.from(document.querySelectorAll('img.place-card-img'));
+      expect(cardImgs).toHaveLength(4);
+      for (const img of cardImgs) {
+        expect(img).toHaveAttribute('width', '88');
+        expect(img).toHaveAttribute('height', '88');
+      }
+      for (const img of cardImgs.slice(2)) expect(img).toHaveAttribute('loading', 'lazy');
+      expect(document.querySelector('#place-card-n-0 div.place-card-img-empty')).not.toBeNull();
+    });
+
+    it(`${mobile ? '좁은' : '넓은'} 화면 — <main> 은 하나이고 결과 본문을 품으며 바닥글은 밖이다`, async () => {
+      stubMedia(mobile);
+      renderPage();
+      await screen.findByText('관광지 n-4');
+
+      const mains = document.querySelectorAll('main');
+      expect(mains).toHaveLength(1);
+      expect(mains[0]).toHaveClass('place-body');
+      expect(mains[0].querySelector('#place-card-n-1')).not.toBeNull();
+      expect(mains[0].querySelector('footer')).toBeNull();
+    });
+  }
+});

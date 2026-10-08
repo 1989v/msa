@@ -582,6 +582,11 @@ export default function PlacePage() {
     () => (isMobile ? (store.key === baseKey ? store.items : []) : (data?.attractions ?? [])),
     [isMobile, store, baseKey, data],
   );
+  // 첫 화면 사진 두 장만 먼저 받는다 — 카드 순번이 아니라 사진 순번이다(사진 없는 카드는 받을 것이 없다)
+  const eagerPhotoIds = useMemo(
+    () => new Set(attractions.filter((a) => a.thumbnailUrl ?? a.imageUrl).slice(0, 2).map((a) => a.id)),
+    [attractions],
+  );
 
   // 센티널이 보이면 다음 페이지. 로딩 중에는 붙이지 않아 중복 요청이 없고,
   // 데이터가 오면 effect 가 다시 붙어 다음 구간을 기다린다.
@@ -1599,7 +1604,7 @@ export default function PlacePage() {
         )}
       </div>
 
-      <div
+      <main
         className={[
           'place-body',
           isMobile || listOpen ? '' : 'list-collapsed',
@@ -1686,6 +1691,7 @@ export default function PlacePage() {
                   attraction={a}
                   lang={lang}
                   index={i}
+                  eager={eagerPhotoIds.has(a.id)}
                   viewId={viewId}
                   screenRef={screenRef}
                   onSelect={() => setSelectedId(a.id)}
@@ -1772,7 +1778,7 @@ export default function PlacePage() {
             <AttractionDetailBody attraction={selected} lang={lang} viewId={viewId} screenRef={screenRef} />
           </aside>
         )}
-      </div>
+      </main>
 
       {/* 지도 보기 / 목록 보기 — 좁은 화면 listFirst 전용. 계측하지 않는다(대상 없는 전환이라 「지도 열기」가 아니다) */}
       {listFirst && hasMapKey && (
@@ -1907,6 +1913,7 @@ function PlaceCard({
   attraction,
   lang,
   index,
+  eager,
   viewId,
   screenRef,
   onSelect,
@@ -1915,6 +1922,8 @@ function PlaceCard({
   lang: PlaceLang;
   /** 목록 순서 — 노출·클릭의 itemIndex */
   index: number;
+  /** 첫 화면 사진 — lazy 로 두면 화면 안인데도 배치 계산 뒤에야 받기 시작한다 */
+  eager: boolean;
   viewId: string;
   screenRef: string;
   onSelect: () => void;
@@ -1970,7 +1979,10 @@ function PlaceCard({
           className="place-card-img"
           src={secureImageUrl(attraction.thumbnailUrl ?? attraction.imageUrl ?? '')}
           alt=""
-          loading="lazy"
+          width={88}
+          height={88}
+          loading={eager ? 'eager' : 'lazy'}
+          fetchPriority={eager ? 'high' : undefined}
         />
       ) : (
         <div className="place-card-img place-card-img-empty" aria-hidden />

@@ -150,6 +150,18 @@ describe('AttractionPage 새 섹션', () => {
     expect(overview.compareDocumentPosition(badges) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  it('<main> 은 하나이고 제목·본문을 품으며 머리말·바닥글은 밖이다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue(enriched);
+    renderAt('/attractions/100');
+    await screen.findByText('명소 301');
+
+    const mains = document.querySelectorAll('main');
+    expect(mains).toHaveLength(1);
+    expect(mains[0]).toHaveClass('place-body', 'place-body-stacked');
+    expect(mains[0].querySelector('h1')).not.toBeNull();
+    expect(mains[0].querySelector('header, footer')).toBeNull();
+  });
+
   it('배지는 해석된 값만, 서버 렌더와 같은 문구로 그린다', async () => {
     vi.mocked(fetchAttraction).mockResolvedValue(enriched);
     renderAt('/attractions/100');

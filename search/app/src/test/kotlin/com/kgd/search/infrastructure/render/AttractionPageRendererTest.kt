@@ -550,10 +550,10 @@ class AttractionPageRendererTest : BehaviorSpec({
         then("본문 끝(바닥글 앞)에 국·영 출처 문구가 있다 — 모든 유형") {
             listOf(doc(), event(), stay(), course()).forEach { d ->
                 val root = rootOf(render(SHELL, d))
-                root shouldContain "<p data-place-section=\"source\">출처: 한국관광공사 TourAPI</p><footer>"
+                root shouldContain "<p data-place-section=\"source\">출처: 한국관광공사 TourAPI</p></main><footer>"
             }
             rootOf(render(SHELL, stay(lang = "en"))) shouldContain
-                "<p data-place-section=\"source\">Source: Korea Tourism Organization TourAPI</p><footer>"
+                "<p data-place-section=\"source\">Source: Korea Tourism Organization TourAPI</p></main><footer>"
         }
 
         then("새 유형 상세에 attraction-end 지면이 없다") {
@@ -581,6 +581,23 @@ class AttractionPageRendererTest : BehaviorSpec({
 
         then("https 원천으로 그린 HTML 과 바이트가 같다") {
             html shouldBe render(SHELL, doc())
+        }
+    }
+
+    given("본문 랜드마크") {
+        val pages = mapOf(
+            "관광지" to render(SHELL, doc()),
+            "셸 없는 관광지" to render(null, doc()),
+            "없는 관광지" to renderer.notFoundPage(SHELL, "ko"),
+        )
+        pages.forEach { (name, html) ->
+            then("$name — <main> 이 하나이고 제목을 품으며 바닥글은 그 밖이다") {
+                Regex("<main[ >]").findAll(html).toList() shouldHaveSize 1
+                val main = html.substringAfter("<main>").substringBefore("</main>")
+                main shouldContain "<h1>"
+                main shouldNotContain "<footer>"
+                html.substringAfter("</main>") shouldContain "<footer>"
+            }
         }
     }
 

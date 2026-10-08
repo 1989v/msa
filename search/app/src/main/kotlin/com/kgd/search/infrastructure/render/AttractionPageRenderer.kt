@@ -645,13 +645,16 @@ class AttractionPageRenderer(
     private fun distance(meters: Int): String =
         if (meters < 1_000) "${meters}m" else String.format(Locale.ROOT, "%.1fkm", meters / 1_000.0)
 
-    /** prerender `shellBody` — SPA 가 마운트되면 통째로 교체되는 임시 본문. 바닥글은 호스트 사이를 잇는다 */
+    /**
+     * prerender `shellBody` — SPA 가 마운트되면 통째로 교체되는 임시 본문. 바닥글은 호스트 사이를 잇는다.
+     * 프리렌더와 다른 점: main — 본문을 `<main>` 으로 감싼다(바닥글은 밖). 화면(AttractionPage)의 랜드마크와 같다.
+     */
     private fun shellBody(inner: String): String {
         val footer = (siteLinks() + trustLinks())
             .joinToString(" · ") { (href, label) -> "<a href=\"$href\">${escapeHtml(label)}</a>" }
         return "<div style=\"max-width:1080px;margin:0 auto;padding:32px 20px;color:#dce4f5;" +
             "font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif\">" +
-            "$inner<footer><nav>$footer</nav></footer></div>"
+            "<main>$inner</main><footer><nav>$footer</nav></footer></div>"
     }
 
     /** prerender `SITE_LINKS` */

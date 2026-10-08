@@ -305,7 +305,7 @@ export default function AttractionPage() {
       {/* 상세 페이지는 지도가 없어 좌우로 나눌 이유가 없다. 허브(PlacePage)의 `22rem | 1fr`
           그리드를 그대로 물려받으면 본문이 20% 칸에 갇혀 설명이 부실해 보인다 —
           위에 이 관광지, 아래에 주변으로 쌓는다 (1440px 실측: 본문 352 → 1344px). */}
-      <div className="place-body place-body-stacked">
+      <main className="place-body place-body-stacked">
         {isLoading && <p className="place-empty">{L.loading}</p>}
         {/* 404 일 때만 '없음' 이라고 말한다 — 일시 장애까지 그렇게 쓰면 200 응답에 '찾을 수
             없음' 문구가 실려 Soft 404 로 잡힌다 (placeView.isNotFoundError 주석 참조) */}
@@ -558,7 +558,7 @@ export default function AttractionPage() {
           </article>
         )}
 
-      </div>
+      </main>
 
       {/* 지도와 주변 목록을 다 본 뒤 (ADR-0076). 행사·숙박·코스 상세에는 지면을 두지 않는다 —
           원천 개요를 그대로 쓰는 페이지가 반려 사유였고, 지면을 다시 켜는 재심사 뒤에도 유지한다. */}

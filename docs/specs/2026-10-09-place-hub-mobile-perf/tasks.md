@@ -17,9 +17,9 @@ Total Task Groups: 5. 정본 `spec.md`(개정 3). 표준 `docs/standards/test-ru
 
 ### Task Group 3: 성능 소작업 (SR-4.1 · 4.3 · 4.4)
 **Dependencies:** TG2 · **Phase:** portal-fe + search
-- [ ] 3.1 테스트: eager 2·fetchpriority·width/height(사진 있는 카드 픽스처), `<main>` 페이지당 하나(FE 셋 + SSR), 프리렌더 preconnect 가 허브 두 파일에만
-- [ ] 3.2 구현: 카드 img 속성, `renderPlaceHubs` head preconnect, `<main>` 래퍼(FE `.place-body`, SSR 본문 + shellBody 사본 주석), CLS 대책은 before 측정의 layout-shifts 노드 보고 결정(없으면 생략·보고)
-- [ ] 3.3 Verify: vitest 범위 + `./gradlew :search:app:test --tests '*AttractionPageRendererTest' --rerun` + 렌더 골든 재생성 diff 확인
+- [x] 3.1 테스트: eager 2·fetchpriority·width/height(사진 있는 카드 픽스처), `<main>` 페이지당 하나(FE 셋 + SSR), 프리렌더 preconnect 가 허브 두 파일에만
+- [x] 3.2 구현: 카드 img 속성, `renderPlaceHubs` head preconnect, `<main>` 래퍼(FE `.place-body`, SSR 본문 + shellBody 사본 주석), CLS 대책은 before 측정의 layout-shifts 노드 보고 결정(없으면 생략·보고)
+- [x] 3.3 Verify: vitest 범위 + `./gradlew :search:app:test --tests '*AttractionPageRendererTest' --rerun` + 렌더 골든 재생성 diff 확인
 
 ### Task Group 4: 기준선 측정 (배포 전)
 **Dependencies:** None

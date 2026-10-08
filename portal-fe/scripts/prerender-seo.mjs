@@ -1095,7 +1095,20 @@ async function fetchSlicePages(lang, sidoCode, category, get) {
 
 // ─── place · 포털 허브 프리렌더 ──────────────────────────────────────────────
 
-async function renderPlaceHubs(shell, places = { ko: [], en: [] }, regions = { ko: [], en: [] }) {
+/**
+ * 허브 목록 카드 사진의 원천 — 연결 준비(DNS·TLS)를 JS 렌더 전에 시작해 둔다.
+ * crossorigin 을 달지 않는다: img 는 no-cors 요청이라 crossorigin 연결은 재사용되지 않는다.
+ * data-seo-multi 도 달지 않는다 — 화면 전환 때 useSeo 가 지우지 않고 남아 있어야 한다.
+ * 허브 두 파일에만 넣는다(지역·상세 프리렌더와 SPA 셸은 그대로).
+ */
+const PLACE_PHOTO_PRECONNECT = '<link rel="preconnect" href="https://tong.visitkorea.or.kr" />';
+
+/**
+ * place 허브(국·영) 파일 목록 — 쓰기와 분리해 산출물을 단위 검증한다.
+ * @returns {Array<{ path: string, html: string }>}
+ */
+export function placeHubPages(shell, places, regions) {
+  const pages = [];
   for (const lang of LANGS) {
     const meta = placeHubMeta(lang);
     const canonical = placeUrl(lang);
@@ -1130,9 +1143,14 @@ async function renderPlaceHubs(shell, places = { ko: [], en: [] }, regions = { k
           (regionLinks ? `<ul>${regionLinks}</ul>` : '') +
           (links ? `<ul>${links}</ul>` : ''),
       ),
-    });
-    await emit(`prerender/_hosts/${PLACE_HOST}${lang === 'en' ? '.en' : ''}.html`, html);
+    }).replace('</head>', `${PLACE_PHOTO_PRECONNECT}\n  </head>`);
+    pages.push({ path: `prerender/_hosts/${PLACE_HOST}${lang === 'en' ? '.en' : ''}.html`, html });
   }
+  return pages;
+}
+
+async function renderPlaceHubs(shell, places = { ko: [], en: [] }, regions = { ko: [], en: [] }) {
+  for (const { path, html } of placeHubPages(shell, places, regions)) await emit(path, html);
 }
 
 // ─── place 지역 상세 프리렌더 (ADR-0062 §8) ─────────────────────────────────

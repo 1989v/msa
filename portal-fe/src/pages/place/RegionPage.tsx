@@ -204,7 +204,7 @@ export default function RegionPage() {
       {isError && <p className="place-empty">{L.failed}</p>}
 
       {region && meta && (
-        <div className="place-body">
+        <main className="place-body">
           <article className="place-detail" aria-label={meta.heading}>
             <h1 className="place-detail-title">{meta.heading}</h1>
             <p className="place-detail-overview">{meta.description}</p>
@@ -297,7 +297,7 @@ export default function RegionPage() {
               ))}
             </section>
           )}
-        </div>
+        </main>
       )}
 
       {/* 통합 푸터 + 출처표시 의무 슬롯 — 허브(PlacePage)와 동일 구성 (data-sources.md §0) */}

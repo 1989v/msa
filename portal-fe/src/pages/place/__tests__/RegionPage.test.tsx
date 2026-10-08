@@ -200,6 +200,17 @@ describe('RegionPage 사진 주소 https', () => {
     cleanup();
   });
 
+  it('<main> 은 하나이고 지역 본문을 품으며 바닥글은 밖이다', async () => {
+    renderAt('/regions/11');
+    await screen.findByText('명소 201');
+
+    const mains = document.querySelectorAll('main');
+    expect(mains).toHaveLength(1);
+    expect(mains[0]).toHaveClass('place-body');
+    expect(mains[0].querySelector('h1')).not.toBeNull();
+    expect(mains[0].querySelector('footer')).toBeNull();
+  });
+
   it('대표 관광지·이번 달 행사 카드가 https 로 그린다', async () => {
     renderAt('/regions/11');
     await screen.findByText('명소 201');
