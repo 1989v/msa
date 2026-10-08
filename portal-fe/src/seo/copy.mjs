@@ -1008,6 +1008,18 @@ export const PORTAL_PAGES = {
 };
 
 /**
+ * 바닥글의 신뢰 링크 — 런타임 Footer 와 모든 프리렌더·상세 SSR 바닥글이 같은 순서로 그린다.
+ * `path` 는 apex 경로다. 화면은 상대 경로로(서브도메인에서는 그 호스트가 같은 라우트를 그린다),
+ * 초기 HTML 은 `PORTAL_ORIGIN` 을 붙인 절대 주소로 쓴다. 대상 페이지는 국문뿐이라 `labelEn` 은 라벨만 바꾼다.
+ */
+export const TRUST_LINKS = [
+  { path: '/privacy', label: '개인정보처리방침', labelEn: 'Privacy policy' },
+  { path: '/about', label: '사이트 소개', labelEn: 'About' },
+  { path: '/contact', label: '연락처', labelEn: 'Contact' },
+  { path: '/data-sources', label: '데이터 출처', labelEn: 'Data sources' },
+];
+
+/**
  * `/tech/search` 의 TechArticle. 페이지(useSeo)와 프리렌더가 이 함수 하나를 쓴다 — 둘이 다르면
  * 하이드레이션이 정적 HTML 의 구조화 데이터를 다른 값으로 갈아끼운다.
  * og:type 은 프리렌더가 website 로 고정하므로 글 성격은 여기서만 말한다.

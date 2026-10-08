@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import ServiceExplorer from './chrome/ServiceExplorer';
+import { TRUST_LINKS } from '../seo/copy.mjs';
 import './Footer.css';
 
 /**
@@ -44,15 +45,11 @@ export default function Footer({
           © 2026 Gideok Kwon. All rights reserved.
           {/* 광고·분석을 싣는 모든 화면에서 방침에 닿아야 한다 (ADR-0076). 상대 경로라
               서브도메인에서는 그 호스트가 같은 라우트를 그린다 — canonical 은 apex 다. */}
-          <a className="site-footer-policy" href="/privacy">
-            개인정보처리방침
-          </a>
-          <a className="site-footer-policy" href="/about">
-            사이트 소개
-          </a>
-          <a className="site-footer-policy" href="/contact">
-            연락처
-          </a>
+          {TRUST_LINKS.map(({ path, label, labelEn }) => (
+            <a key={path} className="site-footer-policy" href={path}>
+              {lang === 'en' ? labelEn : label}
+            </a>
+          ))}
         </p>
       </div>
 

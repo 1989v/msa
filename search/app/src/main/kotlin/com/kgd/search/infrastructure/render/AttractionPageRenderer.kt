@@ -646,7 +646,8 @@ class AttractionPageRenderer(
 
     /** prerender `shellBody` — SPA 가 마운트되면 통째로 교체되는 임시 본문. 바닥글은 호스트 사이를 잇는다 */
     private fun shellBody(inner: String): String {
-        val footer = siteLinks().joinToString(" · ") { (href, label) -> "<a href=\"$href\">${escapeHtml(label)}</a>" }
+        val footer = (siteLinks() + trustLinks())
+            .joinToString(" · ") { (href, label) -> "<a href=\"$href\">${escapeHtml(label)}</a>" }
         return "<div style=\"max-width:1080px;margin:0 auto;padding:32px 20px;color:#dce4f5;" +
             "font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif\">" +
             "$inner<footer><nav>$footer</nav></footer></div>"
@@ -660,6 +661,14 @@ class AttractionPageRenderer(
         "https://blog.1989v.com" to "블로그",
         "https://rank.1989v.com" to "랭킹 리더보드",
         "https://deal.1989v.com" to "혜택 링크 허브",
+    )
+
+    /** copy.mjs `TRUST_LINKS` — apex 문서라 place 에서도 apex 절대 주소로 건다. 영문 상세도 국문 라벨이다 */
+    private fun trustLinks() = listOf(
+        "https://1989v.com/privacy" to "개인정보처리방침",
+        "https://1989v.com/about" to "사이트 소개",
+        "https://1989v.com/contact" to "연락처",
+        "https://1989v.com/data-sources" to "데이터 출처",
     )
 
     // ─── 주소 (copy.mjs placePath·attractionPath·regionPath) ────────────────

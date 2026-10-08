@@ -23,6 +23,7 @@ import {
   BRAND,
   GAME_ORIGIN,
   PORTAL_ORIGIN,
+  TRUST_LINKS,
   RESUME_ORIGIN,
   ADS_ORIGIN,
   ADS_BRAND,
@@ -468,8 +469,14 @@ const SITE_LINKS = [
  * 사이트 그래프는 apex 에서 한 방향으로만 뻗은 나무였다 — 한 허브에 들어온 크롤러는
  * 거기서 끝난다. 화면의 GNB 는 JS 가 그리므로 크롤러 사본에는 없다.
  */
-function siteFooter() {
-  const links = SITE_LINKS.map(([href, label]) => `<a href="${href}">${escapeHtml(label)}</a>`).join(' · ');
+export function siteFooter() {
+  const links = [
+    ...SITE_LINKS,
+    // 신뢰 링크(방침·소개·연락처·데이터 출처)는 apex 문서라 어느 호스트에서든 apex 절대 주소로 건다
+    ...TRUST_LINKS.map(({ path, label }) => [`${PORTAL_ORIGIN}${path}`, label]),
+  ]
+    .map(([href, label]) => `<a href="${escapeHtml(href)}">${escapeHtml(label)}</a>`)
+    .join(' · ');
   return `<footer><nav>${links}</nav></footer>`;
 }
 
