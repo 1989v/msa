@@ -278,6 +278,8 @@ jobs:
                 ;;
             esac
           done
+          # common 은 모든 JVM 서비스가 싣는다 — 단축 코드 고정 벡터 등 공용 계약을 함께 막는다
+          TASKS+=" :common:test"
           echo "── Gradle test tasks: $TASKS"
           ./gradlew --no-daemon --max-workers=1 $TASKS
 

@@ -9,3 +9,4 @@ com.kgd.common.messaging.outbox.OutboxTracingAutoConfiguration
 com.kgd.common.startup.DataSourceWarmupAutoConfiguration
 com.kgd.common.quota.ExternalApiQuotaAutoConfiguration
 com.kgd.common.observability.IngestEndpointAutoConfiguration
+com.kgd.common.shortlink.ShortLinkAutoConfiguration
