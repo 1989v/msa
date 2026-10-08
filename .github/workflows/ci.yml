@@ -277,6 +277,11 @@ jobs:
         working-directory: portal-fe
         run: npm ci --no-audit --no-fund
 
+      # 생성물(src/pages/tech/generated/)은 커밋하지 않는다 — 없으면 아래 tsc 가 TS2307 로 선다.
+      - name: Render content
+        working-directory: portal-fe
+        run: node scripts/render-content.mjs
+
       # 여기가 진짜 게이트다. Dockerfile 검사만 켜면 이미지 빌드는 머지 뒤에 돌아서
       # PR 단계에서 안 잡히고, "빌드가 급하다" 는 이유로 다시 꺼진다.
       #

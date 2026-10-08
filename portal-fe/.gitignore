@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 *.local
+# 빌드 때 src/content/*.md 에서 만든다(scripts/render-content.mjs)
+/src/pages/tech/generated/search-architecture.json
 
 # Editor directories and files
 .vscode/*

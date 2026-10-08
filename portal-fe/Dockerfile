@@ -38,7 +38,11 @@ ENV VITE_API_URL=""
 # `tsc --noEmit` 은 0개 파일을 검사하고 통과한다 — 위에 적은 사고를 그대로 다시 통과시켰다.
 #
 # 프리렌더는 공개 게임 API 를 읽어 SEO 정적 페이지를 찍는다 — 실패해도 빌드는 통과한다.
-RUN npx tsc -b --force && npx vite build --base / && node scripts/prerender-seo.mjs
+#
+# 렌더는 tsc 보다 먼저 — 생성물(src/pages/tech/generated/)은 커밋하지 않아 없으면 tsc 가 TS2307 로 선다.
+# GIT_SHA 는 렌더가 빌드 커밋으로 찍고 아래 lib 지문도 쓴다. ARG 는 선언 이후 줄에만 보여 여기서 선언한다.
+ARG GIT_SHA="dev"
+RUN node scripts/render-content.mjs && npx tsc -b --force && npx vite build --base / && node scripts/prerender-seo.mjs
 # 게임 JS minify — 서빙물에서 원문 가독성 제거 (소스맵 미발행). 인라인 스크립트 HTML 게임은
 # 55종 일괄 회귀 위험 대비 이득이 작아 제외 — 수익 티어(다중 파일) 게임과 공용 lib 만.
 # Unity 산출물(Build/)은 제외한다 — 엔진이 낸 코드라 이미 최소화돼 있고, 5MB 짜리를
@@ -51,7 +55,6 @@ RUN find dist/games -name '*.js' -type f -not -path '*/Build/*' | while read f; 
 # 기존 방문자는 최대 4시간 동안 구버전 lib 를 계속 썼다. 게임 HTML 은 no-cache 가 지켜지므로
 # (cf-cache-status: DYNAMIC) 참조 URL 만 바뀌면 그 즉시 새 파일을 받는다.
 # 이미 ?v=N 이 손으로 붙어 있는 참조가 섞여 있으므로(keys/platform/rank) 먼저 그것부터 갈아친다.
-ARG GIT_SHA="dev"
 RUN find dist/games -name '*.html' -type f -exec \
       sed -i -e "s#\(\.\./lib/[a-z0-9_.-]*\)?v=[^\"]*\"#\1?v=${GIT_SHA}\"#g" \
              -e "s#\(\.\./lib/[a-z0-9_-]*\.js\)\"#\1?v=${GIT_SHA}\"#g" \

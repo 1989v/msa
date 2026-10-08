@@ -23,5 +23,5 @@ fe=0; printf '%s\n' "$files" | grep -Eq '^portal-fe/.*\.(ts|tsx)$' && fe=1
 if [ "${HNS_DRY_RUN:-}" = "1" ]; then echo "gradle:${tasks:- (none)}"; echo "portal-fe tsc -b: $fe"; exit 0; fi
 rc=0
 [ -n "$tasks" ] && { ./gradlew -q $tasks || rc=$?; }
-[ $fe -eq 1 ] && { (cd portal-fe && npx tsc -b) || rc=$?; }
+[ $fe -eq 1 ] && { (cd portal-fe && node scripts/render-content.mjs && npx tsc -b) || rc=$?; }  # 생성물은 gitignore — 새 체크아웃에서 TS2307 방지
 exit $rc
