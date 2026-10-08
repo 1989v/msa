@@ -60,6 +60,7 @@ const FavoritesPage = lazy(() => import('./components/favorite/FavoritesPage'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
+const DataSourcesPage = lazy(() => import('./pages/DataSourcesPage'));
 const ResumePage = lazy(() => import('./pages/resume/ResumePage'));
 const ResumeDetailPage = lazy(() => import('./pages/resume/ResumeDetailPage'));
 const ResumePrintPage = lazy(() => import('./pages/resume/ResumePrintPage'));
@@ -244,9 +245,10 @@ function App() {
           {/* 개인정보처리방침 — 호스트를 가리지 않는다. 서브도메인마다 방침을 따로 두면
               한 곳만 고쳐진 채로 남는다 (ADR-0076) */}
           <Route path="/privacy" element={<PrivacyPage />} />
-          {/* 사이트 소개·연락처 — 방침과 같이 호스트를 가리지 않는다 */}
+          {/* 사이트 소개·연락처·데이터 출처 — 방침과 같이 호스트를 가리지 않는다 */}
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/data-sources" element={<DataSourcesPage />} />
           <Route path="/portfolio" element={<PortfolioPage />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/shop/products/:id" element={<ShopProductDetailPage />} />

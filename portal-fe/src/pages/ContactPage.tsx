@@ -68,7 +68,8 @@ export default function ContactPage() {
             <section className="privacy-section">
               <h2>사이트 소개</h2>
               <p>
-                운영 주체와 데이터 출처는 <a href="/about">사이트 소개</a>에 있습니다.
+                운영 주체는 <a href="/about">사이트 소개</a>, 데이터 원천과 라이선스는{' '}
+                <a href="/data-sources">데이터 출처</a>에 있습니다.
               </p>
             </section>
           </article>

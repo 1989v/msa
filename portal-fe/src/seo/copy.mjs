@@ -999,6 +999,12 @@ export const PORTAL_PAGES = {
     title: portalTitle('연락처'),
     description: '1989v.com 운영자에게 정보 정정·저작권·개인정보·제휴를 문의하는 방법입니다.',
   },
+  // 원천·라이선스 목록 — 출처표시 의무가 있는 데이터를 쓰므로 크롤러가 읽는 초기 HTML 에도 둔다.
+  '/data-sources': {
+    title: portalTitle('데이터 출처'),
+    description:
+      '1989v.com 이 쓰는 공공데이터와 외부 API 의 원천·라이선스 목록입니다. 관광정보·날씨·대기질·지명 자료의 출처를 밝힙니다.',
+  },
 };
 
 /**

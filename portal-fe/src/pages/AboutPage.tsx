@@ -1,6 +1,6 @@
 import GNB from '../components/GNB';
 import Footer from '../components/Footer';
-import { portalTitle, portalUrl } from '../seo/copy.mjs';
+import { PORTAL_PAGES, portalTitle, portalUrl } from '../seo/copy.mjs';
 import { useSeo } from '../seo/useSeo';
 import { useHeritageSurface } from '../hooks/useHeritageSurface';
 import { useReveal } from '../hooks/useReveal';
@@ -10,8 +10,8 @@ import './PrivacyPage.css';
  * 사이트 소개 — 누가 운영하고, 무엇을 보여 주며, 데이터는 어디서 오는지.
  *
  * 광고 심사는 운영 주체와 콘텐츠 출처를 사이트 안에서 찾을 수 있는지 본다(ADR-0076).
- * 출처 목록은 `docs/architecture/data-sources.md` 대장에서 옮긴 것이다 — 원천을 붙이거나
- * 떼면 대장과 이 문서를 함께 고친다. 문서 레이아웃은 개인정보처리방침과 같은 것을 쓴다.
+ * 출처 목록 전체는 `/data-sources` 페이지(상수 `seo/dataSources.mjs`, 원본은 원천 대장 §1)에 있고
+ * 여기는 요약만 둔다. 문서 레이아웃은 개인정보처리방침과 같은 것을 쓴다.
  *
  * 모든 호스트에서 같은 주소(apex `/about`)를 가리킨다 — 방침과 같은 이유.
  */
@@ -20,8 +20,7 @@ export default function AboutPage() {
   const reveal = useReveal();
   useSeo({
     title: portalTitle('사이트 소개'),
-    description:
-      '1989v.com 은 개인이 운영하는 사이트입니다. 관광정보·블로그·게임·혜택 모음 등 하위 서비스와 데이터 출처, 광고 고지를 정리했습니다.',
+    description: PORTAL_PAGES['/about'].description,
     canonical: portalUrl('/about'),
   });
 
@@ -73,22 +72,11 @@ export default function AboutPage() {
 
             <section className="privacy-section">
               <h2>데이터 출처</h2>
-              <p>
-                관광정보는 공공데이터를 매일 받아 그대로 보여 줍니다. 값은 원천을 고치지 않고
-                옮기며, 화면마다 출처를 함께 적습니다.
-              </p>
               <ul>
-                <li>한국관광공사 TourAPI — 관광지·축제·숙박·여행코스 (공공누리 출처표시)</li>
-                <li>한국관광공사 빅데이터 — 지역 방문자 수·관광지 집중률 예측·연관 관광지</li>
-                <li>한국관광공사 무장애 여행·웰니스관광 정보</li>
-                <li>기상청 단기예보·중기예보 (공공누리 제1유형)</li>
-                <li>한국환경공단 에어코리아 — 대기 실시간 측정 (확정 전 자료)</li>
-                <li>행정안전부 법정동코드 · GeoNames (CC BY 4.0) — 지역 이름과 계층</li>
+                <li>관광정보는 한국관광공사 등의 공공데이터를 매일 받아 값을 고치지 않고 보여 줍니다.</li>
+                <li>원천의 값이 바뀌면 다음 수집 때 함께 바뀝니다. 요금·운영 시간은 방문 전에 해당 기관에 확인해 주세요.</li>
+                <li>원천과 라이선스 전체 목록은 <a href="/data-sources">데이터 출처</a>에 있습니다.</li>
               </ul>
-              <p>
-                원천의 값이 바뀌면 다음 수집 때 함께 바뀝니다. 실제 운영 정보(요금·운영 시간 등)는
-                방문 전에 해당 기관에 확인해 주세요.
-              </p>
             </section>
 
             <section className="privacy-section">

@@ -684,7 +684,7 @@ async function writeRobotsAndSitemaps(
   }
 
   const portalEntries = [
-    ...['/', '/tech', '/tech/search', '/portfolio', '/shop', '/privacy', '/about', '/contact'].map((path) => ({
+    ...['/', '/tech', '/tech/search', '/portfolio', '/shop', '/privacy', '/about', '/contact', '/data-sources'].map((path) => ({
       loc: `${PORTAL_ORIGIN}${path}`,
       priority: path === '/' ? '1.0' : '0.6',
     })),
@@ -1757,6 +1757,7 @@ function portalLlmsTxt() {
     '',
     '## 참고',
     `- 각 서비스 호스트마다 별도 sitemap 과 llms.txt 가 있다`,
+    `- [데이터 출처](${PORTAL_ORIGIN}/data-sources): 원천·라이선스 목록`,
     `- [전체 URL 목록](${PORTAL_ORIGIN}/sitemap.xml)`,
     '',
   ].join('\n');
