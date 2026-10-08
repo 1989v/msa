@@ -994,7 +994,7 @@ concepts:
     synonyms: ["Reactive Streams", "Reactor", "Mono", "Flux"]
     questions: ["request(n) 은 어떻게 생산 속도를 늦추나"]
     code:
-      - { path: gateway/src/main/kotlin/com/kgd/gateway/filter/ExperimentAssignmentFilter.kt, symbol: "override fun filter(exchange: ServerWebExchange, chain: GatewayFilterChain): Mono<Void> {", note: "게이트웨이 필터가 Mono 체인으로 요청을 넘긴다" }
+      - { path: gateway/src/main/kotlin/com/kgd/gateway/filter/ExperimentAssignmentFilter.kt, symbol: "override fun filter(original: ServerWebExchange, chain: GatewayFilterChain): Mono<Void> {", note: "게이트웨이 필터가 Mono 체인으로 요청을 넘긴다" }
     contains: [spring-webflux, project-reactor, conc-java-flow-api]
     uses: [backpressure, conc-blocking-nonblocking, conc-reactive-signals]
   - id: conc-java-flow-api
