@@ -19,7 +19,7 @@ import java.net.InetSocketAddress
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
- * 공유용 단축 주소 라우트(`/r` `/p` `/g` `/b`)의 목적지·인증·리미터 키를 고정한다.
+ * 공유용 단축 주소 라우트(`/r` `/p` `/g` `/b` `/c`)의 목적지·인증·리미터 키를 고정한다.
  *
  * 리미터 키는 이름이 아니라 실제 요청으로 판정한다 — `ipKeyResolver` 빈을 기록하는 것으로 바꿔 끼우고
  * `/g/…` 를 호출해, 그 요청이 이 리졸버를 거쳤는지를 본다. 단축 경로에는 인증 필터가 없어
@@ -60,6 +60,32 @@ class ShortLinkRouteSpec(
                 routes.getValue(id).filters.map { it.toString() }
                     .any { it.contains("StripPrefix") && it.contains("parts = 0") } shouldBe true
             }
+        }
+    }
+
+    Given("묶음 단축 주소 라우트 short-link-collection") {
+        val route = routes.getValue("short-link-collection")
+        val filters = route.filters.map { it.toString() }
+
+        Then("공유 묶음을 가진 account 로 간다") {
+            route.uri.host shouldBe "account"
+        }
+        Then("인증 필터가 없고 접두사를 떼지 않는다") {
+            filters.any { it.contains("Authentication") } shouldBe false
+            filters.any { it.contains("StripPrefix") && it.contains("parts = 0") } shouldBe true
+        }
+        Then("레이트 리밋을 걸고 신원 헤더 셋을 지운다") {
+            filters.any { it.contains("RequestRateLimiter") } shouldBe true
+            listOf("X-User-Id", "X-User-Roles", "Authorization").forEach { header ->
+                filters.any { it.contains("RemoveRequestHeader") && it.contains(header) } shouldBe true
+            }
+        }
+    }
+
+    Given("공유 묶음 공개 라우트 wishlist-shared-public") {
+        Then("익명 열람이라 레이트 리밋을 건다") {
+            routes.getValue("wishlist-shared-public").filters
+                .any { it.toString().contains("RequestRateLimiter") } shouldBe true
         }
     }
 

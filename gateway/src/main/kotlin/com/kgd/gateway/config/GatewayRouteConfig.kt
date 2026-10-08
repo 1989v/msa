@@ -364,6 +364,21 @@ class GatewayRouteConfig(
                     .filters { f -> f.stripPrefix(0) }
                     .uri("http://account:8093") // ADR-0093: account 폴드
             }
+            // 공유된 여행 묶음 열람 (ADR-0107) — 받은 사람은 로그인하지 않는다. GET 한 세그먼트만 열어
+            // 같은 접두의 쓰기·하위 경로는 아래 로그인 라우트가 막는다. 인증 필터가 없으니 신원 헤더를
+            // 직접 지워 위조 X-User-Id 가 닿지 않게 하고, 토큰 추측을 늦추려고 IP 리밋을 건다.
+            .route("wishlist-shared-public") { r ->
+                r.method(HttpMethod.GET)
+                    .and().path("/api/v1/wishlist/shared/{token}")
+                    .filters { f ->
+                        f.removeRequestHeader("X-User-Id")
+                            .removeRequestHeader("X-User-Roles")
+                            .removeRequestHeader("Authorization")
+                            .requestRateLimiter { config -> shortLinkLimit(config) }
+                            .stripPrefix(0)
+                    }
+                    .uri("http://account:8093") // ADR-0093: account 폴드
+            }
             // Wishlist Service (ROLE_USER+) — 찜은 로그인 전용, 게이트웨이가 인증 경계 (ADR-0074)
             .route("wishlist-service") { r ->
                 r.path("/api/v1/wishlist/**", "/api/v1/wishlist")
@@ -721,6 +736,19 @@ class GatewayRouteConfig(
                 r.path("/p", "/p/**", "/g", "/g/**", "/b", "/b/**")
                     .filters { f -> f.requestRateLimiter { config -> shortLinkLimit(config) }.stripPrefix(0) }
                     .uri(CONTENT_URI)
+            }
+            // 공유된 여행 묶음의 단축 주소 (ADR-0107) — wishlist 가 토큰 형식만 보고 /shared/… 로 302 한다.
+            // 비공개 자료를 가리키므로 위 단축 경로와 달리 신원 헤더도 지운다.
+            .route("short-link-collection") { r ->
+                r.path("/c", "/c/**")
+                    .filters { f ->
+                        f.removeRequestHeader("X-User-Id")
+                            .removeRequestHeader("X-User-Roles")
+                            .removeRequestHeader("Authorization")
+                            .requestRateLimiter { config -> shortLinkLimit(config) }
+                            .stripPrefix(0)
+                    }
+                    .uri("http://account:8093") // ADR-0093: account 폴드
             }
             // === ADR-0072 블로그 플랫폼 (code-dictionary 소유) ===
             // 좁은 경로부터 선언한다 — 선언 순서가 곧 우선순위라, 공개 라우트를 먼저 두면

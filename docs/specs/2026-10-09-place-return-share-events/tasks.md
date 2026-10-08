@@ -65,12 +65,12 @@ wishlist 최신은 `V3__collections.sql` → 이번은 **`wishlist/feature/src/m
 
 ### Task Group 4: 게이트웨이 라우트 + apex 인그레스 (SR-2.7 · SR-2.13)
 **Dependencies:** TG3(백엔드 경로 확정) · **Phase:** gateway + k8s/overlays/oci-arm · **Required Skills:** Spring Cloud Gateway 라우트 순서, ingress-nginx Prefix
-- [ ] 4.1 테스트 먼저
+- [x] 4.1 테스트 먼저
   - `gateway/src/test/kotlin/com/kgd/gateway/config/GatewayRouteAuthSpec.kt` 증보(선례 `:301`): 무토큰 `GET /api/v1/wishlist/shared/abcdefghij` 가 인증 없이 통과, 백엔드 스텁이 받은 요청에 `X-User-Id`·`X-User-Roles`·`Authorization` 없음(클라이언트가 붙여 보내도), `PUT /api/v1/wishlist/shared/x` 는 공개 라우트에 안 걸리고 401, `GET /api/v1/wishlist/shared/a/b` 는 공개 라우트에 안 걸림, 무토큰 `GET /api/v1/wishlist/collections/1/share` → 401, 공개 라우트가 `wishlist-service` 보다 앞 순서
   - `gateway/src/test/kotlin/com/kgd/gateway/config/ShortLinkRouteSpec.kt` 증보: `short-link-collection` 의 uri 호스트 `account`, 인증 필터 없음, `StripPrefix parts = 0`, `RequestRateLimiter` 필터 존재, 신원 헤더 제거. `wishlist-shared-public` 에도 `RequestRateLimiter` 존재
-- [ ] 4.2 `GatewayRouteConfig.kt`: `wishlist-shared-public` = `method(GET)` + `path("/api/v1/wishlist/shared/{token}")` + `removeRequestHeader` 셋 + `requestRateLimiter { shortLinkLimit(it) }` → `http://account:8093`, `wishlist-count-public` 다음·`wishlist-service` 앞. `short-link-collection` = `path("/c", "/c/**")` + 같은 헤더 제거 + `shortLinkLimit` + `stripPrefix(0)` → `http://account:8093`, `short-link-content` 다음
-- [ ] 4.3 `k8s/overlays/oci-arm/ingresses/commerce-platform.yaml` apex 단축 주소 블록에 `- path: /c`(Prefix, gateway). 블록 주석의 접두사 목록에 `/c` 추가. 다른 호스트 블록에는 넣지 않는다
-- [ ] 4.4 Verify: `./gradlew :gateway:test --tests '*GatewayRouteAuthSpec' --tests '*ShortLinkRouteSpec' --rerun` + `kubectl kustomize k8s/overlays/oci-arm | grep -n -A2 'path: /c$'`(렌더만 — 클러스터에 적용하지 않는다. 운영 조회는 `ssh msa-oci` 로만)
+- [x] 4.2 `GatewayRouteConfig.kt`: `wishlist-shared-public` = `method(GET)` + `path("/api/v1/wishlist/shared/{token}")` + `removeRequestHeader` 셋 + `requestRateLimiter { shortLinkLimit(it) }` → `http://account:8093`, `wishlist-count-public` 다음·`wishlist-service` 앞. `short-link-collection` = `path("/c", "/c/**")` + 같은 헤더 제거 + `shortLinkLimit` + `stripPrefix(0)` → `http://account:8093`, `short-link-content` 다음
+- [x] 4.3 `k8s/overlays/oci-arm/ingresses/commerce-platform.yaml` apex 단축 주소 블록에 `- path: /c`(Prefix, gateway). 블록 주석의 접두사 목록에 `/c` 추가. 다른 호스트 블록에는 넣지 않는다
+- [x] 4.4 Verify: `./gradlew :gateway:test --tests '*GatewayRouteAuthSpec' --tests '*ShortLinkRouteSpec' --rerun` + `kubectl kustomize k8s/overlays/oci-arm | grep -n -A2 'path: /c$'`(렌더만 — 클러스터에 적용하지 않는다. 운영 조회는 `ssh msa-oci` 로만)
 
 ### Task Group 5: FE 로그인 복귀 — 의도 저장·허브 상태 저장/복원·의도 소비 (SR-1)
 **Dependencies:** None(백엔드와 독립, 스펙 E TG2 위) · **Phase:** portal-fe · **Required Skills:** React StrictMode 이중 마운트, sessionStorage, vitest + RTL

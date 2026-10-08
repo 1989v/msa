@@ -9,10 +9,21 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.context.TestConfiguration
+import org.springframework.cloud.gateway.filter.GatewayFilterChain
+import org.springframework.cloud.gateway.filter.GlobalFilter
+import org.springframework.cloud.gateway.route.Route
 import org.springframework.cloud.gateway.route.RouteLocator
+import org.springframework.cloud.gateway.support.ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR
+import org.springframework.context.annotation.Bean
+import org.springframework.core.Ordered
 import org.springframework.core.env.Environment
 import org.springframework.http.HttpMethod
+import org.springframework.http.HttpStatus
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.web.server.ServerWebExchange
+import reactor.core.publisher.Mono
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * 커머스 라우트의 인증 경계 — 무토큰 401 · 역할 부족 403 · `/internal` 라우트 없음 · 옛 경로 없음.
@@ -20,6 +31,9 @@ import org.springframework.test.web.reactive.server.WebTestClient
  * 통과하는 경우(백엔드로 프록시)는 여기서 보지 않는다 — `commerce` 호스트를 해석할 수 없어서다.
  * 여기서 보는 것은 게이트웨이가 스스로 끝내는 응답뿐이다. Redis 는 닫힌 포트라 블랙리스트 조회가
  * 실패하고 fail-open 으로 넘어간다([GatewayRoutingSpec] 과 같은 설정).
+ *
+ * 공유 묶음 공개 경로만은 통과 쪽도 본다 — [UpstreamStub] 이 프록시 직전에 요청을 받아 두고 204 로 끝내므로,
+ * 라우트 필터를 모두 거친 뒤 백엔드로 나갈 헤더를 그대로 확인할 수 있다.
  */
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -359,6 +373,57 @@ class GatewayRouteAuthSpec(
         }
     }
 
+    Given("공유 묶음 열람 GET /api/v1/wishlist/shared/{token} (공개 — 받은 사람은 로그인하지 않는다)") {
+        val forged = mapOf("X-User-Id" to "1", "X-User-Roles" to "ROLE_ADMIN", "Authorization" to "Bearer $userToken")
+
+        Then("토큰 없이 백엔드에 닿고, 클라이언트가 붙인 신원 헤더는 하나도 넘어가지 않는다") {
+            UpstreamStub.received.clear()
+            client.get().uri("/api/v1/wishlist/shared/abcdefghij")
+                .apply { forged.forEach { (k, v) -> header(k, v) } }
+                .exchange()
+                .expectStatus().isNoContent
+            val upstream = UpstreamStub.received.single()
+            upstream.routeId shouldBe "wishlist-shared-public"
+            upstream.identity shouldBe mapOf("X-User-Id" to null, "X-User-Roles" to null, "Authorization" to null)
+        }
+        Then("GET 이 아니면 공개 라우트에 걸리지 않고 로그인 라우트가 401 로 막는다") {
+            UpstreamStub.received.clear()
+            status(HttpMethod.PUT, "/api/v1/wishlist/shared/x") shouldBe 401
+            status(HttpMethod.DELETE, "/api/v1/wishlist/shared/x") shouldBe 401
+            UpstreamStub.received.shouldBeEmpty()
+        }
+        Then("한 세그먼트를 넘는 경로는 공개 라우트에 걸리지 않는다") {
+            UpstreamStub.received.clear()
+            status(HttpMethod.GET, "/api/v1/wishlist/shared/a/b") shouldBe 401
+            UpstreamStub.received.shouldBeEmpty()
+        }
+        Then("소유자 공유 관리 /collections/{id}/share 는 토큰이 없으면 401") {
+            status(HttpMethod.GET, "/api/v1/wishlist/collections/1/share") shouldBe 401
+            status(HttpMethod.POST, "/api/v1/wishlist/collections/1/share") shouldBe 401
+            status(HttpMethod.DELETE, "/api/v1/wishlist/collections/1/share") shouldBe 401
+        }
+        Then("공개 라우트는 찜 수 공개 라우트 다음, 로그인 라우트(wishlist-service) 앞에 선언된다") {
+            val ids = routeLocator.routes.collectList().block().orEmpty().map { it.id }
+            (ids.indexOf("wishlist-count-public") < ids.indexOf("wishlist-shared-public")) shouldBe true
+            (ids.indexOf("wishlist-shared-public") < ids.indexOf("wishlist-service")) shouldBe true
+        }
+    }
+
+    Given("묶음 단축 주소 /c/{token} (공개)") {
+        Then("토큰 없이 백엔드에 닿고, 클라이언트가 붙인 신원 헤더는 하나도 넘어가지 않는다") {
+            UpstreamStub.received.clear()
+            client.get().uri("/c/abcdefghij")
+                .header("X-User-Id", "1")
+                .header("X-User-Roles", "ROLE_ADMIN")
+                .header("Authorization", "Bearer $userToken")
+                .exchange()
+                .expectStatus().isNoContent
+            val upstream = UpstreamStub.received.single()
+            upstream.routeId shouldBe "short-link-collection"
+            upstream.identity shouldBe mapOf("X-User-Id" to null, "X-User-Roles" to null, "Authorization" to null)
+        }
+    }
+
     Given("클러스터 안 전용 경로 /internal") {
         Then("어드민 토큰으로도 404 — 라우트가 없다") {
             status(HttpMethod.POST, "/internal/products/bulk", adminToken) shouldBe 404
@@ -380,4 +445,35 @@ class GatewayRouteAuthSpec(
     }
 }) {
     override fun extensions() = listOf(SpringExtension)
+
+    /**
+     * 백엔드 대역. 프록시(NettyRoutingFilter) 바로 앞 순서라 라우트 필터를 모두 지난 요청을 본다.
+     * 공유 묶음 두 라우트만 가로채고 나머지는 그대로 흘려보낸다 — 다른 검사의 판정을 바꾸지 않는다.
+     */
+    @TestConfiguration
+    class UpstreamStub {
+        data class Received(val routeId: String, val identity: Map<String, String?>)
+
+        companion object {
+            val received = CopyOnWriteArrayList<Received>()
+            private val STUBBED = setOf("wishlist-shared-public", "short-link-collection")
+            private val IDENTITY = listOf("X-User-Id", "X-User-Roles", "Authorization")
+        }
+
+        @Bean
+        fun upstreamStub(): GlobalFilter = object : GlobalFilter, Ordered {
+            override fun getOrder() = Ordered.LOWEST_PRECEDENCE - 1
+
+            override fun filter(
+                exchange: ServerWebExchange,
+                chain: GatewayFilterChain,
+            ): Mono<Void> {
+                val routeId = exchange.getAttribute<Route>(GATEWAY_ROUTE_ATTR)?.id
+                if (routeId !in STUBBED) return chain.filter(exchange)
+                received += Received(routeId!!, IDENTITY.associateWith { exchange.request.headers.getFirst(it) })
+                exchange.response.statusCode = HttpStatus.NO_CONTENT
+                return exchange.response.setComplete()
+            }
+        }
+    }
 }

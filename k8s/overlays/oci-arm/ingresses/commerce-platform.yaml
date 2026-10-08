@@ -82,8 +82,8 @@ spec:
           - path: /svc
             pathType: Prefix
             backend: { service: { name: gateway, port: { name: http } } }
-          # 공유용 단축 주소 (ADR-0106) — apex 에만 연다. Prefix 는 경로 단위로 맞춰
-          # `/p` 가 `/place`·`/privacy`·`/portfolio` 를 가로채지 않는다.
+          # 공유용 단축 주소 (ADR-0106 · 묶음 /c 는 ADR-0107) — apex 에만 연다. 접두사 /r /p /g /b /c.
+          # Prefix 는 경로 단위로 맞춰 `/p` 가 `/place`·`/privacy`·`/portfolio` 를 가로채지 않는다.
           - path: /r
             pathType: Prefix
             backend: { service: { name: gateway, port: { name: http } } }
@@ -94,6 +94,9 @@ spec:
             pathType: Prefix
             backend: { service: { name: gateway, port: { name: http } } }
           - path: /b
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /c
             pathType: Prefix
             backend: { service: { name: gateway, port: { name: http } } }
           - path: /
