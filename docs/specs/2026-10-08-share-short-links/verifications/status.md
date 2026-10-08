@@ -11,3 +11,4 @@
 | 3·4 | 회귀 주입 4건(isPlayable→목록 사본, 크롤러 판정 제거, publiclyVisible→목록 사본, runCatching 제거) | 각각 FAILED, 원복 cmp 일치 — 구현자 보고 |
 | 5 | `./gradlew :common:test --tests '*ClickContext*' :game:feature:test --tests '*GameShortLink*' :blog:feature:test --tests '*BlogShortLink*' :place:feature:test --tests '*AttractionShortLink*' --tests '*PlaceRetentionRunner*' :search:app:test --tests '*AttractionSearchControllerShortUrl*' :content:app:test --tests '*ContentContextLoadSpec' verifyLayerDependencies` | exit 0 · 8 스위트 49/0 · ContentContextLoadSpec 11/0 skipped 0 (실제 MySQL) (메인 세션 재실행) |
 | 5 | 회귀 주입: game TM 한정자 제거 → ContentContextLoadSpec 1 FAILED(`No active transaction`), @JsonUnwrapped 제거·isActive 판정 제거 → 각 FAILED | 구현자 보고 |
+| 5 | 깨끗한 워크트리(HEAD 544dc0243 단독, 다른 세션 미커밋 변경 없음): 8개 모듈 `compileTestKotlin` + place·search 범위 테스트 | exit 0 · PlaceRetentionRunnerSpec 2/0 · AttractionShortLinkControllerTest 9/0 · AttractionSearchControllerShortUrlTest 4/0 |

@@ -76,14 +76,14 @@ Total Task Groups: 8
 **Dependencies:** Task Group 1
 **Phase:** backend
 **Required Skills:** Kotlin, Spring MVC, JPA, Flyway
-- [ ] 5.0 Complete place
-  - [ ] 5.1 테스트 작성: `status = ACTIVE` 만 열림 · 영문 행 `/en/attractions/{id}`, 국문 `/attractions/{id}` · 실패 → place 홈 · 기록 실패에도 302 · 원장 90일 초과 삭제 후 누적 수 유지 · search 상세 `shortUrl` 리터럴 `/p/` + 디코딩 id
-  - [ ] 5.2 `V20__attraction_short_link_click.sql`: 원장 + 집계(관광지 행 컬럼 금지 — 일괄 수집이 행을 다시 쓴다)
-  - [ ] 5.3 UseCase·Port·Adapter(place TM 명시 + REQUIRES_NEW) + `AttractionShortLinkController` `GET /p/**`
-  - [ ] 5.4 `PlaceRetentionRunner` 신설(원장 90일) — `retention-content` CronJob 이 매니페스트 변경 없이 실행하는지 기존 러너 구조로 확인
-  - [ ] 5.5 search:app 관광지 상세 응답 조립 시 `shortUrl` 계산(색인 문서 불변)
-  - [ ] 5.6 `ContentContextLoadSpec`: 새 컨트롤러 3종 빈 등록 + 실제 MySQL 에서 game·blog·place 클릭 기록 후 각 `click_count == was + 1`. TM 한정자를 지우는 회귀를 임시 사본에서 주입해 빨간불 확인
-  - [ ] 5.7 Verify: `./gradlew :place:feature:test --tests '*AttractionShortLink*' --tests '*PlaceRetentionRunner*' :search:app:test --tests '*AttractionSearch*' :content:app:test --tests '*ContentContextLoadSpec'`
+- [x] 5.0 Complete place
+  - [x] 5.1 테스트 작성: `status = ACTIVE` 만 열림 · 영문 행 `/en/attractions/{id}`, 국문 `/attractions/{id}` · 실패 → place 홈 · 기록 실패에도 302 · 원장 90일 초과 삭제 후 누적 수 유지 · search 상세 `shortUrl` 리터럴 `/p/` + 디코딩 id
+  - [x] 5.2 `V20__attraction_short_link_click.sql`: 원장 + 집계(관광지 행 컬럼 금지 — 일괄 수집이 행을 다시 쓴다)
+  - [x] 5.3 UseCase·Port·Adapter(place TM 명시 + REQUIRES_NEW) + `AttractionShortLinkController` `GET /p/**`
+  - [x] 5.4 `PlaceRetentionRunner` 신설(원장 90일) — `retention-content` CronJob 이 매니페스트 변경 없이 실행하는지 기존 러너 구조로 확인
+  - [x] 5.5 search:app 관광지 상세 응답 조립 시 `shortUrl` 계산(색인 문서 불변)
+  - [x] 5.6 `ContentContextLoadSpec`: 새 컨트롤러 3종 빈 등록 + 실제 MySQL 에서 game·blog·place 클릭 기록 후 각 `click_count == was + 1`. TM 한정자를 지우는 회귀를 임시 사본에서 주입해 빨간불 확인
+  - [x] 5.7 Verify: `./gradlew :place:feature:test --tests '*AttractionShortLink*' --tests '*PlaceRetentionRunner*' :search:app:test --tests '*AttractionSearch*' :content:app:test --tests '*ContentContextLoadSpec'`
 **Acceptance Criteria:**
 - content 호스트에서 game·blog 쓰기가 각자 DB 에 실제로 남는다(값으로 판정).
 
