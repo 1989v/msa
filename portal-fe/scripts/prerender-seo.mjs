@@ -96,6 +96,14 @@ import {
   techGlossaryUrl,
   techArticleJsonLd,
   ABOUT_SECTIONS,
+  PLACE_LANDING_ATTRS,
+  PLACE_LANDING_MIN_RESULTS,
+  PLACE_LANDINGS_INDEXABLE,
+  SIGHT_CATEGORIES,
+  landingMeta,
+  landingPath,
+  placeCategoryLabel,
+  sourceText,
 } from '../src/seo/copy.mjs';
 import { DATA_SOURCES, DATA_SOURCE_NOTICES } from '../src/seo/dataSources.mjs';
 
@@ -105,6 +113,8 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = resolve(ROOT, 'dist');
 // render-content.mjs 가 빌드 체인 앞단에서 만든다 (커밋하지 않는 산출물)
 const TECH_SEARCH_JSON = resolve(ROOT, 'src/pages/tech/generated/search-architecture.json');
+// 속성 랜딩 목록 — select-place-landings.mjs 가 만들고 커밋한다. 빌드는 읽기만 한다
+const PLACE_LANDINGS_JSON = resolve(ROOT, 'src/content/place-landings.json');
 const API_ORIGIN = process.env.SEO_API_ORIGIN || 'https://api.1989v.com';
 const LANGS = ['ko', 'en'];
 const GENRES = ['DEFENSE', 'ACTION', 'STRATEGY', 'RPG', 'ARCADE', 'PUZZLE', 'VERSUS', 'CASUAL'];
@@ -149,7 +159,7 @@ const ADS_HOST = new URL(ADS_ORIGIN).host;
  * 정상 프리렌더가 들어 있다. 즉 **세우는 것이 곧 좋은 상태를 지키는 것**이다. 반대로 통과시키면
  * 나쁜 상태로 덮어쓰고, 아무도 모른 채 며칠이 간다.
  */
-class PartialSeoFailure extends Error {}
+export class PartialSeoFailure extends Error {}
 
 // 직접 실행일 때만 돈다 — 렌더 함수 단위 테스트(vitest)가 import 만으로
 // 운영 API 를 두드리는 일이 없어야 한다.
@@ -170,86 +180,11 @@ async function main() {
     throw new Error('index.html 에 <!--seo:start--> 마커가 없습니다');
   }
 
-  // 섹션별 성패를 남긴다 — 끝에서 '일부만 실패' 를 가려내 빌드를 세운다 (PartialSeoFailure)
-  const fetched = [];
-  const failed = [];
-
-  // 카탈로그를 못 받아도 robots/sitemap 은 남긴다 — 포털 색인까지 같이 죽으면 안 된다
-  let games = [];
-  try {
-    games = await fetchCatalog();
-    fetched.push('games');
-  } catch (err) {
-    failed.push('games');
-    console.warn(`[seo] 게임 카탈로그 조회 실패 (${API_ORIGIN}): ${err.message}`);
-  }
-  // 관광지 전량은 sitemap·허브 링크·지역 대표 관광지의 재료다. 상세 HTML 은 찍지 않는다 —
-  // search 가 요청 때 서버 렌더한다(ADR-0103, ADR-0062 §8 대체).
-  let places = { ko: [], en: [] };
-  let regions = { ko: [], en: [] };
-  try {
-    places = await fetchAttractionIndex();
-    regions = await fetchRegionIndex();
-    fetched.push('places');
-  } catch (err) {
-    // 조각이 조회 창을 넘은 것은 일시 장애가 아니라 sitemap 이 조용히 잘리는 상태다 — 그대로 빌드를 세운다
-    if (err instanceof PartialSeoFailure) throw err;
-    failed.push('places');
-    console.warn(`[seo] 관광지 색인 조회 실패: ${err.message}`);
-  }
-
-  // 블로그는 색인 대상이다 (deal/resume 과 반대) — 목록·카테고리·작성자 URL 이 sitemap 에 들어간다
-  let blog = { posts: [], categories: [] };
-  try {
-    blog = await fetchBlogIndex();
-    fetched.push('blog');
-  } catch (err) {
-    failed.push('blog');
-    console.warn(`[seo] 블로그 색인 조회 실패: ${err.message}`);
-  }
-
-  // 개념 사전 — 분류별 용어집의 재료다. 색인 대상이라 가드 안에 둔다.
-  let concepts = [];
-  try {
-    concepts = await fetchConcepts();
-    fetched.push('concepts');
-  } catch (err) {
-    failed.push('concepts');
-    console.warn(`[seo] 개념 사전 조회 실패: ${err.message}`);
-  }
-
-  // 혜택 허브는 2026-08-24 부터 색인 대상이다 (ADR-0069 개정) — 오퍼가 본문이자 llms.txt 이므로
-  // 조회 실패는 곧 "빈 카탈로그가 색인되는" 상태다. 가드 안에 둔다.
-  let dealSections = [];
-  try {
-    dealSections = await fetchDealSections();
-    fetched.push('deal');
-  } catch (err) {
-    failed.push('deal');
-    console.warn(`[seo] 혜택 카탈로그 조회 실패: ${err.message}`);
-  }
-
-  // 랭킹은 **부분 실패 가드 밖**이다. 두 가지가 겹쳐서다:
-  //   ① 보드는 첫 수집이 끝나야 생긴다 — 빈 결과가 정상 상태라 "손실"과 구분되지 않는다
-  //   ② FE 빌드 시점에 백엔드가 아직 이 엔드포인트를 갖고 있지 않을 수 있다(첫 배포)
-  // 여기서 빌드를 세우면 첫 배포 자체가 막힌다. 대신 경고를 남기고 sitemap 을 비운다.
-  let rankBoards = [];
-  try {
-    rankBoards = await fetchRankingBoardIndex();
-  } catch (err) {
-    console.warn(`[seo] 랭킹 보드 조회 실패(첫 배포/첫 수집 전이면 정상): ${err.message}`);
-  }
-
-  // **일부만 실패**했으면 여기서 세운다. 전부 실패한 경우(API 자체가 죽은 상황)는
-  // 통과시킨다 — 그때는 백엔드 장애가 이미 드러나 있고, FE 만 올려야 할 이유가 있을 수 있다.
-  // 위험한 것은 조용한 부분 손실이지 명백한 전면 장애가 아니다.
-  if (failed.length > 0 && fetched.length > 0) {
-    throw new PartialSeoFailure(
-      `일부 색인 조회만 실패했습니다 (성공: ${fetched.join(', ')} / 실패: ${failed.join(', ')}). ` +
-        '이대로 배포하면 실패한 섹션의 프리렌더가 통째로 사라진 이미지가 나갑니다 — ' +
-        '빌드를 세웁니다. 재시도하면 대개 해소됩니다.',
-    );
-  }
+  const { games, places, regions, landingList, landingResults, blog, concepts, dealSections, rankBoards } =
+    await fetchSeoSections();
+  // 속성 랜딩 — 산출물을 먼저 만들어 품질 게이트(title·description 중복)를 쓰기 전에 통과시킨다
+  const landing = placeLandingPages(shell, { landings: landingList, regions, results: landingResults });
+  for (const warning of landing.warnings) console.warn(`[seo] ${warning}`);
 
   // 검색 아키텍처 본문은 API 가 아니라 레포 md 에서 나온다 — 없으면 렌더 단계가 빠진 빌드라 세운다
   let searchArchitecture;
@@ -260,11 +195,13 @@ async function main() {
     throw new PartialSeoFailure(`검색 아키텍처 생성 JSON 을 쓸 수 없습니다 (${TECH_SEARCH_JSON}): ${err.message}`);
   }
 
-  await writeRobotsAndSitemaps(games, places, regions, blog, rankBoards, dealSections, concepts);
+  await writeRobotsAndSitemaps(games, places, regions, blog, rankBoards, dealSections, concepts, landing.pages);
   await renderPortalPages(shell, concepts, { searchArchitecture });
   await renderTechGlossaries(shell, concepts);
   await renderPlaceHubs(shell, places, regions);
   await renderPlaceDetails(shell, places, regions);
+  for (const { path, html } of landing.pages) await emit(path, html);
+  if (landing.pages.length > 0) console.log(`[seo] place 속성 랜딩 프리렌더 ${landing.pages.length}장`);
   await renderDealHub(shell, dealSections);
   await renderRankHub(shell, rankBoards);
   await renderAdsConsoleShell(shell);
@@ -302,6 +239,125 @@ async function main() {
     }
   }
   console.log(`[seo] 프리렌더 ${count}개 페이지 · 게임 ${games.length}종 (${API_ORIGIN})`);
+}
+
+/**
+ * 색인 조회 단계 — 섹션별 성패를 모아 **일부만 실패**했으면 빌드를 세운다(PartialSeoFailure).
+ * 조회 함수는 주입받는다: 테스트가 운영 API 없이 가드 자체를 검증한다.
+ */
+export async function fetchSeoSections(loaders = defaultSeoLoaders()) {
+  // 섹션별 성패를 남긴다 — 끝에서 '일부만 실패' 를 가려내 빌드를 세운다 (PartialSeoFailure)
+  const fetched = [];
+  const failed = [];
+
+  // 카탈로그를 못 받아도 robots/sitemap 은 남긴다 — 포털 색인까지 같이 죽으면 안 된다
+  let games = [];
+  try {
+    games = await loaders.games();
+    fetched.push('games');
+  } catch (err) {
+    failed.push('games');
+    console.warn(`[seo] 게임 카탈로그 조회 실패 (${API_ORIGIN}): ${err.message}`);
+  }
+  // 관광지 전량은 sitemap·허브 링크·지역 대표 관광지의 재료다. 상세 HTML 은 찍지 않는다 —
+  // search 가 요청 때 서버 렌더한다(ADR-0103, ADR-0062 §8 대체).
+  let places = { ko: [], en: [] };
+  let regions = { ko: [], en: [] };
+  try {
+    places = await loaders.places();
+    regions = await loaders.regions();
+    fetched.push('places');
+  } catch (err) {
+    // 조각이 조회 창을 넘은 것은 일시 장애가 아니라 sitemap 이 조용히 잘리는 상태다 — 그대로 빌드를 세운다
+    if (err instanceof PartialSeoFailure) throw err;
+    failed.push('places');
+    console.warn(`[seo] 관광지 색인 조회 실패: ${err.message}`);
+  }
+
+  // 속성 랜딩 — 항목마다 필터 질의 1회. 하나만 실패해도 섹션 실패다(빠진 랜딩은 nginx 가 404 로 낸다).
+  // 모집단(지역 페이지가 있는 시군구)을 알아야 하므로 지역 색인이 성공했을 때만 조회한다 —
+  // 지역 색인이 실패했으면 이미 그 섹션이 실패로 잡혀 있다.
+  let landingList = [];
+  let landingResults = new Map();
+  if (fetched.includes('places')) {
+    try {
+      landingList = await loaders.landingList();
+      landingResults = await loaders.landings(landingList, regions);
+      fetched.push('place-landings');
+    } catch (err) {
+      failed.push('place-landings');
+      console.warn(`[seo] 속성 랜딩 조회 실패: ${err.message}`);
+    }
+  }
+
+  // 블로그는 색인 대상이다 (deal/resume 과 반대) — 목록·카테고리·작성자 URL 이 sitemap 에 들어간다
+  let blog = { posts: [], categories: [] };
+  try {
+    blog = await loaders.blog();
+    fetched.push('blog');
+  } catch (err) {
+    failed.push('blog');
+    console.warn(`[seo] 블로그 색인 조회 실패: ${err.message}`);
+  }
+
+  // 개념 사전 — 분류별 용어집의 재료다. 색인 대상이라 가드 안에 둔다.
+  let concepts = [];
+  try {
+    concepts = await loaders.concepts();
+    fetched.push('concepts');
+  } catch (err) {
+    failed.push('concepts');
+    console.warn(`[seo] 개념 사전 조회 실패: ${err.message}`);
+  }
+
+  // 혜택 허브는 2026-08-24 부터 색인 대상이다 (ADR-0069 개정) — 오퍼가 본문이자 llms.txt 이므로
+  // 조회 실패는 곧 "빈 카탈로그가 색인되는" 상태다. 가드 안에 둔다.
+  let dealSections = [];
+  try {
+    dealSections = await loaders.deal();
+    fetched.push('deal');
+  } catch (err) {
+    failed.push('deal');
+    console.warn(`[seo] 혜택 카탈로그 조회 실패: ${err.message}`);
+  }
+
+  // 랭킹은 **부분 실패 가드 밖**이다. 두 가지가 겹쳐서다:
+  //   ① 보드는 첫 수집이 끝나야 생긴다 — 빈 결과가 정상 상태라 "손실"과 구분되지 않는다
+  //   ② FE 빌드 시점에 백엔드가 아직 이 엔드포인트를 갖고 있지 않을 수 있다(첫 배포)
+  // 여기서 빌드를 세우면 첫 배포 자체가 막힌다. 대신 경고를 남기고 sitemap 을 비운다.
+  let rankBoards = [];
+  try {
+    rankBoards = await loaders.rank();
+  } catch (err) {
+    console.warn(`[seo] 랭킹 보드 조회 실패(첫 배포/첫 수집 전이면 정상): ${err.message}`);
+  }
+
+  // **일부만 실패**했으면 여기서 세운다. 전부 실패한 경우(API 자체가 죽은 상황)는
+  // 통과시킨다 — 그때는 백엔드 장애가 이미 드러나 있고, FE 만 올려야 할 이유가 있을 수 있다.
+  // 위험한 것은 조용한 부분 손실이지 명백한 전면 장애가 아니다.
+  if (failed.length > 0 && fetched.length > 0) {
+    throw new PartialSeoFailure(
+      `일부 색인 조회만 실패했습니다 (성공: ${fetched.join(', ')} / 실패: ${failed.join(', ')}). ` +
+        '이대로 배포하면 실패한 섹션의 프리렌더가 통째로 사라진 이미지가 나갑니다 — ' +
+        '빌드를 세웁니다. 재시도하면 대개 해소됩니다.',
+    );
+  }
+
+  return { games, places, regions, landingList, landingResults, blog, concepts, dealSections, rankBoards };
+}
+
+function defaultSeoLoaders() {
+  return {
+    games: fetchCatalog,
+    places: fetchAttractionIndex,
+    regions: fetchRegionIndex,
+    landingList: async () => JSON.parse(await readFile(PLACE_LANDINGS_JSON, 'utf8')),
+    landings: (list, regions) => fetchPlaceLandings(list, regions),
+    blog: fetchBlogIndex,
+    concepts: fetchConcepts,
+    deal: fetchDealSections,
+    rank: fetchRankingBoardIndex,
+  };
 }
 
 // ─── 카탈로그 ────────────────────────────────────────────────────────────────
@@ -676,6 +732,7 @@ async function writeRobotsAndSitemaps(
   rankBoards = [],
   dealSections = [],
   concepts = [],
+  landingPages = [],
 ) {
   const gameEntries = [];
   for (const lang of LANGS) {
@@ -737,7 +794,7 @@ async function writeRobotsAndSitemaps(
 
   await emit(`seo/${GAME_HOST}/sitemap.xml`, sitemapXml(gameEntries));
   await emit(`seo/${PORTAL_HOST}/sitemap.xml`, sitemapXml(portalEntries));
-  await writePlaceSitemaps([...placeHubEntries, ...regionEntries], placeDetailEntries);
+  await writePlaceSitemaps([...placeHubEntries, ...regionEntries, ...placeLandingSitemapEntries(landingPages)], placeDetailEntries);
 
   await emit(`seo/${GAME_HOST}/robots.txt`, robotsTxt(GAME_ORIGIN));
   await emit(`seo/${PORTAL_HOST}/robots.txt`, robotsTxt(PORTAL_ORIGIN));
@@ -762,7 +819,7 @@ async function writeRobotsAndSitemaps(
 
   await emit(`seo/${GAME_HOST}/llms.txt`, gameLlmsTxt(games));
   await emit(`seo/${PORTAL_HOST}/llms.txt`, portalLlmsTxt());
-  await emit(`seo/${PLACE_HOST}/llms.txt`, placeLlmsTxt(places));
+  await emit(`seo/${PLACE_HOST}/llms.txt`, placeLlmsTxt(places, landingPages));
   await emit(`seo/${BLOG_HOST}/llms.txt`, blogLlmsTxt(blog));
   await emit(`seo/${DEAL_HOST}/llms.txt`, dealLlmsTxt(dealSections));
   await emit(`seo/${RANK_HOST}/llms.txt`, rankLlmsTxt(rankBoards));
@@ -1294,6 +1351,211 @@ async function renderPlaceDetails(shell, places, regions) {
   const pages = placeDetailPages(shell, places, regions);
   for (const { path, html } of pages) await emit(path, html);
   if (pages.length > 0) console.log(`[seo] place 지역 상세 프리렌더 ${pages.length}장`);
+}
+
+// ─── place 속성 랜딩 프리렌더 ─────────────────────────────────────────────────
+//
+// 「부산 중구 주차 가능 관광지」처럼 속성 하나 × 시군구 하나. 대상은 커밋된 목록(place-landings.json)
+// 뿐이고 빌드는 고르지 않는다. 색인은 PLACE_LANDINGS_INDEXABLE 하나가 연다(기본 닫힘).
+
+/** 랜딩 하나에 보이는 결과 수 — 선정 스크립트가 중복도를 잰 id 수와 같다 */
+const LANDING_RESULTS = 30;
+
+const landingKey = (e) => `${e.lang}/${e.code}/${e.attr}`;
+
+/**
+ * 항목의 지역 행(시도·시군구). 시군구가 그 언어의 지역 색인(지역 페이지가 있는 코드)에 없으면 null —
+ * 행정구역 개편으로 코드가 사라진 경우다. 그 랜딩은 만들지 않는다(옛 주소는 nginx 가 301).
+ */
+function landingRegions(entry, regions) {
+  const rows = regions[entry.lang] ?? [];
+  const sigungu = rows.find((r) => r.level === 'SIGUNGU' && r.code === entry.code);
+  const sido = rows.find((r) => r.level === 'SIDO' && r.code === entry.code.slice(0, 2));
+  return sigungu && sido ? { sido, sigungu } : null;
+}
+
+/**
+ * 속성 랜딩 조회 — 항목마다 필터 질의 1회(size 30). N 은 이 응답의 `totalElements` 다
+ * (facet 은 실패 때 null 이라 쓰지 않는다). 질의는 선정 스크립트·SPA 프리셋과 같다:
+ * 관광 분류 + 속성 파라미터 하나 + 시도 2자리·시군구 3자리. 하나라도 실패하면 예외 — 섹션 실패다.
+ * 모집단 밖 항목은 페이지를 만들지 않으므로 조회하지 않는다.
+ * @returns {Promise<Map<string, Record<string, any>>>} `lang/code/attr` → 검색 응답
+ */
+export async function fetchPlaceLandings(landings, regions, get = getJson) {
+  const results = new Map();
+  for (const entry of landings) {
+    if (!landingRegions(entry, regions)) continue;
+    const def = PLACE_LANDING_ATTRS.find((a) => a.attr === entry.attr);
+    if (!def) throw new Error(`알 수 없는 랜딩 속성: ${landingKey(entry)}`);
+    const params = new URLSearchParams({
+      lang: entry.lang,
+      category: SIGHT_CATEGORIES.join(','),
+      sidoCode: entry.code.slice(0, 2),
+      sigunguCode: entry.code.slice(2),
+      [def.param.key]: def.param.value,
+      sort: 'relevance',
+      page: '0',
+      size: String(LANDING_RESULTS),
+    });
+    results.set(landingKey(entry), await get(`/api/search/attractions?${params.toString().replace(/%2C/g, ',')}`));
+  }
+  return results;
+}
+
+/** 원천 수정일(`yyyy-MM-ddTHH:mm:ss`, 시간대 없음)의 날짜 부분. 시간대 변환을 하지 않는다 — 원천 날짜를 그대로 보인다 */
+function sourceDate(value) {
+  const m = /^(\d{4}-\d{2}-\d{2})/.exec(String(value ?? ''));
+  return m ? m[1] : null;
+}
+
+/** 주소 앞부분 — 시도·시군구·도로명까지 */
+function addressHead(address) {
+  return sourceText(address).split(/\s+/).slice(0, 3).join(' ');
+}
+
+/**
+ * 속성 랜딩 산출물 — 쓰기와 분리해 단위 검증한다.
+ *
+ * - 모집단 밖 항목은 만들지 않고 경고한다(행정구역 개편 — 옛 주소는 nginx 가 시도 허브로 301).
+ * - 은퇴·하한 미달 항목은 만들되 noindex·sitemap·llms 제외(이미 생긴 주소를 빌드 사이에 없애지 않는다). 미달은 경고.
+ * - 랜딩 간 title·description 이 겹치면 빌드를 세운다.
+ * @param {string} shell
+ * @param {{ landings: Array<Record<string, any>>, regions: Record<string, Array<Record<string, any>>>,
+ *           results: Map<string, Record<string, any>>, indexable?: boolean }} input
+ * @returns {{ pages: Array<{ path: string, html: string, entry: Record<string, any>, url: string, heading: string,
+ *           count: number | null, asOf: string | null, indexed: boolean, alternates?: Array<Record<string, string>> }>,
+ *           warnings: string[] }}
+ */
+export function placeLandingPages(shell, { landings, regions, results, indexable = PLACE_LANDINGS_INDEXABLE }) {
+  const warnings = [];
+  const prepared = [];
+  for (const entry of landings ?? []) {
+    const where = landingRegions(entry, regions);
+    if (!where) {
+      warnings.push(`속성 랜딩 ${landingKey(entry)} — 시군구 ${entry.code} 가 지역 색인에 없어 만들지 않습니다(행정구역 개편이면 목록을 고치세요)`);
+      continue;
+    }
+    const data = results.get(landingKey(entry)) ?? null;
+    const count = data?.totalElements ?? null;
+    const shown = (data?.attractions ?? []).slice(0, LANDING_RESULTS);
+    const asOf = shown.map((a) => sourceDate(a.modifiedAt)).filter(Boolean).sort().pop() ?? null;
+    const enough = count != null && count >= PLACE_LANDING_MIN_RESULTS;
+    if (!enough && !entry.retired) {
+      warnings.push(`속성 랜딩 ${landingKey(entry)} — 현재 ${count ?? '건수 없음'}건으로 하한 ${PLACE_LANDING_MIN_RESULTS}건 미달, noindex 로 냅니다`);
+    }
+    prepared.push({ entry, ...where, count, asOf, shown, linkable: !entry.retired && enough });
+  }
+
+  // 국·영 둘 다 색인되는 (code, attr) 에만 hreflang 을 건다
+  const indexedKeys = new Set(prepared.filter((p) => indexable && p.linkable).map((p) => landingKey(p.entry)));
+  const pages = prepared.map((p) => {
+    const { entry, sido, sigungu, count, asOf, shown } = p;
+    const lang = entry.lang;
+    const meta = landingMeta(lang, sido, sigungu, entry.attr, { count, asOf });
+    const path = landingPath(lang, entry.code, entry.attr);
+    const url = `${PLACE_ORIGIN}${path}`;
+    const indexed = indexable && p.linkable;
+    const other = lang === 'en' ? 'ko' : 'en';
+    const paired = indexed && indexedKeys.has(landingKey({ ...entry, lang: other }));
+    const alternates = paired ? placeHreflangAlternates(`/regions/${entry.code}/${entry.attr}`) : undefined;
+
+    const hubName = lang === 'en' ? 'Explore Korea' : '한국 관광지 탐색';
+    const sigunguName = regionDisplayName(lang, sigungu);
+    const items = shown
+      .map((a) => {
+        const category = placeCategoryLabel(a.category, lang);
+        const address = addressHead(a.address);
+        return (
+          `<li><a href="${attractionPath(lang, a.id)}">${escapeHtml(sourceText(a.title) || `#${a.id}`)}</a>` +
+          ` · ${escapeHtml(category)}${address ? ` · ${escapeHtml(address)}` : ''}</li>`
+        );
+      })
+      .join('');
+    // 형제: 같은 언어에서 같은 시군구 다른 속성 · 같은 시도 같은 속성 — 비은퇴·현재 N 이 하한 이상인 것만
+    const siblings = prepared.filter(
+      (s) =>
+        s !== p &&
+        s.linkable &&
+        s.entry.lang === lang &&
+        ((s.entry.code === entry.code && s.entry.attr !== entry.attr) ||
+          (s.entry.code !== entry.code && s.entry.code.slice(0, 2) === entry.code.slice(0, 2) && s.entry.attr === entry.attr)),
+    );
+    const siblingLinks = siblings
+      .map(
+        (s) =>
+          `<li><a href="${landingPath(lang, s.entry.code, s.entry.attr)}">${escapeHtml(
+            landingMeta(lang, s.sido, s.sigungu, s.entry.attr).heading,
+          )}</a></li>`,
+      )
+      .join('');
+
+    const html = compose(shell, {
+      lang,
+      title: meta.title,
+      description: meta.description,
+      canonical: url,
+      siteName: placeBrand(lang),
+      image: ogCardUrl(PLACE_ORIGIN, 'place'),
+      imageAlt: meta.heading,
+      noindex: !indexed,
+      ...(alternates ? { alternates } : {}),
+      body: shellBody(
+        `<nav><a href="${placePath(lang, '')}">${escapeHtml(hubName)}</a>` +
+          ` › <a href="${regionPath(lang, sido.code)}">${escapeHtml(regionDisplayName(lang, sido))}</a>` +
+          ` › <a href="${regionPath(lang, sigungu.code)}">${escapeHtml(sigunguName)}</a></nav>` +
+          `<h1>${escapeHtml(meta.heading)}</h1>` +
+          (meta.sentence ? `<p>${escapeHtml(meta.sentence)}</p>` : '') +
+          (items ? `<ul>${items}</ul>` : '') +
+          (siblingLinks
+            ? `<h2>${lang === 'en' ? 'Related lists' : '함께 보기'}</h2><ul>${siblingLinks}</ul>`
+            : '') +
+          `<p><a href="${regionPath(lang, sigungu.code)}">${escapeHtml(
+            lang === 'en' ? `All attractions in ${sigunguName}` : `${sigunguName} 관광지 전체 보기`,
+          )}</a> · <a href="${placePath(lang, '')}">${escapeHtml(hubName)}</a></p>`,
+      ),
+    });
+    return {
+      path: `${lang === 'en' ? 'prerender/en' : 'prerender'}/regions/${entry.code}/${entry.attr}.html`,
+      html,
+      entry,
+      url,
+      heading: meta.heading,
+      title: meta.title,
+      description: meta.description,
+      count,
+      asOf,
+      indexed,
+      alternates,
+    };
+  });
+
+  // 품질 게이트 — 같은 title·description 의 랜딩이 둘이면 서로를 깎는다. 쓰기 전에 세운다
+  for (const field of ['title', 'description']) {
+    const seen = new Map();
+    for (const page of pages) {
+      const prev = seen.get(page[field]);
+      if (prev) {
+        throw new PartialSeoFailure(`속성 랜딩 ${field} 중복 — ${prev} · ${landingKey(page.entry)}: "${page[field]}"`);
+      }
+      seen.set(page[field], landingKey(page.entry));
+    }
+  }
+  return { pages, warnings };
+}
+
+/**
+ * 속성 랜딩의 place sitemap 항목 — 색인을 연 것만(스위치 · 비은퇴 · 하한 이상).
+ * lastmod 는 표시 30건의 원천 수정일 최댓값이고, 없으면 비운다(빌드일로 대신 적지 않는다).
+ */
+export function placeLandingSitemapEntries(pages = []) {
+  return pages
+    .filter((p) => p.indexed)
+    .map((p) => ({
+      loc: p.url,
+      ...(p.asOf ? { lastmod: p.asOf } : {}),
+      priority: '0.5',
+      ...(p.alternates ? { alternates: p.alternates } : {}),
+    }));
 }
 
 /**
@@ -1843,7 +2105,9 @@ function gameLlmsTxt(games) {
   return lines.join('\n');
 }
 
-function placeLlmsTxt(places) {
+export function placeLlmsTxt(places, landingPages = []) {
+  // 속성 랜딩은 색인을 연 것만 싣는다(스위치 · 은퇴 · 하한) — sitemap 과 같은 조건
+  const landings = landingPages.filter((p) => p.indexed);
   return [
     `# ${PLACE_BRAND_EN} (${PLACE_BRAND_KO})`,
     '',
@@ -1864,6 +2128,9 @@ function placeLlmsTxt(places) {
     `- 검색: ${API_ORIGIN}/api/search/attractions?lang=ko&keyword={검색어}`,
     `- 상세: ${API_ORIGIN}/api/search/attractions/{id}`,
     '',
+    ...(landings.length > 0
+      ? ['## 속성별 관광지', ...landings.map((p) => `- [${p.heading}](${p.url})`), '']
+      : []),
   ].join('\n');
 }
 

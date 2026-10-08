@@ -60,7 +60,7 @@ Total Task Groups: 6. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
 
 ### Task Group 3: 프리렌더 · sitemap · llms · nginx (SR-0.2 · SR-1.4~1.9 · SR-3.3 · SR-5.2)
 **Dependencies:** TG1, TG2(목록 형식) · **Phase:** portal-fe `scripts/prerender-seo.mjs` · `nginx.conf` · **Required Skills:** Node ESM, nginx, vitest, bash/docker
-- [ ] 3.1 테스트 먼저 — 새 `portal-fe/src/seo/__tests__/prerenderPlaceLandings.test.ts`(픽스처 목록·검색 응답, 운영 API 없음)
+- [x] 3.1 테스트 먼저 — 새 `portal-fe/src/seo/__tests__/prerenderPlaceLandings.test.ts`(픽스처 목록·검색 응답, 운영 API 없음)
   - 출력: h1(`landingMeta` heading)·문장·목록 30·형제 링크·지역 링크(필수)·허브 링크·canonical 이 그 랜딩 주소
   - 스위치 false → `noindex, follow` 메타
   - N < 하한 → noindex + 빌드 경고
@@ -73,18 +73,18 @@ Total Task Groups: 6. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
   - 품질 게이트: 랜딩 간 title·description 중복 → 예외(빌드 실패)
   - 부분 실패: 랜딩 조회 하나 실패 + 다른 섹션 성공 → `PartialSeoFailure`
   - 조회 인자: `category` = `SIGHT_CATEGORIES`, `sigunguCode` 3자리
-- [ ] 3.2 `prerender-seo.mjs`
+- [x] 3.2 `prerender-seo.mjs`
   - `place-landings.json` 읽기 → 항목마다 SR-1.2 필터 질의 1회(size 30). 빌드 질의 수 = 항목 수(은퇴 포함)
   - `fetched/failed` 가드 안 섹션 `place-landings` — 항목 하나 실패도 섹션 실패
   - `renderPlaceLanding(...)` export: 원천 문자열은 `sourceText`/`placeIntroText` 평문화 → `escapeHtml`, 링크는 `attractionPath`/`regionPath`/`landingPath` 로만
   - 출력 `prerender/{en/}regions/{code}/{attr}.html`. noindex = `!PLACE_LANDINGS_INDEXABLE || retired || N < 하한`(값 없음은 통과 아님)
   - sitemap·llms 항목 함수(스위치·은퇴·하한 조건), title·description 중복 0 게이트
-- [ ] 3.3 `nginx.conf`
+- [x] 3.3 `nginx.conf`
   - 지역 location **바로 앞**에 `location ~ ^/(en/)?regions/([^/]+)/([^/]+)$ { add_header Cache-Control "no-cache, must-revalidate"; add_header X-Robots-Tag $host_robots_tag always; try_files /prerender/$1regions/$2/$3.html =404; }`
   - 옛 지역 301 정규식을 `^/(?<legacy_region_lang>en/)?regions/(29|46)([0-9]{3})?(/[^/]+)?$` 로 넓힌다(랜딩 주소도 시도 허브로)
   - 편집 페이지: `location ~ ^/guides/([a-z0-9][a-z0-9-]*)$ { … X-Robots-Tag $host_robots_tag; try_files /prerender/guides/$1.html =404; }`, `location ~ ^/guides/?$ { … try_files /prerender/guides/index.html =404; }`
-- [ ] 3.4 새 `portal-fe/scripts/check-nginx-place-landings.sh` — `check-nginx-legacy-regions.sh` 와 같은 방식(실제 `nginx:1.27-alpine`, `NGINX_CONF` 로 사본 주입 가능, 도커 없으면 exit 2). 픽스처 dist 로 SR-5.2 9개 계약을 판정한다. CI·훅에 걸지 않는다. 실행은 TG6
-- [ ] 3.5 Verify: `cd portal-fe && npx vitest run src/seo/__tests__/prerenderPlaceLandings.test.ts src/seo/__tests__/prerenderPlace.test.ts && bash -n scripts/check-nginx-place-landings.sh`
+- [x] 3.4 새 `portal-fe/scripts/check-nginx-place-landings.sh` — `check-nginx-legacy-regions.sh` 와 같은 방식(실제 `nginx:1.27-alpine`, `NGINX_CONF` 로 사본 주입 가능, 도커 없으면 exit 2). 픽스처 dist 로 SR-5.2 9개 계약을 판정한다. CI·훅에 걸지 않는다. 실행은 TG6
+- [x] 3.5 Verify: `cd portal-fe && npx vitest run src/seo/__tests__/prerenderPlaceLandings.test.ts src/seo/__tests__/prerenderPlace.test.ts && bash -n scripts/check-nginx-place-landings.sh`
 
 ### Task Group 4: SPA 프리셋 랜딩 화면 (SR-2)
 **Dependencies:** TG1, TG2(번들에 넣을 `place-landings.json`), TG3(동등성 비교용 프리렌더 출력) · **Phase:** portal-fe `src/pages/place` · `App.tsx` · **Required Skills:** React, TS, vitest + Testing Library
