@@ -26,3 +26,12 @@ $ npx vitest run src/content src/pages/tech src/__tests__/routes.test.tsx src/se
 $ npx tsc -b → TSC=0 · 생성 html 의 h1 1개 · 금칙 패턴 grep 0
 ```
 - 구현자 회귀 주입 7건(md 값·키 이름·yml 가중치·HYBRID·모델 ref 해시·CLICK_BOOST env·근거 경로) 전부 빨강 → 되돌림. 그림 고유 폭 412~615px(390 비율 ≤ 1.6).
+
+## TG4 프리렌더 — PASS (메인 재실행)
+```
+$ node scripts/render-content.mjs && npx vitest run src/content/__tests__ src/seo/__tests__ → Test Files 11 passed · Tests 119 passed
+$ npx tsc -b → 0 · eslint → 0
+$ npm run build → BUILD=0, 「프리렌더 184개 페이지」
+dist/prerender/tech/search.html: role="img" 5 · <h1 1 · kh-table 8 · 목차 1 · sitemap/llms 각 1
+```
+- 구현자가 PartialSeoFailure 경로(JSON 없음·빈 html → exit 1)와 분기 제거 주입(role="img" 0)을 프리렌더 단계만 돌려 확인.

@@ -49,10 +49,10 @@ Total Task Groups: 5
 **Dependencies:** Task Group 2, Task Group 3
 **Phase:** seo
 **Required Skills:** Node 스크립트, 기존 prerender 구조
-- [ ] 4.0 Complete 프리렌더
-  - [ ] 4.1 `src/content/__tests__/prerenderTechSearch.test.ts`(node): 입력 = 실제 md 를 `renderContent` 한 반환값. 단언 SR-4.4 전부 + `<title>` 에 「검색 아키텍처」 + 「JSON 없이(`undefined`·`{ html: '' }`) → throw」.
-  - [ ] 4.2 `prerender-seo.mjs`: export `renderTechSearchHtml(shell, generated)`, `renderPortalPages(shell, concepts, { searchArchitecture })` 반복 안 `path === '/tech/search'` 분기(같은 파일 두 번 쓰지 않음), `main()` 에서 JSON 읽기 + 형식 검사 실패 시 `PartialSeoFailure`, sitemap 배열·`portalLlmsTxt` 각 한 줄. JSON-LD 는 copy.mjs 의 같은 빌더.
-  - [ ] 4.3 Verify: `cd portal-fe && node scripts/render-content.mjs && npx vitest run src/content/__tests__ src/seo/__tests__ && npx tsc -b && npm run build && ls dist/prerender/tech/search.html && grep -o 'role="img"' dist/prerender/tech/search.html | wc -l`
+- [x] 4.0 Complete 프리렌더
+  - [x] 4.1 `src/content/__tests__/prerenderTechSearch.test.ts`(node): 입력 = 실제 md 를 `renderContent` 한 반환값. 단언 SR-4.4 전부 + `<title>` 에 「검색 아키텍처」 + 「JSON 없이(`undefined`·`{ html: '' }`) → throw」.
+  - [x] 4.2 `prerender-seo.mjs`: export `renderTechSearchHtml(shell, generated)`, `renderPortalPages(shell, concepts, { searchArchitecture })` 반복 안 `path === '/tech/search'` 분기(같은 파일 두 번 쓰지 않음), `main()` 에서 JSON 읽기 + 형식 검사 실패 시 `PartialSeoFailure`, sitemap 배열·`portalLlmsTxt` 각 한 줄. JSON-LD 는 copy.mjs 의 같은 빌더.
+  - [x] 4.3 Verify: `cd portal-fe && node scripts/render-content.mjs && npx vitest run src/content/__tests__ src/seo/__tests__ && npx tsc -b && npm run build && ls dist/prerender/tech/search.html && grep -o 'role="img"' dist/prerender/tech/search.html | wc -l`
 **Acceptance Criteria:**
 - 기존 seo 테스트 포함 전부 초록, `dist/prerender/tech/search.html` 의 `role="img"` 수 == 5.
 

@@ -91,12 +91,15 @@ import {
   techGlossaryMeta,
   techGlossaryPath,
   techGlossaryUrl,
+  techArticleJsonLd,
 } from '../src/seo/copy.mjs';
 
 const MULTI = SEO_MULTI_ATTR;
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = resolve(ROOT, 'dist');
+// render-content.mjs 가 빌드 체인 앞단에서 만든다 (커밋하지 않는 산출물)
+const TECH_SEARCH_JSON = resolve(ROOT, 'src/pages/tech/generated/search-architecture.json');
 const API_ORIGIN = process.env.SEO_API_ORIGIN || 'https://api.1989v.com';
 const LANGS = ['ko', 'en'];
 const GENRES = ['DEFENSE', 'ACTION', 'STRATEGY', 'RPG', 'ARCADE', 'PUZZLE', 'VERSUS', 'CASUAL'];
@@ -243,8 +246,17 @@ async function main() {
     );
   }
 
+  // 검색 아키텍처 본문은 API 가 아니라 레포 md 에서 나온다 — 없으면 렌더 단계가 빠진 빌드라 세운다
+  let searchArchitecture;
+  try {
+    searchArchitecture = JSON.parse(await readFile(TECH_SEARCH_JSON, 'utf8'));
+    assertTechSearchGenerated(searchArchitecture);
+  } catch (err) {
+    throw new PartialSeoFailure(`검색 아키텍처 생성 JSON 을 쓸 수 없습니다 (${TECH_SEARCH_JSON}): ${err.message}`);
+  }
+
   await writeRobotsAndSitemaps(games, places, regions, blog, rankBoards, dealSections, concepts);
-  await renderPortalPages(shell, concepts);
+  await renderPortalPages(shell, concepts, { searchArchitecture });
   await renderTechGlossaries(shell, concepts);
   await renderPlaceHubs(shell, places, regions);
   await renderPlaceDetails(shell, places, regions);
@@ -672,7 +684,7 @@ async function writeRobotsAndSitemaps(
   }
 
   const portalEntries = [
-    ...['/', '/tech', '/portfolio', '/shop', '/privacy', '/about', '/contact'].map((path) => ({
+    ...['/', '/tech', '/tech/search', '/portfolio', '/shop', '/privacy', '/about', '/contact'].map((path) => ({
       loc: `${PORTAL_ORIGIN}${path}`,
       priority: path === '/' ? '1.0' : '0.6',
     })),
@@ -1581,7 +1593,7 @@ function techGlossaryNav(byCategory) {
   return `<ul>${items}</ul>`;
 }
 
-async function renderPortalPages(shell, concepts = []) {
+async function renderPortalPages(shell, concepts = [], { searchArchitecture } = {}) {
   // /tech 는 용어집 13장으로 들어가는 문이다 — 그 링크가 없으면 sitemap 에만 있는 주소가 되고,
   // 내부 링크 없는 URL 은 잘 크롤되지 않는다.
   const glossaryNav = techGlossaryNav(groupConcepts(concepts));
@@ -1589,6 +1601,10 @@ async function renderPortalPages(shell, concepts = []) {
     .map((path) => `<a href="${path}">${escapeHtml(PORTAL_PAGES[path].title.split(' — ')[0])}</a>`)
     .join(' · ');
   for (const [path, meta] of Object.entries(PORTAL_PAGES)) {
+    if (path === '/tech/search') {
+      await emit(`prerender${path}.html`, renderTechSearchHtml(shell, searchArchitecture));
+      continue;
+    }
     const canonical = portalUrl(path);
     const html = compose(shell, {
       lang: 'ko',
@@ -1611,6 +1627,54 @@ async function renderPortalPages(shell, concepts = []) {
     // 루트만 호스트 키로 — 같은 번들이 game/place 호스트도 서빙하므로 / 는 호스트로 갈린다
     await emit(path === '/' ? `prerender/_hosts/${PORTAL_HOST}.html` : `prerender${path}.html`, html);
   }
+}
+
+function assertTechSearchGenerated(generated) {
+  const ok =
+    generated &&
+    typeof generated.html === 'string' &&
+    generated.html.length > 0 &&
+    Array.isArray(generated.headings) &&
+    typeof generated.updated === 'string' &&
+    typeof generated.sourceHash === 'string';
+  if (!ok) throw new Error('검색 아키텍처 생성물이 { html, headings, updated, sourceHash } 형식이 아니다');
+}
+
+/**
+ * `/tech/search` — 본문은 레포 md 를 render-content 가 구운 html 이다. h1 은 그 안에 있으므로
+ * 따로 넣지 않는다. 목차·JSON-LD 는 페이지(SearchArchitecturePage)와 같은 재료로 만든다.
+ */
+export function renderTechSearchHtml(shell, generated) {
+  assertTechSearchGenerated(generated);
+  const { html, headings, updated, sourceHash } = generated;
+  const meta = PORTAL_PAGES['/tech/search'];
+  const canonical = portalUrl('/tech/search');
+  const toc = headings
+    .filter((h) => h.level === 2 || h.level === 3)
+    .map((h) => `<li><a href="#${escapeHtml(h.id)}">${escapeHtml(h.text)}</a></li>`)
+    .join('');
+  return compose(shell, {
+    lang: 'ko',
+    title: meta.title,
+    description: meta.description,
+    canonical,
+    siteName: PORTAL_BRAND,
+    image: ogCardUrl(PORTAL_ORIGIN, 'portal'),
+    imageAlt: PORTAL_BRAND,
+    jsonLd: [
+      techArticleJsonLd(updated),
+      breadcrumbJsonLd('ko', [
+        { name: '홈', url: portalUrl('/') },
+        { name: 'IT', url: portalUrl('/tech') },
+        { name: '검색 아키텍처', url: canonical },
+      ]),
+    ],
+    body: shellBody(
+      `<div data-source-hash="${escapeHtml(sourceHash)}">` +
+        `<nav aria-label="목차"><p>목차</p><ol>${toc}</ol></nav>` +
+        `<article>${html}</article></div>`,
+    ),
+  });
 }
 
 // ─── llms.txt (AEO) ─────────────────────────────────────────────────────────
@@ -1687,6 +1751,7 @@ function portalLlmsTxt() {
     `- [랭킹 리더보드](${RANK_ORIGIN}/): 지역별 최저가 주유소 등 집계와 등락`,
     `- [혜택 링크 허브](${DEAL_ORIGIN}/): 카테고리별 혜택·제휴 링크 큐레이션`,
     `- [IT 개념 사전](${PORTAL_ORIGIN}/tech): 도메인별 개념을 그래프로 좁혀 가며 배우는 개념 아틀라스`,
+    `- [검색 아키텍처](${PORTAL_ORIGIN}/tech/search): 관광지 검색과 통합 검색의 구조·흐름·지금 쓰는 기법`,
     `- [포트폴리오](${PORTAL_ORIGIN}/portfolio): 검색·전시·커머스·인프라·AI 도메인에서 만든 것들`,
     `- [스토어 데모](${PORTAL_ORIGIN}/shop): MSA 커머스 플랫폼 데모 (검색·추천·주문)`,
     '',
