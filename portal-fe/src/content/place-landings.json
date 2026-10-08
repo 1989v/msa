@@ -1,0 +1,182 @@
+[
+  {
+    "lang": "ko",
+    "code": "11110",
+    "sidoCode": "11",
+    "attr": "barrier-free",
+    "count": 25,
+    "jaccardMax": 0.1,
+    "selectedAt": "2026-10-09"
+  },
+  {
+    "lang": "ko",
+    "code": "11110",
+    "sidoCode": "11",
+    "attr": "free",
+    "count": 68,
+    "jaccardMax": 0,
+    "selectedAt": "2026-10-09"
+  },
+  {
+    "lang": "ko",
+    "code": "11140",
+    "sidoCode": "11",
+    "attr": "barrier-free",
+    "count": 22,
+    "jaccardMax": 0,
+    "selectedAt": "2026-10-09"
+  },
+  {
+    "lang": "ko",
+    "code": "11140",
+    "sidoCode": "11",
+    "attr": "free",
+    "count": 20,
+    "jaccardMax": 0.167,
+    "selectedAt": "2026-10-09"
+  },
+  {
+    "lang": "ko",
+    "code": "11170",
+    "sidoCode": "11",
+    "attr": "free",
+    "count": 19,
+    "jaccardMax": 0,
+    "selectedAt": "2026-10-09"
+  },
+  {
+    "lang": "ko",
+    "code": "11680",
+    "sidoCode": "11",
+    "attr": "free",
+    "count": 32,
+    "jaccardMax": 0,
+    "selectedAt": "2026-10-09"
+  },
+  {
+    "lang": "ko",
+    "code": "27110",
+    "sidoCode": "27",
+    "attr": "free",
+    "count": 19,
+    "jaccardMax": 0,
+    "selectedAt": "2026-10-09"
+  },
+  {
+    "lang": "ko",
+    "code": "31710",
+    "sidoCode": "31",
+    "attr": "pet",
+    "count": 19,
+    "jaccardMax": 0,
+    "selectedAt": "2026-10-09"
+  },
+  {
+    "lang": "ko",
+    "code": "47130",
+    "sidoCode": "47",
+    "attr": "parking",
+    "count": 157,
+    "jaccardMax": 0,
+    "selectedAt": "2026-10-09"
+  },
+  {
+    "lang": "ko",
+    "code": "48310",
+    "sidoCode": "48",
+    "attr": "parking",
+    "count": 123,
+    "jaccardMax": 0,
+    "selectedAt": "2026-10-09"
+  },
+  {
+    "lang": "ko",
+    "code": "50110",
+    "sidoCode": "50",
+    "attr": "parking",
+    "count": 266,
+    "jaccardMax": 0,
+    "selectedAt": "2026-10-09"
+  },
+  {
+    "lang": "ko",
+    "code": "50110",
+    "sidoCode": "50",
+    "attr": "barrier-free",
+    "count": 40,
+    "jaccardMax": 0.132,
+    "selectedAt": "2026-10-09"
+  },
+  {
+    "lang": "ko",
+    "code": "50130",
+    "sidoCode": "50",
+    "attr": "parking",
+    "count": 229,
+    "jaccardMax": 0,
+    "selectedAt": "2026-10-09"
+  },
+  {
+    "lang": "ko",
+    "code": "50130",
+    "sidoCode": "50",
+    "attr": "barrier-free",
+    "count": 37,
+    "jaccardMax": 0.091,
+    "selectedAt": "2026-10-09"
+  },
+  {
+    "lang": "ko",
+    "code": "51150",
+    "sidoCode": "51",
+    "attr": "parking",
+    "count": 127,
+    "jaccardMax": 0,
+    "selectedAt": "2026-10-09"
+  },
+  {
+    "lang": "en",
+    "code": "11110",
+    "sidoCode": "11",
+    "attr": "parking",
+    "count": 36,
+    "jaccardMax": 0,
+    "selectedAt": "2026-10-09"
+  },
+  {
+    "lang": "en",
+    "code": "47130",
+    "sidoCode": "47",
+    "attr": "parking",
+    "count": 50,
+    "jaccardMax": 0,
+    "selectedAt": "2026-10-09"
+  },
+  {
+    "lang": "en",
+    "code": "50110",
+    "sidoCode": "50",
+    "attr": "parking",
+    "count": 78,
+    "jaccardMax": 0,
+    "selectedAt": "2026-10-09"
+  },
+  {
+    "lang": "en",
+    "code": "50130",
+    "sidoCode": "50",
+    "attr": "parking",
+    "count": 67,
+    "jaccardMax": 0,
+    "selectedAt": "2026-10-09"
+  },
+  {
+    "lang": "en",
+    "code": "51150",
+    "sidoCode": "51",
+    "attr": "parking",
+    "count": 40,
+    "jaccardMax": 0,
+    "selectedAt": "2026-10-09"
+  }
+]

@@ -33,7 +33,7 @@ Total Task Groups: 6. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
 
 ### Task Group 2: 선정 스크립트 + 커밋 목록 (SR-1.2 · SR-1.3 · SR-1.10)
 **Dependencies:** TG1 · **Phase:** portal-fe `scripts` · `src/content` · **Required Skills:** Node ESM, vitest, 검색 API(`/api/search/attractions`, `facets=true`)
-- [ ] 2.1 테스트 먼저 — 새 `portal-fe/src/seo/__tests__/selectPlaceLandings.test.ts`. 후보 조립 픽스처는 `SearchAttractionUseCase.AttributeFacets` 모양(`pet.PARTIAL`·`barrierFree.ELEVATOR` 값 포함) + 검색 응답(`totalElements`, 상위 30 id), 선정 함수 픽스처는 `candidates` 모양. 둘 다 분류 필터 유무 포함
+- [x] 2.1 테스트 먼저 — 새 `portal-fe/src/seo/__tests__/selectPlaceLandings.test.ts`. 후보 조립 픽스처는 `SearchAttractionUseCase.AttributeFacets` 모양(`pet.PARTIAL`·`barrierFree.ELEVATOR` 값 포함) + 검색 응답(`totalElements`, 상위 30 id), 선정 함수 픽스처는 `candidates` 모양. 둘 다 분류 필터 유무 포함
   - `buildCandidates({ lang, regions, get })`
     - `pet.PARTIAL`·`ELEVATOR` 건수가 커도 예비 후보가 되지 않음
     - `count` 는 필터 질의 `totalElements`(facet 건수와 다른 값을 둔 픽스처)
@@ -49,14 +49,14 @@ Total Task Groups: 6. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
     - 기존 항목 유지: `previous` 에 있고 이번에 안 뽑힘 → `retired: true`·`retiredAt` 으로 남음 · 상한 계산에서 빠짐 · 다시 뽑히면 `retired`·`retiredAt` 해제, `selectedAt` 은 처음 값
     - 모집단(`administrative-regions` 시군구 행) 밖 코드 제외
     - 은퇴 수가 합산 상한 초과 → 경고 반환, 항목 삭제 없음
-- [ ] 2.2 새 `portal-fe/scripts/select-place-landings.mjs`
+- [x] 2.2 새 `portal-fe/scripts/select-place-landings.mjs`
   - `buildCandidates`·`selectLandings` export(순수, `get` 주입 — 선례 `fetchSidoSlice`), 직접 실행 가드(import 만으로 네트워크를 치지 않는다 — `prerender-seo.mjs` 와 같은 방식)
   - 상수·슬러그 표·`SIGHT_CATEGORIES` 는 `../src/seo/copy.mjs` 에서 import(리터럴 금지)
   - 정렬: 건수 내림차순 → ko 먼저 → 코드 오름차순. 상한은 활성 항목만 센다. Jaccard 는 같은 언어·같은 시군구의 이미 뽑힌 랜딩과
   - 항목 필드 `lang, code, sidoCode, attr, count, jaccardMax, selectedAt`(KST 날짜) + 선택 `retired, retiredAt`
   - 실행 시 `src/content/place-landings.json` 을 읽어 `previous` 로 넘기고 결과를 다시 쓴다. 항목을 스스로 지우지 않는다
-- [ ] 2.3 목록 생성·커밋 대상: 운영 검색 API(읽기 GET)로 `node scripts/select-place-landings.mjs` 1회 → `src/content/place-landings.json`. facet `null` 로 실패하면 다시 돌린다(건너뛰지 않는다). 실행 로그(언어별 예비 후보 수·선정 수·제외 사유 건수)를 `verifications/selection-run.md` 에 남긴다
-- [ ] 2.4 Verify: `cd portal-fe && npx vitest run src/seo/__tests__/selectPlaceLandings.test.ts`
+- [x] 2.3 목록 생성·커밋 대상: 운영 검색 API(읽기 GET)로 `node scripts/select-place-landings.mjs` 1회 → `src/content/place-landings.json`. facet `null` 로 실패하면 다시 돌린다(건너뛰지 않는다). 실행 로그(언어별 예비 후보 수·선정 수·제외 사유 건수)를 `verifications/selection-run.md` 에 남긴다
+- [x] 2.4 Verify: `cd portal-fe && npx vitest run src/seo/__tests__/selectPlaceLandings.test.ts`
 
 ### Task Group 3: 프리렌더 · sitemap · llms · nginx (SR-0.2 · SR-1.4~1.9 · SR-3.3 · SR-5.2)
 **Dependencies:** TG1, TG2(목록 형식) · **Phase:** portal-fe `scripts/prerender-seo.mjs` · `nginx.conf` · **Required Skills:** Node ESM, nginx, vitest, bash/docker
