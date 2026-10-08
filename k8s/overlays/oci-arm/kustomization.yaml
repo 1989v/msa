@@ -360,7 +360,7 @@ images:
     newTag: 7b8f497
   - name: commerce/analytics
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/analytics
-    newTag: 23c07d5
+    newTag: 16090d4
   - name: commerce/atlas
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/atlas
     newTag: 23c07d5
@@ -387,7 +387,7 @@ images:
     newTag: 67219ac
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: 23c07d5
+    newTag: 16090d4
   - name: commerce/quant-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant-fe
     newTag: cb23a78
