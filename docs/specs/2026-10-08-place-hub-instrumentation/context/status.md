@@ -44,3 +44,14 @@ $ npx eslint src/pages/place/AttractionAir.tsx src/pages/place/AttractionWeather
 ```
 - diff: PlacePage.tsx +319 · AttractionPage.tsx +25 · 테스트 +352/+39. `function PlaceCard` 1개. payload 에 `keyword`·`lat`·`lng` 키 없음(grep). 구현자가 테스트 먼저 빨간불(25 failed | 67 passed)과 ⑨ 주입(runKeywordSearch ref 제거 → submit 케이스 + `other` 게이트 빨강)을 본 뒤 초록.
 - 보이스카우트 보고(미수정): `AttractionAir.tsx:13`·`AttractionWeather.tsx:40,129` 의 `react-refresh/only-export-components` lint 오류 3건 — 이 태스크와 무관, 별도 결정.
+
+## TG4 실제 트래커 통합 테스트 — PASS (2026-10-08 15:5x KST, 메인 재실행)
+```
+$ cd portal-fe && npx vitest run src/pages/place/__tests__/PlacePage.tracking.test.tsx
+ ✓ src/pages/place/__tests__/PlacePage.tracking.test.tsx (4 tests) 267ms
+      Tests  4 passed (4)
+$ npx tsc -b                                                   TSC_EXIT=0
+$ npx eslint src/pages/place/__tests__/PlacePage.tracking.test.tsx   ESLINT_EXIT=0
+$ grep -c "vi.mock('../../../analytics" / "FavoriteButton'" → 0 / 0  (실제 트래커·실제 FavoriteButton 경로)
+```
+- 프로덕션 코드 변경 0. 구현자가 ⑦ 주입(keyOf 의 sectionId 제거 → ①②③ 빨강: 3건이 1건으로 접힘)을 본 뒤 되돌려 초록.
