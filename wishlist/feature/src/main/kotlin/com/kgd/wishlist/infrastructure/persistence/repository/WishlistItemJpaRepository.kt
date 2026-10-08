@@ -70,6 +70,13 @@ interface WishlistItemJpaRepository : JpaRepository<WishlistItemJpaEntity, Long>
     @Query("SELECT w.targetKey FROM WishlistItemJpaEntity w WHERE w.memberId = :memberId AND w.targetType = :targetType")
     fun findKeysByMemberIdAndTargetType(memberId: Long, targetType: WishlistTargetType): List<String>
 
+    /** 공유 열람 — 묶음 안 한 타입의 항목. 정렬·상한은 호출자가 [pageable] 로 준다 (ADR-0107) */
+    fun findAllByCollectionIdAndTargetType(
+        collectionId: Long,
+        targetType: WishlistTargetType,
+        pageable: Pageable,
+    ): List<WishlistItemJpaEntity>
+
     fun deleteByMemberIdAndTargetTypeAndTargetKey(
         memberId: Long,
         targetType: WishlistTargetType,

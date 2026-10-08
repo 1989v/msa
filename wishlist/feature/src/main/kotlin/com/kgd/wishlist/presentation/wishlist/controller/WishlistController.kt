@@ -24,8 +24,9 @@ import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDateTime
 
 /**
- * 찜하기 API (ADR-0074). 인증 경계는 게이트웨이 — 이 prefix 전체가 ROLE_USER 필터를
+ * 찜하기 API (ADR-0074). 인증 경계는 게이트웨이 — 이 prefix 가 ROLE_USER 필터를
  * 거치므로 X-User-Id 는 신뢰한다. PUT/DELETE 는 멱등이다.
+ * 공개 예외: /count, /shared/{token}(별도 컨트롤러 `SharedCollectionController`).
  */
 @RestController
 @RequestMapping("/api/v1/wishlist")
