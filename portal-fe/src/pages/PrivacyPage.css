@@ -8,6 +8,9 @@
 }
 
 .privacy-inner {
+  /* 부모가 세로 flex 라 auto 여백이 늘이기를 끈다 — 폭을 주지 않으면 표의 최소 폭(약 440px)에 맞춰
+     좁은 화면에서 문서 전체가 가로로 넘친다(390 폭에서 문서 463~469px) */
+  width: 100%;
   max-width: var(--kh-container, 1280px);
   margin: 0 auto;
 }
