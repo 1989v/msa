@@ -161,12 +161,14 @@ class CategoryLexiconServiceTest : BehaviorSpec({
 
     given("⑧ 코드표 N 행을 받으면") {
         val (service, codes, search) = fixture()
-        every { codes.codes() } returns table
+        // 집계 기본 버킷 수(10)보다 많아야 상수로 넘기는 회귀를 가른다 — 운영 코드표는 617행이다
+        val large = table + (1..20).map { CategoryCode("ko", "ZZ%02d".format(it), 2, "더미 분류 $it") }
+        every { codes.codes() } returns large
         every { search.indexedCategoryCodes(any()) } returns indexed
         service.refresh()
 
         then("색인 집합은 N 이상의 버킷 크기로 묻는다") {
-            verify(exactly = 1) { search.indexedCategoryCodes(match { it >= table.size }) }
+            verify(exactly = 1) { search.indexedCategoryCodes(match { it >= large.size }) }
         }
     }
 
