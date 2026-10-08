@@ -1,0 +1,51 @@
+questions:
+  - id: Q1
+    stage: post-impl
+    status: open
+    question: 편집 페이지 3장의 주제 선정과 사실 검수(사용자) — 검수 전에는 status draft(noindex·sitemap 제외)
+    answer: 초안은 계획서 예시 3개 주제로, 목록·숫자는 색인 데이터에서만 만든다
+  - id: Q2
+    stage: post-impl
+    status: open
+    question: ADR-0062 §18 개정 승인과 PLACE_LANDINGS_INDEXABLE 켜기
+    answer: 꺼진 채 배포, 목록 검수 뒤 승인 커밋에서 켬(권고)
+  - id: Q3
+    stage: post-impl
+    status: open
+    question: 슬러그 정의 pet·barrier-free
+    answer: pet=ALLOWED 만, barrier-free=WHEELCHAIR 만, 국문 이름 「휠체어 대여」(권고)
+  - id: Q4
+    stage: post-impl
+    status: open
+    question: 수치 하한 10 · 속성당 5 · 합산 20 · Jaccard 0.5
+    answer: 그대로(권고)
+  - id: Q5
+    stage: post-impl
+    status: open
+    question: 편집 초안을 공개 200·noindex 로 열지
+    answer: 공개 noindex(권고)
+  - id: Q6
+    stage: post-impl
+    status: open
+    question: 빌드 때 미달 랜딩 처리
+    answer: noindex 로 남김(권고)
+  - id: Q7
+    stage: post-impl
+    status: open
+    question: 랜딩 문장에 「전체 M곳 중」을 넣을지
+    answer: 뺀다(ⓐ) — 빌드 시점 값으로 넣으면(ⓑ) N(현재값)과 M(선정일 값)의 기준 날짜가 갈린다(권고)
+  - id: Q8
+    stage: post-impl
+    status: open
+    question: 선정에서 빠진 랜딩을 404 로 지울지
+    answer: 지우지 않고 retired·noindex 로 남긴다(권고)
+  - id: Q9
+    stage: post-impl
+    status: open
+    question: 게시된 편집 페이지의 관광지가 404 일 때
+    answer: 빌드를 실패시키고 복구는 커밋 하나로(R2-E14)(권고)
+  - id: Q10
+    stage: post-impl
+    status: open
+    question: 은퇴 랜딩 누적 정리 — 스위치를 켠 적 없는 동안 삭제(ⓐ) vs 은퇴 수가 20 을 넘으면 경고만 하고 정리는 Q8 재판단(ⓑ)
+    answer: ⓑ(권고) — ⓐ 는 「켠 적이 있었는지」를 상수 하나로 알 수 없어 목록에 별도 상태가 필요하고, Q8 의 「규칙 하나」 원칙과도 갈린다
