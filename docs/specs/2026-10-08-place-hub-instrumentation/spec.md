@@ -77,11 +77,12 @@ place 허브(`place.1989v.com/`)의 행동 중 필수 6종 가운데 넷(검색 
 | 허브 세션 | `uniqExact(session_id)` where `action='SESSION_START' AND entity_type='PAGE' AND entity_id='place-hub'` |
 | 검색 제출 | `uniqExact(view_id)` where `action='SEARCH' AND JSONExtractString(payload,'trigger') IN ('submit','suggestion','nearMe','area')` |
 | 필터 적용 | 같은 식, `trigger IN ('region','category','attribute','eventStatus')` |
-| 결과 view | `uniqExact(view_id)` where `action='SEARCH' AND trigger != 'landing'` — 카드가 그려진 view 전부(initial·page·lang·other 포함). 비율의 분모는 이것 하나다 |
+| 결과 view | `uniqExact(view_id)` where `action='SEARCH' AND trigger != 'landing'` — 카드가 그려진 view 전부(initial·page·lang·other 포함). 지역 고르기 화면(`pickingRegion`)으로 넘어간 view 도 SEARCH 가 나가 여기 들어간다(카드는 없다). 비율의 분모는 이것 하나다 |
 | 결과 선택 | `uniqExact((view_id, entity_id))` where `action='CLICK' AND section_id IN ('ATTRACTION_LIST','MAP_OVERLAY')` |
 | 찜 완료 | 같은 식, `section_id='FAVORITE' AND JSONExtractBool(payload,'saved')` |
 | 지도 열기 | 같은 식, `section_id='MAP_LINK'` |
-| 건수에서 빼는 것 | 검색 제출·필터 적용 건수에는 `trigger IN ('landing','initial','page','lang','other')` 를 넣지 않는다. 결과 view 에서는 `landing` 만 뺀다 — 지역 선택 화면이라 카드가 없다(`PlacePage.tsx:1192`) |
+| 건수에서 빼는 것 | 검색 제출·필터 적용 건수에는 `trigger IN ('landing','initial','page','lang','other','relax')` 를 넣지 않는다. 두 지표는 허용 목록 `IN (...)` 이라 쿼리는 그대로다. `relax` 는 결과 view 에는 들어간다. 결과 view 에서는 `landing` 만 뺀다 — 지역 선택 화면이라 카드가 없다(`PlacePage.tsx:1192`) |
+| 0건 해제 | `uniqExact(view_id)` where `action='SEARCH' AND JSONExtractString(payload,'trigger')='relax'` — 해제 버튼·「모두 해제」·「원래 검색어로 검색」으로 생긴 view 전부(0건이 아닌 화면에서 누른 원래 검색어 링크, 해제 뒤 다시 0건인 view, 지역 고르기 화면으로 넘어간 view 포함). 복구율은 이번에 정의하지 않는다 |
 | ref 누락 점검 | `count()` where `action='SEARCH' AND trigger='other'` — 0 이어야 한다. 안전망은 fail-open 이라 운영에서 ref 누락은 `other` 로 조용히 분모에만 들어간다. 기준선을 읽을 때마다 같이 본다 |
 | 비율 | 세션당 검색 = 검색 제출 ÷ 허브 세션. 선택률 = 결과 view 가운데 `ATTRACTION_LIST`·`MAP_OVERLAY` CLICK 이 1건 이상인 view 수 ÷ 결과 view 수 — 분자는 분모 집합 안에서만 센다. 선택당 지도 열기(찜) = 결과 선택 튜플 가운데 같은 (view_id, entity_id) 에 `MAP_LINK`(`FAVORITE`·saved) CLICK 이 있는 튜플 수 ÷ 결과 선택 튜플 수 — 자동완성으로 연 패널의 지도·찜 행은 선택 CLICK 이 없어 이 비율에 들어가지 않고 절대 건수에만 남는다. 상세 화면(`ATTRACTION_DETAIL`) 행은 따로 센다 |
 

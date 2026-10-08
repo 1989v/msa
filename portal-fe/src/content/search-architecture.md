@@ -1,4 +1,4 @@
-<!-- source: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt, search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/UnifiedSearchAdapter.kt, search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/HybridSearchPipelineInitializer.kt, search/app/src/main/kotlin/com/kgd/search/application/attraction/service/SearchAttractionService.kt, search/app/src/main/kotlin/com/kgd/search/application/attraction/service/NearbyAttractionsService.kt, search/app/src/main/kotlin/com/kgd/search/application/unified/service/SearchUnifiedService.kt, search/app/src/main/kotlin/com/kgd/search/application/queryvector/service/QueryVectorService.kt, search/domain/src/main/kotlin/com/kgd/search/domain/query/model/QueryIntent.kt, search/app/src/main/resources/application.yml, search/batch/src/main/resources/opensearch/attractions-index.json, k8s/base/search/deployment.yaml, k8s/base/search-batch/cronjob-attraction-reindex.yaml, k8s/base/search-batch/cronjob-eval.yaml, docs/adr/ADR-0065-k-tour-search.md, docs/adr/ADR-0090-unified-search-hybrid-embedding.md -->
+<!-- source: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt, search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/UnifiedSearchAdapter.kt, search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/HybridSearchPipelineInitializer.kt, search/app/src/main/kotlin/com/kgd/search/application/attraction/service/SearchAttractionService.kt, search/app/src/main/kotlin/com/kgd/search/application/attraction/service/CategoryLexiconService.kt, search/app/src/main/kotlin/com/kgd/search/application/attraction/service/NearbyAttractionsService.kt, search/app/src/main/kotlin/com/kgd/search/application/unified/service/SearchUnifiedService.kt, search/app/src/main/kotlin/com/kgd/search/application/queryvector/service/QueryVectorService.kt, search/domain/src/main/kotlin/com/kgd/search/domain/query/model/QueryIntent.kt, search/app/src/main/resources/application.yml, search/batch/src/main/resources/opensearch/attractions-index.json, k8s/base/search/deployment.yaml, k8s/base/search-batch/cronjob-attraction-reindex.yaml, k8s/base/search-batch/cronjob-eval.yaml, docs/adr/ADR-0065-k-tour-search.md, docs/adr/ADR-0090-unified-search-hybrid-embedding.md -->
 # 검색 아키텍처 — 관광지 검색과 통합 검색
 
 관광지 검색과 통합 검색이 어떤 요소로 돌아가는지 구조·흐름·지금 쓰는 기법 순서로 정리한다.
@@ -86,7 +86,7 @@ sequenceDiagram
 2. 오타 교정이 검색어를 고친다(2.2). 교정된 검색어는 두 레그에 모두 쓴다.
 3. 벡터 레그 조건이 맞으면 쿼리 벡터를 구한다. 프로세스 캐시, MySQL `query_vector` 표, search-embed 인코딩 순서다.
 4. 새로 인코딩한 벡터는 `query_vector` 표에 남긴다. 같은 쿼리를 다시 인코딩하지 않는다.
-5. QueryIntent 가 교정된 검색어에서 잔여 검색어·패싯 필터·상업 의도를 만든다.
+5. QueryIntent 가 교정된 검색어에서 잔여 검색어·패싯 필터·상업 의도를 만든다. 분류 사전은 코드표 ∩ 그 언어 색인 코드(10분 갱신)다. 색인에 문서가 없는 분류로는 좁히지 않는다.
 6. 두 레그를 hybrid 질의 하나로 보내고, 검색 파이프라인이 RRF 로 순위를 합친다.
 
 두 레그는 같은 bool 질의에서 출발한다. 가중치는 융합 **전**, 키워드 레그 안에서만 곱한다.
@@ -152,6 +152,7 @@ sequenceDiagram
 | 후보 | 두 글자 이상이고 검색 필드 어디에도 일치하는 문서가 0건인 단어 |
 | 제안 | 자모로 편 단어를 `titleJamo.spell` 사전에서 편집거리 2 안으로 찾는다 |
 | 채택 | 유사도 하한을 넘는 제안 하나, 응답에 교정된 검색어로 함께 낸다 |
+| 건너뜀 | `exact=true`(원래 검색어 검색)면 건너뛴다. 응답의 교정된 검색어는 비어 있다 |
 
 자동완성 세 신호의 무게는 이름 접두가 가장 크고 자모가 가장 작다. 자모는 가장 헐거운 신호라 정확히 맞은 이름을 밀어내지 못하게 낮춘다.
 
@@ -247,7 +248,7 @@ sequenceDiagram
 | 양자화 | `sq` 1비트 | 근사 후보를 원본 벡터로 재채점(×3) | `search/batch/src/main/resources/opensearch/attractions-index.json:455`, `search/app/src/main/kotlin/com/kgd/search/application/attraction/config/AttractionHybridProperties.kt:23` | ADR-0090 |
 | 사이드카 정밀도 | `fp32` | CPU 1코어로 쿼리를 실시간 인코딩 | `k8s/base/search/deployment.yaml:102` | ADR-0090 |
 | 쿼리 벡터 캐시 | 프로세스 캐시 → `query_vector` 표 → 인코딩 | 인코딩 실패만 Redis ZSET 에 센다 | `search/app/src/main/kotlin/com/kgd/search/application/queryvector/service/QueryVectorService.kt:56`, `search/app/src/main/resources/db/migration/V1__create_query_vector.sql:8` | ADR-0090 |
-| 쿼리 언더스탠딩 | 키워드 레그만 | 잔여 검색어·패싯 필터, 상업 의도는 랭킹 스위치 | `search/domain/src/main/kotlin/com/kgd/search/domain/query/model/QueryIntent.kt:236`, `search/app/src/main/kotlin/com/kgd/search/application/attraction/service/SearchAttractionService.kt:91` | ADR-0090 |
+| 쿼리 언더스탠딩 | 키워드 레그만 | 잔여 검색어·패싯 필터, 상업 의도는 랭킹 스위치. 분류 사전은 코드표 ∩ 그 언어 색인 코드(10분 갱신) | `search/domain/src/main/kotlin/com/kgd/search/domain/query/model/QueryIntent.kt:236`, `search/app/src/main/kotlin/com/kgd/search/application/attraction/service/SearchAttractionService.kt:94`, `search/app/src/main/kotlin/com/kgd/search/application/attraction/service/CategoryLexiconService.kt:39` | ADR-0090 |
 | 관광 분류 가중치 | `3.0` | ● 키워드 레그 안, 상업 의도면 빠진다 | `search/app/src/main/resources/application.yml:72` | ADR-0065 |
 | 상업 분류 가중치 | `0.35` | ● 키워드 레그 안, 상업 의도면 빠진다 | `search/app/src/main/resources/application.yml:73` | ADR-0065 |
 | 완결성 계수 | `ln1p(popularityScore)` | 필드가 없으면 1.0 | `search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt:761` | ADR-0065 |
