@@ -71,7 +71,7 @@ import './PlacePage.css';
 import AdSlot from '../../components/ads/AdSlot';
 import TrackedLink from '../../analytics/TrackedLink';
 import { newViewId } from '../../analytics/identity';
-import { installFlushOnLeave } from '../../analytics/tracker';
+import { installFlushOnLeave, track } from '../../analytics/tracker';
 
 const UI = {
   ko: { badges: '방문 정보 요약', region: '지역 안 위치', explore: (p: string) => `${p} 둘러보기`, similar: '다른 지역의 비슷한 곳', related: '여기 온 사람들이 함께 간 곳', back: '← 관광지 탐색', info: '이용 안내', photos: '사진', more: '본문 전체 보기', useTime: '이용시간', restDate: '쉬는날', useFee: '이용요금', parking: '주차', parkingFee: '주차요금', infoCenter: '문의', map: '구글 지도에서 보기', notFound: '관광지를 찾을 수 없습니다.', failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', loading: '불러오는 중…' },
@@ -383,7 +383,12 @@ export default function AttractionPage() {
             {/* 찜 (ADR-0074) — 제목 바로 오른쪽 별. 로그인 전용, 게스트는 로그인으로 복귀 유도 */}
             <div className="favorite-title-row">
               <h1 className="place-detail-title">{attraction.title}</h1>
-              <FavoriteButton type="ATTRACTION" targetKey={attraction.id} lang={lang} />
+              <FavoriteButton
+                type="ATTRACTION"
+                targetKey={attraction.id}
+                lang={lang}
+                tracking={{ screenType: 'ATTRACTION_DETAIL', screenRef: id, viewId }}
+              />
             </div>
             {/* 원어 병기명은 별도 요소다 — 제목에 괄호로 다시 붙이지 않는다 (t2 백엔드 계약) */}
             {titleParts(attraction).secondary && (
@@ -504,11 +509,27 @@ export default function AttractionPage() {
               viewId={viewId}
               screenRef={id}
             />
+            {/* 지도 열기 — 선택 뒤 후속 행동이라 노출은 보내지 않는다(TrackedLink 를 쓰지 않는다).
+                기본 동작(새 탭)은 그대로고, 계측이 이동을 막지 않는다 */}
             <a
               className="place-btn"
               href={googleMapsSearchUrl(attraction)}
               target="_blank"
               rel="noreferrer"
+              onClick={() =>
+                track(
+                  'CLICK',
+                  {
+                    entityType: 'ATTRACTION',
+                    entityId: attraction.id,
+                    screenType: 'ATTRACTION_DETAIL',
+                    screenRef: id,
+                    sectionId: 'MAP_LINK',
+                    payload: { kind: 'google_maps_search' },
+                  },
+                  viewId,
+                )
+              }
             >
               {L.map}
             </a>

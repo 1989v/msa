@@ -31,3 +31,16 @@ $ npx tsc -b
 TSC_EXIT=0
 ```
 - diff: useFavorites.ts +36/-3 · FavoriteButton.tsx +8/-2 · 테스트 +150/-3. 비-place 호출처 diff 없음. 구현자가 테스트 먼저 빨간불(4 failed | 9 passed)을 본 뒤 초록.
+
+## TG3 허브·상세 화면 계측 — PASS (2026-10-08 15:3x KST, 메인 재실행)
+```
+$ cd portal-fe && npx vitest run src/pages/place/__tests__/PlacePage.test.tsx src/pages/place/__tests__/AttractionPage.test.tsx
+ ✓ src/pages/place/__tests__/AttractionPage.test.tsx (53 tests)
+ ✓ src/pages/place/__tests__/PlacePage.test.tsx (39 tests)
+      Tests  92 passed (92)
+$ npx tsc -b                                   TSC_EXIT=0
+$ npx eslint <수정 4파일>                       ESLINT4_EXIT=0
+$ npx eslint src/pages/place/AttractionAir.tsx src/pages/place/AttractionWeather.tsx → 기존 오류(react-refresh/only-export-components), 두 파일은 git status 에 없음(미수정)
+```
+- diff: PlacePage.tsx +319 · AttractionPage.tsx +25 · 테스트 +352/+39. `function PlaceCard` 1개. payload 에 `keyword`·`lat`·`lng` 키 없음(grep). 구현자가 테스트 먼저 빨간불(25 failed | 67 passed)과 ⑨ 주입(runKeywordSearch ref 제거 → submit 케이스 + `other` 게이트 빨강)을 본 뒤 초록.
+- 보이스카우트 보고(미수정): `AttractionAir.tsx:13`·`AttractionWeather.tsx:40,129` 의 `react-refresh/only-export-components` lint 오류 3건 — 이 태스크와 무관, 별도 결정.

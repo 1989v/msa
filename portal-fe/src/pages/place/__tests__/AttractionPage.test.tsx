@@ -12,7 +12,12 @@ vi.mock('../../../api/placeApi', async (importOriginal) => ({
   fetchWeather: vi.fn(),
   fetchAirQuality: vi.fn(),
 }));
-vi.mock('../../../components/favorite/FavoriteButton', () => ({ default: () => null }));
+// 찜 대역은 계측 배선(`tracking`)만 드러낸다 — 어느 view·어느 관광지를 받았는지 본다
+vi.mock('../../../components/favorite/FavoriteButton', () => ({
+  default: ({ targetKey, tracking }: { targetKey: string; tracking?: { viewId: string; screenRef?: string } }) => (
+    <button data-testid="fav" data-key={targetKey} data-view={tracking?.viewId} data-ref={tracking?.screenRef} />
+  ),
+}));
 // 지면은 자리 표시만 남긴다 — 어느 상세에 attraction-end 가 그려지는지 본다
 vi.mock('../../../components/ads/AdSlot', () => ({
   default: ({ placement }: { placement: string }) => <div data-ad-placement={placement} />,
@@ -1042,5 +1047,37 @@ describe('AttractionPage 여기 온 사람들이 함께 간 곳', () => {
     await screen.findByText('조선의 법궁이다.');
     expect(screen.queryByRole('region', { name: '여기 온 사람들이 함께 간 곳' })).toBeNull();
     expect(screen.queryByText(/빅데이터 서비스/)).toBeNull();
+  });
+});
+
+describe('AttractionPage 계측 — 지도 열기 · 찜 배선', () => {
+  beforeEach(() => nearbyFrom(() => []));
+  afterEach(() => vi.clearAllMocks());
+
+  it('구글 지도 링크 클릭 → CLICK MAP_LINK(ATTRACTION_DETAIL · screenRef 는 관광지 id), 기본 동작은 그대로', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue(enriched);
+    renderAt('/attractions/100');
+    const link = await screen.findByRole('link', { name: '구글 지도에서 보기' });
+    vi.mocked(track).mockClear();
+
+    expect(fireEvent.click(link)).toBe(true);
+    const clicks = vi.mocked(track).mock.calls.filter(([action]) => action === 'CLICK');
+    expect(clicks).toHaveLength(1);
+    expect(clicks[0][1]).toEqual({
+      entityType: 'ATTRACTION', entityId: '100', screenType: 'ATTRACTION_DETAIL', screenRef: '100',
+      sectionId: 'MAP_LINK', payload: { kind: 'google_maps_search' },
+    });
+  });
+
+  it('찜 버튼은 이 화면의 viewId 와 screenRef(관광지 id)를 받는다 — 지도 링크 CLICK 과 같은 view', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue(enriched);
+    renderAt('/attractions/100');
+    fireEvent.click(await screen.findByRole('link', { name: '구글 지도에서 보기' }));
+    const mapClick = vi.mocked(track).mock.calls.find(([action, item]) => action === 'CLICK' && item.sectionId === 'MAP_LINK')!;
+
+    const fav = screen.getByTestId('fav');
+    expect(fav.dataset.key).toBe('100');
+    expect(fav.dataset.ref).toBe('100');
+    expect(fav.dataset.view).toBe(mapClick[2]);
   });
 });

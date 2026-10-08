@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Attraction, AttractionQuery, AttributeFacets } from '../../../api/placeApi';
+import type { AdministrativeRegion, Attraction, AttractionQuery, AttributeFacets } from '../../../api/placeApi';
 
 vi.mock('../../../api/placeApi', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../api/placeApi')>()),
@@ -11,10 +11,22 @@ vi.mock('../../../api/placeApi', async (importOriginal) => ({
   fetchAttraction: vi.fn(),
   suggestPlaces: vi.fn(),
 }));
-vi.mock('../../../components/favorite/FavoriteButton', () => ({ default: () => null }));
+// 찜 대역은 계측 배선(`tracking`)만 드러낸다 — 어느 view·어느 지역 코드를 받았는지 본다
+vi.mock('../../../components/favorite/FavoriteButton', () => ({
+  default: ({ targetKey, tracking }: { targetKey: string; tracking?: { viewId: string; screenRef?: string } }) => (
+    <button data-testid="fav" data-key={targetKey} data-view={tracking?.viewId} data-ref={tracking?.screenRef} />
+  ),
+}));
+vi.mock('../../../analytics/tracker', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../analytics/tracker')>()),
+  track: vi.fn(),
+}));
 
 import { fetchAdministrativeRegions, fetchAttraction, searchAttractions, suggestPlaces } from '../../../api/placeApi';
-import PlacePage from '../PlacePage';
+import { track } from '../../../analytics/tracker';
+import { DWELL_MS } from '../../../analytics/useImpression';
+import { advance, installIntersectionObserver } from '../../../components/ads/__tests__/adsTestKit';
+import PlacePage, { resetPlaceSessionForTest } from '../PlacePage';
 
 const facets = (over: Partial<AttributeFacets> = {}): AttributeFacets => ({
   openToday: 120,
@@ -356,5 +368,339 @@ describe('PlacePage 행사·여행코스·숙박', () => {
     const sheet = await screen.findByRole('dialog');
     await within(sheet).findByText('Starts tomorrow');
     expect(within(sheet).getByText('2026-10-27 ~ 2026-10-27')).toBeInTheDocument();
+  });
+});
+
+/*
+ * 허브 행동 계측 (ADR-0095). 판정 근거는 `track` 대역이 받은 인자 — 화면이 내놓은 값이다.
+ * 트리거는 조작 시점의 ref 로 남기므로, 아는 조작만 일으키는 이 묶음에서 `other` 가 나오면 ref 누락이다.
+ */
+describe('PlacePage 계측', () => {
+  const seoul: AdministrativeRegion = {
+    code: '11', parentCode: null, level: 'SIDO', name: '서울특별시', nameEn: 'Seoul', latitude: 37.56, longitude: 126.97, attractionCount: 4321,
+  };
+  const jongno: AdministrativeRegion = {
+    code: '11110', parentCode: '11', level: 'SIGUNGU', name: '종로구', nameEn: 'Jongno-gu', latitude: 37.57, longitude: 126.98, attractionCount: 300,
+  };
+  const tracked = (action: string) => vi.mocked(track).mock.calls.filter(([a]) => a === action);
+  const searchPayloads = () => tracked('SEARCH').map(([, item]) => item.payload as Record<string, unknown>);
+  const lastSearch = () => tracked('SEARCH').at(-1)!;
+  const triggers = () => searchPayloads().map((p) => p.trigger);
+  const cardOf = (title: string) => screen.getByText(title).closest('a')!;
+  /** 자동 시도 선택(서울)까지 끝난 상태 — 그 view 의 SEARCH 가 `initial` 이다 */
+  const untilInitial = () => waitFor(() => expect(triggers()).toEqual(['landing', 'initial']));
+
+  beforeEach(() => {
+    mobile = false;
+    stubMedia();
+    sessionStorage.clear();
+    resetPlaceSessionForTest();
+    vi.mocked(fetchAdministrativeRegions).mockImplementation(({ level }) =>
+      Promise.resolve(level === 'SIDO' ? [seoul] : [jongno]),
+    );
+    vi.mocked(suggestPlaces).mockResolvedValue([]);
+    vi.mocked(fetchAttraction).mockImplementation((id) => Promise.resolve(item(id)));
+    vi.mocked(searchAttractions).mockReset();
+    vi.mocked(searchAttractions).mockImplementation((q) => respond(q, () => facets()));
+  });
+  afterEach(() => {
+    const seen = triggers();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+    cleanup();
+    // 안전망 `other` 는 운영에서 조용히 분모에만 들어간다 — 여기서는 곧 ref 를 안 심은 핸들러다
+    expect(seen).not.toContain('other');
+  });
+
+  describe('세션 시작', () => {
+    it('첫 마운트에 SESSION_START 를 한 번 — PAGE/place-hub, screenRef 빈 값, 섹션 키 없음. 다시 마운트해도 0', async () => {
+      const first = renderPage();
+      await screen.findByText('관광지 a0-1');
+      const starts = tracked('SESSION_START');
+      expect(starts).toHaveLength(1);
+      expect(starts[0][1]).toEqual({ entityType: 'PAGE', entityId: 'place-hub', screenType: 'PLACE_HUB', screenRef: '' });
+      expect('sectionId' in starts[0][1]).toBe(false);
+      expect(starts[0][2]).toEqual(expect.any(String));
+
+      first.unmount();
+      renderPage();
+      await screen.findByText('관광지 a0-1');
+      expect(tracked('SESSION_START')).toHaveLength(1);
+    });
+
+    it('sessionStorage 를 비우고 초기화하면 다시 한 번', async () => {
+      const first = renderPage();
+      await screen.findByText('관광지 a0-1');
+      first.unmount();
+
+      sessionStorage.clear();
+      resetPlaceSessionForTest();
+      renderPage();
+      await screen.findByText('관광지 a0-1');
+      expect(tracked('SESSION_START')).toHaveLength(2);
+    });
+
+    it('저장소가 실패해도 한 번만 — 모듈 변수가 대신한다', async () => {
+      const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new Error('quota');
+      });
+      try {
+        const first = renderPage();
+        await screen.findByText('관광지 a0-1');
+        expect(tracked('SESSION_START')).toHaveLength(1);
+        first.unmount();
+        renderPage();
+        await screen.findByText('관광지 a0-1');
+        expect(tracked('SESSION_START')).toHaveLength(1);
+      } finally {
+        setItem.mockRestore();
+      }
+    });
+  });
+
+  describe('SEARCH — 검색 제출·필터 적용', () => {
+    it('첫 진입 — landing(시도 없음) 뒤 자동 시도 선택의 initial: screenRef 11 · entityId * · 좌표·keyword 키 없음', async () => {
+      renderPage();
+      await screen.findByText('관광지 a0-1');
+      await untilInitial();
+
+      const [landing, initial] = tracked('SEARCH');
+      expect(landing[1]).toMatchObject({ entityType: 'SEARCH', entityId: '*', screenRef: '', payload: { trigger: 'landing' } });
+      expect(initial[1]).toMatchObject({
+        entityType: 'SEARCH', entityId: '*', screenType: 'PLACE_HUB', screenRef: '11', sectionId: 'ATTRACTION_LIST',
+        payload: { trigger: 'initial', term: '', sido: '11', total: 6, page: 0 },
+      });
+      for (const key of ['keyword', 'lat', 'lng', 'geo']) expect(initial[1].payload).not.toHaveProperty(key);
+      expect(initial[2]).not.toBe(landing[2]);
+    });
+
+    it('지역 축이 없으면 landing 한 건 — entityId * · 0건 응답도 보낸다', async () => {
+      vi.mocked(fetchAdministrativeRegions).mockResolvedValue([]);
+      vi.mocked(searchAttractions).mockResolvedValue({ searchId: 's', attractions: [], totalElements: 0, totalPages: 0, currentPage: 0 });
+      renderPage();
+      await screen.findByText('검색 결과가 없습니다');
+      await waitFor(() => expect(triggers()).toEqual(['landing']));
+      expect(lastSearch()[1]).toMatchObject({ entityId: '*', screenRef: '', payload: { trigger: 'landing', total: 0 } });
+    });
+
+    it('submit — 검색어 확정', async () => {
+      renderPage();
+      await untilInitial();
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: ' 궁궐 ' } });
+      fireEvent.click(screen.getByRole('button', { name: '검색' }));
+      await waitFor(() => expect(lastSearch()[1].payload).toMatchObject({ trigger: 'submit', term: '궁궐', changed: ['keyword'] }));
+      expect(lastSearch()[1].entityId).toBe('궁궐');
+    });
+
+    it('suggestion — 자동완성 선택은 SEARCH 한 건이고 CLICK 이 아니다. 반경만 남고 좌표는 없다', async () => {
+      vi.mocked(suggestPlaces).mockResolvedValue([
+        { type: 'ATTRACTION', id: 's1', title: '경복궁', latitude: 37.57, longitude: 126.98, regionLevel: null, category: 'history' },
+      ]);
+      renderPage();
+      await untilInitial();
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: '경복' } });
+      fireEvent.mouseDown(await screen.findByRole('option', { name: /경복궁/ }));
+      await waitFor(() => expect(lastSearch()[1].payload).toMatchObject({ trigger: 'suggestion', radiusKm: 5 }));
+      for (const key of ['lat', 'lng', 'geo', 'keyword']) expect(lastSearch()[1].payload).not.toHaveProperty(key);
+      expect(tracked('CLICK')).toHaveLength(0);
+    });
+
+    it('nearMe — 반경 5km 만 싣고 기기 좌표는 싣지 않는다', async () => {
+      renderPage();
+      await untilInitial();
+      Object.defineProperty(navigator, 'geolocation', {
+        configurable: true,
+        value: { getCurrentPosition: (ok: PositionCallback) => ok({ coords: { latitude: 37.5, longitude: 127 } } as GeolocationPosition) },
+      });
+      try {
+        fireEvent.click(screen.getByRole('button', { name: '내 주변' }));
+        await waitFor(() => expect(lastSearch()[1].payload).toMatchObject({ trigger: 'nearMe', radiusKm: 5 }));
+        for (const key of ['lat', 'lng', 'geo', 'keyword']) expect(lastSearch()[1].payload).not.toHaveProperty(key);
+      } finally {
+        Reflect.deleteProperty(navigator, 'geolocation');
+      }
+    });
+
+    it('region — 구 지역 축 <select> 는 changed: [areaCode]', async () => {
+      vi.mocked(fetchAdministrativeRegions).mockResolvedValue([]);
+      renderPage();
+      await waitFor(() => expect(triggers()).toEqual(['landing']));
+      fireEvent.change(screen.getByLabelText('Area'), { target: { value: '6' } });
+      await waitFor(() => expect(lastSearch()[1].payload).toMatchObject({ trigger: 'region', changed: ['areaCode'] }));
+    });
+
+    it('region — 시군구 선택은 screenRef 가 시도+시군구(11110) 다', async () => {
+      renderPage();
+      await untilInitial();
+      fireEvent.click(await screen.findByRole('button', { name: /종로구/ }));
+      await waitFor(() =>
+        expect(lastSearch()[1]).toMatchObject({ screenRef: '11110', payload: { trigger: 'region', sido: '11', sigungu: '110' } }),
+      );
+    });
+
+    it('category — 분류 칩은 category·listEventStatus·page 를 함께 바꾼다', async () => {
+      renderPage();
+      await untilInitial();
+      fireEvent.click(screen.getByRole('button', { name: '자연' }));
+      await waitFor(() => expect(lastSearch()[1].payload).toMatchObject({ trigger: 'category', category: 'nature' }));
+      expect(lastSearch()[1].payload!.changed).toEqual(['category', 'listEventStatus', 'page']);
+    });
+
+    it('attribute — 속성 칩', async () => {
+      renderPage();
+      await untilInitial();
+      fireEvent.click(chip(/^주차 가능/));
+      await waitFor(() => expect(lastSearch()[1].payload).toMatchObject({ trigger: 'attribute', attributes: ['parking'] }));
+    });
+
+    it('eventStatus — 행사 상태 칩', async () => {
+      renderPage();
+      await untilInitial();
+      fireEvent.click(screen.getByRole('button', { name: '행사' }));
+      await waitFor(() => expect(lastSearch()[1].payload).toMatchObject({ trigger: 'category', category: 'festival' }));
+      fireEvent.click(within(screen.getByRole('group', { name: '행사 상태' })).getByRole('button', { name: '이번 주말' }));
+      await waitFor(() => expect(lastSearch()[1].payload).toMatchObject({ trigger: 'eventStatus', changed: ['listEventStatus', 'page'] }));
+    });
+
+    it('page — 데스크톱 다음 쪽', async () => {
+      renderPage();
+      await untilInitial();
+      fireEvent.click(screen.getByRole('button', { name: '다음' }));
+      await waitFor(() => expect(lastSearch()[1].payload).toMatchObject({ trigger: 'page', page: 1, changed: ['page'] }));
+    });
+
+    it('lang — 언어 전환은 새 view 의 SEARCH 로 남는다', async () => {
+      renderPage();
+      await untilInitial();
+      const before = lastSearch()[2];
+      fireEvent.click(screen.getByRole('button', { name: 'EN' }));
+      await waitFor(() => expect(lastSearch()[1].payload).toMatchObject({ trigger: 'lang', changed: ['lang'] }));
+      expect(lastSearch()[2]).not.toBe(before);
+    });
+
+    it('같은 응답으로 다시 그려져도 같은 view 에 두 번 보내지 않는다', async () => {
+      vi.mocked(fetchAdministrativeRegions).mockResolvedValue([]);
+      renderPage();
+      await screen.findByText('관광지 a0-1');
+      await waitFor(() => expect(triggers()).toEqual(['landing']));
+      fireEvent.click(cardOf('관광지 a0-1'));
+      await screen.findByRole('link', { name: '구글맵에서 보기' });
+      expect(tracked('SEARCH')).toHaveLength(1);
+    });
+
+    it('오버레이 칩 토글은 목록 질의가 아니다 — SEARCH 없음, viewId 그대로', async () => {
+      vi.mocked(fetchAdministrativeRegions).mockResolvedValue([]);
+      renderPage();
+      await screen.findByText('관광지 a0-1');
+      await waitFor(() => expect(triggers()).toEqual(['landing']));
+      const before = screen.getAllByTestId('fav')[0].dataset.view;
+      fireEvent.click(screen.getByRole('button', { name: '숙박' }));
+      expect(screen.getByRole('button', { name: '숙박' })).toHaveAttribute('aria-pressed', 'true');
+      expect(tracked('SEARCH')).toHaveLength(1);
+      expect(screen.getAllByTestId('fav')[0].dataset.view).toBe(before);
+    });
+
+    it('재시도 뒤에도 실패한 질의는 보내지 않는다', async () => {
+      vi.mocked(fetchAdministrativeRegions).mockResolvedValue([]);
+      vi.mocked(searchAttractions).mockRejectedValue(new Error('down'));
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+      renderPage();
+      // retry 3 — 지수 지연 1·2·4초를 넘긴다. 마지막 거절의 통지는 setTimeout 0 이라 가짜 시계를 1ms 더 민다
+      // (0ms 전진은 그 시각에 새로 잡힌 0 지연 타이머를 돌리지 않는다)
+      for (const ms of [0, 1000, 2000, 4000, 1]) await advance(ms);
+      expect(screen.getByText('목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.')).toBeInTheDocument();
+      expect(vi.mocked(searchAttractions)).toHaveBeenCalledTimes(4);
+      expect(tracked('SEARCH')).toHaveLength(0);
+    });
+  });
+
+  describe('CLICK — 결과 선택 · 지도 열기', () => {
+    it('카드 좌클릭 — ATTRACTION_LIST · source card · itemIndex, SEARCH 와 같은 viewId·screenRef, 기본 동작은 막는다', async () => {
+      renderPage();
+      await untilInitial();
+      const [, search, viewId] = lastSearch();
+      expect(search.screenRef).toBe('11');
+
+      expect(fireEvent.click(cardOf('관광지 a0-2'))).toBe(false);
+      const [click] = tracked('CLICK');
+      expect(click[1]).toEqual({
+        entityType: 'ATTRACTION', entityId: 'a0-2', screenType: 'PLACE_HUB', screenRef: '11',
+        sectionId: 'ATTRACTION_LIST', itemIndex: 1, payload: { source: 'card' },
+      });
+      expect(click[2]).toBe(viewId);
+    });
+
+    it('수정키 좌클릭 — 기본 동작(새 탭)을 두고 newTab: true 로 남긴다', async () => {
+      renderPage();
+      await untilInitial();
+      expect(fireEvent.click(cardOf('관광지 a0-1'), { metaKey: true })).toBe(true);
+      expect(tracked('CLICK')[0][1]).toMatchObject({ entityId: 'a0-1', itemIndex: 0, payload: { source: 'card', newTab: true } });
+    });
+
+    it('패널 지도 링크 — MAP_LINK · google_maps_search, 기본 동작 유지, 같은 view', async () => {
+      renderPage();
+      await untilInitial();
+      const viewId = lastSearch()[2];
+      fireEvent.click(cardOf('관광지 a0-1'));
+      const link = await screen.findByRole('link', { name: '구글맵에서 보기' });
+
+      expect(fireEvent.click(link)).toBe(true);
+      const mapClick = tracked('CLICK').find(([, i]) => i.sectionId === 'MAP_LINK')!;
+      expect(mapClick[1]).toEqual({
+        entityType: 'ATTRACTION', entityId: 'a0-1', screenType: 'PLACE_HUB', screenRef: '11',
+        sectionId: 'MAP_LINK', payload: { kind: 'google_maps_search' },
+      });
+      expect(mapClick[2]).toBe(viewId);
+    });
+  });
+
+  describe('IMPRESSION — 카드 노출', () => {
+    it('카드마다 ATTRACTION_LIST·itemIndex 로 한 번, 패널을 열어도 MAP_LINK·FAVORITE 노출은 없다', async () => {
+      const io = installIntersectionObserver();
+      renderPage();
+      await untilInitial();
+      const viewId = lastSearch()[2];
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+
+      io.show(1);
+      await advance(DWELL_MS);
+      const impressions = tracked('IMPRESSION');
+      expect(impressions.map(([, i, v]) => [i.entityId, i.sectionId, i.itemIndex, i.screenRef, v])).toEqual([
+        ['a0-1', 'ATTRACTION_LIST', 0, '11', viewId],
+        ['a0-2', 'ATTRACTION_LIST', 1, '11', viewId],
+      ]);
+
+      fireEvent.click(cardOf('관광지 a0-1'));
+      await advance(0);
+      expect(screen.getByRole('link', { name: '구글맵에서 보기' })).toBeInTheDocument();
+      io.show(1);
+      await advance(DWELL_MS);
+      // 패널·지도 링크·찜은 노출을 보내지 않는다 — 카드가 다시 그려져 또 찍히는 것은 실제 트래커가 키로 거른다
+      const sections = tracked('IMPRESSION').map(([, i]) => i.sectionId);
+      expect(sections.every((s) => s === 'ATTRACTION_LIST')).toBe(true);
+      expect(sections.filter((s) => s === 'MAP_LINK' || s === 'FAVORITE')).toHaveLength(0);
+    });
+  });
+
+  describe('찜 배선', () => {
+    it('카드·패널의 찜 버튼은 그 view 의 viewId 와 지역 코드를 받는다', async () => {
+      renderPage();
+      await untilInitial();
+      const [, search, viewId] = lastSearch();
+      const favs = screen.getAllByTestId('fav');
+      expect(favs.map((f) => f.dataset.key)).toEqual(['a0-1', 'a0-2']);
+      for (const f of favs) {
+        expect(f.dataset.view).toBe(viewId);
+        expect(f.dataset.ref).toBe(search.screenRef);
+      }
+
+      fireEvent.click(cardOf('관광지 a0-1'));
+      const panel = await screen.findByRole('complementary', { name: '관광지 a0-1' });
+      const panelFav = within(panel).getByTestId('fav');
+      expect(panelFav.dataset.key).toBe('a0-1');
+      expect(panelFav.dataset.view).toBe(viewId);
+      expect(panelFav.dataset.ref).toBe('11');
+    });
   });
 });

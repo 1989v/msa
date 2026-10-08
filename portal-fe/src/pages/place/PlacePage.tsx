@@ -58,6 +58,9 @@ import {
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import EventLine from './EventLine';
+import { newViewId } from '../../analytics/identity';
+import { installFlushOnLeave, track } from '../../analytics/tracker';
+import { useImpression } from '../../analytics/useImpression';
 
 // ADR-0065 K-관광/지리 탐색 — 관광지 지도 검색. 데이터 출처: 한국관광공사 TourAPI.
 // place.<domain> 서브도메인이 정규 주소 (game 과 동일한 host 인식 루트 라우팅):
@@ -220,6 +223,55 @@ interface GeoState {
   radiusKm: number;
 }
 
+/**
+ * SEARCH `payload.trigger` (ADR-0095 허브 계측) — 무엇이 질의를 바꿨는지. 조작 시점에 ref 로 남겼다가
+ * 결과 도착 시 소비한다. `landing` 은 직전 조건이 없는 첫 질의, `other` 는 ref 가 빈 채 결과가 온
+ * 안전망(= ref 를 안 심은 핸들러)이라 기준선에서 0 이어야 한다.
+ */
+type SearchTrigger =
+  | 'submit'
+  | 'suggestion'
+  | 'nearMe'
+  | 'area'
+  | 'region'
+  | 'category'
+  | 'attribute'
+  | 'eventStatus'
+  | 'page'
+  | 'initial'
+  | 'landing'
+  | 'lang'
+  | 'other';
+
+/*
+ * 허브 세션 시작은 세션당 한 번 — 화면 쪽 sessionId(sessionStorage, 탭 수명)와 같은 범위다.
+ * 저장소를 못 쓰면(사파리 프라이빗·용량 초과) 모듈 변수가 대신한다 — 그때는 새로고침마다 1회.
+ */
+const SESSION_STARTED_KEY = 'kgd.place.sessionStarted';
+let sessionStartedFallback = false;
+function claimSessionStart(): boolean {
+  try {
+    if (sessionStorage.getItem(SESSION_STARTED_KEY)) return false;
+    sessionStorage.setItem(SESSION_STARTED_KEY, '1');
+    return true;
+  } catch {
+    if (sessionStartedFallback) return false;
+    sessionStartedFallback = true;
+    return true;
+  }
+}
+
+/** 테스트 전용 — 세션 시작 플래그(저장소·모듈 변수)를 비운다. */
+// eslint-disable-next-line react-refresh/only-export-components -- 테스트 초기화는 이 화면의 모듈 변수를 만져야 한다
+export function resetPlaceSessionForTest(): void {
+  sessionStartedFallback = false;
+  try {
+    sessionStorage.removeItem(SESSION_STARTED_KEY);
+  } catch {
+    /* 저장소가 없으면 모듈 변수만 비운다 */
+  }
+}
+
 export default function PlacePage() {
   useHeritageSurface();
   const { pathname } = useLocation();
@@ -320,6 +372,75 @@ export default function PlacePage() {
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
   });
 
+  /*
+   * 계측 한 벌 (ADR-0095) — 검색 조건이 바뀔 때마다 새 view. 마커 리스너는 ref 로 읽는다:
+   * viewId 를 마커 동기화 effect 의 의존성에 넣으면 쪽을 넘길 때마다 마커를 전부 다시 만든다.
+   */
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- query 가 바뀔 때만 새 한 벌이다
+  const viewId = useMemo(() => newViewId(), [query]);
+  const viewIdRef = useRef(viewId);
+  // 행정구역 전체 코드 — 지역 페이지(PLACE_REGION)와 같은 체계. 시군구가 있으면 시도+시군구, 시도가 없으면 빈 값
+  const screenRef = sidoCode ? sidoCode + (sigunguCode ?? '') : '';
+  const screenRefRef = useRef(screenRef);
+  useEffect(() => {
+    viewIdRef.current = viewId;
+    screenRefRef.current = screenRef;
+  }, [viewId, screenRef]);
+  // 화면을 떠날 때 아직 안 보낸 것을 흘린다 — 그 순간의 fetch 는 취소된다.
+  useEffect(installFlushOnLeave, []);
+  // 허브 세션 시작 — 세션당 한 번. 마운트 시점에는 시도가 없어(자동 선택은 지역 자료 도착 뒤) screenRef 가 빈 값이다.
+  useEffect(() => {
+    if (!claimSessionStart()) return;
+    track('SESSION_START', { entityType: 'PAGE', entityId: 'place-hub', screenType: 'PLACE_HUB', screenRef: '' }, viewIdRef.current);
+  }, []);
+
+  /*
+   * SEARCH 는 결과가 도착한 view 마다 한 번(0건 포함). 무엇이 질의를 바꿨는지는 조작 시점에 ref 로
+   * 남겼다가 여기서 소비한다 — 필드 diff 로 역추론하지 않는다. ref 가 비어 있으면 첫 질의는 `landing`,
+   * 그 뒤는 안전망 `other`. 실패(isError)는 보내지 않는다 — 실패한 제출은 분모가 아니다.
+   * 이 effect 는 자동 시도 선택 effect 보다 앞에 둔다 — 같은 커밋에서 그쪽이 먼저 `initial` 을 심으면
+   * 시도 없는 첫 질의(landing)가 그 값을 가져간다.
+   */
+  const triggerRef = useRef<SearchTrigger | null>(null);
+  const changedRef = useRef<string[]>([]);
+  const sentViewRef = useRef<string | null>(null);
+  const hasSearchedRef = useRef(false);
+  useEffect(() => {
+    if (!data || isError || sentViewRef.current === viewId) return;
+    sentViewRef.current = viewId;
+    const trigger: SearchTrigger = triggerRef.current ?? (hasSearchedRef.current ? 'other' : 'landing');
+    const changed = changedRef.current;
+    triggerRef.current = null;
+    changedRef.current = [];
+    hasSearchedRef.current = true;
+    track(
+      'SEARCH',
+      {
+        entityType: 'SEARCH',
+        entityId: keyword || '*',
+        screenType: 'PLACE_HUB',
+        screenRef,
+        sectionId: 'ATTRACTION_LIST',
+        // 기기 좌표(lat·lng)는 싣지 않는다. 검색어 키는 `keyword` 가 아니라 `term` — Streams 키워드 지표가
+        // `payload.keyword` 로 상품 키워드 점수를 만들므로 허브 검색어가 거기 섞이지 않게 한다.
+        payload: {
+          trigger,
+          changed,
+          term: keyword,
+          category,
+          attributes: [...attributes],
+          sido: sidoCode,
+          sigungu: sigunguCode,
+          radiusKm: geo?.radiusKm,
+          page,
+          total: data.totalElements,
+          correctedKeyword: data.correctedKeyword,
+        },
+      },
+      viewId,
+    );
+  }, [data, isError, viewId, keyword, category, attributes, sidoCode, sigunguCode, geo, page, screenRef]);
+
   // ─── 모바일 무한 스크롤 누적 — page 를 뺀 검색 조건이 바뀌면 처음부터 다시 쌓는다.
   // effect 가 아니라 렌더 중 조정(React 'adjusting state during render')이다 —
   // effect 를 거치면 프레임 하나 늦게 그려지고 set-state-in-effect 계단식 렌더가 된다.
@@ -347,6 +468,8 @@ export default function PlacePage() {
   }
   const facets = facetStore.facets;
   const toggleAttribute = (id: AttributeChipId) => {
+    triggerRef.current = 'attribute';
+    changedRef.current = ['attributes', 'page'];
     setAttributes((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -374,6 +497,8 @@ export default function PlacePage() {
       (entries, obs) => {
         if (!entries.some((e) => e.isIntersecting)) return;
         obs.disconnect(); // 한 번만 — 연타로 여러 페이지를 건너뛰지 않는다
+        triggerRef.current = 'page';
+        changedRef.current = ['page'];
         setPage((p) => nextPage(p, totalPages) ?? p);
       },
       { rootMargin: '480px 0px' },
@@ -416,12 +541,20 @@ export default function PlacePage() {
    */
   const pickingRegion = hasRegionAxis && !sidoCode && !keyword && !geo;
 
-  /** 지역 선택 — 드릴다운 칩과 지도의 시도 마커가 같은 경로를 쓴다. */
+  /**
+   * 지역 선택 — 드릴다운 칩과 지도의 시도 마커가 같은 경로를 쓴다.
+   * `trigger` 는 첫 진입 자동 선택(`initial`)과 사람의 선택(`region`)을 가른다 — 기준선은 전자를 필터 적용에 넣지 않는다.
+   */
   const selectRegion = useCallback(
-    (next: { sidoCode: string | null; sigunguCode: string | null; region?: AdministrativeRegion } | AdministrativeRegion) => {
+    (
+      next: { sidoCode: string | null; sigunguCode: string | null; region?: AdministrativeRegion } | AdministrativeRegion,
+      trigger: 'initial' | 'region',
+    ) => {
       const region = 'level' in next ? next : next.region;
       const nextSido = 'level' in next ? next.code : next.sidoCode;
       const nextSigungu = 'level' in next ? null : next.sigunguCode;
+      triggerRef.current = trigger;
+      changedRef.current = ['sidoCode', 'sigunguCode'];
       setSidoCode(nextSido);
       setSigunguCode(nextSigungu);
       setAreaCode(null);
@@ -455,7 +588,7 @@ export default function PlacePage() {
 
     const pick = (region?: AdministrativeRegion | null) => {
       const target = region ?? regions.find((r) => r.code === DEFAULT_SIDO_CODE) ?? regions[0];
-      if (target) selectRegion(target);
+      if (target) selectRegion(target, 'initial');
     };
     if (!navigator.geolocation) {
       pick(null);
@@ -569,7 +702,7 @@ export default function PlacePage() {
             strokeWeight: 2,
           },
         });
-        marker.addListener('click', () => selectRegion(r));
+        marker.addListener('click', () => selectRegion(r, 'region'));
         markersRef.current.set(r.code, marker);
         bounds.extend({ lat: r.latitude, lng: r.longitude });
       });
@@ -600,7 +733,22 @@ export default function PlacePage() {
         icon: isSelected ? selectedPinIcon() : defaultIcon,
         zIndex: isSelected ? 999 : 1,
       });
-      marker.addListener('click', () => setSelectedId(a.id));
+      // 목록 핀 선택 — 노출 없는 클릭. viewId 는 ref 로 읽는다(이 effect 는 view 마다 돌지 않는다)
+      marker.addListener('click', () => {
+        track(
+          'CLICK',
+          {
+            entityType: 'ATTRACTION',
+            entityId: a.id,
+            screenType: 'PLACE_HUB',
+            screenRef: screenRefRef.current,
+            sectionId: 'ATTRACTION_LIST',
+            payload: { source: 'map' },
+          },
+          viewIdRef.current,
+        );
+        setSelectedId(a.id);
+      });
       markersRef.current.set(a.id, marker);
       markers.push(marker);
       bounds.extend({ lat: a.latitude, lng: a.longitude });
@@ -724,7 +872,22 @@ export default function PlacePage() {
           strokeWeight: 1.5,
         },
       });
-      marker.addListener('click', () => setSelectedId(a.id));
+      // 오버레이 핀 선택 — 목록 밖·노출 없는 클릭이지만 인기 집계에는 들어간다(MAP_OVERLAY)
+      marker.addListener('click', () => {
+        track(
+          'CLICK',
+          {
+            entityType: 'ATTRACTION',
+            entityId: a.id,
+            screenType: 'PLACE_HUB',
+            screenRef: screenRefRef.current,
+            sectionId: 'MAP_OVERLAY',
+            payload: { source: 'map' },
+          },
+          viewIdRef.current,
+        );
+        setSelectedId(a.id);
+      });
       overlayMarkersRef.current.push(marker);
     });
   }, [overlay, overlayData, mapReady]);
@@ -838,6 +1001,8 @@ export default function PlacePage() {
     setShowSuggest(false);
     setKeywordInput(s.title);
     if (s.latitude == null || s.longitude == null) return;
+    triggerRef.current = 'suggestion';
+    changedRef.current = ['geo'];
     setKeyword('');
     setCategory(null);
     setAreaCode(null);
@@ -853,6 +1018,8 @@ export default function PlacePage() {
 
   const runKeywordSearch = useCallback(() => {
     setShowSuggest(false);
+    triggerRef.current = 'submit';
+    changedRef.current = ['keyword'];
     setKeyword(keywordInput.trim());
     setGeo(null);
     setPage(0);
@@ -864,6 +1031,8 @@ export default function PlacePage() {
     const center = map.getCenter();
     const bounds = map.getBounds();
     if (!center || !bounds) return;
+    triggerRef.current = 'area';
+    changedRef.current = ['geo'];
     setGeo({ lat: center.lat(), lng: center.lng(), radiusKm: radiusFromBounds(bounds) });
     setPage(0);
     setMapMoved(false);
@@ -871,6 +1040,8 @@ export default function PlacePage() {
 
   const nearMe = useCallback(() => {
     navigator.geolocation?.getCurrentPosition((pos) => {
+      triggerRef.current = 'nearMe';
+      changedRef.current = ['geo'];
       setGeo({ lat: pos.coords.latitude, lng: pos.coords.longitude, radiusKm: 5 });
       setPage(0);
     });
@@ -879,6 +1050,8 @@ export default function PlacePage() {
   const isPlaceHost = window.location.hostname.split('.')[0] === 'place';
   const switchLang = (next: PlaceLang) => {
     if (next === lang) return;
+    triggerRef.current = 'lang';
+    changedRef.current = ['lang'];
     const base = isPlaceHost ? '' : '/place';
     navigate(next === 'en' ? `/en${base}` : base || '/');
   };
@@ -1022,7 +1195,7 @@ export default function PlacePage() {
             lang={lang}
             sidoCode={sidoCode}
             sigunguCode={sigunguCode}
-            onChange={selectRegion}
+            onChange={(next) => selectRegion(next, 'region')}
             onClose={() => setRegionSheetOpen(false)}
           />
         )}
@@ -1031,6 +1204,8 @@ export default function PlacePage() {
           <button
             className={`place-chip ${category == null ? 'active' : ''}`}
             onClick={() => {
+              triggerRef.current = 'category';
+              changedRef.current = ['category', 'listEventStatus', 'page'];
               setCategory(null);
               setPage(0);
             }}
@@ -1044,6 +1219,8 @@ export default function PlacePage() {
               className={`place-chip ${category === c ? 'active' : ''}`}
               data-category={c}
               onClick={() => {
+                triggerRef.current = 'category';
+                changedRef.current = ['category', 'listEventStatus', 'page'];
                 setCategory(category === c ? null : c);
                 setListEventStatus(null);
                 setPage(0);
@@ -1070,6 +1247,8 @@ export default function PlacePage() {
               className="place-area-select"
               value={areaCode ?? ''}
               onChange={(e) => {
+                triggerRef.current = 'region';
+                changedRef.current = ['areaCode'];
                 setAreaCode(e.target.value || null);
                 setGeo(null);
                 setPage(0);
@@ -1097,6 +1276,8 @@ export default function PlacePage() {
                 aria-pressed={listEventStatus === s}
                 data-event-filter={s}
                 onClick={() => {
+                  triggerRef.current = 'eventStatus';
+                  changedRef.current = ['listEventStatus', 'page'];
                   setListEventStatus(listEventStatus === s ? null : s);
                   setPage(0);
                 }}
@@ -1148,7 +1329,7 @@ export default function PlacePage() {
             sidoCode={sidoCode}
             sigunguCode={sigunguCode}
             origin={geo ? { lat: geo.lat, lng: geo.lng } : null}
-            onChange={selectRegion}
+            onChange={(next) => selectRegion(next, 'region')}
           />
         )}
       </div>
@@ -1178,7 +1359,7 @@ export default function PlacePage() {
               <h2 className="place-subtitle">{L.pickRegion}</h2>
               <p className="place-region-hint">{L.pickRegionHint}</p>
               {(sidoRegions ?? []).map((r) => (
-                <button key={r.code} className="place-card" onClick={() => selectRegion(r)}>
+                <button key={r.code} className="place-card" onClick={() => selectRegion(r, 'region')}>
                   <div className="place-card-body">
                     <h3 className="place-card-title">{(lang === 'en' && r.nameEn) || r.name}</h3>
                     <p className="place-card-addr">
@@ -1197,8 +1378,16 @@ export default function PlacePage() {
               {data?.correctedKeyword && attractions.length > 0 && (
                 <p className="place-corrected" role="status">{L.corrected(data.correctedKeyword)}</p>
               )}
-              {attractions.map((a) => (
-                <PlaceCard key={a.id} attraction={a} lang={lang} onSelect={() => setSelectedId(a.id)} />
+              {attractions.map((a, i) => (
+                <PlaceCard
+                  key={a.id}
+                  attraction={a}
+                  lang={lang}
+                  index={i}
+                  viewId={viewId}
+                  screenRef={screenRef}
+                  onSelect={() => setSelectedId(a.id)}
+                />
               ))}
               {/* 다음 페이지를 기다리는 자리 — 정경 톤 opacity pulse (shimmer 금지) */}
               {isMobile && isLoading && (
@@ -1206,7 +1395,15 @@ export default function PlacePage() {
               )}
               {!isMobile && data && data.totalPages > 1 && (
                 <div className="place-paging">
-                  <button className="place-btn" disabled={page === 0} onClick={() => setPage(page - 1)}>
+                  <button
+                    className="place-btn"
+                    disabled={page === 0}
+                    onClick={() => {
+                      triggerRef.current = 'page';
+                      changedRef.current = ['page'];
+                      setPage(page - 1);
+                    }}
+                  >
                     {L.prev}
                   </button>
                   <span className="place-paging-info">
@@ -1215,7 +1412,11 @@ export default function PlacePage() {
                   <button
                     className="place-btn"
                     disabled={page + 1 >= data.totalPages}
-                    onClick={() => setPage(page + 1)}
+                    onClick={() => {
+                      triggerRef.current = 'page';
+                      changedRef.current = ['page'];
+                      setPage(page + 1);
+                    }}
                   >
                     {L.next}
                   </button>
@@ -1228,7 +1429,11 @@ export default function PlacePage() {
                 ) : (
                   <button
                     className="place-btn place-load-more"
-                    onClick={() => setPage((p) => nextPage(p, data.totalPages) ?? p)}
+                    onClick={() => {
+                      triggerRef.current = 'page';
+                      changedRef.current = ['page'];
+                      setPage((p) => nextPage(p, data.totalPages) ?? p);
+                    }}
                   >
                     {L.loadMore}
                   </button>
@@ -1262,7 +1467,7 @@ export default function PlacePage() {
             <button className="place-detail-close" onClick={() => setSelectedId(null)}>
               {L.close}
             </button>
-            <AttractionDetailBody attraction={selected} lang={lang} />
+            <AttractionDetailBody attraction={selected} lang={lang} viewId={viewId} screenRef={screenRef} />
           </aside>
         )}
       </div>
@@ -1272,7 +1477,7 @@ export default function PlacePage() {
       {selected && isMobile && (
         <KhSheet label={L.attractionLabel} onClose={() => setSelectedId(null)}>
           <div className="place-detail place-detail-sheet" aria-label={selected.title}>
-            <AttractionDetailBody attraction={selected} lang={lang} />
+            <AttractionDetailBody attraction={selected} lang={lang} viewId={viewId} screenRef={screenRef} />
             <AttractionLinks links={selected.links} lang={lang} />
           </div>
         </KhSheet>
@@ -1289,8 +1494,18 @@ export default function PlacePage() {
   );
 }
 
-/** 상세 본문 — 데스크톱 세 번째 열과 모바일 바텀시트가 같은 내용을 그린다. */
-function AttractionDetailBody({ attraction, lang }: { attraction: Attraction; lang: PlaceLang }) {
+/** 상세 본문 — 데스크톱 세 번째 열과 모바일 바텀시트가 같은 내용을 그린다. 계측 한 벌(viewId·지역 코드)은 허브가 넘긴다. */
+function AttractionDetailBody({
+  attraction,
+  lang,
+  viewId,
+  screenRef,
+}: {
+  attraction: Attraction;
+  lang: PlaceLang;
+  viewId: string;
+  screenRef: string;
+}) {
   const L = UI[lang];
   const { primary, secondary } = titleParts(attraction);
   return (
@@ -1301,7 +1516,12 @@ function AttractionDetailBody({ attraction, lang }: { attraction: Attraction; la
       {/* 찜 (ADR-0074) — 제목 오른쪽 별. 데스크톱 열·모바일 시트가 이 본문을 공유하므로 여기 한 번만 둔다 */}
       <div className="favorite-title-row">
         <h2 className="place-detail-title">{primary}</h2>
-        <FavoriteButton type="ATTRACTION" targetKey={attraction.id} lang={lang} />
+        <FavoriteButton
+          type="ATTRACTION"
+          targetKey={attraction.id}
+          lang={lang}
+          tracking={{ screenType: 'PLACE_HUB', screenRef, viewId }}
+        />
       </div>
       {secondary && <p className="place-detail-local">{secondary}</p>}
       {attraction.category && (
@@ -1314,11 +1534,27 @@ function AttractionDetailBody({ attraction, lang }: { attraction: Attraction; la
       <a className="place-btn" href={attractionPath(lang, attraction.id)}>
         {lang === 'en' ? 'Open detail page' : '상세 페이지 열기'}
       </a>
+      {/* 지도 열기 — 선택 뒤 후속 행동이라 노출은 보내지 않는다(TrackedLink 를 쓰지 않는다).
+          기본 동작(새 탭)은 그대로고, 계측이 이동을 막지 않는다 */}
       <a
         className="place-btn primary"
         href={googleMapsSearchUrl(attraction)}
         target="_blank"
         rel="noreferrer"
+        onClick={() =>
+          track(
+            'CLICK',
+            {
+              entityType: 'ATTRACTION',
+              entityId: attraction.id,
+              screenType: 'PLACE_HUB',
+              screenRef,
+              sectionId: 'MAP_LINK',
+              payload: { kind: 'google_maps_search' },
+            },
+            viewId,
+          )
+        }
       >
         {L.openInGoogleMaps}
       </a>
@@ -1329,24 +1565,59 @@ function AttractionDetailBody({ attraction, lang }: { attraction: Attraction; la
 function PlaceCard({
   attraction,
   lang,
+  index,
+  viewId,
+  screenRef,
   onSelect,
 }: {
   attraction: Attraction;
   lang: PlaceLang;
+  /** 목록 순서 — 노출·클릭의 itemIndex */
+  index: number;
+  viewId: string;
+  screenRef: string;
   onSelect: () => void;
 }) {
   const L = UI[lang];
   const { primary, secondary } = titleParts(attraction);
+  // 노출은 그려진 것이 아니라 보인 것(면적 50%·1초)만 — 기준은 useImpression 하나다 (ADR-0095)
+  const impressionRef = useImpression<HTMLAnchorElement>(
+    {
+      entityType: 'ATTRACTION',
+      entityId: attraction.id,
+      screenType: 'PLACE_HUB',
+      screenRef,
+      sectionId: 'ATTRACTION_LIST',
+      itemIndex: index,
+    },
+    viewId,
+  );
   return (
     // 실주소를 가진 링크로 둔다 — 크롤러는 onClick 을 따라가지 못하고, 사용자는 새 탭/공유가 된다.
     // 평범한 좌클릭만 가로채 기존 사이드 패널 UX 를 유지한다.
     // id 는 클러스터 최대 줌에서 "이 무리의 목록 보기" 스크롤 목적지다.
     <a
+      ref={impressionRef}
       id={`place-card-${attraction.id}`}
       className="place-card"
       href={attractionPath(lang, attraction.id)}
       onClick={(e) => {
-        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+        // 수정키 클릭은 기본 동작(새 탭)을 두되 선택으로는 센다 — 가운데 클릭은 click 이 아니라 세지 않는다
+        const newTab = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0;
+        track(
+          'CLICK',
+          {
+            entityType: 'ATTRACTION',
+            entityId: attraction.id,
+            screenType: 'PLACE_HUB',
+            screenRef,
+            sectionId: 'ATTRACTION_LIST',
+            itemIndex: index,
+            payload: newTab ? { source: 'card', newTab: true } : { source: 'card' },
+          },
+          viewId,
+        );
+        if (newTab) return;
         e.preventDefault();
         onSelect();
       }}
@@ -1365,7 +1636,13 @@ function PlaceCard({
       )}
       {/* 찜 — 실주소 <a> 안에 앉지만 클릭은 버튼이 삼켜 카드 이동으로 번지지 않는다 (ADR-0074) */}
       <span className="place-card-favorite">
-        <FavoriteButton type="ATTRACTION" targetKey={attraction.id} compact lang={lang} />
+        <FavoriteButton
+          type="ATTRACTION"
+          targetKey={attraction.id}
+          compact
+          lang={lang}
+          tracking={{ screenType: 'PLACE_HUB', screenRef, viewId }}
+        />
       </span>
       <div className="place-card-body">
         <h3 className="place-card-title">{primary}</h3>
