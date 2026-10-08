@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 /**
- * 게임 단축 주소 `/g/{code}` (ADR-0103).
+ * 게임 단축 주소 `/g/{code}` (ADR-0106).
  *
  * 열 수 있는지는 [Game.isPlayable] 이 정한다 — 공개 상세(`GameQueryService`)와 같은 판정이다.
  * 목적지는 `game.1989v.com/games/{slug}` 이고, 코드는 id 에서 나오므로 슬러그가 바뀌어도 같은 게임으로 간다.

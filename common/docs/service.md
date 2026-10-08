@@ -42,7 +42,7 @@
 | `messaging.outbox` | `OutboxPollingPublisher` | `@Scheduled` (`outbox.polling.interval-ms`, default 1s) 로 PENDING row → Kafka 발행 |
 | `messaging.outbox` | `OutboxMetrics` | Micrometer counters (`outbox_publish_total`, `outbox_publish_error_total`) |
 | `messaging.outbox` | `KgdMessagingOutboxAutoConfiguration` | `@ConditionalOnClass(JpaRepository)` + `outbox.polling.enabled` (default true) — 서비스 application class 가 `@EntityScan` / `@EnableJpaRepositories` 에 `com.kgd.common.messaging.outbox` 패키지를 명시해야 동작 |
-| `shortlink` | `ShortCode` | 공개 콘텐츠 단축 코드 — id(0~2^40−1) 고정 순열 + base62 6~7자. 해석 실패는 `null`. **순열 상수 변경 금지**(퍼진 주소가 깨진다, ADR-0103) |
+| `shortlink` | `ShortCode` | 공개 콘텐츠 단축 코드 — id(0~2^40−1) 고정 순열 + base62 6~7자. 해석 실패는 `null`. **순열 상수 변경 금지**(퍼진 주소가 깨진다, ADR-0106) |
 | `shortlink` | `ShortLinkPrefix` | 단축 주소 접두사 `r`·`p`·`g`·`b` |
 | `shortlink` | `ShortLinkProperties` | `kgd.common.short-link.*` — `origin`(기본 `https://1989v.com`), `resume-origin`·`place-origin`·`game-origin`·`blog-origin`, `expose`(기본 `false`) |
 | `shortlink` | `ShortLinks` | 단축 주소·목적지(경로 세그먼트 인코딩)·서비스 홈 조립. 호스트는 설정에서만 얻고 요청을 받지 않는다 |

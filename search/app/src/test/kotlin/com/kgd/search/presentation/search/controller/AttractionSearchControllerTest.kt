@@ -18,7 +18,7 @@ class AttractionSearchControllerTest : BehaviorSpec({
     val search = mockk<SearchAttractionUseCase>()
     val suggest = mockk<SuggestAttractionUseCase>()
     val nearby = mockk<NearbyAttractionsUseCase>()
-    val mvc = MockMvcBuilders.standaloneSetup(AttractionSearchController(search, suggest, nearby))
+    val mvc = MockMvcBuilders.standaloneSetup(AttractionSearchController(search, suggest, nearby, mockk(relaxed = true)))
         .setControllerAdvice(com.kgd.common.exception.GlobalExceptionHandler())
         .build()
     val json = ObjectMapper()

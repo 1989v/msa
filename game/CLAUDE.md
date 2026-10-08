@@ -85,7 +85,7 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
 | suggestion | GameSuggestion(제안 — OPEN/REVIEWING/APPLIED/DECLINED, 로그인 필수, **쓴 사람만 수정**) + SuggestionReply(제안자·운영자 평면 스레드, `author_type` 은 서버가 결정). 표 둘을 전 게임이 공유 (ADR-0087) |
 | arcade | #23 흡수분 — 세션 구슬(HMAC) · 리플레이 제출 · **Tier A/B 검증**(서버가 결정적 sim 을 재실행해 점수 위조 거부) · Redis 리더보드/데일리 챌린지. API 는 `/api/v1/games/arcade/**` |
 
-## 공유용 단축 주소 (ADR-0103)
+## 공유용 단축 주소 (ADR-0106)
 
 `1989v.com/g/{code}` → `game.1989v.com/games/{slug}` 로 302. `/g/list` 는 서비스 홈. 해석 실패(형식 오류·없음·`Game.isPlayable()` 거짓)도 홈으로 간다.
 - 코드는 게임 id 의 고정 순열(common `ShortCode`) — 매핑 테이블이 없다. **순열 상수는 바꾸지 않는다**(퍼진 주소가 깨진다). 클릭은 `game_short_link_click`(90일) + `game_short_link_stat` — Game 행 카운터 금지 규칙 때문에 별도 집계 테이블이다.

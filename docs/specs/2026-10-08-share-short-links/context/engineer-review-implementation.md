@@ -1,6 +1,6 @@
 # Engineer Review — implementation
 
-- 대상: `docs/specs/2026-10-08-share-short-links/spec.md` (+ `planning/requirements.md`, `planning/test-quality.md`, `context/open-questions.yml`, `docs/adr/ADR-0103-share-short-links.md`)
+- 대상: `docs/specs/2026-10-08-share-short-links/spec.md` (+ `planning/requirements.md`, `planning/test-quality.md`, `context/open-questions.yml`, `docs/adr/ADR-0106-share-short-links.md`)
 - 차원: implementation (구현 가능성 · 기존 코드 충돌 · 복잡도 · NFR · 마이그레이션/롤백 · 동시성)
 - 날짜: 2026-10-08
 - KB 조회(`HNS_KB_PATH` 볼트 `wiki/`): 단축 링크·base62·리다이렉터 관련 개념 페이지는 없다. 원칙 페이지 [[yagni]] · [[kiss]] · [[premature-optimization]] 를 판정 기준으로 썼다.
@@ -18,12 +18,12 @@ apex 인그레스에는 `/r` `/p` `/g` `/b` 와 겹치는 규칙이 없다(`comm
 
 ### B1. 이력서 클릭 원장이 ADR-0064 의 수집 범위를 넘는다 — 체크 #2
 
-- **스펙 결정**: `spec.md` SR-6:67 — "도메인마다 클릭 원장 테이블 하나를 둔다. 필드는 대상 id, 시각, **리퍼러 호스트, UA 계열**". SR-6:70 은 그런 원장을 네 개(r 포함) 둔다고 적는다. `ADR-0103.md:42` 도 같은 결정이다.
+- **스펙 결정**: `spec.md` SR-6:67 — "도메인마다 클릭 원장 테이블 하나를 둔다. 필드는 대상 id, 시각, **리퍼러 호스트, UA 계열**". SR-6:70 은 그런 원장을 네 개(r 포함) 둔다고 적는다. `ADR-0106.md:42` 도 같은 결정이다.
 - **충돌 문서·코드**:
   - `docs/adr/ADR-0064-resume-site-gated-serving.md:87-89`: "수집 범위는 **토큰·경로·시각**으로 한정한다. 쿠키 기반 방문자 식별이나 referer/UA 수집은 하지 않는다"
   - `code-dictionary/feature/src/main/resources/codedictionarydb/migration/V6__resume.sql:32`: "referer/UA/쿠키 미수집"
   - `portal-fe/src/pages/PrivacyPage.tsx:56-58`: 이력서 호스트는 "광고도 분석 도구도 싣지 않"는 예외로 고지돼 있다.
-  - ADR-0103 의 "관련"(`:4`)에는 ADR-0064 가 있지만, 이 수집 범위를 개정한다는 문장은 없다.
+  - ADR-0106 의 "관련"(`:4`)에는 ADR-0064 가 있지만, 이 수집 범위를 개정한다는 문장은 없다.
 - **사람 판단이 필요한 이유**: 개인정보 고지 범위를 바꾸는 결정이다. 고를 수 있는 안은 셋이다.
   1. (권고) **이력서 단축 원장을 두지 않는다.** 제출처 링크별 열람 수는 이미 `resume_access_log` 가 센다(`ResumeAdminService.kt:62-75` `visitCount`, 보존 365일 `RetentionRunner.kt:70`). 단축 경유 여부까지 알아야 한다는 요구는 스펙에 없다(User Story 4 는 "몇 번 들어왔는지"). [[yagni]]
   2. 이력서 원장만 `share_link_id`·시각으로 줄인다. 리퍼러와 UA 는 빼고, 보존기간은 `resume_access_log` 와 같은 365일로 맞출지도 함께 정한다.
@@ -104,16 +104,16 @@ VERDICT: BLOCK
 ## Round 2
 
 - 날짜: 2026-10-08
-- 대상: 개정된 `spec.md`, `planning/test-quality.md`, `context/review-verdict.md`(C1–C26 매핑), `ADR-0103-share-short-links.md`
+- 대상: 개정된 `spec.md`, `planning/test-quality.md`, `context/review-verdict.md`(C1–C26 매핑), `ADR-0106-share-short-links.md`
 - 아래 줄 번호는 개정본 `spec.md` 기준이다.
 
 ### 1차 지적 해소 여부
 
 | 1차 | 판정 | 개정 스펙 근거 |
 |---|---|---|
-| B1 이력서 원장이 ADR-0064 범위 초과 | **해소** | SR-6:82 "원장 필드는 링크 id 와 시각뿐이다. 리퍼러·UA 는 모으지 않는다… 365일", `ADR-0103.md:44`. 1차 제시안 2번 채택. SR-6:89 가 `/privacy` §2 에서 이력서를 제외한다. |
+| B1 이력서 원장이 ADR-0064 범위 초과 | **해소** | SR-6:82 "원장 필드는 링크 id 와 시각뿐이다. 리퍼러·UA 는 모으지 않는다… 365일", `ADR-0106.md:44`. 1차 제시안 2번 채택. SR-6:89 가 `/privacy` §2 에서 이력서를 제외한다. |
 | R1 `copyGameLink` | **해소** | SR-5:74, `test-quality.md:23` |
-| R2 대상 행 카운터 | **해소** | SR-6:84-85 별도 집계 테이블 + `INSERT … ON DUPLICATE KEY UPDATE`, `ADR-0103.md:43` |
+| R2 대상 행 카운터 | **해소** | SR-6:84-85 별도 집계 테이블 + `INSERT … ON DUPLICATE KEY UPDATE`, `ADR-0106.md:43` |
 | R3 상세 API 위치·언어 | **해소** | SR-5:68-70(search:app 응답 조립 시 계산, 색인 무변경), SR-1:22(`/en/attractions/{id}`), `test-quality.md:18,21`. 확인: search 문서 id 는 place id 를 문자열로 바꾼 값이다(`AttractionApiReindexTasklet.kt:103`). 다만 `status` 부분은 반영하지 않았다(C26 demote). 근거 문장이 사실과 달라 아래 N2 로 다시 올린다. |
 | R4 백필·롤백 | **해소** | SR-3:40-45. 앱 생성은 `SecureRandom`, 백필은 `RANDOM_BYTES()`, 같은 마이그레이션에서 `NOT NULL`·`UNIQUE` 설정, 형식 검사는 `ResumeShareLink` 생성·복원 시점, 롤백 시 링크 생성 불가 명시. 실현 가능성 확인: atlas 테스트 컨테이너가 `mysql:8.0.33` 이고(`AtlasContextLoadSpec.kt:104`) H2 를 쓰지 않으므로 `RANDOM_BYTES()` 가 테스트 게이트에서도 돈다. |
 | R5 리미터·디코더 경계 | **부분 해소** | 디코더: SR-2:35-36, `test-quality.md:8,10` 해소. 리미터: SR-4:63 에 넣었지만 설정 문구가 서로 맞지 않는다. 아래 N1. |

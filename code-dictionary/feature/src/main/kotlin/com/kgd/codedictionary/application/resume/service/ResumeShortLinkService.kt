@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 /**
- * 이력서 단축 주소 `/r/{code}` (ADR-0103).
+ * 이력서 단축 주소 `/r/{code}` (ADR-0106).
  *
  * 열 수 있는지는 [ResumeShareLink.isUsable] 이 정한다 — 토큰 게이트와 같은 판정이다.
  * 목적지는 `resume.1989v.com/?k={token}` 이고, 공개 토글이 꺼져 있어도 토큰이 있으니 열린다.

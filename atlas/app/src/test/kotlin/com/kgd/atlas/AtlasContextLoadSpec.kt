@@ -146,7 +146,7 @@ class AtlasContextLoadSpec(
             .config(enabledIf = { dockerAvailable }) {
                 val jdbc = jdbc(ctx)
                 jdbc.queryForObject(
-                    "SELECT success FROM flyway_schema_history WHERE version = '22'",
+                    "SELECT success FROM flyway_schema_history WHERE version = '31'",
                     Boolean::class.java,
                 ) shouldBe true
                 jdbc.queryForObject(

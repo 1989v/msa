@@ -1,6 +1,6 @@
 # 보안 리뷰 — 공유용 단축 링크
 
-- 대상: `spec.md`, `planning/requirements.md`, `context/open-questions.yml`, `docs/adr/ADR-0103-share-short-links.md`
+- 대상: `spec.md`, `planning/requirements.md`, `context/open-questions.yml`, `docs/adr/ADR-0106-share-short-links.md`
 - 차원: security (`hns/0.16.1/skills/spec-review/reviewers/security/checklist.md`)
 - 기준 문서: ADR-0064(이력서 게이트), ADR-0089(비밀 게임), ADR-0077(원장 보존), `/privacy`(`portal-fe/src/pages/PrivacyPage.tsx`)
 - 지식베이스: 볼트 `1989v/wiki` 에서 open redirect·단축 링크·base62·열거·bearer 키워드로 찾았다. 직접 해당하는 개념 페이지는 없었고, [[gate-failure-modes]] ④(기대값이 대상과 같은 곳에서 온다)만 R3 에 적용했다.
@@ -21,11 +21,11 @@
 
 | 항목 | 판정 | 근거 |
 |---|---|---|
-| 위협 모델링 (STRIDE) | 부분 | 아래 STRIDE 표. 스펙에 명시적 위협 모델은 없지만 공개 판정·이력서 예외(ADR-0103 §3)가 핵심 위협을 다룬다 |
+| 위협 모델링 (STRIDE) | 부분 | 아래 STRIDE 표. 스펙에 명시적 위협 모델은 없지만 공개 판정·이력서 예외(ADR-0106 §3)가 핵심 위협을 다룬다 |
 | 인증/인가 경계 | 통과 (B1·R3 제외) | 단축 경로는 전부 익명. 권한은 이력서 코드(약 59비트, `spec.md:38`)와 각 도메인 공개 판정(`spec.md:49-51`)이 진다 |
 | 민감 데이터 흐름 | **실패** | B1, R4 |
 | 입력 검증 바운더리 | 부분 | 디코더 문자·길이 검증(`spec.md:33`)은 충분. 출력 쪽(`Location` 조립)이 R2 |
-| 서비스 간 통신 | 통과 | 해석은 대상 도메인 안에서 끝난다, 교차 호출 없음 (`spec.md:45-46`, ADR-0103:37) |
+| 서비스 간 통신 | 통과 | 해석은 대상 도메인 안에서 끝난다, 교차 호출 없음 (`spec.md:45-46`, ADR-0106:37) |
 | 시크릿/크리덴셜 관리 | 부분 | 순열은 비밀이 아니라고 명시(`spec.md:30`)한 판단은 맞다. 이력서 코드 백필이 R1 |
 | 암호화/해싱 | 통과 | 새 저장 비밀값 없음. 이력서 코드는 기존 토큰과 같은 평문 저장 정책(`ResumeShareLink.kt:14`)을 따른다 |
 | 감사 로깅 | 부분 | 해석 결과 debug 로그(`spec.md:76`)는 있으나 필드 규칙이 없다 — R4 |
@@ -47,7 +47,7 @@
 
 ### B1 [BLOCK] 이력서 단축 클릭 원장이 ADR-0064 열람 추적 범위를 넘는다 — 체크 3
 
-- **스펙 결정**: `spec.md:67` 「도메인마다 클릭 원장 테이블 하나를 둔다. 필드는 대상 id, 시각, 리퍼러 호스트, UA 계열이다」 — `r` 이 포함된다(`spec.md:45`, ADR-0103:42 「각 도메인 DB 에 하나씩」).
+- **스펙 결정**: `spec.md:67` 「도메인마다 클릭 원장 테이블 하나를 둔다. 필드는 대상 id, 시각, 리퍼러 호스트, UA 계열이다」 — `r` 이 포함된다(`spec.md:45`, ADR-0106:42 「각 도메인 DB 에 하나씩」).
 - **위반하는 문서**:
   - `docs/adr/ADR-0064-resume-site-gated-serving.md:87-89` 「수집 범위는 토큰·경로·시각으로 한정한다. 쿠키 기반 방문자 식별이나 referer/UA 수집은 하지 않는다」.
   - `portal-fe/src/pages/PrivacyPage.tsx:255-257` 「어떤 공유 링크가 언제 열렸는지만 남고, 열람한 사람을 식별하는 정보는 기록하지 않습니다」. 공개 방침이다.
@@ -100,7 +100,7 @@
 
 ## 통과로 본 것
 
-- 공개 대상(p·g·b) 코드 열거: 순열이 비밀이 아니고 대상이 원래 공개라 새로 노출되는 것이 없다(ADR-0103:26). 실패 응답이 하나라 「대상 없음」과 「비공개」를 구분할 수 없다(`spec.md:52`). `game/CLAUDE.md` 「DRAFT/REVIEW/SUSPENDED 는 NOT_FOUND (존재 여부 은닉)」과 같은 효과다.
+- 공개 대상(p·g·b) 코드 열거: 순열이 비밀이 아니고 대상이 원래 공개라 새로 노출되는 것이 없다(ADR-0106:26). 실패 응답이 하나라 「대상 없음」과 「비공개」를 구분할 수 없다(`spec.md:52`). `game/CLAUDE.md` 「DRAFT/REVIEW/SUSPENDED 는 NOT_FOUND (존재 여부 은닉)」과 같은 효과다.
 - 이력서 실패 응답: 철회·없음 모두 resume 홈으로 간다. `TOKEN_ONLY` 이면 홈이 게이트 화면이다(`open-questions.yml:9`). ADR-0064:53-59 의 「폐기·미존재 → 404, 존재 은닉」과 결과가 같다.
 - 응답 헤더 `no-store`·`noindex, nofollow`(`spec.md:47-48`): 302 캐시로 철회 뒤에도 토큰 주소로 가는 경로를 막는다.
 - IP 비저장(`spec.md:67`), 보존 90일 CronJob 편입(`spec.md:70`, ADR-0077:63-64 「앞으로 생길 원장 정리는 전부 여기 모은다」).
@@ -110,13 +110,13 @@ VERDICT: BLOCK
 
 ## Round 2 (2026-10-08)
 
-대상: 개정 `spec.md`, `planning/test-quality.md`, `context/review-verdict.md`, `docs/adr/ADR-0103-share-short-links.md`. 아래 줄 번호는 개정 `spec.md` 기준이다.
+대상: 개정 `spec.md`, `planning/test-quality.md`, `context/review-verdict.md`, `docs/adr/ADR-0106-share-short-links.md`. 아래 줄 번호는 개정 `spec.md` 기준이다.
 
 ### 1차 지적 종결 확인
 
 | # | 상태 | 근거 |
 |---|---|---|
-| B1 | 종결 | `spec.md:82` 「이력서(r): 원장 필드는 링크 id 와 시각뿐이다. 리퍼러·UA 는 모으지 않는다(ADR-0064 수집 범위). 보존은 … 365일」. ADR-0103:44 도 같다. ADR-0064:87-89 범위 안이고 `/privacy` §6 이력서 문장(「어떤 공유 링크가 언제 열렸는지만」)과도 맞는다 |
+| B1 | 종결 | `spec.md:82` 「이력서(r): 원장 필드는 링크 id 와 시각뿐이다. 리퍼러·UA 는 모으지 않는다(ADR-0064 수집 범위). 보존은 … 365일」. ADR-0106:44 도 같다. ADR-0064:87-89 범위 안이고 `/privacy` §6 이력서 문장(「어떤 공유 링크가 언제 열렸는지만」)과도 맞는다 |
 | R1 | 종결 | `spec.md:43-44` — `RANDOM_BYTES()`, `RAND()`·`UUID()` 금지, 같은 마이그레이션에서 `NOT NULL`·`UNIQUE`. 형식 검사는 엔티티 복원 시점(`spec.md:42`)이라 백필 값이 10자 base62 가 아니면 로드에서 드러난다 |
 | R2 | 종결 | `spec.md:24` origin 은 설정값에서만, `Host`·`X-Forwarded-Host` 금지. `spec.md:23` slug 경로 세그먼트 인코딩, `spec.md:60` 쿼리 미전달. 검증은 `test-quality.md:19` |
 | R3 | 종결 | `spec.md:54-56` 도메인 함수 호출, 상태 목록 재기재 금지. `Game.isPlayable()`(`Game.kt:153`)은 공개 상세가 실제로 쓰는 판정(`GameQueryService.kt:170`)과 같다. 검증은 상태 전수 대조(`test-quality.md:14`) |
@@ -144,7 +144,7 @@ VERDICT: REVISE
 
 ## Round 3 (2026-10-08)
 
-대상: 개정 `spec.md`, `planning/test-quality.md`, `docs/adr/ADR-0103-share-short-links.md`. 줄 번호는 3차 개정 `spec.md` 기준이다. 범위는 N1 종결 확인과 이번 개정으로 새로 생긴 문장뿐이다.
+대상: 개정 `spec.md`, `planning/test-quality.md`, `docs/adr/ADR-0106-share-short-links.md`. 줄 번호는 3차 개정 `spec.md` 기준이다. 범위는 N1 종결 확인과 이번 개정으로 새로 생긴 문장뿐이다.
 
 ### N1 종결 확인
 

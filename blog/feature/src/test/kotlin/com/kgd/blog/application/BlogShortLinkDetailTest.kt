@@ -16,6 +16,7 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
+import com.kgd.blog.application.post.port.BlogPostConceptRepositoryPort
 import io.mockk.every
 import io.mockk.mockk
 import java.time.LocalDateTime
@@ -37,9 +38,11 @@ class BlogShortLinkDetailTest : BehaviorSpec({
         )
         every { profiles.findById(any()) } returns null
         every { categories.findById(any()) } returns null
+        val concepts = mockk<BlogPostConceptRepositoryPort>()
+        every { concepts.findConceptIds(any()) } returns emptyList()
         return BlogQueryService(
             posts, categories, profiles, mockk(), mockk(),
-            BlogAssembler(profiles, categories), shortLinks,
+            BlogAssembler(profiles, categories), concepts, shortLinks,
         )
     }
 

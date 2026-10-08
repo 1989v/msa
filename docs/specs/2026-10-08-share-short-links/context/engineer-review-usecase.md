@@ -1,6 +1,6 @@
 # Engineer Review — usecase
 
-- 대상: `docs/specs/2026-10-08-share-short-links/spec.md` (+ `planning/requirements.md`, `planning/initialization.md`, `planning/test-quality.md`, `context/open-questions.yml`, `docs/adr/ADR-0103-share-short-links.md`)
+- 대상: `docs/specs/2026-10-08-share-short-links/spec.md` (+ `planning/requirements.md`, `planning/initialization.md`, `planning/test-quality.md`, `context/open-questions.yml`, `docs/adr/ADR-0106-share-short-links.md`)
 - 차원: usecase (액터·흐름·전후조건·AC 추적·엣지 케이스·테스트 매핑)
 - 일자: 2026-10-08
 - KB 조회: 볼트 `1989v` 에서 단축 링크·base62·리다이렉트 개념 페이지는 없음. 클릭 원장 규율은 [[anonymous-identity-headers]] (vault, 2026-10 기준) §「조회수 — 원장이 진실, 카운터는 파생」(L159-170)을 표준으로 참조 — 「집계 실패가 본문을 막지 않는다」·「봇 UA 는 세지 않는다」 두 규칙은 스펙 SR-6 과 일치한다.
@@ -51,14 +51,14 @@
 
 ### U5. 해석기 다운과 배포 순서에 대한 예외 흐름·전제가 없다 (Check 2·3)
 
-- 스펙: 실패 시 목록으로 302 하는 이유는 「받은 사람이 빈 화면을 보지 않게」다 (ADR-0103-share-short-links.md:38, open-questions.yml:7). 운영 확인은 배포 후 실측뿐이다 (spec.md:77).
+- 스펙: 실패 시 목록으로 302 하는 이유는 「받은 사람이 빈 화면을 보지 않게」다 (ADR-0106-share-short-links.md:38, open-questions.yml:7). 운영 확인은 배포 후 실측뿐이다 (spec.md:77).
 - 문서: 게이트웨이는 업스트림이 죽어도 **200 + 빈 바디**를 내린다 (`gateway/CLAUDE.md:28`). `/p` `/g` `/b` 는 content 한 파드로 간다 (spec.md:45, `GatewayRouteConfig.kt:26`).
 - 영향: content 가 내려가면 세 종류 단축 주소가 전부 빈 흰 화면이 된다 — ADR 이 피하려던 바로 그 상태다. 또 `shortUrl` 을 내는 상세 API 가 게이트웨이·인그레스 경로보다 먼저 배포되면, 그 사이 공유된 주소는 apex `/` → portal-fe 로 떨어진다 (`k8s/overlays/oci-arm/ingresses/commerce-platform.yaml:84-86`).
 - 수정안: SR-7 또는 Out of Scope 에 「해석 파드가 내려가면 빈 응답이 나간다 — 이번 범위에서 받아들인다」 또는 대응(예: portal-fe 가 `/r|p|g|b/*` 를 받으면 `list` 로 보내는 폴백)을 명시한다. 「`shortUrl` 노출(SR-5)은 해석 경로(SR-4) 배포·실측 뒤에 켠다」를 전제로 적는다.
 
 ### U6. 테스트 전략이 SR 과 이어지지 않고, 순열을 고정하는 검사가 없다 (Check 4·6)
 
-- 순열 고정: ADR 은 「순열 상수를 바꾸면 이미 퍼진 단축 주소가 전부 깨진다. 순열 상수는 바꾸지 않는다」고 한다 (ADR-0103-share-short-links.md:50). 테스트는 왕복·충돌 없음뿐이다 (test-quality.md:7-8). 왕복 검사는 인코더·디코더가 같이 바뀌면 통과하므로 이 결정을 지키지 못한다. **고정 입력→고정 출력 골든 벡터**(예: id 1, 2, 2^40−1 의 기대 코드 문자열)를 넣어야 상수를 바꿨을 때 빨간불이 난다.
+- 순열 고정: ADR 은 「순열 상수를 바꾸면 이미 퍼진 단축 주소가 전부 깨진다. 순열 상수는 바꾸지 않는다」고 한다 (ADR-0106-share-short-links.md:50). 테스트는 왕복·충돌 없음뿐이다 (test-quality.md:7-8). 왕복 검사는 인코더·디코더가 같이 바뀌면 통과하므로 이 결정을 지키지 못한다. **고정 입력→고정 출력 골든 벡터**(예: id 1, 2, 2^40−1 의 기대 코드 문자열)를 넣어야 상수를 바꿨을 때 빨간불이 난다.
 - 범위 불일치: test-quality.md:7 「Long 상한 근처」 ↔ spec.md:34 「0 ~ 2^40−1, 범위를 넘는 id 는 인코딩을 거부」. 2^40 거부 케이스가 테스트 표에 없다.
 - 문구 오류: test-quality.md:11 「비공개·비공개 상태 게임」. 비밀 게임(ADR-0089)은 카탈로그 행 자체가 없어 코드가 생기지 않는다 (`game/CLAUDE.md:172`). 테스트 대상은 DRAFT·REVIEW·SUSPENDED 다 (`game/CLAUDE.md:197`). SR-4 「비공개 게임의 입장 게이트는 목적지 페이지가 처리한다」 (spec.md:50)도 같은 이유로 해당 사례가 없다.
 - 누락 행:
@@ -106,7 +106,7 @@ VERDICT: REVISE
 
 - 스펙: SR-4 가 `/r` `/p` `/g` `/b` 에 `requestRateLimiter` 를 건다(spec.md:62-63). 실패 흐름은 「모두 list 로 302」(spec.md:58)인데, 리미터 거절은 도메인에 닿기 전에 게이트웨이가 429 로 끝낸다.
 - 코드: 같은 설정의 리미터는 `RedisRateLimiter(100, 200, 1)`(`gateway/.../RateLimiterConfig.kt:42`), 키는 `X-User-Id` 없으면 `remoteAddress`(`RateLimiterConfig.kt:24-29`) — 인증 필터가 없는 경로라 IP 키다.
-- 영향: 수신자가 429 를 받으면 「빈 화면을 보지 않게」 원칙(ADR-0103 §실패 처리)의 예외가 하나 더 생긴다. 한도가 초당 100이라 실제로 걸릴 가능성은 낮다.
+- 영향: 수신자가 429 를 받으면 「빈 화면을 보지 않게」 원칙(ADR-0106 §실패 처리)의 예외가 하나 더 생긴다. 한도가 초당 100이라 실제로 걸릴 가능성은 낮다.
 - 수정안(선택): SR-8 「감수하는 한계」에 「리미터 초과 시 429 — list 로 보내지 않는다」 한 줄. 스펙을 다시 돌릴 사유는 아니다.
 
 ### 판정

@@ -101,7 +101,7 @@ charset 이 latin1 이라 리터럴로 넣으면 조용히 이중 인코딩된�
 - `blog/feature` 의 `BlogSeoCopy` 는 `portal-fe/src/seo/copy.mjs` 와 **쌍**이다 — 문구는 함께 고친다
 - NetworkPolicy `18-allow-blog-shell-fetch` 가 없으면 셸 페치가 막혀 전부 최소 HTML 로 떨어진다
 
-## 공유용 단축 주소 (ADR-0103)
+## 공유용 단축 주소 (ADR-0106)
 
 `1989v.com/b/{code}` → `blog.1989v.com/posts/{slug}` 로 302. `/b/list` 는 서비스 홈. 해석 실패(형식 오류·없음·`PostStatus.publiclyVisible` 거짓)도 홈으로 간다.
 - 코드는 글 id 의 고정 순열(common `ShortCode`). 클릭은 `blog_short_link_click`(90일) + `blog_short_link_stat`. 기록은 `blogTransactionManager` + `REQUIRES_NEW` — 한정자가 빠지면 content 의 기본 datasource(place)에 붙어 조용히 사라진다.

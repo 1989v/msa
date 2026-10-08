@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController
 private val log = KotlinLogging.logger {}
 
 /**
- * 이력서 단축 주소 `1989v.com/r/{code}` (ADR-0103).
+ * 이력서 단축 주소 `1989v.com/r/{code}` (ADR-0106).
  *
  * `/api` 밖 경로인 이유는 이 주소가 지원서·메신저로 공유되기 때문이다. 게이트웨이가 접두사를 떼지 않고 넘긴다.
  *

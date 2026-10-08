@@ -4,6 +4,7 @@ import com.kgd.common.shortlink.ShortCode
 import com.kgd.common.shortlink.ShortLinkProperties
 import com.kgd.common.shortlink.ShortLinks
 import com.kgd.search.application.attraction.service.AttractionShortUrlService
+import com.kgd.search.application.attraction.usecase.NearbyAttractionsUseCase
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 import com.kgd.search.application.attraction.usecase.SuggestAttractionUseCase
 import com.kgd.search.presentation.search.controller.AttractionSearchController
@@ -32,11 +33,11 @@ class AttractionSearchControllerShortUrlTest : BehaviorSpec({
             latitude = 37.5788, longitude = 126.9770,
         )
         val shortUrl = AttractionShortUrlService(ShortLinks(ShortLinkProperties(expose = expose)))
-        return AttractionSearchController(search, mockk<SuggestAttractionUseCase>(), shortUrl)
+        return AttractionSearchController(search, mockk<SuggestAttractionUseCase>(), mockk<NearbyAttractionsUseCase>(), shortUrl)
     }
 
     fun AttractionSearchController.detailJson(id: String = "4321"): JsonNode =
-        json.readTree(json.writeValueAsString(findById(id))).get("data")
+        json.readTree(json.writeValueAsString(findById(id).body)).get("data")
 
     fun JsonNode.hasNoShortUrl(): Boolean = path("shortUrl").let { it.isNull || it.isMissingNode }
 

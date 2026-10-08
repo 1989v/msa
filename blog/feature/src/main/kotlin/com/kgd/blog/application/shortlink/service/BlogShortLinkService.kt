@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 /**
- * 블로그 글 단축 주소 `/b/{code}` (ADR-0103).
+ * 블로그 글 단축 주소 `/b/{code}` (ADR-0106).
  *
  * 열 수 있는지는 [PostStatus.publiclyVisible] 이 정한다. 목적지는 `blog.1989v.com/posts/{slug}` 이고,
  * 코드는 글 id 에서 나오므로 슬러그와 무관하다.

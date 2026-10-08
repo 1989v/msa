@@ -1,13 +1,13 @@
 # Engineer Review — Domain
 
-- 대상: `docs/specs/2026-10-08-share-short-links/spec.md` (+ `planning/requirements.md`, `context/open-questions.yml`, `docs/adr/ADR-0103-share-short-links.md`)
+- 대상: `docs/specs/2026-10-08-share-short-links/spec.md` (+ `planning/requirements.md`, `context/open-questions.yml`, `docs/adr/ADR-0106-share-short-links.md`)
 - 차원: domain (체크리스트 `hns/0.16.1/skills/spec-review/reviewers/domain/checklist.md`)
 - 일자: 2026-10-08
 - KB 기준(개념 페이지, 1989v 볼트): [[dry]] · [[modular-monolith-fold]] · [[external-data-ingestion-rules]]
 
 ## Seed Discovery
 
-1. 스펙·요구사항·열린 질문·ADR-0103 전문
+1. 스펙·요구사항·열린 질문·ADR-0106 전문
 2. 같은 폴더: `planning/*`, `context/open-questions.yml` (Q1~Q3 closed)
 3. 표준: `docs/context-map.md`, `blog/glossary.md`, `code-dictionary/glossary.md`, `game/CLAUDE.md`, `place/CLAUDE.md`, `blog/CLAUDE.md`, ADR-0064/0077/0089
 4. 코드: `ResumeShareLink.kt`, `ResumeAccessPolicy.kt`, `ResumeAdminService.kt`, `V6__resume.sql`, `Game.kt`, `GameCatalogAdapters.kt`, `GameQueryService.kt`, `BlogEnums.kt`, `BlogQueryService.kt`, `Attraction.kt`, `AttractionRepositoryAdapter.kt`, `AttractionPage.tsx`, `content/app/build.gradle.kts`, `atlas/app/build.gradle.kts`
@@ -16,7 +16,7 @@
 
 | # | 항목 | 판정 | 근거 |
 |---|---|---|---|
-| C1 | BC 경계 명확·누수 없음 | 통과 | 해석을 대상 도메인이 각자 한다(spec.md:45-46, ADR-0103:33-37). 폴드 위치가 실제와 맞다 — `content/app/build.gradle.kts:13-16`(place·game·blog), `atlas/app/build.gradle.kts:10`(code-dictionary=resume). 원장을 도메인별로 두는 결정(spec.md:67)은 [[modular-monolith-fold]] 「원장·배치는 그것을 아는 도메인 모듈에 둔다」와 맞다 |
+| C1 | BC 경계 명확·누수 없음 | 통과 | 해석을 대상 도메인이 각자 한다(spec.md:45-46, ADR-0106:33-37). 폴드 위치가 실제와 맞다 — `content/app/build.gradle.kts:13-16`(place·game·blog), `atlas/app/build.gradle.kts:10`(code-dictionary=resume). 원장을 도메인별로 두는 결정(spec.md:67)은 [[modular-monolith-fold]] 「원장·배치는 그것을 아는 도메인 모듈에 둔다」와 맞다 |
 | C2 | Glossary 존재 | **미흡** | D1 |
 | C3 | 스펙 어휘 ↔ glossary | **미흡** | D1 (신조어 미등재) |
 | C4 | `Avoid:` 동의어 미사용 | **미흡** | D2 |
@@ -45,9 +45,9 @@
 
 ### D3. 「철회」 ↔ 코드·ADR 의 「폐기」 — REVISE
 
-- 스펙: 「철회한 링크」(spec.md:40), 「철회되지 않은 링크만」(spec.md:51), 「철회」(spec.md:52), 「철회로만 끈다」(spec.md:98). ADR-0103:31 도 같은 말을 쓴다.
+- 스펙: 「철회한 링크」(spec.md:40), 「철회되지 않은 링크만」(spec.md:51), 「철회」(spec.md:52), 「철회로만 끈다」(spec.md:98). ADR-0106:31 도 같은 말을 쓴다.
 - 기존 어휘: `ResumeShareLink.kt:21` 「폐기되지 않았으면 열람 가능」, `ADR-0064-resume-site-gated-serving.md:53` 「폐기·미존재 토큰」, `:102` 「발급/폐기 시각」, 코드 메서드 `revokeShareLink`(`ResumeAdminService.kt:86`), 컬럼 `revokedAt`.
-- 한 개념에 두 이름이 생긴다. 수정: 스펙과 ADR-0103 의 「철회」를 「폐기」로 바꾼다.
+- 한 개념에 두 이름이 생긴다. 수정: 스펙과 ADR-0106 의 「철회」를 「폐기」로 바꾼다.
 
 ### D4. 「비공개 게임」 경로는 존재하지 않는다 — REVISE
 
@@ -110,7 +110,7 @@ VERDICT: REVISE
 ## Round 2
 
 - 일자: 2026-10-08
-- 대상: 개정 spec.md, `context/review-verdict.md`(C1~C26 매핑), ADR-0103
+- 대상: 개정 spec.md, `context/review-verdict.md`(C1~C26 매핑), ADR-0106
 - 1차 줄 번호는 개정 전 기준이다. 아래 줄 번호는 개정본 기준이다.
 
 ### 1차 발견 해소 여부
@@ -129,17 +129,17 @@ VERDICT: REVISE
 
 ### 개정이 새로 만든 이슈
 
-#### N1. 스펙은 「폐기」, ADR-0103 은 여전히 「철회」 — MINOR
+#### N1. 스펙은 「폐기」, ADR-0106 은 여전히 「철회」 — MINOR
 
 - D3 자체는 C24 로 기각됐으므로 재제기하지 않는다. 새로 생긴 것은 **스펙과 ADR 사이의 불일치**다.
 - 스펙: spec.md:46 「폐기(`revoke`)한 링크의 코드는 해석에 실패한다」, :126 「폐기로만 끈다」.
-- ADR: `docs/adr/ADR-0103-share-short-links.md:31` 「철회한 링크의 코드는 해석에 실패한다」.
-- 같은 결정을 두 문서가 다른 이름으로 적는다. 수정: ADR-0103:31 의 「철회한」을 「폐기한」으로 바꾼다.
+- ADR: `docs/adr/ADR-0106-share-short-links.md:31` 「철회한 링크의 코드는 해석에 실패한다」.
+- 같은 결정을 두 문서가 다른 이름으로 적는다. 수정: ADR-0106:31 의 「철회한」을 「폐기한」으로 바꾼다.
 
-#### N2. ADR-0103 관련 목록의 ADR-0089 이름 — MINOR
+#### N2. ADR-0106 관련 목록의 ADR-0089 이름 — MINOR
 
 - 스펙은 「비밀 게임(ADR-0089)」으로 고쳤다(spec.md:57). ADR-0089 제목도 「비밀 게임」이다(`ADR-0089-private-games.md:3`).
-- ADR-0103:4 는 「ADR-0089(비공개 게임)」으로 남아 있다. 수정: 「ADR-0089(비밀 게임)」.
+- ADR-0106:4 는 「ADR-0089(비공개 게임)」으로 남아 있다. 수정: 「ADR-0089(비밀 게임)」.
 
 두 건 모두 단어 교체이고 모델·불변식에는 영향이 없다. 진행을 막지 않는다.
 

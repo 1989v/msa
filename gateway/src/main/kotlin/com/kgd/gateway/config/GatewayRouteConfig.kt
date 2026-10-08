@@ -695,7 +695,7 @@ class GatewayRouteConfig(
                     .filters { f -> f.stripPrefix(0) }
                     .uri(COMMERCE_URI)
             }
-            // 공유용 단축 주소 (ADR-0103). 대상을 가진 도메인이 302 로 답한다 — 이력서는 atlas,
+            // 공유용 단축 주소 (ADR-0106). 대상을 가진 도메인이 302 로 답한다 — 이력서는 atlas,
             // 관광지·게임·글은 content. 인증 필터를 걸지 않으므로 클라이언트가 붙인 X-User-Id 가
             // 지워지지 않는다. 그래서 클릭 기록(익명 쓰기)의 리미터 키는 헤더를 보지 않는 ipKeyResolver 다.
             .route("short-link-resume") { r ->

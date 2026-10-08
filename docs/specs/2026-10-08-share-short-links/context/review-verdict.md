@@ -5,7 +5,7 @@
 
 | id | 출처 | 판정 | 등급 | 반영 |
 |---|---|---|---|---|
-| C1 | impl-B1, sec-B1, domain-D9, usecase-U4 | keep | BLOCK | SR-6: 이력서 원장은 링크 id·시각만, 365일. ADR-0103 §5 |
+| C1 | impl-B1, sec-B1, domain-D9, usecase-U4 | keep | BLOCK | SR-6: 이력서 원장은 링크 id·시각만, 365일. ADR-0106 §5 |
 | C2 | arch-A2, domain-D8, impl-R2 | keep | REVISE | SR-6: 누적 수는 별도 집계 테이블, 원자적 증가 |
 | C3 | arch-A3, domain-D5, sec-R3, test-F6 | keep | REVISE | SR-4: 도메인 판정 함수 호출 |
 | C4 | arch-A5, domain-D6, impl-R3 | keep | REVISE | SR-1/4: `/p` 목적지에 언어 |

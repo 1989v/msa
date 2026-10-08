@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 /**
- * 관광지 단축 주소 `/p/{code}` (ADR-0103).
+ * 관광지 단축 주소 `/p/{code}` (ADR-0106).
  *
  * 열 수 있는지는 `Attraction.isActive()` 가 정한다 — 공개 상세가 읽는 search 색인에 ACTIVE 행만 실린다.
  * 목적지는 `place.1989v.com/attractions/{id}`, 영문 행은 `/en/attractions/{id}` 다.

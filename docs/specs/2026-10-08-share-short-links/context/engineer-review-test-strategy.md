@@ -1,13 +1,13 @@
 # Engineer Review — test-strategy
 
-- 대상: `docs/specs/2026-10-08-share-short-links/spec.md` (+ `planning/test-quality.md`, `planning/requirements.md`, `context/open-questions.yml`, `docs/adr/ADR-0103-share-short-links.md`)
+- 대상: `docs/specs/2026-10-08-share-short-links/spec.md` (+ `planning/test-quality.md`, `planning/requirements.md`, `context/open-questions.yml`, `docs/adr/ADR-0106-share-short-links.md`)
 - 체크리스트: hns `spec-review/reviewers/test-strategy/checklist.md` (skillsets: ac-to-test-case-derivation · test-layer-assignment · mock-boundary-decision)
 - 기준 문서: `docs/standards/test-rules.md`, 볼트 [[gate-failure-modes]] · [[build-time-rule-enforcement]] (2026-09-29 갱신)
 - 일자: 2026-10-08
 
 ## Seed Discovery
 
-1. 스펙 SR-1~SR-7, 테스트 표 `planning/test-quality.md:5-21`, ADR-0103 §검증(`ADR-0103:53-56`).
+1. 스펙 SR-1~SR-7, 테스트 표 `planning/test-quality.md:5-21`, ADR-0106 §검증(`ADR-0106:53-56`).
 2. 같은 폴더에 `tasks*`·`status*` 는 아직 없다 — AC→테스트 대조는 `test-quality.md` 를 테스트 계획으로 본다.
 3. 표준: `docs/standards/test-rules.md:6-17` (Kotest BehaviorSpec · MockK · Domain mock 금지 · `Test` 접미사).
 4. 코드 근거: 선례 `deal/feature/src/test/kotlin/com/kgd/deal/DealRedirectControllerTest.kt`, 게이트웨이 `gateway/src/test/kotlin/com/kgd/gateway/config/GatewayRoutingSpec.kt`, CI 테스트 게이트 `.github/workflows/images.yml:263-282` + `scripts/ci/topology.sh:22-34`, 방침-상수 대조 `portal-fe/src/pages/__tests__/privacyRetention.test.ts`, 폴드 스캔 검사 `content/app/src/test/kotlin/com/kgd/content/ContentContextLoadSpec.kt:89-99`, `atlas/app/src/test/kotlin/com/kgd/atlas/AtlasContextLoadSpec.kt:86-92`.
@@ -28,7 +28,7 @@
 ### F1. [체크 1·5] 코덱 경계값이 스펙과 어긋나고, 순열을 고정하는 테스트가 없다 — REVISE
 
 - `test-quality.md:7` 은 「Long 상한 근처」 왕복을 요구한다. 스펙은 지원 범위를 `0 ~ 2^40−1` 로 두고 넘으면 인코딩을 거부한다(`spec.md:34`, SR-2). 이 행대로 짜면 테스트가 실패하거나, 통과시키려고 범위 검사를 빼게 된다.
-- ADR 은 「순열 상수는 바꾸지 않는다」를 결과로 적는다(`ADR-0103:50`). 하지만 테스트 표의 코덱 검사는 왕복(`test-quality.md:7`)과 충돌 없음(`:8`)뿐이다. 순열을 바꿔도 왕복·충돌 검사는 둘 다 초록이다. 그 경우 이미 퍼진 단축 주소가 전부 깨지는데, 이를 잡는 검사가 없다([[gate-failure-modes]] ③: 바꾼 것에 반응하지 않는 지표).
+- ADR 은 「순열 상수는 바꾸지 않는다」를 결과로 적는다(`ADR-0106:50`). 하지만 테스트 표의 코덱 검사는 왕복(`test-quality.md:7`)과 충돌 없음(`:8`)뿐이다. 순열을 바꿔도 왕복·충돌 검사는 둘 다 초록이다. 그 경우 이미 퍼진 단축 주소가 전부 깨지는데, 이를 잡는 검사가 없다([[gate-failure-modes]] ③: 바꾼 것에 반응하지 않는 지표).
 - 「연속 id 가 연속 코드로 보이지 않는다」(`spec.md:30`)에 대응하는 테스트가 없다.
 - **수정안** — `test-quality.md` 코덱 행을 아래처럼 바꾼다.
   - 왕복: `0`, `1`, `2^40−1`. 거부: `-1`, `2^40` (인코딩 거부).
@@ -63,7 +63,7 @@
 - **수정안**:
   - 행을 「unit (컨트롤러 직접 생성, DealRedirectControllerTest 형태)」로 고친다.
   - 「호스트 컨텍스트 로드 스펙에 리다이렉트 컨트롤러 등록」 행을 추가한다(content·atlas 각각).
-  - ADR 의 공통 헤더 헬퍼(`ADR-0103:51`)는 `common` 에서 한 번 테스트한다(F2 의 게이트 조건 적용).
+  - ADR 의 공통 헤더 헬퍼(`ADR-0106:51`)는 `common` 에서 한 번 테스트한다(F2 의 게이트 조건 적용).
 
 ### F5. [체크 1] 실패 → 목록 302 를 도메인마다 검증하는 행이 없고, FE·보존·누적은 통째로 비어 있다 — REVISE
 
@@ -143,7 +143,7 @@ VERDICT: REVISE
 ## Round 2
 
 - 일자: 2026-10-08
-- 대상: 개정된 `spec.md`, 재작성된 `planning/test-quality.md`, `context/review-verdict.md`(C1–C26), `ADR-0103`
+- 대상: 개정된 `spec.md`, 재작성된 `planning/test-quality.md`, `context/review-verdict.md`(C1–C26), `ADR-0106`
 - 아래 줄 번호는 개정본 기준이다. Round 1 의 줄 번호는 옛 판을 가리킨다.
 
 ### 1차 지적 해소 여부
@@ -190,7 +190,7 @@ VERDICT: REVISE
 
 #### N5. [체크 2] ADR 검증 절이 개정된 계층과 어긋난다 — 경미
 
-- `ADR-0103:58` 은 아직 「리다이렉터 … 슬라이스 테스트」, 코덱은 「왕복·충돌 없음」뿐이다. 개정된 계획은 컨트롤러 직접 생성 unit(`test-quality.md:15`)과 골든 벡터(`:7`)다.
+- `ADR-0106:58` 은 아직 「리다이렉터 … 슬라이스 테스트」, 코덱은 「왕복·충돌 없음」뿐이다. 개정된 계획은 컨트롤러 직접 생성 unit(`test-quality.md:15`)과 골든 벡터(`:7`)다.
 - **수정안**: ADR 검증 절을 「코덱 골든 벡터·왕복·거절 unit, 리다이렉터 302·헤더 unit, 호스트 컨텍스트 로드」로 맞춘다. 한 줄 고침이다.
 
 ### Round 2 판정
@@ -207,7 +207,7 @@ VERDICT: REVISE
 ## Round 3
 
 - 일자: 2026-10-08
-- 대상: 최신 `spec.md`, `planning/test-quality.md`, `ADR-0103`. 줄 번호는 최신판 기준이다.
+- 대상: 최신 `spec.md`, `planning/test-quality.md`, `ADR-0106`. 줄 번호는 최신판 기준이다.
 
 ### 2차 지적 해소 여부
 
@@ -217,7 +217,7 @@ VERDICT: REVISE
 | N2 클릭 저장 TM 계층 | **해소** | `test-quality.md:24` — `ContentContextLoadSpec`·`AtlasContextLoadSpec` 의 실제 MySQL 호스트 하네스로 옮겼다. 한정자를 지우는 회귀 주입도 들어갔다 |
 | N3 백필 형식 | **해소** | `spec.md:46` 형식 `CHECK`(10자 base62, 대소문자 구분) + 위반 시 마이그레이션 실패. `test-quality.md:12` 가 같은 제약을 근거로 든다 |
 | N4 접두사 혼동 | **해소** | `test-quality.md:21` — 리터럴 `https://1989v.com/{g|b|p}/` 시작 + 디코딩 값이 대상 id |
-| N5 ADR 검증 절 | **부분 (경미, 비차단)** | `ADR-0103:58` 에서 「슬라이스」는 「컨트롤러 unit 테스트」로 바뀌었다. 코덱은 아직 「왕복·충돌 없음」뿐이고 골든 벡터(`test-quality.md:7`)가 빠져 있다. 실행 계획의 원본은 `test-quality.md` 라 구현에는 영향이 없다. 수정안: `ADR-0103:58` 첫 문장을 「코덱 골든 벡터·왕복·거절 단위 테스트.」로 바꾼다 |
+| N5 ADR 검증 절 | **부분 (경미, 비차단)** | `ADR-0106:58` 에서 「슬라이스」는 「컨트롤러 unit 테스트」로 바뀌었다. 코덱은 아직 「왕복·충돌 없음」뿐이고 골든 벡터(`test-quality.md:7`)가 빠져 있다. 실행 계획의 원본은 `test-quality.md` 라 구현에는 영향이 없다. 수정안: `ADR-0106:58` 첫 문장을 「코덱 골든 벡터·왕복·거절 단위 테스트.」로 바꾼다 |
 
 ### 이번 개정으로 생긴 이슈
 

@@ -109,7 +109,7 @@ class ContentContextLoadSpec(
                 com.kgd.ranking.presentation.controller.RankingController::class.java,
                 com.kgd.blog.presentation.controller.BlogPublicController::class.java,
                 com.kgd.blog.presentation.controller.BlogPageController::class.java,
-                // 단축 주소 해석(ADR-0103) — 빠지면 /g·/b·/p 가 배포 뒤에야 404 로 드러난다
+                // 단축 주소 해석(ADR-0106) — 빠지면 /g·/b·/p 가 배포 뒤에야 404 로 드러난다
                 com.kgd.game.presentation.shortlink.controller.GameShortLinkController::class.java,
                 com.kgd.blog.presentation.controller.BlogShortLinkController::class.java,
                 com.kgd.place.presentation.shortlink.controller.AttractionShortLinkController::class.java,

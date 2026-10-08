@@ -18,8 +18,8 @@ ADR-0076 에서 개인정보처리방침을 쓰다가 **적을 수 있는 보관
 | `blog_post_view` | `visitor_key` = 게이트웨이 발급 무작위 UUID (`VisitorIdFilter`) | 하루 1표 중복 방지 + 일별 추이 |
 | `deal_offer_click` | 없음 (`referrer_host`, `ua_family`) | 클릭 통계 |
 | `resume_access_log` | 없음 (`share_link_id`, `slug`) | 제출처가 열었는지 확인 |
-| `{game,blog,attraction}_short_link_click` | 없음 (`referrer_host`, `ua_family`) | 단축 주소 클릭 통계 (ADR-0103) |
-| `resume_short_link_click` | 없음 (`share_link_id`) | 이력서 단축 주소로 들어온 횟수 (ADR-0103) |
+| `{game,blog,attraction}_short_link_click` | 없음 (`referrer_host`, `ua_family`) | 단축 주소 클릭 통계 (ADR-0106) |
+| `resume_short_link_click` | 없음 (`share_link_id`) | 이력서 단축 주소로 들어온 횟수 (ADR-0106) |
 | `game_rating.device_id` | localStorage 무작위 UUID | 평점 본체 — 정리 대상 아님 |
 
 IP 는 `RateLimiterConfig` 의 Redis 키로만 쓰이고 TTL 로 만료된다. 서버 접속 로그는 컨테이너

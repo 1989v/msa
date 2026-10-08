@@ -1,12 +1,12 @@
 # Engineer Review — Architecture
 
-- 대상: `docs/specs/2026-10-08-share-short-links/spec.md` (+ `planning/requirements.md`, `context/open-questions.yml`, `docs/adr/ADR-0103-share-short-links.md`)
+- 대상: `docs/specs/2026-10-08-share-short-links/spec.md` (+ `planning/requirements.md`, `context/open-questions.yml`, `docs/adr/ADR-0106-share-short-links.md`)
 - 차원: architecture (`hns/0.16.1/skills/spec-review/reviewers/architecture/checklist.md`)
 - 일자: 2026-10-08
 
 ## Seed Discovery
 
-1. 스펙·요구·열린 질문·ADR-0103 을 읽었다. `planning/shaping-state.yml:5` 의 토폴로지는 codec(common) · resume-resolver(atlas) · content-resolvers(place/game/blog) · gateway+ingress · fe-share · click-ledger+retention 이다.
+1. 스펙·요구·열린 질문·ADR-0106 을 읽었다. `planning/shaping-state.yml:5` 의 토폴로지는 codec(common) · resume-resolver(atlas) · content-resolvers(place/game/blog) · gateway+ingress · fe-share · click-ledger+retention 이다.
 2. 표준: `CLAUDE.md`(레이어 표준 ADR-0083, 폴드 ADR-0093), `docs/conventions/package-structure.md`, 서비스별 `CLAUDE.md`(game·blog·place·deal·common·gateway·k8s).
 3. 지식베이스(`HNS_KB_PATH`, 읽기 전용): [[modular-monolith-fold]](2026-09-11 갱신) — 폴드 호스트의 TM 한정자 함정, 원장·배치를 도메인 모듈에 두는 규칙.
 4. 코드 근거: 아래 각 항목에 `{file}:{line}` 로 인용했다.
@@ -15,11 +15,11 @@
 
 | 체크 | 판정 | 근거 |
 |---|---|---|
-| 의존 방향 · 순환 없음 | 통과 | 코덱은 `common`(순수 Kotlin, SR-2)이고 세 도메인이 읽기만 한다. 도메인 사이 호출이 없다(SR-4 "다른 도메인을 호출하지 않는다", ADR-0103 §4) |
-| 모듈 경계 변경에 근거 | 통과 | 전용 단축 서비스를 만들지 않는 이유가 ADR-0103 §4 에 있다. 만들면 네 도메인의 공개 규칙·슬러그를 알아야 해서 cross-reference 금지(`package-structure.md:53`)에 걸린다 |
+| 의존 방향 · 순환 없음 | 통과 | 코덱은 `common`(순수 Kotlin, SR-2)이고 세 도메인이 읽기만 한다. 도메인 사이 호출이 없다(SR-4 "다른 도메인을 호출하지 않는다", ADR-0106 §4) |
+| 모듈 경계 변경에 근거 | 통과 | 전용 단축 서비스를 만들지 않는 이유가 ADR-0106 §4 에 있다. 만들면 네 도메인의 공개 규칙·슬러그를 알아야 해서 cross-reference 금지(`package-structure.md:53`)에 걸린다 |
 | 저장소 소유 | 통과 | 원장을 도메인 DB 마다 둔다(Q3 해결). content 호스트는 이미 place_db·game_db·blog_db 를 나눠 갖고 있다(`content/app/src/main/resources/application.yml:15-61`) |
 | 패턴 일관성 | 통과 | deal `/go` 리다이렉터와 같은 모양이다(`DealRedirectController.kt:24-68`, 게이트웨이 `GatewayRouteConfig.kt:465-469`). `/p/**` 는 PathPattern 세그먼트 매칭이라 기존 `/posts/**`(`GatewayRouteConfig.kt:531-535`)와 겹치지 않는다. 운영 인그레스는 Prefix 이고 `use-regex` 가 없어서(`commerce-platform.yaml:69-86`) `/p` 가 `/portfolio`·`/privacy` 를 잡지 않는다 |
-| Deletion Test — 코덱 | 통과(earning its keep) | 지우면 순열·base62·범위 검사가 세 도메인과 상세 응답 세 곳에 흩어진다. 순열 상수가 여러 벌이 되면 "순열 상수는 바꾸지 않는다"(ADR-0103 결과)를 지킬 수 없다 |
+| Deletion Test — 코덱 | 통과(earning its keep) | 지우면 순열·base62·범위 검사가 세 도메인과 상세 응답 세 곳에 흩어진다. 순열 상수가 여러 벌이 되면 "순열 상수는 바꾸지 않는다"(ADR-0106 결과)를 지킬 수 없다 |
 | Seam realism | 통과 | 새 인터페이스는 ADR-0083 이 강제하는 UseCase 인터페이스뿐이다. 스펙이 가상의 어댑터 seam 을 만들지 않는다 |
 | 모듈 이름 | 해당 없음 | 이 스펙 폴더에 `glossary.md` 가 없다. 새 모듈 이름도 만들지 않는다 |
 
@@ -59,7 +59,7 @@
 ### A6. (경미) 절대 주소와 302 헤더를 조립하는 곳이 스펙에 없다 [체크: Interface surface minimal]
 
 - SR-5 는 세 상세 응답에 `shortUrl`(절대 주소)을 넣으라고 하지만, `https://1989v.com` 과 접두사 글자를 어디서 받는지는 정하지 않았다. 지금 선례는 도메인마다 `@Value("\${blog.origin:…}")` 를 따로 두는 방식이다(`BlogMetaRenderer.kt:28`). 이대로 가면 apex origin 이 세 곳에 복사된다.
-- ADR-0103 결과 절은 "응답 헤더 조립은 공통 헬퍼로 묶는다"고 하지만 SR 에는 이 내용이 없다.
+- ADR-0106 결과 절은 "응답 헤더 조립은 공통 헬퍼로 묶는다"고 하지만 SR 에는 이 내용이 없다.
 - 수정안: SR-2 에 "코덱 모듈이 `shortUrl(prefix, id)` 도 함께 제공한다. apex origin 은 그 안의 상수 하나다"를 더한다. SR-4 에는 "302 응답(`no-store`·`noindex`) 조립은 `common` 의 헬퍼 하나를 쓴다. deal `/go` 는 이번에 바꾸지 않는다(최소 수정)"를 더한다. 헬퍼를 부르는 곳은 r·p·g·b 넷이라 Rule of Three 를 넘는다.
 
 ## 요약
@@ -70,7 +70,7 @@ VERDICT: REVISE
 
 ## Round 2
 
-- 대상: 개정된 `spec.md`, `planning/test-quality.md`, `context/review-verdict.md`(C1–C26 매핑), `docs/adr/ADR-0103-share-short-links.md`
+- 대상: 개정된 `spec.md`, `planning/test-quality.md`, `context/review-verdict.md`(C1–C26 매핑), `docs/adr/ADR-0106-share-short-links.md`
 - 일자: 2026-10-08
 
 ### 1차 이슈 해소 확인
@@ -78,7 +78,7 @@ VERDICT: REVISE
 | 1차 | 판정표 | 해소 | 근거 |
 |---|---|---|---|
 | A1 TM 한정자 | C8 | 닫힘 | `spec.md:86` "도메인 트랜잭션 관리자 한정자와 `REQUIRES_NEW` … 한정자가 없으면 game·blog 쓰기가 조용히 사라진다". 값 판정 테스트는 `test-quality.md:24` "누적 수가 `was + 1` — game·blog·place·resume 각각, 도메인 TM 으로 실제 저장되는지 값으로 판정" |
-| A2 누적 수 위치 | C2 | 닫힘 | `spec.md:84-85` 별도 집계 테이블 + `INSERT … ON DUPLICATE KEY UPDATE`, 대상 행 컬럼 금지. `open-questions.yml:22` 문구도 같은 결정으로 바뀌었다. ADR-0103 §5(`ADR-0103:43`)도 같다 |
+| A2 누적 수 위치 | C2 | 닫힘 | `spec.md:84-85` 별도 집계 테이블 + `INSERT … ON DUPLICATE KEY UPDATE`, 대상 행 컬럼 금지. `open-questions.yml:22` 문구도 같은 결정으로 바뀌었다. ADR-0106 §5(`ADR-0106:43`)도 같다 |
 | A3 게임 공개 판정 | C3 | 닫힘 | `spec.md:54-56` 이 `Game.isPlayable()`·`PostStatus.publiclyVisible`·`ResumeShareLink.isUsable()` 을 부르고, 표(`spec.md:115`)도 도메인 경로로 바뀌었다. 실재 확인: `Game.kt:153`, `BlogEnums.kt:47`. infrastructure 의 private 상수 참조는 사라졌다 |
 | A4 정리 러너 소유 | C9 | 닫힘 | `spec.md:88` "각 도메인 모듈의 보존 러너 … place 는 러너를 새로 만들고 … CronJob 매니페스트는 바꾸지 않는다". 러너 등록 게이트는 `spec.md:101`. resume 이 붙을 기존 러너는 `code-dictionary/.../RetentionRunner.kt:42`(`resume_access_log`)에 있다 |
 | A5 `/p` 언어 | C4 | 닫힘 | `spec.md:22` "(영문 행은 `/en/attractions/{id}`)", 테스트 `test-quality.md:18` |
@@ -108,7 +108,7 @@ VERDICT: REVISE
 
 ## Round 3
 
-- 대상: 최종 개정 `spec.md`, `planning/test-quality.md`, `docs/adr/ADR-0103-share-short-links.md`
+- 대상: 최종 개정 `spec.md`, `planning/test-quality.md`, `docs/adr/ADR-0106-share-short-links.md`
 - 일자: 2026-10-08
 - 범위: A7·A8 해소 확인과 이번 개정에서 새로 생긴 문장만 본다.
 

@@ -93,12 +93,12 @@ describe('보존기간 — 방침과 코드가 같은 숫자를 말한다', () =
       'BLOG_SHORT_LINK_CLICK_RETENTION_DAYS',
       'ATTRACTION_SHORT_LINK_CLICK_RETENTION_DAYS',
     ]) {
-      expect(retentionDaysFromCode(name), name).toBe(policy);
+      expect(retentionFromCode(name), name).toBe(policy);
     }
   });
 
   it('이력서 단축 주소 클릭 원장: 상수가 방침의 기간과 같다', () => {
-    expect(retentionDaysFromCode('RESUME_SHORT_LINK_CLICK_RETENTION_DAYS')).toBe(
+    expect(retentionFromCode('RESUME_SHORT_LINK_CLICK_RETENTION_DAYS')).toBe(
       retentionDaysFromPolicy('이력서 단축 주소는'),
     );
   });

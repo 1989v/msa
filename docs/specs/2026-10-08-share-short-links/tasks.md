@@ -33,7 +33,7 @@ Total Task Groups: 8
 **Required Skills:** Kotlin, Spring MVC, JPA, Flyway(MySQL 8)
 - [x] 2.0 Complete resume
   - [x] 2.1 테스트 작성: `ResumeShareLink` 코드 형식 검사(생성·복원) · 생성 시 10자 코드 자동 부여 · 유일 충돌 시 재생성 · 리다이렉터 302/목적지 `resume.1989v.com/?k=` · 폐기·없음·형식 오류 → resume 홈 302 · 경로 엣지(쿼리 무시, `/r`·`/r/`·`/r/list` → 홈, 추가 세그먼트 실패) · 원장 행에 리퍼러·UA 없음 · 기록 실패에도 302 · 로그에 코드·토큰 없음 · 어드민 목록 `shortUrl`(expose 켜짐/꺼짐)
-  - [x] 2.2 `V22__resume_short_code.sql`: `short_code` 컬럼(`ascii_bin`) → `RANDOM_BYTES()` 백필 → `NOT NULL`·`UNIQUE`·`CHECK(REGEXP_LIKE(...,'c'))`; 원장 `resume_short_link_click(share_link_id, clicked_at)`; 집계 `resume_short_link_stat(share_link_id PK, click_count)` — SR-3, SR-6
+  - [x] 2.2 `V31__resume_short_code.sql`: `short_code` 컬럼(`ascii_bin`) → `RANDOM_BYTES()` 백필 → `NOT NULL`·`UNIQUE`·`CHECK(REGEXP_LIKE(...,'c'))`; 원장 `resume_short_link_click(share_link_id, clicked_at)`; 집계 `resume_short_link_stat(share_link_id PK, click_count)` — SR-3, SR-6
   - [x] 2.3 도메인·application: 코드 생성(SecureRandom), `ResolveResumeShortLinkUseCase`(`isUsable()`), `RecordResumeShortLinkClickUseCase`(REQUIRES_NEW, 원자적 증가) + Port/Adapter — SR-3, SR-4, SR-6
   - [x] 2.4 `ResumeShortLinkController` `GET /r/**` (common 헬퍼, 크롤러 미기록) — SR-4, SR-7
   - [x] 2.5 어드민 링크 응답에 `shortUrl` — SR-3
@@ -50,7 +50,7 @@ Total Task Groups: 8
 **Required Skills:** Kotlin, Spring MVC, JPA, Flyway
 - [x] 3.0 Complete game
   - [x] 3.1 테스트 작성: `GameStatus` 전수 × 유효 코드 — 리다이렉터가 여는 집합 == `isPlayable()` 참 집합 · 302 목적지 `game.1989v.com/games/{slug}`(slug 경로 인코딩) · 실패 → game 홈 · 기록 실패에도 302 · 상세 `shortUrl` 이 리터럴 `https://1989v.com/g/` 로 시작하고 디코딩하면 그 id
-  - [x] 3.2 `V105__game_short_link_click.sql`: 원장(game_id, clicked_at, referrer_host, ua_family) + 집계(game_id PK, click_count) — Game 행 컬럼 금지(`game/CLAUDE.md`)
+  - [x] 3.2 `V106__game_short_link_click.sql`: 원장(game_id, clicked_at, referrer_host, ua_family) + 집계(game_id PK, click_count) — Game 행 컬럼 금지(`game/CLAUDE.md`)
   - [x] 3.3 UseCase·Port·Adapter(`gameTransactionManager` 한정 + REQUIRES_NEW) + `GameShortLinkController` `GET /g/**`
   - [x] 3.4 `GameDetailDto.shortUrl`(expose 설정 따름)
   - [x] 3.5 `GameRetentionRunner` 에 원장 90일 항목
@@ -64,7 +64,7 @@ Total Task Groups: 8
 **Required Skills:** Kotlin, Spring MVC, JPA, Flyway
 - [x] 4.0 Complete blog
   - [x] 4.1 테스트 작성: `PostStatus` 전수 × 유효 코드 — 여는 집합 == `publiclyVisible` · 302 `blog.1989v.com/posts/{slug}` · 실패 → blog 홈 · 기록 실패에도 302 · 상세 `shortUrl` 리터럴 `/b/` + 디코딩 id
-  - [x] 4.2 `V2__blog_short_link_click.sql`: 원장 + 집계
+  - [x] 4.2 `V4__blog_short_link_click.sql`: 원장 + 집계
   - [x] 4.3 UseCase·Port·Adapter(`blogTransactionManager` 한정 + REQUIRES_NEW) + `BlogShortLinkController` `GET /b/**`
   - [x] 4.4 블로그 글 상세 응답 `shortUrl`
   - [x] 4.5 `BlogRetentionRunner` 에 원장 90일 항목
@@ -78,7 +78,7 @@ Total Task Groups: 8
 **Required Skills:** Kotlin, Spring MVC, JPA, Flyway
 - [x] 5.0 Complete place
   - [x] 5.1 테스트 작성: `status = ACTIVE` 만 열림 · 영문 행 `/en/attractions/{id}`, 국문 `/attractions/{id}` · 실패 → place 홈 · 기록 실패에도 302 · 원장 90일 초과 삭제 후 누적 수 유지 · search 상세 `shortUrl` 리터럴 `/p/` + 디코딩 id
-  - [x] 5.2 `V20__attraction_short_link_click.sql`: 원장 + 집계(관광지 행 컬럼 금지 — 일괄 수집이 행을 다시 쓴다)
+  - [x] 5.2 `V33__attraction_short_link_click.sql`: 원장 + 집계(관광지 행 컬럼 금지 — 일괄 수집이 행을 다시 쓴다)
   - [x] 5.3 UseCase·Port·Adapter(place TM 명시 + REQUIRES_NEW) + `AttractionShortLinkController` `GET /p/**`
   - [x] 5.4 `PlaceRetentionRunner` 신설(원장 90일) — `retention-content` CronJob 이 매니페스트 변경 없이 실행하는지 기존 러너 구조로 확인
   - [x] 5.5 search:app 관광지 상세 응답 조립 시 `shortUrl` 계산(색인 문서 불변)
@@ -119,7 +119,7 @@ Total Task Groups: 8
 **Phase:** validate
 **Required Skills:** docs, CDP
 - [ ] 8.0 Complete docs & validation
-  - [x] 8.1 ADR-0077 표에 단축 링크 원장 4종(90일·이력서 365일) · ADR-0103 상태 「수용」 · `docs/changelog` 해당 없음 확인
+  - [x] 8.1 ADR-0077 표에 단축 링크 원장 4종(90일·이력서 365일) · ADR-0106 상태 「수용」 · `docs/changelog` 해당 없음 확인
   - [x] 8.2 각 서비스 `CLAUDE.md`(code-dictionary·game·blog·place) 에 단축 경로 한 줄
   - [ ] 8.3 로컬 FE 화면 검증: 세 상세 공유 패널 — `docs/standards/fe-visual-verification.md` 4조합 CDP 측정(start·측정·stop 한 명령)
   - [x] 8.4 Verify(최소 범위 — status.md 그룹 8 행): `./gradlew :common:test :gateway:test --tests '*GatewayRoute*'` 재실행 + `scripts/lint` 없음 확인, `git diff --stat` 에 범위 밖 파일 0

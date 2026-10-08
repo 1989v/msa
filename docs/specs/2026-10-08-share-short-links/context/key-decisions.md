@@ -19,3 +19,7 @@ SEED=0x5A3C96E1F0, M1=0xC2B2AE3D27, M2=0x165667B19F, xorshift20 3회. 골든: 0�
 
 ### 2026-10-08 — shortUrl 이 없을 때의 대신 주소는 canonical
 스펙은 「현재 페이지 주소」였다. 게임 화면 주소에 방 초대(`?room=…#join`)가 섞일 수 있고 블로그는 원래 canonical 을 공유했으므로 canonical 로 바꿨다. 아무 주소도 넘기지 않으면 컴포넌트가 현재 주소를 쓴다.
+
+### 2026-10-08 — origin 재기반·번호 재지정
+origin/main 이 강제 푸시로 갈라져 내 커밋을 별도 워크트리에서 origin 위로 옮겼다. 마이그레이션은 각 DB 의 origin 최신 다음 번호(V31·V106·V4·V33), ADR 은 0106. 관광지 상세 응답은 origin 의 엣지 캐시(ADR-0105)를 그대로 두고 본문에만 shortUrl 을 싣는다 — shortUrl 은 id 로 결정되는 값이라 캐시돼도 맞다.
+게이트웨이에 origin 이 `adsClientIpKeyResolver`(CF-Connecting-IP)를 추가했다. 단축 경로는 그대로 `ipKeyResolver` — CF 헤더는 우회 호스트에서 위조되므로 Host 허용 목록과 함께 써야 하고, 그 배선은 이번 범위 밖. 후속 후보.
