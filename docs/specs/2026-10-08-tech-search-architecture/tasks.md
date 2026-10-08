@@ -26,10 +26,10 @@ Total Task Groups: 5
 **Dependencies:** Task Group 1
 **Phase:** content
 **Required Skills:** 검색 코드 읽기(Kotlin·OpenSearch 매핑·k8s yaml), mermaid(fencesvg 5종 제한), 기술 글쓰기
-- [ ] 2.0 Complete 문서·게이트
-  - [ ] 2.1 `portal-fe/src/content/__tests__/searchArchitecture.drift.test.ts`(node): SR-5.1 9값(값마다 존재 단언 후 `toBe`, clickBoost·하이브리드는 env 우선 규칙, 모델 ref 는 매니페스트 둘), SR-5.2 구조 게이트(머리 `<!-- source -->` 경로·§4 근거 열 파일 존재), 머리 주석에 「CI 체크아웃에서만 돈다」.
-  - [ ] 2.2 `portal-fe/src/content/search-architecture.md` 본문(SR-1.1~1.7): 머리·요약 불릿 5~6(값 없음, §4 행 앵커 `#slug`)·§1 flowchart·§2 sequence 3·§3 sequence 1·§4 표(셀 규칙: 게이트 값은 행당 백틱 토큰 하나, 상태 열은 k8s env 기준)·§5 갱신 규칙. **모든 값과 흐름은 코드에서 직접 읽는다** — spec SR-1.3·1.4·1.5 의 교정(가중치는 키워드 레그 안·상업 의도면 BM25 그대로·벡터 레그 필터에 검색어 포함·통합 검색 대상 타입 결정·관광지 외 6종은 잔여 검색어·평가 KST 07:30)을 그대로 반영. 레인은 프로세스·저장소만, `rect` 금지, 간선 라벨 파이프 표기, 모든 펜스 `%% caption:`. 용어는 「쿼리 벡터 캐시(`query_vectors`)」, 과제 번호 금지, 공개 판단 기준(SR-1.7).
-  - [ ] 2.3 Verify: `cd portal-fe && node scripts/render-content.mjs && npx vitest run src/content/__tests__/searchArchitecture.drift.test.ts src/content/__tests__/renderContent.test.ts` + 생성 JSON 의 SVG 수 == 펜스 수(5)를 한 줄로 출력.
+- [x] 2.0 Complete 문서·게이트
+  - [x] 2.1 `portal-fe/src/content/__tests__/searchArchitecture.drift.test.ts`(node): SR-5.1 9값(값마다 존재 단언 후 `toBe`, clickBoost·하이브리드는 env 우선 규칙, 모델 ref 는 매니페스트 둘), SR-5.2 구조 게이트(머리 `<!-- source -->` 경로·§4 근거 열 파일 존재), 머리 주석에 「CI 체크아웃에서만 돈다」.
+  - [x] 2.2 `portal-fe/src/content/search-architecture.md` 본문(SR-1.1~1.7): 머리·요약 불릿 5~6(값 없음, §4 행 앵커 `#slug`)·§1 flowchart·§2 sequence 3·§3 sequence 1·§4 표(셀 규칙: 게이트 값은 행당 백틱 토큰 하나, 상태 열은 k8s env 기준)·§5 갱신 규칙. **모든 값과 흐름은 코드에서 직접 읽는다** — spec SR-1.3·1.4·1.5 의 교정(가중치는 키워드 레그 안·상업 의도면 BM25 그대로·벡터 레그 필터에 검색어 포함·통합 검색 대상 타입 결정·관광지 외 6종은 잔여 검색어·평가 KST 07:30)을 그대로 반영. 레인은 프로세스·저장소만, `rect` 금지, 간선 라벨 파이프 표기, 모든 펜스 `%% caption:`. 용어는 「쿼리 벡터 캐시(`query_vectors`)」, 과제 번호 금지, 공개 판단 기준(SR-1.7).
+  - [x] 2.3 Verify: `cd portal-fe && node scripts/render-content.mjs && npx vitest run src/content/__tests__/searchArchitecture.drift.test.ts src/content/__tests__/renderContent.test.ts` + 생성 JSON 의 SVG 수 == 펜스 수(5)를 한 줄로 출력.
 **Acceptance Criteria:**
 - 드리프트 9값 초록, 렌더 성공(그림 5장), 금칙 패턴 0.
 
