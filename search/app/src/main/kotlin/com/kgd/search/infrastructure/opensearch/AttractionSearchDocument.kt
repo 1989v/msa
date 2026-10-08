@@ -67,6 +67,9 @@ data class AttractionSearchDocument(
     val popularityScore: Double = 1.0,
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     val modifiedAt: LocalDateTime? = null,
+    /** 본문 변경 시각(place 판정) — 최근 갱신 순이 읽는다. 옛 색인 문서에는 없다. */
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    val contentUpdatedAt: LocalDateTime? = null,
     /** 원천 출처·공공누리 유형 — 상세 확인 상태·출처 줄·JSON-LD license 가 읽는다. 옛 색인 문서에는 없다. */
     val source: String? = null,
     val copyrightDivCd: String? = null,
@@ -111,6 +114,8 @@ data class AttractionSearchDocument(
     val relatedPlaces: List<RelatedPlaceEntry>? = null,
     /** 같은 장소의 다른 등록 — 상세 「복합공간」이 읽는다. 없거나 옛 문서는 없다. */
     val samePlace: List<SamePlaceEntry>? = null,
+    /** 언어 대체 짝(다른 언어판 문서 id) — 상세 hreflang 이 읽는다. 짝이 없거나 짝 스위치가 꺼졌으면 없다. */
+    val alternateId: String? = null,
 ) {
     /** [eventEndEffective] 는 항목이 행사일 때의 유효 종료일 — 이 필드가 생기기 전 문서에는 없다. */
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -207,6 +212,7 @@ data class AttractionSearchDocument(
         googlePlaceId = googlePlaceId,
         popularityScore = popularityScore,
         modifiedAt = modifiedAt,
+        contentUpdatedAt = contentUpdatedAt,
         source = source,
         copyrightDivCd = copyrightDivCd,
         feeText = feeText,
@@ -227,5 +233,6 @@ data class AttractionSearchDocument(
         congestion = congestion?.takeIf { it.isNotEmpty() }?.map { CongestionDay(it.date, it.rate) },
         relatedPlaces = relatedPlaces?.takeIf { it.isNotEmpty() }?.map { RelatedPlace(it.rank, it.id, it.title, it.sidoName, it.category) },
         samePlace = samePlace?.takeIf { it.isNotEmpty() }?.map { SamePlace(it.id, it.contentTypeId) },
+        alternateId = alternateId,
     )
 }

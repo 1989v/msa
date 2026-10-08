@@ -109,6 +109,11 @@ interface SearchAttractionUseCase {
          * 갱신 여부를 알릴 방법이 없어 크롤러가 전량을 같은 우선순위로 다시 훑는다.
          */
         val modifiedAt: java.time.LocalDateTime? = null,
+        /**
+         * 본문이 실제로 바뀐 시각(place 가 본문 해시로 판정) — 최근 갱신 순(RSS)의 기준. 원천 수정일 [modifiedAt] 과 다르다.
+         * place 가 아직 채우지 않은 행은 null.
+         */
+        val contentUpdatedAt: java.time.LocalDateTime? = null,
         /** 원천 출처(TOURAPI · GOCAMPING …)·공공누리 유형 — 색인 값 그대로. 없으면 null(추정하지 않는다). */
         val source: String? = null,
         val copyrightDivCd: String? = null,
@@ -161,6 +166,11 @@ interface SearchAttractionUseCase {
         val relatedPlaces: List<Related>? = null,
         /** 같은 장소의 다른 등록(관광지·쇼핑 등) — 단건 조회에만. 있으면 화면이 「복합공간」으로 알리고 잇는다. */
         val samePlace: List<SamePlaceRef>? = null,
+        /**
+         * 다른 언어판 문서 id(언어 대체 짝) — 목록·단건 모두. 상세 hreflang 과 sitemap 이 읽는다.
+         * 짝이 없거나 짝 스위치가 꺼졌으면 null.
+         */
+        val alternateId: String? = null,
     )
 
     /** 같은 장소의 다른 등록 — 제목은 이 관광지와 같다. [contentTypeId] 로 화면이 「쇼핑」 등을 붙인다. */

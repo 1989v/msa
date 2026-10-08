@@ -249,6 +249,7 @@ class SearchAttractionService(
         distanceKm = distanceKm,
         position = position,
         modifiedAt = modifiedAt,
+        contentUpdatedAt = contentUpdatedAt,
         source = source,
         copyrightDivCd = copyrightDivCd,
         feeText = feeText,
@@ -288,5 +289,6 @@ class SearchAttractionService(
             SearchAttractionUseCase.Related(it.rank, it.id, it.title, it.sidoName, it.category)
         },
         samePlace = if (summarize) null else samePlace?.map { SearchAttractionUseCase.SamePlaceRef(it.id, it.contentTypeId) },
+        alternateId = alternateId,
     )
 }

@@ -14,6 +14,7 @@ import tools.jackson.databind.cfg.DateTimeFeature
 import tools.jackson.module.kotlin.jacksonMapperBuilder
 import tools.jackson.module.kotlin.readValue
 import java.time.DayOfWeek
+import java.time.LocalDateTime
 
 /**
  * 색인 문서 `_source` → 도메인. 재색인이 싣는 방문 속성·지역 안 위치(중첩 목록 포함)가
@@ -49,6 +50,19 @@ class AttractionSearchDocumentTest : BehaviorSpec({
                 doc.copyrightDivCd shouldBe "Type3"
                 doc.feeText shouldBe "<어린이> 무료"
                 doc.petAcmpyType shouldBe "일부구역 동반가능"
+            }
+        }
+    }
+
+    given("색인 문서에 언어 대체 짝·본문 변경 시각이 있을 때") {
+        `when`("도메인으로 바꾸면") {
+            val doc = mapper.readValue<AttractionSearchDocument>(
+                """{$base,"alternateId":"2180","contentUpdatedAt":"2026-10-08T09:10:11"}""",
+            ).toDomain()
+
+            then("두 값이 그대로 살아 있다 — 상세 hreflang 과 최근 갱신 순이 읽는다") {
+                doc.alternateId shouldBe "2180"
+                doc.contentUpdatedAt shouldBe LocalDateTime.of(2026, 10, 8, 9, 10, 11)
             }
         }
     }
@@ -105,6 +119,8 @@ class AttractionSearchDocumentTest : BehaviorSpec({
                 doc.source.shouldBeNull()
                 doc.copyrightDivCd.shouldBeNull()
                 doc.feeText.shouldBeNull()
+                doc.alternateId.shouldBeNull()
+                doc.contentUpdatedAt.shouldBeNull()
             }
         }
     }

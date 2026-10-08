@@ -1,0 +1,727 @@
+{
+ "_source": "운영 표본 30쌍(2026-10-08, docs/research/2026-10-07-tourism-growth/evidence/stage1/s1-8-review-pages.json) — 57개 문서와 쌍별 기대 판정(pair = 언어 대체 짝, none = 짝 아님). hasOverview 는 전부 true 로 둔다",
+ "documents": [
+  {
+   "id": "1676",
+   "lang": "en",
+   "contentTypeId": "76",
+   "googlePlaceId": "ChIJ_99FToiCezURBfrQIL7RhFE",
+   "latitude": 37.4714834966,
+   "longitude": 126.5960474521,
+   "title": "Wolmi Zzang Land (Wolmi Theme Park)",
+   "titleLocal": "월미짱랜드"
+  },
+  {
+   "id": "2059",
+   "lang": "en",
+   "contentTypeId": "76",
+   "googlePlaceId": "ChIJ1_YpO5H0YzURW2e6XPn6qiA",
+   "latitude": 37.0003447435,
+   "longitude": 128.3448249603,
+   "title": "Dodamsambong Peaks",
+   "titleLocal": "도담삼봉"
+  },
+  {
+   "id": "2180",
+   "lang": "en",
+   "contentTypeId": "76",
+   "googlePlaceId": "ChIJvTIJu2JNZjUR__D8P26HykE",
+   "latitude": 35.8368783771,
+   "longitude": 129.2900942554,
+   "title": "Hwang Nyong Won",
+   "titleLocal": "황룡원"
+  },
+  {
+   "id": "2194",
+   "lang": "en",
+   "contentTypeId": "76",
+   "googlePlaceId": "ChIJoQIgQnguaTUR8PVTQVmr3v8",
+   "latitude": 34.885136139,
+   "longitude": 128.7376242859,
+   "title": "Neungpohang Port",
+   "titleLocal": "능포항"
+  },
+  {
+   "id": "2220",
+   "lang": "en",
+   "contentTypeId": "76",
+   "googlePlaceId": "ChIJM7LW6FfQbjURRK-PIrU738Q",
+   "latitude": 34.9748138011,
+   "longitude": 128.5174966194,
+   "title": "Geoje Gyedo Fishing Village",
+   "titleLocal": "거제 계도어촌체험마을"
+  },
+  {
+   "id": "2325",
+   "lang": "en",
+   "contentTypeId": "76",
+   "googlePlaceId": "ChIJ9x4sT11McjURqAU3y63VQZc",
+   "latitude": 34.7529927741,
+   "longitude": 126.6629176128,
+   "title": "Dogapsa Temple",
+   "titleLocal": "도갑사"
+  },
+  {
+   "id": "13515",
+   "lang": "en",
+   "contentTypeId": "76",
+   "googlePlaceId": "ChIJ18XYEokIZDURJ1j7TyIPQGI",
+   "latitude": 36.8577716071,
+   "longitude": 128.4725754201,
+   "title": "National Center for Forest Therapy",
+   "titleLocal": "국립산림치유원"
+  },
+  {
+   "id": "13645",
+   "lang": "en",
+   "contentTypeId": "76",
+   "googlePlaceId": "ChIJKzlsWYKlczURp8jmZUJJNBw",
+   "latitude": 34.777982189,
+   "longitude": 126.3592243617,
+   "title": "Gohado Marine Theme Park",
+   "titleLocal": "고하도 해상테마파크"
+  },
+  {
+   "id": "13698",
+   "lang": "en",
+   "contentTypeId": "76",
+   "googlePlaceId": "ChIJLaVdP2GifDURO-dprCax3Xo",
+   "latitude": 37.5559591997,
+   "longitude": 126.9715863108,
+   "title": "Culture Station Seoul 284",
+   "titleLocal": "문화역 서울 284"
+  },
+  {
+   "id": "13853",
+   "lang": "en",
+   "contentTypeId": "76",
+   "googlePlaceId": "ChIJO54Z6RVccDURV_gacx1D99I",
+   "latitude": 35.9898912385106,
+   "longitude": 126.712756805387,
+   "title": "Gunsan Modern Art Museum",
+   "titleLocal": "군산근대미술관"
+  },
+  {
+   "id": "14200",
+   "lang": "en",
+   "contentTypeId": "76",
+   "googlePlaceId": "ChIJm7q1izntaDURsE73CHRyKWc",
+   "latitude": 35.1449947568,
+   "longitude": 129.1270084045,
+   "title": "Busan Gwangandaegyo Bridge",
+   "titleLocal": "부산광안대교"
+  },
+  {
+   "id": "14206",
+   "lang": "en",
+   "contentTypeId": "76",
+   "googlePlaceId": "ChIJWUk9wbm-fDURAh_XpE7zZ-4",
+   "latitude": 37.6649464754,
+   "longitude": 127.0282025819,
+   "title": "Kansong House",
+   "titleLocal": "간송옛집"
+  },
+  {
+   "id": "14608",
+   "lang": "en",
+   "contentTypeId": "76",
+   "googlePlaceId": "ChIJn3bi1YriejURqqM92zB94Hw",
+   "latitude": 36.8889410934,
+   "longitude": 126.8248676612,
+   "title": "Dangjin Sapgyoho Lake",
+   "titleLocal": "당진 삽교호"
+  },
+  {
+   "id": "14815",
+   "lang": "en",
+   "contentTypeId": "76",
+   "googlePlaceId": "ChIJsy6u20mlfDURQOlVT0xmv6U",
+   "latitude": 37.5446026871,
+   "longitude": 127.0590698587,
+   "title": "Amore Seongsu",
+   "titleLocal": "아모레 성수"
+  },
+  {
+   "id": "15093",
+   "lang": "en",
+   "contentTypeId": "76",
+   "googlePlaceId": "ChIJryxvhHTgejURxdeh2z5QxYY",
+   "latitude": 36.8410210525,
+   "longitude": 126.9505937184,
+   "title": "Yeonginsan Recreational Forest",
+   "titleLocal": "아산 영인산자연휴양림 숲속야영장"
+  },
+  {
+   "id": "18066",
+   "lang": "en",
+   "contentTypeId": "78",
+   "googlePlaceId": "ChIJ82MIn6VHbjUR9p9xv_1Gl5s",
+   "latitude": 35.2272566851194,
+   "longitude": 127.64287725668,
+   "title": "Hadong Tea Museum",
+   "titleLocal": "하동야생차박물관"
+  },
+  {
+   "id": "18161",
+   "lang": "en",
+   "contentTypeId": "78",
+   "googlePlaceId": "ChIJax187zTHYTUR4UQuPCPmZK4",
+   "latitude": 37.5475463518,
+   "longitude": 129.106323638,
+   "title": "Pencil Museum",
+   "titleLocal": "연필뮤지엄"
+  },
+  {
+   "id": "18192",
+   "lang": "en",
+   "contentTypeId": "78",
+   "googlePlaceId": "ChIJqWlvO5s9cDURHZQKyhF2C9c",
+   "latitude": 35.8491321219,
+   "longitude": 127.1233519567,
+   "title": "Yeonhwajeong Library",
+   "titleLocal": "연화정 도서관"
+  },
+  {
+   "id": "18206",
+   "lang": "en",
+   "contentTypeId": "78",
+   "googlePlaceId": "ChIJX2gHWMcJZjURxyYqV044P-4",
+   "latitude": 35.8270151958,
+   "longitude": 128.6744124743,
+   "title": "Daegu Art Museum",
+   "titleLocal": "대구미술관"
+  },
+  {
+   "id": "22453",
+   "lang": "en",
+   "contentTypeId": "75",
+   "googlePlaceId": "ChIJvwDHkgpwYTUR80yBd_QnRTc",
+   "latitude": 37.2127210495,
+   "longitude": 128.8216009997,
+   "title": "Kangwon Land Casino",
+   "titleLocal": "강원랜드 카지노"
+  },
+  {
+   "id": "34887",
+   "lang": "en",
+   "contentTypeId": "79",
+   "googlePlaceId": "ChIJVT-MrBh_ezURfROwguY1N0M",
+   "latitude": 37.50991916031166,
+   "longitude": 126.64772502436819,
+   "title": "List - MODA Outlet Incheon Branch [Tax Refund Shop]  (리스트 모다아울렛 인천점)",
+   "titleLocal": "리스트 모다아울렛 인천점"
+  },
+  {
+   "id": "34929",
+   "lang": "en",
+   "contentTypeId": "79",
+   "googlePlaceId": "ChIJVT-MrBh_ezURfROwguY1N0M",
+   "latitude": 37.50991916031166,
+   "longitude": 126.64772502436819,
+   "title": "Levi’s Jeans MODA Outlet Incheon Branch [Tax Refund Shop]",
+   "titleLocal": "리바이스진 모다아울렛 인천점"
+  },
+  {
+   "id": "34965",
+   "lang": "en",
+   "contentTypeId": "79",
+   "googlePlaceId": "ChIJVT-MrBh_ezURfROwguY1N0M",
+   "latitude": 37.50991916031166,
+   "longitude": 126.64772502436819,
+   "title": "Brentwood - MODA Outlet Incheon Branch [Tax Refund Shop]",
+   "titleLocal": "브렌우드 모다아울렛 인천점"
+  },
+  {
+   "id": "36250",
+   "lang": "en",
+   "contentTypeId": "79",
+   "googlePlaceId": null,
+   "latitude": 33.3049726791712,
+   "longitude": 126.31635202613,
+   "title": "Andar - Shinsegae Simon Premium Outlet Jeju Branch [Tax Refund Shop]",
+   "titleLocal": "안다르 신세계사이먼프리미엄아울렛 제주점"
+  },
+  {
+   "id": "37669",
+   "lang": "en",
+   "contentTypeId": "79",
+   "googlePlaceId": null,
+   "latitude": 37.47820851134653,
+   "longitude": 126.88721313952136,
+   "title": "Zen - Mario Outlet Building 1 Branch [Tax Refund Shop]",
+   "titleLocal": "젠 마리오아울렛 1관점"
+  },
+  {
+   "id": "38412",
+   "lang": "en",
+   "contentTypeId": "79",
+   "googlePlaceId": null,
+   "latitude": 35.53956987160145,
+   "longitude": 129.33581146746783,
+   "title": "Ferragamo - Hyundai Department Store Ulsan Branch [Tax Refund Shop]",
+   "titleLocal": "페라가모 현대백화점 울산점"
+  },
+  {
+   "id": "40604",
+   "lang": "en",
+   "contentTypeId": "79",
+   "googlePlaceId": null,
+   "latitude": 37.2459466972835,
+   "longitude": 127.612385423931,
+   "title": "Kiton Shinsegae Simon Premium Outlet Yeoju Branch[Tax Refund Shop]",
+   "titleLocal": "키톤 신세계사이먼프리미엄아울렛 여주점"
+  },
+  {
+   "id": "160",
+   "lang": "ko",
+   "contentTypeId": "12",
+   "googlePlaceId": "ChIJ_99FToiCezURBfrQIL7RhFE",
+   "latitude": 37.4714251763,
+   "longitude": 126.5964029776,
+   "title": "월미 관광특구"
+  },
+  {
+   "id": "1015",
+   "lang": "ko",
+   "contentTypeId": "12",
+   "googlePlaceId": "ChIJryxvhHTgejURxdeh2z5QxYY",
+   "latitude": 36.8410210525,
+   "longitude": 126.9505937184,
+   "title": "아산 영인산자연휴양림"
+  },
+  {
+   "id": "2477",
+   "lang": "ko",
+   "contentTypeId": "12",
+   "googlePlaceId": "ChIJKzlsWYKlczURp8jmZUJJNBw",
+   "latitude": 34.7779436616,
+   "longitude": 126.3592140798,
+   "title": "고하도 전망대"
+  },
+  {
+   "id": "3456",
+   "lang": "ko",
+   "contentTypeId": "12",
+   "googlePlaceId": "ChIJ9x4sT11McjURqAU3y63VQZc",
+   "latitude": 34.7529543462267,
+   "longitude": 126.662903895273,
+   "title": "도갑사"
+  },
+  {
+   "id": "4085",
+   "lang": "ko",
+   "contentTypeId": "12",
+   "googlePlaceId": "ChIJKzlsWYKlczURp8jmZUJJNBw",
+   "latitude": 34.777982189,
+   "longitude": 126.3592243617,
+   "title": "고하도 해상테마파크"
+  },
+  {
+   "id": "5318",
+   "lang": "ko",
+   "contentTypeId": "12",
+   "googlePlaceId": "ChIJ18XYEokIZDURJ1j7TyIPQGI",
+   "latitude": 36.8577716071484,
+   "longitude": 128.472575420065,
+   "title": "국립산림치유원"
+  },
+  {
+   "id": "5337",
+   "lang": "ko",
+   "contentTypeId": "12",
+   "googlePlaceId": "ChIJvTIJu2JNZjUR__D8P26HykE",
+   "latitude": 35.8368341938528,
+   "longitude": 129.290063861643,
+   "title": "황룡원"
+  },
+  {
+   "id": "6776",
+   "lang": "ko",
+   "contentTypeId": "12",
+   "googlePlaceId": "ChIJoQIgQnguaTUR8PVTQVmr3v8",
+   "latitude": 34.8851,
+   "longitude": 128.7376,
+   "title": "능포항"
+  },
+  {
+   "id": "7935",
+   "lang": "ko",
+   "contentTypeId": "12",
+   "googlePlaceId": "ChIJWUk9wbm-fDURAh_XpE7zZ-4",
+   "latitude": 37.664892967926406,
+   "longitude": 127.02818672762793,
+   "title": "간송옛집"
+  },
+  {
+   "id": "8647",
+   "lang": "ko",
+   "contentTypeId": "12",
+   "googlePlaceId": "ChIJLaVdP2GifDURO-dprCax3Xo",
+   "latitude": 37.5560109019,
+   "longitude": 126.9716247231,
+   "title": "문화역 서울 284"
+  },
+  {
+   "id": "9095",
+   "lang": "ko",
+   "contentTypeId": "12",
+   "googlePlaceId": "ChIJn3bi1YriejURqqM92zB94Hw",
+   "latitude": 36.8900103789,
+   "longitude": 126.8228483707,
+   "title": "삽교호놀이동산"
+  },
+  {
+   "id": "10334",
+   "lang": "ko",
+   "contentTypeId": "12",
+   "googlePlaceId": "ChIJM7LW6FfQbjURRK-PIrU738Q",
+   "latitude": 34.9748138011,
+   "longitude": 128.5174966194,
+   "title": "거제 계도어촌체험마을"
+  },
+  {
+   "id": "10381",
+   "lang": "ko",
+   "contentTypeId": "12",
+   "googlePlaceId": "ChIJsy6u20mlfDURQOlVT0xmv6U",
+   "latitude": 37.5446026871,
+   "longitude": 127.0590698587,
+   "title": "아모레 성수"
+  },
+  {
+   "id": "11343",
+   "lang": "ko",
+   "contentTypeId": "12",
+   "googlePlaceId": "ChIJO54Z6RVccDURV_gacx1D99I",
+   "latitude": 35.9899367776,
+   "longitude": 126.7127710457,
+   "title": "군산근대미술관"
+  },
+  {
+   "id": "13062",
+   "lang": "ko",
+   "contentTypeId": "12",
+   "googlePlaceId": "ChIJm7q1izntaDURsE73CHRyKWc",
+   "latitude": 35.1449947568,
+   "longitude": 129.1270084045,
+   "title": "부산광안대교"
+  },
+  {
+   "id": "15369",
+   "lang": "ko",
+   "contentTypeId": "14",
+   "googlePlaceId": "ChIJqWlvO5s9cDURHZQKyhF2C9c",
+   "latitude": 35.8490875285,
+   "longitude": 127.1233377357,
+   "title": "연화정 도서관"
+  },
+  {
+   "id": "16043",
+   "lang": "ko",
+   "contentTypeId": "14",
+   "googlePlaceId": "ChIJHXIVBbpHbjURQDWjiLi2sKk",
+   "latitude": 35.2272566851194,
+   "longitude": 127.64287725668,
+   "title": "하동야생차박물관"
+  },
+  {
+   "id": "16711",
+   "lang": "ko",
+   "contentTypeId": "14",
+   "googlePlaceId": "ChIJax187zTHYTUR4UQuPCPmZK4",
+   "latitude": 37.54749268957238,
+   "longitude": 129.10629595925664,
+   "title": "연필뮤지엄"
+  },
+  {
+   "id": "17689",
+   "lang": "ko",
+   "contentTypeId": "14",
+   "googlePlaceId": "ChIJX2gHWMcJZjURxyYqV044P-4",
+   "latitude": 35.8270707445,
+   "longitude": 128.6743652541,
+   "title": "대구미술관"
+  },
+  {
+   "id": "19627",
+   "lang": "ko",
+   "contentTypeId": "28",
+   "googlePlaceId": "ChIJryxvhHTgejURxdeh2z5QxYY",
+   "latitude": 36.840594550278894,
+   "longitude": 126.9500195093819,
+   "title": "영인산자연휴양림 스카이어드벤처"
+  },
+  {
+   "id": "19751",
+   "lang": "ko",
+   "contentTypeId": "28",
+   "googlePlaceId": "ChIJvwDHkgpwYTUR80yBd_QnRTc",
+   "latitude": 37.2126688752577,
+   "longitude": 128.821573056248,
+   "title": "강원랜드 카지노"
+  },
+  {
+   "id": "20783",
+   "lang": "ko",
+   "contentTypeId": "28",
+   "googlePlaceId": "ChIJ1_YpO5H0YzURW2e6XPn6qiA",
+   "latitude": 37.000814077,
+   "longitude": 128.3418057718,
+   "title": "도담삼봉 모터보트"
+  },
+  {
+   "id": "22851",
+   "lang": "ko",
+   "contentTypeId": "38",
+   "googlePlaceId": "ChIJVT-MrBh_ezURfROwguY1N0M",
+   "latitude": 37.5099191232844,
+   "longitude": 126.64772504066,
+   "title": "링스 모다아울렛 인천점"
+  },
+  {
+   "id": "22857",
+   "lang": "ko",
+   "contentTypeId": "38",
+   "googlePlaceId": "ChIJVT-MrBh_ezURfROwguY1N0M",
+   "latitude": 37.5099191232844,
+   "longitude": 126.64772504066,
+   "title": "린 모다아울렛 인천점"
+  },
+  {
+   "id": "22869",
+   "lang": "ko",
+   "contentTypeId": "38",
+   "googlePlaceId": "ChIJVT-MrBh_ezURfROwguY1N0M",
+   "latitude": 37.5099191232844,
+   "longitude": 126.64772504066,
+   "title": "레베끌레 모다아울렛 인천점"
+  },
+  {
+   "id": "22911",
+   "lang": "ko",
+   "contentTypeId": "38",
+   "googlePlaceId": "ChIJVT-MrBh_ezURfROwguY1N0M",
+   "latitude": 37.5099191232844,
+   "longitude": 126.64772504066,
+   "title": "브렌우드 모다아울렛 인천점"
+  },
+  {
+   "id": "23352",
+   "lang": "ko",
+   "contentTypeId": "38",
+   "googlePlaceId": "ChIJMwPSS-BhezURCbSfK6p09bA",
+   "latitude": 37.4781875545515,
+   "longitude": 126.887154240101,
+   "title": "젠 마리오아울렛 1관점"
+  },
+  {
+   "id": "25698",
+   "lang": "ko",
+   "contentTypeId": "38",
+   "googlePlaceId": "ChIJe6a_KUfNZzURk4QS05iumlA",
+   "latitude": 35.5395698929406,
+   "longitude": 129.335811485046,
+   "title": "페라가모 현대백화점 울산점"
+  },
+  {
+   "id": "27494",
+   "lang": "ko",
+   "contentTypeId": "38",
+   "googlePlaceId": "ChIJaS54LDNeYzURqohP1x3GYx8",
+   "latitude": 37.2459466972835,
+   "longitude": 127.612385423931,
+   "title": "오프라벨 신세계사이먼프리미엄아울렛 여주점"
+  },
+  {
+   "id": "28383",
+   "lang": "ko",
+   "contentTypeId": "38",
+   "googlePlaceId": "ChIJb5TEiitdDDURa3hjtKdoEf0",
+   "latitude": 33.3049726791712,
+   "longitude": 126.31635202613,
+   "title": "산드로 신세계사이먼프리미엄아울렛 제주점"
+  }
+ ],
+ "pairs": [
+  {
+   "no": 1,
+   "en": "14815",
+   "ko": "10381",
+   "expected": "pair"
+  },
+  {
+   "no": 2,
+   "en": "2180",
+   "ko": "5337",
+   "expected": "pair"
+  },
+  {
+   "no": 3,
+   "en": "14206",
+   "ko": "7935",
+   "expected": "pair"
+  },
+  {
+   "no": 4,
+   "en": "13645",
+   "ko": "4085",
+   "expected": "pair"
+  },
+  {
+   "no": 5,
+   "en": "2325",
+   "ko": "3456",
+   "expected": "pair"
+  },
+  {
+   "no": 6,
+   "en": "13698",
+   "ko": "8647",
+   "expected": "pair"
+  },
+  {
+   "no": 7,
+   "en": "2194",
+   "ko": "6776",
+   "expected": "pair"
+  },
+  {
+   "no": 8,
+   "en": "18192",
+   "ko": "15369",
+   "expected": "pair"
+  },
+  {
+   "no": 9,
+   "en": "13515",
+   "ko": "5318",
+   "expected": "pair"
+  },
+  {
+   "no": 10,
+   "en": "13853",
+   "ko": "11343",
+   "expected": "pair"
+  },
+  {
+   "no": 11,
+   "en": "18161",
+   "ko": "16711",
+   "expected": "pair"
+  },
+  {
+   "no": 12,
+   "en": "18206",
+   "ko": "17689",
+   "expected": "pair"
+  },
+  {
+   "no": 13,
+   "en": "14200",
+   "ko": "13062",
+   "expected": "pair"
+  },
+  {
+   "no": 14,
+   "en": "2220",
+   "ko": "10334",
+   "expected": "pair"
+  },
+  {
+   "no": 15,
+   "en": "34965",
+   "ko": "22911",
+   "expected": "pair"
+  },
+  {
+   "no": 16,
+   "en": "15093",
+   "ko": "1015",
+   "expected": "none"
+  },
+  {
+   "no": 17,
+   "en": "15093",
+   "ko": "19627",
+   "expected": "none"
+  },
+  {
+   "no": 18,
+   "en": "2059",
+   "ko": "20783",
+   "expected": "none"
+  },
+  {
+   "no": 19,
+   "en": "1676",
+   "ko": "160",
+   "expected": "none"
+  },
+  {
+   "no": 20,
+   "en": "34929",
+   "ko": "22869",
+   "expected": "none"
+  },
+  {
+   "no": 21,
+   "en": "34887",
+   "ko": "22857",
+   "expected": "none"
+  },
+  {
+   "no": 22,
+   "en": "34965",
+   "ko": "22851",
+   "expected": "none"
+  },
+  {
+   "no": 23,
+   "en": "14608",
+   "ko": "9095",
+   "expected": "none"
+  },
+  {
+   "no": 24,
+   "en": "13645",
+   "ko": "2477",
+   "expected": "none"
+  },
+  {
+   "no": 25,
+   "en": "22453",
+   "ko": "19751",
+   "expected": "pair"
+  },
+  {
+   "no": 26,
+   "en": "38412",
+   "ko": "25698",
+   "expected": "none"
+  },
+  {
+   "no": 27,
+   "en": "18066",
+   "ko": "16043",
+   "expected": "none"
+  },
+  {
+   "no": 28,
+   "en": "40604",
+   "ko": "27494",
+   "expected": "none"
+  },
+  {
+   "no": 29,
+   "en": "37669",
+   "ko": "23352",
+   "expected": "none"
+  },
+  {
+   "no": 30,
+   "en": "36250",
+   "ko": "28383",
+   "expected": "none"
+  }
+ ]
+}

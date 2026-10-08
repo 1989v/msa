@@ -71,6 +71,8 @@ class PlaceApiClient(
         val infoRaw: String? = null,
         val googlePlaceId: String? = null,
         val sourceModifiedAt: LocalDateTime? = null,
+        /** 본문이 실제로 바뀐 시각(place 가 본문 해시로 판정) — 원천 수정일과 다르다. 옛 place 응답에는 없다. */
+        val contentUpdatedAt: LocalDateTime? = null,
         /** 원천 출처(TOURAPI · GOCAMPING …)와 공공누리 유형(Type1 · Type3 …) — place 값 그대로. 없으면 추정하지 않고 null. */
         val source: String? = null,
         val copyrightDivCd: String? = null,
@@ -214,6 +216,7 @@ class PlaceApiClient(
                 infoRaw = a["infoRaw"] as? String,
                 googlePlaceId = a["googlePlaceId"] as? String,
                 sourceModifiedAt = (a["sourceModifiedAt"] as? String)?.let { LocalDateTime.parse(it) },
+                contentUpdatedAt = (a["contentUpdatedAt"] as? String)?.let { LocalDateTime.parse(it) },
                 source = a["source"] as? String,
                 copyrightDivCd = a["copyrightDivCd"] as? String,
                 eventStartDate = (a["eventStartDate"] as? String)?.let { LocalDate.parse(it) },

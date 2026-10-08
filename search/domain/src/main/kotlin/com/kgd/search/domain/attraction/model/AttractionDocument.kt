@@ -68,6 +68,11 @@ data class AttractionDocument(
      */
     val popularityScore: Double = AttractionPopularity.score(imageUrl = imageUrl, overview = overview, tel = tel),
     val modifiedAt: LocalDateTime? = null,
+    /**
+     * 본문이 실제로 바뀐 시각 — place 가 본문 해시로 판정한 값 그대로. 원천 수정일([modifiedAt])과 다르다.
+     * 최근 갱신 순(RSS)이 이 값으로 줄 세운다. place 가 아직 채우지 않은 행·옛 색인 문서는 null.
+     */
+    val contentUpdatedAt: LocalDateTime? = null,
     /** 원천 출처(TOURAPI · GOCAMPING …). 없으면 null — TourAPI 로 추정하지 않는다. */
     val source: String? = null,
     /** 공공누리 유형(Type1 · Type3 …) — 원천 값 그대로. */
@@ -105,4 +110,9 @@ data class AttractionDocument(
     val relatedPlaces: List<RelatedPlace>? = null,
     /** 같은 장소의 다른 등록(관광지·쇼핑 등) — 있으면 상세가 「복합공간」으로 알린다. 없거나 옛 색인 문서는 null. */
     val samePlace: List<SamePlace>? = null,
+    /**
+     * 다른 언어판 문서 id([AlternateLanguagePairer] 가 판정한 언어 대체 짝) — 있으면 상세가 서로를 hreflang 으로 잇는다.
+     * [samePlace](같은 언어 안의 중복 등록)와 다른 개념이다. 짝이 없거나 짝 스위치가 꺼졌거나 옛 색인 문서면 null.
+     */
+    val alternateId: String? = null,
 )

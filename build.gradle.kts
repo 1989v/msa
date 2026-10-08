@@ -547,6 +547,8 @@ val searchReadRequired = mapOf(
         "samePlace",
         // 출처·공공누리 유형·요금 평문·반려동물 원문 — 상세 방문 요약·확인 상태·JSON-LD license 가 읽는다
         "source", "copyrightDivCd", "feeText", "petAcmpyType",
+        // 언어 대체 짝 — 상세 hreflang·sitemap 이, 본문 변경 시각 — 최근 갱신 순이 읽는다. 빠지면 hreflang·순서가 조용히 사라진다
+        "alternateId", "contentUpdatedAt",
     ),
 )
 

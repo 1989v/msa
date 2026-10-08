@@ -26,6 +26,10 @@ data class RegionProjection(
     val eventPeriod: EventPeriod?,
     /** 원천 제목 그대로 — [title] 은 꼬리 괄호를 뗀 표시명이라 괄호로만 갈리는 다른 곳(디올 남성·여성 매장)이 같아진다 */
     val sourceTitle: String? = null,
+    /** 언어 대체 짝 판정([AlternateLanguagePairer])에만 쓴다 — 구글 place_id · 영문 문서의 로컬(국문) 이름 · 개요 유무. */
+    val googlePlaceId: String? = null,
+    val titleLocal: String? = null,
+    val hasOverview: Boolean = false,
 )
 
 /**

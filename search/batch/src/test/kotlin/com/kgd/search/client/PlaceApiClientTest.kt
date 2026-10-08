@@ -14,6 +14,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
 import java.net.InetSocketAddress
 import java.time.Duration
+import java.time.LocalDateTime
 import java.util.concurrent.TimeoutException
 
 /**
@@ -53,6 +54,7 @@ class PlaceApiClientTest : BehaviorSpec({
               "thumbnailUrl":"https://tong.visitkorea.or.kr/cms/resource/98/3487598_image3_1.jpg",
               "tel":"02-3700-3900","overview":"조선의 법궁","googlePlaceId":"ChIJ",
               "sourceModifiedAt":"2026-01-02T03:04:05","source":"TOURAPI","copyrightDivCd":"Type1",
+              "contentUpdatedAt":"2026-10-08T09:10:11.123456",
               "status":"ACTIVE"
             }],"totalElements":-1,"totalPages":-1,"currentPage":-1,"nextAfterId":7}}
         """.trimIndent()
@@ -76,6 +78,10 @@ class PlaceApiClientTest : BehaviorSpec({
             Then("원천 출처와 공공누리 유형이 담긴다 — 상세 확인 상태·출처 줄·license 가 읽는다") {
                 first.source shouldBe "TOURAPI"
                 first.copyrightDivCd shouldBe "Type1"
+            }
+
+            Then("본문 변경 시각이 담긴다 — place 가 마이크로초까지 내도 읽는다") {
+                first.contentUpdatedAt shouldBe LocalDateTime.of(2026, 10, 8, 9, 10, 11, 123_456_000)
             }
 
             Then("키셋으로 요청하고 다음 커서를 담는다") {
@@ -104,6 +110,9 @@ class PlaceApiClientTest : BehaviorSpec({
             Then("키가 없는 출처·공공누리 유형은 null 이다 — TourAPI 로 추정하지 않는다") {
                 first.source shouldBe null
                 first.copyrightDivCd shouldBe null
+            }
+            Then("키가 없는 본문 변경 시각은 null 이다") {
+                first.contentUpdatedAt shouldBe null
             }
             Then("nextAfterId 가 없으면 마지막 페이지다") {
                 page.nextAfterId shouldBe null

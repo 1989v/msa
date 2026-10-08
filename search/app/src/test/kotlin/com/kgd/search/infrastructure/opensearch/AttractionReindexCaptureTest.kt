@@ -32,6 +32,7 @@ import tools.jackson.databind.cfg.DateTimeFeature
 import tools.jackson.module.kotlin.jacksonMapperBuilder
 import tools.jackson.module.kotlin.readValue
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 /**
  * 재색인 왕복 — search-batch 태스클릿이 만든 bulk 문서 캡처본(`AttractionApiReindexTaskletTest` 가 쓴다)을
@@ -248,6 +249,22 @@ class AttractionReindexCaptureTest : BehaviorSpec({
                         (id to listOf(doc.source, doc.copyrightDivCd, doc.feeText, doc.petAcmpyType))
                 }
                 service.findById("202")!!.copyrightDivCd shouldBe "Type3"
+            }
+
+            then("언어 대체 짝·본문 변경 시각이 쓰기 문서 값 그대로 상세 결과까지 남는다") {
+                val written = ObjectMapper().readTree(
+                    AttractionReindexCaptureTest::class.java.getResource("/attraction/reindex-capture.json")!!.readText(),
+                ).path("documents").associate { it.path("id").asString() to it }
+                fun writtenText(id: String, field: String) = written.getValue(id).path(field).takeIf { it.isString }?.asString()
+                documents.keys.forEach { id ->
+                    val result = service.findById(id)!!
+                    (id to result.alternateId) shouldBe (id to writtenText(id, "alternateId"))
+                    (id to result.contentUpdatedAt) shouldBe (id to writtenText(id, "contentUpdatedAt")?.let(LocalDateTime::parse))
+                }
+                // 대조군: 짝이 양방향으로 실려 있고 시각이 실린 문서가 있어야 위 비교가 무언가를 잰다
+                service.findById("601")!!.alternateId shouldBe "602"
+                service.findById("602")!!.alternateId shouldBe "601"
+                documents.values.count { it.contentUpdatedAt != null } shouldBe 1
             }
 
             then("같은 장소의 다른 등록이 상세 결과까지 남는다") {

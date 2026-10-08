@@ -1,5 +1,6 @@
 package com.kgd.search.infrastructure.job
 
+import com.kgd.search.domain.attraction.model.AlternateLanguagePairer
 import com.kgd.search.domain.attraction.model.AttractionAttributeParser
 import com.kgd.search.domain.attraction.model.AttractionAttributeSource
 import com.kgd.search.domain.attraction.model.AttractionClickSignal
@@ -85,6 +86,13 @@ class AttractionApiReindexTasklet(
     @Value("\${search.embedding.model-ref:}")
     private lateinit var embeddingModelRef: String
 
+    /**
+     * 언어 대체 짝을 문서에 실을지. 꺼져 있어도 짝은 계산해 로그에 남긴다 — 켜기 전에 운영 짝 수를 볼 수 있게.
+     * 상세 hreflang 은 문서의 alternateId 만 보므로 꺼져 있으면 하나도 나가지 않는다.
+     */
+    @Value("\${search.alternate-pairs.enabled:false}")
+    private var alternatePairsEnabled: Boolean = false
+
     override fun execute(contribution: StepContribution, chunkContext: ChunkContext): RepeatStatus =
         runBlocking {
             val newIndexName = aliasManager.createTimestampedIndexName(indexAlias)
@@ -120,7 +128,7 @@ class AttractionApiReindexTasklet(
             val uniqueClickers = loadClickSignal()
 
             val today = EventSchedule.todayKst(clock.instant())
-            val (projections, placements, attractionIds, samePlaces) = collectRegionPlacements(today)
+            val (projections, placements, attractionIds, samePlaces, alternates) = collectRegionPlacements(today)
 
             val indexStartedAt = System.nanoTime()
 
@@ -325,6 +333,8 @@ class AttractionApiReindexTasklet(
                             congestion = congestion,
                             relatedPlaces = relatedPlaces,
                             samePlace = samePlaces[attraction.id.toString()],
+                            contentUpdatedAt = attraction.contentUpdatedAt,
+                            alternateId = if (alternatePairsEnabled) alternates[attraction.id.toString()] else null,
                         ),
                         embedding,
                     )
@@ -393,6 +403,7 @@ class AttractionApiReindexTasklet(
      *
      * 투영은 문서당 약 200B 다: 언어·시도·시군구·유형·분류 코드는 종류가 수백 개뿐이라 intern 으로 한 벌만 두고,
      * 문서마다 새로 드는 것은 id·제목·좌표뿐이다. 6만 건이면 약 12MB, 집계 결과(가까운 곳 5건씩)까지 약 30MB.
+     * 언어 대체 짝 판정용 place_id·로컬명은 응답 문자열을 그대로 가리켜 문서당 참조 몇 개만 는다.
      */
     private suspend fun collectRegionPlacements(today: LocalDate): RegionPass {
         val startedAt = System.nanoTime()
@@ -420,11 +431,18 @@ class AttractionApiReindexTasklet(
         // 같은 장소의 다른 등록 — 끝난 행사는 잇지 않는다(listed 만)
         val samePlaces = SamePlaceGrouper.group(listed)
         log.info { "Same place: ${samePlaces.size} documents have another listing of the same place" }
-        return RegionPass(listed.associateBy { it.id }, placements, attractionIds, samePlaces)
+        // 언어 대체 짝 — 전체 활성 투영으로 판정한다(행사·코스는 판정기가 뺀다). 스위치와 무관하게 계산·로그한다
+        val alternates = AlternateLanguagePairer.pair(projections)
+        log.info {
+            "Alternate pairs: ${alternates.pairCount} (edges ${alternates.edges}, " +
+                "dropped by uniqueness ${alternates.droppedByUniqueness}, dropped by overview ${alternates.droppedByOverview}, " +
+                "enabled=$alternatePairsEnabled)"
+        }
+        return RegionPass(listed.associateBy { it.id }, placements, attractionIds, samePlaces, alternates.pairs)
     }
 
     /**
-     * 1차 훑기 결과 — 후보가 될 수 있는 활성 문서의 투영(id 키), 지역 집계, 코스 매칭 지도.
+     * 1차 훑기 결과 — 후보가 될 수 있는 활성 문서의 투영(id 키), 지역 집계, 코스 매칭 지도, 같은 장소 묶음, 언어 대체 짝.
      * 끝난 행사는 [projections] 에 없어 비슷한 곳 항목에서도 빠진다.
      */
     private data class RegionPass(
@@ -432,6 +450,8 @@ class AttractionApiReindexTasklet(
         val placements: Map<String, RegionPlacement>,
         val attractionIds: Map<AttractionKey, Long>,
         val samePlaces: Map<String, List<SamePlace>>,
+        /** 언어 대체 짝 id → 상대 id(양방향). 스위치가 꺼져 있어도 채워진다 — 문서에 실을지는 2차가 정한다. */
+        val alternates: Map<String, String>,
     )
 
     /** 행사만 유효 기간을 갖는다 — 다른 유형에 날짜가 실려 와도 행사 규칙을 적용하지 않는다. */
@@ -467,6 +487,10 @@ class AttractionApiReindexTasklet(
         title = titleDisplay ?: title,
         sourceTitle = title,
         eventPeriod = eventPeriod(),
+        googlePlaceId = googlePlaceId,
+        titleLocal = titleLocal,
+        // 서버 렌더가 noindex 로 판정하는 기준(개요 비었음)과 같다
+        hasOverview = !overview.isNullOrEmpty(),
     )
 
     private fun regionOf(

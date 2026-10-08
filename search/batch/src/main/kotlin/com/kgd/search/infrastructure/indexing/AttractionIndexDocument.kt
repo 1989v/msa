@@ -84,6 +84,9 @@ data class AttractionIndexDocument(
     val embeddingHash: String? = null,
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     val modifiedAt: LocalDateTime? = null,
+    /** 본문 변경 시각(place 판정) — 최근 갱신 정렬용 date(doc_values 유지). 원천 수정일 [modifiedAt] 과 다르다. */
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    val contentUpdatedAt: LocalDateTime? = null,
     /** 원천 출처(TOURAPI · GOCAMPING …)와 공공누리 유형 — place 값 그대로. */
     val source: String? = null,
     val copyrightDivCd: String? = null,
@@ -149,6 +152,8 @@ data class AttractionIndexDocument(
     val relatedPlaces: List<RelatedPlaceEntry>? = null,
     /** 같은 장소의 다른 등록 — 상세 「복합공간」 표시 전용(mapping: enabled=false). 없으면 빈다. */
     val samePlace: List<SamePlaceEntry>? = null,
+    /** 언어 대체 짝(다른 언어판 문서 id) — 상세 hreflang 이 읽는다. 짝이 없거나 짝 스위치가 꺼졌으면 빈다. */
+    val alternateId: String? = null,
 ) {
     /** OpenSearch geo_point object 표기 — 필드명 lat/lon 고정. */
 
@@ -238,6 +243,7 @@ data class AttractionIndexDocument(
                 embeddingModel = embedding?.modelRef,
                 embeddingHash = embedding?.textHash,
                 modifiedAt = doc.modifiedAt,
+                contentUpdatedAt = doc.contentUpdatedAt,
                 source = doc.source,
                 copyrightDivCd = doc.copyrightDivCd,
                 feeText = doc.feeText,
@@ -270,6 +276,7 @@ data class AttractionIndexDocument(
                 relatedPlaces = doc.relatedPlaces?.takeIf { it.isNotEmpty() }
                     ?.map { RelatedPlaceEntry(it.rank, it.id, it.title, it.sidoName, it.category) },
                 samePlace = doc.samePlace?.takeIf { it.isNotEmpty() }?.map { SamePlaceEntry(it.id, it.contentTypeId) },
+                alternateId = doc.alternateId,
             )
         }
     }

@@ -34,6 +34,7 @@ import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.ZoneOffset
 
 class SearchAttractionServiceTest : BehaviorSpec({
@@ -300,6 +301,26 @@ class SearchAttractionServiceTest : BehaviorSpec({
                 r.copyrightDivCd shouldBe "Type1"
                 r.feeText shouldBe "<어린이> 무료"
                 r.petAcmpyType shouldBe "전구역 동반가능"
+            }
+        }
+        // 목록 응답도 싣는다 — 정적 sitemap 이 목록으로 상대 언어 항목을 잇고, 최근 갱신 순이 본문 변경 시각을 읽는다
+        `when`("언어 대체 짝·본문 변경 시각이 색인된 문서면") {
+            val indexed = document().copy(alternateId = "2180", contentUpdatedAt = LocalDateTime.of(2026, 10, 8, 9, 10, 11))
+            then("단건 결과에 두 값을 그대로 싣는다") {
+                every { searchPort.findById("1") } returns indexed
+                val r = service.findById("1")!!
+                r.alternateId shouldBe "2180"
+                r.contentUpdatedAt shouldBe LocalDateTime.of(2026, 10, 8, 9, 10, 11)
+            }
+            then("목록 결과에도 두 값을 싣는다") {
+                every { searchPort.search(any(), any()) } returns found(listOf(AttractionSearchPort.AttractionHit(indexed, 1.0)))
+                val r = service.execute(SearchAttractionUseCase.Query(keyword = "")).attractions.single()
+                r.alternateId shouldBe "2180"
+                r.contentUpdatedAt shouldBe LocalDateTime.of(2026, 10, 8, 9, 10, 11)
+            }
+            then("짝이 없는 문서는 null 이다") {
+                every { searchPort.findById("1") } returns document()
+                service.findById("1")!!.alternateId shouldBe null
             }
         }
         // 화면 JSON-LD 가 이 필드로 영업 요일·무료 여부를 만든다 — 빠지면 하이드레이션이 서버 렌더의 값을 지운다

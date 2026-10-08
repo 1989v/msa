@@ -42,7 +42,7 @@ Total Task Groups: 8. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
 
 ### Task Group 3: 색인 — 언어 대체 짝 계산·스위치 + `contentUpdatedAt` (SR-1.1~1.6 · SR-1.8 · SR-2.4 search 쪽)
 **Dependencies:** TG1(place 응답 필드) · **Phase:** search:domain · search:batch · search:app 읽기 경로 · portal-fe 타입 · k8s CronJob env · **Required Skills:** Kotlin, Spring Batch, OpenSearch 매핑, Kotest, TS
-- [ ] 3.1 테스트 먼저
+- [x] 3.1 테스트 먼저
   - 오라클 픽스처 `search/domain/src/test/resources/attraction/alternate-pairs-oracle.json`: `docs/research/2026-10-07-tourism-growth/evidence/stage1/s1-8-review-pages.json` 에서 57개 문서의 `id·lang·contentTypeId·googlePlaceId·latitude·longitude·title(국문)·titleLocal(영문)` + 30쌍 `expected`(pair|none, 부록 A). `hasOverview` 는 전부 true. 뽑은 스크립트는 스크래치패드에서 돌리고 레포에 두지 않는다
   - 새 `search/domain/src/test/kotlin/com/kgd/search/domain/attraction/model/AlternateLanguagePairerTest.kt`: **57개 전체를 한 번에** `pair()` → 30쌍 각각 `expected` 와 같음(짝 16·없음 14) · 결과 맵이 양방향 · 조건 ① 실패(오라클 #27 + 합성: 한쪽 placeId 빈 값) · ② 합성 51m → 없음, 50m → 짝 · ③ 국 12 ↔ 영 76 → 짝, 국 12 ↔ 영 75 → 없음, 국 25·행사 15/85 → 없음, 표에 없는 코드 → 없음 · ④ NFKC·공백·대소문자만 다른 제목 → 짝, 다른 제목 → 없음, `titleLocal` 없음 → 없음 · **합성** 일대다(국문 둘이 ①~④ 모두 만족 → 둘 다 없음) · 한쪽 `hasOverview=false` → 없음 · 통계(edges·uniqueness·overview 탈락 수)
   - 새 `search/domain/src/test/kotlin/com/kgd/search/domain/attraction/model/ContentTypeLangTest.kt`: 대응표 값이 spec SR-1.2 표와 같음(테스트도 이 상수를 쓴다 — `sync_tour.py:47-58` 과 수치 대조 한 줄 주석)
@@ -52,15 +52,15 @@ Total Task Groups: 8. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
   - `search/app/src/test/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchDocumentTest.kt`: 두 필드 `toDomain()` 왕복
   - `search/app/src/test/kotlin/com/kgd/search/application/attraction/service/SearchAttractionServiceTest.kt`: API 결과에 `alternateId`·`contentUpdatedAt`
   - `search/app/src/test/kotlin/com/kgd/search/infrastructure/opensearch/AttractionReindexCaptureTest.kt`: 캡처(`reindex-capture.json`)에 두 필드가 실리고 읽기 문서까지 남음
-- [ ] 3.2 search:domain `ContentTypeLang`(언어 중립 유형 ↔ 국·영 코드, 행사·코스 제외 표시) + `AlternateLanguagePairer.pair(projections): Map<String, String>` + 통계 반환 — `SamePlace.kt` 와 같은 패키지, `SamePlaceGrouper` 는 건드리지 않는다. 거리는 `RegionAggregator.distanceMeters`, 제목은 `Normalizer.normalize(NFKC)` → `\s`·유니코드 공백 제거 → `lowercase(Locale.ROOT)`
-- [ ] 3.3 batch: `PlaceApiClient.AttractionDto` + `fetchPageAfter` 손 매핑(`:163`)에 `contentUpdatedAt`. `RegionProjection` 에 `googlePlaceId`·`titleLocal`·`hasOverview`
-- [ ] 3.4 batch 태스클릿 `AttractionApiReindexTasklet.kt`: 1차 패스 `collectRegionPlacements`(`:391-418`)가 `pair()` 호출 → 로그 한 줄 → 2차 패스(`:450-464`)가 문서에 `alternateId`(스위치 꺼짐이면 null). 설정 `search.alternate-pairs.enabled`(기본 false, `@ConfigurationProperties` 또는 `@Value` — 같은 모듈의 기존 설정 방식을 따른다)
-- [ ] 3.5 문서·매핑: batch `AttractionIndexDocument`, `search/batch/src/main/resources/opensearch/attractions-index.json` 두 필드
-- [ ] 3.6 읽기 경로: app `AttractionSearchDocument`(필드 + `toDomain`) · 도메인 모델 · `SearchAttractionUseCase` 결과 · `SearchAttractionService` 매핑
-- [ ] 3.7 루트 `build.gradle.kts` `searchReadRequired`(`:538`)에 `alternateId`·`contentUpdatedAt`
+- [x] 3.2 search:domain `ContentTypeLang`(언어 중립 유형 ↔ 국·영 코드, 행사·코스 제외 표시) + `AlternateLanguagePairer.pair(projections): Map<String, String>` + 통계 반환 — `SamePlace.kt` 와 같은 패키지, `SamePlaceGrouper` 는 건드리지 않는다. 거리는 `RegionAggregator.distanceMeters`, 제목은 `Normalizer.normalize(NFKC)` → `\s`·유니코드 공백 제거 → `lowercase(Locale.ROOT)`
+- [x] 3.3 batch: `PlaceApiClient.AttractionDto` + `fetchPageAfter` 손 매핑(`:163`)에 `contentUpdatedAt`. `RegionProjection` 에 `googlePlaceId`·`titleLocal`·`hasOverview`
+- [x] 3.4 batch 태스클릿 `AttractionApiReindexTasklet.kt`: 1차 패스 `collectRegionPlacements`(`:391-418`)가 `pair()` 호출 → 로그 한 줄 → 2차 패스(`:450-464`)가 문서에 `alternateId`(스위치 꺼짐이면 null). 설정 `search.alternate-pairs.enabled`(기본 false, `@ConfigurationProperties` 또는 `@Value` — 같은 모듈의 기존 설정 방식을 따른다)
+- [x] 3.5 문서·매핑: batch `AttractionIndexDocument`, `search/batch/src/main/resources/opensearch/attractions-index.json` 두 필드
+- [x] 3.6 읽기 경로: app `AttractionSearchDocument`(필드 + `toDomain`) · 도메인 모델 · `SearchAttractionUseCase` 결과 · `SearchAttractionService` 매핑
+- [x] 3.7 루트 `build.gradle.kts` `searchReadRequired`(`:538`)에 `alternateId`·`contentUpdatedAt`
 - [ ] 3.8 FE 타입: `portal-fe/src/api/placeApi.ts` `Attraction` 에 `alternateId?: string | null`·`contentUpdatedAt?: string | null`. `portal-fe/scripts/prerender-seo.mjs` `indexDoc` 투영에 `alternateId`
-- [ ] 3.9 `k8s/base/search-batch/cronjob-attraction-reindex.yaml` env(`:54` 블록)에 `SEARCH_ALTERNATE_PAIRS_ENABLED: "false"`
-- [ ] 3.10 Verify:
+- [x] 3.9 `k8s/base/search-batch/cronjob-attraction-reindex.yaml` env(`:54` 블록)에 `SEARCH_ALTERNATE_PAIRS_ENABLED: "false"`
+- [x] 3.10 Verify:
   - `./gradlew :search:domain:test --tests '*AlternateLanguagePairerTest' --tests '*ContentTypeLangTest' --rerun`
   - `./gradlew :search:batch:test --tests '*PlaceApiClientTest' --tests '*AttractionApiReindexTaskletTest' --tests '*AttractionsIndexMappingTest' --rerun`
   - `./gradlew :search:app:test --tests '*AttractionSearchDocumentTest' --tests '*SearchAttractionServiceTest' --tests '*AttractionReindexCaptureTest' --rerun`

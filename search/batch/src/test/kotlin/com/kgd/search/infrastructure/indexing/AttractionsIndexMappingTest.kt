@@ -127,4 +127,14 @@ class AttractionsIndexMappingTest : BehaviorSpec({
             properties.path("clickBoost").path("doc_values").asBoolean(true) shouldBe true
         }
     }
+
+    given("관광지 색인 정의의 언어 대체 짝·본문 변경 시각 필드") {
+        then("짝 id 는 keyword, 본문 변경 시각은 쓰기 문서 형식의 date 이고 둘 다 doc_values 를 끄지 않는다 — 짝 점검 스크롤·최근 갱신 정렬이 읽는다") {
+            properties.path("alternateId").path("type").asString() shouldBe "keyword"
+            properties.path("alternateId").path("doc_values").asBoolean(true) shouldBe true
+            properties.path("contentUpdatedAt").path("type").asString() shouldBe "date"
+            properties.path("contentUpdatedAt").path("format").asString() shouldBe "yyyy-MM-dd'T'HH:mm:ss"
+            properties.path("contentUpdatedAt").path("doc_values").asBoolean(true) shouldBe true
+        }
+    }
 })

@@ -41,6 +41,7 @@ import java.io.File
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicLong
@@ -467,6 +468,8 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
             ReflectionTestUtils.setField(it, "indexAlias", "attractions")
             ReflectionTestUtils.setField(it, "pageSize", 100)
             ReflectionTestUtils.setField(it, "embeddingModelRef", MODEL_REF)
+            // 캡처에 언어 대체 짝이 실려야 읽기 쪽 왕복이 무언가를 잰다
+            ReflectionTestUtils.setField(it, "alternatePairsEnabled", true)
         }
         fun date(value: String) = LocalDate.parse(value)
         fun event(id: Long, start: String?, end: String?, lat: Double) = jongno(id, "EV010100", lat).copy(
@@ -496,6 +499,15 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
             // 같은 장소의 두 등록 — 부산타워 운영 행처럼 관광지(12)·쇼핑(38)이 같은 자리에. 종로 집계에 섞이지 않게 부산 중구에 둔다
             jongno(501, "HS020100", 35.10120).copy(ldongRegnCd = "26", ldongSignguCd = "110", title = "부산타워"),
             jongno(502, "SH040300", 35.10121).copy(ldongRegnCd = "26", ldongSignguCd = "110", title = "부산타워", contentTypeId = "38"),
+            // 언어 대체 짝 — 국문 601 ↔ 영문 602. 다른 시군구(부산 영도구)에 둬 위 집계에 섞이지 않게 한다. 601 만 본문 변경 시각이 있다
+            jongno(601, "HS020100", 35.07870).copy(
+                ldongRegnCd = "26", ldongSignguCd = "200", title = "태종대", googlePlaceId = "ChIJ-tjd", overview = "해안 절벽",
+                contentUpdatedAt = LocalDateTime.of(2026, 10, 1, 8, 0, 0),
+            ),
+            jongno(602, "HS020100", 35.07871, lang = "en").copy(
+                ldongRegnCd = "26", ldongSignguCd = "200", contentTypeId = "76", title = "Taejongdae (태종대)",
+                titleDisplay = "Taejongdae", titleLocal = "태종대", googlePlaceId = "ChIJ-tjd", overview = "Coastal cliffs",
+            ),
         )
 
         // place 링크 벌크 조회가 준 원문 — 상세 화면은 색인에 실린 이 원문을 그대로 푼다
@@ -770,6 +782,74 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                 val missing = bulkSource(documents.single { it.id == "2" })
                 missing.keys shouldNotContain "source"
                 missing.keys shouldNotContain "copyrightDivCd"
+            }
+        }
+    }
+
+    given("재색인이 언어 대체 짝과 본문 변경 시각을 실을 때") {
+        // 국문 11 ↔ 영문 12 는 짝(placeId·50m 안·같은 유형·로컬명 = 표시명·양쪽 개요). 13 은 placeId 가 같아도 제목이 다르다
+        val changedAt = LocalDateTime.of(2026, 10, 8, 9, 10, 11)
+        fun pairInputs() = arrayOf(
+            dto(11, "ko").copy(
+                title = "경복궁", contentTypeId = "12", googlePlaceId = "ChIJ-gbg", overview = "조선의 법궁",
+                contentUpdatedAt = changedAt,
+            ),
+            dto(12, "en").copy(
+                title = "Gyeongbokgung Palace (경복궁)", titleDisplay = "Gyeongbokgung Palace", titleLocal = "경복궁",
+                contentTypeId = "76", googlePlaceId = "ChIJ-gbg", overview = "Main palace", latitude = 37.5001,
+            ),
+            dto(13, "ko").copy(title = "경복궁 주차장", contentTypeId = "12", googlePlaceId = "ChIJ-gbg", overview = "주차"),
+        )
+        fun capturedLogs(): ListAppender<ILoggingEvent> =
+            ListAppender<ILoggingEvent>().also { appender ->
+                appender.start()
+                (LoggerFactory.getLogger(AttractionApiReindexTasklet::class.java) as Logger).addAppender(appender)
+            }
+        fun ListAppender<ILoggingEvent>.pairLine() = list.map { it.formattedMessage }.single { it.startsWith("Alternate pairs:") }
+
+        `when`("짝 스위치가 켜져 있으면") {
+            ReflectionTestUtils.setField(tasklet, "alternatePairsEnabled", true)
+            val documents = captureDocuments()
+            onePage(*pairInputs())
+            val logs = capturedLogs()
+
+            tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+            val sources = documents.associate { it.id to bulkSource(it) }
+
+            then("짝 두 문서가 서로의 id 를 싣고, 짝이 아닌 문서는 필드가 없다") {
+                sources.getValue("11")["alternateId"] shouldBe "12"
+                sources.getValue("12")["alternateId"] shouldBe "11"
+                sources.getValue("13").keys shouldNotContain "alternateId"
+            }
+            then("짝 수와 간선·탈락 수를 한 줄로 남긴다") {
+                logs.pairLine() shouldBe
+                    "Alternate pairs: 1 (edges 1, dropped by uniqueness 0, dropped by overview 0, enabled=true)"
+            }
+            then("본문 변경 시각은 place 값 그대로, 없으면 필드가 없다") {
+                sources.getValue("11")["contentUpdatedAt"] shouldBe "2026-10-08T09:10:11"
+                sources.getValue("12").keys shouldNotContain "contentUpdatedAt"
+            }
+        }
+
+        `when`("짝 스위치가 꺼져 있으면") {
+            ReflectionTestUtils.setField(tasklet, "alternatePairsEnabled", false)
+            val documents = captureDocuments()
+            onePage(*pairInputs())
+            val logs = capturedLogs()
+
+            tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+            val sources = documents.associate { it.id to bulkSource(it) }
+
+            then("모든 문서에 alternateId 가 없다") {
+                sources.keys shouldBe setOf("11", "12", "13")
+                sources.values.forEach { it.keys shouldNotContain "alternateId" }
+            }
+            then("계산은 그대로 해서 로그의 짝 수가 켜졌을 때와 같다") {
+                logs.pairLine() shouldBe
+                    "Alternate pairs: 1 (edges 1, dropped by uniqueness 0, dropped by overview 0, enabled=false)"
+            }
+            then("본문 변경 시각은 스위치와 무관하게 싣는다") {
+                sources.getValue("11")["contentUpdatedAt"] shouldBe "2026-10-08T09:10:11"
             }
         }
     }
