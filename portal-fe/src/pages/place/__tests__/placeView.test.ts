@@ -1,5 +1,5 @@
 import type { Attraction } from '../../../api/placeApi';
-import { campingRows } from '../placeAttributes';
+import { campingRows, placeSourceLine, visitSummary } from '../placeAttributes';
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_MOBILE_LAYOUT,
@@ -478,5 +478,132 @@ describe('activeFilterCount — 「필터 N」의 N', () => {
     expect(activeFilterCount({ ...base, geo: { radiusKm: 5 } })).toBe(0);
     expect(activeFilterCount({ ...base, keyword: '궁궐', sidoCode: '11', sigunguCode: '110', areaCode: '1' })).toBe(0);
     expect(activeFilterCount({ ...base, keyword: '궁궐', category: 'nature', geo: { radiusKm: 5 } })).toBe(1);
+  });
+});
+
+describe('visitSummary — 방문 요약 칸과 배지 줄', () => {
+  const base: Attraction = {
+    id: '1', contentId: '126508', lang: 'ko', title: '경복궁', category: 'history', areaCode: null,
+    address: null, latitude: 37.5, longitude: 127, imageUrl: null, tel: null, overview: null,
+    distanceKm: null, position: 0,
+    closureState: 'UNKNOWN', closedWeekdays: null, attrParking: 'UNKNOWN', attrCreditCard: 'UNKNOWN',
+    attrStrollerRental: 'UNKNOWN', petPolicy: 'UNKNOWN', attrAdmission: 'UNKNOWN',
+  };
+  const cell = (a: Partial<Attraction>, label: string, lang: 'ko' | 'en' = 'ko') =>
+    visitSummary({ ...base, ...a }, lang).rows.find((r) => r.label === label)?.value;
+
+  it('칸은 표 순서 그대로, 값이 없으면 「정보 없음 / Not provided」로 남는다', () => {
+    expect(visitSummary(base, 'ko').rows.map((r) => r.label)).toEqual(
+      ['요금', '이용시간', '쉬는 날', '주차', '반려동물', '무장애', '확인 상태'],
+    );
+    expect(visitSummary(base, 'en').rows.map((r) => r.label)).toEqual(
+      ['Admission', 'Hours', 'Closed', 'Parking', 'Pets', 'Accessibility', 'Data status'],
+    );
+    expect(visitSummary(base, 'ko').rows.slice(0, 6).map((r) => r.value)).toEqual(Array(6).fill('정보 없음'));
+    expect(visitSummary(base, 'en').rows.slice(0, 6).map((r) => r.value)).toEqual(Array(6).fill('Not provided'));
+  });
+
+  it('요금 — feeText 가 우선이고 다시 정규화하지 않는다, 없으면 useFee 원문', () => {
+    expect(cell({ feeText: '<어린이> 무료', useFee: '3,000원' }, '요금')).toBe('<어린이> 무료');
+    expect(cell({ feeText: null, useFee: '어른 3,000원<br>어린이 1,500원' }, '요금')).toBe('어른 3,000원\n어린이 1,500원');
+    expect(cell({ useFee: '&lt;성인&gt; 1,000원' }, '요금')).toBe('<성인> 1,000원');
+    expect(cell({ feeText: null, useFee: ' <br> ' }, '요금')).toBe('정보 없음');
+    expect(cell({ feeText: null, useFee: null }, 'Admission', 'en')).toBe('Not provided');
+  });
+
+  it('이용시간 — 원문 평문', () => {
+    expect(cell({ useTime: '09:00~18:00<br />입장 마감 17:00' }, '이용시간')).toBe('09:00~18:00\n입장 마감 17:00');
+  });
+
+  it('쉬는 날 — 해석 줄과 원문 줄 두 줄, 모르면 원문만', () => {
+    expect(cell({ closureState: 'WEEKLY', closedWeekdays: ['TUE'], restDate: '매주 화요일' }, '쉬는 날')).toBe('매주 화요일 휴무\n매주 화요일');
+    expect(cell({ closureState: 'WEEKLY', closedWeekdays: ['TUE'], restDate: 'Tuesdays' }, 'Closed', 'en')).toBe('Closed on Tuesdays\nTuesdays');
+    expect(cell({ closureState: 'ALWAYS_OPEN', restDate: null }, '쉬는 날')).toBe('연중무휴');
+    expect(cell({ closureState: 'ALWAYS_OPEN', restDate: null }, 'Closed', 'en')).toBe('Open every day');
+    expect(cell({ closureState: 'UNKNOWN', restDate: '설날 당일' }, '쉬는 날')).toBe('설날 당일');
+    expect(cell({ closureState: 'UNKNOWN', restDate: null }, '쉬는 날')).toBe('정보 없음');
+  });
+
+  it('주차 — YES·NO 해석 줄 + 원문, UNKNOWN 에 원문도 없으면 정보 없음', () => {
+    expect(cell({ attrParking: 'NO', parking: '불가' }, '주차')).toBe('주차 불가\n불가');
+    expect(cell({ attrParking: 'YES', parking: null }, 'Parking', 'en')).toBe('Parking available');
+    expect(cell({ attrParking: 'NO' }, 'Parking', 'en')).toBe('No parking');
+    expect(cell({ attrParking: 'UNKNOWN', parking: null }, '주차')).toBe('정보 없음');
+    expect(cell({ attrParking: 'UNKNOWN', parking: '문의 요망' }, '주차')).toBe('문의 요망');
+  });
+
+  it('반려동물 — 허용이면 배지 문구, 모르면 원문', () => {
+    expect(cell({ petPolicy: 'ALLOWED', petAcmpyType: '전구역 동반가능' }, '반려동물')).toBe('반려동물 동반 가능');
+    expect(cell({ petPolicy: 'PARTIAL' }, 'Pets', 'en')).toBe('Pets allowed in some areas');
+    expect(cell({ petPolicy: 'UNKNOWN', petAcmpyType: '소형견만 &amp; 목줄' }, '반려동물')).toBe('소형견만 & 목줄');
+    expect(cell({ petPolicy: 'UNKNOWN', petAcmpyType: null }, '반려동물')).toBe('정보 없음');
+  });
+
+  it('무장애 — 긍정 항목을 접근성 절과 같은 순서로 「 · 」, 없으면 정보 없음', () => {
+    expect(cell({ barrierFree: ['ELEVATOR', 'WHEELCHAIR'] }, '무장애')).toBe('휠체어 · 엘리베이터');
+    expect(cell({ barrierFree: ['RESTROOM'] }, 'Accessibility', 'en')).toBe('Accessible restroom');
+    expect(cell({ barrierFree: [] }, '무장애')).toBe('정보 없음');
+    expect(cell({ barrierFree: null }, '무장애')).toBe('정보 없음');
+  });
+
+  it('속성이 없는 옛 문서는 해석 줄 없이 원문 줄만', () => {
+    const legacy: Partial<Attraction> = {
+      closureState: undefined, closedWeekdays: undefined, attrParking: undefined, petPolicy: undefined,
+      attrCreditCard: undefined, attrStrollerRental: undefined, attrAdmission: undefined,
+      restDate: '매주 월요일', parking: '가능', petAcmpyType: '불가',
+    };
+    expect(cell(legacy, '쉬는 날')).toBe('매주 월요일');
+    expect(cell(legacy, '주차')).toBe('가능');
+    expect(cell(legacy, '반려동물')).toBe('불가');
+    expect(visitSummary({ ...base, ...legacy }, 'ko').badgeLine).toBeNull();
+  });
+
+  it('확인 상태 — 출처 표시명 · 원천 갱신일 · 수집일, 모르는 출처는 TourAPI 로 짐작하지 않는다', () => {
+    const at = '2026-09-30T10:15:00';
+    expect(cell({ source: 'TOURAPI', modifiedAt: at }, '확인 상태'))
+      .toBe('출처: 한국관광공사 TourAPI · 원천 갱신일: 2026-09-30 · 수집일: 정보 없음');
+    expect(cell({ source: 'TOURAPI', modifiedAt: at }, 'Data status', 'en'))
+      .toBe('Source: Korea Tourism Organization TourAPI · Source updated: 2026-09-30 · Collected: Not provided');
+    expect(cell({ source: 'GOCAMPING', modifiedAt: at }, '확인 상태'))
+      .toBe('출처: 한국관광공사 고캠핑 · 원천 갱신일: 2026-09-30 · 수집일: 정보 없음');
+    expect(cell({ source: 'GOCAMPING', modifiedAt: at }, 'Data status', 'en'))
+      .toBe('Source: Korea Tourism Organization GoCamping · Source updated: 2026-09-30 · Collected: Not provided');
+    expect(cell({ source: null, modifiedAt: null }, '확인 상태'))
+      .toBe('출처: 정보 없음 · 원천 갱신일: 정보 없음 · 수집일: 정보 없음');
+    expect(cell({ source: 'KTO_OTHER', modifiedAt: null }, 'Data status', 'en'))
+      .toBe('Source: Not provided · Source updated: Not provided · Collected: Not provided');
+  });
+
+  it('배지 줄 — 신용카드 · 유모차 · 많이 클릭한 곳 순서, UNKNOWN 은 넣지 않고 0개면 없다', () => {
+    expect(visitSummary({ ...base, attrCreditCard: 'YES', attrStrollerRental: 'NO', uniqueClickers14d: 9 }, 'ko').badgeLine)
+      .toBe('신용카드 가능 · 유모차 대여 없음 · 많이 클릭한 곳');
+    expect(visitSummary({ ...base, attrCreditCard: 'NO', uniqueClickers14d: 4 }, 'en').badgeLine).toBe('Credit cards not accepted');
+    expect(visitSummary({ ...base, attrStrollerRental: 'YES', uniqueClickers14d: 5 }, 'en').badgeLine)
+      .toBe('Stroller rental · Frequently clicked');
+    expect(visitSummary(base, 'ko').badgeLine).toBeNull();
+  });
+
+  it('배지 줄에는 칸으로 옮긴 휴무·주차·반려동물·입장료가 없다', () => {
+    const all = visitSummary({
+      ...base, closureState: 'ALWAYS_OPEN', attrParking: 'YES', petPolicy: 'ALLOWED', attrAdmission: 'FREE',
+    }, 'ko');
+    expect(all.badgeLine).toBeNull();
+  });
+});
+
+describe('placeSourceLine — 바닥 출처 줄', () => {
+  const a = { camping: '{}' } as Attraction;
+
+  it('고캠핑 원천이면 첫 항목이 고캠핑이고 「고캠핑」을 한 번만 낸다', () => {
+    const ko = placeSourceLine({ ...a, source: 'GOCAMPING' }, 'ko');
+    expect(ko).toBe('출처: 한국관광공사 고캠핑');
+    expect(ko.match(/고캠핑/g)).toHaveLength(1);
+    expect(placeSourceLine({ ...a, source: 'GOCAMPING' }, 'en')).toBe('Source: Korea Tourism Organization GoCamping');
+  });
+
+  it('그 밖(TourAPI·null·모르는 값)은 지금 고정 문구 — 의무 문구라 비우지 않는다', () => {
+    expect(placeSourceLine({ ...a, source: 'TOURAPI' }, 'ko')).toBe('출처: 한국관광공사 TourAPI · 고캠핑');
+    expect(placeSourceLine({ ...a, source: null }, 'ko')).toBe('출처: 한국관광공사 TourAPI · 고캠핑');
+    expect(placeSourceLine(null, 'en')).toBe('Source: Korea Tourism Organization TourAPI');
   });
 });

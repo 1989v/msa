@@ -3,6 +3,7 @@ package com.kgd.search.infrastructure.render
 import com.kgd.search.infrastructure.config.AttractionRenderProperties
 import com.kgd.search.infrastructure.render.AttractionPageFixtures.SHELL
 import com.kgd.search.infrastructure.render.AttractionPageFixtures.TODAY
+import com.kgd.search.infrastructure.render.AttractionPageFixtures.decodeHtml
 import com.kgd.search.infrastructure.render.AttractionPageFixtures.doc
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldHaveSize
@@ -21,9 +22,6 @@ class FooterLinksParityTest : BehaviorSpec({
 
     val mapper = ObjectMapper()
     val renderer = AttractionPageRenderer(AttractionRenderProperties(), mapper)
-
-    fun decodeHtml(value: String) = value
-        .replace("&quot;", "\"").replace("&gt;", ">").replace("&lt;", "<").replace("&amp;", "&")
 
     fun footerLinks(html: String): List<Pair<String, String>> {
         val footer = Regex("""<footer>([\s\S]*?)</footer>""").find(html)?.groupValues?.get(1).orEmpty()

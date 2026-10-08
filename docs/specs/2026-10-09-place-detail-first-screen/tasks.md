@@ -44,20 +44,20 @@ Total Task Groups: 6. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
 
 ### Task Group 3: FE 규칙 원본 + 골든 (SR-2.1 · SR-2.5 · SR-2.6 · SR-3.5 · SR-3.6)
 **Dependencies:** TG2(타입) · **Phase:** portal-fe(`copy.mjs`·`placeAttributes.ts`) · **Required Skills:** TS/ESM, vitest
-- [ ] 3.1 테스트 먼저
+- [x] 3.1 테스트 먼저
   - `portal-fe/src/seo/__tests__/copy.test.ts` 증보: `attractionPhone` `tel:` 8사례(SR-5.1 목록) + 「관광안내전화1330」 → `tel:1330`, 원문 빈 값 → 항목 없음
   - 새 `portal-fe/src/seo/__tests__/phoneGolden.test.ts`: 위 9사례 출력 `{text, href}` 를 `search/app/src/test/resources/render/phone-golden.json` 로 쓴다(`footerLinksGolden.test.ts` 방식)
   - `attractionJsonLdGolden.test.ts`: 케이스 추가 — 사진 Type1·Type3·Type2·없음 × 시군구 있음·없음. `toApi`(`:30`)가 색인 `sigunguName` 을 copy.mjs 가 읽는 자리로 옮기게. `containedInPlace`·`ImageObject`(`contentUrl`·`license`·`creditText`)·BreadcrumbList 시군구 단계
   - `portal-fe/src/pages/place/__tests__/placeView.test.ts` 증보 — `visitSummary(attraction, lang)` 칸 값(국·영): 요금 `feeText` 우선·`useFee` 폴백·「정보 없음」, 쉬는 날 Weekly+원문 두 줄·AlwaysOpen·Unknown 원문만, 주차 NO 「주차 불가」·UNKNOWN+원문 없음 「정보 없음」, 반려동물 ALLOWED 문구·UNKNOWN 원문(U8), 무장애 긍정 항목 「 · 」·없음, `attributes` null 옛 문서는 원문 줄만, 확인 상태 source TOURAPI·GOCAMPING·null·기타 × 국·영 + `modifiedAt` null + 「수집일: 정보 없음」, 배지 줄 신용카드·유모차·많이 클릭한 곳 순서·0개면 없음
   - 새 `portal-fe/src/pages/place/__tests__/visitSummaryGolden.test.ts`: `{name, input, output}` 케이스를 `search/app/src/test/resources/render/visit-summary-golden.json` 으로 쓴다. `input` 은 색인 `_source` 모양, `output` 은 `toApi` → `visitSummary` 결과. 케이스: feeText 있음·useFee 만·둘 다 없음 × source 있음·없음 × 국·영 + SR-2.1 표 해석·원문 조합 각 1건
-- [ ] 3.2 `copy.mjs`: `attractionPhone(raw)` → `{ text, href }`(패턴 `(?:\+82[- ]?)?0\d{1,3}[- ]?\d{3,4}[- ]?\d{4}`, 없을 때만 `\b1\d{3}(?:-\d{4})?\b`, href 는 숫자와 `+` 만, 첫 번호 하나), `attractionJsonLd`(`:674`) `containedInPlace`·`ImageObject`·license(Type1·Type3 만), `attractionBreadcrumbJsonLd`(`:822`) 시군구 단계, 출처 표시명 표(TOURAPI·GOCAMPING·그 밖 「정보 없음」) — JSON-LD `dateModified` 는 넣지 않는다
-- [ ] 3.3 `placeAttributes.ts`: `visitSummary(attraction, lang)` 순수 함수 하나 — 칸 목록(SR-2.1 표 순서) + 배지 줄. 「정보 없음 / Not provided」 문구 신설. `feeText` 에 `sourceText` 다시 걸지 않는다
-- [ ] 3.4 CI: `.github/workflows/ci.yml` vitest 뒤에 「Visit summary golden fixture is current」「Phone golden fixture is current」 두 단계(기존 secure-image 단계와 같은 모양 — `git diff --exit-code` + `git status --porcelain`)
-- [ ] 3.5 Verify: `cd portal-fe && npx vitest run src/seo src/pages/place/__tests__/placeView.test.ts src/pages/place/__tests__/visitSummaryGolden.test.ts && npx tsc -b` + `git status --porcelain search/app/src/test/resources/render/` 로 골든 셋(jsonld·visit-summary·phone) 생성 확인
+- [x] 3.2 `copy.mjs`: `attractionPhone(raw)` → `{ text, href }`(패턴 `(?:\+82[- ]?)?0\d{1,3}[- ]?\d{3,4}[- ]?\d{4}`, 없을 때만 `\b1\d{3}(?:-\d{4})?\b`, href 는 숫자와 `+` 만, 첫 번호 하나), `attractionJsonLd`(`:674`) `containedInPlace`·`ImageObject`·license(Type1·Type3 만), `attractionBreadcrumbJsonLd`(`:822`) 시군구 단계, 출처 표시명 표(TOURAPI·GOCAMPING·그 밖 「정보 없음」) — JSON-LD `dateModified` 는 넣지 않는다
+- [x] 3.3 `placeAttributes.ts`: `visitSummary(attraction, lang)` 순수 함수 하나 — 칸 목록(SR-2.1 표 순서) + 배지 줄. 「정보 없음 / Not provided」 문구 신설. `feeText` 에 `sourceText` 다시 걸지 않는다
+- [x] 3.4 CI: `.github/workflows/ci.yml` vitest 뒤에 「Visit summary golden fixture is current」「Phone golden fixture is current」 두 단계(기존 secure-image 단계와 같은 모양 — `git diff --exit-code` + `git status --porcelain`)
+- [x] 3.5 Verify: `cd portal-fe && npx vitest run src/seo src/pages/place/__tests__/placeView.test.ts src/pages/place/__tests__/visitSummaryGolden.test.ts && npx tsc -b` + `git status --porcelain search/app/src/test/resources/render/` 로 골든 셋(jsonld·visit-summary·phone) 생성 확인
 
 ### Task Group 4: SSR 렌더 (SR-1 · SR-2 SSR · SR-3)
 **Dependencies:** TG2(문서 필드) · TG3(골든) · **Phase:** search:app `infrastructure/render`, search:domain `AttractionSeoText` · **Required Skills:** Kotlin, HTML 이스케이프, JSON-LD
-- [ ] 4.1 테스트 먼저
+- [x] 4.1 테스트 먼저
   - `search/domain/src/test/kotlin/com/kgd/search/domain/attraction/model/AttractionSeoTextTest.kt`: `attractionPhone` 대표 사례
   - 새 `search/app/src/test/kotlin/com/kgd/search/infrastructure/render/VisitSummaryParityTest.kt`: `visit-summary-golden.json` 의 `input` → `AttractionSearchDocument` → `toDomain()` → 렌더 → `<dl data-place-section="visit-summary">`·`visit-badges` 추출 → `FooterLinksParityTest` 의 `decodeHtml` → `output` 과 비교(`AttractionJsonLdParityTest.kt:47` 선례)
   - 새 `search/app/src/test/kotlin/com/kgd/search/infrastructure/render/PhoneParityTest.kt`: `phone-golden.json` 전 사례 + 렌더된 `actions` 절 href 1건 대조
@@ -65,8 +65,8 @@ Total Task Groups: 6. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
   - `AttractionPageRendererTest.kt` 증보: `data-place-section` 표지 기준 순서(`order.none { it < 0 }` + `order shouldBe order.sorted()`) · 일반 유형에 `visitorInfo`·「방문 정보 요약」 절 없음 · 행사·숙박·코스는 유형별 절·배지 절 그대로 + 행동 줄만 · actions 는 전화 항목 있을 때만, 길찾기 링크 없음(U7) · 전화 중복(`infoCenter` 빔+`tel` → 제목 아래 줄 없음 / 둘 다 → 둘 다) · XSS(`&lt;img src=x onerror=alert(1)&gt;`·`"` → `&lt;img`·`&quot;` 만, `<img` 0) · `feeText` 「<어린이> 무료」 → `<dd>` 에 `&lt;어린이&gt; 무료` · 확인 상태 「원천 갱신일: YYYY-MM-DD」 텍스트·null 폴백 「출처: 정보 없음」 · 바닥 출처 줄 GOCAMPING+camping 이면 「고캠핑」 한 번 · 브레드크럼 시군구(화면·BreadcrumbList) · 이웃 0건·모두 끝난 행사 → 절 없음 · `<img>` https 그대로·tong http → https·그 밖 http 없음·사진 없음 없음
   - 기존 단언 갱신: `:145-150`(「이용 안내」 표지), `:152-154`(`<dt>이용시간</dt>` → 방문 요약 `<dl>`), `:186-195`(「매주 화요일 휴무」 표지·「배지 뒤」 제목), `:303-326`(「입장 무료」<「많이 클릭한 곳」·`<h2>방문 정보 요약</h2>` → `visit-badges` 줄)
   - 골든 HTML: 관광지(12) 국·영 두 건 추가(`render/golden/attraction-ko.html`·`attraction-en.html`), 기존 골든은 재생성 diff 를 이번 변경 범위로 확인
-- [ ] 4.2 `AttractionSeoText.attractionPhone`(Kotlin, 골든 패리티로 copy.mjs 를 따른다)
-- [ ] 4.3 `AttractionPageRenderer.kt`
+- [x] 4.2 `AttractionSeoText.attractionPhone`(Kotlin, 골든 패리티로 copy.mjs 를 따른다)
+- [x] 4.3 `AttractionPageRenderer.kt`
   - `attractionBody`(`:364-388`) 순서: 브레드크럼(시군구) → h1 → 방문 요약 `<dl data-place-section="visit-summary">` → `<p data-place-section="visit-badges">`(있을 때만) → 행동 줄 `data-place-section="actions"`(전화만) → 개요 → 기존 절
   - 일반 유형에서 `visitorInfo`(`:448-453`)·`badges`(`:466`) 미출력, 행사·숙박·코스는 지금대로
   - 「같은 분류 가까운 곳」을 `regionSection` 밖 독립 절 `data-place-section="same-category-nearby"`, 끝난 행사 거른 뒤(`:553`) 0건이면 미출력. 집계 문장은 기존 `regionSection` 그대로
@@ -74,7 +74,7 @@ Total Task Groups: 6. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
   - `primaryJsonLd`(`:223`) `containedInPlace`·`ImageObject`, `breadcrumbJsonLd`(`:331`) 시군구, `sourceLine`(`:611`) GOCAMPING 첫 항목·「고캠핑」 한 번
   - 출력 순서 계약(`:41`): `feeText` 는 `escapeHtml` 만, 그 밖 새 원문 값(요금 폴백 `useFee`·이용시간·쉬는 날·주차·반려동물 원문·전화·시군구·이웃 제목·`alt`·`containedInPlace.name`)은 `sourceText` → `escapeHtml`, `tel:` href 도 `escapeHtml`
   - 제목 아래 전화 줄(`:376`)은 `infoCenter` 가 빌 때만 뺀다
-- [ ] 4.4 Verify:
+- [x] 4.4 Verify:
   - `./gradlew :search:domain:test --tests '*AttractionSeoTextTest' --rerun`
   - `./gradlew :search:app:test --tests '*AttractionPageRendererTest' --tests '*AttractionJsonLdParityTest' --tests '*VisitSummaryParityTest' --tests '*PhoneParityTest' --tests '*FooterLinksParityTest' --tests '*SecureImageParityTest' --rerun`
   - 골든 생성: `UPDATE_RENDER_GOLDEN=1 ./gradlew :search:app:test --tests '*AttractionPageRendererTest' --rerun` 후 `git diff --stat search/app/src/test/resources/render/golden/` — 바뀐 파일이 이번 절 이동·새 절로만 설명되는지 확인하고, 플래그 없이 한 번 더 돌려 초록

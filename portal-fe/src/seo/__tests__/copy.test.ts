@@ -29,6 +29,7 @@ import {
   PORTAL_PAGES,
   attractionMeta,
   attractionPath,
+  attractionPhone,
   attractionUrl,
   collectionPageJsonLd,
   placeBrand,
@@ -289,5 +290,39 @@ describe('/tech 분류별 용어집', () => {
     expect(meta.title).toContain('자료구조 용어집');
     expect(meta.title).toContain('3개');
     expect(meta.canonical).toBe('https://1989v.com/tech/data-structure');
+  });
+});
+
+describe('attractionPhone — 행동 줄의 전화 링크', () => {
+  // 원문에서 처음 나오는 번호 하나만 tel: 로. 원문은 그대로 보이는 글로 남는다.
+  it.each([
+    ['행사장 02-319-1220운영사 02-737-6444', 'tel:023191220'],
+    ['02-724-0274~6', 'tel:027240274'],
+    ['02-2153-0310, 0311 (12:00~13:0', 'tel:0221530310'],
+    ['K-컬처 스퀘어 운영사무국 02-2068-1176', 'tel:0220681176'],
+    ['02-123-4567<br>010-1234-5678', 'tel:021234567'],
+    ['+82-2-123-4567', 'tel:+8221234567'],
+    ['1330', 'tel:1330'],
+    // 한글 바로 뒤 대표번호 — JS \b 는 ASCII 단어 문자만 보므로 「화」와 「1」 사이가 경계다
+    ['관광안내전화1330', 'tel:1330'],
+  ])('%s → %s', (raw, href) => {
+    const phone = attractionPhone(raw);
+    expect(phone).not.toBeNull();
+    expect(phone!.href).toBe(href);
+  });
+
+  it('번호가 없으면 링크 없이 원문만', () => {
+    expect(attractionPhone('문의: 없음')).toEqual({ text: '문의: 없음', href: null });
+  });
+
+  it('원문은 sourceText 를 거친 보이는 글이다', () => {
+    expect(attractionPhone('02-123-4567<br>010-1234-5678')!.text).toBe('02-123-4567\n010-1234-5678');
+  });
+
+  it('원문이 비면 항목이 없다', () => {
+    expect(attractionPhone('')).toBeNull();
+    expect(attractionPhone('  <br>  ')).toBeNull();
+    expect(attractionPhone(null)).toBeNull();
+    expect(attractionPhone(undefined)).toBeNull();
   });
 });

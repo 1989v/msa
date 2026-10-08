@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { attractionBreadcrumbJsonLd, attractionJsonLd, attractionMeta } from '../copy.mjs';
+import { type IndexDoc, toApi } from './indexDocToApi';
 
 /**
  * 관광지 JSON-LD 골든 픽스처 생성기.
@@ -15,7 +16,7 @@ import { attractionBreadcrumbJsonLd, attractionJsonLd, attractionMeta } from '..
  *
  * 입력은 **색인 문서(`_source`) 그대로**다 — Kotlin 은 이것을 `AttractionSearchDocument` 로 역직렬화해
  * 앱의 읽기 경로를 그대로 탄다(필드를 손으로 옮기지 않으므로 새 필드가 조용히 빠지지 않는다).
- * 화면이 받는 검색 API 응답과 이름이 다른 필드만 [toApi] 가 바꾼다 — 여기서 하나를 빠뜨리면
+ * 화면이 받는 검색 API 응답과 이름이 다른 필드만 [toApi](`indexDocToApi.ts`)가 바꾼다 — 여기서 하나를 빠뜨리면
  * 이쪽 JSON-LD 에서 그 값이 사라져 Kotlin 비교가 빨개진다.
  *
  * 행사 상태는 `TODAY` 기준이다. JSON-LD 자체는 오늘에 따라 바뀌지 않지만, Kotlin 이 같은 날로
@@ -24,20 +25,6 @@ import { attractionBreadcrumbJsonLd, attractionJsonLd, attractionMeta } from '..
 const GOLDEN = resolve(__dirname, '../../../../search/app/src/test/resources/render/jsonld-golden.json');
 
 const TODAY = '2026-10-02';
-
-type IndexDoc = Record<string, unknown> & { lang: string; location: { lat: number; lon: number } };
-
-/** 색인 문서 → 검색 API 응답 모양(`SearchAttractionService` 의 결과 이름). 나머지 필드는 이름이 같다. */
-function toApi({ location, ldongRegnCd, eventStartEffective, eventEndEffective, ...rest }: IndexDoc) {
-  return {
-    ...rest,
-    latitude: location.lat,
-    longitude: location.lon,
-    sidoCode: ldongRegnCd ?? null,
-    eventStart: eventStartEffective ?? null,
-    eventEnd: eventEndEffective ?? null,
-  };
-}
 
 const base = {
   contentId: '126508',
@@ -302,6 +289,86 @@ const cases = [
       attrAdmission: 'PAID',
     },
   },
+  {
+    // 공공누리 제1유형 사진 + 시군구까지 아는 문서 — ImageObject 에 license, 소속 지역과 breadcrumb 에 시군구
+    name: 'ko-photo-type1-sigungu',
+    input: {
+      ...base,
+      id: '1101',
+      lang: 'ko',
+      contentTypeId: '12',
+      title: '창덕궁',
+      titleLocal: null,
+      overview: '조선의 이궁이다.',
+      copyrightDivCd: 'Type1',
+      ldongSignguCd: '110',
+      sigunguName: '종로구',
+      regionTypeCount: 40,
+      regionCategoryCount: 5,
+      lclsSystm3Name: '고궁',
+      closureState: 'WEEKLY',
+      closedWeekdays: ['MON'],
+      attrAdmission: 'PAID',
+    },
+  },
+  {
+    // 제3유형 사진, 지역 집계가 없는 문서 — 소속 지역은 시도까지
+    name: 'ko-photo-type3-no-sigungu',
+    input: {
+      ...base,
+      id: '1102',
+      lang: 'ko',
+      contentTypeId: '12',
+      title: '창경궁',
+      titleLocal: null,
+      overview: '성종 때 지은 궁이다.',
+      copyrightDivCd: 'Type3',
+      closureState: 'UNKNOWN',
+      closedWeekdays: null,
+      attrAdmission: 'UNKNOWN',
+    },
+  },
+  {
+    // 제2유형(상업 이용 금지)은 license 를 싣지 않는다. 시군구 이름은 원문 정규화를 거친다
+    name: 'en-photo-type2-sigungu',
+    input: {
+      ...base,
+      id: '2101',
+      lang: 'en',
+      contentTypeId: '76',
+      title: 'Changgyeonggung Palace',
+      titleLocal: '창경궁',
+      category: 'history',
+      address: '185, Changgyeonggung-ro, Jongno-gu, Seoul',
+      overview: 'A palace.',
+      copyrightDivCd: 'Type2',
+      ldongSignguCd: '110',
+      sigunguName: 'Jongno&#8209;gu ',
+      regionTypeCount: 12,
+      regionCategoryCount: null,
+      lclsSystm3Name: null,
+    },
+  },
+  {
+    // 사진 없음 — 유형이 Type1 이어도 image 자체를 싣지 않는다. 시도가 없으면 시군구 단계도 없다
+    name: 'ko-no-photo-sigungu-without-sido',
+    input: {
+      ...base,
+      id: '1103',
+      lang: 'ko',
+      contentTypeId: '12',
+      title: '사진 없는 곳',
+      titleLocal: null,
+      imageUrl: null,
+      ldongRegnCd: null,
+      sidoName: null,
+      overview: null,
+      copyrightDivCd: 'Type1',
+      ldongSignguCd: '110',
+      sigunguName: '종로구',
+      regionTypeCount: 3,
+    },
+  },
 ];
 
 describe('관광지 JSON-LD 골든 픽스처 (서버 렌더 패리티)', () => {
@@ -388,7 +455,52 @@ describe('관광지 JSON-LD 골든 픽스처 (서버 렌더 패리티)', () => {
   it('http tong 원천 사진은 https 로 싣는다', () => {
     const input = cases.find((c) => c.name === 'ko-http-image')!.input as { imageUrl: string };
     expect(input.imageUrl).toMatch(/^http:\/\/tong\./);
-    expect(primary('ko-http-image').image).toBe('https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg');
+    expect(primary('ko-http-image').image.contentUrl).toBe('https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg');
+  });
+
+  it('관광지 사진은 ImageObject — 공공누리 제1·3유형만 license 절대 주소를 싣는다', () => {
+    expect(primary('ko-photo-type1-sigungu').image).toEqual({
+      '@type': 'ImageObject',
+      contentUrl: 'https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg',
+      license: 'https://www.kogl.or.kr/info/licenseType1.do',
+      creditText: '한국관광공사',
+    });
+    expect(primary('ko-photo-type3-no-sigungu').image.license).toBe('https://www.kogl.or.kr/info/licenseType3.do');
+    expect(primary('en-photo-type2-sigungu').image).not.toHaveProperty('license');
+    expect(primary('ko-weekly-free').image).not.toHaveProperty('license');
+    expect(primary('ko-weekly-free').image.creditText).toBe('한국관광공사');
+    expect(primary('ko-no-photo-sigungu-without-sido')).not.toHaveProperty('image');
+  });
+
+  it('행사·숙박·코스의 image 는 지금처럼 주소 문자열이다', () => {
+    expect(typeof primary('ko-event-ongoing').image).toBe('string');
+    expect(typeof primary('ko-stay').image).toBe('string');
+  });
+
+  it('containedInPlace — 시군구 › 시도, 이름만. 모르는 단계는 뺀다', () => {
+    expect(primary('ko-photo-type1-sigungu').containedInPlace).toEqual({
+      '@type': 'AdministrativeArea',
+      name: '종로구',
+      containedInPlace: { '@type': 'AdministrativeArea', name: '서울특별시' },
+    });
+    expect(primary('en-photo-type2-sigungu').containedInPlace.name).toBe('Jongno\u2011gu');
+    expect(primary('ko-photo-type3-no-sigungu').containedInPlace).toEqual({ '@type': 'AdministrativeArea', name: '서울특별시' });
+    expect(primary('ko-no-photo-sigungu-without-sido').containedInPlace).toEqual({ '@type': 'AdministrativeArea', name: '종로구' });
+    expect(primary('ko-unknown-no-overview-no-sido')).not.toHaveProperty('containedInPlace');
+  });
+
+  it('BreadcrumbList 는 시군구까지 안다 — 시도·시군구 코드가 둘 다 있을 때만', () => {
+    const trail = (name: string) =>
+      (rendered.find((c) => c.name === name)!.jsonLd[1] as { itemListElement: Array<{ name: string; item: string }> })
+        .itemListElement.map((i) => [i.name, i.item]);
+    expect(trail('ko-photo-type1-sigungu')).toEqual([
+      ['한국 관광지 탐색', 'https://place.1989v.com/'],
+      ['서울특별시', 'https://place.1989v.com/regions/11'],
+      ['종로구', 'https://place.1989v.com/regions/11110'],
+      ['창덕궁', 'https://place.1989v.com/attractions/1101'],
+    ]);
+    expect(trail('ko-photo-type3-no-sigungu')).toHaveLength(3);
+    expect(trail('ko-no-photo-sigungu-without-sido')).toHaveLength(2);
   });
 
   it('골든 파일을 쓴다 — CI 가 git diff 로 최신인지 본다', () => {

@@ -89,4 +89,36 @@ object AttractionSeoText {
         if (url != null && url.startsWith(TONG_HTTP)) "https:" + url.substring("http:".length) else url
 
     fun jsTrim(value: String): String = value.replace(EDGE_SPACES, "")
+
+    /** 행동 줄의 전화 항목 — [text] 는 보이는 원문(평문), [href] 는 `tel:` 링크이고 번호를 못 찾으면 null */
+    data class Phone(val text: String, val href: String?)
+
+    /** copy.mjs `PHONE_NUMBER` — 국가번호(+82)가 붙으면 앞자리 0 이 빠질 수 있다 */
+    private val PHONE_NUMBER = Regex("(?:\\+82[- ]?0?|0)\\d{1,3}[- ]?\\d{3,4}[- ]?\\d{4}")
+
+    /** copy.mjs `PHONE_REPRESENTATIVE` — 일반 번호가 없을 때만. `\b` 는 JS 와 같이 ASCII 단어 기준이라 한글 바로 뒤도 경계다 */
+    private val PHONE_REPRESENTATIVE = Regex("\\b1\\d{3}(?:-\\d{4})?\\b")
+    private val NOT_DIAL = Regex("[^\\d+]")
+
+    /**
+     * copy.mjs `attractionPhone` — 문의 원문 → 전화 항목. 원문은 [sourceText] 한 번을 거친 평문으로 그대로 보이고,
+     * 처음 나오는 번호 **하나만** 링크로 만든다(숫자와 `+` 만 남긴다). 원문이 비면 null(항목 없음).
+     * 같은 입력에 같은 값을 내는지는 search:app `PhoneParityTest` 가 copy.mjs 출력 골든과 비교한다.
+     */
+    fun attractionPhone(raw: String?): Phone? {
+        val text = sourceText(raw)
+        if (text.isEmpty()) return null
+        val number = (PHONE_NUMBER.find(text) ?: PHONE_REPRESENTATIVE.find(text))?.value
+        return Phone(text, number?.let { "tel:" + it.replace(NOT_DIAL, "") })
+    }
+
+    /** copy.mjs `ATTRACTION_SOURCE_NAMES` — 원천 출처 코드 → (국문, 영문) 표시명 */
+    private val SOURCE_NAMES = mapOf(
+        "TOURAPI" to ("한국관광공사 TourAPI" to "Korea Tourism Organization TourAPI"),
+        "GOCAMPING" to ("한국관광공사 고캠핑" to "Korea Tourism Organization GoCamping"),
+    )
+
+    /** copy.mjs `attractionSourceName` — 표에 없는 값과 null 은 null. TourAPI 로 짐작하지 않는다. */
+    fun attractionSourceName(source: String?, lang: String): String? =
+        SOURCE_NAMES[source]?.let { if (lang == "en") it.second else it.first }
 }

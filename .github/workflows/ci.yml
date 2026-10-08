@@ -318,6 +318,20 @@ jobs:
           git diff --exit-code -- search/app/src/test/resources/render/secure-image-golden.json
           test -z "$(git status --porcelain -- search/app/src/test/resources/render/secure-image-golden.json)"
 
+      # 위 vitest 가 placeAttributes visitSummary 출력으로 방문 요약 골든을 다시 쓴다. 다르면 search 의
+      # VisitSummaryParityTest 가 옛 칸·문구와 비교하고 있다는 뜻이다.
+      - name: Visit summary golden fixture is current
+        run: |
+          git diff --exit-code -- search/app/src/test/resources/render/visit-summary-golden.json
+          test -z "$(git status --porcelain -- search/app/src/test/resources/render/visit-summary-golden.json)"
+
+      # 위 vitest 가 copy.mjs attractionPhone 출력으로 전화 골든을 다시 쓴다. 다르면 search 의
+      # PhoneParityTest 가 옛 규칙과 비교하고 있다는 뜻이다.
+      - name: Phone golden fixture is current
+        run: |
+          git diff --exit-code -- search/app/src/test/resources/render/phone-golden.json
+          test -z "$(git status --porcelain -- search/app/src/test/resources/render/phone-golden.json)"
+
   yaml-validate:
     name: application*.yml syntax check
     runs-on: ubuntu-latest

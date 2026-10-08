@@ -1,0 +1,81 @@
+{
+  "cases": [
+    {
+      "name": "two-numbers-glued",
+      "input": "행사장 02-319-1220운영사 02-737-6444",
+      "output": {
+        "text": "행사장 02-319-1220운영사 02-737-6444",
+        "href": "tel:023191220"
+      }
+    },
+    {
+      "name": "range-suffix",
+      "input": "02-724-0274~6",
+      "output": {
+        "text": "02-724-0274~6",
+        "href": "tel:027240274"
+      }
+    },
+    {
+      "name": "comma-extension",
+      "input": "02-2153-0310, 0311 (12:00~13:0",
+      "output": {
+        "text": "02-2153-0310, 0311 (12:00~13:0",
+        "href": "tel:0221530310"
+      }
+    },
+    {
+      "name": "prefixed-label",
+      "input": "K-컬처 스퀘어 운영사무국 02-2068-1176",
+      "output": {
+        "text": "K-컬처 스퀘어 운영사무국 02-2068-1176",
+        "href": "tel:0220681176"
+      }
+    },
+    {
+      "name": "br-two-lines",
+      "input": "02-123-4567<br>010-1234-5678",
+      "output": {
+        "text": "02-123-4567\n010-1234-5678",
+        "href": "tel:021234567"
+      }
+    },
+    {
+      "name": "international",
+      "input": "+82-2-123-4567",
+      "output": {
+        "text": "+82-2-123-4567",
+        "href": "tel:+8221234567"
+      }
+    },
+    {
+      "name": "representative-only",
+      "input": "1330",
+      "output": {
+        "text": "1330",
+        "href": "tel:1330"
+      }
+    },
+    {
+      "name": "representative-after-hangul",
+      "input": "관광안내전화1330",
+      "output": {
+        "text": "관광안내전화1330",
+        "href": "tel:1330"
+      }
+    },
+    {
+      "name": "no-number",
+      "input": "문의: 없음",
+      "output": {
+        "text": "문의: 없음",
+        "href": null
+      }
+    },
+    {
+      "name": "blank",
+      "input": "",
+      "output": null
+    }
+  ]
+}

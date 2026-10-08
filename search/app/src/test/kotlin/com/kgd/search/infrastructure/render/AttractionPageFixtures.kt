@@ -38,6 +38,10 @@ object AttractionPageFixtures {
         </html>
     """.trimIndent()
 
+    /** 렌더러 `escapeHtml` 의 역 — 렌더된 HTML 에서 뽑은 값을 골든(평문)과 비교할 때 쓴다. `&amp;` 를 마지막에 푼다 */
+    fun decodeHtml(value: String) = value
+        .replace("&quot;", "\"").replace("&gt;", ">").replace("&lt;", "<").replace("&amp;", "&")
+
     fun doc(
         id: String = "1001",
         lang: String = "ko",

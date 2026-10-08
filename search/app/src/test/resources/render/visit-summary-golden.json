@@ -1,0 +1,1104 @@
+{
+  "cases": [
+    {
+      "name": "ko-feetext-tourapi",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "modifiedAt": "2026-09-30T10:15:00",
+        "closureState": "UNKNOWN",
+        "closedWeekdays": null,
+        "attrParking": "UNKNOWN",
+        "attrCreditCard": "UNKNOWN",
+        "attrStrollerRental": "UNKNOWN",
+        "petPolicy": "UNKNOWN",
+        "attrAdmission": "UNKNOWN",
+        "id": "3001",
+        "lang": "ko",
+        "title": "경복궁",
+        "feeText": "<어린이> 무료 / 어른 \"3,000원\"",
+        "useFee": "어른 3,000원",
+        "source": "TOURAPI"
+      },
+      "output": {
+        "rows": [
+          {
+            "label": "요금",
+            "value": "<어린이> 무료 / 어른 \"3,000원\""
+          },
+          {
+            "label": "이용시간",
+            "value": "정보 없음"
+          },
+          {
+            "label": "쉬는 날",
+            "value": "정보 없음"
+          },
+          {
+            "label": "주차",
+            "value": "정보 없음"
+          },
+          {
+            "label": "반려동물",
+            "value": "정보 없음"
+          },
+          {
+            "label": "무장애",
+            "value": "정보 없음"
+          },
+          {
+            "label": "확인 상태",
+            "value": "출처: 한국관광공사 TourAPI · 원천 갱신일: 2026-09-30 · 수집일: 정보 없음"
+          }
+        ],
+        "badgeLine": null
+      }
+    },
+    {
+      "name": "en-feetext-tourapi",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "modifiedAt": "2026-09-30T10:15:00",
+        "closureState": "UNKNOWN",
+        "closedWeekdays": null,
+        "attrParking": "UNKNOWN",
+        "attrCreditCard": "UNKNOWN",
+        "attrStrollerRental": "UNKNOWN",
+        "petPolicy": "UNKNOWN",
+        "attrAdmission": "UNKNOWN",
+        "id": "3002",
+        "lang": "en",
+        "title": "Gyeongbokgung Palace",
+        "feeText": "<어린이> 무료 / 어른 \"3,000원\"",
+        "useFee": "어른 3,000원",
+        "source": "TOURAPI"
+      },
+      "output": {
+        "rows": [
+          {
+            "label": "Admission",
+            "value": "<어린이> 무료 / 어른 \"3,000원\""
+          },
+          {
+            "label": "Hours",
+            "value": "Not provided"
+          },
+          {
+            "label": "Closed",
+            "value": "Not provided"
+          },
+          {
+            "label": "Parking",
+            "value": "Not provided"
+          },
+          {
+            "label": "Pets",
+            "value": "Not provided"
+          },
+          {
+            "label": "Accessibility",
+            "value": "Not provided"
+          },
+          {
+            "label": "Data status",
+            "value": "Source: Korea Tourism Organization TourAPI · Source updated: 2026-09-30 · Collected: Not provided"
+          }
+        ],
+        "badgeLine": null
+      }
+    },
+    {
+      "name": "ko-feetext-no-source",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "modifiedAt": null,
+        "closureState": "UNKNOWN",
+        "closedWeekdays": null,
+        "attrParking": "UNKNOWN",
+        "attrCreditCard": "UNKNOWN",
+        "attrStrollerRental": "UNKNOWN",
+        "petPolicy": "UNKNOWN",
+        "attrAdmission": "UNKNOWN",
+        "id": "3003",
+        "lang": "ko",
+        "title": "경복궁",
+        "feeText": "<어린이> 무료 / 어른 \"3,000원\"",
+        "useFee": "어른 3,000원"
+      },
+      "output": {
+        "rows": [
+          {
+            "label": "요금",
+            "value": "<어린이> 무료 / 어른 \"3,000원\""
+          },
+          {
+            "label": "이용시간",
+            "value": "정보 없음"
+          },
+          {
+            "label": "쉬는 날",
+            "value": "정보 없음"
+          },
+          {
+            "label": "주차",
+            "value": "정보 없음"
+          },
+          {
+            "label": "반려동물",
+            "value": "정보 없음"
+          },
+          {
+            "label": "무장애",
+            "value": "정보 없음"
+          },
+          {
+            "label": "확인 상태",
+            "value": "출처: 정보 없음 · 원천 갱신일: 정보 없음 · 수집일: 정보 없음"
+          }
+        ],
+        "badgeLine": null
+      }
+    },
+    {
+      "name": "en-feetext-no-source",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "modifiedAt": null,
+        "closureState": "UNKNOWN",
+        "closedWeekdays": null,
+        "attrParking": "UNKNOWN",
+        "attrCreditCard": "UNKNOWN",
+        "attrStrollerRental": "UNKNOWN",
+        "petPolicy": "UNKNOWN",
+        "attrAdmission": "UNKNOWN",
+        "id": "3004",
+        "lang": "en",
+        "title": "Gyeongbokgung Palace",
+        "feeText": "<어린이> 무료 / 어른 \"3,000원\"",
+        "useFee": "어른 3,000원"
+      },
+      "output": {
+        "rows": [
+          {
+            "label": "Admission",
+            "value": "<어린이> 무료 / 어른 \"3,000원\""
+          },
+          {
+            "label": "Hours",
+            "value": "Not provided"
+          },
+          {
+            "label": "Closed",
+            "value": "Not provided"
+          },
+          {
+            "label": "Parking",
+            "value": "Not provided"
+          },
+          {
+            "label": "Pets",
+            "value": "Not provided"
+          },
+          {
+            "label": "Accessibility",
+            "value": "Not provided"
+          },
+          {
+            "label": "Data status",
+            "value": "Source: Not provided · Source updated: Not provided · Collected: Not provided"
+          }
+        ],
+        "badgeLine": null
+      }
+    },
+    {
+      "name": "ko-usefee-only-tourapi",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "modifiedAt": "2026-09-30T10:15:00",
+        "closureState": "UNKNOWN",
+        "closedWeekdays": null,
+        "attrParking": "UNKNOWN",
+        "attrCreditCard": "UNKNOWN",
+        "attrStrollerRental": "UNKNOWN",
+        "petPolicy": "UNKNOWN",
+        "attrAdmission": "UNKNOWN",
+        "id": "3005",
+        "lang": "ko",
+        "title": "경복궁",
+        "useFee": "어른 3,000원<br>어린이 &lt;무료&gt;",
+        "source": "TOURAPI"
+      },
+      "output": {
+        "rows": [
+          {
+            "label": "요금",
+            "value": "어른 3,000원\n어린이 <무료>"
+          },
+          {
+            "label": "이용시간",
+            "value": "정보 없음"
+          },
+          {
+            "label": "쉬는 날",
+            "value": "정보 없음"
+          },
+          {
+            "label": "주차",
+            "value": "정보 없음"
+          },
+          {
+            "label": "반려동물",
+            "value": "정보 없음"
+          },
+          {
+            "label": "무장애",
+            "value": "정보 없음"
+          },
+          {
+            "label": "확인 상태",
+            "value": "출처: 한국관광공사 TourAPI · 원천 갱신일: 2026-09-30 · 수집일: 정보 없음"
+          }
+        ],
+        "badgeLine": null
+      }
+    },
+    {
+      "name": "en-usefee-only-tourapi",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "modifiedAt": "2026-09-30T10:15:00",
+        "closureState": "UNKNOWN",
+        "closedWeekdays": null,
+        "attrParking": "UNKNOWN",
+        "attrCreditCard": "UNKNOWN",
+        "attrStrollerRental": "UNKNOWN",
+        "petPolicy": "UNKNOWN",
+        "attrAdmission": "UNKNOWN",
+        "id": "3006",
+        "lang": "en",
+        "title": "Gyeongbokgung Palace",
+        "useFee": "어른 3,000원<br>어린이 &lt;무료&gt;",
+        "source": "TOURAPI"
+      },
+      "output": {
+        "rows": [
+          {
+            "label": "Admission",
+            "value": "어른 3,000원\n어린이 <무료>"
+          },
+          {
+            "label": "Hours",
+            "value": "Not provided"
+          },
+          {
+            "label": "Closed",
+            "value": "Not provided"
+          },
+          {
+            "label": "Parking",
+            "value": "Not provided"
+          },
+          {
+            "label": "Pets",
+            "value": "Not provided"
+          },
+          {
+            "label": "Accessibility",
+            "value": "Not provided"
+          },
+          {
+            "label": "Data status",
+            "value": "Source: Korea Tourism Organization TourAPI · Source updated: 2026-09-30 · Collected: Not provided"
+          }
+        ],
+        "badgeLine": null
+      }
+    },
+    {
+      "name": "ko-usefee-only-no-source",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "modifiedAt": null,
+        "closureState": "UNKNOWN",
+        "closedWeekdays": null,
+        "attrParking": "UNKNOWN",
+        "attrCreditCard": "UNKNOWN",
+        "attrStrollerRental": "UNKNOWN",
+        "petPolicy": "UNKNOWN",
+        "attrAdmission": "UNKNOWN",
+        "id": "3007",
+        "lang": "ko",
+        "title": "경복궁",
+        "useFee": "어른 3,000원<br>어린이 &lt;무료&gt;"
+      },
+      "output": {
+        "rows": [
+          {
+            "label": "요금",
+            "value": "어른 3,000원\n어린이 <무료>"
+          },
+          {
+            "label": "이용시간",
+            "value": "정보 없음"
+          },
+          {
+            "label": "쉬는 날",
+            "value": "정보 없음"
+          },
+          {
+            "label": "주차",
+            "value": "정보 없음"
+          },
+          {
+            "label": "반려동물",
+            "value": "정보 없음"
+          },
+          {
+            "label": "무장애",
+            "value": "정보 없음"
+          },
+          {
+            "label": "확인 상태",
+            "value": "출처: 정보 없음 · 원천 갱신일: 정보 없음 · 수집일: 정보 없음"
+          }
+        ],
+        "badgeLine": null
+      }
+    },
+    {
+      "name": "en-usefee-only-no-source",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "modifiedAt": null,
+        "closureState": "UNKNOWN",
+        "closedWeekdays": null,
+        "attrParking": "UNKNOWN",
+        "attrCreditCard": "UNKNOWN",
+        "attrStrollerRental": "UNKNOWN",
+        "petPolicy": "UNKNOWN",
+        "attrAdmission": "UNKNOWN",
+        "id": "3008",
+        "lang": "en",
+        "title": "Gyeongbokgung Palace",
+        "useFee": "어른 3,000원<br>어린이 &lt;무료&gt;"
+      },
+      "output": {
+        "rows": [
+          {
+            "label": "Admission",
+            "value": "어른 3,000원\n어린이 <무료>"
+          },
+          {
+            "label": "Hours",
+            "value": "Not provided"
+          },
+          {
+            "label": "Closed",
+            "value": "Not provided"
+          },
+          {
+            "label": "Parking",
+            "value": "Not provided"
+          },
+          {
+            "label": "Pets",
+            "value": "Not provided"
+          },
+          {
+            "label": "Accessibility",
+            "value": "Not provided"
+          },
+          {
+            "label": "Data status",
+            "value": "Source: Not provided · Source updated: Not provided · Collected: Not provided"
+          }
+        ],
+        "badgeLine": null
+      }
+    },
+    {
+      "name": "ko-no-fee-tourapi",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "modifiedAt": "2026-09-30T10:15:00",
+        "closureState": "UNKNOWN",
+        "closedWeekdays": null,
+        "attrParking": "UNKNOWN",
+        "attrCreditCard": "UNKNOWN",
+        "attrStrollerRental": "UNKNOWN",
+        "petPolicy": "UNKNOWN",
+        "attrAdmission": "UNKNOWN",
+        "id": "3009",
+        "lang": "ko",
+        "title": "경복궁",
+        "source": "TOURAPI"
+      },
+      "output": {
+        "rows": [
+          {
+            "label": "요금",
+            "value": "정보 없음"
+          },
+          {
+            "label": "이용시간",
+            "value": "정보 없음"
+          },
+          {
+            "label": "쉬는 날",
+            "value": "정보 없음"
+          },
+          {
+            "label": "주차",
+            "value": "정보 없음"
+          },
+          {
+            "label": "반려동물",
+            "value": "정보 없음"
+          },
+          {
+            "label": "무장애",
+            "value": "정보 없음"
+          },
+          {
+            "label": "확인 상태",
+            "value": "출처: 한국관광공사 TourAPI · 원천 갱신일: 2026-09-30 · 수집일: 정보 없음"
+          }
+        ],
+        "badgeLine": null
+      }
+    },
+    {
+      "name": "en-no-fee-tourapi",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "modifiedAt": "2026-09-30T10:15:00",
+        "closureState": "UNKNOWN",
+        "closedWeekdays": null,
+        "attrParking": "UNKNOWN",
+        "attrCreditCard": "UNKNOWN",
+        "attrStrollerRental": "UNKNOWN",
+        "petPolicy": "UNKNOWN",
+        "attrAdmission": "UNKNOWN",
+        "id": "3010",
+        "lang": "en",
+        "title": "Gyeongbokgung Palace",
+        "source": "TOURAPI"
+      },
+      "output": {
+        "rows": [
+          {
+            "label": "Admission",
+            "value": "Not provided"
+          },
+          {
+            "label": "Hours",
+            "value": "Not provided"
+          },
+          {
+            "label": "Closed",
+            "value": "Not provided"
+          },
+          {
+            "label": "Parking",
+            "value": "Not provided"
+          },
+          {
+            "label": "Pets",
+            "value": "Not provided"
+          },
+          {
+            "label": "Accessibility",
+            "value": "Not provided"
+          },
+          {
+            "label": "Data status",
+            "value": "Source: Korea Tourism Organization TourAPI · Source updated: 2026-09-30 · Collected: Not provided"
+          }
+        ],
+        "badgeLine": null
+      }
+    },
+    {
+      "name": "ko-no-fee-no-source",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "modifiedAt": null,
+        "closureState": "UNKNOWN",
+        "closedWeekdays": null,
+        "attrParking": "UNKNOWN",
+        "attrCreditCard": "UNKNOWN",
+        "attrStrollerRental": "UNKNOWN",
+        "petPolicy": "UNKNOWN",
+        "attrAdmission": "UNKNOWN",
+        "id": "3011",
+        "lang": "ko",
+        "title": "경복궁"
+      },
+      "output": {
+        "rows": [
+          {
+            "label": "요금",
+            "value": "정보 없음"
+          },
+          {
+            "label": "이용시간",
+            "value": "정보 없음"
+          },
+          {
+            "label": "쉬는 날",
+            "value": "정보 없음"
+          },
+          {
+            "label": "주차",
+            "value": "정보 없음"
+          },
+          {
+            "label": "반려동물",
+            "value": "정보 없음"
+          },
+          {
+            "label": "무장애",
+            "value": "정보 없음"
+          },
+          {
+            "label": "확인 상태",
+            "value": "출처: 정보 없음 · 원천 갱신일: 정보 없음 · 수집일: 정보 없음"
+          }
+        ],
+        "badgeLine": null
+      }
+    },
+    {
+      "name": "en-no-fee-no-source",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "modifiedAt": null,
+        "closureState": "UNKNOWN",
+        "closedWeekdays": null,
+        "attrParking": "UNKNOWN",
+        "attrCreditCard": "UNKNOWN",
+        "attrStrollerRental": "UNKNOWN",
+        "petPolicy": "UNKNOWN",
+        "attrAdmission": "UNKNOWN",
+        "id": "3012",
+        "lang": "en",
+        "title": "Gyeongbokgung Palace"
+      },
+      "output": {
+        "rows": [
+          {
+            "label": "Admission",
+            "value": "Not provided"
+          },
+          {
+            "label": "Hours",
+            "value": "Not provided"
+          },
+          {
+            "label": "Closed",
+            "value": "Not provided"
+          },
+          {
+            "label": "Parking",
+            "value": "Not provided"
+          },
+          {
+            "label": "Pets",
+            "value": "Not provided"
+          },
+          {
+            "label": "Accessibility",
+            "value": "Not provided"
+          },
+          {
+            "label": "Data status",
+            "value": "Source: Not provided · Source updated: Not provided · Collected: Not provided"
+          }
+        ],
+        "badgeLine": null
+      }
+    },
+    {
+      "name": "ko-weekly-with-raw-parking-no-pet-allowed",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "modifiedAt": "2026-09-30T10:15:00",
+        "closureState": "WEEKLY",
+        "closedWeekdays": [
+          "MON"
+        ],
+        "attrParking": "NO",
+        "attrCreditCard": "UNKNOWN",
+        "attrStrollerRental": "UNKNOWN",
+        "petPolicy": "ALLOWED",
+        "attrAdmission": "UNKNOWN",
+        "id": "3101",
+        "lang": "ko",
+        "title": "창덕궁",
+        "source": "TOURAPI",
+        "restDate": "매주 월요일",
+        "parking": "주차 불가<br>인근 공영주차장 이용",
+        "petAcmpyType": "전구역 동반가능",
+        "useTime": "09:00~18:00<br />입장 마감 17:00"
+      },
+      "output": {
+        "rows": [
+          {
+            "label": "요금",
+            "value": "정보 없음"
+          },
+          {
+            "label": "이용시간",
+            "value": "09:00~18:00\n입장 마감 17:00"
+          },
+          {
+            "label": "쉬는 날",
+            "value": "매주 월요일 휴무\n매주 월요일"
+          },
+          {
+            "label": "주차",
+            "value": "주차 불가\n주차 불가\n인근 공영주차장 이용"
+          },
+          {
+            "label": "반려동물",
+            "value": "반려동물 동반 가능"
+          },
+          {
+            "label": "무장애",
+            "value": "정보 없음"
+          },
+          {
+            "label": "확인 상태",
+            "value": "출처: 한국관광공사 TourAPI · 원천 갱신일: 2026-09-30 · 수집일: 정보 없음"
+          }
+        ],
+        "badgeLine": null
+      }
+    },
+    {
+      "name": "en-always-open-parking-yes-pet-partial",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "modifiedAt": "2026-09-30T10:15:00",
+        "closureState": "ALWAYS_OPEN",
+        "closedWeekdays": null,
+        "attrParking": "YES",
+        "attrCreditCard": "UNKNOWN",
+        "attrStrollerRental": "UNKNOWN",
+        "petPolicy": "PARTIAL",
+        "attrAdmission": "UNKNOWN",
+        "id": "3102",
+        "lang": "en",
+        "title": "N Seoul Tower",
+        "source": "TOURAPI",
+        "restDate": null,
+        "parking": "Available",
+        "useTime": "10:00~23:00"
+      },
+      "output": {
+        "rows": [
+          {
+            "label": "Admission",
+            "value": "Not provided"
+          },
+          {
+            "label": "Hours",
+            "value": "10:00~23:00"
+          },
+          {
+            "label": "Closed",
+            "value": "Open every day"
+          },
+          {
+            "label": "Parking",
+            "value": "Parking available\nAvailable"
+          },
+          {
+            "label": "Pets",
+            "value": "Pets allowed in some areas"
+          },
+          {
+            "label": "Accessibility",
+            "value": "Not provided"
+          },
+          {
+            "label": "Data status",
+            "value": "Source: Korea Tourism Organization TourAPI · Source updated: 2026-09-30 · Collected: Not provided"
+          }
+        ],
+        "badgeLine": null
+      }
+    },
+    {
+      "name": "ko-unknown-closure-raw-only-pet-raw",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "modifiedAt": "2026-09-30T10:15:00",
+        "closureState": "UNKNOWN",
+        "closedWeekdays": null,
+        "attrParking": "UNKNOWN",
+        "attrCreditCard": "UNKNOWN",
+        "attrStrollerRental": "UNKNOWN",
+        "petPolicy": "UNKNOWN",
+        "attrAdmission": "UNKNOWN",
+        "id": "3103",
+        "lang": "ko",
+        "title": "원문만 있는 곳",
+        "source": "GOCAMPING",
+        "restDate": "설·추석 당일 (다음날 대신 휴무)",
+        "parking": null,
+        "petAcmpyType": "소형견 &amp; 목줄 필수"
+      },
+      "output": {
+        "rows": [
+          {
+            "label": "요금",
+            "value": "정보 없음"
+          },
+          {
+            "label": "이용시간",
+            "value": "정보 없음"
+          },
+          {
+            "label": "쉬는 날",
+            "value": "설·추석 당일 (다음날 대신 휴무)"
+          },
+          {
+            "label": "주차",
+            "value": "정보 없음"
+          },
+          {
+            "label": "반려동물",
+            "value": "소형견 & 목줄 필수"
+          },
+          {
+            "label": "무장애",
+            "value": "정보 없음"
+          },
+          {
+            "label": "확인 상태",
+            "value": "출처: 한국관광공사 고캠핑 · 원천 갱신일: 2026-09-30 · 수집일: 정보 없음"
+          }
+        ],
+        "badgeLine": null
+      }
+    },
+    {
+      "name": "ko-no-weekly-barrier-free-badges",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "modifiedAt": "2026-09-30T10:15:00",
+        "closureState": "NO_WEEKLY",
+        "closedWeekdays": null,
+        "attrParking": "UNKNOWN",
+        "attrCreditCard": "YES",
+        "attrStrollerRental": "NO",
+        "petPolicy": "UNKNOWN",
+        "attrAdmission": "UNKNOWN",
+        "id": "3104",
+        "lang": "ko",
+        "title": "배지가 있는 곳",
+        "source": "TOURAPI",
+        "restDate": "명절 당일",
+        "uniqueClickers14d": 12,
+        "barrierFree": [
+          "ELEVATOR",
+          "WHEELCHAIR",
+          "LACTATION_ROOM"
+        ]
+      },
+      "output": {
+        "rows": [
+          {
+            "label": "요금",
+            "value": "정보 없음"
+          },
+          {
+            "label": "이용시간",
+            "value": "정보 없음"
+          },
+          {
+            "label": "쉬는 날",
+            "value": "매주 쉬는 요일 없음\n명절 당일"
+          },
+          {
+            "label": "주차",
+            "value": "정보 없음"
+          },
+          {
+            "label": "반려동물",
+            "value": "정보 없음"
+          },
+          {
+            "label": "무장애",
+            "value": "휠체어 · 엘리베이터 · 수유실"
+          },
+          {
+            "label": "확인 상태",
+            "value": "출처: 한국관광공사 TourAPI · 원천 갱신일: 2026-09-30 · 수집일: 정보 없음"
+          }
+        ],
+        "badgeLine": "신용카드 가능 · 유모차 대여 없음 · 많이 클릭한 곳"
+      }
+    },
+    {
+      "name": "en-gocamping-badges-frequently-clicked-only",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "modifiedAt": "2026-09-30T10:15:00",
+        "closureState": "UNKNOWN",
+        "closedWeekdays": null,
+        "attrParking": "UNKNOWN",
+        "attrCreditCard": "UNKNOWN",
+        "attrStrollerRental": "UNKNOWN",
+        "petPolicy": "UNKNOWN",
+        "attrAdmission": "UNKNOWN",
+        "id": "3105",
+        "lang": "en",
+        "title": "Riverside Camp",
+        "source": "GOCAMPING",
+        "uniqueClickers14d": 5,
+        "barrierFree": []
+      },
+      "output": {
+        "rows": [
+          {
+            "label": "Admission",
+            "value": "Not provided"
+          },
+          {
+            "label": "Hours",
+            "value": "Not provided"
+          },
+          {
+            "label": "Closed",
+            "value": "Not provided"
+          },
+          {
+            "label": "Parking",
+            "value": "Not provided"
+          },
+          {
+            "label": "Pets",
+            "value": "Not provided"
+          },
+          {
+            "label": "Accessibility",
+            "value": "Not provided"
+          },
+          {
+            "label": "Data status",
+            "value": "Source: Korea Tourism Organization GoCamping · Source updated: 2026-09-30 · Collected: Not provided"
+          }
+        ],
+        "badgeLine": "Frequently clicked"
+      }
+    },
+    {
+      "name": "ko-legacy-without-attributes",
+      "input": {
+        "contentId": "126509",
+        "contentTypeId": "14",
+        "category": "culture",
+        "address": null,
+        "location": {
+          "lat": 37.5,
+          "lon": 127
+        },
+        "id": "3106",
+        "lang": "ko",
+        "title": "옛 문서",
+        "restDate": "매주 화요일",
+        "parking": "가능",
+        "petAcmpyType": "불가",
+        "useFee": "무료"
+      },
+      "output": {
+        "rows": [
+          {
+            "label": "요금",
+            "value": "무료"
+          },
+          {
+            "label": "이용시간",
+            "value": "정보 없음"
+          },
+          {
+            "label": "쉬는 날",
+            "value": "매주 화요일"
+          },
+          {
+            "label": "주차",
+            "value": "가능"
+          },
+          {
+            "label": "반려동물",
+            "value": "불가"
+          },
+          {
+            "label": "무장애",
+            "value": "정보 없음"
+          },
+          {
+            "label": "확인 상태",
+            "value": "출처: 정보 없음 · 원천 갱신일: 정보 없음 · 수집일: 정보 없음"
+          }
+        ],
+        "badgeLine": null
+      }
+    }
+  ]
+}

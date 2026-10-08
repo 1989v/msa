@@ -117,13 +117,15 @@ class AttractionPageRendererTest : BehaviorSpec({
         val html = render(SHELL, doc(attributes = PARSED, region = REGION, similarElsewhere = SIMILAR))
         val root = rootOf(html)
 
-        then("아는 값만 배지로 나간다 — UNKNOWN 인 반려동물·카드는 없다") {
-            root shouldContain "매주 화요일 휴무"
-            root shouldContain "주차 가능"
-            root shouldContain "유모차 대여 없음"
-            root shouldContain "입장 무료"
-            root shouldNotContain "반려동물"
+        then("해석된 값은 방문 요약 칸 첫 줄로, 칸이 없는 것은 배지 줄로 — UNKNOWN 은 해석 줄이 없다") {
+            val summary = root.substringAfter("<dl data-place-section=\"visit-summary\">").substringBefore("</dl>")
+            summary shouldContain "<dt>쉬는 날</dt><dd>매주 화요일 휴무\n매주 화요일</dd>"
+            summary shouldContain "<dt>주차</dt><dd>주차 가능\n가능</dd>"
+            summary shouldContain "<dt>반려동물</dt><dd>정보 없음</dd>"
+            root shouldContain "<p data-place-section=\"visit-badges\">유모차 대여 없음</p>"
             root shouldNotContain "신용카드"
+            // 입장 무료/유료는 요금 칸 값과 같은 정보라 따로 내지 않는다
+            root shouldNotContain "입장 무료"
         }
 
         then("지역 안 위치 문구와 허브 링크가 나간다") {
@@ -142,15 +144,30 @@ class AttractionPageRendererTest : BehaviorSpec({
             root shouldContain "<li><a href=\"/attractions/3002\">화성행궁 &lt;정조&gt;</a></li>"
         }
 
-        then("섹션 순서는 개요 → 방문 정보 원문 → 배지 → 지역 안 위치 → 같은 분류 가까운 곳 → 비슷한 곳") {
-            val order = listOf("조선 왕조의 법궁", "이용 안내", "매주 화요일 휴무", "종로구 관광지 120곳", "창덕궁", "다른 지역의 비슷한 곳", "경기전")
-                .map { root.indexOf(it) }
+        then("절 순서는 제목 → 방문 요약 → 배지 줄 → 행동 줄 → 개요 → 지역 안 위치 → 같은 분류 가까운 곳 → 비슷한 곳") {
+            val order = listOf(
+                "<h1>",
+                "data-place-section=\"visit-summary\"",
+                "data-place-section=\"visit-badges\"",
+                "data-place-section=\"actions\"",
+                "조선 왕조의 법궁",
+                "종로구 관광지 120곳",
+                "data-place-section=\"same-category-nearby\"",
+                "다른 지역의 비슷한 곳",
+                "경기전",
+            ).map { root.indexOf(it) }
             order.none { it < 0 } shouldBe true
             order shouldBe order.sorted()
         }
 
-        then("방문 정보 원문의 <br> 은 줄바꿈으로 평문화된다") {
-            root shouldContain "<dt>이용시간</dt><dd>09:00~18:00\n입장 마감 17:00</dd>"
+        then("방문 요약 칸의 원문 <br> 은 줄바꿈으로 평문화된다") {
+            root.substringAfter("<dl data-place-section=\"visit-summary\">").substringBefore("</dl>") shouldContain
+                "<dt>이용시간</dt><dd>09:00~18:00\n입장 마감 17:00</dd>"
+        }
+
+        then("일반 유형은 「이용 안내」·「방문 정보 요약」 절을 내지 않는다 — 방문 요약이 대신한다") {
+            root shouldNotContain "<h2>이용 안내</h2>"
+            root shouldNotContain "방문 정보 요약"
         }
     }
 
@@ -186,7 +203,7 @@ class AttractionPageRendererTest : BehaviorSpec({
             )
         }
 
-        then("웰니스 한 줄과 출처의 원천 이름이 붙고, 절은 배지 뒤 · 지역 안 위치 앞이다") {
+        then("웰니스 한 줄과 출처의 원천 이름이 붙고, 절은 방문 요약 뒤 · 지역 안 위치 앞이다") {
             root shouldContain "<p data-place-section=\"wellness\">웰니스 관광 · 온천 / 사우나 / 스파</p>"
             root shouldContain "<p data-place-section=\"source\">출처: 한국관광공사 TourAPI · 무장애 여행 정보 · 웰니스관광 정보</p>"
             val order = listOf("매주 화요일 휴무", "접근성 정보", "웰니스 관광", "종로구 관광지 120곳").map { root.indexOf(it) }
@@ -303,10 +320,9 @@ class AttractionPageRendererTest : BehaviorSpec({
     given("14일 고유 클릭 방문자 수") {
         val min = AttractionClickSignal.MIN_SAMPLE
 
-        then("최소 표본에 닿으면 배지 목록 끝에 「많이 클릭한 곳」이 붙는다") {
+        then("최소 표본에 닿으면 배지 줄 끝에 「많이 클릭한 곳」이 붙는다") {
             val root = rootOf(render(SHELL, doc(attributes = PARSED, uniqueClickers14d = min)))
-            root shouldContain "<li>많이 클릭한 곳</li>"
-            (root.indexOf("입장 무료") < root.indexOf("많이 클릭한 곳")) shouldBe true
+            root shouldContain "<p data-place-section=\"visit-badges\">유모차 대여 없음 · 많이 클릭한 곳</p>"
         }
 
         then("최소 표본 미만이거나 신호가 없으면 붙지 않는다") {
@@ -315,14 +331,18 @@ class AttractionPageRendererTest : BehaviorSpec({
             }
         }
 
-        then("속성이 없는 옛 문서여도 이 배지 하나로 요약 절을 그린다") {
+        then("속성이 없는 옛 문서여도 이 배지 하나로 배지 줄을 그린다") {
             val root = rootOf(render(SHELL, doc(uniqueClickers14d = min)))
-            root shouldContain "<h2>방문 정보 요약</h2><ul><li>많이 클릭한 곳</li></ul>"
+            root shouldContain "<p data-place-section=\"visit-badges\">많이 클릭한 곳</p>"
         }
 
         then("영문 문구") {
             val root = rootOf(render(SHELL, doc(id = "2001", lang = "en", uniqueClickers14d = min)))
-            root shouldContain "<li>Frequently clicked</li>"
+            root shouldContain "<p data-place-section=\"visit-badges\">Frequently clicked</p>"
+        }
+
+        then("배지 항목이 하나도 없으면 배지 줄이 없다") {
+            rootOf(render(SHELL, doc(attributes = ALL_UNKNOWN))) shouldNotContain "visit-badges"
         }
     }
 
@@ -575,7 +595,7 @@ class AttractionPageRendererTest : BehaviorSpec({
             Regex("""<meta property="og:image:secure_url" content="([^"]*)" />""").find(html)!!.groupValues[1] shouldBe https
             val jsonLd = Regex("""<script type="application/ld\+json" data-seo-multi>([\s\S]*?)</script>""")
                 .findAll(html).map { ObjectMapper().readTree(it.groupValues[1]) }.first()
-            jsonLd["image"].asString() shouldBe https
+            jsonLd["image"]["contentUrl"].asString() shouldBe https
             html shouldNotContain "http://tong."
         }
 
@@ -601,6 +621,196 @@ class AttractionPageRendererTest : BehaviorSpec({
         }
     }
 
+
+    // ─── 첫 화면 (방문 요약 · 배지 줄 · 행동 줄) · 고유 블록 ─────────────────────
+
+    fun section(root: String, name: String): String? =
+        Regex("""<(?:dl|p|section) data-place-section="$name">([\s\S]*?)</(?:dl|p|section)>""").find(root)?.groupValues?.get(1)
+
+    fun summaryValue(root: String, label: String): String? =
+        Regex("""<dt>${Regex.escape(label)}</dt><dd>([\s\S]*?)</dd>""").find(section(root, "visit-summary").orEmpty())?.groupValues?.get(1)
+
+    given("행사·숙박·코스 문서") {
+        then("방문 요약·배지 줄 없이 유형별 절과 배지 절을 그대로 두고 행동 줄만 붙는다") {
+            listOf(event(), stay().copy(attributes = PARSED), course()).forEach { d ->
+                val root = rootOf(render(SHELL, d))
+                root shouldNotContain "visit-summary"
+                root shouldNotContain "visit-badges"
+                root shouldContain "<p data-place-section=\"actions\"><a href=\"tel:0237003900\">02-3700-3900</a></p>"
+            }
+            val stayRoot = rootOf(render(SHELL, stay().copy(attributes = PARSED)))
+            stayRoot shouldContain "<h2>방문 정보 요약</h2>"
+            stayRoot shouldContain "<li>입장 무료</li>"
+            val order = listOf("<h1>", "data-place-section=\"actions\"", "북촌의 한옥 숙소", "data-place-section=\"stay\"", "방문 정보 요약")
+                .map { stayRoot.indexOf(it) }
+            order.none { it < 0 } shouldBe true
+            order shouldBe order.sorted()
+        }
+    }
+
+    given("행동 줄") {
+        then("전화 원문이 없으면 절이 없다") {
+            rootOf(render(SHELL, doc().copy(tel = null, infoCenter = null))) shouldNotContain "data-place-section=\"actions\""
+            rootOf(render(SHELL, doc().copy(tel = "", infoCenter = "<br>"))) shouldNotContain "data-place-section=\"actions\""
+        }
+
+        then("번호를 못 찾으면 링크 없이 원문만") {
+            rootOf(render(SHELL, doc().copy(infoCenter = "문의: 없음"))) shouldContain
+                "<p data-place-section=\"actions\">문의: 없음</p>"
+        }
+
+        then("길찾기 링크는 서버 렌더에 없다 — 화면 전용") {
+            val actions = section(rootOf(render(SHELL, doc())), "actions").orEmpty()
+            actions shouldNotContain "maps"
+            Regex("<a ").findAll(actions).toList() shouldHaveSize 1
+        }
+
+        then("tel: href 와 원문은 이스케이프된다") {
+            val root = rootOf(render(SHELL, doc().copy(infoCenter = "\"관리소\" <b>02-123-4567</b> & 매표소")))
+            root shouldContain "<p data-place-section=\"actions\"><a href=\"tel:021234567\">&quot;관리소&quot; 02-123-4567 &amp; 매표소</a></p>"
+        }
+    }
+
+    given("전화 중복") {
+        then("infoCenter 가 비고 tel 만 있으면 제목 아래 전화 줄이 없고 행동 줄이 tel 을 쓴다") {
+            val root = rootOf(render(SHELL, doc().copy(infoCenter = null)))
+            Regex("02-3700-3900").findAll(root).toList() shouldHaveSize 1
+            section(root, "actions") shouldBe "<a href=\"tel:0237003900\">02-3700-3900</a>"
+        }
+
+        then("둘 다 있으면 제목 아래 tel 줄과 행동 줄의 infoCenter 가 둘 다 보인다") {
+            val root = rootOf(render(SHELL, doc().copy(infoCenter = "관리사무소 02-2148-1800")))
+            root shouldContain "<p>02-3700-3900</p>"
+            section(root, "actions") shouldBe "<a href=\"tel:0221481800\">관리사무소 02-2148-1800</a>"
+        }
+    }
+
+    given("요금 칸 — feeText 는 이미 정규화된 평문") {
+        then("태그 모양 글자가 요소가 되지 않는다 — escapeHtml 만 거친다") {
+            val root = rootOf(render(SHELL, doc().copy(feeText = "<img src=x onerror=alert(1)> \"무료\"")))
+            val summary = section(root, "visit-summary").orEmpty()
+            summary shouldContain "&lt;img src=x onerror=alert(1)&gt; &quot;무료&quot;"
+            summary shouldNotContain "<img"
+        }
+
+        then("「<어린이> 무료」는 그대로 보인다 — sourceText 를 다시 걸면 「무료」만 남는다") {
+            summaryValue(rootOf(render(SHELL, doc().copy(feeText = "<어린이> 무료"))), "요금") shouldBe "&lt;어린이&gt; 무료"
+        }
+
+        then("feeText 가 없으면 원천 useFee 를 정규화해 쓰고, 둘 다 없으면 「정보 없음」") {
+            summaryValue(rootOf(render(SHELL, doc().copy(useFee = "어른 1,000원<br>&lt;어린이&gt; 무료"))), "요금") shouldBe
+                "어른 1,000원\n&lt;어린이&gt; 무료"
+            summaryValue(rootOf(render(SHELL, doc())), "요금") shouldBe "정보 없음"
+            summaryValue(rootOf(render(SHELL, doc(id = "2001", lang = "en"))), "Admission") shouldBe "Not provided"
+        }
+    }
+
+    given("확인 상태 칸") {
+        val updated = java.time.LocalDateTime.of(2026, 9, 30, 10, 15)
+
+        then("출처 표시명과 원천 갱신일, 수집일은 「정보 없음」") {
+            summaryValue(rootOf(render(SHELL, doc().copy(source = "TOURAPI", modifiedAt = updated))), "확인 상태") shouldBe
+                "출처: 한국관광공사 TourAPI · 원천 갱신일: 2026-09-30 · 수집일: 정보 없음"
+            summaryValue(rootOf(render(SHELL, doc(id = "2001", lang = "en").copy(source = "GOCAMPING", modifiedAt = updated))), "Data status") shouldBe
+                "Source: Korea Tourism Organization GoCamping · Source updated: 2026-09-30 · Collected: Not provided"
+        }
+
+        then("출처가 없거나 모르는 값이면 「출처: 정보 없음」, 갱신일이 없으면 「원천 갱신일: 정보 없음」") {
+            listOf(null, "KTO_ETC").forEach { source ->
+                summaryValue(rootOf(render(SHELL, doc().copy(source = source))), "확인 상태") shouldBe
+                    "출처: 정보 없음 · 원천 갱신일: 정보 없음 · 수집일: 정보 없음"
+            }
+        }
+    }
+
+    given("바닥 출처 줄") {
+        val camping = """{"induty":"일반야영장"}"""
+
+        then("고캠핑 원천 + 캠핑장 정보면 첫 항목이 고캠핑이고 「고캠핑」은 한 번만") {
+            val root = rootOf(render(SHELL, doc().copy(source = "GOCAMPING", camping = camping)))
+            root shouldContain "<p data-place-section=\"source\">출처: 한국관광공사 고캠핑</p>"
+            val en = rootOf(render(SHELL, doc(id = "2001", lang = "en").copy(source = "GOCAMPING", camping = camping)))
+            en shouldContain "<p data-place-section=\"source\">Source: Korea Tourism Organization GoCamping</p>"
+        }
+
+        then("TourAPI·없음·모르는 값이면 지금 고정 문구 — 의무 문구라 비우지 않는다") {
+            listOf("TOURAPI", null, "KTO_ETC").forEach { source ->
+                rootOf(render(SHELL, doc().copy(source = source, camping = camping))) shouldContain
+                    "<p data-place-section=\"source\">출처: 한국관광공사 TourAPI · 고캠핑</p>"
+            }
+        }
+    }
+
+    given("브레드크럼 시군구") {
+        fun breadcrumbOf(html: String): List<Pair<String, String>> {
+            val json = Regex("""<script type="application/ld\+json" data-seo-multi>([\s\S]*?)</script>""")
+                .findAll(html).map { ObjectMapper().readTree(it.groupValues[1]) }.toList()[1]
+            val items = json["itemListElement"]
+            return (0 until items.size()).map { items[it]["name"].asString() to items[it]["item"].asString() }
+        }
+
+        then("시도·시군구 코드와 시군구 이름을 알면 화면과 BreadcrumbList 에 시군구 단계가 있다") {
+            val html = render(SHELL, doc(region = REGION))
+            rootOf(html) shouldContain
+                "<nav><a href=\"/\">한국 관광지 탐색</a> › <a href=\"/regions/11\">서울특별시</a> › <a href=\"/regions/11110\">종로구</a></nav>"
+            breadcrumbOf(html) shouldBe listOf(
+                "한국 관광지 탐색" to "https://place.1989v.com/",
+                "서울특별시" to "https://place.1989v.com/regions/11",
+                "종로구" to "https://place.1989v.com/regions/11110",
+                "경복궁" to "https://place.1989v.com/attractions/1001",
+            )
+        }
+
+        then("시군구 이름이 없으면 시도까지 — 원문 시군구 이름은 평문화 · 이스케이프된다") {
+            val html = render(SHELL, doc())
+            rootOf(html) shouldContain "<nav><a href=\"/\">한국 관광지 탐색</a> › <a href=\"/regions/11\">서울특별시</a></nav>"
+            breadcrumbOf(html) shouldHaveSize 3
+            rootOf(render(SHELL, doc(region = REGION.copy(sigunguName = "종로<b>구</b> &amp; \"x\"")))) shouldContain
+                "<a href=\"/regions/11110\">종로구 &amp; &quot;x&quot;</a></nav>"
+        }
+
+        then("시도가 없으면 시군구 단계도 없다") {
+            breadcrumbOf(render(SHELL, doc(region = REGION, sidoName = null))) shouldHaveSize 2
+        }
+    }
+
+    given("같은 분류 가까운 곳 (독립 절)") {
+        then("지역 안 위치 밖 독립 절로 나간다") {
+            val root = rootOf(render(SHELL, doc(region = REGION)))
+            section(root, "same-category-nearby") shouldBe
+                "<h2>같은 분류 가까운 곳</h2><ul><li><a href=\"/attractions/1002\">창덕궁</a> · 1.5km</li>" +
+                "<li><a href=\"/attractions/1003\">덕수궁 &lt;별관&gt;</a> · 820m</li></ul>"
+        }
+
+        then("목록이 비었거나 모두 끝난 행사면 절이 없다") {
+            rootOf(render(SHELL, doc(region = REGION.copy(sameCategoryNearby = emptyList())))) shouldNotContain "same-category-nearby"
+            val allEnded = REGION.copy(sameCategoryNearby = listOf(NearbyPlace("5101", "어제 끝난 축제", 900, TODAY.minusDays(1))))
+            val root = rootOf(render(SHELL, doc(region = allEnded)))
+            root shouldNotContain "same-category-nearby"
+            root shouldNotContain "같은 분류 가까운 곳"
+        }
+    }
+
+    given("대표 사진 <img>") {
+        fun imgOf(d: AttractionDocument): String? = Regex("<img [^>]*>").find(rootOf(render(SHELL, d)))?.value
+
+        then("https 는 그대로, alt 는 제목이고 크기 속성은 없다") {
+            imgOf(doc(title = "경복궁 <정궁>")) shouldBe
+                "<img src=\"https://tong.visitkorea.or.kr/cms/resource/33/1.jpg\" alt=\"경복궁 &lt;정궁&gt;\">"
+        }
+
+        then("tong http 는 https 로 바꿔 낸다") {
+            imgOf(doc().copy(imageUrl = "http://tong.visitkorea.or.kr/cms/resource/33/1.jpg")) shouldBe
+                "<img src=\"https://tong.visitkorea.or.kr/cms/resource/33/1.jpg\" alt=\"경복궁\">"
+        }
+
+        then("그 밖의 http 와 사진 없음은 내지 않는다") {
+            imgOf(doc().copy(imageUrl = "http://example.com/1.jpg")) shouldBe null
+            imgOf(doc().copy(imageUrl = null)) shouldBe null
+            imgOf(doc().copy(imageUrl = "")) shouldBe null
+        }
+    }
+
     given("유형별 골든 HTML (T11)") {
         // 갱신은 명시 플래그로만: UPDATE_RENDER_GOLDEN=1 ./gradlew :search:app:test --tests '*AttractionPageRendererTest'
         val update = System.getenv("UPDATE_RENDER_GOLDEN") == "1"
@@ -621,6 +831,9 @@ class AttractionPageRendererTest : BehaviorSpec({
             "stay-en" to stay(lang = "en"),
             "course-ko" to course(),
             "attraction-http-image-ko" to doc().copy(imageUrl = "http://tong.visitkorea.or.kr/cms/resource/33/1.jpg"),
+            // 관광지(12/76) 첫 화면 — 방문 요약 · 배지 줄 · 행동 줄 · 사진 · 시군구 · 같은 분류 가까운 곳 · 출처
+            "attraction-ko" to richAttraction("ko"),
+            "attraction-en" to richAttraction("en"),
         )
         cases.forEach { (name, d) ->
             then(name) {
@@ -636,3 +849,25 @@ class AttractionPageRendererTest : BehaviorSpec({
         }
     }
 })
+
+/** 골든용 관광지 — 첫 화면의 모든 절이 나오는 문서 */
+private fun richAttraction(lang: String): AttractionDocument {
+    val en = lang == "en"
+    return doc(
+        id = if (en) "2001" else "1001",
+        lang = lang,
+        title = if (en) "Gyeongbokgung Palace" else "경복궁",
+        attributes = PARSED,
+        region = if (en) REGION.copy(sigunguName = "Jongno-gu", categoryName = "Palaces") else REGION,
+        similarElsewhere = SIMILAR,
+        uniqueClickers14d = AttractionClickSignal.MIN_SAMPLE,
+    ).copy(
+        source = "TOURAPI",
+        copyrightDivCd = "Type1",
+        modifiedAt = java.time.LocalDateTime.of(2026, 9, 30, 10, 15),
+        feeText = if (en) "Adults 3,000 won / Children <free>" else "어른 3,000원 / <어린이> 무료",
+        infoCenter = if (en) "+82-2-3700-3900" else "경복궁 관리소 02-3700-3900",
+        petAcmpyType = if (en) null else "동반 불가",
+        barrierFree = GYEONGBOKGUNG_BARRIER_FREE,
+    )
+}

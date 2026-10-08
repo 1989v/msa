@@ -78,6 +78,21 @@ class AttractionJsonLdParityTest : BehaviorSpec({
             statuses shouldContainAll listOf(EventStatus.ONGOING, EventStatus.ENDED)
         }
 
+        then("관광지 사진 license 는 공공누리 제1·3유형만 절대 주소로 — 골든과 별개로 값을 못박는다") {
+            fun licenseOf(name: String): String? {
+                val input = cases.first { it.text("name") == name }["input"]
+                val image = serverJsonLd(renderer.attractionPage(AttractionPageFixtures.SHELL, documentOf(input), today))[0]["image"]
+                image["@type"].asString() shouldBe "ImageObject"
+                image["creditText"].asString() shouldBe "한국관광공사"
+                return image.text("license")
+            }
+            licenseOf("ko-photo-type1-sigungu") shouldBe "https://www.kogl.or.kr/info/licenseType1.do"
+            licenseOf("ko-photo-type3-no-sigungu") shouldBe "https://www.kogl.or.kr/info/licenseType3.do"
+            licenseOf("en-photo-type2-sigungu") shouldBe null
+            // copyrightDivCd 가 없는 문서
+            licenseOf("ko-weekly-free") shouldBe null
+        }
+
         cases.forEach { case ->
             `when`(case.text("name")!!) {
                 then("서버가 렌더한 JSON-LD 가 구조적으로 같다") {

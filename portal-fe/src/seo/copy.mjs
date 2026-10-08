@@ -775,7 +775,10 @@ export function touristTripJsonLd(lang, attraction) {
 
 export function touristAttractionJsonLd(lang, attraction) {
   const json = placeJsonLdBase(lang, attraction, 'TouristAttraction');
+  if (attraction.imageUrl) json.image = attractionImageObject(attraction);
   addContactAndPlace(json, attraction);
+  const area = attractionContainedInPlace(attraction);
+  if (area) json.containedInPlace = area;
   // 원문에서 해석된 방문 속성만 싣는다 — 모르는 값을 「무료 아님」「매일 연다」로 바꾸지 않는다.
   // 서버 렌더(search AttractionPageRenderer)가 같은 규칙으로 같은 필드를 만든다.
   const openDays = attractionOpenDays(attraction);
@@ -789,6 +792,38 @@ export function touristAttractionJsonLd(lang, attraction) {
   if (attraction.attrAdmission === 'FREE') json.isAccessibleForFree = true;
   else if (attraction.attrAdmission === 'PAID') json.isAccessibleForFree = false;
   return json;
+}
+
+/**
+ * 공공누리 유형(원천 `copyrightDivCd`) → 이용 조건 페이지. 사진을 쓰는 조건이 출처표시(제1유형)·
+ * 출처표시+변경금지(제3유형)인 것만 싣는다 — 상업 이용 금지(제2·4유형)나 모르는 값에 주소를 달면
+ * 쓸 수 없는 조건을 쓸 수 있다고 알리게 된다.
+ */
+const KOGL_LICENSE = {
+  Type1: 'https://www.kogl.or.kr/info/licenseType1.do',
+  Type3: 'https://www.kogl.or.kr/info/licenseType3.do',
+};
+
+/** 대표 사진 → ImageObject. 원천 값은 허용 목록의 키로만 쓰고 URL 로 흘려보내지 않는다. */
+function attractionImageObject(attraction) {
+  const image = { '@type': 'ImageObject', contentUrl: secureImageUrl(attraction.imageUrl) };
+  const license = Object.hasOwn(KOGL_LICENSE, attraction.copyrightDivCd ?? '') ? KOGL_LICENSE[attraction.copyrightDivCd] : null;
+  if (license) image.license = license;
+  image.creditText = '한국관광공사';
+  return image;
+}
+
+/** 시군구 이름(지역 안 위치에 실려 온다) — 원문이라 정규화한다. 모르면 빈 문자열. */
+function attractionSigunguName(attraction) {
+  return sourceText(attraction.region?.sigunguName);
+}
+
+/** 소속 지역 — 시군구 › 시도, 이름만. 아는 단계만 싣고 하나도 모르면 null. */
+function attractionContainedInPlace(attraction) {
+  const sido = attraction.sidoName ? { '@type': 'AdministrativeArea', name: attraction.sidoName } : null;
+  const sigungu = attractionSigunguName(attraction);
+  if (!sigungu) return sido;
+  return { '@type': 'AdministrativeArea', name: sigungu, ...(sido ? { containedInPlace: sido } : {}) };
 }
 
 /** 색인 요일 코드(MON…SUN) → schema.org 요일 이름. 순서가 곧 출력 순서다. */
@@ -815,17 +850,63 @@ function attractionOpenDays(attraction) {
 }
 
 /**
- * 관광지 상세 breadcrumb — 허브 › 시도 › 관광지. 화면(AttractionPage)과 서버 렌더가 같은
- * 세 칸을 심어야 한다: 하이드레이션이 서버가 심은 것을 갈아끼우므로, 어긋나면 렌더 전후로
+ * 관광지 상세 breadcrumb — 허브 › 시도 › 시군구 › 관광지. 화면(AttractionPage)과 서버 렌더가 같은
+ * 칸을 심어야 한다: 하이드레이션이 서버가 심은 것을 갈아끼우므로, 어긋나면 렌더 전후로
  * 지역 단계가 생겼다 사라진다. 시도는 색인이 들고 있는 이름(`sidoName`)을 쓴다 (ADR-0095).
+ * 시군구는 시도 단계가 있고 시도·시군구 코드와 이름을 모두 알 때만 — 지역 페이지 주소가 두 코드를 잇는다.
  */
 export function attractionBreadcrumbJsonLd(lang, attraction) {
   const sido = attraction.sidoName ? { code: attraction.sidoCode ?? '', name: attraction.sidoName } : null;
+  const sigunguCode = attraction.region?.ldongSignguCd?.trim();
+  const sigunguName = attractionSigunguName(attraction);
+  const sigungu =
+    sido && sido.code.trim() && sigunguCode && sigunguName ? { name: sigunguName, code: sido.code.trim() + sigunguCode } : null;
   return breadcrumbJsonLd(lang, [
     { name: lang === 'en' ? 'Explore Korea' : '한국 관광지 탐색', url: placeUrl(lang) },
     ...(sido ? [{ name: regionDisplayName(lang, sido), url: regionUrl(lang, sido.code) }] : []),
+    ...(sigungu ? [{ name: sigungu.name, url: regionUrl(lang, sigungu.code) }] : []),
     { name: attraction.title, url: attractionUrl(lang, attraction.id) },
   ]);
+}
+
+/**
+ * 원천 출처(`source`) → 표시명. 표에 없는 값과 null 은 null — TourAPI 로 짐작하지 않는다.
+ * 방문 요약의 확인 상태와 바닥 출처 줄이 쓴다.
+ */
+const ATTRACTION_SOURCE_NAMES = {
+  TOURAPI: { ko: '한국관광공사 TourAPI', en: 'Korea Tourism Organization TourAPI' },
+  GOCAMPING: { ko: '한국관광공사 고캠핑', en: 'Korea Tourism Organization GoCamping' },
+};
+
+/**
+ * @param {string | null | undefined} source
+ * @param {'ko' | 'en'} lang
+ * @returns {string | null}
+ */
+export function attractionSourceName(source, lang) {
+  const names = Object.hasOwn(ATTRACTION_SOURCE_NAMES, source ?? '') ? ATTRACTION_SOURCE_NAMES[source] : null;
+  return names ? names[lang === 'en' ? 'en' : 'ko'] : null;
+}
+
+/** 일반 전화번호 — 국가번호(+82)가 붙으면 앞자리 0 이 빠질 수 있다. */
+const PHONE_NUMBER = /(?:\+82[- ]?0?|0)\d{1,3}[- ]?\d{3,4}[- ]?\d{4}/;
+/** 대표번호(1330 · 1588-1234) — 일반 번호가 없을 때만 본다. `\b` 는 ASCII 기준이라 한글 바로 뒤도 경계다. */
+const PHONE_REPRESENTATIVE = /\b1\d{3}(?:-\d{4})?\b/;
+
+/**
+ * 관광지 문의 원문 → 행동 줄의 전화 항목. 원문(`sourceText` 를 거친 평문)은 그대로 보이는 글로 두고,
+ * 처음 나오는 번호 **하나만** `tel:` 링크로 만든다(숫자와 `+` 만 남긴다). 번호가 없으면 `href` 가 null 이고,
+ * 원문이 비면 항목 자체가 없다(null). search `AttractionSeoText.attractionPhone` 이 같은 규칙이고
+ * `PhoneParityTest` 가 이 함수의 출력과 비교한다.
+ *
+ * @param {string | null | undefined} raw
+ * @returns {{ text: string, href: string | null } | null}
+ */
+export function attractionPhone(raw) {
+  const text = sourceText(raw);
+  if (!text) return null;
+  const number = (text.match(PHONE_NUMBER) ?? text.match(PHONE_REPRESENTATIVE))?.[0];
+  return { text, href: number ? `tel:${number.replace(/[^\d+]/g, '')}` : null };
 }
 
 /* ─── 개요 본문 정리 ────────────────────────────────────────────────────────

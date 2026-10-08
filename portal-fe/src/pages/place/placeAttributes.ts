@@ -5,7 +5,14 @@ import type {
   BarrierFreeFilterCode,
   PlaceLang,
 } from '../../api/placeApi';
-import { PLACE_COURSE_TYPES, PLACE_EVENT_TYPES, PLACE_STAY_TYPES, placeIntroText, sourceText } from '../../seo/copy.mjs';
+import {
+  PLACE_COURSE_TYPES,
+  PLACE_EVENT_TYPES,
+  PLACE_STAY_TYPES,
+  attractionSourceName,
+  placeIntroText,
+  sourceText,
+} from '../../seo/copy.mjs';
 
 /*
  * 속성 패싯 — 검색 화면의 속성 칩과 상세의 방문 정보 배지.
@@ -183,15 +190,22 @@ export function wellnessLine(a: Attraction, lang: PlaceLang): string | null {
   return name ? `${head} · ${name}` : head;
 }
 
-/** 출처 — TourAPI 에 이 관광지가 실제로 쓴 관광공사 원천 이름을 잇는다(서버 렌더 `sourceLine` 과 같은 문구) */
+/**
+ * 출처 — TourAPI 에 이 관광지가 실제로 쓴 관광공사 원천 이름을 잇는다(서버 렌더 `sourceLine` 과 같은 문구).
+ * 출처표시 의무 문구라 원천(`source`)을 몰라도 비우지 않는다 — 첫 항목은 고캠핑 원천일 때만 고캠핑이고 그 밖은
+ * 고정 문구다. 첫 항목이 고캠핑이면 뒤에 덧붙는 「고캠핑」은 빼서 한 번만 낸다.
+ */
 export function placeSourceLine(a: Attraction | null | undefined, lang: PlaceLang): string {
   const en = lang === 'en';
   const hasBarrierFree = (a?.barrierFree?.length ?? 0) > 0 || Object.keys(a?.barrierFreeDetail ?? {}).length > 0;
+  const fromGoCamping = a?.source === 'GOCAMPING';
   return [
-    en ? 'Source: Korea Tourism Organization TourAPI' : '출처: 한국관광공사 TourAPI',
+    fromGoCamping
+      ? `${en ? 'Source' : '출처'}: ${attractionSourceName('GOCAMPING', lang)}`
+      : en ? 'Source: Korea Tourism Organization TourAPI' : '출처: 한국관광공사 TourAPI',
     hasBarrierFree ? (en ? 'Barrier-free travel' : '무장애 여행 정보') : null,
     a?.wellnessTheme ? (en ? 'Wellness tourism' : '웰니스관광 정보') : null,
-    a?.camping ? (en ? 'GoCamping' : '고캠핑') : null,
+    a?.camping && !fromGoCamping ? (en ? 'GoCamping' : '고캠핑') : null,
     (a?.relatedPlaces?.length ?? 0) > 0 ? (en ? 'Big Data (related attractions)' : '빅데이터 서비스(연관 관광지)') : null,
   ].filter((s): s is string => s != null).join(' · ');
 }
@@ -295,6 +309,67 @@ export function visitorBadges(a: Attraction, lang: PlaceLang): string[] {
     admission,
     (a.uniqueClickers14d ?? 0) >= FREQUENTLY_CLICKED_MIN ? (en ? 'Frequently clicked' : '많이 클릭한 곳') : null,
   ].filter((s): s is string => s != null);
+}
+
+/** 값이 없는 칸 — 「불가」「아니오」로 바꾸지 않는다(모름 ≠ 없음) */
+export const NOT_PROVIDED: Record<PlaceLang, string> = { ko: '정보 없음', en: 'Not provided' };
+
+const VISIT_SUMMARY_LABELS: Record<PlaceLang, readonly string[]> = {
+  ko: ['요금', '이용시간', '쉬는 날', '주차', '반려동물', '무장애', '확인 상태'],
+  en: ['Admission', 'Hours', 'Closed', 'Parking', 'Pets', 'Accessibility', 'Data status'],
+};
+
+export interface VisitSummary {
+  /** 칸 — 표 순서 그대로, 항상 일곱. 값이 두 줄이면 `\n` 으로 잇는다. */
+  rows: Array<{ label: string; value: string }>;
+  /** 칸이 없는 배지(신용카드 · 유모차 대여 · 많이 클릭한 곳)를 「 · 」로 이은 줄. 없으면 null */
+  badgeLine: string | null;
+}
+
+/** `yyyy-MM-ddTHH:mm:ss` → `yyyy-MM-dd`. 날짜 모양이 아니면 null */
+function sourceDate(value: string | null | undefined): string | null {
+  return value?.match(/^\d{4}-\d{2}-\d{2}/)?.[0] ?? null;
+}
+
+/**
+ * 방문 요약 — 상세 첫 화면의 칸 목록과 배지 줄. 행사·숙박·코스가 아닌 유형에 붙는다.
+ *
+ * 서버 렌더(search `AttractionPageRenderer` 의 `visit-summary`·`visit-badges` 절)가 같은 칸·같은 문구를 내고
+ * `VisitSummaryParityTest` 가 이 함수의 출력(`visit-summary-golden.json`)과 비교한다 — 한쪽 문구를 고치면 골든이 바뀐다.
+ * 원문 값은 `sourceText` 를 한 번 거친다. `feeText` 는 색인이 이미 정규화한 평문이라 다시 거치지 않는다
+ * (두 번 걸면 디코드된 「<어린이>」가 태그로 지워진다).
+ */
+export function visitSummary(a: Attraction, lang: PlaceLang): VisitSummary {
+  const en = lang === 'en';
+  const na = NOT_PROVIDED[lang];
+  const lines = (...values: Array<string | null | undefined>) => values.filter((v): v is string => !!v).join('\n');
+  const pet =
+    a.petPolicy === 'ALLOWED' ? (en ? 'Pets allowed' : '반려동물 동반 가능')
+      : a.petPolicy === 'PARTIAL' ? (en ? 'Pets allowed in some areas' : '반려동물 일부 구역 동반 가능')
+        : sourceText(a.petAcmpyType);
+  const source = attractionSourceName(a.source, lang);
+  const updated = sourceDate(a.modifiedAt);
+  const status = en
+    ? `Source: ${source ?? na} · Source updated: ${updated ?? na} · Collected: ${na}`
+    : `출처: ${source ?? na} · 원천 갱신일: ${updated ?? na} · 수집일: ${na}`;
+  const values = [
+    a.feeText != null ? a.feeText : sourceText(a.useFee),
+    sourceText(a.useTime),
+    lines(closureBadge(a, en), sourceText(a.restDate)),
+    lines(availability(a.attrParking, en ? 'Parking available' : '주차 가능', en ? 'No parking' : '주차 불가'), sourceText(a.parking)),
+    pet,
+    barrierFreeIcons(a, lang).join(' · '),
+    status,
+  ];
+  const badges = [
+    availability(a.attrCreditCard, en ? 'Credit cards accepted' : '신용카드 가능', en ? 'Credit cards not accepted' : '신용카드 불가'),
+    availability(a.attrStrollerRental, en ? 'Stroller rental' : '유모차 대여', en ? 'No stroller rental' : '유모차 대여 없음'),
+    (a.uniqueClickers14d ?? 0) >= FREQUENTLY_CLICKED_MIN ? (en ? 'Frequently clicked' : '많이 클릭한 곳') : null,
+  ].filter((s): s is string => s != null);
+  return {
+    rows: VISIT_SUMMARY_LABELS[lang].map((label, i) => ({ label, value: values[i] || na })),
+    badgeLine: badges.length > 0 ? badges.join(' · ') : null,
+  };
 }
 
 /**

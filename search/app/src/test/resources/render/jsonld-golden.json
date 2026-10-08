@@ -43,7 +43,11 @@
             "name": "K-관광",
             "url": "https://place.1989v.com"
           },
-          "image": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+          "image": {
+            "@type": "ImageObject",
+            "contentUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+            "creditText": "한국관광공사"
+          },
           "telephone": "02-3700-3900",
           "address": {
             "@type": "PostalAddress",
@@ -54,6 +58,10 @@
             "@type": "GeoCoordinates",
             "latitude": 37.5796,
             "longitude": 126.977
+          },
+          "containedInPlace": {
+            "@type": "AdministrativeArea",
+            "name": "서울특별시"
           },
           "openingHoursSpecification": {
             "@type": "OpeningHoursSpecification",
@@ -135,7 +143,11 @@
             "url": "https://place.1989v.com"
           },
           "alternateName": "N서울타워",
-          "image": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+          "image": {
+            "@type": "ImageObject",
+            "contentUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+            "creditText": "한국관광공사"
+          },
           "telephone": "02-3700-3900",
           "address": {
             "@type": "PostalAddress",
@@ -146,6 +158,10 @@
             "@type": "GeoCoordinates",
             "latitude": 37.5796,
             "longitude": 126.977
+          },
+          "containedInPlace": {
+            "@type": "AdministrativeArea",
+            "name": "서울특별시"
           },
           "openingHoursSpecification": {
             "@type": "OpeningHoursSpecification",
@@ -299,7 +315,11 @@
             "url": "https://place.1989v.com"
           },
           "alternateName": "도산공원",
-          "image": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+          "image": {
+            "@type": "ImageObject",
+            "contentUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+            "creditText": "한국관광공사"
+          },
           "telephone": "02-3700-3900",
           "address": {
             "@type": "PostalAddress",
@@ -310,6 +330,10 @@
             "@type": "GeoCoordinates",
             "latitude": 37.5796,
             "longitude": 126.977
+          },
+          "containedInPlace": {
+            "@type": "AdministrativeArea",
+            "name": "서울특별시"
           },
           "openingHoursSpecification": {
             "@type": "OpeningHoursSpecification",
@@ -394,7 +418,11 @@
             "name": "K-Tour",
             "url": "https://place.1989v.com"
           },
-          "image": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+          "image": {
+            "@type": "ImageObject",
+            "contentUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+            "creditText": "한국관광공사"
+          },
           "telephone": "02-3700-3900",
           "address": {
             "@type": "PostalAddress",
@@ -405,6 +433,10 @@
             "@type": "GeoCoordinates",
             "latitude": 37.5796,
             "longitude": 126.977
+          },
+          "containedInPlace": {
+            "@type": "AdministrativeArea",
+            "name": "서울특별시"
           },
           "openingHoursSpecification": {
             "@type": "OpeningHoursSpecification",
@@ -482,7 +514,11 @@
             "url": "https://place.1989v.com"
           },
           "alternateName": "북촌한옥마을",
-          "image": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+          "image": {
+            "@type": "ImageObject",
+            "contentUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+            "creditText": "한국관광공사"
+          },
           "telephone": "02-3700-3900",
           "address": {
             "@type": "PostalAddress",
@@ -493,6 +529,10 @@
             "@type": "GeoCoordinates",
             "latitude": 37.5796,
             "longitude": 126.977
+          },
+          "containedInPlace": {
+            "@type": "AdministrativeArea",
+            "name": "서울특별시"
           }
         },
         {
@@ -1171,7 +1211,11 @@
             "name": "K-관광",
             "url": "https://place.1989v.com"
           },
-          "image": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+          "image": {
+            "@type": "ImageObject",
+            "contentUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+            "creditText": "한국관광공사"
+          },
           "telephone": "02-3700-3900",
           "address": {
             "@type": "PostalAddress",
@@ -1182,6 +1226,10 @@
             "@type": "GeoCoordinates",
             "latitude": 37.5796,
             "longitude": 126.977
+          },
+          "containedInPlace": {
+            "@type": "AdministrativeArea",
+            "name": "서울특별시"
           },
           "openingHoursSpecification": {
             "@type": "OpeningHoursSpecification",
@@ -1217,6 +1265,395 @@
               "position": 3,
               "name": "덕수궁",
               "item": "https://place.1989v.com/attractions/1004"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ko-photo-type1-sigungu",
+      "input": {
+        "contentId": "126508",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "imageUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+        "tel": "02-3700-3900",
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "1101",
+        "lang": "ko",
+        "contentTypeId": "12",
+        "title": "창덕궁",
+        "titleLocal": null,
+        "overview": "조선의 이궁이다.",
+        "copyrightDivCd": "Type1",
+        "ldongSignguCd": "110",
+        "sigunguName": "종로구",
+        "regionTypeCount": 40,
+        "regionCategoryCount": 5,
+        "lclsSystm3Name": "고궁",
+        "closureState": "WEEKLY",
+        "closedWeekdays": [
+          "MON"
+        ],
+        "attrAdmission": "PAID"
+      },
+      "meta": {
+        "title": "창덕궁 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | K-관광",
+        "description": "창덕궁 — 서울특별시 종로구 사직로 161에 있는 역사 관광지입니다. 주소·지도·사진과 가는 길, 주변 가볼 만한 곳을 함께 확인하세요."
+      },
+      "jsonLd": [
+        {
+          "@context": "https://schema.org",
+          "@type": "TouristAttraction",
+          "name": "창덕궁",
+          "description": "조선의 이궁이다.",
+          "url": "https://place.1989v.com/attractions/1101",
+          "inLanguage": "ko",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "K-관광",
+            "url": "https://place.1989v.com"
+          },
+          "image": {
+            "@type": "ImageObject",
+            "contentUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+            "license": "https://www.kogl.or.kr/info/licenseType1.do",
+            "creditText": "한국관광공사"
+          },
+          "telephone": "02-3700-3900",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "서울특별시 종로구 사직로 161",
+            "addressCountry": "KR"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 37.5796,
+            "longitude": 126.977
+          },
+          "containedInPlace": {
+            "@type": "AdministrativeArea",
+            "name": "종로구",
+            "containedInPlace": {
+              "@type": "AdministrativeArea",
+              "name": "서울특별시"
+            }
+          },
+          "openingHoursSpecification": {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": [
+              "https://schema.org/Tuesday",
+              "https://schema.org/Wednesday",
+              "https://schema.org/Thursday",
+              "https://schema.org/Friday",
+              "https://schema.org/Saturday",
+              "https://schema.org/Sunday"
+            ]
+          },
+          "isAccessibleForFree": false
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "한국 관광지 탐색",
+              "item": "https://place.1989v.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "서울특별시",
+              "item": "https://place.1989v.com/regions/11"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "종로구",
+              "item": "https://place.1989v.com/regions/11110"
+            },
+            {
+              "@type": "ListItem",
+              "position": 4,
+              "name": "창덕궁",
+              "item": "https://place.1989v.com/attractions/1101"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ko-photo-type3-no-sigungu",
+      "input": {
+        "contentId": "126508",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "imageUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+        "tel": "02-3700-3900",
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "1102",
+        "lang": "ko",
+        "contentTypeId": "12",
+        "title": "창경궁",
+        "titleLocal": null,
+        "overview": "성종 때 지은 궁이다.",
+        "copyrightDivCd": "Type3",
+        "closureState": "UNKNOWN",
+        "closedWeekdays": null,
+        "attrAdmission": "UNKNOWN"
+      },
+      "meta": {
+        "title": "창경궁 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | K-관광",
+        "description": "창경궁 — 서울특별시 종로구 사직로 161에 있는 역사 관광지입니다. 주소·지도·사진과 가는 길, 주변 가볼 만한 곳을 함께 확인하세요."
+      },
+      "jsonLd": [
+        {
+          "@context": "https://schema.org",
+          "@type": "TouristAttraction",
+          "name": "창경궁",
+          "description": "성종 때 지은 궁이다.",
+          "url": "https://place.1989v.com/attractions/1102",
+          "inLanguage": "ko",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "K-관광",
+            "url": "https://place.1989v.com"
+          },
+          "image": {
+            "@type": "ImageObject",
+            "contentUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+            "license": "https://www.kogl.or.kr/info/licenseType3.do",
+            "creditText": "한국관광공사"
+          },
+          "telephone": "02-3700-3900",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "서울특별시 종로구 사직로 161",
+            "addressCountry": "KR"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 37.5796,
+            "longitude": 126.977
+          },
+          "containedInPlace": {
+            "@type": "AdministrativeArea",
+            "name": "서울특별시"
+          }
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "한국 관광지 탐색",
+              "item": "https://place.1989v.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "서울특별시",
+              "item": "https://place.1989v.com/regions/11"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "창경궁",
+              "item": "https://place.1989v.com/attractions/1102"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "en-photo-type2-sigungu",
+      "input": {
+        "contentId": "126508",
+        "category": "history",
+        "address": "185, Changgyeonggung-ro, Jongno-gu, Seoul",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "imageUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+        "tel": "02-3700-3900",
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "2101",
+        "lang": "en",
+        "contentTypeId": "76",
+        "title": "Changgyeonggung Palace",
+        "titleLocal": "창경궁",
+        "overview": "A palace.",
+        "copyrightDivCd": "Type2",
+        "ldongSignguCd": "110",
+        "sigunguName": "Jongno&#8209;gu ",
+        "regionTypeCount": 12,
+        "regionCategoryCount": null,
+        "lclsSystm3Name": null
+      },
+      "meta": {
+        "title": "Visit Changgyeonggung Palace — Map, Photos & Things to Do Nearby | K-Tour",
+        "description": "Changgyeonggung Palace is a history attraction at 185, Changgyeonggung-ro, Jongno-gu, Seoul. See the map, photos, directions and things to do nearby."
+      },
+      "jsonLd": [
+        {
+          "@context": "https://schema.org",
+          "@type": "TouristAttraction",
+          "name": "Changgyeonggung Palace",
+          "description": "A palace.",
+          "url": "https://place.1989v.com/en/attractions/2101",
+          "inLanguage": "en",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "K-Tour",
+            "url": "https://place.1989v.com"
+          },
+          "alternateName": "창경궁",
+          "image": {
+            "@type": "ImageObject",
+            "contentUrl": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+            "creditText": "한국관광공사"
+          },
+          "telephone": "02-3700-3900",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "185, Changgyeonggung-ro, Jongno-gu, Seoul",
+            "addressCountry": "KR"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 37.5796,
+            "longitude": 126.977
+          },
+          "containedInPlace": {
+            "@type": "AdministrativeArea",
+            "name": "Jongno‑gu",
+            "containedInPlace": {
+              "@type": "AdministrativeArea",
+              "name": "서울특별시"
+            }
+          }
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Explore Korea",
+              "item": "https://place.1989v.com/en"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "서울특별시",
+              "item": "https://place.1989v.com/en/regions/11"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Jongno‑gu",
+              "item": "https://place.1989v.com/en/regions/11110"
+            },
+            {
+              "@type": "ListItem",
+              "position": 4,
+              "name": "Changgyeonggung Palace",
+              "item": "https://place.1989v.com/en/attractions/2101"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ko-no-photo-sigungu-without-sido",
+      "input": {
+        "contentId": "126508",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "imageUrl": null,
+        "tel": "02-3700-3900",
+        "ldongRegnCd": null,
+        "sidoName": null,
+        "id": "1103",
+        "lang": "ko",
+        "contentTypeId": "12",
+        "title": "사진 없는 곳",
+        "titleLocal": null,
+        "overview": null,
+        "copyrightDivCd": "Type1",
+        "ldongSignguCd": "110",
+        "sigunguName": "종로구",
+        "regionTypeCount": 3
+      },
+      "meta": {
+        "title": "사진 없는 곳 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | K-관광",
+        "description": "사진 없는 곳 — 서울특별시 종로구 사직로 161에 있는 역사 관광지입니다. 주소·지도·사진과 가는 길, 주변 가볼 만한 곳을 함께 확인하세요."
+      },
+      "jsonLd": [
+        {
+          "@context": "https://schema.org",
+          "@type": "TouristAttraction",
+          "name": "사진 없는 곳",
+          "description": "사진 없는 곳 — 서울특별시 종로구 사직로 161에 있는 역사 관광지입니다. 주소·지도·사진과 가는 길, 주변 가볼 만한 곳을 함께 확인하세요.",
+          "url": "https://place.1989v.com/attractions/1103",
+          "inLanguage": "ko",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "K-관광",
+            "url": "https://place.1989v.com"
+          },
+          "telephone": "02-3700-3900",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "서울특별시 종로구 사직로 161",
+            "addressCountry": "KR"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 37.5796,
+            "longitude": 126.977
+          },
+          "containedInPlace": {
+            "@type": "AdministrativeArea",
+            "name": "종로구"
+          }
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "한국 관광지 탐색",
+              "item": "https://place.1989v.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "사진 없는 곳",
+              "item": "https://place.1989v.com/attractions/1103"
             }
           ]
         }
