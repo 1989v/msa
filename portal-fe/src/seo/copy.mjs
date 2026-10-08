@@ -969,6 +969,11 @@ export const PORTAL_PAGES = {
     description:
       '도메인 열한 개의 IT 개념을 그래프로 좁혀 가며 배우는 개념 아틀라스. 개념마다 이 레포의 코드와 그것을 다룬 글이 붙어 있습니다.',
   },
+  '/tech/search': {
+    title: portalTitle('검색 아키텍처'),
+    description:
+      '관광지 검색과 통합 검색의 구조·흐름·지금 쓰는 기법을 한 장에 — nori 사용자 사전, BM25+HNSW 하이브리드, RRF, 쿼리 언더스탠딩, 쿼리 벡터 캐시, 일일 평가',
+  },
   '/portfolio': {
     title: portalTitle('포트폴리오'),
     description: '검색·전시·커머스·인프라·AI 엔지니어링 도메인에서 만든 것들과 그때의 판단.',
@@ -995,6 +1000,28 @@ export const PORTAL_PAGES = {
     description: '1989v.com 운영자에게 정보 정정·저작권·개인정보·제휴를 문의하는 방법입니다.',
   },
 };
+
+/**
+ * `/tech/search` 의 TechArticle. 페이지(useSeo)와 프리렌더가 이 함수 하나를 쓴다 — 둘이 다르면
+ * 하이드레이션이 정적 HTML 의 구조화 데이터를 다른 값으로 갈아끼운다.
+ * og:type 은 프리렌더가 website 로 고정하므로 글 성격은 여기서만 말한다.
+ *
+ * @param {string} updated 원본 문서의 갱신일(YYYY-MM-DD)
+ */
+export function techArticleJsonLd(updated) {
+  const page = PORTAL_PAGES['/tech/search'];
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'TechArticle',
+    headline: '검색 아키텍처',
+    description: page.description,
+    url: portalUrl('/tech/search'),
+    inLanguage: 'ko',
+    dateModified: updated,
+    author: personRef,
+    publisher: { '@type': 'Organization', name: PORTAL_BRAND, url: PORTAL_ORIGIN, founder: personRef },
+  };
+}
 
 // ─── deal (혜택 링크 허브) ────────────────────────────────────────────────────
 

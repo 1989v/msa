@@ -49,6 +49,8 @@ const RegionPage = lazy(() => import('./pages/place/RegionPage'));
 // ADR-0066 — IT(개념 사전·3D 그래프·트리맵). 메인이 런처가 되면서 three.js 를 쓰지 않게 됐다.
 // eager 로 두면 타일만 보는 방문자도 그래프 엔진을 통째로 받는다.
 const ConceptAtlasPage = lazy(() => import('./pages/atlas/ConceptAtlasPage'));
+// 검색 아키텍처 — 빌드 때 렌더한 문서 한 장. 그림(SVG)이 커서 lazy 로 뺀다.
+const SearchArchitecturePage = lazy(() => import('./pages/tech/SearchArchitecturePage'));
 const UnifiedSearchPage = lazy(() => import('./pages/search/UnifiedSearchPage'));
 // ADR-0074 — 내 찜 모아보기 (호스트 인식: game=GAME, place=ATTRACTION, blog=BLOG_POST, apex=탭)
 const FavoritesPage = lazy(() => import('./components/favorite/FavoritesPage'));
@@ -228,6 +230,7 @@ function App() {
           <Route path="/tech/c/:conceptId" element={<ConceptAtlasPage />} />
           {/* 통합 검색 (ADR-0090 D6) — 모든 호스트에서 열리되 정규 주소는 apex 하나다(unifiedSearchHref) */}
           <Route path="/search" element={<UnifiedSearchPage />} />
+          <Route path="/tech/search" element={<SearchArchitecturePage />} />
           {/* 분류별 용어집 (ADR-0062 §16). 개념마다 URL 을 주지 않는다 — 풀이가 짧아
               개념당 한 장이면 얇은 페이지가 162장 생긴다 */}
           <Route path="/tech/:category" element={<TechGlossaryPage />} />

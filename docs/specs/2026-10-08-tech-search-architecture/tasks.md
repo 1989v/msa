@@ -37,11 +37,11 @@ Total Task Groups: 5
 **Dependencies:** Task Group 1
 **Phase:** page
 **Required Skills:** React, react-router 7, vitest+RTL, CSS 토큰
-- [ ] 3.0 Complete 페이지
-  - [ ] 3.1 테스트: `src/pages/tech/__tests__/SearchArchitecturePage.test.tsx`(목차 링크 수 == headings, `useHeritageSurface` 호출, 요약 블록, `data-source-hash`, 「빌드 커밋 · 문서 갱신」 줄) · `src/__tests__/routes.test.tsx`(`history.pushState('/tech/search')` → `render(<App />)` → `findByRole('heading',{level:1})` 이 이 페이지, 용어집 아님) · 아틀라스 NAV 링크 1개(기존 아틀라스 테스트 파일이 있으면 거기, 없으면 routes.test 에서 `/tech` 렌더) · `copy.test.ts:165` 배열에 `'/tech'` 바로 뒤 `'/tech/search'`.
-  - [ ] 3.2 `copy.mjs`: `PORTAL_PAGES['/tech/search']`(`'/tech'` 바로 뒤) + export `techArticleJsonLd(updated)`.
-  - [ ] 3.3 `src/pages/tech/SearchArchitecturePage.tsx`+`.css`: SR-3.2~3.5(useSeo 는 canonical + jsonLd, `type` 없음), 생성 JSON import, `.fs-figure` 규칙과 `--fs-*` → `--kh-*` 매핑, figure 안 가로 스크롤, 16px 거터. `App.tsx` lazy + 라우트, `ConceptAtlasPage.tsx` NAV 한 줄.
-  - [ ] 3.4 Verify: `cd portal-fe && node scripts/render-content.mjs && npx vitest run src/pages/tech src/__tests__/routes.test.tsx src/seo/__tests__/copy.test.ts src/pages/atlas && npx tsc -b && npx eslint src/pages/tech src/App.tsx src/pages/atlas/ConceptAtlasPage.tsx src/seo/copy.mjs`
+- [x] 3.0 Complete 페이지
+  - [x] 3.1 테스트: `src/pages/tech/__tests__/SearchArchitecturePage.test.tsx`(목차 링크 수 == headings, `useHeritageSurface` 호출, 요약 블록, `data-source-hash`, 「빌드 커밋 · 문서 갱신」 줄) · `src/__tests__/routes.test.tsx`(`history.pushState('/tech/search')` → `render(<App />)` → `findByRole('heading',{level:1})` 이 이 페이지, 용어집 아님) · 아틀라스 NAV 링크 1개(기존 아틀라스 테스트 파일이 있으면 거기, 없으면 routes.test 에서 `/tech` 렌더) · `copy.test.ts:165` 배열에 `'/tech'` 바로 뒤 `'/tech/search'`.
+  - [x] 3.2 `copy.mjs`: `PORTAL_PAGES['/tech/search']`(`'/tech'` 바로 뒤) + export `techArticleJsonLd(updated)`.
+  - [x] 3.3 `src/pages/tech/SearchArchitecturePage.tsx`+`.css`: SR-3.2~3.5(useSeo 는 canonical + jsonLd, `type` 없음), 생성 JSON import, `.fs-figure` 규칙과 `--fs-*` → `--kh-*` 매핑, figure 안 가로 스크롤, 16px 거터. `App.tsx` lazy + 라우트, `ConceptAtlasPage.tsx` NAV 한 줄.
+  - [x] 3.4 Verify: `cd portal-fe && node scripts/render-content.mjs && npx vitest run src/pages/tech src/__tests__/routes.test.tsx src/seo/__tests__/copy.test.ts src/pages/atlas && npx tsc -b && npx eslint src/pages/tech src/App.tsx src/pages/atlas/ConceptAtlasPage.tsx src/seo/copy.mjs`
 **Acceptance Criteria:**
 - 테스트·tsc·eslint 0, 기존 /tech 변경은 NAV 한 줄뿐.
 

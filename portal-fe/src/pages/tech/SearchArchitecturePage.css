@@ -1,0 +1,176 @@
+/* 검색 아키텍처 (/tech/search) — k-heritage. 색은 토큰만, 라이트 · 다크는 토큰이 가른다. */
+
+.ts-page {
+  min-height: 100dvh;
+  background: var(--ko-surface-0);
+  color: var(--ko-text-primary);
+}
+
+.ts-main {
+  max-width: var(--kh-container);
+  margin: 0 auto;
+  padding: var(--ko-space-6) var(--ko-space-4) var(--ko-space-16);
+  /* 그림 · 표는 각자 안에서 스크롤한다 — 페이지는 가로로 넘치지 않는다 */
+  min-width: 0;
+}
+
+.ts-build {
+  margin: 0 0 var(--ko-space-4);
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-xs);
+  color: var(--kh-ocher-text);
+}
+
+/* 첫 화면: 요약(제목 · 한 줄 · 요약 불릿)과 목차를 나란히 둔다 */
+.ts-top {
+  display: grid;
+  gap: var(--ko-space-6);
+  padding-bottom: var(--ko-space-6);
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+@media (min-width: 64rem) {
+  .ts-top {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    align-items: start;
+  }
+}
+
+.ts-toc {
+  padding: var(--ko-space-4);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius-asym);
+  background: var(--ko-surface-1);
+  font-size: var(--ko-text-sm);
+}
+
+.ts-toc-title {
+  margin: 0 0 var(--ko-space-2);
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-xs);
+  color: var(--kh-ocher-text);
+}
+
+.ts-toc ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ts-toc li + li {
+  margin-top: var(--ko-space-1);
+}
+
+.ts-toc .ts-toc-sub {
+  padding-left: var(--ko-space-4);
+}
+
+.ts-toc a,
+.ts-doc a {
+  color: var(--ko-accent-text);
+  text-underline-offset: 3px;
+}
+
+/* ─── 본문 ──────────────────────────────────────────────────────── */
+.ts-doc {
+  min-width: 0;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.ts-doc h1 {
+  margin: 0 0 var(--ko-space-3);
+  font-size: var(--kh-display);
+  line-height: 1.2;
+}
+
+.ts-doc h2 {
+  margin: var(--ko-space-12) 0 var(--ko-space-4);
+  padding-bottom: var(--ko-space-3);
+  border-bottom: 1px solid var(--ko-border-subtle);
+  font-size: var(--kh-headline);
+}
+
+.ts-doc h3 {
+  margin: var(--ko-space-8) 0 var(--ko-space-3);
+  font-size: var(--ko-text-lg);
+}
+
+.ts-doc h2,
+.ts-doc h3 {
+  scroll-margin-top: calc(var(--gnb-height, 64px) + var(--ko-space-4));
+}
+
+.ts-doc p {
+  margin: 0 0 var(--ko-space-3);
+  color: var(--ko-text-secondary);
+}
+
+.ts-doc ul,
+.ts-doc ol {
+  margin: 0 0 var(--ko-space-4);
+  padding-left: 1.25em;
+}
+
+.ts-doc code {
+  font-family: var(--kh-font-mono);
+  font-size: 0.88em;
+  padding: 0 0.25em;
+  border-radius: var(--kh-radius);
+  background: var(--ko-surface-2);
+}
+
+/* 표는 열이 많아 좁은 화면에서는 상자 안에서 가로로 스크롤한다 */
+.ts-doc table.kh-table {
+  display: block;
+  overflow-x: auto;
+  margin: 0 0 var(--ko-space-6);
+}
+
+@media (min-width: 64rem) {
+  .ts-doc table.kh-table {
+    display: table;
+  }
+}
+
+.ts-doc tr:target {
+  background: var(--ko-accent-primary-bg);
+}
+
+/* ─── 다이어그램 (fencesvg) ─────────────────────────────────────── *
+ * 라이브러리는 색을 `var(--fs-*, currentColor 혼합)` 으로 낸다. 여기서 k-heritage 토큰에 잇는다.
+ * 열보다 넓은 그림은 figure 안에서만 스크롤한다 — svg 의 min-width 가 그 폭을 지킨다. */
+.ts-doc .fs-figure {
+  --fs-ink: var(--ko-text-primary);
+  --fs-label: var(--ko-text-primary);
+  --fs-muted: var(--ko-text-muted);
+  --fs-line: var(--ko-border-strong);
+  --fs-line-faint: var(--ko-border-default);
+  --fs-node-border: var(--ko-border-strong);
+  --fs-node-fill: var(--ko-surface-1);
+  --fs-node-fill-alt: var(--ko-surface-2);
+  --fs-node-fill-strong: var(--ko-surface-3);
+  --fs-label-chip: var(--ko-surface-0);
+  --fs-accent: var(--kh-ocher-text);
+  --fs-accent-fill: color-mix(in srgb, var(--kh-ocher) 18%, transparent);
+  --fs-radius: var(--kh-radius);
+  margin: var(--ko-space-5) 0 var(--ko-space-6);
+  padding: var(--ko-space-4);
+  overflow-x: auto;
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius);
+  background: var(--ko-surface-0);
+  color: var(--ko-text-primary);
+}
+
+.ts-doc .fs-figure svg {
+  display: block;
+  margin-inline: auto;
+}
+
+.ts-doc .fs-figure figcaption {
+  margin-top: var(--ko-space-3);
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-muted);
+  text-align: center;
+}

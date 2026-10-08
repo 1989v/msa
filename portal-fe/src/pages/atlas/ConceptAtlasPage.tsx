@@ -13,6 +13,7 @@ import './ConceptAtlas.css';
 
 const NAV = [
   { label: '아틀라스', href: '/tech' },
+  { label: '검색 아키텍처', href: '/tech/search' },
   { label: '홈', href: '/' },
 ];
 
