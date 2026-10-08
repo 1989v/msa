@@ -148,6 +148,30 @@ class AttractionPageRendererTest : BehaviorSpec({
         }
     }
 
+    given("최근 갱신 피드(RSS) 링크") {
+        val feed = Regex("""<link rel="alternate" type="application/rss\+xml"[^>]*>""")
+
+        then("국문 상세는 국문 피드 한 줄을 data-seo-multi 와 함께 낸다") {
+            val links = feed.findAll(render(SHELL, doc())).map { it.value }.toList()
+            links shouldBe listOf(
+                """<link rel="alternate" type="application/rss+xml" title="K-관광 — 최근 바뀐 관광지" href="https://place.1989v.com/feed.xml" data-seo-multi />""",
+            )
+        }
+
+        then("영문 상세는 영문 피드") {
+            val links = feed.findAll(render(SHELL, doc(id = "2001", lang = "en", title = "Gyeongbokgung Palace"))).map { it.value }.toList()
+            links shouldBe listOf(
+                """<link rel="alternate" type="application/rss+xml" title="K-Tour — Recently Updated Attractions" href="https://place.1989v.com/en/feed.xml" data-seo-multi />""",
+            )
+        }
+
+        then("피드 링크는 head 안에 있다") {
+            val html = render(SHELL, doc())
+            val at = html.indexOf("application/rss+xml")
+            (at in 0 until html.indexOf("</head>")) shouldBe true
+        }
+    }
+
     given("속성이 해석된 문서") {
         val html = render(SHELL, doc(attributes = PARSED, region = REGION, similarElsewhere = SIMILAR))
         val root = rootOf(html)

@@ -76,6 +76,11 @@ describe('indexDoc — 슬라이스 항목 변환', () => {
     expect(item).not.toHaveProperty('overview');
   });
 
+  it('본문 변경 시각(contentUpdatedAt)을 투영한다 — 없으면 null', () => {
+    expect(indexDoc({ ...raw, contentUpdatedAt: '2026-10-08T09:10:11' }, '11')).toMatchObject({ contentUpdatedAt: '2026-10-08T09:10:11' });
+    expect(indexDoc(raw, '11')).toMatchObject({ contentUpdatedAt: null });
+  });
+
   it('개요 없는 문서는 sitemap 용 스켈레톤만 — 6만 건 본문을 메모리에 얹지 않는다', () => {
     expect(indexDoc({ ...raw, overview: '' }, '11')).toEqual({ id: 'a1', hasOverview: false });
     expect(indexDoc({ ...raw, overview: '   ' }, '11')).toEqual({ id: 'a1', hasOverview: false });
@@ -379,6 +384,17 @@ describe('placeHubPages — 사진 원천 preconnect', () => {
       expect(html.match(/rel="preconnect"/g)).toHaveLength(1);
       expect(html).not.toMatch(/preconnect[^>]*(crossorigin|data-seo-multi)/);
     }
+  });
+
+  it('허브 국·영 head 에 그 언어의 최근 갱신 피드 링크가 한 줄 — data-seo-multi 를 단다', () => {
+    const [ko, en] = placeHubPages(SHELL, places, regions);
+    const feeds = (html: string) => head(html).match(/<link rel="alternate" type="application\/rss\+xml"[^>]*>/g) ?? [];
+    expect(feeds(ko.html)).toEqual([
+      '<link rel="alternate" type="application/rss+xml" title="K-관광 — 최근 바뀐 관광지" href="https://place.1989v.com/feed.xml" data-seo-multi />',
+    ]);
+    expect(feeds(en.html)).toEqual([
+      '<link rel="alternate" type="application/rss+xml" title="K-Tour — Recently Updated Attractions" href="https://place.1989v.com/en/feed.xml" data-seo-multi />',
+    ]);
   });
 
   it('지역 프리렌더에는 넣지 않는다', () => {

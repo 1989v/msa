@@ -66,6 +66,7 @@ import {
   attractionPath,
   collectionPageJsonLd,
   placeBrand,
+  placeFeed,
   placeHreflangAlternates,
   placeHubMeta,
   placeUrl,
@@ -346,6 +347,7 @@ export default function PlacePage() {
     canonical: seoCanonical,
     lang,
     alternates: placeHreflangAlternates(''),
+    feeds: [placeFeed(lang)],
     jsonLd: [collectionPageJsonLd(lang, seoMeta, seoCanonical, { name: placeBrand(lang), url: PLACE_ORIGIN })],
   });
 

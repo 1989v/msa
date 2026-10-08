@@ -91,17 +91,17 @@ Total Task Groups: 8. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
 
 ### Task Group 5: RSS 피드 (SR-3)
 **Dependencies:** TG3(색인 `contentUpdatedAt`) · TG4(`data-seo-multi` 출력 경로) · **Phase:** search:app render · portal-fe `nginx.conf`·`useSeo.ts`·`copy.mjs`·`prerender-seo.mjs` · **Required Skills:** Kotlin, RSS 2.0/XML, nginx, TS
-- [ ] 5.1 테스트 먼저
+- [x] 5.1 테스트 먼저
   - 새 `search/app/src/test/kotlin/com/kgd/search/infrastructure/render/AttractionFeedRendererTest.kt`: `contentUpdatedAt desc, id asc` 정렬(같은 시각 → id 오름) · 50 상한 · 해당 언어만 · `contentUpdatedAt` null 제외(질의 조건) · 제목에 U+0001·U+FFFE 포함 → 제거된 유효 XML(JDK `DocumentBuilder` 로 파싱 통과) · `& < > " '` 이스케이프 · `pubDate` `+0900` RFC 1123 · `guid isPermaLink="true"` = 상세 canonical · `lastBuildDate` = 첫 항목 시각 · 0건 → 항목 없는 유효 channel · `language` ko/en
   - 새 `search/app/src/test/kotlin/com/kgd/search/presentation/render/controller/AttractionFeedControllerTest.kt`(`EventSitemapController` 테스트 방식): `/internal/render/feed/ko.xml`·`en.xml` 200 + `application/rss+xml` + `Cache-Control: public, max-age=600` · 조회 실패 → 503 + `no-store` · 모르는 언어 → 404
   - `AttractionPageRendererTest.kt` 증보: 상세 `<head>` 에 해당 언어 feed `<link rel="alternate" type="application/rss+xml" … data-seo-multi>`
   - 새 `portal-fe/src/seo/__tests__/useSeoFeeds.test.ts`: `useSeo({ feeds })` → MULTI 블록에 feed 링크, 재호출 시 지우고 다시 담(중복 없음)
   - `portal-fe/src/seo/__tests__/prerenderPlace.test.ts` 증보: 허브 국·영 프리렌더 `<head>` 에 해당 언어 feed 링크
   - 새 `portal-fe/scripts/check-nginx-place-feed.sh`(`check-nginx-events-sitemap.sh` 복제 방식, 실제 nginx 이미지 + 스텁): ① place 호스트 `/feed.xml`·`/en/feed.xml` → 스텁 고정 경로 · 200 · `Cache-Control` 한 벌 ② Cookie·Authorization 미전달 ③ apex·blog → 404·스텁 호출 없음 ④ 스텁 503 → 503(셸 200 아님)
-- [ ] 5.2 search:app `infrastructure/render/AttractionFeedRenderer.kt`(텍스트 순서 `sourceText` → XML 금지 문자 제거 → 이스케이프 고정, 제목·요약 규칙은 `AttractionSeoText` 재사용) + 조회(언어·`contentUpdatedAt` exists·정렬·50) + `presentation/render/controller/AttractionFeedController.kt`. 서버 캐시 없음
-- [ ] 5.3 `portal-fe/nginx.conf`: `location = /feed.xml`·`location = /en/feed.xml` — 행사 sitemap location(`:75-89`) 그대로(place 호스트 외 404, 고정 upstream 경로, 쿠키·인증 헤더 제거, `proxy_intercept_errors` 없음, 성공에만 캐시 헤더)
-- [ ] 5.4 head 링크: `AttractionPageRenderer` 상세 + 허브 SSR(있으면) `data-seo-multi` · `useSeo.ts`(`:69-78`)에 `feeds` 입력(같은 MULTI 블록) · `copy.mjs` feed 제목·주소 헬퍼 하나 · `AttractionPage.tsx`·허브 페이지가 `feeds` 전달 · `prerender-seo.mjs` 허브(`:712`·`:1123` 근처) 같은 값
-- [ ] 5.5 Verify:
+- [x] 5.2 search:app `infrastructure/render/AttractionFeedRenderer.kt`(텍스트 순서 `sourceText` → XML 금지 문자 제거 → 이스케이프 고정, 제목·요약 규칙은 `AttractionSeoText` 재사용) + 조회(언어·`contentUpdatedAt` exists·정렬·50) + `presentation/render/controller/AttractionFeedController.kt`. 서버 캐시 없음
+- [x] 5.3 `portal-fe/nginx.conf`: `location = /feed.xml`·`location = /en/feed.xml` — 행사 sitemap location(`:75-89`) 그대로(place 호스트 외 404, 고정 upstream 경로, 쿠키·인증 헤더 제거, `proxy_intercept_errors` 없음, 성공에만 캐시 헤더)
+- [x] 5.4 head 링크: `AttractionPageRenderer` 상세 + 허브 SSR(있으면) `data-seo-multi` · `useSeo.ts`(`:69-78`)에 `feeds` 입력(같은 MULTI 블록) · `copy.mjs` feed 제목·주소 헬퍼 하나 · `AttractionPage.tsx`·허브 페이지가 `feeds` 전달 · `prerender-seo.mjs` 허브(`:712`·`:1123` 근처) 같은 값
+- [x] 5.5 Verify:
   - `./gradlew :search:app:test --tests '*AttractionFeedRendererTest' --tests '*AttractionFeedControllerTest' --tests '*AttractionPageRendererTest' --rerun`
   - `cd portal-fe && npx vitest run src/seo/__tests__/useSeoFeeds.test.ts src/seo/__tests__/prerenderPlace.test.ts && npx tsc -b`
   - `bash portal-fe/scripts/check-nginx-place-feed.sh` (exit 2 = 도커 없음, 통과로 세지 않는다)

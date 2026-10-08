@@ -56,6 +56,7 @@ import {
   placeBrand,
   attractionHreflangAlternates,
   placeHreflangAlternates,
+  placeFeed,
   placeHubMeta,
   placePath,
   placeUrl,
@@ -386,7 +387,7 @@ function escapeHtml(value) {
 }
 
 function metaTags({ title, description, canonical, lang, image, imageSmall, imageAlt,
-                    alternates, jsonLd, noindex, siteName = BRAND }) {
+                    alternates, feeds, jsonLd, noindex, siteName = BRAND }) {
   const lines = [
     `<title>${escapeHtml(title)}</title>`,
     `<meta name="description" content="${escapeHtml(description)}" />`,
@@ -427,6 +428,12 @@ function metaTags({ title, description, canonical, lang, image, imageSmall, imag
   // (`…›서울특별시›경복궁` vs `…›경복궁`) 검색엔진이 어느 쪽을 쓸지 임의로 고르는 상태였다.
   for (const alt of alternates ?? []) {
     lines.push(`<link rel="alternate" hreflang="${alt.hreflang}" href="${alt.href}" ${MULTI} />`);
+  }
+  // 최근 갱신 피드 — useSeo `feeds` 가 같은 표시로 지우고 다시 단다
+  for (const feed of feeds ?? []) {
+    lines.push(
+      `<link rel="alternate" type="application/rss+xml" title="${escapeHtml(feed.title)}" href="${feed.href}" ${MULTI} />`,
+    );
   }
   for (const data of jsonLd ?? []) {
     // </script> 가 JSON 문자열에 섞이면 파서가 조기 종료된다
@@ -1029,6 +1036,8 @@ export function indexDoc(a, sidoCode) {
     modifiedAt: a.modifiedAt ?? null,
     // 언어 대체 짝 — sitemap 항목의 hreflang. 짝이 없거나 짝 스위치가 꺼져 있으면 null
     alternateId: a.alternateId ?? null,
+    // 본문이 실제로 바뀐 시각(place 해시 판정, KST). 원천 수정일(modifiedAt)과 다르다. 없으면 null
+    contentUpdatedAt: a.contentUpdatedAt ?? null,
   };
 }
 
@@ -1148,6 +1157,7 @@ export function placeHubPages(shell, places, regions) {
       siteName: placeBrand(lang),
       imageAlt: meta.heading,
       alternates: placeHreflangAlternates(''),
+      feeds: [placeFeed(lang)],
       jsonLd: [
         collectionPageJsonLd(lang, meta, canonical, { name: placeBrand(lang), url: PLACE_ORIGIN }),
         placeItemListJsonLd(lang, seeds.slice(0, 30)),

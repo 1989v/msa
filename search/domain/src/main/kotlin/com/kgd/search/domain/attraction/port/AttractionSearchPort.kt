@@ -1,6 +1,7 @@
 package com.kgd.search.domain.attraction.port
 
 import com.kgd.search.domain.attraction.model.AttractionDocument
+import com.kgd.search.domain.attraction.model.AttractionFeedEntry
 import com.kgd.search.domain.attraction.model.AttributeFacetCounts
 import com.kgd.search.domain.attraction.model.AttributeSelection
 import com.kgd.search.domain.attraction.model.EventDateRange
@@ -33,6 +34,12 @@ interface AttractionSearchPort {
      * 빈 개요(`""`)는 색인에서 「있음」으로 잡히므로 [EventSitemapEntry.hasOverview] 로 한 번 더 가른다.
      */
     fun findEvents(range: EventDateRange): List<EventSitemapEntry>
+
+    /**
+     * 최근 갱신 피드(RSS) — [lang] 문서 중 본문 변경 시각이 있는 것을 그 시각 내림차순, 같으면 숫자 id 오름차순으로 [size] 건.
+     * 시각이 없는 문서(place 가 아직 채우지 않은 행)는 오지 않는다.
+     */
+    fun findRecentlyUpdated(lang: String, size: Int): List<AttractionFeedEntry>
 
     /**
      * 색인에 문서가 1건 이상인 분류 코드 — 언어(`lang`) → `lclsSystm1~3` 값을 합친 집합.

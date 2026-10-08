@@ -19,6 +19,7 @@ import {
   attractionUrl,
   placeBrand,
   placeCategoryLabel,
+  placeFeed,
   placePath,
   regionPath,
   attractionJsonLd,
@@ -175,6 +176,8 @@ export default function AttractionPage() {
           // 빼는 일은 noindex 가 한다. 수집 배치가 개요를 채우면 저절로 풀린다.
           // 끝난 지 31일이 지난 행사도 뺀다 — 서버 렌더와 같은 판정이라 하이드레이션이 robots 를 뒤집지 않는다.
           noindex: seoNoindex,
+          // 서버 렌더가 심은 피드 링크를 하이드레이션이 지우지 않게 같은 값을 넘긴다
+          feeds: [placeFeed(docLang)],
           // 언어 대체 짝이고 짝 스위치(`search.alternate-pairs.enabled`, 기본 꺼짐)가 켜졌을 때만 hreflang
           // (ADR-0062 §8 개정). TourAPI 국·영은 id 가 다른 별개 문서라 짝은 재색인이 판정해 `alternateId` 로 싣는다.
           // 서버 렌더와 같은 조건 — 짝이 없거나 noindex 면 키를 넘기지 않는다.

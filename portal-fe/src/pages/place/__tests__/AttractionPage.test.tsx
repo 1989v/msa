@@ -1503,3 +1503,23 @@ describe('AttractionPage hreflang — 언어 대체 짝', () => {
     expect(hreflangs()).toEqual([]);
   });
 });
+
+describe('AttractionPage 피드 링크', () => {
+  beforeEach(() => nearbyFrom(() => []));
+  afterEach(() => {
+    vi.clearAllMocks();
+    document.head.innerHTML = '';
+  });
+
+  const feeds = () =>
+    Array.from(document.head.querySelectorAll('link[rel="alternate"][type="application/rss+xml"]')).map((l) => [
+      l.getAttribute('href'), l.hasAttribute('data-seo-multi'),
+    ]);
+
+  it('국문 상세는 국문 피드 링크 하나를 단다(서버 렌더와 같은 값)', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue(enriched);
+    renderAt('/attractions/100');
+    await screen.findByRole('heading', { level: 1, name: '경복궁' });
+    expect(feeds()).toEqual([['https://place.1989v.com/feed.xml', true]]);
+  });
+});

@@ -5,6 +5,7 @@ import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.domain.attraction.model.Admission
 import com.kgd.search.domain.attraction.model.AttractionAttributeCodes
 import com.kgd.search.domain.attraction.model.AttractionDocument
+import com.kgd.search.domain.attraction.model.AttractionFeedEntry
 import com.kgd.search.domain.attraction.model.AttributeFacetCounts
 import com.kgd.search.domain.attraction.model.AttributeSelection
 import com.kgd.search.domain.attraction.model.Availability
@@ -136,6 +137,14 @@ class AttractionSearchAdapter(
             AttractionSearchDocument::id.name, AttractionSearchDocument::contentId.name, AttractionSearchDocument::lang.name,
             AttractionSearchDocument::title.name, AttractionSearchDocument::location.name, CONTENT_TYPE_ID, OVERVIEW,
             AttractionSearchDocument::modifiedAt.name, EVENT_START, EVENT_END,
+        )
+
+        private val CONTENT_UPDATED_AT = AttractionSearchDocument::contentUpdatedAt.name
+
+        /** 최근 갱신 피드가 읽는 필드 — 읽기 문서의 필수 필드(id·contentId·lang·title·location)는 역직렬화에 필요해 함께 받는다. */
+        private val FEED_SOURCE = listOf(
+            AttractionSearchDocument::id.name, AttractionSearchDocument::contentId.name, AttractionSearchDocument::lang.name,
+            AttractionSearchDocument::title.name, AttractionSearchDocument::location.name, OVERVIEW, CONTENT_UPDATED_AT,
         )
     }
 
@@ -409,6 +418,28 @@ class AttractionSearchAdapter(
                     modifiedAt = doc.modifiedAt,
                 )
             }
+        }
+    }
+
+    override fun findRecentlyUpdated(lang: String, size: Int): List<AttractionFeedEntry> {
+        val request = SearchRequest.of { s ->
+            s.index(INDEX)
+                .size(size)
+                .source { src -> src.filter { f -> f.includes(FEED_SOURCE) } }
+                .query { q ->
+                    q.bool { b ->
+                        b.filter { f -> f.term { t -> t.field("lang").value(FieldValue.of(lang)) } }
+                        b.filter { f -> f.exists { e -> e.field(CONTENT_UPDATED_AT) } }
+                    }
+                }
+                .sort { o -> o.field { f -> f.field(CONTENT_UPDATED_AT).order(SortOrder.Desc) } }
+                // keyword id 는 사전순("100" < "7")이다 — 숫자 필드로 같은 시각을 가른다
+                .sort { o -> o.field { f -> f.field("idSort").order(SortOrder.Asc).unmappedType(FieldType.Long) } }
+        }
+        return client.search(request, AttractionSearchDocument::class.java).hits().hits().mapNotNull { hit ->
+            val doc = hit.source()?.toDomain() ?: return@mapNotNull null
+            val at = doc.contentUpdatedAt ?: return@mapNotNull null
+            AttractionFeedEntry(id = doc.id, lang = doc.lang, title = doc.title, overview = doc.overview, contentUpdatedAt = at)
         }
     }
 

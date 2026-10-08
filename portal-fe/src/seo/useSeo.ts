@@ -6,6 +6,12 @@ export interface SeoAlternate {
   href: string;
 }
 
+/** RSS 피드 링크 — copy.mjs `placeFeed` 가 만든다 */
+export interface SeoFeed {
+  title: string;
+  href: string;
+}
+
 export interface SeoInput {
   title: string;
   description?: string;
@@ -15,6 +21,7 @@ export interface SeoInput {
   type?: 'website' | 'article';
   lang?: 'ko' | 'en';
   alternates?: SeoAlternate[];
+  feeds?: SeoFeed[];
   jsonLd?: unknown[];
   /** 로그인·주문내역처럼 색인하면 안 되는 페이지 */
   noindex?: boolean;
@@ -38,11 +45,12 @@ export function useSeo(input: SeoInput): void {
     type = 'website',
     lang = 'ko',
     alternates,
+    feeds,
     jsonLd,
     noindex,
   } = input;
   // 배열/객체를 그대로 deps 에 넣으면 매 렌더 새 참조라 무한 갱신된다
-  const key = JSON.stringify([title, description, canonical, image, type, lang, alternates, jsonLd, noindex]);
+  const key = JSON.stringify([title, description, canonical, image, type, lang, alternates, feeds, jsonLd, noindex]);
 
   useEffect(() => {
     // 빈 title = "아직 확정할 데이터가 없음". 프리렌더로 심어둔 메타를 로딩 중에 덮어쓰지 않는다.
@@ -73,6 +81,15 @@ export function useSeo(input: SeoInput): void {
       link.rel = 'alternate';
       link.hreflang = alt.hreflang;
       link.href = alt.href;
+      link.setAttribute(MULTI, '');
+      document.head.appendChild(link);
+    });
+    feeds?.forEach((feed) => {
+      const link = document.createElement('link');
+      link.rel = 'alternate';
+      link.type = 'application/rss+xml';
+      link.title = feed.title;
+      link.href = feed.href;
       link.setAttribute(MULTI, '');
       document.head.appendChild(link);
     });

@@ -646,6 +646,19 @@ export function attractionHreflangAlternates(docLang, id, alternateId) {
   ];
 }
 
+/**
+ * 최근 갱신 피드(RSS) — 허브·상세 `<head>` 의 `<link rel="alternate" type="application/rss+xml">` 한 줄.
+ * 피드 본문은 search 가 요청 때 만든다(`AttractionFeedRenderer`, nginx `location = /feed.xml`·`/en/feed.xml`).
+ * 서버 렌더도 같은 제목·주소를 낸다 — 이 값을 고치면 `AttractionFeedRenderer.feedTitle`·`feedPath` 도 고친다.
+ * @param {'ko' | 'en'} lang
+ * @returns {{ title: string, href: string }}
+ */
+export function placeFeed(lang) {
+  return lang === 'en'
+    ? { title: `${PLACE_BRAND_EN} — Recently Updated Attractions`, href: placeUrl('en', '/feed.xml') }
+    : { title: `${PLACE_BRAND_KO} — 최근 바뀐 관광지`, href: placeUrl('ko', '/feed.xml') };
+}
+
 export function placeHubMeta(lang) {
   return lang === 'en'
     ? {

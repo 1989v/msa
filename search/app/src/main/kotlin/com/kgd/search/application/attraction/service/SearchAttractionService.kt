@@ -72,7 +72,6 @@ class SearchAttractionService(
         }
 
     companion object {
-        private const val OVERVIEW_SUMMARY_LENGTH = 200
         private const val DEFAULT_RADIUS_KM = 5.0
         private const val SORT_EVENT_START = "eventStart"
     }
@@ -206,12 +205,6 @@ class SearchAttractionService(
         )
     }
 
-    /** 평문화한 뒤 자른다 — 원문을 먼저 자르면 잘린 엔티티·태그 조각(`&r`, `<b`)이 카드에 남는다. */
-    private fun summarizeOverview(raw: String?): String? {
-        val text = AttractionSeoText.sourceText(raw).ifEmpty { return null }
-        return if (text.length > OVERVIEW_SUMMARY_LENGTH) text.take(OVERVIEW_SUMMARY_LENGTH) + "…" else text
-    }
-
     private fun AttractionDocument.toResult(
         distanceKm: Double?,
         position: Int,
@@ -232,7 +225,7 @@ class SearchAttractionService(
         imageUrl = imageUrl,
         thumbnailUrl = thumbnailUrl,
         tel = tel,
-        overview = if (summarize) summarizeOverview(overview) else overview,
+        overview = if (summarize) AttractionSeoText.summary(overview) else overview,
         useTime = useTime,
         restDate = restDate,
         useFee = useFee,

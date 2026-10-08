@@ -59,6 +59,18 @@ object AttractionSeoText {
         return jsTrim(text)
     }
 
+    /** 목록 요약 길이 — 목록 응답 overview 와 최근 갱신 피드 description 이 같은 값을 쓴다 */
+    const val SUMMARY_MAX = 200
+
+    /**
+     * 목록 요약 — [sourceText] 로 평문화한 뒤 [SUMMARY_MAX] 자에서 자른다. 정규화 뒤 비면 null.
+     * 원문을 먼저 자르면 잘린 엔티티·태그 조각(`&r`, `<b`)이 남으므로 순서를 바꾸지 않는다.
+     */
+    fun summary(raw: String?): String? {
+        val text = sourceText(raw).ifEmpty { return null }
+        return if (text.length > SUMMARY_MAX) text.take(SUMMARY_MAX) + "…" else text
+    }
+
     fun clampDescription(text: String?, max: Int = DESC_MAX): String {
         val flat = jsTrim((text ?: "").replace(SPACES, " "))
         if (flat.length <= max) return flat

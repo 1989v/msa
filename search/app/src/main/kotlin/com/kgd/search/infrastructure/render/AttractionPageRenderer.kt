@@ -71,6 +71,7 @@ class AttractionPageRenderer(
             // 언어 대체 짝이고 짝 스위치(`search.alternate-pairs.enabled`, 기본 꺼짐)가 켜졌을 때만 hreflang (ADR-0062 §8 개정).
             // 스위치가 꺼져 있으면 색인 `alternateId` 가 늘 null 이다. noindex 문서는 대체 주소를 선언하지 않는다
             alternates = doc.alternateId?.takeUnless { noindex }?.let { attractionHreflangAlternates(lang, doc.id, it) }.orEmpty(),
+            feed = AttractionFeedRenderer.feedTitle(lang) to origin + AttractionFeedRenderer.feedPath(lang),
             jsonLd = listOf(primaryJsonLd(lang, doc, meta), breadcrumbJsonLd(lang, doc)),
         )
         return compose(shell, lang, head, shellBody(attractionBody(lang, doc, meta, today)))
@@ -136,6 +137,7 @@ class AttractionPageRenderer(
         noindex: Boolean,
         jsonLd: List<Map<String, Any?>>,
         alternates: List<Pair<String, String>> = emptyList(),
+        feed: Pair<String, String>? = null,
     ): String {
         val lines = mutableListOf(
             "<title>${escapeHtml(title)}</title>",
@@ -166,6 +168,10 @@ class AttractionPageRenderer(
         // 하이드레이션(useSeo)이 지우고 다시 달 수 있게 JSON-LD 와 같은 표시를 단다
         alternates.forEach { (hreflang, href) ->
             lines += """<link rel="alternate" hreflang="${escapeHtml(hreflang)}" href="${escapeHtml(href)}" $SEO_MULTI />"""
+        }
+        // 최근 갱신 피드(copy.mjs `placeFeed`) — (제목, 주소). 화면 useSeo `feeds` 가 같은 표시로 다시 단다
+        feed?.let { (title, href) ->
+            lines += """<link rel="alternate" type="application/rss+xml" title="${escapeHtml(title)}" href="${escapeHtml(href)}" $SEO_MULTI />"""
         }
         jsonLd.forEach {
             // </script> 가 JSON 문자열에 섞이면 파서가 조기 종료된다
