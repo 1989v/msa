@@ -17,3 +17,7 @@
 | 6 | `kubectl kustomize k8s/overlays/oci-arm` | exit 0 · apex 경로 `/api /ws /sse /svc /r /p /g /b → gateway`, `/ → portal-fe` |
 | 7 | `cd portal-fe && npx vitest run src/pages/__tests__/privacyRetention.test.ts src/pages/games/__tests__/browserHelp.test.ts src/components/share src/pages/games/__tests__/GameDetailPage.loop.test.tsx src/pages/blog` · `npx tsc -b`(portal-fe·admin/frontend) | Test Files 11 passed · Tests 77 passed · tsc exit 0 ×2 (메인 세션) |
 | 7 | 회귀 주입: PlaceRetentionRunner 90→30, 방침 이력서 1년→2년, url‖shortUrl 역순, 대신 주소 제거 | 각각 FAILED — 구현자 보고 |
+| 7 | 깨끗한 워크트리(HEAD f4f66fecc 단독): portal-fe·admin `npx tsc -b` + 범위 vitest | tsc exit 0 ×2 · Test Files 10 passed · Tests 74 passed |
+| 8 | 최소 범위 보강: `./gradlew :common:test --tests '*GlobalExceptionHandlerBootTest' --tests '*GlobalExceptionHandlerWebMvcTest' --tests '*ShortCode*' --tests '*ShortLink*' --tests '*ClickContext*' --tests '*CrawlerUserAgents*' :blog:feature:test --tests '*BlogInteractionServiceTest' --tests '*BlogMetaRendererTest' :search:app:test --tests '*SearchAttractionServiceTest'` | exit 0 · 11 스위트 109/0 — 자동 설정을 띄우는 common 컨텍스트 테스트 2종 + 고친 기존 클래스(BlogQueryService·BlogPostDetail·SearchAttractionUseCase)를 쓰는 기존 테스트 (메인 세션) |
+| 8 | Codex 위임(전체 스위트) | 실행 불가 — 샌드박스가 `~/.gradle` 잠금·산출물 쓰기·Docker 를 막음. Codex 사용률 20%→20% |
+| 8 | 미실행 | common·관련 모듈 **전체** 스위트(usage 89% 테스트 범위 게이트), CDP 화면 측정, fresh verifier |

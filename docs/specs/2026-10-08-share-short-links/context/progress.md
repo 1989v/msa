@@ -1,11 +1,11 @@
 # 진행 상태
 
-- 현재 그룹: 8 (문서·통합 검증) — 8.1·8.2 완료, 8.3·8.4 남음
+- 현재 그룹: 8 — 8.1·8.2·8.4(최소 범위) 완료, 8.3(CDP) 남음
 - 완료 커밋: 스펙 c418643ff · G1 d96ab86f8 · G2 0e739d2e2 · G3·4 b6849d6af · G5 544dc0243(+01c6658c9) · G6 36b49197f · G7 f4f66fecc · 문서 06d5edbaa
 - 멈춘 이유: usage 89% (2026-10-08 17:31). 테스트 범위 게이트(85%)가 common 전체 스위트를 막고, CDP 측정·verifier 는 토큰을 많이 쓴다
 
 ## 다음 세션에서 할 것 (순서대로)
-1. `./gradlew :common:test` 전체 — 배포 게이트(images.yml)에 넣었으므로 초록이어야 한다. 다른 세션의 common/analytics 미커밋 변경이 섞인 워킹트리라, 빨강이면 깨끗한 워크트리(HEAD)에서 다시 돌려 원인을 가른다
+1. (usage 85% 미만일 때) `./gradlew :common:test` 전체 — 배포 게이트(images.yml)에 넣었으므로 초록이어야 한다. 다른 세션의 common/analytics 미커밋 변경이 섞인 워킹트리라, 빨강이면 깨끗한 워크트리(HEAD)에서 다시 돌려 원인을 가른다
 2. 8.3 CDP 화면 검증 — 블로그·게임·관광지 상세의 `role=group name=공유/Share` 와 「링크 복사」 버튼, `docs/standards/fe-visual-verification.md` 4조합. start·측정·stop 을 한 명령으로
 3. 8.4 `hns:verifier`(새 컨텍스트) → `verifications/final-verification.md`, 이어서 `hns:validate --code` · `hns:drift-check` · `hns:validate --docs`
 4. 푸시 여부를 사용자에게 묻는다 — 아래 제약 확인 후
