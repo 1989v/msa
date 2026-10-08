@@ -51,4 +51,23 @@ class CollectEventItemTest : BehaviorSpec({
             }
         }
     }
+
+    Given("eventId — 재전송을 가려내는 열쇠") {
+        When("viewId 와 섹션이 있는 목록 이벤트면") {
+            Then("(viewId, entityType, entityId, sectionId, action) 으로 짓는다 — 같은 대상의 선택·지도 열기·찜은 섹션이 달라 다른 행이다") {
+                mapper.readValue(body("null"), CollectEventsRequest::class.java)
+                    .events.first().toEvent("visitor", "session", null)
+                    .eventId shouldBe "v1:SEARCH:하이브리드 검색:SEARCH_GROUP:SEARCH"
+            }
+        }
+        When("섹션이 없는 화면 대상(PAGE)이면") {
+            val json = """{"events":[{"entityType":"PAGE","entityId":"place-hub","action":"SESSION_START",
+                "screenType":"PLACE_HUB","viewId":"v1"}]}"""
+            Then("섹션 자리는 빈 칸이다") {
+                mapper.readValue(json, CollectEventsRequest::class.java)
+                    .events.first().toEvent("visitor", "session", null)
+                    .eventId shouldBe "v1:PAGE:place-hub::SESSION_START"
+            }
+        }
+    }
 })

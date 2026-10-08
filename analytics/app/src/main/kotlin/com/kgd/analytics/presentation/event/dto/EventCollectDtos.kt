@@ -21,6 +21,13 @@ data class CollectEventsRequest(
     @field:Valid
     @field:Size(min = 1, max = MAX_BATCH, message = "한 번에 1~$MAX_BATCH 건까지 보낼 수 있습니다")
     val events: List<CollectEventItem>,
+    /**
+     * beacon 은 헤더를 못 실어 본문에 같이 온다 — `X-Session-Id` 헤더가 없을 때만 쓴다.
+     * `visitorId` 는 받지 않는다: 게이트웨이가 헤더를 항상 덮어써 본문 값은 도달 불가다.
+     * 모르는 키는 Jackson 기본값대로 무시한다 — 거절하면 pagehide 전송 전부가 400 이 된다.
+     */
+    @field:Size(max = 128)
+    val sessionId: String? = null,
 ) {
     companion object {
         /** 브라우저가 한 번에 보낼 수 있는 상한. 넘치면 FE 가 나눠 보낸다. */
@@ -49,14 +56,15 @@ data class CollectEventItem(
     val payload: Map<String, Any?>? = null,
 ) {
     /**
-     * `eventId` 를 서버가 만들지 않고 **(viewId, entityId, action) 으로 짓는 이유**:
+     * `eventId` 를 서버가 만들지 않고 **(viewId, entityType, entityId, sectionId, action) 으로 짓는 이유**:
      * 같은 노출이 재전송(재시도·중복 beacon)으로 두 번 와도 같은 id 가 되어 원장에서 가려낼 수
      * 있다. 서버에서 UUID 를 새로 만들면 재전송이 전부 다른 행이 되어 CTR 분모가 부푼다.
+     * 섹션이 키에 들어가는 이유: 같은 관광지의 카드 선택·지도 열기·찜은 섹션이 달라 다른 행이다.
      */
     fun toEvent(visitorId: String, sessionId: String, userId: Long?): AnalyticsEvent {
         val view = viewId.orEmpty()
         val eventId = if (view.isBlank()) UUID.randomUUID().toString()
-        else "$view:$entityId:${action!!.name}"
+        else "$view:${entityType!!.name}:$entityId:${sectionId.orEmpty()}:${action!!.name}"
         return AnalyticsEvent(
             eventId = eventId,
             entityType = entityType!!,

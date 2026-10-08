@@ -1,6 +1,6 @@
 package com.kgd.analytics.infrastructure.popularity
 
-import com.kgd.analytics.application.event.usecase.CollectEventsUseCase
+import com.kgd.analytics.application.popularity.usecase.AggregateAttractionPopularityUseCase
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -15,6 +15,8 @@ import javax.sql.DataSource
 /**
  * 어댑터가 ClickHouse 로 **보내는 SQL 과 인자**를 본다. 이 모듈엔 ClickHouse 컨테이너 테스트가 없어서
  * 합치기 의미(uniqMerge 가 여러 날의 같은 방문자를 1로 센다)는 배포 뒤 대조 질의가 확인한다.
+ *
+ * 기대값은 리터럴로 적는다 — 프로덕션 상수로 조립하면 상수가 비어도 초록불이 난다.
  */
 class ClickHouseAttractionPopularityAdapterTest : BehaviorSpec({
 
@@ -53,9 +55,9 @@ class ClickHouseAttractionPopularityAdapterTest : BehaviorSpec({
         then("고유 클릭 방문자 상태를 채운다 — 클릭만, 수집기가 익명에 붙이는 값은 뺀다") {
             val insert = oneLine(sent[1].sql)
             insert shouldContain "(day, attraction_id, impressions, clicks, unique_clickers)"
-            // 수집기와 같은 상수를 쓴다 — 한쪽만 바뀌면 익명 전체가 한 사람으로 섞인다
+            // 수집기의 ANONYMOUS_VISITOR 와 같은 글자여야 한다 — 한쪽만 바뀌면 익명 전체가 한 사람으로 섞인다
             insert shouldContain
-                "uniqStateIf(visitor_id, action = 'CLICK' AND visitor_id != '${CollectEventsUseCase.ANONYMOUS_VISITOR}')"
+                "uniqStateIf(visitor_id, action = 'CLICK' AND section_id NOT IN ('MAP_LINK', 'FAVORITE') AND visitor_id != 'anonymous') AS unique_clickers"
             // 노출은 순위의 결과라 방문자 신호에 섞지 않는다
             insert shouldNotContain "uniqStateIf(visitor_id, action = 'IMPRESSION'"
         }
@@ -67,7 +69,21 @@ class ClickHouseAttractionPopularityAdapterTest : BehaviorSpec({
         then("노출·클릭 합계는 그대로 센다 — place-ingest 가 읽는 값이다") {
             val insert = oneLine(sent[1].sql)
             insert shouldContain "toUInt32(countIf(action = 'IMPRESSION')) AS impressions"
-            insert shouldContain "toUInt32(countIf(action = 'CLICK')) AS clicks"
+            insert shouldContain "toUInt32(countIf(action = 'CLICK' AND section_id NOT IN ('MAP_LINK', 'FAVORITE'))) AS clicks"
+        }
+
+        then("선택 뒤 후속 행동(지도 열기·찜)은 클릭 수와 고유 클릭자에서만 뺀다 — 노출 집계에는 제외가 없다") {
+            val insert = oneLine(sent[1].sql)
+            insert shouldContain "countIf(action = 'CLICK' AND section_id NOT IN ('MAP_LINK', 'FAVORITE'))"
+            insert shouldContain
+                "uniqStateIf(visitor_id, action = 'CLICK' AND section_id NOT IN ('MAP_LINK', 'FAVORITE') AND visitor_id != 'anonymous')"
+            insert shouldNotContain "action = 'IMPRESSION' AND"
+        }
+    }
+
+    given("제외 목록 상수") {
+        then("선택 뒤 후속 행동 두 섹션이다 — FE events.ts 의 같은 이름 주석과 한 몸") {
+            AggregateAttractionPopularityUseCase.POST_SELECTION_SECTIONS shouldBe setOf("MAP_LINK", "FAVORITE")
         }
     }
 })

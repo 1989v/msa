@@ -22,5 +22,12 @@ interface AggregateAttractionPopularityUseCase {
     companion object {
         /** 원장 보존기간(ADR-0077 · V005 TTL)보다 오래된 날짜는 원장이 비어 있어 접으면 0행이 된다. */
         const val MAX_REAGGREGATE_DAYS = 90
+
+        /**
+         * `clicks`·`unique_clickers` 는 목록 선택(카드·목록 핀·오버레이 핀)만 센다 — 이 집합(선택 뒤 후속 행동)은
+         * 제외하고, 노출은 그대로 센다. 기준은 「목록 밖」이 아니라 「선택 뒤」다: `MAP_OVERLAY` 도 노출 없는
+         * 목록 밖 클릭이지만 집계에 넣는다. FE `portal-fe/src/analytics/events.ts` 의 같은 이름 주석과 한 몸이다.
+         */
+        val POST_SELECTION_SECTIONS: Set<String> = setOf("MAP_LINK", "FAVORITE")
     }
 }

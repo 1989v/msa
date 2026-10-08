@@ -31,6 +31,9 @@ class EventCollectController(
     /**
      * **202 로 답한다.** 화면은 이 응답을 기다리지 않고, 실패해도 화면이 깨지면 안 된다 —
      * 계측이 기능을 막는 것은 본말전도다.
+     *
+     * `X-User-Id` 는 읽지 않는다 — 이 라우트는 게이트웨이 인증 필터를 거치지 않아 클라이언트가 임의 값을
+     * 넣을 수 있다. 회원 귀속이 필요해지면 라우트를 인증 필터 뒤로 옮긴다.
      */
     @PostMapping
     @ResponseStatus(HttpStatus.ACCEPTED)
@@ -46,18 +49,17 @@ class EventCollectController(
             return ApiResponse.success(CollectEventsResponse(accepted = 0))
         }
         val visitorId = visitorHeader?.takeIf { it.isNotBlank() } ?: CollectEventsUseCase.ANONYMOUS_VISITOR
-        val sessionId = sessionHeader?.takeIf { it.isNotBlank() } ?: visitorId
-        val userId = servletRequest.getHeader(USER_HEADER)?.toLongOrNull()
+        val sessionId = sessionHeader?.takeIf { it.isNotBlank() }
+            ?: request.sessionId?.takeIf { it.isNotBlank() }
+            ?: visitorId
 
         val accepted = collectEvents.collect(
-            request.events.map { it.toEvent(visitorId, sessionId, userId) },
+            request.events.map { it.toEvent(visitorId, sessionId, null) },
         )
         return ApiResponse.success(CollectEventsResponse(accepted))
     }
 
     companion object {
-        /** 게이트웨이가 인증에서 넘겨주는 헤더와 같은 규약. */
-        const val USER_HEADER = "X-User-Id"
         const val VISITOR_HEADER = "X-Visitor-Id"
         const val SESSION_HEADER = "X-Session-Id"
     }
