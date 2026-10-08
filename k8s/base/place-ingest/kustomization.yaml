@@ -19,3 +19,4 @@ resources:
   - cronjob-gocamping.yaml
   - cronjob-air.yaml
   - cronjob-air-stations.yaml
+  - cronjob-indexnow.yaml

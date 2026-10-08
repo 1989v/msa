@@ -93,6 +93,13 @@ def fetch_attractions() -> list[dict]:
     return rows
 
 
+def content_updated(since: str, until: str, after_id: int, size: int) -> dict:
+    """본문이 바뀐 관광지 한 쪽 — `since ≤ 변경 시각 < until`(서울 시각, 오프셋 없는 ISO), id 키셋.
+    반환: `{items: [{id, lang}], nextAfterId}` (마지막 쪽이면 nextAfterId 가 None)."""
+    qs = urllib.parse.urlencode({"since": since, "until": until, "afterId": after_id, "size": size})
+    return _request("GET", f"/internal/attractions/content-updated?{qs}")["data"]
+
+
 def bulk_upsert(records: list[dict]) -> tuple[int, int]:
     """전체 동기화다 — 부분 레코드를 보내면 나머지 필드가 null 로 덮인다 (개요만 예외)."""
     created = updated = 0

@@ -78,4 +78,8 @@ COPY --from=builder /app/dist-releases /usr/share/nginx/asset-releases
 ENV NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1 \
     NGINX_ENVSUBST_FILTER=NGINX_LOCAL_RESOLVERS
 COPY nginx.conf /etc/nginx/templates/default.conf.template
+# IndexNow 키 파일 — 키가 32자 소문자 hex 일 때만 conf.d/indexnow/ 에 location 조각을 쓴다(20-envsubst 보다 먼저).
+# 실행 비트가 없으면 엔트리포인트가 오류 없이 건너뛰어 키 파일만 조용히 빠지므로 권한을 COPY 에서 정한다.
+COPY --chmod=0755 docker-entrypoint.d/15-indexnow-key.sh /docker-entrypoint.d/
+RUN mkdir -p /etc/nginx/conf.d/indexnow
 EXPOSE 80

@@ -1,6 +1,8 @@
 # 진행 상태
 
-- 현재 그룹: 6 (IndexNow)
+- 현재 그룹: 7 (ADR·문서) — TG6 의 원천 데이터 대장 「송신」 행도 TG7 에서
+- 완료: TG6 IndexNow — 메인 재실행 05:26 KST: indexnow_test 15 passed, ingest 전체 175 passed, check-nginx-indexnow·place-landings·place-feed·legacy-regions 모두 PASSED, oci-arm kustomize rc=0. 새 스크립트 두 개 100755
+- 사용자 확인: 스위치 켜짐 + 키 없음이면 보내지 않고 로그만(exit 0)
 - 완료: TG5 RSS — 메인 재실행 05:10 KST: vitest 15 files / 334 passed, tsc exit 0, AttractionFeedRendererTest 14/0, AttractionFeedControllerTest 4/0, AttractionPageRendererTest 107/0, SearchAttractionServiceTest 50/0, AttractionPageControllerTest 14/0, check-nginx-place-feed.sh PASSED. 상세 feeds 한 줄은 메인이 넣음(빼면 새 테스트 빨강 확인)
 - 사용자 확인: item 제목은 h1 이름, noindex 문서도 피드에 실림, Cache-Control 은 search 가 단다(nginx add_header 없음)
 - TG7 메모: search/CLAUDE.md 에 /internal/render/feed/{ko|en}.xml

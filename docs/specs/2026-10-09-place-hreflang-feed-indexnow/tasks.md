@@ -109,16 +109,16 @@ Total Task Groups: 8. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
 
 ### Task Group 6: IndexNow — 키 파일·제출 잡 (SR-4)
 **Dependencies:** TG2(내부 조회) · TG5(nginx.conf 같은 파일 — 충돌 회피 순서) · **Phase:** portal-fe 이미지(entrypoint·nginx include), place-ingest(Python), k8s CronJob·Deployment env · **Required Skills:** POSIX sh, nginx, Docker, Python/pytest, Kustomize
-- [ ] 6.1 테스트 먼저
+- [x] 6.1 테스트 먼저
   - 새 `place/ingest/tests/indexnow_test.py`(`urlopen` 만 가짜): `INDEXNOW_ENABLED` 미설정·false → 요청 없음 + `IndexNow 비활성 — 보낼 주소 N건` · 켜짐 → 본문 `host·key·keyLocation·urlList`, URL 국 `/attractions/{id}`·영 `/en/attractions/{id}` · 10,001건 → 요청 2회(10,000 + 1) · 200·202 → 성공 기록 · 400·403(「키 불일치 — 키 파일 확인」)·422·429·500·타임아웃 → 코드별 문구 + exit 0 · 0건 → 요청 없이 `IndexNow 대상 0건` · 창 = `[실행 KST − 24h, 실행 KST)` 를 place 조회 파라미터로 · `nextAfterId` 따라 페이지 순회 · 로그 전체에 키 문자열·요청 본문 없음
   - 새 `portal-fe/scripts/check-nginx-indexnow.sh`(`check-nginx-events-sitemap.sh` 와 같은 방식, `nginx:1.27-alpine`): 레포의 실제 entrypoint 스크립트를 실행 권한째 `/docker-entrypoint.d/` 에 마운트, `-e INDEXNOW_KEY` 를 바꿔 가며 ① 미설정 → 기동·`/{임의hex}.txt` 가 키 본문 아님 ② `;` 포함 · 여러 줄(첫 줄 정상 키) · 끝 개행 포함 → 조각 없음·기동 ③ 정상 32자 hex → place 호스트 200·본문 = 키·`Cache-Control` 한 벌, apex·blog 404, `/.txt`·틀린 키 → 키 본문 아님. 도커 없으면 exit 2
-- [ ] 6.2 `portal-fe/docker-entrypoint.d/15-indexnow-key.sh`(20-envsubst 앞 번호, 레포 파일 모드 100755 — `git update-index --chmod=+x`): `${#k} -eq 32` + `case "$k" in *[!0-9a-f]*) 거부` 로만 검사(줄 단위 `grep` 금지), 통과 시 `/etc/nginx/conf.d/indexnow/indexnow.conf` 에 spec SR-4.2 조각, 아니면 경고 한 줄(키 값 미출력)
-- [ ] 6.3 `portal-fe/Dockerfile`(`:76-80`): `COPY --chmod=0755 docker-entrypoint.d/15-indexnow-key.sh /docker-entrypoint.d/` + `mkdir -p /etc/nginx/conf.d/indexnow`. `nginx.conf` place server 블록에 `include /etc/nginx/conf.d/indexnow/*.conf;`. `NGINX_ENVSUBST_FILTER` 는 그대로
-- [ ] 6.4 portal-fe Deployment env `INDEXNOW_KEY`(secretKeyRef `place-indexnow`/`key`, `optional: true`) — oci-arm·k3s-lite 가 같은 base 를 쓰는지 확인하고 base 한 곳에. Secret·SealedSecret 파일은 만들지 않는다
-- [ ] 6.5 place-ingest: `place/ingest/src/indexnow.py`(제출 — 10,000건 분할, 타임아웃 30초, 코드별 문구) + `place_client.py`(`:33-105` 방식)에 `content_updated(since, until, after_id, size)` + `main.py` `--job=indexnow` 분기·모듈 독스트링 한 줄
-- [ ] 6.6 `k8s/base/place-ingest/cronjob-indexnow.yaml`(`place-ingest-indexnow`, `schedule: "30 22 * * *"` UTC = KST 07:30, 다른 ingest CronJob 템플릿 복제) — env `INDEXNOW_ENABLED: "false"`, `INDEXNOW_KEY` secretKeyRef `optional: true` · `k8s/base/place-ingest/kustomization.yaml` 에 등록 · oci-arm overlay 에 이미지 매핑이 CronJob 별로 필요한지 확인(다른 place-ingest CronJob 과 같게)
+- [x] 6.2 `portal-fe/docker-entrypoint.d/15-indexnow-key.sh`(20-envsubst 앞 번호, 레포 파일 모드 100755 — `git update-index --chmod=+x`): `${#k} -eq 32` + `case "$k" in *[!0-9a-f]*) 거부` 로만 검사(줄 단위 `grep` 금지), 통과 시 `/etc/nginx/conf.d/indexnow/indexnow.conf` 에 spec SR-4.2 조각, 아니면 경고 한 줄(키 값 미출력)
+- [x] 6.3 `portal-fe/Dockerfile`(`:76-80`): `COPY --chmod=0755 docker-entrypoint.d/15-indexnow-key.sh /docker-entrypoint.d/` + `mkdir -p /etc/nginx/conf.d/indexnow`. `nginx.conf` place server 블록에 `include /etc/nginx/conf.d/indexnow/*.conf;`. `NGINX_ENVSUBST_FILTER` 는 그대로
+- [x] 6.4 portal-fe Deployment env `INDEXNOW_KEY`(secretKeyRef `place-indexnow`/`key`, `optional: true`) — oci-arm·k3s-lite 가 같은 base 를 쓰는지 확인하고 base 한 곳에. Secret·SealedSecret 파일은 만들지 않는다
+- [x] 6.5 place-ingest: `place/ingest/src/indexnow.py`(제출 — 10,000건 분할, 타임아웃 30초, 코드별 문구) + `place_client.py`(`:33-105` 방식)에 `content_updated(since, until, after_id, size)` + `main.py` `--job=indexnow` 분기·모듈 독스트링 한 줄
+- [x] 6.6 `k8s/base/place-ingest/cronjob-indexnow.yaml`(`place-ingest-indexnow`, `schedule: "30 22 * * *"` UTC = KST 07:30, 다른 ingest CronJob 템플릿 복제) — env `INDEXNOW_ENABLED: "false"`, `INDEXNOW_KEY` secretKeyRef `optional: true` · `k8s/base/place-ingest/kustomization.yaml` 에 등록 · oci-arm overlay 에 이미지 매핑이 CronJob 별로 필요한지 확인(다른 place-ingest CronJob 과 같게)
 - [ ] 6.7 `docs/architecture/data-sources.md` 「송신」 행(IndexNow — 공개 URL·공개 키, 개인정보 없음) · `k8s/base/network-policy/11-allow-egress-https-public.yaml` place-ingest 주석에 「+ IndexNow 송신(api.indexnow.org)」(정책 값 그대로)
-- [ ] 6.8 Verify:
+- [x] 6.8 Verify:
   - `cd place/ingest && python -m pytest tests/indexnow_test.py -q`
   - `bash portal-fe/scripts/check-nginx-indexnow.sh` (exit 2 = 도커 없음, 통과로 세지 않는다)
   - `git ls-files -s portal-fe/docker-entrypoint.d/15-indexnow-key.sh` → `100755`

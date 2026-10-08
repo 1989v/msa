@@ -21,6 +21,7 @@ K8s CronJob 이 본 모듈을 --job 으로 분기해 호출한다:
     python -m src.main --job=related --base-ym=202608   # 그 달을 1회 받는다
     python -m src.main --job=air                   # 대기 실시간 측정 전국 1콜 (매시, 하루 24콜)
     python -m src.main --job=air-stations          # 대기 측정소 목록 전국 1콜 + 시군구 최근접 매핑 (주 1회)
+    python -m src.main --job=indexnow              # 지난 24시간 본문이 바뀐 상세 주소를 IndexNow 에 (INDEXNOW_ENABLED 꺼지면 건수만)
 
 외부 :443 을 부르는 것은 이 CronJob 파드뿐이다 — 상시 파드인 place 에는 egress 를 열지 않는다
 (ADR-0031 §5.10 화이트리스트에 place-ingest 만 추가).
@@ -37,7 +38,7 @@ from datetime import datetime
 
 from pathlib import Path
 
-from src import (gocamping, administrative_region, air, backfill_intro, backfill_overview, barrier_free, congestion, google_place, naver,
+from src import (gocamping, administrative_region, air, backfill_intro, backfill_overview, barrier_free, congestion, google_place, indexnow, naver,
                  place_client, related,
                  backfill_media, popularity, quota, sync_lcls_codes, sync_pet_tour,
                  sync_tour,
@@ -393,7 +394,7 @@ def main() -> int:
                     choices=["overview", "intro", "media", "stats", "sync", "tour-portal-sync", "links",
                              "administrative-regions", "google-places", "lcls-codes", "pet-tour",
                              "attraction-attrs", "visitors", "weather-short", "weather-mid", "congestion", "related",
-                             "air", "air-stations", "gocamping"])
+                             "air", "air-stations", "gocamping", "indexnow"])
     ap.add_argument("--budget", type=int, default=int(os.environ.get("BUDGET", "1000")),
                     help="개요 수집 일일 예산 (언어별, detailCommon2 호출 상한)")
     ap.add_argument("--lang", choices=["ko", "en"], help="미지정 시 ko·en 둘 다")
@@ -444,6 +445,8 @@ def main() -> int:
         return _job_air("stations" if args.job == "air-stations" else "measurements")
     if args.job == "gocamping":
         return _job_gocamping()
+    if args.job == "indexnow":
+        return indexnow.run()
     if args.job == "related":
         if args.base_ym and not (len(args.base_ym) == 6 and args.base_ym.isdigit()):
             raise SystemExit(f"--base-ym 은 YYYYMM 이다: {args.base_ym}")

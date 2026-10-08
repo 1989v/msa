@@ -1,0 +1,55 @@
+# IndexNow 제출 — 지난 24시간 동안 본문이 바뀐 관광지 상세 주소를 api.indexnow.org 에 알린다.
+#
+# 바뀐 id 는 place 내부 조회(/internal/attractions/content-updated)로 받는다. 저장처가 없어 하루 실패하면
+# 그날 변경은 IndexNow 에서 빠진다 — RSS·sitemap 에 남으므로 받아들인다. 응답이 무엇이든 잡은 성공으로 끝난다.
+#
+# **제출 스위치는 꺼 둔다(INDEXNOW_ENABLED "false").** 꺼져 있으면 보낼 건수만 로그에 남긴다.
+# 키는 portal-fe 와 같은 Secret place-indexnow — 레포에 두지 않고 운영에서 수동으로 만든다. 없어도 잡은 뜬다.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: place-ingest-indexnow
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: place-ingest
+    app.kubernetes.io/part-of: commerce-platform
+    place.kgd.io/job: "indexnow"
+spec:
+  # 매일 UTC 22:30 = KST 07:30 — 관광지 재색인(UTC 21:30) 뒤라 제출 시점에 상세 서버 렌더가 새 본문을 낸다.
+  schedule: "30 22 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 1800
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: place-ingest
+            app.kubernetes.io/part-of: commerce-platform
+            place.kgd.io/job: "indexnow"
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: ingest
+              image: commerce/place-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--job=indexnow"]
+              env:
+                - name: PLACE_API
+                  value: "http://content:8097"
+                - name: INDEXNOW_ENABLED
+                  value: "false"
+                - name: INDEXNOW_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: place-indexnow
+                      key: key
+                      optional: true
+              resources:
+                # 하루치 변경 id 목록뿐이다(전량 스캔 아님).
+                requests: { cpu: 50m, memory: 64Mi }
+                limits:   { memory: 256Mi }
