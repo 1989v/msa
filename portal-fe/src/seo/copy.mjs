@@ -494,6 +494,89 @@ export function regionMeta(lang, region, attractionCount = null) {
   };
 }
 
+/**
+ * 관광 성격의 분류 — 목록·주변목록에 올리는 것 (place `Attraction.SIGHT_CATEGORIES` 와 같다).
+ *
+ * 적재의 절반 이상이 음식·쇼핑이라 **분류를 안 걸면 상점 목록이 된다.** 실제로 상세 페이지
+ * 주변목록이 이걸 안 보내서 명동에서 국문·영문 모두 7건 전부 쇼핑이 나왔다 (2026-09-03).
+ * 화면마다 각자 배열을 들고 있던 게 원인이라 여기 한 곳에 둔다 — 허브·지역 화면(`placeApi.ts` 가
+ * 다시 내보낸다)과 속성 랜딩 선정 스크립트·프리렌더가 같은 배열을 쓴다.
+ */
+export const SIGHT_CATEGORIES = /** @type {const} */ (['nature', 'history', 'culture', 'leisure']);
+
+/**
+ * 속성 랜딩 슬러그 표 — 「부산 중구 주차 가능 관광지」처럼 속성 하나 × 시군구 하나의 주소.
+ * 이 표가 유일한 정의다: 선정 스크립트·프리렌더·SPA 프리셋이 모두 여기서 읽는다.
+ *
+ * - `param`: 검색 API 필터(필터 질의의 `totalElements` 가 랜딩 건수 N 이다 — facet 은 실패 때 null 이라 N 으로 쓰지 않는다)
+ * - `facetKey`: 선정 예비 후보를 고르는 facet 건수 키. `pet.PARTIAL`·`ELEVATOR`·`RESTROOM` 은 세지 않는다 — 이름이 센 것과 같아야 한다
+ * - `chipId`: 허브 속성 칩 id(`placeAttributes.ts` `ATTRIBUTE_CHIPS`)
+ * - `langs`: 영문은 원천에 반려동물·무장애 값이 없어 parking·free 만
+ *
+ * `barrier-free` 를 「휠체어 대여」라 부르는 이유: 원천 `wheelchair` 칸의 긍정 원문은 대부분 대여·보유
+ * 안내라 「휠체어로 이용 가능」(접근성)을 약속하지 않는다. 허브 칩 라벨(「휠체어」)은 그대로 둔다.
+ */
+export const PLACE_LANDING_ATTRS = Object.freeze([
+  { attr: 'parking', param: { key: 'parking', value: 'YES' }, facetKey: 'parking.YES', chipId: 'parking', nameKo: '주차 가능', nameEn: 'Parking', langs: ['ko', 'en'] },
+  { attr: 'pet', param: { key: 'pet', value: 'ALLOWED' }, facetKey: 'pet.ALLOWED', chipId: 'petAllowed', nameKo: '반려동물 동반', nameEn: null, langs: ['ko'] },
+  { attr: 'barrier-free', param: { key: 'barrierFree', value: 'WHEELCHAIR' }, facetKey: 'barrierFree.WHEELCHAIR', chipId: 'bfWheelchair', nameKo: '휠체어 대여', nameEn: null, langs: ['ko'] },
+  { attr: 'free', param: { key: 'admission', value: 'FREE' }, facetKey: 'admission.FREE', chipId: 'admissionFree', nameKo: '입장 무료', nameEn: 'Free admission', langs: ['ko', 'en'] },
+]);
+
+/** 랜딩 하나가 성립하는 최소 건수 N — 미만이면 선정하지 않고, 빌드 때 미달이면 noindex 로 남긴다 */
+export const PLACE_LANDING_MIN_RESULTS = 10;
+/** 언어별 속성당 랜딩 상한 */
+export const PLACE_LANDING_MAX_PER_ATTR = 5;
+/** 국·영 합산 랜딩 상한 */
+export const PLACE_LANDING_MAX_TOTAL = 20;
+/** 같은 언어·같은 시군구 랜딩끼리 상위 결과 id 의 Jaccard 상한 — 넘으면 같은 목록이라 하나만 둔다 */
+export const PLACE_LANDING_MAX_JACCARD = 0.5;
+
+/** 속성 랜딩 주소 — `/regions/{시군구 5자리}/{attr}`. 지역 페이지 주소 아래에 붙는다 */
+export function landingPath(lang, code, attr) {
+  return placePath(lang, `/regions/${code}/${attr}`);
+}
+
+/**
+ * 속성 랜딩 메타 — 프리렌더와 SPA 가 같은 함수를 쓴다.
+ * 시도 이름을 앞에 붙이는 이유: 「중구」는 서울·부산·대구·인천·대전·울산에 다 있다.
+ * 전체 건수(속성을 뺀 M)는 싣지 않는다 — 속성 필터 질의 응답에 그 값이 없다.
+ * @param {{ count?: number | null, asOf?: string | null }} [opts] count 는 필터 질의의 totalElements(모르면 생략 — 문장을 내지 않는다),
+ *   asOf 는 표시된 결과의 `modifiedAt` 최댓값(없으면 「원천 갱신 기준」 꼬리를 뺀다)
+ * @returns {{ title: string, description: string, heading: string, sentence?: string }}
+ */
+export function landingMeta(lang, sido, sigungu, attr, opts = {}) {
+  const { count = null, asOf = null } = opts;
+  const def = PLACE_LANDING_ATTRS.find((a) => a.attr === attr);
+  if (!def) throw new Error(`unknown landing attr: ${attr}`);
+  const sidoName = regionDisplayName(lang, sido);
+  const sigunguName = regionDisplayName(lang, sigungu);
+  const hasCount = count != null;
+  if (lang === 'en') {
+    const attrName = def.nameEn ?? def.nameKo;
+    const heading = `${attrName} Attractions in ${sigunguName}, ${sidoName}`;
+    const n = hasCount ? count.toLocaleString('en') : null;
+    return {
+      title: `${heading} — Map & Directions | ${PLACE_BRAND_EN}`,
+      description: clampDescription(
+        `${attrName} tourist attractions in ${sigunguName}, ${sidoName}, South Korea${n ? ` — ${n} spots` : ''}, with maps, photos and directions from official tourism data.`,
+      ),
+      heading,
+      sentence: hasCount ? `${attrName} attractions in ${sigunguName}, ${sidoName}: ${n}${asOf ? ` — as of source update ${asOf}` : ''}` : undefined,
+    };
+  }
+  const heading = `${sidoName} ${sigunguName} ${def.nameKo} 관광지`;
+  const n = hasCount ? count.toLocaleString('ko') : null;
+  return {
+    title: `${heading} — 지도·가는 길 | ${PLACE_BRAND_KO}`,
+    description: clampDescription(
+      `${sidoName} ${sigunguName}의 ${def.nameKo} 관광지${n ? ` ${n}곳` : ''}을 모았습니다. 한국관광공사 공식 데이터로 지도·사진과 가는 길을 확인하세요.`,
+    ),
+    heading,
+    sentence: hasCount ? `${sidoName} ${sigunguName}에서 ${def.nameKo} 관광지 ${n}곳${asOf ? ` — 원천 갱신 기준 ${asOf}` : ''}` : undefined,
+  };
+}
+
 /** TouristDestination + 대표 관광지 ItemList — 지역 페이지의 구조화 데이터 (ADR-0071 §9) */
 export function touristDestinationJsonLd(lang, region, attractions = []) {
   const name = regionDisplayName(lang, region);
@@ -1401,6 +1484,14 @@ export function blogBreadcrumbJsonLd(crumbs) {
 }
 
 // ─── AdSense (수익화) ────────────────────────────────────────────────────────
+
+/**
+ * 속성 랜딩 색인 스위치. `false` 면 랜딩은 200 으로 나가되 프리렌더·SPA 모두 `noindex, follow`,
+ * sitemap·llms 에서 빠진다. 프리렌더·SPA·sitemap·llms 가 전부 이 상수 하나만 본다.
+ * 환경 변수로 두지 않는다 — 빌드 인자를 거치면 프리렌더와 SPA 가 다른 값을 볼 수 있고,
+ * 켜는 일이 커밋 한 줄로 남아야 ADR-0062 개정 수용과 짝이 맞는다(그 커밋에서 함께 켠다).
+ */
+export const PLACE_LANDINGS_INDEXABLE = false;
 
 /**
  * AdSense 게시자 ID (`ca-pub-…`).

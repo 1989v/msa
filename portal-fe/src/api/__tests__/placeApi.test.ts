@@ -46,3 +46,11 @@ describe('searchAttractions — 원래 검색어 검색(exact)', () => {
     expect(sentParams().has('exact')).toBe(false);
   });
 });
+
+describe('SIGHT_CATEGORIES — 정의는 copy.mjs 한 곳', () => {
+  it('placeApi 가 내보내는 것은 copy.mjs 의 같은 배열이다(사본 아님)', async () => {
+    const api = await import('../placeApi');
+    const copy = await import('../../seo/copy.mjs');
+    expect(api.SIGHT_CATEGORIES).toBe(copy.SIGHT_CATEGORIES);
+  });
+});

@@ -13,7 +13,7 @@ Total Task Groups: 6. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
 
 ### Task Group 1: 상수·슬러그 표·랜딩 문구 (copy.mjs) (SR-0.1 · SR-1.1 · SR-1.4 · SR-4)
 **Dependencies:** None · **Phase:** portal-fe `src/seo` · **Required Skills:** JS(ESM), TS, vitest
-- [ ] 1.1 테스트 먼저
+- [x] 1.1 테스트 먼저
   - 새 `portal-fe/src/seo/__tests__/landingDecisions.test.ts` — 상수만 import 하고 리터럴로 단언(SR-4.2): `PLACE_LANDINGS_INDEXABLE === false`, `PLACE_LANDING_MIN_RESULTS` 10, 속성당 상한 5, 합산 상한 20, Jaccard 상한 0.5, 슬러그 표 4행(attr·facet 키·국문 이름: `parking`/`parking.YES`/주차 가능, `pet`/`pet.ALLOWED`/반려동물 동반, `barrier-free`/`barrierFree.WHEELCHAIR`/휠체어 대여, `free`/`admission.FREE`/입장 무료), 영문 허용은 `parking`·`free` 만, `SIGHT_CATEGORIES` = `['nature','history','culture','leisure']`
   - 새 `portal-fe/src/seo/__tests__/landingMeta.test.ts` — 기대값은 상수·대상 함수 출력으로 계산(SR-4.3, 문장을 테스트 안에서 다시 조립하지 않는다)
     - 슬러그 표의 칩 id 4개가 전부 `placeAttributes.ts` `ATTRIBUTE_CHIPS` id 안에 있음
@@ -22,14 +22,14 @@ Total Task Groups: 6. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
     - 영문 형식 「{Attr en} Attractions in {Sigungu en}, {Sido en}」, 영문명 빈 시도는 국문명
     - `landingPath(lang, code, attr)` 가 `/regions/{code}/{attr}`·`/en/regions/{code}/{attr}`
   - `portal-fe/src/api/__tests__/placeApi.test.ts` 증보: `placeApi` 의 `SIGHT_CATEGORIES` 가 `copy.mjs` 의 것과 같은 배열 참조
-- [ ] 1.2 `copy.mjs`
+- [x] 1.2 `copy.mjs`
   - `export const PLACE_LANDINGS_INDEXABLE = false;` 한 줄(`ADSENSE_CLIENT` 옆, 환경 변수 아님)
   - `SIGHT_CATEGORIES` 정의를 옮기고, `placeApi.ts:326-331` 주석(명동 7건 쇼핑 사고 근거)도 함께 옮긴다
   - 슬러그 표 `PLACE_LANDING_ATTRS`(attr·검색 파라미터·facet 키·칩 id·국문/영문 이름·언어) — SR-1.1 표가 유일한 정의
   - `PLACE_LANDING_MIN_RESULTS`(10)·속성당 상한(5)·합산 상한(20)·Jaccard 상한(0.5)
   - `landingPath(lang, code, attr)`, `landingMeta(lang, sido, sigungu, attr, { count, asOf })` → `{ title, description, heading, sentence }`. 시도 약칭은 지역 표시명 규칙(`copy.mjs:460-491` 주변)을 재사용
-- [ ] 1.3 `src/api/placeApi.ts` 의 `SIGHT_CATEGORIES` 를 `export { SIGHT_CATEGORIES } from '../seo/copy.mjs'` 한 줄로(선례 `AdSlot.tsx:2`). `PlacePage.tsx`·`RegionPage.tsx` import 는 그대로 동작해야 한다 — 다른 파일에 리터럴을 다시 적지 않는다
-- [ ] 1.4 Verify: `cd portal-fe && npx vitest run src/seo/__tests__/landingDecisions.test.ts src/seo/__tests__/landingMeta.test.ts src/api/__tests__/placeApi.test.ts && npx tsc -b`
+- [x] 1.3 `src/api/placeApi.ts` 의 `SIGHT_CATEGORIES` 를 `export { SIGHT_CATEGORIES } from '../seo/copy.mjs'` 한 줄로(선례 `AdSlot.tsx:2`). `PlacePage.tsx`·`RegionPage.tsx` import 는 그대로 동작해야 한다 — 다른 파일에 리터럴을 다시 적지 않는다
+- [x] 1.4 Verify: `cd portal-fe && npx vitest run src/seo/__tests__/landingDecisions.test.ts src/seo/__tests__/landingMeta.test.ts src/api/__tests__/placeApi.test.ts && npx tsc -b`
 
 ### Task Group 2: 선정 스크립트 + 커밋 목록 (SR-1.2 · SR-1.3 · SR-1.10)
 **Dependencies:** TG1 · **Phase:** portal-fe `scripts` · `src/content` · **Required Skills:** Node ESM, vitest, 검색 API(`/api/search/attractions`, `facets=true`)

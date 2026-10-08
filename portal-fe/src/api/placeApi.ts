@@ -332,14 +332,7 @@ export const fetchRegionVisitors = async (code: string): Promise<RegionVisitorTr
   return res.data.data;
 };
 
-/**
- * 관광 성격의 분류 — 목록·주변목록에 올리는 것 (place `Attraction.SIGHT_CATEGORIES` 와 같다).
- *
- * 적재의 절반 이상이 음식·쇼핑이라 **분류를 안 걸면 상점 목록이 된다.** 실제로 상세 페이지
- * 주변목록이 이걸 안 보내서 명동에서 국문·영문 모두 7건 전부 쇼핑이 나왔다 (2026-09-03).
- * 화면마다 각자 배열을 들고 있던 게 원인이라 여기 한 곳에 둔다.
- */
-export const SIGHT_CATEGORIES = ['nature', 'history', 'culture', 'leisure'] as const;
+export { SIGHT_CATEGORIES } from '../seo/copy.mjs';
 
 /** 지도 위 토글로만 켜는 편의·식음·숙박 — 목록에는 올리지 않는다(숙박은 목록 칩이 아니라 여기다, ADR-0071 §5). */
 export const OVERLAY_CATEGORIES = ['food', 'shopping', 'stay'] as const;
