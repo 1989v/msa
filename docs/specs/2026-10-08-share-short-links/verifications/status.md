@@ -12,3 +12,6 @@
 | 5 | `./gradlew :common:test --tests '*ClickContext*' :game:feature:test --tests '*GameShortLink*' :blog:feature:test --tests '*BlogShortLink*' :place:feature:test --tests '*AttractionShortLink*' --tests '*PlaceRetentionRunner*' :search:app:test --tests '*AttractionSearchControllerShortUrl*' :content:app:test --tests '*ContentContextLoadSpec' verifyLayerDependencies` | exit 0 · 8 스위트 49/0 · ContentContextLoadSpec 11/0 skipped 0 (실제 MySQL) (메인 세션 재실행) |
 | 5 | 회귀 주입: game TM 한정자 제거 → ContentContextLoadSpec 1 FAILED(`No active transaction`), @JsonUnwrapped 제거·isActive 판정 제거 → 각 FAILED | 구현자 보고 |
 | 5 | 깨끗한 워크트리(HEAD 544dc0243 단독, 다른 세션 미커밋 변경 없음): 8개 모듈 `compileTestKotlin` + place·search 범위 테스트 | exit 0 · PlaceRetentionRunnerSpec 2/0 · AttractionShortLinkControllerTest 9/0 · AttractionSearchControllerShortUrlTest 4/0 |
+| 6 | `./gradlew :gateway:test --tests '*ShortLinkRouteSpec' --tests '*GatewayRoutingSpec'` | exit 0 · ShortLinkRouteSpec 5/0 · GatewayRoutingSpec 19/0 (메인 세션) |
+| 6 | 리미터 키 배선 — 한정자 없이 `ipKeyResolver` 생성자 인자만 둔 첫 구현 | ShortLinkRouteSpec 「두 요청 모두 ipKeyResolver 를 거친다」 FAILED(`@Primary` userKeyResolver 가 주입됨) → `@Qualifier` 후 통과. 검사가 실제 결함을 잡음 |
+| 6 | `kubectl kustomize k8s/overlays/oci-arm` | exit 0 · apex 경로 `/api /ws /sse /svc /r /p /g /b → gateway`, `/ → portal-fe` |

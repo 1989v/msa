@@ -1,8 +1,8 @@
 # 진행 상태
 
-- 현재 그룹: 6 (gateway + ingress)
+- 현재 그룹: 7 (frontend)
 - 완료: 스펙·ADR c418643ff · G1 common d96ab86f8 · G2 resume 0e739d2e2 · G3·4 game/blog b6849d6af · G5 place/search 544dc0243
-- 다음 단계: 그룹 6 → 7 → 8
+- 다음 단계: 그룹 7 → 8
 - 블로커: 없음
 
 ## 푸시 전 제약 (필수)

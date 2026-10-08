@@ -2,6 +2,7 @@ package com.kgd.gateway.config
 
 import com.kgd.gateway.filter.AuthenticationGatewayFilter
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.cloud.gateway.filter.factory.RequestRateLimiterGatewayFilterFactory
 import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver
 import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter
 import org.springframework.cloud.gateway.route.RouteLocator
@@ -14,6 +15,8 @@ import org.springframework.http.HttpMethod
 class GatewayRouteConfig(
     private val authFilter: AuthenticationGatewayFilter,
     private val userKeyResolver: KeyResolver,
+    // 타입이 같은 후보 중 @Primary(userKeyResolver)가 이름보다 먼저 이기므로 한정자로 고정한다.
+    @Qualifier("ipKeyResolver") private val ipKeyResolver: KeyResolver,
     private val redisRateLimiter: RedisRateLimiter,
     @Qualifier("adsClientIpKeyResolver") private val adsClientIpKeyResolver: KeyResolver,
     private val adsHostAllowlist: AdsHostAllowlist,
@@ -33,6 +36,12 @@ class GatewayRouteConfig(
 
         /** ADR-0098 — 광고 네트워크(ads)는 engagement 에 폴드돼 있다. */
         const val ENGAGEMENT_URI = "http://engagement:8091"
+    }
+
+    private fun shortLinkLimit(config: RequestRateLimiterGatewayFilterFactory.Config) {
+        config.setRateLimiter(redisRateLimiter)
+        config.setKeyResolver(ipKeyResolver)
+        config.setDenyEmptyKey(false)
     }
 
     private fun userConfig() = AuthenticationGatewayFilter.Config(
@@ -685,6 +694,19 @@ class GatewayRouteConfig(
                 r.path("/go/**")
                     .filters { f -> f.stripPrefix(0) }
                     .uri(COMMERCE_URI)
+            }
+            // 공유용 단축 주소 (ADR-0103). 대상을 가진 도메인이 302 로 답한다 — 이력서는 atlas,
+            // 관광지·게임·글은 content. 인증 필터를 걸지 않으므로 클라이언트가 붙인 X-User-Id 가
+            // 지워지지 않는다. 그래서 클릭 기록(익명 쓰기)의 리미터 키는 헤더를 보지 않는 ipKeyResolver 다.
+            .route("short-link-resume") { r ->
+                r.path("/r", "/r/**")
+                    .filters { f -> f.requestRateLimiter { config -> shortLinkLimit(config) }.stripPrefix(0) }
+                    .uri(ATLAS_URI)
+            }
+            .route("short-link-content") { r ->
+                r.path("/p", "/p/**", "/g", "/g/**", "/b", "/b/**")
+                    .filters { f -> f.requestRateLimiter { config -> shortLinkLimit(config) }.stripPrefix(0) }
+                    .uri(CONTENT_URI)
             }
             // === ADR-0072 블로그 플랫폼 (code-dictionary 소유) ===
             // 좁은 경로부터 선언한다 — 선언 순서가 곧 우선순위라, 공개 라우트를 먼저 두면

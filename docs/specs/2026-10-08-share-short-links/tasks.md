@@ -91,11 +91,11 @@ Total Task Groups: 8
 **Dependencies:** Task Group 2, 3, 4, 5
 **Phase:** edge
 **Required Skills:** Spring Cloud Gateway, Kustomize
-- [ ] 6.0 Complete edge
-  - [ ] 6.1 테스트 작성: `routeLocator` 로 `/r/**` → `ATLAS_URI`, `/p,/g,/b/**` → `CONTENT_URI`, 접두사 유지, 인증 필터 없음, 리미터 키 `ipKeyResolver`(`X-User-Id` 를 바꾼 요청도 같은 키)
-  - [ ] 6.2 `GatewayRouteConfig.kt` 경로 2개(`requestRateLimiter` + `ipKeyResolver`) — SR-4
-  - [ ] 6.3 `k8s/overlays/oci-arm/ingresses/commerce-platform.yaml` apex 호스트에 `/r` `/p` `/g` `/b` → gateway — SR-4
-  - [ ] 6.4 Verify: `./gradlew :gateway:test --tests '*GatewayRoute*'` && `kubectl kustomize k8s/overlays/oci-arm >/dev/null`
+- [x] 6.0 Complete edge
+  - [x] 6.1 테스트 작성: `routeLocator` 로 `/r/**` → `ATLAS_URI`, `/p,/g,/b/**` → `CONTENT_URI`, 접두사 유지, 인증 필터 없음, 리미터 키 `ipKeyResolver`(`X-User-Id` 를 바꾼 요청도 같은 키)
+  - [x] 6.2 `GatewayRouteConfig.kt` 경로 2개(`requestRateLimiter` + `ipKeyResolver`) — SR-4
+  - [x] 6.3 `k8s/overlays/oci-arm/ingresses/commerce-platform.yaml` apex 호스트에 `/r` `/p` `/g` `/b` → gateway — SR-4
+  - [x] 6.4 Verify: `./gradlew :gateway:test --tests '*GatewayRoute*'` && `kubectl kustomize k8s/overlays/oci-arm >/dev/null`
 **Acceptance Criteria:**
 - 다른 호스트의 인그레스 규칙 diff 0.
 
