@@ -73,6 +73,33 @@ export function relaxConditions(s: HubFilterState): RelaxCondition[] {
   return out;
 }
 
+/** 「필터 N」이 세는 조건 — 분류·행사 상태·속성. 검색어·지역·반경은 툴바·지역 트리거가 이미 보여 주고, 지도 오버레이는 조건이 아니다. */
+export type ActiveFilterCondition = Extract<RelaxCondition, { kind: 'category' | 'eventStatus' | 'attribute' }>;
+
+/** 좁은 화면 「필터 N」과 요약 줄이 같이 쓰는 목록 — 실제 질의에 실린 조건(relaxConditions)에서 고른다. */
+export function activeFilterConditions(s: HubFilterState): ActiveFilterCondition[] {
+  return relaxConditions(s).filter(
+    (c): c is ActiveFilterCondition => c.kind === 'category' || c.kind === 'eventStatus' || c.kind === 'attribute',
+  );
+}
+
+export function activeFilterCount(s: HubFilterState): number {
+  return activeFilterConditions(s).length;
+}
+
+/**
+ * 좁은 화면 허브의 배치 — `listFirst` 는 목록이 먼저이고 지도는 전환, `mapSplit` 은 지도 아래 목록.
+ * 실험 배정이 아니라 화면 배치라서 주소의 `layout` 으로만 고른다. 두 값 밖은 기본값으로 떨어뜨려
+ * 쿼리 원문이 화면에 들어갈 길을 막는다.
+ */
+export type MobileLayout = 'listFirst' | 'mapSplit';
+export const DEFAULT_MOBILE_LAYOUT: MobileLayout = 'listFirst';
+
+export function parseMobileLayout(search: string): MobileLayout {
+  const value = new URLSearchParams(search).get('layout');
+  return value === 'listFirst' || value === 'mapSplit' ? value : DEFAULT_MOBILE_LAYOUT;
+}
+
 /**
  * 관광지 표시명 분리 — title 이 정제된 주 표시명, titleLocal 이 괄호에서 분리된 원어명.
  * 필드가 없는 구 응답, 빈 문자열, 주 표시명과 같은 값이면 보조명을 내지 않는다.

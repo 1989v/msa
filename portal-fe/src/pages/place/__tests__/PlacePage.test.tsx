@@ -195,6 +195,8 @@ describe('PlacePage 속성 칩', () => {
     await screen.findByText('관광지 a1-1');
     expect(screen.getByText('관광지 a0-1')).toBeInTheDocument(); // 누적
 
+    // 좁은 화면의 속성 칩은 「필터」 시트 안에 있다
+    fireEvent.click(screen.getByRole('button', { name: '필터' }));
     fireEvent.click(chip(/^주차 가능/));
     await screen.findByText('관광지 p0-1');
 
@@ -442,7 +444,7 @@ describe('PlacePage 행사·여행코스·숙박', () => {
     renderPage('/en/place');
     fireEvent.click(await screen.findByText('불꽃축제'));
 
-    const sheet = await screen.findByRole('dialog');
+    const sheet = await screen.findByRole('dialog', { name: 'Attraction' });
     await within(sheet).findByText('Starts tomorrow');
     expect(within(sheet).getByText('2026-10-27 ~ 2026-10-27')).toBeInTheDocument();
   });

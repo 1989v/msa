@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -37,10 +37,12 @@ import Footer from '../../components/Footer';
 import ThemeToggle from '../../components/ThemeToggle';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
 import {
+  activeFilterConditions,
   isPlottable,
   mergePages,
   nextPage,
   overviewText,
+  parseMobileLayout,
   relaxConditions,
   secureImageUrl,
   titleParts,
@@ -118,6 +120,9 @@ const UI = {
     pickRegionHint: '지도의 숫자는 그 시·도의 관광지 수입니다',
     countSuffix: '곳',
     regionTrigger: '지역 선택',
+    showMap: '지도 보기',
+    showListView: '목록 보기',
+    filters: '필터',
     categories: {
       nature: '자연', history: '역사', culture: '문화', leisure: '레포츠',
       shopping: '쇼핑', food: '음식', stay: '숙박', etc: '기타',
@@ -168,6 +173,9 @@ const UI = {
     pickRegionHint: 'Numbers on the map are attraction counts per province',
     countSuffix: 'places',
     regionTrigger: 'Choose a region',
+    showMap: 'Map',
+    showListView: 'List',
+    filters: 'Filters',
     categories: {
       nature: 'Nature', history: 'History', culture: 'Culture', leisure: 'Leisure',
       shopping: 'Shopping', food: 'Food', stay: 'Stay', etc: 'Etc',
@@ -201,6 +209,9 @@ const MAX_SELECT_ZOOM = 16;
 
 /** JS 렌더 분기(시트·무한스크롤·목록 상시 노출)용 모바일 판정 — CSS 900px 티어와 같은 경계 */
 const MOBILE_QUERY = '(max-width: 899.98px)';
+
+/** 좁은 화면 필터 줄에 바로 꺼내 두는 분류 칩(전체 = null). 나머지 분류는 「필터」 시트 안에 있다. */
+const QUICK_CATEGORIES: (string | null)[] = [null, 'nature', EVENT_CATEGORY];
 
 /*
  * 지도 핀 — 기본과 선택이 같은 실루엣을 쓰고 색·크기·발밑 고리로 갈린다.
@@ -312,7 +323,7 @@ export function resetPlaceSessionForTest(): void {
 
 export default function PlacePage() {
   useHeritageSurface();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const navigate = useNavigate();
   const lang: PlaceLang = pathname.startsWith('/en') ? 'en' : 'ko';
   const L = UI[lang];
@@ -365,7 +376,53 @@ export default function PlacePage() {
   const clustererRef = useRef<MarkerClusterer | null>(null);
   const overlayMarkersRef = useRef<any[]>([]);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
   const hasMapKey = mapsApiKey() !== '';
+
+  /*
+   * 좁은 화면 배치 — listFirst 는 목록이 먼저고 지도는 「지도 보기」로 연다. 지도 스크립트는 처음 열 때
+   * 부르고(mapRequested), 한 번 부르면 되돌리지 않는다. 지도 div 는 늘 마운트하고 CSS 로만 숨긴다.
+   * 넓은 화면과 mapSplit 은 지금처럼 마운트 때 지도를 부른다.
+   */
+  const layout = parseMobileLayout(search);
+  const listFirst = isMobile && layout === 'listFirst';
+  const [mobileView, setMobileView] = useState<'list' | 'map'>('list');
+  const mapHidden = listFirst && mobileView === 'list';
+  const [mapRequested, setMapRequested] = useState(() => !listFirst);
+  if (!mapRequested && !listFirst) setMapRequested(true);
+  // 지도 상태로 들어간 횟수 — 들어갈 때마다 한 번 결과에 맞춰 지도를 맞춘다
+  const [mapEntry, setMapEntry] = useState(0);
+  // 지도 상태의 지도 높이 = 화면 높이 − 툴바 아래끝(문서 좌표). 들어갈 때 재고 맨 위로 올린다
+  const [mapTop, setMapTop] = useState(0);
+  const listScrollRef = useRef(0);
+  const enterMapView = () => {
+    listScrollRef.current = window.scrollY;
+    setMapTop(Math.round((toolbarRef.current?.getBoundingClientRect().bottom ?? 0) + window.scrollY));
+    setMobileView('map');
+    setMapRequested(true);
+    setMapEntry((n) => n + 1);
+    window.scrollTo(0, 0);
+  };
+  const leaveMapView = () => {
+    setMobileView('list');
+    // 목록이 다시 펼쳐진 뒤 보던 자리로
+    requestAnimationFrame(() => window.scrollTo(0, listScrollRef.current));
+  };
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  // KhSheet 는 onClose 가 바뀔 때마다 패널로 포커스를 옮긴다 — 고정해야 칩을 누른 뒤 포커스가 칩에 남는다
+  const closeFilterSheet = useCallback(() => setFilterSheetOpen(false), []);
+  /*
+   * 오버레이(음식·쇼핑·숙박)는 지도 위에만 그려지고 질의도 지도 범위가 있어야 나간다.
+   * 목록 상태에서 켜면 지도로 넘어가 시트를 닫는다. 지도 키가 없으면 돌아올 버튼이 없어 넘어가지 않는다.
+   */
+  const toggleOverlay = (c: string) => {
+    const turningOn = overlay !== c;
+    setOverlay(turningOn ? c : null);
+    if (turningOn && hasMapKey && mapHidden) {
+      enterMapView();
+      closeFilterSheet();
+    }
+  };
 
   const query: AttractionQuery = useMemo(
     () => ({
@@ -751,9 +808,9 @@ export default function PlacePage() {
     return null;
   }, [selectedId, attractions, selected]);
 
-  // 지도 초기화 (키 있을 때만 — 미설정이면 리스트-only)
+  // 지도 초기화 (키 있을 때만 — 미설정이면 리스트-only). 좁은 화면 listFirst 는 「지도 보기」를 누른 뒤에
   useEffect(() => {
-    if (!hasMapKey || mapRef.current || !mapDivRef.current) return;
+    if (!hasMapKey || !mapRequested || mapRef.current || !mapDivRef.current) return;
     let cancelled = false;
     loadGoogleMaps()
       .then((maps) => {
@@ -775,7 +832,7 @@ export default function PlacePage() {
     return () => {
       cancelled = true;
     };
-  }, [hasMapKey]);
+  }, [hasMapKey, mapRequested]);
 
   // 클러스터 최대 줌에서 카드 목록으로 안내 — 지도가 더는 쪼개 주지 못하는 것을 목록이 보여준다
   const scrollCardIntoView = useCallback((id: string) => {
@@ -797,6 +854,11 @@ export default function PlacePage() {
   useEffect(() => {
     selectedIdRef.current = selectedId;
   }, [selectedId]);
+  // 숨긴 지도에는 맞추지 않는다 — 크기 0 으로 줌을 계산한다. 마커 동기화의 의존성에 넣지 않으려고 ref 로 넘긴다
+  const mapHiddenRef = useRef(mapHidden);
+  useEffect(() => {
+    mapHiddenRef.current = mapHidden;
+  }, [mapHidden]);
 
   // 결과 → 마커 동기화. 관광지 마커는 줌에 따라 클러스터로 묶는다 —
   // 모바일 무한 스크롤이 마커를 수백 개까지 쌓아 개별 핀만으로는 지도가 덮인다.
@@ -837,7 +899,7 @@ export default function PlacePage() {
         markersRef.current.set(r.code, marker);
         bounds.extend({ lat: r.latitude, lng: r.longitude });
       });
-      if (!bounds.isEmpty()) {
+      if (!bounds.isEmpty() && !mapHiddenRef.current) {
         map.fitBounds(bounds, 56);
         window.google.maps.event.addListenerOnce(map, 'idle', () => setMapMoved(false));
       }
@@ -930,7 +992,7 @@ export default function PlacePage() {
 
     // 새 검색(0페이지)만 화면을 다시 맞춘다 — 무한 스크롤로 페이지가 붙을 때마다
     // fitBounds 를 하면 읽고 있던 지도가 계속 튄다.
-    if (!isMobile || page === 0) {
+    if ((!isMobile || page === 0) && !mapHiddenRef.current) {
       map.fitBounds(bounds, 48);
       window.google.maps.event.addListenerOnce(map, 'idle', () => {
         // 시도를 고른 상태면 그 레벨보다 더 당기지 않는다
@@ -940,6 +1002,38 @@ export default function PlacePage() {
       });
     }
   }, [attractions, mapReady, areaCode, pickingRegion, sidoRegions, lang, selectRegion, scrollCardIntoView, isMobile, page]);
+
+  /*
+   * 지도 상태로 들어갈 때마다(첫 진입 포함) 지금 결과에 한 번 맞춘다 — 쪽 번호와 무관하다.
+   * 지도 div 가 보이게 된 뒤 레이아웃이 끝나도록 다음 프레임에서 한다. 지역 고르기면 시도 마커에 맞춘다.
+   */
+  const fittedEntryRef = useRef(0);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (mapEntry === 0 || fittedEntryRef.current === mapEntry || mapHidden || !mapReady || !map || !window.google?.maps) return;
+    const raf = requestAnimationFrame(() => {
+      fittedEntryRef.current = mapEntry;
+      const maps = window.google.maps;
+      const bounds = new maps.LatLngBounds();
+      if (pickingRegion) {
+        (sidoRegions ?? []).forEach((r) => {
+          if (r.latitude != null && r.longitude != null) bounds.extend({ lat: r.latitude, lng: r.longitude });
+        });
+      } else {
+        attractions.forEach((a) => {
+          if (isPlottable(a.latitude, a.longitude)) bounds.extend({ lat: a.latitude, lng: a.longitude });
+        });
+      }
+      if (bounds.isEmpty()) return;
+      map.fitBounds(bounds, pickingRegion ? 56 : 48);
+      maps.event.addListenerOnce(map, 'idle', () => {
+        if (!pickingRegion && areaCode && map.getZoom() > MAX_ZOOM_BY_LEVEL.SIDO) map.setZoom(MAX_ZOOM_BY_LEVEL.SIDO);
+        // fitBounds 가 낸 zoom_changed 를 사용자 이동으로 오인하지 않게 — 안 하면 「이 지역 검색」이 바로 뜬다
+        setMapMoved(false);
+      });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [mapEntry, mapHidden, mapReady, pickingRegion, sidoRegions, attractions, areaCode]);
 
   /*
    * 오버레이가 켜져 있을 때만 지도 이동을 따라간다. 꺼져 있으면 상태를 건드리지 않는다 —
@@ -1178,6 +1272,29 @@ export default function PlacePage() {
     });
   }, []);
 
+  // 분류 칩 — 넓은 화면 칩 줄, 좁은 화면 필터 줄·필터 시트가 같은 핸들러를 쓴다
+  const pickAllCategories = () => {
+    triggerRef.current = 'category';
+    changedRef.current = ['category', 'listEventStatus', 'page'];
+    setCategory(null);
+    setPage(0);
+  };
+  const pickCategory = (c: string) => {
+    triggerRef.current = 'category';
+    changedRef.current = ['category', 'listEventStatus', 'page'];
+    setCategory(category === c ? null : c);
+    setListEventStatus(null);
+    setPage(0);
+  };
+  // 「필터 N」과 요약 줄 — 같은 조건 목록에서 센다(검색어·지역·반경은 세지 않는다)
+  const activeFilters = activeFilterConditions({ keyword, category, listEventStatus, attributes, areaCode, sidoCode, sigunguCode, geo });
+  const activeFilterNames = activeFilters.map((c) => {
+    if (c.kind === 'category') return L.categories[c.category] ?? c.category;
+    if (c.kind === 'eventStatus') return L.eventStatuses[c.status as ListEventStatus] ?? c.status;
+    const chip = ATTRIBUTE_CHIPS.find((a) => a.id === c.id);
+    return chip ? chip[lang] : c.id;
+  });
+
   const isPlaceHost = window.location.hostname.split('.')[0] === 'place';
   const switchLang = (next: PlaceLang) => {
     if (next === lang) return;
@@ -1188,7 +1305,7 @@ export default function PlacePage() {
   };
 
   return (
-    <div className="place-page">
+    <div className={listFirst && hasMapKey ? 'place-page has-view-toggle' : 'place-page'}>
       <header className="place-header">
         <h1 className="place-title">
           {L.title}
@@ -1210,7 +1327,7 @@ export default function PlacePage() {
         <p className="place-subtitle">{L.subtitle}</p>
       </header>
 
-      <div className="place-toolbar">
+      <div className="place-toolbar" ref={toolbarRef}>
         <form
           className="place-search"
           onSubmit={(e) => {
@@ -1309,17 +1426,43 @@ export default function PlacePage() {
           />
         )}
 
-        {/* 모바일 지역 선택 — 칩 벽 대신 현재 선택을 접은 트리거 + 바텀시트 드릴다운 */}
-        {hasRegionAxis && isMobile && (
-          <button
-            type="button"
-            className="place-region-trigger"
-            aria-haspopup="dialog"
-            onClick={() => setRegionSheetOpen(true)}
-          >
-            <span className="place-region-trigger-label">{regionTriggerLabel}</span>
-            <span aria-hidden="true">▾</span>
-          </button>
+        {/* 좁은 화면 필터 한 줄 — 지역 트리거 + 핵심 분류 칩 셋 + 「필터 N」. 나머지 칩은 시트 안에 있다 */}
+        {isMobile && (
+          <div className="place-filter-bar">
+            <div className="place-filter-row">
+              {/* 모바일 지역 선택 — 칩 벽 대신 현재 선택을 접은 트리거 + 바텀시트 드릴다운 */}
+              {hasRegionAxis && (
+                <button
+                  type="button"
+                  className="place-region-trigger"
+                  aria-haspopup="dialog"
+                  onClick={() => setRegionSheetOpen(true)}
+                >
+                  <span className="place-region-trigger-label">{regionTriggerLabel}</span>
+                  <span aria-hidden="true">▾</span>
+                </button>
+              )}
+              {QUICK_CATEGORIES.map((c) => (
+                <button
+                  key={c ?? 'all'}
+                  type="button"
+                  className={`place-chip ${category === c ? 'active' : ''}`}
+                  onClick={() => (c == null ? pickAllCategories() : pickCategory(c))}
+                >
+                  {c == null ? L.all : L.categories[c]}
+                </button>
+              ))}
+              <button
+                type="button"
+                className="place-btn place-filter-open"
+                aria-haspopup="dialog"
+                onClick={() => setFilterSheetOpen(true)}
+              >
+                {activeFilters.length > 0 ? `${L.filters} ${activeFilters.length}` : L.filters}
+              </button>
+            </div>
+            {activeFilters.length > 0 && <p className="place-filter-summary">{activeFilterNames.join(' · ')}</p>}
+          </div>
         )}
         {regionSheetOpen && isMobile && (
           <RegionSheet
@@ -1331,127 +1474,118 @@ export default function PlacePage() {
           />
         )}
 
-        <div className="place-filters">
-          <button
-            className={`place-chip ${category == null ? 'active' : ''}`}
-            onClick={() => {
-              triggerRef.current = 'category';
-              changedRef.current = ['category', 'listEventStatus', 'page'];
-              setCategory(null);
-              setPage(0);
-            }}
-          >
-            {L.all}
-          </button>
-          {/* 행사는 모든 언어, 여행코스는 국문만 — 영문 서비스에는 코스 유형이 없어 0건 칩이 된다 */}
-          {[...SIGHT_CATEGORIES, EVENT_CATEGORY, ...(lang === 'ko' ? [COURSE_CATEGORY] : [])].map((c) => (
+        <FilterSheetFrame mobile={isMobile} open={filterSheetOpen} label={L.filters} onClose={closeFilterSheet}>
+          <div className="place-filters">
             <button
-              key={c}
-              className={`place-chip ${category === c ? 'active' : ''}`}
-              data-category={c}
-              onClick={() => {
-                triggerRef.current = 'category';
-                changedRef.current = ['category', 'listEventStatus', 'page'];
-                setCategory(category === c ? null : c);
-                setListEventStatus(null);
-                setPage(0);
-              }}
+              className={`place-chip ${category == null ? 'active' : ''}`}
+              onClick={pickAllCategories}
             >
-              {L.categories[c]}
+              {L.all}
             </button>
-          ))}
-          <span className="place-filter-sep" aria-hidden="true" />
-          <span className="place-filter-label">{L.onMap}</span>
-          {OVERLAY_CATEGORIES.map((c) => (
-            <button
-              key={c}
-              type="button"
-              className={`place-chip overlay ${overlay === c ? 'active' : ''}`}
-              aria-pressed={overlay === c}
-              onClick={() => setOverlay(overlay === c ? null : c)}
-            >
-              {L.categories[c]}
-            </button>
-          ))}
-          {!hasRegionAxis && (
-            <select
-              className="place-area-select"
-              value={areaCode ?? ''}
-              onChange={(e) => {
-                triggerRef.current = 'region';
-                changedRef.current = ['areaCode'];
-                setAreaCode(e.target.value || null);
-                setGeo(null);
-                setPage(0);
-              }}
-              aria-label="Area"
-            >
-              <option value="">{L.all}</option>
-              {AREAS.map((a) => (
-                <option key={a.code} value={a.code}>
-                  {lang === 'ko' ? a.ko : a.en}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-
-        {/* 행사 상태 칩 — 행사 칩을 골랐을 때만. 안 고르면 끝나지 않은 행사 전부, 고른 칩을 다시 누르면 풀린다. */}
-        {category === EVENT_CATEGORY && (
-          <div className="place-event-filter" role="group" aria-label={L.eventStatusGroup}>
-            {LIST_EVENT_STATUSES.map((s) => (
+            {/* 행사는 모든 언어, 여행코스는 국문만 — 영문 서비스에는 코스 유형이 없어 0건 칩이 된다 */}
+            {[...SIGHT_CATEGORIES, EVENT_CATEGORY, ...(lang === 'ko' ? [COURSE_CATEGORY] : [])].map((c) => (
               <button
-                key={s}
-                type="button"
-                className={`place-chip ${listEventStatus === s ? 'active' : ''}`}
-                aria-pressed={listEventStatus === s}
-                data-event-filter={s}
-                onClick={() => {
-                  triggerRef.current = 'eventStatus';
-                  changedRef.current = ['listEventStatus', 'page'];
-                  setListEventStatus(listEventStatus === s ? null : s);
-                  setPage(0);
-                }}
+                key={c}
+                className={`place-chip ${category === c ? 'active' : ''}`}
+                data-category={c}
+                onClick={() => pickCategory(c)}
               >
-                {L.eventStatuses[s]}
+                {L.categories[c]}
               </button>
             ))}
+            <span className="place-filter-sep" aria-hidden="true" />
+            <span className="place-filter-label">{L.onMap}</span>
+            {OVERLAY_CATEGORIES.map((c) => (
+              <button
+                key={c}
+                type="button"
+                className={`place-chip overlay ${overlay === c ? 'active' : ''}`}
+                aria-pressed={overlay === c}
+                onClick={() => toggleOverlay(c)}
+              >
+                {L.categories[c]}
+              </button>
+            ))}
+            {!hasRegionAxis && (
+              <select
+                className="place-area-select"
+                value={areaCode ?? ''}
+                onChange={(e) => {
+                  triggerRef.current = 'region';
+                  changedRef.current = ['areaCode'];
+                  setAreaCode(e.target.value || null);
+                  setGeo(null);
+                  setPage(0);
+                }}
+                aria-label="Area"
+              >
+                <option value="">{L.all}</option>
+                {AREAS.map((a) => (
+                  <option key={a.code} value={a.code}>
+                    {lang === 'ko' ? a.ko : a.en}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
-        )}
 
-        {/* 속성 칩 — 분류 칩과 다른 축이라 따로 한 묶음(모바일은 한 줄 가로 스크롤).
-            칩은 숨기지 않는다: 안 고른 칩이 0 이면 흐리게 두고 자리를 지킨다 — 빠지면 옆 칩이
-            밀려 누르려던 자리에 다른 칩이 온다. 고른 칩은 0 이어도 활성이다(풀 수 있어야 한다).
-            행사 칩을 골랐을 때만 줄째 뺀다 — 관광지 속성이라 행사에는 전부 0 이다. */}
-        {category !== EVENT_CATEGORY && (
-          <div className="place-attr-group" role="group" aria-label={lang === 'en' ? 'Visitor info filters' : '방문 정보 필터'}>
-            <div className="place-attr-chips">
-              {attributeChips(lang, attributes).map((chip) => {
-                const selected = attributes.has(chip.id);
-                const count = chipCount(facets, chip.id);
-                const empty = !selected && count === 0;
-                return (
-                  <button
-                    key={chip.id}
-                    type="button"
-                    className={['place-chip', 'place-attr-chip', selected ? 'active' : '', empty ? 'is-empty' : '']
-                      .filter(Boolean)
-                      .join(' ')}
-                    aria-pressed={selected}
-                    data-attr={chip.id}
-                    onClick={() => toggleAttribute(chip.id)}
-                  >
-                    {chip[lang]}
-                    {count != null && (
-                      <span className="place-attr-count">{count.toLocaleString(lang === 'en' ? 'en' : 'ko')}</span>
-                    )}
-                  </button>
-                );
-              })}
+          {/* 행사 상태 칩 — 행사 칩을 골랐을 때만. 안 고르면 끝나지 않은 행사 전부, 고른 칩을 다시 누르면 풀린다. */}
+          {category === EVENT_CATEGORY && (
+            <div className="place-event-filter" role="group" aria-label={L.eventStatusGroup}>
+              {LIST_EVENT_STATUSES.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  className={`place-chip ${listEventStatus === s ? 'active' : ''}`}
+                  aria-pressed={listEventStatus === s}
+                  data-event-filter={s}
+                  onClick={() => {
+                    triggerRef.current = 'eventStatus';
+                    changedRef.current = ['listEventStatus', 'page'];
+                    setListEventStatus(listEventStatus === s ? null : s);
+                    setPage(0);
+                  }}
+                >
+                  {L.eventStatuses[s]}
+                </button>
+              ))}
             </div>
-            <p className="place-attr-caption">{ATTRIBUTE_CAPTION[lang]}</p>
-          </div>
-        )}
+          )}
+
+          {/* 속성 칩 — 분류 칩과 다른 축이라 따로 한 묶음(모바일은 한 줄 가로 스크롤).
+              칩은 숨기지 않는다: 안 고른 칩이 0 이면 흐리게 두고 자리를 지킨다 — 빠지면 옆 칩이
+              밀려 누르려던 자리에 다른 칩이 온다. 고른 칩은 0 이어도 활성이다(풀 수 있어야 한다).
+              행사 칩을 골랐을 때만 줄째 뺀다 — 관광지 속성이라 행사에는 전부 0 이다. */}
+          {category !== EVENT_CATEGORY && (
+            <div className="place-attr-group" role="group" aria-label={lang === 'en' ? 'Visitor info filters' : '방문 정보 필터'}>
+              <div className="place-attr-chips">
+                {attributeChips(lang, attributes).map((chip) => {
+                  const selected = attributes.has(chip.id);
+                  const count = chipCount(facets, chip.id);
+                  const empty = !selected && count === 0;
+                  return (
+                    <button
+                      key={chip.id}
+                      type="button"
+                      className={['place-chip', 'place-attr-chip', selected ? 'active' : '', empty ? 'is-empty' : '']
+                        .filter(Boolean)
+                        .join(' ')}
+                      aria-pressed={selected}
+                      data-attr={chip.id}
+                      onClick={() => toggleAttribute(chip.id)}
+                    >
+                      {chip[lang]}
+                      {count != null && (
+                        <span className="place-attr-count">{count.toLocaleString(lang === 'en' ? 'en' : 'ko')}</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="place-attr-caption">{ATTRIBUTE_CAPTION[lang]}</p>
+            </div>
+          )}
+        </FilterSheetFrame>
 
         {/* 데스크톱은 기존 칩 드릴다운 그대로 — 화면이 넓으면 펼쳐 보이는 쪽이 한 탭 덜 든다 */}
         {hasRegionAxis && !isMobile && (
@@ -1470,9 +1604,13 @@ export default function PlacePage() {
           'place-body',
           isMobile || listOpen ? '' : 'list-collapsed',
           selected && !isMobile ? 'has-detail' : '',
+          // 배치 클래스는 파싱된 값에서 고른 고정 문자열이다 — 주소의 원문을 넣지 않는다
+          !isMobile ? '' : !listFirst ? 'is-map-split' : mobileView === 'map' ? 'is-map-view' : 'is-list-view',
         ].filter(Boolean).join(' ')}
+        style={listFirst && mobileView === 'map' ? ({ '--place-map-top': `${mapTop}px` } as CSSProperties) : undefined}
       >
-        <div className="place-list-col">
+        {/* 지도 상태의 결과 패널은 같은 목록 칸을 지도 아래쪽에 앉힌 것이다 — 목록을 두 번 그리지 않는다 */}
+        <div className={listFirst && mobileView === 'map' ? 'place-list-col place-results-panel' : 'place-list-col'}>
           {/* 접기 토글은 데스크톱 전용 — 모바일 목록은 지도 아래에 항상 있다 */}
           {!isMobile && (
             <button
@@ -1636,6 +1774,17 @@ export default function PlacePage() {
         )}
       </div>
 
+      {/* 지도 보기 / 목록 보기 — 좁은 화면 listFirst 전용. 계측하지 않는다(대상 없는 전환이라 「지도 열기」가 아니다) */}
+      {listFirst && hasMapKey && (
+        <button
+          type="button"
+          className="place-btn primary place-view-toggle"
+          onClick={mobileView === 'map' ? leaveMapView : enterMapView}
+        >
+          {mobileView === 'map' ? L.showListView : L.showMap}
+        </button>
+      )}
+
       {/* 모바일 상세 — 세 번째 열 대신 바텀시트. 포커스·Escape·드래그 닫기는 KhSheet 가 담당하고,
           선택이 화면 아래로 흘러가 못 보는 일이 없다. */}
       {selected && isMobile && (
@@ -1655,6 +1804,32 @@ export default function PlacePage() {
         </p>
       </Footer>
     </div>
+  );
+}
+
+/**
+ * 분류·행사 상태·속성·지도 오버레이 칩 묶음의 자리 — 넓은 화면은 툴바에 그대로,
+ * 좁은 화면은 「필터」 시트 안에. 칩·핸들러·계측은 한 벌이다.
+ */
+function FilterSheetFrame({
+  mobile,
+  open,
+  label,
+  onClose,
+  children,
+}: {
+  mobile: boolean;
+  open: boolean;
+  label: string;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  if (!mobile) return <>{children}</>;
+  if (!open) return null;
+  return (
+    <KhSheet label={label} onClose={onClose} className="place-filter-sheet">
+      <div className="place-filter-sheet-body">{children}</div>
+    </KhSheet>
   );
 }
 

@@ -2,8 +2,10 @@ import type { Attraction } from '../../../api/placeApi';
 import { campingRows } from '../placeAttributes';
 import { describe, expect, it } from 'vitest';
 import {
+  DEFAULT_MOBILE_LAYOUT,
   INTRO_DERIVED_CONCEPTS,
   INTRO_LABELS,
+  activeFilterCount,
   galleryImages,
   groupByCategory,
   introBaseKey,
@@ -13,6 +15,7 @@ import {
   nextPage,
   overviewText,
   parseLinks,
+  parseMobileLayout,
   relaxConditions,
   repeatInfoRows,
   sourceText,
@@ -433,5 +436,47 @@ describe('relaxConditions — 0건 화면의 해제 후보', () => {
       { kind: 'category', category: 'nature' },
       { kind: 'attribute', id: 'parking' },
     ]);
+  });
+});
+
+describe('parseMobileLayout — 좁은 화면 배치 변형', () => {
+  it('정확히 listFirst · mapSplit 이면 그 값', () => {
+    expect(parseMobileLayout('?layout=listFirst')).toBe('listFirst');
+    expect(parseMobileLayout('?layout=mapSplit')).toBe('mapSplit');
+    expect(parseMobileLayout('?q=1&layout=mapSplit')).toBe('mapSplit');
+  });
+
+  it('없거나 그 밖의 값이면 기본값 — 대소문자·앞뒤 문자도 무효', () => {
+    expect(DEFAULT_MOBILE_LAYOUT).toBe('listFirst');
+    expect(parseMobileLayout('')).toBe(DEFAULT_MOBILE_LAYOUT);
+    expect(parseMobileLayout('?layout=')).toBe(DEFAULT_MOBILE_LAYOUT);
+    expect(parseMobileLayout('?layout=mapsplit')).toBe(DEFAULT_MOBILE_LAYOUT);
+    expect(parseMobileLayout('?layout=mapSplit%22%3E')).toBe(DEFAULT_MOBILE_LAYOUT);
+    expect(parseMobileLayout('?layout=evil')).toBe(DEFAULT_MOBILE_LAYOUT);
+  });
+});
+
+describe('activeFilterCount — 「필터 N」의 N', () => {
+  const base = {
+    keyword: '', category: null, listEventStatus: null, attributes: new Set<never>(),
+    areaCode: null, sidoCode: null, sigunguCode: null, geo: null,
+  };
+
+  it('분류만 고르면 1', () => {
+    expect(activeFilterCount({ ...base, category: 'nature' })).toBe(1);
+  });
+
+  it('행사 + 상태는 2', () => {
+    expect(activeFilterCount({ ...base, category: 'festival', listEventStatus: 'ONGOING' })).toBe(2);
+  });
+
+  it('속성 2개는 2', () => {
+    expect(activeFilterCount({ ...base, attributes: new Set(['parking', 'wellness'] as const) })).toBe(2);
+  });
+
+  it('반경(geo)·검색어·지역은 세지 않는다', () => {
+    expect(activeFilterCount({ ...base, geo: { radiusKm: 5 } })).toBe(0);
+    expect(activeFilterCount({ ...base, keyword: '궁궐', sidoCode: '11', sigunguCode: '110', areaCode: '1' })).toBe(0);
+    expect(activeFilterCount({ ...base, keyword: '궁궐', category: 'nature', geo: { radiusKm: 5 } })).toBe(1);
   });
 });

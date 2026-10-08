@@ -11,9 +11,9 @@ Total Task Groups: 5. 정본 `spec.md`(개정 3). 표준 `docs/standards/test-ru
 
 ### Task Group 2: 모바일 두 변형 + 필터 압축 (SR-1 · SR-2 · SR-3)
 **Dependencies:** TG1 · **Phase:** portal-fe
-- [ ] 2.1 테스트 `PlacePage.layout.test.tsx` + `placeView.test.ts` 증보(SR-5.1 목록 전부, matchMedia 목 교체, 기존 모바일 테스트는 시트 열고 같은 단언)
-- [ ] 2.2 `parseMobileLayout`·`activeFilterCount`(placeView.ts), `DEFAULT_MOBILE_LAYOUT='listFirst'`, mapRequested·지도 effect·결과 패널·하단 버튼·진입 fit(rAF·pickingRegion)·대안 흐름, 필터 한 줄·KhSheet 시트(onClose useCallback), mapSplit 38vh
-- [ ] 2.3 Verify: `cd portal-fe && npx vitest run src/pages/place && npx tsc -b`
+- [x] 2.1 테스트 `PlacePage.layout.test.tsx` + `placeView.test.ts` 증보(SR-5.1 목록 전부, matchMedia 목 교체, 기존 모바일 테스트는 시트 열고 같은 단언)
+- [x] 2.2 `parseMobileLayout`·`activeFilterCount`(placeView.ts), `DEFAULT_MOBILE_LAYOUT='listFirst'`, mapRequested·지도 effect·결과 패널·하단 버튼·진입 fit(rAF·pickingRegion)·대안 흐름, 필터 한 줄·KhSheet 시트(onClose useCallback), mapSplit 38vh
+- [x] 2.3 Verify: `cd portal-fe && npx vitest run src/pages/place && npx tsc -b`
 
 ### Task Group 3: 성능 소작업 (SR-4.1 · 4.3 · 4.4)
 **Dependencies:** TG2 · **Phase:** portal-fe + search

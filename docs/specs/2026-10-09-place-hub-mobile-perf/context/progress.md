@@ -1,6 +1,7 @@
 # 진행 상태
 
-- 현재 그룹: 2 (모바일 두 변형 + 필터 압축)
+- 현재 그룹: 3 (성능 소작업)
+- 완료: TG2 모바일 두 변형 + 필터 압축 — 메인 재실행: vitest src/pages/place 11 files / 235 passed, tsc exit 0. 폴드·지도 높이는 TG5 CDP 에서 판정
 - 완료: TG1 사진 주소 https — 메인 재실행 2026-10-09 00:45 KST
   - vitest 33 files / 389 passed, tsc exit 0
   - AttractionSeoTextTest 6/0, AttractionPageRendererTest 70/0, AttractionJsonLdParityTest 31/0, SecureImageParityTest 10/0
