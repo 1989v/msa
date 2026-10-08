@@ -577,6 +577,22 @@ export function landingMeta(lang, sido, sigungu, attr, opts = {}) {
   };
 }
 
+/**
+ * 랜딩 문장의 기준일 — 표시된 결과의 원천 수정일(`modifiedAt`, 시간대 없음) 날짜 부분 최댓값, 없으면 null.
+ * 시간대 변환을 하지 않는다 — 원천 날짜를 그대로 보인다. 프리렌더와 SPA 가 같은 함수를 쓴다.
+ * @param {Array<{ modifiedAt?: string | null }>} [attractions]
+ * @returns {string | null}
+ */
+export function landingAsOf(attractions = []) {
+  return (
+    attractions
+      .map((a) => /^(\d{4}-\d{2}-\d{2})/.exec(String(a.modifiedAt ?? ''))?.[1])
+      .filter(Boolean)
+      .sort()
+      .pop() ?? null
+  );
+}
+
 /** TouristDestination + 대표 관광지 ItemList — 지역 페이지의 구조화 데이터 (ADR-0071 §9) */
 export function touristDestinationJsonLd(lang, region, attractions = []) {
   const name = regionDisplayName(lang, region);

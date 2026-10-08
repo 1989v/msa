@@ -47,6 +47,12 @@
   font-size: 0.95rem;
 }
 
+/* 속성 랜딩의 건수 문장 — 부제와 달리 좁은 화면에서도 남긴다(프리렌더 본문과 같은 문장이다) */
+.place-landing-sentence {
+  color: var(--ko-text-secondary);
+  font-size: 0.95rem;
+}
+
 .place-lang-toggle {
   display: inline-flex;
   border: 1px solid var(--ko-border-default);

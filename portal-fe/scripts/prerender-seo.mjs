@@ -100,6 +100,7 @@ import {
   PLACE_LANDING_MIN_RESULTS,
   PLACE_LANDINGS_INDEXABLE,
   SIGHT_CATEGORIES,
+  landingAsOf,
   landingMeta,
   landingPath,
   placeCategoryLabel,
@@ -1402,12 +1403,6 @@ export async function fetchPlaceLandings(landings, regions, get = getJson) {
   return results;
 }
 
-/** 원천 수정일(`yyyy-MM-ddTHH:mm:ss`, 시간대 없음)의 날짜 부분. 시간대 변환을 하지 않는다 — 원천 날짜를 그대로 보인다 */
-function sourceDate(value) {
-  const m = /^(\d{4}-\d{2}-\d{2})/.exec(String(value ?? ''));
-  return m ? m[1] : null;
-}
-
 /** 주소 앞부분 — 시도·시군구·도로명까지 */
 function addressHead(address) {
   return sourceText(address).split(/\s+/).slice(0, 3).join(' ');
@@ -1438,7 +1433,7 @@ export function placeLandingPages(shell, { landings, regions, results, indexable
     const data = results.get(landingKey(entry)) ?? null;
     const count = data?.totalElements ?? null;
     const shown = (data?.attractions ?? []).slice(0, LANDING_RESULTS);
-    const asOf = shown.map((a) => sourceDate(a.modifiedAt)).filter(Boolean).sort().pop() ?? null;
+    const asOf = landingAsOf(shown);
     const enough = count != null && count >= PLACE_LANDING_MIN_RESULTS;
     if (!enough && !entry.retired) {
       warnings.push(`속성 랜딩 ${landingKey(entry)} — 현재 ${count ?? '건수 없음'}건으로 하한 ${PLACE_LANDING_MIN_RESULTS}건 미달, noindex 로 냅니다`);

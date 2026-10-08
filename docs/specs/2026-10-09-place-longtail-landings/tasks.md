@@ -88,7 +88,7 @@ Total Task Groups: 6. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
 
 ### Task Group 4: SPA 프리셋 랜딩 화면 (SR-2)
 **Dependencies:** TG1, TG2(번들에 넣을 `place-landings.json`), TG3(동등성 비교용 프리렌더 출력) · **Phase:** portal-fe `src/pages/place` · `App.tsx` · **Required Skills:** React, TS, vitest + Testing Library
-- [ ] 4.1 테스트 먼저 — 새 `portal-fe/src/pages/place/__tests__/PlaceLanding.test.tsx`(선례 `PlacePage.tracking.test.tsx` 의 `byAction`, 좌표 성공·거부 두 경우)
+- [x] 4.1 테스트 먼저 — 새 `portal-fe/src/pages/place/__tests__/PlaceLanding.test.tsx`(선례 `PlacePage.tracking.test.tsx` 의 `byAction`, 좌표 성공·거부 두 경우)
   - SEARCH trigger 열 = `['landing']`(`initial` 없음)
   - 모든 SEARCH 가 같은 시도·시군구·속성, payload `landing: "{code5}/{attr}"`
   - 조건 변경 뒤 주소·canonical 유지
@@ -99,16 +99,16 @@ Total Task Groups: 6. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
   - `retired` 항목 → 화면은 그리고 noindex
   - 스위치 false → noindex
   - `PlacePage.test.tsx`·`PlacePage.tracking.test.tsx` 기존 단언이 그대로 통과(프리셋 없음 = 지금과 같음)
-- [ ] 4.2 새 `PlaceLandingRoute`(`src/pages/place/PlaceLandingRoute.tsx`): 번들 `place-landings.json` 에서 (lang, code, attr) 조회 → 없으면 `NotFoundPage`, 있으면 `<PlacePage preset={{ sidoCode, sigunguCode: entry.code.slice(2), attribute: 칩 id, retired, seo }} />`
-- [ ] 4.3 `PlacePage({ preset? })`
+- [x] 4.2 새 `PlaceLandingRoute`(`src/pages/place/PlaceLandingRoute.tsx`): 번들 `place-landings.json` 에서 (lang, code, attr) 조회 → 없으면 `NotFoundPage`, 있으면 `<PlacePage preset={{ sidoCode, sigunguCode: entry.code.slice(2), attribute: 칩 id, retired, seo }} />`
+- [x] 4.3 `PlacePage({ preset? })`
   - `sidoCode`·`sigunguCode`·`attributes` 를 `useState` 초기값으로(effect·`selectRegion` 경유 금지), `autoPickedRef` 를 `true` 로 시작
   - 첫 질의 trigger `landing`, 라우트 동안 모든 SEARCH payload 에 `landing`
   - 위에 heading·sentence(N = 프리셋 첫 결과 `totalElements`), `useSeo` 입력을 preset.seo 로, canonical 고정·히스토리 교체 없음
   - noindex = `!PLACE_LANDINGS_INDEXABLE || preset.retired || 첫 결과 전 || 첫 결과 totalElements < 하한`. 조건 변경 뒤 재계산 없음
   - `:339` 주석을 「속성 칩 조작은 주소를 만들지 않는다 — 속성 주소는 `place-landings.json` 에 커밋된 랜딩뿐」으로
   - 배치·색은 DESIGN.md 토큰만(hex 금지), `k-heritage.html` 견본 기준
-- [ ] 4.4 `App.tsx`: `/regions/:code/:attr`·`/en/regions/:code/:attr` → `placeRoute(<PlaceLandingRoute />)` (`:296-297` 지역 라우트 옆)
-- [ ] 4.5 Verify: `cd portal-fe && npx vitest run src/pages/place/__tests__/PlaceLanding.test.tsx src/pages/place/__tests__/PlacePage.test.tsx src/pages/place/__tests__/PlacePage.tracking.test.tsx && npx tsc -b`
+- [x] 4.4 `App.tsx`: `/regions/:code/:attr`·`/en/regions/:code/:attr` → `placeRoute(<PlaceLandingRoute />)` (`:296-297` 지역 라우트 옆)
+- [x] 4.5 Verify: `cd portal-fe && npx vitest run src/pages/place/__tests__/PlaceLanding.test.tsx src/pages/place/__tests__/PlacePage.test.tsx src/pages/place/__tests__/PlacePage.tracking.test.tsx && npx tsc -b`
 
 ### Task Group 5: 편집 페이지 — render-content `parts` · 프리렌더 카드 · SPA · 초안 3장 (SR-3)
 **Dependencies:** TG1, TG2(내부 링크 대조용 목록), TG3(nginx `/guides` location) · **Phase:** portal-fe `scripts/render-content.mjs` · `prerender-seo.mjs` · `src/pages/place` · `src/content/guides` · `scripts/lint-blog-post.py` · **Required Skills:** Node ESM, marked, React, Python 3, vitest

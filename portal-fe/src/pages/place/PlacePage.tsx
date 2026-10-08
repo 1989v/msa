@@ -62,9 +62,14 @@ import { useMediaQuery } from './useMediaQuery';
 import './PlacePage.css';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import {
+  PLACE_LANDINGS_INDEXABLE,
+  PLACE_LANDING_MIN_RESULTS,
   PLACE_ORIGIN,
   attractionPath,
   collectionPageJsonLd,
+  landingAsOf,
+  landingMeta,
+  ogCardUrl,
   placeBrand,
   placeFeed,
   placeHreflangAlternates,
@@ -332,24 +337,26 @@ export function resetPlaceSessionForTest(): void {
   }
 }
 
-export default function PlacePage() {
+/**
+ * 속성 랜딩 프리셋 — `PlaceLandingRoute` 가 커밋된 목록(place-landings.json)의 항목으로 만든다.
+ * 조건은 첫 화면의 초기값일 뿐이고, 사람이 바꾸면 허브처럼 움직인다(주소·canonical 은 그대로).
+ */
+export interface PlacePreset {
+  sidoCode: string;
+  /** 검색 API 의 시군구 3자리(`code.slice(2)`) */
+  sigunguCode: string;
+  attribute: AttributeChipId;
+  retired: boolean;
+  /** 랜딩 주소의 시군구 5자리·속성 슬러그와 고정 canonical — 메타 문구는 첫 결과의 N 이 와야 정해진다 */
+  seo: { code: string; attr: string; canonical: string };
+}
+
+export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
   useHeritageSurface();
   const { pathname, search } = useLocation();
   const navigate = useNavigate();
   const lang: PlaceLang = pathname.startsWith('/en') ? 'en' : 'ko';
   const L = UI[lang];
-
-  const seoMeta = placeHubMeta(lang);
-  const seoCanonical = placeUrl(lang);
-  useSeo({
-    title: seoMeta.title,
-    description: seoMeta.description,
-    canonical: seoCanonical,
-    lang,
-    alternates: placeHreflangAlternates(''),
-    feeds: [placeFeed(lang)],
-    jsonLd: [collectionPageJsonLd(lang, seoMeta, seoCanonical, { name: placeBrand(lang), url: PLACE_ORIGIN })],
-  });
 
   /*
    * 로그인 복귀 — 게스트가 별을 눌러 로그인으로 가기 직전에 남긴 화면 상태(10분). 초기값 함수는 읽기만 하고
@@ -357,7 +364,9 @@ export default function PlacePage() {
    * 모바일 목록은 0쪽부터 누적되고 지도 맞춤도 0쪽에서만 돌아 0쪽부터 다시 시작한다 — 그때 선택은 첫 쪽에
    * 있을 때만 살린다(첫 쪽 도착까지 보류).
    */
-  const [restored] = useState(() => readPlaceHubState(HUB_KNOWN));
+  // 랜딩에서는 프리셋이 이긴다 — 복귀 상태는 주소와 묶여 있지 않아(허브에서 남긴 것일 수 있다) 되살리면
+  // 첫 질의가 그 랜딩의 조건이 아니게 되고, N·noindex 의 근거(프리셋 첫 결과)가 사라진다. 키는 그대로 지운다.
+  const [restored] = useState(() => (preset ? null : readPlaceHubState(HUB_KNOWN)));
   const [restoredMobile] = useState(() => restored != null && window.matchMedia(MOBILE_QUERY).matches);
   const [pendingSelectId, setPendingSelectId] = useState<string | null>(() =>
     restoredMobile ? (restored?.selectedId ?? null) : null,
@@ -375,13 +384,14 @@ export default function PlacePage() {
   const [listEventStatus, setListEventStatus] = useState<ListEventStatus | null>(
     (restored?.listEventStatus as ListEventStatus | null | undefined) ?? null,
   );
-  // 속성 칩 — 화면 상태일 뿐 주소를 만들지 않는다(새 색인 URL 금지). 속성끼리 AND.
+  // 속성 칩 조작은 주소를 만들지 않는다 — 속성 주소는 `place-landings.json` 에 커밋된 랜딩뿐. 속성끼리 AND.
+  // 프리셋은 초기값으로만 넣는다 — effect·selectRegion 을 거치면 trigger 가 initial/region 으로 덮인다.
   const [attributes, setAttributes] = useState<ReadonlySet<AttributeChipId>>(
-    () => new Set((restored?.attributes ?? []) as AttributeChipId[]),
+    () => new Set(preset ? [preset.attribute] : ((restored?.attributes ?? []) as AttributeChipId[])),
   );
   const [areaCode, setAreaCode] = useState<string | null>(restored?.areaCode ?? null);
-  const [sidoCode, setSidoCode] = useState<string | null>(restored?.sidoCode ?? null);
-  const [sigunguCode, setSigunguCode] = useState<string | null>(restored?.sigunguCode ?? null);
+  const [sidoCode, setSidoCode] = useState<string | null>(preset?.sidoCode ?? restored?.sidoCode ?? null);
+  const [sigunguCode, setSigunguCode] = useState<string | null>(preset?.sigunguCode ?? restored?.sigunguCode ?? null);
   const [overlay, setOverlay] = useState<string | null>(null);
   const [mapView, setMapView] = useState<{ lat: number; lng: number; radiusKm: number } | null>(null);
   const [geo, setGeo] = useState<GeoState | null>(restored?.geo ?? null);
@@ -537,6 +547,7 @@ export default function PlacePage() {
    * 시도 없는 첫 질의(landing)가 그 값을 가져간다.
    */
   const triggerRef = useRef<SearchTrigger | null>(restored ? 'restore' : null);
+  const landingTag = preset ? `${preset.seo.code}/${preset.seo.attr}` : null;
   const changedRef = useRef<string[]>([]);
   const sentViewRef = useRef<string | null>(null);
   const hasSearchedRef = useRef(false);
@@ -570,11 +581,13 @@ export default function PlacePage() {
           page,
           total: data.totalElements,
           correctedKeyword: data.correctedKeyword,
+          // 속성 랜딩에서 연 화면 — 라우트가 살아 있는 동안의 모든 SEARCH 에 싣는다(조건을 바꾼 뒤에도)
+          ...(landingTag ? { landing: landingTag } : {}),
         },
       },
       viewId,
     );
-  }, [data, isError, viewId, keyword, category, attributes, sidoCode, sigunguCode, geo, page, screenRef]);
+  }, [data, isError, viewId, keyword, category, attributes, sidoCode, sigunguCode, geo, page, screenRef, landingTag]);
 
   // ─── 모바일 무한 스크롤 누적 — page 를 뺀 검색 조건이 바뀌면 처음부터 다시 쌓는다.
   // effect 가 아니라 렌더 중 조정(React 'adjusting state during render')이다 —
@@ -588,6 +601,16 @@ export default function PlacePage() {
   if (data && (store.key !== baseKey || store.data !== data)) {
     const prev = store.key === baseKey ? store.items : [];
     setStore({ key: baseKey, data, items: mergePages(prev, data.attractions, data.currentPage) });
+  }
+
+  /*
+   * 속성 랜딩의 N·기준일 — 프리셋 조건의 첫 결과에서 한 번만 잡는다(facet 이 아니라 totalElements).
+   * 프리렌더와 같은 질의라 같은 값이 나온다. 조건을 바꾼 뒤의 결과로는 다시 계산하지 않는다.
+   */
+  const [presetBaseKey] = useState(baseKey);
+  const [landingFirst, setLandingFirst] = useState<{ count: number; asOf: string | null } | null>(null);
+  if (preset && landingFirst == null && data && data.currentPage === 0 && baseKey === presetBaseKey) {
+    setLandingFirst({ count: data.totalElements, asOf: landingAsOf(data.attractions) });
   }
 
   /*
@@ -687,6 +710,48 @@ export default function PlacePage() {
    */
   const pickingRegion = hasRegionAxis && !sidoCode && !keyword && !geo;
 
+  /*
+   * 메타 — 허브는 고정 문구, 속성 랜딩은 landingMeta(프리렌더와 같은 함수). 랜딩의 지역 행은 프리셋 코드로
+   * 찾는다(사람이 지역을 바꿔도 제목은 랜딩 그대로다). 행이 오기 전에는 빈 title 로 프리렌더 메타를 덮지 않는다.
+   * noindex 는 프리렌더와 같은 규칙이고, 첫 결과 전에는 모르는 값이라 통과로 세지 않는다.
+   */
+  const { data: landingSigungus } = useQuery({
+    queryKey: ['administrative-regions', 'SIGUNGU', preset?.sidoCode ?? null, lang],
+    queryFn: () => fetchAdministrativeRegions({ level: 'SIGUNGU', parent: preset!.sidoCode, lang }),
+    enabled: preset != null,
+    staleTime: 30 * 60_000,
+  });
+  const landingSido = preset ? (sidoRegions ?? []).find((r) => r.code === preset.sidoCode) : undefined;
+  const landingSigungu = preset ? (landingSigungus ?? []).find((r) => r.code === preset.seo.code) : undefined;
+  const landingCopy =
+    preset && landingSido && landingSigungu
+      ? landingMeta(lang, landingSido, landingSigungu, preset.seo.attr, landingFirst ?? {})
+      : null;
+  const landingNoindex =
+    !PLACE_LANDINGS_INDEXABLE || preset?.retired === true || landingFirst == null || landingFirst.count < PLACE_LANDING_MIN_RESULTS;
+  const seoMeta = placeHubMeta(lang);
+  const seoCanonical = placeUrl(lang);
+  useSeo(
+    preset
+      ? {
+          title: landingCopy?.title ?? '',
+          description: landingCopy?.description,
+          canonical: preset.seo.canonical,
+          image: ogCardUrl(PLACE_ORIGIN, 'place'),
+          lang,
+          noindex: landingNoindex,
+        }
+      : {
+          title: seoMeta.title,
+          description: seoMeta.description,
+          canonical: seoCanonical,
+          lang,
+          alternates: placeHreflangAlternates(''),
+          feeds: [placeFeed(lang)],
+          jsonLd: [collectionPageJsonLd(lang, seoMeta, seoCanonical, { name: placeBrand(lang), url: PLACE_ORIGIN })],
+        },
+  );
+
   /**
    * 지역 선택 — 드릴다운 칩과 지도의 시도 마커가 같은 경로를 쓴다.
    * `trigger` 는 첫 진입 자동 선택(`initial`)과 사람의 선택(`region`)을 가른다 — 기준선은 전자를 필터 적용에 넣지 않는다.
@@ -725,8 +790,8 @@ export default function PlacePage() {
    * 한 번만 돈다 — 사용자가 "전체"로 되돌린 뒤 다시 낚아채면 조작을 빼앗는 셈이다.
    * 검색어를 들고 들어온 경우(공유 링크 등)도 비켜준다. 그건 이미 명시된 의도다.
    */
-  // 되살린 화면은 사람이 고른 조건이다 — 자동 선택이 덮지 않는다
-  const autoPickedRef = useRef(restored != null);
+  // 되살린 화면·랜딩 프리셋은 이미 정해진 조건이다 — 자동 선택이 덮지 않는다
+  const autoPickedRef = useRef(restored != null || preset != null);
   useEffect(() => {
     if (autoPickedRef.current || !hasRegionAxis || sidoCode || keyword || geo) return;
     const regions = sidoRegions ?? [];
@@ -1356,7 +1421,7 @@ export default function PlacePage() {
     <div className={listFirst && hasMapKey ? 'place-page has-view-toggle' : 'place-page'}>
       <header className="place-header">
         <h1 className="place-title">
-          {L.title}
+          {landingCopy ? <span>{landingCopy.heading}</span> : L.title}
           <span className="place-header-actions">
             <span className="place-lang-toggle" role="group" aria-label="Language">
               {(['ko', 'en'] as PlaceLang[]).map((key) => (
@@ -1372,7 +1437,11 @@ export default function PlacePage() {
             <ThemeToggle />
           </span>
         </h1>
-        <p className="place-subtitle">{L.subtitle}</p>
+        {preset ? (
+          landingCopy?.sentence && <p className="place-landing-sentence">{landingCopy.sentence}</p>
+        ) : (
+          <p className="place-subtitle">{L.subtitle}</p>
+        )}
       </header>
 
       <div className="place-toolbar" ref={toolbarRef}>

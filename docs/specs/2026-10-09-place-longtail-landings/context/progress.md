@@ -1,6 +1,8 @@
 # 진행 상태
 
-- 현재 그룹: 4 (SPA 프리셋 화면)
+- 현재 그룹: 5 (편집 페이지)
+- 완료: TG4 SPA 프리셋 화면 — 메인 재실행 05:27 KST: vitest src/pages/place src/seo routes 33 files / 518 passed, tsc exit 0
+- 결정(근거 보고): 프리셋이 로그인 복귀 상태를 이긴다(SR-2.5·2.6). 랜딩에서 로그인 복귀 시 조건은 초기 상태로 — 필요하면 상태를 주소에 묶는 스펙 필요
 - 완료: TG3 프리렌더·sitemap·llms·nginx — 메인 재실행 05:18 KST: prerenderPlaceLandings·prerenderPlace 54 passed, tsc exit 0, check-nginx-place-landings·legacy-regions·place-feed 모두 PASSED(실제 nginx)
 - 사용자 확인: 프리렌더가 통째로 실패(SPA 만 배포)하면 랜딩 20개가 404 — 그대로 둘지 빌드를 세울지
 - TG6 메모: 랜딩↔지역 location 순서 주입은 무동작, 옛 지역 301 블록과의 순서가 실제로 무는 곳
