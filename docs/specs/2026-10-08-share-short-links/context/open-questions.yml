@@ -1,0 +1,28 @@
+questions:
+  - id: Q1
+    class: pre-impl
+    status: closed
+    question: 해석 실패(형식 오류·대상 없음·비공개·철회) 시 응답
+    options:
+      - "302 → 해당 서비스 목록(/{접두사}/list 와 같은 목적지). 받은 사람이 빈 화면을 보지 않는다 (권고)"
+      - "404"
+    note: 이력서 철회는 목록 = resume 홈이고, 공개 토글이 꺼져 있으면 게이트 화면이 뜬다.
+  - id: Q2
+    class: pre-impl
+    status: closed
+    question: 관광지 상세·게임 상세에 공유 버튼을 새로 둘지
+    options:
+      - "blog SharePanel 을 공용 컴포넌트로 옮겨 세 상세에서 같이 쓴다 (권고)"
+      - "기존 복사 버튼만 단축 주소로 바꾼다. 관광지는 버튼을 추가하지 않는다"
+  - id: Q3
+    class: pre-impl
+    status: closed
+    question: 클릭 원장을 둘 곳
+    options:
+      - "도메인별 원장 테이블 + 별도 집계 테이블의 누적 수 (권고 — 각 도메인이 자기 DB 만 만진다. 대상 행 컬럼은 리뷰 C2 로 금지)"
+      - "ADR-0095 노출·클릭 파이프라인(ClickHouse)에 action=SHARE_OPEN 으로 싣는다 — 지금 공유 트리에서 진행 중이라 의존하면 일정이 묶인다"
+resolutions:  # 2026-10-08 사용자 답변
+  Q1: "서비스 목록으로 302"
+  Q2: "세 상세에 공용 패널"
+  Q3: "도메인별 테이블"
+  ADR: "ADR-0103 작성"

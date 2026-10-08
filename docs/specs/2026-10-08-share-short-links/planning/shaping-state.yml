@@ -1,0 +1,6 @@
+round: 1
+mode: no-interview
+threshold: 0.2
+ambiguity: 0.15
+topology: [codec(common), resume-resolver(atlas), content-resolvers(place/game/blog), gateway+ingress, fe-share, click-ledger+retention]
+open_pre_impl: []
