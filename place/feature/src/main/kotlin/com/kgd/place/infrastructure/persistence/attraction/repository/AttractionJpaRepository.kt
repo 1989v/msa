@@ -25,6 +25,28 @@ interface AttractionJpaRepository : JpaRepository<AttractionJpaEntity, Long> {
 
     fun findByLangAndIdGreaterThanOrderByIdAsc(lang: String, afterId: Long, limit: Limit): List<AttractionJpaEntity>
 
+    /**
+     * 본문 변경 시각 창 안의 운영 관광지 id·언어 — 인덱스 (content_updated_at, id) 범위로 고르고 id 키셋으로 잇는다.
+     * 본문 컬럼을 읽지 않도록 두 값만 꺼낸다.
+     */
+    @Query(
+        """
+        SELECT a.id AS id, a.lang AS lang
+        FROM AttractionJpaEntity a
+        WHERE a.contentUpdatedAt >= :since
+          AND a.contentUpdatedAt < :until
+          AND a.id > :afterId
+          AND a.status = 'ACTIVE'
+        ORDER BY a.id ASC
+        """,
+    )
+    fun findContentUpdated(
+        @Param("since") since: LocalDateTime,
+        @Param("until") until: LocalDateTime,
+        @Param("afterId") afterId: Long,
+        limit: Limit,
+    ): List<IdLangProjection>
+
     /** 구글 place_id 미보강분 — Pageable 정렬(id)로 안정된 스캔 순서를 보장한다. */
     fun findByGooglePlaceIdIsNullAndStatus(status: String, pageable: Pageable): Page<AttractionJpaEntity>
 
@@ -65,6 +87,11 @@ interface AttractionJpaRepository : JpaRepository<AttractionJpaEntity, Long> {
         """,
     )
     fun countByTitleDisplay(@Param("titles") titles: Collection<String>): List<TitleCountProjection>
+
+    interface IdLangProjection {
+        fun getId(): Long
+        fun getLang(): String
+    }
 
     interface TitleCountProjection {
         fun getTitleDisplay(): String

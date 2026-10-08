@@ -72,6 +72,15 @@ class AttractionRepositoryAdapter(
 
     override fun count(): Long = jpaRepository.count()
 
+    override fun findContentUpdated(
+        since: LocalDateTime,
+        until: LocalDateTime,
+        afterId: Long,
+        size: Int,
+    ): List<AttractionRepositoryPort.ContentUpdated> =
+        jpaRepository.findContentUpdated(since, until, afterId, Limit.of(size))
+            .map { AttractionRepositoryPort.ContentUpdated(it.getId(), it.getLang()) }
+
     override fun countByLdong(
         lang: String,
         categories: Collection<String>,

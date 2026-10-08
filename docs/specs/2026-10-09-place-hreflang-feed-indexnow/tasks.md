@@ -31,14 +31,14 @@ Total Task Groups: 8. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
 
 ### Task Group 2: place 변경 목록 내부 조회 (SR-4.3)
 **Dependencies:** TG1 · **Phase:** place:feature application·infrastructure·presentation · **Required Skills:** Kotlin, Spring MVC, Querydsl/JPA, MockK
-- [ ] 2.1 테스트 먼저
+- [x] 2.1 테스트 먼저
   - 새 `place/feature/src/test/kotlin/com/kgd/place/application/attraction/service/AttractionContentUpdatedServiceTest.kt`(MockK 포트): 포트에 `since·until·afterId·size` 를 그대로 넘김 · 결과가 `size` 와 같으면 `nextAfterId` = 마지막 id, 작으면 null · `size` 상한(예: 1000) 넘는 요청은 상한으로 · `since ≥ until` → 빈 결과
   - `AttractionRepositoryAdapterTest.kt` 증보: `findContentUpdated` 범위 — `since` 포함 · `until` 제외 · `content_updated_at` null 제외 · ACTIVE 만 · `id > afterId` · id 오름차순 · `size` 개
   - 새 `place/feature/src/test/kotlin/com/kgd/place/presentation/attraction/controller/AttractionContentUpdatedInternalControllerTest.kt`(슬라이스, `AttractionExtrasInternalControllerTest` 방식): `GET /internal/attractions/content-updated?since=&until=&afterId=&size=` → `{items:[{id,lang}], nextAfterId}` · 파라미터 누락·형식 오류 → 400
-- [ ] 2.2 `place/feature/.../application/attraction/usecase/FindContentUpdatedAttractionsUseCase.kt`(인터페이스 + Query/Result 모델) · `AttractionRepositoryPort.findContentUpdated(since, until, afterId, size)` · 구현 `AttractionContentUpdatedService`(UseCase 당 서비스 — `AttractionExtrasService` 선례)
-- [ ] 2.3 어댑터 질의 — 인덱스 `(content_updated_at, id)` 를 타는 모양(`content_updated_at >= ? AND content_updated_at < ? AND id > ? AND status = 'ACTIVE' ORDER BY id LIMIT ?`). 범위 안에서 id 키셋이므로 정렬은 id
-- [ ] 2.4 컨트롤러 `AttractionContentUpdatedInternalController`(`/internal/attractions/content-updated`, 게이트웨이 비경유 — `AttractionExtrasInternalController` 와 같은 `/internal/attractions/**`). 날짜 파라미터는 ISO `LocalDateTime`(KST)
-- [ ] 2.5 Verify: `./gradlew :place:feature:test --tests '*AttractionContentUpdatedServiceTest' --tests '*AttractionRepositoryAdapterTest' --tests '*AttractionContentUpdatedInternalControllerTest' --rerun`
+- [x] 2.2 `place/feature/.../application/attraction/usecase/FindContentUpdatedAttractionsUseCase.kt`(인터페이스 + Query/Result 모델) · `AttractionRepositoryPort.findContentUpdated(since, until, afterId, size)` · 구현 `AttractionContentUpdatedService`(UseCase 당 서비스 — `AttractionExtrasService` 선례)
+- [x] 2.3 어댑터 질의 — 인덱스 `(content_updated_at, id)` 를 타는 모양(`content_updated_at >= ? AND content_updated_at < ? AND id > ? AND status = 'ACTIVE' ORDER BY id LIMIT ?`). 범위 안에서 id 키셋이므로 정렬은 id
+- [x] 2.4 컨트롤러 `AttractionContentUpdatedInternalController`(`/internal/attractions/content-updated`, 게이트웨이 비경유 — `AttractionExtrasInternalController` 와 같은 `/internal/attractions/**`). 날짜 파라미터는 ISO `LocalDateTime`(KST)
+- [x] 2.5 Verify: `./gradlew :place:feature:test --tests '*AttractionContentUpdatedServiceTest' --tests '*AttractionRepositoryAdapterTest' --tests '*AttractionContentUpdatedInternalControllerTest' --rerun`
 
 ### Task Group 3: 색인 — 언어 대체 짝 계산·스위치 + `contentUpdatedAt` (SR-1.1~1.6 · SR-1.8 · SR-2.4 search 쪽)
 **Dependencies:** TG1(place 응답 필드) · **Phase:** search:domain · search:batch · search:app 읽기 경로 · portal-fe 타입 · k8s CronJob env · **Required Skills:** Kotlin, Spring Batch, OpenSearch 매핑, Kotest, TS

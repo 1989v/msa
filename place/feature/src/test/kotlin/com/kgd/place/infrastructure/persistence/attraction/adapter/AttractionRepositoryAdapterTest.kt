@@ -1,5 +1,6 @@
 package com.kgd.place.infrastructure.persistence.attraction.adapter
 
+import com.kgd.place.application.attraction.port.AttractionRepositoryPort
 import com.kgd.place.domain.attraction.model.Attraction
 import com.kgd.place.domain.attraction.model.AttractionContentHash
 import com.kgd.place.infrastructure.persistence.attraction.entity.AttractionJpaEntity
@@ -11,6 +12,7 @@ import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import org.springframework.data.domain.Limit
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -140,4 +142,30 @@ class AttractionRepositoryAdapterTest : BehaviorSpec({
             }
         }
     }
+    Given("본문 변경 시각 창으로 바뀐 관광지를 고를 때") {
+        // 창 경계·시각 없음·비활성·키셋 의미는 실제 MySQL 에서 본다(PlaceSchemaIntegrationSpec V34 케이스)
+        When("창·afterId·size 를 넘기면") {
+            val since = LocalDateTime.of(2026, 10, 8, 7, 30)
+            val until = LocalDateTime.of(2026, 10, 9, 7, 30)
+            val limit = slot<Limit>()
+            every { jpaRepository.findContentUpdated(since, until, 10L, capture(limit)) } returns listOf(
+                idLang(11L, "ko"), idLang(12L, "en"),
+            )
+
+            val rows = adapter.findContentUpdated(since, until, 10L, 2)
+
+            Then("같은 값으로 저장소를 부르고 id·lang 만 돌려준다") {
+                limit.captured.max() shouldBe 2
+                rows shouldBe listOf(
+                    AttractionRepositoryPort.ContentUpdated(11L, "ko"),
+                    AttractionRepositoryPort.ContentUpdated(12L, "en"),
+                )
+            }
+        }
+    }
 })
+
+private fun idLang(id: Long, lang: String) = object : AttractionJpaRepository.IdLangProjection {
+    override fun getId(): Long = id
+    override fun getLang(): String = lang
+}

@@ -14,6 +14,7 @@ import com.kgd.place.infrastructure.persistence.attraction.adapter.AttractionCon
 import com.kgd.place.infrastructure.persistence.attraction.adapter.AttractionExtrasRepositoryAdapter
 import com.kgd.place.infrastructure.persistence.attraction.adapter.AttractionRelatedRepositoryAdapter
 import com.kgd.place.infrastructure.persistence.attraction.adapter.AttractionRepositoryAdapter
+import com.kgd.place.infrastructure.persistence.attraction.entity.AttractionJpaEntity
 import com.kgd.place.infrastructure.persistence.attraction.adapter.AttractionSimilarRepositoryAdapter
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionBarrierFreeJpaRepository
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionCategoryCodeJpaRepository
@@ -182,6 +183,40 @@ class PlaceSchemaIntegrationSpec(
                 val ko = adapter.findAfter("ko", all[1], 10)
                 ko.map { it.lang }.distinct() shouldBe listOf("ko")
                 ko.map { it.id!! }.all { it > all[1] } shouldBe true
+            }
+    }
+
+    Given("본문 변경 시각 창으로 바뀐 관광지를 고를 때 (V34)") {
+        Then("since 는 포함·until 은 제외, 시각 없음·비활성은 빠지고 afterId 다음부터 id 순으로 size 개만 나온다")
+            .config(enabledIf = { dockerAvailable }) {
+                // 다른 케이스가 upsert 로 찍는 시각(지금)과 겹치지 않게 지난 창을 쓴다
+                val since = LocalDateTime.of(2001, 1, 1, 7, 30)
+                val until = since.plusHours(24)
+                fun row(key: String, at: LocalDateTime?, status: String = "ACTIVE", lang: String = "ko") = AttractionJpaEntity(
+                    contentId = "cu-$key", lang = lang, title = key, titleDisplay = key,
+                    latitude = 37.0, longitude = 127.0, contentUpdatedAt = at, status = status,
+                )
+                r3.saveAll(
+                    listOf(
+                        row("at-since", since),
+                        row("inside-en", since.plusHours(3), lang = "en"),
+                        row("before", since.minusSeconds(1)),
+                        row("at-until", until),
+                        row("no-stamp", null),
+                        row("inactive", since.plusHours(1), status = "INACTIVE"),
+                        row("last", until.minusSeconds(1)),
+                    ),
+                )
+                val ids = r3.findAll().filter { it.contentId.startsWith("cu-") }.associate { it.contentId.removePrefix("cu-") to it.id!! }
+                val adapter = AttractionRepositoryAdapter(r3)
+
+                val all = adapter.findContentUpdated(since, until, 0L, 100)
+                all.map { it.id } shouldBe listOf(ids["at-since"], ids["inside-en"], ids["last"]).map { it!! }.sorted()
+                all.single { it.id == ids["inside-en"] }.lang shouldBe "en"
+
+                val first = adapter.findContentUpdated(since, until, 0L, 2)
+                first.size shouldBe 2
+                adapter.findContentUpdated(since, until, first.last().id, 2).map { it.id } shouldBe all.drop(2).map { it.id }
             }
     }
 

@@ -3,6 +3,7 @@ package com.kgd.place.application.attraction.port
 import com.kgd.place.domain.attraction.model.Attraction
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import java.time.LocalDateTime
 
 interface AttractionRepositoryPort {
     /** (contentId, lang) 자연키 기준 멱등 upsert — 기존 행은 원천 최신값으로 동기화. */
@@ -24,6 +25,9 @@ interface AttractionRepositoryPort {
 
     fun count(): Long
 
+    /** 운영 중이고 since ≤ 본문 변경 시각 < until 인 관광지를 id > afterId 부터 id 순으로 최대 size 건 — id·언어만. */
+    fun findContentUpdated(since: LocalDateTime, until: LocalDateTime, afterId: Long, size: Int): List<ContentUpdated>
+
     /** 법정동 축 관광지 건수 — 드릴다운이 "몇 곳"을 보이는 근거. 관광 분류만 센다. */
     fun countByLdong(lang: String, categories: Collection<String>): List<LdongCount>
 
@@ -34,6 +38,8 @@ interface AttractionRepositoryPort {
     fun saveAll(attractions: List<Attraction>)
 
     data class UpsertSummary(val created: Int, val updated: Int)
+
+    data class ContentUpdated(val id: Long, val lang: String)
 
     /** 같은 표시명·언어의 운영 관광지 수 — 이름이 겹치는 곳을 가린다(영상 검색어에 지역을 붙인다). */
     fun countByTitleDisplay(titles: Collection<String>): List<TitleCount>
