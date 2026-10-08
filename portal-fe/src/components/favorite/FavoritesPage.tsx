@@ -7,7 +7,7 @@ import { useCollections, type CollectionFilter } from './useCollections';
 import { fetchGameDetail } from '../../api/gameApi';
 import { fetchPost } from '../../api/blogApi';
 import { fetchAttraction } from '../../api/placeApi';
-import { titleParts } from '../../pages/place/placeView';
+import { secureImageUrl, titleParts } from '../../pages/place/placeView';
 import { fetchProduct } from '../../api/shopApi';
 import { buildLoginHref, isLoggedIn } from '../../auth/auth';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
@@ -84,7 +84,7 @@ async function hydrate(type: FavoriteTargetType, key: string): Promise<HydratedC
           meta: [secondary, attraction.address ?? attraction.category]
             .filter(Boolean)
             .join(' · '),
-          imageUrl: attraction.imageUrl,
+          imageUrl: secureImageUrl(attraction.imageUrl),
           href: `/attractions/${key}`,
           external: false,
         };

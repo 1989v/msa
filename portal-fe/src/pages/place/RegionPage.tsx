@@ -28,7 +28,7 @@ import {
 import { useSeo } from '../../seo/useSeo';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import Footer from '../../components/Footer';
-import { titleParts } from './placeView';
+import { secureImageUrl, titleParts } from './placeView';
 import EventLine from './EventLine';
 import RegionVisitorTrend from './RegionVisitorTrend';
 import TrackedLink from '../../analytics/TrackedLink';
@@ -245,7 +245,7 @@ export default function RegionPage() {
               {top.map((a) => (
                 <Link key={a.id} className="place-card" to={attractionPath(lang, a.id)}>
                   {a.imageUrl ? (
-                    <img className="place-card-img" src={a.imageUrl} alt="" loading="lazy" />
+                    <img className="place-card-img" src={secureImageUrl(a.imageUrl)} alt="" loading="lazy" />
                   ) : (
                     <div className="place-card-img place-card-img-empty" aria-hidden />
                   )}
@@ -284,7 +284,7 @@ export default function RegionPage() {
                   }}
                 >
                   {a.imageUrl ? (
-                    <img className="place-card-img" src={a.imageUrl} alt="" loading="lazy" />
+                    <img className="place-card-img" src={secureImageUrl(a.imageUrl)} alt="" loading="lazy" />
                   ) : (
                     <div className="place-card-img place-card-img-empty" aria-hidden />
                   )}

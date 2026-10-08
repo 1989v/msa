@@ -1081,3 +1081,52 @@ describe('AttractionPage 계측 — 지도 열기 · 찜 배선', () => {
     expect(fav.dataset.view).toBe(mapClick[2]);
   });
 });
+
+describe('AttractionPage 사진 주소 https', () => {
+  const TONG = 'http://tong.visitkorea.or.kr/cms/resource/';
+  const photos = [0, 1, 2].map((i) => `${TONG}${i}.jpg`);
+
+  beforeEach(() => {
+    // 주변 탐색 썸네일도 http 원천으로 온다
+    nearbyFrom((c) => (c.includes('history') ? [{ ...card('301'), imageUrl: `${TONG}301.jpg` }] : []));
+    vi.mocked(fetchAttraction).mockResolvedValue({
+      ...enriched,
+      imageUrl: photos[0],
+      // 대표 사진이 원문에 https 로 한 번 더 들어 있다 — 중복 판정은 프로토콜을 빼고 한다
+      imagesRaw: JSON.stringify([
+        { originimgurl: photos[0].replace('http:', 'https:'), imgname: '대표' },
+        ...photos.slice(1).map((u, i) => ({ originimgurl: u, imgname: `사진${i + 1}` })),
+      ]),
+    });
+  });
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
+
+  const httpTong = () =>
+    document.querySelectorAll('img[src^="http://tong."], [data-src^="http://tong."]').length;
+
+  it('큰 사진·타일·크게 보기·주변 탐색·og:image·JSON-LD 가 https 이고 중복 사진은 한 장', async () => {
+    renderAt('/attractions/100');
+    const tiles = await screen.findByRole('group', { name: '사진' });
+    await screen.findByText('명소 301');
+
+    expect(document.querySelectorAll('img[src^="https://tong."]').length).toBeGreaterThanOrEqual(4);
+    expect(httpTong()).toBe(0);
+    expect(within(tiles).getAllByRole('button')).toHaveLength(2);
+    const hero = document.querySelector<HTMLElement>('.place-detail-hero')!;
+    expect(hero.style.backgroundImage).toContain('https://tong.');
+    expect(hero.style.backgroundImage).not.toContain('http://tong.');
+
+    expect(document.head.querySelector('meta[property="og:image"]')).toHaveAttribute('content', `https://tong.visitkorea.or.kr/cms/resource/0.jpg`);
+    const ld = Array.from(document.head.querySelectorAll('script[type="application/ld+json"]')).map((s) => s.textContent ?? '');
+    expect(ld.some((t) => t.includes('https://tong.visitkorea.or.kr/cms/resource/0.jpg'))).toBe(true);
+    expect(ld.some((t) => t.includes('http://tong.'))).toBe(false);
+
+    fireEvent.click(screen.getByRole('button', { name: '사진 크게 보기' }));
+    const viewer = screen.getByRole('dialog', { name: '사진 크게 보기' });
+    expect(viewer.querySelector('.place-photo-viewer-img')!.getAttribute('src')).toMatch(/^https:\/\/tong\./);
+    expect(httpTong()).toBe(0);
+  });
+});

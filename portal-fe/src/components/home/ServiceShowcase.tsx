@@ -12,7 +12,7 @@ import { useShownItems } from '../dispenser/useDispenser';
 import PickLine from '../dispenser/PickLine';
 import TileGrid from './TileGrid';
 import { useReveal } from '../../hooks/useReveal';
-import { BLOG_ORIGIN, PLACE_ORIGIN, attractionPath, blogPostUrl, gameUrl } from '../../seo/copy.mjs';
+import { BLOG_ORIGIN, PLACE_ORIGIN, attractionPath, blogPostUrl, gameUrl, secureImageUrl } from '../../seo/copy.mjs';
 import './Home.css';
 
 /**
@@ -162,7 +162,7 @@ export default function ServiceShowcase({ services }: { services: DisplayService
 
   const renderPlace = useMemo(
     () => (a: Attraction, i: number) =>
-      `${photo(a.thumbnailUrl ?? a.imageUrl)}<div class="cd-body"><span class="cd-seal">${escapeHtml(PLACE_CATEGORY[a.category ?? ''] ?? a.category ?? '')}</span>` +
+      `${photo(secureImageUrl(a.thumbnailUrl ?? a.imageUrl))}<div class="cd-body"><span class="cd-seal">${escapeHtml(PLACE_CATEGORY[a.category ?? ''] ?? a.category ?? '')}</span>` +
       `<b class="cd-title">${escapeHtml(a.title)}</b><span class="cd-meta">${escapeHtml(district(a.address))} · ${pad(i)}</span></div>`,
     [],
   );

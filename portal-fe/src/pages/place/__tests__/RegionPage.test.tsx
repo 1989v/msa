@@ -176,3 +176,36 @@ describe('RegionPage 방문 추이', () => {
     expect(html).not.toContain('방문 추이');
   });
 });
+
+describe('RegionPage 사진 주소 https', () => {
+  const TONG = 'http://tong.visitkorea.or.kr/cms/resource/';
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-26T03:00:00Z'));
+    vi.mocked(fetchAdministrativeRegions).mockImplementation(({ level }) =>
+      Promise.resolve(level === 'SIDO' ? [seoul] : [jongno]),
+    );
+    vi.mocked(fetchRegionVisitors).mockResolvedValue({ code: '11', level: 'SIDO', latestDate: null, months: [] });
+    // 대표 관광지·이번 달 행사 둘 다 http tong 원천
+    vi.mocked(searchAttractions).mockImplementation((q) => {
+      const attractions = q.category === 'festival'
+        ? [{ ...ev('601', '2026-10-10', '2026-10-31'), imageUrl: `${TONG}601.jpg` }]
+        : [card('201', 'history', { imageUrl: `${TONG}201.jpg` })];
+      return Promise.resolve({ searchId: 's', attractions, totalElements: 1, totalPages: 1, currentPage: 0 });
+    });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.clearAllMocks();
+    cleanup();
+  });
+
+  it('대표 관광지·이번 달 행사 카드가 https 로 그린다', async () => {
+    renderAt('/regions/11');
+    await screen.findByText('명소 201');
+    await screen.findByRole('region', { name: '이번 달 행사' });
+
+    expect(document.querySelectorAll('img[src^="https://tong."]')).toHaveLength(2);
+    expect(document.querySelectorAll('img[src^="http://tong."], [data-src^="http://tong."]')).toHaveLength(0);
+  });
+});

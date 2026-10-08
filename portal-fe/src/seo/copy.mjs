@@ -640,6 +640,27 @@ function attractionMetaCopy(lang, attraction, name, where) {
       };
 }
 
+/** 원천(TourAPI) 사진 호스트의 http 주소 앞부분 */
+const TONG_HTTP = 'http://tong.visitkorea.or.kr/';
+
+/**
+ * 원천 사진 주소 → 표시용. 문자열이 `http://tong.visitkorea.or.kr/` 로 **시작할 때만** `https:` 로 바꾼다 —
+ * 원천이 http 로 준 사진을 https 페이지에 그리면 브라우저가 혼합 콘텐츠로 경고한다.
+ * 원천 값은 덮지 않고 표시 시점에만 바꾼다. 다른 호스트·null·빈 값은 그대로다.
+ * HTML 문자열에 넣을 때는 이 뒤에 escape 를 거친다. search `AttractionSeoText.secureImageUrl` 이 같은 규칙이고
+ * `SecureImageParityTest` 가 이 함수의 출력과 비교한다.
+ *
+ * @template {string | null | undefined} T
+ * @param {T} url
+ * @returns {T}
+ */
+export function secureImageUrl(url) {
+  if (typeof url === 'string' && url.startsWith(TONG_HTTP)) {
+    return /** @type {T} */ (`https:${url.slice('http:'.length)}`);
+  }
+  return url;
+}
+
 /** 원천 관광 유형 — 상세가 유형별 본문·구조화 데이터를 고르는 축. 국문·영문 코드 체계가 다르다. */
 export const PLACE_EVENT_TYPES = ['15', '85'];
 export const PLACE_STAY_TYPES = ['32', '80'];
@@ -673,7 +694,7 @@ function placeJsonLdBase(lang, attraction, type) {
   // 검색엔진에는 alternateName 으로 알린다. name 에 괄호로 다시 합치지 않는다.
   const local = (attraction.titleLocal || '').trim();
   if (local && local !== attraction.title) json.alternateName = local;
-  if (attraction.imageUrl) json.image = attraction.imageUrl;
+  if (attraction.imageUrl) json.image = secureImageUrl(attraction.imageUrl);
   return json;
 }
 

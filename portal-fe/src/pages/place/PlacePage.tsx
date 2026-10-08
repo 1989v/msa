@@ -42,6 +42,7 @@ import {
   nextPage,
   overviewText,
   relaxConditions,
+  secureImageUrl,
   titleParts,
   type RelaxCondition,
 } from './placeView';
@@ -1287,7 +1288,7 @@ export default function PlacePage() {
             items={pickItems}
             error={pickError}
             render={(a, i) =>
-              `${(a.thumbnailUrl ?? a.imageUrl) ? `<div class="cd-photo" data-src="${escapeHtml(a.thumbnailUrl ?? a.imageUrl ?? '')}"></div>` : '<div class="cd-photo"></div>'}` +
+              `${(a.thumbnailUrl ?? a.imageUrl) ? `<div class="cd-photo" data-src="${escapeHtml(secureImageUrl(a.thumbnailUrl ?? a.imageUrl ?? ''))}"></div>` : '<div class="cd-photo"></div>'}` +
               `<div class="cd-body"><span class="cd-seal">${escapeHtml(a.category ? (L.categories[a.category] ?? a.category) : '')}</span>` +
               `<b class="cd-title">${escapeHtml(a.title)}</b><span class="cd-meta">${escapeHtml(a.address?.split(' ')[1] ?? '')} · ${String(i + 1).padStart(2, '0')}</span></div>`
             }
@@ -1675,7 +1676,7 @@ function AttractionDetailBody({
   return (
     <>
       {attraction.imageUrl && (
-        <img className="place-detail-img" src={attraction.imageUrl} alt={primary} loading="lazy" />
+        <img className="place-detail-img" src={secureImageUrl(attraction.imageUrl)} alt={primary} loading="lazy" />
       )}
       {/* 찜 (ADR-0074) — 제목 오른쪽 별. 데스크톱 열·모바일 시트가 이 본문을 공유하므로 여기 한 번만 둔다 */}
       <div className="favorite-title-row">
@@ -1792,7 +1793,7 @@ function PlaceCard({
       {(attraction.thumbnailUrl ?? attraction.imageUrl) ? (
         <img
           className="place-card-img"
-          src={attraction.thumbnailUrl ?? attraction.imageUrl ?? ''}
+          src={secureImageUrl(attraction.thumbnailUrl ?? attraction.imageUrl ?? '')}
           alt=""
           loading="lazy"
         />

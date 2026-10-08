@@ -286,6 +286,22 @@ const cases = [
       courseStops: [{ order: 0, contentId: '126081', name: '해운대해수욕장', attractionId: 7001 }],
     },
   },
+  {
+    // 원천이 http 로 준 사진 — 표시 시점에 https 로 바꿔 싣는다(원천 값은 그대로)
+    name: 'ko-http-image',
+    input: {
+      ...base,
+      id: '1004',
+      lang: 'ko',
+      title: '덕수궁',
+      titleLocal: null,
+      imageUrl: 'http://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg',
+      overview: '대한제국의 황궁이다.',
+      closureState: 'WEEKLY',
+      closedWeekdays: ['MON'],
+      attrAdmission: 'PAID',
+    },
+  },
 ];
 
 describe('관광지 JSON-LD 골든 픽스처 (서버 렌더 패리티)', () => {
@@ -367,6 +383,12 @@ describe('관광지 JSON-LD 골든 픽스처 (서버 렌더 패리티)', () => {
     expect(title('en-no-weekly-free')).toBe('Visit Dosan Park — Map, Photos & Things to Do Nearby | K-Tour');
     // 개요가 짧은 행사는 유형 설명으로 채운다
     expect(rendered.find((c) => c.name === 'ko-event-ended-no-place')!.meta.description).toContain('에서 열리는 축제·행사입니다');
+  });
+
+  it('http tong 원천 사진은 https 로 싣는다', () => {
+    const input = cases.find((c) => c.name === 'ko-http-image')!.input as { imageUrl: string };
+    expect(input.imageUrl).toMatch(/^http:\/\/tong\./);
+    expect(primary('ko-http-image').image).toBe('https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg');
   });
 
   it('골든 파일을 쓴다 — CI 가 git diff 로 최신인지 본다', () => {

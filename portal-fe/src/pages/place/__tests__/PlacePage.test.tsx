@@ -781,3 +781,63 @@ describe('PlacePage 계측', () => {
     });
   });
 });
+
+describe('PlacePage 사진 주소 https', () => {
+  const TONG = 'http://tong.visitkorea.or.kr/cms/resource/';
+  // 썸네일이 있는 카드와 원본만 있는 카드를 섞는다 — 카드는 썸네일 우선, 패널은 원본을 쓴다
+  const photoItem = (id: string, withThumb: boolean): Attraction => ({
+    ...item(id),
+    imageUrl: `${TONG}${id}/origin.jpg`,
+    thumbnailUrl: withThumb ? `${TONG}${id}/thumb.jpg` : null,
+  });
+  const page = () => ({
+    searchId: 's',
+    attractions: [photoItem('h1', true), photoItem('h2', false)],
+    totalElements: 2,
+    totalPages: 1,
+    currentPage: 0,
+  });
+  const httpsTong = (root: ParentNode) => root.querySelectorAll('img[src^="https://tong."]').length;
+  const httpTong = (root: ParentNode) =>
+    root.querySelectorAll('img[src^="http://tong."], [data-src^="http://tong."]').length;
+
+  beforeEach(() => {
+    mobile = false;
+    stubMedia();
+    vi.mocked(fetchAdministrativeRegions).mockResolvedValue([]);
+    vi.mocked(suggestPlaces).mockResolvedValue([]);
+    vi.mocked(searchAttractions).mockReset();
+    vi.mocked(searchAttractions).mockImplementation(() => Promise.resolve(page()));
+    vi.mocked(fetchAttraction).mockImplementation((id) => Promise.resolve(photoItem(String(id), true)));
+  });
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
+
+  it('카드와 상세 패널이 http tong 원천을 https 로 그린다', async () => {
+    renderPage();
+    await screen.findByText('관광지 h1');
+    expect(httpsTong(document)).toBeGreaterThanOrEqual(2);
+    expect(httpTong(document)).toBe(0);
+
+    fireEvent.click(screen.getByText('관광지 h1'));
+    const panel = await screen.findByRole('complementary', { name: '관광지 h1' });
+    await waitFor(() => expect(panel.querySelector('img.place-detail-img')).not.toBeNull());
+    expect(httpsTong(panel)).toBeGreaterThanOrEqual(1);
+    expect(httpTong(document)).toBe(0);
+  });
+
+  it('뽑기 시트 카드의 사진 주소도 https', async () => {
+    renderPage();
+    await screen.findByText('관광지 h1');
+    fireEvent.click(screen.getByRole('button', { name: '뽑기' }));
+
+    const photos = () => Array.from(document.querySelectorAll<HTMLElement>('.cd-photo'));
+    const httpsPhoto = (el: HTMLElement) =>
+      (el.getAttribute('data-src') ?? '').startsWith('https://tong.') || el.style.backgroundImage.includes('https://tong.');
+    await waitFor(() => expect(photos().filter(httpsPhoto).length).toBeGreaterThanOrEqual(1));
+    expect(document.querySelectorAll('[data-src^="http://tong."]')).toHaveLength(0);
+    expect(photos().filter((el) => el.style.backgroundImage.includes('http://tong.'))).toHaveLength(0);
+  });
+});

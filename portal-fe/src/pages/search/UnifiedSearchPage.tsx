@@ -9,7 +9,7 @@ import { newViewId } from '../../analytics/identity';
 import { installFlushOnLeave, track } from '../../analytics/tracker';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import { useSeo } from '../../seo/useSeo';
-import { portalTitle } from '../../seo/copy.mjs';
+import { portalTitle, secureImageUrl } from '../../seo/copy.mjs';
 import { TYPE_ENTITY, TYPE_LABELS, TYPE_ORDER } from './unifiedTypes';
 import './UnifiedSearchPage.css';
 
@@ -224,7 +224,7 @@ function GroupSection({
                 itemIndex,
               }}
             >
-              {hit.thumbnailUrl && <img className="usearch-thumb" src={hit.thumbnailUrl} alt="" loading="lazy" />}
+              {hit.thumbnailUrl && <img className="usearch-thumb" src={secureImageUrl(hit.thumbnailUrl)} alt="" loading="lazy" />}
               <span className="usearch-hit-body">
                 <span className="usearch-hit-title">{hit.title}</span>
                 {hit.summary && <span className="usearch-hit-summary">{hit.summary}</span>}

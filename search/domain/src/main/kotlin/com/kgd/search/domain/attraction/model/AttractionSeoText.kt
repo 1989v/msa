@@ -77,5 +77,16 @@ object AttractionSeoText {
         .replace(">", "&gt;")
         .replace("\"", "&quot;")
 
+    /** copy.mjs `TONG_HTTP` — 원천(TourAPI) 사진 호스트의 http 주소 앞부분 */
+    private const val TONG_HTTP = "http://tong.visitkorea.or.kr/"
+
+    /**
+     * copy.mjs `secureImageUrl` — 원천 사진 주소가 [TONG_HTTP] 로 **시작할 때만** `https:` 로 바꾼다.
+     * 원천이 http 로 준 사진을 https 페이지에 그리면 브라우저가 혼합 콘텐츠로 경고한다. 원천 값은 덮지 않고
+     * 표시 시점에만 바꾼다. 다른 호스트·null·빈 값은 그대로다. HTML 에 넣을 때는 이 뒤에 [escapeHtml] 을 거친다.
+     */
+    fun secureImageUrl(url: String?): String? =
+        if (url != null && url.startsWith(TONG_HTTP)) "https:" + url.substring("http:".length) else url
+
     fun jsTrim(value: String): String = value.replace(EDGE_SPACES, "")
 }

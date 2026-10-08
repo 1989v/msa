@@ -565,6 +565,25 @@ class AttractionPageRendererTest : BehaviorSpec({
         }
     }
 
+    given("원천 사진 주소가 http tong 일 때") {
+        val http = doc().copy(imageUrl = "http://tong.visitkorea.or.kr/cms/resource/33/1.jpg")
+        val html = render(SHELL, http)
+
+        then("og:image · og:image:secure_url · JSON-LD image 가 셋 다 https") {
+            val https = "https://tong.visitkorea.or.kr/cms/resource/33/1.jpg"
+            Regex("""<meta property="og:image" content="([^"]*)" />""").find(html)!!.groupValues[1] shouldBe https
+            Regex("""<meta property="og:image:secure_url" content="([^"]*)" />""").find(html)!!.groupValues[1] shouldBe https
+            val jsonLd = Regex("""<script type="application/ld\+json" data-seo-multi>([\s\S]*?)</script>""")
+                .findAll(html).map { ObjectMapper().readTree(it.groupValues[1]) }.first()
+            jsonLd["image"].asString() shouldBe https
+            html shouldNotContain "http://tong."
+        }
+
+        then("https 원천으로 그린 HTML 과 바이트가 같다") {
+            html shouldBe render(SHELL, doc())
+        }
+    }
+
     given("유형별 골든 HTML (T11)") {
         // 갱신은 명시 플래그로만: UPDATE_RENDER_GOLDEN=1 ./gradlew :search:app:test --tests '*AttractionPageRendererTest'
         val update = System.getenv("UPDATE_RENDER_GOLDEN") == "1"
@@ -584,6 +603,7 @@ class AttractionPageRendererTest : BehaviorSpec({
             "stay-ko" to stay(),
             "stay-en" to stay(lang = "en"),
             "course-ko" to course(),
+            "attraction-http-image-ko" to doc().copy(imageUrl = "http://tong.visitkorea.or.kr/cms/resource/33/1.jpg"),
         )
         cases.forEach { (name, d) ->
             then(name) {

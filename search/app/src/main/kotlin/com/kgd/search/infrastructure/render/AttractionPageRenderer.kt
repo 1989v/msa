@@ -20,6 +20,7 @@ import com.kgd.search.infrastructure.config.AttractionRenderProperties
 import com.kgd.search.domain.attraction.model.AttractionSeoText.clampDescription
 import com.kgd.search.domain.attraction.model.AttractionSeoText.escapeHtml
 import com.kgd.search.domain.attraction.model.AttractionSeoText.jsTrim
+import com.kgd.search.domain.attraction.model.AttractionSeoText.secureImageUrl
 import com.kgd.search.domain.attraction.model.AttractionSeoText.sourceText
 import org.springframework.stereotype.Component
 import tools.jackson.databind.ObjectMapper
@@ -51,7 +52,7 @@ class AttractionPageRenderer(
         val lang = if (doc.lang == EN) EN else KO
         val meta = attractionMeta(lang, doc)
         val canonical = attractionUrl(lang, doc.id)
-        val image = doc.imageUrl?.takeIf { PHOTO.containsMatchIn(it) } ?: "$origin/og/place.png"
+        val image = secureImageUrl(doc.imageUrl)?.takeIf { PHOTO.containsMatchIn(it) } ?: "$origin/og/place.png"
         val head = metaTags(
             lang = lang,
             title = meta.title,
@@ -238,7 +239,7 @@ class AttractionPageRenderer(
         put("isPartOf", mapOf("@type" to "WebSite", "name" to brand(lang), "url" to origin))
         val local = jsTrim(doc.titleLocal.orEmpty())
         if (local.isNotEmpty() && local != doc.title) put("alternateName", local)
-        if (!doc.imageUrl.isNullOrEmpty()) put("image", doc.imageUrl)
+        if (!doc.imageUrl.isNullOrEmpty()) put("image", secureImageUrl(doc.imageUrl))
     }
 
     private fun postalAddress(doc: AttractionDocument) =

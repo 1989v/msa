@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { PlaceLang } from '../../api/placeApi';
 import { attractionPath, placeCategoryLabel } from '../../seo/copy.mjs';
+import { secureImageUrl } from './placeView';
 import TrackedLink from '../../analytics/TrackedLink';
 import type { TrackedItem } from '../../analytics/events';
 import EventLine from './EventLine';
@@ -247,7 +248,7 @@ export default function NearbyExplore({
                     {item.number}
                   </span>
                   {item.imageUrl ? (
-                    <img className="place-explore-thumb" src={item.imageUrl} alt="" loading="lazy" />
+                    <img className="place-explore-thumb" src={secureImageUrl(item.imageUrl)} alt="" loading="lazy" />
                   ) : (
                     <span className="place-explore-thumb place-card-img-empty" aria-hidden />
                   )}

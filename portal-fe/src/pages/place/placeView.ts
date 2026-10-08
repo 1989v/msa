@@ -4,6 +4,7 @@ import type {
   CollectedLink,
 } from '../../api/placeApi';
 import { EVENT_CATEGORY } from '../../api/placeApi';
+import { secureImageUrl } from '../../seo/copy.mjs';
 import type { AttributeChipId } from './placeAttributes';
 
 /**
@@ -251,6 +252,9 @@ export { sourceText } from '../../seo/copy.mjs';
 /** 개요 전용 별칭 — 호출부의 뜻이 드러나게 남긴다. */
 export { sourceText as overviewText } from '../../seo/copy.mjs';
 
+/** 원천 사진 주소 → 표시용(tong http 만 https). 원본은 copy.mjs — 빌드 스크립트·서버 렌더와 같은 규칙. */
+export { secureImageUrl } from '../../seo/copy.mjs';
+
 
 /** 갤러리 한 장. `name` 은 원천이 준 캡션인데 비어 있거나 엉뚱할 때가 있다. */
 export interface GalleryImage {
@@ -263,6 +267,7 @@ export interface GalleryImage {
  *
  * 대표사진을 **맨 앞에 두고** 원문의 나머지를 잇는다 — 대표가 원문에도 들어 있으면
  * 중복되므로 URL 로 걸러낸다. 원천이 http/https 를 섞어 주므로 프로토콜은 비교에서 뺀다.
+ * 내보내는 주소는 [secureImageUrl] 을 거친 표시용이다 — 중복 판정 키는 원천 값으로 만든다.
  */
 export function galleryImages(
   raw: string | null | undefined,
@@ -276,7 +281,7 @@ export function galleryImages(
     const u = String(url ?? '').trim();
     if (!u || seen.has(keyOf(u))) return;
     seen.add(keyOf(u));
-    out.push({ url: u, name: String(name ?? '').trim() });
+    out.push({ url: secureImageUrl(u), name: String(name ?? '').trim() });
   };
 
   push(primaryUrl, '');

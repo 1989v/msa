@@ -1,0 +1,51 @@
+questions:
+  - id: Q1
+    stage: post-impl
+    status: open
+    question: D-5 확정 — 두 변형 캡처를 본 사용자가 ⓐ(기본값)를 유지할지
+    answer: 세션 기본값 ⓐ 로 적용, 마지막에 사용자 확인. 되돌리기는 기본 변형 상수 한 줄.
+  - id: Q2
+    stage: post-impl
+    status: open
+    question: 허브 LCP 요소가 카드 썸네일인지 지도 타일인지 — 1단계 원본 JSON 이 스크래치에만 있어 코드로 확정 못 함
+    answer: SR-5.1 배포 전후 측정에서 LCP 요소 노드를 함께 기록해 확정
+  - id: Q3
+    stage: post-impl
+    status: open
+    question: 지도 보기/목록 보기 전환을 계측할지
+    answer: 이번엔 안 함(심판 권고). 세려면 후속 스펙에서 별도 sectionId
+  - id: Q4
+    stage: post-impl
+    status: open
+    question: 좁은 화면 한 줄의 핵심 분류 칩 3개
+    answer: 전체·자연·행사(심판 권고)
+  - id: Q5
+    stage: post-impl
+    status: open
+    question: 필터 N 에 geo 를 셀지
+    answer: 세지 않음(심판 권고)
+  - id: Q6
+    stage: post-impl
+    status: open
+    question: 1440x900 첫 카드 y 가 320 을 넘을 때
+    answer: 데스크톱 불변, 실측 보고·미충족 표시(심판 권고)
+  - id: Q7
+    stage: post-impl
+    status: open
+    question: 계획서 S2-5 편차(표시 시점 치환·insecure 기준)
+    answer: 표시 시점, tong 원인 insecure 0, 그 밖은 건수·사유 보고, 계획서 비고 기록(심판 권고)
+  - id: Q8
+    stage: post-impl
+    status: open
+    question: eager 2장 기준
+    answer: 사진 있는 앞 2장(심판 권고)
+  - id: Q9
+    stage: post-impl
+    status: open
+    question: 지도 키 없을 때 오버레이 칩
+    answer: 전환만 막음(심판 권고)
+  - id: Q10
+    stage: post-impl
+    status: open
+    question: ci.yml 골든 검사 단계 추가
+    answer: 추가(심판 권고, footer 선례)

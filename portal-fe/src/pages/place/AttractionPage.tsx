@@ -48,6 +48,7 @@ import {
   isPlottable,
   overviewText,
   repeatInfoRows,
+  secureImageUrl,
   sourceText,
   titleParts,
   type IntroRow,
@@ -162,7 +163,7 @@ export default function AttractionPage() {
           description: meta.description,
           canonical: attractionUrl(docLang, attraction.id),
           lang: docLang,
-          image: attraction.imageUrl,
+          image: secureImageUrl(attraction.imageUrl),
           // 개요가 없으면 제목·주소·좌표뿐이라 본문이 없는 문서다. 사이트맵도 이런 문서를
           // 싣지 않지만(prerender-seo.mjs) 이미 색인된 것은 사이트맵에서 빠져도 남는다 —
           // 빼는 일은 noindex 가 한다. 수집 배치가 개요를 채우면 저절로 풀린다.

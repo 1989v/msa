@@ -1128,6 +1128,99 @@
           ]
         }
       ]
+    },
+    {
+      "name": "ko-http-image",
+      "input": {
+        "contentId": "126508",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "imageUrl": "http://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+        "tel": "02-3700-3900",
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "1004",
+        "lang": "ko",
+        "title": "덕수궁",
+        "titleLocal": null,
+        "overview": "대한제국의 황궁이다.",
+        "closureState": "WEEKLY",
+        "closedWeekdays": [
+          "MON"
+        ],
+        "attrAdmission": "PAID"
+      },
+      "meta": {
+        "title": "덕수궁 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | K-관광",
+        "description": "덕수궁 — 서울특별시 종로구 사직로 161에 있는 역사 관광지입니다. 주소·지도·사진과 가는 길, 주변 가볼 만한 곳을 함께 확인하세요."
+      },
+      "jsonLd": [
+        {
+          "@context": "https://schema.org",
+          "@type": "TouristAttraction",
+          "name": "덕수궁",
+          "description": "대한제국의 황궁이다.",
+          "url": "https://place.1989v.com/attractions/1004",
+          "inLanguage": "ko",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "K-관광",
+            "url": "https://place.1989v.com"
+          },
+          "image": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+          "telephone": "02-3700-3900",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "서울특별시 종로구 사직로 161",
+            "addressCountry": "KR"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 37.5796,
+            "longitude": 126.977
+          },
+          "openingHoursSpecification": {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": [
+              "https://schema.org/Tuesday",
+              "https://schema.org/Wednesday",
+              "https://schema.org/Thursday",
+              "https://schema.org/Friday",
+              "https://schema.org/Saturday",
+              "https://schema.org/Sunday"
+            ]
+          },
+          "isAccessibleForFree": false
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "한국 관광지 탐색",
+              "item": "https://place.1989v.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "서울특별시",
+              "item": "https://place.1989v.com/regions/11"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "덕수궁",
+              "item": "https://place.1989v.com/attractions/1004"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

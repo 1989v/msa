@@ -1,0 +1,49 @@
+{
+  "cases": [
+    {
+      "name": "tong-http",
+      "input": "http://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+      "expected": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg"
+    },
+    {
+      "name": "tong-https",
+      "input": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+      "expected": "https://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg"
+    },
+    {
+      "name": "other-host-http",
+      "input": "http://example.com/a.jpg",
+      "expected": "http://example.com/a.jpg"
+    },
+    {
+      "name": "tong-in-query-of-other-host",
+      "input": "http://evil/?u=http://tong.visitkorea.or.kr/",
+      "expected": "http://evil/?u=http://tong.visitkorea.or.kr/"
+    },
+    {
+      "name": "tong-uppercase-host",
+      "input": "http://TONG.VISITKOREA.OR.KR/cms/1.jpg",
+      "expected": "http://TONG.VISITKOREA.OR.KR/cms/1.jpg"
+    },
+    {
+      "name": "tong-host-prefix-of-other-host",
+      "input": "http://tong.visitkorea.or.kr.evil.com/1.jpg",
+      "expected": "http://tong.visitkorea.or.kr.evil.com/1.jpg"
+    },
+    {
+      "name": "leading-space",
+      "input": " http://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg",
+      "expected": " http://tong.visitkorea.or.kr/cms/resource/33/2678633_image2_1.jpg"
+    },
+    {
+      "name": "empty",
+      "input": "",
+      "expected": ""
+    },
+    {
+      "name": "null",
+      "input": null,
+      "expected": null
+    }
+  ]
+}

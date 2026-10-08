@@ -53,3 +53,27 @@ describe('UnifiedSearchPage summary', () => {
     expect(screen.getByText('K-movie <PARASITE> - …')).toBeInTheDocument();
   });
 });
+
+describe('UnifiedSearchPage 썸네일', () => {
+  it('http tong 썸네일은 https 로, 다른 호스트는 그대로 그린다', async () => {
+    const result: UnifiedResult = {
+      query: '궁',
+      understood: { type: null, residual: null },
+      groups: [
+        { type: 'attraction', total: 1, hits: [hit({ type: 'attraction', id: 'a1', title: '경복궁', thumbnailUrl: 'http://tong.visitkorea.or.kr/cms/resource/1/t.jpg' })] },
+        { type: 'blog_post', total: 1, hits: [hit({ id: 'b1', title: '글', thumbnailUrl: 'http://example.com/cover.jpg' })] },
+      ],
+    };
+    vi.mocked(fetchUnifiedSearch).mockResolvedValue(result);
+    const { container } = render(
+      <MemoryRouter initialEntries={['/search?q=궁']}>
+        <UnifiedSearchPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText('경복궁');
+    expect(container.querySelectorAll('img[src^="https://tong."]')).toHaveLength(1);
+    expect(container.querySelectorAll('img[src^="http://tong."]')).toHaveLength(0);
+    expect(container.querySelector('img[src="http://example.com/cover.jpg"]')).not.toBeNull();
+  });
+});
