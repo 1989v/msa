@@ -1,4 +1,4 @@
-# 2단계 증거 — 구현 (S1-12b 완료, 이후 슬라이스 진행 중)
+# 2·3단계 증거 — 구현 (2026-10-09 코드 몫 배포 완료)
 
 > 1단계(진단·기준선)는 `../stage1/README.md`. 계획은 `docs/plans/2026-10-08-place-growth-work-plan.md`. 보고 틀은 계획서 「완료 보고 형식」 절.
 
@@ -36,5 +36,30 @@ SR-10 첫 실행값(60분, 표본 = 내 세션이라 의미는 「질의가 돈�
 ### 결정 영향
 _(S2-1 이후 슬라이스의 전후 비교는 이 기준선 정의로 한다)_
 
-### 다음
+### 다음 (당시)
 S2-1 영문 정제(허브 카드·패널 경로) → S2-2 신뢰 블록(source 전달 + 원천 갱신일) → S2-3a 변형 시안.
+
+## S2-1 · S2-4 · S2-8 · S2-9 — 스펙 B · C (2026-10-08)
+
+| 계획 ID | 스펙 | 증거 |
+|---|---|---|
+| S2-1 영문 정제 · S2-4 상태 규칙 | `docs/specs/2026-10-08-place-text-and-states/` | `verifications/regression-injection.md`, `verifications/deploy-check.md`(파서 v2 운영 67,435건 전부 v2 — 10-09 11:33 KST) |
+| S2-8 ETag · S2-9 신뢰 페이지 | `docs/specs/2026-10-08-place-trust-pages-etag/` | 같은 폴더 `verifications/` |
+
+## 2단계 나머지 + 3단계 코드 몫 — 스펙 D · E · F · G1 · G2 (2026-10-09)
+
+운영 배포 `0d7377f`(12:31 KST) → 수정판 `9f65c3a` · `8cf3177` · `ac95a67` · `74bc02d`. 새 스위치 넷(묶음 공유 · 영문 짝 hreflang · IndexNow 제출 · 랜딩 색인)은 꺼진 채 배포.
+
+| 스펙 | 계획 ID | 회귀 주입 | 운영 확인 | 증거 |
+|---|---|---|---|---|
+| D 상세 첫 화면 | S2-2 · S2-7 · S3-7 | 18/18 빨강 | S2-7 30곳 불일치 0, schema.org 오류 0, 390 길찾기 4/10(미충족) | `docs/specs/2026-10-09-place-detail-first-screen/verifications/` |
+| E 모바일 허브·성능 | S2-3a·b · S2-5 | 14/14 빨강 | 390 폴드 카드 0→2, 1440 첫 카드 y 438(범위 밖 미충족), CLS 회귀 발견·해소 | `docs/specs/2026-10-09-place-hub-mobile-perf/verifications/`, `lh/{before,after,after2,after3}/README.md` |
+| F 복귀·공유·계측 | S3-3 · S3-4 · S3-4b · S3-6a | 28/28 빨강 | 꺼짐 404 동일, GA 0건 | `docs/specs/2026-10-09-place-return-share-events/verifications/` |
+| G1 랜딩·편집 | S3-1 · S3-2 | 37 중 35 빨강(1 무동작·1 보강) | 랜딩 20장 noindex·301·404 | `docs/specs/2026-10-09-place-longtail-landings/verifications/` |
+| G2 hreflang·RSS·IndexNow | S3-5 · S3-9 | 24/24 빨강 | hreflang 0줄, 피드 200(항목 0 — 10-10 재확인) | `docs/specs/2026-10-09-place-hreflang-feed-indexnow/verifications/` |
+
+배포 뒤 사용자 지적으로 고친 것: 상세 길찾기(place_id → `destination_place_id`, 없으면 좌표 — 「이름+주소」는 운영 표본 8건 중 0건 착지), 상세 사진 타일 아래 여백(3줄 고정). 성능 원시 JSON 은 레포 밖(`scratchpad/lh-raw/stage2/`).
+
+### 남은 것
+- 세션: RSS·IndexNow 재확인(10-10), H 판정 세트 사례(S3-6b), I 방문량 추천·가는 법(S4-3·S4-4), J 데이터 스토리 초안(S4-5), 종합 비포/애프터.
+- 사용자: 스위치 넷과 ADR 승인, 편집 초안 3장 검수, 모바일 상세 긴 칸 접기·선정 균형·시도 약칭 등 결정 — 목록은 아티팩트 §16.
