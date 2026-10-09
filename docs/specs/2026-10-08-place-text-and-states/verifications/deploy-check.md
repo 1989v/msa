@@ -13,6 +13,6 @@
 | 원래 검색어 검색 | `경복굼` → `correctedKeyword=경복궁`, `exact=true` → `null` | API |
 | 템플스테이 | ko 「템플스테이」 0 → 74건, en 「temple stay」 0 → 397건 | API `totalElements` |
 | 분류 사전 갱신 | `분류 사전 갱신: ko 667건, en 585건`(13:23:33Z) | search 로그 |
-| 파서 v2 | 미확인 — 다음 정기 재색인(`attraction-reindex` 21:30 UTC = 10-09 06:30 KST) 뒤 `attributeParserVersion` 2 와 영문 `N/A` 주차 문서의 `attrParking=UNKNOWN` 건수를 확인 | — |
+| 파서 v2 | **확인 2026-10-09 11:33 KST** — 06:30 KST 정기 재색인(`attraction-reindex-29858250` Complete 4m31s, 색인 `attractions_20261008213012`) 뒤 `attributeParserVersion` 터미 집계 `{2: 67,435}`(v1 0건). 영문 15,299건 전체 스크롤: parking 원문 13,947건 중 「N/A」 포함 1건(「N/A (Please use nearby parking facilities)」) → `attrParking=UNKNOWN`. 영문 분포 YES 11,343 · NO 2,470 · UNKNOWN 1,486 | ssh msa-oci → opensearch-0 `_search`(size 0 terms) · `_search?scroll` |
 
 스크린샷: `scratchpad/cdp-place-b/hub-en.jpg`, `zero-1280.jpg`, `zero-390.jpg`(세션 스크래치패드).
