@@ -30,5 +30,5 @@ Total Task Groups: 5. 정본 `spec.md`(개정 3). 표준 `docs/standards/test-ru
 **Dependencies:** TG1–4
 - [x] 5.1 회귀 주입(SR-5.3, 임시 워크트리) → `verifications/regression-injection.md`
 - [x] 5.2 다른 프리렌더 산출물 diff(SR-5.5)
-- [ ] 5.3 배포 → Lighthouse after 15회 → 판정 표 → `verifications/perf-before-after.md`
+- [x] 5.3 배포 → Lighthouse after 15회 → 판정 표 → `verifications/perf-before-after.md`
 - [ ] 5.4 CDP 두 변형 × 390·1440 캡처, 폴드 표, 4조합 대비, 지도 왕복 bounds → `verifications/screens.md`
