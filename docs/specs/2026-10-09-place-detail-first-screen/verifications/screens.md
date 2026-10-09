@@ -65,3 +65,62 @@
 빈 줄 정리와 긴 칸 접기가 남은 수단이다. 둘 다 이번 범위에서 정하지 않았다.
 
 캡처(위 664px 또는 800px): `screens/detail-77-ko-390.png`, `detail-12933-ko-390.png`, `detail-13863-en-390.png`, `detail-18083-en-390.png`, `detail-77-ko-1280.png`, `detail-13863-en-1280.png`.
+
+## 재측정 (ac95a67)
+
+- 대상: 운영 portal-fe `ac95a67`(빈 줄 정리 `5bcc6bad3` · 길찾기 place_id `ac95a67b7` 포함), search `8cf3177`. 측정 시각 2026-10-09 13:50~13:53 KST
+- 번들: 측정한 모든 화면의 `document.scripts` 가 `index-UuNZOCeH.js` 다. 측정 지시에 적힌 `index-C2R-GWD9.js` 는 운영에서 404 이고, place·apex 의 index.html(`last-modified` 04:47:56 GMT = 13:47 KST, `cf-cache-status: DYNAMIC`)이 `index-UuNZOCeH.js` 를 낸다. 그래서 해시 대신 이번 커밋의 새 심볼로 최신 여부를 확인했다 — 로드된 JS·CSS 30개 중 `useMediaQuery-5A_34fK7.js` 에 `destination_place_id` 가 있다(`ac95a67b7` 이 넣은 문자열). 측정 유효
+- 방법: 위와 같다(`scratchpad/meas5/r.mjs`·`h.mjs`, 같은 표본·뷰포트·폴드·6초 대기). 실행마다 남은 크롬 0
+
+### 1. 길찾기 링크
+
+| id | 언어 | 장소 | place_id | href (디코드) |
+|---|---|---|---|---|
+| 1 | 국 | 경복궁 | 있음 | `https://www.google.com/maps/dir/?api=1&destination=경복궁&destination_place_id=ChIJod7tSseifDUR9hXHLFNGMIs` |
+| 9 | 국 | 남산공원 | 있음 | `…/maps/dir/?api=1&destination=남산공원&destination_place_id=ChIJm3V0fu2ifDURL5X2_nPOeVQ` |
+| 2000 | 영 | Naksansa Temple | 있음 | `…/maps/dir/?api=1&destination=Naksansa Temple&destination_place_id=ChIJzcljWJOv2F8RhIkfptRT3sg` |
+| 50000 | 국 | 언칼국수 | 없음 | `…/maps/dir/?api=1&destination=언칼국수 경기도 파주시 금정20길 23 (금촌동)` |
+| 40000 | 영 | Homeplus Gyeonggi Hanam Branch | 없음 | `…/maps/dir/?api=1&destination=Homeplus Gyeonggi Hanam Branch[Tax Refund Shop] 747, Hanam-daero, Hanam-si, Gyeonggi-do` |
+
+- 경복궁: `destination=경복궁` · `destination_place_id=ChIJod7tSseifDUR9hXHLFNGMIs` · `travelmode` 없음 → 기대와 같다.
+- 15건(위 5건 + 아래 첫 화면 표본 10곳) 모두 `travelmode` 가 없다. place_id 가 있으면 이름 + `destination_place_id`, 없으면 「이름 + 주소」로 나온다.
+- 첫 화면 표본 10곳은 전부 place_id 가 있다. 영문 레코드는 같은 장소의 국문 레코드와 같은 place_id 를 쓴다(77↔13863 `ChIJy_KLudyifDUR8R3cB_PyJsU`, 4811↔13808, 16151↔18083).
+- 좌표 폴백(주소도 없는 경우)은 표본에서 찾지 못했다. `/api/search/attractions/{id}` 로 id 20개(응답 17건)를 훑었을 때 주소가 빈 레코드가 없었고, place_id 가 없는 것은 40000·50000 두 건이었다.
+
+### 2. 첫 화면 — 390×844 (가시 664)
+
+| 언어 | id | 요금 전→후 | 쉬는 날 전→후 | 길찾기 전→후 | 판정 |
+|---|---|---|---|---|---|
+| 국 | 77 운현궁 | 250→250 | 493→**414** | 686→**608** | 넘침 → 통과 |
+| 국 | 4811 서오릉 | 349→349 | 513→513 | 706→706 | 길찾기 넘침(그대로) |
+| 국 | 16151 국립고궁박물관 | 250→250 | 375→375 | 568→568 | 통과 |
+| 국 | 12933 남한산성행궁 | 507→**388** | 730→**533** | 954→**757** | 쉬는 날 통과, 길찾기 93px 넘침 |
+| 국 | 2961 광화문 | 290→290 | 454→454 | 647→647 | 통과 |
+| 영 | 13863 Unhyeongung | 308→308 | 452→452 | 665→665 | 길찾기 1px 넘침(그대로) |
+| 영 | 13808 Seooreung | 368→368 | 512→512 | 725→725 | 넘침(그대로) |
+| 영 | 18083 National Palace Museum | 308→308 | 452→452 | 645→645 | 통과 |
+| 영 | 14580 Namhansanseong | 342→342 | 506→506 | 719→719 | 넘침(그대로) |
+| 영 | 14367 DDP | 280→280 | 463→463 | 676→676 | 넘침(그대로) |
+
+### 2. 첫 화면 — 1280×800 (가시 800)
+
+| 언어 | id | 요금 전→후 | 쉬는 날 전→후 | 길찾기 전→후 |
+|---|---|---|---|---|
+| 국 | 77 | 247→247 | 471→392 | 664→585 |
+| 국 | 4811 | 326→326 | 451→451 | 644→644 |
+| 국 | 16151 | 247→247 | 352→352 | 526→526 |
+| 국 | 12933 | 484→366 | 707→510 | **931→734** |
+| 국 | 2961 | 287→287 | 411→411 | 605→605 |
+| 영 | 13863·13808·18083·14580·14367 | 같음 | 같음 | 574·603·554·603·614 (같음) |
+
+### 판정 요약 (전 → 후)
+
+| 항목 | 390×844 | 1280×800 |
+|---|---|---|
+| 요금 | 10/10 → 10/10 | 10/10 → 10/10 |
+| 쉬는 날 | 9/10 → **10/10** | 10/10 → 10/10 |
+| 길찾기 | 3/10 → **4/10** | 9/10 → **10/10** |
+
+- 값이 바뀐 곳은 원문에 빈 줄이 있던 국문 77·12933 둘뿐이다. 나머지 8곳은 px 단위까지 전과 같다 — 빈 줄 정리가 빈 줄이 없는 레코드에는 작용하지 않으니 기대대로다.
+- **390 길찾기는 여전히 미충족(4/10).** 남은 6곳은 1px(13863)·12px(14367)·42px(4811)·55px(14580)·61px(13808)·93px(12933) 넘친다. 빈 줄이 원인이 아닌 곳들이다 — 이용시간·쉬는 날 칸이 여러 줄이고 영문은 제목이 두 줄로 접혀 표가 내려간다. 남은 수단은 긴 칸 접기다.
+- 캡처(위 664px 또는 800px): `screens/detail-77-ko-390-ac95a67.png`, `detail-12933-ko-390-ac95a67.png`, `detail-13863-en-390-ac95a67.png`, `detail-12933-ko-1280-ac95a67.png`. 77 캡처에서 이용시간 칸이 빈 줄 없이 4줄로 붙고 길찾기가 608 에 보인다.
