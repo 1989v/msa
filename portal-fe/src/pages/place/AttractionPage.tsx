@@ -36,7 +36,7 @@ import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import AttractionLinks from './AttractionLinks';
 import AttractionConditions from './AttractionConditions';
 import AttractionInfoTabs from './AttractionInfoTabs';
-import { googleMapsSearchUrl, mapsApiKey } from './googleMaps';
+import { googleMapsDirectionsUrl, googleMapsSearchUrl, mapsApiKey } from './googleMaps';
 import NearbyExplore from './NearbyExplore';
 import PhotoViewer from './PhotoViewer';
 import { exploreItems, type ExploreKind } from './exploreItems';
@@ -44,7 +44,6 @@ import Footer from '../../components/Footer';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
 import { useResumeFavoriteIntent } from '../../components/favorite/useResumeFavoriteIntent';
 import SharePanel from '../../components/share/SharePanel';
-import { googleMapsDirectionsUrl } from '../rank/rankView';
 import {
   galleryImages,
   groupByCategory,
@@ -438,12 +437,7 @@ export default function AttractionPage() {
                   </a>
                   <a
                     className="place-btn"
-                    href={googleMapsDirectionsUrl({
-                      name: attraction.title,
-                      latitude: attraction.latitude,
-                      longitude: attraction.longitude,
-                      roadAddress: attraction.address,
-                    })}
+                    href={googleMapsDirectionsUrl(attraction)}
                     target="_blank"
                     rel="noreferrer"
                     onClick={() =>

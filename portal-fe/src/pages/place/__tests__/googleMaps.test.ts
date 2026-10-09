@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  googleMapsDirectionsUrl,
   googleMapsSearchUrl,
   haversineKm,
   nearestRegion,
@@ -123,5 +124,26 @@ describe('nearestRegion', () => {
 
   it('빈 목록이면 null', () => {
     expect(nearestRegion([], 37.5, 127)).toBeNull();
+  });
+});
+
+describe('googleMapsDirectionsUrl', () => {
+  const base = { title: '경복궁', address: '서울특별시 종로구 사직로 161', latitude: 37.5796, longitude: 126.977 };
+
+  it('place_id 가 있으면 이름 + destination_place_id 로 장소에 착지한다(좌표·plus code 아님)', () => {
+    const url = new URL(googleMapsDirectionsUrl({ ...base, googlePlaceId: 'ChIJod7tSseifDUR9hXHLFNGMIs' }));
+    expect(url.pathname).toBe('/maps/dir/');
+    expect(url.searchParams.get('destination')).toBe('경복궁');
+    expect(url.searchParams.get('destination_place_id')).toBe('ChIJod7tSseifDUR9hXHLFNGMIs');
+  });
+
+  it('이동 수단을 지정하지 않는다 — 운전 고정 아님', () => {
+    const url = new URL(googleMapsDirectionsUrl({ ...base, googlePlaceId: 'ChIJx' }));
+    expect(url.searchParams.has('travelmode')).toBe(false);
+  });
+
+  it('place_id 가 없으면 이름+주소, 주소도 없으면 좌표', () => {
+    expect(new URL(googleMapsDirectionsUrl(base)).searchParams.get('destination')).toBe('경복궁 서울특별시 종로구 사직로 161');
+    expect(new URL(googleMapsDirectionsUrl({ ...base, address: null })).searchParams.get('destination')).toBe('37.5796,126.977');
   });
 });

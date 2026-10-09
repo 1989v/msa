@@ -39,7 +39,7 @@ import { track } from '../../../analytics/tracker';
 import { addFavorite, fetchFavoriteKeys } from '../../../api/wishlistApi';
 import { todayKst } from '../../../seo/eventSchedule';
 import AttractionPage from '../AttractionPage';
-import { googleMapsDirectionsUrl } from '../../rank/rankView';
+import { googleMapsDirectionsUrl } from '../googleMaps';
 
 // 날씨는 따로 다루는 묶음 밖에서는 빈 응답 — 절이 없다
 vi.mocked(fetchWeather).mockResolvedValue({ sigunguCode: '11110', shortBaseAt: null, midTmFc: null, days: [] });
@@ -1122,17 +1122,17 @@ describe('AttractionPage 계측 — 길찾기 · 공유', () => {
   const clicks = () => vi.mocked(track).mock.calls.filter(([action]) => action === 'CLICK');
 
   it('행동 줄의 길찾기는 구글맵 경로 링크이고, 누르면 CLICK DIRECTIONS 하나 — 지도 링크는 MAP_LINK 그대로', async () => {
-    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, address: '서울특별시 종로구 사직로 161' });
+    const a = { ...enriched, address: '서울특별시 종로구 사직로 161', googlePlaceId: 'ChIJgbg' };
+    vi.mocked(fetchAttraction).mockResolvedValue(a);
     renderAt('/attractions/100');
     const actions = (await screen.findByRole('link', { name: '길찾기' })).closest('[data-place-section="actions"]') as HTMLElement;
     const directions = within(actions).getByRole('link', { name: '길찾기' });
-    expect(directions).toHaveAttribute(
-      'href',
-      googleMapsDirectionsUrl({ name: '경복궁', latitude: 37.5, longitude: 127, roadAddress: '서울특별시 종로구 사직로 161' }),
-    );
-    // 좌표로 도착지를 정한다 — 이름 검색은 같은 이름의 다른 곳으로 안내할 수 있다
-    expect(directions.getAttribute('href')).toContain('https://www.google.com/maps/dir/?api=1');
-    expect(directions.getAttribute('href')).toContain('destination=37.5,127');
+    expect(directions).toHaveAttribute('href', googleMapsDirectionsUrl(a));
+    // place_id 로 장소에 착지한다 — 좌표만 넘기면 구글맵이 plus code 지점으로 보여 준다
+    const url = new URL(directions.getAttribute('href') ?? '');
+    expect(url.searchParams.get('destination_place_id')).toBe('ChIJgbg');
+    expect(url.searchParams.get('destination')).toBe('경복궁');
+    expect(url.searchParams.has('travelmode')).toBe(false);
     vi.mocked(track).mockClear();
 
     expect(fireEvent.click(directions)).toBe(true);

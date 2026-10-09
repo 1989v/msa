@@ -58,6 +58,30 @@ export function googleMapsSearchUrl(a: {
   return `${base}&query=${a.latitude},${a.longitude}`;
 }
 
+/**
+ * 구글맵 길찾기 링크 (Maps URLs API — 키·쿼터 불요). 출발지는 비워 두면 구글맵이 현재 위치로 잡는다.
+ *
+ * 도착지를 좌표로만 넘기면 장소가 아니라 plus code 지점이 되어 이름도 영업 정보도 안 보인다.
+ * 검색 링크와 같은 3단 폴백이다: place_id(`destination_place_id`, destination 은 표시용 이름) → 이름+주소 → 좌표.
+ * 이동 수단은 지정하지 않는다 — 관광지는 걷기·대중교통으로 가는 경우가 많아 운전으로 고정하면 맞지 않는다.
+ */
+export function googleMapsDirectionsUrl(a: {
+  title: string;
+  googlePlaceId?: string | null;
+  address?: string | null;
+  latitude: number;
+  longitude: number;
+}): string {
+  const base = 'https://www.google.com/maps/dir/?api=1';
+  const placeId = (a.googlePlaceId ?? '').trim();
+  if (placeId) {
+    return `${base}&destination=${encodeURIComponent(a.title)}&destination_place_id=${encodeURIComponent(placeId)}`;
+  }
+  const address = (a.address ?? '').trim();
+  if (address) return `${base}&destination=${encodeURIComponent(`${a.title} ${address}`)}`;
+  return `${base}&destination=${a.latitude},${a.longitude}`;
+}
+
 /** 지도 bounds 로부터 재검색 반경(km) 추정 — 중심~모서리 거리, 0.5~50 캡. */
 export function radiusFromBounds(bounds: any): number {
   const ne = bounds.getNorthEast();
