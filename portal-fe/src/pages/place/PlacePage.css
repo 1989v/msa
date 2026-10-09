@@ -9,6 +9,16 @@
   gap: 1rem;
 }
 
+/* 바닥글은 첫 화면 밖에서 시작한다. 결과·상세가 오기 전 본문이 비어 있으면 바닥글이 화면 안에
+   보였다가 결과가 오면서 아래로 밀려 CLS 가 된다(허브·상세·지역 모두 바닥글 하나가 0.2 안팎).
+   최소 높이를 「화면 + 바닥글보다 큰 여유」로 두고 바닥글을 맨 아래에 붙인다. */
+.place-page {
+  min-height: calc(100dvh + 16rem);
+}
+.place-page > .site-footer {
+  margin-top: auto;
+}
+
 .place-header {
   display: flex;
   flex-direction: column;
