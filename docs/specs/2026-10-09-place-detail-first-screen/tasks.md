@@ -98,14 +98,14 @@ Total Task Groups: 6. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
 > **배포 제약 (SR-4.2)**: 2026-10-09 06:30 KST 정기 재색인 로그에서 `attribute parser v2` 와 영문 N/A 주차 UNKNOWN 건수를 확인해 `docs/specs/2026-10-08-place-text-and-states/verifications/deploy-check.md` 에 적기 **전에는 이 변경을 main 에 푸시하지 않는다** — main 푸시가 곧 이미지 생성이고(`.github/workflows/images.yml:5`), 다음 정기 재색인이 v3 로 돈다.
 > 색인 필드 `source`·`copyrightDivCd`·`feeText` 추가와 파서 v3 는 **재색인 1회를 거쳐야** 문서에 실린다. 그 전까지 표시는 폴백(확인 상태 「출처: 정보 없음」·바닥 출처 줄 고정 문구·요금 칸 `sourceText(useFee)`)으로 나간다.
 
-- [ ] 6.1 선행 확인: `deploy-check.md` 의 「파서 v2」 행이 확인 값으로 채워졌는지 본다. 비어 있으면 6.6 이후를 멈춘다
-- [ ] 6.2 S2-7 「전」 값 + 기대값 표(SR-5.2) — 재색인 **전에** `verifications/s2-7-expected.md` 에 먼저 적는다
+- [x] 6.1 선행 확인: `deploy-check.md` 의 「파서 v2」 행이 확인 값으로 채워졌는지 본다. 비어 있으면 6.6 이후를 멈춘다
+- [x] 6.2 S2-7 「전」 값 + 기대값 표(SR-5.2) — 재색인 **전에** `verifications/s2-7-expected.md` 에 먼저 적는다
   - 「전」: v2 재색인 뒤 같은 30곳, 같은 집계 스크립트
   - 휴무 누락 2 → 1(U1: 4811 은 휴무 이동 단서라 UNKNOWN 유지)
   - 요금 칸 「정보 없음」 11건: id 별 반복정보 `infoname`·`serialnum`·`infotext` 원문과 SR-2.2 일치 여부 표 → 기대 「11 → (11 − 일치 id 수)」, 일치 id 는 각각 「정보 없음」이 아니어야 한다. 3종 이름 밖 id 는 이유와 함께 「남는 건」(이름 목록은 이 표를 보고 늘리지 않는다)
   - 입장 UNKNOWN 9건: 13354 는 요금 행 없음 → 남음. 나머지 8건은 반복정보 요금 행 원문으로 FREE·PAID·UNKNOWN 기대값
   - 안 바뀌는 id 는 이유와 함께 「남는 건」
-- [ ] 6.3 회귀 주입(SR-5.5, 임시 사본 워크트리 — 공유 트리에서 하지 않는다). 각각 빨간불과 잡은 테스트 이름을 `verifications/regression-injection.md` 에 기록. 컴파일되는 회귀여야 한다(구문 오류 빨간불은 증거 아님)
+- [x] 6.3 회귀 주입(SR-5.5, 임시 사본 워크트리 — 공유 트리에서 하지 않는다). 각각 빨간불과 잡은 테스트 이름을 `verifications/regression-injection.md` 에 기록. 컴파일되는 회귀여야 한다(구문 오류 빨간불은 증거 아님)
   - 괄호 여는 말 처리 삭제 → 77 단언
   - 휴무 이동 말 판정 삭제 → 4811 UNKNOWN 단언
   - `AttractionFee` 반복정보 폴백 삭제 → `AttractionFeeTest`
@@ -122,7 +122,7 @@ Total Task Groups: 6. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
   - Kotlin `attractionPhone` 에서 `(?:\+82[- ]?)?` 삭제 → `PhoneParityTest` 「+82-2-123-4567」
   - FE 「이용 안내」에서 `repeatInfoRows` 제외 → FE 남는 행 단언
   - 파서 `admission()` 에 `stripTags` 다시 걸기 → 「<어린이> 무료」 UNKNOWN 단언
-- [ ] 6.4 골든·참조 정합
+- [x] 6.4 골든·참조 정합
   - 골든 재생성 diff: `cd portal-fe && npx vitest run src/seo src/pages/place` 뒤 `git diff --stat search/app/src/test/resources/render/` 가 비어 있다(커밋된 jsonld·visit-summary·phone 골든이 최신). `UPDATE_RENDER_GOLDEN=1` 재생성 후 `render/golden/` diff 도 0
   - 온톨로지 참조: `grep -nE "AttractionApiReindexTasklet|AttractionAttributeParser|AttractionPageRenderer|AttractionSeoText|PlaceApiClient|copy\.mjs|placeAttributes|AttractionPage\.tsx" code-dictionary/feature/src/main/resources/ontology/*.yaml` — 걸린 `symbol` 문자열이 바뀐 파일에 그대로 남아 있는지 `grep -F` 로 하나씩 확인(현재 `spring.yaml:1142` 태스클릿 `execute`, `ads.yaml:673` `ADSENSE_CLIENT`)
 - [ ] 6.5 문서: `search/glossary.md` 3-1 절에 「방문 요약」「확인 상태」「행동 줄」「배지 줄」「feeText」. 「방문 요약」 금지/주의 열에 「「방문 정보 요약」/「At a glance」는 행사·숙박·코스의 배지 절 제목이고(FE 탭 이름은 「방문 정보」) 방문 요약과 다르다」
