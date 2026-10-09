@@ -1,19 +1,19 @@
 # Wishlist Service
 
 회원별 찜하기(다형 대상) 서비스 — 상품·게임·관광지·블로그 글 (ADR-0074).
-관광지는 **여행 묶음(컬렉션)** 으로 모을 수 있다 (ADR-0080).
+관광지는 **여행 묶음(컬렉션)** 으로 모을 수 있다 (ADR-0080). 묶음은 공유 링크로 로그인 없이 보여 줄 수 있다 (ADR-0107).
 commerce:app 에 폴드된 라이브러리 모듈 (ADR-0058 round 2).
 
 ## Modules
 
 | Gradle path | 역할 |
 |---|---|
-| `:wishlist:domain` | Pure Kotlin 도메인 (WishlistItem, WishlistTargetType, WishlistCollection) |
+| `:wishlist:domain` | Pure Kotlin 도메인 (WishlistItem, WishlistTargetType, WishlistCollection, CollectionShare) |
 | `:wishlist:feature` | 비-bootable 라이브러리 — commerce:app 이 폴드 (전용 datasource wishlist_db) |
 
 ## 구조 상태 (ADR-0083)
 
-표준 준수 — UseCase 인터페이스 5 · `WishlistRepositoryPort` · adapter · 테스트 있음. 부채 없음.
+표준 준수 — UseCase 인터페이스 9(찜 6 · 공유 3) · `WishlistRepositoryPort` · `CollectionSharePort` · adapter · 테스트 있음. 부채 없음.
 전용 datasource 형 `:feature` 의 `build.gradle.kts` 원본으로 쓴다 (신규 도메인 체크리스트 §1).
 
 ## Commands
@@ -35,8 +35,16 @@ commerce:app 에 폴드된 라이브러리 모듈 (ADR-0058 round 2).
   묶음 FK 는 `ON DELETE SET NULL` — **묶음을 지워도 찜은 남는다**
 - 묶음 API 는 전부 `memberId` 와 함께 조회한다 — id 가 URL 로 들어오므로 남의 묶음을 건드릴 수 있으면 안 된다
 - 스키마는 범용이지만 **그룹 선택 UI 는 ATTRACTION 에만** 노출한다 (전 타입에 열면 찜의 가벼움이 사라진다)
-- memberId 는 X-User-Id 헤더 (게이트웨이가 ROLE_USER 검증 후 주입 — 찜 **목록·추가·삭제는 로그인 전용**이고, 대상별 **찜 수 조회만 공개**다)
-- Kafka 소비: `product.deleted` → PRODUCT 타입 찜 삭제 / `member.withdrawn` → 회원 찜 전체 삭제
+- memberId 는 X-User-Id 헤더 (게이트웨이가 ROLE_USER 검증 후 주입 — 찜 **목록·추가·삭제는 로그인 전용**이고, 공개는 대상별 **찜 수 조회**와 **공유 토큰 열람**(`/api/v1/wishlist/shared/{token}`·`/c/{token}`) 둘뿐이다. 공유 열람은 `X-User-Id` 를 받지 않는 별도 컨트롤러 `SharedCollectionController` 가 받는다)
+- Kafka 소비: `product.deleted` → PRODUCT 타입 찜 삭제 / `member.withdrawn` → 회원 찜 전체 + 그 회원의 공유 링크(`collection_share`) 삭제
+- **묶음 공유** (ADR-0107): 링크는 묶음당 살아 있는 것 하나 — 재생성은 이전 행에 `revoked_at` 을 채우고 새 행을 넣는다(묶음 행 `PESSIMISTIC_WRITE` 잠금).
+  만료·폐기는 행을 지우지 않고 열람 시점에 판정한다. 없음·남의 묶음·만료·폐기·꺼짐은 전부 **같은 404 본문**이다.
+  공개 응답은 ATTRACTION 항목만 최신순 100건 + `truncated`, 소유자 id·시각을 싣지 않는다. 묶음을 지우면 FK `ON DELETE CASCADE` 로 링크도 사라진다
+- **공유 설정** `kgd.wishlist.share.enabled`(기본 `false`, env `KGD_WISHLIST_SHARE_ENABLED`): 끄면 공유 다섯 경로가 모두 404 다.
+  켜는 곳은 account 오버레이 env 한 줄이고, ADR-0107 승인 전에는 넣지 않는다. 공유 컨트롤러 둘은 설정과 무관하게 **항상 등록**한다 —
+  `@ConditionalOnProperty` 로 빼면 `GET /api/v1/wishlist/shared/x` 가 `PUT/DELETE /{targetType}/{targetKey}` 와 겹쳐 405 가 된다
+- **단축 주소 `/c/{token}`**: 토큰을 조회하지 않고 형식(영숫자 10자)만 본다 — 맞으면 `{ShortLinkProperties.origin}/shared/{token}`, 아니면 `/shared/invalid` 로 302.
+  목적지 호스트는 `ShortLinkProperties.origin` 에서만 얻는다. 단축 접두사 목록(ADR-0106)에 `/c` 를 더한 기록은 ADR-0107 §5 가 갖는다
 - 스키마는 `wishlistdb/migration` + ScopedFlywayMigrator (baseline=1, 토글 `wishlist.flyway.enabled`)
 
 ## API Endpoints
@@ -52,3 +60,8 @@ commerce:app 에 폴드된 라이브러리 모듈 (ADR-0058 round 2).
 | PATCH | `/api/v1/wishlist/collections/{id}` | 묶음 이름 변경 |
 | DELETE | `/api/v1/wishlist/collections/{id}` | 묶음 삭제 (소속 찜은 미분류로 남음) |
 | PATCH | `/api/v1/wishlist/{targetType}/{targetKey}/collection` | 찜을 묶음으로 이동 (`collectionId: null` = 미분류) |
+| POST | `/api/v1/wishlist/collections/{id}/share` | 공유 링크 생성 — 본문 없음·`{}` = 30일, `{"expiresInDays":null}` = 만료 없음, 1~365 밖은 400. 살아 있던 링크는 폐기 |
+| GET | `/api/v1/wishlist/collections/{id}/share` | 현재 공유 링크 `{link: {token, url, expiresAt} \| null}` — 링크 없음은 404 가 아니라 `link: null` |
+| DELETE | `/api/v1/wishlist/collections/{id}/share` | 공유 중단 (멱등) |
+| GET | `/api/v1/wishlist/shared/{token}` | **공개** — 공유 묶음 열람 `{name, items[{targetType, targetKey}], truncated}` |
+| GET | `/c/{token}` | **공개** — 공유 묶음 단축 주소. apex 인그레스 → 게이트웨이 `short-link-collection` → `/shared/{token}` 302 (`no-store`·`noindex`) |

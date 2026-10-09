@@ -59,7 +59,7 @@ entity_id    String                                    체계가 대상마다 �
 ### 2) 노출 위치는 계층으로 남긴다 — 한 축으로 누르면 원인을 못 가린다
 
 ```
-screen_type    화면 종류 (상수)        PLACE_HUB · ATTRACTION_DETAIL · PLACE_REGION
+screen_type    화면 종류 (상수)        PLACE_HUB · ATTRACTION_DETAIL · PLACE_REGION · FAVORITES(찜 화면)
 screen_ref     그 화면의 주체          상세면 그 관광지 id. 목록 화면은 비우되, 지역을 축으로 고른 목록(허브·지역 허브)은 그 지역 코드
 section_id     섹션 고유 id            NEARBY_ATTRACTIONS · AMENITY_CAROUSEL · POPULAR_LIST
 section_index  화면 안 섹션 순서       섹션 배치는 바뀐다 — 그때 값으로 남아 있어야 비교가 된다
@@ -128,7 +128,8 @@ TourAPI 운영계정 승인은 여기에 영향이 없다 — 링크는 data.go.
 접는 「어제」에서 KST 마지막 몇 시간이 빠졌고, place-ingest 가 읽는 합계에도 같이 적용된다.
 
 **`clicks`·`unique_clickers` 의 뜻 (2026-10-08)**: 목록 선택(카드·목록 핀·오버레이 핀)만 센다 —
-선택 뒤 후속 행동인 `MAP_LINK`(지도 열기)·`FAVORITE`(찜) 섹션은 `POST_SELECTION_SECTIONS` 로 제외한다.
+선택 뒤 후속 행동인 `MAP_LINK`(지도 열기)·`FAVORITE`(찜)·`DIRECTIONS`(길찾기)·`SHARE`(공유) 섹션은
+`POST_SELECTION_SECTIONS` 로 제외한다(길찾기·공유는 2026-10-09 추가).
 노출은 그대로다. 노출 없는 클릭(핀)이 있어 한 관광지의 `clicks` 가 `impressions` 를 넘을 수 있고,
 두 소비자 모두 비율을 쓰지 않으므로 깨지지 않는다.
 

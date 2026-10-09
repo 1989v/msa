@@ -81,6 +81,9 @@ place 허브(`place.1989v.com/`)의 행동 중 필수 6종 가운데 넷(검색 
 | 결과 선택 | `uniqExact((view_id, entity_id))` where `action='CLICK' AND section_id IN ('ATTRACTION_LIST','MAP_OVERLAY')` |
 | 찜 완료 | 같은 식, `section_id='FAVORITE' AND JSONExtractBool(payload,'saved')` |
 | 지도 열기 | 같은 식, `section_id='MAP_LINK'` |
+| 길찾기 | 같은 식, `section_id='DIRECTIONS'` — 관광지 상세(`ATTRACTION_DETAIL`)의 구글맵 길찾기 링크, payload `kind:'google_maps_directions'`. `MAP_LINK`(검색 링크)와 따로 센다 (2026-10-09 행동 이벤트 스펙 SR-3.1) |
+| 관광지 공유 | 같은 식, `section_id='SHARE' AND entity_type='ATTRACTION'` — 상세 SharePanel 의 복사·Web Share·X·LinkedIn, payload `{kind:'attraction', channel}`. 중복 키가 채널을 모르므로 view 당 첫 채널만 남는다 (SR-3.2·3.5) |
+| 묶음 공유 | `uniqExact(view_id)` where `screen_type='FAVORITES' AND section_id='SHARE'` — 찜 화면(`entity_type='PAGE'`, `entity_id='favorites'`)의 묶음 막대 복사·Web Share, payload `{kind:'collection', channel}`, 묶음 id 없음. 「공유 링크 만들기」는 이벤트가 없다(생성 기록은 `collection_share.created_at`). viewId 는 묶음 칩을 바꿀 때마다 새로 만든다 (SR-3.2) |
 | 건수에서 빼는 것 | 검색 제출·필터 적용 건수에는 `trigger IN ('landing','initial','page','lang','other','relax','restore')` 를 넣지 않는다. 두 지표는 허용 목록 `IN (...)` 이라 쿼리는 그대로다. `relax` 와 `restore`(로그인 복귀로 되살린 허브의 첫 질의, 2026-10-09 로그인 복귀 스펙 SR-1.2) 는 결과 view 에는 들어간다. 결과 view 에서는 `landing` 만 뺀다 — 지역 선택 화면이라 카드가 없다(`PlacePage.tsx:1192`) |
 | 0건 해제 | `uniqExact(view_id)` where `action='SEARCH' AND JSONExtractString(payload,'trigger')='relax'` — 해제 버튼·「모두 해제」·「원래 검색어로 검색」으로 생긴 view 전부(0건이 아닌 화면에서 누른 원래 검색어 링크, 해제 뒤 다시 0건인 view, 지역 고르기 화면으로 넘어간 view 포함). 복구율은 이번에 정의하지 않는다 |
 | ref 누락 점검 | `count()` where `action='SEARCH' AND trigger='other'` — 0 이어야 한다. 안전망은 fail-open 이라 운영에서 ref 누락은 `other` 로 조용히 분모에만 들어간다. 기준선을 읽을 때마다 같이 본다 |

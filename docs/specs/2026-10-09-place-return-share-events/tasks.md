@@ -115,7 +115,7 @@ wishlist 최신은 `V3__collections.sql` → 이번은 **`wishlist/feature/src/m
 
 ### Task Group 8: 회귀 주입 · 문서 · 온톨로지 참조 · 배포 · 운영 확인 (SR-4.3 · SR-4.4 · SR-2.12)
 **Dependencies:** TG1–7 · **Phase:** 검증 + 문서 + 배포 · **Required Skills:** 임시 워크트리 회귀 주입, CDP(독립 프로필 헤드리스 크롬), `ssh msa-oci`
-- [ ] 8.1 회귀 주입(SR-4.3) — **임시 사본 워크트리**에서 한 건씩 넣고 아래 테스트의 빨강을 본 뒤 되돌린다. 컴파일되는 회귀여야 한다(구문 오류 빨강은 증거 아님). 결과 → `verifications/regression-injection.md`(주입 diff 한 줄 · 실패한 테스트 이름 · 실패 줄)
+- [x] 8.1 회귀 주입(SR-4.3) — **임시 사본 워크트리**에서 한 건씩 넣고 아래 테스트의 빨강을 본 뒤 되돌린다. 컴파일되는 회귀여야 한다(구문 오류 빨강은 증거 아님). 결과 → `verifications/regression-injection.md`(주입 diff 한 줄 · 실패한 테스트 이름 · 실패 줄)
 
   | # | 주입 | 빨강이 나야 하는 테스트 |
   |---|---|---|
@@ -140,8 +140,8 @@ wishlist 최신은 `V3__collections.sql` → 이번은 **`wishlist/feature/src/m
   | 19 | 허브 별에 `onBeforeLogin` 미전달 | `PlacePage.loginReturn` |
   | 20 | 묶음 막대에 `channels` 미전달 | `FavoritesPage.share.test`(X·LinkedIn 0) |
   | 21 | GA 로더 조건 하나씩 삭제(①②③) | `gaLoader.test` |
-- [ ] 8.2 문서: `wishlist/CLAUDE.md` Key Rules 공개 경로 문장에 「공유 토큰 열람」, API 표에 네 행 + `/c/{token}`, `/c` 접두사와 설정 키·켜는 env(`KGD_WISHLIST_SHARE_ENABLED`, account 오버레이 — 승인 전에는 넣지 않는다). ADR-0106 접두사 목록은 ADR-0107 §5 가 갖는다. 열람 원장 없음이라 ADR-0077 표·`/privacy` §6·retention 변경 없음. 문서-소스 추적(`docs/standards/doc-index-tracking.md`) 갱신 대상이면 같은 커밋
-- [ ] 8.3 온톨로지 참조 확인 — 이번에 고친 파일·심볼을 가리키는 항목이 아직 맞는지:
+- [x] 8.2 문서: `wishlist/CLAUDE.md` Key Rules 공개 경로 문장에 「공유 토큰 열람」, API 표에 네 행 + `/c/{token}`, `/c` 접두사와 설정 키·켜는 env(`KGD_WISHLIST_SHARE_ENABLED`, account 오버레이 — 승인 전에는 넣지 않는다). ADR-0106 접두사 목록은 ADR-0107 §5 가 갖는다. 열람 원장 없음이라 ADR-0077 표·`/privacy` §6·retention 변경 없음. 문서-소스 추적(`docs/standards/doc-index-tracking.md`) 갱신 대상이면 같은 커밋
+- [x] 8.3 온톨로지 참조 확인 — 이번에 고친 파일·심볼을 가리키는 항목이 아직 맞는지:
   `grep -n -E 'path: (wishlist/|gateway/src/main/kotlin/com/kgd/gateway/config/GatewayRouteConfig|analytics/app/src/main/kotlin/com/kgd/analytics/(application|infrastructure)/popularity|portal-fe/src/(components/(favorite|share)|auth/auth|analytics/(events|tracker)|pages/place/(PlacePage|AttractionPage))|portal-fe/index.html|k8s/overlays/oci-arm/ingresses/commerce-platform)' code-dictionary/feature/src/main/resources/ontology/*.yaml`
   2026-10-09 기준 걸리는 것: `auth.ts`(security.yaml 6곳 — `safeNext`·`COOKIE_DOMAIN`·`buildGoogleAuthUrl`·`getOAuthRedirectUri`·`Max-Age=0; SameSite=Lax`·`scope=openid`), `GatewayRouteConfig.kt`(3곳 — `class GatewayRouteConfig(`·`fun routeLocator(`·`requiredRoles = listOf("ROLE_ADMIN")`), `commerce-platform.yaml`(5곳). 각 `symbol` 문자열이 파일에 그대로 있는지 `grep -F` 로 확인하고, 바뀌었으면 yaml 수정 + `manifest.yaml` `revision` 올림(ADR-0100). 개념 추가(공유 토큰 등)는 이번 범위 밖
 - [ ] 8.4 배포: 커밋·푸시는 사용자 확인 뒤. 이미지 넷 — account(wishlist)·gateway·analytics·portal-fe. 인그레스는 Argo 가 반영. **설정은 켜지 않는다**(Q1). 운영 조회·kubectl 은 `ssh msa-oci` 로만(로컬 기본 컨텍스트는 회사 EKS)
