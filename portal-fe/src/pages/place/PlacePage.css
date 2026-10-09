@@ -2639,6 +2639,20 @@ button.place-card {
     padding-right: 2px;
   }
 
+  /* 접힌 상태(처음 [PHOTO_TILES] 장 = 2열 3줄)는 줄을 큰 사진 높이의 3등분으로 고정한다 — 4:3 고정이면 사진 열 폭에
+     따라 3줄이 25rem 에 못 미쳐 아래가 빈다. 줄 수를 사진 수에 맞춰 늘리면 2장일 때 세로 띠(112×400)가 되므로
+     3줄로 고정하고, 사진이 적으면 아래가 비는 것을 받아들인다. 사진은 cover 로 잘라 채운다. 펼친 상태는 4:3 + 스크롤. */
+  .place-detail-tiles:not([data-open]) {
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    grid-auto-rows: 0;
+    overflow-y: hidden;
+  }
+
+  .place-detail-tiles:not([data-open]) .place-detail-tile {
+    aspect-ratio: auto;
+    height: 100%;
+  }
+
   .place-body-stacked .place-detail-overview {
     max-width: none;
   }

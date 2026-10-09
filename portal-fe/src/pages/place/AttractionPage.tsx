@@ -531,7 +531,7 @@ export default function AttractionPage() {
                       const tiles = tilesOpen ? others : others.slice(0, PHOTO_TILES);
                       const rest = others.length - tiles.length;
                       return (
-                        <div className="place-detail-tiles" role="group" aria-label={L.photos}>
+                        <div className="place-detail-tiles" role="group" aria-label={L.photos} data-open={tilesOpen || undefined}>
                           {tiles.map(({ img, i }, k) => {
                             const last = k === tiles.length - 1 && rest > 0;
                             return (

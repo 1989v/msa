@@ -142,8 +142,8 @@ describe('googleMapsDirectionsUrl', () => {
     expect(url.searchParams.has('travelmode')).toBe(false);
   });
 
-  it('place_id 가 없으면 이름+주소, 주소도 없으면 좌표', () => {
-    expect(new URL(googleMapsDirectionsUrl(base)).searchParams.get('destination')).toBe('경복궁 서울특별시 종로구 사직로 161');
-    expect(new URL(googleMapsDirectionsUrl({ ...base, address: null })).searchParams.get('destination')).toBe('37.5796,126.977');
+  it('place_id 가 없으면 주소가 있어도 좌표 — 이름+주소 문자열은 길찾기에서 착지하지 못한다', () => {
+    expect(new URL(googleMapsDirectionsUrl(base)).searchParams.get('destination')).toBe('37.5796,126.977');
+    expect(new URL(googleMapsDirectionsUrl({ ...base, googlePlaceId: '  ' })).searchParams.get('destination')).toBe('37.5796,126.977');
   });
 });

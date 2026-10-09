@@ -61,8 +61,9 @@ export function googleMapsSearchUrl(a: {
 /**
  * 구글맵 길찾기 링크 (Maps URLs API — 키·쿼터 불요). 출발지는 비워 두면 구글맵이 현재 위치로 잡는다.
  *
- * 도착지를 좌표로만 넘기면 장소가 아니라 plus code 지점이 되어 이름도 영업 정보도 안 보인다.
- * 검색 링크와 같은 3단 폴백이다: place_id(`destination_place_id`, destination 은 표시용 이름) → 이름+주소 → 좌표.
+ * place_id 가 있으면 `destination_place_id` 로 장소에 착지한다(destination 은 표시용 이름).
+ * 없으면 좌표로 넘긴다 — 도착지가 plus code 로 보이지만 핀과 경로는 맞다. 이름+주소 문자열은 길찾기에서는
+ * 검색과 달리 장소를 거의 못 찾는다(운영 표본 8건 중 0건 착지 — 6건 「찾을 수 없음」, 2건 다른 장소, 2026-10-09).
  * 이동 수단은 지정하지 않는다 — 관광지는 걷기·대중교통으로 가는 경우가 많아 운전으로 고정하면 맞지 않는다.
  */
 export function googleMapsDirectionsUrl(a: {
@@ -77,8 +78,6 @@ export function googleMapsDirectionsUrl(a: {
   if (placeId) {
     return `${base}&destination=${encodeURIComponent(a.title)}&destination_place_id=${encodeURIComponent(placeId)}`;
   }
-  const address = (a.address ?? '').trim();
-  if (address) return `${base}&destination=${encodeURIComponent(`${a.title} ${address}`)}`;
   return `${base}&destination=${a.latitude},${a.longitude}`;
 }
 
