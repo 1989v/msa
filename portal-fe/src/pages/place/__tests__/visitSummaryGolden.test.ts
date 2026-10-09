@@ -105,6 +105,16 @@ const combos = [
     },
   },
   {
+    // 원문 「<br>」 뒤 줄바꿈이 겹쳐 생긴 빈 줄 — 칸 안에서는 한 줄바꿈으로 줄인다
+    name: 'ko-blank-lines-in-source',
+    input: {
+      ...base, id: '3107', lang: 'ko', title: '빈 줄이 있는 곳', source: 'TOURAPI',
+      closureState: 'WEEKLY', closedWeekdays: ['MON'], restDate: '매주 월요일<br>\n<br>\n1월 1일',
+      feeText: '- 개인 3,000원\n\n- 단체(10인 이상) 2,400원',
+      useTime: '하절기 09:00~18:00<br>\n동절기 09:00~17:00<br>\n<br>\n※ 입장 마감 1시간 전',
+    },
+  },
+  {
     // 방문 속성이 생기기 전에 색인된 문서 — 해석 줄 없이 원문만, 배지 줄 없음
     name: 'ko-legacy-without-attributes',
     input: {

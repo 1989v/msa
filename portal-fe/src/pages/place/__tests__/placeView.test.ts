@@ -515,6 +515,15 @@ describe('visitSummary — 방문 요약 칸과 배지 줄', () => {
     expect(cell({ useTime: '09:00~18:00<br />입장 마감 17:00' }, '이용시간')).toBe('09:00~18:00\n입장 마감 17:00');
   });
 
+  it('원문 빈 줄은 칸 안에서 한 줄바꿈으로 줄인다 — 「<br>」 뒤 원문 줄바꿈이 겹친 경우', () => {
+    expect(cell({ useTime: '하절기 09:00~18:00<br>\n동절기 09:00~17:00<br>\n<br>\n※ 입장 마감 1시간 전' }, '이용시간'))
+      .toBe('하절기 09:00~18:00\n동절기 09:00~17:00\n※ 입장 마감 1시간 전');
+    // 색인이 정규화한 feeText 에 남은 빈 줄도 같은 규칙
+    expect(cell({ feeText: '- 개인 3,000원\n\n- 단체(10인 이상) 2,400원' }, '요금')).toBe('- 개인 3,000원\n- 단체(10인 이상) 2,400원');
+    expect(cell({ closureState: 'WEEKLY', closedWeekdays: ['MON'], restDate: '매주 월요일<br>\n \n1월 1일' }, '쉬는 날'))
+      .toBe('매주 월요일 휴무\n매주 월요일\n1월 1일');
+  });
+
   it('쉬는 날 — 해석 줄과 원문 줄 두 줄, 모르면 원문만', () => {
     expect(cell({ closureState: 'WEEKLY', closedWeekdays: ['TUE'], restDate: '매주 화요일' }, '쉬는 날')).toBe('매주 화요일 휴무\n매주 화요일');
     expect(cell({ closureState: 'WEEKLY', closedWeekdays: ['TUE'], restDate: 'Tuesdays' }, 'Closed', 'en')).toBe('Closed on Tuesdays\nTuesdays');

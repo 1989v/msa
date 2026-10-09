@@ -566,9 +566,18 @@ class AttractionPageRenderer(
         )
         // feeText 도 escapeHtml 만 — 원문 값은 위에서 이미 sourceText 를 거쳤다
         return "<dl data-place-section=\"visit-summary\">" +
-            rows.joinToString("") { (label, value) -> "<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value?.ifEmpty { null } ?: na)}</dd>" } +
+            rows.joinToString("") { (label, value) ->
+                "<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(visitSummaryValue(value?.ifEmpty { null } ?: na))}</dd>"
+            } +
             "</dl>"
     }
+
+    /**
+     * 방문 요약 칸 값의 빈 줄을 한 줄바꿈으로 줄인다 — 원천이 「<br>」 뒤에 줄바꿈을 또 붙여 보내 평문화하면 줄마다 빈 줄이 끼고,
+     * 칸이 길어져 첫 화면의 길찾기를 밀어낸다. 표시 값에만 거는 규칙이다(원천·색인 원문과 다른 절은 그대로).
+     * 화면 `visitSummaryValue`(placeAttributes.ts)와 같은 규칙.
+     */
+    private fun visitSummaryValue(value: String): String = value.replace(VISIT_SUMMARY_BLANK_LINES, "\n")
 
     /**
      * 배지 줄 — 방문 요약에 칸이 없는 것(신용카드 · 유모차 대여 · 많이 클릭한 곳)만, 이 순서로 「 · 」로 잇는다.
@@ -882,6 +891,9 @@ class AttractionPageRenderer(
             Triple("caravSiteCo", "카라반", "Caravan"),
             Triple("indvdlCaravSiteCo", "개인 카라반", "Own caravan"),
         )
+
+        /** 빈 줄(공백·탭만 있는 줄 포함) 연속 — 화면 `visitSummaryValue` 의 정규식과 같다 */
+        private val VISIT_SUMMARY_BLANK_LINES = Regex("\n(?:[ \t]*\n)+")
 
         const val KO = "ko"
         const val EN = "en"

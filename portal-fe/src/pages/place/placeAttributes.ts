@@ -332,11 +332,20 @@ function sourceDate(value: string | null | undefined): string | null {
 }
 
 /**
+ * 방문 요약 칸 값의 빈 줄을 한 줄바꿈으로 줄인다 — 원천은 「<br>」 뒤에 줄바꿈을 또 붙여 보내는 곳이 많아
+ * 평문화하면 줄마다 빈 줄이 끼고, 칸이 길어져 첫 화면의 길찾기를 밀어낸다. 표시 값에만 거는 규칙이다
+ * (원천·색인 원문과 「이용 안내」 등 다른 절은 그대로). 서버 렌더 `visitSummaryValue` 와 같은 규칙.
+ */
+function visitSummaryValue(value: string): string {
+  return value.replace(/\n(?:[ \t]*\n)+/g, '\n');
+}
+
+/**
  * 방문 요약 — 상세 첫 화면의 칸 목록과 배지 줄. 행사·숙박·코스가 아닌 유형에 붙는다.
  *
  * 서버 렌더(search `AttractionPageRenderer` 의 `visit-summary`·`visit-badges` 절)가 같은 칸·같은 문구를 내고
  * `VisitSummaryParityTest` 가 이 함수의 출력(`visit-summary-golden.json`)과 비교한다 — 한쪽 문구를 고치면 골든이 바뀐다.
- * 원문 값은 `sourceText` 를 한 번 거친다. `feeText` 는 색인이 이미 정규화한 평문이라 다시 거치지 않는다
+ * 원문 값은 `sourceText` 를 한 번 거친다(칸 안의 빈 줄은 `visitSummaryValue` 가 한 줄바꿈으로 줄인다). `feeText` 는 색인이 이미 정규화한 평문이라 다시 거치지 않는다
  * (두 번 걸면 디코드된 「<어린이>」가 태그로 지워진다).
  */
 export function visitSummary(a: Attraction, lang: PlaceLang): VisitSummary {
@@ -367,7 +376,7 @@ export function visitSummary(a: Attraction, lang: PlaceLang): VisitSummary {
     (a.uniqueClickers14d ?? 0) >= FREQUENTLY_CLICKED_MIN ? (en ? 'Frequently clicked' : '많이 클릭한 곳') : null,
   ].filter((s): s is string => s != null);
   return {
-    rows: VISIT_SUMMARY_LABELS[lang].map((label, i) => ({ label, value: values[i] || na })),
+    rows: VISIT_SUMMARY_LABELS[lang].map((label, i) => ({ label, value: visitSummaryValue(values[i] || na) })),
     badgeLine: badges.length > 0 ? badges.join(' · ') : null,
   };
 }

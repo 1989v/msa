@@ -1048,6 +1048,71 @@
       }
     },
     {
+      "name": "ko-blank-lines-in-source",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "modifiedAt": "2026-09-30T10:15:00",
+        "closureState": "WEEKLY",
+        "closedWeekdays": [
+          "MON"
+        ],
+        "attrParking": "UNKNOWN",
+        "attrCreditCard": "UNKNOWN",
+        "attrStrollerRental": "UNKNOWN",
+        "petPolicy": "UNKNOWN",
+        "attrAdmission": "UNKNOWN",
+        "id": "3107",
+        "lang": "ko",
+        "title": "빈 줄이 있는 곳",
+        "source": "TOURAPI",
+        "restDate": "매주 월요일<br>\n<br>\n1월 1일",
+        "feeText": "- 개인 3,000원\n\n- 단체(10인 이상) 2,400원",
+        "useTime": "하절기 09:00~18:00<br>\n동절기 09:00~17:00<br>\n<br>\n※ 입장 마감 1시간 전"
+      },
+      "output": {
+        "rows": [
+          {
+            "label": "요금",
+            "value": "- 개인 3,000원\n- 단체(10인 이상) 2,400원"
+          },
+          {
+            "label": "이용시간",
+            "value": "하절기 09:00~18:00\n동절기 09:00~17:00\n※ 입장 마감 1시간 전"
+          },
+          {
+            "label": "쉬는 날",
+            "value": "매주 월요일 휴무\n매주 월요일\n1월 1일"
+          },
+          {
+            "label": "주차",
+            "value": "정보 없음"
+          },
+          {
+            "label": "반려동물",
+            "value": "정보 없음"
+          },
+          {
+            "label": "무장애",
+            "value": "정보 없음"
+          },
+          {
+            "label": "확인 상태",
+            "value": "출처: 한국관광공사 TourAPI · 원천 갱신일: 2026-09-30 · 수집일: 정보 없음"
+          }
+        ],
+        "badgeLine": null
+      }
+    },
+    {
       "name": "ko-legacy-without-attributes",
       "input": {
         "contentId": "126509",
