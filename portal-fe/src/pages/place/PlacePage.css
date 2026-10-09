@@ -957,8 +957,9 @@
   }
 
   .place-body.is-map-view .place-map-wrap {
-    /* --place-map-top: 지도 상태로 들어갈 때 잰 툴바 아래끝(문서 좌표). 맨 위로 올린 뒤 남는 높이를 다 쓴다 */
-    height: calc(100svh - var(--place-map-top, 0px) - 1rem);
+    /* --place-map-top: 지도 상태로 들어갈 때 잰 툴바 아래끝(문서 좌표). 맨 위로 올린 뒤 남는 높이를 다 쓴다.
+       하단 탭바 높이(--kh-shell-bottom)도 뺀다 — 안 빼면 지도 아래쪽과 결과 패널이 탭바 밑에 깔린다 */
+    height: calc(100svh - var(--place-map-top, 0px) - 1rem - var(--kh-shell-bottom, 0px));
     min-height: 16rem;
     isolation: isolate;
   }
@@ -968,7 +969,8 @@
     min-height: 0;
   }
 
-  /* 접힌 높이는 카드 한 장 — 나머지는 패널 안에서 세로로 넘긴다. 아래는 고정 버튼 자리 */
+  /* 접힌 높이는 카드 한 장 — 나머지는 패널 안에서 세로로 넘긴다. 아래는 고정 버튼 자리.
+     보이는 칸(9.5rem)은 카드 한 장(사진 5.5rem + 안쪽 여백·글 세 줄, 실측 131px)과 위 여백이 다 들어가는 높이 */
   .place-results-panel {
     --place-toggle-room: 4.25rem;
     position: absolute;
@@ -976,7 +978,7 @@
     right: 0;
     bottom: 0;
     z-index: 2;
-    height: calc(7.75rem + var(--place-toggle-room));
+    height: calc(9.5rem + var(--place-toggle-room));
     overflow-y: auto;
     overscroll-behavior: contain;
     padding: 0.5rem 0.5rem var(--place-toggle-room);
@@ -990,16 +992,23 @@
     max-height: none;
   }
 
-  /* 지도 보기 / 목록 보기 — 화면 하단 가운데 고정 */
+  /* 지도 보기 / 목록 보기 — 화면 하단 가운데, 탭바가 있으면 그 위에 고정.
+     --kh-shell-bottom 은 탭바 높이 + safe-area 이고, 탭바가 없는 폭(768~899px)에서는 safe-area 만 둔다 */
   .place-view-toggle {
     position: fixed;
     left: 50%;
-    bottom: calc(1rem + env(safe-area-inset-bottom));
+    bottom: calc(1rem + var(--kh-shell-bottom, env(safe-area-inset-bottom)));
     transform: translateX(-50%);
     z-index: 200; /* sticky 계층 (frontend-design.md z-index 스케일) — 시트(300) 아래 */
     min-height: 44px;
     padding: 0.5rem 1.25rem;
     box-shadow: 0 2px 8px oklch(0 0 0 / 0.35);
+  }
+
+  /* 글자는 두 정경 모두 한지색 — k-heritage 버튼 견본(채움은 소나무, 다크에서는 청자, 글자는 한지)과 같다.
+     .place-btn.primary 의 글자색(--ko-surface-0)은 다크에서 #131313 이라 청자 위 2.03:1 이다 */
+  .place-btn.primary.place-view-toggle {
+    color: var(--kh-hanji, var(--ko-surface-0));
   }
 
   /* 필터 한 줄 — 지역 트리거가 남는 폭을 쓰고 칩·「필터 N」은 줄지 않는다 */

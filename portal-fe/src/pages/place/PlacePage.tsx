@@ -1897,18 +1897,18 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
             />
           </aside>
         )}
+        {/* 지도 보기 / 목록 보기 — 좁은 화면 listFirst 전용. 계측하지 않는다(대상 없는 전환이라 「지도 열기」가 아니다).
+            main 안에 두는 이유: 바닥글 바로 앞 형제는 Footer.css 가 아래 여백을 주는데, 고정 버튼이 그 자리면 여백만큼 떠오른다 */}
+        {listFirst && hasMapKey && (
+          <button
+            type="button"
+            className="place-btn primary place-view-toggle"
+            onClick={mobileView === 'map' ? leaveMapView : enterMapView}
+          >
+            {mobileView === 'map' ? L.showListView : L.showMap}
+          </button>
+        )}
       </main>
-
-      {/* 지도 보기 / 목록 보기 — 좁은 화면 listFirst 전용. 계측하지 않는다(대상 없는 전환이라 「지도 열기」가 아니다) */}
-      {listFirst && hasMapKey && (
-        <button
-          type="button"
-          className="place-btn primary place-view-toggle"
-          onClick={mobileView === 'map' ? leaveMapView : enterMapView}
-        >
-          {mobileView === 'map' ? L.showListView : L.showMap}
-        </button>
-      )}
 
       {/* 모바일 상세 — 세 번째 열 대신 바텀시트. 포커스·Escape·드래그 닫기는 KhSheet 가 담당하고,
           선택이 화면 아래로 흘러가 못 보는 일이 없다. */}

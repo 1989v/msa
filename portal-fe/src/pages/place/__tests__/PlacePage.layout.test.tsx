@@ -167,6 +167,17 @@ describe('좁은 화면 listFirst (기본)', () => {
     expect(body()).toHaveClass('is-list-view');
   });
 
+  it('전환 버튼은 바닥글 바로 앞 형제가 아니다 — 바닥글 앞 요소가 받는 여백이 고정 버튼을 띄우지 않게', async () => {
+    renderPage();
+    await screen.findByText('관광지 a-1');
+    const beforeFooter = () => document.querySelector('.site-footer')!.previousElementSibling;
+
+    expect(beforeFooter()).not.toBe(mapToggle());
+    fireEvent.click(mapToggle()!);
+    expect(mapToggle()).toHaveTextContent('목록 보기');
+    expect(beforeFooter()).not.toBe(mapToggle());
+  });
+
   it('지도 보기 → 목록 보기 → 지도 보기 왕복에도 지도 스크립트는 한 번, 질의·계측은 그대로', async () => {
     renderPage();
     await screen.findByText('관광지 a-1');
