@@ -139,7 +139,7 @@ Total Task Groups: 8. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
 
 ### Task Group 8: 회귀 주입 · 온톨로지 참조 · 배포 · 운영 확인 (SR-5.2 · SR-5.3 · SR-5.4 · 부록 B·C)
 **Dependencies:** TG1~TG7 · **Phase:** 검증·배포 · **Required Skills:** Gradle, vitest, pytest, 도커, `ssh msa-oci`(읽기 확인만 — 로컬 kubectl 로 운영 접근 금지)
-- [ ] 8.1 회귀 주입 — **워킹트리가 아니라 임시 사본**(`git worktree add` 또는 `cp -r` 를 스크래치패드에)에서 하나씩 주입 → 해당 테스트 빨강 확인 → 되돌림. 컴파일되는 회귀여야 한다(구문 오류 빨강은 증거 아님). 결과(주입·잡은 테스트·빨강 줄)를 `verifications/regression-injection.md` 에 남긴다
+- [x] 8.1 회귀 주입 — **워킹트리가 아니라 임시 사본**(`git worktree add` 또는 `cp -r` 를 스크래치패드에)에서 하나씩 주입 → 해당 테스트 빨강 확인 → 되돌림. 컴파일되는 회귀여야 한다(구문 오류 빨강은 증거 아님). 결과(주입·잡은 테스트·빨강 줄)를 `verifications/regression-injection.md` 에 남긴다
   - [ ] 대응표 무시(코드 문자열 비교) → `AlternateLanguagePairerTest`(#25 22453↔19751 이 없음으로)
   - [ ] 제목 조건 삭제 → 오라클(#16·#19 가 짝, #4·#15 가 일대일에서 빠짐)
   - [ ] 일대일 삭제 → 합성 일대다 사례
