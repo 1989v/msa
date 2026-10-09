@@ -101,6 +101,13 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 `rank` 화면의 "출처: 한국석유공사 오피넷"은 **의무가 아니라 선택**이다(오피넷은 이용허락범위
 제한 없음) — 그래도 보드 행이 `source_label` 로 들고 다닌다.
 
+### 송신 — 외부로 보내는 것
+
+위 표는 받는 데이터만 싣는다(공개 `/data-sources` 페이지와 1:1). 우리가 밖으로 보내는 것은 여기 둔다.
+
+- **IndexNow** (`api.indexnow.org`) — `place/ingest --job=indexnow`(매일 KST 07:30, `INDEXNOW_ENABLED` 기본 꺼짐).
+  보내는 것은 본문이 바뀐 관광지의 공개 상세 URL 과 공개 키(Secret `place-indexnow`, 키 파일로 소유 증명)뿐이다. **개인정보 없음.**
+
 ---
 
 ## 2. 관광지 — 한국관광공사 TourAPI 4.0

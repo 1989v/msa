@@ -90,6 +90,7 @@
 반려동물(`petAcmpyType`·`petRaw`·`petSyncedAt`) · `setting` · 부가 사진·반복정보(`imagesRaw`·`infoRaw`·`extraSyncedAt`) ·
 행사 날짜·목록 행 원문(`eventStartDate`·`eventEndDate`·`listRaw` — 행사·숙박·코스 목록만 싣고 보강 왕복은 안 싣는다).
 주소·이미지·분류·좌표·전화 같은 목록 필드는 전부 덮인다. 보강 필드를 새로 더하면 여기 한 줄이 같이 가야 한다.
+`content_hash`·`content_updated_at`(V34)은 서버 계산값이라 요청에서 받지 않는다 — 병합이 끝난 뒤 정규화 해시를 계산하고, 이전과 다를 때만 시각을 올린다(ADR-0103 개정 「결정 4 의 예외」). RSS·IndexNow 가 이 시각으로 고른다.
 
 - 실측 사고: 검증용으로 `{contentId, lang, title, lat, lng}` 만 보냈다가 **경복궁 행의
   주소·이미지·분류·지역코드를 실제로 날렸다** (`detailCommon2` 로 복구).
@@ -136,6 +137,7 @@
 | PUT/POST | `/internal/attractions/similar/{bulk,lookup}` | 클러스터 내부 | 비슷한 곳 목록 `attraction_similar`(V22) — `tools/embed` 가 관광지 단위로 통째 교체 적재, search:batch 재색인이 조회 (ADR-0103) |
 | GET/POST | `/internal/attractions/links/**` | 클러스터 내부 | 수집 큐 조회 / 결과 적재 — 게이트웨이가 라우팅하지 않는다 |
 | GET/POST | `/internal/attractions/google-place-ids/**` | 클러스터 내부 | 구글 place_id 미보강분 조회 / 반영 (data-sources.md §7, ID-only 무과금 SKU) |
+| GET | `/internal/attractions/content-updated?since=&until=&afterId=&size=` | 클러스터 내부 | 본문 변경 시각(`content_updated_at`)이 `[since, until)` 인 관광지 — id 키셋. `place-ingest --job=indexnow` 가 읽는다 (ADR-0103 개정) |
 | GET | `/api/places/attractions/overview-probes?lang=` | public | 개요 negative cache 조회 — 수집기 제외 목록 (ADR-0070) |
 | POST | `/api/places/attractions/overview-probes` | ADMIN | 원천이 빈 개요를 준 (contentId, lang) 기록 |
 

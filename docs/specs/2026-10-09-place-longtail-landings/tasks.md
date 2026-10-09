@@ -141,7 +141,7 @@ Total Task Groups: 6. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
 
 > **스위치는 꺼진 채 배포한다.** `PLACE_LANDINGS_INDEXABLE = false` 가 커밋에 그대로 있는지 배포 전에 확인한다. 켜는 것은 ADR-0062 §18 개정 수용과 함께 사용자가 한다. 편집 초안 3장도 draft 로 나간다 — 게시는 사용자 검수 뒤(SR-3.8).
 
-- [ ] 6.1 문서 동기화: `search/glossary.md` 에 「속성 랜딩」「편집 페이지(guide)」「프리셋」「색인 스위치」 네 행(「속성 랜딩」 행에 trigger 값 `landing` 과 구분된다는 주의). ADR-0062 는 손대지 않는다(초안만 `context/` 에)
+- [x] 6.1 문서 동기화: `search/glossary.md` 에 「속성 랜딩」「편집 페이지(guide)」「프리셋」「색인 스위치」 네 행(「속성 랜딩」 행에 trigger 값 `landing` 과 구분된다는 주의). ADR-0062 는 손대지 않는다(초안만 `context/` 에)
 - [x] 6.2 회귀 주입(SR-5.3) — 임시 사본 워크트리에서, 컴파일되는 회귀만(구문 오류 빨간불은 증거 아님). 각각 빨간불과 잡은 테스트(또는 nginx 계약 항목) 이름을 `verifications/regression-injection.md` 에 기록
   - 하한 10→9 → `landingDecisions.test.ts` 만 빨강(경계 테스트는 상수로 계산해 초록인 것도 기록)
   - 선정 함수 `>=` → `>` → 경계 테스트

@@ -184,6 +184,23 @@ noindex 를 화면(`useSeo`)에서 다는 이유는 개요 없는 문서에는 �
   비어 그 축의 샤딩은 그만큼을 sitemap 에서 누락시켰다. 시도 17개 정적 목록으로 훑는다
   (ADR-0071 의 지역 축과 일치, 10,000건 창 회피는 동일)
 
+#### 개정 — 언어 대체 짝에만 hreflang (2026-10-09)
+
+위 「hreflang 을 걸지 않는다」는 짝을 알 수 없어서였다. S1-8 실측(영문 300·수동 30쌍)으로 짝을 고르는 규칙이 생겨,
+**그 규칙을 통과한 일대일 짝에만** 상세 hreflang 을 걸 수 있게 한다. 거는지 여부는 search:batch 설정
+`search.alternate-pairs.enabled`(CronJob env `SEARCH_ALTERNATE_PAIRS_ENABLED`)가 정하고 **기본은 꺼짐**이다 —
+꺼져 있으면 짝을 계산해 로그만 남기고 문서 `alternateId` 는 null 이라 hreflang 이 0건이다. 켜는 것은 사용자 승인 뒤 운영 30쌍
+수동 확인과 함께 한다. 되돌리면 재색인 뒤 portal-fe 를 다시 빌드해 sitemap 에서도 지운다. 나머지 상세는 지금처럼 없다.
+
+- 규칙: googlePlaceId 같음 · 50m 이내 · 언어 중립 유형 같음(국 12 ↔ 영 76 등 대응표) · 영문 `titleLocal` 과 국문 표시명이
+  NFKC·공백 제거·소문자화 후 같음 · 후보 간선이 양쪽 모두 하나뿐 · 양쪽 모두 개요 있음(noindex 아님). 행사·코스는 제외.
+  placeId·거리·유형만으로는 관광특구 ↔ 놀이공원, 같은 아울렛의 다른 브랜드가 이어졌다(S1-8 #19~#22) — 제목 조건이 그것을 막는다.
+- 계산은 재색인 1차 패스의 search:domain 순수 함수(`AlternateLanguagePairer`), 결과는 문서 필드 `alternateId`.
+  SSR·하이드레이션·sitemap 이 같은 헬퍼 값을 쓴다(x-default = 영문, 허브와 같은 규칙).
+- 검증: S1-8 30쌍 오라클에서 짝 16 · 오탐 0. 운영 AC 는 「상호 참조·양쪽 색인 대상 위반 0」.
+- 감수: placeId 가 없거나 서로 다른 짝·대표점이 50m 를 넘는 긴 시설은 놓친다(재현율 손실, 오연결 아님).
+- `/en/attractions/{국문id}` 같은 어긋난 주소에서도 문서 `lang` 기준으로 ko·en 을 정한다(위 canonical 규칙과 같다).
+
 ### 9. `/en` 은 호스트로 가른다 (2026-08-19)
 
 `location = /en` 이 호스트를 보지 않아 **place 영문 홈에 게임 허브 프리렌더가 나가고 있었다** —

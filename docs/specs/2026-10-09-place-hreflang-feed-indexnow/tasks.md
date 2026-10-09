@@ -117,7 +117,7 @@ Total Task Groups: 8. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
 - [x] 6.4 portal-fe Deployment env `INDEXNOW_KEY`(secretKeyRef `place-indexnow`/`key`, `optional: true`) — oci-arm·k3s-lite 가 같은 base 를 쓰는지 확인하고 base 한 곳에. Secret·SealedSecret 파일은 만들지 않는다
 - [x] 6.5 place-ingest: `place/ingest/src/indexnow.py`(제출 — 10,000건 분할, 타임아웃 30초, 코드별 문구) + `place_client.py`(`:33-105` 방식)에 `content_updated(since, until, after_id, size)` + `main.py` `--job=indexnow` 분기·모듈 독스트링 한 줄
 - [x] 6.6 `k8s/base/place-ingest/cronjob-indexnow.yaml`(`place-ingest-indexnow`, `schedule: "30 22 * * *"` UTC = KST 07:30, 다른 ingest CronJob 템플릿 복제) — env `INDEXNOW_ENABLED: "false"`, `INDEXNOW_KEY` secretKeyRef `optional: true` · `k8s/base/place-ingest/kustomization.yaml` 에 등록 · oci-arm overlay 에 이미지 매핑이 CronJob 별로 필요한지 확인(다른 place-ingest CronJob 과 같게)
-- [ ] 6.7 `docs/architecture/data-sources.md` 「송신」 행(IndexNow — 공개 URL·공개 키, 개인정보 없음) · `k8s/base/network-policy/11-allow-egress-https-public.yaml` place-ingest 주석에 「+ IndexNow 송신(api.indexnow.org)」(정책 값 그대로)
+- [x] 6.7 `docs/architecture/data-sources.md` 「송신」 행(IndexNow — 공개 URL·공개 키, 개인정보 없음) · `k8s/base/network-policy/11-allow-egress-https-public.yaml` place-ingest 주석에 「+ IndexNow 송신(api.indexnow.org)」(정책 값 그대로)
 - [x] 6.8 Verify:
   - `cd place/ingest && python -m pytest tests/indexnow_test.py -q`
   - `bash portal-fe/scripts/check-nginx-indexnow.sh` (exit 2 = 도커 없음, 통과로 세지 않는다)
@@ -127,11 +127,12 @@ Total Task Groups: 8. 정본은 `spec.md`(3라운드 심판 반영). 열린 질�
 
 ### Task Group 7: ADR 개정·문서 동기화 (Q4 · SR-1.7 주석 문구 · SR-4.6)
 **Dependencies:** TG1~TG6 · **Phase:** docs · **Required Skills:** 문서 작성(ADR-0026 분류)
-- [ ] 7.1 `docs/adr/ADR-0062-seo-and-organic-discovery.md` §8 끝에 `context/adr-amendments-draft.md` 「개정 — 언어 대체 짝에만 hreflang (2026-10-09)」 블록(규칙·스위치 기본 꺼짐·켜기는 사용자). 원문 「hreflang 을 걸지 않는다」는 지우지 않는다
-- [ ] 7.2 `docs/adr/ADR-0103-place-attraction-server-render-enrichment.md` 끝에 「개정 — 본문 변경 시각은 place 에 둔다: 결정 4 의 예외」 절. Flyway 번호가 V34 에서 바뀌었으면 여기도 맞춘다
-- [ ] 7.3 서비스 문서: `place/CLAUDE.md`(두 열·내부 조회 `/internal/attractions/content-updated`·`--job=indexnow`), `search/CLAUDE.md`(`alternateId`·`contentUpdatedAt`·`search.alternate-pairs.enabled`·RSS 내부 경로) — 해당 절이 있는 곳에만 한두 줄. `place/ingest/README.md` 잡 목록에 indexnow
-- [ ] 7.4 문서-소스 추적: `docs/standards/doc-index-tracking.md` 절차대로 `doc_map.py`/`doc_scan.py` 를 돌려 `docs/doc-index.json` 갱신분 확인
-- [ ] 7.5 Verify:
+- [x] 7.1 `docs/adr/ADR-0062-seo-and-organic-discovery.md` §8 끝에 `context/adr-amendments-draft.md` 「개정 — 언어 대체 짝에만 hreflang (2026-10-09)」 블록(규칙·스위치 기본 꺼짐·켜기는 사용자). 원문 「hreflang 을 걸지 않는다」는 지우지 않는다
+- [x] 7.2 `docs/adr/ADR-0103-place-attraction-server-render-enrichment.md` 끝에 「개정 — 본문 변경 시각은 place 에 둔다: 결정 4 의 예외」 절. Flyway 번호가 V34 에서 바뀌었으면 여기도 맞춘다
+- [x] 7.3 서비스 문서: `place/CLAUDE.md`(두 열·내부 조회 `/internal/attractions/content-updated`·`--job=indexnow`), `search/CLAUDE.md`(`alternateId`·`contentUpdatedAt`·`search.alternate-pairs.enabled`·RSS 내부 경로) — 해당 절이 있는 곳에만 한두 줄. `place/ingest/README.md` 잡 목록에 indexnow
+- [x] 7.4 문서-소스 추적: `docs/standards/doc-index-tracking.md` 절차대로 `doc_map.py`/`doc_scan.py` 를 돌려 `docs/doc-index.json` 갱신분 확인
+  - 보류: `doc_map.py --check` 가 이번 변경 전부터 drift(마지막 lock 갱신 2026-10-08 `d41e5dc19`). 재생성하면 링크 +118 중 이 스펙 몫 58(place·search 새 소스), 단축 주소·찜 공유 몫 60(wishlist)이 섞여 lock 은 되돌려 뒀다. 정책 `doc-index.json` 은 바꿀 것 없음 — 누가 lock 을 한 번에 재생성할지 정한 뒤 체크
+- [x] 7.5 Verify:
   - `grep -n '언어 대체 짝에만 hreflang' docs/adr/ADR-0062-seo-and-organic-discovery.md` → 1줄
   - `grep -n '결정 4 의 예외' docs/adr/ADR-0103-place-attraction-server-render-enrichment.md` → 1줄
   - `grep -n 'IndexNow' docs/architecture/data-sources.md k8s/base/network-policy/11-allow-egress-https-public.yaml`

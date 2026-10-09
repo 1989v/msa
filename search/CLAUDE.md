@@ -108,6 +108,12 @@ OpenSearch 기반 읽기 전용 검색 모델 서비스 (ADR-0055 로 ES 에서 
   순위 반영은 `search.attraction.click-boost.enabled`(env `SEARCH_ATTRACTION_CLICK_BOOST_ENABLED`, **기본 꺼짐**)이고
   검색어 있는 키워드 레그에만 곱한다. 켜기 전에 `live-eval.py --click-boost-pair` 판정이 「켬」이어야 한다.
 - **비슷한 곳**: 재색인이 place `/internal/attractions/similar/lookup` 에서 받아 싣는다 — 재색인 중 kNN 을 돌리지 않는다.
+- **언어 대체 짝(ADR-0062 §8 개정)**: 재색인 1차 패스가 search:domain `AlternateLanguagePairer` 로 국·영 일대일 짝을 골라 `alternateId` 에 싣는다.
+  짝 스위치 `search.alternate-pairs.enabled`(env `SEARCH_ALTERNATE_PAIRS_ENABLED`)는 **기본 꺼짐**이다 — 꺼져 있으면 「Alternate pairs: N …」 로그만 남기고
+  `alternateId` 가 비어 상세 hreflang 이 0건이다. 켜는 것은 사용자다. SSR·하이드레이션·sitemap 이 같은 값을 쓴다.
+- **최근 갱신 피드(RSS)**: place 호스트 `/feed.xml`·`/en/feed.xml` 을 portal-fe nginx 가 `/internal/render/feed/{ko|en}.xml` 로 넘긴다.
+  색인 `contentUpdatedAt`(place 본문 변경 시각) 내림차순 50건이고 그 값이 없는 문서는 빠진다.
+  **캐시 헤더는 search 가 단다** — 성공 `public, max-age=600`, 조회 실패 503 + `no-store`. nginx 는 덧붙이지 않는다(두 벌이 나간다).
 
 ## 행사 상태 · 행사 sitemap (ADR-0104)
 
