@@ -46,7 +46,7 @@ class NearbyAttractionsServiceTest : BehaviorSpec({
                 queries.map { listOf(it.category, it.radiusKm, it.sort, it.size, it.eventStatus) } shouldContainExactlyInAnyOrder listOf(
                     listOf("nature,history,culture,leisure", 5.0, "distance", 9, null),
                     listOf("stay", 5.0, "distance", 12, null),
-                    listOf("festival", 20.0, "eventStart", 12, "NOT_ENDED"),
+                    listOf("festival", 20.0, "distance", 12, "NOT_ENDED"),
                     listOf("shopping,food", 5.0, "distance", 60, null),
                 )
                 queries.forEach {

@@ -32,8 +32,9 @@ class NearbyAttractionsService(
             // 관광 분류만 — 거리순 상위를 그대로 쓰면 상점가에서는 전부 상점이 된다
             sights = around(SIGHT_CATEGORIES, NEARBY_RADIUS_KM, SIGHTS_SIZE),
             stays = around(STAY_CATEGORY, NEARBY_RADIUS_KM, KIND_SIZE),
-            // 행사는 하루 나들이 거리까지 · 끝나지 않은 것만 · 시작일 순
-            events = around(EVENT_CATEGORY, EVENTS_RADIUS_KM, KIND_SIZE, sort = "eventStart", eventStatus = "NOT_ENDED"),
+            // 행사는 하루 나들이 거리까지 · 끝나지 않은 것만 · 가까운 순. 시작일 순이면 1년 내내 하는 상설 행사가
+            // 거리와 무관하게 늘 맨 위라, 청계산 상세의 「주변 행사」가 15km 밖 도심 행사로 채워졌다.
+            events = around(EVENT_CATEGORY, EVENTS_RADIUS_KM, KIND_SIZE, eventStatus = "NOT_ENDED"),
             // 편의시설은 넉넉히 받아 화면이 유형마다 몫을 자른다
             amenities = around(AMENITY_CATEGORIES, NEARBY_RADIUS_KM, AMENITY_SIZE),
         )
