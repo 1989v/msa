@@ -480,7 +480,7 @@ export type NearbyPlace = Pick<
 >;
 
 /**
- * 주변 탐색 — 명소(관광 분류 5km) · 숙소(5km) · 행사(20km, 끝나지 않은 것, 시작일 순) · 편의시설(음식·쇼핑 5km).
+ * 주변 탐색 — 명소(관광 분류 5km) · 숙소(5km) · 행사(20km, 끝나지 않은 것, 가까운 순) · 편의시설(음식·쇼핑 5km).
  * 키가 관광지 id 하나라 엣지가 캐시한다(ADR-0105). 조건은 search `NearbyAttractionsService` 가 갖는다.
  */
 export const fetchAttractionNearby = async (id: string): Promise<AttractionNearby> => {
