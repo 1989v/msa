@@ -149,6 +149,7 @@ class PlaceSchemaIntegrationSpec(
     @Autowired private val t3: TransitBusCoverageJpaRepository,
     @Autowired private val t4: AttractionAccessJpaRepository,
     @Autowired private val tx: TransactionTemplate,
+    @Autowired private val dataSource: javax.sql.DataSource,
 ) : BehaviorSpec({
 
     Given("place 전용 Flyway 가 적용된 place_db") {
@@ -526,7 +527,13 @@ class PlaceSchemaIntegrationSpec(
                     listOf(Triple(seoul, TransitKind.RAIL, 1000))
                 adapter.findByAttractionIds(listOf(seoul)).single().let { it.lines to it.baseDate } shouldBe ("1·4호선" to LocalDate.of(2024, 12, 31))
 
-                // 연계 판정 — 서울 종로구 연계 · 강릉시 미연계 · 판정 없는 시군구는 빠진다
+                // 연계 판정 — 서울 종로구 연계 · 강릉시 미연계 · 판정 없는 시군구는 빠진다.
+                // 운영 place_db 는 기본 콜레이션이 utf8mb4_unicode_ci 라 V35 표가 attractions(utf8mb4_0900_ai_ci)와 갈린다 — 그 조합을 재현한다
+                dataSource.connection.use {
+                    it.createStatement().execute(
+                        "ALTER TABLE transit_bus_coverage MODIFY sigungu_code VARCHAR(5) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL",
+                    )
+                }
                 val transit = TransitSourceRepositoryAdapter(t0, t1, t2, t3)
                 tx.execute { transit.replaceCoverage(listOf(BusCoverage("11110", 12_000, true), BusCoverage("51150", 20, false)), week2) }
                 adapter.findBusCoverage(ids.values) shouldBe mapOf(seoul to true, gangneung to false)
