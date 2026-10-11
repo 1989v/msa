@@ -1065,10 +1065,11 @@ function sitemapIndexXml(locs) {
   ].join('\n');
 }
 
+// `/api/` 는 막지 않는다 — 막으면 구글 렌더러가 화면의 데이터 호출을 못 해 서버 렌더 본문이 오류 문구로 바뀌고
+// 상세·지역·글이 Soft 404 가 된다(2026-10-11 실측). API 응답의 색인은 게이트웨이가 X-Robots-Tag: noindex 로 막는다.
 export function robotsTxt(origin, extraDisallow = []) {
   return `User-agent: *
 Allow: /
-Disallow: /api/
 Disallow: /oauth/
 Disallow: /admin/
 Disallow: /shop/login
@@ -2139,7 +2140,6 @@ function rankLlmsTxt(boards = []) {
 export function dealRobotsTxt() {
   return `User-agent: *
 Allow: /
-Disallow: /api/
 Disallow: /go/
 
 Sitemap: ${DEAL_ORIGIN}/sitemap.xml

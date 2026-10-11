@@ -19,6 +19,7 @@ import {
   placeSitemapFiles,
   renderRegionDetail,
   robotsTxt,
+  dealRobotsTxt,
 } from '../../../scripts/prerender-seo.mjs';
 
 const SHELL = [
@@ -171,6 +172,14 @@ describe('하이드레이션 인계 표시 — data-seo-multi', () => {
 });
 
 describe('robots — 크롤러 정책', () => {
+  it('화면이 부르는 /api/ 를 막지 않는다 — 막으면 렌더러가 본문 대신 오류 문구를 보고 Soft 404 로 판정한다', () => {
+    for (const robots of [robotsTxt('https://place.1989v.com'), dealRobotsTxt()]) {
+      const block = robots.split('\n\n')[0];
+      expect(block).toContain('User-agent: *');
+      expect(block).not.toMatch(/^Disallow: \/api/m);
+    }
+  });
+
   it('메타 AI 학습 크롤러는 막는다 — 부하의 95% 였고 답변형 검색이 아니다', () => {
     // 2026-09-16~17 ingress 로그: 관광지 상세 1,465건 중 meta-externalagent 1,395건
     const robots = robotsTxt('https://place.1989v.com');
