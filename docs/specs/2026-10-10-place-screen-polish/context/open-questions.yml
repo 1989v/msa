@@ -1,0 +1,53 @@
+# answered-default = 리뷰 판정(context/review-verdict.md, 2026-10-11)의 권고 기본값으로 스펙에 반영했고 사용자 확인 대기.
+# 뒤집히면 해당 SR 과 tasks.md 를 먼저 고친다.
+questions:
+  - id: Q1
+    stage: post-impl
+    status: open
+    question: 넓은 화면 필터 한 줄의 분류 칩 — 좁은 화면과 같은 핵심 셋(전체·자연·행사)인가, 넓은 화면에서만 분류 전부를 펴는가
+    answer: 핵심 셋(권고 기본값). 두 폭이 같은 코드·같은 계측 경로를 타고, 분류를 다 펴면 시트 안 분류 묶음과 중복된다. 나머지 분류는 「필터」에서 두 번 클릭이다. 1440 에서 남는 폭이 아깝다는 판단이 서면 넓은 화면만 분류 전부를 펴고 시트에서는 분류 묶음을 빼는 후속으로 한다
+  - id: Q2
+    stage: post-impl
+    status: open
+    question: 데스크톱 칩 드릴다운을 지역 시트로 바꿀 때 「가까운 시도 맨 앞」 정렬을 시트로 옮길지
+    answer: 옮긴다(권고 기본값, SR-2.4). 데스크톱이 기능을 잃지 않게 하는 최소 변경이고 모바일 시트도 정렬을 함께 얻는다. 정렬은 `googleMaps.ts` 의 `nearestRegion`(ADR-0071 §3)을 그대로 import 하고, 가까운 시도 행에 「현재 위치」 배지(`place-region-near`)를 옮겨 단다. 시트는 선택을 바꾸지 않는다(드릴다운 규칙 승계). 첫 진입 자동 선택 1회(ADR-0071:67 「자동 선택은 한 번만 동작한다」)는 그대로다 — 이전 답의 「자동 선택은 하지 않는 규칙(ADR-0071 §3)」은 인용 오류라 고쳤다(리뷰 D2)
+  - id: Q3
+    stage: post-impl
+    status: answered-default
+    question: 같은 결함 꼴인 언어 토글(`.place-lang-btn.active` 다크 2.03:1, 비활성 라이트 4.23:1)과 바닥글 황토 글자(`Footer.css:42`)를 이번에 함께 고칠지
+    answer: 언어 토글은 넣는다(SR-4.5, 사용자 판단 4). place 전용 버튼이고 수정 방식이 SR-4 와 같다. 바닥글 낙관은 넣지 않고 실측만 보고한다 — 로고타입이라 WCAG 1.4.3 예외이고 전 호스트 공용이라 place 범위 밖이다. 대비는 한지 위 2.89:1(DESIGN.md:347)로 정정한다(이전 「2.79 추정」은 틀림). k-heritage 견본 `.label` 은 시트 라벨과 같이 고치고(SR-9.6) `footer .mark` 는 바닥글 결정을 따라 그대로 둔다
+  - id: Q4
+    stage: post-impl
+    status: open
+    question: 상세 첫 화면 — 행동 줄을 위로(B) 올린 뒤 요금·쉬는 날이 폴드를 넘는 표본이 생기면
+    answer: B 를 유지하고 넘친 표본·값을 보고한다. 그때 FE 전용 긴 칸 접기(A, SSR 은 전문·visit-summary-golden 불변)를 후속 스펙으로 올린다
+  - id: Q5
+    stage: post-impl
+    status: open
+    question: 1440×900 에서 y ≤ 320 을 못 맞추면(예 영문 요약 줄 길이)
+    answer: 가독성이 우선이다. 실측 값과 툴바 자식별 높이를 보고하고 미충족으로 표시한다(스펙 E Q6 과 같은 규칙)
+  - id: Q6
+    stage: post-impl
+    status: answered-default
+    question: 0건 속성 칩(`.place-chip.is-empty`, `PlacePage.css:222` opacity 0.4)이 시트 글자 대비 4.5:1 판정에 걸리면 어떻게 하나
+    answer: (a) 이번 대비 판정에서 명시적으로 빼고 실측값만 보고한다(권고 기본값, Goal·SR-5.4). (b) 투명도 대신 muted 색 + 점선 테두리로 바꾸는 안은 후속으로 둔다(사용자 판단 2)
+  - id: Q7
+    stage: pre-impl
+    status: answered-default
+    question: 공용 `KhSheet` 에 포커스 가두기·복원을 넣을지 — GNB·탭바·서비스 탐색·뽑기·블로그 공간 전환 등 사용처 8곳이 함께 바뀐다
+    answer: 넣는다(권고 기본값, SR-1.8, 사용자 판단 1). 넓은 화면 칩이 다이얼로그 안으로 들어가므로 빼면 데스크톱 키보드 사용자에게 회귀를 내보내는 셈이다. `ServiceExplorer`·`PickSheet` 의 같은 기존 결함도 함께 고쳐진다
+  - id: Q8
+    stage: pre-impl
+    status: answered-default
+    question: 카드 제목 외에 같은 카드의 meta(황토 원색)·주소(muted) 대비 결함도 이번에 고칠지
+    answer: 넣는다(권고 기본값, SR-3.3, 사용자 판단 3). 각각 한 줄이고 라이트만 값이 바뀐다
+  - id: Q9
+    stage: pre-impl
+    status: answered-default
+    question: 데스크톱 필터 클릭 수 증가(핵심 셋 밖 분류 1→3, 속성 k→k+2, 시도 1→3)를 받아들일지
+    answer: 첫 카드 y ≤ 320 을 위해 감수한다(권고 기본값, SR-1.9 전·후 표를 결정으로 남김, 사용자 판단 5)
+  - id: Q10
+    stage: pre-impl
+    status: answered-default
+    question: 넓은 화면 필터 다이얼로그에서 지도 오버레이를 켜면 다이얼로그를 열어 둘지 닫을지
+    answer: 켜는 순간 닫는다(권고 기본값, SR-1.4, 사용자 판단 6). 다이얼로그 뒤 veil 이 먹빛 62% 에 blur(24px)라 지도 반응이 안 보이고, 좁은 화면 listFirst 규칙과 같은 모양이 된다. 이전 SR-1.3 의 「넓은 화면은 열어 둔다」 문장은 이 결정으로 바꿨다
