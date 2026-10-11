@@ -65,6 +65,8 @@
   두 코드 체계가 섞여 있어(법정동 25,030행 + TourAPI 구코드 19,874행) **필터 축으로 쓰지 않는다.**
 - 스키마는 **Flyway+validate** 단독 책임. 단일 datasource (warehouse 의 routing 미사용).
 - OpenSearch 클라이언트는 ADR-0055 패턴(opensearch-java + HttpClient5) 재사용.
+- 관광지의 파생 `category`·대표 사진·`google_place_id` 는 place 호스트 **핵심 sitemap**(티어 A) 판정 재료다 — 이 값이 비거나 색인에서 빠지면
+  core 상세가 0이 되고 portal-fe 빌드가 선다(상세 1만 건 이상 · 티어 A 0 게이트, ADR-0062 §8 개정 2026-10-10).
 
 ### ★ TourAPI — 두 가지가 조용히 데이터를 망가뜨린다
 

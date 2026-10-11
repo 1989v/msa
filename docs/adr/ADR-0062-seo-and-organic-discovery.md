@@ -201,6 +201,26 @@ noindex 를 화면(`useSeo`)에서 다는 이유는 개요 없는 문서에는 �
 - 감수: placeId 가 없거나 서로 다른 짝·대표점이 50m 를 넘는 긴 시설은 놓친다(재현율 손실, 오연결 아님).
 - `/en/attractions/{국문id}` 같은 어긋난 주소에서도 문서 `lang` 기준으로 ko·en 을 정한다(위 canonical 규칙과 같다).
 
+#### 개정 — 핵심 sitemap 분리·noindex 헤더·언어 어긋난 주소 301 (2026-10-10)
+
+Googlebot 의 place 상세 크롤은 하루 약 17건이고 sitemap 은 6만 URL 이다. 크롤 수를 늘리는 것은 외부 신뢰의 몫이라,
+이 개정은 **받은 크롤을 어디에 쓰게 할지**와 **같은 문서가 두 주소로 나가는 것**만 고친다.
+
+- **핵심 sitemap**: `sitemap-places-core.xml` = 허브 항목(허브·지역·색인 켜진 랜딩·게시된 편집 페이지) + **티어 A** 상세
+  (관광 분류 `SIGHT_CATEGORIES` · 개요 · 사진 · googlePlaceId 를 모두 가진 것, 판정은 `isTierA` 하나). 나머지 상세는
+  `sitemap-places-{n}.xml`, 색인 순서는 core → 나머지 → 행사. `sitemap-places-hub.xml` 은 없어졌다. core 가 2만을 넘으면
+  `sitemap-places-core-2.xml` 로 이어 쓴다. 상세가 1만 건 이상인데 티어 A 가 0이면 수신 필드가 빠진 것으로 보고 빌드를 세운다.
+  place_id 만으로 가르지 않는 이유: 사진·place_id 를 가진 국문의 41% 가 쇼핑이다 — 갈림은 분류가 만든다.
+- 상세 `lastmod` 는 `contentUpdatedAt` 의 날짜 부분(KST 문자열 앞 10자) → 없으면 `modifiedAt` → 둘 다 없으면 비운다.
+  `isoDate` 를 거치지 않는다 — UTC 로 바꾸면 KST 자정 근처 시각이 하루 앞 날짜가 된다.
+- **내부 링크 깊이**: 시군구 프리렌더에 대표 관광지 최대 10곳(티어 A 먼저, 개요 없는 문서 제외)을 싣는다. 전에는 시군구에서
+  상세로 가는 링크가 0이라 시도 대표에 못 든 상세는 허브에서 3클릭 안에 닿지 않았다.
+- **noindex 헤더**: 색인하지 않는 랜딩·편집 초안은 프리렌더가 `prerender/_noindex/` 아래에 쓰고, nginx `@place_noindex` 가
+  `X-Robots-Tag: noindex, follow` 를 단다. 판단은 프리렌더 한 곳에만 있다(nginx 는 스위치를 모른다). `_noindex` 직접 경로는 404.
+- **언어가 어긋난 상세 주소는 301**: `/en/attractions/{국문 id}` → `/attractions/{id}`(반대도 같다). 행선은 문서 자신의 canonical 이고
+  영문 짝으로 보내지 않는다. Location 은 경로만, 301 에도 `Cache-Control: no-cache, must-revalidate` 를 단다 — 영구 캐시되면
+  언어 판정을 고쳐도 되돌릴 수 없다. 렌더러와 같이 en 외 언어는 ko 로 보아 비교한다(정규화 없이 비교하면 이동이 돈다).
+
 ### 9. `/en` 은 호스트로 가른다 (2026-08-19)
 
 `location = /en` 이 호스트를 보지 않아 **place 영문 홈에 게임 허브 프리렌더가 나가고 있었다** —

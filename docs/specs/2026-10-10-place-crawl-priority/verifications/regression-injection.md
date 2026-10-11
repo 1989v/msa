@@ -253,3 +253,71 @@ TG4 항목(서비스 언어 비교 생략 · SPA Navigate 제거 · 언어 정�
 - 결과: exit 1 · Tests  1 failed | 78 passed (79)
 - 빨개진 테스트:
   - AttractionPage 언어가 어긋난 주소 > 영문 라우트로 국문 문서를 받으면 국문 주소로 옮기고 search·hash 를 지킨다 — 상세는 한 번만 받는다 13ms
+
+# 회귀 주입 — TG4 서버 재실행 (301 경로를 서비스가 만든 뒤, 4b9a5bf7b)
+
+2026-10-11. 4b9a5bf7b 에서 이동 경로(`canonicalPath`)를 컨트롤러가 아니라 서비스가 만들게 바뀌어 위 「Location 에 호스트」 주입의 대상 줄이 없어졌다. 서버 쪽 다섯 주입을 지금 코드에 다시 했다. 임시 사본(스크래치패드 `crawl5-inject`, build·node_modules·.gradle·.git 제외 rsync)에서 하나씩 주입하고 매번 원본으로 되돌렸다(되돌린 뒤 `diff -r` 로 워크트리와 같음 확인). 모두 컴파일되는 변경이다.
+
+- 명령: `./gradlew :search:app:test --tests '*AttractionPageServiceTest' --tests '*AttractionPageControllerTest'` (주입 전 기준선 BUILD SUCCESSFUL — 서비스 9 · 컨트롤러 18)
+
+### 서비스 언어 비교 생략
+
+- 파일: `search/app/src/main/kotlin/com/kgd/search/application/attraction/service/AttractionPageService.kt`
+- 바꾼 줄: `if (docLang != query.pathLang) {` → `if (false && docLang != query.pathLang) {`
+- 결과: exit 1 · 27 tests completed, 8 failed · BUILD FAILED in 8s
+- 빨개진 테스트:
+  - Then: 문서 언어(en)로 옮기라는 결과이고 조회는 한 번 · 렌더하지 않는다
+  - Then: 문서 언어(ko)로 옮기라는 결과다
+  - Then: 짝이 아니라 문서 자신의 id 로 옮긴다
+  - Then: 상세와 같은 규칙으로 옮긴다
+  - Then: 301 · Location 은 문서 언어(국문) 경로만 · 본문·ETag 없음 · 재검증 캐시 헤더
+  - Then: 301 · Location 은 영문 경로
+  - Then: 짝이 아니라 문서 자신의 국문 경로로 301
+  - Then: 상세와 같이 301
+
+### 서버 언어 정규화 생략
+
+- 파일: `search/app/src/main/kotlin/com/kgd/search/application/attraction/service/AttractionPageService.kt`
+- 바꾼 줄: `val docLang = if (doc.lang == EN) EN else KO` → `val docLang = doc.lang`
+- 결과: exit 1 · 27 tests completed, 2 failed · BUILD FAILED in 8s
+- 빨개진 테스트:
+  - Then: 국문으로 보아 옮기지 않고 렌더한다 — 정규화 없이 비교하면 어느 경로에서도 어긋나 루프가 된다
+  - Then: 국문으로 보아 200 렌더 — 이동하지 않는다
+
+### Location 에 호스트
+
+- 파일: `search/app/src/main/kotlin/com/kgd/search/application/attraction/service/AttractionPageService.kt`
+- 바꾼 줄: `renderPort.canonicalPath(docLang, doc.id))` → `"https://place.1989v.com" + renderPort.canonicalPath(docLang, doc.id))`
+- 결과: exit 1 · 27 tests completed, 8 failed · BUILD FAILED in 7s
+- 빨개진 테스트:
+  - Then: 문서 언어(en)로 옮기라는 결과이고 조회는 한 번 · 렌더하지 않는다
+  - Then: 문서 언어(ko)로 옮기라는 결과다
+  - Then: 짝이 아니라 문서 자신의 id 로 옮긴다
+  - Then: 상세와 같은 규칙으로 옮긴다
+  - Then: 301 · Location 은 문서 언어(국문) 경로만 · 본문·ETag 없음 · 재검증 캐시 헤더
+  - Then: 301 · Location 은 영문 경로
+  - Then: 짝이 아니라 문서 자신의 국문 경로로 301
+  - Then: 상세와 같이 301
+
+### 301 Cache-Control 누락
+
+- 파일: `search/app/src/main/kotlin/com/kgd/search/presentation/render/controller/AttractionPageController.kt`
+- 바꾼 줄: `.header(HttpHeaders.LOCATION, location)             .header(HttpHeaders.CACHE_CONTROL, NO_CACHE)` → `.header(HttpHeaders.LOCATION, location)`
+- 결과: exit 1 · 27 tests completed, 1 failed · BUILD FAILED in 7s
+- 빨개진 테스트:
+  - Then: 301 · Location 은 문서 언어(국문) 경로만 · 본문·ETag 없음 · 재검증 캐시 헤더
+
+### 301 → 302
+
+- 파일: `search/app/src/main/kotlin/com/kgd/search/presentation/render/controller/AttractionPageController.kt`
+- 바꾼 줄: `HttpStatus.MOVED_PERMANENTLY` → `HttpStatus.FOUND`
+- 결과: exit 1 · 27 tests completed, 4 failed · BUILD FAILED in 7s
+- 빨개진 테스트:
+  - Then: 301 · Location 은 문서 언어(국문) 경로만 · 본문·ETag 없음 · 재검증 캐시 헤더
+  - Then: 301 · Location 은 영문 경로
+  - Then: 짝이 아니라 문서 자신의 국문 경로로 301
+  - Then: 상세와 같이 301
+
+## SR-7.4 목록 대조
+
+SR-7.4 의 20항목 전부 빨강을 봤다. 「named location 헤더 삭제」는 도커(nginx:1.27-alpine)로 실제 확인했다(미확인 아님). TG4 서버 항목은 지금 코드 기준으로 위 절이 최신이다.

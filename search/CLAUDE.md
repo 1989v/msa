@@ -101,6 +101,7 @@ OpenSearch 기반 읽기 전용 검색 모델 서비스 (ADR-0055 로 ES 에서 
   `/internal/**` 은 게이트웨이 라우트가 없다. 응답 표지 `X-Render`: `ssr` · `shell-fallback`(색인 조회 실패) · nginx 의 `proxy-fallback`.
   JSON-LD 는 클라이언트(`copy.mjs`)와 **같은 내용**이어야 한다 — `AttractionJsonLdParityTest` 가 portal-fe 골든 픽스처와 대조한다.
   관광지 상세 프리렌더는 없다(지역만 프리렌더).
+  문서 언어(en 외는 ko)가 경로 언어와 다르면 301 — Location 은 문서 자신의 경로만(짝 아님), 301 에도 `no-cache, must-revalidate`(ADR-0062 §8 개정 2026-10-10).
 - **속성 패싯**: 재색인 때 search:domain 순수 함수가 휴무·주차·반려동물(`petPolicy`)·신용카드·유모차·무료 입장을 계산해 싣는다(`UNKNOWN` 은 명시값).
   목록 API 필터 `openToday`·`parking`·`creditCard`·`strollerRental`·`pet`·`admission` — 모르는 값은 400 이 아니라 무시한다.
   건수는 `facets=true` 일 때만 센다(목록 첫 쪽만 요청).

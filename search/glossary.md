@@ -98,6 +98,8 @@ Search BC는 **OpenSearch 기반 읽기 전용 검색 모델 서비스**. CDC + 
 | **편집 페이지(guide)** | 사람이 고르고 쓴 큐레이션 글 — `place.1989v.com/guides/{slug}`(국문만). 원본 `portal-fe/src/content/guides/{slug}.md`, 머리말 `status`(`draft`·`published`)·`reviewedBy`·`reviewedAt`·`attractionIds`. 본문의 관광지 카드는 `<div data-guide-card="{id}"></div>` 표지를 빌드·화면이 검색 API 로 채운다. `draft` 는 `noindex` + 「검수 전 초안」 띠, 검수자 없이 `published` 면 빌드 실패 | 블로그 글이 아니다(blog 호스트·DB 원본 아님). 기각된 태그 랜딩과도 다르다 — 사람이 고른 선별이라 색인 스위치를 따르지 않고 자기 `status` 가 스위치다 |
 | **프리셋** | 속성 랜딩이 허브 화면(`PlacePage`)에 넘기는 초기 조건 — 시도·시군구(3자리 `code.slice(2)`)·속성 칩 하나·은퇴 여부·SEO 입력. `useState` 초기값으로만 넣는다(effect·`selectRegion` 으로 넣으면 trigger 가 `initial`/`region` 으로 덮인다) | 사용자가 고른 필터 상태(허브 복원 `restore`)와 다르다 |
 | **색인 스위치** | 속성 랜딩의 색인 여부를 정하는 상수 `PLACE_LANDINGS_INDEXABLE`(`portal-fe/src/seo/copy.mjs`, **기본 `false`**). 꺼져 있으면 랜딩은 200 이되 프리렌더·화면 모두 `noindex, follow`, sitemap·llms 에서 빠진다. 환경 변수가 아니라 상수라 켜는 일이 커밋 한 줄로 남는다 | 켜는 커밋은 ADR-0062 개정 수용과 같아야 하고, 켜는 것은 사용자다. 편집 페이지에는 걸리지 않는다. 관광지 짝 스위치(`search.alternate-pairs.enabled`)와 다른 스위치다 |
+| **티어 A** | sitemap 에 실리는 관광지 상세 중 관광 분류(`SIGHT_CATEGORIES`) · 개요 · 사진 · googlePlaceId 를 모두 가진 것. 사진·place_id 는 공백뿐이면 없음으로 본다. 판정은 portal-fe 빌드의 순수 함수 `isTierA` 하나가 한다(2026-10-11 운영 ko 16,968 · en 2,029) | 품질 점수(`popularityScore`)나 짝(`alternateId`)과 다르다. place_id 하나로 가르지 않는다 — 사진·place_id 를 가진 국문의 41% 가 쇼핑이다 |
+| **핵심 sitemap** | place 호스트 `sitemap-places-core.xml` — 허브 항목(허브·지역·색인 켜진 랜딩·게시된 편집 페이지) + 티어 A 상세. `sitemap.xml` 색인의 첫 항목이고, 2만을 넘으면 `sitemap-places-core-2.xml` 로 이어 쓴다. 나머지 상세는 `sitemap-places-{n}.xml`, 행사는 마지막 `sitemap-places-events.xml`(동적) | 우선순위 신호지 색인 여부가 아니다 — 나머지 상세도 sitemap 에 그대로 있다. 옛 `sitemap-places-hub.xml` 은 없어졌다(404) |
 
 ---
 
