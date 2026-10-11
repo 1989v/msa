@@ -27,7 +27,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Callable, Iterable, Iterator, NamedTuple
 
-from src.popularity import CLICKHOUSE_URL, CONNECT_RETRIES
+from src.popularity import CLICKHOUSE_URL, CONNECT_RETRIES, clickhouse_headers
 
 REQUESTS_TABLE = "analytics.crawler_requests_hourly"
 COVERAGE_TABLE = "analytics.crawler_log_coverage_hourly"
@@ -326,14 +326,6 @@ class Kube:
 # ─── ClickHouse 쓰기 ───
 
 Poster = Callable[[str], "tuple[int, str]"]
-
-
-def clickhouse_headers() -> dict[str, str]:
-    """ClickHouse 계정 헤더 — 계정 없이 보내면 default 로 들어가 거부된다(HTTP 403, Code 516)."""
-    user = os.environ.get("CLICKHOUSE_USER", "")
-    if not user:
-        return {}
-    return {"X-ClickHouse-User": user, "X-ClickHouse-Key": os.environ.get("CLICKHOUSE_PASSWORD", "")}
 
 
 def _post_clickhouse(body: str) -> tuple[int, str]:

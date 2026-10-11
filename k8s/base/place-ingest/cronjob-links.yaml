@@ -68,6 +68,12 @@ spec:
                 # ADR-0095 — 인기 집계(analytics 소유 전용 표). 못 읽으면 기존 순서로 간다.
                 - name: CLICKHOUSE_URL
                   value: "http://clickhouse:8123"
+                # ClickHouse 는 analytics 계정만 받는다(default 는 403) — 재색인 잡·analytics Deployment 와 같은 평문 값이다.
+                # 빠지면 매 회차 「조회 거부 HTTP 403」으로 인기순 없이 돈다
+                - name: CLICKHOUSE_USER
+                  value: "analytics"
+                - name: CLICKHOUSE_PASSWORD
+                  value: "analytics"
                 - name: LINK_LIMIT
                   value: "10"
                 - name: YOUTUBE_API_KEY

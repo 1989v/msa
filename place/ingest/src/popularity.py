@@ -30,6 +30,14 @@ CONNECT_RETRIES = (2, 4, 8, 16)
 WINDOW_DAYS = int(os.environ.get("POPULARITY_WINDOW_DAYS", "14"))
 
 
+def clickhouse_headers() -> dict[str, str]:
+    """ClickHouse 계정 헤더 — 계정 없이 보내면 default 로 들어가 거부된다(HTTP 403, Code 516)."""
+    user = os.environ.get("CLICKHOUSE_USER", "")
+    if not user:
+        return {}
+    return {"X-ClickHouse-User": user, "X-ClickHouse-Key": os.environ.get("CLICKHOUSE_PASSWORD", "")}
+
+
 def _get_with_connect_retry(url: str) -> str | None:
     """연결 자체가 안 되는 오류만 재시도한다. 서버가 답한 것(HTTP 4xx/5xx)은 그대로 실패다.
 
@@ -39,13 +47,19 @@ def _get_with_connect_retry(url: str) -> str | None:
     실측했다 (2026-09-17). 재시도 없이 빈 목록으로 가면 **매 회차가 인기순 없이 돌면서도
     로그엔 "조회 실패" 한 줄뿐**이라 오래 묻힌다.
     """
+    req = urllib.request.Request(url, headers=clickhouse_headers())
     for attempt, wait in enumerate((*CONNECT_RETRIES, None)):
         try:
-            with urllib.request.urlopen(url, timeout=20) as res:
+            with urllib.request.urlopen(req, timeout=20) as res:
                 return res.read().decode("utf-8")
         except urllib.error.HTTPError as e:
             # 서버가 답했다 — 정책이 아니라 질의 문제다. 재시도해도 같다.
-            log(f"[popularity] 조회 거부 HTTP {e.code} — 인기순 없이 진행한다")
+            if e.code in (401, 403):
+                # 계정이 빠졌거나 틀렸다 — 저절로 낫지 않고 매 회차 인기순이 빠진다. 몇 주씩 묻혔던 실패라 ERROR 로 남긴다.
+                log(f"[popularity] ERROR 조회 거부 HTTP {e.code} — ClickHouse 계정(CLICKHOUSE_USER/PASSWORD)을 확인할 것. "
+                    "인기순 없이 진행한다")
+            else:
+                log(f"[popularity] 조회 거부 HTTP {e.code} — 인기순 없이 진행한다")
             return None
         except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as e:
             if wait is None:

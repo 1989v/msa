@@ -706,7 +706,7 @@ def _popularity_drives_link_budget() -> None:
     captured = {}
 
     def fake_urlopen(url, timeout=None):
-        captured["url"] = url
+        captured["url"] = getattr(url, "full_url", url)
 
         class R:
             def __enter__(self): return self
