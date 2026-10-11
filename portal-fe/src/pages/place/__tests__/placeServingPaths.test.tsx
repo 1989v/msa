@@ -39,6 +39,8 @@ function respond(url: string): unknown {
   if (visitors) {
     return { code: visitors[1], level: 'SIDO', latestDate: '2026-09-02', months: [{ month: '2026-08', local: 5000000, outsider: 800000, foreigner: 12000 }] };
   }
+  const ranking = url.match(/^\/api\/places\/administrative-regions\/(\d{2})\/visitor-ranking$/);
+  if (ranking) return { month: '2026-08', items: [] };
   if (url.startsWith('/api/places/administrative-regions')) {
     return { regions: url.includes('level=SIGUNGU') ? [sigungu] : [sido] };
   }
@@ -93,6 +95,8 @@ import AttractionPage from '../AttractionPage';
 const CACHED_PLACE_GETS = [
   /^\/api\/places\/administrative-regions\?/,
   /^\/api\/places\/administrative-regions\/\d{2}(\d{3})?\/visitors$/,
+  // 시도 「타지 방문자가 많은 시군구」 — RegionVisitorRankingService 의 @Cacheable(VISITOR_RANKING)
+  /^\/api\/places\/administrative-regions\/\d{2}\/visitor-ranking$/,
   /^\/api\/places\/weather\?sigungu=\d{5}$/,
   /^\/api\/places\/air\?sigungu=\d{5}$/,
 ];
@@ -154,6 +158,7 @@ describe('관광지 화면의 읽기 경로', () => {
       expect.stringContaining('level=SIGUNGU'),
       '/api/places/administrative-regions/11/visitors',
       '/api/places/administrative-regions/11110/visitors',
+      '/api/places/administrative-regions/11/visitor-ranking',
     ]));
     placeGets().forEach((url) => expect(isCachedPlaceGet(url), url).toBe(true));
   });
