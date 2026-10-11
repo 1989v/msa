@@ -1,0 +1,12 @@
+{"size":0,"aggs":{"lang":{"terms":{"field":"lang"},"aggs":{"scope":{"filters":{"filters":{"all":{"match_all":{}},"hubSight":{"terms":{"category":["nature","history","culture","leisure"]}}}},"aggs":{"f":{"filters":{"filters":{
+ "regionLabel":{"bool":{"filter":[{"exists":{"field":"regionTypeCount"}},{"exists":{"field":"sigunguName"}}]}},
+ "sigunguName":{"exists":{"field":"sigunguName"}},
+ "sidoName":{"exists":{"field":"sidoName"}},
+ "closureWeeklyOrAlways":{"terms":{"closureState":["WEEKLY","ALWAYS_OPEN"]}},
+ "closureWeekly":{"term":{"closureState":"WEEKLY"}},
+ "admissionFree":{"term":{"attrAdmission":"FREE"}},
+ "petAllowedPartial":{"terms":{"petPolicy":["ALLOWED","PARTIAL"]}},
+ "barrierFree3":{"terms":{"barrierFree":["WHEELCHAIR","ELEVATOR","RESTROOM"]}},
+ "barrierFreeAny":{"exists":{"field":"barrierFree"}},
+ "parkingYes":{"term":{"attrParking":"YES"}},
+ "savedCount":{"exists":{"field":"savedCount"}}}}}}}}}}}
