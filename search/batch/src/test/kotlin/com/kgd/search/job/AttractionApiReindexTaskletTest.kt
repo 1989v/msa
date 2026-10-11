@@ -97,6 +97,11 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
         every { aliasManager.createTimestampedIndexName("attractions") } returns "attractions_1"
         every { aliasManager.createIndex("attractions_1", IndexAliasManager.ATTRACTIONS_INDEX_DEFINITION) } just Runs
         every { aliasManager.updateAliasAndCleanup("attractions", "attractions_1", maxRetention = 1) } just Runs
+        every { aliasManager.deleteIndex(any()) } just Runs
+        // 묶음 조회는 기본으로 성공(빈 응답)한다 — 실패는 상한 게이트에 걸리므로 실패를 보는 테스트만 따로 던진다
+        coEvery { placeApiClient.lookupLinks(any()) } returns emptyMap()
+        coEvery { placeApiClient.lookupExtras(any()) } returns emptyMap()
+        coEvery { placeApiClient.lookupSimilar(any(), any()) } returns emptyMap()
         every { bulkProcessor.errorCount } returns AtomicLong(0)
         every { clickReader.loadUniqueClickers(any()) } returns emptyMap()
         coEvery { wishlistClient.fetchTargetCounts(any(), any()) } returns emptyMap()
@@ -251,21 +256,22 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
             }
         }
 
-        `when`("비슷한 곳 조회가 실패하면") {
-            then("필드만 비고 색인과 별칭 교체는 끝까지 가야 한다") {
+        `when`("비슷한 곳 조회가 통째로 실패하면") {
+            then("별칭을 넘기지 않고 새 색인을 지운 뒤 잡이 실패해야 한다 — 전 관광지에서 목록이 빠진 색인을 라이브로 두지 않는다") {
                 useModelRef(MODEL_REF)
                 clearMocks(aliasManager, answers = false)
-                val documents = captureDocuments()
+                captureDocuments()
                 onePage(seoul(1), elsewhere(21, "26"))
                 coEvery { placeApiClient.lookupEmbeddings(any(), any()) } returns emptyMap()
                 coEvery { placeApiClient.lookupSimilar(any(), any()) } throws IllegalStateException("place down")
 
-                val result = tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+                val failure = shouldThrow<IllegalStateException> {
+                    tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+                }
 
-                result shouldBe RepeatStatus.FINISHED
-                documents.map { it.id } shouldContainExactly listOf("1", "21")
-                documents.forEach { bulkSource(it).keys shouldNotContain "similarElsewhere" }
-                verify { aliasManager.updateAliasAndCleanup("attractions", "attractions_1", maxRetention = 1) }
+                failure.message shouldContain "similar 1/1"
+                verify { aliasManager.deleteIndex("attractions_1") }
+                verify(exactly = 0) { aliasManager.updateAliasAndCleanup(any(), any(), any()) }
                 useModelRef("")
             }
         }
@@ -279,6 +285,64 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                 tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
 
                 coVerify(exactly = 0) { placeApiClient.lookupSimilar(any(), any()) }
+            }
+        }
+    }
+
+    given("묶음 조회 실패 비율이 상한(5%) 근처일 때") {
+        /** 한 쪽에 관광지 하나 — 쪽마다 묶음 조회가 한 번씩 나간다. id 1 묶음만 부가 정보 조회가 실패한다. */
+        fun pagesWithOneExtrasFailure(pageCount: Long) {
+            clearMocks(aliasManager, bulkProcessor, answers = false)
+            captureDocuments()
+            coEvery { placeApiClient.fetchPageAfter(any(), 100) } answers {
+                val id = firstArg<Long>() + 1
+                PlaceApiClient.AttractionPageResponse(listOf(dto(id, "ko")), nextAfterId = id.takeIf { it < pageCount })
+            }
+            coEvery { placeApiClient.lookupExtras(any()) } answers {
+                if (1L in firstArg<List<Long>>()) throw IllegalStateException("Illegal mix of collations") else emptyMap()
+            }
+        }
+
+        `when`("20묶음 중 1묶음(5%)이 실패하면") {
+            then("상한 이하라 그 묶음만 비우고 별칭을 넘겨야 한다") {
+                pagesWithOneExtrasFailure(20)
+
+                val result = tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+
+                result shouldBe RepeatStatus.FINISHED
+                verify(exactly = 20) { bulkProcessor.processDocument("attractions_1", any<String>(), any<AttractionIndexDocument>()) }
+                verify { aliasManager.updateAliasAndCleanup("attractions", "attractions_1", maxRetention = 1) }
+                verify(exactly = 0) { aliasManager.deleteIndex(any()) }
+            }
+        }
+
+        `when`("19묶음 중 1묶음(5.26%)이 실패하면") {
+            then("상한을 넘어 새 색인을 지우고 별칭은 그대로 둔 채 잡이 실패해야 한다") {
+                pagesWithOneExtrasFailure(19)
+
+                val failure = shouldThrow<IllegalStateException> {
+                    tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+                }
+
+                failure.message shouldContain "extras 1/19"
+                verify { aliasManager.deleteIndex("attractions_1") }
+                verify(exactly = 0) { aliasManager.updateAliasAndCleanup(any(), any(), any()) }
+            }
+        }
+
+        `when`("링크 조회가 통째로 실패하면") {
+            then("같은 게이트에 걸려 잡이 실패해야 한다") {
+                clearMocks(aliasManager, answers = false)
+                captureDocuments()
+                onePage(dto(1, "ko"), dto(2, "en"))
+                coEvery { placeApiClient.lookupLinks(any()) } throws IllegalStateException("place down")
+
+                val failure = shouldThrow<IllegalStateException> {
+                    tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+                }
+
+                failure.message shouldContain "links 1/1"
+                verify(exactly = 0) { aliasManager.updateAliasAndCleanup(any(), any(), any()) }
             }
         }
     }

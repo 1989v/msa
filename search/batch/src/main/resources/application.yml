@@ -41,6 +41,8 @@ search:
     region-alias: regions
   batch:
     page-size: 100
+    # 관광지 재색인의 묶음 조회(부가 정보·링크·비슷한 곳)가 이 비율보다 많이 실패하면 별칭을 넘기지 않고 잡을 실패시킨다
+    max-lookup-failure-ratio: 0.05
   embedding:
     # 문서 벡터 스탬프 (ADR-0090). **비어 있으면 벡터를 싣지 않는다** — 첫 채움 전에는 이것이 정상이다.
     # 값은 search:app 의 같은 설정과 한 글자도 다르지 않아야 한다. 다르면 질의 경로가 벡터 레그를 끈다.

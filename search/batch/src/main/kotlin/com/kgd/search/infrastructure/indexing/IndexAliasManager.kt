@@ -97,6 +97,12 @@ class IndexAliasManager(private val osClient: OpenSearchClient) {
             }
     }
 
+    /** 별칭을 넘기지 않기로 한 새 색인을 지운다 — 남겨 두면 다음 회차 정리 전까지 디스크와 페이지 캐시를 나눠 쓴다. */
+    fun deleteIndex(indexName: String) {
+        osClient.indices().delete { d -> d.index(indexName) }
+        log.info { "Deleted index: $indexName" }
+    }
+
     private fun checkNewIndexComplete(alias: String, newIndexName: String, liveIndices: List<String>) {
         osClient.indices().refresh { it.index(newIndexName) }
         val newCount = countDocs(newIndexName)

@@ -98,6 +98,14 @@ class AttractionApiReindexTasklet(
     @Value("\${search.alternate-pairs.enabled:false}")
     private var alternatePairsEnabled: Boolean = false
 
+    /**
+     * 묶음 조회(부가 정보·링크·비슷한 곳) 하나가 실패한 묶음 비율의 상한. 넘으면 별칭을 넘기지 않고 잡을 실패시킨다.
+     * 묶음 몇 개의 실패는 그 묶음만 비우고 넘어가지만, 조회가 통째로 죽은 채 넘기면 전 관광지에서 그 섹션이
+     * 사라진 색인이 라이브가 된다 — 어제 색인을 그대로 두는 편이 낫다.
+     */
+    @Value("\${search.batch.max-lookup-failure-ratio:0.05}")
+    private var maxLookupFailureRatio: Double = 0.05
+
     override fun execute(contribution: StepContribution, chunkContext: ChunkContext): RepeatStatus =
         runBlocking {
             val newIndexName = aliasManager.createTimestampedIndexName(indexAlias)
@@ -160,8 +168,11 @@ class AttractionApiReindexTasklet(
             var unreadableCongestionDays = 0L
             var withRelated = 0L
             var relatedNotActive = 0L
+            var similarLookupBatches = 0L
             var extrasLookupFailures = 0L
+            var extrasLookupBatches = 0L
             var linksLookupFailures = 0L
+            var linksLookupBatches = 0L
             var withSaved = 0L
             var withAccess = 0L
             var busNotCovered = 0L
@@ -183,12 +194,13 @@ class AttractionApiReindexTasklet(
                 }
 
                 // 비슷한 곳도 페이지 단위. 목록은 벡터 스탬프에 묶여 있어 스탬프가 없으면 부르지 않는다.
-                // 못 받으면 그 쪽의 목록만 비고 색인은 이어 간다 — 부가 섹션 하나로 재색인을 멈추지 않는다.
+                // 못 받으면 그 쪽의 목록만 비고 색인은 이어 간다. 실패 묶음이 상한을 넘으면 끝에서 별칭을 넘기지 않는다.
                 val similar = if (modelRef.isEmpty()) {
                     emptyMap()
                 } else {
                     active.map { it.id }.chunked(PlaceApiClient.LOOKUP_MAX_BATCH)
                         .fold(emptyMap<Long, PlaceApiClient.SimilarDto>()) { acc, ids ->
+                            similarLookupBatches++
                             acc + runCatching { placeApiClient.lookupSimilar(modelRef, ids) }.getOrElse { e ->
                                 similarLookupFailures++
                                 log.warn(e) { "비슷한 곳 조회 실패(${ids.size}건) — 이 묶음은 목록 없이 색인한다" }
@@ -200,6 +212,7 @@ class AttractionApiReindexTasklet(
                 // 링크도 페이지 단위로 한 번에 받는다 — 관광지마다 부르면 6만 번이다.
                 val links = active.map { it.id }.chunked(PlaceApiClient.LOOKUP_MAX_BATCH)
                     .fold(emptyMap<Long, String>()) { acc, ids ->
+                        linksLookupBatches++
                         acc + runCatching { placeApiClient.lookupLinks(ids) }.getOrElse { e ->
                             linksLookupFailures++
                             log.warn(e) { "링크 조회 실패(${ids.size}건) — 이 묶음은 링크 없이 색인한다" }
@@ -207,9 +220,10 @@ class AttractionApiReindexTasklet(
                         }
                     }
 
-                // 부가 정보(무장애 · 웰니스)도 페이지 단위로 한 번에. 못 받으면 그 묶음만 비고 색인은 이어 간다.
+                // 부가 정보(무장애 · 웰니스)도 페이지 단위로 한 번에. 못 받으면 그 묶음만 비고 색인은 이어 간다(상한은 위와 같다).
                 val extras = active.map { it.id }.chunked(PlaceApiClient.LOOKUP_MAX_BATCH)
                     .fold(emptyMap<Long, PlaceApiClient.ExtrasDto>()) { acc, ids ->
+                        extrasLookupBatches++
                         acc + runCatching { placeApiClient.lookupExtras(ids) }.getOrElse { e ->
                             extrasLookupFailures++
                             log.warn(e) { "부가 정보 조회 실패(${ids.size}건) — 이 묶음은 무장애·웰니스 없이 색인한다" }
@@ -371,6 +385,22 @@ class AttractionApiReindexTasklet(
 
             bulkProcessor.flush()
 
+            val overLimit = listOf(
+                LookupFailures("extras", extrasLookupFailures, extrasLookupBatches),
+                LookupFailures("links", linksLookupFailures, linksLookupBatches),
+                LookupFailures("similar", similarLookupFailures, similarLookupBatches),
+            ).filter { it.exceeds(maxLookupFailureRatio) }
+            if (overLimit.isNotEmpty()) {
+                runCatching { aliasManager.deleteIndex(newIndexName) }
+                    .onFailure { e -> log.error(e) { "새 색인 $newIndexName 을 지우지 못했다 — 다음 회차 정리가 지운다" } }
+                val detail = overLimit.joinToString { "${it.name} ${it.failures}/${it.batches}" }
+                log.error { "묶음 조회 실패가 상한(${maxLookupFailureRatio * 100}%)을 넘어 별칭을 넘기지 않는다: $detail" }
+                error(
+                    "관광지 재색인 중단 — 묶음 조회 실패 $detail 가 상한 ${maxLookupFailureRatio * 100}% 를 넘는다. " +
+                        "새 색인 $newIndexName 은 지웠고 별칭 '$indexAlias' 는 그대로다",
+                )
+            }
+
             // 관광지 색인은 한 벌 272 MB(벡터 153 MB 포함)라 두 벌을 두면 옛 벌이 페이지 캐시를 나눠 먹는다 —
             // kNN 은 그래프·벡터 파일이 캐시에 다 있어야 빨라서(없으면 질의당 100초대) 살아 있는 한 벌만 남긴다.
             aliasManager.updateAliasAndCleanup(indexAlias, newIndexName, maxRetention = 1)
@@ -480,6 +510,11 @@ class AttractionApiReindexTasklet(
      * 1차 훑기 결과 — 후보가 될 수 있는 활성 문서의 투영(id 키), 지역 집계, 코스 매칭 지도, 같은 장소 묶음, 언어 대체 짝.
      * 끝난 행사는 [projections] 에 없어 비슷한 곳 항목에서도 빠진다.
      */
+    /** 묶음 조회 하나의 실패 묶음 수 / 전체 묶음 수. 묶음을 하나도 부르지 않았으면 판정하지 않는다. */
+    private data class LookupFailures(val name: String, val failures: Long, val batches: Long) {
+        fun exceeds(maxRatio: Double): Boolean = batches > 0 && failures.toDouble() / batches > maxRatio
+    }
+
     private data class RegionPass(
         val projections: Map<String, RegionProjection>,
         val placements: Map<String, RegionPlacement>,
