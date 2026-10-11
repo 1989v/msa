@@ -1,0 +1,130 @@
+# 관광지 검색 질의 결함 셋 — 열린 질문. answer 는 권고 기본값이고, 사용자가 바꾸지 않으면 이대로 진행한다.
+questions:
+  - id: Q1
+    stage: pre-impl
+    status: open
+    question: 「에펠탑」「디즈니랜드」처럼 개요에 글자 그대로 나오는 문서(8건·2건)가 있는 질의를 0건으로 만들까
+    answer: 아니다. 글자 그대로 언급한 문서는 어휘 근거이고 「해석한 척」이 아니다. CONFINE 에서 그 문서만 남긴다(충렬탑 류는 빠진다). 판정 세트 S3-6b 가 이런 질의를 NO_ANSWER 로 두면 빈 정답 통과율에서 실패로 잡히는데, 보고에 「글자 그대로 언급」 건수를 따로 적어 구분한다. 제목·주소만 근거로 치는 규칙은 개요 언급 정답(체험 프로그램 등)을 놓쳐서 택하지 않는다
+  - id: Q2
+    stage: pre-impl
+    status: open
+    question: 해석 해제를 기존 exact(오타 교정 끄기)에 합칠까, 새 파라미터로 둘까
+    answer: 새 파라미터 keepConditionWords(전체 해제)와 skipCondition=<param>(조건 하나 해제, V1). exact 는 「원래 검색어로 검색」(교정 취소)이고 이미 계측·테스트 계약이 있다. 합치면 조건 하나를 풀 때 교정까지 풀린다
+  - id: Q3
+    stage: post-impl
+    status: open
+    question: 자모만인 입력을 0건으로 확정하면 초성 검색(ㄱㅂㄱ→경복궁)을 나중에 넣기 어려워지나
+    answer: 아니다. 지금도 초성 검색은 없고 결과는 무관한 문서(파머스가든봄 등)다. 초성 검색을 넣을 때 noContent 분기를 그 기능으로 바꾸면 된다. 운영 SEARCH 원장에 자모만 질의가 2명 이상에서 나오면 후보로 올린다
+  - id: Q4
+    stage: pre-impl
+    status: open
+    question: 「반려동물 동반」 해석에 PARTIAL(일부 구역)까지 넣을까
+    answer: 넣는다(ALLOWED,PARTIAL). 허브의 두 칩이 따로 있어 사용자가 PARTIAL 만 끌 수 있고, 판정 기준(S3-6b SR-4.2)도 동반 가능을 정답으로 친다. ALLOWED 9,129 · PARTIAL 534
+  - id: Q5
+    stage: pre-impl
+    status: open
+    question: GATE·CONFINE 을 스위치 없이 바로 켤까
+    answer: 스위치로 단계별. 근사 측정에서 CONFINE 이 ko −0.015 · en +0.003, 질의별로 16·14개가 0.05 넘게 나빠졌다(질의 이해 없는 근사라 실제는 작을 것). 클릭 계수처럼 측정이 통과한 단계까지만 켜고, 되돌림은 env 한 줄로 끝나야 한다
+    note: 2026-10-11 심판 I-1 — 근사 표의 B 행은 kNN 에 키워드 필터를 걸지 않은 구성이라 지금 경로(kNN filter 에 OR multi_match)가 아니다. 위 수치는 재측정 필요(TG6.0). 단계별 스위치 결론은 수치와 무관하게 유지
+  - id: Q6
+    stage: post-impl
+    status: open
+    question: 의도어만인 질의의 total 이 k(100)에 묶이는 것(「해수욕장」 total 100, 실제 분류 문서는 더 많다)도 고칠까
+    answer: 이번엔 아니다. 벡터 단독 경로의 total 정의 문제라 결함 셋과 따로다. 후속 후보로 보고만(Out of Scope)
+  - id: Q7
+    stage: post-impl
+    status: open
+    question: 「반려견과」→반려·견과 같은 nori 분절 오류를 사용자 사전으로 막을까
+    answer: 후속. 조건어 표가 어절 단위라 이 질의는 QU 가 먼저 처리해 BM25 에 안 간다. 다른 질의에서 같은 분절이 판정 세트 손실로 보이면 그때 사전 한 줄
+  - id: Q8
+    stage: post-impl
+    status: open
+    question: 조건어 해석률을 운영에서 볼까
+    answer: 이번엔 두지 않는다. 운영 검색어가 아직 사실상 없고(S3-6b 현황 — 검색어 있는 SEARCH 4건), 원장 SEARCH payload 계약(계측 스펙 SR-2)도 건드리지 않는다. 트래픽이 생기면 기존 intentCounter 옆 카운터 하나로 시작한다
+
+# 2026-10-11 심판 판정(context/review-verdict.md)의 「사용자 판단 목록」. 권고 기본값을 spec·tasks 에 반영했고 사용자 확인을 기다린다.
+  - id: V1
+    stage: pre-impl
+    status: answered-default
+    source: U1, U6
+    question: 해석 해제가 GATE 에서 0건을 만드는 문제를 어떻게 풀지
+    answer: (가)+(나) 둘 다. (가) 근거 검사용 잔여에서는 조건어 머리말·꼬리말 어절을 늘 뺀다 — 통합 검색·미해석 조건·「조건으로 읽지 않고 검색」까지 한 번에 막는다. (나) 칩 끄기는 skipCondition=<param> 로 그 param 의 해석만 버린다 — 「나머지를 명시 칩으로 옮기기」는 없앤다
+    reflected: SR-3.4, SR-4.3, SR-5.1, TG2.4, TG3.1②, TG4.1
+  - id: V2
+    stage: pre-impl
+    status: answered-default
+    source: I-8, T1
+    question: 단계 1 되돌림 방식
+    answer: search.attraction.condition-words.enabled 스위치(기본 true, env SEARCH_ATTRACTION_CONDITION_WORDS_ENABLED). SR-1 은 되돌림 배포, SR-2 는 보관 색인으로 별칭 이동 후 JSON 되돌림. 효과 분리는 keepConditionWords=true 짝 측정(--condition-pair)
+    reflected: SR-3.4, SR-7.2, SR-7.3, TG2.4, TG6.0, TG6.3
+  - id: V3
+    stage: pre-impl
+    status: answered-default
+    source: T7
+    question: 단계 2·3 이 판정 세트 v3 를 선행 조건으로 삼는지
+    answer: 그렇다. 순서는 v3 머지 → v3 첫 실행·기준선 갱신 → 단계 1. 세트는 단계 3 까지 고정
+    reflected: SR-7.1, tasks 착수 전 메모, TG6.5
+  - id: V4
+    stage: pre-impl
+    status: answered-default
+    source: T2
+    question: 「에펠탑」「디즈니랜드」 탐침 기대
+    answer: 0 을 요구하지 않는다. CONFINE 에서 남은 문서 전부가 개요에 글자 그대로 언급된 것인지 사람이 확인하고 건수를 따로 보고(Q1 유지)
+    reflected: SR-7.1 기대표
+  - id: V5
+    stage: pre-impl
+    status: answered-default
+    source: D3c
+    question: 「무료」 단독 해석 범위
+    answer: 다음 어절이 없거나 쿼리 언더스탠딩이 가져가는 말(유형·분류·불용구)일 때만 admission=FREE. 「무료 셔틀/체험/와이파이」는 미해석
+    reflected: SR-3.2⑤, SR-3.5
+  - id: V6
+    stage: pre-impl
+    status: answered-default
+    source: D3a·b, T4⑥
+    question: 「주차 무료」 처리
+    answer: 꼬리말 무료 유지(결과는 주차 가능, 안내 줄에 원문 그대로). admission 예외는 「앞 또는 뒤 어절이 parking 머리말」. 둘 다 두되 처리 순서는 「parking 이 먼저 어절 소비」
+    note: 반영하며 확인한 점 — 처리 순서와 V5 단독 제한이 함께 있으면 예외가 단독으로 막는 경우가 없다(「주차 무료」는 순서가, 「무료 주차장」은 단독 제한이 막는다). 회귀 주입 ⑥ 은 순서 뒤집기 + 예외 삭제로 잡는다. 예외를 지워 단순화할지는 사용자 판단
+    reflected: SR-3.1 표, SR-3.2④, TG2.3, TG6.1⑥
+  - id: V7
+    stage: pre-impl
+    status: answered-default
+    source: D4
+    question: 명시 칩과 해석이 같은 param 일 때
+    answer: 명시 선택이 이긴다(해석 버림, 어절은 잔여에서 뺌)
+    reflected: SR-3.3, TG2.1②
+  - id: V8
+    stage: pre-impl
+    status: answered-default
+    source: U2
+    question: 0건 사유 필드
+    answer: zeroReason 을 추가한다(NO_EVIDENCE·NO_CONTENT·null)
+    reflected: SR-4.1, SR-4.5, TG3.1⑦
+  - id: V9
+    stage: pre-impl
+    status: answered-default
+    source: U3
+    question: 근거 요청 실패
+    answer: 예외로 올려 화면 실패 분기를 탄다(fail-closed 0건 금지)
+    reflected: SR-5.4, TG4.1, TG6.1⑱
+  - id: V10
+    stage: pre-impl
+    status: answered-default
+    source: U7
+    question: exact + GATE
+    answer: 게이트를 그대로 걸고, 0건 화면에 교정어로 다시 검색하는 링크를 둔다
+    reflected: SR-5.6, TG3.1⑪, TG4.1
+  - id: V11
+    stage: pre-impl
+    status: answered-default
+    source: T3
+    question: p99 채택 조건
+    answer: ADR-0025 Tier 1 예산을 넘으면 그 단계를 켜지 않는다. 잡음 하한은 무변경 이틀 정기 실행 차이로 먼저 잰다
+    reflected: SR-7.3, TG6.0, TG6.5
+  - id: V12
+    stage: pre-impl
+    status: answered-default
+    source: D3f
+    question: ko 전용 행의 영문 머리말(pet·wheelchair)
+    answer: 삭제한다. 언어 열 규칙과 맞춘다
+    reflected: SR-3.1 표
