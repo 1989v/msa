@@ -1,0 +1,90 @@
+questions:
+  - id: Q1
+    stage: post-impl
+    status: open
+    question: 티어 A 정의 — 관광 분류 + 개요 + 사진 + place_id(약 19,000) 로 둘지, 내부 링크 대표(허브 60 · 시도/시군구 대표, 약 5,000)로 더 좁힐지
+    answer: 데이터 조건으로 둔다(권고). 좁히면 core 색인율은 올라 보이나 기준이 링크 배치에 묶여 빌드마다 흔들린다. GSC sitemap 별 색인 수를 4주 본 뒤 재판단
+  - id: Q2
+    stage: post-impl
+    status: open
+    question: core 가 20,000 을 넘을 때
+    answer: core-2 로 이어 쓰고 빌드는 세우지 않는다(권고). 지금 약 19,540 이라 개요 수집이 늘면 곧 넘는다
+  - id: Q3
+    stage: post-impl
+    status: open
+    question: noindex 헤더 방식과 범위 — 프리렌더가 _noindex 디렉터리로 가르고 nginx named location 이 헤더를 붙인다. 편집 초안도 같은 방식에 넣을지
+    answer: 넣는다(권고). 같은 문제이고 추가 비용이 location 한 줄이다. 대안(nginx 에 스위치 복제·생성 map 파일)은 판단이 두 곳으로 갈린다
+  - id: Q4
+    stage: post-impl
+    status: open
+    question: 언어가 어긋난 상세 주소 — 301 인지 404 인지
+    answer: 양방향 301, Location 은 경로만(권고). canonical 이 이미 정규 주소를 가리켜 왔고 외부 링크 신호를 잃지 않는다
+  - id: Q5
+    stage: post-impl
+    status: open
+    question: 시군구 대표 재료 — 빌드 때 시군구마다 질의(약 505회 추가) 대 검색 응답에 시군구 코드 추가(search 변경)
+    answer: 빌드 질의(권고). 프론트만 바뀌고 SPA 와 같은 질의다. 빌드 시간이 문제가 되면 그때 응답 필드 추가
+  - id: Q6
+    stage: post-impl
+    status: open
+    question: I2-6 범위 — apex 홈의 서울 지역 링크 하나만 추가
+    answer: 하나만(권고). blog 는 데이터 스토리(H6)가, rank·deal 은 맥락이 없어 손대지 않는다
+  - id: Q7
+    stage: post-impl
+    status: open
+    question: sitemap-places-hub.xml 을 없앨 때 Search Console 에 하위 sitemap 이 개별 제출돼 있는지
+    answer: 없앤다(권고). 사용자가 GSC 에서 개별 제출된 하위 sitemap 이 있으면 지우고 sitemap.xml 만 남긴다
+  - id: Q8
+    stage: post-impl
+    status: open
+    question: ADR 처리 — 새 ADR 인지 ADR-0062 §8 개정 문단인지
+    answer: §8 개정 문단(권고). sitemap 구조·헤더·리다이렉트는 기존 결정의 세부라 새 결정이 아니다
+  # 심판 판정(context/review-verdict.md)의 사용자 판단 목록 1~8. 권고 기본값으로 spec·tasks 에 반영했고 사용자 확인 대기다.
+  - id: Q9
+    stage: post-review
+    status: answered-default
+    source: review-verdict 사용자 판단 1 (D4·T6)
+    question: 영문 짝이 있는 국문 문서를 어긋난 언어 경로로 받았을 때 301 행선 — 문서 자신의 canonical 인지 짝 문서인지
+    answer: 문서 자신의 canonical(/attractions/{koId}), 짝으로 보내지 않는다(권고 기본값). 지금까지의 canonical 신호와 같고 짝 스위치가 꺼져 있다 → SR-5.2
+  - id: Q10
+    stage: post-review
+    status: answered-default
+    source: review-verdict 사용자 판단 2 (U3)
+    question: 서버 301 에서 UTM 등 쿼리 손실을 감수할지
+    answer: 감수한다(권고 기본값). nginx 상세 location 이 쿼리를 넘기지 않고, 어긋난 주소에 UTM 을 단 링크는 드물다. SPA Navigate 는 search·hash 를 보존한다 → SR-5.4·5.5
+  - id: Q11
+    stage: post-review
+    status: answered-default
+    source: review-verdict 사용자 판단 3 (U1·T4)
+    question: Goal 「상세가 허브에서 3클릭 안」의 범위
+    answer: 「시도·시군구 대표 상세가 3클릭 안」으로 좁힌다(권고 기본값). 깊이 3 안 티어 A 비율을 빌드 로그로 남기고, 전체 상세 도달(정적 목록 페이지네이션)은 Out of Scope → Goal · SR-7.1
+  - id: Q12
+    stage: post-review
+    status: answered-default
+    source: review-verdict 사용자 판단 4 (A-2)
+    question: SPA RegionPage 랜딩 링크를 지금 넣을지
+    answer: 연기한다(권고 기본값). 스위치가 꺼져 있어 양쪽 다 0개다. 켤 때 landingIndexed 공용 함수와 count 출처를 함께 정한다 → SR-2.5 · tasks 2.4
+  - id: Q13
+    stage: post-review
+    status: answered-default
+    source: review-verdict 사용자 판단 5 (U2)
+    question: 크롤 효과 판정(SR-8)을 이 스펙에 넣을지
+    answer: 넣는다. I0-6(봇 일 집계) 배포를 선행 조건으로 두고, 배포 전 기준선을 못 뜨면 그 칸은 「미확인」으로 기록한다(권고 기본값) → SR-8 · tasks 5.6
+  - id: Q14
+    stage: post-review
+    status: answered-default
+    source: review-verdict 사용자 판단 6 (I-8·U5·Q7)
+    question: GSC 에서 core 를 sitemap 필터로 따로 볼 수 없을 때
+    answer: 배포 뒤 필터를 확인하고, 안 보이면 sitemap-places-core.xml 하나만 개별 제출한다(권고 기본값, Q7 「sitemap.xml 만」의 예외) → tasks 5.5
+  - id: Q15
+    stage: post-review
+    status: answered-default
+    source: review-verdict 사용자 판단 7 (T6)
+    question: 행사 문서의 언어 어긋남 처리
+    answer: 상세와 같은 301 규칙(권고 기본값) → SR-5.2 · SR-7.2
+  - id: Q16
+    stage: post-review
+    status: answered-default
+    source: review-verdict 사용자 판단 8 (I-5)
+    question: 티어 A 0건 게이트 임계값
+    answer: 상세 ≥ 10,000 이면서 티어 A = 0일 때 PartialSeoFailure 로 빌드를 세운다(권고 기본값) → SR-1.2
