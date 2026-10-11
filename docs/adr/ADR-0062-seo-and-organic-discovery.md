@@ -192,7 +192,7 @@ noindex 를 화면(`useSeo`)에서 다는 이유는 개요 없는 문서에는 �
 **그 규칙을 통과한 일대일 짝에만** 상세 hreflang 을 걸 수 있게 한다. 거는지 여부는 search:batch 설정
 `search.alternate-pairs.enabled`(CronJob env `SEARCH_ALTERNATE_PAIRS_ENABLED`)가 정하고 **기본은 꺼짐**이다 —
 꺼져 있으면 짝을 계산해 로그만 남기고 문서 `alternateId` 는 null 이라 hreflang 이 0건이다. 켜는 것은 사용자 승인 뒤 운영 30쌍
-수동 확인과 함께 한다. 되돌리면 재색인 뒤 portal-fe 를 다시 빌드해 sitemap 에서도 지운다. 나머지 상세는 지금처럼 없다.
+수동 확인과 함께 한다(2026-10-11 승인·켬). 되돌리면 재색인 뒤 portal-fe 를 다시 빌드해 sitemap 에서도 지운다. 나머지 상세는 지금처럼 없다.
 
 - 규칙: googlePlaceId 같음 · 50m 이내 · 언어 중립 유형 같음(국 12 ↔ 영 76 등 대응표) · 영문 `titleLocal` 과 국문 표시명이
   NFKC·공백 제거·소문자화 후 같음 · 후보 간선이 양쪽 모두 하나뿐 · 양쪽 모두 개요 있음(noindex 아님). 행사·코스는 제외.

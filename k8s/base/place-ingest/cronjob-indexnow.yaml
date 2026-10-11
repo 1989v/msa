@@ -3,7 +3,7 @@
 # 바뀐 id 는 place 내부 조회(/internal/attractions/content-updated)로 받는다. 저장처가 없어 하루 실패하면
 # 그날 변경은 IndexNow 에서 빠진다 — RSS·sitemap 에 남으므로 받아들인다. 응답이 무엇이든 잡은 성공으로 끝난다.
 #
-# **제출 스위치는 꺼 둔다(INDEXNOW_ENABLED "false").** 꺼져 있으면 보낼 건수만 로그에 남긴다.
+# 제출은 켜져 있다(2026-10-11, 운영 Secret 생성과 함께). "false" 로 두면 보낼 건수만 로그에 남긴다.
 # 키는 portal-fe 와 같은 Secret place-indexnow — 레포에 두지 않고 운영에서 수동으로 만든다. 없어도 잡은 뜬다.
 apiVersion: batch/v1
 kind: CronJob
@@ -42,7 +42,7 @@ spec:
                 - name: PLACE_API
                   value: "http://content:8097"
                 - name: INDEXNOW_ENABLED
-                  value: "false"
+                  value: "true"
                 - name: INDEXNOW_KEY
                   valueFrom:
                     secretKeyRef:
