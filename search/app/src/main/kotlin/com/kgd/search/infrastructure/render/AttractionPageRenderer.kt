@@ -99,6 +99,8 @@ class AttractionPageRenderer(
 
     override fun fallbackPage(shell: String?): String = shell ?: MINIMAL_SHELL
 
+    override fun canonicalPath(lang: String, id: String): String = attractionPath(lang, id)
+
     // ─── 조립 ──────────────────────────────────────────────────────────────
 
     private fun compose(shell: String?, lang: String, head: String, body: String): String {

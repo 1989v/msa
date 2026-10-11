@@ -166,3 +166,90 @@ TG4 항목(서비스 언어 비교 생략 · SPA Navigate 제거 · 언어 정�
   - `FAIL _noindex 파일이 직접 경로로 나간다`
   - `FAIL /prerender/_noindex/guides/draft-x.html 직접 경로 404 — 기대 [404] 실제 [200]`
   - `FAILED`
+
+# 회귀 주입 — TG4 (언어가 어긋난 상세 주소 301)
+
+2026-10-11. 워크트리 밖 임시 사본(스크래치패드 `inject-tg4`, build·node_modules 제외 rsync, portal-fe node_modules 는 심링크)에서 한 번에 하나씩 주입하고 해당 테스트만 돌렸다. 주입은 모두 컴파일되는 코드 변경이고, 주입마다 사본을 원본으로 되돌렸다.
+
+- 서버 명령: `./gradlew :search:app:test --tests '*AttractionPageServiceTest' --tests '*AttractionPageControllerTest'` (주입 전 기준선 BUILD SUCCESSFUL, 27 tests — 서비스 9 · 컨트롤러 18)
+- SPA 명령: `npx vitest run src/pages/place/__tests__/AttractionPage.test.tsx` (주입 전 기준선 `Tests  79 passed (79)`)
+
+### 서비스 언어 비교 생략
+
+- 파일: `search/app/src/main/kotlin/com/kgd/search/application/attraction/service/AttractionPageService.kt`
+- 바꾼 줄: `if (docLang != query.pathLang) return RenderAttractionPageUseCase.Page.Redirect(docLang, doc.id)` → `if (false && docLang != query.pathLang) return RenderAttractionPageUseCase.Page.Redirect(docLang, doc.id)`
+- 결과: exit 1 · 27 tests completed, 8 failed · BUILD FAILED in 7s
+- 빨개진 테스트:
+  - Then: 문서 언어(en)로 옮기라는 결과이고 조회는 한 번 · 렌더하지 않는다
+  - Then: 문서 언어(ko)로 옮기라는 결과다
+  - Then: 짝이 아니라 문서 자신의 id 로 옮긴다
+  - Then: 상세와 같은 규칙으로 옮긴다
+  - Then: 301 · Location 은 문서 언어(국문) 경로만 · 본문·ETag 없음 · 재검증 캐시 헤더
+  - Then: 301 · Location 은 영문 경로
+  - Then: 짝이 아니라 문서 자신의 국문 경로로 301
+  - Then: 상세와 같이 301
+
+### 서버 언어 정규화 생략
+
+- 파일: `search/app/src/main/kotlin/com/kgd/search/application/attraction/service/AttractionPageService.kt`
+- 바꾼 줄: `val docLang = if (doc.lang == EN) EN else KO` → `val docLang = doc.lang`
+- 결과: exit 1 · 27 tests completed, 2 failed · BUILD FAILED in 8s
+- 빨개진 테스트:
+  - Then: 국문으로 보아 옮기지 않고 렌더한다 — 정규화 없이 비교하면 어느 경로에서도 어긋나 루프가 된다
+  - Then: 국문으로 보아 200 렌더 — 이동하지 않는다
+
+### 301 Cache-Control 누락
+
+- 파일: `search/app/src/main/kotlin/com/kgd/search/presentation/render/controller/AttractionPageController.kt`
+- 바꾼 줄: `.header(HttpHeaders.CACHE_CONTROL, NO_CACHE)
+            .build()` → `.build()`
+- 결과: exit 1 · 27 tests completed, 1 failed · BUILD FAILED in 9s
+- 빨개진 테스트:
+  - Then: 301 · Location 은 문서 언어(국문) 경로만 · 본문·ETag 없음 · 재검증 캐시 헤더
+
+### 301 → 302
+
+- 파일: `search/app/src/main/kotlin/com/kgd/search/presentation/render/controller/AttractionPageController.kt`
+- 바꾼 줄: `HttpStatus.MOVED_PERMANENTLY` → `HttpStatus.FOUND`
+- 결과: exit 1 · 27 tests completed, 4 failed · BUILD FAILED in 9s
+- 빨개진 테스트:
+  - Then: 301 · Location 은 문서 언어(국문) 경로만 · 본문·ETag 없음 · 재검증 캐시 헤더
+  - Then: 301 · Location 은 영문 경로
+  - Then: 짝이 아니라 문서 자신의 국문 경로로 301
+  - Then: 상세와 같이 301
+
+### Location 에 호스트
+
+- 파일: `search/app/src/main/kotlin/com/kgd/search/presentation/render/controller/AttractionPageController.kt`
+- 바꾼 줄: `renderPort.canonicalPath(docLang, id))` → `"https://place.1989v.com" + renderPort.canonicalPath(docLang, id))`
+- 결과: exit 1 · 27 tests completed, 4 failed · BUILD FAILED in 8s
+- 빨개진 테스트:
+  - Then: 301 · Location 은 문서 언어(국문) 경로만 · 본문·ETag 없음 · 재검증 캐시 헤더
+  - Then: 301 · Location 은 영문 경로
+  - Then: 짝이 아니라 문서 자신의 국문 경로로 301
+  - Then: 상세와 같이 301
+
+### SPA Navigate 제거
+
+- 파일: `portal-fe/src/pages/place/AttractionPage.tsx`
+- 바꾼 줄: `if (attraction && docLang !== lang) {` → `if (false && attraction && docLang !== lang) {`
+- 결과: exit 1 · Tests  2 failed | 77 passed (79)
+- 빨개진 테스트:
+  - AttractionPage 언어가 어긋난 주소 > 영문 라우트로 국문 문서를 받으면 국문 주소로 옮기고 search·hash 를 지킨다 — 상세는 한 번만 받는다 15ms
+  - AttractionPage 언어가 어긋난 주소 > 국문 라우트로 영문 문서를 받으면 영문 주소로 옮긴다 13ms
+
+### SPA 언어 정규화 생략
+
+- 파일: `portal-fe/src/pages/place/AttractionPage.tsx`
+- 바꾼 줄: `const docLang: PlaceLang = attraction ? (attraction.lang === 'en' ? 'en' : 'ko') : lang;` → `const docLang: PlaceLang = attraction?.lang ?? lang;`
+- 결과: exit 1 · Tests  1 failed | 78 passed (79)
+- 빨개진 테스트:
+  - AttractionPage 언어가 어긋난 주소 > en 이 아닌 언어(xx) 문서는 국문으로 보아 국문 라우트에서 옮기지 않는다 1014ms
+
+### SPA search·hash 버림
+
+- 파일: `portal-fe/src/pages/place/AttractionPage.tsx`
+- 바꾼 줄: `${attractionPath(docLang, attraction.id)}${search}${hash}` → `${attractionPath(docLang, attraction.id)}`
+- 결과: exit 1 · Tests  1 failed | 78 passed (79)
+- 빨개진 테스트:
+  - AttractionPage 언어가 어긋난 주소 > 영문 라우트로 국문 문서를 받으면 국문 주소로 옮기고 search·hash 를 지킨다 — 상세는 한 번만 받는다 13ms

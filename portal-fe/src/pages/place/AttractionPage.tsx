@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Link, useParams, useLocation } from 'react-router-dom';
+import { Link, Navigate, useParams, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   fetchAirQuality,
@@ -118,7 +118,7 @@ const PHOTO_TILES = 6;
 export default function AttractionPage() {
   useHeritageSurface();
   const { id = '' } = useParams();
-  const { pathname } = useLocation();
+  const { pathname, search, hash } = useLocation();
   const lang: PlaceLang = pathname.startsWith('/en') ? 'en' : 'ko';
   const L = UI[lang];
 
@@ -155,7 +155,8 @@ export default function AttractionPage() {
 
   // 문서 자신의 언어를 SEO 기준으로 삼는다 — id 는 언어별로 다르므로 /en/attractions/{ko-id}
   // 같은 어긋난 주소가 들어올 수 있고, 그때 canonical 이 올바른 쪽을 가리켜야 한다.
-  const docLang: PlaceLang = attraction?.lang ?? lang;
+  // 서버 렌더와 같이 en 외는 ko 로 본다 — 정규화 없이 비교하면 그 밖의 언어 문서는 어느 라우트에서도 어긋나 이동이 돈다.
+  const docLang: PlaceLang = attraction ? (attraction.lang === 'en' ? 'en' : 'ko') : lang;
 
   const meta = attraction ? attractionMeta(docLang, attraction) : null;
   // 행사 상태·만료는 렌더 시점의 KST 오늘로 판정한다(서버 렌더와 같은 규칙)
@@ -318,6 +319,12 @@ export default function AttractionPage() {
     () => (plottable && lat != null && lng != null ? { lat, lng } : null),
     [plottable, lat, lng],
   );
+
+  // 어긋난 언어 라우트는 문서 언어 주소로 옮긴다(서버는 같은 경우 301). 모든 훅 뒤에 둔다 — 앞에서 반환하면 훅 순서가 깨진다.
+  // 쿼리 키가 id 뿐이라 옮긴 뒤 상세를 다시 받지 않는다.
+  if (attraction && docLang !== lang) {
+    return <Navigate replace to={`${attractionPath(docLang, attraction.id)}${search}${hash}`} />;
+  }
 
   return (
     <div className="place-page">

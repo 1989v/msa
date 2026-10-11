@@ -1,7 +1,9 @@
 package com.kgd.search.presentation.render.controller
 
+import com.kgd.search.application.attraction.port.AttractionPageRenderPort
 import com.kgd.search.application.attraction.usecase.RenderAttractionPageUseCase
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -18,6 +20,7 @@ import java.security.MessageDigest
 @RestController
 class AttractionPageController(
     private val renderPage: RenderAttractionPageUseCase,
+    private val renderPort: AttractionPageRenderPort,
 ) {
 
     @GetMapping("/internal/render/attractions/{id}", produces = [MediaType.TEXT_HTML_VALUE])
@@ -28,10 +31,14 @@ class AttractionPageController(
 
     /** 문서 id 는 place PK 숫자다. 형식이 틀리면 조회하지 않고, 404 에 그 값을 되돌려 쓰지 않는다. */
     private fun render(id: String, pathLang: String): ResponseEntity<String> {
-        val page = if (ID.matches(id)) {
+        val result = if (ID.matches(id)) {
             renderPage.render(RenderAttractionPageUseCase.Query(id, pathLang))
         } else {
             renderPage.notFound(pathLang)
+        }
+        val page = when (result) {
+            is RenderAttractionPageUseCase.Page.Redirect -> return redirect(result.docLang, id)
+            is RenderAttractionPageUseCase.Page.Rendered -> result
         }
         val (status, marker) = when (page) {
             is RenderAttractionPageUseCase.Page.Found -> 200 to RENDERED
@@ -43,12 +50,22 @@ class AttractionPageController(
             .contentType(HTML_UTF8)
             .header(RENDER_HEADER, marker)
             // HTML 은 항상 재검증 — 재색인 뒤에도 CDN 이 옛 메타를 내보내면 서버 렌더를 한 이유가 없다
-            .header(HttpHeaders.CACHE_CONTROL, "no-cache, must-revalidate")
+            .header(HttpHeaders.CACHE_CONTROL, NO_CACHE)
         // 재검증이 본문 전송 없이 끝나도록 렌더한 본문에만 ETag 를 단다. 셸 폴백도 200 이라 상태 코드로 가르지 않는다.
         // If-None-Match 비교와 304 는 Spring 이 응답 엔티티를 보고 처리한다.
         if (page is RenderAttractionPageUseCase.Page.Found) builder.eTag(etagOf(page.html))
         return builder.body(page.html)
     }
+
+    /**
+     * 문서 언어 경로로 301. Location 은 경로만(호스트는 nginx·CDN 몫)이고 id 는 이미 검증한 값이다.
+     * 본문·ETag 는 없다. 재검증 헤더는 301 에도 단다 — 없으면 브라우저·CDN 이 영구 캐시해 언어 판정을 고쳐도 되돌릴 수 없다.
+     */
+    private fun redirect(docLang: String, id: String): ResponseEntity<String> =
+        ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
+            .header(HttpHeaders.LOCATION, renderPort.canonicalPath(docLang, id))
+            .header(HttpHeaders.CACHE_CONTROL, NO_CACHE)
+            .build()
 
     private fun etagOf(html: String): String =
         MessageDigest.getInstance("SHA-256").digest(html.toByteArray(Charsets.UTF_8))
@@ -62,5 +79,6 @@ class AttractionPageController(
         const val RENDERED = "ssr"
         const val FALLBACK = "shell-fallback"
         const val ETAG_LENGTH = 16
+        const val NO_CACHE = "no-cache, must-revalidate"
     }
 }

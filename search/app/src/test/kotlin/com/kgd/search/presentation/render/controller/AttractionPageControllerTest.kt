@@ -33,11 +33,13 @@ class AttractionPageControllerTest : BehaviorSpec({
     val shellPort = object : AttractionShellPort {
         override fun shell() = AttractionPageFixtures.SHELL
     }
+    val renderer = AttractionPageRenderer(AttractionRenderProperties(), ObjectMapper())
     val service = AttractionPageService(
-        searchPort, shellPort, AttractionPageRenderer(AttractionRenderProperties(), ObjectMapper()),
+        searchPort, shellPort, renderer,
         Clock.fixed(Instant.parse("2026-10-08T03:00:00Z"), ZoneOffset.UTC),
     )
-    val mvc = MockMvcBuilders.standaloneSetup(AttractionPageController(service)).build()
+    val mvc = MockMvcBuilders.standaloneSetup(AttractionPageController(service, renderer)).build()
+    val locationShape = Regex("^/(en/)?attractions/\\d{1,12}$")
 
     fun call(path: String): MvcResult = mvc.perform(get(path)).andReturn()
     fun MvcResult.body(): String = response.getContentAsString(Charsets.UTF_8)
@@ -65,13 +67,61 @@ class AttractionPageControllerTest : BehaviorSpec({
         }
 
         `when`("영문 경로로 국문 문서를 요청하면") {
-            then("canonical 은 문서 언어(국문) 경로다") {
+            then("301 · Location 은 문서 언어(국문) 경로만 · 본문·ETag 없음 · 재검증 캐시 헤더") {
                 every { searchPort.findById("1001") } returns AttractionPageFixtures.doc()
 
-                val body = call("/internal/render/en/attractions/1001").body()
+                val result = call("/internal/render/en/attractions/1001")
 
-                body shouldContain """<link rel="canonical" href="https://place.1989v.com/attractions/1001" />"""
-                body shouldNotContain "/en/attractions/1001"
+                result.response.status shouldBe 301
+                result.response.getHeader("Location") shouldBe "/attractions/1001"
+                result.response.contentAsByteArray.size shouldBe 0
+                result.response.getHeader("ETag") shouldBe null
+                result.response.getHeader("Cache-Control") shouldBe "no-cache, must-revalidate"
+            }
+        }
+
+        `when`("국문 경로로 영문 문서를 요청하면") {
+            then("301 · Location 은 영문 경로") {
+                every { searchPort.findById("6001") } returns AttractionPageFixtures.doc(id = "6001", lang = "en")
+
+                val result = call("/internal/render/attractions/6001")
+
+                result.response.status shouldBe 301
+                result.response.getHeader("Location") shouldBe "/en/attractions/6001"
+                result.response.getHeader("Location")!!.matches(locationShape) shouldBe true
+            }
+        }
+
+        `when`("영문 짝이 있는 국문 문서를 영문 경로로 요청하면") {
+            then("짝이 아니라 문서 자신의 국문 경로로 301") {
+                every { searchPort.findById("1001") } returns AttractionPageFixtures.doc().copy(alternateId = "6001")
+
+                val result = call("/internal/render/en/attractions/1001")
+
+                result.response.status shouldBe 301
+                result.response.getHeader("Location") shouldBe "/attractions/1001"
+            }
+        }
+
+        `when`("행사 문서를 어긋난 언어 경로로 요청하면") {
+            then("상세와 같이 301") {
+                every { searchPort.findById("5001") } returns AttractionPageFixtures.event()
+
+                val result = call("/internal/render/en/attractions/5001")
+
+                result.response.status shouldBe 301
+                result.response.getHeader("Location") shouldBe "/attractions/5001"
+            }
+        }
+
+        `when`("en 이 아닌 언어(xx) 문서를 국문 경로로 요청하면") {
+            then("국문으로 보아 200 렌더 — 이동하지 않는다") {
+                every { searchPort.findById("1001") } returns AttractionPageFixtures.doc(lang = "xx")
+
+                val result = call("/internal/render/attractions/1001")
+
+                result.response.status shouldBe 200
+                result.response.getHeader("Location") shouldBe null
             }
         }
     }
@@ -183,11 +233,13 @@ class AttractionPageControllerTest : BehaviorSpec({
             }
         }
 
-        `when`("같은 id 를 국문·영문 경로로 받으면") {
-            then("본문이 같으므로 ETag 도 같다") {
+        `when`("같은 언어 경로로 같은 문서를 두 번 받으면") {
+            then("본문이 같으므로 ETag 도 같다 — 영문 문서의 영문 경로도 ETag 를 단다") {
                 every { searchPort.findById("1001") } returns AttractionPageFixtures.doc()
+                every { searchPort.findById("6001") } returns AttractionPageFixtures.doc(id = "6001", lang = "en")
 
-                etagOf(path) shouldBe etagOf("/internal/render/en/attractions/1001")
+                etagOf(path) shouldBe etagOf(path)
+                etagOf("/internal/render/en/attractions/6001") shouldBe etagOf("/internal/render/en/attractions/6001")
             }
         }
 

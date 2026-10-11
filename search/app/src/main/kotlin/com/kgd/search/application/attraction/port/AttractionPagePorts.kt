@@ -23,4 +23,7 @@ interface AttractionPageRenderPort {
 
     /** 렌더 없이 셸 그대로. 셸도 없으면 메타 없는 최소 HTML */
     fun fallbackPage(shell: String?): String
+
+    /** 상세의 정규 경로(호스트 없음) — canonical 을 만드는 것과 같은 함수다 */
+    fun canonicalPath(lang: String, id: String): String
 }

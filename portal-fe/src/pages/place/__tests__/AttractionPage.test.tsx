@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Attraction } from '../../../api/placeApi';
 
@@ -1521,5 +1521,67 @@ describe('AttractionPage 피드 링크', () => {
     renderAt('/attractions/100');
     await screen.findByRole('heading', { level: 1, name: '경복궁' });
     expect(feeds()).toEqual([['https://place.1989v.com/feed.xml', true]]);
+  });
+});
+
+describe('AttractionPage 언어가 어긋난 주소', () => {
+  beforeEach(() => nearbyFrom(() => []));
+  afterEach(() => {
+    vi.clearAllMocks();
+    document.head.innerHTML = '';
+  });
+
+  /** 라우터가 지금 가리키는 주소 — 화면 밖에 적어 두고 읽는다 */
+  function LocationProbe() {
+    const { pathname, search, hash } = useLocation();
+    return <output data-testid="loc">{`${pathname}${search}${hash}`}</output>;
+  }
+  function renderWithProbe(path: string) {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    return render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter initialEntries={[path]}>
+          <LocationProbe />
+          <Routes>
+            <Route path="/attractions/:id" element={<AttractionPage />} />
+            <Route path="/en/attractions/:id" element={<AttractionPage />} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+  }
+
+  it('영문 라우트로 국문 문서를 받으면 국문 주소로 옮기고 search·hash 를 지킨다 — 상세는 한 번만 받는다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue(enriched);
+    renderWithProbe('/en/attractions/100?utm_source=x#map');
+    await screen.findByRole('heading', { level: 1, name: '경복궁' });
+
+    expect(screen.getByTestId('loc').textContent).toBe('/attractions/100?utm_source=x#map');
+    expect(fetchAttraction).toHaveBeenCalledTimes(1);
+  });
+
+  it('국문 라우트로 영문 문서를 받으면 영문 주소로 옮긴다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, lang: 'en', contentTypeId: '76' });
+    renderWithProbe('/attractions/100');
+    await screen.findByRole('heading', { level: 1 });
+
+    expect(screen.getByTestId('loc').textContent).toBe('/en/attractions/100');
+    expect(fetchAttraction).toHaveBeenCalledTimes(1);
+  });
+
+  it('같은 언어면 옮기지 않는다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue(enriched);
+    renderWithProbe('/attractions/100?q=1');
+    await screen.findByRole('heading', { level: 1, name: '경복궁' });
+
+    expect(screen.getByTestId('loc').textContent).toBe('/attractions/100?q=1');
+  });
+
+  it('en 이 아닌 언어(xx) 문서는 국문으로 보아 국문 라우트에서 옮기지 않는다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, lang: 'xx' as Attraction['lang'] });
+    renderWithProbe('/attractions/100');
+    await screen.findByRole('heading', { level: 1, name: '경복궁' });
+
+    expect(screen.getByTestId('loc').textContent).toBe('/attractions/100');
   });
 });

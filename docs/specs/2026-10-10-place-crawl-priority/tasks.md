@@ -51,15 +51,15 @@ Total Task Groups: 5. 정본은 `spec.md`. 열린 질문은 `context/open-questi
 
 ### Task Group 4: 언어가 어긋난 상세 주소 301 (SR-5)
 **Dependencies:** None · **Phase:** search `application`·`presentation`, portal-fe `pages/place` · **Required Skills:** Kotlin, Kotest BehaviorSpec + MockK, React, vitest
-- [ ] 4.1 테스트 먼저
+- [x] 4.1 테스트 먼저
   - `AttractionPageServiceTest`: 경로 ko + 문서 en → `Page.Redirect("en", id)`, 경로 en + 문서 ko → `Page.Redirect("ko", id)`, 같은 언어 → Found, 없음 → NotFound, 조회 1회. 더해서 `lang="xx"` 문서 + 경로 ko → Found(정규화), 짝(`alternateId`) 있는 문서 → Redirect id 는 문서 자신의 id, 행사 문서 어긋남 → Redirect, 조회 실패 → Fallback(Redirect 아님)
   - `AttractionPageControllerTest`: 이동 결과 → 301, `Location` 이 `^/(en/)?attractions/\d{1,12}$`(경로만, 렌더 포트 `canonicalPath` 출력), 본문 비움, ETag 없음, `Cache-Control: no-cache, must-revalidate` 있음. 숫자 아닌 id → 404 그대로
   - **기존 테스트 교체**: `AttractionPageControllerTest.kt:67-76`(영문 경로로 국문 문서 → 200 본문·canonical)은 301 · Location · ETag 없음 단언으로, `:186-191`(국·영 경로 ETag 동일)은 같은 언어 경로에서 ETag 유지 단언으로 바꾼다 — 둘 다 SR-5 와 정면으로 충돌해 그대로 두면 빨강이다
   - `AttractionPage.test.tsx`: 라우트 en + 문서 ko → `/attractions/{id}` 로 replace 이동(search·hash 보존), 같은 언어는 이동 없음, `lang="xx"` 문서 + 국문 라우트 → 이동 없음. 쿼리 키가 `['attraction', id]`(`AttractionPage.tsx:126`)이라 언어가 바뀌어도 다시 받지 않는다 — 상세 fetch 1회를 단언
-- [ ] 4.2 `RenderAttractionPageUseCase.Page` 에 `Redirect(docLang, id)`(사실만, `html` 없음) 추가 — `val html` 을 `Page` 에서 렌더된 변형(`Found`·`NotFound`·`Fallback`) 쪽으로 내린다. `AttractionPageRenderPort` 에 `canonicalPath(lang, id)` 를 열고 렌더러의 `attractionPath`(`AttractionPageRenderer.kt:844`)를 쓴다. `AttractionPageService.render` 는 정규화(en 외 = ko) 뒤 `docLang != query.pathLang` 판정(Query 주석 「404 문구에만 쓴다」도 고침)
-- [ ] 4.3 `AttractionPageController` 가 이동 결과를 301 + `Location: renderPort.canonicalPath(...)`(id 는 검증된 `query.id`) + `Cache-Control: no-cache, must-revalidate` 로. 본문·ETag 없음
-- [ ] 4.4 `AttractionPage.tsx`: `docLang` 을 정규화(en 외 = ko)하고, 어긋나면 `<Navigate replace>`(search·hash 보존). 분기는 **모든 훅 뒤, JSX 반환 직전**에 둔다 — `docLang`(`:158`) 다음에 `useSeo(`(`:165`) 등 훅이 이어지므로 그 자리에서 반환하면 훅 순서가 깨진다
-- [ ] 4.5 검증: `./gradlew :search:app:test --tests '*AttractionPageServiceTest' --tests '*AttractionPageControllerTest' && (cd portal-fe && npx vitest run src/pages/place/__tests__/AttractionPage.test.tsx)`
+- [x] 4.2 `RenderAttractionPageUseCase.Page` 에 `Redirect(docLang, id)`(사실만, `html` 없음) 추가 — `val html` 을 `Page` 에서 렌더된 변형(`Found`·`NotFound`·`Fallback`) 쪽으로 내린다. `AttractionPageRenderPort` 에 `canonicalPath(lang, id)` 를 열고 렌더러의 `attractionPath`(`AttractionPageRenderer.kt:844`)를 쓴다. `AttractionPageService.render` 는 정규화(en 외 = ko) 뒤 `docLang != query.pathLang` 판정(Query 주석 「404 문구에만 쓴다」도 고침)
+- [x] 4.3 `AttractionPageController` 가 이동 결과를 301 + `Location: renderPort.canonicalPath(...)`(id 는 검증된 `query.id`) + `Cache-Control: no-cache, must-revalidate` 로. 본문·ETag 없음
+- [x] 4.4 `AttractionPage.tsx`: `docLang` 을 정규화(en 외 = ko)하고, 어긋나면 `<Navigate replace>`(search·hash 보존). 분기는 **모든 훅 뒤, JSX 반환 직전**에 둔다 — `docLang`(`:158`) 다음에 `useSeo(`(`:165`) 등 훅이 이어지므로 그 자리에서 반환하면 훅 순서가 깨진다
+- [x] 4.5 검증: `./gradlew :search:app:test --tests '*AttractionPageServiceTest' --tests '*AttractionPageControllerTest' && (cd portal-fe && npx vitest run src/pages/place/__tests__/AttractionPage.test.tsx)`
 
 ### Task Group 5: 회귀 주입 · 문서 · 배포 · 운영 확인
 **Dependencies:** TG1~TG4 · **Phase:** 검증·문서·배포 · **Required Skills:** bash, git, kubectl(읽기, `ssh msa-oci`)

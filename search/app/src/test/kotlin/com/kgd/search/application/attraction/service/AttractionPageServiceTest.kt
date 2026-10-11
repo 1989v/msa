@@ -73,6 +73,59 @@ class AttractionPageServiceTest : BehaviorSpec({
         }
     }
 
+    given("경로 언어와 문서 언어가 어긋날 때") {
+        fun redirectOf(docLang: String, pathLang: String, target: AttractionDocument = doc.copy(lang = docLang)) =
+            run {
+                every { searchPort.findById(target.id) } returns target
+                service.render(RenderAttractionPageUseCase.Query(target.id, pathLang))
+            }
+
+        `when`("국문 경로로 영문 문서를 받으면") {
+            then("문서 언어(en)로 옮기라는 결과이고 조회는 한 번 · 렌더하지 않는다") {
+                val page = redirectOf(docLang = "en", pathLang = "ko")
+
+                page shouldBe RenderAttractionPageUseCase.Page.Redirect("en", "1001")
+                verify(exactly = 1) { searchPort.findById(any()) }
+                verify(exactly = 0) { renderPort.attractionPage(any(), any(), any()) }
+            }
+        }
+
+        `when`("영문 경로로 국문 문서를 받으면") {
+            then("문서 언어(ko)로 옮기라는 결과다") {
+                redirectOf(docLang = "ko", pathLang = "en") shouldBe RenderAttractionPageUseCase.Page.Redirect("ko", "1001")
+            }
+        }
+
+        `when`("영문 짝(alternateId)이 있는 국문 문서를 영문 경로로 받으면") {
+            then("짝이 아니라 문서 자신의 id 로 옮긴다") {
+                val paired = doc.copy(alternateId = "6001")
+
+                redirectOf(docLang = "ko", pathLang = "en", target = paired) shouldBe
+                    RenderAttractionPageUseCase.Page.Redirect("ko", "1001")
+            }
+        }
+
+        `when`("행사 문서가 어긋나면") {
+            then("상세와 같은 규칙으로 옮긴다") {
+                val event = doc.copy(id = "5001", contentTypeId = "15")
+
+                redirectOf(docLang = "ko", pathLang = "en", target = event) shouldBe
+                    RenderAttractionPageUseCase.Page.Redirect("ko", "5001")
+            }
+        }
+
+        `when`("en 이 아닌 언어(xx) 문서를 국문 경로로 받으면") {
+            then("국문으로 보아 옮기지 않고 렌더한다 — 정규화 없이 비교하면 어느 경로에서도 어긋나 루프가 된다") {
+                val xx = doc.copy(lang = "xx")
+                every { renderPort.attractionPage("SHELL", xx, todayKst) } returns "PAGE_XX"
+
+                val page = redirectOf(docLang = "xx", pathLang = "ko", target = xx)
+
+                page shouldBe RenderAttractionPageUseCase.Page.Found("PAGE_XX")
+            }
+        }
+    }
+
     given("조회가 실패할 때") {
         `when`("렌더하면") {
             then("예외를 내지 않고 셸을 그대로 200 으로 낸다 — 재시도하지 않는다") {
