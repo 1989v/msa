@@ -328,8 +328,18 @@ class Kube:
 Poster = Callable[[str], "tuple[int, str]"]
 
 
+def clickhouse_headers() -> dict[str, str]:
+    """ClickHouse 계정 헤더 — 계정 없이 보내면 default 로 들어가 거부된다(HTTP 403, Code 516)."""
+    user = os.environ.get("CLICKHOUSE_USER", "")
+    if not user:
+        return {}
+    return {"X-ClickHouse-User": user, "X-ClickHouse-Key": os.environ.get("CLICKHOUSE_PASSWORD", "")}
+
+
 def _post_clickhouse(body: str) -> tuple[int, str]:
-    req = urllib.request.Request(f"{CLICKHOUSE_URL}/", data=body.encode("utf-8"), method="POST")
+    req = urllib.request.Request(
+        f"{CLICKHOUSE_URL}/", data=body.encode("utf-8"), method="POST", headers=clickhouse_headers(),
+    )
     for attempt, wait in enumerate((*CONNECT_RETRIES, None)):
         try:
             with urllib.request.urlopen(req, timeout=30) as res:

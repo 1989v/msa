@@ -289,3 +289,25 @@ def test_no_portal_fe_pod_exits_non_zero():
     post = PostRecorder([])
     assert crawl_stats.run("2026-10-10T19", kube=kube, post=post, now=COLLECTED) != 0
     assert post.bodies == []
+
+
+def test_clickhouse_write_sends_account_headers(monkeypatch):
+    """계정 없이 쓰면 default 로 들어가 운영 ClickHouse 가 403(Code 516)으로 거부한다."""
+    monkeypatch.setenv("CLICKHOUSE_USER", "analytics")
+    monkeypatch.setenv("CLICKHOUSE_PASSWORD", "pw")
+    sent = []
+
+    class _Res:
+        status = 200
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def read(self): return b""
+
+    def fake_urlopen(req, timeout):
+        sent.append(req)
+        return _Res()
+
+    monkeypatch.setattr(crawl_stats.urllib.request, "urlopen", fake_urlopen)
+    assert crawl_stats._post_clickhouse("SELECT 1") == (200, "")
+    assert sent[0].get_header("X-clickhouse-user") == "analytics"
+    assert sent[0].get_header("X-clickhouse-key") == "pw"

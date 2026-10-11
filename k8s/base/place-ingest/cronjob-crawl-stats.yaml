@@ -55,6 +55,11 @@ spec:
               env:
                 - name: CLICKHOUSE_URL
                   value: "http://clickhouse:8123"
+                # ClickHouse 는 analytics 계정만 받는다(default 는 거부) — 재색인 잡·analytics Deployment 와 같은 평문 값이다
+                - name: CLICKHOUSE_USER
+                  value: "analytics"
+                - name: CLICKHOUSE_PASSWORD
+                  value: "analytics"
                 # 루트 FS 가 읽기 전용이라 .pyc 를 쓰지 못하게 한다
                 - name: PYTHONDONTWRITEBYTECODE
                   value: "1"

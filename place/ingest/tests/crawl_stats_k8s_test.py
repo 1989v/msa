@@ -279,6 +279,8 @@ def test_env_has_no_secret_and_security_context_is_locked_down():
     assert container["args"] == ["--job=crawl-stats"]
     assert {e["name"]: e["value"] for e in container["env"]} == {
         "CLICKHOUSE_URL": "http://clickhouse:8123",
+        "CLICKHOUSE_USER": "analytics",
+        "CLICKHOUSE_PASSWORD": "analytics",
         "PYTHONDONTWRITEBYTECODE": "1",
     }
     assert container["securityContext"] == {
