@@ -1,0 +1,105 @@
+questions:
+  - id: Q1
+    stage: post-impl
+    status: open
+    owner: user
+    question: 관광지 단위 방문량 원천 — 한국관광 데이터랩 관광지별 내비게이션 검색 건수(T맵)의 공개 API 유무·이용 조건 확인, 필요하면 활용신청
+    answer: 확인 전에는 SR-8 을 하지 않는다. 집중률(관광지별 자기 최대=100)·연관(순위만)으로 대신 만들지 않는다(권고)
+  - id: Q2
+    stage: post-impl
+    status: open
+    owner: user
+    question: 관광공사 지역별 관광 수요 강도(15151868) 활용신청 여부
+    answer: 이번 범위 밖. 지수라 「방문량」 이름과 맞지 않는다(권고 — 보류)
+  - id: Q3
+    stage: pre-impl
+    status: open
+    question: 두 원천 파일을 로그인 없이 고정 주소로 받을 수 있나, 갱신 때 주소가 바뀌나
+    answer: TG0.2 실측. 바뀌면 env 두 줄을 연 1회 사람이 고친다. 로그인이 필요하면 사용자가 받아 Object Storage(PAR 읽기 전용)에 올리고 잡이 거기서 받는다(권고)
+  - id: Q4
+    stage: post-impl
+    status: open
+    owner: user
+    question: 일반철도(KTX·무궁화) 역 좌표 원천 — 공개 파일 미확인
+    answer: 이번 범위 밖. 원천을 찾으면 SR-5 표에 같은 모양으로 붙인다
+  - id: Q5
+    stage: pre-impl
+    status: open
+    question: 도시철도 역사정보 위경도 좌표계(WGS84 여부)
+    answer: TG0.3 표본 대조로 확정. 다르면 변환 대신 원천 문서 확인부터(KATEC 이중 변환 전례)
+  - id: Q6
+    stage: post-impl
+    status: open
+    question: 가는 법 갱신 주기 — 주 1회면 새 관광지는 최대 7일 뒤에 붙는다
+    answer: 주 1회(권고). 원천 갱신이 연 1회라 매일 돌릴 이유는 새 관광지뿐이다
+  - id: Q7
+    stage: post-impl
+    status: open
+    question: 영문 상세에서 버스정류장 이름(원천 국문만)
+    answer: 국문 원문 + 「Bus stop」 라벨(권고). 번역·로마자 표기는 만들지 않는다
+  - id: Q8
+    stage: post-impl
+    status: open
+    question: 하한 — 찜 3명 · 클릭 5명 · 절 표시 최소 3곳 · 역 2km · 정류장 500m
+    answer: 그대로(권고). TG0.5 분포를 보고 찜 절이 전국에서 거의 안 나오면 데이터 규칙(3건 미만)으로 스스로 숨는다 — 별도 스위치 없음
+  - id: Q9
+    stage: post-impl
+    status: open
+    question: 시도 순위의 값 — 외지인+외국인(현지인 제외)
+    answer: 외지인+외국인(권고). 현지인을 넣으면 인구 많은 구가 늘 위에 온다
+  - id: Q10
+    stage: pre-impl
+    status: answered-default  # 심판 권고 기본값, 사용자 확인 대기
+    owner: user
+    source: review-verdict D1·I0
+    question: 이 사이트에서 행동한 사람을 부르는 말 — 「방문자」는 관광공사 원천에만 쓴다
+    answer: 「이용자」(영문 「people on this site」). 다른 선택지 「사람」. 코드 식별자(`visitor_id`·`uniqueClickers14d`)는 그대로 (spec SR-1.2·1.3·1.5)
+  - id: Q11
+    stage: pre-impl
+    status: answered-default  # 심판 권고 기본값, 사용자 확인 대기
+    owner: user
+    source: review-verdict U6
+    question: 관광공사 외지인 산정에 통근·통학(일상 이동)이 섞이는가
+    answer: TG0.7 실측·원천 정의 인용 뒤, 포함이면 근거 줄 끝에 「통근 포함」. 다른 선택지 — 값을 외국인만으로 좁힘 (spec SR-2.1)
+  - id: Q12
+    stage: pre-impl
+    status: answered-default  # 심판 권고 기본값, 사용자 확인 대기
+    owner: user
+    source: review-verdict U7
+    question: 관광지 상세에 시군구 방문자 줄을 낼지
+    answer: ① 수치 없이 「{시군구} 방문 추이 보기」 링크만. 다른 선택지 ② 「{시도} 시군구 중 N위」를 붙여 수치를 남김 · ③ 원안(시군구 타지 방문자 약 N명 줄) (spec SR-2.4, tasks 2.4)
+  - id: Q13
+    stage: pre-impl
+    status: answered-default  # 심판 권고 기본값, 사용자 확인 대기
+    owner: user
+    source: review-verdict U3
+    question: 가는 법 절 제목과 역 반경
+    answer: 제목 「가까운 역·정류장」, 반경 2,000m 유지. 다른 선택지 — 제목 「가는 법」 유지 + 반경 1,000~1,500m (spec SR-6.2·7.1)
+  - id: Q14
+    stage: pre-impl
+    status: answered-default  # 심판 권고 기본값, 사용자 확인 대기
+    owner: user
+    source: review-verdict S1
+    question: 찜 하한 3의 성격 — 표시 정책인가 개인정보 통제인가
+    answer: (a) 표시 정책(적은 수는 신호가 아니다), 공개 `/api/v1/wishlist/count` 는 그대로. 다른 선택지 (b) 개인정보 통제로 쓰고 공개 `/count` 를 GAME 으로 좁힘(wishlist 범위가 바뀜) (spec SR-3.3)
+  - id: Q15
+    stage: pre-impl
+    status: answered-default  # 심판 권고 기본값, 사용자 확인 대기
+    owner: user
+    source: review-verdict D3
+    question: 찜 절 제목
+    answer: 「많이 찜한 곳」. 다른 선택지 — 「많이 저장한 곳」 유지하고 용어 표에 대응만 적음 (spec SR-3 제목·3.4, tasks 4.1)
+  - id: Q16
+    stage: pre-impl
+    status: answered-default  # 심판 권고 기본값, 사용자 확인 대기
+    owner: user
+    source: review-verdict I7
+    question: 찜·클릭 근거 줄의 기준 시각
+    answer: 색인 `signalsAsOf` 필드 하나 추가해 「{YYYY-MM-DD} 기준」. 다른 선택지 — 기준 시각을 표시하지 않음 (spec SR-3.5)
+  - id: Q17
+    stage: pre-impl
+    status: answered-default  # 심판 권고 기본값, 사용자 확인 대기
+    owner: user
+    source: review-verdict I2·U4
+    question: 역·정류장 원천 교체 단위
+    answer: 적재 회차 id + 마지막에 활성 회차 전환. 다른 선택지 — 버스 `도시코드` 단위 요청(congestion·related 와 같은 방식) (spec SR-5.4·6.3)
