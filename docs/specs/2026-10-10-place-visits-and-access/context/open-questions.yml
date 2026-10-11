@@ -103,3 +103,65 @@ questions:
     source: review-verdict I2·U4
     question: 역·정류장 원천 교체 단위
     answer: 적재 회차 id + 마지막에 활성 회차 전환. 다른 선택지 — 버스 `도시코드` 단위 요청(congestion·related 와 같은 방식) (spec SR-5.4·6.3)
+  - id: Q18
+    stage: pre-impl
+    status: answered-default  # TG0 발견 · 부모 지시 기본값, 사용자 확인 대기
+    owner: user
+    source: TG0 부수 발견 1 · TG5
+    question: 철도 「역번호」가 키가 아니다(1,099행 고유 907, (역번호, 노선번호)도 5쌍 겹침) — 자연 키를 무엇으로 하나
+    answer: >-
+      지시 기본값은 (역번호, 노선번호, 역사명) + 완전 중복 행 하나만. 실제 원천에서 이 셋이 겹치는 4쌍 중 3쌍(광운대역·중랑역·상봉역)은
+      노선명(경의중앙선 ↔ 경춘선)이 달라 하나만 남기면 경춘선이 사라진다 — 그래서 자연 키에 노선명을 더해 (역번호, 노선번호, 역사명, 노선명)으로 했다.
+      그래도 겹치는 1쌍(주안역 경인선, 기준일만 다름 — 완전 중복은 아니다)은 기준일이 늦은 행 하나만 남기고 건수를 로그에 남긴다(2026-10-11 원천 1행).
+      다른 선택지 — 대리 키만 두고 겹치는 행도 전부 적재(그러면 access 의 원천 자연 키가 한 행을 가리키지 못한다)
+  - id: Q19
+    stage: pre-impl
+    status: answered-default  # 부모 지시 기본값, 사용자 확인 대기
+    owner: user
+    source: TG0 부수 발견 2 · TG5
+    question: 철도 「데이터기준일자」 세 모양(ISO 1,056 · 엑셀 일련번호 36 · 빈 값 7)을 어떻게 읽나
+    answer: >-
+      원문은 `base_date_raw` 에 그대로, 파생 `base_date` 에 날짜. 일련번호는 1899-12-30 기준 일수(46191 → 2026-06-18), 빈 값은 파일 전체의 최빈 기준일(2024-12-31).
+      가는 법 줄의 기준일은 노선별 행을 묶은 역에서 가장 늦은 날이다. 빈 값을 채웠다는 표시는 따로 두지 않는다(원문 칸이 빈 값이라 알 수 있다)
+  - id: Q20
+    stage: pre-impl
+    status: answered-default  # TG0.8 판정안 · 부모 지시 기본값, 사용자 확인 대기
+    owner: user
+    source: TG0.8 · TG5
+    question: 버스 원천 「자료 없음」(연계 지역 밖) 판정 — 하한 100 과 광역 행 펴기
+    answer: >-
+      원천 도시명을 시군구로 잇고(옛 이름 대응표는 수집기 상수, 못 이으면 잡 실패) 그 시군구로 이어진 원천 정류장이 100개 이상이면 연계.
+      광역·특별자치 도시 행은 그 시도 시군구 전부로 펴되 원천에 따로 도시 행이 있는 시군구는 뺀다(TG0 권고) — 그 결과 대구 군위군은 자기 행 56개만 남아
+      미연계가 된다(TG0 표의 13곳 + 군위군 = 100 미만 14곳, 원천 도시 없음 6곳 → 미연계 20곳). 판정은 `transit_bus_coverage` 에 시군구마다 저장하고
+      extras 조회가 관광지 시군구로 읽어 `access.busCovered` 로 낸다. 다른 선택지 — 군위군을 대구 광역 행에도 넣기(그러면 대구BIS 5,937개가 군위에 붙어 연계로 보인다)
+  - id: Q21
+    stage: pre-impl
+    status: answered-default  # TG0.4 · 부모 지시 기본값, 사용자 확인 대기
+    owner: user
+    source: TG0.4 · TG5
+    question: 잡 메모리와 받기 방식
+    answer: >-
+      버스 CSV 는 CP949 로 파일에 받아 두 번 스트리밍(검사·계산용 튜플 → 2,000행 묶음 전송), 관광지는 쪽마다 (id, 위도, 경도)만(`fetch_attraction_points`),
+      `requests 256Mi / limits 512Mi`. 실제 원천 두 파일 + 운영 관광지 67,440곳으로 돌린 드라이런(place 호출은 가짜): 3.8초, 최대 RSS 246 MiB(맥),
+      역이 붙은 관광지 41.9% · 정류장이 붙은 관광지 83.7%
+  - id: Q22
+    stage: pre-impl
+    status: answered-default  # 스펙 값과 다름, 사용자 확인 대기
+    owner: user
+    source: TG5 실측
+    question: 같은 역의 노선별 행을 묶는 거리 — 스펙 SR-6.2 는 「역명(+200m 안)」
+    answer: >-
+      500m 로 했다. 2026-10-11 원천에서 같은 이름(끝 「역」 뗌) 행의 가장 가까운 짝까지 거리는 0~394m(잠실 2·8호선 394 · 서울역 1호선 302) 이거나 2km 이상으로 갈린다.
+      200m 면 서울역 · 시청 · 잠실 · 노원 등 38행이 따로 남아 한 관광지에 「서울역」이 두 줄 붙는다. 행끼리 이어 붙이므로(한 행이라도 500m 안) 노선 셋 이상인 역도 묶인다.
+      다른 선택지 — 200m 유지(같은 역 두 줄을 감수)
+  - id: Q23
+    stage: pre-impl
+    status: answered-default  # 스펙 공백, 사용자 확인 대기
+    owner: user
+    source: TG5
+    question: 스펙 SR-5.4 의 「세 표」로는 활성 회차와 버스 연계 판정을 둘 곳이 없다
+    answer: >-
+      V35 에 표 둘을 더했다 — `transit_source_run`(원천마다 활성 회차 · 행 수, ±20% 검사 기준) · `transit_bus_coverage`(시군구 연계 판정).
+      원천 행에 활성 표시를 두면 활성화 때 23만 행을 고쳐 써야 해서 회차 표 한 행을 바꾸는 쪽을 골랐다. 이름도 둘 바꿨다 — `rank`·`lines` 는 MySQL 예약어라
+      `stop_rank`·`line_names`. extras 조회의 `access` 는 `{stops:[{kind, rank, name, nameEn, lines, distanceM, baseDate}], busCovered}` 이고,
+      줄이 없어도 미연계 시군구면 실린다. 연계 판정 읽기만 `attractions` 와 `transit_bus_coverage` 를 시군구 코드로 잇는다(원천 표와는 잇지 않는다)

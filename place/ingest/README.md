@@ -36,6 +36,7 @@ TourAPI(KorService2/EngService2)
 | `congestion` | 관광지 집중률(한국관광공사 빅데이터) 앞 30일 — 시군구 269 마다 1콜, 이름+시군구로 국문 관광지에 매칭(`name_match`, 연관 관광지와 공용) → `attraction_congestion` 시군구 단위 교체. 0건 시군구 목록을 로그에 남긴다 | `place-ingest-congestion` 매일 KST 02:00 |
 | `air` | 에어코리아 실시간 측정 — `sidoName=전국` 1콜에 측정소 672 → `air_measurement` 측정소마다 원문 한 행(측정 시각이 같거나 새로울 때만 덮기) + 그 측정소를 쓰는 시군구 대기 캐시 덮기. 시간 초과는 2번까지 다시 부른다 | `place-ingest-air` 매시 40분 |
 | `air-stations` | 에어코리아 측정소 목록 전국 1콜(좌표 dmX=위도 · dmY=경도, 한반도 범위 검사) → `air_station` + 시군구 대표점 → 최근접 측정소 `air_station_sigungu` | `place-ingest-air-stations` 매주 월 KST 01:50 |
+| `transit-stops` | 도시철도 역사정보(KRIC XLSX) · 전국 버스정류장 위치정보(data.go.kr CSV, CP949) 파일 2개(키 없음, 주소는 env `TRANSIT_RAIL_FILE_URL`·`TRANSIT_BUS_FILE_URL`) → 원천 칸 전부를 회차 단위로 교체(`transit_rail_station`·`transit_bus_stop`, 2,000행 묶음 → 활성화) + 버스 연계 시군구 판정 → 관광지마다 역 2곳(직선 2,000m)·정류장 2곳(500m) `attraction_access`. 헤더 다름·0행·무효 좌표 5% 초과·행 수 ±20% 면 이전 회차 유지하고 실패 | `place-ingest-transit-stops` 매주 월 KST 00:00 |
 | `indexnow` | IndexNow 제출 — 실행 시각(KST) 앞 24시간에 본문이 바뀐 관광지(place `/internal/attractions/content-updated`)의 상세 주소를 `api.indexnow.org` 에 10,000건씩. `INDEXNOW_ENABLED` 가 `"true"` 가 아니면 건수만 남긴다(**기본 꺼짐**). 키는 Secret `place-indexnow`(없어도 기동). 응답과 무관하게 잡은 성공 | `place-ingest-indexnow` 매일 KST 07:30 |
 
 재색인은 이 이미지가 트리거하지 않는다 — Job 생성 RBAC 을 얻는 대신 `attraction-reindex`

@@ -107,3 +107,41 @@ wishlist 내부 경로 기본값 `min=3` 은 search `SAVED_MIN` 의 사본이다
 
 못 잡는 것(알고 둔다): 시군구 절은 서버가 하한 이상만 준다는 전제로 건수만 본다 — 서버 정렬 하한은 TG3 의 R13 이 지킨다.
 패리티 골든은 CI 의 「Visit signals golden fixture is current」 단계가 최신인지 본다(골든을 갱신하지 않은 채 화면 문구만 바꾸면 거기서 막힌다).
+
+# 회귀 주입 — 역·정류장 적재와 사전 계산 (TG5)
+
+같은 방식이다. 임시 사본(스크래치패드 `regress-tg5/`, `node_modules`·`build`·`.git`·`.gradle` 을 뺀 rsync 사본)에 하나씩 넣고, 검사를 돌린 뒤
+원본으로 되돌렸다(주입 스크립트 `inject-tg5.py` 가 되돌린 파일을 워킹트리 원본과 `filecmp` 로 대조). 주입은 전부 파이썬 import·Kotlin 컴파일을 통과하는 회귀다.
+
+판정 근거: 수집기 테스트는 TG0 에서 받은 원천 실제 행(`tests/fixtures/transit-stops.json` — 철도 13행 · 버스 8행 · 버스 원천 도시별 행 수 160줄 · 운영 시군구 269행)과
+리터럴 경계(반경 2,000/2,001m · 500/501m, 묶음 500/501m, 무효 1/20·2/20, 행 수 79·80·120·121 대 100, 위도 37° 에서 1.9km 동쪽 두 칸)로 만든 입력에서 나온 값을 본다.
+place 쪽은 컨트롤러가 받은 JSON → 도메인 검사(400), Testcontainers MySQL 에 실제로 쌓고 지운 행이다. 상한 대조는 수집기 테스트가 Kotlin 파일에서 `const val` 을 뽑는다.
+
+| # | 주입 (사본) | 컴파일 | 빨개진 테스트 |
+|---|---|---|---|
+| R20 | 수집기 헤더 검사 `if missing or extra or len(...) != len(...)` → `if False` (헤더 검사 한 줄 삭제) | import 통과 | `test_renamed_column_is_rejected_before_any_put` · `test_added_column_is_rejected` (2 failed / 34) |
+| R21 | 반경 포함 판정 `d <= radius` → `d < radius` | 〃 | `test_radius_boundary_rail_2000_and_bus_500_inclusive` (1 / 34) |
+| R22 | `STATION_MERGE_M = 500` → `200`(스펙 초안 값) | 〃 | `test_transfer_station_rows_become_one_station_with_lines_joined` · `test_merge_distance_boundary_500m` (2 / 34) |
+| R23 | `INVALID_RATIO_MAX = 0.05` → `0.10` | 〃 | `test_invalid_coordinate_ratio_above_5_percent_fails` (1 / 34) |
+| R24 | `ROW_CHANGE_MAX = 0.20` → `0.25` | 〃 | `test_row_count_change_beyond_20_percent_of_previous_active_run_fails` (1 / 34) |
+| R25 | 같은 이름 정류장 건너뛰기 `if kind == BUS and s.name in names` → `if False` | 〃 | `test_same_name_pair_keeps_only_the_nearer_and_caps_at_two` (1 / 34) |
+| R26 | 경도 이웃 칸 수 `ceil(반경 / 칸 폭)` → `1`(3×3 고정) | 〃 | `test_station_1_9km_east_two_cells_away_at_latitude_37_is_found` (1 / 34) |
+| R27 | 광역 도시 행을 펼 때 「따로 도시 행이 있는 시군구」 빼기를 없앰 | 〃 | `test_every_source_city_maps_to_our_sigungu_and_coverage_needs_100_stops` (1 / 34) |
+| R28 | place 도메인 `AttractionAccess.BUS_MAX_DISTANCE_M = 500` → `501` | `:place:feature:test` 컴파일 후 실행 | `AttractionAccessInternalControllerTest` 「역 2001m · 정류장 501m · 순위 3 … 는 400」 (1 / 3), 수집기 `test_server_limits_match_ingest_constants` (1 / 34) |
+| R29 | 활성화 행 수 대조 `if (rows != expectedRows)` → `if (rows < 0 && rows != expectedRows)` | 〃 | `TransitSourceServiceTest` 「묶음이 빠져 행 수가 모자라거나 0행이면 400 …」 (1 / 5), `PlaceSchemaIntegrationSpec` 「세 번째 묶음이 실패하면 활성 회차는 옛 회차 그대로 …」 (1 / 18) |
+| R30 | 활성화 때 버스 옛 회차 행 삭제를 뺌(`deleteOtherRuns` → `0`) | 〃 | `PlaceSchemaIntegrationSpec` 「세 번째 묶음이 실패하면 …」 (1 / 18) |
+| R31 | 회차 끝 정리 `computedAt < :computedAt` → `<=` | 〃 | `PlaceSchemaIntegrationSpec` 「보낸 관광지는 통째로 바뀌고, 회차 끝 정리가 …」 (1 / 18) |
+| R32 | extras 의 `access` 를 줄이 있을 때만 싣게 함(미연계 시군구 무시) | 〃 | `AttractionExtrasServiceTest` 「… 줄이 없어도 버스 미연계 시군구면 항목이 생기며 …」 (1 / 10) |
+
+명령(사본 루트에서):
+
+```bash
+(cd place/ingest && find . -name __pycache__ -prune -exec rm -rf {} + ; PYTHONDONTWRITEBYTECODE=1 python3 -B -m pytest tests/transit_stops_test.py -q -p no:cacheprovider)
+./gradlew :place:feature:test --tests '*AttractionAccessInternalController*' --tests '*TransitSourceService*' --tests '*AttractionExtrasService*' --tests '*PlaceSchemaIntegrationSpec*'
+```
+
+함정(이번에 밟았다): 파이썬 주입을 바이트코드 캐시를 둔 채 연달아 돌리면 R23 과 R24 처럼 **길이가 같은 치환이 같은 초 안에** 일어날 때
+`.pyc`(원본 mtime 초 단위 + 크기로 무효화)가 앞 주입의 코드를 그대로 써서, R24 가 R23 의 테스트를 빨갛게 만든 것처럼 보였다. 캐시를 지우고 `-B` 로 다시 돌린 위 표가 판정이다.
+
+못 잡는 것(알고 둔다): 버스 묶음 전송 중 실패(네트워크)의 재시도는 `place_client._request` 의 연결 재시도뿐이고, 같은 묶음 재전송이 같은 자연 키를 덮는다는 것은
+`PlaceSchemaIntegrationSpec` 이 「다시 보낸 묶음은 행이 늘지 않는다」로 본다. 실제 원천 23만 행 적재 소요는 운영 첫 회차(TG6.4)에서 잰다.

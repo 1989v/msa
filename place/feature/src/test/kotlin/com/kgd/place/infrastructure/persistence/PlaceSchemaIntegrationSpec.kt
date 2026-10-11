@@ -57,6 +57,24 @@ import com.kgd.place.infrastructure.persistence.weather.repository.WeatherShortF
 import com.kgd.place.infrastructure.persistence.weather.repository.WeatherSigunguGridJpaRepository
 import com.kgd.place.domain.region.model.AdministrativeRegionLevel
 import com.kgd.place.domain.region.model.RegionVisitorDaily
+import com.kgd.common.exception.BusinessException
+import com.kgd.place.application.attraction.service.AttractionAccessService
+import com.kgd.place.application.attraction.usecase.SyncAttractionAccessUseCase
+import com.kgd.place.application.transit.service.TransitSourceService
+import com.kgd.place.domain.attraction.model.AttractionAccess
+import com.kgd.place.domain.attraction.model.TransitKind
+import com.kgd.place.domain.transit.model.BusCoverage
+import com.kgd.place.domain.transit.model.TransitBusStop
+import com.kgd.place.domain.transit.model.TransitRailStation
+import com.kgd.place.domain.transit.model.TransitSource
+import com.kgd.place.infrastructure.persistence.attraction.adapter.AttractionAccessRepositoryAdapter
+import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionAccessJpaRepository
+import com.kgd.place.infrastructure.persistence.transit.adapter.TransitSourceRepositoryAdapter
+import com.kgd.place.infrastructure.persistence.transit.repository.TransitBusCoverageJpaRepository
+import com.kgd.place.infrastructure.persistence.transit.repository.TransitBusStopJpaRepository
+import com.kgd.place.infrastructure.persistence.transit.repository.TransitRailStationJpaRepository
+import com.kgd.place.infrastructure.persistence.transit.repository.TransitSourceRunJpaRepository
+import io.kotest.assertions.throwables.shouldThrow
 import java.math.BigDecimal
 import java.time.YearMonth
 import io.kotest.core.spec.style.BehaviorSpec
@@ -125,6 +143,11 @@ class PlaceSchemaIntegrationSpec(
     @Autowired private val a0: AirStationJpaRepository,
     @Autowired private val a1: AirMeasurementJpaRepository,
     @Autowired private val a2: AirStationSigunguJpaRepository,
+    @Autowired private val t0: TransitRailStationJpaRepository,
+    @Autowired private val t1: TransitBusStopJpaRepository,
+    @Autowired private val t2: TransitSourceRunJpaRepository,
+    @Autowired private val t3: TransitBusCoverageJpaRepository,
+    @Autowired private val t4: AttractionAccessJpaRepository,
     @Autowired private val tx: TransactionTemplate,
 ) : BehaviorSpec({
 
@@ -133,7 +156,7 @@ class PlaceSchemaIntegrationSpec(
             .config(enabledIf = { dockerAvailable }) {
                 // count() 는 엔티티마다 실제 SQL 을 MySQL 로 보낸다 — 컬럼이 어긋나면
                 // validate 에서 컨텍스트가 아예 안 뜨고, 뜬 뒤에도 매핑이 틀리면 여기서 터진다.
-                listOf(r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, w0, w1, w2, w3, c0, c1, a0, a1, a2).map { it.count() }.size shouldBe 19
+                listOf(r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, w0, w1, w2, w3, c0, c1, a0, a1, a2, t0, t1, t2, t3, t4).map { it.count() }.size shouldBe 24
             }
     }
 
@@ -423,6 +446,90 @@ class PlaceSchemaIntegrationSpec(
                 tx.execute { adapter.upsertMeasurements(listOf(AirQualityRepositoryPort.MeasurementRaw("경기", "새측정소", t21, """{"stationName":"새측정소","pm10Value":"20"}""")), at) }
                 adapter.findMeasurements(listOf("새측정소")).single().let { (it.dataTime to it.fields["pm10Value"]) } shouldBe (t21 to "20")
                 a1.count() shouldBe 2
+            }
+    }
+
+    Given("역·정류장 원천을 V35 표에 회차 단위로 적재할 때") {
+        Then("세 번째 묶음이 실패하면 활성 회차는 옛 회차 그대로이고, 다 들어간 회차만 활성화되며 옛 회차 행이 지워진다")
+            .config(enabledIf = { dockerAvailable }) {
+                val service = TransitSourceService(TransitSourceRepositoryAdapter(t0, t1, t2, t3))
+                // 운영 표본(2026-10-11) 안동 길안정류장 모양 — 정류장번호만 바꿔 행을 만든다
+                fun stop(n: Int, name: String = "길안정류장") = TransitBusStop(
+                    "37040:ADB3540$n", "ADB3540$n", name, "36.458658", "128.891228", "2025-10-31", "", "37040", "경상북도 안동시", "안동BIS",
+                    36.458658, 128.891228, true, LocalDate.of(2025, 10, 31),
+                )
+                val cover = listOf(BusCoverage("47170", 120, true))
+                tx.execute { service.putBus("old", (1..3).map { stop(it) }) }
+                tx.execute { service.activate(TransitSource.BUS, "old", 3, cover) }
+
+                // 새 회차: 묶음 1·2 는 들어가고 3 은 정류장명이 열 길이(100)를 넘어 DB 가 거부한다
+                tx.execute { service.putBus("new", (10..11).map { stop(it) }) }
+                tx.execute { service.putBus("new", (12..13).map { stop(it) }) }
+                runCatching { tx.execute { service.putBus("new", listOf(stop(14, "가".repeat(101)))) } }.isFailure shouldBe true
+                // 수집기는 여기서 멈추고 활성화를 부르지 않는다 — 불러도 행 수가 어긋나 400 이다
+                shouldThrow<BusinessException> { tx.execute { service.activate(TransitSource.BUS, "new", 5, cover) } }
+                service.state(TransitSource.BUS).let { it.runId to it.rows } shouldBe ("old" to 3)
+                t1.countByLoadRunId("old") shouldBe 3L
+
+                // 다시 보낸 묶음은 같은 자연 키를 덮는다(행이 늘지 않는다) — 다 들어가면 활성화되고 옛 회차는 지워진다
+                tx.execute { service.putBus("new", (12..13).map { stop(it) }) }
+                tx.execute { service.putBus("new", listOf(stop(14))) }
+                tx.execute { service.activate(TransitSource.BUS, "new", 5, cover) }!!.removed shouldBe 3
+                service.state(TransitSource.BUS).let { it.runId to it.rows } shouldBe ("new" to 5)
+                t1.findAll().map { it.loadRunId }.distinct() shouldBe listOf("new")
+                t1.findAll().first().let { it.collectedDateRaw to it.mobileShortNo } shouldBe ("2025-10-31" to "")
+
+                // 철도 — 원천 15칸이 원문 그대로 돌아온다(엑셀 일련번호 기준일 · 한자 역명)
+                val sinsa = TransitRailStation(
+                    "D004|I11D1|신사|신분당선", "D004", "신사", "I11D1", "신분당선", "Sinsa", "新沙", "도시철도 환승역", "I11D1",
+                    "수도권 광역철도 신분당선", "37.516125263312901", "127.019760916726", "경기도 신분당선", "서울특별시 강남구 강남대로 620-2",
+                    "02) 810-5870", "46191", 37.516125263312901, 127.019760916726, true, LocalDate.of(2026, 6, 18),
+                )
+                tx.execute { service.putRail("r1", listOf(sinsa)) }
+                tx.execute { service.activate(TransitSource.RAIL, "r1", 1, null) }
+                t0.findAll().single().let { listOf(it.stationNameHanja, it.baseDateRaw, it.baseDate.toString()) } shouldBe
+                    listOf("新沙", "46191", "2026-06-18")
+            }
+    }
+
+    Given("가는 법을 V35 표에 계산 회차 단위로 바꿀 때") {
+        Then("보낸 관광지는 통째로 바뀌고, 회차 끝 정리가 이번 회차에 없는 관광지 행을 지우며, 버스 연계 판정이 관광지 시군구로 읽힌다")
+            .config(enabledIf = { dockerAvailable }) {
+                val adapter = AttractionAccessRepositoryAdapter(t4)
+                val service = AttractionAccessService(adapter)
+                fun row(key: String, regn: String, signgu: String) = AttractionJpaEntity(
+                    contentId = "acc-$key", lang = "ko", title = key, titleDisplay = key, latitude = 37.0, longitude = 127.0,
+                    ldongRegnCd = regn, ldongSignguCd = signgu, status = "ACTIVE",
+                )
+                r3.saveAll(listOf(row("seoul", "11", "110"), row("gangneung", "51", "150"), row("nowhere", "99", "999")))
+                val ids = r3.findAll().filter { it.contentId.startsWith("acc-") }.associate { it.contentId.removePrefix("acc-") to it.id!! }
+                val seoul = ids.getValue("seoul")
+                val gangneung = ids.getValue("gangneung")
+                fun rail(id: Long, rank: Int, m: Int) =
+                    AttractionAccess(id, TransitKind.RAIL, rank, "0133|I4101|서울역|1호선", "서울역", "Seoul Station", "1·4호선", m, LocalDate.of(2024, 12, 31))
+                fun bus(id: Long, rank: Int) =
+                    AttractionAccess(id, TransitKind.BUS, rank, "11:GGB$rank", "정류장$rank", null, null, 100 + rank, LocalDate.of(2025, 10, 31))
+                val week1 = LocalDateTime.of(2026, 10, 5, 0, 0)
+                val week2 = LocalDateTime.of(2026, 10, 12, 0, 0)
+
+                tx.execute {
+                    service.replace(week1, listOf(
+                        SyncAttractionAccessUseCase.Item(seoul, listOf(rail(seoul, 1, 999), bus(seoul, 1), bus(seoul, 2))),
+                        SyncAttractionAccessUseCase.Item(gangneung, listOf(bus(gangneung, 1))),
+                    ))
+                }
+                // 다음 주: 서울만 보내고(강릉은 비활성이 되어 이번 회차에 없다) 같은 순위를 다시 넣어도 유니크 키에 걸리지 않는다
+                tx.execute { service.replace(week2, listOf(SyncAttractionAccessUseCase.Item(seoul, listOf(rail(seoul, 1, 1000))))) }!!.removed shouldBe 3
+                tx.execute { service.prune(week2) } shouldBe 1
+
+                adapter.findByAttractionIds(listOf(seoul, gangneung)).map { Triple(it.attractionId, it.kind, it.distanceM) } shouldBe
+                    listOf(Triple(seoul, TransitKind.RAIL, 1000))
+                adapter.findByAttractionIds(listOf(seoul)).single().let { it.lines to it.baseDate } shouldBe ("1·4호선" to LocalDate.of(2024, 12, 31))
+
+                // 연계 판정 — 서울 종로구 연계 · 강릉시 미연계 · 판정 없는 시군구는 빠진다
+                val transit = TransitSourceRepositoryAdapter(t0, t1, t2, t3)
+                tx.execute { transit.replaceCoverage(listOf(BusCoverage("11110", 12_000, true), BusCoverage("51150", 20, false)), week2) }
+                adapter.findBusCoverage(ids.values) shouldBe mapOf(seoul to true, gangneung to false)
             }
     }
 

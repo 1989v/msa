@@ -93,6 +93,31 @@ def fetch_attractions() -> list[dict]:
     return rows
 
 
+def fetch_attraction_points() -> list[tuple[int, float, float]]:
+    """운영 중(ACTIVE) 관광지의 (id, 위도, 경도)만 — 쪽마다 바로 줄인다. 좌표가 없는 행은 뺀다.
+
+    `fetch_attractions()` 는 전 필드 dict 를 전량 쌓는다(한 쪽 200행이 약 1.1 MB, 6.7만 행이면 JSON 만 수백 MB) —
+    가는 법 계산은 좌표만 쓰므로 쪽을 받자마자 버린다.
+    """
+    points: list[tuple[int, float, float]] = []
+    after_id = last_id = 0
+    while True:
+        qs = urllib.parse.urlencode({"afterId": after_id, "size": PAGE_SIZE})
+        data = _request("GET", f"/api/places/attractions?{qs}")["data"]
+        got = data.get("attractions") or []
+        if got and int(got[0]["id"]) <= last_id:
+            raise RuntimeError(f"[place] 키셋이 앞으로 가지 않는다: afterId={after_id}, 첫 id={got[0]['id']}")
+        for a in got:
+            if a.get("status") == "ACTIVE" and a.get("latitude") is not None and a.get("longitude") is not None:
+                points.append((int(a["id"]), float(a["latitude"]), float(a["longitude"])))
+        if got:
+            last_id = int(got[-1]["id"])
+        next_after = data.get("nextAfterId")
+        if not got or next_after is None:
+            return points
+        after_id = int(next_after)
+
+
 def content_updated(since: str, until: str, after_id: int, size: int) -> dict:
     """본문이 바뀐 관광지 한 쪽 — `since ≤ 변경 시각 < until`(서울 시각, 오프셋 없는 ISO), id 키셋.
     반환: `{items: [{id, lang}], nextAfterId}` (마지막 쪽이면 nextAfterId 가 None)."""
@@ -296,3 +321,38 @@ def apply_google_place_ids(results: list[dict]) -> int:
         return 0
     return int(_request("POST", "/internal/attractions/google-place-ids/bulk",
                         {"results": results}, timeout=300)["data"]["applied"])
+
+
+def transit_state(source: str) -> dict:
+    """역·정류장 원천(`RAIL`·`BUS`)의 활성 회차 — `{source, runId, rows, activatedAt}`. 받은 적 없으면 runId·rows 가 null."""
+    return _request("GET", f"/internal/transit/{source.lower()}/state")["data"]
+
+
+def put_transit_rail(run_id: str, items: list[dict]) -> dict:
+    """철도 원천 행 묶음(≤ 2,000)을 [run_id] 회차로 쌓는다. 활성화 전에는 화면·조회에 쓰이지 않는다. 같은 묶음을 다시 보내도 결과가 같다."""
+    return _request("PUT", f"/internal/transit/rail/runs/{urllib.parse.quote(run_id)}", {"items": items}, timeout=300)["data"]
+
+
+def put_transit_bus(run_id: str, items: list[dict]) -> dict:
+    """버스 원천 행 묶음(≤ 2,000)을 [run_id] 회차로 쌓는다."""
+    return _request("PUT", f"/internal/transit/bus/runs/{urllib.parse.quote(run_id)}", {"items": items}, timeout=300)["data"]
+
+
+def activate_transit(source: str, run_id: str, expected_rows: int, coverage: list[dict] | None = None) -> dict:
+    """[run_id] 회차의 행 수가 [expected_rows] 와 같을 때만 활성으로 바꾸고 옛 회차를 지운다(어긋나면 400, 이전 회차 유지).
+    버스는 시군구 연계 판정(coverage)을 함께 통째로 바꾼다."""
+    body: dict = {"expectedRows": expected_rows}
+    if coverage is not None:
+        body["coverage"] = coverage
+    return _request("POST", f"/internal/transit/{source.lower()}/runs/{urllib.parse.quote(run_id)}/activate",
+                    body, timeout=600)["data"]
+
+
+def put_attraction_access(computed_at: str, items: list[dict]) -> dict:
+    """관광지마다 가까운 역·정류장 — 보낸 관광지의 행을 통째로 바꾼다(빈 목록이면 지운다). [computed_at] 은 이번 계산 회차."""
+    return _request("PUT", "/internal/attractions/access", {"computedAt": computed_at, "items": items}, timeout=300)["data"]
+
+
+def prune_attraction_access(computed_at: str) -> dict:
+    """[computed_at] 보다 앞선 회차의 행 — 이번 회차에 실리지 않은 관광지(비활성·삭제 포함) — 을 지운다."""
+    return _request("POST", "/internal/attractions/access/prune", {"computedAt": computed_at}, timeout=300)["data"]

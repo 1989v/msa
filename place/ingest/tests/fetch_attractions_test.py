@@ -89,3 +89,17 @@ def test_커서가_앞으로_가지_않으면_멈춘다(monkeypatch):
     monkeypatch.setattr(place_client, "_request", request)
     with pytest.raises(RuntimeError, match="앞으로 가지 않는다"):
         place_client.fetch_attractions()
+
+
+def test_좌표_투영은_ACTIVE_이고_좌표가_있는_행의_id_위도_경도만_남긴다(monkeypatch):
+    rows = [{"id": i, "status": "ACTIVE", "latitude": 37.0 + i / 1000, "longitude": 127.0, "overview": "x" * 100}
+            for i in range(1, SERVER_CAP + 5)]
+    rows[3]["status"] = "INACTIVE"
+    rows[5]["latitude"] = None
+    _fake_place(monkeypatch, rows)
+
+    got = place_client.fetch_attraction_points()
+
+    assert len(got) == len(rows) - 2
+    assert got[0] == (1, 37.001, 127.0) and all(len(p) == 3 for p in got)
+    assert 4 not in {p[0] for p in got} and 6 not in {p[0] for p in got}

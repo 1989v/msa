@@ -1,0 +1,53 @@
+# 역·정류장 CronJob — 도시철도 역사정보(국가철도공단 KRIC, XLSX) · 전국 버스정류장 위치정보(국토교통부 data.go.kr 15067528, CSV).
+#
+# 주 1회 파일 2개를 받아(키 없음, 로그인 없음) 원천 행을 회차 단위로 통째로 바꾸고, 관광지마다 가까운 역 2곳(직선 2,000m 안) ·
+# 정류장 2곳(500m 안)을 계산해 보낸다(PUT /internal/transit/* · /internal/attractions/access). 재색인이 extras 조회로 싣는다.
+# 받기 실패 · 헤더가 다름 · 0행 · 무효 좌표 5% 초과 · 행 수 ±20% 초과면 이전 회차를 그대로 두고 실패한다.
+# 원천 파일 주소는 env 다 — 버스 주소(atchFileId)는 원천 갱신(연 1회, 다음 2026-10-30) 때 바뀔 수 있어 그때 이 두 줄만 고친다.
+# 메모리: 버스 원천은 파일로 받아 두 번 스트리밍하고 계산용 튜플만 든다 — 실데이터 드라이런 최대 RSS 246 MiB(맥, 2026-10-11).
+# 첫 배포 뒤 한 번은 손으로 돌린다 — 값이 없으면 상세의 「가까운 역·정류장」이 그려지지 않는다:
+#   kubectl -n commerce create job --from=cronjob/place-ingest-transit-stops place-ingest-transit-stops-init
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: place-ingest-transit-stops
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: place-ingest
+    app.kubernetes.io/part-of: commerce-platform
+    place.kgd.io/job: "transit-stops"
+spec:
+  # 매주 월 KST 00:00 = 일 UTC 15:00. 다른 place-ingest 전량 스캔(01:50 측정소 · 02:00 집중률 …)과 겹치지 않는 자리.
+  schedule: "0 15 * * 0"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      # 원천 행 약 23만 + 관광지 약 6.7만 곳을 2,000건 묶음으로 보낸다 — 받기 시간 제한 300초 × 2 + 적재
+      activeDeadlineSeconds: 3600
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: place-ingest
+            app.kubernetes.io/part-of: commerce-platform
+            place.kgd.io/job: "transit-stops"
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: ingest
+              image: commerce/place-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--job=transit-stops"]
+              env:
+                - name: PLACE_API
+                  value: "http://content:8097"
+                - name: TRANSIT_RAIL_FILE_URL
+                  value: "https://data.kric.go.kr/rips/dataset/download.file?type=filedata&id=32&operation=1"
+                - name: TRANSIT_BUS_FILE_URL
+                  value: "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000003558143&fileDetailSn=1&insertDataPrcus=N"
+              resources:
+                requests: { cpu: 100m, memory: 256Mi }
+                limits:   { memory: 512Mi }

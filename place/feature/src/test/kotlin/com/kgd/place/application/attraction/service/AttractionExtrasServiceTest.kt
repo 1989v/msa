@@ -1,5 +1,6 @@
 package com.kgd.place.application.attraction.service
 
+import com.kgd.place.application.attraction.port.AttractionAccessRepositoryPort
 import com.kgd.place.application.attraction.port.AttractionCongestionRepositoryPort
 import com.kgd.place.application.attraction.port.AttractionExtrasRepositoryPort
 import com.kgd.place.application.attraction.port.AttractionRelatedRepositoryPort
@@ -9,6 +10,7 @@ import com.kgd.place.domain.attraction.model.Attraction
 import com.kgd.place.application.attraction.usecase.LookupAttractionExtrasUseCase
 import com.kgd.place.application.attraction.usecase.SyncAttractionBarrierFreeUseCase
 import com.kgd.place.application.attraction.usecase.SyncAttractionWellnessUseCase
+import com.kgd.place.domain.attraction.model.AttractionAccess
 import com.kgd.place.domain.attraction.model.AttractionBarrierFree
 import com.kgd.place.domain.attraction.model.AttractionRelated
 import com.kgd.place.domain.attraction.model.AttractionWellness
@@ -16,6 +18,7 @@ import com.kgd.place.domain.attraction.model.CongestionDay
 import com.kgd.place.domain.attraction.model.CongestionForecast
 import com.kgd.place.domain.attraction.model.NameMatch
 import com.kgd.place.domain.attraction.model.RelatedTarget
+import com.kgd.place.domain.attraction.model.TransitKind
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -37,7 +40,8 @@ class AttractionExtrasServiceTest : BehaviorSpec({
     val related = mockk<AttractionRelatedRepositoryPort>()
     val attractions = mockk<AttractionRepositoryPort>()
     val gocamping = mockk<GocampingSiteRepositoryPort>()
-    val service = AttractionExtrasService(repository, congestion, related, attractions, gocamping)
+    val access = mockk<AttractionAccessRepositoryPort>()
+    val service = AttractionExtrasService(repository, congestion, related, attractions, gocamping, access)
 
     val listRaw = """{"contentid":"125894","contenttypeid":"12","title":"마곡사 [유네스코 세계유산]","modifiedtime":"20251224171858"}"""
     val detailRaw = """{"contentid":"126508","wheelchair":"대여가능","restroom":"장애인 화장실 있음","elevator":""}"""
@@ -45,8 +49,10 @@ class AttractionExtrasServiceTest : BehaviorSpec({
     val synced = LocalDateTime.of(2026, 10, 3, 2, 41)
 
     beforeTest {
-        clearMocks(repository, congestion, related, attractions, gocamping)
+        clearMocks(repository, congestion, related, attractions, gocamping, access)
         every { congestion.findForecasts(any(), any()) } returns emptyList()
+        every { access.findByAttractionIds(any()) } returns emptyList()
+        every { access.findBusCoverage(any()) } returns emptyMap()
         every { related.findLinked(any(), any()) } returns emptyList()
         every { gocamping.findCampingInfo(any()) } returns emptyMap()
         every { repository.saveBarrierFree(any()) } answers { firstArg<List<AttractionBarrierFree>>().size }
@@ -242,6 +248,29 @@ class AttractionExtrasServiceTest : BehaviorSpec({
 
             service.lookup(listOf(51L, 52L)).map { it.attractionId to it.camping } shouldBe
                 listOf(51L to """{"induty":"일반야영장","animalCmgCl":"가능"}""")
+        }
+    }
+
+    Given("가는 법이 있는 id 묶음을 조회할 때") {
+        Then("줄은 철도→버스·순위 순으로 싣고, 줄이 없어도 버스 미연계 시군구면 항목이 생기며, 연계 지역의 빈 관광지는 빠진다") {
+            every { repository.findBarrierFreeByAttractionIds(any()) } returns emptyList()
+            every { repository.findWellnessByAttractionIds(any()) } returns emptyList()
+            val date = LocalDate.of(2024, 12, 31)
+            every { access.findByAttractionIds(listOf(61L, 62L, 63L)) } returns listOf(
+                AttractionAccess(61L, TransitKind.BUS, 1, "11:GGB123000289", "가락시장역4번출구.제일오피스텔", null, null, 120, LocalDate.of(2025, 10, 31)),
+                AttractionAccess(61L, TransitKind.RAIL, 2, "0130|I4101|종로3가|1호선", "종로3가", "Jongno 3(sam)ga", "1·3호선", 1_000, date),
+                AttractionAccess(61L, TransitKind.RAIL, 1, "0133|I4101|서울역|1호선", "서울역", "Seoul Station", "1·4호선", 999, date),
+            )
+            // 62 는 줄이 없고 강릉시(미연계), 63 은 줄이 없고 연계 지역
+            every { access.findBusCoverage(listOf(61L, 62L, 63L)) } returns mapOf(61L to true, 62L to false, 63L to true)
+
+            val found = service.lookup(listOf(61L, 62L, 63L)).associateBy { it.attractionId }
+            found.keys shouldBe setOf(61L, 62L)
+            found.getValue(61L).access!!.stops.map { it.kind to it.name } shouldBe
+                listOf("RAIL" to "서울역", "RAIL" to "종로3가", "BUS" to "가락시장역4번출구.제일오피스텔")
+            found.getValue(61L).access!!.stops.first().let { it.distanceM to it.lines } shouldBe (999 to "1·4호선")
+            found.getValue(61L).access!!.stops.first().baseDate shouldBe "2024-12-31"
+            found.getValue(62L).access shouldBe LookupAttractionExtrasUseCase.Access(emptyList(), false)
         }
     }
 })

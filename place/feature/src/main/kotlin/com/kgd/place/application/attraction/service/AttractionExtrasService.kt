@@ -1,5 +1,6 @@
 package com.kgd.place.application.attraction.service
 
+import com.kgd.place.application.attraction.port.AttractionAccessRepositoryPort
 import com.kgd.place.application.attraction.port.AttractionCongestionRepositoryPort
 import com.kgd.place.application.attraction.port.AttractionExtrasRepositoryPort
 import com.kgd.place.application.attraction.port.AttractionRelatedRepositoryPort
@@ -8,6 +9,7 @@ import com.kgd.place.application.attraction.port.GocampingSiteRepositoryPort
 import com.kgd.place.application.attraction.usecase.LookupAttractionExtrasUseCase
 import com.kgd.place.application.attraction.usecase.SyncAttractionBarrierFreeUseCase
 import com.kgd.place.application.attraction.usecase.SyncAttractionWellnessUseCase
+import com.kgd.place.domain.attraction.model.AttractionAccess
 import com.kgd.place.domain.attraction.model.AttractionBarrierFree
 import com.kgd.place.domain.attraction.model.AttractionRelated
 import com.kgd.place.domain.attraction.model.AttractionWellness
@@ -21,7 +23,7 @@ import java.time.LocalDateTime
 private val log = KotlinLogging.logger {}
 
 /**
- * 관광지에 붙는 2단계 공공데이터(무장애 · 웰니스)의 저장과, 재색인 묶음 조회(무장애 · 웰니스 · 집중률 · 연관 관광지).
+ * 관광지에 붙는 2단계 공공데이터(무장애 · 웰니스)의 저장과, 재색인 묶음 조회(무장애 · 웰니스 · 집중률 · 연관 관광지 · 가는 법).
  *
  * 관광지 행(attractions)에는 쓰지 않는다 — bulk upsert(전체 동기화) 경로와 갈라 두어야 매일 밤 지워지지 않는다.
  * 원천 contentId 는 그 언어의 관광지 행에 붙을 때만 저장한다. 못 붙은 것은 건수와 표본만 돌려준다.
@@ -33,6 +35,7 @@ class AttractionExtrasService(
     private val related: AttractionRelatedRepositoryPort,
     private val attractions: AttractionRepositoryPort,
     private val gocamping: GocampingSiteRepositoryPort,
+    private val access: AttractionAccessRepositoryPort,
 ) : SyncAttractionBarrierFreeUseCase, SyncAttractionWellnessUseCase, LookupAttractionExtrasUseCase {
 
     @Transactional
@@ -129,13 +132,16 @@ class AttractionExtrasService(
             }
             .filterValues { it.isNotEmpty() }
         val camping = gocamping.findCampingInfo(attractionIds)
+        val accessStops = access.findByAttractionIds(attractionIds).groupBy { it.attractionId }
+        val busCovered = access.findBusCoverage(attractionIds)
         return attractionIds.distinct().mapNotNull { id ->
             val bf = barrierFree[id]
             val wl = wellness[id]
             val cg = forecasts[id]
             val rp = relatedPlaces[id]
             val cp = camping[id]
-            if (bf == null && wl == null && cg == null && rp == null && cp == null) {
+            val ac = accessOf(accessStops[id].orEmpty(), busCovered[id])
+            if (bf == null && wl == null && cg == null && rp == null && cp == null && ac == null) {
                 null
             } else {
                 LookupAttractionExtrasUseCase.Found(
@@ -150,10 +156,26 @@ class AttractionExtrasService(
                     },
                     relatedPlaces = rp,
                     camping = cp,
+                    access = ac,
                 )
             }
         }
     }
+
+    /** 줄이 없고 연계 지역(또는 판정 전)이면 보여 줄 것이 없다. */
+    private fun accessOf(stops: List<AttractionAccess>, busCovered: Boolean?): LookupAttractionExtrasUseCase.Access? =
+        if (stops.isEmpty() && busCovered != false) {
+            null
+        } else {
+            LookupAttractionExtrasUseCase.Access(
+                stops.sortedWith(compareBy({ it.kind.ordinal }, { it.rank })).map {
+                    LookupAttractionExtrasUseCase.AccessStop(
+                        it.kind.name, it.rank, it.name, it.nameEn, it.lines, it.distanceM, it.baseDate?.toString(),
+                    )
+                },
+                busCovered,
+            )
+        }
 
     private companion object {
         /** 무장애 원천은 국문뿐이다(영문 0, 2026-10-02 실측). */

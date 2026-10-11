@@ -19,6 +19,7 @@ resources:
   - cronjob-gocamping.yaml
   - cronjob-air.yaml
   - cronjob-air-stations.yaml
+  - cronjob-transit-stops.yaml
   - cronjob-indexnow.yaml
   - rbac-crawl-stats.yaml
   - cronjob-crawl-stats.yaml

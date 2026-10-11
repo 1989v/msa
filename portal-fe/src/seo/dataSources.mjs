@@ -100,6 +100,18 @@ export const DATA_SOURCES = [
     license: '공공누리 제3유형으로 취급',
     note: '',
   },
+  {
+    data: '도시철도역 좌표',
+    source: '국가철도공단 도시철도 역사정보 (철도산업정보센터 KRIC 파일, data.go.kr 15013205)',
+    license: FREE_USE,
+    note: '',
+  },
+  {
+    data: '버스정류장 좌표',
+    source: '국토교통부 전국 버스정류장 위치정보 (data.go.kr 15067528 파일)',
+    license: FREE_USE,
+    note: '',
+  },
   { data: '행정구역(법정동)', source: '행정안전부 행정표준코드관리시스템', license: '공공누리 제1유형', note: '' },
   { data: '세계 지명 계층', source: 'GeoNames', license: 'CC BY 4.0', note: '' },
   { data: 'POI(상가)', source: '소상공인시장진흥공단 상가(상권)정보', license: '이용허락범위 제한없음', note: '' },

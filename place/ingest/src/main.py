@@ -21,6 +21,7 @@ K8s CronJob 이 본 모듈을 --job 으로 분기해 호출한다:
     python -m src.main --job=related --base-ym=202608   # 그 달을 1회 받는다
     python -m src.main --job=air                   # 대기 실시간 측정 전국 1콜 (매시, 하루 24콜)
     python -m src.main --job=air-stations          # 대기 측정소 목록 전국 1콜 + 시군구 최근접 매핑 (주 1회)
+    python -m src.main --job=transit-stops         # 도시철도 역사·버스정류장 파일 2개 → 원천 회차 교체 + 관광지 가까운 역·정류장 (주 1회)
     python -m src.main --job=indexnow              # 지난 24시간 본문이 바뀐 상세 주소를 IndexNow 에 (INDEXNOW_ENABLED 꺼지면 건수만)
     python -m src.main --job=crawl-stats           # portal-fe 접근 로그의 로봇 요청 직전 정시 한 시간 집계 (외부 호출 0, 표 주인 analytics)
     python -m src.main --job=crawl-stats --hour=2026-10-10T19   # 그 시간(UTC)을 다시 집계
@@ -44,7 +45,7 @@ from src import (gocamping, administrative_region, air, backfill_intro, backfill
                  google_place, indexnow, naver,
                  place_client, related,
                  backfill_media, popularity, quota, sync_lcls_codes, sync_pet_tour,
-                 sync_tour,
+                 sync_tour, transit_stops,
                  visitors, weather, wellness, youtube)
 
 
@@ -159,6 +160,15 @@ def _job_air(kind: str, key: str | None = None) -> int:
     key = key or _api_key()
     summary = air.run_stations(key) if kind == "stations" else air.run_measurements(key)
     return 1 if summary["failed"] else 0
+
+
+def _job_transit_stops() -> int:
+    """역·정류장 — 원천 파일 주소는 env 로 받는다(원천 갱신 때 주소가 바뀌면 env 만 고친다). 원천 하나라도 실패면 1."""
+    rail = os.environ.get("TRANSIT_RAIL_FILE_URL")
+    bus = os.environ.get("TRANSIT_BUS_FILE_URL")
+    if not rail or not bus:
+        raise SystemExit("TRANSIT_RAIL_FILE_URL · TRANSIT_BUS_FILE_URL 이 필요합니다")
+    return 1 if transit_stops.run(rail, bus)["failed"] else 0
 
 
 def _job_media(budget: int, langs: tuple[str, ...]) -> int:
@@ -397,7 +407,7 @@ def main() -> int:
                     choices=["overview", "intro", "media", "stats", "sync", "tour-portal-sync", "links",
                              "administrative-regions", "google-places", "lcls-codes", "pet-tour",
                              "attraction-attrs", "visitors", "weather-short", "weather-mid", "congestion", "related",
-                             "air", "air-stations", "gocamping", "indexnow", "crawl-stats"])
+                             "air", "air-stations", "gocamping", "indexnow", "crawl-stats", "transit-stops"])
     ap.add_argument("--budget", type=int, default=int(os.environ.get("BUDGET", "1000")),
                     help="개요 수집 일일 예산 (언어별, detailCommon2 호출 상한)")
     ap.add_argument("--lang", choices=["ko", "en"], help="미지정 시 ko·en 둘 다")
@@ -449,6 +459,8 @@ def main() -> int:
         return _job_air("stations" if args.job == "air-stations" else "measurements")
     if args.job == "gocamping":
         return _job_gocamping()
+    if args.job == "transit-stops":
+        return _job_transit_stops()
     if args.job == "indexnow":
         return indexnow.run()
     if args.job == "crawl-stats":
