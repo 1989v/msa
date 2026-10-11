@@ -61,11 +61,12 @@ Total Task Groups: 5. 정본 `spec.md`. 열린 질문 `context/open-questions.ym
 
 ### Task Group 5: 세트 교체·기준선·문서 (SR-6 · SR-8)
 **Dependencies:** TG3, TG4
-- [ ] 5.1 `judgments-attractions-<날짜>.json` 생성(기존 150 + 새 질의, 옛 파일 유지). `kustomization.yaml` configMapGenerator 에 새 파일 추가(옛 파일 줄은 빼서 ConfigMap 크기를 늘리지 않는다), CronJob 명령 파일 이름 교체. 이후 사람 대조 결과로 등급만 바뀔 때도 새 날짜 파일 + 기준선 갱신을 한 커밋에(SR-6.1).
-- [ ] 5.2 기준선은 **클러스터 안 실행 값만** 쓴다(배포 뒤 수동 Job — Q5 네 조건, 또는 첫 정기 실행). 로컬에서 공개 API 로 잰 C 는 경로(엣지 경유 vs 내부 `search:8083`)가 달라 참고값으로만 README 에 둔다. 그 값으로 `EVAL_BASELINE_KO/EN` 갱신, CronJob 주석 「판정 세트 v3(<날짜>, N 질의)로 잰 C」. v2 정기 실행 소요 시간 × (v3 질의 수 / 150) × 1.5 를 `activeDeadlineSeconds: 900` 과 비교해 기록하고, 넘으면 기준선 커밋 전에 멈추고 보고.
-- [ ] 5.3 README v3 절 · rubric · glossary · 계획서 S3-6b 상태(SR-8).
-- [ ] 5.4 커밋은 경로를 좁혀(`k8s/base/search-batch/` · `scripts/search-eval/` · `search/glossary.md` · 이 스펙 폴더 · 계획서) `git diff --cached` 로 세트 파일·CronJob 파일명·기준선 세 줄이 함께 들어갔는지 확인.
+- [x] 5.1 `judgments-attractions-<날짜>.json` 생성(기존 150 + 새 질의, 옛 파일 유지). `kustomization.yaml` configMapGenerator 에 새 파일 추가(옛 파일 줄은 빼서 ConfigMap 크기를 늘리지 않는다), CronJob 명령 파일 이름 교체. 이후 사람 대조 결과로 등급만 바뀔 때도 새 날짜 파일 + 기준선 갱신을 한 커밋에(SR-6.1).
+- [x] 5.2 기준선은 **클러스터 안 실행 값만** 쓴다(배포 뒤 수동 Job — Q5 네 조건, 또는 첫 정기 실행). 로컬에서 공개 API 로 잰 C 는 경로(엣지 경유 vs 내부 `search:8083`)가 달라 참고값으로만 README 에 둔다. 그 값으로 `EVAL_BASELINE_KO/EN` 갱신, CronJob 주석 「판정 세트 v3(<날짜>, N 질의)로 잰 C」. v2 정기 실행 소요 시간 × (v3 질의 수 / 150) × 1.5 를 `activeDeadlineSeconds: 900` 과 비교해 기록하고, 넘으면 기준선 커밋 전에 멈추고 보고.
+- [x] 5.3 README v3 절 · rubric · glossary · 계획서 S3-6b 상태(SR-8).
+- [x] 5.4 커밋은 경로를 좁혀(`k8s/base/search-batch/` · `scripts/search-eval/` · `search/glossary.md` · 이 스펙 폴더 · 계획서) `git diff --cached` 로 세트 파일·CronJob 파일명·기준선 세 줄이 함께 들어갔는지 확인.
 - [ ] 5.5 Verify: 배포 뒤 다음 정기 실행(KST 07:30) 로그에서 ① 판정 통과 ② 의도별 표에 여덟 유형 ③ 「v2 150 질의만」 C 가 v2 기준선 ±0.03 안 — 벗어나면 재채점 4 질의 때문인지 먼저 본다.
+  - 배포 뒤 수동 Job(2026-10-11 12:26 KST)에서 ①②③ 확인 — `verifications/first-run.md`. 정기 실행(10-12 07:30) 로그 확인은 남음.
 
 ## 완료 보고에 넣을 것
 유형별 질의 수(ko/en) · 쌍 수 · 등급 출처별 수 · 사람 대조 일치율(또는 「대기」) · 첫 측정 의도별 표 · 빈 정답 통과율 · 새 기준선 · 드러난 검색 결함 목록(후속 후보).

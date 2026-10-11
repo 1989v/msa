@@ -44,14 +44,13 @@ spec:
                 - name: EVAL_MODEL_REF
                   value: "microsoft/harrier-oss-v1-270m@31de22b#d640"
                 # 판정 세트 v3(2026-10-11, 228쿼리)로 잰 C — NO_ANSWER 13 질의는 빼고 낸 평균.
-                # 임시값: 배포 전 검색 파드 안에서 같은 스크립트·같은 세트로 잰 값(2026-10-11 10:18 KST).
-                # 배포 뒤 첫 정기 실행 값으로 갱신한다. v2 기준선(ko .7767 · en .7140)은 눈금이 달라 비교하지 않는다.
+                # 배포 뒤 이 CronJob 과 같은 Job 으로 잰 값(2026-10-11 12:26 KST). v2 기준선(ko .7767 · en .7140)은 눈금이 달라 비교하지 않는다.
                 # 색인 드리프트로 ±0.02 움직인 적이 있어 허용폭은 0.03.
                 # 판정 세트를 바꾸면 점수 눈금이 바뀐다 — 옛 기준선을 그대로 두면 게이트가 사실상 열린다.
                 - name: EVAL_BASELINE_KO
-                  value: "0.7364"
+                  value: "0.7428"
                 - name: EVAL_BASELINE_EN
-                  value: "0.7097"
+                  value: "0.7216"
                 - name: EVAL_TOLERANCE
                   value: "0.03"
               volumeMounts:
