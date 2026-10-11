@@ -26,6 +26,13 @@ nDCG 평균에서 `intent` 로 빼고 빈 정답 통과율(`totalElements == 0` 
 
   python3 live-eval.py --click-boost-pair <판정.json> [결과.json]
   EVAL_CLICK_BOOST_EXPONENT=30 python3 live-eval.py --click-boost-pair …   # 회귀 주입: 계수를 30제곱해 과대하게
+
+조건어 짝 비교 (`--condition-pair`) — 같은 실행에서 질의마다 라이브 API 를 기본 요청과 `keepConditionWords=true`
+(조건어를 속성으로 옮기지 않는 대조군)로 두 번 부르고, 언어별 C 를 두 열로 낸다. 조건어 해석 효과를 같은 색인·같은 배포에서
+불용구·품사 필터 효과와 가른다. 결과 JSON 에 대조군 값과 측정 시작·끝의 색인 이름(별칭이 가리키는 실제 색인)을 적는다.
+판정은 하지 않고 보고만 한다 — 질의 실패가 있으면 1, 아니면 0. 형식 검사는 기본 실행과 같다.
+
+  python3 live-eval.py --condition-pair <판정.json> [결과.json]
 """
 import json, os, re, sys, unicodedata, urllib.parse, urllib.request
 
@@ -78,9 +85,13 @@ def ids_hybrid(q, lang, vec):
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 msa-eval"
 
 
-def ids_live(q, lang):
+def ids_live(q, lang, keep_condition_words=False):
     """라이브 응답 → (상위 id, 전체 건수, 교정된 검색어). 전체 건수가 없으면 예외 — 0 으로 두면 0건율이 조용히 100% 가 된다."""
-    qs = urllib.parse.urlencode({"keyword": q, "lang": lang, "size": K, "sort": "relevance"})
+    params = {"keyword": q, "lang": lang, "size": K, "sort": "relevance"}
+    if keep_condition_words:
+        # 대조군 — AttractionSearchController 의 「조건으로 읽지 않고 검색」 파라미터
+        params["keepConditionWords"] = "true"
+    qs = urllib.parse.urlencode(params)
     req = urllib.request.Request(f"{API_URL}?{qs}", headers={"User-Agent": UA, "Accept": "application/json"})
     with urllib.request.urlopen(req, timeout=30) as r:
         d = json.load(r)
@@ -291,6 +302,70 @@ def click_boost_pair(path, out=None):
     return code
 
 
+# ── 조건어 짝 비교 ──────────────────────────────────────────────────────────
+def index_or_none():
+    """색인 이름을 기록용으로만 읽는다 — OpenSearch 에 닿지 않는 곳(공개 API 로 재는 로컬)에서도 측정은 한다."""
+    try:
+        return resolve_index()
+    except Exception as e:
+        print(f"  색인 이름을 읽지 못했다 ({str(e)[:60]}) — 결과 JSON 에 null 로 남긴다", flush=True)
+        return None
+
+
+def condition_pair(path, out=None):
+    import datetime
+    qs = json.load(open(path, encoding="utf-8"))
+    bad = check_format(qs)
+    if bad:
+        print(f"  판정 파일 형식 위반 {len(bad)}건 — 재지 않고 멈춘다", flush=True)
+        for line in bad:
+            print("  - " + line, flush=True)
+        return 1
+    started = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
+    index_start = index_or_none()
+    print(f"  색인 {index_start} · 대조군 keepConditionWords=true", flush=True)
+    rows = []
+    for n, item in enumerate(qs, 1):
+        q, lang, grades = item["query"], item["lang"], item["grades"]
+        r = {"query": q, "lang": lang, "intent": item["intent"]}
+        try:
+            ids, total, _ = ids_live(q, lang)
+            keep, total_keep, _ = ids_live(q, lang, keep_condition_words=True)
+        except Exception as e:
+            r["error"] = str(e)[:80]
+            rows.append(r)
+            print(f"  [{n:2d}/{len(qs)}] {lang} {q[:22]:<24} ERR {r['error'][:60]}", flush=True)
+            continue
+        r.update({"C": ndcg(ids, grades), "C_keep": ndcg(keep, grades), "total_C": total,
+                  "total_keep": total_keep, "changed": ids != keep})
+        if r["C"] is not None and r["C_keep"] is not None:
+            r["delta"] = r["C"] - r["C_keep"]
+        rows.append(r)
+        delta = f" Δ={r['delta']:+.4f}" if "delta" in r else ""
+        print(f"  [{n:2d}/{len(qs)}] {lang} {q[:22]:<24} C={r['C'] and round(r['C'],4)}"
+              f" keep={r['C_keep'] and round(r['C_keep'],4)}{delta}{' 순서다름' if r['changed'] else ''}", flush=True)
+    index_end = index_or_none()
+    if out:
+        json.dump({"mode": "condition-pair", "control": {"keepConditionWords": True}, "startedAt": started,
+                   "apiUrl": API_URL, "alias": "attractions", "indexAtStart": index_start, "indexAtEnd": index_end,
+                   "rows": rows}, open(out, "w"), ensure_ascii=False, indent=1)
+    if index_start != index_end:
+        # 도중에 재색인이 별칭을 옮기면 앞뒤 질의가 다른 벌을 본다 — 짝은 질의 안에서 맺으니 남기되 알린다
+        print(f"  주의: 측정 도중 색인이 바뀌었다 {index_start} → {index_end}", flush=True)
+    print("\n  언어   질의   C(기본)  C(대조)    평균Δ  순서다름  0.05넘게나빠짐")
+    for lang in ("ko", "en"):
+        g = [r for r in rows if r["lang"] == lang and r["intent"] != "NO_ANSWER" and "error" not in r]
+        pairs = [r for r in g if "delta" in r]
+        mean = lambda key: sum(r[key] for r in pairs) / len(pairs) if pairs else 0.0
+        worse = sum(1 for r in pairs if r["delta"] < -PAIR_WORSE_BY)
+        print(f"  {lang:<4} {len(pairs):>6}  {mean('C'):.4f}   {mean('C_keep'):.4f}  {mean('delta'):+.4f}"
+              f"  {sum(1 for r in g if r['changed']):>8}  {worse:>13}")
+    err = [r for r in rows if "error" in r]
+    if err:
+        print(f"\n  실패 {len(err)}건: {err[0]['error']}", flush=True)
+    return 1 if err else 0
+
+
 def main():
     qs = json.load(open(sys.argv[1], encoding="utf-8"))
     bad = check_format(qs)
@@ -408,4 +483,6 @@ def gate(c_ko, c_en, n_err):
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--click-boost-pair":
         sys.exit(click_boost_pair(sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else None))
+    if len(sys.argv) > 1 and sys.argv[1] == "--condition-pair":
+        sys.exit(condition_pair(sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else None))
     sys.exit(main())
