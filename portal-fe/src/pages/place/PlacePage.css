@@ -3087,6 +3087,17 @@ button.place-card {
   padding-bottom: 0;
 }
 
+/* 바는 푸터 바로 앞 형제라 Footer.css 의 `#root :has(+ .site-footer)` 여백(48px, 명시도 1,1,0)이 걸려
+ * 고정 바가 48px 떠 있었다 — 문서 끝 내용과 Tab 포커스가 바 밑에 깔린다. 명시도 1,2,0 으로 끄고,
+ * 본문과 괘선 사이 여백은 바 앞 요소가 대신 갖는다(바가 없을 때와 같은 값). */
+#root .place-action-bar.kh-slab {
+  margin-bottom: 0;
+}
+
+#root :has(+ .place-action-bar + .site-footer) {
+  margin-bottom: var(--ko-space-12);
+}
+
 /* 작성자 display 가 hidden 을 이기지 않게 */
 .place-action-bar[hidden] {
   display: none;

@@ -41,3 +41,30 @@ Gradle 명령: `./gradlew :search:app:test --tests '*SearchAttractionServiceTest
 - 각 주입은 자기 열만 바꾸고 나머지 열은 대조와 같다 — 다섯 줄이 서로의 대조군이다.
 - **R9 는 대조가 이미 빨강이다.** 대조 빌드에서도 Tab 가림이 18 이다 — 운영과 같은 결함(`screens.md` §4: `components/Footer.css:17` 의 `#root :has(+ .site-footer)` 여백이 고정 바에 `margin-bottom: 48px` 을 붙여 바가 48px 뜬다) 때문이다. 그래서 R9 는 「빨강이 됐다」가 아니라 **18 → 38 로 늘었다**로만 드러난다. 그 결함이 고쳐지기 전까지 SR-8.4 의 Tab 단언은 R9 를 0 → n 으로 가르지 못한다.
 - **R9b 는 포커스 링을 잡지 못한다.** 덮어쓰기를 지워도 찜 포커스 링은 15.82 · 13.06 그대로다 — `.kh-slab` 범위가 `--ko-text-primary` 를 판 위 글씨색으로 바꾸고, `Favorite.css` 의 포커스 outline 이 그 변수를 쓰기 때문이다. R9b 를 잡는 값은 **별 켜짐 대비(2.24 · 1.83 < 3)와 칸 크기(44×44, 칸 전체가 아님)** 다. 별 꺼짐(6.81 · 5.31)도 같은 이유로 바뀌지 않는다.
+
+## 3. 바 위치 수정 뒤 — 로컬 프리뷰 (2026-10-11 16:00~16:45 KST)
+
+수정: `PlacePage.css` 에 `#root .place-action-bar.kh-slab { margin-bottom: 0 }`(명시도 1,2,0 — Footer.css 의 `#root :has(+ .site-footer)` 1,1,0 을 이긴다)과, 그 여백을 바 앞 흐름 요소로 옮기는 `#root :has(+ .place-action-bar + .site-footer) { margin-bottom: var(--ko-space-12) }`. Footer.css 는 건드리지 않았다.
+빌드 `VITE_API_URL= npx vite build`(수정 · 수정 + R9 둘 다 0), `vite preview` + `/api` 운영 프록시(§2 와 같은 설정), 드라이버 `scripts/detail-after.mjs`(12곳 × 3회, 390×844). 측정 화면이 실은 번들: 수정 `index-DWcgCIsr.js`·`PlacePage-BHoVnx0p.css`, R9 `index-BMf8OT80.js`·`PlacePage-BUVu7piw.css`(R9 CSS 의 `scroll-padding-bottom` 0개 · 바 `margin-bottom:0` 규칙 1개). 실행마다 「이 세션」 크롬 `(없음)`, 프리뷰 리스너 0.
+드라이버 수정: 로컬 주소의 영문 상세 URL 이 `/place/en/attractions/…`(없는 경로)였다 → `/en/place/attractions/…`. 운영 경로는 그대로다.
+
+| 빌드 | 바 top (탭바 top) | 문서 끝 내용 bottom ≤ 바 top | Tab 가림 (12곳, 바 보일 때 본문 포커스 중) | `scroll-padding-bottom` |
+|---|---|---|---|---|
+| 운영 (수정 전, `screens.md` §4) | 680 | 0/12 (32px 깔림) | 14~36 | 116px |
+| 수정 | **728** (791) — 1658 만 746 (809) | **36/36** (712/728 · 1658 730/746, 틈 16px) | **0 ×12** (118~126 중) | 116px |
+| 수정 + R9 | 728 | 36/36 | **17~32** (국 32·29·32·20·31·17, 영 28·24·17·25·17·22) | auto |
+
+- R9 는 이제 대조 0 → 주입 17~32 로 갈린다(§2 의 18 → 38 을 대신한다). 문서 끝 위치는 `.place-page` 하단 여백이 맡아 R9 와 무관하다.
+- 나머지 열(첫 화면 숨김 · 표시 최대 26ms · 다시 숨김 · 길찾기 폴드 36/36 · 이동 줄 겹침 0 · CLS)은 수정 전과 같다.
+- 바 bottom(784)과 탭바 top(791) 사이 7px 는 남는다 — `--kh-shell-bottom`(60px)이 실제 탭바 높이(53px)보다 크다. 그 값은 `body` 하단 여백·지도 높이 등 모든 화면이 함께 쓰므로 여기서 바꾸지 않았다.
+
+### 바닥글 앞 여백 — 다른 화면 회귀 없음
+
+`.site-footer` 앞 흐름 요소 bottom 과 푸터 top 사이(px). 로컬은 수정 빌드, 운영은 수정 전 `index-dXbP3TLy.js`.
+
+| 화면 | 390 운영 → 수정 | 1440 운영 → 수정 |
+|---|---|---|
+| place 허브 | 60 → 60 | 64 → 64 |
+| 상세 77 | **12 → 60** (운영은 48px 이 바에 붙어 본문 여백이 0 이었다) | 64 → 64 |
+| `/about` | 48 → 48 | 48 → 48 |
+| `/privacy` | 48 → 48 | 48 → 48 |

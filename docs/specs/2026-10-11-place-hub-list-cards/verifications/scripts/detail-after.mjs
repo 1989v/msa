@@ -45,7 +45,7 @@ for (const lang of ['ko', 'en']) for (const id of IDS[lang]) for (let run = 1; r
   await t.send('Network.setCacheDisabled', { cacheDisabled: true });
   await t.send('Network.setBlockedURLs', { urls: ['*/api/v1/events*'] });
   await t.send('Page.addScriptToEvaluateOnNewDocument', { source: CLS_INIT });
-  const url = LOCAL ? `${ORIG}/place${lang === 'en' ? '/en' : ''}/attractions/${id}` : `${ORIG}${lang === 'en' ? '/en' : ''}/attractions/${id}`;
+  const url = LOCAL ? `${ORIG}${lang === 'en' ? '/en' : ''}/place/attractions/${id}` : `${ORIG}${lang === 'en' ? '/en' : ''}/attractions/${id}`;
   await t.send('Page.navigate', { url }); await sleep(6000);
   const row = { lang, id, run };
   row.top = await t.ev(TOP);
