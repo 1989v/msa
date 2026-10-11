@@ -1,0 +1,276 @@
+{
+  "cases": [
+    {
+      "name": "ko-at-min",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "4001",
+        "lang": "ko",
+        "title": "경복궁",
+        "savedCount": 3,
+        "uniqueClickers14d": 5,
+        "signalsAsOf": "2026-10-10"
+      },
+      "output": [
+        "이 사이트 회원 3명이 찜했습니다 · 2026-10-10 기준",
+        "최근 14일 이 사이트에서 5명이 눌렀습니다(같은 사람은 한 번) · 2026-10-10 기준"
+      ]
+    },
+    {
+      "name": "en-at-min",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "4002",
+        "lang": "en",
+        "title": "Gyeongbokgung Palace",
+        "savedCount": 3,
+        "uniqueClickers14d": 5,
+        "signalsAsOf": "2026-10-10"
+      },
+      "output": [
+        "3 members of this site saved this · as of 2026-10-10",
+        "5 people on this site clicked this in the last 14 days (each person counted once) · as of 2026-10-10"
+      ]
+    },
+    {
+      "name": "ko-below-min",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "4003",
+        "lang": "ko",
+        "title": "경복궁",
+        "savedCount": 2,
+        "uniqueClickers14d": 4,
+        "signalsAsOf": "2026-10-10"
+      },
+      "output": []
+    },
+    {
+      "name": "en-below-min",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "4004",
+        "lang": "en",
+        "title": "Gyeongbokgung Palace",
+        "savedCount": 2,
+        "uniqueClickers14d": 4,
+        "signalsAsOf": "2026-10-10"
+      },
+      "output": []
+    },
+    {
+      "name": "ko-saved-only-no-date",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "4005",
+        "lang": "ko",
+        "title": "경복궁",
+        "savedCount": 12
+      },
+      "output": [
+        "이 사이트 회원 12명이 찜했습니다"
+      ]
+    },
+    {
+      "name": "en-saved-only-no-date",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "4006",
+        "lang": "en",
+        "title": "Gyeongbokgung Palace",
+        "savedCount": 12
+      },
+      "output": [
+        "12 members of this site saved this"
+      ]
+    },
+    {
+      "name": "ko-clicked-only",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "4007",
+        "lang": "ko",
+        "title": "경복궁",
+        "uniqueClickers14d": 1234,
+        "signalsAsOf": "2026-10-09"
+      },
+      "output": [
+        "최근 14일 이 사이트에서 1234명이 눌렀습니다(같은 사람은 한 번) · 2026-10-09 기준"
+      ]
+    },
+    {
+      "name": "en-clicked-only",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "4008",
+        "lang": "en",
+        "title": "Gyeongbokgung Palace",
+        "uniqueClickers14d": 1234,
+        "signalsAsOf": "2026-10-09"
+      },
+      "output": [
+        "1234 people on this site clicked this in the last 14 days (each person counted once) · as of 2026-10-09"
+      ]
+    },
+    {
+      "name": "ko-none",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "4009",
+        "lang": "ko",
+        "title": "경복궁"
+      },
+      "output": []
+    },
+    {
+      "name": "en-none",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "4010",
+        "lang": "en",
+        "title": "Gyeongbokgung Palace"
+      },
+      "output": []
+    },
+    {
+      "name": "ko-stay",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "32",
+        "category": "stay",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "4011",
+        "lang": "ko",
+        "title": "경복궁",
+        "savedCount": 7,
+        "uniqueClickers14d": 9,
+        "signalsAsOf": "2026-10-10"
+      },
+      "output": [
+        "이 사이트 회원 7명이 찜했습니다 · 2026-10-10 기준",
+        "최근 14일 이 사이트에서 9명이 눌렀습니다(같은 사람은 한 번) · 2026-10-10 기준"
+      ]
+    },
+    {
+      "name": "en-stay",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "32",
+        "category": "stay",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "4012",
+        "lang": "en",
+        "title": "Gyeongbokgung Palace",
+        "savedCount": 7,
+        "uniqueClickers14d": 9,
+        "signalsAsOf": "2026-10-10"
+      },
+      "output": [
+        "7 members of this site saved this · as of 2026-10-10",
+        "9 people on this site clicked this in the last 14 days (each person counted once) · as of 2026-10-10"
+      ]
+    }
+  ]
+}

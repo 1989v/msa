@@ -1585,3 +1585,88 @@ describe('AttractionPage 언어가 어긋난 주소', () => {
     expect(screen.getByTestId('loc').textContent).toBe('/attractions/100');
   });
 });
+
+describe('AttractionPage 이 사이트 근거 줄 · 방문 추이 링크', () => {
+  beforeEach(() => nearbyFrom(() => []));
+  afterEach(() => vi.clearAllMocks());
+
+  const signalLines = () =>
+    Array.from(document.querySelectorAll('[data-place-section="visit-signals"] p')).map((p) => p.textContent);
+
+  it('찜 3 · 클릭 5 — 두 근거 줄에 기준일을 붙이고, 기존 배지 「많이 클릭한 곳」은 그대로 둔다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, savedCount: 3, uniqueClickers14d: 5, signalsAsOf: '2026-10-10' });
+    renderAt('/attractions/100');
+    await screen.findByRole('heading', { level: 1 });
+
+    expect(signalLines()).toEqual([
+      '이 사이트 회원 3명이 찜했습니다 · 2026-10-10 기준',
+      '최근 14일 이 사이트에서 5명이 눌렀습니다(같은 사람은 한 번) · 2026-10-10 기준',
+    ]);
+    expect(badgeLine()).toBe('유모차 대여 없음 · 많이 클릭한 곳');
+  });
+
+  it('찜 2 · 클릭 4 — 하한 미만은 줄을 내지 않는다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, savedCount: 2, uniqueClickers14d: 4, signalsAsOf: '2026-10-10' });
+    renderAt('/attractions/100');
+    await screen.findByRole('heading', { level: 1 });
+
+    expect(signalLines()).toEqual([]);
+  });
+
+  it('기준일이 없는 옛 문서 — 근거 줄만, 「기준」 없이', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, savedCount: 12, uniqueClickers14d: null, signalsAsOf: null });
+    renderAt('/attractions/100');
+    await screen.findByRole('heading', { level: 1 });
+
+    expect(signalLines()).toEqual(['이 사이트 회원 12명이 찜했습니다']);
+  });
+
+  it('영문 — 같은 두 문장, 「방문자 · visitor」 없음', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({
+      ...enriched, lang: 'en', savedCount: 3, uniqueClickers14d: 5, signalsAsOf: '2026-10-10',
+      region: { ...enriched.region!, sigunguName: 'Jongno-gu' },
+    });
+    renderAt('/en/attractions/100');
+    await screen.findByRole('heading', { level: 1 });
+
+    expect(signalLines()).toEqual([
+      '3 members of this site saved this · as of 2026-10-10',
+      '5 people on this site clicked this in the last 14 days (each person counted once) · as of 2026-10-10',
+    ]);
+    for (const line of signalLines()) expect(line?.toLowerCase()).not.toContain('visitor');
+  });
+
+  it('「{시군구} 방문 추이 보기」 — 시군구 지역 페이지로 가는 링크 한 줄, 방문자 수치는 없다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, sidoName: '서울특별시' });
+    renderAt('/attractions/100');
+    await screen.findByRole('heading', { level: 1 });
+
+    const link = screen.getByRole('link', { name: '종로구 방문 추이 보기' });
+    expect(link).toHaveAttribute('href', '/regions/11110');
+    const block = document.querySelector('[data-place-section="visit-signals"]')!;
+    expect(block.textContent).toBe('종로구 방문 추이 보기');
+    expect(block.textContent).not.toMatch(/\d/);
+  });
+
+  it('영문 링크 「Visitor trend in {sigungu}」 → 영문 지역 페이지', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, lang: 'en', region: { ...enriched.region!, sigunguName: 'Jongno-gu' } });
+    renderAt('/en/attractions/100');
+    await screen.findByRole('heading', { level: 1 });
+
+    expect(screen.getByRole('link', { name: 'Visitor trend in Jongno-gu' })).toHaveAttribute('href', '/en/regions/11110');
+  });
+
+  it('시군구 코드나 이름을 모르면 링크를 걸지 않는다 — 근거가 하나도 없으면 묶음도 없다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, region: { ...enriched.region!, ldongSignguCd: null } });
+    const { unmount } = renderAt('/attractions/100');
+    await screen.findByRole('heading', { level: 1 });
+    expect(screen.queryByRole('link', { name: /방문 추이 보기/ })).toBeNull();
+    expect(document.querySelector('[data-place-section="visit-signals"]')).toBeNull();
+    unmount();
+
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, region: { ...enriched.region!, sigunguName: null } });
+    renderAt('/attractions/100');
+    await screen.findByRole('heading', { level: 1 });
+    expect(screen.queryByRole('link', { name: /방문 추이 보기/ })).toBeNull();
+  });
+});

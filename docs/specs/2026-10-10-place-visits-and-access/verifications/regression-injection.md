@@ -78,3 +78,32 @@ OpenSearch 실제 동작(요청 JSON 만으로는 못 보는 것): `index:false`
 
 못 잡는 것(알고 둔다): 시도 순위의 SQL(시도 접두 `LIKE`)은 `PlaceSchemaIntegrationSpec` 이 실제 MySQL 로 보지만 회귀 주입은 하지 않았다.
 wishlist 내부 경로 기본값 `min=3` 은 search `SAVED_MIN` 의 사본이다 — 재색인이 늘 명시해 보내므로(R12 가 그 값을 본다) 기본값이 어긋나도 운영 경로는 영향이 없고, 테스트도 잡지 않는다.
+
+# 회귀 주입 — 근거 절·근거 줄 화면 · 방문 추이 링크 (TG4 · 2.4)
+
+같은 방식이다. 임시 사본(스크래치패드 `regress-tg4/`, `node_modules`·`build`·`.git`·`.gradle` 을 뺀 rsync 사본 + `node_modules` 심링크)에
+하나씩 넣고 검사를 돌린 뒤 원본으로 되돌렸다(파일 내용 일치 확인, R26 은 사본 안에서 다시 쓰인 골든도 되돌림). 스크립트는 스크래치패드
+`inject-visits-tg4.py`, 판정은 vitest JSON 리포트·JUnit XML 의 실패 테스트 이름이다. 모든 주입은 `npx tsc -b` exit 0 · Kotlin 컴파일 통과다.
+
+판정 근거: 화면은 리터럴 경계(찜 2·3, 클릭 4·5, 응답 2·3건)와 리터럴 기대 문구(「… · 3명 이상만」「… · 2026-10-10 기준」), 서버는 렌더된 HTML 의
+`visit-signals` 절, 패리티는 **화면 함수 출력으로 쓴 골든** ↔ 서버가 렌더한 HTML 이다.
+
+| # | 주입 (사본) | 컴파일 | 빨개진 테스트 |
+|---|---|---|---|
+| R20 | `visitSignals.ts` `SAVED_MIN = 3` → `2` | tsc exit 0 | `AttractionPage.test.tsx` 「찜 2 · 클릭 4 — 하한 미만은 줄을 내지 않는다」, `RegionPage.test.tsx` 「찜 3곳 — 절 「많이 찜한 곳」 …」·「영문 — 절 제목과 같은 세 칸 근거 줄」, `visitSignals.test.ts` 2건, `visitSignalsGate.test.ts` 1건 (6 / 133) |
+| R21 | `SITE_SECTION_MIN_ITEMS = 3` → `2` | 〃 | 「응답이 2건이면 절을 그리지 않는다」 (1 / 133) |
+| R22 | 시군구 찜 절 질의 `siteSignalQuery('saved')` → `'clicked'` | 〃 | 「시군구 — 두 절이 각자 sort=saved · sort=clicked …」 외 3건 (4 / 133) |
+| R23 | 상세 방문 추이 링크 대상 `hubCode` → `hubCode.slice(0, 2)`(시도) | 〃 | 「「{시군구} 방문 추이 보기」 — 시군구 지역 페이지로 가는 링크 …」·「영문 링크 …」 (2 / 133) |
+| R24 | search/domain `AttractionSaveSignal.SAVED_MIN = 3` → `2` | `:search:app:test` 컴파일 후 실행 | `AttractionPageRendererTest` 「찜 2 · 클릭 4 — 하한 미만은 줄도 절도 없다」, `VisitSignalsParityTest` 「근거 줄이 순서째 같다」 2건(`*-below-min` 국·영) |
+| R25 | 렌더러 클릭 하한 `isFrequentlyClicked(it)` → `it >= 4` | 〃 | 같은 렌더러 테스트 1건 + 패리티 2건 |
+| R26 | 화면 문구만 「찜했습니다」→「저장했습니다」, 사본에서 골든 재생성 뒤 서버 패리티 | tsc exit 0 · 컴파일 통과 | `VisitSignalsParityTest` 3건(국문 찜 줄이 있는 `at-min`·`saved-only-no-date`·`stay`) — 패리티가 화면 출력과 서버 HTML 을 실제로 맞댄다 |
+
+명령(사본 루트에서):
+
+```bash
+(cd portal-fe && npx tsc -b && npx vitest run src/pages/place/__tests__/{AttractionPage.test.tsx,RegionPage.test.tsx,visitSignals.test.ts,visitSignalsGate.test.ts,visitSignalsGolden.test.ts})
+./gradlew :search:app:test --tests '*AttractionPageRenderer*' --tests '*VisitSignalsParity*'
+```
+
+못 잡는 것(알고 둔다): 시군구 절은 서버가 하한 이상만 준다는 전제로 건수만 본다 — 서버 정렬 하한은 TG3 의 R13 이 지킨다.
+패리티 골든은 CI 의 「Visit signals golden fixture is current」 단계가 최신인지 본다(골든을 갱신하지 않은 채 화면 문구만 바꾸면 거기서 막힌다).

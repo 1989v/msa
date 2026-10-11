@@ -7,10 +7,13 @@ import {
   SAVED_MIN,
   SIGNAL_COPY,
   SIGNAL_KINDS,
+  SITE_CLICKS_BASIS,
   type SignalKind,
   formatSignalLine,
   ktoRankingSignalLine,
+  siteSectionSignalLine,
   siteSignalSentence,
+  siteSignalSentences,
   visitorTrendLinkLabel,
 } from '../visitSignals';
 
@@ -41,6 +44,11 @@ function everyText(): { kind: SignalKind | 'LINK'; text: string }[] {
       out.push({ kind: 'KTO_REGION_VISITORS', text });
     }
     out.push({ kind: 'KTO_REGION_VISITORS', text: ktoRankingSignalLine('부산', '2026-08', lang) ?? '' });
+    out.push({ kind: 'SITE_SAVES', text: siteSectionSignalLine('SITE_SAVES', '해운대구', lang) ?? '' });
+    out.push({ kind: 'SITE_CLICKS', text: siteSectionSignalLine('SITE_CLICKS', '해운대구', lang) ?? '' });
+    for (const text of [SITE_CLICKS_BASIS[lang].toggle, ...SITE_CLICKS_BASIS[lang].lines]) out.push({ kind: 'SITE_CLICKS', text });
+    const [saves, clicks] = siteSignalSentences({ savedCount: 100, uniqueClickers14d: 100, signalsAsOf: '2026-10-10' }, lang);
+    out.push({ kind: 'SITE_SAVES', text: saves }, { kind: 'SITE_CLICKS', text: clicks });
   }
   return out;
 }

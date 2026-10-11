@@ -405,6 +405,53 @@ class AttractionPageRendererTest : BehaviorSpec({
         }
     }
 
+    given("이 사이트 근거 줄 (찜 · 클릭)") {
+        // 경계는 리터럴이다 — 상수 이름으로 만들면 상수를 낮춰도 초록이다
+        fun signals(d: AttractionDocument): List<String> {
+            val block = Regex("""<div data-place-section="visit-signals">([\s\S]*?)</div>""").find(rootOf(render(SHELL, d)))
+                ?.groupValues?.get(1) ?: return emptyList()
+            return Regex("""<p>([\s\S]*?)</p>""").findAll(block).map { it.groupValues[1] }.toList()
+        }
+        val asOf = LocalDate.of(2026, 10, 10)
+
+        then("찜 3 · 클릭 5 — 두 줄에 기준일을 붙인다") {
+            signals(doc().copy(savedCount = 3, uniqueClickers14d = 5, signalsAsOf = asOf)) shouldBe listOf(
+                "이 사이트 회원 3명이 찜했습니다 · 2026-10-10 기준",
+                "최근 14일 이 사이트에서 5명이 눌렀습니다(같은 사람은 한 번) · 2026-10-10 기준",
+            )
+        }
+
+        then("찜 2 · 클릭 4 — 하한 미만은 줄도 절도 없다") {
+            rootOf(render(SHELL, doc().copy(savedCount = 2, uniqueClickers14d = 4, signalsAsOf = asOf))) shouldNotContain "visit-signals"
+        }
+
+        then("기준일이 없는 옛 문서는 「기준」 없이") {
+            signals(doc().copy(savedCount = 12)) shouldBe listOf("이 사이트 회원 12명이 찜했습니다")
+        }
+
+        then("영문 — 같은 두 문장, visitor 없음") {
+            val lines = signals(doc(id = "2001", lang = "en").copy(savedCount = 3, uniqueClickers14d = 5, signalsAsOf = asOf))
+            lines shouldBe listOf(
+                "3 members of this site saved this · as of 2026-10-10",
+                "5 people on this site clicked this in the last 14 days (each person counted once) · as of 2026-10-10",
+            )
+            lines.forEach { it.lowercase() shouldNotContain "visitor" }
+        }
+
+        then("행사·숙박 같은 유형 문서에도 같은 줄이 행동 줄 앞에 나온다") {
+            val root = rootOf(render(SHELL, stay().copy(savedCount = 3)))
+            root shouldContain "<div data-place-section=\"visit-signals\"><p>이 사이트 회원 3명이 찜했습니다</p></div>"
+        }
+
+        then("렌더러 출력에 「인기」「많이 본」「핫플」이 없고, 근거 줄에 「방문자」가 없다") {
+            listOf("ko", "en").forEach { lang ->
+                val root = rootOf(render(SHELL, doc(id = if (lang == "en") "2001" else "1001", lang = lang).copy(savedCount = 40, uniqueClickers14d = 40, signalsAsOf = asOf)))
+                listOf("인기", "많이 본", "핫플").forEach { root shouldNotContain it }
+                signals(doc(lang = lang).copy(savedCount = 40, uniqueClickers14d = 40, signalsAsOf = asOf)).forEach { it shouldNotContain "방문자" }
+            }
+        }
+    }
+
     given("셸을 한 번도 받지 못했을 때") {
         val html = render(null, doc())
 

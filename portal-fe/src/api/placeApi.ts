@@ -99,8 +99,12 @@ export interface Attraction {
   region?: AttractionRegion | null;
   /** 다른 시도의 비슷한 곳(같은 언어·유형) — 단건 조회에만 온다. 목록이 없으면 null. */
   similarElsewhere?: Array<{ id: string; title: string; sidoName: string | null; eventEndEffective?: string | null }> | null;
-  /** 최근 14일 클릭한 고유 방문자 수 — 단건 조회에만 온다. 신호를 못 읽은 회차·옛 문서는 null. */
+  /** 최근 14일 상세를 클릭한 고유 이용자 수 — 단건 조회에만 온다. 신호를 못 읽은 회차·옛 문서는 null. */
   uniqueClickers14d?: number | null;
+  /** 이 사이트 회원 찜 수(이 언어 문서 기준) — 목록·단건 모두. 하한(3) 미만·못 읽은 회차·옛 문서는 null. */
+  savedCount?: number | null;
+  /** 찜·클릭 신호의 기준일(재색인 날짜, `YYYY-MM-DD`) — 근거 줄의 「{날짜} 기준」. 옛 문서는 null. */
+  signalsAsOf?: string | null;
   /** 무장애 긍정 코드(`WHEELCHAIR` …) — 정보가 없으면 null. 「없음」 코드는 없다. */
   barrierFree?: string[] | null;
   /** 무장애 원천 키 → 원문 문장 — 단건 조회에만 온다. */
@@ -405,8 +409,11 @@ export interface AttractionQuery {
   lat?: number;
   lng?: number;
   radiusKm?: number;
-  /** eventStart — 유효 시작일 오름차순(같으면 id). 행사 목록이 쓴다. */
-  sort?: 'relevance' | 'distance' | 'eventStart';
+  /**
+   * eventStart — 유효 시작일 오름차순(같으면 id). 행사 목록이 쓴다.
+   * saved · clicked — 찜 수 · 14일 고유 클릭 수 내림차순. 서버가 하한(찜 3 · 클릭 5) 이상만 돌려준다.
+   */
+  sort?: 'relevance' | 'distance' | 'eventStart' | 'saved' | 'clicked';
   page?: number;
   size?: number;
   /**

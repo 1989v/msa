@@ -325,6 +325,13 @@ jobs:
           git diff --exit-code -- search/app/src/test/resources/render/visit-summary-golden.json
           test -z "$(git status --porcelain -- search/app/src/test/resources/render/visit-summary-golden.json)"
 
+      # 위 vitest 가 visitSignals siteSignalSentences 출력으로 이 사이트 근거 줄(찜·클릭) 골든을 다시 쓴다. 다르면 search 의
+      # VisitSignalsParityTest 가 옛 문장·하한과 비교하고 있다는 뜻이다.
+      - name: Visit signals golden fixture is current
+        run: |
+          git diff --exit-code -- search/app/src/test/resources/render/visit-signals-golden.json
+          test -z "$(git status --porcelain -- search/app/src/test/resources/render/visit-signals-golden.json)"
+
       # 위 vitest 가 copy.mjs attractionPhone 출력으로 전화 골든을 다시 쓴다. 다르면 search 의
       # PhoneParityTest 가 옛 규칙과 비교하고 있다는 뜻이다.
       - name: Phone golden fixture is current

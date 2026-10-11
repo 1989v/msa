@@ -1,0 +1,22 @@
+/* 이 사이트 근거(찜·클릭) — 지역 절의 「기준 보기」와 상세의 근거 줄 묶음. 색은 토큰만 쓴다(DESIGN.md) */
+.place-site-signals-basis > summary {
+  margin-top: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--ko-text-secondary);
+  cursor: pointer;
+}
+
+.place-visit-signals {
+  margin: 0.4rem 0;
+}
+
+.place-visit-signals > p {
+  margin: 0.15rem 0;
+  font-size: 0.8rem;
+  color: var(--ko-text-secondary);
+}
+
+.place-visit-signals > a {
+  font-size: 0.8rem;
+  color: inherit;
+}

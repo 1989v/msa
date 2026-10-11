@@ -74,7 +74,9 @@ import {
   wellnessLine,
   type PlaceKind,
 } from './placeAttributes';
+import { siteSignalSentences, visitorTrendLinkLabel } from './visitSignals';
 import './PlacePage.css';
+import './RegionSiteSignals.css';
 import AdSlot from '../../components/ads/AdSlot';
 import TrackedLink from '../../analytics/TrackedLink';
 import { newViewId } from '../../analytics/identity';
@@ -288,6 +290,11 @@ export default function AttractionPage() {
   const wellness = attraction ? wellnessLine(attraction, lang) : null;
   const phrase = attraction ? regionPhrase(attraction, lang) : null;
   const hubCode = attraction ? regionHubCode(attraction) : null;
+  // 이 사이트 근거 줄(찜·클릭, 하한 이상만) + 시군구 방문 추이 링크. 시군구 방문자 수치는 상세에 내지 않는다 —
+  // 같은 숫자가 시군구 안 관광지 전부에 붙는다. 링크는 시군구 코드와 이름을 다 알 때만.
+  const siteSignals = attraction ? siteSignalSentences(attraction, lang) : [];
+  const sigunguName = attraction?.region?.sigunguName?.trim();
+  const trendLink = hubCode && sigunguName ? { to: regionPath(lang, hubCode), label: visitorTrendLinkLabel(sigunguName, lang) } : null;
 
   /*
    * 주변 목록 다섯을 「주변 탐색」 한 줄로. 처음 받은 목록만 쓴다 — 지도를 옮겨도 다시 부르지 않는다.
@@ -415,6 +422,14 @@ export default function AttractionPage() {
                   <p className="place-visit-badges" data-place-section="visit-badges">
                     {summary.badgeLine}
                   </p>
+                )}
+                {(siteSignals.length > 0 || trendLink) && (
+                  <div className="place-visit-signals" data-place-section="visit-signals">
+                    {siteSignals.map((line) => (
+                      <p key={line}>{line}</p>
+                    ))}
+                    {trendLink && <Link to={trendLink.to}>{trendLink.label}</Link>}
+                  </div>
                 )}
                 {/* 행동 줄 — 길찾기(화면 전용)와 문의 전화. 번호 모양이 없으면 원문만 글로 둔다 */}
                 <div className="place-detail-actions" data-place-section="actions">

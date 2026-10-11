@@ -39,7 +39,7 @@ Total Task Groups: 7 (TG0 실측 + 지금 범위 TG1~TG6). SR-8·SR-9(사용자 
   - 없는·잘못된 `sidoCode` → 400, 캐시 키 미생성
 - [x] 2.2 UseCase 인터페이스 + Port + Adapter(ADR-0083 레이어), 컨트롤러 `GET /api/places/administrative-regions/{sidoCode}/visitor-ranking` + `RegionCaches.VISITOR_RANKING` 상수 · `RegionCacheConfig` 직렬화기·TTL 26시간 등록 · `RegionVisitorSyncService` 에서 `@CachePut` 을 다른 빈으로 호출
 - [x] 2.3 FE `RegionPage.tsx` 시도 페이지에 절 추가 — 근거 줄은 `formatSignalLine`. 시군구 페이지·상세에는 순위 없음
-- [ ] 2.4 상세에 「{시군구} 방문 추이 보기」 링크 한 줄(수치 없음) — `AttractionPage.test.tsx` 에 링크 대상·문구 단언
+- [x] 2.4 상세에 「{시군구} 방문 추이 보기」 링크 한 줄(수치 없음) — `AttractionPage.test.tsx` 에 링크 대상·문구 단언
 - [x] 2.5 검증: `./gradlew :place:feature:test --tests '*RegionVisitorRanking*'`, `npx vitest run src/pages/place/__tests__/RegionPage.test.tsx` · `RegionPage.test.tsx` 사례: 시도에만 절 · 시군구엔 없음 · 「약」 · 소수 버림 · 세종 숨김
 
 ### Task Group 3: 찜 집계 → 색인 (SR-3.1~3.3 · SR-3.6 · SR-3.7)
@@ -53,10 +53,10 @@ Total Task Groups: 7 (TG0 실측 + 지금 범위 TG1~TG6). SR-8·SR-9(사용자 
 
 ### Task Group 4: 근거 절·근거 줄 화면 (SR-3.4 · SR-3.5 · SR-4)
 **Dependencies:** TG1, TG3
-- [ ] 4.1 테스트 먼저 — `RegionPage.test.tsx`: 시군구 페이지 「많이 찜한 곳」「이 사이트에서 많이 누른 곳」이 각자 `sort` 로 질의, 3 미만이면 절 없음, 근거 줄 세 칸 · 경계·기대 문구는 리터럴 · 응답 2건이면 절 없음
-- [ ] 4.2 `AttractionPage.test.tsx`: `savedCount`·`uniqueClickers14d` 하한 이상만 근거 줄, 기준 시각 표시, 기존 배지 유지 · 경계·기대 문구는 리터럴 · 응답 2건이면 절 없음
-- [ ] 4.3 구현(RegionPage · AttractionPage · placeApi 타입)
-- [ ] 4.4 서버 렌더 `AttractionPageRenderer` 에 같은 근거 줄(하한은 search 상수). 골든 JSON 갱신은 바뀐 줄만 · 렌더러 출력에 금지어 없음 · 사이트 근거 줄에 「방문자」 없음 · 경계 리터럴(상수 이름 금지) · FE↔서버 근거 줄 골든 대조
+- [x] 4.1 테스트 먼저 — `RegionPage.test.tsx`: 시군구 페이지 「많이 찜한 곳」「이 사이트에서 많이 누른 곳」이 각자 `sort` 로 질의, 3 미만이면 절 없음, 근거 줄 세 칸 · 경계·기대 문구는 리터럴 · 응답 2건이면 절 없음
+- [x] 4.2 `AttractionPage.test.tsx`: `savedCount`·`uniqueClickers14d` 하한 이상만 근거 줄, 기준 시각 표시, 기존 배지 유지 · 경계·기대 문구는 리터럴 · 응답 2건이면 절 없음
+- [x] 4.3 구현(RegionPage · AttractionPage · placeApi 타입)
+- [x] 4.4 서버 렌더 `AttractionPageRenderer` 에 같은 근거 줄(하한은 search 상수). 골든 JSON 갱신은 바뀐 줄만 · 렌더러 출력에 금지어 없음 · 사이트 근거 줄에 「방문자」 없음 · 경계 리터럴(상수 이름 금지) · FE↔서버 근거 줄 골든 대조
 
 ### Task Group 5: 역·정류장 적재와 사전 계산 (SR-5 · SR-6)
 **Dependencies:** TG0

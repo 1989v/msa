@@ -305,3 +305,105 @@ describe('RegionPage 타지 방문자가 많은 시군구', () => {
     expect(screen.queryByRole('region', { name: '타지 방문자가 많은 시군구' })).toBeNull();
   });
 });
+
+describe('RegionPage 이 사이트 근거 절 — 많이 찜한 곳 · 이 사이트에서 많이 누른 곳', () => {
+  // 서버가 이미 하한 이상만 담아 준다 — 화면은 건수(3곳 이상)로만 절을 정한다
+  let saved: Attraction[] = [];
+  let clicked: Attraction[] = [];
+  const many = (prefix: string, n: number) => Array.from({ length: n }, (_, i) => card(`${prefix}${i}`));
+
+  beforeEach(() => {
+    vi.mocked(fetchAdministrativeRegions).mockImplementation(({ level }) =>
+      Promise.resolve(level === 'SIDO' ? [seoul] : [jongno]),
+    );
+    vi.mocked(fetchRegionVisitors).mockResolvedValue({ code: '11110', level: 'SIGUNGU', latestDate: null, months: [] });
+    vi.mocked(searchAttractions).mockImplementation((q) => {
+      const attractions = q.sort === 'saved' ? saved : q.sort === 'clicked' ? clicked : q.category === 'festival' ? [] : [card('201')];
+      return Promise.resolve({ searchId: 's', attractions, totalElements: attractions.length, totalPages: 1, currentPage: 0 });
+    });
+  });
+  afterEach(() => {
+    saved = [];
+    clicked = [];
+    vi.clearAllMocks();
+    cleanup();
+  });
+
+  it('시군구 — 두 절이 각자 sort=saved · sort=clicked 로 같은 시군구·관광 분류 상위 6을 부른다', async () => {
+    saved = many('7', 3);
+    clicked = many('8', 3);
+    renderAt('/regions/11110');
+    await screen.findByRole('region', { name: '많이 찜한 곳' });
+
+    const sorted = searchCalls().filter((q) => q.sort === 'saved' || q.sort === 'clicked');
+    expect(sorted.map((q) => q.sort).sort()).toEqual(['clicked', 'saved']);
+    for (const q of sorted) {
+      expect(q).toEqual(expect.objectContaining({
+        lang: 'ko', sidoCode: '11', sigunguCode: '110', category: 'nature,history,culture,leisure', size: 6,
+      }));
+    }
+  });
+
+  it('찜 3곳 — 절 「많이 찜한 곳」, 관광지 링크와 원천·대상·기간 근거 줄', async () => {
+    saved = many('7', 3);
+    renderAt('/regions/11110');
+    const section = await screen.findByRole('region', { name: '많이 찜한 곳' });
+
+    expect(within(section).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual([
+      '/attractions/70', '/attractions/71', '/attractions/72',
+    ]);
+    expect(within(section).getByText('이 사이트 회원 찜 · 종로구 관광지 · 누적 · 3명 이상만')).toBeInTheDocument();
+  });
+
+  it('클릭 3곳 — 절 「이 사이트에서 많이 누른 곳」, 근거 줄과 기준 보기(식별값 조작 한계)', async () => {
+    clicked = many('8', 3);
+    renderAt('/regions/11110');
+    const section = await screen.findByRole('region', { name: '이 사이트에서 많이 누른 곳' });
+
+    expect(within(section).getAllByRole('link')).toHaveLength(3);
+    expect(
+      within(section).getByText('이 사이트 이용자 클릭(같은 사람은 한 번) · 종로구 관광지 · 최근 14일 · 5명 이상만'),
+    ).toBeInTheDocument();
+    expect(within(section).getByText('기준 보기')).toBeInTheDocument();
+    expect(within(section).getByText(/조작을 막지 못합니다/)).toBeInTheDocument();
+    expect(section.textContent).not.toContain('방문자');
+  });
+
+  it('응답이 2건이면 절을 그리지 않는다', async () => {
+    saved = many('7', 2);
+    clicked = many('8', 2);
+    renderAt('/regions/11110');
+    await screen.findByText('명소 201');
+    await vi.waitFor(() => expect(searchCalls().filter((q) => q.sort === 'saved' || q.sort === 'clicked')).toHaveLength(2));
+    expect(screen.queryByRole('region', { name: '많이 찜한 곳' })).toBeNull();
+    expect(screen.queryByRole('region', { name: '이 사이트에서 많이 누른 곳' })).toBeNull();
+  });
+
+  it('영문 — 절 제목과 같은 세 칸 근거 줄', async () => {
+    saved = many('7', 3);
+    clicked = many('8', 3);
+    renderAt('/en/regions/11110');
+    const savedSection = await screen.findByRole('region', { name: 'Most saved' });
+    const clickedSection = await screen.findByRole('region', { name: 'Most clicked on this site' });
+
+    expect(within(savedSection).getAllByRole('link')[0].getAttribute('href')).toBe('/en/attractions/70');
+    expect(
+      within(savedSection).getByText('Saves by members of this site · Attractions in Jongno-gu · All time · 3 or more people only'),
+    ).toBeInTheDocument();
+    expect(
+      within(clickedSection).getByText(
+        'Clicks by people on this site (each person once) · Attractions in Jongno-gu · Last 14 days · 5 or more people only',
+      ),
+    ).toBeInTheDocument();
+    expect(clickedSection.textContent?.toLowerCase()).not.toContain('visitor');
+  });
+
+  it('시도 페이지는 두 절을 부르지도 그리지도 않는다', async () => {
+    saved = many('7', 3);
+    clicked = many('8', 3);
+    renderAt('/regions/11');
+    await screen.findByText('명소 201');
+    expect(searchCalls().some((q) => q.sort === 'saved' || q.sort === 'clicked')).toBe(false);
+    expect(screen.queryByRole('region', { name: '많이 찜한 곳' })).toBeNull();
+  });
+});

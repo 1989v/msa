@@ -162,3 +162,70 @@ export function ktoRankingSignalLine(sido: string, month: string | null | undefi
     lang,
   );
 }
+
+/** 관광지 상세의 이 사이트 근거 문장들 — 찜 → 클릭 순. 서버 렌더 `visit-signals` 절과 같은 줄(골든으로 대조한다). */
+export function siteSignalSentences(
+  a: { savedCount?: number | null; uniqueClickers14d?: number | null; signalsAsOf?: string | null },
+  lang: PlaceLang = 'ko',
+): string[] {
+  return [
+    siteSignalSentence('SITE_SAVES', a.savedCount, lang, a.signalsAsOf),
+    siteSignalSentence('SITE_CLICKS', a.uniqueClickers14d, lang, a.signalsAsOf),
+  ].filter((line): line is string => line != null);
+}
+
+/** 시군구 페이지 이 사이트 근거 절 — 상위 몇 곳을 부르나 */
+export const SITE_SECTION_SIZE = 6;
+/** 이 수보다 적게 오면 절을 숨긴다 — 한두 곳짜리 목록은 「많이」라고 부를 수 없다 */
+export const SITE_SECTION_MIN_ITEMS = 3;
+
+const SITE_SECTION_COPY: Record<
+  PlaceLang,
+  { target: (sigungu: string) => string; period: Record<'SITE_SAVES' | 'SITE_CLICKS', string>; note: (min: number) => string }
+> = {
+  ko: {
+    target: (sigungu) => `${sigungu} 관광지`,
+    period: { SITE_SAVES: '누적', SITE_CLICKS: '최근 14일' },
+    note: (min) => `${min}명 이상만`,
+  },
+  en: {
+    target: (sigungu) => `Attractions in ${sigungu}`,
+    period: { SITE_SAVES: 'All time', SITE_CLICKS: 'Last 14 days' },
+    note: (min) => `${min} or more people only`,
+  },
+};
+
+/**
+ * 시군구 페이지 절 근거 줄 — 「이 사이트 회원 찜 · {시군구} 관광지 · 누적 · 3명 이상만」,
+ * 「이 사이트 이용자 클릭(같은 사람은 한 번) · {시군구} 관광지 · 최근 14일 · 5명 이상만」.
+ */
+export function siteSectionSignalLine(kind: 'SITE_SAVES' | 'SITE_CLICKS', sigungu: string, lang: PlaceLang = 'ko'): string | null {
+  const C = SITE_SECTION_COPY[lang];
+  return formatSignalLine(
+    kind,
+    {
+      target: sigungu.trim() ? C.target(sigungu) : null,
+      period: C.period[kind],
+      note: C.note(kind === 'SITE_SAVES' ? SAVED_MIN : FREQUENTLY_CLICKED_MIN),
+    },
+    lang,
+  );
+}
+
+/** 클릭 절 「기준 보기」 — 클릭은 브라우저에 저장된 식별값으로 센다. 그 값은 이용자가 바꿀 수 있다. */
+export const SITE_CLICKS_BASIS: Record<PlaceLang, { toggle: string; lines: readonly string[] }> = {
+  ko: {
+    toggle: '기준 보기',
+    lines: [
+      '최근 14일 동안 관광지 상세를 누른 사람 수입니다. 같은 사람이 여러 번 눌러도 한 번으로 셉니다.',
+      '사람은 브라우저에 저장된 식별값으로 구분합니다. 이 값은 지우거나 바꿀 수 있어 조작을 막지 못합니다.',
+    ],
+  },
+  en: {
+    toggle: 'How this is counted',
+    lines: [
+      'People who opened the attraction page in the last 14 days. Several clicks by the same person count once.',
+      'People are told apart by an identifier stored in the browser. It can be cleared or changed, so this count cannot rule out manipulation.',
+    ],
+  },
+};

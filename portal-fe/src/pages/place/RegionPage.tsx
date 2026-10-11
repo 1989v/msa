@@ -33,6 +33,8 @@ import { secureImageUrl, titleParts } from './placeView';
 import EventLine from './EventLine';
 import RegionVisitorTrend from './RegionVisitorTrend';
 import RegionVisitorRanking from './RegionVisitorRanking';
+import RegionSiteSignals from './RegionSiteSignals';
+import { SITE_SECTION_SIZE } from './visitSignals';
 import TrackedLink from '../../analytics/TrackedLink';
 import { newViewId } from '../../analytics/identity';
 import { installFlushOnLeave } from '../../analytics/tracker';
@@ -159,6 +161,24 @@ export default function RegionPage() {
     enabled: isSido && region != null,
     staleTime: 60 * 60_000,
   });
+
+  // 시군구 「많이 찜한 곳」·「이 사이트에서 많이 누른 곳」 — 서버가 하한 이상만 정렬해 준다. 시도 페이지에는 없다.
+  const siteSignalQuery = (sort: 'saved' | 'clicked') => ({
+    queryKey: ['region-site-signal', code, lang, sort],
+    queryFn: () =>
+      searchAttractions({
+        lang,
+        sidoCode: parentCode!,
+        sigunguCode: code.slice(2),
+        category: SIGHT_CATEGORIES.join(','),
+        sort,
+        size: SITE_SECTION_SIZE,
+      }),
+    enabled: !isSido && region != null,
+    staleTime: 10 * 60_000,
+  });
+  const { data: mostSaved } = useQuery(siteSignalQuery('saved'));
+  const { data: mostClicked } = useQuery(siteSignalQuery('clicked'));
 
   // 노출 기록용 화면 식별자 (ADR-0095) — 지역이 바뀌면 새 한 벌이다
   // eslint-disable-next-line react-hooks/exhaustive-deps -- code 가 바뀔 때만 새 한 벌이다
@@ -310,6 +330,13 @@ export default function RegionPage() {
                 </TrackedLink>
               ))}
             </section>
+          )}
+
+          {!isSido && (
+            <>
+              <RegionSiteSignals kind="SITE_SAVES" items={mostSaved?.attractions ?? []} sigunguName={regionDisplayName(lang, region)} lang={lang} />
+              <RegionSiteSignals kind="SITE_CLICKS" items={mostClicked?.attractions ?? []} sigunguName={regionDisplayName(lang, region)} lang={lang} />
+            </>
           )}
         </main>
       )}

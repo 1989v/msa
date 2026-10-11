@@ -6,6 +6,7 @@ import com.kgd.search.domain.attraction.model.AttractionAttributes
 import com.kgd.search.domain.attraction.model.AttractionClickSignal
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionRegion
+import com.kgd.search.domain.attraction.model.AttractionSaveSignal
 import com.kgd.search.domain.attraction.model.Availability
 import com.kgd.search.domain.attraction.model.BarrierFreeInfo
 import com.kgd.search.domain.attraction.model.CourseStop
@@ -423,7 +424,7 @@ class AttractionPageRenderer(
     // ─── 크롤러용 본문 ──────────────────────────────────────────────────────
 
     /**
-     * 화면(AttractionPage)과 같은 순서로 절을 낸다: 브레드크럼(시군구까지) → 제목 → 방문 요약 → 배지 줄 → 행동 줄 →
+     * 화면(AttractionPage)과 같은 순서로 절을 낸다: 브레드크럼(시군구까지) → 제목 → 방문 요약 → 배지 줄 → 이 사이트 근거 줄 → 행동 줄 →
      * 개요 → 대표 사진 → 유형별 절(행사·숙박·코스) → 지역 안 위치 → 같은 분류 가까운 곳 → 비슷한 곳(다른 시도) →
      * 함께 간 곳 → 출처. 방문 요약·배지 줄은 유형별 절이 없는 유형에만 붙고, 그 유형에서는 「이용 안내」·배지 절이
      * 겹치므로 내지 않는다. 반경 주변 관광지·편의시설·근처 행사·숙소는 조회가 더 필요해 SPA 가 그린다
@@ -449,6 +450,7 @@ class AttractionPageRenderer(
             append(visitSummary(lang, doc))
             append(visitBadges(lang, doc.attributes, doc.uniqueClickers14d))
         }
+        append(siteSignals(lang, doc))
         append(actions(if (infoCenter.isNotEmpty()) doc.infoCenter else doc.tel))
         append("<p>${escapeHtml(sourceText(doc.overview))}</p>")
         append(photo(doc))
@@ -594,6 +596,27 @@ class AttractionPageRenderer(
         )
         if (items.isEmpty()) return ""
         return "<p data-place-section=\"visit-badges\">${escapeHtml(items.joinToString(" · "))}</p>"
+    }
+
+    /**
+     * 이 사이트 근거 줄 — 찜(하한 [AttractionSaveSignal.SAVED_MIN]) → 14일 고유 클릭(하한 [AttractionClickSignal.MIN_SAMPLE]) 순,
+     * 기준일(`signalsAsOf`)이 있으면 「{날짜} 기준」. 화면 `siteSignalSentences`(visitSignals.ts)와 같은 문장이고 골든으로 대조한다.
+     * 유형과 무관하게 행동 줄 앞에 둔다. 하한 미만·값 없음이면 절을 내지 않는다.
+     */
+    private fun siteSignals(lang: String, doc: AttractionDocument): String {
+        val en = lang == EN
+        val asOf = doc.signalsAsOf?.let { if (en) " · as of $it" else " · $it 기준" }.orEmpty()
+        val lines = listOfNotNull(
+            doc.savedCount?.takeIf { AttractionSaveSignal.meetsMin(it) }?.let {
+                if (en) "$it members of this site saved this" else "이 사이트 회원 ${it}명이 찜했습니다"
+            },
+            doc.uniqueClickers14d?.takeIf { AttractionClickSignal.isFrequentlyClicked(it) }?.let {
+                if (en) "$it people on this site clicked this in the last 14 days (each person counted once)"
+                else "최근 14일 이 사이트에서 ${it}명이 눌렀습니다(같은 사람은 한 번)"
+            },
+        )
+        if (lines.isEmpty()) return ""
+        return "<div data-place-section=\"visit-signals\">" + lines.joinToString("") { "<p>${escapeHtml(it + asOf)}</p>" } + "</div>"
     }
 
     /**
