@@ -7,26 +7,26 @@ Total Task Groups: 7 (TG0 실측 + 지금 범위 TG1~TG6). SR-8·SR-9(사용자 
 
 ### Task Group 0: 원천 실측 (코드 변경 없음) (SR-5.1 · SR-5.3 · 무료 티어)
 **Dependencies:** None
-- [ ] 0.1 두 원천 파일을 받아 행 수·인코딩(EUC-KR/UTF-8)·컬럼 원문·좌표 순서를 `verifications/source-sample.md` 에 적는다. 원천 파일은 스크래치패드에만 둔다(레포에 커밋하지 않는다) · 원천별 헤더 원문을 `EXPECTED_COLUMNS` 로 옮길 수 있게 그대로 적고, 파일 크기를 잰다(최대 바이트 = × 3)
-- [ ] 0.2 파일 주소가 로그인 없이 받히는지, 갱신 때 주소가 바뀌는지(`atchFileId`) 확인 → Q3 답
-- [ ] 0.3 철도 위경도가 WGS84 인지: 운영 관광지 중 역 이름을 가진 곳 5곳과 대조 → Q5 답
-- [ ] 0.4 관광지 ACTIVE `(id, lat, lng)` 투영 + 정류장 계산용 튜플 상태에서 최대 RSS 를 잰다 → 잡 `resources.limits` 값
-- [ ] 0.5 wishlist ATTRACTION 대상 찜 분포(3 이상인 대상 수)를 `ssh msa-oci` 로 센다 → SR-3.4 절이 실제로 나올지 · `wishlist_items` 전체 행 수도 적는다
-- [ ] 0.6 클릭 분포: `uniqueClickers14d ≥ 5` 관광지 수, 그런 곳이 3곳 이상인 시군구 수(재색인 로그 「최소 표본 이상 N곳」) → CDP 표본 페이지 확정
-- [ ] 0.7 서울·부산의 외지인+외국인 상위 10 시군구를 뽑아 보고, 원천의 외지인 정의(일상 이동 포함 여부)를 인용 → Q11 답
-- [ ] 0.8 버스 원천 `도시코드·관리도시명` ↔ 시군구 코드 대응을 정한다(안 되면 「관광지 10km 안 유효 정류장 0」을 미연계로 판정)
+- [x] 0.1 두 원천 파일을 받아 행 수·인코딩(EUC-KR/UTF-8)·컬럼 원문·좌표 순서를 `verifications/source-sample.md` 에 적는다. 원천 파일은 스크래치패드에만 둔다(레포에 커밋하지 않는다) · 원천별 헤더 원문을 `EXPECTED_COLUMNS` 로 옮길 수 있게 그대로 적고, 파일 크기를 잰다(최대 바이트 = × 3)
+- [x] 0.2 파일 주소가 로그인 없이 받히는지, 갱신 때 주소가 바뀌는지(`atchFileId`) 확인 → Q3 답
+- [x] 0.3 철도 위경도가 WGS84 인지: 운영 관광지 중 역 이름을 가진 곳 5곳과 대조 → Q5 답
+- [x] 0.4 관광지 ACTIVE `(id, lat, lng)` 투영 + 정류장 계산용 튜플 상태에서 최대 RSS 를 잰다 → 잡 `resources.limits` 값
+- [x] 0.5 wishlist ATTRACTION 대상 찜 분포(3 이상인 대상 수)를 `ssh msa-oci` 로 센다 → SR-3.4 절이 실제로 나올지 · `wishlist_items` 전체 행 수도 적는다
+- [x] 0.6 클릭 분포: `uniqueClickers14d ≥ 5` 관광지 수, 그런 곳이 3곳 이상인 시군구 수(재색인 로그 「최소 표본 이상 N곳」) → CDP 표본 페이지 확정
+- [x] 0.7 서울·부산의 외지인+외국인 상위 10 시군구를 뽑아 보고, 원천의 외지인 정의(일상 이동 포함 여부)를 인용 → Q11 답
+- [x] 0.8 버스 원천 `도시코드·관리도시명` ↔ 시군구 코드 대응을 정한다(안 되면 「관광지 10km 안 유효 정류장 0」을 미연계로 판정)
 
 ### Task Group 1: 근거 문구·하한 단일 원본 (SR-1)
 **Dependencies:** None · **Phase:** portal-fe, search/domain
-- [ ] 1.1 테스트 먼저 — `portal-fe/src/pages/place/__tests__/visitSignals.test.ts`
+- [x] 1.1 테스트 먼저 — `portal-fe/src/pages/place/__tests__/visitSignals.test.ts`
   - 금지어(「많이 본」「인기」「핫플」)가 국·영 문구 어디에도 없음(문구 객체를 순회해 판정)
   - `SITE_CLICKS` 문구에 「방문자」가 없음, `KTO_REGION_VISITORS` 문구에만 있음
   - 근거 줄 함수가 원천·대상·기간 세 칸을 모두 낸다(빈 칸이면 줄을 내지 않는다)
   - `SAVED_MIN`(3) · `FREQUENTLY_CLICKED_MIN`(5) 리터럴 단언
   - 하한 단언은 리터럴 경계로: 찜 2 → 줄 없음, 3 → 줄 있음 · 클릭 4 → 없음, 5 → 있음
-- [ ] 1.2 `visitSignals.ts` — 근거 종류·문구(국·영)·하한·`formatSignalLine(kind, {target, period})`
-- [ ] 1.3 search/domain 에 `SAVED_MIN` 상수(`AttractionClickSignal.MIN_SAMPLE` 옆). FE↔서버 대조 테스트를 **새로 만든다**(선례 없음): Kotlin 파일을 `readFileSync` 로 읽어 `SAVED_MIN`·`MIN_SAMPLE` 을 뽑아 FE 값과 대조, 정규식 0건이면 실패. `FREQUENTLY_CLICKED_MIN` 은 `visitSignals.ts` 로 옮기고 `placeAttributes.ts` 는 다시 내보내기만
-- [ ] 1.4 grep 게이트: `scripts/` 의 기존 FE 게이트 묶음에 「`congestion` 으로 정렬·순위 금지」 한 줄(`visitSignals.ts`·`RegionPage.tsx`·`AttractionPageRenderer.kt` 대상) + 「`AttractionPageRenderer.kt` 문자열에 「인기」「많이 본」「핫플」 없음, 사이트 근거 줄에 「방문자」 없음」 한 줄. 회귀 주입(임시 사본에 congestion 정렬 한 줄)으로 빨간불 확인
+- [x] 1.2 `visitSignals.ts` — 근거 종류·문구(국·영)·하한·`formatSignalLine(kind, {target, period})`
+- [x] 1.3 search/domain 에 `SAVED_MIN` 상수(`AttractionClickSignal.MIN_SAMPLE` 옆). FE↔서버 대조 테스트를 **새로 만든다**(선례 없음): Kotlin 파일을 `readFileSync` 로 읽어 `SAVED_MIN`·`MIN_SAMPLE` 을 뽑아 FE 값과 대조, 정규식 0건이면 실패. `FREQUENTLY_CLICKED_MIN` 은 `visitSignals.ts` 로 옮기고 `placeAttributes.ts` 는 다시 내보내기만
+- [x] 1.4 grep 게이트: `scripts/` 의 기존 FE 게이트 묶음에 「`congestion` 으로 정렬·순위 금지」 한 줄(`visitSignals.ts`·`RegionPage.tsx`·`AttractionPageRenderer.kt` 대상) + 「`AttractionPageRenderer.kt` 문자열에 「인기」「많이 본」「핫플」 없음, 사이트 근거 줄에 「방문자」 없음」 한 줄. 회귀 주입(임시 사본에 congestion 정렬 한 줄)으로 빨간불 확인
 - [ ] 1.5 `search/glossary.md` `uniqueClickers14d` 정의를 「최근 14일 관광지 상세를 클릭한 고유 이용자 수」로 바꾼다. 구현 뒤 `/hns:glossary` 로 `place/glossary.md`(spec SR-1.5 용어)를 만들고 `docs/context-map.md` BC 표에 place 한 줄
 
 ### Task Group 2: 시도 「타지 방문자가 많은 시군구」 (SR-2)

@@ -13,6 +13,7 @@ import {
   placeIntroText,
   sourceText,
 } from '../../seo/copy.mjs';
+import { FREQUENTLY_CLICKED_MIN } from './visitSignals';
 
 /*
  * 속성 패싯 — 검색 화면의 속성 칩과 상세의 방문 정보 배지.
@@ -280,11 +281,8 @@ function availability(value: string | null | undefined, yes: string, no: string)
   return null;
 }
 
-/**
- * 「많이 클릭한 곳」 최소 표본 — 14일 고유 클릭 방문자가 이 수 이상일 때만 배지를 붙인다.
- * search `AttractionClickSignal.MIN_SAMPLE`(search/domain) 과 같은 값이어야 한다 — 서버 렌더가 그 상수로 판단한다.
- */
-export const FREQUENTLY_CLICKED_MIN = 5;
+/** 「많이 클릭한 곳」 최소 표본 — 원본은 방문 근거 모듈(`visitSignals.ts`)이다. 여기서는 다시 내보내기만 한다. */
+export { FREQUENTLY_CLICKED_MIN };
 
 /**
  * 방문 정보 배지 — 해석된 값만. `UNKNOWN` 은 그리지 않는다(「모른다」가 「아니다」로 읽히지 않게).

@@ -74,7 +74,7 @@ Search BC는 **OpenSearch 기반 읽기 전용 검색 모델 서비스**. CDC + 
 |---|---|---|
 | **속성 패싯** | 관광지 문서에 재색인 때 계산해 싣는 파생 속성(휴무·주차·반려동물·신용카드·유모차 대여·무료 입장)과, 그것으로 거르는 목록 필터·건수. 값은 긍정·부정·`UNKNOWN` 이고 `UNKNOWN` 을 부정으로 바꾸지 않는다. 건수는 `facets=true` 일 때만 센다. 목록에서 「행사」를 고르면 화면이 칩·속성 조건·건수 요청을 모두 뺀다(관광지 축이라 행사에는 전부 0) | 「태그」와 다르다 — 원천에 없는 추출값이다. 코드: `search:domain` 속성 파서 |
 | **`petPolicy`** | 반려동물 동반 정책 — `ALLOWED`(전 구역) · `PARTIAL`(일부 구역) · `UNKNOWN`. place `petAcmpyType` 원문을 대응 표로 정규화한다. 운영 원문에 「불가」가 없어 부정 값이 없다 | 영문 문서는 원천이 없어 늘 `UNKNOWN` |
-| **`uniqueClickers14d`** | 최근 14일 관광지 상세를 클릭한 고유 방문자 수(`anonymous` 제외, KST 날짜). analytics `attraction_popularity_daily.unique_clickers` 를 `uniqMerge` 로 합친 값 | 원시 클릭 수 아님. `visitor_id` 가 클라이언트 값이라 조작을 막지 못한다 |
+| **`uniqueClickers14d`** | 최근 14일 관광지 상세를 클릭한 고유 이용자 수(`anonymous` 제외, KST 날짜). analytics `attraction_popularity_daily.unique_clickers` 를 `uniqMerge` 로 합친 값 | 원시 클릭 수 아님. `visitor_id` 가 클라이언트 값이라 조작을 막지 못한다 |
 | **`clickBoost`** | `uniqueClickers14d` 로 만든 순위 계수(상한·최소 표본). 검색어 있는 키워드 레그 점수에만 곱한다. 스위치 `search.attraction.click-boost.enabled` 기본 꺼짐 | `popularityScore`(정보 충실도)와 다른 값이다 |
 | **서버 렌더(관광지)** | place 호스트의 관광지 상세 요청을 search:app 이 받아 portal-fe 셸에 메타·JSON-LD·본문을 넣어 내는 것. 표지 `X-Render: ssr`(폴백은 `shell-fallback`·`proxy-fallback`) | 「프리렌더」 아님 — 빌드 때 찍는 파일은 지역 페이지뿐이다 |
 | **비슷한 곳** | 관광지마다 오프라인 도구(`tools/embed`)가 임베딩으로 고른 유사 관광지 목록. place `attraction_similar` 에 적재하고 재색인이 문서에 싣는다 | 「주변 명소」(반경 검색)와 다르다 — 거리와 무관하다 |
