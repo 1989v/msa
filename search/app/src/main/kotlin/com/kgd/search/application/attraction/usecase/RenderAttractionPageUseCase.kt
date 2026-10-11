@@ -38,7 +38,8 @@ interface RenderAttractionPageUseCase {
          * 경로 언어가 문서 언어와 다르다 — 본문 없이 문서 언어 경로로 옮긴다.
          * @property docLang 정규화한 문서 언어(en 외는 ko)
          * @property id 문서 자신의 id. 영문 짝이 있어도 짝으로 보내지 않는다(canonical 과 같은 행선)
+         * @property location 옮길 경로(호스트 없음) — canonical 을 만드는 렌더 포트의 같은 함수로 만든다
          */
-        data class Redirect(val docLang: String, val id: String) : Page
+        data class Redirect(val docLang: String, val id: String, val location: String) : Page
     }
 }

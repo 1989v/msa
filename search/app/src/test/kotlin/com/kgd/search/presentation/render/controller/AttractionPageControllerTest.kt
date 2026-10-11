@@ -38,7 +38,7 @@ class AttractionPageControllerTest : BehaviorSpec({
         searchPort, shellPort, renderer,
         Clock.fixed(Instant.parse("2026-10-08T03:00:00Z"), ZoneOffset.UTC),
     )
-    val mvc = MockMvcBuilders.standaloneSetup(AttractionPageController(service, renderer)).build()
+    val mvc = MockMvcBuilders.standaloneSetup(AttractionPageController(service)).build()
     val locationShape = Regex("^/(en/)?attractions/\\d{1,12}$")
 
     fun call(path: String): MvcResult = mvc.perform(get(path)).andReturn()

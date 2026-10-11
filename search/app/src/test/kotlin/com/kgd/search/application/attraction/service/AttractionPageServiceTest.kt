@@ -35,6 +35,7 @@ class AttractionPageServiceTest : BehaviorSpec({
         every { renderPort.attractionPage("SHELL", doc, todayKst) } returns "PAGE"
         every { renderPort.notFoundPage("SHELL", any()) } returns "NOT_FOUND"
         every { renderPort.fallbackPage("SHELL") } returns "RAW_SHELL"
+        every { renderPort.canonicalPath(any(), any()) } answers { "/${if (firstArg<String>() == "en") "en/" else ""}attractions/${secondArg<String>()}" }
     }
 
     given("색인에 있는 관광지") {
@@ -84,7 +85,7 @@ class AttractionPageServiceTest : BehaviorSpec({
             then("문서 언어(en)로 옮기라는 결과이고 조회는 한 번 · 렌더하지 않는다") {
                 val page = redirectOf(docLang = "en", pathLang = "ko")
 
-                page shouldBe RenderAttractionPageUseCase.Page.Redirect("en", "1001")
+                page shouldBe RenderAttractionPageUseCase.Page.Redirect("en", "1001", "/en/attractions/1001")
                 verify(exactly = 1) { searchPort.findById(any()) }
                 verify(exactly = 0) { renderPort.attractionPage(any(), any(), any()) }
             }
@@ -92,7 +93,7 @@ class AttractionPageServiceTest : BehaviorSpec({
 
         `when`("영문 경로로 국문 문서를 받으면") {
             then("문서 언어(ko)로 옮기라는 결과다") {
-                redirectOf(docLang = "ko", pathLang = "en") shouldBe RenderAttractionPageUseCase.Page.Redirect("ko", "1001")
+                redirectOf(docLang = "ko", pathLang = "en") shouldBe RenderAttractionPageUseCase.Page.Redirect("ko", "1001", "/attractions/1001")
             }
         }
 
@@ -101,7 +102,7 @@ class AttractionPageServiceTest : BehaviorSpec({
                 val paired = doc.copy(alternateId = "6001")
 
                 redirectOf(docLang = "ko", pathLang = "en", target = paired) shouldBe
-                    RenderAttractionPageUseCase.Page.Redirect("ko", "1001")
+                    RenderAttractionPageUseCase.Page.Redirect("ko", "1001", "/attractions/1001")
             }
         }
 
@@ -110,7 +111,7 @@ class AttractionPageServiceTest : BehaviorSpec({
                 val event = doc.copy(id = "5001", contentTypeId = "15")
 
                 redirectOf(docLang = "ko", pathLang = "en", target = event) shouldBe
-                    RenderAttractionPageUseCase.Page.Redirect("ko", "5001")
+                    RenderAttractionPageUseCase.Page.Redirect("ko", "5001", "/attractions/5001")
             }
         }
 

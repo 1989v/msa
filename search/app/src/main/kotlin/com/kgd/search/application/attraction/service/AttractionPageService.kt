@@ -34,7 +34,9 @@ class AttractionPageService(
         } ?: return RenderAttractionPageUseCase.Page.NotFound(renderPort.notFoundPage(shell, query.pathLang))
         // 렌더러와 같이 en 외는 ko 로 본다 — 정규화 없이 비교하면 lang 이 ko·en 이 아닌 문서는 어느 경로에서도 어긋나 이동이 돈다
         val docLang = if (doc.lang == EN) EN else KO
-        if (docLang != query.pathLang) return RenderAttractionPageUseCase.Page.Redirect(docLang, doc.id)
+        if (docLang != query.pathLang) {
+            return RenderAttractionPageUseCase.Page.Redirect(docLang, doc.id, renderPort.canonicalPath(docLang, doc.id))
+        }
         val today = EventSchedule.todayKst(clock.instant())
         return RenderAttractionPageUseCase.Page.Found(renderPort.attractionPage(shell, doc, today))
     }

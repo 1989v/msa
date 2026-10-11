@@ -1,6 +1,5 @@
 package com.kgd.search.presentation.render.controller
 
-import com.kgd.search.application.attraction.port.AttractionPageRenderPort
 import com.kgd.search.application.attraction.usecase.RenderAttractionPageUseCase
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -20,7 +19,6 @@ import java.security.MessageDigest
 @RestController
 class AttractionPageController(
     private val renderPage: RenderAttractionPageUseCase,
-    private val renderPort: AttractionPageRenderPort,
 ) {
 
     @GetMapping("/internal/render/attractions/{id}", produces = [MediaType.TEXT_HTML_VALUE])
@@ -37,7 +35,7 @@ class AttractionPageController(
             renderPage.notFound(pathLang)
         }
         val page = when (result) {
-            is RenderAttractionPageUseCase.Page.Redirect -> return redirect(result.docLang, id)
+            is RenderAttractionPageUseCase.Page.Redirect -> return redirect(result.location)
             is RenderAttractionPageUseCase.Page.Rendered -> result
         }
         val (status, marker) = when (page) {
@@ -58,12 +56,12 @@ class AttractionPageController(
     }
 
     /**
-     * 문서 언어 경로로 301. Location 은 경로만(호스트는 nginx·CDN 몫)이고 id 는 이미 검증한 값이다.
+     * 문서 언어 경로로 301. Location 은 경로만(호스트는 nginx·CDN 몫)이고, 서비스가 검증한 id 로 만든 값이다.
      * 본문·ETag 는 없다. 재검증 헤더는 301 에도 단다 — 없으면 브라우저·CDN 이 영구 캐시해 언어 판정을 고쳐도 되돌릴 수 없다.
      */
-    private fun redirect(docLang: String, id: String): ResponseEntity<String> =
+    private fun redirect(location: String): ResponseEntity<String> =
         ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
-            .header(HttpHeaders.LOCATION, renderPort.canonicalPath(docLang, id))
+            .header(HttpHeaders.LOCATION, location)
             .header(HttpHeaders.CACHE_CONTROL, NO_CACHE)
             .build()
 
