@@ -1,3 +1,4 @@
+import { gameSelectionGuide } from '../../seo/gameGuide.mjs';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
@@ -187,6 +188,7 @@ export default function GamesPage() {
   const catalogCount = catalogCounts[genre ?? 'all'];
   const meta = genre ? genreMeta(lang, genre, [], catalogCount ?? null) : hubMeta(lang, catalogCount);
   const guide = gameHubGuide(lang);
+  const selection = gameSelectionGuide(lang);
   const canonical = gameUrl(lang, seoSub);
   useSeo({
     // 같은 주소의 초기 메타는 유지하고, SPA 전환에서는 건수 없는 새 주소 메타를 쓴다.
@@ -391,6 +393,15 @@ export default function GamesPage() {
         <section className="games-guide" aria-labelledby="games-guide-heading">
           <h2 id="games-guide-heading">{guide.heading}</h2>
           {guide.paragraphs.map((text) => <p key={text}>{text}</p>)}
+          <h3>{selection.heading}</h3>
+          <ul className="games-guide-picks">
+            {selection.picks.map((pick) => (
+              <li key={pick.slug}>
+                <Link to={pick.href}>{pick.title}</Link>
+                <p>{pick.reason}</p>
+              </li>
+            ))}
+          </ul>
           <nav aria-label={L.genreLabel}>
             {guide.genres.map((item) => <Link key={item.href} to={item.href}>{item.label}</Link>)}
           </nav>

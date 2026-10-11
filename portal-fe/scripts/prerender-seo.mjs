@@ -1,3 +1,4 @@
+import { gamePlayGuide, gameSelectionGuide } from '../src/seo/gameGuide.mjs';
 /**
  * 빌드 후 SEO 정적 자산 생성기.
  *
@@ -650,8 +651,11 @@ function genreNav(lang, games) {
 
 function renderGameHubGuide(lang) {
   const guide = gameHubGuide(lang);
+  const selection = gameSelectionGuide(lang);
   return `<section aria-labelledby="games-guide-heading"><h2 id="games-guide-heading">${escapeHtml(guide.heading)}</h2>` +
     guide.paragraphs.map((text) => `<p>${escapeHtml(text)}</p>`).join('') +
+    `<h3>${escapeHtml(selection.heading)}</h3><ul>` +
+    selection.picks.map((pick) => `<li><a href="${escapeHtml(pick.href)}">${escapeHtml(pick.title)}</a><p>${escapeHtml(pick.reason)}</p></li>`).join('') + '</ul>' +
     `<nav>${guide.genres.map(({ href, label }) => `<a href="${escapeHtml(href)}">${escapeHtml(label)}</a>`).join('')}</nav></section>`;
 }
 
@@ -708,6 +712,9 @@ function renderGenre(shell, lang, genre, inGenre, allGames) {
 }
 
 export function renderDetail(shell, lang, game, games) {
+  const guide = gamePlayGuide(game.slug, lang);
+  const instructions = guide ? `<section aria-labelledby="game-about-heading"><h2 id="game-about-heading">${lang === 'en' ? 'About' : '소개'}</h2><dl class="game-play-guide">` +
+    guide.map((item) => `<div><dt>${escapeHtml(item.label)}</dt><dd>${escapeHtml(item.text)}</dd></div>`).join('') + '</dl></section>' : '';
   const meta = detailMeta(lang, game);
   const canonical = gameUrl(lang, `/games/${game.slug}`);
   const related = relatedGames(game, games);
@@ -744,6 +751,7 @@ export function renderDetail(shell, lang, game, games) {
         // meta.description 은 검색결과용으로 154자에 잘린 값이다. 본문까지 그걸 쓰면
         // 길게 쓴 설명이 60% 넘게 버려진 채 나간다 — 본문에는 원문을 그대로 싣는다.
         `<p>${escapeHtml(descriptionOf(game, lang) || meta.description)}</p>` +
+        instructions +
         '<ul>' +
         (game.playerMode === 'MULTI' ? `<li>${lang === 'en' ? '2+ players' : '2인 이상'}</li>` :
           game.playerMode === 'SINGLE' ? `<li>${lang === 'en' ? 'Single player' : '1인'}</li>` : '') +

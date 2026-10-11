@@ -1,3 +1,4 @@
+import { gamePlayGuide } from '../../seo/gameGuide.mjs';
 import { displayDescription, type GameDetail, type MyGameRecord, type ReleaseNote } from '../../api/gameApi';
 import { StarRating, StarRatingInput, starsFromHalves } from './StarRating';
 import type { GameLang } from '../../api/gameApi';
@@ -40,10 +41,18 @@ export function GameAboutPanel({ game, lang, favorites }: {
   lang: GameLang;
   favorites: number | null;
 }) {
+  const guide = gamePlayGuide(game.slug, lang);
   return (
     <section className="game-panel" aria-labelledby="game-about-heading">
       <h2 className="game-panel-title" id="game-about-heading">{lang === 'en' ? 'About' : '소개'}</h2>
       <p className="game-about-body">{displayDescription(game, lang)}</p>
+      {guide && (
+        <dl className="game-play-guide">
+          {guide.map((item) => (
+            <div key={item.label}><dt>{item.label}</dt><dd>{item.text}</dd></div>
+          ))}
+        </dl>
+      )}
       <div className="game-rating-summary">
         {/* ratingAvg 는 BE 척도(halves 1~10) 다 — 별과 숫자가 같은 축을 써야 9.1 과 4.6 이 함께 뜨지 않는다 */}
         {game.ratingCount > 0 && (

@@ -1,0 +1,26 @@
+[
+  {
+    "slug": "block-burst",
+    "revision": "d1bbfa6a91bda9172113c22a8b506ffa7af08c27",
+    "url": "https://game.1989v.com/games/block-burst/index.html",
+    "sourceSha256": "d99755ccdb821e5c48c577f1d56ff7a25902dbc6b3c4ac4873947e5faa8de5be",
+    "productionSha256": "0a35792479f7ac07335d28b017c377b7c75c99761969f99c2d8fd9899c5cdd34",
+    "identicalAfterRemovingAssetVersion": true
+  },
+  {
+    "slug": "mine-pioneer",
+    "revision": "d1bbfa6a91bda9172113c22a8b506ffa7af08c27",
+    "url": "https://game.1989v.com/games/mine-pioneer/index.html",
+    "sourceSha256": "edb16917ab520c75683b5a8c892bbab6f127c0eed9fa2875e5171f6af52adc04",
+    "productionSha256": "9c0cbb1e81660c6b28a64fd2f81f27fba7c5b5570528d2e7363fd9488a2abc3e",
+    "identicalAfterRemovingAssetVersion": true
+  },
+  {
+    "slug": "rift-front",
+    "revision": "d1bbfa6a91bda9172113c22a8b506ffa7af08c27",
+    "url": "https://game.1989v.com/games/rift-front/index.html",
+    "sourceSha256": "f178889cb3718dfef029c2486e842eba3c20f0b466d1742c07dfb900b8109f01",
+    "productionSha256": "263fec15250fd6cde24a10c36a537181a99502793dc516429ade0c754ad3a2a3",
+    "identicalAfterRemovingAssetVersion": true
+  }
+]

@@ -2025,3 +2025,12 @@
   .game-detail-body.is-playing > .game-detail-mine { order: 1; align-self: stretch; }
   .game-detail-body.is-playing > .game-tabpane { order: 3; }
 }
+
+/* Instruction copy uses the existing guide typography and heritage surfaces. */
+.games-guide h3 { color: var(--ko-text-primary); font-size: 1rem; font-weight: 600; }
+.games-guide-picks { list-style: none; padding: 0; display: grid; gap: 1rem; }
+.games-guide-picks li { min-width: 0; }
+.games-guide-picks p { margin: 0; }
+.game-play-guide { display: grid; gap: 1rem; margin-block: 1.5rem; font-size: 1rem; line-height: 1.7; }
+.game-play-guide dt { color: var(--ko-text-primary); font-weight: 600; }
+.game-play-guide dd { color: var(--ko-text-secondary); margin: 0; max-width: 65ch; }

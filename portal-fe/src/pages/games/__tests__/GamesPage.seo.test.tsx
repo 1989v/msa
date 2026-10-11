@@ -1,3 +1,4 @@
+import { gameSelectionGuide } from '../../../seo/gameGuide.mjs';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, expect, it, vi } from 'vitest';
@@ -36,4 +37,19 @@ it('moves to count-free metadata when a new scope fails and ignores stale counts
  await act(async () => { puzzle.reject(Error('offline')); action.resolve(page(60)); });
  expect(description()).toContain('퍼즐'); expect(description()).not.toMatch(/82종|60종|0종/);
  expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toContain('/genre/puzzle');
+});
+
+it.each(['ko', 'en'])('shows shared selection copy and local detail links: %s', async (lang) => {
+ vi.mocked(listGames).mockResolvedValue(page(82));
+ const view = mount(lang === 'en' ? '/en' : '/');
+ await screen.findByText('Game 47');
+ const guide = gameSelectionGuide(lang);
+ expect(screen.getByText(guide.heading)).toBeTruthy();
+ for (const pick of guide.picks) {
+  expect(screen.getByRole('link', { name: pick.title }).getAttribute('href')).toBe(pick.href);
+  expect(screen.getByText(pick.reason)).toBeTruthy();
+ }
+ expect(description()).toContain(lang === 'en' ? '82 free' : '82종');
+ expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(gameUrl(lang));
+ view.unmount();
 });
