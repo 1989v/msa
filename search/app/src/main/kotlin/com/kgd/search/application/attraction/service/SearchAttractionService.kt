@@ -355,6 +355,12 @@ class SearchAttractionService(
             SearchAttractionUseCase.Related(it.rank, it.id, it.title, it.sidoName, it.category)
         },
         samePlace = if (summarize) null else samePlace?.map { SearchAttractionUseCase.SamePlaceRef(it.id, it.contentTypeId) },
+        access = if (summarize) null else access?.let { a ->
+            SearchAttractionUseCase.Access(
+                a.stops.map { SearchAttractionUseCase.AccessStop(it.kind.name, it.rank, it.name, it.nameEn, it.lines, it.distanceM, it.baseDate) },
+                a.busCovered,
+            )
+        },
         alternateId = alternateId,
     )
 }

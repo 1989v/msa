@@ -1,0 +1,27 @@
+/* 가까운 역·정류장 — 행동 줄 바로 아래. 색은 토큰만 쓴다(DESIGN.md) */
+.place-access {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin: 0.5rem 0;
+}
+
+.place-access-title {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.place-access-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--ko-text-primary);
+}
+
+.place-access-note {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--ko-text-secondary);
+}

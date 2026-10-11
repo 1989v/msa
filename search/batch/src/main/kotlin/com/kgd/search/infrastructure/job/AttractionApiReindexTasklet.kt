@@ -1,6 +1,7 @@
 package com.kgd.search.infrastructure.job
 
 import com.kgd.search.domain.attraction.model.AlternateLanguagePairer
+import com.kgd.search.domain.attraction.model.AttractionAccess
 import com.kgd.search.domain.attraction.model.AttractionAttributeParser
 import com.kgd.search.domain.attraction.model.AttractionAttributeSource
 import com.kgd.search.domain.attraction.model.AttractionClickSignal
@@ -23,6 +24,7 @@ import com.kgd.search.domain.attraction.model.RelatedPlace
 import com.kgd.search.domain.attraction.model.SamePlace
 import com.kgd.search.domain.attraction.model.SamePlaceGrouper
 import com.kgd.search.domain.attraction.model.SimilarPlace
+import com.kgd.search.domain.attraction.model.TransitKind
 import com.kgd.search.domain.attraction.model.WellnessTheme
 import com.kgd.search.infrastructure.client.PlaceApiClient
 import com.kgd.search.infrastructure.client.WishlistApiClient
@@ -161,6 +163,9 @@ class AttractionApiReindexTasklet(
             var extrasLookupFailures = 0L
             var linksLookupFailures = 0L
             var withSaved = 0L
+            var withAccess = 0L
+            var busNotCovered = 0L
+            var unreadableAccessDates = 0L
 
             while (afterId != null) {
                 val response = placeApiClient.fetchPageAfter(afterId, pageSize)
@@ -262,6 +267,12 @@ class AttractionApiReindexTasklet(
                     val relatedPlaces = extra?.relatedPlaces
                         ?.let { relatedOf(attraction.id, attraction.lang, it, projections, sidoNames) { relatedNotActive++ } }
                     if (relatedPlaces != null) withRelated++
+                    // 가는 법 — place 가 계산한 줄을 순서 그대로. 줄도 미연계 안내도 없으면 싣지 않는다
+                    val access = extra?.access?.let { accessOf(it) { unreadableAccessDates++ } }?.takeIf { it.hasContent }
+                    if (access != null) {
+                        withAccess++
+                        if (access.busCovered == false) busNotCovered++
+                    }
                     val eventPeriod = attraction.eventPeriod()
                     if (EventSchedule.isEvent(attraction.contentTypeId)) {
                         when (EventSchedule.dateIssue(attraction.eventStartDate, attraction.eventEndDate)) {
@@ -344,6 +355,7 @@ class AttractionApiReindexTasklet(
                             congestion = congestion,
                             relatedPlaces = relatedPlaces,
                             samePlace = samePlaces[attraction.id.toString()],
+                            access = access,
                             contentUpdatedAt = attraction.contentUpdatedAt,
                             alternateId = if (alternatePairsEnabled) alternates[attraction.id.toString()] else null,
                         ),
@@ -379,6 +391,7 @@ class AttractionApiReindexTasklet(
                     "related $withRelated (not active $relatedNotActive), " +
                     "extras lookup failures $extrasLookupFailures, " +
                     "links lookup failures $linksLookupFailures, " +
+                    "access $withAccess (bus not covered $busNotCovered, unreadable base date $unreadableAccessDates), " +
                     "saved $withSaved (min ${AttractionSaveSignal.SAVED_MIN}${if (savedCounts == null) ", load failed" else ""}), " +
                     "attribute parser v${AttractionAttributeParser.VERSION}, index pass ${elapsedMs(indexStartedAt)}ms"
             }
@@ -559,6 +572,22 @@ class AttractionApiReindexTasklet(
     }
 
     /** 집중률 원천 → 도메인(예측일 순). 날짜를 못 읽는 날은 빼고 [onUnreadable] 로 센다. 남는 날이 없으면 null. */
+    /** 모르는 종류는 클라이언트가 이미 걸렀다. 못 읽는 기준일은 비우고 [onUnreadableDate] 로 센다 — 줄은 남긴다. */
+    private fun accessOf(dto: PlaceApiClient.AccessDto, onUnreadableDate: () -> Unit): AttractionAccess =
+        AttractionAccess(
+            stops = dto.stops.mapNotNull { stop ->
+                val kind = runCatching { TransitKind.valueOf(stop.kind) }.getOrNull() ?: return@mapNotNull null
+                val baseDate = stop.baseDate?.let { raw ->
+                    runCatching { LocalDate.parse(raw) }.getOrNull() ?: run {
+                        onUnreadableDate()
+                        null
+                    }
+                }
+                AttractionAccess.Stop(kind, stop.rank, stop.name, stop.nameEn, stop.lines, stop.distanceM, baseDate)
+            },
+            busCovered = dto.busCovered,
+        )
+
     private fun congestionOf(days: List<PlaceApiClient.CongestionDayDto>, onUnreadable: () -> Unit): List<CongestionDay>? =
         days.mapNotNull { day ->
             runCatching { LocalDate.parse(day.date) }.getOrNull()?.let { CongestionDay(it, day.rate) } ?: run {

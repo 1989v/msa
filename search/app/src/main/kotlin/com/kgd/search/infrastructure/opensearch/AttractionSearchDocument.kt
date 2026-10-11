@@ -10,7 +10,9 @@ import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionRegion
 import com.kgd.search.domain.attraction.model.Availability
 import com.kgd.search.domain.attraction.model.BarrierFreeInfo
+import com.kgd.search.domain.attraction.model.AttractionAccess
 import com.kgd.search.domain.attraction.model.CongestionDay
+import com.kgd.search.domain.attraction.model.TransitKind
 import com.kgd.search.domain.attraction.model.CourseStop
 import com.kgd.search.domain.attraction.model.EventSchedule
 import com.kgd.search.domain.attraction.model.NearbyPlace
@@ -119,6 +121,8 @@ data class AttractionSearchDocument(
     val relatedPlaces: List<RelatedPlaceEntry>? = null,
     /** 같은 장소의 다른 등록 — 상세 「복합공간」이 읽는다. 없거나 옛 문서는 없다. */
     val samePlace: List<SamePlaceEntry>? = null,
+    /** 가까운 역·정류장과 버스 원천 연계 판정 — 상세 절과 서버 렌더가 읽는다. 보일 것이 없거나 옛 문서는 없다. */
+    val access: AccessEntry? = null,
     /** 언어 대체 짝(다른 언어판 문서 id) — 상세 hreflang 이 읽는다. 짝이 없거나 짝 스위치가 꺼졌으면 없다. */
     val alternateId: String? = null,
 ) {
@@ -143,6 +147,21 @@ data class AttractionSearchDocument(
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     data class RelatedPlaceEntry(val rank: Int, val id: String, val title: String, val sidoName: String? = null, val category: String? = null)
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class AccessEntry(val stops: List<AccessStopEntry> = emptyList(), val busCovered: Boolean? = null)
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class AccessStopEntry(
+        val kind: String,
+        val rank: Int,
+        val name: String,
+        val nameEn: String? = null,
+        val lines: String? = null,
+        val distanceM: Int,
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        val baseDate: LocalDate? = null,
+    )
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     data class SamePlaceEntry(val id: String, val contentTypeId: String? = null)
@@ -240,6 +259,16 @@ data class AttractionSearchDocument(
         congestion = congestion?.takeIf { it.isNotEmpty() }?.map { CongestionDay(it.date, it.rate) },
         relatedPlaces = relatedPlaces?.takeIf { it.isNotEmpty() }?.map { RelatedPlace(it.rank, it.id, it.title, it.sidoName, it.category) },
         samePlace = samePlace?.takeIf { it.isNotEmpty() }?.map { SamePlace(it.id, it.contentTypeId) },
+        // 모르는 종류의 줄은 버린다 — 쓰기 쪽이 RAIL · BUS 만 싣는다
+        access = access?.let { a ->
+            AttractionAccess(
+                a.stops.mapNotNull { s ->
+                    val kind = TransitKind.entries.firstOrNull { it.name == s.kind } ?: return@mapNotNull null
+                    AttractionAccess.Stop(kind, s.rank, s.name, s.nameEn, s.lines, s.distanceM, s.baseDate)
+                },
+                a.busCovered,
+            ).takeIf { it.hasContent }
+        },
         alternateId = alternateId,
     )
 }

@@ -309,7 +309,11 @@
     "signalsAsOf" : "2026-10-02",
     "clickBoost" : 1.0,
     "wellnessTheme" : "EX050100",
-    "wellnessThemeName" : "온천 / 사우나 / 스파"
+    "wellnessThemeName" : "온천 / 사우나 / 스파",
+    "access" : {
+      "stops" : [ ],
+      "busCovered" : false
+    }
   }, {
     "id" : "203",
     "idSort" : 203,
@@ -349,7 +353,32 @@
     } ],
     "uniqueClickers14d" : 0,
     "signalsAsOf" : "2026-10-02",
-    "clickBoost" : 1.0
+    "clickBoost" : 1.0,
+    "access" : {
+      "stops" : [ {
+        "kind" : "RAIL",
+        "rank" : 1,
+        "name" : "서울역",
+        "nameEn" : "Seoul Station",
+        "lines" : "1·4호선",
+        "distanceM" : 999,
+        "baseDate" : "2024-12-31"
+      }, {
+        "kind" : "RAIL",
+        "rank" : 2,
+        "name" : "시청",
+        "nameEn" : "City Hall",
+        "lines" : "1·2호선",
+        "distanceM" : 1000,
+        "baseDate" : "2024-12-31"
+      }, {
+        "kind" : "BUS",
+        "rank" : 1,
+        "name" : "가락시장역4번출구.제일오피스텔",
+        "distanceM" : 120
+      } ],
+      "busCovered" : true
+    }
   }, {
     "id" : "301",
     "idSort" : 301,
@@ -694,6 +723,14 @@
     "uniqueClickers14d" : 0,
     "signalsAsOf" : "2026-10-02",
     "clickBoost" : 1.0,
+    "access" : {
+      "stops" : [ {
+        "kind" : "RAIL",
+        "rank" : 1,
+        "name" : "태종대",
+        "distanceM" : 1950
+      } ]
+    },
     "alternateId" : "601"
   } ],
   "sourceDates" : {
@@ -729,7 +766,8 @@
       "wellnessThemeCode" : null,
       "congestion" : null,
       "relatedPlaces" : null,
-      "camping" : null
+      "camping" : null,
+      "access" : null
     },
     "202" : {
       "barrierFreeFlags" : null,
@@ -737,7 +775,79 @@
       "wellnessThemeCode" : "EX050100",
       "congestion" : null,
       "relatedPlaces" : null,
-      "camping" : "{\"induty\":\"일반야영장\",\"gnrlSiteCo\":\"25\",\"sbrsCl\":\"전기,무선인터넷,장작판매\",\"animalCmgCl\":\"가능\",\"operPdCl\":\"봄,여름,가을,겨울\"}"
+      "camping" : "{\"induty\":\"일반야영장\",\"gnrlSiteCo\":\"25\",\"sbrsCl\":\"전기,무선인터넷,장작판매\",\"animalCmgCl\":\"가능\",\"operPdCl\":\"봄,여름,가을,겨울\"}",
+      "access" : {
+        "stops" : [ ],
+        "busCovered" : false
+      }
+    },
+    "203" : {
+      "barrierFreeFlags" : null,
+      "barrierFreeDetailRaw" : null,
+      "wellnessThemeCode" : null,
+      "congestion" : null,
+      "relatedPlaces" : null,
+      "camping" : null,
+      "access" : {
+        "stops" : [ {
+          "kind" : "RAIL",
+          "rank" : 1,
+          "name" : "서울역",
+          "nameEn" : "Seoul Station",
+          "lines" : "1·4호선",
+          "distanceM" : 999,
+          "baseDate" : "2024-12-31"
+        }, {
+          "kind" : "RAIL",
+          "rank" : 2,
+          "name" : "시청",
+          "nameEn" : "City Hall",
+          "lines" : "1·2호선",
+          "distanceM" : 1000,
+          "baseDate" : "2024-12-31"
+        }, {
+          "kind" : "BUS",
+          "rank" : 1,
+          "name" : "가락시장역4번출구.제일오피스텔",
+          "nameEn" : null,
+          "lines" : null,
+          "distanceM" : 120,
+          "baseDate" : "20251031"
+        } ],
+        "busCovered" : true
+      }
+    },
+    "101" : {
+      "barrierFreeFlags" : null,
+      "barrierFreeDetailRaw" : null,
+      "wellnessThemeCode" : null,
+      "congestion" : null,
+      "relatedPlaces" : null,
+      "camping" : null,
+      "access" : {
+        "stops" : [ ],
+        "busCovered" : true
+      }
+    },
+    "602" : {
+      "barrierFreeFlags" : null,
+      "barrierFreeDetailRaw" : null,
+      "wellnessThemeCode" : null,
+      "congestion" : null,
+      "relatedPlaces" : null,
+      "camping" : null,
+      "access" : {
+        "stops" : [ {
+          "kind" : "RAIL",
+          "rank" : 1,
+          "name" : "태종대",
+          "nameEn" : null,
+          "lines" : null,
+          "distanceM" : 1950,
+          "baseDate" : null
+        } ],
+        "busCovered" : null
+      }
     },
     "401" : {
       "barrierFreeFlags" : [ "WHEELCHAIR" ],
@@ -793,7 +903,8 @@
         "attractionId" : 402,
         "category" : null
       } ],
-      "camping" : null
+      "camping" : null,
+      "access" : null
     },
     "402" : {
       "barrierFreeFlags" : null,
@@ -810,7 +921,8 @@
         "rate" : 93.41
       } ],
       "relatedPlaces" : null,
-      "camping" : null
+      "camping" : null,
+      "access" : null
     }
   }
 }

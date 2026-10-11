@@ -70,6 +70,13 @@ class AttractionsIndexMappingTest : BehaviorSpec({
         }
     }
 
+    given("관광지 색인 정의의 가까운 역·정류장 필드") {
+        then("종류·이름·노선·직선거리·기준일과 버스 연계 판정은 상세 표시 전용이라 색인하지 않는 객체다") {
+            properties.path("access").path("type").asString() shouldBe "object"
+            properties.path("access").path("enabled").asBoolean(true) shouldBe false
+        }
+    }
+
     given("관광지 색인 정의의 지역 안 위치 필드") {
         `when`("표시에만 쓰는 값을 보면") {
             then("색인하지 않아야 한다") {

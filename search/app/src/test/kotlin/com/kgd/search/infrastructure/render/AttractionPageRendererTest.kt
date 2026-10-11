@@ -1,5 +1,6 @@
 package com.kgd.search.infrastructure.render
 
+import com.kgd.search.domain.attraction.model.AttractionAccess
 import com.kgd.search.domain.attraction.model.AttractionClickSignal
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionRegion
@@ -10,6 +11,7 @@ import com.kgd.search.domain.attraction.model.EventStatusText
 import com.kgd.search.domain.attraction.model.NearbyPlace
 import com.kgd.search.domain.attraction.model.RelatedPlace
 import com.kgd.search.domain.attraction.model.SimilarPlace
+import com.kgd.search.domain.attraction.model.TransitKind
 import com.kgd.search.domain.attraction.model.WellnessTheme
 import com.kgd.search.infrastructure.config.AttractionRenderProperties
 import com.kgd.search.infrastructure.render.AttractionPageFixtures.ALL_UNKNOWN
@@ -463,6 +465,65 @@ class AttractionPageRendererTest : BehaviorSpec({
                 listOf("인기", "많이 본", "핫플").forEach { root shouldNotContain it }
                 signals(doc(lang = lang).copy(savedCount = 40, uniqueClickers14d = 40, signalsAsOf = asOf)).forEach { it shouldNotContain "방문자" }
             }
+        }
+    }
+
+    given("가까운 역·정류장") {
+        // 경계·기대 문구는 리터럴이다
+        val date = LocalDate.of(2024, 12, 31)
+        fun rail(name: String, m: Int, lines: String? = null, en: String? = null, rank: Int = 1) =
+            AttractionAccess.Stop(TransitKind.RAIL, rank, name, en, lines, m, date)
+        fun bus(name: String, m: Int, rank: Int = 1) = AttractionAccess.Stop(TransitKind.BUS, rank, name, null, null, m, LocalDate.of(2025, 10, 31))
+        fun section(d: AttractionDocument): String? =
+            Regex("""<section data-place-section="access">([\s\S]*?)</section>""").find(rootOf(render(SHELL, d)))?.groupValues?.get(1)
+        fun items(d: AttractionDocument) = Regex("""<li>([\s\S]*?)</li>""").findAll(section(d).orEmpty()).map { it.groupValues[1] }.toList()
+
+        then("모든 거리 앞에 「직선거리」, 999m · 1.0km · 1.1km, 「서울역」에 역을 다시 붙이지 않는다") {
+            val d = doc().copy(
+                access = AttractionAccess(
+                    listOf(rail("서울역", 999, "1·4호선"), rail("시청", 1000, "1·2호선", rank = 2), bus("세종문화회관", 1049), bus("광화문", 1050, rank = 2)),
+                    true,
+                ),
+            )
+            items(d) shouldBe listOf(
+                "서울역 (1·4호선) · 직선거리 999m",
+                "시청역 (1·2호선) · 직선거리 1.0km",
+                "세종문화회관 버스정류장 · 직선거리 1.0km",
+                "광화문 버스정류장 · 직선거리 1.1km",
+            )
+            section(d)!! shouldNotContain "서울역역"
+            section(d)!! shouldNotContain "도보"
+            section(d)!! shouldContain "<p data-access=\"note\">직선거리이며 실제 걷는 길은 더 깁니다 · 자료 기준일 2025-10-31</p>"
+            section(d)!! shouldContain "<p data-access=\"source\">출처: 국가철도공단 도시철도 역사정보 · 국토교통부 전국 버스정류장 위치정보</p>"
+        }
+
+        then("버스 원천 미연계면 정류장 자리에 「자료 없음」, 연계 지역의 범위 밖이면 버스 줄이 없다") {
+            items(doc().copy(access = AttractionAccess(listOf(rail("서울역", 999)), false))) shouldBe
+                listOf("서울역 · 직선거리 999m", "이 지역은 버스정류장 위치 자료가 없습니다")
+            items(doc().copy(access = AttractionAccess(emptyList(), false))) shouldBe listOf("이 지역은 버스정류장 위치 자료가 없습니다")
+            items(doc().copy(access = AttractionAccess(listOf(rail("서울역", 999)), true))) shouldBe listOf("서울역 · 직선거리 999m")
+        }
+
+        then("보일 것이 없으면 절이 없다") {
+            listOf(null, AttractionAccess(emptyList(), true), AttractionAccess(emptyList(), null)).forEach { access ->
+                rootOf(render(SHELL, doc().copy(access = access))) shouldNotContain "data-place-section=\"access\""
+            }
+        }
+
+        then("영문 — 영문 역명·「Line」 노선, 정류장은 국문 이름에 「Bus stop」") {
+            items(doc(id = "2001", lang = "en").copy(access = AttractionAccess(listOf(rail("서울역", 999, "1·4호선", "Seoul Station"), bus("광화문", 120)), true))) shouldBe
+                listOf("Seoul Station (Line 1·4) · straight-line 999m", "Bus stop 광화문 · straight-line 120m")
+        }
+
+        then("절은 행동 줄 바로 뒤, 방문 요약 앞이다 — 화면과 같은 자리") {
+            val root = rootOf(render(SHELL, doc(attributes = PARSED).copy(access = AttractionAccess(listOf(rail("경복궁", 420, "3호선")), true))))
+            val order = listOf(
+                "data-place-section=\"actions\"",
+                "data-place-section=\"access\"",
+                "data-place-section=\"visit-summary\"",
+            ).map { root.indexOf(it) }
+            order.none { it < 0 } shouldBe true
+            order shouldBe order.sorted()
         }
     }
 

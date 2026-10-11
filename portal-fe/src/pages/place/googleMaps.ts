@@ -64,21 +64,26 @@ export function googleMapsSearchUrl(a: {
  * place_id 가 있으면 `destination_place_id` 로 장소에 착지한다(destination 은 표시용 이름).
  * 없으면 좌표로 넘긴다 — 도착지가 plus code 로 보이지만 핀과 경로는 맞다. 이름+주소 문자열은 길찾기에서는
  * 검색과 달리 장소를 거의 못 찾는다(운영 표본 8건 중 0건 착지 — 6건 「찾을 수 없음」, 2건 다른 장소, 2026-10-09).
- * 이동 수단은 지정하지 않는다 — 관광지는 걷기·대중교통으로 가는 경우가 많아 운전으로 고정하면 맞지 않는다.
+ * 행동 줄의 길찾기는 이동 수단을 지정하지 않는다 — 관광지는 걷기·대중교통으로 가는 경우가 많아 운전으로 고정하면 맞지 않는다.
+ * 「가까운 역·정류장」 절은 역·정류장을 보여 준 자리라 대중교통(`travelmode=transit`)으로 연다.
  */
-export function googleMapsDirectionsUrl(a: {
-  title: string;
-  googlePlaceId?: string | null;
-  address?: string | null;
-  latitude: number;
-  longitude: number;
-}): string {
+export function googleMapsDirectionsUrl(
+  a: {
+    title: string;
+    googlePlaceId?: string | null;
+    address?: string | null;
+    latitude: number;
+    longitude: number;
+  },
+  travelmode?: 'transit',
+): string {
   const base = 'https://www.google.com/maps/dir/?api=1';
+  const mode = travelmode ? `&travelmode=${travelmode}` : '';
   const placeId = (a.googlePlaceId ?? '').trim();
   if (placeId) {
-    return `${base}&destination=${encodeURIComponent(a.title)}&destination_place_id=${encodeURIComponent(placeId)}`;
+    return `${base}&destination=${encodeURIComponent(a.title)}&destination_place_id=${encodeURIComponent(placeId)}${mode}`;
   }
-  return `${base}&destination=${a.latitude},${a.longitude}`;
+  return `${base}&destination=${a.latitude},${a.longitude}${mode}`;
 }
 
 /** 지도 bounds 로부터 재검색 반경(km) 추정 — 중심~모서리 거리, 0.5~50 캡. */

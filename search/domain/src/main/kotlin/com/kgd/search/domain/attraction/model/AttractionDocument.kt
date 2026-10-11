@@ -118,6 +118,8 @@ data class AttractionDocument(
     val relatedPlaces: List<RelatedPlace>? = null,
     /** 같은 장소의 다른 등록(관광지·쇼핑 등) — 있으면 상세가 「복합공간」으로 알린다. 없거나 옛 색인 문서는 null. */
     val samePlace: List<SamePlace>? = null,
+    /** 가까운 역·정류장(place 가 주 1회 계산) — 상세 「가까운 역·정류장」 절. 줄도 미연계 안내도 없거나 옛 색인 문서는 null. */
+    val access: AttractionAccess? = null,
     /**
      * 다른 언어판 문서 id([AlternateLanguagePairer] 가 판정한 언어 대체 짝) — 있으면 상세가 서로를 hreflang 으로 잇는다.
      * [samePlace](같은 언어 안의 중복 등록)와 다른 개념이다. 짝이 없거나 짝 스위치가 꺼졌거나 옛 색인 문서면 null.

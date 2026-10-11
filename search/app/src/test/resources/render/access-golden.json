@@ -1,0 +1,424 @@
+{
+  "cases": [
+    {
+      "name": "ko-boundaries",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "5001",
+        "lang": "ko",
+        "title": "경복궁",
+        "access": {
+          "stops": [
+            {
+              "kind": "RAIL",
+              "rank": 1,
+              "name": "서울역",
+              "nameEn": "Seoul Station",
+              "lines": "1·4호선",
+              "distanceM": 999,
+              "baseDate": "2024-12-31"
+            },
+            {
+              "kind": "RAIL",
+              "rank": 2,
+              "name": "시청",
+              "lines": "1·2호선",
+              "distanceM": 1000,
+              "baseDate": "2024-12-31"
+            },
+            {
+              "kind": "BUS",
+              "rank": 1,
+              "name": "세종문화회관",
+              "distanceM": 1049,
+              "baseDate": "2025-10-31"
+            },
+            {
+              "kind": "BUS",
+              "rank": 2,
+              "name": "광화문",
+              "distanceM": 1050,
+              "baseDate": "2025-10-31"
+            }
+          ],
+          "busCovered": true
+        }
+      },
+      "output": {
+        "items": [
+          "서울역 (1·4호선) · 직선거리 999m",
+          "시청역 (1·2호선) · 직선거리 1.0km",
+          "세종문화회관 버스정류장 · 직선거리 1.0km",
+          "광화문 버스정류장 · 직선거리 1.1km"
+        ],
+        "note": "직선거리이며 실제 걷는 길은 더 깁니다 · 자료 기준일 2025-10-31",
+        "source": "출처: 국가철도공단 도시철도 역사정보 · 국토교통부 전국 버스정류장 위치정보"
+      }
+    },
+    {
+      "name": "en-boundaries",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "5002",
+        "lang": "en",
+        "title": "Gyeongbokgung Palace",
+        "access": {
+          "stops": [
+            {
+              "kind": "RAIL",
+              "rank": 1,
+              "name": "서울역",
+              "nameEn": "Seoul Station",
+              "lines": "1·4호선",
+              "distanceM": 999,
+              "baseDate": "2024-12-31"
+            },
+            {
+              "kind": "RAIL",
+              "rank": 2,
+              "name": "시청",
+              "lines": "1·2호선",
+              "distanceM": 1000,
+              "baseDate": "2024-12-31"
+            },
+            {
+              "kind": "BUS",
+              "rank": 1,
+              "name": "세종문화회관",
+              "distanceM": 1049,
+              "baseDate": "2025-10-31"
+            },
+            {
+              "kind": "BUS",
+              "rank": 2,
+              "name": "광화문",
+              "distanceM": 1050,
+              "baseDate": "2025-10-31"
+            }
+          ],
+          "busCovered": true
+        }
+      },
+      "output": {
+        "items": [
+          "Seoul Station (Line 1·4) · straight-line 999m",
+          "시청역 (Line 1·2) · straight-line 1.0km",
+          "Bus stop 세종문화회관 · straight-line 1.0km",
+          "Bus stop 광화문 · straight-line 1.1km"
+        ],
+        "note": "Straight-line distance; the actual walk is longer · Data as of 2025-10-31",
+        "source": "Source: Korea National Railway urban rail station information · Ministry of Land, Infrastructure and Transport nationwide bus stop locations"
+      }
+    },
+    {
+      "name": "ko-named-line-bus-not-covered",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "5003",
+        "lang": "ko",
+        "title": "경복궁",
+        "access": {
+          "stops": [
+            {
+              "kind": "RAIL",
+              "rank": 1,
+              "name": "광운대",
+              "nameEn": "Kwangwoon Univ.",
+              "lines": "경의중앙선·경춘선",
+              "distanceM": 1950,
+              "baseDate": "2026-06-18"
+            }
+          ],
+          "busCovered": false
+        }
+      },
+      "output": {
+        "items": [
+          "광운대역 (경의중앙선·경춘선) · 직선거리 2.0km",
+          "이 지역은 버스정류장 위치 자료가 없습니다"
+        ],
+        "note": "직선거리이며 실제 걷는 길은 더 깁니다 · 자료 기준일 2026-06-18",
+        "source": "출처: 국가철도공단 도시철도 역사정보 · 국토교통부 전국 버스정류장 위치정보"
+      }
+    },
+    {
+      "name": "en-named-line-bus-not-covered",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "5004",
+        "lang": "en",
+        "title": "Gyeongbokgung Palace",
+        "access": {
+          "stops": [
+            {
+              "kind": "RAIL",
+              "rank": 1,
+              "name": "광운대",
+              "nameEn": "Kwangwoon Univ.",
+              "lines": "경의중앙선·경춘선",
+              "distanceM": 1950,
+              "baseDate": "2026-06-18"
+            }
+          ],
+          "busCovered": false
+        }
+      },
+      "output": {
+        "items": [
+          "Kwangwoon Univ. (경의중앙선·경춘선) · straight-line 2.0km",
+          "No bus stop data for this area"
+        ],
+        "note": "Straight-line distance; the actual walk is longer · Data as of 2026-06-18",
+        "source": "Source: Korea National Railway urban rail station information · Ministry of Land, Infrastructure and Transport nationwide bus stop locations"
+      }
+    },
+    {
+      "name": "ko-not-covered-only",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "5005",
+        "lang": "ko",
+        "title": "경복궁",
+        "access": {
+          "stops": [],
+          "busCovered": false
+        }
+      },
+      "output": {
+        "items": [
+          "이 지역은 버스정류장 위치 자료가 없습니다"
+        ],
+        "note": null,
+        "source": "출처: 국토교통부 전국 버스정류장 위치정보"
+      }
+    },
+    {
+      "name": "en-not-covered-only",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "5006",
+        "lang": "en",
+        "title": "Gyeongbokgung Palace",
+        "access": {
+          "stops": [],
+          "busCovered": false
+        }
+      },
+      "output": {
+        "items": [
+          "No bus stop data for this area"
+        ],
+        "note": null,
+        "source": "Source: Ministry of Land, Infrastructure and Transport nationwide bus stop locations"
+      }
+    },
+    {
+      "name": "ko-covered-empty",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "5007",
+        "lang": "ko",
+        "title": "경복궁",
+        "access": {
+          "stops": [],
+          "busCovered": true
+        }
+      },
+      "output": null
+    },
+    {
+      "name": "en-covered-empty",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "5008",
+        "lang": "en",
+        "title": "Gyeongbokgung Palace",
+        "access": {
+          "stops": [],
+          "busCovered": true
+        }
+      },
+      "output": null
+    },
+    {
+      "name": "ko-bus-only-no-date",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "5009",
+        "lang": "ko",
+        "title": "경복궁",
+        "access": {
+          "stops": [
+            {
+              "kind": "BUS",
+              "rank": 1,
+              "name": "경복궁역",
+              "distanceM": 85
+            }
+          ]
+        }
+      },
+      "output": {
+        "items": [
+          "경복궁역 버스정류장 · 직선거리 85m"
+        ],
+        "note": "직선거리이며 실제 걷는 길은 더 깁니다",
+        "source": "출처: 국토교통부 전국 버스정류장 위치정보"
+      }
+    },
+    {
+      "name": "en-bus-only-no-date",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "5010",
+        "lang": "en",
+        "title": "Gyeongbokgung Palace",
+        "access": {
+          "stops": [
+            {
+              "kind": "BUS",
+              "rank": 1,
+              "name": "경복궁역",
+              "distanceM": 85
+            }
+          ]
+        }
+      },
+      "output": {
+        "items": [
+          "Bus stop 경복궁역 · straight-line 85m"
+        ],
+        "note": "Straight-line distance; the actual walk is longer",
+        "source": "Source: Ministry of Land, Infrastructure and Transport nationwide bus stop locations"
+      }
+    },
+    {
+      "name": "ko-none",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "5011",
+        "lang": "ko",
+        "title": "경복궁"
+      },
+      "output": null
+    },
+    {
+      "name": "en-none",
+      "input": {
+        "contentId": "126508",
+        "contentTypeId": "12",
+        "category": "history",
+        "address": "서울특별시 종로구 사직로 161",
+        "location": {
+          "lat": 37.5796,
+          "lon": 126.977
+        },
+        "ldongRegnCd": "11",
+        "sidoName": "서울특별시",
+        "id": "5012",
+        "lang": "en",
+        "title": "Gyeongbokgung Palace"
+      },
+      "output": null
+    }
+  ]
+}

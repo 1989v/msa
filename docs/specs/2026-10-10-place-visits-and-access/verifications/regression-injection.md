@@ -145,3 +145,44 @@ place 쪽은 컨트롤러가 받은 JSON → 도메인 검사(400), Testcontaine
 
 못 잡는 것(알고 둔다): 버스 묶음 전송 중 실패(네트워크)의 재시도는 `place_client._request` 의 연결 재시도뿐이고, 같은 묶음 재전송이 같은 자연 키를 덮는다는 것은
 `PlaceSchemaIntegrationSpec` 이 「다시 보낸 묶음은 행이 늘지 않는다」로 본다. 실제 원천 23만 행 적재 소요는 운영 첫 회차(TG6.4)에서 잰다.
+
+# 회귀 주입 — 가까운 역·정류장 색인·화면·서버 렌더 (TG6 배포 전)
+
+같은 방식이다. 임시 사본(스크래치패드 `regress-tg6/`, `node_modules`·`build`·`.git`·`.gradle` 을 뺀 rsync 사본 + `portal-fe/node_modules` 심링크)에
+하나씩 넣고 검사를 돌린 뒤 원본으로 되돌렸다. 스크립트 `inject-tg6.py` 가 되돌린 파일을 사본 원본·워킹트리와 대조하고, 화면 골든 생성기가 사본에서
+다시 쓴 골든·캡처도 되돌린다. 판정은 vitest JSON 리포트·JUnit XML 의 실패 테스트 이름, 게이트는 `verifySearchIndexContract` 출력 줄이다.
+주입은 전부 `npx tsc -b` exit 0 · Kotlin 컴파일 통과다(`compile_error=False`).
+
+판정 근거: 화면·서버 모두 리터럴 기대 문구(「서울역 (1·4호선) · 직선거리 999m」「시청역 (1·2호선) · 직선거리 1.0km」, 1,049 → 「1.0km」 · 1,050 → 「1.1km」,
+「이 지역은 버스정류장 위치 자료가 없습니다」), 서버는 렌더된 HTML 의 `access` 절, 패리티는 **화면 `accessView` 출력으로 쓴 골든** ↔ 서버 HTML,
+색인 왕복은 태스클릿이 쓴 bulk 문서 캡처 → 읽기 문서 → 상세 결과다.
+
+| # | 주입 (사본) | 컴파일 | 빨개진 테스트 |
+|---|---|---|---|
+| R33 | 화면 「직선거리」 문구 빼기(`accessLines.ts` `distance: '직선거리'` → `''`) | tsc exit 0 | `AttractionAccess.test.tsx` 「모든 거리 앞에 「직선거리」…」 외 2 · `AttractionPage.test.tsx` 「가까운 역·정류장은 행동 줄 바로 아래…」 · `accessLinesGolden.test.ts` 1 (5 / 97) |
+| R34 | 서버 「직선거리」 문구 빼기(렌더러 `"직선거리"` → `""`) | 컴파일 통과 | `AttractionPageRendererTest` 「모든 거리 앞에 「직선거리」…」·「버스 원천 미연계면…」, `AttractionAccessParityTest` 3건 |
+| R35 | 화면 km 경계 `meters < 1000` → `<= 1000` | tsc exit 0 | `AttractionAccess.test.tsx` 2 · `accessLinesGolden.test.ts` 1 (3 / 97) |
+| R36 | 서버 km 경계 `meters < 1000` → `<= 1000` | 컴파일 통과 | 렌더러 1 · 패리티 2(`*-boundaries` 국·영) |
+| R37 | 화면 역명에 무조건 「역」(`서울역역`) | tsc exit 0 | `AttractionAccess.test.tsx` 3 · `accessLinesGolden.test.ts` 1 (4 / 97) |
+| R38 | 화면 미연계 안내를 줄이 있을 때만 냄 | tsc exit 0 | 「버스 원천 미연계 지역은 「자료 없음」을…」 · 「영문은…」 (2 / 97) |
+| R39 | 읽기 문서 `toDomain()` 이 `access` 를 버림(`.takeIf { false }`) | 컴파일 통과 | `AttractionReindexCaptureTest` 「place 가 준 줄·순서·연계 판정을…」·「가까운 역·정류장이 상세 결과까지 남는다」, `AttractionAccessParityTest` 8건 |
+| R40 | 읽기 문서 필드 이름 `access` → `accessInfo`(매핑과 어긋남) | 컴파일 통과 | `verifySearchIndexContract` — 「반드시 읽어야 할 필드를 안 읽는다: access」 외 2줄 |
+| R41 | 배치 클라이언트가 extras 의 `access` 를 읽지 않음(`access = null`) | 컴파일 통과 | `PlaceApiClientTest` 「무장애 코드·원문과 웰니스 코드가 그대로 나오고…」(access 만 있는 51 · 미연계만 있는 52 단언) (1 / 24) |
+| R42 | 태스클릿이 문서에 `access = null` | 컴파일 통과 | `AttractionApiReindexTaskletTest` 「가까운 역·정류장은 place 순서 그대로…」 (1 / 42) |
+| R43 | 서버 렌더 본문에서 `accessSection` 호출 삭제 | 컴파일 통과 | 렌더러 4(자리 순서 포함) · 패리티 8 |
+| R44 | 화면 안내 문구만 「더 깁니다」→「더 길 수 있습니다」, 사본에서 골든 재생성 뒤 서버 패리티 | tsc exit 0 · 컴파일 통과 | `AttractionAccessParityTest` 3건(국문 안내 줄이 있는 사례) — 패리티가 화면 출력과 서버 HTML 을 실제로 맞댄다 |
+
+TG6.7 목록 대조: FE `SAVED_MIN` 2 → R1·R20, search/domain `SAVED_MIN` 2 → R3·R24, batch `min` 2 → R12, 「직선거리」 빼기 → R33(화면)·R34(서버),
+congestion 정렬 한 줄 → R4, 헤더 검사 한 줄 삭제 → TG5 R20.
+
+명령(사본 루트에서):
+
+```bash
+(cd portal-fe && npx tsc -b && npx vitest run src/pages/place/__tests__/{AttractionAccess.test.tsx,AttractionPage.test.tsx,accessLinesGolden.test.ts})
+./gradlew :search:app:test --tests '*AttractionPageRenderer*' --tests '*AttractionAccessParity*' --tests '*AttractionReindexCapture*'
+./gradlew :search:batch:test --tests '*AttractionApiReindexTasklet*' --tests '*PlaceApiClientTest*' --tests '*AttractionsIndexMapping*'
+./gradlew verifySearchIndexContract
+```
+
+못 잡는 것(알고 둔다): 목록 응답(`summarize`)에서 `access` 를 빼는 것은 테스트하지 않았다 — 같은 서비스 테스트 파일을 다른 작업이 고치는 중이라
+그 파일에 사례를 더하지 않았다. 구글 지도 대중교통 링크는 외부 링크라 서버 렌더에 없고 화면만 그린다(패리티 대상 밖).

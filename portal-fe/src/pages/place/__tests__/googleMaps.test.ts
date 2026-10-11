@@ -142,6 +142,13 @@ describe('googleMapsDirectionsUrl', () => {
     expect(url.searchParams.has('travelmode')).toBe(false);
   });
 
+  it('「가까운 역·정류장」 절은 대중교통 모드를 지정한다 — 기본 링크는 그대로 둔다', () => {
+    const url = new URL(googleMapsDirectionsUrl({ ...base, googlePlaceId: 'ChIJx' }, 'transit'));
+    expect(url.searchParams.get('travelmode')).toBe('transit');
+    expect(url.searchParams.get('destination_place_id')).toBe('ChIJx');
+    expect(new URL(googleMapsDirectionsUrl(base, 'transit')).searchParams.get('destination')).toBe('37.5796,126.977');
+  });
+
   it('place_id 가 없으면 주소가 있어도 좌표 — 이름+주소 문자열은 길찾기에서 착지하지 못한다', () => {
     expect(new URL(googleMapsDirectionsUrl(base)).searchParams.get('destination')).toBe('37.5796,126.977');
     expect(new URL(googleMapsDirectionsUrl({ ...base, googlePlaceId: '  ' })).searchParams.get('destination')).toBe('37.5796,126.977');

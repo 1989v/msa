@@ -116,6 +116,22 @@ class PlaceApiClient(
         val relatedPlaces: List<RelatedPlaceDto>? = null,
         /** 「캠핑장 정보」 JSON 객체 문자열 그대로 — place 가 고캠핑 원문에서 화면용 키만 골라 준다 */
         val camping: String? = null,
+        /** 가까운 역·정류장 — place 가 주 1회 계산한 줄과 버스 원천 연계 판정. 줄도 판정도 없으면 null */
+        val access: AccessDto? = null,
+    )
+
+    /** 가는 법 — [stops] 는 place 순서(RAIL→BUS, 순위 순) 그대로, [busCovered] 는 시군구 버스 원천 연계 판정(판정 전 null). */
+    data class AccessDto(val stops: List<AccessStopDto>, val busCovered: Boolean?)
+
+    /** 역·정류장 한 줄 — [baseDate] 는 place 가 준 `yyyy-MM-dd` 문자열 그대로. 버스는 [nameEn]·[lines] 가 없다. */
+    data class AccessStopDto(
+        val kind: String,
+        val rank: Int,
+        val name: String,
+        val nameEn: String?,
+        val lines: String?,
+        val distanceM: Int,
+        val baseDate: String?,
     )
 
     /** 연관 관광지 한 건 — place 가 고른 순서(원천 순위 순) 그대로. [category] 는 원천 소분류 이름. */
@@ -391,7 +407,7 @@ class PlaceApiClient(
     }
 
     /**
-     * 부가 정보(무장애 · 웰니스 · 집중률 · 연관 관광지) 묶음 조회 — 표마다 따로 부르지 않고 한 번에 받는다. 아무것도 없는 id 는 응답에 없다.
+     * 부가 정보(무장애 · 웰니스 · 집중률 · 연관 관광지 · 가는 법) 묶음 조회 — 표마다 따로 부르지 않고 한 번에 받는다. 아무것도 없는 id 는 응답에 없다.
      * 무장애 상세는 원문 문자열 그대로 받는다 — 줄을 고르는 규칙은 도메인([com.kgd.search.domain.attraction.model.BarrierFreeInfo])이 갖는다.
      */
     suspend fun lookupExtras(ids: List<Long>): Map<Long, ExtrasDto> {
@@ -434,11 +450,27 @@ class PlaceApiClient(
                     val id = (p["attractionId"] as? Number)?.toLong() ?: return@mapNotNull null
                     RelatedPlaceDto(rank, id, p["category"] as? String)
                 },
+                access = (item["access"] as? Map<*, *>)?.let(::accessOf),
             )
         }
     }
 
+    /** 종류·순위·이름·거리가 빠졌거나 모르는 종류인 줄은 건너뛴다 — 거리·순위를 지어내지 않는다. */
+    private fun accessOf(access: Map<*, *>): AccessDto = AccessDto(
+        stops = (access["stops"] as? List<*>).orEmpty().mapNotNull { stop ->
+            val s = stop as? Map<*, *> ?: return@mapNotNull null
+            val kind = (s["kind"] as? String)?.takeIf { it in ACCESS_KINDS } ?: return@mapNotNull null
+            val rank = (s["rank"] as? Number)?.toInt() ?: return@mapNotNull null
+            val name = (s["name"] as? String)?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+            val distanceM = (s["distanceM"] as? Number)?.toInt() ?: return@mapNotNull null
+            AccessStopDto(kind, rank, name, s["nameEn"] as? String, s["lines"] as? String, distanceM, s["baseDate"] as? String)
+        },
+        busCovered = access["busCovered"] as? Boolean,
+    )
+
     companion object {
+        private val ACCESS_KINDS = setOf("RAIL", "BUS")
+
         /** 서버 `AttractionEmbeddingInternalController.MAX_BATCH` 와 같은 값. */
         const val LOOKUP_MAX_BATCH = 500
 

@@ -551,6 +551,8 @@ val searchReadRequired = mapOf(
         "alternateId", "contentUpdatedAt",
         // 찜 수·근거 기준일 — 상세 근거 줄과 「많이 찜한 곳」이 읽는다. 빠지면 근거 줄이 조용히 사라진다
         "savedCount", "signalsAsOf",
+        // 가까운 역·정류장 — 상세 절과 서버 렌더 본문이 읽는다. 빠지면 절이 조용히 사라진다
+        "access",
     ),
 )
 

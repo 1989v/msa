@@ -34,6 +34,7 @@ import {
 import { useSeo } from '../../seo/useSeo';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import AttractionLinks from './AttractionLinks';
+import AttractionAccess from './AttractionAccess';
 import AttractionConditions from './AttractionConditions';
 import AttractionInfoTabs from './AttractionInfoTabs';
 import { googleMapsDirectionsUrl, googleMapsSearchUrl, mapsApiKey } from './googleMaps';
@@ -464,6 +465,26 @@ export default function AttractionPage() {
                       <span className="place-detail-phone">{phone.text}</span>
                     ))}
                 </div>
+                {/* 가까운 역·정류장 — 길찾기 바로 아래(같은 「가는 법」 묶음). 첫 행동은 대중교통 길찾기, 보일 것이 없으면 절이 없다 */}
+                <AttractionAccess
+                  access={attraction.access}
+                  lang={lang}
+                  directionsHref={googleMapsDirectionsUrl(attraction, 'transit')}
+                  onDirectionsClick={() =>
+                    track(
+                      'CLICK',
+                      {
+                        entityType: 'ATTRACTION',
+                        entityId: attraction.id,
+                        screenType: 'ATTRACTION_DETAIL',
+                        screenRef: id,
+                        sectionId: 'DIRECTIONS',
+                        payload: { kind: 'google_maps_transit_directions' },
+                      },
+                      viewId,
+                    )
+                  }
+                />
                 {summary && (
                   <section className="place-visit" aria-label={L.summary} data-place-section="visit-summary">
                     <dl className="place-detail-info-list">

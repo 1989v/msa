@@ -70,10 +70,10 @@ Total Task Groups: 7 (TG0 실측 + 지금 범위 TG1~TG6). SR-8·SR-9(사용자 
 
 ### Task Group 6: 가는 법 화면 + 운영 확인 (SR-6.4 · SR-7 · 검증)
 **Dependencies:** TG4, TG5
-- [ ] 6.1 search batch `access` 매핑(`enabled:false`)·문서 필드, 재색인 테스트 증보 · 읽기 문서·UseCase·매핑에 `access` 를 잇고 `searchReadRequired` 에 넣는다
-- [ ] 6.2 테스트 먼저 — `AttractionAccess.test.tsx`: 「직선거리」가 모든 거리 앞에, 1km 경계 표기, 도보 시간 문구 없음, 항목 없으면 절 없음, 영문 역명/「Bus stop」 · 기대 문구 리터럴(「직선거리 999m」「직선거리 1.0km」) · 「서울역」에 「역」 중복 없음 · 미연계 지역 → 「이 지역은 버스정류장 위치 자료가 없습니다」, 연계 지역 범위 밖 → 버스 줄 없음
-- [ ] 6.3 `AttractionAccess.tsx` + `AttractionPage` 배치(길찾기 옆) + 서버 렌더 같은 목록 · `AttractionPageRendererTest` 에 가는 법 목록 증보 + FE·서버 같은 문구 골든 대조
+- [x] 6.1 search batch `access` 매핑(`enabled:false`)·문서 필드, 재색인 테스트 증보 · 읽기 문서·UseCase·매핑에 `access` 를 잇고 `searchReadRequired` 에 넣는다
+- [x] 6.2 테스트 먼저 — `AttractionAccess.test.tsx`: 「직선거리」가 모든 거리 앞에, 1km 경계 표기, 도보 시간 문구 없음, 항목 없으면 절 없음, 영문 역명/「Bus stop」 · 기대 문구 리터럴(「직선거리 999m」「직선거리 1.0km」) · 「서울역」에 「역」 중복 없음 · 미연계 지역 → 「이 지역은 버스정류장 위치 자료가 없습니다」, 연계 지역 범위 밖 → 버스 줄 없음
+- [x] 6.3 `AttractionAccess.tsx` + `AttractionPage` 배치(길찾기 옆) + 서버 렌더 같은 목록 · `AttractionPageRendererTest` 에 가는 법 목록 증보 + FE·서버 같은 문구 골든 대조
 - [ ] 6.4 배포 후: `transit-stops` 1회 수동 실행 로그(행 수·무효 좌표 수·관광지 중 역/정류장이 붙은 비율), 재색인 소요 전후 · search-batch→account 임시 파드 탐침(15초 대기 + 무관 라벨 대조군)
 - [ ] 6.5 표본 10곳 직선거리 대조(±30m) → `verifications/distance-check.md`
 - [ ] 6.6 CDP 4조합(국·영 × 모바일·데스크톱)으로 상세·시도·시군구 근거 줄과 가는 법 DOM 텍스트 기록. 헤드리스 크롬은 start·측정·stop 한 명령 · 대상은 TG0.6 으로 고른 근거 있는 표본 + 근거 없는 페이지(절 숨김), 표본 0이면 컴포넌트 테스트로만 확인했다고 적는다
-- [ ] 6.7 회귀 주입(임시 사본, 컴파일·tsc 통과하는 회귀만): FE `SAVED_MIN` 2 · search/domain `SAVED_MIN` 2 · batch `min` 2 · 「직선거리」 문구 빼기 · congestion 정렬 한 줄 · 헤더 검사 한 줄 삭제 — 각각 빨개지는 테스트 이름을 `verifications/regression-injection.md` 에
+- [x] 6.7 회귀 주입(임시 사본, 컴파일·tsc 통과하는 회귀만): FE `SAVED_MIN` 2 · search/domain `SAVED_MIN` 2 · batch `min` 2 · 「직선거리」 문구 빼기 · congestion 정렬 한 줄 · 헤더 검사 한 줄 삭제 — 각각 빨개지는 테스트 이름을 `verifications/regression-injection.md` 에

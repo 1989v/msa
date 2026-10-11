@@ -181,6 +181,11 @@ interface SearchAttractionUseCase {
         /** 같은 장소의 다른 등록(관광지·쇼핑 등) — 단건 조회에만. 있으면 화면이 「복합공간」으로 알리고 잇는다. */
         val samePlace: List<SamePlaceRef>? = null,
         /**
+         * 가까운 역·정류장 — 단건 조회에만. [Access.busCovered] 가 false 면 화면이 「이 지역은 버스정류장 위치 자료가 없습니다」를,
+         * null 은 판정 전이다. 줄도 미연계 안내도 없으면 null.
+         */
+        val access: Access? = null,
+        /**
          * 다른 언어판 문서 id(언어 대체 짝) — 목록·단건 모두. 상세 hreflang 과 sitemap 이 읽는다.
          * 짝이 없거나 짝 스위치가 꺼졌으면 null.
          */
@@ -189,6 +194,20 @@ interface SearchAttractionUseCase {
 
     /** 같은 장소의 다른 등록 — 제목은 이 관광지와 같다. [contentTypeId] 로 화면이 「쇼핑」 등을 붙인다. */
     data class SamePlaceRef(val id: String, val contentTypeId: String?)
+
+    /** 가는 법 — [stops] 는 종류(RAIL→BUS)·순위 순. */
+    data class Access(val stops: List<AccessStop>, val busCovered: Boolean?)
+
+    /** [kind] 는 RAIL · BUS, [distanceM] 은 직선거리(m), [baseDate] 는 원천 기준일(역)·수집일(정류장). 버스는 [nameEn]·[lines] 가 없다. */
+    data class AccessStop(
+        val kind: String,
+        val rank: Int,
+        val name: String,
+        val nameEn: String?,
+        val lines: String?,
+        val distanceM: Int,
+        val baseDate: java.time.LocalDate?,
+    )
 
     /** [category] 는 원천 소분류 이름 그대로. */
     data class Related(val rank: Int, val id: String, val title: String, val sidoName: String?, val category: String?)

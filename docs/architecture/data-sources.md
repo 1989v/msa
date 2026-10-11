@@ -318,7 +318,9 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
   원천 교체는 회차 단위다 — 2,000행 묶음을 새 회차로 쌓고 활성화 한 번으로 바꾼 뒤 옛 회차를 지운다. 같은 이름(끝 「역」 뗌) 역의 노선별 행은 500m 안이면
   한 역으로 묶고 노선을 「1·4호선」처럼 합친다(같은 이름 행 사이 거리는 394m 이하 아니면 2km 이상으로 갈린다). 같은 이름 정류장(길 건너 쌍)은 가까운 하나만.
   직선거리는 하버사인이고 **도보 시간은 만들지 않는다**(길 경로 자료가 없다).
-- 서빙: 재색인이 `/internal/attractions/extras/lookup` 의 `access` 로 받아 색인에 싣는다(사용자 요청 경로에 외부 호출 없음). 원천 표는 화면이 읽지 않는다.
+- 서빙: 재색인이 `/internal/attractions/extras/lookup` 의 `access` 로 받아 색인 문서 `access`(줄 + `busCovered`, 색인하지 않는 객체)에 싣는다(사용자 요청 경로에 외부 호출 없음).
+  줄이 없고 연계 지역이면 싣지 않는다. 원천 표는 화면이 읽지 않는다. 상세 「가까운 역·정류장」 절(행동 줄 바로 아래)과 서버 렌더 본문이 같은 줄을 낸다 —
+  「서울역 (1·4호선) · 직선거리 999m」, 1,000m 부터 「1.0km」. 두 쪽 문구는 골든 `search/app/src/test/resources/render/access-golden.json` 으로 대조한다.
 
 > 원천 raw 응답은 레포에 커밋하지 않는다. 정규화 산출물만 적재한다.
 > 예외: 테스트 픽스처와 스펙 표본(`place/ingest/tests/fixtures/sample-*.json`, `place/ingest/tests/fixtures/phase2-*.json`,

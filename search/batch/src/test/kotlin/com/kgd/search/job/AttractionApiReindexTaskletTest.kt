@@ -534,7 +534,30 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                 null,
             ),
             // 웰니스 국문 표본의 테마 코드 — 이름은 운영 분류 코드표 값
-            202L to PlaceApiClient.ExtrasDto(null, null, "EX050100", camping = CAMPING),
+            // 가는 법 — 줄은 없고 시군구가 버스 원천 연계 지역 밖이다(화면은 「자료 없음」을 낸다)
+            202L to PlaceApiClient.ExtrasDto(null, null, "EX050100", camping = CAMPING, access = PlaceApiClient.AccessDto(emptyList(), false)),
+            // 가는 법만 있는 곳 — 다른 칸이 다 비어도 실린다. 역 2·정류장 1(place 가 준 순서 그대로), 못 읽는 기준일은 빈다
+            203L to PlaceApiClient.ExtrasDto(
+                null, null, null,
+                access = PlaceApiClient.AccessDto(
+                    listOf(
+                        PlaceApiClient.AccessStopDto("RAIL", 1, "서울역", "Seoul Station", "1·4호선", 999, "2024-12-31"),
+                        PlaceApiClient.AccessStopDto("RAIL", 2, "시청", "City Hall", "1·2호선", 1_000, "2024-12-31"),
+                        PlaceApiClient.AccessStopDto("BUS", 1, "가락시장역4번출구.제일오피스텔", null, null, 120, "20251031"),
+                    ),
+                    busCovered = true,
+                ),
+            ),
+            // 줄도 없고 연계 지역이면 보일 것이 없다 — 필드를 싣지 않는다
+            101L to PlaceApiClient.ExtrasDto(null, null, null, access = PlaceApiClient.AccessDto(emptyList(), true)),
+            // 영문 문서 — 역은 원천 영문 역명이 함께 온다
+            602L to PlaceApiClient.ExtrasDto(
+                null, null, null,
+                access = PlaceApiClient.AccessDto(
+                    listOf(PlaceApiClient.AccessStopDto("RAIL", 1, "태종대", null, null, 1_950, null)),
+                    busCovered = null,
+                ),
+            ),
             // 상세 원문을 못 읽으면 코드만 싣는다. 연관 관광지 — place 가 고른 순위 순 그대로 온다. 자기 자신(401) · 끝난 행사(103) ·
             // 영문 문서(403) · 겹친 id(202) 는 빠지고, 남는 앞의 6곳만 실린다(302 · 402 는 잘린다)
             401L to PlaceApiClient.ExtrasDto(
@@ -620,6 +643,21 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                 listOf("101", "201", "202", "402").forEach { id -> sources.getValue(id).keys shouldNotContain "relatedPlaces" }
             }
 
+            then("가까운 역·정류장은 place 순서 그대로 종류·순위·이름·노선·직선거리·기준일을 싣고, 줄 없는 연계 지역은 필드가 없다") {
+                sources.getValue("203")["access"] shouldBe mapOf(
+                    "stops" to listOf(
+                        mapOf("kind" to "RAIL", "rank" to 1, "name" to "서울역", "nameEn" to "Seoul Station", "lines" to "1·4호선", "distanceM" to 999, "baseDate" to "2024-12-31"),
+                        mapOf("kind" to "RAIL", "rank" to 2, "name" to "시청", "nameEn" to "City Hall", "lines" to "1·2호선", "distanceM" to 1000, "baseDate" to "2024-12-31"),
+                        mapOf("kind" to "BUS", "rank" to 1, "name" to "가락시장역4번출구.제일오피스텔", "distanceM" to 120),
+                    ),
+                    "busCovered" to true,
+                )
+                // 미연계 시군구는 줄이 없어도 판정이 실린다
+                sources.getValue("202")["access"] shouldBe mapOf("stops" to emptyList<Any>(), "busCovered" to false)
+                (sources.getValue("602")["access"] as Map<*, *>).keys shouldBe setOf("stops")
+                listOf("101", "201", "401").forEach { id -> sources.getValue(id).keys shouldNotContain "access" }
+            }
+
             then("같은 시군구·제목·1km 안의 다른 등록을 서로 싣고(제목 없이 id·유형만), 없는 문서는 필드가 없다") {
                 sources.getValue("501")["samePlace"] shouldBe listOf(mapOf("id" to "502", "contentTypeId" to "38"))
                 sources.getValue("502")["samePlace"] shouldBe listOf(mapOf("id" to "501", "contentTypeId" to "12"))
@@ -698,6 +736,8 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
             then("완료 로그에 유효 기간 적재 · S>E · 날짜 없음 · 코스 적재 · 해석 실패 · 링크 못 단 지점 수가 남는다") {
                 val complete = logs.list.map { it.formattedMessage }.single { it.startsWith("Attraction reindex complete") }
                 complete shouldContain "events (today 2026-10-02) period 3, S>E 1, no date 1"
+                // 가는 법 — 실린 문서 셋(203 · 202 미연계 · 602), 기준일을 못 읽은 줄 하나
+                complete shouldContain "access 3 (bus not covered 1, unreadable base date 1)"
                 complete shouldContain "courses stops 1, unreadable infoRaw 1, unmatched stops 5"
                 complete shouldContain "barrier-free 2 (unreadable 1), wellness 1, congestion 1 (unreadable days 1), " +
                     "related 1 (not active 2), extras lookup failures 0"

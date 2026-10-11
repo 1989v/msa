@@ -7,6 +7,7 @@ import com.kgd.search.application.attraction.usecase.CategoryLexiconUseCase
 import com.kgd.search.application.attraction.service.SearchAttractionService
 import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.application.queryvector.usecase.ResolveQueryVectorUseCase
+import com.kgd.search.domain.attraction.model.AttractionAccess
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionFee
 import com.kgd.search.domain.attraction.model.AttractionKey
@@ -17,6 +18,7 @@ import com.kgd.search.domain.attraction.model.EventPeriod
 import com.kgd.search.domain.attraction.model.EventSchedule
 import com.kgd.search.domain.attraction.model.RelatedPlace
 import com.kgd.search.domain.attraction.model.SamePlace
+import com.kgd.search.domain.attraction.model.TransitKind
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
 import com.kgd.search.domain.query.model.QueryIntent
 import io.kotest.core.spec.style.BehaviorSpec
@@ -99,7 +101,32 @@ class AttractionReindexCaptureTest : BehaviorSpec({
             .takeIf { it.isNotEmpty() }
     }
 
+    /** 캡처의 place 가는 법을 재색인 규칙에 다시 넣은 기대값 — 못 읽는 기준일은 비우고, 줄도 미연계 안내도 없으면 null. */
+    fun expectedAccess(id: String): AttractionAccess? =
+        capture.sourceExtras[id]?.access?.let { a ->
+            AttractionAccess(
+                a.stops.map { s ->
+                    AttractionAccess.Stop(
+                        TransitKind.valueOf(s.kind), s.rank, s.name, s.nameEn, s.lines, s.distanceM,
+                        s.baseDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
+                    )
+                },
+                a.busCovered,
+            ).takeIf { it.hasContent }
+        }
+
     given("태스클릿이 만든 bulk 문서를 읽기 문서로 읽으면") {
+        `when`("가까운 역·정류장을 보면") {
+            then("place 가 준 줄·순서·연계 판정을 재색인 규칙에 넣은 값과 같다 — 없는 문서는 null 이다") {
+                documents.keys.forEach { id -> (id to documents.getValue(id).access) shouldBe (id to expectedAccess(id)) }
+                // 대조군: 줄 있는 문서 · 미연계만 있는 문서 · 보일 것이 없어 빠진 문서(101)가 모두 있어야 위 비교가 무언가를 잰다
+                documents.getValue("203").access!!.stops.size shouldBe 3
+                documents.getValue("202").access shouldBe AttractionAccess(emptyList(), false)
+                capture.sourceExtras.getValue("101").access shouldNotBe null
+                documents.getValue("101").access shouldBe null
+            }
+        }
+
         `when`("연관 관광지를 보면") {
             then("place 가 준 순서·순위를 재색인 규칙에 넣은 값과 같다 — 없는 문서는 null 이다") {
                 documents.keys.forEach { id ->
@@ -284,6 +311,19 @@ class AttractionReindexCaptureTest : BehaviorSpec({
                 service.findById("201")!!.signalsAsOf shouldBe LocalDate.of(2026, 10, 2)
             }
 
+            then("가까운 역·정류장이 상세 결과까지 남는다") {
+                documents.keys.forEach { id ->
+                    val expected = expectedAccess(id)?.let { a ->
+                        SearchAttractionUseCase.Access(
+                            a.stops.map { SearchAttractionUseCase.AccessStop(it.kind.name, it.rank, it.name, it.nameEn, it.lines, it.distanceM, it.baseDate) },
+                            a.busCovered,
+                        )
+                    }
+                    (id to service.findById(id)!!.access) shouldBe (id to expected)
+                }
+                service.findById("203")!!.access!!.stops.first().let { it.name to it.distanceM } shouldBe ("서울역" to 999)
+            }
+
             then("같은 장소의 다른 등록이 상세 결과까지 남는다") {
                 service.findById("501")!!.samePlace shouldBe listOf(SearchAttractionUseCase.SamePlaceRef("502", "38"))
                 service.findById("201")!!.samePlace shouldBe null
@@ -330,6 +370,19 @@ class AttractionReindexCaptureTest : BehaviorSpec({
         val wellnessThemeCode: String? = null,
         val congestion: List<SourceCongestionDay>? = null,
         val relatedPlaces: List<SourceRelated>? = null,
+        val access: SourceAccess? = null,
+    )
+
+    private data class SourceAccess(val stops: List<SourceAccessStop> = emptyList(), val busCovered: Boolean? = null)
+
+    private data class SourceAccessStop(
+        val kind: String,
+        val rank: Int,
+        val name: String,
+        val nameEn: String? = null,
+        val lines: String? = null,
+        val distanceM: Int,
+        val baseDate: String? = null,
     )
 
     private data class SourceRelated(val rank: Int, val attractionId: Long, val category: String? = null)

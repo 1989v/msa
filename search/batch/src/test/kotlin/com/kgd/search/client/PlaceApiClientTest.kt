@@ -230,12 +230,18 @@ class PlaceApiClientTest : BehaviorSpec({
               {"attractionId":31,"barrierFree":null,"wellness":null,
                "congestion":{"matchMethod":"EXACT","days":[{"date":"2026-10-02","rate":47.16},{"date":"2026-10-03","rate":52}]}},
               {"attractionId":41,"barrierFree":null,"wellness":null,"congestion":null,
-               "relatedPlaces":[{"rank":2,"attractionId":601,"category":"자연경관(하천/해양)"},{"rank":4,"attractionId":602,"category":null},{"rank":5}]}
+               "relatedPlaces":[{"rank":2,"attractionId":601,"category":"자연경관(하천/해양)"},{"rank":4,"attractionId":602,"category":null},{"rank":5}]},
+              {"attractionId":51,"barrierFree":null,"wellness":null,"access":{"stops":[
+                {"kind":"RAIL","rank":1,"name":"서울역","nameEn":"Seoul Station","lines":"1·4호선","distanceM":999,"baseDate":"2024-12-31"},
+                {"kind":"BUS","rank":1,"name":"가락시장역4번출구.제일오피스텔","nameEn":null,"lines":null,"distanceM":120,"baseDate":"2025-10-31"},
+                {"kind":"TRAM","rank":1,"name":"모름","distanceM":10},
+                {"kind":"BUS","rank":2,"name":"거리 없음"}],"busCovered":true}},
+              {"attractionId":52,"barrierFree":null,"wellness":null,"access":{"stops":[],"busCovered":false}}
             ]}}
             """.trimIndent(),
         )
         requestedUris.clear()
-        val found = kotlinx.coroutines.runBlocking { client.lookupExtras(listOf(11L, 21L, 30L)) }
+        val found = kotlinx.coroutines.runBlocking { client.lookupExtras(listOf(11L, 21L, 30L, 51L, 52L)) }
 
         When("항목을 읽는다") {
             Then("무장애 코드·원문과 웰니스 코드가 그대로 나오고, 없는 쪽은 null 이다") {
@@ -254,6 +260,17 @@ class PlaceApiClientTest : BehaviorSpec({
                     PlaceApiClient.RelatedPlaceDto(4, 602L, null),
                 )
                 found.getValue(31L).relatedPlaces shouldBe null
+                // 가까운 역·정류장 — 다른 칸이 다 비어도 access 가 실린다(빈 묶음이 되지 않는다). 모르는 종류·거리 없는 줄은 건너뛴다
+                found.getValue(51L).access shouldBe PlaceApiClient.AccessDto(
+                    listOf(
+                        PlaceApiClient.AccessStopDto("RAIL", 1, "서울역", "Seoul Station", "1·4호선", 999, "2024-12-31"),
+                        PlaceApiClient.AccessStopDto("BUS", 1, "가락시장역4번출구.제일오피스텔", null, null, 120, "2025-10-31"),
+                    ),
+                    busCovered = true,
+                )
+                // 줄이 없어도 미연계 판정은 남는다 — 화면이 「자료 없음」을 낸다
+                found.getValue(52L).access shouldBe PlaceApiClient.AccessDto(emptyList(), busCovered = false)
+                found.getValue(41L).access shouldBe null
                 found.containsKey(30L) shouldBe false
                 requestedUris.single() shouldBe "/internal/attractions/extras/lookup"
             }

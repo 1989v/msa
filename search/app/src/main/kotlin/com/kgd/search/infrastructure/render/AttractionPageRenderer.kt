@@ -2,6 +2,7 @@ package com.kgd.search.infrastructure.render
 
 import com.kgd.search.application.attraction.port.AttractionPageRenderPort
 import com.kgd.search.domain.attraction.model.Admission
+import com.kgd.search.domain.attraction.model.AttractionAccess
 import com.kgd.search.domain.attraction.model.AttractionAttributes
 import com.kgd.search.domain.attraction.model.AttractionClickSignal
 import com.kgd.search.domain.attraction.model.AttractionDocument
@@ -16,6 +17,7 @@ import com.kgd.search.domain.attraction.model.PetPolicy
 import com.kgd.search.domain.attraction.model.RegularClosure
 import com.kgd.search.domain.attraction.model.RelatedPlace
 import com.kgd.search.domain.attraction.model.SimilarPlace
+import com.kgd.search.domain.attraction.model.TransitKind
 import com.kgd.search.domain.attraction.model.WellnessTheme
 import com.kgd.search.infrastructure.config.AttractionRenderProperties
 import com.kgd.search.domain.attraction.model.AttractionSeoText.attractionPhone
@@ -424,7 +426,7 @@ class AttractionPageRenderer(
     // ─── 크롤러용 본문 ──────────────────────────────────────────────────────
 
     /**
-     * 화면(AttractionPage)과 같은 순서로 절을 낸다: 브레드크럼(시군구까지) → 제목 → 행동 줄 → 방문 요약 → 배지 줄 → 이 사이트 근거 줄 →
+     * 화면(AttractionPage)과 같은 순서로 절을 낸다: 브레드크럼(시군구까지) → 제목 → 행동 줄 → 가까운 역·정류장 → 방문 요약 → 배지 줄 → 이 사이트 근거 줄 →
      * 개요 → 대표 사진 → 유형별 절(행사·숙박·코스) → 지역 안 위치 → 같은 분류 가까운 곳 → 비슷한 곳(다른 시도) →
      * 함께 간 곳 → 출처. 방문 요약·배지 줄은 유형별 절이 없는 유형에만 붙고, 그 유형에서는 「이용 안내」·배지 절이
      * 겹치므로 내지 않는다. 반경 주변 관광지·편의시설·근처 행사·숙소는 조회가 더 필요해 SPA 가 그린다
@@ -446,6 +448,7 @@ class AttractionPageRenderer(
         val infoCenter = sourceText(doc.infoCenter)
         if (!doc.tel.isNullOrEmpty() && infoCenter.isNotEmpty()) append("<p>${escapeHtml(doc.tel)}</p>")
         append(actions(if (infoCenter.isNotEmpty()) doc.infoCenter else doc.tel))
+        append(accessSection(lang, doc.access))
         val typed = typeSection(lang, doc, today)
         if (typed == null) {
             append(visitSummary(lang, doc))
@@ -628,6 +631,62 @@ class AttractionPageRenderer(
         val text = escapeHtml(phone.text)
         val item = phone.href?.let { "<a href=\"${escapeHtml(it)}\">$text</a>" } ?: text
         return "<p data-place-section=\"actions\">$item</p>"
+    }
+
+    /**
+     * 가까운 역·정류장 — 화면 `accessView`(portal-fe `accessLines.ts`)와 같은 줄·안내·출처(골든 `access-golden.json` 으로 대조).
+     * 모든 거리 앞에 「직선거리」를 쓰고 도보 시간은 내지 않는다. 구글 지도 대중교통 길찾기는 외부 링크라 화면만 그린다.
+     * 줄이 없고 미연계도 아니면 절이 없다.
+     */
+    private fun accessSection(lang: String, access: AttractionAccess?): String {
+        if (access == null) return ""
+        val en = lang == EN
+        val rail = access.stops.filter { it.kind == TransitKind.RAIL }
+        val bus = access.stops.filter { it.kind == TransitKind.BUS }
+        val busNoData = access.busCovered == false
+        if (rail.isEmpty() && bus.isEmpty() && !busNoData) return ""
+        val items = rail.map { accessLine(en, it) } +
+            if (busNoData) listOf(if (en) "No bus stop data for this area" else "이 지역은 버스정류장 위치 자료가 없습니다") else bus.map { accessLine(en, it) }
+        val shown = if (busNoData) rail else rail + bus
+        val latest = shown.mapNotNull { it.baseDate }.maxOrNull()?.toString()
+        val noteText = if (en) "Straight-line distance; the actual walk is longer" else "직선거리이며 실제 걷는 길은 더 깁니다"
+        val note = when {
+            shown.isEmpty() -> null
+            latest == null -> noteText
+            else -> "$noteText · ${if (en) "Data as of $latest" else "자료 기준일 $latest"}"
+        }
+        val sources = buildList {
+            if (rail.isNotEmpty()) add(if (en) "Korea National Railway urban rail station information" else "국가철도공단 도시철도 역사정보")
+            if (bus.isNotEmpty() || busNoData) {
+                add(if (en) "Ministry of Land, Infrastructure and Transport nationwide bus stop locations" else "국토교통부 전국 버스정류장 위치정보")
+            }
+        }
+        return buildString {
+            append("<section data-place-section=\"access\"><h2>${if (en) "Nearby stations and stops" else "가까운 역·정류장"}</h2><ul>")
+            items.forEach { append("<li>${escapeHtml(it)}</li>") }
+            append("</ul>")
+            note?.let { append("<p data-access=\"note\">${escapeHtml(it)}</p>") }
+            append("<p data-access=\"source\">${escapeHtml("${if (en) "Source" else "출처"}: ${sources.joinToString(" · ")}")}</p></section>")
+        }
+    }
+
+    /** 「서울역 (1·4호선) · 직선거리 999m」 · 「광화문 버스정류장 · 직선거리 1.1km」 / 「Seoul Station (Line 1·4) · straight-line 999m」 · 「Bus stop 광화문 · …」 */
+    private fun accessLine(en: Boolean, stop: AttractionAccess.Stop): String {
+        val distance = "${if (en) "straight-line" else "직선거리"} ${accessDistance(stop.distanceM)}"
+        if (stop.kind == TransitKind.BUS) return if (en) "Bus stop ${stop.name} · $distance" else "${stop.name} 버스정류장 · $distance"
+        val koName = if (stop.name.endsWith("역")) stop.name else "${stop.name}역"
+        val name = stop.nameEn?.trim()?.takeIf { en && it.isNotEmpty() } ?: koName
+        val lines = stop.lines?.trim()?.takeIf { it.isNotEmpty() }
+            ?.let { l -> " (${if (en) NUMBERED_LINES.matchEntire(l)?.let { "Line ${it.groupValues[1]}" } ?: l else l})" }
+            .orEmpty()
+        return "$name$lines · $distance"
+    }
+
+    /** 999m · 1.0km — 1,000m 부터 km, 소수 첫째 자리(반올림). 화면 `accessDistance` 와 같은 정수 계산이다. */
+    private fun accessDistance(meters: Int): String {
+        if (meters < 1000) return "${meters}m"
+        val tenths = (meters + 50) / 100
+        return "${tenths / 10}.${tenths % 10}km"
     }
 
     /**
@@ -908,6 +967,8 @@ class AttractionPageRenderer(
     }
 
     private companion object {
+        /** 「1·4호선」 → 영문 「Line 1·4」. 번호 노선이 아니면 원천 표기 그대로 */
+        val NUMBERED_LINES = Regex("""^(\d+(?:·\d+)*)호선$""")
         /** 고캠핑 사이트 수 키 — (원문 키, 국문, 영문). 화면 `CampingInfo` 와 같은 순서 */
         private val CAMPING_SITES = listOf(
             Triple("gnrlSiteCo", "일반", "Tent"),

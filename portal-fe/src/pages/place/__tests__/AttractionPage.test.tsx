@@ -1321,6 +1321,45 @@ describe('AttractionPage 첫 화면 — 방문 요약 · 행동 줄', () => {
     expect(screen.getAllByRole('link', { name: '구글 지도에서 보기' })).toHaveLength(1);
   });
 
+  it('가까운 역·정류장은 행동 줄 바로 아래·방문 요약 위 — 대중교통 길찾기를 누르면 CLICK DIRECTIONS(transit)', async () => {
+    const a: Attraction = {
+      ...first,
+      googlePlaceId: 'ChIJgbg',
+      access: {
+        stops: [{ kind: 'RAIL', rank: 1, name: '경복궁', nameEn: 'Gyeongbokgung', lines: '3호선', distanceM: 420, baseDate: '2024-12-31' }],
+        busCovered: false,
+      },
+    };
+    vi.mocked(fetchAttraction).mockResolvedValue(a);
+    renderAt('/attractions/100');
+    const access = await screen.findByRole('region', { name: '가까운 역·정류장' });
+
+    expect(access.previousElementSibling).toBe(actions());
+    expect(isBefore(access, at('[data-place-section="visit-summary"]'))).toBe(true);
+    expect([...access.querySelectorAll('li')].map((li) => li.textContent)).toEqual([
+      '경복궁역 (3호선) · 직선거리 420m',
+      '이 지역은 버스정류장 위치 자료가 없습니다',
+    ]);
+    const transit = within(access).getByRole('link', { name: '대중교통 길찾기' });
+    expect(transit).toHaveAttribute('href', googleMapsDirectionsUrl(a, 'transit'));
+    expect(new URL(transit.getAttribute('href') ?? '').searchParams.get('travelmode')).toBe('transit');
+    vi.mocked(track).mockClear();
+    fireEvent.click(transit);
+    expect(vi.mocked(track).mock.calls.filter(([action]) => action === 'CLICK').map(([, e]) => e)).toEqual([
+      {
+        entityType: 'ATTRACTION', entityId: '100', screenType: 'ATTRACTION_DETAIL', screenRef: '100',
+        sectionId: 'DIRECTIONS', payload: { kind: 'google_maps_transit_directions' },
+      },
+    ]);
+  });
+
+  it('가까운 역·정류장이 없으면 절이 없다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...first, access: { stops: [], busCovered: true } });
+    renderAt('/attractions/100');
+    await screen.findByRole('heading', { level: 1, name: '경복궁' });
+    expect(document.querySelector('[data-place-section="access"]')).toBeNull();
+  });
+
   it('시군구 코드가 없으면 브레드크럼은 시도까지다', async () => {
     vi.mocked(fetchAttraction).mockResolvedValue({ ...first, region: { ...first.region!, ldongSignguCd: null } });
     renderAt('/attractions/100');

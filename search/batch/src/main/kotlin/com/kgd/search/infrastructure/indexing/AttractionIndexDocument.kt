@@ -157,6 +157,8 @@ data class AttractionIndexDocument(
     val relatedPlaces: List<RelatedPlaceEntry>? = null,
     /** 같은 장소의 다른 등록 — 상세 「복합공간」 표시 전용(mapping: enabled=false). 없으면 빈다. */
     val samePlace: List<SamePlaceEntry>? = null,
+    /** 가까운 역·정류장과 버스 원천 연계 판정 — 상세 절 표시 전용(mapping: enabled=false). 줄도 미연계 안내도 없으면 빈다. */
+    val access: AccessEntry? = null,
     /** 언어 대체 짝(다른 언어판 문서 id) — 상세 hreflang 이 읽는다. 짝이 없거나 짝 스위치가 꺼졌으면 빈다. */
     val alternateId: String? = null,
 ) {
@@ -192,6 +194,23 @@ data class AttractionIndexDocument(
 
     /** 같은 장소의 다른 등록 한 건 — 제목은 자기와 같아 싣지 않는다. */
     data class SamePlaceEntry(val id: String, val contentTypeId: String? = null)
+
+    /** 가는 법 — [busCovered] 는 판정 전이면 빈다. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    data class AccessEntry(val stops: List<AccessStopEntry>, val busCovered: Boolean? = null)
+
+    /** 역·정류장 한 줄 — [kind] 는 RAIL · BUS, [distanceM] 은 하버사인 직선거리(m). 버스는 영문 이름·노선이 없다. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    data class AccessStopEntry(
+        val kind: String,
+        val rank: Int,
+        val name: String,
+        val nameEn: String? = null,
+        val lines: String? = null,
+        val distanceM: Int,
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        val baseDate: LocalDate? = null,
+    )
 
     /** 집중률 예측 하루 — [rate] 는 원천 값 그대로(0~100). */
     data class CongestionEntry(
@@ -283,6 +302,12 @@ data class AttractionIndexDocument(
                 relatedPlaces = doc.relatedPlaces?.takeIf { it.isNotEmpty() }
                     ?.map { RelatedPlaceEntry(it.rank, it.id, it.title, it.sidoName, it.category) },
                 samePlace = doc.samePlace?.takeIf { it.isNotEmpty() }?.map { SamePlaceEntry(it.id, it.contentTypeId) },
+                access = doc.access?.takeIf { it.hasContent }?.let { a ->
+                    AccessEntry(
+                        a.stops.map { AccessStopEntry(it.kind.name, it.rank, it.name, it.nameEn, it.lines, it.distanceM, it.baseDate) },
+                        a.busCovered,
+                    )
+                },
                 alternateId = doc.alternateId,
             )
         }
