@@ -499,12 +499,64 @@ a.place-card:focus-visible {
 
 .place-card-meta {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  min-width: 0;
+  white-space: nowrap;
   font-family: var(--kh-font-mono);
   letter-spacing: var(--kh-tracking-mono);
   font-size: 0.72rem;
   /* 황토 원색은 라이트 카드 위 2.79:1 — 글씨용 황토(다크는 원색 그대로) */
   color: var(--kh-ocher-text, var(--ko-accent-primary));
+}
+
+/* 허브 카드 meta 는 한 줄이다 — 분류·거리·찜은 줄지 않고 지역 라벨 칸만 줄어 말줄임된다 */
+.place-card-meta > span {
+  flex-shrink: 0;
+}
+
+.place-card-meta > span + span:not(.place-sr-only)::before {
+  content: '·' / '';
+  margin-inline-end: 0.4rem;
+}
+
+.place-card-meta > .place-card-region {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/*
+ * 카드 상태 배지 — 확인된 상태(휴무·무료·반려·무장애·주차) 최대 3. 상세의 「배지 줄」(.place-badge)과 같은
+ * 상태 표시 모양(9999px)이고, 카드 높이를 지키려고 항상 한 줄이다: 줄 높이를 고정하고 넘친 배지는 통째로
+ * 다음 줄로 내려가 max-height 밖에서 숨는다(잘린 배지가 보이지 않는다).
+ */
+.place-card-badges {
+  --place-card-badge-h: calc(16px + 2 * 3px + 2 * 1px); /* line-height + padding + border = 24px */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  max-height: var(--place-card-badge-h);
+  overflow: hidden;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.place-card-badges li {
+  padding: 3px 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid var(--ko-border-default);
+  color: var(--ko-text-secondary);
+  font-size: 0.72rem;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+/* 오늘 휴무 — 색만으로 뜻을 나르지 않는다(글자가 말한다). 굵기와 글씨용 강조색을 함께 준다 */
+.place-card-badges li.is-closed-today {
+  color: var(--ko-accent-text, var(--ko-accent-primary));
+  font-weight: 700;
 }
 
 .place-card-addr {
@@ -519,7 +571,8 @@ a.place-card:focus-visible {
   font-size: 0.82rem;
   color: var(--ko-text-secondary);
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  /* 한 줄 — 카드 상태 배지 줄이 늘어난 만큼 개요가 줄어 카드 높이가 늘지 않는다 */
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

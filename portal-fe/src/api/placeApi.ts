@@ -64,6 +64,8 @@ export interface Attraction {
   infoRaw?: string | null;
   /** 시도 이름. 색인이 들고 있어 화면이 285행 목록을 받지 않는다 (ADR-0095). */
   sidoName?: string | null;
+  /** 시군구 이름(언어별) — 목록·단건 모두. 옛 응답에는 없다. */
+  sigunguName?: string | null;
   /** 외부 링크 원문 JSON — `{ collected, deepLinks }`. 상세에서 DB 를 부르지 않는다. */
   links?: string | null;
   /**

@@ -27,6 +27,10 @@ import { addFavorite, fetchFavoriteKeys, removeFavorite } from '../../../api/wis
 import { resetIdentityForTest } from '../../../analytics/identity';
 import { pendingForTest, resetTrackerForTest } from '../../../analytics/tracker';
 import PlacePage, { resetPlaceSessionForTest } from '../PlacePage';
+import { DWELL_MS } from '../../../analytics/useImpression';
+import { advance, installIntersectionObserver } from '../../../components/ads/__tests__/adsTestKit';
+import { cardFacts } from '../placeAttributes';
+import { todayKst } from '../../../seo/eventSchedule';
 
 const seoul: AdministrativeRegion = {
   code: '11', parentCode: null, level: 'SIDO', name: '서울특별시', nameEn: 'Seoul', latitude: 37.56, longitude: 126.97, attractionCount: 4321,
@@ -254,5 +258,43 @@ describe('PlacePage 계측 — 실제 트래커', () => {
     expect(favs.map((e) => e.payload)).toEqual([{ saved: true }, { saved: false }]);
     expect(favs.map((e) => e.viewId)).toEqual([initial.viewId, next.viewId]);
     expect(favs.map((e) => e.entityId)).toEqual(['a1', 'a1']);
+  });
+
+  // 배지별 CTR 을 볼 수 있게 노출·클릭 둘 다 카드 상태 배지 code 를 싣는다 — 기대값은 대상 함수(cardFacts)가 낸 값이다
+  it('⑤ 카드 노출·클릭 payload.badges = cardFacts 의 code 배열(빈 배열 포함), 기존 키·source 는 그대로', async () => {
+    const rich: Attraction = {
+      ...item('a1'), contentTypeId: '12', closureState: 'ALWAYS_OPEN', attrAdmission: 'FREE', petPolicy: 'ALLOWED', attrParking: 'YES',
+    };
+    vi.mocked(searchAttractions).mockImplementation((q) =>
+      Promise.resolve({
+        searchId: 's', attractions: [rich, item('a2')], totalElements: 2, totalPages: 1, currentPage: q.page ?? 0, attributeFacets: null,
+      }),
+    );
+    const expected = cardFacts(rich, 'ko', todayKst()).badges.map((b) => b.code);
+    expect(expected).toEqual(['alwaysOpen', 'free', 'pet']);
+
+    const io = installIntersectionObserver();
+    renderPage();
+    await untilInitial();
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      io.show(1);
+      await advance(DWELL_MS);
+      const imps = byAction('IMPRESSION');
+      expect(imps.map((e) => [e.entityId, e.sectionId, e.itemIndex, e.payload])).toEqual([
+        ['a1', 'ATTRACTION_LIST', 0, { badges: expected }],
+        ['a2', 'ATTRACTION_LIST', 1, { badges: [] }],
+      ]);
+
+      fireEvent.click(cardOf('관광지 a1'));
+      fireEvent.click(cardOf('관광지 a2'), { metaKey: true });
+      const clicks = byAction('CLICK').filter((e) => e.sectionId === 'ATTRACTION_LIST');
+      expect(clicks.map((e) => [e.entityId, e.itemIndex, e.payload])).toEqual([
+        ['a1', 0, { source: 'card', badges: expected }],
+        ['a2', 1, { source: 'card', newTab: true, badges: [] }],
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

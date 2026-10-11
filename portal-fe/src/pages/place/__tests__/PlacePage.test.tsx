@@ -335,6 +335,99 @@ describe('PlacePage 개요 표시', () => {
   });
 });
 
+/*
+ * 허브 결과 카드 — 제목 → 현지명 → meta(분류 · 지역 · 거리 · 찜) → 행사 줄 → 카드 상태 배지 → 개요 1줄.
+ * 주소 줄은 뺐다(지역 라벨이 대신한다). 판정은 그려진 DOM 이다. 날짜는 Date 만 고정한다.
+ */
+describe('PlacePage 허브 카드', () => {
+  const card = (over: Partial<Attraction>): Attraction => ({
+    ...item('c1'), address: '서울특별시 종로구 사직로 161', overview: '조선의 법궁', sidoName: '서울특별시', sigunguName: '종로구',
+    contentTypeId: '12', closureState: 'WEEKLY', closedWeekdays: ['MON'], attrAdmission: 'FREE', attrParking: 'YES',
+    distanceKm: 0.4567, savedCount: 5, ...over,
+  });
+  const renderWith = async (a: Attraction, path = '/place') => {
+    vi.mocked(searchAttractions).mockResolvedValue({
+      searchId: 's', attractions: [a], totalElements: 1, totalPages: 1, currentPage: 0,
+    });
+    renderPage(path);
+    return (await screen.findByText(a.title)).closest('a')!;
+  };
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    mobile = false;
+    stubMedia();
+    vi.mocked(fetchAdministrativeRegions).mockResolvedValue([]);
+    vi.mocked(suggestPlaces).mockResolvedValue([]);
+    vi.mocked(searchAttractions).mockReset();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it('주소 줄이 없고, meta 줄에 분류 · 지역 라벨 · 거리 · 찜, 배지 목록, 개요가 그 순서로 있다', async () => {
+    vi.setSystemTime(new Date('2026-10-27T03:00:00Z')); // KST 화요일
+    const el = await renderWith(card({}));
+    expect(el.querySelector('.place-card-addr')).toBeNull();
+    expect(el.textContent).not.toContain('사직로');
+    const meta = el.querySelector('.place-card-meta')!;
+    expect(meta.querySelector('.place-card-region')?.textContent).toBe('서울특별시 종로구');
+    expect(meta.textContent).toContain('자연');
+    expect(meta.textContent).toContain('457m');
+    expect(Array.from(el.querySelectorAll('.place-card-badges li')).map((li) => li.textContent)).toEqual([
+      '월 휴무', '입장 무료', '주차 가능',
+    ]);
+    const body = el.querySelector('.place-card-body')!;
+    const order = Array.from(body.children).map((c) => c.className);
+    expect(order).toEqual(['place-card-title', 'place-card-meta', 'place-card-badges', 'place-card-overview']);
+  });
+
+  it('찜 수 — 보이는 「찜 n」은 aria-hidden, 옆에 읽기 문구가 있다. 하한 미만은 그리지 않는다', async () => {
+    vi.setSystemTime(new Date('2026-10-27T03:00:00Z'));
+    const el = await renderWith(card({}));
+    const visible = el.querySelector('.place-card-saved')!;
+    expect(visible.textContent).toBe('찜 5');
+    expect(visible).toHaveAttribute('aria-hidden', 'true');
+    expect(el.querySelector('.place-card-meta .place-sr-only')?.textContent).toBe('이 사이트 회원 5명이 찜');
+    cleanup();
+
+    const low = await renderWith(card({ savedCount: 2 }));
+    expect(low.querySelector('.place-card-saved')).toBeNull();
+  });
+
+  it('배지가 없으면 목록을 그리지 않는다', async () => {
+    vi.setSystemTime(new Date('2026-10-27T03:00:00Z'));
+    const el = await renderWith(card({ closureState: 'UNKNOWN', attrAdmission: 'PAID', attrParking: 'NO' }));
+    expect(el.querySelector('.place-card-badges')).toBeNull();
+  });
+
+  // 호출부가 렌더 시점의 todayKst() 를 넘기는지 — UTC 로는 아직 일요일인 KST 월요일 00:30
+  it('UTC 일요일 15:30(= KST 월요일)에는 월요일 휴무 카드가 「오늘은 정기휴무일」이고 규칙 기준 읽기 문구가 붙는다', async () => {
+    vi.setSystemTime(new Date('2026-10-25T15:30:00Z'));
+    const el = await renderWith(card({}));
+    const first = el.querySelector('.place-card-badges li')!;
+    expect(first).toHaveClass('is-closed-today');
+    expect(first.querySelector('[aria-hidden="true"]')?.textContent).toBe('오늘은 정기휴무일');
+    expect(first.querySelector('.place-sr-only')?.textContent).toBe('오늘은 정기휴무일(매주 월 휴무 규칙 기준)');
+  });
+
+  it('KST 화요일에는 같은 카드가 「월 휴무」다', async () => {
+    vi.setSystemTime(new Date('2026-10-26T15:30:00Z'));
+    const el = await renderWith(card({}));
+    expect(el.querySelector('.place-card-badges li')?.textContent).toBe('월 휴무');
+  });
+
+  it('영문 카드 — 「시군구, 시도」와 영문 배지', async () => {
+    vi.setSystemTime(new Date('2026-10-27T03:00:00Z'));
+    const el = await renderWith(card({ lang: 'en', sidoName: 'Seoul', sigunguName: 'Jongno-gu' }), '/en/place');
+    expect(el.querySelector('.place-card-region')?.textContent).toBe('Jongno-gu, Seoul');
+    expect(Array.from(el.querySelectorAll('.place-card-badges li')).map((li) => li.textContent)).toEqual([
+      'Closed Mon', 'Free admission', 'Parking',
+    ]);
+  });
+});
+
 describe('PlacePage 행사·여행코스·숙박', () => {
   // 오늘 = 2026-10-26(월) KST. Date 만 고정한다 — react-query 의 타이머는 그대로 둔다.
   const NOW = new Date('2026-10-26T03:00:00Z');
@@ -723,7 +816,7 @@ describe('PlacePage 계측', () => {
       const [click] = tracked('CLICK');
       expect(click[1]).toEqual({
         entityType: 'ATTRACTION', entityId: 'a0-2', screenType: 'PLACE_HUB', screenRef: '11',
-        sectionId: 'ATTRACTION_LIST', itemIndex: 1, payload: { source: 'card' },
+        sectionId: 'ATTRACTION_LIST', itemIndex: 1, payload: { source: 'card', badges: [] },
       });
       expect(click[2]).toBe(viewId);
     });

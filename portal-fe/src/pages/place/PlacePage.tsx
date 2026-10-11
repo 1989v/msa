@@ -55,6 +55,7 @@ import {
   ATTRIBUTE_PARAMS,
   attributeChips,
   attributeQuery,
+  cardFacts,
   chipCount,
   interpretedChipIds,
   interpretedNotice,
@@ -80,6 +81,7 @@ import {
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import EventLine from './EventLine';
+import { todayKst } from '../../seo/eventSchedule';
 import { newViewId } from '../../analytics/identity';
 import { installFlushOnLeave, track } from '../../analytics/tracker';
 import { useImpression } from '../../analytics/useImpression';
@@ -2143,6 +2145,10 @@ function PlaceCard({
 }) {
   const L = UI[lang];
   const { primary, secondary } = titleParts(attraction);
+  // 오늘은 렌더마다 읽는다(메모하지 않는다) — 자정을 넘겨 다시 그리면 휴무 배지가 새 날짜로 판정된다
+  const facts = cardFacts(attraction, lang, todayKst());
+  // 배지별 CTR 을 볼 수 있게 노출·클릭 모두 배지 code 를 싣는다(한 줄에서 넘쳐 숨은 것 포함)
+  const badgeCodes = facts.badges.map((b) => b.code);
   // 노출은 그려진 것이 아니라 보인 것(면적 50%·1초)만 — 기준은 useImpression 하나다 (ADR-0095)
   const impressionRef = useImpression<HTMLAnchorElement>(
     {
@@ -2152,6 +2158,7 @@ function PlaceCard({
       screenRef,
       sectionId: 'ATTRACTION_LIST',
       itemIndex: index,
+      payload: { badges: badgeCodes },
     },
     viewId,
   );
@@ -2176,7 +2183,7 @@ function PlaceCard({
             screenRef,
             sectionId: 'ATTRACTION_LIST',
             itemIndex: index,
-            payload: newTab ? { source: 'card', newTab: true } : { source: 'card' },
+            payload: newTab ? { source: 'card', newTab: true, badges: badgeCodes } : { source: 'card', badges: badgeCodes },
           },
           viewId,
         );
@@ -2214,12 +2221,35 @@ function PlaceCard({
       <div className="place-card-body">
         <h3 className="place-card-title">{primary}</h3>
         {secondary && <p className="place-card-local">{secondary}</p>}
+        {/* 지역 라벨 칸만 줄어든다 — 분류·거리·찜은 줄지 않는다. 주소 줄은 두지 않는다(지역 라벨이 대신한다) */}
         <p className="place-card-meta">
           {attraction.category && <span>{L.categories[attraction.category] ?? attraction.category}</span>}
-          {attraction.distanceKm != null && <span>{attraction.distanceKm.toFixed(1)}km</span>}
+          {facts.regionLabel && <span className="place-card-region">{facts.regionLabel}</span>}
+          {facts.distance && <span>{facts.distance}</span>}
+          {facts.saved && (
+            <>
+              <span className="place-card-saved" aria-hidden="true">{facts.saved.label}</span>
+              <span className="place-sr-only">{facts.saved.srLabel}</span>
+            </>
+          )}
         </p>
         <EventLine attraction={attraction} lang={lang} />
-        {attraction.address && <p className="place-card-addr">{attraction.address}</p>}
+        {facts.badges.length > 0 && (
+          <ul className="place-card-badges">
+            {facts.badges.map((b) => (
+              <li key={b.code} className={b.code === 'closedToday' ? 'is-closed-today' : undefined}>
+                {b.srText ? (
+                  <>
+                    <span aria-hidden="true">{b.text}</span>
+                    <span className="place-sr-only">{b.srText}</span>
+                  </>
+                ) : (
+                  b.text
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
         {attraction.overview && <p className="place-card-overview">{attraction.overview}</p>}
       </div>
     </a>

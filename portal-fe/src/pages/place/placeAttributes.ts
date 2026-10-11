@@ -14,7 +14,7 @@ import {
   placeIntroText,
   sourceText,
 } from '../../seo/copy.mjs';
-import { FREQUENTLY_CLICKED_MIN } from './visitSignals';
+import { FREQUENTLY_CLICKED_MIN, SAVED_MIN } from './visitSignals';
 
 /*
  * 속성 패싯 — 검색 화면의 속성 칩과 상세의 방문 정보 배지.
@@ -310,6 +310,10 @@ const EN_DAY: Record<string, string> = {
   MON: 'Monday', TUE: 'Tuesday', WED: 'Wednesday', THU: 'Thursday', FRI: 'Friday', SAT: 'Saturday', SUN: 'Sunday',
 };
 const WEEK_ORDER = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+/** 카드처럼 좁은 자리의 영문 요일 — 세 글자 */
+const EN_DAY_SHORT: Record<string, string> = {
+  MON: 'Mon', TUE: 'Tue', WED: 'Wed', THU: 'Thu', FRI: 'Fri', SAT: 'Sat', SUN: 'Sun',
+};
 
 function closureBadge(a: Attraction, en: boolean): string | null {
   switch (a.closureState) {
@@ -482,6 +486,97 @@ export function regionHubCode(a: Attraction): string | null {
 /** 서버 렌더 `distance` 와 같은 표기 — 1km 미만은 m, 이상은 소수 한 자리 km. */
 export function distanceLabel(meters: number): string {
   return meters < 1000 ? `${meters}m` : `${(meters / 1000).toFixed(1)}km`;
+}
+
+/*
+ * 허브 결과 카드 — 「어디 · 오늘 가도 되는지 · 무엇이 되는지」. 카드는 이 결과만 그린다.
+ * 카드 상태 배지는 확인된 값만, 최대 3개, 순서는 휴무 → 무료 → 반려 → 무장애 → 주차다 — 반려·무장애 동반
+ * 방문자의 조건이 상한에서 먼저 잘리지 않게 주차를 맨 뒤에 둔다. 상세의 「배지 줄」과 다른 것이고,
+ * 배지가 없다는 것은 「아니다」가 아니다(부정값·UNKNOWN 은 그리지 않는다 — 상세의 「정보 없음」이 그 몫이다).
+ * 「영업 중」은 쓰지 않는다 — 원천에 시각이 없고 명절 휴무를 모른다.
+ */
+export type CardBadgeCode =
+  | 'closedToday'
+  | 'weeklyClosed'
+  | 'alwaysOpen'
+  | 'free'
+  | 'pet'
+  | 'petPartial'
+  | 'barrierFree'
+  | 'parking';
+
+export interface CardBadge {
+  code: CardBadgeCode;
+  text: string;
+  /** 읽기 도구용 문구 — 보이는 글자가 줄임말일 때만(오늘 휴무는 「규칙 기준」임을 말한다) */
+  srText?: string;
+}
+
+export interface CardFacts {
+  regionLabel: string | null;
+  badges: CardBadge[];
+  distance: string | null;
+  /** 보이는 「찜 n」(label)과 읽기 문구(srLabel) — 카드가 통째로 링크라 aria-label 은 읽히지 않는다 */
+  saved: { count: number; label: string; srLabel: string } | null;
+}
+
+const CARD_BADGE_MAX = 3;
+
+/** 'YYYY-MM-DD' 의 요일 — 기기 시간대와 무관하게 그 날짜 자체의 요일 */
+function weekdayOf(date: string): string {
+  return WEEK_ORDER[(new Date(`${date}T00:00:00Z`).getUTCDay() + 6) % 7];
+}
+
+function closureCardBadge(a: Attraction, en: boolean, today: string): CardBadge | null {
+  if (a.closureState === 'ALWAYS_OPEN') return { code: 'alwaysOpen', text: en ? 'Open every day' : '연중무휴' };
+  if (a.closureState !== 'WEEKLY') return null;
+  // 요일 없는 WEEKLY 는 「모름」이다 — closureBadge 와 같은 판정
+  const days = WEEK_ORDER.filter((d) => (a.closedWeekdays ?? []).includes(d));
+  if (days.length === 0) return null;
+  const ko = days.map((d) => KO_DAY[d]).join('·');
+  const enDays = days.map((d) => EN_DAY_SHORT[d]).join(', ');
+  if (days.includes(weekdayOf(today))) {
+    return en
+      ? { code: 'closedToday', text: 'Regular closing day today', srText: `Regular closing day today (weekly rule: ${enDays})` }
+      : { code: 'closedToday', text: '오늘은 정기휴무일', srText: `오늘은 정기휴무일(매주 ${ko} 휴무 규칙 기준)` };
+  }
+  return { code: 'weeklyClosed', text: en ? `Closed ${enDays}` : `${ko} 휴무` };
+}
+
+/**
+ * @param today 오늘 KST 날짜(`YYYY-MM-DD`) — 호출부가 렌더마다 `todayKst()` 로 넘긴다. 여기서는 시계를 읽지 않는다.
+ */
+export function cardFacts(a: Attraction, lang: PlaceLang, today: string): CardFacts {
+  const en = lang === 'en';
+  const sido = a.sidoName?.trim() || null;
+  const sigungu = a.sigunguName?.trim() || null;
+  const regionLabel =
+    sido && sigungu && sigungu !== sido ? (en ? `${sigungu}, ${sido}` : `${sido} ${sigungu}`) : (sido ?? sigungu);
+
+  const badges: CardBadge[] = [];
+  if (placeKind(a.contentTypeId) !== 'event') {
+    const closure = closureCardBadge(a, en, today);
+    if (closure) badges.push(closure);
+    if (a.attrAdmission === 'FREE') badges.push({ code: 'free', text: en ? 'Free admission' : '입장 무료' });
+    if (a.petPolicy === 'ALLOWED') badges.push({ code: 'pet', text: en ? 'Pets allowed' : '반려동물 동반' });
+    if (a.petPolicy === 'PARTIAL') badges.push({ code: 'petPartial', text: en ? 'Pets in some areas' : '반려동물 일부 구역' });
+    // 목록 필터와 같은 정밀 코드로만 — 원천에는 홍보·수유실 같은 저정밀·비시설 코드도 있다
+    if ((a.barrierFree ?? []).some((c) => BARRIER_FREE_CHIPS.some(([, code]) => code === c))) {
+      badges.push({ code: 'barrierFree', text: en ? 'Accessible facilities' : '무장애 시설' });
+    }
+    if (a.attrParking === 'YES') badges.push({ code: 'parking', text: en ? 'Parking' : '주차 가능' });
+  }
+
+  const n = a.savedCount;
+  return {
+    regionLabel,
+    badges: badges.slice(0, CARD_BADGE_MAX),
+    distance: a.distanceKm != null ? distanceLabel(Math.round(a.distanceKm * 1000)) : null,
+    saved:
+      n != null && n >= SAVED_MIN
+        ? { count: n, label: en ? `Saved ${n}` : `찜 ${n}`, srLabel: en ? `Saved by ${n} members of this site` : `이 사이트 회원 ${n}명이 찜` }
+        : null,
+  };
 }
 
 /*
