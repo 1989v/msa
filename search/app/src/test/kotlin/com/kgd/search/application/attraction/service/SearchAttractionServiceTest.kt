@@ -259,6 +259,40 @@ class SearchAttractionServiceTest : BehaviorSpec({
         }
     }
 
+    // 목록 카드의 지역 라벨이 읽는다 — 지역 안 위치(region)는 단건 전용이지만 시군구 이름은 목록에도 싣는다
+    given("시군구 이름이 색인된 문서") {
+        val withRegion = document().copy(
+            region = AttractionRegion(
+                sigunguName = "종로구", typeCount = 40, categoryCount = 6, categoryName = "고궁",
+                sameCategoryNearby = emptyList(),
+            ),
+        )
+        `when`("목록으로 검색하면") {
+            then("region 은 null 이어도 sigunguName 은 싣는다") {
+                every { searchPort.search(any(), any()) } returns found(listOf(AttractionSearchPort.AttractionHit(withRegion, 1.0)))
+                val r = service.execute(SearchAttractionUseCase.Query(keyword = "경복궁")).attractions.first()
+                r.region shouldBe null
+                r.sigunguName shouldBe "종로구"
+            }
+        }
+        `when`("단건 조회하면") {
+            then("sigunguName 과 region.sigunguName 이 같다") {
+                every { searchPort.findById("1") } returns withRegion
+                val r = service.findById("1")!!
+                r.sigunguName shouldBe "종로구"
+                r.region!!.sigunguName shouldBe r.sigunguName
+            }
+        }
+        `when`("지역 집계가 없는 문서면") {
+            then("목록·단건 모두 null 이다") {
+                every { searchPort.search(any(), any()) } returns found(listOf(AttractionSearchPort.AttractionHit(document(), 1.0)))
+                every { searchPort.findById("1") } returns document()
+                service.execute(SearchAttractionUseCase.Query(keyword = "경복궁")).attractions.first().sigunguName shouldBe null
+                service.findById("1")!!.sigunguName shouldBe null
+            }
+        }
+    }
+
     given("통합 자동완성 시") {
         `when`("지역과 관광지가 섞여 반환되면") {
             then("타입·좌표·레벨이 보존되어야 한다") {

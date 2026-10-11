@@ -325,6 +325,7 @@ class SearchAttractionService(
         attrStrollerRental = attributes?.strollerRental?.name,
         petPolicy = attributes?.petPolicy?.name,
         attrAdmission = attributes?.freeAdmission?.name,
+        sigunguName = region?.sigunguName,
         region = if (summarize) null else region?.let { r ->
             SearchAttractionUseCase.Region(
                 ldongSignguCd = ldongSignguCd,
