@@ -221,10 +221,11 @@
   color: inherit;
 }
 
-/* 이 조건을 더하면 0곳 — 흐리게 두되 자리는 지킨다(숨기면 옆 칩이 밀린다).
-   누를 수는 있다: 건수는 앞 조건 기준이라 조건이 바뀌는 사이 잠깐 어긋날 수 있다. */
+/* 이 조건을 더하면 0곳 — 점선 테두리로 구분하되 자리는 지킨다(숨기면 옆 칩이 밀린다).
+   누를 수 있는 칩이라 글자는 대비 하한을 지킨다(투명도로 흐리면 2.00:1 이었다).
+   건수는 앞 조건 기준이라 조건이 바뀌는 사이 잠깐 어긋날 수 있다. */
 .place-chip.is-empty {
-  opacity: 0.4;
+  border-style: dashed;
 }
 
 .place-attr-caption {
@@ -446,6 +447,20 @@
   position: absolute;
   top: 4px;
   right: 4px;
+}
+
+/* 카드 별은 이제 사진 밖(카드 모서리)에 앉는다 — 사진 위를 전제한 먹빛 스크림을 걷어 회색 사각형이 되지 않게 한다 */
+.place-card-favorite .favorite-btn.is-compact {
+  background: transparent;
+  color: var(--ko-text-secondary);
+}
+
+.place-card-favorite .favorite-btn.is-compact.is-on {
+  color: var(--kh-yeonji);
+}
+
+:root[data-surface='heritage'][data-theme='dark'] .place-card-favorite .favorite-btn.is-compact.is-on {
+  color: var(--ko-accent-primary);
 }
 
 .place-card:hover {
