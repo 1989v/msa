@@ -538,6 +538,7 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
   // 화면을 떠날 때 아직 안 보낸 것을 흘린다 — 그 순간의 fetch 는 취소된다.
   useEffect(installFlushOnLeave, []);
   // 허브 세션 시작 — 세션당 한 번. 마운트 시점에는 시도가 없어(자동 선택은 지역 자료 도착 뒤) screenRef 가 빈 값이다.
+  // 착지가 아니라 마운트 때 발화해 「허브·속성 랜딩을 연 세션」을 센다 — 모든 place 세션은 부팅 때의 place-entry 가 센다(같은 세션에서 place-hub ⊆ place-entry).
   useEffect(() => {
     if (!claimSessionStart()) return;
     track('SESSION_START', { entityType: 'PAGE', entityId: 'place-hub', screenType: 'PLACE_HUB', screenRef: '' }, viewIdRef.current);

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Suspense, lazy, type ReactElement } from 'react';
 import { isApexProd, isProd1989vHost } from './shell/serviceHref';
 import { PORTAL_ORIGIN } from './seo/copy.mjs';
+import { recordPlaceEntry } from './analytics/inflow';
 import AppShellChrome from './components/shell/AppShellChrome';
 import HomePage from './pages/HomePage';
 import PortfolioPage from './pages/PortfolioPage';
@@ -78,6 +79,8 @@ const AgentViewerApp = lazy(() => import('./shell/placeholders').then((m) => ({ 
 const isGamesHost = window.location.hostname.split('.')[0] === 'game';
 // place.<domain> — 같은 portal-fe 번들을 서빙하되 루트가 K-관광/지리 탐색이다 (ADR-0065)
 const isPlaceHost = window.location.hostname.split('.')[0] === 'place';
+// place 유입 기록 — 부팅 시점의 리퍼러·주소로 탭 세션당 한 번. SPA 이동·리다이렉트 전에 읽어야 착지가 맞다
+if (isPlaceHost) recordPlaceEntry();
 // resume.<domain> — 같은 portal-fe 번들을 서빙하되 루트가 이력서다 (ADR-0064)
 const isResumeHost = window.location.hostname.split('.')[0] === 'resume';
 // deal.<domain> — 같은 번들을 서빙하되 루트가 혜택 링크 허브다 (ADR-0069)

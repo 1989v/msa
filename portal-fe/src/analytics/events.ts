@@ -18,6 +18,8 @@ export type ScreenType =
   | 'PLACE_REGION'
   | 'ATTRACTION_DETAIL'
   | 'UNIFIED_SEARCH'
+  /** place 호스트 부팅 — 탭 세션의 첫 진입(유입 기록). 착지 화면은 payload 의 `landingType` 이 말한다 */
+  | 'PLACE_ENTRY'
   /** 내 찜 — 묶음 공유 계측만 보낸다 */
   | 'FAVORITES';
 

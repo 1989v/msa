@@ -48,3 +48,20 @@ k8s 명령: `python3 -m pytest tests/crawl_stats_k8s_test.py -q` (기준 `10 pas
 메모
 - 15 는 처음엔 (c) 하나만 빨개졌다 — (d) 가 상수 `place-crawl-stats` 가 선택 목록에 있는지를 보고 있어서, 라벨이 `place-ingest` 로 돌아가 11 이 실제로 그 파드를 고르는 경우를 못 잡았다. (d) 가 CronJob 이 실제로 붙인 파드 라벨을 읽도록 고친 뒤 두 케이스가 함께 빨개지는 것을 확인했다.
 - 27 은 pytest 게이트로 만들지 않았다 — 파서 쪽 형식 검사(`crawl_stats_test.py`)는 테스트가 직접 쓴 줄을 읽고, nginx 설정을 읽어 줄을 합성하면 검사가 근거를 스스로 만든다. 실제 nginx 1.27-alpine 이 낸 줄로 대조한 결과만 남긴다.
+
+# 회귀 주입 — 그룹 2
+
+2026-10-11. 임시 사본(`scratchpad/regr-tg2` — `portal-fe` 전체, node_modules 는 원본 심링크)에서 한 건씩 넣고 빨간불을 본 뒤 되돌렸다. 모두 `npx tsc -b` 가 exit 0 인(컴파일되는) 회귀다.
+명령: `npx vitest run src/analytics/__tests__/placeEntry.test.ts src/__tests__/placeEntryBoot.test.tsx` (기준 `6 passed`).
+
+| # | 주입 | 파일 | 빨간 줄 |
+|---|---|---|---|
+| 28 | 세션 플래그 확인 제거(`if (!claimEntry()) return;` → `claimEntry();`, 두 건 발화) | `portal-fe/src/analytics/inflow.ts` | `× 두 번 불러도 탭 세션에 한 행 …` · `× 세션 저장소에 쓸 수 없으면 모듈 변수로 한 번만` — `2 failed` |
+| 29 | payload 에 `section: undefined` 키 하나 | 같음 | `× 두 번 불러도 탭 세션에 한 행 …` · `× UTM 이 없는 진입은 UTM 키가 없다 …` — `2 failed` (`toEqual` 은 `undefined` 키를 무시하므로 `Object.values` 단언이 잡는다) |
+| 30 | `recordPlaceEntry` 의 `installFlushOnLeave()` 설치 제거 | 같음 | `× 떠날 때 흘리는 것을 스스로 설치한다 — … 편집 글 착지에서도 beacon 에 실린다` — `1 failed` |
+| 31 | `App.tsx` 의 `recordPlaceEntry()` 호출 제거 | `portal-fe/src/App.tsx` | `× 앱 부팅 — place 유입 기록 > place 호스트에서는 한 행을 남긴다` — `1 failed` |
+| 32 | 호출을 `isPlaceHost` 분기 밖으로(무조건 호출) | 같음 | `× 앱 부팅 — place 유입 기록 > place 가 아닌 호스트에서는 남기지 않는다` — `1 failed` |
+
+메모
+- 2.4 는 grep 게이트 대안 없이 렌더로 됐다 — `vi.resetModules()` 뒤 `jsdom.reconfigure({ url })` 로 호스트를 바꾸고 `App`·트래커를 같은 모듈 그래프에서 동적 import 한다. 테스트 파일은 `portal-fe/src/__tests__/placeEntryBoot.test.tsx`.
+- 허브 SESSION_START 에 payload 를 더하는 주입(tasks 8.1)은 이번 그룹이 허브 발화 코드를 바꾸지 않아 넣지 않았다 — 그룹 8 몫.

@@ -7,6 +7,9 @@
  * 두 구현은 `place/ingest/tests/fixtures/path_types.json` 하나로 함께 검사한다.
  */
 
+import { newViewId } from './identity';
+import { installFlushOnLeave, track } from './tracker';
+
 export type LandingType = 'hub' | 'detail' | 'region' | 'attr_landing' | 'editorial' | 'other';
 
 export interface UtmFields {
@@ -80,4 +83,66 @@ export function landingTypeOf(pathname: string): LandingType {
   if (/^\/regions\/[^/]+\/[^/]+$/.test(path)) return 'attr_landing';
   if (/^\/guides(\/[^/]+)?$/.test(path)) return 'editorial';
   return 'other';
+}
+
+/*
+ * 유입 기록은 탭 세션당 한 번 — 같은 탭의 SPA 이동·새로고침은 새 행을 만들지 않는다.
+ * 저장소를 못 쓰면(사파리 프라이빗·용량 초과) 모듈 변수가 대신한다 — 그때는 새로고침마다 1회.
+ */
+const ENTRY_RECORDED_KEY = 'kgd.place.entryRecorded';
+let entryRecordedFallback = false;
+let uninstallFlushOnLeave: (() => void) | null = null;
+
+function claimEntry(): boolean {
+  try {
+    if (sessionStorage.getItem(ENTRY_RECORDED_KEY)) return false;
+    sessionStorage.setItem(ENTRY_RECORDED_KEY, '1');
+    return true;
+  } catch {
+    if (entryRecordedFallback) return false;
+    entryRecordedFallback = true;
+    return true;
+  }
+}
+
+/**
+ * place 호스트 부팅 시 한 번 — 이전 사이트·착지 유형·언어·UTM 을 `place-entry` 세션 시작 한 행으로 남긴다.
+ * 허브 세션(`place-hub`)은 허브·속성 랜딩을 연 세션만 세고, 이 행은 착지 화면과 상관없이 모든 place 세션을 센다.
+ * 이 행의 viewId 는 노출↔클릭을 잇지 않는 단독 키다 — 착지 화면은 payload 의 `landingType` 이 말한다.
+ *
+ * 떠날 때 흘리는 것을 여기서 직접 설치한다. 편집 글 화면처럼 설치하지 않는 화면으로 착지해
+ * 5초 안에 떠나면 이 행이 대기열에서 사라지기 때문이다.
+ */
+export function recordPlaceEntry(): void {
+  if (uninstallFlushOnLeave === null) uninstallFlushOnLeave = installFlushOnLeave();
+  if (!claimEntry()) return;
+  const { hostname, pathname, search } = window.location;
+  track(
+    'SESSION_START',
+    {
+      entityType: 'PAGE',
+      entityId: 'place-entry',
+      screenType: 'PLACE_ENTRY',
+      screenRef: '',
+      payload: {
+        referrerHost: referrerHostOf(document.referrer, hostname),
+        landingType: landingTypeOf(pathname),
+        lang: langOf(pathname),
+        ...utmOf(search),
+      },
+    },
+    newViewId(),
+  );
+}
+
+/** 테스트 전용 — 세션 플래그(저장소·모듈 변수)와 떠날 때 흘리는 설치를 비운다. */
+export function resetPlaceEntryForTest(): void {
+  entryRecordedFallback = false;
+  uninstallFlushOnLeave?.();
+  uninstallFlushOnLeave = null;
+  try {
+    sessionStorage.removeItem(ENTRY_RECORDED_KEY);
+  } catch {
+    /* 저장소가 없으면 모듈 변수만 비운다 */
+  }
 }
