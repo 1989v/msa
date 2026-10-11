@@ -161,9 +161,11 @@ describe('허브 로그인 복귀 — 이어 붙인 시나리오', () => {
     // ① 게스트로 허브 — 자동 시도(서울)까지 끝난다
     renderPage();
     await waitFor(() => expect(triggers()).toEqual(['landing', 'initial']));
-    // ② 필터 조작: 분류 「역사」 + 2쪽 + 카드 선택
-    fireEvent.click(screen.getAllByRole('button', { name: '역사' })[0]);
+    // ② 필터 조작: 분류 「역사」(「필터」 다이얼로그 안) + 2쪽 + 카드 선택
+    fireEvent.click(screen.getByRole('button', { name: /^필터/ }));
+    fireEvent.click(within(screen.getByRole('dialog', { name: '필터' })).getByRole('button', { name: '역사' }));
     await waitFor(() => expect(queries().at(-1)).toMatchObject({ category: 'history', page: 0 }));
+    fireEvent.keyDown(document, { key: 'Escape' });
     fireEvent.click(await screen.findByRole('button', { name: '다음' }));
     await screen.findByText('관광지 11');
     fireEvent.click(cardOf('관광지 11'));

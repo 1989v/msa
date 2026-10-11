@@ -59,12 +59,16 @@ describe('언어 전환 뒤 고른 칩', () => {
       </QueryClientProvider>,
     );
     await screen.findByText('관광지 a1');
-    fireEvent.click(screen.getByRole('button', { name: /^반려동물 동반/ }));
+    // 속성 칩은 「필터」 다이얼로그 안 — 고른 뒤 닫고 언어를 바꾼다
+    fireEvent.click(screen.getByRole('button', { name: /^필터/ }));
+    fireEvent.click(within(screen.getByRole('dialog', { name: '필터' })).getByRole('button', { name: /^반려동물 동반/ }));
     await waitFor(() => expect(calls().at(-1)).toMatchObject({ pet: ['ALLOWED'] }));
+    fireEvent.keyDown(document, { key: 'Escape' });
 
     fireEvent.click(screen.getByRole('button', { name: 'EN' }));
     await waitFor(() => expect(window.location.pathname).toBe('/en/place'));
-    const group = await screen.findByRole('group', { name: 'Visitor info filters' });
+    fireEvent.click(await screen.findByRole('button', { name: /^Filters/ }));
+    const group = await within(screen.getByRole('dialog', { name: 'Filters' })).findByRole('group', { name: 'Visitor info filters' });
     await waitFor(() => expect(calls().at(-1)).toMatchObject({ lang: 'en', pet: ['ALLOWED'] }));
 
     const petChip = within(group).getByRole('button', { name: /^Pets allowed/ });

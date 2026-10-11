@@ -74,14 +74,16 @@
   padding: 0.2rem 0.7rem;
   font-size: 0.8rem;
   background: transparent;
-  color: var(--ko-text-muted);
+  /* 작은 글자 — muted 는 한지 위 4.23:1 이라 secondary */
+  color: var(--ko-text-secondary);
   border: none;
   cursor: pointer;
 }
 
 .place-lang-btn.active {
   background: var(--ko-accent-primary);
-  color: var(--ko-surface-0);
+  /* .place-btn.primary 와 같은 이유 — 다크 청자 위 --ko-surface-0(#131313)은 2.03:1 */
+  color: var(--kh-hanji, var(--ko-surface-0));
 }
 
 .place-toolbar {
@@ -148,7 +150,9 @@
 .place-btn.primary {
   background: var(--ko-accent-primary);
   border-color: var(--ko-accent-primary);
-  color: var(--ko-surface-0);
+  /* 글자는 두 정경 모두 한지색 — k-heritage 버튼 견본(채움은 소나무, 다크에서는 청자, 글자는 한지)과 같다.
+     --ko-surface-0 은 다크에서 #131313 이라 청자 위 2.03:1 이다 */
+  color: var(--kh-hanji, var(--ko-surface-0));
   font-weight: 600;
 }
 
@@ -210,7 +214,7 @@
   min-width: 6ch;
   text-align: end;
   font-variant-numeric: tabular-nums;
-  color: var(--ko-text-muted);
+  color: var(--ko-text-secondary);
 }
 
 .place-chip.active .place-attr-count {
@@ -226,7 +230,8 @@
 .place-attr-caption {
   margin: 0;
   font-size: 0.75rem;
-  color: var(--ko-text-muted);
+  /* 시트 바탕 위 muted 는 4.09:1 — 작은 글자 하한(4.5)에 못 미쳐 secondary (.place-card-local 과 같은 근거) */
+  color: var(--ko-text-secondary);
 }
 
 /* 모바일(세로·가로 모두 — JS MOBILE_QUERY 와 같은 경계)은 한 줄 가로 스크롤.
@@ -447,6 +452,17 @@
   background: var(--ko-surface-2);
 }
 
+/* 링크 카드(허브·지역 페이지) — 링크 기본색·밑줄을 지우고 사이트 글자색을 물려받는다 */
+a.place-card {
+  color: inherit;
+  text-decoration: none;
+}
+
+a.place-card:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: 2px;
+}
+
 .place-card-img {
   width: 5.5rem;
   height: 5.5rem;
@@ -487,12 +503,13 @@
   font-family: var(--kh-font-mono);
   letter-spacing: var(--kh-tracking-mono);
   font-size: 0.72rem;
-  color: var(--kh-ocher, var(--ko-accent-primary));
+  /* 황토 원색은 라이트 카드 위 2.79:1 — 글씨용 황토(다크는 원색 그대로) */
+  color: var(--kh-ocher-text, var(--ko-accent-primary));
 }
 
 .place-card-addr {
   font-size: 0.8rem;
-  color: var(--ko-text-muted);
+  color: var(--ko-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -938,6 +955,69 @@
   }
 }
 
+/* 필터 한 줄(두 폭 공통) — 지역 트리거가 남는 폭을 쓰고 칩·「필터 N」은 줄지 않는다 */
+.place-filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.place-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.place-filter-row .place-region-trigger {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+
+.place-filter-row > .place-chip,
+.place-filter-row > .place-filter-open {
+  flex-shrink: 0;
+}
+
+.place-filter-open {
+  min-height: 44px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.place-filter-summary {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--ko-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 시트 안에서는 칩을 접어 쌓는다 — 툴바용 한 줄 가로 스크롤(잘림 페이드·바깥 여백)을 푼다 */
+.place-filter-sheet-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.place-filter-sheet .place-filters,
+.place-filter-sheet .place-attr-chips {
+  flex-wrap: wrap;
+  overflow: visible;
+  margin: 0;
+  padding: 0;
+  mask-image: none;
+  -webkit-mask-image: none;
+}
+
+/* 넓은 화면은 트리거가 한 줄 전체로 늘어나지 않게 폭을 둔다 */
+@media (min-width: 900px) {
+  .place-filter-row .place-region-trigger {
+    flex: 0 1 16rem;
+  }
+}
+
 /* ─── 좁은 화면 배치 변형 — listFirst(목록 기본 + 지도 전환) ───────────────────
  * 목록 상태: 지도는 마운트한 채 숨긴다(지도 스크립트는 「지도 보기」 뒤에 부른다).
  * 지도 상태: 지도가 툴바 아래 남은 높이를 다 쓰고, 같은 목록 칸이 지도 아래쪽 결과 패널이 된다.
@@ -1003,68 +1083,6 @@
     min-height: 44px;
     padding: 0.5rem 1.25rem;
     box-shadow: 0 2px 8px oklch(0 0 0 / 0.35);
-  }
-
-  /* 글자는 두 정경 모두 한지색 — k-heritage 버튼 견본(채움은 소나무, 다크에서는 청자, 글자는 한지)과 같다.
-     .place-btn.primary 의 글자색(--ko-surface-0)은 다크에서 #131313 이라 청자 위 2.03:1 이다 */
-  .place-btn.primary.place-view-toggle {
-    color: var(--kh-hanji, var(--ko-surface-0));
-  }
-
-  /* 필터 한 줄 — 지역 트리거가 남는 폭을 쓰고 칩·「필터 N」은 줄지 않는다 */
-  .place-filter-bar {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-  }
-
-  .place-filter-row {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-  }
-
-  .place-filter-row .place-region-trigger {
-    flex: 1 1 auto;
-    width: auto;
-    min-width: 0;
-  }
-
-  .place-filter-row > .place-chip,
-  .place-filter-row > .place-filter-open {
-    flex-shrink: 0;
-  }
-
-  .place-filter-open {
-    min-height: 44px;
-    margin-left: auto;
-    white-space: nowrap;
-  }
-
-  .place-filter-summary {
-    margin: 0;
-    font-size: 0.8rem;
-    color: var(--ko-text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  /* 시트 안에서는 칩을 접어 쌓는다 — 툴바용 한 줄 가로 스크롤(잘림 페이드·바깥 여백)을 푼다 */
-  .place-filter-sheet-body {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  .place-filter-sheet .place-filters,
-  .place-filter-sheet .place-attr-chips {
-    flex-wrap: wrap;
-    overflow: visible;
-    margin: 0;
-    padding: 0;
-    mask-image: none;
-    -webkit-mask-image: none;
   }
 }
 
@@ -1654,22 +1672,12 @@ a.place-detail-phone {
   text-decoration: underline;
 }
 
-/* ─── 지역 드릴다운 (ADR-0071) ─── */
-.place-region {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
+/* ─── 지역 (ADR-0071) ─── */
 .place-region-crumbs {
   display: flex;
   align-items: center;
   gap: 0.35rem;
   flex-wrap: wrap;
-}
-
-.place-region-sep {
-  color: var(--ko-text-muted);
 }
 
 .place-region-list {
@@ -1682,10 +1690,6 @@ a.place-detail-phone {
   margin-left: 0.35rem;
   font-size: 0.75rem;
   color: var(--ko-text-secondary);
-}
-
-.place-chip.active .place-region-count {
-  color: inherit;
 }
 
 /* 현재 위치의 시도라는 표시. 정렬만 앞으로 올릴 뿐 자동으로 고르지 않는다. */

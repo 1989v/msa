@@ -83,9 +83,20 @@ function renderPage(path = '/place') {
 }
 
 const calls = () => vi.mocked(searchAttractions).mock.calls.map(([q]) => q);
-const chip = (label: RegExp) => screen.getByRole('button', { name: label });
+/**
+ * 「필터」 시트 — 두 폭 모두 분류 전부·행사 상태·속성·지도 오버레이 칩은 이 안에 있다(넓은 화면은 다이얼로그).
+ * 열려 있으면 그대로 돌려준다. 시트 밖 버튼을 누르기 전에는 closeFilters 로 닫는다(실제 흐름과 같게).
+ */
+const openFilters = () => {
+  const open = screen.queryByRole('dialog', { name: /^(필터|Filters)$/ });
+  if (open) return open;
+  fireEvent.click(screen.getByRole('button', { name: /^(필터|Filters)/ }));
+  return screen.getByRole('dialog', { name: /^(필터|Filters)$/ });
+};
+const closeFilters = () => fireEvent.keyDown(document, { key: 'Escape' });
+const chip = (label: RegExp) => within(openFilters()).getByRole('button', { name: label });
 const chipLabels = () =>
-  Array.from(document.querySelectorAll('.place-attr-chip')).map((el) => el.getAttribute('data-attr'));
+  Array.from(openFilters().querySelectorAll('.place-attr-chip')).map((el) => el.getAttribute('data-attr'));
 
 describe('PlacePage 속성 칩', () => {
   beforeEach(() => {
@@ -102,7 +113,7 @@ describe('PlacePage 속성 칩', () => {
     renderPage();
     await screen.findByText('관광지 a0-1');
 
-    const group = screen.getByRole('group', { name: '방문 정보 필터' });
+    const group = within(openFilters()).getByRole('group', { name: '방문 정보 필터' });
     expect(group.querySelectorAll('.place-attr-chip')).toHaveLength(11);
     expect(group.closest('.place-filters')).toBeNull();
     expect(within(group).getByText('정보가 있는 곳만 거릅니다')).toBeInTheDocument();
@@ -157,7 +168,7 @@ describe('PlacePage 속성 칩', () => {
     fireEvent.click(chip(/^주차 가능/));
     await screen.findByText('관광지 p0-1');
 
-    fireEvent.click(screen.getByRole('button', { name: '행사' }));
+    fireEvent.click(within(openFilters()).getByRole('button', { name: '행사' }));
     await waitFor(() => expect(calls().at(-1)).toMatchObject({ category: 'festival', page: 0 }));
     expect(screen.queryByRole('group', { name: '방문 정보 필터' })).toBeNull();
     expect(document.querySelector('.place-attr-chip')).toBeNull();
@@ -166,7 +177,7 @@ describe('PlacePage 속성 칩', () => {
     expect(eventCall.parking).toBeUndefined();
 
     // 풀면 앞의 주차 조건 그대로 — 같은 조건은 캐시에서 나와 새 요청이 없을 수 있어 칩·목록으로 본다
-    fireEvent.click(screen.getByRole('button', { name: '행사' }));
+    fireEvent.click(within(openFilters()).getByRole('button', { name: '행사' }));
     expect(await screen.findByRole('group', { name: '방문 정보 필터' })).toBeInTheDocument();
     expect(chip(/^주차 가능/)).toHaveAttribute('aria-pressed', 'true');
     expect(await screen.findByText('관광지 p0-1')).toBeInTheDocument();
@@ -177,6 +188,7 @@ describe('PlacePage 속성 칩', () => {
     await screen.findByText('관광지 a0-1');
     await waitFor(() => expect(chip(/^주차 가능/)).toHaveTextContent('80'));
 
+    closeFilters();
     fireEvent.click(screen.getByRole('button', { name: '다음' }));
     await screen.findByText('관광지 a1-1');
 
@@ -209,6 +221,7 @@ describe('PlacePage 속성 칩', () => {
     vi.mocked(searchAttractions).mockImplementation((q) => respond(q, () => null));
     renderPage();
     await screen.findByText('관광지 a0-1');
+    openFilters();
 
     expect(document.querySelectorAll('.place-attr-count')).toHaveLength(0);
     expect(document.querySelectorAll('.place-attr-chip.is-empty')).toHaveLength(0);
@@ -219,7 +232,7 @@ describe('PlacePage 속성 칩', () => {
     renderPage('/en/place');
     await screen.findByText('관광지 a0-1');
 
-    const group = screen.getByRole('group', { name: 'Visitor info filters' });
+    const group = within(openFilters()).getByRole('group', { name: 'Visitor info filters' });
     expect(within(group).getByRole('button', { name: /^Not a regular closing day today \(holidays excluded\)/ })).toBeInTheDocument();
     // 영문 원천에 반려동물 값이 없다(petAcmpyType 영문 채움 0) — 늘 0 인 칩을 두지 않는다
     expect(within(group).queryByRole('button', { name: /^Pets in some areas/ })).toBeNull();
@@ -353,7 +366,7 @@ describe('PlacePage 행사·여행코스·숙박', () => {
   });
 
   const categoryChips = () =>
-    Array.from(document.querySelectorAll('.place-filters [data-category]')).map((el) => el.getAttribute('data-category'));
+    Array.from(openFilters().querySelectorAll('.place-filters [data-category]')).map((el) => el.getAttribute('data-category'));
 
   it('국문은 행사·여행코스 칩을, 영문은 행사 칩만 그린다 — 영문 코스는 0건이다', async () => {
     renderPage();
@@ -365,7 +378,7 @@ describe('PlacePage 행사·여행코스·숙박', () => {
     await screen.findByText('관광지 a1');
     expect(categoryChips()).toEqual(['nature', 'history', 'culture', 'leisure', 'festival']);
     expect(screen.queryByRole('button', { name: 'Courses' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Events' })).toBeInTheDocument();
+    expect(within(openFilters()).getByRole('button', { name: 'Events' })).toBeInTheDocument();
   });
 
   it('행사 칩은 상태 칩을 열고 기본 NOT_ENDED · 시작일 순으로 받는다. 상태 칩을 고르면 그 값, 다시 누르면 풀린다', async () => {
@@ -374,7 +387,8 @@ describe('PlacePage 행사·여행코스·숙박', () => {
     expect(screen.queryByRole('group', { name: '행사 상태' })).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: '행사' }));
-    const group = await screen.findByRole('group', { name: '행사 상태' });
+    // 행사 상태 칩은 「필터」 안에 있다
+    const group = await within(openFilters()).findByRole('group', { name: '행사 상태' });
     expect(within(group).getAllByRole('button').map((b) => b.textContent)).toEqual(['진행 중', '이번 주말', '예정']);
     await waitFor(() =>
       expect(calls().at(-1)).toMatchObject({ category: 'festival', eventStatus: 'NOT_ENDED', sort: 'eventStart' }),
@@ -415,12 +429,13 @@ describe('PlacePage 행사·여행코스·숙박', () => {
   it('숙박은 목록 칩이 아니라 지도 오버레이 토글이다', async () => {
     renderPage();
     await screen.findByText('관광지 a1');
-    const stay = screen.getByRole('button', { name: '숙박' });
+    const stay = within(openFilters()).getByRole('button', { name: '숙박' });
     expect(stay).toHaveClass('overlay');
     expect(stay).toHaveAttribute('aria-pressed', 'false');
     expect(categoryChips()).not.toContain('stay');
     fireEvent.click(stay);
-    expect(stay).toHaveAttribute('aria-pressed', 'true');
+    // 넓은 화면은 켜는 순간 다이얼로그를 닫는다 — 다시 열어 켜진 상태를 본다
+    expect(within(openFilters()).getByRole('button', { name: '숙박' })).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('목록 카드에 행사 기간과 상태를 그린다 — 날짜를 모르는 행사와 관광지는 그리지 않는다', async () => {
@@ -605,14 +620,17 @@ describe('PlacePage 계측', () => {
       vi.mocked(fetchAdministrativeRegions).mockResolvedValue([]);
       renderPage();
       await waitFor(() => expect(triggers()).toEqual(['landing']));
-      fireEvent.change(screen.getByLabelText('Area'), { target: { value: '6' } });
+      fireEvent.change(within(openFilters()).getByLabelText('Area'), { target: { value: '6' } });
       await waitFor(() => expect(lastSearch()[1].payload).toMatchObject({ trigger: 'region', changed: ['areaCode'] }));
     });
 
     it('region — 시군구 선택은 screenRef 가 시도+시군구(11110) 다', async () => {
       renderPage();
       await untilInitial();
-      fireEvent.click(await screen.findByRole('button', { name: /종로구/ }));
+      // 지역 트리거 → 시군구 행 — 시도를 고른 상태면 시트가 그 시도의 시군구 목록에서 열린다
+      fireEvent.click(await screen.findByRole('button', { name: /서울특별시/ }));
+      const sheet = await screen.findByRole('dialog', { name: '지역 선택' });
+      fireEvent.click(await within(sheet).findByRole('button', { name: /종로구/ }));
       await waitFor(() =>
         expect(lastSearch()[1]).toMatchObject({ screenRef: '11110', payload: { trigger: 'region', sido: '11', sigungu: '110' } }),
       );
@@ -638,7 +656,7 @@ describe('PlacePage 계측', () => {
       await untilInitial();
       fireEvent.click(screen.getByRole('button', { name: '행사' }));
       await waitFor(() => expect(lastSearch()[1].payload).toMatchObject({ trigger: 'category', category: 'festival' }));
-      fireEvent.click(within(screen.getByRole('group', { name: '행사 상태' })).getByRole('button', { name: '이번 주말' }));
+      fireEvent.click(within(within(openFilters()).getByRole('group', { name: '행사 상태' })).getByRole('button', { name: '이번 주말' }));
       await waitFor(() => expect(lastSearch()[1].payload).toMatchObject({ trigger: 'eventStatus', changed: ['listEventStatus', 'page'] }));
     });
 
@@ -674,8 +692,8 @@ describe('PlacePage 계측', () => {
       await screen.findByText('관광지 a0-1');
       await waitFor(() => expect(triggers()).toEqual(['landing']));
       const before = screen.getAllByTestId('fav')[0].dataset.view;
-      fireEvent.click(screen.getByRole('button', { name: '숙박' }));
-      expect(screen.getByRole('button', { name: '숙박' })).toHaveAttribute('aria-pressed', 'true');
+      fireEvent.click(within(openFilters()).getByRole('button', { name: '숙박' }));
+      expect(within(openFilters()).getByRole('button', { name: '숙박' })).toHaveAttribute('aria-pressed', 'true');
       expect(tracked('SEARCH')).toHaveLength(1);
       expect(screen.getAllByTestId('fav')[0].dataset.view).toBe(before);
     });

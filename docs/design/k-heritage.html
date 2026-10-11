@@ -5,6 +5,8 @@
     --hanji: #f9f8f2; --giwa: #1d1d1f; --ink: #0a0a0a;
     --pine: #1a472a; --aged-pine: #3e4c3f; --yeonji: #a2231d;
     --ocher: #b38b6d; --celadon: #2b4b63;
+    /* 글씨용 황토 — 원색은 한지 위 2.89:1 이라 작은 라벨에 못 쓴다. 다크는 원색 그대로 (portal-fe/src/styles/k-heritage.css 의 --kh-ocher-text) */
+    --ocher-text: #8a6346;
 
     --ground: var(--hanji); --s1: #f5f4ee; --s2: #efeee8; --s3: #e3e3dd;
     --tx: var(--giwa); --tx-2: #46464a; --tx-3: #77767b;
@@ -31,7 +33,7 @@
       --line: color-mix(in srgb, var(--ocher) 12%, transparent);
       --line-2: color-mix(in srgb, var(--ocher) 22%, transparent);
       --line-3: color-mix(in srgb, var(--ocher) 40%, transparent);
-      --action: var(--celadon); --action-text: #6f9fc4;
+      --action: var(--celadon); --action-text: #6f9fc4; --ocher-text: var(--ocher);
       --slab: #1d1d1f; --slab-deep: #0e0e0e; --on-slab: #e5e2e1; --on-slab-2: #919095;
       --slab-line: color-mix(in srgb, var(--ocher) 14%, transparent);
     }
@@ -43,7 +45,7 @@
     --line: color-mix(in srgb, var(--ocher) 12%, transparent);
     --line-2: color-mix(in srgb, var(--ocher) 22%, transparent);
     --line-3: color-mix(in srgb, var(--ocher) 40%, transparent);
-    --action: var(--celadon); --action-text: #6f9fc4;
+    --action: var(--celadon); --action-text: #6f9fc4; --ocher-text: var(--ocher);
     --slab: #1d1d1f; --slab-deep: #0e0e0e; --on-slab: #e5e2e1; --on-slab-2: #919095;
     --slab-line: color-mix(in srgb, var(--ocher) 14%, transparent);
   }
@@ -70,7 +72,7 @@
   section { padding: var(--void) 0; border-top: 1px solid var(--line); }
   section:first-of-type { border-top: 0; }
   .head { display: flex; flex-direction: column; gap: .5rem; margin-bottom: 2.5rem; }
-  .label { font-family: var(--mono); font-size: .75rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--ocher); }
+  .label { font-family: var(--mono); font-size: .75rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--ocher-text); }
   h2 { font-size: clamp(1.375rem, 2.6vw, 1.625rem); font-weight: 600; letter-spacing: -.01em; }
   h2::after { content: ""; display: block; width: 88px; height: 1px; margin-top: 1rem; background: var(--line-2); }
   .note { max-width: var(--measure); color: var(--tx-2); margin: 0 0 2.5rem; }

@@ -238,7 +238,10 @@ describe('PlacePage 계측 — 실제 트래커', () => {
     await waitFor(() => expect(favoriteClicks()).toHaveLength(1));
     expect(favoriteClicks()[0]).toMatchObject({ viewId: initial.viewId, payload: { saved: true } });
 
-    fireEvent.click(screen.getByRole('button', { name: /^주차 가능/ }));
+    // 속성 칩은 「필터」 다이얼로그 안 — 고른 뒤 닫고 카드로 돌아간다
+    fireEvent.click(screen.getByRole('button', { name: /^필터/ }));
+    fireEvent.click(within(screen.getByRole('dialog', { name: '필터' })).getByRole('button', { name: /^주차 가능/ }));
+    fireEvent.keyDown(document, { key: 'Escape' });
     await waitFor(() => expect(triggers()).toEqual(['landing', 'initial', 'attribute']));
     const next = byAction('SEARCH')[2];
     expect(next.viewId).not.toBe(initial.viewId);

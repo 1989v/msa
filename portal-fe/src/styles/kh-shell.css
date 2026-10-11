@@ -181,7 +181,8 @@ textarea {
 }
 
 .kh-sheet-label {
-  color: var(--kh-ocher, var(--ko-text-muted));
+  /* 글씨용 황토 — 원색은 라이트 시트 바탕 위 2.79:1 (DESIGN.md §12). 다크는 원색 그대로 */
+  color: var(--kh-ocher-text, var(--ko-text-muted));
   font-size: var(--ko-text-xs);
   text-transform: uppercase;
   padding-bottom: var(--ko-space-3);

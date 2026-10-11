@@ -2,7 +2,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Attraction, AttractionQuery } from '../../../api/placeApi';
+import type { AdministrativeRegion, Attraction, AttractionQuery } from '../../../api/placeApi';
 
 vi.mock('../../../api/placeApi', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../api/placeApi')>()),
@@ -317,7 +317,150 @@ describe('넓은 화면', () => {
     expect(mapToggle()).toBeNull();
     expect(body()).not.toHaveClass('is-list-view');
     expect(body()).not.toHaveClass('is-map-view');
-    expect(document.querySelector('.place-filter-bar')).toBeNull();
+    // 넓은 화면도 필터 한 줄이다 — 첫 결과를 필터 벽 아래로 밀지 않는다
+    expect(document.querySelector('.place-filter-bar')).not.toBeNull();
+  });
+
+  it('필터 한 줄만 그리고 나머지 칩은 「필터」를 열기 전에는 없다 — 열면 가운데 다이얼로그', async () => {
+    stubMedia(false);
+    renderPage();
+    await screen.findByText('관광지 a-1');
+    const bar = document.querySelector('.place-filter-bar') as HTMLElement;
+    expect(Array.from(bar.querySelectorAll('.place-chip')).map((b) => b.textContent)).toEqual(['전체', '자연', '행사']);
+    expect(document.querySelector('.place-attr-chip')).toBeNull();
+    expect(document.querySelector('[data-category]')).toBeNull();
+    expect(document.querySelector('.place-chip.overlay')).toBeNull();
+    expect(screen.queryByRole('group', { name: '방문 정보 필터' })).toBeNull();
+    expect(filterSheet()).toBeNull();
+
+    openFilters();
+    const dialog = screen.getByRole('dialog', { name: '필터' });
+    expect(dialog).toHaveClass('kh-sheet--dialog');
+    expect(dialog).toHaveClass('place-filter-sheet');
+    expect(within(dialog).getByRole('group', { name: '방문 정보 필터' })).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: '역사' })).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: '숙박' })).toHaveClass('overlay');
+  });
+
+  it('지도 오버레이 칩을 켜면 다이얼로그를 닫는다 — 켠 값은 남는다', async () => {
+    stubMedia(false);
+    renderPage();
+    await screen.findByText('관광지 a-1');
+    openFilters();
+    fireEvent.click(within(screen.getByRole('dialog', { name: '필터' })).getByRole('button', { name: '숙박' }));
+    expect(filterSheet()).toBeNull();
+
+    openFilters();
+    expect(within(screen.getByRole('dialog', { name: '필터' })).getByRole('button', { name: '숙박' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+});
+
+/*
+ * 두 폭이 같은 코드(필터 한 줄·시트)를 탄다. 같은 클릭의 결과가 두 폭에서 같은지 보고, 기대 리터럴로도 고정한다 —
+ * 두 폭이 같은 핸들러를 타므로 상대 비교만으로는 핸들러가 다른 trigger 를 심어도 빨강이 나지 않는다.
+ * 판정 근거는 화면이 보낸 질의(`searchAttractions` 대역 인자)와 계측 대역(`track`)이 받은 SEARCH payload 다.
+ */
+describe('넓은/좁은 짝 — 같은 클릭은 같은 질의·계측을 낸다', () => {
+  const seoul: AdministrativeRegion = {
+    code: '11', parentCode: null, level: 'SIDO', name: '서울특별시', nameEn: 'Seoul', latitude: 37.56, longitude: 126.97, attractionCount: 4321,
+  };
+  const jongno: AdministrativeRegion = {
+    code: '11110', parentCode: '11', level: 'SIGUNGU', name: '종로구', nameEn: 'Jongno-gu', latitude: 37.57, longitude: 126.98, attractionCount: 300,
+  };
+  const lastSearch = () => vi.mocked(track).mock.calls.filter(([a]) => a === 'SEARCH').at(-1)![1].payload;
+
+  /** 넓은 화면·좁은 화면 차례로 같은 조작을 하고 마지막 SEARCH payload·질의와 연 시트의 class 를 모은다 */
+  const both = async (operate: () => Promise<HTMLElement | null>) => {
+    const out: { payload: unknown; query: AttractionQuery; sheetClass: string | null }[] = [];
+    for (const mobile of [false, true]) {
+      stubMedia(mobile);
+      vi.mocked(track).mockClear();
+      vi.mocked(searchAttractions).mockClear();
+      renderPage();
+      await screen.findByText('관광지 a-1');
+      const sheet = await operate();
+      out.push({ payload: lastSearch(), query: calls().at(-1)!, sheetClass: sheet?.className ?? null });
+      cleanup();
+    }
+    return out;
+  };
+  const inFilters = async () => {
+    openFilters();
+    return screen.findByRole('dialog', { name: '필터' });
+  };
+
+  it('속성 칩 — trigger attribute · changed [attributes, page] · 질의 parking YES', async () => {
+    const [wide, narrow] = await both(async () => {
+      const sheet = await inFilters();
+      fireEvent.click(within(sheet).getByRole('button', { name: /^주차 가능/ }));
+      await screen.findByText('관광지 p-1');
+      await waitFor(() => expect(lastSearch()).toMatchObject({ attributes: ['parking'] }));
+      return sheet;
+    });
+    for (const r of [wide, narrow]) {
+      expect(r.payload).toMatchObject({ trigger: 'attribute', changed: ['attributes', 'page'], attributes: ['parking'] });
+      expect(r.query).toMatchObject({ parking: 'YES', page: 0 });
+    }
+    expect(wide.payload).toEqual(narrow.payload);
+    expect(wide.sheetClass).toContain('kh-sheet--dialog');
+    expect(narrow.sheetClass).not.toContain('kh-sheet--dialog');
+  });
+
+  it('분류 칩(한 줄) — trigger category · changed [category, listEventStatus, page] · 질의 category nature', async () => {
+    const [wide, narrow] = await both(async () => {
+      const bar = document.querySelector('.place-filter-bar') as HTMLElement;
+      fireEvent.click(within(bar).getByRole('button', { name: '자연' }));
+      await waitFor(() => expect(lastSearch()).toMatchObject({ category: 'nature' }));
+      return null;
+    });
+    for (const r of [wide, narrow]) {
+      expect(r.payload).toMatchObject({ trigger: 'category', changed: ['category', 'listEventStatus', 'page'], category: 'nature' });
+      expect(r.query).toMatchObject({ category: 'nature', page: 0 });
+    }
+    expect(wide.payload).toEqual(narrow.payload);
+  });
+
+  it('행사 상태 칩 — trigger eventStatus · changed [listEventStatus, page] · 질의 festival WEEKEND', async () => {
+    const [wide, narrow] = await both(async () => {
+      const bar = document.querySelector('.place-filter-bar') as HTMLElement;
+      fireEvent.click(within(bar).getByRole('button', { name: '행사' }));
+      await waitFor(() => expect(lastSearch()).toMatchObject({ category: 'festival' }));
+      const sheet = await inFilters();
+      fireEvent.click(within(within(sheet).getByRole('group', { name: '행사 상태' })).getByRole('button', { name: '이번 주말' }));
+      await waitFor(() => expect(calls().at(-1)).toMatchObject({ eventStatus: 'WEEKEND' }));
+      await waitFor(() => expect(lastSearch()).toMatchObject({ trigger: 'eventStatus' }));
+      return sheet;
+    });
+    for (const r of [wide, narrow]) {
+      expect(r.payload).toMatchObject({ trigger: 'eventStatus', changed: ['listEventStatus', 'page'], category: 'festival' });
+      expect(r.query).toMatchObject({ category: 'festival', eventStatus: 'WEEKEND', page: 0 });
+    }
+    expect(wide.payload).toEqual(narrow.payload);
+  });
+
+  it('지역 시트 — 트리거 → 시군구 행: trigger region · changed [sidoCode, sigunguCode] · 질의 11/110', async () => {
+    vi.mocked(fetchAdministrativeRegions).mockImplementation(({ level }) =>
+      Promise.resolve(level === 'SIDO' ? [seoul] : [jongno]),
+    );
+    const [wide, narrow] = await both(async () => {
+      // 첫 진입 자동 선택(서울)이 끝난 뒤
+      await waitFor(() => expect(calls().at(-1)).toMatchObject({ sidoCode: '11' }));
+      fireEvent.click(await screen.findByRole('button', { name: /^서울특별시/ }));
+      const sheet = await screen.findByRole('dialog', { name: '지역 선택' });
+      fireEvent.click(await within(sheet).findByRole('button', { name: /^종로구/ }));
+      await waitFor(() => expect(lastSearch()).toMatchObject({ sigungu: '110' }));
+      return sheet;
+    });
+    for (const r of [wide, narrow]) {
+      expect(r.payload).toMatchObject({ trigger: 'region', changed: ['sidoCode', 'sigunguCode'], sido: '11', sigungu: '110' });
+      expect(r.query).toMatchObject({ sidoCode: '11', sigunguCode: '110', page: 0 });
+    }
+    expect(wide.payload).toEqual(narrow.payload);
+    expect(wide.sheetClass).toContain('kh-sheet--dialog');
+    expect(narrow.sheetClass).not.toContain('kh-sheet--dialog');
   });
 });
 
