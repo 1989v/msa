@@ -424,7 +424,7 @@ class AttractionPageRenderer(
     // ─── 크롤러용 본문 ──────────────────────────────────────────────────────
 
     /**
-     * 화면(AttractionPage)과 같은 순서로 절을 낸다: 브레드크럼(시군구까지) → 제목 → 방문 요약 → 배지 줄 → 이 사이트 근거 줄 → 행동 줄 →
+     * 화면(AttractionPage)과 같은 순서로 절을 낸다: 브레드크럼(시군구까지) → 제목 → 행동 줄 → 방문 요약 → 배지 줄 → 이 사이트 근거 줄 →
      * 개요 → 대표 사진 → 유형별 절(행사·숙박·코스) → 지역 안 위치 → 같은 분류 가까운 곳 → 비슷한 곳(다른 시도) →
      * 함께 간 곳 → 출처. 방문 요약·배지 줄은 유형별 절이 없는 유형에만 붙고, 그 유형에서는 「이용 안내」·배지 절이
      * 겹치므로 내지 않는다. 반경 주변 관광지·편의시설·근처 행사·숙소는 조회가 더 필요해 SPA 가 그린다
@@ -445,13 +445,13 @@ class AttractionPageRenderer(
         // 문의(infoCenter)가 비면 행동 줄이 tel 을 보여 주므로 여기서는 빼서 두 번 나가지 않게 한다
         val infoCenter = sourceText(doc.infoCenter)
         if (!doc.tel.isNullOrEmpty() && infoCenter.isNotEmpty()) append("<p>${escapeHtml(doc.tel)}</p>")
+        append(actions(if (infoCenter.isNotEmpty()) doc.infoCenter else doc.tel))
         val typed = typeSection(lang, doc, today)
         if (typed == null) {
             append(visitSummary(lang, doc))
             append(visitBadges(lang, doc.attributes, doc.uniqueClickers14d))
         }
         append(siteSignals(lang, doc))
-        append(actions(if (infoCenter.isNotEmpty()) doc.infoCenter else doc.tel))
         append("<p>${escapeHtml(sourceText(doc.overview))}</p>")
         append(photo(doc))
         typed?.let(::append)
@@ -601,7 +601,7 @@ class AttractionPageRenderer(
     /**
      * 이 사이트 근거 줄 — 찜(하한 [AttractionSaveSignal.SAVED_MIN]) → 14일 고유 클릭(하한 [AttractionClickSignal.MIN_SAMPLE]) 순,
      * 기준일(`signalsAsOf`)이 있으면 「{날짜} 기준」. 화면 `siteSignalSentences`(visitSignals.ts)와 같은 문장이고 골든으로 대조한다.
-     * 유형과 무관하게 행동 줄 앞에 둔다. 하한 미만·값 없음이면 절을 내지 않는다.
+     * 유형과 무관하게 방문 요약·배지 줄 뒤(행동 줄보다 아래)에 둔다. 하한 미만·값 없음이면 절을 내지 않는다.
      */
     private fun siteSignals(lang: String, doc: AttractionDocument): String {
         val en = lang == EN

@@ -364,7 +364,7 @@ export default function AttractionPage() {
 
         {attraction && (
           <article className="place-detail" aria-label={attraction.title}>
-            {/* 첫 화면 — 제목 · 방문 요약 · 행동 줄 → 개요 → 사진 → 유형별 절 · 이용 안내. 서버 렌더와 같은 순서다.
+            {/* 첫 화면 — 제목 · 행동 줄 · 방문 요약 → 개요 → 사진 → 유형별 절 · 이용 안내. 서버 렌더와 같은 순서다.
                 넓은 화면은 위 줄이 「요약 | 사진」, 아래 줄이 「개요 | 이용 안내」인 격자다(PlacePage.css .place-detail-first). */}
             <div className="place-detail-first">
               <div className="place-detail-lead">
@@ -406,32 +406,8 @@ export default function AttractionPage() {
                   <span className="place-chip active">{placeCategoryLabel(attraction.category, lang)}</span>
                 )}
                 {attraction.tel && infoCenterPhone && <p className="place-detail-tel">{attraction.tel}</p>}
-                {summary && (
-                  <section className="place-visit" aria-label={L.summary} data-place-section="visit-summary">
-                    <dl className="place-detail-info-list">
-                      {summary.rows.map((row) => (
-                        <div className="place-detail-info-row" key={row.label}>
-                          <dt>{row.label}</dt>
-                          <dd>{row.value}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </section>
-                )}
-                {summary?.badgeLine && (
-                  <p className="place-visit-badges" data-place-section="visit-badges">
-                    {summary.badgeLine}
-                  </p>
-                )}
-                {(siteSignals.length > 0 || trendLink) && (
-                  <div className="place-visit-signals" data-place-section="visit-signals">
-                    {siteSignals.map((line) => (
-                      <p key={line}>{line}</p>
-                    ))}
-                    {trendLink && <Link to={trendLink.to}>{trendLink.label}</Link>}
-                  </div>
-                )}
-                {/* 행동 줄 — 길찾기(화면 전용)와 문의 전화. 번호 모양이 없으면 원문만 글로 둔다 */}
+                {/* 행동 줄 — 길찾기(화면 전용)와 문의 전화. 번호 모양이 없으면 원문만 글로 둔다.
+                    방문 요약보다 위에 둔다 — 요약 칸이 길어도 길찾기가 첫 화면에 든다 */}
                 <div className="place-detail-actions" data-place-section="actions">
                   {/* 지도 열기 — 선택 뒤 후속 행동이라 노출은 보내지 않는다(TrackedLink 를 쓰지 않는다).
                       기본 동작(새 탭)은 그대로고, 계측이 이동을 막지 않는다 */}
@@ -488,6 +464,31 @@ export default function AttractionPage() {
                       <span className="place-detail-phone">{phone.text}</span>
                     ))}
                 </div>
+                {summary && (
+                  <section className="place-visit" aria-label={L.summary} data-place-section="visit-summary">
+                    <dl className="place-detail-info-list">
+                      {summary.rows.map((row) => (
+                        <div className="place-detail-info-row" key={row.label}>
+                          <dt>{row.label}</dt>
+                          <dd>{row.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </section>
+                )}
+                {summary?.badgeLine && (
+                  <p className="place-visit-badges" data-place-section="visit-badges">
+                    {summary.badgeLine}
+                  </p>
+                )}
+                {(siteSignals.length > 0 || trendLink) && (
+                  <div className="place-visit-signals" data-place-section="visit-signals">
+                    {siteSignals.map((line) => (
+                      <p key={line}>{line}</p>
+                    ))}
+                    {trendLink && <Link to={trendLink.to}>{trendLink.label}</Link>}
+                  </div>
+                )}
               </div>
               {/* 원천 개요는 평문이 아니다 — <br>·HTML 엔티티가 섞여 오고 국문은 \n 이 온다.
                   overviewText 가 태그·엔티티를 풀고 줄바꿈만 남기며, CSS 가 그것을 살린다. */}

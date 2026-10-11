@@ -203,12 +203,12 @@ class AttractionPageRendererTest : BehaviorSpec({
             root shouldContain "<li><a href=\"/attractions/3002\">화성행궁 &lt;정조&gt;</a></li>"
         }
 
-        then("절 순서는 제목 → 방문 요약 → 배지 줄 → 행동 줄 → 개요 → 지역 안 위치 → 같은 분류 가까운 곳 → 비슷한 곳") {
+        then("절 순서는 제목 → 행동 줄 → 방문 요약 → 배지 줄 → 개요 → 지역 안 위치 → 같은 분류 가까운 곳 → 비슷한 곳") {
             val order = listOf(
                 "<h1>",
+                "data-place-section=\"actions\"",
                 "data-place-section=\"visit-summary\"",
                 "data-place-section=\"visit-badges\"",
-                "data-place-section=\"actions\"",
                 "조선 왕조의 법궁",
                 "종로구 관광지 120곳",
                 "data-place-section=\"same-category-nearby\"",
@@ -438,9 +438,23 @@ class AttractionPageRendererTest : BehaviorSpec({
             lines.forEach { it.lowercase() shouldNotContain "visitor" }
         }
 
-        then("행사·숙박 같은 유형 문서에도 같은 줄이 행동 줄 앞에 나온다") {
+        then("근거 묶음은 방문 요약·배지 줄 뒤, 개요 앞 — 행동 줄은 그보다 위다") {
+            val root = rootOf(render(SHELL, doc(attributes = PARSED).copy(savedCount = 3)))
+            val order = listOf(
+                "data-place-section=\"actions\"",
+                "data-place-section=\"visit-summary\"",
+                "data-place-section=\"visit-badges\"",
+                "data-place-section=\"visit-signals\"",
+                "조선 왕조의 법궁",
+            ).map { root.indexOf(it) }
+            order.none { it < 0 } shouldBe true
+            order shouldBe order.sorted()
+        }
+
+        then("행사·숙박 같은 유형 문서에도 같은 줄이 행동 줄 뒤에 나온다") {
             val root = rootOf(render(SHELL, stay().copy(savedCount = 3)))
             root shouldContain "<div data-place-section=\"visit-signals\"><p>이 사이트 회원 3명이 찜했습니다</p></div>"
+            (root.indexOf("data-place-section=\"actions\"") in 0 until root.indexOf("data-place-section=\"visit-signals\"")) shouldBe true
         }
 
         then("렌더러 출력에 「인기」「많이 본」「핫플」이 없고, 근거 줄에 「방문자」가 없다") {
@@ -937,7 +951,7 @@ class AttractionPageRendererTest : BehaviorSpec({
             "stay-en" to stay(lang = "en"),
             "course-ko" to course(),
             "attraction-http-image-ko" to doc().copy(imageUrl = "http://tong.visitkorea.or.kr/cms/resource/33/1.jpg"),
-            // 관광지(12/76) 첫 화면 — 방문 요약 · 배지 줄 · 행동 줄 · 사진 · 시군구 · 같은 분류 가까운 곳 · 출처
+            // 관광지(12/76) 첫 화면 — 행동 줄 · 방문 요약 · 배지 줄 · 사진 · 시군구 · 같은 분류 가까운 곳 · 출처
             "attraction-ko" to richAttraction("ko"),
             "attraction-en" to richAttraction("en"),
         )

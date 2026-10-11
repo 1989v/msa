@@ -1272,7 +1272,7 @@ describe('AttractionPage 사진 주소 https', () => {
   });
 });
 
-/** 첫 화면 — 브레드크럼(시군구) → 제목 → 방문 요약 → 배지 줄 → 행동 줄 → 개요 → 사진. 서버 렌더와 같은 순서다 */
+/** 첫 화면 — 브레드크럼(시군구) → 제목 → 행동 줄 → 방문 요약 → 배지 줄 → 근거 묶음 → 개요 → 사진. 서버 렌더와 같은 순서다 */
 describe('AttractionPage 첫 화면 — 방문 요약 · 행동 줄', () => {
   beforeEach(() => nearbyFrom(() => []));
   afterEach(() => vi.clearAllMocks());
@@ -1293,7 +1293,7 @@ describe('AttractionPage 첫 화면 — 방문 요약 · 행동 줄', () => {
   const isBefore = (a: Element, b: Element) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
   const actions = () => at('[data-place-section="actions"]') as HTMLElement;
 
-  it('일반 유형 — 브레드크럼(시도 › 시군구) → 제목·찜 → 방문 요약 → 배지 줄 → 행동 줄(길찾기·전화) → 개요 → 사진 히어로', async () => {
+  it('일반 유형 — 브레드크럼(시도 › 시군구) → 제목·찜 → 행동 줄(길찾기·전화) → 방문 요약 → 배지 줄 → 근거 묶음 → 개요 → 사진 히어로', async () => {
     vi.mocked(fetchAttraction).mockResolvedValue(first);
     renderAt('/attractions/100');
     await screen.findByRole('heading', { level: 1, name: '경복궁' });
@@ -1305,16 +1305,19 @@ describe('AttractionPage 첫 화면 — 방문 요약 · 행동 줄', () => {
       within(nav).getByRole('link', { name: '종로구' }),
       screen.getByRole('heading', { level: 1 }),
       screen.getByTestId('fav'),
+      actions(),
       at('[data-place-section="visit-summary"]'),
       at('[data-place-section="visit-badges"]'),
-      actions(),
+      at('[data-place-section="visit-signals"]'),
       screen.getByText('조선의 법궁이다.'),
       at('.place-detail-hero'),
     ];
     order.slice(1).forEach((el, i) => expect(isBefore(order[i], el), `${i} → ${i + 1}`).toBe(true));
+    // 길찾기·전화가 요금·쉬는 날보다 먼저 — 요약 칸 길이와 상관없이 첫 화면에 든다
+    expect(isBefore(actions(), at('[data-place-section="visit-summary"]')), 'actions → visit-summary').toBe(true);
     expect(within(actions()).getByRole('link', { name: '구글 지도에서 보기' })).toBeInTheDocument();
     expect(within(actions()).getByRole('link', { name: '경복궁 관리소 02-3700-3900' })).toHaveAttribute('href', 'tel:0237003900');
-    // 길찾기는 요약 아래로 옮겼다 — 한 번만 있다
+    // 길찾기는 제목 아래 행동 줄에만 있다 — 한 번만 있다
     expect(screen.getAllByRole('link', { name: '구글 지도에서 보기' })).toHaveLength(1);
   });
 

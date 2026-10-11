@@ -18,7 +18,7 @@
 | 대조군 | 주입 없음(사본 원본) | 0 | 없음 — `PlacePage.layout`·`RegionSheet`·`KhSheet` 37/37 통과 |
 
 - 주입 2 는 짝 단언의 **절대값**(`trigger: 'attribute'` 리터럴)이 잡았다. 두 폭이 같은 `toggleAttribute` 를 타므로 이 주입에서는 두 폭 모두 `'category'` 가 되어, 넓은/좁은 결과끼리 비교하는 단언(`toEqual(narrow.payload)`)만으로는 같다고 판정된다.
-- 상세 행동 줄 위치(FE·SSR)·렌더 골든 주입은 TG4 범위라 여기 없다.
+- 상세 행동 줄 위치(FE·SSR)·렌더 골든 주입은 TG4 범위라 아래 §3 에 있다.
 
 ## 2. CSS 대비 (SR-3~5) — 사본 빌드 측정, 2026-10-11 10:31~10:46 KST
 
@@ -38,3 +38,19 @@
 
 - 측정한 번들이 그 사본인지는 측정 화면의 `document.scripts` 해시로 확인했다 — 아홉 개가 모두 다르고(`index-DP-5hiYG.js` … `index-CmLy-01e.js`), 후 빌드(`index-DcJZLHoa.js`)와도 다르다.
 - 실행마다 「이 세션」 크롬 `(없음)`, 프리뷰 리스너 0.
+
+## 3. 상세 행동 줄 위치 (TG4, SR-6) — 2026-10-11 KST
+
+임시 사본은 워크트리를 스크래치패드로 `rsync`(node_modules·build·.gradle·.git 제외, node_modules 는 원본 심링크)한 트리다. 주입마다 원본 파일을 되돌렸고, 끝에 사본의 `AttractionPage.tsx`·`AttractionPageRenderer.kt`·`render/` 골든이 워크트리와 같은지 `diff` 로 확인했다. 주입은 모두 컴파일되는 회귀다(FE 는 사본 `npx tsc -b` 0, SSR 은 Gradle 컴파일 통과 후 테스트 실패).
+
+명령: FE `npx vitest run src/pages/place/__tests__/AttractionPage.test.tsx`, SSR `./gradlew :search:app:test --tests '*AttractionPageRendererTest' --tests '*Parity*' --rerun`(**`UPDATE_RENDER_GOLDEN` 없이**).
+
+| # | 주입 (파일) | tsc / 컴파일 | 빨강을 낸 테스트 |
+|---|---|---|---|
+| 1 | FE 행동 줄을 옛 자리(근거 묶음 뒤)로 되돌리기 (`AttractionPage.tsx`) | 0 | 첫 화면 > 일반 유형 — … → 행동 줄(길찾기·전화) → 방문 요약 → … (`3 → 4`) — 1건 |
+| 2 | FE 행동 줄을 방문 요약 바로 뒤로 (`AttractionPage.tsx`) | 0 | 같은 테스트 (`3 → 4`) — 1건 |
+| 3 | FE 근거 묶음을 행동 줄 위로 (`AttractionPage.tsx`) | 0 | 같은 테스트 (`5 → 6`, 배지 줄 → 근거 묶음) — 1건 |
+| 4 | SSR `append(actions(…))` 를 옛 자리(`siteSignals` 뒤)로 되돌리기 (`AttractionPageRenderer.kt`) | 통과 | 절 순서는 제목 → 행동 줄 → 방문 요약 → … · 근거 묶음은 방문 요약·배지 줄 뒤, 개요 앞 — 행동 줄은 그보다 위다 · 행사·숙박 같은 유형 문서에도 같은 줄이 행동 줄 뒤에 나온다 · 렌더 골든 `attraction-ko` · `attraction-en` · `attraction-http-image-ko` — 6건(233 중). `*Parity*` 7개 스위트는 초록 |
+| 대조군 | 주입 없음(되돌린 사본) | 0 / 통과 | 없음 — FE 89/89(`AttractionPage`·`visitSummaryGolden`), Gradle 233건 실패 0 |
+
+- 렌더 골든은 주입 4 에서 세 파일만 빨강이고 `event-*`·`stay-*`·`course-ko` 는 초록이다 — 이 문서들은 방문 요약이 없고 근거 줄 표본(찜·클릭)도 없어 행동 줄의 상대 위치가 바뀌지 않는다(SR-6.2).
