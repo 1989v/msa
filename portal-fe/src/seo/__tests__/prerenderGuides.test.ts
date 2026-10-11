@@ -56,7 +56,9 @@ describe('편집 페이지 프리렌더', () => {
 
   it('draft → noindex · 「검수 전 초안」 띠 · sitemap·llms 제외 · 목록 없음 · 허브 링크 없음', () => {
     const out = placeGuidePages(SHELL, { guides: [draft], cards, buildDate: BUILD });
-    expect(out.pages.map((p: { path: string }) => p.path)).toEqual(['prerender/guides/seoul-free.html']);
+    // 초안은 _noindex 아래 같은 경로 — nginx 가 X-Robots-Tag 헤더로도 noindex 를 낸다
+    expect(out.pages.map((p: { path: string }) => p.path)).toEqual(['prerender/_noindex/guides/seoul-free.html']);
+    expect(out.pages[0].path).toBe(`prerender/_noindex${new URL(out.pages[0].url).pathname}.html`);
     const html = out.pages[0].html;
     expect(html).toContain('<meta name="robots" content="noindex, follow" />');
     expect(html).toContain(`<link rel="canonical" href="${guideUrl('seoul-free')}" />`);
@@ -75,6 +77,8 @@ describe('편집 페이지 프리렌더', () => {
     const out = placeGuidePages(SHELL, { guides: [draft, pub], cards, buildDate: BUILD });
     const pubPage = out.pages.find((p) => p.guide.slug === 'palace')!;
     expect(pubPage.html).not.toContain('noindex');
+    expect(pubPage.path).toBe('prerender/guides/palace.html');
+    expect(pubPage.path).toBe(`prerender${new URL(pubPage.url).pathname}.html`);
     expect(body(pubPage.html)).not.toContain(GUIDE_DRAFT_BAND);
     expect(out.index!.path).toBe('prerender/guides/index.html');
     expect(out.index!.html).toContain(`href="${guidePath('palace')}"`);
@@ -148,6 +152,7 @@ describe('부분 실패 가드 — guides 섹션', () => {
     regions: async () => ({ ko: [], en: [] }),
     landingList: async () => [],
     landings: async () => new Map(),
+    regionTops: async () => new Map(),
     guides: async () => [guide('a', 'draft', [{ cardId: '101' }])],
     guideCards: async () => new Map([['101', card('101')]]),
     blog: async () => ({ posts: [], categories: [] }),

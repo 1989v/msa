@@ -191,7 +191,7 @@ async function main() {
     throw new Error('index.html 에 <!--seo:start--> 마커가 없습니다');
   }
 
-  const { games, places, regions, landingList, landingResults, guides, guideCards, blog, concepts, dealSections, rankBoards } =
+  const { games, places, regions, landingList, landingResults, regionTops, guides, guideCards, blog, concepts, dealSections, rankBoards } =
     await fetchSeoSections();
   // 속성 랜딩 — 산출물을 먼저 만들어 품질 게이트(title·description 중복)를 쓰기 전에 통과시킨다
   const landing = placeLandingPages(shell, { landings: landingList, regions, results: landingResults });
@@ -212,8 +212,10 @@ async function main() {
   await writeRobotsAndSitemaps(games, places, regions, blog, rankBoards, dealSections, concepts, landing.pages, guidePages);
   await renderPortalPages(shell, concepts, { searchArchitecture });
   await renderTechGlossaries(shell, concepts);
-  await renderPlaceHubs(shell, places, regions, { guidesListed: guidePages.index != null });
-  await renderPlaceDetails(shell, places, regions);
+  const hubPages = await renderPlaceHubs(shell, places, regions, { guidesListed: guidePages.index != null });
+  const regionPages = await renderPlaceDetails(shell, places, regions, { regionTops, landingPages: landing.pages });
+  const depth = placeLinkDepth([...hubPages, ...regionPages], places);
+  console.log(`[seo] place 티어 A 중 깊이 3 안 ${LANGS.map((lang) => `${lang} ${depth[lang].within}/${depth[lang].total}`).join(' · ')}`);
   for (const { path, html } of landing.pages) await emit(path, html);
   if (landing.pages.length > 0) console.log(`[seo] place 속성 랜딩 프리렌더 ${landing.pages.length}장`);
   for (const { path, html } of [...guidePages.pages, ...(guidePages.index ? [guidePages.index] : [])]) await emit(path, html);
@@ -295,6 +297,8 @@ export async function fetchSeoSections(loaders = defaultSeoLoaders()) {
   // 지역 색인이 실패했으면 이미 그 섹션이 실패로 잡혀 있다.
   let landingList = [];
   let landingResults = new Map();
+  // 시군구 대표 관광지 — 시군구마다 질의 1회. 받은 결과를 지역 색인(places)의 id 로 거르므로 그 섹션이 성공했을 때만 부른다
+  let regionTops = new Map();
   if (fetched.includes('places')) {
     try {
       landingList = await loaders.landingList();
@@ -303,6 +307,14 @@ export async function fetchSeoSections(loaders = defaultSeoLoaders()) {
     } catch (err) {
       failed.push('place-landings');
       console.warn(`[seo] 속성 랜딩 조회 실패: ${err.message}`);
+    }
+    try {
+      regionTops = await loaders.regionTops(regions);
+      fetched.push('place-region-tops');
+    } catch (err) {
+      regionTops = new Map();
+      failed.push('place-region-tops');
+      console.warn(`[seo] 시군구 대표 관광지 조회 실패: ${err.message}`);
     }
   }
 
@@ -373,7 +385,7 @@ export async function fetchSeoSections(loaders = defaultSeoLoaders()) {
     );
   }
 
-  return { games, places, regions, landingList, landingResults, guides, guideCards, blog, concepts, dealSections, rankBoards };
+  return { games, places, regions, landingList, landingResults, regionTops, guides, guideCards, blog, concepts, dealSections, rankBoards };
 }
 
 function defaultSeoLoaders() {
@@ -383,6 +395,7 @@ function defaultSeoLoaders() {
     regions: fetchRegionIndex,
     landingList: async () => JSON.parse(await readFile(PLACE_LANDINGS_JSON, 'utf8')),
     landings: (list, regions) => fetchPlaceLandings(list, regions),
+    regionTops: (regions) => fetchRegionTops(regions),
     guides: readGuides,
     guideCards: (list) => fetchPlaceGuideCards(list),
     blog: fetchBlogIndex,
@@ -928,8 +941,10 @@ export function placeDetailSitemapEntries(places) {
     const other = lang === 'en' ? 'ko' : 'en';
     return listed[lang].map((a) => ({
       loc: placeUrl(lang, `/attractions/${a.id}`),
-      lastmod: isoDate(a.modifiedAt),
+      lastmod: detailLastmod(a),
       priority: '0.7',
+      // 핵심 sitemap 으로 갈 항목 — placeSitemapFiles 가 이 표지로 가른다(urlEntry 는 읽지 않는다)
+      tierA: isTierA(a),
       // 언어 대체 짝은 상대 언어 항목도 이 sitemap 에 있을 때만 잇는다 — 없는 주소를 대체로 선언하지 않는다.
       // 빌드 시점 값이라 다음 빌드까지 낡을 수 있다(기준은 상세 서버 렌더).
       ...(a.alternateId && listedIds[other].has(a.alternateId)
@@ -939,8 +954,25 @@ export function placeDetailSitemapEntries(places) {
   });
 }
 
+/**
+ * 상세 lastmod — 본문이 바뀐 날(contentUpdatedAt, KST 문자열의 앞 10자) → 없으면 원천 수정일 → 둘 다 없으면 비운다.
+ * contentUpdatedAt 은 isoDate 를 거치지 않는다: UTC 로 바꾸면 KST 자정 근처 시각이 하루 앞 날짜가 된다.
+ * 앞 10자가 날짜 형식이 아니면 없는 것으로 본다.
+ */
+function detailLastmod(a) {
+  const head = typeof a.contentUpdatedAt === 'string' ? a.contentUpdatedAt.slice(0, 10) : '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(head)) return head;
+  return isoDate(a.modifiedAt);
+}
+
 /** sitemap 은 파일당 50,000 URL 상한이 있다. 넘치면 쪼개고 인덱스로 묶는다. */
-const SITEMAP_CHUNK = 20_000;
+export const SITEMAP_CHUNK = 20_000;
+
+/**
+ * 상세가 이만큼 있는데 티어 A 가 0건이면 판정 필드(분류·place_id)가 빌드 수신에서 빠진 것으로 본다.
+ * 그대로 내면 core 가 허브 항목만 남아 티어 A 를 따로 재려던 분리가 조용히 무너진다.
+ */
+const TIER_A_GATE_MIN_DETAILS = 10_000;
 
 /**
  * 행사 sitemap — 정적 파일이 아니다. nginx 가 이 경로를 search 로 넘기고 search 가 요청 시점의 오늘(KST)로 만든다
@@ -951,23 +983,37 @@ export const PLACE_EVENT_SITEMAP = 'sitemap-places-events.xml';
 /**
  * place sitemap 파일들 — `seo/{place 호스트}/` 아래 이름 → 내용.
  *
+ * 색인 순서는 core → 나머지 → 행사다. core(`sitemap-places-core.xml`) = 허브 항목 + 티어 A 상세,
+ * `sitemap-places-{n}.xml` = 나머지 상세. Search Console 이 sitemap 별 색인 수를 따로 보여 주므로
+ * 티어 A 와 나머지의 색인 비율을 가를 수 있다. core 가 상한을 넘으면 `sitemap-places-core-2.xml`… 로 이어 쓴다.
+ *
  * 상세가 0건이면 인덱스 대신 urlset 하나(허브·지역)만 내고 행사 sitemap 도 가리키지 않는다 —
  * 상세 URL 이 전부 빠진 실패 빌드라 행사만 살릴 이유가 없다.
+ * @param {number} [chunk] 파일당 URL 수 — 테스트가 상한 경계를 만든다
  * @returns {Array<[string, string]>}
  */
-export function placeSitemapFiles(hubEntries, detailEntries) {
-  const chunks = [];
-  for (let i = 0; i < detailEntries.length; i += SITEMAP_CHUNK) {
-    chunks.push(detailEntries.slice(i, i + SITEMAP_CHUNK));
-  }
-  if (chunks.length === 0) {
+export function placeSitemapFiles(hubEntries, detailEntries, chunk = SITEMAP_CHUNK) {
+  if (detailEntries.length === 0) {
     return [['sitemap.xml', sitemapXml(hubEntries)]];
   }
-
-  const files = [['sitemap-places-hub.xml', sitemapXml(hubEntries)]];
-  for (let i = 0; i < chunks.length; i += 1) {
-    files.push([`sitemap-places-${i + 1}.xml`, sitemapXml(chunks[i])]);
+  if (detailEntries.length >= TIER_A_GATE_MIN_DETAILS && !detailEntries.some((e) => e.tierA)) {
+    throw new PartialSeoFailure(
+      `place 상세 ${detailEntries.length}건 중 티어 A 가 0건입니다 — 판정 필드(category·googlePlaceId)가 검색 응답에서 빠진 것으로 보고 빌드를 세웁니다.`,
+    );
   }
+  const split = (entries) => {
+    const chunks = [];
+    for (let i = 0; i < entries.length; i += chunk) chunks.push(entries.slice(i, i + chunk));
+    return chunks;
+  };
+
+  const files = [];
+  split([...hubEntries, ...detailEntries.filter((e) => e.tierA)]).forEach((part, i) => {
+    files.push([i === 0 ? 'sitemap-places-core.xml' : `sitemap-places-core-${i + 1}.xml`, sitemapXml(part)]);
+  });
+  split(detailEntries.filter((e) => !e.tierA)).forEach((part, i) => {
+    files.push([`sitemap-places-${i + 1}.xml`, sitemapXml(part)]);
+  });
   const indexed = [...files.map(([name]) => name), PLACE_EVENT_SITEMAP];
   files.push(['sitemap.xml', sitemapIndexXml(indexed.map((f) => `${PLACE_ORIGIN}/${f}`))]);
   return files;
@@ -978,7 +1024,12 @@ async function writePlaceSitemaps(hubEntries, detailEntries) {
   for (const [name, content] of files) {
     await emit(`seo/${PLACE_HOST}/${name}`, content);
   }
-  if (detailEntries.length > 0) console.log(`[seo] place sitemap ${detailEntries.length} URL · 정적 ${files.length - 1} 파일 + 행사 동적 1`);
+  if (detailEntries.length > 0) {
+    console.log(`[seo] place sitemap ${detailEntries.length} URL · 정적 ${files.length - 1} 파일 + 행사 동적 1`);
+    const tierA = Object.fromEntries(LANGS.map((lang) => [lang, 0]));
+    for (const e of detailEntries) if (e.tierA) tierA[e.loc.startsWith(`${PLACE_ORIGIN}/en/`) ? 'en' : 'ko'] += 1;
+    console.log(`[seo] place core 티어 A ${LANGS.map((lang) => `${lang} ${tierA[lang]}건`).join(' · ')}`);
+  }
 }
 
 function sitemapIndexXml(locs) {
@@ -1123,9 +1174,13 @@ export function indexDoc(a, sidoCode) {
     hasOverview: true,
     sidoCode,
     title: a.title,
-    imageUrl: a.imageUrl ?? null,
+    // 공백뿐인 사진 주소는 없는 것으로 본다 — 숙박 등재 조건·티어 A 판정이 빈 문자열을 사진으로 세지 않게
+    imageUrl: a.imageUrl?.trim() ? a.imageUrl : null,
     // 숙박의 sitemap 조건(개요 + 대표 사진)이 유형으로 갈린다
     contentTypeId: a.contentTypeId ?? null,
+    // 티어 A 판정 재료(isTierA). place_id 는 값이 아니라 유무만 싣는다 — 짝 판정과 같이 공백뿐이면 없음
+    category: a.category ?? null,
+    hasGooglePlaceId: Boolean(a.googlePlaceId?.trim()),
     // sitemap 의 lastmod. 원천 수정일이 없는 문서는 그냥 비운다 — 빌드일을 대신 적으면
     // 6만 URL 이 배포마다 전부 "갱신됨"이 되어 신호가 신호이길 그만둔다.
     modifiedAt: a.modifiedAt ?? null,
@@ -1134,6 +1189,17 @@ export function indexDoc(a, sidoCode) {
     // 본문이 실제로 바뀐 시각(place 해시 판정, KST). 원천 수정일(modifiedAt)과 다르다. 없으면 null
     contentUpdatedAt: a.contentUpdatedAt ?? null,
   };
+}
+
+/**
+ * 티어 A 상세 — 핵심 sitemap(`sitemap-places-core.xml`)에 허브 항목과 함께 싣는 관광지.
+ * 관광 분류(지역 페이지·허브 목록과 같은 SIGHT_CATEGORIES) + 개요 + 사진 + 구글 place_id 를 모두 갖춘 문서다.
+ * place_id 만으로는 가르지 못한다 — 사진·place_id 를 가진 국문의 41% 가 쇼핑이라 분류가 갈림을 만든다.
+ * @param {Record<string, any>} doc indexDoc 결과
+ */
+export function isTierA(doc) {
+  if (!doc?.hasOverview) return false;
+  return SIGHT_CATEGORIES.includes(doc.category) && Boolean(doc.imageUrl?.trim()) && doc.hasGooglePlaceId === true;
 }
 
 /** 검색 조회 창 — OpenSearch from+size 상한. 한 조각은 100건 × 100쪽까지만 받을 수 있다. */
@@ -1273,7 +1339,9 @@ export function placeHubPages(shell, places, regions, { guidesListed = false } =
 }
 
 async function renderPlaceHubs(shell, places = { ko: [], en: [] }, regions = { ko: [], en: [] }, opts = {}) {
-  for (const { path, html } of placeHubPages(shell, places, regions, opts)) await emit(path, html);
+  const pages = placeHubPages(shell, places, regions, opts);
+  for (const { path, html } of pages) await emit(path, html);
+  return pages;
 }
 
 // ─── place 지역 상세 프리렌더 (ADR-0062 §8) ─────────────────────────────────
@@ -1291,6 +1359,65 @@ function regionTopCandidates(docs) {
   return docs.filter((a) => a.hasOverview && a.title).sort((a, b) => rank(a) - rank(b));
 }
 
+/** 시군구 대표 관광지 질의 크기 — 색인 대조·개요 필터로 빠지는 몫을 감안해 화면(10)보다 넉넉히 받는다 */
+const REGION_TOPS_SIZE = 30;
+/** 지역 페이지 하나에 싣는 대표 관광지 수 */
+const REGION_TOPS_SHOWN = 10;
+
+/**
+ * 시군구 대표 관광지 조회 — 시군구마다 `GET /api/search/attractions` 1회(SPA 지역 화면과 같은 질의, 크기만 30).
+ * 검색 응답에 시군구 축이 없어 시도 샤드 결과로는 짝지을 수 없다. 약 500회라 하나만 실패해도 섹션 실패가
+ * 되므로 호출마다 백오프 재시도를 한다(공용 getJson 은 그대로 둔다). 재시도까지 실패하면 예외 — 섹션 실패다.
+ * @param {(path: string) => Promise<any>} [get] 조회 함수 — 테스트가 주입한다
+ * @returns {Promise<Map<string, Array<Record<string, any>>>>} `lang/시군구코드` → 검색 응답의 관광지 목록
+ */
+export async function fetchRegionTops(
+  regions,
+  get = getJson,
+  { concurrency = 4, retryDelays = [500, 1000] } = {},
+) {
+  const targets = LANGS.flatMap((lang) =>
+    (regions[lang] ?? []).filter((r) => r.level === 'SIGUNGU').map((r) => ({ lang, code: r.code })),
+  );
+  const fetchOne = async ({ lang, code }) => {
+    const params = new URLSearchParams({
+      lang,
+      sidoCode: code.slice(0, 2),
+      sigunguCode: code.slice(2),
+      category: SIGHT_CATEGORIES.join(','),
+      size: String(REGION_TOPS_SIZE),
+    });
+    const path = `/api/search/attractions?${params.toString().replace(/%2C/g, ',')}`;
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        return (await get(path)).attractions ?? [];
+      } catch (err) {
+        if (attempt >= retryDelays.length) throw err;
+        await new Promise((done) => setTimeout(done, retryDelays[attempt]));
+      }
+    }
+  };
+  const started = Date.now();
+  const tops = new Map();
+  for (let i = 0; i < targets.length; i += concurrency) {
+    const batch = targets.slice(i, i + concurrency);
+    const results = await Promise.all(batch.map(fetchOne));
+    batch.forEach((t, j) => tops.set(`${t.lang}/${t.code}`, results[j]));
+  }
+  console.log(`[seo] 시군구 대표 관광지 조회 ${targets.length}회 · ${((Date.now() - started) / 1000).toFixed(1)}초`);
+  return tops;
+}
+
+/**
+ * 시군구 대표 관광지 — 조회 결과를 지역 색인(indexDoc) 항목으로 바꿔 고른다.
+ * 색인에 없는 id 는 뺀다(행사 등 sitemap 밖 문서). 개요 없는 문서도 뺀다(시도 대표와 같은 기준).
+ * 티어 A 먼저, 그다음 개요 있는 문서 — 각 묶음 안에서는 검색 응답 순서를 지킨다.
+ */
+function sigunguTops(found, docsById) {
+  const docs = (found ?? []).map((a) => docsById.get(a.id)).filter((d) => d?.hasOverview && d.title);
+  return [...docs.filter(isTierA), ...docs.filter((d) => !isTierA(d))].slice(0, REGION_TOPS_SHOWN);
+}
+
 /**
  * 지역 상세 정적 HTML — "제주 가볼 만한 곳" 류 질의의 무 JS 착지점 (ADR-0071 §9).
  * @param {string} shell
@@ -1303,7 +1430,7 @@ export function renderRegionDetail(
   shell,
   lang,
   region,
-  { parent = null, children = [], top = [], bothLangs = false } = {},
+  { parent = null, children = [], top = [], landings = [], bothLangs = false } = {},
 ) {
   const meta = regionMeta(lang, region, region.attractionCount);
   const canonical = regionUrl(lang, region.code);
@@ -1318,6 +1445,10 @@ export function renderRegionDetail(
     .join('');
   const topLinks = top
     .map((a) => `<li><a href="${attractionPath(lang, a.id)}">${escapeHtml(a.title)}</a></li>`)
+    .join('');
+  // 색인을 연 속성 랜딩만 — 스위치가 꺼져 있으면 0개다
+  const landingLinks = landings
+    .map((l) => `<li><a href="${landingPath(lang, l.entry.code, l.entry.attr)}">${escapeHtml(l.heading)}</a></li>`)
     .join('');
   return compose(shell, {
     lang,
@@ -1342,6 +1473,9 @@ export function renderRegionDetail(
           : '') +
         (topLinks
           ? `<h2>${lang === 'en' ? 'Top attractions' : '대표 관광지'}</h2><ul>${topLinks}</ul>`
+          : '') +
+        (landingLinks
+          ? `<h2>${lang === 'en' ? 'Lists by feature' : '조건별 목록'}</h2><ul>${landingLinks}</ul>`
           : ''),
     ),
   });
@@ -1349,9 +1483,14 @@ export function renderRegionDetail(
 
 /**
  * place 상세 단계가 쓸 파일 목록 — 쓰기와 분리해 산출물을 단위 검증한다.
+ * @param {string} shell
+ * @param {Record<string, Array<Record<string, any>>>} places indexDoc 결과(언어별)
+ * @param {Record<string, Array<Record<string, any>>>} regions 지역 색인(언어별)
+ * @param {{ regionTops?: Map<string, Array<Record<string, any>>>, landingPages?: Array<Record<string, any>> }} [opts]
+ *   시군구 대표 조회 결과(fetchRegionTops)와 속성 랜딩 산출물(placeLandingPages — 색인을 연 것만 링크)
  * @returns {Array<{ path: string, html: string }>}
  */
-export function placeDetailPages(shell, places, regions) {
+export function placeDetailPages(shell, places, regions, { regionTops = new Map(), landingPages = [] } = {}) {
   const pages = [];
   const bothLangCodes = new Set(
     (regions.ko ?? []).map((r) => r.code).filter((code) => (regions.en ?? []).some((r) => r.code === code)),
@@ -1360,6 +1499,7 @@ export function placeDetailPages(shell, places, regions) {
     const prefix = lang === 'en' ? 'prerender/en' : 'prerender';
     const regionsLang = regions[lang] ?? [];
     const sidoByCode = new Map(regionsLang.filter((r) => r.level === 'SIDO').map((r) => [r.code, r]));
+    const docsById = new Map((places[lang] ?? []).map((d) => [d.id, d]));
 
     // 대표 관광지 짝짓기 — 훑을 때 쓴 시도 샤드가 그대로 말해 준다 (indexDoc.sidoCode)
     const bySido = new Map();
@@ -1373,14 +1513,20 @@ export function placeDetailPages(shell, places, regions) {
       const isSido = region.level === 'SIDO';
       const parent = isSido ? null : (sidoByCode.get(region.code.slice(0, 2)) ?? null);
       const children = isSido ? regionsLang.filter((r) => r.level === 'SIGUNGU' && r.code.startsWith(region.code)) : [];
-      // 대표 관광지는 시도만 — 검색 응답에 시군구 축이 없어 시군구는 짝지을 수 없다
-      const top = isSido ? (bySido.get(region.code) ?? []).slice(0, 10) : [];
+      // 시도는 시도 샤드에서, 시군구는 빌드 때 시군구마다 조회한 결과(fetchRegionTops)에서 고른다
+      const top = isSido
+        ? (bySido.get(region.code) ?? []).slice(0, REGION_TOPS_SHOWN)
+        : sigunguTops(regionTops.get(`${lang}/${region.code}`), docsById);
+      const landings = isSido
+        ? []
+        : landingPages.filter((p) => p.indexed && p.entry.lang === lang && p.entry.code === region.code);
       pages.push({
         path: `${prefix}/regions/${region.code}.html`,
         html: renderRegionDetail(shell, lang, region, {
           parent,
           children,
           top,
+          landings,
           bothLangs: bothLangCodes.has(region.code),
         }),
       });
@@ -1389,10 +1535,41 @@ export function placeDetailPages(shell, places, regions) {
   return pages;
 }
 
-async function renderPlaceDetails(shell, places, regions) {
-  const pages = placeDetailPages(shell, places, regions);
+async function renderPlaceDetails(shell, places, regions, opts = {}) {
+  const pages = placeDetailPages(shell, places, regions, opts);
   for (const { path, html } of pages) await emit(path, html);
   if (pages.length > 0) console.log(`[seo] place 지역 상세 프리렌더 ${pages.length}장`);
+  return pages;
+}
+
+/**
+ * 허브(국·영)에서 `<a href>` 만 따라갔을 때 깊이 3 안에 닿는 티어 A 상세 수 — 빌드 로그용.
+ * 허브·지역 프리렌더 산출물의 링크를 그대로 따라간다(JS 없이 크롤러가 보는 그래프).
+ * @param {Array<{ path: string, html: string }>} pages 허브·지역 프리렌더 산출물
+ * @returns {Record<string, { within: number, total: number }>}
+ */
+export function placeLinkDepth(pages, places, maxDepth = 3) {
+  const hubUrl = { [`prerender/_hosts/${PLACE_HOST}.html`]: '/', [`prerender/_hosts/${PLACE_HOST}.en.html`]: '/en' };
+  const urlOf = (path) => hubUrl[path] ?? path.replace(/^prerender/, '').replace(/\.html$/, '');
+  const htmlByUrl = new Map(pages.map((p) => [urlOf(p.path), p.html]));
+  const depth = new Map([['/', 0], ['/en', 0]]);
+  const queue = ['/', '/en'];
+  while (queue.length > 0) {
+    const url = queue.shift();
+    const next = depth.get(url) + 1;
+    if (next > maxDepth) continue;
+    for (const m of (htmlByUrl.get(url) ?? '').matchAll(/<a href="([^"]+)"/g)) {
+      if (depth.has(m[1])) continue;
+      depth.set(m[1], next);
+      if (htmlByUrl.has(m[1])) queue.push(m[1]);
+    }
+  }
+  return Object.fromEntries(
+    LANGS.map((lang) => {
+      const tierA = (places[lang] ?? []).filter(isTierA);
+      return [lang, { within: tierA.filter((d) => depth.has(attractionPath(lang, d.id))).length, total: tierA.length }];
+    }),
+  );
 }
 
 // ─── place 속성 랜딩 프리렌더 ─────────────────────────────────────────────────
@@ -1551,7 +1728,7 @@ export function placeLandingPages(shell, { landings, regions, results, indexable
       ),
     });
     return {
-      path: `${lang === 'en' ? 'prerender/en' : 'prerender'}/regions/${entry.code}/${entry.attr}.html`,
+      path: prerenderFile(path, indexed),
       html,
       entry,
       url,
@@ -1577,6 +1754,16 @@ export function placeLandingPages(shell, { landings, regions, results, indexable
     }
   }
   return { pages, warnings };
+}
+
+/**
+ * 랜딩·편집 페이지의 프리렌더 파일 경로. 색인하지 않는 페이지는 `prerender/_noindex/` 아래 같은 경로로 쓴다 —
+ * nginx 가 원래 자리에 파일이 없으면 `@place_noindex` 에서 이 자리를 찾고 `X-Robots-Tag: noindex, follow` 를 붙인다.
+ * 색인 판단은 여기 한 곳이고 nginx 는 스위치를 모른다. 식은 nginx 의 `/prerender/_noindex$uri.html` 과 같다.
+ * @param {string} pathname 페이지 주소의 경로(`/regions/11110/free`, `/en/regions/…`, `/guides/{slug}`)
+ */
+function prerenderFile(pathname, indexed) {
+  return `prerender${indexed ? '' : '/_noindex'}${pathname}.html`;
 }
 
 /**
@@ -1692,7 +1879,7 @@ export function placeGuidePages(shell, { guides = [], cards = new Map(), buildDa
           `<article>${content}</article>`,
       ),
     });
-    return { path: `prerender/guides/${guide.slug}.html`, html, guide, url, indexed: published };
+    return { path: prerenderFile(guidePath(guide.slug), published), html, guide, url, indexed: published };
   });
 
   const listed = pages.filter((p) => p.indexed);
@@ -2090,10 +2277,7 @@ async function renderPortalPages(shell, concepts = [], { searchArchitecture } = 
   // /tech 는 용어집 13장으로 들어가는 문이다 — 그 링크가 없으면 sitemap 에만 있는 주소가 되고,
   // 내부 링크 없는 URL 은 잘 크롤되지 않는다.
   const glossaryNav = techGlossaryNav(groupConcepts(concepts));
-  const nav = Object.keys(PORTAL_PAGES)
-    .map((path) => `<a href="${path}">${escapeHtml(PORTAL_PAGES[path].title.split(' — ')[0])}</a>`)
-    .join(' · ');
-  for (const [path, meta] of Object.entries(PORTAL_PAGES)) {
+  for (const path of Object.keys(PORTAL_PAGES)) {
     if (path === '/tech/search') {
       await emit(`prerender${path}.html`, renderTechSearchHtml(shell, searchArchitecture));
       continue;
@@ -2106,28 +2290,42 @@ async function renderPortalPages(shell, concepts = [], { searchArchitecture } = 
       await emit(`prerender${path}.html`, renderDataSourcesHtml(shell));
       continue;
     }
-    const canonical = portalUrl(path);
-    const html = compose(shell, {
-      lang: 'ko',
-      title: meta.title,
-      description: meta.description,
-      canonical,
-      siteName: PORTAL_BRAND,
-      image: ogCardUrl(PORTAL_ORIGIN, 'portal'),
-      imageAlt: PORTAL_BRAND,
-      // Person 전체 노드는 apex 홈 한 곳에만 둔다 — 나머지 페이지는 personRef 의 `@id` 로
-      // 이 노드를 가리킨다. 프로필이 바뀌면 고칠 자리가 하나다.
-      jsonLd: path === '/' ? [websiteJsonLd(), personJsonLd()] : [],
-      body: shellBody(
-        `<h1>${escapeHtml(meta.title.split(' — ')[0])}</h1><p>${escapeHtml(meta.description)}</p>` +
-          `<nav>${nav}</nav>` +
-          (path === '/tech' ? `<h2>분류별 용어집</h2>${glossaryNav}` : ''),
-        // 서브도메인으로 가는 링크는 shellBody 의 바닥글이 모든 페이지에 붙인다
-      ),
-    });
+    const html = portalPageHtml(shell, path, { glossaryNav });
     // 루트만 호스트 키로 — 같은 번들이 game/place 호스트도 서빙하므로 / 는 호스트로 갈린다
     await emit(path === '/' ? `prerender/_hosts/${PORTAL_HOST}.html` : `prerender${path}.html`, html);
   }
+}
+
+/**
+ * 포털 페이지 한 장(소개·데이터 출처·검색 아키텍처 밖의 일반 페이지) — 쓰기와 분리해 단위 검증한다.
+ * @param {string} path PORTAL_PAGES 의 키
+ * @param {{ glossaryNav?: string }} [opts] `/tech` 의 분류별 용어집 목록
+ */
+export function portalPageHtml(shell, path, { glossaryNav = '' } = {}) {
+  const meta = PORTAL_PAGES[path];
+  const nav = Object.keys(PORTAL_PAGES)
+    .map((p) => `<a href="${p}">${escapeHtml(PORTAL_PAGES[p].title.split(' — ')[0])}</a>`)
+    .join(' · ');
+  return compose(shell, {
+    lang: 'ko',
+    title: meta.title,
+    description: meta.description,
+    canonical: portalUrl(path),
+    siteName: PORTAL_BRAND,
+    image: ogCardUrl(PORTAL_ORIGIN, 'portal'),
+    imageAlt: PORTAL_BRAND,
+    // Person 전체 노드는 apex 홈 한 곳에만 둔다 — 나머지 페이지는 personRef 의 `@id` 로
+    // 이 노드를 가리킨다. 프로필이 바뀌면 고칠 자리가 하나다.
+    jsonLd: path === '/' ? [websiteJsonLd(), personJsonLd()] : [],
+    body: shellBody(
+      `<h1>${escapeHtml(meta.title.split(' — ')[0])}</h1><p>${escapeHtml(meta.description)}</p>` +
+        `<nav>${nav}</nav>` +
+        // 홈 카드가 서울 관광지를 보이므로 같은 맥락의 지역 페이지로 한 줄 잇는다(바닥글은 place 루트만 가리킨다)
+        (path === '/' ? `<p><a href="${regionUrl('ko', '11')}">서울 가볼 만한 곳</a></p>` : '') +
+        (path === '/tech' ? `<h2>분류별 용어집</h2>${glossaryNav}` : ''),
+      // 서브도메인으로 가는 링크는 shellBody 의 바닥글이 모든 페이지에 붙인다
+    ),
+  });
 }
 
 /**

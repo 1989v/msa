@@ -82,9 +82,27 @@ describe('placeLandingPages — 출력', () => {
   const page = pageOf(out, 'ko', '11110', 'parking')!;
   const meta = landingMeta('ko', seoul, jongno, 'parking', { count: 35, asOf: '2026-09-24' });
 
-  it('파일 경로는 prerender/{en/}regions/{code}/{attr}.html', () => {
-    expect(page.path).toBe('prerender/regions/11110/parking.html');
-    expect(pageOf(out, 'en', '11110', 'parking')!.path).toBe('prerender/en/regions/11110/parking.html');
+  it('스위치 false → 모든 랜딩 파일이 prerender/_noindex 아래 같은 경로(국·영) — nginx 가 헤더로도 noindex 를 낸다', () => {
+    expect(page.path).toBe('prerender/_noindex/regions/11110/parking.html');
+    expect(pageOf(out, 'en', '11110', 'free')!.path).toBe('prerender/_noindex/en/regions/11110/free.html');
+    for (const p of out.pages) expect(p.path.startsWith('prerender/_noindex/')).toBe(true);
+  });
+
+  it('스위치 true + 하한 이상 → 원래 자리, 은퇴·하한 미달 → _noindex', () => {
+    const on = build(true);
+    expect(pageOf(on, 'ko', '11110', 'parking')!.path).toBe('prerender/regions/11110/parking.html');
+    expect(pageOf(on, 'en', '11110', 'parking')!.path).toBe('prerender/en/regions/11110/parking.html');
+    expect(pageOf(on, 'ko', '11140', 'parking')!.path).toBe('prerender/_noindex/regions/11140/parking.html');
+    expect(pageOf(on, 'ko', '11110', 'pet')!.path).toBe('prerender/_noindex/regions/11110/pet.html');
+  });
+
+  it('파일 경로 공식 — nginx try_files(/prerender$uri.html · /prerender/_noindex$uri.html)와 같은 식', () => {
+    for (const indexable of [false, true]) {
+      for (const p of build(indexable).pages) {
+        const pathname = new URL(p.url).pathname;
+        expect(p.path).toBe(p.indexed ? `prerender${pathname}.html` : `prerender/_noindex${pathname}.html`);
+      }
+    }
   });
 
   it('h1 은 landingMeta heading, 문장은 N(totalElements)과 asOf(표시 30건 modifiedAt 최댓값)', () => {
@@ -267,6 +285,7 @@ describe('부분 실패 가드 — place-landings 섹션', () => {
     places: async () => ({ ko: [], en: [] }),
     regions: async () => REGIONS,
     landingList: async () => LIST,
+    regionTops: async () => new Map(),
     guides: async () => [],
     guideCards: async () => new Map(),
     blog: async () => ({ posts: [], categories: [] }),

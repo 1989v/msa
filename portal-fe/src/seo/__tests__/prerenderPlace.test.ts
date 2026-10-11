@@ -1,14 +1,20 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { SIGHT_CATEGORIES } from '../copy.mjs';
 // 프리렌더 스크립트는 직접 실행 가드가 있어 import 만으로는 네트워크를 두드리지 않는다 —
 // 운영 API 를 치지 않고 렌더 함수를 그대로 검증한다 (dry-verify).
 import {
+  PartialSeoFailure,
   SIDO_CODES,
   SLICE_CATEGORIES,
   SLICE_WINDOW,
+  fetchRegionTops,
+  fetchSeoSections,
   fetchSidoSlice,
   indexDoc,
+  isTierA,
   placeDetailPages,
   placeHubPages,
+  placeLinkDepth,
   placeDetailSitemapEntries,
   placeSitemapFiles,
   renderRegionDetail,
@@ -301,10 +307,11 @@ describe('place sitemap 인덱스 — 행사 sitemap(동적) 연결', () => {
   it('상세가 있으면 인덱스가 sitemap-places-events.xml 을 가리키고, 그 파일은 정적으로 만들지 않는다', () => {
     const files = placeSitemapFiles(hub, detail);
     expect(sitemapLocs(fileOf(files, 'sitemap.xml'))).toEqual([
-      'https://place.1989v.com/sitemap-places-hub.xml',
+      'https://place.1989v.com/sitemap-places-core.xml',
       'https://place.1989v.com/sitemap-places-1.xml',
       'https://place.1989v.com/sitemap-places-events.xml',
     ]);
+    expect(fileOf(files, 'sitemap-places-hub.xml')).toBeUndefined();
     expect(fileOf(files, 'sitemap-places-events.xml')).toBeUndefined();
   });
 
@@ -401,5 +408,340 @@ describe('placeHubPages — 사진 원천 preconnect', () => {
     for (const { html } of placeDetailPages(SHELL, places, { ko: [seoul, gangnam], en: [seoul] })) {
       expect(html).not.toContain('preconnect');
     }
+  });
+});
+
+describe('isTierA — 핵심 sitemap 의 상세 기준', () => {
+  // 검색 응답 모양 그대로 — 판정은 indexDoc 을 거친 항목으로 한다(빌드가 실제로 보는 값)
+  const full = {
+    id: 't1', title: '경복궁', category: 'history', contentTypeId: '12', overview: '조선의 법궁',
+    imageUrl: 'p.jpg', googlePlaceId: 'ChIJx',
+  };
+  const tierA = (over: Record<string, unknown>) => isTierA(indexDoc({ ...full, ...over }, '11')!);
+
+  it('관광 분류 · 개요 · 사진 · place_id 를 다 갖추면 티어 A', () => {
+    expect(tierA({})).toBe(true);
+  });
+
+  it('하나라도 빠지면 아니다 — 분류(쇼핑) · 사진 · place_id · 개요', () => {
+    expect(tierA({ category: 'shopping' })).toBe(false);
+    expect(tierA({ category: undefined })).toBe(false);
+    expect(tierA({ imageUrl: null })).toBe(false);
+    expect(tierA({ googlePlaceId: null })).toBe(false);
+    expect(tierA({ googlePlaceId: undefined })).toBe(false);
+    expect(tierA({ overview: '' })).toBe(false);
+  });
+
+  it("place_id · 사진이 빈 문자열이나 공백뿐이면 없는 것이다", () => {
+    for (const blank of ['', '  ']) {
+      expect(tierA({ googlePlaceId: blank })).toBe(false);
+      expect(tierA({ imageUrl: blank })).toBe(false);
+    }
+  });
+
+  it('indexDoc 은 place_id 값이 아니라 유무만 싣는다', () => {
+    const item = indexDoc(full, '11');
+    expect(item).toMatchObject({ category: 'history', hasGooglePlaceId: true });
+    expect(item).not.toHaveProperty('googlePlaceId');
+    expect(indexDoc({ ...full, imageUrl: '  ' }, '11')).toMatchObject({ imageUrl: null });
+  });
+});
+
+describe('place sitemap — 핵심(core) 분리', () => {
+  const api = (id: string, over: Record<string, unknown> = {}) => ({
+    id, title: `문서 ${id}`, category: 'nature', contentTypeId: '12', overview: '개요', imageUrl: 'p.jpg',
+    googlePlaceId: 'ChIJ', ...over,
+  });
+  const docs = (list: Array<Record<string, unknown>>) =>
+    list.map((a) => indexDoc(a, '11')).filter((d): d is Record<string, unknown> & { id: string } => d != null);
+  const places = {
+    ko: docs([api('A1'), api('A2'), api('N1', { googlePlaceId: null }), api('N2', { category: 'shopping' }), api('N3', { imageUrl: null })]),
+    en: docs([api('E1'), api('EN1', { googlePlaceId: '' })]),
+  };
+  const hub = [
+    { loc: 'https://place.1989v.com/', priority: '1.0' },
+    { loc: 'https://place.1989v.com/regions/11', priority: '0.8' },
+  ];
+  const detail = placeDetailSitemapEntries(places);
+  const files = placeSitemapFiles(hub, detail);
+  const fileOf = (fs: Array<[string, string]>, name: string) => fs.find(([n]) => n === name)?.[1];
+  const urlLocs = (xml: string | undefined) => [...(xml ?? '').matchAll(/<url>\s*<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+  const indexLocs = (fs: Array<[string, string]>) =>
+    [...(fileOf(fs, 'sitemap.xml') ?? '').matchAll(/<sitemap>\s*<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+  /** sitemap.xml(색인)을 뺀 모든 urlset 의 <loc> — 순서 무관 멀티셋 비교용으로 정렬 */
+  const allUrlLocs = (fs: Array<[string, string]>) =>
+    fs.filter(([n]) => n !== 'sitemap.xml' || fs.length === 1).flatMap(([, xml]) => urlLocs(xml)).sort();
+  const P = (path: string) => `https://place.1989v.com${path}`;
+
+  it('색인 순서는 core → 나머지 → 행사, hub 파일은 없다', () => {
+    expect(indexLocs(files)).toEqual([
+      P('/sitemap-places-core.xml'),
+      P('/sitemap-places-1.xml'),
+      P('/sitemap-places-events.xml'),
+    ]);
+    expect(files.map(([n]) => n)).not.toContain('sitemap-places-hub.xml');
+  });
+
+  it('티어 A 상세와 허브 항목은 core 에만, 나머지 상세는 core 에 없다', () => {
+    const core = urlLocs(fileOf(files, 'sitemap-places-core.xml'));
+    const rest = urlLocs(fileOf(files, 'sitemap-places-1.xml'));
+    expect(core).toEqual([P('/'), P('/regions/11'), P('/attractions/A1'), P('/attractions/A2'), P('/en/attractions/E1')]);
+    expect(rest.sort()).toEqual([P('/attractions/N1'), P('/attractions/N2'), P('/attractions/N3'), P('/en/attractions/EN1')].sort());
+  });
+
+  it('집합 동일성 — 모든 urlset 의 <loc> 멀티셋 = 입력 허브 ∪ 상세, 중복 0', () => {
+    const expected = [...hub, ...detail].map((e) => e.loc).sort();
+    const got = allUrlLocs(files);
+    expect(got).toEqual(expected);
+    expect(new Set(got).size).toBe(got.length);
+  });
+
+  it('core 가 상한을 넘으면 core-2 로 이어 쓰고 색인에서 core 바로 다음 — 집합은 그대로', () => {
+    const chunk = 3;
+    // 허브 2 + 티어 A 3 = 5 > 3
+    const over = placeSitemapFiles(hub, detail, chunk);
+    expect(indexLocs(over).slice(0, 3)).toEqual([P('/sitemap-places-core.xml'), P('/sitemap-places-core-2.xml'), P('/sitemap-places-1.xml')]);
+    expect(urlLocs(fileOf(over, 'sitemap-places-core.xml'))).toHaveLength(chunk);
+    const got = allUrlLocs(over);
+    expect(got).toEqual([...hub, ...detail].map((e) => e.loc).sort());
+    expect(new Set(got).size).toBe(got.length);
+  });
+
+  it('기본 상한(20,000) 경계 — core 가 상한 + 1 이면 core-2 에 한 건', () => {
+    const many = Array.from({ length: 20_000 }, (_, i) => ({ loc: P(`/attractions/c${i}`), priority: '0.7', tierA: true }));
+    const big = placeSitemapFiles([hub[0]], many);
+    expect(urlLocs(fileOf(big, 'sitemap-places-core.xml'))).toHaveLength(20_000);
+    expect(urlLocs(fileOf(big, 'sitemap-places-core-2.xml'))).toHaveLength(1);
+    expect(indexLocs(big)).toEqual([P('/sitemap-places-core.xml'), P('/sitemap-places-core-2.xml'), P('/sitemap-places-events.xml')]);
+  });
+
+  it('상세 0건이면 urlset 하나 — 집합은 허브 그대로', () => {
+    const none = placeSitemapFiles(hub, []);
+    expect(none.map(([n]) => n)).toEqual(['sitemap.xml']);
+    expect(allUrlLocs(none)).toEqual(hub.map((e) => e.loc).sort());
+  });
+
+  it('티어 A 0건 게이트 — 상세 10,000건 · 티어 A 0 이면 빌드를 세우고, 9,999건이면 통과', () => {
+    const plain = (n: number) => Array.from({ length: n }, (_, i) => ({ loc: P(`/attractions/p${i}`), priority: '0.7', tierA: false }));
+    expect(() => placeSitemapFiles(hub, plain(10_000))).toThrow(PartialSeoFailure);
+    expect(() => placeSitemapFiles(hub, plain(9_999))).not.toThrow();
+  });
+});
+
+describe('place sitemap — 상세 lastmod', () => {
+  const TZ = process.env.TZ;
+  // KST 자정 직후 시각이 UTC 로 바뀌면 하루 앞 날짜가 된다 — 그 경로로 가면 갈리도록 서울 시간대로 고정한다
+  beforeAll(() => {
+    process.env.TZ = 'Asia/Seoul';
+  });
+  afterAll(() => {
+    process.env.TZ = TZ;
+  });
+  const api = (id: string, over: Record<string, unknown>) => ({
+    id, title: id, category: 'nature', contentTypeId: '12', overview: '개요', ...over,
+  });
+  const lastmodOf = (over: Record<string, unknown>) => {
+    const item = indexDoc(api('x', over), '11')!;
+    const [entry] = placeDetailSitemapEntries({ ko: [item], en: [] });
+    const xml = placeSitemapFiles([], [entry])[0][1];
+    return { entry: entry.lastmod ?? null, xml: xml.match(/<lastmod>([^<]+)<\/lastmod>/)?.[1] ?? null };
+  };
+
+  it('contentUpdatedAt 이 있으면 그 날짜 부분(KST 문자열 앞 10자) — 시간대 변환을 거치지 않는다', () => {
+    expect(new Date('2026-10-09T00:30:00').toISOString().slice(0, 10)).toBe('2026-10-08');
+    expect(lastmodOf({ contentUpdatedAt: '2026-10-09T00:30:00', modifiedAt: '2026-01-02T12:00:00' }).entry).toBe('2026-10-09');
+  });
+
+  it('앞 10자가 날짜 형식이 아니면 modifiedAt 규칙', () => {
+    expect(lastmodOf({ contentUpdatedAt: '20261009T003000', modifiedAt: '2026-01-02T12:00:00' }).entry).toBe('2026-01-02');
+  });
+
+  it('contentUpdatedAt 이 없으면 modifiedAt 규칙, 둘 다 없으면 <lastmod> 없음', () => {
+    expect(lastmodOf({ modifiedAt: '2026-01-02T12:00:00' }).entry).toBe('2026-01-02');
+    const none = lastmodOf({});
+    expect(none.entry).toBeNull();
+  });
+});
+
+describe('시군구 대표 관광지 — 내부 링크 깊이', () => {
+  const jongno = { code: '11110', level: 'SIGUNGU', name: '종로구', nameEn: 'Jongno-gu', attractionCount: 300 };
+  const regions = { ko: [seoul, gangnam, jongno], en: [seoul] };
+  const api = (id: string, over: Record<string, unknown> = {}) => ({
+    id, title: `문서 ${id}`, category: 'history', contentTypeId: '12', overview: '개요', imageUrl: 'p.jpg', googlePlaceId: 'ChIJ', ...over,
+  });
+  // 서울 시도 샤드 30건 — 시도 대표(10)에는 앞쪽만 든다
+  const raw = [
+    ...Array.from({ length: 24 }, (_, i) => api(`s${i}`)),
+    api('plain1', { googlePlaceId: null }),
+    api('plain2', { googlePlaceId: null }),
+    api('no-ov', { overview: '' }),
+  ];
+  const places = {
+    ko: raw.map((a) => indexDoc(a, '11')).filter((d): d is Record<string, unknown> & { id: string } => d != null),
+    en: [],
+  };
+  // 강남 응답 30건: 색인(places)에 없는 id · 개요 없는 문서 · 티어 A 아닌 문서가 섞여 있고, 티어 A 가 뒤에 있다
+  const gangnamTop = [
+    api('plain1', { googlePlaceId: null }),
+    api('ghost'),
+    api('no-ov', { overview: '' }),
+    api('plain2', { googlePlaceId: null }),
+    ...Array.from({ length: 12 }, (_, i) => api(`s${12 + i}`)),
+  ];
+  const regionTops = new Map([['ko/11680', gangnamTop]]);
+  const pages = placeDetailPages(SHELL, places, regions, { regionTops });
+  const htmlOf = (path: string) => pages.find((p) => p.path === path)!.html;
+  const attrLinks = (html: string) => [...html.matchAll(/<a href="\/attractions\/([^"]+)">/g)].map((m) => m[1]);
+
+  it('시군구 페이지에 대표 최대 10곳 — 색인에 없는 id · 개요 없는 문서는 빠지고 티어 A 가 먼저', () => {
+    const links = attrLinks(htmlOf('prerender/regions/11680.html'));
+    expect(links).toHaveLength(10);
+    expect(links).toEqual(Array.from({ length: 10 }, (_, i) => `s${12 + i}`));
+    expect(links).not.toContain('ghost');
+    expect(links).not.toContain('no-ov');
+  });
+
+  it('티어 A 가 모자라면 개요 있는 나머지로 채운다', () => {
+    const few = placeDetailPages(SHELL, places, regions, { regionTops: new Map([['ko/11680', gangnamTop.slice(0, 6)]]) });
+    expect(attrLinks(few.find((p) => p.path === 'prerender/regions/11680.html')!.html)).toEqual(['s12', 's13', 'plain1', 'plain2']);
+  });
+
+  it('조회 결과가 없는 시군구는 대표 링크 0 — 지어내지 않는다', () => {
+    expect(attrLinks(htmlOf('prerender/regions/11110.html'))).toEqual([]);
+  });
+
+  it('시도 페이지는 지금 출력 그대로(대표 10)', () => {
+    const before = placeDetailPages(SHELL, places, regions);
+    expect(htmlOf('prerender/regions/11.html')).toBe(before.find((p) => p.path === 'prerender/regions/11.html')!.html);
+    expect(attrLinks(htmlOf('prerender/regions/11.html'))).toHaveLength(10);
+  });
+
+  it('링크 그래프 — 허브에서 <a href> 만 따라가면 시군구 대표가 깊이 3 안', () => {
+    const all = [...placeHubPages(SHELL, { ko: [], en: [] }, regions), ...pages];
+    const urlOf = (path: string) =>
+      path === 'prerender/_hosts/place.1989v.com.html' ? '/' : path.replace(/^prerender/, '').replace(/\.html$/, '');
+    const byUrl = new Map(all.map((p) => [urlOf(p.path), p.html]));
+    const depth = new Map([['/', 0]]);
+    const queue = ['/'];
+    while (queue.length) {
+      const url = queue.shift()!;
+      for (const m of (byUrl.get(url) ?? '').matchAll(/<a href="([^"]+)"/g)) {
+        if (depth.has(m[1])) continue;
+        depth.set(m[1], depth.get(url)! + 1);
+        if (byUrl.has(m[1])) queue.push(m[1]);
+      }
+    }
+    // 허브의 관광지 seed 를 비웠으므로 대표는 지역 페이지를 거쳐서만 닿는다
+    expect(depth.get('/regions/11680')).toBe(2);
+    expect(attrLinks(htmlOf('prerender/regions/11680.html')).length).toBeGreaterThan(0);
+    for (const id of attrLinks(htmlOf('prerender/regions/11680.html'))) {
+      expect(depth.get(`/attractions/${id}`)).toBeLessThanOrEqual(3);
+    }
+  });
+
+  it('빌드 로그 재료 — 티어 A 중 깊이 3 안 N/M', () => {
+    const all = [...placeHubPages(SHELL, { ko: [], en: [] }, regions), ...pages];
+    const tierA = places.ko.filter((d) => isTierA(d)).length;
+    // 시도 대표 s0~s9 + 강남 대표 s12~s21 = 20곳
+    expect(placeLinkDepth(all, places).ko).toEqual({ within: 20, total: tierA });
+  });
+
+  it('스위치가 꺼져 있으면 시군구 페이지 랜딩 링크 0, indexed 랜딩은 그 시군구 페이지에만', () => {
+    const landing = (code: string, attr: string, indexed: boolean) => ({
+      entry: { lang: 'ko', code, attr }, heading: `${code} ${attr} 랜딩`, indexed,
+    });
+    const off = placeDetailPages(SHELL, places, regions, { regionTops, landingPages: [landing('11680', 'parking', false)] });
+    for (const { html } of off) expect(html).not.toContain('/regions/11680/parking');
+    const on = placeDetailPages(SHELL, places, regions, { regionTops, landingPages: [landing('11680', 'parking', true)] });
+    expect(on.find((p) => p.path === 'prerender/regions/11680.html')!.html).toContain('<a href="/regions/11680/parking">');
+    for (const { path, html } of on) {
+      if (path !== 'prerender/regions/11680.html') expect(html).not.toContain('/regions/11680/parking');
+    }
+  });
+});
+
+describe('fetchRegionTops — 시군구 대표 조회', () => {
+  const regions = {
+    ko: [seoul, gangnam],
+    en: [seoul, { ...gangnam }],
+  };
+
+  it('시군구마다 1회 — 관광 분류 · 시도 2자리 · 시군구 3자리 · size 30', async () => {
+    const paths: string[] = [];
+    const get = async (path: string) => {
+      paths.push(path);
+      return { attractions: [{ id: 'x' }] };
+    };
+    const tops = await fetchRegionTops(regions, get, { retryDelays: [0, 0] });
+    expect(paths).toHaveLength(2);
+    const q = new URLSearchParams(paths[0].split('?')[1]);
+    expect(paths[0].startsWith('/api/search/attractions?')).toBe(true);
+    expect(q.get('category')).toBe(SIGHT_CATEGORIES.join(','));
+    expect(q.get('category')).toBe('nature,history,culture,leisure');
+    expect(q.get('sidoCode')).toBe('11');
+    expect(q.get('sigunguCode')).toBe('680');
+    expect(q.get('size')).toBe('30');
+    expect(paths[0]).toContain('category=nature,history,culture,leisure');
+    expect(tops.get('ko/11680')).toEqual([{ id: 'x' }]);
+    expect(tops.get('en/11680')).toEqual([{ id: 'x' }]);
+  });
+
+  it('첫 시도 실패 · 재시도 성공이면 성공으로 친다', async () => {
+    let calls = 0;
+    const get = async () => {
+      calls += 1;
+      if (calls === 1) throw new Error('GET → 503');
+      return { attractions: [] };
+    };
+    const tops = await fetchRegionTops({ ko: [gangnam], en: [] }, get, { retryDelays: [0, 0] });
+    expect(calls).toBe(2);
+    expect(tops.get('ko/11680')).toEqual([]);
+  });
+
+  const ok = {
+    games: async () => [{ slug: 'g' }],
+    places: async () => ({ ko: [], en: [] }),
+    regions: async () => regions,
+    landingList: async () => [],
+    landings: async () => new Map(),
+    guides: async () => [],
+    guideCards: async () => new Map(),
+    blog: async () => ({ posts: [], categories: [] }),
+    concepts: async () => [],
+    deal: async () => [],
+    rank: async () => [],
+  };
+
+  it('하나가 재시도까지 실패하면 place-region-tops 섹션 실패 — 다른 섹션이 성공했으면 PartialSeoFailure', async () => {
+    const get = async (path: string) => {
+      if (path.includes('lang=en')) throw new Error('GET → 503');
+      return { attractions: [] };
+    };
+    const err = await fetchSeoSections({
+      ...ok,
+      regionTops: (r: unknown) => fetchRegionTops(r, get, { retryDelays: [0, 0] }),
+    }).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(PartialSeoFailure);
+    expect((err as Error).message).toMatch(/실패: place-region-tops/);
+  });
+
+  it('places 섹션이 실패하면 시군구 대표를 조회하지 않는다', async () => {
+    const regionTops = vi.fn(async () => new Map());
+    await fetchSeoSections({
+      ...ok,
+      places: async () => {
+        throw new Error('GET → 503');
+      },
+      regionTops,
+    }).catch(() => undefined);
+    expect(regionTops).not.toHaveBeenCalled();
+  });
+
+  it('성공하면 결과를 돌려준다', async () => {
+    const data = await fetchSeoSections({
+      ...ok,
+      regionTops: (r: unknown) => fetchRegionTops(r, async () => ({ attractions: [{ id: 'y' }] }), { retryDelays: [0, 0] }),
+    });
+    expect(data.regionTops.get('ko/11680')).toEqual([{ id: 'y' }]);
   });
 });
