@@ -1,0 +1,672 @@
+{
+  "firstAttemptFailures": [
+    {
+      "url": "https://game.1989v.com/en/games/block-burst",
+      "width": 390,
+      "scrollWidth": 390,
+      "title": "Block Burst — Play Free Online | 1989v 게임",
+      "canonical": [
+        "https://game.1989v.com/en/games/block-burst"
+      ],
+      "meta": "Fit polyomino pieces into an 8×8 board and burst full lines. Clearing several lines at once multiplies the combo, and consecutive bursting turns add a…",
+      "links": [],
+      "instructions": [],
+      "introBeforeGuide": false,
+      "play": null,
+      "assets": [
+        "https://www.googletagmanager.com/gtag/js?id=G-5EE8XW7JHN",
+        "https://game.1989v.com/assets/index-CaKMfcpP.js",
+        "https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920"
+      ],
+      "failures": [
+        "timeout",
+        "instructions",
+        "introOrder",
+        "play"
+      ]
+    }
+  ],
+  "capturedAt": "2026-10-11T12:02:58.055Z",
+  "mode": "Actual production HTTPS navigation, no mocks/CDP fulfill, no interaction clicks or gameplay. Network observations include page-initiated requests.",
+  "results": [
+    {
+      "url": "https://game.1989v.com/",
+      "width": 390,
+      "scrollWidth": 390,
+      "title": "무료 웹게임 아케이드 — 설치 없이 브라우저에서 바로 | 1989v 게임",
+      "canonical": [
+        "https://game.1989v.com/"
+      ],
+      "meta": "설치도 가입도 없이 브라우저에서 바로 즐기는 무료 웹게임 82종. 퍼즐·액션·디펜스·RPG·전략 게임을 한곳에서 플레이하세요.",
+      "links": [
+        {
+          "text": "Block Burst",
+          "href": "/games/block-burst"
+        },
+        {
+          "text": "Minefield",
+          "href": "/games/mine-pioneer"
+        },
+        {
+          "text": "Rift",
+          "href": "/games/rift-front"
+        }
+      ],
+      "instructions": [],
+      "introBeforeGuide": false,
+      "play": null,
+      "assets": [
+        "https://www.googletagmanager.com/gtag/js?id=G-5EE8XW7JHN",
+        "https://game.1989v.com/assets/index-CaKMfcpP.js",
+        "https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920"
+      ],
+      "failures": []
+    },
+    {
+      "url": "https://game.1989v.com/en",
+      "width": 390,
+      "scrollWidth": 390,
+      "title": "Free Online Games — Play Instantly in Your Browser | 1989v 게임",
+      "canonical": [
+        "https://game.1989v.com/en"
+      ],
+      "meta": "Play 82 free browser games instantly — no download, no sign-up. Puzzle, action, tower defense, RPG and strategy games in one arcade.",
+      "links": [
+        {
+          "text": "Block Burst",
+          "href": "/en/games/block-burst"
+        },
+        {
+          "text": "Minefield",
+          "href": "/en/games/mine-pioneer"
+        },
+        {
+          "text": "Rift",
+          "href": "/en/games/rift-front"
+        }
+      ],
+      "instructions": [],
+      "introBeforeGuide": false,
+      "play": null,
+      "assets": [
+        "https://www.googletagmanager.com/gtag/js?id=G-5EE8XW7JHN",
+        "https://game.1989v.com/assets/index-CaKMfcpP.js",
+        "https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920"
+      ],
+      "failures": []
+    },
+    {
+      "url": "https://game.1989v.com/games/block-burst",
+      "width": 390,
+      "scrollWidth": 390,
+      "title": "Block Burst — 무료 온라인 플레이 | 1989v 게임",
+      "canonical": [
+        "https://game.1989v.com/games/block-burst"
+      ],
+      "meta": "8×8 판에 폴리오미노 조각을 끼워 줄을 터뜨린다. 동시에 여러 줄을 지우면 콤보 배수, 연속 턴 폭파는 스트릭 보너스 — 놓을 자리가 사라지는 순간이 끝이다.",
+      "links": [],
+      "instructions": [
+        "목표",
+        "조작법",
+        "첫 플레이 팁"
+      ],
+      "instructionText": "목표8×8 보드에 조각을 놓아 가로줄이나 세로줄을 채우세요. 줄을 지우며 점수를 쌓고, 어떤 조각도 놓을 수 없으면 게임이 끝납니다.조작법아래의 조각을 마우스나 손가락으로 보드에 끌어다 놓습니다.첫 플레이 팁큰 조각이 들어갈 빈 공간을 남겨두세요. 여러 줄을 동시에 지우거나 연속으로 줄을 지우면 추가 점수를 얻습니다.",
+      "intro": "8×8 판에 폴리오미노 조각을 끼워 줄을 터뜨린다. 동시에 여러 줄을 지우면 콤보 배수, 연속 턴 폭파는 스트릭 보너스 — 놓을 자리가 사라지는 순간이 끝이다.",
+      "introBeforeGuide": true,
+      "play": {
+        "text": "▶ 플레이",
+        "top": 535.71875
+      },
+      "assets": [
+        "https://www.googletagmanager.com/gtag/js?id=G-5EE8XW7JHN",
+        "https://game.1989v.com/assets/index-CaKMfcpP.js",
+        "https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920"
+      ],
+      "failures": []
+    },
+    {
+      "url": "https://game.1989v.com/games/mine-pioneer",
+      "width": 390,
+      "scrollWidth": 390,
+      "title": "Minefield — 무료 온라인 플레이 | 1989v 게임",
+      "canonical": [
+        "https://game.1989v.com/games/mine-pioneer"
+      ],
+      "meta": "지뢰찾기에 목숨 3개와 연속 돌파를 얹었다. 판을 깰 때마다 지뢰가 늘어나고, 판마다 3×3 스캔 한 번. 언제 퇴각해 점수를 확정할지가 진짜 승부다.",
+      "links": [],
+      "instructions": [
+        "목표",
+        "조작법",
+        "첫 플레이 팁"
+      ],
+      "instructionText": "목표지뢰가 없는 칸을 모두 열어 판을 돌파하세요. 개척 모드는 목숨 3개로 시작하며, 판을 깰수록 지뢰가 늘어납니다. 판 사이에 퇴각해 점수를 확정할 수 있습니다.조작법탭이나 좌클릭으로 칸을 열고, 길게 누르거나 우클릭으로 깃발을 표시합니다. 아래의 열기·깃발 버튼으로 모드를 바꿀 수도 있습니다.첫 플레이 팁먼저 클래식 초급 9×9에서 숫자와 깃발 조작을 익혀보세요. 개척 모드의 3×3 스캔은 첫 칸을 연 뒤 판마다 한 번 쓸 수 있습니다.",
+      "intro": "지뢰찾기에 목숨 3개와 연속 돌파를 얹었다. 판을 깰 때마다 지뢰가 늘어나고, 판마다 3×3 스캔 한 번. 언제 퇴각해 점수를 확정할지가 진짜 승부다.",
+      "introBeforeGuide": true,
+      "play": {
+        "text": "▶ 플레이",
+        "top": 535.71875
+      },
+      "assets": [
+        "https://www.googletagmanager.com/gtag/js?id=G-5EE8XW7JHN",
+        "https://game.1989v.com/assets/index-CaKMfcpP.js",
+        "https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920"
+      ],
+      "failures": []
+    },
+    {
+      "url": "https://game.1989v.com/games/rift-front",
+      "width": 390,
+      "scrollWidth": 390,
+      "title": "Rift — 무료 온라인 플레이 | 1989v 게임",
+      "canonical": [
+        "https://game.1989v.com/games/rift-front"
+      ],
+      "meta": "단일 전선 미니 AoS. 크립 웨이브에 몸을 싣고 스킬로 전선을 밀어 올려, 수호탑을 넘어 적 균열 첨탑을 파괴하라. 죽음은 8초의 공백일 뿐.",
+      "links": [],
+      "instructions": [
+        "목표",
+        "조작법",
+        "첫 플레이 팁"
+      ],
+      "instructionText": "목표크립과 함께 단일 전선을 밀어 적 수호탑 2기를 바깥부터 차례로 무너뜨리고, 적의 균열 첨탑을 파괴하세요.조작법방향키 또는 WASD로 이동하며 사거리 안의 적을 자동 공격합니다. Q는 균열 폭발, E는 재생 오라입니다. 터치 화면에서는 이동·스킬 버튼을 사용합니다.첫 플레이 팁크립 없이 수호탑에 뛰어들지 마세요. 크립을 잡아 레벨을 올리고, 체력이 낮아지면 아군 첨탑 근처로 돌아가 회복하세요.",
+      "intro": "단일 전선 미니 AoS. 크립 웨이브에 몸을 싣고 스킬로 전선을 밀어 올려, 수호탑을 넘어 적 균열 첨탑을 파괴하라. 죽음은 8초의 공백일 뿐.",
+      "introBeforeGuide": true,
+      "play": {
+        "text": "▶ 플레이",
+        "top": 535.71875
+      },
+      "assets": [
+        "https://www.googletagmanager.com/gtag/js?id=G-5EE8XW7JHN",
+        "https://game.1989v.com/assets/index-CaKMfcpP.js",
+        "https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920"
+      ],
+      "failures": []
+    },
+    {
+      "url": "https://game.1989v.com/en/games/mine-pioneer",
+      "width": 390,
+      "scrollWidth": 390,
+      "title": "Minefield — Play Free Online | 1989v 게임",
+      "canonical": [
+        "https://game.1989v.com/en/games/mine-pioneer"
+      ],
+      "meta": "Minesweeper with three lives and an endless push. Every cleared field adds more mines, each field grants one 3×3 scan — the real decision is when to…",
+      "links": [],
+      "instructions": [
+        "Goal",
+        "Controls",
+        "First-play tip"
+      ],
+      "instructionText": "GoalOpen every safe tile to clear a field. Pioneer mode starts with three lives and adds more mines after each clear. Retreat between fields to bank your score.ControlsTap or left-click to open a tile; long-press or right-click to flag it. The Open and Flag buttons also switch the input mode.First-play tipTry Classic Easy 9×9 to learn the numbers and flag controls. In Pioneer mode, one 3×3 scan is available per field after you open the first tile.",
+      "intro": "Minesweeper with three lives and an endless push. Every cleared field adds more mines, each field grants one 3×3 scan — the real decision is when to retreat and bank your score.",
+      "introBeforeGuide": true,
+      "play": {
+        "text": "▶ Play",
+        "top": 535.71875
+      },
+      "assets": [
+        "https://www.googletagmanager.com/gtag/js?id=G-5EE8XW7JHN",
+        "https://game.1989v.com/assets/index-CaKMfcpP.js",
+        "https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920"
+      ],
+      "failures": []
+    },
+    {
+      "url": "https://game.1989v.com/en/games/rift-front",
+      "width": 390,
+      "scrollWidth": 390,
+      "title": "Rift — Play Free Online | 1989v 게임",
+      "canonical": [
+        "https://game.1989v.com/en/games/rift-front"
+      ],
+      "meta": "A single-lane mini AoS. Ride the creep waves, push with your two skills, break the guard towers and bring down the enemy rift spire. Death costs you only…",
+      "links": [],
+      "instructions": [
+        "Goal",
+        "Controls",
+        "First-play tip"
+      ],
+      "instructionText": "GoalPush the single lane with your creeps. Break the two enemy guard towers from the outside in, then destroy the enemy Rift Spire.ControlsMove with arrow keys or WASD; enemies in range are attacked automatically. Q casts Rift Burst and E casts Mending Aura. Touch screens use movement and skill buttons.First-play tipAvoid diving a tower without creeps. Defeat creeps to level up, and return near your own spire to recover when health is low.",
+      "intro": "A single-lane mini AoS. Ride the creep waves, push with your two skills, break the guard towers and bring down the enemy rift spire. Death costs you only eight seconds.",
+      "introBeforeGuide": true,
+      "play": {
+        "text": "▶ Play",
+        "top": 535.71875
+      },
+      "assets": [
+        "https://www.googletagmanager.com/gtag/js?id=G-5EE8XW7JHN",
+        "https://game.1989v.com/assets/index-CaKMfcpP.js",
+        "https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920"
+      ],
+      "failures": []
+    },
+    {
+      "url": "https://game.1989v.com/",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "title": "무료 웹게임 아케이드 — 설치 없이 브라우저에서 바로 | 1989v 게임",
+      "canonical": [
+        "https://game.1989v.com/"
+      ],
+      "meta": "설치도 가입도 없이 브라우저에서 바로 즐기는 무료 웹게임 82종. 퍼즐·액션·디펜스·RPG·전략 게임을 한곳에서 플레이하세요.",
+      "links": [
+        {
+          "text": "Block Burst",
+          "href": "/games/block-burst"
+        },
+        {
+          "text": "Minefield",
+          "href": "/games/mine-pioneer"
+        },
+        {
+          "text": "Rift",
+          "href": "/games/rift-front"
+        }
+      ],
+      "instructions": [],
+      "introBeforeGuide": false,
+      "play": null,
+      "assets": [
+        "https://www.googletagmanager.com/gtag/js?id=G-5EE8XW7JHN",
+        "https://game.1989v.com/assets/index-CaKMfcpP.js",
+        "https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920"
+      ],
+      "failures": []
+    },
+    {
+      "url": "https://game.1989v.com/en",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "title": "Free Online Games — Play Instantly in Your Browser | 1989v 게임",
+      "canonical": [
+        "https://game.1989v.com/en"
+      ],
+      "meta": "Play 82 free browser games instantly — no download, no sign-up. Puzzle, action, tower defense, RPG and strategy games in one arcade.",
+      "links": [
+        {
+          "text": "Block Burst",
+          "href": "/en/games/block-burst"
+        },
+        {
+          "text": "Minefield",
+          "href": "/en/games/mine-pioneer"
+        },
+        {
+          "text": "Rift",
+          "href": "/en/games/rift-front"
+        }
+      ],
+      "instructions": [],
+      "introBeforeGuide": false,
+      "play": null,
+      "assets": [
+        "https://www.googletagmanager.com/gtag/js?id=G-5EE8XW7JHN",
+        "https://game.1989v.com/assets/index-CaKMfcpP.js",
+        "https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920"
+      ],
+      "failures": []
+    },
+    {
+      "url": "https://game.1989v.com/games/block-burst",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "title": "Block Burst — 무료 온라인 플레이 | 1989v 게임",
+      "canonical": [
+        "https://game.1989v.com/games/block-burst"
+      ],
+      "meta": "8×8 판에 폴리오미노 조각을 끼워 줄을 터뜨린다. 동시에 여러 줄을 지우면 콤보 배수, 연속 턴 폭파는 스트릭 보너스 — 놓을 자리가 사라지는 순간이 끝이다.",
+      "links": [],
+      "instructions": [
+        "목표",
+        "조작법",
+        "첫 플레이 팁"
+      ],
+      "instructionText": "목표8×8 보드에 조각을 놓아 가로줄이나 세로줄을 채우세요. 줄을 지우며 점수를 쌓고, 어떤 조각도 놓을 수 없으면 게임이 끝납니다.조작법아래의 조각을 마우스나 손가락으로 보드에 끌어다 놓습니다.첫 플레이 팁큰 조각이 들어갈 빈 공간을 남겨두세요. 여러 줄을 동시에 지우거나 연속으로 줄을 지우면 추가 점수를 얻습니다.",
+      "intro": "8×8 판에 폴리오미노 조각을 끼워 줄을 터뜨린다. 동시에 여러 줄을 지우면 콤보 배수, 연속 턴 폭파는 스트릭 보너스 — 놓을 자리가 사라지는 순간이 끝이다.",
+      "introBeforeGuide": true,
+      "play": {
+        "text": "▶ 플레이",
+        "top": 747.15625
+      },
+      "assets": [
+        "https://www.googletagmanager.com/gtag/js?id=G-5EE8XW7JHN",
+        "https://game.1989v.com/assets/index-CaKMfcpP.js",
+        "https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920"
+      ],
+      "failures": []
+    },
+    {
+      "url": "https://game.1989v.com/games/mine-pioneer",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "title": "Minefield — 무료 온라인 플레이 | 1989v 게임",
+      "canonical": [
+        "https://game.1989v.com/games/mine-pioneer"
+      ],
+      "meta": "지뢰찾기에 목숨 3개와 연속 돌파를 얹었다. 판을 깰 때마다 지뢰가 늘어나고, 판마다 3×3 스캔 한 번. 언제 퇴각해 점수를 확정할지가 진짜 승부다.",
+      "links": [],
+      "instructions": [
+        "목표",
+        "조작법",
+        "첫 플레이 팁"
+      ],
+      "instructionText": "목표지뢰가 없는 칸을 모두 열어 판을 돌파하세요. 개척 모드는 목숨 3개로 시작하며, 판을 깰수록 지뢰가 늘어납니다. 판 사이에 퇴각해 점수를 확정할 수 있습니다.조작법탭이나 좌클릭으로 칸을 열고, 길게 누르거나 우클릭으로 깃발을 표시합니다. 아래의 열기·깃발 버튼으로 모드를 바꿀 수도 있습니다.첫 플레이 팁먼저 클래식 초급 9×9에서 숫자와 깃발 조작을 익혀보세요. 개척 모드의 3×3 스캔은 첫 칸을 연 뒤 판마다 한 번 쓸 수 있습니다.",
+      "intro": "지뢰찾기에 목숨 3개와 연속 돌파를 얹었다. 판을 깰 때마다 지뢰가 늘어나고, 판마다 3×3 스캔 한 번. 언제 퇴각해 점수를 확정할지가 진짜 승부다.",
+      "introBeforeGuide": true,
+      "play": {
+        "text": "▶ 플레이",
+        "top": 747.15625
+      },
+      "assets": [
+        "https://www.googletagmanager.com/gtag/js?id=G-5EE8XW7JHN",
+        "https://game.1989v.com/assets/index-CaKMfcpP.js",
+        "https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920"
+      ],
+      "failures": []
+    },
+    {
+      "url": "https://game.1989v.com/games/rift-front",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "title": "Rift — 무료 온라인 플레이 | 1989v 게임",
+      "canonical": [
+        "https://game.1989v.com/games/rift-front"
+      ],
+      "meta": "단일 전선 미니 AoS. 크립 웨이브에 몸을 싣고 스킬로 전선을 밀어 올려, 수호탑을 넘어 적 균열 첨탑을 파괴하라. 죽음은 8초의 공백일 뿐.",
+      "links": [],
+      "instructions": [
+        "목표",
+        "조작법",
+        "첫 플레이 팁"
+      ],
+      "instructionText": "목표크립과 함께 단일 전선을 밀어 적 수호탑 2기를 바깥부터 차례로 무너뜨리고, 적의 균열 첨탑을 파괴하세요.조작법방향키 또는 WASD로 이동하며 사거리 안의 적을 자동 공격합니다. Q는 균열 폭발, E는 재생 오라입니다. 터치 화면에서는 이동·스킬 버튼을 사용합니다.첫 플레이 팁크립 없이 수호탑에 뛰어들지 마세요. 크립을 잡아 레벨을 올리고, 체력이 낮아지면 아군 첨탑 근처로 돌아가 회복하세요.",
+      "intro": "단일 전선 미니 AoS. 크립 웨이브에 몸을 싣고 스킬로 전선을 밀어 올려, 수호탑을 넘어 적 균열 첨탑을 파괴하라. 죽음은 8초의 공백일 뿐.",
+      "introBeforeGuide": true,
+      "play": {
+        "text": "▶ 플레이",
+        "top": 747.15625
+      },
+      "assets": [
+        "https://www.googletagmanager.com/gtag/js?id=G-5EE8XW7JHN",
+        "https://game.1989v.com/assets/index-CaKMfcpP.js",
+        "https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920"
+      ],
+      "failures": []
+    },
+    {
+      "url": "https://game.1989v.com/en/games/block-burst",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "title": "Block Burst — Play Free Online | 1989v 게임",
+      "canonical": [
+        "https://game.1989v.com/en/games/block-burst"
+      ],
+      "meta": "Fit polyomino pieces into an 8×8 board and burst full lines. Clearing several lines at once multiplies the combo, and consecutive bursting turns add a…",
+      "links": [],
+      "instructions": [
+        "Goal",
+        "Controls",
+        "First-play tip"
+      ],
+      "instructionText": "GoalPlace shapes on an 8×8 board to fill rows or columns and earn points. The game ends when none of the available shapes can fit.ControlsDrag a shape from the tray onto the board with your mouse or finger.First-play tipLeave room for larger shapes. Clearing multiple lines together or clearing lines on consecutive turns earns extra points.",
+      "intro": "Fit polyomino pieces into an 8×8 board and burst full lines. Clearing several lines at once multiplies the combo, and consecutive bursting turns add a streak bonus — it ends the moment nothing fits.",
+      "introBeforeGuide": true,
+      "play": {
+        "text": "▶ Play",
+        "top": 747.15625
+      },
+      "assets": [
+        "https://www.googletagmanager.com/gtag/js?id=G-5EE8XW7JHN",
+        "https://game.1989v.com/assets/index-CaKMfcpP.js",
+        "https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920"
+      ],
+      "failures": []
+    },
+    {
+      "url": "https://game.1989v.com/en/games/mine-pioneer",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "title": "Minefield — Play Free Online | 1989v 게임",
+      "canonical": [
+        "https://game.1989v.com/en/games/mine-pioneer"
+      ],
+      "meta": "Minesweeper with three lives and an endless push. Every cleared field adds more mines, each field grants one 3×3 scan — the real decision is when to…",
+      "links": [],
+      "instructions": [
+        "Goal",
+        "Controls",
+        "First-play tip"
+      ],
+      "instructionText": "GoalOpen every safe tile to clear a field. Pioneer mode starts with three lives and adds more mines after each clear. Retreat between fields to bank your score.ControlsTap or left-click to open a tile; long-press or right-click to flag it. The Open and Flag buttons also switch the input mode.First-play tipTry Classic Easy 9×9 to learn the numbers and flag controls. In Pioneer mode, one 3×3 scan is available per field after you open the first tile.",
+      "intro": "Minesweeper with three lives and an endless push. Every cleared field adds more mines, each field grants one 3×3 scan — the real decision is when to retreat and bank your score.",
+      "introBeforeGuide": true,
+      "play": {
+        "text": "▶ Play",
+        "top": 747.15625
+      },
+      "assets": [
+        "https://www.googletagmanager.com/gtag/js?id=G-5EE8XW7JHN",
+        "https://game.1989v.com/assets/index-CaKMfcpP.js",
+        "https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920"
+      ],
+      "failures": []
+    },
+    {
+      "url": "https://game.1989v.com/en/games/rift-front",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "title": "Rift — Play Free Online | 1989v 게임",
+      "canonical": [
+        "https://game.1989v.com/en/games/rift-front"
+      ],
+      "meta": "A single-lane mini AoS. Ride the creep waves, push with your two skills, break the guard towers and bring down the enemy rift spire. Death costs you only…",
+      "links": [],
+      "instructions": [
+        "Goal",
+        "Controls",
+        "First-play tip"
+      ],
+      "instructionText": "GoalPush the single lane with your creeps. Break the two enemy guard towers from the outside in, then destroy the enemy Rift Spire.ControlsMove with arrow keys or WASD; enemies in range are attacked automatically. Q casts Rift Burst and E casts Mending Aura. Touch screens use movement and skill buttons.First-play tipAvoid diving a tower without creeps. Defeat creeps to level up, and return near your own spire to recover when health is low.",
+      "intro": "A single-lane mini AoS. Ride the creep waves, push with your two skills, break the guard towers and bring down the enemy rift spire. Death costs you only eight seconds.",
+      "introBeforeGuide": true,
+      "play": {
+        "text": "▶ Play",
+        "top": 747.15625
+      },
+      "assets": [
+        "https://www.googletagmanager.com/gtag/js?id=G-5EE8XW7JHN",
+        "https://game.1989v.com/assets/index-CaKMfcpP.js",
+        "https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920"
+      ],
+      "failures": []
+    },
+    {
+      "url": "https://game.1989v.com/en/games/block-burst",
+      "width": 390,
+      "scrollWidth": 390,
+      "title": "Block Burst — Play Free Online | 1989v 게임",
+      "canonical": [
+        "https://game.1989v.com/en/games/block-burst"
+      ],
+      "meta": "Fit polyomino pieces into an 8×8 board and burst full lines. Clearing several lines at once multiplies the combo, and consecutive bursting turns add a…",
+      "links": [],
+      "instructions": [
+        "Goal",
+        "Controls",
+        "First-play tip"
+      ],
+      "instructionText": "GoalPlace shapes on an 8×8 board to fill rows or columns and earn points. The game ends when none of the available shapes can fit.ControlsDrag a shape from the tray onto the board with your mouse or finger.First-play tipLeave room for larger shapes. Clearing multiple lines together or clearing lines on consecutive turns earns extra points.",
+      "intro": "Fit polyomino pieces into an 8×8 board and burst full lines. Clearing several lines at once multiplies the combo, and consecutive bursting turns add a streak bonus — it ends the moment nothing fits.",
+      "introBeforeGuide": true,
+      "play": {
+        "text": "▶ Play",
+        "top": 535.71875
+      },
+      "assets": [
+        "https://www.googletagmanager.com/gtag/js?id=G-5EE8XW7JHN",
+        "https://game.1989v.com/assets/index-CaKMfcpP.js",
+        "https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920"
+      ],
+      "failures": []
+    }
+  ],
+  "exceptions": [],
+  "nonReadRequests": [
+    {
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5EE8XW7JHN&gtm=45je6a72v9260457269za208zd9260457269xf1&_p=1791720072127&gcd=13l3l3l3l1l1&npa=0&dma=0&cid=380761835.1791720073&frm=0&ngs=1&pscdl=noapi&rcb=19&sr=390x900&uaa=arm&uab=64&uafvl=Chromium%3B154.0.8037.99%7CGoogle%2520Chrome%3B154.0.8037.99%7CNot%2520A(Brand%3B99.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.5.1&uaw=0&ul=ko-kr&_s=1&tag_exp=115616985~115938465~115938468~118897920~118897930~120213116~120385422~120469145~120469153~121046263~121046271~121246026~121246034&sid=1791720072&sct=1&seg=0&dl=https%3A%2F%2Fgame.1989v.com%2F&dt=%EB%AC%B4%EB%A3%8C%20%EC%9B%B9%EA%B2%8C%EC%9E%84%20%EC%95%84%EC%BC%80%EC%9D%B4%EB%93%9C%20%E2%80%94%20%EC%84%A4%EC%B9%98%20%EC%97%86%EC%9D%B4%20%EB%B8%8C%EB%9D%BC%EC%9A%B0%EC%A0%80%EC%97%90%EC%84%9C%20%EB%B0%94%EB%A1%9C%20%7C%201989v%20%EA%B2%8C%EC%9E%84&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&tfd=1237",
+      "method": "POST"
+    },
+    {
+      "url": "https://game.1989v.com/cdn-cgi/rum?",
+      "method": "POST"
+    },
+    {
+      "url": "https://game.1989v.com/api/v1/ads/decisions",
+      "method": "POST"
+    },
+    {
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5EE8XW7JHN&gtm=45je6a72v9260457269za208zd9260457269xf1&_p=1791720079041&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AAAAAAQ&cid=380761835.1791720073&frm=0&ngs=1&pscdl=noapi&rcb=13&sr=390x900&uaa=arm&uab=64&uafvl=Chromium%3B154.0.8037.99%7CGoogle%2520Chrome%3B154.0.8037.99%7CNot%2520A(Brand%3B99.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.5.1&uaw=0&ul=ko-kr&_s=1&tag_exp=115938466~115938468~118897920~118897930~120213116~120385422~120469145~120469153~121046263~121046271~121246026~121246034&sid=1791720072&sct=1&seg=1&dl=https%3A%2F%2Fgame.1989v.com%2Fen&dt=Free%20Online%20Games%20%E2%80%94%20Play%20Instantly%20in%20Your%20Browser%20%7C%201989v%20%EA%B2%8C%EC%9E%84&en=page_view&_ee=1&tfd=668",
+      "method": "POST"
+    },
+    {
+      "url": "https://game.1989v.com/api/v1/ads/decisions",
+      "method": "POST"
+    },
+    {
+      "url": "https://game.1989v.com/cdn-cgi/rum?",
+      "method": "POST"
+    },
+    {
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5EE8XW7JHN&gtm=45je6a72v9260457269za208zd9260457269xf1&_p=1791720080875&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AAAAAAQ&cid=380761835.1791720073&frm=0&ngs=1&pscdl=noapi&rcb=10&sr=390x900&uaa=arm&uab=64&uafvl=Chromium%3B154.0.8037.99%7CGoogle%2520Chrome%3B154.0.8037.99%7CNot%2520A(Brand%3B99.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.5.1&uaw=0&ul=ko-kr&_s=1&tag_exp=115938465~115938469~118012009~118897920~118897930~120213116~120385422~120469145~120469153~121046263~121046271~121246026~121246034&sid=1791720072&sct=1&seg=1&dl=https%3A%2F%2Fgame.1989v.com%2Fgames%2Fblock-burst&dt=Block%20Burst%20%E2%80%94%20%EB%AC%B4%EB%A3%8C%20%EC%98%A8%EB%9D%BC%EC%9D%B8%20%ED%94%8C%EB%A0%88%EC%9D%B4%20%7C%201989v%20%EA%B2%8C%EC%9E%84&en=page_view&_ee=1&tfd=1350",
+      "method": "POST"
+    },
+    {
+      "url": "https://game.1989v.com/cdn-cgi/rum?",
+      "method": "POST"
+    },
+    {
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5EE8XW7JHN&gtm=45je6a72v9260457269za208zd9260457269xf1&_p=1791720081763&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AAAAAAQ&cid=380761835.1791720073&frm=0&ngs=1&pscdl=noapi&rcb=3&sr=390x900&uaa=arm&uab=64&uafvl=Chromium%3B154.0.8037.99%7CGoogle%2520Chrome%3B154.0.8037.99%7CNot%2520A(Brand%3B99.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.5.1&uaw=0&ul=ko-kr&_s=1&tag_exp=115938465~115938468~118897920~118897930~120213116~120385422~120469145~120469153~121046263~121046271~121246026~121246034&sid=1791720072&sct=1&seg=1&dl=https%3A%2F%2Fgame.1989v.com%2Fgames%2Fmine-pioneer&dt=Minefield%20%E2%80%94%20%EB%AC%B4%EB%A3%8C%20%EC%98%A8%EB%9D%BC%EC%9D%B8%20%ED%94%8C%EB%A0%88%EC%9D%B4%20%7C%201989v%20%EA%B2%8C%EC%9E%84&en=page_view&_ee=1&tfd=157",
+      "method": "POST"
+    },
+    {
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5EE8XW7JHN&gtm=45je6a72v9260457269za208zd9260457269xf1&_p=1791720082675&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AAAAAAQ&cid=380761835.1791720073&frm=0&ngs=1&pscdl=noapi&rcb=11&sr=390x900&uaa=arm&uab=64&uafvl=Chromium%3B154.0.8037.99%7CGoogle%2520Chrome%3B154.0.8037.99%7CNot%2520A(Brand%3B99.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.5.1&uaw=0&ul=ko-kr&_s=1&tag_exp=115616985~115938466~115938469~118897920~118897930~120213116~120385423~120469145~120469153~121046263~121046271~121246026~121246034&sid=1791720072&sct=1&seg=1&dl=https%3A%2F%2Fgame.1989v.com%2Fgames%2Frift-front&dt=Rift%20%E2%80%94%20%EB%AC%B4%EB%A3%8C%20%EC%98%A8%EB%9D%BC%EC%9D%B8%20%ED%94%8C%EB%A0%88%EC%9D%B4%20%7C%201989v%20%EA%B2%8C%EC%9E%84&en=page_view&_ee=1&tfd=182",
+      "method": "POST"
+    },
+    {
+      "url": "https://game.1989v.com/cdn-cgi/rum?",
+      "method": "POST"
+    },
+    {
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5EE8XW7JHN&gtm=45je6a72v9260457269za200zd9260457269xf1&_p=1791720082675&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AEAAAAQ&ae=a&cid=380761835.1791720073&frm=0&ngs=1&pscdl=noapi&rcb=11&sr=390x900&uaa=arm&uab=64&uafvl=Chromium%3B154.0.8037.99%7CGoogle%2520Chrome%3B154.0.8037.99%7CNot%2520A(Brand%3B99.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.5.1&uaw=0&ul=ko-kr&_s=2&tag_exp=115616985~115938466~115938469~118897920~118897930~120213116~120385423~120469145~120469153~121046263~121046271~121246026~121246034&sid=1791720072&sct=1&seg=1&dl=https%3A%2F%2Fgame.1989v.com%2Fgames%2Frift-front&dt=Rift%20%E2%80%94%20%EB%AC%B4%EB%A3%8C%20%EC%98%A8%EB%9D%BC%EC%9D%B8%20%ED%94%8C%EB%A0%88%EC%9D%B4%20%7C%201989v%20%EA%B2%8C%EC%9E%84&en=scroll&epn.percent_scrolled=90&tfd=5185",
+      "method": "POST"
+    },
+    {
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5EE8XW7JHN&gtm=45je6a72v9260457269za208zd9260457269xf1&_p=1791720092913&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AAAAAAQ&cid=380761835.1791720073&frm=0&ngs=1&pscdl=noapi&rcb=15&sr=390x900&uaa=arm&uab=64&uafvl=Chromium%3B154.0.8037.99%7CGoogle%2520Chrome%3B154.0.8037.99%7CNot%2520A(Brand%3B99.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.5.1&uaw=0&ul=ko-kr&_s=1&tag_exp=115938466~115938469~118012009~118897920~118897930~120213116~120385423~120469145~120469153~121046263~121046271~121246026~121246034&sid=1791720072&sct=1&seg=1&dl=https%3A%2F%2Fgame.1989v.com%2Fen%2Fgames%2Fblock-burst&dt=Block%20Burst%20%E2%80%94%20Play%20Free%20Online%20%7C%201989v%20%EA%B2%8C%EC%9E%84&en=page_view&_ee=1&tfd=2949",
+      "method": "POST"
+    },
+    {
+      "url": "https://game.1989v.com/cdn-cgi/rum?",
+      "method": "POST"
+    },
+    {
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5EE8XW7JHN&gtm=45je6a72v9260457269za200zd9260457269xf1&_p=1791720092913&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AEAAAAQ&ae=a&cid=380761835.1791720073&frm=0&ngs=1&pscdl=noapi&rcb=15&sr=390x900&uaa=arm&uab=64&uafvl=Chromium%3B154.0.8037.99%7CGoogle%2520Chrome%3B154.0.8037.99%7CNot%2520A(Brand%3B99.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.5.1&uaw=0&ul=ko-kr&_s=2&tag_exp=115938466~115938469~118012009~118897920~118897930~120213116~120385423~120469145~120469153~121046263~121046271~121246026~121246034&sid=1791720072&sct=1&seg=1&dl=https%3A%2F%2Fgame.1989v.com%2Fen%2Fgames%2Fblock-burst&dt=Block%20Burst%20%E2%80%94%20Play%20Free%20Online%20%7C%201989v%20%EA%B2%8C%EC%9E%84&en=scroll&epn.percent_scrolled=90&tfd=7951",
+      "method": "POST"
+    },
+    {
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5EE8XW7JHN&gtm=45je6a72v9260457269za208zd9260457269xf1&_p=1791720130833&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AAAAAAQ&cid=380761835.1791720073&frm=0&ngs=1&pscdl=noapi&rcb=0&sr=390x900&uaa=arm&uab=64&uafvl=Chromium%3B154.0.8037.99%7CGoogle%2520Chrome%3B154.0.8037.99%7CNot%2520A(Brand%3B99.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.5.1&uaw=0&ul=ko-kr&_s=1&tag_exp=115938465~115938468~118897920~118897930~120213116~120385422~120469145~120469153~121046263~121046271~121246026~121246034&sid=1791720072&sct=1&seg=1&dl=https%3A%2F%2Fgame.1989v.com%2Fen%2Fgames%2Fmine-pioneer&dt=Minefield%20%E2%80%94%20Play%20Free%20Online%20%7C%201989v%20%EA%B2%8C%EC%9E%84&en=page_view&_ee=1&tfd=7695",
+      "method": "POST"
+    },
+    {
+      "url": "https://game.1989v.com/cdn-cgi/rum?",
+      "method": "POST"
+    },
+    {
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5EE8XW7JHN&gtm=45je6a72v9260457269za208zd9260457269xf1&_p=1791720131749&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AAAAAAQ&cid=380761835.1791720073&frm=0&ngs=1&pscdl=noapi&rcb=14&sr=390x900&uaa=arm&uab=64&uafvl=Chromium%3B154.0.8037.99%7CGoogle%2520Chrome%3B154.0.8037.99%7CNot%2520A(Brand%3B99.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.5.1&uaw=0&ul=ko-kr&_s=1&tag_exp=115616985~115938465~115938468~118897920~118897930~120213116~120385423~120469145~120469153~121046263~121046271~121246026~121246034&sid=1791720072&sct=1&seg=1&dl=https%3A%2F%2Fgame.1989v.com%2Fen%2Fgames%2Frift-front&dt=Rift%20%E2%80%94%20Play%20Free%20Online%20%7C%201989v%20%EA%B2%8C%EC%9E%84&en=page_view&_ee=1&tfd=184",
+      "method": "POST"
+    },
+    {
+      "url": "https://game.1989v.com/cdn-cgi/rum?",
+      "method": "POST"
+    },
+    {
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5EE8XW7JHN&gtm=45je6a72v9260457269za208zd9260457269xf1&_p=1791720132636&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AAAAAAQ&cid=380761835.1791720073&frm=0&ngs=1&pscdl=noapi&rcb=10&sr=800x600&uaa=arm&uab=64&uafvl=Chromium%3B154.0.8037.99%7CGoogle%2520Chrome%3B154.0.8037.99%7CNot%2520A(Brand%3B99.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.5.1&uaw=0&ul=ko-kr&_s=1&tag_exp=115938465~115938468~118897920~118897930~120213116~120385422~120469145~120469153~121046263~121046271~121246026~121246034&sid=1791720072&sct=1&seg=1&dl=https%3A%2F%2Fgame.1989v.com%2F&dt=%EB%AC%B4%EB%A3%8C%20%EC%9B%B9%EA%B2%8C%EC%9E%84%20%EC%95%84%EC%BC%80%EC%9D%B4%EB%93%9C%20%E2%80%94%20%EC%84%A4%EC%B9%98%20%EC%97%86%EC%9D%B4%20%EB%B8%8C%EB%9D%BC%EC%9A%B0%EC%A0%80%EC%97%90%EC%84%9C%20%EB%B0%94%EB%A1%9C%20%7C%201989v%20%EA%B2%8C%EC%9E%84&en=page_view&_ee=1&tfd=159",
+      "method": "POST"
+    },
+    {
+      "url": "https://game.1989v.com/cdn-cgi/rum?",
+      "method": "POST"
+    },
+    {
+      "url": "https://game.1989v.com/api/v1/ads/decisions",
+      "method": "POST"
+    },
+    {
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5EE8XW7JHN&gtm=45je6a72v9260457269za208zd9260457269xf1&_p=1791720133269&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AAAAAAQ&cid=380761835.1791720073&frm=0&ngs=1&pscdl=noapi&rcb=19&sr=800x600&uaa=arm&uab=64&uafvl=Chromium%3B154.0.8037.99%7CGoogle%2520Chrome%3B154.0.8037.99%7CNot%2520A(Brand%3B99.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.5.1&uaw=0&ul=ko-kr&_s=1&tag_exp=115616985~115938466~115938468~118897920~118897930~120213116~120385422~120469145~120469153~121046263~121046271~121246026~121246034&sid=1791720072&sct=1&seg=1&dl=https%3A%2F%2Fgame.1989v.com%2Fen&dt=Free%20Online%20Games%20%E2%80%94%20Play%20Instantly%20in%20Your%20Browser%20%7C%201989v%20%EA%B2%8C%EC%9E%84&en=page_view&_ee=1&tfd=164",
+      "method": "POST"
+    },
+    {
+      "url": "https://game.1989v.com/cdn-cgi/rum?",
+      "method": "POST"
+    },
+    {
+      "url": "https://game.1989v.com/api/v1/ads/decisions",
+      "method": "POST"
+    },
+    {
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5EE8XW7JHN&gtm=45je6a72v9260457269za208zd9260457269xf1&_p=1791720133958&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AAAAAAQ&cid=380761835.1791720073&frm=0&ngs=1&pscdl=noapi&rcb=4&sr=800x600&uaa=arm&uab=64&uafvl=Chromium%3B154.0.8037.99%7CGoogle%2520Chrome%3B154.0.8037.99%7CNot%2520A(Brand%3B99.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.5.1&uaw=0&ul=ko-kr&_s=1&tag_exp=115938465~115938468~118897920~118897930~120213116~120385423~120469145~120469153~121046263~121046271~121246026~121246034&sid=1791720072&sct=1&seg=1&dl=https%3A%2F%2Fgame.1989v.com%2Fgames%2Fblock-burst&dt=Block%20Burst%20%E2%80%94%20%EB%AC%B4%EB%A3%8C%20%EC%98%A8%EB%9D%BC%EC%9D%B8%20%ED%94%8C%EB%A0%88%EC%9D%B4%20%7C%201989v%20%EA%B2%8C%EC%9E%84&en=page_view&_ee=1&tfd=263",
+      "method": "POST"
+    },
+    {
+      "url": "https://game.1989v.com/cdn-cgi/rum?",
+      "method": "POST"
+    },
+    {
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5EE8XW7JHN&gtm=45je6a72v9260457269za208zd9260457269xf1&_p=1791720134806&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AAAAAAQ&cid=380761835.1791720073&frm=0&ngs=1&pscdl=noapi&rcb=3&sr=800x600&uaa=arm&uab=64&uafvl=Chromium%3B154.0.8037.99%7CGoogle%2520Chrome%3B154.0.8037.99%7CNot%2520A(Brand%3B99.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.5.1&uaw=0&ul=ko-kr&_s=1&tag_exp=115938466~115938468~118897920~118897930~120213116~120385423~120469145~120469153~121046263~121046271~121246026~121246034&sid=1791720072&sct=1&seg=1&dl=https%3A%2F%2Fgame.1989v.com%2Fgames%2Fmine-pioneer&dt=Minefield%20%E2%80%94%20%EB%AC%B4%EB%A3%8C%20%EC%98%A8%EB%9D%BC%EC%9D%B8%20%ED%94%8C%EB%A0%88%EC%9D%B4%20%7C%201989v%20%EA%B2%8C%EC%9E%84&en=page_view&_ee=1&tfd=145",
+      "method": "POST"
+    },
+    {
+      "url": "https://game.1989v.com/cdn-cgi/rum?",
+      "method": "POST"
+    },
+    {
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5EE8XW7JHN&gtm=45je6a72v9260457269za208zd9260457269xf1&_p=1791720135477&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AAAAAAQ&cid=380761835.1791720073&frm=0&ngs=1&pscdl=noapi&rcb=0&sr=800x600&uaa=arm&uab=64&uafvl=Chromium%3B154.0.8037.99%7CGoogle%2520Chrome%3B154.0.8037.99%7CNot%2520A(Brand%3B99.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.5.1&uaw=0&ul=ko-kr&_s=1&tag_exp=115938466~115938469~118897920~118897930~120213116~120385423~120469145~120469153~121046263~121046271~121246026~121246034&sid=1791720072&sct=1&seg=1&dl=https%3A%2F%2Fgame.1989v.com%2Fgames%2Frift-front&dt=Rift%20%E2%80%94%20%EB%AC%B4%EB%A3%8C%20%EC%98%A8%EB%9D%BC%EC%9D%B8%20%ED%94%8C%EB%A0%88%EC%9D%B4%20%7C%201989v%20%EA%B2%8C%EC%9E%84&en=page_view&_ee=1&tfd=185",
+      "method": "POST"
+    },
+    {
+      "url": "https://game.1989v.com/cdn-cgi/rum?",
+      "method": "POST"
+    },
+    {
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5EE8XW7JHN&gtm=45je6a72v9260457269za208zd9260457269xf1&_p=1791720136356&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AAAAAAQ&cid=380761835.1791720073&frm=0&ngs=1&pscdl=noapi&rcb=0&sr=800x600&uaa=arm&uab=64&uafvl=Chromium%3B154.0.8037.99%7CGoogle%2520Chrome%3B154.0.8037.99%7CNot%2520A(Brand%3B99.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.5.1&uaw=0&ul=ko-kr&_s=1&tag_exp=115938465~115938468~118012007~118897920~118897930~119404697~120213116~120385422~120469145~120469153~121046263~121046271~121246026~121246034&sid=1791720072&sct=1&seg=1&dl=https%3A%2F%2Fgame.1989v.com%2Fen%2Fgames%2Fblock-burst&dt=Block%20Burst%20%E2%80%94%20Play%20Free%20Online%20%7C%201989v%20%EA%B2%8C%EC%9E%84&en=page_view&_ee=1&tfd=139",
+      "method": "POST"
+    },
+    {
+      "url": "https://game.1989v.com/cdn-cgi/rum?",
+      "method": "POST"
+    },
+    {
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5EE8XW7JHN&gtm=45je6a72v9260457269za208zd9260457269xf1&_p=1791720137037&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AAAAAAQ&cid=380761835.1791720073&frm=0&ngs=1&pscdl=noapi&rcb=8&sr=800x600&uaa=arm&uab=64&uafvl=Chromium%3B154.0.8037.99%7CGoogle%2520Chrome%3B154.0.8037.99%7CNot%2520A(Brand%3B99.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.5.1&uaw=0&ul=ko-kr&_s=1&tag_exp=115616985~115938465~115938468~118897920~118897930~120213116~120385423~120469145~120469153~121046263~121046271~121246026~121246034~123235076&sid=1791720072&sct=1&seg=1&dl=https%3A%2F%2Fgame.1989v.com%2Fen%2Fgames%2Fmine-pioneer&dt=Minefield%20%E2%80%94%20Play%20Free%20Online%20%7C%201989v%20%EA%B2%8C%EC%9E%84&en=page_view&_ee=1&tfd=197",
+      "method": "POST"
+    },
+    {
+      "url": "https://game.1989v.com/cdn-cgi/rum?",
+      "method": "POST"
+    },
+    {
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5EE8XW7JHN&gtm=45je6a72v9260457269za208zd9260457269xf1&_p=1791720138196&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AAAAAAQ&cid=380761835.1791720073&frm=0&ngs=1&pscdl=noapi&rcb=12&sr=800x600&uaa=arm&uab=64&uafvl=Chromium%3B154.0.8037.99%7CGoogle%2520Chrome%3B154.0.8037.99%7CNot%2520A(Brand%3B99.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.5.1&uaw=0&ul=ko-kr&_s=1&tag_exp=115938466~115938468~118897920~118897930~119793974~120213116~120385423~120469145~120469153~121046263~121046271~121246026~121246034&sid=1791720072&sct=1&seg=1&dl=https%3A%2F%2Fgame.1989v.com%2Fen%2Fgames%2Frift-front&dt=Rift%20%E2%80%94%20Play%20Free%20Online%20%7C%201989v%20%EA%B2%8C%EC%9E%84&en=page_view&_ee=1&tfd=169",
+      "method": "POST"
+    },
+    {
+      "url": "https://game.1989v.com/cdn-cgi/rum?",
+      "method": "POST"
+    },
+    {
+      "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5EE8XW7JHN&gtm=45je6a72v9260457269za208zd9260457269xf1&_p=1791720176554&gcd=13l3l3l3l1l1&npa=0&dma=0&cid=1138178827.1791720177&frm=0&ngs=1&pscdl=noapi&rcb=11&sr=390x900&uaa=arm&uab=64&uafvl=Chromium%3B154.0.8037.99%7CGoogle%2520Chrome%3B154.0.8037.99%7CNot%2520A(Brand%3B99.0.0.0&uam=&uamb=0&uap=macOS&uapv=26.5.1&uaw=0&ul=ko-kr&_s=1&tag_exp=115616985~115938465~115938469~118897920~118897930~120213116~120385423~120469145~120469153~121046263~121046271~121246026~121246034&sid=1791720177&sct=1&seg=0&dl=https%3A%2F%2Fgame.1989v.com%2Fen%2Fgames%2Fblock-burst&dt=Block%20Burst%20%E2%80%94%20Play%20Free%20Online%20%7C%201989v%20%EA%B2%8C%EC%9E%84&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&tfd=1231",
+      "method": "POST"
+    },
+    {
+      "url": "https://game.1989v.com/cdn-cgi/rum?",
+      "method": "POST"
+    }
+  ]
+}

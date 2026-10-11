@@ -1,0 +1,123 @@
+{
+  "checkedAt": "2026-10-11T12:02:33.232633+00:00",
+  "image": "portal-fe:0f95d05",
+  "routes": [
+    {
+      "path": "/",
+      "status": "200",
+      "canonical": [
+        "https://game.1989v.com/"
+      ],
+      "checks": {
+        "http200": true,
+        "selfCanonical": true,
+        "notNoindex": true,
+        "selectionHeading": true,
+        "threeDetailLinks": true,
+        "meta82": true
+      },
+      "passed": true
+    },
+    {
+      "path": "/en",
+      "status": "200",
+      "canonical": [
+        "https://game.1989v.com/en"
+      ],
+      "checks": {
+        "http200": true,
+        "selfCanonical": true,
+        "notNoindex": true,
+        "selectionHeading": true,
+        "threeDetailLinks": true,
+        "meta82": true
+      },
+      "passed": true
+    },
+    {
+      "path": "/games/block-burst",
+      "status": "200",
+      "canonical": [
+        "https://game.1989v.com/games/block-burst"
+      ],
+      "checks": {
+        "http200": true,
+        "selfCanonical": true,
+        "notNoindex": true,
+        "threeGuideLabels": true
+      },
+      "passed": true
+    },
+    {
+      "path": "/games/mine-pioneer",
+      "status": "200",
+      "canonical": [
+        "https://game.1989v.com/games/mine-pioneer"
+      ],
+      "checks": {
+        "http200": true,
+        "selfCanonical": true,
+        "notNoindex": true,
+        "threeGuideLabels": true
+      },
+      "passed": true
+    },
+    {
+      "path": "/games/rift-front",
+      "status": "200",
+      "canonical": [
+        "https://game.1989v.com/games/rift-front"
+      ],
+      "checks": {
+        "http200": true,
+        "selfCanonical": true,
+        "notNoindex": true,
+        "threeGuideLabels": true
+      },
+      "passed": true
+    },
+    {
+      "path": "/en/games/block-burst",
+      "status": "200",
+      "canonical": [
+        "https://game.1989v.com/en/games/block-burst"
+      ],
+      "checks": {
+        "http200": true,
+        "selfCanonical": true,
+        "notNoindex": true,
+        "threeGuideLabels": true
+      },
+      "passed": true
+    },
+    {
+      "path": "/en/games/mine-pioneer",
+      "status": "200",
+      "canonical": [
+        "https://game.1989v.com/en/games/mine-pioneer"
+      ],
+      "checks": {
+        "http200": true,
+        "selfCanonical": true,
+        "notNoindex": true,
+        "threeGuideLabels": true
+      },
+      "passed": true
+    },
+    {
+      "path": "/en/games/rift-front",
+      "status": "200",
+      "canonical": [
+        "https://game.1989v.com/en/games/rift-front"
+      ],
+      "checks": {
+        "http200": true,
+        "selfCanonical": true,
+        "notNoindex": true,
+        "threeGuideLabels": true
+      },
+      "passed": true
+    }
+  ],
+  "passed": true
+}

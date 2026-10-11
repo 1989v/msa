@@ -1,0 +1,29 @@
+{
+  "checkedAt": "2026-10-11T12:02:46.660617+00:00",
+  "afterImage": "0f95d05",
+  "queries": [
+    {
+      "query": "웹게임",
+      "ownDirectLinks": [],
+      "competitorHosts": [
+        "ogto.dev",
+        "oreumgames.com",
+        "play.gomgomapps.com",
+        "www.crazygames.com"
+      ],
+      "visibleBodyChars": 13256,
+      "scope": "logged-out HTTP initial search page; no exact full ranking measurement"
+    },
+    {
+      "query": "무료 웹게임",
+      "ownDirectLinks": [],
+      "competitorHosts": [
+        "ogto.dev",
+        "oreumgames.com",
+        "www.crazygames.com"
+      ],
+      "visibleBodyChars": 12079,
+      "scope": "logged-out HTTP initial search page; no exact full ranking measurement"
+    }
+  ]
+}
