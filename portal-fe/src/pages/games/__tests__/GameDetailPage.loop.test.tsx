@@ -114,3 +114,20 @@ describe('게임 상세 — 상세 조회 루프 방지', () => {
 });
 
  it('BOTH manual landscape click keeps gesture, reports lock rejection and unlocks on fullscreen exit', async()=>{vi.mocked(fetchGameDetail).mockResolvedValue({...DETAIL,orientation:'BOTH'} as never);vi.mocked(fetchSimilarGames).mockResolvedValue([] as never);vi.mocked(fetchLeaderboard).mockResolvedValue([] as never);const lock=vi.fn().mockRejectedValue(Error('denied')),unlock=vi.fn(),request=vi.fn().mockResolvedValue(undefined);vi.stubGlobal('matchMedia',(query:string)=>({matches:query.includes('pointer: coarse'),addEventListener(){},removeEventListener(){}}));vi.stubGlobal('innerWidth',390);vi.stubGlobal('innerHeight',844);const prior=Object.getOwnPropertyDescriptor(globalThis.screen,'orientation');Object.defineProperty(globalThis.screen,'orientation',{configurable:true,value:{lock,unlock}});const previous=HTMLElement.prototype.requestFullscreen;HTMLElement.prototype.requestFullscreen=request;try{const view=renderPage();await waitFor(()=>expect(uiScreen.getByText(/플레이$/)).toBeTruthy());fireEvent.click(uiScreen.getByText(/플레이$/));const button=await uiScreen.findByLabelText('전체화면 가로 전환');fireEvent.click(button);expect(request).toHaveBeenCalledTimes(1);await waitFor(()=>expect(lock).toHaveBeenCalledWith('landscape'));await waitFor(()=>expect(uiScreen.getByText(/방향 잠금이 거부/)).toBeTruthy());document.dispatchEvent(new Event('fullscreenchange'));expect(unlock).toHaveBeenCalled();view.unmount();expect(fetchGameDetail).toHaveBeenCalledTimes(1);}finally{HTMLElement.prototype.requestFullscreen=previous;if(prior)Object.defineProperty(globalThis.screen,'orientation',prior);else Reflect.deleteProperty(globalThis.screen,'orientation');vi.unstubAllGlobals();}});
+
+it('reads introduction before personal records and ratings, preserving tabs and Play', async () => {
+  vi.mocked(fetchGameDetail).mockResolvedValue({ ...DETAIL, ratingCount: 2, ratingAvg: 8 } as never);
+  vi.mocked(fetchSimilarGames).mockResolvedValue([] as never);
+  vi.mocked(fetchLeaderboard).mockResolvedValue([] as never);
+  const view = renderPage();
+  await uiScreen.findByText('설명');
+  const intro = view.container.querySelector('.game-about-body')!;
+  for (const selector of ['.game-detail-mine', '.game-rating-summary']) {
+    expect(intro.compareDocumentPosition(view.container.querySelector(selector)!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  }
+  fireEvent.click(uiScreen.getByRole('tab', { name: '랭킹' }));
+  expect(view.container.querySelector('.game-pane-rank')?.classList.contains('is-on')).toBe(true);
+  fireEvent.click(uiScreen.getByRole('tab', { name: '소개' }));
+  expect(view.container.querySelector('.game-pane-about')?.classList.contains('is-on')).toBe(true);
+  expect(uiScreen.getByText(/플레이$/)).toBeTruthy();
+});

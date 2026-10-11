@@ -43,6 +43,7 @@ export function GameAboutPanel({ game, lang, favorites }: {
   return (
     <section className="game-panel" aria-labelledby="game-about-heading">
       <h2 className="game-panel-title" id="game-about-heading">{lang === 'en' ? 'About' : '소개'}</h2>
+      <p className="game-about-body">{displayDescription(game, lang)}</p>
       <div className="game-rating-summary">
         {/* ratingAvg 는 BE 척도(halves 1~10) 다 — 별과 숫자가 같은 축을 써야 9.1 과 4.6 이 함께 뜨지 않는다 */}
         {game.ratingCount > 0 && (
@@ -58,7 +59,6 @@ export function GameAboutPanel({ game, lang, favorites }: {
           <span className="game-stat-sub">♡ {favorites.toLocaleString()}</span>
         )}
       </div>
-      <p className="game-about-body">{displayDescription(game, lang)}</p>
     </section>
   );
 }

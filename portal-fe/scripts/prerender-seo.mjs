@@ -1,8 +1,8 @@
 /**
  * 빌드 후 SEO 정적 자산 생성기.
  *
- * portal-fe 는 CSR SPA 라 초기 HTML 에 게임 정보가 전혀 없다. 구글은 JS 를 실행해 주지만
- * 네이버(Yeti)·다음(Daumoa)·카카오톡/슬랙/X 언퍼러는 실행하지 않는다. 그래서 `vite build`
+ * portal-fe 는 CSR SPA 라 초기 HTML 에 게임 정보가 전혀 없다. 네이버도 JS 렌더링을
+ * 지원하지만 초기 HTML 콘텐츠를 권장하며, 메신저 언퍼러에는 정적 메타가 필요하다. `vite build`
  * 산출물의 index.html 을 틀로 삼아 게임 페이지별 메타·본문을 심은 정적 HTML 을 미리 찍어둔다.
  * 자산(script/link) 태그는 index.html 것을 그대로 물려받으므로 SPA 는 정상 부팅한다.
  *
@@ -39,6 +39,7 @@ import {
   genreSlug,
   hreflangAlternates,
   hubMeta,
+  gameHubGuide,
   HUB_OG_IMAGE,
   itemListJsonLd,
   OG_IMAGE_H,
@@ -647,7 +648,14 @@ function genreNav(lang, games) {
   return `<nav aria-label="${lang === 'en' ? 'Genres' : '장르'}">${links}</nav>`;
 }
 
-function renderHub(shell, lang, games) {
+function renderGameHubGuide(lang) {
+  const guide = gameHubGuide(lang);
+  return `<section aria-labelledby="games-guide-heading"><h2 id="games-guide-heading">${escapeHtml(guide.heading)}</h2>` +
+    guide.paragraphs.map((text) => `<p>${escapeHtml(text)}</p>`).join('') +
+    `<nav>${guide.genres.map(({ href, label }) => `<a href="${escapeHtml(href)}">${escapeHtml(label)}</a>`).join('')}</nav></section>`;
+}
+
+export function renderHub(shell, lang, games) {
   const meta = hubMeta(lang, games.length);
   const canonical = gameUrl(lang);
   return compose(shell, {
@@ -665,7 +673,8 @@ function renderHub(shell, lang, games) {
     body: shellBody(
       `<h1>${escapeHtml(meta.heading)}</h1><p>${escapeHtml(meta.description)}</p>` +
         genreNav(lang, games) +
-        gameLinkList(lang, games),
+        gameLinkList(lang, games) +
+        renderGameHubGuide(lang),
     ),
   });
 }
@@ -698,7 +707,7 @@ function renderGenre(shell, lang, genre, inGenre, allGames) {
   });
 }
 
-function renderDetail(shell, lang, game, games) {
+export function renderDetail(shell, lang, game, games) {
   const meta = detailMeta(lang, game);
   const canonical = gameUrl(lang, `/games/${game.slug}`);
   const related = relatedGames(game, games);
@@ -735,6 +744,12 @@ function renderDetail(shell, lang, game, games) {
         // meta.description 은 검색결과용으로 154자에 잘린 값이다. 본문까지 그걸 쓰면
         // 길게 쓴 설명이 60% 넘게 버려진 채 나간다 — 본문에는 원문을 그대로 싣는다.
         `<p>${escapeHtml(descriptionOf(game, lang) || meta.description)}</p>` +
+        '<ul>' +
+        (game.playerMode === 'MULTI' ? `<li>${lang === 'en' ? '2+ players' : '2인 이상'}</li>` :
+          game.playerMode === 'SINGLE' ? `<li>${lang === 'en' ? 'Single player' : '1인'}</li>` : '') +
+        (game.estimatedMinutes != null ? `<li>${escapeHtml(lang === 'en' ? `~${game.estimatedMinutes} min` : `약 ${game.estimatedMinutes}분`)}</li>` : '') +
+        (game.supportsMobile === true ? `<li>${lang === 'en' ? 'Mobile' : '모바일 지원'}</li>` : '') +
+        '</ul>' +
         rating +
         play +
         (related.length

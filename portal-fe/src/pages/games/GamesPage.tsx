@@ -24,6 +24,7 @@ import {
   genreSlug,
   hreflangAlternates,
   hubMeta,
+  gameHubGuide,
   itemListJsonLd,
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
@@ -62,6 +63,8 @@ const GENRE_ORDER: GameGenre[] = [
   'DECIDER', 'DEFENSE', 'ACTION', 'STRATEGY', 'RPG', 'ARCADE', 'PUZZLE', 'VERSUS', 'CASUAL',
 ];
 
+const EMPTY_GAMES: GameSummary[] = [];
+
 const GENRES = Object.keys(GENRE_LABELS) as GameGenre[];
 
 /**
@@ -91,11 +94,10 @@ export default function GamesPage() {
   const navigate = useNavigate();
   const [collections, setCollections] = useState<GameCollection[]>([]);
   const [tags, setTags] = useState<GameTag[]>([]);
-  const [games, setGames] = useState<GameSummary[]>([]);
+  const [catalogCounts, setCatalogCounts] = useState<Record<string, number>>({});
+  const [listResult, setListResult] = useState<{ key: string; content: GameSummary[]; error: boolean } | null>(null);
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [sort, setSort] = useState<GameSortKey>('trending');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
   const [partyPool, setPartyPool] = useState<GameSummary[]>([]);
   const [partyOpen, setPartyOpen] = useState(false);
   // 뽑기 — 지금 걸린 장르·태그·정렬 목록에서 하나. 목록이 곧 후보다 (48개까지 한 번에 받는다)
@@ -105,6 +107,11 @@ export default function GamesPage() {
   // (정렬·태그는 같은 게임 목록의 재배열이라 중복 콘텐츠가 되므로 로컬 상태로 둔다)
   const lang: GameLang = pathname === '/en' || pathname.startsWith('/en/') ? 'en' : 'ko';
   const genre = genreFromSlug(genreParam) as GameGenre | null;
+
+  const requestKey = JSON.stringify([activeTag, genre, sort]);
+  const loading = listResult?.key !== requestKey;
+  const error = !loading && listResult?.error;
+  const games = listResult?.content ?? EMPTY_GAMES;
 
   const L = UI[lang];
   const SORTS: { key: GameSortKey; label: string }[] = [
@@ -132,13 +139,26 @@ export default function GamesPage() {
   }, []);
 
   useEffect(() => {
-    setLoading(true);
-    setError(false);
+    let current = true;
     listGames({ tag: activeTag ?? undefined, genre: genre ?? undefined, sort, size: 48 })
-      .then((page) => setGames(page.content))
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
-  }, [activeTag, genre, sort]);
+      .then((page) => { if (current) setListResult({ key: requestKey, content: page.content, error: false }); })
+      .catch(() => { if (current) setListResult({ key: requestKey, content: [], error: true }); });
+    return () => { current = false; };
+  }, [activeTag, genre, sort, requestKey]);
+
+  // 태그·정렬은 카탈로그 수를 바꾸지 않는다. 페이지 길이가 아닌 전체 건수를 따로 읽는다.
+  useEffect(() => {
+    let current = true;
+    const scope = genre ?? 'all';
+    listGames({ genre: genre ?? undefined, size: 1 })
+      .then((page) => {
+        if (current && Number.isInteger(page.totalElements) && page.totalElements >= 0) {
+          setCatalogCounts((counts) => ({ ...counts, [scope]: page.totalElements }));
+        }
+      })
+      .catch(() => { /* 실패 시 마지막 확인 값 또는 초기 HTML을 유지한다. */ });
+    return () => { current = false; };
+  }, [genre]);
 
   // 필터가 걸리면 큐레이션 행 대신 그리드만 노출
   const showCollections = useMemo(
@@ -164,18 +184,21 @@ export default function GamesPage() {
   const seoSub = genre ? `/games/genre/${genreSlug(genre)}` : '';
   // 광고 문맥 — 배너와 목록 끝 지면이 같은 값이라 결정 한 번으로 묶인다
   const adContext = genre ? `game:${genreSlug(genre)}` : '';
-  const meta = genre ? genreMeta(lang, genre, games) : hubMeta(lang, games.length);
+  const catalogCount = catalogCounts[genre ?? 'all'];
+  const meta = genre ? genreMeta(lang, genre, [], catalogCount ?? null) : hubMeta(lang, catalogCount);
+  const guide = gameHubGuide(lang);
   const canonical = gameUrl(lang, seoSub);
   useSeo({
-    // 목록이 오기 전에는 프리렌더된 메타를 유지한다 — "게임 0종" 스냅샷이 색인되면 안 된다
-    title: loading && games.length === 0 ? '' : meta.title,
+    // 같은 주소의 초기 메타는 유지하고, SPA 전환에서는 건수 없는 새 주소 메타를 쓴다.
+    title: catalogCount === undefined && document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href === canonical
+      ? '' : meta.title,
     description: meta.description,
     canonical,
     lang,
     alternates: hreflangAlternates(seoSub),
     jsonLd: [
       collectionPageJsonLd(lang, meta, canonical),
-      ...(games.length > 0 ? [itemListJsonLd(lang, games.slice(0, 30))] : []),
+      ...(!loading && !error && games.length > 0 ? [itemListJsonLd(lang, games.slice(0, 30))] : []),
       ...(genre
         ? [
             breadcrumbJsonLd(lang, [
@@ -363,6 +386,16 @@ export default function GamesPage() {
             </>
           )}
       </section>
+
+      {!genre && (
+        <section className="games-guide" aria-labelledby="games-guide-heading">
+          <h2 id="games-guide-heading">{guide.heading}</h2>
+          {guide.paragraphs.map((text) => <p key={text}>{text}</p>)}
+          <nav aria-label={L.genreLabel}>
+            {guide.genres.map((item) => <Link key={item.href} to={item.href}>{item.label}</Link>)}
+          </nav>
+        </section>
+      )}
 
       {/* 목록 끝. 게임 프레임(iframe) 안에는 두지 않는다 — 조작 방해이자 정책 위반 (ADR-0076) */}
       <AdSlot placement="game-hub-end" contextKey={adContext} shape="horizontal" minHeight={90} />

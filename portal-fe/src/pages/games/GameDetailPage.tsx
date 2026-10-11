@@ -492,6 +492,10 @@ export default function GameDetailPage() {
         )}
       </section>
 
+      <div className={`game-tabpane game-pane-about${tab === 'about' ? ' is-on' : ''}`}>
+        <GameAboutPanel game={game} lang={lang} favorites={side.favorites} />
+      </div>
+
       {/* 무대 바로 아래 — 내 기록과 평점이 한 줄. 넓은 화면에서는 두 단을 가로질러 앉는다 */}
       <div className="game-detail-mine">
         <GameMyRecordPanel record={side.me} loggedIn={side.loggedIn} lang={lang} />
@@ -537,10 +541,6 @@ export default function GameDetailPage() {
         >
           {lang === 'en' ? 'Suggestions' : '개선 제안'}
         </button>
-      </div>
-
-      <div className={`game-tabpane game-pane-about${tab === 'about' ? ' is-on' : ''}`}>
-        <GameAboutPanel game={game} lang={lang} favorites={side.favorites} />
       </div>
 
       {/* 제목은 GameLeaderboard 가 갖는다(새로고침 버튼이 붙어 있다) — 여기 또 달면 두 번 나온다.

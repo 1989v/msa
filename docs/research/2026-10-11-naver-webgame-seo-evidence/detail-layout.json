@@ -1,0 +1,262 @@
+[
+  {
+    "width": 390,
+    "device": "light",
+    "theme": "light",
+    "stage": {
+      "x": 0,
+      "y": 332.46875,
+      "width": 390,
+      "height": 298.75
+    },
+    "about": {
+      "x": 16,
+      "y": 956.8125,
+      "width": 358,
+      "height": 72.796875
+    },
+    "mine": {
+      "x": 16,
+      "y": 663.21875,
+      "width": 358,
+      "height": 232.59375
+    },
+    "tabs": {
+      "x": 16,
+      "y": 895.8125,
+      "width": 358,
+      "height": 45
+    },
+    "introBeforeMine": true,
+    "play": "▶ 플레이",
+    "overflow": false
+  },
+  {
+    "width": 390,
+    "device": "light",
+    "theme": "dark",
+    "stage": {
+      "x": 0,
+      "y": 332.46875,
+      "width": 390,
+      "height": 298.75
+    },
+    "about": {
+      "x": 16,
+      "y": 956.8125,
+      "width": 358,
+      "height": 72.796875
+    },
+    "mine": {
+      "x": 16,
+      "y": 663.21875,
+      "width": 358,
+      "height": 232.59375
+    },
+    "tabs": {
+      "x": 16,
+      "y": 895.8125,
+      "width": 358,
+      "height": 45
+    },
+    "introBeforeMine": true,
+    "play": "▶ 플레이",
+    "overflow": false
+  },
+  {
+    "width": 390,
+    "device": "dark",
+    "theme": "light",
+    "stage": {
+      "x": 0,
+      "y": 332.46875,
+      "width": 390,
+      "height": 298.75
+    },
+    "about": {
+      "x": 16,
+      "y": 956.8125,
+      "width": 358,
+      "height": 72.796875
+    },
+    "mine": {
+      "x": 16,
+      "y": 663.21875,
+      "width": 358,
+      "height": 232.59375
+    },
+    "tabs": {
+      "x": 16,
+      "y": 895.8125,
+      "width": 358,
+      "height": 45
+    },
+    "introBeforeMine": true,
+    "play": "▶ 플레이",
+    "overflow": false
+  },
+  {
+    "width": 390,
+    "device": "dark",
+    "theme": "dark",
+    "stage": {
+      "x": 0,
+      "y": 332.46875,
+      "width": 390,
+      "height": 298.75
+    },
+    "about": {
+      "x": 16,
+      "y": 956.8125,
+      "width": 358,
+      "height": 72.796875
+    },
+    "mine": {
+      "x": 16,
+      "y": 663.21875,
+      "width": 358,
+      "height": 232.59375
+    },
+    "tabs": {
+      "x": 16,
+      "y": 895.8125,
+      "width": 358,
+      "height": 45
+    },
+    "introBeforeMine": true,
+    "play": "▶ 플레이",
+    "overflow": false
+  },
+  {
+    "width": 1280,
+    "device": "light",
+    "theme": "light",
+    "stage": {
+      "x": 656,
+      "y": 446.71875,
+      "width": 560,
+      "height": 402.75
+    },
+    "about": {
+      "x": 64,
+      "y": 446.71875,
+      "width": 560,
+      "height": 110.296875
+    },
+    "mine": {
+      "x": 64,
+      "y": 881.46875,
+      "width": 1152,
+      "height": 143.296875
+    },
+    "tabs": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "introBeforeMine": true,
+    "play": "▶ 플레이",
+    "overflow": false
+  },
+  {
+    "width": 1280,
+    "device": "light",
+    "theme": "dark",
+    "stage": {
+      "x": 656,
+      "y": 446.71875,
+      "width": 560,
+      "height": 402.75
+    },
+    "about": {
+      "x": 64,
+      "y": 446.71875,
+      "width": 560,
+      "height": 110.296875
+    },
+    "mine": {
+      "x": 64,
+      "y": 881.46875,
+      "width": 1152,
+      "height": 143.296875
+    },
+    "tabs": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "introBeforeMine": true,
+    "play": "▶ 플레이",
+    "overflow": false
+  },
+  {
+    "width": 1280,
+    "device": "dark",
+    "theme": "light",
+    "stage": {
+      "x": 656,
+      "y": 446.71875,
+      "width": 560,
+      "height": 402.75
+    },
+    "about": {
+      "x": 64,
+      "y": 446.71875,
+      "width": 560,
+      "height": 110.296875
+    },
+    "mine": {
+      "x": 64,
+      "y": 881.46875,
+      "width": 1152,
+      "height": 143.296875
+    },
+    "tabs": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "introBeforeMine": true,
+    "play": "▶ 플레이",
+    "overflow": false
+  },
+  {
+    "width": 1280,
+    "device": "dark",
+    "theme": "dark",
+    "stage": {
+      "x": 656,
+      "y": 446.71875,
+      "width": 560,
+      "height": 402.75
+    },
+    "about": {
+      "x": 64,
+      "y": 446.71875,
+      "width": 560,
+      "height": 110.296875
+    },
+    "mine": {
+      "x": 64,
+      "y": 881.46875,
+      "width": 1152,
+      "height": 143.296875
+    },
+    "tabs": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "introBeforeMine": true,
+    "play": "▶ 플레이",
+    "overflow": false
+  },
+  {
+    "rankVisible": "block",
+    "aboutHidden": "none"
+  }
+]

@@ -103,27 +103,52 @@ export function hreflangAlternates(sub = '') {
 // ─── 페이지별 카피 ───────────────────────────────────────────────────────────
 
 export function hubMeta(lang, gameCount) {
-  const n = gameCount || 0;
+  const count = Number.isInteger(gameCount) && gameCount >= 0 ? gameCount : null;
+  const enCount = count === null ? '' : `${count} `;
+  const koCount = count === null ? '' : ` ${count}종`;
   return lang === 'en'
     ? {
         title: `Free Online Games — Play Instantly in Your Browser | ${BRAND}`,
         description: clampDescription(
-          `Play ${n} free browser games instantly — no download, no sign-up. Puzzle, action, tower defense, RPG and strategy games in one arcade.`,
+          `Play ${enCount}free browser games instantly — no download, no sign-up. Puzzle, action, tower defense, RPG and strategy games in one arcade.`,
         ),
         heading: 'Free Online Games',
       }
     : {
         title: `무료 웹게임 아케이드 — 설치 없이 브라우저에서 바로 | ${BRAND}`,
         description: clampDescription(
-          `설치도 가입도 없이 브라우저에서 바로 즐기는 무료 웹게임 ${n}종. 퍼즐·액션·디펜스·RPG·전략 게임을 한곳에서 플레이하세요.`,
+          `설치도 가입도 없이 브라우저에서 바로 즐기는 무료 웹게임${koCount}. 퍼즐·액션·디펜스·RPG·전략 게임을 한곳에서 플레이하세요.`,
         ),
         heading: '무료 웹게임 아케이드',
       };
 }
 
-export function genreMeta(lang, genre, games) {
+/** 홈페이지 안내 — 실제 화면과 초기 HTML이 같은 문구·링크를 쓴다. */
+export function gameHubGuide(lang) {
+  const en = lang === 'en';
+  return {
+    heading: en ? 'Choose a game and start playing' : '웹게임 고르고 시작하기',
+    paragraphs: en ? [
+      'Browse by genre, narrow the list with tags, or sort by Trending, New and Top Rated. Pick one selects a game from the current list.',
+      'Open a game to read its introduction, player mode and mobile support, then press Play. Games run in your browser without installing an app; controls and supported devices vary by game.',
+      'You can start playing without an account. Sign in to keep personal play records. You can also rate games. Saved progress and online multiplayer are available only in games that support them.',
+    ] : [
+      '장르별로 둘러보고 태그로 목록을 좁히거나 인기·신작·평점 순으로 정렬해 보세요. 뭐 하지 버튼은 현재 목록에서 게임 하나를 골라줍니다.',
+      '게임을 열어 소개와 플레이 인원, 모바일 지원 여부를 확인한 뒤 플레이 버튼을 누르세요. 앱 설치 없이 브라우저에서 실행되며, 조작법과 지원 기기는 게임마다 다릅니다.',
+      '계정 없이 플레이를 시작할 수 있습니다. 로그인하면 개인 플레이 기록을 남길 수 있습니다. 게임을 평가하는 기능도 제공합니다. 진행 저장과 온라인 멀티플레이는 해당 기능을 지원하는 게임에서 이용할 수 있습니다.',
+    ],
+    genres: ['PUZZLE', 'ACTION', 'DEFENSE', 'RPG', 'STRATEGY'].map((genre) => ({
+      label: genreLabelOf(genre, lang),
+      href: gamePath(lang, `/games/genre/${genreSlug(genre)}`),
+    })),
+  };
+}
+
+export function genreMeta(lang, genre, games, gameCount = games.length) {
   const label = genreLabelOf(genre, lang);
-  const n = games.length;
+  const count = Number.isInteger(gameCount) && gameCount >= 0 ? gameCount : null;
+  const enCount = count === null ? '' : `${count} `;
+  const koCount = count === null ? '' : ` ${count}종`;
   const picks = games
     .slice(0, 3)
     .map((g) => titleOf(g, lang))
@@ -132,14 +157,14 @@ export function genreMeta(lang, genre, games) {
     ? {
         title: `Free ${label} Games — Play Online, No Download | ${BRAND}`,
         description: clampDescription(
-          `${n} free ${label.toLowerCase()} games you can play right in your browser${picks ? ` — including ${picks}` : ''}. No download, no sign-up.`,
+          `${enCount}free ${label.toLowerCase()} games you can play right in your browser${picks ? ` — including ${picks}` : ''}. No download, no sign-up.`,
         ),
         heading: `${label} Games`,
       }
     : {
         title: `무료 ${label} 게임 모음 — 브라우저에서 바로 플레이 | ${BRAND}`,
         description: clampDescription(
-          `설치 없이 즐기는 ${label} 웹게임 ${n}종${picks ? `. ${picks} 등을 브라우저에서 바로 플레이하세요` : ''}.`,
+          `설치 없이 즐기는 ${label} 웹게임${koCount}${picks ? `. ${picks} 등을 브라우저에서 바로 플레이하세요` : ''}.`,
         ),
         heading: `${label} 게임`,
       };
