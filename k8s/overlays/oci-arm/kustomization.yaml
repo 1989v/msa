@@ -378,7 +378,7 @@ images:
     newTag: 4b9a5bf
   - name: commerce/content
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/content
-    newTag: 1dac5c1
+    newTag: ae1ead7
   - name: commerce/engagement
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/engagement
     newTag: 4b9a5bf
@@ -390,7 +390,7 @@ images:
     newTag: 6a1889c
   - name: commerce/place-ingest
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/place-ingest
-    newTag: a6b35ea
+    newTag: ae1ead7
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
     newTag: 4b9a5bf
@@ -414,7 +414,7 @@ images:
     newTag: 1dac5c1
   - name: commerce/search-batch
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-batch
-    newTag: 4b9a5bf
+    newTag: ae1ead7
   - name: commerce/search-consumer
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-consumer
     newTag: 4b9a5bf
