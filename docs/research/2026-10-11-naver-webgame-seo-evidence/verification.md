@@ -38,4 +38,18 @@ Vite의 500kB 초과 청크 경고는 남아 있다.
 - 변경 파일 ESLint: 오류 0개, 기존 상세 `stageRef.current` 정리 관련 경고 1개.
 - 작업 diff 공백 검사: 오류 없음.
 - [상세 배치 측정](detail-layout.json): 모바일·데스크톱과 기기/사이트 테마 8조합의 실제 측정.
-- 추가 홈페이지 색상 측정은 완료되지 않았다. 배포·네이버 재수집 제출은 실행하지 않았다.
+- 추가 홈페이지 색상 측정은 완료되지 않았다. 아래 운영 배포 확인 이전에는 배포·네이버 재수집 제출을 실행하지 않았다.
+
+## 최신 main 통합·운영 배포
+
+- 게임·SEO: `Test Files 11 passed (11)`, `Tests 129 passed (129)`.
+- 광고: `Test Files 2 passed (2)`, `Tests 22 passed (22)`.
+- TypeScript 종료 코드 0, Vite `built in 577ms`. 변경 ESLint 오류 0개·기존 경고 1개.
+- [images 실행](https://github.com/1989v/msa/actions/runs/38115152915): `completed`, `success`.
+- 운영 `portal-fe:c6941ee`, ready `1/1`; `deployment "portal-fe" successfully rolled out`.
+- 한국어·영어 초기 HTML guide 존재, description 각각 `82종`, `82 free`.
+- [실제 브라우저 증거](production-browser.json): `passed: true`; mock 없이 홈페이지 2개와 대표 상세 확인.
+- 로컬 로그: `/private/tmp/naver-seo-integrated-tests.log`, `/private/tmp/naver-seo-integrated-ads.log`,
+  `/private/tmp/naver-seo-integrated-build.log`, `/private/tmp/naver-seo-prod-smoke/run.log`.
+- 초기 Python 기본 User-Agent 요청은 403을 반환했다. 브라우저와 Mozilla User-Agent의 curl 요청은 성공했다.
+- 공통 CI는 다른 main 변경으로 취소되었다. 네이버 재수집·검색 순위 변화는 검증하지 않았다.
