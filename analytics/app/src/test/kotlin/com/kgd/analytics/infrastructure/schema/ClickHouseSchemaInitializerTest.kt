@@ -51,7 +51,7 @@ class ClickHouseSchemaInitializerTest : BehaviorSpec({
                 val scripts = PathMatchingResourcePatternResolver()
                     .getResources("classpath*:clickhouse/analytics/*.sql")
                     .sortedBy { it.filename }
-                scripts.size shouldBe 7
+                scripts.size shouldBe 8
                 scripts.forEach { script ->
                     val stmts = ClickHouseSchemaInitializer.statementsOf(
                         script.inputStream.bufferedReader().readText(),
@@ -95,6 +95,37 @@ class ClickHouseSchemaInitializerTest : BehaviorSpec({
             }
         }
     }
+
+    given("봇 요청 시간 집계 (V008)") {
+        `when`("파일을 문장으로 가르면") {
+            val sql = PathMatchingResourcePatternResolver()
+                .getResource("classpath:clickhouse/analytics/V008__crawler_requests.sql")
+                .inputStream.bufferedReader().readText()
+            val stmts = ClickHouseSchemaInitializer.statementsOf(sql).map { it.replace(Regex("\\s+"), " ") }
+            val requests = stmts.single { "analytics.crawler_requests_hourly" in it }
+            val coverage = stmts.single { "analytics.crawler_log_coverage_hourly" in it }
+
+            then("표 둘, 문장도 둘이다 — 꼬리 주석의 세미콜론이 문장을 더 만들면 안 된다") {
+                stmts shouldHaveSize 2
+            }
+            then("요청 표는 파드별 행을 남기고 같은 칸은 큰 건수로 덮는다") {
+                // pod 가 키에 없으면 교체 시간대의 옛·새 파드 두 행이 한쪽 최댓값으로 접힌다
+                requests shouldContain "ENGINE = ReplacingMergeTree(requests)"
+                requests shouldContain "ORDER BY (hour, host, bot, path_type, status_class, pod)"
+                requests shouldContain "hour DateTime('UTC')"
+                requests shouldContain "TTL hour + INTERVAL 400 DAY"
+            }
+            then("커버리지 표는 (시간, 파드)당 한 행을 읽은 줄 수 기준으로 덮는다") {
+                coverage shouldContain "ENGINE = ReplacingMergeTree(lines)"
+                coverage shouldContain "ORDER BY (hour, pod)"
+                coverage shouldContain "hour DateTime('UTC')"
+                coverage shouldContain "first_line_at DateTime('UTC')"
+                coverage shouldContain "container_started_at DateTime('UTC')"
+                coverage shouldContain "collected_at DateTime('UTC')"
+                coverage shouldContain "TTL hour + INTERVAL 400 DAY"
+            }
+        }
+    }
 })
 
 class ClickHouseSchemaInitializerRunOnceTest : io.kotest.core.spec.style.BehaviorSpec({
@@ -125,7 +156,7 @@ class ClickHouseSchemaInitializerRunOnceTest : io.kotest.core.spec.style.Behavio
 
         Then("스크립트를 전부 돌리고 각각 이력에 남긴다") {
             val inserts = db.executed.filter { it.startsWith("INSERT INTO analytics.schema_migrations") }
-            inserts.size shouldBe 7
+            inserts.size shouldBe 8
             inserts.any { "V005__events_two_axis.sql" in it } shouldBe true
         }
         Then("V005 의 DROP 이 실행된다 — 옛 표를 새 표로 바꾸는 일회성 작업이다") {
@@ -138,7 +169,7 @@ class ClickHouseSchemaInitializerRunOnceTest : io.kotest.core.spec.style.Behavio
             "V001__product_scores.sql", "V002__product_scores_smoothing_gmv.sql",
             "V003__search_judgments_and_eval.sql", "V004__events.sql",
             "V005__events_two_axis.sql", "V006__attraction_popularity_daily.sql",
-            "V007__attraction_unique_clickers.sql",
+            "V007__attraction_unique_clickers.sql", "V008__crawler_requests.sql",
         ))
         ClickHouseSchemaInitializer(db.dataSource).apply()
 
@@ -163,7 +194,7 @@ class ClickHouseSchemaInitializerRunOnceTest : io.kotest.core.spec.style.Behavio
             inserts.map { Regex("V\\d+__[a-z_]+\\.sql").find(it)!!.value } shouldBe
                 listOf(
                     "V005__events_two_axis.sql", "V006__attraction_popularity_daily.sql",
-                    "V007__attraction_unique_clickers.sql",
+                    "V007__attraction_unique_clickers.sql", "V008__crawler_requests.sql",
                 )
         }
     }

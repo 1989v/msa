@@ -95,6 +95,31 @@ class EventCollectControllerTest : BehaviorSpec({
         }
     }
 
+    given("place 첫 방문 유입 행(SESSION_START · PAGE · place-entry)에 payload 여섯 키를 실으면") {
+        val h = Harness()
+        val entry =
+            """{"entityType":"PAGE","entityId":"place-entry","action":"SESSION_START","screenType":"PLACE_ENTRY","screenRef":"","viewId":"v-entry",""" +
+                """"payload":{"referrerHost":"www.google.com","landingType":"detail","lang":"ko","utmSource":"test","utmMedium":"spec","utmCampaign":"i0-5"}}"""
+        val res = h.send("""{"events":[$entry],"sessionId":"s-entry"}""")
+        then("서버 코드 변경 없이 같은 키·값이 원장으로 넘어가고, 직렬화하면 평평한 문자열 맵이다") {
+            res.status shouldBe 202
+            json.readTree(res.contentAsString)["data"]["accepted"].asInt() shouldBe 1
+            val event = h.saved.captured.single()
+            event.entityId shouldBe "place-entry"
+            event.payload shouldBe mapOf(
+                "referrerHost" to "www.google.com",
+                "landingType" to "detail",
+                "lang" to "ko",
+                "utmSource" to "test",
+                "utmMedium" to "spec",
+                "utmCampaign" to "i0-5",
+            )
+            // 어댑터는 payload 를 Jackson 으로 문자열화해 적재한다 — ClickHouse JSONExtractString 이 읽으려면 값이 전부 문자열이어야 한다
+            val stored = json.readTree(jacksonMapperBuilder().build().writeValueAsString(event.payload))
+            stored.properties().map { it.key to it.value.isString } shouldBe event.payload.keys.map { it to true }
+        }
+    }
+
     given("크롤러 UA(HeadlessChrome)면") {
         val h = Harness()
         val res = h.send("""{"events":[$oneEvent]}""", "Mozilla/5.0 HeadlessChrome/130")

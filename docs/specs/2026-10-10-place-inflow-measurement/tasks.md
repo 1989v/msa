@@ -7,10 +7,10 @@
 **Phase:** 1
 **Required Skills:** TypeScript, vitest
 
-- [ ] 1.1 테스트 먼저: `portal-fe/src/analytics/__tests__/inflow.test.ts` — `referrerHostOf` 표 케이스(빈 값·파싱 실패·`javascript:` 스킴·같은 호스트 → `'self'`·다른 1989v 서브도메인 유지·`https://www.google.com/search?q=비밀&token=x` → `www.google.com`·포트·사용자 정보 제거·대문자 → 소문자·`android-app://com.google.android.googlequicksearchbox/` → 패키지명·254자 → 빈 값), `utmOf` 케이스(정상·65자 → `invalid`·`a@b.com` → `invalid`·한글 → `invalid`·공백만 → 키 없음·다른 키 무시), `landingTypeOf` 를 SR-4 표 전 행(`/regions/11/pet` → `attr_landing`) + 끝 슬래시 + `/en` 접두 + `/favorites` → `other` 로. 기대값은 리터럴로 쓴다(함수 출력으로 기대값을 만들지 않는다)
-- [ ] 1.2 `portal-fe/src/analytics/inflow.ts` 에 `referrerHostOf`·`utmOf`·`landingTypeOf`·`langOf` 구현 (SR-2·SR-3·SR-4)
-- [ ] 1.3 같은 SR-4·SR-6.4 경로 표를 공용 픽스처 `place/ingest/tests/fixtures/path_types.json` 으로 둔다. 모양은 `[{"path": "/regions/11/pet", "landing": "attr_landing", "crawl": "attr_landing"}, {"path": "/sitemap-places-4.xml", "landing": "other", "crawl": "sitemap"}, …]` — `landing` 은 화면(`landingTypeOf`), `crawl` 은 파이썬 봇 집계의 기대값이다. 1.1 테스트는 이 파일을 **`readFileSync` 로 런타임에 읽는다 — `import` 하지 않는다**(`tsconfig.app.json:30` 의 `include: ["src"]` 밖이고, 이미지 빌드 컨텍스트가 `portal-fe` 뿐이라 import 하면 `Dockerfile:45` 의 `tsc -b` 가 깨진다). 레포 루트는 `privacyRetention.test.ts` 의 `REPO` 선례로 찾는다
-- [ ] 1.4 검증: `cd portal-fe && npx vitest run src/analytics/__tests__/inflow.test.ts && npx tsc -b`
+- [x] 1.1 테스트 먼저: `portal-fe/src/analytics/__tests__/inflow.test.ts` — `referrerHostOf` 표 케이스(빈 값·파싱 실패·`javascript:` 스킴·같은 호스트 → `'self'`·다른 1989v 서브도메인 유지·`https://www.google.com/search?q=비밀&token=x` → `www.google.com`·포트·사용자 정보 제거·대문자 → 소문자·`android-app://com.google.android.googlequicksearchbox/` → 패키지명·254자 → 빈 값), `utmOf` 케이스(정상·65자 → `invalid`·`a@b.com` → `invalid`·한글 → `invalid`·공백만 → 키 없음·다른 키 무시), `landingTypeOf` 를 SR-4 표 전 행(`/regions/11/pet` → `attr_landing`) + 끝 슬래시 + `/en` 접두 + `/favorites` → `other` 로. 기대값은 리터럴로 쓴다(함수 출력으로 기대값을 만들지 않는다)
+- [x] 1.2 `portal-fe/src/analytics/inflow.ts` 에 `referrerHostOf`·`utmOf`·`landingTypeOf`·`langOf` 구현 (SR-2·SR-3·SR-4)
+- [x] 1.3 같은 SR-4·SR-6.4 경로 표를 공용 픽스처 `place/ingest/tests/fixtures/path_types.json` 으로 둔다. 모양은 `[{"path": "/regions/11/pet", "landing": "attr_landing", "crawl": "attr_landing"}, {"path": "/sitemap-places-4.xml", "landing": "other", "crawl": "sitemap"}, …]` — `landing` 은 화면(`landingTypeOf`), `crawl` 은 파이썬 봇 집계의 기대값이다. 1.1 테스트는 이 파일을 **`readFileSync` 로 런타임에 읽는다 — `import` 하지 않는다**(`tsconfig.app.json:30` 의 `include: ["src"]` 밖이고, 이미지 빌드 컨텍스트가 `portal-fe` 뿐이라 import 하면 `Dockerfile:45` 의 `tsc -b` 가 깨진다). 레포 루트는 `privacyRetention.test.ts` 의 `REPO` 선례로 찾는다
+- [x] 1.4 검증: `cd portal-fe && npx vitest run src/analytics/__tests__/inflow.test.ts && npx tsc -b`
 
 ## Task Group 2: 유입 이벤트 발화
 **Dependencies:** Task Group 1
@@ -28,10 +28,10 @@
 **Phase:** 1
 **Required Skills:** Kotlin, Kotest, MockMvc
 
-- [ ] 3.1 테스트 먼저: `EventCollectControllerTest.kt` 에 1케이스 — 사람 브라우저 UA, `SESSION_START`/`PAGE`/`place-entry`, payload 여섯 키(`landingType` 포함)를 보내 `slot<List<AnalyticsEvent>>` 의 `payload` 가 같은 키·값(리터럴)이고 `accepted == 1`
-- [ ] 3.2 `EventRepositoryAdapter` 의 `objectMapper.writeValueAsString(event.payload)` 를 거친 문자열에서 `JSONExtractString` 으로 읽힐 모양(평평한 문자열 맵)인지 기존 어댑터 테스트에 단언 1줄 — 없으면 3.1 로 갈음하고 그 사실을 기록
-- [ ] 3.3 서버 코드가 바뀌지 않았음을 `git diff --stat -- analytics/app/src/main/kotlin` 이 빈 출력으로 확인(리소스의 새 V 파일은 그룹 6 몫)
-- [ ] 3.4 검증: `./gradlew :analytics:app:test --tests '*EventCollectControllerTest'`
+- [x] 3.1 테스트 먼저: `EventCollectControllerTest.kt` 에 1케이스 — 사람 브라우저 UA, `SESSION_START`/`PAGE`/`place-entry`, payload 여섯 키(`landingType` 포함)를 보내 `slot<List<AnalyticsEvent>>` 의 `payload` 가 같은 키·값(리터럴)이고 `accepted == 1`
+- [x] 3.2 (어댑터 테스트가 없어 3.1 로 갈음 — 3.1 이 캡처한 payload 를 Jackson 으로 문자열화해 값이 전부 문자열인지 본다) `EventRepositoryAdapter` 의 `objectMapper.writeValueAsString(event.payload)` 를 거친 문자열에서 `JSONExtractString` 으로 읽힐 모양(평평한 문자열 맵)인지 기존 어댑터 테스트에 단언 1줄 — 없으면 3.1 로 갈음하고 그 사실을 기록
+- [x] 3.3 서버 코드가 바뀌지 않았음을 `git diff --stat -- analytics/app/src/main/kotlin` 이 빈 출력으로 확인(리소스의 새 V 파일은 그룹 6 몫)
+- [x] 3.4 검증: `./gradlew :analytics:app:test --tests '*EventCollectControllerTest'`
 
 ## Task Group 4: 개인정보처리방침
 **Dependencies:** Task Group 2
@@ -47,19 +47,19 @@
 **Phase:** 2
 **Required Skills:** Python, pytest
 
-- [ ] 5.1 테스트 먼저: `place/ingest/tests/crawl_stats_test.py` — 파서: 운영 실측 줄 + `"place.1989v.com"` → `(googlebot, place.1989v.com, sitemap, 200)`, 호스트 칸 없는 옛 줄 → `unknown`, 위조 호스트 → `other`, 쿼리 절단, UA 우선순위(`OAI-SearchBot` 와 `GPTBot` 이 같이 있으면 `oai-searchbot`), 사람 UA → None, 상태 칸 7종, 픽스처 `path_types.json` 전 행의 `crawl` 값. 시간 경계: `[10/Oct/2026:19:18:01 +0000]` 줄이 `hour` epoch `1791658800`(2026-10-10T19:00Z)에 들고, SR-9 의 `toDate(hour,'Asia/Seoul')` 기준 **KST 다음 날(10-11) 04시**임을 리터럴로 단언. 집계: 두 파드의 같은 칸이 파드별 두 행으로 남음, 정시 경계 밖 줄 제외, `partial` 판정 3케이스(첫 줄 시각 > 시간 시작 · 컨테이너 시작 > 시간 시작 · 둘 다 아님). `--hour=` 인자가 그 시간 창을 고름. 쓰기: fetch 함수를 주입하는 `Recorder` 선례(`datagokr_test.py:33-42`)로 받은 본문이 `INSERT INTO analytics.crawler_requests_hourly FORMAT JSONEachRow` + 기대 행(`hour` 가 epoch 초, `pod` 포함)이고, `INSERT INTO analytics.crawler_log_coverage_hourly FORMAT JSONEachRow` 본문에 `first_line_at`·`container_started_at`·`partial` 이 기대값으로 있음, ClickHouse 500 → 잡 종료 코드 ≠ 0. 쿠버네티스 API 호출은 SA 토큰 헤더, `labelSelector=app.kubernetes.io/name%3Dportal-fe` 경로, `timeout` 인자 전달을 단언
-- [ ] 5.2 `place/ingest/src/crawl_stats.py`(파서·집계·API 읽기(스트리밍)·쓰기), `main.py` 에 `--job=crawl-stats` 디스패치와 docstring 잡 목록 한 줄. 경로 유형은 픽스처와 같은 표를 코드 상수로
-- [ ] 5.3 IP·UA 원문·전체 경로가 반환값·로그 메시지에 없음을 테스트로 단언(SR-6.6) — 정상 줄과 **깨진 줄**(따옴표 짝 안 맞음·상태 코드 자리에 문자) 둘 다 넣고 `capsys` 로 stdout/stderr 에 IP(`10.42.0.73`)·UA 조각(`Googlebot/2.1`)이 없고 파싱 실패 **건수**만 있음을 본다
-- [ ] 5.4 검증: `cd place/ingest && python -m pytest tests/crawl_stats_test.py -q` (CI 가 `place/ingest/*` 를 테스트하지 않으므로 그룹 8 커밋 전에도 다시 돈다)
+- [x] 5.1 테스트 먼저: `place/ingest/tests/crawl_stats_test.py` — 파서: 운영 실측 줄 + `"place.1989v.com"` → `(googlebot, place.1989v.com, sitemap, 200)`, 호스트 칸 없는 옛 줄 → `unknown`, 위조 호스트 → `other`, 쿼리 절단, UA 우선순위(`OAI-SearchBot` 와 `GPTBot` 이 같이 있으면 `oai-searchbot`), 사람 UA → None, 상태 칸 7종, 픽스처 `path_types.json` 전 행의 `crawl` 값. 시간 경계: `[10/Oct/2026:19:18:01 +0000]` 줄이 `hour` epoch `1791658800`(2026-10-10T19:00Z)에 들고, SR-9 의 `toDate(hour,'Asia/Seoul')` 기준 **KST 다음 날(10-11) 04시**임을 리터럴로 단언. 집계: 두 파드의 같은 칸이 파드별 두 행으로 남음, 정시 경계 밖 줄 제외, `partial` 판정 3케이스(첫 줄 시각 > 시간 시작 · 컨테이너 시작 > 시간 시작 · 둘 다 아님). `--hour=` 인자가 그 시간 창을 고름. 쓰기: fetch 함수를 주입하는 `Recorder` 선례(`datagokr_test.py:33-42`)로 받은 본문이 `INSERT INTO analytics.crawler_requests_hourly FORMAT JSONEachRow` + 기대 행(`hour` 가 epoch 초, `pod` 포함)이고, `INSERT INTO analytics.crawler_log_coverage_hourly FORMAT JSONEachRow` 본문에 `first_line_at`·`container_started_at`·`partial` 이 기대값으로 있음, ClickHouse 500 → 잡 종료 코드 ≠ 0. 쿠버네티스 API 호출은 SA 토큰 헤더, `labelSelector=app.kubernetes.io/name%3Dportal-fe` 경로, `timeout` 인자 전달을 단언
+- [x] 5.2 `place/ingest/src/crawl_stats.py`(파서·집계·API 읽기(스트리밍)·쓰기), `main.py` 에 `--job=crawl-stats` 디스패치와 docstring 잡 목록 한 줄. 경로 유형은 픽스처와 같은 표를 코드 상수로
+- [x] 5.3 IP·UA 원문·전체 경로가 반환값·로그 메시지에 없음을 테스트로 단언(SR-6.6) — 정상 줄과 **깨진 줄**(따옴표 짝 안 맞음·상태 코드 자리에 문자) 둘 다 넣고 `capsys` 로 stdout/stderr 에 IP(`10.42.0.73`)·UA 조각(`Googlebot/2.1`)이 없고 파싱 실패 **건수**만 있음을 본다
+- [x] 5.4 검증: `cd place/ingest && python -m pytest tests/crawl_stats_test.py -q` (CI 가 `place/ingest/*` 를 테스트하지 않으므로 그룹 8 커밋 전에도 다시 돈다)
 
 ## Task Group 6: ClickHouse 표
 **Dependencies:** 없음
 **Phase:** 2
 **Required Skills:** ClickHouse, Kotlin
 
-- [ ] 6.1 테스트 먼저: `ClickHouseSchemaInitializerTest.kt` — 스크립트 수 단언(`:54`, `:128` 의 `shouldBe 7`)을 새 수로 올리고, V007 선례(`:85-93`)처럼 새 V 파일을 `statementsOf` 로 갈라 두 표의 엔진(`ReplacingMergeTree(requests)`·`ReplacingMergeTree(lines)`)·`ORDER BY`(`pod` 포함)·`TTL hour + INTERVAL 400 DAY`·`DateTime('UTC')` 를 단언한다. 문장 수도 단언한다(꼬리 주석 `;` 가 문장을 더 만들면 빨개진다)
-- [ ] 6.2 `analytics/app/src/main/resources/clickhouse/analytics/V{다음}__crawler_requests.sql` — SR-7.4·7.5 두 표. 꼬리 주석에 `;` 금지(SR-7.6). 번호는 `git fetch && git ls-tree origin/main analytics/app/src/main/resources/clickhouse/analytics/` 로 확인
-- [ ] 6.3 검증: `./gradlew :analytics:app:test --tests '*ClickHouseSchemaInitializerTest'`
+- [x] 6.1 테스트 먼저: `ClickHouseSchemaInitializerTest.kt` — 스크립트 수 단언(`:54`, `:128` 의 `shouldBe 7`)을 새 수로 올리고, V007 선례(`:85-93`)처럼 새 V 파일을 `statementsOf` 로 갈라 두 표의 엔진(`ReplacingMergeTree(requests)`·`ReplacingMergeTree(lines)`)·`ORDER BY`(`pod` 포함)·`TTL hour + INTERVAL 400 DAY`·`DateTime('UTC')` 를 단언한다. 문장 수도 단언한다(꼬리 주석 `;` 가 문장을 더 만들면 빨개진다)
+- [x] 6.2 `analytics/app/src/main/resources/clickhouse/analytics/V{다음}__crawler_requests.sql` — SR-7.4·7.5 두 표. 꼬리 주석에 `;` 금지(SR-7.6). 번호는 `git fetch && git ls-tree origin/main analytics/app/src/main/resources/clickhouse/analytics/` 로 확인
+- [x] 6.3 검증: `./gradlew :analytics:app:test --tests '*ClickHouseSchemaInitializerTest'`
 
 ## Task Group 7: 쿠버네티스 배선 · nginx 로그 형식
 **Dependencies:** Task Group 5, 6
