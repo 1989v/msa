@@ -1,0 +1,5 @@
+작업 위치: 워크트리 W=/private/tmp/claude-501/-Users-gideok-kwon-IdeaProjects-msa/d594f57c-5e92-42e8-b77f-50048d63c825/scratchpad/wt-impl. 메인 트리 금지, 커밋 금지, 코드 수정 금지 — 스펙 문서만. 운영 확인은 읽기만(`ssh msa-oci` 읽기, 공개 API GET).
+hns 스펙 형식으로 docs/specs/2026-10-10-search-judgment-cases/ 에 spec.md, tasks.md, context/open-questions.yml, planning/initialization.md(이 프롬프트 원문). 400줄 이내.
+배경: 계획 S3-6b — 「판정 세트 v2 에 자연어 조건·별칭·오타·0건 사례 추가, 의도별 분해(→ 의도별 0건율)」. 판정 세트 v2(150쿼리·6,530쌍)는 매일 평가 중(통합 검색 ADR-0090, search-eval CronJob). 먼저 레포에서 판정 세트 파일 위치·형식·채점 방식·평가 잡을 찾는다(search/ 아래, docs/specs/*unified-search* 등). 메모: 「판정 세트는 그것을 만든 시스템에만 공정 — 새 모델 비교 전 풀링 병합」「대량 채점은 서브 에이전트」.
+범위: 관광지 검색(place 허브·통합 검색)의 의도 유형을 정의하고(관광지명·지역+분류·조건형 「주차 되는」「반려동물」「무료」·자연어 「아이랑 갈 만한」·별칭/영문 표기·오타·0건이 정답인 질의), 유형별로 질의를 추가하는 규칙과 정답(관련성 판정) 만드는 방법, 의도별 지표(0건율·nDCG 등 기존 지표) 리포트 분해. 「지원하지 않는 자연어는 해석한 척하지 않는다」 규칙(0건이 정답인 경우)을 판정에 반영. 질의 출처는 지어내지 말고 근거(운영 SEARCH 이벤트 term — analytics.events 에서 읽기, 원천 데이터 분포)로.
+보고: 쓴 파일, 판정 세트 현황(파일·건수), 주요 결정, 열린 질문. 한글로.

@@ -1,0 +1,67 @@
+# S3-6b 판정 세트 사례 추가 — 열린 질문. answer 는 권고 기본값이고, 사용자가 바꾸지 않으면 이대로 진행한다.
+questions:
+  - id: Q1
+    stage: pre-impl
+    status: answered-default  # 심판 판정(context/review-verdict.md) 사용자 판단 2번 — 사용자 확인 대기
+    question: 사람 대조 채점(새 유형 4종 × 20쌍 + NO_ANSWER 풀 전부)을 누가 하나
+    answer: 사용자 몫. 결과가 오기 전에는 sonnet 등급으로 세트를 교체하고 README·graded_by 에 「사람 대조 전」을 적는다. 일치율 80% 미만 유형은 기준을 고쳐 재채점
+  - id: Q2
+    stage: pre-impl
+    status: open
+    question: 기존 조건형 4 질의(pet friendly 등)를 데이터 규칙으로 재채점하면 v2 와 같은 질의의 점수가 바뀐다 — 재채점할까
+    answer: 한다(SR-4.4). en 반려동물 원천 값이 0건인데 등급 ≥1 이 26건이라 지금 등급이 「해석한 척」을 정답으로 삼고 있다. 바뀐 쌍 수와 v2-only C 평균 변화를 README 에 적어 기준선 이동 원인을 구분한다
+  - id: Q3
+    stage: post-impl
+    status: open
+    question: 계획의 「의도별 0건율」을 운영 트래픽(analytics.events SEARCH total=0)으로도 낼까
+    answer: 이번엔 판정 세트 기준만. 운영 SEARCH 중 검색어가 있는 것이 4건(시험 입력 2 포함)이라 분해할 모수가 없고, 운영 검색어를 의도로 나누려면 분류기가 필요하다. 트래픽이 생기면 SR-1 규칙을 함수로 옮기는 후속으로
+  - id: Q4
+    stage: post-impl
+    status: open
+    question: 의도별 결과를 Job 로그 말고 어딘가 적재할까
+    answer: 아니다. analytics.search_eval_results 는 상품 평가 잡(ADR-0050) 표라 섞지 않는다. 남길 값이 있는 실행만 scripts/search-eval/results/<날짜>.json 에 둔다(지금 관행)
+  - id: Q5
+    stage: pre-impl
+    status: answered-default  # 심판 판정 사용자 판단 1번 — 사용자 확인 대기
+    question: 풀링(A·B top-20)과 첫 3구성 측정에 클러스터 안 실행이 필요하다 — 수동 Job·임시 파드를 띄워도 되나
+    answer: >-
+      네 조건을 지키며 진행한다 — ① ssh msa-oci 에서만(로컬 kubectl 금지) ② 이 변경이 Argo 로 반영된 뒤
+      ③ KST 06:30~06:45 와 07:30(정기 search-eval) 회피 ④ 끝나면 Job·파드 삭제.
+      운영 클러스터에 리소스를 만드는 일이라 띄우기 직전에 사용자에게 한 줄 알린다. 기준선은 클러스터 안 실행 값만 쓴다(TG5.2).
+    previous_answer: 수동 Job 은 운영 쓰기라 사용자 확인 뒤. 확인 전에는 ssh 셸 조회만으로 풀링하고 3구성 첫 값은 배포 뒤 정기 실행으로 받는다
+  - id: Q6
+    stage: post-impl
+    status: open
+    question: NO_ANSWER 빈 정답 통과율·의도별 0건율을 언제 게이트로 올리나
+    answer: 2주 정기 실행 값의 흔들림을 본 뒤. 지금은 보고만(SR-5.4). 탐침에서 정답 없는 질의 4개 중 3개가 수백 건을 내므로 지금 게이트로 걸면 매일 실패한다
+  - id: Q7
+    stage: post-impl
+    status: open
+    question: 새 사례가 드러낸 검색 결함을 이 스펙에서 고칠까
+    answer: 고치지 않는다(Out of Scope). 후보만 보고 — ① 조건어(주차·무료·반려동물)를 속성 필터로 옮기지 않음 ② 정답 없는 질의에도 수백 건(「에펠탑」 854, 「ㅁㄴㅇㄹ」 691) ③ 띄어쓴 「갈 만한」이 불용구에 안 걸려 「아이랑 갈 만한 곳」이 아이아이 연남·아이와즈를 냄
+  # 아래는 심판 판정(context/review-verdict.md) 「사용자 판단 목록」 3~7 — 권고 기본값으로 반영, 사용자 확인 대기
+  - id: Q8
+    stage: pre-impl
+    status: answered-default
+    question: (F3) 조건만 있는 질의(「무료로 볼 수 있는 곳」「pet friendly」)의 등급표를 어떻게 두나
+    answer: YES/FREE/동반가능 3 · UNKNOWN 이지만 개요 근거 2 · 근거 없음 1 · NO/PAID/불가 0. 조건+유형/지역 질의는 기존 규칙(SR-4.2). 재채점 4 질의의 C 전/후를 README 에
+  - id: Q9
+    stage: pre-impl
+    status: answered-default
+    question: (F4) 새 유형 풀을 A·B·C 밖 레그로 보강할까 — 채점할 쌍이 늘어 서브 에이전트 비용이 커진다
+    answer: 보강한다. CONDITION 은 BM25+속성 필터 top-20 레그, ALIAS 는 evidence 문서 id 강제 포함, TYPO 는 원 질의 v2 등급 합침. 판정 없는 비율 10% 기준은 보강 뒤에 잰다(SR-4.1, TG3.1b·3.7)
+  - id: Q10
+    stage: pre-impl
+    status: answered-default
+    question: (F7) 채점 모델이 v2 와 다르면 v2 질의 10개를 다시 채점해 눈금 차를 잴까
+    answer: 잰다. v2 모델 id 가 README 에 없어 같다고 확인할 수 없으면 다른 것으로 본다. graded_by 는 sonnet-<모델 id>-<날짜>(SR-4.5, TG3.4b)
+  - id: Q11
+    stage: pre-impl
+    status: answered-default
+    question: (F12) NO_ANSWER 행에 「top-10 중 등급 0 비율」 칸을 둘까(리뷰도 선택으로 둠)
+    answer: 둔다. 비용이 작고, 빈 정답 통과율은 탐침상 0 근처에 붙어 움직임이 안 보인다(SR-5.3)
+  - id: Q12
+    stage: pre-impl
+    status: answered-default
+    question: (F11) 운영 검색어를 판정 파일(ConfigMap 에 그대로 실림)에 넣기 전 개인정보 필터 정규식
+    answer: 숫자 6자리 이상 연속 · `@` · URL(http·www.·://) 이 있으면 뺀다. 같은 정규식을 형식 검사(SR-5.5 ⑥)에도 둔다(SR-2, TG2.1)
