@@ -12,6 +12,12 @@ EVAL_TOLERANCE 넘게 떨어지거나 질의가 하나라도 실패하면 종료
 
   python3 live-eval.py <판정.json> [결과.json]
 
+판정 항목마다 질의 의도 유형(`intent`, 여덟 값)이 있고, 언어별 표 아래에 의도별 표를 낸다 — A/B/C nDCG@10 ·
+0건율(라이브 응답 `totalElements == 0` 비율) · 판정 없는 top-10 비율. 정답이 「결과 없음」인 질의(`NO_ANSWER`)는
+nDCG 평균에서 `intent` 로 빼고 빈 정답 통과율(`totalElements == 0` 비율)로 따로 본다 — `ndcg()` 의 `None` 에 맡기면
+국내 대체지에 등급 1 이 있는 질의가 숫자를 내 평균에 섞인다. 게이트는 NO_ANSWER 를 뺀 C 평균, 질의 실패는 전체로 센다.
+네트워크를 부르기 전에 판정 파일 형식(의도·출처 `evidence`·`graded_by`·검색어 개인정보)을 검사하고, 어기면 종료 코드 1.
+
 클릭 계수 짝 비교 (`--click-boost-pair`) — 순위 스위치 `search.attraction.click-boost.enabled` 를 켜기 전에 돈다.
 같은 색인 한 벌(별칭을 시작 때 실제 색인 이름으로 고정)에서 질의마다 앱의 키워드 레그를 계수 없이·계수를 곱해
 두 번 내고 nDCG@10 을 짝지어 비교한다. 계수는 키워드 레그에만 붙으므로 비교도 키워드 레그로 한다.
@@ -21,7 +27,7 @@ EVAL_TOLERANCE 넘게 떨어지거나 질의가 하나라도 실패하면 종료
   python3 live-eval.py --click-boost-pair <판정.json> [결과.json]
   EVAL_CLICK_BOOST_EXPONENT=30 python3 live-eval.py --click-boost-pair …   # 회귀 주입: 계수를 30제곱해 과대하게
 """
-import json, os, sys, urllib.parse, urllib.request
+import json, os, re, sys, unicodedata, urllib.parse, urllib.request
 
 OS_URL   = os.environ.get("EVAL_OPENSEARCH_URL", "http://opensearch:9200")
 ENC_URL  = os.environ.get("EVAL_ENCODER_URL", "http://search:8099")
@@ -73,11 +79,16 @@ UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 msa-eva
 
 
 def ids_live(q, lang):
+    """라이브 응답 → (상위 id, 전체 건수, 교정된 검색어). 전체 건수가 없으면 예외 — 0 으로 두면 0건율이 조용히 100% 가 된다."""
     qs = urllib.parse.urlencode({"keyword": q, "lang": lang, "size": K, "sort": "relevance"})
     req = urllib.request.Request(f"{API_URL}?{qs}", headers={"User-Agent": UA, "Accept": "application/json"})
     with urllib.request.urlopen(req, timeout=30) as r:
         d = json.load(r)
-    return [str(x["id"]) for x in (d.get("data") or {}).get("attractions") or []]
+    data = d.get("data") or {}
+    if "totalElements" not in data:
+        raise ValueError("응답에 totalElements 없음")
+    ids = [str(x["id"]) for x in data.get("attractions") or []]
+    return ids, data["totalElements"], data.get("correctedKeyword")
 
 
 def ndcg(ranked, grades, k=K):
@@ -88,6 +99,93 @@ def ndcg(ranked, grades, k=K):
     ideal = sorted(grades.values(), reverse=True)[:k]
     idcg = sum((2 ** g - 1) / math.log2(i + 2) for i, g in enumerate(ideal))
     return dcg / idcg if idcg else None
+
+
+# ── 판정 파일 형식 검사 ────────────────────────────────────────────────────────
+# 위쪽이 이긴다(둘 이상에 걸리면 표의 위쪽 유형). 정의는 scripts/search-eval/README.md 「판정 세트 v3」.
+INTENTS = ("NO_ANSWER", "TYPO", "ALIAS", "CONDITION", "NATURAL", "NAME", "REGION_TYPE", "CATEGORY")
+DATE = r"\d{4}-\d{2}-\d{2}"
+# 새 질의의 출처. 접두어마다 값 모양과 쓸 수 있는 유형이 정해져 있다(None = 전부).
+EVIDENCE = {
+    "events":   (re.compile(rf"events:{DATE}"), None),
+    "codes":    (re.compile(r"codes:[A-Z]{2}[0-9]{0,6}"), {"CATEGORY", "REGION_TYPE"}),
+    "attr":     (re.compile(r"attr:[A-Za-z]+=[A-Z_]+(&[A-Za-z0-9]+=[A-Z0-9_]+)*:[1-9][0-9]*"), {"CONDITION"}),
+    "seed":     (re.compile(r"seed:intents\.yml"), {"NATURAL"}),
+    "variant":  (re.compile(r"variant:(.+):(조사|띄어쓰기|어미)"), {"NATURAL"}),
+    "title":    (re.compile(r"title:[0-9]+"), {"ALIAS"}),
+    "synonym":  (re.compile(r"synonym:\S.*"), {"ALIAS"}),
+    "romanize": (re.compile(r"romanize:[0-9]+:mr"), {"ALIAS"}),
+    "edit":     (re.compile(r"edit:(.+):(받침|된소리|ㅐㅔ|띄어쓰기|철자누락|철자전치)"), {"TYPO"}),
+    "zero":     (re.compile(r"zero:\S.*"), {"NO_ANSWER"}),
+}
+GRADED_BY = re.compile(rf"v2|human-{DATE}|(sonnet|claude)-[a-z0-9.-]+-{DATE}")
+# 판정 파일은 ConfigMap 에 그대로 실린다 — 검색어에 연락처·주문번호·주소 꼴이 있으면 넣지 않는다
+PRIVATE = re.compile(r"[0-9]{6,}|@|http|www\.|://", re.I)
+
+
+def jamo(s):
+    """한글을 자판에서 치는 자모 줄로 푼다 — 받침·된소리 한 번 바꿈, 「한라→할나」 같은 이웃 맞바꿈이 편집 거리 1 이 되게.
+    받침(종성)은 같은 글자의 초성으로 맞춘다. 안 맞추면 「한라」의 받침 ㄴ 과 「할나」의 초성 ㄴ 이 다른 글자로 세어진다."""
+    out = []
+    for ch in unicodedata.normalize("NFD", s):
+        ch = unicodedata.normalize("NFKC", ch)  # 낱자(ㅁㄴㅇㄹ)도 같은 자모로
+        name = unicodedata.name(ch, "")
+        if name.startswith("HANGUL JONGSEONG "):
+            try:
+                ch = unicodedata.lookup("HANGUL CHOSEONG " + name[len("HANGUL JONGSEONG "):])
+            except KeyError:
+                pass  # 겹받침(ㄳ 등)은 초성 짝이 없다 — 그대로 둔다
+        out.append(ch)
+    return "".join(out)
+
+
+def edit_distance(a, b):
+    """제한 Damerau-Levenshtein — 바꿈·넣기·빼기·이웃 두 글자 맞바꿈이 각각 1."""
+    d = [[0] * (len(b) + 1) for _ in range(len(a) + 1)]
+    for i in range(len(a) + 1):
+        d[i][0] = i
+    for j in range(len(b) + 1):
+        d[0][j] = j
+    for i in range(1, len(a) + 1):
+        for j in range(1, len(b) + 1):
+            d[i][j] = min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] != b[j - 1]))
+            if i > 1 and j > 1 and a[i - 1] == b[j - 2] and a[i - 2] == b[j - 1]:
+                d[i][j] = min(d[i][j], d[i - 2][j - 2] + 1)
+    return d[len(a)][len(b)]
+
+
+def check_format(qs):
+    """네트워크 없이 판정 파일을 검사해 위반 문구 목록을 낸다. 비어 있으면 통과."""
+    bad = []
+    known = {(x.get("lang"), x.get("query")) for x in qs}
+    for n, x in enumerate(qs, 1):
+        q, lang, intent = x.get("query"), x.get("lang"), x.get("intent")
+        at = f"#{n} {lang} {q!r}"
+        if intent not in INTENTS:
+            bad.append(f"{at}: intent {intent!r} 가 여덟 값 밖")
+        if intent != "NO_ANSWER" and not any(g > 0 for g in (x.get("grades") or {}).values()):
+            # ndcg() 가 None 을 내 평균에서 조용히 빠진다 — 라벨 누락이 숫자에서 사라지지 않게 막는다
+            bad.append(f"{at}: NO_ANSWER 가 아닌데 등급 >0 문서가 없다")
+        ev = x.get("evidence")
+        if ev != "v2":
+            prefix = ev.split(":", 1)[0] if isinstance(ev, str) else None
+            rule = EVIDENCE.get(prefix)
+            m = rule[0].fullmatch(ev) if rule else None
+            if not m:
+                bad.append(f"{at}: evidence {ev!r} 가 v2 도 출처 형식도 아니다")
+            elif rule[1] is not None and intent not in rule[1]:
+                bad.append(f"{at}: evidence {prefix}: 는 {intent} 에 쓰지 않는다")
+            elif prefix in ("edit", "variant"):
+                orig = m.group(1)
+                if (lang, orig) not in known:
+                    bad.append(f"{at}: {prefix}: 의 원 질의 {orig!r} 가 같은 언어에 없다")
+                elif prefix == "edit" and edit_distance(jamo(orig), jamo(q)) != 1:
+                    bad.append(f"{at}: 원 질의 {orig!r} 와 편집 거리가 1 이 아니다")
+        if not isinstance(x.get("graded_by"), str) or not GRADED_BY.fullmatch(x["graded_by"]):
+            bad.append(f"{at}: graded_by {x.get('graded_by')!r} 형식이 아니다")
+        if isinstance(q, str) and PRIVATE.search(q):
+            bad.append(f"#{n} {lang}: 검색어에 개인정보 꼴(숫자 6자리 이상·@·URL)이 있다")
+    return bad
 
 
 # ── 클릭 계수 짝 비교 ────────────────────────────────────────────────────────
@@ -160,6 +258,9 @@ def click_boost_pair(path, out=None):
     rows, deltas, unjudged, total, errors, changed = [], [], 0, 0, 0, 0
     for n, item in enumerate(qs, 1):
         q, lang, grades = item["query"], item["lang"], item["grades"]
+        if item.get("intent") == "NO_ANSWER":
+            # 정답이 없는 질의 — 등급 1 이 있으면 ndcg() 가 숫자를 내 짝 비교에 섞인다
+            continue
         try:
             off = ids_keyword(index, q, lang, False)
             on = ids_keyword(index, q, lang, True, exponent)
@@ -192,44 +293,104 @@ def click_boost_pair(path, out=None):
 
 def main():
     qs = json.load(open(sys.argv[1], encoding="utf-8"))
+    bad = check_format(qs)
+    if bad:
+        print(f"  판정 파일 형식 위반 {len(bad)}건 — 재지 않고 멈춘다", flush=True)
+        for line in bad:
+            print("  - " + line, flush=True)
+        return 1
     rows = []
     for n, item in enumerate(qs, 1):
         q, lang, grades = item["query"], item["lang"], item["grades"]
         # 구성마다 따로 잡는다 — 하나가 실패해도 나머지 값을 버리지 않는다
-        r = {"query": q, "lang": lang}
+        r = {"query": q, "lang": lang, "intent": item["intent"], "evidence": item["evidence"],
+             "graded_by": item["graded_by"]}
         errs = []
         try:
             vec = encode(q)
         except Exception as e:
             vec = None; errs.append(f"enc:{str(e)[:40]}")
         for key, fn in (("A", lambda: ids_bm25(q, lang)),
-                        ("B", (lambda: ids_hybrid(q, lang, vec)) if vec else None),
-                        ("C", lambda: ids_live(q, lang))):
+                        ("B", (lambda: ids_hybrid(q, lang, vec)) if vec else None)):
             if fn is None:
                 continue
             try:
                 r[key] = ndcg(fn(), grades)
             except Exception as e:
                 errs.append(f"{key}:{str(e)[:40]}")
+        try:
+            ids, total, corrected = ids_live(q, lang)
+            r["C"] = ndcg(ids, grades)
+            r["total_C"] = total
+            r["returned_C"] = len(ids)
+            r["unjudged_C"] = sum(1 for d in ids if d not in grades)
+            r["zero_grade_C"] = sum(1 for d in ids if grades.get(d, 0) == 0)
+            r["correctedKeyword"] = corrected
+        except Exception as e:
+            errs.append(f"C:{str(e)[:40]}")
         if errs:
             r["error"] = " · ".join(errs)
         rows.append(r)
         print(f"  [{n:2d}/{len(qs)}] {lang} {q[:22]:<24} "
               f"A={r.get('A') and round(r['A'],4)} B={r.get('B') and round(r['B'],4)} C={r.get('C') and round(r['C'],4)}"
-              f"{' ERR ' + r['error'] if 'error' in r else ''}", flush=True)
+              f" total={r.get('total_C')}{' ERR ' + r['error'] if 'error' in r else ''}", flush=True)
     if len(sys.argv) > 2:
         json.dump(rows, open(sys.argv[2], "w"), ensure_ascii=False, indent=1)
 
-    def avg(lang, key):
-        v = [r[key] for r in rows if r.get("lang") == lang and r.get(key) is not None]
+    def avg(lang, key, sel=lambda r: True):
+        # NO_ANSWER 는 정답이 없어 nDCG 를 내지 않는다 — ndcg() 의 None 이 아니라 intent 로 뺀다
+        v = [r[key] for r in rows if r.get("lang") == lang and r["intent"] != "NO_ANSWER" and sel(r)
+             and r.get(key) is not None]
         return sum(v) / len(v) if v else 0.0
     print("\n  구성                    ko       en")
     for key, name in (("A", "BM25 단독"), ("B", "하이브리드"), ("C", "하이브리드+QU")):
         print(f"  {name:<20} {avg('ko',key):.4f}  {avg('en',key):.4f}")
+    v2 = lambda r: r["evidence"] == "v2"
+    v2_kept = lambda r: r["evidence"] == "v2" and r["graded_by"] == "v2"
+    print(f"  {'C · v2 150 질의만':<20} {avg('ko','C',v2):.4f}  {avg('en','C',v2):.4f}")
+    print(f"  {'C · v2 146(재채점 제외)':<20} {avg('ko','C',v2_kept):.4f}  {avg('en','C',v2_kept):.4f}")
+    for lang in ("ko", "en"):
+        print_intents(rows, lang)
     err = [r for r in rows if "error" in r]
     if err:
         print(f"\n  실패 {len(err)}건: {err[0]['error']}")
+    # 질의 실패는 NO_ANSWER 까지 센다 — 그 호출이 죽으면 빈 정답 통과율이 조용히 틀린다
     return gate(avg("ko", "C"), avg("en", "C"), len(err))
+
+
+def ratio(num, den):
+    return f"{num / den:.1%}" if den else "-"
+
+
+def print_intents(rows, lang):
+    """의도별 표 — 처음엔 보고만 한다(유형당 질의가 10~20개라 하루 흔들림이 크다)."""
+    groups = []
+    for intent in INTENTS:
+        if intent == "NATURAL":
+            # 의도 사전(seed) 문구는 질의 벡터 사전에 미리 들어 있어 벡터 레그가 맞히게 되어 있다 — 따로 본다
+            groups.append(("NATURAL·seed", lambda r: r["intent"] == "NATURAL" and r["evidence"].startswith("seed:")))
+            groups.append(("NATURAL·그 밖", lambda r: r["intent"] == "NATURAL" and not r["evidence"].startswith("seed:")))
+        else:
+            groups.append((intent, lambda r, i=intent: r["intent"] == i))
+    print(f"\n  [{lang}] 의도          질의     A       B       C     0건율  판정없음  빈정답통과  top10등급0")
+    for name, sel in groups:
+        g = [r for r in rows if r["lang"] == lang and sel(r)]
+        if not g:
+            continue
+        live = [r for r in g if r.get("total_C") is not None]
+        returned = sum(r["returned_C"] for r in live)
+        unjudged = ratio(sum(r["unjudged_C"] for r in live), returned)
+        if name == "NO_ANSWER":
+            passed = ratio(sum(1 for r in live if r["total_C"] == 0), len(live))
+            zero = ratio(sum(r["zero_grade_C"] for r in live), returned)
+            print(f"  {name:<14} {len(g):>4}       -       -       -       -  {unjudged:>8}  {passed:>10}  {zero:>10}")
+            continue
+
+        def mean(key):
+            v = [r[key] for r in g if r.get(key) is not None]
+            return f"{sum(v) / len(v):.4f}" if v else "     -"
+        zero_rate = ratio(sum(1 for r in live if r["total_C"] == 0), len(live))
+        print(f"  {name:<14} {len(g):>4}  {mean('A')}  {mean('B')}  {mean('C')}  {zero_rate:>6}  {unjudged:>8}")
 
 
 def gate(c_ko, c_en, n_err):
