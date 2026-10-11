@@ -1,0 +1,100 @@
+# place 유입 측정 — 열린 질문.
+# J1~J10: 심판 판정(context/review-verdict.md)의 사용자 판단 목록. 권고 기본값을 spec.md·tasks.md 에 이미 반영했다 — status answered-default = 사용자 확인 대기.
+# Q1~Q5: 구현 뒤(post-impl) 다시 보는 것들이고, 권고 기본값으로 진행한다.
+questions:
+  - id: Q1
+    stage: post-impl
+    question: 유입 기록을 별도 `place-entry` 행으로 둘지, 허브 SESSION_START payload 에 합칠지
+    recommended_default: 별도 행. 허브 SESSION_START 는 허브로 착지하지 않은 세션(상세·지역 착지)을 못 세고, 그 정의를 바꾸면 계측 스펙 SR-10 의 허브 세션 기준선이 끊긴다
+    revisit_when: 허브 착지 세션에서 두 행이 늘 같이 나와 중복이 분석을 헷갈리게 할 때
+  - id: Q2
+    stage: post-impl
+    question: 크롤 잡의 쿠버네티스 API egress 를 서비스 주소(10.43.0.1:443)로 열지 노드 주소(:6443)로 열지
+    recommended_default: 임시 파드 탐침으로 실제 통하는 쪽 하나만 연다(k3s NP 는 DNAT 뒤 주소로 판정하는 경우가 많아 노드 :6443 이 유력). 노드 IP 가 들어가면 oci-arm overlay 에 둔다
+    revisit_when: 노드 교체·IP 변경
+  - id: Q3
+    stage: post-impl
+    question: 봇 집계 표 보존기간과 방침 §6 표기
+    recommended_default: TTL 400일(전년 같은 달 비교 가능), 개인정보가 없어 방침 §6 에 숫자를 싣지 않고 §2 에 「시간당 건수로만」 문장만. ADR-0077 원장 표에는 「개인정보 없음」으로 한 줄
+    revisit_when: 집계 칸에 경로·IP 등 개인 식별 가능 값이 들어가는 변경이 생길 때
+  - id: Q4
+    stage: post-impl
+    question: 하루 한 번(요청 원문) 대신 시간마다 읽는 것
+    recommended_default: 시간마다. portal-fe 는 커밋마다 교체되어 하루 한 번이면 마지막 교체 전 요청을 잃는다. 일 집계는 질의가 만든다. 커버리지 표가 잃은 시간을 드러낸다
+    revisit_when: 커버리지 표에서 partial 이 하루 2시간 이상 반복되면 로그 보존(노드 쪽 수집기) 재검토. 그때 */15 주기(하루 Job 96개 · kine 부피)도 함께 본다(J5)
+  - id: Q5
+    stage: post-impl
+    question: Googlebot UA 위조를 거를지
+    recommended_default: 거르지 않는다. 로그 원격 주소가 인그레스 파드라 역DNS 검증 재료가 없다. 수치는 「UA 가 그렇다고 말한 요청」으로 읽고 GSC 크롤 통계와 대조한다
+    revisit_when: 실제 클라이언트 IP(CF-Connecting-IP)를 로그에 넣기로 할 때 — 그때는 방침 문구도 같이 바뀐다
+  # ─── 심판 판정 사용자 판단 목록 (권고 기본값 반영, 사용자 확인 대기) ───
+  - id: J1
+    stage: pre-impl
+    source: review-verdict S1
+    question: 크롤 잡 SA 가 commerce 네임스페이스 전 파드 로그를 읽는 것을 수용할지
+    recommended_default: 수용한다. 조건 셋 — 전용 라벨 place-crawl-stats 로 외부 443 egress 를 받지 않는다, egress 는 DNS·ClickHouse 8123·API 서버 하나만, Role 은 pods list + pods/log get 뿐. RBAC 으로 portal-fe 만 읽게 좁힐 수 없다는 사실을 스펙(SR-8.1 위험 수용)에 적었다
+    applied_in: spec.md SR-8.1·8.2·8.3, tasks.md 7.1·7.3·8.1
+    status: answered-default
+  - id: J2
+    stage: pre-impl
+    source: review-verdict D-5 / A1
+    question: crawler_* 표의 소유
+    recommended_default: 표 주인은 analytics(V 파일·스키마 초기화), place-ingest 이미지는 실행 장소일 뿐. ADR-0095 §5 에 한 줄, 09 정책 주석 수정
+    applied_in: spec.md SR-7.1, tasks.md 7.3·8.2
+    status: answered-default
+  - id: J3
+    stage: pre-impl
+    source: review-verdict A2
+    question: 이미지에 관측 잡을 얹는 결정을 어느 ADR 에 둘지
+    recommended_default: 새 ADR 없이 ADR-0070 에 개정 절
+    applied_in: tasks.md 8.2
+    status: answered-default
+  - id: J4
+    stage: pre-impl
+    source: review-verdict I2 / T-7
+    question: place/ingest 파이썬 테스트를 CI 게이트에 넣을지
+    recommended_default: 이번에는 CI 설정을 바꾸지 않는다(최소 수정). 로컬 pytest + 그룹 8 커밋 전 체크. frontend-gate 에 pytest 한 줄을 넣을지는 별도 결정
+    applied_in: spec.md SR-6.4, tasks.md 5.4·8.3
+    status: answered-default
+  - id: J5
+    stage: pre-impl
+    source: review-verdict U-4
+    question: 크롤 주기
+    recommended_default: 5 * * * * 유지, 키에 pod 추가, --hour 재실행 인자. */15 는 하루 Job 96개와 kine 부피 때문에 보류하고 coverage partial 이 하루 2시간 이상이면 다시 본다(Q4)
+    applied_in: spec.md SR-7.2·7.4·7.5
+    status: answered-default
+  - id: J6
+    stage: pre-impl
+    source: review-verdict D-3
+    question: 같은 호스트 리퍼러를 어떻게 남길지
+    recommended_default: "'self' 로 남긴다. place 세션 집계에는 포함하고 유입원에서만 따로 센다"
+    applied_in: spec.md SR-2.2·SR-9, tasks.md 1.1
+    status: answered-default
+  - id: J7
+    stage: pre-impl
+    source: review-verdict D-2
+    question: payload 키·값 어휘
+    recommended_default: 키 landingType, 값 attr_landing 채택(허브 SEARCH trigger 'landing' 과 충돌 회피)
+    applied_in: spec.md SR-1.5·SR-4·SR-9, tasks.md 1.1·1.3·2.1·8.1
+    status: answered-default
+  - id: J8
+    stage: pre-impl
+    source: review-verdict U-1
+    question: 검색 유입과 커뮤니티 유입을 나눌지
+    recommended_default: 채택. search_*·community_* 로 나누고 리터럴 호스트 표로 검증한다(T-5)
+    applied_in: spec.md SR-9, tasks.md 8.7
+    status: answered-default
+  - id: J9
+    stage: pre-impl
+    source: review-verdict D-8
+    question: 용어집 신설
+    recommended_default: 이번 슬라이스 밖으로 미룬다. 구현 뒤 등록 여부를 묻는다
+    applied_in: 없음(보류)
+    status: answered-default
+  - id: J10
+    stage: pre-impl
+    source: review-verdict T-3
+    question: k8s 매니페스트 단언 테스트를 레포에 커밋할지
+    recommended_default: 커밋한다(선례 datagokr_test.py). place/ingest/tests/crawl_stats_k8s_test.py
+    applied_in: tasks.md 7.1·7.5·8.3
+    status: answered-default
