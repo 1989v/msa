@@ -1,0 +1,19 @@
+{
+  "window": "since24h tail15000 (not complete history)",
+  "uaAuthenticated": false,
+  "matchingRequests": 24,
+  "statusCounts": {
+    "200": 24
+  },
+  "htmlRequests": [],
+  "sampleApiPaths": [
+    "/api/v1/games/crate-shift",
+    "/api/v1/games/crate-shift/leaderboard",
+    "/api/v1/games/crate-shift/release-notes",
+    "/api/v1/games/crate-shift/similar",
+    "/api/v1/games/crate-shift/suggestions",
+    "/api/v1/games/profile/me",
+    "/api/v1/resume/status",
+    "/api/v1/wishlist/count"
+  ]
+}

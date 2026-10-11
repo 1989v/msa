@@ -1,0 +1,104 @@
+{
+  "checkedAt": "2026-10-11T20:16:53.189678+09:00",
+  "method": "Logged-out curl GET, Mozilla/5.0 UA, nexearch first response; not exhaustive ranking or visual/mobile verification",
+  "results": [
+    {
+      "query": "무료 웹게임",
+      "bodyBlocked": false,
+      "ownResultUrls": [],
+      "ownSnippets": [],
+      "competitorDomains": [
+        "ogto.dev",
+        "oreumgames.com",
+        "www.crazygames.com"
+      ]
+    },
+    {
+      "query": "웹게임",
+      "bodyBlocked": false,
+      "ownResultUrls": [],
+      "ownSnippets": [],
+      "competitorDomains": [
+        "ogto.dev",
+        "oreumgames.com",
+        "play.gomgomapps.com",
+        "www.crazygames.com"
+      ]
+    },
+    {
+      "query": "site",
+      "bodyBlocked": false,
+      "ownResultUrls": [
+        "https://game.1989v.com/",
+        "https://game.1989v.com/en/games/block-burst",
+        "https://game.1989v.com/en/games/crate-shift",
+        "https://game.1989v.com/en/games/nine-bells",
+        "https://game.1989v.com/en/games/rift-front",
+        "https://game.1989v.com/en/games/spud-arena",
+        "https://game.1989v.com/en/games/word-warden",
+        "https://game.1989v.com/en/games/zombie-lane",
+        "https://game.1989v.com/favorites",
+        "https://game.1989v.com/games/abyssal-crown",
+        "https://game.1989v.com/games/alley-pool",
+        "https://game.1989v.com/games/arena",
+        "https://game.1989v.com/games/bee-guard",
+        "https://game.1989v.com/games/block-burst",
+        "https://game.1989v.com/games/card-flip",
+        "https://game.1989v.com/games/cliff-climber",
+        "https://game.1989v.com/games/genre/action",
+        "https://game.1989v.com/games/genre/arcade",
+        "https://game.1989v.com/games/genre/defense",
+        "https://game.1989v.com/games/genre/puzzle",
+        "https://game.1989v.com/games/genre/rpg",
+        "https://game.1989v.com/games/genre/strategy",
+        "https://game.1989v.com/games/golden-forge",
+        "https://game.1989v.com/games/mine-pioneer",
+        "https://game.1989v.com/games/rift-front",
+        "https://game.1989v.com/games/word-warden"
+      ],
+      "ownSnippets": [
+        {
+          "href": "https://game.1989v.com/",
+          "text": "설치도 가입도 없이 브라우저에서 바로 즐기는 무료 웹게임 48종. 퍼즐·액션·디펜스·RPG·전략 게임을 한곳에서 플레이하세요.새 창 열림"
+        },
+        {
+          "href": "https://game.1989v.com/games/bee-guard",
+          "text": "내 기록 · 로그인하면 내 기록이 남습니다.이 게임을 평가하기 · ★ · ★ · ★ · ★ · ★ · 로그인 없이도 이 기기에서 한 번 평가할 수 있습니다.새 창 열림"
+        },
+        {
+          "href": "https://game.1989v.com/games/alley-pool",
+          "text": "내 기록 · 로그인하면 내 기록이 남습니다.이 게임을 평가하기 · ★ · ★ · ★ · ★ · ★ · 로그인 없이도 이 기기에서 한 번 평가할 수 있습니다.새 창 열림"
+        },
+        {
+          "href": "https://game.1989v.com/games/rift-front",
+          "text": "내 기록 · 로그인하면 내 기록이 남습니다.이 게임을 평가하기 · ★ · ★ · ★ · ★ · ★ · 로그인 없이도 이 기기에서 한 번 평가할 수 있습니다.새 창 열림"
+        },
+        {
+          "href": "https://game.1989v.com/games/block-burst",
+          "text": "내 기록 · 로그인하면 내 기록이 남습니다.이 게임을 평가하기 · ★ · ★ · ★ · ★ · ★ · 로그인 없이도 이 기기에서 한 번 평가할 수 있습니다.새 창 열림"
+        },
+        {
+          "href": "https://game.1989v.com/games/word-warden",
+          "text": "내 기록 · 로그인하면 내 기록이 남습니다.이 게임을 평가하기 · ★ · ★ · ★ · ★ · ★ · 로그인 없이도 이 기기에서 한 번 평가할 수 있습니다.새 창 열림"
+        },
+        {
+          "href": "https://game.1989v.com/games/mine-pioneer",
+          "text": "내 기록 · 로그인하면 내 기록이 남습니다.이 게임을 평가하기 · ★ · ★ · ★ · ★ · ★ · 로그인 없이도 이 기기에서 한 번 평가할 수 있습니다.새 창 열림"
+        },
+        {
+          "href": "https://game.1989v.com/games/golden-forge",
+          "text": "내 기록 · 로그인하면 내 기록이 남습니다.이 게임을 평가하기 · ★ · ★ · ★ · ★ · ★ · 로그인 없이도 이 기기에서 한 번 평가할 수 있습니다.새 창 열림"
+        },
+        {
+          "href": "https://game.1989v.com/games/abyssal-crown",
+          "text": "내 기록 · 로그인하면 내 기록이 남습니다.이 게임을 평가하기 · ★ · ★ · ★ · ★ · ★ · 로그인 없이도 이 기기에서 한 번 평가할 수 있습니다.새 창 열림"
+        },
+        {
+          "href": "https://game.1989v.com/games/cliff-climber",
+          "text": "내 기록 · 로그인하면 내 기록이 남습니다.이 게임을 평가하기 · ★ · ★ · ★ · ★ · ★ · 로그인 없이도 이 기기에서 한 번 평가할 수 있습니다.새 창 열림"
+        }
+      ],
+      "competitorDomains": []
+    }
+  ]
+}

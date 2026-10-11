@@ -1,0 +1,107 @@
+{
+  "checkedAt": "2026-10-11T20:16:25.875443+09:00",
+  "pages": [
+    {
+      "url": "https://game.1989v.com/",
+      "status": "200",
+      "bytes": 29629,
+      "canonical": [
+        "https://game.1989v.com/"
+      ],
+      "description": [
+        "설치도 가입도 없이 브라우저에서 바로 즐기는 무료 웹게임 82종. 퍼즐·액션·디펜스·RPG·전략 게임을 한곳에서 플레이하세요."
+      ],
+      "robots": [],
+      "h1Count": 1,
+      "images": 80,
+      "missingAlt": 0,
+      "ownGameLinks": 95,
+      "bodyEmpty": false
+    },
+    {
+      "url": "https://game.1989v.com/en",
+      "status": "200",
+      "bytes": 29696,
+      "canonical": [
+        "https://game.1989v.com/en"
+      ],
+      "description": [
+        "Play 82 free browser games instantly — no download, no sign-up. Puzzle, action, tower defense, RPG and strategy games in one arcade."
+      ],
+      "robots": [],
+      "h1Count": 1,
+      "images": 80,
+      "missingAlt": 0,
+      "ownGameLinks": 95,
+      "bodyEmpty": false
+    },
+    {
+      "url": "https://game.1989v.com/games/block-burst",
+      "status": "200",
+      "bytes": 10787,
+      "canonical": [
+        "https://game.1989v.com/games/block-burst"
+      ],
+      "description": [
+        "8×8 판에 폴리오미노 조각을 끼워 줄을 터뜨린다. 동시에 여러 줄을 지우면 콤보 배수, 연속 턴 폭파는 스트릭 보너스 — 놓을 자리가 사라지는 순간이 끝이다."
+      ],
+      "robots": [],
+      "h1Count": 1,
+      "images": 7,
+      "missingAlt": 0,
+      "ownGameLinks": 8,
+      "bodyEmpty": false
+    },
+    {
+      "url": "https://game.1989v.com/games/mine-pioneer",
+      "status": "200",
+      "bytes": 10533,
+      "canonical": [
+        "https://game.1989v.com/games/mine-pioneer"
+      ],
+      "description": [
+        "지뢰찾기에 목숨 3개와 연속 돌파를 얹었다. 판을 깰 때마다 지뢰가 늘어나고, 판마다 3×3 스캔 한 번. 언제 퇴각해 점수를 확정할지가 진짜 승부다."
+      ],
+      "robots": [],
+      "h1Count": 1,
+      "images": 7,
+      "missingAlt": 0,
+      "ownGameLinks": 8,
+      "bodyEmpty": false
+    },
+    {
+      "url": "https://game.1989v.com/games/rift-front",
+      "status": "200",
+      "bytes": 10471,
+      "canonical": [
+        "https://game.1989v.com/games/rift-front"
+      ],
+      "description": [
+        "단일 전선 미니 AoS. 크립 웨이브에 몸을 싣고 스킬로 전선을 밀어 올려, 수호탑을 넘어 적 균열 첨탑을 파괴하라. 죽음은 8초의 공백일 뿐."
+      ],
+      "robots": [],
+      "h1Count": 1,
+      "images": 7,
+      "missingAlt": 0,
+      "ownGameLinks": 8,
+      "bodyEmpty": false
+    },
+    {
+      "url": "https://game.1989v.com/games/genre/puzzle",
+      "status": "200",
+      "bytes": 13450,
+      "canonical": [
+        "https://game.1989v.com/games/genre/puzzle"
+      ],
+      "description": [
+        "설치 없이 즐기는 퍼즐 웹게임 15종. 그어서 막기, 그림 로직, 고리 맞추기 등을 브라우저에서 바로 플레이하세요."
+      ],
+      "robots": [],
+      "h1Count": 1,
+      "images": 15,
+      "missingAlt": 0,
+      "ownGameLinks": 23,
+      "bodyEmpty": false
+    }
+  ]
+}
