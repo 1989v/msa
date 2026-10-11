@@ -85,7 +85,10 @@ export default function NearbyExplore({
   lang,
   viewId,
   screenRef,
+  sectionId,
 }: {
+  /** 절 이동 줄의 대상 id — 주면 포커스를 받을 수 있게(tabIndex -1) 한다 */
+  sectionId?: string;
   items: ExploreItem[];
   center: { lat: number; lng: number } | null;
   centerTitle: string;
@@ -201,7 +204,12 @@ export default function NearbyExplore({
   if (items.length === 0) return null;
 
   return (
-    <section className="place-explore" aria-label={T.title} data-place-section="explore">
+    <section
+      className="place-explore"
+      aria-label={T.title}
+      data-place-section="explore"
+      {...(sectionId ? { id: sectionId, tabIndex: -1 } : {})}
+    >
       <h2 className="place-detail-info-title">{T.title}</h2>
       <div className="place-explore-body">
         {showMap && center && !mapFailed ? (

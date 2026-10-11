@@ -3049,3 +3049,197 @@ button.place-card {
   color: var(--ko-surface-0);
   text-shadow: none;
 }
+
+/*
+ * 상세 하단 행동 바(≤640px, AttractionActionBar) — 행동 줄이 머리띠 밑으로 지나간 뒤에만 보인다.
+ * 면은 하단 탭바(.kh-tabbar)와 같은 기와 먹빛 판이고, .kh-slab 범위라 안쪽 --ko-text-* 가 판 위 글씨로 바뀐다.
+ * 탭바가 있는 호스트(place)에서는 탭바 바로 위에 앉는다 — bottom 이 탭바 높이(--kh-shell-bottom)다.
+ * 등장 전환은 두지 않는다(hidden → 즉시 표시).
+ */
+.place-action-bar {
+  --place-action-bar-h: 56px;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: var(--kh-shell-bottom, 0px);
+  z-index: 200; /* sticky 층 — 시트(300)·사진 보기(1000) 아래 */
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  height: calc(var(--place-action-bar-h) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  box-sizing: border-box;
+}
+
+/* .kh-slab 의 판 모양(사방 테두리·비대칭 귀)은 화면 끝에 붙는 바에 맞지 않는다 — 탭바와 같은 면으로 덮는다.
+ * 두 클래스를 함께 써서 스타일시트 적재 순서와 무관하게 이긴다 */
+.place-action-bar.kh-slab {
+  background: var(--kh-giwa, var(--ko-surface-1));
+  border: 0;
+  border-top: 1px solid var(--kh-slab-border, var(--ko-border-subtle));
+  border-radius: 0;
+  color: var(--kh-hanji, var(--ko-text-primary));
+}
+
+/* safe-area 는 탭바가 이미 갖는다 */
+:root[data-tabbar='on'] .place-action-bar {
+  height: var(--place-action-bar-h);
+  padding-bottom: 0;
+}
+
+/* 작성자 display 가 hidden 을 이기지 않게 */
+.place-action-bar[hidden] {
+  display: none;
+}
+
+.place-action-bar__cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 44px;
+  min-height: 44px;
+  color: inherit;
+  text-decoration: none;
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+
+.place-action-bar__cell svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* 판 위 포커스 링 — 정경 링(소나무·청자)은 기와 위에서 안 보인다. 칸 안쪽으로 그어 판 가장자리에서 잘리지 않게 */
+.place-action-bar a.place-action-bar__cell:focus-visible,
+.place-action-bar .share-panel__btn:focus-visible,
+.place-action-bar .favorite-btn:focus-visible {
+  outline: 2px solid var(--ko-text-primary);
+  outline-offset: -4px;
+}
+
+/* 찜 칸 — 칸 전체가 별 버튼이고 「찜」 글자는 그 위에 겹친 장식이다(이름은 버튼이 말한다) */
+.place-action-bar .favorite-btn {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  place-items: start center;
+  padding-top: 7px;
+  color: var(--ko-text-secondary);
+}
+
+.place-action-bar .favorite-btn .favorite-btn__star {
+  width: 22px;
+  height: 22px;
+}
+
+/* 켜짐 — 연지·청자는 기와 위 3:1 에 못 미친다. 판 위 글씨색으로 채워 모양(채운 별)이 상태를 말한다.
+ * 헤리티지 다크의 켜짐 규칙(Favorite.css, 명세도 0,5,0)보다 앞서야 해서 같은 속성 선택자를 더한다 */
+.place-action-bar .favorite-btn.is-on,
+:root[data-surface][data-theme] .place-action-bar .favorite-btn.is-on {
+  color: var(--ko-text-primary);
+}
+
+.place-action-bar__label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 7px;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* 공유 칸 — 공용 SharePanel 을 그대로 두고 바 범위에서만 판 위 칸으로 덮는다 */
+.place-action-bar .share-panel {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.place-action-bar .share-panel__btn {
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: var(--ko-text-primary);
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+
+.place-action-bar .share-panel__btn::before {
+  content: '';
+  width: 22px;
+  height: 22px;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3v12M7.5 7.5 12 3l4.5 4.5M5 12.5V20h14v-7.5'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3v12M7.5 7.5 12 3l4.5 4.5M5 12.5V20h14v-7.5'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/*
+ * 덮임 방지 — 바가 마운트된 동안(상세 ≤640)에만. 바는 숨어 있어도 DOM 에 있어 처음부터 자리를 둔다.
+ * 허브로 돌아가면 바가 언마운트되어 저절로 풀린다. 마지막 내용과 키보드 포커스가 바 밑에 깔리지 않는다(WCAG 2.4.11).
+ */
+html:has(.place-action-bar) {
+  scroll-padding-bottom: calc(var(--place-action-bar-h, 56px) + var(--kh-shell-bottom, env(safe-area-inset-bottom, 0px)));
+}
+
+html:has(.place-action-bar) .place-page {
+  padding-bottom: calc(1rem + 56px + env(safe-area-inset-bottom, 0px));
+}
+
+html[data-tabbar='on']:has(.place-action-bar) .place-page {
+  padding-bottom: calc(1rem + 56px);
+}
+
+html:has(.place-action-bar) .favorite-resume-notice {
+  bottom: calc(16px + 56px + var(--kh-shell-bottom, env(safe-area-inset-bottom, 0px)));
+}
+
+/*
+ * 절 이동 줄(≤640px, AttractionJumpNav) — 머리띠 바로 밑에 붙는다. 머리띠 높이는 실측값(--place-header-h)이라
+ * 두 줄로 접혀도 겹치지 않는다. 높이 고정. 현재 절 강조는 하지 않는다.
+ */
+.place-jump {
+  position: sticky;
+  top: var(--place-header-h, 0px);
+  z-index: 200;
+  display: flex;
+  gap: 1.1rem;
+  height: 44px;
+  box-sizing: border-box;
+  overflow-x: auto;
+  white-space: nowrap;
+  background: var(--ko-surface-0);
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+.place-jump a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--ko-text-secondary);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.place-jump a:hover,
+.place-jump a:focus-visible {
+  color: var(--ko-text-primary);
+  text-decoration: underline;
+}
+
+.place-jump a:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: -2px;
+}
+
+/* 이동 대상 — 머리띠와 이동 줄 밑에서 시작한다 */
+[id^='place-sec-'] {
+  scroll-margin-top: calc(var(--place-header-h, 0px) + 44px);
+}

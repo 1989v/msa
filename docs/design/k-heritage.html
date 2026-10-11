@@ -460,6 +460,27 @@
       <div class="mo-cell"><span class="mo-key">먹 캔버스 · InkWash</span><div class="mo-stage"><span style="font-size:0.85rem; color:var(--tx-2)">/ 전면 · /portfolio 히어로</span></div><span class="mo-note">포인터를 따라 먹이 번지고 마른다. 메인은 페이지 전체가 지면 — 스크롤해도 먹이 지면에 남는다. 마르면 rAF 완전 정지. 먹 색은 정경 토큰 --kh-ink-wash — 한지 위 먹빛, 송연 위 흰 안개.</span></div>
     </div>
     <p class="note" style="margin-top:1rem"><strong>모바일 앱 셸</strong> (뷰포트 &lt; 768px) — 하단 탭바 <code>.kh-tabbar</code>(기와 먹빛 판, 활성은 긋기), 바텀시트 <code>.kh-sheet</code>(먹빛 veil, 비대칭 귀), 스켈레톤 <code>.kh-skeleton</code>(정경 톤 opacity pulse — shimmer 금지), 스택 전환(View Transitions: 상세 진입 push / 뒤로 pop / 탭 간 cross-fade). 데스크탑은 머리띠 그대로 — 한 코드베이스, 두 표정.</p>
+
+    <h3 style="margin-top: 2.5rem">카드 상태 배지 · 상세 하단 행동 바 (place)</h3>
+    <style>
+      .cb-list { display: flex; flex-wrap: wrap; gap: 0.3rem; max-height: 24px; overflow: hidden; list-style: none; margin: 0.4rem 0 0; padding: 0; }
+      .cb-list li { padding: 3px 0.5rem; border-radius: 9999px; border: 1px solid var(--line-2); color: var(--tx-2); font-size: 0.72rem; line-height: 16px; white-space: nowrap; }
+      .cb-list li.today { color: var(--action-text); font-weight: 700; }
+      .ab-demo { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); max-width: 390px; height: 56px; margin-top: 1rem; background: var(--giwa); border-top: 1px solid var(--slab-line); color: var(--on-slab); }
+      .ab-demo span { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 0.72rem; }
+      .ab-demo i { font-style: normal; font-size: 1.1rem; line-height: 1; }
+    </style>
+    <p class="note"><strong>카드 상태 배지</strong> <code>.place-card-badges</code> — 허브 결과 카드에 확인된 상태만, 최대 셋, 순서는 휴무 → 무료 → 반려 → 무장애 → 주차. 상세의 「배지 줄」과 다른 것이다. 상태 표시라 9999px, 항상 한 줄(줄 높이 고정 + max-height 24px — 넘친 배지는 통째로 숨는다). 오늘 휴무만 글씨용 강조색 + 굵게 — 색만으로 뜻을 나르지 않는다. 부정값·모름은 그리지 않는다(없다는 것은 「아니다」가 아니다).</p>
+    <ul class="cb-list" aria-label="카드 상태 배지 견본">
+      <li class="today">오늘은 정기휴무일</li><li>입장 무료</li><li>반려동물 동반</li>
+    </ul>
+    <ul class="cb-list" aria-label="카드 상태 배지 견본 2">
+      <li>월·화 휴무</li><li>무장애 시설</li><li>주차 가능</li>
+    </ul>
+    <p class="note"><strong>상세 하단 행동 바</strong> <code>.place-action-bar</code> (≤640px) — 탭바와 같은 기와 먹빛 판(<code>.kh-slab</code> 범위라 안쪽 글자가 판 위 색). 행동 줄이 머리띠 밑으로 지나간 뒤에만 나타나고(첫 화면에는 없다), 숨을 때는 <code>hidden</code>. 길찾기 · 찜 · 공유 · 전화(번호가 있을 때만), 칸마다 44×44 이상, 높이 56px. 탭바가 있으면 탭바 바로 위에 앉는다. 판 위 포커스 링은 판 위 글씨색(정경 링은 기와 위에서 안 보인다), 찜 켜짐은 채운 별 모양이 말한다(연지·청자는 기와 위 3:1 미달).</p>
+    <div class="ab-demo" role="img" aria-label="하단 행동 바 견본">
+      <span><i aria-hidden="true">◇</i>길찾기</span><span><i aria-hidden="true">☆</i>찜</span><span><i aria-hidden="true">↥</i>링크 복사</span><span><i aria-hidden="true">☏</i>전화</span>
+    </div>
   </section>
 
   <section>

@@ -11,17 +11,25 @@ export default function AttractionAccess({
   lang,
   directionsHref,
   onDirectionsClick,
+  sectionId,
 }: {
   access: Access | null | undefined;
   lang: PlaceLang;
   directionsHref: string;
   onDirectionsClick?: () => void;
+  /** 절 이동 줄의 대상 id — 주면 포커스를 받을 수 있게(tabIndex -1) 한다 */
+  sectionId?: string;
 }) {
   const view = accessView(access, lang);
   if (!view) return null;
   const C = ACCESS_COPY[lang];
   return (
-    <section className="place-access" aria-label={C.title} data-place-section="access">
+    <section
+      className="place-access"
+      aria-label={C.title}
+      data-place-section="access"
+      {...(sectionId ? { id: sectionId, tabIndex: -1 } : {})}
+    >
       <h2 className="place-access-title">{C.title}</h2>
       <a className="place-btn" href={directionsHref} target="_blank" rel="noreferrer" onClick={onDirectionsClick}>
         {C.directions}

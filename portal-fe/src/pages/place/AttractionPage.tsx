@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Link, Navigate, useParams, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -36,7 +36,10 @@ import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import AttractionLinks from './AttractionLinks';
 import AttractionAccess from './AttractionAccess';
 import AttractionConditions from './AttractionConditions';
-import AttractionInfoTabs from './AttractionInfoTabs';
+import AttractionInfoTabs, { infoTabsShown } from './AttractionInfoTabs';
+import AttractionActionBar, { AttractionJumpNav, jumpSectionId, type JumpTarget } from './AttractionActionBar';
+import { accessView } from './accessLines';
+import { useMediaQuery } from './useMediaQuery';
 import { googleMapsDirectionsUrl, googleMapsSearchUrl, mapsApiKey } from './googleMaps';
 import NearbyExplore from './NearbyExplore';
 import PhotoViewer from './PhotoViewer';
@@ -241,6 +244,44 @@ export default function AttractionPage() {
   // 로그인 복귀의 찜 마저 하기 — 상세는 주소가 곧 상태라 의도만 이어 받는다
   const resumeNotice = useResumeFavoriteIntent({ screenType: 'ATTRACTION_DETAIL', screenRef: id, viewId }, lang);
 
+  /*
+   * 좁은 화면(머리띠가 sticky 가 되는 폭) — 하단 행동 바와 절 이동 줄. 질의는 CSS 의 같은 폭과 한 몸이다.
+   * 머리띠 높이는 실측해 `--place-header-h` 로 쓴다(두 줄로 접혀도 이동 줄·바 판정이 머리띠와 겹치지 않게).
+   */
+  const narrow = useMediaQuery('(max-width: 640px)');
+  const headerRef = useRef<HTMLElement | null>(null);
+  const [headerH, setHeaderH] = useState(0);
+  useLayoutEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const measure = () => setHeaderH(Math.round(el.getBoundingClientRect().height));
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  // 바는 행동 줄이 머리띠 밑으로 지나간 뒤에만 보인다 — 첫 화면(행동 줄이 보일 때)에는 같은 행동을 두 번 두지 않는다.
+  // IntersectionObserver 가 없으면 바를 그리지 않는다(행동 줄이 남아 있다).
+  const barEnabled = narrow && typeof window.IntersectionObserver === 'function';
+  const actionsRef = useRef<HTMLDivElement | null>(null);
+  const [barShown, setBarShown] = useState(false);
+  useEffect(() => {
+    setBarShown(false);
+    const el = actionsRef.current;
+    if (!barEnabled || !el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        const e = entries[entries.length - 1];
+        const top = e.rootBounds?.top ?? headerH;
+        setBarShown(!e.isIntersecting && e.boundingClientRect.bottom < top);
+      },
+      { rootMargin: `-${headerH}px 0px 0px 0px` },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [barEnabled, headerH, attraction?.contentId]);
+
   const hasMapKey = mapsApiKey() !== '';
   const lat = attraction?.latitude;
   const lng = attraction?.longitude;
@@ -323,6 +364,30 @@ export default function AttractionPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [id, kind, today, attraction?.region, nearby],
   );
+  const infoTabsProps = attraction
+    ? {
+        badges,
+        wellness,
+        accessIcons,
+        accessRows,
+        address: attraction.address ?? null,
+        phrase: attraction.region ? phrase : null,
+        hub: attraction.region && hubCode ? { to: regionPath(lang, hubCode), label: L.explore(regionPlaceName(attraction, lang)) } : null,
+        samePlace: attraction.samePlace ?? [],
+      }
+    : null;
+  // 절 이동 줄의 링크 — 렌더 시점에 아는 조건만(주변은 좌표가 있으면 링크하고, 목록이 비어 절이 없으면 클릭이 무동작)
+  const jumpTargets: JumpTarget[] = attraction && narrow
+    ? [
+        ...(summary ? (['summary'] as const) : []),
+        ...(accessView(attraction.access, lang) ? (['access'] as const) : []),
+        ...(infoTabsProps && infoTabsShown(infoTabsProps).length > 0 ? (['info'] as const) : []),
+        ...(attraction.latitude != null && attraction.longitude != null ? (['nearby'] as const) : []),
+      ]
+    : [];
+  const jumpOn = jumpTargets.length >= 2;
+  const secId = (t: JumpTarget) => (jumpOn ? jumpSectionId(t) : undefined);
+
   const center = useMemo(
     () => (plottable && lat != null && lng != null ? { lat, lng } : null),
     [plottable, lat, lng],
@@ -335,8 +400,8 @@ export default function AttractionPage() {
   }
 
   return (
-    <div className="place-page">
-      <header className="place-header">
+    <div className="place-page" style={{ '--place-header-h': `${headerH}px` } as CSSProperties}>
+      <header className="place-header" ref={headerRef}>
         <nav className="place-crumbs" aria-label={lang === 'en' ? 'Breadcrumb' : '탐색 경로'}>
           <Link className="place-btn" to={placePath(lang)}>
             {L.back}
@@ -409,7 +474,7 @@ export default function AttractionPage() {
                 {attraction.tel && infoCenterPhone && <p className="place-detail-tel">{attraction.tel}</p>}
                 {/* 행동 줄 — 길찾기(화면 전용)와 문의 전화. 번호 모양이 없으면 원문만 글로 둔다.
                     방문 요약보다 위에 둔다 — 요약 칸이 길어도 길찾기가 첫 화면에 든다 */}
-                <div className="place-detail-actions" data-place-section="actions">
+                <div className="place-detail-actions" data-place-section="actions" ref={actionsRef}>
                   {/* 지도 열기 — 선택 뒤 후속 행동이라 노출은 보내지 않는다(TrackedLink 를 쓰지 않는다).
                       기본 동작(새 탭)은 그대로고, 계측이 이동을 막지 않는다 */}
                   <a
@@ -458,7 +523,23 @@ export default function AttractionPage() {
                   </a>
                   {phone &&
                     (phone.href ? (
-                      <a className="place-btn place-detail-phone" href={phone.href}>
+                      <a
+                        className="place-btn place-detail-phone"
+                        href={phone.href}
+                        onClick={() =>
+                          track(
+                            'CLICK',
+                            {
+                              entityType: 'ATTRACTION',
+                              entityId: attraction.id,
+                              screenType: 'ATTRACTION_DETAIL',
+                              screenRef: id,
+                              sectionId: 'PHONE',
+                            },
+                            viewId,
+                          )
+                        }
+                      >
                         {phone.text}
                       </a>
                     ) : (
@@ -469,6 +550,7 @@ export default function AttractionPage() {
                 <AttractionAccess
                   access={attraction.access}
                   lang={lang}
+                  sectionId={secId('access')}
                   directionsHref={googleMapsDirectionsUrl(attraction, 'transit')}
                   onDirectionsClick={() =>
                     track(
@@ -486,7 +568,12 @@ export default function AttractionPage() {
                   }
                 />
                 {summary && (
-                  <section className="place-visit" aria-label={L.summary} data-place-section="visit-summary">
+                  <section
+                    className="place-visit"
+                    aria-label={L.summary}
+                    data-place-section="visit-summary"
+                    {...(jumpOn ? { id: jumpSectionId('summary'), tabIndex: -1 } : {})}
+                  >
                     <dl className="place-detail-info-list">
                       {summary.rows.map((row) => (
                         <div className="place-detail-info-row" key={row.label}>
@@ -658,21 +745,16 @@ export default function AttractionPage() {
               </div>
             </div>
 
+            {/* 절 이동 줄(좁은 화면) — 첫 화면 묶음 바로 뒤. 요약·가는 법은 그 묶음 안이라 위로 거슬러 가는 이동이고,
+                sticky 라 스크롤해 내려온 뒤 누르는 쓰임이다 */}
+            {jumpOn && <AttractionJumpNav targets={jumpTargets} lang={lang} attractionId={attraction.id} viewId={viewId} />}
+
             {/* 방문 정보(주소·속성·지역 안 위치) · 접근성 — 지도 위에 탭으로, 내용은 칩. 서버 렌더는 절을 그대로 쌓는다(색인용) */}
-            <AttractionInfoTabs
-              badges={badges}
-              wellness={wellness}
-              accessIcons={accessIcons}
-              accessRows={accessRows}
-              address={attraction.address ?? null}
-              phrase={attraction.region ? phrase : null}
-              hub={attraction.region && hubCode ? { to: regionPath(lang, hubCode), label: L.explore(regionPlaceName(attraction, lang)) } : null}
-              samePlace={attraction.samePlace ?? []}
-              lang={lang}
-            />
+            {infoTabsProps && <AttractionInfoTabs {...infoTabsProps} lang={lang} sectionId={secId('info')} />}
             {/* 주변 탐색 — 같은 분류 가까운 곳 · 주변 명소 · 숙소 · 행사 · 편의시설을 지도 한 장과 목록 하나로.
                 지도를 못 그리면(키 없음 · 좌표 이상 · 로더 실패) 목록만 남고 아래 링크가 위치를 대신한다. */}
             <NearbyExplore
+              sectionId={secId('nearby')}
               items={explore}
               center={center}
               centerTitle={attraction.title}
@@ -708,6 +790,18 @@ export default function AttractionPage() {
           contextKey={attraction?.sidoCode ? `place:${attraction.sidoCode}` : ''}
           shape="horizontal"
           minHeight={90}
+        />
+      )}
+
+      {attraction && barEnabled && (
+        <AttractionActionBar
+          attraction={attraction}
+          lang={lang}
+          shareUrl={attractionUrl(docLang, attraction.id)}
+          phoneHref={phone?.href ?? null}
+          viewId={viewId}
+          screenRef={id}
+          hidden={!barShown}
         />
       )}
 

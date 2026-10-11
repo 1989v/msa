@@ -328,6 +328,8 @@ flat 디자인 지향. 카드 사이에 그림자 남발 금지.
 |---|---|
 | `.kh-tabbar` / `KhTabBar` | 하단 탭바 — 호스트별 구성은 `shell/appShell.tsx`. 기와 먹빛 판, 활성은 긋기. resume·deal·게임 플레이 화면은 없음 |
 | `.kh-sheet` / `KhSheet` | 바텀시트 — 먹빛 veil, 비대칭 귀, 드래그 닫기. 모바일의 다이얼로그 대체 |
+| 카드 상태 배지 `.place-card-badges` | place 허브 결과 카드의 확인된 상태(휴무·무료·반려·무장애·주차) 최대 3 — 9999px, 항상 한 줄(24px). 상세 「배지 줄」과 다른 것. 부정값·모름은 그리지 않는다 |
+| 상세 하단 행동 바 `.place-action-bar` | place 상세(≤640px) — 기와 먹빛 판(`.kh-slab` 범위), 행동 줄이 머리띠 밑으로 지나간 뒤에만. 길찾기·찜·공유·전화, 칸 44px 이상·높이 56px, 탭바 위에 앉는다 |
 | `.kh-skeleton` | 스켈레톤 — 정경 톤 opacity pulse. **shimmer 그래디언트 금지** |
 | 스택 전환 | RR7 `viewTransition` — 상세 진입 push / 뒤로 pop / 탭 간 cross-fade. 방향은 `<html data-nav>` |
 | 접히는 머리띠 | `useScrollDirection()` — 아래로 스크롤 시 GNB 접힘 |

@@ -27,6 +27,27 @@ const UI = {
   },
 } as const;
 
+type InfoTabsContent = {
+  address: string | null;
+  badges: string[];
+  wellness: string | null;
+  accessIcons: string[];
+  accessRows: Array<{ key: string; label: string; value: string }>;
+  phrase: string | null;
+  hub: { to: string; label: string } | null;
+  samePlace: Array<{ id: string; contentTypeId?: string | null }>;
+};
+
+/** 그릴 탭(방문 정보 · 접근성) — 하나도 없으면 묶음을 그리지 않는다. 상세의 절 이동 줄도 같은 판정으로 링크를 고른다 */
+export function infoTabsShown(c: InfoTabsContent): Tab[] {
+  const hasRegion = c.phrase != null || c.hub != null || c.samePlace.length > 0;
+  const has: Record<Tab, boolean> = {
+    visit: c.address != null || c.badges.length > 0 || c.wellness != null || hasRegion,
+    access: c.accessIcons.length > 0 || c.accessRows.length > 0,
+  };
+  return (['visit', 'access'] as const).filter((t) => has[t]);
+}
+
 /**
  * 지도 위 정보 묶음 — 방문 정보 · 접근성을 탭 둘로, 내용은 칩으로.
  * 방문 정보는 주소 · 휴무·주차 같은 속성 · 지역 안 위치를 함께 둔다. 지역 안 위치는 칩 한두 개라 탭 하나를
@@ -43,32 +64,27 @@ export default function AttractionInfoTabs({
   hub,
   samePlace,
   lang,
-}: {
-  address: string | null;
-  badges: string[];
-  wellness: string | null;
-  accessIcons: string[];
-  accessRows: Array<{ key: string; label: string; value: string }>;
-  phrase: string | null;
-  hub: { to: string; label: string } | null;
-  samePlace: Array<{ id: string; contentTypeId?: string | null }>;
+  sectionId,
+}: InfoTabsContent & {
   lang: PlaceLang;
+  /** 절 이동 줄의 대상 id — 주면 포커스를 받을 수 있게(tabIndex -1) 하고 이름(「방문 정보」)을 단다 */
+  sectionId?: string;
 }) {
   const L = UI[lang];
   const [picked, setPicked] = useState<Tab>('visit');
   const [accessOpen, setAccessOpen] = useState(false);
   const title: Record<Tab, string> = { visit: L.visit, access: BARRIER_FREE_TITLE[lang] };
   const hasRegion = phrase != null || hub != null || samePlace.length > 0;
-  const has: Record<Tab, boolean> = {
-    visit: address != null || badges.length > 0 || wellness != null || hasRegion,
-    access: accessIcons.length > 0 || accessRows.length > 0,
-  };
-  const tabs = (['visit', 'access'] as const).filter((t) => has[t]);
+  const tabs = infoTabsShown({ address, badges, wellness, accessIcons, accessRows, phrase, hub, samePlace });
   if (tabs.length === 0) return null;
   const current = tabs.includes(picked) ? picked : tabs[0];
 
   return (
-    <div className="place-info-tabs" data-place-section="info">
+    <div
+      className="place-info-tabs"
+      data-place-section="info"
+      {...(sectionId ? { id: sectionId, tabIndex: -1, role: 'group', 'aria-label': L.visit } : {})}
+    >
       <div className="place-tabs" role="tablist" aria-label={L.group}>
         {tabs.map((t) => (
           <button
