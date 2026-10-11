@@ -537,6 +537,15 @@
         "type": "integer",
         "index": false
       },
+      "savedCount": {
+        "type": "integer",
+        "index": false
+      },
+      "signalsAsOf": {
+        "type": "date",
+        "format": "yyyy-MM-dd",
+        "index": false
+      },
       "clickBoost": {
         "type": "float"
       },

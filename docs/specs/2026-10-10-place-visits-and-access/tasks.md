@@ -31,25 +31,25 @@ Total Task Groups: 7 (TG0 실측 + 지금 범위 TG1~TG6). SR-8·SR-9(사용자 
 
 ### Task Group 2: 시도 「타지 방문자가 많은 시군구」 (SR-2)
 **Dependencies:** TG1
-- [ ] 2.1 테스트 먼저 — place `RegionVisitorRankingServiceTest`(BehaviorSpec)
+- [x] 2.1 테스트 먼저 — place `RegionVisitorRankingServiceTest`(BehaviorSpec)
   - 다 받은 달만 쓴다(일부만 받은 최근 달은 건너뛴다)
   - 값 = 외지인+외국인, 현지인 제외 · 옛 코드 29·46 제외 · 상위 10 · 같은 값이면 코드 오름차순
   - 방문자 PUT 뒤 받은 시도의 레디스 키를 다시 쓴다(write-through)
   - 다 받은 달은 시도 안 모든 시군구 기준 · 시군구 3개 미만 시도(36 세종)는 빈 결과 · 다 받은 달이 없으면 빈 결과
   - 없는·잘못된 `sidoCode` → 400, 캐시 키 미생성
-- [ ] 2.2 UseCase 인터페이스 + Port + Adapter(ADR-0083 레이어), 컨트롤러 `GET /api/places/administrative-regions/{sidoCode}/visitor-ranking` + `RegionCaches.VISITOR_RANKING` 상수 · `RegionCacheConfig` 직렬화기·TTL 26시간 등록 · `RegionVisitorSyncService` 에서 `@CachePut` 을 다른 빈으로 호출
-- [ ] 2.3 FE `RegionPage.tsx` 시도 페이지에 절 추가 — 근거 줄은 `formatSignalLine`. 시군구 페이지·상세에는 순위 없음
+- [x] 2.2 UseCase 인터페이스 + Port + Adapter(ADR-0083 레이어), 컨트롤러 `GET /api/places/administrative-regions/{sidoCode}/visitor-ranking` + `RegionCaches.VISITOR_RANKING` 상수 · `RegionCacheConfig` 직렬화기·TTL 26시간 등록 · `RegionVisitorSyncService` 에서 `@CachePut` 을 다른 빈으로 호출
+- [x] 2.3 FE `RegionPage.tsx` 시도 페이지에 절 추가 — 근거 줄은 `formatSignalLine`. 시군구 페이지·상세에는 순위 없음
 - [ ] 2.4 상세에 「{시군구} 방문 추이 보기」 링크 한 줄(수치 없음) — `AttractionPage.test.tsx` 에 링크 대상·문구 단언
-- [ ] 2.5 검증: `./gradlew :place:feature:test --tests '*RegionVisitorRanking*'`, `npx vitest run src/pages/place/__tests__/RegionPage.test.tsx` · `RegionPage.test.tsx` 사례: 시도에만 절 · 시군구엔 없음 · 「약」 · 소수 버림 · 세종 숨김
+- [x] 2.5 검증: `./gradlew :place:feature:test --tests '*RegionVisitorRanking*'`, `npx vitest run src/pages/place/__tests__/RegionPage.test.tsx` · `RegionPage.test.tsx` 사례: 시도에만 절 · 시군구엔 없음 · 「약」 · 소수 버림 · 세종 숨김
 
 ### Task Group 3: 찜 집계 → 색인 (SR-3.1~3.3 · SR-3.6 · SR-3.7)
 **Dependencies:** None
-- [ ] 3.1 테스트 먼저 — wishlist `WishlistInternalControllerTest`(3.2 의 컨트롤러 이름 `WishlistInternalController`): `min` 미만 제외 · 응답에 memberId·시각 없음 · 잘못된 type 400
-- [ ] 3.2 wishlist UseCase + Port 메서드(`countGroupedByTarget(type, min)`) + JPA 집계 질의 + 내부 컨트롤러 · HAVING 하한은 `WishlistSchemaIntegrationSpec` 에서 실제 질의로 검증(2·3 리터럴) · `min` 은 `max(min,1)`, 상한 10,000
-- [ ] 3.3 search batch: 클라이언트 + `AttractionIndexDocument.savedCount` + 매핑(`integer`, `index:false`). 실패 시 필드 없이 계속 + 요약 로그. 테스트: 정상·실패·하한 미만 · 읽기 `AttractionSearchDocument`·UseCase 결과·서비스 매핑까지 `savedCount`·`signalsAsOf` 를 잇고 `searchReadRequired` 에 넣는다 · `savedCount` 는 언어 문서 id 단위
-- [ ] 3.4 search app: `sort=saved|clicked` → 하한 이상 문서만(`savedCount ≥ 3`, `uniqueClickers14d ≥ 5`) 내림차순, 벡터 레그 끔. `SearchAttractionServiceTest`: 하한 미만·값 없는 문서가 응답에 없음, 키워드가 있어도 하이브리드 경로를 타지 않음
-- [ ] 3.5 NetworkPolicy `allow-search-batch-to-account` 한 블록(`kgd.io/host-of: wishlist`, `podSelector: app.kubernetes.io/name: account`) + 파일 머리 허용 쌍 한 줄. 게이트웨이 `/internal` 은 기존 `GatewayRouteAuthSpec` 으로 충족(새 테스트 없음)
-- [ ] 3.6 검증: `./gradlew :wishlist:feature:test --tests '*WishlistInternalController*' :search:batch:test --tests '*AttractionApiReindex*' :search:app:test --tests '*SearchAttractionService*'`
+- [x] 3.1 테스트 먼저 — wishlist `WishlistInternalControllerTest`(3.2 의 컨트롤러 이름 `WishlistInternalController`): `min` 미만 제외 · 응답에 memberId·시각 없음 · 잘못된 type 400
+- [x] 3.2 wishlist UseCase + Port 메서드(`countGroupedByTarget(type, min)`) + JPA 집계 질의 + 내부 컨트롤러 · HAVING 하한은 `WishlistSchemaIntegrationSpec` 에서 실제 질의로 검증(2·3 리터럴) · `min` 은 `max(min,1)`, 상한 10,000
+- [x] 3.3 search batch: 클라이언트 + `AttractionIndexDocument.savedCount` + 매핑(`integer`, `index:false`). 실패 시 필드 없이 계속 + 요약 로그. 테스트: 정상·실패·하한 미만 · 읽기 `AttractionSearchDocument`·UseCase 결과·서비스 매핑까지 `savedCount`·`signalsAsOf` 를 잇고 `searchReadRequired` 에 넣는다 · `savedCount` 는 언어 문서 id 단위
+- [x] 3.4 search app: `sort=saved|clicked` → 하한 이상 문서만(`savedCount ≥ 3`, `uniqueClickers14d ≥ 5`) 내림차순, 벡터 레그 끔. `SearchAttractionServiceTest`: 하한 미만·값 없는 문서가 응답에 없음, 키워드가 있어도 하이브리드 경로를 타지 않음
+- [x] 3.5 NetworkPolicy `allow-search-batch-to-account` 한 블록(`kgd.io/host-of: wishlist`, `podSelector: app.kubernetes.io/name: account`) + 파일 머리 허용 쌍 한 줄. 게이트웨이 `/internal` 은 기존 `GatewayRouteAuthSpec` 으로 충족(새 테스트 없음)
+- [x] 3.6 검증: `./gradlew :wishlist:feature:test --tests '*WishlistInternalController*' :search:batch:test --tests '*AttractionApiReindex*' :search:app:test --tests '*SearchAttractionService*'`
 
 ### Task Group 4: 근거 절·근거 줄 화면 (SR-3.4 · SR-3.5 · SR-4)
 **Dependencies:** TG1, TG3

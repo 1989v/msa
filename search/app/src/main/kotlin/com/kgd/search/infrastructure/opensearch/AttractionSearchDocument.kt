@@ -95,6 +95,11 @@ data class AttractionSearchDocument(
     val similarElsewhere: List<Similar>? = null,
     /** 14일 고유 클릭 방문자 수 — 상세 「많이 클릭한 곳」 배지용. 신호를 못 읽은 회차·옛 문서는 없다. */
     val uniqueClickers14d: Int? = null,
+    /** 이 사이트 회원 찜 수(언어 문서 id 단위, 하한 이상만) — 상세 근거 줄·「많이 찜한 곳」. 하한 미만·옛 문서는 없다. */
+    val savedCount: Int? = null,
+    /** 찜·클릭 신호의 기준일(재색인 날짜) — 근거 줄의 「{날짜} 기준」. 옛 문서는 없다. */
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    val signalsAsOf: LocalDate? = null,
     /** 행사 유효 기간 — 재색인이 정규화해 싣는다. 행사가 아니거나 날짜가 없으면(UNKNOWN) 둘 다 없다. */
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     val eventStartEffective: LocalDate? = null,
@@ -220,6 +225,8 @@ data class AttractionSearchDocument(
         region = region(),
         similarElsewhere = similarElsewhere?.map { SimilarPlace(it.id, it.title, it.sidoName, it.eventEndEffective) },
         uniqueClickers14d = uniqueClickers14d,
+        savedCount = savedCount,
+        signalsAsOf = signalsAsOf,
         // 재색인이 이미 정규화한 값이라 같은 함수에 다시 넣어도 (s, e) 그대로다. 한쪽만 있는 문서는 생기지 않는다.
         eventPeriod = EventSchedule.effectivePeriod(eventStartEffective, eventEndEffective),
         courseStops = courseStops?.map { CourseStop(it.order, it.contentId, it.name, it.attractionId) },

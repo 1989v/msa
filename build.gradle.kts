@@ -549,6 +549,8 @@ val searchReadRequired = mapOf(
         "source", "copyrightDivCd", "feeText", "petAcmpyType",
         // 언어 대체 짝 — 상세 hreflang·sitemap 이, 본문 변경 시각 — 최근 갱신 순이 읽는다. 빠지면 hreflang·순서가 조용히 사라진다
         "alternateId", "contentUpdatedAt",
+        // 찜 수·근거 기준일 — 상세 근거 줄과 「많이 찜한 곳」이 읽는다. 빠지면 근거 줄이 조용히 사라진다
+        "savedCount", "signalsAsOf",
     ),
 )
 

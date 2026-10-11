@@ -18,8 +18,9 @@ interface SearchAttractionUseCase {
         val lng: Double? = null,
         val radiusKm: Double? = null,
         /**
-         * relevance(기본) | distance | eventStart — distance 는 lat/lng 지정 시에만 유효.
+         * relevance(기본) | distance | eventStart | saved | clicked — distance 는 lat/lng 지정 시에만 유효.
          * eventStart 는 유효 시작일 오름차순(날짜 없음은 뒤, 같으면 id 순)이고 벡터 레그를 쓰지 않는다.
+         * saved · clicked 는 찜 수 · 14일 고유 클릭 수 내림차순이고 **하한 이상인 문서만** 돌려준다 — 벡터 레그를 쓰지 않는다.
          */
         val sort: String = "relevance",
         val page: Int = 0,
@@ -142,6 +143,13 @@ interface SearchAttractionUseCase {
          * (기준은 [com.kgd.search.domain.attraction.model.AttractionClickSignal.MIN_SAMPLE]).
          */
         val uniqueClickers14d: Int? = null,
+        /**
+         * 이 사이트 회원 찜 수(언어 문서 id 단위) — 목록·단건 모두. 하한
+         * ([com.kgd.search.domain.attraction.model.AttractionSaveSignal.SAVED_MIN]) 미만이면 색인에 없어 null.
+         */
+        val savedCount: Int? = null,
+        /** 찜·클릭 신호의 기준일(재색인 날짜) — 근거 줄의 「{날짜} 기준」. 옛 색인 문서는 null. */
+        val signalsAsOf: java.time.LocalDate? = null,
         /**
          * 행사의 유효 기간(원천 시작·종료일을 정규화한 값, 양 끝 포함). 행사가 아니거나 날짜가 없으면 둘 다 null.
          * 상태 문구는 화면이 오늘 기준으로 같은 규칙으로 판정한다 — 응답에 상태를 싣지 않는 것은 캐시된 응답이 낡지 않게.

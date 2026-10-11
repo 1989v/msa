@@ -6,6 +6,7 @@ import com.kgd.search.domain.attraction.model.Admission
 import com.kgd.search.domain.attraction.model.AttractionAttributeCodes
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionFeedEntry
+import com.kgd.search.domain.attraction.model.AttractionSignalSort
 import com.kgd.search.domain.attraction.model.AttributeFacetCounts
 import com.kgd.search.domain.attraction.model.AttributeSelection
 import com.kgd.search.domain.attraction.model.Availability
@@ -140,6 +141,12 @@ class AttractionSearchAdapter(
         )
 
         private val CONTENT_UPDATED_AT = AttractionSearchDocument::contentUpdatedAt.name
+
+        /** 찜순·클릭순이 거르고 줄 세우는 필드 — 둘 다 index=false 라 doc_values 로 읽는다. */
+        private val SIGNAL_FIELDS = mapOf(
+            AttractionSignalSort.SAVED to AttractionSearchDocument::savedCount.name,
+            AttractionSignalSort.CLICKED to AttractionSearchDocument::uniqueClickers14d.name,
+        )
 
         /** 최근 갱신 피드가 읽는 필드 — 읽기 문서의 필수 필드(id·contentId·lang·title·location)는 역직렬화에 필요해 함께 받는다. */
         private val FEED_SOURCE = listOf(
@@ -619,6 +626,10 @@ class AttractionSearchAdapter(
             attributeFilters.forEach { b.filter(it) }
             // 속성 필터와 같은 이유로 맨 뒤 — 조건이 없는 요청은 이 필드가 생기기 전과 바이트 단위로 같다.
             query.eventRange?.let { b.filter(eventFilter(it)) }
+            // 찜순·클릭순은 하한을 함께 건다 — 하한 미만·값 없는 문서는 결과에 없다. 이 정렬이 없는 요청은 바이트 그대로다.
+            query.signalSort?.let { sort ->
+                b.filter { f -> f.range { r -> r.field(SIGNAL_FIELDS.getValue(sort)).gte(JsonData.of(sort.min)) } }
+            }
             b
         }
     }
@@ -694,7 +705,11 @@ class AttractionSearchAdapter(
         }
 
         val geo = query.geo
-        if (query.sortByEventStart) {
+        val signalSort = query.signalSort
+        if (signalSort != null) {
+            builder.sort { s -> s.field { f -> f.field(SIGNAL_FIELDS.getValue(signalSort)).order(SortOrder.Desc) } }
+            addTiebreakers(builder)
+        } else if (query.sortByEventStart) {
             // 시작일이 같은 행사끼리는 id 순 — 날짜 없는 문서는 맨 뒤. 재색인 전 옛 인덱스에서도 정렬이 깨지지 않게 unmappedType.
             builder.sort { s ->
                 s.field { f -> f.field(EVENT_START).order(SortOrder.Asc).unmappedType(FieldType.Date).missing(FieldValue.of("_last")) }

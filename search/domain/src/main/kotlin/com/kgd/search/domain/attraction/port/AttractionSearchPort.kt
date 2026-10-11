@@ -2,6 +2,7 @@ package com.kgd.search.domain.attraction.port
 
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionFeedEntry
+import com.kgd.search.domain.attraction.model.AttractionSignalSort
 import com.kgd.search.domain.attraction.model.AttributeFacetCounts
 import com.kgd.search.domain.attraction.model.AttributeSelection
 import com.kgd.search.domain.attraction.model.EventDateRange
@@ -99,10 +100,14 @@ interface AttractionSearchPort {
         val eventRange: EventDateRange? = null,
         /** 유효 시작일 오름차순(날짜 없음은 뒤), 같으면 id 오름차순. 거리순보다 우선한다. */
         val sortByEventStart: Boolean = false,
+        /** 이 사이트 근거 정렬 — 하한 이상 문서만 값 내림차순, 같으면 id 오름차순. null 이면 이 조건이 없다. */
+        val signalSort: AttractionSignalSort? = null,
     ) {
         init {
             // 정렬이 점수를 버리므로 벡터 레그는 값만 치르고, 하이브리드 질의는 정렬을 아예 받지 않는다.
             require(!sortByEventStart || embedding == null) { "시작일 정렬에는 벡터를 실지 않는다" }
+            require(signalSort == null || embedding == null) { "찜·클릭 정렬에는 벡터를 실지 않는다" }
+            require(signalSort == null || !sortByEventStart) { "정렬은 하나만 건다" }
             // 건수는 오늘 요일(「오늘 정기휴무 아님」)이 있어야 셀 수 있다. 요일은 선택이 갖는다.
             require(!countAttributeFacets || attributes != null) { "속성 패싯을 세려면 선택(빈 선택 포함)이 필요하다" }
         }

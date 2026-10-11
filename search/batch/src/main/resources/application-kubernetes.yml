@@ -8,3 +8,7 @@ product:
 place:
   service:
     url: http://content:8097
+
+wishlist:
+  service:
+    url: http://account:8093

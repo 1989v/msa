@@ -35,6 +35,7 @@ resources:
   - 19-allow-portal-fe-to-search-render.yaml
   - 20-allow-search-shell-fetch.yaml
   - 21-allow-crawl-stats-egress.yaml
+  - 22-allow-search-batch-to-account.yaml
 
 # 주의: commonLabels / labels (includeSelectors=true) 는 사용 금지.
 # NetworkPolicy 의 podSelector.matchLabels 에 합쳐지면 selector 가

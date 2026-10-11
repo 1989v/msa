@@ -6,6 +6,7 @@ import ch.qos.logback.core.read.ListAppender
 import com.kgd.search.domain.attraction.model.AttractionAttributeParser
 import com.kgd.search.domain.attraction.model.AttractionClickSignal
 import com.kgd.search.infrastructure.client.PlaceApiClient
+import com.kgd.search.infrastructure.client.WishlistApiClient
 import com.kgd.search.infrastructure.clicksignal.ClickHouseClickSignalReader
 import com.kgd.search.infrastructure.indexing.AttractionIndexDocument
 import com.kgd.search.infrastructure.indexing.IndexAliasManager
@@ -54,7 +55,8 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
     val bulkProcessor = mockk<OsBulkDocumentProcessor>(relaxed = true)
     val aliasManager = mockk<IndexAliasManager>()
     val clickReader = mockk<ClickHouseClickSignalReader>()
-    val tasklet = AttractionApiReindexTasklet(placeApiClient, bulkProcessor, aliasManager, clickReader).also {
+    val wishlistClient = mockk<WishlistApiClient>()
+    val tasklet = AttractionApiReindexTasklet(placeApiClient, bulkProcessor, aliasManager, clickReader, wishlistClient).also {
         ReflectionTestUtils.setField(it, "indexAlias", "attractions")
         ReflectionTestUtils.setField(it, "pageSize", 100)
         // 기본은 빈 값 = 벡터 없이 색인. 첫 채움 전 운영이 실제로 이 상태다.
@@ -97,6 +99,7 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
         every { aliasManager.updateAliasAndCleanup("attractions", "attractions_1", maxRetention = 1) } just Runs
         every { bulkProcessor.errorCount } returns AtomicLong(0)
         every { clickReader.loadUniqueClickers(any()) } returns emptyMap()
+        coEvery { wishlistClient.fetchTargetCounts(any(), any()) } returns emptyMap()
     }
 
     given("관광지 재색인 실행 시") {
@@ -464,7 +467,7 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
     given("재색인이 행사 유효 기간·코스 구성을 싣고 끝난 행사를 후보에서 뺄 때") {
         // 재색인일은 KST 2026-10-02 00:30 — UTC 날짜(10-01)로 판정하면 어제 끝난 행사가 진행 중으로 남는다
         val clock = Clock.fixed(Instant.parse("2026-10-01T15:30:00Z"), ZoneOffset.UTC)
-        val timedTasklet = AttractionApiReindexTasklet(placeApiClient, bulkProcessor, aliasManager, clickReader, clock).also {
+        val timedTasklet = AttractionApiReindexTasklet(placeApiClient, bulkProcessor, aliasManager, clickReader, wishlistClient, clock).also {
             ReflectionTestUtils.setField(it, "indexAlias", "attractions")
             ReflectionTestUtils.setField(it, "pageSize", 100)
             ReflectionTestUtils.setField(it, "embeddingModelRef", MODEL_REF)
@@ -558,6 +561,8 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
             coEvery { placeApiClient.lookupLinks(any()) } answers { sourceLinks.filterKeys { it in firstArg<List<Long>>() } }
             coEvery { placeApiClient.lookupExtras(any()) } answers { sourceExtras.filterKeys { it in firstArg<List<Long>>() } }
             coEvery { placeApiClient.fetchCategoryNames("ko") } returns mapOf("EX050100" to "온천 / 사우나 / 스파")
+            // 찜 — 201 은 4명(읽기 쪽 왕복용), 202 는 2명(하한 미만이라 싣지 않는다)
+            coEvery { wishlistClient.fetchTargetCounts("ATTRACTION", 3) } returns mapOf("201" to 4, "202" to 2)
             coEvery { placeApiClient.lookupSimilar(MODEL_REF, any()) } returns mapOf(
                 // 103 은 끝난 행사, 105 는 날짜 없는 행사 — 둘 다 빠지고 순위 순서는 남는다
                 201L to PlaceApiClient.SimilarDto(MODEL_REF, listOf(103L, 101L, 105L, 202L)),
@@ -913,6 +918,62 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                 }
                 verify { aliasManager.updateAliasAndCleanup("attractions", "attractions_1", maxRetention = 1) }
                 logs.list.single { it.formattedMessage.startsWith("클릭 신호") }.level.toString() shouldBe "WARN"
+            }
+        }
+    }
+
+    given("재색인이 찜 신호를 붙일 때") {
+        fun capturedLogs(): ListAppender<ILoggingEvent> =
+            ListAppender<ILoggingEvent>().also { appender ->
+                appender.start()
+                (LoggerFactory.getLogger(AttractionApiReindexTasklet::class.java) as Logger).addAppender(appender)
+            }
+        // 재색인일 KST 2026-10-11 00:30 — UTC 날짜(10-10)가 아니라 KST 날짜가 기준일이다
+        val clock = Clock.fixed(Instant.parse("2026-10-10T15:30:00Z"), ZoneOffset.UTC)
+        val timed = AttractionApiReindexTasklet(placeApiClient, bulkProcessor, aliasManager, clickReader, wishlistClient, clock).also {
+            ReflectionTestUtils.setField(it, "indexAlias", "attractions")
+            ReflectionTestUtils.setField(it, "pageSize", 100)
+            ReflectionTestUtils.setField(it, "embeddingModelRef", "")
+        }
+
+        `when`("wishlist 가 관광지 문서 id 별 찜 수를 주면") {
+            then("하한 3명을 넘겨 부르고, 3명 이상만 싣고 2명·없는 문서는 필드가 없으며, 국·영 문서는 따로 센다") {
+                clearMocks(wishlistClient, answers = false)
+                val documents = captureDocuments()
+                onePage(dto(1, "ko"), dto(2, "en"), dto(3, "ko"), dto(4, "ko"))
+                // 1(국문)과 2(영문)는 같은 장소의 두 언어 문서라도 각자 센다
+                coEvery { wishlistClient.fetchTargetCounts("ATTRACTION", 3) } returns mapOf("1" to 3, "2" to 5, "3" to 2)
+                val logs = capturedLogs()
+
+                timed.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+
+                coVerify(exactly = 1) { wishlistClient.fetchTargetCounts("ATTRACTION", 3) }
+                val sources = documents.associate { it.id to bulkSource(it) }
+                sources.getValue("1")["savedCount"] shouldBe 3
+                sources.getValue("2")["savedCount"] shouldBe 5
+                sources.getValue("3").keys shouldNotContain "savedCount"
+                sources.getValue("4").keys shouldNotContain "savedCount"
+                sources.values.forEach { it["signalsAsOf"] shouldBe "2026-10-11" }
+                logs.list.map { it.formattedMessage }.single { it.startsWith("Attraction reindex complete") } shouldContain "saved 2 (min 3)"
+            }
+        }
+
+        `when`("wishlist 조회가 실패하면") {
+            then("필드를 비운 채 끝까지 색인하고 경고와 요약 줄에 실패를 남긴다") {
+                val documents = captureDocuments()
+                onePage(dto(1, "ko"), dto(2, "ko"))
+                coEvery { wishlistClient.fetchTargetCounts(any(), any()) } throws TimeoutException("account down")
+                val logs = capturedLogs()
+
+                val result = timed.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+
+                result shouldBe RepeatStatus.FINISHED
+                documents.size shouldBe 2
+                documents.forEach { bulkSource(it).keys shouldNotContain "savedCount" }
+                verify { aliasManager.updateAliasAndCleanup("attractions", "attractions_1", maxRetention = 1) }
+                logs.list.single { it.formattedMessage.startsWith("찜 신호") }.level.toString() shouldBe "WARN"
+                logs.list.map { it.formattedMessage }.single { it.startsWith("Attraction reindex complete") } shouldContain
+                    "saved 0 (min 3, load failed)"
             }
         }
     }

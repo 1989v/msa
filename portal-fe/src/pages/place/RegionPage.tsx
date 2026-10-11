@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   EVENT_CATEGORY,
   fetchAdministrativeRegions,
+  fetchRegionVisitorRanking,
   fetchRegionVisitors,
   searchAttractions,
   SIGHT_CATEGORIES,
@@ -31,6 +32,7 @@ import Footer from '../../components/Footer';
 import { secureImageUrl, titleParts } from './placeView';
 import EventLine from './EventLine';
 import RegionVisitorTrend from './RegionVisitorTrend';
+import RegionVisitorRanking from './RegionVisitorRanking';
 import TrackedLink from '../../analytics/TrackedLink';
 import { newViewId } from '../../analytics/identity';
 import { installFlushOnLeave } from '../../analytics/tracker';
@@ -150,6 +152,14 @@ export default function RegionPage() {
     staleTime: 60 * 60_000,
   });
 
+  // 시도 「타지 방문자가 많은 시군구」 — 시도 페이지에서만 부른다(시군구 페이지에는 순위가 없다). 실패하면 절만 빠진다.
+  const { data: visitorRanking } = useQuery({
+    queryKey: ['region-visitor-ranking', code],
+    queryFn: () => fetchRegionVisitorRanking(code),
+    enabled: isSido && region != null,
+    staleTime: 60 * 60_000,
+  });
+
   // 노출 기록용 화면 식별자 (ADR-0095) — 지역이 바뀌면 새 한 벌이다
   // eslint-disable-next-line react-hooks/exhaustive-deps -- code 가 바뀔 때만 새 한 벌이다
   const viewId = useMemo(() => newViewId(), [code]);
@@ -233,6 +243,10 @@ export default function RegionPage() {
             )}
 
             {visitorTrend && visitorTrend.months.length > 0 && <RegionVisitorTrend trend={visitorTrend} lang={lang} />}
+
+            {isSido && visitorRanking && (
+              <RegionVisitorRanking ranking={visitorRanking} sidoName={regionDisplayName(lang, region)} lang={lang} />
+            )}
 
             <Link className="place-btn primary" to={placePath(lang)}>
               {L.all}

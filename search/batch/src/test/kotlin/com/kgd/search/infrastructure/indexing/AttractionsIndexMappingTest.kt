@@ -118,6 +118,19 @@ class AttractionsIndexMappingTest : BehaviorSpec({
         }
     }
 
+    given("관광지 색인 정의의 찜 신호 필드") {
+        then("찜 수는 색인하지 않되 doc_values 로 정렬·범위 거르기를 하고, 기준일은 날짜 표시 전용이다") {
+            properties.path("savedCount").path("type").asString() shouldBe "integer"
+            properties.path("savedCount").path("index").asBoolean(true) shouldBe false
+            // 「많이 찜한 곳」 정렬·하한 거르기는 doc_values 를 읽는다 — 끄면 정렬이 실패한다
+            properties.path("savedCount").path("doc_values").asBoolean(true) shouldBe true
+            properties.path("uniqueClickers14d").path("doc_values").asBoolean(true) shouldBe true
+            properties.path("signalsAsOf").path("type").asString() shouldBe "date"
+            properties.path("signalsAsOf").path("format").asString() shouldBe "yyyy-MM-dd"
+            properties.path("signalsAsOf").path("index").asBoolean(true) shouldBe false
+        }
+    }
+
     given("관광지 색인 정의의 클릭 신호 필드") {
         then("방문자 수는 표시 전용이라 색인하지 않고, 계수는 점수 함수가 읽는 숫자 필드다") {
             properties.path("uniqueClickers14d").path("type").asString() shouldBe "integer"

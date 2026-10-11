@@ -3,6 +3,7 @@ package com.kgd.wishlist.infrastructure.persistence.adapter
 import com.kgd.wishlist.application.wishlist.port.WishlistRepositoryPort
 import com.kgd.wishlist.domain.model.WishlistCollection
 import com.kgd.wishlist.domain.model.WishlistItem
+import com.kgd.wishlist.domain.model.WishlistTargetCount
 import com.kgd.wishlist.domain.model.WishlistTargetType
 import com.kgd.wishlist.infrastructure.persistence.entity.WishlistCollectionJpaEntity
 import com.kgd.wishlist.infrastructure.persistence.entity.WishlistItemJpaEntity
@@ -20,6 +21,10 @@ class WishlistRepositoryAdapter(
 
     override fun countByTarget(targetType: WishlistTargetType, targetKey: String): Long =
         wishlistItemJpaRepository.countByTargetTypeAndTargetKey(targetType, targetKey)
+
+    override fun countGroupedByTarget(targetType: WishlistTargetType, min: Int, limit: Int): List<WishlistTargetCount> =
+        wishlistItemJpaRepository.countGroupedByTarget(targetType, min.toLong(), PageRequest.of(0, limit))
+            .map { WishlistTargetCount(it[0] as String, (it[1] as Number).toLong()) }
 
     override fun save(item: WishlistItem): WishlistItem {
         val entity = WishlistItemJpaEntity.fromDomain(item)

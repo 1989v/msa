@@ -339,6 +339,30 @@ export const fetchRegionVisitors = async (code: string): Promise<RegionVisitorTr
   return res.data.data;
 };
 
+/** 시도 「타지 방문자가 많은 시군구」 한 줄 — 수치는 명 단위·소수 버림, total = 외지인 + 외국인. */
+export interface RegionVisitorRankingItem {
+  code: string;
+  name: string;
+  nameEn: string | null;
+  outsiders: number;
+  foreigners: number;
+  total: number;
+}
+
+export interface RegionVisitorRanking {
+  /** 시도 안 모든 시군구가 모든 날을 받은 마지막 달(yyyy-MM). 없으면 null 이고 items 가 빈다 */
+  month: string | null;
+  items: RegionVisitorRankingItem[];
+}
+
+/** 시도 「타지 방문자가 많은 시군구」(한국관광공사 빅데이터). 방문 추이와 같은 place 레디스 캐시 경로다. */
+export const fetchRegionVisitorRanking = async (sidoCode: string): Promise<RegionVisitorRanking> => {
+  const res = await api.get<ApiResponse<RegionVisitorRanking>>(
+    `/api/places/administrative-regions/${encodeURIComponent(sidoCode)}/visitor-ranking`,
+  );
+  return res.data.data;
+};
+
 export { SIGHT_CATEGORIES } from '../seo/copy.mjs';
 
 /** 지도 위 토글로만 켜는 편의·식음·숙박 — 목록에는 올리지 않는다(숙박은 목록 칩이 아니라 여기다, ADR-0071 §5). */

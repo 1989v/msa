@@ -1,8 +1,11 @@
 package com.kgd.place.infrastructure.cache
 
+import com.kgd.place.application.region.port.AdministrativeRegionRepositoryPort
 import com.kgd.place.application.region.port.RegionVisitorRepositoryPort
+import com.kgd.place.application.region.service.RegionVisitorRankingService
 import com.kgd.place.application.region.service.RegionVisitorService
 import com.kgd.place.application.region.service.RegionVisitorSyncService
+import com.kgd.place.application.region.usecase.RegionVisitorRankingUseCase
 import com.kgd.place.application.region.usecase.RegionVisitorUseCase
 import com.kgd.place.application.region.usecase.SyncRegionVisitorsUseCase
 import com.kgd.place.domain.region.model.AdministrativeRegionLevel
@@ -37,17 +40,27 @@ import java.time.YearMonth
 class RegionVisitorCacheTest : BehaviorSpec({
     val repo = mockk<RegionVisitorRepositoryPort>()
     val txManager = mockk<PlatformTransactionManager>(relaxed = true)
+    // 시도 목록이 비어 있다 — 순위 갱신은 키를 만들지 않는다(순위 경로는 RegionVisitorRankingServiceTest)
+    val adminRepo = mockk<AdministrativeRegionRepositoryPort>(relaxed = true)
     val writer = InMemoryCacheWriter()
 
     val ctx = AnnotationConfigApplicationContext().apply {
         beanFactory.registerSingleton("visitorRepo", repo)
         beanFactory.registerSingleton("transactionManager", txManager)
+        beanFactory.registerSingleton("adminRepo", adminRepo)
         beanFactory.registerSingleton("writer", writer)
-        register(RegionCacheTest.TestBeans::class.java, RegionCacheConfig::class.java, RegionVisitorService::class.java, RegionVisitorSyncService::class.java)
+        register(
+            RegionCacheTest.TestBeans::class.java, RegionCacheConfig::class.java,
+            RegionVisitorService::class.java, RegionVisitorRankingService::class.java, RegionVisitorSyncService::class.java,
+        )
         refresh()
     }
     val mvc: MockMvc = MockMvcBuilders.standaloneSetup(
-        RegionVisitorController(ctx.getBean(RegionVisitorUseCase::class.java), ctx.getBean(SyncRegionVisitorsUseCase::class.java)),
+        RegionVisitorController(
+            ctx.getBean(RegionVisitorUseCase::class.java),
+            ctx.getBean(SyncRegionVisitorsUseCase::class.java),
+            ctx.getBean(RegionVisitorRankingUseCase::class.java),
+        ),
     ).build()
 
     fun body(url: String): ByteArray = mvc.perform(get(url)).andReturn().response.also { it.status shouldBe 200 }.contentAsByteArray

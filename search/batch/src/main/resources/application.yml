@@ -29,6 +29,11 @@ atlas:
   service:
     url: ${ATLAS_SERVICE_URL:http://localhost:8089}
 
+# 찜 집계 — 관광지 재색인이 색인 savedCount 를 싣는다. wishlist 는 account 파드에 폴드돼 있다(ADR-0093)
+wishlist:
+  service:
+    url: ${WISHLIST_SERVICE_URL:http://localhost:8093}
+
 search:
   index:
     alias: products

@@ -13,6 +13,9 @@
 # search-batch 쪽은 그래서 **실제로 막힌 상태**였다(대상 CronJob 이 suspend 라 안 드러났을 뿐).
 # 라벨을 따라가지 않으면 규칙은 에러 없이 무효가 된다.
 #   - search-batch → content  (attractionApiReindexJob 페이지 풀스캔, ADR-0065)
+#   - search-batch → account  (attractionApiReindexJob 이 찜 집계를 회차당 한 번, wishlist 는 account 폴드)
+#     → 22-allow-search-batch-to-account.yaml. 따로 둔 이유: verifyPodTopology 의 host-of 검사가 파일 단위라
+#       (첫 host-of 하나 · 파일 안 모든 이름과 대조) 이 파일에 넣으면 검사가 물리지 않고 아래 atlas 검사도 밀려난다.
 #   - search → content        (질의 이해가 쓰는 분류 코드표 조회, ADR-0090 D8)
 #     ADR-0093: place 는 content 파드로 폴드됐다.
 #

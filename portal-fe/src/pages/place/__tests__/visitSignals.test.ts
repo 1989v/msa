@@ -3,11 +3,13 @@ import type { PlaceLang } from '../../../api/placeApi';
 import { FREQUENTLY_CLICKED_MIN as REEXPORTED_CLICKED_MIN } from '../placeAttributes';
 import {
   FREQUENTLY_CLICKED_MIN,
+  KTO_RANKING_COPY,
   SAVED_MIN,
   SIGNAL_COPY,
   SIGNAL_KINDS,
   type SignalKind,
   formatSignalLine,
+  ktoRankingSignalLine,
   siteSignalSentence,
   visitorTrendLinkLabel,
 } from '../visitSignals';
@@ -34,6 +36,11 @@ function everyText(): { kind: SignalKind | 'LINK'; text: string }[] {
     out.push({ kind: 'SITE_SAVES', text: siteSignalSentence('SITE_SAVES', 100, lang, '2026-10-10') ?? '' });
     out.push({ kind: 'SITE_CLICKS', text: siteSignalSentence('SITE_CLICKS', 100, lang, '2026-10-10') ?? '' });
     out.push({ kind: 'KTO_REGION_VISITORS', text: visitorTrendLinkLabel('해운대구', lang) });
+    const C = KTO_RANKING_COPY[lang];
+    for (const text of [C.target('부산'), C.note, C.value(12.5), C.basisToggle, ...C.basis, C.sourceLine]) {
+      out.push({ kind: 'KTO_REGION_VISITORS', text });
+    }
+    out.push({ kind: 'KTO_REGION_VISITORS', text: ktoRankingSignalLine('부산', '2026-08', lang) ?? '' });
   }
   return out;
 }
@@ -126,5 +133,15 @@ describe('관광지 상세의 시군구 방문 추이 링크', () => {
   it('수치 없이 링크 문구만', () => {
     expect(visitorTrendLinkLabel('해운대구', 'ko')).toBe('해운대구 방문 추이 보기');
     expect(visitorTrendLinkLabel('Haeundae-gu', 'en')).toBe('Visitor trend in Haeundae-gu');
+  });
+});
+
+describe('visitSignals — 시도 순위 근거 줄', () => {
+  it('원천·대상·기간 세 칸 + 외지인+외국인, 달이 없으면 줄을 내지 않는다', () => {
+    expect(ktoRankingSignalLine('부산광역시', '2026-08')).toBe(
+      '한국관광공사 빅데이터(이동통신 추정) · 부산광역시 시군구 · 2026년 8월 · 외지인+외국인',
+    );
+    expect(ktoRankingSignalLine('부산광역시', null)).toBeNull();
+    expect(KTO_RANKING_COPY.ko.value(1234.99)).toBe('약 1,234명');
   });
 });

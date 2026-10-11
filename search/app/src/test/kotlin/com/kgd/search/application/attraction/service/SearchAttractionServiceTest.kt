@@ -6,6 +6,7 @@ import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.application.queryvector.usecase.ResolveQueryVectorUseCase
 import com.kgd.search.domain.attraction.model.AttractionDocument
+import com.kgd.search.domain.attraction.model.AttractionSignalSort
 import com.kgd.search.domain.attraction.model.Admission
 import com.kgd.search.domain.attraction.model.AttractionAttributes
 import com.kgd.search.domain.attraction.model.AttractionRegion
@@ -607,6 +608,47 @@ class SearchAttractionServiceTest : BehaviorSpec({
             }
         }
     }
+    given("찜순·클릭순 정렬") {
+        fun sentQuery(query: SearchAttractionUseCase.Query, hybridEnabled: Boolean = false): AttractionSearchPort.SearchQuery {
+            val captured = slot<AttractionSearchPort.SearchQuery>()
+            every { searchPort.search(capture(captured), any()) } returns found(emptyList())
+            serviceWith(hybridEnabled = hybridEnabled).execute(query)
+            return captured.captured
+        }
+
+        then("sort=saved·clicked 는 하한을 실은 근거 정렬을 넘긴다 — 하한은 찜 3명·클릭 5명") {
+            sentQuery(SearchAttractionUseCase.Query(sort = "saved")).signalSort shouldBe AttractionSignalSort.SAVED
+            sentQuery(SearchAttractionUseCase.Query(sort = "clicked")).signalSort shouldBe AttractionSignalSort.CLICKED
+            AttractionSignalSort.SAVED.min shouldBe 3
+            AttractionSignalSort.CLICKED.min shouldBe 5
+        }
+        then("키워드가 있고 하이브리드가 켜져 있어도 벡터를 만들지 않는다 — 하이브리드 경로를 타지 않는다") {
+            every { resolveQueryVector.resolve(any(), any()) } returns listOf(0.6f, 0.8f)
+            listOf("saved", "clicked").forEach { sort ->
+                sentQuery(SearchAttractionUseCase.Query(keyword = "한옥", sort = sort), hybridEnabled = true).embedding shouldBe null
+            }
+            verify(exactly = 0) { resolveQueryVector.resolve(any(), any()) }
+        }
+        then("다른 정렬·모르는 값은 근거 정렬이 아니다") {
+            listOf("relevance", "eventStart", "distance", "SAVED", "").forEach { sort ->
+                (sort to sentQuery(SearchAttractionUseCase.Query(sort = sort)).signalSort) shouldBe (sort to null)
+            }
+        }
+        then("목록 결과에도 찜 수와 기준일이 실린다 — 「많이 찜한 곳」 카드가 쓴다") {
+            every { searchPort.search(any(), any()) } returns found(
+                listOf(
+                    AttractionSearchPort.AttractionHit(
+                        document().copy(savedCount = 4, signalsAsOf = LocalDate.of(2026, 10, 11)),
+                        score = 1.0,
+                    ),
+                ),
+            )
+            val item = serviceWith().execute(SearchAttractionUseCase.Query(sort = "saved")).attractions.single()
+            item.savedCount shouldBe 4
+            item.signalsAsOf shouldBe LocalDate.of(2026, 10, 11)
+        }
+    }
+
     given("행사 필터·정렬 — 고정 시계 2026-10-02T15:30Z (KST 10-03 토요일 00:30)") {
         val kstSaturday = Clock.fixed(Instant.parse("2026-10-02T15:30:00Z"), ZoneOffset.UTC)
 

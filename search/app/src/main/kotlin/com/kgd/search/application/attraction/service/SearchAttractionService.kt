@@ -10,6 +10,7 @@ import com.kgd.search.domain.attraction.model.Admission
 import com.kgd.search.domain.attraction.model.AttractionAttributeCodes
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionSeoText
+import com.kgd.search.domain.attraction.model.AttractionSignalSort
 import com.kgd.search.domain.attraction.model.AttributeFacetCounts
 import com.kgd.search.domain.attraction.model.AttributeSelection
 import com.kgd.search.domain.attraction.model.BarrierFreeInfo
@@ -79,6 +80,7 @@ class SearchAttractionService(
     override fun execute(query: SearchAttractionUseCase.Query): SearchAttractionUseCase.Result {
         val geo = toGeoFilter(query)
         val sortByEventStart = query.sort == SORT_EVENT_START
+        val signalSort = AttractionSignalSort.of(query.sort)
         val pageable = PageRequest.of(query.page.coerceAtLeast(0), query.size.coerceIn(1, 100))
         val original = query.keyword?.takeIf { it.isNotBlank() }
         // 오타 교정은 두 레그 모두에 준다 — 오타가 섞인 문장은 벡터도 엉뚱한 곳을 가리킨다.
@@ -88,7 +90,7 @@ class SearchAttractionService(
         if (corrected != null) correctionCounter.increment()
         val keyword = corrected ?: original
         // 벡터 레그에는 **원문**을 준다 — 문장의 뜻이 그 레그의 전부라 잘라내면 안 된다 (ADR-0090 개정).
-        val embedding = resolveEmbedding(keyword, geo, sortByEventStart)
+        val embedding = resolveEmbedding(keyword, geo, sortByEventStart || signalSort != null)
         // 키워드 레그에는 의도어를 뺀 잔여만 준다. 형태소가 쪼갠 조각이 내용어로 채점되는 것을 막는다.
         val understood = keyword?.let { QueryIntent.analyze(it, categoryLexicon.lexicon(query.lang)) }
         if (understood?.hasFilter == true) intentCounter.increment()
@@ -117,6 +119,7 @@ class SearchAttractionService(
                 eventRange = EventStatusFilter.of(query.eventStatus?.trim())
                     ?.let { EventSchedule.range(it, EventSchedule.todayKst(clock.instant())) },
                 sortByEventStart = sortByEventStart,
+                signalSort = signalSort,
             ),
             pageable,
         )
@@ -172,20 +175,20 @@ class SearchAttractionService(
 
     /**
      * 벡터 레그를 켤지 정한다. **끄는 쪽이 기본**이고, 넷 중 하나라도 아니면 BM25 로 간다:
-     * 기능이 켜져 있고 · 스탬프가 설정돼 있고 · 키워드가 있고 · 거리순·시작일순 정렬이 아니다.
+     * 기능이 켜져 있고 · 스탬프가 설정돼 있고 · 키워드가 있고 · 거리순·시작일순·찜순·클릭순 정렬이 아니다.
      *
-     * 거리순·시작일순을 빼는 이유: 정렬이 점수를 무시하므로 벡터 레그를 얹어도 순서가 그대로다 —
+     * 거리순·시작일순·찜순·클릭순을 빼는 이유: 정렬이 점수를 무시하므로 벡터 레그를 얹어도 순서가 그대로다 —
      * 이웃 100개를 훑는 값만 치르고 얻는 것이 없다.
      */
     private fun resolveEmbedding(
         keyword: String?,
         geo: AttractionSearchPort.GeoFilter?,
-        sortByEventStart: Boolean,
+        sortIgnoresScore: Boolean,
     ): List<Float>? {
         // 검색어가 없는 목록 조회는 **폴백이 아니다** — 인코딩할 질의가 애초에 없다.
         // 이것을 bm25 로 세면 「벡터를 쓰려다 못 썼다」로 읽혀 폴백률이 부풀려진다.
         if (keyword == null) return null
-        if (!hybrid.enabled || !queryVector.enabled || geo?.sortByDistance == true || sortByEventStart) {
+        if (!hybrid.enabled || !queryVector.enabled || geo?.sortByDistance == true || sortIgnoresScore) {
             bm25Counter.increment()
             return null
         }
@@ -270,6 +273,8 @@ class SearchAttractionService(
             SearchAttractionUseCase.Similar(it.id, it.title, it.sidoName, it.eventEndEffective)
         },
         uniqueClickers14d = if (summarize) null else uniqueClickers14d,
+        savedCount = savedCount,
+        signalsAsOf = signalsAsOf,
         eventStart = eventPeriod?.start,
         eventEnd = eventPeriod?.end,
         courseStops = courseStops?.map { SearchAttractionUseCase.CourseStop(it.order, it.contentId, it.name, it.attractionId) },

@@ -2,11 +2,15 @@ package com.kgd.wishlist.application.wishlist.port
 
 import com.kgd.wishlist.domain.model.WishlistCollection
 import com.kgd.wishlist.domain.model.WishlistItem
+import com.kgd.wishlist.domain.model.WishlistTargetCount
 import com.kgd.wishlist.domain.model.WishlistTargetType
 
 interface WishlistRepositoryPort {
     /** 이 대상을 찜한 사람 수. 로그인 없이도 볼 수 있는 공개 수치다 */
     fun countByTarget(targetType: WishlistTargetType, targetKey: String): Long
+
+    /** 대상별 찜 수 — [min] 명 이상만, 많은 순(같으면 키 순)으로 최대 [limit] 건. */
+    fun countGroupedByTarget(targetType: WishlistTargetType, min: Int, limit: Int): List<WishlistTargetCount>
 
     fun save(item: WishlistItem): WishlistItem
     fun findByMemberAndTarget(memberId: Long, targetType: WishlistTargetType, targetKey: String): WishlistItem?

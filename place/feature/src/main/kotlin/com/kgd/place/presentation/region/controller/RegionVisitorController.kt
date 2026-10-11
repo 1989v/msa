@@ -1,6 +1,7 @@
 package com.kgd.place.presentation.region.controller
 
 import com.kgd.common.response.ApiResponse
+import com.kgd.place.application.region.usecase.RegionVisitorRankingUseCase
 import com.kgd.place.application.region.usecase.RegionVisitorUseCase
 import com.kgd.place.application.region.usecase.SyncRegionVisitorsUseCase
 import jakarta.validation.Valid
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController
  * 지역 방문자 (한국관광공사 빅데이터).
  *
  * - 조회 `GET /api/places/administrative-regions/{code}/visitors` — 지역 허브가 부른다. 레디스 캐시 경로다(ADR-0071 §10).
+ * - 시도 순위 `GET /api/places/administrative-regions/{sidoCode}/visitor-ranking` — 시도 페이지 「타지 방문자가 많은
+ *   시군구」. 같은 레디스 경로다. 지금 시도가 아닌 코드는 400.
  * - 적재 `PUT /internal/regions/visitors` — 수집기(place-ingest)만. 게이트웨이가 `/internal` 을 라우팅하지 않는다.
  *   같은 요청을 다시 보내도 결과가 같다((수준, 지역, 날짜, 구분) 키 upsert).
  */
@@ -25,10 +28,15 @@ import org.springframework.web.bind.annotation.RestController
 class RegionVisitorController(
     private val visitors: RegionVisitorUseCase,
     private val sync: SyncRegionVisitorsUseCase,
+    private val rankings: RegionVisitorRankingUseCase,
 ) {
 
     @GetMapping("/api/places/administrative-regions/{code}/visitors")
     fun trend(@PathVariable code: String): ApiResponse<RegionVisitorUseCase.Trend> = ApiResponse.success(visitors.trend(code))
+
+    @GetMapping("/api/places/administrative-regions/{sidoCode}/visitor-ranking")
+    fun ranking(@PathVariable sidoCode: String): ApiResponse<RegionVisitorRankingUseCase.Ranking> =
+        ApiResponse.success(rankings.ranking(sidoCode))
 
     @PutMapping("/internal/regions/visitors")
     fun apply(@Valid @RequestBody request: RegionVisitorBulkRequest): ApiResponse<SyncRegionVisitorsUseCase.Applied> =

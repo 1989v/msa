@@ -505,6 +505,39 @@ class PlaceSchemaIntegrationSpec(
             }
     }
 
+    Given("시도 순위용으로 시도 접두 범위를 읽을 때") {
+        Then("그 시도의 시군구 행만 (시군구, 달, 구분)으로 묶고, 시도 행과 다른 시도는 빠진다")
+            .config(enabledIf = { dockerAvailable }) {
+                val adapter = RegionVisitorRepositoryAdapter(r9)
+                fun row(level: AdministrativeRegionLevel, code: String, day: Int, div: String, num: String) =
+                    RegionVisitorDaily(level, code, LocalDate.of(2026, 8, day), div, num)
+                val at = LocalDateTime.of(2026, 10, 3, 2, 30)
+                tx.execute {
+                    adapter.upsertAll(
+                        listOf(
+                            row(AdministrativeRegionLevel.SIGUNGU, "26350", 1, "2", "10.5"),
+                            row(AdministrativeRegionLevel.SIGUNGU, "26350", 2, "2", "20.25"),
+                            row(AdministrativeRegionLevel.SIGUNGU, "26350", 3, "3", "1"),
+                            row(AdministrativeRegionLevel.SIGUNGU, "26110", 31, "2", "7"),
+                            row(AdministrativeRegionLevel.SIDO, "26", 1, "2", "99999"),
+                            row(AdministrativeRegionLevel.SIGUNGU, "27110", 1, "2", "88888"),
+                        ),
+                        at,
+                    )
+                }
+
+                adapter.findLatestSigunguDate("26") shouldBe LocalDate.of(2026, 8, 31)
+                adapter.findLatestSigunguDate("36") shouldBe null
+                val totals = adapter.findSigunguMonthlyTotals("26", LocalDate.of(2026, 8, 1))
+                totals.map { it.code }.toSet() shouldBe setOf("26350", "26110")
+                val haeundae = totals.single { it.code == "26350" && it.touDivCd == "2" }
+                haeundae.month shouldBe YearMonth.of(2026, 8)
+                haeundae.days shouldBe 2
+                haeundae.total.compareTo(BigDecimal("30.750")) shouldBe 0
+                adapter.findSigunguMonthlyTotals("26", LocalDate.of(2026, 9, 1)) shouldBe emptyList()
+            }
+    }
+
     Given("비슷한 곳 목록을 V22 표에 두 번 적재할 때") {
         Then("문서·스탬프 단위로 통째로 바뀌고, 다른 스탬프 목록은 남으며, 조회는 순위 순이어야 한다")
             .config(enabledIf = { dockerAvailable }) {

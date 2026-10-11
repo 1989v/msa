@@ -5,10 +5,12 @@ import com.kgd.wishlist.application.wishlist.usecase.AddWishlistItemUseCase
 import com.kgd.wishlist.application.wishlist.usecase.CountWishlistTargetUseCase
 import com.kgd.wishlist.application.wishlist.usecase.GetWishlistKeysUseCase
 import com.kgd.wishlist.application.wishlist.usecase.GetWishlistUseCase
+import com.kgd.wishlist.application.wishlist.usecase.ListWishlistTargetCountsUseCase
 import com.kgd.wishlist.application.wishlist.usecase.ManageCollectionUseCase
 import com.kgd.wishlist.application.wishlist.usecase.RemoveWishlistItemUseCase
 import com.kgd.wishlist.domain.model.WishlistCollection
 import com.kgd.wishlist.domain.model.WishlistItem
+import com.kgd.wishlist.domain.model.WishlistTargetCount
 import com.kgd.wishlist.domain.model.WishlistTargetType
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
@@ -25,7 +27,8 @@ class WishlistService(
     GetWishlistUseCase,
     GetWishlistKeysUseCase,
     ManageCollectionUseCase,
-    CountWishlistTargetUseCase {
+    CountWishlistTargetUseCase,
+    ListWishlistTargetCountsUseCase {
 
     // PUT 멱등 — 이미 찜한 대상이면 그 행을 돌려준다. 더블탭·재시도가 에러가 되지 않는다 (ADR-0074 §2).
     @Transactional
@@ -143,4 +146,11 @@ class WishlistService(
     override fun execute(query: CountWishlistTargetUseCase.Query): Long =
         wishlistRepositoryPort.countByTarget(query.targetType, query.targetKey)
 
+    /** 단일 집계 질의라 트랜잭션을 선언하지 않는다 (transactional-usage.md 규칙 1) */
+    override fun execute(query: ListWishlistTargetCountsUseCase.Query): List<WishlistTargetCount> =
+        wishlistRepositoryPort.countGroupedByTarget(
+            query.targetType,
+            maxOf(query.min, 1),
+            ListWishlistTargetCountsUseCase.MAX_ITEMS,
+        )
 }

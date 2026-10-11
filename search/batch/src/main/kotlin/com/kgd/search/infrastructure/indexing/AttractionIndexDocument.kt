@@ -123,6 +123,11 @@ data class AttractionIndexDocument(
     val similarElsewhere: List<Similar>? = null,
     /** 최근 14일 고유 클릭 방문자 수 — 상세 배지 표시용(mapping: index=false). 신호를 못 읽은 회차면 빈다. */
     val uniqueClickers14d: Int? = null,
+    /** 이 사이트 회원 찜 수(언어 문서 id 단위, 하한 이상만) — 상세 근거 줄·「많이 찜한 곳」 정렬(mapping: index=false, doc_values). */
+    val savedCount: Int? = null,
+    /** 찜·클릭 신호의 기준일(재색인 날짜, KST) — 표시 전용(mapping: index=false). */
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    val signalsAsOf: LocalDate? = null,
     /**
      * 순위 계수 — 키워드 레그 점수 함수가 곱한다(스위치 기본 꺼짐). 상한·최소 표본은 fvf 로 못 걸어
      * 재색인이 미리 계산한다([com.kgd.search.domain.attraction.model.AttractionClickSignal]). 신호가 없으면 1.0.
@@ -263,6 +268,8 @@ data class AttractionIndexDocument(
                 similarElsewhere = doc.similarElsewhere?.takeIf { it.isNotEmpty() }
                     ?.map { Similar(it.id, it.title, it.sidoName, it.eventEndEffective) },
                 uniqueClickers14d = doc.uniqueClickers14d,
+                savedCount = doc.savedCount,
+                signalsAsOf = doc.signalsAsOf,
                 clickBoost = AttractionClickSignal.boost(doc.uniqueClickers14d),
                 eventStartEffective = doc.eventPeriod?.start,
                 eventEndEffective = doc.eventPeriod?.end,

@@ -8,6 +8,7 @@ import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionFee
 import com.kgd.search.domain.attraction.model.AttractionKey
 import com.kgd.search.domain.attraction.model.AttractionRegion
+import com.kgd.search.domain.attraction.model.AttractionSaveSignal
 import com.kgd.search.domain.attraction.model.BarrierFreeInfo
 import com.kgd.search.domain.attraction.model.CongestionDay
 import com.kgd.search.domain.attraction.model.CourseStopsParse
@@ -24,6 +25,7 @@ import com.kgd.search.domain.attraction.model.SamePlaceGrouper
 import com.kgd.search.domain.attraction.model.SimilarPlace
 import com.kgd.search.domain.attraction.model.WellnessTheme
 import com.kgd.search.infrastructure.client.PlaceApiClient
+import com.kgd.search.infrastructure.client.WishlistApiClient
 import com.kgd.search.infrastructure.clicksignal.ClickHouseClickSignalReader
 import com.kgd.search.infrastructure.indexing.AttractionIndexDocument
 import com.kgd.search.infrastructure.indexing.IndexAliasManager
@@ -70,6 +72,7 @@ class AttractionApiReindexTasklet(
     private val bulkProcessor: OsBulkDocumentProcessor,
     private val aliasManager: IndexAliasManager,
     private val clickSignalReader: ClickHouseClickSignalReader,
+    private val wishlistApiClient: WishlistApiClient,
     /** 재색인일(KST) — 끝난 행사를 후보·건수에서 거르는 기준. */
     private val clock: Clock = Clock.systemUTC(),
 ) : Tasklet {
@@ -126,6 +129,7 @@ class AttractionApiReindexTasklet(
             }
 
             val uniqueClickers = loadClickSignal()
+            val savedCounts = loadSaveSignal()
 
             val today = EventSchedule.todayKst(clock.instant())
             val (projections, placements, attractionIds, samePlaces, alternates) = collectRegionPlacements(today)
@@ -156,6 +160,7 @@ class AttractionApiReindexTasklet(
             var relatedNotActive = 0L
             var extrasLookupFailures = 0L
             var linksLookupFailures = 0L
+            var withSaved = 0L
 
             while (afterId != null) {
                 val response = placeApiClient.fetchPageAfter(afterId, pageSize)
@@ -275,6 +280,9 @@ class AttractionApiReindexTasklet(
                         withCourseStops++
                         unmatchedCourseStops += stops.count { it.attractionId == null }
                     }
+                    // 찜은 언어 문서 id 단위다 — 국·영 찜을 합치지 않는다. 하한 미만은 싣지 않는다(집계가 이미 걸렀어도 한 번 더)
+                    val savedCount = savedCounts?.get(attraction.id.toString())?.takeIf { AttractionSaveSignal.meetsMin(it) }
+                    if (savedCount != null) withSaved++
                     val document = AttractionIndexDocument.fromDomain(
                         AttractionDocument(
                             id = attraction.id.toString(),
@@ -326,6 +334,9 @@ class AttractionApiReindexTasklet(
                             similarElsewhere = similarElsewhere,
                             // 신호를 읽었으면 없는 관광지는 0(클릭 없음), 못 읽었으면 비운다(모름)
                             uniqueClickers14d = uniqueClickers?.let { it[attraction.id.toString()] ?: 0 },
+                            savedCount = savedCount,
+                            // 근거 줄의 「{날짜} 기준」 — 찜·클릭을 이 회차에 읽었다는 날짜다
+                            signalsAsOf = today,
                             eventPeriod = eventPeriod,
                             courseStops = courseStops,
                             barrierFree = barrierFree,
@@ -368,6 +379,7 @@ class AttractionApiReindexTasklet(
                     "related $withRelated (not active $relatedNotActive), " +
                     "extras lookup failures $extrasLookupFailures, " +
                     "links lookup failures $linksLookupFailures, " +
+                    "saved $withSaved (min ${AttractionSaveSignal.SAVED_MIN}${if (savedCounts == null) ", load failed" else ""}), " +
                     "attribute parser v${AttractionAttributeParser.VERSION}, index pass ${elapsedMs(indexStartedAt)}ms"
             }
 
@@ -397,6 +409,16 @@ class AttractionApiReindexTasklet(
             .onFailure { e -> log.warn(e) { "클릭 신호를 못 읽어 uniqueClickers14d 없이 색인한다 (clickBoost 1.0)" } }
             .getOrNull()
     }
+
+    /**
+     * 찜 신호 — 회차당 한 번, wishlist 내부 집계에서 관광지(언어 문서 id)별 찜 수를 [AttractionSaveSignal.SAVED_MIN] 이상만 읽는다.
+     * 못 읽으면 null 을 돌려 필드를 비우고 색인은 이어 간다 — 찜이 없어도 상세는 성립한다. 실패는 WARN, 요약 줄에도 남긴다.
+     */
+    private suspend fun loadSaveSignal(): Map<String, Int>? =
+        runCatching { wishlistApiClient.fetchTargetCounts(SAVE_TARGET_TYPE, AttractionSaveSignal.SAVED_MIN) }
+            .onSuccess { loaded -> log.info { "찜 신호 ${loaded.size}곳 적재 (하한 ${AttractionSaveSignal.SAVED_MIN}명 이상)" } }
+            .onFailure { e -> log.warn(e) { "찜 신호를 못 읽어 savedCount 없이 색인한다" } }
+            .getOrNull()
 
     /**
      * 1차 훑기 — 색인할 문서(ACTIVE)의 투영만 모아 지역 안 위치를 센다. 벡터·링크는 부르지 않는다.
@@ -577,6 +599,9 @@ class AttractionApiReindexTasklet(
 
     companion object {
         private val LANGS = listOf("ko", "en")
+
+        /** wishlist 찜 대상 종류 — 관광지. 대상 키는 관광지 언어 문서 id 다. */
+        private const val SAVE_TARGET_TYPE = "ATTRACTION"
         private val introReader = ObjectMapper()
     }
 }

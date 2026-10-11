@@ -95,6 +95,21 @@ interface WishlistItemJpaRepository : JpaRepository<WishlistItemJpaEntity, Long>
      */
     fun countByTargetTypeAndTargetKey(targetType: WishlistTargetType, targetKey: String): Long
 
+    /**
+     * 대상별 찜 수 — 하한 이상만, 많은 순. `(target_type, target_key)` 인덱스 없이 훑는다: 하루 한 번 부르고
+     * 2026-10-11 전체 14행이다. 수십만 행을 넘으면 인덱스를 검토한다.
+     */
+    @Query(
+        """
+        SELECT w.targetKey, COUNT(w) FROM WishlistItemJpaEntity w
+        WHERE w.targetType = :targetType
+        GROUP BY w.targetKey
+        HAVING COUNT(w) >= :min
+        ORDER BY COUNT(w) DESC, w.targetKey ASC
+        """,
+    )
+    fun countGroupedByTarget(targetType: WishlistTargetType, min: Long, pageable: Pageable): List<Array<Any>>
+
     @Modifying
     @Query("DELETE FROM WishlistItemJpaEntity w WHERE w.targetType = :targetType AND w.targetKey = :targetKey")
     fun deleteAllByTarget(targetType: WishlistTargetType, targetKey: String)

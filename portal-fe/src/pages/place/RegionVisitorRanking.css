@@ -1,0 +1,32 @@
+/* 시도 「타지 방문자가 많은 시군구」 — 순위 목록. 색은 토큰만 쓴다(DESIGN.md) */
+.place-visitor-ranking {
+  margin-top: 1rem;
+}
+
+.place-visitor-ranking-list {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.place-visitor-ranking-row {
+  padding: 0.2rem 0;
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+.place-visitor-ranking-row > a {
+  color: inherit;
+}
+
+.place-visitor-ranking-value {
+  float: right;
+  font-family: var(--kh-font-mono);
+  font-size: 0.85rem;
+  color: var(--ko-text-secondary);
+}
+
+.place-visitor-ranking-basis > summary {
+  margin-top: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--ko-text-secondary);
+  cursor: pointer;
+}

@@ -21,6 +21,7 @@ private val log = KotlinLogging.logger {}
 class RegionVisitorSyncService(
     private val repository: RegionVisitorRepositoryPort,
     private val trends: RegionVisitorService,
+    private val rankings: RegionVisitorRankingService,
 ) : SyncRegionVisitorsUseCase {
 
     override fun apply(items: List<SyncRegionVisitorsUseCase.Item>): SyncRegionVisitorsUseCase.Applied {
@@ -41,6 +42,8 @@ class RegionVisitorSyncService(
         val applied = repository.upsertAll(rows, LocalDateTime.now(KST))
         val codes = rows.map { it.regionCode }.distinct()
         codes.forEach { trends.refresh(it) }
+        // 시도 순위는 그 시도 시군구 전부를 보고 정하므로, 받은 행의 시도마다 다시 계산한다
+        codes.map { it.take(2) }.distinct().forEach { rankings.refresh(it) }
         log.info { "지역 방문자: 적재 $applied · 캐시 갱신 지역 ${codes.size} · 날짜 ${rows.minOf { it.baseDate }}~${rows.maxOf { it.baseDate }}" }
         return SyncRegionVisitorsUseCase.Applied(applied, codes.size)
     }

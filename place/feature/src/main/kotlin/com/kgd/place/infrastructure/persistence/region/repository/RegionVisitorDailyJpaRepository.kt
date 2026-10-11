@@ -62,6 +62,37 @@ interface RegionVisitorDailyJpaRepository : JpaRepository<RegionVisitorDailyJpaE
     )
     fun findMonthlyTotals(@Param("level") level: String, @Param("code") code: String, @Param("from") from: LocalDate): List<MonthlyRow>
 
+    /** 시도 접두(시군구 코드 앞 2자리) 범위의 가장 최근 날 — PK 앞부분 (수준, 지역) 범위 읽기다. */
+    @Query(
+        value = """
+            SELECT MAX(base_ymd) FROM region_visitor_daily
+            WHERE region_level = 'SIGUNGU' AND region_code LIKE CONCAT(:sido, '%')
+        """,
+        nativeQuery = true,
+    )
+    fun findLatestSigunguDate(@Param("sido") sido: String): LocalDate?
+
+    /** 시도 아래 시군구의 (시군구, 달, 구분) 합계와 행 수. 큰 시도(경기 55구)도 12달이면 약 2천 행이다. */
+    @Query(
+        value = """
+            SELECT region_code AS code, DATE_FORMAT(base_ymd, '%Y-%m') AS month, tou_div_cd AS touDivCd,
+                   SUM(tou_num_value) AS total, COUNT(*) AS days
+            FROM region_visitor_daily
+            WHERE region_level = 'SIGUNGU' AND region_code LIKE CONCAT(:sido, '%') AND base_ymd >= :from
+            GROUP BY region_code, month, tou_div_cd
+        """,
+        nativeQuery = true,
+    )
+    fun findSigunguMonthlyTotals(@Param("sido") sido: String, @Param("from") from: LocalDate): List<SigunguMonthlyRow>
+
+    interface SigunguMonthlyRow {
+        fun getCode(): String
+        fun getMonth(): String
+        fun getTouDivCd(): String
+        fun getTotal(): BigDecimal
+        fun getDays(): Long
+    }
+
     interface MonthlyRow {
         fun getMonth(): String
         fun getTouDivCd(): String

@@ -3,6 +3,7 @@ package com.kgd.place.infrastructure.persistence.region.adapter
 import com.kgd.place.application.region.port.RegionVisitorRepositoryPort
 import com.kgd.place.domain.region.model.AdministrativeRegionLevel
 import com.kgd.place.domain.region.model.RegionVisitorDaily
+import com.kgd.place.domain.region.model.RegionVisitorRanking
 import com.kgd.place.domain.region.model.RegionVisitorTrend
 import com.kgd.place.infrastructure.persistence.region.repository.RegionVisitorDailyJpaRepository
 import org.springframework.stereotype.Component
@@ -34,5 +35,12 @@ class RegionVisitorRepositoryAdapter(
     override fun findMonthlyTotals(level: AdministrativeRegionLevel, code: String, from: LocalDate): List<RegionVisitorTrend.MonthlyTotal> =
         repository.findMonthlyTotals(level.name, code, from).map {
             RegionVisitorTrend.MonthlyTotal(YearMonth.parse(it.getMonth()), it.getTouDivCd(), it.getTotal(), it.getDays().toInt())
+        }
+
+    override fun findLatestSigunguDate(sidoCode: String): LocalDate? = repository.findLatestSigunguDate(sidoCode)
+
+    override fun findSigunguMonthlyTotals(sidoCode: String, from: LocalDate): List<RegionVisitorRanking.SigunguMonthlyTotal> =
+        repository.findSigunguMonthlyTotals(sidoCode, from).map {
+            RegionVisitorRanking.SigunguMonthlyTotal(it.getCode(), YearMonth.parse(it.getMonth()), it.getTouDivCd(), it.getTotal(), it.getDays().toInt())
         }
 }

@@ -1,5 +1,6 @@
 package com.kgd.search.domain.attraction.model
 
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 /**
@@ -96,6 +97,13 @@ data class AttractionDocument(
      * null 은 그 회차에 신호를 못 읽었거나 이 필드가 생기기 전 문서다 — 0(읽었는데 클릭 없음)과 다르다.
      */
     val uniqueClickers14d: Int? = null,
+    /**
+     * 이 사이트 회원의 찜 수 — 언어 문서 id 단위(국·영 찜을 합치지 않는다). 재색인이 wishlist 집계에서 읽어
+     * [AttractionSaveSignal.SAVED_MIN] 이상일 때만 싣는다. null 은 하한 미만·못 읽은 회차·옛 색인 문서다.
+     */
+    val savedCount: Int? = null,
+    /** 찜·클릭 신호의 기준일(재색인 날짜, KST) — 상세 근거 줄의 「{날짜} 기준」. 옛 색인 문서는 null. */
+    val signalsAsOf: LocalDate? = null,
     /** 행사(유형 15·85)의 유효 기간 ([EventSchedule.effectivePeriod]). 행사가 아니거나 날짜가 없으면 null(UNKNOWN). */
     val eventPeriod: EventPeriod? = null,
     /** 여행코스(유형 25)의 구성 지점, `subnum` 순서. 코스가 아니거나 원문을 못 읽었으면 null. */

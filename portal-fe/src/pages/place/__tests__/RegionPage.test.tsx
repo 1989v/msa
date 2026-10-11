@@ -9,13 +9,19 @@ vi.mock('../../../api/placeApi', async (importOriginal) => ({
   searchAttractions: vi.fn(),
   fetchAdministrativeRegions: vi.fn(),
   fetchRegionVisitors: vi.fn(),
+  fetchRegionVisitorRanking: vi.fn(() => Promise.resolve({ month: null, items: [] })),
 }));
 vi.mock('../../../analytics/tracker', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../analytics/tracker')>()),
   track: vi.fn(),
 }));
 
-import { fetchAdministrativeRegions, fetchRegionVisitors, searchAttractions } from '../../../api/placeApi';
+import {
+  fetchAdministrativeRegions,
+  fetchRegionVisitorRanking,
+  fetchRegionVisitors,
+  searchAttractions,
+} from '../../../api/placeApi';
 import { track } from '../../../analytics/tracker';
 import { renderRegionDetail } from '../../../../scripts/prerender-seo.mjs';
 import RegionPage from '../RegionPage';
@@ -38,6 +44,7 @@ function renderAt(path: string) {
       <MemoryRouter initialEntries={[path]}>
         <Routes>
           <Route path="/regions/:code" element={<RegionPage />} />
+          <Route path="/en/regions/:code" element={<RegionPage />} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -218,5 +225,83 @@ describe('RegionPage 사진 주소 https', () => {
 
     expect(document.querySelectorAll('img[src^="https://tong."]')).toHaveLength(2);
     expect(document.querySelectorAll('img[src^="http://tong."], [data-src^="http://tong."]')).toHaveLength(0);
+  });
+});
+
+describe('RegionPage 타지 방문자가 많은 시군구', () => {
+  const sejong: AdministrativeRegion = { code: '36', parentCode: null, level: 'SIDO', name: '세종특별자치시', nameEn: 'Sejong', latitude: 36.48, longitude: 127.28, attractionCount: 50 };
+  // 11개를 준다 — 화면은 서버가 준 상위 10을 그대로 그리고, 수치는 소수를 버린다
+  const items = Array.from({ length: 10 }, (_, i) => ({
+    code: `11${110 + i * 10}`, name: `구${i}`, nameEn: `Gu${i}`,
+    outsiders: 1000 - i, foreigners: 0, total: 1000 - i + 0.9,
+  }));
+  items[0] = { code: '11680', name: '강남구', nameEn: 'Gangnam-gu', outsiders: 18558922, foreigners: 1042586, total: 19601508.7 };
+  const ranking = { month: '2026-08', items };
+
+  beforeEach(() => {
+    vi.mocked(fetchAdministrativeRegions).mockImplementation(({ level }) =>
+      Promise.resolve(level === 'SIDO' ? [seoul, sejong] : [jongno]),
+    );
+    vi.mocked(fetchRegionVisitors).mockResolvedValue({ code: '11', level: 'SIDO', latestDate: null, months: [] });
+    respond([]);
+  });
+  afterEach(() => {
+    vi.clearAllMocks();
+    cleanup();
+  });
+
+  it('시도 — 시군구 페이지로 가는 순위, 「약 N명」(소수 버림), 원천·대상·기간 근거 줄과 기준 정의를 단다', async () => {
+    vi.mocked(fetchRegionVisitorRanking).mockResolvedValueOnce(ranking);
+    renderAt('/regions/11');
+    const section = await screen.findByRole('region', { name: '타지 방문자가 많은 시군구' });
+
+    expect(fetchRegionVisitorRanking).toHaveBeenCalledWith('11');
+    const rows = within(section).getAllByRole('listitem');
+    expect(rows).toHaveLength(10);
+    const first = within(rows[0]).getByRole('link');
+    expect(first).toHaveTextContent('강남구');
+    expect(first.getAttribute('href')).toBe('/regions/11680');
+    expect(rows[0]).toHaveTextContent('약 19,601,508명');
+    expect(rows[1]).toHaveTextContent('약 999명');
+    expect(
+      within(section).getByText('한국관광공사 빅데이터(이동통신 추정) · 서울특별시 시군구 · 2026년 8월 · 외지인+외국인'),
+    ).toBeInTheDocument();
+    expect(within(section).getByText('기준 보기')).toBeInTheDocument();
+    expect(within(section).getByText(/일자별 순방문자 합/)).toBeInTheDocument();
+    expect(within(section).getByText(/같은 사람이 사흘 머물면 3명/)).toBeInTheDocument();
+    // 원천 정의상 통근·통학은 빠져 있다 — 「통근 포함」을 붙이지 않는다
+    expect(section.textContent).not.toContain('통근 포함');
+  });
+
+  it('영문 — 영문 지역 링크와 「about N」, 같은 세 칸 근거 줄', async () => {
+    vi.mocked(fetchRegionVisitorRanking).mockResolvedValueOnce(ranking);
+    renderAt('/en/regions/11');
+    const section = await screen.findByRole('region', { name: 'Districts with the most visitors from elsewhere' });
+
+    const first = within(section).getAllByRole('listitem')[0];
+    expect(within(first).getByRole('link').getAttribute('href')).toBe('/en/regions/11680');
+    expect(first).toHaveTextContent('Gangnam-gu');
+    expect(first).toHaveTextContent('about 19,601,508');
+    expect(
+      within(section).getByText(
+        'Korea Tourism Organization big data (mobile carrier estimate) · Districts of Seoul · Aug 2026 · from other regions + foreigners',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('시군구 페이지는 순위를 부르지도 그리지도 않는다', async () => {
+    vi.mocked(fetchRegionVisitorRanking).mockResolvedValue(ranking);
+    renderAt('/regions/11110');
+    await screen.findByRole('heading', { level: 1 });
+    expect(fetchRegionVisitorRanking).not.toHaveBeenCalled();
+    expect(screen.queryByRole('region', { name: '타지 방문자가 많은 시군구' })).toBeNull();
+  });
+
+  it('세종 — 서버가 빈 결과(시군구 3개 미만)를 주면 절을 숨긴다', async () => {
+    vi.mocked(fetchRegionVisitorRanking).mockResolvedValueOnce({ month: null, items: [] });
+    renderAt('/regions/36');
+    await screen.findByRole('heading', { level: 1 });
+    await vi.waitFor(() => expect(fetchRegionVisitorRanking).toHaveBeenCalledWith('36'));
+    expect(screen.queryByRole('region', { name: '타지 방문자가 많은 시군구' })).toBeNull();
   });
 });

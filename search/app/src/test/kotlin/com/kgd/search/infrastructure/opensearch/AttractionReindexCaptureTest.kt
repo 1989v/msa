@@ -267,6 +267,23 @@ class AttractionReindexCaptureTest : BehaviorSpec({
                 documents.values.count { it.contentUpdatedAt != null } shouldBe 1
             }
 
+            then("찜 수·근거 기준일이 쓰기 문서 값 그대로 상세·목록 결과까지 남는다") {
+                val written = ObjectMapper().readTree(
+                    AttractionReindexCaptureTest::class.java.getResource("/attraction/reindex-capture.json")!!.readText(),
+                ).path("documents").associate { it.path("id").asString() to it }
+                documents.keys.forEach { id ->
+                    val result = service.findById(id)!!
+                    val savedNode = written.getValue(id).path("savedCount")
+                    (id to result.savedCount) shouldBe (id to savedNode.takeIf { it.isNumber }?.asInt())
+                    (id to result.signalsAsOf) shouldBe
+                        (id to written.getValue(id).path("signalsAsOf").takeIf { it.isString }?.asString()?.let(LocalDate::parse))
+                }
+                // 대조군: 쓰기 쪽이 201 에 4명을 실었고(202 의 2명은 하한 미만이라 없다) 기준일은 재색인일(KST)이다
+                service.findById("201")!!.savedCount shouldBe 4
+                service.findById("202")!!.savedCount shouldBe null
+                service.findById("201")!!.signalsAsOf shouldBe LocalDate.of(2026, 10, 2)
+            }
+
             then("같은 장소의 다른 등록이 상세 결과까지 남는다") {
                 service.findById("501")!!.samePlace shouldBe listOf(SearchAttractionUseCase.SamePlaceRef("502", "38"))
                 service.findById("201")!!.samePlace shouldBe null

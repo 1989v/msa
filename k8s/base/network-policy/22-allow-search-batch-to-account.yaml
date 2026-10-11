@@ -1,0 +1,28 @@
+# search-batch → account : attractionApiReindexJob 이 찜 집계(`/internal/wishlist/target-counts`)를 회차당 한 번 받는다.
+#   wishlist 는 account 파드에 폴드돼 있다(ADR-0093). kgd.io/host-of 로 「wishlist 패키지를 담은 파드」를 가리킨다 —
+#   폴드가 옮겨 가면 verifyPodTopology 가 잡는다. 그 검사가 파일 단위라 04 에 넣지 않고 이 파일 하나에 정책 하나만 둔다.
+#   빠뜨리면 재색인은 찜 없이 끝나고(실패를 삼킨다) 요약 줄에 `load failed` 만 남는다.
+#   경로 차단은 게이트웨이가 맡는다 — `/internal` 을 라우팅하지 않는다(GatewayRouteAuthSpec).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-search-batch-to-account
+  namespace: commerce
+  annotations:
+    kgd.io/host-of: wishlist
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: account
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: search-batch
+      ports:
+        - { port: http, protocol: TCP }

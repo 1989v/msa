@@ -101,3 +101,64 @@ export function siteSignalSentence(
 export function visitorTrendLinkLabel(sigungu: string, lang: PlaceLang = 'ko'): string {
   return lang === 'en' ? `Visitor trend in ${sigungu}` : `${sigungu} 방문 추이 보기`;
 }
+
+/** 근거 줄 기간 칸의 달 — `yyyy-MM` → 「2026년 8월」 / 「Aug 2026」. */
+export function signalMonthLabel(month: string, lang: PlaceLang = 'ko'): string {
+  const [y, m] = month.split('-').map(Number);
+  if (lang === 'ko') return `${y}년 ${m}월`;
+  return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString('en', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+}
+
+/**
+ * 시도 페이지 「타지 방문자가 많은 시군구」(KTO_REGION_VISITORS) 문구. 원천 수치는 「일자별 순방문자 합」이다 —
+ * 같은 사람이 사흘 머물면 3명이라 실제 사람 수보다 크다. 그래서 수치 앞에 「약」을 붙이고, 기준 보기에 정의를 적는다.
+ * 원천 정의상 외지인에는 통근·통학(일상생활권 이동)이 들어가지 않는다 — 근거 줄에 「통근 포함」을 붙이지 않는다.
+ */
+export const KTO_RANKING_COPY: Record<
+  PlaceLang,
+  {
+    target: (sido: string) => string;
+    note: string;
+    value: (n: number) => string;
+    basisToggle: string;
+    basis: readonly string[];
+    sourceLine: string;
+  }
+> = {
+  ko: {
+    target: (sido) => `${sido} 시군구`,
+    note: '외지인+외국인',
+    value: (n) => `약 ${Math.floor(n).toLocaleString('ko')}명`,
+    basisToggle: '기준 보기',
+    basis: [
+      '한 달 동안 날마다 그 시군구에 머문 사람 수를 더한 값입니다(일자별 순방문자 합). 같은 사람이 사흘 머물면 3명으로 셉니다.',
+      '외지인과 외국인만 셉니다. 현지인은 생활 이동이 섞여 뺐습니다.',
+      '원천은 거주·통근·통학 같은 일상생활권 이동을 방문으로 치지 않습니다. 이 판정도 이동통신 자료로 한 추정입니다.',
+      '달은 시도 안 모든 시군구가 그 달의 모든 날을 받은 마지막 달입니다.',
+    ],
+    sourceLine: '출처: 한국관광공사 빅데이터 서비스(지역별 방문자 수)',
+  },
+  en: {
+    target: (sido) => `Districts of ${sido}`,
+    note: 'from other regions + foreigners',
+    value: (n) => `about ${Math.floor(n).toLocaleString('en')}`,
+    basisToggle: 'How this is counted',
+    basis: [
+      'Each day’s visitors in the district, added up over the month (daily unique visitors). One person staying three days counts as 3.',
+      'Only visitors from other regions and foreigners. Locals are left out because everyday trips mix in.',
+      'The source does not count trips within daily life (home, commuting, school) as visits. That judgment is itself an estimate from mobile carrier data.',
+      'The month is the latest one for which every district in the province has every day.',
+    ],
+    sourceLine: 'Source: Korea Tourism Organization Big Data Service (visitors by region)',
+  },
+};
+
+/** 시도 순위 근거 줄 — 「한국관광공사 빅데이터(이동통신 추정) · {시도} 시군구 · {YYYY년 M월} · 외지인+외국인」. */
+export function ktoRankingSignalLine(sido: string, month: string | null | undefined, lang: PlaceLang = 'ko'): string | null {
+  const C = KTO_RANKING_COPY[lang];
+  return formatSignalLine(
+    'KTO_REGION_VISITORS',
+    { target: sido ? C.target(sido) : null, period: month ? signalMonthLabel(month, lang) : null, note: C.note },
+    lang,
+  );
+}

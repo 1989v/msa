@@ -4,6 +4,7 @@ import com.kgd.place.application.air.usecase.AirQualityUseCase
 import com.kgd.place.application.region.service.RegionCaches
 import com.kgd.place.application.region.usecase.AdministrativeRegionUseCase
 import com.kgd.place.application.region.usecase.GetRegionUseCase
+import com.kgd.place.application.region.usecase.RegionVisitorRankingUseCase
 import com.kgd.place.application.region.usecase.RegionVisitorUseCase
 import com.kgd.place.application.weather.usecase.WeatherUseCase
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -87,6 +88,8 @@ class RegionCacheConfig : CachingConfigurer {
                 .withCacheConfiguration(RegionCaches.ADMINISTRATIVE, config(listSerializer(AdministrativeRegionUseCase.View::class.java)))
                 .withCacheConfiguration(RegionCaches.GEONAMES, config(listSerializer(GetRegionUseCase.RegionView::class.java)))
                 .withCacheConfiguration(RegionCaches.VISITORS, config(valueSerializer(RegionVisitorUseCase.Trend::class.java), VISITORS_TTL))
+                // 순위도 방문자 적재가 덮는다 — 같은 수집 주기라 같은 TTL
+                .withCacheConfiguration(RegionCaches.VISITOR_RANKING, config(valueSerializer(RegionVisitorRankingUseCase.Ranking::class.java), VISITORS_TTL))
                 .withCacheConfiguration(RegionCaches.WEATHER, config(valueSerializer(WeatherUseCase.Outlook::class.java), WEATHER_TTL))
                 .withCacheConfiguration(RegionCaches.AIR, config(valueSerializer(AirQualityUseCase.Air::class.java), AIR_TTL))
                 // 이름을 모르는 캐시는 만들지 않는다 — 기본 설정(JDK 직렬화)으로 조용히 생기면 값이 깨진다

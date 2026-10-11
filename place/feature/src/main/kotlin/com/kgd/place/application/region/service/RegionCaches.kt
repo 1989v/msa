@@ -18,6 +18,12 @@ object RegionCaches {
     const val VISITORS = "placeRegionVisitors"
 
     /**
+     * 시도 페이지 「타지 방문자가 많은 시군구」. 키는 시도 코드 2자리. [VISITORS] 와 같이 적재가 받은 시도의 키를 덮는다
+     * (write-through) — 비우지 않는다.
+     */
+    const val VISITOR_RANKING = "placeRegionVisitorRanking"
+
+    /**
      * 시군구 날씨(기상청 단기·중기). 키는 시군구 법정동 코드 5자리. 적재가 받은 격자·구역을 쓰는 시군구의 키를 덮는다
      * (write-through) — 비우지 않는다. 값은 신선도로 거르기 전이고, 거르기는 읽을 때 한다.
      */

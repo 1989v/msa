@@ -2,7 +2,10 @@ package com.kgd.wishlist.infrastructure.persistence
 
 import com.kgd.common.persistence.ScopedFlywayMigrator
 import com.kgd.wishlist.domain.model.CollectionShare
+import com.kgd.wishlist.domain.model.WishlistTargetCount
+import com.kgd.wishlist.domain.model.WishlistTargetType
 import com.kgd.wishlist.infrastructure.persistence.adapter.CollectionShareAdapter
+import com.kgd.wishlist.infrastructure.persistence.adapter.WishlistRepositoryAdapter
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -216,6 +219,22 @@ class WishlistSchemaIntegrationSpec : BehaviorSpec({
                 adapter.findOwnedCollection(collectionId, 12L).shouldNotBeNull()
                 lockedElsewhere(collectionId) shouldBe false
             }
+        }
+
+        Then("찜 집계는 하한 이상 대상만, 많은 순으로 상한까지 — 다른 종류는 섞이지 않는다").config(enabledIf = { dockerAvailable }) {
+            val wishlist = jpa.getBean(WishlistRepositoryAdapter::class.java)
+            // 관광지 g3 는 3명, g2 는 2명, g4 는 4명 — 같은 키의 게임 5명은 다른 종류다
+            (1..3).forEach { insertItem(200L + it, null, "ATTRACTION", "g3", "2026-10-01 00:00:00") }
+            (1..2).forEach { insertItem(210L + it, null, "ATTRACTION", "g2", "2026-10-01 00:00:00") }
+            (1..4).forEach { insertItem(220L + it, null, "ATTRACTION", "g4", "2026-10-01 00:00:00") }
+            (1..5).forEach { insertItem(230L + it, null, "GAME", "g2", "2026-10-01 00:00:00") }
+
+            val atLeast3 = wishlist.countGroupedByTarget(WishlistTargetType.ATTRACTION, 3, 10_000)
+                .filter { it.targetKey.startsWith("g") }
+            atLeast3 shouldBe listOf(WishlistTargetCount("g4", 4), WishlistTargetCount("g3", 3))
+            wishlist.countGroupedByTarget(WishlistTargetType.ATTRACTION, 2, 10_000)
+                .filter { it.targetKey.startsWith("g") }.map { it.targetKey } shouldBe listOf("g4", "g3", "g2")
+            wishlist.countGroupedByTarget(WishlistTargetType.ATTRACTION, 2, 1).map { it.targetKey } shouldBe listOf("g4")
         }
 
         Then("탈퇴 정리는 그 회원의 공유 행만 지운다").config(enabledIf = { dockerAvailable }) {

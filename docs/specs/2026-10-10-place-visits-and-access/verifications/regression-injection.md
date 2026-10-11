@@ -28,3 +28,53 @@
 서버 렌더 금지어 검사는 문자열 리터럴만 보므로, 문구를 다른 파일에서 가져와 조립하면 그 파일은 보지 않는다(지금 렌더러 문구는 전부 이 파일 리터럴이다).
 
 남은 회귀 주입(TG6.7): batch 가 넘기는 `min` 2 · 「직선거리」 문구 빼기 · 헤더 검사 한 줄 삭제 — 해당 코드가 생기는 TG3·TG5·TG6 에서.
+
+# 회귀 주입 — 시도 순위 · 찜 집계 → 색인 (TG2 · TG3)
+
+TG1 과 같은 방식이다. 임시 사본(스크래치패드 `regress-tg23/`, `node_modules`·`build`·`.git`·`.gradle` 을 뺀 rsync 사본 + `node_modules` 심링크)에
+하나씩 넣고, 검사를 돌린 뒤 원본으로 되돌렸다(`cmp` 확인). 주입은 전부 컴파일·타입체크를 통과하는 회귀다. 주입 스크립트는
+스크래치패드 `inject-tg23.py`(문자열 한 곳 치환 → 명령 → 원복)이고, 판정은 JUnit XML 의 실패 테스트 이름이다.
+
+판정 근거: 순위는 리터럴 입력(현지인을 거꾸로 크게 준 12구, 하루 빠진 한 구, 2·3개 시군구)에서 나온 응답 JSON,
+찜 하한은 실제 MySQL 질의(2·3명)와 저장소에 넘어간 값, 정렬 하한은 어댑터가 낸 요청 JSON 의 `range` 에 리터럴(찜 2·3, 클릭 4·5)을 넣은 결과다.
+
+| # | 주입 (사본) | 컴파일 | 빨개진 테스트 |
+|---|---|---|---|
+| R7 | `RegionVisitorRanking` 값에 현지인을 더함 | 〃 | `RegionVisitorRankingServiceTest` 「8월의 외지인+외국인으로 상위 10 …」 (1 failed / 12) |
+| R8 | 다 받은 달 판정 `codes.all` → `codes.any`(시군구마다 따로) | 〃 | 「시도 전체로 판정해 그 앞의 다 받은 달(7월)로 간다」 (1 / 12) |
+| R9 | `MIN_SIGUNGU = 3` → `2` | 〃 | 「제주(50, 2개)도 빈 결과다」 (1 / 12) |
+| R10 | wishlist `maxOf(query.min, 1)` → `maxOf(query.min, 0)` | 〃 | `WishlistInternalControllerTest` 「0·음수는 1 로 막는다」 (1 / 5) |
+| R11 | 집계 JPQL `HAVING COUNT(w) >= :min` → `>` | 〃 | `WishlistSchemaIntegrationSpec`(Testcontainers MySQL) 「찜 집계는 하한 이상 대상만 …」 (1 / 10) |
+| R12 | 재색인이 넘기는 `min` 을 `SAVED_MIN - 1` 로 | 〃 | `AttractionApiReindexTaskletTest` 「하한 3명을 넘겨 부르고 …」 (1 / 41) |
+| R13 | 어댑터 범위 `gte(sort.min)` → `gte(sort.min - 1)` | 〃 | `AttractionSearchAdapterSignalSortTest` 「찜 2명은 빠지고 3명은 들어온다」·「클릭 4명은 빠지고 5명은 들어온다」 (2 / 6) |
+| R14 | `resolveEmbedding` 조건에서 근거 정렬을 뺌 | 〃 | `SearchAttractionServiceTest` 「키워드가 있고 하이브리드가 켜져 있어도 벡터를 만들지 않는다」 (1 / 54) |
+| R15 | 읽기 문서 `toDomain()` 에서 `savedCount = savedCount` 한 줄 삭제 | 〃 | `AttractionReindexCaptureTest` 「찜 수·근거 기준일이 쓰기 문서 값 그대로 …」 (1 / 17) |
+| R16 | 읽기 문서에서 `savedCount` 필드와 매핑 줄 삭제 | 〃 | `verifySearchIndexContract` — 「반드시 읽어야 할 필드를 안 읽는다: savedCount」 |
+| R17 | NetworkPolicy `22-allow-search-batch-to-account.yaml` 의 대상 `account` → `content` | — | `verifyPodTopology` — 「'wishlist' 은 account 파드에 있는데 정책이 그것을 가리키지 않는다(content, search-batch)」 |
+| R18 | 화면 수치 `Math.floor` → `Math.round` | `npx tsc -b --force` exit 0 | `RegionPage.test.tsx` 「시도 — … 「약 N명」(소수 버림) …」, `visitSignals.test.ts` 「시도 순위 근거 줄 …」 (2 / 29) |
+| R19 | 시군구 페이지에서도 순위를 부르고 그림(`isSido` 조건 제거) | 〃 | 「시군구 페이지는 순위를 부르지도 그리지도 않는다」 (1 / 15) |
+
+R17 의 앞 시도: 같은 정책을 spec 대로 `04-allow-backend-to-backend.yaml` 에 넣고 같은 회귀를 넣었더니 **초록(exit 0)** 이었다.
+`verifyPodTopology` 의 host-of 검사는 파일 단위다 — 파일의 첫 `kgd.io/host-of` 하나만 읽고, 파일 안 **모든** 정책의 이름과 대조한다.
+04 에는 `allow-auth-to-account` 가 이미 `account` 를 갖고 있어 무엇을 가리켜도 통과하고, 새 정책이 atlas 정책보다 앞에 오면 기존 `codedictionary` 검사가 밀려난다.
+그래서 정책을 `22-…yaml` 한 파일에 하나만 두었다(04 머리 목록에는 이 파일을 가리키는 줄).
+
+OpenSearch 실제 동작(요청 JSON 만으로는 못 보는 것): `index:false` + doc_values 정수 필드에 `range`·정렬이 듣는지 로컬 컨테이너
+(`opensearch-nori:3.8.0`, 운영과 같은 판)로 확인했다 — 문서 5개(찜 2·3·7·없음·3 / 클릭 0·5·4·9·5)에서 `savedCount ≥ 3` 정렬은 `[3, 2, 5]`,
+`uniqueClickers14d ≥ 5` 는 `[4, 2, 5]`(값 내림차순, 같으면 idSort). 컨테이너는 같은 명령 안에서 내렸다.
+
+명령(사본 루트에서):
+
+```bash
+./gradlew :place:feature:test --tests '*RegionVisitorRankingService*'
+./gradlew :wishlist:feature:test --tests '*WishlistInternalController*'      # R10
+./gradlew :wishlist:feature:test --tests '*WishlistSchemaIntegrationSpec*'   # R11
+./gradlew :search:batch:test --tests '*AttractionApiReindexTasklet*'
+./gradlew :search:app:test --tests '*AttractionSearchAdapterSignalSort*'      # R13 (R14·R15 는 각 테스트 클래스)
+./gradlew verifySearchIndexContract                                           # R16
+./gradlew verifyPodTopology                                                   # R17
+(cd portal-fe && npx tsc -b --force && npx vitest run src/pages/place/__tests__/RegionPage.test.tsx src/pages/place/__tests__/visitSignals.test.ts)
+```
+
+못 잡는 것(알고 둔다): 시도 순위의 SQL(시도 접두 `LIKE`)은 `PlaceSchemaIntegrationSpec` 이 실제 MySQL 로 보지만 회귀 주입은 하지 않았다.
+wishlist 내부 경로 기본값 `min=3` 은 search `SAVED_MIN` 의 사본이다 — 재색인이 늘 명시해 보내므로(R12 가 그 값을 본다) 기본값이 어긋나도 운영 경로는 영향이 없고, 테스트도 잡지 않는다.

@@ -20,6 +20,9 @@ class WebClientConfig {
     @Value("\${atlas.service.url:http://localhost:8089}")
     private lateinit var atlasServiceUrl: String
 
+    @Value("\${wishlist.service.url:http://localhost:8093}")
+    private lateinit var wishlistServiceUrl: String
+
     @Bean("productWebClient")
     fun productWebClient(builder: WebClient.Builder): WebClient =
         builder.baseUrl(productServiceUrl).build()
@@ -47,6 +50,13 @@ class WebClientConfig {
     @Bean("atlasWebClient")
     fun atlasWebClient(builder: WebClient.Builder): WebClient =
         builder.baseUrl(atlasServiceUrl).build()
+
+    /** wishlist(account 파드) 내부 집계 — 관광지 재색인이 찜 수를 회차당 한 번 받는다. 응답이 작아 기본 버퍼면 된다 */
+    @Bean("wishlistWebClient")
+    fun wishlistWebClient(builder: WebClient.Builder): WebClient =
+        builder.baseUrl(wishlistServiceUrl)
+            .clientConnector(JdkClientHttpConnector(HttpClient.newBuilder().connectTimeout(PLACE_CONNECT_TIMEOUT).build()))
+            .build()
 
     companion object {
         /** 검사가 이 값을 그대로 본다 — 코드와 검사가 각자 사본을 갖지 않게. */
