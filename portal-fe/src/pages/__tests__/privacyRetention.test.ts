@@ -177,3 +177,31 @@ describe('검색어 — 수집 항목과 보관기간', () => {
     expect(row, '좌표 미저장').toMatch(/좌표는 저장하지\s+않습니다/);
   });
 });
+
+describe('place 첫 방문 유입', () => {
+  it('2항에 place 유입 행이 있고, 원장 TTL 과 같은 일수·도메인 수준만 남긴다는 것을 밝힌다', () => {
+    const sql = readFileSync(
+      resolve(REPO, 'analytics/app/src/main/resources/clickhouse/analytics/V005__events_two_axis.sql'),
+      'utf-8',
+    );
+    const m = sql.match(/TTL toDateTime\(timestamp\) \+ INTERVAL (\d+) DAY/);
+    expect(m, '이벤트 원장 TTL 을 못 찾았다 — 표 정의가 옮겨졌으면 이 검사도 고친다').not.toBeNull();
+    const days = Number(m![1]);
+
+    const text = privacyText();
+    const at = text.indexOf('place 방문을 시작할 때');
+    expect(at, '방침 2항에 place 유입 행이 없다').toBeGreaterThan(0);
+    const row = text.slice(at, text.indexOf('</tr>', at));
+    expect(row, '도메인 수준').toContain('직전 사이트의 도메인');
+    expect(row, '보관 일수').toContain(`${days}일`);
+  });
+
+  it('접속 로그 문단에 로봇 요청은 시간당 건수로만 남긴다는 문장이 있다', () => {
+    const text = privacyText();
+    const at = text.indexOf('서버 접속 로그는 별도 저장소에');
+    expect(at, '접속 로그 문단이 없다').toBeGreaterThan(0);
+    const para = text.slice(at, text.indexOf('</p>', at));
+    expect(para).toContain('검색엔진·AI 수집 로봇');
+    expect(para).toContain('시간당 건수로만');
+  });
+});

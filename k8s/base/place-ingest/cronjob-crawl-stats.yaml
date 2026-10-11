@@ -1,0 +1,71 @@
+# 검색엔진·AI 수집 로봇 요청의 시간 집계 CronJob — portal-fe nginx 접근 로그를 쿠버네티스 API 로 읽어
+# (로봇, 호스트, 경로 유형, 상태 칸, 파드)별 건수를 ClickHouse analytics.crawler_requests_hourly 에 쓴다.
+#
+# 표 주인은 analytics(V008__crawler_requests.sql)다. place-ingest 이미지는 실행 장소일 뿐이고 place 도메인
+# 데이터가 아니다 — 새 이미지를 만들지 않으려고 얹었다(OCIR 무료 10GB).
+#
+# **이미지는 place-ingest 지만 파드는 place-ingest 가 아니다.**
+#   - 파드 라벨은 전용 place-crawl-stats 다. place-ingest 로 두면 11-allow-egress-https-public 이 외부
+#     0.0.0.0/0:443 을 연다 — 클러스터 로그를 읽는 파드가 밖으로 나갈 수 있게 된다.
+#   - 파드 템플릿에 part-of: commerce-platform 을 붙이지 않는다. 12-allow-backend-egress-internal 이 그 라벨을
+#     가진 파드에 commerce 안 모든 파드로의 egress 를 연다. CronJob 메타데이터에는 둔다 — oci-arm 의 OCIR
+#     pull secret 패치가 CronJob 메타데이터 라벨로 대상을 고른다.
+#   - env 에 비밀을 넣지 않는다(place-ingest-secrets 를 받지 않는다). ClickHouse 주소 하나뿐이다.
+#
+# 시간마다 도는 이유: 컨테이너 로그는 현재 컨테이너 것만 읽히고 portal-fe 는 배포마다 교체된다. 하루 한 번이면
+# 마지막 교체 전 요청을 통째로 잃는다. 지난 시간을 다시 돌리려면 인자만 바꿔 Job 하나를 띄운다:
+#   kubectl -n commerce create job crawl-stats-redo --from=cronjob/place-crawl-stats --dry-run=client -o json \
+#     | jq '.spec.template.spec.containers[0].args=["--job=crawl-stats","--hour=2026-10-10T19"]' | kubectl apply -f -
+#   (pods/log 는 현재 컨테이너 것만 주므로 이미 교체된 파드의 시간은 다시 돌려도 채워지지 않는다)
+# 멈추려면 suspend: true. 표는 남겨 둔다.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: place-crawl-stats
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: place-crawl-stats
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  # 매시 5분(UTC) — 직전 정시 한 시간을 읽는다. 5분은 그 시간의 마지막 줄이 로그에 다 쓰일 여유다.
+  schedule: "5 * * * *"
+  concurrencyPolicy: Forbid
+  # 하루 24개 Job 이 kine 에 쌓이지 않게 기록을 짧게 둔다
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 600
+      ttlSecondsAfterFinished: 3600
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: place-crawl-stats
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          serviceAccountName: place-crawl-stats
+          automountServiceAccountToken: true
+          containers:
+            - name: crawl-stats
+              image: commerce/place-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--job=crawl-stats"]
+              env:
+                - name: CLICKHOUSE_URL
+                  value: "http://clickhouse:8123"
+                # 루트 FS 가 읽기 전용이라 .pyc 를 쓰지 못하게 한다
+                - name: PYTHONDONTWRITEBYTECODE
+                  value: "1"
+              # 이미지에 USER 가 없어 runAsUser 를 주지 않으면 runAsNonRoot 에서 기동이 거부된다
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 65534
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+              resources:
+                requests: { cpu: 50m, memory: 64Mi }
+                limits:   { memory: 128Mi }

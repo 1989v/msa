@@ -38,9 +38,9 @@
 **Phase:** 1
 **Required Skills:** React, 문서
 
-- [ ] 4.1 테스트 먼저: `portal-fe/src/pages/__tests__/privacyRetention.test.ts` 에 `describe('place 첫 방문 유입')` 를 더한다 — 선례(`:162-178`)처럼 `V005__events_two_axis.sql` 의 TTL 일수를 정규식으로 읽고, 방침 2항의 「place 방문을 시작할 때」 행이 「직전 사이트의 도메인」과 **그 일수**를 담는지, 접속 로그 문단에 「검색엔진·AI 수집 로봇」·「시간당 건수로만」 문장이 있는지 단언
-- [ ] 4.2 `PrivacyPage.tsx` §2 표 한 행 + 접속 로그 문단 한 문장, 개정일(SR-5)
-- [ ] 4.3 검증: `cd portal-fe && npx vitest run src/pages/__tests__/privacyRetention.test.ts`
+- [x] 4.1 테스트 먼저: `portal-fe/src/pages/__tests__/privacyRetention.test.ts` 에 `describe('place 첫 방문 유입')` 를 더한다 — 선례(`:162-178`)처럼 `V005__events_two_axis.sql` 의 TTL 일수를 정규식으로 읽고, 방침 2항의 「place 방문을 시작할 때」 행이 「직전 사이트의 도메인」과 **그 일수**를 담는지, 접속 로그 문단에 「검색엔진·AI 수집 로봇」·「시간당 건수로만」 문장이 있는지 단언
+- [x] 4.2 `PrivacyPage.tsx` §2 표 한 행 + 접속 로그 문단 한 문장, 개정일(SR-5)
+- [x] 4.3 검증: `cd portal-fe && npx vitest run src/pages/__tests__/privacyRetention.test.ts`
 
 ## Task Group 5: 봇 로그 파서·집계 잡
 **Dependencies:** Task Group 1 (경로 표 픽스처)
@@ -66,11 +66,11 @@
 **Phase:** 2
 **Required Skills:** Kubernetes, nginx, NetworkPolicy
 
-- [ ] 7.1 테스트 먼저: `place/ingest/tests/crawl_stats_k8s_test.py` 를 **레포에 커밋한다**(선례 `datagokr_test.py:14,120-130` 이 `REPO / "k8s"` 매니페스트를 읽어 단언한다). 단언: (a) Role `place-crawl-stats` 의 규칙이 정확히 `{pods: [list], pods/log: [get]}` 와 같다(포함이 아니라 일치) (b) SA `place-crawl-stats` 를 `serviceAccountName` 으로 쓰는 CronJob 은 `place-crawl-stats` 하나뿐이고, 그 파드 스펙에 `automountServiceAccountToken: true`, 다른 place-ingest CronJob 의 `serviceAccountName` 은 없다 (c) 그 파드 템플릿 라벨 `app.kubernetes.io/name` 이 `place-crawl-stats` 이고 `part-of` 라벨이 없다 (d) `0.0.0.0/0` egress 를 여는 정책(`11-…`)의 선택 목록에 `place-crawl-stats` 가 없다 (e) `09-allow-app-to-clickhouse.yaml` 목록에 있다 (f) `21-allow-crawl-stats-egress.yaml` 의 egress 목적지가 ClickHouse 8123 과 API 서버 한 곳뿐이다 (g) env 에 `secretKeyRef` 가 없고 `securityContext` 가 SR-8.1 값이다. nginx 문법: `docker run --rm -e NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1 -e NGINX_ENVSUBST_FILTER=NGINX_LOCAL_RESOLVERS -v $PWD/portal-fe/nginx.conf:/etc/nginx/templates/default.conf.template:ro nginx:1.27-alpine nginx -t` (`nginx.conf:79` 의 `${NGINX_LOCAL_RESOLVERS}` 를 이미지와 같은 방식으로 채운다, `Dockerfile:71,78-79`)
-- [ ] 7.2 `portal-fe/nginx.conf` — `log_format` + `access_log` (SR-6.1)
-- [ ] 7.3 `k8s/base/place-ingest/cronjob-crawl-stats.yaml`·`rbac-crawl-stats.yaml`, kustomization 등록 (SR-8.1·8.2). `k8s/base/network-policy/09-allow-app-to-clickhouse.yaml:42` 목록에 `place-crawl-stats` 추가 + 주석 한 줄(쓰는 쪽 crawl-stats 잡, 표 주인 analytics), `21-allow-crawl-stats-egress.yaml` 새로 + network-policy kustomization 등록 (SR-8.3)
-- [ ] 7.4 NetworkPolicy egress 의 API 서버 목적지 — 먼저 `ssh msa-oci` 로 임시 파드 탐침(15초 대기 + 무관 라벨 대조군)으로 `10.43.0.1:443` 과 노드 `:6443` 중 통하는 쪽을 정하고(Q2) 그 하나만 연다
-- [ ] 7.5 검증: `cd place/ingest && python -m pytest tests/crawl_stats_k8s_test.py -q` 와 `kubectl kustomize k8s/overlays/oci-arm | grep -c 'place-crawl-stats'`(렌더만, 클러스터 접속 없음)
+- [x] 7.1 테스트 먼저: `place/ingest/tests/crawl_stats_k8s_test.py` 를 **레포에 커밋한다**(선례 `datagokr_test.py:14,120-130` 이 `REPO / "k8s"` 매니페스트를 읽어 단언한다). 단언: (a) Role `place-crawl-stats` 의 규칙이 정확히 `{pods: [list], pods/log: [get]}` 와 같다(포함이 아니라 일치) (b) SA `place-crawl-stats` 를 `serviceAccountName` 으로 쓰는 CronJob 은 `place-crawl-stats` 하나뿐이고, 그 파드 스펙에 `automountServiceAccountToken: true`, 다른 place-ingest CronJob 의 `serviceAccountName` 은 없다 (c) 그 파드 템플릿 라벨 `app.kubernetes.io/name` 이 `place-crawl-stats` 이고 `part-of` 라벨이 없다 (d) `0.0.0.0/0` egress 를 여는 정책(`11-…`)의 선택 목록에 `place-crawl-stats` 가 없다 (e) `09-allow-app-to-clickhouse.yaml` 목록에 있다 (f) `21-allow-crawl-stats-egress.yaml` 의 egress 목적지가 ClickHouse 8123 과 API 서버 한 곳뿐이다 (g) env 에 `secretKeyRef` 가 없고 `securityContext` 가 SR-8.1 값이다. nginx 문법: `docker run --rm -e NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1 -e NGINX_ENVSUBST_FILTER=NGINX_LOCAL_RESOLVERS -v $PWD/portal-fe/nginx.conf:/etc/nginx/templates/default.conf.template:ro nginx:1.27-alpine nginx -t` (`nginx.conf:79` 의 `${NGINX_LOCAL_RESOLVERS}` 를 이미지와 같은 방식으로 채운다, `Dockerfile:71,78-79`)
+- [x] 7.2 `portal-fe/nginx.conf` — `log_format` + `access_log` (SR-6.1)
+- [x] 7.3 `k8s/base/place-ingest/cronjob-crawl-stats.yaml`·`rbac-crawl-stats.yaml`, kustomization 등록 (SR-8.1·8.2). `k8s/base/network-policy/09-allow-app-to-clickhouse.yaml:42` 목록에 `place-crawl-stats` 추가 + 주석 한 줄(쓰는 쪽 crawl-stats 잡, 표 주인 analytics), `21-allow-crawl-stats-egress.yaml` 새로 + network-policy kustomization 등록 (SR-8.3)
+- [x] 7.4 NetworkPolicy egress 의 API 서버 목적지 — 먼저 `ssh msa-oci` 로 임시 파드 탐침(15초 대기 + 무관 라벨 대조군)으로 `10.43.0.1:443` 과 노드 `:6443` 중 통하는 쪽을 정하고(Q2) 그 하나만 연다
+- [x] 7.5 검증: `cd place/ingest && python -m pytest tests/crawl_stats_k8s_test.py -q` 와 `kubectl kustomize k8s/overlays/oci-arm | grep -c 'place-crawl-stats'`(렌더만, 클러스터 접속 없음)
 
 ## Task Group 8: 회귀 주입 · 문서 · 배포 · 운영 확인
 **Dependencies:** Task Group 1–7

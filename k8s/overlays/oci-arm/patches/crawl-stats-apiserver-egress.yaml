@@ -1,0 +1,11 @@
+# 봇 요청 집계 잡 → 쿠버네티스 API 서버. k3s NetworkPolicy 는 DNAT 뒤 노드 주소로 판정하므로
+# 서비스 IP(10.43.0.1:443)가 아니라 노드 10.0.0.102:6443 을 연다(kubectl get endpoints kubernetes).
+# 노드를 바꾸면 이 주소도 바꾼다 — 안 바꾸면 잡이 API 연결 실패로 끝난다.
+- op: add
+  path: /spec/egress/-
+  value:
+    to:
+      - ipBlock:
+          cidr: 10.0.0.102/32
+    ports:
+      - { port: 6443, protocol: TCP }

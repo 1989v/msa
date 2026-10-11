@@ -1,0 +1,32 @@
+# 봇 요청 시간 집계 잡(place-crawl-stats) 의 egress — ClickHouse 8123 과 쿠버네티스 API 서버뿐.
+#
+# 이 파드의 SA 는 commerce 전 파드의 로그를 읽을 수 있다(rbac-crawl-stats.yaml 의 위험 수용). 그래서 나갈 곳을
+# 셋으로 묶는다: DNS(01, 네임스페이스 전체) · ClickHouse 8123(여기 + 09 의 인그레스) · API 서버(overlay).
+# 외부 443(11)·commerce 내부 전체(12)는 라벨로 비켜 간다 — 파드 라벨이 전용이고 part-of 가 없다.
+#
+# **API 서버 목적지는 overlay 가 더한다.** k3s 의 NetworkPolicy 는 서비스 IP(10.43.0.1:443)가 아니라 DNAT 뒤
+# 노드 주소 :6443 으로 판정한다 — 2026-10-11 oci-arm 임시 파드 탐침: 10.43.0.1/32:443 만 연 파드는 두 주소 모두
+# 연결 실패, 노드 /32:6443 을 연 파드는 두 주소 모두 401(도달), 정책 없는 대조군은 둘 다 실패. 노드 주소는
+# 클러스터마다 달라 base 에 둘 수 없다(oci-arm: patches/crawl-stats-apiserver-egress.yaml). 그 줄이 없는
+# 클러스터에서는 잡이 API 를 못 불러 실패로 끝난다 — 조용히 0행이 되지 않는다.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-crawl-stats-egress
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: place-crawl-stats
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: clickhouse
+      ports:
+        - { port: 8123, protocol: TCP }

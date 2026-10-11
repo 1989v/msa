@@ -11,6 +11,8 @@
 #                    전용 집계 표만 읽는다(공용 원장 아님). HTTP 8123 만 쓰므로 드라이버가 없다.
 #   - search-batch   검색 평가 잡의 클릭 로그 read + ADR-0103 — 관광지 재색인(attraction-reindex)이
 #                    attraction_popularity_daily 의 14일 고유 클릭 방문자 수를 읽어 문서에 싣는다.
+#   - place-crawl-stats  로봇 요청 시간 집계를 crawler_requests_hourly·crawler_log_coverage_hourly 에 쓴다.
+#                    표 주인은 analytics(V008), 쓰는 쪽은 place-ingest 이미지의 crawl-stats 잡(전용 라벨).
 # 다른 서비스가 추가로 필요해지면 ingress.from.podSelector matchExpressions 에 추가.
 #
 # 라벨 선택 근거:
@@ -39,7 +41,7 @@ spec:
     - from:
         - podSelector:
             matchExpressions:
-              - { key: app.kubernetes.io/name, operator: In, values: [analytics, sideapp, quant-ingest, engagement, recommendation-ml, search-batch, place-ingest] }
+              - { key: app.kubernetes.io/name, operator: In, values: [analytics, sideapp, quant-ingest, engagement, recommendation-ml, search-batch, place-ingest, place-crawl-stats] }
       ports:
         - { port: 8123, protocol: TCP }   # HTTP — recommendation 등이 사용
         - { port: 9000, protocol: TCP }   # Native TCP — recommendation-ml (clickhouse_driver) 가 사용

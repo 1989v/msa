@@ -23,3 +23,28 @@
 메모
 - 11 은 tasks 8.1 의 「`requests` → `collected_at`」 대신 `hour` 로 넣었다 — 요청 표에는 `collected_at` 열이 없다(커버리지 표에만 있다). 검사가 보는 것은 버전 열이 `requests` 인지라 뜻은 같다.
 - 8 은 처음엔 가짜 ClickHouse 가 응답 하나만 준비해 두어 두 번째 쓰기에서 `IndexError` 로 빨개졌다 — 주입이 아니라 가짜의 한계가 낸 빨간불이다. 커버리지 쓰기 응답(200)을 더해 `assert 0 != 0` 으로 빨개지는 것을 다시 확인했다.
+
+# 회귀 주입 — 그룹 4·7
+
+2026-10-11. 임시 사본(`scratchpad/regr-tg47` — `settings.gradle.kts`·`k8s/`·`place/ingest/`·V 파일·`portal-fe`(node_modules 는 원본 심링크))에서 한 건씩 넣고 빨간불을 본 뒤 되돌렸다. 모두 파싱·실행되는 회귀다.
+k8s 명령: `python3 -m pytest tests/crawl_stats_k8s_test.py -q` (기준 `10 passed`). 방침 명령: `npx vitest run src/pages/__tests__/privacyRetention.test.ts -t 'place 첫 방문'` (기준 `2 passed`).
+
+| # | 주입 | 파일 | 빨간 줄 |
+|---|---|---|---|
+| 15 | 파드 템플릿 라벨을 `place-ingest` 로 되돌림 (S1) | `k8s/base/place-ingest/cronjob-crawl-stats.yaml` | `FAILED test_pod_label_is_dedicated_and_has_no_part_of` · `FAILED test_no_public_egress_policy_selects_the_pod` — `2 failed, 8 passed` |
+| 16 | 파드 템플릿에 `part-of: commerce-platform` | 같음 | `FAILED test_pod_label_is_dedicated_and_has_no_part_of` — `1 failed` |
+| 17 | Role `pods` 에 `get` 추가 | `k8s/base/place-ingest/rbac-crawl-stats.yaml` | `FAILED test_role_is_exactly_pods_list_and_pods_log_get` — `1 failed` |
+| 18 | Role 에 `secrets` `get` 규칙 추가 | 같음 | 같은 케이스 — `1 failed` |
+| 19 | 11 외부 egress 목록에 `place-crawl-stats` | `k8s/base/network-policy/11-allow-egress-https-public.yaml` | `FAILED test_no_public_egress_policy_selects_the_pod` — `1 failed` |
+| 20 | 21 에 API 목적지(`10.43.0.1/32:443`) 하나 더 | `k8s/base/network-policy/21-allow-crawl-stats-egress.yaml` | `FAILED test_egress_is_clickhouse_8123_plus_one_apiserver_address` — `1 failed` |
+| 21 | env 에 `secretKeyRef`(`place-ingest-secrets`) | `cronjob-crawl-stats.yaml` | `FAILED test_env_has_no_secret_and_security_context_is_locked_down` — `1 failed` |
+| 22 | `readOnlyRootFilesystem: false` | 같음 | 같은 케이스 — `1 failed` |
+| 23 | 다른 잡(`cronjob-links.yaml`)이 `serviceAccountName: place-crawl-stats` | `k8s/base/place-ingest/cronjob-links.yaml` | `FAILED test_only_this_cronjob_uses_the_service_account` — `1 failed` |
+| 24 | 방침 로봇 문장의 「검색엔진·AI 수집 로봇」 → 「검색엔진 로봇」 | `portal-fe/src/pages/PrivacyPage.tsx` | `× 접속 로그 문단에 로봇 요청은 시간당 건수로만 남긴다는 문장이 있다` — `1 failed` |
+| 25 | 유입 행 보관 「90일」 → 「30일」 | 같음 | `× 2항에 place 유입 행이 있고, 원장 TTL 과 같은 일수…` — `1 failed` |
+| 26 | 유입 행 「직전 사이트의 도메인(주소 전체 아님)」 → 「직전 사이트 주소」 | 같음 | 같은 케이스 — `1 failed` |
+| 27 | nginx `log_format` 끝 `"$host"` 제거 | `portal-fe/nginx.conf` | 게이트 없음 — 수동 확인: 그 설정으로 띄운 nginx 컨테이너에 Googlebot UA·`Host: place.1989v.com` 요청을 보내 나온 줄을 `crawl_stats.parse_line` 에 넣으면 `host='unknown'` (원본 설정이면 `host='place.1989v.com'`) |
+
+메모
+- 15 는 처음엔 (c) 하나만 빨개졌다 — (d) 가 상수 `place-crawl-stats` 가 선택 목록에 있는지를 보고 있어서, 라벨이 `place-ingest` 로 돌아가 11 이 실제로 그 파드를 고르는 경우를 못 잡았다. (d) 가 CronJob 이 실제로 붙인 파드 라벨을 읽도록 고친 뒤 두 케이스가 함께 빨개지는 것을 확인했다.
+- 27 은 pytest 게이트로 만들지 않았다 — 파서 쪽 형식 검사(`crawl_stats_test.py`)는 테스트가 직접 쓴 줄을 읽고, nginx 설정을 읽어 줄을 합성하면 검사가 근거를 스스로 만든다. 실제 nginx 1.27-alpine 이 낸 줄로 대조한 결과만 남긴다.

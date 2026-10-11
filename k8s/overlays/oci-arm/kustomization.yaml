@@ -65,6 +65,9 @@ patches:
   # 광고 공개 라우트 Host 허용 목록 — AOP 가 걸린 proxied 호스트만 (rt 제외, 와일드카드 금지)
   - path: patches/gateway-ads-hosts.yaml
     target: {kind: Deployment, name: gateway}
+  # 봇 요청 집계 잡의 API 서버 egress — 노드 주소라 overlay 에 둔다 (base 21 주석 참조)
+  - path: patches/crawl-stats-apiserver-egress.yaml
+    target: {kind: NetworkPolicy, name: allow-crawl-stats-egress}
   # 세션 쿠키 도메인 — 서브도메인이 로그인을 공유한다 (ADR-0101)
   - path: patches/auth-cookie-domain.yaml
     target: {kind: Deployment, name: auth}

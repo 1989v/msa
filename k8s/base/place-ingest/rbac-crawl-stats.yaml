@@ -1,0 +1,49 @@
+# 봇 요청 시간 집계 잡(place-crawl-stats) 전용 권한 — portal-fe 파드를 나열하고 그 로그를 읽는다.
+#
+# 동작이 「나열 → pods/{name}/log」뿐이라 규칙은 pods list 와 pods/log get 둘이다(pods get 도 필요 없다).
+# **위험 수용:** RBAC 은 라벨로 대상을 좁히지 못하고 resourceNames 는 list 에 걸리지 않으며 portal-fe
+# 파드 이름은 배포마다 바뀐다 — 이 SA 는 commerce 의 모든 파드 로그를 읽을 수 있다. 그래서 이 SA 를 쓰는
+# 파드는 밖으로 못 나간다: 전용 라벨이라 외부 443 정책(11)이 고르지 않고, egress 는 DNS·ClickHouse 8123·
+# API 서버뿐이다(21). 다른 place-ingest 잡은 이 SA 를 쓰지 않는다 — 배치 하나 때문에 다른 잡 권한을 늘리지 않는다.
+# 선례: k8s/argocd/stuck-sync-watchdog.yaml (SA 토큰으로 API 를 직접 부른다).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: place-crawl-stats
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: place-crawl-stats
+    app.kubernetes.io/part-of: commerce-platform
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: place-crawl-stats
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: place-crawl-stats
+    app.kubernetes.io/part-of: commerce-platform
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["list"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: place-crawl-stats
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: place-crawl-stats
+    app.kubernetes.io/part-of: commerce-platform
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: place-crawl-stats
+subjects:
+  - kind: ServiceAccount
+    name: place-crawl-stats
+    namespace: commerce

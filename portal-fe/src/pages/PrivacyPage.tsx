@@ -7,7 +7,7 @@ import { useReveal } from '../hooks/useReveal';
 import './PrivacyPage.css';
 
 /** 개정일 — 본문을 고치면 반드시 함께 올린다. 방침은 '언제부터의 약속인지'가 내용의 일부다. */
-const EFFECTIVE_DATE = '2026-10-08';
+const EFFECTIVE_DATE = '2026-10-11';
 const CONTACT_EMAIL = '1989v@naver.com';
 
 /**
@@ -97,6 +97,14 @@ export default function PrivacyPage() {
                     <td>결과가 없거나 부족한 검색을 찾아 검색 품질을 고치기 위해</td>
                   </tr>
                   <tr>
+                    <td>place 방문을 시작할 때(탭마다 한 번)</td>
+                    <td>
+                      직전 사이트의 도메인(주소 전체 아님) · 캠페인 표시(utm) · 처음 연 화면 종류 +
+                      방문자 번호. 90일 보관(6항의 조회 · 클릭 기록과 같은 기간)
+                    </td>
+                    <td>검색·외부 링크로 들어온 방문을 세어 사이트를 알리는 작업의 효과를 보기 위해</td>
+                  </tr>
+                  <tr>
                     <td>혜택 링크 클릭</td>
                     <td>어떤 링크를 언제, 들어온 사이트 주소, 브라우저 종류(예: Chrome)</td>
                     <td>어떤 혜택이 실제로 쓰이는지 파악</td>
@@ -142,7 +150,9 @@ export default function PrivacyPage() {
               <p>
                 IP 주소는 <strong>저장하지 않고</strong>, 짧은 시간 동안 과도한 요청을 막는
                 용도로만 사용한 뒤 자동으로 사라집니다. 서버 접속 로그는 별도 저장소에
-                적재하지 않으며 컨테이너가 교체되면 함께 사라집니다.
+                적재하지 않으며 컨테이너가 교체되면 함께 사라집니다. 검색엔진·AI 수집 로봇의
+                요청은 로봇 종류 · 페이지 종류 · 응답 코드별 <strong>시간당 건수로만</strong>{' '}
+                남기며, IP · 주소 · 브라우저 정보는 남기지 않습니다.
               </p>
               <p>
                 <strong>소셜 로그인에서도 이메일과 실명을 받지 않습니다.</strong> 로그인 시
