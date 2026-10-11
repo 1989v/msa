@@ -26,6 +26,7 @@
 | S2-4 | 완료(파서 v2 는 2026-10-09 06:30 KST 정기 재색인 뒤 반영) | 영문 칩 4종(국문 전용 7종 영문 0건), 0건 화면 조건 해제, 교정 안내 0건에도 + `exact`, 「템플스테이」 0→74건·「temple stay」 0→397건 |
 | S2-8 | 완료(origin 기준) | 상세 SSR ETag — origin 강한 값·gzip `W/` 모두 304. 공개 주소는 Cloudflare 경유에서 ETag 가 사라짐(설정은 사용자 몫, 크롤 통계 304 비율은 배포 후 관찰). lastmod 는 S1-9 로 충족 → `docs/specs/2026-10-08-place-trust-pages-etag/verifications/deploy-check.md` |
 | S2-9 | 완료(운영 확인) | `/data-sources`(대장 §1 30행 + 게이트), 초기 HTML 바닥글 4링크(모든 호스트), `/about`·`/data-sources` 프리렌더 본문 |
+| S3-6b | 세트 교체 준비 완료, 배포 뒤 확인 대기(2026-10-11) | 판정 세트 v3 228쿼리 · 9,692쌍, 의도 8유형 + 의도별 표·형식 검사. 기준선은 배포 전 파드 안 측정값(C ko .7364 · en .7097)을 임시로 두고 첫 정기 실행 값으로 갱신. 사람 대조 대기 → `docs/specs/2026-10-10-search-judgment-cases/` · `scripts/search-eval/README.md` 「판정 세트 v3」 |
 
 추가된 작업: **S1-12b** 최소 계측(허브 submit·filter·결과 선택·찜 성공·지도 링크·세션 시작, 중복 키, beacon 계약). S2-2 의존에 S1-11 결과(출처 `source` 전달)가 들어간다. S2-5 는 페이지별로 다른 병목(상세·지역 렌더 지연/TTFB, 허브 LCP 이미지 발견·CLS).
 

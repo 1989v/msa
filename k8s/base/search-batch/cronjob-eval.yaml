@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/part-of: commerce-platform
     app.kubernetes.io/component: eval
 spec:
-  # 관광지 검색 품질 회귀 감시 — 판정 6,530쌍(쿼리 150) 으로 3구성 nDCG@10 을 매일 잰다.
+  # 관광지 검색 품질 회귀 감시 — 판정 세트 v3(9,692쌍, 쿼리 228) 으로 3구성 nDCG@10 과 의도별 표를 매일 잰다.
   # 하이브리드+쿼리 언더스탠딩(C, 라이브 API) 이 기준선보다 EVAL_TOLERANCE 넘게 떨어지면 Job 이 Failed 로 남는다.
   # 기록 표와 결과는 scripts/search-eval/README.md.
   #   온디맨드:  kubectl -n commerce create job --from=cronjob/search-eval search-eval-manual
@@ -38,17 +38,20 @@ spec:
               image: commerce/search-embed:latest
               imagePullPolicy: IfNotPresent
               # 새 파드는 첫 몇 초간 DNS egress 가 막힌다(attraction-reindex 참고) — 기다렸다 시작한다.
-              command: ["sh", "-c", "sleep 20 && exec python3 /eval/live-eval.py /eval/judgments-attractions-2026-10-05.json"]
+              command: ["sh", "-c", "sleep 20 && exec python3 /eval/live-eval.py /eval/judgments-attractions-2026-10-11.json"]
               env:
                 # search:app 의 search.query-vector.model-ref 와 같아야 한다
                 - name: EVAL_MODEL_REF
                   value: "microsoft/harrier-oss-v1-270m@31de22b#d640"
-                # 판정 세트 v2(2026-10-05, 150쿼리) 로 잰 C. 색인 드리프트로 ±0.02 움직인 적이 있어 허용폭은 0.03.
+                # 판정 세트 v3(2026-10-11, 228쿼리)로 잰 C — NO_ANSWER 13 질의는 빼고 낸 평균.
+                # 임시값: 배포 전 검색 파드 안에서 같은 스크립트·같은 세트로 잰 값(2026-10-11 10:18 KST).
+                # 배포 뒤 첫 정기 실행 값으로 갱신한다. v2 기준선(ko .7767 · en .7140)은 눈금이 달라 비교하지 않는다.
+                # 색인 드리프트로 ±0.02 움직인 적이 있어 허용폭은 0.03.
                 # 판정 세트를 바꾸면 점수 눈금이 바뀐다 — 옛 기준선을 그대로 두면 게이트가 사실상 열린다.
                 - name: EVAL_BASELINE_KO
-                  value: "0.7767"
+                  value: "0.7364"
                 - name: EVAL_BASELINE_EN
-                  value: "0.7140"
+                  value: "0.7097"
                 - name: EVAL_TOLERANCE
                   value: "0.03"
               volumeMounts:
