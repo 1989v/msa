@@ -15,6 +15,10 @@ export const PLACE_HUB_STATE_TTL_MS = 10 * 60_000;
 export interface PlaceHubState {
   keyword: string;
   exactFor: string | null;
+  /** 「조건으로 읽지 않고 검색」을 누른 검색어 — `exactFor` 처럼 검색어가 바뀌면 질의에서 빠진다 */
+  keepWordsFor: string | null;
+  /** 해석을 끈 param 과 그때의 검색어 */
+  skipConditions: { for: string; params: string[] } | null;
   category: string | null;
   attributes: string[];
   areaCode: string | null;
@@ -33,6 +37,8 @@ export interface PlaceHubKnownValues {
   categories: readonly string[];
   attributes: readonly string[];
   eventStatuses: readonly string[];
+  /** 해석을 끌 수 있는 param 이름 */
+  conditionParams: readonly string[];
 }
 
 export function writePlaceHubState(state: Omit<PlaceHubState, 'createdAt'>, now = Date.now()): void {
@@ -67,7 +73,15 @@ export function parsePlaceHubState(raw: unknown, known: PlaceHubKnownValues, now
 
   if (!isString(v.keyword)) return null;
   if (!optional(v.exactFor, isString)) return null;
+  if (!optional(v.keepWordsFor, isString)) return null;
   const inList = (list: readonly string[]) => (x: unknown): x is string => isString(x) && list.includes(x);
+  let skipConditions: PlaceHubState['skipConditions'] = null;
+  if (v.skipConditions != null) {
+    if (typeof v.skipConditions !== 'object') return null;
+    const sc = v.skipConditions as Record<string, unknown>;
+    if (!isString(sc.for) || !Array.isArray(sc.params) || !sc.params.every(inList(known.conditionParams))) return null;
+    skipConditions = { for: sc.for, params: [...(sc.params as string[])] };
+  }
   if (!optional(v.category, inList(known.categories))) return null;
   if (!optional(v.listEventStatus, inList(known.eventStatuses))) return null;
   if (!Array.isArray(v.attributes) || !v.attributes.every(inList(known.attributes))) return null;
@@ -87,6 +101,8 @@ export function parsePlaceHubState(raw: unknown, known: PlaceHubKnownValues, now
   return {
     keyword: v.keyword,
     exactFor: (v.exactFor as string | null | undefined) ?? null,
+    keepWordsFor: (v.keepWordsFor as string | null | undefined) ?? null,
+    skipConditions,
     category: (v.category as string | null | undefined) ?? null,
     attributes: [...(v.attributes as string[])],
     areaCode: (v.areaCode as string | null | undefined) ?? null,

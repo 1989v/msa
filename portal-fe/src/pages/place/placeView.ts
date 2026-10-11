@@ -35,6 +35,8 @@ export type RelaxCondition =
   | { kind: 'category'; category: string }
   | { kind: 'eventStatus'; status: string }
   | { kind: 'attribute'; id: AttributeChipId }
+  /** 서버가 검색어에서 읽은 속성 조건 — 풀면 칩을 끄는 것이 아니라 그 param 의 해석을 끈다 */
+  | { kind: 'interpreted'; param: string; ids: AttributeChipId[] }
   | { kind: 'region'; level: 'sigungu' | 'sido' | 'area'; code: string }
   | { kind: 'geo'; radiusKm: number };
 
@@ -48,6 +50,8 @@ export interface HubFilterState {
   sidoCode: string | null;
   sigunguCode: string | null;
   geo: { radiusKm: number } | null;
+  /** 응답에서 파생한 해석 조건(표시 상태) — `attributes` 와 따로 둔다 */
+  interpreted?: ReadonlyArray<{ param: string; ids: AttributeChipId[] }>;
 }
 
 /**
@@ -65,6 +69,7 @@ export function relaxConditions(s: HubFilterState): RelaxCondition[] {
   }
   if (s.category !== EVENT_CATEGORY) {
     for (const id of s.attributes) out.push({ kind: 'attribute', id });
+    for (const c of s.interpreted ?? []) out.push({ kind: 'interpreted', param: c.param, ids: c.ids });
   }
   if (s.sigunguCode) out.push({ kind: 'region', level: 'sigungu', code: s.sigunguCode });
   else if (s.sidoCode) out.push({ kind: 'region', level: 'sido', code: s.sidoCode });
@@ -73,13 +78,14 @@ export function relaxConditions(s: HubFilterState): RelaxCondition[] {
   return out;
 }
 
-/** 「필터 N」이 세는 조건 — 분류·행사 상태·속성. 검색어·지역·반경은 툴바·지역 트리거가 이미 보여 주고, 지도 오버레이는 조건이 아니다. */
-export type ActiveFilterCondition = Extract<RelaxCondition, { kind: 'category' | 'eventStatus' | 'attribute' }>;
+/** 「필터 N」이 세는 조건 — 분류·행사 상태·속성(검색어에서 읽은 속성 포함). 검색어·지역·반경은 툴바·지역 트리거가 이미 보여 주고, 지도 오버레이는 조건이 아니다. */
+export type ActiveFilterCondition = Extract<RelaxCondition, { kind: 'category' | 'eventStatus' | 'attribute' | 'interpreted' }>;
 
 /** 좁은 화면 「필터 N」과 요약 줄이 같이 쓰는 목록 — 실제 질의에 실린 조건(relaxConditions)에서 고른다. */
 export function activeFilterConditions(s: HubFilterState): ActiveFilterCondition[] {
   return relaxConditions(s).filter(
-    (c): c is ActiveFilterCondition => c.kind === 'category' || c.kind === 'eventStatus' || c.kind === 'attribute',
+    (c): c is ActiveFilterCondition =>
+      c.kind === 'category' || c.kind === 'eventStatus' || c.kind === 'attribute' || c.kind === 'interpreted',
   );
 }
 

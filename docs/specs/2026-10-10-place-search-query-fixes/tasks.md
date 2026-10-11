@@ -55,7 +55,7 @@ Total Task Groups: 6. 정본은 `spec.md`, 열린 질문은 `context/open-questi
 
 ### Task Group 3: 허브 해석 표시·해제 (SR-4.2~4.5)
 **Dependencies:** TG2(응답 계약) · **모듈:** `portal-fe`
-- [ ] 3.1 테스트 먼저: `PlacePage.relax.test.tsx`(또는 새 `PlacePage.interpret.test.tsx`)에 넣는다.
+- [x] 3.1 테스트 먼저: `PlacePage.relax.test.tsx`(또는 새 `PlacePage.interpret.test.tsx`)에 넣는다.
   - ① 응답 `interpretedConditions=[parking]` → 주차 칩 켜짐 + 안내 줄(`ATTRIBUTE_CAPTION` 문장 포함), **추가 요청 없음**(요청 수 단언)
   - ② 칩 끄기 → 다음 질의에 `skipCondition=parking`, 다른 해석은 파라미터로 옮겨지지 않음
   - ③ 「조건으로 읽지 않고 검색」 → `keepConditionWords=true`
@@ -68,12 +68,12 @@ Total Task Groups: 6. 정본은 `spec.md`, 열린 질문은 `context/open-questi
   - ⑩ phrase 에 `<b>x</b>` 가 든 응답 → 텍스트로 보이고 `b` 요소가 생기지 않음
   - ⑪ `exact` + `NO_EVIDENCE` → 교정어로 다시 검색 링크
   - `placeApi` 단위 테스트에는 `keepConditionWords`·`skipCondition` 직렬화를 넣는다.
-- [ ] 3.2 구현
+- [x] 3.2 구현
   - `placeApi.ts` 응답 타입(`interpretedConditions`·`zeroReason`)과 질의 파라미터.
   - `keepConditionWords`·`skipCondition` 은 `exact` 처럼 `PlacePage.tsx` 의 `query` 메모 **안**에 넣는다(의존성 배열 포함). 그래야 캐시 키 `['place-attractions', query]` 가 갈린다. 해석 조건은 응답에서 파생한 표시 상태이고 `attributes` 에 넣지 않는다.
   - `placeHubState.ts` 에 `keepWordsFor`·`skipConditions` 를 `exactFor` 와 같은 저장·검증으로 추가한다.
   - 칩 역변환, 안내 문구(ko·en — 칩 이름·`ATTRIBUTE_CAPTION` 재사용, React 텍스트 노드), `placeView.ts` 의 `relaxConditions`·0건 문구 분기.
-- [ ] 3.3 Verify: `cd portal-fe && npx vitest run src/pages/place/__tests__/PlacePage.relax.test.tsx src/pages/place/__tests__/PlacePage.tracking.test.tsx` + 새 테스트 파일 + `placeHubState` 테스트 + `npx tsc --noEmit` 통과 줄.
+- [x] 3.3 Verify: `cd portal-fe && npx vitest run src/pages/place/__tests__/PlacePage.relax.test.tsx src/pages/place/__tests__/PlacePage.tracking.test.tsx` + 새 테스트 파일 + `placeHubState` 테스트 + `npx tsc --noEmit` 통과 줄.
 
 ### Task Group 4: 어휘 근거 게이트 · 한정 · 검색 분석기 품사 필터 (SR-2 · SR-5 · SR-6)
 **Dependencies:** TG1, TG2(`narrowsByIntent`·근거 잔여) · **모듈:** `:search:app`, `:search:batch`
@@ -95,8 +95,8 @@ Total Task Groups: 6. 정본은 `spec.md`, 열린 질문은 `context/open-questi
 
 ### Task Group 5: 문서 (SR-8)
 **Dependencies:** TG2, TG4
-- [ ] 5.1 ADR-0090 개정 단락, `QueryIntent` 머리 주석, `search/glossary.md`·`search-architecture.md` 동기화. glossary 새 행은 「쿼리 언더스탠딩」 표기로 쓴다: 어휘 근거 게이트 · 조건어 해석 · 머리말·꼬리말 · 한정(CONFINE) · 내용 없는 입력, 「근거」 ≠ 판정 세트 `evidence` 비고. search-architecture §4 줄 번호도 갱신한다.
-- [ ] 5.2 Verify: `python3 ai/plugins/hns/scripts/doc_scan.py` 가 새 경로를 추적하는지 확인한다(`docs/standards/doc-index-tracking.md` 절차). glossary 에 「어휘 근거 게이트」·「조건어 해석」·「머리말·꼬리말」·「한정(CONFINE)」·「내용 없는 입력」 다섯 행이 있는지 grep.
+- [x] 5.1 ADR-0090 개정 단락, `QueryIntent` 머리 주석, `search/glossary.md`·`search-architecture.md` 동기화. glossary 새 행은 「쿼리 언더스탠딩」 표기로 쓴다: 어휘 근거 게이트 · 조건어 해석 · 머리말·꼬리말 · 한정(CONFINE) · 내용 없는 입력, 「근거」 ≠ 판정 세트 `evidence` 비고. search-architecture §4 줄 번호도 갱신한다.
+- [x] 5.2 Verify: `python3 ai/plugins/hns/scripts/doc_scan.py` 가 새 경로를 추적하는지 확인한다(`docs/standards/doc-index-tracking.md` 절차). glossary 에 「어휘 근거 게이트」·「조건어 해석」·「머리말·꼬리말」·「한정(CONFINE)」·「내용 없는 입력」 다섯 행이 있는지 grep.
 
 ### Task Group 6: 착수 전 측정 · 회귀 주입(임시 사본) · 배포 · 운영 확인 · 판정 세트 전후 nDCG (SR-7)
 **Dependencies:** TG1~TG5(6.0 은 TG1 과 병행 가능)

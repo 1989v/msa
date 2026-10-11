@@ -3,6 +3,7 @@ import type {
   AttractionQuery,
   AttributeFacets,
   BarrierFreeFilterCode,
+  InterpretedCondition,
   PlaceLang,
 } from '../../api/placeApi';
 import {
@@ -98,6 +99,57 @@ export function attributeQuery(selected: ReadonlySet<AttributeChipId>): Pick<
     barrierFree: barrierFree.length > 0 ? barrierFree : undefined,
     wellness: selected.has('wellness') || undefined,
   };
+}
+
+type AttributeParams = ReturnType<typeof attributeQuery>;
+
+/** 칩 하나를 켰을 때 실리는 (param, 값 목록) — 역변환이 같은 변환을 쓰도록 여기서만 만든다 */
+function chipParams(id: AttributeChipId): Array<[string, string[]]> {
+  return Object.entries(attributeQuery(new Set([id])) as AttributeParams)
+    .filter(([, v]) => v != null)
+    .map(([param, v]) => [param, Array.isArray(v) ? v.map(String) : [String(v)]]);
+}
+
+/** 속성 칩이 만드는 param 이름 전부 — 저장값 검증이 쓴다 */
+export const ATTRIBUTE_PARAMS: readonly string[] = [
+  ...new Set(ATTRIBUTE_CHIPS.flatMap((chip) => chipParams(chip.id).map(([param]) => param))),
+];
+
+/**
+ * 서버가 해석한 조건(`param=value`) → 켜진 것으로 그릴 칩. `attributeQuery` 를 거꾸로 쓴다 —
+ * 칩 하나가 내는 값이 해석 값 안에 다 들어 있으면 그 칩이다(`pet=ALLOWED,PARTIAL` 은 두 칩).
+ */
+export function interpretedChipIds(condition: Pick<InterpretedCondition, 'param' | 'value'>): AttributeChipId[] {
+  const values = condition.value.split(',').map((v) => v.trim());
+  return ATTRIBUTE_CHIPS.map((chip) => chip.id).filter((id) =>
+    chipParams(id).some(([param, vs]) => param === condition.param && vs.every((v) => values.includes(v))),
+  );
+}
+
+/** 한글 끝 글자의 받침 유무로 고른 목적격 조사 — 한글이 아니면 「을(를)」 */
+function objectParticle(word: string): string {
+  const code = word.charCodeAt(word.length - 1) - 0xac00;
+  if (Number.isNaN(code) || code < 0 || code > 11171) return '을(를)';
+  return code % 28 === 0 ? '를' : '을';
+}
+
+/**
+ * 해석 안내 줄 — 「‘주차 되는’·‘반려견 동반’을 주차 가능·반려동물 동반 조건으로 읽었습니다. 정보가 있는 곳만 거릅니다」.
+ * 칩 이름은 해석이 켠 첫 칩(PET 은 「반려동물 동반」), 뒷문장은 칩 묶음의 고지(`ATTRIBUTE_CAPTION`)를 그대로 쓴다.
+ * 원문은 사용자 입력이라 이 문자열은 텍스트 노드로만 넣는다.
+ */
+export function interpretedNotice(lang: PlaceLang, conditions: ReadonlyArray<InterpretedCondition>): string | null {
+  const named = conditions
+    .map((c) => ({ phrase: c.phrase, chip: ATTRIBUTE_CHIPS.find((chip) => chip.id === interpretedChipIds(c)[0]) }))
+    .filter((c): c is { phrase: string; chip: (typeof ATTRIBUTE_CHIPS)[number] } => c.chip != null);
+  if (named.length === 0) return null;
+  const names = named.map((c) => c.chip[lang]);
+  if (lang === 'en') {
+    return `Read ${named.map((c) => `‘${c.phrase}’`).join(' · ')} as ${names.join(' · ')}. ${ATTRIBUTE_CAPTION.en}`;
+  }
+  const phrases = named.map((c) => `‘${c.phrase}’`).join('·');
+  const last = named[named.length - 1].phrase;
+  return `${phrases}${objectParticle(last)} ${names.join('·')} 조건으로 읽었습니다. ${ATTRIBUTE_CAPTION.ko}`;
 }
 
 /** 칩의 건수. 건수를 못 받았으면(null) null — 0 과 다른 뜻이다(모름 ≠ 없음). */

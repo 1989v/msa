@@ -14,12 +14,14 @@ import com.kgd.search.domain.attraction.model.Availability
  * **벡터 레그에는 적용하지 않는다.** 문장의 뜻이 그 레그의 전부라, 잘라내면 지금 잘 하는 것을 망친다.
  * 자르는 대상은 BM25 레그뿐이고, 이 클래스는 그 잔여 검색어와 필터를 만든다.
  *
- * 의도는 세 갈래로 나간다.
+ * 의도는 네 갈래로 나간다.
  * - **타입 의도**(「블로그」·「게임」·「관광지」)는 검색 대상 [Understood.type] 이 된다 — 통합 검색이 쓴다.
  * - **분류 의도**는 [Understood.facets] (인덱스 필드 → 값) 가 된다. 유형(`관광지`→`contentTypeId=12`)은 원천이
  *   정한 뜻이라 코드에 두고, 분류(`해수욕장`→`lclsSystm3=NA020100`)는 원천 코드표에서 온다 — 손으로 쓰면
  *   원천이 분류를 늘릴 때마다 배포해야 한다.
  * - **상업 의도**는 필터가 아니라 랭킹 스위치다 ([Understood.commerceIntent]).
+ * - **조건 의도**(「주차 되는」·「반려견 동반」)는 허브 칩과 같은 속성 선택 [Understood.conditions] 가 된다 — 관광지 경로만.
+ *   머리말과 꼬리말이 함께 있어야 하고 부정어가 붙으면 옮기지 않는다. API 이름(`parking=YES`)은 presentation 이 정한다.
  */
 object QueryIntent {
 

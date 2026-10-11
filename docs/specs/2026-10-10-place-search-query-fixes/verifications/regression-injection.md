@@ -4,7 +4,7 @@
 주입마다 원본에서 파일 하나를 읽어 바꾼 뒤 그 테스트만 돌리고, 끝나면 원본으로 되돌렸다. **전부 컴파일되는 변경**이다(구문 오류 빨간불은 증거로 치지 않는다).
 판정 근거는 각 테스트가 대상 함수(`QueryIntent.analyze` · `SearchAttractionService.execute` · `AttractionSearchAdapter.search` · 색인 정의 JSON · MockMvc 응답)를 부르고 그 산출물을 보는 것이다.
 
-FE 몫(⑭·⑮)은 TG3 범위라 여기 없다.
+FE 몫(⑭·⑮)은 아래 「FE 몫」 절에 있다.
 
 | # | 주입 | 돌린 테스트 | 결과 | 빨갛게 된 케이스(첫 줄) |
 |---|---|---|---|---|
@@ -31,3 +31,15 @@ FE 몫(⑭·⑮)은 TG3 범위라 여기 없다.
 
 - **⑤ 의 대상 케이스를 바꿨다.** 스펙은 「pet friendly」(en)가 빨개진다고 적었지만, V12 로 ko 전용 행의 영문 머리말(`pet` 등)을 지웠기 때문에 언어 열을 무시해도 「pet friendly」는 여전히 조건이 아니다 — 그 케이스로는 안 문다. 언어 열이 실제로 막는 것은 **en 요청의 ko 머리말**(「반려견 동반」·「유모차 대여」)이라 그 케이스로 잡았다.
 - **TG1.1 의 「가볼 만한 곳」은 지금 코드에서도 초록이었다.** 질의 전체를 한 구절로 먼저 맞추는 기존 단계가 `가볼만한곳`(유형 12)으로 잡는다. 세 어절 창이 필요한 것은 다른 말이 섞인 경우(「서울 갈 수 있는 곳」·「부모님과 가기 좋은 곳」)다 — 착수 전 빨강 확인에서 그 둘이 빨갰다.
+
+## FE 몫 (⑭·⑮)
+
+2026-10-11. `scratchpad/regress-fe/portal-fe`(워크트리 `portal-fe` 의 `rsync` 사본, `node_modules` 는 워크트리 것을 심링크)에서 했다.
+사본에 함께 딸려 온 다른 작업의 미완성 테스트(`AttractionAccess.test.tsx`)는 사본에서만 지우고 기준 `tsc -b` exit 0 을 확인했다.
+주입마다 `npx tsc -b` exit 0(컴파일되는 변경)을 확인한 뒤 `npx vitest run src/pages/place/__tests__/PlacePage.interpret.test.tsx` 를 돌리고 원본으로 되돌렸다.
+판정 근거는 화면이 실제로 보낸 질의(`searchAttractions` 대역 인자)와 SEARCH 계측 payload 다.
+
+| # | 주입 | 결과 | 빨갛게 된 케이스 |
+|---|---|---|---|
+| ⑭ | 해석된 칩을 끌 때 `skipInterpreted(param)` 호출 삭제(trigger·changed 는 그대로) | RED 2/14 | 해석된 칩을 끄면 다음 질의에 skipCondition=parking · 검색어를 바꾸면 keepConditionWords·skipCondition 이 질의에서 빠진다 |
+| ⑮ | `keepConditionWords: keepWordsFor != null` — 검색어 대조 삭제 | RED 1/14 | 검색어를 바꾸면 keepConditionWords·skipCondition 이 질의에서 빠진다 |

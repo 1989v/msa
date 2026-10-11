@@ -52,9 +52,12 @@ import {
 import {
   ATTRIBUTE_CAPTION,
   ATTRIBUTE_CHIPS,
+  ATTRIBUTE_PARAMS,
   attributeChips,
   attributeQuery,
   chipCount,
+  interpretedChipIds,
+  interpretedNotice,
   type AttributeChipId,
 } from './placeAttributes';
 import { useMediaQuery } from './useMediaQuery';
@@ -93,6 +96,7 @@ const HUB_KNOWN: PlaceHubKnownValues = {
   categories: [...SIGHT_CATEGORIES, EVENT_CATEGORY, COURSE_CATEGORY],
   attributes: ATTRIBUTE_CHIPS.map((c) => c.id),
   eventStatuses: LIST_EVENT_STATUSES,
+  conditionParams: ATTRIBUTE_PARAMS,
 };
 
 const UI = {
@@ -106,8 +110,10 @@ const UI = {
     empty: '검색 결과가 없습니다',
     emptyReason: '고른 조건을 모두 만족하는 관광지가 없습니다. 아래에서 조건을 풀면 결과가 넓어집니다.',
     emptyNoFilter: '이 범위에 등록된 관광지가 없습니다.',
+    // 0건의 이유가 조건이 아니라 검색어일 때(어휘 근거 없음·자모만인 입력) — 조건을 풀라고 권하지 않는다
+    emptyNoMatch: '찾는 대상이 등록된 관광지 정보에 없습니다. 다른 검색어로 찾아보세요.',
     relaxGroup: '조건 해제',
-    relaxKeyword: (k: string) => `검색어 ‘${k}’ 해제`,
+    relaxKeyword: '검색어 빼고 보기',
     relaxCategory: (c: string) => `분류 ‘${c}’ 해제`,
     relaxEventStatus: (st: string) => `행사 상태 ‘${st}’ 해제`,
     relaxAttribute: (a: string) => `‘${a}’ 해제`,
@@ -118,6 +124,8 @@ const UI = {
     sidoFallback: '시·도',
     corrected: (k: string) => `‘${k}’(으)로 검색한 결과입니다`,
     searchExact: (k: string) => `원래 검색어 ‘${k}’(으)로 검색`,
+    searchCorrected: (k: string) => `교정한 검색어 ‘${k}’(으)로 검색`,
+    keepConditionWords: '조건으로 읽지 않고 검색',
     failed: '목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
     mapKeyMissing: '지도 키가 설정되지 않아 목록만 표시합니다',
     openInGoogleMaps: '구글맵에서 보기',
@@ -159,8 +167,9 @@ const UI = {
     empty: 'No results found',
     emptyReason: 'No attractions match all the selected filters. Removing a filter below widens the results.',
     emptyNoFilter: 'No attractions are listed in this range.',
+    emptyNoMatch: 'Nothing in our attraction listings matches what you searched for. Try a different search term.',
     relaxGroup: 'Remove filters',
-    relaxKeyword: (k: string) => `Remove keyword “${k}”`,
+    relaxKeyword: 'Show without the keyword',
     relaxCategory: (c: string) => `Remove category “${c}”`,
     relaxEventStatus: (st: string) => `Remove event status “${st}”`,
     relaxAttribute: (a: string) => `Remove “${a}”`,
@@ -171,6 +180,8 @@ const UI = {
     sidoFallback: 'province',
     corrected: (k: string) => `Showing results for “${k}”`,
     searchExact: (k: string) => `Search for “${k}” instead`,
+    searchCorrected: (k: string) => `Search for “${k}” (corrected)`,
+    keepConditionWords: 'Search words as typed',
     failed: 'Could not load the list. Please try again in a moment.',
     mapKeyMissing: 'Map key not configured — showing list only',
     openInGoogleMaps: 'Open in Google Maps',
@@ -376,6 +387,13 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
   const [keyword, setKeyword] = useState(restored?.keyword ?? '');
   // 「원래 검색어로 검색」을 누른 순간의 검색어. 검색어가 바뀌면 질의에서 저절로 빠진다(불리언이면 남는다).
   const [exactFor, setExactFor] = useState<string | null>(restored?.exactFor ?? null);
+  // 원래 검색어 검색을 누르기 직전의 교정어 — exact 질의가 근거 없음으로 0건이면 교정어로 되돌아갈 링크에 쓴다
+  const [correctedBeforeExact, setCorrectedBeforeExact] = useState<{ for: string; corrected: string } | null>(null);
+  // 조건어 해석 해제 — exactFor 와 같이 그 검색어에 묶어 두어, 검색어가 바뀌면 질의에서 저절로 빠진다
+  const [keepWordsFor, setKeepWordsFor] = useState<string | null>(restored?.keepWordsFor ?? null);
+  const [skipConditions, setSkipConditions] = useState<{ for: string; params: string[] } | null>(
+    restored?.skipConditions ?? null,
+  );
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showSuggest, setShowSuggest] = useState(false);
   const [category, setCategory] = useState<string | null>(restored?.category ?? null);
@@ -492,10 +510,15 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
       // 고른 칩은 남겨 두어 행사 칩을 풀면 다시 걸린다
       ...(category === EVENT_CATEGORY ? {} : attributeQuery(attributes)),
       exact: (exactFor != null && exactFor === keyword) || undefined,
+      keepConditionWords: (keepWordsFor != null && keepWordsFor === keyword) || undefined,
+      skipCondition:
+        skipConditions != null && skipConditions.for === keyword && skipConditions.params.length > 0
+          ? skipConditions.params
+          : undefined,
       page,
       size: 30,
     }),
-    [keyword, exactFor, lang, areaCode, sidoCode, sigunguCode, category, listEventStatus, geo, attributes, page],
+    [keyword, exactFor, keepWordsFor, skipConditions, lang, areaCode, sidoCode, sigunguCode, category, listEventStatus, geo, attributes, page],
   );
 
   const { data, isLoading, isError } = useQuery({
@@ -532,7 +555,7 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
   // 게스트 별이 로그인으로 가기 직전에 부른다 — 돌아오면 이 조건·선택으로 다시 그린다
   const saveHubState = () =>
     writePlaceHubState({
-      keyword, exactFor, category, attributes: [...attributes], areaCode, sidoCode, sigunguCode,
+      keyword, exactFor, keepWordsFor, skipConditions, category, attributes: [...attributes], areaCode, sidoCode, sigunguCode,
       geo, listEventStatus, selectedId, page,
     });
   // 화면을 떠날 때 아직 안 보낸 것을 흘린다 — 그 순간의 fetch 는 취소된다.
@@ -635,7 +658,32 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
     setPendingSelectId(null);
     if (data?.attractions.some((a) => a.id === pendingSelectId)) setSelectedId(pendingSelectId);
   }
+  /*
+   * 검색어에서 읽은 속성 조건 — 응답에서 파생한 표시 상태다. `attributes` 에 넣지 않는다: 그건 질의 입력이라
+   * 넣으면 같은 검색어로 요청이 한 번 더 나가고, 해석을 끌 때도 칩 조건으로 남는다.
+   */
+  const interpretedConditions = useMemo(() => data?.interpretedConditions ?? [], [data]);
+  const interpreted = useMemo(
+    () => interpretedConditions.map((c) => ({ param: c.param, ids: interpretedChipIds(c) })).filter((c) => c.ids.length > 0),
+    [interpretedConditions],
+  );
+  const interpretedIds = useMemo(() => new Set(interpreted.flatMap((c) => c.ids)), [interpreted]);
+  const shownAttributes = useMemo(() => new Set([...attributes, ...interpretedIds]), [attributes, interpretedIds]);
+  /** 해석 하나를 끈다 — 그 param 만 다음 질의의 skipCondition 에 더한다. 나머지 해석은 해석으로 남는다 */
+  const skipInterpreted = (param: string) =>
+    setSkipConditions((prev) => {
+      const kept = prev != null && prev.for === keyword ? prev.params : [];
+      return { for: keyword, params: kept.includes(param) ? kept : [...kept, param] };
+    });
   const toggleAttribute = (id: AttributeChipId) => {
+    const byInterpretation = interpreted.find((c) => c.ids.includes(id));
+    if (byInterpretation && !attributes.has(id)) {
+      triggerRef.current = 'relax';
+      changedRef.current = ['skipCondition', 'attributes', 'page'];
+      skipInterpreted(byInterpretation.param);
+      setPage(0);
+      return;
+    }
     triggerRef.current = 'attribute';
     changedRef.current = ['attributes', 'page'];
     setAttributes((prev) => {
@@ -824,7 +872,9 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
    * 상태를 바꾸기 전에 autoPickedRef 를 세운다: 해제로 시도가 비면 첫 진입 자동 선택이 다시 돌아
    * 시도를 고르고 trigger 를 initial 로 덮는다.
    */
-  const relaxable = relaxConditions({ keyword, category, listEventStatus, attributes, areaCode, sidoCode, sigunguCode, geo });
+  const relaxable = relaxConditions({
+    keyword, category, listEventStatus, attributes, areaCode, sidoCode, sigunguCode, geo, interpreted,
+  });
   /** 조건 하나를 풀고 바꾼 상태 필드 이름(계측 changed)을 돌려준다. */
   const releaseCondition = (c: RelaxCondition): string[] => {
     switch (c.kind) {
@@ -848,6 +898,9 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
           return next;
         });
         return ['attributes'];
+      case 'interpreted':
+        skipInterpreted(c.param);
+        return ['skipCondition', 'attributes'];
       case 'region':
         // 한 단계 위로 — 반경(geo)과 지도는 그대로 둔다
         if (c.level === 'sigungu') {
@@ -883,13 +936,35 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
     autoPickedRef.current = true;
     triggerRef.current = 'relax';
     changedRef.current = ['exact', 'page'];
+    setCorrectedBeforeExact(data?.correctedKeyword ? { for: keyword, corrected: data.correctedKeyword } : null);
     setExactFor(keyword);
     setPage(0);
   };
+  /** 원래 검색어가 근거 없음으로 0건일 때 — exact 를 풀어 서버가 다시 교정하게 한다 */
+  const searchCorrected = () => {
+    autoPickedRef.current = true;
+    triggerRef.current = 'relax';
+    changedRef.current = ['exact', 'page'];
+    setExactFor(null);
+    setPage(0);
+  };
+  const keepConditionWords = () => {
+    autoPickedRef.current = true;
+    triggerRef.current = 'relax';
+    changedRef.current = ['keepConditionWords', 'attributes', 'page'];
+    setKeepWordsFor(keyword);
+    setPage(0);
+  };
+  const interpretedLine = interpretedNotice(lang, interpretedConditions);
+  const zeroByKeyword = data?.zeroReason === 'NO_EVIDENCE' || data?.zeroReason === 'NO_CONTENT';
+  const correctedLink =
+    query.exact && data?.zeroReason === 'NO_EVIDENCE' && correctedBeforeExact?.for === keyword
+      ? correctedBeforeExact.corrected
+      : null;
   const relaxLabel = (c: RelaxCondition): string => {
     switch (c.kind) {
       case 'keyword':
-        return L.relaxKeyword(c.keyword);
+        return L.relaxKeyword;
       case 'category':
         return L.relaxCategory(L.categories[c.category] ?? c.category);
       case 'eventStatus':
@@ -897,6 +972,10 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
       case 'attribute': {
         const chip = ATTRIBUTE_CHIPS.find((a) => a.id === c.id);
         return L.relaxAttribute(chip ? chip[lang] : c.id);
+      }
+      case 'interpreted': {
+        const chip = ATTRIBUTE_CHIPS.find((a) => a.id === c.ids[0]);
+        return L.relaxAttribute(chip ? chip[lang] : c.param);
       }
       case 'region':
         if (c.level === 'sigungu') return L.relaxRegion(selectedSigunguName ?? L.sigunguFallback);
@@ -1405,12 +1484,15 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
     setPage(0);
   };
   // 「필터 N」과 요약 줄 — 같은 조건 목록에서 센다(검색어·지역·반경은 세지 않는다)
-  const activeFilters = activeFilterConditions({ keyword, category, listEventStatus, attributes, areaCode, sidoCode, sigunguCode, geo });
+  const activeFilters = activeFilterConditions({
+    keyword, category, listEventStatus, attributes, areaCode, sidoCode, sigunguCode, geo, interpreted,
+  });
   const activeFilterNames = activeFilters.map((c) => {
     if (c.kind === 'category') return L.categories[c.category] ?? c.category;
     if (c.kind === 'eventStatus') return L.eventStatuses[c.status as ListEventStatus] ?? c.status;
-    const chip = ATTRIBUTE_CHIPS.find((a) => a.id === c.id);
-    return chip ? chip[lang] : c.id;
+    const id = c.kind === 'interpreted' ? c.ids[0] : c.id;
+    const chip = ATTRIBUTE_CHIPS.find((a) => a.id === id);
+    return chip ? chip[lang] : id;
   });
 
   const isPlaceHost = window.location.hostname.split('.')[0] === 'place';
@@ -1689,8 +1771,9 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
               {category !== EVENT_CATEGORY && (
                 <div className="place-attr-group" role="group" aria-label={lang === 'en' ? 'Visitor info filters' : '방문 정보 필터'}>
                   <div className="place-attr-chips">
-                    {attributeChips(lang, attributes).map((chip) => {
-                      const selected = attributes.has(chip.id);
+                    {attributeChips(lang, shownAttributes).map((chip) => {
+                      // 검색어에서 읽은 조건도 켜진 칩으로 그린다 — 끄면 그 해석만 풀린다
+                      const selected = shownAttributes.has(chip.id);
                       const count = chipCount(facets, chip.id);
                       const empty = !selected && count === 0;
                       return (
@@ -1771,6 +1854,15 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
                   </button>
                 </p>
               )}
+              {/* 조건어 해석 안내 — 교정 안내 아래. 원문은 사용자 입력이라 텍스트 노드로만 넣는다 */}
+              {interpretedLine && (
+                <p className="place-corrected place-interpreted" role="status">
+                  {interpretedLine}{' '}
+                  <button type="button" className="place-chip" onClick={keepConditionWords}>
+                    {L.keepConditionWords}
+                  </button>
+                </p>
+              )}
               {attractions.length === 0 && !isLoading && (
                 isError ? (
                   // 실패는 조건 탓이 아니다 — 해제를 권하지 않는다
@@ -1778,7 +1870,12 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
                 ) : (
                   <div className="place-empty">
                     <p>{L.empty}</p>
-                    <p>{relaxable.length > 0 ? L.emptyReason : L.emptyNoFilter}</p>
+                    <p>{zeroByKeyword ? L.emptyNoMatch : relaxable.length > 0 ? L.emptyReason : L.emptyNoFilter}</p>
+                    {correctedLink && (
+                      <button type="button" className="place-chip" onClick={searchCorrected}>
+                        {L.searchCorrected(correctedLink)}
+                      </button>
+                    )}
                     {relaxable.length > 0 && (
                       <div role="group" aria-label={L.relaxGroup}>
                         {relaxable.map((c) => (

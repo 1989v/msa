@@ -130,7 +130,7 @@ describe('0건 — 조건 해제 버튼', () => {
     await untilSeoul();
     submitKeyword('궁궐');
     await waitFor(() => expect(lastCall()).toMatchObject({ keyword: '궁궐', eventStatus: 'NOT_ENDED' }));
-    await waitFor(() => expect(relaxButtons()).toEqual(['검색어 ‘궁궐’ 해제', '지역 ‘서울특별시’ 해제', '모두 해제']));
+    await waitFor(() => expect(relaxButtons()).toEqual(['검색어 빼고 보기', '지역 ‘서울특별시’ 해제', '모두 해제']));
   });
 
   it('조건 셋(시도·검색어·속성) → 버튼 셋 + 모두 해제, 속성 버튼은 그 속성만 푼 질의를 보낸다', async () => {
@@ -142,7 +142,7 @@ describe('0건 — 조건 해제 버튼', () => {
     await waitFor(() => expect(lastCall()).toMatchObject({ parking: 'YES' }));
     closeFilters();
     await waitFor(() =>
-      expect(relaxButtons()).toEqual(['검색어 ‘궁궐’ 해제', '‘주차 가능’ 해제', '지역 ‘서울특별시’ 해제', '모두 해제']),
+      expect(relaxButtons()).toEqual(['검색어 빼고 보기', '‘주차 가능’ 해제', '지역 ‘서울특별시’ 해제', '모두 해제']),
     );
 
     fireEvent.click(relaxButton('‘주차 가능’ 해제'));
@@ -155,9 +155,9 @@ describe('0건 — 조건 해제 버튼', () => {
     renderPage();
     await untilSeoul();
     submitKeyword('궁궐');
-    await waitFor(() => expect(relaxButtons()).toContain('검색어 ‘궁궐’ 해제'));
+    await waitFor(() => expect(relaxButtons()).toContain('검색어 빼고 보기'));
 
-    fireEvent.click(relaxButton('검색어 ‘궁궐’ 해제'));
+    fireEvent.click(relaxButton('검색어 빼고 보기'));
     await waitFor(() => expect(lastSearch()).toMatchObject({ trigger: 'relax', changed: ['keyword', 'page'] }));
     expect(lastCall().keyword).toBeUndefined();
     expect(lastCall()).toMatchObject({ sidoCode: '11' });
@@ -275,7 +275,7 @@ describe('0건 — 조건 해제 버튼', () => {
     submitKeyword('궁궐');
     fireEvent.click(within(openFilters()).getByRole('button', { name: /^주차 가능/ }));
     closeFilters();
-    await waitFor(() => expect(relaxButtons()).toEqual(['검색어 ‘궁궐’ 해제', '‘주차 가능’ 해제', '지역 ‘종로구’ 해제', '모두 해제']));
+    await waitFor(() => expect(relaxButtons()).toEqual(['검색어 빼고 보기', '‘주차 가능’ 해제', '지역 ‘종로구’ 해제', '모두 해제']));
 
     fireEvent.click(relaxButton('모두 해제'));
     await waitFor(() => expect(lastSearch()).toMatchObject({ trigger: 'relax' }));
@@ -301,7 +301,7 @@ describe('0건 — 조건 해제 버튼', () => {
       fireEvent.click(screen.getByRole('button', { name: '행사' }));
       await waitFor(() => expect(lastCall()).toMatchObject({ category: 'festival' }));
       expect(lastCall().parking).toBeUndefined();
-      await waitFor(() => expect(relaxButtons()).toEqual(['검색어 ‘불꽃’ 해제', '분류 ‘행사’ 해제', '모두 해제']));
+      await waitFor(() => expect(relaxButtons()).toEqual(['검색어 빼고 보기', '분류 ‘행사’ 해제', '모두 해제']));
     };
 
     it('「모두 해제」는 숨은 속성까지 비운다', async () => {
@@ -333,12 +333,12 @@ describe('0건 — 조건 해제 버튼', () => {
     renderPage();
     await waitFor(() => expect(calls()).toHaveLength(1));
     submitKeyword('궁궐');
-    await waitFor(() => expect(relaxButtons()).toEqual(['검색어 ‘궁궐’ 해제']));
+    await waitFor(() => expect(relaxButtons()).toEqual(['검색어 빼고 보기']));
     resolveSido([seoul]);
     // 시도 목록이 도착했다 — 지역 트리거가 생긴다(검색어가 있어 자동 선택은 하지 않으니 라벨은 「지역 선택」)
     expect(await screen.findByRole('button', { name: /^지역 선택/ })).toBeInTheDocument();
 
-    fireEvent.click(relaxButton('검색어 ‘궁궐’ 해제'));
+    fireEvent.click(relaxButton('검색어 빼고 보기'));
     expect(await screen.findByRole('heading', { name: '어느 지역부터 볼까요?' })).toBeInTheDocument();
     await waitFor(() => expect(lastSearch()).toMatchObject({ trigger: 'relax', changed: ['keyword', 'page'] }));
     expect(lastCall().sidoCode).toBeUndefined();
@@ -397,6 +397,6 @@ describe('교정 안내 · 원래 검색어로 검색', () => {
     expect(await screen.findByText('Showing results for “경복궁”')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Search for “palce” instead' })).toBeInTheDocument();
     const group = screen.getByRole('group', { name: 'Remove filters' });
-    expect(within(group).getAllByRole('button').map((b) => b.textContent)).toEqual(['Remove keyword “palce”']);
+    expect(within(group).getAllByRole('button').map((b) => b.textContent)).toEqual(['Show without the keyword']);
   });
 });

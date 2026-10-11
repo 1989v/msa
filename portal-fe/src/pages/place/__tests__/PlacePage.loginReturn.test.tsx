@@ -319,6 +319,10 @@ describe('허브 상태 복원 — 외부 입력 검증', () => {
     ['radiusKm 0', { geo: { lat: 37.5, lng: 127, radiusKm: 0 } }],
     ['geo 가 유한하지 않음', { geo: { lat: 'x', lng: 127, radiusKm: 5 } }],
     ['exactFor 가 문자열 아님', { exactFor: 3 }],
+    ['keepWordsFor 가 문자열 아님', { keepWordsFor: ['주차'] }],
+    ['skipConditions 의 param 이 모르는 값', { skipConditions: { for: '경복궁', params: ['parking', 'jacuzzi'] } }],
+    ['skipConditions 의 for 가 문자열 아님', { skipConditions: { for: 1, params: ['parking'] } }],
+    ['skipConditions 의 params 가 배열 아님', { skipConditions: { for: '경복궁', params: 'parking' } }],
     ['10분 지남', { createdAt: Date.now() - 10 * 60_000 - 1 }],
   ])('%s → 통째로 버리고 지운다', async (_name, over) => {
     seedHubState({ ...over, keyword: '경복궁' });
@@ -350,6 +354,29 @@ describe('허브 상태 복원 — 외부 입력 검증', () => {
     expect(queries()[0]).toMatchObject({ keyword: '경복궁', exact: true, parking: 'YES', lat: 37.57, lng: 126.97, radiusKm: 5, page: 2 });
     expect(screen.getByLabelText(/^관광지 검색/)).toHaveValue('경복궁');
     expect(triggers()).toEqual(['restore']);
+  });
+
+  it('조건어 해제(keepWordsFor · skipConditions)도 그 검색어에 묶인 채 복원한다', async () => {
+    seedHubState({
+      keyword: '주차 되는 해수욕장', keepWordsFor: '주차 되는 해수욕장',
+      skipConditions: { for: '주차 되는 해수욕장', params: ['pet'] }, category: null, sidoCode: null,
+    });
+    renderPage();
+    await screen.findByText('관광지 1');
+    await flush();
+
+    expect(queries()[0]).toMatchObject({ keyword: '주차 되는 해수욕장', keepConditionWords: true, skipCondition: ['pet'] });
+  });
+
+  it('옛 저장값(두 필드 없음)도 받는다 — 해제 없음으로', async () => {
+    seedHubState({ keyword: '해수욕장', category: null, sidoCode: null });
+    renderPage();
+    await screen.findByText('관광지 1');
+    await flush();
+
+    expect(queries()[0]).toMatchObject({ keyword: '해수욕장' });
+    expect(queries()[0].keepConditionWords).toBeUndefined();
+    expect(queries()[0].skipCondition).toBeUndefined();
   });
 });
 

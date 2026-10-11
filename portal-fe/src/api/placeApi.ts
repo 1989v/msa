@@ -126,6 +126,11 @@ export interface Attraction {
   samePlace?: Array<{ id: string; contentTypeId?: string | null }> | null;
   /** 「캠핑장 정보」 — 고캠핑 원문 중 화면에 내는 키만 담은 JSON 객체 문자열(place 가 고른다). 캠핑장이 아니면 없다 */
   camping?: string | null;
+  /**
+   * 가까운 역·정류장(place 가 주 1회 계산) — 단건 조회에만 온다. `busCovered` 가 false 면 그 시군구는 버스 원천에 없다
+   * (「이 지역은 버스정류장 위치 자료가 없습니다」), null 은 판정 전이다. 보일 것이 없으면 null.
+   */
+  access?: AttractionAccess | null;
   /** 원천 출처(TOURAPI · GOCAMPING …) — 없으면 「출처: 정보 없음」. TourAPI 로 추정하지 않는다. */
   source?: string | null;
   /** 공공누리 유형(Type1 · Type3 …) — 원천 값 그대로. */
@@ -155,6 +160,23 @@ export interface RelatedPlace {
 }
 
 /** 집중률 예측 하루 — `date` 는 `YYYY-MM-DD`, `rate` 는 원천 값 그대로(0~100). */
+export interface AttractionAccess {
+  /** 종류(RAIL → BUS)·순위 순 */
+  stops: AttractionAccessStop[];
+  busCovered: boolean | null;
+}
+
+/** 역·정류장 한 줄 — `distanceM` 은 하버사인 직선거리(m), `baseDate` 는 원천 기준일(역)·수집일(정류장) `YYYY-MM-DD`. 버스는 영문 이름·노선이 없다. */
+export interface AttractionAccessStop {
+  kind: 'RAIL' | 'BUS';
+  rank: number;
+  name: string;
+  nameEn: string | null;
+  lines: string | null;
+  distanceM: number;
+  baseDate: string | null;
+}
+
 export interface CongestionDay {
   date: string;
   rate: number;
@@ -211,7 +233,22 @@ export interface AttractionSearchResult {
   correctedKeyword?: string | null;
   /** `facets=true` 로 요청했을 때만. 건수 요청이 실패·시간 초과면 null — 결과는 그대로 온다. */
   attributeFacets?: AttributeFacets | null;
+  /** 검색어에서 속성 조건으로 읽은 말 — 칩을 켠 것과 같은 `param=value`. 없거나 `keepConditionWords` 면 빈 배열 */
+  interpretedConditions?: InterpretedCondition[];
+  /** 0건의 이유가 조건이 아니라 검색어일 때만 — 필터 때문인 0건과 결과가 있는 경우는 null */
+  zeroReason?: ZeroReason | null;
 }
+
+/** `phrase` 는 사용자 입력이 되돌아오는 값이다 — 텍스트 노드로만 그린다 */
+export interface InterpretedCondition {
+  param: string;
+  /** 여러 값은 쉼표로 잇는다(`pet` 은 `ALLOWED,PARTIAL`) */
+  value: string;
+  phrase: string;
+}
+
+/** `NO_EVIDENCE` — 색인에 검색어의 어휘 근거가 없다 · `NO_CONTENT` — 자모·기호만인 입력 */
+export type ZeroReason = 'NO_EVIDENCE' | 'NO_CONTENT';
 
 /**
  * 한국 행정구역 (ADR-0071). GeoNames 지명 계층(`/api/places/regions`)과 다른 축이다 —
@@ -442,6 +479,10 @@ export interface AttractionQuery {
   eventStatus?: 'ONGOING' | 'WEEKEND' | 'UPCOMING' | 'THIS_MONTH' | 'NOT_ENDED';
   /** 원래 검색어 검색 — 참이면 서버가 오타 교정을 건너뛰고 응답의 `correctedKeyword` 는 null 이다. */
   exact?: boolean;
+  /** 조건어 해석을 전부 끈다 — 문장 그대로 검색 */
+  keepConditionWords?: boolean;
+  /** 이 param 들의 해석만 끈다(그 말은 검색어로 남는다). param 마다 한 번씩 반복해 싣는다 */
+  skipCondition?: string[];
 }
 
 export const searchAttractions = async (query: AttractionQuery): Promise<AttractionSearchResult> => {
@@ -468,6 +509,8 @@ export const searchAttractions = async (query: AttractionQuery): Promise<Attract
   if (query.facets) params.set('facets', 'true');
   if (query.eventStatus) params.set('eventStatus', query.eventStatus);
   if (query.exact) params.set('exact', 'true');
+  if (query.keepConditionWords) params.set('keepConditionWords', 'true');
+  for (const param of query.skipCondition ?? []) params.append('skipCondition', param);
   params.set('page', String(query.page ?? 0));
   params.set('size', String(query.size ?? 30));
   const res = await api.get<ApiResponse<AttractionSearchResult>>(`/api/search/attractions?${params}`);

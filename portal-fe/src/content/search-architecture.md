@@ -231,35 +231,38 @@ sequenceDiagram
 
 | 항목 | 현재 값 | 상태 | 근거 | 결정 |
 |---|---|---|---|---|
-| 형태소 분석기 | `nori` | 복합어는 `discard` 로 쪼갠 조각만 남긴다 | `search/batch/src/main/resources/opensearch/attractions-index.json:36` | ADR-0065 |
-| nori 사용자 사전 줄 수 | `200` | ● 색인 시점·검색 시점 공통 | `search/batch/src/main/resources/opensearch/attractions-index.json:39` | ADR-0065 |
+| 형태소 분석기 | `nori` | 복합어는 `discard` 로 쪼갠 조각만 남긴다 | `search/batch/src/main/resources/opensearch/attractions-index.json:40` | ADR-0065 |
+| nori 사용자 사전 줄 수 | `200` | ● 색인 시점·검색 시점 공통 | `search/batch/src/main/resources/opensearch/attractions-index.json:43` | ADR-0065 |
 | 동의어 줄 수 | `10` | ● 검색 시점 분석기에만 건다 | `search/batch/src/main/resources/opensearch/attractions-index.json:10` | ADR-0090 |
-| 영문 분석기 | `english` | 제목·개요·주소의 `.en` 서브필드 | `search/batch/src/main/resources/opensearch/attractions-index.json:293` | ADR-0065 |
-| 자모 자동완성 | `edge_ngram` | 자동완성 세 신호 중 가장 낮은 무게 | `search/batch/src/main/resources/opensearch/attractions-index.json:27`, `search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt:477` | ADR-0065 |
-| 오타 교정 | 자모 편집거리 `2` | 검색 필드에 없는 단어만 | `search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt:367` | ADR-0065 |
-| 하이브리드 켜짐 | `true` | ● 운영 켜짐(deployment env) | `k8s/base/search/deployment.yaml:36`, `search/app/src/main/resources/application.yml:86` | ADR-0090 |
-| 융합 방식 | `rrf` | ● 앱이 기동 때 검색 파이프라인을 만든다 | `search/app/src/main/resources/application.yml:88` | ADR-0090 |
+| 영문 분석기 | `english` | 제목·개요·주소의 `.en` 서브필드 | `search/batch/src/main/resources/opensearch/attractions-index.json:298` | ADR-0065 |
+| 자모 자동완성 | `edge_ngram` | 자동완성 세 신호 중 가장 낮은 무게 | `search/batch/src/main/resources/opensearch/attractions-index.json:31`, `search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt:570` | ADR-0065 |
+| 오타 교정 | 자모 편집거리 `2` | 검색 필드에 없는 단어만 | `search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt:528` | ADR-0065 |
+| 하이브리드 켜짐 | `true` | ● 운영 켜짐(deployment env) | `k8s/base/search/deployment.yaml:36`, `search/app/src/main/resources/application.yml:92` | ADR-0090 |
+| 융합 방식 | `rrf` | ● 앱이 기동 때 검색 파이프라인을 만든다 | `search/app/src/main/resources/application.yml:94` | ADR-0090 |
 | RRF rank_constant | `60` | ● 순위만 써서 점수 정규화가 필요 없다 | `search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/HybridSearchPipelineInitializer.kt:67` | ADR-0090 |
-| 필터 위치 | 두 레그 각각 | 벡터 레그도 검색어가 걸린 문서 안에서만 찾는다 — 의도(구조 필터만 넣는 안과 판정 세트 비교, 차이 유의하지 않음) | `search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt:693` | ADR-0090 |
+| 필터 위치 | 두 레그 각각 | 벡터 레그도 검색어가 걸린 문서 안에서만 찾는다 — 의도(구조 필터만 넣는 안과 판정 세트 비교, 차이 유의하지 않음) | `search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt:824` | ADR-0090 |
 | 임베딩 모델 ref | `microsoft/harrier-oss-v1-270m@31de22b#d640` | ● 검색 앱과 재색인이 같은 값이어야 벡터 레그가 돈다 | `k8s/base/search/deployment.yaml:34`, `k8s/base/search-batch/cronjob-attraction-reindex.yaml:62` | ADR-0090 |
-| 벡터 차원 | `640` | ● | `search/batch/src/main/resources/opensearch/attractions-index.json:446` | ADR-0090 |
-| HNSW m | `16` | ● Lucene 엔진, 코사인 | `search/batch/src/main/resources/opensearch/attractions-index.json:452` | ADR-0090 |
-| HNSW ef_construction | `128` | ● | `search/batch/src/main/resources/opensearch/attractions-index.json:453` | ADR-0090 |
-| 양자화 | `sq` 1비트 | 근사 후보를 원본 벡터로 재채점(×3) | `search/batch/src/main/resources/opensearch/attractions-index.json:455`, `search/app/src/main/kotlin/com/kgd/search/application/attraction/config/AttractionHybridProperties.kt:23` | ADR-0090 |
+| 벡터 차원 | `640` | ● | `search/batch/src/main/resources/opensearch/attractions-index.json:461` | ADR-0090 |
+| HNSW m | `16` | ● Lucene 엔진, 코사인 | `search/batch/src/main/resources/opensearch/attractions-index.json:467` | ADR-0090 |
+| HNSW ef_construction | `128` | ● | `search/batch/src/main/resources/opensearch/attractions-index.json:468` | ADR-0090 |
+| 양자화 | `sq` 1비트 | 근사 후보를 원본 벡터로 재채점(×3) | `search/batch/src/main/resources/opensearch/attractions-index.json:469`, `search/app/src/main/kotlin/com/kgd/search/application/attraction/config/AttractionHybridProperties.kt:23` | ADR-0090 |
 | 사이드카 정밀도 | `fp32` | CPU 1코어로 쿼리를 실시간 인코딩 | `k8s/base/search/deployment.yaml:102` | ADR-0090 |
 | 쿼리 벡터 캐시 | 프로세스 캐시 → `query_vector` 표 → 인코딩 | 인코딩 실패만 Redis ZSET 에 센다 | `search/app/src/main/kotlin/com/kgd/search/application/queryvector/service/QueryVectorService.kt:56`, `search/app/src/main/resources/db/migration/V1__create_query_vector.sql:8` | ADR-0090 |
-| 쿼리 언더스탠딩 | 키워드 레그만 | 잔여 검색어·패싯 필터, 상업 의도는 랭킹 스위치. 분류 사전은 코드표 ∩ 그 언어 색인 코드(10분 갱신) | `search/domain/src/main/kotlin/com/kgd/search/domain/query/model/QueryIntent.kt:236`, `search/app/src/main/kotlin/com/kgd/search/application/attraction/service/SearchAttractionService.kt:94`, `search/app/src/main/kotlin/com/kgd/search/application/attraction/service/CategoryLexiconService.kt:39` | ADR-0090 |
+| 쿼리 언더스탠딩 | 키워드 레그만 | 잔여 검색어·패싯 필터, 상업 의도는 랭킹 스위치. 분류 사전은 코드표 ∩ 그 언어 색인 코드(10분 갱신) | `search/domain/src/main/kotlin/com/kgd/search/domain/query/model/QueryIntent.kt:351`, `search/app/src/main/kotlin/com/kgd/search/application/attraction/service/SearchAttractionService.kt:109`, `search/app/src/main/kotlin/com/kgd/search/application/attraction/service/CategoryLexiconService.kt:39` | ADR-0090 |
+| 조건어 해석 켜짐 | `true` | 「주차 되는」·「반려견 동반」 같은 말을 허브 칩과 같은 속성 선택으로 옮긴다(관광지 경로만). 응답 `interpretedConditions`, 해제 `keepConditionWords`·`skipCondition` | `search/app/src/main/resources/application.yml:81`, `search/domain/src/main/kotlin/com/kgd/search/domain/query/model/QueryIntent.kt:151` | ADR-0090 |
+| 어휘 근거 게이트 | `OFF` | `GATE` 는 근거 잔여가 msm `2<75%` 로 1건도 안 맞으면 0건(`zeroReason=NO_EVIDENCE`), `CONFINE` 은 쿼리 언더스탠딩 필터가 없을 때 두 레그를 그 집합으로 한정. 판정 세트 측정이 통과한 단계까지만 켠다 | `search/app/src/main/resources/application.yml:84`, `search/app/src/main/kotlin/com/kgd/search/application/attraction/config/AttractionAnswerEvidenceProperties.kt` | ADR-0090 |
+| 검색 분석기 품사 필터 | 조사·어미 세분 태그 `14`개 | 검색 시점 분석기에만, 동의어 필터 앞. 다음 재색인부터 반영 | `search/batch/src/main/resources/opensearch/attractions-index.json:25` | ADR-0090 |
 | 관광 분류 가중치 | `3.0` | ● 키워드 레그 안, 상업 의도면 빠진다 | `search/app/src/main/resources/application.yml:72` | ADR-0065 |
 | 상업 분류 가중치 | `0.35` | ● 키워드 레그 안, 상업 의도면 빠진다 | `search/app/src/main/resources/application.yml:73` | ADR-0065 |
-| 완결성 계수 | `ln1p(popularityScore)` | 필드가 없으면 1.0 | `search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt:761` | ADR-0065 |
+| 완결성 계수 | `ln1p(popularityScore)` | 필드가 없으면 1.0 | `search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt:857` | ADR-0065 |
 | clickBoost 켜짐 | `false` | ● 꺼짐 — 14일 고유 클릭 방문자 기반 계수, 상한 1.3 | `search/app/src/main/resources/application.yml:78`, `search/domain/src/main/kotlin/com/kgd/search/domain/attraction/model/AttractionClickSignal.kt:36` | ADR-0095 |
-| pagination_depth | `max(from + size, k)` | k 는 100, 기본값 10 이면 2페이지부터 빈다 | `search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt:721` | ADR-0090 |
-| 엣지 캐시 | `s-maxage` 1시간 | 상세·주변 응답만 | `search/app/src/main/kotlin/com/kgd/search/presentation/search/controller/AttractionSearchController.kt:120` | ADR-0105 |
+| pagination_depth | `max(from + size, k)` | k 는 100, 기본값 10 이면 2페이지부터 빈다 | `search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt:841` | ADR-0090 |
+| 엣지 캐시 | `s-maxage` 1시간 | 상세·주변 응답만 | `search/app/src/main/kotlin/com/kgd/search/presentation/search/controller/AttractionSearchController.kt:128` | ADR-0105 |
 | 지연 예산 P99 | 적중 `150ms` · 미적중 500ms | 실측 평균 74.6ms · 354ms | `docs/conventions/latency-budget.md:64` | ADR-0025 |
 | 일일 품질 평가 | nDCG@10 `3구성` | CronJob `search-eval` KST 07:30, 기준선 −0.03 아래면 실패 | `k8s/base/search-batch/cronjob-eval.yaml:17`, `scripts/search-eval/README.md` | ADR-0090 |
 | 색인 갱신 | 전체 재색인 + `alias` 교체 | 관광지는 매일 KST 06:30 | `k8s/base/search-batch/cronjob-attraction-reindex.yaml:21` | ADR-0065 |
 | 행동 계측 | 노출 · 클릭 · 검색 · 세션 시작 | ADR 은 제안 상태, place 허브·지역·상세·통합 검색 화면이 보낸다 | `portal-fe/src/analytics/events.ts:13` | ADR-0095 |
-| 범위 밖 | 각 서비스의 자체 검색 면 | 코드사전·블로그·혜택·랭킹·상품이 자기 화면에서 쓰는 검색은 이 문서에 없다 | `search/app/src/main/kotlin/com/kgd/search/application/unified/service/SearchUnifiedService.kt:118` | — |
+| 범위 밖 | 각 서비스의 자체 검색 면 | 코드사전·블로그·혜택·랭킹·상품이 자기 화면에서 쓰는 검색은 이 문서에 없다 | `search/app/src/main/kotlin/com/kgd/search/application/unified/service/SearchUnifiedService.kt:128` | — |
 
 ## 5. 이 문서를 고치는 때
 

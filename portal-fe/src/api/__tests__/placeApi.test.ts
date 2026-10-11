@@ -47,6 +47,26 @@ describe('searchAttractions — 원래 검색어 검색(exact)', () => {
   });
 });
 
+describe('searchAttractions — 조건어 해석 해제(keepConditionWords · skipCondition)', () => {
+  afterEach(() => get.mockReset());
+
+  it('keepConditionWords 가 참이면 keepConditionWords=true, skipCondition 은 param 마다 한 번씩 반복해 싣는다', async () => {
+    get.mockResolvedValue({ data: { data: { attractions: [] } } });
+    await searchAttractions({
+      lang: 'ko', keyword: '주차 되는 해수욕장', category: 'nature', keepConditionWords: true, skipCondition: ['parking', 'pet'],
+    });
+    expect(sentParams().get('keepConditionWords')).toBe('true');
+    expect(sentParams().getAll('skipCondition')).toEqual(['parking', 'pet']);
+  });
+
+  it('없거나 비면 둘 다 싣지 않는다', async () => {
+    get.mockResolvedValue({ data: { data: { attractions: [] } } });
+    await searchAttractions({ lang: 'ko', keyword: '해수욕장', category: 'nature', keepConditionWords: false, skipCondition: [] });
+    expect(sentParams().has('keepConditionWords')).toBe(false);
+    expect(sentParams().has('skipCondition')).toBe(false);
+  });
+});
+
 describe('SIGHT_CATEGORIES — 정의는 copy.mjs 한 곳', () => {
   it('placeApi 가 내보내는 것은 copy.mjs 의 같은 배열이다(사본 아님)', async () => {
     const api = await import('../placeApi');
