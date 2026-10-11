@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RestController
  * 공유 묶음 열람과 단축 주소 `/c/{token}` — **로그인 없음** (ADR-0107).
  *
  * `X-User-Id` 를 받지 않는다. 게이트웨이가 이 경로에서 신원 헤더를 지우지만, 받지 않는 것이 먼저다.
- * 설정과 무관하게 항상 등록된다 — 빠지면 `GET /shared/x` 가 찜 컨트롤러의 `PUT/DELETE /{type}/{key}`
- * 와 겹쳐 405 가 된다. 꺼짐 판정은 서비스 첫 줄의 404 다.
+ * 조건 없이 항상 등록된다 — 빠지면 `GET /shared/x` 가 찜 컨트롤러의 `PUT/DELETE /{type}/{key}`
+ * 와 겹쳐 405 가 된다.
  */
 @RestController
 class SharedCollectionController(

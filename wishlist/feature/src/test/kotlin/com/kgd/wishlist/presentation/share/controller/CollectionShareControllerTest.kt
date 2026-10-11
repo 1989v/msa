@@ -2,7 +2,6 @@ package com.kgd.wishlist.presentation.share.controller
 
 import com.kgd.common.exception.GlobalExceptionHandler
 import com.kgd.common.shortlink.ShortLinkProperties
-import com.kgd.wishlist.application.share.config.WishlistShareProperties
 import com.kgd.wishlist.application.share.service.CollectionShareService
 import com.kgd.wishlist.domain.model.CollectionShare
 import com.kgd.wishlist.domain.model.WishlistCollection
@@ -44,7 +43,7 @@ class CollectionShareControllerTest : BehaviorSpec({
     fun mvc(port: FakeCollectionSharePort): MockMvc {
         // 운영 기본값과 다른 호스트 — url 이 리터럴이 아니라 설정에서 오는지 가른다
         val service = CollectionShareService(
-            port, WishlistShareProperties(enabled = true), ShortLinkProperties(origin = "https://short.test"), clock,
+            port, ShortLinkProperties(origin = "https://short.test"), clock,
         )
         return MockMvcBuilders.standaloneSetup(CollectionShareController(service))
             .setControllerAdvice(GlobalExceptionHandler())

@@ -7,7 +7,7 @@ import java.time.Instant
 
 /**
  * 본문 없음과 `{}` 는 30일, 명시 `null` 은 만료 없음이다 — 셋을 가르는 것이 Kotlin 기본값이다.
- * Bean Validation 을 달지 않는다: 달면 설정 꺼짐 404 보다 400 이 먼저 난다. 범위 검사는 서비스가 한다.
+ * Bean Validation 을 달지 않는다 — 범위 검사는 서비스 한 곳에서 한다.
  */
 data class CreateCollectionShareRequest(val expiresInDays: Int? = 30)
 

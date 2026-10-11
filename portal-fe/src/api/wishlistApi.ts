@@ -125,7 +125,7 @@ export interface CollectionShareLink {
 }
 
 /**
- * 묶음의 공유 상태. 404 는 「공유를 쓸 수 없음」(설정 꺼짐·없는 묶음)이라 오류가 아니라 값으로 돌려준다 —
+ * 묶음의 공유 상태. 404 는 「공유를 쓸 수 없음」(없는 묶음·남의 묶음)이라 오류가 아니라 값으로 돌려준다 —
  * 화면은 그때 공유 버튼을 숨긴다. 그 밖의 오류(5xx·네트워크)는 던진다.
  */
 export type CollectionShareState = { available: false } | { available: true; link: CollectionShareLink | null };
@@ -170,7 +170,7 @@ export interface SharedCollection {
   truncated: boolean;
 }
 
-/** 로그인 없이 읽는 공개 묶음. 없음·폐기·만료·꺼짐은 모두 404 라 null 로 돌려준다 */
+/** 로그인 없이 읽는 공개 묶음. 없음·폐기·만료는 모두 404 라 null 로 돌려준다 */
 export async function fetchSharedCollection(token: string): Promise<SharedCollection | null> {
   try {
     const res = await api.get<ApiResponse<SharedCollection>>(`/api/v1/wishlist/shared/${encodeURIComponent(token)}`);

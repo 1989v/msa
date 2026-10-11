@@ -24,7 +24,7 @@ function formatDate(iso: string, lang: 'ko' | 'en'): string {
 /**
  * 선택한 여행 묶음의 공유 막대 (ADR-0107). 묶음 칩을 골랐을 때만 그려지고, 그때만 공유 상태를 묻는다.
  *
- * FE 에는 기능 플래그가 없다 — 서버가 404 를 주면(설정 꺼짐) 막대를 숨긴다. 5xx·네트워크 오류도 숨긴다.
+ * FE 에는 기능 플래그가 없다 — 서버가 404 를 주면(없는 묶음) 막대를 숨긴다. 5xx·네트워크 오류도 숨긴다.
  */
 export default function CollectionShareBar({
   collection,

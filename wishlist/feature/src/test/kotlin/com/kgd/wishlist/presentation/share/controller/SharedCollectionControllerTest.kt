@@ -2,7 +2,6 @@ package com.kgd.wishlist.presentation.share.controller
 
 import com.kgd.common.exception.GlobalExceptionHandler
 import com.kgd.common.shortlink.ShortLinkProperties
-import com.kgd.wishlist.application.share.config.WishlistShareProperties
 import com.kgd.wishlist.application.share.service.CollectionShareService
 import com.kgd.wishlist.domain.model.WishlistCollection
 import com.kgd.wishlist.domain.model.WishlistItem
@@ -46,7 +45,7 @@ class SharedCollectionControllerTest : BehaviorSpec({
         items += WishlistItem.restore(500L, 1L, collectionId, WishlistTargetType.PRODUCT, "p1", base.plusDays(1))
     }
     val service = CollectionShareService(
-        port, WishlistShareProperties(enabled = true), ShortLinkProperties(origin = "https://short.test"), clock,
+        port, ShortLinkProperties(origin = "https://short.test"), clock,
     )
     val token = service.create(1L, collectionId, 30).token
     val mvc = MockMvcBuilders.standaloneSetup(SharedCollectionController(service, service))

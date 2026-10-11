@@ -3,7 +3,6 @@ package com.kgd.wishlist.infrastructure.consumer
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
 import com.kgd.common.shortlink.ShortLinkProperties
-import com.kgd.wishlist.application.share.config.WishlistShareProperties
 import com.kgd.wishlist.application.share.service.CollectionShareService
 import com.kgd.wishlist.application.wishlist.port.WishlistRepositoryPort
 import com.kgd.wishlist.domain.model.WishlistCollection
@@ -40,7 +39,7 @@ class MemberEventConsumerTest : BehaviorSpec({
             ),
         )
         val service = CollectionShareService(
-            port, WishlistShareProperties(enabled = true), ShortLinkProperties(origin = "https://short.test"), clock,
+            port, ShortLinkProperties(origin = "https://short.test"), clock,
         )
         val withdrawnToken = service.create(7L, 5L, 30).token
         val otherToken = service.create(8L, 6L, 30).token

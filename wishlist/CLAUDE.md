@@ -38,11 +38,10 @@ commerce:app 에 폴드된 라이브러리 모듈 (ADR-0058 round 2).
 - memberId 는 X-User-Id 헤더 (게이트웨이가 ROLE_USER 검증 후 주입 — 찜 **목록·추가·삭제는 로그인 전용**이고, 공개는 대상별 **찜 수 조회**와 **공유 토큰 열람**(`/api/v1/wishlist/shared/{token}`·`/c/{token}`) 둘뿐이다. 공유 열람은 `X-User-Id` 를 받지 않는 별도 컨트롤러 `SharedCollectionController` 가 받는다)
 - Kafka 소비: `product.deleted` → PRODUCT 타입 찜 삭제 / `member.withdrawn` → 회원 찜 전체 + 그 회원의 공유 링크(`collection_share`) 삭제
 - **묶음 공유** (ADR-0107): 링크는 묶음당 살아 있는 것 하나 — 재생성은 이전 행에 `revoked_at` 을 채우고 새 행을 넣는다(묶음 행 `PESSIMISTIC_WRITE` 잠금).
-  만료·폐기는 행을 지우지 않고 열람 시점에 판정한다. 없음·남의 묶음·만료·폐기·꺼짐은 전부 **같은 404 본문**이다.
+  만료·폐기는 행을 지우지 않고 열람 시점에 판정한다. 없음·남의 묶음·만료·폐기는 전부 **같은 404 본문**이다.
   공개 응답은 ATTRACTION 항목만 최신순 100건 + `truncated`, 소유자 id·시각을 싣지 않는다. 묶음을 지우면 FK `ON DELETE CASCADE` 로 링크도 사라진다
-- **공유 설정** `kgd.wishlist.share.enabled`(기본 `false`, env `KGD_WISHLIST_SHARE_ENABLED`): 끄면 공유 다섯 경로가 모두 404 다.
-  켜는 곳은 account 오버레이 env 한 줄이고, ADR-0107 승인 전에는 넣지 않는다. 공유 컨트롤러 둘은 설정과 무관하게 **항상 등록**한다 —
-  `@ConditionalOnProperty` 로 빼면 `GET /api/v1/wishlist/shared/x` 가 `PUT/DELETE /{targetType}/{targetKey}` 와 겹쳐 405 가 된다
+- **공유는 항상 켜져 있다** — 끄는 설정은 2026-10-11 승인 때 없앴다(ADR-0107). 공유 컨트롤러 둘은 **조건 없이 등록**한다 —
+  `@ConditionalOnProperty` 를 달아 빠지면 `GET /api/v1/wishlist/shared/x` 가 `PUT/DELETE /{targetType}/{targetKey}` 와 겹쳐 405 가 된다
 - **단축 주소 `/c/{token}`**: 토큰을 조회하지 않고 형식(영숫자 10자)만 본다 — 맞으면 `{ShortLinkProperties.origin}/shared/{token}`, 아니면 `/shared/invalid` 로 302.
   목적지 호스트는 `ShortLinkProperties.origin` 에서만 얻는다. 단축 접두사 목록(ADR-0106)에 `/c` 를 더한 기록은 ADR-0107 §5 가 갖는다
 - 스키마는 `wishlistdb/migration` + ScopedFlywayMigrator (baseline=1, 토글 `wishlist.flyway.enabled`)

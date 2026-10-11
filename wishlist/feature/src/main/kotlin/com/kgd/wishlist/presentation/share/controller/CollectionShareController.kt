@@ -16,8 +16,6 @@ import org.springframework.web.bind.annotation.RestController
 
 /**
  * 묶음 공유 링크 — 소유자 전용 (ADR-0107). 인증은 게이트웨이의 찜 라우트가 한다.
- *
- * 설정(`kgd.wishlist.share.enabled`)과 무관하게 항상 등록된다. 꺼짐 판정은 서비스 첫 줄의 404 다.
  */
 @RestController
 @RequestMapping("/api/v1/wishlist/collections/{collectionId}/share")

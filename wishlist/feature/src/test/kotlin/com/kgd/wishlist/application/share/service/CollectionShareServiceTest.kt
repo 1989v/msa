@@ -3,7 +3,6 @@ package com.kgd.wishlist.application.share.service
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
 import com.kgd.common.shortlink.ShortLinkProperties
-import com.kgd.wishlist.application.share.config.WishlistShareProperties
 import com.kgd.wishlist.application.share.port.CollectionSharePort
 import com.kgd.wishlist.domain.model.CollectionShare
 import com.kgd.wishlist.domain.model.WishlistCollection
@@ -11,7 +10,6 @@ import com.kgd.wishlist.domain.model.WishlistItem
 import com.kgd.wishlist.domain.model.WishlistTargetType
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
-import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -27,7 +25,7 @@ import java.time.ZoneOffset
 /**
  * 묶음 공유 (ADR-0107).
  *
- * 지키는 것: 묶음당 살아 있는 링크 하나 · 존재 은닉(없음·남의 것·만료·폐기·꺼짐이 같은 404) ·
+ * 지키는 것: 묶음당 살아 있는 링크 하나 · 존재 은닉(없음·남의 것·만료·폐기가 같은 404) ·
  * 단축 주소 목적지 호스트가 설정에서만 온다는 것.
  */
 class CollectionShareServiceTest : BehaviorSpec({
@@ -50,8 +48,8 @@ class CollectionShareServiceTest : BehaviorSpec({
         ),
     )
 
-    fun service(port: CollectionSharePort, enabled: Boolean = true, at: Clock = clock) =
-        CollectionShareService(port, WishlistShareProperties(enabled = enabled), shortLink, at)
+    fun service(port: CollectionSharePort, at: Clock = clock) =
+        CollectionShareService(port, shortLink, at)
 
     fun notFound(block: () -> Unit): BusinessException =
         shouldThrow<BusinessException>(block).also { it.errorCode shouldBe ErrorCode.NOT_FOUND }
@@ -192,24 +190,6 @@ class CollectionShareServiceTest : BehaviorSpec({
         }
     }
 
-    Given("설정이 꺼져 있으면") {
-        val port = newPort()
-        val off = service(port, enabled = false)
-        Then("세 유스케이스의 모든 메서드가 NOT_FOUND 이고, 범위 검사보다 먼저다") {
-            notFound { off.create(owner, myCollection, 0) }
-            notFound { off.create(owner, myCollection, 30) }
-            notFound { off.get(owner, myCollection) }
-            notFound { off.revoke(owner, myCollection) }
-            val offMissing = notFound { off.get("Ab3dEf7hIj") }
-            notFound { off.resolve("Ab3dEf7hIj") }
-            // 꺼짐 404 와 없는 토큰 404 의 본문이 같다
-            offMissing.message shouldBe notFound { service(newPort()).get("Ab3dEf7hIj") }.message
-            port.shares.shouldBeEmpty()
-            verify(exactly = 0) { port.lockOwnedCollection(any(), any()) }
-            verify(exactly = 0) { port.findOwnedCollection(any(), any()) }
-            verify(exactly = 0) { port.findByToken(any()) }
-        }
-    }
 })
 
 /** 살아 있는 행 수를 셀 수 있는 인메모리 포트. 묶음 소유 판정은 실제 어댑터와 같은 조건(id + memberId)이다 */
