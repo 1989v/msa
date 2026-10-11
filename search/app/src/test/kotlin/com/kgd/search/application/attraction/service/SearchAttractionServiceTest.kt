@@ -1,5 +1,7 @@
 package com.kgd.search.application.attraction.service
 
+import com.kgd.search.application.attraction.config.AttractionAnswerEvidenceProperties
+import com.kgd.search.application.attraction.config.AttractionConditionWordsProperties
 import com.kgd.search.application.attraction.config.AttractionHybridProperties
 import com.kgd.search.application.attraction.usecase.CategoryLexiconUseCase
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
@@ -29,6 +31,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.springframework.data.domain.PageImpl
 import java.time.Clock
@@ -49,6 +52,9 @@ class SearchAttractionServiceTest : BehaviorSpec({
         modelRef: String = MODEL_REF,
         lexicon: QueryIntent.Lexicon = QueryIntent.Lexicon.EMPTY,
         clock: Clock = Clock.systemUTC(),
+        conditionWords: Boolean = true,
+        evidence: AttractionAnswerEvidenceProperties.Mode = AttractionAnswerEvidenceProperties.Mode.OFF,
+        registry: MeterRegistry = SimpleMeterRegistry(),
     ) = SearchAttractionService(
         searchPort, resolveQueryVector,
         object : CategoryLexiconUseCase {
@@ -56,8 +62,10 @@ class SearchAttractionServiceTest : BehaviorSpec({
         },
         AttractionHybridProperties(enabled = hybridEnabled),
         QueryVectorProperties(modelRef = modelRef),
-        SimpleMeterRegistry(),
+        registry,
         clock,
+        AttractionConditionWordsProperties(enabled = conditionWords),
+        AttractionAnswerEvidenceProperties(mode = evidence),
     )
     val service = serviceWith()
 
@@ -728,6 +736,200 @@ class SearchAttractionServiceTest : BehaviorSpec({
                     SearchAttractionUseCase.CourseStop(0, "126508", "경복궁", 1L),
                     SearchAttractionUseCase.CourseStop(1, null, "광화문", null),
                 )
+            }
+        }
+    }
+    given("조건어 → 속성 선택") {
+        val beach = QueryIntent.Lexicon.of(listOf(Triple("NA020100", 3, "해수욕장")))
+        val conditioned = serviceWith(lexicon = beach)
+
+        fun sent(svc: SearchAttractionService, query: SearchAttractionUseCase.Query): Pair<AttractionSearchPort.SearchQuery, SearchAttractionUseCase.Result> {
+            val captured = slot<AttractionSearchPort.SearchQuery>()
+            every { searchPort.search(capture(captured), any()) } returns found(emptyList())
+            val result = svc.execute(query)
+            return captured.captured to result
+        }
+
+        `when`("「주차 되는 해수욕장」") {
+            then("주차 선택·분류 필터가 걸리고 검색어는 남지 않으며 해석을 응답에 싣는다") {
+                val (q, r) = sent(conditioned, SearchAttractionUseCase.Query(keyword = "주차 되는 해수욕장", lang = "ko"))
+                q.attributes!!.parking shouldBe true
+                q.facets shouldBe mapOf("lclsSystm3" to "NA020100")
+                q.keyword shouldBe null
+                r.interpreted shouldBe listOf(QueryIntent.Condition(QueryIntent.ConditionKind.PARKING, "주차 되는"))
+            }
+        }
+        `when`("다른 축의 칩(creditCard)이 켜져 있으면") {
+            then("칩과 해석이 합쳐진다") {
+                val (q, r) = sent(conditioned, SearchAttractionUseCase.Query(keyword = "주차 되는 해수욕장", creditCard = "YES"))
+                q.attributes!!.parking shouldBe true
+                q.attributes!!.creditCard shouldBe true
+                r.interpreted.map { it.kind } shouldBe listOf(QueryIntent.ConditionKind.PARKING)
+            }
+        }
+        `when`("같은 축의 칩(pet=ALLOWED)이 켜진 채 「반려견 동반」을 치면") {
+            then("칩이 이기고 해석은 버리며 어절은 검색어에서 빠진다") {
+                val (q, r) = sent(conditioned, SearchAttractionUseCase.Query(keyword = "반려견 동반", pet = "ALLOWED"))
+                q.attributes!!.pet shouldBe setOf(PetPolicy.ALLOWED)
+                q.keyword shouldBe null
+                r.interpreted shouldBe emptyList()
+            }
+        }
+        `when`("keepConditionWords=true 면") {
+            then("조건 없이 조건어가 검색어로 남고 해석은 빈 배열이다") {
+                val (q, r) = sent(conditioned, SearchAttractionUseCase.Query(keyword = "주차 되는 해수욕장", keepConditionWords = true))
+                q.attributes!!.parking shouldBe false
+                q.keyword shouldBe "주차 되는"
+                r.interpreted shouldBe emptyList()
+            }
+        }
+        `when`("skipConditions=PARKING 이면") {
+            then("주차만 빠지고 반려동물 해석은 남는다") {
+                val (q, r) = sent(
+                    conditioned,
+                    SearchAttractionUseCase.Query(
+                        keyword = "주차 되는 반려견 동반 해수욕장",
+                        skipConditions = setOf(QueryIntent.ConditionKind.PARKING),
+                    ),
+                )
+                q.attributes!!.parking shouldBe false
+                q.attributes!!.pet shouldBe setOf(PetPolicy.ALLOWED, PetPolicy.PARTIAL)
+                q.keyword shouldBe "주차 되는"
+                r.interpreted.map { it.kind } shouldBe listOf(QueryIntent.ConditionKind.PET)
+            }
+        }
+        `when`("스위치 condition-words.enabled=false 면") {
+            then("조건을 쓰지 않는다 — 조건어는 검색어로 남는다") {
+                val (q, r) = sent(serviceWith(lexicon = beach, conditionWords = false), SearchAttractionUseCase.Query(keyword = "주차 되는 해수욕장"))
+                q.attributes!!.parking shouldBe false
+                q.keyword shouldBe "주차 되는"
+                r.interpreted shouldBe emptyList()
+            }
+        }
+        `when`("건수를 세면") {
+            then("합친 선택으로 센다") {
+                val (q, _) = sent(conditioned, SearchAttractionUseCase.Query(keyword = "주차 되는 해수욕장", attributeFacets = true))
+                q.countAttributeFacets shouldBe true
+                q.attributes!!.parking shouldBe true
+            }
+        }
+        `when`("행사만 고른 목록에서 「주차 되는 축제」") {
+            then("조건어를 옮기지 않는다 — 행사에서는 속성 조건이 무의미하다") {
+                val (q, r) = sent(conditioned, SearchAttractionUseCase.Query(keyword = "주차 되는 축제", category = "festival"))
+                q.attributes!!.parking shouldBe false
+                r.interpreted shouldBe emptyList()
+            }
+        }
+        `when`("조건만 있는 질의(「반려견 동반 서울」)") {
+            then("한정 판정은 참(CONFINE 이어도 한정 없음)이고 hasFilter 를 세는 intent 카운터는 오르지 않는다") {
+                val registry = SimpleMeterRegistry()
+                val svc = serviceWith(lexicon = beach, evidence = AttractionAnswerEvidenceProperties.Mode.CONFINE, registry = registry)
+                val (q, _) = sent(svc, SearchAttractionUseCase.Query(keyword = "반려견 동반 서울"))
+                q.confine shouldBe false
+                q.evidenceKeyword shouldBe "서울"
+                registry.counter("search.attraction.intent").count() shouldBe 0.0
+            }
+        }
+    }
+
+    given("내용 없는 입력 「ㅁㄴㅇㄹ」") {
+        `when`("검색하면") {
+            then("교정·색인을 부르지 않고 0건·NO_CONTENT") {
+                val result = service.execute(SearchAttractionUseCase.Query(keyword = "ㅁㄴㅇㄹ", lang = "ko"))
+                verify(exactly = 0) { searchPort.search(any(), any()) }
+                verify(exactly = 0) { searchPort.correct(any(), any()) }
+                result.totalElements shouldBe 0
+                result.attractions shouldBe emptyList()
+                result.zeroReason shouldBe SearchAttractionUseCase.ZeroReason.NO_CONTENT
+            }
+        }
+    }
+
+    given("어휘 근거 스위치") {
+        val beach = QueryIntent.Lexicon.of(listOf(Triple("NA020100", 3, "해수욕장")))
+        fun sent(
+            mode: AttractionAnswerEvidenceProperties.Mode,
+            query: SearchAttractionUseCase.Query,
+            result: AttractionSearchPort.SearchResult = found(emptyList()),
+        ): Pair<AttractionSearchPort.SearchQuery, SearchAttractionUseCase.Result> {
+            val captured = slot<AttractionSearchPort.SearchQuery>()
+            every { searchPort.search(capture(captured), any()) } returns result
+            val r = serviceWith(lexicon = beach, evidence = mode).execute(query)
+            return captured.captured to r
+        }
+        val off = AttractionAnswerEvidenceProperties.Mode.OFF
+        val gate = AttractionAnswerEvidenceProperties.Mode.GATE
+        val confine = AttractionAnswerEvidenceProperties.Mode.CONFINE
+
+        `when`("OFF(기본)") {
+            then("근거도 한정도 싣지 않는다 — 요청은 전과 같다") {
+                val (q, r) = sent(off, SearchAttractionUseCase.Query(keyword = "에펠탑"))
+                q.evidenceKeyword shouldBe null
+                q.confine shouldBe false
+                r.zeroReason shouldBe null
+            }
+        }
+        `when`("GATE + 근거 잔여 있음") {
+            then("잔여를 근거로 싣는다") {
+                sent(gate, SearchAttractionUseCase.Query(keyword = "에펠탑")).first.evidenceKeyword shouldBe "에펠탑"
+            }
+        }
+        `when`("GATE + 근거 잔여 없음(의도어만)") {
+            then("근거를 싣지 않는다 — 필터가 곧 답이다") {
+                sent(gate, SearchAttractionUseCase.Query(keyword = "해수욕장")).first.evidenceKeyword shouldBe null
+            }
+        }
+        `when`("GATE + keepConditionWords 의 「주차 되는 해수욕장」") {
+            then("검색어는 「주차 되는」이지만 조건어라 근거를 요구하지 않는다") {
+                val (q, _) = sent(gate, SearchAttractionUseCase.Query(keyword = "주차 되는 해수욕장", keepConditionWords = true))
+                q.keyword shouldBe "주차 되는"
+                q.evidenceKeyword shouldBe null
+            }
+        }
+        `when`("포트가 근거 없음을 알리면") {
+            then("zeroReason=NO_EVIDENCE") {
+                val (_, r) = sent(
+                    gate,
+                    SearchAttractionUseCase.Query(keyword = "에펠탑"),
+                    AttractionSearchPort.SearchResult(PageImpl(emptyList()), noEvidence = true),
+                )
+                r.zeroReason shouldBe SearchAttractionUseCase.ZeroReason.NO_EVIDENCE
+            }
+        }
+        `when`("CONFINE + 쿼리 언더스탠딩 필터 없음") {
+            then("한정을 걸고 근거 요청은 내지 않으며, 0건이면 NO_EVIDENCE") {
+                val (q, r) = sent(confine, SearchAttractionUseCase.Query(keyword = "에펠탑"))
+                q.confine shouldBe true
+                q.evidenceKeyword shouldBe null
+                r.zeroReason shouldBe SearchAttractionUseCase.ZeroReason.NO_EVIDENCE
+            }
+            then("결과가 있으면 zeroReason 은 null") {
+                val (_, r) = sent(
+                    confine,
+                    SearchAttractionUseCase.Query(keyword = "에펠탑"),
+                    found(listOf(AttractionSearchPort.AttractionHit(document(), 1.0))),
+                )
+                r.zeroReason shouldBe null
+            }
+        }
+        `when`("CONFINE + 분류 필터가 있는 질의") {
+            then("GATE 와 같다 — 한정 없이 근거만") {
+                val (q, _) = sent(confine, SearchAttractionUseCase.Query(keyword = "부산 해수욕장"))
+                q.confine shouldBe false
+                q.evidenceKeyword shouldBe "부산"
+            }
+        }
+        `when`("CONFINE + keepConditionWords 로 조건이 비면") {
+            then("한정이 걸린다") {
+                sent(confine, SearchAttractionUseCase.Query(keyword = "주차 되는 곳", keepConditionWords = true)).first.confine shouldBe true
+            }
+        }
+        `when`("GATE + exact=true") {
+            then("교정 없이 원문으로 근거를 검사한다") {
+                every { searchPort.correct(any(), any()) } returns "경복궁"
+                val (q, _) = sent(gate, SearchAttractionUseCase.Query(keyword = "경복굼", exact = true))
+                verify(exactly = 0) { searchPort.correct(any(), any()) }
+                q.evidenceKeyword shouldBe "경복굼"
             }
         }
     }

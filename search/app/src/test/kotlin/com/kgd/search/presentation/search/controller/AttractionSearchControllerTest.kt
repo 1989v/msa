@@ -3,6 +3,7 @@ package com.kgd.search.presentation.search.controller
 import com.kgd.search.application.attraction.usecase.NearbyAttractionsUseCase
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 import com.kgd.search.application.attraction.usecase.SuggestAttractionUseCase
+import com.kgd.search.domain.query.model.QueryIntent
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.clearMocks
@@ -207,6 +208,74 @@ class AttractionSearchControllerTest : BehaviorSpec({
                 items[0]["eventEnd"].asString() shouldBe "2026-10-12"
                 items[1]["courseStops"][0]["name"].asString() shouldBe "경복궁"
                 items[1]["courseStops"][0]["attractionId"].asLong() shouldBe 7
+            }
+        }
+    }
+
+    given("조건어 해석·해제") {
+        `when`("keepConditionWords·skipCondition 을 주면") {
+            then("질의로 묶이고 skipCondition 은 파라미터 이름으로 축을 고른다(여럿·쉼표·모르는 이름은 버림)") {
+                val captured = slot<SearchAttractionUseCase.Query>()
+                every { search.execute(capture(captured)) } returns result()
+
+                val status = mvc.perform(
+                    get("/api/search/attractions").param("keyword", "주차 되는 반려견 동반 해수욕장")
+                        .param("keepConditionWords", "true")
+                        .param("skipCondition", "parking")
+                        .param("skipCondition", "pet,foo"),
+                ).andReturn().response.status
+
+                status shouldBe 200
+                captured.captured.keepConditionWords shouldBe true
+                captured.captured.skipConditions shouldBe setOf(QueryIntent.ConditionKind.PARKING, QueryIntent.ConditionKind.PET)
+            }
+        }
+        `when`("주지 않으면") {
+            then("해석하는 기본 검색이다") {
+                val captured = slot<SearchAttractionUseCase.Query>()
+                every { search.execute(capture(captured)) } returns result()
+
+                mvc.perform(get("/api/search/attractions").param("keyword", "한옥")).andReturn()
+
+                captured.captured.keepConditionWords shouldBe false
+                captured.captured.skipConditions shouldBe emptySet()
+            }
+        }
+        `when`("해석한 조건과 0건 사유가 있는 결과면") {
+            then("interpretedConditions 는 param·value·phrase 로, zeroReason 은 이름으로 나가고 도메인 조건은 나가지 않는다") {
+                every { search.execute(any()) } returns result().copy(
+                    interpreted = listOf(
+                        QueryIntent.Condition(QueryIntent.ConditionKind.PARKING, "주차 되는"),
+                        QueryIntent.Condition(QueryIntent.ConditionKind.PET, "반려견 동반"),
+                    ),
+                    zeroReason = SearchAttractionUseCase.ZeroReason.NO_EVIDENCE,
+                )
+
+                val body = mvc.perform(get("/api/search/attractions").param("keyword", "x")).andReturn()
+                    .response.getContentAsString(Charsets.UTF_8)
+
+                val data = json.readTree(body)["data"]
+                data["interpretedConditions"].size() shouldBe 2
+                data["interpretedConditions"][0]["param"].asText() shouldBe "parking"
+                data["interpretedConditions"][0]["value"].asText() shouldBe "YES"
+                data["interpretedConditions"][0]["phrase"].asText() shouldBe "주차 되는"
+                data["interpretedConditions"][1]["param"].asText() shouldBe "pet"
+                data["interpretedConditions"][1]["value"].asText() shouldBe "ALLOWED,PARTIAL"
+                data["zeroReason"].asText() shouldBe "NO_EVIDENCE"
+                data.has("interpreted") shouldBe false
+                data["searchId"].asText() shouldBe "s"
+            }
+        }
+        `when`("해석이 없고 결과가 있으면") {
+            then("interpretedConditions 는 빈 배열, zeroReason 은 null") {
+                every { search.execute(any()) } returns result()
+
+                val data = json.readTree(
+                    mvc.perform(get("/api/search/attractions")).andReturn().response.getContentAsString(Charsets.UTF_8),
+                )["data"]
+
+                data["interpretedConditions"].size() shouldBe 0
+                (data["zeroReason"] == null || data["zeroReason"].isNull) shouldBe true
             }
         }
     }

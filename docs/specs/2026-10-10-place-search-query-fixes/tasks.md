@@ -12,16 +12,16 @@ Total Task Groups: 6. 정본은 `spec.md`, 열린 질문은 `context/open-questi
 
 ### Task Group 1: 불용구 창·영문 불용어·내용 없는 입력 (SR-1)
 **Dependencies:** None · **모듈:** `:search:domain`
-- [ ] 1.1 테스트 먼저: `QueryIntentTest` 에 SR-1.6 케이스 전부를 넣는다(기대 잔여 문자열 전체로 단언). 통합 경로(`attractionOnly=false`)의 「travel」·「place」 잔여 유지도 넣는다. 지금 코드로 「아이랑 갈 만한 곳」·「가볼 만한 곳」·「winter trip」·「ㅁㄴㅇㄹ」이 빨강인지 확인하고 실패 줄을 기록한다.
-- [ ] 1.2 `analyze` 에 `lang`·관광지 경로 표시(`attractionOnly`) 인자를 더한다(SR-1.3). 기존 호출부의 기본값은 지금 동작을 유지한다.
-- [ ] 1.3 어절 창 1~3 을 긴 것부터 `match` 와 불용구 둘 다에 적용한다. 기존 두 어절 창 동작(「가볼만한 곳」)과 `RAINY_DAY` 선처리는 유지한다.
-- [ ] 1.4 `STOP_PHRASES` 에 ko·en 을 추가한다(SR-1.2 목록 그대로, 그 외 금지). 새 en 불용어는 `attractionOnly` 에서만 쓴다.
-- [ ] 1.5 `Understood.noContent` — 완성형 음절·라틴·숫자가 0개면 참이다.
-- [ ] 1.6 Verify: `./gradlew :search:domain:test --tests '*QueryIntentTest'` 통과 줄. 기존 케이스 전부 초록.
+- [x] 1.1 테스트 먼저: `QueryIntentTest` 에 SR-1.6 케이스 전부를 넣는다(기대 잔여 문자열 전체로 단언). 통합 경로(`attractionOnly=false`)의 「travel」·「place」 잔여 유지도 넣는다. 지금 코드로 「아이랑 갈 만한 곳」·「가볼 만한 곳」·「winter trip」·「ㅁㄴㅇㄹ」이 빨강인지 확인하고 실패 줄을 기록한다.
+- [x] 1.2 `analyze` 에 `lang`·관광지 경로 표시(`attractionOnly`) 인자를 더한다(SR-1.3). 기존 호출부의 기본값은 지금 동작을 유지한다.
+- [x] 1.3 어절 창 1~3 을 긴 것부터 `match` 와 불용구 둘 다에 적용한다. 기존 두 어절 창 동작(「가볼만한 곳」)과 `RAINY_DAY` 선처리는 유지한다.
+- [x] 1.4 `STOP_PHRASES` 에 ko·en 을 추가한다(SR-1.2 목록 그대로, 그 외 금지). 새 en 불용어는 `attractionOnly` 에서만 쓴다.
+- [x] 1.5 `Understood.noContent` — 완성형 음절·라틴·숫자가 0개면 참이다.
+- [x] 1.6 Verify: `./gradlew :search:domain:test --tests '*QueryIntentTest'` 통과 줄. 기존 케이스 전부 초록.
 
 ### Task Group 2: 조건어 → 속성 선택 · 해석 응답 · 해제 파라미터 (SR-3 · SR-4.1 · SR-5 일부)
 **Dependencies:** TG1 · **모듈:** `:search:domain`, `:search:app`
-- [ ] 2.1 테스트 먼저
+- [x] 2.1 테스트 먼저
   - `QueryIntentTest`: SR-3.5 케이스 전부(부정어·조사 `가`·조건 둘·`무료` 단독/셔틀·「무료 주차장」·「주차 무료」·행사 분류·`attractionOnly=false`).
   - `SearchAttractionServiceTest`:
     - ① 다른 축 조건 + 명시 칩 → 합집합
@@ -34,8 +34,8 @@ Total Task Groups: 6. 정본은 `spec.md`, 열린 질문은 `context/open-questi
     - ⑧ `narrowsByIntent` 가 conditions 만 있어도 참이고 `hasFilter`·`intentCounter` 는 그대로
   - `AttractionSearchControllerTest`: `keepConditionWords`·`skipCondition` 바인딩, 응답 `interpretedConditions`·`zeroReason` 직렬화.
   - `SearchUnifiedServiceTest`: 「travel」·「place」·「카드 결제 할인」의 잔여가 다른 타입 검색에 그대로 넘어가고 조건이 없음.
-- [ ] 2.2 `Condition(kind, values, phrase)` 와 조건어 표(SR-3.1)를 `:search:domain` 에 둔다. `kind` 는 속성 축 enum, `values` 는 도메인 값 집합이다. **API 문자열(param·value)은 presentation 매핑 표 한 곳**이 만들고, 컨트롤러 `@RequestParam(name = …)` 이 그 상수를 쓴다. 문자열 사본을 두지 않는다.
-- [ ] 2.3 SR-3.2 규칙을 구현한다.
+- [x] 2.2 `Condition(kind, values, phrase)` 와 조건어 표(SR-3.1)를 `:search:domain` 에 둔다. `kind` 는 속성 축 enum, `values` 는 도메인 값 집합이다. **API 문자열(param·value)은 presentation 매핑 표 한 곳**이 만들고, 컨트롤러 `@RequestParam(name = …)` 이 그 상수를 쓴다. 문자열 사본을 두지 않는다.
+- [x] 2.3 SR-3.2 규칙을 구현한다.
   - 머리말 + 꼬리말
   - 조사 떼기(`가·이·은·는` 포함)
   - 부정어 미해석
@@ -44,14 +44,14 @@ Total Task Groups: 6. 정본은 `spec.md`, 열린 질문은 `context/open-questi
   - 언어 열
   - 행사 분류 단독이면 미해석
   - ko 전용 행의 영문 머리말 없음
-- [ ] 2.4 서비스 쪽 작업
+- [x] 2.4 서비스 쪽 작업
   - 명시 우선 + 다른 축 합집합
   - `keepConditionWords`·`skipCondition`
   - `AttractionConditionWordsProperties`(`enabled`, 기본 true, env `SEARCH_ATTRACTION_CONDITION_WORDS_ENABLED`) — `application.yml` 한 줄
   - 응답 `interpretedConditions`·`zeroReason`
   - 통합 검색은 `attractionOnly=false`
   - `narrowsByIntent`
-- [ ] 2.5 Verify: `./gradlew :search:domain:test --tests '*QueryIntentTest'` · `./gradlew :search:app:test --tests '*SearchAttractionServiceTest' --tests '*AttractionSearchControllerTest' --tests '*SearchUnifiedServiceTest'` 통과 줄.
+- [x] 2.5 Verify: `./gradlew :search:domain:test --tests '*QueryIntentTest'` · `./gradlew :search:app:test --tests '*SearchAttractionServiceTest' --tests '*AttractionSearchControllerTest' --tests '*SearchUnifiedServiceTest'` 통과 줄.
 
 ### Task Group 3: 허브 해석 표시·해제 (SR-4.2~4.5)
 **Dependencies:** TG2(응답 계약) · **모듈:** `portal-fe`
@@ -77,7 +77,7 @@ Total Task Groups: 6. 정본은 `spec.md`, 열린 질문은 `context/open-questi
 
 ### Task Group 4: 어휘 근거 게이트 · 한정 · 검색 분석기 품사 필터 (SR-2 · SR-5 · SR-6)
 **Dependencies:** TG1, TG2(`narrowsByIntent`·근거 잔여) · **모듈:** `:search:app`, `:search:batch`
-- [ ] 4.1 테스트 먼저 — 어댑터 요청 캡처. 스텁은 **근거 요청(size 0)에만 total 1 을 돌려주는 것**을 새로 둔다. 기존 `emptyResponse()` 는 total 0 고정이라 근거 있음 경로를 못 연다.
+- [x] 4.1 테스트 먼저 — 어댑터 요청 캡처. 스텁은 **근거 요청(size 0)에만 total 1 을 돌려주는 것**을 새로 둔다. 기존 `emptyResponse()` 는 total 0 고정이라 근거 있음 경로를 못 연다.
   - `OFF` → 지금 요청과 바이트 단위로 같음(스냅숏)
   - `GATE` + 근거 잔여 있음 → 근거 요청(`size 0`·`terminate_after 1`·msm `2<75%`·본 질의와 같은 필터 전부) 뒤 건수 요청 ∥ 본 질의
   - 근거 0 → 본 질의 **와 건수 요청** 없음·빈 페이지·`NO_EVIDENCE`
@@ -88,10 +88,10 @@ Total Task Groups: 6. 정본은 `spec.md`, 열린 질문은 `context/open-questi
   - `CONFINE` + `narrowsByIntent` 참 → `GATE` 와 같은 요청
   - `exact=true` → 원문으로 근거 검사
   - 계약 테스트는 search:batch 의 `AttractionsIndexMappingTest` 에 넣는다: `nori_search` 품사 필터가 `tourism_synonyms` **앞**·세분 태그 14개·`E`/`J` 단독 없음
-- [ ] 4.2 `AttractionAnswerEvidenceProperties`(`mode`, 기본 `OFF`)와 `application.yml` env 한 줄. 서비스가 `SearchQuery` 에 「근거 필요(근거 잔여)」「한정」을 실어 넘긴다. 어댑터는 설정을 읽지 않는다 — 판단은 application 층이다.
-- [ ] 4.3 어댑터에 근거 요청(건수 요청보다 먼저)·한정 분기(`matchedQuery` 의 msm, `countFacets` 의 msm)를 넣는다. msm 값은 상수 하나다.
-- [ ] 4.4 `attractions-index.json` `nori_search` 에 품사 필터를 `[pos, tourism_synonyms]` 순서로 넣는다. 운영 `_analyze`(필터 인라인)로 SR-2.2 예시를 재확인하고, 「서울 궁궐」 msm `_count`(필터 전후)를 잰다. 결과는 `verifications/analyze.md` 에.
-- [ ] 4.5 Verify: `./gradlew :search:app:test --tests '*AttractionSearchAdapter*Test' --tests '*SearchAttractionServiceTest'` · `./gradlew :search:batch:test --tests '*AttractionsIndexMappingTest'` 통과 줄.
+- [x] 4.2 `AttractionAnswerEvidenceProperties`(`mode`, 기본 `OFF`)와 `application.yml` env 한 줄. 서비스가 `SearchQuery` 에 「근거 필요(근거 잔여)」「한정」을 실어 넘긴다. 어댑터는 설정을 읽지 않는다 — 판단은 application 층이다.
+- [x] 4.3 어댑터에 근거 요청(건수 요청보다 먼저)·한정 분기(`matchedQuery` 의 msm, `countFacets` 의 msm)를 넣는다. msm 값은 상수 하나다.
+- [ ] 4.4 (JSON 반영·로컬 3.8.0 `_analyze` 확인 완료 — `verifications/analyze.md`. 운영 `_analyze`·「서울 궁궐」 운영 msm `_count` 는 미측정) `attractions-index.json` `nori_search` 에 품사 필터를 `[pos, tourism_synonyms]` 순서로 넣는다. 운영 `_analyze`(필터 인라인)로 SR-2.2 예시를 재확인하고, 「서울 궁궐」 msm `_count`(필터 전후)를 잰다. 결과는 `verifications/analyze.md` 에.
+- [x] 4.5 Verify: `./gradlew :search:app:test --tests '*AttractionSearchAdapter*Test' --tests '*SearchAttractionServiceTest'` · `./gradlew :search:batch:test --tests '*AttractionsIndexMappingTest'` 통과 줄.
 
 ### Task Group 5: 문서 (SR-8)
 **Dependencies:** TG2, TG4

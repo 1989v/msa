@@ -1,5 +1,7 @@
 package com.kgd.search.application.attraction.usecase
 
+import com.kgd.search.domain.query.model.QueryIntent
+
 interface SearchAttractionUseCase {
     fun execute(query: Query): Result
 
@@ -53,6 +55,10 @@ interface SearchAttractionUseCase {
         val eventStatus: String? = null,
         /** true 면 오타 교정을 건너뛰고 받은 검색어 그대로 찾는다(「원래 검색어로 검색」). 응답 `correctedKeyword` 는 null. */
         val exact: Boolean = false,
+        /** true 면 조건어를 하나도 속성 선택으로 옮기지 않는다(「조건으로 읽지 않고 검색」) — 문장 그대로 찾는다. */
+        val keepConditionWords: Boolean = false,
+        /** 이 축의 해석만 버린다(해석된 칩을 끈 것). 그 어절은 검색어로 남는다. */
+        val skipConditions: Set<QueryIntent.ConditionKind> = emptySet(),
     )
 
     data class AttractionSearchResult(
@@ -218,7 +224,22 @@ interface SearchAttractionUseCase {
         val correctedKeyword: String? = null,
         /** 속성 패싯 건수. 건수 요청이 실패하면 null — 결과는 그대로 온다. */
         val attributeFacets: AttributeFacets? = null,
+        /**
+         * 질의에서 읽어 속성 선택으로 옮긴 조건. 같은 축에 명시 선택이 있어 버린 것은 없다.
+         * 응답의 API 이름(param·value)은 presentation 이 붙인다.
+         */
+        val interpreted: List<QueryIntent.Condition> = emptyList(),
+        /** 0건인 이유가 조건 탓이 아닐 때 — 어휘 근거 없음 · 내용 없는 입력. 결과가 있거나 필터 탓 0건이면 null. */
+        val zeroReason: ZeroReason? = null,
     )
+
+    enum class ZeroReason {
+        /** 잔여 검색어가 같은 필터 안에서 어휘로 하나도 맞지 않는다 — 벡터 이웃만으로는 결과를 내지 않는다 */
+        NO_EVIDENCE,
+
+        /** 완성형 음절·라틴·숫자가 없는 입력(자모·기호만) — 색인을 부르지 않는다 */
+        NO_CONTENT,
+    }
 
     /**
      * 속성 값별 건수 — 키는 요청 파라미터 값과 같은 표기다(`parking.YES` ↔ `parking=YES`).

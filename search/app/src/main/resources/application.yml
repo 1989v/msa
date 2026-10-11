@@ -76,6 +76,12 @@ search:
   attraction:
     click-boost:
       enabled: ${SEARCH_ATTRACTION_CLICK_BOOST_ENABLED:false}
+    # 조건어 해석(「주차 되는」→ 주차 칩). 끄면 조건어가 검색어로 남는다 — 배포 없이 되돌리는 길
+    condition-words:
+      enabled: ${SEARCH_ATTRACTION_CONDITION_WORDS_ENABLED:true}
+    # 어휘 근거 OFF·GATE·CONFINE — 판정 세트 짝 측정이 통과한 단계까지만 켠다
+    answer-evidence:
+      mode: ${SEARCH_ATTRACTION_ANSWER_EVIDENCE_MODE:OFF}
   # ADR-0090 — 질의 사전. **비어 있으면 사전을 쓰지 않는다**(첫 채움 전 정상 상태).
   # 값은 search:batch 의 `search.embedding.model-ref` 와 한 글자도 달라선 안 된다 —
   # 다르면 사전이 적중해도 문서 벡터의 스탬프가 달라 벡터 레그가 꺼진다.

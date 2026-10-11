@@ -1,5 +1,7 @@
 package com.kgd.search.application.attraction.service
 
+import com.kgd.search.application.attraction.config.AttractionAnswerEvidenceProperties
+import com.kgd.search.application.attraction.config.AttractionConditionWordsProperties
 import com.kgd.search.application.attraction.config.AttractionHybridProperties
 import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.application.queryvector.usecase.ResolveQueryVectorUseCase
@@ -18,9 +20,11 @@ import com.kgd.search.domain.attraction.model.Availability
 import com.kgd.search.domain.attraction.model.ClosedToday
 import com.kgd.search.domain.attraction.model.EventSchedule
 import com.kgd.search.domain.attraction.model.EventStatusFilter
+import com.kgd.search.domain.attraction.model.PetPolicy
 import com.kgd.search.domain.query.model.QueryIntent
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
 import io.micrometer.core.instrument.MeterRegistry
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import java.time.Clock
@@ -40,6 +44,8 @@ class SearchAttractionService(
     meterRegistry: MeterRegistry,
     /** 「오늘 정기휴무 아님」과 행사 상태의 오늘. 둘 다 KST 로 센다. */
     private val clock: Clock = Clock.systemUTC(),
+    private val conditionWords: AttractionConditionWordsProperties = AttractionConditionWordsProperties(),
+    private val answerEvidence: AttractionAnswerEvidenceProperties = AttractionAnswerEvidenceProperties(),
 ) : SearchAttractionUseCase, SuggestAttractionUseCase {
 
     /** 벡터 레그가 실제로 켜진 요청 수. 사전 적중률(`search.qvec.*`)과 나눠 본다 — 여기가 낮으면 사전이 얇다. */
@@ -83,6 +89,10 @@ class SearchAttractionService(
         val signalSort = AttractionSignalSort.of(query.sort)
         val pageable = PageRequest.of(query.page.coerceAtLeast(0), query.size.coerceIn(1, 100))
         val original = query.keyword?.takeIf { it.isNotBlank() }
+        // 자모·기호만인 입력은 찾을 말이 없다 — 교정·색인을 부르지 않는다. 지금도 결과는 무관한 문서였다.
+        if (original != null && QueryIntent.hasNoContent(original)) {
+            return emptyResult(pageable, SearchAttractionUseCase.ZeroReason.NO_CONTENT)
+        }
         // 오타 교정은 두 레그 모두에 준다 — 오타가 섞인 문장은 벡터도 엉뚱한 곳을 가리킨다.
         // exact 는 사용자가 교정을 물린 검색이라 교정을 부르지 않는다.
         val corrected = original?.takeUnless { query.exact }
@@ -91,20 +101,41 @@ class SearchAttractionService(
         val keyword = corrected ?: original
         // 벡터 레그에는 **원문**을 준다 — 문장의 뜻이 그 레그의 전부라 잘라내면 안 된다 (ADR-0090 개정).
         val embedding = resolveEmbedding(keyword, geo, sortByEventStart || signalSort != null)
-        // 키워드 레그에는 의도어를 뺀 잔여만 준다. 형태소가 쪼갠 조각이 내용어로 채점되는 것을 막는다.
-        val understood = keyword?.let { QueryIntent.analyze(it, categoryLexicon.lexicon(query.lang)) }
-        if (understood?.hasFilter == true) intentCounter.increment()
         val categories = query.category
             ?.split(",")
             ?.map { it.trim() }
             ?.filter { it.isNotBlank() }
             .orEmpty()
+        // 키워드 레그에는 의도어를 뺀 잔여만 준다. 형태소가 쪼갠 조각이 내용어로 채점되는 것을 막는다.
+        // 행사만 고른 목록에서는 화면이 속성 조건을 모두 빼므로 조건어도 옮기지 않는다.
+        val understood = keyword?.let {
+            QueryIntent.analyze(
+                it,
+                categoryLexicon.lexicon(query.lang),
+                lang = query.lang?.takeIf { l -> l.isNotBlank() },
+                attractionOnly = true,
+                conditionWords = conditionWords.enabled && !query.keepConditionWords &&
+                    categories != listOf(NearbyAttractionsService.EVENT_CATEGORY),
+                skipConditions = query.skipConditions,
+            )
+        }
+        if (understood?.hasFilter == true) intentCounter.increment()
+        val explicit = toAttributeSelection(query)
+        // 같은 축에 칩이 켜져 있으면 칩이 이긴다(해석은 버리고, 해석에 쓴 어절은 검색어에서 빠진 채로 둔다)
+        val interpreted = understood?.conditions.orEmpty().filterNot { explicit.has(it.kind) }
+        // `?:` 를 쓰면 안 된다 — 잔여가 null 인 것은 「값이 없다」가 아니라
+        // **「의도어만이라 검색어가 남지 않았다」**는 결과다. 엘비스로 원문을 되살리면
+        // 방금 잘라낸 「해수욕장」이 그대로 BM25 에 돌아간다.
+        val searchKeyword = if (understood != null) understood.residual else keyword
+        val mode = answerEvidence.mode
+        // 한정: 쿼리 언더스탠딩이 집합을 좁히지 않은 질의는 결과를 어휘 근거 일치 문서로 한정한다
+        val confine = mode == AttractionAnswerEvidenceProperties.Mode.CONFINE &&
+            understood?.narrowsByIntent != true && searchKeyword != null
+        val evidenceKeyword = understood?.evidenceResidual
+            ?.takeIf { mode != AttractionAnswerEvidenceProperties.Mode.OFF && !confine }
         val found = attractionSearchPort.search(
             AttractionSearchPort.SearchQuery(
-                // `?:` 를 쓰면 안 된다 — 잔여가 null 인 것은 「값이 없다」가 아니라
-                // **「의도어만이라 검색어가 남지 않았다」**는 결과다. 엘비스로 원문을 되살리면
-                // 방금 잘라낸 「해수욕장」이 그대로 BM25 에 돌아간다.
-                keyword = if (understood != null) understood.residual else keyword,
+                keyword = searchKeyword,
                 lang = query.lang?.takeIf { it.isNotBlank() },
                 areaCode = query.areaCode?.takeIf { it.isNotBlank() },
                 sidoCode = query.sidoCode?.takeIf { it.isNotBlank() },
@@ -114,16 +145,19 @@ class SearchAttractionService(
                 commerceIntent = understood?.commerceIntent ?: false,
                 geo = geo,
                 embedding = embedding,
-                attributes = toAttributeSelection(query),
+                attributes = interpreted.fold(explicit) { selection, condition -> selection.with(condition) },
                 countAttributeFacets = query.attributeFacets,
                 eventRange = EventStatusFilter.of(query.eventStatus?.trim())
                     ?.let { EventSchedule.range(it, EventSchedule.todayKst(clock.instant())) },
                 sortByEventStart = sortByEventStart,
                 signalSort = signalSort,
+                evidenceKeyword = evidenceKeyword,
+                confine = confine,
             ),
             pageable,
         )
         val page = found.page
+        val noEvidence = found.noEvidence || (confine && page.totalElements == 0L)
         return SearchAttractionUseCase.Result(
             searchId = UUID.randomUUID().toString(),
             attractions = page.content.mapIndexed { index, hit ->
@@ -134,7 +168,41 @@ class SearchAttractionService(
             currentPage = page.number,
             correctedKeyword = corrected,
             attributeFacets = found.attributeFacets?.toResult(),
+            interpreted = interpreted,
+            zeroReason = SearchAttractionUseCase.ZeroReason.NO_EVIDENCE.takeIf { noEvidence },
         )
+    }
+
+    private fun emptyResult(pageable: PageRequest, reason: SearchAttractionUseCase.ZeroReason): SearchAttractionUseCase.Result {
+        val page = PageImpl(emptyList<Any>(), pageable, 0)
+        return SearchAttractionUseCase.Result(
+            searchId = UUID.randomUUID().toString(),
+            attractions = emptyList(),
+            totalElements = 0,
+            totalPages = page.totalPages,
+            currentPage = page.number,
+            zeroReason = reason,
+        )
+    }
+
+    /** 그 축에 명시 선택(칩)이 있는가 — 축은 요청 파라미터 하나다. */
+    private fun AttributeSelection.has(kind: QueryIntent.ConditionKind): Boolean = when (kind) {
+        QueryIntent.ConditionKind.PARKING -> parking
+        QueryIntent.ConditionKind.ADMISSION -> freeAdmission
+        QueryIntent.ConditionKind.PET -> pet.isNotEmpty()
+        QueryIntent.ConditionKind.STROLLER_RENTAL -> strollerRental
+        QueryIntent.ConditionKind.BARRIER_FREE -> barrierFree.isNotEmpty()
+        QueryIntent.ConditionKind.CREDIT_CARD -> creditCard
+    }
+
+    /** 해석한 조건을 선택에 더한다. 다른 축끼리는 합집합(속성 사이 AND)이다. */
+    private fun AttributeSelection.with(condition: QueryIntent.Condition): AttributeSelection = when (condition.kind) {
+        QueryIntent.ConditionKind.PARKING -> copy(parking = true)
+        QueryIntent.ConditionKind.ADMISSION -> copy(freeAdmission = true)
+        QueryIntent.ConditionKind.PET -> copy(pet = condition.values.map { PetPolicy.valueOf(it) }.toSet())
+        QueryIntent.ConditionKind.STROLLER_RENTAL -> copy(strollerRental = true)
+        QueryIntent.ConditionKind.BARRIER_FREE -> copy(barrierFree = condition.values)
+        QueryIntent.ConditionKind.CREDIT_CARD -> copy(creditCard = true)
     }
 
     /**

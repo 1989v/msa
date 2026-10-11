@@ -14,9 +14,9 @@ import tools.jackson.databind.ObjectMapper
  */
 class AttractionsIndexMappingTest : BehaviorSpec({
 
-    val properties: JsonNode = ObjectMapper()
+    val definition: JsonNode = ObjectMapper()
         .readTree(javaClass.getResourceAsStream(IndexAliasManager.ATTRACTIONS_INDEX_DEFINITION))
-        .path("mappings").path("properties")
+    val properties: JsonNode = definition.path("mappings").path("properties")
 
     given("관광지 색인 정의의 속성 필드") {
         `when`("필터·집계 대상 속성을 보면") {
@@ -148,6 +148,29 @@ class AttractionsIndexMappingTest : BehaviorSpec({
             properties.path("contentUpdatedAt").path("type").asString() shouldBe "date"
             properties.path("contentUpdatedAt").path("format").asString() shouldBe "yyyy-MM-dd'T'HH:mm:ss"
             properties.path("contentUpdatedAt").path("doc_values").asBoolean(true) shouldBe true
+        }
+    }
+
+    given("검색 분석기 nori_search 의 품사 필터") {
+        val analysis = definition.path("settings").path("analysis")
+        fun strings(array: JsonNode): List<String> = (0 until array.size()).map { array.get(it).asString() }
+        val searchFilters = strings(analysis.path("analyzer").path("nori_search").path("filter"))
+        val posFilters = searchFilters.filter { name -> analysis.path("filter").path(name).path("type").asString() == "nori_part_of_speech" }
+
+        then("품사 필터가 하나 있고 동의어 필터(tourism_synonyms) 앞에 있다 — 조사·어미가 동의어 그래프에 들어가지 않게") {
+            posFilters.size shouldBe 1
+            searchFilters shouldBe listOf(posFilters.single(), "tourism_synonyms")
+        }
+        then("stoptags 는 조사·어미 세분 태그 14개다 — 묶음 태그 E·J 는 OpenSearch 3.8(Lucene 10)이 거부한다") {
+            val tags = strings(analysis.path("filter").path(posFilters.single()).path("stoptags"))
+            tags.toSet() shouldBe setOf(
+                "EP", "EF", "EC", "ETN", "ETM", "JKS", "JKC", "JKG", "JKO", "JKB", "JKV", "JKQ", "JX", "JC",
+            )
+            tags.size shouldBe 14
+            ("E" in tags || "J" in tags) shouldBe false
+        }
+        then("색인 분석기 nori_analyzer 는 그대로다 — 질의 쪽에서 빠진 토큰은 색인에 남아도 맞을 일이 없다") {
+            analysis.path("analyzer").path("nori_analyzer").path("filter").isMissingNode shouldBe true
         }
     }
 })

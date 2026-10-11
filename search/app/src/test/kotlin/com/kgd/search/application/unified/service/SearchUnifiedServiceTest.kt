@@ -39,6 +39,22 @@ class SearchUnifiedServiceTest : BehaviorSpec({
         return Triple(SearchUnifiedService(attraction, port, lexicon), attraction, port)
     }
 
+    given("조건어가 든 「주차 되는 해수욕장」") {
+        val (service, attraction, port) = fixture()
+        val sent = slot<SearchAttractionUseCase.Query>()
+        every { attraction.execute(capture(sent)) } returns attractionResult()
+        every { port.search(any()) } returns UnifiedSearchPort.Page(emptyList(), 0)
+
+        `when`("검색하면") {
+            service.execute(SearchUnifiedUseCase.Query(q = "주차 되는 해수욕장"))
+
+            then("관광지 검색에 조건어 해석을 끄고 원문을 넘긴다 — 통합 검색에는 해석을 풀 화면이 없다") {
+                sent.captured.keepConditionWords shouldBe true
+                sent.captured.keyword shouldBe "주차 되는 해수욕장"
+            }
+        }
+    }
+
     given("타입 의도어가 없는 「하이브리드 검색」") {
         val (service, attraction, port) = fixture()
         every { attraction.execute(any()) } returns attractionResult()
@@ -170,6 +186,24 @@ class SearchUnifiedServiceTest : BehaviorSpec({
         then("아무것도 묻지 않고 빈 결과다") {
             service.execute(SearchUnifiedUseCase.Query(q = "  ")).groups shouldBe emptyList()
             verify(exactly = 0) { attraction.execute(any()); port.search(any()) }
+        }
+    }
+
+    given("관광지 전용 불용어·조건어가 든 질의") {
+        `when`("「travel」·「place」·「카드 결제 할인」을 전 타입 검색하면") {
+            then("잔여가 그대로 다른 타입 검색에 간다 — 지우면 그 타입이 전체 목록 + 인기순이 된다") {
+                listOf("travel" to "en", "place" to "en", "카드 결제 할인" to "ko").forEach { (q, lang) ->
+                    val (service, attraction, port) = fixture()
+                    every { attraction.execute(any()) } returns attractionResult()
+                    val sent = mutableListOf<UnifiedSearchPort.Query>()
+                    every { port.search(capture(sent)) } returns UnifiedSearchPort.Page(emptyList(), 0)
+
+                    val result = service.execute(SearchUnifiedUseCase.Query(q = q, lang = lang))
+
+                    sent.map { it.keyword }.toSet() shouldBe setOf(q)
+                    result.understood.residual shouldBe q
+                }
+            }
         }
     }
 })

@@ -7,7 +7,9 @@ import com.kgd.search.application.attraction.usecase.AttractionShortUrlUseCase
 import com.kgd.search.application.attraction.usecase.NearbyAttractionsUseCase
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 import com.kgd.search.application.attraction.usecase.SuggestAttractionUseCase
+import com.kgd.search.presentation.search.dto.AttractionConditionParams
 import com.kgd.search.presentation.search.dto.AttractionDetailResponse
+import com.kgd.search.presentation.search.dto.AttractionSearchResponse
 import org.springframework.http.CacheControl
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -58,13 +60,13 @@ class AttractionSearchController(
         // 속성 패싯 — 긍정 값만 필터가 된다(openToday=true · parking|creditCard|strollerRental=YES ·
         // pet=ALLOWED,PARTIAL · admission=FREE). 다른 값은 무시하고 그 속성은 거르지 않는다.
         @RequestParam(defaultValue = "false") openToday: Boolean,
-        @RequestParam(required = false) parking: String?,
-        @RequestParam(required = false) creditCard: String?,
-        @RequestParam(required = false) strollerRental: String?,
-        @RequestParam(required = false) pet: String?,
-        @RequestParam(required = false) admission: String?,
+        @RequestParam(name = AttractionConditionParams.PARKING, required = false) parking: String?,
+        @RequestParam(name = AttractionConditionParams.CREDIT_CARD, required = false) creditCard: String?,
+        @RequestParam(name = AttractionConditionParams.STROLLER_RENTAL, required = false) strollerRental: String?,
+        @RequestParam(name = AttractionConditionParams.PET, required = false) pet: String?,
+        @RequestParam(name = AttractionConditionParams.ADMISSION, required = false) admission: String?,
         // 무장애(WHEELCHAIR·ELEVATOR·RESTROOM, 쉼표 AND) · 웰니스 테마 있음 — 연 코드 밖의 값은 무시한다
-        @RequestParam(required = false) barrierFree: String?,
+        @RequestParam(name = AttractionConditionParams.BARRIER_FREE, required = false) barrierFree: String?,
         @RequestParam(defaultValue = "false") wellness: Boolean,
         // 건수는 요청할 때만 센다 — 상세의 주변·편의시설·지도가 같은 API 를 부른다. 필터 적용과는 무관하다.
         @RequestParam(defaultValue = "false") facets: Boolean,
@@ -72,7 +74,11 @@ class AttractionSearchController(
         @RequestParam(required = false) eventStatus: String?,
         // true 면 오타 교정 없이 받은 검색어 그대로 찾는다 — 교정 안내의 「원래 검색어로 검색」
         @RequestParam(defaultValue = "false") exact: Boolean,
-    ): ApiResponse<SearchAttractionUseCase.Result> {
+        // 「조건으로 읽지 않고 검색」 — 조건어를 하나도 속성으로 옮기지 않는다
+        @RequestParam(defaultValue = "false") keepConditionWords: Boolean,
+        // 해석된 칩을 끈 것 — 그 파라미터 이름(parking·pet …)의 해석만 버린다. 여럿 가능
+        @RequestParam(required = false) skipCondition: List<String>?,
+    ): ApiResponse<AttractionSearchResponse> {
         val result = searchAttractionUseCase.execute(
             SearchAttractionUseCase.Query(
                 keyword = keyword,
@@ -98,9 +104,11 @@ class AttractionSearchController(
                 attributeFacets = facets,
                 eventStatus = eventStatus,
                 exact = exact,
+                keepConditionWords = keepConditionWords,
+                skipConditions = AttractionConditionParams.kindsOf(skipCondition),
             )
         )
-        return ApiResponse.success(result)
+        return ApiResponse.success(AttractionSearchResponse.of(result))
     }
 
     /** 상세 — 색인은 하루 한 번 바뀌므로 엣지가 1시간 쥔다 (ADR-0105). 404 에는 붙이지 않는다(예외 경로). */

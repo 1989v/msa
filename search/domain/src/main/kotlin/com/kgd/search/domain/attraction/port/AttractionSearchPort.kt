@@ -102,6 +102,17 @@ interface AttractionSearchPort {
         val sortByEventStart: Boolean = false,
         /** 이 사이트 근거 정렬 — 하한 이상 문서만 값 내림차순, 같으면 id 오름차순. null 이면 이 조건이 없다. */
         val signalSort: AttractionSignalSort? = null,
+        /**
+         * 어휘 근거를 요구할 말. null 이 아니면 본 질의 전에 이 말이 같은 필터 안에서
+         * `minimum_should_match` [EVIDENCE_MINIMUM_SHOULD_MATCH] 로 맞는 문서가 있는지 먼저 센다 — 없으면 본 질의와
+         * 건수 요청을 내지 않고 0건이다([SearchResult.noEvidence]). null 이면 요청은 이 필드가 생기기 전과 같다.
+         */
+        val evidenceKeyword: String? = null,
+        /**
+         * 결과 집합을 어휘 근거로 한정한다 — 검색어 일치에 `minimum_should_match` 를 건다. 그 일치가 키워드 레그와
+         * 벡터 레그(knn filter)에 같이 들어가므로 두 레그가 함께 좁아지고, 건수 요청도 같은 일치로 센다.
+         */
+        val confine: Boolean = false,
     ) {
         init {
             // 정렬이 점수를 버리므로 벡터 레그는 값만 치르고, 하이브리드 질의는 정렬을 아예 받지 않는다.
@@ -110,13 +121,22 @@ interface AttractionSearchPort {
             require(signalSort == null || !sortByEventStart) { "정렬은 하나만 건다" }
             // 건수는 오늘 요일(「오늘 정기휴무 아님」)이 있어야 셀 수 있다. 요일은 선택이 갖는다.
             require(!countAttributeFacets || attributes != null) { "속성 패싯을 세려면 선택(빈 선택 포함)이 필요하다" }
+            // 한정은 본 질의가 곧 근거 집합이라 근거 요청을 따로 내지 않는다
+            require(!confine || evidenceKeyword == null) { "한정과 근거 요청은 함께 걸지 않는다" }
         }
+    }
+
+    companion object {
+        /** 토큰 2개 이하는 전부, 3개 이상은 75% — 「에펠탑」이 `탑` 하나로 충렬탑에 맞지 않게 한다. */
+        const val EVIDENCE_MINIMUM_SHOULD_MATCH = "2<75%"
     }
 
     /** [attributeFacets] 는 건수 요청을 내지 않았거나 그 요청이 실패하면 null — 결과는 그래도 돌려준다. */
     data class SearchResult(
         val page: Page<AttractionHit>,
         val attributeFacets: AttributeFacetCounts? = null,
+        /** 근거 요청이 0건이라 본 질의를 내지 않았다. */
+        val noEvidence: Boolean = false,
     )
 
     data class GeoFilter(

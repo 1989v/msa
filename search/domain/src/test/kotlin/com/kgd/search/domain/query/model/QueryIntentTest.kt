@@ -337,4 +337,239 @@ class QueryIntentTest : BehaviorSpec({
             }
         }
     }
+
+    Given("띄어 쓴 불용구 — 어절 창 1~3") {
+        // 관광지 경로로 부른다(attractionOnly) — 화면이 실제로 부르는 모양이다.
+        fun place(q: String, lang: String = "ko") = QueryIntent.analyze(q, lexicon, lang = lang, attractionOnly = true)
+
+        When("「아이랑 갈 만한 곳」") {
+            Then("「갈 만한」·「곳」이 지워지고 「아이랑」만 남는다") { place("아이랑 갈 만한 곳").residual shouldBe "아이랑" }
+        }
+        When("「아이와 갈만한 곳」") {
+            Then("붙여 쓴 것도 같다") { place("아이와 갈만한 곳").residual shouldBe "아이와" }
+        }
+        When("「부모님과 가기 좋은 곳」") {
+            Then("「가기 좋은 곳」이 지워진다") { place("부모님과 가기 좋은 곳").residual shouldBe "부모님과" }
+        }
+        When("「가볼 만한 곳」") {
+            val r = place("가볼 만한 곳")
+            Then("세 어절 창이 유형 의도로 맞는다") {
+                r.residual shouldBe null
+                r.facets shouldBe mapOf("contentTypeId" to "12")
+            }
+        }
+        When("「winter trip」(en)") {
+            Then("영문 불용어 trip 이 지워진다") { place("winter trip", "en").residual shouldBe "winter" }
+        }
+        When("「things to do in busan」(en)") {
+            Then("세 어절 영문 불용구도 지워진다") { place("things to do busan", "en").residual shouldBe "busan" }
+        }
+        When("「비 오는 날 갈만한 곳」") {
+            val r = place("비 오는 날 갈만한 곳")
+            Then("기존처럼 실내 필터만 남는다") {
+                r.residual shouldBe null
+                r.facets[QueryIntent.SETTING_FIELD] shouldBe "indoor"
+            }
+        }
+        When("「야경 명소」") {
+            Then("뜻이 있는 「야경」은 남는다") { place("야경 명소").residual shouldBe "야경" }
+        }
+        When("「갈 수 있는 곳」이 섞이면") {
+            Then("「갈 수 있는」도 불용구다") { place("서울 갈 수 있는 곳").residual shouldBe "서울" }
+        }
+    }
+
+    Given("통합 검색 경로(attractionOnly = false)") {
+        When("「travel」·「place」") {
+            Then("관광지 전용 영문 불용어는 지우지 않는다 — 다른 타입 결과가 통째로 바뀐다") {
+                QueryIntent.analyze("travel", lexicon, searchTypes = true, lang = "en").residual shouldBe "travel"
+                QueryIntent.analyze("place", lexicon, searchTypes = true, lang = "en").residual shouldBe "place"
+            }
+        }
+        When("띄어 쓴 한국어 불용구") {
+            Then("어절 창은 두 경로 공통이다") {
+                QueryIntent.analyze("아이랑 갈 만한 곳", lexicon, searchTypes = true).residual shouldBe "아이랑"
+            }
+        }
+    }
+
+    Given("내용 없는 입력") {
+        When("자모만인 「ㅁㄴㅇㄹ」") {
+            Then("noContent 다") { QueryIntent.analyze("ㅁㄴㅇㄹ", attractionOnly = true).noContent shouldBe true }
+        }
+        When("기호만인 입력") {
+            Then("noContent 다") { QueryIntent.analyze("ㅋㅋ !!", attractionOnly = true).noContent shouldBe true }
+        }
+        When("자모 뒤에 완성형이 붙은 「ㄱ경복궁」") {
+            Then("noContent 가 아니다") { QueryIntent.analyze("ㄱ경복궁", attractionOnly = true).noContent shouldBe false }
+        }
+        When("라틴·숫자가 있으면") {
+            Then("noContent 가 아니다") {
+                QueryIntent.analyze("qwxzv", attractionOnly = true).noContent shouldBe false
+                QueryIntent.analyze("63", attractionOnly = true).noContent shouldBe false
+            }
+        }
+    }
+
+    Given("조건어 → 속성 축 (관광지 경로)") {
+
+        fun place(q: String, lang: String = "ko", skip: Set<QueryIntent.ConditionKind> = emptySet(), words: Boolean = true) =
+            QueryIntent.analyze(q, lexicon, lang = lang, attractionOnly = true, conditionWords = words, skipConditions = skip)
+
+        When("「주차 되는 해수욕장」") {
+            val r = place("주차 되는 해수욕장")
+            Then("주차 조건과 분류 필터가 되고 검색어는 남지 않는다") {
+                r.conditions shouldBe listOf(QueryIntent.Condition(QueryIntent.ConditionKind.PARKING, "주차 되는"))
+                r.facets["lclsSystm3"] shouldBe "NA020100"
+                r.residual shouldBe null
+            }
+        }
+        When("「주차가 되는 해수욕장」 — 머리말에 조사 「가」") {
+            val r = place("주차가 되는 해수욕장")
+            Then("조사를 떼고 같은 조건이 된다") {
+                r.conditions.map { it.kind } shouldBe listOf(QueryIntent.ConditionKind.PARKING)
+                r.conditions.single().phrase shouldBe "주차가 되는"
+                r.residual shouldBe null
+            }
+        }
+        When("「주차 되는 반려견 동반 해수욕장」 — 조건 둘") {
+            val r = place("주차 되는 반려견 동반 해수욕장")
+            Then("둘 다 옮기고 검색어는 남지 않는다") {
+                r.conditions.map { it.kind } shouldBe listOf(QueryIntent.ConditionKind.PARKING, QueryIntent.ConditionKind.PET)
+                r.residual shouldBe null
+            }
+        }
+        When("「반려견과 함께 갈 수 있는 곳」") {
+            val r = place("반려견과 함께 갈 수 있는 곳")
+            Then("반려동물 동반(ALLOWED·PARTIAL)이 되고 검색어는 남지 않는다") {
+                r.conditions.single().kind shouldBe QueryIntent.ConditionKind.PET
+                r.conditions.single().values shouldBe setOf("ALLOWED", "PARTIAL")
+                r.residual shouldBe null
+            }
+        }
+        When("「무료로 볼 수 있는 곳」") {
+            val r = place("무료로 볼 수 있는 곳")
+            Then("다음 말을 불용구가 가져가므로 무료 입장이다") {
+                r.conditions.map { it.kind } shouldBe listOf(QueryIntent.ConditionKind.ADMISSION)
+                r.residual shouldBe null
+            }
+        }
+        When("「무료 박물관」") {
+            val r = place("무료 박물관")
+            Then("다음 말이 유형 의도라 무료 입장이고 유형 필터도 걸린다") {
+                r.conditions.map { it.kind } shouldBe listOf(QueryIntent.ConditionKind.ADMISSION)
+                r.facets shouldBe mapOf("contentTypeId" to "14")
+                r.residual shouldBe null
+            }
+        }
+        When("「무료 셔틀」") {
+            val r = place("무료 셔틀")
+            Then("무료 단독 제한 — 조건 없이 검색어 그대로") {
+                r.conditions shouldBe emptyList()
+                r.residual shouldBe "무료 셔틀"
+            }
+        }
+        When("「주차 무료 해수욕장」") {
+            val r = place("주차 무료 해수욕장")
+            Then("주차가 먼저 무료를 꼬리말로 가져간다 — 무료 입장은 없다") {
+                r.conditions shouldBe listOf(QueryIntent.Condition(QueryIntent.ConditionKind.PARKING, "주차 무료"))
+                r.residual shouldBe null
+            }
+        }
+        When("「무료 주차장」") {
+            val r = place("무료 주차장")
+            Then("주차 꼬리말도 없고 무료 입장도 아니다 — 검색어 그대로") {
+                r.conditions shouldBe emptyList()
+                r.residual shouldBe "무료 주차장"
+            }
+        }
+        When("「반려견 놀이터」") {
+            val r = place("반려견 놀이터")
+            Then("꼬리말이 없으면 조건이 아니다") {
+                r.conditions shouldBe emptyList()
+                r.residual shouldBe "반려견 놀이터"
+            }
+        }
+        When("부정어가 붙으면") {
+            Then("「반려동물 동반 불가」는 조건 없이 검색어 그대로") {
+                val r = place("반려동물 동반 불가")
+                r.conditions shouldBe emptyList()
+                r.residual shouldBe "반려동물 동반 불가"
+            }
+            Then("「카드 결제 안 되는 곳」도 조건 없이 부정어까지 검색어로 남는다") {
+                val r = place("카드 결제 안 되는 곳")
+                r.conditions shouldBe emptyList()
+                r.residual shouldBe "카드 결제 안 되는"
+            }
+        }
+        When("en 「pet friendly」") {
+            val r = place("pet friendly", lang = "en")
+            Then("조건 없이 검색어 그대로") {
+                r.conditions shouldBe emptyList()
+                r.residual shouldBe "pet friendly"
+            }
+        }
+        When("en 요청에 ko 전용 행의 말(「반려견 동반」·「유모차 대여」)") {
+            Then("언어 열에 없어 옮기지 않는다 — en 원천에 값이 없어 늘 0건이 된다") {
+                place("반려견 동반", lang = "en").conditions shouldBe emptyList()
+                place("유모차 대여", lang = "en").residual shouldBe "유모차 대여"
+            }
+            Then("ko 요청이면 옮긴다") {
+                place("반려견 동반").conditions.map { it.kind } shouldBe listOf(QueryIntent.ConditionKind.PET)
+                place("유모차 대여").conditions.map { it.kind } shouldBe listOf(QueryIntent.ConditionKind.STROLLER_RENTAL)
+            }
+        }
+        When("en 「free admission museum」") {
+            val r = place("free admission museum", lang = "en")
+            Then("무료 입장이다") {
+                r.conditions.map { it.kind } shouldBe listOf(QueryIntent.ConditionKind.ADMISSION)
+                r.conditions.single().phrase shouldBe "free admission"
+            }
+        }
+        When("조건어 추출을 끄면(conditionWords = false — 해제·스위치·행사 분류)") {
+            val r = place("주차 되는 해수욕장", words = false)
+            Then("조건 없이 조건어가 검색어로 남는다") {
+                r.conditions shouldBe emptyList()
+                r.residual shouldBe "주차 되는"
+            }
+            Then("근거 잔여에서는 조건어 어절이 빠진다") { r.evidenceResidual shouldBe null }
+        }
+        When("한 축만 건너뛰면(skipConditions = PARKING)") {
+            val r = place("주차 되는 반려견 동반 해수욕장", skip = setOf(QueryIntent.ConditionKind.PARKING))
+            Then("주차만 빠지고 그 어절은 검색어로 남는다") {
+                r.conditions.map { it.kind } shouldBe listOf(QueryIntent.ConditionKind.PET)
+                r.residual shouldBe "주차 되는"
+                r.evidenceResidual shouldBe null
+            }
+        }
+        When("휠체어·카드") {
+            Then("「휠체어 가능」·「카드결제 가능한 카페」") {
+                place("휠체어 가능").conditions.map { it.kind } shouldBe listOf(QueryIntent.ConditionKind.BARRIER_FREE)
+                place("카드 결제 되는 곳").conditions.map { it.kind } shouldBe listOf(QueryIntent.ConditionKind.CREDIT_CARD)
+            }
+            Then("붙여 쓴 「주차가능」도 머리말+꼬리말이다") {
+                place("주차가능 해수욕장").conditions.map { it.kind } shouldBe listOf(QueryIntent.ConditionKind.PARKING)
+            }
+        }
+        When("통합 검색 경로(attractionOnly = false)의 「카드 결제 할인」") {
+            val r = QueryIntent.analyze("카드 결제 할인", lexicon, searchTypes = true)
+            Then("조건 없이 잔여 그대로") {
+                r.conditions shouldBe emptyList()
+                r.residual shouldBe "카드 결제 할인"
+            }
+        }
+        When("근거 잔여") {
+            Then("「무료 셔틀」은 머리말 무료를 빼고 「셔틀」만 근거를 요구한다") {
+                place("무료 셔틀").evidenceResidual shouldBe "셔틀"
+            }
+            Then("조건어가 없으면 잔여와 같다") { place("에펠탑").evidenceResidual shouldBe "에펠탑" }
+        }
+        When("한정 판정(narrowsByIntent)") {
+            Then("조건만 있어도 참이고 hasFilter 는 그대로 거짓이다") {
+                val r = place("반려견 동반")
+                r.narrowsByIntent shouldBe true
+                r.hasFilter shouldBe false
+            }
+        }
+    }
 })

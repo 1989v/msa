@@ -180,6 +180,12 @@ class AttractionSearchAdapter(
         query: AttractionSearchPort.SearchQuery,
         pageable: Pageable,
     ): AttractionSearchPort.SearchResult {
+        // 근거 요청이 먼저다 — 근거가 없으면 본 질의도 건수 요청도 내지 않는다(0건 화면의 칩 건수와 목록이 어긋나지 않게).
+        // 이 요청의 실패는 그대로 올린다. 0건으로 삼키면 장애가 「찾는 대상이 없다」로 보인다.
+        val evidence = query.evidenceKeyword
+        if (evidence != null && !hasEvidence(query, evidence)) {
+            return AttractionSearchPort.SearchResult(page = PageImpl(emptyList(), pageable, 0), noEvidence = true)
+        }
         // 건수 요청을 먼저 띄우고 본 질의를 낸다 — 둘이 병렬로 돈다.
         val facets = query.attributes?.takeIf { query.countAttributeFacets }?.let { selection ->
             CompletableFuture.supplyAsync({ countFacets(query, selection) }, facetExecutor)
@@ -202,6 +208,22 @@ class AttractionSearchAdapter(
             page = PageImpl(content, pageable, response.hits().total()?.value() ?: 0L),
             attributeFacets = facets?.let(::awaitFacets),
         )
+    }
+
+    /**
+     * 어휘 근거 — [evidence] 가 본 질의와 같은 필터 안에서 `minimum_should_match` 로 맞는 문서가 하나라도 있는가.
+     * 한 건만 찾으면 되므로 `size 0` · `terminate_after 1` · `track_total_hits 1` 이다.
+     */
+    private fun hasEvidence(query: AttractionSearchPort.SearchQuery, evidence: String): Boolean {
+        val attributeFilters = query.attributes?.let { selectedAttributeFilters(it).values.toList() }.orEmpty()
+        val request = SearchRequest.Builder()
+            .index(INDEX)
+            .size(0)
+            .terminateAfter(1L)
+            .trackTotalHits { t -> t.count(1) }
+            .query(matchedQuery(query, evidence, attributeFilters, AttractionSearchPort.EVIDENCE_MINIMUM_SHOULD_MATCH))
+            .build()
+        return (client.search(request, JsonData::class.java).hits().total()?.value() ?: 0L) > 0
     }
 
     /** 건수는 결과의 부속이다 — 실패·지연은 경고만 남기고 건수 없이 간다. */
@@ -233,7 +255,14 @@ class AttractionSearchAdapter(
         val request = SearchRequest.Builder()
             .index(INDEX)
             .size(0)
-            .query(matchedQuery(query, keyword = query.keyword.takeIf { query.embedding == null }, attributeFilters = emptyList()))
+            .query(
+                // 한정이면 목록과 같은 일치(msm)로 센다 — 검색어를 빼고 세면 칩 건수가 목록보다 커진다
+                if (query.confine) {
+                    matchedQuery(query, query.keyword, emptyList(), AttractionSearchPort.EVIDENCE_MINIMUM_SHOULD_MATCH)
+                } else {
+                    matchedQuery(query, keyword = query.keyword.takeIf { query.embedding == null }, attributeFilters = emptyList())
+                },
+            )
             .aggregations(
                 buckets.associate { bucket ->
                     val others = selected.filterKeys { it != bucket.facet }.values.toList()
@@ -581,10 +610,18 @@ class AttractionSearchAdapter(
         query: AttractionSearchPort.SearchQuery,
         keyword: String?,
         attributeFilters: List<Query>,
+        /** 어휘 근거·한정일 때만 건다. null 이면 요청은 이 인자가 생기기 전과 같다(토큰 하나만 맞아도 후보). */
+        minimumShouldMatch: String? = null,
     ): Query = Query.of { q ->
         q.bool { b ->
             if (keyword != null) {
-                b.must { m -> m.multiMatch { mm -> mm.query(keyword).fields(KEYWORD_FIELDS) } }
+                b.must { m ->
+                    m.multiMatch { mm ->
+                        mm.query(keyword).fields(KEYWORD_FIELDS)
+                        minimumShouldMatch?.let { mm.minimumShouldMatch(it) }
+                        mm
+                    }
+                }
             } else {
                 b.must { m -> m.matchAll { it } }
             }
@@ -675,7 +712,13 @@ class AttractionSearchAdapter(
     private fun buildRequest(query: AttractionSearchPort.SearchQuery, pageable: Pageable): SearchRequest {
         // 속성 필터는 이 bool 에 들어가므로 키워드 레그와 벡터 레그(knn filter) 양쪽에 걸린다.
         val attributeFilters = query.attributes?.let { selectedAttributeFilters(it).values.toList() }.orEmpty()
-        val matched = matchedQuery(query, query.keyword, attributeFilters)
+        // 한정이면 이 일치에 msm 이 걸린다 — 키워드 레그와 벡터 레그(knn filter)가 같은 `matched` 를 쓰므로 함께 좁아진다
+        val matched = matchedQuery(
+            query,
+            query.keyword,
+            attributeFilters,
+            AttractionSearchPort.EVIDENCE_MINIMUM_SHOULD_MATCH.takeIf { query.confine },
+        )
         // 클릭 계수는 관련도에 곱하는 값이라 검색어가 있을 때만 붙는다 — 검색어 없는 목록은 완결성 순서 그대로다
         val keywordLeg = withCategoryWeights(
             matched,

@@ -21,6 +21,10 @@
             "수목원, 식물원",
             "전망대, 스카이워크"
           ]
+        },
+        "search_pos_stop": {
+          "type": "nori_part_of_speech",
+          "stoptags": ["EP", "EF", "EC", "ETN", "ETM", "JKS", "JKC", "JKG", "JKO", "JKB", "JKV", "JKQ", "JX", "JC"]
         }
       },
       "tokenizer": {
@@ -249,6 +253,7 @@
           "type": "custom",
           "tokenizer": "nori_user",
           "filter": [
+            "search_pos_stop",
             "tourism_synonyms"
           ]
         },

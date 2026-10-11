@@ -26,7 +26,10 @@ class SearchUnifiedService(
         val size = query.size.coerceIn(1, MAX_SIZE)
 
         // 타입 의도는 여기서만 읽는다(searchTypes) — 관광지 검색은 자기 쿼리 언더스탠딩을 따로 돈다.
-        val understood = QueryIntent.analyze(q, categoryLexicon.lexicon(query.lang), searchTypes = true)
+        // attractionOnly=false: 잔여가 다른 타입 검색으로 가므로 관광지 전용 불용어·조건어 추출을 하지 않는다.
+        val understood = QueryIntent.analyze(
+            q, categoryLexicon.lexicon(query.lang), searchTypes = true, lang = query.lang, attractionOnly = false,
+        )
         val requestedType = query.type?.takeIf { it.isNotBlank() }
         val intentType = understood.type
         val targetTypes = when {
@@ -56,10 +59,17 @@ class SearchUnifiedService(
     /**
      * 관광지는 원문을 그대로 넘긴다 — 그쪽 서비스가 자기 사전으로 필터·잔여를 다시 만든다.
      * 끝난 행사는 뺀다(목록 키워드 검색과 같은 기준). 오늘은 관광지 서비스가 자기 시계로 KST 로 센다.
+     * 조건어 해석은 끈다 — 통합 검색에는 해석을 보여 주고 풀 화면이 없다.
      */
     private fun attractions(q: String, lang: String?, size: Int): SearchUnifiedUseCase.Group {
         val result = searchAttraction.execute(
-            SearchAttractionUseCase.Query(keyword = q, lang = lang, size = size, eventStatus = EventStatusFilter.NOT_ENDED.name),
+            SearchAttractionUseCase.Query(
+                keyword = q,
+                lang = lang,
+                size = size,
+                eventStatus = EventStatusFilter.NOT_ENDED.name,
+                keepConditionWords = true,
+            ),
         )
         return SearchUnifiedUseCase.Group(
             type = QueryIntent.Types.ATTRACTION,
