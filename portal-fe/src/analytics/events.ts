@@ -48,13 +48,27 @@ export type SectionId =
    */
   | 'MAP_LINK'
   | 'FAVORITE'
-  /** 구글맵 길찾기 링크 */
+  /**
+   * 구글맵 길찾기 링크. 위치는 payload `source`(`'action_bar'` = 상세 하단 행동 바, 없음 = 행동 줄)가 갖는다 —
+   * 중복 키에 payload 가 없어 view 당 첫 위치만 남는다
+   */
   | 'DIRECTIONS'
   /**
    * 공유 채널 버튼(복사·Web Share·X·LinkedIn). 채널은 payload 가 갖는다 — 중복 키에 채널이 없어
-   * 같은 view·대상의 두 번째 채널은 버려진다(채널 분포는 view 당 첫 채널)
+   * 같은 view·대상의 두 번째 채널은 버려진다(채널 분포는 view 당 첫 채널). 위치는 `DIRECTIONS` 와 같은
+   * payload `source` 규칙이다(view 당 첫 위치)
    */
   | 'SHARE'
+  /**
+   * 전화 링크(행동 줄·하단 행동 바, 위치는 payload `source`) — 선택 뒤 행동이라 집계 제외, 노출 없음.
+   * 중복 키에 payload 가 없어 view 당 첫 건만 남는다 — 지표는 「전화를 누른 view 비율」로 읽는다
+   */
+  | 'PHONE'
+  /**
+   * 상세 절 이동 줄(payload `target`: summary·access·info·nearby) — 선택 뒤 행동이라 집계 제외, 노출 없음.
+   * view 당 첫 건만 남는다(두 번째 이동은 다른 target 이어도 버려진다) — 지표는 「이동을 쓴 view 비율」이다
+   */
+  | 'SECTION_JUMP'
   /** 지도 레이어 핀 — 노출 없는 클릭, 인기 집계 포함 */
   | 'MAP_OVERLAY';
 

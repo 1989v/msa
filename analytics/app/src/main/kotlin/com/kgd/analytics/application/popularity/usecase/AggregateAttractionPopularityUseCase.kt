@@ -27,7 +27,9 @@ interface AggregateAttractionPopularityUseCase {
          * `clicks`·`unique_clickers` 는 목록 선택(카드·목록 핀·오버레이 핀)만 센다 — 이 집합(선택 뒤 후속 행동)은
          * 제외하고, 노출은 그대로 센다. 기준은 「목록 밖」이 아니라 「선택 뒤」다: `MAP_OVERLAY` 도 노출 없는
          * 목록 밖 클릭이지만 집계에 넣는다. FE `portal-fe/src/analytics/events.ts` 의 같은 이름 주석과 한 몸이다.
+         * 집계는 화면 종류로 거르지 않으므로, 상세에 새 행동 섹션이 생기면 여기에도 더해야 한다(거부 목록).
          */
-        val POST_SELECTION_SECTIONS: Set<String> = setOf("MAP_LINK", "FAVORITE", "DIRECTIONS", "SHARE")
+        val POST_SELECTION_SECTIONS: Set<String> =
+            setOf("MAP_LINK", "FAVORITE", "DIRECTIONS", "SHARE", "PHONE", "SECTION_JUMP")
     }
 }

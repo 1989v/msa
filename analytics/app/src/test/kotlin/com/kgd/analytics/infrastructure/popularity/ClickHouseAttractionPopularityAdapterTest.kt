@@ -57,7 +57,7 @@ class ClickHouseAttractionPopularityAdapterTest : BehaviorSpec({
             insert shouldContain "(day, attraction_id, impressions, clicks, unique_clickers)"
             // 수집기의 ANONYMOUS_VISITOR 와 같은 글자여야 한다 — 한쪽만 바뀌면 익명 전체가 한 사람으로 섞인다
             insert shouldContain
-                "uniqStateIf(visitor_id, action = 'CLICK' AND section_id NOT IN ('MAP_LINK', 'FAVORITE', 'DIRECTIONS', 'SHARE') AND visitor_id != 'anonymous') AS unique_clickers"
+                "uniqStateIf(visitor_id, action = 'CLICK' AND section_id NOT IN ('MAP_LINK', 'FAVORITE', 'DIRECTIONS', 'SHARE', 'PHONE', 'SECTION_JUMP') AND visitor_id != 'anonymous') AS unique_clickers"
             // 노출은 순위의 결과라 방문자 신호에 섞지 않는다
             insert shouldNotContain "uniqStateIf(visitor_id, action = 'IMPRESSION'"
         }
@@ -69,21 +69,21 @@ class ClickHouseAttractionPopularityAdapterTest : BehaviorSpec({
         then("노출·클릭 합계는 그대로 센다 — place-ingest 가 읽는 값이다") {
             val insert = oneLine(sent[1].sql)
             insert shouldContain "toUInt32(countIf(action = 'IMPRESSION')) AS impressions"
-            insert shouldContain "toUInt32(countIf(action = 'CLICK' AND section_id NOT IN ('MAP_LINK', 'FAVORITE', 'DIRECTIONS', 'SHARE'))) AS clicks"
+            insert shouldContain "toUInt32(countIf(action = 'CLICK' AND section_id NOT IN ('MAP_LINK', 'FAVORITE', 'DIRECTIONS', 'SHARE', 'PHONE', 'SECTION_JUMP'))) AS clicks"
         }
 
         then("선택 뒤 후속 행동(지도 열기·찜)은 클릭 수와 고유 클릭자에서만 뺀다 — 노출 집계에는 제외가 없다") {
             val insert = oneLine(sent[1].sql)
-            insert shouldContain "countIf(action = 'CLICK' AND section_id NOT IN ('MAP_LINK', 'FAVORITE', 'DIRECTIONS', 'SHARE'))"
+            insert shouldContain "countIf(action = 'CLICK' AND section_id NOT IN ('MAP_LINK', 'FAVORITE', 'DIRECTIONS', 'SHARE', 'PHONE', 'SECTION_JUMP'))"
             insert shouldContain
-                "uniqStateIf(visitor_id, action = 'CLICK' AND section_id NOT IN ('MAP_LINK', 'FAVORITE', 'DIRECTIONS', 'SHARE') AND visitor_id != 'anonymous')"
+                "uniqStateIf(visitor_id, action = 'CLICK' AND section_id NOT IN ('MAP_LINK', 'FAVORITE', 'DIRECTIONS', 'SHARE', 'PHONE', 'SECTION_JUMP') AND visitor_id != 'anonymous')"
             insert shouldNotContain "action = 'IMPRESSION' AND"
         }
     }
 
     given("제외 목록 상수") {
-        then("선택 뒤 후속 행동 네 섹션이다 — FE events.ts 의 같은 이름 주석과 한 몸") {
-            AggregateAttractionPopularityUseCase.POST_SELECTION_SECTIONS shouldBe setOf("MAP_LINK", "FAVORITE", "DIRECTIONS", "SHARE")
+        then("선택 뒤 후속 행동 여섯 섹션이다 — FE events.ts 의 같은 이름 주석과 한 몸") {
+            AggregateAttractionPopularityUseCase.POST_SELECTION_SECTIONS shouldBe setOf("MAP_LINK", "FAVORITE", "DIRECTIONS", "SHARE", "PHONE", "SECTION_JUMP")
         }
     }
 })
