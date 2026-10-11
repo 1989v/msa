@@ -56,6 +56,9 @@ spec:
                   value: "http://opensearch:9200"
                 - name: PLACE_SERVICE_URL
                   value: "http://content:8097"
+                # 찜 집계(savedCount) — kubernetes 프로필을 켜지 않는 잡이라 env 가 없으면 localhost:8093 으로 가서 「load failed」가 된다
+                - name: WISHLIST_SERVICE_URL
+                  value: "http://account:8093"
                 # 이 값이 비면 벡터 없이 색인한다(첫 채움 전 정상 상태).
                 # search:app 의 search.query-vector.model-ref 와 **한 글자도 달라선 안 된다.**
                 - name: SEARCH_EMBEDDING_MODEL_REF
