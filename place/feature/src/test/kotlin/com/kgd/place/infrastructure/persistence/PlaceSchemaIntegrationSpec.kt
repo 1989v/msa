@@ -149,7 +149,6 @@ class PlaceSchemaIntegrationSpec(
     @Autowired private val t3: TransitBusCoverageJpaRepository,
     @Autowired private val t4: AttractionAccessJpaRepository,
     @Autowired private val tx: TransactionTemplate,
-    @Autowired private val dataSource: javax.sql.DataSource,
 ) : BehaviorSpec({
 
     Given("place 전용 Flyway 가 적용된 place_db") {
@@ -528,12 +527,7 @@ class PlaceSchemaIntegrationSpec(
                 adapter.findByAttractionIds(listOf(seoul)).single().let { it.lines to it.baseDate } shouldBe ("1·4호선" to LocalDate.of(2024, 12, 31))
 
                 // 연계 판정 — 서울 종로구 연계 · 강릉시 미연계 · 판정 없는 시군구는 빠진다.
-                // 운영 place_db 는 기본 콜레이션이 utf8mb4_unicode_ci 라 V35 표가 attractions(utf8mb4_0900_ai_ci)와 갈린다 — 그 조합을 재현한다
-                dataSource.connection.use {
-                    it.createStatement().execute(
-                        "ALTER TABLE transit_bus_coverage MODIFY sigungu_code VARCHAR(5) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL",
-                    )
-                }
+                // V35 표는 서버 기본(utf8mb4_unicode_ci), attractions 는 V3 의 `DEFAULT CHARSET = utf8mb4`(utf8mb4_0900_ai_ci)로 갈린다 — 운영과 같은 조합
                 val transit = TransitSourceRepositoryAdapter(t0, t1, t2, t3)
                 tx.execute { transit.replaceCoverage(listOf(BusCoverage("11110", 12_000, true), BusCoverage("51150", 20, false)), week2) }
                 adapter.findBusCoverage(ids.values) shouldBe mapOf(seoul to true, gangneung to false)
@@ -747,6 +741,10 @@ class PlaceSchemaIntegrationSpec(
         @JvmStatic
         private val mysql: MySQLContainer<*>? = if (dockerAvailable) {
             MySQLContainer(DockerImageName.parse("mysql:8.0.33"))
+                // 운영 MySQL 과 같은 서버 기본값(k8s/infra/local/mysql/statefulset.yaml args). 이미지 기본(utf8mb4_0900_ai_ci)으로
+                // 띄우면 콜레이션을 적지 않은 표와 `DEFAULT CHARSET = utf8mb4` 표가 같은 콜레이션이 되어, 운영에서만 나는
+                // 「Illegal mix of collations」를 테스트가 못 본다
+                .withCommand("--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci")
                 .withDatabaseName("place_db")
                 .withUsername("root")
                 .withPassword("test")
