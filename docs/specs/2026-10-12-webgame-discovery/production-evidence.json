@@ -1,0 +1,318 @@
+{
+  "checkedAt": "2026-10-12T13:17:50.303Z",
+  "expectedDeploymentImage": "2224a81",
+  "method": "Read-only GET of initial HTML, sitemap and API samples. Parsed with JSDOM without running page scripts. Runtime browser smoke belongs to parent.",
+  "pages": [
+    {
+      "url": "https://game.1989v.com/",
+      "status": 200,
+      "finalUrl": "https://game.1989v.com/",
+      "headers": {
+        "contentType": "text/html",
+        "xRobotsTag": null,
+        "etag": null,
+        "lastModified": "Mon, 12 Oct 2026 13:14:28 GMT"
+      },
+      "canonical": [
+        "https://game.1989v.com/"
+      ],
+      "checks": {
+        "http200": true,
+        "selfCanonicalExactlyOne": true,
+        "noNoindex": true,
+        "oneH1": true,
+        "sharedIntro": true,
+        "home82Metadata": true,
+        "homeHeading": true,
+        "selectionLinks": true,
+        "hreflang": true
+      },
+      "content": {
+        "intro": "1989v 게임은 설치·회원가입 없이 즐기는 무료 웹게임 서비스입니다. 원하는 장르를 골라 바로 플레이하세요.",
+        "description": "1989v 게임의 무료 웹게임 82종을 설치·회원가입 없이 브라우저에서 바로 즐기세요. 퍼즐·액션·디펜스·RPG·전략 게임을 한곳에서 플레이하세요."
+      }
+    },
+    {
+      "url": "https://game.1989v.com/games/block-burst",
+      "status": 200,
+      "finalUrl": "https://game.1989v.com/games/block-burst",
+      "headers": {
+        "contentType": "text/html",
+        "xRobotsTag": null,
+        "etag": null,
+        "lastModified": "Mon, 12 Oct 2026 13:14:29 GMT"
+      },
+      "canonical": [
+        "https://game.1989v.com/games/block-burst"
+      ],
+      "checks": {
+        "http200": true,
+        "selfCanonicalExactlyOne": true,
+        "noNoindex": true,
+        "oneH1": true,
+        "detailGuide": true,
+        "hreflang": true
+      },
+      "content": {
+        "guidePresent": true
+      }
+    },
+    {
+      "url": "https://game.1989v.com/games/mine-pioneer",
+      "status": 200,
+      "finalUrl": "https://game.1989v.com/games/mine-pioneer",
+      "headers": {
+        "contentType": "text/html",
+        "xRobotsTag": null,
+        "etag": null,
+        "lastModified": "Mon, 12 Oct 2026 13:14:29 GMT"
+      },
+      "canonical": [
+        "https://game.1989v.com/games/mine-pioneer"
+      ],
+      "checks": {
+        "http200": true,
+        "selfCanonicalExactlyOne": true,
+        "noNoindex": true,
+        "oneH1": true,
+        "detailGuide": true,
+        "hreflang": true
+      },
+      "content": {
+        "guidePresent": true
+      }
+    },
+    {
+      "url": "https://game.1989v.com/games/rift-front",
+      "status": 200,
+      "finalUrl": "https://game.1989v.com/games/rift-front",
+      "headers": {
+        "contentType": "text/html",
+        "xRobotsTag": null,
+        "etag": null,
+        "lastModified": "Mon, 12 Oct 2026 13:14:29 GMT"
+      },
+      "canonical": [
+        "https://game.1989v.com/games/rift-front"
+      ],
+      "checks": {
+        "http200": true,
+        "selfCanonicalExactlyOne": true,
+        "noNoindex": true,
+        "oneH1": true,
+        "detailGuide": true,
+        "hreflang": true
+      },
+      "content": {
+        "guidePresent": true
+      }
+    },
+    {
+      "url": "https://game.1989v.com/en",
+      "status": 200,
+      "finalUrl": "https://game.1989v.com/en",
+      "headers": {
+        "contentType": "text/html",
+        "xRobotsTag": null,
+        "etag": null,
+        "lastModified": "Mon, 12 Oct 2026 13:14:28 GMT"
+      },
+      "canonical": [
+        "https://game.1989v.com/en"
+      ],
+      "checks": {
+        "http200": true,
+        "selfCanonicalExactlyOne": true,
+        "noNoindex": true,
+        "oneH1": true,
+        "sharedIntro": true,
+        "home82Metadata": true,
+        "homeHeading": true,
+        "selectionLinks": true,
+        "hreflang": true
+      },
+      "content": {
+        "intro": "Play free browser games on 1989v 게임 — no download or sign-up. Choose your genre and start playing.",
+        "description": "Play 82 free browser games on 1989v 게임 — no download, no sign-up. Puzzle, action, tower defense, RPG and strategy."
+      }
+    },
+    {
+      "url": "https://game.1989v.com/en/games/block-burst",
+      "status": 200,
+      "finalUrl": "https://game.1989v.com/en/games/block-burst",
+      "headers": {
+        "contentType": "text/html",
+        "xRobotsTag": null,
+        "etag": null,
+        "lastModified": "Mon, 12 Oct 2026 13:14:29 GMT"
+      },
+      "canonical": [
+        "https://game.1989v.com/en/games/block-burst"
+      ],
+      "checks": {
+        "http200": true,
+        "selfCanonicalExactlyOne": true,
+        "noNoindex": true,
+        "oneH1": true,
+        "detailGuide": true,
+        "hreflang": true
+      },
+      "content": {
+        "guidePresent": true
+      }
+    },
+    {
+      "url": "https://game.1989v.com/en/games/mine-pioneer",
+      "status": 200,
+      "finalUrl": "https://game.1989v.com/en/games/mine-pioneer",
+      "headers": {
+        "contentType": "text/html",
+        "xRobotsTag": null,
+        "etag": null,
+        "lastModified": "Mon, 12 Oct 2026 13:14:29 GMT"
+      },
+      "canonical": [
+        "https://game.1989v.com/en/games/mine-pioneer"
+      ],
+      "checks": {
+        "http200": true,
+        "selfCanonicalExactlyOne": true,
+        "noNoindex": true,
+        "oneH1": true,
+        "detailGuide": true,
+        "hreflang": true
+      },
+      "content": {
+        "guidePresent": true
+      }
+    },
+    {
+      "url": "https://game.1989v.com/en/games/rift-front",
+      "status": 200,
+      "finalUrl": "https://game.1989v.com/en/games/rift-front",
+      "headers": {
+        "contentType": "text/html",
+        "xRobotsTag": null,
+        "etag": null,
+        "lastModified": "Mon, 12 Oct 2026 13:14:29 GMT"
+      },
+      "canonical": [
+        "https://game.1989v.com/en/games/rift-front"
+      ],
+      "checks": {
+        "http200": true,
+        "selfCanonicalExactlyOne": true,
+        "noNoindex": true,
+        "oneH1": true,
+        "detailGuide": true,
+        "hreflang": true
+      },
+      "content": {
+        "guidePresent": true
+      }
+    }
+  ],
+  "sitemap": {
+    "url": "https://game.1989v.com/sitemap.xml",
+    "status": 200,
+    "dateChecks": [
+      {
+        "url": "https://game.1989v.com/",
+        "expected": "2026-10-12",
+        "actual": "2026-10-12",
+        "pass": true
+      },
+      {
+        "url": "https://game.1989v.com/games/block-burst",
+        "expected": "2026-10-11",
+        "actual": "2026-10-11",
+        "pass": true
+      },
+      {
+        "url": "https://game.1989v.com/games/mine-pioneer",
+        "expected": "2026-10-11",
+        "actual": "2026-10-11",
+        "pass": true
+      },
+      {
+        "url": "https://game.1989v.com/games/rift-front",
+        "expected": "2026-10-11",
+        "actual": "2026-10-11",
+        "pass": true
+      },
+      {
+        "url": "https://game.1989v.com/games/snake",
+        "expected": "2026-08-17",
+        "actual": "2026-08-17",
+        "pass": true
+      },
+      {
+        "url": "https://game.1989v.com/en",
+        "expected": "2026-10-12",
+        "actual": "2026-10-12",
+        "pass": true
+      },
+      {
+        "url": "https://game.1989v.com/en/games/block-burst",
+        "expected": "2026-10-11",
+        "actual": "2026-10-11",
+        "pass": true
+      },
+      {
+        "url": "https://game.1989v.com/en/games/mine-pioneer",
+        "expected": "2026-10-11",
+        "actual": "2026-10-11",
+        "pass": true
+      },
+      {
+        "url": "https://game.1989v.com/en/games/rift-front",
+        "expected": "2026-10-11",
+        "actual": "2026-10-11",
+        "pass": true
+      },
+      {
+        "url": "https://game.1989v.com/en/games/snake",
+        "expected": "2026-08-17",
+        "actual": "2026-08-17",
+        "pass": true
+      }
+    ],
+    "apiSamples": [
+      {
+        "source": "https://api.1989v.com/api/v1/games/block-burst",
+        "status": 200,
+        "slug": "block-burst",
+        "contentUpdatedAt": "2026-08-17T13:52:15.836515Z",
+        "releasedAt": "2026-08-06T19:52:37.217523Z",
+        "expectedLastmod": "2026-10-11"
+      },
+      {
+        "source": "https://api.1989v.com/api/v1/games/mine-pioneer",
+        "status": 200,
+        "slug": "mine-pioneer",
+        "contentUpdatedAt": "2026-08-17T13:52:15.836515Z",
+        "releasedAt": "2026-08-06T19:52:37.217523Z",
+        "expectedLastmod": "2026-10-11"
+      },
+      {
+        "source": "https://api.1989v.com/api/v1/games/rift-front",
+        "status": 200,
+        "slug": "rift-front",
+        "contentUpdatedAt": "2026-08-17T13:52:15.836515Z",
+        "releasedAt": "2026-08-05T18:09:11.385775Z",
+        "expectedLastmod": "2026-10-11"
+      },
+      {
+        "source": "https://api.1989v.com/api/v1/games/snake",
+        "status": 200,
+        "slug": "snake",
+        "contentUpdatedAt": "2026-08-17T13:52:15.836515Z",
+        "releasedAt": "2026-08-04T20:59:35.951403Z",
+        "expectedLastmod": "2026-08-17"
+      }
+    ],
+    "homepageCatalogCount": 82,
+    "homepageDateScope": "Latest valid dates from actual list response and four checked detail responses plus explicit FE homepage edit date."
+  },
+  "pass": true
+}

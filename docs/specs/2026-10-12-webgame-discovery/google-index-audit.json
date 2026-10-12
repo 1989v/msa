@@ -1,0 +1,531 @@
+{
+  "checkedAt": "2026-10-12T13:12:37.954265+00:00",
+  "gscReportDate": "2026-10-09",
+  "gscSitemap": "https://game.1989v.com/sitemap.xml",
+  "indexed": 14,
+  "notIndexed": 168,
+  "soft404Rows": [
+    {
+      "url": "https://game.1989v.com/en/games/overworld-quest",
+      "gscLastCrawl": "2026-10-02",
+      "currentHttp": "200",
+      "title": [
+        "Overworld — Play Free Online | 1989v 게임"
+      ],
+      "h1": [
+        "Overworld"
+      ],
+      "canonical": [
+        "https://game.1989v.com/en/games/overworld-quest"
+      ],
+      "noindex": false,
+      "bodyChars": 716,
+      "introParagraphs": [
+        "",
+        "An action RPG across an open overworld. Upgrade your sword, earn gold, and conquer every dungeon.",
+        "Play Overworld"
+      ],
+      "scope": "current initial HTML via Googlebot UA, not actual Google rendered inspection"
+    },
+    {
+      "url": "https://game.1989v.com/games/nether-return",
+      "gscLastCrawl": "2026-09-15",
+      "currentHttp": "200",
+      "title": [
+        "Rewind — 무료 온라인 플레이 | 1989v 게임"
+      ],
+      "h1": [
+        "Rewind"
+      ],
+      "canonical": [
+        "https://game.1989v.com/games/nether-return"
+      ],
+      "noindex": false,
+      "bodyChars": 743,
+      "introParagraphs": [
+        "",
+        "저승에 떨어졌다 — 베어서 올라가라. 무적 질주로 예고된 공격을 빠져나가고, 방마다 문 위의 문양으로 다음 보상을 고르고, 염라·바리·강림·마고 네 신격의 문장으로 빌드를 쌓는 로그라이크 액션. 3계층 끝의 재의 군주를 꺾으면 이승이다. 쓰러져도 명전과 영구 강화, 뱃사공의 예언은 남는다.",
+        "Rewind 플레이하기"
+      ],
+      "scope": "current initial HTML via Googlebot UA, not actual Google rendered inspection"
+    },
+    {
+      "url": "https://game.1989v.com/games/beat-dojo",
+      "gscLastCrawl": "2026-09-14",
+      "currentHttp": "200",
+      "title": [
+        "Beat Dojo — 무료 온라인 플레이 | 1989v 게임"
+      ],
+      "h1": [
+        "Beat Dojo"
+      ],
+      "canonical": [
+        "https://game.1989v.com/games/beat-dojo"
+      ],
+      "noindex": false,
+      "bodyChars": 674,
+      "introParagraphs": [
+        "",
+        "사부의 북에 맞춰 한 버튼으로 겨루는 수련. 단타·롱노트·연타가 흐르고 판정은 오디오 시계 기준 — 세 곡의 등급을 사범까지 끌어올려라.",
+        "Beat Dojo 플레이하기"
+      ],
+      "scope": "current initial HTML via Googlebot UA, not actual Google rendered inspection"
+    },
+    {
+      "url": "https://game.1989v.com/games/card-flip",
+      "gscLastCrawl": "2026-09-14",
+      "currentHttp": "200",
+      "title": [
+        "카드 뒤집기 — 무료 온라인 플레이 | 1989v 게임"
+      ],
+      "h1": [
+        "카드 뒤집기"
+      ],
+      "canonical": [
+        "https://game.1989v.com/games/card-flip"
+      ],
+      "noindex": false,
+      "bodyChars": 1134,
+      "introParagraphs": [
+        "",
+        "커피 사는 사람 정하기, 순서 정하기에 쓰는 카드 뽑기. 참가자 수만큼 카드를 엎어 놓고 한 명씩 뒤집는다. 남은 카드가 줄수록 걸릴 확률이 오르고 화면이 그 숫자를 계속 보여 주기 때문에, 마지막 두 장에서 가장 조마조마하다. 심장 박동 소리도 확률을 따라 빨라진다. 먼저 뽑는 게 불리하다고들 하지만 실제로는 누구나 정확히 같은 확률이다 — 남은 카드가 줄어 확률이 오르는 것과 자기 차례까지 갈 확률이 줄어드는 것이 정확히 상쇄되기 때문이고, 4천 판을 돌려 차례별 분포를 카이제곱으로 확인했다(4.18, 임계 11.07). 왼쪽부터 고르든 아무거나 고르든 같다. 판이 끝나면 아무도 안 뒤집은 카드까지 전부 까서 보여 준다 — 걸림이 정말 한 장뿐이었는지 눈으로 확인시키기 위해서다. 한 명이 걸린다 / 순서 정하기 / 여러 명 뽑기 세 가지로 쓸 수 있고 2~12명까지 된다. 결과를 미리 정해 두고 영상만 재생하는 방식이 아니며, 판마다 다시 보기 코드가 나오고 같은 코드로 다시 깔면 카드 배치가 똑같다. 이름은 이 기기에만 저장되고 어디로도 전송하지 않는다. 앱 안에 돈이나 포인트는 없다. 그래픽·사운드 전부 절차 생성(1080x1440).",
+        "카드 뒤집기 플레이하기"
+      ],
+      "scope": "current initial HTML via Googlebot UA, not actual Google rendered inspection"
+    },
+    {
+      "url": "https://game.1989v.com/games/storm-corridor",
+      "gscLastCrawl": "2026-09-10",
+      "currentHttp": "200",
+      "title": [
+        "Storm Runner — 무료 온라인 플레이 | 1989v 게임"
+      ],
+      "h1": [
+        "Storm Runner"
+      ],
+      "canonical": [
+        "https://game.1989v.com/games/storm-corridor"
+      ],
+      "noindex": false,
+      "bodyChars": 656,
+      "introParagraphs": [
+        "",
+        "번개가 몰아치는 회랑에서 탄막을 피해 버티는 생존 액션. 20초마다 페이즈가 오르고 패턴이 겹친다 — 실드 3개로 얼마나 오래 버틸까.",
+        "Storm Runner 플레이하기"
+      ],
+      "scope": "current initial HTML via Googlebot UA, not actual Google rendered inspection"
+    },
+    {
+      "url": "https://game.1989v.com/games/relic-heir",
+      "gscLastCrawl": "2026-09-10",
+      "currentHttp": "200",
+      "title": [
+        "Relic — 무료 온라인 플레이 | 1989v 게임"
+      ],
+      "h1": [
+        "Relic"
+      ],
+      "canonical": [
+        "https://game.1989v.com/games/relic-heir"
+      ],
+      "noindex": false,
+      "bodyChars": 685,
+      "introParagraphs": [
+        "",
+        "한 번의 탐사가 한 세대다. 유적은 깊어질수록 대원을 잡아먹고, 전멸하면 수확의 절반이 사라진다 — 언제 철수할지가 가문의 명운이다. 유산은 다음 계승자에게 남는다.",
+        "Relic 플레이하기"
+      ],
+      "scope": "current initial HTML via Googlebot UA, not actual Google rendered inspection"
+    },
+    {
+      "url": "https://game.1989v.com/games/sum-trail",
+      "gscLastCrawl": "2026-09-09",
+      "currentHttp": "200",
+      "title": [
+        "합이 딱 — 무료 온라인 플레이 | 1989v 게임"
+      ],
+      "h1": [
+        "합이 딱"
+      ],
+      "canonical": [
+        "https://game.1989v.com/games/sum-trail"
+      ],
+      "noindex": false,
+      "bodyChars": 927,
+      "introParagraphs": [
+        "",
+        "숫자 카드를 이어 그어 제시된 합을 정확히 만드는 퍼즐. 넘치면 더 못 잇고, 딱 맞는 순간 확인 없이 바로 지워진다 — 그 지점이 유일한 정지점이다. 길게 이을수록 점수가 붙고 3.2초 안에 다음을 만들면 연속 배율이 쌓인다. 라운드마다 할당량을 채워야 넘어가고, 통과 못 하는 카드(돌)와 잠긴 카드(자물쇠)가 길을 막지만 옆칸을 지우면 부서지고 풀린다. 목표는 단순 합·금지 숫자·홀짝 세 종류. 마우스·터치 드래그와 키보드 양쪽으로 똑같이 그릴 수 있다. 목표는 난수가 아니라 지금 판에서 실제로 만들 수 있는 합에서만 뽑고 리필마다 다시 검사하므로 풀 수 없는 판이 나오지 않는다. 그래픽·사운드 전부 절차 생성(1080×1440).",
+        "★ 10.0 / 10 (1표)"
+      ],
+      "scope": "current initial HTML via Googlebot UA, not actual Google rendered inspection"
+    },
+    {
+      "url": "https://game.1989v.com/games/iron-vanguard",
+      "gscLastCrawl": "2026-09-09",
+      "currentHttp": "200",
+      "title": [
+        "Iron Vanguard — 무료 온라인 플레이 | 1989v 게임"
+      ],
+      "h1": [
+        "Iron Vanguard"
+      ],
+      "canonical": [
+        "https://game.1989v.com/games/iron-vanguard"
+      ],
+      "noindex": false,
+      "bodyChars": 662,
+      "introParagraphs": [
+        "",
+        "주어진 넷으로 몰려오는 무리를 컨트롤로 잡아내는 마이크로 게임. 궁수는 치고 빠지고, 기사가 막고, 사제가 살린다. 죽은 대원은 돌아오지 않는다.",
+        "Iron Vanguard 플레이하기"
+      ],
+      "scope": "current initial HTML via Googlebot UA, not actual Google rendered inspection"
+    },
+    {
+      "url": "https://game.1989v.com/games/moon-angler",
+      "gscLastCrawl": "2026-09-09",
+      "currentHttp": "200",
+      "title": [
+        "Moon Fishing — 무료 온라인 플레이 | 1989v 게임"
+      ],
+      "h1": [
+        "Moon Fishing"
+      ],
+      "canonical": [
+        "https://game.1989v.com/games/moon-angler"
+      ],
+      "noindex": false,
+      "bodyChars": 689,
+      "introParagraphs": [
+        "",
+        "던지고, 기다리고, 챔질하고, 릴을 감는다. 물고기마다 성격이 달라 온순한 놈은 따라오고 교활한 놈은 멈췄다 튄다 — 달이 뜬 시간에는 귀한 놈이 문다.",
+        "Moon Fishing 플레이하기"
+      ],
+      "scope": "current initial HTML via Googlebot UA, not actual Google rendered inspection"
+    },
+    {
+      "url": "https://game.1989v.com/games/snake",
+      "gscLastCrawl": "2026-09-09",
+      "currentHttp": "200",
+      "title": [
+        "Snake — 무료 온라인 플레이 | 1989v 게임"
+      ],
+      "h1": [
+        "Snake"
+      ],
+      "canonical": [
+        "https://game.1989v.com/games/snake"
+      ],
+      "noindex": false,
+      "bodyChars": 624,
+      "introParagraphs": [
+        "",
+        "먹이를 먹을수록 길어지는 클래식 스네이크. 입력 기록을 서버가 재실행해 점수를 검증하므로 랭킹 위조가 통하지 않는다.",
+        "Snake 플레이하기"
+      ],
+      "scope": "current initial HTML via Googlebot UA, not actual Google rendered inspection"
+    },
+    {
+      "url": "https://game.1989v.com/games/bee-guard",
+      "gscLastCrawl": "2026-09-09",
+      "currentHttp": "200",
+      "title": [
+        "그어서 막기 — 무료 온라인 플레이 | 1989v 게임"
+      ],
+      "h1": [
+        "그어서 막기"
+      ],
+      "canonical": [
+        "https://game.1989v.com/games/bee-guard"
+      ],
+      "noindex": false,
+      "bodyChars": 760,
+      "introParagraphs": [
+        "",
+        "선을 그어 막는다 — 막기 유형 세 가지. 물은 흐르니 막는 게 아니라 흘려보낼 각도를 찾아야 하고, 돌은 무거워 받침 없는 선을 부러뜨리며, 벌은 막으면 갈라진다. 위협 14종이 저마다 다른 답을 요구한다. 정해진 판을 푸는 판 모드 27판과, 계속 몰려오는 끝없이 모드가 유형마다 있다. 잉크는 시간이 지나면 차오르니 아끼지 말고 어디에 그을지를 고민하면 된다.",
+        "그어서 막기 플레이하기"
+      ],
+      "scope": "current initial HTML via Googlebot UA, not actual Google rendered inspection"
+    },
+    {
+      "url": "https://game.1989v.com/games/hand-alchemy",
+      "gscLastCrawl": "2026-09-09",
+      "currentHttp": "200",
+      "title": [
+        "Hand Alchemy — 무료 온라인 플레이 | 1989v 게임"
+      ],
+      "h1": [
+        "Hand Alchemy"
+      ],
+      "canonical": [
+        "https://game.1989v.com/games/hand-alchemy"
+      ],
+      "noindex": false,
+      "bodyChars": 710,
+      "introParagraphs": [
+        "",
+        "포커 족보를 연성해 안테 여덟 관문을 돌파하는 로그라이크. 시약 스무 종이 배수와 점수를 뒤틀고, 폐기를 아끼는 빌드와 폐기로 먹고사는 빌드가 정면으로 충돌한다.",
+        "★ 8.0 / 10 (1표)"
+      ],
+      "scope": "current initial HTML via Googlebot UA, not actual Google rendered inspection"
+    },
+    {
+      "url": "https://game.1989v.com/games/word-warden",
+      "gscLastCrawl": "2026-09-09",
+      "currentHttp": "200",
+      "title": [
+        "낱말 다섯 — 무료 온라인 플레이 | 1989v 게임"
+      ],
+      "h1": [
+        "낱말 다섯"
+      ],
+      "canonical": [
+        "https://game.1989v.com/games/word-warden"
+      ],
+      "noindex": false,
+      "bodyChars": 637,
+      "introParagraphs": [
+        "",
+        "매일 한 단어 — 두 글자 우리말을 여섯 번 안에 맞혀라. 글자마다 초성·중성·종성이 따로 채점된다. 연속 출석 스트릭과 이모지 결과 공유, 무한 연습 모드까지.",
+        "낱말 다섯 플레이하기"
+      ],
+      "scope": "current initial HTML via Googlebot UA, not actual Google rendered inspection"
+    },
+    {
+      "url": "https://game.1989v.com/en/games/ladder-draw",
+      "gscLastCrawl": "2026-09-09",
+      "currentHttp": "200",
+      "title": [
+        "Ladder Draw — Play Free Online | 1989v 게임"
+      ],
+      "h1": [
+        "Ladder Draw"
+      ],
+      "canonical": [
+        "https://game.1989v.com/en/games/ladder-draw"
+      ],
+      "noindex": false,
+      "bodyChars": 1652,
+      "introParagraphs": [
+        "",
+        "A ladder lottery (amidakuji) for settling things in a group — who buys the coffee, who does which chore, what order to go in. Type the names and the ladder is drawn with every rung visible from the start; the only thing hidden is the result at the bottom. Three modes: one person is it, running order, or assigning a list of items. Tap a name to send just that line down first. A ladder is always a bijection, so two people can never land on the same result. The ladder alone is not uniform, though — with a limited number of rungs you tend to land near where you started — so the thing that makes each person equally likely is shuffling the bottom labels from the seed (measured: chi-square 640 before shuffling versus 3.1 after, for six people). Nothing is decided in advance and played back; every draw shows its seed, and rebuilding with the same seed gives the same ladder. Names and items never leave your device, and there is no money or points anywhere in the app. All art and audio are procedurally generated at 1080x1440.",
+        "Play Ladder Draw"
+      ],
+      "scope": "current initial HTML via Googlebot UA, not actual Google rendered inspection"
+    },
+    {
+      "url": "https://game.1989v.com/games/zombie-march",
+      "gscLastCrawl": "2026-09-09",
+      "currentHttp": "200",
+      "title": [
+        "좀비 행군 — 무료 온라인 플레이 | 1989v 게임"
+      ],
+      "h1": [
+        "좀비 행군"
+      ],
+      "canonical": [
+        "https://game.1989v.com/games/zombie-march"
+      ],
+      "noindex": false,
+      "bodyChars": 994,
+      "introParagraphs": [
+        "",
+        "좀비 군단을 손가락으로 몰아 왕국을 삼킨다. 화면을 끌면 해골 표식이 움직이고 군단이 그리로 몰려가 닿는 사람을 문다. 쓰러진 사람은 몇 초 뒤 일어나 내 편이 되고, 기사는 갑옷을 두른 좀비 기사가 된다 — 그래서 크게 이길수록 다음 판이 쉬워진다. 창병은 앞을 찌르니 옆으로 돌고, 궁수는 뒷걸음질하니 뛰는 좀비로 파고들고, 사제는 시체를 태우니 가장 먼저 잡는다. 성채의 기사 대장은 광역 휘두르기와 돌진을 쓰고 절반에서 종을 쳐 민병을 부르는데, 돌진 뒤 2초 남짓 생기는 빈틈이 유일한 기회다. 싸움에서 돌아오면 안개가 걷힌 땅에 무덤·뼈 채굴장·역병 우물·제단을 세운다. 무덤은 모아 온 시체를 좀비로 일으키고, 묘지성을 올려야 출정 상한과 건물 자리와 영웅 자리가 는다. 자리를 비운 동안에도 여덟 시간까지 생산이 쌓인다.",
+        "★ 10.0 / 10 (1표)"
+      ],
+      "scope": "current initial HTML via Googlebot UA, not actual Google rendered inspection"
+    },
+    {
+      "url": "https://game.1989v.com/games/infinity-tower",
+      "gscLastCrawl": "2026-09-09",
+      "currentHttp": "200",
+      "title": [
+        "인피니티 타워 — 무료 온라인 플레이 | 1989v 게임"
+      ],
+      "h1": [
+        "인피니티 타워"
+      ],
+      "canonical": [
+        "https://game.1989v.com/games/infinity-tower"
+      ],
+      "noindex": false,
+      "bodyChars": 839,
+      "introParagraphs": [
+        "",
+        "넷이서 지키고, 넷이서 오른다 — 최대 4인 협동 액션. 철벽 수호기사·쌍월 밀정·회색깃 사수·재의 술사 중 하나를 골라 두 가지 판을 즐긴다. 「첨탑 방어」는 사방 여섯 갈래로 몰려오는 적을 막는 방어전이라 뭉쳐 서면 뚫린다. 「타워 등반」은 한 층씩 격파하며 오르는 무한 등반으로, 층이 오를수록 적이 강해지고 열 층마다 층지기와 체크포인트가 기다린다. 레벨과 성장은 층을 넘어 이어지고, 그만두어도 최고 층은 남는다. 자리를 비우면 AI가 이어받아 판이 멈추지 않는다.",
+        "인피니티 타워 플레이하기"
+      ],
+      "scope": "current initial HTML via Googlebot UA, not actual Google rendered inspection"
+    },
+    {
+      "url": "https://game.1989v.com/games/random-tower-defense",
+      "gscLastCrawl": "2026-09-09",
+      "currentHttp": "200",
+      "title": [
+        "랜덤 타워 디펜스 — 무료 온라인 플레이 | 1989v 게임"
+      ],
+      "h1": [
+        "랜덤 타워 디펜스"
+      ],
+      "canonical": [
+        "https://game.1989v.com/games/random-tower-defense"
+      ],
+      "noindex": false,
+      "bodyChars": 852,
+      "introParagraphs": [
+        "",
+        "뽑고, 합치고, 막는다 — 최대 4인 협동 랜덤 타워 디펜스. 매 판 무작위로 나오는 지킴이를 회로에 세우고, 같은 것끼리 합쳐 상위 등급으로 올리며 몰려오는 적을 막아라. 지킴이 37종 6등급(일반~신화)과 2단 조합 트리 8종, 우두머리 4기가 기다린다. 네 구역의 길이 전부 가운데 방벽으로 모이므로 한 곳만 뚫려도 모두의 손해다. 자리를 비우면 AI가 대신 뽑고 합쳐 판이 멈추지 않는다. 기본 20판 약 11분, 긴 40판은 약 44분. 스프라이트·배경·BGM 전부 코드 생성.",
+        "랜덤 타워 디펜스 플레이하기"
+      ],
+      "scope": "current initial HTML via Googlebot UA, not actual Google rendered inspection"
+    },
+    {
+      "url": "https://game.1989v.com/en/games/drift-continent",
+      "gscLastCrawl": "2026-09-01",
+      "currentHttp": "200",
+      "title": [
+        "Drift — Play Free Online | 1989v 게임"
+      ],
+      "h1": [
+        "Drift"
+      ],
+      "canonical": [
+        "https://game.1989v.com/en/games/drift-continent"
+      ],
+      "noindex": false,
+      "bodyChars": 898,
+      "introParagraphs": [
+        "",
+        "Wash ashore as a castaway, meet the people of Landfall Port, and uncover why the lighthouse went dark. Fight with three-hit combos, dodges and two branching skills, grow your skill tree, and face the keeper's wraith at the bottom of the sunken lighthouse. (P1 — an ongoing long-form title)",
+        "Play Drift"
+      ],
+      "scope": "current initial HTML via Googlebot UA, not actual Google rendered inspection"
+    }
+  ],
+  "noindexRows": [
+    {
+      "url": "https://game.1989v.com/games/crimson-ravine",
+      "gscLastCrawl": "2026-08-22"
+    },
+    {
+      "url": "https://game.1989v.com/games/element-pilgrim",
+      "gscLastCrawl": "2026-08-21"
+    },
+    {
+      "url": "https://game.1989v.com/games/deadline",
+      "gscLastCrawl": "2026-08-21"
+    },
+    {
+      "url": "https://game.1989v.com/games/ashen-warband",
+      "gscLastCrawl": "2026-08-21"
+    },
+    {
+      "url": "https://game.1989v.com/games/starlight-farm",
+      "gscLastCrawl": "2026-08-21"
+    },
+    {
+      "url": "https://game.1989v.com/games/rift-front",
+      "gscLastCrawl": "2026-08-20"
+    }
+  ],
+  "currentNoindexSamples": [
+    {
+      "url": "https://game.1989v.com/games/crimson-ravine",
+      "status": "200",
+      "noindex": false,
+      "title": [
+        "Crimson Ravine — 무료 온라인 플레이 | 1989v 게임"
+      ]
+    },
+    {
+      "url": "https://game.1989v.com/games/element-pilgrim",
+      "status": "200",
+      "noindex": false,
+      "title": [
+        "Elemental — 무료 온라인 플레이 | 1989v 게임"
+      ]
+    },
+    {
+      "url": "https://game.1989v.com/games/deadline",
+      "status": "200",
+      "noindex": false,
+      "title": [
+        "데드라인 — 무료 온라인 플레이 | 1989v 게임"
+      ]
+    },
+    {
+      "url": "https://game.1989v.com/games/ashen-warband",
+      "status": "200",
+      "noindex": false,
+      "title": [
+        "Dungeon Crew — 무료 온라인 플레이 | 1989v 게임"
+      ]
+    },
+    {
+      "url": "https://game.1989v.com/games/starlight-farm",
+      "status": "200",
+      "noindex": false,
+      "title": [
+        "Starlight Farm — 무료 온라인 플레이 | 1989v 게임"
+      ]
+    }
+  ],
+  "riftCurrentNoindexEvidence": "docs/specs/2026-10-12-webgame-discovery/production-evidence.json",
+  "crawledNotIndexedSamples": [
+    {
+      "url": "https://game.1989v.com/en/games/beat-dojo",
+      "gscLastCrawl": "2026-10-06"
+    },
+    {
+      "url": "https://game.1989v.com/en/games/wall-breaker",
+      "gscLastCrawl": "2026-09-25"
+    },
+    {
+      "url": "https://game.1989v.com/",
+      "gscLastCrawl": "2026-09-13"
+    },
+    {
+      "url": "https://game.1989v.com/games/depth-delver",
+      "gscLastCrawl": "2026-09-10"
+    },
+    {
+      "url": "https://game.1989v.com/games/mine-pioneer",
+      "gscLastCrawl": "2026-09-10"
+    },
+    {
+      "url": "https://game.1989v.com/games/abyssal-crown",
+      "gscLastCrawl": "2026-09-10"
+    }
+  ],
+  "googleLiveOverworld": {
+    "url": "https://game.1989v.com/en/games/overworld-quest",
+    "testedAtKst": "2026-10-12 22:14",
+    "result": "URL can be indexed; HTTP200; all page resources loaded; no JavaScript console messages; rendered screenshot has game title, cover, Play button and facts",
+    "scope": "Live eligibility test, not final indexing or full Soft404 validation. Original stored crawl2026-10-02 remains Soft404."
+  },
+  "homepageStoredInspection": {
+    "url": "https://game.1989v.com/",
+    "indexed": false,
+    "reason": "Crawled - currently not indexed",
+    "lastCrawlKst": "2026-09-13 23:46:56",
+    "crawlAllowed": true,
+    "fetch": "Success",
+    "indexingAllowed": true,
+    "declaredCanonical": "https://game.1989v.com/",
+    "sitemapField": "Temporary processing error in URL Inspection; not proof of sitemap fetch failure"
+  },
+  "googleLiveHomepage": {
+    "url": "https://game.1989v.com/",
+    "testedAtKst": "2026-10-12 22:24",
+    "result": "URL can be indexed; page can be indexed",
+    "scope": "Live eligibility, not final indexing"
+  },
+  "followupActions": {
+    "homepageIndexRequest": "Submitted once; confirmed indexing requested and added to priority crawl queue",
+    "soft404Validation": "Confirmed Started, start date2026-10-12",
+    "noindexValidation": "Not submitted; paused before further UI per new explicit prior approval policy",
+    "sitemapResubmission": false,
+    "bulkIndexRequest": false
+  },
+  "computerUseApprovalPolicy": "2026-10-12 new user rule: no further UI calls without specific approved bundle; no tool-level blocker claimed"
+}

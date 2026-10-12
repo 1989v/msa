@@ -1,7 +1,7 @@
 # 웹게임 검색 노출 보완 — 대표 소개·수정일
 <!-- source: portal-fe/src/seo/copy.mjs, portal-fe/src/seo/gameContentDates.mjs, portal-fe/src/pages/games/GamesPage.tsx, portal-fe/scripts/prerender-seo.mjs -->
 
-상태: 구현·관련 검증 완료, 운영 배포 승인 대기. `웹게임` 상위 노출 목표는 아직 미달성이다.
+상태: 사용자 운영 배포 승인으로2026-10-12 배포 완료. `웹게임` 상위 노출 목표는 아직 미달성이다.
 구현 커밋 `d2c231ef94acb18f1d677b5cbc1587b5e558ee49`.
 
 ## 변경
@@ -30,7 +30,7 @@
 ## 검증 한계
 
 로컬 신규 번들과 읽기 전용 운영 API GET 프록시로 확인했다. 광고 POST는405로 차단됐으므로 운영 광고 검증은 아니다.
-전체 `npm run build`/전체 프리렌더는 게임 submodule 미초기화로 실행하지 않았다. 운영 이미지 빌드·배포 검증은 아직 남아 있다.
+전체 `npm run build`/전체 프리렌더는 게임 submodule 미초기화로 실행하지 않았다. 이후 운영 이미지 빌드·CI와 배포 후검증을 완료했다.
 검증용 탭·개발 도구·로컬 서버는 정리했고 사용자 원래 화면을 복원했다.
 
 ## 배포 이후 확인
@@ -50,4 +50,15 @@
 - [기존 게임별 안내](../2026-10-11-webgame-ranking/README.md)
 - [외부 소개 글 초안](../2026-10-11-webgame-ranking/outreach-drafts.md) — 실제 리뷰·외부 인용 확보는 미실행
 
-사용자 AGENTS.md의 배포 전 확인 규칙에 따라 이번 변경은 최종 운영 배포 승인을 기다린다.
+## 운영 확인
+
+- images run38253629792 및CI38253629768 성공. 운영이미지`portal-fe:2224a81`,Ready1/1 확인.
+- 실제운영초기HTML8페이지에서공통소개·82종메타·기존안내·canonical·H1·noindex없음 확인.
+- sitemap ko/en 홈페이지·대표3게임·비대상snake 총10개 날짜를 실제상세API와 대조해 통과했다.
+- [배포후증거](production-evidence.json). Google리포트정상화·웹게임상위노출달성은아직아니다.
+- [CDN·원본캐시대조](cache-audit.json): 홈·sitemap·Overworld4요청방식의동일응답,홈원본SHA256일치. 표본의cf-cache-status는DYNAMIC.
+- [Google색인실측](google-index-audit.json):10/9게임sitemap기준14색인/168미색인,Soft40418개현재HTTP200/noindex없음. OverworldGoogle라이브테스트등록가능/모든리소스로드/JS메시지없음.
+- 홈페이지도크롤링후미색인목록에있고마지막수집9/13. 과거6noindex는8/20~22의정상상세였으며현재는noindex가없다. 최신상태재검증·색인결정은남아있다.
+
+
+- [Google색인·캐시·이미실행한조치와남은확인](google-indexing.md). 홈페이지색인요청과Soft404검증은접수했고,noindex검증은새컴퓨터유즈승인대기다.

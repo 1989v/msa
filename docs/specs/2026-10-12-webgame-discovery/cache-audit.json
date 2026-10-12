@@ -1,0 +1,222 @@
+{
+  "checkedAt": "2026-10-12T13:20:05.272266+00:00",
+  "image": "portal-fe:2224a81",
+  "publicSamples": [
+    {
+      "path": "/",
+      "mode": "normal",
+      "status": "200",
+      "headers": {
+        "date": "Mon, 12 Oct 2026 13:20:03 GMT",
+        "last-modified": "Mon, 12 Oct 2026 13:14:28 GMT",
+        "vary": "Accept-Encoding",
+        "cache-control": "no-cache, must-revalidate",
+        "cf-cache-status": "DYNAMIC"
+      },
+      "sha256": "825a0c96a1b5b544558c90104f86eb87f44e11a25f04ed59a511d9f10a862505",
+      "bundle": [
+        "/assets/index-C17zRYpA.js"
+      ],
+      "newIntro": true,
+      "newHomeDate": null
+    },
+    {
+      "path": "/",
+      "mode": "googlebot",
+      "status": "200",
+      "headers": {
+        "date": "Mon, 12 Oct 2026 13:20:03 GMT",
+        "last-modified": "Mon, 12 Oct 2026 13:14:28 GMT",
+        "vary": "Accept-Encoding",
+        "cache-control": "no-cache, must-revalidate",
+        "cf-cache-status": "DYNAMIC"
+      },
+      "sha256": "825a0c96a1b5b544558c90104f86eb87f44e11a25f04ed59a511d9f10a862505",
+      "bundle": [
+        "/assets/index-C17zRYpA.js"
+      ],
+      "newIntro": true,
+      "newHomeDate": null
+    },
+    {
+      "path": "/",
+      "mode": "revalidate",
+      "status": "200",
+      "headers": {
+        "date": "Mon, 12 Oct 2026 13:20:04 GMT",
+        "last-modified": "Mon, 12 Oct 2026 13:14:28 GMT",
+        "vary": "Accept-Encoding",
+        "cache-control": "no-cache, must-revalidate",
+        "cf-cache-status": "DYNAMIC"
+      },
+      "sha256": "825a0c96a1b5b544558c90104f86eb87f44e11a25f04ed59a511d9f10a862505",
+      "bundle": [
+        "/assets/index-C17zRYpA.js"
+      ],
+      "newIntro": true,
+      "newHomeDate": null
+    },
+    {
+      "path": "/",
+      "mode": "bust",
+      "status": "200",
+      "headers": {
+        "date": "Mon, 12 Oct 2026 13:20:03 GMT",
+        "last-modified": "Mon, 12 Oct 2026 13:14:28 GMT",
+        "vary": "Accept-Encoding",
+        "cache-control": "no-cache, must-revalidate",
+        "cf-cache-status": "DYNAMIC"
+      },
+      "sha256": "825a0c96a1b5b544558c90104f86eb87f44e11a25f04ed59a511d9f10a862505",
+      "bundle": [
+        "/assets/index-C17zRYpA.js"
+      ],
+      "newIntro": true,
+      "newHomeDate": null
+    },
+    {
+      "path": "/sitemap.xml",
+      "mode": "normal",
+      "status": "200",
+      "headers": {
+        "date": "Mon, 12 Oct 2026 13:20:03 GMT",
+        "last-modified": "Mon, 12 Oct 2026 13:14:25 GMT",
+        "cache-control": "public, max-age=300, must-revalidate",
+        "etag": "W/\"6accdd31-139f5\"",
+        "cf-cache-status": "DYNAMIC"
+      },
+      "sha256": "8d0073c7c6351b73039ad8137500c34a0df2f59094844b16d6b52cf9f3cfc0ed",
+      "bundle": [],
+      "newIntro": null,
+      "newHomeDate": true
+    },
+    {
+      "path": "/sitemap.xml",
+      "mode": "googlebot",
+      "status": "200",
+      "headers": {
+        "date": "Mon, 12 Oct 2026 13:20:04 GMT",
+        "last-modified": "Mon, 12 Oct 2026 13:14:25 GMT",
+        "cache-control": "public, max-age=300, must-revalidate",
+        "etag": "W/\"6accdd31-139f5\"",
+        "cf-cache-status": "DYNAMIC"
+      },
+      "sha256": "8d0073c7c6351b73039ad8137500c34a0df2f59094844b16d6b52cf9f3cfc0ed",
+      "bundle": [],
+      "newIntro": null,
+      "newHomeDate": true
+    },
+    {
+      "path": "/sitemap.xml",
+      "mode": "revalidate",
+      "status": "200",
+      "headers": {
+        "date": "Mon, 12 Oct 2026 13:20:03 GMT",
+        "last-modified": "Mon, 12 Oct 2026 13:14:25 GMT",
+        "cache-control": "public, max-age=300, must-revalidate",
+        "etag": "W/\"6accdd31-139f5\"",
+        "cf-cache-status": "DYNAMIC"
+      },
+      "sha256": "8d0073c7c6351b73039ad8137500c34a0df2f59094844b16d6b52cf9f3cfc0ed",
+      "bundle": [],
+      "newIntro": null,
+      "newHomeDate": true
+    },
+    {
+      "path": "/sitemap.xml",
+      "mode": "bust",
+      "status": "200",
+      "headers": {
+        "date": "Mon, 12 Oct 2026 13:20:04 GMT",
+        "last-modified": "Mon, 12 Oct 2026 13:14:25 GMT",
+        "cache-control": "public, max-age=300, must-revalidate",
+        "etag": "W/\"6accdd31-139f5\"",
+        "cf-cache-status": "DYNAMIC"
+      },
+      "sha256": "8d0073c7c6351b73039ad8137500c34a0df2f59094844b16d6b52cf9f3cfc0ed",
+      "bundle": [],
+      "newIntro": null,
+      "newHomeDate": true
+    },
+    {
+      "path": "/en/games/overworld-quest",
+      "mode": "normal",
+      "status": "200",
+      "headers": {
+        "date": "Mon, 12 Oct 2026 13:20:04 GMT",
+        "last-modified": "Mon, 12 Oct 2026 13:14:29 GMT",
+        "vary": "Accept-Encoding",
+        "cache-control": "no-cache, must-revalidate",
+        "cf-cache-status": "DYNAMIC"
+      },
+      "sha256": "cbf02730e1505e419bfbf45080c23962872cdcb11c2823d85bdbd4ee7c61b595",
+      "bundle": [
+        "/assets/index-C17zRYpA.js"
+      ],
+      "newIntro": null,
+      "newHomeDate": null
+    },
+    {
+      "path": "/en/games/overworld-quest",
+      "mode": "googlebot",
+      "status": "200",
+      "headers": {
+        "date": "Mon, 12 Oct 2026 13:20:04 GMT",
+        "last-modified": "Mon, 12 Oct 2026 13:14:29 GMT",
+        "vary": "Accept-Encoding",
+        "cache-control": "no-cache, must-revalidate",
+        "cf-cache-status": "DYNAMIC"
+      },
+      "sha256": "cbf02730e1505e419bfbf45080c23962872cdcb11c2823d85bdbd4ee7c61b595",
+      "bundle": [
+        "/assets/index-C17zRYpA.js"
+      ],
+      "newIntro": null,
+      "newHomeDate": null
+    },
+    {
+      "path": "/en/games/overworld-quest",
+      "mode": "revalidate",
+      "status": "200",
+      "headers": {
+        "date": "Mon, 12 Oct 2026 13:20:04 GMT",
+        "last-modified": "Mon, 12 Oct 2026 13:14:29 GMT",
+        "vary": "Accept-Encoding",
+        "cache-control": "no-cache, must-revalidate",
+        "cf-cache-status": "DYNAMIC"
+      },
+      "sha256": "cbf02730e1505e419bfbf45080c23962872cdcb11c2823d85bdbd4ee7c61b595",
+      "bundle": [
+        "/assets/index-C17zRYpA.js"
+      ],
+      "newIntro": null,
+      "newHomeDate": null
+    },
+    {
+      "path": "/en/games/overworld-quest",
+      "mode": "bust",
+      "status": "200",
+      "headers": {
+        "date": "Mon, 12 Oct 2026 13:20:04 GMT",
+        "last-modified": "Mon, 12 Oct 2026 13:14:29 GMT",
+        "vary": "Accept-Encoding",
+        "cache-control": "no-cache, must-revalidate",
+        "cf-cache-status": "DYNAMIC"
+      },
+      "sha256": "cbf02730e1505e419bfbf45080c23962872cdcb11c2823d85bdbd4ee7c61b595",
+      "bundle": [
+        "/assets/index-C17zRYpA.js"
+      ],
+      "newIntro": null,
+      "newHomeDate": null
+    }
+  ],
+  "originHomepage": {
+    "exit": 0,
+    "newIntro": true,
+    "bundle": [
+      "/assets/index-C17zRYpA.js"
+    ],
+    "sha256": "825a0c96a1b5b544558c90104f86eb87f44e11a25f04ed59a511d9f10a862505"
+  }
+}
