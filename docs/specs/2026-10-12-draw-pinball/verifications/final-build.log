@@ -88,7 +88,7 @@ dist/assets/SearchPage-V9gzupcB.js          1,455.61 kB │ gzip: 392.01 kB
   - @tailwindcss/vite:generate:build (6%)
 See https://rolldown.rs/options/checks#plugintimings for more details.
 
-[plugin builtin:vite-reporter] 
+[plugin builtin:vite-reporter]
 (!) Some chunks are larger than 500 kB after minification. Consider:
 - Using dynamic import() to code-split the application
 - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting

@@ -8,7 +8,7 @@ import { usePartyRoom } from '../usePartyRoom';
 const api = vi.hoisted(() => ({ host: vi.fn(), join: vi.fn(), shareRoster: vi.fn(), claimName: vi.fn(), startRound: vi.fn(), leave: vi.fn() }));
 vi.mock('../usePartyRoom', () => ({ usePartyRoom: vi.fn() }));
 vi.mock('../../../api/gameApi', () => ({ getGameLang: () => 'ko', listGames: vi.fn().mockResolvedValue({ content: [] }), displayTitle: () => '' }));
-vi.mock('../../../auth/auth', () => ({ getAccessToken: () => null }));
+vi.mock('../../../auth/auth', () => ({ isLoggedIn: () => false }));
 function page(path: string, invitationRoot = false) { return render(<MemoryRouter initialEntries={[path]}><Routes>
   <Route path="/" element={<PartyPage invitationRoot={invitationRoot} />} />
   <Route path="/party/:room" element={<PartyPage />} /><Route path="/en/party/:room" element={<PartyPage />} />
