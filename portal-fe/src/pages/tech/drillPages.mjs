@@ -42,6 +42,14 @@ export const DRILL_PAGES = [
     card: '광고 요청 하나가 노출 · 클릭 · 정산이 되기까지 — 자격 · 경매 · 무효 트래픽 방어 · 원장을 단계별로 좁혀 본다.',
     module: 'AdsArchitecturePage',
   },
+  {
+    domain: 'commerce-catalog',
+    path: '/tech/catalog',
+    title: '상품 · 재고 아키텍처',
+    area: '상품 · 재고',
+    card: '상품 등록부터 장바구니 · 재고 예약 · 혜택 보류까지 — 판매자 입점 · 잠금 · 창고 선택 · 쿠폰을 단계별로 좁혀 본다.',
+    module: 'CatalogArchitecturePage',
+  },
 ];
 
 /** IT 면 GNB — 아틀라스, 드릴다운 페이지들, 홈. 아틀라스와 드릴다운 페이지가 같은 줄을 쓴다 */

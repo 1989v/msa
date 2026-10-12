@@ -766,7 +766,7 @@ concepts:
     description: "구글의 퍼블리셔용 광고 네트워크다. 1989v 는 게시자 ID 하나가 로더 · 지면 · ads.txt 를 함께 켜고 끈다"
     synonyms: ["AdSense"]
     code:
-      - { path: portal-fe/src/seo/copy.mjs, symbol: "export const ADSENSE_CLIENT", note: "게시자 ID — 빈 값이면 광고 없음" }
+      - { path: portal-fe/src/components/ads/adsenseLoader.ts, symbol: "export function ensureAdsenseLoaded(): void {", note: "게시자 ID 가 비었거나 광고 호스트가 아니면 로더를 넣지 않는다" }
     implements: [ad-network, ads-unfilled-handling]
   - id: fill-rate
     kind: METRIC

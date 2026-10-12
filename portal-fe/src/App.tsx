@@ -60,6 +60,7 @@ const SearchArchitecturePage = lazy(() => import('./pages/tech/SearchArchitectur
 const RecommendationArchitecturePage = lazy(() => import('./pages/tech/RecommendationArchitecturePage'));
 const OrderArchitecturePage = lazy(() => import('./pages/tech/OrderArchitecturePage'));
 const AdsArchitecturePage = lazy(() => import('./pages/tech/AdsArchitecturePage'));
+const CatalogArchitecturePage = lazy(() => import('./pages/tech/CatalogArchitecturePage'));
 const UnifiedSearchPage = lazy(() => import('./pages/search/UnifiedSearchPage'));
 // ADR-0074 — 내 찜 모아보기 (호스트 인식: game=GAME, place=ATTRACTION, blog=BLOG_POST, apex=탭)
 const FavoritesPage = lazy(() => import('./components/favorite/FavoritesPage'));
@@ -247,6 +248,7 @@ function App() {
           <Route path="/tech/recommendation" element={<RecommendationArchitecturePage />} />
           <Route path="/tech/order" element={<OrderArchitecturePage />} />
           <Route path="/tech/ads" element={<AdsArchitecturePage />} />
+          <Route path="/tech/catalog" element={<CatalogArchitecturePage />} />
           {/* 분류별 용어집 (ADR-0062 §16). 개념마다 URL 을 주지 않는다 — 풀이가 짧아
               개념당 한 장이면 얇은 페이지가 162장 생긴다 */}
           <Route path="/tech/:category" element={<TechGlossaryPage />} />

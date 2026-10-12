@@ -23,6 +23,7 @@
 
 ## Key Rules
 
+- **공개 드릴다운 `/tech/catalog` 가 상품 · 재고 · 혜택 · 장바구니의 운영 상태를 보인다** — 단계를 켜거나(옵션 · SKU · 쿠폰 운영 · 재색인 재개) 값을 바꾸면 온톨로지 `commerce-catalog.yaml` 의 `applied` 도 고치고 다시 내보낸다(ADR-0108). 보류 기한 · 만료 · 대사 주기 · 동시 예약 상한 · 장바구니 수량 등은 드리프트 테스트가 대조한다
 - **운영 프로파일은 코드와 따로 움직인다** — 기본 yml 의 `spring.datasource.product.*` 는
   `${PRODUCT_DB_MASTER:localhost:3316}` 이라, `commerce/app/.../application-kubernetes.yml` 에
   product 블록이 없으면 운영에서 localhost 로 붙어 컨텍스트가 죽는다(2026-09-11 실제 장애).
