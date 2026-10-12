@@ -29,6 +29,22 @@
 
 새 통합 회귀는 SSR·런타임 홈, 3개 지역 × 2언어, 비대상 지역·레벨·미로딩·실패 시 메타 보존을 확인한다. 첫 타입 검사에서 JS의 null 기본인자 추론을 수정했고, 최종 검사에서 통과했다. 기존 테스트의 주입된 503·라우트·JSDOM 경고는 assertion 실패와 구분한다.
 
+## 최신 main 통합 검증
+
+다른 작업의 주문·광고 기술 화면이 main에 추가돼 충돌 없이 통합했다. 기존 전체 검증을 이유 없이 반복하지 않고, 새 통합의 공유 copy·FE 컴파일 영향을 worker가 한 번 확인했다.
+
+통합 HEAD: `6ccdc3577219db3322c0246f35d1133d67e3517c`.
+
+- `node scripts/render-content.mjs` → exit 0. 기존·신규 기술 drill 콘텐츠 생성.
+- `npx tsc -b` → exit 0.
+- PlaceDiscovery/placeCopy/prerenderPlace/copy/prerenderGames/gameSitemap/GamesPage.seo → **7 files / 146 tests passed**.
+- `npx vite build` → **✓ built in 835ms**, exit 0.
+- `git diff --check` → exit 0.
+
+검증 전후 HEAD는 동일하며 새 코드 수정·push·운영 배포는 없었다. 다른 기여자의 변경과 generated 파일은 보존했다.
+
+원래 작업 디렉터리에 문서 8개를 동기화한 커밋 `7e4569165`는 정상 훅을 실행해 완료됐다. 해당 디렉터리의 Doctor는 83/100 FAIL을 출력했고, 표시된 원인에는 기존 문서들의 source citation 누락이 있다. 이 전역 문서 진단을 통과했다고 주장하지 않는다. 위 FE 검증과 워크트리 커밋의 Doctor 100/100은 별도의 검증이며, 이번 변경에 속하지 않는 문서를 수정하거나 훅을 우회하지 않았다.
+
 ## 검증 경계
 
 worker는 브라우저·컴퓨터 유즈·push·운영 배포·콘솔 제출을 수행하지 않았다. 부모의 Google 영문 서울 실시간 렌더 검사는 **현재 운영 버전**에 대한 것으로 이 커밋의 화면 검증이 아니다. 새 본문의 실제 브라우저 화면·운영 초기 HTML은 배포/별도 승인 범위에서 확인한다. 전체 게임 프리렌더 빌드는 로컬에서 재실행하지 않았다.

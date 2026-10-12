@@ -1,3 +1,4 @@
+<!-- source: docs/specs/2026-10-12-place-ko-en-discovery/gsc-language-baseline.json, portal-fe/src/seo/copy.mjs -->
 # 직접 검색·콘솔 현황
 
 2026-10-12 약 23:16~23:36 KST, 사용자에게 **조회만** 사전 승인받은 뒤 Chrome에서 확인했다. 현재 결과는 이번 본문 보완 커밋의 배포 전이다.

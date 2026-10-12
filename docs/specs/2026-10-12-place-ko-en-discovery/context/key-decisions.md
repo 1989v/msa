@@ -1,3 +1,4 @@
+<!-- source: portal-fe/src/seo/copy.mjs, docs/specs/2026-10-12-place-ko-en-discovery/spec.md -->
 # 결정
 
 ### 2026-10-12 검색 언어와 1차 유지보수
