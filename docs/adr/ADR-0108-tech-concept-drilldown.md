@@ -78,14 +78,21 @@
 13. **드릴다운 HTML 은 엣지에 5분 두고, 지연 청크는 프리렌더가 미리 받게 한다.** 2026-10-12 실측: 국내 회선(KT 대역)에서
     1989v.com 이 `colo=LAX` 로 붙어 HTML 한 장이 0.8~2.8초(오리진 안쪽은 ingress 9ms), 캐시 끈 첫 화면은 다이어그램까지 4.4초였다.
     다이어그램 데이터 청크 자체는 0.3초 — 데이터 조회가 아니라 왕복 횟수 × 태평양이 원인이다.
-    - nginx 가 두 경로에만 `Cache-Control: public, max-age=0, s-maxage=300, must-revalidate` 를 단다. 브라우저는 매번 다시 묻는다
+    - nginx 가 드릴다운 경로에만 `Cache-Control: public, max-age=0, s-maxage=300, must-revalidate` 를 단다. 브라우저는 매번 다시 묻는다
     - **Cloudflare 대시보드 캐시 규칙이 짝이다**(API 토큰이 레포에 없다): 이름 `tech drill html`,
-      식 `(http.host eq "1989v.com" and http.request.uri.path in {"/tech/search" "/tech/recommendation"})`,
+      식 `(http.host eq "1989v.com" and starts_with(http.request.uri.path, "/tech/"))`(도메인이 늘어도 규칙을 안 고친다 — 용어집은 오리진이
+      `no-cache` 라 담기지 않는다),
       동작 「캐시 대상」, 엣지 TTL 「오리진 Cache-Control 을 따름」, 브라우저 TTL 「오리진을 따름」. 규칙이 없으면 헤더는 무동작이다(`cf-cache-status: DYNAMIC`)
     - 배포 뒤 최대 5분은 옛 셸이 나갈 수 있다 — 옛 청크는 이미지가 직전 릴리스 자산을 함께 담아(retain-assets) 404 가 나지 않는다
     - 프리렌더가 vite 매니페스트에서 페이지 · 화면 · 목록 청크와 CSS 를 찾아 `modulepreload` 로 head 에 넣는다. 메인 번들을 기다린 뒤에야
       청크를 요청하던 한 줄의 왕복이 겹쳐진다. 매니페스트는 프리렌더가 읽고 이미지 빌드가 지운다(서빙물에 남기지 않는다)
     - 사이트 전체 HTML(DYNAMIC)이 같은 경로를 탄다 — 이 규칙을 다른 경로로 넓힐지는 따로 정한다
+
+14. **주문 · 결제(`/tech/order`)도 운영 확인으로 상태를 적는다.** 2026-10-12 확인: 주문 사가가 운영에서 끝까지 돈다(데모 주문 9건,
+    사가 완료 6 · 실패 3, 원장 35줄 차대 합 0, 정산서 1장 지급). 결제 상대는 항상 승인하는 모의 PG(결제 6건 모두 `mock-` 키,
+    `PAYMENT_PG` 미설정, 토스 웹훅 404)이고 지급도 모의 송금이라 결제 · 대사 · 지급은 「일부 구현」, 송장 연동 · 세금계산서는 없다.
+    드릴다운 경로를 nginx 엣지 캐시 location 에 빠뜨리면 용어집 location 이 받아 헤더가 안 붙는다 — 프리렌더 테스트가
+    `DRILL_PAGES` 경로 전부를 그 location 정규식에 대 본다.
 
 ## 결과
 

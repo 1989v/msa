@@ -26,6 +26,14 @@ export const DRILL_PAGES = [
     card: '행동 신호가 추천 목록이 되기까지 — 후보 생성 · 랭킹 · 재정렬 · 서빙 · 실험을 단계별로 좁혀 본다.',
     module: 'RecommendationArchitecturePage',
   },
+  {
+    domain: 'commerce-order',
+    path: '/tech/order',
+    title: '주문 · 결제 아키텍처',
+    area: '주문 · 결제',
+    card: '주문서 한 장이 결제 · 이행 · 정산까지 가는 길 — 사가 · 결제 결과 미상 · 원장을 단계별로 좁혀 본다.',
+    module: 'OrderArchitecturePage',
+  },
 ];
 
 /** IT 면 GNB — 아틀라스, 드릴다운 페이지들, 홈. 아틀라스와 드릴다운 페이지가 같은 줄을 쓴다 */

@@ -20,11 +20,13 @@ vi.mock('../../../api/resumeApi', () => ({ fetchResumeStatus: () => Promise.reso
 
 import searchData from '../generated/search-drill.json';
 import recommendationData from '../generated/recommendation-drill.json';
+import orderData from '../generated/commerce-order-drill.json';
 import { PORTAL_PAGES } from '../../../seo/copy.mjs';
 import { STATUS_LABEL } from '../drillModel.mjs';
 import { DRILL_PAGES } from '../drillPages.mjs';
 import SearchArchitecturePage from '../SearchArchitecturePage';
 import RecommendationArchitecturePage from '../RecommendationArchitecturePage';
+import OrderArchitecturePage from '../OrderArchitecturePage';
 
 type Node = { id: string; lanes?: string[] };
 type Concept = { name: string; description: string; applied?: { status: keyof typeof STATUS_LABEL; summary?: string }; code?: { path: string; start: number; end: number }[] };
@@ -41,6 +43,7 @@ type Data = {
 const PAGES: Record<string, { Page: ComponentType; data: Data }> = {
   search: { Page: SearchArchitecturePage, data: searchData as unknown as Data },
   recommendation: { Page: RecommendationArchitecturePage, data: recommendationData as unknown as Data },
+  'commerce-order': { Page: OrderArchitecturePage, data: orderData as unknown as Data },
 };
 
 it('드릴다운 페이지 목록의 도메인마다 페이지 컴포넌트가 있다', () => {

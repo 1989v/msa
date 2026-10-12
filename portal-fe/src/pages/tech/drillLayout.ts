@@ -63,7 +63,10 @@ const GROUP_FOOT = 24;
 /** 세로 배치의 행 사이 — 위 상자의 [상세보기], 돌아가는 선의 글자, 받는 상자 쪽 글자가 차례로 들어갈 자리 */
 const ROW_GAP_V = 60;
 
-/** 최장 경로 단계 — 순환이 있으면(데이터 오류) 남은 노드는 마지막 단계 다음에 둔다 */
+/**
+ * 최장 경로 단계 — 순환이 있으면(데이터 오류) 남은 노드는 마지막 단계 다음에 둔다.
+ * 흐름이 있는 그림에서 간선이 하나도 없는 노드는 맨 뒤 단계에 둔다 — 첫 단계에 두면 흐름의 시작처럼 읽힌다
+ */
 function layers(d: DrillDiagram): Map<string, number> {
   const ids = d.nodes.map((n) => n.id);
   const indeg = new Map(ids.map((id) => [id, 0]));
@@ -82,6 +85,11 @@ function layers(d: DrillDiagram): Map<string, number> {
   }
   const max = Math.max(0, ...layer.values());
   for (const id of ids) if (!done.has(id)) layer.set(id, max + 1);
+  if (d.edges.length) {
+    const linked = new Set(d.edges.flatMap((e) => [e.from, e.to]));
+    const last = Math.max(0, ...ids.filter((id) => linked.has(id)).map((id) => layer.get(id)!));
+    for (const id of ids) if (!linked.has(id)) layer.set(id, last + 1);
+  }
   return layer;
 }
 
@@ -92,25 +100,25 @@ function laneCols(n: DrillNode, vertical: boolean, maxWidth: number): number {
   return Math.max(1, Math.min(k, Math.floor((maxWidth - PAD * 2 - GROUP_PAD * 2 + LANE_GAP) / (NODE_W + LANE_GAP))));
 }
 
-function size(n: DrillNode, vertical: boolean, maxWidth: number): { w: number; h: number } {
+function size(n: DrillNode, vertical: boolean, maxWidth: number, nodeH: number): { w: number; h: number } {
   const k = n.lanes?.length ?? 0;
-  if (!k) return { w: NODE_W, h: NODE_H };
+  if (!k) return { w: NODE_W, h: nodeH };
   const cols = laneCols(n, vertical, maxWidth);
   const rows = Math.ceil(k / cols);
   return {
     w: GROUP_PAD * 2 + cols * NODE_W + (cols - 1) * LANE_GAP,
-    h: GROUP_HEAD + rows * NODE_H + (rows - 1) * LANE_GAP + GROUP_FOOT,
+    h: GROUP_HEAD + rows * nodeH + (rows - 1) * LANE_GAP + GROUP_FOOT,
   };
 }
 
-function lanesOf(n: DrillNode, x: number, y: number, vertical: boolean, maxWidth: number): Rect[] {
+function lanesOf(n: DrillNode, x: number, y: number, vertical: boolean, maxWidth: number, nodeH: number): Rect[] {
   const cols = laneCols(n, vertical, maxWidth);
   return (n.lanes ?? []).map((id, i) => ({
     id,
     x: x + GROUP_PAD + (i % cols) * (NODE_W + LANE_GAP),
-    y: y + GROUP_HEAD + Math.floor(i / cols) * (NODE_H + LANE_GAP),
+    y: y + GROUP_HEAD + Math.floor(i / cols) * (nodeH + LANE_GAP),
     w: NODE_W,
-    h: NODE_H,
+    h: nodeH,
   }));
 }
 
@@ -125,8 +133,12 @@ const curveV = (x1: number, y1: number, x2: number, y2: number) => {
 
 /**
  * @param maxWidth 그릴 수 있는 폭(px). 가로 배치에서 열을 몇 개씩 한 줄에 둘지 정한다
+ * @param nodeH 노드 상자 높이 — 제목이 두 줄인 노드가 있는 그림은 화면이 키워서 넘긴다
  */
-export function layoutDiagram(d: DrillDiagram, { vertical, maxWidth }: { vertical: boolean; maxWidth: number }): Layout {
+export function layoutDiagram(
+  d: DrillDiagram,
+  { vertical, maxWidth, nodeH = NODE_H }: { vertical: boolean; maxWidth: number; nodeH?: number },
+): Layout {
   if (d.nodes.length === 0) return { boxes: [], routes: [], width: 0, height: 0 };
   const layer = layers(d);
   const count = Math.max(...layer.values()) + 1;
@@ -146,7 +158,7 @@ export function layoutDiagram(d: DrillDiagram, { vertical, maxWidth }: { vertica
       let row: DrillNode[] = [];
       let used = 0;
       for (const n of col) {
-        const w = size(n, true, maxWidth).w;
+        const w = size(n, true, maxWidth, nodeH).w;
         if (row.length && used + step + w > maxWidth - PAD * 2) {
           rows.push(row);
           row = [];
@@ -158,14 +170,15 @@ export function layoutDiagram(d: DrillDiagram, { vertical, maxWidth }: { vertica
       rows.push(row);
     }
     let y = PAD;
-    const rowWidths = rows.map((col) => col.reduce((s, n) => s + size(n, true, maxWidth).w, 0) + (col.length - 1) * step);
-    width = Math.max(...rowWidths) + PAD * 2;
+    const rowWidths = rows.map((col) => col.reduce((s, n) => s + size(n, true, maxWidth, nodeH).w, 0) + (col.length - 1) * step);
+    // 받을 수 있는 폭을 다 쓴다 — 선 옆 글자가 상자 폭 밖으로 나가도 그림 안에 남게
+    width = Math.max(Math.max(...rowWidths) + PAD * 2, maxWidth);
     rows.forEach((col, r) => {
-      const rowH = Math.max(...col.map((n) => size(n, true, maxWidth).h));
+      const rowH = Math.max(...col.map((n) => size(n, true, maxWidth, nodeH).h));
       let x = (width - rowWidths[r]) / 2;
       for (const n of col) {
-        const { w, h } = size(n, true, maxWidth);
-        boxes.set(n.id, { id: n.id, x, y: y + (rowH - h) / 2, w, h, lanes: lanesOf(n, x, y + (rowH - h) / 2, true, maxWidth) });
+        const { w, h } = size(n, true, maxWidth, nodeH);
+        boxes.set(n.id, { id: n.id, x, y: y + (rowH - h) / 2, w, h, lanes: lanesOf(n, x, y + (rowH - h) / 2, true, maxWidth, nodeH) });
         bandOf.set(n.id, 0);
         x += w + step;
       }
@@ -180,15 +193,15 @@ export function layoutDiagram(d: DrillDiagram, { vertical, maxWidth }: { vertica
     let top = PAD;
     for (let b = 0; b < bands; b++) {
       const cols = columns.slice(b * perBand, (b + 1) * perBand);
-      const colH = cols.map((col) => col.reduce((s, n) => s + size(n, false, maxWidth).h, 0) + (col.length - 1) * GAP_Y);
+      const colH = cols.map((col) => col.reduce((s, n) => s + size(n, false, maxWidth, nodeH).h, 0) + (col.length - 1) * GAP_Y);
       const bandH = Math.max(...colH);
       cols.forEach((col, i) => {
         const x = PAD + i * (slot + GAP_X);
         let y = top + (bandH - colH[i]) / 2;
         for (const n of col) {
-          const { w, h } = size(n, false, maxWidth);
+          const { w, h } = size(n, false, maxWidth, nodeH);
           const bx = x + (slot - w) / 2;
-          boxes.set(n.id, { id: n.id, x: bx, y, w, h, lanes: lanesOf(n, bx, y, false, maxWidth) });
+          boxes.set(n.id, { id: n.id, x: bx, y, w, h, lanes: lanesOf(n, bx, y, false, maxWidth, nodeH) });
           bandOf.set(n.id, b);
           y += h + GAP_Y;
         }
@@ -207,6 +220,8 @@ export function layoutDiagram(d: DrillDiagram, { vertical, maxWidth }: { vertica
       const l = layer.get(x.id)!;
       return l > layer.get(e.from)! && l < layer.get(e.to)! && bandOf.get(x.id) === bandOf.get(e.from);
     });
+  /** 출발 상자마다 이미 단 돌아가는 간선 글자 수 — 겹치지 않게 한 줄씩 내린다 */
+  const detours = new Map<string, number>();
   const routes: Route[] = d.edges.map((e) => {
     const a = boxes.get(e.from)!;
     const b = boxes.get(e.to)!;
@@ -224,7 +239,9 @@ export function layoutDiagram(d: DrillDiagram, { vertical, maxWidth }: { vertica
         const dd = `M${x1},${y1} C${x1},${y1 + 24} ${sx},${y1 + 12} ${sx},${y1 + 36} L${sx},${y2 - 36} C${sx},${y2 - 12} ${x2},${y2 - 24} ${x2},${y2}`;
         // 글자는 돌아가는 선이 아니라 출발 상자 바로 밑, 선이 돌아 나가지 않는 쪽에 — 선은 가장자리를 타서 글자가 그림 밖으로 잘린다
         const lx = left ? x1 + 8 : x1 - 8;
-        return { from: e.from, to: e.to, label: e.label, d: dd, lx, ly: y1 + 37, anchor: left ? 'start' : 'end' };
+        const nth = detours.get(e.from) ?? 0;
+        detours.set(e.from, nth + 1);
+        return { from: e.from, to: e.to, label: e.label, d: dd, lx, ly: y1 + 37 + nth * 16, anchor: left ? 'start' : 'end' };
       }
       // 글자는 받는 상자 쪽, 선 오른쪽에 붙인다 — 가운데에 두면 출발 상자의 [상세보기] 글자와 겹치고, 선 위에 두면 선이 글자를 가른다
       return { from: e.from, to: e.to, label: e.label, d: curveV(x1, y1, x2, y2), lx: Math.max(x1, x2) + 8, ly: y2 - 6, anchor: 'start' };

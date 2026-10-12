@@ -75,6 +75,7 @@ ADR-0032 의 코레오그래피를 대체).
 - **금액은 서버가 정한다** — 클라이언트는 주문서 id 만 보낸다. 주문서(`POST /api/v1/order-sheets`, 만료 15분)가 읽기 모델로 가격·
   쿠폰·포인트·판매자별 배송비를 계산해 스냅샷하고 주문 1개에만 쓰인다. 만료·재사용·소유자 불일치는 422, 남의 주문서 조회는 404.
 - **금액은 원 단위 `Long`**(`Money.amount`). `order_items` 는 `unit_price_won` 을 읽고, 확장 단계라 옛 `unit_price` 에도 같은 값을 쓴다(삭제는 다음 단계).
+- **공개 드릴다운 `/tech/order` 가 주문 · 결제 · 정산의 운영 상태를 보인다** — 단계를 켜거나(토스 활성화 · 송장 연동 · 세금계산서) 값을 바꾸면 온톨로지 `commerce-order.yaml` 의 `applied` 도 고치고 다시 내보낸다(ADR-0108). 사가 기한 · 멱등 키 · 보류 · 재조회 · 정산 배치 값은 드리프트 테스트가 대조한다
 - **Idempotency-Key**: (사용자, 키) 유니크, 처리 중 리스 60초(409), 완료 뒤 저장 응답 그대로, 24시간 보관. 결제 대기 주문은 사용자당 3건(`order.pending-order-limit`, 초과 429).
 - **읽기 모델**(`product_view`·`seller_view`·`coupon_definition_view`·`user_coupon_view`·`point_balance_view`)은
   `OrderReadModelConsumer` 가 이벤트로만 채운다. 늦게 온 옛 이벤트는 `occurred_at` 으로 거른다.
