@@ -51,6 +51,8 @@ const TABS = [
 type Tab = (typeof TABS)[number][0];
 /** 이 폭보다 좁으면 그림을 세로로 그린다 */
 const VERTICAL_BELOW = 640;
+/** 노드 제목은 상자에 안 들어가면 이 크기까지 줄인다 */
+const LABEL_MIN_PX = 11;
 /** 가로 배치는 화면에 맞춰 줄이되 이 배율 아래로는 줄이지 않고 그림 상자 안에서 가로로 넘긴다 */
 const MIN_SCALE = 0.72;
 
@@ -87,6 +89,20 @@ function Diagram({ owner, picked, onPick }: { owner: string; picked?: string; on
     () => layoutDiagram(diagram, { vertical, maxWidth: vertical ? width - 8 : width }),
     [diagram, vertical, width],
   );
+  const svgRef = useRef<SVGSVGElement>(null);
+  // 상자 폭은 고정이라 긴 제목은 그 노드만 글자를 줄여 넣는다 — 글꼴이 늦게 오면 폭이 달라지므로 그때 한 번 더
+  useLayoutEffect(() => {
+    const fit = () =>
+      svgRef.current?.querySelectorAll<SVGTextElement>('.td-label').forEach((t) => {
+        if (typeof t.getComputedTextLength !== 'function') return;
+        t.style.fontSize = '';
+        const room = Number(t.dataset.room);
+        const len = t.getComputedTextLength();
+        if (len > room) t.style.fontSize = `${Math.max(LABEL_MIN_PX, (parseFloat(getComputedStyle(t).fontSize) * room) / len)}px`;
+      });
+    fit();
+    document.fonts?.ready.then(fit);
+  }, [layout]);
   if (layout.boxes.length === 0) return <div ref={ref} />;
   const statusOf = (id: string) => drill.concepts[id]?.applied?.status;
   const fit = Math.max(Math.min(layout.width, width - 8), Math.round(layout.width * MIN_SCALE));
@@ -118,7 +134,7 @@ function Diagram({ owner, picked, onPick }: { owner: string; picked?: string; on
         {hasDetail && <rect className="td-stack" x={5} y={5} width={w} height={h} rx={4} />}
         <rect className="td-box" width={w} height={h} rx={4} />
         {status && <circle className={`td-dot is-${status.toLowerCase()}`} cx={w - 12} cy={13} r={4} />}
-        <text className="td-label" x={12} y={24}>
+        <text className="td-label" x={12} y={24} data-room={w - 32}>
           {c.name}
         </text>
         <text className="td-kind" x={12} y={43}>
@@ -135,6 +151,7 @@ function Diagram({ owner, picked, onPick }: { owner: string; picked?: string; on
   return (
     <div className="td-canvas" ref={ref}>
       <svg
+        ref={svgRef}
         viewBox={`0 0 ${layout.width} ${layout.height + 12}`}
         width={fit}
         height={Math.round(((layout.height + 12) * fit) / layout.width)}
