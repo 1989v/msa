@@ -1018,6 +1018,30 @@ class SearchAttractionServiceTest : BehaviorSpec({
                 result.relaxedKeyword shouldBe null
             }
         }
+        `when`("GATE 근거 검사로 0건이어도 분류만으로는 결과가 있으면") {
+            then("NO_EVIDENCE 가 아니라 NO_MATCH_IN_CATEGORY — 「그 분류 보기」를 준다") {
+                val gated = serviceWith(lexicon = beach, evidence = AttractionAnswerEvidenceProperties.Mode.GATE)
+                every { searchPort.search(any(), any()) } answers {
+                    if (firstArg<AttractionSearchPort.SearchQuery>().keyword == null) {
+                        AttractionSearchPort.SearchResult(PageImpl(listOf(AttractionSearchPort.AttractionHit(document(), 1.0)), PageRequest.of(0, 1), 20))
+                    } else {
+                        AttractionSearchPort.SearchResult(PageImpl(emptyList()), noEvidence = true)
+                    }
+                }
+                val result = gated.execute(SearchAttractionUseCase.Query(keyword = "도쿄 해수욕장", lang = "ko"))
+                result.zeroReason shouldBe SearchAttractionUseCase.ZeroReason.NO_MATCH_IN_CATEGORY
+                result.relaxedKeyword shouldBe "해수욕장"
+            }
+            then("분류만으로도 0건이면 NO_EVIDENCE 그대로") {
+                val gated = serviceWith(lexicon = beach, evidence = AttractionAnswerEvidenceProperties.Mode.GATE)
+                every { searchPort.search(any(), any()) } answers {
+                    if (firstArg<AttractionSearchPort.SearchQuery>().keyword == null) found(emptyList())
+                    else AttractionSearchPort.SearchResult(PageImpl(emptyList()), noEvidence = true)
+                }
+                gated.execute(SearchAttractionUseCase.Query(keyword = "도쿄 해수욕장", lang = "ko")).zeroReason shouldBe
+                    SearchAttractionUseCase.ZeroReason.NO_EVIDENCE
+            }
+        }
         `when`("분류 의도가 없는 0건") {
             then("다시 세지 않는다") {
                 every { searchPort.search(any(), any()) } returns found(emptyList())

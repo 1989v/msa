@@ -157,7 +157,9 @@ class SearchAttractionService(
         val found = attractionSearchPort.search(searchQuery, pageable)
         val page = found.page
         val noEvidence = found.noEvidence || (confine && page.totalElements == 0L)
-        val relaxed = if (!noEvidence && page.totalElements == 0L && searchKeyword != null) {
+        // 근거 검사(GATE)로 0건이어도 센다 — 분류 필터 안에서 남은 말의 근거가 없는 것이 바로 「분류 안 0건」이고,
+        // 「그 분류 보기」가 「등록된 정보에 없다」보다 다음 행동을 준다(「도쿄 수족관」)
+        val relaxed = if (page.totalElements == 0L && searchKeyword != null) {
             understood?.facetPhrase?.let { phrase ->
                 // 분류만으로 다시 센다 — 조건·구조 필터는 그대로 두고 남은 검색어·벡터·근거 검사만 뺀다
                 val count = attractionSearchPort.search(
@@ -183,8 +185,8 @@ class SearchAttractionService(
             attributeFacets = found.attributeFacets?.toResult(),
             interpreted = interpreted,
             zeroReason = when {
-                noEvidence -> SearchAttractionUseCase.ZeroReason.NO_EVIDENCE
                 relaxed != null -> SearchAttractionUseCase.ZeroReason.NO_MATCH_IN_CATEGORY
+                noEvidence -> SearchAttractionUseCase.ZeroReason.NO_EVIDENCE
                 else -> null
             },
             relaxedKeyword = relaxed?.first,
