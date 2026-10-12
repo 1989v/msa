@@ -55,7 +55,7 @@ const VERTICAL_BELOW = 640;
 const LABEL_MIN_PX = 11;
 /** 노드 제목이 들어갈 폭 — 왼쪽 여백 12, 오른쪽은 상태 점 자리 */
 const LABEL_ROOM = NODE_W - 32;
-/** 제목 두 번째 줄의 간격 — 두 줄 제목이 있는 그림은 상자를 이만큼 키운다 */
+/** 제목 줄 간격 — 여러 줄 제목이 있는 그림은 늘어난 줄 수만큼 상자를 키운다 */
 const LABEL_LINE = 17;
 
 let measureCtx: CanvasRenderingContext2D | null | undefined;
@@ -70,15 +70,37 @@ function labelWidth(text: string): number {
   return measureCtx.measureText(text).width;
 }
 
-/** 상자에 안 들어가는 제목은 두 줄로 — 괄호 설명 앞에서, 없으면 가운데에 가까운 띄어쓰기에서 끊는다 */
+/** 제목은 이 줄 수까지 접는다 — 넘치면 마지막 줄에 몰고 글자를 줄인다 */
+const LABEL_MAX_LINES = 3;
+
+/** 단어 단위로 폭에 맞춰 접는다. 「·」 같은 구분 기호는 앞 단어에 붙여 줄 머리에 오지 않게 한다 */
+function wrapWords(text: string): string[] {
+  const words = text.split(' ').reduce<string[]>((acc, w) => {
+    if (acc.length && /^[·—+]$/.test(w)) acc[acc.length - 1] += ` ${w}`;
+    else acc.push(w);
+    return acc;
+  }, []);
+  const lines: string[] = [];
+  let cur = '';
+  for (const w of words) {
+    const next = cur ? `${cur} ${w}` : w;
+    if (cur && labelWidth(next) > LABEL_ROOM) {
+      lines.push(cur);
+      cur = w;
+    } else cur = next;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
+/** 상자에 안 들어가는 제목은 여러 줄로 — 괄호 설명 앞에서 먼저 끊고, 그래도 넘치면 단어 단위로 접는다 */
 function labelLines(name: string): string[] {
   if (labelWidth(name) <= LABEL_ROOM) return [name];
   const paren = name.indexOf(' (');
-  if (paren > 0) return [name.slice(0, paren), name.slice(paren + 1)];
-  const spaces = [...name.matchAll(/ /g)].map((m) => m.index!);
-  if (spaces.length === 0) return [name];
-  const cut = spaces.reduce((a, b) => (Math.abs(b - name.length / 2) < Math.abs(a - name.length / 2) ? b : a));
-  return [name.slice(0, cut), name.slice(cut + 1)];
+  const parts = paren > 0 ? [name.slice(0, paren), name.slice(paren + 1)] : [name];
+  const lines = parts.flatMap(wrapWords);
+  if (lines.length <= LABEL_MAX_LINES) return lines;
+  return [...lines.slice(0, LABEL_MAX_LINES - 1), lines.slice(LABEL_MAX_LINES - 1).join(' ')];
 }
 /** 가로 배치는 화면에 맞춰 줄이되 이 배율 아래로는 줄이지 않고 그림 상자 안에서 가로로 넘긴다 */
 const MIN_SCALE = 0.72;
@@ -119,7 +141,7 @@ function Diagram({ owner, picked, onPick }: { owner: string; picked?: string; on
       ),
     [diagram, drill],
   );
-  const nodeH = [...lines.values()].some((l) => l.length > 1) ? NODE_H + LABEL_LINE : NODE_H;
+  const nodeH = NODE_H + (Math.max(1, ...[...lines.values()].map((l) => l.length)) - 1) * LABEL_LINE;
   const layout = useMemo(
     () => layoutDiagram(diagram, { vertical, maxWidth: vertical ? width - 8 : width, nodeH }),
     [diagram, vertical, width, nodeH],
@@ -155,7 +177,7 @@ function Diagram({ owner, picked, onPick }: { owner: string; picked?: string; on
     const sub = drill.diagrams[id];
     const more = !hasDetail ? '' : sub.nodes.length > 0 ? ', 상세 다이어그램 있음' : ', 하위 개념 있음';
     const label = lines.get(id) ?? [c.name];
-    // 두 줄 제목이 있는 그림은 상자가 커진다 — 한 줄 노드는 글자 묶음을 위아래 가운데에
+    // 여러 줄 제목이 있는 그림은 상자가 커진다 — 줄이 적은 노드는 글자 묶음을 위아래 가운데에
     const top = (h - NODE_H - (label.length - 1) * LABEL_LINE) / 2;
     const aria = `${c.name}${status ? `, ${STATUS_LABEL[status]}` : ''}${more}`;
     return (

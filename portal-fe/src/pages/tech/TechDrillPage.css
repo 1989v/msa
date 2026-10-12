@@ -84,7 +84,7 @@ html[data-theme='dark'] .td-page {
   padding: 0;
   list-style: none;
   font-size: var(--ko-text-xs);
-  color: var(--ko-text-muted);
+  color: var(--ko-text-secondary);
 }
 
 .td-legend li {
@@ -97,7 +97,7 @@ html[data-theme='dark'] .td-page {
   margin: 0;
   padding: 0 var(--ko-space-4) var(--ko-space-4);
   font-size: var(--ko-text-sm);
-  color: var(--ko-text-muted);
+  color: var(--ko-text-secondary);
 }
 
 /* 그림 — 그림 상자 안에서만 가로로 넘친다 */
@@ -155,7 +155,7 @@ html[data-theme='dark'] .td-page {
 }
 
 .td-kind {
-  fill: var(--ko-text-muted);
+  fill: var(--ko-text-secondary);
   font-family: var(--kh-font-mono);
   font-size: 11.5px;
 }
@@ -369,7 +369,7 @@ html[data-theme='dark'] .td-page {
   margin: 0;
   padding: var(--ko-space-3) var(--ko-space-4) var(--ko-space-2);
   font-size: var(--ko-text-sm);
-  color: var(--ko-text-muted);
+  color: var(--ko-text-secondary);
 }
 
 .td-level-head h3 {
@@ -446,7 +446,7 @@ html[data-theme='dark'] .td-page {
 .td-tabs button {
   font: inherit;
   font-size: var(--ko-text-sm);
-  color: var(--ko-text-muted);
+  color: var(--ko-text-secondary);
   background: none;
   border: 0;
   border-bottom: 2px solid transparent;
@@ -472,7 +472,7 @@ html[data-theme='dark'] .td-page {
 }
 
 .td-empty {
-  color: var(--ko-text-muted);
+  color: var(--ko-text-secondary);
 }
 
 .td-facts {
@@ -489,7 +489,7 @@ html[data-theme='dark'] .td-page {
 }
 
 .td-facts dt {
-  color: var(--ko-text-muted);
+  color: var(--ko-text-secondary);
 }
 
 .td-facts dd {
@@ -522,7 +522,7 @@ html[data-theme='dark'] .td-page {
 .td-note {
   font-family: var(--kh-font-mono);
   font-size: var(--ko-text-xs);
-  color: var(--ko-text-muted);
+  color: var(--ko-text-secondary);
   font-weight: 400;
   overflow-wrap: anywhere;
 }

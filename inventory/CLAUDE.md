@@ -31,6 +31,7 @@ Outbox·멱등 원장은 common 바인딩(`InventoryOutboxRepository`·`Inventor
 
 ## Key Rules
 
+- **공개 드릴다운 `/tech/catalog` 가 상품 · 재고 · 혜택 · 장바구니의 운영 상태를 보인다** — 단계를 켜거나(옵션 · SKU · 쿠폰 운영 · 재색인 재개) 값을 바꾸면 온톨로지 `commerce-catalog.yaml` 의 `applied` 도 고치고 다시 내보낸다(ADR-0108). 보류 기한 · 만료 · 대사 주기 · 동시 예약 상한 · 장바구니 수량 등은 드리프트 테스트가 대조한다
 - **명령 → 답**(키 = orderId): `inventory.command.{reserve,confirm,release,restock}` →
   `inventory.reservation.{reserved,failed,confirmed,released,restocked}`. 명령 하나 = inventory_db 트랜잭션 하나(예약·재고 행 ·
   동기화 이벤트 · 답 · 답 원장). 답 원장 (orderId, commandKey) 유니크 — 같은 명령이 다시 오면 **처음 답을 그대로 다시 낸다**.
