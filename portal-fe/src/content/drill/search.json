@@ -1,6 +1,7 @@
 {
 "root": "search-query",
 "updated": "2026-10-12",
+"maxDepth": 3,
 "concepts": {
 "search-query": {"name": "검색어 파이프라인", "kind": "DOMAIN", "description": "검색어가 결과가 되기까지 — 쿼리 리포뮬레이션 · 쿼리 언더스탠딩 · 후보 생성 · 융합 · 리랭킹을 거쳐 결과를 구성하고, 0건이면 대응한다. 싼 것으로 많이 거르고 비싼 것은 적게 쓴다"},
 "srch-query-input": {"name": "사용자 검색", "kind": "STAGE", "description": "사용자가 검색창에 치는 순간부터 검색이 시작된다. 입력 중에는 자동완성이 후보를 보여 주고, 제출한 검색어가 파이프라인으로 들어간다", "applied": {"status": "LIVE", "summary": "검색창 입력 중에는 자동완성이 지역과 관광지를 함께 제안한다. 제출한 검색어는 관광지 검색과 통합 검색 두 경로로 들어간다", "facts": [{"label": "API", "value": "GET /api/search/attractions · /api/search/unified"}]}, "code": [{"path": "search/app/src/main/kotlin/com/kgd/search/application/attraction/service/SearchAttractionService.kt", "start": 86, "end": 97, "note": "관광지 검색 한 번의 순서", "snippet": "override fun execute(query: SearchAttractionUseCase.Query): SearchAttractionUseCase.Result {\n    val geo = toGeoFilter(query)\n    val sortByEventStart = query.sort == SORT_EVENT_START\n    val signalSort = AttractionSignalSort.of(query.sort)\n    val pageable = PageRequest.of(query.page.coerceAtLeast(0), query.size.coerceIn(1, 100))\n    val original = query.keyword?.takeIf { it.isNotBlank() }\n    // 자모·기호만인 입력은 찾을 말이 없다 — 교정·색인을 부르지 않는다. 지금도 결과는 무관한 문서였다.\n    if (original != null && QueryIntent.hasNoContent(original)) {\n        return emptyResult(pageable, SearchAttractionUseCase.ZeroReason.NO_CONTENT)\n    }\n    // 오타 교정은 두 레그 모두에 준다 — 오타가 섞인 문장은 벡터도 엉뚱한 곳을 가리킨다.\n    // exact 는 사용자가 교정을 물린 검색이라 교정을 부르지 않는다."}]},

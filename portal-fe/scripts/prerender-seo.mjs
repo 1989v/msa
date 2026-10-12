@@ -118,13 +118,14 @@ import {
 } from '../src/seo/copy.mjs';
 import { DATA_SOURCES, DATA_SOURCE_NOTICES } from '../src/seo/dataSources.mjs';
 import { STATUS_LABEL, assertDrill } from '../src/pages/tech/drillModel.mjs';
+import { DRILL_PAGES } from '../src/pages/tech/drillPages.mjs';
 
 const MULTI = SEO_MULTI_ATTR;
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = resolve(ROOT, 'dist');
-// render-content.mjs 가 빌드 체인 앞단에서 만든다 (커밋하지 않는 산출물)
-const TECH_SEARCH_JSON = resolve(ROOT, 'src/pages/tech/generated/search-drill.json');
+// render-content.mjs 가 빌드 체인 앞단에서 만든다 (커밋하지 않는 산출물) — 드릴다운 도메인마다 한 장
+const techDrillJson = (domain) => resolve(ROOT, `src/pages/tech/generated/${domain}-drill.json`);
 // 속성 랜딩 목록 — select-place-landings.mjs 가 만들고 커밋한다. 빌드는 읽기만 한다
 const PLACE_LANDINGS_JSON = resolve(ROOT, 'src/content/place-landings.json');
 // 편집 페이지 생성 JSON — render-content 가 src/content/guides/*.md 에서 만든다(0장이어도 폴더는 있다)
@@ -203,17 +204,20 @@ async function main() {
   const guidePages = placeGuidePages(shell, { guides, cards: guideCards, landingPages: landing.pages, buildDate: kstDate() });
   for (const warning of guidePages.warnings) console.warn(`[seo] ${warning}`);
 
-  // 검색 아키텍처 본문은 API 가 아니라 레포의 드릴다운 데이터에서 나온다 — 없으면 렌더 단계가 빠진 빌드라 세운다
-  let searchArchitecture;
-  try {
-    searchArchitecture = JSON.parse(await readFile(TECH_SEARCH_JSON, 'utf8'));
-    assertTechSearchGenerated(searchArchitecture);
-  } catch (err) {
-    throw new PartialSeoFailure(`검색 아키텍처 생성 JSON 을 쓸 수 없습니다 (${TECH_SEARCH_JSON}): ${err.message}`);
+  // 드릴다운 본문은 API 가 아니라 레포의 드릴다운 데이터에서 나온다 — 없으면 렌더 단계가 빠진 빌드라 세운다
+  const techDrills = {};
+  for (const page of DRILL_PAGES) {
+    const file = techDrillJson(page.domain);
+    try {
+      techDrills[page.path] = JSON.parse(await readFile(file, 'utf8'));
+      assertTechDrillGenerated(techDrills[page.path]);
+    } catch (err) {
+      throw new PartialSeoFailure(`${page.title} 생성 JSON 을 쓸 수 없습니다 (${file}): ${err.message}`);
+    }
   }
 
   await writeRobotsAndSitemaps(games, places, regions, blog, rankBoards, dealSections, concepts, landing.pages, guidePages);
-  await renderPortalPages(shell, concepts, { searchArchitecture });
+  await renderPortalPages(shell, concepts, { techDrills });
   await renderTechGlossaries(shell, concepts);
   const hubPages = await renderPlaceHubs(shell, places, regions, { guidesListed: guidePages.index != null });
   const regionPages = await renderPlaceDetails(shell, places, regions, { regionTops, landingPages: landing.pages });
@@ -830,7 +834,7 @@ async function writeRobotsAndSitemaps(
   }
 
   const portalEntries = [
-    ...['/', '/tech', '/tech/search', '/portfolio', '/shop', '/privacy', '/about', '/contact', '/data-sources'].map((path) => ({
+    ...Object.keys(PORTAL_PAGES).map((path) => ({
       loc: `${PORTAL_ORIGIN}${path}`,
       priority: path === '/' ? '1.0' : '0.6',
     })),
@@ -2297,13 +2301,14 @@ function techGlossaryNav(byCategory) {
   return `<ul>${items}</ul>`;
 }
 
-async function renderPortalPages(shell, concepts = [], { searchArchitecture } = {}) {
+async function renderPortalPages(shell, concepts = [], { techDrills = {} } = {}) {
   // /tech 는 용어집 13장으로 들어가는 문이다 — 그 링크가 없으면 sitemap 에만 있는 주소가 되고,
   // 내부 링크 없는 URL 은 잘 크롤되지 않는다.
   const glossaryNav = techGlossaryNav(groupConcepts(concepts));
   for (const path of Object.keys(PORTAL_PAGES)) {
-    if (path === '/tech/search') {
-      await emit(`prerender${path}.html`, renderTechSearchHtml(shell, searchArchitecture));
+    const drillPage = DRILL_PAGES.find((p) => p.path === path);
+    if (drillPage) {
+      await emit(`prerender${path}.html`, renderTechDrillHtml(shell, techDrills[path], drillPage));
       continue;
     }
     if (path === '/about') {
@@ -2426,20 +2431,21 @@ export function renderDataSourcesHtml(shell, rows = DATA_SOURCES) {
   });
 }
 
-function assertTechSearchGenerated(generated) {
+function assertTechDrillGenerated(generated) {
   assertDrill(generated);
-  if (typeof generated.sourceHash !== 'string') throw new Error('검색 아키텍처 생성물에 sourceHash 가 없다');
+  if (typeof generated.sourceHash !== 'string') throw new Error('드릴다운 생성물에 sourceHash 가 없다');
 }
 
 /**
- * `/tech/search` — 화면은 노드를 눌러 펼치는 그림이라 정적 HTML 에는 1단계 단계를 목록으로 둔다.
+ * tech 드릴다운(`/tech/search` …) — 화면은 노드를 눌러 펼치는 그림이라 정적 HTML 에는 1단계 단계를 목록으로 둔다.
  * 단계마다 이름 · 적용 상태 · 일반 개념 · 이 서비스의 적용 내용 — 크롤러가 읽는 본문이다.
+ * @param {import('../src/pages/tech/drillPages.mjs').DrillPage} page
  */
-export function renderTechSearchHtml(shell, generated) {
-  assertTechSearchGenerated(generated);
+export function renderTechDrillHtml(shell, generated, page) {
+  assertTechDrillGenerated(generated);
   const { root, concepts, diagrams, updated, sourceHash } = generated;
-  const meta = PORTAL_PAGES['/tech/search'];
-  const canonical = portalUrl('/tech/search');
+  const meta = PORTAL_PAGES[page.path];
+  const canonical = portalUrl(page.path);
   const stage = (id) => {
     const c = concepts[id];
     const status = c.applied?.status;
@@ -2460,16 +2466,16 @@ export function renderTechSearchHtml(shell, generated) {
     image: ogCardUrl(PORTAL_ORIGIN, 'portal'),
     imageAlt: PORTAL_BRAND,
     jsonLd: [
-      techArticleJsonLd(updated),
+      techArticleJsonLd(page.path, page.title, updated),
       breadcrumbJsonLd('ko', [
         { name: '홈', url: portalUrl('/') },
         { name: 'IT', url: portalUrl('/tech') },
-        { name: '검색 아키텍처', url: canonical },
+        { name: page.title, url: canonical },
       ]),
     ],
     body: shellBody(
       `<div data-source-hash="${escapeHtml(sourceHash)}">` +
-        `<h1>검색 아키텍처</h1><p>${escapeHtml(concepts[root].description)}</p>` +
+        `<h1>${escapeHtml(page.title)}</h1><p>${escapeHtml(concepts[root].description)}</p>` +
         `<section aria-label="${escapeHtml(concepts[root].name)}"><h2>${escapeHtml(concepts[root].name)}</h2><ol>${items}</ol></section>` +
         '</div>',
     ),
@@ -2565,7 +2571,9 @@ function portalLlmsTxt() {
     `- [랭킹 리더보드](${RANK_ORIGIN}/): 지역별 최저가 주유소 등 집계와 등락`,
     `- [혜택 링크 허브](${DEAL_ORIGIN}/): 카테고리별 혜택·제휴 링크 큐레이션`,
     `- [IT 개념 사전](${PORTAL_ORIGIN}/tech): 도메인별 개념을 그래프로 좁혀 가며 배우는 개념 아틀라스`,
-    `- [검색 아키텍처](${PORTAL_ORIGIN}/tech/search): 검색 파이프라인을 단계별로 좁혀 보는 다이어그램 — 단계마다 일반 개념 · 이 서비스의 적용 상태 · 코드`,
+    ...DRILL_PAGES.map(
+      (p) => `- [${p.title}](${PORTAL_ORIGIN}${p.path}): ${p.area} 파이프라인을 단계별로 좁혀 보는 다이어그램 — 단계마다 일반 개념 · 이 서비스의 적용 상태 · 코드`,
+    ),
     `- [포트폴리오](${PORTAL_ORIGIN}/portfolio): 검색·전시·커머스·인프라·AI 도메인에서 만든 것들`,
     `- [스토어 데모](${PORTAL_ORIGIN}/shop): MSA 커머스 플랫폼 데모 (검색·추천·주문)`,
     '',

@@ -164,7 +164,7 @@ describe('place (K-관광)', () => {
 
 describe('포털 페이지 카피', () => {
   it('프리렌더 대상 경로가 모두 정의돼 있다', () => {
-    expect(Object.keys(PORTAL_PAGES)).toEqual(['/', '/tech', '/tech/search', '/portfolio', '/shop', '/privacy', '/about', '/contact', '/data-sources']);
+    expect(Object.keys(PORTAL_PAGES)).toEqual(['/', '/tech', '/tech/search', '/tech/recommendation', '/portfolio', '/shop', '/privacy', '/about', '/contact', '/data-sources']);
     const pages = Object.entries(PORTAL_PAGES) as [string, { title: string; description: string }][];
     for (const [path, meta] of pages) {
       expect(meta.title, path).toBeTruthy();
@@ -172,10 +172,13 @@ describe('포털 페이지 카피', () => {
     }
   });
 
-  it('검색 아키텍처 TechArticle 은 갱신일과 정규 주소를 싣는다 — 페이지와 프리렌더가 같은 함수를 쓴다', () => {
-    const ld = techArticleJsonLd('2026-10-08') as Record<string, unknown>;
+  it('드릴다운 TechArticle 은 제목 · 갱신일 · 정규 주소를 싣는다 — 페이지와 프리렌더가 같은 함수를 쓴다', () => {
+    const ld = techArticleJsonLd('/tech/recommendation', '추천 아키텍처', '2026-10-08') as Record<string, unknown>;
     expect(ld['@type']).toBe('TechArticle');
-    expect(ld.url).toBe('https://1989v.com/tech/search');
+    expect(ld.headline).toBe('추천 아키텍처');
+    expect(ld.description).toBe(PORTAL_PAGES['/tech/recommendation'].description);
+    expect(ld.url).toBe('https://1989v.com/tech/recommendation');
+    expect(() => techArticleJsonLd('/tech/nope', 'x', '2026-10-08')).toThrow();
     expect(ld.dateModified).toBe('2026-10-08');
     expect(ld.author).toEqual(personRef);
   });

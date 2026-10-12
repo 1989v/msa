@@ -1,4 +1,4 @@
-/* 검색 아키텍처 드릴다운 (/tech/search) — k-heritage. 색은 토큰만, 라이트 · 다크는 토큰이 가른다. */
+/* tech 드릴다운 (/tech/search · /tech/recommendation …) — k-heritage. 색은 토큰만, 라이트 · 다크는 토큰이 가른다. */
 
 .td-page {
   /* 상태 색 — 운영 중은 강조색, 비활성은 황토, 미구현은 연지 */
@@ -303,28 +303,41 @@ html[data-theme='dark'] .td-page {
   white-space: nowrap;
 }
 
-/* 펼친 단계 — 머리 → 상세 다이어그램 → 탭 */
-.td-levels {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--ko-space-5);
-}
-
+/* 펼친 단계 — 머리 띠 → 상세 다이어그램 → 탭 → 다음 단계(이 단계 안에 들여 넣는다).
+   단계를 형제로 늘어놓으면 앞 단계의 탭 뒤에 다음 단계가 바로 붙어 어디까지가 어느 단계인지 안 보인다. */
 .td-level {
   background: var(--ko-surface-0);
   scroll-margin-top: var(--ko-space-4);
+  overflow: hidden;
 }
 
+/* 머리 띠 — 단계의 시작을 면으로 가른다 */
 .td-level-head {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--ko-space-2) var(--ko-space-4);
-  justify-content: space-between;
+  gap: var(--ko-space-2) var(--ko-space-3);
   align-items: center;
-  padding: var(--ko-space-4) var(--ko-space-4) 0;
+  padding: var(--ko-space-3) var(--ko-space-4);
+  background: var(--ko-surface-2);
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+.td-depth {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: var(--ko-text-primary);
+  color: var(--ko-surface-0);
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-sm);
+  font-weight: 700;
 }
 
 .td-who {
+  flex: 1 1 12rem;
   display: grid;
   gap: var(--ko-space-1);
   min-width: 0;
@@ -332,6 +345,31 @@ html[data-theme='dark'] .td-page {
 
 .td-kicker {
   overflow-wrap: anywhere;
+}
+
+/* 다음 단계 — 이 단계 안쪽에 들여 넣고 왼쪽 띠로 이어 붙인다 */
+.td-children {
+  padding: 0 var(--ko-space-2) var(--ko-space-3) var(--ko-space-3);
+  border-top: 1px dashed var(--ko-border-default);
+  padding-top: var(--ko-space-3);
+}
+
+.td-children > .td-level {
+  border-left: 3px solid var(--ko-text-primary);
+}
+
+@media (min-width: 640px) {
+  .td-children {
+    padding-left: var(--ko-space-5);
+    padding-right: var(--ko-space-3);
+  }
+}
+
+.td-leaf {
+  margin: 0;
+  padding: var(--ko-space-3) var(--ko-space-4) var(--ko-space-2);
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-muted);
 }
 
 .td-level-head h3 {

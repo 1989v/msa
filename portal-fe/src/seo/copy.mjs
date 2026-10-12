@@ -1305,6 +1305,11 @@ export const PORTAL_PAGES = {
     description:
       '검색어 하나가 결과가 되기까지 — 쿼리 리포뮬레이션, 쿼리 언더스탠딩, 스파스·덴스 검색, RRF 융합, 리랭킹, 0건 대응을 다이어그램으로 좁혀 가며 본다. 단계마다 일반 개념, 이 서비스의 적용 상태, 코드.',
   },
+  '/tech/recommendation': {
+    title: portalTitle('추천 아키텍처'),
+    description:
+      '행동 신호가 추천 목록이 되기까지 — 신호 수집, 점수 보정, 후보 생성, 랭킹, 재정렬, 콜드 스타트, 서빙, 실험을 다이어그램으로 좁혀 가며 본다. 단계마다 일반 개념, 이 서비스의 적용 상태, 코드.',
+  },
   '/portfolio': {
     title: portalTitle('포트폴리오'),
     description: '검색·전시·커머스·인프라·AI 엔지니어링 도메인에서 만든 것들과 그때의 판단.',
@@ -1351,20 +1356,23 @@ export const TRUST_LINKS = [
 ];
 
 /**
- * `/tech/search` 의 TechArticle. 페이지(useSeo)와 프리렌더가 이 함수 하나를 쓴다 — 둘이 다르면
+ * tech 드릴다운 페이지(`/tech/search` …)의 TechArticle. 페이지(useSeo)와 프리렌더가 이 함수 하나를 쓴다 — 둘이 다르면
  * 하이드레이션이 정적 HTML 의 구조화 데이터를 다른 값으로 갈아끼운다.
  * og:type 은 프리렌더가 website 로 고정하므로 글 성격은 여기서만 말한다.
  *
+ * @param {string} path PORTAL_PAGES 의 드릴다운 경로
+ * @param {string} headline 페이지 제목(h1)
  * @param {string} updated 드릴다운 데이터의 갱신일(YYYY-MM-DD)
  */
-export function techArticleJsonLd(updated) {
-  const page = PORTAL_PAGES['/tech/search'];
+export function techArticleJsonLd(path, headline, updated) {
+  const page = PORTAL_PAGES[path];
+  if (!page) throw new Error(`PORTAL_PAGES 에 ${path} 가 없다`);
   return {
     '@context': 'https://schema.org',
     '@type': 'TechArticle',
-    headline: '검색 아키텍처',
+    headline,
     description: page.description,
-    url: portalUrl('/tech/search'),
+    url: portalUrl(path),
     inLanguage: 'ko',
     dateModified: updated,
     author: personRef,

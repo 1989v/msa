@@ -12,7 +12,7 @@ dist
 dist-ssr
 *.local
 # 빌드 때 src/content 원본에서 만든다(scripts/render-content.mjs)
-/src/pages/tech/generated/search-drill.json
+/src/pages/tech/generated/*-drill.json
 /src/pages/place/generated/
 
 # Editor directories and files

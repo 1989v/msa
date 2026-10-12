@@ -28,6 +28,7 @@
 - 점수 가중치 `reservation×100 + click×20 + addwish×10 + pageview×1` + Wilson LCB — 도메인(`ActionWeightedScore`)이 소유
 - 밴딧(`RedisThompsonSampler`)은 실험 서비스와 함께 쓴다 — 변형 배정은 experiment, 보상 갱신은 여기
 - `/internal/**` 는 클러스터 내부 동기화(배치가 호출) — 게이트웨이가 라우팅하지 않는다
+- **공개 드릴다운 `/tech/recommendation` 이 이 서비스의 운영 상태를 보인다** — 단계를 켜거나(스케줄 배포 · 플래그 · 모델 적재) 값을 바꾸면 온톨로지 `recommendation.yaml` 의 `applied` 도 고치고 다시 내보낸다(ADR-0108). 가중치 · PPMI · HNSW · 밴딧 값은 드리프트 테스트가 대조한다
 - 외부 API 호출 없음. ANN 사이드카는 클러스터 내부 HTTP
 
 ## API

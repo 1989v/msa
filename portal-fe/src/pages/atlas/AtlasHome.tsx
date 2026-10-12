@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { AtlasDomain, ConceptAtlas } from './atlasGraph';
+import { DRILL_PAGES } from '../tech/drillPages.mjs';
 import { ConceptSearch, SectionHead } from './AtlasParts';
 
 // 첫 화면 분류 — 온톨로지가 아니라 보여 주는 방식이라 화면 쪽에 둔다.
@@ -44,14 +45,18 @@ export default function AtlasHome({ atlas }: { atlas: ConceptAtlas }) {
         </div>
         <ConceptSearch />
         {/* 아키텍처 드릴다운 — 도메인 하나를 업계 기준 파이프라인으로 그리고 단계를 눌러 좁혀 들어간다(ADR-0108) */}
-        <Link to="/tech/search" className="atlas-drill">
-          <span className="kh-mono atlas-drill__eyebrow">ARCHITECTURE · 검색</span>
-          <span className="atlas-drill__name">검색 아키텍처</span>
-          <span className="atlas-drill__desc">
-            검색어 하나가 결과가 되기까지 — 단계를 눌러 좁혀 들어가며 일반 개념, 이 서비스의 적용 상태, 코드를 본다.
-          </span>
-          <span className="kh-mono atlas-drill__go">다이어그램 열기 →</span>
-        </Link>
+        <ul className="atlas-drills">
+          {DRILL_PAGES.map((p) => (
+            <li key={p.domain}>
+              <Link to={p.path} className="atlas-drill">
+                <span className="kh-mono atlas-drill__eyebrow">ARCHITECTURE · {p.area}</span>
+                <span className="atlas-drill__name">{p.title}</span>
+                <span className="atlas-drill__desc">{p.card}</span>
+                <span className="kh-mono atlas-drill__go">다이어그램 열기 →</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className="atlas-home__sec" aria-label="서비스 도메인">

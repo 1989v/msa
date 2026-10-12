@@ -28,7 +28,13 @@ concepts:
       - "행동별 가중치 100 : 20 : 10 : 1 은 무엇에서 나온 비율인가"
     contains: [explicit-feedback, implicit-feedback, rec-action-weighting, rec-realtime-reward-aggregation, rec-data-sparsity]
     uses: [rec-interaction-matrix, impression-click-ledger]
-    flows_to: [rec-score-correction]
+    flows_to: [{ to: rec-score-correction, label: "행동 로그" }]
+    applied:
+      status: DISABLED
+      summary: "analytics 이벤트 토픽에서 상품 행동(노출 · 클릭 · 장바구니 · 주문)을 받아 ClickHouse 행동 테이블에 쌓는 소비자가 있다. 운영 ClickHouse 에는 그 테이블이 아직 없어 쌓인 행동이 없다(2026-10-12 확인)"
+      facts:
+        - { label: "행동 매핑", value: "노출 → pageview · 클릭 → click · 장바구니 → addwish · 주문 → reservation" }
+        - { label: "대상", value: "상품 행동만 — 검색 · 세션 이벤트는 버린다" }
   - id: explicit-feedback
     kind: MECHANISM
     name: "명시 피드백"
@@ -37,6 +43,10 @@ concepts:
     description: "별점 · 좋아요처럼 사용자가 선호를 직접 밝힌 신호다. 뜻이 분명하지만 양이 적고 남기는 사람이 치우친다"
     synonyms: ["explicit feedback", "rating"]
     alternative_to: [implicit-feedback]
+    flows_to: [rec-action-weighting]
+    applied:
+      status: NONE
+      summary: "별점 · 좋아요 같은 명시 피드백은 받지 않는다. 행동에서 추정한 암묵 피드백만 쓴다"
   - id: implicit-feedback
     kind: MECHANISM
     name: "암묵 피드백"
@@ -46,6 +56,10 @@ concepts:
     synonyms: ["implicit feedback", "one-class feedback"]
     code:
       - { path: recommendation/feature/src/main/kotlin/com/kgd/recommendation/infrastructure/kafka/RecommendationEventConsumer.kt, symbol: "class RecommendationEventConsumer", note: "analytics 이벤트에서 추천 행동을 받는다" }
+    flows_to: [rec-action-weighting]
+    applied:
+      status: DISABLED
+      summary: "노출 · 클릭 · 장바구니 · 주문 네 행동을 받는다. 운영에는 쌓을 테이블이 없다"
   - id: rec-action-weighting
     kind: MECHANISM
     name: "행동 가중합"
@@ -56,6 +70,14 @@ concepts:
     code:
       - { path: recommendation/domain/src/main/kotlin/com/kgd/recommendation/domain/recommendation/policy/ActionWeightedScore.kt, symbol: "object ActionWeightedScore", note: "가중치는 도메인이 소유" }
     contains: [rec-dynamic-action-weight]
+    applied:
+      status: DISABLED
+      summary: "행동마다 가중치를 곱해 더한다. 가중치는 도메인 정책 객체가 갖고, 카테고리 베스트 점수를 계산할 때 쓴다 — 그 계산이 운영에서 돌지 않는다"
+      facts:
+        - { label: "주문", value: "100", key: reservation-weight }
+        - { label: "클릭", value: "20", key: click-weight }
+        - { label: "장바구니", value: "10", key: addwish-weight }
+        - { label: "노출", value: "1", key: pageview-weight }
   - id: rec-dynamic-action-weight
     kind: MECHANISM
     name: "동적 행동 가중치"
@@ -91,7 +113,14 @@ concepts:
       - "노출 2회 클릭 2회인 아이템을 CTR 100% 로 줄 세우면 무엇이 틀리나"
       - "Wilson 하한과 베이지안 평활은 언제 무엇을 고르나"
     contains: [wilson-score, bayesian-smoothing, rec-small-sample-distortion]
-    flows_to: [rec-candidate-retrieval]
+    flows_to: [{ to: rec-candidate-retrieval, label: "아이템 점수" }]
+    applied:
+      status: DISABLED
+      summary: "카테고리 베스트 점수는 행동 가중합에 Wilson 하한으로 보정한 CTR 을 곱해 낸다 — 가중합 × ln(1 + Wilson CTR × 100). 최근 30일, 행동 10건 이상인 아이템만 계산한다. 계산은 내부 동기화 호출로만 돌고 운영에는 그 호출을 거는 스케줄이 없다"
+      facts:
+        - { label: "Wilson z", value: "1.96", key: wilson-z }
+        - { label: "집계 기간", value: "30일" }
+        - { label: "최소 행동 수", value: "10건" }
   - id: wilson-score
     kind: MECHANISM
     name: "Wilson 점수 하한"
@@ -134,7 +163,10 @@ concepts:
       - "Two-Tower 와 Two-Stage 는 어떻게 다른가"
     contains: [rec-rule-based-retrieval, rec-content-based, rec-collaborative, rec-embedding-retrieval, rec-geo-retrieval, hybrid-recommendation]
     measured_by: [srch-recall-at-k]
-    flows_to: [rec-ranking]
+    flows_to: [{ to: rec-ranking, label: "후보" }, { to: rec-cold-start, label: "행동 · 후보가 모자라면" }]
+    applied:
+      status: DISABLED
+      summary: "후보 원천 셋 — 카테고리 베스트, 아이템 협업 필터링(PPMI), 임베딩 ANN 이 구현돼 있다. 운영에서는 셋 다 비어 있다 — Redis 에 사전 계산 목록이 없고 ANN 사이드카에 모델 파일이 없다(2026-10-12 확인)"
   - id: rec-rule-based-retrieval
     kind: STAGE
     name: "룰 기반 추천"
@@ -142,7 +174,12 @@ concepts:
     level: BEGINNER
     description: "모델 없이 집계 규칙으로 목록을 만든다. 개인화는 약하지만 콜드 스타트의 안전망이고 첫 단계로 도입한다"
     contains: [popularity-recommendation, rec-category-best, rec-seasonal-window, rec-ctr-best, rec-repurchase-best]
-    flows_to: [rec-content-based]
+    flows_to: [{ to: hybrid-recommendation, label: "카테고리 베스트" }]
+    applied:
+      status: DISABLED
+      summary: "카테고리 베스트 — 도시 × 카테고리별 점수 상위 목록을 Redis 정렬 집합에 미리 넣고 읽는다. 목록을 채우는 동기화가 운영에서 돌지 않아 키가 없다"
+      facts:
+        - { label: "Redis 키", value: "reco:cb:{도시}:{카테고리}" }
   - id: popularity-recommendation
     kind: MECHANISM
     name: "인기 추천"
@@ -192,7 +229,10 @@ concepts:
     questions:
       - "콘텐츠 기반이 과도한 특화(비슷한 것만 반복)에 빠지는 이유는"
     contains: [content-based-filtering, more-like-this, rec-text-embedding-similarity]
-    flows_to: [rec-collaborative]
+    flows_to: [hybrid-recommendation]
+    applied:
+      status: NONE
+      summary: "콘텐츠 기반 후보는 없다"
   - id: content-based-filtering
     kind: MECHANISM
     name: "콘텐츠 기반 필터링"
@@ -231,7 +271,14 @@ concepts:
       - "사용자 기반보다 아이템 기반 CF 가 운영에서 흔한 이유는"
       - "코사인 · Jaccard · PMI 는 인기 아이템에 각각 어떻게 반응하나"
     contains: [collaborative-filtering, rec-similarity-metric, matrix-factorization, rec-popularity-bias]
-    flows_to: [rec-embedding-retrieval]
+    flows_to: [hybrid-recommendation]
+    applied:
+      status: DISABLED
+      summary: "아이템 × 아이템 PPMI 를 최근 행동으로 계산해 아이템마다 상위 목록을 Redis 에 둔다. 「비슷한 상품」 API 가 이것을 읽고, 개인화 후보에는 섞지 않는다. 운영에는 계산 스케줄과 원천 테이블이 없다"
+      facts:
+        - { label: "기간", value: "30일", key: ppmi-window-days }
+        - { label: "최소 동시 출현", value: "2회", key: ppmi-min-co-count }
+        - { label: "아이템당 상위", value: "50개", key: ppmi-top-per-item }
   - id: collaborative-filtering
     kind: MECHANISM
     name: "이웃 기반 협업 필터링"
@@ -241,6 +288,9 @@ concepts:
     synonyms: ["memory-based CF", "neighborhood CF", "kNN CF"]
     contains: [user-based-cf, item-based-cf]
     uses: [rec-co-occurrence]
+    applied:
+      status: DISABLED
+      summary: "아이템 기반만 있다 — 사용자 기반 · 행렬 분해는 없다"
   - id: user-based-cf
     kind: MECHANISM
     name: "사용자 기반 CF"
@@ -269,6 +319,10 @@ concepts:
     synonyms: ["similarity measure"]
     contains: [jaccard-similarity, pmi, lift, pearson-correlation]
     uses: [cosine-similarity]
+    flows_to: [{ to: collaborative-filtering, label: "아이템 유사도" }]
+    applied:
+      status: DISABLED
+      summary: "PPMI 로 아이템 쌍의 유사도를 낸다. 계산이 운영에서 돌지 않는다"
   - id: jaccard-similarity
     kind: MECHANISM
     name: "Jaccard 유사도"
@@ -371,7 +425,14 @@ concepts:
       - "in-batch negative 가 인기 아이템을 과하게 벌하는 이유와 보정 방법은"
     contains: [two-tower, item2vec, negative-sampling, faiss, rec-sampling-bias]
     uses: [ann-search, hnsw, embedding-model]
-    flows_to: [rec-geo-retrieval]
+    flows_to: [{ to: hybrid-recommendation, label: "ANN 후보" }]
+    applied:
+      status: DISABLED
+      summary: "Two-Tower 로 학습한 사용자 · 아이템 임베딩을 FAISS HNSW 사이드카가 들고 개인화 후보를 낸다. 사이드카 파드는 떠 있지만 모델 파일이 없어 빈 결과를 낸다(2026-10-12 확인)"
+      facts:
+        - { label: "HNSW M", value: "16", key: ann-hnsw-m }
+        - { label: "efSearch", value: "100", key: ann-hnsw-ef-search }
+        - { label: "후보 수", value: "max(요청 수 × 5, 100)" }
   - id: two-tower
     kind: MECHANISM
     name: "Two-Tower"
@@ -385,6 +446,10 @@ concepts:
     contains: [in-batch-negative, sampling-bias-correction]
     uses: [ann-search, pytorch]
     alternative_to: [matrix-factorization]
+    flows_to: [{ to: faiss, label: "아이템 임베딩" }]
+    applied:
+      status: DISABLED
+      summary: "PyTorch 로 사용자 · 아이템 타워를 학습해 임베딩 파일을 낸다. 학습 잡이 배포돼 있지 않다"
   - id: in-batch-negative
     kind: MECHANISM
     name: "in-batch negative"
@@ -421,6 +486,10 @@ concepts:
     code:
       - { path: recommendation-ml/train_ranking.py, symbol: "NEG_PER_POS = int(os.environ.get(\"NEG_PER_POS\", \"4\"))", note: "양성 1 : 무작위 음성 4" }
     uses: [implicit-feedback]
+    flows_to: [{ to: two-tower, label: "학습 표본" }]
+    applied:
+      status: DISABLED
+      summary: "학습 스크립트가 음성 표본을 섞어 Two-Tower 를 학습한다. 학습이 돌지 않는다"
   - id: faiss
     kind: TECHNOLOGY
     name: "FAISS"
@@ -431,6 +500,9 @@ concepts:
     code:
       - { path: recommendation-ann/app.py, symbol: "faiss.IndexHNSWFlat(dim, HNSW_M, faiss.METRIC_INNER_PRODUCT)", note: "M · efConstruction · efSearch 환경변수" }
     implements: [rec-ann-sidecar]
+    applied:
+      status: DISABLED
+      summary: "사이드카가 임베딩 파일로 HNSW 인덱스를 만든다. 올릴 파일이 없어 인덱스가 비어 있다"
   - id: rec-geo-retrieval
     kind: STAGE
     name: "위치 기반 추천"
@@ -442,6 +514,9 @@ concepts:
       - "거리 패널티와 인기를 단순 곱하면 어떤 함정이 있나"
     contains: [rec-spatial-cell-index, haversine-distance, rec-distance-decay]
     flows_to: [hybrid-recommendation]
+    applied:
+      status: NONE
+      summary: "위치 기반 후보는 추천에 없다"
   - id: rec-spatial-cell-index
     kind: MECHANISM
     name: "공간 셀 인덱싱"
@@ -474,6 +549,9 @@ concepts:
     code:
       - { path: recommendation/feature/src/main/kotlin/com/kgd/recommendation/application/recommendation/service/PersonalizedService.kt, symbol: "private fun mergeWithCb(", note: "임베딩 후보와 카테고리 베스트를 합친다" }
     uses: [content-based-filtering, collaborative-filtering, two-tower]
+    applied:
+      status: DISABLED
+      summary: "개인화 요청에서 ANN 후보가 요청 수의 절반에 못 미치면 카테고리 베스트로 채운다. 이 병합은 요청마다 돌지만 두 원천이 비어 있어 운영에서는 빈 목록이 나온다"
 
   # ── 랭킹 ─────────────────────────────────────────────────
   - id: rec-ranking
@@ -489,7 +567,12 @@ concepts:
     contains: [rec-ctr-prediction, rec-multi-task-ranking, rec-feature-engineering, srch-train-serve-skew, rec-auc, onnx-runtime]
     uses: [learning-to-rank]
     measured_by: [ndcg]
-    flows_to: [rec-reranking]
+    flows_to: [{ to: rec-reranking, label: "점수 순 목록" }]
+    applied:
+      status: DISABLED
+      summary: "ANN 후보를 ONNX 랭커(Wide & Deep · DLRM)로 다시 점수 매긴다. 사이드카에 랭커 모델이 없어 받은 순서를 그대로 돌려준다(2026-10-12 확인)"
+      facts:
+        - { label: "랭커", value: "wide_and_deep · dlrm (ONNX)" }
   - id: rec-ctr-prediction
     kind: MECHANISM
     name: "CTR 예측 모델"
@@ -501,6 +584,10 @@ concepts:
       - { path: recommendation/feature/src/main/kotlin/com/kgd/recommendation/infrastructure/client/RankingAnnRestClient.kt, symbol: "override fun rerank(", note: "사이드카 /rank 로 후보 재채점" }
     contains: [logistic-regression-ctr, factorization-machine, wide-and-deep, deepfm, dcn, dlrm, tab-transformer]
     measured_by: [rec-auc]
+    flows_to: [{ to: onnx-runtime, label: "ONNX 모델" }]
+    applied:
+      status: DISABLED
+      summary: "Wide & Deep · DLRM 두 랭커를 PyTorch 로 학습해 ONNX 로 내보낸다. 학습 잡이 배포돼 있지 않다"
   - id: logistic-regression-ctr
     kind: MECHANISM
     name: "로지스틱 회귀 CTR"
@@ -578,6 +665,10 @@ concepts:
     synonyms: ["feature engineering"]
     contains: [feature-store]
     uses: [rec-feature-cross, rec-sparse-dense-features, ranking-features]
+    flows_to: [{ to: rec-ctr-prediction, label: "특징" }]
+    applied:
+      status: DISABLED
+      summary: "학습 스크립트가 사용자 · 아이템 id 와 문맥 특징을 만든다. 운영에서 학습이 돌지 않는다"
   - id: feature-store
     kind: MECHANISM
     name: "Feature Store"
@@ -596,6 +687,9 @@ concepts:
     code:
       - { path: recommendation-ann/app.py, symbol: "import onnxruntime as ort", note: "user_tower.onnx · ranker.onnx 로드" }
     implements: [rec-ctr-prediction, two-tower]
+    applied:
+      status: DISABLED
+      summary: "사이드카가 onnxruntime 세션으로 랭커를 띄운다. 모델 파일이 없어 세션이 없다"
   - id: rec-auc
     kind: METRIC
     name: "AUC"
@@ -620,6 +714,10 @@ concepts:
     contains: [rec-diversification, rec-score-boost, rec-seen-filter, rec-calibration, rec-exposure-fairness, filter-bubble]
     uses: [diversity-business-rules]
     measured_by: [srch-intra-list-diversity]
+    flows_to: [rec-serving]
+    applied:
+      status: NONE
+      summary: "재정렬 단계는 없다. 폴백으로 목록을 채울 때 이미 고른 아이템을 빼는 중복 제거만 있다"
   - id: rec-diversification
     kind: MECHANISM
     name: "다양화"
@@ -629,6 +727,10 @@ concepts:
     synonyms: ["diversification"]
     contains: [mmr, dpp]
     mitigates: [filter-bubble]
+    flows_to: [rec-exposure-fairness]
+    applied:
+      status: NONE
+      summary: "다양화는 없다"
   - id: mmr
     kind: MECHANISM
     name: "MMR"
@@ -653,6 +755,10 @@ concepts:
     description: "신상품 · 프로모션 · 재고 같은 운영 의도를 가산점으로 넣거나 제외한다. 부스트는 기록하고 효과를 A/B 로 재야 모델 점수를 오염시키지 않는다"
     synonyms: ["boosting", "business rule", "freshness boost"]
     uses: [diversity-business-rules]
+    flows_to: [rec-diversification]
+    applied:
+      status: NONE
+      summary: "비즈니스 규칙 부스트는 없다"
   - id: rec-seen-filter
     kind: MECHANISM
     name: "이미 본 것 · 산 것 제외"
@@ -660,6 +766,10 @@ concepts:
     level: BEGINNER
     description: "최근 노출했거나 이미 구매한 아이템, 추천 대상 자신을 목록에서 뺀다. 소모품은 재구매 주기가 지나면 다시 넣는다"
     synonyms: ["seen filter", "dedup"]
+    flows_to: [rec-score-boost]
+    applied:
+      status: PARTIAL
+      summary: "이미 본 것 · 산 것은 빼지 않는다. 폴백 병합 때 같은 아이템 중복만 뺀다"
   - id: rec-calibration
     kind: MECHANISM
     name: "캘리브레이션"
@@ -675,6 +785,9 @@ concepts:
     description: "공급자 · 아이템 그룹이 받는 노출을 관련성에 비례하게 나눈다. 마켓플레이스에서 판매자 쏠림을 막는다"
     synonyms: ["fairness of exposure", "provider fairness"]
     mitigates: [rec-popularity-bias]
+    applied:
+      status: NONE
+      summary: "노출 공정성 보정은 없다"
   - id: filter-bubble
     kind: PROBLEM
     name: "필터 버블"
@@ -695,6 +808,12 @@ concepts:
       - "새 사용자 · 새 아이템 · 새 도시는 각각 무엇으로 버티나"
       - "하드 콜드 스타트와 소프트 콜드 스타트는 어떻게 다른가"
     contains: [rec-fallback-chain, rec-default-preference, rec-onboarding-bandit, rec-new-item-exposure, rec-transfer-learning, rec-cold-start-problem]
+    flows_to: [{ to: rec-serving, label: "폴백 목록" }]
+    applied:
+      status: PARTIAL
+      summary: "개인화 요청은 최근 30일 행동이 기준 미만이면 바로 카테고리 베스트로 넘긴다. 선호 도시 · 카테고리는 90일 행동에서 고르고 없으면 기본값을 쓴다. 판정과 폴백 순서는 요청마다 돌지만 폴백 목적지인 카테고리 베스트가 운영에서 비어 있다"
+      facts:
+        - { label: "개인화 최소 행동", value: "5", key: personalized-min-actions }
   - id: rec-fallback-chain
     kind: MECHANISM
     name: "폴백 체인"
@@ -758,6 +877,12 @@ concepts:
       - "캐시 키를 통째로 바꿀 때 읽는 쪽이 반쯤 쓴 목록을 보지 않게 하려면"
     contains: [rec-precompute-cache, rec-staged-key-swap, rec-ann-sidecar, rec-periodic-retraining, rec-funnel-latency-budget, rec-model-staleness, pytorch]
     uses: [redis]
+    flows_to: [{ to: rec-evaluation, label: "노출 · 클릭" }]
+    applied:
+      status: PARTIAL
+      summary: "추천 API 셋(카테고리 베스트 · 비슷한 상품 · 개인화)은 engagement 파드에서, ANN 은 사이드카 파드에서 돈다. 사전 계산 목록을 갱신하는 스케줄과 재학습 잡은 배포돼 있지 않다"
+      facts:
+        - { label: "API", value: "GET /api/v1/recommendations/category-best · similar-items · personalized" }
   - id: rec-precompute-cache
     kind: MECHANISM
     name: "사전 계산 · 캐시 서빙"
@@ -769,6 +894,13 @@ concepts:
       - { path: recommendation/feature/src/main/kotlin/com/kgd/recommendation/infrastructure/sync/CbScoreSync.kt, symbol: "class CbScoreSync(", note: "ClickHouse 집계 → Redis Top-N, TTL 25시간" }
     uses: [clickhouse, redis, caching]
     causes: [rec-model-staleness]
+    flows_to: [{ to: rec-staged-key-swap, label: "스테이징 키" }]
+    applied:
+      status: DISABLED
+      summary: "점수 상위 목록을 TTL 을 걸어 Redis 에 둔다. 동기화가 돌지 않아 운영에 키가 없다"
+      facts:
+        - { label: "파티션당 상위", value: "100개", key: cb-top-per-partition }
+        - { label: "TTL", value: "25시간", key: cb-ttl-hours }
   - id: rec-staged-key-swap
     kind: MECHANISM
     name: "스테이징 키 교체"
@@ -778,6 +910,9 @@ concepts:
     code:
       - { path: recommendation/feature/src/main/kotlin/com/kgd/recommendation/infrastructure/sync/ItemSimilaritySync.kt, symbol: "private fun commit(stagingKey: String, liveKey: String, ttl: Duration)", note: "staging → live 교체" }
     uses: [redis]
+    applied:
+      status: DISABLED
+      summary: "새 목록을 스테이징 키에 다 쓴 뒤 RENAME 으로 바꿔 끼운다 — 읽는 쪽이 반쯤 찬 목록을 보지 않는다. 동기화가 돌 때만 쓰인다"
   - id: rec-ann-sidecar
     kind: MECHANISM
     name: "ANN 추론 사이드카"
@@ -788,6 +923,11 @@ concepts:
     code:
       - { path: recommendation-ann/app.py, symbol: "def reindex():", note: "새 인덱스를 만든 뒤 교체" }
     uses: [faiss, onnx-runtime]
+    applied:
+      status: PARTIAL
+      summary: "FAISS · ONNX 사이드카 파드가 운영에 떠 있다. 모델 볼륨이 비어 상태가 degraded 다(2026-10-12 확인)"
+      facts:
+        - { label: "상태", value: "degraded · retrieval_ready=false · ranking_ready=false" }
   - id: rec-periodic-retraining
     kind: MECHANISM
     name: "주기 재학습"
@@ -799,6 +939,10 @@ concepts:
       - { path: k8s/base/recommendation-ann/argo-train-daily.yaml, symbol: "kind: CronWorkflow", note: "일일 학습 워크플로" }
     uses: [pytorch, rec-temporal-split]
     mitigates: [rec-model-staleness]
+    flows_to: [{ to: rec-ann-sidecar, label: "모델 파일" }]
+    applied:
+      status: DISABLED
+      summary: "매일 04:00 재학습 워크플로 정의가 있지만 배포 목록에 없다"
   - id: rec-funnel-latency-budget
     kind: METRIC
     name: "퍼널 단계별 지연 예산"
@@ -836,6 +980,9 @@ concepts:
       - "추천에서 오프라인 지표가 좋아도 A/B 에서 지는 이유는"
       - "무작위 분할 대신 시간 순 분할을 쓰는 이유는"
     contains: [rec-offline-evaluation, rec-online-evaluation, rec-drift-monitoring, rec-concept-drift, rec-feedback-loop]
+    applied:
+      status: DISABLED
+      summary: "오프라인 평가는 학습 스크립트 안에만 있고, 온라인 실험 · 밴딧 · 노출 발행은 구현돼 있지만 꺼져 있다"
   - id: rec-offline-evaluation
     kind: STAGE
     name: "오프라인 평가"
@@ -846,6 +993,9 @@ concepts:
     uses: [off-policy-evaluation]
     measured_by: [ndcg, recall-precision]
     flows_to: [rec-online-evaluation]
+    applied:
+      status: DISABLED
+      summary: "학습 스크립트가 시간 순으로 나눠 AUC 를 잰다. 학습이 돌지 않아 결과가 없다"
   - id: rec-temporal-split
     kind: MECHANISM
     name: "시간 순 분할"
@@ -893,6 +1043,12 @@ concepts:
     contains: [rec-experiment-variant-routing, rec-variant-bandit, rec-impression-publishing, srch-dwell-time]
     uses: [ab-test, interleaving]
     measured_by: [ctr, ads-cvr, ord-gmv]
+    applied:
+      status: DISABLED
+      summary: "변형 넷(control · retrieval-only · retrieval-and-rank · retrieval-and-rank-dlrm)을 실험 배정이나 톰슨 밴딧으로 고른다. 운영값은 실험 id 0, 밴딧 꺼짐, 노출 발행 꺼짐이라 기본 변형만 쓴다"
+      facts:
+        - { label: "밴딧", value: "false", key: bandit-enabled }
+        - { label: "사전 분포", value: "Beta(1, 10)" }
   - id: rec-experiment-variant-routing
     kind: MECHANISM
     name: "실험 변형 분기"

@@ -7,6 +7,7 @@ vi.mock('../components/AuthButton', () => ({ default: () => null }));
 vi.mock('../api/resumeApi', () => ({ fetchResumeStatus: () => Promise.resolve(false) }));
 
 import App from '../App';
+import { DRILL_PAGES } from '../pages/tech/drillPages.mjs';
 
 /**
  * App 이 BrowserRouter 를 직접 연다 — MemoryRouter 로 감쌀 수 없어 주소를 먼저 바꾸고 그린다.
@@ -23,17 +24,17 @@ function renderAt(path: string) {
 afterEach(() => window.history.pushState({}, '', '/'));
 
 describe('라우트', () => {
-  it('/tech/search 는 검색 아키텍처 페이지다 — /tech/:category 용어집이 받지 않는다', async () => {
-    renderAt('/tech/search');
+  it.each(DRILL_PAGES)('$path 는 $title 페이지다 — /tech/:category 용어집이 받지 않는다', async (page) => {
+    renderAt(page.path);
     const h1 = await screen.findByRole('heading', { level: 1 });
-    expect(h1.textContent).toBe('검색 아키텍처');
+    expect(h1.textContent).toBe(page.title);
     expect(h1.textContent).not.toMatch(/용어집/);
   });
 
-  it('/tech 아틀라스 NAV 에 검색 아키텍처 링크가 하나 있다', async () => {
+  it.each(DRILL_PAGES)('/tech 아틀라스 NAV 에 $title 링크가 하나 있다', async (page) => {
     renderAt('/tech');
-    const links = await screen.findAllByRole('link', { name: '검색 아키텍처' });
+    const links = await screen.findAllByRole('link', { name: page.title });
     expect(links).toHaveLength(1);
-    expect(links[0].getAttribute('href')).toBe('/tech/search');
+    expect(links[0].getAttribute('href')).toBe(page.path);
   });
 });

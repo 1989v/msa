@@ -16,7 +16,7 @@ import java.io.File
  * - 개념 X 의 그림 노드 = 자식 중 STAGE 이거나 형제와 FLOWS_TO 로 이어진 것. 나머지 자식은 관련 개념
  * - 간선 = 그림 안 노드끼리의 FLOWS_TO, 글자는 관계의 label
  * - 노드의 자식 중 STAGE 가 둘 이상이고 자식 사이에 흐름이 하나도 없으면 그 노드를 묶음으로 그리고 STAGE 자식을 나란히 펼친다
- * - 펼침은 3단계까지 — 3단계에서 연 개념은 그림 없이 설명만
+ * - 펼침은 3단계까지 — 3단계에서 연 개념은 그림 없이 설명만. 화면이 그 사실을 말하도록 `maxDepth` 로 함께 낸다
  *
  * 그려지는 개념은 `applied.status` 가 있어야 한다. 없는 단계를 빼고 그리면 읽는 사람은 있다고 가정한다.
  * 코드 스니펫은 여기서 원본 파일을 읽어 싣는다 — portal-fe 이미지 빌드는 레포의 다른 디렉토리를 못 본다.
@@ -61,7 +61,10 @@ class DrillExportSpec : BehaviorSpec({
  */
 private data class Drill(val domain: String, val root: String, val updated: String)
 
-private val DRILLS = listOf(Drill("search", "search-query", "2026-10-12"))
+private val DRILLS = listOf(
+    Drill("search", "search-query", "2026-10-12"),
+    Drill("recommendation", "recommendation-system", "2026-10-12"),
+)
 
 /** 펼칠 수 있는 단계 수. 루트 그림의 노드가 1단계다 */
 private const val MAX_DEPTH = 3
@@ -113,7 +116,7 @@ private fun render(o: ConceptOntology, drill: Drill, repo: File, problems: Mutab
     for (id in drawnIds) if (byId.getValue(id).applied == null) problems += "$id 는 그려지는데 applied.status 가 없다"
 
     return buildString {
-        append("{\n\"root\": ${q(root)},\n\"updated\": ${q(drill.updated)},\n\"concepts\": {\n")
+        append("{\n\"root\": ${q(root)},\n\"updated\": ${q(drill.updated)},\n\"maxDepth\": $MAX_DEPTH,\n\"concepts\": {\n")
         append(exported.joinToString(",\n") { id -> "${q(id)}: ${concept(byId.getValue(id), repo, problems)}" })
         append("\n},\n\"diagrams\": {\n")
         append(diagrams.entries.joinToString(",\n") { (owner, d) ->

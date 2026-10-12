@@ -3,7 +3,7 @@
  *
  * - 열: 흐름(간선)의 최장 경로 단계. 간선이 없는 노드는 첫 열
  * - 가로: 열이 화면 폭을 넘으면 다음 줄로 접고, 줄을 넘는 간선은 아래로 내려 왼쪽으로 돌아 들어간다
- * - 세로(좁은 화면): 열을 행으로 바꾼다
+ * - 세로(좁은 화면): 열을 행으로 바꾸고, 한 행이 폭을 넘으면 여러 줄로 접는다(같은 단계끼리는 간선이 없다)
  * - 묶음 노드는 틀 안에 하위 단계를 나란히 펼친다
  */
 
@@ -123,17 +123,34 @@ export function layoutDiagram(d: DrillDiagram, { vertical, maxWidth }: { vertica
   const bandBottoms: number[] = [];
 
   if (vertical) {
+    const step = GAP_X / 2;
+    const rows: DrillNode[][] = [];
+    for (const col of columns) {
+      let row: DrillNode[] = [];
+      let used = 0;
+      for (const n of col) {
+        const w = size(n, true).w;
+        if (row.length && used + step + w > maxWidth - PAD * 2) {
+          rows.push(row);
+          row = [];
+          used = 0;
+        }
+        used += (row.length ? step : 0) + w;
+        row.push(n);
+      }
+      rows.push(row);
+    }
     let y = PAD;
-    const rowWidths = columns.map((col) => col.reduce((s, n) => s + size(n, true).w, 0) + (col.length - 1) * (GAP_X / 2));
+    const rowWidths = rows.map((col) => col.reduce((s, n) => s + size(n, true).w, 0) + (col.length - 1) * step);
     width = Math.max(...rowWidths) + PAD * 2;
-    columns.forEach((col, r) => {
+    rows.forEach((col, r) => {
       const rowH = Math.max(...col.map((n) => size(n, true).h));
       let x = (width - rowWidths[r]) / 2;
       for (const n of col) {
         const { w, h } = size(n, true);
         boxes.set(n.id, { id: n.id, x, y: y + (rowH - h) / 2, w, h, lanes: lanesOf(n, x, y + (rowH - h) / 2, true) });
         bandOf.set(n.id, 0);
-        x += w + GAP_X / 2;
+        x += w + step;
       }
       y += rowH + GAP_Y + 18;
     });
@@ -179,15 +196,20 @@ export function layoutDiagram(d: DrillDiagram, { vertical, maxWidth }: { vertica
     const mid = between(e);
     if (vertical) {
       const x1 = a.x + a.w / 2, y1 = a.y + a.h, x2 = b.x + b.w / 2, y2 = b.y;
-      const hit = mid.filter((m) => m.x < Math.max(x1, x2) + 8 && m.x + m.w > Math.min(x1, x2) - 8);
+      // 사이에 낀 상자 — 단계를 건너뛴 간선뿐 아니라 접힌 줄을 지나는 간선도 걸린다
+      const hit = [...boxes.values()].filter(
+        (m) => m.id !== e.from && m.id !== e.to && m.y >= y1 && m.y + m.h <= y2 && m.x < Math.max(x1, x2) + 8 && m.x + m.w > Math.min(x1, x2) - 8,
+      );
       if (hit.length) {
         // 사이 노드의 옆으로 비켜 내려간다 — 출발이 가운데보다 왼쪽이면 왼쪽으로
         const left = x1 <= width / 2;
         const sx = left ? Math.min(...hit.map((m) => m.x)) - 16 : Math.max(...hit.map((m) => m.x + m.w)) + 16;
         const dd = `M${x1},${y1} C${x1},${y1 + 24} ${sx},${y1 + 12} ${sx},${y1 + 36} L${sx},${y2 - 36} C${sx},${y2 - 12} ${x2},${y2 - 24} ${x2},${y2}`;
-        return { from: e.from, to: e.to, label: e.label, d: dd, lx: sx, ly: (y1 + y2) / 2 };
+        // 글자는 돌아가는 선이 아니라 출발 상자 바로 밑에 — 선은 가장자리를 타서 글자가 그림 밖으로 잘린다
+        return { from: e.from, to: e.to, label: e.label, d: dd, lx: x1, ly: y1 + 30 };
       }
-      return { from: e.from, to: e.to, label: e.label, d: curveV(x1, y1, x2, y2), lx: (x1 + x2) / 2, ly: (y1 + y2) / 2 };
+      // 글자는 받는 상자 쪽에 붙인다 — 가운데에 두면 출발 상자의 [상세보기] 글자와 겹친다
+      return { from: e.from, to: e.to, label: e.label, d: curveV(x1, y1, x2, y2), lx: (x1 + x2) / 2, ly: y2 - 6 };
     }
     if (bandOf.get(e.from) === bandOf.get(e.to)) {
       const x1 = a.x + a.w, y1 = a.y + a.h / 2, x2 = b.x, y2 = b.y + b.h / 2;

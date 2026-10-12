@@ -4,6 +4,7 @@ import GNB from '../../components/GNB';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import { PORTAL_PAGES, portalTitle, portalUrl } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
+import { DRILL_NAV } from '../tech/drillPages.mjs';
 import AtlasHome from './AtlasHome';
 import { domainLinks, kindCounts, pathFromRoot } from './atlasGraph';
 import ConceptPanel from './ConceptPanel';
@@ -11,11 +12,6 @@ import DomainScreen from './DomainScreen';
 import { useDescriptions, useGraph } from './useAtlasData';
 import './ConceptAtlas.css';
 
-const NAV = [
-  { label: '아틀라스', href: '/tech' },
-  { label: '검색 아키텍처', href: '/tech/search' },
-  { label: '홈', href: '/' },
-];
 
 /**
  * `/tech` 개념 아틀라스 — 아틀라스(서비스 도메인 · 기반 기술) → 도메인(그래프 · 묶음) → 개념 순으로 좁혀 간다.
@@ -125,7 +121,7 @@ export default function ConceptAtlasPage() {
 
   return (
     <div className="atlas-page">
-      <GNB pageLabel="IT" items={NAV} />
+      <GNB pageLabel="IT" items={DRILL_NAV} />
       {body}
     </div>
   );

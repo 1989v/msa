@@ -135,11 +135,20 @@
 .atlas-home__sec { max-width: 1240px; margin: var(--ko-space-10) auto 0; }
 
 /* 아키텍처 드릴다운 진입 — 한지 위 한 장, 비대칭 모서리 */
+.atlas-drills {
+  list-style: none;
+  margin: var(--ko-space-5) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: var(--ko-space-3);
+  max-width: 52rem;
+}
 .atlas-drill {
   display: grid;
   gap: var(--ko-space-1);
-  max-width: 34rem;
-  margin-top: var(--ko-space-5);
+  height: 100%;
+  box-sizing: border-box;
   padding: var(--ko-space-4);
   border: 1px solid var(--ko-border-default);
   border-radius: var(--kh-radius-asym);
