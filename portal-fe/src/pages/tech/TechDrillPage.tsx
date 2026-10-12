@@ -118,7 +118,10 @@ function useWidth<T extends HTMLElement>() {
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
-    setWidth(el.clientWidth || width);
+    // 안쪽 여백을 뺀 폭 — 아래 ResizeObserver 의 contentRect 와 같은 기준이어야 첫 그림이 여백만큼 넘치지 않는다
+    const cs = getComputedStyle(el);
+    const content = el.clientWidth - parseFloat(cs.paddingLeft || '0') - parseFloat(cs.paddingRight || '0');
+    setWidth(content > 0 ? Math.round(content) : width);
     if (typeof ResizeObserver === 'undefined') return;
     const ro = new ResizeObserver(([entry]) => setWidth(Math.round(entry.contentRect.width)));
     ro.observe(el);
