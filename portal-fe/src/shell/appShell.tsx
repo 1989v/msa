@@ -140,6 +140,12 @@ const BLOG_TABS: ShellTab[] = [
 /** 게임 플레이 화면 — 허브(/games)·장르(/games/genre/*)가 아닌 /games/{slug} */
 const GAME_PLAY_PATH = /^\/(en\/)?games\/(?!genre\/)[^/]+\/?$/;
 
+/**
+ * place 관광지 상세 — 하단 행동 바(찜·길찾기·공유)가 탭바 자리를 쓴다. 둘을 겹쳐 쌓으면
+ * 모바일 첫 화면 아래가 막대 둘로 덮이고, 상세에서 탭바 이동은 뒤로 가기와 겹친다.
+ */
+const PLACE_DETAIL_PATH = /^\/(en\/)?attractions\/[^/]+\/?$/;
+
 export function shellTabsFor(hostname: string, pathname: string): ShellTab[] | null {
   if (GAME_PLAY_PATH.test(pathname)) return null;
   // 로그인·OAuth 콜백 — 일회성 중단 화면이라 탭바가 목적을 흐린다 (게임 플레이와 같은
@@ -150,7 +156,7 @@ export function shellTabsFor(hostname: string, pathname: string): ShellTab[] | n
   const sub = hostname.split('.')[0];
   // ads: 광고주 콘솔은 자기 탭(대시보드·캠페인·리포트)을 갖는 작업 화면이다.
   if (sub === 'resume' || sub === 'deal' || sub === 'ads') return null;
-  if (sub === 'place') return PLACE_TABS;
+  if (sub === 'place') return PLACE_DETAIL_PATH.test(pathname) ? null : PLACE_TABS;
   if (sub === 'game') return GAME_TABS;
   if (sub === 'blog') return BLOG_TABS;
   return APEX_TABS;

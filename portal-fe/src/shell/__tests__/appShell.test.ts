@@ -15,6 +15,17 @@ describe('shellTabsFor — 호스트별 탭', () => {
     expect(keys('place.1989v.com')).toEqual(['map', 'favorites', 'services']);
   });
 
+  it('place 관광지 상세는 탭바가 없다 — 하단 행동 바가 그 자리를 쓴다', () => {
+    expect(shellTabsFor('place.1989v.com', '/attractions/126508')).toBeNull();
+    expect(shellTabsFor('place.1989v.com', '/en/attractions/2001')).toBeNull();
+  });
+
+  it('place 허브·지역·가이드는 탭바가 그대로다', () => {
+    for (const path of ['/', '/en', '/regions/11', '/en/regions/11', '/regions/11/parking', '/guides']) {
+      expect(keys('place.1989v.com', path), path).toEqual(['map', 'favorites', 'services']);
+    }
+  });
+
   it('game 은 로비·장르·내 찜·서비스를 갖는다', () => {
     expect(keys('game.1989v.com')).toEqual(['lobby', 'genres', 'favorites', 'services']);
   });

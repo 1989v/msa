@@ -14,8 +14,8 @@ import {
  * 하단 탭바 — 모바일 주 이동 축 (kh-motion-app-shell spec §4).
  *
  * 항상 렌더하고 노출은 CSS 가 결정한다 (< 768px 만). 탭 구성은 호스트별로
- * appShell.tsx 에 선언돼 있고, 구성이 없는 호스트(resume/deal/place)와
- * 게임 플레이 화면에서는 아예 그리지 않는다.
+ * appShell.tsx 에 선언돼 있고, 구성이 없는 호스트(resume/deal/ads)와
+ * 게임 플레이 화면 · place 관광지 상세(하단 행동 바가 이 자리를 쓴다)에서는 아예 그리지 않는다.
  *
  * 탭 간 이동은 push 가 아니라 cross-fade 다 — markTabNav 가 방향 판정을
  * 'tab' 으로 돌려 스택 전환 애니메이션을 비껴간다.

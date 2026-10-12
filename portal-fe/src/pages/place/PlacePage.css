@@ -3068,7 +3068,7 @@ button.place-card {
 /*
  * 상세 하단 행동 바(≤640px, AttractionActionBar) — 행동 줄이 머리띠 밑으로 지나간 뒤에만 보인다.
  * 면은 하단 탭바(.kh-tabbar)와 같은 기와 먹빛 판이고, .kh-slab 범위라 안쪽 --ko-text-* 가 판 위 글씨로 바뀐다.
- * 탭바가 있는 호스트(place)에서는 탭바 바로 위에 앉는다 — bottom 이 탭바 높이(--kh-shell-bottom)다.
+ * 상세에는 하단 탭바가 없다(appShell `shellTabsFor`) — 바가 그 자리, 화면 맨 아래에 붙고 safe-area 를 스스로 갖는다.
  * 등장 전환은 두지 않는다(hidden → 즉시 표시).
  */
 .place-action-bar {
@@ -3076,7 +3076,7 @@ button.place-card {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: var(--kh-shell-bottom, 0px);
+  bottom: 0;
   z-index: 200; /* sticky 층 — 시트(300)·사진 보기(1000) 아래 */
   display: grid;
   grid-auto-flow: column;
@@ -3094,12 +3094,6 @@ button.place-card {
   border-top: 1px solid var(--kh-slab-border, var(--ko-border-subtle));
   border-radius: 0;
   color: var(--kh-hanji, var(--ko-text-primary));
-}
-
-/* safe-area 는 탭바가 이미 갖는다 */
-:root[data-tabbar='on'] .place-action-bar {
-  height: var(--place-action-bar-h);
-  padding-bottom: 0;
 }
 
 /* 바는 푸터 바로 앞 형제라 Footer.css 의 `#root :has(+ .site-footer)` 여백(48px, 명시도 1,1,0)이 걸려
@@ -3212,19 +3206,15 @@ button.place-card {
  * 허브로 돌아가면 바가 언마운트되어 저절로 풀린다. 마지막 내용과 키보드 포커스가 바 밑에 깔리지 않는다(WCAG 2.4.11).
  */
 html:has(.place-action-bar) {
-  scroll-padding-bottom: calc(var(--place-action-bar-h, 56px) + var(--kh-shell-bottom, env(safe-area-inset-bottom, 0px)));
+  scroll-padding-bottom: calc(var(--place-action-bar-h, 56px) + env(safe-area-inset-bottom, 0px));
 }
 
 html:has(.place-action-bar) .place-page {
   padding-bottom: calc(1rem + 56px + env(safe-area-inset-bottom, 0px));
 }
 
-html[data-tabbar='on']:has(.place-action-bar) .place-page {
-  padding-bottom: calc(1rem + 56px);
-}
-
 html:has(.place-action-bar) .favorite-resume-notice {
-  bottom: calc(16px + 56px + var(--kh-shell-bottom, env(safe-area-inset-bottom, 0px)));
+  bottom: calc(16px + 56px + env(safe-area-inset-bottom, 0px));
 }
 
 /*
