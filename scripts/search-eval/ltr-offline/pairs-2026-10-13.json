@@ -1,0 +1,1002 @@
+[
+ {
+  "q": "아이랑 갈 만한 곳",
+  "l": "ko",
+  "c": "6202",
+  "ltr": "16324",
+  "c_rank": 0,
+  "ltr_rank_in_c": 5,
+  "id": "y000",
+  "c_side": "left"
+ },
+ {
+  "q": "hanok village",
+  "l": "en",
+  "c": "59606",
+  "ltr": "14791",
+  "c_rank": 4,
+  "ltr_rank_in_c": 8,
+  "id": "y001",
+  "c_side": "left"
+ },
+ {
+  "q": "hot spring",
+  "l": "en",
+  "c": "14752",
+  "ltr": "2128",
+  "c_rank": 3,
+  "ltr_rank_in_c": 5,
+  "id": "y002",
+  "c_side": "right"
+ },
+ {
+  "q": "busan beach",
+  "l": "en",
+  "c": "2218",
+  "ltr": "14342",
+  "c_rank": 2,
+  "ltr_rank_in_c": 18,
+  "id": "y003",
+  "c_side": "right"
+ },
+ {
+  "q": "성산일춘봉",
+  "l": "ko",
+  "c": "5705",
+  "ltr": "5979",
+  "c_rank": 2,
+  "ltr_rank_in_c": 14,
+  "id": "y004",
+  "c_side": "left"
+ },
+ {
+  "q": "해수욕쟝",
+  "l": "ko",
+  "c": "8721",
+  "ltr": "4675",
+  "c_rank": 1,
+  "ltr_rank_in_c": 7,
+  "id": "y005",
+  "c_side": "right"
+ },
+ {
+  "q": "jeju oreum",
+  "l": "en",
+  "c": "18122",
+  "ltr": "2357",
+  "c_rank": 1,
+  "ltr_rank_in_c": 9,
+  "id": "y006",
+  "c_side": "left"
+ },
+ {
+  "q": "조용한 사찰",
+  "l": "ko",
+  "c": "5627",
+  "ltr": "697",
+  "c_rank": 0,
+  "ltr_rank_in_c": 5,
+  "id": "y007",
+  "c_side": "right"
+ },
+ {
+  "q": "haeundae",
+  "l": "en",
+  "c": "1886",
+  "ltr": "59539",
+  "c_rank": 4,
+  "ltr_rank_in_c": 7,
+  "id": "y008",
+  "c_side": "right"
+ },
+ {
+  "q": "scenic drive",
+  "l": "en",
+  "c": "1908",
+  "ltr": "14965",
+  "c_rank": 1,
+  "ltr_rank_in_c": 6,
+  "id": "y009",
+  "c_side": "right"
+ },
+ {
+  "q": "역사 체험",
+  "l": "ko",
+  "c": "21769",
+  "ltr": "19737",
+  "c_rank": 2,
+  "ltr_rank_in_c": 6,
+  "id": "y010",
+  "c_side": "right"
+ },
+ {
+  "q": "걷기 좋은 길",
+  "l": "ko",
+  "c": "20701",
+  "ltr": "530",
+  "c_rank": 0,
+  "ltr_rank_in_c": 12,
+  "id": "y011",
+  "c_side": "right"
+ },
+ {
+  "q": "둘레길",
+  "l": "ko",
+  "c": "4259",
+  "ltr": "5968",
+  "c_rank": 2,
+  "ltr_rank_in_c": 5,
+  "id": "y012",
+  "c_side": "right"
+ },
+ {
+  "q": "botanical garden",
+  "l": "en",
+  "c": "15167",
+  "ltr": "15040",
+  "c_rank": 2,
+  "ltr_rank_in_c": 7,
+  "id": "y013",
+  "c_side": "right"
+ },
+ {
+  "q": "계곡",
+  "l": "ko",
+  "c": "12386",
+  "ltr": "8976",
+  "c_rank": 4,
+  "ltr_rank_in_c": 5,
+  "id": "y014",
+  "c_side": "left"
+ },
+ {
+  "q": "temple stay",
+  "l": "en",
+  "c": "1809",
+  "ltr": "14650",
+  "c_rank": 2,
+  "ltr_rank_in_c": 8,
+  "id": "y015",
+  "c_side": "right"
+ },
+ {
+  "q": "nami island",
+  "l": "en",
+  "c": "2131",
+  "ltr": "1665",
+  "c_rank": 2,
+  "ltr_rank_in_c": 6,
+  "id": "y016",
+  "c_side": "left"
+ },
+ {
+  "q": "할나산",
+  "l": "ko",
+  "c": "1297",
+  "ltr": "11582",
+  "c_rank": 2,
+  "ltr_rank_in_c": 5,
+  "id": "y017",
+  "c_side": "right"
+ },
+ {
+  "q": "사진 찍기 좋은 곳",
+  "l": "ko",
+  "c": "17327",
+  "ltr": "8443",
+  "c_rank": 2,
+  "ltr_rank_in_c": 6,
+  "id": "y018",
+  "c_side": "left"
+ },
+ {
+  "q": "템플스테이",
+  "l": "ko",
+  "c": "12503",
+  "ltr": "8180",
+  "c_rank": 2,
+  "ltr_rank_in_c": 5,
+  "id": "y019",
+  "c_side": "right"
+ },
+ {
+  "q": "aquarim",
+  "l": "en",
+  "c": "18232",
+  "ltr": "14771",
+  "c_rank": 1,
+  "ltr_rank_in_c": 10,
+  "id": "y020",
+  "c_side": "right"
+ },
+ {
+  "q": "뮤지엄",
+  "l": "ko",
+  "c": "15868",
+  "ltr": "16780",
+  "c_rank": 2,
+  "ltr_rank_in_c": 5,
+  "id": "y021",
+  "c_side": "right"
+ },
+ {
+  "q": "waterfall",
+  "l": "en",
+  "c": "14829",
+  "ltr": "15064",
+  "c_rank": 3,
+  "ltr_rank_in_c": 7,
+  "id": "y022",
+  "c_side": "right"
+ },
+ {
+  "q": "place to visit on a rainy day",
+  "l": "en",
+  "c": "18374",
+  "ltr": "18041",
+  "c_rank": 3,
+  "ltr_rank_in_c": 5,
+  "id": "y023",
+  "c_side": "left"
+ },
+ {
+  "q": "설악산",
+  "l": "ko",
+  "c": "7706",
+  "ltr": "7183",
+  "c_rank": 2,
+  "ltr_rank_in_c": 5,
+  "id": "y024",
+  "c_side": "left"
+ },
+ {
+  "q": "photo spot",
+  "l": "en",
+  "c": "13641",
+  "ltr": "15122",
+  "c_rank": 4,
+  "ltr_rank_in_c": 7,
+  "id": "y025",
+  "c_side": "right"
+ },
+ {
+  "q": "혼자서 여행",
+  "l": "ko",
+  "c": "15416",
+  "ltr": "2570",
+  "c_rank": 3,
+  "ltr_rank_in_c": 6,
+  "id": "y026",
+  "c_side": "left"
+ },
+ {
+  "q": "벚꽃 명소",
+  "l": "ko",
+  "c": "6675",
+  "ltr": "8019",
+  "c_rank": 2,
+  "ltr_rank_in_c": 6,
+  "id": "y027",
+  "c_side": "right"
+ },
+ {
+  "q": "데이트 코스",
+  "l": "ko",
+  "c": "20101",
+  "ltr": "13275",
+  "c_rank": 2,
+  "ltr_rank_in_c": 11,
+  "id": "y028",
+  "c_side": "left"
+ },
+ {
+  "q": "camping site",
+  "l": "en",
+  "c": "22383",
+  "ltr": "22303",
+  "c_rank": 3,
+  "ltr_rank_in_c": 6,
+  "id": "y029",
+  "c_side": "right"
+ },
+ {
+  "q": "바다가 보이는 곳",
+  "l": "ko",
+  "c": "20565",
+  "ltr": "10761",
+  "c_rank": 0,
+  "ltr_rank_in_c": 10,
+  "id": "y030",
+  "c_side": "right"
+ },
+ {
+  "q": "일출 명소",
+  "l": "ko",
+  "c": "1551",
+  "ltr": "6301",
+  "c_rank": 2,
+  "ltr_rank_in_c": 6,
+  "id": "y031",
+  "c_side": "left"
+ },
+ {
+  "q": "seoraksan",
+  "l": "en",
+  "c": "14212",
+  "ltr": "14442",
+  "c_rank": 4,
+  "ltr_rank_in_c": 5,
+  "id": "y032",
+  "c_side": "left"
+ },
+ {
+  "q": "부산 해수욕장",
+  "l": "ko",
+  "c": "7701",
+  "ltr": "7670",
+  "c_rank": 4,
+  "ltr_rank_in_c": 6,
+  "id": "y033",
+  "c_side": "left"
+ },
+ {
+  "q": "seoul night view",
+  "l": "en",
+  "c": "14515",
+  "ltr": "14563",
+  "c_rank": 1,
+  "ltr_rank_in_c": 5,
+  "id": "y034",
+  "c_side": "left"
+ },
+ {
+  "q": "한옥촌",
+  "l": "ko",
+  "c": "13106",
+  "ltr": "10937",
+  "c_rank": 3,
+  "ltr_rank_in_c": 10,
+  "id": "y035",
+  "c_side": "left"
+ },
+ {
+  "q": "유모차 대여 박물관",
+  "l": "ko",
+  "c": "15960",
+  "ltr": "16604",
+  "c_rank": 1,
+  "ltr_rank_in_c": 5,
+  "id": "y036",
+  "c_side": "left"
+ },
+ {
+  "q": "date course",
+  "l": "en",
+  "c": "22243",
+  "ltr": "14372",
+  "c_rank": 3,
+  "ltr_rank_in_c": 14,
+  "id": "y037",
+  "c_side": "left"
+ },
+ {
+  "q": "독립기녕관",
+  "l": "ko",
+  "c": "16698",
+  "ltr": "12573",
+  "c_rank": 3,
+  "ltr_rank_in_c": 6,
+  "id": "y038",
+  "c_side": "right"
+ },
+ {
+  "q": "free admission museum",
+  "l": "en",
+  "c": "18024",
+  "ltr": "18261",
+  "c_rank": 3,
+  "ltr_rank_in_c": 8,
+  "id": "y039",
+  "c_side": "right"
+ },
+ {
+  "q": "서울 궁궐",
+  "l": "ko",
+  "c": "16151",
+  "ltr": "16477",
+  "c_rank": 3,
+  "ltr_rank_in_c": 10,
+  "id": "y040",
+  "c_side": "left"
+ },
+ {
+  "q": "반려동물 동반 해수욕장",
+  "l": "ko",
+  "c": "8338",
+  "ltr": "616",
+  "c_rank": 2,
+  "ltr_rank_in_c": 18,
+  "id": "y041",
+  "c_side": "right"
+ },
+ {
+  "q": "botanical garden with parking",
+  "l": "en",
+  "c": "15014",
+  "ltr": "2034",
+  "c_rank": 4,
+  "ltr_rank_in_c": 6,
+  "id": "y042",
+  "c_side": "right"
+ },
+ {
+  "q": "night view",
+  "l": "en",
+  "c": "22405",
+  "ltr": "14205",
+  "c_rank": 3,
+  "ltr_rank_in_c": 8,
+  "id": "y043",
+  "c_side": "right"
+ },
+ {
+  "q": "설경",
+  "l": "ko",
+  "c": "22221",
+  "ltr": "7170",
+  "c_rank": 2,
+  "ltr_rank_in_c": 9,
+  "id": "y044",
+  "c_side": "left"
+ },
+ {
+  "q": "부모님과 가기 좋은 곳",
+  "l": "ko",
+  "c": "16338",
+  "ltr": "259",
+  "c_rank": 3,
+  "ltr_rank_in_c": 12,
+  "id": "y045",
+  "c_side": "right"
+ },
+ {
+  "q": "롯데월드",
+  "l": "ko",
+  "c": "17414",
+  "ltr": "28658",
+  "c_rank": 3,
+  "ltr_rank_in_c": 10,
+  "id": "y046",
+  "c_side": "left"
+ },
+ {
+  "q": "폭포",
+  "l": "ko",
+  "c": "14",
+  "ltr": "1522",
+  "c_rank": 1,
+  "ltr_rank_in_c": 6,
+  "id": "y047",
+  "c_side": "right"
+ },
+ {
+  "q": "남대문 수입상가",
+  "l": "ko",
+  "c": "11504",
+  "ltr": "34633",
+  "c_rank": 0,
+  "ltr_rank_in_c": 6,
+  "id": "y048",
+  "c_side": "right"
+ },
+ {
+  "q": "rainy day indoor",
+  "l": "en",
+  "c": "18131",
+  "ltr": "13952",
+  "c_rank": 4,
+  "ltr_rank_in_c": 6,
+  "id": "y049",
+  "c_side": "right"
+ },
+ {
+  "q": "주차 가능 사찰",
+  "l": "ko",
+  "c": "13207",
+  "ltr": "11911",
+  "c_rank": 3,
+  "ltr_rank_in_c": 18,
+  "id": "y050",
+  "c_side": "left"
+ },
+ {
+  "q": "남이섬",
+  "l": "ko",
+  "c": "4387",
+  "ltr": "5415",
+  "c_rank": 4,
+  "ltr_rank_in_c": 10,
+  "id": "y051",
+  "c_side": "left"
+ },
+ {
+  "q": "palace in seoul",
+  "l": "en",
+  "c": "14190",
+  "ltr": "13866",
+  "c_rank": 3,
+  "ltr_rank_in_c": 8,
+  "id": "y052",
+  "c_side": "right"
+ },
+ {
+  "q": "케이블카",
+  "l": "ko",
+  "c": "4004",
+  "ltr": "2531",
+  "c_rank": 4,
+  "ltr_rank_in_c": 6,
+  "id": "y053",
+  "c_side": "left"
+ },
+ {
+  "q": "제주 오름",
+  "l": "ko",
+  "c": "11256",
+  "ltr": "10343",
+  "c_rank": 3,
+  "ltr_rank_in_c": 6,
+  "id": "y054",
+  "c_side": "right"
+ },
+ {
+  "q": "pet friendly",
+  "l": "en",
+  "c": "1905",
+  "ltr": "18279",
+  "c_rank": 4,
+  "ltr_rank_in_c": 7,
+  "id": "y055",
+  "c_side": "right"
+ },
+ {
+  "q": "night market",
+  "l": "en",
+  "c": "41920",
+  "ltr": "45730",
+  "c_rank": 4,
+  "ltr_rank_in_c": 6,
+  "id": "y056",
+  "c_side": "left"
+ },
+ {
+  "q": "gangneung beach",
+  "l": "en",
+  "c": "2218",
+  "ltr": "1989",
+  "c_rank": 1,
+  "ltr_rank_in_c": 10,
+  "id": "y057",
+  "c_side": "left"
+ },
+ {
+  "q": "노을 명소",
+  "l": "ko",
+  "c": "9551",
+  "ltr": "9576",
+  "c_rank": 1,
+  "ltr_rank_in_c": 7,
+  "id": "y058",
+  "c_side": "right"
+ },
+ {
+  "q": "seongsan ilchulbong",
+  "l": "en",
+  "c": "13748",
+  "ltr": "37094",
+  "c_rank": 4,
+  "ltr_rank_in_c": 6,
+  "id": "y059",
+  "c_side": "left"
+ },
+ {
+  "q": "aquarium",
+  "l": "en",
+  "c": "17972",
+  "ltr": "1716",
+  "c_rank": 4,
+  "ltr_rank_in_c": 5,
+  "id": "y060",
+  "c_side": "right"
+ },
+ {
+  "q": "bulguksa temple",
+  "l": "en",
+  "c": "14210",
+  "ltr": "2167",
+  "c_rank": 2,
+  "ltr_rank_in_c": 7,
+  "id": "y061",
+  "c_side": "left"
+ },
+ {
+  "q": "감천문화마을",
+  "l": "ko",
+  "c": "1189",
+  "ltr": "33016",
+  "c_rank": 3,
+  "ltr_rank_in_c": 8,
+  "id": "y062",
+  "c_side": "right"
+ },
+ {
+  "q": "야경 명소",
+  "l": "ko",
+  "c": "4079",
+  "ltr": "5414",
+  "c_rank": 3,
+  "ltr_rank_in_c": 6,
+  "id": "y063",
+  "c_side": "left"
+ },
+ {
+  "q": "scenic drive near seoul",
+  "l": "en",
+  "c": "22320",
+  "ltr": "14468",
+  "c_rank": 1,
+  "ltr_rank_in_c": 5,
+  "id": "y064",
+  "c_side": "left"
+ },
+ {
+  "q": "아이와 갈만한 곳",
+  "l": "ko",
+  "c": "15671",
+  "ltr": "4784",
+  "c_rank": 1,
+  "ltr_rank_in_c": 5,
+  "id": "y065",
+  "c_side": "left"
+ },
+ {
+  "q": "등때",
+  "l": "ko",
+  "c": "8134",
+  "ltr": "1150",
+  "c_rank": 1,
+  "ltr_rank_in_c": 9,
+  "id": "y066",
+  "c_side": "right"
+ },
+ {
+  "q": "강릉 해변",
+  "l": "ko",
+  "c": "6916",
+  "ltr": "7009",
+  "c_rank": 0,
+  "ltr_rank_in_c": 6,
+  "id": "y067",
+  "c_side": "right"
+ },
+ {
+  "q": "래프팅",
+  "l": "ko",
+  "c": "19955",
+  "ltr": "22075",
+  "c_rank": 1,
+  "ltr_rank_in_c": 6,
+  "id": "y068",
+  "c_side": "left"
+ },
+ {
+  "q": "gyeongju historic site",
+  "l": "en",
+  "c": "13626",
+  "ltr": "2176",
+  "c_rank": 1,
+  "ltr_rank_in_c": 5,
+  "id": "y069",
+  "c_side": "right"
+ },
+ {
+  "q": "반려동물 동반 공원",
+  "l": "ko",
+  "c": "4902",
+  "ltr": "13320",
+  "c_rank": 1,
+  "ltr_rank_in_c": 5,
+  "id": "y070",
+  "c_side": "right"
+ },
+ {
+  "q": "등산 코스",
+  "l": "ko",
+  "c": "19735",
+  "ltr": "19783",
+  "c_rank": 2,
+  "ltr_rank_in_c": 15,
+  "id": "y071",
+  "c_side": "left"
+ },
+ {
+  "q": "야시장",
+  "l": "ko",
+  "c": "23207",
+  "ltr": "62097",
+  "c_rank": 1,
+  "ltr_rank_in_c": 14,
+  "id": "y072",
+  "c_side": "left"
+ },
+ {
+  "q": "indoor activities",
+  "l": "en",
+  "c": "18160",
+  "ltr": "13872",
+  "c_rank": 2,
+  "ltr_rank_in_c": 5,
+  "id": "y073",
+  "c_side": "right"
+ },
+ {
+  "q": "cable car",
+  "l": "en",
+  "c": "2152",
+  "ltr": "14442",
+  "c_rank": 4,
+  "ltr_rank_in_c": 9,
+  "id": "y074",
+  "c_side": "left"
+ },
+ {
+  "q": "글램핑",
+  "l": "ko",
+  "c": "21100",
+  "ltr": "21863",
+  "c_rank": 2,
+  "ltr_rank_in_c": 6,
+  "id": "y075",
+  "c_side": "right"
+ },
+ {
+  "q": "생태공원",
+  "l": "ko",
+  "c": "7496",
+  "ltr": "8833",
+  "c_rank": 3,
+  "ltr_rank_in_c": 8,
+  "id": "y076",
+  "c_side": "right"
+ },
+ {
+  "q": "jade cave",
+  "l": "en",
+  "c": "1986",
+  "ltr": "14996",
+  "c_rank": 2,
+  "ltr_rank_in_c": 6,
+  "id": "y077",
+  "c_side": "left"
+ },
+ {
+  "q": "대구 근대골목",
+  "l": "ko",
+  "c": "392",
+  "ltr": "12597",
+  "c_rank": 4,
+  "ltr_rank_in_c": 7,
+  "id": "y078",
+  "c_side": "left"
+ },
+ {
+  "q": "autumn foliage",
+  "l": "en",
+  "c": "2261",
+  "ltr": "2073",
+  "c_rank": 2,
+  "ltr_rank_in_c": 7,
+  "id": "y079",
+  "c_side": "left"
+ },
+ {
+  "q": "민속마을",
+  "l": "ko",
+  "c": "5383",
+  "ltr": "3599",
+  "c_rank": 3,
+  "ltr_rank_in_c": 6,
+  "id": "y080",
+  "c_side": "left"
+ },
+ {
+  "q": "동굴",
+  "l": "ko",
+  "c": "2813",
+  "ltr": "1529",
+  "c_rank": 1,
+  "ltr_rank_in_c": 6,
+  "id": "y081",
+  "c_side": "right"
+ },
+ {
+  "q": "주차 가능 계곡",
+  "l": "ko",
+  "c": "10543",
+  "ltr": "794",
+  "c_rank": 1,
+  "ltr_rank_in_c": 9,
+  "id": "y082",
+  "c_side": "right"
+ },
+ {
+  "q": "여름 물놀이",
+  "l": "ko",
+  "c": "19014",
+  "ltr": "10247",
+  "c_rank": 0,
+  "ltr_rank_in_c": 10,
+  "id": "y083",
+  "c_side": "left"
+ },
+ {
+  "q": "museum",
+  "l": "en",
+  "c": "18397",
+  "ltr": "18426",
+  "c_rank": 3,
+  "ltr_rank_in_c": 5,
+  "id": "y084",
+  "c_side": "right"
+ },
+ {
+  "q": "free admission art gallery",
+  "l": "en",
+  "c": "18157",
+  "ltr": "18022",
+  "c_rank": 3,
+  "ltr_rank_in_c": 13,
+  "id": "y085",
+  "c_side": "right"
+ },
+ {
+  "q": "seongsan ilchulbog",
+  "l": "en",
+  "c": "18293",
+  "ltr": "37094",
+  "c_rank": 2,
+  "ltr_rank_in_c": 6,
+  "id": "y086",
+  "c_side": "right"
+ },
+ {
+  "q": "반려동물 동반 수목원",
+  "l": "ko",
+  "c": "5220",
+  "ltr": "6655",
+  "c_rank": 3,
+  "ltr_rank_in_c": 5,
+  "id": "y087",
+  "c_side": "left"
+ },
+ {
+  "q": "hanbok rental",
+  "l": "en",
+  "c": "22291",
+  "ltr": "13700",
+  "c_rank": 3,
+  "ltr_rank_in_c": 15,
+  "id": "y088",
+  "c_side": "right"
+ },
+ {
+  "q": "전망데",
+  "l": "ko",
+  "c": "6248",
+  "ltr": "6975",
+  "c_rank": 3,
+  "ltr_rank_in_c": 5,
+  "id": "y089",
+  "c_side": "right"
+ },
+ {
+  "q": "주차 가능 수목원",
+  "l": "ko",
+  "c": "1580",
+  "ltr": "8063",
+  "c_rank": 4,
+  "ltr_rank_in_c": 7,
+  "id": "y090",
+  "c_side": "left"
+ },
+ {
+  "q": "고택",
+  "l": "ko",
+  "c": "11759",
+  "ltr": "11732",
+  "c_rank": 2,
+  "ltr_rank_in_c": 5,
+  "id": "y091",
+  "c_side": "left"
+ },
+ {
+  "q": "beach near busan",
+  "l": "en",
+  "c": "2218",
+  "ltr": "14201",
+  "c_rank": 1,
+  "ltr_rank_in_c": 5,
+  "id": "y092",
+  "c_side": "right"
+ },
+ {
+  "q": "island trip",
+  "l": "en",
+  "c": "13740",
+  "ltr": "14867",
+  "c_rank": 3,
+  "ltr_rank_in_c": 6,
+  "id": "y093",
+  "c_side": "right"
+ },
+ {
+  "q": "주차 가능 해수욕장",
+  "l": "ko",
+  "c": "6691",
+  "ltr": "6394",
+  "c_rank": 3,
+  "ltr_rank_in_c": 8,
+  "id": "y094",
+  "c_side": "left"
+ },
+ {
+  "q": "동물원",
+  "l": "ko",
+  "c": "5451",
+  "ltr": "5481",
+  "c_rank": 0,
+  "ltr_rank_in_c": 8,
+  "id": "y095",
+  "c_side": "left"
+ },
+ {
+  "q": "traditional market food",
+  "l": "en",
+  "c": "1790",
+  "ltr": "45757",
+  "c_rank": 1,
+  "ltr_rank_in_c": 10,
+  "id": "y096",
+  "c_side": "right"
+ },
+ {
+  "q": "해운대",
+  "l": "ko",
+  "c": "4580",
+  "ltr": "22619",
+  "c_rank": 2,
+  "ltr_rank_in_c": 17,
+  "id": "y097",
+  "c_side": "left"
+ },
+ {
+  "q": "전통시장 먹거리",
+  "l": "ko",
+  "c": "508",
+  "ltr": "564",
+  "c_rank": 2,
+  "ltr_rank_in_c": 10,
+  "id": "y098",
+  "c_side": "right"
+ },
+ {
+  "q": "kids friendly place",
+  "l": "en",
+  "c": "13426",
+  "ltr": "1773",
+  "c_rank": 4,
+  "ltr_rank_in_c": 6,
+  "id": "y099",
+  "c_side": "right"
+ }
+]

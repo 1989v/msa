@@ -254,6 +254,13 @@ SELECT countIf(JSONExtractString(payload,'term') != '') typed, count() total
 FROM analytics.events WHERE screen_type='PLACE_HUB' AND action='SEARCH'
 ```
 
+**사람 판정 2차 (10-13 발행, 채점 대기)** — 판정 페이지(아티팩트 「관광지 검색 판정」) 한 장에 셋을 올렸다.
+① v3 사람 대조 80쌍(`docs/specs/2026-10-10-search-judgment-cases/context/human-sample.md`, 저장 `v3grades`)
+② 정답 없는 검색어 13개 · 438건 확인(저장 `noanswer`, 맞는 곳에만 체크와 사유)
+③ LTR 블라인드 비교 100쌍(저장 `pairs`, id `y000`~). v3 등급으로 5겹 학습한 LTR 과 C 의 상위 5위가 갈리는 쿼리마다 한 쌍,
+앞서 고른 51쌍은 뺐다. **어느 쪽이 C 인지는 `ltr-offline/pairs-2026-10-13.json` 의 `c_side`** — 채점이 끝나기 전에는 열지 않는다.
+다시 만들려면 `pool.sh`(클러스터에서 A·B·C top-20) → `features.sh` → `pairs.py`.
+
 ## 함정
 
 - **판정 세트는 그것을 만든 시스템에만 공정하다.** 새 구성(예: 1-bit 양자화)이 top-10 에 새 문서를 올리면 그 문서는
