@@ -40,6 +40,7 @@ import AttractionInfoTabs, { infoTabsShown } from './AttractionInfoTabs';
 import AttractionActionBar, { AttractionJumpNav, jumpSectionId, type JumpTarget } from './AttractionActionBar';
 import { accessView } from './accessLines';
 import { useMediaQuery } from './useMediaQuery';
+import { takeSsrAttraction } from './ssrAttractionData';
 import { googleMapsDirectionsUrl, googleMapsSearchUrl, mapsApiKey } from './googleMaps';
 import NearbyExplore from './NearbyExplore';
 import PhotoViewer from './PhotoViewer';
@@ -128,10 +129,17 @@ export default function AttractionPage() {
   const lang: PlaceLang = pathname.startsWith('/en') ? 'en' : 'ko';
   const L = UI[lang];
 
+  // 서버 렌더가 실어 보낸 상세 데이터 — 첫 화면은 이것으로 그리고 API 를 다시 부르지 않는다.
+  // 재호출이 실패하면 서버 렌더 본문이 실패 문구 한 줄로 바뀌었다(크롤러가 /api 를 못 받던 때 Soft 404 의 원인)
+  const [ssrAttraction] = useState(() => takeSsrAttraction(id, lang));
+  const fromSsr = ssrAttraction !== undefined && ssrAttraction.id === id;
   const { data: attraction, isLoading, isError, error } = useQuery({
     queryKey: ['attraction', id],
     queryFn: () => fetchAttraction(id),
     enabled: id !== '',
+    initialData: fromSsr ? ssrAttraction : undefined,
+    // 색인은 하루 한 번 바뀐다 — 실어 온 값을 마운트 직후 다시 받지 않게 신선한 것으로 둔다
+    staleTime: fromSsr ? 10 * 60_000 : 0,
   });
 
   // 주변 탐색 — 명소·숙소·행사·편의시설을 서버가 한 번에 찾는다(ADR-0105, 관광지 id 키라 엣지 캐시). 처음 받은 목록만 쓴다.
