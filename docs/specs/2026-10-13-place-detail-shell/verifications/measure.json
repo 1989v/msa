@@ -1,0 +1,62 @@
+{
+  "detail": {
+    "ready": true,
+    "scripts": [
+      "js?id=G-5EE8XW7JHN",
+      "index-Dm_Fwnz8.js"
+    ],
+    "title": "서울 운현궁",
+    "tabbarNode": 0,
+    "dataTabbar": null,
+    "shellBottomVar": "(없음)",
+    "barHiddenAtTop": true,
+    "barMid": {
+      "hidden": false,
+      "top": 788,
+      "bottom": 844,
+      "height": 56,
+      "innerHeight": 844,
+      "cssBottom": "0px",
+      "marginBottom": "0px",
+      "paddingBottom": "0px"
+    },
+    "barEnd": {
+      "hidden": false,
+      "top": 788,
+      "bottom": 844,
+      "height": 56,
+      "innerHeight": 844,
+      "cssBottom": "0px",
+      "marginBottom": "0px",
+      "paddingBottom": "0px"
+    },
+    "lastContent": {
+      "tag": "p",
+      "cls": "site-footer-copy",
+      "text": "© 2026 Gideok Kwon. All rights",
+      "bottom": 739.796875
+    },
+    "scrollPaddingBottom": "56px",
+    "atEnd": true
+  },
+  "hub": {
+    "ready": true,
+    "scripts": [
+      "js?id=G-5EE8XW7JHN",
+      "index-Dm_Fwnz8.js"
+    ],
+    "tabbarNode": 1,
+    "dataTabbar": "on",
+    "tabs": [
+      "지도",
+      "내 찜",
+      "서비스"
+    ],
+    "tabbarRect": {
+      "top": 791,
+      "bottom": 844,
+      "innerHeight": 844
+    },
+    "actionBar": 0
+  }
+}
