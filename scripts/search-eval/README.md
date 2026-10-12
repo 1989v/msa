@@ -5,7 +5,8 @@ CronJob 이 ConfigMap 으로 싣도록 `k8s/base/search-batch/eval/` 에 있다.
 
 | 파일 | 무엇 |
 |---|---|
-| `k8s/base/search-batch/eval/judgments-attractions-2026-10-11.json` | 매일 평가가 쓰는 세트(v3) — 쿼리 228개(ko 137 · en 91) × 관광지 id 등급 0~3, 9,692건. 항목마다 `intent`·`evidence`·`graded_by` |
+| `k8s/base/search-batch/eval/judgments-attractions-2026-10-13.json` | 매일 평가가 쓰는 세트(v3 보강) — 10-11 에 동반 표현 5 질의의 새 문서 30쌍을 더한 것. 보강한 항목에 `augmented` 가 붙는다 |
+| `k8s/base/search-batch/eval/judgments-attractions-2026-10-11.json` | v3 원본 — 쿼리 228개(ko 137 · en 91) × 관광지 id 등급 0~3, 9,692건. 항목마다 `intent`·`evidence`·`graded_by` |
 | `k8s/base/search-batch/eval/judgments-attractions-2026-10-05.json` | 이전 세트(v2) — 쿼리 150개(ko 90 · en 60), 6,530건. v3 스크립트로 돌리면 형식 위반(의도 라벨 없음)으로 멈춘다 |
 | `k8s/base/search-batch/eval/judgments-attractions-2026-09-13.json` | 이전 세트 — 쿼리 48개(ko 24 · en 24), 2,141건. 풀링은 세 구성의 top-10 합집합 |
 | `k8s/base/search-batch/eval/live-eval.py` | A. BM25 · B. 하이브리드(RRF) · C. 하이브리드 + 쿼리 언더스탠딩(라이브 API) 의 nDCG@10 + 회귀 판정 |
@@ -141,6 +142,19 @@ ssh msa-oci 'sudo kubectl -n commerce logs job/search-eval-manual'     # 표와 
 
 어느 쪽이 C 였는지 적은 파일을 잃어, **10-11 의 C 순위로 다시 갈랐다**(C 쪽은 그때 C 상위 5위, LTR 쪽은 C 10위 밖이었다).
 다음에는 대응표를 레포에 함께 남긴다.
+
+## 2026-10-13 — v3 보강: 동반 표현 5 질의 30쌍 (`judgments-attractions-2026-10-13.json`)
+
+동반 표현을 벡터 문장에서 표준 문구로 바꾸자(ADR-0090 개정 2026-10-13) 「아이랑 갈 만한 곳」·「아이와 갈만한 곳」·「유아와 갈만한 곳」·
+「kids friendly place」·「kids-friendly place」의 top-10 이 어린이공원·가족공원으로 바뀌었고, 그중 30쌍(16곳)이 판정 없는 문서였다
+(「아이랑」 9/10). 판정 없는 문서는 0점이라 보강 전에는 국문 C −0.0069 로 보였다.
+
+| 항목 | 값 |
+|---|---|
+| 채점 | Claude Sonnet 서브 에이전트, 블라인드(기준 파일과 카드만), 2026-10-13. 분포 3:20 · 2:5 · 1:2 · 0:3 (0 은 아동복 매장) |
+| 표시 | 보강한 질의에 `"augmented": "sonnet-2026-10-13"`. `graded_by` 는 원래 값(v2 · claude-opus-5-5-2026-10-11)을 둔다 — 같은 질의 안에 채점 모델이 둘 섞인다 |
+| 보강 뒤 C (OFF 옛 → 새 코드) | ko 0.7360 → 0.7438 · en 0.7219 → 0.7441 |
+| 기준선 | `EVAL_BASELINE_KO/EN` = 0.7438 · 0.7441 (GATE 켠 운영, 클러스터 안 수집기 2바퀴째) |
 
 ## 2026-10-11 — 판정 세트 v3: 228 쿼리 · 9,692쌍 · 의도 유형 (`judgments-attractions-2026-10-11.json`)
 

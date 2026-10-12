@@ -38,19 +38,20 @@ spec:
               image: commerce/search-embed:latest
               imagePullPolicy: IfNotPresent
               # 새 파드는 첫 몇 초간 DNS egress 가 막힌다(attraction-reindex 참고) — 기다렸다 시작한다.
-              command: ["sh", "-c", "sleep 20 && exec python3 /eval/live-eval.py /eval/judgments-attractions-2026-10-11.json"]
+              command: ["sh", "-c", "sleep 20 && exec python3 /eval/live-eval.py /eval/judgments-attractions-2026-10-13.json"]
               env:
                 # search:app 의 search.query-vector.model-ref 와 같아야 한다
                 - name: EVAL_MODEL_REF
                   value: "microsoft/harrier-oss-v1-270m@31de22b#d640"
-                # 판정 세트 v3(2026-10-11, 228쿼리)로 잰 C — NO_ANSWER 13 질의는 빼고 낸 평균.
-                # 배포 뒤 이 CronJob 과 같은 Job 으로 잰 값(2026-10-11 12:26 KST). v2 기준선(ko .7767 · en .7140)은 눈금이 달라 비교하지 않는다.
+                # 판정 세트 v3(2026-10-13, 228쿼리 — 10-11 에 동반 표현 5질의의 새 문서 30쌍을 보강 채점)로 잰 C — NO_ANSWER 13 질의는 빼고 낸 평균.
+                # 2026-10-13 04:52 KST 어휘 근거 GATE 켠 운영을 클러스터 안 주소로 잰 값(stage2-gate.md 재측정 절). 10-11 값은 ko .7428 · en .7216.
+                # v2 기준선(ko .7767 · en .7140)은 눈금이 달라 비교하지 않는다.
                 # 색인 드리프트로 ±0.02 움직인 적이 있어 허용폭은 0.03.
                 # 판정 세트를 바꾸면 점수 눈금이 바뀐다 — 옛 기준선을 그대로 두면 게이트가 사실상 열린다.
                 - name: EVAL_BASELINE_KO
-                  value: "0.7428"
+                  value: "0.7438"
                 - name: EVAL_BASELINE_EN
-                  value: "0.7216"
+                  value: "0.7441"
                 - name: EVAL_TOLERANCE
                   value: "0.03"
                 # C top-10 중 판정 없는 문서 비율 상한 — 넘으면 색인 대상이 바뀐 것이니 판정 세트를 다시 풀링한다.

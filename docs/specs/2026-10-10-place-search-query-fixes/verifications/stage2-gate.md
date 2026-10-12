@@ -34,3 +34,23 @@
 1. OFF 유지 — 지금 상태.
 2. 영문 오타 교정(사전 기반 did-you-mean)을 먼저 넣고 GATE 를 다시 잰다. 교정이 `garedn→garden` 은 고치고 `mexico` 는 그대로 두면 조건을 맞출 수 있다.
 3. 국문만 GATE — ko 는 C 변화가 없지만 ko NO_ANSWER 도 그대로라 얻는 것이 없다. 권하지 않는다.
+
+## 재측정 (2026-10-13 04:47~04:52 KST) — 채택
+
+영문 교정 하한(라틴 0.80)·동반 표현·분류 안 0건 사유를 넣은 search `5a28c1c` 위에서 같은 수집기로 OFF → GATE(`413ac7fa6`) 를 두 바퀴씩 모았다.
+판정은 `judgments-attractions-2026-10-13.json`(10-11 + 동반 표현 새 문서 30쌍 보강 채점).
+
+| 조건 | OFF | GATE | 판정 |
+|---|---|---|---|
+| C ko | 0.7438 | 0.7438 | 변화 없음 |
+| C en | 0.7441 | 0.7441 | 변화 없음 (지난번 −0.0119 의 원인 「botanical garedn」은 이제 「botanical garden」으로 교정된 뒤 검사된다) |
+| 0.05 넘게 나빠진 질의 | — | 0 | 통과 |
+| NO_ANSWER 0건 | ko 3/7 · en 2/6 | ko 3/7 · en 5/6 (egypt museum 432→0 · mexico beach 266→0 · daejeon beach 442→0) | 좋아짐 |
+| p50 · p95 · p99 (2바퀴째, ms) | 46.5 · 74.9 · 87.9 | 47.5 · 78.7 · 90.4 | 통과 |
+
+**판정: GATE 를 켠 채로 둔다**(`k8s/base/search/deployment.yaml` `SEARCH_ATTRACTION_ANSWER_EVIDENCE_MODE=GATE`). CONFINE 은 재지 않았다.
+
+새 코드 자체의 효과(옛 OFF `gate-off` → 새 OFF, 같은 보강 판정): ko 0.7360 → 0.7438 · en 0.7219 → 0.7441. 바뀐 질의 7개 —
+아이랑 갈 만한 곳 +0.60 · 아이와 갈만한 곳 +0.41 · 유아와 갈만한 곳 +0.02 · kids-friendly place +0.03 · kids friendly place −0.17 ·
+chomsongdae 0→1.0 · gyeongbokgoong 0→1.0.
+

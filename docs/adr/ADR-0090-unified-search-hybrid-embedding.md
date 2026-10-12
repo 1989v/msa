@@ -235,7 +235,8 @@ URL 은 굽지 않고 FE 가 `serviceHref.ts` 로 조립한다. 이력서(ADR-00
   `zeroReason=NO_MATCH_IN_CATEGORY` 와 `relaxedKeyword`(조건어 + 분류어)·`relaxedTotal` 을 낸다. 0건일 때만 부르는 추가 질의다.
 - **영문 교정 하한 0.80.** 제목 자모 사전 제안의 하한 0.85 는 한글(자모로 펴서 길다)에 맞춘 값이라, 영문 6글자 단어의 한 글자 오타
   (0.833)를 늘 버렸다. 라틴 단어만 0.80 으로 둔다. 교정은 색인에서 0건인 단어에만 부르므로 이미 있는 단어(quiet 51건)는 바뀌지 않는다.
-  이것이 막고 있던 어휘 근거 `GATE` 채택(영문 C −0.0119, 원인 「botanical garedn」)을 다시 잰다.
+  이것이 막고 있던 어휘 근거 `GATE` 채택(영문 C −0.0119, 원인 「botanical garedn」)을 다시 재어 **채택했다**(2026-10-13 — C ko·en 변화 0,
+  정답 없는 영문 질의 0건 2/6 → 5/6, 나빠진 질의 0. `docs/specs/2026-10-10-place-search-query-fixes/verifications/stage2-gate.md` 재측정 절). 기본값은 여전히 `OFF` 이고 운영 매니페스트가 `GATE` 로 켠다.
 
 ## Alternatives Considered
 

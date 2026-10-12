@@ -18,4 +18,4 @@ configMapGenerator:
     files:
       - eval/live-eval.py
       # 옛 세트 파일은 eval/ 에 남기되 여기엔 싣지 않는다 — ConfigMap 크기를 늘리지 않는다
-      - eval/judgments-attractions-2026-10-11.json
+      - eval/judgments-attractions-2026-10-13.json

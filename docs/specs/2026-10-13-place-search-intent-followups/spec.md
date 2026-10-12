@@ -57,3 +57,10 @@
 - `vitest run src/pages/place/__tests__/PlacePage.interpret.test.tsx` → 15 passed · `tsc -b` exit 0 · `searchArchitecture.drift.test.ts` 10 passed
 - 회귀 주입(컴파일되는 변경, 원본 복구 확인): 라틴 하한 제거 → Spell 1 실패 · 벡터 문장 미사용 → Service 1 실패 ·
   0건 재계수 끔(`takeIf { false }`) → Service 1 실패 · 동반 추출 끔 → QueryIntent 8 실패 · 화면 버튼 숨김 → interpret 1 실패
+
+## 배포 뒤 (2026-10-13 04:46~04:52 KST, search `5a28c1c`)
+- 아이랑 갈 만한 곳 top-5: 임내숲 어린이공원 · 가막들공원 · 아빠랑놀자 키즈글램핑 · 안성맞춤가족공원 · 모산공원(「아이」 상호 0)
+- 도쿄 수족관: 0건 · `NO_MATCH_IN_CATEGORY` · relaxedKeyword 「수족관」 20건 / botanical garedn: 교정 「botanical garden」 331건
+- 해수욕장 · 경복궁 기준 id 5/5 유지
+- GATE 재측정 통과 → 켬 (`place-search-query-fixes/verifications/stage2-gate.md` 재측정 절)
+
