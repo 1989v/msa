@@ -134,6 +134,27 @@
 .atlas-home__intro { max-width: 1240px; margin: 0 auto; }
 .atlas-home__sec { max-width: 1240px; margin: var(--ko-space-10) auto 0; }
 
+/* 아키텍처 드릴다운 진입 — 한지 위 한 장, 비대칭 모서리 */
+.atlas-drill {
+  display: grid;
+  gap: var(--ko-space-1);
+  max-width: 34rem;
+  margin-top: var(--ko-space-5);
+  padding: var(--ko-space-4);
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--kh-radius-asym);
+  background: var(--ko-surface-1);
+  color: var(--ko-text-primary);
+  text-decoration: none;
+  transition: transform var(--kh-dur-feedback) var(--kh-ease-enter);
+}
+.atlas-drill:hover { transform: translateY(-2px); border-color: var(--ko-border-strong); }
+.atlas-drill:focus-visible { outline: var(--ko-focus-ring); outline-offset: 2px; }
+.atlas-drill__eyebrow { font-size: 0.6875rem; color: var(--kh-ocher-text); }
+.atlas-drill__name { font-size: 1.125rem; font-weight: 700; }
+.atlas-drill__desc { font-size: 0.875rem; line-height: 1.6; color: var(--ko-text-secondary); }
+.atlas-drill__go { font-size: 0.75rem; color: var(--ko-accent-text); }
+
 /* 서비스 도메인 — 어두운 판 다섯, 비대칭 모서리 */
 .atlas-services { list-style: none; margin: var(--ko-space-4) 0 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--ko-space-3); }
 .atlas-service {
@@ -500,5 +521,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .atlas-row__caret, .atlas-board, .atlas-graph__edge, .atlas-graph__node { transition: none; }
-  .atlas-service { transition: none; }
+  .atlas-service, .atlas-drill { transition: none; }
 }

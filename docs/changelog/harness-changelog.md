@@ -21,6 +21,7 @@
 
 | 날짜 | 판정 | 대상 | 변경 | 근거 |
 |---|---|---|---|---|
+| 2026-10-12 | 채택(개정) | 루트 `CLAUDE.md` Key Conventions 「검색 아키텍처」 한 줄 · Frontend 진입 구조 표 `/tech/search` 행 | 검색 기법을 바꾸면 고칠 곳이 마크다운(`search-architecture.md`)에서 온톨로지 `search.yaml` 의 `applied`·`flows_to` + `DrillExportSpec` 재내보내기로 바뀜. 드리프트 대조는 9값 표 → `facts[].key` 12값 | `/tech/search` 를 온톨로지 데이터에서 규칙으로 그리는 드릴다운으로 재설계(ADR-0108). 2026-10-08 행의 이유(원본이 검색 코드 쪽에서 안 보인다)는 그대로 — 원본 위치만 온톨로지로 옮겼다 |
 | 2026-10-11 | 채택 | `~/.claude/CLAUDE.md` Workflow 두 항목 | 「없이 진행」은 일부 실패에만(비율 상한 넘으면 잡 실패·교체 안 함) · 대역이 흉내 내지 않는 운영 조건(콜레이션·외부 계정·CDN 캐시)은 배포 뒤 실제 경로 확인 전 「검증됨」 아님, 운영 확인은 캐시 우회·응답에서 필드 이름 먼저 | place extras 콜레이션 500 을 재색인이 삼키고 alias 교체(전 관광지 30분), links 잡 ClickHouse 403 몇 주 무증상, crawl-stats 첫 실행 403, CDN HIT·틀린 필드 이름으로 「복구 안 됨」 오판. 코드 쪽 게이트는 재색인 실패율 상한·Testcontainers 운영 콜레이션으로 함께 반영 |
 | 2026-09-07 | 채택 | auto memory `MEMORY.md` | 모듈 구조표 오류 4건 정정 — `:order:app` → `:order:feature`, 없는 `order/app/build.gradle.kts`·`docker/docker-compose.yml` 제거, "모든 서비스가 `:domain`/`:app`" → 실제 48 모듈 | `./gradlew :order:app:build` → `project 'app' not found in project ':order'`. 항상 로드되는 색인이 거짓을 싣고 있었다 |
 | 2026-09-07 | 채택 | auto memory `MEMORY.md` | `Known Fixes`(코틀린 스마트캐스트)·`Build Commands` 절 삭제 | 앞은 모델이 이미 아는 일반 지식, 뒤는 루트 `CLAUDE.md` §Commands 와 **갈라진** 중복 |

@@ -31,7 +31,7 @@ class DrillExportSpec : BehaviorSpec({
     val repo = File("../..").canonicalFile
     val dir = File(repo, "portal-fe/src/content/drill")
     val problems = mutableListOf<String>()
-    val expected = DRILLS.associate { (domain, root) -> "$domain.json" to render(ontology, root, repo, problems) }
+    val expected = DRILLS.associate { d -> "${d.domain}.json" to render(ontology, d, repo, problems) }
 
     if (System.getenv("DRILL_EXPORT") == "write" && problems.isEmpty()) {
         dir.mkdirs()
@@ -55,8 +55,13 @@ class DrillExportSpec : BehaviorSpec({
     }
 })
 
-/** (출력 이름, 루트 개념) — 드릴다운 페이지가 있는 도메인 */
-private val DRILLS = listOf("search" to "search-query")
+/**
+ * 드릴다운 페이지가 있는 도메인. [updated] 는 페이지의 갱신일(구조화 데이터 dateModified) —
+ * 그 도메인의 `flows_to` · `applied` 를 고치면 함께 올린다.
+ */
+private data class Drill(val domain: String, val root: String, val updated: String)
+
+private val DRILLS = listOf(Drill("search", "search-query", "2026-10-12"))
 
 /** 펼칠 수 있는 단계 수. 루트 그림의 노드가 1단계다 */
 private const val MAX_DEPTH = 3
@@ -65,7 +70,8 @@ private val INTERNAL_DOC = Regex("""\bADR-\d+""")
 
 private class Diagram(val nodes: List<Pair<String, List<String>>>, val edges: List<Triple<String, String, String?>>, val related: List<String>)
 
-private fun render(o: ConceptOntology, root: String, repo: File, problems: MutableList<String>): String {
+private fun render(o: ConceptOntology, drill: Drill, repo: File, problems: MutableList<String>): String {
+    val root = drill.root
     val byId = o.concepts.associateBy { it.id }
     val childrenOf = o.relations.filter { it.kind == ConceptEdgeKind.CONTAINS }.groupBy({ it.from }, { it.to })
     val flows = o.relations.filter { it.kind == ConceptEdgeKind.FLOWS_TO }
@@ -107,7 +113,7 @@ private fun render(o: ConceptOntology, root: String, repo: File, problems: Mutab
     for (id in drawnIds) if (byId.getValue(id).applied == null) problems += "$id 는 그려지는데 applied.status 가 없다"
 
     return buildString {
-        append("{\n\"root\": ${q(root)},\n\"concepts\": {\n")
+        append("{\n\"root\": ${q(root)},\n\"updated\": ${q(drill.updated)},\n\"concepts\": {\n")
         append(exported.joinToString(",\n") { id -> "${q(id)}: ${concept(byId.getValue(id), repo, problems)}" })
         append("\n},\n\"diagrams\": {\n")
         append(diagrams.entries.joinToString(",\n") { (owner, d) ->

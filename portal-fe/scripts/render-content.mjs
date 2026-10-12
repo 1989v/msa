@@ -1,7 +1,7 @@
-// 레포 안 마크다운 원본을 빌드 때 HTML 로 굽는다. mermaid 펜스는 fencesvg 로 SVG 가 된다.
+// 레포 안 원본을 빌드 때 페이지 데이터로 굽는다. 마크다운의 mermaid 펜스는 fencesvg 로 SVG 가 된다.
 //
 // 실행: node scripts/render-content.mjs
-//   src/content/search-architecture.md → src/pages/tech/generated/search-architecture.json
+//   src/content/drill/search.json      → src/pages/tech/generated/search-drill.json (tech 드릴다운 — 모양 검사 + 빌드 커밋)
 //   src/content/guides/{slug}.md       → src/pages/place/generated/guides/{slug}.json (편집 페이지 — 본문·머리말·parts)
 //   생성물은 커밋하지 않는다(.gitignore). 그래서 build·dev·Dockerfile·CI·커밋 훅이 tsc 보다 먼저 이걸 돌린다.
 //   API 는 부르지 않는다 — 편집 페이지의 관광지 카드는 프리렌더(prerender-seo.mjs)와 SPA 가 채운다.
@@ -14,11 +14,12 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { renderDiagram } from 'fencesvg';
 import { Marked } from 'marked';
+import { assertDrill } from '../src/pages/tech/drillModel.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const SOURCE = resolve(ROOT, 'src/content/search-architecture.md');
-const OUTPUT = resolve(ROOT, 'src/pages/tech/generated/search-architecture.json');
-const ID_PREFIX = 'ts-';
+// 드릴다운 원본은 code-dictionary 의 DrillExportSpec 이 온톨로지에서 내보내 커밋한 파일이다
+const DRILL_SOURCE = resolve(ROOT, 'src/content/drill/search.json');
+const DRILL_OUTPUT = resolve(ROOT, 'src/pages/tech/generated/search-drill.json');
 const GUIDES_SOURCE = resolve(ROOT, 'src/content/guides');
 const GUIDES_OUTPUT = resolve(ROOT, 'src/pages/place/generated/guides');
 const PLACE_LANDINGS = resolve(ROOT, 'src/content/place-landings.json');
@@ -312,20 +313,19 @@ async function renderGuides() {
 }
 
 async function main() {
-  await renderTechSearch();
+  await renderTechDrill();
   await renderGuides();
 }
 
-async function renderTechSearch() {
-  const markdown = await readFile(SOURCE, 'utf8');
-  const updated = markdown.match(/문서 갱신일[^\n]*?(\d{4}-\d{2}-\d{2})/)?.[1];
-  if (!updated) fail(`「문서 갱신일」 줄(YYYY-MM-DD)을 찾지 못했다: ${SOURCE}`);
-  const { html, headings } = renderContent(markdown, { idPrefix: ID_PREFIX });
-  const sourceHash = createHash('sha256').update(markdown).digest('hex').slice(0, 12);
+async function renderTechDrill() {
+  const text = await readFile(DRILL_SOURCE, 'utf8');
+  const drill = JSON.parse(text);
+  assertDrill(drill);
+  const sourceHash = createHash('sha256').update(text).digest('hex').slice(0, 12);
   const gitSha = process.env.GIT_SHA ?? 'dev';
-  await mkdir(dirname(OUTPUT), { recursive: true });
-  await writeFile(OUTPUT, `${JSON.stringify({ html, headings, updated, sourceHash, gitSha }, null, 2)}\n`);
-  console.log(`[render-content] ${OUTPUT} — 그림 ${(html.match(/<figure /g) ?? []).length}장, heading ${headings.length}개`);
+  await mkdir(dirname(DRILL_OUTPUT), { recursive: true });
+  await writeFile(DRILL_OUTPUT, `${JSON.stringify({ ...drill, sourceHash, gitSha })}\n`);
+  console.log(`[render-content] ${DRILL_OUTPUT} — 개념 ${Object.keys(drill.concepts).length}개, 그림 ${Object.keys(drill.diagrams).length}장`);
 }
 
 // 직접 실행일 때만 돈다 — 테스트는 import 만으로 파일을 쓰지 않는다.

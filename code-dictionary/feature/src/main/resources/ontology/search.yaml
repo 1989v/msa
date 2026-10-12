@@ -1372,7 +1372,7 @@ concepts:
     name: "검색어 파이프라인"
     category: ARCHITECTURE
     level: INTERMEDIATE
-    description: "검색어가 결과가 되기까지 — 쿼리 언더스탠딩 · 후보 생성 · 융합 · 후처리. 싼 것으로 많이 거르고 비싼 것은 적게 쓴다"
+    description: "검색어가 결과가 되기까지 — 쿼리 리포뮬레이션 · 쿼리 언더스탠딩 · 후보 생성 · 융합 · 리랭킹을 거쳐 결과를 구성하고, 0건이면 대응한다. 싼 것으로 많이 거르고 비싼 것은 적게 쓴다"
     contains: [srch-query-input, srch-query-reformulation, query-understanding, candidate-generation, rank-fusion, post-ranking, srch-zero-result-handling, srch-result-presentation]
   - id: srch-query-input
     kind: STAGE

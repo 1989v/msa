@@ -1,0 +1,218 @@
+/**
+ * 드릴다운 그림 배치 — 좌표를 저장하지 않고 흐름에서 계산한다(ADR-0108 R5).
+ *
+ * - 열: 흐름(간선)의 최장 경로 단계. 간선이 없는 노드는 첫 열
+ * - 가로: 열이 화면 폭을 넘으면 다음 줄로 접고, 줄을 넘는 간선은 아래로 내려 왼쪽으로 돌아 들어간다
+ * - 세로(좁은 화면): 열을 행으로 바꾼다
+ * - 묶음 노드는 틀 안에 하위 단계를 나란히 펼친다
+ */
+
+export interface DrillNode {
+  id: string;
+  lanes?: string[];
+}
+export interface DrillEdge {
+  from: string;
+  to: string;
+  label?: string;
+}
+export interface DrillDiagram {
+  nodes: DrillNode[];
+  edges: DrillEdge[];
+  related: string[];
+}
+
+export interface Rect {
+  id: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+export interface Box extends Rect {
+  lanes: Rect[];
+}
+export interface Route {
+  from: string;
+  to: string;
+  d: string;
+  lx: number;
+  ly: number;
+  label?: string;
+}
+export interface Layout {
+  boxes: Box[];
+  routes: Route[];
+  width: number;
+  height: number;
+}
+
+export const NODE_W = 168;
+export const NODE_H = 58;
+const PAD = 28;
+const GAP_X = 92;
+const GAP_Y = 26;
+const BAND_GAP = 64;
+const GROUP_PAD = 12;
+const GROUP_HEAD = 28;
+/** 묶음 안 단계 사이 — 위 단계의 [상세보기] 글자가 들어갈 자리 */
+const LANE_GAP = 24;
+const GROUP_FOOT = 24;
+
+/** 최장 경로 단계 — 순환이 있으면(데이터 오류) 남은 노드는 마지막 단계 다음에 둔다 */
+function layers(d: DrillDiagram): Map<string, number> {
+  const ids = d.nodes.map((n) => n.id);
+  const indeg = new Map(ids.map((id) => [id, 0]));
+  for (const e of d.edges) indeg.set(e.to, (indeg.get(e.to) ?? 0) + 1);
+  const layer = new Map(ids.map((id) => [id, 0]));
+  const queue = ids.filter((id) => indeg.get(id) === 0);
+  const done = new Set<string>();
+  while (queue.length) {
+    const id = queue.shift()!;
+    done.add(id);
+    for (const e of d.edges.filter((x) => x.from === id)) {
+      layer.set(e.to, Math.max(layer.get(e.to) ?? 0, (layer.get(id) ?? 0) + 1));
+      indeg.set(e.to, (indeg.get(e.to) ?? 0) - 1);
+      if (indeg.get(e.to) === 0) queue.push(e.to);
+    }
+  }
+  const max = Math.max(0, ...layer.values());
+  for (const id of ids) if (!done.has(id)) layer.set(id, max + 1);
+  return layer;
+}
+
+function size(n: DrillNode, vertical: boolean): { w: number; h: number } {
+  const k = n.lanes?.length ?? 0;
+  if (!k) return { w: NODE_W, h: NODE_H };
+  return vertical
+    ? { w: GROUP_PAD * 2 + k * NODE_W + (k - 1) * LANE_GAP, h: GROUP_HEAD + NODE_H + GROUP_FOOT }
+    : { w: NODE_W + GROUP_PAD * 2, h: GROUP_HEAD + k * NODE_H + (k - 1) * LANE_GAP + GROUP_FOOT };
+}
+
+function lanesOf(n: DrillNode, x: number, y: number, vertical: boolean): Rect[] {
+  return (n.lanes ?? []).map((id, i) =>
+    vertical
+      ? { id, x: x + GROUP_PAD + i * (NODE_W + LANE_GAP), y: y + GROUP_HEAD, w: NODE_W, h: NODE_H }
+      : { id, x: x + GROUP_PAD, y: y + GROUP_HEAD + i * (NODE_H + LANE_GAP), w: NODE_W, h: NODE_H },
+  );
+}
+
+const curveH = (x1: number, y1: number, x2: number, y2: number) => {
+  const k = Math.max(20, (x2 - x1) / 2);
+  return `M${x1},${y1} C${x1 + k},${y1} ${x2 - k},${y2} ${x2},${y2}`;
+};
+const curveV = (x1: number, y1: number, x2: number, y2: number) => {
+  const k = Math.max(16, (y2 - y1) / 2);
+  return `M${x1},${y1} C${x1},${y1 + k} ${x2},${y2 - k} ${x2},${y2}`;
+};
+
+/**
+ * @param maxWidth 그릴 수 있는 폭(px). 가로 배치에서 열을 몇 개씩 한 줄에 둘지 정한다
+ */
+export function layoutDiagram(d: DrillDiagram, { vertical, maxWidth }: { vertical: boolean; maxWidth: number }): Layout {
+  if (d.nodes.length === 0) return { boxes: [], routes: [], width: 0, height: 0 };
+  const layer = layers(d);
+  const count = Math.max(...layer.values()) + 1;
+  const columns: DrillNode[][] = Array.from({ length: count }, () => []);
+  for (const n of d.nodes) columns[layer.get(n.id)!].push(n);
+
+  const boxes = new Map<string, Box>();
+  const bandOf = new Map<string, number>();
+  let width = 0;
+  let height = 0;
+  const bandBottoms: number[] = [];
+
+  if (vertical) {
+    let y = PAD;
+    const rowWidths = columns.map((col) => col.reduce((s, n) => s + size(n, true).w, 0) + (col.length - 1) * (GAP_X / 2));
+    width = Math.max(...rowWidths) + PAD * 2;
+    columns.forEach((col, r) => {
+      const rowH = Math.max(...col.map((n) => size(n, true).h));
+      let x = (width - rowWidths[r]) / 2;
+      for (const n of col) {
+        const { w, h } = size(n, true);
+        boxes.set(n.id, { id: n.id, x, y: y + (rowH - h) / 2, w, h, lanes: lanesOf(n, x, y + (rowH - h) / 2, true) });
+        bandOf.set(n.id, 0);
+        x += w + GAP_X / 2;
+      }
+      y += rowH + GAP_Y + 18;
+    });
+    height = y - GAP_Y - 18 + PAD;
+  } else {
+    const slot = NODE_W + GROUP_PAD * 2;
+    const fit = Math.max(1, Math.floor((maxWidth - PAD * 2 + GAP_X) / (slot + GAP_X)));
+    const bands = Math.ceil(count / fit);
+    const perBand = Math.ceil(count / bands);
+    let top = PAD;
+    for (let b = 0; b < bands; b++) {
+      const cols = columns.slice(b * perBand, (b + 1) * perBand);
+      const colH = cols.map((col) => col.reduce((s, n) => s + size(n, false).h, 0) + (col.length - 1) * GAP_Y);
+      const bandH = Math.max(...colH);
+      cols.forEach((col, i) => {
+        const x = PAD + i * (slot + GAP_X);
+        let y = top + (bandH - colH[i]) / 2;
+        for (const n of col) {
+          const { w, h } = size(n, false);
+          const bx = x + (slot - w) / 2;
+          boxes.set(n.id, { id: n.id, x: bx, y, w, h, lanes: lanesOf(n, bx, y, false) });
+          bandOf.set(n.id, b);
+          y += h + GAP_Y;
+        }
+      });
+      width = Math.max(width, PAD * 2 + cols.length * slot + (cols.length - 1) * GAP_X);
+      top += bandH;
+      bandBottoms.push(top);
+      top += BAND_GAP;
+    }
+    height = top - BAND_GAP + PAD;
+  }
+
+  /** 두 단계 이상 건너뛰는 간선이 지나갈 사이 노드들 */
+  const between = (e: DrillEdge) =>
+    [...boxes.values()].filter((x) => {
+      const l = layer.get(x.id)!;
+      return l > layer.get(e.from)! && l < layer.get(e.to)! && bandOf.get(x.id) === bandOf.get(e.from);
+    });
+  const routes: Route[] = d.edges.map((e) => {
+    const a = boxes.get(e.from)!;
+    const b = boxes.get(e.to)!;
+    const mid = between(e);
+    if (vertical) {
+      const x1 = a.x + a.w / 2, y1 = a.y + a.h, x2 = b.x + b.w / 2, y2 = b.y;
+      const hit = mid.filter((m) => m.x < Math.max(x1, x2) + 8 && m.x + m.w > Math.min(x1, x2) - 8);
+      if (hit.length) {
+        // 사이 노드의 옆으로 비켜 내려간다 — 출발이 가운데보다 왼쪽이면 왼쪽으로
+        const left = x1 <= width / 2;
+        const sx = left ? Math.min(...hit.map((m) => m.x)) - 16 : Math.max(...hit.map((m) => m.x + m.w)) + 16;
+        const dd = `M${x1},${y1} C${x1},${y1 + 24} ${sx},${y1 + 12} ${sx},${y1 + 36} L${sx},${y2 - 36} C${sx},${y2 - 12} ${x2},${y2 - 24} ${x2},${y2}`;
+        return { from: e.from, to: e.to, label: e.label, d: dd, lx: sx, ly: (y1 + y2) / 2 };
+      }
+      return { from: e.from, to: e.to, label: e.label, d: curveV(x1, y1, x2, y2), lx: (x1 + x2) / 2, ly: (y1 + y2) / 2 };
+    }
+    if (bandOf.get(e.from) === bandOf.get(e.to)) {
+      const x1 = a.x + a.w, y1 = a.y + a.h / 2, x2 = b.x, y2 = b.y + b.h / 2;
+      const hit = mid.filter((m) => m.y < Math.max(y1, y2) + 8 && m.y + m.h > Math.min(y1, y2) - 8);
+      if (hit.length) {
+        // 사이 노드의 위나 아래로 돌아간다 — 출발이 사이 노드보다 위에 있으면 위로
+        const top = Math.min(...hit.map((m) => m.y));
+        const bottom = Math.max(...hit.map((m) => m.y + m.h));
+        const up = y1 <= (top + bottom) / 2;
+        const ry = up ? top - 18 : bottom + 26;
+        const k = 28;
+        const dd = `M${x1},${y1} C${x1 + k},${y1} ${x1 + k},${ry} ${x1 + k * 2},${ry} L${x2 - k * 2},${ry} C${x2 - k},${ry} ${x2 - k},${y2} ${x2},${y2}`;
+        return { from: e.from, to: e.to, label: e.label, d: dd, lx: (x1 + x2) / 2, ly: ry };
+      }
+      return { from: e.from, to: e.to, label: e.label, d: curveH(x1, y1, x2, y2), lx: (x1 + x2) / 2, ly: (y1 + y2) / 2 };
+    }
+    // 다음 줄로 넘어가는 간선 — 아래로 내려 왼쪽으로 돌아 대상의 왼쪽으로 들어간다
+    const sx = a.x + a.w / 2, sy = a.y + a.h;
+    const midY = bandBottoms[bandOf.get(e.from)!] + BAND_GAP / 2;
+    const tx = b.x, ty = b.y + b.h / 2, lx = tx - 28, r = 8;
+    const d = `M${sx},${sy} L${sx},${midY - r} Q${sx},${midY} ${sx - r},${midY} L${lx + r},${midY} Q${lx},${midY} ${lx},${midY + r} L${lx},${ty - r} Q${lx},${ty} ${lx + r},${ty} L${tx},${ty}`;
+    return { from: e.from, to: e.to, label: e.label, d, lx: (sx + lx) / 2, ly: midY };
+  });
+
+  // 돌아가는 간선이 그림 밖으로 나가지 않게 높이를 늘린다
+  const lowest = Math.max(height, ...routes.map((r) => r.ly + 18));
+  return { boxes: [...boxes.values()], routes, width, height: lowest };
+}

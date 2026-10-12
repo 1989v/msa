@@ -106,7 +106,7 @@ Search BC는 **OpenSearch 기반 읽기 전용 검색 모델 서비스**. CDC + 
 
 ## 3-2. 하이브리드 검색 용어 (ADR-0090 · ADR-0065 · ADR-0095)
 
-정의는 `portal-fe/src/content/search-architecture.md` §2·§4 와 같다. 값이 바뀌면 그 문서의 §4 표가 먼저 바뀐다.
+정의는 검색 온톨로지(`code-dictionary/feature/src/main/resources/ontology/search.yaml`)의 `applied` 와 같다. 값이 바뀌면 그 개념의 `applied.facts` 가 먼저 바뀐다.
 
 | 용어 | 정의 | 피할 말 · 비고 |
 |---|---|---|

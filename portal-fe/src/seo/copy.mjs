@@ -1303,7 +1303,7 @@ export const PORTAL_PAGES = {
   '/tech/search': {
     title: portalTitle('검색 아키텍처'),
     description:
-      '관광지 검색과 통합 검색의 구조·흐름·지금 쓰는 기법을 한 장에 — nori 사용자 사전, BM25+HNSW 하이브리드, RRF, 쿼리 언더스탠딩, 쿼리 벡터 캐시, 일일 평가',
+      '검색어 하나가 결과가 되기까지 — 쿼리 리포뮬레이션, 쿼리 언더스탠딩, 스파스·덴스 검색, RRF 융합, 리랭킹, 0건 대응을 다이어그램으로 좁혀 가며 본다. 단계마다 일반 개념, 이 서비스의 적용 상태, 코드.',
   },
   '/portfolio': {
     title: portalTitle('포트폴리오'),
@@ -1355,7 +1355,7 @@ export const TRUST_LINKS = [
  * 하이드레이션이 정적 HTML 의 구조화 데이터를 다른 값으로 갈아끼운다.
  * og:type 은 프리렌더가 website 로 고정하므로 글 성격은 여기서만 말한다.
  *
- * @param {string} updated 원본 문서의 갱신일(YYYY-MM-DD)
+ * @param {string} updated 드릴다운 데이터의 갱신일(YYYY-MM-DD)
  */
 export function techArticleJsonLd(updated) {
   const page = PORTAL_PAGES['/tech/search'];

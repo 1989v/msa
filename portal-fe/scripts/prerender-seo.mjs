@@ -117,13 +117,14 @@ import {
   kstDate,
 } from '../src/seo/copy.mjs';
 import { DATA_SOURCES, DATA_SOURCE_NOTICES } from '../src/seo/dataSources.mjs';
+import { STATUS_LABEL, assertDrill } from '../src/pages/tech/drillModel.mjs';
 
 const MULTI = SEO_MULTI_ATTR;
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = resolve(ROOT, 'dist');
 // render-content.mjs 가 빌드 체인 앞단에서 만든다 (커밋하지 않는 산출물)
-const TECH_SEARCH_JSON = resolve(ROOT, 'src/pages/tech/generated/search-architecture.json');
+const TECH_SEARCH_JSON = resolve(ROOT, 'src/pages/tech/generated/search-drill.json');
 // 속성 랜딩 목록 — select-place-landings.mjs 가 만들고 커밋한다. 빌드는 읽기만 한다
 const PLACE_LANDINGS_JSON = resolve(ROOT, 'src/content/place-landings.json');
 // 편집 페이지 생성 JSON — render-content 가 src/content/guides/*.md 에서 만든다(0장이어도 폴더는 있다)
@@ -202,7 +203,7 @@ async function main() {
   const guidePages = placeGuidePages(shell, { guides, cards: guideCards, landingPages: landing.pages, buildDate: kstDate() });
   for (const warning of guidePages.warnings) console.warn(`[seo] ${warning}`);
 
-  // 검색 아키텍처 본문은 API 가 아니라 레포 md 에서 나온다 — 없으면 렌더 단계가 빠진 빌드라 세운다
+  // 검색 아키텍처 본문은 API 가 아니라 레포의 드릴다운 데이터에서 나온다 — 없으면 렌더 단계가 빠진 빌드라 세운다
   let searchArchitecture;
   try {
     searchArchitecture = JSON.parse(await readFile(TECH_SEARCH_JSON, 'utf8'));
@@ -2426,29 +2427,30 @@ export function renderDataSourcesHtml(shell, rows = DATA_SOURCES) {
 }
 
 function assertTechSearchGenerated(generated) {
-  const ok =
-    generated &&
-    typeof generated.html === 'string' &&
-    generated.html.length > 0 &&
-    Array.isArray(generated.headings) &&
-    typeof generated.updated === 'string' &&
-    typeof generated.sourceHash === 'string';
-  if (!ok) throw new Error('검색 아키텍처 생성물이 { html, headings, updated, sourceHash } 형식이 아니다');
+  assertDrill(generated);
+  if (typeof generated.sourceHash !== 'string') throw new Error('검색 아키텍처 생성물에 sourceHash 가 없다');
 }
 
 /**
- * `/tech/search` — 본문은 레포 md 를 render-content 가 구운 html 이다. h1 은 그 안에 있으므로
- * 따로 넣지 않는다. 목차·JSON-LD 는 페이지(SearchArchitecturePage)와 같은 재료로 만든다.
+ * `/tech/search` — 화면은 노드를 눌러 펼치는 그림이라 정적 HTML 에는 1단계 단계를 목록으로 둔다.
+ * 단계마다 이름 · 적용 상태 · 일반 개념 · 이 서비스의 적용 내용 — 크롤러가 읽는 본문이다.
  */
 export function renderTechSearchHtml(shell, generated) {
   assertTechSearchGenerated(generated);
-  const { html, headings, updated, sourceHash } = generated;
+  const { root, concepts, diagrams, updated, sourceHash } = generated;
   const meta = PORTAL_PAGES['/tech/search'];
   const canonical = portalUrl('/tech/search');
-  const toc = headings
-    .filter((h) => h.level === 2 || h.level === 3)
-    .map((h) => `<li><a href="#${escapeHtml(h.id)}">${escapeHtml(h.text)}</a></li>`)
-    .join('');
+  const stage = (id) => {
+    const c = concepts[id];
+    const status = c.applied?.status;
+    return (
+      `<li><h3>${escapeHtml(c.name)}${status ? ` <span>(${escapeHtml(STATUS_LABEL[status])})</span>` : ''}</h3>` +
+      `<p>${escapeHtml(c.description)}</p>` +
+      (c.applied?.summary ? `<p>${escapeHtml(c.applied.summary)}</p>` : '') +
+      '</li>'
+    );
+  };
+  const items = diagrams[root].nodes.map((n) => stage(n.id) + (n.lanes ?? []).map(stage).join('')).join('');
   return compose(shell, {
     lang: 'ko',
     title: meta.title,
@@ -2467,8 +2469,9 @@ export function renderTechSearchHtml(shell, generated) {
     ],
     body: shellBody(
       `<div data-source-hash="${escapeHtml(sourceHash)}">` +
-        `<nav aria-label="목차"><p>목차</p><ol>${toc}</ol></nav>` +
-        `<article>${html}</article></div>`,
+        `<h1>검색 아키텍처</h1><p>${escapeHtml(concepts[root].description)}</p>` +
+        `<section aria-label="${escapeHtml(concepts[root].name)}"><h2>${escapeHtml(concepts[root].name)}</h2><ol>${items}</ol></section>` +
+        '</div>',
     ),
   });
 }
@@ -2562,7 +2565,7 @@ function portalLlmsTxt() {
     `- [랭킹 리더보드](${RANK_ORIGIN}/): 지역별 최저가 주유소 등 집계와 등락`,
     `- [혜택 링크 허브](${DEAL_ORIGIN}/): 카테고리별 혜택·제휴 링크 큐레이션`,
     `- [IT 개념 사전](${PORTAL_ORIGIN}/tech): 도메인별 개념을 그래프로 좁혀 가며 배우는 개념 아틀라스`,
-    `- [검색 아키텍처](${PORTAL_ORIGIN}/tech/search): 관광지 검색과 통합 검색의 구조·흐름·지금 쓰는 기법`,
+    `- [검색 아키텍처](${PORTAL_ORIGIN}/tech/search): 검색 파이프라인을 단계별로 좁혀 보는 다이어그램 — 단계마다 일반 개념 · 이 서비스의 적용 상태 · 코드`,
     `- [포트폴리오](${PORTAL_ORIGIN}/portfolio): 검색·전시·커머스·인프라·AI 도메인에서 만든 것들`,
     `- [스토어 데모](${PORTAL_ORIGIN}/shop): MSA 커머스 플랫폼 데모 (검색·추천·주문)`,
     '',

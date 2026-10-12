@@ -126,7 +126,7 @@
       ]
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "sources": [
         "search/app/src/main/kotlin/com/kgd/search/*"
       ]

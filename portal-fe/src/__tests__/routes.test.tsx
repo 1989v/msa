@@ -6,7 +6,6 @@ vi.mock('../seo/useSeo', () => ({ useSeo: () => undefined }));
 vi.mock('../components/AuthButton', () => ({ default: () => null }));
 vi.mock('../api/resumeApi', () => ({ fetchResumeStatus: () => Promise.resolve(false) }));
 
-import generated from '../pages/tech/generated/search-architecture.json';
 import App from '../App';
 
 /**
@@ -27,7 +26,7 @@ describe('라우트', () => {
   it('/tech/search 는 검색 아키텍처 페이지다 — /tech/:category 용어집이 받지 않는다', async () => {
     renderAt('/tech/search');
     const h1 = await screen.findByRole('heading', { level: 1 });
-    expect(h1.textContent).toBe(generated.headings.find((h) => h.level === 1)?.text);
+    expect(h1.textContent).toBe('검색 아키텍처');
     expect(h1.textContent).not.toMatch(/용어집/);
   });
 
