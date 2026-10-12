@@ -37,7 +37,7 @@ spec:
               value: "true"
             # 어휘 근거 단계(OFF → GATE → CONFINE). 판정 세트 짝 측정 중 — 되돌림은 이 값 한 줄
             - name: SEARCH_ATTRACTION_ANSWER_EVIDENCE_MODE
-              value: "GATE"
+              value: "OFF"
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
