@@ -29,7 +29,6 @@ interface Step {
 export interface DrillData {
   root: string;
   updated: string;
-  maxDepth: number;
   sourceHash: string;
   gitSha: string;
   concepts: Record<string, Concept>;
@@ -356,8 +355,8 @@ function TabBody({ c, tab }: { c: Concept; tab: Tab }) {
 }
 
 /**
- * 펼친 한 단계 — 머리 → 상세 다이어그램 → 탭, 그리고 이 단계에서 연 다음 단계를 **자기 안에** 품는다.
- * 단계를 형제로 늘어놓으면 1단계 탭 뒤에 2단계 머리가 바로 붙어 경계가 안 보인다(모바일에서 특히).
+ * 펼친 한 단계 — 머리 → 상세 다이어그램 → 탭. 단계들은 같은 폭의 카드로 차례로 쌓는다.
+ * 안쪽에 들여 넣으면 단계가 깊어질수록 왼쪽 띠가 겹치고 그림 폭이 줄어든다 — 경계는 카드 간격과 머리 띠가 가른다.
  */
 function Level({
   index,
@@ -420,11 +419,7 @@ function Level({
           <Related owner={step.id} picked={path[index + 1]?.id} onPick={onPick} title="하위 개념" />
         </div>
       ) : (
-        <p className="td-leaf">
-          {index + 1 >= drill.maxDepth
-            ? `상세 다이어그램은 ${drill.maxDepth}단계까지 그린다 — 여기서는 설명 · 적용 상태 · 코드만 본다.`
-            : '더 나뉘는 하위 단계가 없는 개념이다 — 설명 · 적용 상태 · 코드만 있다.'}
-        </p>
+        <p className="td-leaf">더 나뉘는 하위 단계가 없는 개념이다 — 설명 · 적용 상태 · 코드만 있다.</p>
       )}
       <div className="td-tabs" role="tablist" aria-label={`${c.name} 상세 탭`} ref={tabsRef}>
         {TABS.map(([k, label], i) => (
@@ -447,11 +442,6 @@ function Level({
       <div className="td-panel" role="tabpanel" id={`td-panel-${index}`} aria-labelledby={`td-tab-${index}-${tab}`}>
         <TabBody c={c} tab={tab} />
       </div>
-      {path[index + 1] && (
-        <div className="td-children">
-          <Level key={`${index + 1}:${path[index + 1].id}`} index={index + 1} path={path} pick={pick} close={close} />
-        </div>
-      )}
     </section>
   );
 }
@@ -540,7 +530,13 @@ export default function TechDrillPage({ page, data }: { page: DrillPage; data: D
             </p>
           </section>
 
-          {path[0] && <Level key={`0:${path[0].id}`} index={0} path={path} pick={pick} close={close} />}
+          {path.length > 0 && (
+            <div className="td-levels">
+              {path.map((s, i) => (
+                <Level key={`${i}:${s.id}`} index={i} path={path} pick={pick} close={close} />
+              ))}
+            </div>
+          )}
         </main>
       </div>
     </DrillContext.Provider>

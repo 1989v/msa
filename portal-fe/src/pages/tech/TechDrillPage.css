@@ -303,8 +303,12 @@ html[data-theme='dark'] .td-page {
   white-space: nowrap;
 }
 
-/* 펼친 단계 — 머리 띠 → 상세 다이어그램 → 탭 → 다음 단계(이 단계 안에 들여 넣는다).
-   단계를 형제로 늘어놓으면 앞 단계의 탭 뒤에 다음 단계가 바로 붙어 어디까지가 어느 단계인지 안 보인다. */
+/* 펼친 단계들 — 같은 폭의 카드를 간격을 두고 쌓는다. 들여 넣지 않으므로 깊어져도 그림 폭이 그대로다 */
+.td-levels {
+  display: grid;
+  gap: var(--ko-space-4);
+}
+
 .td-level {
   background: var(--ko-surface-0);
   scroll-margin-top: var(--ko-space-4);
@@ -345,24 +349,6 @@ html[data-theme='dark'] .td-page {
 
 .td-kicker {
   overflow-wrap: anywhere;
-}
-
-/* 다음 단계 — 이 단계 안쪽에 들여 넣고 왼쪽 띠로 이어 붙인다 */
-.td-children {
-  padding: 0 var(--ko-space-2) var(--ko-space-3) var(--ko-space-3);
-  border-top: 1px dashed var(--ko-border-default);
-  padding-top: var(--ko-space-3);
-}
-
-.td-children > .td-level {
-  border-left: 3px solid var(--ko-text-primary);
-}
-
-@media (min-width: 640px) {
-  .td-children {
-    padding-left: var(--ko-space-5);
-    padding-right: var(--ko-space-3);
-  }
 }
 
 .td-leaf {

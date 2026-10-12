@@ -1,7 +1,6 @@
 {
 "root": "commerce-catalog",
 "updated": "2026-10-12",
-"maxDepth": 3,
 "concepts": {
 "commerce-catalog": {"name": "상품 · 전시 · 재고", "kind": "DOMAIN", "description": "무엇을 얼마에 팔고(상품 · 가격), 어떻게 보여 주고(전시), 몇 개 남았는지(재고), 어떤 혜택을 얹는지(프로모션)를 다루는 커머스의 판매 준비 영역"},
 "cat-product-domain": {"name": "상품", "kind": "DOMAIN", "description": "상품 구조 · 분류 · 가격 · 판매자를 정의한다. 주문 이후의 모든 계산이 여기서 정한 값을 스냅샷해 쓴다", "applied": {"status": "LIVE", "summary": "상품이 카탈로그 원본이고 바뀔 때마다 이벤트를 낸다. 운영 상품 27개(판매 중 25) · 판매자 2 · 카테고리 18종(자유 문자열)(2026-10-12 확인)"}},

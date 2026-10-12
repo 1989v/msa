@@ -62,7 +62,6 @@ describe.each(DRILL_PAGES)('$path 프리렌더', (page) => {
     expect(() => renderTechDrillHtml(SHELL, undefined, page)).toThrow();
     expect(() => renderTechDrillHtml(SHELL, { ...generated, sourceHash: undefined }, page)).toThrow();
     expect(() => renderTechDrillHtml(SHELL, { ...generated, root: 'nope' }, page)).toThrow();
-    expect(() => renderTechDrillHtml(SHELL, { ...generated, maxDepth: 0 }, page)).toThrow();
   });
 });
 

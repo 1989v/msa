@@ -31,7 +31,6 @@ export function assertDrill(drill) {
   const { root, concepts, diagrams } = drill;
   if (typeof root !== 'string' || !concepts?.[root]) fail(`루트 ${root} 가 개념에 없다`);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(drill.updated ?? '')) fail('updated 가 YYYY-MM-DD 가 아니다');
-  if (!Number.isInteger(drill.maxDepth) || drill.maxDepth < 1) fail('maxDepth 가 1 이상의 정수가 아니다');
   if (!diagrams?.[root]) fail('루트 그림이 없다');
   for (const [id, c] of Object.entries(concepts)) {
     if (typeof c.name !== 'string' || typeof c.description !== 'string') fail(`${id} 의 이름 · 설명`);

@@ -1,7 +1,6 @@
 {
 "root": "recommendation-system",
 "updated": "2026-10-12",
-"maxDepth": 3,
 "concepts": {
 "recommendation-system": {"name": "추천", "kind": "DOMAIN", "description": "검색어 없이 사용자가 좋아할 아이템을 고른다. 수천만 후보를 후보 생성 → 랭킹 → 재정렬 퍼널로 좁히고, 피드백이 다음 학습으로 돌아온다"},
 "rec-signal-collection": {"name": "행동 신호 수집", "kind": "STAGE", "description": "평점 같은 명시 피드백과 조회 · 클릭 · 찜 · 구매 같은 암묵 피드백을 모아 사용자 × 아이템 상호작용으로 만든다", "applied": {"status": "DISABLED", "summary": "analytics 이벤트 토픽에서 상품 행동(노출 · 클릭 · 장바구니 · 주문)을 받아 ClickHouse 행동 테이블에 쌓는 소비자가 있다. 운영 ClickHouse 에는 그 테이블이 아직 없어 쌓인 행동이 없다(2026-10-12 확인)", "facts": [{"label": "행동 매핑", "value": "노출 → pageview · 클릭 → click · 장바구니 → addwish · 주문 → reservation"}, {"label": "대상", "value": "상품 행동만 — 검색 · 세션 이벤트는 버린다"}]}},
@@ -112,7 +111,20 @@
 "rec-regularization": {"name": "정규화 항 · 편향 항", "kind": "TERM", "description": "벡터 크기에 벌점(λ)을 줘 적은 관측에 과적합하지 않게 하고, 전체 평균 · 사용자 편향 · 아이템 편향을 따로 둬 잠재 요인이 설명할 몫만 남긴다"},
 "rec-feature-cross": {"name": "특징 교차", "kind": "TERM", "description": "두 특징의 조합(도시 × 카테고리)을 새 특징으로 만든 것이다. 조합에만 있는 신호를 선형 모델이 외우게 한다"},
 "rec-memorization-generalization": {"name": "외우기 · 일반화", "kind": "TERM", "description": "자주 본 조합을 그대로 기억하는 능력과 본 적 없는 조합을 임베딩으로 추론하는 능력이다. Wide & Deep 이 둘을 나눠 맡긴다"},
-"rec-funnel": {"name": "추천 퍼널", "kind": "TERM", "description": "후보 생성(recall, 수천만 → 수백) → 랭킹(precision, 수백 → 수십) → 재정렬(규칙 · 다양성, 수십 → Top-K) 순의 단계 구조다"}
+"rec-funnel": {"name": "추천 퍼널", "kind": "TERM", "description": "후보 생성(recall, 수천만 → 수백) → 랭킹(precision, 수백 → 수십) → 재정렬(규칙 · 다양성, 수십 → Top-K) 순의 단계 구조다"},
+"user-based-cf": {"name": "사용자 기반 CF", "kind": "MECHANISM", "description": "나와 행동이 비슷한 사용자들이 좋아한 것을 추천한다. 사용자 수가 아이템보다 많고 취향이 빨리 변해 이웃 계산이 비싸고 불안정하다"},
+"item-based-cf": {"name": "아이템 기반 CF", "kind": "MECHANISM", "description": "같이 본 · 같이 산 아이템끼리의 유사도를 미리 계산해 두고, 사용자가 본 아이템의 이웃을 모은다(Amazon 2003). 아이템 관계가 느리게 변해 배치 계산이 잘 맞는다", "code": [{"path": "recommendation/feature/src/main/kotlin/com/kgd/recommendation/infrastructure/persistence/ClickHouseItemSimilarityComputer.kt", "start": 24, "end": 27, "note": "아이템 × 아이템 PPMI 를 ClickHouse 에서 계산 (ADR-0044 Phase 2)", "snippet": "class ClickHouseItemSimilarityComputer(\n    @Qualifier(\"clickHouseDataSource\") private val dataSource: DataSource,\n) {\n    private val logger = KotlinLogging.logger {}"}, {"path": "recommendation/feature/src/main/kotlin/com/kgd/recommendation/application/recommendation/service/SimilarItemsService.kt", "start": 24, "end": 29, "note": "유사 아이템 + 절반 미만이면 폴백", "snippet": "class SimilarItemsService(\n    private val itemSimilarityPort: ItemSimilarityPort,\n    private val itemMetadataPort: ItemMetadataPort,\n    private val recommendationRepository: RecommendationRepository,\n) : GetSimilarItemsUseCase {\n    private val logger = KotlinLogging.logger {}"}]},
+"jaccard-similarity": {"name": "Jaccard 유사도", "kind": "MECHANISM", "description": "두 집합의 교집합 ÷ 합집합이다. 이진 상호작용에 맞고 빈도를 무시한다"},
+"pmi": {"name": "PMI · PPMI", "kind": "MECHANISM", "description": "log(P(i,j) ÷ (P(i)P(j))) — 우연히 같이 나올 기대보다 얼마나 더 같이 나왔는지다. 인기 아이템이 모든 쌍을 차지하는 것을 막고, 음수를 0 으로 자른 PPMI 가 산업 표준이다", "code": [{"path": "recommendation/feature/src/main/kotlin/com/kgd/recommendation/infrastructure/persistence/ClickHouseItemSimilarityComputer.kt", "start": 16, "end": 27, "note": "PPMI 식", "snippet": " *   PPMI(i,j) = max(0, log( P(i,j) / (P(i) × P(j)) ))\n *     P(i,j) = (i,j 둘 다 보유한 사용자 수) / 전체 사용자 수\n *     P(i)   = (i 보유한 사용자 수) / 전체 사용자 수\n *\n * 시그널: click + addwish + reservation (강한 행동). pageview 는 noise 비율 높아 제외.\n * 윈도우: 30일. 최소 공출현: 5번 이상.\n */\n@Component\nclass ClickHouseItemSimilarityComputer(\n    @Qualifier(\"clickHouseDataSource\") private val dataSource: DataSource,\n) {\n    private val logger = KotlinLogging.logger {}"}]},
+"lift": {"name": "Lift", "kind": "MECHANISM", "description": "P(j|i) ÷ P(j) — 장바구니 분석에서 온 지표로 PMI 의 로그를 뗀 값이다. 1 보다 크면 함께 살 경향이 있다"},
+"pearson-correlation": {"name": "피어슨 상관", "kind": "MECHANISM", "description": "평균을 빼고 잰 코사인이다. 별점처럼 사람마다 기준이 다른 명시 피드백에서 짜게 · 후하게 주는 습관을 지운다"},
+"svd": {"name": "SVD", "kind": "MECHANISM", "description": "행렬을 직교 행렬 둘과 특이값으로 정확히 분해한다. 빈칸을 0 으로 채워야 해 추천 행렬에는 그대로 못 쓴다"},
+"funk-svd": {"name": "FunkSVD", "kind": "MECHANISM", "description": "관측된 칸만으로 오차 제곱 + 정규화 항을 SGD 로 줄인다. 사용자 · 아이템 편향 항을 더한 것이 Koren 의 bias MF(SVD++ 계열)다"},
+"als": {"name": "ALS", "kind": "MECHANISM", "description": "사용자 벡터를 고정하고 아이템 벡터를 최소제곱으로 풀고, 번갈아 반복한다. 각 단계가 독립이라 분산 학습(Spark MLlib)에 맞는다"},
+"implicit-als": {"name": "암묵 피드백 ALS", "kind": "MECHANISM", "description": "모든 칸을 선호(0/1) × 확신도(1 + α × 횟수)로 가중해 학습한다(Hu · Koren · Volinsky 2008). 안 본 칸도 약한 부정으로 쓴다"},
+"rec-sgd": {"name": "SGD 학습", "kind": "MECHANISM", "description": "관측 하나씩 오차 기울기로 벡터를 조금씩 고친다. 구현이 쉽고 특징 · 편향을 더하기 쉽지만 분산이 어렵다"},
+"in-batch-negative": {"name": "in-batch negative", "kind": "MECHANISM", "description": "같은 배치의 다른 사용자가 고른 아이템을 음성 표본으로 쓰고 softmax 교차 엔트로피로 학습한다. 음성을 따로 뽑지 않아 싸다"},
+"sampling-bias-correction": {"name": "샘플링 편향 보정 (logQ)", "kind": "MECHANISM", "description": "in-batch 음성은 인기 아이템이 자주 뽑혀 과하게 벌받는다. 점수에서 log(아이템 출현 빈도)를 빼 보정한다(Yi et al. 2019)", "code": [{"path": "recommendation-ml/train_two_tower.py", "start": 219, "end": 230, "note": "점수 - log 빈도 후 교차 엔트로피", "snippet": "log_item_freq = torch.log(item_freq + 1e-8)\n\nfor epoch in range(EPOCHS):\n    model.train()\n    total_loss = 0.0\n    n_batches = 0\n    for user_batch, item_batch in loader:\n        u = model.user_tower(user_batch)\n        v = model.item_tower(item_batch)\n        scores = u @ v.T\n        # Sampling Bias Correction (Yi et al. 2019)\n        batch_item_log_freq = log_item_freq[item_batch].unsqueeze(0)"}]}
 },
 "diagrams": {
 "recommendation-system": {"nodes": [{"id": "rec-signal-collection"}, {"id": "rec-score-correction"}, {"id": "rec-candidate-retrieval"}, {"id": "rec-ranking"}, {"id": "rec-reranking"}, {"id": "rec-cold-start"}, {"id": "rec-serving"}, {"id": "rec-evaluation"}], "edges": [{"from": "rec-signal-collection", "to": "rec-score-correction", "label": "행동 로그"}, {"from": "rec-score-correction", "to": "rec-candidate-retrieval", "label": "아이템 점수"}, {"from": "rec-candidate-retrieval", "to": "rec-ranking", "label": "후보"}, {"from": "rec-candidate-retrieval", "to": "rec-cold-start", "label": "행동 · 후보가 모자라면"}, {"from": "rec-ranking", "to": "rec-reranking", "label": "점수 순 목록"}, {"from": "rec-reranking", "to": "rec-serving"}, {"from": "rec-cold-start", "to": "rec-serving", "label": "폴백 목록"}, {"from": "rec-serving", "to": "rec-evaluation", "label": "노출 · 클릭"}], "related": ["rec-glossary"]},
@@ -137,6 +149,10 @@
 "rec-offline-evaluation": {"nodes": [], "edges": [], "related": ["rec-temporal-split", "srch-offline-online-gap", "srch-recall-at-k", "srch-map", "srch-mrr", "rec-hit-rate", "rec-catalog-coverage", "srch-intra-list-diversity", "rec-novelty", "rec-serendipity"]},
 "rec-online-evaluation": {"nodes": [], "edges": [], "related": ["rec-experiment-variant-routing", "rec-variant-bandit", "rec-impression-publishing", "srch-dwell-time"]},
 "rec-glossary-data": {"nodes": [], "edges": [], "related": ["rec-interaction-matrix", "rec-co-occurrence", "rec-long-tail", "rec-sparse-dense-features"]},
-"rec-glossary-model": {"nodes": [], "edges": [], "related": ["rec-latent-factor", "rec-regularization", "rec-feature-cross", "rec-memorization-generalization", "rec-funnel"]}
+"rec-glossary-model": {"nodes": [], "edges": [], "related": ["rec-latent-factor", "rec-regularization", "rec-feature-cross", "rec-memorization-generalization", "rec-funnel"]},
+"collaborative-filtering": {"nodes": [], "edges": [], "related": ["user-based-cf", "item-based-cf"]},
+"rec-similarity-metric": {"nodes": [], "edges": [], "related": ["jaccard-similarity", "pmi", "lift", "pearson-correlation"]},
+"matrix-factorization": {"nodes": [], "edges": [], "related": ["svd", "funk-svd", "als", "implicit-als", "rec-sgd"]},
+"two-tower": {"nodes": [], "edges": [], "related": ["in-batch-negative", "sampling-bias-correction"]}
 }
 }

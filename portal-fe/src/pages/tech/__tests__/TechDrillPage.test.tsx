@@ -24,7 +24,7 @@ import orderData from '../generated/commerce-order-drill.json';
 import adsData from '../generated/ads-drill.json';
 import catalogData from '../generated/commerce-catalog-drill.json';
 import { PORTAL_PAGES } from '../../../seo/copy.mjs';
-import { STATUS_LABEL } from '../drillModel.mjs';
+import { STATUS_LABEL, openPaths } from '../drillModel.mjs';
 import { DRILL_PAGES } from '../drillPages.mjs';
 import SearchArchitecturePage from '../SearchArchitecturePage';
 import RecommendationArchitecturePage from '../RecommendationArchitecturePage';
@@ -37,7 +37,6 @@ type Concept = { name: string; description: string; applied?: { status: keyof ty
 type Data = {
   root: string;
   updated: string;
-  maxDepth: number;
   sourceHash: string;
   gitSha: string;
   concepts: Record<string, Concept>;
@@ -77,6 +76,8 @@ describe.each(DRILL_PAGES)('$path', (page) => {
     .flatMap((owner) => deeper(owner).filter((id) => !diagrams[id]).map((id) => ({ owner, id })))[0];
   /** 하위 개념은 있지만 흐름이 없어 노드가 0개인 그림 */
   const listOnly = drawn(data.root).find((id) => diagrams[id] && !hasPicture(id) && diagrams[id].related.length > 0);
+  /** 3단계 이하에서 열리면서 하위 개념이 있는 개념 — 옛 내보내기는 여기서 끊었다. 없는 도메인은 건너뛴다 */
+  const deepOwner = [...openPaths(data)].find(([id, p]) => p.length >= 3 && diagrams[id])?.[0];
   /** 코드가 있는 아무 개념 — 해시로 그 단계까지 연다 */
   const withCode = Object.entries(concepts).find(([, c]) => c.code?.length);
 
@@ -113,16 +114,16 @@ describe.each(DRILL_PAGES)('$path', (page) => {
     expect(window.location.hash).toBe(`#${first}`);
   });
 
-  it('2단계는 1단계 안에 들어가 그 탭 뒤에 놓이고, 위 단계 노드를 다시 누르면 아래가 모두 접힌다', () => {
+  it('2단계는 1단계 카드 뒤에 같은 폭의 형제 카드로 놓이고, 위 단계 노드를 다시 누르면 아래가 모두 접힌다', () => {
     const { container } = renderPage();
     fireEvent.click(nodeButton(container, first));
     const l1 = level(first);
     fireEvent.click(nodeButton(within(l1).getByRole('group', { name: `${concepts[first].name} 다이어그램` }), second));
     const l2 = level(second);
-    // 경계가 보이도록 다음 단계를 앞 단계 안에 품는다 — 형제로 늘어놓지 않는다
-    expect(l1.contains(l2)).toBe(true);
-    const l1Tabs = within(l1).getAllByRole('tablist')[0];
-    expect(l1Tabs.compareDocumentPosition(l2) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // 들여 넣지 않는다 — 깊어질수록 왼쪽 띠가 겹치고 그림 폭이 줄어든다
+    expect(l1.contains(l2)).toBe(false);
+    expect(l2.parentElement).toBe(l1.parentElement);
+    expect(l1.compareDocumentPosition(l2) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByText(`2단계 · ${concepts[first].name} › ${concepts[second].name}`)).toBeInTheDocument();
 
     fireEvent.click(nodeButton(screen.getByRole('group', { name: `${concepts[data.root].name} 다이어그램` }), first));
@@ -160,6 +161,15 @@ describe.each(DRILL_PAGES)('$path', (page) => {
     const link = within(l).getByRole('link', { name: /GitHub/ });
     const rev = data.gitSha === 'dev' ? 'main' : data.gitSha;
     expect(link.getAttribute('href')).toBe(`https://github.com/1989v/msa/blob/${rev}/${ref.path}#L${ref.start}-L${ref.end}`);
+  });
+
+  it.runIf(Boolean(deepOwner))('3단계 이하도 하위 개념이 있으면 그림이나 하위 개념 목록을 연다 — 펼침 깊이에 상한이 없다', () => {
+    window.history.replaceState(null, '', `${page.path}#${deepOwner}`);
+    renderPage();
+    const l = level(deepOwner!);
+    expect(within(l).queryByText(/더 나뉘는 하위 단계가 없는 개념이다/)).toBeNull();
+    const picture = within(l).queryByRole('group', { name: `${concepts[deepOwner!].name} 다이어그램` });
+    expect(picture ?? within(l).getByText('하위 개념')).toBeInTheDocument();
   });
 
   it('해시(#개념 id)로 열면 그 단계까지 펼친 상태로 시작한다', () => {
