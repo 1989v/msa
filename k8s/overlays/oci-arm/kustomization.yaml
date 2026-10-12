@@ -369,7 +369,7 @@ images:
     newTag: 0a8afc3
   - name: commerce/atlas
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/atlas
-    newTag: 0a8afc3
+    newTag: 412a10d
   - name: commerce/auth
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/auth
     newTag: 0a8afc3
@@ -393,7 +393,7 @@ images:
     newTag: 915ca41
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: c503d08
+    newTag: 412a10d
   - name: commerce/quant-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant-fe
     newTag: cb23a78
@@ -411,7 +411,7 @@ images:
     newTag: 6a1889c
   - name: commerce/search
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search
-    newTag: 0a8afc3
+    newTag: 412a10d
   - name: commerce/search-batch
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-batch
     newTag: 0a8afc3
