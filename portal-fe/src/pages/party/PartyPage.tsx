@@ -292,7 +292,7 @@ export default function PartyPage({ invitationRoot = false }: { invitationRoot?:
     <div className="party-page kh-arcade">
       <header className="party-header">
         <h1>내기용 게임</h1>
-        <p>{isHost ? '친구를 부르고, 뭘 할지 정하고, 한 판으로 끝낸다.' : '들어왔습니다. 이름을 고르세요.'}</p>
+        <p>{isHost ? '링크나 QR 코드로 친구를 초대하고, 함께할 게임을 고르세요.' : '참가할 이름을 고르세요.'}</p>
       </header>
 
       {invalid && <p className="party-alert" role="alert">초대 코드 형식이 올바르지 않습니다. 6자리 코드를 다시 입력하세요.</p>}
@@ -347,7 +347,7 @@ export default function PartyPage({ invitationRoot = false }: { invitationRoot?:
           390px 화면에서 정작 할 일(명부)이 접힌 아래로 밀린다(실측). */}
       {(room.occupied.length > 1 || !isHost) && (
       <section className="party-seats" aria-label="참가자">
-        <h2>들어온 사람 {room.occupied.length}</h2>
+        <h2>입장한 친구 {room.occupied.length}명</h2>
         <ul>
           {room.occupied.map((seat) => (
             <li key={seat} className={seat === room.seat ? 'me' : ''}>
@@ -362,9 +362,9 @@ export default function PartyPage({ invitationRoot = false }: { invitationRoot?:
 
       {!isHost && (
         <section className="party-claim" aria-label="이름 고르기">
-          <h2>{myName ? `${myName} 님으로 참가` : '명부에서 자기 이름을 고르세요'}</h2>
+          <h2>{myName ? `${myName} 님으로 참가` : '목록에서 내 이름을 고르세요'}</h2>
           {room.roster.names.length === 0 ? (
-            <p className="party-status">방장이 명부를 정하는 중입니다…</p>
+            <p className="party-status">방장이 참가자를 입력하는 중…</p>
           ) : (
             <div className="party-name-grid">
               {room.roster.names.map((name) => {
@@ -392,8 +392,8 @@ export default function PartyPage({ invitationRoot = false }: { invitationRoot?:
       )}
 
       {isHost && phase === 'setup' && (
-        <section className="party-roster" aria-label="명부">
-          <h2>누가 하나</h2>
+        <section className="party-roster" aria-label="참가자 설정">
+          <h2>참가자</h2>
 
           {signedIn ? (
             <div className="party-group-row">
@@ -418,13 +418,13 @@ export default function PartyPage({ invitationRoot = false }: { invitationRoot?:
               </label>
               {optedIn && config.entries.length > 0 && (
                 <button type="button" className="party-ghost" onClick={saveGroup}>
-                  지금 명부를 그룹으로 저장
+                  참가자 목록을 그룹으로 저장
                 </button>
               )}
             </div>
           ) : (
             <p className="party-status">
-              로그인하면 친구 그룹을 저장해 다음에도 씁니다. 지금은 직접 입력으로 진행합니다.
+              로그인하면 친구 그룹을 저장할 수 있어요. 로그인 없이도 이름을 입력해 시작할 수 있어요.
             </p>
           )}
 
@@ -485,7 +485,7 @@ export default function PartyPage({ invitationRoot = false }: { invitationRoot?:
                     className={`party-chip ${config.mode === m.key ? 'active' : ''}`}
                     onClick={() => setConfig((c) => setMode(c, m.key))}
                   >
-                    {m.ko}
+                    {m.key === 'last' ? '인원 뽑기' : m.ko}
                     <small>{m.hint}</small>
                   </button>
                 ))}
@@ -493,7 +493,7 @@ export default function PartyPage({ invitationRoot = false }: { invitationRoot?:
 
               {config.mode !== 'order' && (
                 <div className="party-pick-row">
-                  <span className="party-field-label">몇 명이 걸리나</span>
+                  <span className="party-field-label">뽑을 인원</span>
                   <button
                     type="button"
                     onClick={() => setConfig((c) => setPick(c, c.pick - 1))}
@@ -520,35 +520,35 @@ export default function PartyPage({ invitationRoot = false }: { invitationRoot?:
             disabled={!canStart(config)}
             onClick={() => setPhase('branch')}
           >
-            {canStart(config) ? '뭘 할지 정하기' : '두 명 이상 필요합니다'}
+            {canStart(config) ? '게임 고르기' : '2명 이상 입력하세요'}
           </button>
         </section>
       )}
 
       {isHost && phase === 'branch' && (
         <section className="party-branch" aria-label="게임 선정">
-          <h2>뭘 할까</h2>
+          <h2>게임 선택</h2>
           <div className="party-branch-row">
             <button
               type="button"
               className={`party-chip ${branch === 'pick' ? 'active' : ''}`}
               onClick={() => setBranch('pick')}
             >
-              게임 픽<small>목록에서 하나 고른다</small>
+              직접 선택<small>목록에서 게임 고르기</small>
             </button>
             <button
               type="button"
               className={`party-chip ${branch === 'random' ? 'active' : ''}`}
               onClick={() => setBranch('random')}
             >
-              랜덤<small>지켜보는 게임 중 무작위</small>
+              무작위<small>자동으로 진행되는 게임</small>
             </button>
             <button
               type="button"
               className={`party-chip ${branch === 'interactive' ? 'active' : ''}`}
               onClick={() => setBranch('interactive')}
             >
-              참여형<small>다 같이 조작한다</small>
+              참여형<small>함께 조작하는 게임</small>
             </button>
           </div>
 
@@ -560,10 +560,10 @@ export default function PartyPage({ invitationRoot = false }: { invitationRoot?:
               onClick={() => {
                 const picked = randomFrom(pool);
                 if (picked) beginRound(picked.slug);
-                else setNotice('돌릴 게임이 없습니다.');
+                else setNotice('이용할 수 있는 게임이 없습니다.');
               }}
             >
-              {pool.length ? `${pool.length}종에서 무작위로 시작` : '돌릴 게임이 없습니다'}
+              {pool.length ? `${pool.length}개 중 무작위로 시작하기` : '이용할 수 있는 게임이 없습니다'}
             </button>
           ) : (
             <>
@@ -578,7 +578,7 @@ export default function PartyPage({ invitationRoot = false }: { invitationRoot?:
                       if (picked) beginRound(picked.slug);
                     }}
                   >
-                    참여형 중 무작위
+                    참여형 게임 무작위로 시작하기
                   </button>
                   {/* 익명 투표는 여기서만 뜬다 — 나머지 갈래는 방장이 정한다 */}
                   {votingApplies(branch, 'pick') && (
@@ -603,14 +603,14 @@ export default function PartyPage({ invitationRoot = false }: { invitationRoot?:
           )}
 
           <button type="button" className="party-ghost" onClick={() => setPhase('setup')}>
-            명부로 돌아가기
+            참가자 설정으로 돌아가기
           </button>
         </section>
       )}
 
       {isHost && phase === 'vote' && vote && (
         <section className="party-vote" aria-label="투표">
-          <h2>무엇을 할지 투표</h2>
+          <h2>게임 투표</h2>
           <VotePanel vote={vote} titles={titles} onCast={submitBallot} />
         </section>
       )}

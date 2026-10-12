@@ -21,9 +21,10 @@ describe('local draw', () => {
     const socket = vi.fn(); vi.stubGlobal('WebSocket', socket);
     draw(); await screen.findByRole('button', { name: 'marble-race' });
     expect(screen.queryByRole('button', { name: 'unsupported' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '다시 시도' })).toBeNull();
     fireEvent.change(screen.getByLabelText('참가자 · 한 줄에 한 명'), { target: { value: '가\n나\n다' } });
     fireEvent.click(screen.getByRole('button', { name: '순서 정하기' }));
-    fireEvent.click(screen.getByRole('button', { name: '추첨 시작' }));
+    fireEvent.click(screen.getByRole('button', { name: '시작하기' }));
     expect(screen.getByText('game destination')).toBeInTheDocument();
     const sandbox: Record<string, unknown> = { Date, JSON, Math, String, isFinite, parseInt, localStorage }; sandbox.window = sandbox;
     vm.runInNewContext(readFileSync('public/games/lib/party.js', 'utf8'), sandbox);
@@ -34,7 +35,7 @@ describe('local draw', () => {
     draw(); await screen.findByRole('button', { name: 'marble-race' });
     fireEvent.change(screen.getByLabelText('참가자 · 한 줄에 한 명'), { target: { value: '가\n나' } });
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('denied'); });
-    fireEvent.click(screen.getByRole('button', { name: '추첨 시작' }));
+    fireEvent.click(screen.getByRole('button', { name: '시작하기' }));
     expect(screen.getByRole('alert')).toHaveTextContent('추첨을 저장하지 못했습니다');
     expect(screen.queryByText('game destination')).toBeNull(); expect(screen.getByLabelText('참가자 · 한 줄에 한 명')).toHaveValue('가\n나');
   });
@@ -53,16 +54,18 @@ describe('local draw', () => {
   it('does not start during loading, failure, filtered empty, or fewer than two names; retries', async () => {
     let resolve!: (p: typeof page) => void;
     vi.mocked(listGames).mockReturnValueOnce(new Promise((r) => { resolve = r; }));
-    draw(); expect(screen.getByRole('button', { name: '추첨 시작' })).toBeDisabled();
+    draw(); expect(screen.getByRole('button', { name: '시작하기' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: '다시 시도' })).toBeNull();
     await act(async () => resolve({ content: [] } as unknown as typeof page));
-    expect(screen.getByText('지원 가능한 게임이 없습니다.')).toBeInTheDocument();
+    expect(screen.getByText('지금 이용할 수 있는 게임이 없습니다.')).toBeInTheDocument();
     vi.mocked(listGames).mockRejectedValueOnce(new Error('network'));
-    fireEvent.click(screen.getByRole('button', { name: '목록 다시 불러오기' }));
-    await screen.findByRole('alert'); expect(screen.getByRole('button', { name: '추첨 시작' })).toBeDisabled();
-    fireEvent.click(screen.getByRole('button', { name: '목록 다시 불러오기' }));
+    fireEvent.click(screen.getByRole('button', { name: '다시 시도' }));
+    await screen.findByRole('alert'); expect(screen.getByRole('button', { name: '시작하기' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: '다시 시도' }));
     await screen.findByRole('button', { name: 'marble-race' });
+    expect(screen.queryByRole('button', { name: '다시 시도' })).toBeNull();
     fireEvent.change(screen.getByLabelText('참가자 · 한 줄에 한 명'), { target: { value: '혼자' } });
-    await waitFor(() => expect(screen.getByRole('button', { name: '추첨 시작' })).toBeDisabled());
+    await waitFor(() => expect(screen.getByRole('button', { name: '시작하기' })).toBeDisabled());
     expect(localStorage.getItem(PARTY_KEY)).toBeNull();
   });
 });

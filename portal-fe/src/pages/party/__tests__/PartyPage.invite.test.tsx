@@ -23,7 +23,7 @@ describe('invitation page never silently becomes a host', () => {
     page(path, true); expect(api.host).not.toHaveBeenCalled(); expect(api.join).not.toHaveBeenCalled();
     expect(screen.getByRole('alert')).toHaveTextContent('초대 코드 형식');
     fireEvent.change(screen.getByLabelText('방 코드 또는 초대 링크'), { target: { value: 'abc-234' } });
-    fireEvent.click(screen.getByRole('button', { name: '코드로 입장' }));
+    fireEvent.click(screen.getByRole('button', { name: '입장하기' }));
     await waitFor(() => expect(api.join).toHaveBeenCalledWith('ABC234'));
     expect(api.host).not.toHaveBeenCalled();
   });
@@ -33,7 +33,7 @@ describe('invitation page never silently becomes a host', () => {
     await act(async () => { page(path, true); }); expect(api.join).toHaveBeenCalledTimes(1); expect(api.host).not.toHaveBeenCalled();
     expect(screen.getByText(/그 방이 없습니다/)).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('방 코드 또는 초대 링크'), { target: { value: 'ABC234' } });
-    fireEvent.click(screen.getByRole('button', { name: '코드로 입장' }));
+    fireEvent.click(screen.getByRole('button', { name: '입장하기' }));
     expect(api.join).toHaveBeenCalledTimes(2);
   });
   it('copies only after click and never reports failed clipboard as success', async () => {

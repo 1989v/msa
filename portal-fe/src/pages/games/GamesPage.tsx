@@ -261,7 +261,7 @@ export default function GamesPage() {
         <span className="games-party-entry-desc">
           {lang === 'en'
             ? 'Invite friends by link, pick a game, one round decides.'
-            : '링크로 친구를 부르고, 뭘 할지 정하고, 한 판으로 끝낸다'}
+            : '방을 만들고 링크로 친구를 초대하세요.'}
         </span>
         <span aria-hidden="true">→</span>
       </Link>

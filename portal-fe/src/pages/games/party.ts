@@ -41,8 +41,8 @@ export const PARTY_MIN = 2;
 export const PARTY_MAX = 12;
 
 export const PARTY_MODES: { key: PartyMode; ko: string; en: string; hint: string }[] = [
-  { key: 'last', ko: '한 명이 걸린다', en: 'One is picked', hint: '커피 사는 사람 정하기' },
-  { key: 'order', ko: '순서 정하기', en: 'Running order', hint: '차례를 정한다' },
+  { key: 'last', ko: '한 명 뽑기', en: 'One is picked', hint: '커피 사는 사람 정하기' },
+  { key: 'order', ko: '순서 정하기', en: 'Running order', hint: '차례 정하기' },
 ];
 
 export function writeParty(

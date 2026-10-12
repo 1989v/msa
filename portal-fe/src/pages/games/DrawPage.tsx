@@ -41,7 +41,7 @@ export default function DrawPage() {
   }
   return <main className="party-page draw-page kh-arcade">
     <header className="party-header"><h1>{lang === 'en' ? 'Random Race' : '랜덤레이스'}</h1>
-      <p>{lang === 'en' ? 'One device, names, and one round.' : '한 기기에서 이름을 넣고 바로 한 판.'}</p></header>
+      <p>{lang === 'en' ? 'Enter names and choose a game.' : '이름을 입력하고 게임을 고르세요.'}</p></header>
     <section>
       <label className="party-manual" htmlFor="draw-names">{lang === 'en' ? 'Participants · one per line' : '참가자 · 한 줄에 한 명'}
         <textarea id="draw-names" rows={5} maxLength={2000} spellCheck={false} value={draft.text}
@@ -54,10 +54,10 @@ export default function DrawPage() {
       <h2>{lang === 'en' ? 'Choose a game' : '게임 선택'}</h2>
       {catalog.status === 'loading' && <p role="status">{lang === 'en' ? 'Loading games…' : '게임 목록을 불러오는 중…'}</p>}
       {catalog.status === 'error' && <p role="alert">{lang === 'en' ? 'Could not load games.' : '게임 목록을 불러오지 못했습니다.'}</p>}
-      {catalog.status === 'ready' && catalog.games.length === 0 && <p role="status">{lang === 'en' ? 'No supported games available.' : '지원 가능한 게임이 없습니다.'}</p>}
-      {catalog.status !== 'loading' && <button className="party-copy" onClick={() => {
+      {catalog.status === 'ready' && catalog.games.length === 0 && <p role="status">{lang === 'en' ? 'No games available right now.' : '지금 이용할 수 있는 게임이 없습니다.'}</p>}
+      {(catalog.status === 'error' || (catalog.status === 'ready' && catalog.games.length === 0)) && <button className="party-copy" onClick={() => {
         setCatalog({ games: [], status: 'loading' }); setAttempt((a) => a + 1);
-      }}>{lang === 'en' ? 'Reload games' : '목록 다시 불러오기'}</button>}
+      }}>{lang === 'en' ? 'Try again' : '다시 시도'}</button>}
       <div className="party-mode-row" role="group" aria-label={lang === 'en' ? 'Game' : '게임'}>
         {[...catalog.games.map((g) => ({ key: g.slug as DrawChoice, title: displayTitle(g, lang) })),
           ...(catalog.games.length ? [{ key: 'random' as const, title: lang === 'en' ? 'Random' : '무작위' }] : [])].map((g) =>
@@ -66,12 +66,13 @@ export default function DrawPage() {
       </div>
       {error && <p role="alert" className="party-alert">{error}</p>}
       {!storageOk && <p role="status" className="party-notice">{lang === 'en' ? 'This device cannot keep recent settings. Current input is kept on this screen.' : '이 기기에 최근 설정을 저장할 수 없습니다. 현재 입력은 이 화면에 유지됩니다.'}</p>}
-      <button className="party-primary" disabled={!ready} onClick={start}>{lang === 'en' ? 'Start draw' : '추첨 시작'}</button>
+      <button className="party-primary" disabled={!ready} onClick={start}>{lang === 'en' ? 'Start' : '시작하기'}</button>
       <p className="party-status">{lang === 'en' ? 'Names stay on this device.' : '이름은 이 기기에만 저장됩니다.'}</p>
     </section>
-    <section><h2>{lang === 'en' ? 'Join friends online' : '친구와 온라인으로'}</h2>
+    <section><h2>{lang === 'en' ? 'Play with friends' : '친구와 함께하기'}</h2>
+      <p className="party-status">{lang === 'en' ? 'Create a room and invite friends with a link or QR code.' : '방을 만들고 링크나 QR 코드로 친구를 초대하세요.'}</p>
       <InviteEntry lang={lang} />
-      <Link className="party-ghost" to={gamePath(lang, '/party')}>{lang === 'en' ? 'Open an online room' : '온라인 파티 방 열기'}</Link>
+      <Link className="party-ghost" to={gamePath(lang, '/party')}>{lang === 'en' ? 'Invite friends' : '친구 초대하기'}</Link>
     </section>
   </main>;
 }
