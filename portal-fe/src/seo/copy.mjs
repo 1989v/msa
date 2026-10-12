@@ -102,6 +102,13 @@ export function hreflangAlternates(sub = '') {
 
 // ─── 페이지별 카피 ───────────────────────────────────────────────────────────
 
+/** Homepage introduction shared by the live subtitle and initial HTML. */
+export function gameHubIntro(lang) {
+  return lang === 'en'
+    ? 'Play free browser games on 1989v 게임 — no download or sign-up. Choose your genre and start playing.'
+    : '1989v 게임은 설치·회원가입 없이 즐기는 무료 웹게임 서비스입니다. 원하는 장르를 골라 바로 플레이하세요.';
+}
+
 export function hubMeta(lang, gameCount) {
   const count = Number.isInteger(gameCount) && gameCount >= 0 ? gameCount : null;
   const enCount = count === null ? '' : `${count} `;
@@ -110,14 +117,14 @@ export function hubMeta(lang, gameCount) {
     ? {
         title: `Free Online Games — Play Instantly in Your Browser | ${BRAND}`,
         description: clampDescription(
-          `Play ${enCount}free browser games instantly — no download, no sign-up. Puzzle, action, tower defense, RPG and strategy games in one arcade.`,
+          `Play ${enCount}free browser games on ${BRAND} — no download, no sign-up. Puzzle, action, tower defense, RPG and strategy.`,
         ),
         heading: 'Free Online Games',
       }
     : {
         title: `무료 웹게임 아케이드 — 설치 없이 브라우저에서 바로 | ${BRAND}`,
         description: clampDescription(
-          `설치도 가입도 없이 브라우저에서 바로 즐기는 무료 웹게임${koCount}. 퍼즐·액션·디펜스·RPG·전략 게임을 한곳에서 플레이하세요.`,
+          `${BRAND}의 무료 웹게임${koCount}을 설치·회원가입 없이 브라우저에서 바로 즐기세요. 퍼즐·액션·디펜스·RPG·전략 게임을 한곳에서 플레이하세요.`,
         ),
         heading: '무료 웹게임 아케이드',
       };

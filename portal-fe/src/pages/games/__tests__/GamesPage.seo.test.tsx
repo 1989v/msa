@@ -12,7 +12,7 @@ vi.mock('../HouseBanner', () => ({ default: () => null }));
 vi.mock('../../../components/ads/AdSlot', () => ({ default: () => null }));
 import { listGames, type GameSummary } from '../../../api/gameApi';
 import GamesPage from '../GamesPage';
-import { gameUrl, hubMeta } from '../../../seo/copy.mjs';
+import { gameHubIntro, gameUrl, hubMeta } from '../../../seo/copy.mjs';
 const games = Array.from({ length: 48 }, (_, i) => ({ id: i, slug: `g${i}`, title: `Game ${i}`, genre: 'ACTION', tags: [] })) as unknown as GameSummary[];
 const page = (total: number, content = games) => ({ content, totalElements: total, totalPages: 2, number: 0, size: content.length });
 function deferred() { let resolve!: (value: ReturnType<typeof page>) => void; let reject!: (value: Error) => void; const promise = new Promise<ReturnType<typeof page>>((yes, no) => { resolve = yes; reject = no; }); return { promise, resolve, reject }; }
@@ -45,6 +45,10 @@ it.each(['ko', 'en'])('shows shared selection copy and local detail links: %s', 
  await screen.findByText('Game 47');
  const guide = gameSelectionGuide(lang);
  expect(screen.getByText(guide.heading)).toBeTruthy();
+ expect(view.container.querySelector('.games-subtitle')?.textContent).toBe(gameHubIntro(lang));
+ expect(view.container.querySelectorAll('h1')).toHaveLength(1);
+ expect(view.container.querySelector('h1')?.firstChild?.textContent).toBe(hubMeta(lang, 82).heading);
+ expect(description()).toBe(hubMeta(lang, 82).description);
  for (const pick of guide.picks) {
   expect(screen.getByRole('link', { name: pick.title }).getAttribute('href')).toBe(pick.href);
   expect(screen.getByText(pick.reason)).toBeTruthy();

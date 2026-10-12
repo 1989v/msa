@@ -1,3 +1,4 @@
+import { gameDetailLastmod, gameHubLastmod } from '../src/seo/gameContentDates.mjs';
 import { gamePlayGuide, gameSelectionGuide } from '../src/seo/gameGuide.mjs';
 /**
  * 빌드 후 SEO 정적 자산 생성기.
@@ -40,6 +41,7 @@ import {
   genreSlug,
   hreflangAlternates,
   hubMeta,
+  gameHubIntro,
   gameHubGuide,
   HUB_OG_IMAGE,
   itemListJsonLd,
@@ -691,7 +693,7 @@ export function renderHub(shell, lang, games) {
       websiteJsonLd({ name: BRAND, url: GAME_ORIGIN }),
     ],
     body: shellBody(
-      `<h1>${escapeHtml(meta.heading)}</h1><p>${escapeHtml(meta.description)}</p>` +
+      `<h1>${escapeHtml(meta.heading)}</h1><p class="games-subtitle">${escapeHtml(gameHubIntro(lang))}</p>` +
         genreNav(lang, games) +
         gameLinkList(lang, games) +
         renderGameHubGuide(lang),
@@ -810,21 +812,13 @@ function sitemapXml(entries) {
   ].join('\n');
 }
 
-async function writeRobotsAndSitemaps(
-  games,
-  places = { ko: [], en: [] },
-  regions = { ko: [], en: [] },
-  blog = { posts: [], categories: [] },
-  rankBoards = [],
-  dealSections = [],
-  concepts = [],
-  landingPages = [],
-  guidePages = { pages: [], index: null },
-) {
+/** Actual game XML used by the build and focused integration tests. */
+export function renderGameSitemap(games) {
   const gameEntries = [];
   for (const lang of LANGS) {
     gameEntries.push({
       loc: gameUrl(lang),
+      lastmod: gameHubLastmod(games),
       priority: '1.0',
       alternates: hreflangAlternates(''),
     });
@@ -837,13 +831,27 @@ async function writeRobotsAndSitemaps(
       const sub = `/games/${game.slug}`;
       gameEntries.push({
         loc: gameUrl(lang, sub),
-        lastmod: isoDate(game.contentUpdatedAt || game.releasedAt),
+        lastmod: gameDetailLastmod(game),
         priority: '0.7',
         alternates: hreflangAlternates(sub),
       });
     }
   }
 
+  return sitemapXml(gameEntries);
+}
+
+async function writeRobotsAndSitemaps(
+  games,
+  places = { ko: [], en: [] },
+  regions = { ko: [], en: [] },
+  blog = { posts: [], categories: [] },
+  rankBoards = [],
+  dealSections = [],
+  concepts = [],
+  landingPages = [],
+  guidePages = { pages: [], index: null },
+) {
   const portalEntries = [
     ...Object.keys(PORTAL_PAGES).map((path) => ({
       loc: `${PORTAL_ORIGIN}${path}`,
@@ -879,7 +887,7 @@ async function writeRobotsAndSitemaps(
   );
   const placeDetailEntries = placeDetailSitemapEntries(places);
 
-  await emit(`seo/${GAME_HOST}/sitemap.xml`, sitemapXml(gameEntries));
+  await emit(`seo/${GAME_HOST}/sitemap.xml`, renderGameSitemap(games));
   await emit(`seo/${PORTAL_HOST}/sitemap.xml`, sitemapXml(portalEntries));
   await writePlaceSitemaps(
     [...placeHubEntries, ...regionEntries, ...placeLandingSitemapEntries(landingPages), ...placeGuideSitemapEntries(guidePages)],

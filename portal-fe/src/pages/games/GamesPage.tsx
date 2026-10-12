@@ -25,6 +25,7 @@ import {
   genreSlug,
   hreflangAlternates,
   hubMeta,
+  gameHubIntro,
   gameHubGuide,
   itemListJsonLd,
 } from '../../seo/copy.mjs';
@@ -44,14 +45,12 @@ import AdSlot from '../../components/ads/AdSlot';
 
 const UI = {
   ko: {
-    subtitle: '코드베이스 개념으로 만든 미니게임 아케이드',
     sortTrending: '인기', sortNew: '신작', sortTop: '평점',
     all: '전체', allGames: '전체 게임',
     loading: '불러오는 중…', error: '게임 목록을 불러오지 못했습니다.', empty: '조건에 맞는 게임이 없습니다.',
     filterLabel: '게임 필터', genreLabel: '장르 카테고리', allLabel: '전체 게임',
   },
   en: {
-    subtitle: 'A mini-game arcade built from codebase concepts',
     sortTrending: 'Trending', sortNew: 'New', sortTop: 'Top Rated',
     all: 'All', allGames: 'All Games',
     loading: 'Loading…', error: 'Could not load the game list.', empty: 'No games match the filter.',
@@ -251,7 +250,7 @@ export default function GamesPage() {
             ))}
           </span>
         </h1>
-        <p className="games-subtitle">{L.subtitle}</p>
+        <p className="games-subtitle">{gameHubIntro(lang)}</p>
       </header>
 
       {/* 내기용 게임 진입 — 목록 맨 위. 전에는 「순서 정하기」 장르 안에서만 버튼이 보여서,

@@ -2,7 +2,7 @@ import { gamePlayGuide, gameSelectionGuide } from '../gameGuide.mjs';
 import { gameUrl } from '../copy.mjs';
 import { expect, it } from 'vitest';
 import { renderDetail, renderHub } from '../../../scripts/prerender-seo.mjs';
-import { gameHubGuide } from '../copy.mjs';
+import { gameHubIntro, hubMeta, hreflangAlternates, gameHubGuide } from '../copy.mjs';
 const shell = '<html><head><!--seo:start--><title>x</title><!--seo:end--></head><body><div id="root"></div></body></html>';
 const game = { slug: 'test', title: '<Test & play>', titleEn: 'Test & play', genre: 'ACTION', tags: [], description: '소개 <script>danger</script> & 설명', descriptionEn: 'Read <intro> & play', playerMode: 'MULTI', supportsMobile: true, estimatedMinutes: 5, ratingCount: 1, ratingAvg: 8 };
 it.each(['ko', 'en'])('shares visible guide and language links: %s', (lang) => { const html = renderHub(shell, lang, [game]); const doc = new DOMParser().parseFromString(html, 'text/html'); const guide = gameHubGuide(lang); expect(doc.querySelector('#games-guide-heading')?.textContent).toBe(guide.heading); for (const text of guide.paragraphs) expect(doc.body.textContent).toContain(text); for (const item of guide.genres) expect(doc.querySelector(`section a[href="${item.href}"]`)?.textContent).toBe(item.label); expect(html.indexOf('games-guide-heading')).toBeGreaterThan(html.indexOf('/games/test')); expect(doc.body.textContent).toContain(lang === 'ko' ? game.title : game.titleEn); expect(doc.querySelector('intro')).toBeNull(); });
@@ -29,4 +29,19 @@ it('leaves non-target introductions unchanged', () => {
   expect(gamePlayGuide('test', 'ko')).toBeNull();
   expect(gamePlayGuide('toString', 'ko')).toBeNull();
   expect(renderDetail(shell, 'ko', game, [game])).not.toContain('game-play-guide');
+});
+
+
+it.each(['ko', 'en'])('renders the shared homepage introduction with unchanged heading and 82-game metadata: %s', (lang) => {
+  const games = Array.from({ length: 82 }, (_, i) => ({ ...game, slug: `g${i}` }));
+  const doc = new DOMParser().parseFromString(renderHub(shell, lang, games), 'text/html');
+  expect(doc.querySelector('.games-subtitle')?.textContent).toBe(gameHubIntro(lang));
+  expect(doc.querySelectorAll('h1')).toHaveLength(1);
+  expect(doc.querySelector('h1')?.textContent).toBe(hubMeta(lang, 82).heading);
+  expect(doc.querySelector('meta[name="description"]')?.getAttribute('content')).toBe(hubMeta(lang, 82).description);
+  expect(hubMeta(lang, 82).description).toContain('1989v 게임');
+  expect(hubMeta(lang, 82).description).toContain(lang === 'en' ? '82 free' : '82종');
+  for (const alt of hreflangAlternates('')) {
+    expect(doc.querySelector(`link[hreflang="${alt.hreflang}"]`)?.getAttribute('href')).toBe(alt.href);
+  }
 });
