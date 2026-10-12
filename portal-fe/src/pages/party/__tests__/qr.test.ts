@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { encodeQr, qrSvgPath } from '../qr';
+import { encodeQr, qrDisplayGeometry, qrSvgPath } from '../qr';
 
 /**
  * ADR-0092 SR-4.2 — QR 은 클라이언트가 그린다.
@@ -78,4 +78,22 @@ describe('QR 인코더 — 규격이 정한 구조', () => {
     const dark = g.flat().filter(Boolean).length;
     expect(qrSvgPath(g).match(/M/g)).toHaveLength(dark);
   });
+});
+
+
+it('QR display contains a four-module white quiet zone and integer six-pixel modules', () => {
+  for (const modules of [21, 25, 29, 33, 37, 41]) {
+    const geometry = qrDisplayGeometry(modules);
+    expect(geometry).toEqual({ x: -4, y: -4, span: modules + 8, viewBox: `-4 -4 ${modules + 8} ${modules + 8}`, pixels: (modules + 8) * 6 });
+  }
+});
+it('L/mask0 format bits follow row-column orientation on both copies', () => {
+  const g = encodeQr(LINK), n = g.length, format = 0x77c4;
+  const bit = (i: number) => !!((format >> i) & 1);
+  for (let i = 0; i <= 5; i++) expect(g[i][8]).toBe(bit(i));
+  expect(g[7][8]).toBe(bit(6)); expect(g[8][8]).toBe(bit(7)); expect(g[8][7]).toBe(bit(8));
+  for (let i = 9; i <= 14; i++) expect(g[8][14 - i]).toBe(bit(i));
+  for (let i = 0; i <= 7; i++) expect(g[8][n - 1 - i]).toBe(bit(i));
+  for (let i = 8; i <= 14; i++) expect(g[n - 15 + i][8]).toBe(bit(i));
+  expect(g[n - 8][8]).toBe(true);
 });

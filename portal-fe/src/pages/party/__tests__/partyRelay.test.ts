@@ -42,7 +42,7 @@ describe('파티 방 상태', () => {
 
   it('초대 링크에 별칭이 없다 — 웹서버 접근 로그에 남는다', () => {
     const link = inviteLink('ABC123', 'https://game.1989v.com');
-    expect(link).toBe('https://game.1989v.com/party/ABC123');
+    expect(link).toBe('https://game.1989v.com/?r=ABC123');
     expect(link).not.toMatch(/민수|names|nick/);
   });
 

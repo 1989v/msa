@@ -93,5 +93,5 @@ export const isHost = (s: PartyState, occupied: number[]) =>
 
 /** 초대 링크 — 별칭을 싣지 않는다. 웹서버 접근 로그에 남는다 */
 export function inviteLink(room: string, origin = window.location.origin): string {
-  return `${origin}/party/${room}`;
+  return `${origin}/?r=${encodeURIComponent(room)}`;
 }

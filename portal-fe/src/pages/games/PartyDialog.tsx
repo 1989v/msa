@@ -12,7 +12,7 @@ import type { GameLang, GameSummary } from '../../api/gameApi';
 import { displayTitle } from '../../api/gameApi';
 
 /**
- * 랜덤 순서 뽑기 — 참가자와 방식을 먼저 정하고, **어느 게임으로 정할지는 뽑는다.**
+ * 랜덤레이스 — 참가자와 방식을 먼저 정하고, **어느 게임으로 정할지는 뽑는다.**
  *
  * 대상은 「순서 정하기」 장르 전체다. 목록을 하드코딩하지 않고 카탈로그에서 받아 쓰므로,
  * 앞으로 이 장르로 게임이 추가되면 코드를 고치지 않아도 바로 뽑기 대상에 들어간다.
@@ -85,7 +85,7 @@ export default function PartyDialog({
       className="party-scrim"
       role="dialog"
       aria-modal="true"
-      aria-label="랜덤 순서 뽑기"
+      aria-label="랜덤레이스"
       /* 바깥을 누르면 닫힌다 — 작은 화면에서 ✕ 하나만 탈출구면 잘못 눌렀을 때 갇힌다 */
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -95,7 +95,7 @@ export default function PartyDialog({
         <button ref={closeRef} className="party-close" onClick={onClose} aria-label="닫기">
           ✕
         </button>
-        <h2 className="party-title">🎲 랜덤 순서 뽑기</h2>
+        <h2 className="party-title">🎲 랜덤레이스</h2>
         <p className="party-sub">
           참가자와 방식만 정하면, <b>어느 게임으로 정할지는 뽑아서</b> 바로 시작한다.
         </p>

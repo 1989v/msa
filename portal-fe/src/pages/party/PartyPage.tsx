@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { gamePath } from '../../seo/copy.mjs';
 import { displayTitle, getGameLang, listGames, type GameSummary } from '../../api/gameApi';
 import { isLoggedIn } from '../../auth/auth';
@@ -22,7 +22,7 @@ import {
   type Branch,
   type PartyGame,
 } from './gameChoice';
-import { encodeQr, qrSvgPath } from './qr';
+import { encodeQr, qrDisplayGeometry, qrSvgPath } from './qr';
 import {
   canStart,
   fromGroup,
@@ -36,6 +36,8 @@ import {
   type RoundConfig,
 } from './roundConfig';
 import { inviteLink } from './partyRelay';
+import { parseInvitation, queryInvitation, shareInvitation } from './invitation';
+import InviteEntry from './InviteEntry';
 import { usePartyRoom } from './usePartyRoom';
 import './party.css';
 
@@ -56,14 +58,18 @@ const MANUAL_GROUP = -1;
 
 type Phase = 'setup' | 'branch' | 'vote' | 'ready';
 
-export default function PartyPage() {
+export default function PartyPage({ invitationRoot = false }: { invitationRoot?: boolean }) {
   const { room: roomParam } = useParams<{ room?: string }>();
-  const isHost = !roomParam;
+  const location = useLocation();
+  const invitation = roomParam !== undefined ? parseInvitation(roomParam) : queryInvitation(location.search);
+  const invalid = invitation.kind === 'invalid' || (invitationRoot && invitation.kind === 'none');
+  const isHost = !invalid && invitation.kind === 'none' && !invitationRoot;
+  const joinCode = invitation.kind === 'join' ? invitation.code : null;
   const navigate = useNavigate();
   const lang = getGameLang();
 
   const net = usePartyRoom();
-  const { room, host, join, shareRoster, claimName, startRound } = net;
+  const { room, host, join, leave, shareRoster, claimName, startRound } = net;
 
   const [games, setGames] = useState<PartyGame[]>([]);
   const [titles, setTitles] = useState<Record<string, string>>({});
@@ -83,13 +89,18 @@ export default function PartyPage() {
 
   /* 방은 화면에 들어오는 즉시 연다 — 설정하는 동안 사람들이 들어와 있게 하려면
      초대 링크가 먼저 있어야 한다. 방장/참가자 각각 한 번만 붙는다. */
-  const opened = useRef(false);
+  const opened = useRef<string | null>(null);
   useEffect(() => {
-    if (opened.current) return;
-    opened.current = true;
+    const target = isHost ? 'host' : joinCode;
+    if (!target || opened.current === target) return;
+    opened.current = target;
+    startedRef.current = false;
     if (isHost) host(SEATS);
-    else join(roomParam!);
-  }, [host, isHost, join, roomParam]);
+    else join(joinCode!);
+    // StrictMode tears down sockets between effect setups; allow the new setup to open.
+    // Route changes also leave the old room before a corrected or invalid invitation.
+    return () => { opened.current = null; leave(); };
+  }, [host, isHost, join, joinCode, leave]);
 
   /* 카탈로그에서 명부 규약을 구현한 게임을 받아 온다 — 목록을 하드코딩하면
      새 게임이 붙어도 여기 손대기 전까지 안 보인다 */
@@ -152,13 +163,14 @@ export default function PartyPage() {
   const beginRound = useCallback(
     (slug: string) => {
       if (startedRef.current) return;
-      startedRef.current = true;
       const handoff = toHandoff(config, room.room ?? undefined);
-      writeParty(slug, handoff.names, handoff.mode, {
+      const saved = writeParty(slug, handoff.names, handoff.mode, {
         pick: handoff.pick,
         weights: handoff.weights,
         room: handoff.room,
       });
+      if (!saved) { setNotice('추첨을 저장하지 못했습니다. 기기 저장을 허용하고 다시 시도하세요.'); return; }
+      startedRef.current = true;
       startRound({ game: slug, ...handoff });
       navigate(gamePath(lang, `/games/${slug}`));
     },
@@ -201,7 +213,7 @@ export default function PartyPage() {
 
   /* 참가자: 방장이 판을 열면 인계를 기록하고 게임으로 간다 */
   useEffect(() => {
-    if (isHost || !room.cfg || startedRef.current) return;
+    if (isHost || invalid || !room.cfg || startedRef.current) return;
     const cfg = room.cfg as {
       game?: string;
       names?: string[];
@@ -211,14 +223,15 @@ export default function PartyPage() {
       room?: string;
     };
     if (!cfg.game) return;
-    startedRef.current = true;
-    writeParty(cfg.game, cfg.names ?? [], cfg.mode ?? 'last', {
+    const saved = writeParty(cfg.game, cfg.names ?? [], cfg.mode ?? 'last', {
       pick: cfg.pick,
       weights: cfg.weights,
       room: cfg.room ?? room.room ?? undefined,
     });
+    if (!saved) { setNotice('추첨을 저장하지 못했습니다. 기기 저장을 허용하고 다시 입장하세요.'); return; }
+    startedRef.current = true;
     navigate(gamePath(lang, `/games/${cfg.game}`));
-  }, [isHost, lang, navigate, room.cfg, room.room]);
+  }, [isHost, invalid, lang, navigate, room.cfg, room.room]);
 
   /* ── 그리기 ────────────────────────────────────────────── */
 
@@ -227,13 +240,14 @@ export default function PartyPage() {
     if (!link) return null;
     try {
       const grid = encodeQr(link);
-      return { size: grid.length, path: qrSvgPath(grid) };
+      return { ...qrDisplayGeometry(grid.length), path: qrSvgPath(grid) };
     } catch {
       return null;
     }
   }, [link]);
 
   const copyLink = async () => {
+    setCopied(false);
     try {
       await navigator.clipboard.writeText(link);
       setCopied(true);
@@ -241,6 +255,11 @@ export default function PartyPage() {
     } catch {
       setNotice('복사가 막혀 있습니다. 주소를 길게 눌러 복사하세요.');
     }
+  };
+
+  const shareLink = async () => {
+    const result = await shareInvitation(link);
+    if (result === 'failed') setNotice('공유하지 못했습니다. 링크 복사를 이용하세요.');
   };
 
   const saveGroup = async () => {
@@ -276,6 +295,11 @@ export default function PartyPage() {
         <p>{isHost ? '친구를 부르고, 뭘 할지 정하고, 한 판으로 끝낸다.' : '들어왔습니다. 이름을 고르세요.'}</p>
       </header>
 
+      {invalid && <p className="party-alert" role="alert">초대 코드 형식이 올바르지 않습니다. 6자리 코드를 다시 입력하세요.</p>}
+      {(!isHost || invalid) && <section aria-label="초대 코드 수정"><InviteEntry lang={lang} onJoin={(code) => {
+        if (code === joinCode) { startedRef.current = false; join(code); }
+        else navigate(gamePath(lang, `/party/${code}`));
+      }} /></section>}
       {room.error && <p className="party-alert">{room.error}</p>}
       {room.lost && (
         <p className="party-alert">
@@ -285,7 +309,7 @@ export default function PartyPage() {
       {notice && <p className="party-notice">{notice}</p>}
 
       {/* 초대 — 방 코드는 설정하는 내내 보인다. 나중에 보여 주면 그때까지 아무도 못 들어온다 */}
-      <section className="party-invite" aria-label="초대">
+      {!invalid && <section className="party-invite" aria-label="초대">
         {room.room ? (
           <>
             <div className="party-code-block">
@@ -294,23 +318,29 @@ export default function PartyPage() {
               <button type="button" className="party-copy" onClick={copyLink}>
                 {copied ? '복사됨' : '링크 복사'}
               </button>
+              {typeof navigator.share === 'function' && <button type="button" className="party-copy" onClick={shareLink}>공유</button>}
+              <a className="party-link" href={link}>{link}</a>
             </div>
             {qr && (
               <svg
                 className="party-qr"
-                viewBox={`-2 -2 ${qr.size + 4} ${qr.size + 4}`}
+                viewBox={qr.viewBox}
+                width={qr.pixels}
+                height={qr.pixels}
+                style={{ width: qr.pixels, height: qr.pixels }}
+                shapeRendering="crispEdges"
                 role="img"
                 aria-label="초대 링크 QR"
               >
-                <rect x={-2} y={-2} width={qr.size + 4} height={qr.size + 4} fill="#fff" />
+                <rect x={qr.x} y={qr.y} width={qr.span} height={qr.span} fill="#fff" />
                 <path d={qr.path} fill="#000" />
               </svg>
             )}
           </>
         ) : (
-          <p className="party-status">방을 여는 중…</p>
+          <p className="party-status">{isHost ? '방을 여는 중…' : room.error ? '코드를 수정해 다시 입장하세요.' : '초대 방에 연결 중…'}</p>
         )}
-      </section>
+      </section>}
 
       {/* 자리 — 누가 들어와 어떤 이름을 골랐는지.
           방장 혼자일 때는 그리지 않는다: 「들어온 사람 0」 한 줄이 카드 하나를 차지해

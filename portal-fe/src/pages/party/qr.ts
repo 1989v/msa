@@ -6,7 +6,7 @@
  * 필요한 것은 바이트 모드 하나뿐이라 규격의 그 부분만 구현한다.
  *
  * 지원 범위: 바이트 모드 · 오류 정정 레벨 L · 버전 1~6(최대 134바이트).
- * 초대 링크는 `https://game.1989v.com/party/ABC123` 형태라 40바이트를 안 넘는다.
+ * 초대 링크는 `https://game.1989v.com/?r=ABC234` 형태라 40바이트를 안 넘는다.
  */
 
 /** 버전별 (총 코드워드, 오류정정 코드워드/블록, 블록 수) — 레벨 L. 규격 표 그대로다 */
@@ -195,14 +195,15 @@ function writeFormat(grid: Grid, size: number) {
   const format = ((data << 10) | bch) ^ 0b101010000010010;
   const bit = (i: number): 0 | 1 => ((format >> i) & 1 ? 1 : 0);
 
-  for (let i = 0; i <= 5; i++) grid[8][i] = bit(i);
-  grid[8][7] = bit(6);
+  // Matrix indexes are [row][column]; QR coordinate references use (x, y).
+  for (let i = 0; i <= 5; i++) grid[i][8] = bit(i);
+  grid[7][8] = bit(6);
   grid[8][8] = bit(7);
-  grid[7][8] = bit(8);
-  for (let i = 9; i <= 14; i++) grid[14 - i][8] = bit(i);
+  grid[8][7] = bit(8);
+  for (let i = 9; i <= 14; i++) grid[8][14 - i] = bit(i);
 
-  for (let i = 0; i <= 7; i++) grid[size - 1 - i][8] = bit(i);
-  for (let i = 8; i <= 14; i++) grid[8][size - 15 + i] = bit(i);
+  for (let i = 0; i <= 7; i++) grid[8][size - 1 - i] = bit(i);
+  for (let i = 8; i <= 14; i++) grid[size - 15 + i][8] = bit(i);
 }
 
 /** 문자열 → 모듈 격자(true 가 어두운 칸) */
@@ -254,4 +255,12 @@ export function qrSvgPath(grid: boolean[][]): string {
     });
   });
   return d;
+}
+
+/** Four-module quiet zone belongs to the rendered symbol, never the encoded data. */
+export const QR_QUIET_MODULES = 4;
+export function qrDisplayGeometry(modules: number) {
+  const span = modules + QR_QUIET_MODULES * 2;
+  return { viewBox: `${-QR_QUIET_MODULES} ${-QR_QUIET_MODULES} ${span} ${span}`,
+    x: -QR_QUIET_MODULES, y: -QR_QUIET_MODULES, span, pixels: span * 6 };
 }

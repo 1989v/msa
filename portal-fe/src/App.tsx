@@ -5,6 +5,7 @@ import { PORTAL_ORIGIN } from './seo/copy.mjs';
 import { recordPlaceEntry } from './analytics/inflow';
 import AppShellChrome from './components/shell/AppShellChrome';
 import HomePage from './pages/HomePage';
+import { rootInvitation } from './pages/party/invitation';
 import PortfolioPage from './pages/PortfolioPage';
 import ShopPage from './pages/ShopPage';
 import ShopProductDetailPage from './pages/ShopProductDetailPage';
@@ -19,6 +20,7 @@ import ShopOAuthCallbackPage from './pages/ShopOAuthCallbackPage';
 const GamesPage = lazy(() => import('./pages/games/GamesPage'));
 const GameDetailPage = lazy(() => import('./pages/games/GameDetailPage'));
 const PartyPage = lazy(() => import('./pages/party/PartyPage'));
+const DrawPage = lazy(() => import('./pages/games/DrawPage'));
 // ADR-0065 — K-관광/지리 탐색. place.<domain> 이 정규 주소 (host 인식 루트 라우팅),
 // apex/개발은 /place. 구글맵 로더 포함이라 lazy 분리.
 const PlacePage = lazy(() => import('./pages/place/PlacePage'));
@@ -220,7 +222,9 @@ function App() {
           <Route
             path="/"
             element={
-              isResumeHost ? (
+              rootInvitation(window.location.hostname, '/', window.location.search).kind !== 'none' ? (
+                <PartyPage invitationRoot />
+              ) : isResumeHost ? (
                 <ResumePage />
               ) : isGamesHost ? (
                 <GamesPage />
@@ -332,6 +336,8 @@ function App() {
 
           {/* 파티 세션 (ADR-0092) — 방장은 /party, 초대받은 사람은 /party/<방 코드>.
               초대 링크에 이름을 싣지 않으므로 주소에 남는 것은 방 코드뿐이다. */}
+          <Route path="/draw" element={gameRoute(<DrawPage />)} />
+          <Route path="/en/draw" element={gameRoute(<DrawPage />)} />
           <Route path="/party" element={gameRoute(<PartyPage />)} />
           <Route path="/party/:room" element={gameRoute(<PartyPage />)} />
           <Route path="/en/party" element={gameRoute(<PartyPage />)} />

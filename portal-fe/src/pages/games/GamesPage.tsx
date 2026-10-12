@@ -31,7 +31,6 @@ import {
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import GameCard from './GameCard';
-import PartyDialog from './PartyDialog';
 import PickSheet from '../../components/dispenser/PickSheet';
 import { displayTitle } from '../../api/gameApi';
 import { escapeHtml } from 'card-dispenser';
@@ -99,7 +98,6 @@ export default function GamesPage() {
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [sort, setSort] = useState<GameSortKey>('trending');
   const [partyPool, setPartyPool] = useState<GameSummary[]>([]);
-  const [partyOpen, setPartyOpen] = useState(false);
   // 뽑기 — 지금 걸린 장르·태그·정렬 목록에서 하나. 목록이 곧 후보다 (48개까지 한 번에 받는다)
   const [pickOpen, setPickOpen] = useState(false);
 
@@ -357,8 +355,8 @@ export default function GamesPage() {
                   </Link>
                   <span className="games-genre-count">{section.games.length}</span>
                   {section.key === PARTY_GENRE && partyPool.length > 0 && (
-                    <button className="games-party-btn" onClick={() => setPartyOpen(true)}>
-                      🎲 {lang === 'en' ? 'Random pick' : '랜덤으로 돌리기'}
+                    <button className="games-party-btn" onClick={() => navigate(gamePath(lang, '/draw'))}>
+                      🎲 {lang === 'en' ? 'Random Race' : '랜덤레이스'}
                     </button>
                   )}
                 </h2>
@@ -374,8 +372,8 @@ export default function GamesPage() {
               <h2 className="games-collection-title">
                 {activeTag ? `#${activeTag}` : genre ? genreLabel(genre, lang) : L.allGames}
                 {genre === PARTY_GENRE && partyPool.length > 0 && (
-                  <button className="games-party-btn" onClick={() => setPartyOpen(true)}>
-                    🎲 {lang === 'en' ? 'Random pick' : '랜덤으로 돌리기'}
+                  <button className="games-party-btn" onClick={() => navigate(gamePath(lang, '/draw'))}>
+                    🎲 {lang === 'en' ? 'Random Race' : '랜덤레이스'}
                   </button>
                 )}
               </h2>
@@ -432,14 +430,7 @@ export default function GamesPage() {
           skin="arcade"
         />
       )}
-      {partyOpen && (
-        <PartyDialog
-          games={partyPool}
-          lang={lang}
-          onClose={() => setPartyOpen(false)}
-          onStart={(slug) => navigate(gamePath(lang, `/games/${slug}`))}
-        />
-      )}
+
     </>
   );
 }

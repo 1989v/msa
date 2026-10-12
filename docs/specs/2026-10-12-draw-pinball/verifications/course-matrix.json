@@ -1,0 +1,29 @@
+[
+  {
+    "course": "pinball",
+    "completedReplayPairs": 60,
+    "minSeconds": 17.44999999999933,
+    "maxSeconds": 34.71250000000066,
+    "samplesPerCorrelation": 720,
+    "baseline": 0.00946495423173471,
+    "changed": -0.018851653364405887
+  },
+  {
+    "course": "cascade",
+    "completedReplayPairs": 60,
+    "minSeconds": 13.641666666666213,
+    "maxSeconds": 25.579166666665536,
+    "samplesPerCorrelation": 720,
+    "baseline": -0.05969298956566546,
+    "changed": -0.05212180873126833
+  },
+  {
+    "course": "carousel",
+    "completedReplayPairs": 60,
+    "minSeconds": 12.958333333332918,
+    "maxSeconds": 33.458333333332995,
+    "samplesPerCorrelation": 720,
+    "baseline": 0.07659217820843611,
+    "changed": 0.11187740237618463
+  }
+]

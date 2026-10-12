@@ -18,7 +18,9 @@ import vm from 'node:vm';
 const GAMES_ROOT = resolve(__dirname, '../../public/games');
 
 /** 게임 하나를 격리된 컨텍스트에 올린다. 반환값이 그 게임의 전역이다 */
-export function loadGame(slug: string, files: string[]): Record<string, any> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Untyped IIFE exports are inspected by runtime tests.
+export function loadGame(slug: string, files: string[], sourceOverrides: Record<string, string> = {}): Record<string, any> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Node VM receives arbitrary public-game globals.
   const sandbox: Record<string, any> = {
     Math,
     Date,
@@ -49,7 +51,7 @@ export function loadGame(slug: string, files: string[]): Record<string, any> {
 
   for (const file of files) {
     const path = resolve(GAMES_ROOT, slug, 'js', file);
-    const code = readFileSync(path, 'utf-8');
+    const code = sourceOverrides[file] ?? readFileSync(path, 'utf-8');
     vm.runInContext(code, ctx, { filename: path });
   }
   return sandbox;

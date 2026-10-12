@@ -91,10 +91,13 @@
 }
 
 .party-qr {
-  width: 132px;
-  height: 132px;
+  display: block;
+  flex: 0 0 auto;
+  max-width: none;
+  background: white;
+  shape-rendering: crispEdges;
   margin-left: auto;
-  border-radius: 4px;
+  border-radius: 0;
 }
 
 /* ── 자리 ─────────────────────────────────────────────── */
@@ -414,3 +417,11 @@
     justify-content: space-between;
   }
 }
+
+.party-join-form { display: grid; gap: 8px; }
+.party-join-form input { min-height: 44px; padding: 10px 12px; background: var(--ko-surface-2); color: var(--ko-text-primary); border: 1px solid var(--ko-border-subtle); border-radius: var(--kh-radius, 6px); font: inherit; }
+.party-link { overflow-wrap: anywhere; color: var(--ko-accent-text, var(--ko-accent-primary)); }
+.draw-page .party-mode-row { margin-top: 16px; }
+.draw-page a.party-ghost { display: inline-flex; align-items: center; text-decoration: none; }
+.party-page button:focus-visible, .party-page input:focus-visible, .party-page textarea:focus-visible, .party-page a:focus-visible { outline: 2px solid var(--ko-accent-primary); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .draw-page * { animation-duration: 0ms; transition-duration: 0ms; } }

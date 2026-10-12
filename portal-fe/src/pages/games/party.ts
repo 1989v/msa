@@ -50,12 +50,13 @@ export function writeParty(
   names: string[],
   mode: PartyMode,
   extra: { pick?: number; weights?: number[]; room?: string } = {},
-): void {
+): boolean {
   const payload: PartyHandoff = { v: 1, slug, names, mode, at: Date.now(), ...extra };
   try {
     localStorage.setItem(PARTY_KEY, JSON.stringify(payload));
+    return true;
   } catch {
-    /* 저장 불가 환경 — 게임이 자기 준비 화면을 띄운다 */
+    return false;
   }
 }
 
