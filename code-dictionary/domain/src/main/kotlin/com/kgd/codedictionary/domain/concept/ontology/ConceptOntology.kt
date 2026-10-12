@@ -20,7 +20,26 @@ data class OntologyConcept(
     val evidence: List<OntologyEvidence> = emptyList(),
     val questions: List<String> = emptyList(),
     val code: List<OntologyCodeRef> = emptyList(),
+    /** 이 서비스가 이 개념을 지금 쓰는가 — tech 드릴다운이 그린다. 일반 설명([description])과 가른다 */
+    val applied: OntologyApplied? = null,
 )
+
+/**
+ * 적용 상태 — 운영 중 · 일부 · 구현했지만 꺼짐 · 없음.
+ * 「꺼짐」을 OFF 로 두지 않는다 — YAML 1.1 은 `OFF`·`ON` 을 참거짓으로 읽어 문자열이 오지 않는다.
+ */
+enum class AppliedStatus { LIVE, PARTIAL, DISABLED, NONE }
+
+/**
+ * [facts] 의 [OntologyFact.key] 는 코드 값과 대조하는 테스트가 쓰는 이름이다. 키가 없는 사실은 사람이 고친다.
+ */
+data class OntologyApplied(
+    val status: AppliedStatus,
+    val summary: String? = null,
+    val facts: List<OntologyFact> = emptyList(),
+)
+
+data class OntologyFact(val label: String, val value: String, val key: String? = null)
 
 /**
  * 이 개념을 구현한 레포 코드 — 줄 번호가 아니라 심볼로 가리킨다(코드가 움직여도 썩지 않게).
@@ -39,6 +58,8 @@ data class OntologyRelation(
     val ordinal: Int = 0,
     val reason: String? = null,
     val evidenceRef: String? = null,
+    /** 그림의 간선 글자 — 흐름(FLOWS_TO)에만 쓴다 */
+    val label: String? = null,
 )
 
 /** 도메인 파일 하나 = 루트 하나. 간선은 from 개념이 사는 파일에만 적힌다 */

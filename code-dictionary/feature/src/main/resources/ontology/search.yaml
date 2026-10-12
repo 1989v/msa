@@ -133,6 +133,12 @@ concepts:
     level: ADVANCED
     description: "문서와 검색어를 같은 벡터 공간으로 보내는 모델. 양쪽이 같은 모델이어야 한다"
     contains: [matryoshka-embedding, srch-two-tower]
+    flows_to: [live-encoding]
+    applied:
+      status: LIVE
+      summary: "검색 앱과 재색인이 같은 모델 ref 여야 벡터 검색이 돈다. 다른 모델로 만든 문서 벡터는 벡터 검색에서 빠진다"
+      facts:
+        - { label: "모델 ref", value: "microsoft/harrier-oss-v1-270m@31de22b#d640", key: embedding-model-ref }
   # 차원을 잘라 쓰도록 고르는 방식이라 MECHANISM
   - id: matryoshka-embedding
     kind: MECHANISM
@@ -503,6 +509,9 @@ concepts:
       - { to: srch-expensive-query, reason: "질의 때 prefix 확장 대신 색인된 접두 토큰을 바로 찾는다" }
     causes:
       - { to: srch-ngram-index-bloat, reason: "토큰마다 접두 길이만큼 토큰이 는다" }
+    applied:
+      status: LIVE
+      summary: "제목을 자모로 풀어 앞에서부터 n-gram 으로 색인한다"
   - id: srch-token-filter
     kind: MECHANISM
     name: "토큰 필터"
@@ -630,6 +639,11 @@ concepts:
     description: "분석기가 모르는 고유명사 · 복합어를 한 토큰으로 지정한다"
     flows_to: [system-dictionary-entry]
     uses: [surface-form]
+    applied:
+      status: LIVE
+      summary: "분석기가 모르는 고유명사(관광지 이름 등)를 한 덩어리로 지킨다. 색인 · 검색 시점 공통"
+      facts:
+        - { label: "줄 수", value: "200" }
   - id: decompound-mode
     kind: MECHANISM
     name: "복합어 분해 모드"
@@ -647,6 +661,9 @@ concepts:
     synonyms: ["mecab-ko-dic"]
     contains: [mecab-ko-dic]
     flows_to: [tokenizer-cost-retraining]
+    applied:
+      status: LIVE
+      summary: "nori 기본 사전(mecab-ko-dic)을 그대로 쓴다"
   - id: mecab-ko-dic
     kind: TECHNOLOGY
     name: "mecab-ko-dic"
@@ -661,6 +678,9 @@ concepts:
     level: ADVANCED
     description: "정답 분해가 붙은 도메인 코퍼스로 비용표(CRF)를 다시 배운다. 형태소 분석기의 「지도학습」은 이 층을 가리킨다. 라벨 코퍼스가 없으면 착수가 아니다"
     contains: [crf, sejong-corpus]
+    applied:
+      status: NONE
+      summary: "사전 비용을 다시 학습하지 않는다 — 고유명사는 사용자 사전으로 지킨다"
   # 비용을 학습하는 모델이라 MECHANISM — 용어 사전에서 빠진다
   - id: crf
     kind: MECHANISM
@@ -1353,7 +1373,138 @@ concepts:
     category: ARCHITECTURE
     level: INTERMEDIATE
     description: "검색어가 결과가 되기까지 — 쿼리 언더스탠딩 · 후보 생성 · 융합 · 후처리. 싼 것으로 많이 거르고 비싼 것은 적게 쓴다"
-    contains: [query-understanding, search-lexicon, query-embedding, srch-query-dsl, candidate-generation, rank-fusion, srch-relevance-tuning, post-ranking, srch-autocomplete, srch-aggregation, srch-result-presentation]
+    contains: [srch-query-input, srch-query-reformulation, query-understanding, candidate-generation, rank-fusion, post-ranking, srch-zero-result-handling, srch-result-presentation]
+  - id: srch-query-input
+    kind: STAGE
+    name: "사용자 검색"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "사용자가 검색창에 치는 순간부터 검색이 시작된다. 입력 중에는 자동완성이 후보를 보여 주고, 제출한 검색어가 파이프라인으로 들어간다"
+    contains: [srch-autocomplete]
+    flows_to: [srch-query-reformulation]
+    applied:
+      status: LIVE
+      summary: "검색창 입력 중에는 자동완성이 지역과 관광지를 함께 제안한다. 제출한 검색어는 관광지 검색과 통합 검색 두 경로로 들어간다"
+      facts:
+        - { label: "API", value: "GET /api/search/attractions · /api/search/unified" }
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/application/attraction/service/SearchAttractionService.kt, symbol: "override fun execute(query: SearchAttractionUseCase.Query)", note: "관광지 검색 한 번의 순서" }
+  - id: srch-query-reformulation
+    kind: STAGE
+    name: "쿼리 리포뮬레이션"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "사용자가 친 말을 색인이 알아듣는 말로 고쳐 쓴다 — 오타 교정 · 질의 확장 · 질의 재작성. 원문과 고친 말을 함께 들고 가고, 고쳤으면 사용자에게 알린다"
+    contains: [srch-spell-correction, srch-query-expansion, srch-query-rewriting]
+    flows_to: [{ to: query-understanding, label: "교정된 검색어" }]
+    applied:
+      status: LIVE
+      summary: "검색 필드 어디에도 없는 단어만 자모 편집거리 2 안에서 고친다. 동의어는 검색 시점 분석기에만 건다. 교정어는 키워드 검색과 벡터 검색에 모두 쓰고, 사용자는 「원래 검색어로 검색」으로 교정을 물릴 수 있다"
+      facts:
+        - { label: "교정 후보", value: "검색 필드 히트 0건 단어" }
+        - { label: "교정 해제", value: "exact=true" }
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/application/attraction/service/SearchAttractionService.kt, symbol: "val corrected = original?.takeUnless { query.exact }", note: "교정은 두 검색 모두에 쓴다" }
+  - id: srch-sparse-retrieval
+    kind: STAGE
+    name: "스파스 검색"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "단어가 맞는 문서를 찾는다. 역색인에서 검색어 토큰을 가진 문서를 모아 BM25 로 채점한다. 고유명사 · 정확한 이름에 강하고, 뜻은 같지만 표현이 다른 문서는 놓친다"
+    contains: [srch-query-dsl, bm25, srch-relevance-tuning, srch-tf-idf, srch-boolean-retrieval, srch-learned-sparse]
+    applied:
+      status: LIVE
+      summary: "잔여 검색어로 BM25 를 돌리고, 융합 전에 이 검색 안에서만 관광 · 상업 분류 가중치와 문서 품질 점수를 곱한다"
+      facts:
+        - { label: "관광 분류 가중치", value: "3.0", key: sight-weight }
+        - { label: "상업 분류 가중치", value: "0.35", key: commerce-weight }
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt, symbol: "private fun withCategoryWeights(", note: "키워드 검색 점수에 가중치를 곱한다" }
+  - id: srch-dense-retrieval
+    kind: STAGE
+    name: "덴스 검색"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "뜻이 가까운 문서를 찾는다. 검색어와 문서를 같은 벡터 공간에 놓고 가까운 이웃을 근사 탐색으로 고른다. 표현이 달라도 찾지만 정확한 이름 일치에는 약하다"
+    contains: [query-embedding, ann-search, srch-late-interaction]
+    applied:
+      status: LIVE
+      summary: "교정된 원문 전체를 벡터로 바꿔 필터를 건 HNSW 로 찾는다. 1비트 양자화로 후보를 넓게 뽑고 원본 벡터로 다시 채점한다"
+      facts:
+        - { label: "벡터 차원", value: "640", key: vector-dimension }
+        - { label: "양자화", value: "sq 1비트 → 원본 재채점 ×3" }
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt, symbol: "private fun vectorLeg(", note: "필터를 knn 안에 둔 벡터 검색" }
+  - id: srch-zero-result-handling
+    kind: STAGE
+    name: "0건 대응"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "결과가 0건일 때 빈 화면 대신 무엇을 보여 줄지 정한다 — 무의미 입력 차단, 0건 사유 설명, 필터 해제 제안, 쿼리 완화, 대체 추천"
+    contains: [srch-query-content-guard, srch-lexical-gate, srch-zero-reason, srch-filter-relax-suggest, srch-query-relaxation, srch-zero-result-recovery, srch-bm25-fallback, srch-zero-result, srch-zero-result-rate]
+    flows_to: [srch-result-presentation]
+    applied:
+      status: PARTIAL
+      summary: "무의미 입력 차단 · 0건 사유 코드 · 화면의 필터 해제 제안까지 있다. 서버가 스스로 조건을 풀어 다시 찾는 쿼리 완화와 대체 추천은 없다"
+  - id: srch-query-content-guard
+    kind: MECHANISM
+    name: "무의미 입력 차단"
+    category: ALGORITHM
+    level: BEGINNER
+    description: "찾을 말이 없는 입력(자음만 · 기호만)은 색인을 부르지 않고 바로 끝낸다. 그대로 검색하면 무관한 문서가 결과로 나온다"
+    flows_to: [{ to: srch-zero-reason, label: "자모 · 기호만" }]
+    applied:
+      status: LIVE
+      summary: "완성형 음절 · 라틴 · 숫자가 하나도 없으면 교정도 색인도 부르지 않고 0건 사유를 NO_CONTENT 로 낸다"
+    code:
+      - { path: search/domain/src/main/kotlin/com/kgd/search/domain/query/model/QueryIntent.kt, symbol: "fun hasNoContent(", note: "내용 없는 입력 판정" }
+  - id: srch-lexical-gate
+    kind: MECHANISM
+    name: "어휘 일치 검증"
+    category: ALGORITHM
+    level: ADVANCED
+    description: "벡터 검색은 관련이 없어도 「가장 가까운 것」을 돌려준다. 검색어가 어떤 문서와도 글자로 맞지 않으면 결과를 내지 않거나, 글자가 맞는 문서로 결과를 한정한다"
+    flows_to: [{ to: srch-zero-reason, label: "어휘 불일치" }]
+    applied:
+      status: DISABLED
+      summary: "구현돼 있고 꺼져 있다. GATE 는 글자로 한 건도 안 맞으면 0건(NO_EVIDENCE), CONFINE 은 결과를 글자가 맞는 문서로 한정한다. 판정 세트 측정이 통과한 단계까지만 켠다"
+      facts:
+        - { label: "모드", value: "OFF · GATE · CONFINE 중 OFF" }
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/application/attraction/config/AttractionAnswerEvidenceProperties.kt, symbol: "enum class Mode", note: "세 단계" }
+  - id: srch-zero-reason
+    kind: MECHANISM
+    name: "0건 사유 안내"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "0건 화면은 이유가 있어야 다음 행동을 고를 수 있다. 「필터 탓」과 「검색어 탓」은 처방이 다르다"
+    flows_to: [{ to: srch-filter-relax-suggest, label: "필터 탓" }, { to: srch-zero-result-recovery, label: "대체 추천" }]
+    applied:
+      status: LIVE
+      summary: "검색어 탓 0건만 코드로 알린다 — NO_CONTENT · NO_EVIDENCE. 결과가 있거나 필터 탓 0건이면 비어 있다"
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/application/attraction/usecase/SearchAttractionUseCase.kt, symbol: "enum class ZeroReason", note: "0건 사유 코드" }
+  - id: srch-filter-relax-suggest
+    kind: MECHANISM
+    name: "필터 해제 제안"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "사용자가 건 조건 중 무엇을 풀면 결과가 나오는지 버튼으로 제안한다. 사용자가 직접 고르니 검색 의도가 바뀌지 않는다"
+    flows_to: [{ to: srch-query-relaxation, label: "서버 자동" }]
+    applied:
+      status: LIVE
+      summary: "실제 질의에 실린 사용자 조건(검색어 · 분류 · 행사 상태 · 속성 · 해석 조건 · 지역 · 반경)만 해제 버튼으로 낸다. 화면이 대신 붙인 기본 조건은 빼고, 조건어 해석은 「해석 끄고 재검색」으로 푼다"
+    code:
+      - { path: portal-fe/src/pages/place/placeView.ts, symbol: "export function relaxConditions(", note: "해제 후보 고르기" }
+  - id: srch-query-relaxation
+    kind: MECHANISM
+    name: "쿼리 완화"
+    category: ALGORITHM
+    level: INTERMEDIATE
+    description: "0건이면 서버가 덜 중요한 조건(검색어 일부 · 좁은 필터)부터 빼고 다시 찾아 「대신 이런 결과」를 보여 준다. 뜻이 바뀔 수 있어 무엇을 뺐는지 함께 알린다"
+    applied:
+      status: NONE
+      summary: "서버가 대신 조건을 풀어 다시 찾지 않는다. 사용자가 해제 버튼으로 직접 푼다"
   - id: query-understanding
     kind: STAGE
     name: "쿼리 언더스탠딩"
@@ -1364,8 +1515,16 @@ concepts:
     questions:
       - "「강남 3만원 이하 이탈리안」에서 무엇을 필터로 옮기고 무엇을 검색어로 남기나"
       - "의도를 필터로 쓸 때와 랭킹 힌트로 쓸 때 각각 무엇을 잃나"
-    contains: [query-normalization, morphological-analysis, keyword-type-classification, intent-to-filter, srch-spell-correction, srch-query-intent-classification, srch-query-entity-recognition, srch-query-segmentation, srch-language-identification, srch-query-expansion, srch-query-rewriting, srch-zero-result-recovery, srch-policy-switch, srch-morpheme-fragment-noise, srch-zero-result, srch-zero-result-rate]
-    flows_to: [candidate-generation]
+    contains: [query-normalization, morphological-analysis, keyword-type-classification, intent-to-filter, srch-query-intent-classification, srch-query-entity-recognition, srch-query-segmentation, srch-language-identification, srch-policy-switch, srch-morpheme-fragment-noise, search-lexicon]
+    flows_to: [{ to: candidate-generation, label: "잔여 검색어 · 필터" }]
+    applied:
+      status: LIVE
+      summary: "QueryIntent 가 교정된 검색어를 잔여 검색어 · 패싯 필터 · 상업 의도 · 조건어 · 타입 의도로 가른다. 잔여 검색어만 키워드 검색에 쓰고, 필터는 두 검색에 같이 건다"
+      facts:
+        - { label: "조건어 해석", value: "주차 · 반려견 같은 말을 속성 필터로" }
+        - { label: "분류 사전 갱신", value: "10분" }
+    code:
+      - { path: search/domain/src/main/kotlin/com/kgd/search/domain/query/model/QueryIntent.kt, symbol: "fun analyze(", note: "검색어를 의도별로 가른다" }
   - id: query-normalization
     kind: MECHANISM
     name: "정규화"
@@ -1375,6 +1534,10 @@ concepts:
     code:
       - { path: search/domain/src/main/kotlin/com/kgd/search/domain/queryvector/model/QueryNormalizer.kt, symbol: "fun normalize(raw: String)", note: "질의 벡터 캐시 키를 만드는 정규화" }
     contains: [srch-unicode-normalization]
+    flows_to: [morphological-analysis]
+    applied:
+      status: LIVE
+      summary: "공백 · 대소문자 · 전각을 정리해 캐시 키와 분석 입력을 맞춘다"
   - id: srch-unicode-normalization
     kind: MECHANISM
     name: "유니코드 정규형"
@@ -1390,12 +1553,28 @@ concepts:
     description: "조사 · 어미를 떼고 어간을 남긴다. 「아이와」가 「아이」+「와」로 갈리는 노이즈도 여기서 난다"
     contains: [analyzer-customization-layers]
     uses: [morpheme, pos-tag]
+    flows_to: [keyword-type-classification]
+    applied:
+      status: LIVE
+      summary: "nori 형태소 분석. 복합어는 쪼갠 조각만 남기고, 검색 시점에는 조사 · 어미 품사 14개를 뺀다"
+      facts:
+        - { label: "decompound", value: "discard" }
+        - { label: "사용자 사전 줄 수", value: "200", key: nori-user-dictionary-lines }
+        - { label: "품사 필터", value: "조사 · 어미 14태그" }
+    code:
+      - { path: search/batch/src/main/resources/opensearch/attractions-index.json, symbol: "\"decompound_mode\": \"discard\"", note: "nori 토크나이저 설정" }
   - id: keyword-type-classification
     kind: MECHANISM
     name: "키워드 유형 분류"
     category: ALGORITHM
     level: INTERMEDIATE
     description: "검색어의 낱말을 유형 · 분류 · 대상 · 스톱워드로 가른다"
+    flows_to: [{ to: intent-to-filter, label: "지역 · 분류" }, { to: srch-policy-switch, label: "상업 의도" }, { to: srch-query-intent-classification, label: "타입 의도" }]
+    applied:
+      status: LIVE
+      summary: "어절마다 지역 · 분류 · 상업어 · 조건어 · 타입어인지 사전으로 판정한다. 의도어를 빼고 남은 말이 잔여 검색어다"
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/application/attraction/service/SearchAttractionService.kt, symbol: "val searchKeyword = if (understood != null) understood.residual else keyword", note: "잔여 검색어만 키워드 검색에" }
   - id: intent-to-filter
     kind: MECHANISM
     name: "의도 → 필터 승격"
@@ -1406,6 +1585,9 @@ concepts:
       - { path: search/domain/src/main/kotlin/com/kgd/search/domain/query/model/QueryIntent.kt, symbol: "object QueryIntent", note: "의도어를 검색어에서 빼서 필터로 옮긴다" }
     mitigates:
       - { to: srch-morpheme-fragment-noise, reason: "의도어를 BM25 검색어에서 빼 조각이 채점되지 않게 한다" }
+    applied:
+      status: LIVE
+      summary: "「부산 해수욕장」의 부산은 지역 필터, 해수욕장은 분류 필터가 된다. 색인에 문서가 없는 분류로는 좁히지 않는다"
   - id: srch-spell-correction
     kind: MECHANISM
     name: "오타 교정"
@@ -1418,6 +1600,15 @@ concepts:
     contains: [cs-edit-distance, srch-query-log-correction, srch-noisy-channel-model, srch-keyboard-layout-correction]
     mitigates:
       - { to: srch-zero-result, reason: "오타로 0건이 된 질의를 고친 질의로 다시 찾는다" }
+    flows_to: [srch-query-expansion]
+    applied:
+      status: LIVE
+      summary: "0히트 단어를 자모로 풀어 제목 자모 사전에서 term suggester 로 찾고, 점수가 하한을 넘는 제안 하나만 채택한다. 제목에만 없는 단어까지 고치면 제대로 친 검색어가 망가진다"
+      facts:
+        - { label: "편집거리", value: "2 (자모 단위)" }
+        - { label: "prefixLength", value: "1" }
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt, symbol: "private fun closestTitleSpelling(", note: "자모 term 제안" }
   - id: srch-query-log-correction
     kind: MECHANISM
     name: "로그 기반 교정"
@@ -1448,6 +1639,9 @@ concepts:
     synonyms: ["query intent", "query classification"]
     code:
       - { path: search/domain/src/main/kotlin/com/kgd/search/domain/query/model/QueryIntent.kt, symbol: "val SEARCH_TYPE_INTENTS", note: "검색 대상 타입을 고르는 의도어" }
+    applied:
+      status: LIVE
+      summary: "통합 검색에서 「게임」 「블로그」 같은 말이 있으면 대상을 그 타입 하나로 좁힌다"
   - id: srch-query-entity-recognition
     kind: MECHANISM
     name: "엔티티 인식"
@@ -1481,6 +1675,14 @@ concepts:
       - "확장어에 원어와 같은 가중치를 주면 무엇이 올라오나"
     contains: [srch-transliteration, srch-cross-lingual-expansion, srch-pseudo-relevance-feedback]
     uses: [synonym-dictionary]
+    flows_to: [srch-query-rewriting]
+    applied:
+      status: PARTIAL
+      summary: "관광 동의어를 검색 시점 분석기에서 확장한다. 사전을 바꿔도 재색인이 필요 없다. 음역 · 다국어 확장은 없다"
+      facts:
+        - { label: "동의어 줄 수", value: "10", key: synonym-lines }
+    code:
+      - { path: search/batch/src/main/resources/opensearch/attractions-index.json, symbol: "\"tourism_synonyms\": {", note: "검색 시점 동의어 필터" }
   - id: srch-transliteration
     kind: MECHANISM
     name: "음차 · 로마자 변환"
@@ -1505,12 +1707,15 @@ concepts:
     synonyms: ["PRF", "RM3", "blind feedback"]
   - id: srch-query-rewriting
     kind: MECHANISM
-    name: "쿼리 리포뮬레이션"
+    name: "질의 재작성"
     category: ALGORITHM
     level: ADVANCED
     description: "질의의 구조를 바꿔 다시 쓴다 — 필드 지정 · 구문화 · 불필요어 제거 · 조건 분해. 유형별로 식별한 낱말을 매칭어가 아니라 필터 · 가점 · 제외 조건으로 바꾸는 것이 대표적이다. 규칙 기반과 학습 기반이 있다"
     synonyms: ["query reformulation", "query rewriting", "query relaxation", "질의 재작성", "쿼리 재작성", "검색 조건 변환"]
     contains: [srch-llm-query-rewrite]
+    applied:
+      status: NONE
+      summary: "LLM 으로 검색어를 다시 쓰는 단계는 없다"
   - id: srch-llm-query-rewrite
     kind: MECHANISM
     name: "LLM 질의 재작성"
@@ -1527,6 +1732,9 @@ concepts:
     synonyms: ["zero-result recovery", "null query handling", "0건 복구", "결과 없는 검색", "대체 검색"]
     mitigates:
       - { to: srch-zero-result, reason: "완화한 질의로 다시 찾는다" }
+    applied:
+      status: NONE
+      summary: "0건일 때 인기 · 근처 결과를 대신 보여 주지 않는다"
   - id: srch-policy-switch
     kind: MECHANISM
     name: "랭킹 정책 스위치"
@@ -1535,6 +1743,9 @@ concepts:
     description: "질의에서 읽은 의도로 필터도 검색어도 아닌 순위 규칙을 바꾼다(상업 의도면 상점 가중을 켠다)"
     code:
       - { path: search/domain/src/main/kotlin/com/kgd/search/domain/query/model/QueryIntent.kt, symbol: "commerceIntent", note: "상업 의도는 필터가 아니라 랭킹 스위치" }
+    applied:
+      status: LIVE
+      summary: "「맛집」 같은 상업 의도면 관광 우선 가중치를 끄고 BM25 그대로 채점한다"
   - id: srch-morpheme-fragment-noise
     kind: PROBLEM
     name: "형태소 조각 오탐"
@@ -1565,6 +1776,14 @@ concepts:
     level: INTERMEDIATE
     description: "동의어 · 사용자 사전 · 스톱워드. 원천 코드표에서 유도하면 손으로 안 쓴다"
     contains: [synonym-dictionary, user-dictionary, stopword, lexicon-from-source-codes]
+    flows_to: [{ to: keyword-type-classification, label: "분류 사전" }]
+    applied:
+      status: LIVE
+      summary: "분류 사전은 원천 분류 코드표와 그 언어 색인에 실제로 있는 코드의 교집합이다. 원천이 바뀌면 사전도 따라 바뀐다"
+      facts:
+        - { label: "갱신 주기", value: "10분" }
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/application/attraction/service/CategoryLexiconService.kt, symbol: "override fun lexicon(", note: "코드표 ∩ 색인 코드" }
   - id: synonym-dictionary
     kind: MECHANISM
     name: "동의어 사전"
@@ -1593,7 +1812,12 @@ concepts:
     questions:
       - "질의 벡터를 미리 만든 사전으로 대면 미적중은 품질 사건인가 지연 사건인가"
     contains: [live-encoding, embedding-model, query-vector-ledger, srch-precomputed-query-dictionary, srch-query-instruction-prefix, srch-query-tower-placement, srch-bm25-fallback, srch-encoder-outage]
-    flows_to: [candidate-generation]
+    flows_to: [{ to: ann-search, label: "쿼리 벡터" }]
+    applied:
+      status: LIVE
+      summary: "쿼리 벡터를 로컬 캐시 → MySQL query_vector 표 → search-embed 사이드카 인코딩 순서로 구한다. 새로 만든 벡터는 표에 남겨 다시 인코딩하지 않는다"
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/application/queryvector/service/QueryVectorService.kt, symbol: "override fun resolve(rawQuery: String, modelRef: String)", note: "3단 조회" }
   - id: live-encoding
     kind: MECHANISM
     name: "라이브 인코딩"
@@ -1602,6 +1826,14 @@ concepts:
     description: "요청 경로에서 임베딩 모델을 부른다. 지연 예산의 대부분을 먹고, 단건 지연은 파라미터 수보다 토큰 수가 정한다"
     causes:
       - { to: srch-encoder-outage, reason: "요청 경로가 인코더 가용성에 묶인다" }
+    flows_to: [{ to: srch-bm25-fallback, label: "인코딩 실패" }]
+    applied:
+      status: LIVE
+      summary: "같은 파드의 사이드카가 쿼리 하나를 CPU 에서 실시간으로 인코딩한다"
+      facts:
+        - { label: "정밀도", value: "fp32" }
+    code:
+      - { path: search/embed/server.py, symbol: "def encode(", note: "사이드카 인코딩" }
   - id: query-vector-ledger
     kind: MECHANISM
     name: "벡터 캐시 · 원장"
@@ -1610,6 +1842,10 @@ concepts:
     description: "만든 쿼리 벡터를 저장해 같은 검색어를 다시 인코딩하지 않는다"
     measured_by:
       - { to: cache-hit-rate, reason: "같은 질의를 다시 인코딩하지 않은 비율" }
+    flows_to: [{ to: live-encoding, label: "캐시 미적중" }]
+    applied:
+      status: LIVE
+      summary: "로컬 캐시(미적중도 담는다)와 MySQL query_vector 표. 저장이 실패해도 검색은 막지 않는다"
   - id: srch-precomputed-query-dictionary
     kind: MECHANISM
     name: "질의 벡터 사전"
@@ -1621,6 +1857,10 @@ concepts:
       - { path: search/app/src/main/kotlin/com/kgd/search/application/queryvector/service/QueryVectorService.kt, symbol: "private fun recordMiss(", note: "사전 미적중 질의를 기록해 다음 채움의 입력으로 쓴다" }
     alternative_to:
       - { to: live-encoding, reason: "큰 모델 + 적중률 상한 대 작은 모델 + 모든 질의에 벡터" }
+    flows_to: [{ to: query-vector-ledger, label: "미리 채움" }]
+    applied:
+      status: LIVE
+      summary: "인코딩에 실패한 질의를 Redis 에 세어 두고, 사전 채우기 도구가 많이 실패한 것부터 미리 인코딩한다"
   - id: srch-query-instruction-prefix
     kind: MECHANISM
     name: "질의 지시문 접두어"
@@ -1687,6 +1927,9 @@ concepts:
       - { to: srch-encoder-outage, reason: "인코더가 죽어도 검색이 끊기지 않는다" }
     measured_by:
       - { to: fallback-rate, reason: "BM25 만 나간 비율" }
+    applied:
+      status: LIVE
+      summary: "사이드카가 죽거나 인코딩이 실패하면 키워드 검색만으로 답한다. 검색은 멈추지 않는다"
   - id: srch-encoder-outage
     kind: PROBLEM
     name: "인코더 장애"
@@ -1704,6 +1947,10 @@ concepts:
       - "같은 조건을 must 에 두는 것과 filter 에 두는 것은 무엇이 다른가"
       - "term 과 match 는 분석기 관점에서 어떻게 다른가"
     contains: [srch-query-filter-context, srch-term-level-query, srch-full-text-query, srch-bool-query, srch-multi-term-query, srch-join-query, srch-terms-lookup, srch-more-like-this, srch-percolation, srch-geo-query, srch-search-template, srch-expensive-query]
+    flows_to: [bm25]
+    applied:
+      status: LIVE
+      summary: "필터는 bool 의 filter 문맥에, 검색어는 여러 필드 multi_match 로 넣는다"
   - id: srch-query-filter-context
     kind: MECHANISM
     name: "질의 문맥 · 필터 문맥"
@@ -1888,12 +2135,17 @@ concepts:
       - "글자를 맞추는 방식과 뜻을 맞추는 방식은 각각 어떤 질의에서 지나"
     code:
       - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt, symbol: "private fun hybridQuery(", note: "키워드 레그와 벡터 레그를 한 하이브리드 질의로 묶는다" }
-    contains: [srch-boolean-retrieval, srch-tf-idf, bm25, srch-learned-sparse, ann-search, srch-late-interaction, srch-similarity-module, opensearch, srch-post-filter-recall-loss, srch-ann-recall]
+    contains: [srch-sparse-retrieval, srch-dense-retrieval, srch-similarity-module, opensearch, srch-post-filter-recall-loss, srch-ann-recall]
     flows_to: [rank-fusion]
     measured_by:
       - { to: recall-precision, reason: "후보 단계는 놓친 정답(재현율)을 잰다" }
       - { to: latency-percentile, reason: "레그별 P99 로 후보 생성이 지연 예산 안인지 본다" }
       - { to: srch-recall-at-k, reason: "정답이 상위 k 후보 안에 들어왔는지" }
+    applied:
+      status: LIVE
+      summary: "키워드 검색과 벡터 검색을 하이브리드 질의 하나로 보낸다. 두 검색은 같은 필터를 쓰고, 벡터가 없으면 키워드 검색만 돈다"
+      facts:
+        - { label: "하이브리드", value: "true", key: hybrid-enabled }
   - id: srch-boolean-retrieval
     kind: MECHANISM
     name: "불리언 검색"
@@ -1924,6 +2176,10 @@ concepts:
     alternative_to:
       - { to: ann-search, reason: "글자가 맞는 것 대 뜻이 가까운 것 — 둘 다 쓰고 순위로 섞는다" }
       - { to: srch-tf-idf, reason: "빈도 포화와 길이 정규화로 TF-IDF 의 약점을 고친 후속" }
+    flows_to: [srch-relevance-tuning]
+    applied:
+      status: LIVE
+      summary: "OpenSearch 기본 BM25. 한국어는 nori, 영문은 .en 서브필드"
   - id: srch-bm25-k1
     kind: MECHANISM
     name: "k1 (빈도 포화)"
@@ -1959,6 +2215,8 @@ concepts:
     uses: [srch-sparse-vector-field]
     alternative_to:
       - { to: bm25, reason: "통계 가중 대 학습 가중 — 같은 역색인 위에서" }
+    applied:
+      status: NONE
   - id: srch-splade
     kind: MECHANISM
     name: "SPLADE"
@@ -1998,6 +2256,12 @@ concepts:
     measured_by:
       - { to: fallback-rate, reason: "인코더가 죽어 벡터 레그가 꺼지고 BM25 만 나간 비율" }
       - { to: srch-ann-recall, reason: "정확 kNN 결과를 얼마나 되찾나" }
+    applied:
+      status: LIVE
+      summary: "필터를 k-NN 안에 넣어 「필터를 통과한 것 중 가까운 k개」를 찾는다"
+      facts:
+        - { label: "HNSW m", value: "16", key: hnsw-m }
+        - { label: "ef_construction", value: "128", key: hnsw-ef-construction }
   - id: srch-filtered-ann
     kind: MECHANISM
     name: "필터 결합 kNN"
@@ -2033,6 +2297,8 @@ concepts:
     synonyms: ["ColBERT", "late interaction", "MaxSim"]
     alternative_to:
       - { to: ann-search, reason: "문서당 벡터 하나 대 토큰마다 벡터 — 정확도 대 저장" }
+    applied:
+      status: NONE
   - id: srch-similarity-module
     kind: MECHANISM
     name: "유사도 모델 교체"
@@ -2077,6 +2343,12 @@ concepts:
     flows_to: [post-ranking]
     measured_by:
       - { to: ndcg, reason: "융합 결과 상위 10 을 등급 판정으로 잰다" }
+    applied:
+      status: LIVE
+      summary: "앱이 기동할 때 OpenSearch 검색 파이프라인을 만들고, 두 검색을 hybrid 질의 하나로 보내 OpenSearch 안에서 순위로 합친다"
+      facts:
+        - { label: "방식", value: "rrf", key: fusion-technique }
+        - { label: "융합 깊이", value: "max(from + size, 100)" }
   - id: rrf
     kind: MECHANISM
     name: "RRF"
@@ -2088,9 +2360,14 @@ concepts:
       - "점수가 아니라 순위로 합치는 이유는 무엇인가"
       - "rank_constant 를 키우면 순위 분포가 어떻게 바뀌나"
     code:
-      - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/HybridSearchPipelineInitializer.kt, symbol: "private const val RRF_PIPELINE", note: "rank_constant 60 인 RRF 검색 파이프라인" }
+      - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/HybridSearchPipelineInitializer.kt, symbol: "\"phase_results_processors\"", note: "rank_constant 60 인 RRF 검색 파이프라인" }
     mitigates:
       - { to: srch-score-scale-mismatch, reason: "점수 대신 순위를 쓰므로 단위가 사라진다" }
+    applied:
+      status: LIVE
+      summary: "두 검색의 순위만 써서 점수 스케일 차이를 피한다"
+      facts:
+        - { label: "rank_constant", value: "60", key: rrf-rank-constant }
   - id: srch-weighted-score-fusion
     kind: MECHANISM
     name: "가중 점수합 (선형 융합)"
@@ -2119,6 +2396,12 @@ concepts:
     level: INTERMEDIATE
     description: "의도나 질의 모양에 따라 한 레그만 쓴다. 의도어를 빼고 잔여 검색어가 안 남으면 키워드 레그가 전부 맞음이 돼 임의 순서가 섞이므로 벡터 단독으로 답한다. 설명하기 쉽지만 경계에서 결과가 튄다"
     synonyms: ["query routing", "vector-only fallback"]
+    flows_to: [{ to: rrf, label: "두 검색 모두" }]
+    applied:
+      status: LIVE
+      summary: "벡터가 없으면 키워드 검색만, 의도어만 친 경우는 벡터 검색만, 검색어가 없으면 분류 가중치 × 문서 품질 순서. 그 밖에만 두 검색을 합친다"
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt, symbol: "private fun hybridQuery(", note: "두 검색을 하나로 묶는 곳" }
   - id: srch-learned-fusion
     kind: MECHANISM
     name: "학습 융합"
@@ -2182,7 +2465,12 @@ concepts:
     questions:
       - "인기도를 점수에 그대로 곱하면 무엇이 터지고 log1p 는 무엇을 막나"
     contains: [srch-function-score, srch-field-boosting, srch-rank-feature-boost, srch-distance-feature-boost, srch-pinned-results, srch-negative-boost, srch-constant-score, srch-static-quality-signals, srch-query-rules, srch-raw-signal-domination, srch-zero-multiply]
-    flows_to: [post-ranking]
+    applied:
+      status: LIVE
+      summary: "관광 ×3.0 · 상업 ×0.35 분류 가중치와 × ln1p(문서 품질 점수)를 곱한다. 클릭 신호 부스트는 구현돼 있지만 꺼져 있다"
+      facts:
+        - { label: "클릭 부스트", value: "false", key: click-boost-enabled }
+        - { label: "문서 품질", value: "× ln1p(popularityScore)" }
   - id: srch-function-score
     kind: MECHANISM
     name: "점수 함수 결합"
@@ -2298,6 +2586,10 @@ concepts:
     level: ADVANCED
     description: "융합된 상위를 다시 채점하거나 다양성 · 비즈니스 규칙을 건다. 단계마다 후보 수와 문서당 비용이 반비례한다"
     contains: [srch-ranking-funnel, reranking, diversity-business-rules, srch-personalization, srch-train-serve-skew]
+    flows_to: [{ to: srch-zero-result-handling, label: "0건이면" }]
+    applied:
+      status: PARTIAL
+      summary: "상품 검색만 톰슨 샘플링 밴딧으로 상위 100건을 다시 정렬한다. 관광지 · 통합 검색은 융합 결과가 최종 순위다"
   - id: srch-ranking-funnel
     kind: MECHANISM
     name: "랭킹 퍼널 (캐스케이드)"
@@ -2317,6 +2609,13 @@ concepts:
     contains: [learning-to-rank, srch-cross-encoder, srch-llm-reranker, srch-query-rescore]
     measured_by:
       - { to: ndcg, reason: "리랭크 전후 상위 10 의 등급 순서를 비교한다" }
+    applied:
+      status: PARTIAL
+      summary: "상품 검색에 톰슨 샘플링 밴딧 재정렬이 켜져 있다. 교차 인코더 · LTR 은 없다"
+      facts:
+        - { label: "밴딧 상위", value: "100건" }
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/application/ranking/service/ThompsonReranker.kt, symbol: "fun rerank(", note: "상품 검색 상위 N 재정렬" }
   - id: srch-cross-encoder
     kind: MECHANISM
     name: "크로스 인코더"
@@ -2419,6 +2718,8 @@ concepts:
     description: "사용자 이력 · 문맥(기기 · 시간 · 지역)을 피처로 넣어 같은 질의에도 사람마다 순위를 바꾼다. 개인 식별과의 선을 어디 긋는지가 정책 문제다"
     synonyms: ["personalized search"]
     uses: [srch-contextual-features, srch-behavioral-features]
+    applied:
+      status: NONE
   - id: srch-train-serve-skew
     kind: PROBLEM
     name: "학습-서빙 불일치"
@@ -2437,6 +2738,16 @@ concepts:
       - "자동완성에 n-gram 이 아니라 edge n-gram 을 쓰는 이유는 무엇인가"
       - "한국어 자동완성에서 자모 분리가 필요한 이유는 무엇인가"
     contains: [srch-edge-ngram, srch-search-as-you-type, srch-completion-suggester, srch-match-bool-prefix, srch-prefix-term-enumeration, srch-popular-query-suggestion, srch-jamo-decomposition, srch-chosung-search, srch-ngram-index-bloat]
+    applied:
+      status: LIVE
+      summary: "지역 칸을 먼저 채우고 남은 칸을 관광지로 채운다. 관광지 후보는 이름 접두 · 형태소 일치 · 자모 세 신호를 무게를 달리해 섞는다. 자동완성은 쿼리 언더스탠딩을 거치지 않는다"
+      facts:
+        - { label: "지역", value: "이름 접두 + log1p(인구), 상단 3칸" }
+        - { label: "이름 접두", value: "× 6" }
+        - { label: "형태소 일치", value: "× 1" }
+        - { label: "자모(ㄱㅕㅇㅂㅗ)", value: "× 0.3" }
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt, symbol: "private fun suggestAttractions(", note: "지역 · 관광지 자동완성" }
   - id: srch-search-as-you-type
     kind: MECHANISM
     name: "입력 중 검색 필드"
@@ -2455,6 +2766,8 @@ concepts:
     uses: [srch-fst]
     alternative_to:
       - { to: srch-edge-ngram, reason: "메모리 FST 로 가장 빠르게 대 색인 토큰으로 유연하게" }
+    applied:
+      status: NONE
   - id: srch-context-suggester
     kind: MECHANISM
     name: "문맥 제안"
@@ -2471,6 +2784,9 @@ concepts:
     synonyms: ["match_bool_prefix", "match_phrase_prefix"]
     code:
       - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt, symbol: "matchBoolPrefix", note: "관광지 · 지역 자동완성" }
+    applied:
+      status: LIVE
+      summary: "마지막 토큰만 접두로 맞춘다 — 관광지 · 지역 자동완성"
   - id: srch-prefix-term-enumeration
     kind: MECHANISM
     name: "텀 사전 접두 열거"
@@ -2486,6 +2802,8 @@ concepts:
     level: INTERMEDIATE
     description: "문서가 아니라 과거 질의 로그에서 접두가 맞는 인기 질의를 제안한다. 사전순이 아니라 빈도 · 성공률로 정렬하고 0 건 질의는 뺀다"
     synonyms: ["query log suggestion"]
+    applied:
+      status: NONE
   - id: srch-jamo-decomposition
     kind: MECHANISM
     name: "자모 분리"
@@ -2495,6 +2813,9 @@ concepts:
     synonyms: ["jamo", "Hangul decomposition", "ICU NFD"]
     code:
       - { path: search/batch/src/main/resources/opensearch/attractions-index.json, symbol: "\"jamo_edge_ngram\"", note: "자모 단위 edge n-gram 토크나이저" }
+    applied:
+      status: LIVE
+      summary: "조합 중인 입력(ㄱㅕㅇ)도 맞게 자모 단위로 맞춘다"
   - id: srch-chosung-search
     kind: MECHANISM
     name: "초성 검색"
@@ -2502,6 +2823,8 @@ concepts:
     level: INTERMEDIATE
     description: "초성만 친 입력(ㅅㅇ → 서울)을 초성 필드로 찾는다. 색인 때 초성열을 따로 만든다"
     synonyms: ["chosung", "initial consonant search"]
+    applied:
+      status: NONE
   - id: srch-ngram-index-bloat
     kind: PROBLEM
     name: "n-gram 색인 비대"
@@ -2518,6 +2841,9 @@ concepts:
     questions:
       - "샤드가 여러 개일 때 terms 집계 상위 10 이 틀릴 수 있는 이유는 무엇인가"
     contains: [srch-bucket-aggregation, srch-metric-aggregation, srch-pipeline-aggregation, srch-faceted-navigation, srch-terms-agg-inaccuracy]
+    applied:
+      status: LIVE
+      summary: "속성 값별 건수(오늘 운영 · 주차 · 반려견 등)를 함께 낸다. 각 건수는 자기 속성의 선택만 빼고 계산한다"
   - id: srch-bucket-aggregation
     kind: MECHANISM
     name: "버킷 집계"
@@ -2606,7 +2932,14 @@ concepts:
     category: ARCHITECTURE
     level: INTERMEDIATE
     description: "순위가 정해진 결과를 사람이 읽을 모양으로 만든다 — 일치 부분 강조 · 묶기 · 생성형 답변"
-    contains: [srch-highlighting, srch-field-collapsing, srch-rag]
+    contains: [srch-highlighting, srch-field-collapsing, srch-rag, srch-aggregation]
+    applied:
+      status: LIVE
+      summary: "관광지 검색은 결과와 함께 교정어 · 해석한 조건 · 속성 패싯 건수 · 0건 사유 · 검색 id 를 낸다. 통합 검색은 타입별 묶음을 의도 → 제목 일치 → 고정 순서로 정렬하고, 한 타입이 실패하면 그 묶음만 빠진다"
+      facts:
+        - { label: "공통 포맷", value: "ApiResponse<T>" }
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/application/unified/service/SearchUnifiedService.kt, symbol: "class SearchUnifiedService(", note: "통합 검색 묶음" }
   - id: srch-highlighting
     kind: MECHANISM
     name: "하이라이팅"
@@ -2615,6 +2948,8 @@ concepts:
     description: "질의와 맞은 부분을 원문에서 찾아 표시한 조각(스니펫)을 만든다. 긴 필드는 오프셋 · 텀 벡터를 색인해 두면 다시 분석하지 않아 빠르다"
     synonyms: ["highlight", "snippet", "unified highlighter", "fvh"]
     uses: [srch-positions-offsets]
+    applied:
+      status: NONE
   - id: srch-rag
     kind: MECHANISM
     name: "RAG (검색 증강 생성)"
@@ -2622,6 +2957,8 @@ concepts:
     level: ADVANCED
     description: "검색한 상위 문서를 언어 모델 입력에 넣어 답을 생성한다. 생성 품질의 상한은 검색 재현율이 정하고, 출처를 함께 보여야 검증된다"
     synonyms: ["RAG", "Retrieval-Augmented Generation", "conversational search"]
+    applied:
+      status: NONE
 
   # ─────────────────────────── 평가 ───────────────────────────
   - id: search-evaluation

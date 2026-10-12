@@ -6,12 +6,15 @@ import com.kgd.codedictionary.domain.concept.model.ConceptCategory
 import com.kgd.codedictionary.domain.concept.model.ConceptEdgeKind
 import com.kgd.codedictionary.domain.concept.model.ConceptKind
 import com.kgd.codedictionary.domain.concept.model.ConceptLevel
+import com.kgd.codedictionary.domain.concept.ontology.AppliedStatus
 import com.kgd.codedictionary.domain.concept.ontology.ConceptOntology
 import com.kgd.codedictionary.domain.concept.ontology.EvidenceKind
+import com.kgd.codedictionary.domain.concept.ontology.OntologyApplied
 import com.kgd.codedictionary.domain.concept.ontology.OntologyCodeRef
 import com.kgd.codedictionary.domain.concept.ontology.OntologyConcept
 import com.kgd.codedictionary.domain.concept.ontology.OntologyDomain
 import com.kgd.codedictionary.domain.concept.ontology.OntologyEvidence
+import com.kgd.codedictionary.domain.concept.ontology.OntologyFact
 import com.kgd.codedictionary.domain.concept.ontology.OntologyManifest
 import com.kgd.codedictionary.domain.concept.ontology.OntologyRelation
 import org.springframework.beans.factory.annotation.Value
@@ -109,6 +112,7 @@ class YamlOntologyReader(
                     unknownKeys("$where $id.code", cm.keys, setOf("path", "symbol", "note"))
                     OntologyCodeRef(text(cm["path"], "$where $id.code.path"), text(cm["symbol"], "$where $id.code.symbol"), cm["note"] as? String)
                 },
+                applied = c["applied"]?.let { applied(it, "$where $id.applied") },
             )
         }
         return OntologyDomain(
@@ -120,13 +124,36 @@ class YamlOntologyReader(
         )
     }
 
+    private fun applied(v: Any, where: String): OntologyApplied {
+        @Suppress("UNCHECKED_CAST")
+        val m = v as? Map<String, Any?> ?: error("$where 는 맵이어야 한다")
+        unknownKeys(where, m.keys, setOf("status", "summary", "facts"))
+        return OntologyApplied(
+            status = enumOf<AppliedStatus>(text(m["status"], "$where.status"), "$where.status"),
+            summary = m["summary"]?.let { text(it, "$where.summary") },
+            facts = list(m["facts"], "$where.facts").map { f ->
+                @Suppress("UNCHECKED_CAST")
+                val fm = f as? Map<String, Any?> ?: error("$where.facts 항목이 맵이 아니다")
+                unknownKeys("$where.facts", fm.keys, setOf("label", "value", "key"))
+                OntologyFact(text(fm["label"], "$where.facts.label"), scalar(fm["value"], "$where.facts.value"), fm["key"]?.let { text(it, "$where.facts.key") })
+            },
+        )
+    }
+
+    /** 사실 값은 숫자 · 참거짓도 쓴다 — 표시는 문자열로 */
+    private fun scalar(v: Any?, where: String): String = when (v) {
+        is String -> v.takeIf { it.isNotBlank() } ?: error("$where 는 비어 있으면 안 된다")
+        is Number, is Boolean -> v.toString()
+        else -> error("$where 는 문자열 · 숫자 · 참거짓이어야 한다: $v")
+    }
+
     private fun relation(from: String, kind: ConceptEdgeKind, ordinal: Int, v: Any?, where: String): OntologyRelation = when (v) {
         is String -> OntologyRelation(from, v, kind, ordinal)
         is Map<*, *> -> {
-            unknownKeys(where, v.keys.map { it.toString() }.toSet(), setOf("to", "reason", "evidence"))
-            OntologyRelation(from, text(v["to"], "$where.to"), kind, ordinal, v["reason"] as? String, v["evidence"] as? String)
+            unknownKeys(where, v.keys.map { it.toString() }.toSet(), setOf("to", "reason", "evidence", "label"))
+            OntologyRelation(from, text(v["to"], "$where.to"), kind, ordinal, v["reason"] as? String, v["evidence"] as? String, v["label"] as? String)
         }
-        else -> error("$where 항목은 개념 id 또는 {to, reason, evidence} 여야 한다: $v")
+        else -> error("$where 항목은 개념 id 또는 {to, reason, evidence, label} 여야 한다: $v")
     }
 
     private fun unknownKeys(where: String, keys: Set<String>, allowed: Set<String>) {
@@ -150,7 +177,7 @@ class YamlOntologyReader(
 
     private companion object {
         const val MANIFEST = "manifest.yaml"
-        val CONCEPT_KEYS = setOf("id", "kind", "name", "category", "level", "description", "synonyms", "evidence", "questions", "code")
+        val CONCEPT_KEYS = setOf("id", "kind", "name", "category", "level", "description", "synonyms", "evidence", "questions", "code", "applied")
         val RELATION_KEYS: Map<String, ConceptEdgeKind> = ConceptEdgeKind.entries.associateBy { it.name.lowercase() }
     }
 }
