@@ -35,6 +35,9 @@ spec:
             # 벡터 레그. 문서 벡터 적재율이 100% 가 된 뒤에 켠다 — 비어 있으면 knn 레그가 0건을 낸다.
             - name: SEARCH_ATTRACTION_HYBRID_ENABLED
               value: "true"
+            # 어휘 근거 단계(OFF → GATE → CONFINE). 판정 세트 짝 측정 중 — 되돌림은 이 값 한 줄
+            - name: SEARCH_ATTRACTION_ANSWER_EVIDENCE_MODE
+              value: "GATE"
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
