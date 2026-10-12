@@ -45,7 +45,7 @@ class PhoneParityTest : BehaviorSpec({
 
         then("렌더된 행동 줄의 tel: 링크가 골든 href 와 같다") {
             val case = cases.first { it.text("name") == "international" }
-            val html = renderer.attractionPage(SHELL, doc().copy(infoCenter = case.text("input"), tel = null), TODAY)
+            val html = renderer.page(SHELL, doc().copy(infoCenter = case.text("input"), tel = null), TODAY)
             val href = Regex("""<p data-place-section="actions"><a href="([^"]*)">""").find(html)?.groupValues?.get(1)
             href?.let(::decodeHtml) shouldBe case["output"].text("href")
         }

@@ -81,7 +81,7 @@ class AttractionJsonLdParityTest : BehaviorSpec({
         then("관광지 사진 license 는 공공누리 제1·3유형만 절대 주소로 — 골든과 별개로 값을 못박는다") {
             fun licenseOf(name: String): String? {
                 val input = cases.first { it.text("name") == name }["input"]
-                val image = serverJsonLd(renderer.attractionPage(AttractionPageFixtures.SHELL, documentOf(input), today))[0]["image"]
+                val image = serverJsonLd(renderer.page(AttractionPageFixtures.SHELL, documentOf(input), today))[0]["image"]
                 image["@type"].asString() shouldBe "ImageObject"
                 image["creditText"].asString() shouldBe "한국관광공사"
                 return image.text("license")
@@ -96,11 +96,11 @@ class AttractionJsonLdParityTest : BehaviorSpec({
         cases.forEach { case ->
             `when`(case.text("name")!!) {
                 then("서버가 렌더한 JSON-LD 가 구조적으로 같다") {
-                    val html = renderer.attractionPage(AttractionPageFixtures.SHELL, documentOf(case["input"]), today)
+                    val html = renderer.page(AttractionPageFixtures.SHELL, documentOf(case["input"]), today)
                     serverJsonLd(html).map(::normalize) shouldBe case["jsonLd"].items().map(::normalize)
                 }
                 then("서버가 렌더한 제목·설명이 같다") {
-                    val html = renderer.attractionPage(AttractionPageFixtures.SHELL, documentOf(case["input"]), today)
+                    val html = renderer.page(AttractionPageFixtures.SHELL, documentOf(case["input"]), today)
                     val meta = case["meta"]
                     Regex("<title>([^<]*)</title>").find(html)!!.groupValues[1] shouldBe
                         AttractionSeoText.escapeHtml(meta.text("title"))

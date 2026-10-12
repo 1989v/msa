@@ -53,7 +53,7 @@ class VisitSignalsParityTest : BehaviorSpec({
         cases.forEach { case ->
             `when`(case["name"].asString()) {
                 then("근거 줄이 순서째 같다 — 없으면 절도 없다") {
-                    val html = renderer.attractionPage(SHELL, documentOf(case["input"]), TODAY)
+                    val html = renderer.page(SHELL, documentOf(case["input"]), TODAY)
                     signalLines(html) shouldBe case["output"].items().map { it.asString() }
                 }
             }

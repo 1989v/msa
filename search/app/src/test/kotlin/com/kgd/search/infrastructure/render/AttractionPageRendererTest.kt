@@ -44,10 +44,14 @@ class AttractionPageRendererTest : BehaviorSpec({
 
     val renderer = AttractionPageRenderer(AttractionRenderProperties(), ObjectMapper())
 
-    fun render(shell: String?, d: AttractionDocument, today: LocalDate = TODAY) = renderer.attractionPage(shell, d, today)
+    fun render(shell: String?, d: AttractionDocument, today: LocalDate = TODAY) = renderer.page(shell, d, today)
 
     fun rootOf(html: String): String =
         html.substringAfter("<div id=\"root\">").substringBefore("<script type=\"module\"")
+
+    /** 상세 데이터 스크립트를 뺀 HTML — 마크업 규칙만 볼 때 */
+    fun withoutData(html: String): String =
+        html.replace(Regex("""<script type="application/json" id="attraction-data">[\s\S]*?</script>"""), "")
 
     fun jsonLdBlocks(html: String): List<String> =
         Regex("""<script type="application/ld\+json"([^>]*)>([\s\S]*?)</script>""")
@@ -777,11 +781,12 @@ class AttractionPageRendererTest : BehaviorSpec({
             val jsonLd = Regex("""<script type="application/ld\+json" data-seo-multi>([\s\S]*?)</script>""")
                 .findAll(html).map { ObjectMapper().readTree(it.groupValues[1]) }.first()
             jsonLd["image"]["contentUrl"].asString() shouldBe https
-            html shouldNotContain "http://tong."
+            // 상세 데이터는 API 응답과 같은 원천값(http)을 그대로 싣는다 — 마크업만 본다
+            withoutData(html) shouldNotContain "http://tong."
         }
 
-        then("https 원천으로 그린 HTML 과 바이트가 같다") {
-            html shouldBe render(SHELL, doc())
+        then("상세 데이터를 빼면 https 원천으로 그린 HTML 과 바이트가 같다") {
+            withoutData(html) shouldBe withoutData(render(SHELL, doc()))
         }
     }
 
@@ -989,6 +994,44 @@ class AttractionPageRendererTest : BehaviorSpec({
             imgOf(doc().copy(imageUrl = "http://example.com/1.jpg")) shouldBe null
             imgOf(doc().copy(imageUrl = null)) shouldBe null
             imgOf(doc().copy(imageUrl = "")) shouldBe null
+        }
+    }
+
+    given("상세 데이터 스크립트(attraction-data)") {
+        val dataScript = Regex("""<script type="application/json" id="attraction-data">([\s\S]*?)</script>""")
+        val evil = "</script><script>alert(1)</script>"
+        val overview = "줄 나눔\u2028문단\u2029끝 & <b>"
+        val html = render(SHELL, doc(title = evil, overview = overview))
+        val raw = dataScript.find(html)?.groupValues?.get(1)
+
+        then("#root 앞에 하나만 실린다 — React 가 #root 를 비워도 남는다") {
+            dataScript.findAll(html).count() shouldBe 1
+            (html.indexOf("id=\"attraction-data\"") < html.indexOf("<div id=\"root\">")) shouldBe true
+        }
+
+        then("제목의 </script> 가 블록을 닫지 못한다 — < > & U+2028 U+2029 가 원문 글자로 남지 않는다") {
+            val json = raw!!
+            json shouldNotContain "<"
+            json shouldNotContain ">"
+            json shouldNotContain "&"
+            json shouldNotContain "\u2028"
+            json shouldNotContain "\u2029"
+            html shouldNotContain "<script>alert(1)</script>"
+        }
+
+        then("JSON 으로 읽으면 원래 글자로 돌아온다") {
+            val node = ObjectMapper().readTree(raw!!)
+            node.get("title").asString() shouldBe evil
+            node.get("overview").asString() shouldBe overview
+            node.get("id").asString() shouldBe "1001"
+        }
+
+        then("셸이 없을 때의 최소 HTML 에도 실린다") {
+            dataScript.findAll(render(null, doc())).count() shouldBe 1
+        }
+
+        then("없는 관광지 페이지에는 싣지 않는다 — 화면이 API 로 404 를 판정한다") {
+            renderer.notFoundPage(SHELL, "ko") shouldNotContain "attraction-data"
         }
     }
 

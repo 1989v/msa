@@ -2,6 +2,8 @@ package com.kgd.search.application.attraction.service
 
 import com.kgd.search.application.attraction.port.AttractionPageRenderPort
 import com.kgd.search.application.attraction.port.AttractionShellPort
+import com.kgd.search.application.attraction.usecase.AttractionDetailResponse
+import com.kgd.search.application.attraction.usecase.AttractionShortUrlUseCase
 import com.kgd.search.application.attraction.usecase.RenderAttractionPageUseCase
 import com.kgd.search.domain.attraction.model.EventSchedule
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
@@ -14,6 +16,7 @@ class AttractionPageService(
     private val searchPort: AttractionSearchPort,
     private val shellPort: AttractionShellPort,
     private val renderPort: AttractionPageRenderPort,
+    private val shortUrl: AttractionShortUrlUseCase,
     private val clock: Clock = Clock.systemUTC(),
 ) : RenderAttractionPageUseCase {
     private val log = KotlinLogging.logger {}
@@ -38,7 +41,9 @@ class AttractionPageService(
             return RenderAttractionPageUseCase.Page.Redirect(docLang, doc.id, renderPort.canonicalPath(docLang, doc.id))
         }
         val today = EventSchedule.todayKst(clock.instant())
-        return RenderAttractionPageUseCase.Page.Found(renderPort.attractionPage(shell, doc, today))
+        // 상세 API(findById)와 같은 변환·같은 응답 모양 — 이미 받은 문서로 만들어 색인 조회는 그대로 한 번이다
+        val data = AttractionDetailResponse(doc.toResult(distanceKm = null, position = 0, summarize = false), shortUrl.shortUrlOf(doc.id))
+        return RenderAttractionPageUseCase.Page.Found(renderPort.attractionPage(shell, doc, today, data))
     }
 
     override fun notFound(pathLang: String): RenderAttractionPageUseCase.Page.NotFound =

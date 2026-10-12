@@ -70,7 +70,7 @@ class AttractionAccessParityTest : BehaviorSpec({
         cases.forEach { case ->
             `when`(case["name"].asString()) {
                 then("줄·안내·출처가 같다 — 화면이 절을 숨기면 서버도 없다") {
-                    val html = renderer.attractionPage(SHELL, documentOf(case["input"]), TODAY)
+                    val html = renderer.page(SHELL, documentOf(case["input"]), TODAY)
                     accessOf(html) shouldBe expected(case["output"])
                 }
             }

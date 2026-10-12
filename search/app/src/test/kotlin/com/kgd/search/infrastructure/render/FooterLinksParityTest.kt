@@ -41,7 +41,7 @@ class FooterLinksParityTest : BehaviorSpec({
 
         then("국·영 상세의 바닥글 링크가 골든과 순서째 같다") {
             listOf(doc(), doc(id = "6001", lang = "en")).forEach { d ->
-                footerLinks(renderer.attractionPage(SHELL, d, TODAY)) shouldBe expected
+                footerLinks(renderer.page(SHELL, d, TODAY)) shouldBe expected
             }
         }
     }

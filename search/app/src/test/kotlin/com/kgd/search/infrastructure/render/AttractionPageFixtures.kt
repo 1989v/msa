@@ -1,5 +1,7 @@
 package com.kgd.search.infrastructure.render
 
+import com.kgd.search.application.attraction.service.toResult
+import com.kgd.search.application.attraction.usecase.AttractionDetailResponse
 import com.kgd.search.domain.attraction.model.Admission
 import com.kgd.search.domain.attraction.model.AttractionAttributes
 import com.kgd.search.domain.attraction.model.AttractionDocument
@@ -192,3 +194,11 @@ object AttractionPageFixtures {
         ),
     )
 }
+
+/** 서비스가 렌더러에 넘기는 것과 같은 상세 데이터 — 상세 API(`findById`)와 같은 변환을 지난다 */
+fun pageData(d: AttractionDocument, shortUrl: String? = null) =
+    AttractionDetailResponse(d.toResult(distanceKm = null, position = 0, summarize = false), shortUrl)
+
+/** 문서만 바꿔 가며 보는 렌더 테스트용 — 데이터는 그 문서로 만든다 */
+fun AttractionPageRenderer.page(shell: String?, d: AttractionDocument, today: LocalDate): String =
+    attractionPage(shell, d, today, pageData(d))

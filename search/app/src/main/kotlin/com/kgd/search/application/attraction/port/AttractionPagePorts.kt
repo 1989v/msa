@@ -1,5 +1,6 @@
 package com.kgd.search.application.attraction.port
 
+import com.kgd.search.application.attraction.usecase.AttractionDetailResponse
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import java.time.LocalDate
 
@@ -17,8 +18,9 @@ interface AttractionPageRenderPort {
     /**
      * @param today 렌더 시점의 KST 날짜 — 행사 상태 문구 · 색인 만료 · 끝난 항목 거름의 기준.
      *   렌더러는 시계를 갖지 않는다(호출자가 계산해 넘긴다).
+     * @param data 상세 API 응답의 `data` 와 같은 객체. 화면이 API 를 다시 부르지 않고 쓰도록 HTML 에 그대로 싣는다
      */
-    fun attractionPage(shell: String?, doc: AttractionDocument, today: LocalDate): String
+    fun attractionPage(shell: String?, doc: AttractionDocument, today: LocalDate, data: AttractionDetailResponse): String
     fun notFoundPage(shell: String?, lang: String): String
 
     /** 렌더 없이 셸 그대로. 셸도 없으면 메타 없는 최소 HTML */

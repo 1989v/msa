@@ -3,12 +3,12 @@ package com.kgd.search.presentation.search.controller
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
 import com.kgd.common.response.ApiResponse
+import com.kgd.search.application.attraction.usecase.AttractionDetailResponse
 import com.kgd.search.application.attraction.usecase.AttractionShortUrlUseCase
 import com.kgd.search.application.attraction.usecase.NearbyAttractionsUseCase
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 import com.kgd.search.application.attraction.usecase.SuggestAttractionUseCase
 import com.kgd.search.presentation.search.dto.AttractionConditionParams
-import com.kgd.search.presentation.search.dto.AttractionDetailResponse
 import com.kgd.search.presentation.search.dto.AttractionSearchResponse
 import org.springframework.http.CacheControl
 import org.springframework.http.ResponseEntity

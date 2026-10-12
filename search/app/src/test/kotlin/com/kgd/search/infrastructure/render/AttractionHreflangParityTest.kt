@@ -38,7 +38,7 @@ class AttractionHreflangParityTest : BehaviorSpec({
         cases.forEach { case ->
             then(case.text("name")) {
                 val d = doc(id = case.text("id"), lang = case.text("docLang")).copy(alternateId = case.text("alternateId"))
-                val html = renderer.attractionPage(SHELL, d, TODAY)
+                val html = renderer.page(SHELL, d, TODAY)
                 val rendered = link.findAll(html).map { decodeHtml(it.groupValues[1]) to decodeHtml(it.groupValues[2]) }.toList()
                 val expected = (0 until case["output"].size()).map { case["output"][it] }
                     .map { it.text("hreflang") to it.text("href") }

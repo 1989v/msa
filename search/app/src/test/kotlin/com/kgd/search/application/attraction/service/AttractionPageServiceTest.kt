@@ -2,6 +2,8 @@ package com.kgd.search.application.attraction.service
 
 import com.kgd.search.application.attraction.port.AttractionPageRenderPort
 import com.kgd.search.application.attraction.port.AttractionShellPort
+import com.kgd.search.application.attraction.usecase.AttractionDetailResponse
+import com.kgd.search.application.attraction.usecase.AttractionShortUrlUseCase
 import com.kgd.search.application.attraction.usecase.RenderAttractionPageUseCase
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
@@ -11,6 +13,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import java.io.IOException
 import java.time.Clock
@@ -22,17 +25,19 @@ class AttractionPageServiceTest : BehaviorSpec({
     val searchPort = mockk<AttractionSearchPort>()
     val shellPort = mockk<AttractionShellPort>()
     val renderPort = mockk<AttractionPageRenderPort>()
+    val shortUrl = mockk<AttractionShortUrlUseCase>()
     // UTC 로는 10월 1일 15:30 — KST 로는 10월 2일 00:30. UTC 날짜를 넘기면 하루 늦게 판정한다
     val clock = Clock.fixed(Instant.parse("2026-10-01T15:30:00Z"), ZoneOffset.UTC)
     val todayKst = LocalDate.of(2026, 10, 2)
-    val service = AttractionPageService(searchPort, shellPort, renderPort, clock)
+    val service = AttractionPageService(searchPort, shellPort, renderPort, shortUrl, clock)
 
     val doc = AttractionDocument(id = "1001", contentId = "126508", lang = "ko", title = "경복궁", latitude = 37.5, longitude = 127.0)
 
     beforeTest {
-        clearMocks(searchPort, shellPort, renderPort)
+        clearMocks(searchPort, shellPort, renderPort, shortUrl)
         every { shellPort.shell() } returns "SHELL"
-        every { renderPort.attractionPage("SHELL", doc, todayKst) } returns "PAGE"
+        every { shortUrl.shortUrlOf(any()) } answers { "https://1989v.com/p/${firstArg<String>()}" }
+        every { renderPort.attractionPage("SHELL", doc, todayKst, any()) } returns "PAGE"
         every { renderPort.notFoundPage("SHELL", any()) } returns "NOT_FOUND"
         every { renderPort.fallbackPage("SHELL") } returns "RAW_SHELL"
         every { renderPort.canonicalPath(any(), any()) } answers { "/${if (firstArg<String>() == "en") "en/" else ""}attractions/${secondArg<String>()}" }
@@ -55,7 +60,22 @@ class AttractionPageServiceTest : BehaviorSpec({
 
                 service.render(RenderAttractionPageUseCase.Query("1001", "ko"))
 
-                verify(exactly = 1) { renderPort.attractionPage("SHELL", doc, todayKst) }
+                verify(exactly = 1) { renderPort.attractionPage("SHELL", doc, todayKst, any()) }
+            }
+
+            then("렌더 포트에 상세 API 와 같은 변환을 지난 데이터와 단축 주소를 넘긴다 — 색인은 다시 조회하지 않는다") {
+                every { searchPort.findById("1001") } returns doc
+                val data = slot<AttractionDetailResponse>()
+                every { renderPort.attractionPage("SHELL", doc, todayKst, capture(data)) } returns "PAGE"
+
+                service.render(RenderAttractionPageUseCase.Query("1001", "ko"))
+
+                data.captured shouldBe AttractionDetailResponse(
+                    doc.toResult(distanceKm = null, position = 0, summarize = false),
+                    "https://1989v.com/p/1001",
+                )
+                data.captured.attraction.title shouldBe "경복궁"
+                verify(exactly = 1) { searchPort.findById(any()) }
             }
         }
     }
@@ -87,7 +107,7 @@ class AttractionPageServiceTest : BehaviorSpec({
 
                 page shouldBe RenderAttractionPageUseCase.Page.Redirect("en", "1001", "/en/attractions/1001")
                 verify(exactly = 1) { searchPort.findById(any()) }
-                verify(exactly = 0) { renderPort.attractionPage(any(), any(), any()) }
+                verify(exactly = 0) { renderPort.attractionPage(any(), any(), any(), any()) }
             }
         }
 
@@ -118,7 +138,7 @@ class AttractionPageServiceTest : BehaviorSpec({
         `when`("en 이 아닌 언어(xx) 문서를 국문 경로로 받으면") {
             then("국문으로 보아 옮기지 않고 렌더한다 — 정규화 없이 비교하면 어느 경로에서도 어긋나 루프가 된다") {
                 val xx = doc.copy(lang = "xx")
-                every { renderPort.attractionPage("SHELL", xx, todayKst) } returns "PAGE_XX"
+                every { renderPort.attractionPage("SHELL", xx, todayKst, any()) } returns "PAGE_XX"
 
                 val page = redirectOf(docLang = "xx", pathLang = "ko", target = xx)
 

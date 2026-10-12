@@ -294,93 +294,97 @@ class SearchAttractionService(
             sortByDistance = query.sort == "distance",
         )
     }
-
-    private fun AttractionDocument.toResult(
-        distanceKm: Double?,
-        position: Int,
-        summarize: Boolean,
-    ) = SearchAttractionUseCase.AttractionSearchResult(
-        id = id,
-        contentId = contentId,
-        lang = lang,
-        title = title,
-        titleLocal = titleLocal,
-        category = category,
-        contentTypeId = contentTypeId,
-        areaCode = areaCode,
-        sidoCode = ldongRegnCd,
-        address = address,
-        latitude = latitude,
-        longitude = longitude,
-        imageUrl = imageUrl,
-        thumbnailUrl = thumbnailUrl,
-        tel = tel,
-        overview = if (summarize) AttractionSeoText.summary(overview) else overview,
-        useTime = useTime,
-        restDate = restDate,
-        useFee = useFee,
-        parking = parking,
-        parkingFee = parkingFee,
-        infoCenter = infoCenter,
-        introRaw = introRaw,
-        imagesRaw = imagesRaw,
-        infoRaw = infoRaw,
-        sidoName = sidoName,
-        links = links,
-        camping = camping,
-        googlePlaceId = googlePlaceId,
-        distanceKm = distanceKm,
-        position = position,
-        modifiedAt = modifiedAt,
-        contentUpdatedAt = contentUpdatedAt,
-        source = source,
-        copyrightDivCd = copyrightDivCd,
-        feeText = feeText,
-        petAcmpyType = petAcmpyType,
-        closureState = attributes?.let { AttractionAttributeCodes.closureState(it.regularClosure).name },
-        closedWeekdays = attributes?.let { AttractionAttributeCodes.closedWeekdays(it.regularClosure) },
-        attrParking = attributes?.parking?.name,
-        attrCreditCard = attributes?.creditCard?.name,
-        attrStrollerRental = attributes?.strollerRental?.name,
-        petPolicy = attributes?.petPolicy?.name,
-        attrAdmission = attributes?.freeAdmission?.name,
-        sigunguName = region?.sigunguName,
-        region = if (summarize) null else region?.let { r ->
-            SearchAttractionUseCase.Region(
-                ldongSignguCd = ldongSignguCd,
-                sigunguName = r.sigunguName,
-                typeCount = r.typeCount,
-                categoryCount = r.categoryCount,
-                categoryName = r.categoryName,
-                sameCategoryNearby = r.sameCategoryNearby.map {
-                    SearchAttractionUseCase.Nearby(it.id, it.title, it.distanceMeters, it.eventEndEffective)
-                },
-            )
-        },
-        similarElsewhere = if (summarize) null else similarElsewhere?.map {
-            SearchAttractionUseCase.Similar(it.id, it.title, it.sidoName, it.eventEndEffective)
-        },
-        uniqueClickers14d = if (summarize) null else uniqueClickers14d,
-        savedCount = savedCount,
-        signalsAsOf = signalsAsOf,
-        eventStart = eventPeriod?.start,
-        eventEnd = eventPeriod?.end,
-        courseStops = courseStops?.map { SearchAttractionUseCase.CourseStop(it.order, it.contentId, it.name, it.attractionId) },
-        barrierFree = barrierFree?.flags?.takeIf { it.isNotEmpty() },
-        barrierFreeDetail = if (summarize) null else barrierFree?.detail?.takeIf { it.isNotEmpty() },
-        wellnessTheme = wellness?.code,
-        wellnessThemeName = wellness?.name,
-        congestion = if (summarize) null else congestion?.map { SearchAttractionUseCase.CongestionDay(it.date, it.rate) },
-        relatedPlaces = if (summarize) null else relatedPlaces?.map {
-            SearchAttractionUseCase.Related(it.rank, it.id, it.title, it.sidoName, it.category)
-        },
-        samePlace = if (summarize) null else samePlace?.map { SearchAttractionUseCase.SamePlaceRef(it.id, it.contentTypeId) },
-        access = if (summarize) null else access?.let { a ->
-            SearchAttractionUseCase.Access(
-                a.stops.map { SearchAttractionUseCase.AccessStop(it.kind.name, it.rank, it.name, it.nameEn, it.lines, it.distanceM, it.baseDate) },
-                a.busCovered,
-            )
-        },
-        alternateId = alternateId,
-    )
 }
+
+/**
+ * 색인 문서 → 검색·상세 결과. 상세 API(`findById`)와 상세 서버 렌더가 싣는 데이터가 같은 함수를 지나게
+ * 클래스 밖에 둔다 — 렌더 경로가 색인을 한 번 더 조회하지 않고 이미 받은 문서로 같은 모양을 만든다.
+ */
+internal fun AttractionDocument.toResult(
+    distanceKm: Double?,
+    position: Int,
+    summarize: Boolean,
+) = SearchAttractionUseCase.AttractionSearchResult(
+    id = id,
+    contentId = contentId,
+    lang = lang,
+    title = title,
+    titleLocal = titleLocal,
+    category = category,
+    contentTypeId = contentTypeId,
+    areaCode = areaCode,
+    sidoCode = ldongRegnCd,
+    address = address,
+    latitude = latitude,
+    longitude = longitude,
+    imageUrl = imageUrl,
+    thumbnailUrl = thumbnailUrl,
+    tel = tel,
+    overview = if (summarize) AttractionSeoText.summary(overview) else overview,
+    useTime = useTime,
+    restDate = restDate,
+    useFee = useFee,
+    parking = parking,
+    parkingFee = parkingFee,
+    infoCenter = infoCenter,
+    introRaw = introRaw,
+    imagesRaw = imagesRaw,
+    infoRaw = infoRaw,
+    sidoName = sidoName,
+    links = links,
+    camping = camping,
+    googlePlaceId = googlePlaceId,
+    distanceKm = distanceKm,
+    position = position,
+    modifiedAt = modifiedAt,
+    contentUpdatedAt = contentUpdatedAt,
+    source = source,
+    copyrightDivCd = copyrightDivCd,
+    feeText = feeText,
+    petAcmpyType = petAcmpyType,
+    closureState = attributes?.let { AttractionAttributeCodes.closureState(it.regularClosure).name },
+    closedWeekdays = attributes?.let { AttractionAttributeCodes.closedWeekdays(it.regularClosure) },
+    attrParking = attributes?.parking?.name,
+    attrCreditCard = attributes?.creditCard?.name,
+    attrStrollerRental = attributes?.strollerRental?.name,
+    petPolicy = attributes?.petPolicy?.name,
+    attrAdmission = attributes?.freeAdmission?.name,
+    sigunguName = region?.sigunguName,
+    region = if (summarize) null else region?.let { r ->
+        SearchAttractionUseCase.Region(
+            ldongSignguCd = ldongSignguCd,
+            sigunguName = r.sigunguName,
+            typeCount = r.typeCount,
+            categoryCount = r.categoryCount,
+            categoryName = r.categoryName,
+            sameCategoryNearby = r.sameCategoryNearby.map {
+                SearchAttractionUseCase.Nearby(it.id, it.title, it.distanceMeters, it.eventEndEffective)
+            },
+        )
+    },
+    similarElsewhere = if (summarize) null else similarElsewhere?.map {
+        SearchAttractionUseCase.Similar(it.id, it.title, it.sidoName, it.eventEndEffective)
+    },
+    uniqueClickers14d = if (summarize) null else uniqueClickers14d,
+    savedCount = savedCount,
+    signalsAsOf = signalsAsOf,
+    eventStart = eventPeriod?.start,
+    eventEnd = eventPeriod?.end,
+    courseStops = courseStops?.map { SearchAttractionUseCase.CourseStop(it.order, it.contentId, it.name, it.attractionId) },
+    barrierFree = barrierFree?.flags?.takeIf { it.isNotEmpty() },
+    barrierFreeDetail = if (summarize) null else barrierFree?.detail?.takeIf { it.isNotEmpty() },
+    wellnessTheme = wellness?.code,
+    wellnessThemeName = wellness?.name,
+    congestion = if (summarize) null else congestion?.map { SearchAttractionUseCase.CongestionDay(it.date, it.rate) },
+    relatedPlaces = if (summarize) null else relatedPlaces?.map {
+        SearchAttractionUseCase.Related(it.rank, it.id, it.title, it.sidoName, it.category)
+    },
+    samePlace = if (summarize) null else samePlace?.map { SearchAttractionUseCase.SamePlaceRef(it.id, it.contentTypeId) },
+    access = if (summarize) null else access?.let { a ->
+        SearchAttractionUseCase.Access(
+            a.stops.map { SearchAttractionUseCase.AccessStop(it.kind.name, it.rank, it.name, it.nameEn, it.lines, it.distanceM, it.baseDate) },
+            a.busCovered,
+        )
+    },
+    alternateId = alternateId,
+)

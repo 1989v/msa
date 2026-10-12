@@ -57,7 +57,7 @@ class VisitSummaryParityTest : BehaviorSpec({
 
         cases.forEach { case ->
             `when`(case["name"].asString()) {
-                val html = renderer.attractionPage(SHELL, documentOf(case["input"]), TODAY)
+                val html = renderer.page(SHELL, documentOf(case["input"]), TODAY)
                 val output = case["output"]
 
                 then("칸 이름·값이 순서째 같다") {

@@ -1,11 +1,19 @@
 package com.kgd.search.presentation.render.controller
 
+import com.kgd.common.shortlink.ShortLinkProperties
+import com.kgd.common.shortlink.ShortLinks
 import com.kgd.search.application.attraction.port.AttractionShellPort
 import com.kgd.search.application.attraction.service.AttractionPageService
+import com.kgd.search.application.attraction.service.AttractionShortUrlService
+import com.kgd.search.application.attraction.service.toResult
+import com.kgd.search.application.attraction.usecase.NearbyAttractionsUseCase
+import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
+import com.kgd.search.application.attraction.usecase.SuggestAttractionUseCase
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
 import com.kgd.search.infrastructure.config.AttractionRenderProperties
 import com.kgd.search.infrastructure.render.AttractionPageFixtures
 import com.kgd.search.infrastructure.render.AttractionPageRenderer
+import com.kgd.search.presentation.search.controller.AttractionSearchController
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -21,6 +29,7 @@ import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -34,8 +43,9 @@ class AttractionPageControllerTest : BehaviorSpec({
         override fun shell() = AttractionPageFixtures.SHELL
     }
     val renderer = AttractionPageRenderer(AttractionRenderProperties(), ObjectMapper())
+    val shortUrl = AttractionShortUrlService(ShortLinks(ShortLinkProperties(expose = true)))
     val service = AttractionPageService(
-        searchPort, shellPort, renderer,
+        searchPort, shellPort, renderer, shortUrl,
         Clock.fixed(Instant.parse("2026-10-08T03:00:00Z"), ZoneOffset.UTC),
     )
     val mvc = MockMvcBuilders.standaloneSetup(AttractionPageController(service)).build()
@@ -122,6 +132,27 @@ class AttractionPageControllerTest : BehaviorSpec({
 
                 result.response.status shouldBe 200
                 result.response.getHeader("Location") shouldBe null
+            }
+        }
+    }
+
+    given("서버 렌더가 싣는 상세 데이터") {
+        `when`("같은 문서를 상세 API 로도 받으면") {
+            then("HTML 의 attraction-data 와 API 응답의 data 가 같은 JSON 이다 — 화면이 API 대신 그대로 쓴다") {
+                val d = AttractionPageFixtures.doc()
+                every { searchPort.findById("1001") } returns d
+                val html = call("/internal/render/attractions/1001").body()
+                val search = mockk<SearchAttractionUseCase>()
+                every { search.findById("1001") } returns d.toResult(distanceKm = null, position = 0, summarize = false)
+                val api = AttractionSearchController(search, mockk<SuggestAttractionUseCase>(), mockk<NearbyAttractionsUseCase>(), shortUrl)
+                // 웹 계층과 같은 방식(모듈 자동 등록)의 매퍼로 응답을 직렬화한다
+                val json = JsonMapper.builder().findAndAddModules().build()
+                val apiData = json.readTree(json.writeValueAsString(api.findById("1001").body)).get("data")
+
+                val script = Regex("""<script type="application/json" id="attraction-data">([\s\S]*?)</script>""")
+                    .find(html).shouldNotBeNull().groupValues[1]
+                json.readTree(script) shouldBe apiData
+                apiData.get("shortUrl").asString() shouldStartWith "https://1989v.com/p/"
             }
         }
     }

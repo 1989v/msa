@@ -1,6 +1,7 @@
 package com.kgd.search.infrastructure.render
 
 import com.kgd.search.application.attraction.port.AttractionPageRenderPort
+import com.kgd.search.application.attraction.usecase.AttractionDetailResponse
 import com.kgd.search.domain.attraction.model.Admission
 import com.kgd.search.domain.attraction.model.AttractionAccess
 import com.kgd.search.domain.attraction.model.AttractionAttributes
@@ -55,7 +56,7 @@ class AttractionPageRenderer(
 ) : AttractionPageRenderPort {
     private val origin = properties.origin.trimEnd('/')
 
-    override fun attractionPage(shell: String?, doc: AttractionDocument, today: LocalDate): String {
+    override fun attractionPage(shell: String?, doc: AttractionDocument, today: LocalDate, data: AttractionDetailResponse): String {
         val lang = if (doc.lang == EN) EN else KO
         val meta = attractionMeta(lang, doc)
         val canonical = attractionUrl(lang, doc.id)
@@ -77,7 +78,7 @@ class AttractionPageRenderer(
             feed = AttractionFeedRenderer.feedTitle(lang) to origin + AttractionFeedRenderer.feedPath(lang),
             jsonLd = listOf(primaryJsonLd(lang, doc, meta), breadcrumbJsonLd(lang, doc)),
         )
-        return compose(shell, lang, head, shellBody(attractionBody(lang, doc, meta, today)))
+        return compose(shell, lang, head, shellBody(attractionBody(lang, doc, meta, today)), dataScript(data))
     }
 
     /** 요청 id 를 쓰지 않는다 — 경로에서 온 값을 페이지에 되돌리지 않는다. */
@@ -106,17 +107,34 @@ class AttractionPageRenderer(
 
     // ─── 조립 ──────────────────────────────────────────────────────────────
 
-    private fun compose(shell: String?, lang: String, head: String, body: String): String {
-        if (shell == null) return minimalHtml(lang, head, body)
+    private fun compose(shell: String?, lang: String, head: String, body: String, data: String = ""): String {
+        if (shell == null) return minimalHtml(lang, head, body, data)
         // 치환 문자열을 해석하지 않는 방식만 쓴다 — 원문의 `$1` 이 그룹 참조가 되면 예외나 내용 변형이 난다
         val withMeta = SEO_BLOCK.replace(shell) { "<!--seo:server-->\n    $head" }
         return withMeta
             .replaceFirst(HTML_KO, "<html lang=\"$lang\">")
-            .replaceFirst(ROOT_DIV, "<div id=\"root\">$body</div>")
+            .replaceFirst(ROOT_DIV, "$data<div id=\"root\">$body</div>")
+    }
+
+    /**
+     * 상세 API 응답과 같은 데이터를 `#root` **앞**에 싣는다 — 화면이 이것으로 첫 화면을 그려 API 를 다시 부르지 않는다.
+     * `#root` 안에 두면 React 가 첫 커밋에서 비워 버려 화면이 읽기 전에 사라질 수 있다.
+     *
+     * `<`·`>`·`&`·U+2028·U+2029 를 `\uXXXX` 로 바꾼다. 원문 어디에 `</script>` 가 있어도 스크립트 블록을 닫지 못하고,
+     * 바꾼 값은 JSON 문자열 이스케이프라 `JSON.parse` 가 원래 글자로 되돌린다.
+     */
+    private fun dataScript(data: AttractionDetailResponse): String {
+        val json = objectMapper.writeValueAsString(data)
+            .replace("<", "\\u003c")
+            .replace(">", "\\u003e")
+            .replace("&", "\\u0026")
+            .replace("\u2028", "\\u2028")
+            .replace("\u2029", "\\u2029")
+        return "<script type=\"application/json\" id=\"$DATA_SCRIPT_ID\">$json</script>"
     }
 
     /** 셸을 한 번도 받지 못했을 때(콜드 스타트 + portal-fe 미기동). SPA 는 없지만 본문은 읽힌다. */
-    private fun minimalHtml(lang: String, head: String, body: String) = """
+    private fun minimalHtml(lang: String, head: String, body: String, data: String) = """
         <!doctype html>
         <html lang="$lang">
           <head>
@@ -124,7 +142,7 @@ class AttractionPageRenderer(
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
             $head
           </head>
-          <body><div id="root">$body</div></body>
+          <body>$data<div id="root">$body</div></body>
         </html>
     """.trimIndent()
 
@@ -994,6 +1012,8 @@ class AttractionPageRenderer(
         val SEO_BLOCK = Regex("<!--seo:start-->[\\s\\S]*?<!--seo:end-->")
         const val HTML_KO = "<html lang=\"ko\">"
         const val ROOT_DIV = "<div id=\"root\"></div>"
+        /** portal-fe `ssrAttractionData.ts` 가 읽는 노드 id */
+        const val DATA_SCRIPT_ID = "attraction-data"
         val PHOTO = Regex("\\.(png|jpe?g|webp)$", RegexOption.IGNORE_CASE)
         val MIME_EXT = Regex("\\.([a-z0-9]+)$", RegexOption.IGNORE_CASE)
 
