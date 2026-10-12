@@ -224,6 +224,9 @@
 | arch-glossary-quality | 품질 속성 용어 (quality attributes) | 분야 표준(ISO/IEC 25010 · SEI 품질 속성) | placed |
 | arch-functional-requirement | 기능 요구사항 (functional requirement) | 분야 표준(ISO/IEC 25010 · SEI 품질 속성) | placed |
 | arch-nfr | 비기능 요구사항 (non-functional requirement) | 분야 표준(ISO/IEC 25010 · SEI 품질 속성) | placed |
+| arch-architecture-driver | 아키텍처 드라이버 (architecture driver · ASR) | 분야 표준(SEI 『Software Architecture in Practice』 — 드라이버 · 품질 속성 · 택틱) | placed |
+| arch-architecture-tactic | 아키텍처 택틱 (architecture tactic) | 분야 표준(SEI 『Software Architecture in Practice』 — 드라이버 · 품질 속성 · 택틱) | placed |
+| arch-architecture-style | 아키텍처 스타일 (architecture style) | 분야 표준(Richards·Ford 『Fundamentals of Software Architecture』) | placed |
 | arch-quality-attribute-scenario | 품질 속성 시나리오 (quality attribute scenario) | 분야 표준(ISO/IEC 25010 · SEI 품질 속성) | placed |
 | arch-scalability | 확장성 (scalability) | 분야 표준(ISO/IEC 25010 · SEI 품질 속성) | placed |
 | arch-elasticity | 탄력성 (elasticity) | 분야 표준(ISO/IEC 25010 · SEI 품질 속성) | placed |

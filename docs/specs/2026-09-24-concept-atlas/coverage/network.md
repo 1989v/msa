@@ -127,6 +127,7 @@
 | net-pagination | 페이지네이션 | 분야 표준 | placed |
 | net-offset-pagination | 오프셋 페이지네이션 | 레포 코드 | placed |
 | net-cursor-pagination | 커서 페이지네이션 | 분야 표준 | placed |
+| net-field-selection | 필드 선택 (부분 응답) | 분야 표준 | placed |
 | net-api-versioning | API 버전 관리 | 분야 표준 | placed |
 | net-api-error-model | API 오류 응답 설계 | 분야 표준 | placed |
 | net-api-spec | API 명세 (OpenAPI) | 레포 코드 | placed |

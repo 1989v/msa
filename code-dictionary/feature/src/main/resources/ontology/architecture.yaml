@@ -995,6 +995,7 @@ concepts:
     level: INTERMEDIATE
     description: "도메인 경계를 몇 개의 배포 단위와 프로세스로 옮길지, 어떤 아키텍처 스타일로 묶을지 정한다. 코드 경계와 배포 경계를 따로 고를 수 있다는 점이 핵심이다"
     questions: ["모듈 경계를 지키면서 하나의 JVM 으로 배포하면 무엇을 얻고 무엇을 잃나", "서비스를 더 쪼개야 할 신호와 합쳐야 할 신호는 각각 무엇인가"]
+    uses: [arch-architecture-style]
     contains: [monolith, arch-modular-monolith, arch-service-based, soa, msa, event-driven-architecture, arch-pipe-and-filter, arch-microkernel, arch-space-based, arch-serverless, arch-decompose-by-capability, arch-decompose-by-subdomain, arch-service-granularity, arch-database-per-service, arch-shared-database, arch-workload-tiering, arch-inverse-conway-maneuver, arch-distributed-monolith, arch-over-decomposition, arch-big-ball-of-mud, arch-coupling, spring-boot]
     flows_to: [arch-integration-design]
     measured_by: [arch-coupling]
@@ -1501,7 +1502,7 @@ concepts:
     level: ADVANCED
     description: "후보 설계를 품질 속성 시나리오에 대어 보고 한 속성을 올리면 어느 속성이 내려가는지(민감점·절충점)를 드러낸다. ATAM 이 이를 절차로 만든 방법이다"
     synonyms: ["trade-off analysis", "ATAM", "Architecture Tradeoff Analysis Method"]
-    uses: [arch-quality-attribute-scenario, cap-theorem]
+    uses: [arch-quality-attribute-scenario, arch-architecture-tactic, cap-theorem]
   - id: arch-failure-mode-analysis
     kind: MECHANISM
     name: "장애 모드 분석"
@@ -1538,6 +1539,7 @@ concepts:
     synonyms: ["ADR", "Architecture Decision Record"]
     code:
       - { path: docs/adr/ADR-0083-layer-structure-standard-and-gate.md, symbol: "## 결정", note: "계층 표준을 맥락·결정·대안·결과 형식으로 남긴 ADR" }
+    uses: [arch-architecture-driver, arch-tradeoff-analysis]
     mitigates: [arch-architecture-erosion]
   - id: arch-c4-model
     kind: MECHANISM
@@ -1624,7 +1626,7 @@ concepts:
     level: BEGINNER
     description: "경계·계층·품질·문서화를 읽는 데 필요한 말. 단계·장치가 아니라 그것을 설명하는 용어를 모은다"
     synonyms: ["glossary", "용어집"]
-    contains: [arch-glossary-ddd, arch-glossary-layer, arch-glossary-quality, arch-glossary-coupling, arch-glossary-doc, arch-conways-law]
+    contains: [arch-glossary-ddd, arch-glossary-layer, arch-glossary-quality, arch-glossary-coupling, arch-glossary-doc, arch-conways-law, arch-architecture-style]
   - id: arch-conways-law
     kind: TERM
     name: "콘웨이 법칙"
@@ -1868,7 +1870,23 @@ concepts:
     level: INTERMEDIATE
     description: "아키텍처가 기능 말고 무엇을 보장해야 하는지 말하는 용어. 품질 속성끼리는 서로 부딪쳐 트레이드오프가 된다"
     synonyms: ["quality attributes", "architecture characteristics", "-ilities"]
-    contains: [arch-functional-requirement, arch-nfr, arch-quality-attribute-scenario, arch-scalability, arch-elasticity, arch-reliability, arch-fault-tolerance, arch-performance, arch-maintainability, arch-testability, arch-deployability, arch-interoperability, arch-portability]
+    contains: [arch-architecture-driver, arch-functional-requirement, arch-nfr, arch-quality-attribute-scenario, arch-architecture-tactic, arch-scalability, arch-elasticity, arch-reliability, arch-fault-tolerance, arch-performance, arch-maintainability, arch-testability, arch-deployability, arch-interoperability, arch-portability]
+  - id: arch-architecture-driver
+    kind: TERM
+    name: "아키텍처 드라이버"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "구조와 주요 설계 결정을 가르는 요구. 구조를 바꾸는 핵심 기능, 측정 가능한 품질 속성, 미리 정해진 제약 셋이다. 메뉴 추가처럼 구조를 바꾸지 않고 수용되는 요구는 어려워도 드라이버가 아니다"
+    synonyms: ["architecture driver", "architecturally significant requirement", "ASR", "제약 사항"]
+    questions: ["요구사항 중 어떤 것이 드라이버이고 어떤 것이 아닌지 무엇으로 가르나"]
+  - id: arch-architecture-tactic
+    kind: TERM
+    name: "아키텍처 택틱"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "품질 속성 하나를 올리려고 고르는 설계 수단. 성능에는 캐시 · 병렬 처리, 가용성에는 이중화 · 페일오버를 쓴다. 무엇을 할지만 정하고 어떤 구조로 할지는 패턴(cache-aside 등)이 정하며, 대개 다른 품질 속성을 대가로 치른다"
+    synonyms: ["architecture tactic", "architectural tactic", "전술"]
+    questions: ["캐시라는 택틱과 cache-aside 라는 패턴은 무엇이 다른가"]
   - id: arch-functional-requirement
     kind: TERM
     name: "기능 요구사항"
@@ -2083,6 +2101,13 @@ concepts:
     level: BEGINNER
     description: "구조를 그림과 문서로 전할 때 쓰는 말"
     contains: [arch-c4-system-context, arch-c4-container, arch-c4-component, arch-c4-code]
+  - id: arch-architecture-style
+    kind: TERM
+    name: "아키텍처 스타일"
+    category: ARCHITECTURE
+    level: BEGINNER
+    description: "시스템 전체를 어떤 구성 요소로 나누고 어떤 규칙으로 주고받게 할지 정한 큰 틀. 레이어드 · 이벤트 드리븐 · 마이크로서비스 · 파이프 앤 필터가 예다. 패턴이 특정 문제 하나를 푼다면 스타일은 전체 골격이라 한 번 정하면 바꾸기 어렵다"
+    synonyms: ["architecture style", "architectural style"]
   - id: arch-c4-system-context
     kind: TERM
     name: "시스템 컨텍스트 다이어그램"
