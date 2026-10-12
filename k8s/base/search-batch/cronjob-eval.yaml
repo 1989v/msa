@@ -53,6 +53,11 @@ spec:
                   value: "0.7216"
                 - name: EVAL_TOLERANCE
                   value: "0.03"
+                # C top-10 중 판정 없는 문서 비율 상한 — 넘으면 색인 대상이 바뀐 것이니 판정 세트를 다시 풀링한다.
+                # 판정 없는 문서는 0점이라 C 가 이유 없이 내린다(10-02 축제·숙박 5,300건 유입 때 BM25 .45 → .38).
+                # 2026-10-13 v3 세트로 잰 값 ko 8.0% · en 2.6%.
+                - name: EVAL_UNJUDGED_MAX
+                  value: "0.15"
               volumeMounts:
                 - name: eval
                   mountPath: /eval

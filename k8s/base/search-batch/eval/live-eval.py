@@ -9,6 +9,7 @@ A·B 는 색인을 직접 질의해 구성을 통제하고, C 는 서비스가 �
 
 매일 CronJob `search-eval` 이 재색인 뒤에 돌린다. C 가 기준선(EVAL_BASELINE_KO/EN)보다
 EVAL_TOLERANCE 넘게 떨어지거나 질의가 하나라도 실패하면 종료 코드 1 — Job 이 Failed 로 남는다.
+C top-10 의 판정 없는 문서 비율이 EVAL_UNJUDGED_MAX 를 넘어도 1 — 색인 대상이 바뀌어 판정 세트를 다시 풀링할 때다.
 
   python3 live-eval.py <판정.json> [결과.json]
 
@@ -429,8 +430,18 @@ def main():
     err = [r for r in rows if "error" in r]
     if err:
         print(f"\n  실패 {len(err)}건: {err[0]['error']}")
+    unjudged = {lang: unjudged_share(rows, lang) for lang in ("ko", "en")}
+    print(f"\n  C top-10 판정 없는 문서   ko {unjudged['ko']:.1%}   en {unjudged['en']:.1%}")
     # 질의 실패는 NO_ANSWER 까지 센다 — 그 호출이 죽으면 빈 정답 통과율이 조용히 틀린다
-    return gate(avg("ko", "C"), avg("en", "C"), len(err))
+    return gate(avg("ko", "C"), avg("en", "C"), len(err), unjudged)
+
+
+def unjudged_share(rows, lang):
+    """C top-10 중 판정 없는 문서 비율(NO_ANSWER 제외). 판정 없는 문서는 nDCG 에서 0점이라,
+    색인에 새 문서가 들어오면 이 값이 먼저 오르고 C 가 이유 없이 내린다 — 재풀링 신호다."""
+    live = [r for r in rows if r.get("lang") == lang and r["intent"] != "NO_ANSWER" and r.get("returned_C")]
+    returned = sum(r["returned_C"] for r in live)
+    return sum(r["unjudged_C"] for r in live) / returned if returned else 0.0
 
 
 def ratio(num, den):
@@ -468,14 +479,17 @@ def print_intents(rows, lang):
         print(f"  {name:<14} {len(g):>4}  {mean('A')}  {mean('B')}  {mean('C')}  {zero_rate:>6}  {unjudged:>8}")
 
 
-def gate(c_ko, c_en, n_err):
-    """기준선 대비 C 하락 판정. 기준선이 없으면 재기만 하고 통과시킨다."""
+def gate(c_ko, c_en, n_err, unjudged):
+    """기준선 대비 C 하락 · 판정 없는 문서 비율 판정. 기준선·상한이 없으면 재기만 하고 통과시킨다."""
     tol = float(os.environ.get("EVAL_TOLERANCE", "0.03"))
     base = {"ko": os.environ.get("EVAL_BASELINE_KO"), "en": os.environ.get("EVAL_BASELINE_EN")}
+    unjudged_max = os.environ.get("EVAL_UNJUDGED_MAX")
     fails = [f"질의 실패 {n_err}건"] if n_err else []
     for lang, got in (("ko", c_ko), ("en", c_en)):
         if base[lang] and got < float(base[lang]) - tol:
             fails.append(f"C {lang} {got:.4f} < 기준선 {float(base[lang]):.4f} - {tol}")
+        if unjudged_max and unjudged[lang] > float(unjudged_max):
+            fails.append(f"판정 없는 문서 {lang} {unjudged[lang]:.1%} > {float(unjudged_max):.0%} — 재풀링 필요")
     print("\n  판정: " + ("회귀 — " + " · ".join(fails) if fails else "통과"), flush=True)
     return 1 if fails else 0
 
