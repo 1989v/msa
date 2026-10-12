@@ -493,6 +493,43 @@ export function regionDisplayName(lang, region) {
   return (lang === 'en' && region.nameEn) || region.name;
 }
 
+/** Full region introduction shared by the visible body and the capped metadata.
+ * @param {number | null} [attractionCount] Unknown counts stay absent, just as in regionMeta.
+ */
+export function regionIntro(lang, region, attractionCount = null) {
+  const name = regionDisplayName(lang, region);
+  const isSido = region.level === 'SIDO';
+  const count = attractionCount != null && attractionCount > 0 ? attractionCount : null;
+  return lang === 'en'
+    ? `Visit ${name}, South Korea: ${count ? `${count.toLocaleString('en')} ` : ''}tourist attractions${
+        isSido ? ' by district' : ''
+      } — nature, history, culture and leisure spots with maps, photos and directions from official tourism data.`
+    : `${name} 여행에서 가볼 만한 자연·역사·문화·레포츠 관광지${count ? ` ${count.toLocaleString('ko')}곳` : ''}을 ${
+        isSido ? '시·군·구별로 ' : ''
+      }모았습니다. 한국관광공사 공식 데이터로 지도·사진과 가는 길을 확인하세요.`;
+}
+
+/** Short regional planning guidance, limited to the reviewed province pages. */
+const REGION_VISIT_GUIDES = {
+  '11': {
+    ko: '서울 여행은 궁궐·역사 명소, 박물관·문화 공간, 공원 등 관심 있는 테마부터 골라보세요. 자치구별 목록에서 방문지를 좁힌 뒤 상세 페이지의 운영시간과 가까운 역·정류장을 확인하면 이동 계획을 세우기 좋습니다.',
+    en: 'For places to visit in Seoul, start with your interests: palaces and historic sites, museums and cultural spaces, or parks. Browse by district, then check the listed opening hours and nearby stations or bus stops to plan your stops.',
+  },
+  '50': {
+    ko: '제주 가볼 만한 곳은 제주시와 서귀포시 목록으로 나누어 찾아보세요. 자연·역사·문화 등 테마와 위치를 함께 비교하고, 상세 페이지에 제공된 운영시간·휴무·주차 정보를 확인해 방문지를 골라보세요.',
+    en: 'Find places to visit on Jeju Island through the Jeju-si and Seogwipo-si lists. Compare nature, history and cultural attractions by location, and check the opening hours, closed days and parking information available on each detail page.',
+  },
+  '26': {
+    ko: '부산 여행은 해안·해수욕장과 역사·문화 공간 등 관심 있는 테마부터 골라보세요. 구·군별 목록에서 위치를 비교하고, 상세 페이지의 가까운 역·정류장과 제공된 방문 정보를 확인하면 동선을 정하기 좋습니다.',
+    en: 'For things to do in Busan, explore coastal and beach attractions alongside historic and cultural places. Compare locations by district, then check nearby stations and bus stops and the available visitor information on each detail page.',
+  },
+};
+
+export function regionVisitGuide(lang, region) {
+  if (region.level !== 'SIDO' || !Object.hasOwn(REGION_VISIT_GUIDES, region.code)) return null;
+  return REGION_VISIT_GUIDES[region.code][lang === 'en' ? 'en' : 'ko'];
+}
+
 /**
  * 지역 페이지 메타 — "제주 가볼 만한 곳"(ko) / "Things to Do in Jeju"(en) 류
  * 지역×의도 키워드가 title 앞머리에 오도록 짠다 (ADR-0071 §9).
@@ -500,27 +537,18 @@ export function regionDisplayName(lang, region) {
  */
 export function regionMeta(lang, region, attractionCount = null) {
   const name = regionDisplayName(lang, region);
-  const isSido = region.level === 'SIDO';
   const count = attractionCount != null && attractionCount > 0 ? attractionCount : null;
   if (lang === 'en') {
     return {
       title: `Things to Do in ${name}${count ? ` — ${count.toLocaleString('en')} Attractions & Map` : ' — Attractions & Map'} | ${PLACE_BRAND_EN}`,
-      description: clampDescription(
-        `Visit ${name}, South Korea: ${count ? `${count.toLocaleString('en')} ` : ''}tourist attractions${
-          isSido ? ' by district' : ''
-        } — nature, history, culture and leisure spots with maps, photos and directions from official tourism data.`,
-      ),
+      description: clampDescription(regionIntro(lang, region, attractionCount)),
       heading: `Things to do in ${name}`,
       image: ogCardUrl(PLACE_ORIGIN, 'place'),
     };
   }
   return {
     title: `${name} 가볼 만한 곳${count ? ` ${count.toLocaleString('ko')}곳` : ''} — 관광지 지도·여행 명소 | ${PLACE_BRAND_KO}`,
-    description: clampDescription(
-      `${name} 여행에서 가볼 만한 자연·역사·문화·레포츠 관광지${count ? ` ${count.toLocaleString('ko')}곳` : ''}을 ${
-        isSido ? '시·군·구별로 ' : ''
-      }모았습니다. 한국관광공사 공식 데이터로 지도·사진과 가는 길을 확인하세요.`,
-    ),
+    description: clampDescription(regionIntro(lang, region, attractionCount)),
     heading: `${name} 가볼 만한 곳`,
     image: ogCardUrl(PLACE_ORIGIN, 'place'),
   };
@@ -780,6 +808,13 @@ export function placeFeed(lang) {
   return lang === 'en'
     ? { title: `${PLACE_BRAND_EN} — Recently Updated Attractions`, href: placeUrl('en', '/feed.xml') }
     : { title: `${PLACE_BRAND_KO} — 최근 바뀐 관광지`, href: placeUrl('ko', '/feed.xml') };
+}
+
+/** Homepage body copy; kept separate from the search snippet's 155-character cap. */
+export function placeHubIntro(lang) {
+  return lang === 'en'
+    ? 'Find places to visit in South Korea by region and theme. Compare attraction photos, addresses, maps and available opening hours and visitor information, then check nearby stations and bus stops on each detail page.'
+    : '한국 관광지 탐색에서 지역과 테마별로 가볼 만한 곳을 찾아보세요. 관광지 사진·주소·지도와 제공된 운영시간·방문 정보를 비교하고, 상세 페이지에서 가까운 역과 정류장을 확인할 수 있습니다.';
 }
 
 export function placeHubMeta(lang) {

@@ -21,6 +21,8 @@ import {
   PLACE_STAY_TYPES,
   placeItemListJsonLd,
   regionMeta,
+  regionIntro,
+  regionVisitGuide,
   touristDestinationJsonLd,
   BRAND,
   GAME_ORIGIN,
@@ -62,6 +64,7 @@ import {
   placeHreflangAlternates,
   placeFeed,
   placeHubMeta,
+  placeHubIntro,
   placePath,
   placeUrl,
   regionDisplayName,
@@ -1372,7 +1375,7 @@ export function placeHubPages(shell, places, regions, { guidesListed = false } =
         placeItemListJsonLd(lang, seeds.slice(0, 30)),
       ],
       body: shellBody(
-        `<h1>${escapeHtml(meta.heading)}</h1><p>${escapeHtml(meta.description)}</p>` +
+        `<h1>${escapeHtml(meta.heading)}</h1><p class="place-subtitle">${escapeHtml(placeHubIntro(lang))}</p>` +
           (regionLinks ? `<ul>${regionLinks}</ul>` : '') +
           (links ? `<ul>${links}</ul>` : '') +
           // 편집 페이지는 국문만이고 published 가 있을 때만 목록이 있다 — 없는 목록(404)으로 링크하지 않는다
@@ -1482,6 +1485,7 @@ export function renderRegionDetail(
 ) {
   const meta = regionMeta(lang, region, region.attractionCount);
   const canonical = regionUrl(lang, region.code);
+  const visitGuide = regionVisitGuide(lang, region);
   const hubName = lang === 'en' ? 'Explore Korea' : '한국 관광지 탐색';
   const crumbs = [
     { name: hubName, url: placeUrl(lang) },
@@ -1515,7 +1519,8 @@ export function renderRegionDetail(
           : '') +
         `</nav>` +
         `<h1>${escapeHtml(meta.heading)}</h1>` +
-        `<p>${escapeHtml(meta.description)}</p>` +
+        `<p class="place-detail-overview">${escapeHtml(regionIntro(lang, region, region.attractionCount))}</p>` +
+        (visitGuide ? `<p class="place-detail-overview">${escapeHtml(visitGuide)}</p>` : '') +
         (childLinks
           ? `<h2>${lang === 'en' ? 'Browse by district' : '시·군·구별로 보기'}</h2><ul>${childLinks}</ul>`
           : '') +

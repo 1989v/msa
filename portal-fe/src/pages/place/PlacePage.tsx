@@ -77,6 +77,7 @@ import {
   placeFeed,
   placeHreflangAlternates,
   placeHubMeta,
+  placeHubIntro,
   placeUrl,
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
@@ -104,7 +105,6 @@ const HUB_KNOWN: PlaceHubKnownValues = {
 const UI = {
   ko: {
     title: 'K-관광 지도',
-    subtitle: '한국의 관광지를 검색하고 지도에서 찾아보세요',
     searchPlaceholder: '관광지 검색 — 예: 궁궐, 해수욕장',
     nearMe: '내 주변',
     searchArea: '이 지역 재검색',
@@ -161,7 +161,6 @@ const UI = {
   },
   en: {
     title: 'K-Tour Map',
-    subtitle: 'Search and explore Korean attractions on the map',
     searchPlaceholder: 'Search attractions — e.g. palace, beach',
     nearMe: 'Near me',
     searchArea: 'Search this area',
@@ -1529,7 +1528,7 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
         {preset ? (
           landingCopy?.sentence && <p className="place-landing-sentence">{landingCopy.sentence}</p>
         ) : (
-          <p className="place-subtitle">{L.subtitle}</p>
+          <p className="place-subtitle">{placeHubIntro(lang)}</p>
         )}
       </header>
 

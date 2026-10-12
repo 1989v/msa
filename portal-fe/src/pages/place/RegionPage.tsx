@@ -22,6 +22,8 @@ import {
   placeUrl,
   regionDisplayName,
   regionMeta,
+  regionIntro,
+  regionVisitGuide,
   regionPath,
   regionUrl,
   touristDestinationJsonLd,
@@ -186,6 +188,7 @@ export default function RegionPage() {
   useEffect(installFlushOnLeave, []);
 
   const meta = region ? regionMeta(lang, region, region.attractionCount) : null;
+  const visitGuide = region ? regionVisitGuide(lang, region) : null;
   useSeo(
     region && meta
       ? {
@@ -237,7 +240,8 @@ export default function RegionPage() {
         <main className="place-body">
           <article className="place-detail" aria-label={meta.heading}>
             <h1 className="place-detail-title">{meta.heading}</h1>
-            <p className="place-detail-overview">{meta.description}</p>
+            <p className="place-detail-overview">{regionIntro(lang, region, region.attractionCount)}</p>
+            {visitGuide && <p className="place-detail-overview">{visitGuide}</p>}
             {region.attractionCount != null && region.attractionCount > 0 && (
               <span className="place-chip active">
                 {lang === 'en'
