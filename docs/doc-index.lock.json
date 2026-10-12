@@ -55144,602 +55144,602 @@
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/SearchApplication.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/attraction/config/AttractionHybridProperties.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/attraction/port/AttractionFeedRenderPort.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/attraction/port/AttractionPagePorts.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/attraction/port/CategoryCodePort.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/attraction/port/EventSitemapRenderPort.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/attraction/service/AttractionFeedService.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/attraction/service/AttractionPageService.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/attraction/service/AttractionShortUrlService.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/attraction/service/CategoryLexiconService.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/attraction/service/EventSitemapService.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/attraction/service/NearbyAttractionsService.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/attraction/service/SearchAttractionService.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/attraction/usecase/AttractionShortUrlUseCase.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/attraction/usecase/CategoryLexiconUseCase.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/attraction/usecase/NearbyAttractionsUseCase.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/attraction/usecase/RenderAttractionFeedUseCase.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/attraction/usecase/RenderAttractionPageUseCase.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/attraction/usecase/RenderEventSitemapUseCase.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/attraction/usecase/SearchAttractionUseCase.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/attraction/usecase/SuggestAttractionUseCase.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/debug/port/SearchDebugPort.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/debug/service/SearchDebugService.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/debug/usecase/DebugSearchUseCase.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/product/port/SearchVariantPort.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/product/service/SearchProductService.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/product/usecase/SearchProductUseCase.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/product/usecase/SuggestProductUseCase.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/queryvector/config/QueryVectorProperties.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/queryvector/service/QueryVectorService.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/queryvector/usecase/ManageQueryVectorsUseCase.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/queryvector/usecase/ResolveQueryVectorUseCase.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/ranking/config/BanditProperties.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/ranking/config/DiversityProperties.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/ranking/service/BetaSampler.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/ranking/service/MultiScopeBanditBlender.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/ranking/service/SearchInteractionService.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/ranking/service/SellerDiversityReranker.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/ranking/service/ThompsonReranker.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/ranking/usecase/RecordSearchInteractionUseCase.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/unified/port/UnifiedSearchPort.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/unified/service/SearchUnifiedService.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/application/unified/usecase/SearchUnifiedUseCase.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/bandit/BanditEventKafkaAdapter.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/bandit/BanditStateRedisAdapter.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/client/CategoryCodeAdapter.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/client/QueryEncoderAdapter.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/client/QueryEncoderProperties.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/client/SearchExperimentClient.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/config/AttractionRenderProperties.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/config/KafkaProducerConfig.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/config/OpenApiConfig.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/config/OpenSearchConfig.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionClickBoostProperties.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionRankingProperties.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchDocument.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/GeoPoint.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/HybridSearchPipelineInitializer.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/ProductSearchAdapter.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/ProductSearchDocument.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/RankingProperties.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/RankingQueryBuilder.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/RankingVariantsProperties.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/RegionSearchDocument.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/SearchDebugAdapter.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/UnifiedSearchAdapter.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/UnifiedSearchDocument.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/persistence/queryvector/QueryVectorJpaRepository.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/persistence/queryvector/QueryVectorPersistenceAdapter.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/persistence/queryvector/entity/QueryVectorJpaEntity.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/redis/QueryMissRedisAdapter.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/render/AttractionFeedRenderer.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/render/AttractionPageRenderer.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/render/AttractionShellHealthIndicator.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/render/AttractionShellProvider.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/infrastructure/render/EventSitemapRenderer.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/presentation/queryvector/controller/QueryVectorInternalController.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/presentation/render/controller/AttractionFeedController.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/presentation/render/controller/AttractionPageController.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/presentation/render/controller/EventSitemapController.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/presentation/search/controller/AttractionSearchController.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/presentation/search/controller/SearchController.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/presentation/search/controller/SearchDebugController.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/presentation/search/controller/UnifiedSearchController.kt",
       "link_type": "manual",
       "service": "search",
       "resolved": true
     },
     {
-      "doc": "portal-fe/src/content/search-architecture.md",
+      "doc": "code-dictionary/feature/src/main/resources/ontology/search.yaml",
       "source": "search/app/src/main/kotlin/com/kgd/search/presentation/search/dto/AttractionDetailResponse.kt",
       "link_type": "manual",
       "service": "search",
