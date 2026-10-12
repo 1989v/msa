@@ -100,8 +100,12 @@ location = /sitemap.xml { try_files /seo/$host/sitemap.xml =404; }
 캐시 나이가 달라 응답이 요청마다 갈리는 바람에 파드 혼재로 오진했다. 크롤러가 자주 읽는
 파일이 아니라 짧은 TTL(300s)의 비용은 사실상 없다.
 
-게임 sitemap 은 142 URL(허브 2 + 장르 18 + 상세 122, 2026-08-19 기준 61종 × 2언어)이며 `lastmod` 는 `contentUpdatedAt`,
+게임 sitemap 은 142 URL(허브 2 + 장르 18 + 상세 122, 2026-08-19 기준 61종 × 2언어)이었으며,
 각 URL 에 `xhtml:link` hreflang 대체 주소를 붙인다.
+2026-10-12 보완: 홈페이지 `lastmod` 는 실제 FE 소개 변경일과 목록 콘텐츠 날짜의 최신 유효일이다.
+고유 안내가 있는 대표3상세는 실제 안내 변경일과 API `contentUpdatedAt`/`releasedAt`의 최신 유효일,
+비대상 상세는 기존 `contentUpdatedAt` 우선·`releasedAt` 폴백이다. API timestamp는 기존UTC 날짜변환을 유지한다.
+빌드 날짜로 전체 URL을 갱신하지 않는다. [범위·검증](../specs/2026-10-12-webgame-discovery/README.md).
 
 ### 6. 구조화 데이터
 

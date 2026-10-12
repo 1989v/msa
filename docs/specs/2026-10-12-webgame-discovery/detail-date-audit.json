@@ -1,0 +1,41 @@
+{
+  "input": "Four actual game detail GET responses; same detail input shape used by fetchCatalog, not the 82-summary fixture.",
+  "summaryFixtureLimitation": "Existing sitemap.xml was generated from 82 list summaries. Summaries do not carry detail contentUpdatedAt/releasedAt; non-target dates can be null in that fixture. It is not the production fetchCatalog result.",
+  "homepageLastmod": "2026-10-12",
+  "dates": [
+    {
+      "slug": "block-burst",
+      "source": "https://api.1989v.com/api/v1/games/block-burst",
+      "contentUpdatedAt": "2026-08-17T13:52:15.836515Z",
+      "releasedAt": "2026-08-06T19:52:37.217523Z",
+      "emittedLastmod": "2026-10-11"
+    },
+    {
+      "slug": "mine-pioneer",
+      "source": "https://api.1989v.com/api/v1/games/mine-pioneer",
+      "contentUpdatedAt": "2026-08-17T13:52:15.836515Z",
+      "releasedAt": "2026-08-06T19:52:37.217523Z",
+      "emittedLastmod": "2026-10-11"
+    },
+    {
+      "slug": "rift-front",
+      "source": "https://api.1989v.com/api/v1/games/rift-front",
+      "contentUpdatedAt": "2026-08-17T13:52:15.836515Z",
+      "releasedAt": "2026-08-05T18:09:11.385775Z",
+      "emittedLastmod": "2026-10-11"
+    },
+    {
+      "slug": "snake",
+      "source": "https://api.1989v.com/api/v1/games/snake",
+      "contentUpdatedAt": "2026-08-17T13:52:15.836515Z",
+      "releasedAt": "2026-08-04T20:59:35.951403Z",
+      "emittedLastmod": "2026-08-17"
+    }
+  ],
+  "checks": {
+    "targets": true,
+    "untouchedSnake": true,
+    "homepage": true
+  },
+  "xmlPath": "/tmp/webgame-discovery-preview/detail-date-audit.xml"
+}

@@ -1,0 +1,95 @@
+{
+  "checkedAt": "2026-10-12T12:59:21.086455+00:00",
+  "sourceCommit": "d2c231ef94acb18f1d677b5cbc1587b5e558ee49",
+  "mode": "New local Vite bundle + actual renderHub HTML + read-only production API GET proxy. No production deployment. Native Chrome CUA toolbar / AX / screenshots, not CDP.",
+  "viewports": [
+    {
+      "width": 390,
+      "height": 900,
+      "lang": "ko",
+      "introReadable": true,
+      "newIntroClippingObserved": false,
+      "catalogPresent": true,
+      "existingGuideLinksPresent": true
+    },
+    {
+      "width": 1280,
+      "height": 900,
+      "lang": "ko",
+      "introReadable": true,
+      "newIntroClippingObserved": false,
+      "catalogPresent": true,
+      "existingGuideLinksPresent": true
+    },
+    {
+      "width": 390,
+      "height": 900,
+      "lang": "en",
+      "introReadable": true,
+      "newIntroClippingObserved": false,
+      "catalogPresent": true,
+      "existingGuideLinksPresent": true
+    },
+    {
+      "width": 1280,
+      "height": 900,
+      "lang": "en",
+      "introReadable": true,
+      "newIntroClippingObserved": false,
+      "catalogPresent": true,
+      "existingGuideLinksPresent": true
+    }
+  ],
+  "limitations": [
+    "Visual check, no computed scrollWidth or runtime exception audit",
+    "Local ad decisions/events POST returned405 by design of GET-only proxy; production ad behavior not verified",
+    "No gameplay/rating interaction",
+    "Full npm build/prerender-all not run; source game submodule uninitialized"
+  ],
+  "sitemapEntries": 182,
+  "sampleSitemapDates": [
+    {
+      "url": "https://game.1989v.com/",
+      "lastmod": "2026-10-12"
+    },
+    {
+      "url": "https://game.1989v.com/games/mine-pioneer",
+      "lastmod": "2026-10-11"
+    },
+    {
+      "url": "https://game.1989v.com/games/block-burst",
+      "lastmod": "2026-10-11"
+    },
+    {
+      "url": "https://game.1989v.com/games/rift-front",
+      "lastmod": "2026-10-11"
+    },
+    {
+      "url": "https://game.1989v.com/games/snake",
+      "lastmod": null
+    },
+    {
+      "url": "https://game.1989v.com/en",
+      "lastmod": "2026-10-12"
+    },
+    {
+      "url": "https://game.1989v.com/en/games/mine-pioneer",
+      "lastmod": "2026-10-11"
+    },
+    {
+      "url": "https://game.1989v.com/en/games/block-burst",
+      "lastmod": "2026-10-11"
+    },
+    {
+      "url": "https://game.1989v.com/en/games/rift-front",
+      "lastmod": "2026-10-11"
+    },
+    {
+      "url": "https://game.1989v.com/en/games/snake",
+      "lastmod": null
+    }
+  ],
+  "chromeCleanup": "Responsive mode disabled, devtools and local test tab closed; original user tab restored",
+  "summaryFixtureLimitation": "The 82-summary input lacks detail dates and is not the full fetchCatalog input. Real detail date validation is in detail-date-audit.json.",
+  "realDetailAudit": "detail-date-audit.json"
+}
