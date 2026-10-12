@@ -112,8 +112,10 @@ jobs:
       # 여기서 본다. 이미지 게이트는 code-dictionary 가 바뀔 때만 이 스펙을 돌려, 다른 모듈의 리팩터가 참조를
       # 깨면 한참 뒤 code-dictionary 를 건드린 커밋의 이미지 전체가 막혔다(2026-09-26 HttpOnly 전환이 참조 셋을
       # 깨 atlas · portal-fe · gateway 배포가 한 번 막혔다). 파일 검사라 도커가 필요 없다.
-      - name: 온톨로지 파일 검사 (코드 참조 · 커버리지 · /tech 정적 그래프)
-        run: ./gradlew :code-dictionary:feature:test --tests '*OntologyFilesSpec' --tests '*OntologyCoverageSpec' --tests '*AtlasGraphExportSpec' --no-daemon
+      # 드릴다운(/tech/search)은 코드 스니펫을 내보낸 파일에 싣는다 — 참조한 코드가 움직이면 여기서 빨강이 되고,
+      # DrillExportSpec 머리 주석의 명령으로 다시 내보낸다.
+      - name: 온톨로지 파일 검사 (코드 참조 · 커버리지 · /tech 정적 그래프 · 드릴다운)
+        run: ./gradlew :code-dictionary:feature:test --tests '*OntologyFilesSpec' --tests '*OntologyCoverageSpec' --tests '*AtlasGraphExportSpec' --tests '*DrillExportSpec' --no-daemon
 
   test-gate:
     name: Changed-services test (PR only)
