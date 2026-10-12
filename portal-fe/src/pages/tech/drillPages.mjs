@@ -3,8 +3,9 @@
 // 데이터는 `src/content/drill/<domain>.json`(온톨로지에서 내보낸 것)이고 렌더가 `generated/<domain>-drill.json` 을 만든다.
 
 /**
- * @typedef {{ domain: string, path: string, title: string, area: string, card: string }} DrillPage
+ * @typedef {{ domain: string, path: string, title: string, area: string, card: string, module: string }} DrillPage
  * `area` 는 머리 줄 · 카드의 분야 이름, `card` 는 아틀라스 첫 화면 카드의 한 줄 설명.
+ * `module` 은 그 페이지 파일(src/pages/tech/<module>.tsx) — 프리렌더가 빌드 매니페스트에서 청크를 찾아 미리 받게 한다.
  */
 
 /** @type {DrillPage[]} */
@@ -15,6 +16,7 @@ export const DRILL_PAGES = [
     title: '검색 아키텍처',
     area: '검색',
     card: '검색어 하나가 결과가 되기까지 — 단계를 눌러 좁혀 들어가며 일반 개념, 이 서비스의 적용 상태, 코드를 본다.',
+    module: 'SearchArchitecturePage',
   },
   {
     domain: 'recommendation',
@@ -22,6 +24,7 @@ export const DRILL_PAGES = [
     title: '추천 아키텍처',
     area: '추천',
     card: '행동 신호가 추천 목록이 되기까지 — 후보 생성 · 랭킹 · 재정렬 · 서빙 · 실험을 단계별로 좁혀 본다.',
+    module: 'RecommendationArchitecturePage',
   },
 ];
 

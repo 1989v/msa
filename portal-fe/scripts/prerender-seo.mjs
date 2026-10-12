@@ -126,6 +126,8 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = resolve(ROOT, 'dist');
 // render-content.mjs 가 빌드 체인 앞단에서 만든다 (커밋하지 않는 산출물) — 드릴다운 도메인마다 한 장
 const techDrillJson = (domain) => resolve(ROOT, `src/pages/tech/generated/${domain}-drill.json`);
+// vite build 매니페스트 — 드릴다운 페이지의 지연 청크 이름을 읽는다(build.manifest)
+const VITE_MANIFEST = resolve(DIST, '.vite/manifest.json');
 // 속성 랜딩 목록 — select-place-landings.mjs 가 만들고 커밋한다. 빌드는 읽기만 한다
 const PLACE_LANDINGS_JSON = resolve(ROOT, 'src/content/place-landings.json');
 // 편집 페이지 생성 JSON — render-content 가 src/content/guides/*.md 에서 만든다(0장이어도 폴더는 있다)
@@ -206,7 +208,16 @@ async function main() {
 
   // 드릴다운 본문은 API 가 아니라 레포의 드릴다운 데이터에서 나온다 — 없으면 렌더 단계가 빠진 빌드라 세운다
   const techDrills = {};
+  // 지연 청크 미리 받기는 덤이다 — 매니페스트가 없으면(로컬 빌드 설정 차이) 경고만 하고 태그 없이 찍는다
+  let manifest = null;
+  try {
+    manifest = JSON.parse(await readFile(VITE_MANIFEST, 'utf8'));
+  } catch (err) {
+    console.warn(`[seo] vite 매니페스트를 못 읽어 드릴다운 청크 미리 받기를 뺀다 (${VITE_MANIFEST}): ${err.message}`);
+  }
+  const techDrillPreloads = {};
   for (const page of DRILL_PAGES) {
+    techDrillPreloads[page.path] = manifest ? drillPreloadTags(manifest, page, shell) : '';
     const file = techDrillJson(page.domain);
     try {
       techDrills[page.path] = JSON.parse(await readFile(file, 'utf8'));
@@ -217,7 +228,7 @@ async function main() {
   }
 
   await writeRobotsAndSitemaps(games, places, regions, blog, rankBoards, dealSections, concepts, landing.pages, guidePages);
-  await renderPortalPages(shell, concepts, { techDrills });
+  await renderPortalPages(shell, concepts, { techDrills, techDrillPreloads });
   await renderTechGlossaries(shell, concepts);
   const hubPages = await renderPlaceHubs(shell, places, regions, { guidesListed: guidePages.index != null });
   const regionPages = await renderPlaceDetails(shell, places, regions, { regionTops, landingPages: landing.pages });
@@ -2301,14 +2312,14 @@ function techGlossaryNav(byCategory) {
   return `<ul>${items}</ul>`;
 }
 
-async function renderPortalPages(shell, concepts = [], { techDrills = {} } = {}) {
+async function renderPortalPages(shell, concepts = [], { techDrills = {}, techDrillPreloads = {} } = {}) {
   // /tech 는 용어집 13장으로 들어가는 문이다 — 그 링크가 없으면 sitemap 에만 있는 주소가 되고,
   // 내부 링크 없는 URL 은 잘 크롤되지 않는다.
   const glossaryNav = techGlossaryNav(groupConcepts(concepts));
   for (const path of Object.keys(PORTAL_PAGES)) {
     const drillPage = DRILL_PAGES.find((p) => p.path === path);
     if (drillPage) {
-      await emit(`prerender${path}.html`, renderTechDrillHtml(shell, techDrills[path], drillPage));
+      await emit(`prerender${path}.html`, renderTechDrillHtml(shell, techDrills[path], drillPage, techDrillPreloads[path]));
       continue;
     }
     if (path === '/about') {
@@ -2437,11 +2448,41 @@ function assertTechDrillGenerated(generated) {
 }
 
 /**
+ * 드릴다운 페이지의 지연 청크(페이지 · 화면 · 데이터)와 그 CSS 를 미리 받는 태그.
+ * 이게 없으면 브라우저는 메인 번들을 받아 실행하고 라우트를 고른 뒤에야 이 청크를 요청한다 — 왕복이 하나 더 줄 선다.
+ * 메인 진입 청크와 셸이 이미 부르는 파일은 빼고, 매니페스트의 정적 import 를 따라간다.
+ * @param {Record<string, { file: string, src?: string, isEntry?: boolean, imports?: string[], css?: string[] }>} manifest
+ * @param {import('../src/pages/tech/drillPages.mjs').DrillPage} page
+ * @param {string} shell 빌드된 index.html — 이미 부르는 파일(메인 진입이 미리 받는 공용 청크)은 다시 적지 않는다
+ */
+export function drillPreloadTags(manifest, page, shell = '') {
+  const key = `src/pages/tech/${page.module}.tsx`;
+  if (!manifest[key]) throw new Error(`vite 매니페스트에 ${key} 가 없다 — drillPages 의 module 과 파일 이름이 다르다`);
+  const js = [];
+  const css = new Set();
+  const seen = new Set();
+  const visit = (k) => {
+    const e = manifest[k];
+    if (!e || seen.has(k) || e.isEntry) return;
+    seen.add(k);
+    if (!shell.includes(`/${e.file}`)) js.push(e.file);
+    for (const c of e.css ?? []) if (!shell.includes(`/${c}`)) css.add(c);
+    for (const i of e.imports ?? []) visit(i);
+  };
+  visit(key);
+  return [
+    ...js.map((f) => `<link rel="modulepreload" crossorigin href="/${escapeHtml(f)}">`),
+    ...[...css].map((f) => `<link rel="preload" as="style" href="/${escapeHtml(f)}">`),
+  ].join('');
+}
+
+/**
  * tech 드릴다운(`/tech/search` …) — 화면은 노드를 눌러 펼치는 그림이라 정적 HTML 에는 1단계 단계를 목록으로 둔다.
  * 단계마다 이름 · 적용 상태 · 일반 개념 · 이 서비스의 적용 내용 — 크롤러가 읽는 본문이다.
  * @param {import('../src/pages/tech/drillPages.mjs').DrillPage} page
+ * @param {string} [preload] drillPreloadTags 가 만든 태그 — head 끝에 넣는다
  */
-export function renderTechDrillHtml(shell, generated, page) {
+export function renderTechDrillHtml(shell, generated, page, preload = '') {
   assertTechDrillGenerated(generated);
   const { root, concepts, diagrams, updated, sourceHash } = generated;
   const meta = PORTAL_PAGES[page.path];
@@ -2457,7 +2498,7 @@ export function renderTechDrillHtml(shell, generated, page) {
     );
   };
   const items = diagrams[root].nodes.map((n) => stage(n.id) + (n.lanes ?? []).map(stage).join('')).join('');
-  return compose(shell, {
+  const html = compose(shell, {
     lang: 'ko',
     title: meta.title,
     description: meta.description,
@@ -2480,6 +2521,7 @@ export function renderTechDrillHtml(shell, generated, page) {
         '</div>',
     ),
   });
+  return preload ? html.replace('</head>', `${preload}</head>`) : html;
 }
 
 // ─── llms.txt (AEO) ─────────────────────────────────────────────────────────

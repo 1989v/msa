@@ -1,9 +1,9 @@
 // @vitest-environment node
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 // 직접 실행 가드가 있어 import 만으로는 운영 API 를 두드리지 않는다.
-import { renderTechDrillHtml } from '../../../scripts/prerender-seo.mjs';
+import { drillPreloadTags, renderTechDrillHtml } from '../../../scripts/prerender-seo.mjs';
 import { STATUS_LABEL } from '../../pages/tech/drillModel.mjs';
 import { DRILL_PAGES } from '../../pages/tech/drillPages.mjs';
 
@@ -53,5 +53,51 @@ describe.each(DRILL_PAGES)('$path 프리렌더', (page) => {
     expect(() => renderTechDrillHtml(SHELL, { ...generated, sourceHash: undefined }, page)).toThrow();
     expect(() => renderTechDrillHtml(SHELL, { ...generated, root: 'nope' }, page)).toThrow();
     expect(() => renderTechDrillHtml(SHELL, { ...generated, maxDepth: 0 }, page)).toThrow();
+  });
+});
+
+describe('드릴다운 지연 청크 미리 받기', () => {
+  // vite build 매니페스트와 같은 모양 — 페이지 청크가 화면 청크를, 화면 청크가 메인 진입과 공용 청크를 부른다
+  const page = DRILL_PAGES[0];
+  const manifest = {
+    'index.html': { file: 'assets/index-AAA.js', isEntry: true, imports: ['_react-BBB.js'] },
+    '_react-BBB.js': { file: 'assets/react-BBB.js' },
+    [`src/pages/tech/${page.module}.tsx`]: { file: 'assets/Page-CCC.js', imports: ['src/pages/tech/TechDrillPage.tsx', 'index.html'] },
+    'src/pages/tech/TechDrillPage.tsx': { file: 'assets/TechDrillPage-DDD.js', imports: ['index.html', '_drillPages-EEE.js'], css: ['assets/TechDrillPage-FFF.css'] },
+    '_drillPages-EEE.js': { file: 'assets/drillPages-EEE.js' },
+  };
+
+  it('페이지 청크와 그 정적 import 를 따라가 미리 받고, 메인 진입 쪽은 빼고, CSS 는 스타일로 미리 받는다', () => {
+    const tags = drillPreloadTags(manifest, page);
+    expect(tags).toBe(
+      '<link rel="modulepreload" crossorigin href="/assets/Page-CCC.js">' +
+        '<link rel="modulepreload" crossorigin href="/assets/TechDrillPage-DDD.js">' +
+        '<link rel="modulepreload" crossorigin href="/assets/drillPages-EEE.js">' +
+        '<link rel="preload" as="style" href="/assets/TechDrillPage-FFF.css">',
+    );
+    expect(tags).not.toContain('index-AAA');
+  });
+
+  it('셸이 이미 부르는 공용 청크는 다시 적지 않는다', () => {
+    const shell = '<link rel="modulepreload" crossorigin href="/assets/drillPages-EEE.js">';
+    expect(drillPreloadTags(manifest, page, shell)).not.toContain('drillPages-EEE');
+    expect(drillPreloadTags(manifest, page, shell)).toContain('TechDrillPage-DDD');
+  });
+
+  it('매니페스트에 페이지 파일이 없으면 throw — module 이름과 파일이 어긋난 것이다', () => {
+    expect(() => drillPreloadTags({}, page)).toThrow(/매니페스트/);
+  });
+
+  it.each(DRILL_PAGES)('$path 의 module 은 실제 페이지 파일이다', (p) => {
+    expect(existsSync(fileURLToPath(new URL(`../../pages/tech/${p.module}.tsx`, import.meta.url)))).toBe(true);
+  });
+
+  it('미리 받기 태그는 head 안에 들어가고 본문에는 없다', () => {
+    const drill = JSON.parse(readFileSync(fileURLToPath(new URL(`../drill/${page.domain}.json`, import.meta.url)), 'utf8'));
+    const tags = drillPreloadTags(manifest, page);
+    const html = renderTechDrillHtml(SHELL, { ...drill, sourceHash: 'abc123def456', gitSha: 'test' }, page, tags);
+    const head = html.slice(0, html.indexOf('</head>'));
+    expect(head).toContain(tags);
+    expect(html.indexOf(tags)).toBe(html.lastIndexOf(tags));
   });
 });
