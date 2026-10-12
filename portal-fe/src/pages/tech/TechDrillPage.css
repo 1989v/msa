@@ -150,20 +150,20 @@ html[data-theme='dark'] .td-page {
 
 .td-label {
   fill: var(--ko-text-primary);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
 }
 
 .td-kind {
   fill: var(--ko-text-muted);
   font-family: var(--kh-font-mono);
-  font-size: 10.5px;
+  font-size: 11.5px;
 }
 
 .td-more {
   fill: var(--ko-accent-text);
   font-family: var(--kh-font-mono);
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 600;
 }
 
@@ -197,7 +197,7 @@ html[data-theme='dark'] .td-page {
 
 .td-group-head {
   fill: var(--ko-accent-text);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   outline: none;
@@ -216,7 +216,7 @@ html[data-theme='dark'] .td-page {
 
 .td-edge text {
   fill: var(--ko-text-secondary);
-  font-size: 10.5px;
+  font-size: 11.5px;
   paint-order: stroke;
   stroke: var(--ko-surface-1);
   stroke-width: 4px;

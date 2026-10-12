@@ -51,7 +51,7 @@ const TABS = [
 type Tab = (typeof TABS)[number][0];
 /** 이 폭보다 좁으면 그림을 세로로 그린다 */
 const VERTICAL_BELOW = 640;
-/** 화면에 맞춰 줄이되 이 배율 아래로는 줄이지 않고 그림 상자 안에서 가로로 넘긴다 */
+/** 가로 배치는 화면에 맞춰 줄이되 이 배율 아래로는 줄이지 않고 그림 상자 안에서 가로로 넘긴다 */
 const MIN_SCALE = 0.72;
 
 function readHash(paths: Map<string, Step[]>): Step[] {
@@ -82,9 +82,9 @@ function Diagram({ owner, picked, onPick }: { owner: string; picked?: string; on
   const [ref, width] = useWidth<HTMLDivElement>();
   const diagram = drill.diagrams[owner];
   const vertical = width < VERTICAL_BELOW;
-  // 세로 배치는 MIN_SCALE 까지 줄여 맞추므로 그만큼 넓게 잡고 접는다 — 그보다 넓으면 그림 상자 안에서 가로로 넘친다
+  // 세로 배치는 줄이지 않고 화면 폭에 맞춰 접는다 — 줄이면 휴대폰에서 글자가 10px 아래로 내려가 읽기 어렵다
   const layout = useMemo(
-    () => layoutDiagram(diagram, { vertical, maxWidth: vertical ? Math.floor(width / MIN_SCALE) : width }),
+    () => layoutDiagram(diagram, { vertical, maxWidth: vertical ? width - 8 : width }),
     [diagram, vertical, width],
   );
   if (layout.boxes.length === 0) return <div ref={ref} />;
@@ -150,7 +150,7 @@ function Diagram({ owner, picked, onPick }: { owner: string; picked?: string; on
           <g key={`${r.from}>${r.to}`} className="td-edge">
             <path d={r.d} markerEnd={`url(#${marker})`} />
             {r.label && (
-              <text x={r.lx} y={r.ly - 5} textAnchor="middle">
+              <text x={r.lx} y={r.ly - 5} textAnchor={r.anchor ?? 'middle'}>
                 {r.label}
               </text>
             )}
