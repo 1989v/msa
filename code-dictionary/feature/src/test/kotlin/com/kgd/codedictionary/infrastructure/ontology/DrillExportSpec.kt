@@ -64,6 +64,8 @@ private data class Drill(val domain: String, val root: String, val updated: Stri
 private val DRILLS = listOf(
     Drill("search", "search-query", "2026-10-12"),
     Drill("recommendation", "recommendation-system", "2026-10-12"),
+    Drill("commerce-order", "commerce-order", "2026-10-12"),
+    Drill("ads", "advertising", "2026-10-12"),
 )
 
 /** 펼칠 수 있는 단계 수. 루트 그림의 노드가 1단계다 */

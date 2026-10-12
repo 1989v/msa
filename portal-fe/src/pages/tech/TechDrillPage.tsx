@@ -3,7 +3,7 @@ import GNB from '../../components/GNB';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import { PORTAL_PAGES, breadcrumbJsonLd, portalUrl, techArticleJsonLd } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
-import { layoutDiagram, type DrillDiagram } from './drillLayout';
+import { NODE_H, NODE_W, layoutDiagram, type DrillDiagram } from './drillLayout';
 import { STATUS_LABEL, codeUrl, openPaths, type AppliedStatus } from './drillModel.mjs';
 import { DRILL_NAV, type DrillPage } from './drillPages.mjs';
 import './TechDrillPage.css';
@@ -53,6 +53,33 @@ type Tab = (typeof TABS)[number][0];
 const VERTICAL_BELOW = 640;
 /** 노드 제목은 상자에 안 들어가면 이 크기까지 줄인다 */
 const LABEL_MIN_PX = 11;
+/** 노드 제목이 들어갈 폭 — 왼쪽 여백 12, 오른쪽은 상태 점 자리 */
+const LABEL_ROOM = NODE_W - 32;
+/** 제목 두 번째 줄의 간격 — 두 줄 제목이 있는 그림은 상자를 이만큼 키운다 */
+const LABEL_LINE = 17;
+
+let measureCtx: CanvasRenderingContext2D | null | undefined;
+/** 굵은 14px 제목의 폭. 캔버스가 없으면(jsdom · 서버) 글자 수로 어림한다 */
+function labelWidth(text: string): number {
+  if (measureCtx === undefined) {
+    const real = typeof document !== 'undefined' && !navigator.userAgent.includes('jsdom');
+    measureCtx = real ? document.createElement('canvas').getContext('2d') : null;
+  }
+  if (!measureCtx) return [...text].reduce((w, ch) => w + (/[가-힣]/.test(ch) ? 14 : 8), 0);
+  measureCtx.font = `700 14px ${getComputedStyle(document.body).fontFamily}`;
+  return measureCtx.measureText(text).width;
+}
+
+/** 상자에 안 들어가는 제목은 두 줄로 — 괄호 설명 앞에서, 없으면 가운데에 가까운 띄어쓰기에서 끊는다 */
+function labelLines(name: string): string[] {
+  if (labelWidth(name) <= LABEL_ROOM) return [name];
+  const paren = name.indexOf(' (');
+  if (paren > 0) return [name.slice(0, paren), name.slice(paren + 1)];
+  const spaces = [...name.matchAll(/ /g)].map((m) => m.index!);
+  if (spaces.length === 0) return [name];
+  const cut = spaces.reduce((a, b) => (Math.abs(b - name.length / 2) < Math.abs(a - name.length / 2) ? b : a));
+  return [name.slice(0, cut), name.slice(cut + 1)];
+}
 /** 가로 배치는 화면에 맞춰 줄이되 이 배율 아래로는 줄이지 않고 그림 상자 안에서 가로로 넘긴다 */
 const MIN_SCALE = 0.72;
 
@@ -85,9 +112,17 @@ function Diagram({ owner, picked, onPick }: { owner: string; picked?: string; on
   const diagram = drill.diagrams[owner];
   const vertical = width < VERTICAL_BELOW;
   // 세로 배치는 줄이지 않고 화면 폭에 맞춰 접는다 — 줄이면 휴대폰에서 글자가 10px 아래로 내려가 읽기 어렵다
+  const lines = useMemo(
+    () =>
+      new Map(
+        diagram.nodes.flatMap((n) => [n.id, ...(n.lanes ?? [])]).map((id) => [id, labelLines(drill.concepts[id].name)] as const),
+      ),
+    [diagram, drill],
+  );
+  const nodeH = [...lines.values()].some((l) => l.length > 1) ? NODE_H + LABEL_LINE : NODE_H;
   const layout = useMemo(
-    () => layoutDiagram(diagram, { vertical, maxWidth: vertical ? width - 8 : width }),
-    [diagram, vertical, width],
+    () => layoutDiagram(diagram, { vertical, maxWidth: vertical ? width - 8 : width, nodeH }),
+    [diagram, vertical, width, nodeH],
   );
   const svgRef = useRef<SVGSVGElement>(null);
   // 상자 폭은 고정이라 긴 제목은 그 노드만 글자를 줄여 넣는다 — 글꼴이 늦게 오면 폭이 달라지므로 그때 한 번 더
@@ -97,7 +132,8 @@ function Diagram({ owner, picked, onPick }: { owner: string; picked?: string; on
         if (typeof t.getComputedTextLength !== 'function') return;
         t.style.fontSize = '';
         const room = Number(t.dataset.room);
-        const len = t.getComputedTextLength();
+        const spans = [...t.querySelectorAll('tspan')];
+        const len = Math.max(...spans.map((x) => x.getComputedTextLength()), 0);
         if (len > room) t.style.fontSize = `${Math.max(LABEL_MIN_PX, (parseFloat(getComputedStyle(t).fontSize) * room) / len)}px`;
       });
     fit();
@@ -118,7 +154,10 @@ function Diagram({ owner, picked, onPick }: { owner: string; picked?: string; on
     const status = statusOf(id);
     const sub = drill.diagrams[id];
     const more = !hasDetail ? '' : sub.nodes.length > 0 ? ', 상세 다이어그램 있음' : ', 하위 개념 있음';
-    const label = `${c.name}${status ? `, ${STATUS_LABEL[status]}` : ''}${more}`;
+    const label = lines.get(id) ?? [c.name];
+    // 두 줄 제목이 있는 그림은 상자가 커진다 — 한 줄 노드는 글자 묶음을 위아래 가운데에
+    const top = (h - NODE_H - (label.length - 1) * LABEL_LINE) / 2;
+    const aria = `${c.name}${status ? `, ${STATUS_LABEL[status]}` : ''}${more}`;
     return (
       <g
         key={id}
@@ -126,7 +165,7 @@ function Diagram({ owner, picked, onPick }: { owner: string; picked?: string; on
         transform={`translate(${x},${y})`}
         role="button"
         tabIndex={0}
-        aria-label={label}
+        aria-label={aria}
         aria-expanded={id === picked}
         onClick={() => onPick(id)}
         onKeyDown={key(id)}
@@ -134,10 +173,14 @@ function Diagram({ owner, picked, onPick }: { owner: string; picked?: string; on
         {hasDetail && <rect className="td-stack" x={5} y={5} width={w} height={h} rx={4} />}
         <rect className="td-box" width={w} height={h} rx={4} />
         {status && <circle className={`td-dot is-${status.toLowerCase()}`} cx={w - 12} cy={13} r={4} />}
-        <text className="td-label" x={12} y={24} data-room={w - 32}>
-          {c.name}
+        <text className="td-label" x={12} y={24 + top} data-room={w - 32}>
+          {label.map((t, i) => (
+            <tspan key={i} x={12} dy={i ? LABEL_LINE : 0}>
+              {t}
+            </tspan>
+          ))}
         </text>
-        <text className="td-kind" x={12} y={43}>
+        <text className="td-kind" x={12} y={43 + (label.length - 1) * LABEL_LINE + top}>
           {status ? STATUS_LABEL[status] : '기록 없음'}
         </text>
         {hasDetail && (

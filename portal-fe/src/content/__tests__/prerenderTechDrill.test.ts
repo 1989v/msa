@@ -10,6 +10,16 @@ import { DRILL_PAGES } from '../../pages/tech/drillPages.mjs';
 const SHELL = readFileSync(fileURLToPath(new URL('../../../index.html', import.meta.url)), 'utf8');
 type Node = { id: string; lanes?: string[] };
 
+const NGINX = readFileSync(fileURLToPath(new URL('../../../nginx.conf', import.meta.url)), 'utf8');
+
+it('nginx 드릴다운 location 이 목록의 경로를 전부 받는다 — 빠지면 용어집 location 이 받아 엣지 캐시 헤더가 안 붙는다', () => {
+  // 판정 근거: 실제 nginx.conf 에서 엣지 캐시(s-maxage) 를 붙이는 /tech location 의 정규식
+  const block = NGINX.split(/\n\s*(?=location )/).find((b) => b.startsWith('location ~ ^/tech/(') && b.includes('s-maxage'));
+  expect(block, '엣지 캐시를 붙이는 /tech 드릴다운 location 이 없다').toBeDefined();
+  const re = new RegExp(block!.match(/^location ~ (\S+) \{/)![1]);
+  expect(DRILL_PAGES.filter((p) => !re.test(p.path)).map((p) => p.path)).toEqual([]);
+});
+
 describe.each(DRILL_PAGES)('$path 프리렌더', (page) => {
   // 생성 JSON 과 같은 모양 — render-content 는 커밋된 드릴다운 데이터에 sourceHash · gitSha 만 붙인다
   const drill = JSON.parse(readFileSync(fileURLToPath(new URL(`../drill/${page.domain}.json`, import.meta.url)), 'utf8'));
