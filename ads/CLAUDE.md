@@ -48,6 +48,7 @@ recommendation·experiment 도 같은 파드라 **함께 멈춘다.** 이미지�
 
 ## 규칙 (깨면 조용히 틀린다)
 
+- **공개 드릴다운 `/tech/ads` 가 광고의 운영 상태를 보인다** — 단계를 켜거나(유료 캠페인 집행 · 동의 관리 · 전환 추적) 값을 바꾸면 온톨로지 `ads.yaml` 의 `applied` 도 고치고 다시 내보낸다(ADR-0108). 빈도 · 시간당 상한 · 토큰 수명 · 클릭 제한 · 수익 배분 · 정산 주기 · 가시 노출 기준 등은 드리프트 테스트가 대조한다
 - **결정 경로(`POST /api/v1/ads/decisions`)는 DB 를 부르지 않는다.** 메모리 후보 인덱스(30초 갱신) + Redis 읽기 1회·쓰기 1회(Lua)만.
   `DecisionIntegrationSpec` 이 MySQL `Com_*` 증감과 Redis `INFO commandstats` 로 판정한다 — JPA 호출을 더하면 빨간불
 - **ads Redis 연결은 스프링 빈이 아니다** (`AdsRedisConnection` 이 직접 만들어 쥔다, 명령 250ms·연결 500ms).

@@ -34,6 +34,14 @@ export const DRILL_PAGES = [
     card: '주문서 한 장이 결제 · 이행 · 정산까지 가는 길 — 사가 · 결제 결과 미상 · 원장을 단계별로 좁혀 본다.',
     module: 'OrderArchitecturePage',
   },
+  {
+    domain: 'ads',
+    path: '/tech/ads',
+    title: '광고 아키텍처',
+    area: '광고',
+    card: '광고 요청 하나가 노출 · 클릭 · 정산이 되기까지 — 자격 · 경매 · 무효 트래픽 방어 · 원장을 단계별로 좁혀 본다.',
+    module: 'AdsArchitecturePage',
+  },
 ];
 
 /** IT 면 GNB — 아틀라스, 드릴다운 페이지들, 홈. 아틀라스와 드릴다운 페이지가 같은 줄을 쓴다 */

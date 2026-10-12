@@ -222,6 +222,8 @@ export function layoutDiagram(
     });
   /** 출발 상자마다 이미 단 돌아가는 간선 글자 수 — 겹치지 않게 한 줄씩 내린다 */
   const detours = new Map<string, number>();
+  /** 세로 배치에서 이미 쓴 돌아가는 통로 — 쪽과 높이 범위 */
+  const passes: { left: boolean; y1: number; y2: number }[] = [];
   const routes: Route[] = d.edges.map((e) => {
     const a = boxes.get(e.from)!;
     const b = boxes.get(e.to)!;
@@ -233,11 +235,18 @@ export function layoutDiagram(
         (m) => m.id !== e.from && m.id !== e.to && m.y >= y1 && m.y + m.h <= y2 && m.x < Math.max(x1, x2) + 8 && m.x + m.w > Math.min(x1, x2) - 8,
       );
       if (hit.length) {
-        // 사이 노드의 옆으로 비켜 내려간다 — 출발이 가운데보다 왼쪽이면 왼쪽으로
-        const left = x1 <= width / 2;
+        // 사이 노드의 옆으로 비켜 내려간다 — 출발이 가운데보다 왼쪽이면 왼쪽으로.
+        // 그쪽에 높이가 겹치는 돌아가는 선이 이미 있으면 반대쪽으로 — 같은 통로를 쓰면 선이 겹쳐 어느 쪽인지 안 보인다
+        let left = x1 <= width / 2;
+        if (passes.some((u) => u.left === left && u.y1 < y2 && y1 < u.y2)) left = !left;
+        passes.push({ left, y1, y2 });
         const sx = left ? Math.min(...hit.map((m) => m.x)) - 16 : Math.max(...hit.map((m) => m.x + m.w)) + 16;
         const dd = `M${x1},${y1} C${x1},${y1 + 24} ${sx},${y1 + 12} ${sx},${y1 + 36} L${sx},${y2 - 36} C${sx},${y2 - 12} ${x2},${y2 - 24} ${x2},${y2}`;
         // 글자는 돌아가는 선이 아니라 출발 상자 바로 밑, 선이 돌아 나가지 않는 쪽에 — 선은 가장자리를 타서 글자가 그림 밖으로 잘린다
+        // 오른쪽 통로는 바깥에 자리가 남는다 — 글자를 그 세로 구간 옆에 달아 어느 선의 글자인지 보이게 한다(글자 폭은 어림)
+        if (!left && e.label && width - sx - 10 >= e.label.length * 11) {
+          return { from: e.from, to: e.to, label: e.label, d: dd, lx: sx + 6, ly: (y1 + y2) / 2 + 9, anchor: 'start' };
+        }
         const lx = left ? x1 + 8 : x1 - 8;
         const nth = detours.get(e.from) ?? 0;
         detours.set(e.from, nth + 1);
