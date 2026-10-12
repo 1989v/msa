@@ -62,7 +62,7 @@ class DrillExportSpec : BehaviorSpec({
 private data class Drill(val domain: String, val root: String, val updated: String)
 
 private val DRILLS = listOf(
-    Drill("search", "search-query", "2026-10-12"),
+    Drill("search", "search-system", "2026-10-13"),
     Drill("recommendation", "recommendation-system", "2026-10-12"),
     Drill("commerce-order", "commerce-order", "2026-10-12"),
     Drill("ads", "advertising", "2026-10-12"),

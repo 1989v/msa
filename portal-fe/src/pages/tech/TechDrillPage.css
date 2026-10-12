@@ -1,7 +1,7 @@
 /* tech 드릴다운 (/tech/search · /tech/recommendation …) — k-heritage. 색은 토큰만, 라이트 · 다크는 토큰이 가른다. */
 
 .td-page {
-  /* 상태 색 — 운영 중은 강조색, 비활성은 황토, 미구현은 연지 */
+  /* 상태 색 — 적용은 강조색, 비활성은 황토, 미적용은 연지 */
   --td-live: var(--ko-accent-text);
   --td-disabled: var(--kh-ocher-text);
   --td-none: var(--kh-yeonji);

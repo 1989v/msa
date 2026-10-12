@@ -15,7 +15,7 @@ export const DRILL_PAGES = [
     path: '/tech/search',
     title: '검색 아키텍처',
     area: '검색',
-    card: '검색어 하나가 결과가 되기까지 — 단계를 눌러 좁혀 들어가며 일반 개념, 이 서비스의 적용 상태, 코드를 본다.',
+    card: '콘텐츠 이해부터 서빙까지 — 검색 시스템을 단계별로 좁혀 들어가며 일반 개념, 이 서비스의 적용 상태, 코드를 본다.',
     module: 'SearchArchitecturePage',
   },
   {

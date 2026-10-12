@@ -5,7 +5,7 @@
 /** @typedef {'LIVE' | 'PARTIAL' | 'DISABLED' | 'NONE'} AppliedStatus */
 
 /** @type {Record<AppliedStatus, string>} */
-export const STATUS_LABEL = { LIVE: '운영 중', PARTIAL: '일부 구현', DISABLED: '비활성', NONE: '미구현' };
+export const STATUS_LABEL = { LIVE: '적용', PARTIAL: '부분', DISABLED: '비활성', NONE: '미적용' };
 
 const REPO_BLOB = 'https://github.com/1989v/msa/blob/';
 

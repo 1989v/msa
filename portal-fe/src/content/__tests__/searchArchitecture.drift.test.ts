@@ -22,6 +22,9 @@ const APP_YML = 'search/app/src/main/resources/application.yml';
 const DEPLOYMENT = 'k8s/base/search/deployment.yaml';
 const REINDEX_CRONJOB = 'k8s/base/search-batch/cronjob-attraction-reindex.yaml';
 const INDEX_JSON = 'search/batch/src/main/resources/opensearch/attractions-index.json';
+const ALIAS_MANAGER = 'search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/IndexAliasManager.kt';
+const BATCH_YML = 'search/batch/src/main/resources/application.yml';
+const EVAL_CRONJOB = 'k8s/base/search-batch/cronjob-eval.yaml';
 
 /** 대조하는 사실 키 — 온톨로지의 facts[].key 와 같은 이름 */
 const KEY = {
@@ -37,6 +40,10 @@ const KEY = {
   sightWeight: 'sight-weight',
   commerceWeight: 'commerce-weight',
   clickBoost: 'click-boost-enabled',
+  minDocRatio: 'reindex-min-doc-ratio',
+  lookupFailure: 'reindex-lookup-failure-ratio',
+  evalTolerance: 'eval-tolerance',
+  unjudged: 'eval-unjudged-limit',
 } as const;
 
 type Fact = { label: string; value: string; key?: string };
@@ -52,6 +59,14 @@ function envValue(yaml: string, name: string): string | undefined {
 /** 켜짐 스위치 — deployment.yaml env 가 있으면 그 값, 없으면 application.yml 의 `${ENV:기본값}` */
 function switchValue(envName: string): string | undefined {
   return envValue(read(DEPLOYMENT), envName) ?? read(APP_YML).match(new RegExp(`${envName}:(true|false)\\}`))?.[1];
+}
+
+/** 화면 값이 퍼센트(「라이브 건수의 90%」)이고 코드 값이 비율(0.9)일 때 */
+function expectPercent(key: string, ratio: string | undefined) {
+  const v = docValue(key);
+  expect(v, `드릴다운 데이터에서 사실 키 ${key} 를 못 찾음`).toBeDefined();
+  expect(ratio, `코드 쪽 ${key} 값을 못 읽음`).toBeDefined();
+  expect(Number(v!.match(/([\d.]+)%/)?.[1]), `${key}: 온톨로지 값과 코드 값이 다르다`).toBeCloseTo(Number(ratio) * 100, 6);
 }
 
 function expectDocValue(key: string, codeValue: unknown) {
@@ -109,6 +124,16 @@ describe('검색 드릴다운 적용 값 드리프트', () => {
 
   it('clickBoost 켜짐이 운영 매니페스트(없으면 application.yml 기본값)와 같다', () => {
     expectDocValue(KEY.clickBoost, switchValue('SEARCH_ATTRACTION_CLICK_BOOST_ENABLED'));
+  });
+
+  it('재색인 교체 하한 · 조회 실패 상한이 배치 코드 · 설정과 같다', () => {
+    expectPercent(KEY.minDocRatio, read(ALIAS_MANAGER).match(/const val MIN_DOC_RATIO = ([\d.]+)/)?.[1]);
+    expectPercent(KEY.lookupFailure, read(BATCH_YML).match(/max-lookup-failure-ratio:\s*([\d.]+)/)?.[1]);
+  });
+
+  it('평가 게이트의 허용 하락폭 · 판정 없는 문서 상한이 운영 CronJob 과 같다', () => {
+    expectDocValue(KEY.evalTolerance, envValue(read(EVAL_CRONJOB), 'EVAL_TOLERANCE'));
+    expectPercent(KEY.unjudged, envValue(read(EVAL_CRONJOB), 'EVAL_UNJUDGED_MAX'));
   });
 
   it('융합 방식이 application.yml 과 같다', () => {

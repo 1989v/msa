@@ -9,20 +9,80 @@ concepts:
     name: "검색 시스템"
     category: ARCHITECTURE
     level: INTERMEDIATE
-    description: "색인을 만드는 인제스트, 색인의 내부 구조, 색인을 읽는 쿼리, 결과를 재는 평가, 그것을 떠받치는 서빙 — 다섯 갈래로 읽는 검색 아키텍처"
+    description: "콘텐츠를 이해하고, 색인을 만들고, 검색어에 답하고, 결과를 재고, 그것을 떠받치는 서빙까지 — 콘텐츠 이해 · 색인 · 파이프라인 · 검색어 파이프라인 · 평가 · 로그 · 서빙 · 운영으로 읽는 검색 아키텍처. 색인 내부 구조와 용어는 곁에 둔다"
     synonyms: ["hybrid search", "하이브리드 검색", "information retrieval", "정보 검색"]
     evidence:
       - { kind: POST, ref: search-system-concept-map, note: "검색 도메인 일반을 도식으로 정리한 글" }
-    contains: [search-ingest, search-index-internals, search-query, search-evaluation, search-serving, search-glossary]
+    contains: [search-ingest, search-index-internals, search-query, search-evaluation, search-serving, search-glossary, srch-content-understanding]
+  - id: srch-content-understanding
+    kind: DOMAIN
+    name: "콘텐츠 이해"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "문서가 무엇인지를 사람 대신 읽어 둔다 — 지식 그래프 · 구조화된 속성 · 임베딩 · LLM 추출. 색인에 들어갈 필드와 벡터의 질이 여기서 정해진다"
+    contains: [srch-knowledge-graph, srch-content-structuring, srch-multimodal-embedding, srch-rag, srch-llm-attribute-extraction]
+    flows_to: [{ to: search-ingest, label: "속성 · 벡터" }]
+    applied:
+      status: PARTIAL
+      summary: "개념 온톨로지 · 분류 코드 사전 · 텍스트 임베딩 · LLM 실내 · 실외 판정이 있다. 멀티모달 임베딩과 검색 결과에 붙은 RAG 는 없다"
+  - id: srch-knowledge-graph
+    kind: STAGE
+    name: "지식 그래프"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "개체와 관계를 그래프로 둔다. 질의 · 문서의 개체를 그래프에 잇는(엔티티 링킹) 순간 동의 · 상하위 · 연관이 검색과 랭킹의 신호가 된다"
+    code:
+      - { path: code-dictionary/domain/src/main/kotlin/com/kgd/codedictionary/domain/concept/ontology/ConceptOntology.kt, symbol: "class ConceptOntology(", note: "개념 · 관계 · 공리 검사" }
+    applied:
+      status: PARTIAL
+      summary: "개념 온톨로지(개념 유형 7 · 관계 9)와 개념 아틀라스 · 드릴다운이 있다. 엔티티 링킹으로 검색 · 랭킹에 쓰지는 않는다"
+  - id: srch-content-structuring
+    kind: STAGE
+    name: "콘텐츠 구조화"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "장르 · 키워드 · 관계처럼 자유 텍스트에 묻힌 것을 필드로 꺼낸다. 필터와 패싯은 구조화된 필드만 쓸 수 있다"
+    contains: [taxonomy-tagging]
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/application/attraction/service/CategoryLexiconService.kt, symbol: "class CategoryLexiconService(", note: "코드표에서 분류 사전을 유도" }
+    applied:
+      status: PARTIAL
+      summary: "분류 코드표에서 검색 사전을 자동 유도한다(코드표 ∩ 그 언어 색인에 문서가 있는 코드). 실내 · 실외 속성은 규칙 + LLM 판정을 사람이 반영한다. 관광지 단위 테마 · 계절 속성은 없다"
+  - id: srch-multimodal-embedding
+    kind: STAGE
+    name: "임베딩 · 멀티모달"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "텍스트 · 이미지를 같은 벡터 공간에 놓아 뜻으로 찾게 한다. 무엇을 한 벡터로 묶을지(임베딩 텍스트 규칙)가 품질을 정한다"
+    contains: [embedding-model]
+    applied:
+      status: PARTIAL
+      summary: "텍스트 임베딩만 있다 — 제목 · 분류명 · 주소 · 개요 앞 1,000자를 한 벡터로. 이미지 · 멀티모달 임베딩은 없다"
+  - id: srch-llm-attribute-extraction
+    kind: STAGE
+    name: "LLM 속성 추출"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "LLM · VLM 이 문서에서 속성을 읽어 분류한다. 규칙이 못 정하는 꼬리를 메우지만, 표본 채점으로 정확도를 재고 나서 써야 한다"
+    flows_to: [{ to: srch-content-structuring, label: "실내 · 실외" }]
+    code:
+      - { path: scripts/attraction-setting/extract.py, symbol: "def ask(doc):", note: "로컬 LLM 에 JSON 스키마로 실내 · 실외를 묻는다" }
+    applied:
+      status: PARTIAL
+      summary: "로컬 Qwen3-8B 가 분류 규칙이 못 정한 관광지 3,220건의 실내 · 실외를 판정한다(표본 정확도 약 93%). 결과는 사람이 SQL 로 반영하고, 테마 · 계절은 표본 오답이 잦아 버렸다"
 
   # ─────────────────────────── 인제스트 ───────────────────────────
   - id: search-ingest
     kind: DOMAIN
-    name: "검색 인제스트"
+    name: "색인 · 파이프라인"
     category: ARCHITECTURE
     level: INTERMEDIATE
     description: "원천에서 색인까지. 문서 임베딩은 이 축에서 오프라인으로 일어난다"
-    contains: [source-collection, normalization-derivation, document-embedding, index-contract, bulk-indexing, srch-index-sync]
+    contains: [source-collection, normalization-derivation, document-embedding, index-contract, bulk-indexing, srch-index-sync, srch-opensearch-operation]
+    flows_to: [{ to: search-query, label: "색인" }]
+    applied:
+      status: LIVE
+      summary: "place DB 를 매일 전량 훑어 새 색인을 만들고 별칭을 한 번에 옮긴다. 상품은 Kafka 이벤트로 증분 색인한다"
   - id: source-collection
     kind: STAGE
     name: "원천 수집"
@@ -31,6 +91,9 @@ concepts:
     description: "외부 원천을 전량 또는 증분으로 받는다. 호출은 일일 한도 자원이다"
     contains: [full-scan, incremental-backfill, api-quota]
     flows_to: [normalization-derivation]
+    applied:
+      status: LIVE
+      summary: "원천은 place DB(SSOT)다. TourAPI 는 place 수집 CronJob 들이 받고, 재색인은 매번 place API 를 키셋으로 전량 훑는다"
   - id: full-scan
     kind: MECHANISM
     name: "풀스캔"
@@ -58,6 +121,9 @@ concepts:
     description: "원본은 그대로 두고 화면용 그루핑은 파생 컬럼으로 만든다"
     contains: [raw-preservation, derived-column, taxonomy-tagging, srch-ingest-pipeline]
     flows_to: [document-embedding]
+    applied:
+      status: LIVE
+      summary: "제목의 현지명 분리 · 방문 속성(주차 · 휴무 · 반려동물 · 입장료) 파싱 · 분류 코드 이름을 파생 필드로 둔다. 원천 필드는 덮지 않는다"
   - id: raw-preservation
     kind: MECHANISM
     name: "원본 보존"
@@ -120,6 +186,9 @@ concepts:
       - "모델을 바꾸면 왜 전 문서를 다시 인코딩해야 하나"
     contains: [embedding-text-rule, embedding-model, model-stamp, offline-batch, srch-embedding-model-selection, srch-embedding-fine-tuning, srch-chunking, srch-embedding-model-migration, srch-vector-normalization, srch-vector-dimension-choice, srch-pca-reduction, srch-vector-space-mismatch]
     flows_to: [bulk-indexing]
+    applied:
+      status: LIVE
+      summary: "문서 벡터는 클러스터 밖(로컬 GPU)에서 만들어 place DB 에 올리고 재색인이 실어 색인한다. 모델 ref 가 다른 벡터는 싣지 않는다"
   - id: embedding-text-rule
     kind: MECHANISM
     name: "임베딩 텍스트 규칙"
@@ -264,6 +333,11 @@ concepts:
     questions:
       - "매핑을 운영 중에 바꿀 수 없는 필드 속성은 무엇이고 그때 어떻게 하나"
     contains: [index-mapping, analyzer-tokenizer, inverse-index, vector-field, srch-index-template, srch-mapping-explosion, srch-object-array-cross-match, srch-analyzer-mismatch]
+    code:
+      - { path: search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/IndexAliasManager.kt, symbol: "fun createIndex(indexName: String, definitionResource: String = PRODUCTS_INDEX_DEFINITION) {", note: "색인 정의를 원문 그대로 보낸다" }
+    applied:
+      status: LIVE
+      summary: "색인 정의 JSON 을 원문 그대로 보낸다. nori 사용자 사전 200항 · 검색 분석기에만 조사 · 어미 품사 필터와 동의어 · 640차원 HNSW(m 16 · ef_construction 128 · 1-bit)"
   - id: index-mapping
     kind: MECHANISM
     name: "매핑 · 필드 타입"
@@ -469,6 +543,9 @@ concepts:
     description: "토큰화 전에 원문 문자열을 고친다 — HTML 제거 · 문자 치환 · 정규식 치환. 여기서 지운 글자는 뒤 단계에서 되살릴 수 없다"
     synonyms: ["char filter", "html_strip", "mapping char filter"]
     flows_to: [srch-tokenizer]
+    applied:
+      status: NONE
+      summary: "문자 필터는 없다"
   - id: srch-tokenizer
     kind: MECHANISM
     name: "토크나이저"
@@ -478,6 +555,9 @@ concepts:
     synonyms: ["tokenizer"]
     contains: [srch-standard-tokenizer, srch-ngram-tokenizer, srch-edge-ngram]
     flows_to: [srch-token-filter]
+    applied:
+      status: LIVE
+      summary: "nori_user — 복합어는 분해형만 남기고(discard) 사용자 사전 200항을 쓴다"
   - id: srch-standard-tokenizer
     kind: MECHANISM
     name: "표준 토크나이저"
@@ -521,6 +601,9 @@ concepts:
     synonyms: ["token filter"]
     contains: [srch-lowercase-folding, srch-stemming, srch-lemmatization, srch-synonym-filter, srch-shingle, srch-pos-filter, srch-reading-form]
     uses: [stopword]
+    applied:
+      status: LIVE
+      summary: "검색 분석기에만 조사 · 어미 품사 필터(14개)와 동의어 그래프를 건다. 색인 분석기에는 필터가 없다"
   - id: srch-lowercase-folding
     kind: MECHANISM
     name: "소문자화 · ASCII 폴딩"
@@ -924,15 +1007,23 @@ concepts:
       - { to: srch-ann-recall, reason: "탐색 폭이 곧 근사 재현율이다" }
   - id: bulk-indexing
     kind: STAGE
-    name: "벌크 인덱싱"
+    name: "데이터 파이프라인"
     category: DATA
     level: INTERMEDIATE
-    description: "대량 데이터를 한 번에 색인하는 기법"
+    description: "원천 전량으로 새 색인을 만들고 별칭을 한 번에 옮긴다. 덜 찬 색인이 라이브가 되지 않게 교체 전에 건수 · 실패율을 잰다"
     synonyms: ["bulk API"]
     questions:
       - "벌크 응답이 200 인데 일부 문서가 빠지는 경우는 어떻게 잡나"
     contains: [index-rebuild, alias-swap, reindex-count-gate, partial-index-live, srch-bulk-sizing, srch-bulk-partial-failure, srch-vector-indexing-cost, srch-indexing-throughput]
     flows_to: [srch-index-sync]
+    code:
+      - { path: search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/IndexAliasManager.kt, symbol: "fun updateAliasAndCleanup(alias: String, newIndexName: String, maxRetention: Int = 2) {", note: "건수 게이트 → 별칭 교체 → 이전 색인 정리" }
+    applied:
+      status: LIVE
+      summary: "매일 06:30(KST) CronJob 이 새 색인을 만들고 별칭을 옮긴다. 새 색인이 라이브의 90% 미만이거나 부가 정보 묶음 조회 실패가 5% 를 넘으면 교체하지 않는다"
+      facts:
+        - { label: "교체 하한", value: "라이브 건수의 90%", key: reindex-min-doc-ratio }
+        - { label: "조회 실패 상한", value: "5%", key: reindex-lookup-failure-ratio }
   - id: index-rebuild
     kind: MECHANISM
     name: "새 인덱스 생성"
@@ -945,6 +1036,9 @@ concepts:
     flows_to: [alias-swap]
     causes:
       - { to: partial-index-live, reason: "벌크가 도중에 죽어도 별칭을 넘기면 덜 찬 색인이 라이브 — 2026-09-22 45,535/59,735건", evidence: msa-opensearch-memory-and-quantization-record }
+    applied:
+      status: LIVE
+      summary: "place API 를 afterId 키셋으로 훑어 날짜 붙은 새 색인을 만든다"
   - id: alias-swap
     kind: MECHANISM
     name: "별칭 스왑"
@@ -956,6 +1050,9 @@ concepts:
       - "별칭 교체가 막지 못하는 실패는 무엇인가"
     code:
       - { path: code-dictionary/feature/src/main/kotlin/com/kgd/codedictionary/infrastructure/opensearch/adapter/IndexAliasManager.kt, symbol: "override fun swapAlias(", note: "별칭을 새 색인으로 옮기고 옛 색인은 보관 수만 남긴다" }
+    applied:
+      status: LIVE
+      summary: "건수 게이트를 통과하면 별칭을 새 색인으로 한 번에 옮기고 이전 색인을 지운다(관광지는 하나만 남긴다)"
   - id: reindex-count-gate
     kind: MECHANISM
     name: "재색인 건수 게이트"
@@ -1005,7 +1102,7 @@ concepts:
     synonyms: ["indexing rate", "docs/s"]
   - id: srch-index-sync
     kind: STAGE
-    name: "색인 동기화"
+    name: "Kafka · RDB 색인"
     category: DISTRIBUTED_SYSTEM
     level: INTERMEDIATE
     description: "원천(SSOT)의 변경을 색인에 옮긴다 — 전체 재색인 · 증분 · 이벤트 기반 중 고른다. 증분은 빠르지만 순서와 멱등이 문제가 된다"
@@ -1013,6 +1110,23 @@ concepts:
       - "DB 트랜잭션 안에서 검색 엔진을 직접 호출하면 무엇이 틀어지나"
       - "같은 문서의 이벤트가 순서가 뒤바뀌어 오면 어떻게 옛 값을 버리나"
     contains: [srch-incremental-indexing, srch-change-capture-indexing, srch-external-versioning, srch-source-of-truth-rebuild, srch-out-of-order-update, srch-index-lag, srch-reindex-rto]
+    code:
+      - { path: search/consumer/src/main/kotlin/com/kgd/search/infrastructure/messaging/ProductIndexingConsumer.kt, symbol: "class ProductIndexingConsumer(", note: "상품 이벤트 증분 색인" }
+    applied:
+      status: LIVE
+      summary: "상품은 product.item.created · updated 이벤트를 search-indexer 컨슈머가 받아 증분 색인하고, 실패는 재시도 뒤 DLT 로 보낸다. 관광지는 RDB(place) 전체 재색인만 있다"
+  - id: srch-opensearch-operation
+    kind: STAGE
+    name: "OpenSearch 운영"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "검색 엔진을 직접 띄우고 버전 · 플러그인 · 메모리 경계를 관리한다. 힙 밖 메모리(페이지 캐시 · 네이티브)가 한도를 정한다"
+    contains: [opensearch, nori]
+    code:
+      - { path: docker/opensearch/Dockerfile, symbol: "FROM opensearchproject/opensearch:3.8.0", note: "nori 플러그인을 얹은 이미지" }
+    applied:
+      status: LIVE
+      summary: "OpenSearch 3.8 + nori 이미지를 직접 빌드해 단일 노드로 운영한다. 힙 512MB 에 메모리 한도 2,560Mi, 힙 밖 증가는 MALLOC_ARENA_MAX=2 로 누른다"
   - id: srch-incremental-indexing
     kind: MECHANISM
     name: "증분 색인"
@@ -1093,6 +1207,9 @@ concepts:
       - "역색인과 doc values 를 한 구조로 겸할 수 없는 이유는 무엇인가"
       - "text 필드로 정렬 · 집계하면 왜 메모리가 터지나"
     contains: [inverse-index, srch-doc-values, srch-fielddata, srch-stored-fields, srch-norms, srch-term-vectors, srch-points-bkd, vector-field, srch-heap-pressure]
+    applied:
+      status: LIVE
+      summary: "OpenSearch(Lucene) 기본 자료구조 — 역색인 · doc values · HNSW 를 그대로 쓴다. 손댄 것은 필드 매핑과 1-bit 양자화다"
   - id: srch-term-dictionary
     kind: MECHANISM
     name: "텀 사전"
@@ -1225,6 +1342,9 @@ concepts:
       - "방금 색인한 문서가 검색에 안 보이는 이유와, 재시작 후에도 남는 이유는 각각 무엇인가"
       - "refresh_interval 을 100ms 로 줄이면 무엇이 나빠지나"
     contains: [srch-segment, srch-indexing-buffer, srch-refresh, srch-translog, srch-flush-commit, srch-segment-merge, srch-index-sorting, srch-segment-explosion, srch-merge-io-storm, srch-unrefreshed-read, srch-acked-write-loss, srch-segment-count]
+    applied:
+      status: LIVE
+      summary: "refresh · merge · translog 를 설정하지 않아 OpenSearch 기본값(refresh 1초)으로 돈다. 재색인 중에도 refresh 를 끄지 않는다"
   - id: srch-segment
     kind: MECHANISM
     name: "세그먼트 (불변 묶음)"
@@ -1257,6 +1377,9 @@ concepts:
     description: "새 문서는 먼저 메모리 버퍼에 쌓인다. 아직 검색도 안 되고 디스크에도 없다"
     synonyms: ["indexing buffer", "in-memory buffer"]
     flows_to: [srch-refresh]
+    applied:
+      status: LIVE
+      summary: "기본값으로 쓴다"
   - id: srch-refresh
     kind: MECHANISM
     name: "리프레시 (NRT 가시성)"
@@ -1271,6 +1394,9 @@ concepts:
       - { to: srch-segment-explosion, reason: "짧은 간격이 작은 세그먼트를 계속 만든다" }
     affects:
       - { to: srch-indexing-throughput, reason: "대량 색인 중에는 리프레시를 늦춰야 처리량이 오른다" }
+    applied:
+      status: LIVE
+      summary: "기본값(1초)으로 쓴다. 재색인 중에도 끄지 않는다"
   - id: srch-translog
     kind: MECHANISM
     name: "트랜스로그"
@@ -1289,6 +1415,9 @@ concepts:
     description: "세그먼트를 fsync 해 디스크에 내구하게 만들고 트랜스로그를 비운다. 리프레시와 달리 무겁고 드물다"
     synonyms: ["flush", "Lucene commit", "fsync"]
     flows_to: [srch-segment-merge]
+    applied:
+      status: LIVE
+      summary: "기본값으로 쓴다"
   - id: srch-segment-merge
     kind: MECHANISM
     name: "세그먼트 병합"
@@ -1301,6 +1430,9 @@ concepts:
       - { to: srch-segment-explosion, reason: "작은 세그먼트를 모아 질의가 훑을 단위를 줄인다" }
     causes:
       - { to: srch-merge-io-storm, reason: "큰 병합이 디스크 I/O 를 점유한다" }
+    applied:
+      status: LIVE
+      summary: "기본 계층 병합 정책을 쓴다. 강제 병합은 하지 않는다"
   - id: srch-tiered-merge-policy
     kind: MECHANISM
     name: "계층 병합 정책"
@@ -1372,8 +1504,12 @@ concepts:
     name: "검색어 파이프라인"
     category: ARCHITECTURE
     level: INTERMEDIATE
-    description: "검색어가 결과가 되기까지 — 쿼리 리포뮬레이션 · 쿼리 언더스탠딩 · 후보 생성 · 융합 · 리랭킹을 거쳐 결과를 구성하고, 0건이면 대응한다. 싼 것으로 많이 거르고 비싼 것은 적게 쓴다"
+    description: "검색어가 결과가 되기까지 — 쿼리 재작성 · 쿼리 언더스탠딩 · 리트리벌(키워드 · 덴스) · 하이브리드 RRF · 랭킹을 거쳐 결과를 구성하고, 0건이면 대응한다. 싼 것으로 많이 거르고 비싼 것은 적게 쓴다"
     contains: [srch-query-input, srch-query-reformulation, query-understanding, candidate-generation, rank-fusion, post-ranking, srch-zero-result-handling, srch-result-presentation]
+    flows_to: [{ to: search-evaluation, label: "노출 · 클릭" }]
+    applied:
+      status: PARTIAL
+      summary: "쿼리 이해 · 리트리벌 · 하이브리드 RRF 는 적용이다. 랭킹은 규칙 기반 피처 결합뿐이고 Learning to Rank · 리랭킹 모델은 재 보고 보류했다"
   - id: srch-query-input
     kind: STAGE
     name: "사용자 검색"
@@ -1391,7 +1527,7 @@ concepts:
       - { path: search/app/src/main/kotlin/com/kgd/search/application/attraction/service/SearchAttractionService.kt, symbol: "override fun execute(query: SearchAttractionUseCase.Query)", note: "관광지 검색 한 번의 순서" }
   - id: srch-query-reformulation
     kind: STAGE
-    name: "쿼리 리포뮬레이션"
+    name: "쿼리 재작성"
     category: ALGORITHM
     level: INTERMEDIATE
     description: "사용자가 친 말을 색인이 알아듣는 말로 고쳐 쓴다 — 오타 교정 · 질의 확장 · 질의 재작성. 원문과 고친 말을 함께 들고 가고, 고쳤으면 사용자에게 알린다"
@@ -1405,13 +1541,23 @@ concepts:
         - { label: "교정 해제", value: "exact=true" }
     code:
       - { path: search/app/src/main/kotlin/com/kgd/search/application/attraction/service/SearchAttractionService.kt, symbol: "val corrected = original?.takeUnless { query.exact }", note: "교정은 두 검색 모두에 쓴다" }
+  - id: srch-multilingual-query
+    kind: STAGE
+    name: "다국어 · 자연어"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "여러 언어와 설명형 문장 질의를 받는다. 언어마다 분석기 · 필터를 고르고, 문장형 질의는 키워드보다 뜻 검색이 받는다"
+    contains: [srch-language-identification]
+    applied:
+      status: LIVE
+      summary: "ko · en 이 한 색인에 lang 필드로 함께 있고 질의마다 lang 필터를 건다. 설명형 자연어 질의는 덴스 검색이 받는다"
   - id: srch-sparse-retrieval
     kind: STAGE
-    name: "스파스 검색"
+    name: "키워드 · 정확 일치"
     category: ALGORITHM
     level: INTERMEDIATE
     description: "단어가 맞는 문서를 찾는다. 역색인에서 검색어 토큰을 가진 문서를 모아 BM25 로 채점한다. 고유명사 · 정확한 이름에 강하고, 뜻은 같지만 표현이 다른 문서는 놓친다"
-    contains: [srch-query-dsl, bm25, srch-relevance-tuning, srch-tf-idf, srch-boolean-retrieval, srch-learned-sparse]
+    contains: [srch-query-dsl, bm25, srch-relevance-tuning, srch-tf-idf, srch-boolean-retrieval]
     applied:
       status: LIVE
       summary: "잔여 검색어로 BM25 를 돌리고, 융합 전에 이 검색 안에서만 관광 · 상업 분류 가중치와 문서 품질 점수를 곱한다"
@@ -1422,11 +1568,11 @@ concepts:
       - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt, symbol: "private fun withCategoryWeights(", note: "키워드 검색 점수에 가중치를 곱한다" }
   - id: srch-dense-retrieval
     kind: STAGE
-    name: "덴스 검색"
+    name: "덴스 + 1-bit"
     category: ALGORITHM
     level: ADVANCED
     description: "뜻이 가까운 문서를 찾는다. 검색어와 문서를 같은 벡터 공간에 놓고 가까운 이웃을 근사 탐색으로 고른다. 표현이 달라도 찾지만 정확한 이름 일치에는 약하다"
-    contains: [query-embedding, ann-search, srch-late-interaction]
+    contains: [query-embedding, ann-search, srch-late-interaction, srch-vector-database]
     applied:
       status: LIVE
       summary: "교정된 원문 전체를 벡터로 바꿔 필터를 건 HNSW 로 찾는다(동반 표현만 표준 문구로 바꾼다). 1비트 양자화로 후보를 넓게 뽑고 원본 벡터로 다시 채점한다"
@@ -1435,6 +1581,15 @@ concepts:
         - { label: "양자화", value: "sq 1비트 → 원본 재채점 ×3" }
     code:
       - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt, symbol: "private fun vectorLeg(", note: "필터를 knn 안에 둔 벡터 검색" }
+  - id: srch-vector-database
+    kind: TECHNOLOGY
+    name: "Milvus · FAISS"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "벡터 전용 검색 엔진 · 라이브러리. 대규모 ANN 에 특화됐지만 키워드 검색 · 필터 · 문서 저장을 따로 붙여야 한다"
+    applied:
+      status: NONE
+      summary: "전용 벡터 DB 는 없다 — OpenSearch kNN(Lucene HNSW)이 같은 색인에서 키워드 검색 · 필터와 함께 받는다"
   - id: srch-zero-result-handling
     kind: STAGE
     name: "0건 대응"
@@ -1515,7 +1670,7 @@ concepts:
     questions:
       - "「강남 3만원 이하 이탈리안」에서 무엇을 필터로 옮기고 무엇을 검색어로 남기나"
       - "의도를 필터로 쓸 때와 랭킹 힌트로 쓸 때 각각 무엇을 잃나"
-    contains: [query-normalization, morphological-analysis, keyword-type-classification, intent-to-filter, srch-query-intent-classification, srch-query-entity-recognition, srch-query-segmentation, srch-language-identification, srch-policy-switch, srch-morpheme-fragment-noise, search-lexicon]
+    contains: [query-normalization, morphological-analysis, keyword-type-classification, intent-to-filter, srch-query-intent-classification, srch-query-entity-recognition, srch-query-segmentation, srch-language-identification, srch-policy-switch, srch-morpheme-fragment-noise, search-lexicon, srch-multilingual-query]
     flows_to: [{ to: candidate-generation, label: "잔여 검색어 · 필터" }]
     applied:
       status: LIVE
@@ -1709,18 +1864,18 @@ concepts:
     synonyms: ["PRF", "RM3", "blind feedback"]
   - id: srch-query-rewriting
     kind: MECHANISM
-    name: "질의 재작성"
+    name: "구조 재작성"
     category: ALGORITHM
     level: ADVANCED
     description: "질의의 구조를 바꿔 다시 쓴다 — 필드 지정 · 구문화 · 불필요어 제거 · 조건 분해. 유형별로 식별한 낱말을 매칭어가 아니라 필터 · 가점 · 제외 조건으로 바꾸는 것이 대표적이다. 규칙 기반과 학습 기반이 있다"
     synonyms: ["query reformulation", "query rewriting", "query relaxation", "질의 재작성", "쿼리 재작성", "검색 조건 변환"]
     contains: [srch-llm-query-rewrite]
     applied:
-      status: NONE
-      summary: "LLM 으로 검색어를 다시 쓰는 단계는 없다"
+      status: PARTIAL
+      summary: "규칙으로 구조를 바꾼다 — 의도어를 빼고 조건어(주차 · 무료 · 반려동물)를 속성 필터로 옮긴다. LLM 으로 검색어를 다시 쓰는 단계는 없다"
   - id: srch-llm-query-rewrite
     kind: MECHANISM
-    name: "LLM 질의 재작성"
+    name: "LLM 쿼리 재작성"
     category: ALGORITHM
     level: ADVANCED
     description: "언어 모델로 질의를 풀어 쓰거나 가상 문서(HyDE)를 만들어 검색한다. 표현력이 크지만 지연 · 비용 · 비결정성이 붙어 캐시와 폴백이 필요하다"
@@ -1898,11 +2053,32 @@ concepts:
       - { to: srch-embedding-sidecar, reason: "search/embed 이미지의 추론 런타임" }
   - id: srch-inference-server
     kind: MECHANISM
-    name: "추론 서버"
+    name: "Triton · vLLM"
     category: INFRASTRUCTURE
     level: ADVANCED
-    description: "인코더를 별도 서비스(GPU 가능)로 두고 여러 호출자가 네트워크로 부른다. 배치 · 확장이 자유롭지만 홉과 장애 지점이 하나 는다"
+    description: "모델을 별도 추론 서버(Triton · vLLM · ONNX Runtime · TensorRT)로 두고 여러 호출자가 네트워크로 부른다. 배치 · GPU 스케줄링 · 확장이 자유롭지만 홉과 장애 지점이 하나 는다"
     synonyms: ["inference server", "embedding service"]
+    applied:
+      status: NONE
+      summary: "전용 추론 서버는 없다 — 질의 인코더는 search 파드 안의 CPU 사이드카다"
+  - id: srch-paper-adoption
+    kind: MECHANISM
+    name: "최신 논문 적용"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "새 기법을 논문 · 오픈소스에서 가져와 평가 세트로 재 보고 쓴다"
+    applied:
+      status: LIVE
+      summary: "RRF · HNSW · RaBitQ 계열 1-bit 양자화 · 임베딩 모델 벤치오프(4B → 270m)"
+  - id: srch-production-languages
+    kind: TECHNOLOGY
+    name: "Python · Go"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "검색 · ML 쪽에서 흔한 프로덕션 언어. 모델 · 평가 도구는 Python, 고성능 서버는 Go 가 많다"
+    applied:
+      status: PARTIAL
+      summary: "Kotlin/JVM 이 주력이다. Python 은 수집 · 임베딩 · 평가 · 질의 인코더 사이드카에 쓰고 Go 는 없다"
   - id: srch-in-engine-inference
     kind: MECHANISM
     name: "엔진 내장 추론"
@@ -2128,16 +2304,16 @@ concepts:
     synonyms: ["expensive queries", "leading wildcard"]
   - id: candidate-generation
     kind: STAGE
-    name: "후보 생성"
+    name: "리트리벌"
     category: ALGORITHM
     level: INTERMEDIATE
-    description: "스파스와 덴스, 두 레그가 각자 상위 후보를 낸다. 1단계가 놓친 문서는 2단계가 되살릴 수 없어서 리랭킹보다 1단계 재현율이 먼저다"
+    description: "키워드 · 덴스(그리고 학습형 스파스) 검색이 각자 상위 후보를 낸다. 1단계가 놓친 문서는 2단계가 되살릴 수 없어서 리랭킹보다 1단계 재현율이 먼저다"
     synonyms: ["retrieval", "리트리벌", "first-stage retrieval"]
     questions:
       - "글자를 맞추는 방식과 뜻을 맞추는 방식은 각각 어떤 질의에서 지나"
     code:
       - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt, symbol: "private fun hybridQuery(", note: "키워드 레그와 벡터 레그를 한 하이브리드 질의로 묶는다" }
-    contains: [srch-sparse-retrieval, srch-dense-retrieval, srch-similarity-module, opensearch, srch-post-filter-recall-loss, srch-ann-recall]
+    contains: [srch-sparse-retrieval, srch-dense-retrieval, srch-similarity-module, opensearch, srch-post-filter-recall-loss, srch-ann-recall, srch-learned-sparse]
     flows_to: [rank-fusion]
     measured_by:
       - { to: recall-precision, reason: "후보 단계는 놓친 정답(재현율)을 잰다" }
@@ -2205,7 +2381,7 @@ concepts:
     description: "여러 필드를 가중치를 주고 한 가상 필드로 합친 뒤 BM25 를 한 번 계산한다. 필드마다 따로 채점해 더할 때의 IDF 왜곡이 없다"
     synonyms: ["BM25F", "combined_fields"]
   - id: srch-learned-sparse
-    kind: MECHANISM
+    kind: STAGE
     name: "학습형 스파스"
     category: ALGORITHM
     level: ADVANCED
@@ -2215,10 +2391,9 @@ concepts:
       - "학습형 스파스가 덴스 벡터 대신 역색인을 유지해서 얻는 것은 무엇인가"
     contains: [srch-splade, srch-doc-expansion, srch-two-phase-sparse]
     uses: [srch-sparse-vector-field]
-    alternative_to:
-      - { to: bm25, reason: "통계 가중 대 학습 가중 — 같은 역색인 위에서" }
     applied:
       status: NONE
+      summary: "오프라인 측정: 다국어 inference-free 스파스를 셋째 검색으로 넣으면 nDCG@10 ko −0.048 · en +0.018. 국문은 단독이 BM25 보다 낮아 보류했다"
   - id: srch-splade
     kind: MECHANISM
     name: "SPLADE"
@@ -2226,6 +2401,8 @@ concepts:
     level: ADVANCED
     description: "언어 모델의 마스크 예측 로짓으로 어휘 전체에 가중을 매기고 희소성 규제로 대부분을 0 으로 만든다. 학습형 스파스의 대표 모델 계열이다"
     synonyms: ["SPLADE"]
+    alternative_to:
+      - { to: bm25, reason: "통계 가중 대 학습 가중 — 같은 역색인 위에서" }
   - id: srch-doc-expansion
     kind: MECHANISM
     name: "문서 확장"
@@ -2335,7 +2512,7 @@ concepts:
     synonyms: ["recall@k vs exact", "ANN recall"]
   - id: rank-fusion
     kind: STAGE
-    name: "융합"
+    name: "하이브리드 RRF"
     category: ALGORITHM
     level: INTERMEDIATE
     description: "점수 스케일이 다른 두 후보 목록을 합친다. BM25 점수와 코사인은 단위가 달라 그대로 더하면 큰 쪽이 이긴다. 융합 전에 두 레그에 같은 필터를 건다"
@@ -2583,15 +2760,27 @@ concepts:
     description: "곱셈 결합에서 신호 값이 0 인 문서(신상품)의 점수가 0 이 돼 텍스트가 잘 맞아도 바닥으로 가는 상태"
   - id: post-ranking
     kind: STAGE
-    name: "후처리"
+    name: "랭킹"
     category: ALGORITHM
     level: ADVANCED
-    description: "융합된 상위를 다시 채점하거나 다양성 · 비즈니스 규칙을 건다. 단계마다 후보 수와 문서당 비용이 반비례한다"
-    contains: [srch-ranking-funnel, reranking, diversity-business-rules, srch-personalization, srch-train-serve-skew]
+    description: "합친 후보의 최종 순서를 정한다 — 피처 결합(규칙) → Learning to Rank → 리랭킹 모델로 갈수록 후보는 줄고 문서당 비용은 는다"
+    contains: [srch-ranking-funnel, reranking, diversity-business-rules, srch-personalization, srch-train-serve-skew, srch-ranking-feature-combination, learning-to-rank]
     flows_to: [{ to: srch-zero-result-handling, label: "0건이면" }]
     applied:
       status: PARTIAL
-      summary: "상품 검색만 톰슨 샘플링 밴딧으로 상위 100건을 다시 정렬한다. 관광지 · 통합 검색은 융합 결과가 최종 순위다"
+      summary: "규칙 기반 피처 결합이 순위를 정한다. Learning to Rank · 리랭킹 모델은 재 보고 보류했고, 상품 검색만 밴딧 재정렬이 붙는다"
+  - id: srch-ranking-feature-combination
+    kind: MECHANISM
+    name: "랭킹 피처 결합"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "관련도 점수에 분류 · 품질 · 인기 같은 피처를 손으로 정한 가중으로 곱하거나 더한다. 학습 없이 바로 쓰지만 가중을 사람이 정한다"
+    flows_to: [{ to: learning-to-rank, label: "피처" }]
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt, symbol: "private fun withCategoryWeights(", note: "분류 가중치를 곱한다" }
+    applied:
+      status: LIVE
+      summary: "키워드 검색 점수에 관광 · 상업 분류 가중치와 문서 품질을 곱하고(function_score), 상업 의도면 정책을 바꾼 뒤 RRF 로 합친다. 가중은 규칙으로 정한다"
   - id: srch-ranking-funnel
     kind: MECHANISM
     name: "랭킹 퍼널 (캐스케이드)"
@@ -2603,21 +2792,17 @@ concepts:
       - "리랭커를 좋게 만드는 것보다 1단계 재현율이 먼저인 이유는 무엇인가"
   - id: reranking
     kind: MECHANISM
-    name: "리랭킹"
+    name: "리랭킹 모델"
     category: ALGORITHM
     level: ADVANCED
     description: "상위 후보만 무거운 모델로 다시 채점한다. 신경망 리랭커는 GPU 없이는 성립하기 어렵고, 트리 모델 LTR 은 CPU 로 된다"
     synonyms: ["reranker", "re-ranking"]
-    contains: [learning-to-rank, srch-cross-encoder, srch-llm-reranker, srch-query-rescore]
+    contains: [srch-cross-encoder, srch-llm-reranker, srch-query-rescore]
     measured_by:
       - { to: ndcg, reason: "리랭크 전후 상위 10 의 등급 순서를 비교한다" }
     applied:
-      status: PARTIAL
-      summary: "상품 검색에 톰슨 샘플링 밴딧 재정렬이 켜져 있다. 교차 인코더 · LTR 은 없다"
-      facts:
-        - { label: "밴딧 상위", value: "100건" }
-    code:
-      - { path: search/app/src/main/kotlin/com/kgd/search/application/ranking/service/ThompsonReranker.kt, symbol: "fun rerank(", note: "상품 검색 상위 N 재정렬" }
+      status: NONE
+      summary: "학습 리랭커(bge-reranker-v2-m3)는 오프라인 ko +0.052 였지만 질의당 1.3초라 ARM CPU 요청 경로에 못 올려 보류했다. 상품 검색의 톰슨 밴딧 재정렬은 모델이 아니라 탐색이라 「밴딧 · 탐색」에 둔다"
   - id: srch-cross-encoder
     kind: MECHANISM
     name: "크로스 인코더"
@@ -2656,6 +2841,10 @@ concepts:
       - "LTR 학습 피처와 서빙 피처가 어긋나면 어떤 증상이 나나"
     contains: [query-level-cross-validation, srch-lambdamart, srch-feature-logging]
     uses: [ranking-features, ltr-loss-families]
+    flows_to: [{ to: reranking, label: "상위 후보" }]
+    applied:
+      status: NONE
+      summary: "LightGBM LambdaMART 를 서빙 피처로 오프라인 학습했다(질의 5겹 교차검증). LLM 라벨로는 ko +0.047 · en +0.029 지만 사람 블라인드 비교 승률 57%(21쌍, p=0.66)로 지금 순위와 구별되지 않아 보류했다"
   - id: srch-lambdamart
     kind: MECHANISM
     name: "LambdaMART"
@@ -2934,7 +3123,7 @@ concepts:
     category: ARCHITECTURE
     level: INTERMEDIATE
     description: "순위가 정해진 결과를 사람이 읽을 모양으로 만든다 — 일치 부분 강조 · 묶기 · 생성형 답변"
-    contains: [srch-highlighting, srch-field-collapsing, srch-rag, srch-aggregation]
+    contains: [srch-highlighting, srch-field-collapsing, srch-aggregation]
     applied:
       status: LIVE
       summary: "관광지 검색은 결과와 함께 교정어 · 해석한 조건 · 속성 패싯 건수 · 0건 사유 · 검색 id 를 낸다. 통합 검색은 타입별 묶음을 의도 → 제목 일치 → 고정 순서로 정렬하고, 한 타입이 실패하면 그 묶음만 빠진다"
@@ -2953,23 +3142,29 @@ concepts:
     applied:
       status: NONE
   - id: srch-rag
-    kind: MECHANISM
-    name: "RAG (검색 증강 생성)"
+    kind: STAGE
+    name: "RAG · GraphRAG"
     category: ARCHITECTURE
     level: ADVANCED
     description: "검색한 상위 문서를 언어 모델 입력에 넣어 답을 생성한다. 생성 품질의 상한은 검색 재현율이 정하고, 출처를 함께 보여야 검증된다"
     synonyms: ["RAG", "Retrieval-Augmented Generation", "conversational search"]
+    code:
+      - { path: chatbot/feature/src/main/kotlin/com/kgd/chatbot/infrastructure/knowledge/FileSystemKnowledgeAdapter.kt, symbol: "class FileSystemKnowledgeAdapter(", note: "챗봇 문서 지식원" }
     applied:
-      status: NONE
+      status: PARTIAL
+      summary: "챗봇에 파일 시스템 문서 지식원이 있지만 검색과 분리돼 있다. 검색 결과로 답을 생성하는 경로와 GraphRAG 는 없다"
 
   # ─────────────────────────── 평가 ───────────────────────────
   - id: search-evaluation
     kind: DOMAIN
-    name: "검색 평가"
+    name: "평가 · 로그"
     category: TESTING
     level: INTERMEDIATE
     description: "오프라인은 판정 세트가, 온라인은 트래픽이 필요하다. 어느 한쪽만 보면 각각의 맹점에 빠진다"
-    contains: [judgment-set-building, offline-evaluation, online-evaluation, srch-relevance-debugging, search-ops-monitoring]
+    contains: [judgment-set-building, offline-evaluation, online-evaluation, srch-relevance-debugging, search-ops-monitoring, srch-search-log-analysis, srch-metric-driven-improvement]
+    applied:
+      status: PARTIAL
+      summary: "판정 세트 v3(228쿼리 · 9,692쌍)로 매일 nDCG 게이트가 돈다. 검색 → 노출 → 클릭 원장은 이어졌지만 사람이 직접 친 검색이 적고 온라인 A/B 는 없다"
   - id: judgment-set-building
     kind: STAGE
     name: "판정 세트 구축"
@@ -2981,6 +3176,11 @@ concepts:
     contains: [pooling, judgment-coverage, click-weak-labels, position-bias, srch-llm-judgment, srch-inter-annotator-agreement, srch-pooling-bias, srch-small-query-set]
     flows_to: [offline-evaluation]
     uses: [graded-relevance]
+    code:
+      - { path: tools/embed/src/embed/pool.py, symbol: "def run_pool(", note: "세 구성의 상위를 풀링" }
+    applied:
+      status: LIVE
+      summary: "판정 세트 v3 — 228쿼리 · 9,692쌍 · 의도 유형 8, 세 구성의 top-20 을 다시 풀링했다. LLM 채점은 사람 블라인드 100건과 88% 일치를 확인한 뒤 썼다"
   - id: pooling
     kind: MECHANISM
     name: "풀링"
@@ -3045,18 +3245,44 @@ concepts:
   # 옛 offline-metrics(지표 묶음)를 평가 활동으로 바꾼 새 개념 — 옛 행은 관리 해제 뒤 어드민 삭제
   - id: offline-evaluation
     kind: STAGE
-    name: "오프라인 평가"
+    name: "평가 체계"
     category: TESTING
     level: INTERMEDIATE
-    description: "판정 세트로 순위를 채점한다 — nDCG·재현율을 트래픽 없이 잰다. 빠르게 반복하는 대리 지표이고, 확정은 온라인이 한다"
+    description: "판정 세트로 순위를 채점하고 회귀를 막는다 — nDCG · 재현율을 트래픽 없이 잰다. 빠르게 반복하는 대리 지표이고, 확정은 온라인이 한다"
     questions:
       - "MRR 과 nDCG 는 각각 어떤 질의에 맞나"
       - "평균 nDCG 가 올랐는데 질의별 델타를 봐야 하는 이유는 무엇인가"
-    code:
-      - { path: search/batch/src/main/kotlin/com/kgd/search/infrastructure/job/SearchEvaluationJobConfig.kt, symbol: "class SearchEvaluationJobConfig(", note: "판정 세트로 지표를 계산하는 배치" }
     contains: [ndcg, recall-precision, srch-precision-at-k, srch-recall-at-k, srch-f1-score, srch-mrr, srch-map, srch-dcg, srch-idcg, srch-err, srch-intra-list-diversity, srch-per-query-delta-analysis, srch-query-leakage, srch-offline-online-gap, srch-popularity-overfitting, srch-diversity-collapse]
-    flows_to: [online-evaluation]
     uses: [judgment-set]
+    flows_to: [online-evaluation, { to: srch-metric-driven-improvement, label: "회귀 · 원인" }]
+    code:
+      - { path: k8s/base/search-batch/eval/live-eval.py, symbol: "def gate(c_ko, c_en, n_err, unjudged):", note: "회귀 · 판정 없는 문서 비율 게이트" }
+    applied:
+      status: PARTIAL
+      summary: "매일 재색인 뒤 search-eval CronJob 이 ko · en nDCG@10 을 재서, 기준선보다 0.03 넘게 떨어지거나 판정 없는 문서가 15% 를 넘으면 실패한다. 온라인 A/B 는 없다"
+      facts:
+        - { label: "허용 하락폭", value: "0.03", key: eval-tolerance }
+        - { label: "판정 없는 문서 상한", value: "15%", key: eval-unjudged-limit }
+  - id: srch-search-log-analysis
+    kind: STAGE
+    name: "검색 로그 분석"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "검색 → 노출 → 클릭을 한 화면 단위로 잇고 순위 위치를 남긴다. 이어져 있어야 재질의 · 이탈 · 클릭 기반 학습을 할 수 있다"
+    contains: [impression-click-ledger]
+    flows_to: [{ to: online-evaluation, label: "노출 · 클릭" }]
+    applied:
+      status: PARTIAL
+      summary: "검색 → 노출 → 클릭이 화면 단위로 이어진다(2026-10-13 기준 클릭 71건 모두 연결, 순위 위치 99.7%). 검색어를 직접 친 검색이 2주에 4건이라 분석 · 학습은 트래픽을 기다린다"
+  - id: srch-metric-driven-improvement
+    kind: STAGE
+    name: "지표 기반 개선"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "지표로 문제를 정의하고 원인을 값으로 확정한 뒤 고친다. 지표가 움직인 이유가 검색이 아니라 측정(판정 · 라벨)일 수 있다"
+    applied:
+      status: LIVE
+      summary: "nDCG 로 회귀를 잡고 원인을 값으로 확정한다 — BM25 .45 → .38 하락을 판정 없는 새 문서(풀링 편향)로, LTR 이득을 라벨 누수로 가려냈다"
   - id: ndcg
     kind: METRIC
     name: "nDCG"
@@ -3192,6 +3418,9 @@ concepts:
       - "A/B 대신 인터리빙을 쓰면 무엇을 얻고 무엇을 못 재나"
       - "클릭 로그만으로 새 랭커를 평가할 때 무엇을 먼저 기록해 둬야 하나"
     contains: [interleaving, ab-test, impression-click-ledger, propensity-logging, off-policy-evaluation, bandit-exploration, srch-north-star-guardrail, infra-shadow-traffic, srch-ramp-up, srch-ab-sample-size, srch-click-models, srch-propensity-estimation, srch-random-exploration, ctr, srch-conversion-rate, srch-requery-rate, srch-dwell-time, srch-abandonment-rate, srch-regret, srch-exposure-bias, srch-feedback-loop, srch-peeking-problem, srch-sample-ratio-mismatch, srch-ranking-flicker]
+    applied:
+      status: PARTIAL
+      summary: "A/B · 인터리빙은 없다. 노출 · 클릭 원장과 상품 검색의 밴딧 탐색만 있다"
   - id: interleaving
     kind: MECHANISM
     name: "인터리빙"
@@ -3225,6 +3454,11 @@ concepts:
     level: INTERMEDIATE
     description: "대상 × 동작 두 축(entity_type · action)과 계층 위치(screen · section · item_index)로 남긴 노출과 클릭. 온라인 학습과 CTR 지표의 유일한 원천"
     flows_to: [propensity-logging]
+    code:
+      - { path: analytics/app/src/main/resources/clickhouse/analytics/V005__events_two_axis.sql, symbol: "CREATE TABLE IF NOT EXISTS analytics.events", note: "대상 × 동작 두 축 원장" }
+    applied:
+      status: LIVE
+      summary: "place 검색 화면이 SEARCH · IMPRESSION · CLICK 을 보내고 노출 · 클릭에 순위 위치(item_index)를 싣는다. ClickHouse analytics.events 에 쌓인다"
   - id: propensity-logging
     kind: MECHANISM
     name: "탐색 · 성향 로깅"
@@ -3236,6 +3470,9 @@ concepts:
     uses: [srch-propensity-score]
     mitigates:
       - { to: position-bias, reason: "노출 확률을 함께 적어 두면 위치 때문에 받은 클릭을 역가중할 수 있다" }
+    applied:
+      status: NONE
+      summary: "탐색 확률을 남기지 않는다"
   - id: off-policy-evaluation
     kind: MECHANISM
     name: "오프폴리시 평가"
@@ -3245,6 +3482,9 @@ concepts:
     synonyms: ["counterfactual evaluation", "OPE"]
     contains: [inverse-propensity-scoring, srch-doubly-robust]
     flows_to: [bandit-exploration]
+    applied:
+      status: NONE
+      summary: "성향 로그가 없어 오프폴리시 평가를 하지 않는다"
   - id: inverse-propensity-scoring
     kind: MECHANISM
     name: "성향 역수 가중"
@@ -3286,6 +3526,11 @@ concepts:
       - { to: srch-exposure-bias, reason: "불확실한 팔에 노출을 나눠 신호가 쌓이게 한다" }
     measured_by:
       - { to: srch-regret, reason: "최선의 팔만 골랐을 때 대비 잃은 보상" }
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/application/ranking/service/ThompsonReranker.kt, symbol: "class ThompsonReranker(", note: "상품 검색 밴딧 재정렬" }
+    applied:
+      status: LIVE
+      summary: "상품 검색 상위 100건에 톰슨 샘플링 — 사전 Beta(1, 9) · 하루 0.02 감쇠 · 랭커 점수와 0.8 가중 결합. 팔 상태는 Redis 에 둔다"
   - id: srch-thompson-sampling
     kind: MECHANISM
     name: "Thompson Sampling"
@@ -3567,6 +3812,11 @@ concepts:
     questions:
       - "기대한 문서가 안 나올 때 분석 · explain · profile 을 어떤 순서로 보나"
     contains: [srch-analyze-api, srch-score-explain, srch-query-profiling]
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/SearchDebugAdapter.kt, symbol: "class SearchDebugAdapter(", note: "상품 검색 디버그" }
+    applied:
+      status: PARTIAL
+      summary: "상품 검색에 디버그 API(변형 · topK · 원 질의)가 있지만 점수 설명은 꺼져 있다. _analyze · profile 은 쓰지 않는다"
   - id: srch-analyze-api
     kind: MECHANISM
     name: "분석 결과 확인"
@@ -3575,6 +3825,9 @@ concepts:
     description: "문자열이 필드의 분석기에서 어떤 토큰 · 위치 · 품사로 갈리는지 본다. 매칭 문제의 첫 확인이다"
     synonyms: ["_analyze"]
     flows_to: [srch-score-explain]
+    applied:
+      status: NONE
+      summary: "운영 경로에서 _analyze 를 부르지 않는다"
   - id: srch-score-explain
     kind: MECHANISM
     name: "점수 설명"
@@ -3585,6 +3838,9 @@ concepts:
     code:
       - { path: search/app/src/main/kotlin/com/kgd/search/application/debug/usecase/DebugSearchUseCase.kt, symbol: "functionScore", note: "검색 디버그 화면에 점수 구성을 내보인다" }
     flows_to: [srch-query-profiling]
+    applied:
+      status: DISABLED
+      summary: "디버그 API 에 explain 옵션이 있지만 어댑터가 false 로 고정한다"
   - id: srch-query-profiling
     kind: MECHANISM
     name: "질의 프로파일링"
@@ -3592,6 +3848,9 @@ concepts:
     level: INTERMEDIATE
     description: "샤드마다 질의 절 · 집계의 실행 시간을 나눠 받는다. 느린 절을 찾지만 자체 오버헤드가 있어 운영 전체 트래픽에는 켜지 않는다"
     synonyms: ["profile API"]
+    applied:
+      status: NONE
+      summary: "profile 을 쓰지 않는다"
   # 옛 search-ops-metrics(지표 묶음)를 관측 활동으로 바꾼 새 개념 — 옛 행은 관리 해제 뒤 어드민 삭제
   - id: search-ops-monitoring
     kind: STAGE
@@ -3600,6 +3859,9 @@ concepts:
     level: INTERMEDIATE
     description: "운영 중 검색이 느려지거나 벡터 레그가 꺼지는지, 노드 메모리가 한도에 닿는지 지표로 지켜본다"
     contains: [latency-percentile, fallback-rate, cache-hit-rate, impression-click-ledger, search-node-memory, page-cache-eviction, srch-vector-memory-footprint, srch-qps, srch-slow-log]
+    applied:
+      status: PARTIAL
+      summary: "하이브리드 · BM25 · 교정 · 질의 벡터 적중 카운터와 인코딩 타이머를 Grafana 검색 품질 대시보드로 본다. 슬로 로그는 없다"
   - id: latency-percentile
     kind: METRIC
     name: "지연 · P99"
@@ -3651,11 +3913,45 @@ concepts:
   # ─────────────────────────── 서빙 · 운영 ───────────────────────────
   - id: search-serving
     kind: DOMAIN
-    name: "검색 서빙 · 운영"
+    name: "서빙 · 운영"
     category: INFRASTRUCTURE
     level: INTERMEDIATE
     description: "색인을 샤드로 나눠 여러 노드에 두고, 질의를 흩뿌려 모으고, 캐시와 지연 예산으로 꼬리를 누르고, 수명 주기 · 백업으로 운영한다"
-    contains: [srch-cluster-topology, srch-query-execution, srch-search-caching, srch-latency-budgeting, srch-cluster-operations]
+    contains: [srch-cluster-topology, srch-query-execution, srch-search-caching, srch-latency-budgeting, srch-cluster-operations, srch-incident-performance, srch-research-to-production, srch-model-serving]
+    flows_to: [{ to: search-query, label: "실행" }]
+    applied:
+      status: PARTIAL
+      summary: "OpenSearch 3.8 단일 노드(샤드 1 · 레플리카 0)와 질의 인코더 사이드카로 서빙한다. 전용 모델 서빙 스택(Triton · vLLM)은 없다"
+  - id: srch-incident-performance
+    kind: STAGE
+    name: "장애 · 성능 개선"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "지연 · 메모리 · 오류의 원인을 구간별로 재서 확정하고 고친다. 클러스터 안 시간과 사용자 체감 시간을 나눠 재야 어디가 느린지 안다"
+    applied:
+      status: LIVE
+      summary: "kNN 112초 → 0.6초, OOM 두 원인을 값으로 확정했다(MALLOC_ARENA_MAX=2 로 힙 밖 증가 1/4). 검색 지연 0.6~62초를 클러스터 안 0.05초와 대조해 Cloudflare 구간으로 확정 — 장애 뒤 평균 0.48초"
+  - id: srch-research-to-production
+    kind: STAGE
+    name: "연구 → 서비스"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "논문 · 오픈소스 기법을 평가 세트로 검증한 뒤 라이브에 올린다. 검증 없이 올리면 좋아졌는지 아무도 모른다"
+    contains: [srch-paper-adoption, srch-production-languages]
+    flows_to: [{ to: srch-model-serving, label: "검증된 모델" }]
+    applied:
+      status: LIVE
+      summary: "하이브리드 검색 · 1-bit 양자화를 판정 세트로 검증한 뒤 라이브로 올렸다"
+  - id: srch-model-serving
+    kind: STAGE
+    name: "모델 서빙"
+    category: ARCHITECTURE
+    level: INTERMEDIATE
+    description: "임베딩 · 리랭킹 모델을 요청 경로에서 부른다. 지연 예산 안에 못 들면 그 모델은 오프라인에만 쓸 수 있다"
+    contains: [srch-inference-server, srch-embedding-sidecar]
+    applied:
+      status: PARTIAL
+      summary: "질의 인코딩만 search 파드의 CPU 사이드카(270m, 스레드 1)가 한다. 전용 모델 서빙 스택은 없다"
   - id: srch-cluster-topology
     kind: STAGE
     name: "클러스터 구성"
@@ -3666,6 +3962,10 @@ concepts:
       - "데이터가 작은데 샤드를 많이 나누면 무엇을 잃나"
       - "레플리카 수는 가용성과 처리량 중 무엇으로 정하나"
     contains: [srch-node-roles, srch-shard, srch-replica, srch-shard-sizing, srch-custom-routing, srch-shard-allocation, srch-shard-split-shrink, srch-master-quorum, srch-cross-cluster-search, srch-cross-cluster-replication, srch-oversharding, srch-hot-shard]
+    flows_to: [{ to: srch-query-execution, label: "샤드" }]
+    applied:
+      status: LIVE
+      summary: "단일 노드 · 샤드 1 · 레플리카 0. 무료 등급 한 노드라 복제 · 분산은 없다(다중 노드 Operator 구성은 연결돼 있지 않다)"
   - id: srch-node-roles
     kind: MECHANISM
     name: "노드 역할"
@@ -3772,6 +4072,9 @@ concepts:
     questions:
       - "from 10000 size 10 요청이 샤드마다 몇 건을 모으게 하나"
     contains: [srch-scatter-gather, srch-dfs-query-then-fetch, srch-adaptive-replica-selection, srch-deep-paging, srch-async-search, srch-multi-search-batching, srch-search-timeout-partial, srch-shard-local-idf-skew, srch-deep-paging-cost, srch-tail-latency]
+    applied:
+      status: LIVE
+      summary: "단일 샤드라 흩뿌려 모으기가 한 번이다. 페이징은 from + size 이고 search_after · 검색 timeout 은 없다"
   - id: srch-scatter-gather
     kind: MECHANISM
     name: "스캐터-개더 (query then fetch)"
@@ -3896,6 +4199,9 @@ concepts:
       - "검색 노드의 힙을 크게 잡을수록 빨라지지 않는 이유는 무엇인가"
     contains: [data-page-cache, srch-filter-cache, srch-request-cache, query-vector-ledger, page-cache-eviction, cache-hit-rate]
     uses: [caching]
+    applied:
+      status: PARTIAL
+      summary: "질의 벡터만 캐시한다 — 메모리 1만 건 → DB 원장 → 인코더 순. OpenSearch 요청 · 필터 캐시는 기본값이다"
   - id: srch-filter-cache
     kind: MECHANISM
     name: "필터 캐시"
@@ -3919,6 +4225,11 @@ concepts:
     questions:
       - "종단 지연 예산을 서버 안 계측으로 판정하면 무엇이 어긋나나"
     contains: [srch-per-stage-latency-budget, srch-bm25-fallback, latency-percentile, srch-tail-latency]
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/application/attraction/service/SearchAttractionService.kt, symbol: "private fun resolveEmbedding(", note: "벡터를 못 받으면 BM25 로" }
+    applied:
+      status: LIVE
+      summary: "질의 인코더를 연결 200ms · 읽기 400ms 안에 못 받으면 키워드 검색(BM25)으로 내려간다"
   - id: srch-per-stage-latency-budget
     kind: MECHANISM
     name: "단계별 지연 예산"
@@ -3939,6 +4250,9 @@ concepts:
     questions:
       - "클러스터가 yellow 일 때와 red 일 때 각각 무엇을 잃었나"
     contains: [srch-cluster-health, srch-disk-watermark, srch-hot-threads, srch-slow-log, srch-memory-circuit-breaker, srch-snapshot-restore, srch-index-lifecycle, srch-time-series-indexing, srch-update-by-query, srch-task-management, srch-disk-flood-stage, srch-thread-pool-rejection]
+    applied:
+      status: PARTIAL
+      summary: "단일 노드 메모리 경계를 실측해 한도를 정했다. 스냅숏 · 인덱스 수명 관리 · 슬로 로그는 없다 — 색인은 원천 DB 재색인으로 복구한다"
   - id: srch-cluster-health
     kind: MECHANISM
     name: "클러스터 상태 색"
@@ -4192,6 +4506,9 @@ concepts:
     description: "글자 경계마다 노드를 두고 사전에 있는 후보 단어를 간선으로 깐 그래프. 형태소 분석의 탐색 공간이고, 사전에 없는 단어는 간선 자체가 없다"
     synonyms: ["lattice"]
     flows_to: [word-cost]
+    applied:
+      status: LIVE
+      summary: "nori 가 격자에서 최소 비용 경로로 분해한다"
   - id: word-cost
     kind: TERM
     name: "단어 비용"
@@ -4199,6 +4516,9 @@ concepts:
     level: INTERMEDIATE
     description: "사전 항목마다 붙은 비용. 낮을수록 그 분해를 선호한다. 사용자 사전 항목은 −100000 으로 고정돼 경쟁 없이 이긴다"
     flows_to: [connection-cost]
+    applied:
+      status: LIVE
+      summary: "nori 기본 사전의 단어 비용을 그대로 쓴다"
   - id: connection-cost
     kind: TERM
     name: "연접 비용"
@@ -4206,6 +4526,9 @@ concepts:
     level: INTERMEDIATE
     description: "앞 단어의 우 문맥 ID 와 뒤 단어의 좌 문맥 ID 로 행렬(matrix.def)에서 찾는 이음 비용. 「명사 뒤에 조사」 같은 품사 연쇄의 자연스러움을 값으로 갖는다"
     synonyms: ["matrix.def"]
+    applied:
+      status: LIVE
+      summary: "nori 기본 사전의 연접 비용을 그대로 쓴다 — 비용 재학습은 없다"
   - id: context-id
     kind: TERM
     name: "문맥 ID"

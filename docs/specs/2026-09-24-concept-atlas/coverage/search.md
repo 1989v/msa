@@ -14,7 +14,7 @@
 | id | 개념 | 출처 | 배치 |
 |---|---|---|---|
 | search-system | 검색 시스템 (DOMAIN) | 지도 서문 · 기존 | placed |
-| search-ingest | · 검색 인제스트 (DOMAIN) | 지도 §1 · 기존 | placed |
+| search-ingest | · 색인 · 파이프라인 (DOMAIN) | 지도 §1 · 기존 | placed |
 | source-collection | · · 원천 수집 (STAGE) | 기존 · 벡터 노트 E §01 | placed |
 | full-scan | · · · 풀스캔 (MECHANISM) | 기존 | placed |
 | incremental-backfill | · · · 증분 · 백필 (MECHANISM) | 기존 · 벡터 노트 E §09 | placed |
@@ -123,7 +123,7 @@
 | srch-mapping-explosion | · · · 매핑 폭증 (PROBLEM) | #38 §10-2 · 분야 표준 | placed |
 | srch-object-array-cross-match | · · · 객체 배열 교차 매칭 (PROBLEM) | #07 §6-1 · #38 | placed |
 | srch-analyzer-mismatch | · · · 색인 · 질의 분석 불일치 (PROBLEM) | 지도 §2 · #04 §9-2 | placed |
-| bulk-indexing | · · 벌크 인덱싱 (STAGE) | 기존 · #13 §2 | placed |
+| bulk-indexing | · · 데이터 파이프라인 (STAGE) | 기존 · #13 §2 | placed |
 | index-rebuild | · · · 새 인덱스 생성 (MECHANISM) | 기존 · 지도 §9 | placed |
 | alias-swap | · · · 별칭 스왑 (MECHANISM) | 기존 · 지도 §2 · §9 · #13 §4 | placed |
 | reindex-count-gate | · · · 재색인 건수 게이트 (MECHANISM) | 기존 · 지도 §9 | placed |
@@ -132,7 +132,7 @@
 | srch-bulk-partial-failure | · · · 벌크 부분 실패 (PROBLEM) | #13 §9-2 | placed |
 | srch-vector-indexing-cost | · · · 벡터 색인 비용 (PROBLEM) | #08 §6-4 · #41 §9-2 | placed |
 | srch-indexing-throughput | · · · 색인 처리량 (METRIC) | #18 §5-2 · 분야 표준 | placed |
-| srch-index-sync | · · 색인 동기화 (STAGE) | 지도 §9 · #14 | placed |
+| srch-index-sync | · · Kafka · RDB 색인 (STAGE) | 지도 §9 · #14 | placed |
 | srch-incremental-indexing | · · · 증분 색인 (MECHANISM) | 지도 §9 | placed |
 | srch-change-capture-indexing | · · · 변경 이벤트 색인 (MECHANISM) | 지도 §9 · #14 §4 · §5 | placed |
 | srch-external-versioning | · · · 외부 버전 · 순서 보장 (MECHANISM) | 지도 §9 · #03 §6-3 · #14 §7 | placed |
@@ -189,8 +189,8 @@
 | srch-transliteration | · · · · 음차 · 로마자 변환 (MECHANISM) | 지도 §3 | placed |
 | srch-cross-lingual-expansion | · · · · 교차 언어 확장 (MECHANISM) | 지도 §3 · 벡터 노트 E §04 | placed |
 | srch-pseudo-relevance-feedback | · · · · 의사 적합성 피드백 (MECHANISM) | 분야 표준 | placed |
-| srch-query-rewriting | · · · 쿼리 리포뮬레이션 (MECHANISM) | 지도 §3 | placed |
-| srch-llm-query-rewrite | · · · · LLM 질의 재작성 (MECHANISM) | 지도 §3 · 벡터 노트 E §10 | placed |
+| srch-query-rewriting | · · · 구조 재작성 (MECHANISM) | 지도 §3 | placed |
+| srch-llm-query-rewrite | · · · · LLM 쿼리 재작성 (MECHANISM) | 지도 §3 · 벡터 노트 E §10 | placed |
 | srch-zero-result-recovery | · · · 0건 대체 결과 (MECHANISM) | 지도 §3 · 벡터 노트 E §02 | placed |
 | srch-policy-switch | · · · 랭킹 정책 스위치 (MECHANISM) | 지도 §3 | placed |
 | srch-morpheme-fragment-noise | · · · 형태소 조각 오탐 (PROBLEM) | 벡터 노트 E 서문 · §03 | placed |
@@ -208,7 +208,7 @@
 | srch-query-tower-placement | · · · 질의 타워 배치 (MECHANISM) | #46 §7.1 · 벡터 노트 I | placed |
 | srch-embedding-sidecar | · · · · 임베딩 사이드카 (MECHANISM) | 벡터 노트 E §01 · #46 §7 | placed |
 | sentence-transformers | · · · · · sentence-transformers (TECHNOLOGY) | 레포 구현 (search/embed) | placed |
-| srch-inference-server | · · · · 추론 서버 (MECHANISM) | #46 §7.1 · #18 §4 | placed |
+| srch-inference-server | · · · · Triton · vLLM (MECHANISM) | #46 §7.1 · #18 §4 | placed |
 | srch-in-engine-inference | · · · · 엔진 내장 추론 (MECHANISM) | study/19 §Q (ML Commons) · #29 | placed |
 | srch-external-embedding-api | · · · · 외부 임베딩 API (MECHANISM) | #18 §4-2 · #46 §7.1 | placed |
 | srch-bm25-fallback | · · · BM25 폴백 (MECHANISM) | 벡터 노트 A · E §01 · 지도 §9 | placed |
@@ -236,14 +236,14 @@
 | srch-geo-shape-query | · · · · 도형 질의 (MECHANISM) | study/19 §G · #30 | placed |
 | srch-search-template | · · · 검색 템플릿 (MECHANISM) | study/19 §H · #39 §4 | placed |
 | srch-expensive-query | · · · 비싼 질의 (PROBLEM) | study/19 §G (expensive queries) · #07 §12-3 | placed |
-| candidate-generation | · · 후보 생성 (STAGE) | 기존 · 지도 §4 | placed |
+| candidate-generation | · · 리트리벌 (STAGE) | 기존 · 지도 §4 | placed |
 | srch-boolean-retrieval | · · · 불리언 검색 (MECHANISM) | 지도 §4 | placed |
 | srch-tf-idf | · · · TF-IDF (MECHANISM) | 지도 §4 · #06 §2 | placed |
 | bm25 | · · · 스파스 · BM25 (MECHANISM) | 기존 · 지도 §4 · #06 | placed |
 | srch-bm25-k1 | · · · · k1 (빈도 포화) (MECHANISM) | 지도 §4 · #06 §4 | placed |
 | srch-bm25-b | · · · · b (길이 정규화) (MECHANISM) | 지도 §4 · #06 §5 | placed |
 | srch-bm25f | · · · · BM25F (필드 가중) (MECHANISM) | 지도 §4 · study/19 §E · #38 §8-1 | placed |
-| srch-learned-sparse | · · · 학습형 스파스 (MECHANISM) | 지도 §4 · study/19 §M · §Q · #28 · #29 | placed |
+| srch-learned-sparse | · · · 학습형 스파스 (STAGE) | 지도 §4 · study/19 §M · §Q · #28 · #29 | placed |
 | srch-splade | · · · · SPLADE (MECHANISM) | 지도 §4 · 벡터 노트 E §10 | placed |
 | srch-doc-expansion | · · · · 문서 확장 (MECHANISM) | 분야 표준 | placed |
 | srch-two-phase-sparse | · · · · 2단계 희소 가속 (MECHANISM) | study/19 §Q · #29 | placed |
@@ -256,7 +256,7 @@
 | opensearch | · · · OpenSearch (TECHNOLOGY) | 기존 · #11 | placed |
 | srch-post-filter-recall-loss | · · · 사후 필터 결과 부족 (PROBLEM) | #41 §3 · #08 §12-5 | placed |
 | srch-ann-recall | · · · ANN 재현율 (METRIC) | #41 §4 · 분야 표준 | placed |
-| rank-fusion | · · 융합 (STAGE) | 기존 · 지도 §7 · #09 | placed |
+| rank-fusion | · · 하이브리드 RRF (STAGE) | 기존 · 지도 §7 · #09 | placed |
 | rrf | · · · RRF (MECHANISM) | 기존 · 지도 §7 · #09 §3 | placed |
 | srch-weighted-score-fusion | · · · 가중 점수합 (선형 융합) (MECHANISM) | 지도 §7 · #09 §2-2 | placed |
 | srch-score-normalization | · · · · 점수 정규화 (MECHANISM) | study/19 §Q · #29 | placed |
@@ -283,9 +283,9 @@
 | srch-query-rules | · · · 질의 규칙 (MECHANISM) | study/19 §G (rule_query) · §H (Search Application) | placed |
 | srch-raw-signal-domination | · · · 원시 신호 독주 (PROBLEM) | #35 §2 | placed |
 | srch-zero-multiply | · · · 0 곱으로 점수 소멸 (PROBLEM) | #35 §4 | placed |
-| post-ranking | · · 후처리 (STAGE) | 기존 · 지도 §6 | placed |
+| post-ranking | · · 랭킹 (STAGE) | 기존 · 지도 §6 | placed |
 | srch-ranking-funnel | · · · 랭킹 퍼널 (캐스케이드) (MECHANISM) | 지도 §6 · #09 §6 · 벡터 노트 E §10 | placed |
-| reranking | · · · 리랭킹 (MECHANISM) | 기존 · 지도 §6 · #10 | placed |
+| reranking | · · · 리랭킹 모델 (MECHANISM) | 기존 · 지도 §6 · #10 | placed |
 | learning-to-rank | · · · · Learning to Rank (MECHANISM) | 기존 · #10 §5 | placed |
 | query-level-cross-validation | · · · · · 쿼리 단위 교차검증 (MECHANISM) | 기존 · study/19 §H | placed |
 | srch-lambdamart | · · · · · LambdaMART (MECHANISM) | #10 §5-2 | placed |
@@ -323,8 +323,8 @@
 | srch-terms-agg-inaccuracy | · · · 분산 terms 집계 오차 (PROBLEM) | #07 §12-8 · 분야 표준 | placed |
 | srch-result-presentation | · · 결과 구성 (STAGE) | 지도 §1 (결과 · 하이라이팅) | placed |
 | srch-highlighting | · · · 하이라이팅 (MECHANISM) | 지도 §1 · #07 §8 | placed |
-| srch-rag | · · · RAG (검색 증강 생성) (MECHANISM) | study/19 §Q (Conversational Search / RAG) | placed |
-| search-evaluation | · 검색 평가 (DOMAIN) | 기존 · 지도 §8 · #34 · #45 | placed |
+| srch-rag | · · · RAG · GraphRAG (STAGE) | study/19 §Q (Conversational Search / RAG) | placed |
+| search-evaluation | · 평가 · 로그 (DOMAIN) | 기존 · 지도 §8 · #34 · #45 | placed |
 | judgment-set-building | · · 판정 세트 구축 (STAGE) | 기존 · 지도 §8 | placed |
 | pooling | · · · 풀링 (MECHANISM) | 기존 · 지도 §8 · #46 §6.1 | placed |
 | judgment-coverage | · · · 커버리지 (METRIC) | 기존 · 벡터 노트 A 결정 02 | placed |
@@ -334,7 +334,7 @@
 | srch-inter-annotator-agreement | · · · 판정 일관성 검사 (MECHANISM) | #46 §6.1.1 | placed |
 | srch-pooling-bias | · · · 풀링 편향 (PROBLEM) | 지도 §8 · 벡터 노트 A 결정 02 · E §06 | placed |
 | srch-small-query-set | · · · 질의 수 부족 (PROBLEM) | 벡터 노트 A 결정 03 · #46 §6.2 | placed |
-| offline-evaluation | · · 오프라인 평가 (STAGE) | 기존 · 지도 §8 · #34 | placed |
+| offline-evaluation | · · 평가 체계 (STAGE) | 기존 · 지도 §8 · #34 | placed |
 | ndcg | · · · nDCG (METRIC) | 기존 · 지도 §8 · #34 §3-8 | placed |
 | recall-precision | · · · 재현율 · 정밀도 (METRIC) | 기존 · #34 | placed |
 | srch-precision-at-k | · · · Precision@k (METRIC) | #34 §3-1 | placed |
@@ -411,7 +411,7 @@
 | srch-vector-memory-footprint | · · · 벡터 상주량 (METRIC) | 지도 §5 (상주량 식) · #41 §9 | placed |
 | srch-qps | · · · 처리량 (QPS) (METRIC) | #16 §5-2 · 분야 표준 | placed |
 | srch-slow-log | · · · 슬로 로그 (MECHANISM) | study/19 §P · #16 §4 | placed |
-| search-serving | · 검색 서빙 · 운영 (DOMAIN) | 지도 §9 · #12 | placed |
+| search-serving | · 서빙 · 운영 (DOMAIN) | 지도 §9 · #12 | placed |
 | srch-cluster-topology | · · 클러스터 구성 (STAGE) | #12 | placed |
 | srch-node-roles | · · · 노드 역할 (MECHANISM) | #12 §2 | placed |
 | srch-shard | · · · 샤드 (MECHANISM) | 지도 §9 · study/19 §C · #12 §3 | placed |
@@ -507,6 +507,32 @@
 | srch-contextual-features | · · · · 문맥 피처 (TERM) | 지도 §6 · study/19 §G (contextual-feature-eng) | placed |
 | srch-eval-2x2 | · · · 평가 2×2 (단계 × 환경) (TERM) | study/19 §H (online-offline-axis) | placed |
 | srch-geohash | · · 지오해시 (TERM) | study/19 §I · #30 | placed |
+| srch-content-understanding | 콘텐츠 이해 (DOMAIN) | 검색 JD 적용 지도(2026-10-13) | placed |
+| srch-knowledge-graph | 지식 그래프 (STAGE) | 검색 JD 적용 지도(2026-10-13) | placed |
+| srch-content-structuring | 콘텐츠 구조화 (STAGE) | 검색 JD 적용 지도(2026-10-13) | placed |
+| srch-multimodal-embedding | 임베딩 · 멀티모달 (STAGE) | 검색 JD 적용 지도(2026-10-13) | placed |
+| srch-llm-attribute-extraction | LLM 속성 추출 (STAGE) | 검색 JD 적용 지도(2026-10-13) | placed |
+| srch-opensearch-operation | OpenSearch 운영 (STAGE) | 검색 JD 적용 지도(2026-10-13) | placed |
+| srch-query-input | 사용자 검색 (STAGE) | tech 드릴다운 (ADR-0108) | placed |
+| srch-query-reformulation | 쿼리 재작성 (STAGE) | tech 드릴다운 (ADR-0108) | placed |
+| srch-multilingual-query | 다국어 · 자연어 (STAGE) | 검색 JD 적용 지도(2026-10-13) | placed |
+| srch-sparse-retrieval | 키워드 · 정확 일치 (STAGE) | tech 드릴다운 (ADR-0108) | placed |
+| srch-dense-retrieval | 덴스 + 1-bit (STAGE) | tech 드릴다운 (ADR-0108) | placed |
+| srch-vector-database | Milvus · FAISS (TECHNOLOGY) | 검색 JD 적용 지도(2026-10-13) | placed |
+| srch-zero-result-handling | 0건 대응 (STAGE) | tech 드릴다운 (ADR-0108) | placed |
+| srch-query-content-guard | 무의미 입력 차단 (MECHANISM) | tech 드릴다운 (ADR-0108) | placed |
+| srch-lexical-gate | 어휘 일치 검증 (MECHANISM) | tech 드릴다운 (ADR-0108) | placed |
+| srch-zero-reason | 0건 사유 안내 (MECHANISM) | tech 드릴다운 (ADR-0108) | placed |
+| srch-filter-relax-suggest | 필터 해제 제안 (MECHANISM) | tech 드릴다운 (ADR-0108) | placed |
+| srch-query-relaxation | 쿼리 완화 (MECHANISM) | tech 드릴다운 (ADR-0108) | placed |
+| srch-paper-adoption | 최신 논문 적용 (MECHANISM) | 검색 JD 적용 지도(2026-10-13) | placed |
+| srch-production-languages | Python · Go (TECHNOLOGY) | 검색 JD 적용 지도(2026-10-13) | placed |
+| srch-ranking-feature-combination | 랭킹 피처 결합 (MECHANISM) | 검색 JD 적용 지도(2026-10-13) | placed |
+| srch-search-log-analysis | 검색 로그 분석 (STAGE) | 검색 JD 적용 지도(2026-10-13) | placed |
+| srch-metric-driven-improvement | 지표 기반 개선 (STAGE) | 검색 JD 적용 지도(2026-10-13) | placed |
+| srch-incident-performance | 장애 · 성능 개선 (STAGE) | 검색 JD 적용 지도(2026-10-13) | placed |
+| srch-research-to-production | 연구 → 서비스 (STAGE) | 검색 JD 적용 지도(2026-10-13) | placed |
+| srch-model-serving | 모델 서빙 (STAGE) | 검색 JD 적용 지도(2026-10-13) | placed |
 
 ## 제외
 
