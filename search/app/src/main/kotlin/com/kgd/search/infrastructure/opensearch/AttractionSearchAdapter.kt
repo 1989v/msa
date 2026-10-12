@@ -97,6 +97,18 @@ class AttractionSearchAdapter(
         private const val SPELL_MIN_CHARS = 2
         /** 제안 유사도 하한. 실측: 경복굼→경복궁 0.89 · haeundea→haeundae 0.88, 엉뚱한 제안은 0.6~0.8 */
         private const val SPELL_MIN_SCORE = 0.85
+
+        /**
+         * 라틴 문자 단어의 제안 하한. 한글은 자모로 펴서 단어가 길어지므로 한 글자 오타도 0.85 를 넘지만, 영문 6글자
+         * 단어는 한 글자 오타가 0.833 이라(garedn→garden · palcae→palace) 0.85 에 늘 걸렸다. 교정은 색인에서 0건인 단어에만
+         * 하므로(quiet→quilt 0.8 같은 제안은 quiet 가 이미 51건이라 부르지 않는다) 하한을 낮춰도 맞는 단어는 바뀌지 않는다.
+         * 실측 2026-10-13 판정 세트 영문 112단어: 0.80~0.85 에 새로 드는 0건 단어는 garedn·chomsongdae 둘, 둘 다 맞는 교정.
+         */
+        internal const val SPELL_MIN_SCORE_LATIN = 0.80
+
+        /** 제안을 받아들일 하한 — 한글이 하나라도 있으면 [SPELL_MIN_SCORE], 아니면 [SPELL_MIN_SCORE_LATIN] */
+        internal fun spellMinScore(word: String): Double =
+            if (word.any { it in '\uAC00'..'\uD7A3' || it in '\u3131'..'\u318E' }) SPELL_MIN_SCORE else SPELL_MIN_SCORE_LATIN
         private val WHITESPACE = Regex("\\s+")
 
         /**
@@ -537,7 +549,7 @@ class AttractionSearchAdapter(
         )
         response.suggest()[SPELL_SUGGESTER].orEmpty()
             .firstOrNull { it.isTerm }?.term()?.options()
-            ?.firstOrNull { it.score() >= SPELL_MIN_SCORE }
+            ?.firstOrNull { it.score() >= spellMinScore(word) }
             ?.let { Jamo.compose(it.text()) }
             ?.takeIf { it != word }
     }.getOrNull()

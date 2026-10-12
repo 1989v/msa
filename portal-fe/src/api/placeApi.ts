@@ -239,6 +239,9 @@ export interface AttractionSearchResult {
   interpretedConditions?: InterpretedCondition[];
   /** 0건의 이유가 조건이 아니라 검색어일 때만 — 필터 때문인 0건과 결과가 있는 경우는 null */
   zeroReason?: ZeroReason | null;
+  /** `NO_MATCH_IN_CATEGORY` 일 때만 — 분류로 읽은 말만으로 다시 찾을 검색어(「수족관」)와 그 건수 */
+  relaxedKeyword?: string | null;
+  relaxedTotal?: number | null;
 }
 
 /** `phrase` 는 사용자 입력이 되돌아오는 값이다 — 텍스트 노드로만 그린다 */
@@ -249,8 +252,11 @@ export interface InterpretedCondition {
   phrase: string;
 }
 
-/** `NO_EVIDENCE` — 색인에 검색어의 어휘 근거가 없다 · `NO_CONTENT` — 자모·기호만인 입력 */
-export type ZeroReason = 'NO_EVIDENCE' | 'NO_CONTENT';
+/**
+ * `NO_EVIDENCE` — 색인에 검색어의 어휘 근거가 없다 · `NO_CONTENT` — 자모·기호만인 입력 ·
+ * `NO_MATCH_IN_CATEGORY` — 분류로 읽은 말(「수족관」)은 있는데 남은 말(「도쿄」)과 겹치는 곳이 그 분류에 없다
+ */
+export type ZeroReason = 'NO_EVIDENCE' | 'NO_CONTENT' | 'NO_MATCH_IN_CATEGORY';
 
 /**
  * 한국 행정구역 (ADR-0071). GeoNames 지명 계층(`/api/places/regions`)과 다른 축이다 —

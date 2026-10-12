@@ -1429,7 +1429,7 @@ concepts:
     contains: [query-embedding, ann-search, srch-late-interaction]
     applied:
       status: LIVE
-      summary: "교정된 원문 전체를 벡터로 바꿔 필터를 건 HNSW 로 찾는다. 1비트 양자화로 후보를 넓게 뽑고 원본 벡터로 다시 채점한다"
+      summary: "교정된 원문 전체를 벡터로 바꿔 필터를 건 HNSW 로 찾는다(동반 표현만 표준 문구로 바꾼다). 1비트 양자화로 후보를 넓게 뽑고 원본 벡터로 다시 채점한다"
       facts:
         - { label: "벡터 차원", value: "640", key: vector-dimension }
         - { label: "양자화", value: "sq 1비트 → 원본 재채점 ×3" }
@@ -1481,7 +1481,7 @@ concepts:
     flows_to: [{ to: srch-filter-relax-suggest, label: "필터 탓" }, { to: srch-zero-result-recovery, label: "대체 추천" }]
     applied:
       status: LIVE
-      summary: "검색어 탓 0건만 코드로 알린다 — NO_CONTENT · NO_EVIDENCE. 결과가 있거나 필터 탓 0건이면 비어 있다"
+      summary: "검색어 탓 0건만 코드로 알린다 — NO_CONTENT · NO_EVIDENCE · NO_MATCH_IN_CATEGORY. 마지막은 「도쿄 수족관」처럼 분류로 읽은 말은 결과가 있는데 남은 말과 겹치는 곳이 없을 때이고, 분류만으로 다시 찾을 검색어와 건수를 함께 낸다. 결과가 있거나 필터 탓 0건이면 비어 있다"
     code:
       - { path: search/app/src/main/kotlin/com/kgd/search/application/attraction/usecase/SearchAttractionUseCase.kt, symbol: "enum class ZeroReason", note: "0건 사유 코드" }
   - id: srch-filter-relax-suggest
@@ -1522,6 +1522,7 @@ concepts:
       summary: "QueryIntent 가 교정된 검색어를 잔여 검색어 · 패싯 필터 · 상업 의도 · 조건어 · 타입 의도로 가른다. 잔여 검색어만 키워드 검색에 쓰고, 필터는 두 검색에 같이 건다"
       facts:
         - { label: "조건어 해석", value: "주차 · 반려견 같은 말을 속성 필터로" }
+        - { label: "동반 표현", value: "「아이랑」 · 「with kids」는 키워드에서 빼고 벡터 문장을 「어린이와 가족이 함께」로 바꾼다" }
         - { label: "분류 사전 갱신", value: "10분" }
     code:
       - { path: search/domain/src/main/kotlin/com/kgd/search/domain/query/model/QueryIntent.kt, symbol: "fun analyze(", note: "검색어를 의도별로 가른다" }
@@ -1603,10 +1604,11 @@ concepts:
     flows_to: [srch-query-expansion]
     applied:
       status: LIVE
-      summary: "0히트 단어를 자모로 풀어 제목 자모 사전에서 term suggester 로 찾고, 점수가 하한을 넘는 제안 하나만 채택한다. 제목에만 없는 단어까지 고치면 제대로 친 검색어가 망가진다"
+      summary: "0히트 단어를 자모로 풀어 제목 자모 사전에서 term suggester 로 찾고, 점수가 하한을 넘는 제안 하나만 채택한다. 제목에만 없는 단어까지 고치면 제대로 친 검색어가 망가진다. 영문 단어는 짧아 한 글자 오타도 점수가 낮으므로 하한을 따로 둔다"
       facts:
         - { label: "편집거리", value: "2 (자모 단위)" }
         - { label: "prefixLength", value: "1" }
+        - { label: "채택 하한", value: "한글 0.85 · 영문 0.80 (garedn→garden 0.833)" }
     code:
       - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchAdapter.kt, symbol: "private fun closestTitleSpelling(", note: "자모 term 제안" }
   - id: srch-query-log-correction

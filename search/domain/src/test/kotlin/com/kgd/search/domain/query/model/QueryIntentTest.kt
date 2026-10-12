@@ -338,15 +338,81 @@ class QueryIntentTest : BehaviorSpec({
         }
     }
 
+    Given("동반 대상 표현 — 키워드에서 빼고 벡터 문장은 표준 문구로") {
+        fun place(q: String, lang: String = "ko") = QueryIntent.analyze(q, lexicon, lang = lang, attractionOnly = true)
+
+        When("「아이랑 갈 만한 곳」") {
+            val r = place("아이랑 갈 만한 곳")
+            Then("검색어가 남지 않는다 — 형태소의 `아이` 가 상호 「아이아이 연남」에 맞지 않게") { r.residual shouldBe null }
+            Then("벡터 문장은 동반 표현만 표준 문구로 바뀐다") { r.vectorText shouldBe "어린이와 가족이 함께 갈 만한 곳" }
+            Then("근거 잔여도 비어 근거 검사가 이 말을 요구하지 않는다") { r.evidenceResidual shouldBe null }
+        }
+        When("「애들이랑 같이 해수욕장」") {
+            val r = place("애들이랑 같이 해수욕장")
+            Then("조사 붙은 머리말과 뒤따르는 「같이」를 함께 옮긴다") {
+                r.vectorText shouldBe "어린이와 가족이 함께 해수욕장"
+                r.residual shouldBe null
+            }
+            Then("분류 의도는 그대로 읽는다") { r.facets shouldBe mapOf("lclsSystm3" to "NA020100") }
+        }
+        When("「아이 동반 해수욕장」") {
+            Then("조사 없는 머리말은 「동반」이 뒤따를 때만") {
+                place("아이 동반 해수욕장").vectorText shouldBe "어린이와 가족이 함께 해수욕장"
+            }
+        }
+        When("「things to do with kids」") {
+            val r = place("things to do with kids", lang = "en")
+            Then("영문 두 어절 표현도 옮기고 영문 표준 문구를 쓴다") {
+                r.residual shouldBe null
+                r.vectorText shouldBe "things to do family friendly for kids"
+            }
+        }
+        When("「아이와즈」") {
+            val r = place("아이와즈")
+            Then("조사가 아닌 꼬리는 상호다 — 검색어로 남는다") {
+                r.residual shouldBe "아이와즈"
+                r.vectorText shouldBe null
+            }
+        }
+        When("「어린이 박물관」") {
+            Then("머리말만 있으면 그 시설을 찾는 말이다 — 옮기지 않는다") {
+                place("어린이 박물관").vectorText shouldBe null
+            }
+        }
+        When("통합 검색(attractionOnly=false)") {
+            val r = QueryIntent.analyze("아이랑 갈 만한 곳", lexicon)
+            Then("옮기지 않는다 — 잔여가 다른 타입 검색으로 넘어간다") {
+                r.residual shouldBe "아이랑"
+                r.vectorText shouldBe null
+            }
+        }
+    }
+
+    Given("분류로 읽은 원문 어절 — facetPhrase") {
+        When("「도쿄 해수욕장」") {
+            val r = QueryIntent.analyze("도쿄 해수욕장", lexicon, attractionOnly = true)
+            Then("분류 필터와 남은 말이 갈린다") {
+                r.facets shouldBe mapOf("lclsSystm3" to "NA020100")
+                r.residual shouldBe "도쿄"
+                r.facetPhrase shouldBe "해수욕장"
+            }
+        }
+        When("분류 의도가 없는 질의") {
+            Then("null") { QueryIntent.analyze("경복궁", lexicon, attractionOnly = true).facetPhrase shouldBe null }
+        }
+    }
+
     Given("띄어 쓴 불용구 — 어절 창 1~3") {
         // 관광지 경로로 부른다(attractionOnly) — 화면이 실제로 부르는 모양이다.
         fun place(q: String, lang: String = "ko") = QueryIntent.analyze(q, lexicon, lang = lang, attractionOnly = true)
 
         When("「아이랑 갈 만한 곳」") {
-            Then("「갈 만한」·「곳」이 지워지고 「아이랑」만 남는다") { place("아이랑 갈 만한 곳").residual shouldBe "아이랑" }
+            Then("「갈 만한」·「곳」이 지워지고 「아이랑」은 동반 표현이라 검색어가 남지 않는다") {
+                place("아이랑 갈 만한 곳").residual shouldBe null
+            }
         }
         When("「아이와 갈만한 곳」") {
-            Then("붙여 쓴 것도 같다") { place("아이와 갈만한 곳").residual shouldBe "아이와" }
+            Then("붙여 쓴 것도 같다") { place("아이와 갈만한 곳").residual shouldBe null }
         }
         When("「부모님과 가기 좋은 곳」") {
             Then("「가기 좋은 곳」이 지워진다") { place("부모님과 가기 좋은 곳").residual shouldBe "부모님과" }

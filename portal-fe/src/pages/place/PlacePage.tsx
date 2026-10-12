@@ -114,6 +114,9 @@ const UI = {
     emptyNoFilter: '이 범위에 등록된 관광지가 없습니다.',
     // 0건의 이유가 조건이 아니라 검색어일 때(어휘 근거 없음·자모만인 입력) — 조건을 풀라고 권하지 않는다
     emptyNoMatch: '찾는 대상이 등록된 관광지 정보에 없습니다. 다른 검색어로 찾아보세요.',
+    // 「도쿄 수족관」 — 수족관은 분류로 읽었고, 국내 수족관 중 「도쿄」와 겹치는 곳이 없다
+    emptyInCategory: (k: string) => `‘${k}’ 관광지 중에는 나머지 검색어와 겹치는 곳이 없습니다.`,
+    searchRelaxed: (k: string, n: number) => `‘${k}’ 결과 ${n.toLocaleString('ko-KR')}건 보기`,
     relaxGroup: '조건 해제',
     relaxKeyword: '검색어 빼고 보기',
     relaxCategory: (c: string) => `분류 ‘${c}’ 해제`,
@@ -169,6 +172,8 @@ const UI = {
     emptyReason: 'No attractions match all the selected filters. Removing a filter below widens the results.',
     emptyNoFilter: 'No attractions are listed in this range.',
     emptyNoMatch: 'Nothing in our attraction listings matches what you searched for. Try a different search term.',
+    emptyInCategory: (k: string) => `None of the “${k}” listings match the rest of your search.`,
+    searchRelaxed: (k: string, n: number) => `Show ${n.toLocaleString('en-US')} results for “${k}”`,
     relaxGroup: 'Remove filters',
     relaxKeyword: 'Show without the keyword',
     relaxCategory: (c: string) => `Remove category “${c}”`,
@@ -958,6 +963,18 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
   };
   const interpretedLine = interpretedNotice(lang, interpretedConditions);
   const zeroByKeyword = data?.zeroReason === 'NO_EVIDENCE' || data?.zeroReason === 'NO_CONTENT';
+  const relaxedSearch =
+    data?.zeroReason === 'NO_MATCH_IN_CATEGORY' && data.relaxedKeyword && data.relaxedTotal
+      ? { keyword: data.relaxedKeyword, total: data.relaxedTotal }
+      : null;
+  const searchRelaxed = (next: string) => {
+    autoPickedRef.current = true;
+    triggerRef.current = 'relax';
+    changedRef.current = ['keyword', 'page'];
+    setKeywordInput(next);
+    setKeyword(next);
+    setPage(0);
+  };
   const correctedLink =
     query.exact && data?.zeroReason === 'NO_EVIDENCE' && correctedBeforeExact?.for === keyword
       ? correctedBeforeExact.corrected
@@ -1871,7 +1888,16 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
                 ) : (
                   <div className="place-empty">
                     <p>{L.empty}</p>
-                    <p>{zeroByKeyword ? L.emptyNoMatch : relaxable.length > 0 ? L.emptyReason : L.emptyNoFilter}</p>
+                    <p>
+                      {relaxedSearch
+                        ? L.emptyInCategory(relaxedSearch.keyword)
+                        : zeroByKeyword ? L.emptyNoMatch : relaxable.length > 0 ? L.emptyReason : L.emptyNoFilter}
+                    </p>
+                    {relaxedSearch && (
+                      <button type="button" className="place-chip" onClick={() => searchRelaxed(relaxedSearch.keyword)}>
+                        {L.searchRelaxed(relaxedSearch.keyword, relaxedSearch.total)}
+                      </button>
+                    )}
                     {correctedLink && (
                       <button type="button" className="place-chip" onClick={searchCorrected}>
                         {L.searchCorrected(correctedLink)}

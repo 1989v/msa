@@ -250,11 +250,20 @@ interface SearchAttractionUseCase {
          * 응답의 API 이름(param·value)은 presentation 이 붙인다.
          */
         val interpreted: List<QueryIntent.Condition> = emptyList(),
-        /** 0건인 이유가 조건 탓이 아닐 때 — 어휘 근거 없음 · 내용 없는 입력. 결과가 있거나 필터 탓 0건이면 null. */
+        /** 0건인 이유가 조건 탓이 아닐 때 — 어휘 근거 없음 · 내용 없는 입력 · 분류 안에서 남은 말과 겹치는 곳 없음. 결과가 있거나 필터 탓 0건이면 null. */
         val zeroReason: ZeroReason? = null,
+        /** [ZeroReason.NO_MATCH_IN_CATEGORY] 일 때만 — 분류로 읽은 말만으로 다시 찾을 검색어(「수족관」)와 그 건수 */
+        val relaxedKeyword: String? = null,
+        val relaxedTotal: Long? = null,
     )
 
     enum class ZeroReason {
+        /**
+         * 검색어 일부를 분류 필터로 읽었는데(「수족관」) 남은 말(「도쿄」)과 겹치는 문서가 그 분류에 없다.
+         * 분류만으로는 결과가 있다 — 화면은 [Result.relaxedKeyword] 로 「그 분류 보기」를 권한다.
+         */
+        NO_MATCH_IN_CATEGORY,
+
         /** 잔여 검색어가 같은 필터 안에서 어휘로 하나도 맞지 않는다 — 벡터 이웃만으로는 결과를 내지 않는다 */
         NO_EVIDENCE,
 

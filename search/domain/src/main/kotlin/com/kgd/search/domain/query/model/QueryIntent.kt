@@ -12,7 +12,8 @@ import com.kgd.search.domain.attraction.model.Availability
  * `관광` 이 「관광특구」를 `title^3` 으로 끌어올린다 — 뜻이 아니라 글자가 이긴다.
  *
  * **벡터 레그에는 적용하지 않는다.** 문장의 뜻이 그 레그의 전부라, 잘라내면 지금 잘 하는 것을 망친다.
- * 자르는 대상은 BM25 레그뿐이고, 이 클래스는 그 잔여 검색어와 필터를 만든다.
+ * 자르는 대상은 BM25 레그뿐이고, 이 클래스는 그 잔여 검색어와 필터를 만든다. 예외는 동반 표현 하나다 —
+ * 벡터 문장에서 그 어절만 표준 문구로 바꾼다([Understood.vectorText]).
  *
  * 의도는 네 갈래로 나간다.
  * - **타입 의도**(「블로그」·「게임」·「관광지」)는 검색 대상 [Understood.type] 이 된다 — 통합 검색이 쓴다.
@@ -260,6 +261,13 @@ object QueryIntent {
          * 조건으로 읽지 않은 경우(해제·부정어·통합 검색)에도 빼서, 「주차 되는」 같은 말이 근거 요구를 만들지 않게 한다.
          */
         val evidenceResidual: String? = residual,
+        /**
+         * 벡터 레그에 넘길 문장 — 동반 표현(「아이랑」)을 표준 문구로 바꾼 원문. 바꿀 것이 없으면 null(원문 그대로 쓴다).
+         * 임베딩도 글자에 끌린다 — 「아이랑 갈 만한 곳」 벡터는 「아이아이 연남」·「아이와즈」를 가장 가깝게 본다.
+         */
+        val vectorText: String? = null,
+        /** 분류·유형 필터로 읽은 원문 어절(「수족관」). 필터는 있는데 잔여와 겹치는 문서가 없을 때 「이 말만으로 보기」에 쓴다. */
+        val facetPhrase: String? = null,
     ) {
         /** 검색어가 남지 않았다 = 순위를 정할 키워드 신호가 없다. */
         val residualIsEmpty: Boolean get() = residual.isNullOrBlank()
@@ -378,12 +386,14 @@ object QueryIntent {
         } else {
             emptyList()
         }
+        val companion = if (attractionOnly) extractCompanion(words, consumed) else null
 
         var type: String? = null
         val facets = linkedMapOf<String, String>()
         var shop = isShop(wholeNormalized, lexicon)
         var food = isFood(wholeNormalized, lexicon)
         val kept = mutableListOf<String>()
+        val facetWords = mutableListOf<String>()
 
         var i = 0
         while (i < words.size) {
@@ -407,6 +417,7 @@ object QueryIntent {
                 if (hit != null) {
                     type = type ?: hit.type
                     hit.facets.forEach { (field, value) -> facets.putIfAbsent(field, value) }
+                    if (hit.facets.isNotEmpty()) facetWords += words.subList(i, i + size)
                     taken = size
                     break
                 }
@@ -433,8 +444,58 @@ object QueryIntent {
             noContent = noContent,
             conditions = conditions,
             evidenceResidual = withoutConditionWords(kept),
+            vectorText = companion?.let { (range, canonical) ->
+                (words.subList(0, range.first) + canonical + words.subList(range.last + 1, words.size)).joinToString(" ")
+            },
+            facetPhrase = facetWords.joinToString(" ").ifBlank { null },
         )
     }
+
+    /**
+     * 동반 대상 표현 — 「아이랑」·「애들이랑 같이」·「with kids」. **키워드에서 빼고 벡터 문장은 표준 문구로 바꾼다.**
+     *
+     * 지우지 않으면 형태소가 남긴 `아이` 가 `title^3` 으로 「아이아이 연남」·「아이와즈」를 올린다. 벡터만 남겨도 같은 상호가
+     * 가깝게 나오므로(임베딩도 글자에 끌린다) 뜻을 풀어 쓴 문구로 바꿔 넘긴다 — 실측 2026-10-13: 「아이랑 갈 만한 곳」 벡터 상위
+     * 10 중 상호 5 → 「어린이와 가족이 함께 갈 만한 곳」은 어린이공원·가족공원·체험장.
+     *
+     * 머리말만 있는 「어린이」·「키즈」는 옮기지 않는다 — 「어린이 박물관」·「키즈카페」는 그 시설을 찾는 말이다.
+     * 조사가 붙거나(「아이랑」) 「함께·같이·동반·데리고」가 뒤따라야 동반으로 읽는다.
+     */
+    private fun extractCompanion(words: List<String>, consumed: BooleanArray): Pair<IntRange, String>? {
+        for (i in words.indices) {
+            if (consumed[i]) continue
+            val one = normalize(words[i]).replace("-", "")
+            val next = words.getOrNull(i + 1)?.takeIf { !consumed[i + 1] }?.let { normalize(it) }
+            val range = when {
+                isKoCompanion(one) -> if (next != null && next in COMPANION_TAILS_KO) i..i + 1 else i..i
+                one in COMPANION_HEADS_KO && next != null && next in COMPANION_TAILS_KO -> i..i + 1
+                one in COMPANION_EN -> i..i
+                next != null && (one + next.replace("-", "")) in COMPANION_EN -> i..i + 1
+                else -> null
+            } ?: continue
+            range.forEach { consumed[it] = true }
+            val latin = words[i].any { it in 'a'..'z' || it in 'A'..'Z' }
+            return range to if (latin) COMPANION_CANONICAL_EN else COMPANION_CANONICAL_KO
+        }
+        return null
+    }
+
+    /** 머리말 + 조사 한 어절(「아이랑」·「애들이랑」·「가족과」). 「아이와즈」처럼 조사가 아닌 꼬리는 아니다. */
+    private fun isKoCompanion(word: String): Boolean =
+        COMPANION_HEADS_KO.any { head -> word.startsWith(head) && word.removePrefix(head) in COMPANION_PARTICLES_KO }
+
+    private val COMPANION_HEADS_KO = setOf("아이", "아이들", "애", "애들", "아기", "아가", "어린이", "어린이들", "자녀", "유아", "키즈", "가족")
+    private val COMPANION_PARTICLES_KO = setOf(
+        "랑", "이랑", "와", "과", "하고", "들과", "들이랑", "들하고", "와함께", "과함께", "랑함께", "이랑함께",
+        "랑같이", "이랑같이", "와같이", "과같이", "동반",
+    )
+    private val COMPANION_TAILS_KO = setOf("함께", "같이", "동반", "데리고")
+    private val COMPANION_EN = setOf(
+        "withkids", "withkid", "withchildren", "withchild", "withfamily", "forkids", "forchildren", "forfamilies",
+        "kidfriendly", "kidsfriendly", "familyfriendly", "childfriendly",
+    )
+    private const val COMPANION_CANONICAL_KO = "어린이와 가족이 함께"
+    private const val COMPANION_CANONICAL_EN = "family friendly for kids"
 
     /** 어절 창의 최대 크기 — 「가볼 만한 곳」·「갈 수 있는」이 세 어절이다. */
     private const val MAX_WINDOW = 3

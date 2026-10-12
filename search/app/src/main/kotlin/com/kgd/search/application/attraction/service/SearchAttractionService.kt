@@ -99,8 +99,6 @@ class SearchAttractionService(
             ?.let { attractionSearchPort.correct(it, query.lang?.takeIf { l -> l.isNotBlank() }) }
         if (corrected != null) correctionCounter.increment()
         val keyword = corrected ?: original
-        // 벡터 레그에는 **원문**을 준다 — 문장의 뜻이 그 레그의 전부라 잘라내면 안 된다 (ADR-0090 개정).
-        val embedding = resolveEmbedding(keyword, geo, sortByEventStart || signalSort != null)
         val categories = query.category
             ?.split(",")
             ?.map { it.trim() }
@@ -120,6 +118,9 @@ class SearchAttractionService(
             )
         }
         if (understood?.hasFilter == true) intentCounter.increment()
+        // 벡터 레그에는 **원문**을 준다 — 문장의 뜻이 그 레그의 전부라 잘라내면 안 된다 (ADR-0090 개정).
+        // 동반 표현만은 표준 문구로 바꾼 문장을 준다 — 원문의 「아이랑」은 임베딩에서도 상호 「아이…」에 끌린다.
+        val embedding = resolveEmbedding(understood?.vectorText ?: keyword, geo, sortByEventStart || signalSort != null)
         val explicit = toAttributeSelection(query)
         // 같은 축에 칩이 켜져 있으면 칩이 이긴다(해석은 버리고, 해석에 쓴 어절은 검색어에서 빠진 채로 둔다)
         val interpreted = understood?.conditions.orEmpty().filterNot { explicit.has(it.kind) }
@@ -133,31 +134,43 @@ class SearchAttractionService(
             understood?.narrowsByIntent != true && searchKeyword != null
         val evidenceKeyword = understood?.evidenceResidual
             ?.takeIf { mode != AttractionAnswerEvidenceProperties.Mode.OFF && !confine }
-        val found = attractionSearchPort.search(
-            AttractionSearchPort.SearchQuery(
-                keyword = searchKeyword,
-                lang = query.lang?.takeIf { it.isNotBlank() },
-                areaCode = query.areaCode?.takeIf { it.isNotBlank() },
-                sidoCode = query.sidoCode?.takeIf { it.isNotBlank() },
-                sigunguCode = query.sigunguCode?.takeIf { it.isNotBlank() },
-                categories = categories,
-                facets = understood?.facets.orEmpty(),
-                commerceIntent = understood?.commerceIntent ?: false,
-                geo = geo,
-                embedding = embedding,
-                attributes = interpreted.fold(explicit) { selection, condition -> selection.with(condition) },
-                countAttributeFacets = query.attributeFacets,
-                eventRange = EventStatusFilter.of(query.eventStatus?.trim())
-                    ?.let { EventSchedule.range(it, EventSchedule.todayKst(clock.instant())) },
-                sortByEventStart = sortByEventStart,
-                signalSort = signalSort,
-                evidenceKeyword = evidenceKeyword,
-                confine = confine,
-            ),
-            pageable,
+        val searchQuery = AttractionSearchPort.SearchQuery(
+            keyword = searchKeyword,
+            lang = query.lang?.takeIf { it.isNotBlank() },
+            areaCode = query.areaCode?.takeIf { it.isNotBlank() },
+            sidoCode = query.sidoCode?.takeIf { it.isNotBlank() },
+            sigunguCode = query.sigunguCode?.takeIf { it.isNotBlank() },
+            categories = categories,
+            facets = understood?.facets.orEmpty(),
+            commerceIntent = understood?.commerceIntent ?: false,
+            geo = geo,
+            embedding = embedding,
+            attributes = interpreted.fold(explicit) { selection, condition -> selection.with(condition) },
+            countAttributeFacets = query.attributeFacets,
+            eventRange = EventStatusFilter.of(query.eventStatus?.trim())
+                ?.let { EventSchedule.range(it, EventSchedule.todayKst(clock.instant())) },
+            sortByEventStart = sortByEventStart,
+            signalSort = signalSort,
+            evidenceKeyword = evidenceKeyword,
+            confine = confine,
         )
+        val found = attractionSearchPort.search(searchQuery, pageable)
         val page = found.page
         val noEvidence = found.noEvidence || (confine && page.totalElements == 0L)
+        val relaxed = if (!noEvidence && page.totalElements == 0L && searchKeyword != null) {
+            understood?.facetPhrase?.let { phrase ->
+                // 분류만으로 다시 센다 — 조건·구조 필터는 그대로 두고 남은 검색어·벡터·근거 검사만 뺀다
+                val count = attractionSearchPort.search(
+                    searchQuery.copy(keyword = null, embedding = null, evidenceKeyword = null, confine = false, countAttributeFacets = false),
+                    PageRequest.of(0, 1),
+                ).page.totalElements
+                // 다시 찾을 검색어는 조건어도 함께 둔다 — 「주차 되는 도쿄 수족관」은 「주차 되는 수족관」으로 센 건수다
+                val again = (interpreted.map { it.phrase } + phrase).joinToString(" ")
+                (again to count).takeIf { count > 0 }
+            }
+        } else {
+            null
+        }
         return SearchAttractionUseCase.Result(
             searchId = UUID.randomUUID().toString(),
             attractions = page.content.mapIndexed { index, hit ->
@@ -169,7 +182,13 @@ class SearchAttractionService(
             correctedKeyword = corrected,
             attributeFacets = found.attributeFacets?.toResult(),
             interpreted = interpreted,
-            zeroReason = SearchAttractionUseCase.ZeroReason.NO_EVIDENCE.takeIf { noEvidence },
+            zeroReason = when {
+                noEvidence -> SearchAttractionUseCase.ZeroReason.NO_EVIDENCE
+                relaxed != null -> SearchAttractionUseCase.ZeroReason.NO_MATCH_IN_CATEGORY
+                else -> null
+            },
+            relaxedKeyword = relaxed?.first,
+            relaxedTotal = relaxed?.second,
         )
     }
 

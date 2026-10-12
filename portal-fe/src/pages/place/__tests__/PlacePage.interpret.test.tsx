@@ -54,6 +54,7 @@ const respond = (q: AttractionQuery): Promise<AttractionSearchResult> => {
     correctedKeyword: corrected(q),
     interpretedConditions: interpreted,
     zeroReason: zeroReason(q),
+    ...(zeroReason(q) === 'NO_MATCH_IN_CATEGORY' ? { relaxedKeyword: '수족관', relaxedTotal: 20 } : {}),
   });
 };
 
@@ -257,6 +258,17 @@ describe('0건 화면', () => {
     await searchFor('에펠탑');
     expect(await screen.findByText('찾는 대상이 등록된 관광지 정보에 없습니다. 다른 검색어로 찾아보세요.')).toBeInTheDocument();
     expect(screen.queryByText(/고른 조건을 모두 만족하는 관광지가 없습니다/)).toBeNull();
+  });
+
+  it('NO_MATCH_IN_CATEGORY → 분류 안 0건 문구와 「‘수족관’ 결과 20건 보기」. 누르면 그 검색어로 다시 찾는다', async () => {
+    zeroReason = (q) => (q.keyword === '도쿄 수족관' ? 'NO_MATCH_IN_CATEGORY' : null);
+    await searchFor('도쿄 수족관');
+    expect(await screen.findByText('‘수족관’ 관광지 중에는 나머지 검색어와 겹치는 곳이 없습니다.')).toBeInTheDocument();
+    expect(screen.queryByText(/고른 조건을 모두 만족하는 관광지가 없습니다/)).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: '‘수족관’ 결과 20건 보기' }));
+    await waitFor(() => expect(lastCall()).toMatchObject({ keyword: '수족관' }));
+    await waitFor(() => expect(lastSearch()).toMatchObject({ trigger: 'relax', changed: ['keyword', 'page'] }));
   });
 
   it('zeroReason 이 없으면 지금 문구 그대로', async () => {
