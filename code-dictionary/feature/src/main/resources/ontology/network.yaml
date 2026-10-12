@@ -1054,6 +1054,8 @@ concepts:
     description: "호환이 깨지는 변경을 새 버전(URL 경로 /v1 · 헤더 · 미디어 타입)으로 내고 옛 버전을 일정 기간 함께 운영한다. 필드 추가처럼 호환되는 변경은 버전을 올리지 않는다"
     synonyms: ["API versioning", "/api/v1", "deprecation"]
     questions: ["어떤 변경이 하위 호환을 깨는가"]
+    code:
+      - { path: build.gradle.kts, symbol: "val verifyApiVersionPrefix by tasks.registering {", note: "새 매핑은 /api/v1 아래에만 — 이미 나간 무버전 경로는 목록으로 고정" }
   - id: net-api-error-model
     kind: MECHANISM
     name: "API 오류 응답 설계"

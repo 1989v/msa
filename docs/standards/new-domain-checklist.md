@@ -96,6 +96,9 @@
 
 - [ ] gateway 라우트 — 인증 수준별로 분리(public / 게스트 허용 `required=false` / ROLE_USER / ADMIN), `gateway/CLAUDE.md`.
 - [ ] 어드민 API 는 `/api/v1/admin/**` 로 서비스가 제공 (admin 은 FE 전용).
+- [ ] 공개 API 경로는 `/api/v1/**` — 빌드 게이트 `verifyApiVersionPrefix` 가 막는다. 버전 없이 이미 나간 경로
+  (`/api/places/**` · `/api/search/**` 등)는 경로를 바꾸는 일 자체가 호환을 깨므로 그대로 두고 `unversionedApiPaths` 에
+  고정했다. 호환을 깨야 할 때 그 자원만 `/api/v1` 으로 새로 열어 옛 경로와 함께 운영한다.
 - [ ] API 문서에 드러낼 도메인이면 feature 에 `GroupedOpenApi`(`infrastructure/config/OpenApiConfig.kt`)
   를 두고 gateway `openApiServices` 에 `/v3/api-docs/{group}` 으로 등록한다. 폴드 호스트의 기본
   `/v3/api-docs` 는 도메인이 합쳐진 하나라 **이름만 다른 같은 스펙**이 된다.

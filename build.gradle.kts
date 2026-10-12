@@ -1225,6 +1225,59 @@ val verifyTestConventions by tasks.registering {
 }
 
 /**
+ * 공개 API 경로 버전 게이트 — 새 HTTP 매핑은 `/api/v1` 아래에 둔다.
+ *
+ * 경로에 버전을 붙이는 일은 그 자체가 호환을 깨는 변경이라, 이미 버전 없이 나간 경로는 고치지 않고
+ * [unversionedApiPaths] 에 그대로 남긴다. 호환을 깨야 할 일이 생기면 그때 그 자원만 `/api/v1` 으로
+ * 새로 열어 옛 경로와 함께 운영한다. 목록은 **경로 문자열 그대로**라 같은 접두어 아래에
+ * 새 매핑 경로를 더해도(`/api/places/weather` 처럼) 여기서 막힌다.
+ * 버전 없는 새 경로를 정말 열어야 하면 이 목록에 한 줄 더하며 이유를 남긴다.
+ */
+val unversionedApiPaths: Set<String> = setOf(
+    "/api",                                         // agent-viewer — 개발 도구, 게이트웨이 밖
+    "/api/auth", "/api/auth/roles",
+    "/api/members", "/api/members/stats",
+    "/api/gifticons", "/api/gifticons/share-groups", "/api/gifticons/push",
+    "/api/search", "/api/search/unified", "/api/search/attractions",
+    "/api/inventories", "/api/warehouses", "/api/fulfillments",
+    "/api/places", "/api/places/regions", "/api/places/administrative-regions", "/api/places/attractions",
+    "/api/places/air", "/api/places/weather", "/api/places/attractions/category-codes",
+    "/api/places/administrative-regions/{code}/visitors",
+    "/api/places/administrative-regions/{sidoCode}/visitor-ranking",
+)
+
+val verifyApiVersionPrefix by tasks.registering {
+    group = "verification"
+    description = "새 /api 매핑이 /api/v1 아래에 있는지 확인"
+    doLast {
+        val mapping = Regex(
+            """@(?:[\w.]+\.)?(?:Request|Get|Post|Put|Patch|Delete)Mapping\(\s*(?:value\s*=\s*|path\s*=\s*)?(?:\[|arrayOf\()?\s*"(/api(?:/[^"]*)?)"""",
+        )
+        val failures = mutableListOf<String>()
+        subprojects.forEach { p ->
+            val srcDir = p.file("src/main/kotlin").takeIf(File::isDirectory) ?: return@forEach
+            srcDir.walkTopDown().filter { it.isFile && it.extension == "kt" }.forEach { src ->
+                mapping.findAll(src.readText()).map { it.groupValues[1] }
+                    .filterNot { it == "/api/v1" || it.startsWith("/api/v1/") || it in unversionedApiPaths }
+                    .forEach { failures += "${src.relativeTo(rootProject.projectDir)}: \"$it\" — /api/v1 아래에 둘 것" }
+            }
+        }
+        if (failures.isNotEmpty()) {
+            throw GradleException(
+                failures.joinToString(
+                    prefix = "API 경로 버전 위반:\n  ",
+                    separator = "\n  ",
+                    postfix = "\n\n기존 무버전 경로는 build.gradle.kts 의 unversionedApiPaths 에 있다. " +
+                        "근거는 docs/standards/new-domain-checklist.md 의 노출 항목이다.",
+                ),
+            )
+        }
+    }
+}
+
+subprojects { plugins.withId("java") { tasks.named("check") { dependsOn(verifyApiVersionPrefix) } } }
+
+/**
  * 구조 게이트 묶음. pre-push 훅과 CI 는 **이 태스크 하나만** 부른다 —
  * 개별 이름을 부르면 게이트를 새로 만들 때 호출부에 추가하는 걸 잊고,
  * `check` 에만 달린 채 아무 데서도 안 도는 상태가 된다 (2026-08-26 실제로 그랬다).
@@ -1243,5 +1296,6 @@ val verifyArchitecture by tasks.registering {
         verifyDataSourcePoolKeys,
         verifyTopologyGenerated,
         verifyTestConventions,
+        verifyApiVersionPrefix,
     )
 }
