@@ -1,0 +1,558 @@
+push graphic-context
+viewbox 0 0 1260 880
+fill white
+stroke none
+rectangle 0,0 1260,880
+font '/System/Library/Fonts/Supplemental/Arial.ttf'
+fill black
+font-size 20
+text 24,28 'Actual entrance geometry - static diagram (not a live screenshot)'
+font-size 14
+text 24,52 'Blue: unchanged 12-person spawn; black: walls; gray: pegs; orange: bumpers / initial moving arms; y496 handoff'
+fill none
+stroke lightgray
+stroke-width 1
+rectangle 20,80 418,458
+stroke none
+fill black
+font-size 17
+text 32,103 'pinball'
+fill none
+stroke black
+stroke-linecap round
+stroke-width 15.600000000000001
+line 110.0,140.0 110.0,259.6
+fill none
+stroke black
+stroke-linecap round
+stroke-width 15.600000000000001
+line 344.0,140.0 344.0,259.6
+fill none
+stroke black
+stroke-linecap round
+stroke-width 15.600000000000001
+line 110.0,259.6 116.5,276.5
+fill none
+stroke black
+stroke-linecap round
+stroke-width 15.600000000000001
+line 344.0,259.6 337.5,276.5
+stroke none
+fill slategray
+circle 227.0,307.70000000000005 238.7,307.70000000000005
+stroke none
+fill slategray
+circle 162.0,332.4 171.1,332.4
+stroke none
+fill slategray
+circle 292.0,332.4 301.1,332.4
+fill none
+stroke steelblue
+stroke-width 1
+circle 190.9867057341151,203.5025401241146 205.28670573411512,203.5025401241146
+fill none
+stroke steelblue
+stroke-width 1
+circle 159.29106578947977,203.1927727968432 173.59106578947979,203.1927727968432
+fill none
+stroke steelblue
+stroke-width 1
+circle 294.740744673647,203.59275547545406 309.040744673647,203.59275547545406
+fill none
+stroke steelblue
+stroke-width 1
+circle 226.84439025223256,235.58779548835008 241.14439025223257,235.58779548835008
+fill none
+stroke steelblue
+stroke-width 1
+circle 207.57120918119327,168.57007394526153 221.87120918119328,168.57007394526153
+fill none
+stroke steelblue
+stroke-width 1
+circle 160.12703336114063,235.10206411443653 174.42703336114064,235.10206411443653
+fill none
+stroke steelblue
+stroke-width 1
+circle 292.68585737729444,233.35402156328783 306.98585737729445,233.35402156328783
+fill none
+stroke steelblue
+stroke-width 1
+circle 193.38125785524025,233.59370483569802 207.68125785524026,233.59370483569802
+fill none
+stroke steelblue
+stroke-width 1
+circle 226.36416303487493,200.44976370269433 240.66416303487495,200.44976370269433
+fill none
+stroke steelblue
+stroke-width 1
+circle 263.03151745777575,237.11472263867034 277.33151745777576,237.11472263867034
+fill none
+stroke steelblue
+stroke-width 1
+circle 242.31389433238655,168.55476419329642 256.61389433238656,168.55476419329642
+fill none
+stroke steelblue
+stroke-width 1
+circle 262.43785730311646,200.1439735000953 276.73785730311647,200.1439735000953
+stroke gray
+stroke-width 1
+stroke-dasharray 6,5
+line 60.599999999999994,364.9 393.4,364.9
+stroke-dasharray none
+stroke none
+fill black
+font-size 13
+text 32,436 'Handoff y496 - downstream unchanged'
+fill none
+stroke lightgray
+stroke-width 1
+rectangle 434,80 832,458
+stroke none
+fill black
+font-size 17
+text 446,103 'cascade'
+fill none
+stroke black
+stroke-linecap round
+stroke-width 15.600000000000001
+line 544.8,140.0 544.8,266.1
+fill none
+stroke black
+stroke-linecap round
+stroke-width 15.600000000000001
+line 737.2,140.0 737.2,266.1
+fill none
+stroke black
+stroke-linecap round
+stroke-width 15.600000000000001
+line 544.8,266.1 592.9,346.70000000000005
+fill none
+stroke black
+stroke-linecap round
+stroke-width 15.600000000000001
+line 737.2,266.1 689.1,346.70000000000005
+fill none
+stroke steelblue
+stroke-width 1
+circle 604.986705734115,203.5025401241146 619.286705734115,203.5025401241146
+fill none
+stroke steelblue
+stroke-width 1
+circle 573.2910657894797,203.1927727968432 587.5910657894797,203.1927727968432
+fill none
+stroke steelblue
+stroke-width 1
+circle 708.740744673647,203.59275547545406 723.0407446736469,203.59275547545406
+fill none
+stroke steelblue
+stroke-width 1
+circle 640.8443902522325,235.58779548835008 655.1443902522325,235.58779548835008
+fill none
+stroke steelblue
+stroke-width 1
+circle 621.5712091811932,168.57007394526153 635.8712091811932,168.57007394526153
+fill none
+stroke steelblue
+stroke-width 1
+circle 574.1270333611407,235.10206411443653 588.4270333611406,235.10206411443653
+fill none
+stroke steelblue
+stroke-width 1
+circle 706.6858573772945,233.35402156328783 720.9858573772945,233.35402156328783
+fill none
+stroke steelblue
+stroke-width 1
+circle 607.3812578552403,233.59370483569802 621.6812578552402,233.59370483569802
+fill none
+stroke steelblue
+stroke-width 1
+circle 640.364163034875,200.44976370269433 654.664163034875,200.44976370269433
+fill none
+stroke steelblue
+stroke-width 1
+circle 677.0315174577757,237.11472263867034 691.3315174577757,237.11472263867034
+fill none
+stroke steelblue
+stroke-width 1
+circle 656.3138943323866,168.55476419329642 670.6138943323865,168.55476419329642
+fill none
+stroke steelblue
+stroke-width 1
+circle 676.4378573031165,200.1439735000953 690.7378573031165,200.1439735000953
+stroke gray
+stroke-width 1
+stroke-dasharray 6,5
+line 474.6,364.9 807.4,364.9
+stroke-dasharray none
+stroke none
+fill black
+font-size 13
+text 446,436 'Handoff y496 - downstream unchanged'
+fill none
+stroke lightgray
+stroke-width 1
+rectangle 848,80 1246,458
+stroke none
+fill black
+font-size 17
+text 860,103 'carousel'
+fill none
+stroke black
+stroke-linecap round
+stroke-width 15.600000000000001
+line 918.5,140.0 918.5,259.6
+fill none
+stroke black
+stroke-linecap round
+stroke-width 15.600000000000001
+line 1191.5,140.0 1191.5,259.6
+fill none
+stroke darkorange
+stroke-width 13.0
+line 961.0295185908517,304.20262161828975 1018.9704814091483,318.99737838171023
+stroke none
+fill black
+circle 990.0,311.6 993.0,311.6
+fill none
+stroke darkorange
+stroke-width 13.0
+line 1091.0295185908517,318.99737838171023 1148.9704814091483,304.20262161828975
+stroke none
+fill black
+circle 1120.0,311.6 1123.0,311.6
+fill none
+stroke steelblue
+stroke-width 1
+circle 1018.986705734115,203.5025401241146 1033.286705734115,203.5025401241146
+fill none
+stroke steelblue
+stroke-width 1
+circle 987.2910657894797,203.1927727968432 1001.5910657894797,203.1927727968432
+fill none
+stroke steelblue
+stroke-width 1
+circle 1122.740744673647,203.59275547545406 1137.040744673647,203.59275547545406
+fill none
+stroke steelblue
+stroke-width 1
+circle 1054.8443902522326,235.58779548835008 1069.1443902522326,235.58779548835008
+fill none
+stroke steelblue
+stroke-width 1
+circle 1035.5712091811934,168.57007394526153 1049.8712091811933,168.57007394526153
+fill none
+stroke steelblue
+stroke-width 1
+circle 988.1270333611407,235.10206411443653 1002.4270333611406,235.10206411443653
+fill none
+stroke steelblue
+stroke-width 1
+circle 1120.6858573772945,233.35402156328783 1134.9858573772945,233.35402156328783
+fill none
+stroke steelblue
+stroke-width 1
+circle 1021.3812578552403,233.59370483569802 1035.6812578552403,233.59370483569802
+fill none
+stroke steelblue
+stroke-width 1
+circle 1054.364163034875,200.44976370269433 1068.664163034875,200.44976370269433
+fill none
+stroke steelblue
+stroke-width 1
+circle 1091.0315174577759,237.11472263867034 1105.3315174577758,237.11472263867034
+fill none
+stroke steelblue
+stroke-width 1
+circle 1070.3138943323866,168.55476419329642 1084.6138943323865,168.55476419329642
+fill none
+stroke steelblue
+stroke-width 1
+circle 1090.4378573031165,200.1439735000953 1104.7378573031165,200.1439735000953
+stroke gray
+stroke-width 1
+stroke-dasharray 6,5
+line 888.6,364.9 1221.4,364.9
+stroke-dasharray none
+stroke none
+fill black
+font-size 13
+text 860,436 'Handoff y496 - downstream unchanged'
+fill none
+stroke lightgray
+stroke-width 1
+rectangle 20,475 418,853
+stroke none
+fill black
+font-size 17
+text 32,498 'zigzag'
+fill none
+stroke black
+stroke-linecap round
+stroke-width 15.600000000000001
+line 94.4,535.0 94.4,654.6
+fill none
+stroke black
+stroke-linecap round
+stroke-width 15.600000000000001
+line 359.6,535.0 359.6,654.6
+fill none
+stroke black
+stroke-linecap round
+stroke-width 15.600000000000001
+line 94.4,654.6 123.0,672.8
+fill none
+stroke black
+stroke-linecap round
+stroke-width 15.600000000000001
+line 359.6,654.6 331.0,672.8
+fill none
+stroke black
+stroke-linecap round
+stroke-width 15.600000000000001
+line 123.0,672.8 193.2,722.2
+fill none
+stroke black
+stroke-linecap round
+stroke-width 15.600000000000001
+line 331.0,672.8 260.8,722.2
+fill none
+stroke steelblue
+stroke-width 1
+circle 190.9867057341151,598.5025401241146 205.28670573411512,598.5025401241146
+fill none
+stroke steelblue
+stroke-width 1
+circle 159.29106578947977,598.1927727968432 173.59106578947979,598.1927727968432
+fill none
+stroke steelblue
+stroke-width 1
+circle 294.740744673647,598.592755475454 309.040744673647,598.592755475454
+fill none
+stroke steelblue
+stroke-width 1
+circle 226.84439025223256,630.5877954883501 241.14439025223257,630.5877954883501
+fill none
+stroke steelblue
+stroke-width 1
+circle 207.57120918119327,563.5700739452616 221.87120918119328,563.5700739452616
+fill none
+stroke steelblue
+stroke-width 1
+circle 160.12703336114063,630.1020641144365 174.42703336114064,630.1020641144365
+fill none
+stroke steelblue
+stroke-width 1
+circle 292.68585737729444,628.3540215632878 306.98585737729445,628.3540215632878
+fill none
+stroke steelblue
+stroke-width 1
+circle 193.38125785524025,628.593704835698 207.68125785524026,628.593704835698
+fill none
+stroke steelblue
+stroke-width 1
+circle 226.36416303487493,595.4497637026943 240.66416303487495,595.4497637026943
+fill none
+stroke steelblue
+stroke-width 1
+circle 263.03151745777575,632.1147226386704 277.33151745777576,632.1147226386704
+fill none
+stroke steelblue
+stroke-width 1
+circle 242.31389433238655,563.5547641932965 256.61389433238656,563.5547641932965
+fill none
+stroke steelblue
+stroke-width 1
+circle 262.43785730311646,595.1439735000953 276.73785730311647,595.1439735000953
+stroke gray
+stroke-width 1
+stroke-dasharray 6,5
+line 60.599999999999994,759.9 393.4,759.9
+stroke-dasharray none
+stroke none
+fill black
+font-size 13
+text 32,831 'Handoff y496 - downstream unchanged'
+fill none
+stroke lightgray
+stroke-width 1
+rectangle 434,475 832,853
+stroke none
+fill black
+font-size 17
+text 446,498 'bumper-forest'
+fill none
+stroke black
+stroke-linecap round
+stroke-width 15.600000000000001
+line 513.6,535.0 513.6,654.6
+fill none
+stroke black
+stroke-linecap round
+stroke-width 15.600000000000001
+line 768.4,535.0 768.4,654.6
+fill none
+stroke black
+stroke-linecap round
+stroke-width 15.600000000000001
+line 513.6,654.6 521.4,671.5
+fill none
+stroke black
+stroke-linecap round
+stroke-width 15.600000000000001
+line 768.4,654.6 760.6,671.5
+stroke none
+fill slategray
+circle 641.0,671.5 648.8,671.5
+stroke none
+fill orange
+circle 587.7,722.2 600.7,722.2
+stroke none
+fill orange
+circle 694.3,722.2 707.3,722.2
+fill none
+stroke steelblue
+stroke-width 1
+circle 604.986705734115,598.5025401241146 619.286705734115,598.5025401241146
+fill none
+stroke steelblue
+stroke-width 1
+circle 573.2910657894797,598.1927727968432 587.5910657894797,598.1927727968432
+fill none
+stroke steelblue
+stroke-width 1
+circle 708.740744673647,598.592755475454 723.0407446736469,598.592755475454
+fill none
+stroke steelblue
+stroke-width 1
+circle 640.8443902522325,630.5877954883501 655.1443902522325,630.5877954883501
+fill none
+stroke steelblue
+stroke-width 1
+circle 621.5712091811932,563.5700739452616 635.8712091811932,563.5700739452616
+fill none
+stroke steelblue
+stroke-width 1
+circle 574.1270333611407,630.1020641144365 588.4270333611406,630.1020641144365
+fill none
+stroke steelblue
+stroke-width 1
+circle 706.6858573772945,628.3540215632878 720.9858573772945,628.3540215632878
+fill none
+stroke steelblue
+stroke-width 1
+circle 607.3812578552403,628.593704835698 621.6812578552402,628.593704835698
+fill none
+stroke steelblue
+stroke-width 1
+circle 640.364163034875,595.4497637026943 654.664163034875,595.4497637026943
+fill none
+stroke steelblue
+stroke-width 1
+circle 677.0315174577757,632.1147226386704 691.3315174577757,632.1147226386704
+fill none
+stroke steelblue
+stroke-width 1
+circle 656.3138943323866,563.5547641932965 670.6138943323865,563.5547641932965
+fill none
+stroke steelblue
+stroke-width 1
+circle 676.4378573031165,595.1439735000953 690.7378573031165,595.1439735000953
+stroke gray
+stroke-width 1
+stroke-dasharray 6,5
+line 474.6,759.9 807.4,759.9
+stroke-dasharray none
+stroke none
+fill black
+font-size 13
+text 446,831 'Handoff y496 - downstream unchanged'
+fill none
+stroke lightgray
+stroke-width 1
+rectangle 848,475 1246,853
+stroke none
+fill black
+font-size 17
+text 860,498 'seesaw'
+fill none
+stroke black
+stroke-linecap round
+stroke-width 15.600000000000001
+line 896.4,535.0 896.4,659.8
+fill none
+stroke black
+stroke-linecap round
+stroke-width 15.600000000000001
+line 1213.6,535.0 1213.6,659.8
+fill none
+stroke darkorange
+stroke-width 13.0
+line 959.6942551846167,708.2836780554734 1020.3057448153833,723.1163219445266
+stroke none
+fill black
+circle 990.0,715.7 993.0,715.7
+fill none
+stroke darkorange
+stroke-width 13.0
+line 1089.6942551846166,723.1163219445266 1150.3057448153834,708.2836780554734
+stroke none
+fill black
+circle 1120.0,715.7 1123.0,715.7
+fill none
+stroke steelblue
+stroke-width 1
+circle 1018.986705734115,598.5025401241146 1033.286705734115,598.5025401241146
+fill none
+stroke steelblue
+stroke-width 1
+circle 987.2910657894797,598.1927727968432 1001.5910657894797,598.1927727968432
+fill none
+stroke steelblue
+stroke-width 1
+circle 1122.740744673647,598.592755475454 1137.040744673647,598.592755475454
+fill none
+stroke steelblue
+stroke-width 1
+circle 1054.8443902522326,630.5877954883501 1069.1443902522326,630.5877954883501
+fill none
+stroke steelblue
+stroke-width 1
+circle 1035.5712091811934,563.5700739452616 1049.8712091811933,563.5700739452616
+fill none
+stroke steelblue
+stroke-width 1
+circle 988.1270333611407,630.1020641144365 1002.4270333611406,630.1020641144365
+fill none
+stroke steelblue
+stroke-width 1
+circle 1120.6858573772945,628.3540215632878 1134.9858573772945,628.3540215632878
+fill none
+stroke steelblue
+stroke-width 1
+circle 1021.3812578552403,628.593704835698 1035.6812578552403,628.593704835698
+fill none
+stroke steelblue
+stroke-width 1
+circle 1054.364163034875,595.4497637026943 1068.664163034875,595.4497637026943
+fill none
+stroke steelblue
+stroke-width 1
+circle 1091.0315174577759,632.1147226386704 1105.3315174577758,632.1147226386704
+fill none
+stroke steelblue
+stroke-width 1
+circle 1070.3138943323866,563.5547641932965 1084.6138943323865,563.5547641932965
+fill none
+stroke steelblue
+stroke-width 1
+circle 1090.4378573031165,595.1439735000953 1104.7378573031165,595.1439735000953
+stroke gray
+stroke-width 1
+stroke-dasharray 6,5
+line 888.6,759.9 1221.4,759.9
+stroke-dasharray none
+stroke none
+fill black
+font-size 13
+text 860,831 'Handoff y496 - downstream unchanged'
+pop graphic-context

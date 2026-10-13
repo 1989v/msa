@@ -37,3 +37,18 @@
 - User removed skip mode entirely, requested a completed-only replay icon in the map center, and removed the bottom button region.
 - Parent decision: remove all player fast-forward/skip paths including racing Space; preserve internal deterministic simulation API only. Remove both bottom canvas button rows and shortcut strip. Same-seed native replay is centered after result activation guard; R works only on completed result. Native compact menu keeps slow/participant/settings and completed-only copy/new-seed round actions. Preserve course/viewport work.
 - Existing local approval applies to the ongoing maps/layout/control validation: local icons/menu/keys and replay affect only the already approved local names/settings and game state. Stop verification of the removed FF control. Do not expand to native fullscreen, clipboard writes, production or rooms.
+
+
+## 2026-10-14 입구 차별화 승인
+- User reported all entrances look the same. Parent approved six physically distinct initial containers/outlets/first-contact profiles using existing shapes, fixed spawn and physical parameters; routine safe dimensions may tune.
+- Downstream handoff remains y496 and downstream geometry/finishes are protected by pre-change per-course hashes. The previous full-course baseline is superseded only for entrance geometry, not silently regenerated.
+- Only parts.js/courses.js plus relevant tests/spec evidence are owned. Browser approval expired; static actual-geometry comparison is permitted and is not a live screenshot. Parent handles later push/deployment.
+
+
+## 2026-10-14 폭포 입구 설계 B 승인
+- Initial wide split, narrower split and pre-split mixing-pegs profiles completed safely but their same60seed start-xrho stayed outsideabs0.20 (-0.2973/-0.3162/-0.2180), while original hopper baseline was-0.0606. First three-attempt loop stopped.
+- Parent approved a new bounded design loop B: preserve original halfwidth148/throat74 central collection, shorten the funnel outlet safely, then place a short symmetric splitter before unchanged y496 downstream. Only cascade is re-verified; no physics/spawn/downstream changes or threshold changes.
+
+## 2026-10-14 폭포 원본 입구 최종 승인
+- B의 짧은 분기 시안도60시드ρ=-0.29588339로 조사선을 넘었다. 더 이상의 튜닝을 중단하고 부모가 승인한 fallback으로 폭포는 원본 hopper를 정확히 유지한다. 다른 다섯 입구가 서로 달라 여섯 코스의 입구 구분은 충족한다.
+- 최종 cascade60시드ρ=-0.06060092406529045는 원본 비교와 정확히 동일하다. 원본 cascade 전체와 모든6코스 downstream hash, spawn/physics 보존을 확인했다. 실패한4시안의 JSON은 최종 데이터와 명확히 구분한다.

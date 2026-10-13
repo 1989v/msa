@@ -13,3 +13,11 @@ questions:
     decision: "캔버스의 실제 미니맵 왼쪽 경계와 여백을 기준으로 메뉴 최대 폭을 제한한다. 긴 이름 12명으로 메뉴를 열고 실제 경계 및 아래쪽 조작의 도달 가능성을 확인한다. 물리와 코스는 유지한다."
     evidence: "verifications/course-expansion-ui/replay-measure.json: 844×390, canvas292px, 12 distinct 12-character names, opened menu right538.36px < minimap left546.37px; participant-edit action bottom329px < menu bottom346px. Native max-width/height assertions also pass."
     resolution: "fit() restricts width to actual canvas area before minimap, with an 8px gap; bounded scrolling keeps all menu actions reachable. No physics/map changes."
+
+  - id: entrance-cascade-start-x
+    category: test-discovery
+    status: closed
+    question: "새 폭포 분기 입구의30시드 출발-x/등수 표본rho=-0.2667이 기존 조사선abs0.20을 넘는다. 60시드에서도 지속되는가?"
+    decision: "다른 완료된 검증을 반복하지 않고 폭포만60시드 표본을 조사한다. 지속되면 승인된 대칭 분기 입구의 치수를 조정하고 영향받는 폭포 완주/재현/스케줄/geometry만 다시 확인한다. 물리/spawn/downstream/기준값 변경 없음."
+    resolution: "세 초기 시안과 B1의 조사선 초과 후 튜닝 중단. 부모 승인으로 폭포 원본 hopper 보존; 최종60시드 rho=-0.06060092406529045는 원본 baseline과 동일. 최종 geometry/완주/재현/스케줄 통과."
+    evidence: "verifications/entrance-cascade-investigation.json, entrance-cascade-baseline.json, entrance-cascade-matrix.json; entrance-variation.md"

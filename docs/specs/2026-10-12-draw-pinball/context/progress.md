@@ -24,3 +24,11 @@
 - Own games commit:9f8be705; coherent root integration committed with owned paths only and active hooks.
 
 - Final Korean mode labels simplified after UI/build; node syntax checks and explicitly authorized dist static-game asset sync/byte comparison passed. UI captures precede this label-only follow-up; no UI reopened or physics matrix repeated.
+
+## Group 5 — 2026-10-14 entrance variation
+- Isolated workspace /Users/gideok-kwon/.codex/worktrees/d3c3/msa only; six historical untracked live QA files preserved. No browser/push/deploy by implementer.
+- Five new initial containers/outlets/first contacts and original cascade collector produce six distinct entrances. Cascade splitting was rejected after bounded60seed regression investigation; parent approved exact original-hopper fallback. Source and evidence describe this final state.
+- Actual spawn/physics unchanged; all six downstream y496 geometry hashes and exact original cascade full-course hash preserved. Geometry/clearance checks, initial504 simulations and final cascade-only144 simulations pass; finite final60seed rho−0.060600924 matches old baseline. Failed attempts retained separately.
+- Focused26 tests and final preservation test passed, touchedlint/type exit0. Final source build and targeted final review in progress. Static geometry JSON/SVG/PNG updated from final source, not UI screenshots. Evidence: verifications/entrance-variation.md.
+- Final-source npm build exit0 (Vite2.25s,184pages/82games,strip892); parts/courses dist byte-identical. node syntax/root+games diffcheck exit0. Await final targeted review before coherent commits.
+- Final targeted review SHIP; parent accepted final actual-geometry PNG. Own games commit ecfa8dc3; coherent root commit authorized, hooks kept active, historical QA excluded.

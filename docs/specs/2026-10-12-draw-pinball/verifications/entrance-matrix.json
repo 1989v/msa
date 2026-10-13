@@ -1,0 +1,56 @@
+[
+  {
+    "course": "pinball",
+    "replayPairs": 30,
+    "minSeconds": 15.212499999999457,
+    "maxSeconds": 41.16250000000579,
+    "biasSeeds": 30,
+    "biasSamples": 180,
+    "rho": 0.02328905442094695
+  },
+  {
+    "course": "cascade",
+    "replayPairs": 30,
+    "minSeconds": 15.837499999999421,
+    "maxSeconds": 25.845833333332187,
+    "biasSeeds": 30,
+    "biasSamples": 180,
+    "rho": -0.2666972361108441
+  },
+  {
+    "course": "carousel",
+    "replayPairs": 30,
+    "minSeconds": 13.949999999999529,
+    "maxSeconds": 30.566666666665252,
+    "biasSeeds": 30,
+    "biasSamples": 180,
+    "rho": 0.0026294093701069135
+  },
+  {
+    "course": "zigzag",
+    "replayPairs": 30,
+    "minSeconds": 27.399999999998766,
+    "maxSeconds": 35.620833333334716,
+    "biasSeeds": 30,
+    "biasSamples": 180,
+    "rho": -0.10736754927936565
+  },
+  {
+    "course": "bumper-forest",
+    "replayPairs": 30,
+    "minSeconds": 10.666666666666382,
+    "maxSeconds": 32.55833333333228,
+    "biasSeeds": 30,
+    "biasSamples": 180,
+    "rho": -0.10392427510422564
+  },
+  {
+    "course": "seesaw",
+    "replayPairs": 30,
+    "minSeconds": 10.39999999999973,
+    "maxSeconds": 41.15416666667245,
+    "biasSeeds": 30,
+    "biasSamples": 180,
+    "rho": 0.043823489501781894
+  }
+]

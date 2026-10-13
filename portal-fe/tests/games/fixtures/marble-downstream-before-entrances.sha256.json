@@ -1,0 +1,19 @@
+{
+  "sourceGamesCommit": "3f19afbc58e67243041b5d454706e6ea609890de",
+  "sharedHopper": {
+    "endY": 496,
+    "walls": 4,
+    "pegs": 0,
+    "rotors": 0,
+    "seesaws": 0,
+    "marks": 1
+  },
+  "hashes": {
+    "pinball": "8fedeafeb7c95cca350f994159c2feb5f612d0bf71a68d0faa8b3c25d54cbbab",
+    "cascade": "4404bbea21f399ca371b9f0f3dfec3f49f12e576dbe16c2efdbb647bb0ab9fbc",
+    "carousel": "52d48648a4a22c4b6915694d411a2554f6a453ce435568bb4f8c0494f2fc62f7",
+    "zigzag": "0d07a5531695b71d2c31b135a8d7c0428b40b4900f9a2409313cc65558e5b156",
+    "bumper-forest": "87f48c6a484b6d217dfec728cc480dfae99cd273473aec97551d9225cc8fbf5a",
+    "seesaw": "b2b291e3a933bc73d2b1f8d13485f099c78ea83113b5bd97242ca8669c07811e"
+  }
+}

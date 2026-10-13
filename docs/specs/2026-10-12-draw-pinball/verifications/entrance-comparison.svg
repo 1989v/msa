@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1260" height="880" viewBox="0 0 1260 880"><rect width="1260" height="880" fill="white"/><text x="24" y="28" font-size="20">Actual entrance geometry — static diagram (not a live screenshot)</text><text x="24" y="52" font-size="14">Blue: unchanged 12-person spawn · black: walls · gray: pegs · orange: bumpers / initial moving arms · dashed: y496 handoff</text>
+<rect x="20" y="80" width="398" height="378" fill="none" stroke="lightgray"/><text x="32" y="103" font-size="17">pinball</text>
+<line stroke="black" stroke-linecap="round" x1="110.0" y1="140.0" x2="110.0" y2="259.6" stroke-width="15.600000000000001"/>
+<line stroke="black" stroke-linecap="round" x1="344.0" y1="140.0" x2="344.0" y2="259.6" stroke-width="15.600000000000001"/>
+<line stroke="black" stroke-linecap="round" x1="110.0" y1="259.6" x2="116.5" y2="276.5" stroke-width="15.600000000000001"/>
+<line stroke="black" stroke-linecap="round" x1="344.0" y1="259.6" x2="337.5" y2="276.5" stroke-width="15.600000000000001"/>
+<circle fill="slategray" cx="227.0" cy="307.70000000000005" r="11.700000000000001"/>
+<circle fill="slategray" cx="162.0" cy="332.4" r="9.1"/>
+<circle fill="slategray" cx="292.0" cy="332.4" r="9.1"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="190.9867057341151" cy="203.5025401241146" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="159.29106578947977" cy="203.1927727968432" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="294.740744673647" cy="203.59275547545406" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="226.84439025223256" cy="235.58779548835008" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="207.57120918119327" cy="168.57007394526153" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="160.12703336114063" cy="235.10206411443653" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="292.68585737729444" cy="233.35402156328783" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="193.38125785524025" cy="233.59370483569802" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="226.36416303487493" cy="200.44976370269433" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="263.03151745777575" cy="237.11472263867034" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="242.31389433238655" cy="168.55476419329642" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="262.43785730311646" cy="200.1439735000953" r="14.3"/>
+<line x1="60.599999999999994" y1="364.9" x2="393.4" y2="364.9" stroke="gray" stroke-dasharray="6 5"/><text x="32" y="436" font-size="13">Handoff y496 — downstream unchanged</text>
+<rect x="434" y="80" width="398" height="378" fill="none" stroke="lightgray"/><text x="446" y="103" font-size="17">cascade</text>
+<line stroke="black" stroke-linecap="round" x1="544.8" y1="140.0" x2="544.8" y2="266.1" stroke-width="15.600000000000001"/>
+<line stroke="black" stroke-linecap="round" x1="737.2" y1="140.0" x2="737.2" y2="266.1" stroke-width="15.600000000000001"/>
+<line stroke="black" stroke-linecap="round" x1="544.8" y1="266.1" x2="592.9" y2="346.70000000000005" stroke-width="15.600000000000001"/>
+<line stroke="black" stroke-linecap="round" x1="737.2" y1="266.1" x2="689.1" y2="346.70000000000005" stroke-width="15.600000000000001"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="604.986705734115" cy="203.5025401241146" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="573.2910657894797" cy="203.1927727968432" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="708.740744673647" cy="203.59275547545406" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="640.8443902522325" cy="235.58779548835008" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="621.5712091811932" cy="168.57007394526153" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="574.1270333611407" cy="235.10206411443653" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="706.6858573772945" cy="233.35402156328783" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="607.3812578552403" cy="233.59370483569802" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="640.364163034875" cy="200.44976370269433" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="677.0315174577757" cy="237.11472263867034" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="656.3138943323866" cy="168.55476419329642" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="676.4378573031165" cy="200.1439735000953" r="14.3"/>
+<line x1="474.6" y1="364.9" x2="807.4" y2="364.9" stroke="gray" stroke-dasharray="6 5"/><text x="446" y="436" font-size="13">Handoff y496 — downstream unchanged</text>
+<rect x="848" y="80" width="398" height="378" fill="none" stroke="lightgray"/><text x="860" y="103" font-size="17">carousel</text>
+<line stroke="black" stroke-linecap="round" x1="918.5" y1="140.0" x2="918.5" y2="259.6" stroke-width="15.600000000000001"/>
+<line stroke="black" stroke-linecap="round" x1="1191.5" y1="140.0" x2="1191.5" y2="259.6" stroke-width="15.600000000000001"/>
+<line stroke="darkorange" stroke-linecap="round" x1="961.0295185908517" y1="304.20262161828975" x2="1018.9704814091483" y2="318.99737838171023" stroke-width="13.0"/><circle cx="990.0" cy="311.6" r="3" fill="black"/>
+<line stroke="darkorange" stroke-linecap="round" x1="1091.0295185908517" y1="318.99737838171023" x2="1148.9704814091483" y2="304.20262161828975" stroke-width="13.0"/><circle cx="1120.0" cy="311.6" r="3" fill="black"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="1018.986705734115" cy="203.5025401241146" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="987.2910657894797" cy="203.1927727968432" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="1122.740744673647" cy="203.59275547545406" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="1054.8443902522326" cy="235.58779548835008" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="1035.5712091811934" cy="168.57007394526153" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="988.1270333611407" cy="235.10206411443653" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="1120.6858573772945" cy="233.35402156328783" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="1021.3812578552403" cy="233.59370483569802" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="1054.364163034875" cy="200.44976370269433" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="1091.0315174577759" cy="237.11472263867034" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="1070.3138943323866" cy="168.55476419329642" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="1090.4378573031165" cy="200.1439735000953" r="14.3"/>
+<line x1="888.6" y1="364.9" x2="1221.4" y2="364.9" stroke="gray" stroke-dasharray="6 5"/><text x="860" y="436" font-size="13">Handoff y496 — downstream unchanged</text>
+<rect x="20" y="475" width="398" height="378" fill="none" stroke="lightgray"/><text x="32" y="498" font-size="17">zigzag</text>
+<line stroke="black" stroke-linecap="round" x1="94.4" y1="535.0" x2="94.4" y2="654.6" stroke-width="15.600000000000001"/>
+<line stroke="black" stroke-linecap="round" x1="359.6" y1="535.0" x2="359.6" y2="654.6" stroke-width="15.600000000000001"/>
+<line stroke="black" stroke-linecap="round" x1="94.4" y1="654.6" x2="123.0" y2="672.8" stroke-width="15.600000000000001"/>
+<line stroke="black" stroke-linecap="round" x1="359.6" y1="654.6" x2="331.0" y2="672.8" stroke-width="15.600000000000001"/>
+<line stroke="black" stroke-linecap="round" x1="123.0" y1="672.8" x2="193.2" y2="722.2" stroke-width="15.600000000000001"/>
+<line stroke="black" stroke-linecap="round" x1="331.0" y1="672.8" x2="260.8" y2="722.2" stroke-width="15.600000000000001"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="190.9867057341151" cy="598.5025401241146" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="159.29106578947977" cy="598.1927727968432" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="294.740744673647" cy="598.592755475454" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="226.84439025223256" cy="630.5877954883501" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="207.57120918119327" cy="563.5700739452616" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="160.12703336114063" cy="630.1020641144365" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="292.68585737729444" cy="628.3540215632878" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="193.38125785524025" cy="628.593704835698" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="226.36416303487493" cy="595.4497637026943" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="263.03151745777575" cy="632.1147226386704" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="242.31389433238655" cy="563.5547641932965" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="262.43785730311646" cy="595.1439735000953" r="14.3"/>
+<line x1="60.599999999999994" y1="759.9" x2="393.4" y2="759.9" stroke="gray" stroke-dasharray="6 5"/><text x="32" y="831" font-size="13">Handoff y496 — downstream unchanged</text>
+<rect x="434" y="475" width="398" height="378" fill="none" stroke="lightgray"/><text x="446" y="498" font-size="17">bumper-forest</text>
+<line stroke="black" stroke-linecap="round" x1="513.6" y1="535.0" x2="513.6" y2="654.6" stroke-width="15.600000000000001"/>
+<line stroke="black" stroke-linecap="round" x1="768.4" y1="535.0" x2="768.4" y2="654.6" stroke-width="15.600000000000001"/>
+<line stroke="black" stroke-linecap="round" x1="513.6" y1="654.6" x2="521.4" y2="671.5" stroke-width="15.600000000000001"/>
+<line stroke="black" stroke-linecap="round" x1="768.4" y1="654.6" x2="760.6" y2="671.5" stroke-width="15.600000000000001"/>
+<circle fill="slategray" cx="641.0" cy="671.5" r="7.800000000000001"/>
+<circle fill="orange" cx="587.7" cy="722.2" r="13.0"/>
+<circle fill="orange" cx="694.3" cy="722.2" r="13.0"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="604.986705734115" cy="598.5025401241146" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="573.2910657894797" cy="598.1927727968432" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="708.740744673647" cy="598.592755475454" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="640.8443902522325" cy="630.5877954883501" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="621.5712091811932" cy="563.5700739452616" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="574.1270333611407" cy="630.1020641144365" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="706.6858573772945" cy="628.3540215632878" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="607.3812578552403" cy="628.593704835698" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="640.364163034875" cy="595.4497637026943" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="677.0315174577757" cy="632.1147226386704" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="656.3138943323866" cy="563.5547641932965" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="676.4378573031165" cy="595.1439735000953" r="14.3"/>
+<line x1="474.6" y1="759.9" x2="807.4" y2="759.9" stroke="gray" stroke-dasharray="6 5"/><text x="446" y="831" font-size="13">Handoff y496 — downstream unchanged</text>
+<rect x="848" y="475" width="398" height="378" fill="none" stroke="lightgray"/><text x="860" y="498" font-size="17">seesaw</text>
+<line stroke="black" stroke-linecap="round" x1="896.4" y1="535.0" x2="896.4" y2="659.8" stroke-width="15.600000000000001"/>
+<line stroke="black" stroke-linecap="round" x1="1213.6" y1="535.0" x2="1213.6" y2="659.8" stroke-width="15.600000000000001"/>
+<line stroke="darkorange" stroke-linecap="round" x1="959.6942551846167" y1="708.2836780554734" x2="1020.3057448153833" y2="723.1163219445266" stroke-width="13.0"/><circle cx="990.0" cy="715.7" r="3" fill="black"/>
+<line stroke="darkorange" stroke-linecap="round" x1="1089.6942551846166" y1="723.1163219445266" x2="1150.3057448153834" y2="708.2836780554734" stroke-width="13.0"/><circle cx="1120.0" cy="715.7" r="3" fill="black"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="1018.986705734115" cy="598.5025401241146" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="987.2910657894797" cy="598.1927727968432" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="1122.740744673647" cy="598.592755475454" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="1054.8443902522326" cy="630.5877954883501" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="1035.5712091811934" cy="563.5700739452616" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="988.1270333611407" cy="630.1020641144365" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="1120.6858573772945" cy="628.3540215632878" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="1021.3812578552403" cy="628.593704835698" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="1054.364163034875" cy="595.4497637026943" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="1091.0315174577759" cy="632.1147226386704" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="1070.3138943323866" cy="563.5547641932965" r="14.3"/>
+<circle fill="none" stroke="steelblue" stroke-width="1" cx="1090.4378573031165" cy="595.1439735000953" r="14.3"/>
+<line x1="888.6" y1="759.9" x2="1221.4" y2="759.9" stroke="gray" stroke-dasharray="6 5"/><text x="860" y="831" font-size="13">Handoff y496 — downstream unchanged</text>
+</svg>

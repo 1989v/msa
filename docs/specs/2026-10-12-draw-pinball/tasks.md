@@ -29,3 +29,10 @@ Dependencies: 기존 구현/배포 완료. User requested 2026-10-13.
 - [x] 새 맵 완주/시드 재현/스케줄 동일성과 native controls 통합 검증; 기존 맵 보존 확인.
 - [x] 관련 lint/type/build와 fresh-context 구현 리뷰; 증거는 `verifications/course-expansion.md`에 기록.
 - [x] 승인된 로컬 브라우저로 모바일/데스크톱 및 새 맵/viewport/완료 후 리플레이·메뉴 검증. 브라우저 검증 여부와 한계를 구분해 보고.
+
+
+## Group 5: 여섯 코스의 출발 입구 구분
+- [x] 코스별 경계/출구/첫 접촉 구현; spawn/physics/downstream 유지.
+- [x] 실제 입구 geometry/spawn JSON과 비-UI 정적 도식 생성.
+- [x] 모든6코스2/6/12명×10시드 완주·재현, 대표스케줄·spawn/통로/nonfinite/downstream 검증, 제한된 출발-x 표본 보고.
+- [x] focused tests/type/build 및 fresh review, 증거 entrance-variation.md 기록 후 coherent games/root commits. 구현자 push/deploy/browser 없음.
