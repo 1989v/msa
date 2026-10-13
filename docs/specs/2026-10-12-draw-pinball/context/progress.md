@@ -13,7 +13,7 @@
 
 ## Group 4 — 2026-10-13 current candidate
 - Workspace: /Users/gideok-kwon/.codex/worktrees/d3c3/msa; root feature/marble-course-expansion-20261013, games from cb192475. Preserve six historical untracked live QA artifacts. No push/deploy.
-- Three new courses and previews complete. Original three geometry/physics SHA-256 fixtures match, only course descriptions change. parts/game/physics unchanged.
+- Three new courses and previews complete. Original three geometry/physics SHA-256 fixtures match, only course descriptions change. parts/physics and simulation logic unchanged; final game.js mode display labels only were simplified.
 - User superseded fast-forward with no player skip/bottom buttons; same-seed completed-only centered64px replay and compact native menu implemented. Internal fastForward remains only simulation/dev tooling.
 - Forced viewport height is scoped to marble-race. Host controls remain top-right; HUD reserves their space on exact-aspect screens. Menu max-width/height use actual canvas/minimap bounds; result names/ranks reserve center replay area.
 - Evidence: verifications/course-expansion.md; course-expansion-matrix.json (372 simulations, ~123s to regenerate; do not repeat without physical change); course-expansion-ui/ contains current no-skip screenshots, measurements, reproducible local API fixture scripts; command output summaries are in course-expansion.md.
@@ -22,3 +22,5 @@
 - Fresh follow-up review SHIP; parent authorized coherent games/root commits after final-source build. Owned browser/profile, fixture and keep-alive shell cleaned. No push/deploy.
 
 - Own games commit:9f8be705; coherent root integration committed with owned paths only and active hooks.
+
+- Final Korean mode labels simplified after UI/build; node syntax checks and explicitly authorized dist static-game asset sync/byte comparison passed. UI captures precede this label-only follow-up; no UI reopened or physics matrix repeated.

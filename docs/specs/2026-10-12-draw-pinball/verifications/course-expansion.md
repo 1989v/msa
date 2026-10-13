@@ -4,7 +4,7 @@ Workspace: `/Users/gideok-kwon/.codex/worktrees/d3c3/msa`, isolated `feature/mar
 
 ## Final behavior
 
-- Six courses: original 핀볼/폭포/회전목마 plus 지그재그/범퍼 숲/시소. New previews and short Korean descriptions. Original serialized geometry/physical parameters remain identical; only original tags change. No edits to parts.js, physics.js or game.js.
+- Six courses: original 핀볼/폭포/회전목마 plus 지그재그/범퍼 숲/시소. New previews and short Korean descriptions. Original serialized geometry/physical parameters remain identical; only original tags change. parts.js and physics.js remain unchanged; game.js changes only final mode display labels, with no simulation edits.
 - The user's later request supersedes the earlier fast-forward proposal. No player skip, race/result canvas button rows, bottom shortcut strip, or background-tap restart. Racing Space/Enter/R do not advance time or reset. Internal `Game.fastForward` remains simulation/development tooling.
 - Completed results expose one centered native replay target (64 CSS px; SVG32px, “다시 보기”) after the existing0.4-second guard. Replay retains map/roster/mode/seed and immediately hides during ready/racing. ResultR also retains seed; result bodySpace/Enter are no-ops. Native button/summary keys do not execute global shortcuts.
 - Native menu: participant selection, manual slow view and participant editing; result copying and an explicit new-seed “새로 시작하기” are available only after completion. Expanded menus use actual canvas width before the minimap and bounded scrolling. Result winner/rank layout reserves the center replay area.
@@ -26,7 +26,7 @@ Each new course completes and repeats for2/6/12 people ×10 fixed seeds (i×7919
 
 One representative six-person seed per new map also matched30/60/120Hz ordinary stepping against fixed-step fast-forward. These finite samples establish completion/replay and detect the measured start-x relationship; they do not establish universal fairness or all-seed completion.
 
-Original-course geometry hashes were captured before editing and exclude only display tags. Latest preservation command: `npx vitest run tests/games/marbleCourseExpansion.test.ts -t 'keeps the original'` → `Tests 1 passed | 2 skipped`; skipped expensive matrix/schedule cases already passed above. Simulation/game/parts sources remain unchanged, preserving original seeded outcomes.
+Original-course geometry hashes were captured before editing and exclude only display tags. Latest preservation command: `npx vitest run tests/games/marbleCourseExpansion.test.ts -t 'keeps the original'` → `Tests 1 passed | 2 skipped`; skipped expensive matrix/schedule cases already passed above. Simulation logic and physics/parts sources remain unchanged, preserving original seeded outcomes; mode display strings alone change in game.js.
 
 ## CLI evidence
 
@@ -65,3 +65,10 @@ Owned browser cleanup: `CLAUDE_SCRATCHPAD=/private/tmp/marble-expansion-ui-20261
 
 
 Final asset check: `FINAL_GAME_ASSETS match shipped source; replay/menu present; player skip/bottom rows absent` (exit0). Built courses/setup/main JS are byte-for-byte equal to final source; final HTML includes the replay control styling. Owned CDP port9403 no longer responds and its task profile directory is absent after cleanup.
+
+
+## Final label-only follow-up
+
+Parent/user Korean-copy feedback was applied after the verified layout/behavior screenshots and completed portal build: last “꼴찌 뽑기”, first “1등 뽑기”, rank “등수 지정”, rank HUD “N등 뽑기”, last-result heading “뽑힌 사람”. MODES actually lives in game.js (no modes.js); keys, subtitles and all simulation logic are unchanged. Screenshots/measurement button text reflect the pre-follow-up labels and remain evidence of the same layout/control behavior. The browser approval bundle remained closed.
+
+`node --check public/games/marble-race/js/game.js` and the matching main.js command: exit0. Portal ESLint config targets onlyts/tsx, so it does not lint these legacy staticJS files; matching TypeScript touched-lint results above remain unchanged. At the parent's explicit direction, only the built static game.js/main.js files were copied from their final sources into dist after the already-passing portal build. Byte comparison reports `LABEL_ONLY_ASSETS match final source; prior portal build + explicit static games asset sync` (exit0). No matrix, broad test suite, full rebuild or UI reopening for labels.
