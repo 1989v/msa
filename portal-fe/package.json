@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:watch": "vitest --watch",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "test:marble-sweep": "MARBLE_SWEEP=1 vitest run tests/games/marbleCourseMatrix.test.ts tests/games/marbleSchedules.test.ts"
   },
   "dependencies": {
     "@chenglou/pretext": "^0.0.5",
