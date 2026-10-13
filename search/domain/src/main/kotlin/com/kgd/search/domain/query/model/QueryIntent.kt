@@ -1,6 +1,7 @@
 package com.kgd.search.domain.query.model
 
 import com.kgd.search.domain.attraction.model.Admission
+import com.kgd.search.domain.attraction.model.AttractionCompanion
 import com.kgd.search.domain.attraction.model.AttributeSelection
 import com.kgd.search.domain.attraction.model.Availability
 
@@ -268,6 +269,11 @@ object QueryIntent {
         val vectorText: String? = null,
         /** 분류·유형 필터로 읽은 원문 어절(「수족관」). 필터는 있는데 잔여와 겹치는 문서가 없을 때 「이 말만으로 보기」에 쓴다. */
         val facetPhrase: String? = null,
+        /**
+         * 동반 표현을 읽었으면 그 동행([AttractionCompanion.KIDS]). 거르지 않고 순위에만 쓴다 — 검색이 그 동행에 맞는 문서를
+         * 조금 올린다. 원천에 근거가 없는 곳도 결과에 남는다.
+         */
+        val companion: AttractionCompanion? = null,
     ) {
         /** 검색어가 남지 않았다 = 순위를 정할 키워드 신호가 없다. */
         val residualIsEmpty: Boolean get() = residual.isNullOrBlank()
@@ -448,6 +454,8 @@ object QueryIntent {
                 (words.subList(0, range.first) + canonical + words.subList(range.last + 1, words.size)).joinToString(" ")
             },
             facetPhrase = facetWords.joinToString(" ").ifBlank { null },
+            // 표현이 무엇이든(「아이랑」·「가족과」·「with kids」) 원천 근거가 있는 동행은 아이 하나다
+            companion = companion?.let { AttractionCompanion.KIDS },
         )
     }
 

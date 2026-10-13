@@ -145,6 +145,12 @@ class AttractionsIndexMappingTest : BehaviorSpec({
             // fvf 는 doc_values 를 읽는다 — index:false 는 괜찮지만 doc_values 를 끄면 점수 함수가 실패한다
             properties.path("clickBoost").path("type").asString() shouldBe "float"
             properties.path("clickBoost").path("doc_values").asBoolean(true) shouldBe true
+            // 소개문 고유도도 fvf 로 곱한다 — 같은 이유로 doc_values 를 끄지 않는다
+            properties.path("contentUniqueness").path("type").asString() shouldBe "float"
+            properties.path("contentUniqueness").path("doc_values").asBoolean(true) shouldBe true
+            // 동행 적합은 점수 함수가 term 필터로 건다 — 색인되는 keyword 여야 한다
+            properties.path("companions").path("type").asString() shouldBe "keyword"
+            properties.path("companions").path("index").asBoolean(true) shouldBe true
         }
     }
 

@@ -5,6 +5,8 @@ import com.kgd.search.domain.attraction.model.AttractionAccess
 import com.kgd.search.domain.attraction.model.AttractionAttributeParser
 import com.kgd.search.domain.attraction.model.AttractionAttributeSource
 import com.kgd.search.domain.attraction.model.AttractionClickSignal
+import com.kgd.search.domain.attraction.model.AttractionCompanionFit
+import com.kgd.search.domain.attraction.model.AttractionContentUniqueness
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionFee
 import com.kgd.search.domain.attraction.model.AttractionKey
@@ -142,7 +144,7 @@ class AttractionApiReindexTasklet(
             val savedCounts = loadSaveSignal()
 
             val today = EventSchedule.todayKst(clock.instant())
-            val (projections, placements, attractionIds, samePlaces, alternates) = collectRegionPlacements(today)
+            val (projections, placements, attractionIds, samePlaces, alternates, overviewCounts) = collectRegionPlacements(today)
 
             val indexStartedAt = System.nanoTime()
 
@@ -177,6 +179,8 @@ class AttractionApiReindexTasklet(
             var withAccess = 0L
             var busNotCovered = 0L
             var unreadableAccessDates = 0L
+            var withKids = 0L
+            var sharedOverview = 0L
 
             while (afterId != null) {
                 val response = placeApiClient.fetchPageAfter(afterId, pageSize)
@@ -308,6 +312,12 @@ class AttractionApiReindexTasklet(
                     // 찜은 언어 문서 id 단위다 — 국·영 찜을 합치지 않는다. 하한 미만은 싣지 않는다(집계가 이미 걸렀어도 한 번 더)
                     val savedCount = savedCounts?.get(attraction.id.toString())?.takeIf { AttractionSaveSignal.meetsMin(it) }
                     if (savedCount != null) withSaved++
+                    // 1차 훑기 뒤에 새로 생긴 문서는 세지 못했다 — 1건(계수 1.0)으로 둔다
+                    val sameOverviewCount = overviewKeyOf(attraction.lang, attraction.overview)?.let { overviewCounts[it] ?: 1 }
+                    if (sameOverviewCount != null && sameOverviewCount > 1) sharedOverview++
+                    // 깨진 소개 원문은 연령 근거 없이 분류로만 판정한다
+                    val companions = AttractionCompanionFit.of(attraction.lclsSystm3, intro.orEmpty())
+                    if (companions.isNotEmpty()) withKids++
                     val document = AttractionIndexDocument.fromDomain(
                         AttractionDocument(
                             id = attraction.id.toString(),
@@ -372,6 +382,8 @@ class AttractionApiReindexTasklet(
                             access = access,
                             contentUpdatedAt = attraction.contentUpdatedAt,
                             alternateId = if (alternatePairsEnabled) alternates[attraction.id.toString()] else null,
+                            sameOverviewCount = sameOverviewCount,
+                            companions = companions,
                         ),
                         embedding,
                     )
@@ -422,6 +434,7 @@ class AttractionApiReindexTasklet(
                     "extras lookup failures $extrasLookupFailures, " +
                     "links lookup failures $linksLookupFailures, " +
                     "access $withAccess (bus not covered $busNotCovered, unreadable base date $unreadableAccessDates), " +
+                    "companions KIDS $withKids, shared overview $sharedOverview, " +
                     "saved $withSaved (min ${AttractionSaveSignal.SAVED_MIN}${if (savedCounts == null) ", load failed" else ""}), " +
                     "attribute parser v${AttractionAttributeParser.VERSION}, index pass ${elapsedMs(indexStartedAt)}ms"
             }
@@ -473,12 +486,16 @@ class AttractionApiReindexTasklet(
     private suspend fun collectRegionPlacements(today: LocalDate): RegionPass {
         val startedAt = System.nanoTime()
         val projections = ArrayList<RegionProjection>()
+        val overviewCounts = HashMap<Long, Int>()
         var page = 0
         var afterId: Long? = 0L
         while (afterId != null) {
             val response = placeApiClient.fetchPageAfter(afterId, pageSize)
             afterId = response.nextAfterId
-            response.attractions.filter { it.status == "ACTIVE" }.mapTo(projections) { it.toProjection() }
+            response.attractions.filter { it.status == "ACTIVE" }.forEach { attraction ->
+                projections += attraction.toProjection()
+                overviewKeyOf(attraction.lang, attraction.overview)?.let { overviewCounts.merge(it, 1, Int::plus) }
+            }
             page++
         }
 
@@ -503,7 +520,11 @@ class AttractionApiReindexTasklet(
                 "dropped by uniqueness ${alternates.droppedByUniqueness}, dropped by overview ${alternates.droppedByOverview}, " +
                 "enabled=$alternatePairsEnabled)"
         }
-        return RegionPass(listed.associateBy { it.id }, placements, attractionIds, samePlaces, alternates.pairs)
+        log.info {
+            "Overview keys: ${overviewCounts.size} distinct, " +
+                "${overviewCounts.values.filter { it > 1 }.sum()} documents share an overview with another"
+        }
+        return RegionPass(listed.associateBy { it.id }, placements, attractionIds, samePlaces, alternates.pairs, overviewCounts)
     }
 
     /**
@@ -522,6 +543,8 @@ class AttractionApiReindexTasklet(
         val samePlaces: Map<String, List<SamePlace>>,
         /** 언어 대체 짝 id → 상대 id(양방향). 스위치가 꺼져 있어도 채워진다 — 문서에 실을지는 2차가 정한다. */
         val alternates: Map<String, String>,
+        /** 소개문 열쇠([overviewKeyOf]) → 그 소개문을 쓰는 활성 문서 수. 2차가 문서의 고유도 계수를 만든다. */
+        val overviewCounts: Map<Long, Int>,
     )
 
     /** 행사만 유효 기간을 갖는다 — 다른 유형에 날짜가 실려 와도 행사 규칙을 적용하지 않는다. */
@@ -659,6 +682,22 @@ class AttractionApiReindexTasklet(
             .toList()
             .takeIf { it.isNotEmpty() }
 
+    /**
+     * 언어별 소개문 열쇠의 64비트 해시 — 문서마다 소개문 앞 300자를 들고 있으면 6만 건에 수십 MB 라 해시만 센다.
+     * 32비트 hashCode 는 열쇠 6만 개에서 충돌 기대값이 약 0.4쌍이라 FNV-1a 64비트를 쓴다. 소개문이 비면 null(세지 않는다).
+     */
+    private fun overviewKeyOf(lang: String, overview: String?): Long? {
+        val key = AttractionContentUniqueness.key(overview) ?: return null
+        var hash = FNV_OFFSET
+        fun mix(c: Char) {
+            hash = (hash xor c.code.toLong()) * FNV_PRIME
+        }
+        lang.forEach(::mix)
+        mix('\u0000')
+        key.forEach(::mix)
+        return hash
+    }
+
     private fun elapsedMs(startedAt: Long) = (System.nanoTime() - startedAt) / 1_000_000
 
     companion object {
@@ -667,5 +706,8 @@ class AttractionApiReindexTasklet(
         /** wishlist 찜 대상 종류 — 관광지. 대상 키는 관광지 언어 문서 id 다. */
         private const val SAVE_TARGET_TYPE = "ATTRACTION"
         private val introReader = ObjectMapper()
+
+        private const val FNV_OFFSET = -0x340d631b7bdddcdbL
+        private const val FNV_PRIME = 0x100000001b3L
     }
 }

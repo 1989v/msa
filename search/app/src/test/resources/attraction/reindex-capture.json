@@ -34,6 +34,7 @@
     "uniqueClickers14d" : 0,
     "signalsAsOf" : "2026-10-02",
     "clickBoost" : 1.0,
+    "contentUniqueness" : 1.0,
     "eventStartEffective" : "2026-09-25",
     "eventEndEffective" : "2026-10-05"
   }, {
@@ -71,6 +72,7 @@
     "uniqueClickers14d" : 0,
     "signalsAsOf" : "2026-10-02",
     "clickBoost" : 1.0,
+    "contentUniqueness" : 1.0,
     "eventStartEffective" : "2026-10-10",
     "eventEndEffective" : "2026-10-10"
   }, {
@@ -113,6 +115,7 @@
     "uniqueClickers14d" : 0,
     "signalsAsOf" : "2026-10-02",
     "clickBoost" : 1.0,
+    "contentUniqueness" : 1.0,
     "eventStartEffective" : "2026-09-01",
     "eventEndEffective" : "2026-10-01"
   }, {
@@ -154,7 +157,8 @@
     } ],
     "uniqueClickers14d" : 0,
     "signalsAsOf" : "2026-10-02",
-    "clickBoost" : 1.0
+    "clickBoost" : 1.0,
+    "contentUniqueness" : 1.0
   }, {
     "id" : "105",
     "idSort" : 105,
@@ -194,7 +198,8 @@
     } ],
     "uniqueClickers14d" : 0,
     "signalsAsOf" : "2026-10-02",
-    "clickBoost" : 1.0
+    "clickBoost" : 1.0,
+    "contentUniqueness" : 1.0
   }, {
     "id" : "201",
     "idSort" : 201,
@@ -252,6 +257,7 @@
     "savedCount" : 4,
     "signalsAsOf" : "2026-10-02",
     "clickBoost" : 1.0,
+    "contentUniqueness" : 1.0,
     "barrierFree" : [ "PARKING", "WHEELCHAIR", "EXIT", "RESTROOM", "AUDIO_GUIDE", "STROLLER", "LACTATION_ROOM", "INFANT_ETC" ],
     "barrierFreeDetail" : {
       "parking" : "장애인 주차장 있음(광화문 우측 옥외 주차장에 9개)_무장애 편의시설",
@@ -308,6 +314,7 @@
     "uniqueClickers14d" : 0,
     "signalsAsOf" : "2026-10-02",
     "clickBoost" : 1.0,
+    "contentUniqueness" : 1.0,
     "wellnessTheme" : "EX050100",
     "wellnessThemeName" : "온천 / 사우나 / 스파",
     "access" : {
@@ -354,6 +361,7 @@
     "uniqueClickers14d" : 0,
     "signalsAsOf" : "2026-10-02",
     "clickBoost" : 1.0,
+    "contentUniqueness" : 1.0,
     "access" : {
       "stops" : [ {
         "kind" : "RAIL",
@@ -405,6 +413,7 @@
     "uniqueClickers14d" : 0,
     "signalsAsOf" : "2026-10-02",
     "clickBoost" : 1.0,
+    "contentUniqueness" : 1.0,
     "courseStops" : [ {
       "order" : 0,
       "contentId" : "128138",
@@ -470,7 +479,8 @@
     "attributeParserVersion" : 3,
     "uniqueClickers14d" : 0,
     "signalsAsOf" : "2026-10-02",
-    "clickBoost" : 1.0
+    "clickBoost" : 1.0,
+    "contentUniqueness" : 1.0
   }, {
     "id" : "401",
     "idSort" : 401,
@@ -494,6 +504,7 @@
     "uniqueClickers14d" : 0,
     "signalsAsOf" : "2026-10-02",
     "clickBoost" : 1.0,
+    "contentUniqueness" : 1.0,
     "barrierFree" : [ "WHEELCHAIR" ],
     "relatedPlaces" : [ {
       "rank" : 3,
@@ -555,6 +566,7 @@
     "uniqueClickers14d" : 0,
     "signalsAsOf" : "2026-10-02",
     "clickBoost" : 1.0,
+    "contentUniqueness" : 1.0,
     "congestion" : [ {
       "date" : "2026-10-02",
       "rate" : 84.23
@@ -584,7 +596,8 @@
     "attributeParserVersion" : 3,
     "uniqueClickers14d" : 0,
     "signalsAsOf" : "2026-10-02",
-    "clickBoost" : 1.0
+    "clickBoost" : 1.0,
+    "contentUniqueness" : 1.0
   }, {
     "id" : "501",
     "idSort" : 501,
@@ -616,6 +629,7 @@
     "uniqueClickers14d" : 0,
     "signalsAsOf" : "2026-10-02",
     "clickBoost" : 1.0,
+    "contentUniqueness" : 1.0,
     "samePlace" : [ {
       "id" : "502",
       "contentTypeId" : "38"
@@ -651,6 +665,7 @@
     "uniqueClickers14d" : 0,
     "signalsAsOf" : "2026-10-02",
     "clickBoost" : 1.0,
+    "contentUniqueness" : 1.0,
     "samePlace" : [ {
       "id" : "501",
       "contentTypeId" : "12"
@@ -689,6 +704,7 @@
     "uniqueClickers14d" : 0,
     "signalsAsOf" : "2026-10-02",
     "clickBoost" : 1.0,
+    "contentUniqueness" : 1.0,
     "alternateId" : "602"
   }, {
     "id" : "602",
@@ -723,6 +739,7 @@
     "uniqueClickers14d" : 0,
     "signalsAsOf" : "2026-10-02",
     "clickBoost" : 1.0,
+    "contentUniqueness" : 1.0,
     "access" : {
       "stops" : [ {
         "kind" : "RAIL",

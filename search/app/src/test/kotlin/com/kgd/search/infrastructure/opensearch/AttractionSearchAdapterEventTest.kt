@@ -173,7 +173,7 @@ class AttractionSearchAdapterEventTest : BehaviorSpec({
                 ),
             )
             eventFilters(root) shouldHaveSize 2
-            eventFilters(root["query"]["hybrid"]["queries"][1]["knn"]) shouldHaveSize 1
+            eventFilters(root["query"]["hybrid"]["queries"][1].findValue("knn")) shouldHaveSize 1
         }
 
         then("속성 패싯 건수 요청에도 같은 조건이 걸린다") {

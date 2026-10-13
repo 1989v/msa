@@ -1,5 +1,6 @@
 package com.kgd.search.domain.attraction.port
 
+import com.kgd.search.domain.attraction.model.AttractionCompanion
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionFeedEntry
 import com.kgd.search.domain.attraction.model.AttractionSignalSort
@@ -113,6 +114,11 @@ interface AttractionSearchPort {
          * 벡터 레그(knn filter)에 같이 들어가므로 두 레그가 함께 좁아지고, 건수 요청도 같은 일치로 센다.
          */
         val confine: Boolean = false,
+        /**
+         * 질의 이해가 읽은 동행. 거르지 않고 그 동행에 맞는 문서(`companions`)의 점수를 두 레그에서 곱해 올린다.
+         * null 이면 요청은 이 필드가 생기기 전과 같다.
+         */
+        val companion: AttractionCompanion? = null,
     ) {
         init {
             // 정렬이 점수를 버리므로 벡터 레그는 값만 치르고, 하이브리드 질의는 정렬을 아예 받지 않는다.

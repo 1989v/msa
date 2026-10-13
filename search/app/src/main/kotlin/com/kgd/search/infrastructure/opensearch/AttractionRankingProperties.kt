@@ -20,6 +20,19 @@ data class AttractionRankingProperties(
     val commerceWeight: Double = 0.35,
     val sightCategories: List<String> = listOf("nature", "history", "culture", "leisure"),
     val commerceCategories: List<String> = listOf("shopping", "food"),
+    /**
+     * 벡터 레그에도 분류 가중치를 건다(단독·하이브리드 둘 다). 동반 표현만 있는 질의는 잔여 검색어가 없어 벡터 레그 단독이고,
+     * 거기 가중치가 없으면 상점·식당이 상위를 채웠다(2026-10-13 「family friendly for kids place」 상위 10 중 상점 6).
+     * 완결성(popularityScore)은 벡터 레그에 걸지 않는다 — 의미 순위를 완결성이 뒤집는다. 끄면 벡터 레그는 이전과 같은 knn 이다.
+     */
+    val vectorLeg: Boolean = true,
+    /**
+     * 소개문 고유도(`contentUniqueness`)를 두 레그에 곱한다 — 같은 브랜드 문구를 나눠 쓰는 지점들이 목록을 채우지 않게 한다.
+     * 상업 의도 질의에도 건다. 끄면 이 함수를 넣지 않는다.
+     */
+    val contentUniqueness: Boolean = true,
+    /** 질의의 동행에 맞는 문서(`companions`)에 두 레그가 곱하는 값. 1.0 이면 함수를 넣지 않는다 — 거르지 않고 올리기만 한다. */
+    val companionWeight: Double = 1.5,
 ) {
     /** 두 가중치가 모두 중립이면 function_score 를 감싸지 않는다 (쿼리 단순화). */
     val enabled: Boolean

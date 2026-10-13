@@ -4,6 +4,7 @@ import com.kgd.search.application.attraction.config.AttractionHybridProperties
 import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.domain.attraction.model.Admission
 import com.kgd.search.domain.attraction.model.AttractionAttributeCodes
+import com.kgd.search.domain.attraction.model.AttractionCompanion
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionFeedEntry
 import com.kgd.search.domain.attraction.model.AttractionSignalSort
@@ -133,6 +134,8 @@ class AttractionSearchAdapter(
 
         /** 읽기 문서는 이 필드를 읽지 않는다(순위 전용) — 이름은 쓰기 문서·매핑과 같다. */
         private const val CLICK_BOOST = "clickBoost"
+        private const val CONTENT_UNIQUENESS = "contentUniqueness"
+        private const val COMPANIONS = "companions"
 
         private val CONTENT_TYPE_ID = AttractionSearchDocument::contentTypeId.name
         private val EVENT_START = AttractionSearchDocument::eventStartEffective.name
@@ -732,10 +735,13 @@ class AttractionSearchAdapter(
             AttractionSearchPort.EVIDENCE_MINIMUM_SHOULD_MATCH.takeIf { query.confine },
         )
         // 클릭 계수는 관련도에 곱하는 값이라 검색어가 있을 때만 붙는다 — 검색어 없는 목록은 완결성 순서 그대로다
+        // 소개문 고유도도 관련도에 곱하는 값이라 같은 조건이다. 동행은 질의에서 읽은 것이라 받았으면 건다
         val keywordLeg = withCategoryWeights(
             matched,
             query.commerceIntent,
             withClickBoost = clickBoost.enabled && query.keyword != null,
+            withUniqueness = query.keyword != null,
+            companion = query.companion,
         )
         val embedding = query.embedding
 
@@ -751,9 +757,9 @@ class AttractionSearchAdapter(
         } else if (query.keyword == null) {
             // 검색어가 없으면 키워드 레그는 matchAll 이다 — 그것을 융합하면 **임의 순서**가
             // 벡터 결과와 같은 무게로 섞인다. 순위를 정할 신호가 벡터뿐이니 벡터만 쓴다.
-            builder.query(vectorLeg(embedding, matched))
+            builder.query(vectorLeg(embedding, matched, query))
         } else {
-            builder.query(hybridQuery(keywordLeg, embedding, matched, pageable.offset.toInt() + pageable.pageSize))
+            builder.query(hybridQuery(keywordLeg, vectorLeg(embedding, matched, query), pageable.offset.toInt() + pageable.pageSize))
                 // 파이프라인이 두 레그의 점수를 융합한다. **이름이 없으면 OpenSearch 가 요청을 거부한다** —
                 // 조용히 BM25 로 떨어지지 않는다는 뜻이라, 파이프라인 부재는 즉시 드러난다.
                 .searchPipeline(hybrid.pipeline)
@@ -819,10 +825,21 @@ class AttractionSearchAdapter(
      * 한쪽에만 걸면 다른 쪽이 필터 밖 문서를 끌어 온다(지역 필터를 건 검색에 엉뚱한 지역이 섞인다).
      */
     /**
+     * 벡터 레그 — [knnLeg] 에 키워드 레그와 같은 분류 가중치·고유도·동행을 곱한다([AttractionRankingProperties.vectorLeg]).
+     * 완결성은 빼고(의미 순위를 뒤집는다), 클릭 계수도 키워드 레그에만 둔다. 스위치를 끄면 knn 그대로다.
+     * function_score 는 knn 이 뽑은 후보의 점수만 곱하므로 후보 집합은 그대로이고 그 안의 순서만 바뀐다.
+     */
+    private fun vectorLeg(embedding: List<Float>, filters: Query, query: AttractionSearchPort.SearchQuery): Query {
+        val knn = knnLeg(embedding, filters)
+        if (!ranking.vectorLeg) return knn
+        return withCategoryWeights(knn, query.commerceIntent, withUniqueness = true, companion = query.companion, completeness = false)
+    }
+
+    /**
      * 필터드 HNSW 한 레그. **필터를 `knn` 안에** 두는 것이 중요하다 — 밖에 두면 전역 이웃 k 개를
      * 뽑은 뒤 거르므로, 지역·분류 필터가 좁을수록 살아남는 것이 급격히 줄어 레그가 사실상 꺼진다.
      */
-    private fun vectorLeg(embedding: List<Float>, filters: Query): Query = Query.of { q ->
+    private fun knnLeg(embedding: List<Float>, filters: Query): Query = Query.of { q ->
         q.knn(
             KnnQuery.Builder()
                 .field(VECTOR_FIELD)
@@ -842,8 +859,7 @@ class AttractionSearchAdapter(
         )
     }
 
-    private fun hybridQuery(keywordLeg: Query, embedding: List<Float>, filters: Query, depth: Int): Query {
-        val vectorLeg = vectorLeg(embedding, filters)
+    private fun hybridQuery(keywordLeg: Query, vectorLeg: Query, depth: Int): Query {
         return Query.of { q ->
             q.hybrid(
                 HybridQuery.Builder()
@@ -877,27 +893,60 @@ class AttractionSearchAdapter(
      *
      * [withClickBoost] 면 클릭 계수(`clickBoost`, 1.0~1.3)를 한 번 더 곱한다. 스위치
      * ([AttractionClickBoostProperties]) 가 꺼져 있으면 함수 자체를 넣지 않아 요청이 이전과 같다.
+     *
+     * 아래 둘은 분류 하향과 별개라 상업 의도 질의에도 건다.
+     * - [withUniqueness] 면 소개문 고유도(`contentUniqueness`, 재색인이 계산한 1/(1+ln n))를 곱한다 — 같은 브랜드 지점이
+     *   목록을 채우지 않게. 없는 옛 문서는 1.0.
+     * - [companion] 이 있으면 그 동행에 맞는 문서(`companions`)에 [AttractionRankingProperties.companionWeight] 를 곱한다.
+     *   필터가 아니라 함수라 맞지 않는 문서도 남는다.
+     *
+     * [completeness] 가 false 면 완결성 fvf 를 넣지 않는다 — 벡터 레그용이다. 걸 함수가 하나도 없으면 감싸지 않는다.
      */
-    private fun withCategoryWeights(matched: Query, commerceIntent: Boolean, withClickBoost: Boolean = false): Query {
+    private fun withCategoryWeights(
+        matched: Query,
+        commerceIntent: Boolean,
+        withClickBoost: Boolean = false,
+        withUniqueness: Boolean = false,
+        companion: AttractionCompanion? = null,
+        completeness: Boolean = true,
+    ): Query {
         // 질의가 상업 시설을 직접 찾으면 하향을 걸지 않는다 — 「야시장」의 정답은 전부 shopping 이다
-        if (!ranking.enabled || commerceIntent) return matched
+        val categoryWeights = ranking.enabled && !commerceIntent
+        val uniqueness = withUniqueness && ranking.contentUniqueness
+        val companionBoost = companion != null && ranking.companionWeight != 1.0
+        if (!categoryWeights && !uniqueness && !companionBoost) return matched
         return Query.of { q ->
             q.functionScore { fs ->
                 fs.query(matched)
-                categoryFunction(fs, ranking.sightCategories, ranking.sightWeight)
-                categoryFunction(fs, ranking.commerceCategories, ranking.commerceWeight)
-                fs.functions { fn ->
-                    fn.fieldValueFactor { fvf ->
-                        fvf.field("popularityScore")
-                            .factor(1.0f)
-                            .modifier(FieldValueFactorModifier.Ln1p)
-                            .missing(1.0)
+                if (categoryWeights) {
+                    categoryFunction(fs, ranking.sightCategories, ranking.sightWeight)
+                    categoryFunction(fs, ranking.commerceCategories, ranking.commerceWeight)
+                    if (completeness) {
+                        fs.functions { fn ->
+                            fn.fieldValueFactor { fvf ->
+                                fvf.field("popularityScore")
+                                    .factor(1.0f)
+                                    .modifier(FieldValueFactorModifier.Ln1p)
+                                    .missing(1.0)
+                            }
+                        }
+                    }
+                    // 클릭 계수 — 재색인이 상한·최소 표본을 적용해 둔 값이라 그대로 곱한다. 없는 옛 문서는 중립(1.0).
+                    if (withClickBoost) {
+                        fs.functions { fn ->
+                            fn.fieldValueFactor { fvf -> fvf.field(CLICK_BOOST).factor(1.0f).missing(1.0) }
+                        }
                     }
                 }
-                // 클릭 계수 — 재색인이 상한·최소 표본을 적용해 둔 값이라 그대로 곱한다. 없는 옛 문서는 중립(1.0).
-                if (withClickBoost) {
+                if (uniqueness) {
                     fs.functions { fn ->
-                        fn.fieldValueFactor { fvf -> fvf.field(CLICK_BOOST).factor(1.0f).missing(1.0) }
+                        fn.fieldValueFactor { fvf -> fvf.field(CONTENT_UNIQUENESS).factor(1.0f).missing(1.0) }
+                    }
+                }
+                if (companion != null && companionBoost) {
+                    fs.functions { fn ->
+                        fn.filter { f -> f.term { t -> t.field(COMPANIONS).value(FieldValue.of(companion.name)) } }
+                            .weight(ranking.companionWeight.toFloat())
                     }
                 }
                 fs.scoreMode(FunctionScoreMode.Multiply)

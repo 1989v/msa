@@ -257,8 +257,9 @@ class AttractionSearchAdapterFacetTest : BehaviorSpec({
                 a.search(query, PageRequest.of(0, 20))
 
                 val legs = tree(captured.main.single())["query"]["hybrid"]["queries"]
-                val keywordLeg = legs.single { !it.has("knn") }
-                val knnFilter = legs.single { it.has("knn") }["knn"]["embedding"]["filter"]
+                // 벡터 레그는 분류 가중치 function_score 안에 knn 이 있다
+                val keywordLeg = legs.single { it.findValue("knn") == null }
+                val knnFilter = legs.single { it.findValue("knn") != null }.findValue("knn")["embedding"]["filter"]
                 knnFilter shouldNotBe null
                 for (leg in listOf(keywordLeg, knnFilter)) {
                     termFields(leg) shouldContain "attrCreditCard"

@@ -125,4 +125,11 @@ data class AttractionDocument(
      * [samePlace](같은 언어 안의 중복 등록)와 다른 개념이다. 짝이 없거나 짝 스위치가 꺼졌거나 옛 색인 문서면 null.
      */
     val alternateId: String? = null,
+    /**
+     * 같은 소개문([AttractionContentUniqueness.key])을 쓰는 같은 언어 활성 문서 수(자기 포함) — 재색인 1차 훑기가 센다.
+     * 색인 문서의 순위 계수 `contentUniqueness` 를 만드는 입력이다. null 은 소개문이 비었거나 세지 않은 경로다(계수 1.0).
+     */
+    val sameOverviewCount: Int? = null,
+    /** 동행 적합([AttractionCompanionFit]) — 재색인이 원천 분류·체험 연령에서 계산한다. null 은 계산하지 않은 경로다. */
+    val companions: Set<AttractionCompanion>? = null,
 )

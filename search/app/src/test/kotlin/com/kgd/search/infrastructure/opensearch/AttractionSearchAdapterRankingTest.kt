@@ -4,6 +4,7 @@ import com.kgd.search.application.attraction.config.AttractionHybridProperties
 import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
 import io.kotest.core.spec.style.BehaviorSpec
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.mockk.CapturingSlot
@@ -78,7 +79,8 @@ class AttractionSearchAdapterRankingTest : BehaviorSpec({
 
                 // 완결성 신호 — ln1p 로 눌러 키워드 모드에선 BM25 가 지배적으로 남고,
                 // missing=1.0 이라 재색인 전 옛 인덱스에서도 중립으로 동작한다
-                val fvf = fs.functions().single { it.isFieldValueFactor }.fieldValueFactor()
+                val fvf = fs.functions().single { it.isFieldValueFactor && it.fieldValueFactor().field() == "popularityScore" }
+                    .fieldValueFactor()
                 fvf.field() shouldBe "popularityScore"
                 fvf.modifier() shouldBe FieldValueFactorModifier.Ln1p
                 fvf.missing() shouldBe 1.0
@@ -169,11 +171,11 @@ class AttractionSearchAdapterRankingTest : BehaviorSpec({
         }
     }
 
-    given("가중치를 둘 다 1.0 으로 두면") {
+    given("가중치를 둘 다 1.0 으로 두고 소개문 고유도도 끄면") {
         `when`("검색을 하면") {
             then("function_score 를 감싸지 않는다 — 끄는 스위치가 있어야 되돌릴 수 있다") {
                 val (adapter, captured) = adapterWith(
-                    AttractionRankingProperties(sightWeight = 1.0, commerceWeight = 1.0),
+                    AttractionRankingProperties(sightWeight = 1.0, commerceWeight = 1.0, contentUniqueness = false),
                 )
 
                 adapter.search(
@@ -189,7 +191,7 @@ class AttractionSearchAdapterRankingTest : BehaviorSpec({
     given("질의 이해가 상업 의도로 판정한 검색") {
         // 「야시장」의 정답은 전부 shopping 인데 0.35 하향이 그것을 잡음 아래로 내렸다 (실측 nDCG 0.681 → 0.030)
         `when`("commerceIntent 로 검색하면") {
-            then("가중치가 켜져 있어도 function_score 를 감싸지 않는다") {
+            then("가중치가 켜져 있어도 분류 함수·완결성은 걸지 않고 소개문 고유도만 곱한다 — 같은 브랜드 지점이 목록을 채우지 않게") {
                 val (adapter, captured) = adapterWith(AttractionRankingProperties())
 
                 adapter.search(
@@ -197,7 +199,9 @@ class AttractionSearchAdapterRankingTest : BehaviorSpec({
                     PageRequest.of(0, 10),
                 )
 
-                captured.captured.query()?.isBool shouldBe true
+                val functions = captured.captured.query()!!.functionScore().functions()
+                functions.mapNotNull { it.weight() }.shouldBeEmpty()
+                functions.map { it.fieldValueFactor().field() } shouldBe listOf("contentUniqueness")
             }
         }
         `when`("자동완성이면") {

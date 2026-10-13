@@ -1,5 +1,6 @@
 package com.kgd.search.domain.query.model
 
+import com.kgd.search.domain.attraction.model.AttractionCompanion
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 
@@ -384,6 +385,18 @@ class QueryIntentTest : BehaviorSpec({
             Then("옮기지 않는다 — 잔여가 다른 타입 검색으로 넘어간다") {
                 r.residual shouldBe "아이랑"
                 r.vectorText shouldBe null
+                r.companion shouldBe null
+            }
+        }
+        When("동반 표현을 읽으면") {
+            Then("동행이 아이로 정해진다 — 한글·영문·「가족과」 모두") {
+                place("아이랑 갈 만한 곳").companion shouldBe AttractionCompanion.KIDS
+                place("가족과 해수욕장").companion shouldBe AttractionCompanion.KIDS
+                place("things to do with kids", lang = "en").companion shouldBe AttractionCompanion.KIDS
+            }
+            Then("동반 표현이 아닌 말(「아이와즈」·「어린이 박물관」)은 동행을 정하지 않는다") {
+                place("아이와즈").companion shouldBe null
+                place("어린이 박물관").companion shouldBe null
             }
         }
     }

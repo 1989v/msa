@@ -153,6 +153,7 @@ class SearchAttractionService(
             signalSort = signalSort,
             evidenceKeyword = evidenceKeyword,
             confine = confine,
+            companion = understood?.companion,
         )
         val found = attractionSearchPort.search(searchQuery, pageable)
         val page = found.page

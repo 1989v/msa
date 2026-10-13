@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.kgd.search.domain.attraction.model.AttractionAttributeCodes
 import com.kgd.search.domain.attraction.model.AttractionClickSignal
+import com.kgd.search.domain.attraction.model.AttractionContentUniqueness
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.Jamo
 import java.time.LocalDate
@@ -133,6 +134,13 @@ data class AttractionIndexDocument(
      * 재색인이 미리 계산한다([com.kgd.search.domain.attraction.model.AttractionClickSignal]). 신호가 없으면 1.0.
      */
     val clickBoost: Double,
+    /**
+     * 소개문 고유도 계수 — 두 레그의 점수 함수가 곱한다([AttractionContentUniqueness]). 같은 소개문을 나눠 쓰는 지점이 많을수록 작다.
+     * 소개문이 비었거나 세지 않았으면 1.0.
+     */
+    val contentUniqueness: Double,
+    /** 동행 적합(`KIDS`) — 동반 질의에서 점수 함수가 거는 term 필터(mapping: keyword). 맞는 동행이 없으면 빈다. */
+    val companions: List<String>? = null,
     /**
      * 행사 유효 기간 ([com.kgd.search.domain.attraction.model.EventSchedule.effectivePeriod]) — 행사 필터의 범위 질의가
      * 이 둘만 본다. 원천 날짜는 place 컬럼에 그대로 있다. 행사가 아니거나 날짜가 없으면(UNKNOWN) 둘 다 빈다.
@@ -290,6 +298,8 @@ data class AttractionIndexDocument(
                 savedCount = doc.savedCount,
                 signalsAsOf = doc.signalsAsOf,
                 clickBoost = AttractionClickSignal.boost(doc.uniqueClickers14d),
+                contentUniqueness = AttractionContentUniqueness.weight(doc.sameOverviewCount ?: 1),
+                companions = doc.companions?.takeIf { it.isNotEmpty() }?.map { it.name }?.sorted(),
                 eventStartEffective = doc.eventPeriod?.start,
                 eventEndEffective = doc.eventPeriod?.end,
                 courseStops = doc.courseStops?.takeIf { it.isNotEmpty() }

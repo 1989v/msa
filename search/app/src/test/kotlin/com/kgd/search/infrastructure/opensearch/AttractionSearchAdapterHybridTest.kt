@@ -13,6 +13,8 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import org.opensearch.client.opensearch.OpenSearchClient
+import org.opensearch.client.opensearch._types.query_dsl.HybridQuery
+import org.opensearch.client.opensearch._types.query_dsl.KnnQuery
 import org.opensearch.client.opensearch.core.SearchRequest
 import org.opensearch.client.opensearch.core.SearchResponse
 import org.opensearch.client.opensearch.core.search.TotalHitsRelation
@@ -22,6 +24,10 @@ import org.springframework.data.domain.PageRequest
  * 하이브리드 질의의 **모양**을 못 박는다 (ADR-0090 D4). 실제 순위는 OpenSearch 가 정하므로
  * 여기서 재는 것은 어댑터가 내놓은 `SearchRequest` 다 — 이름 일치가 아니라 산출물이다.
  */
+/** 하이브리드의 knn 레그 — 벡터 레그 가중치가 켜져 있으면 function_score 안에 있다. */
+private fun HybridQuery.knnLeg(): KnnQuery =
+    queries().map { if (it.isFunctionScore) requireNotNull(it.functionScore().query()) else it }.single { it.isKnn }.knn()
+
 class AttractionSearchAdapterHybridTest : BehaviorSpec({
 
     val modelRef = "microsoft/harrier-oss-v1-270m@abc1234#d640"
@@ -95,7 +101,7 @@ class AttractionSearchAdapterHybridTest : BehaviorSpec({
                     PageRequest.of(0, 10),
                 )
 
-                val knn = captured.captured.query()!!.hybrid().queries().single { it.isKnn }.knn()
+                val knn = captured.captured.query()!!.hybrid().knnLeg()
                 knn.field() shouldBe "embedding"
                 knn.vector() shouldBe vector
                 knn.k() shouldBe 100
@@ -113,7 +119,7 @@ class AttractionSearchAdapterHybridTest : BehaviorSpec({
                     PageRequest.of(0, 10),
                 )
 
-                val filter = captured.captured.query()!!.hybrid().queries().single { it.isKnn }.knn().filter()
+                val filter = captured.captured.query()!!.hybrid().knnLeg().filter()
                 filter shouldNotBe null
                 val terms = filter!!.bool().filter().filter { it.isTerm }.map { it.term() }
                 terms.map { it.field() } shouldContain "embeddingModel"
@@ -130,7 +136,7 @@ class AttractionSearchAdapterHybridTest : BehaviorSpec({
                     PageRequest.of(0, 10),
                 )
 
-                val knnFilter = captured.captured.query()!!.hybrid().queries().single { it.isKnn }.knn().filter()!!
+                val knnFilter = captured.captured.query()!!.hybrid().knnLeg().filter()!!
                 // 키워드 레그의 필터를 그대로 감싸 넣었으므로, 안쪽 bool 에 lang·ldongRegnCd 가 있다
                 val inner = knnFilter.bool().filter().single { it.isBool }.bool().filter()
                 inner.filter { it.isTerm }.map { it.term().field() } shouldContain "ldongRegnCd"

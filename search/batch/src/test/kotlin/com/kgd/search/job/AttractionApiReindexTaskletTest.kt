@@ -5,6 +5,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import com.kgd.search.domain.attraction.model.AttractionAttributeParser
 import com.kgd.search.domain.attraction.model.AttractionClickSignal
+import com.kgd.search.domain.attraction.model.AttractionContentUniqueness
 import com.kgd.search.infrastructure.client.PlaceApiClient
 import com.kgd.search.infrastructure.client.WishlistApiClient
 import com.kgd.search.infrastructure.clicksignal.ClickHouseClickSignalReader
@@ -959,6 +960,51 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
             }
             then("본문 변경 시각은 스위치와 무관하게 싣는다") {
                 sources.getValue("11")["contentUpdatedAt"] shouldBe "2026-10-08T09:10:11"
+            }
+        }
+    }
+
+    given("재색인이 소개문 고유도와 동행 적합을 실을 때") {
+        `when`("같은 언어 활성 문서 셋이 같은 소개문을 쓰고, 다른 언어·비활성 문서도 같은 문구를 쓰면") {
+            then("같은 언어 활성 문서만 세어 셋 다 1/(1+ln 3) 을, 혼자 쓰는 문서·소개문 없는 문서는 1.0 을 싣는다") {
+                val documents = captureDocuments()
+                val brand = "Tax Refund Shop — duty free brand story"
+                onePage(
+                    dto(1, "en").copy(overview = brand),
+                    dto(2, "en").copy(overview = "  $brand "),
+                    dto(3, "en").copy(overview = brand),
+                    dto(4, "ko").copy(overview = brand),
+                    dto(5, "en", status = "INACTIVE").copy(overview = brand),
+                    dto(6, "en").copy(overview = "A palace of its own"),
+                    dto(7, "en"),
+                )
+
+                tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+
+                val uniqueness = documents.associate { it.id to bulkSource(it)["contentUniqueness"].let { v -> (v as Number).toDouble() } }
+                listOf("1", "2", "3").forEach { id -> uniqueness.getValue(id) shouldBe AttractionContentUniqueness.weight(3) }
+                uniqueness.getValue("4") shouldBe 1.0
+                uniqueness.getValue("6") shouldBe 1.0
+                uniqueness.getValue("7") shouldBe 1.0
+            }
+        }
+        `when`("아이 대상 분류이거나 체험 연령이 아이를 말하면") {
+            then("companions 에 KIDS 를 싣고, 「전연령」만인 문서·다른 분류 문서는 필드가 없다") {
+                val documents = captureDocuments()
+                onePage(
+                    dto(1, "ko").copy(lclsSystm3 = "VE020300"),
+                    dto(2, "ko").copy(lclsSystm3 = "HS010100", introRaw = """{"expagerange":"초등학생 이상"}"""),
+                    dto(3, "ko").copy(lclsSystm3 = "NA040500", introRaw = """{"expagerange":"전연령"}"""),
+                    dto(4, "ko").copy(lclsSystm3 = "SH010100", introRaw = "{not json"),
+                )
+
+                tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+
+                val sources = documents.associate { it.id to bulkSource(it) }
+                sources.getValue("1")["companions"] shouldBe listOf("KIDS")
+                sources.getValue("2")["companions"] shouldBe listOf("KIDS")
+                sources.getValue("3").containsKey("companions") shouldBe false
+                sources.getValue("4").containsKey("companions") shouldBe false
             }
         }
     }

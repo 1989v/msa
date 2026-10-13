@@ -7,6 +7,7 @@ import com.kgd.search.application.attraction.usecase.CategoryLexiconUseCase
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.application.queryvector.usecase.ResolveQueryVectorUseCase
+import com.kgd.search.domain.attraction.model.AttractionCompanion
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionSignalSort
 import com.kgd.search.domain.attraction.model.Admission
@@ -982,6 +983,24 @@ class SearchAttractionServiceTest : BehaviorSpec({
                 verify(exactly = 1) { resolveQueryVector.resolve("어린이와 가족이 함께 갈 만한 곳", MODEL_REF) }
                 captured.first().keyword shouldBe null
                 captured.first().embedding shouldBe listOf(0.6f, 0.8f)
+            }
+            then("읽은 동행(KIDS)을 포트에 넘긴다 — 어댑터가 두 레그에서 그 동행에 맞는 문서를 올린다") {
+                val captured = mutableListOf<AttractionSearchPort.SearchQuery>()
+                every { searchPort.search(capture(captured), any()) } returns found(listOf(AttractionSearchPort.AttractionHit(document(), 1.0)))
+
+                hybrid.execute(SearchAttractionUseCase.Query(keyword = "아이랑 갈 만한 곳", lang = "ko"))
+
+                captured.first().companion shouldBe AttractionCompanion.KIDS
+            }
+        }
+        `when`("동반 표현이 없으면") {
+            then("동행을 넘기지 않는다") {
+                val captured = mutableListOf<AttractionSearchPort.SearchQuery>()
+                every { searchPort.search(capture(captured), any()) } returns found(emptyList())
+
+                service.execute(SearchAttractionUseCase.Query(keyword = "해운대", lang = "ko"))
+
+                captured.first().companion shouldBe null
             }
         }
     }

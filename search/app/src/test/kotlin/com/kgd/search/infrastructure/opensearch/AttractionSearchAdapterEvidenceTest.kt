@@ -78,8 +78,8 @@ class AttractionSearchAdapterEvidenceTest : BehaviorSpec({
         }
         return AttractionSearchAdapter(
             client,
-            // 분류 가중치를 끄면 본 질의가 일치 bool 그대로라 근거 요청과 필터를 나란히 비교할 수 있다
-            AttractionRankingProperties(sightWeight = 1.0, commerceWeight = 1.0),
+            // 분류 가중치·소개문 고유도를 끄면 본 질의가 일치 bool 그대로라 근거 요청과 필터를 나란히 비교할 수 있다
+            AttractionRankingProperties(sightWeight = 1.0, commerceWeight = 1.0, contentUniqueness = false),
             AttractionHybridProperties(enabled = true, k = 100),
             QueryVectorProperties(modelRef = AttractionSearchBaselineQueries.MODEL_REF),
         ) to calls
