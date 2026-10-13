@@ -1,0 +1,29 @@
+[
+  {
+    "course": "zigzag",
+    "replayPairs": 30,
+    "minSeconds": 27.06666666666545,
+    "maxSeconds": 34.71666666666733,
+    "biasSeeds": 60,
+    "biasSamples": 360,
+    "rho": -0.0744677677434535
+  },
+  {
+    "course": "bumper-forest",
+    "replayPairs": 30,
+    "minSeconds": 11.037499999999694,
+    "maxSeconds": 32.59166666666564,
+    "biasSeeds": 60,
+    "biasSamples": 360,
+    "rho": -0.05160156163307402
+  },
+  {
+    "course": "seesaw",
+    "replayPairs": 30,
+    "minSeconds": 8.349999999999847,
+    "maxSeconds": 30.179166666665274,
+    "biasSeeds": 60,
+    "biasSamples": 360,
+    "rho": -0.07670587005268298
+  }
+]

@@ -63,10 +63,11 @@ function visibleHeight(): number | null {
   return Math.round(Math.min(window.innerHeight, visual));
 }
 
-export function useStageFit(active: boolean) {
+export function useStageFit(active: boolean, forceImmersive = false) {
   const ref = useRef<HTMLIFrameElement | null>(null);
   const [height, setHeight] = useState<number | null>(null);
-  const [immersive, setImmersive] = useState(isImmersiveViewport);
+  const [responsiveImmersive, setImmersive] = useState(isImmersiveViewport);
+  const immersive = forceImmersive || responsiveImmersive;
   const [portrait, setPortrait] = useState(() => window.innerHeight >= window.innerWidth);
   const [stageHeight, setStageHeight] = useState<number | null>(visibleHeight);
 

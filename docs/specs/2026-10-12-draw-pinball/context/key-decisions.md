@@ -24,3 +24,16 @@
 ## 2026-10-13 루트 통합 승인
 - User replied "진행해" to the concrete integration question. Parent confirmed current games pointer560224e4 integration including intervening already committed games history (no isolation).
 - Only listed featureFE/spec paths and gamesgitlink are authorized for this rootcommit. Preserve every other preexisting staged/dirty path; no push/deploy.
+
+## 2026-10-13 맵 확장과 빨리감기 변경
+- User requested more maps and replacing the large fast-forward action with a small top-right icon.
+- Parent decision: add three distinct courses using existing safe parts (지그재그/범퍼 숲/시소), preserve original three; native icon with a 44px target positioned relative to the actual game canvas, preserving the existing three-second fixed-step fast-forward behavior.
+- Scope: games marble-race course/setup/main/index and relevant portal-fe tests; existing spec amendment only. No new service/architecture/dependency/ADR. This request authorizes implementation, not publication or a fresh browser bundle.
+- Korean wording follows project feedback memory `feedback_korean_game_wording.md`; short literal action labels and course descriptions.
+- User additionally requested full visible viewport height for `/games/marble-race`. Parent decision: opt this slug into existing immersive stage through an optional trailing `useStageFit` flag, preserving visual viewport sizing and other games. Scope adds GameDetailPage/useStageFit and matching tests; no forced browser fullscreen or changed canvas aspect.
+- User explicitly approved “로컬 브라우저 검증도 수행 해” after the scoped local browser bundle and viewport steering. Approved localhost/127.0.0.1 only: screenshot/UI reads, fake names, course selection/race/results, desktop/mobile sizes, icon clicks and keyboard. Local test names/settings storage allowed. No external sharing, room creation, production browser or deployment. Completion: new maps and icon/viewport layout verified; own browser cleaned.
+
+## 2026-10-13 후속 조작 요구 (기존 빨리감기 아이콘 대체)
+- User removed skip mode entirely, requested a completed-only replay icon in the map center, and removed the bottom button region.
+- Parent decision: remove all player fast-forward/skip paths including racing Space; preserve internal deterministic simulation API only. Remove both bottom canvas button rows and shortcut strip. Same-seed native replay is centered after result activation guard; R works only on completed result. Native compact menu keeps slow/participant/settings and completed-only copy/new-seed round actions. Preserve course/viewport work.
+- Existing local approval applies to the ongoing maps/layout/control validation: local icons/menu/keys and replay affect only the already approved local names/settings and game state. Stop verification of the removed FF control. Do not expand to native fullscreen, clipboard writes, production or rooms.

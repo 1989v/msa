@@ -91,7 +91,7 @@ export default function GameDetailPage() {
   const [playing, setPlaying] = useState(false);
   // 플레이를 끝내고 나온 순간에 랭킹을 다시 읽는다 (GameLeaderboard 의 reloadToken 주석 참조)
   const [boardToken, setBoardToken] = useState(0);
-  const stageFit = useStageFit(playing);
+  const stageFit = useStageFit(playing, slug === 'marble-race');
   const [notFound, setNotFound] = useState(false);
   /* 없는 게임(404)과 잠깐 못 불러온 것을 가른다 — 배포 중 몇 초짜리 공백까지 「찾을 수 없습니다」로
      보이면 사람은 게임이 사라진 줄 안다. 못 불러온 쪽은 다시 시도로 돌린다 */
@@ -417,7 +417,7 @@ export default function GameDetailPage() {
           **플레이 중에는 2단을 풀어 무대가 전폭을 쓴다** — 게임을 반 폭에 가둘 이유가 없다. */}
       <div className={`game-detail-body${playing ? ' is-playing' : ''}`}>
       <section
-        className={`game-stage${immersive ? ' is-immersive' : ''}`}
+        className={`game-stage${immersive ? ' is-immersive' : ''}${slug === 'marble-race' ? ' is-marble-race' : ''}`}
         ref={stageRef}
         aria-label="게임 플레이 영역"
         style={immersive && stageFit.stageHeight ? { height: `${stageFit.stageHeight}px` } : undefined}
@@ -430,11 +430,11 @@ export default function GameDetailPage() {
             {/* 세로에서는 가로형 캔버스가 폭에 걸려 작아진다 — 가로 전환이 실질적인 해법이라
                 아이콘만 두지 않고 이름을 붙여 눈에 띄게 한다. */}
             <button
-              className={`game-stage-chip${stageFit.portrait ? ' is-wide' : ''}`}
+              className={`game-stage-chip${stageFit.portrait && slug !== 'marble-race' ? ' is-wide' : ''}`}
               onClick={toggleFullscreen}
               aria-label={game.orientation === 'PORTRAIT' ? '전체화면' : '전체화면 가로 전환'}
             >
-              {stageFit.portrait ? '⛶ 크게' : '⛶'}
+              {stageFit.portrait && slug !== 'marble-race' ? '⛶ 크게' : '⛶'}
             </button>
           </div>
         )}

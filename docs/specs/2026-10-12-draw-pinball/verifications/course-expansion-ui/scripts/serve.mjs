@@ -1,0 +1,7 @@
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+const root=resolve(process.argv[2] ?? 'portal-fe');
+const { createServer } = await import(pathToFileURL(resolve(root,'node_modules/vite/dist/node/index.js')));
+const detail = { id:1, slug:'marble-race', title:'구슬 레이스', titleEn:'Marble Race', description:'로컬 검증용 게임 카탈로그', thumbnailUrl:'/games/marble-race/thumb.png', loadType:'IFRAME', entryUrl:'/games/marble-race/index.html', engineType:'CANVAS_TS', orientation:'PORTRAIT', supportsMobile:true, developerName:'kgd', sdkIntegrated:false, status:'PUBLISHED', genre:'DECIDER', tags:['roster-ready'], scoreBoards:[], ratingAvg:0, ratingCount:0, playCount:0 };
+const fixture={name:'local-marble-api-fixture',configureServer(server){server.middlewares.use((req,res,next)=>{if(!req.url.startsWith('/api/'))return next();let data=[];if(req.url==='/api/v1/games/marble-race')data=detail;else if(req.url.includes('/suggestions'))data={content:[],totalElements:0,number:0,last:true};else if(req.url.includes('/sessions'))data={sessionKey:'local-qa'};else if(req.url.includes('/favorite-count'))data=0;res.setHeader('Content-Type','application/json');res.end(JSON.stringify({success:true,data,error:null}));});}};
+const server=await createServer({root,plugins:[fixture],server:{port:5186,host:'127.0.0.1',strictPort:true}});await server.listen();console.log('LOCAL_FIXTURE http://127.0.0.1:5186');

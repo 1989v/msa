@@ -78,9 +78,9 @@ const DETAIL = {
   ratingCount: 0,
 };
 
-function renderPage() {
+function renderPage(slug = 'neon-drifter') {
   return render(
-    <MemoryRouter initialEntries={['/games/neon-drifter']}>
+    <MemoryRouter initialEntries={[`/games/${slug}`]}>
       <Routes>
         <Route path="/games/:slug" element={<GameDetailPage />} />
       </Routes>
@@ -130,4 +130,33 @@ it('reads introduction before personal records and ratings, preserving tabs and 
   fireEvent.click(uiScreen.getByRole('tab', { name: '소개' }));
   expect(view.container.querySelector('.game-pane-about')?.classList.contains('is-on')).toBe(true);
   expect(uiScreen.getByText(/플레이$/)).toBeTruthy();
+});
+
+
+it('only marble-race fills the desktop visible viewport while playing and restores scrolling on close', async () => {
+  vi.clearAllMocks();
+  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+  vi.stubGlobal('innerWidth', 1440); vi.stubGlobal('innerHeight', 1100);
+  const viewport = new EventTarget(); Object.assign(viewport, { height: 1040 });
+  vi.stubGlobal('visualViewport', viewport);
+  vi.mocked(fetchGameDetail).mockResolvedValue({ ...DETAIL, slug: 'marble-race', orientation: 'PORTRAIT', entryUrl: '/games/marble-race/index.html' } as never);
+  vi.mocked(fetchSimilarGames).mockResolvedValue([] as never); vi.mocked(fetchLeaderboard).mockResolvedValue([] as never);
+  const before = document.body.style.overflow;
+  const view = renderPage('marble-race');
+  try {
+    fireEvent.click(await uiScreen.findByText(/플레이$/));
+    const stage = view.container.querySelector<HTMLElement>('.game-stage')!;
+    expect(stage).toHaveClass('is-immersive', 'is-marble-race'); expect(stage.style.height).toBe('1040px');
+    expect(document.body.style.overflow).toBe('hidden');
+    expect(view.container.querySelector('iframe')!.style.height).toBe('');
+    fireEvent.click(uiScreen.getByLabelText('게임 닫기'));
+    expect(stage).not.toHaveClass('is-immersive'); expect(document.body.style.overflow).toBe(before);
+    expect(fetchGameDetail).toHaveBeenCalledTimes(1);
+    view.unmount();
+    vi.mocked(fetchGameDetail).mockResolvedValue({ ...DETAIL, orientation: 'PORTRAIT' } as never);
+    const other = renderPage();
+    fireEvent.click(await uiScreen.findByText(/플레이$/));
+    expect(other.container.querySelector('.game-stage')).not.toHaveClass('is-immersive', 'is-marble-race');
+    other.unmount();
+  } finally { view.unmount(); vi.unstubAllGlobals(); }
 });

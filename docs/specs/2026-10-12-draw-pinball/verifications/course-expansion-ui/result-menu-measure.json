@@ -1,0 +1,228 @@
+{
+  "fixture": "real local GameDetailPage and shipped iframe; catalogue/session API fixtures only, external requests blocked",
+  "viewports": [
+    {
+      "width": 844,
+      "height": 390,
+      "mobile": true,
+      "titles": [
+        "핀볼",
+        "폭포",
+        "회전목마",
+        "지그재그",
+        "범퍼 숲",
+        "시소"
+      ],
+      "noSkip": true,
+      "keyboard": {
+        "before": {
+          "seed": 2993816228,
+          "t": 0.12916666666666665
+        },
+        "after": {
+          "seed": 2993816228,
+          "t": 0.12916666666666665
+        }
+      },
+      "innerHeight": 390,
+      "visualHeight": 390,
+      "stage": {
+        "left": 0,
+        "top": 0,
+        "right": 844,
+        "bottom": 390,
+        "width": 844,
+        "height": 390
+      },
+      "frame": {
+        "left": 0,
+        "top": 0,
+        "right": 844,
+        "bottom": 390,
+        "width": 844,
+        "height": 390
+      },
+      "canvas": {
+        "left": 276,
+        "top": 0,
+        "right": 568,
+        "bottom": 390,
+        "width": 292,
+        "height": 390
+      },
+      "menu": {
+        "left": 284,
+        "top": 52,
+        "right": 370.625,
+        "bottom": 114,
+        "width": 86.625,
+        "height": 62
+      },
+      "toolbar": {
+        "left": 764,
+        "top": 6,
+        "right": 838,
+        "bottom": 40,
+        "width": 74,
+        "height": 34
+      },
+      "hud": {
+        "x": 20,
+        "y": 20,
+        "w": 964,
+        "h": 118
+      },
+      "replayHidden": true,
+      "buttons": [
+        "가나다라마바사아자차카타",
+        "개나다라마바사아자차카타",
+        "갸나다라마바사아자차카타",
+        "걔나다라마바사아자차카타",
+        "거나다라마바사아자차카타",
+        "게나다라마바사아자차카타",
+        "겨나다라마바사아자차카타",
+        "계나다라마바사아자차카타",
+        "고나다라마바사아자차카타",
+        "과나다라마바사아자차카타",
+        "괘나다라마바사아자차카타",
+        "괴나다라마바사아자차카타",
+        "느리게 보기",
+        "참가자 변경",
+        "＋ 추가",
+        "－ 빼기",
+        "꼴찌가 걸린다커피 사는 사람 정하기",
+        "1등이 뽑힌다한 명만 고르기",
+        "몇 등 지정원하는 등수로",
+        "순서 정하기도착 순서 그대로",
+        "핀볼범퍼와 회전문을 지나는 코스",
+        "폭포갈라진 길이 결승 앞에서 만나는 코스",
+        "회전목마회전 장애물 사이로 내려오는 코스",
+        "지그재그번갈아 놓인 비탈과 좁은 관문",
+        "범퍼 숲못밭 사이로 튕기는 구슬",
+        "시소기울어지는 발판과 회전하는 날개",
+        "▶ 출발"
+      ],
+      "course": "seesaw",
+      "opened": {
+        "right": 538.359375,
+        "bottom": 346,
+        "minimapLeft": 546.3703703703704,
+        "names": [
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12
+        ]
+      },
+      "action": {
+        "bottom": 329,
+        "menuBottom": 346
+      }
+    }
+  ],
+  "naturalResult": {
+    "seed": 2993816228,
+    "course": "seesaw",
+    "simT": 23.162499999999007,
+    "order": [
+      "걔나다라마바사아자차카타",
+      "가나다라마바사아자차카타",
+      "계나다라마바사아자차카타",
+      "게나다라마바사아자차카타",
+      "괴나다라마바사아자차카타",
+      "개나다라마바사아자차카타",
+      "갸나다라마바사아자차카타",
+      "겨나다라마바사아자차카타",
+      "거나다라마바사아자차카타",
+      "고나다라마바사아자차카타",
+      "괘나다라마바사아자차카타",
+      "과나다라마바사아자차카타"
+    ]
+  },
+  "replay": {
+    "seed": 2993816228,
+    "phase": "ready",
+    "hidden": true
+  },
+  "resultMenu": {
+    "top": 8,
+    "bottom": 346,
+    "scrollHeight": 336,
+    "clientHeight": 336,
+    "actions": [
+      {
+        "text": "결과 복사",
+        "top": 293,
+        "bottom": 337,
+        "height": 44
+      },
+      {
+        "text": "새로 시작하기",
+        "top": 293,
+        "bottom": 337,
+        "height": 44
+      }
+    ]
+  },
+  "resultLayout": [
+    {
+      "canvas": {
+        "left": 276,
+        "top": 0,
+        "width": 292,
+        "height": 390
+      },
+      "replay": {
+        "left": 390,
+        "top": 163,
+        "width": 64,
+        "height": 64
+      },
+      "name": "다시 보기"
+    },
+    {
+      "canvas": {
+        "left": 382.5,
+        "top": 0,
+        "width": 675,
+        "height": 900
+      },
+      "replay": {
+        "left": 688,
+        "top": 418,
+        "width": 64,
+        "height": 64
+      },
+      "name": "다시 보기"
+    },
+    {
+      "canvas": {
+        "left": 0,
+        "top": 162,
+        "width": 390,
+        "height": 520
+      },
+      "replay": {
+        "left": 163,
+        "top": 390,
+        "width": 64,
+        "height": 64
+      },
+      "name": "다시 보기"
+    }
+  ],
+  "menuKeyboard": {
+    "phase": "racing",
+    "seed": 2993816228,
+    "focus": "SUMMARY",
+    "outline": "solid"
+  }
+}
