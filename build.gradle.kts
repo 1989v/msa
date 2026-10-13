@@ -527,6 +527,8 @@ val searchReadOmitted = mapOf(
         "lclsSystm3" to "위와 같음 (소분류)",
         "setting" to "실내·실외 — 질의 이해가 거는 필터 축이지 응답 필드가 아니다",
         "clickBoost" to "순위 계수 — 키워드 레그 점수 함수가 색인에서 곱하는 값이지 응답 필드가 아니다(원값은 uniqueClickers14d)",
+        "contentUniqueness" to "순위 계수 — 같은 소개문을 쓰는 문서 수로 재색인이 계산해 두 레그 점수 함수가 곱하는 값이지 응답 필드가 아니다",
+        "companions" to "동행 적합(KIDS) — 질의의 동반 표현이 점수 함수로 거는 축이지 응답 필드가 아니다",
     ),
 )
 
