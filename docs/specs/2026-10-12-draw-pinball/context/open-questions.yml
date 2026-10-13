@@ -8,7 +8,7 @@ questions:
     resolution: "후속 사용자 지시가 FF 제어 자체를 제거하므로 이 FF 겹침 발견은 superseded. 수정 완료를 주장하지 않는다. 최종 메뉴/HUD/미니맵 겹침은 새 UI 요구와 로컬 검증에서 확인한다."
   - id: course-expansion-menu-canvas-width
     category: test-discovery
-    status: open
+    status: closed
     question: "844×390에서는 캔버스 폭이 292px인데 열린 메뉴 최대 폭은 iframe 기준 360px이라 긴 이름 명단에서 미니맵을 덮을 수 있다."
     decision: "캔버스의 실제 미니맵 왼쪽 경계와 여백을 기준으로 메뉴 최대 폭을 제한한다. 긴 이름 12명으로 메뉴를 열고 실제 경계 및 아래쪽 조작의 도달 가능성을 확인한다. 물리와 코스는 유지한다."
     evidence: "verifications/course-expansion-ui/replay-measure.json: 844×390, canvas292px, 12 distinct 12-character names, opened menu right538.36px < minimap left546.37px; participant-edit action bottom329px < menu bottom346px. Native max-width/height assertions also pass."
