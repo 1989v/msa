@@ -36,3 +36,9 @@ Dependencies: 기존 구현/배포 완료. User requested 2026-10-13.
 - [x] 실제 입구 geometry/spawn JSON과 비-UI 정적 도식 생성.
 - [x] 모든6코스2/6/12명×10시드 완주·재현, 대표스케줄·spawn/통로/nonfinite/downstream 검증, 제한된 출발-x 표본 보고.
 - [x] focused tests/type/build 및 fresh review, 증거 entrance-variation.md 기록 후 coherent games/root commits. 구현자 push/deploy/browser 없음.
+
+## Group 6: 선두 포커스와 폭포 마지막 회전 구간
+- [x] 시각적 선두/가까운 후속 포커스와 기존 슬로모션 경계 분리, 모드/완주/handoff/수동강조/결과 보존 검사.
+- [x] 폭포 마지막 zigzag 뒤 기존 rotorRow 추가; 다른 다섯 전체와 폭포 앞구간/입구 및 평행이동된 finish 보존 검사.
+- [x] 폭포2/6/12명×10시드 완주/재현,60시드 표본과 대표스케줄, 이전/이후 실제 마지막 구간 체류시간 비교.
+- [x] 관련 lint/type/build 및 fresh review, focus-cascade-finish.md 증거 기록, hooks 유지 coherent commits. browser/push/deploy 없음.

@@ -36,16 +36,18 @@ function rho(x: number[], y: number[]) {
 it('preserves all downstream geometry and physical parameters across the entrance-only amendment', () => {
   const baseline = JSON.parse(readFileSync(resolve(__dirname, 'fixtures/marble-downstream-before-entrances.sha256.json'), 'utf8')) as { hashes: Record<string, string> };
   const g = loadGame('marble-race', MARBLE_SIM_FILES);
+  // Cascade's separately checked finish amendment follows the entrance amendment.
+  const beforeFinish = JSON.parse(readFileSync(resolve(__dirname, 'fixtures/marble-before-cascade-finish.json'), 'utf8'));
   expect(g.Courses.all.map((c: { key: string }) => c.key)).toEqual(['pinball', 'cascade', 'carousel', ...courses]);
   for (const [key, hash] of Object.entries(baseline.hashes)) {
-    const geometry = { ...g.Courses.byKey(key) }, entry = geometry.entrance;
+    const geometry = { ...(key === 'cascade' ? beforeFinish.cascade : g.Courses.byKey(key)) }, entry = geometry.entrance;
     delete geometry.tag; delete geometry.name; delete geometry.entrance;
     for (const field of ['walls', 'pegs', 'rotors', 'seesaws', 'marks']) geometry[field] = geometry[field].slice(entry[field]);
     expect(entry.endY).toBe(496);
     expect(createHash('sha256').update(JSON.stringify(geometry)).digest('hex')).toBe(hash);
   }
   const previous = JSON.parse(readFileSync(resolve(__dirname, 'fixtures/marble-original-courses.sha256.json'), 'utf8')) as Record<string, string>;
-  const cascade = { ...g.Courses.byKey('cascade') }; delete cascade.tag; delete cascade.entrance;
+  const cascade = { ...beforeFinish.cascade }; delete cascade.tag; delete cascade.entrance;
   expect(createHash('sha256').update(JSON.stringify(cascade)).digest('hex')).toBe(previous.cascade);
 });
 it('new courses: 2/6/12 people × 10 seeds complete/replay and 60 six-person seeds have |start-x rho| <= .20', () => {

@@ -52,3 +52,19 @@
 ## 2026-10-14 폭포 원본 입구 최종 승인
 - B의 짧은 분기 시안도60시드ρ=-0.29588339로 조사선을 넘었다. 더 이상의 튜닝을 중단하고 부모가 승인한 fallback으로 폭포는 원본 hopper를 정확히 유지한다. 다른 다섯 입구가 서로 달라 여섯 코스의 입구 구분은 충족한다.
 - 최종 cascade60시드ρ=-0.06060092406529045는 원본 비교와 정확히 동일하다. 원본 cascade 전체와 모든6코스 downstream hash, spawn/physics 보존을 확인했다. 실패한4시안의 JSON은 최종 데이터와 명확히 구분한다.
+
+## 2026-10-14 선두 포커스/폭포 마지막 회전 구간 승인
+- Parent approved leader-first visual attention in every mode, with at most two close followers and stable id ties. Decouple original target-boundary helper for contest slow motion; preserve winner/physics/RNG/manual guidance.
+- Cascade only reuses rotorRow(3,1.8) immediately before its finishGate; no shared finish/spawn/entrance/other-course changes. Scoped cascade comparison and bounded verification; no browser calls, parent handles publication.
+
+## 2026-10-14 자동 슬로모션 경량화 승인
+- Decision: 승인된 0.68배속/1.2 wall초 burst/2.5초 cooldown/라운드 총2.4 active wall초 예산 적용. interrupted burst에도 예산과 cooldown을 유지한다.
+- Reason: 사용자 결정 순간의 적절한 슬로모션 요구. 부모의 벤치마크 설명(min0.2/dynamic)은 설계 변경 요구가 아니다.
+- Evidence: https://github.com/lazygyu/roulette/blob/main/src/roulette.ts ; 기존 contestGroup/targetBoundary 규약.
+- Impact: game.js presentation timer, focused competition tests, 기존 spec amendment/evidence. 기존 폭포 geometry134회 검증은 반복하지 않는다. 브라우저 승인 없음.
+
+## 2026-10-14 참고 수준 동적 슬로모션 후속 승인
+- Decision: latest user 요구로 이전0.68계획을 대체. 실제 미결정 cutoff 입구거리 기반1→0.30,1.6초burst/2.5초cooldown/총3.2초 active wall budget.
+- Reason: 참고와 비슷한 감속 느낌과 기존 “너무 느리지 않게” 요구를 짧은 한도로 함께 충족.
+- Evidence: 사용자 후속 인용은 spec 마지막 amendment; https://github.com/lazygyu/roulette/blob/main/src/roulette.ts.
+- Impact: presentation only; 범위 확장이나 geometry 재튜닝 없음.

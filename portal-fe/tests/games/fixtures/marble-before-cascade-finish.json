@@ -1,0 +1,1032 @@
+{
+  "source": "ecfa8dc34eb0b2eeb0aedb5be5f71a32c2541faf",
+  "hashes": {
+    "pinball": "ce0db2a99a4622083c5667d8e9580fc812123d74a24b581ff01ce222b5c06f42",
+    "cascade": "623d4d5a7c168373fa6f523abe91323cc89a8675b85ff6d40f261190e2e6d49e",
+    "carousel": "6fd32c67dae4e76866b1863854f7c45fecef5d3ce1aca6ff3a479ca1aee7f8b4",
+    "zigzag": "2f9e6e60e5d30bfff7ffad6f18af4dd14444e19bb008df4ff030170f2fe502aa",
+    "bumper-forest": "7781faf57184f9e73018aafb5541d5a7aed4572e18ea6945190defa33b3e380c",
+    "seesaw": "77cc111f3db1c48daba71363ef85c796603b515072285520a75d26f55a67fff6"
+  },
+  "cascade": {
+    "key": "cascade",
+    "name": "폭포",
+    "tag": "갈라진 길이 결승 앞에서 만나는 코스",
+    "pegs": [
+      {
+        "x": 114,
+        "y": 550,
+        "r": 12
+      },
+      {
+        "x": 212,
+        "y": 550,
+        "r": 12
+      },
+      {
+        "x": 310,
+        "y": 550,
+        "r": 12
+      },
+      {
+        "x": 408,
+        "y": 550,
+        "r": 12
+      },
+      {
+        "x": 506,
+        "y": 550,
+        "r": 12
+      },
+      {
+        "x": 604,
+        "y": 550,
+        "r": 12
+      },
+      {
+        "x": 702,
+        "y": 550,
+        "r": 12
+      },
+      {
+        "x": 800,
+        "y": 550,
+        "r": 12
+      },
+      {
+        "x": 898,
+        "y": 550,
+        "r": 12
+      },
+      {
+        "x": 163,
+        "y": 638,
+        "r": 12
+      },
+      {
+        "x": 261,
+        "y": 638,
+        "r": 12
+      },
+      {
+        "x": 359,
+        "y": 638,
+        "r": 12
+      },
+      {
+        "x": 457,
+        "y": 638,
+        "r": 12
+      },
+      {
+        "x": 555,
+        "y": 638,
+        "r": 12
+      },
+      {
+        "x": 653,
+        "y": 638,
+        "r": 12
+      },
+      {
+        "x": 751,
+        "y": 638,
+        "r": 12
+      },
+      {
+        "x": 849,
+        "y": 638,
+        "r": 12
+      },
+      {
+        "x": 114,
+        "y": 726,
+        "r": 12
+      },
+      {
+        "x": 212,
+        "y": 726,
+        "r": 12
+      },
+      {
+        "x": 310,
+        "y": 726,
+        "r": 12
+      },
+      {
+        "x": 408,
+        "y": 726,
+        "r": 12
+      },
+      {
+        "x": 506,
+        "y": 726,
+        "r": 12
+      },
+      {
+        "x": 604,
+        "y": 726,
+        "r": 12
+      },
+      {
+        "x": 702,
+        "y": 726,
+        "r": 12
+      },
+      {
+        "x": 800,
+        "y": 726,
+        "r": 12
+      },
+      {
+        "x": 898,
+        "y": 726,
+        "r": 12
+      },
+      {
+        "x": 316,
+        "y": 821.336898395722,
+        "r": 13
+      },
+      {
+        "x": 516,
+        "y": 866.2566844919786,
+        "r": 13
+      },
+      {
+        "x": 706,
+        "y": 908.9304812834225,
+        "r": 13
+      },
+      {
+        "x": 696,
+        "y": 1085.3368983957218,
+        "r": 13
+      },
+      {
+        "x": 496,
+        "y": 1130.2566844919786,
+        "r": 13
+      },
+      {
+        "x": 306,
+        "y": 1172.9304812834225,
+        "r": 13
+      },
+      {
+        "x": 674,
+        "y": 1562,
+        "r": 14
+      },
+      {
+        "x": 338,
+        "y": 1686,
+        "r": 14
+      },
+      {
+        "x": 273,
+        "y": 2630,
+        "r": 14
+      },
+      {
+        "x": 506,
+        "y": 2630,
+        "r": 14
+      },
+      {
+        "x": 739,
+        "y": 2630,
+        "r": 14
+      },
+      {
+        "x": 506,
+        "y": 3170,
+        "r": 40,
+        "e": 0.55,
+        "bump": 1,
+        "kick": 640
+      },
+      {
+        "x": 274,
+        "y": 3262,
+        "r": 36,
+        "e": 0.55,
+        "bump": 1,
+        "kick": 640
+      },
+      {
+        "x": 738,
+        "y": 3262,
+        "r": 36,
+        "e": 0.55,
+        "bump": 1,
+        "kick": 640
+      },
+      {
+        "x": 390,
+        "y": 3384,
+        "r": 32,
+        "e": 0.55,
+        "bump": 1,
+        "kick": 640
+      },
+      {
+        "x": 622,
+        "y": 3384,
+        "r": 32,
+        "e": 0.55,
+        "bump": 1,
+        "kick": 640
+      },
+      {
+        "x": 316,
+        "y": 4051.3368983957216,
+        "r": 13
+      },
+      {
+        "x": 516,
+        "y": 4096.256684491978,
+        "r": 13
+      },
+      {
+        "x": 706,
+        "y": 4138.9304812834225,
+        "r": 13
+      },
+      {
+        "x": 696,
+        "y": 4315.336898395722,
+        "r": 13
+      },
+      {
+        "x": 496,
+        "y": 4360.256684491978,
+        "r": 13
+      },
+      {
+        "x": 306,
+        "y": 4402.9304812834225,
+        "r": 13
+      },
+      {
+        "x": 506,
+        "y": 4692,
+        "r": 34,
+        "e": 0.26
+      },
+      {
+        "x": 274,
+        "y": 4718,
+        "r": 30,
+        "e": 0.26
+      },
+      {
+        "x": 738,
+        "y": 4718,
+        "r": 30,
+        "e": 0.26
+      },
+      {
+        "x": 390,
+        "y": 4834,
+        "r": 28,
+        "e": 0.26
+      },
+      {
+        "x": 622,
+        "y": 4834,
+        "r": 28,
+        "e": 0.26
+      },
+      {
+        "x": 158,
+        "y": 4834,
+        "r": 26,
+        "e": 0.26
+      },
+      {
+        "x": 854,
+        "y": 4834,
+        "r": 26,
+        "e": 0.26
+      },
+      {
+        "x": 426,
+        "y": 5118,
+        "r": 24,
+        "e": 0.26
+      },
+      {
+        "x": 586,
+        "y": 5118,
+        "r": 24,
+        "e": 0.26
+      }
+    ],
+    "walls": [
+      {
+        "x1": 358,
+        "y1": 150,
+        "x2": 358,
+        "y2": 344,
+        "r": 12
+      },
+      {
+        "x1": 654,
+        "y1": 150,
+        "x2": 654,
+        "y2": 344,
+        "r": 12
+      },
+      {
+        "x1": 358,
+        "y1": 344,
+        "x2": 432,
+        "y2": 468,
+        "r": 12
+      },
+      {
+        "x1": 654,
+        "y1": 344,
+        "x2": 580,
+        "y2": 468,
+        "r": 12
+      },
+      {
+        "x1": 40,
+        "y1": 604,
+        "x2": -34,
+        "y2": 696,
+        "r": 11
+      },
+      {
+        "x1": 34,
+        "y1": 840,
+        "x2": 782,
+        "y2": 1008,
+        "r": 13
+      },
+      {
+        "x1": 978,
+        "y1": 1104,
+        "x2": 230,
+        "y2": 1272,
+        "r": 13
+      },
+      {
+        "x1": 34,
+        "y1": 1470,
+        "x2": 428,
+        "y2": 1516,
+        "r": 14,
+        "sv": 340
+      },
+      {
+        "x1": 978,
+        "y1": 1598,
+        "x2": 584,
+        "y2": 1644,
+        "r": 14,
+        "sv": 340
+      },
+      {
+        "x1": 112,
+        "y1": 1858,
+        "x2": 150,
+        "y2": 1802,
+        "r": 11
+      },
+      {
+        "x1": 150,
+        "y1": 1802,
+        "x2": 188,
+        "y2": 1858,
+        "r": 11
+      },
+      {
+        "x1": 290,
+        "y1": 1858,
+        "x2": 328,
+        "y2": 1802,
+        "r": 11
+      },
+      {
+        "x1": 328,
+        "y1": 1802,
+        "x2": 366,
+        "y2": 1858,
+        "r": 11
+      },
+      {
+        "x1": 468,
+        "y1": 1858,
+        "x2": 506,
+        "y2": 1802,
+        "r": 11
+      },
+      {
+        "x1": 506,
+        "y1": 1802,
+        "x2": 544,
+        "y2": 1858,
+        "r": 11
+      },
+      {
+        "x1": 646,
+        "y1": 1858,
+        "x2": 684,
+        "y2": 1802,
+        "r": 11
+      },
+      {
+        "x1": 684,
+        "y1": 1802,
+        "x2": 722,
+        "y2": 1858,
+        "r": 11
+      },
+      {
+        "x1": 824,
+        "y1": 1858,
+        "x2": 862,
+        "y2": 1802,
+        "r": 11
+      },
+      {
+        "x1": 862,
+        "y1": 1802,
+        "x2": 900,
+        "y2": 1858,
+        "r": 11
+      },
+      {
+        "x1": 201,
+        "y1": 2034,
+        "x2": 239,
+        "y2": 1978,
+        "r": 11
+      },
+      {
+        "x1": 239,
+        "y1": 1978,
+        "x2": 277,
+        "y2": 2034,
+        "r": 11
+      },
+      {
+        "x1": 379,
+        "y1": 2034,
+        "x2": 417,
+        "y2": 1978,
+        "r": 11
+      },
+      {
+        "x1": 417,
+        "y1": 1978,
+        "x2": 455,
+        "y2": 2034,
+        "r": 11
+      },
+      {
+        "x1": 557,
+        "y1": 2034,
+        "x2": 595,
+        "y2": 1978,
+        "r": 11
+      },
+      {
+        "x1": 595,
+        "y1": 1978,
+        "x2": 633,
+        "y2": 2034,
+        "r": 11
+      },
+      {
+        "x1": 735,
+        "y1": 2034,
+        "x2": 773,
+        "y2": 1978,
+        "r": 11
+      },
+      {
+        "x1": 773,
+        "y1": 1978,
+        "x2": 811,
+        "y2": 2034,
+        "r": 11
+      },
+      {
+        "x1": 112,
+        "y1": 2210,
+        "x2": 150,
+        "y2": 2154,
+        "r": 11
+      },
+      {
+        "x1": 150,
+        "y1": 2154,
+        "x2": 188,
+        "y2": 2210,
+        "r": 11
+      },
+      {
+        "x1": 290,
+        "y1": 2210,
+        "x2": 328,
+        "y2": 2154,
+        "r": 11
+      },
+      {
+        "x1": 328,
+        "y1": 2154,
+        "x2": 366,
+        "y2": 2210,
+        "r": 11
+      },
+      {
+        "x1": 468,
+        "y1": 2210,
+        "x2": 506,
+        "y2": 2154,
+        "r": 11
+      },
+      {
+        "x1": 506,
+        "y1": 2154,
+        "x2": 544,
+        "y2": 2210,
+        "r": 11
+      },
+      {
+        "x1": 646,
+        "y1": 2210,
+        "x2": 684,
+        "y2": 2154,
+        "r": 11
+      },
+      {
+        "x1": 684,
+        "y1": 2154,
+        "x2": 722,
+        "y2": 2210,
+        "r": 11
+      },
+      {
+        "x1": 824,
+        "y1": 2210,
+        "x2": 862,
+        "y2": 2154,
+        "r": 11
+      },
+      {
+        "x1": 862,
+        "y1": 2154,
+        "x2": 900,
+        "y2": 2210,
+        "r": 11
+      },
+      {
+        "x1": 32,
+        "y1": 2754,
+        "x2": 131.33333333333331,
+        "y2": 2794,
+        "r": 12
+      },
+      {
+        "x1": 259.3333333333333,
+        "y1": 2794,
+        "x2": 350.66666666666663,
+        "y2": 2754,
+        "r": 12
+      },
+      {
+        "x1": 350.66666666666663,
+        "y1": 2754,
+        "x2": 442,
+        "y2": 2794,
+        "r": 12
+      },
+      {
+        "x1": 570,
+        "y1": 2794,
+        "x2": 661.3333333333334,
+        "y2": 2754,
+        "r": 12
+      },
+      {
+        "x1": 661.3333333333334,
+        "y1": 2754,
+        "x2": 752.6666666666667,
+        "y2": 2794,
+        "r": 12
+      },
+      {
+        "x1": 880.6666666666667,
+        "y1": 2794,
+        "x2": 980,
+        "y2": 2754,
+        "r": 12
+      },
+      {
+        "x1": 32,
+        "y1": 2904,
+        "x2": 286.66666666666663,
+        "y2": 2944,
+        "r": 12
+      },
+      {
+        "x1": 414.66666666666663,
+        "y1": 2944,
+        "x2": 505.99999999999994,
+        "y2": 2904,
+        "r": 12
+      },
+      {
+        "x1": 505.99999999999994,
+        "y1": 2904,
+        "x2": 597.3333333333333,
+        "y2": 2944,
+        "r": 12
+      },
+      {
+        "x1": 725.3333333333333,
+        "y1": 2944,
+        "x2": 980,
+        "y2": 2904,
+        "r": 12
+      },
+      {
+        "x1": 34,
+        "y1": 3104,
+        "x2": 168,
+        "y2": 3254,
+        "r": 12
+      },
+      {
+        "x1": 978,
+        "y1": 3104,
+        "x2": 844,
+        "y2": 3254,
+        "r": 12
+      },
+      {
+        "x1": 112,
+        "y1": 3576,
+        "x2": 150,
+        "y2": 3520,
+        "r": 11
+      },
+      {
+        "x1": 150,
+        "y1": 3520,
+        "x2": 188,
+        "y2": 3576,
+        "r": 11
+      },
+      {
+        "x1": 290,
+        "y1": 3576,
+        "x2": 328,
+        "y2": 3520,
+        "r": 11
+      },
+      {
+        "x1": 328,
+        "y1": 3520,
+        "x2": 366,
+        "y2": 3576,
+        "r": 11
+      },
+      {
+        "x1": 468,
+        "y1": 3576,
+        "x2": 506,
+        "y2": 3520,
+        "r": 11
+      },
+      {
+        "x1": 506,
+        "y1": 3520,
+        "x2": 544,
+        "y2": 3576,
+        "r": 11
+      },
+      {
+        "x1": 646,
+        "y1": 3576,
+        "x2": 684,
+        "y2": 3520,
+        "r": 11
+      },
+      {
+        "x1": 684,
+        "y1": 3520,
+        "x2": 722,
+        "y2": 3576,
+        "r": 11
+      },
+      {
+        "x1": 824,
+        "y1": 3576,
+        "x2": 862,
+        "y2": 3520,
+        "r": 11
+      },
+      {
+        "x1": 862,
+        "y1": 3520,
+        "x2": 900,
+        "y2": 3576,
+        "r": 11
+      },
+      {
+        "x1": 201,
+        "y1": 3752,
+        "x2": 239,
+        "y2": 3696,
+        "r": 11
+      },
+      {
+        "x1": 239,
+        "y1": 3696,
+        "x2": 277,
+        "y2": 3752,
+        "r": 11
+      },
+      {
+        "x1": 379,
+        "y1": 3752,
+        "x2": 417,
+        "y2": 3696,
+        "r": 11
+      },
+      {
+        "x1": 417,
+        "y1": 3696,
+        "x2": 455,
+        "y2": 3752,
+        "r": 11
+      },
+      {
+        "x1": 557,
+        "y1": 3752,
+        "x2": 595,
+        "y2": 3696,
+        "r": 11
+      },
+      {
+        "x1": 595,
+        "y1": 3696,
+        "x2": 633,
+        "y2": 3752,
+        "r": 11
+      },
+      {
+        "x1": 735,
+        "y1": 3752,
+        "x2": 773,
+        "y2": 3696,
+        "r": 11
+      },
+      {
+        "x1": 773,
+        "y1": 3696,
+        "x2": 811,
+        "y2": 3752,
+        "r": 11
+      },
+      {
+        "x1": 112,
+        "y1": 3928,
+        "x2": 150,
+        "y2": 3872,
+        "r": 11
+      },
+      {
+        "x1": 150,
+        "y1": 3872,
+        "x2": 188,
+        "y2": 3928,
+        "r": 11
+      },
+      {
+        "x1": 290,
+        "y1": 3928,
+        "x2": 328,
+        "y2": 3872,
+        "r": 11
+      },
+      {
+        "x1": 328,
+        "y1": 3872,
+        "x2": 366,
+        "y2": 3928,
+        "r": 11
+      },
+      {
+        "x1": 468,
+        "y1": 3928,
+        "x2": 506,
+        "y2": 3872,
+        "r": 11
+      },
+      {
+        "x1": 506,
+        "y1": 3872,
+        "x2": 544,
+        "y2": 3928,
+        "r": 11
+      },
+      {
+        "x1": 646,
+        "y1": 3928,
+        "x2": 684,
+        "y2": 3872,
+        "r": 11
+      },
+      {
+        "x1": 684,
+        "y1": 3872,
+        "x2": 722,
+        "y2": 3928,
+        "r": 11
+      },
+      {
+        "x1": 824,
+        "y1": 3928,
+        "x2": 862,
+        "y2": 3872,
+        "r": 11
+      },
+      {
+        "x1": 862,
+        "y1": 3872,
+        "x2": 900,
+        "y2": 3928,
+        "r": 11
+      },
+      {
+        "x1": 34,
+        "y1": 4070,
+        "x2": 782,
+        "y2": 4238,
+        "r": 13
+      },
+      {
+        "x1": 978,
+        "y1": 4334,
+        "x2": 230,
+        "y2": 4502,
+        "r": 13
+      },
+      {
+        "x1": 34,
+        "y1": 4722,
+        "x2": 226,
+        "y2": 4792,
+        "r": 12
+      },
+      {
+        "x1": 978,
+        "y1": 4722,
+        "x2": 786,
+        "y2": 4792,
+        "r": 12
+      },
+      {
+        "x1": 34,
+        "y1": 4932,
+        "x2": 466,
+        "y2": 5128,
+        "r": 13
+      },
+      {
+        "x1": 978,
+        "y1": 4932,
+        "x2": 546,
+        "y2": 5128,
+        "r": 13
+      },
+      {
+        "x1": 466,
+        "y1": 5128,
+        "x2": 466,
+        "y2": 5448,
+        "r": 13
+      },
+      {
+        "x1": 546,
+        "y1": 5128,
+        "x2": 546,
+        "y2": 5448,
+        "r": 13
+      }
+    ],
+    "rotors": [
+      {
+        "x": 156.5,
+        "y": 2462,
+        "len": 50.5,
+        "r": 12,
+        "w": 2.6,
+        "bars": 2,
+        "a0": 0
+      },
+      {
+        "x": 389.5,
+        "y": 2462,
+        "len": 50.5,
+        "r": 12,
+        "w": -2.6,
+        "bars": 2,
+        "a0": 0.6
+      },
+      {
+        "x": 622.5,
+        "y": 2462,
+        "len": 50.5,
+        "r": 12,
+        "w": 2.6,
+        "bars": 2,
+        "a0": 1.2
+      },
+      {
+        "x": 855.5,
+        "y": 2462,
+        "len": 50.5,
+        "r": 12,
+        "w": -2.6,
+        "bars": 2,
+        "a0": 1.7999999999999998
+      }
+    ],
+    "seesaws": [],
+    "marks": [
+      {
+        "y": 300,
+        "name": "출발"
+      },
+      {
+        "y": 496,
+        "name": "못밭"
+      },
+      {
+        "y": 800,
+        "name": "지그재그"
+      },
+      {
+        "y": 1362,
+        "name": "컨베이어"
+      },
+      {
+        "y": 1752,
+        "name": "슬라롬"
+      },
+      {
+        "y": 2312,
+        "name": "회전 십자"
+      },
+      {
+        "y": 2698,
+        "name": "관문"
+      },
+      {
+        "y": 3052,
+        "name": "범퍼"
+      },
+      {
+        "y": 3470,
+        "name": "슬라롬"
+      },
+      {
+        "y": 4030,
+        "name": "지그재그"
+      },
+      {
+        "y": 4592,
+        "name": "마지막 관문"
+      },
+      {
+        "y": 5472,
+        "name": "결승"
+      }
+    ],
+    "finishY": 5582,
+    "entryY": 5128,
+    "length": 5582,
+    "gravity": 1950,
+    "restitution": 0.26,
+    "friction": 0.12,
+    "drag": 0.045,
+    "entrance": {
+      "key": "cascade",
+      "endY": 496,
+      "walls": 4,
+      "pegs": 0,
+      "rotors": 0,
+      "seesaws": 0,
+      "marks": 1
+    }
+  },
+  "gameSource": "/* 구슬 레이스 — 진행\n *\n * 이건 실력 게임이 아니라 **여럿이서 뭔가를 정할 때 쓰는 도구**다. 그래서 설계의 1급 목표가\n * 재미가 아니라 **공정성과 그 증명**이다:\n *   · 구슬은 전부 동일하다 (반지름·질량·반발계수·마찰). 다른 건 색과 번호뿐\n *   · 맵은 매 판 고정이고 좌우 대칭이다\n *   · 출발 자리는 매 판 무작위로 섞어 배정한다  ← 참가자별 확률이 같아지는 지점은 여기다\n *   · 결과를 미리 정해놓고 애니메이션만 재생하지 않는다. 시드를 화면에 띄우고\n *     \"같은 시드로 다시\" 로 재현할 수 있게 해 그걸 증명한다\n *\n * 앱 안에 돈·포인트·베팅 금액은 없고, 그런 낱말도 쓰지 않는다.\n */\n(function (global) {\n  'use strict';\n\n  var C = Courses;\n\n  var COLORS = [\n    '#FF5D5D', '#FF9A3C', '#FFD84D', '#8BE04E', '#34C77B', '#35D0C0',\n    '#4DA6FF', '#6C7BFF', '#A97BFF', '#FF6FD8', '#D0A03C', '#AEB7D4'\n  ];\n\n  var MODES = [\n    { key: 'last', name: '꼴찌 뽑기', sub: '커피 사는 사람 정하기', verb: '뽑힌 사람' },\n    { key: 'first', name: '1등 뽑기', sub: '한 명만 고르기', verb: '뽑힌 사람' },\n    { key: 'rank', name: '등수 지정', sub: '원하는 등수로', verb: '지목된 사람' },\n    { key: 'order', name: '순서 정하기', sub: '도착 순서 그대로', verb: '순서' }\n  ];\n\n  var MIN_P = 2, MAX_P = 12, MAX_MARBLES = 20;\n\n  var S = null;\n  // Presentation bounds use wall time; never consume the physics RNG.\n  var CONTEST = { zone: 760, spreadY: 260, spreadX: 360, duration: 2.4, cooldown: 1.8, speed: 0.42 };\n\n  function modeByKey(k) {\n    for (var i = 0; i < MODES.length; i++) if (MODES[i].key === k) return MODES[i];\n    return MODES[0];\n  }\n\n  /**\n   * @param opt { entries:[{name,count}], modeKey, rank, courseKey, seed }\n   */\n  function start(opt) {\n    var entries = opt.entries.slice(0, MAX_P);\n    var seed = opt.seed >>> 0;\n    var rng = Rng.make(seed);\n    var course = C.byKey(opt.courseKey);\n\n    // 사람 → 구슬. 여러 개를 건 사람은 그만큼 걸릴(뽑힐) 확률이 올라간다\n    var marbles = [], total = 0, i, k;\n    for (i = 0; i < entries.length && total < MAX_MARBLES; i++) {\n      var cnt = Math.max(1, Math.min(9, entries[i].count | 0 || 1));\n      for (k = 0; k < cnt && total < MAX_MARBLES; k++) {\n        marbles.push({\n          id: total, owner: i, num: i + 1, name: entries[i].name,\n          color: COLORS[i % COLORS.length], dup: cnt > 1 ? (k + 1) : 0,\n          x: 0, y: 0, vx: 0, vy: 0, a: 0, w: 0, r: C.R,\n          held: true, done: false, rank: 0, slowT: 0, stallT: 0, best: -1e9, trail: []\n        });\n        total++;\n      }\n    }\n\n    /* 출발 자리 배정. **한 통에 모아 담는다** — 화면 폭 전체에 한 줄로 세우면\n       코스가 섞을 일이 없어 출발 자리가 그대로 순위가 된다.\n       배정 자체도 시드로 섞지만, 애초에 자리 차이가 거의 없게 만드는 게 먼저다. */\n    var slots = [];\n    var perRow = Math.min(total, 5);\n    var rows = Math.ceil(total / perRow);\n    for (var r = 0; r < rows; r++) {\n      var inRow = Math.min(perRow, total - r * perRow);\n      for (k = 0; k < inRow; k++) {\n        slots.push({ x: C.MID + (k - (inRow - 1) / 2) * 52, y: C.START_Y - r * 50 });\n      }\n    }\n    rng.shuffle(slots);\n    for (i = 0; i < marbles.length; i++) {\n      marbles[i].x = slots[i].x + rng.range(-4, 4);\n      marbles[i].y = slots[i].y - rng.range(0, 8);\n      marbles[i].slot = i;\n    }\n\n    var world = new Physics.World({\n      gravity: course.gravity, restitution: course.restitution,\n      friction: course.friction, drag: course.drag,\n      left: C.LEFT, right: C.RIGHT,\n      pegs: course.pegs, walls: course.walls,\n      rotors: course.rotors, seesaws: course.seesaws,\n      marbles: marbles\n    });\n\n    var mode = modeByKey(opt.modeKey);\n    S = {\n      seed: seed, rng: rng, course: course, mode: mode,\n      // 등수는 **모드가 정한다.** opt.rank 는 '몇 등 지정' 일 때만 쓴다 —\n      // 그러지 않으면 '꼴찌가 걸린다' 인데 1등이 걸리는 사고가 난다 (실측)\n      wantRank: mode.key === 'first' ? 1\n        : mode.key === 'rank' ? Math.max(1, Math.min(total, opt.rank | 0 || 1))\n        : total,\n      entries: entries, n: total, people: entries.length,\n      world: world, marbles: marbles,\n      cam: new Camera(course),\n      phase: 'ready',            // ready → racing → done\n      phaseT: 1.6,\n      raceT: 0,\n      order: [],\n      picked: null,\n      leadY: C.START_Y,\n      hits: [],\n      slow: 1, manualSlow: false, decisive: null,\n      autoSlowT: 0, slowCooldown: 0, contestLatch: false, selectedOwner: null,\n      aim: { x: C.MID + 54, y: C.START_Y + 460, z: 1 }\n    };\n    return S;\n  }\n\n  function state() { return S; }\n\n  /** 구슬이 어딘가에 끼면 판이 안 끝난다. 흔드는 값도 시드에서 뽑아 재현성을 지킨다 */\n  /* 흔드는 값도 시드에서 뽑아 재현성을 지킨다.\n     **아래로 치우쳐 민다** — 위로 밀면 좁은 통로에 들어간 구슬을 도로 뱉어내\n     구제 장치가 오히려 판을 못 끝내게 만든다 (통과 시험 34/34 → 32/34 로 악화) */\n  function unstick(m) {\n    m.vx += S.rng.range(-230, 230);\n    m.vy += S.rng.range(-30, 240);\n    m.w += S.rng.range(-14, 14);\n    m.slowT = 0;\n  }\n\n  function onStep(w) {\n    var i, m, lead = -1e9;\n    for (i = 0; i < S.marbles.length; i++) {\n      m = S.marbles[i];\n      if (m.done) continue;\n      if (m.y > lead) lead = m.y;\n      if (m.y - m.r > S.course.finishY) {\n        m.done = true;\n        m.rank = S.order.length + 1;\n        S.order.push(m);\n        continue;\n      }\n      var sp = Math.abs(m.vx) + Math.abs(m.vy);\n      if (sp < 52) {\n        m.slowT += Physics.DT;\n        if (m.slowT > 0.8) unstick(m);\n      } else if (m.slowT > 0) {\n        m.slowT = Math.max(0, m.slowT - Physics.DT * 2);\n      }\n      // 빠르게 움직이는데 **앞으로 못 나가는** 경우 — 벨트나 회전체를 도는 중이다.\n      // 속도만 보면 못 잡는다\n      if (m.y > m.best + 26) { m.best = m.y; m.stallT = 0; }\n      else {\n        m.stallT = (m.stallT || 0) + Physics.DT;\n        if (m.stallT > 3.2) { unstick(m); m.vy += 260; m.stallT = 0; }\n      }\n    }\n    // A single remaining PHYSICAL marble has a known last rank, wherever it is.\n    // Both frame advance and fastForward call this same fixed-step callback.\n    var remaining = S.marbles.filter(function (q) { return !q.done; });\n    if (remaining.length === 1 && S.order.length === S.n - 1) {\n      m = remaining[0]; m.done = true; m.rank = S.n; S.order.push(m);\n    }\n    if (lead > -1e8) S.leadY = lead;\n    // 오래 걸리면 중력을 함께 올린다 — 모든 구슬에 똑같이 걸리므로 순위를 건드리지 않는다\n    if (w.t > 55) w.gBoost = Math.min(3.0, 1 + (w.t - 55) * 0.15);\n  }\n\n  /** Shared camera/name attention: trailing danger vs the target rank boundary. */\n  function attention() {\n    if (!S) return [];\n    var live = S.marbles.filter(function (m) { return !m.done; });\n    live.sort(function (a, b) { return b.y - a.y || a.id - b.id; });\n    if (S.mode.key === 'last' || S.mode.key === 'order') return live.slice(-3);\n    if (S.mode.key === 'first') return live.slice(0, 3);\n    var boundary = S.wantRank - S.order.length - 1;\n    return live.slice(Math.max(0, boundary - 1), Math.max(0, boundary - 1) + 3);\n  }\n\n  function cameraAim() {\n    var live = attention();\n    if (!live.length) return { x: C.MID + 54, y: S.course.finishY - 260, z: 1.5 };\n    var loY = 1e9, hiY = -1e9, loX = 1e9, hiX = -1e9;\n    live.forEach(function (m) {\n      loY = Math.min(loY, m.y); hiY = Math.max(hiY, m.y);\n      loX = Math.min(loX, m.x); hiX = Math.max(hiX, m.x);\n    });\n    var z = Math.min(Camera.VH / (hiY - loY + Camera.MARGIN), Camera.VW / (hiX - loX + Camera.MARGIN));\n    z = Math.max(0.86, Math.min(1.65, z));\n    return { x: (loX + hiX) / 2, y: (hiY + loY) / 2 + 90 / z, z: z };\n  }\n\n  function contestGroup() {\n    var live = S.marbles.filter(function (m) { return !m.done; });\n    if (live.length < 2) return [];\n    if (S.mode.key === 'last' || S.mode.key === 'order') {\n      if (live.length > 3) return [];\n    } else {\n      // Show the next target boundary only while that rank is still undecided.\n      if (S.order.length >= S.wantRank || S.wantRank - S.order.length > 3) return [];\n      live = attention();\n    }\n    var entry = S.course.entryY, group = live.filter(function (m) {\n      return m.y >= entry - CONTEST.zone && m.y <= entry + m.r;\n    });\n    if (group.length < 2) return [];\n    var ys = group.map(function (m) { return m.y; }), xs = group.map(function (m) { return m.x; });\n    if (Math.max.apply(null, ys) - Math.min.apply(null, ys) > CONTEST.spreadY ||\n        Math.max.apply(null, xs) - Math.min.apply(null, xs) > CONTEST.spreadX) return [];\n    return group;\n  }\n\n  function presentation(dt) {\n    var group = contestGroup();\n    S.slowCooldown = Math.max(0, S.slowCooldown - dt);\n    if (!group.length) { S.contestLatch = false; S.autoSlowT = 0; }\n    else if (!S.contestLatch && S.slowCooldown === 0) {\n      S.contestLatch = true; S.autoSlowT = CONTEST.duration;\n    }\n    if (S.autoSlowT > 0) {\n      S.autoSlowT = Math.max(0, S.autoSlowT - dt);\n      if (S.autoSlowT === 0) S.slowCooldown = CONTEST.cooldown;\n    }\n    S.decisive = S.autoSlowT > 0 ? group[0] : null;\n    return S.manualSlow ? 0.34 : !S.reducedMotion && S.autoSlowT > 0 ? CONTEST.speed : 1;\n  }\n\n  function selectOwner(owner) {\n    if (!S) return;\n    S.selectedOwner = owner == null || S.selectedOwner === owner ? null : owner;\n  }\n\n  /** Actual viewport (no drawing overscan). Prefer any visible marble of the owner. */\n  function selectionGuide() {\n    if (!S || S.selectedOwner == null) return '';\n    var selected = S.marbles.filter(function (m) { return !m.done && m.owner === S.selectedOwner; });\n    var name = S.entries[S.selectedOwner].name;\n    if (!selected.length) return name + ' · 도착했습니다';\n    var cam = S.cam, halfW = Camera.VW / (2 * cam.z), halfH = Camera.VH / (2 * cam.z);\n    function visible(m) { return Math.abs(m.x - cam.x) <= halfW && Math.abs(m.y - cam.y) <= halfH; }\n    if (selected.some(visible)) return name + ' · 화면 안에서 강조 중';\n    var m = selected[0], directions = [];\n    if (m.y < cam.y - halfH) directions.push('↑ 화면 위');\n    if (m.y > cam.y + halfH) directions.push('↓ 화면 아래');\n    if (m.x < cam.x - halfW) directions.push('← 화면 왼쪽');\n    if (m.x > cam.x + halfW) directions.push('→ 화면 오른쪽');\n    return name + ' ' + directions.join(' · ') + ' · 미니맵에서 위치 확인';\n  }\n\n  function resultText() {\n    if (!S || S.phase !== 'done') return '';\n    return S.course.name + ' · ' + S.mode.name + '\\n' +\n      S.order.map(function (m) { return m.rank + '등 ' + m.name + (m.dup ? ' (' + m.dup + ')' : ''); }).join('\\n') +\n      '\\n다시 보기 코드 ' + Rng.label(S.seed);\n  }\n\n  function step(dt) {\n    if (!S) return;\n    if (S.phase === 'ready') {\n      S.phaseT -= dt;\n      S.aim = { x: C.MID + 54, y: C.START_Y + 420, z: 1.05 };\n      S.cam.follow(S.aim, dt);\n      if (S.phaseT <= 0) {\n        S.phase = 'racing';\n        for (var i = 0; i < S.marbles.length; i++) S.marbles[i].held = false;\n        Sound.gate();\n      }\n      return;\n    }\n    if (S.phase !== 'racing') { S.aim = cameraAim(); S.cam.follow(S.aim, dt); return; }\n\n    S.raceT += dt;\n    var want = presentation(dt);\n    // 배속은 부드럽게 갈아탄다 — 뚝 끊기면 연출이 아니라 렉으로 보인다\n    S.slow += (want - S.slow) * Math.min(1, dt * 7);\n    S.world.hits.length = 0;\n    var before = S.order.length;\n    S.world.advance(dt * S.slow, onStep);\n    S.hits = S.world.hits;\n\n    for (var k = 0; k < S.hits.length; k++) {\n      var h = S.hits[k];\n      Sound.clack(h.y - S.cam.y + 720, h.speed, h.kind);\n      FX.spark(h.x, h.y, h.speed, h.kind === 'bump' ? '#FFD84D' : null);\n    }\n    for (k = before; k < S.order.length; k++) {\n      var m = S.order[k];\n      Sound.arrive(m.rank, S.n);\n      FX.ring(m.x, S.course.finishY, m.color);\n      if (m.rank === S.wantRank && S.mode.key !== 'order') FX.burst(m.x, S.course.finishY, m.color, 26);\n    }\n\n    // 궤적 — 어느 구슬이 어디서 왔는지 눈으로 따라갈 수 있게\n    for (k = 0; k < S.marbles.length; k++) {\n      m = S.marbles[k];\n      if (m.done) continue;\n      m.trail.push(m.x, m.y);\n      if (m.trail.length > 16) m.trail.splice(0, 2);\n    }\n\n    S.aim = cameraAim();\n    S.cam.follow(S.aim, dt);\n    if (S.order.length >= S.n) finish();\n  }\n\n  function finish() {\n    S.phase = 'done';\n    if (S.mode.key === 'order') S.picked = null;\n    else S.picked = S.order[Math.max(0, Math.min(S.order.length - 1, S.wantRank - 1))] || null;\n    Sound.result(S.mode.key);\n    FX.flash('#FFE9A0', 0.26);\n    FX.shake(9, 0.4);\n  }\n\n  /** 결과를 기다리지 않고 넘기기 — 물리를 건너뛰는 게 아니라 빨리 감는다 */\n  function fastForward(seconds) {\n    if (!S || (S.phase !== 'racing' && S.phase !== 'ready')) return 0;\n    if (S.phase === 'ready') {\n      S.phase = 'racing';\n      for (var i = 0; i < S.marbles.length; i++) S.marbles[i].held = false;\n    }\n    var n = 0, budget = Math.min(seconds, 240) / Physics.DT;\n    while (S.order.length < S.n && n < budget) {\n      S.world.step();\n      onStep(S.world);\n      n++;\n    }\n    if (S.order.length >= S.n) finish();\n    return n;\n  }\n\n  /** 화면 연출만 바꾼다 — 물리에는 손대지 않으므로 결과와 무관하다 */\n  function toggleSlow() {\n    if (!S) return false;\n    S.manualSlow = !S.manualSlow;\n    return S.manualSlow;\n  }\n\n  global.Game = {\n    COLORS: COLORS, MODES: MODES, MIN_P: MIN_P, MAX_P: MAX_P, MAX_MARBLES: MAX_MARBLES,\n    start: start, state: state, step: step, modeByKey: modeByKey,\n    fastForward: fastForward, toggleSlow: toggleSlow, cameraAim: cameraAim,\n    attention: attention, selectOwner: selectOwner, selectionGuide: selectionGuide, resultText: resultText, CONTEST: CONTEST\n  };\n})(window);\n"
+}

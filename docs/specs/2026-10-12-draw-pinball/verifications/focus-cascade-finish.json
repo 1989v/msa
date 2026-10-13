@@ -1,0 +1,313 @@
+{
+  "results": [
+    {
+      "count": 2,
+      "seed": 7919,
+      "seconds": 16.933333333332694
+    },
+    {
+      "count": 2,
+      "seed": 15838,
+      "seconds": 17.441666666666
+    },
+    {
+      "count": 2,
+      "seed": 23757,
+      "seconds": 17.004166666666023
+    },
+    {
+      "count": 2,
+      "seed": 31676,
+      "seconds": 16.54166666666605
+    },
+    {
+      "count": 2,
+      "seed": 39595,
+      "seconds": 17.049999999999354
+    },
+    {
+      "count": 2,
+      "seed": 47514,
+      "seconds": 18.754166666665924
+    },
+    {
+      "count": 2,
+      "seed": 55433,
+      "seconds": 20.383333333332498
+    },
+    {
+      "count": 2,
+      "seed": 63352,
+      "seconds": 18.274999999999284
+    },
+    {
+      "count": 2,
+      "seed": 71271,
+      "seconds": 20.795833333332475
+    },
+    {
+      "count": 2,
+      "seed": 79190,
+      "seconds": 20.19583333333251
+    },
+    {
+      "count": 6,
+      "seed": 7919,
+      "seconds": 22.787499999999028
+    },
+    {
+      "count": 6,
+      "seed": 15838,
+      "seconds": 24.645833333332256
+    },
+    {
+      "count": 6,
+      "seed": 23757,
+      "seconds": 22.02499999999907
+    },
+    {
+      "count": 6,
+      "seed": 31676,
+      "seconds": 21.941666666665743
+    },
+    {
+      "count": 6,
+      "seed": 39595,
+      "seconds": 23.891666666665632
+    },
+    {
+      "count": 6,
+      "seed": 47514,
+      "seconds": 23.97499999999896
+    },
+    {
+      "count": 6,
+      "seed": 55433,
+      "seconds": 24.33749999999894
+    },
+    {
+      "count": 6,
+      "seed": 63352,
+      "seconds": 22.870833333332357
+    },
+    {
+      "count": 6,
+      "seed": 71271,
+      "seconds": 23.745833333332307
+    },
+    {
+      "count": 6,
+      "seed": 79190,
+      "seconds": 23.77916666666564
+    },
+    {
+      "count": 12,
+      "seed": 7919,
+      "seconds": 25.73749999999886
+    },
+    {
+      "count": 12,
+      "seed": 15838,
+      "seconds": 25.774999999998858
+    },
+    {
+      "count": 12,
+      "seed": 23757,
+      "seconds": 23.737499999998974
+    },
+    {
+      "count": 12,
+      "seed": 31676,
+      "seconds": 23.82499999999897
+    },
+    {
+      "count": 12,
+      "seed": 39595,
+      "seconds": 25.43333333333221
+    },
+    {
+      "count": 12,
+      "seed": 47514,
+      "seconds": 26.058333333332175
+    },
+    {
+      "count": 12,
+      "seed": 55433,
+      "seconds": 24.30416666666561
+    },
+    {
+      "count": 12,
+      "seed": 63352,
+      "seconds": 25.708333333332195
+    },
+    {
+      "count": 12,
+      "seed": 71271,
+      "seconds": 23.633333333332313
+    },
+    {
+      "count": 12,
+      "seed": 79190,
+      "seconds": 23.36666666666566
+    }
+  ],
+  "replayPairs": 30,
+  "simulations": 134,
+  "biasSeeds": 60,
+  "biasSamples": 360,
+  "rho": -0.11603699664774364,
+  "schedules": [
+    30,
+    60,
+    120,
+    "ff"
+  ],
+  "comparison": {
+    "beforeApproach": 2.324944444444313,
+    "afterApproach": 2.872013888888726,
+    "beforeUpstream": 1.8054444444444482,
+    "afterUpstream": 2.3452083333333498
+  },
+  "dwellPairs": [
+    {
+      "before": {
+        "seed": 7919,
+        "seconds": 22.43333333333238,
+        "approachDwell": 2.2041666666665414,
+        "upstreamDwell": 1.7388888888888951
+      },
+      "after": {
+        "seed": 7919,
+        "seconds": 22.799999999999027,
+        "approachDwell": 2.666666666666515,
+        "upstreamDwell": 2.162500000000014
+      }
+    },
+    {
+      "before": {
+        "seed": 15838,
+        "seconds": 23.470833333332322,
+        "approachDwell": 2.204166666666542,
+        "upstreamDwell": 1.7124999999999986
+      },
+      "after": {
+        "seed": 15838,
+        "seconds": 24.649999999998922,
+        "approachDwell": 3.296527777777591,
+        "upstreamDwell": 2.7388888888889213
+      }
+    },
+    {
+      "before": {
+        "seed": 23757,
+        "seconds": 22.862499999999024,
+        "approachDwell": 2.5416666666665226,
+        "upstreamDwell": 1.9986111111111187
+      },
+      "after": {
+        "seed": 23757,
+        "seconds": 22.033333333332404,
+        "approachDwell": 2.4812499999998594,
+        "upstreamDwell": 1.996527777777781
+      }
+    },
+    {
+      "before": {
+        "seed": 31676,
+        "seconds": 22.39999999999905,
+        "approachDwell": 2.5090277777776353,
+        "upstreamDwell": 1.9548611111111154
+      },
+      "after": {
+        "seed": 31676,
+        "seconds": 21.94583333333241,
+        "approachDwell": 2.515277777777635,
+        "upstreamDwell": 1.958333333333333
+      }
+    },
+    {
+      "before": {
+        "seed": 39595,
+        "seconds": 22.408333333332383,
+        "approachDwell": 2.3858333333331982,
+        "upstreamDwell": 1.8000000000000056
+      },
+      "after": {
+        "seed": 39595,
+        "seconds": 23.899999999998965,
+        "approachDwell": 3.3549999999998095,
+        "upstreamDwell": 2.7683333333333664
+      }
+    },
+    {
+      "before": {
+        "seed": 47514,
+        "seconds": 22.816666666665693,
+        "approachDwell": 2.160416666666544,
+        "upstreamDwell": 1.6729166666666766
+      },
+      "after": {
+        "seed": 47514,
+        "seconds": 23.983333333332293,
+        "approachDwell": 2.892361111110947,
+        "upstreamDwell": 2.3881944444444616
+      }
+    },
+    {
+      "before": {
+        "seed": 55433,
+        "seconds": 23.179166666665672,
+        "approachDwell": 2.1819444444443206,
+        "upstreamDwell": 1.6944444444444444
+      },
+      "after": {
+        "seed": 55433,
+        "seconds": 24.33749999999894,
+        "approachDwell": 2.8513888888887267,
+        "upstreamDwell": 2.363194444444459
+      }
+    },
+    {
+      "before": {
+        "seed": 63352,
+        "seconds": 22.39999999999905,
+        "approachDwell": 2.5608333333331883,
+        "upstreamDwell": 1.964166666666672
+      },
+      "after": {
+        "seed": 63352,
+        "seconds": 22.870833333332357,
+        "approachDwell": 2.944999999999833,
+        "upstreamDwell": 2.3525000000000142
+      }
+    },
+    {
+      "before": {
+        "seed": 71271,
+        "seconds": 23.212499999999004,
+        "approachDwell": 2.2666666666665383,
+        "upstreamDwell": 1.7750000000000001
+      },
+      "after": {
+        "seed": 71271,
+        "seconds": 23.745833333332307,
+        "approachDwell": 2.938194444444278,
+        "upstreamDwell": 2.4444444444444615
+      }
+    },
+    {
+      "before": {
+        "seed": 79190,
+        "seconds": 23.24166666666567,
+        "approachDwell": 2.234722222222096,
+        "upstreamDwell": 1.7430555555555545
+      },
+      "after": {
+        "seed": 79190,
+        "seconds": 23.783333333332305,
+        "approachDwell": 2.778472222222065,
+        "upstreamDwell": 2.2791666666666845
+      }
+    }
+  ]
+}
