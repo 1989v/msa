@@ -2,6 +2,9 @@ package com.kgd.place.infrastructure.persistence.market.adapter
 
 import com.kgd.place.application.market.port.MarketQueryPort
 import com.kgd.place.application.market.port.MarketSavePort
+import com.kgd.place.application.market.port.MarketEditorPort
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import com.kgd.place.domain.market.model.Market
 import com.kgd.place.domain.market.model.MarketChangeLog
 import com.kgd.place.domain.market.model.MarketSteward
@@ -35,7 +38,8 @@ class MarketRepositoryAdapter(
     private val overrides: MarketStoreOverrideJpaRepository,
     private val changes: MarketChangeLogJpaRepository,
     private val stewards: MarketStewardJpaRepository,
-) : MarketQueryPort, MarketSavePort {
+    private val restorer: MarketRowRestorer,
+) : MarketQueryPort, MarketSavePort, MarketEditorPort {
     private val json = JsonMapper.builder().build()
 
     private fun validateJson(vararg values: String?) {
@@ -58,6 +62,8 @@ class MarketRepositoryAdapter(
     override fun saveMarket(market: Market): Market {
         validateJson(market.sourceRaw)
         val existing = markets.findByAttractionContentId(market.attractionContentId)?.toDomain()
+        // Ingestion joins its place transaction and serializes with market editor writes.
+        existing?.id?.let { markets.lockById(it) }
         require(market.id == null || market.id == existing?.id)
         val row = when {
             existing == null -> market
@@ -113,6 +119,11 @@ class MarketRepositoryAdapter(
                         } else null
                 } else null
         require(existing == null || existing.marketId == store.marketId)
+        if (existing == null && store.id != null) {
+            require(store.source == MarketStoreSource.MANUAL) { "Only manual stores can be restored" }
+            restorer.store(store)
+            return store
+        }
         require(existing == null || existing.source == store.source || (
             observedSourceKeys != null && existing.source != MarketStoreSource.MANUAL &&
                 store.source != MarketStoreSource.MANUAL && store.sanggaKey != null && store.sanggaKey == existing.sanggaKey))
@@ -158,5 +169,44 @@ class MarketRepositoryAdapter(
         require(steward.id == null || steward.id == existing?.id)
         val row = if (existing == null) steward else steward.copy(id = existing.id, createdAt = existing.createdAt)
         return stewards.save(MarketStewardJpaEntity.fromDomain(row)).toDomain()
+    }
+
+    override fun findMarket(id: Long): Market? = markets.findById(id).orElse(null)?.toDomain()
+    override fun lockMarket(id: Long): Market? = markets.lockById(id)?.toDomain()
+    override fun listMarkets(name: String, page: Int, size: Int): Pair<List<Market>, Long> {
+        val result = markets.findByNameContainingIgnoreCase(name, PageRequest.of(page, size, Sort.by("id")))
+        return result.content.map { it.toDomain() } to result.totalElements
+    }
+    override fun findChanges(marketId: Long, page: Int, size: Int): Pair<List<MarketChangeLog>, Long> {
+        val result = changes.findAllByMarketId(marketId, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id")))
+        return result.content.map { it.toDomain() } to result.totalElements
+    }
+    override fun findChange(id: Long): MarketChangeLog? = changes.findById(id).orElse(null)?.toDomain()
+    override fun saveEditedZone(zone: MarketZone): MarketZone {
+        val current = zone.id?.let { zones.findById(it).orElse(null)?.toDomain() }
+        require(current == null || (current.marketId == zone.marketId && current.source == zone.source && current.sourceKey == zone.sourceKey))
+        if (current == null && zone.id != null) {
+            restorer.zone(zone)
+            return zone
+        }
+        return zones.save(MarketZoneJpaEntity.fromDomain(zone)).toDomain()
+    }
+    override fun deleteZone(id: Long) { zones.deleteById(id) }
+    override fun deleteManualStore(id: Long) {
+        require(stores.findById(id).orElse(null)?.source == MarketStoreSource.MANUAL)
+        stores.deleteById(id)
+    }
+    override fun replaceOverrides(store: MarketStore, rows: List<MarketStoreOverride>) {
+        val id = requireNotNull(store.id)
+        require(rows.all { it.storeId == id })
+        MarketStoreDisplay.from(store, rows)
+        val current = overrides.findAllByStoreIdIn(listOf(id))
+        val fields = rows.map { it.field }.toSet()
+        overrides.deleteAll(current.filter { it.field !in fields })
+        rows.forEach { row ->
+            val old = current.find { it.field == row.field }
+            if (old == null && row.id != null) restorer.override(row)
+            else overrides.save(MarketStoreOverrideJpaEntity.fromDomain(row.copy(id = old?.id)))
+        }
     }
 }

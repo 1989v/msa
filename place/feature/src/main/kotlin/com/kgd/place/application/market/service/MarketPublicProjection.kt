@@ -6,6 +6,7 @@ import com.kgd.place.domain.market.model.MarketStore
 import com.kgd.place.domain.market.model.MarketStoreDisplay
 import com.kgd.place.domain.market.model.MarketStoreOverride
 import com.kgd.place.domain.market.model.MarketStoreSource
+import com.kgd.place.domain.market.model.MarketPinKind
 import java.text.Normalizer
 import java.util.Locale
 
@@ -31,7 +32,7 @@ internal object MarketPublicProjection {
                 canonicalIds[requireNotNull(sangga.id)] = requireNotNull(onnuri.id)
             }
         }
-        return rows.filter { it.id !in canonicalIds }.map { row ->
+        val projected = rows.filter { it.id !in canonicalIds }.map { row ->
             val other = partners[row.id]
             val ownOverrides = overrides[row.id].orEmpty()
             val otherOverrides = overrides[other?.id].orEmpty()
@@ -66,6 +67,16 @@ internal object MarketPublicProjection {
             }
             QueryMarketUseCase.Store(publicSource, if (display.membership.status == MarketMembershipStatus.UNKNOWN)
                 display.copy(coordinate = null) else display, sources)
+        }
+        val byId = projected.associateBy { it.source.id }
+        return projected.map { row ->
+            if (row.display.pinKind != MarketPinKind.REFERENCE || row.display.membership.status != MarketMembershipStatus.IN) row
+            else {
+                val neighbor = byId[row.source.referenceStoreId]
+                val coordinate = neighbor?.takeIf { it.source.marketId == row.source.marketId &&
+                    it.display.pinKind == MarketPinKind.EXACT && it.display.membership.status == MarketMembershipStatus.IN }?.display?.coordinate
+                row.copy(display = row.display.copy(coordinate = row.display.coordinate ?: coordinate))
+            }
         }
     }
 }
