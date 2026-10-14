@@ -23,6 +23,8 @@ export function marketSourceBadges(store: MarketStore, lang: PlaceLang): string[
     : store.sources.includes('ONNURI')
       ? [en ? 'Onnuri merchant' : '가맹점', ...(store.sources.includes('SANGGA') ? [en ? 'Store data' : '상가정보'] : [])]
       : store.sources.includes('SANGGA') ? [en ? 'Not an Onnuri merchant · Store data' : '가맹점 아님 · 상가정보'] : [];
+  const stewardBadge = en ? 'Merchant association' : '상인회 제공';
+  if (store.actorKind === 'STEWARD' && !badges.includes(stewardBadge)) badges.push(stewardBadge);
   return [...badges, ...(store.pinKind === 'REFERENCE' ? [en ? 'Reference location' : '참고 위치'] : [])];
 }
 

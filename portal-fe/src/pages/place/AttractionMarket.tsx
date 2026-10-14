@@ -4,6 +4,7 @@ import { fetchMarket, type MarketResponse, type MarketZone } from '../../api/mar
 import type { PlaceLang } from '../../api/placeApi';
 import { formatMarketFloor, groupMarketPins, hasMarketCoordinate, marketSourceBadges, matchesMarketName, normalizeMarketName, projectMarketPins, visibleMarketStores, zoneIds } from './marketView';
 import './AttractionMarket.css';
+import MarketStewardApplication from './MarketStewardApplication';
 
 const COPY = {
   ko: { title: '시장 구역·가게', type: '시장 유형', count: '점포수', cycle: '개설주기', facilities: '편의시설', all: '전체 구역', zones: '골목·건물·층', search: '가게 이름 찾기', outside: '시장 밖도 보기', out: '시장 밖', unknown: '소속 미확인', found: '찾은 가게', none: '없음', shops: '가게 목록', parcel: '같은 필지 가게', reset: '전체 가게 보기', noCoordinates: '좌표가 있는 가게가 없습니다. 아래 목록을 확인하세요.', noPin: '지도 위치 없음', map: '가게 위치 지도', mapNote: '북쪽이 위입니다. 점은 필지 단위 위치이며, 실제 출입구와 다를 수 있습니다.', reference: '참고 위치는 점선으로 표시합니다.', empty: '이 구역에 표시할 가게가 없습니다.', types: { STREET: '거리형', BUILDING: '건물형', MIXED: '혼합형' } },
@@ -124,6 +125,7 @@ function MarketSection({ data, lang, includeOutside, onOutside }: {
           </ul>
         </div>
       </div>
+      {data.market.id != null && <MarketStewardApplication marketId={data.market.id} lang={lang} />}
     </section>
   );
 }

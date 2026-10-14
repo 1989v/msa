@@ -59,3 +59,14 @@
   .place-market-panel { min-width: 0; position: sticky; top: 5rem; }
 }
 @media (prefers-reduced-motion: reduce) { .place-market *, .place-market *::before, .place-market *::after { transition: none; animation: none; } }
+.market-steward { margin-block: 2rem; padding-block: 1.5rem; border-top: 1px solid var(--ko-border-default); }
+.market-steward form, .market-zone-rename { display: grid; gap: 0.5rem; max-width: 36rem; }
+.market-steward label { display: grid; gap: 0.5rem; }
+.market-steward :is(input, select), .market-zone-rename input { min-width: 0; width: 100%; min-height: 2.75rem; padding: 0.5rem 0.75rem; background: var(--ko-surface-0); color: var(--ko-text-primary); border: 1px solid var(--ko-border-strong); border-radius: var(--kh-radius); font: inherit; }
+.market-steward a, .market-manage a { display: inline-flex; align-items: center; min-height: 2.75rem; text-decoration: underline; color: var(--ko-accent-text); }
+.market-manage { max-width: 60rem; margin: 0 auto; padding: 2rem 1rem; overflow-wrap: anywhere; }
+.market-manage fieldset { min-width: 0; border: 0; padding: 0; }
+.market-manage .place-market-shops { max-height: none; }
+.market-manage li button { margin: 0.5rem 0.5rem 0 0; }
+.market-zone-rename { margin-block: 1.5rem; }
+.place-market select:focus-visible { outline: var(--ko-focus-ring); outline-offset: 3px; }

@@ -39,6 +39,7 @@ export interface MarketStore {
 
 export interface MarketResponse {
   market: {
+    id?: number | null;
     name: string;
     marketType: 'STREET' | 'BUILDING' | 'MIXED';
     sourceMarketType: string | null;

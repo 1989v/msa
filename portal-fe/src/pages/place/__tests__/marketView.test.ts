@@ -10,6 +10,11 @@ const store = (overrides: Partial<MarketStore> = {}): MarketStore => ({
 });
 
 describe('market display projection', () => {
+  it('labels STEWARD manual entries and source-store overrides', () => {
+    expect(marketSourceBadges(store({ actorKind: 'STEWARD' }), 'ko')).toEqual(['가맹점', '상인회 제공']);
+    expect(marketSourceBadges(store({ actorKind: 'STEWARD', manual: true, sources: ['MANUAL'] }), 'ko')).toEqual(['상인회 제공']);
+    expect(marketSourceBadges(store({ actorKind: 'STEWARD' }), 'en')).toContain('Merchant association');
+  });
   it('groups the same parcel or coordinate, and omits unknown and missing coordinates', () => {
     const rows = [store({ jibunAddress: '서울 1' }), store({ id: 2, jibunAddress: '서울 1', longitude: 127.001 }),
       store({ id: 3 }), store({ id: 4, latitude: null }), store({ id: 5, membership: 'UNKNOWN' }),
