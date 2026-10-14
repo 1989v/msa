@@ -1,0 +1,61 @@
+.place-market {
+  --market-pine: color-mix(in srgb, var(--kh-pine) 60%, var(--ko-text-primary));
+  --market-celadon: color-mix(in srgb, var(--kh-celadon) 60%, var(--ko-text-primary));
+  --market-yeonji: color-mix(in srgb, var(--kh-yeonji) 60%, var(--ko-text-primary));
+  --market-ocher: color-mix(in srgb, var(--kh-ocher) 60%, var(--ko-text-primary));
+  --market-zone-1: var(--market-pine);
+  --market-zone-2: var(--market-celadon);
+  --market-zone-3: var(--market-yeonji);
+  --market-zone-4: var(--market-ocher);
+  --market-zone-5: color-mix(in srgb, var(--market-pine), var(--market-celadon));
+  --market-zone-6: color-mix(in srgb, var(--market-pine), var(--market-ocher));
+  --market-zone-7: color-mix(in srgb, var(--market-yeonji), var(--market-celadon));
+  --market-zone-8: color-mix(in srgb, var(--market-yeonji), var(--market-ocher));
+  --market-zone-9: color-mix(in srgb, var(--market-celadon), var(--market-ocher));
+ margin-block: 3rem; color: var(--ko-text-primary); }
+.place-market-name { margin-block: 0.75rem; font-size: 1.25rem; font-weight: 600; }
+.place-market-facts { display: flex; flex-wrap: wrap; gap: 1rem 2rem; margin-block: 1rem; }
+.place-market-facts dt, .place-market-note, .place-market-source { color: var(--ko-text-secondary); font-size: 0.875rem; }
+.place-market-facts dd { margin: 0; font-variant-numeric: tabular-nums; }
+.place-market-source a { color: var(--ko-accent-text); text-decoration: underline; }
+.place-market-controls { display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; margin-block: 1.5rem; }
+.place-market input[type='search'] { width: min(100%, 26rem); min-height: 2.75rem; background: var(--ko-surface-0); color: var(--ko-text-primary); border: 1px solid var(--ko-border-strong); border-radius: var(--kh-radius); padding: 0.5rem 0.75rem; font: inherit; }
+.place-market-outside { display: flex; gap: 0.5rem; align-items: center; min-height: 2.75rem; cursor: pointer; }
+.place-market-outside input { width: 1.25rem; height: 1.25rem; flex-shrink: 0; margin: 0; accent-color: var(--ko-accent-primary); }
+.place-market button { min-height: 2.75rem; min-width: 2.75rem; padding: 0.5rem 0.75rem; background: var(--ko-surface-0); color: var(--ko-text-primary); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius); font: inherit; cursor: pointer; }
+.place-market button:hover { background: var(--ko-surface-2); }
+.place-market button:active { background: var(--ko-surface-3); }
+.place-market button[aria-pressed='true'] { border-color: var(--ko-accent-text); background: var(--ko-accent-primary-bg); }
+.place-market button:disabled { opacity: 0.55; cursor: default; }
+.place-market :is(button, input, a):focus-visible { outline: var(--ko-focus-ring); outline-offset: 3px; }
+.place-market-zones { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.5rem; margin-bottom: 1rem; }
+.place-market-zone-children { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem 0 0.5rem 1rem; }
+.place-market-zone-swatch { display: inline-block; width: 0.75rem; height: 0.75rem; margin-right: 0.5rem; border-radius: 50%; }
+.place-market-layout { display: grid; gap: 1.5rem; align-items: start; }
+.place-market-map { min-width: 0; }
+.place-market-canvas { position: relative; }
+.place-market-map svg { width: 100%; display: block; background: var(--ko-surface-1); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius-asym); }
+.place-market-map svg > text { fill: var(--ko-text-primary); font-size: 16px; }
+.place-market-scale { fill: none; stroke: var(--ko-text-primary); stroke-width: 2; }
+.place-market-dot { fill: var(--market-zone-color); stroke: var(--ko-surface-0); stroke-width: 3; }
+.place-market-pin text { fill: var(--ko-surface-0); font-size: 12px; pointer-events: none; font-weight: 700; }
+.place-market-pin[data-hit] .place-market-dot, .place-market-pin[data-selected] .place-market-dot { stroke: var(--ko-text-primary); stroke-width: 4; }
+.place-market button.place-market-pin-button { position: absolute; transform: translate(-50%, -50%); width: 2.75rem; height: 2.75rem; padding: 0; border: 1px solid transparent; border-radius: 50%; background: transparent; }
+.place-market button.place-market-pin-button:hover, .place-market button.place-market-pin-button:active { border-color: var(--ko-accent-text); background: transparent; }
+.place-market button.place-market-pin-button[aria-pressed='true'] { border-color: var(--ko-text-primary); background: transparent; }
+.place-market-hit-ring { fill: none; stroke: var(--ko-accent-text); stroke-width: 5; }
+.place-market-pin text.place-market-hit-label { fill: var(--ko-accent-text); stroke: var(--ko-surface-1); stroke-width: 5; paint-order: stroke; stroke-linejoin: round; font-size: 16px; }
+.place-market-panel h3 { margin: 0 0 0.75rem; font-size: 1.25rem; }
+.place-market-shops { list-style: none; padding: 0; margin: 0.75rem 0 0; max-height: 28rem; overflow-y: auto; }
+.place-market-shops li { padding-block: 1rem; border-bottom: 1px solid var(--ko-border-default); }
+.place-market-shops li[data-found] { background: var(--ko-accent-primary-bg); padding-inline: 0.75rem; }
+.place-market-shops li[data-outside] { color: var(--ko-text-secondary); }
+.place-market-shops p { margin: 0.5rem 0 0; overflow-wrap: anywhere; }
+.place-market-badges { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+.place-market-badges span { border: 1px solid var(--ko-border-default); padding: 0.125rem 0.5rem; font-size: 0.875rem; }
+@media (min-width: 1024px) {
+  .place-market-layout { grid-template-columns: minmax(0, 3fr) minmax(16rem, 2fr); }
+  .place-market-map { position: sticky; top: 5rem; }
+  .place-market-panel { min-width: 0; position: sticky; top: 5rem; }
+}
+@media (prefers-reduced-motion: reduce) { .place-market *, .place-market *::before, .place-market *::after { transition: none; animation: none; } }

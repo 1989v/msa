@@ -35,6 +35,7 @@ import { useSeo } from '../../seo/useSeo';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import AttractionLinks from './AttractionLinks';
 import AttractionAccess from './AttractionAccess';
+import AttractionMarket from './AttractionMarket';
 import AttractionConditions from './AttractionConditions';
 import AttractionInfoTabs, { infoTabsShown } from './AttractionInfoTabs';
 import AttractionActionBar, { AttractionJumpNav, jumpSectionId, type JumpTarget } from './AttractionActionBar';
@@ -759,6 +760,7 @@ export default function AttractionPage() {
 
             {/* 방문 정보(주소·속성·지역 안 위치) · 접근성 — 지도 위에 탭으로, 내용은 칩. 서버 렌더는 절을 그대로 쌓는다(색인용) */}
             {infoTabsProps && <AttractionInfoTabs {...infoTabsProps} lang={lang} sectionId={secId('info')} />}
+            <AttractionMarket key={attraction.contentId} contentId={attraction.contentId} lang={lang} />
             {/* 주변 탐색 — 같은 분류 가까운 곳 · 주변 명소 · 숙소 · 행사 · 편의시설을 지도 한 장과 목록 하나로.
                 지도를 못 그리면(키 없음 · 좌표 이상 · 로더 실패) 목록만 남고 아래 링크가 위치를 대신한다. */}
             <NearbyExplore
