@@ -1,0 +1,145 @@
+[
+  {
+    "path": "/draw",
+    "title": "내기 게임·랜덤 추첨 — 랜덤레이스 | 1989v 게임",
+    "lang": "ko",
+    "robots": "",
+    "canonical": [
+      "https://game.1989v.com/draw"
+    ],
+    "alternates": {
+      "ko": "https://game.1989v.com/draw",
+      "en": "https://game.1989v.com/en/draw",
+      "x-default": "https://game.1989v.com/en/draw"
+    }
+  },
+  {
+    "path": "/en/draw",
+    "title": "Random Picker & Party Decision Games — Random Race | 1989v Games",
+    "lang": "en",
+    "robots": "",
+    "canonical": [
+      "https://game.1989v.com/en/draw"
+    ],
+    "alternates": {
+      "ko": "https://game.1989v.com/draw",
+      "en": "https://game.1989v.com/en/draw",
+      "x-default": "https://game.1989v.com/en/draw"
+    }
+  },
+  {
+    "path": "/games/marble-race",
+    "title": "핀볼 추첨·내기 게임 — 구슬 레이스 | 1989v 게임",
+    "lang": "ko",
+    "robots": "",
+    "canonical": [
+      "https://game.1989v.com/games/marble-race"
+    ],
+    "alternates": {
+      "ko": "https://game.1989v.com/games/marble-race",
+      "en": "https://game.1989v.com/en/games/marble-race",
+      "x-default": "https://game.1989v.com/en/games/marble-race"
+    }
+  },
+  {
+    "path": "/en/games/marble-race",
+    "title": "Pinball Random Picker — Marble Race | 1989v Games",
+    "lang": "en",
+    "robots": "",
+    "canonical": [
+      "https://game.1989v.com/en/games/marble-race"
+    ],
+    "alternates": {
+      "ko": "https://game.1989v.com/games/marble-race",
+      "en": "https://game.1989v.com/en/games/marble-race",
+      "x-default": "https://game.1989v.com/en/games/marble-race"
+    }
+  },
+  {
+    "path": "/",
+    "title": "무료 웹게임 아케이드 — 설치 없이 브라우저에서 바로 | 1989v 게임",
+    "lang": "ko",
+    "robots": "",
+    "canonical": [
+      "https://game.1989v.com/"
+    ],
+    "alternates": {
+      "ko": "https://game.1989v.com/",
+      "en": "https://game.1989v.com/en",
+      "x-default": "https://game.1989v.com/en"
+    }
+  },
+  {
+    "path": "/?r=ABC234",
+    "title": "무료 웹게임 아케이드 — 설치 없이 브라우저에서 바로 | 1989v 게임",
+    "lang": "ko",
+    "robots": "x-robots-tag: noindex, follow",
+    "canonical": [
+      "https://game.1989v.com/"
+    ],
+    "alternates": {
+      "ko": "https://game.1989v.com/",
+      "en": "https://game.1989v.com/en",
+      "x-default": "https://game.1989v.com/en"
+    }
+  },
+  {
+    "path": "/?r=",
+    "title": "무료 웹게임 아케이드 — 설치 없이 브라우저에서 바로 | 1989v 게임",
+    "lang": "ko",
+    "robots": "x-robots-tag: noindex, follow",
+    "canonical": [
+      "https://game.1989v.com/"
+    ],
+    "alternates": {
+      "ko": "https://game.1989v.com/",
+      "en": "https://game.1989v.com/en",
+      "x-default": "https://game.1989v.com/en"
+    }
+  },
+  {
+    "path": "/?%72=ABC234",
+    "title": "무료 웹게임 아케이드 — 설치 없이 브라우저에서 바로 | 1989v 게임",
+    "lang": "ko",
+    "robots": "x-robots-tag: noindex, follow",
+    "canonical": [
+      "https://game.1989v.com/"
+    ],
+    "alternates": {
+      "ko": "https://game.1989v.com/",
+      "en": "https://game.1989v.com/en",
+      "x-default": "https://game.1989v.com/en"
+    }
+  },
+  {
+    "path": "/party",
+    "title": "1989v",
+    "lang": "ko",
+    "robots": "x-robots-tag: noindex, follow",
+    "canonical": [],
+    "alternates": {}
+  },
+  {
+    "path": "/en/party",
+    "title": "1989v",
+    "lang": "ko",
+    "robots": "x-robots-tag: noindex, follow",
+    "canonical": [],
+    "alternates": {}
+  },
+  {
+    "path": "/games/marble-race/index.html",
+    "title": "구슬 레이스",
+    "lang": "ko",
+    "robots": "x-robots-tag: noindex, follow",
+    "canonical": [
+      "https://game.1989v.com/games/marble-race"
+    ],
+    "alternates": {}
+  },
+  {
+    "path": "/sitemap.xml",
+    "four_edited_urls_with_lastmod": true,
+    "private_urls_excluded": true
+  }
+]
