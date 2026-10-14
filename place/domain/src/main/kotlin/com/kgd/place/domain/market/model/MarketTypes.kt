@@ -14,7 +14,7 @@ enum class MarketStoreField { NAME, ITEMS, MEMBERSHIP, ZONE_ID, LATITUDE, LONGIT
 
 /** Stores the automatic decision; an override never rewrites this evidence. */
 data class MarketMembership(val status: MarketMembershipStatus) {
-    val visibleByDefault: Boolean get() = status == MarketMembershipStatus.IN
+    val visibleByDefault: Boolean get() = status != MarketMembershipStatus.OUT
 }
 
 /** Validated display coordinate. Raw upstream strings stay in the source payload. */

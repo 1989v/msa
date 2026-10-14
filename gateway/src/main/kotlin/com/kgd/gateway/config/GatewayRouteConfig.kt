@@ -819,7 +819,7 @@ class GatewayRouteConfig(
             // Place Service — 지역/POI 근처검색 조회는 비로그인 공개 (탐색). 쓰기(적재)는 ADMIN. (ADR-0056)
             .route("place-service-read") { r ->
                 r.method(HttpMethod.GET)
-                    .and().path("/api/places/**")
+                    .and().path("/api/places/**", "/api/v1/place/markets/**")
                     .filters { f -> f.stripPrefix(0) }
                     .uri(CONTENT_URI) // ADR-0093: content 폴드
             }

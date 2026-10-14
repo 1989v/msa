@@ -17,10 +17,10 @@ class MarketStoreTest : BehaviorSpec({
     )
 
     Given("자동 소속 판정") {
-        Then("IN만 기본 노출하고 OUT과 UNKNOWN은 기본 숨김이다") {
+        Then("IN과 UNKNOWN은 기본 노출하고 OUT은 기본 숨김이다") {
             MarketMembership(MarketMembershipStatus.IN).visibleByDefault shouldBe true
             MarketMembership(MarketMembershipStatus.OUT).visibleByDefault shouldBe false
-            MarketMembership(MarketMembershipStatus.UNKNOWN).visibleByDefault shouldBe false
+            MarketMembership(MarketMembershipStatus.UNKNOWN).visibleByDefault shouldBe true
         }
     }
     Given("필드 단위 덮어쓰기") {

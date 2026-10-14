@@ -6,7 +6,6 @@ import com.kgd.place.application.market.usecase.QueryMarketUseCase
 import com.kgd.place.application.market.usecase.SaveMarketUseCase
 import com.kgd.place.domain.market.model.Market
 import com.kgd.place.domain.market.model.MarketStore
-import com.kgd.place.domain.market.model.MarketStoreDisplay
 import com.kgd.place.domain.market.model.MarketZone
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -22,9 +21,8 @@ class MarketService(private val query: MarketQueryPort, private val save: Market
         val marketId = requireNotNull(market.id)
         val stores = query.findStores(marketId)
         val overrides = query.findOverrides(stores.mapNotNull { it.id }).groupBy { it.storeId }
-        return QueryMarketUseCase.MarketResult(market, query.findZones(marketId), stores.map {
-            QueryMarketUseCase.Store(it, MarketStoreDisplay.from(it, overrides[it.id].orEmpty()))
-        }.filter { includeOutside || it.display.membership.visibleByDefault })
+        return QueryMarketUseCase.MarketResult(market, query.findZones(marketId), MarketPublicProjection.stores(stores, overrides)
+            .filter { includeOutside || it.display.membership.visibleByDefault })
     }
 
     @Transactional(transactionManager = "placeTransactionManager")
