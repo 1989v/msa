@@ -20,6 +20,7 @@ import { ResumePage } from '@/pages/ResumePage';
 import { ResumeProfilePage } from '@/pages/ResumeProfilePage';
 import { DisplayServicesPage } from '@/pages/DisplayServicesPage';
 import { DealOffersPage } from '@/pages/DealOffersPage';
+import { MarketsPage } from '@/pages/MarketsPage';
 import { DealCategoriesPage } from '@/pages/DealCategoriesPage';
 // ADR-0072 — blog.1989v.com. 운영자가 글을 쓰는 기본 경로가 여기다.
 import { BlogPostsPage } from '@/pages/blog/BlogPostsPage';
@@ -49,6 +50,7 @@ export default function App() {
         <Route index element={<DashboardPage />} />
         <Route path="system" element={<SystemPage />} />
         <Route path="members" element={<MembersPage />} />
+        <Route path="place/markets" element={<MarketsPage />} />
         <Route path="products" element={<ProductsPage />} />
         <Route path="orders" element={<OrdersPage />} />
         <Route path="sellers" element={<SellersPage />} />

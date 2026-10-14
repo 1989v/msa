@@ -54,6 +54,7 @@ const navItems: NavItem[] = [
   { label: '회원 관리', icon: Users, to: '/members', enabled: true },
   { label: '상품 관리', icon: Package, to: '/products', enabled: true },
   { label: '주문 관리', icon: ClipboardList, to: '/orders', enabled: true },
+  { label: '시장 가게', icon: Store, to: '/place/markets', enabled: true },
   { label: '판매자', icon: Store, to: '/sellers', enabled: true },
   { label: '혜택', icon: Ticket, to: '/promotions', enabled: true },
   { label: '정산', icon: Landmark, to: '/settlements', enabled: true },
