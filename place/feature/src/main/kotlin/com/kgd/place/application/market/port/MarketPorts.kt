@@ -20,6 +20,8 @@ interface MarketSavePort {
     fun saveMarket(market: Market): Market
     fun saveZone(zone: MarketZone): MarketZone
     fun saveStore(store: MarketStore): MarketStore
+    /** Complete current market source-key population; prevents merging distinct current tenants. */
+    fun saveSourceStore(store: MarketStore, observedSourceKeys: Set<String>): MarketStore
     fun saveOverride(override: MarketStoreOverride): MarketStoreOverride
     /** One store, distinct fields; validates and writes the effective display atomically. */
     fun saveOverrides(rows: List<MarketStoreOverride>): List<MarketStoreOverride>

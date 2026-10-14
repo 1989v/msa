@@ -356,3 +356,35 @@ def put_attraction_access(computed_at: str, items: list[dict]) -> dict:
 def prune_attraction_access(computed_at: str) -> dict:
     """[computed_at] 보다 앞선 회차의 행 — 이번 회차에 실리지 않은 관광지(비활성·삭제 포함) — 을 지운다."""
     return _request("POST", "/internal/attractions/access/prune", {"computedAt": computed_at}, timeout=300)["data"]
+
+
+def fetch_market_attractions() -> list[dict]:
+    """Filter each keyset page immediately; do not hold the full attraction payload in memory."""
+    rows = []
+    after_id = last_id = 0
+    while True:
+        qs = urllib.parse.urlencode({"afterId": after_id, "size": PAGE_SIZE})
+        data = _request("GET", f"/api/places/attractions?{qs}")["data"]
+        got = data.get("attractions") or []
+        if got and int(got[0]["id"]) <= last_id:
+            raise RuntimeError("Market attraction cursor did not advance")
+        for a in got:
+            if a.get("lang") == "ko" and a.get("status") == "ACTIVE" and is_tourapi(a) and (
+                "시장" in (a.get("title") or "") or a.get("cat3") in {"A04010100", "A04010200"}
+                or a.get("lclsSystm2") in {"SH04", "SH06"}
+            ):
+                rows.append(a)
+        if got:
+            last_id = int(got[-1]["id"])
+        cursor = data.get("nextAfterId")
+        if not got or cursor is None:
+            return rows
+        after_id = int(cursor)
+
+
+def market_state(content_id: str) -> dict | None:
+    return _request("GET", f"/internal/markets/{urllib.parse.quote(content_id, safe='')}")["data"]
+
+
+def put_market(command: dict) -> dict:
+    return _request("PUT", "/internal/markets", command, timeout=300)["data"]

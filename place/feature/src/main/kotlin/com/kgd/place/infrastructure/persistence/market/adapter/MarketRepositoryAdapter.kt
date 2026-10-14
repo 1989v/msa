@@ -86,17 +86,46 @@ class MarketRepositoryAdapter(
         return zones.save(MarketZoneJpaEntity.fromDomain(row)).toDomain()
     }
 
-    override fun saveStore(store: MarketStore): MarketStore {
+    override fun saveStore(store: MarketStore): MarketStore = saveStoreInternal(store, null)
+
+    override fun saveSourceStore(store: MarketStore, observedSourceKeys: Set<String>): MarketStore {
+        require(store.source != MarketStoreSource.MANUAL && store.id == null)
+        require(store.sourceKey in observedSourceKeys)
+        return saveStoreInternal(store, observedSourceKeys)
+    }
+
+    private fun saveStoreInternal(store: MarketStore, observedSourceKeys: Set<String>?): MarketStore {
         validateJson(store.onnuriRaw, store.sanggaRaw)
-        val existing = if (store.id != null) stores.findById(requireNotNull(store.id)).orElse(null)?.toDomain()
+        val natural = if (store.id != null) stores.findById(requireNotNull(store.id)).orElse(null)?.toDomain()
             else store.sourceKey?.let { stores.findByMarketIdAndSourceAndSourceKey(store.marketId, store.source, it)?.toDomain() }
-        require(existing == null || (existing.marketId == store.marketId && existing.source == store.source && existing.sourceKey == store.sourceKey))
+        val sanggaOwner = if (observedSourceKeys != null) store.sanggaKey?.let {
+            stores.findByMarketIdAndSanggaKey(store.marketId, it)?.toDomain()
+        } else null
+        // Two established IDs can each carry editorial overrides. Never delete/merge them or steal UNIQUE ownership.
+        val incoming = if (natural != null && sanggaOwner != null && natural.id != sanggaOwner.id)
+            store.copy(sanggaKey = natural.sanggaKey) else store
+        val existing = natural ?: sanggaOwner ?: if (observedSourceKeys != null) {
+                    if (!store.jibunAddress.isNullOrBlank()) {
+                            stores.findAllByMarketIdOrderByIdAsc(store.marketId).map { it.toDomain() }.filter {
+                                it.source == store.source && it.sourceKey !in observedSourceKeys &&
+                                    it.name == store.name && it.jibunAddress == store.jibunAddress
+                            }.singleOrNull()
+                        } else null
+                } else null
+        require(existing == null || existing.marketId == store.marketId)
+        require(existing == null || existing.source == store.source || (
+            observedSourceKeys != null && existing.source != MarketStoreSource.MANUAL &&
+                store.source != MarketStoreSource.MANUAL && store.sanggaKey != null && store.sanggaKey == existing.sanggaKey))
         val row = when {
             existing == null -> store
             store.source == MarketStoreSource.MANUAL -> store.copy(id = existing.id, createdAt = existing.createdAt)
-            else -> existing.reloadSource(store)
+            existing.source == MarketStoreSource.ONNURI && store.source == MarketStoreSource.SANGGA ->
+                existing.reloadSource(incoming.copy(source = existing.source, sourceKey = existing.sourceKey,
+                    onnuriKey = existing.onnuriKey, onnuriRaw = existing.onnuriRaw, items = existing.items))
+            else -> existing.copy(source = incoming.source, sourceKey = incoming.sourceKey,
+                onnuriKey = incoming.onnuriKey ?: existing.onnuriKey, onnuriRaw = incoming.onnuriRaw ?: existing.onnuriRaw).reloadSource(incoming)
         }
-        // No operation on override / MANUAL tables in the automatic source path.
+        // Same ID survives enrichment/source-key migration; override and MANUAL rows are untouched.
         return stores.save(MarketStoreJpaEntity.fromDomain(row)).toDomain()
     }
 

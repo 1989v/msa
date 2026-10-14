@@ -1,0 +1,58 @@
+# Weekly Monday KST 01:10 (Sunday UTC 16:10); disk-backed ZIP/SQLite staging.
+# File download URLs change on publication: provision place-market-source-files before enabling.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: place-ingest-market-stores
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: place-ingest
+    app.kubernetes.io/part-of: commerce-platform
+    place.kgd.io/job: "market-stores"
+spec:
+  # Monday KST 01:10; before daily scan jobs.
+  # place-market-source-files ConfigMap 을 만든 뒤에 false 로 바꾼다 — 없으면 매주 컨테이너 생성 오류.
+  suspend: true
+  schedule: "10 16 * * 0"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      # Disk download + streaming bulk join + bounded 9,000 API calls + internal upserts.
+      activeDeadlineSeconds: 14400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: place-ingest
+            app.kubernetes.io/part-of: commerce-platform
+            place.kgd.io/job: "market-stores"
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: ingest
+              image: commerce/place-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--job=market-stores"]
+              env:
+                - name: PLACE_API
+                  value: "http://content:8097"
+                - name: TOUR_API_KEY
+                  valueFrom:
+                    secretKeyRef: { name: place-ingest-secrets, key: tour-api-key }
+                - name: REDIS_HOST
+                  value: redis
+                - name: MARKET_STANDARD_FILE_URL
+                  valueFrom:
+                    configMapKeyRef: { name: place-market-source-files, key: standard-url }
+                - name: MARKET_ONNURI_FILE_URL
+                  valueFrom:
+                    configMapKeyRef: { name: place-market-source-files, key: onnuri-url }
+                - name: MARKET_SANGGA_BULK_URL
+                  valueFrom:
+                    configMapKeyRef: { name: place-market-source-files, key: sangga-bulk-url }
+              resources:
+                requests: { cpu: 100m, memory: 256Mi }
+                limits: { memory: 512Mi }

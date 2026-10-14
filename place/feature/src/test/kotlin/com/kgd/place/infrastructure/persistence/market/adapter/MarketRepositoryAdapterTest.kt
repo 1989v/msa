@@ -52,6 +52,73 @@ class MarketRepositoryAdapterTest : BehaviorSpec({
             shouldThrow<IllegalArgumentException> { adapter.saveStore(old.copy(onnuriRaw = "[]")) }
         }
     }
+    Given("분기 변경으로 상가 원천 키만 달라진 재적재") {
+        val old = MarketStore(1, "가게", MarketStoreSource.SANGGA, sourceKey = "old", sanggaKey = "old",
+            sanggaRaw = "{}", jibunAddress = "경기 광명시 광명동 1", id = 99)
+        every { stores.findByMarketIdAndSourceAndSourceKey(1, MarketStoreSource.SANGGA, "new") } returns null
+        every { stores.findByMarketIdAndSanggaKey(1, "new") } returns null
+        every { stores.findAllByMarketIdOrderByIdAsc(1) } returns listOf(MarketStoreJpaEntity.fromDomain(old))
+        every { stores.save(any()) } answers { firstArg() }
+        Then("유일한 동일 상호·필지의 ID를 재사용하고 override·MANUAL 행에는 쓰지 않는다") {
+            val result = adapter.saveSourceStore(old.copy(id = null, sourceKey = "new", sanggaKey = "new"), setOf("new"))
+            result.id shouldBe 99
+            result.sourceKey shouldBe "new"
+            result.sanggaKey shouldBe "new"
+            verify(exactly = 0) { overrides.save(any()) }
+            verify(exactly = 0) { stores.deleteAll() }
+        }
+    }
+    Given("같은 이름과 필지의 서로 다른 현재 상가 ID") {
+        val old = MarketStore(1, "가게", MarketStoreSource.SANGGA, sourceKey = "tenant-1", sanggaKey = "tenant-1",
+            sanggaRaw = "{}", jibunAddress = "경기 광명시 광명동 1", id = 101)
+        every { stores.findByMarketIdAndSourceAndSourceKey(1, MarketStoreSource.SANGGA, "tenant-2") } returns null
+        every { stores.findByMarketIdAndSanggaKey(1, "tenant-2") } returns null
+        every { stores.findAllByMarketIdOrderByIdAsc(1) } returns listOf(MarketStoreJpaEntity.fromDomain(old))
+        every { stores.save(any()) } answers { firstArg() }
+        Then("전체 현재 키 목록에 있는 임차인 ID는 다른 임차인으로 병합하지 않는다") {
+            val result = adapter.saveSourceStore(old.copy(id = null, sourceKey = "tenant-2", sanggaKey = "tenant-2"),
+                setOf("tenant-1", "tenant-2"))
+            result.id shouldBe null
+            result.sourceKey shouldBe "tenant-2"
+        }
+    }
+    Given("상가정보 행이 다음 적재에서 온누리 가맹점으로 보강됨") {
+        val old = MarketStore(1, "가게", MarketStoreSource.SANGGA, sourceKey = "s1", sanggaKey = "s1",
+            sanggaRaw = "{}", jibunAddress = "경기 광명시 광명동 1", id = 102)
+        every { stores.findByMarketIdAndSourceAndSourceKey(1, MarketStoreSource.ONNURI, "o1") } returns null
+        every { stores.findByMarketIdAndSanggaKey(1, "s1") } returns MarketStoreJpaEntity.fromDomain(old)
+        every { stores.save(any()) } answers { firstArg() }
+        Then("같은 Sangga UNIQUE 키의 기존 ID를 승격하며 override를 유지한다") {
+            val result = adapter.saveSourceStore(MarketStore(1, "가게", MarketStoreSource.ONNURI,
+                sourceKey = "o1", onnuriKey = "o1", onnuriRaw = "{}", sanggaKey = "s1", sanggaRaw = "{}"), setOf("o1"))
+            result.id shouldBe 102
+            result.source shouldBe MarketStoreSource.ONNURI
+            result.sanggaKey shouldBe "s1"
+            verify(exactly = 0) { overrides.save(any()) }
+            verify(exactly = 0) { stores.deleteAll() }
+        }
+    }
+    Given("이미 별도 ID를 가진 온누리와 상가 행이 새로 매칭됨") {
+        val merchant = MarketStore(1, "온누리 가게", MarketStoreSource.ONNURI, sourceKey = "o-existing",
+            onnuriKey = "o-existing", onnuriRaw = "{}", id = 103)
+        val sangga = MarketStore(1, "상가 가게", MarketStoreSource.SANGGA, sourceKey = "s-existing",
+            sanggaKey = "s-existing", sanggaRaw = "{}", id = 104)
+        every { stores.findByMarketIdAndSourceAndSourceKey(1, MarketStoreSource.ONNURI, "o-existing") } returns MarketStoreJpaEntity.fromDomain(merchant)
+        every { stores.findByMarketIdAndSanggaKey(1, "s-existing") } returns MarketStoreJpaEntity.fromDomain(sangga)
+        every { stores.save(any()) } answers { firstArg() }
+        Then("두 ID와 기존 UNIQUE 소유권을 보존하고 온누리의 공간·원문 보강만 갱신한다") {
+            val result = adapter.saveSourceStore(merchant.copy(id = null, sanggaKey = "s-existing",
+                sanggaRaw = "{\"상가업소번호\":\"s-existing\"}", latitude = 37.48, longitude = 126.85),
+                setOf("o-existing", "s-existing"))
+            result.id shouldBe 103
+            result.sanggaKey shouldBe null
+            result.latitude shouldBe 37.48
+            result.sanggaRaw shouldBe "{\"상가업소번호\":\"s-existing\"}"
+            verify(exactly = 0) { stores.save(match { it.id == 104L }) }
+            verify(exactly = 0) { overrides.save(any()) }
+            verify(exactly = 0) { stores.deleteAll() }
+        }
+    }
     Given("합성 표시값 override 저장") {
         val source = MarketStore(1, "수동 가게", MarketStoreSource.MANUAL, id = 20,
             actorKind = MarketActorKind.ADMIN, createdByMemberId = 7, latitude = 37.5, longitude = 127.0)

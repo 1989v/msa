@@ -90,6 +90,9 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | 버스정류장 좌표 | 국토교통부 전국 버스정류장 위치정보 (data.go.kr 15067528 파일) | **불필요** (파일 내려받기는 로그인 없이 된다) | 이용허락범위 제한 없음 | 〃 (같은 잡, 파일 1개) |
 | **행정구역(법정동)** | 행정안전부 행정표준코드관리시스템 | **불필요** | 공공누리 제1유형 | `place/ingest --job=administrative-regions` |
 | 세계 지명 계층 | GeoNames | 불필요 | **CC BY 4.0** | `tools/seed/place/normalize_regions.py` |
+| 전통시장 기본정보 | [전국전통시장표준데이터 #15012894](https://www.data.go.kr/data/15012894/standard.do) | 파일은 불필요 | **공공누리 제1유형(출처표시)** | `place/ingest --job=market-stores` (매주 월 KST 01:10) |
+| 온누리 가맹점 | [소진공 전자상품권 가맹점 상세 #15091259](https://www.data.go.kr/data/15091259/fileData.do) | 파일은 불필요 | **공공누리 제1유형(출처표시)** | 〃 (utf-8-sig CSV) |
+| 시장 상가 보강 | [소진공 상가(상권)정보 API #15012005](https://www.data.go.kr/data/15012005/openapi.do) | 필요 | **공공누리 제1유형(출처표시)** | 〃 (`storeListInRadius` / `storeListInPolygon`) |
 | POI(상가) | 소상공인시장진흥공단 상가(상권)정보 | 필요 | 이용허락범위 제한없음 | `tools/seed/place/normalize_pois.py` |
 | 상품·영양 | 식약처 / 한국소비자원 참가격 | 필요 | 제한없음 / KOGL 제1유형 | `tools/seed/products/normalize.py` |
 | 관광지 영상 | YouTube Data API v3 | 필요 | Google API 서비스 약관 | `place/ingest --job=links` (매시) |
@@ -98,7 +101,7 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | 구글 place_id | Google Places API (New) Text Search | 필요 | Google Maps Platform 약관 (**place_id 만 무기한 저장 허용**) | `place/ingest --job=google-places` |
 | **주유소·유가** | 한국석유공사 오피넷 (직접) | `OPINET_API_KEY` | **이용허락범위 제한 없음** | `ranking/ingest --job=gas-stations` (매일) |
 
-**출처 표기 의무가 있는 것**: GeoNames(CC BY 4.0), TourAPI(공공누리), 참가격(KOGL 제1유형), 기상청(공공누리 제1유형), 에어코리아(공공누리 제3유형 — 변경금지).
+**출처 표기 의무가 있는 것**: GeoNames(CC BY 4.0), TourAPI(공공누리), 참가격(KOGL 제1유형), 기상청(공공누리 제1유형), 전통시장표준데이터·온누리·상가정보 API(공공누리 제1유형), 에어코리아(공공누리 제3유형 — 변경금지).
 화면 하단 또는 관련 페이지에 표기한다 — `place` 화면은 "출처: 한국관광공사 TourAPI",
 `rank` 화면의 "출처: 한국석유공사 오피넷"은 **의무가 아니라 선택**이다(오피넷은 이용허락범위
 제한 없음) — 그래도 보드 행이 `source_label` 로 들고 다닌다.
@@ -396,6 +399,33 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 
 > ⚠ 영양값은 표준데이터 기준(연 1회 갱신)이라 리뉴얼 반영이 늦다 — **참고용이며 의료·다이어트
 > 처방이 아니라는 면책이 필수**다.
+
+---
+
+### 시장·구역·가게 원천 (ADR-0109 / WU-2)
+
+전국전통시장표준데이터(#15012894), 소진공 온누리 가맹점 상세(#15091259), 상가정보 API(#15012005)는 **공공누리 1유형·출처표시**로 취급한다. 기존 상가정보 벌크(#15083033)는 이용허락범위 제한없음이다. 화면에 `출처: 전국전통시장표준데이터, 소상공인시장진흥공단 온누리 가맹점·상가(상권)정보`를 표기한다(WU-3/4). 원천의 모든 CSV/API 필드는 `market.source_raw`, `market_store.onnuri_raw`·`sangga_raw`에 보존하고, 소속·구역은 별도 파생 필드다. 같은 필지의 여러 임차인이 동일 좌표를 공유하면 전체 후보 원문 JSON을 보존하되 특정 상가 키·층을 임의로 택하지 않는다.
+
+**키 발급**: data.go.kr 로그인 → #15012005 활용신청 → 개발계정 일반 인증키의 **Encoding 키**를 `place-ingest-secrets/tour-api-key`에 저장한다(현재 TourAPI와 같은 계정). URL에 키를 그대로 붙이며 다시 urlencode하지 않는다. API 제공 한도 10,000/일(KST), 잡 예산 `DAILY_API_BUDGET=9,000`, 시장당 `MAX_PAGES_PER_MARKET=18`(페이지 1,000행; 482×18=8,676)이다. polygon 연산의 WKT 입력 쿼리 이름은 공식 Swagger의 `key`(출력 필드 `coords`와 구분)다. 모든 성공·실패 호출은 `quota.py` 장부 provider `sangga-market`로 센다. 장부 장애의 기존 fail-open 정책에 더해 실행 내 9,000 상한이 항상 적용된다. 동시에 같은 API를 쓰는 다른 호출자는 동일 provider 장부를 사용해야 한다.
+
+**파일 설정**: 포털의 최신 파일 다운로드 URL 3개를 `place-market-source-files` ConfigMap의 `standard-url`(#15012894), `onnuri-url`(#15091259), `sangga-bulk-url`(#15083033 ZIP)에 넣는다. 각 URL은 `MARKET_STANDARD_FILE_URL` / `MARKET_ONNURI_FILE_URL` / `MARKET_SANGGA_BULK_URL`로 주입된다. 파일 ID는 원천 발표마다 바뀌므로 가짜/오래된 URL을 기본값으로 고정하지 않는다. CronJob 활성화 전 ConfigMap을 준비해야 한다. 잡은 매주 월 KST 01:10, 요청256Mi/제한512Mi이며 ZIP은 디스크, 시도별 CSV는 스트리밍, 대상 법정동 조회는 SQLite, 준비된 시장 요청은 임시 JSON 파일을 사용한다. 전국 벌크 메모리 최대치의 실측은 아직 하지 않았다.
+
+**판정과 사전 검사**: 거리형300m·건물형150m 반경 안에서 도로별 고유 온누리 점포 수 / 같은 도로의 상가정보 점포 수를 센다. 두 원천의 모집단 차이를 고려해 분모는 두 수의 최댓값이다. `ROAD_MIN_ONNURI_MERCHANTS=11` 및 `ROAD_MIN_ONNURI_SHARE=0.30`을 모두 만족해야 IN이다. 좌표 결측은 UNKNOWN, 반경 밖·저밀도는 OUT. 같은 동 안 지번+이름 → 지번 → 이름으로 매칭하되 모호한 다른 필지/다른 좌표를 임의로 선택하지 않는다. 순수 지번 다중 후보는 모두 같은 좌표일 때만 공통 공간 정보로 사용한다.
+
+광명 고정 표본 중심(내부4골목 좌표 중앙값37.480106,126.856212), 300m에서 실측:
+
+| 도로 | 반경 내 고유 온누리 / 상가 | 비율 | 판정 |
+|---|---:|---:|---|
+| 오리로964번길 | 43 / 83 | 0.518 | IN |
+| 광이로13번길 | 36 / 88 | 0.409 | IN |
+| 오리로976번길 | 22 / 50 | 0.440 | IN |
+| 광명로918번길 | 18 / 32 | 0.563 | IN |
+| 오리로963번길 | 10 / 16 | 0.625 | OUT (최소 표본 미달) |
+| 광명로888번길 | 7 / 31 | 0.226 | OUT |
+
+광명 온누리692행 중413행에 원천 또는 공통 필지 공간정보를 붙였다(기존 분석 아티팩트421행과 다른 모호성 처리). 이 임계값은 이 표본을 분리한 초기값이며 전국·광장·망원 전체 정확도 보장은 아니다. 실제 적재는 관광지/표준데이터 좌표를 쓰므로 관광지 중심이 달라지면 위 분모도 달라진다. 고정 fixture는 원천17쌍(전화·개인정보 없음)과 실측 집계이며 실원천 표본11쌍으로 밀도 계산 자체도 검사한다.
+
+`MAX_MARKET_FAILURE_RATIO=0.05`, `MAX_CALL_FAILURE_RATIO=0.05` 초과 또는 필수 원천 빈값/헤더 오류면 **place에 한 건도 쓰기 전에 실패**한다. 허용된 실패 시장은 이전 행을 유지한다. 검사 후 내부 `/internal/markets`가 같은 원천 키를 UPDATE하며 override·MANUAL 행 및 자동 구역의 편집 이름·polygon·sort를 유지한다. 상가 원천키 변경은 전체 현재 source key 목록에서 사라진 키에 한해 동일 시장·원천·이름·지번이 유일할 때 기존 ID를 재사용한다. 모든 청크에 전체 현재 키 집합을 전달해 같은 이름·필지인 현재 임차인끼리 합쳐지지 않는다. 기존 SANGGA 행이 온누리로 보강되면 동일 sangga_key의 ID를 승격해 UNIQUE 충돌 없이 override를 유지한다. 이미 서로 다른 ONNURI/SANGGA ID가 있으면 두 행과 override를 그대로 남기고 ONNURI의 좌표·원문만 보강한다(타 행의 sangga_key를 가져오지 않음). 이 경우 표시상 중복 해소는 후속 정책이며 재적재에서 삭제/override 이동하지 않는다. 같은 표준 시장 source_key가 두 관광지 content ID에 붙으면 적재 전 잡을 실패시킨다. source collection preflight는 일괄적이지만 이후 place 통신/DB 오류가 나면 앞서 성공한 시장은 남을 수 있다(전체 시장 DB 원자성은 제공하지 않음).
 
 ---
 
