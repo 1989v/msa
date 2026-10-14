@@ -68,3 +68,10 @@
 - Reason: 참고와 비슷한 감속 느낌과 기존 “너무 느리지 않게” 요구를 짧은 한도로 함께 충족.
 - Evidence: 사용자 후속 인용은 spec 마지막 amendment; https://github.com/lazygyu/roulette/blob/main/src/roulette.ts.
 - Impact: presentation only; 범위 확장이나 geometry 재튜닝 없음.
+
+### [2026-10-15] 공개 한영 편집 소개와 비공개 메타 분리
+- Decision: `gameEditorial.mjs`를 검증된 구슬 레이스 소개/사용법과 draw 공개 카피의 원본으로 사용한다. `descriptionOf`와 `displayDescription`가 같은 소개를 재사용한다. DB 스키마/시드는 수정하지 않는다.
+- Reason: 실제 소개, 메타, JSON-LD, 초기 HTML이 구버전 API의 3개 맵 설명으로 되돌아가는 일을 막고 다른 게임 fallback을 보존한다.
+- Evidence: 승인 계획 및 `portal-fe/src/seo/{copy,gameGuide,gameEditorial}.mjs`, `src/api/gameApi.ts`.
+- Privacy finding: 기존 파티에는 noindex가 없었다. 부모 승인으로 generic noindex와 HTTP 전용 매핑을 추가한다. `useSeo` canonical `undefined`는 기존 prerender 보존, 명시적 `null`만 제거한다. 루트 초대 규칙은 `rootInvitation`의 호스트/루트/`r` 존재 조건을 따른다.
+- Impact: 공개 카피/프리렌더/링크/사이트맵/nginx 및 파티 SEO 메타만. 방 동작·게임 내부·물리·계정 기능 변경 없음.

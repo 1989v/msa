@@ -1,3 +1,5 @@
+import { MemoryRouter } from 'react-router-dom';
+import { marbleEditorial } from '../../../seo/gameEditorial.mjs';
 import { render, screen } from '@testing-library/react';
 import { it, expect } from 'vitest';
 import { GameAboutPanel } from '../GameDetailPanels';
@@ -23,4 +25,13 @@ it('keeps ordinary game introductions and ratings without added instructions', (
   expect(screen.getByText('설명')).toBeTruthy();
   expect(view.container.querySelector('.game-play-guide')).toBeNull();
   expect(view.container.textContent).toContain('4.0');
+});
+
+it.each(['ko', 'en'] as const)('shows authoritative pinball copy instead of legacy database text: %s', (lang) => {
+  const game = { slug: 'marble-race', description: '맵 3종 같은 같은 코드', descriptionEn: 'Three old maps', ratingCount: 0 } as GameDetail;
+  render(<MemoryRouter><GameAboutPanel game={game} lang={lang} favorites={null} /></MemoryRouter>);
+  expect(screen.getByText(marbleEditorial(lang).description)).toBeInTheDocument();
+  for (const item of gamePlayGuide(game.slug, lang)!) expect(screen.getByText(item.text)).toBeInTheDocument();
+  expect(screen.queryByText(game.description)).toBeNull();
+  expect(screen.queryByText(game.descriptionEn!)).toBeNull();
 });

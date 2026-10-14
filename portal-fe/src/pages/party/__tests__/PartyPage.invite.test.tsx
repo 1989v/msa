@@ -64,3 +64,15 @@ it('invalid invitations never consume a stale previous room start', async () => 
   expect(localStorage.getItem('kgd.party.v1')).toBeNull();
   expect(api.join).not.toHaveBeenCalled(); expect(api.host).not.toHaveBeenCalled();
 });
+
+it('clears prior public draw signals on a private room and never puts its code or names in metadata', async () => {
+  document.head.innerHTML = '<link rel="canonical" href="https://game.1989v.com/draw"><link data-seo-multi rel="alternate" hreflang="en" href="https://game.1989v.com/en/draw"><meta name="description" content="Public draw"><script data-seo-multi type="application/ld+json">{"name":"Public draw"}</script>';
+  await act(async () => { page('/party/ABC234'); });
+  expect(document.querySelector('meta[name="robots"]')).toHaveAttribute('content', 'noindex, follow');
+  expect(document.querySelector('link[rel="canonical"]')).toBeNull();
+  expect(document.querySelector('link[hreflang]')).toBeNull();
+  expect(document.querySelector('meta[name="description"]')).toBeNull();
+  expect(document.querySelector('script[type="application/ld+json"]')).toBeNull();
+  expect(document.title).toBe('친구와 함께하기 | 1989v 게임');
+  expect(document.head.textContent).not.toContain('ABC234');
+});

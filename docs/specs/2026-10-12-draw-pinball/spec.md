@@ -113,3 +113,10 @@ root DESIGN.md 및 docs/standards/design-md.md를 적용한다. CSS는 기존 �
 - User: “참고레포와 유사한 수준으로 슬로우모션이 걸리도록해 줘. 단 완전 동일한 수치라기보단 비슷한 느낌으로”. 이 지시는 직전 0.68배속 경량화 계획을 대체한다.
 - 미결정 cutoff 구슬(첫등: 선두, 꼴찌/순서: 최후미, 지정등수: 남은 미결정 live 순위)이 가까운 경합 무리에 포함된 경우에만 기존 finish entry 구역 detector로 활성화한다. cutoff의 입구 거리에 따라 목표 배속을 1.0에서 최소0.30으로 연속 변경하고 기존 dt×7 easing을 유지한다. unrelated 선두가 속도를 결정하지 않는다.
 - burst 최대1.6 wall초, cooldown2.5초, 라운드 활성 wall 예산3.2초. 분리/pipe/지정순위 결정 시 정상 목표속도로 복귀하고 완료 시 즉시1로 초기화한다. 수동0.34, reduced-motion auto off, 카메라/물리/RNG 규약은 유지한다.
+
+### 2026-10-15 한영 공개 소개와 검색 발견성
+- 승인 계획: `docs/plans/2026-10-15-multilingual-game-discovery.md`. 공개 `/draw`, `/en/draw`와 구슬 레이스 상세의 ko/en 제목·설명·본문·사용법을 같은 순수 편집 원본으로 제공한다. 기존 DB의 3개 맵 소개는 해당 slug만 덮어쓰고, 다른 게임의 언어 fallback은 유지한다.
+- 구슬 레이스는 핀볼 추첨·친구끼리 내기/순서 정하기의 실제 문맥과 6개 코스·관전·리플레이를 설명한다. 플리퍼 점수 게임이나 현금 베팅 기능으로 오인시키지 않는다. 게임 내부 모드·물리·UI는 변경하지 않는다.
+- draw 초기 HTML에는 공개 소개/사용법/관련 링크만 포함한다. 이름·로컬 설정·방 코드·초대 상태는 포함하지 않는다. 언어별 self-canonical, 양방향 ko/en/x-default, 실제 편집일과 sitemap 및 nginx 서빙을 연결한다. 루트의 전체 웹게임 정체성은 유지한다.
+- 검사 과정에서 기존 PartyPage에 noindex가 없고 공유 SEO 훅이 canonical을 보존하는 공백을 발견했다. 부모 승인으로 파티 화면에는 generic noindex 메타를 제공하고 이전 공개 canonical/hreflang을 지운다. HTTP는 실제 `/party`, `/en/party` 및 기존 방 코드 경로와 게임 호스트 루트의 `r` 파라미터 존재 시에만 noindex를 추가한다. 일반 루트·영문 루트·draw는 색인 허용하며 raw frame/호스트별 기존 정책은 유지한다.
+- 검증은 공개 초기 HTML/React 소개·메타·링크·fallback·escaping·비공개 제외, draw 입력/시작/초대, hook canonical 보존/명시적 제거 및 nginx 매핑에 집중한다. 물리 매트릭스와 승인 없는 브라우저 UI는 반복하지 않는다.

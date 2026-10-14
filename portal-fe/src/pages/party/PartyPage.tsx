@@ -1,3 +1,4 @@
+import { useSeo } from '../../seo/useSeo';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { gamePath } from '../../seo/copy.mjs';
@@ -67,6 +68,7 @@ export default function PartyPage({ invitationRoot = false }: { invitationRoot?:
   const joinCode = invitation.kind === 'join' ? invitation.code : null;
   const navigate = useNavigate();
   const lang = getGameLang();
+  useSeo({ title: lang === 'en' ? 'Play with friends | 1989v Games' : '친구와 함께하기 | 1989v 게임', lang, canonical: null, noindex: true });
 
   const net = usePartyRoom();
   const { room, host, join, leave, shareRoster, claimName, startRound } = net;

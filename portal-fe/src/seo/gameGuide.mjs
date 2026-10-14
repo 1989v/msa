@@ -1,3 +1,4 @@
+import { marbleEditorial } from './gameEditorial.mjs';
 /** Verified game instructions shared by the live introduction and initial HTML.
  * Evidence: docs/specs/2026-10-11-webgame-ranking/implementation.md.
  */
@@ -52,6 +53,7 @@ const GUIDES = {
 };
 
 export function gamePlayGuide(slug, lang) {
+  if (slug === 'marble-race') return marbleEditorial(lang).guide;
   const guide = Object.hasOwn(GUIDES, slug) ? GUIDES[slug] : null;
   if (!guide) return null;
   const en = lang === 'en';

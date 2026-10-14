@@ -42,3 +42,10 @@ Dependencies: 기존 구현/배포 완료. User requested 2026-10-13.
 - [x] 폭포 마지막 zigzag 뒤 기존 rotorRow 추가; 다른 다섯 전체와 폭포 앞구간/입구 및 평행이동된 finish 보존 검사.
 - [x] 폭포2/6/12명×10시드 완주/재현,60시드 표본과 대표스케줄, 이전/이후 실제 마지막 구간 체류시간 비교.
 - [x] 관련 lint/type/build 및 fresh review, focus-cascade-finish.md 증거 기록, hooks 유지 coherent commits. browser/push/deploy 없음.
+
+## Group 7: 2026-10-15 한영 검색 발견성
+- [x] 승인 계획에 맞춰 구슬 레이스 ko/en 편집 소개·제목·검증된 6코스 사용법을 공유하고 실제 화면/SEO/JSON-LD의 구형 API 설명을 대체한다.
+- [x] draw 공개 ko/en 소개·가이드·canonical/hreflang·실제 편집일·sitemap·nginx 초기 HTML을 연결하고 root/genre/detail/draw에 실제 관련 링크를 제공한다.
+- [x] 발견된 기존 파티 noindex 공백을 승인 범위로 보완한다. 일반 공개 루트와 draw/영문 draw의 색인 허용을 보존한다.
+- [x] focused test, 타입·lint·최종 build, fresh review와 실제 nginx/HTTP 확인; 증거 `verifications/multilingual-discovery.md`에 기록.
+- [x] owned paths만 coherent commit. 부모가 푸시/배포와 운영 HTTP를 수행한다. 브라우저 UI·검색 콘솔 제출·검색 순위 향상을 수행했다고 주장하지 않는다.

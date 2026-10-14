@@ -48,3 +48,14 @@ describe('useSeo — feeds', () => {
     expect(feedLinks()).toEqual([]);
   });
 });
+
+it('preserves prerender canonical when unknown and clears it only with explicit null', () => {
+  document.head.innerHTML = '<link rel="canonical" href="https://place.1989v.com/attractions/1">';
+  const { rerender } = renderHook((input: SeoInput) => useSeo(input), { initialProps: { title: 'Loading' } as SeoInput });
+  expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute('href', 'https://place.1989v.com/attractions/1');
+  rerender({ title: 'Private', canonical: null, noindex: true });
+  expect(document.querySelector('link[rel="canonical"]')).toBeNull();
+  rerender({ title: 'Public draw', canonical: 'https://game.1989v.com/draw' });
+  expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute('href', 'https://game.1989v.com/draw');
+  expect(document.querySelector('meta[name="robots"]')).toBeNull();
+});

@@ -41,6 +41,12 @@
 - lint·type·build·fresh review 이후 커밋·푸시하고 운영 HTTP HTML/헤더/사이트맵을 검사한다. 브라우저 사용 승인은 현재 없으므로 UI 자동화는 하지 않는다.
 - Search Console/서치어드바이저의 제출·색인 검사·노출/클릭/평균순위 측정은 계정 접근과 실제 수행 여부를 구분해 보고한다. 실행하지 않은 제출 또는 순위 상승을 완료라고 쓰지 않는다.
 
+## 구현 중 발견과 승인
+
+- PartyPage의 기존 noindex가 보존될 것이라는 초기 가정과 달리, 실제 화면에는 useSeo/noindex가 없고 HTTP 경로에도 명시적인 파티 제외가 없었다. 신규 공개 draw에서 전환할 때 메타가 남는 경우까지 포함해 최소한의 경계 보완을 승인했다.
+- 실제 `/party`, `/en/party`는 이름·코드를 포함하지 않는 일반 제목과 noindex를 제공하며 이전 공개 canonical/alternates를 제거한다. 초기 HTTP 응답에서도 해당 파티 경로와 루트 초대 `?r` 변형을 제외한다. 일반 루트·공개 draw/영문·기존 원시 프레임/호스트별 정책은 유지한다.
+- 존재하지 않는 `/room` 경로나 방 기능을 새로 만들지 않는다. 초대 링크가 사이트맵에 들어가지 않는 것과 noindex 응답을 내는 것은 별개의 검사다. 이 항목은 기존 보호가 있었다는 보고가 아니라 발견된 누락을 수정한 기록이다.
+
 ## 근거
 
 - https://developers.google.com/search/docs/appearance/title-link?hl=ko

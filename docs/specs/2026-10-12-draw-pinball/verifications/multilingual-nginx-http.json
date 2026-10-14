@@ -1,0 +1,184 @@
+[
+  {
+    "host": "game.1989v.com",
+    "path": "/",
+    "status": 200,
+    "robots": "",
+    "publicInitialHtml": true
+  },
+  {
+    "host": "game.1989v.com",
+    "path": "/?q=r",
+    "status": 200,
+    "robots": "",
+    "publicInitialHtml": true
+  },
+  {
+    "host": "game.1989v.com",
+    "path": "/?rr=ABC234",
+    "status": 200,
+    "robots": "",
+    "publicInitialHtml": true
+  },
+  {
+    "host": "game.1989v.com",
+    "path": "/?r=ABC234",
+    "status": 200,
+    "robots": "noindex, follow",
+    "publicInitialHtml": true
+  },
+  {
+    "host": "game.1989v.com",
+    "path": "/?r=",
+    "status": 200,
+    "robots": "noindex, follow",
+    "publicInitialHtml": true
+  },
+  {
+    "host": "game.1989v.com",
+    "path": "/?r",
+    "status": 200,
+    "robots": "noindex, follow",
+    "publicInitialHtml": true
+  },
+  {
+    "host": "game.1989v.com",
+    "path": "/?r=ABC234&r=ABC234",
+    "status": 200,
+    "robots": "noindex, follow",
+    "publicInitialHtml": true
+  },
+  {
+    "host": "game.1989v.com",
+    "path": "/?x=1&r=bad",
+    "status": 200,
+    "robots": "noindex, follow",
+    "publicInitialHtml": true
+  },
+  {
+    "host": "game.1989v.com",
+    "path": "/?%72=ABC234",
+    "status": 200,
+    "robots": "noindex, follow",
+    "publicInitialHtml": true
+  },
+  {
+    "host": "game.1989v.com",
+    "path": "/en?r=ABC234",
+    "status": 200,
+    "robots": "",
+    "publicInitialHtml": true
+  },
+  {
+    "host": "game.1989v.com",
+    "path": "/draw",
+    "status": 200,
+    "robots": "",
+    "publicInitialHtml": true
+  },
+  {
+    "host": "game.1989v.com",
+    "path": "/draw?r=ABC234",
+    "status": 200,
+    "robots": "",
+    "publicInitialHtml": true
+  },
+  {
+    "host": "game.1989v.com",
+    "path": "/en/draw",
+    "status": 200,
+    "robots": "",
+    "publicInitialHtml": true
+  },
+  {
+    "host": "game.1989v.com",
+    "path": "/games/marble-race",
+    "status": 200,
+    "robots": "",
+    "publicInitialHtml": true
+  },
+  {
+    "host": "game.1989v.com",
+    "path": "/en/games/marble-race",
+    "status": 200,
+    "robots": "",
+    "publicInitialHtml": true
+  },
+  {
+    "host": "game.1989v.com",
+    "path": "/party",
+    "status": 200,
+    "robots": "noindex, follow",
+    "publicInitialHtml": false
+  },
+  {
+    "host": "game.1989v.com",
+    "path": "/party/ABC234",
+    "status": 200,
+    "robots": "noindex, follow",
+    "publicInitialHtml": false
+  },
+  {
+    "host": "game.1989v.com",
+    "path": "/en/party",
+    "status": 200,
+    "robots": "noindex, follow",
+    "publicInitialHtml": false
+  },
+  {
+    "host": "game.1989v.com",
+    "path": "/en/party/ABC234",
+    "status": 200,
+    "robots": "noindex, follow",
+    "publicInitialHtml": false
+  },
+  {
+    "host": "game.1989v.com",
+    "path": "/games/marble-race/index.html",
+    "status": 200,
+    "robots": "noindex, follow",
+    "publicInitialHtml": false
+  },
+  {
+    "host": "resume.1989v.com",
+    "path": "/?r=ABC234",
+    "status": 200,
+    "robots": "noindex, nofollow",
+    "publicInitialHtml": false
+  },
+  {
+    "host": "1989v.com",
+    "path": "/?r=ABC234",
+    "status": 200,
+    "robots": "",
+    "publicInitialHtml": false
+  },
+  {
+    "host": "resume.1989v.com",
+    "path": "/draw",
+    "robots": "noindex, nofollow",
+    "status": 200,
+    "publicInitialHtml": true
+  },
+  {
+    "host": "resume.1989v.com",
+    "path": "/party/ABC234",
+    "robots": "noindex, nofollow",
+    "status": 200,
+    "publicInitialHtml": false
+  },
+  {
+    "host": "ads.1989v.com",
+    "path": "/draw",
+    "robots": "noindex, nofollow",
+    "status": 200,
+    "publicInitialHtml": true
+  },
+  {
+    "host": "ads.1989v.com",
+    "path": "/party/ABC234",
+    "robots": "noindex, nofollow",
+    "status": 200,
+    "publicInitialHtml": false
+  }
+]

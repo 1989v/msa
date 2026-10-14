@@ -382,7 +382,7 @@ export default function GameDetailPage() {
         <div>
           <div className="favorite-title-row">
             <h1 className="games-title">
-              {displayTitle(game, lang)}
+              {meta?.heading ?? displayTitle(game, lang)}
               {isBeta(game) && <span className="game-badge-beta inline">BETA</span>}
             </h1>
             <FavoriteButton type="GAME" targetKey={slug} />

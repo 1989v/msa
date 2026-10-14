@@ -1,3 +1,4 @@
+import GameDiscoveryLinks from './GameDiscoveryLinks';
 import { gameSelectionGuide } from '../../seo/gameGuide.mjs';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -385,6 +386,8 @@ export default function GamesPage() {
             </>
           )}
       </section>
+
+      <GameDiscoveryLinks lang={lang} />
 
       {!genre && (
         <section className="games-guide" aria-labelledby="games-guide-heading">

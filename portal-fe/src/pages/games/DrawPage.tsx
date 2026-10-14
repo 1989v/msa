@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { displayTitle, listGames, type GameSummary } from '../../api/gameApi';
-import { gamePath } from '../../seo/copy.mjs';
+import { drawMeta, hreflangAlternates, HUB_OG_IMAGE, gamePath } from '../../seo/copy.mjs';
+import { drawCopy } from '../../seo/gameEditorial.mjs';
+import GameDiscoveryLinks from './GameDiscoveryLinks';
 import { useSeo } from '../../seo/useSeo';
 import InviteEntry from '../party/InviteEntry';
 import { DRAW_SLUGS, readDrawDraft, saveDrawDraft, type DrawChoice } from './drawDraft';
@@ -18,7 +20,9 @@ export default function DrawPage() {
   const [storageOk, setStorageOk] = useState(true);
   const [error, setError] = useState('');
   const names = parseNames(draft.text);
-  useSeo({ title: lang === 'en' ? 'Random Race | 1989v Games' : '랜덤레이스 | 1989v 게임', lang, noindex: true });
+  const copy = drawCopy(lang);
+  const meta = drawMeta(lang);
+  useSeo({ ...meta, lang, image: HUB_OG_IMAGE, alternates: hreflangAlternates('/draw') });
   useEffect(() => {
     let active = true;
     listGames({ genre: 'DECIDER', size: 200 }).then((p) => {
@@ -40,8 +44,8 @@ export default function DrawPage() {
     navigate(gamePath(lang, `/games/${game.slug}`));
   }
   return <main className="party-page draw-page kh-arcade">
-    <header className="party-header"><h1>{lang === 'en' ? 'Random Race' : '랜덤레이스'}</h1>
-      <p>{lang === 'en' ? 'Enter names and choose a game.' : '이름을 입력하고 게임을 고르세요.'}</p></header>
+    <header className="party-header"><h1>{copy.heading}</h1>
+      <p>{copy.intro}</p></header>
     <section>
       <label className="party-manual" htmlFor="draw-names">{lang === 'en' ? 'Participants · one per line' : '참가자 · 한 줄에 한 명'}
         <textarea id="draw-names" rows={5} maxLength={2000} spellCheck={false} value={draft.text}
@@ -73,6 +77,11 @@ export default function DrawPage() {
       <p className="party-status">{lang === 'en' ? 'Create a room and invite friends with a link or QR code.' : '방을 만들고 링크나 QR 코드로 친구를 초대하세요.'}</p>
       <InviteEntry lang={lang} />
       <Link className="party-ghost" to={gamePath(lang, '/party')}>{lang === 'en' ? 'Invite friends' : '친구 초대하기'}</Link>
+    </section>
+    <section aria-labelledby="draw-guide-heading"><h2 id="draw-guide-heading">{copy.guideHeading}</h2>
+      <ol>{copy.steps.map((step) => <li key={step}>{step}</li>)}</ol>
+      <p className="party-status">{copy.privacy}</p>
+      <GameDiscoveryLinks lang={lang} />
     </section>
   </main>;
 }

@@ -1,3 +1,4 @@
+import GameDiscoveryLinks from './GameDiscoveryLinks';
 import { gamePlayGuide } from '../../seo/gameGuide.mjs';
 import { displayDescription, type GameDetail, type MyGameRecord, type ReleaseNote } from '../../api/gameApi';
 import { StarRating, StarRatingInput, starsFromHalves } from './StarRating';
@@ -53,6 +54,7 @@ export function GameAboutPanel({ game, lang, favorites }: {
           ))}
         </dl>
       )}
+      {game.slug === 'marble-race' && <GameDiscoveryLinks lang={lang} />}
       <div className="game-rating-summary">
         {/* ratingAvg 는 BE 척도(halves 1~10) 다 — 별과 숫자가 같은 축을 써야 9.1 과 4.6 이 함께 뜨지 않는다 */}
         {game.ratingCount > 0 && (

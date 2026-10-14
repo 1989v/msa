@@ -19,7 +19,7 @@ it('emits actual FE dates for both language homepages and all three edited guide
   const games = ['block-burst', 'mine-pioneer', 'rift-front'].map((slug) => game(slug, '2026-08-17'));
   const result = dates(renderGameSitemap(games));
   for (const lang of ['ko', 'en']) {
-    expect(result[gameUrl(lang)]).toBe('2026-10-12');
+    expect(result[gameUrl(lang)]).toBe('2026-10-15');
     for (const g of games) expect(result[gameUrl(lang, `/games/${g.slug}`)]).toBe('2026-10-11');
     expect(result[gameUrl(lang, '/games/genre/puzzle')]).toBeNull();
   }
@@ -49,7 +49,7 @@ it('omits invalid API dates, including impossible calendar days, without losing 
     game('invalid-month', undefined, '2026-13-01'),
     game('no-date'),
   ]));
-  expect(result[gameUrl('ko')]).toBe('2026-10-12');
+  expect(result[gameUrl('ko')]).toBe('2026-10-15');
   expect(result[gameUrl('ko', '/games/block-burst')]).toBe('2026-10-11');
   for (const slug of ['invalid', 'invalid-day', 'invalid-month', 'no-date']) {
     expect(result[gameUrl('ko', `/games/${slug}`)]).toBeNull();
@@ -64,5 +64,5 @@ it('produces identical XML across build times, including an empty catalog', () =
   vi.setSystemTime(new Date('2027-07-01T00:00:00Z'));
   expect(renderGameSitemap(games)).toBe(first);
   expect(renderGameSitemap([])).toBe(empty);
-  expect(dates(empty)[gameUrl('en')]).toBe('2026-10-12');
+  expect(dates(empty)[gameUrl('en')]).toBe('2026-10-15');
 });

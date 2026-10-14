@@ -6,6 +6,9 @@ import vm from 'node:vm';
 import DrawPage from '../DrawPage';
 import { DRAW_DRAFT_KEY } from '../drawDraft';
 import { PARTY_KEY } from '../party';
+import { useSeo } from '../../../seo/useSeo';
+import { drawCopy } from '../../../seo/gameEditorial.mjs';
+import { drawMeta, gameDiscoveryLinks, hreflangAlternates } from '../../../seo/copy.mjs';
 import { listGames } from '../../../api/gameApi';
 vi.mock('../../../api/gameApi', () => ({ listGames: vi.fn(), displayTitle: (g: { title: string }) => g.title }));
 vi.mock('../../../seo/useSeo', () => ({ useSeo: vi.fn() }));
@@ -68,4 +71,21 @@ describe('local draw', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: '시작하기' })).toBeDisabled());
     expect(localStorage.getItem(PARTY_KEY)).toBeNull();
   });
+});
+
+it.each(['ko', 'en'] as const)('keeps the public localized guide and metadata aligned without leaking names: %s', async (lang) => {
+  localStorage.setItem(DRAW_DRAFT_KEY, JSON.stringify({ text: 'Private Alice\nPrivate Bob', mode: 'order', choice: 'marble-race' }));
+  const view = draw(lang === 'en' ? '/en/draw' : '/draw');
+  await screen.findByRole('button', { name: 'marble-race' });
+  const copy = drawCopy(lang);
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(copy.heading);
+  expect(screen.getByText(copy.intro)).toBeInTheDocument();
+  for (const step of copy.steps) expect(screen.getByText(step)).toBeInTheDocument();
+  for (const link of gameDiscoveryLinks(lang).links) expect(screen.getByRole('link', { name: link.label })).toHaveAttribute('href', link.href);
+  const seo = vi.mocked(useSeo).mock.calls.at(-1)![0];
+  expect(seo).toMatchObject({ ...drawMeta(lang), lang, alternates: hreflangAlternates('/draw') });
+  expect(seo.noindex).not.toBe(true);
+  expect(JSON.stringify(seo)).not.toContain('Private Alice');
+  expect(view.container.querySelector('textarea')).toHaveValue('Private Alice\nPrivate Bob');
+  expect(screen.getByRole('link', { name: lang === 'en' ? 'Invite friends' : '친구 초대하기' })).toHaveAttribute('href', lang === 'en' ? '/en/party' : '/party');
 });

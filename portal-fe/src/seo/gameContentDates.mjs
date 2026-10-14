@@ -1,6 +1,8 @@
 /** Actual FE content edits, not deployment/build dates. Update alongside the edited copy. */
-export const GAME_HUB_UPDATED_AT = '2026-10-12';
+export const GAME_HUB_UPDATED_AT = '2026-10-15';
+export const DRAW_UPDATED_AT = '2026-10-15';
 const GUIDE_UPDATED_AT = {
+  'marble-race': '2026-10-15',
   'block-burst': '2026-10-11',
   'mine-pioneer': '2026-10-11',
   'rift-front': '2026-10-11',

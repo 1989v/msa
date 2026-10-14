@@ -15,7 +15,8 @@ export interface SeoFeed {
 export interface SeoInput {
   title: string;
   description?: string;
-  canonical?: string;
+  /** null explicitly clears a public canonical on private screens; undefined preserves prerender metadata. */
+  canonical?: string | null;
   /** 소셜 카드 이미지 절대 URL. 래스터(png/jpg)만 — SVG 는 언퍼러가 렌더하지 못한다 */
   image?: string | null;
   type?: 'website' | 'article';
@@ -118,12 +119,14 @@ function upsertMeta(attr: 'name' | 'property', key: string, content: string | nu
 }
 
 /**
- * canonical 은 **지우지 않는다.** 값이 없다는 건 "이 화면이 아직 모른다"이지
+ * canonical 이 undefined 이면 보존한다. 값이 없다는 건 "이 화면이 아직 모른다"이지
  * "정규 주소가 없다"가 아니다 — 지우면 프리렌더가 심어둔 정확한 canonical 이 사라져
  * 크롤러가 정규 주소 없는 페이지를 본다 (2026-08-22 /attractions/1 실측: 'canonical 없음').
+ * 비공개 화면은 명시적 null 로 이전 공개 canonical 을 제거할 수 있다.
  */
-function upsertLink(rel: string, href: string | undefined): void {
+function upsertLink(rel: string, href: string | null | undefined): void {
   const existing = document.head.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
+  if (href === null) { existing?.remove(); return; }
   if (!href) return;
   const link = existing ?? document.head.appendChild(document.createElement('link'));
   link.rel = rel;

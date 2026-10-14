@@ -1,4 +1,5 @@
-import { gameDetailLastmod, gameHubLastmod } from '../src/seo/gameContentDates.mjs';
+import { drawCopy } from '../src/seo/gameEditorial.mjs';
+import { DRAW_UPDATED_AT, gameDetailLastmod, gameHubLastmod } from '../src/seo/gameContentDates.mjs';
 import { gamePlayGuide, gameSelectionGuide } from '../src/seo/gameGuide.mjs';
 /**
  * 빌드 후 SEO 정적 자산 생성기.
@@ -36,6 +37,8 @@ import {
   collectionPageJsonLd,
   descriptionOf,
   detailMeta,
+  drawMeta,
+  gameDiscoveryLinks,
   gamePath,
   gameUrl,
   genreLabelOf,
@@ -139,7 +142,7 @@ const PLACE_LANDINGS_JSON = resolve(ROOT, 'src/content/place-landings.json');
 const GUIDES_JSON_DIR = resolve(ROOT, 'src/pages/place/generated/guides');
 const API_ORIGIN = process.env.SEO_API_ORIGIN || 'https://api.1989v.com';
 const LANGS = ['ko', 'en'];
-const GENRES = ['DEFENSE', 'ACTION', 'STRATEGY', 'RPG', 'ARCADE', 'PUZZLE', 'VERSUS', 'CASUAL'];
+const GENRES = ['DEFENSE', 'ACTION', 'STRATEGY', 'RPG', 'ARCADE', 'PUZZLE', 'VERSUS', 'CASUAL', 'DECIDER'];
 
 const GAME_HOST = new URL(GAME_ORIGIN).host;
 const PORTAL_HOST = new URL(PORTAL_ORIGIN).host;
@@ -268,6 +271,8 @@ async function main() {
     count += 2;
 
     const prefix = lang === 'en' ? 'prerender/en' : 'prerender';
+    await emit(`${prefix}/draw.html`, renderDraw(shell, lang));
+    count += 1;
     for (const genre of GENRES) {
       const inGenre = games.filter((g) => g.genre === genre);
       if (inGenre.length === 0) continue;
@@ -680,6 +685,27 @@ function renderGameHubGuide(lang) {
     `<nav>${guide.genres.map(({ href, label }) => `<a href="${escapeHtml(href)}">${escapeHtml(label)}</a>`).join('')}</nav></section>`;
 }
 
+function renderGameDiscoveryLinks(lang) {
+  const { heading, links } = gameDiscoveryLinks(lang);
+  return `<nav class="games-guide" aria-label="${escapeHtml(heading)}"><h2>${escapeHtml(heading)}</h2><ul>` +
+    links.map((link) => `<li><a href="${escapeHtml(link.href)}">${escapeHtml(link.label)}</a></li>`).join('') + '</ul></nav>';
+}
+
+/** The public introduction only: names, local settings and invite state are never read. */
+export function renderDraw(shell, lang) {
+  const meta = drawMeta(lang);
+  const copy = drawCopy(lang);
+  return compose(shell, {
+    lang, ...meta, image: HUB_OG_IMAGE, imageAlt: meta.heading,
+    alternates: hreflangAlternates('/draw'),
+    body: shellBody(`<h1>${escapeHtml(copy.heading)}</h1><p>${escapeHtml(copy.intro)}</p>` +
+      `<section aria-labelledby="draw-guide-heading"><h2 id="draw-guide-heading">${escapeHtml(copy.guideHeading)}</h2><ol>` +
+      copy.steps.map((step) => `<li>${escapeHtml(step)}</li>`).join('') +
+      `</ol><p>${escapeHtml(copy.privacy)}</p></section>` + renderGameDiscoveryLinks(lang) +
+      `<p><a href="${gamePath(lang)}">${lang === 'en' ? 'All browser games' : '전체 웹게임'}</a></p>`),
+  });
+}
+
 export function renderHub(shell, lang, games) {
   const meta = hubMeta(lang, games.length);
   const canonical = gameUrl(lang);
@@ -699,12 +725,13 @@ export function renderHub(shell, lang, games) {
       `<h1>${escapeHtml(meta.heading)}</h1><p class="games-subtitle">${escapeHtml(gameHubIntro(lang))}</p>` +
         genreNav(lang, games) +
         gameLinkList(lang, games) +
+        renderGameDiscoveryLinks(lang) +
         renderGameHubGuide(lang),
     ),
   });
 }
 
-function renderGenre(shell, lang, genre, inGenre, allGames) {
+export function renderGenre(shell, lang, genre, inGenre, allGames) {
   const meta = genreMeta(lang, genre, inGenre);
   const canonical = gameUrl(lang, `/games/genre/${genreSlug(genre)}`);
   return compose(shell, {
@@ -727,7 +754,7 @@ function renderGenre(shell, lang, genre, inGenre, allGames) {
     body: shellBody(
       `<h1>${escapeHtml(meta.heading)}</h1><p>${escapeHtml(meta.description)}</p>` +
         genreNav(lang, allGames) +
-        gameLinkList(lang, inGenre),
+        gameLinkList(lang, inGenre) + renderGameDiscoveryLinks(lang),
     ),
   });
 }
@@ -773,6 +800,7 @@ export function renderDetail(shell, lang, game, games) {
         // 길게 쓴 설명이 60% 넘게 버려진 채 나간다 — 본문에는 원문을 그대로 싣는다.
         `<p>${escapeHtml(descriptionOf(game, lang) || meta.description)}</p>` +
         instructions +
+        (game.slug === 'marble-race' ? renderGameDiscoveryLinks(lang) : '') +
         '<ul>' +
         (game.playerMode === 'MULTI' ? `<li>${lang === 'en' ? '2+ players' : '2인 이상'}</li>` :
           game.playerMode === 'SINGLE' ? `<li>${lang === 'en' ? 'Single player' : '1인'}</li>` : '') +
@@ -825,6 +853,7 @@ export function renderGameSitemap(games) {
       priority: '1.0',
       alternates: hreflangAlternates(''),
     });
+    gameEntries.push({ loc: gameUrl(lang, '/draw'), lastmod: DRAW_UPDATED_AT, priority: '0.8', alternates: hreflangAlternates('/draw') });
     for (const genre of GENRES) {
       if (!games.some((g) => g.genre === genre)) continue;
       const sub = `/games/genre/${genreSlug(genre)}`;
@@ -2563,7 +2592,7 @@ function gameLlmsTxt(games) {
     '## 게임',
   ];
   for (const game of games) {
-    const desc = (game.description || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+    const desc = descriptionOf(game, 'ko').replace(/\s+/g, ' ').trim().slice(0, 120);
     lines.push(`- [${titleOf(game, 'ko')}](${gameUrl('ko', `/games/${game.slug}`)}): ${desc}`);
   }
   lines.push('');

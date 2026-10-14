@@ -1,3 +1,5 @@
+import { marbleEditorial, drawCopy } from './gameEditorial.mjs';
+
 /**
  * SEO 카피 · 구조화 데이터 SSOT.
  *
@@ -151,6 +153,24 @@ export function gameHubGuide(lang) {
   };
 }
 
+/** Public decision-game navigation, shared by initial HTML and React. */
+export function gameDiscoveryLinks(lang) {
+  const en = lang === 'en';
+  return {
+    heading: en ? 'Pick names and decide an order with friends' : '친구와 이름 뽑기·순서 정하기',
+    links: [
+      { href: gamePath(lang, '/draw'), label: en ? 'Random picker & party decision games' : '랜덤레이스 · 내기 게임' },
+      { href: gamePath(lang, '/games/marble-race'), label: en ? 'Pinball random picker · Marble Race' : '핀볼 추첨 · 구슬 레이스' },
+      { href: gamePath(lang, '/games/genre/decider'), label: en ? 'More decision games' : '순서 정하기 게임 더 보기' },
+    ],
+  };
+}
+
+export function drawMeta(lang) {
+  const { title, description, heading } = drawCopy(lang);
+  return { title, description: clampDescription(description), heading, canonical: gameUrl(lang, '/draw') };
+}
+
 export function genreMeta(lang, genre, games, gameCount = games.length) {
   const label = genreLabelOf(genre, lang);
   const count = Number.isInteger(gameCount) && gameCount >= 0 ? gameCount : null;
@@ -182,11 +202,16 @@ export function titleOf(game, lang) {
 }
 
 export function descriptionOf(game, lang) {
+  if (game.slug === 'marble-race') return marbleEditorial(lang).description;
   if (lang === 'en') return game.descriptionEn || game.description || '';
   return game.description || '';
 }
 
 export function detailMeta(lang, game) {
+  if (game.slug === 'marble-race') {
+    const { title, heading, description } = marbleEditorial(lang);
+    return { title, heading, description: clampDescription(description) };
+  }
   const name = titleOf(game, lang);
   const raw = descriptionOf(game, lang);
   const label = genreLabelOf(game.genre, lang);
