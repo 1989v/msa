@@ -818,8 +818,16 @@ class GatewayRouteConfig(
             }
             // Place Service — 지역/POI 근처검색 조회는 비로그인 공개 (탐색). 쓰기(적재)는 ADMIN. (ADR-0056)
             .route("place-market-admin") { r ->
-                r.path("/api/v1/admin/place/markets", "/api/v1/admin/place/markets/**")
+                r.path("/api/v1/admin/place/markets", "/api/v1/admin/place/markets/**",
+                    "/api/v1/admin/place/stewards", "/api/v1/admin/place/stewards/**")
                     .filters { f -> f.filter(authFilter.apply(adminConfig())).stripPrefix(0) }
+                    .uri(CONTENT_URI)
+            }
+            // Must precede public GET markets/**, including /me and manage detail/history.
+            .route("place-market-member") { r ->
+                r.path("/api/v1/place/markets/*/steward-applications", "/api/v1/place/markets/*/steward-applications/**",
+                    "/api/v1/place/markets/*/manage", "/api/v1/place/markets/*/manage/**")
+                    .filters { f -> f.filter(authFilter.apply(userConfig())).stripPrefix(0) }
                     .uri(CONTENT_URI)
             }
             .route("place-service-read") { r ->

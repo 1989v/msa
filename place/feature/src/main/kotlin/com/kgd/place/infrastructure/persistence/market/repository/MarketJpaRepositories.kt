@@ -41,5 +41,11 @@ interface MarketChangeLogJpaRepository : JpaRepository<MarketChangeLogJpaEntity,
     fun findAllByMarketId(marketId: Long, pageable: Pageable): Page<MarketChangeLogJpaEntity>
 }
 interface MarketStewardJpaRepository : JpaRepository<MarketStewardJpaEntity, Long> {
+    @Query("select s.marketId from MarketStewardJpaEntity s where s.id = :id")
+    fun marketIdById(@Param("id") id: Long): Long?
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select s from MarketStewardJpaEntity s where s.id = :id")
+    fun lockById(@Param("id") id: Long): MarketStewardJpaEntity?
+    fun findAllByStatus(status: com.kgd.place.domain.market.model.MarketStewardStatus, pageable: Pageable): Page<MarketStewardJpaEntity>
     fun findByMarketIdAndMemberId(marketId: Long, memberId: Long): MarketStewardJpaEntity?
 }
