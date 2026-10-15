@@ -43,7 +43,7 @@ export function GeometryMap({ data, boundary, setBoundary, line, onPoint, center
       </g>
       {boundary.map((p, i) => { const xy = point(p), next = point(boundary[(i + 1) % boundary.length]); return <g key={i}>
         <circle cx={(xy.x + next.x) / 2} cy={(xy.y + next.y) / 2} r="4" fill="var(--ko-surface-2)" stroke="var(--ko-accent-primary)" role="button" tabIndex={disabled ? -1 : 0} aria-label={`꼭짓점 ${i + 1} 뒤 추가`} aria-disabled={disabled} onPointerDown={e => { e.stopPropagation(); if (!disabled) setBoundary(editBoundary(boundary, { type: 'insert', index: i })); }} onKeyDown={e => { if (!disabled && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); setBoundary(editBoundary(boundary, { type: 'insert', index: i })); } }} />
-        <circle cx={xy.x} cy={xy.y} r="6" fill="var(--ko-accent-primary)" role="button" tabIndex={disabled ? -1 : 0} aria-label={`경계 꼭짓점 ${i + 1}`} aria-disabled={disabled} onPointerDown={e => begin(e, i)} onKeyDown={e => { if (!disabled && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); selectVertex(i); } }} />
+        <circle cx={xy.x} cy={xy.y} r="6" stroke="transparent" strokeWidth="24" paintOrder="stroke" fill="var(--ko-accent-primary)" role="button" tabIndex={disabled ? -1 : 0} aria-label={`경계 꼭짓점 ${i + 1}`} aria-disabled={disabled} onPointerDown={e => begin(e, i)} onKeyDown={e => { if (!disabled && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); selectVertex(i); } }} />
       </g>; })}
       <circle cx={point(center).x} cy={point(center).y} r="13" fill="var(--ko-surface-2)" stroke="var(--ko-status-warning)" strokeWidth="3" aria-label="시장 중심 핀" role="img" onPointerDown={e => begin(e, 'center')} />
     </svg>
