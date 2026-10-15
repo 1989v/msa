@@ -27,13 +27,10 @@ class MarketSearchQueryRepository(@Qualifier("placeJpaQueryFactory") private val
     // over-merging. Kotlin public projection remains authoritative when hydrating selected rows.
     private fun normalized(value: StringExpression): StringExpression =
         Expressions.stringTemplate("lower(cast(regexp_replace({0}, {1}, {2}) as string))", value, "[[:space:]]+", "")
-    private fun identity(value: StringExpression): StringExpression =
-        Expressions.stringTemplate("hex({0})", normalized(value))
 
+    // identity_key is MarketStoreIdentity.key, written with every row and indexed per market.
     private fun sameIdentity(a: QMarketStoreJpaEntity, b: QMarketStoreJpaEntity) =
-        a.marketId.eq(b.marketId).and(identity(a.name).eq(identity(b.name)))
-            .and(identity(a.jibunAddress).eq(identity(b.jibunAddress)))
-            .and(normalized(a.jibunAddress).ne(""))
+        a.marketId.eq(b.marketId).and(a.identityKey.isNotNull).and(a.identityKey.eq(b.identityKey))
 
     private fun partnerId() : com.querydsl.jpa.JPQLQuery<Long> {
         val candidate = QMarketStoreJpaEntity("pairCandidate")

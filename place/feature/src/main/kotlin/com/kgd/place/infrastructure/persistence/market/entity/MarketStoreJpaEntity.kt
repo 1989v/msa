@@ -1,5 +1,7 @@
 package com.kgd.place.infrastructure.persistence.market.entity
 
+import com.kgd.place.domain.market.model.MarketStoreIdentity
+
 import com.kgd.place.domain.market.model.MarketActorKind
 import com.kgd.place.domain.market.model.MarketMembership
 import com.kgd.place.domain.market.model.MarketMembershipStatus
@@ -106,6 +108,9 @@ class MarketStoreJpaEntity(
     val goodPriceMatchedBy: String? = null,
     @Column(name = "good_price_menu_names", nullable = true, length = 500)
     val goodPriceMenuNames: String? = null,
+    /** Derived on every write from [MarketStoreIdentity.key]; never read back into the domain. */
+    @Column(name = "identity_key", nullable = true, length = 64)
+    val identityKey: String? = null,
 ) {
     fun toDomain(): MarketStore = MarketStore(
         marketId = marketId,
@@ -193,6 +198,7 @@ class MarketStoreJpaEntity(
             goodPriceRaw = row.goodPriceRaw,
             goodPriceMatchedBy = row.goodPriceMatchedBy,
             goodPriceMenuNames = row.goodPriceMenuNames,
+            identityKey = MarketStoreIdentity.key(row),
 
         )
     }

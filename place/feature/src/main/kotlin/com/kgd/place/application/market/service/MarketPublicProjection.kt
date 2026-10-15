@@ -7,14 +7,11 @@ import com.kgd.place.domain.market.model.MarketStoreDisplay
 import com.kgd.place.domain.market.model.MarketStoreOverride
 import com.kgd.place.domain.market.model.MarketStoreSource
 import com.kgd.place.domain.market.model.MarketPinKind
-import java.text.Normalizer
-import java.util.Locale
+import com.kgd.place.domain.market.model.MarketStoreIdentity
 
 /** Response-only reconciliation. No persistence row or upstream payload is changed. */
 internal object MarketPublicProjection {
-    private val whitespace = Regex("\\s+")
-    private fun normalized(value: String): String =
-        Normalizer.normalize(value, Normalizer.Form.NFKC).replace(whitespace, "").lowercase(Locale.ROOT)
+    private fun normalized(value: String): String = MarketStoreIdentity.normalized(value)
 
     private data class Identity(val marketId: Long, val name: String, val jibun: String)
 
