@@ -21,6 +21,7 @@ resources:
   - cronjob-air-stations.yaml
   - cronjob-transit-stops.yaml
   - cronjob-market-stores.yaml
+  - cronjob-market-osm.yaml
   - cronjob-indexnow.yaml
   - rbac-crawl-stats.yaml
   - cronjob-crawl-stats.yaml

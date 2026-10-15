@@ -93,6 +93,7 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | 전통시장 기본정보 | [전국전통시장표준데이터 #15012894](https://www.data.go.kr/data/15012894/standard.do) | 파일은 불필요 | **공공누리 제1유형(출처표시)** | `place/ingest --job=market-stores` (매주 월 KST 01:10) |
 | 온누리 가맹점 | [소진공 전자상품권 가맹점 상세 #15091259](https://www.data.go.kr/data/15091259/fileData.do) | 파일은 불필요 | **공공누리 제1유형(출처표시)** | 〃 (utf-8-sig CSV) |
 | 시장 상가 보강 | [소진공 상가(상권)정보 API #15012005](https://www.data.go.kr/data/15012005/openapi.do) | 필요 | **공공누리 제1유형(출처표시)** | 〃 (`storeListInRadius` / `storeListInPolygon`) |
+| 시장 경계·골목·배경 큰길 | [OpenStreetMap / Overpass](https://overpass-api.de/api/interpreter) | 불필요 | **ODbL 1.0**, `© OpenStreetMap contributors` | `place/ingest --job=market-osm` (매주 월 KST 05:20, suspend 유지). 지도 표시만, 데이터 자체 공개 배포 금지. [ADR-0110](../adr/ADR-0110-market-alley-geometry-osm.md) |
 | POI(상가) | 소상공인시장진흥공단 상가(상권)정보 | 필요 | 이용허락범위 제한없음 | `tools/seed/place/normalize_pois.py` |
 | 상품·영양 | 식약처 / 한국소비자원 참가격 | 필요 | 제한없음 / KOGL 제1유형 | `tools/seed/products/normalize.py` |
 | 관광지 영상 | YouTube Data API v3 | 필요 | Google API 서비스 약관 | `place/ingest --job=links` (매시) |
