@@ -25,6 +25,34 @@ function mount(lang: 'ko' | 'en' = 'ko') {
 }
 
 describe('optional attraction market section', () => {
+  it.each(['ko', 'en'] as const)('shows good-price menus, expands all menus in the selected parcel, and attributes the summary in %s', async (lang) => {
+    const goodPrice = { category: '한식', matchedBy: 'NAME' as const, menus: [
+      { name: '칼국수', price: 5000 }, { name: '수제비', price: null }, { name: '비빔밥', price: 6000 },
+    ] };
+    vi.mocked(fetchMarket).mockResolvedValue({ ...data,
+      market: { ...data.market, goodPrice: { storeCount: 1, minPrice: 5000, maxPrice: 6000,
+        attribution: { name: '행정안전부 착한가격업소', url: 'https://www.data.go.kr/data/3045247/fileData.do', license: '이용허락범위 제한 없음' } } },
+      stores: [shop({ goodPrice })],
+    });
+    mount(lang);
+    expect(await screen.findByText(lang === 'en' ? 'Good price' : '착한가격')).toBeInTheDocument();
+    const source = screen.getByRole('link', { name: '행정안전부 착한가격업소' });
+    expect(source).toHaveAttribute('href', 'https://www.data.go.kr/data/3045247/fileData.do');
+    expect(source.parentElement).toHaveTextContent(lang === 'en' ? 'Good-price shops 1 · ₩5,000–6,000' : '착한가격업소 1곳 · 5,000~6,000원');
+    expect(screen.getByText(lang === 'en' ? '칼국수 ₩5,000 · 수제비' : '칼국수 5,000원 · 수제비')).toBeInTheDocument();
+    expect(screen.queryByText(/비빔밥/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /유명순대국/ }));
+    expect(screen.getByText(lang === 'en' ? '칼국수 ₩5,000 · 수제비 · 비빔밥 ₩6,000' : '칼국수 5,000원 · 수제비 · 비빔밥 6,000원')).toBeInTheDocument();
+  });
+
+  it.each([undefined, null])('omits good-price additions safely when missing: %s', async (goodPrice) => {
+    vi.mocked(fetchMarket).mockResolvedValue({ ...data, market: { ...data.market, goodPrice }, stores: [shop({ goodPrice })] });
+    mount();
+    await screen.findByText('유명순대국');
+    expect(screen.queryByText('착한가격')).not.toBeInTheDocument();
+    expect(screen.queryByText(/착한가격업소/)).not.toBeInTheDocument();
+  });
+
   it('initializes the shop finder from marketQuery and scrolls after market data arrives', async () => {
     const scrollIntoView = vi.fn();
     const previous = HTMLElement.prototype.scrollIntoView;

@@ -1,4 +1,4 @@
-import type { MarketCoordinate, MarketResponse, MarketStore, MarketZone } from '../../api/marketApi';
+import type { GoodPriceMenu, GoodPriceSummary, MarketCoordinate, MarketResponse, MarketStore, MarketZone } from '../../api/marketApi';
 import type { PlaceLang } from '../../api/placeApi';
 
 export const normalizeMarketName = (value: string) => value.replace(/\s+/gu, '').toLocaleLowerCase();
@@ -129,4 +129,25 @@ export function longestMarketSegmentMidpoint(points: { x: number; y: number }[])
     }
   }
   return midpoint;
+}
+
+export function formatMarketPrice(price: number, lang: PlaceLang): string {
+  const amount = price.toLocaleString('ko-KR');
+  return lang === 'en' ? `₩${amount}` : `${amount}원`;
+}
+
+export function formatGoodPriceMenu(menu: GoodPriceMenu, lang: PlaceLang): string {
+  return menu.price == null ? menu.name : `${menu.name} ${formatMarketPrice(menu.price, lang)}`;
+}
+
+export function formatGoodPriceSummary(summary: Pick<GoodPriceSummary, 'storeCount' | 'minPrice' | 'maxPrice'>, lang: PlaceLang): string {
+  const { storeCount, minPrice, maxPrice } = summary;
+  const label = lang === 'en' ? `Good-price shops ${storeCount}` : `착한가격업소 ${storeCount}곳`;
+  const min = minPrice ?? maxPrice;
+  const max = maxPrice ?? minPrice;
+  if (min == null || max == null) return label;
+  const price = min === max ? formatMarketPrice(min, lang)
+    : lang === 'en' ? `${formatMarketPrice(min, lang)}–${formatMarketPrice(max, lang).replace(/^₩/u, '')}`
+      : `${formatMarketPrice(min, lang).replace(/원$/u, '')}~${formatMarketPrice(max, lang)}`;
+  return `${label} · ${price}`;
 }

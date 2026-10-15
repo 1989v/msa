@@ -8,9 +8,12 @@
 .market-search-form button, .market-search-pagination button { min-height: 44px; flex-shrink: 0; }
 .market-search-results { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--ko-border-default); }
 .market-search-results li { border-bottom: 1px solid var(--ko-border-default); }
-.market-search-results a { display: flex; flex-direction: column; gap: .375rem; padding: 1rem .5rem; min-height: 44px; color: var(--ko-text-primary); text-decoration: none; overflow-wrap: anywhere; }
+.market-search-results li > :is(a, div) { display: flex; flex-direction: column; gap: .375rem; padding: 1rem .5rem; min-height: 44px; color: var(--ko-text-primary); text-decoration: none; overflow-wrap: anywhere; }
 .market-search-results a:hover { background: var(--ko-surface-1); }
 .market-search-results span { color: var(--ko-text-secondary); font-size: .875rem; }
 .market-search-pagination { display: flex; justify-content: space-between; gap: 1rem; margin-top: 1.5rem; }
 .market-map-badge { display: inline-block; align-self: flex-start; justify-self: start; width: fit-content; padding: .125rem .375rem; border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius); color: var(--ko-accent-text); font-size: .75rem; }
 .market-search-main :is(a, input, button):focus-visible { outline: var(--ko-focus-ring); outline-offset: 3px; }
+
+.market-search-results .market-search-good-price-badge { align-self: flex-start; width: fit-content; padding: .125rem .5rem; border: 1px solid var(--ko-accent-text); color: var(--ko-accent-text); }
+.market-search-good-price-menu { font-variant-numeric: tabular-nums; }

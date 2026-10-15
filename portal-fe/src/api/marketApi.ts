@@ -12,6 +12,15 @@ export interface MarketZone {
   children: MarketZone[];
 }
 
+export interface GoodPriceMenu { name: string; price: number | null }
+export interface GoodPriceShop { category: string; menus: GoodPriceMenu[] }
+export interface GoodPriceSummary {
+  storeCount: number;
+  minPrice: number | null;
+  maxPrice: number | null;
+  attribution: { name: string; url: string; license: string };
+}
+
 export interface MarketStore {
   id: number | null;
   name: string;
@@ -36,6 +45,7 @@ export interface MarketStore {
   actorKind: 'ADMIN' | 'STEWARD' | null;
   relativePosition: string | null;
   positionNote: string | null;
+  goodPrice?: (GoodPriceShop & { matchedBy: 'NAME' | 'ROAD' }) | null;
 }
 
 export type MarketCoordinate = [number, number]; // [latitude, longitude]
@@ -69,6 +79,7 @@ export interface MarketResponse {
     id?: number | null;
     name: string;
     marketType: 'STREET' | 'BUILDING' | 'MIXED';
+    goodPrice?: GoodPriceSummary | null;
     sourceMarketType: string | null;
     storeCountRaw: string | null;
     openingCycle: string | null;
@@ -96,7 +107,7 @@ export interface MarketSearchResult {
   query: string;
   markets: Array<{ contentId: string; name: string; region: string | null; marketType: string; storeCount: number; attraction: MarketAttractionRef | null }>;
   stores: {
-    items: Array<{ storeId: number; name: string; items: string | null; category: string | null; marketContentId: string; marketName: string; zoneName: string | null; latitude: number | null; longitude: number | null; attraction: MarketAttractionRef | null }>;
+    items: Array<{ goodPrice?: GoodPriceShop | null; storeId: number; name: string; items: string | null; category: string | null; marketContentId: string; marketName: string; zoneName: string | null; latitude: number | null; longitude: number | null; attraction: MarketAttractionRef | null }>;
     total: number; page: number; size: number;
   };
 }
