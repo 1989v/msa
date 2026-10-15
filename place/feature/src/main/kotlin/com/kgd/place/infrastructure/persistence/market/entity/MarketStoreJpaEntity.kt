@@ -6,6 +6,7 @@ import com.kgd.place.domain.market.model.MarketMembershipStatus
 import com.kgd.place.domain.market.model.MarketPinKind
 import com.kgd.place.domain.market.model.MarketStore
 import com.kgd.place.domain.market.model.MarketStoreSource
+import com.kgd.place.domain.market.model.MarketJudgedBy
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -87,6 +88,16 @@ class MarketStoreJpaEntity(
     val id: Long? = null,
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: LocalDateTime,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "judged_membership", nullable = true, length = 20, columnDefinition = "varchar(20)")
+    val judgedMembership: MarketMembershipStatus? = null,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "judged_by", nullable = true, length = 20, columnDefinition = "varchar(20)")
+    val judgedBy: MarketJudgedBy? = null,
+    @Column(name = "path_id", nullable = true)
+    val pathId: Long? = null,
+    @Column(name = "needs_review", nullable = false)
+    val needsReview: Boolean = false,
 ) {
     fun toDomain(): MarketStore = MarketStore(
         marketId = marketId,
@@ -121,6 +132,11 @@ class MarketStoreJpaEntity(
         createdByMemberId = createdByMemberId,
         id = id,
         createdAt = createdAt,
+        judgedMembership = judgedMembership,
+        judgedBy = judgedBy,
+        pathId = pathId,
+        needsReview = needsReview,
+
     )
 
     companion object {
@@ -157,6 +173,11 @@ class MarketStoreJpaEntity(
             createdByMemberId = row.createdByMemberId,
             id = row.id,
             createdAt = row.createdAt,
+            judgedMembership = row.judgedMembership,
+            judgedBy = row.judgedBy,
+            pathId = row.pathId,
+            needsReview = row.needsReview,
+
         )
     }
 }

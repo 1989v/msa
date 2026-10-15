@@ -35,6 +35,10 @@ data class MarketStore(
     val createdByMemberId: Long? = null,
     val id: Long? = null,
     val createdAt: LocalDateTime = LocalDateTime.now(),
+    val judgedMembership: MarketMembershipStatus? = null,
+    val judgedBy: MarketJudgedBy? = null,
+    val pathId: Long? = null,
+    val needsReview: Boolean = false,
 ) {
     init {
         require(marketId > 0 && name.isNotBlank())
@@ -53,6 +57,7 @@ data class MarketStore(
         require(marketId == incoming.marketId && source == incoming.source && sourceKey == incoming.sourceKey)
         val retainSangga = incoming.sanggaRaw == null && sanggaRaw != null
         return incoming.copy(id = id, createdAt = createdAt,
+            judgedMembership = judgedMembership, judgedBy = judgedBy, pathId = pathId, needsReview = needsReview,
             onnuriKey = incoming.onnuriKey ?: onnuriKey, onnuriRaw = incoming.onnuriRaw ?: onnuriRaw,
             sanggaKey = incoming.sanggaKey ?: sanggaKey, sanggaRaw = incoming.sanggaRaw ?: sanggaRaw,
             latitude = if (retainSangga) latitude else incoming.latitude,

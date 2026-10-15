@@ -75,7 +75,9 @@ class MarketRepositoryAdapter(
                 roadAddress = existing.roadAddress, jibunAddress = existing.jibunAddress)
             else -> market.copy(id = existing.id, createdAt = existing.createdAt)
         }
-        return markets.save(MarketJpaEntity.fromDomain(row)).toDomain()
+        return markets.save(MarketJpaEntity.fromDomain(if (existing == null) row else row.copy(
+            centerOverrideLat = existing.centerOverrideLat, centerOverrideLng = existing.centerOverrideLng,
+            radiusOverrideM = existing.radiusOverrideM))).toDomain()
     }
 
     override fun saveZone(zone: MarketZone): MarketZone {

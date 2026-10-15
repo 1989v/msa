@@ -70,6 +70,16 @@
   "_manual_links_note": "pattern 으로 표현 불가한 cross-cutting 문서. 각 항목: {doc, sources:[glob...]}",
   "manual_links": [
     {
+      "doc": "docs/adr/ADR-0110-market-alley-geometry-osm.md",
+      "sources": [
+        "place/domain/src/main/kotlin/com/kgd/place/domain/market/model/MarketGeometry.kt",
+        "place/feature/src/main/kotlin/com/kgd/place/application/market/*/MarketRejudge*",
+        "place/feature/src/main/kotlin/com/kgd/place/application/market/usecase/RejudgeMarketUseCase.kt",
+        "place/feature/src/main/kotlin/com/kgd/place/infrastructure/persistence/market/*/MarketGeometry*",
+        "place/feature/src/main/resources/placedb/migration/V37__market_alley_geometry.sql"
+      ]
+    },
+    {
       "doc": "docs/architecture/kafka-convention.md",
       "sources": [
         "*/src/main/kotlin/*messaging*"

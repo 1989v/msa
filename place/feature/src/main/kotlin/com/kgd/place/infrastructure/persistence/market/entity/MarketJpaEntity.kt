@@ -48,6 +48,12 @@ class MarketJpaEntity(
     val id: Long? = null,
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: LocalDateTime,
+    @Column(name = "center_override_lat", nullable = true)
+    val centerOverrideLat: Double? = null,
+    @Column(name = "center_override_lng", nullable = true)
+    val centerOverrideLng: Double? = null,
+    @Column(name = "radius_override_m", nullable = true)
+    val radiusOverrideM: Double? = null,
 ) {
     fun toDomain(): Market = Market(
         attractionContentId = attractionContentId,
@@ -66,6 +72,10 @@ class MarketJpaEntity(
         sourceRaw = sourceRaw,
         id = id,
         createdAt = createdAt,
+        centerOverrideLat = centerOverrideLat,
+        centerOverrideLng = centerOverrideLng,
+        radiusOverrideM = radiusOverrideM,
+
     )
 
     companion object {
@@ -86,6 +96,10 @@ class MarketJpaEntity(
             sourceRaw = row.sourceRaw,
             id = row.id,
             createdAt = row.createdAt,
+            centerOverrideLat = row.centerOverrideLat,
+            centerOverrideLng = row.centerOverrideLng,
+            radiusOverrideM = row.radiusOverrideM,
+
         )
     }
 }

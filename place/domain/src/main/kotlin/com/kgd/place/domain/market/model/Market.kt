@@ -19,8 +19,14 @@ data class Market(
     val sourceRaw: String? = null,
     val id: Long? = null,
     val createdAt: LocalDateTime = LocalDateTime.now(),
+    val centerOverrideLat: Double? = null,
+    val centerOverrideLng: Double? = null,
+    val radiusOverrideM: Double? = null,
 ) {
     init {
+        require((centerOverrideLat == null) == (centerOverrideLng == null))
+        if (centerOverrideLat != null && centerOverrideLng != null) MarketCoordinate(centerOverrideLat, centerOverrideLng)
+        require(radiusOverrideM == null || (radiusOverrideM.isFinite() && radiusOverrideM > 0))
         require(attractionContentId.isNotBlank() && name.isNotBlank())
         require(!marketInfoMatched || (!sourceKey.isNullOrBlank() && !sourceRaw.isNullOrBlank()))
         require((latitude == null) == (longitude == null))

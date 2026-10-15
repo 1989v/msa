@@ -7,7 +7,7 @@ enum class MarketStoreSource { ONNURI, SANGGA, MANUAL }
 enum class MarketMembershipStatus { IN, OUT, UNKNOWN }
 enum class MarketPinKind { EXACT, REFERENCE }
 enum class MarketActorKind { ADMIN, STEWARD }
-enum class MarketChangeTarget { MARKET, ZONE, STORE }
+enum class MarketChangeTarget { MARKET, ZONE, STORE, BOUNDARY, PATH, ENTRANCE, ROAD_RULE, MARKET_GEO }
 enum class MarketChangeAction { CREATE, UPDATE, DELETE, REVERT }
 enum class MarketStewardStatus { PENDING, ACTIVE, SUSPENDED, REJECTED }
 enum class MarketStoreField { NAME, ITEMS, MEMBERSHIP, ZONE_ID, LATITUDE, LONGITUDE, PIN_KIND }

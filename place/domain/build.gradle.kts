@@ -3,6 +3,7 @@
 dependencies {
     implementation(project(":common"))
 
+    testImplementation("tools.jackson.core:jackson-databind")
     testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.kotest.assertions.core)
 }
