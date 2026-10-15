@@ -41,6 +41,8 @@ class MarketSearchRepositoryAdapter(
             projected[store.id]
                 ?: MarketPublicProjection.stores(listOfNotNull(store, partner), edits).first()
         }
+        val attractions = attractions((marketRows.map { it.attractionContentId } +
+            marketById.values.map { it.attractionContentId }).toSet(), lang)
         val zoneNames = zones.findAllById(displayed.mapNotNull { it.display.zoneId }.distinct()).associate { it.id to it.name }
         val summaries = displayed.map { row ->
             val market = marketById.getValue(row.source.marketId)
@@ -48,32 +50,43 @@ class MarketSearchRepositoryAdapter(
                 listOfNotNull(row.source.categoryMajor, row.source.categoryMid, row.source.categorySub)
                     .takeIf { it.isNotEmpty() }?.joinToString(" > "),
                 market.attractionContentId, market.name, zoneNames[row.display.zoneId],
-                row.display.coordinate?.latitude, row.display.coordinate?.longitude)
+                row.display.coordinate?.latitude, row.display.coordinate?.longitude,
+                attractions[market.attractionContentId]?.ref())
         }
-        val regions = regions(marketRows, lang)
+        val regions = regions(marketRows, attractions)
         return SearchMarketsUseCase.Result(query, marketRows.map { market ->
             SearchMarketsUseCase.MarketSummary(market.attractionContentId, market.name, regions[market.attractionContentId],
-                market.marketType, counts[market.id] ?: 0)
+                market.marketType, counts[market.id] ?: 0, attractions[market.attractionContentId]?.ref())
         }, SearchMarketsUseCase.StorePage(summaries, candidates?.total ?: 0, page, size))
     }
 
     override fun contentIds(): List<String> = queries.contentIds(queries.counts())
 
-    private fun regions(markets: List<Market>, lang: String): Map<String, String?> {
-        if (markets.isEmpty()) return emptyMap()
+    private class AttractionRow(val id: Long, val lang: String, val address: String?)
+
+    /** Detail pages are keyed by attraction id per language; markets are keyed by the Korean contentId. */
+    private fun attractions(contentIds: Collection<String>, lang: String): Map<String, AttractionRow> {
+        if (contentIds.isEmpty()) return emptyMap()
         val attraction = QAttractionJpaEntity.attractionJpaEntity
-        val addresses = factory.select(attraction.contentId, attraction.address).from(attraction)
-            .where(attraction.contentId.`in`(markets.map { it.attractionContentId }), attraction.lang.eq(lang),
-                attraction.source.eq("TOURAPI"))
-            .fetch().associate { requireNotNull(it[attraction.contentId]) to it[attraction.address] }
-        return markets.associate { market ->
+        return factory.select(attraction.id, attraction.contentId, attraction.lang, attraction.address).from(attraction)
+            .where(attraction.contentId.`in`(contentIds), attraction.lang.`in`(lang, "ko"), attraction.source.eq("TOURAPI"))
+            .fetch().groupBy { requireNotNull(it[attraction.contentId]) }
+            .mapValues { (_, rows) ->
+                val row = rows.firstOrNull { it[attraction.lang] == lang } ?: rows.first()
+                AttractionRow(requireNotNull(row[attraction.id]), requireNotNull(row[attraction.lang]), row[attraction.address])
+            }
+    }
+
+    private fun regions(markets: List<Market>, attractions: Map<String, AttractionRow>): Map<String, String?> =
+        markets.associate { market ->
             val raw = market.sourceRaw?.let { json.readTree(it) }
             val sigungu = listOf("sigungu", "시군구명").firstNotNullOfOrNull { key ->
                 raw?.get(key)?.takeUnless { it.isNull }?.asText()?.takeIf { it.isNotBlank() }
             }
-            val region = sigungu ?: addresses[market.attractionContentId]?.trim()?.split(Regex("\\s+"))
+            val region = sigungu ?: attractions[market.attractionContentId]?.address?.trim()?.split(Regex("\\s+"))
                 ?.filter { it.isNotBlank() }?.take(2)?.joinToString(" ")?.takeIf { it.isNotBlank() }
             market.attractionContentId to region
         }
-    }
+
+    private fun AttractionRow.ref() = SearchMarketsUseCase.AttractionRef(id, lang)
 }

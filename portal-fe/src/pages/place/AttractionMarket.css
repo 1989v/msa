@@ -83,4 +83,5 @@
 .market-request-canvas { display: block; width: 100%; height: auto; border: 1px solid var(--ko-border-default); background: var(--ko-surface-1); color: var(--ko-text-muted); cursor: crosshair; }
 .market-request-coordinate { display: flex; gap: var(--ko-space-3, 12px); flex-wrap: wrap; align-items: end; }
 
-.place-market#market { scroll-margin-top: calc(var(--place-header-h, 80px) + 1rem); }
+/* 머리띠와 절 이동 줄 밑에서 시작한다 — 다른 절과 같은 여백 */
+.place-market#market { scroll-margin-top: calc(var(--place-header-h, 0px) + 44px); }

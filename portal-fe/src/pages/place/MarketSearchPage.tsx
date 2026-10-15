@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { searchMarkets } from '../../api/marketApi';
+import { searchMarkets, type MarketAttractionRef } from '../../api/marketApi';
 import type { PlaceLang } from '../../api/placeApi';
 import Footer from '../../components/Footer';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
@@ -14,6 +14,16 @@ const COPY = {
   ko: { back: '← 관광지 탐색', search: '가게·품목 검색', submit: '찾기', markets: '시장', stores: '가게', count: '가게', loading: '불러오는 중…', error: '시장 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', empty: '검색 결과가 없습니다.', previous: '이전', next: '다음', types: { STREET: '거리형', BUILDING: '건물형', MIXED: '혼합형' } },
   en: { back: '← Explore Korea', search: 'Search shops or goods', submit: 'Search', markets: 'Markets', stores: 'Shops', count: 'shops', loading: 'Loading…', error: 'Could not load markets. Please try again in a moment.', empty: 'No results found.', previous: 'Previous', next: 'Next', types: { STREET: 'Street market', BUILDING: 'Building market', MIXED: 'Mixed market' } },
 } as const;
+
+function detailHref(attraction: MarketAttractionRef | null, query: string): string | null {
+  if (!attraction) return null;
+  return `${placePath(attraction.lang, `/attractions/${attraction.id}`)}${query ? `?marketQuery=${encodeURIComponent(query)}` : ''}#market`;
+}
+
+/** A market without a TourAPI attraction row has no detail page; show the result without a dead link. */
+function ResultLink({ to, children }: { to: string | null; children: ReactNode }) {
+  return to ? <Link to={to}>{children}</Link> : <div>{children}</div>;
+}
 
 export default function MarketSearchPage() {
   useHeritageSurface();
@@ -44,10 +54,10 @@ export default function MarketSearchPage() {
       {isError && <p role="alert">{C.error}</p>}
       {data && !isError && <>
         {data.markets.length > 0 && <section aria-label={C.markets}><h2>{C.markets}</h2><ul className="market-search-results">{data.markets.map((market) => <li key={market.contentId}>
-          <Link to={`${placePath(lang, `/attractions/${market.contentId}`)}${query ? `?marketQuery=${encodeURIComponent(query)}` : ''}#market`}><strong>{market.name}</strong><span>{[market.region, C.types[market.marketType as keyof typeof C.types], `${market.storeCount} ${C.count}`].filter(Boolean).join(' · ')}</span></Link>
+          <ResultLink to={detailHref(market.attraction, query)}><strong>{market.name}</strong><span>{[market.region, C.types[market.marketType as keyof typeof C.types], `${market.storeCount} ${C.count}`].filter(Boolean).join(' · ')}</span></ResultLink>
         </li>)}</ul></section>}
         {query && shops.length > 0 && <section aria-label={C.stores}><h2>{C.stores} ({data.stores.total})</h2><ul className="market-search-results">{shops.map((shop) => <li key={shop.storeId}>
-          <Link to={`${placePath(lang, `/attractions/${shop.marketContentId}`)}?marketQuery=${encodeURIComponent(query)}#market`}><strong>{shop.name}</strong><span>{[shop.items, shop.category].filter(Boolean).join(' · ')}</span><span>{[shop.marketName, shop.zoneName].filter(Boolean).join(' · ')}</span></Link>
+          <ResultLink to={detailHref(shop.attraction, query)}><strong>{shop.name}</strong><span>{[shop.items, shop.category].filter(Boolean).join(' · ')}</span><span>{[shop.marketName, shop.zoneName].filter(Boolean).join(' · ')}</span></ResultLink>
         </li>)}</ul></section>}
         {data.markets.length === 0 && shops.length === 0 && <p role="status">{C.empty}</p>}
         <nav className="market-search-pagination" aria-label={lang === 'en' ? 'Result pages' : '결과 페이지'}>

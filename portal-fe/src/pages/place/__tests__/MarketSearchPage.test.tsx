@@ -9,7 +9,8 @@ vi.mock('../../../api/marketApi', () => ({ searchMarkets: vi.fn() }));
 vi.mock('../../../components/Footer', () => ({ default: () => null }));
 vi.mock('../../../hooks/useHeritageSurface', () => ({ useHeritageSurface: vi.fn() }));
 afterEach(() => { cleanup(); vi.resetAllMocks(); });
-const market = { contentId: '100', name: '광명시장', region: '경기 광명', marketType: 'STREET', storeCount: 153 };
+// The route id is the attraction id (per language), never the TourAPI contentId.
+const market = { contentId: '100', name: '광명시장', region: '경기 광명', marketType: 'STREET', storeCount: 153, attraction: { id: 7, lang: 'ko' as const } };
 const result: MarketSearchResult = { query: '', markets: [market], stores: { items: [], total: 0, page: 0, size: 20 } };
 function Address() { const location = useLocation(); return <span data-testid="address">{location.pathname}{location.search}</span>; }
 function mount(entry = '/markets') {
@@ -20,7 +21,7 @@ describe('market shop discovery', () => {
   it('lists markets and counts for an empty query with links to their market sections', async () => {
     vi.mocked(searchMarkets).mockResolvedValue(result);
     mount();
-    expect(await screen.findByRole('link', { name: /광명시장/ })).toHaveAttribute('href', '/attractions/100#market');
+    expect(await screen.findByRole('link', { name: /광명시장/ })).toHaveAttribute('href', '/attractions/7#market');
     expect(screen.getByText(/153 가게/)).toBeInTheDocument();
     expect(searchMarkets).toHaveBeenCalledWith('', 'ko', 0);
     expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute('href', 'https://place.1989v.com/markets');
@@ -28,11 +29,12 @@ describe('market shop discovery', () => {
 
   it.each(['/markets', '/en/markets'])('renders shops, goods, category and alley with encoded deep links on %s', async (entry) => {
     const q = '순대 & 국밥';
-    vi.mocked(searchMarkets).mockResolvedValue({ ...result, stores: { ...result.stores, total: 1, items: [{ storeId: 1, name: '유명순대국', items: '순대', category: '음식점', marketContentId: '100', marketName: '광명시장', zoneName: '시장 골목', latitude: null, longitude: null }] } });
+    vi.mocked(searchMarkets).mockResolvedValue({ ...result, stores: { ...result.stores, total: 1, items: [{ storeId: 1, name: '유명순대국', items: '순대', category: '음식점', marketContentId: '100', marketName: '광명시장', zoneName: '시장 골목', latitude: null, longitude: null, attraction: { id: entry.startsWith('/en') ? 8 : 7, lang: entry.startsWith('/en') ? 'en' : 'ko' } }] } });
     mount(`${entry}?q=${encodeURIComponent(q)}`);
     const prefix = entry.startsWith('/en') ? '/en' : '';
-    expect(await screen.findByRole('link', { name: /유명순대국/ })).toHaveAttribute('href', `${prefix}/attractions/100?marketQuery=${encodeURIComponent(q)}#market`);
-    expect(screen.getByRole('link', { name: /광명시장 경기/ })).toHaveAttribute('href', `${prefix}/attractions/100?marketQuery=${encodeURIComponent(q)}#market`);
+    expect(await screen.findByRole('link', { name: /유명순대국/ })).toHaveAttribute('href', `${prefix}/attractions/${prefix ? 8 : 7}?marketQuery=${encodeURIComponent(q)}#market`);
+    // A market with only a Korean page links there from the English search too.
+    expect(screen.getByRole('link', { name: /광명시장 경기/ })).toHaveAttribute('href', `/attractions/7?marketQuery=${encodeURIComponent(q)}#market`);
     expect(screen.getByText('순대 · 음식점')).toBeInTheDocument();
     expect(screen.getByText('광명시장 · 시장 골목')).toBeInTheDocument();
     expect(screen.getByRole('searchbox')).toHaveValue(q);
@@ -49,6 +51,13 @@ describe('market shop discovery', () => {
     expect(searchMarkets).toHaveBeenLastCalledWith('순대', 'ko', 0);
     expect(screen.getByTestId('address')).toHaveTextContent('/markets');
     expect(screen.getByRole('searchbox')).toHaveAttribute('maxlength', '50');
+  });
+
+  it('does not link a market that has no attraction page', async () => {
+    vi.mocked(searchMarkets).mockResolvedValue({ ...result, markets: [{ ...market, attraction: null }] });
+    mount();
+    expect(await screen.findByText('광명시장')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /광명시장/ })).toBeNull();
   });
 
   it('shows a useful empty state', async () => {

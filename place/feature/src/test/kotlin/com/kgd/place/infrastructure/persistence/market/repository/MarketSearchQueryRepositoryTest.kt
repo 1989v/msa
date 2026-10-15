@@ -1,5 +1,6 @@
 package com.kgd.place.infrastructure.persistence.market.repository
 
+import com.kgd.place.application.market.usecase.SearchMarketsUseCase
 import com.kgd.place.domain.market.model.*
 import com.kgd.place.infrastructure.persistence.market.entity.*
 import com.kgd.place.infrastructure.persistence.market.adapter.MarketSearchRepositoryAdapter
@@ -169,6 +170,23 @@ class MarketSearchQueryRepositoryTest : BehaviorSpec({
             result.markets[1].storeCount shouldBe 1
             result.stores.total shouldBe 0
             adapter.search("떡시장", "ko", 0, 20).markets[1].region shouldBe "서울특별시 중구"
+        }
+        Then("상세 링크는 요청 언어의 관광지 id, 없으면 국문 관광지 id 를 준다") {
+            val both = market("ref-both", "참시장"); val koOnly = market("ref-ko", "참새시장")
+            store(both, "참기름집", items = "참기름"); store(koOnly, "참외가게", items = "참외")
+            fun attraction(content: String, lang: String) = AttractionJpaEntity(contentId = content, lang = lang,
+                title = content, titleDisplay = content, address = "서울특별시 중구", latitude = 37.0, longitude = 127.0,
+                status = "ACTIVE").also { em.persist(it) }
+            val bothKo = attraction("ref-both", "ko"); val bothEn = attraction("ref-both", "en")
+            val koOnlyKo = attraction("ref-ko", "ko")
+            em.flush()
+            val en = adapter.search("참", "en", 0, 20)
+            en.markets.associate { it.contentId to it.attraction } shouldBe mapOf(
+                "ref-both" to SearchMarketsUseCase.AttractionRef(requireNotNull(bothEn.id), "en"),
+                "ref-ko" to SearchMarketsUseCase.AttractionRef(requireNotNull(koOnlyKo.id), "ko"))
+            en.stores.items.associate { it.name to it.attraction?.lang } shouldBe mapOf("참기름집" to "en", "참외가게" to "ko")
+            adapter.search("참기름", "ko", 0, 20).stores.items.single().attraction shouldBe
+                SearchMarketsUseCase.AttractionRef(requireNotNull(bothKo.id), "ko")
         }
         Then("유효 IN 또는 경계만 가진 시장을 반환하고 빈 검색은 가게를 조회하지 않는다") {
             val a = market("in", "가시장"); val b = market("boundary", "나시장")

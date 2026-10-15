@@ -12,5 +12,5 @@
 .market-search-results a:hover { background: var(--ko-surface-1); }
 .market-search-results span { color: var(--ko-text-secondary); font-size: .875rem; }
 .market-search-pagination { display: flex; justify-content: space-between; gap: 1rem; margin-top: 1.5rem; }
-.market-map-badge { display: inline-block; padding: .125rem .375rem; border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius); color: var(--ko-accent-text); font-size: .75rem; }
+.market-map-badge { display: inline-block; align-self: flex-start; justify-self: start; width: fit-content; padding: .125rem .375rem; border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius); color: var(--ko-accent-text); font-size: .75rem; }
 .market-search-main :is(a, input, button):focus-visible { outline: var(--ko-focus-ring); outline-offset: 3px; }

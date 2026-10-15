@@ -89,11 +89,14 @@ export async function fetchMarket(contentId: string, includeOutside: boolean, la
   return response.data.data;
 }
 
+/** Detail pages are keyed by attraction id per language; Korean when the requested language has none. */
+export interface MarketAttractionRef { id: number; lang: PlaceLang }
+
 export interface MarketSearchResult {
   query: string;
-  markets: Array<{ contentId: string; name: string; region: string | null; marketType: string; storeCount: number }>;
+  markets: Array<{ contentId: string; name: string; region: string | null; marketType: string; storeCount: number; attraction: MarketAttractionRef | null }>;
   stores: {
-    items: Array<{ storeId: number; name: string; items: string | null; category: string | null; marketContentId: string; marketName: string; zoneName: string | null; latitude: number | null; longitude: number | null }>;
+    items: Array<{ storeId: number; name: string; items: string | null; category: string | null; marketContentId: string; marketName: string; zoneName: string | null; latitude: number | null; longitude: number | null; attraction: MarketAttractionRef | null }>;
     total: number; page: number; size: number;
   };
 }

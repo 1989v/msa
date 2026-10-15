@@ -7,10 +7,12 @@ interface SearchMarketsUseCase {
     fun contentIds(): List<String>
 
     data class Result(val query: String, val markets: List<MarketSummary>, val stores: StorePage)
+    /** [attraction] is the detail page to open: the requested language first, else Korean. */
     data class MarketSummary(val contentId: String, val name: String, val region: String?,
-        val marketType: MarketType, val storeCount: Long)
+        val marketType: MarketType, val storeCount: Long, val attraction: AttractionRef?)
+    data class AttractionRef(val id: Long, val lang: String)
     data class StorePage(val items: List<StoreSummary>, val total: Long, val page: Int, val size: Int)
     data class StoreSummary(val storeId: Long, val name: String, val items: String?, val category: String?,
         val marketContentId: String, val marketName: String, val zoneName: String?,
-        val latitude: Double?, val longitude: Double?)
+        val latitude: Double?, val longitude: Double?, val attraction: AttractionRef?)
 }
