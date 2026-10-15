@@ -358,6 +358,15 @@ def prune_attraction_access(computed_at: str) -> dict:
     return _request("POST", "/internal/attractions/access/prune", {"computedAt": computed_at}, timeout=300)["data"]
 
 
+# SH06 = 정기·상설 시장. SH04 는 브랜드 매장(1만여 곳), 제목의 「시장」은 「○○시장점」·여행기 글까지 잡아 쓰지 않는다.
+MARKET_CLASSES = {"SH06"}
+MARKET_CAT3 = {"A04010100", "A04010200"}
+
+
+def is_market_attraction(row: dict) -> bool:
+    return is_tourapi(row) and (row.get("lclsSystm2") in MARKET_CLASSES or row.get("cat3") in MARKET_CAT3)
+
+
 def fetch_market_attractions() -> list[dict]:
     """Filter each keyset page immediately; do not hold the full attraction payload in memory."""
     rows = []
@@ -369,10 +378,7 @@ def fetch_market_attractions() -> list[dict]:
         if got and int(got[0]["id"]) <= last_id:
             raise RuntimeError("Market attraction cursor did not advance")
         for a in got:
-            if a.get("lang") == "ko" and a.get("status") == "ACTIVE" and is_tourapi(a) and (
-                "시장" in (a.get("title") or "") or a.get("cat3") in {"A04010100", "A04010200"}
-                or a.get("lclsSystm2") in {"SH04", "SH06"}
-            ):
+            if a.get("lang") == "ko" and a.get("status") == "ACTIVE" and is_market_attraction(a):
                 rows.append(a)
         if got:
             last_id = int(got[-1]["id"])

@@ -85,7 +85,7 @@ def test_onnuri_bom_header_and_raw_fields(tmp_path):
 
 def test_identify_requires_same_locality_and_preserves_standard_raw():
     standard = {'시장명':'광명시장','소재지지번주소':'경기도 광명시 광명동 158-100','시장유형':'건물형','점포수':'0042','위도':'37.48','경도':'126.85','그외원천':'보존'}
-    attraction = {'contentId':'123','lang':'ko','status':'ACTIVE','title':'광명시장','address':'경기 광명시 광명동 1','latitude':37.4,'longitude':126.8}
+    attraction = {'contentId':'123','lang':'ko','status':'ACTIVE','lclsSystm2':'SH06','title':'광명시장','address':'경기 광명시 광명동 1','latitude':37.4,'longitude':126.8}
     market = ms.identify([attraction],[standard])[0]
     assert market['marketInfoMatched'] and market['marketType'] == 'BUILDING'
     assert json.loads(market['sourceRaw']) == standard
@@ -174,7 +174,97 @@ def test_legal_dong_parser_does_not_truncate_city_or_gu_names():
 
 
 def test_duplicate_standard_source_keys_fail_preflight():
-    attraction = {'contentId':'1','lang':'ko','status':'ACTIVE','title':'시장','address':'경기 광명시 광명동 1'}
+    attraction = {'contentId':'1','lang':'ko','status':'ACTIVE','lclsSystm2':'SH06','title':'시장','address':'경기 광명시 광명동 1'}
     standard = {'시장명':'시장','소재지지번주소':'경기 광명시 광명동 1'}
     with pytest.raises(ValueError,match='Duplicate standardized market'):
         ms.identify([attraction,{**attraction,'contentId':'2'}],[standard])
+
+
+def test_standard_api_mapping_all_pages_raw_key_and_unknown_fields():
+    urls = []
+    original = {'mrktNm':'광명시장','mrktType':'건물형','rdnmadr':'경기 광명시 광명로 1',
+                'lnmadr':'경기 광명시 광명동 1','latitude':'37.48','longitude':'126.85',
+                'storNumber':'0042','mrktEstblCycle':'상설','pblicToiletYn':'Y','unknown':{'keep':True}}
+    def fetch(url):
+        urls.append(url)
+        row = original if len(urls) == 1 else {**original, 'mrktNm':'다른시장'}
+        return 200, json.dumps({'response':{'header':{'resultCode':'00'},
+            'body':{'items':[row], 'totalCount':1001}}})
+    rows = ms.fetch_standards('key%2Bencoded%3D', fetch=fetch)
+    assert len(rows) == 2 and rows[1]['시장명'] == '다른시장'
+    assert all(u.startswith(ms.STANDARD_API_URL+'?serviceKey=key%2Bencoded%3D&') for u in urls)
+    assert 'type=json' in urls[0] and 'numOfRows=1000' in urls[0] and 'pageNo=2' in urls[1]
+    assert all(rows[0][field] == value for field, value in original.items())
+    assert rows[0]['점포수'] == '0042' and rows[0]['개설주기'] == '상설'
+    attraction = {'contentId':'1','lang':'ko','status':'ACTIVE','lclsSystm2':'SH06','title':'광명시장',
+                  'address':'경기 광명시 광명동 1','latitude':37.4,'longitude':126.8}
+    market = ms.identify([attraction],rows)[0]
+    assert market['marketInfoMatched'] and market['latitude'] == 37.48
+    assert json.loads(market['sourceRaw'])['unknown'] == {'keep':True}
+
+
+@pytest.mark.parametrize('response', [
+    json.dumps({'response':{'header':{'resultCode':'30','resultMsg':'SERVICE_KEY_IS_NOT_REGISTERED_ERROR'}}}),
+    '<OpenAPI_ServiceResponse><cmmMsgHeader><returnReasonCode>30</returnReasonCode></cmmMsgHeader></OpenAPI_ServiceResponse>',
+])
+def test_standard_api_error_30_aborts_before_place_writes(response, tmp_path):
+    with patch.object(ms.datagokr,'_http_get',return_value=(200,response)), \
+         patch.object(place_client,'put_market') as write, patch.object(ms,'download') as download:
+        with pytest.raises(ms.datagokr.DataGoKrError):
+            ms.run(None,'onnuri','bulk','key',standard_source='api')
+        write.assert_not_called()
+        download.assert_not_called()
+
+
+def test_standard_file_mode_retains_csv_path(tmp_path):
+    path = tmp_path/'standard.csv'
+    path.write_text('시장명,새로운필드\n광명시장,보존\n',encoding='utf-8-sig')
+    with patch.object(ms,'download',return_value=path) as download, patch.object(ms,'fetch_standards') as api:
+        assert ms.load_standards('file','csv-url','key',tmp_path) == [{'시장명':'광명시장','새로운필드':'보존'}]
+        assert download.call_args.args[0] == 'csv-url'
+        api.assert_not_called()
+
+
+def test_off_run_uses_attraction_and_reports_source_without_standard_download(tmp_path):
+    o = FIXTURE['samples'][0]['onnuri']
+    attraction = {'contentId':'1','lang':'ko','status':'ACTIVE','lclsSystm2':'SH06','title':o['시장명'],
+                  'latitude':37.4,'longitude':126.8}
+    api = Mock(calls=0,failures=0); api.stores.return_value = []
+    with patch.object(ms,'download',return_value=tmp_path/'file') as download, \
+         patch.object(ms,'read_csv',return_value=[o]), patch.object(ms,'load_bulk',return_value=1), \
+         patch.object(ms,'fetch_standards') as standard_api, patch.object(ms,'StoreApi',return_value=api), \
+         patch.object(place_client,'fetch_market_attractions',return_value=[attraction]), \
+         patch.object(place_client,'market_state',return_value=None), patch.object(place_client,'put_market') as write:
+        summary = ms.run(None,'onnuri','bulk','key',standard_source='off')
+        assert summary['standardSource'] == 'off' and summary['markets'] == 1
+        market = write.call_args.args[0]['market']
+        assert market['name'] == attraction['title'] and market['latitude'] == attraction['latitude']
+        assert market['longitude'] == attraction['longitude'] and market['marketInfoMatched'] is False
+        assert [c.args[0] for c in download.call_args_list] == ['onnuri','bulk']
+        standard_api.assert_not_called()
+
+
+def test_empty_onnuri_still_fails_when_standard_source_off(tmp_path):
+    with patch.object(ms,'download',return_value=tmp_path/'file'), patch.object(ms,'read_csv',return_value=[]), \
+         patch.object(place_client,'put_market') as write:
+        with pytest.raises(ValueError,match='Empty market source'):
+            ms.run(None,'onnuri','bulk','key',standard_source='off')
+        write.assert_not_called()
+
+
+def test_invalid_standard_source_fails(tmp_path):
+    with pytest.raises(ValueError,match='MARKET_STANDARD_SOURCE'):
+        ms.load_standards('invalid',None,'key',tmp_path)
+
+
+def test_market_attraction_requires_market_class_not_title():
+    base = {'contentId':'1','lang':'ko','status':'ACTIVE','source':'TOURAPI'}
+    assert place_client.is_market_attraction({**base,'title':'광장시장','lclsSystm2':'SH06'})
+    assert place_client.is_market_attraction({**base,'title':'정선5일장','cat3':'A04010100'})
+    assert not place_client.is_market_attraction({**base,'title':'MLB 명동점','lclsSystm2':'SH04'})
+    assert not place_client.is_market_attraction({**base,'title':'다이소 제주동문시장점','lclsSystm2':'SH04'})
+    assert not place_client.is_market_attraction({**base,'title':'시장 골목 여행기','lclsSystm2':'C0114'})
+    assert not place_client.is_market_attraction({**base,'title':'광장시장','lclsSystm2':'SH06','source':'GOCAMPING'})
+    attraction = {**base,'title':'다이소 제주동문시장점','lclsSystm2':'SH04','address':'제주 제주시 일도1동'}
+    with pytest.raises(ValueError):
+        ms.identify([attraction],[])

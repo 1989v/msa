@@ -62,7 +62,4 @@ class MarketGeometryInternalController(private val geometry: MarketGeometryUseCa
     }
     @PostMapping("/{marketId}/rejudge")
     fun rejudge(@PathVariable marketId: Long) = ApiResponse.success(MarketGeometryUseCase.Rejudge(judge.rejudge(marketId)))
-    @GetMapping("/{marketId}/stores")
-    fun stores(@PathVariable marketId: Long, @RequestParam(defaultValue = "IN") membership: MarketMembershipStatus) =
-        ApiResponse.success(geometry.stores(marketId, membership))
 }

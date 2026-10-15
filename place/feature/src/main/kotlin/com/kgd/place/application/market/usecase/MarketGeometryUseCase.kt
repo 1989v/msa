@@ -9,10 +9,8 @@ interface MarketGeometryUseCase {
     fun reset(actor: MarketEditorActor, marketId: Long, request: Reset): Map<String, Any?>
     fun needsReview(actor: MarketEditorActor, marketId: Long): List<Review>
     fun assign(actor: MarketEditorActor, marketId: Long, storeId: Long, request: Assignment): Map<String, Rejudge>
-    fun stores(marketId: Long, membership: MarketMembershipStatus): List<StoreLocation>
     fun ingest(marketId: Long, request: Osm)
     fun revert(actor: MarketEditorActor, change: MarketChangeLog)
-    data class StoreLocation(val id: Long, val lat: Double?, val lng: Double?)
     data class Rejudge(val changedStores: Int)
     data class Boundary(val polygon: List<List<Double>>, val source: MarketGeometrySource, val osmId: String? = null)
     data class Path(val id: Long?, val name: String?, val named: Boolean, val geometry: List<List<Double>>, val source: MarketGeometrySource)

@@ -1,5 +1,5 @@
 # Weekly Monday KST 01:10 (Sunday UTC 16:10); disk-backed ZIP/SQLite staging.
-# File download URLs change on publication: provision place-market-source-files before enabling.
+# File download URLs change on publication: update place-market-source-files.
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -11,8 +11,7 @@ metadata:
     place.kgd.io/job: "market-stores"
 spec:
   # Monday KST 01:10; before daily scan jobs.
-  # place-market-source-files ConfigMap 을 만든 뒤에 false 로 바꾼다 — 없으면 매주 컨테이너 생성 오류.
-  suspend: true
+  suspend: false
   schedule: "10 16 * * 0"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 2
@@ -44,9 +43,12 @@ spec:
                     secretKeyRef: { name: place-ingest-secrets, key: tour-api-key }
                 - name: REDIS_HOST
                   value: redis
+                - name: MARKET_STANDARD_SOURCE
+                  valueFrom:
+                    configMapKeyRef: { name: place-market-source-files, key: standard-source }
                 - name: MARKET_STANDARD_FILE_URL
                   valueFrom:
-                    configMapKeyRef: { name: place-market-source-files, key: standard-url }
+                    configMapKeyRef: { name: place-market-source-files, key: standard-url, optional: true }
                 - name: MARKET_ONNURI_FILE_URL
                   valueFrom:
                     configMapKeyRef: { name: place-market-source-files, key: onnuri-url }
