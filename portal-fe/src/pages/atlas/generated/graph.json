@@ -1,6 +1,6 @@
 {
-"revision": 21,
-"source": "ef8807edcd9dd862db997d8b05decf71d1399672f37f0849141191aef337bbe4",
+"revision": 22,
+"source": "cb7f6b5cff8bf7150417ffcca9e1683ebe8d3d1f1f6750961984f63d5582ec65",
 "kinds": ["DOMAIN", "STAGE", "MECHANISM", "TERM", "TECHNOLOGY", "PROBLEM", "METRIC"],
 "edgeKinds": ["CONTAINS", "FLOWS_TO", "USES", "IMPLEMENTS", "AFFECTS", "CAUSES", "MITIGATES", "MEASURED_BY", "ALTERNATIVE_TO"],
 "domains": [
