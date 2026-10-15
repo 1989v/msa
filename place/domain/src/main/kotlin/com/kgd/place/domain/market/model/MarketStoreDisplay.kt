@@ -18,7 +18,7 @@ data class MarketStoreDisplay(
                 "Coordinate overrides require both latitude and longitude fields"
             }
             fun value(field: MarketStoreField, original: String?): String? =
-                if (field in fields) fields.getValue(field).value else original
+                MarketDisplayValuePolicy.editedValue(original, fields[field]) { edit, _ -> edit.value }
             val lat = value(MarketStoreField.LATITUDE, store.latitude?.toString())?.toDouble()
             val lng = value(MarketStoreField.LONGITUDE, store.longitude?.toString())?.toDouble()
             require((lat == null) == (lng == null)) { "Display coordinate requires both latitude and longitude" }
@@ -30,7 +30,8 @@ data class MarketStoreDisplay(
                 items = value(MarketStoreField.ITEMS, store.items),
                 zoneId = value(MarketStoreField.ZONE_ID, store.zoneId?.toString())?.toLong(),
                 membership = MarketMembership(MarketMembershipStatus.valueOf(
-                    value(MarketStoreField.MEMBERSHIP, (store.judgedMembership ?: store.membership.status).name)!!)),
+                    value(MarketStoreField.MEMBERSHIP, MarketDisplayValuePolicy.membership(
+                        store.judgedMembership, store.membership.status) { judged, ingested -> judged ?: ingested }!!.name)!!)),
                 coordinate = if (lat != null && lng != null) MarketCoordinate(lat, lng) else null,
                 pinKind = pinKind,
             )
