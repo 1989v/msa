@@ -23,6 +23,8 @@ class MarketRowRestorer(@Qualifier("placeDataSource") dataSource: DataSource) {
         "building_name" to r.buildingName, "dong" to r.dong, "floor" to r.floor, "ho" to r.ho,
         "road_name" to r.roadName, "onnuri_key" to r.onnuriKey, "sangga_key" to r.sanggaKey,
         "onnuri_raw" to r.onnuriRaw, "sangga_raw" to r.sanggaRaw, "membership" to r.membership.status,
+        "good_price_key" to r.goodPriceKey, "good_price_raw" to r.goodPriceRaw,
+        "good_price_matched_by" to r.goodPriceMatchedBy, "good_price_menu_names" to r.goodPriceMenuNames,
         "pin_kind" to r.pinKind, "reference_store_id" to r.referenceStoreId, "relative_position" to r.relativePosition,
         "position_note" to r.positionNote, "actor_kind" to r.actorKind,
         "created_by_member_id" to r.createdByMemberId, "created_at" to r.createdAt))

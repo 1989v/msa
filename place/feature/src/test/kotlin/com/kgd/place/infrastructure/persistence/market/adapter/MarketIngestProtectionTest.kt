@@ -55,7 +55,9 @@ class MarketIngestProtectionTest : BehaviorSpec({
             every { changes.save(any()) } answers { firstArg() }
             zoneRows[10] = MarketZoneJpaEntity.fromDomain(MarketZone(1, MarketZoneKind.ROAD, "원천", MarketZoneSource.AUTO, sourceKey = "road", id = 10))
             storeRows[11] = MarketStoreJpaEntity.fromDomain(MarketStore(1, "원천", MarketStoreSource.ONNURI, sourceKey = "o",
-                onnuriKey = "o", onnuriRaw = "{}", zoneId = 10, latitude = 37.0, longitude = 127.0, id = 11))
+                onnuriKey = "o", onnuriRaw = "{}", zoneId = 10, latitude = 37.0, longitude = 127.0, id = 11,
+                goodPriceKey = "good", goodPriceRaw = """{"메뉴1":"국수","가격1":"5000"}""",
+                goodPriceMatchedBy = "NAME", goodPriceMenuNames = "국수"))
             val adapter = MarketRepositoryAdapter(markets, zones, stores, overrides, changes, stewards, mockk())
             val edit = MarketEditorService(adapter, adapter, adapter); val actor = MarketEditorActor(MarketActorKind.ADMIN, 7)
             val polygon = "POLYGON((127 37,128 37,128 38,127 37))"
@@ -80,6 +82,11 @@ class MarketIngestProtectionTest : BehaviorSpec({
             val afterAutoZone = adapter.findZones(1).find { it.id == 10L }!!
             afterAutoZone.name shouldBe beforeAutoZone.name; afterAutoZone.polygonWkt shouldBe polygon; afterAutoZone.sortOrder shouldBe 5
             adapter.findStores(1).find { it.id == 11L }!!.name shouldBe "새 원천 이름"
+            val reloaded = adapter.findStores(1).find { it.id == 11L }!!
+            reloaded.goodPriceKey shouldBe null
+            reloaded.goodPriceRaw shouldBe null
+            reloaded.goodPriceMatchedBy shouldBe null
+            reloaded.goodPriceMenuNames shouldBe null
             edit.detail(actor, 1).stores.find { it.source.id == 11L }!!.display.name shouldBe "운영자 이름"
         }
     }

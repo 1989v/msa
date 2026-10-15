@@ -55,6 +55,10 @@ internal object MarketPublicProjection {
                 categoryMajor = row.categoryMajor ?: other.categoryMajor,
                 categoryMid = row.categoryMid ?: other.categoryMid,
                 categorySub = row.categorySub ?: other.categorySub,
+                goodPriceKey = if (row.goodPriceRaw != null) row.goodPriceKey else other.goodPriceKey,
+                goodPriceRaw = row.goodPriceRaw ?: other.goodPriceRaw,
+                goodPriceMatchedBy = if (row.goodPriceRaw != null) row.goodPriceMatchedBy else other.goodPriceMatchedBy,
+                goodPriceMenuNames = if (row.goodPriceRaw != null) row.goodPriceMenuNames else other.goodPriceMenuNames,
             )
             val publicSource = if (base.referenceStoreId in canonicalIds)
                 base.copy(referenceStoreId = canonicalIds.getValue(requireNotNull(base.referenceStoreId))) else base

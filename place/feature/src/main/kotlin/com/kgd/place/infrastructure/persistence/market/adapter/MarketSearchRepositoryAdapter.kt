@@ -2,6 +2,7 @@ package com.kgd.place.infrastructure.persistence.market.adapter
 
 import com.kgd.place.application.market.port.MarketSearchPort
 import com.kgd.place.application.market.service.MarketPublicProjection
+import com.kgd.place.application.market.dto.GoodPriceProjection
 import com.kgd.place.application.market.usecase.SearchMarketsUseCase
 import com.kgd.place.domain.market.model.Market
 import com.kgd.place.infrastructure.persistence.market.repository.*
@@ -51,7 +52,9 @@ class MarketSearchRepositoryAdapter(
                     .takeIf { it.isNotEmpty() }?.joinToString(" > "),
                 market.attractionContentId, market.name, zoneNames[row.display.zoneId],
                 row.display.coordinate?.latitude, row.display.coordinate?.longitude,
-                attractions[market.attractionContentId]?.ref())
+                attractions[market.attractionContentId]?.ref(), GoodPriceProjection.from(row.source.goodPriceRaw)?.let {
+                    SearchMarketsUseCase.GoodPrice(it.category, it.menus)
+                })
         }
         val regions = regions(marketRows, attractions)
         return SearchMarketsUseCase.Result(query, marketRows.map { market ->

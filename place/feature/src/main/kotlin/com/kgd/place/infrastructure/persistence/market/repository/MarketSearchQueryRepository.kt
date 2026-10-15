@@ -61,6 +61,8 @@ class MarketSearchQueryRepository(@Qualifier("placeJpaQueryFactory") private val
             store.membership.stringValue()) { judged, ingested -> judged.coalesce(ingested) })
     private val categories get() = listOf(store.categoryMajor.coalesce(partner.categoryMajor),
         store.categoryMid.coalesce(partner.categoryMid), store.categorySub.coalesce(partner.categorySub))
+    private val menuNames get() = CaseBuilder().`when`(store.goodPriceRaw.isNotNull)
+        .then(store.goodPriceMenuNames).otherwise(partner.goodPriceMenuNames)
 
     private fun base(): JPAQuery<*> {
         val query = factory.from(store).leftJoin(partner).on(partner.id.eq(partnerId()))
@@ -77,7 +79,8 @@ class MarketSearchQueryRepository(@Qualifier("placeJpaQueryFactory") private val
 
     private fun matches(value: StringExpression, query: String) = normalized(value).containsIgnoreCase(query)
     private fun matching(query: String): JPAQuery<*> = base().where(
-        matches(name, query).or(matches(items, query)).or(categories.map { matches(it, query) }.reduce { a, b -> a.or(b) }))
+        matches(name, query).or(matches(items, query)).or(matches(menuNames, query))
+            .or(categories.map { matches(it, query) }.reduce { a, b -> a.or(b) }))
 
     data class Candidates(val rows: List<Pair<com.kgd.place.domain.market.model.MarketStore,
         com.kgd.place.domain.market.model.MarketStore?>>, val total: Long)
@@ -95,7 +98,7 @@ class MarketSearchQueryRepository(@Qualifier("placeJpaQueryFactory") private val
 
     fun stores(query: String, pageable: Pageable): Candidates {
         val rank = CaseBuilder().`when`(matches(name, query)).then(0)
-            .`when`(matches(items, query)).then(1).otherwise(2)
+            .`when`(matches(items, query)).then(1).`when`(matches(menuNames, query)).then(2).otherwise(3)
         val rows = matching(query).select(store, partner)
             .orderBy(rank.asc(), market.name.asc(), name.asc(), store.id.asc())
             .offset(pageable.offset).limit(pageable.pageSize.toLong()).fetch()

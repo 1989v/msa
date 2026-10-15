@@ -98,6 +98,14 @@ class MarketStoreJpaEntity(
     val pathId: Long? = null,
     @Column(name = "needs_review", nullable = false)
     val needsReview: Boolean = false,
+    @Column(name = "good_price_key", nullable = true, length = 64)
+    val goodPriceKey: String? = null,
+    @Column(name = "good_price_raw", nullable = true, columnDefinition = "text")
+    val goodPriceRaw: String? = null,
+    @Column(name = "good_price_matched_by", nullable = true, length = 16)
+    val goodPriceMatchedBy: String? = null,
+    @Column(name = "good_price_menu_names", nullable = true, length = 500)
+    val goodPriceMenuNames: String? = null,
 ) {
     fun toDomain(): MarketStore = MarketStore(
         marketId = marketId,
@@ -136,6 +144,10 @@ class MarketStoreJpaEntity(
         judgedBy = judgedBy,
         pathId = pathId,
         needsReview = needsReview,
+        goodPriceKey = goodPriceKey,
+        goodPriceRaw = goodPriceRaw,
+        goodPriceMatchedBy = goodPriceMatchedBy,
+        goodPriceMenuNames = goodPriceMenuNames,
 
     )
 
@@ -177,6 +189,10 @@ class MarketStoreJpaEntity(
             judgedBy = row.judgedBy,
             pathId = row.pathId,
             needsReview = row.needsReview,
+            goodPriceKey = row.goodPriceKey,
+            goodPriceRaw = row.goodPriceRaw,
+            goodPriceMatchedBy = row.goodPriceMatchedBy,
+            goodPriceMenuNames = row.goodPriceMenuNames,
 
         )
     }
