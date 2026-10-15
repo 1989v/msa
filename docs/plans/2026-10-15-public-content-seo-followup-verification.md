@@ -143,3 +143,9 @@
 - 첫 SEO 이미지의 search/portal-fe 모두 `successfully rolled out` 확인 후 공개 HTTP를 검사했다. 게임 공개184페이지(한영 상세164+장르18+허브2), 관광지 표본63페이지, 서버301/쿼리 보존11개, private/asset 헤더6개 =264항목 오류0. 제목 고유성·초기 안내·canonical·noindex·SSR·지역 구분을 확인했다. [검증 JSON](2026-10-15-public-content-seo-live-http.json).
 - 공개 관광지 sitemap4개는 동적 행사554 URL을 포함한 상세63,541 URL, 한영3,520쌍, 상호 연결 위반0이다. 로컬 정적 상세62,987 URL과 비교할 때 동적 행사 포함 여부를 구분한다. 매칭 기준이나 색인을 조작해 늘린 것이 아니라 새 빌드에 기존 검증된 데이터를 반영했다.
 - 브라우저·계정 UI는 사용하지 않았다. Search Console/네이버 계정의 실제 색인 상태·검색어 노출·평균순위·sitemap 제출은 수행하지 않았다. 기존 관광지 IndexNow 자동 제출 확인은 감사 문서에 기록했다.
+
+### 최종 완료
+
+- 코드/CI 설정 커밋 `6aa16213d`의 [전체 CI 38672471829](https://github.com/1989v/msa/actions/runs/38672471829) **success**. frontend `Test Files 146 passed | 1 skipped`, `Tests 1540 passed | 6 skipped`, `Duration 578.50s`; 이후 JSON-LD·footer·이미지·방문·접근·전화·hreflang golden검사도 모두 통과했다. 서버 구조·전체 코드/테스트 컴파일·온톨로지·YAML·Kustomize 검사도 success다. PR 전용 Changed-services test는 설계대로 skipped이며 서버 실제 테스트는 앞의 images/로컬 결과와 구분한다.
+- 최종 portal-fe:216c2b4에 `deployment portal-fe successfully rolled out` 재확인. search:e611387 세대158/158, portal-fe:216c2b4 세대577/577, 각각 available/updated1. 한글 거점 원정·영문 Archer Outbreak의 실제 제목과 안내도 재확인했다. 앞의 전체264 HTTP 검사 뒤 추가 제품 동작 변경은 없다.
+- 공통 제목/소개 원칙은 `docs/conventions/search-discoverability.md`, 장기 사용자 선호는 기존 `feedback_multilingual_search_discoverability.md`와 Claude/Codex 인덱스 참조에 반영했다. 전체 lint의 기존25 errors/2 warnings 및 저장소 전체 doc-index drift는 앞의 제한 기록을 유지한다. 전체 CI success를 이 두 별도 검사까지 모두 고쳤다는 의미로 쓰지 않는다.

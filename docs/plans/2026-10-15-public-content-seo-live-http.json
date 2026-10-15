@@ -509,5 +509,36 @@
       "robots": "noindex, follow"
     }
   ],
-  "errors": []
+  "errors": [],
+  "final_verification": {
+    "code_ci_commit": "6aa16213d69a142a2e95086d7cb4b412d4bd022a",
+    "ci_run": "https://github.com/1989v/msa/actions/runs/38672471829",
+    "ci_conclusion": "success",
+    "frontend_test_files_passed": 146,
+    "frontend_tests_passed": 1540,
+    "frontend_tests_skipped": 6,
+    "search_image": "search:e611387",
+    "search_generation_observed": [
+      158,
+      158
+    ],
+    "portal_image": "portal-fe:216c2b4",
+    "portal_generation_observed": [
+      577,
+      577
+    ],
+    "final_portal_rollout": "success",
+    "final_portal_sanity": [
+      {
+        "url": "https://game.1989v.com/games/marine-command",
+        "title": "궁수 키우기: 거점 원정 — RPG 게임 | 1989v 게임",
+        "guide": true
+      },
+      {
+        "url": "https://game.1989v.com/en/games/archer-outbreak",
+        "title": "Archer Outbreak — Action Game | 1989v 게임",
+        "guide": true
+      }
+    ]
+  }
 }
