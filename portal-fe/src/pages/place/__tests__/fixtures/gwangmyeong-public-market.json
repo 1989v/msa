@@ -1,0 +1,1211 @@
+{
+  "market": {
+    "name": "광명시장 · 표시 검증 표본",
+    "marketType": "STREET",
+    "sourceMarketType": null,
+    "storeCountRaw": null,
+    "openingCycle": null,
+    "facilities": null,
+    "attribution": null
+  },
+  "zones": [],
+  "boundary": {
+    "polygon": [
+      [
+        37.4816195,
+        126.8555512
+      ],
+      [
+        37.4808054,
+        126.8551766
+      ],
+      [
+        37.4807844,
+        126.855167
+      ],
+      [
+        37.4795328,
+        126.8545912
+      ],
+      [
+        37.4794961,
+        126.8546093
+      ],
+      [
+        37.4793963,
+        126.8549451
+      ],
+      [
+        37.4793723,
+        126.8550261
+      ],
+      [
+        37.4793212,
+        126.8551979
+      ],
+      [
+        37.4797057,
+        126.8553693
+      ],
+      [
+        37.4794953,
+        126.8560773
+      ],
+      [
+        37.4793533,
+        126.8560115
+      ],
+      [
+        37.4793651,
+        126.8559713
+      ],
+      [
+        37.4791246,
+        126.8558597
+      ],
+      [
+        37.4790712,
+        126.8560395
+      ],
+      [
+        37.4790647,
+        126.8560611
+      ],
+      [
+        37.4790472,
+        126.8561201
+      ],
+      [
+        37.4789988,
+        126.8562829
+      ],
+      [
+        37.4791438,
+        126.8563504
+      ],
+      [
+        37.4790922,
+        126.8565264
+      ],
+      [
+        37.4792118,
+        126.8565819
+      ],
+      [
+        37.4792168,
+        126.8565653
+      ],
+      [
+        37.4792687,
+        126.8565869
+      ],
+      [
+        37.4793708,
+        126.8566348
+      ],
+      [
+        37.4794162,
+        126.8564771
+      ],
+      [
+        37.479924,
+        126.8567133
+      ],
+      [
+        37.4798785,
+        126.8568733
+      ],
+      [
+        37.4799613,
+        126.8569122
+      ],
+      [
+        37.4800306,
+        126.8569447
+      ],
+      [
+        37.4801167,
+        126.8569852
+      ],
+      [
+        37.480163,
+        126.8568245
+      ],
+      [
+        37.4803761,
+        126.8569236
+      ],
+      [
+        37.4811179,
+        126.8572687
+      ],
+      [
+        37.4811577,
+        126.8571322
+      ],
+      [
+        37.4811951,
+        126.8570043
+      ],
+      [
+        37.4812325,
+        126.8568763
+      ],
+      [
+        37.4805293,
+        126.8565627
+      ],
+      [
+        37.4805808,
+        126.8563885
+      ],
+      [
+        37.4805951,
+        126.8563405
+      ],
+      [
+        37.4806861,
+        126.8560329
+      ],
+      [
+        37.4807007,
+        126.8559834
+      ],
+      [
+        37.4807452,
+        126.8558328
+      ],
+      [
+        37.481446,
+        126.8561453
+      ],
+      [
+        37.4814832,
+        126.8560177
+      ],
+      [
+        37.4815222,
+        126.8558842
+      ],
+      [
+        37.4816195,
+        126.8555512
+      ]
+    ],
+    "source": "OSM",
+    "osmId": null
+  },
+  "paths": [
+    {
+      "id": 1,
+      "name": "오리로964번길",
+      "named": true,
+      "geometry": [
+        [
+          37.4789567,
+          126.8560497
+        ],
+        [
+          37.4793451,
+          126.8562291
+        ],
+        [
+          37.4795308,
+          126.8563148
+        ],
+        [
+          37.480097,
+          126.8565763
+        ],
+        [
+          37.4803558,
+          126.8566958
+        ],
+        [
+          37.4812307,
+          126.8570998
+        ]
+      ],
+      "source": "OSM"
+    },
+    {
+      "id": 2,
+      "name": "오리로976번길",
+      "named": true,
+      "geometry": [
+        [
+          37.4813496,
+          126.8558875
+        ],
+        [
+          37.4806774,
+          126.8555805
+        ],
+        [
+          37.4804241,
+          126.8554647
+        ],
+        [
+          37.4798503,
+          126.8552026
+        ],
+        [
+          37.4792758,
+          126.8549402
+        ]
+      ],
+      "source": "OSM"
+    },
+    {
+      "id": 3,
+      "name": null,
+      "named": false,
+      "geometry": [
+        [
+          37.4798503,
+          126.8552026
+        ],
+        [
+          37.4797387,
+          126.8555911
+        ],
+        [
+          37.4796404,
+          126.8559332
+        ],
+        [
+          37.4795308,
+          126.8563148
+        ]
+      ],
+      "source": "OSM"
+    },
+    {
+      "id": 4,
+      "name": "광이로13번길",
+      "named": true,
+      "geometry": [
+        [
+          37.480097,
+          126.8565763
+        ],
+        [
+          37.4802105,
+          126.8561909
+        ],
+        [
+          37.4803146,
+          126.855837
+        ],
+        [
+          37.4804241,
+          126.8554647
+        ]
+      ],
+      "source": "OSM"
+    },
+    {
+      "id": 5,
+      "name": "광명로918번길",
+      "named": true,
+      "geometry": [
+        [
+          37.4808355,
+          126.8550321
+        ],
+        [
+          37.4806774,
+          126.8555805
+        ],
+        [
+          37.4805699,
+          126.8559534
+        ],
+        [
+          37.4804678,
+          126.8563073
+        ],
+        [
+          37.4803558,
+          126.8566958
+        ]
+      ],
+      "source": "OSM"
+    },
+    {
+      "id": 6,
+      "name": "광이로13번길",
+      "named": true,
+      "geometry": [
+        [
+          37.4799853,
+          126.8569559
+        ],
+        [
+          37.480097,
+          126.8565763
+        ]
+      ],
+      "source": "OSM"
+    },
+    {
+      "id": 7,
+      "name": null,
+      "named": false,
+      "geometry": [
+        [
+          37.4803146,
+          126.855837
+        ],
+        [
+          37.4797387,
+          126.8555911
+        ]
+      ],
+      "source": "OSM"
+    },
+    {
+      "id": 8,
+      "name": null,
+      "named": false,
+      "geometry": [
+        [
+          37.4802105,
+          126.8561909
+        ],
+        [
+          37.4796404,
+          126.8559332
+        ]
+      ],
+      "source": "OSM"
+    },
+    {
+      "id": 9,
+      "name": null,
+      "named": false,
+      "geometry": [
+        [
+          37.4806553,
+          126.8559919
+        ],
+        [
+          37.4814503,
+          126.8563507
+        ]
+      ],
+      "source": "OSM"
+    },
+    {
+      "id": 10,
+      "name": null,
+      "named": false,
+      "geometry": [
+        [
+          37.4805402,
+          126.85634
+        ],
+        [
+          37.4813465,
+          126.8567045
+        ]
+      ],
+      "source": "OSM"
+    },
+    {
+      "id": 11,
+      "name": null,
+      "named": false,
+      "geometry": [
+        [
+          37.4793451,
+          126.8562291
+        ],
+        [
+          37.4792476,
+          126.8565645
+        ],
+        [
+          37.479238,
+          126.8565974
+        ]
+      ],
+      "source": "OSM"
+    },
+    {
+      "id": 12,
+      "name": null,
+      "named": false,
+      "geometry": [
+        [
+          37.4805699,
+          126.8559534
+        ],
+        [
+          37.4806553,
+          126.8559919
+        ]
+      ],
+      "source": "OSM"
+    },
+    {
+      "id": 13,
+      "name": null,
+      "named": false,
+      "geometry": [
+        [
+          37.4804678,
+          126.8563073
+        ],
+        [
+          37.4805402,
+          126.85634
+        ]
+      ],
+      "source": "OSM"
+    },
+    {
+      "id": 14,
+      "name": null,
+      "named": false,
+      "geometry": [
+        [
+          37.481558,
+          126.8559827
+        ],
+        [
+          37.4813496,
+          126.8558875
+        ]
+      ],
+      "source": "OSM"
+    }
+  ],
+  "entrances": [
+    {
+      "id": 1,
+      "lat": 37.479054660499095,
+      "lng": 126.85609494746019,
+      "pathId": 1,
+      "label": "입구 1",
+      "source": "OSM"
+    },
+    {
+      "id": 2,
+      "lat": 37.481174731583145,
+      "lng": 126.85707395562875,
+      "pathId": 1,
+      "label": "입구 2",
+      "source": "OSM"
+    },
+    {
+      "id": 3,
+      "lat": 37.47938321515953,
+      "lng": 126.85498926133657,
+      "pathId": 2,
+      "label": "입구 3",
+      "source": "OSM"
+    },
+    {
+      "id": 4,
+      "lat": 37.48079518754212,
+      "lng": 126.85517193144781,
+      "pathId": 5,
+      "label": "입구 4",
+      "source": "OSM"
+    },
+    {
+      "id": 5,
+      "lat": 37.47999368932893,
+      "lng": 126.85692738980072,
+      "pathId": 4,
+      "label": "입구 5",
+      "source": "OSM"
+    },
+    {
+      "id": 6,
+      "lat": 37.480693153933686,
+      "lng": 126.85600898426593,
+      "pathId": 9,
+      "label": "입구 6",
+      "source": "OSM"
+    },
+    {
+      "id": 7,
+      "lat": 37.48058871506168,
+      "lng": 126.85636193196079,
+      "pathId": 10,
+      "label": "입구 7",
+      "source": "OSM"
+    },
+    {
+      "id": 8,
+      "lat": 37.479244056532295,
+      "lng": 126.85657664375913,
+      "pathId": 11,
+      "label": "입구 8",
+      "source": "OSM"
+    },
+    {
+      "id": 9,
+      "lat": 37.48150102773751,
+      "lng": 126.85595667428316,
+      "pathId": 14,
+      "label": "입구 9",
+      "source": "OSM"
+    }
+  ],
+  "attribution": [
+    "© OpenStreetMap contributors"
+  ],
+  "stores": [
+    {
+      "id": 1,
+      "name": "ESP마트",
+      "items": "내의판매점",
+      "zoneId": null,
+      "pathId": 2,
+      "membership": "IN",
+      "latitude": 37.480205,
+      "longitude": 126.855487,
+      "roadAddress": "오리로976번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    },
+    {
+      "id": 2,
+      "name": "가이오베이커리",
+      "items": "제과점",
+      "zoneId": null,
+      "pathId": 5,
+      "membership": "IN",
+      "latitude": 37.480719,
+      "longitude": 126.855757,
+      "roadAddress": "광명로918번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    },
+    {
+      "id": 3,
+      "name": "개나리상가8호",
+      "items": "정장",
+      "zoneId": null,
+      "pathId": 2,
+      "membership": "IN",
+      "latitude": 37.480007,
+      "longitude": 126.855374,
+      "roadAddress": "오리로976번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    },
+    {
+      "id": 4,
+      "name": "고현미한복집",
+      "items": "맞춤복점",
+      "zoneId": null,
+      "pathId": 4,
+      "membership": "IN",
+      "latitude": 37.479873,
+      "longitude": 126.855827,
+      "roadAddress": "광이로13번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    },
+    {
+      "id": 5,
+      "name": "광명기름집",
+      "items": "기타음료식품",
+      "zoneId": null,
+      "pathId": 5,
+      "membership": "IN",
+      "latitude": 37.480638,
+      "longitude": 126.85543,
+      "roadAddress": "광명로918번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    },
+    {
+      "id": 6,
+      "name": "광명농수산",
+      "items": "농축수산품",
+      "zoneId": null,
+      "pathId": 2,
+      "membership": "IN",
+      "latitude": 37.480467,
+      "longitude": 126.855543,
+      "roadAddress": "오리로976번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    },
+    {
+      "id": 7,
+      "name": "광명농수산물직판장",
+      "items": "농축수산품",
+      "zoneId": null,
+      "pathId": 2,
+      "membership": "IN",
+      "latitude": 37.481413,
+      "longitude": 126.856027,
+      "roadAddress": "오리로976번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    },
+    {
+      "id": 8,
+      "name": "광명민물수산",
+      "items": "농축수산품",
+      "zoneId": null,
+      "pathId": 1,
+      "membership": "IN",
+      "latitude": 37.479738,
+      "longitude": 126.856279,
+      "roadAddress": "오리로964번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    },
+    {
+      "id": 9,
+      "name": "광명수예",
+      "items": "침구수예점",
+      "zoneId": null,
+      "pathId": 4,
+      "membership": "IN",
+      "latitude": 37.480125,
+      "longitude": 126.856256,
+      "roadAddress": "광이로13번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    },
+    {
+      "id": 10,
+      "name": "광명쌍방울",
+      "items": "내의판매점",
+      "zoneId": null,
+      "pathId": 2,
+      "membership": "IN",
+      "latitude": 37.480106,
+      "longitude": 126.855431,
+      "roadAddress": "오리로976번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    },
+    {
+      "id": 11,
+      "name": "광명제일유통",
+      "items": "농축수산품",
+      "zoneId": null,
+      "pathId": 5,
+      "membership": "IN",
+      "latitude": 37.480575,
+      "longitude": 126.855611,
+      "roadAddress": "광명로918번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    },
+    {
+      "id": 12,
+      "name": "구정주단",
+      "items": "맞춤복점",
+      "zoneId": null,
+      "pathId": 4,
+      "membership": "IN",
+      "latitude": 37.479963,
+      "longitude": 126.855962,
+      "roadAddress": "광이로13번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    },
+    {
+      "id": 13,
+      "name": "군산상회",
+      "items": "농축수산품",
+      "zoneId": null,
+      "pathId": 1,
+      "membership": "IN",
+      "latitude": 37.480071,
+      "longitude": 126.856426,
+      "roadAddress": "오리로964번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    },
+    {
+      "id": 14,
+      "name": "금성상회",
+      "items": "기타음료식품",
+      "zoneId": null,
+      "pathId": 1,
+      "membership": "IN",
+      "latitude": 37.479972,
+      "longitude": 126.856392,
+      "roadAddress": "오리로964번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    },
+    {
+      "id": 15,
+      "name": "길미",
+      "items": "정장",
+      "zoneId": null,
+      "pathId": 5,
+      "membership": "IN",
+      "latitude": 37.480414,
+      "longitude": 126.856176,
+      "roadAddress": "광명로918번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    },
+    {
+      "id": 16,
+      "name": "김주희자수고전방",
+      "items": "침구수예점",
+      "zoneId": null,
+      "pathId": 5,
+      "membership": "IN",
+      "latitude": 37.480378,
+      "longitude": 126.856301,
+      "roadAddress": "광명로918번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    },
+    {
+      "id": 17,
+      "name": "꼬꼬댁",
+      "items": "정육점",
+      "zoneId": null,
+      "pathId": 1,
+      "membership": "IN",
+      "latitude": 37.480207,
+      "longitude": 126.856482,
+      "roadAddress": "오리로964번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    },
+    {
+      "id": 18,
+      "name": "남해김집",
+      "items": "농축수산품",
+      "zoneId": null,
+      "pathId": 1,
+      "membership": "IN",
+      "latitude": 37.479621,
+      "longitude": 126.856449,
+      "roadAddress": "오리로964번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    },
+    {
+      "id": 19,
+      "name": "농우축산",
+      "items": "정육점",
+      "zoneId": null,
+      "pathId": 2,
+      "membership": "IN",
+      "latitude": 37.479899,
+      "longitude": 126.855341,
+      "roadAddress": "오리로976번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    },
+    {
+      "id": 20,
+      "name": "다락방",
+      "items": "정장",
+      "zoneId": null,
+      "pathId": 1,
+      "membership": "IN",
+      "latitude": 37.479242,
+      "longitude": 126.85628,
+      "roadAddress": "오리로964번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    },
+    {
+      "id": 21,
+      "name": "다빛코리아",
+      "items": "악세사리",
+      "zoneId": null,
+      "pathId": 2,
+      "membership": "IN",
+      "latitude": 37.480007,
+      "longitude": 126.855374,
+      "roadAddress": "오리로976번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    },
+    {
+      "id": 22,
+      "name": "대도상회",
+      "items": "기타음료식품",
+      "zoneId": null,
+      "pathId": 1,
+      "membership": "IN",
+      "latitude": 37.479495,
+      "longitude": 126.856382,
+      "roadAddress": "오리로964번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    },
+    {
+      "id": 23,
+      "name": "대도상회",
+      "items": "정장",
+      "zoneId": null,
+      "pathId": 2,
+      "membership": "IN",
+      "latitude": 37.480314,
+      "longitude": 126.855521,
+      "roadAddress": "오리로976번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    },
+    {
+      "id": 24,
+      "name": "대도상회",
+      "items": "주방용구",
+      "zoneId": null,
+      "pathId": 2,
+      "membership": "IN",
+      "latitude": 37.480314,
+      "longitude": 126.855521,
+      "roadAddress": "오리로976번길",
+      "jibunAddress": null,
+      "buildingName": null,
+      "dong": null,
+      "floor": null,
+      "ho": null,
+      "categoryMajor": null,
+      "categoryMid": null,
+      "categorySub": null,
+      "sources": [
+        "ONNURI"
+      ],
+      "pinKind": "EXACT",
+      "manual": false,
+      "actorKind": null,
+      "relativePosition": null,
+      "positionNote": null
+    }
+  ]
+}

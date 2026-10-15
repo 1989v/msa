@@ -17,6 +17,7 @@ export interface MarketStore {
   name: string;
   items: string | null;
   zoneId: number | null;
+  pathId?: number | null;
   membership: 'IN' | 'OUT' | 'UNKNOWN';
   latitude: number | null;
   longitude: number | null;
@@ -37,7 +38,33 @@ export interface MarketStore {
   positionNote: string | null;
 }
 
+export type MarketCoordinate = [number, number]; // [latitude, longitude]
+export interface MarketBoundary {
+  polygon: MarketCoordinate[];
+  source: 'OSM' | 'DERIVED' | 'MANUAL';
+  osmId?: string | null;
+}
+export interface MarketPath {
+  id: number;
+  name: string | null;
+  named: boolean;
+  geometry: MarketCoordinate[];
+  source: 'OSM' | 'MANUAL';
+}
+export interface MarketEntrance {
+  id: number;
+  lat: number;
+  lng: number;
+  pathId: number | null;
+  label: string | null;
+  source: 'OSM' | 'MANUAL';
+}
+
 export interface MarketResponse {
+  boundary?: MarketBoundary | null;
+  paths?: MarketPath[] | null;
+  entrances?: MarketEntrance[] | null;
+  attribution?: string[] | null;
   market: {
     id?: number | null;
     name: string;
