@@ -52,8 +52,10 @@ class MarketRepositoryAdapter(
         markets.findByAttractionContentId(contentId)?.toDomain()
     override fun findZones(marketId: Long): List<MarketZone> =
         zones.findAllByMarketIdOrderBySortOrderAscIdAsc(marketId).map { it.toDomain() }
+    // Sorted here, not in SQL: MySQL filesorts the rows with their raw payload columns and runs out of
+    // sort memory on large markets; one market's stores fit comfortably in memory.
     override fun findStores(marketId: Long): List<MarketStore> =
-        stores.findAllByMarketIdOrderByIdAsc(marketId).map { it.toDomain() }
+        stores.findAllByMarketId(marketId).map { it.toDomain() }.sortedBy { it.id }
     override fun findOverrides(storeIds: List<Long>): List<MarketStoreOverride> =
         if (storeIds.isEmpty()) emptyList() else overrides.findAllByStoreIdIn(storeIds).map { it.toDomain() }
     override fun findSteward(marketId: Long, memberId: Long): MarketSteward? =
@@ -113,12 +115,13 @@ class MarketRepositoryAdapter(
         val incoming = if (natural != null && sanggaOwner != null && natural.id != sanggaOwner.id)
             store.copy(sanggaKey = natural.sanggaKey) else store
         val existing = natural ?: sanggaOwner ?: if (observedSourceKeys != null) {
-                    if (!store.jibunAddress.isNullOrBlank()) {
-                            stores.findAllByMarketIdOrderByIdAsc(store.marketId).map { it.toDomain() }.filter {
-                                it.source == store.source && it.sourceKey !in observedSourceKeys &&
-                                    it.name == store.name && it.jibunAddress == store.jibunAddress
-                            }.singleOrNull()
-                        } else null
+                    store.jibunAddress?.takeIf { it.isNotBlank() }?.let { jibun ->
+                            // Narrow in SQL: reading the whole market per store was quadratic and sorted rows
+                            // carrying the raw payload columns, which ran out of sort memory on large markets.
+                            stores.findAllByMarketIdAndSourceAndNameAndJibunAddress(store.marketId, store.source,
+                                store.name, jibun).map { it.toDomain() }
+                                .filter { it.sourceKey !in observedSourceKeys }.singleOrNull()
+                        }
                 } else null
         require(existing == null || existing.marketId == store.marketId)
         if (existing == null && store.id != null) {

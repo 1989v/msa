@@ -34,7 +34,11 @@ class MarketIngestProtectionTest : BehaviorSpec({
                 val row = firstArg<MarketZoneJpaEntity>().toDomain(); val entity = MarketZoneJpaEntity.fromDomain(row.copy(id = row.id ?: 30L))
                 zoneRows[requireNotNull(entity.id)] = entity; entity
             }
-            every { stores.findAllByMarketIdOrderByIdAsc(1) } answers { storeRows.values.toList() }
+            every { stores.findAllByMarketId(1) } answers { storeRows.values.toList() }
+            every { stores.findAllByMarketIdAndSourceAndNameAndJibunAddress(any(), any(), any(), any()) } answers {
+                storeRows.values.filter { it.marketId == firstArg<Long>() && it.source == secondArg<MarketStoreSource>() &&
+                    it.name == thirdArg<String>() && it.jibunAddress == arg<String>(3) }
+            }
             every { stores.findById(any()) } answers { Optional.ofNullable(storeRows[firstArg<Long>()]) }
             every { stores.findByMarketIdAndSourceAndSourceKey(any(), any(), any()) } answers {
                 storeRows.values.find { it.marketId == firstArg<Long>() && it.source == secondArg<MarketStoreSource>() && it.sourceKey == thirdArg<String>() }

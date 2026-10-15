@@ -30,7 +30,10 @@ interface MarketZoneJpaRepository : JpaRepository<MarketZoneJpaEntity, Long> {
 }
 interface MarketStoreJpaRepository : JpaRepository<MarketStoreJpaEntity, Long> {
     fun findByMarketIdAndSanggaKey(marketId: Long, sanggaKey: String): MarketStoreJpaEntity?
-    fun findAllByMarketIdOrderByIdAsc(marketId: Long): List<MarketStoreJpaEntity>
+    fun findAllByMarketId(marketId: Long): List<MarketStoreJpaEntity>
+    fun findAllByMarketIdAndSourceAndNameAndJibunAddress(
+        marketId: Long, source: MarketStoreSource, name: String, jibunAddress: String,
+    ): List<MarketStoreJpaEntity>
     fun findByMarketIdAndSourceAndSourceKey(marketId: Long, source: MarketStoreSource, sourceKey: String): MarketStoreJpaEntity?
 }
 interface MarketStoreOverrideJpaRepository : JpaRepository<MarketStoreOverrideJpaEntity, Long> {

@@ -57,7 +57,7 @@ class MarketRepositoryAdapterTest : BehaviorSpec({
             sanggaRaw = "{}", jibunAddress = "경기 광명시 광명동 1", id = 99)
         every { stores.findByMarketIdAndSourceAndSourceKey(1, MarketStoreSource.SANGGA, "new") } returns null
         every { stores.findByMarketIdAndSanggaKey(1, "new") } returns null
-        every { stores.findAllByMarketIdOrderByIdAsc(1) } returns listOf(MarketStoreJpaEntity.fromDomain(old))
+        every { stores.findAllByMarketIdAndSourceAndNameAndJibunAddress(1, MarketStoreSource.SANGGA, "가게", "경기 광명시 광명동 1") } returns listOf(MarketStoreJpaEntity.fromDomain(old))
         every { stores.save(any()) } answers { firstArg() }
         Then("유일한 동일 상호·필지의 ID를 재사용하고 override·MANUAL 행에는 쓰지 않는다") {
             val result = adapter.saveSourceStore(old.copy(id = null, sourceKey = "new", sanggaKey = "new"), setOf("new"))
@@ -73,7 +73,7 @@ class MarketRepositoryAdapterTest : BehaviorSpec({
             sanggaRaw = "{}", jibunAddress = "경기 광명시 광명동 1", id = 101)
         every { stores.findByMarketIdAndSourceAndSourceKey(1, MarketStoreSource.SANGGA, "tenant-2") } returns null
         every { stores.findByMarketIdAndSanggaKey(1, "tenant-2") } returns null
-        every { stores.findAllByMarketIdOrderByIdAsc(1) } returns listOf(MarketStoreJpaEntity.fromDomain(old))
+        every { stores.findAllByMarketIdAndSourceAndNameAndJibunAddress(1, MarketStoreSource.SANGGA, "가게", "경기 광명시 광명동 1") } returns listOf(MarketStoreJpaEntity.fromDomain(old))
         every { stores.save(any()) } answers { firstArg() }
         Then("전체 현재 키 목록에 있는 임차인 ID는 다른 임차인으로 병합하지 않는다") {
             val result = adapter.saveSourceStore(old.copy(id = null, sourceKey = "tenant-2", sanggaKey = "tenant-2"),
