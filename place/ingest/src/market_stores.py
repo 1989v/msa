@@ -114,6 +114,111 @@ def read_csv(path, required, encoding="utf-8-sig"):
         yield from reader
 
 
+GOOD_PRICE_COLUMNS = ["시도", "시군", "업종", "업소명", "연락처", "주소",
+                      "메뉴1", "가격1", "메뉴2", "가격2", "메뉴3", "가격3", "메뉴4", "가격4"]
+
+
+def load_good_prices(url, base):
+    if not url:
+        raise ValueError("MARKET_GOOD_PRICE_FILE_URL required")
+    path = download(url, FILE_MAX_BYTES, base/'good-price.csv')
+    try:
+        rows = list(read_csv(path, GOOD_PRICE_COLUMNS))
+    except UnicodeDecodeError:
+        rows = list(read_csv(path, GOOD_PRICE_COLUMNS, encoding="cp949"))
+    if not rows:
+        raise ValueError("Empty good-price source")
+    return rows
+
+
+def good_price_name(name):
+    return re.sub(r"[^a-z0-9가-힣]", "", (name or "").lower())
+
+
+def good_price_locality(address):
+    words = (address or "").split()
+    return tuple(norm(word) for word in words[:2]) if len(words) >= 2 else ()
+
+
+def good_price_road(address):
+    # "중앙로 200번길 27" 과 "중앙로200번길 27" 은 같은 주소다. 번길·길 앞 띄어쓰기를 없앤 뒤 읽는다.
+    joined = re.sub(r"(로|길)\s+(\d+번?길)", r"\1\2", address or "")
+    match = re.search(r"(?:^|\s)([^\s]+(?:로|길))\s*(\d+(?:-\d+)?)(?=\s|[,()]|$)", joined)
+    return (norm(match[1]), match[2]) if match else ()
+
+
+def good_price_dong(address):
+    """법정동·리 이름. 도로명 주소는 괄호 안 "(창신동)", 지번 주소는 시군구 뒤 첫 동·가·리."""
+    text = address or ""
+    inside = re.search(r"\(([가-힣0-9]+(?:동|가|리))[,)\s]", text)
+    if inside:
+        return norm(inside[1])
+    for word in text.split()[2:]:
+        if re.fullmatch(r"[가-힣0-9]+(?:동|가|리)", word):
+            return norm(word)
+        if re.search(r"\d", word):
+            break
+    return ""
+
+
+def attach_good_prices(paths, originals):
+    """Disk-backed passes: same name at the same road address first, then same name, then same road.
+
+    Market store sources repeat one shop (a road-address row, a lot-number row, a neighbouring
+    market's list); claiming the exact-address rows first keeps the price on the right row.
+    """
+    names, roads = {}, {}
+    for original in originals:
+        region = good_price_locality(original['시도']+' '+original['시군'])
+        name = good_price_name(original['업소명'])
+        address_road = good_price_road(original['주소'])
+        if region and name:
+            names.setdefault((region, name), []).append(original)
+            if address_road:
+                roads.setdefault((region, address_road), []).append(original)
+    used, counts, ambiguous = set(), Counter(NAME=0, ROAD=0), set()
+    for step in ('NAME_AT_ROAD', 'NAME', 'ROAD'):
+        method = 'ROAD' if step == 'ROAD' else 'NAME'
+        for path in paths:
+            command = json.loads(path.read_text())
+            for index, store in enumerate(command['stores']):
+                row = store['row']
+                if step == 'NAME_AT_ROAD':
+                    row.update(goodPriceKey=None, goodPriceRaw=None, goodPriceMatchedBy=None)
+                elif row['goodPriceKey']:
+                    continue
+                address = row.get('roadAddress') or row.get('jibunAddress')
+                region, name = good_price_locality(address), good_price_name(row.get('name'))
+                address_road, dong = good_price_road(address), good_price_dong(address)
+                namesakes = names.get((region, name), [])
+                if method == 'NAME':
+                    # 같은 구의 다른 지점이 붙지 않게, 양쪽에 있는 도로명·동은 같아야 한다.
+                    candidates = [r for r in namesakes
+                                  if good_price_road(r['주소']) in ((), address_road) or not address_road]
+                    candidates = [r for r in candidates if not dong or good_price_dong(r['주소']) in ("", dong)]
+                    if step == 'NAME_AT_ROAD':
+                        candidates = [r for r in candidates if address_road and good_price_road(r['주소']) == address_road]
+                else:
+                    if namesakes:  # A namesake that failed the address check must not come back by road.
+                        continue
+                    candidates = [r for r in roads.get((region, address_road), [])
+                                  if min(len(name), len(good_price_name(r['업소명']))) >= 2
+                                  and (name in good_price_name(r['업소명']) or good_price_name(r['업소명']) in name)]
+                candidates = [r for r in candidates
+                              if key(*(r[k] for k in ('시도', '시군', '업소명', '주소'))) not in used]
+                if len(candidates) > 1:
+                    ambiguous.add((path.name, index))
+                elif len(candidates) == 1:
+                    original = candidates[0]
+                    source_key = key(*(original[k] for k in ('시도', '시군', '업소명', '주소')))
+                    row.update(goodPriceKey=source_key, goodPriceRaw=raw(original), goodPriceMatchedBy=method)
+                    used.add(source_key)
+                    counts[method] += 1
+                    ambiguous.discard((path.name, index))
+            path.write_text(raw(command))
+    return {'goodPriceRows': len(originals), 'goodPriceMatched': dict(counts), 'goodPriceAmbiguous': len(ambiguous)}
+
+
 class SanggaIndex:
     def __init__(self, path):
         self.db = sqlite3.connect(path)
@@ -356,6 +461,7 @@ def prepare(market, merchants, index, api_rows):
                "latitude":c[0] if c else None,"longitude":c[1] if c else None,
                "membership":{"status":membership(c,center,radius,rname,densities)}, "roadName":rname or None,
                "roadAddress":r.get("도로명주소"),"jibunAddress":r.get("지번주소") or (o["주소"] if o else None)}
+        row.update(goodPriceKey=None, goodPriceRaw=None, goodPriceMatchedBy=None)
         for field, column in (("categoryMajor","상권업종대분류명"),("categoryMid","상권업종중분류명"),("categorySub","상권업종소분류명"),("buildingManagementNo","건물관리번호"),("buildingName","건물명"),("dong","동정보"),("floor","층정보"),("ho","호정보")):
             row[field] = r.get(column) or None
         if o:
@@ -379,13 +485,16 @@ def check_failures(markets, failed_markets, calls, failed_calls):
         raise ValueError(f"API failure ratio {failed_calls}/{calls} exceeds {MAX_CALL_FAILURE_RATIO}")
 
 
-def run(standard_url, onnuri_url, bulk_url, service_key, standard_source="file"):
+def run(standard_url, onnuri_url, bulk_url, service_key, standard_source="file", good_price_url=None):
+    if not good_price_url:
+        raise ValueError("MARKET_GOOD_PRICE_FILE_URL required")
     with tempfile.TemporaryDirectory(prefix="market-stores-") as tmp:
         base = Path(tmp)
         standards = load_standards(standard_source, standard_url, service_key, base)
         merchants = list(read_csv(download(onnuri_url,FILE_MAX_BYTES,base/'onnuri.csv'), ["시장명","점포명","취급품목","주소"]))
         if not merchants:
             raise ValueError("Empty market source")
+        good_prices = load_good_prices(good_price_url, base)
         markets = identify(place_client.fetch_market_attractions(), standards)
         grouped = {}
         for o in merchants:
@@ -406,6 +515,7 @@ def run(standard_url, onnuri_url, bulk_url, service_key, standard_source="file")
                 except Exception as e:
                     failed += 1; errors.append(f"{m['attractionContentId']}: {type(e).__name__}")
             check_failures(len(markets),failed,api.calls,api.failures)
+            good_price_summary = attach_good_prices(paths, good_prices)
             # ALL validation precedes writes. Failed markets remain unchanged; accepted markets upsert in chunks.
             applied = 0
             for path in paths:
@@ -414,7 +524,7 @@ def run(standard_url, onnuri_url, bulk_url, service_key, standard_source="file")
                 for start in range(0,max(1,len(stores)),place_client.BULK_CHUNK):
                     place_client.put_market({**command,"stores":stores[start:start+place_client.BULK_CHUNK]})
                 applied += 1
-            summary = {"standardSource":standard_source,"markets":applied,"failedMarkets":failed,"calls":api.calls,"failedCalls":api.failures,"errors":errors}
+            summary = {"standardSource":standard_source,"markets":applied,"failedMarkets":failed,"calls":api.calls,"failedCalls":api.failures,"errors":errors, **good_price_summary}
             print(f"[market-stores] {raw(summary)}",flush=True)
             return summary
         finally:

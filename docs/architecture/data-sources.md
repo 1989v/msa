@@ -93,6 +93,7 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | 전통시장 기본정보 | [전국전통시장표준데이터 #15012894](https://www.data.go.kr/data/15012894/standard.do) | API 활용신청 필요 (현재 off) / 파일 불필요 | **공공누리 제1유형(출처표시)** | `place/ingest --job=market-stores` (매주 월 KST 01:10) |
 | 온누리 가맹점 | [소진공 전자상품권 가맹점 상세 #15091259](https://www.data.go.kr/data/15091259/fileData.do) | 파일은 불필요 | **공공누리 제1유형(출처표시)** | 〃 (utf-8-sig CSV) |
 | 시장 상가 보강 | [소진공 상가(상권)정보 API #15012005](https://www.data.go.kr/data/15012005/openapi.do) | 필요 | **공공누리 제1유형(출처표시)** | 〃 (`storeListInRadius` / `storeListInPolygon`) |
+| 가게 대표 메뉴·가격 | [행정안전부 착한가격업소 현황 #3045247](https://www.data.go.kr/data/3045247/fileData.do) | **불필요** | 이용허락범위 제한 없음. 화면 출처: **행정안전부 착한가격업소** | `place/ingest --job=market-stores` (파일 다운로드, 분기 갱신) |
 | 시장 경계·골목·배경 큰길 | [OpenStreetMap / Overpass](https://overpass-api.de/api/interpreter) | 불필요 | **ODbL 1.0**, `© OpenStreetMap contributors` | `place/ingest --job=market-osm` (매주 월 KST 05:20). 지도 표시만, 데이터 자체 공개 배포 금지. [ADR-0110](../adr/ADR-0110-market-alley-geometry-osm.md) |
 | POI(상가) | 소상공인시장진흥공단 상가(상권)정보 | 필요 | 이용허락범위 제한없음 | `tools/seed/place/normalize_pois.py` |
 | 상품·영양 | 식약처 / 한국소비자원 참가격 | 필요 | 제한없음 / KOGL 제1유형 | `tools/seed/products/normalize.py` |
@@ -412,6 +413,8 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 **원천 설정**: `place-market-source-files` ConfigMap의 `standard-source`(`MARKET_STANDARD_SOURCE`)는 `api|file|off`이며 현재 **off**다. 전국전통시장표준데이터 API는 별도 활용신청 승인이 필요하며 승인 후 `api`로 전환한다. endpoint는 `https://api.data.go.kr/openapi/tn_pubr_public_trdit_mrkt_api`이며 Encoding 키를 raw URL에 붙여 JSON 전페이지를 받는다. `file`은 `standard-url`(`MARKET_STANDARD_FILE_URL`)의 기존 CSV를 사용한다. `off`는 표준 원천 없이 관광지 제목·좌표로 시장을 생성하며 `market_info_matched=false`, 잡 요약 `standardSource=off`로 구분한다. 따라서 AC-1의 표준정보 매칭률은 API 활성화 후 검증한다.
 
 온누리 CSV `onnuri-url`(#15091259, 10,135,421 bytes)과 상가정보 `sangga-bulk-url`(#15083033, 20260630 ZIP, 352,699,739 bytes)은 각각 `MARKET_ONNURI_FILE_URL` / `MARKET_SANGGA_BULK_URL`로 주입한다. **파일 발표마다 data.go.kr의 새 다운로드 URL을 확인해 ConfigMap의 해당 URL을 갱신한다.** 잡은 매주 월 KST 01:10, 4시간 마감이며 OSM 잡은 KST 05:20에 뒤따른다. 두 CronJob은 활성화 상태이며 요청256Mi/제한512Mi를 유지한다. ZIP은 디스크, 시도별 CSV는 스트리밍, 대상 법정동 조회는 SQLite, 준비된 시장 요청은 임시 JSON 파일을 사용한다. 전국 벌크 메모리 최대치의 실측은 아직 하지 않았다.
+
+**착한가격업소**: 행정안전부 #3045247 파일을 키 없이 내려받는다. `place-market-source-files/good-price-url` → `MARKET_GOOD_PRICE_FILE_URL`은 필수다. 2026-06-30 CSV는 12,645행·1,577,607 B이며 분기 발표마다 파일 ID를 갱신한다. UTF-8 BOM 또는 cp949를 읽고 원본 14열(빈 값 포함)을 `market_store.good_price_raw`에 보존한다. 이름+시군구가 같고 양쪽에 있는 도로명·건물번호와 법정동이 같으면 NAME(도로명까지 같은 것부터), 같은 이름 업소가 없을 때만 도로명·건물번호+이름 포함 관계로 ROAD를 매칭한다(정본 `docs/specs/2026-10-15-market-store-map/p6-contract.md`). 모호한 후보는 연결하지 않으며 원천 한 행은 최대 한 가게에 붙인다. 매칭이 사라지면 세 적재 필드를 null로 보내 지운다. URL 누락·다운로드 실패·빈 파일은 쓰기 전에 실패한다. 화면 출처는 `행정안전부 착한가격업소`다.
 
 **판정과 사전 검사**: 거리형300m·건물형150m 반경 안에서 도로별 고유 온누리 점포 수 / 같은 도로의 상가정보 점포 수를 센다. 두 원천의 모집단 차이를 고려해 분모는 두 수의 최댓값이다. `ROAD_MIN_ONNURI_MERCHANTS=11` 및 `ROAD_MIN_ONNURI_SHARE=0.30`을 모두 만족해야 IN이다. 좌표 결측은 UNKNOWN, 반경 밖·저밀도는 OUT. 같은 동 안 지번+이름 → 지번 → 이름으로 매칭하되 모호한 다른 필지/다른 좌표를 임의로 선택하지 않는다. 순수 지번 다중 후보는 모두 같은 좌표일 때만 공통 공간 정보로 사용한다.
 
