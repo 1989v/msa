@@ -47,6 +47,17 @@ class MarketServiceTest : BehaviorSpec({
         every { query.findMarketByContentId("content-1") } returns market
         every { query.findZones(1) } returns emptyList()
     }
+    Given("OSM 수집 시각") {
+        Then("마지막 수집 시각을 상태에 실어 적재 잡이 최근 수집한 시장을 건너뛰게 한다") {
+            val edits = mockk<com.kgd.place.application.market.port.MarketGeometryEditPort>()
+            val fetchedAt = java.time.LocalDateTime.of(2026, 10, 16, 5, 30)
+            every { edits.findEntrances(1) } returns emptyList()
+            every { edits.findRawFetchedAt(1) } returns fetchedAt
+            rows(listOf(store(10)))
+            MarketService(query, save, geometryEdits = edits).find("content-1", true)!!.osmFetchedAt shouldBe fetchedAt
+            service.find("content-1", true)!!.osmFetchedAt shouldBe null
+        }
+    }
     Given("시장 소속 공개 규칙") {
         Then("IN은 핀과 함께, UNKNOWN은 좌표 없이 노출하고 OUT은 토글로 노출한다") {
             rows(listOf(store(10), store(11, MarketMembershipStatus.OUT), store(12, MarketMembershipStatus.UNKNOWN)))

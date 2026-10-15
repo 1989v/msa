@@ -26,7 +26,7 @@ class MarketService(private val query: MarketQueryPort, private val save: Market
         val paths = geometry?.findPaths(marketId).orEmpty()
         return QueryMarketUseCase.MarketResult(market, query.findZones(marketId), MarketPublicProjection.stores(stores, overrides, paths.mapNotNull { it.id }.toSet())
             .filter { includeOutside || it.display.membership.visibleByDefault }, geometry?.findBoundary(marketId),
-            paths, geometryEdits?.findEntrances(marketId).orEmpty())
+            paths, geometryEdits?.findEntrances(marketId).orEmpty(), geometryEdits?.findRawFetchedAt(marketId))
     }
 
     @Transactional(transactionManager = "placeTransactionManager")

@@ -16,7 +16,8 @@ interface QueryMarketUseCase {
     data class MarketResult(val market: Market, val zones: List<MarketZone>, val stores: List<Store>,
         val boundary: com.kgd.place.domain.market.model.MarketBoundary? = null,
         val paths: List<com.kgd.place.domain.market.model.MarketPath> = emptyList(),
-        val entrances: List<com.kgd.place.domain.market.model.MarketEntrance> = emptyList())
+        val entrances: List<com.kgd.place.domain.market.model.MarketEntrance> = emptyList(),
+        val osmFetchedAt: java.time.LocalDateTime? = null)
 }
 
 /** Persistence skeleton. HTTP ingest / editing orchestration and authorization arrive in later WUs. */
