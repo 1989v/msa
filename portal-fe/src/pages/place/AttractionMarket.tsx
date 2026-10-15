@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import { useAttractionMarket } from './marketQueries';
 import type { MarketResponse, MarketZone } from '../../api/marketApi';
 import type { PlaceLang } from '../../api/placeApi';
-import { formatMarketFloor, groupMarketPins, longestMarketSegmentMidpoint, hasMarketCoordinate, marketSourceBadges, matchesMarketName, normalizeMarketName, projectMarketPins, visibleMarketStores, zoneIds } from './marketView';
+import { formatGoodPriceMenu, formatGoodPriceSummary, formatMarketFloor, groupMarketPins, longestMarketSegmentMidpoint, hasMarketCoordinate, marketSourceBadges, matchesMarketName, normalizeMarketName, projectMarketPins, visibleMarketStores, zoneIds } from './marketView';
 import './AttractionMarket.css';
 import MarketStewardApplication from './MarketStewardApplication';
 
@@ -61,6 +61,7 @@ function MarketSection({ data, lang, initialQuery, includeOutside, onOutside }: 
     - Number(b.stores.some((store) => matchesMarketName(store, query))));
   const pickZone = (id: number | null) => { setZoneId(id); setParcelKey(null); };
   const attribution = data.market.attribution;
+  const goodPrice = data.market.goodPrice;
   const facts = [
     [C.type, C.types[data.market.marketType]], [C.count, data.market.storeCountRaw],
     [C.cycle, data.market.openingCycle], [C.facilities, data.market.facilities],
@@ -73,6 +74,9 @@ function MarketSection({ data, lang, initialQuery, includeOutside, onOutside }: 
       <dl className="place-market-facts">
         {facts.filter(([, value]) => value).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
       </dl>
+      {goodPrice && <p className="place-market-source place-market-good-price-summary">
+        {formatGoodPriceSummary(goodPrice, lang)}{' · '}<a href={goodPrice.attribution.url} target="_blank" rel="noreferrer">{goodPrice.attribution.name}</a>
+      </p>}
       {attribution && <p className="place-market-source"><a href={attribution.url} target="_blank" rel="noreferrer">{attribution.name}</a>{' · '}{attribution.license}</p>}
       <div className="place-market-controls">
         <label htmlFor={searchId}>{C.search}</label>
@@ -145,12 +149,14 @@ function MarketSection({ data, lang, initialQuery, includeOutside, onOutside }: 
             {ordered.map((store, index) => <li key={store.id ?? `${store.name}-${index}`} data-found={matchesMarketName(store, query) || undefined} data-outside={store.membership === 'OUT' || undefined}>
               <strong>{store.name}</strong>
               <div className="place-market-badges">
+                {store.goodPrice && <span className="place-market-good-price-badge">{lang === 'en' ? 'Good price' : '착한가격'}</span>}
                 {matchesMarketName(store, query) && <span>{C.found}</span>}
                 {marketSourceBadges(store, lang).map((badge) => <span key={badge}>{badge}</span>)}
                 {store.membership === 'OUT' && <span>{C.out}</span>}
                 {store.membership === 'UNKNOWN' && <span>{C.unknown}</span>}
                 {!hasMarketCoordinate(store) && <span>{C.noPin}</span>}
               </div>
+              {store.goodPrice && store.goodPrice.menus.length > 0 && <p className="place-market-good-price-menus">{(parcel ? store.goodPrice.menus : store.goodPrice.menus.slice(0, 2)).map((menu) => formatGoodPriceMenu(menu, lang)).join(' · ')}</p>}
               {store.items && <p>{store.items}</p>}
               <p>{[store.roadAddress || store.jibunAddress, store.buildingName, store.dong, formatMarketFloor(store.floor, lang), store.ho].filter(Boolean).join(' · ')}</p>
               {store.pinKind === 'REFERENCE' && <p>{[store.relativePosition, store.positionNote].filter(Boolean).join(' · ')}</p>}

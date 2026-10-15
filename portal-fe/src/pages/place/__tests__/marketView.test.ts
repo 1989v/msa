@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { MarketStore, MarketZone } from '../../../api/marketApi';
-import { formatMarketFloor, groupMarketPins, longestMarketSegmentMidpoint, marketSourceBadges, matchesMarketName, projectMarketPins, visibleMarketStores, zoneIds } from '../marketView';
+import { formatMarketPrice, formatGoodPriceSummary, formatMarketFloor, groupMarketPins, longestMarketSegmentMidpoint, marketSourceBadges, matchesMarketName, projectMarketPins, visibleMarketStores, zoneIds } from '../marketView';
 
 const store = (overrides: Partial<MarketStore> = {}): MarketStore => ({
   id: 1, name: '유명 순대국', items: null, zoneId: 1, membership: 'IN', latitude: 37.5, longitude: 127,
@@ -127,5 +127,24 @@ describe('market display projection', () => {
     expect(projected!.points.every((point) => point.x >= 28 && point.x <= 572 && point.y >= 48 && point.y <= 384)).toBe(true);
     expect(projectMarketPins([])).toBeNull();
     expect(projectMarketPins(groupMarketPins([store()]))!.scale100m).toBeGreaterThan(0);
+  });
+});
+
+
+describe('good-price formatting', () => {
+  it.each([
+    ['ko', 5000, 6000, '착한가격업소 2곳 · 5,000~6,000원'],
+    ['en', 5000, 6000, 'Good-price shops 2 · ₩5,000–6,000'],
+    ['ko', 5000, 5000, '착한가격업소 2곳 · 5,000원'],
+    ['en', 5000, 5000, 'Good-price shops 2 · ₩5,000'],
+    ['ko', null, null, '착한가격업소 2곳'],
+    ['en', null, null, 'Good-price shops 2'],
+  ] as const)('formats %s summary (%s, %s)', (lang, minPrice, maxPrice, expected) => {
+    expect(formatGoodPriceSummary({ storeCount: 2, minPrice, maxPrice }, lang)).toBe(expected);
+  });
+  it('formats prices in both languages, including zero', () => {
+    expect(formatMarketPrice(5000, 'ko')).toBe('5,000원');
+    expect(formatMarketPrice(5000, 'en')).toBe('₩5,000');
+    expect(formatMarketPrice(0, 'ko')).toBe('0원');
   });
 });

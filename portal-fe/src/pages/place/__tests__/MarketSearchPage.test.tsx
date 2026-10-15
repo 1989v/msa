@@ -81,3 +81,18 @@ describe('market shop discovery', () => {
     expect(searchMarkets).toHaveBeenLastCalledWith('순대', 'ko', 0);
   });
 });
+
+
+it.each(['/markets', '/en/markets'])('shows a good-price badge and only the first menu in %s search results', async (entry) => {
+  vi.mocked(searchMarkets).mockResolvedValue({ ...result, stores: { ...result.stores, total: 2, items: [
+    { storeId: 1, name: '칼국수집', items: null, category: '한식', marketContentId: '100', marketName: '광명시장', zoneName: null, latitude: null, longitude: null, attraction: null,
+      goodPrice: { category: '한식', menus: [{ name: '칼국수', price: 5000 }, { name: '수제비', price: 6000 }] } },
+    { storeId: 2, name: '가격 미상', items: null, category: null, marketContentId: '100', marketName: '광명시장', zoneName: null, latitude: null, longitude: null, attraction: null,
+      goodPrice: { category: '한식', menus: [{ name: '백반', price: null }] } },
+  ] } });
+  mount(`${entry}?q=국수`);
+  expect(await screen.findAllByText(entry.startsWith('/en') ? 'Good price' : '착한가격')).toHaveLength(2);
+  expect(screen.getByText(entry.startsWith('/en') ? '칼국수 ₩5,000' : '칼국수 5,000원')).toBeInTheDocument();
+  expect(screen.getByText('백반')).toBeInTheDocument();
+  expect(screen.queryByText(/수제비/)).not.toBeInTheDocument();
+});
