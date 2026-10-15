@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 
 @Order(-1)
-@RestControllerAdvice(assignableTypes = [MarketAdminController::class, MarketManageController::class, MarketStewardController::class, MarketStewardAdminController::class])
+@RestControllerAdvice(assignableTypes = [MarketGeometryController::class, MarketGeometryInternalController::class, MarketAdminController::class, MarketManageController::class, MarketStewardController::class, MarketStewardAdminController::class])
 class MarketAdminExceptionHandler {
     @ExceptionHandler(IllegalArgumentException::class)
     fun invalid(e: IllegalArgumentException): ResponseEntity<ApiResponse<Nothing>> =

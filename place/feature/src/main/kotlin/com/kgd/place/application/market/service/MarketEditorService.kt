@@ -17,6 +17,8 @@ class MarketEditorService(
     private val query: MarketQueryPort,
     private val save: MarketSavePort,
     private val editor: MarketEditorPort,
+    private val geometryEditor: com.kgd.place.application.market.usecase.MarketGeometryUseCase? = null,
+    private val rejudge: com.kgd.place.application.market.usecase.RejudgeMarketUseCase? = null,
 ) : EditMarketUseCase {
     private val json = JsonMapper.builder().addModule(KotlinModule.Builder().build()).build()
     data class Snapshot(val type: String, val store: MarketStore? = null, val zone: MarketZone? = null,
@@ -86,6 +88,7 @@ class MarketEditorService(
         log(actor, marketId, MarketChangeTarget.STORE, storeId, MarketChangeAction.UPDATE,
             Snapshot("overrides", overrides = before, reason = request.reason),
             Snapshot("overrides", overrides = rows(storeId), reason = request.reason))
+        rejudge?.rejudge(marketId)
     }
     private fun validateManual(row: MarketStore) {
         require(row.source == MarketStoreSource.MANUAL)
@@ -208,6 +211,10 @@ class MarketEditorService(
         access(actor, marketId, true); admin(actor)
         val change = requireNotNull(editor.findChange(logId)) { "Change not found" }
         require(change.marketId == marketId)
+        if (change.target in setOf(MarketChangeTarget.BOUNDARY, MarketChangeTarget.PATH, MarketChangeTarget.ENTRANCE, MarketChangeTarget.ROAD_RULE, MarketChangeTarget.MARKET_GEO)) {
+            requireNotNull(geometryEditor).revert(actor, change)
+            return
+        }
         val before = json.readValue(requireNotNull(change.beforeRaw), Snapshot::class.java).copy(reason = null)
         val after = json.readValue(requireNotNull(change.afterRaw), Snapshot::class.java).copy(reason = null)
         require(before.type == after.type)
@@ -245,6 +252,7 @@ class MarketEditorService(
                 editor.saveEditedZone(before.zone)
             }
         }
+        rejudge?.rejudge(marketId)
         log(actor, marketId, change.target, change.targetId, MarketChangeAction.REVERT, current, before)
     }
 }

@@ -13,7 +13,10 @@ interface QueryMarketUseCase {
         val display: MarketStoreDisplay,
         val sources: List<MarketStoreSource> = listOf(source.source),
     )
-    data class MarketResult(val market: Market, val zones: List<MarketZone>, val stores: List<Store>)
+    data class MarketResult(val market: Market, val zones: List<MarketZone>, val stores: List<Store>,
+        val boundary: com.kgd.place.domain.market.model.MarketBoundary? = null,
+        val paths: List<com.kgd.place.domain.market.model.MarketPath> = emptyList(),
+        val entrances: List<com.kgd.place.domain.market.model.MarketEntrance> = emptyList())
 }
 
 /** Persistence skeleton. HTTP ingest / editing orchestration and authorization arrive in later WUs. */

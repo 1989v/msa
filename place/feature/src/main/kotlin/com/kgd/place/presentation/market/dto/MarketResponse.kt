@@ -1,6 +1,6 @@
 package com.kgd.place.presentation.market.dto
 
-import com.kgd.place.application.market.usecase.QueryMarketUseCase
+import com.kgd.place.application.market.usecase.*
 import com.kgd.place.domain.market.model.Market
 import com.kgd.place.domain.market.model.MarketActorKind
 import com.kgd.place.domain.market.model.MarketMembershipStatus
@@ -12,7 +12,9 @@ import com.kgd.place.domain.market.model.MarketZoneKind
 import com.kgd.place.domain.market.model.MarketZoneSource
 
 /** Public fields only: upstream payloads and editorial member IDs never leave this boundary. */
-data class MarketResponse(val market: Info, val zones: List<Zone>, val stores: List<Store>) {
+data class MarketResponse(val market: Info, val zones: List<Zone>, val stores: List<Store>,
+    val boundary: MarketGeometryUseCase.Boundary? = null, val paths: List<MarketGeometryUseCase.Path> = emptyList(),
+    val entrances: List<MarketGeometryUseCase.Entrance> = emptyList(), val attribution: List<String> = emptyList()) {
     data class Attribution(val name: String, val url: String, val license: String)
 
     data class Info(
@@ -37,6 +39,7 @@ data class MarketResponse(val market: Info, val zones: List<Zone>, val stores: L
         val categoryMajor: String?, val categoryMid: String?, val categorySub: String?,
         val sources: List<MarketStoreSource>, val pinKind: MarketPinKind, val manual: Boolean,
         val actorKind: MarketActorKind?, val referenceStoreId: Long?, val relativePosition: String?, val positionNote: String?,
+        val pathId: Long? = null,
     )
 
     companion object {
@@ -54,14 +57,15 @@ data class MarketResponse(val market: Info, val zones: List<Zone>, val stores: L
                     categorySub = source.categorySub, sources = row.sources, pinKind = display.pinKind,
                     manual = source.source == MarketStoreSource.MANUAL, actorKind = source.actorKind,
                     referenceStoreId = source.referenceStoreId, relativePosition = source.relativePosition,
-                    positionNote = source.positionNote,
+                    positionNote = source.positionNote, pathId = source.pathId?.takeIf { id -> result.paths.any { it.id == id } },
                 )
-            },
+            }, boundary = result.boundary?.view(), paths = result.paths.map { it.view() }, entrances = result.entrances.map { it.view().copy(pathId = it.viaPathId?.takeIf { id -> result.paths.any { path -> path.id == id } }) },
+            attribution = if (result.boundary?.source == com.kgd.place.domain.market.model.MarketGeometrySource.OSM || result.paths.any { it.source == com.kgd.place.domain.market.model.MarketGeometrySource.OSM }) listOf("© OpenStreetMap contributors") else emptyList(),
         )
 
         private fun info(market: Market): Info = Info(
             id = market.id, contentId = market.attractionContentId, name = market.name, marketType = market.marketType,
-            latitude = market.latitude, longitude = market.longitude, roadAddress = market.roadAddress,
+            latitude = market.centerOverrideLat ?: market.latitude, longitude = market.centerOverrideLng ?: market.longitude, roadAddress = market.roadAddress,
             jibunAddress = market.jibunAddress, marketInfoMatched = market.marketInfoMatched, sourceKey = market.sourceKey,
             sourceMarketType = market.sourceMarketType, storeCountRaw = market.storeCountRaw,
             openingCycle = market.openingCycle, facilities = market.facilities,

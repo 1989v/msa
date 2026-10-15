@@ -11,7 +11,9 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-class MarketService(private val query: MarketQueryPort, private val save: MarketSavePort) :
+class MarketService(private val query: MarketQueryPort, private val save: MarketSavePort,
+    private val geometry: com.kgd.place.application.market.port.MarketGeometryQueryPort? = null,
+    private val geometryEdits: com.kgd.place.application.market.port.MarketGeometryEditPort? = null) :
     QueryMarketUseCase, SaveMarketUseCase {
 
     @Transactional(transactionManager = "placeTransactionManager", readOnly = true)
@@ -21,8 +23,10 @@ class MarketService(private val query: MarketQueryPort, private val save: Market
         val marketId = requireNotNull(market.id)
         val stores = query.findStores(marketId)
         val overrides = query.findOverrides(stores.mapNotNull { it.id }).groupBy { it.storeId }
-        return QueryMarketUseCase.MarketResult(market, query.findZones(marketId), MarketPublicProjection.stores(stores, overrides)
-            .filter { includeOutside || it.display.membership.visibleByDefault })
+        val paths = geometry?.findPaths(marketId).orEmpty()
+        return QueryMarketUseCase.MarketResult(market, query.findZones(marketId), MarketPublicProjection.stores(stores, overrides, paths.mapNotNull { it.id }.toSet())
+            .filter { includeOutside || it.display.membership.visibleByDefault }, geometry?.findBoundary(marketId),
+            paths, geometryEdits?.findEntrances(marketId).orEmpty())
     }
 
     @Transactional(transactionManager = "placeTransactionManager")

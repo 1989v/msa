@@ -30,7 +30,7 @@ data class MarketStoreDisplay(
                 items = value(MarketStoreField.ITEMS, store.items),
                 zoneId = value(MarketStoreField.ZONE_ID, store.zoneId?.toString())?.toLong(),
                 membership = MarketMembership(MarketMembershipStatus.valueOf(
-                    value(MarketStoreField.MEMBERSHIP, store.membership.status.name)!!)),
+                    value(MarketStoreField.MEMBERSHIP, (store.judgedMembership ?: store.membership.status).name)!!)),
                 coordinate = if (lat != null && lng != null) MarketCoordinate(lat, lng) else null,
                 pinKind = pinKind,
             )

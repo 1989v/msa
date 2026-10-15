@@ -19,7 +19,7 @@ data class MarketStoreOverride(
             MarketStoreField.ITEMS -> Unit
             MarketStoreField.MEMBERSHIP -> require(MarketMembershipStatus.entries.any { it.name == value })
             MarketStoreField.PIN_KIND -> require(MarketPinKind.entries.any { it.name == value })
-            MarketStoreField.ZONE_ID -> require(value == null || (value.toLongOrNull()?.let { it > 0 } == true))
+            MarketStoreField.ZONE_ID, MarketStoreField.PATH_ID -> require(value == null || (value.toLongOrNull()?.let { it > 0 } == true))
             MarketStoreField.LATITUDE -> require(value == null || (value.toDoubleOrNull()?.let { it.isFinite() && it in -90.0..90.0 } == true))
             MarketStoreField.LONGITUDE -> require(value == null || (value.toDoubleOrNull()?.let { it.isFinite() && it in -180.0..180.0 } == true))
         }

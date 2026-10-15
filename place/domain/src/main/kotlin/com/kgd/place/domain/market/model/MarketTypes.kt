@@ -10,7 +10,7 @@ enum class MarketActorKind { ADMIN, STEWARD }
 enum class MarketChangeTarget { MARKET, ZONE, STORE, BOUNDARY, PATH, ENTRANCE, ROAD_RULE, MARKET_GEO }
 enum class MarketChangeAction { CREATE, UPDATE, DELETE, REVERT }
 enum class MarketStewardStatus { PENDING, ACTIVE, SUSPENDED, REJECTED }
-enum class MarketStoreField { NAME, ITEMS, MEMBERSHIP, ZONE_ID, LATITUDE, LONGITUDE, PIN_KIND }
+enum class MarketStoreField { NAME, ITEMS, MEMBERSHIP, ZONE_ID, LATITUDE, LONGITUDE, PIN_KIND, PATH_ID }
 
 /** Stores the automatic decision; an override never rewrites this evidence. */
 data class MarketMembership(val status: MarketMembershipStatus) {

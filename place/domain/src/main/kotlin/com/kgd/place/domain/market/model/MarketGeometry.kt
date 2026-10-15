@@ -172,6 +172,11 @@ object MarketStoreJudge {
         val distances = paths.map { it to MarketGeometry.distanceToPolyline(point, it.geometry) }
         val matching = distances.filter { (path, distance) -> path.named && path.name == store.roadName && distance <= 25.0 }
             .minByOrNull { it.second }
+        val correction = overrides.find { it.field == MarketStoreField.PATH_ID }
+        if (correction != null) {
+            val id = correction.value?.toLong()
+            if (id == null || paths.any { it.id == id }) return MarketStoreJudgment(membership, by, id, false)
+        }
         val selected = matching ?: distances.minBy { it.second }
         return MarketStoreJudgment(membership, by, selected.first.id, matching == null)
     }

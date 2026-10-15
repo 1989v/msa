@@ -47,6 +47,7 @@ reason 은 필수(빈 문자열 400). 모든 쓰기는 `market_change_log` 에 �
 | 메서드·경로 | 바디 |
 |---|---|
 | PUT `/{marketId}/osm` | `{ fetchedAt, raw: { boundary: <overpass json>|null, paths: <json>, roads: <json> }, boundary: { polygon, source: "OSM"|"DERIVED", osmId }|null, paths: [ { osmWayId, name, geometry } ] }` — MANUAL 경계·MANUAL 선은 바꾸지 않는다. OSM 선은 osmWayId 로 upsert |
+| GET `/{marketId}/stores?membership=IN` | 유효 소속 가게 좌표 목록 `[{ id, lat, lng }]` (DERIVED 초안 입력) |
 | POST `/{marketId}/rejudge` | (없음) → `RejudgeResult` |
 
 시장 목록은 기존 내부 API(GET 시장 id·중심·유형)를 쓴다.

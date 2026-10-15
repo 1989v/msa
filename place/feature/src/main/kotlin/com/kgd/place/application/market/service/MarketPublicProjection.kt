@@ -18,7 +18,7 @@ internal object MarketPublicProjection {
 
     private data class Identity(val marketId: Long, val name: String, val jibun: String)
 
-    fun stores(rows: List<MarketStore>, overrides: Map<Long, List<MarketStoreOverride>>): List<QueryMarketUseCase.Store> {
+    fun stores(rows: List<MarketStore>, overrides: Map<Long, List<MarketStoreOverride>>, pathIds: Set<Long>? = null): List<QueryMarketUseCase.Store> {
         val candidates = rows.filter { it.source != MarketStoreSource.MANUAL && !it.jibunAddress.isNullOrBlank() }
             .groupBy { Identity(it.marketId, normalized(it.name), normalized(requireNotNull(it.jibunAddress))) }
         val partners = mutableMapOf<Long, MarketStore>()
@@ -58,14 +58,18 @@ internal object MarketPublicProjection {
             )
             val publicSource = if (base.referenceStoreId in canonicalIds)
                 base.copy(referenceStoreId = canonicalIds.getValue(requireNotNull(base.referenceStoreId))) else base
-            val display = MarketStoreDisplay.from(publicSource, mergedOverrides)
+            val pathOverride = mergedOverrides.find { it.field == com.kgd.place.domain.market.model.MarketStoreField.PATH_ID }
+            val correctedPathId = pathOverride?.value?.toLong()
+            val effectiveSource = if (pathOverride == null || (correctedPathId != null && pathIds != null && correctedPathId !in pathIds))
+                publicSource else publicSource.copy(pathId = correctedPathId)
+            val display = MarketStoreDisplay.from(effectiveSource, mergedOverrides)
             val sources = MarketStoreSource.entries.filter { source ->
                 listOfNotNull(row, other).any {
                     it.source == source || (source == MarketStoreSource.ONNURI && (!it.onnuriKey.isNullOrBlank() || it.onnuriRaw != null)) ||
                         (source == MarketStoreSource.SANGGA && (!it.sanggaKey.isNullOrBlank() || it.sanggaRaw != null))
                 }
             }
-            QueryMarketUseCase.Store(publicSource, if (display.membership.status == MarketMembershipStatus.UNKNOWN)
+            QueryMarketUseCase.Store(effectiveSource, if (display.membership.status == MarketMembershipStatus.UNKNOWN)
                 display.copy(coordinate = null) else display, sources)
         }
         val byId = projected.associateBy { it.source.id }
