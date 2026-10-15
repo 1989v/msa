@@ -48,7 +48,7 @@ class MarketSearchQueryRepositoryTest : BehaviorSpec({
         Market(content, name, MarketType.STREET, sourceRaw = raw)).also { em.persist(it); em.flush() }
     fun store(market: MarketJpaEntity, name: String, status: MarketMembershipStatus = MarketMembershipStatus.IN,
         items: String? = null, category: String? = null, source: MarketStoreSource = MarketStoreSource.MANUAL,
-        jibun: String? = null, judged: MarketMembershipStatus? = null): MarketStoreJpaEntity {
+        jibun: String? = null, judged: MarketMembershipStatus? = null, menu: String? = null): MarketStoreJpaEntity {
         val key = java.util.UUID.randomUUID().toString()
         val row = MarketStore(requireNotNull(market.id), name, source, sourceKey = key, items = items,
             categoryMajor = category, jibunAddress = jibun, onnuriKey = if (source == MarketStoreSource.ONNURI) key else null,
@@ -56,7 +56,9 @@ class MarketSearchQueryRepositoryTest : BehaviorSpec({
             sanggaKey = if (source == MarketStoreSource.SANGGA) key else null,
             sanggaRaw = if (source == MarketStoreSource.SANGGA) "{}" else null,
             actorKind = MarketActorKind.ADMIN, createdByMemberId = 1,
-            membership = MarketMembership(status), judgedMembership = judged)
+            membership = MarketMembership(status), judgedMembership = judged,
+            goodPriceRaw = menu?.let { """{"업종":"한식","메뉴1":"$it","가격1":"7000"}""" },
+            goodPriceKey = menu?.let { "private-key" }, goodPriceMatchedBy = menu?.let { "NAME" }, goodPriceMenuNames = menu)
         return MarketStoreJpaEntity.fromDomain(row).also { em.persist(it); em.flush() }
     }
     fun edit(store: MarketStoreJpaEntity, field: MarketStoreField, value: String?) {
@@ -64,6 +66,22 @@ class MarketSearchQueryRepositoryTest : BehaviorSpec({
             value, "수정", 1, MarketActorKind.ADMIN))); em.flush()
     }
     Given("유효 IN 가게 검색") {
+        Then("이름 품목 메뉴 업종 순위와 메뉴 공백 정규화를 적용하며 파트너 메뉴도 검색한다") {
+            val m = market("menu")
+            store(m, "분류가게", category = "칼국수")
+            store(m, "메뉴가게", menu = "칼 국수")
+            store(m, "품목가게", items = "칼국수")
+            store(m, "칼국수집")
+            val primary = store(m, "파트너가게", source = MarketStoreSource.ONNURI, jibun = "중구1")
+            store(m, "파트너가게", source = MarketStoreSource.SANGGA, jibun = "중구1", menu = "칼국수")
+            store(m, "제외메뉴", status = MarketMembershipStatus.OUT, menu = "칼국수")
+            val result = adapter.search("칼국수", "ko", 0, 20).stores
+            result.total shouldBe 5
+            result.items.map { it.name } shouldBe listOf("칼국수집", "품목가게", "메뉴가게", "파트너가게", "분류가게")
+            result.items.first { it.storeId == primary.id }.goodPrice shouldBe
+                SearchMarketsUseCase.GoodPrice("한식", listOf(GoodPriceMenu("칼국수", 7000)))
+            result.items[2].goodPrice?.menus?.single()?.name shouldBe "칼 국수"
+        }
         Then("이름·품목·분류 순서, 시장명·가게명 동점 정렬과 DB 페이지 전체 건수가 맞는다") {
             val b = market("b", "나시장"); val a = market("a", "가시장")
             store(a, "분류가게", category = "떡")

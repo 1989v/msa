@@ -39,9 +39,14 @@ data class MarketStore(
     val judgedBy: MarketJudgedBy? = null,
     val pathId: Long? = null,
     val needsReview: Boolean = false,
+    val goodPriceKey: String? = null,
+    val goodPriceRaw: String? = null,
+    val goodPriceMatchedBy: String? = null,
+    val goodPriceMenuNames: String? = null,
 ) {
     init {
         require(marketId > 0 && name.isNotBlank())
+        require(goodPriceMatchedBy == null || goodPriceMatchedBy in setOf("NAME", "ROAD"))
         require((latitude == null) == (longitude == null))
         if (latitude != null && longitude != null) MarketCoordinate(latitude, longitude)
         require(source == MarketStoreSource.MANUAL || !sourceKey.isNullOrBlank())

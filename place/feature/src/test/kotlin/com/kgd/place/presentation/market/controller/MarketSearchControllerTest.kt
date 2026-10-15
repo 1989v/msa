@@ -19,6 +19,19 @@ class MarketSearchControllerTest : BehaviorSpec({
         .setControllerAdvice(GlobalExceptionHandler())
         .setMessageConverters(JacksonJsonHttpMessageConverter(jacksonMapperBuilder().build())).build()
     Given("공개 검색 계약") {
+        Then("착한가격 메뉴를 공개하고 매칭 방법과 원문 및 원천 키는 제외한다") {
+            val shop = SearchMarketsUseCase.StoreSummary(1, "국수집", null, null, "c", "시장", null,
+                null, null, null, SearchMarketsUseCase.GoodPrice("한식",
+                    listOf(com.kgd.place.domain.market.model.GoodPriceMenu("국수", 5000))))
+            every { port.search("국수", "ko", 0, 20) } returns SearchMarketsUseCase.Result("국수", emptyList(),
+                SearchMarketsUseCase.StorePage(listOf(shop), 1, 0, 20))
+            mvc.perform(get("/api/v1/place/markets/search").param("q", "국수"))
+                .andExpect(status().isOk).andExpect(jsonPath("$.data.stores.items[0].goodPrice.category").value("한식"))
+                .andExpect(jsonPath("$.data.stores.items[0].goodPrice.menus[0].price").value(5000))
+                .andExpect(jsonPath("$.data.stores.items[0].goodPrice.matchedBy").doesNotExist())
+                .andExpect(jsonPath("$.data.stores.items[0].goodPriceRaw").doesNotExist())
+                .andExpect(jsonPath("$.data.stores.items[0].goodPriceKey").doesNotExist())
+        }
         Then("공백을 제거한 검색어와 기본 페이지를 반환한다") {
             every { port.search("떡집", "ko", 0, 20) } returns SearchMarketsUseCase.Result("떡집", emptyList(),
                 SearchMarketsUseCase.StorePage(emptyList(), 0, 0, 20))

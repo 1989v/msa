@@ -1,6 +1,7 @@
 package com.kgd.place.application.market.usecase
 
 import com.kgd.place.domain.market.model.MarketType
+import com.kgd.place.domain.market.model.GoodPriceMenu
 
 interface SearchMarketsUseCase {
     fun search(query: String, lang: String, page: Int, size: Int): Result
@@ -14,5 +15,6 @@ interface SearchMarketsUseCase {
     data class StorePage(val items: List<StoreSummary>, val total: Long, val page: Int, val size: Int)
     data class StoreSummary(val storeId: Long, val name: String, val items: String?, val category: String?,
         val marketContentId: String, val marketName: String, val zoneName: String?,
-        val latitude: Double?, val longitude: Double?, val attraction: AttractionRef?)
+        val latitude: Double?, val longitude: Double?, val attraction: AttractionRef?, val goodPrice: GoodPrice? = null)
+    data class GoodPrice(val category: String?, val menus: List<GoodPriceMenu>)
 }

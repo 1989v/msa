@@ -1,5 +1,6 @@
 package com.kgd.place.application.market.service
 
+import com.kgd.place.application.market.dto.GoodPriceProjection
 import com.kgd.place.application.market.port.MarketSavePort
 import com.kgd.place.application.market.usecase.IngestMarketUseCase
 import com.kgd.place.domain.market.model.MarketStoreSource
@@ -34,7 +35,10 @@ class MarketIngestService(private val save: MarketSavePort) : IngestMarketUseCas
             )).id)
         }
         command.stores.forEach { store ->
-            save.saveSourceStore(store.row.copy(marketId = marketId, zoneId = store.zoneKey?.let { zones.getValue(it) }), observed)
+            val menuNames = GoodPriceProjection.from(store.row.goodPriceRaw)?.menus
+                ?.joinToString(" · ") { it.name }?.take(500)
+            save.saveSourceStore(store.row.copy(marketId = marketId, zoneId = store.zoneKey?.let { zones.getValue(it) },
+                goodPriceMenuNames = menuNames), observed)
         }
         return IngestMarketUseCase.Result(marketId, zones.size, command.stores.size)
     }

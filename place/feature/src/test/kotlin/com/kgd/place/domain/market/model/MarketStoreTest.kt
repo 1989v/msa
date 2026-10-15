@@ -16,6 +16,18 @@ class MarketStoreTest : BehaviorSpec({
         storeId = 10, field = field, value = value, reason = "현장 확인", memberId = 7, actorKind = MarketActorKind.ADMIN,
     )
 
+    Given("착한가격 매칭 정보") {
+        Then("전체 원천 재적재의 null은 기존 지정 정보를 지우고 잘못된 매칭 방법은 거부한다") {
+            val matched = source.copy(goodPriceKey = "good", goodPriceRaw = "{}", goodPriceMatchedBy = "NAME",
+                goodPriceMenuNames = "국수")
+            val reloaded = matched.reloadSource(source.copy(id = null))
+            reloaded.goodPriceKey shouldBe null
+            reloaded.goodPriceRaw shouldBe null
+            reloaded.goodPriceMatchedBy shouldBe null
+            reloaded.goodPriceMenuNames shouldBe null
+            shouldThrow<IllegalArgumentException> { source.copy(goodPriceMatchedBy = "FUZZY") }
+        }
+    }
     Given("자동 소속 판정") {
         Then("IN과 UNKNOWN은 기본 노출하고 OUT은 기본 숨김이다") {
             MarketMembership(MarketMembershipStatus.IN).visibleByDefault shouldBe true

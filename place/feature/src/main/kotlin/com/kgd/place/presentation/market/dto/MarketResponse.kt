@@ -1,6 +1,8 @@
 package com.kgd.place.presentation.market.dto
 
 import com.kgd.place.application.market.usecase.*
+import com.kgd.place.application.market.dto.GoodPriceProjection
+import com.kgd.place.domain.market.model.GoodPriceMenu
 import com.kgd.place.domain.market.model.Market
 import com.kgd.place.domain.market.model.MarketActorKind
 import com.kgd.place.domain.market.model.MarketMembershipStatus
@@ -22,7 +24,11 @@ data class MarketResponse(val market: Info, val zones: List<Zone>, val stores: L
         val latitude: Double?, val longitude: Double?, val roadAddress: String?, val jibunAddress: String?,
         val marketInfoMatched: Boolean, val sourceKey: String?, val sourceMarketType: String?,
         val storeCountRaw: String?, val openingCycle: String?, val facilities: String?, val attribution: Attribution?,
+        val goodPrice: GoodPriceSummary? = null,
     )
+
+    data class GoodPrice(val category: String?, val menus: List<GoodPriceMenu>, val matchedBy: String?)
+    data class GoodPriceSummary(val storeCount: Int, val minPrice: Int?, val maxPrice: Int?, val attribution: Attribution)
 
     data class Zone(
         val id: Long?, val parentId: Long?, val kind: MarketZoneKind, val name: String,
@@ -40,11 +46,12 @@ data class MarketResponse(val market: Info, val zones: List<Zone>, val stores: L
         val sources: List<MarketStoreSource>, val pinKind: MarketPinKind, val manual: Boolean,
         val actorKind: MarketActorKind?, val referenceStoreId: Long?, val relativePosition: String?, val positionNote: String?,
         val pathId: Long? = null,
+        val goodPrice: GoodPrice? = null,
     )
 
     companion object {
         fun from(result: QueryMarketUseCase.MarketResult): MarketResponse = MarketResponse(
-            market = info(result.market), zones = zones(result.zones), stores = result.stores.map { row ->
+            market = info(result.market).copy(goodPrice = goodPriceSummary(result.stores)), zones = zones(result.zones), stores = result.stores.map { row ->
                 val source = row.source
                 val display = row.display
                 Store(
@@ -58,10 +65,23 @@ data class MarketResponse(val market: Info, val zones: List<Zone>, val stores: L
                     manual = source.source == MarketStoreSource.MANUAL, actorKind = source.actorKind,
                     referenceStoreId = source.referenceStoreId, relativePosition = source.relativePosition,
                     positionNote = source.positionNote, pathId = source.pathId?.takeIf { id -> result.paths.any { it.id == id } },
+                    goodPrice = GoodPriceProjection.from(source.goodPriceRaw)?.let {
+                        GoodPrice(it.category, it.menus, source.goodPriceMatchedBy)
+                    },
                 )
             }, boundary = result.boundary?.view(), paths = result.paths.map { it.view() }, entrances = result.entrances.map { it.view().copy(pathId = it.viaPathId?.takeIf { id -> result.paths.any { path -> path.id == id } }) },
             attribution = if (result.boundary?.source == com.kgd.place.domain.market.model.MarketGeometrySource.OSM || result.paths.any { it.source == com.kgd.place.domain.market.model.MarketGeometrySource.OSM }) listOf("© OpenStreetMap contributors") else emptyList(),
         )
+
+        private fun goodPriceSummary(stores: List<QueryMarketUseCase.Store>): GoodPriceSummary? {
+            val shops = stores.filter { it.display.membership.status == MarketMembershipStatus.IN }
+                .mapNotNull { GoodPriceProjection.from(it.source.goodPriceRaw) }
+            if (shops.isEmpty()) return null
+            val prices = shops.flatMap { it.menus }.mapNotNull { it.price }
+            return GoodPriceSummary(shops.size, prices.minOrNull(), prices.maxOrNull(), Attribution(
+                "행정안전부 착한가격업소", "https://www.data.go.kr/data/3045247/fileData.do", "이용허락범위 제한 없음",
+            ))
+        }
 
         private fun info(market: Market): Info = Info(
             id = market.id, contentId = market.attractionContentId, name = market.name, marketType = market.marketType,

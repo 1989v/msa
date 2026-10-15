@@ -103,7 +103,7 @@ class MarketRepositoryAdapter(
     }
 
     private fun saveStoreInternal(store: MarketStore, observedSourceKeys: Set<String>?): MarketStore {
-        validateJson(store.onnuriRaw, store.sanggaRaw)
+        validateJson(store.onnuriRaw, store.sanggaRaw, store.goodPriceRaw)
         val natural = if (store.id != null) stores.findById(requireNotNull(store.id)).orElse(null)?.toDomain()
             else store.sourceKey?.let { stores.findByMarketIdAndSourceAndSourceKey(store.marketId, store.source, it)?.toDomain() }
         val sanggaOwner = if (observedSourceKeys != null) store.sanggaKey?.let {

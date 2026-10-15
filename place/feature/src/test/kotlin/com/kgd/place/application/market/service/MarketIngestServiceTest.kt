@@ -32,6 +32,27 @@ class MarketIngestServiceTest : BehaviorSpec({
             verify(exactly = 0) { save.saveOverride(any()) }
         }
     }
+    Given("착한가격 원문 전체 동기화") {
+        val save = mockk<MarketSavePort>()
+        val service = MarketIngestService(save)
+        val market = Market("123", "시장", MarketType.STREET)
+        val store = MarketStore(1, "가게", MarketStoreSource.ONNURI, sourceKey = "o", onnuriKey = "o", onnuriRaw = "{}")
+        every { save.saveMarket(any()) } returns market.copy(id = 1)
+        every { save.saveSourceStore(any(), any()) } answers { firstArg() }
+        fun ingest(row: MarketStore) = service.ingest(IngestMarketUseCase.Command(market, emptyList(),
+            listOf(IngestMarketUseCase.Store(row)), listOf("o")))
+        Then("검색 이름은 원문에서 계산하고 입력 파생값은 신뢰하지 않으며 null 원문은 이름도 지운다") {
+            ingest(store.copy(goodPriceRaw = """{"메뉴1":"칼국수","메뉴2":"수제비","메뉴3":" "}""",
+                goodPriceMenuNames = "신뢰하지 않는 값"))
+            verify { save.saveSourceStore(match { it.goodPriceMenuNames == "칼국수 · 수제비" }, any()) }
+            ingest(store.copy(goodPriceMenuNames = "오래된 값"))
+            verify { save.saveSourceStore(match { it.goodPriceRaw == null && it.goodPriceMenuNames == null }, any()) }
+        }
+        Then("검색 이름은 500자로 제한한다") {
+            ingest(store.copy(goodPriceRaw = """{"메뉴1":"${"가".repeat(600)}"}"""))
+            verify { save.saveSourceStore(match { it.goodPriceMenuNames == "가".repeat(500) }, any()) }
+        }
+    }
     Given("automatic reingest tries to write a manual row") {
         val save = mockk<MarketSavePort>()
         val service = MarketIngestService(save)
