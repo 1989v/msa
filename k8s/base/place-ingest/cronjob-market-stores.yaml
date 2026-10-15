@@ -55,6 +55,9 @@ spec:
                 - name: MARKET_SANGGA_BULK_URL
                   valueFrom:
                     configMapKeyRef: { name: place-market-source-files, key: sangga-bulk-url }
+                - name: MARKET_GOOD_PRICE_FILE_URL
+                  valueFrom:
+                    configMapKeyRef: { name: place-market-source-files, key: good-price-url }
               resources:
                 requests: { cpu: 100m, memory: 256Mi }
                 limits: { memory: 512Mi }

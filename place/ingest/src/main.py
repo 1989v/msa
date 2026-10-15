@@ -465,11 +465,12 @@ def main() -> int:
     if args.job == "market-stores":
         urls = [os.environ.get(k) for k in ("MARKET_STANDARD_FILE_URL", "MARKET_ONNURI_FILE_URL", "MARKET_SANGGA_BULK_URL")]
         source = os.environ.get("MARKET_STANDARD_SOURCE", "file")
+        good_price_url = os.environ.get("MARKET_GOOD_PRICE_FILE_URL")
         if source not in {"api", "file", "off"}:
             raise SystemExit("MARKET_STANDARD_SOURCE must be api, file or off")
-        if not all(urls[1:]) or (source == "file" and not urls[0]):
-            raise SystemExit("MARKET_ONNURI_FILE_URL · MARKET_SANGGA_BULK_URL required; file source also requires MARKET_STANDARD_FILE_URL")
-        market_stores.run(*urls, _api_key(), standard_source=source)
+        if not all(urls[1:]) or not good_price_url or (source == "file" and not urls[0]):
+            raise SystemExit("MARKET_ONNURI_FILE_URL · MARKET_SANGGA_BULK_URL · MARKET_GOOD_PRICE_FILE_URL required; file source also requires MARKET_STANDARD_FILE_URL")
+        market_stores.run(*urls, _api_key(), standard_source=source, good_price_url=good_price_url)
         return 0
     if args.job == "transit-stops":
         return _job_transit_stops()

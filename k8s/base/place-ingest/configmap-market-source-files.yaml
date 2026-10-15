@@ -11,3 +11,5 @@ data:
   onnuri-url: "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000002449544&fileDetailSn=1&insertDataPrcus=N"
   # 상가정보 20260630 ZIP (352,699,739 bytes).
   sangga-bulk-url: "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000003695831&fileDetailSn=1&insertDataPrcus=N"
+  # 착한가격업소 2026-06-30 CSV (1,577,607 B), 분기 갱신. 발표마다 파일 ID 갱신.
+  good-price-url: "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000003681743&fileDetailSn=1&insertDataPrcus=N"
