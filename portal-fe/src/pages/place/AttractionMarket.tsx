@@ -94,17 +94,15 @@ function MarketSection({ data, lang, includeOutside, onOutside }: {
             }).join(' ')} />}
             {paths.map((path) => {
               const points = path.geometry.map(projection.project);
-              const label = path.named && path.name ? longestMarketSegmentMidpoint(points) : null;
               return <g key={path.id} style={{ '--market-path-color': pathColor(path.id) } as CSSProperties}>
                 <polyline className="place-market-path" points={points.map((point) => `${point.x},${point.y}`).join(' ')} />
-                {label && <text className="place-market-path-label" x={label.x} y={label.y} textAnchor="middle">{path.name}</text>}
               </g>;
             })}
             {hasGeometry && (data.entrances ?? []).map((entrance) => {
               const point = projection.project([entrance.lat, entrance.lng]);
               return <g key={entrance.id} className="place-market-entrance" transform={`translate(${point.x} ${point.y})`}>
                 <path d="M 0 -7 L 7 0 L 0 7 L -7 0 Z" />
-                {entrance.label && <text y="-12" textAnchor="middle">{entrance.label}</text>}
+                {entrance.label && <title>{entrance.label}</title>}
               </g>;
             })}
             <text x="28" y="30" className="place-market-direction">N ↑</text>
@@ -120,6 +118,16 @@ function MarketSection({ data, lang, includeOutside, onOutside }: {
                 <text textAnchor="middle" dy="4">{pin.stores.length}</text>
                 {hit && <text className="place-market-hit-label" textAnchor={pin.x < 150 ? 'start' : pin.x > 450 ? 'end' : 'middle'} y="-25">{pin.stores.filter((store) => matchesMarketName(store, query)).map((store) => store.name).join(', ')}</text>}
               </g>;
+            })}
+            {/* 골목 이름은 가게 점 위에 그려 가려지지 않게 하고, 같은 이름의 선이 여럿이면 가장 긴 선에 한 번만 단다 */}
+            {[...paths.filter((path) => path.named && path.name).reduce((byName, path) => {
+              const length = pathLength(path.geometry.map(projection.project));
+              const kept = byName.get(path.name!);
+              if (!kept || length > kept.length) byName.set(path.name!, { path, length });
+              return byName;
+            }, new Map<string, { path: (typeof paths)[number]; length: number }>()).values()].map(({ path }) => {
+              const label = longestMarketSegmentMidpoint(path.geometry.map(projection.project));
+              return label && <text key={path.id} className="place-market-path-label" x={label.x} y={label.y} textAnchor="middle">{path.name}</text>;
             })}
             <path d={`M 28 402 v 6 h ${projection.scaleBarLength} v -6`} className="place-market-scale" />
             <text x="28" y="430">{projection.scaleBarMetres} m</text>
@@ -167,4 +175,8 @@ function ZoneFilter({ zone, selected, onSelect, color, lang }: {
     </button>
     {zone.children.length > 0 && <div className="place-market-zone-children">{zone.children.map((child, index) => <ZoneFilter key={child.id ?? index} zone={child} selected={selected} onSelect={onSelect} color={color} lang={lang} />)}</div>}
   </div>;
+}
+
+function pathLength(points: { x: number; y: number }[]) {
+  return points.slice(1).reduce((sum, point, index) => sum + Math.hypot(point.x - points[index].x, point.y - points[index].y), 0);
 }
