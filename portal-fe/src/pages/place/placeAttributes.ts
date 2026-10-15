@@ -411,6 +411,8 @@ export function visitSummary(a: Attraction, lang: PlaceLang): VisitSummary {
       : a.petPolicy === 'PARTIAL' ? (en ? 'Pets allowed in some areas' : '반려동물 일부 구역 동반 가능')
         : sourceText(a.petAcmpyType);
   const source = attractionSourceName(a.source, lang);
+  const fee = sourceText(a.parkingFee);
+  const parkingFee = ['-', 'n/a', '정보 없음', 'not provided'].includes(fee.toLowerCase()) ? '' : fee;
   const updated = sourceDate(a.modifiedAt);
   const status = en
     ? `Source: ${source ?? na} · Source updated: ${updated ?? na} · Collected: ${na}`
@@ -419,7 +421,8 @@ export function visitSummary(a: Attraction, lang: PlaceLang): VisitSummary {
     a.feeText != null ? a.feeText : sourceText(a.useFee),
     sourceText(a.useTime),
     lines(closureBadge(a, en), sourceText(a.restDate)),
-    lines(availability(a.attrParking, en ? 'Parking available' : '주차 가능', en ? 'No parking' : '주차 불가'), sourceText(a.parking)),
+    lines(availability(a.attrParking, en ? 'Parking available' : '주차 가능', en ? 'No parking' : '주차 불가'), sourceText(a.parking),
+      parkingFee ? `${en ? 'Parking fee' : '주차요금'}: ${parkingFee}` : null),
     pet,
     barrierFreeIcons(a, lang).join(' · '),
     status,

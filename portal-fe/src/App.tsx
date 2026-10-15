@@ -3,6 +3,7 @@ import { Suspense, lazy, type ReactElement } from 'react';
 import { isApexProd, isProd1989vHost } from './shell/serviceHref';
 import { PORTAL_ORIGIN } from './seo/copy.mjs';
 import { recordPlaceEntry } from './analytics/inflow';
+import WebVitalsNavigationGuard from './analytics/WebVitalsNavigationGuard';
 import AppShellChrome from './components/shell/AppShellChrome';
 import HomePage from './pages/HomePage';
 import { rootInvitation } from './pages/party/invitation';
@@ -218,6 +219,7 @@ function AdminHostRedirect() {
 function App() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
+      <WebVitalsNavigationGuard />
       <Suspense fallback={<div style={{ padding: 32, color: 'var(--ko-text-muted)' }}>로딩…</div>}>
         <Routes>
           {/* apex 루트는 서비스 런처 (ADR-0066). 개념 사전·시각화는 /tech 가 받는다. */}

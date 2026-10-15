@@ -62,7 +62,6 @@ import {
   secureImageUrl,
   sourceText,
   titleParts,
-  type IntroRow,
 } from './placeView';
 import {
   barrierFreeIcons,
@@ -706,16 +705,12 @@ export default function AttractionPage() {
                     점진 보강이라 아직 안 받은 관광지가 있다 — 값이 없는 줄은 그리지 않고,
                     다 없으면 블록 자체를 내지 않는다(빈 표는 "정보 없음"보다 나쁘다). */}
                 {!kind && (() => {
-                  // 이용시간·쉬는날·이용요금·주차·문의는 방문 요약·행동 줄이 보여 주므로 뺀다 — 남는 파생 값은 주차요금뿐이다.
+                  // 이용시간·쉬는날·이용요금·주차·주차요금·문의는 방문 요약·행동 줄이 보여 주므로 뺀다.
                   // 그 다음 원문에만 있는 나머지. 반복정보의 요금 행도 남긴다(어느 행이 요금인지 고르는 규칙 사본을 두지 않는다).
                   // 원천이 준 것을 다 보여준다 — 상세는 이 관광지에 대해 아는 전부를 내는 자리다.
-                  const derived: IntroRow[] = [
-                    { key: 'parkingFee', label: L.parkingFee, value: attraction.parkingFee ?? '' },
-                  ];
                   // 이용정보에도 <br>·엔티티가 섞여 온다 — 개요와 같은 정리를 거친다
                   // 반복정보(detailInfo2)는 라벨을 원천이 준다 — 예약안내·코스안내 등
                   const rows = [
-                    ...derived,
                     ...introRows(attraction.introRaw, lang),
                     ...repeatInfoRows(attraction.infoRaw),
                   ]

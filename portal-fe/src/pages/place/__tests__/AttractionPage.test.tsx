@@ -147,7 +147,7 @@ describe('AttractionPage 새 섹션', () => {
   afterEach(() => vi.clearAllMocks());
 
   it('방문 요약 → 개요·이용 안내 → 정보 탭(방문 정보) → 주변 탐색 → 비슷한 곳 순서다', async () => {
-    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, parkingFee: '소형 2,000원' });
+    vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, parkingFee: '소형 2,000원', introRaw: JSON.stringify({ expguide: '체험 프로그램 안내' }) });
     renderAt('/attractions/100');
     await screen.findByText('명소 301');
     await screen.findByText('명소 401');
@@ -1396,7 +1396,7 @@ describe('AttractionPage 첫 화면 — 방문 요약 · 행동 줄', () => {
     expect(document.querySelector('[data-place-section="visit-badges"]')).toBeNull();
   });
 
-  it('「이용 안내」(일반 유형) — 요약과 겹치는 다섯 행은 빼고 주차요금·intro·반복정보(요금 행 포함)는 원천 순서대로 남긴다', async () => {
+  it('주차요금은 방문 요약에 한 번, 나머지 이용 안내는 원천 순서대로 남긴다', async () => {
     vi.mocked(fetchAttraction).mockResolvedValue({
       ...first,
       useTime: '09:00~18:00',
@@ -1412,12 +1412,14 @@ describe('AttractionPage 첫 화면 — 방문 요약 · 행동 줄', () => {
     });
     renderAt('/attractions/100');
     const info = await screen.findByRole('region', { name: '이용 안내' });
+    const summary = document.querySelector('[data-place-section="visit-summary"]')!;
+    expect(summary.textContent).toContain('주차요금: 소형 2,000원');
+    expect(info.textContent).not.toContain('소형 2,000원');
 
     const rows = Array.from(info.querySelectorAll('.place-detail-info-row')).map((r) => [
       r.querySelector('dt')!.textContent, r.querySelector('dd')!.textContent,
     ]);
     expect(rows).toEqual([
-      ['주차요금', '소형 2,000원'],
       ['체험 안내', '수문장 교대식'],
       ['화장실', '있음'],
       ['입장료', '어른 3,000원'],

@@ -36,7 +36,12 @@ import {
   placeHubMeta,
   placeUrl,
   touristAttractionJsonLd,
+  videoGameJsonLd,
 } from '../copy.mjs';
+
+it.each(['SINGLE', 'MULTI', null, undefined])('does not infer structured playMode from unverified catalog mode %s', (playerMode) => {
+  expect(videoGameJsonLd('en', { slug: 'test', title: 'Test', genre: 'ACTION', playerMode, tags: ['multiplayer'] })).not.toHaveProperty('playMode');
+});
 
 const game = {
   slug: 'spud-arena',

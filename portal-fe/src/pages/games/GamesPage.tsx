@@ -394,14 +394,17 @@ export default function GamesPage() {
           <h2 id="games-guide-heading">{guide.heading}</h2>
           {guide.paragraphs.map((text) => <p key={text}>{text}</p>)}
           <h3>{selection.heading}</h3>
+          {selection.groups.map((group) => <div key={group.heading}>
+          <h4>{group.heading}</h4>
           <ul className="games-guide-picks">
-            {selection.picks.map((pick) => (
+            {group.picks.map((pick) => (
               <li key={pick.slug}>
                 <Link to={pick.href}>{pick.title}</Link>
                 <p>{pick.reason}</p>
               </li>
             ))}
           </ul>
+          </div>)}
           <nav aria-label={L.genreLabel}>
             {guide.genres.map((item) => <Link key={item.href} to={item.href}>{item.label}</Link>)}
           </nav>

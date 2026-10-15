@@ -45,6 +45,7 @@ it.each(['ko', 'en'])('shows shared selection copy and local detail links: %s', 
  await screen.findByText('Game 47');
  const guide = gameSelectionGuide(lang);
  expect(screen.getByText(guide.heading)).toBeTruthy();
+ for (const group of guide.groups) expect(screen.getByRole('heading', { name: group.heading })).toBeTruthy();
  expect(view.container.querySelector('.games-subtitle')?.textContent).toBe(gameHubIntro(lang));
  expect(view.container.querySelectorAll('h1')).toHaveLength(1);
  expect(view.container.querySelector('h1')?.firstChild?.textContent).toBe(hubMeta(lang, 82).heading);

@@ -125,7 +125,17 @@ const combos = [
   },
 ];
 
-const cases = [...matrix, ...combos];
+const parkingFees = langs.flatMap(({ lang, title }) => [
+  { key: 'fee-only', fields: { parkingFee: '소형 2,000원<br>&lt;추가&gt; &amp; 500원' } },
+  { key: 'with-parking', fields: { parking: 'Available', attrParking: 'YES', parkingFee: 'First hour free' } },
+  { key: 'blank-fee', fields: { parkingFee: ' \n <br> &nbsp; ' } },
+  ...['-', 'N/A', '정보 없음', 'Not provided', '<p>N/A</p>'].map((parkingFee, index) => ({ key: `missing-${index}`, fields: { parkingFee } })),
+  ...['무료', '없음', '현장 문의'].map((parkingFee, index) => ({ key: `meaningful-${index}`, fields: { parkingFee } })),
+].map(({ key, fields }) => ({
+  name: `${lang}-parking-${key}`,
+  input: { ...base, id: '3200', lang, title, ...fields },
+})));
+const cases = [...matrix, ...combos, ...parkingFees];
 
 describe('방문 요약 골든 (서버 렌더 패리티)', () => {
   const rendered = cases.map(({ name, input }) => ({
@@ -145,6 +155,15 @@ describe('방문 요약 골든 (서버 렌더 패리티)', () => {
     expect(values).toContain('Not provided');
     expect(rendered.some((c) => c.output.badgeLine != null)).toBe(true);
     expect(rendered.some((c) => c.output.badgeLine == null)).toBe(true);
+  });
+
+  it.each(['ko', 'en'])('주차 여부가 미상이어도 요금을 보이며 빈 원문은 요금으로 만들지 않는다: %s', (lang) => {
+    const parking = (key: string) => rendered.find((c) => c.name === `${lang}-parking-${key}`)!.output.rows[3].value;
+    expect(parking('fee-only')).toBe(`${lang === 'en' ? 'Parking fee' : '주차요금'}: 소형 2,000원\n<추가> & 500원`);
+    expect(parking('with-parking')).toContain('First hour free');
+    expect(parking('blank-fee')).toBe(lang === 'en' ? 'Not provided' : '정보 없음');
+    for (let index = 0; index < 5; index++) expect(parking(`missing-${index}`)).toBe(lang === 'en' ? 'Not provided' : '정보 없음');
+    for (const [index, value] of ['무료', '없음', '현장 문의'].entries()) expect(parking(`meaningful-${index}`)).toBe(`${lang === 'en' ? 'Parking fee' : '주차요금'}: ${value}`);
   });
 
   it('골든 파일을 쓴다 — CI 가 git diff · status 로 최신인지 본다', () => {

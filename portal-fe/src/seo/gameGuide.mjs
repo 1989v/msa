@@ -82,13 +82,40 @@ export function gameGuideSources(slug) {
 
 export function gameSelectionGuide(lang) {
   const en = lang === 'en';
+  const groups = [
+      { heading: en ? 'Pick a name or decide an order' : '이름 뽑고 순서 정하기', slugs: ['marble-race'] },
+      { heading: en ? 'Solve a puzzle at your own pace' : '차분하게 퍼즐 풀기', slugs: ['block-burst', 'mine-pioneer'] },
+      { heading: en ? 'Test your timing and precision' : '시간 감각과 정확도 겨루기', slugs: ['seven-seconds', 'circle-trace'] },
+      { heading: en ? 'Control a hero and push a lane' : '영웅을 움직여 전선 밀기', slugs: ['rift-front'] },
+    ].map((group) => ({
+      heading: group.heading,
+      picks: group.slugs.map((slug) => {
+        const guide = GUIDES[slug];
+        const special = {
+          'marble-race': {
+            title: en ? 'Marble Race' : '구슬 레이스',
+            reason: en ? 'Enter names, choose a course and watch the marbles race to decide the finishing order.' : '이름을 입력하고 코스를 골라 구슬이 도착하는 순서로 결과를 정하세요.',
+          },
+          'seven-seconds': {
+            title: en ? 'Seven Seconds' : '7초를 맞춰라',
+            reason: en ? 'Start the timer and stop as close to seven seconds as you can. Practice alone or challenge friends in a party.' : '시작한 뒤 7초에 가깝게 멈춰 보세요. 혼자 연습하거나 파티에서 친구와 겨룰 수 있어요.',
+          },
+          'circle-trace': {
+            title: en ? 'Trace the Circle' : '원 그리기',
+            reason: en ? 'Trace the target circle with your mouse or finger and compare how closely you followed it.' : '마우스나 손가락으로 목표 원을 따라 그리고 얼마나 정확한지 확인하세요.',
+          },
+        }[slug];
+        return {
+          slug,
+          title: special?.title ?? guide.title,
+          reason: special?.reason ?? guide[en ? 'en' : 'ko'].reason,
+          href: gamePath(lang, `/games/${slug}`),
+        };
+      }),
+    }));
   return {
     heading: en ? 'Choose by how you like to play' : '플레이 방식으로 골라보기',
-    picks: Object.entries(GUIDES).map(([slug, guide]) => ({
-      slug,
-      title: guide.title,
-      reason: guide[en ? 'en' : 'ko'].reason,
-      href: gamePath(lang, `/games/${slug}`),
-    })),
+    groups,
+    picks: groups.flatMap((group) => group.picks),
   };
 }

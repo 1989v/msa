@@ -37,3 +37,11 @@ createRoot(document.getElementById('root')!).render(
     </QueryClientProvider>
   </StrictMode>,
 );
+
+// Document metrics keep the initial URL even if a route changes while the chunk loads.
+const initialPerformanceHref = window.location.href;
+setTimeout(() => {
+  void import('./analytics/webVitals')
+    .then(({ installWebVitals }) => installWebVitals(initialPerformanceHref))
+    .catch(() => { /* Optional measurement must not affect app boot. */ });
+}, 0);

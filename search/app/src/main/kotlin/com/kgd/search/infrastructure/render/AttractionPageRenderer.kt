@@ -582,6 +582,7 @@ class AttractionPageRenderer(
         val parking = attributes?.let {
             availability(it.parking, if (en) "Parking available" else "주차 가능", if (en) "No parking" else "주차 불가")
         }
+        val parkingFee = sourceText(doc.parkingFee).takeUnless { it.lowercase(Locale.ROOT) in setOf("-", "n/a", "정보 없음", "not provided") }
         val pet = when (attributes?.petPolicy) {
             PetPolicy.ALLOWED -> if (en) "Pets allowed" else "반려동물 동반 가능"
             PetPolicy.PARTIAL -> if (en) "Pets allowed in some areas" else "반려동물 일부 구역 동반 가능"
@@ -601,7 +602,8 @@ class AttractionPageRenderer(
             (if (en) "Admission" else "요금") to (doc.feeText ?: sourceText(doc.useFee)),
             (if (en) "Hours" else "이용시간") to sourceText(doc.useTime),
             (if (en) "Closed" else "쉬는 날") to lines(closure, sourceText(doc.restDate)),
-            (if (en) "Parking" else "주차") to lines(parking, sourceText(doc.parking)),
+            (if (en) "Parking" else "주차") to lines(parking, sourceText(doc.parking),
+                parkingFee?.takeIf { it.isNotEmpty() }?.let { "${if (en) "Parking fee" else "주차요금"}: $it" }),
             (if (en) "Pets" else "반려동물") to pet,
             (if (en) "Accessibility" else "무장애") to accessibility,
             (if (en) "Data status" else "확인 상태") to status,

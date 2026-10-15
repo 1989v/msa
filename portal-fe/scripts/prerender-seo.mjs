@@ -682,8 +682,9 @@ function renderGameHubGuide(lang) {
   const selection = gameSelectionGuide(lang);
   return `<section aria-labelledby="games-guide-heading"><h2 id="games-guide-heading">${escapeHtml(guide.heading)}</h2>` +
     guide.paragraphs.map((text) => `<p>${escapeHtml(text)}</p>`).join('') +
-    `<h3>${escapeHtml(selection.heading)}</h3><ul>` +
-    selection.picks.map((pick) => `<li><a href="${escapeHtml(pick.href)}">${escapeHtml(pick.title)}</a><p>${escapeHtml(pick.reason)}</p></li>`).join('') + '</ul>' +
+    `<h3>${escapeHtml(selection.heading)}</h3>` +
+    selection.groups.map((group) => `<div><h4>${escapeHtml(group.heading)}</h4><ul>` +
+      group.picks.map((pick) => `<li><a href="${escapeHtml(pick.href)}">${escapeHtml(pick.title)}</a><p>${escapeHtml(pick.reason)}</p></li>`).join('') + '</ul></div>').join('') +
     `<nav>${guide.genres.map(({ href, label }) => `<a href="${escapeHtml(href)}">${escapeHtml(label)}</a>`).join('')}</nav></section>`;
 }
 

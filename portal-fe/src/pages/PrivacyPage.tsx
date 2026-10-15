@@ -7,7 +7,7 @@ import { useReveal } from '../hooks/useReveal';
 import './PrivacyPage.css';
 
 /** 개정일 — 본문을 고치면 반드시 함께 올린다. 방침은 '언제부터의 약속인지'가 내용의 일부다. */
-const EFFECTIVE_DATE = '2026-10-11';
+const EFFECTIVE_DATE = '2026-10-15';
 const CONTACT_EMAIL = '1989v@naver.com';
 
 /**
@@ -87,6 +87,11 @@ export default function PrivacyPage() {
                     <td>글·게임·관광지 조회</td>
                     <td>무엇을 어느 날 봤는지 + 방문자 번호</td>
                     <td>조회수 집계</td>
+                  </tr>
+                  <tr>
+                    <td>게임·관광지의 공개 화면을 처음 열 때</td>
+                    <td>화면 성능 지표(LCP·INP·CLS), 평가, 화면 종류와 언어를 Google Analytics로 전송합니다. 이 성능 이벤트에는 상세 주소·검색어·초대 코드·요소 정보·별도 이용자 번호를 넣지 않습니다.</td>
+                    <td>처음 연 문서의 로딩·반응·화면 안정성을 측정해 개선하기 위해. 앱 안 화면 이동이나 게임 프레임 내부의 성능 지표는 아닙니다.</td>
                   </tr>
                   <tr>
                     <td>통합 검색 · 관광지 검색</td>

@@ -10,6 +10,8 @@ it('escapes intro and includes only known facts before ratings', () => { const h
 
 it.each(['ko', 'en'])('renders verified selection and instructions from shared copy: %s', (lang) => {
   const hub = new DOMParser().parseFromString(renderHub(shell, lang, [game]), 'text/html');
+  expect(gameSelectionGuide(lang).groups).toHaveLength(4);
+  for (const group of gameSelectionGuide(lang).groups) expect(hub.body.textContent).toContain(group.heading);
   for (const pick of gameSelectionGuide(lang).picks) {
     expect(hub.querySelector(`section a[href="${pick.href}"]`)?.textContent).toBe(pick.title);
     expect(hub.body.textContent).toContain(pick.reason);

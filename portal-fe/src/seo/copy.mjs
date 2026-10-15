@@ -304,7 +304,6 @@ export function videoGameJsonLd(lang, game) {
     gamePlatform: 'Web Browser',
     applicationCategory: 'Game',
     operatingSystem: 'Any',
-    playMode: 'SinglePlayer',
     // 개발자 이름이 시드에 따로 있으면 그것을, 없으면 운영자 본인이다
     author: game.developerName && game.developerName !== 'kgd'
       ? { '@type': 'Organization', name: game.developerName }
