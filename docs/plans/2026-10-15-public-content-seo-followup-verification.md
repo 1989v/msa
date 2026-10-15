@@ -116,3 +116,17 @@
 ## 수행하지 않은 것
 
 브라우저·CUA·Playwright/UI 접근, Search Console/서치어드바이저 계정 조회·제출, 외부 게시·전송·배포, 게임 물리 전수검사는 수행하지 않았다. 검색엔진 색인·순위 상승은 검증 결과가 아니다. 부모 세션이 fresh-context 리뷰를 완료했고 통합을 담당한다.
+
+## CI sparse checkout 후속 (2026-10-15)
+
+- 기존 CI는 lib·marble-race·card-flip·ladder-draw만 받아 82종 안내의 소스 경로 검사가 실패할 수 있었다. `.github/workflows/ci.yml`과 `scripts/ci/game-sparse-paths.mjs`만 바꿔, 공유 catalogGuides/gameGuideSources에서 목록을 생성한다. npm 설치 전 순수 Node로 실행하며 수동82종 목록은 만들지 않았다.
+- cone 모드를 no-cone으로 바꾸고 기존4개 전체 디렉토리와 소스 근거87개 파일만 anchored literal패턴으로 포함했다. 공개 안내 제품 코드는 변경하지 않았다.
+- 핀 `1fc9b430bace17d323aa84363d32432019e58c5e`의 로컬 공유 클론에 실제 적용:91패턴, 작업 파일139개/3,893,369bytes, 허용 범위 밖 파일0. NPM 없는 독립 디렉토리의 generator 출력도 같고, workflow처럼 HEAD가 아직 없는 git init 상태에서도 sparse init/set이 성공했다. 결과: `/tmp/public-seo-ci-sparse-result.json`.
+- 실제 sparse checkout을 사용하는 격리된 frontend에서 `npx vitest run src/seo/__tests__/gameCatalogGuides.test.tsx tests/games/marbleDeterminism.test.ts tests/games/relayClient.test.ts tests/games/rosterHandoff.test.ts` → `Test Files 4 passed (4)`, `Tests 39 passed (39)` (8.28s, `/tmp/public-seo-ci-sparse-tests.log`). 기존 소비자와 82종 안내 검사 모두 통과했다.
+- 격리 위치: `/tmp/public-seo-ci-sparse-work`에 실제 경로를 기록했다. 인증·UI·네트워크 fetch·기존 게임 워킹트리 교체 없이 로컬 pinned objects로 검증했다. `node --check scripts/ci/game-sparse-paths.mjs`, `git diff --check` exit0. 부모 fresh-context 리뷰 SHIP. 진행 중 image publish는 건드리지 않았다.
+
+## 기존 DrillExportSpec 파생 파일 갱신
+
+- 이전 CI `38630379376`도 DrillExportSpec.kt:53의 파생JSON 동일성에서 실패했다. 현 소스를 `env -u DRILL_EXPORT ./gradlew :code-dictionary:feature:test --tests '*DrillExportSpec'`로 읽기 전용 재현한 결과2개 중1개 실패: 적용 상태·실제 파일/심볼 검사는 통과하고 `ads.json 가 온톨로지와 다르다`만 남았다 (`/tmp/public-seo-drill-readonly.log`).
+- 현재 JSON5개 코드 참조를 확인한 결과 `ads-txt`의 nginx ads.txt 블록은 내용이 같고 행만158→198로 이동했다. 기존 실패에 더해 이번 nginx 앞부분 삽입도 행 위치를 옮겼다. 부모 승인 후 지정 명령 `DRILL_EXPORT=write ./gradlew :code-dictionary:feature:test --tests '*DrillExportSpec'` → `BUILD SUCCESSFUL in 31s`. 변경은 `portal-fe/src/content/drill/ads.json`의 start158→198/end163→203 두 숫자뿐이다. 다른JSON·온톨로지·생성 규칙·제품 코드는 바꾸지 않았다.
+- 이어 `env -u DRILL_EXPORT ./gradlew :code-dictionary:feature:test --tests '*DrillExportSpec' --rerun` → `BUILD SUCCESSFUL in 29s`, XML2 tests/0 failures/0 errors (`/tmp/public-seo-drill-final.log`). 테스트를 실제 재실행했고 UP-TO-DATE를 검증 근거로 쓰지 않았다. 전체 ontology matrix·전체 FE 빌드/API재수집은 반복하지 않았다.
