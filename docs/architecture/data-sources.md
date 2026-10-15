@@ -90,10 +90,10 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | 버스정류장 좌표 | 국토교통부 전국 버스정류장 위치정보 (data.go.kr 15067528 파일) | **불필요** (파일 내려받기는 로그인 없이 된다) | 이용허락범위 제한 없음 | 〃 (같은 잡, 파일 1개) |
 | **행정구역(법정동)** | 행정안전부 행정표준코드관리시스템 | **불필요** | 공공누리 제1유형 | `place/ingest --job=administrative-regions` |
 | 세계 지명 계층 | GeoNames | 불필요 | **CC BY 4.0** | `tools/seed/place/normalize_regions.py` |
-| 전통시장 기본정보 | [전국전통시장표준데이터 #15012894](https://www.data.go.kr/data/15012894/standard.do) | 파일은 불필요 | **공공누리 제1유형(출처표시)** | `place/ingest --job=market-stores` (매주 월 KST 01:10) |
+| 전통시장 기본정보 | [전국전통시장표준데이터 #15012894](https://www.data.go.kr/data/15012894/standard.do) | API 활용신청 필요 (현재 off) / 파일 불필요 | **공공누리 제1유형(출처표시)** | `place/ingest --job=market-stores` (매주 월 KST 01:10) |
 | 온누리 가맹점 | [소진공 전자상품권 가맹점 상세 #15091259](https://www.data.go.kr/data/15091259/fileData.do) | 파일은 불필요 | **공공누리 제1유형(출처표시)** | 〃 (utf-8-sig CSV) |
 | 시장 상가 보강 | [소진공 상가(상권)정보 API #15012005](https://www.data.go.kr/data/15012005/openapi.do) | 필요 | **공공누리 제1유형(출처표시)** | 〃 (`storeListInRadius` / `storeListInPolygon`) |
-| 시장 경계·골목·배경 큰길 | [OpenStreetMap / Overpass](https://overpass-api.de/api/interpreter) | 불필요 | **ODbL 1.0**, `© OpenStreetMap contributors` | `place/ingest --job=market-osm` (매주 월 KST 05:20, suspend 유지). 지도 표시만, 데이터 자체 공개 배포 금지. [ADR-0110](../adr/ADR-0110-market-alley-geometry-osm.md) |
+| 시장 경계·골목·배경 큰길 | [OpenStreetMap / Overpass](https://overpass-api.de/api/interpreter) | 불필요 | **ODbL 1.0**, `© OpenStreetMap contributors` | `place/ingest --job=market-osm` (매주 월 KST 05:20). 지도 표시만, 데이터 자체 공개 배포 금지. [ADR-0110](../adr/ADR-0110-market-alley-geometry-osm.md) |
 | POI(상가) | 소상공인시장진흥공단 상가(상권)정보 | 필요 | 이용허락범위 제한없음 | `tools/seed/place/normalize_pois.py` |
 | 상품·영양 | 식약처 / 한국소비자원 참가격 | 필요 | 제한없음 / KOGL 제1유형 | `tools/seed/products/normalize.py` |
 | 관광지 영상 | YouTube Data API v3 | 필요 | Google API 서비스 약관 | `place/ingest --job=links` (매시) |
@@ -409,7 +409,9 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 
 **키 발급**: data.go.kr 로그인 → #15012005 활용신청 → 개발계정 일반 인증키의 **Encoding 키**를 `place-ingest-secrets/tour-api-key`에 저장한다(현재 TourAPI와 같은 계정). URL에 키를 그대로 붙이며 다시 urlencode하지 않는다. API 제공 한도 10,000/일(KST), 잡 예산 `DAILY_API_BUDGET=9,000`, 시장당 `MAX_PAGES_PER_MARKET=18`(페이지 1,000행; 482×18=8,676)이다. polygon 연산의 WKT 입력 쿼리 이름은 공식 Swagger의 `key`(출력 필드 `coords`와 구분)다. 모든 성공·실패 호출은 `quota.py` 장부 provider `sangga-market`로 센다. 장부 장애의 기존 fail-open 정책에 더해 실행 내 9,000 상한이 항상 적용된다. 동시에 같은 API를 쓰는 다른 호출자는 동일 provider 장부를 사용해야 한다.
 
-**파일 설정**: 포털의 최신 파일 다운로드 URL 3개를 `place-market-source-files` ConfigMap의 `standard-url`(#15012894), `onnuri-url`(#15091259), `sangga-bulk-url`(#15083033 ZIP)에 넣는다. 각 URL은 `MARKET_STANDARD_FILE_URL` / `MARKET_ONNURI_FILE_URL` / `MARKET_SANGGA_BULK_URL`로 주입된다. 파일 ID는 원천 발표마다 바뀌므로 가짜/오래된 URL을 기본값으로 고정하지 않는다. CronJob 활성화 전 ConfigMap을 준비해야 한다. 잡은 매주 월 KST 01:10, 요청256Mi/제한512Mi이며 ZIP은 디스크, 시도별 CSV는 스트리밍, 대상 법정동 조회는 SQLite, 준비된 시장 요청은 임시 JSON 파일을 사용한다. 전국 벌크 메모리 최대치의 실측은 아직 하지 않았다.
+**원천 설정**: `place-market-source-files` ConfigMap의 `standard-source`(`MARKET_STANDARD_SOURCE`)는 `api|file|off`이며 현재 **off**다. 전국전통시장표준데이터 API는 별도 활용신청 승인이 필요하며 승인 후 `api`로 전환한다. endpoint는 `https://api.data.go.kr/openapi/tn_pubr_public_trdit_mrkt_api`이며 Encoding 키를 raw URL에 붙여 JSON 전페이지를 받는다. `file`은 `standard-url`(`MARKET_STANDARD_FILE_URL`)의 기존 CSV를 사용한다. `off`는 표준 원천 없이 관광지 제목·좌표로 시장을 생성하며 `market_info_matched=false`, 잡 요약 `standardSource=off`로 구분한다. 따라서 AC-1의 표준정보 매칭률은 API 활성화 후 검증한다.
+
+온누리 CSV `onnuri-url`(#15091259, 10,135,421 bytes)과 상가정보 `sangga-bulk-url`(#15083033, 20260630 ZIP, 352,699,739 bytes)은 각각 `MARKET_ONNURI_FILE_URL` / `MARKET_SANGGA_BULK_URL`로 주입한다. **파일 발표마다 data.go.kr의 새 다운로드 URL을 확인해 ConfigMap의 해당 URL을 갱신한다.** 잡은 매주 월 KST 01:10, 4시간 마감이며 OSM 잡은 KST 05:20에 뒤따른다. 두 CronJob은 활성화 상태이며 요청256Mi/제한512Mi를 유지한다. ZIP은 디스크, 시도별 CSV는 스트리밍, 대상 법정동 조회는 SQLite, 준비된 시장 요청은 임시 JSON 파일을 사용한다. 전국 벌크 메모리 최대치의 실측은 아직 하지 않았다.
 
 **판정과 사전 검사**: 거리형300m·건물형150m 반경 안에서 도로별 고유 온누리 점포 수 / 같은 도로의 상가정보 점포 수를 센다. 두 원천의 모집단 차이를 고려해 분모는 두 수의 최댓값이다. `ROAD_MIN_ONNURI_MERCHANTS=11` 및 `ROAD_MIN_ONNURI_SHARE=0.30`을 모두 만족해야 IN이다. 좌표 결측은 UNKNOWN, 반경 밖·저밀도는 OUT. 같은 동 안 지번+이름 → 지번 → 이름으로 매칭하되 모호한 다른 필지/다른 좌표를 임의로 선택하지 않는다. 순수 지번 다중 후보는 모두 같은 좌표일 때만 공통 공간 정보로 사용한다.
 

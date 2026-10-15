@@ -1,5 +1,5 @@
 # Weekly Monday KST 05:20, after the 01:10 market-stores job's four-hour deadline.
-# Keep suspended until the geometry ingest API is deployed (ADR-0110).
+# Geometry enrichment follows market-stores ingestion (ADR-0110).
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/part-of: commerce-platform
     place.kgd.io/job: "market-osm"
 spec:
-  suspend: true
+  suspend: false
   schedule: "20 20 * * 0"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 2

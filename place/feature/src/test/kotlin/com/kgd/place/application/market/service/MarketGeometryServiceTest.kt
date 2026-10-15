@@ -111,7 +111,6 @@ class MarketGeometryServiceTest : BehaviorSpec({
             val f=GeometryFixture(); (1L..141L).forEach { f.stores.add(f.source(it)) }
             f.service.edit(f.actor,1,MarketChangeTarget.ROAD_RULE,null,Edit(roadName="Main",membership=MarketMembershipStatus.IN,reason="survey"),"survey")["rejudge"] shouldBe Rejudge(141)
             f.stores.count { it.judgedMembership==MarketMembershipStatus.IN } shouldBe 141
-            f.service.stores(1,MarketMembershipStatus.IN).size shouldBe 141
             f.stores.all { it.membership.status==MarketMembershipStatus.OUT } shouldBe true
         }
         Then("null center and radius explicitly clear previous overrides and are reversible") {

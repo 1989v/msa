@@ -20,6 +20,7 @@ resources:
   - cronjob-air.yaml
   - cronjob-air-stations.yaml
   - cronjob-transit-stops.yaml
+  - configmap-market-source-files.yaml
   - cronjob-market-stores.yaml
   - cronjob-market-osm.yaml
   - cronjob-indexnow.yaml

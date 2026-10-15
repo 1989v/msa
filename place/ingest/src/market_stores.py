@@ -34,6 +34,17 @@ MAX_PAGES_PER_MARKET = 18  # 482 × 18 = 8,676 < 9,000
 API_PAGE_SIZE = 1_000
 FILE_MAX_BYTES = 600 * 1024 * 1024
 API_PATH = "B553077/api/open/sdsc2"
+STANDARD_API_URL = "https://api.data.go.kr/openapi/tn_pubr_public_trdit_mrkt_api"
+# Standard API → existing CSV vocabulary. Retain every original field, including unknowns.
+STANDARD_COLUMNS = {
+    "mrktNm": "시장명", "mrktType": "시장유형", "rdnmadr": "소재지도로명주소",
+    "lnmadr": "소재지지번주소", "mrktEstblCycle": "개설주기", "storNumber": "점포수",
+    "latitude": "위도", "longitude": "경도", "trtmntPrdlst": "취급품목",
+    "useGiftCert": "사용가능상품권", "homepageUrl": "홈페이지주소",
+    "pblicToiletYn": "공중화장실보유여부", "prkplceYn": "주차장보유여부",
+    "estblYear": "개설년도", "telno": "전화번호", "referenceDate": "데이터기준일자",
+    "insttCode": "제공기관코드", "insttNm": "제공기관명",
+}
 SANGGA_QUOTA_PROVIDER = "sangga-market"
 quota.DAILY_LIMIT[SANGGA_QUOTA_PROVIDER] = DAILY_API_BUDGET
 
@@ -248,14 +259,45 @@ class StoreApi:
         return list(result.values())
 
 
+def standard_row(original):
+    return {**original, **{column: original[field] for field, column in STANDARD_COLUMNS.items() if field in original}}
+
+
+def fetch_standards(service_key, fetch=None):
+    page = 1
+    result = []
+    while True:
+        url = f"{STANDARD_API_URL}?serviceKey={service_key}&{urlencode({'type':'json', 'numOfRows':API_PAGE_SIZE, 'pageNo':page})}"
+        status, text = (fetch or datagokr._http_get)(url)
+        body = datagokr.parse(status, text, "market-standard")
+        rows = datagokr.items(body)
+        result.extend(standard_row(row) for row in rows)
+        total = int(body["totalCount"])
+        if page * API_PAGE_SIZE >= total:
+            return result
+        if not rows:
+            raise ValueError("Empty standard API page before totalCount")
+        page += 1
+
+
+def load_standards(source, url, service_key, base):
+    if source == "api":
+        return fetch_standards(service_key)
+    if source == "file":
+        if not url:
+            raise ValueError("MARKET_STANDARD_FILE_URL required for file source")
+        return list(read_csv(download(url, FILE_MAX_BYTES, base/'standard.csv'), ["시장명"]))
+    if source == "off":
+        return []
+    raise ValueError("MARKET_STANDARD_SOURCE must be api, file or off")
+
+
 def identify(attractions, standards):
     out = {}
     for a in attractions:
-        if a.get("lang") != "ko" or a.get("status") != "ACTIVE" or not place_client.is_tourapi(a):
+        if a.get("lang") != "ko" or a.get("status") != "ACTIVE" or not place_client.is_market_attraction(a):
             continue
         name = a.get("title") or ""
-        if "시장" not in name and a.get("cat3") not in {"A04010100","A04010200"} and a.get("lclsSystm2") not in {"SH04","SH06"}:
-            continue
         address = a.get("addr1") or a.get("address") or ""
         # Require same normalized locality rather than choosing one of many namesakes.
         region = locality(address)
@@ -337,12 +379,12 @@ def check_failures(markets, failed_markets, calls, failed_calls):
         raise ValueError(f"API failure ratio {failed_calls}/{calls} exceeds {MAX_CALL_FAILURE_RATIO}")
 
 
-def run(standard_url, onnuri_url, bulk_url, service_key):
+def run(standard_url, onnuri_url, bulk_url, service_key, standard_source="file"):
     with tempfile.TemporaryDirectory(prefix="market-stores-") as tmp:
         base = Path(tmp)
-        standards = list(read_csv(download(standard_url,FILE_MAX_BYTES,base/'standard.csv'), ["시장명"]))
+        standards = load_standards(standard_source, standard_url, service_key, base)
         merchants = list(read_csv(download(onnuri_url,FILE_MAX_BYTES,base/'onnuri.csv'), ["시장명","점포명","취급품목","주소"]))
-        if not standards or not merchants:
+        if not merchants:
             raise ValueError("Empty market source")
         markets = identify(place_client.fetch_market_attractions(), standards)
         grouped = {}
@@ -372,7 +414,7 @@ def run(standard_url, onnuri_url, bulk_url, service_key):
                 for start in range(0,max(1,len(stores)),place_client.BULK_CHUNK):
                     place_client.put_market({**command,"stores":stores[start:start+place_client.BULK_CHUNK]})
                 applied += 1
-            summary = {"markets":applied,"failedMarkets":failed,"calls":api.calls,"failedCalls":api.failures,"errors":errors}
+            summary = {"standardSource":standard_source,"markets":applied,"failedMarkets":failed,"calls":api.calls,"failedCalls":api.failures,"errors":errors}
             print(f"[market-stores] {raw(summary)}",flush=True)
             return summary
         finally:

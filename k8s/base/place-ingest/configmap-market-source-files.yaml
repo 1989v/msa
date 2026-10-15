@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: place-market-source-files
+  namespace: commerce
+data:
+  # 전통시장표준데이터 활용신청 승인 후 api로 전환한다.
+  standard-source: "off"
+  standard-url: ""
+  # 전자상품권가맹점 CSV (10,135,421 bytes). 발표마다 파일 ID 갱신.
+  onnuri-url: "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000002449544&fileDetailSn=1&insertDataPrcus=N"
+  # 상가정보 20260630 ZIP (352,699,739 bytes).
+  sangga-bulk-url: "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000003695831&fileDetailSn=1&insertDataPrcus=N"

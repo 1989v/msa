@@ -185,16 +185,6 @@ class MarketGeometryService(
             json.writeValueAsString(MarketEditorService.Snapshot("overrides", overrides = query.findOverrides(listOf(storeId)).sortedBy { it.field.name }, reason = request.reason))))
         return mapOf("rejudge" to Rejudge(judge.rejudge(marketId)))
     }
-    @Transactional(transactionManager = "placeTransactionManager", readOnly = true)
-    override fun stores(marketId: Long, membership: MarketMembershipStatus): List<StoreLocation> {
-        editor.findMarket(marketId) ?: throw BusinessException(ErrorCode.NOT_FOUND)
-        val rows = query.findStores(marketId)
-        val overrides = query.findOverrides(rows.mapNotNull { it.id }).groupBy { it.storeId }
-        return rows.map { row -> row to MarketStoreDisplay.from(row, overrides[row.id].orEmpty()) }
-            .filter { it.second.membership.status == membership }.map { (row, display) ->
-                StoreLocation(requireNotNull(row.id), display.coordinate?.latitude, display.coordinate?.longitude)
-            }
-    }
     @Transactional(transactionManager = "placeTransactionManager")
     override fun ingest(marketId: Long, request: Osm) {
         editor.lockMarket(marketId) ?: throw BusinessException(ErrorCode.NOT_FOUND)
