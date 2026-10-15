@@ -1,6 +1,6 @@
-import { useId, useState, type CSSProperties } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { fetchMarket, type MarketResponse, type MarketZone } from '../../api/marketApi';
+import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
+import { useAttractionMarket } from './marketQueries';
+import type { MarketResponse, MarketZone } from '../../api/marketApi';
 import type { PlaceLang } from '../../api/placeApi';
 import { formatMarketFloor, groupMarketPins, longestMarketSegmentMidpoint, hasMarketCoordinate, marketSourceBadges, matchesMarketName, normalizeMarketName, projectMarketPins, visibleMarketStores, zoneIds } from './marketView';
 import './AttractionMarket.css';
@@ -15,27 +15,25 @@ const ZONE_COLORS = Array.from({ length: 9 }, (_, index) => `var(--market-zone-$
 const flattenZones = (zones: MarketZone[]): MarketZone[] => zones.flatMap((zone) => [zone, ...flattenZones(zone.children)]);
 
 /** A failed or absent market response only removes this optional section. */
-export default function AttractionMarket({ contentId, lang }: { contentId: string; lang: PlaceLang }) {
+export default function AttractionMarket({ contentId, lang, initialQuery }: { contentId: string; lang: PlaceLang; initialQuery?: string }) {
   const [includeOutside, setIncludeOutside] = useState(false);
-  const { data, isError } = useQuery({
-    queryKey: ['attraction-market', contentId, includeOutside, lang],
-    queryFn: () => fetchMarket(contentId, includeOutside, lang),
-    enabled: contentId.length > 0,
-    staleTime: 10 * 60_000,
-    retry: false,
-    placeholderData: (previous) => previous,
-  });
+  const { data, isError } = useAttractionMarket(contentId, lang, includeOutside);
   if (!data || isError) return null;
-  return <MarketSection key={contentId} data={data} lang={lang} includeOutside={includeOutside} onOutside={setIncludeOutside} />;
+  return <MarketSection key={contentId} data={data} lang={lang} initialQuery={initialQuery} includeOutside={includeOutside} onOutside={setIncludeOutside} />;
 }
 
-function MarketSection({ data, lang, includeOutside, onOutside }: {
-  data: MarketResponse; lang: PlaceLang; includeOutside: boolean; onOutside: (value: boolean) => void;
+function MarketSection({ data, lang, initialQuery, includeOutside, onOutside }: {
+  data: MarketResponse; lang: PlaceLang; initialQuery?: string; includeOutside: boolean; onOutside: (value: boolean) => void;
 }) {
   const C = COPY[lang];
   const searchId = useId();
   const [zoneId, setZoneId] = useState<number | null>(null);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(() => (initialQuery ?? new URLSearchParams(window.location.search).get('marketQuery') ?? '').trim().slice(0, 50));
+  const sectionRef = useRef<HTMLElement>(null);
+  const [scrollToMarket] = useState(() => Boolean(query || window.location.hash === '#market'));
+  useEffect(() => {
+    if (scrollToMarket || window.location.hash === '#market') sectionRef.current?.scrollIntoView?.({ block: 'start' });
+  }, [scrollToMarket]);
   const [parcelKey, setParcelKey] = useState<string | null>(null);
   const zones = flattenZones(data.zones);
   const selectedZone = zones.find((zone) => zone.id === zoneId);
@@ -69,7 +67,7 @@ function MarketSection({ data, lang, includeOutside, onOutside }: {
   ];
 
   return (
-    <section className="place-market" aria-label={C.title} data-place-section="market">
+    <section id="market" ref={sectionRef} tabIndex={-1} className="place-market" aria-label={C.title} data-place-section="market">
       <h2 className="place-detail-info-title">{C.title}</h2>
       <p className="place-market-name">{data.market.name}</p>
       <dl className="place-market-facts">

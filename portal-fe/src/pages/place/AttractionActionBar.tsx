@@ -88,14 +88,14 @@ export default function AttractionActionBar({
   );
 }
 
-export type JumpTarget = 'summary' | 'access' | 'info' | 'nearby';
+export type JumpTarget = 'summary' | 'access' | 'info' | 'nearby' | 'market';
 
 const JUMP_LABEL: Record<PlaceLang, Record<JumpTarget, string>> = {
-  ko: { summary: '요약', access: '가는 법', info: '방문 정보', nearby: '주변' },
-  en: { summary: 'Summary', access: 'Getting there', info: 'At a glance', nearby: 'Nearby' },
+  ko: { market: '시장 지도', summary: '요약', access: '가는 법', info: '방문 정보', nearby: '주변' },
+  en: { market: 'Market map', summary: 'Summary', access: 'Getting there', info: 'At a glance', nearby: 'Nearby' },
 };
 
-export const jumpSectionId = (target: JumpTarget) => `place-sec-${target}`;
+export const jumpSectionId = (target: JumpTarget) => target === 'market' ? 'market' : `place-sec-${target}`;
 
 /**
  * 절 이동 줄(좁은 화면) — 있는 절만, 둘 미만이면 그리지 않는다. 실주소(`#place-sec-…`)를 갖되 기본 동작은 막고

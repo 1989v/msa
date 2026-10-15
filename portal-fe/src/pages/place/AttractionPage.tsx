@@ -1,3 +1,4 @@
+import { useAttractionMarket } from './marketQueries';
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Link, Navigate, useParams, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -142,6 +143,8 @@ export default function AttractionPage() {
     // 색인은 하루 한 번 바뀐다 — 실어 온 값을 마운트 직후 다시 받지 않게 신선한 것으로 둔다
     staleTime: fromSsr ? 10 * 60_000 : 0,
   });
+
+  const { data: marketData, isError: marketError } = useAttractionMarket(attraction?.contentId ?? '', lang);
 
   // 주변 탐색 — 명소·숙소·행사·편의시설을 서버가 한 번에 찾는다(ADR-0105, 관광지 id 키라 엣지 캐시). 처음 받은 목록만 쓴다.
   const { data: nearby } = useQuery({
@@ -391,6 +394,7 @@ export default function AttractionPage() {
         ...(summary ? (['summary'] as const) : []),
         ...(accessView(attraction.access, lang) ? (['access'] as const) : []),
         ...(infoTabsProps && infoTabsShown(infoTabsProps).length > 0 ? (['info'] as const) : []),
+        ...(marketData && !marketError ? (['market'] as const) : []),
         ...(attraction.latitude != null && attraction.longitude != null ? (['nearby'] as const) : []),
       ]
     : [];
@@ -760,7 +764,7 @@ export default function AttractionPage() {
 
             {/* 방문 정보(주소·속성·지역 안 위치) · 접근성 — 지도 위에 탭으로, 내용은 칩. 서버 렌더는 절을 그대로 쌓는다(색인용) */}
             {infoTabsProps && <AttractionInfoTabs {...infoTabsProps} lang={lang} sectionId={secId('info')} />}
-            <AttractionMarket key={attraction.contentId} contentId={attraction.contentId} lang={lang} />
+            <AttractionMarket key={attraction.contentId} contentId={attraction.contentId} lang={lang} initialQuery={new URLSearchParams(search).get('marketQuery') ?? undefined} />
             {/* 주변 탐색 — 같은 분류 가까운 곳 · 주변 명소 · 숙소 · 행사 · 편의시설을 지도 한 장과 목록 하나로.
                 지도를 못 그리면(키 없음 · 좌표 이상 · 로더 실패) 목록만 남고 아래 링크가 위치를 대신한다. */}
             <NearbyExplore

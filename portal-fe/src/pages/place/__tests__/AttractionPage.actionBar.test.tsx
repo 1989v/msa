@@ -1,3 +1,4 @@
+import { fetchMarket, fetchMarketContentIds } from '../../../api/marketApi';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
@@ -14,6 +15,7 @@ vi.mock('../../../api/placeApi', async (importOriginal) => ({
   fetchAdministrativeRegions: vi.fn(),
   suggestPlaces: vi.fn(),
 }));
+vi.mock('../../../api/marketApi', () => ({ fetchMarket: vi.fn(), fetchMarketContentIds: vi.fn() }));
 vi.mock('../../../components/ads/AdSlot', () => ({ default: () => null }));
 // wishlistApi 만 대역이다 — FavoriteButton·tracker 는 진짜라 두 별의 동기와 전송 대기열을 대상의 값으로 본다
 vi.mock('../../../api/wishlistApi', () => ({
@@ -136,6 +138,8 @@ beforeEach(() => {
   resetPlaceSessionForTest();
   vi.stubGlobal('fetch', () => Promise.resolve(new Response(null, { status: 202 })));
   Element.prototype.scrollIntoView = vi.fn();
+  vi.mocked(fetchMarket).mockResolvedValue(null);
+  vi.mocked(fetchMarketContentIds).mockResolvedValue([]);
   vi.mocked(fetchAttraction).mockResolvedValue(base);
   vi.mocked(fetchAttractionNearby).mockResolvedValue({ sights: [], stays: [], events: [], amenities: [] } as never);
   vi.mocked(fetchWeather).mockResolvedValue({ sigunguCode: '11110', shortBaseAt: null, midTmFc: null, days: [] });
@@ -370,5 +374,24 @@ describe('절 이동 줄 (≤640px)', () => {
     renderAt();
     await screen.findByRole('heading', { level: 1, name: '경복궁' });
     expect(document.querySelector('.place-jump')).toBeNull();
+  });
+});
+
+describe('market section navigation', () => {
+  it('only adds the market map jump after data loads and shares one request with the section', async () => {
+    vi.mocked(fetchMarket).mockResolvedValue({ market: { name: '광명시장', marketType: 'STREET', sourceMarketType: null, storeCountRaw: null, openingCycle: null, facilities: null, attribution: null }, stores: [], zones: [] });
+    renderAt('/attractions/100?marketQuery=국밥#market');
+    expect(await screen.findByRole('link', { name: '시장 지도' })).toHaveAttribute('href', '#market');
+    expect(await screen.findByRole('searchbox', { name: '가게 이름 찾기' })).toHaveValue('국밥');
+    expect(fetchMarket).toHaveBeenCalledTimes(1);
+    expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
+  });
+  it.each([null, new Error('offline')])('omits the market jump when the optional section has no data: %s', async (result) => {
+    if (result instanceof Error) vi.mocked(fetchMarket).mockRejectedValue(result);
+    else vi.mocked(fetchMarket).mockResolvedValue(result);
+    renderAt();
+    await screen.findByRole('heading', { level: 1, name: '경복궁' });
+    await waitFor(() => expect(fetchMarket).toHaveBeenCalledTimes(1));
+    expect(screen.queryByRole('link', { name: '시장 지도' })).not.toBeInTheDocument();
   });
 });

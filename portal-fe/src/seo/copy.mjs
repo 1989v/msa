@@ -1851,3 +1851,10 @@ export const ABOUT_SECTIONS = [
     ],
   },
 ];
+
+/** Market discovery copy is shared by the client and static HTML. */
+export function marketIndexMeta(lang) {
+  return lang === 'en'
+    ? { title: `Korean market shops & goods | ${PLACE_BRAND_EN}`, heading: 'Find market shops & goods', description: 'Find shops and goods in Korean traditional markets, then explore each market’s alleys and shop map.' }
+    : { title: `전통시장 가게·품목 찾기 | ${PLACE_BRAND_KO}`, heading: '시장 가게·품목 찾기', description: '전통시장의 가게와 품목을 검색하고 시장별 골목과 가게 지도로 찾아보세요.' };
+}

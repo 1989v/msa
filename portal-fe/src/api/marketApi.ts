@@ -88,3 +88,24 @@ export async function fetchMarket(contentId: string, includeOutside: boolean, la
   );
   return response.data.data;
 }
+
+export interface MarketSearchResult {
+  query: string;
+  markets: Array<{ contentId: string; name: string; region: string | null; marketType: string; storeCount: number }>;
+  stores: {
+    items: Array<{ storeId: number; name: string; items: string | null; category: string | null; marketContentId: string; marketName: string; zoneName: string | null; latitude: number | null; longitude: number | null }>;
+    total: number; page: number; size: number;
+  };
+}
+
+export async function searchMarkets(q: string, lang: PlaceLang = 'ko', page = 0, size = 20): Promise<MarketSearchResult> {
+  const response = await api.get<ApiResponse<MarketSearchResult>>('/api/v1/place/markets/search', {
+    params: { q: q.trim().slice(0, 50), lang, page: Math.max(0, page), size: Math.min(50, Math.max(1, size)) },
+  });
+  return response.data.data;
+}
+
+export async function fetchMarketContentIds(): Promise<string[]> {
+  const response = await api.get<ApiResponse<string[]>>('/api/v1/place/markets/content-ids');
+  return response.data.data;
+}

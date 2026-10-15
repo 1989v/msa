@@ -1,3 +1,4 @@
+import MarketMapBadge from './MarketMapBadge';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -78,6 +79,7 @@ import {
   placeHreflangAlternates,
   placeHubMeta,
   placeHubIntro,
+  placePath,
   placeUrl,
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
@@ -1547,6 +1549,7 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
         ) : (
           <p className="place-subtitle">{placeHubIntro(lang)}</p>
         )}
+        <a className="place-btn" href={placePath(lang, '/markets')}>{lang === 'en' ? 'Find market shops & goods' : '시장 가게 찾기'}</a>
       </header>
 
       <div className="place-toolbar" ref={toolbarRef}>
@@ -2245,6 +2248,7 @@ function PlaceCard({
       </span>
       <div className="place-card-body">
         <h3 className="place-card-title">{primary}</h3>
+        <MarketMapBadge contentId={attraction.contentId} lang={lang} />
         {secondary && <p className="place-card-local">{secondary}</p>}
         {/* 지역 라벨 칸만 줄어든다 — 분류·거리·찜은 줄지 않는다. 주소 줄은 두지 않는다(지역 라벨이 대신한다) */}
         <p className="place-card-meta">
