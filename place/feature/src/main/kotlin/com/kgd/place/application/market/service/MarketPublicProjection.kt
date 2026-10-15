@@ -11,17 +11,13 @@ import com.kgd.place.domain.market.model.MarketStoreIdentity
 
 /** Response-only reconciliation. No persistence row or upstream payload is changed. */
 internal object MarketPublicProjection {
-    private fun normalized(value: String): String = MarketStoreIdentity.normalized(value)
-
-    private data class Identity(val marketId: Long, val name: String, val jibun: String)
-
     /**
      * ONNURI store id → SANGGA store id for one shop listed by both sources. Ingest stores the result as
      * `paired_store_id` so search pairs rows by primary key with the same rule as this projection.
      */
     fun pairs(rows: List<MarketStore>): Map<Long, Long> {
-        val candidates = rows.filter { it.source != MarketStoreSource.MANUAL && !it.jibunAddress.isNullOrBlank() }
-            .groupBy { Identity(it.marketId, normalized(it.name), normalized(requireNotNull(it.jibunAddress))) }
+        val candidates = rows.mapNotNull { row -> MarketStoreIdentity.key(row)?.let { (row.marketId to it) to row } }
+            .groupBy({ it.first }, { it.second })
         val pairs = mutableMapOf<Long, Long>()
         candidates.values.forEach { group ->
             // Ambiguous multiple tenants from either source are deliberately left separate.

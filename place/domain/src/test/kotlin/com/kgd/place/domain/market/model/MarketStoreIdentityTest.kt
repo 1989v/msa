@@ -17,6 +17,17 @@ class MarketStoreIdentityTest : BehaviorSpec({
             MarketStoreIdentity.key(store(MarketStoreSource.ONNURI)) shouldBe
                 MarketStoreIdentity.key(store(MarketStoreSource.SANGGA, name = "망원식당", jibun = "서울 마포구 망원동 ４１４-９８"))
         }
+        Then("시도를 정식 명칭·「서울시」·약칭으로 달리 써도 키가 같다") {
+            val official = MarketStoreIdentity.key(store(MarketStoreSource.SANGGA, jibun = "서울특별시 마포구 망원동 414-98"))
+            MarketStoreIdentity.key(store(MarketStoreSource.ONNURI, jibun = "서울시 마포구 망원동 414-98")) shouldBe official
+            MarketStoreIdentity.key(store(MarketStoreSource.ONNURI)) shouldBe official
+            MarketStoreIdentity.key(store(MarketStoreSource.ONNURI, jibun = "경북 경주시 성건동 339-2")) shouldBe
+                MarketStoreIdentity.key(store(MarketStoreSource.SANGGA, jibun = "경상북도 경주시 성건동 339-2"))
+        }
+        Then("시도가 다르면 키가 다르다") {
+            MarketStoreIdentity.key(store(MarketStoreSource.ONNURI, jibun = "경남 경주시 성건동 339-2")) shouldNotBe
+                MarketStoreIdentity.key(store(MarketStoreSource.SANGGA, jibun = "경상북도 경주시 성건동 339-2"))
+        }
         Then("이름이나 지번이 다르면 키가 다르다") {
             MarketStoreIdentity.key(store(MarketStoreSource.ONNURI)) shouldNotBe
                 MarketStoreIdentity.key(store(MarketStoreSource.SANGGA, name = "망원분식"))
