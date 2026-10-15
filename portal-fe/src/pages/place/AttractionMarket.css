@@ -88,3 +88,5 @@
 
 .place-market-good-price-summary, .place-market-good-price-menus { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .place-market-badges .place-market-good-price-badge { color: var(--ko-accent-text); border-color: var(--ko-accent-text); }
+/* 출처 이름이 줄 끝에서 한 글자만 넘어가지 않게 링크를 한 덩어리로 넘긴다 */
+.place-market-good-price-summary a { white-space: nowrap; }
