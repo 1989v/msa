@@ -27,4 +27,6 @@ interface MarketSavePort {
     fun saveOverrides(rows: List<MarketStoreOverride>): List<MarketStoreOverride>
     fun appendChange(change: MarketChangeLog): MarketChangeLog
     fun saveSteward(steward: MarketSteward): MarketSteward
+    /** ONNURI id → SANGGA id; both rows point at each other and every other store of the market loses its pair. */
+    fun savePairs(marketId: Long, pairs: Map<Long, Long>)
 }

@@ -146,6 +146,15 @@ class MarketRepositoryAdapter(
     }
 
     @Transactional(transactionManager = "placeTransactionManager")
+    override fun savePairs(marketId: Long, pairs: Map<Long, Long>) {
+        stores.clearPairs(marketId)
+        pairs.forEach { (onnuriId, sanggaId) ->
+            stores.pair(onnuriId, sanggaId)
+            stores.pair(sanggaId, onnuriId)
+        }
+    }
+
+    @Transactional(transactionManager = "placeTransactionManager")
     override fun saveOverride(override: MarketStoreOverride): MarketStoreOverride =
         saveOverrides(listOf(override)).single()
 

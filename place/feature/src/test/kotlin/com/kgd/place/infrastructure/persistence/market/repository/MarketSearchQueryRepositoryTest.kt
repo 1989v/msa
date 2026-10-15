@@ -49,6 +49,19 @@ class MarketSearchQueryRepositoryTest : BehaviorSpec({
     afterSpec { runCatching { em.close() }; runCatching { emf.close() }; mysql.stop() }
     fun market(content: String, name: String = content, raw: String? = null): MarketJpaEntity = MarketJpaEntity.fromDomain(
         Market(content, name, MarketType.STREET, sourceRaw = raw)).also { em.persist(it); em.flush() }
+    /** Same as ingest: recompute the market's pairs with the projection rule and write paired_store_id. */
+    fun pair(marketId: Long) {
+        val rows = em.createQuery("select s from MarketStoreJpaEntity s where s.marketId = :m", MarketStoreJpaEntity::class.java)
+            .setParameter("m", marketId).resultList.map { it.toDomain() }
+        em.createQuery("update MarketStoreJpaEntity s set s.pairedStoreId = null where s.marketId = :m").setParameter("m", marketId).executeUpdate()
+        com.kgd.place.application.market.service.MarketPublicProjection.pairs(rows).forEach { (a, b) ->
+            listOf(a to b, b to a).forEach { (id, partner) ->
+                em.createQuery("update MarketStoreJpaEntity s set s.pairedStoreId = :p where s.id = :id")
+                    .setParameter("p", partner).setParameter("id", id).executeUpdate()
+            }
+        }
+        em.clear()
+    }
     fun store(market: MarketJpaEntity, name: String, status: MarketMembershipStatus = MarketMembershipStatus.IN,
         items: String? = null, category: String? = null, source: MarketStoreSource = MarketStoreSource.MANUAL,
         jibun: String? = null, judged: MarketMembershipStatus? = null, menu: String? = null): MarketStoreJpaEntity {
@@ -62,7 +75,7 @@ class MarketSearchQueryRepositoryTest : BehaviorSpec({
             membership = MarketMembership(status), judgedMembership = judged,
             goodPriceRaw = menu?.let { """{"업종":"한식","메뉴1":"$it","가격1":"7000"}""" },
             goodPriceKey = menu?.let { "private-key" }, goodPriceMatchedBy = menu?.let { "NAME" }, goodPriceMenuNames = menu)
-        return MarketStoreJpaEntity.fromDomain(row).also { em.persist(it); em.flush() }
+        return MarketStoreJpaEntity.fromDomain(row).also { em.persist(it); em.flush(); pair(requireNotNull(market.id)) }
     }
     fun edit(store: MarketStoreJpaEntity, field: MarketStoreField, value: String?) {
         em.persist(MarketStoreOverrideJpaEntity.fromDomain(MarketStoreOverride(requireNotNull(store.id), field,

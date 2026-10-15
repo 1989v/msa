@@ -32,20 +32,6 @@ class MarketSearchQueryRepository(@Qualifier("placeJpaQueryFactory") private val
     private fun sameIdentity(a: QMarketStoreJpaEntity, b: QMarketStoreJpaEntity) =
         a.marketId.eq(b.marketId).and(a.identityKey.isNotNull).and(a.identityKey.eq(b.identityKey))
 
-    private fun partnerId() : com.querydsl.jpa.JPQLQuery<Long> {
-        val candidate = QMarketStoreJpaEntity("pairCandidate")
-        val sameSource = QMarketStoreJpaEntity("pairSameSource")
-        val otherSource = QMarketStoreJpaEntity("pairOtherSource")
-        val ownCount = JPAExpressions.select(sameSource.count()).from(sameSource)
-            .where(sameIdentity(store, sameSource), sameSource.source.eq(store.source))
-        val otherCount = JPAExpressions.select(otherSource.count()).from(otherSource)
-            .where(sameIdentity(store, otherSource), otherSource.source.eq(candidate.source))
-        return JPAExpressions.select(candidate.id.min()).from(candidate)
-            .where(sameIdentity(store, candidate), store.source.`in`(MarketStoreSource.ONNURI, MarketStoreSource.SANGGA),
-                candidate.source.`in`(MarketStoreSource.ONNURI, MarketStoreSource.SANGGA),
-                candidate.source.ne(store.source), ownCount.eq(1L), otherCount.eq(1L))
-    }
-
     private fun connection(value: StringExpression): StringExpression =
         Expressions.stringTemplate("cast({0} as string)", value)
 
@@ -68,7 +54,7 @@ class MarketSearchQueryRepository(@Qualifier("placeJpaQueryFactory") private val
         .then(store.goodPriceMenuNames).otherwise(partner.goodPriceMenuNames)
 
     private fun base(): JPAQuery<*> {
-        val query = factory.from(store).leftJoin(partner).on(partner.id.eq(partnerId()))
+        val query = factory.from(store).leftJoin(partner).on(partner.id.eq(store.pairedStoreId))
             .join(market).on(market.id.eq(store.marketId))
         listOf(MarketStoreField.NAME, MarketStoreField.ITEMS, MarketStoreField.MEMBERSHIP).forEach { field ->
             val first = own.getValue(field)

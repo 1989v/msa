@@ -35,6 +35,8 @@ class MarketIngestProtectionTest : BehaviorSpec({
                 zoneRows[requireNotNull(entity.id)] = entity; entity
             }
             every { stores.findAllByMarketId(1) } answers { storeRows.values.toList() }
+            every { stores.clearPairs(any()) } returns 0
+            every { stores.pair(any(), any()) } returns 1
             every { stores.findAllByMarketIdAndSourceAndNameAndJibunAddress(any(), any(), any(), any()) } answers {
                 storeRows.values.filter { it.marketId == firstArg<Long>() && it.source == secondArg<MarketStoreSource>() &&
                     it.name == thirdArg<String>() && it.jibunAddress == arg<String>(3) }
@@ -73,7 +75,7 @@ class MarketIngestProtectionTest : BehaviorSpec({
             val beforeManualZones = adapter.findZones(1).filter { it.source == MarketZoneSource.MANUAL }
             val beforeOverrides = adapter.findOverrides(listOf(11))
             val beforeAutoZone = adapter.findZones(1).find { it.id == 10L }!!
-            MarketIngestService(adapter).ingest(IngestMarketUseCase.Command(market.copy(id = null),
+            MarketIngestService(adapter, adapter).ingest(IngestMarketUseCase.Command(market.copy(id = null),
                 listOf(IngestMarketUseCase.Zone(MarketZone(1, MarketZoneKind.ROAD, "새 원천 구역", MarketZoneSource.AUTO, sourceKey = "road"))),
                 listOf(IngestMarketUseCase.Store(MarketStore(1, "새 원천 이름", MarketStoreSource.ONNURI,
                     sourceKey = "o", onnuriKey = "o", onnuriRaw = "{\"version\":2}"), "road")), listOf("o")))

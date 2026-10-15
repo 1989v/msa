@@ -1,6 +1,7 @@
 package com.kgd.place.application.market.service
 
 import com.kgd.place.application.market.dto.GoodPriceProjection
+import com.kgd.place.application.market.port.MarketQueryPort
 import com.kgd.place.application.market.port.MarketSavePort
 import com.kgd.place.application.market.usecase.IngestMarketUseCase
 import com.kgd.place.domain.market.model.MarketStoreSource
@@ -9,7 +10,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-class MarketIngestService(private val save: MarketSavePort) : IngestMarketUseCase {
+class MarketIngestService(private val save: MarketSavePort, private val query: MarketQueryPort) : IngestMarketUseCase {
     @Transactional(transactionManager = "placeTransactionManager")
     override fun ingest(command: IngestMarketUseCase.Command): IngestMarketUseCase.Result {
         require(command.market.id == null)
@@ -40,6 +41,8 @@ class MarketIngestService(private val save: MarketSavePort) : IngestMarketUseCas
             save.saveSourceStore(store.row.copy(marketId = marketId, zoneId = store.zoneKey?.let { zones.getValue(it) },
                 goodPriceMenuNames = menuNames), observed)
         }
+        // Commands arrive in chunks; pairing is recomputed over the whole market after each one.
+        save.savePairs(marketId, MarketPublicProjection.pairs(query.findStores(marketId)))
         return IngestMarketUseCase.Result(marketId, zones.size, command.stores.size)
     }
 }

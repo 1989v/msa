@@ -15,20 +15,28 @@ internal object MarketPublicProjection {
 
     private data class Identity(val marketId: Long, val name: String, val jibun: String)
 
-    fun stores(rows: List<MarketStore>, overrides: Map<Long, List<MarketStoreOverride>>, pathIds: Set<Long>? = null): List<QueryMarketUseCase.Store> {
+    /**
+     * ONNURI store id → SANGGA store id for one shop listed by both sources. Ingest stores the result as
+     * `paired_store_id` so search pairs rows by primary key with the same rule as this projection.
+     */
+    fun pairs(rows: List<MarketStore>): Map<Long, Long> {
         val candidates = rows.filter { it.source != MarketStoreSource.MANUAL && !it.jibunAddress.isNullOrBlank() }
             .groupBy { Identity(it.marketId, normalized(it.name), normalized(requireNotNull(it.jibunAddress))) }
-        val partners = mutableMapOf<Long, MarketStore>()
-        val canonicalIds = mutableMapOf<Long, Long>()
+        val pairs = mutableMapOf<Long, Long>()
         candidates.values.forEach { group ->
             // Ambiguous multiple tenants from either source are deliberately left separate.
             val onnuri = group.filter { it.source == MarketStoreSource.ONNURI }.singleOrNull()
             val sangga = group.filter { it.source == MarketStoreSource.SANGGA }.singleOrNull()
-            if (onnuri?.id != null && sangga?.id != null) {
-                partners[requireNotNull(onnuri.id)] = sangga
-                canonicalIds[requireNotNull(sangga.id)] = requireNotNull(onnuri.id)
-            }
+            if (onnuri?.id != null && sangga?.id != null) pairs[requireNotNull(onnuri.id)] = requireNotNull(sangga.id)
         }
+        return pairs
+    }
+
+    fun stores(rows: List<MarketStore>, overrides: Map<Long, List<MarketStoreOverride>>, pathIds: Set<Long>? = null): List<QueryMarketUseCase.Store> {
+        val rowsById = rows.associateBy { it.id }
+        val pairs = pairs(rows)
+        val partners = pairs.mapValues { (_, sanggaId) -> rowsById.getValue(sanggaId) }
+        val canonicalIds = pairs.entries.associate { (onnuriId, sanggaId) -> sanggaId to onnuriId }
         val projected = rows.filter { it.id !in canonicalIds }.map { row ->
             val other = partners[row.id]
             val ownOverrides = overrides[row.id].orEmpty()

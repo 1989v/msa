@@ -111,6 +111,9 @@ class MarketStoreJpaEntity(
     /** Derived on every write from [MarketStoreIdentity.key]; never read back into the domain. */
     @Column(name = "identity_key", nullable = true, length = 64)
     val identityKey: String? = null,
+    /** Written only by [com.kgd.place.application.market.port.MarketSavePort.savePairs]; entity saves leave it alone. */
+    @Column(name = "paired_store_id", nullable = true, insertable = false, updatable = false)
+    val pairedStoreId: Long? = null,
 ) {
     fun toDomain(): MarketStore = MarketStore(
         marketId = marketId,
