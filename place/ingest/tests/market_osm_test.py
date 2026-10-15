@@ -1,0 +1,186 @@
+"""Hand-built geometry and fake transports only; no OSM/place network access."""
+import copy
+import io
+import json
+from unittest.mock import Mock, patch
+from urllib.parse import parse_qs
+
+import pytest
+
+from src import market_osm as osm
+
+CENTER = [37.5, 127.0]
+POLYGON = [[37.4995,126.9995], [37.4995,127.0005], [37.5005,127.0005], [37.5005,126.9995], [37.4995,126.9995]]
+
+
+def way(sid, points, **tags):
+    return {"type": "way", "id": sid, "tags": tags,
+            "geometry": [{"lat": p[0], "lon": p[1]} for p in points]}
+
+
+def response(*elements):
+    return {"version": 0.6, "generator": "offline", "osm3s": {"copyright": "keep me"}, "elements": list(elements)}
+
+
+def state(mid=1, kind="STREET", points=()):
+    return {"market": {"id": mid, "latitude": CENTER[0], "longitude": CENTER[1], "marketType": kind},
+            "stores": [{"source": {"unused": "preserved"}, "display": {
+                "membership": {"status": "IN"}, "coordinate": {"latitude": p[0], "longitude": p[1]}}} for p in points]}
+
+
+def test_boundary_selection_containing_before_nearest_and_far_none():
+    near = [[p[0]+.0008,p[1]] for p in POLYGON]
+    far = [[p[0]+.01,p[1]] for p in POLYGON]
+    assert osm.select_boundary([way(1,near,amenity="marketplace"),way(2,POLYGON,amenity="marketplace")],CENTER)["osmId"] == "way/2"
+    assert osm.select_boundary([way(1,near,amenity="marketplace")],CENTER)["osmId"] == "way/1"
+    assert osm.select_boundary([way(1,far,amenity="marketplace")],CENTER) is None
+    assert osm.select_boundary([way(1,POLYGON[:-1],amenity="marketplace")],CENTER) is None
+
+
+def test_relation_joins_reversed_outer_ways_and_rejects_holes_or_islands():
+    relation = {"type": "relation", "id": 12, "tags": {"amenity": "marketplace"}, "members": [
+        {**way(1,POLYGON[:3]), "role": "outer"}, {**way(2,POLYGON[2:][::-1]), "role": "outer"}]}
+    assert osm.select_boundary([relation], CENTER)["osmId"] == "relation/12"
+    assert osm.select_boundary([{**relation,"members": relation["members"]+[{"type":"way","role":"inner"}]}], CENTER) is None
+    assert osm.select_boundary([{**relation,"members": relation["members"]+[way(3,POLYGON)]}], CENTER) is None
+
+
+def test_derived_hull_has_twenty_meter_margin_and_requires_three_noncollinear_points():
+    result = osm.derived_boundary(POLYGON[:-1]+POLYGON[:1])
+    assert result["source"] == "DERIVED" and result["osmId"] is None
+    assert result["polygon"][0] == result["polygon"][-1]
+    for p in POLYGON[:-1]:
+        assert osm.contains(p,result["polygon"])
+        assert min(osm.segment_distance(p,a,b) for a,b in zip(result["polygon"],result["polygon"][1:])) == pytest.approx(20,abs=.001)
+    assert osm.derived_boundary(POLYGON[:2]) is None
+    assert osm.derived_boundary([CENTER,CENTER,[37.501,127]]) is None
+    assert osm.derived_boundary([[37.5,127],[37.501,127],[37.502,127]]) is None
+
+
+def test_derived_thin_triangle_round_buffer_stays_within_twenty_meters_of_hull():
+    # A ~176m-long, 1.1m-high street-market hull has two acute corners.
+    # Intersecting offset edges produces kilometer-long miters at those corners.
+    stores = [[37.5,127],[37.5,127.002],[37.50001,127.001]]
+    boundary = osm.derived_boundary(stores)["polygon"]
+    assert boundary[0] == boundary[-1]
+    assert all(osm.contains(p,boundary) for p in stores)
+    edges = list(zip(stores,stores[1:]+stores[:1]))
+    for p in boundary:
+        assert min(osm.segment_distance(p,a,b) for a,b in edges) <= 20.001
+    for p in stores:
+        assert min(osm.segment_distance(p,a,b) for a,b in zip(boundary,boundary[1:])) == pytest.approx(20,abs=.001)
+
+
+def test_polygon_filter_keeps_crossing_unnamed_paths_and_complete_raw():
+    crossing = [[37.5,126.99],[37.5,127.01]]
+    payload = response(way(1,POLYGON,amenity="marketplace"),way(2,crossing,highway="footway"),
+                       way(3,[[37.51,127],[37.52,127]],highway="service"),
+                       way(4,crossing,highway="primary",name="큰길"))
+    original = copy.deepcopy(payload)
+    command = osm.prepare(payload,CENTER,300)
+    assert command["paths"] == [{"osmWayId":2,"name":None,"geometry":crossing}]
+    assert command["raw"] == {"boundary":original,"paths":original,"roads":original}
+    assert payload == original
+
+
+def test_no_boundary_radius_filter_uses_segment_distance_and_derived_fallback():
+    payload = response(way(2,[[37.5,126.99],[37.5,127.01]],highway="residential"),
+                       way(3,[[37.51,127],[37.52,127]],highway="service"))
+    command = osm.prepare(payload,CENTER,150)
+    assert command["boundary"] is None and len(command["paths"]) == 1
+    assert osm.prepare(payload,CENTER,150,POLYGON[:-1])["boundary"]["source"] == "DERIVED"
+
+
+def test_fetch_one_post_headers_query_and_no_source_field_loss():
+    payload = response(way(1,POLYGON,amenity="marketplace",unknown="preserve"))
+    with patch.object(osm,"urlopen",return_value=io.BytesIO(json.dumps(payload).encode())) as transport:
+        assert osm.fetch_overpass(CENTER,300) == payload
+    transport.assert_called_once()
+    req = transport.call_args.args[0]
+    assert req.full_url == osm.OVERPASS_ENDPOINT and req.method == "POST"
+    assert req.get_header("User-agent") == osm.USER_AGENT and req.get_header("Accept") == "application/json"
+    query = parse_qs(req.data.decode())["data"][0]
+    assert 'relation["amenity"="marketplace"]' in query and 'way["amenity"="marketplace"]' in query
+    assert "around:300,37.5,127.0" in query and "out body geom" in query
+    for highway in osm.ALLEY_HIGHWAYS | osm.BACKGROUND_HIGHWAYS:
+        assert highway in query
+
+
+@pytest.mark.parametrize("payload", [{}, {"elements": [], "remark": "timeout"}])
+def test_incomplete_overpass_is_failure(payload):
+    with patch.object(osm,"urlopen",return_value=io.BytesIO(json.dumps(payload).encode())):
+        with pytest.raises(ValueError):
+            osm.fetch_overpass(CENTER,300)
+
+
+def test_existing_store_projection_only_uses_in_display_coordinates():
+    sample = state(points=POLYGON[:-1])
+    sample["stores"] += [{"display":{"membership":{"status":"OUT"},"coordinate":{"latitude":0,"longitude":0}}},
+                          {"display":{"membership":{"status":"IN"},"coordinate":None}}]
+    assert osm.in_store_points(sample) == POLYGON[:-1]
+
+
+def test_orchestration_stages_all_reads_then_put_and_bodyless_rejudge():
+    events = []
+    def read(cid):
+        events.append("read")
+        return state(int(cid),"BUILDING" if cid == "2" else "STREET",POLYGON[:-1])
+    def fetch(center,radius):
+        events.append(("fetch",radius))
+        return response()
+    def write(*args):
+        events.append(args)
+    sleep = Mock()
+    with patch.object(osm.place_client,"fetch_market_attractions",return_value=[{"contentId":"1"},{"contentId":"2"}]), \
+         patch.object(osm.place_client,"market_state",side_effect=read), patch.object(osm.place_client,"_request",side_effect=write):
+        summary = osm.run(fetch=fetch,sleep=sleep)
+    assert events[:4] == ["read",("fetch",300),"read",("fetch",150)]
+    assert summary["markets"] == 2 and summary["calls"] == 2
+    sleep.assert_called_once_with(osm.REQUEST_INTERVAL_SECONDS)
+    for i,mid in enumerate((1,2)):
+        put, post = events[4+i*2:6+i*2]
+        assert put[:2] == ("PUT",f"/internal/markets/{mid}/osm")
+        assert set(put[2]) == {"fetchedAt","raw","boundary","paths"}
+        assert put[2]["boundary"]["source"] == "DERIVED"
+        assert post == ("POST",f"/internal/markets/{mid}/rejudge")
+
+
+@pytest.mark.parametrize("count,failed,allowed", [(20,1,True),(19,1,False),(20,2,False)])
+def test_failure_threshold_zero_writes_before_gate(count,failed,allowed):
+    results = [OSError("offline")]*failed + [response()]*(count-failed)
+    with patch.object(osm.place_client,"fetch_market_attractions",return_value=[{"contentId":str(i)} for i in range(count)]), \
+         patch.object(osm.place_client,"market_state",return_value=state()), patch.object(osm.place_client,"_request") as writes:
+        fetch = Mock(side_effect=results)
+        if allowed:
+            assert osm.run(fetch=fetch,sleep=Mock())["failedCalls"] == failed
+            assert writes.call_count == (count-failed)*2
+        else:
+            with pytest.raises(ValueError,match="failure ratio"):
+                osm.run(fetch=fetch,sleep=Mock())
+            writes.assert_not_called()
+
+
+def test_internal_read_failure_also_prevents_writes():
+    with patch.object(osm.place_client,"fetch_market_attractions",return_value=[{"contentId":"1"},{"contentId":"2"}]), \
+         patch.object(osm.place_client,"market_state",side_effect=[state(),OSError("offline")]), \
+         patch.object(osm.place_client,"_request") as writes:
+        with pytest.raises(ValueError,match="Market failure ratio"):
+            osm.run(fetch=Mock(return_value=response()),sleep=Mock())
+        writes.assert_not_called()
+
+
+def test_uningested_attractions_do_not_dilute_market_failure_ratio():
+    states = [None]*30 + [state(), OSError("offline")]
+    with patch.object(osm.place_client,"fetch_market_attractions",return_value=[{"contentId":str(i)} for i in range(len(states))]), \
+         patch.object(osm.place_client,"market_state",side_effect=states), patch.object(osm.place_client,"_request") as writes:
+        with pytest.raises(ValueError,match="Market failure ratio 1/2"):
+            osm.run(fetch=Mock(return_value=response()),sleep=Mock())
+        writes.assert_not_called()
+
+
+def test_overpass_remark_does_not_publish_partial_geometry():
+    with patch.object(osm.place_client,"fetch_market_attractions",return_value=[{"contentId":"1"}]), \
+         patch.object(osm.place_client,"market_state",return_value=state()), patch.object(osm.place_client,"_request") as writes:
+        with pytest.raises(ValueError,match="failure ratio"):
+            osm.run(fetch=Mock(return_value={"elements":[],"remark":"runtime error: timeout"}),sleep=Mock())
+        writes.assert_not_called()

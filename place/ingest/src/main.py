@@ -45,7 +45,7 @@ from src import (gocamping, administrative_region, air, backfill_intro, backfill
                  google_place, indexnow, naver,
                  place_client, related,
                  backfill_media, popularity, quota, sync_lcls_codes, sync_pet_tour,
-                 sync_tour, transit_stops, market_stores,
+                 sync_tour, transit_stops, market_stores, market_osm,
                  visitors, weather, wellness, youtube)
 
 
@@ -407,7 +407,7 @@ def main() -> int:
                     choices=["overview", "intro", "media", "stats", "sync", "tour-portal-sync", "links",
                              "administrative-regions", "google-places", "lcls-codes", "pet-tour",
                              "attraction-attrs", "visitors", "weather-short", "weather-mid", "congestion", "related",
-                             "air", "air-stations", "gocamping", "indexnow", "crawl-stats", "transit-stops", "market-stores"])
+                             "air", "air-stations", "gocamping", "indexnow", "crawl-stats", "transit-stops", "market-stores", "market-osm"])
     ap.add_argument("--budget", type=int, default=int(os.environ.get("BUDGET", "1000")),
                     help="개요 수집 일일 예산 (언어별, detailCommon2 호출 상한)")
     ap.add_argument("--lang", choices=["ko", "en"], help="미지정 시 ko·en 둘 다")
@@ -459,6 +459,9 @@ def main() -> int:
         return _job_air("stations" if args.job == "air-stations" else "measurements")
     if args.job == "gocamping":
         return _job_gocamping()
+    if args.job == "market-osm":
+        market_osm.run()
+        return 0
     if args.job == "market-stores":
         urls = [os.environ.get(k) for k in ("MARKET_STANDARD_FILE_URL", "MARKET_ONNURI_FILE_URL", "MARKET_SANGGA_BULK_URL")]
         if not all(urls):

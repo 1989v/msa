@@ -1,0 +1,41 @@
+# Weekly Monday KST 05:20, after the 01:10 market-stores job's four-hour deadline.
+# Keep suspended until the geometry ingest API is deployed (ADR-0110).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: place-ingest-market-osm
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: place-ingest
+    app.kubernetes.io/part-of: commerce-platform
+    place.kgd.io/job: "market-osm"
+spec:
+  suspend: true
+  schedule: "20 20 * * 0"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 14400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: place-ingest
+            app.kubernetes.io/part-of: commerce-platform
+            place.kgd.io/job: "market-osm"
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: ingest
+              image: commerce/place-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--job=market-osm"]
+              env:
+                - name: PLACE_API
+                  value: "http://content:8097"
+              resources:
+                requests: { cpu: 100m, memory: 256Mi }
+                limits: { memory: 512Mi }
