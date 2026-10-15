@@ -2,7 +2,7 @@
 import copy
 import io
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 from unittest.mock import Mock, patch
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs
@@ -164,8 +164,13 @@ def test_batch_of_only_uningested_markets_does_not_stop_the_run():
     assert writes.call_count == 2
 
 
+def test_fetched_at_is_a_local_date_time_without_offset():
+    fetched = osm.prepare(response(), CENTER, 300)["fetchedAt"]
+    assert datetime.fromisoformat(fetched).tzinfo is None and "+" not in fetched
+
+
 def test_recently_fetched_markets_are_skipped_so_each_run_continues():
-    now = datetime(2026, 10, 16, tzinfo=timezone.utc)
+    now = datetime(2026, 10, 16)
     fresh = {**state(1), "osmFetchedAt": "2026-10-10T00:00:00"}
     stale = {**state(2), "osmFetchedAt": "2026-09-01T00:00:00"}
     fetch = Mock(return_value=response())

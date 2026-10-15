@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import math
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -192,7 +192,8 @@ def prepare(payload, center, radius, store_points=()):
             paths.append({"osmWayId": e["id"], "name": e.get("tags", {}).get("name"), "geometry": points})
     # One combined provider response serves all three kinds. Keep its complete
     # envelope, tags, members and unselected elements in every raw slot.
-    return {"fetchedAt": datetime.now(timezone.utc).isoformat(),
+    # place reads LocalDateTime: an offset suffix ("+00:00") makes it reject the whole body.
+    return {"fetchedAt": datetime.now().replace(microsecond=0).isoformat(),
             "raw": {"boundary": payload, "paths": payload, "roads": payload},
             "boundary": boundary, "paths": paths}
 
@@ -215,9 +216,7 @@ def fetched_recently(state, now):
     fetched = state.get("osmFetchedAt")
     if not fetched:
         return False
-    at = datetime.fromisoformat(fetched)
-    at = at if at.tzinfo else at.replace(tzinfo=timezone.utc)
-    return now - at < timedelta(days=OSM_REFRESH_DAYS)
+    return now - datetime.fromisoformat(fetched) < timedelta(days=OSM_REFRESH_DAYS)
 
 
 def run(fetch=None, sleep=None, now=None):
@@ -229,7 +228,7 @@ def run(fetch=None, sleep=None, now=None):
     called once more at the end of its batch, before the batch's failure gate.
     """
     fetch, sleep = fetch or fetch_overpass, sleep or time.sleep
-    now = now or datetime.now(timezone.utc)
+    now = now or datetime.now()
     attractions = place_client.fetch_market_attractions()
     summary = {"markets": 0, "failedMarkets": 0, "calls": 0, "failedCalls": 0, "errors": [],
                "batches": 0, "skippedRecent": 0}
