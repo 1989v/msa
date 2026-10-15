@@ -18,3 +18,9 @@ export async function overrideManagedStore(id: number, storeId: number, values: 
 export async function saveManagedStore(id: number, storeId: number | null, data: StoreInput) { if (storeId == null) await api.post(`${base(id)}/manage/stores`, data); else await api.put(`${base(id)}/manage/stores/${storeId}`, data); }
 export async function deleteManagedStore(id: number, storeId: number) { await api.delete(`${base(id)}/manage/stores/${storeId}`); }
 export async function renameManagedZone(id: number, zone: EditorZone, name: string) { const { id: zoneId, ...payload } = zone; await api.put(`${base(id)}/manage/zones/${zoneId}`, { ...payload, name: name.trim() }); }
+
+export type GeometryKind = 'BOUNDARY' | 'PATH' | 'ENTRANCE' | 'NOTE';
+export type GeometryStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export interface GeometryRequest { id: number; marketId: number; kind: GeometryKind; geometry: [number, number][] | null; description: string; status: GeometryStatus; createdAt: string; decisionReason: string | null }
+export async function listGeometryRequests(id: number) { return (await api.get<ApiResponse<GeometryRequest[]>>(`${base(id)}/manage/geometry-requests`)).data.data; }
+export async function submitGeometryRequest(id: number, input: { kind: GeometryKind; geometry: [number, number][] | null; description: string }) { return (await api.post<ApiResponse<{ id: number; status: 'PENDING' }>>(`${base(id)}/manage/geometry-requests`, input)).data.data; }
