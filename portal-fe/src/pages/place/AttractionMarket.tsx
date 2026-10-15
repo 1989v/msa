@@ -2,7 +2,7 @@ import { useId, useState, type CSSProperties } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchMarket, type MarketResponse, type MarketZone } from '../../api/marketApi';
 import type { PlaceLang } from '../../api/placeApi';
-import { formatMarketFloor, groupMarketPins, hasMarketCoordinate, marketSourceBadges, matchesMarketName, normalizeMarketName, projectMarketPins, visibleMarketStores, zoneIds } from './marketView';
+import { formatMarketFloor, groupMarketPins, longestMarketSegmentMidpoint, hasMarketCoordinate, marketSourceBadges, matchesMarketName, normalizeMarketName, projectMarketPins, visibleMarketStores, zoneIds } from './marketView';
 import './AttractionMarket.css';
 import MarketStewardApplication from './MarketStewardApplication';
 
@@ -41,7 +41,9 @@ function MarketSection({ data, lang, includeOutside, onOutside }: {
   const selectedZone = zones.find((zone) => zone.id === zoneId);
   const stores = visibleMarketStores(data.stores, includeOutside, selectedZone ? zoneIds(selectedZone) : undefined);
   const pins = groupMarketPins(stores);
-  const projection = projectMarketPins(pins);
+  const projection = projectMarketPins(pins, data);
+  const paths = data.paths ?? [];
+  const hasGeometry = Boolean(data.boundary?.polygon.length || paths.some((path) => path.geometry.length));
   const searched = normalizeMarketName(query).length > 0;
   const found = stores.filter((store) => matchesMarketName(store, query));
   const parcel = pins.find((pin) => pin.key === parcelKey);
@@ -51,7 +53,12 @@ function MarketSection({ data, lang, includeOutside, onOutside }: {
     const index = id == null ? -1 : zones.findIndex((zone) => zone.id === id);
     return index < 0 ? 'var(--ko-text-muted)' : ZONE_COLORS[index % ZONE_COLORS.length];
   };
-  const mapPoints = [...(projection?.points ?? [])].sort((a, b) =>
+  const pathColor = (id: number | null | undefined) => {
+    const index = paths.findIndex((path) => path.id === id);
+    return index < 0 ? undefined : ZONE_COLORS[index % ZONE_COLORS.length];
+  };
+  const mapPoints = [...(projection?.points ?? [])].filter((pin) => !hasGeometry
+    || (pin.x >= 0 && pin.x <= 600 && pin.y >= 0 && pin.y <= 440)).sort((a, b) =>
     Number(a.stores.some((store) => matchesMarketName(store, query)))
     - Number(b.stores.some((store) => matchesMarketName(store, query))));
   const pickZone = (id: number | null) => { setZoneId(id); setParcelKey(null); };
@@ -80,7 +87,26 @@ function MarketSection({ data, lang, includeOutside, onOutside }: {
       </nav>
       <div className="place-market-layout">
         <div className="place-market-map">
-          {projection ? <div className="place-market-canvas" role="group" aria-label={C.map}><svg viewBox="0 0 600 440" aria-hidden="true">
+          {projection ? <div className="place-market-canvas" data-geometry={hasGeometry || undefined} role="group" aria-label={C.map}><svg viewBox="0 0 600 440" aria-hidden="true">
+            {data.boundary && <polygon className="place-market-boundary" points={data.boundary.polygon.map((coordinate) => {
+              const point = projection.project(coordinate);
+              return `${point.x},${point.y}`;
+            }).join(' ')} />}
+            {paths.map((path) => {
+              const points = path.geometry.map(projection.project);
+              const label = path.named && path.name ? longestMarketSegmentMidpoint(points) : null;
+              return <g key={path.id} style={{ '--market-path-color': pathColor(path.id) } as CSSProperties}>
+                <polyline className="place-market-path" points={points.map((point) => `${point.x},${point.y}`).join(' ')} />
+                {label && <text className="place-market-path-label" x={label.x} y={label.y} textAnchor="middle">{path.name}</text>}
+              </g>;
+            })}
+            {hasGeometry && (data.entrances ?? []).map((entrance) => {
+              const point = projection.project([entrance.lat, entrance.lng]);
+              return <g key={entrance.id} className="place-market-entrance" transform={`translate(${point.x} ${point.y})`}>
+                <path d="M 0 -7 L 7 0 L 0 7 L -7 0 Z" />
+                {entrance.label && <text y="-12" textAnchor="middle">{entrance.label}</text>}
+              </g>;
+            })}
             <text x="28" y="30" className="place-market-direction">N ↑</text>
             {mapPoints.map((pin) => {
               const hit = pin.stores.some((store) => matchesMarketName(store, query));
@@ -88,7 +114,7 @@ function MarketSection({ data, lang, includeOutside, onOutside }: {
               const out = pin.stores.every((store) => store.membership === 'OUT');
               return <g key={pin.key} transform={`translate(${pin.x} ${pin.y})`}
                 data-selected={parcel?.key === pin.key || undefined} className="place-market-pin" data-hit={hit || undefined} data-outside={out || undefined}
-                style={{ '--market-zone-color': out ? 'var(--ko-text-muted)' : color(pin.stores[0].zoneId) } as CSSProperties}>
+                style={{ '--market-zone-color': pathColor(pin.stores[0].pathId) ?? (out ? 'var(--ko-text-muted)' : color(pin.stores[0].zoneId)) } as CSSProperties}>
                 {hit && <circle r="18" className="place-market-hit-ring" />}
                 <circle r={hit || parcel?.key === pin.key ? 13 : 10} className="place-market-dot" strokeDasharray={reference ? '3 3' : undefined} />
                 <text textAnchor="middle" dy="4">{pin.stores.length}</text>
@@ -101,6 +127,7 @@ function MarketSection({ data, lang, includeOutside, onOutside }: {
             style={{ left: `${pin.x / 6}%`, top: `${pin.y / 4.4}%` }}
             aria-label={`${C.parcel}: ${pin.stores.map((store) => store.name).join(', ')}`}
             aria-pressed={parcel?.key === pin.key} onClick={() => setParcelKey(pin.key)} />)}</div> : <p>{C.noCoordinates}</p>}
+          {(data.attribution ?? []).map((credit, index) => <p key={index} className="place-market-source place-market-geometry-attribution">{credit}</p>)}
           <p className="place-market-note">{C.mapNote} {C.reference}</p>
         </div>
         <div className="place-market-panel">

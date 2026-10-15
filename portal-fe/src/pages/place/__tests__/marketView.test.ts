@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { MarketStore, MarketZone } from '../../../api/marketApi';
-import { formatMarketFloor, groupMarketPins, marketSourceBadges, matchesMarketName, projectMarketPins, visibleMarketStores, zoneIds } from '../marketView';
+import { formatMarketFloor, groupMarketPins, longestMarketSegmentMidpoint, marketSourceBadges, matchesMarketName, projectMarketPins, visibleMarketStores, zoneIds } from '../marketView';
 
 const store = (overrides: Partial<MarketStore> = {}): MarketStore => ({
   id: 1, name: '유명 순대국', items: null, zoneId: 1, membership: 'IN', latitude: 37.5, longitude: 127,
@@ -10,6 +10,32 @@ const store = (overrides: Partial<MarketStore> = {}): MarketStore => ({
 });
 
 describe('market display projection', () => {
+  it('uses boundary bounds independently of stores, including when there are no shops', () => {
+    const geometry = { boundary: { polygon: [[37.5, 127], [37.501, 127], [37.501, 127.001], [37.5, 127.001]] as [number, number][], source: 'OSM' as const } };
+    const empty = projectMarketPins([], geometry)!;
+    const distant = projectMarketPins(groupMarketPins([store({ latitude: 38 })]), geometry)!;
+    expect(empty).not.toBeNull();
+    expect(empty.project([37.5, 127])).toEqual(distant.project([37.5, 127]));
+    expect(empty.scale100m).toBe(distant.scale100m);
+    expect(empty.project([37.501, 127]).y).toBeCloseTo(48);
+    expect(empty.project([37.5, 127]).y).toBeCloseTo(384);
+  });
+
+  it('fits paths without a boundary and keeps null geometry on the legacy viewport', () => {
+    const pins = groupMarketPins([store()]);
+    const legacy = projectMarketPins(pins)!;
+    const absent = projectMarketPins(pins, { boundary: null, paths: null, entrances: null })!;
+    expect(absent.points).toEqual(legacy.points);
+    expect(absent.scale100m).toBe(legacy.scale100m);
+    const pathOnly = projectMarketPins([], { paths: [{ id: 1, name: null, named: false, source: 'MANUAL', geometry: [[37.5, 127], [37.501, 127]] }] })!;
+    expect(pathOnly.project([37.501, 127]).y).toBeCloseTo(48);
+  });
+
+  it('places a single label halfway along the longest segment, ignoring zero-length segments', () => {
+    expect(longestMarketSegmentMidpoint([{ x: 0, y: 0 }, { x: 4, y: 0 }, { x: 4, y: 20 }, { x: 4, y: 20 }])).toEqual({ x: 4, y: 10 });
+    expect(longestMarketSegmentMidpoint([{ x: 4, y: 20 }])).toBeNull();
+    expect(longestMarketSegmentMidpoint([{ x: 4, y: 20 }, { x: 4, y: 20 }])).toBeNull();
+  });
   it('labels STEWARD manual entries and source-store overrides', () => {
     expect(marketSourceBadges(store({ actorKind: 'STEWARD' }), 'ko')).toEqual(['가맹점', '상인회 제공']);
     expect(marketSourceBadges(store({ actorKind: 'STEWARD', manual: true, sources: ['MANUAL'] }), 'ko')).toEqual(['상인회 제공']);

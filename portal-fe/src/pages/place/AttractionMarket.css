@@ -34,9 +34,15 @@
 .place-market-layout { display: grid; gap: 1.5rem; align-items: start; }
 .place-market-map { min-width: 0; }
 .place-market-canvas { position: relative; }
+.place-market-canvas[data-geometry] { overflow: hidden; }
 .place-market-map svg { width: 100%; display: block; background: var(--ko-surface-1); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius-asym); }
 .place-market-map svg > text { fill: var(--ko-text-primary); font-size: 16px; }
 .place-market-scale { fill: none; stroke: var(--ko-text-primary); stroke-width: 2; }
+.place-market-boundary { fill: color-mix(in srgb, var(--market-pine) 8%, transparent); stroke: var(--market-pine); stroke-width: 2; stroke-dasharray: 6 3; }
+.place-market-path { fill: none; stroke: var(--market-path-color); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.place-market-path-label, .place-market-entrance text { fill: var(--ko-text-primary); stroke: var(--ko-surface-1); stroke-width: 4; paint-order: stroke; stroke-linejoin: round; font-size: 14px; }
+.place-market-entrance path { fill: var(--ko-surface-0); stroke: var(--ko-text-primary); stroke-width: 2; }
+.place-market-geometry-attribution { overflow-wrap: anywhere; }
 .place-market-dot { fill: var(--market-zone-color); stroke: var(--ko-surface-0); stroke-width: 3; }
 .place-market-pin text { fill: var(--ko-surface-0); font-size: 12px; pointer-events: none; font-weight: 700; }
 .place-market-pin[data-hit] .place-market-dot, .place-market-pin[data-selected] .place-market-dot { stroke: var(--ko-text-primary); stroke-width: 4; }
