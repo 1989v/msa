@@ -66,7 +66,7 @@ private class GeometryFixture {
             val id = secondArg<Long>(); val judgment = thirdArg<MarketStoreJudgment>(); val index = stores.indexOfFirst { it.id == id }
             stores[index] = stores[index].copy(judgedMembership = judgment.membership, judgedBy = judgment.judgedBy, pathId = judgment.pathId, needsReview = judgment.needsReview); Unit
         }
-        judge = MarketRejudgeService(editor, query, geometry, judgments)
+        judge = MarketRejudgeService(editor, query, geometry, judgments, mockk(relaxed = true))
         service = MarketGeometryService(editor, query, save, geometry, writes, judge)
     }
     fun source(id: Long) = MarketStore(1, "Store $id", MarketStoreSource.SANGGA, sourceKey = id.toString(), sanggaKey = id.toString(), sanggaRaw = "{}",

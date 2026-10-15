@@ -33,7 +33,7 @@ class MarketRepositoryAdapterTest : BehaviorSpec({
     val overrides = mockk<MarketStoreOverrideJpaRepository>()
     val changes = mockk<MarketChangeLogJpaRepository>()
     val stewards = mockk<MarketStewardJpaRepository>()
-    val adapter = MarketRepositoryAdapter(markets, zones, stores, overrides, changes, stewards, mockk())
+    val adapter = MarketRepositoryAdapter(markets, zones, stores, overrides, changes, stewards, mockk(), searchRefresh = io.mockk.mockk(relaxed = true))
 
     Given("원천 가게 재적재") {
         val old = MarketStore(1, "원천명", MarketStoreSource.ONNURI, sourceKey = "1", onnuriKey = "1",

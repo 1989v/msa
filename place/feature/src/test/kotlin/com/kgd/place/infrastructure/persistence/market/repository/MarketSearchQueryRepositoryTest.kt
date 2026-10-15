@@ -1,6 +1,8 @@
 package com.kgd.place.infrastructure.persistence.market.repository
 
-import com.kgd.place.application.market.usecase.SearchMarketsUseCase
+import com.kgd.place.application.market.usecase.*
+import com.kgd.place.application.market.service.*
+import com.kgd.place.infrastructure.persistence.market.adapter.*
 import com.kgd.place.domain.market.model.*
 import com.kgd.place.infrastructure.persistence.market.entity.*
 import com.kgd.place.infrastructure.persistence.market.adapter.MarketSearchRepositoryAdapter
@@ -25,6 +27,9 @@ class MarketSearchQueryRepositoryTest : BehaviorSpec({
     lateinit var emf: org.hibernate.SessionFactory
     lateinit var em: EntityManager
     lateinit var repository: MarketSearchQueryRepository
+    lateinit var refresh: com.kgd.place.infrastructure.persistence.market.adapter.MarketSearchRefreshRepositoryAdapter
+    lateinit var writer: MarketRepositoryAdapter
+    lateinit var geometryWriter: MarketGeometryRepositoryAdapter
     lateinit var adapter: MarketSearchRepositoryAdapter
     beforeSpec {
         mysql.start()
@@ -32,14 +37,26 @@ class MarketSearchQueryRepositoryTest : BehaviorSpec({
             .setProperty("hibernate.connection.username", mysql.username)
             .setProperty("hibernate.connection.password", mysql.password)
             .setProperty("hibernate.hbm2ddl.auto", "create-drop")
-        listOf(MarketJpaEntity::class.java, MarketStoreJpaEntity::class.java, MarketStoreOverrideJpaEntity::class.java,
-            MarketBoundaryJpaEntity::class.java, MarketZoneJpaEntity::class.java, AttractionJpaEntity::class.java)
+        listOf(MarketJpaEntity::class.java, MarketStoreSearchJpaEntity::class.java, MarketStoreJpaEntity::class.java, MarketStoreOverrideJpaEntity::class.java,
+            MarketBoundaryJpaEntity::class.java, MarketZoneJpaEntity::class.java, AttractionJpaEntity::class.java,
+            MarketChangeLogJpaEntity::class.java, MarketStewardJpaEntity::class.java,
+            MarketPathJpaEntity::class.java, MarketRoadRuleJpaEntity::class.java)
             .forEach { config.addAnnotatedClass(it) }
         emf = config.buildSessionFactory()
         em = emf.createEntityManager()
         val factory = JPAQueryFactory(em)
         repository = MarketSearchQueryRepository(factory)
+        refresh = com.kgd.place.infrastructure.persistence.market.adapter.MarketSearchRefreshRepositoryAdapter(factory)
+        refresh.javaClass.getDeclaredField("em").also { it.isAccessible = true }.set(refresh, em)
         val repos = JpaRepositoryFactory(em)
+        val dataSource = org.springframework.jdbc.datasource.DriverManagerDataSource(mysql.jdbcUrl, mysql.username, mysql.password)
+        writer = MarketRepositoryAdapter(repos.getRepository(MarketJpaRepository::class.java),
+            repos.getRepository(MarketZoneJpaRepository::class.java), repos.getRepository(MarketStoreJpaRepository::class.java),
+            repos.getRepository(MarketStoreOverrideJpaRepository::class.java), repos.getRepository(MarketChangeLogJpaRepository::class.java),
+            repos.getRepository(MarketStewardJpaRepository::class.java), MarketRowRestorer(dataSource), searchRefresh = refresh)
+        geometryWriter = MarketGeometryRepositoryAdapter(repos.getRepository(MarketBoundaryJpaRepository::class.java),
+            repos.getRepository(MarketPathJpaRepository::class.java), repos.getRepository(MarketRoadRuleJpaRepository::class.java))
+        geometryWriter.javaClass.getDeclaredField("entityManager").also { it.isAccessible = true }.set(geometryWriter, em)
         adapter = MarketSearchRepositoryAdapter(repository, repos.getRepository(MarketJpaRepository::class.java),
             repos.getRepository(MarketStoreOverrideJpaRepository::class.java),
             repos.getRepository(MarketZoneJpaRepository::class.java), factory)
@@ -61,6 +78,7 @@ class MarketSearchQueryRepositoryTest : BehaviorSpec({
             }
         }
         em.clear()
+        refresh.refresh(marketId)
     }
     fun store(market: MarketJpaEntity, name: String, status: MarketMembershipStatus = MarketMembershipStatus.IN,
         items: String? = null, category: String? = null, source: MarketStoreSource = MarketStoreSource.MANUAL,
@@ -80,6 +98,125 @@ class MarketSearchQueryRepositoryTest : BehaviorSpec({
     fun edit(store: MarketStoreJpaEntity, field: MarketStoreField, value: String?) {
         em.persist(MarketStoreOverrideJpaEntity.fromDomain(MarketStoreOverride(requireNotNull(store.id), field,
             value, "수정", 1, MarketActorKind.ADMIN))); em.flush()
+        refresh.refresh(store.marketId)
+    }
+    Given("쓰기와 같은 트랜잭션의 검색 투영") {
+        Then("적재는 pairing 이후 한 번 갱신하고 재적재의 품목과 메뉴도 즉시 바뀐다") {
+            val m = market("write-ingest")
+            val marketId = requireNotNull(m.id)
+            val ingest = MarketIngestService(writer, writer)
+            val onnuri = MarketStore(marketId, "적재가게", MarketStoreSource.ONNURI, sourceKey = "o",
+                onnuriKey = "o", onnuriRaw = "{}", jibunAddress = "중구1", items = "옛품목",
+                membership = MarketMembership(MarketMembershipStatus.IN))
+            val sangga = MarketStore(marketId, "적재가게", MarketStoreSource.SANGGA, sourceKey = "s",
+                sanggaKey = "s", sanggaRaw = "{}", jibunAddress = "중구1", categoryMajor = "분류",
+                membership = MarketMembership(MarketMembershipStatus.IN))
+            fun ingestRows(a: MarketStore, b: MarketStore) = ingest.ingest(IngestMarketUseCase.Command(
+                m.toDomain().copy(id = null), emptyList(), listOf(IngestMarketUseCase.Store(a), IngestMarketUseCase.Store(b)), listOf("o", "s")))
+            ingestRows(onnuri, sangga)
+            repository.counts()[marketId] shouldBe 1
+            repository.stores("옛품목", PageRequest.of(0, 20)).total shouldBe 1
+            ingestRows(onnuri.copy(items = "새품목"), sangga)
+            repository.stores("옛품목", PageRequest.of(0, 20)).total shouldBe 0
+            repository.stores("새품목", PageRequest.of(0, 20)).total shouldBe 1
+            val search = em.createQuery("select s from MarketStoreSearchJpaEntity s", MarketStoreSearchJpaEntity::class.java).singleResult
+            search.partnerId shouldBe writer.findStores(marketId).single { it.source == MarketStoreSource.SANGGA }.id
+        }
+        Then("운영자와 상인회 보정 IN OUT 및 수동 추가 수정 삭제는 오래된 검색 행을 남기지 않는다") {
+            val m = market("write-editor")
+            val marketId = requireNotNull(m.id)
+            val editor = MarketEditorService(writer, writer, writer)
+            val actor = MarketEditorActor(MarketActorKind.STEWARD, 1, setOf(marketId))
+            val row = editor.manualStore(actor, marketId, null,
+                EditMarketUseCase.ManualStoreRequest("수동가게", latitude = 37.0, longitude = 127.0))
+            val id = requireNotNull(row.id)
+            repository.stores("수동", PageRequest.of(0, 20)).total shouldBe 1
+            editor.override(actor, marketId, id, EditMarketUseCase.OverrideRequest(mapOf("membership" to "OUT"), reason = "확인"))
+            repository.counts() shouldBe emptyMap()
+            editor.override(actor, marketId, id, EditMarketUseCase.OverrideRequest(mapOf("membership" to "IN", "name" to "새이름"), reason = "확인"))
+            repository.stores("수동", PageRequest.of(0, 20)).total shouldBe 0
+            repository.stores("새이름", PageRequest.of(0, 20)).total shouldBe 1
+            editor.override(actor, marketId, id, EditMarketUseCase.OverrideRequest(clear = setOf("membership", "name"), reason = "복원"))
+            editor.deleteStore(actor, marketId, id)
+            repository.stores("수동", PageRequest.of(0, 20)).total shouldBe 0
+            adapter.contentIds() shouldBe emptyList()
+        }
+        Then("재판정이 바꾼 IN OUT 판정을 검색에 반영한다") {
+            val m = market("write-judgment")
+            val marketId = requireNotNull(m.id)
+            val row = store(m, "판정가게", source = MarketStoreSource.ONNURI)
+            geometryWriter.saveJudgment(marketId, requireNotNull(row.id),
+                MarketStoreJudgment(MarketMembershipStatus.OUT, MarketJudgedBy.INGEST, null, false))
+            refresh.refresh(marketId)
+            repository.stores("판정", PageRequest.of(0, 20)).total shouldBe 0
+            val rejudge = MarketRejudgeService(writer, writer, geometryWriter, geometryWriter, refresh)
+            rejudge.rejudge(marketId) shouldBe 1
+            repository.stores("판정", PageRequest.of(0, 20)).total shouldBe 1
+        }
+        Then("비어 있는 검색 표는 모든 시장을 채우고 다시 실행해도 같은 결과를 준다") {
+            val a = market("backfill-a"); val b = market("backfill-b")
+            store(a, "가게"); store(b, "가게")
+            em.createQuery("delete from MarketStoreSearchJpaEntity").executeUpdate()
+            val backfill = MarketSearchBackfill(JPAQueryFactory(em), refresh)
+            backfill.backfillIfEmpty()
+            repository.counts() shouldBe mapOf(requireNotNull(a.id) to 1L, requireNotNull(b.id) to 1L)
+            backfill.backfillIfEmpty()
+            repository.counts().values.sum() shouldBe 2L
+        }
+        Then("백필은 한 시장이 실패해도 다음 시장을 계속 처리한다") {
+            val a = market("failure-a"); val b = market("failure-b")
+            store(a, "가게"); store(b, "가게")
+            em.createQuery("delete from MarketStoreSearchJpaEntity").executeUpdate()
+            val partial = object : com.kgd.place.application.market.port.MarketSearchRefreshPort {
+                override fun refresh(marketId: Long) {
+                    if (marketId == a.id) throw IllegalStateException("injected market failure")
+                    refresh.refresh(marketId)
+                }
+            }
+            MarketSearchBackfill(JPAQueryFactory(em), partial).backfillIfEmpty()
+            repository.counts() shouldBe mapOf(requireNotNull(b.id) to 1L)
+        }
+        Then("이미 시작된 반복읽기 스냅샷 뒤에 커밋된 보정도 갱신에 반영한다") {
+            val m = market("snapshot-refresh")
+            val marketId = requireNotNull(m.id)
+            val row = store(m, "예전이름")
+            val storeId = requireNotNull(row.id)
+            em.transaction.commit()
+            em.clear()
+            em.transaction.begin()
+            try {
+                // Ingest can establish this snapshot before waiting for the market lock.
+                em.createQuery("select s.name from MarketStoreJpaEntity s where s.id = :id", String::class.java)
+                    .setParameter("id", storeId).singleResult shouldBe "예전이름"
+                val other = emf.createEntityManager()
+                try {
+                    other.transaction.begin()
+                    other.persist(MarketStoreOverrideJpaEntity.fromDomain(MarketStoreOverride(storeId,
+                        MarketStoreField.NAME, "커밋된이름", "동시편집", 1, MarketActorKind.ADMIN)))
+                    other.transaction.commit()
+                } finally { other.close() }
+                refresh.refresh(marketId)
+                // Inspect the refresh's own writes, which are visible regardless of snapshot age.
+                em.createQuery("select s.name from MarketStoreSearchJpaEntity s where s.storeId = :id", String::class.java)
+                    .setParameter("id", storeId).singleResult shouldBe "커밋된이름"
+            } finally {
+                em.transaction.rollback()
+                em.clear()
+                em.transaction.begin()
+                em.createQuery("delete from MarketStoreSearchJpaEntity s where s.marketId = :id").setParameter("id", marketId).executeUpdate()
+                em.createQuery("delete from MarketStoreOverrideJpaEntity s where s.storeId = :id").setParameter("id", storeId).executeUpdate()
+                em.createQuery("delete from MarketStoreJpaEntity s where s.marketId = :id").setParameter("id", marketId).executeUpdate()
+                em.createQuery("delete from MarketJpaEntity m where m.id = :id").setParameter("id", marketId).executeUpdate()
+                em.transaction.commit()
+                em.transaction.begin()
+            }
+        }
+        Then("반복 갱신은 멱등이고 다른 시장의 검색 행을 건드리지 않는다") {
+            val a = market("refresh-a"); val b = market("refresh-b")
+            store(a, "가게"); store(b, "가게")
+            repeat(2) { refresh.refresh(requireNotNull(a.id)) }
+            repository.counts() shouldBe mapOf(requireNotNull(a.id) to 1L, requireNotNull(b.id) to 1L)
+        }
     }
     Given("유효 IN 가게 검색") {
         Then("이름 품목 메뉴 업종 순위와 메뉴 공백 정규화를 적용하며 파트너 메뉴도 검색한다") {
@@ -145,6 +282,7 @@ class MarketSearchQueryRepositoryTest : BehaviorSpec({
                 pinKind = MarketPinKind.REFERENCE, referenceStoreId = partner.id, relativePosition = "옆",
                 actorKind = MarketActorKind.ADMIN, createdByMemberId = 1, membership = MarketMembership(MarketMembershipStatus.IN))))
             em.flush()
+            refresh.refresh(requireNotNull(m.id))
             val result = adapter.search("참고", "ko", 0, 20).stores.items.single()
             result.latitude shouldBe 37.5; result.longitude shouldBe 127.0
         }

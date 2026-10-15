@@ -21,7 +21,7 @@ private class GeometryRequestFixture {
     val query = mockk<MarketQueryPort>()
     val geometry = mockk<MarketGeometryQueryPort>()
     val judgments = mockk<MarketJudgmentSavePort>(relaxed = true)
-    val rejudge = MarketRejudgeService(editor, query, geometry, judgments)
+    val rejudge = MarketRejudgeService(editor, query, geometry, judgments, mockk(relaxed = true))
     var grant = MarketSteward(1, 7, "상인회", "연락처", MarketStewardStatus.ACTIVE, 9, LocalDateTime.now(), 3)
     val rows = mutableMapOf<Long, MarketGeometryRequest>()
     val service = MarketGeometryRequestService(requests, MarketStewardService(grants, editor), grants, editor)

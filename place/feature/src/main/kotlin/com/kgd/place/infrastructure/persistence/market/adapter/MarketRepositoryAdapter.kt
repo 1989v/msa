@@ -1,5 +1,6 @@
 package com.kgd.place.infrastructure.persistence.market.adapter
 
+import com.kgd.place.application.market.port.MarketSearchRefreshPort
 import com.kgd.place.application.market.port.MarketQueryPort
 import com.kgd.place.application.market.port.MarketSavePort
 import com.kgd.place.application.market.port.MarketEditorPort
@@ -39,6 +40,7 @@ class MarketRepositoryAdapter(
     private val changes: MarketChangeLogJpaRepository,
     private val stewards: MarketStewardJpaRepository,
     private val restorer: MarketRowRestorer,
+    private val searchRefresh: MarketSearchRefreshPort,
 ) : MarketQueryPort, MarketSavePort, MarketEditorPort {
     private val json = JsonMapper.builder().build()
 
@@ -96,8 +98,11 @@ class MarketRepositoryAdapter(
         return zones.save(MarketZoneJpaEntity.fromDomain(row)).toDomain()
     }
 
-    override fun saveStore(store: MarketStore): MarketStore = saveStoreInternal(store, null)
+    @Transactional(transactionManager = "placeTransactionManager")
+    override fun saveStore(store: MarketStore): MarketStore =
+        saveStoreInternal(store, null).also { searchRefresh.refresh(it.marketId) }
 
+    // Only ingest calls this batch-internal write; savePairs refreshes once after all source rows.
     override fun saveSourceStore(store: MarketStore, observedSourceKeys: Set<String>): MarketStore {
         require(store.source != MarketStoreSource.MANUAL && store.id == null)
         require(store.sourceKey in observedSourceKeys)
@@ -152,6 +157,7 @@ class MarketRepositoryAdapter(
             stores.pair(onnuriId, sanggaId)
             stores.pair(sanggaId, onnuriId)
         }
+        searchRefresh.refresh(marketId)
     }
 
     @Transactional(transactionManager = "placeTransactionManager")
@@ -171,7 +177,7 @@ class MarketRepositoryAdapter(
         MarketStoreDisplay.from(store, current.filter { it.field !in changedFields }.map { it.toDomain() } + rows)
         return overrides.saveAll(rows.map {
             MarketStoreOverrideJpaEntity.fromDomain(it.copy(id = byField[it.field]?.id))
-        }).map { it.toDomain() }
+        }).map { it.toDomain() }.also { searchRefresh.refresh(store.marketId) }
     }
     override fun appendChange(change: MarketChangeLog): MarketChangeLog {
         require(change.id == null) { "Change history is append-only" }
@@ -206,10 +212,14 @@ class MarketRepositoryAdapter(
         return zones.save(MarketZoneJpaEntity.fromDomain(zone)).toDomain()
     }
     override fun deleteZone(id: Long) { zones.deleteById(id) }
+    @Transactional(transactionManager = "placeTransactionManager")
     override fun deleteManualStore(id: Long) {
-        require(stores.findById(id).orElse(null)?.source == MarketStoreSource.MANUAL)
+        val store = requireNotNull(stores.findById(id).orElse(null))
+        require(store.source == MarketStoreSource.MANUAL)
         stores.deleteById(id)
+        searchRefresh.refresh(store.marketId)
     }
+    @Transactional(transactionManager = "placeTransactionManager")
     override fun replaceOverrides(store: MarketStore, rows: List<MarketStoreOverride>) {
         val id = requireNotNull(store.id)
         require(rows.all { it.storeId == id })
@@ -222,5 +232,6 @@ class MarketRepositoryAdapter(
             if (old == null && row.id != null) restorer.override(row)
             else overrides.save(MarketStoreOverrideJpaEntity.fromDomain(row.copy(id = old?.id)))
         }
+        searchRefresh.refresh(store.marketId)
     }
 }
