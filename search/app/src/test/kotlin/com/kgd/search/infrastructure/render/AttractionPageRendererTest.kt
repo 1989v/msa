@@ -63,7 +63,7 @@ class AttractionPageRendererTest : BehaviorSpec({
 
         then("seo 블록이 관광지 메타로 갈리고 자산 스크립트는 남는다") {
             html shouldNotContain "<title>기본</title>"
-            html shouldContain "<title>경복궁 \$1 &lt;/script&gt; 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | K-관광</title>"
+            html shouldContain "<title>경복궁 \$1 &lt;/script&gt; (서울특별시) 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | K-관광</title>"
             html shouldContain "/assets/index-abc123.js"
             html shouldNotContain "<!--seo:start-->"
         }
@@ -535,7 +535,7 @@ class AttractionPageRendererTest : BehaviorSpec({
         val html = render(null, doc())
 
         then("SPA 없이도 읽히는 최소 HTML 에 메타와 본문이 있다") {
-            html shouldContain "<title>경복궁 관광 정보"
+            html shouldContain "<title>경복궁 (서울특별시) 관광 정보"
             html shouldContain "<h1>경복궁</h1>"
             html shouldContain "data-seo-multi"
         }

@@ -15,12 +15,12 @@ function dates(xml: string) {
 }
 afterEach(() => vi.useRealTimers());
 
-it('emits actual FE dates for both language homepages and all three edited guides', () => {
+it('emits actual FE dates for both language homepages and all edited guides', () => {
   const games = ['block-burst', 'mine-pioneer', 'rift-front'].map((slug) => game(slug, '2026-08-17'));
   const result = dates(renderGameSitemap(games));
   for (const lang of ['ko', 'en']) {
     expect(result[gameUrl(lang)]).toBe('2026-10-15');
-    for (const g of games) expect(result[gameUrl(lang, `/games/${g.slug}`)]).toBe('2026-10-11');
+    for (const g of games) expect(result[gameUrl(lang, `/games/${g.slug}`)]).toBe('2026-10-15');
     expect(result[gameUrl(lang, '/games/genre/puzzle')]).toBeNull();
   }
 });
@@ -50,7 +50,7 @@ it('omits invalid API dates, including impossible calendar days, without losing 
     game('no-date'),
   ]));
   expect(result[gameUrl('ko')]).toBe('2026-10-15');
-  expect(result[gameUrl('ko', '/games/block-burst')]).toBe('2026-10-11');
+  expect(result[gameUrl('ko', '/games/block-burst')]).toBe('2026-10-15');
   for (const slug of ['invalid', 'invalid-day', 'invalid-month', 'no-date']) {
     expect(result[gameUrl('ko', `/games/${slug}`)]).toBeNull();
   }

@@ -31,4 +31,6 @@
 
 ## 진행
 
-- 부모: 승인 범위와 완료 기준 확정. 구현 인계 대기.
+- 구현: 82/82 게임 한영 공유 안내·고유 제목·실제 편집일 반영, 관광지 지역 제목 JS/Kotlin parity, 공개 alias 서버301 및 초대 HTML 폴백 noindex 보존을 구현했다. 게임 소스·서브모듈 포인터는 보존했다.
+- 검증: FE 281 tests passed, Kotlin 200 tests/0 failures, 실제 nginx syntax+HTTP 88 checks passed. 전체 lint는 기존25 errors/2 warnings, 변경 TS의 새 lint 문제는 없음을 HEAD 대조로 확인했다. prod API 전체 빌드 exit0, 실제 게임 HTML164장·관광지 sitemap3,520 상호쌍(비상호0)을 확인했다. 마지막 displayTitle 정합성 후 scoped15tests·eslint·tsc-b·별도 Vite 번들을 검증했다. 전체 dist JS와 마지막 별도 번들의 구분은 검증 문서에 명시했다.
+- [구현 검증과 82종 소스 근거](2026-10-15-public-content-seo-followup-verification.md). 부모 세션이 마지막 helper·nginx 변경까지 fresh-context 리뷰 SHIP을 확인했으며 최종 통합을 담당한다. 배포·검색엔진 계정 작업·UI 검증은 아직 수행하지 않았다.

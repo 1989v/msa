@@ -369,6 +369,19 @@ const cases = [
       regionTypeCount: 3,
     },
   },
+  ...[
+    { name: 'ko-region-a', lang: 'ko', title: '중앙공원', sidoName: '경기도', sigunguName: '성남시' },
+    { name: 'ko-region-b', lang: 'ko', title: '중앙공원', sidoName: '부산광역시', sigunguName: '중구' },
+    { name: 'ko-region-in-name', lang: 'ko', title: '경기도 성남시 중앙공원', sidoName: '경기도', sigunguName: '성남시' },
+    { name: 'en-region-unicode-space', lang: 'en', title: 'SEOUL\u00a0PARK', sidoName: 'Seoul\u00a0', sigunguName: 'Seoul' },
+    { name: 'en-region-local-only', lang: 'en', title: 'Central Park', sidoName: '서울특별시', sigunguName: '중구' },
+    { name: 'en-region-escaped', lang: 'en', title: 'Central <Park> & Garden', sidoName: 'Busan', sigunguName: 'Jung-gu' },
+    { name: 'en-region-empty', lang: 'en', title: 'Central Park', sidoName: ' ', sigunguName: '' },
+  ].map(({ name, lang, title, sidoName, sigunguName }, index) => ({
+    name,
+    input: { ...base, id: String(1200 + index), lang, title, sidoName, sigunguName,
+      contentTypeId: lang === 'en' ? '76' : '12', regionTypeCount: 3, overview: longOverview },
+  })),
 ];
 
 describe('관광지 JSON-LD 골든 픽스처 (서버 렌더 패리티)', () => {
@@ -436,20 +449,33 @@ describe('관광지 JSON-LD 골든 픽스처 (서버 렌더 패리티)', () => {
 
   it('제목은 유형에 맞춘다 — 행사는 일정·장소, 숙박은 입실, 코스는 코스 구성, 관광지는 기존 그대로', () => {
     const title = (name: string) => rendered.find((c) => c.name === name)!.meta.title;
-    expect(title('ko-event-ongoing')).toBe('서울세계불꽃축제 행사 정보 — 일정 · 장소 · 주변 가볼 만한 곳 | K-관광');
+    expect(title('ko-event-ongoing')).toBe('서울세계불꽃축제 (서울특별시) 행사 정보 — 일정 · 장소 · 주변 가볼 만한 곳 | K-관광');
     expect(title('en-event-unknown-dates')).toBe('Lantern Festival — Dates, Venue & Things to Do Nearby | K-Tour');
-    expect(title('ko-stay')).toBe('한옥 스테이 숙박 정보 — 입실·퇴실 · 주변 가볼 만한 곳 | K-관광');
+    expect(title('ko-stay')).toBe('한옥 스테이 (서울특별시) 숙박 정보 — 입실·퇴실 · 주변 가볼 만한 곳 | K-관광');
     expect(title('en-stay-no-geo-fields')).toBe('Seoul Guesthouse — Stay Info, Check-in & Things to Do Nearby | K-Tour');
     // 이름이 이미 「코스」로 끝나면 「여행코스」를 덧붙이지 않는다(「… 코스 여행코스」 중복)
-    expect(title('ko-course')).toBe('부산 바다 하루 코스 — 코스 구성 · 거리 · 소요 시간 | K-관광');
-    expect(title('ko-course-plain-name')).toBe('남해 바래길 드라이브 여행코스 — 코스 구성 · 거리 · 소요 시간 | K-관광');
+    expect(title('ko-course')).toBe('부산 바다 하루 코스 (서울특별시) — 코스 구성 · 거리 · 소요 시간 | K-관광');
+    expect(title('ko-course-plain-name')).toBe('남해 바래길 드라이브 여행코스 (서울특별시) — 코스 구성 · 거리 · 소요 시간 | K-관광');
     const description = (name: string) => rendered.find((c) => c.name === name)!.meta.description;
     expect(description('ko-course')).toMatch(/^부산 바다 하루 코스입니다\. /);
     expect(description('ko-course-plain-name')).toMatch(/^남해 바래길 드라이브 여행코스입니다\. /);
-    expect(title('ko-weekly-free')).toBe('경복궁 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | K-관광');
+    expect(title('ko-weekly-free')).toBe('경복궁 (서울특별시) 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | K-관광');
     expect(title('en-no-weekly-free')).toBe('Visit Dosan Park — Map, Photos & Things to Do Nearby | K-Tour');
     // 개요가 짧은 행사는 유형 설명으로 채운다
     expect(rendered.find((c) => c.name === 'ko-event-ended-no-place')!.meta.description).toContain('에서 열리는 축제·행사입니다');
+  });
+
+  it('qualifies equal names by verified regions without duplicating names or leaking Korean into English', () => {
+    const title = (name: string) => rendered.find(c => c.name === name)!.meta.title;
+    expect(title('ko-region-a')).toContain('중앙공원 (경기도 성남시)');
+    expect(title('ko-region-b')).toContain('중앙공원 (부산광역시 중구)');
+    expect(title('ko-region-a')).not.toBe(title('ko-region-b'));
+    expect(title('ko-region-in-name')).not.toContain('(');
+    expect(title('en-region-unicode-space')).not.toContain('(');
+    expect(title('en-region-local-only')).not.toMatch(/[가-힣]/u);
+    expect(title('en-region-empty')).not.toContain('(');
+    expect(title('en-region-escaped')).toContain('Central <Park> & Garden (Busan, Jung-gu)');
+    expect(primary('en-region-escaped').name).toBe('Central <Park> & Garden');
   });
 
   it('http tong 원천 사진은 https 로 싣는다', () => {

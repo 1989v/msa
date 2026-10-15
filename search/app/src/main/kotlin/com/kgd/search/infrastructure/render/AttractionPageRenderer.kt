@@ -224,44 +224,61 @@ class AttractionPageRenderer(
 
     /** copy.mjs `attractionMetaCopy` — 유형별 (제목, 개요가 짧을 때의 설명). 유형은 원천 유형 코드로 고른다. */
     private fun attractionMetaCopy(lang: String, doc: AttractionDocument, name: String, where: String): Pair<String, String> {
+        val displayName = attractionRegionalName(lang, doc, name)
         val en = lang == EN
         val at = if (where.isNotEmpty()) " at $where" else " in South Korea"
         val dash = if (where.isNotEmpty()) " — $where" else ""
         return when {
             EventSchedule.isEvent(doc.contentTypeId) -> if (en) {
-                "$name — Dates, Venue & Things to Do Nearby | $BRAND_EN" to
+                "$displayName — Dates, Venue & Things to Do Nearby | $BRAND_EN" to
                     "$name is a festival or event$at. See the dates, venue, map and things to do nearby."
             } else {
-                "$name 행사 정보 — 일정 · 장소 · 주변 가볼 만한 곳 | $BRAND_KO" to
+                "$displayName 행사 정보 — 일정 · 장소 · 주변 가볼 만한 곳 | $BRAND_KO" to
                     "$name${dash}에서 열리는 축제·행사입니다. 일정·장소와 지도, 주변 가볼 만한 곳을 함께 확인하세요."
             }
             doc.contentTypeId in STAY_CONTENT_TYPES -> if (en) {
-                "$name — Stay Info, Check-in & Things to Do Nearby | $BRAND_EN" to
+                "$displayName — Stay Info, Check-in & Things to Do Nearby | $BRAND_EN" to
                     "$name is a place to stay$at. See check-in times, the map and things to do nearby."
             } else {
-                "$name 숙박 정보 — 입실·퇴실 · 주변 가볼 만한 곳 | $BRAND_KO" to
+                "$displayName 숙박 정보 — 입실·퇴실 · 주변 가볼 만한 곳 | $BRAND_KO" to
                     "$name${dash}에 있는 숙소입니다. 입실·퇴실 시간과 지도, 주변 가볼 만한 곳을 함께 확인하세요."
             }
             doc.contentTypeId in COURSE_CONTENT_TYPES -> if (en) {
-                "$name — Travel Course, Stops & Time Needed | $BRAND_EN" to
+                "$displayName — Travel Course, Stops & Time Needed | $BRAND_EN" to
                     "$name is a travel course in South Korea. See the stops in order, total distance and time needed."
             } else {
                 // 원천 코스 이름은 「… 코스」로 끝나는 것이 많다 — 그때 「여행코스」를 또 붙이면 「… 코스 여행코스」가 된다
                 val course = if (name.trimEnd().endsWith("코스")) name else "$name 여행코스"
-                "$course — 코스 구성 · 거리 · 소요 시간 | $BRAND_KO" to
+                "${attractionRegionalName(lang, doc, course)} — 코스 구성 · 거리 · 소요 시간 | $BRAND_KO" to
                     "${course}입니다. 코스를 이루는 관광지를 순서대로 보고 총 거리와 소요 시간을 확인하세요."
             }
             else -> {
                 val label = categoryLabel(doc.category, lang)
                 if (en) {
-                    "Visit $name — Map, Photos & Things to Do Nearby | $BRAND_EN" to
+                    "Visit $displayName — Map, Photos & Things to Do Nearby | $BRAND_EN" to
                         "$name is a ${label.lowercase(Locale.ROOT)} attraction$at. See the map, photos, directions and things to do nearby."
                 } else {
-                    "$name 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | $BRAND_KO" to
+                    "$displayName 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | $BRAND_KO" to
                         "$name${dash}에 있는 $label 관광지입니다. 주소·지도·사진과 가는 길, 주변 가볼 만한 곳을 함께 확인하세요."
                 }
             }
         }
+    }
+
+    /** copy.mjs attractionRegionalName — title qualifier from verified fields, never address guesses. */
+    private fun attractionRegionalName(lang: String, doc: AttractionDocument, name: String): String {
+        fun normalize(value: String) = value.lowercase(Locale.ROOT).replace(Regex("[\\s\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]+"), "")
+        val parts = mutableListOf<String>()
+        var seen = normalize(name)
+        for (raw in listOf(doc.sidoName, doc.region?.sigunguName)) {
+            val region = jsTrim(sourceText(raw))
+            if (region.isEmpty() || (lang == EN && Regex("[가-힣]").containsMatchIn(region))) continue
+            val key = normalize(region)
+            if (seen.contains(key)) continue
+            parts.add(region)
+            seen += key
+        }
+        return if (parts.isEmpty()) name else "$name (${parts.joinToString(if (lang == EN) ", " else " ")})"
     }
 
     /** copy.mjs `attractionJsonLd` — 유형별 주 구조화 데이터 */

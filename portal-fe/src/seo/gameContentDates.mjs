@@ -1,11 +1,15 @@
+import { catalogGuides } from './gameGuideCatalog.mjs';
+
 /** Actual FE content edits, not deployment/build dates. Update alongside the edited copy. */
 export const GAME_HUB_UPDATED_AT = '2026-10-15';
 export const DRAW_UPDATED_AT = '2026-10-15';
 const GUIDE_UPDATED_AT = {
+  // The complete catalog gained bilingual instructions/detail titles on this date.
+  ...Object.fromEntries(Object.keys(catalogGuides).map(slug => [slug, '2026-10-15'])),
   'marble-race': '2026-10-15',
-  'block-burst': '2026-10-11',
-  'mine-pioneer': '2026-10-11',
-  'rift-front': '2026-10-11',
+  'block-burst': '2026-10-15',
+  'mine-pioneer': '2026-10-15',
+  'rift-front': '2026-10-15',
 };
 
 function validDate(value) {
