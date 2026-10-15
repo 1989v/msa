@@ -18,7 +18,10 @@ import java.time.LocalDateTime
 
 /** Actual MySQL execution: correlated pairing, effective overrides, literal LIKE and DB pagination. */
 class MarketSearchQueryRepositoryTest : BehaviorSpec({
+    // 운영 place_db 와 같은 콜레이션: 서버·열 utf8mb4_unicode_ci, 연결은 드라이버 기본(utf8mb4_0900_ai_ci).
+    // 컨테이너 기본값으로 돌리면 둘이 섞일 때 나는 Illegal mix of collations 를 놓친다.
     val mysql = MySQLContainer(DockerImageName.parse("mysql:8.0"))
+        .withCommand("--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci")
     lateinit var emf: org.hibernate.SessionFactory
     lateinit var em: EntityManager
     lateinit var repository: MarketSearchQueryRepository

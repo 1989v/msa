@@ -49,9 +49,15 @@ class MarketSearchQueryRepository(@Qualifier("placeJpaQueryFactory") private val
                 candidate.source.ne(store.source), ownCount.eq(1L), otherCount.eq(1L))
     }
 
+    private fun connection(value: StringExpression): StringExpression =
+        Expressions.stringTemplate("cast({0} as string)", value)
+
     private fun effective(field: MarketStoreField, fallback: StringExpression): StringExpression =
         MarketDisplayValuePolicy.editedValue(fallback, own.getValue(field), theirs.getValue(field)) { edit, source ->
-            CaseBuilder().`when`(edit.id.isNotNull).then(edit.value).otherwise(source)
+            // Both branches go through the connection collation: an override column (utf8mb4_unicode_ci)
+            // next to a cast value (utf8mb4_0900_ai_ci) leaves CASE without a collation and MySQL
+            // refuses the comparison that follows ("Illegal mix of collations").
+            CaseBuilder().`when`(edit.id.isNotNull).then(connection(edit.value)).otherwise(connection(source))
         }
 
     private val name get() = effective(MarketStoreField.NAME, store.name)
