@@ -50,3 +50,37 @@ PRD 열린 질문에 대한 진행 가정 (사용자가 바꾸면 해당 단위�
 ## 단위마다 완료 조건
 - 해당 모듈 컴파일 + 변경한 테스트 클래스 통과 출력.
 - 커밋은 이번 단위 경로만 `git add` 로 지정. 푸시·배포 안 함.
+
+---
+
+# P4 — 골목 구조 보강 (PRD §11)
+
+진행 가정: OSM 데이터는 지도 표시용으로만 쓰고 공개 배포하지 않는다(ODbL share-alike 회피, ADR 에 기록). 상인회는 변경 요청 → 운영자 승인. 광명 표본 픽스처는 `place/domain/src/test/resources/market/gwangmyeong_osm.json`(OSM 2026-10-15 © OpenStreetMap contributors ODbL + 상가정보 매칭 결과. `cur`·`poly`·`snap`·`sd` 는 분석 스크립트가 낸 기대값이라 테스트 입력으로 쓰지 않는다).
+
+## WU-9 ADR-0110 + 스키마 + 재판정 도메인
+- `docs/adr/ADR-0110-market-alley-geometry-osm.md`: OSM 채택·ODbL 범위(표시만, 배포 안 함)·판정 순서·MANUAL 보호.
+- Flyway `V37__market_alley_geometry.sql`: PRD §11.3 테이블·컬럼.
+- 도메인 순수 함수: 점-다각형 포함, 점-선 거리(m), 판정 순서(§11.1), 골목 배정(§11.2), 둘레 초안(볼록 껍질 + 여유), 출입구 후보(경계×골목 선 교차).
+- 재판정 서비스: 시장 하나의 원천 가게를 읽어 파생 컬럼만 쓴다.
+- 테스트: 광명 픽스처로 AC-P4-1 기대값(153·29·104·49·14·9), 도로 규칙 구간, 경계 없는 시장 폴백.
+
+## WU-10 OSM 적재
+- `place/ingest/src/market_osm.py`: Overpass 조회(시장마다 한 요청), `market_osm_raw` 전체 보존, 경계·골목 선 초안 upsert(MANUAL 행 불변), 없으면 DERIVED 둘레. 실패율 상한. 끝나면 시장별 재판정 호출.
+- place 내부 API `/internal/markets/{id}/osm`·`/internal/markets/{id}/rejudge`.
+- CronJob(기존 market-stores 뒤, suspend 유지), `data-sources.md` OSM 행, egress 는 기존 place-ingest :443 정책 안.
+- 테스트: 파싱·DERIVED·MANUAL 보호(AC-P4-2).
+
+## WU-11 운영자 편집 API (경계·골목·출입구·도로 규칙·중심/반경)
+- `/api/v1/admin/place/markets/{id}/geometry`(GET), boundary PUT/초안 되돌리기, paths·entrances·road-rules CRUD, geo(center/radius) PUT, needs-review 목록·가게 골목 지정.
+- 저장마다 같은 트랜잭션에서 재판정 + `market_change_log`, 응답에 바뀐 가게 수. 되돌리기 지원(AC-P4-3).
+
+## WU-12 공개 API + 시장 섹션 표시
+- 공개 응답에 boundary·paths(이름)·entrances·가게 path_id. needs_review·OSM payload 제외(AC-P4-5).
+- portal-fe `AttractionMarket`: 경계·골목 선·라벨·출입구, 골목 색, OSM 출처. 경계 없으면 지금 그대로. CDP 4조합.
+
+## WU-13 어드민 지도 편집 화면
+- OSM 배경 선, 경계 꼭짓점 편집, 골목 선 그리기·이름, 출입구, 도로 규칙 표, 중심 핀·반경, 확인 필요 목록, 저장 후 바뀐 가게 수, OSM 출처. CDP 4조합.
+
+## WU-14 상인회 변경 요청
+- API: 상인회 `POST …/manage/geometry-requests`(그림 JSON + 설명), 운영자 목록·승인·반려. 승인 시 WU-11 경로로 반영·이력(AC-P4-6).
+- 화면: portal-fe 관리 화면에 요청 작성(경계·골목 선 그리기 대신 지도 위 메모 핀 + 설명도 허용), admin 에 요청 목록·미리보기·승인.

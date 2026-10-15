@@ -205,6 +205,63 @@ Flyway 는 `place/feature/src/main/resources/placedb/migration/` 최신 V35 다�
 4. 영문 화면의 가게 이름·품목 번역 범위.
 5. 시장별 품목 시세(서울시 생필품) 를 후속 PRD 로 뺄지 여기 P4 로 둘지.
 
+## 11. P4 — 골목 구조 보강 (2026-10-15 추가)
+
+근거: 「시장 지도 화면 샘플」 v2 의 「골목 구조 개선안」. P1 판정은 도로명 + 반경이라 엮인 골목 구조가 보이지 않고, 큰길가 가게가 비율 기준 하나에 통째로 들어오거나 빠진다(광명 오리로 141/486 = 0.29, 기준 0.30).
+
+### 11.1 판정 순서 (P1 §4.3 위에 얹는다)
+
+1. 가게별 보정(`market_store_override` MEMBERSHIP)
+2. 시장 경계가 있으면 경계 안 = IN, 밖 = OUT
+3. 경계가 없으면 도로 단위 규칙(도로명, 건물번호 구간 선택) — 일치하는 규칙의 IN/OUT
+4. 그 밖에는 적재 잡의 도로명 + 반경 판정(지금 값)
+
+판정 결과는 파생 값이다. 원천 행의 적재 판정(`membership`)은 덮지 않고, 재판정 결과를 별도 컬럼으로 둔다(외부 데이터 3규칙 ②).
+
+### 11.2 골목 배정
+
+- 가게에서 25m 안에 주소 도로명과 같은 이름의 골목 선이 있으면 그 골목.
+- 없으면 가장 가까운 골목 선, 그리고 `needs_review = true`("확인 필요" 목록, 공개 화면에는 안 보임).
+- 골목 선이 없으면 P1 의 도로명 구역을 그대로 쓴다.
+- 광명 표본 기대값: 경계 안 가맹점 153곳, 큰길 가게 중 경계 안 29곳(오리로 12·광명로 17), 자동 배정 104곳, 확인 필요 49곳, 골목 선 14개, 출입구 후보 9곳.
+
+### 11.3 데이터
+
+| 테이블 | 핵심 컬럼 | 비고 |
+|---|---|---|
+| `market_boundary` | market_id(1:1), polygon(위경도 배열 JSON), source(OSM/DERIVED/MANUAL), osm_type·osm_id, fetched_at | OSM 원본은 `market_osm_raw` 에 그대로 둔다 |
+| `market_path` | id, market_id, name(null 허용), named, geometry(선 JSON), source(OSM/MANUAL), osm_way_id, sort | 골목 선 |
+| `market_entrance` | id, market_id, lat/lng, via_path_id, label, source | 경계를 지나는 자리 |
+| `market_road_rule` | id, market_id, road_name, building_no_from/to(null 허용), membership(IN/OUT), reason | 경계가 없는 시장의 안전망 |
+| `market_osm_raw` | market_id, kind(BOUNDARY/PATHS/ROADS), payload JSON, fetched_at | 원천 전체 보존, 배경 큰길 선 포함 |
+| `market` 추가 컬럼 | center_override lat/lng, radius_override_m | 관광지 좌표 고정 문제 |
+| `market_store` 추가 컬럼 | judged_membership, judged_by(OVERRIDE/BOUNDARY/ROAD_RULE/INGEST), path_id, needs_review | 파생 컬럼 |
+
+모든 편집은 기존 `market_change_log` 로 전후 값을 남기고 되돌릴 수 있다(target 에 BOUNDARY·PATH·ENTRANCE·ROAD_RULE·MARKET_GEO 추가).
+
+### 11.4 원천 — OpenStreetMap (ODbL 1.0)
+
+- Overpass API 로 시장 중심 반경 안의 `amenity=marketplace` 폴리곤, `highway=footway|pedestrian|service|living_street|residential` 선, 배경용 큰길 선을 받는다. 출입구 후보는 경계와 골목 선의 교차점으로 계산한다.
+- 화면(공개·어드민 지도)에 "© OpenStreetMap contributors" 를 표시한다.
+- 고친 경계·골목 선은 OSM 파생 데이터베이스다. 내려받기·API 로 **데이터 자체를 공개 배포하지 않는다**(지도 표시만). 공개 배포가 필요해지면 ODbL share-alike 로 공개해야 하므로 별도 결정한다. ADR-0110 과 원천 대장에 적는다.
+- Overpass 사용 정책: User-Agent·`Accept` 지정, 시장 하나에 한 요청, 요청 사이 간격, 실패율 상한(5%) 초과 시 잡 실패·쓰기 없음. OSM 폴리곤이 없으면 IN 가게 좌표의 둘레(볼록 껍질 + 20m 여유)를 `DERIVED` 초안으로 만든다.
+- 운영자·상인회가 고친 경계(`MANUAL`)는 재적재가 덮지 않는다. OSM 원본이 바뀌면 `market_osm_raw` 만 갱신한다.
+
+### 11.5 기능
+
+- 어드민: 지도 배경에 OSM 큰길·골목 선, 경계 꼭짓점 끌기·추가·삭제, 경계를 OSM/둘레 초안으로 되돌리기, 골목 선 그리기·이름 붙이기·삭제, 출입구 찍기, 도로 규칙 표(도로명·건물번호 구간·IN/OUT·이유), 시장 중심 핀 이동·반경 입력, "확인 필요" 목록(가게 → 골목 선택), 저장하면 그 시장을 바로 재판정해 바뀐 가게 수를 보여 준다.
+- 공개 시장 섹션: 경계 선, 골목 선(이름 라벨), 출입구 표시, 가게 색은 배정된 골목, OSM 출처 표시. 경계가 없으면 지금 화면 그대로.
+- 상인회: 경계·골목 선·도로 규칙은 직접 고치지 않는다. **변경 요청**(그림 + 설명)을 올리고 운영자가 승인하면 반영된다.
+
+### 11.6 수용 기준
+
+- AC-P4-1: 광명 표본(OSM 2026-10-15)으로 재판정하면 §11.2 기대값이 나온다.
+- AC-P4-2: 경계를 고친 뒤 재적재해도 `MANUAL` 경계·골목 선·출입구·도로 규칙이 그대로다.
+- AC-P4-3: 경계 저장 → 같은 요청 안에서 재판정, 응답에 바뀐 가게 수. 되돌리기로 이전 판정이 복원된다.
+- AC-P4-4: 경계가 없는 시장은 도로 규칙 → 반경 판정 순서로 간다(규칙 하나로 큰길 141곳을 한 번에 IN/OUT).
+- AC-P4-5: 공개·어드민 지도에 OSM 출처 표시가 있다. 공개 API 는 확인 필요 플래그와 OSM 원본 payload 를 내지 않는다.
+- AC-P4-6: 상인회 변경 요청은 승인 전까지 판정에 영향이 없고, 승인하면 운영자 편집과 같은 경로로 반영·이력이 남는다.
+
 ## 관련
 
 - 분석 샘플: 「시장 골목 지도 샘플」 아티팩트, 볼트 `claude/artifact/market-alley-sample.md`
