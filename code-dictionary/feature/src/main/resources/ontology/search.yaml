@@ -2842,9 +2842,17 @@ concepts:
     contains: [query-level-cross-validation, srch-lambdamart, srch-feature-logging]
     uses: [ranking-features, ltr-loss-families]
     flows_to: [{ to: reranking, label: "상위 후보" }]
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/application/attraction/ltr/AttractionLtrReranker.kt, symbol: "fun rerank", note: "하이브리드 첫 장 상위 20 재정렬" }
+      - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionLtrFeatureAdapter.kt, symbol: "fun requestBody", note: "학습 행과 같은 피처를 _msearch 한 번으로" }
+      - { path: scripts/search-eval/ltr-offline/export.py, symbol: "def ranker", note: "서버 밖 학습 · 트리 내보내기" }
     applied:
-      status: NONE
-      summary: "LightGBM LambdaMART 를 서빙 피처로 오프라인 학습했다(질의 5겹 교차검증). LLM 라벨로는 ko +0.047 · en +0.029 지만 사람 블라인드 비교 승률 57%(21쌍, p=0.66)로 지금 순위와 구별되지 않아 보류했다"
+      status: PARTIAL
+      summary: "관광지 국문 검색에서 하이브리드 첫 장 상위 20 을 LightGBM LambdaMART 트리로 다시 줄 세운다. 학습은 판정 세트로 서버 밖에서 하고 서빙은 search:app 안 트리 평가기다. 사람 블라인드 비교에서 국문은 LTR 18 · 지금 순위 2 로 갈렸고, 영문은 12 · 9 로 갈리지 않아 켜지 않았다."
+      facts:
+        - { label: "적용 범위", value: "관광지 · 국문 · 첫 장 상위 20" }
+        - { label: "5겹 교차검증 nDCG@10 (국문)", value: ".7483 → .7837 (+.036 ±.018)" }
+        - { label: "사람 블라인드 비교", value: "국문 LTR 18 · 지금 순위 2 / 영문 12 · 9" }
   - id: srch-lambdamart
     kind: MECHANISM
     name: "LambdaMART"
