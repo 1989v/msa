@@ -25,6 +25,23 @@ function mount(lang: 'ko' | 'en' = 'ko') {
 }
 
 describe('optional attraction market section', () => {
+  it('initializes the shop finder from marketQuery and scrolls after market data arrives', async () => {
+    const scrollIntoView = vi.fn();
+    const previous = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+    window.history.replaceState(null, '', '/attractions/100?marketQuery=%EC%9C%A0%EB%AA%85%EC%88%9C%EB%8C%80%EA%B5%AD#market');
+    try {
+      vi.mocked(fetchMarket).mockResolvedValue(data);
+      mount();
+      expect(await screen.findByRole('searchbox', { name: '가게 이름 찾기' })).toHaveValue('유명순대국');
+      expect(screen.getByRole('region', { name: '시장 구역·가게' })).toHaveAttribute('id', 'market');
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
+      expect(screen.getByRole('status')).toHaveTextContent('찾은 가게: 1');
+    } finally {
+      window.history.replaceState(null, '', '/');
+      HTMLElement.prototype.scrollIntoView = previous;
+    }
+  });
   it('renders the real-coordinate display fixture even with no stores', async () => {
     // JSON imports widen tuple coordinates and enum strings; the checked-in fixture follows the public contract.
     vi.mocked(fetchMarket).mockResolvedValue({ ...gwangmyeong, stores: [] } as unknown as MarketResponse);

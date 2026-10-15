@@ -1,3 +1,4 @@
+import MarketMapBadge from './MarketMapBadge';
 import { useEffect, useMemo } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -288,7 +289,7 @@ export default function RegionPage() {
                     <div className="place-card-img place-card-img-empty" aria-hidden />
                   )}
                   <div className="place-card-body">
-                    <h3 className="place-card-title">{a.title}</h3>
+                    <h3 className="place-card-title">{a.title}</h3><MarketMapBadge contentId={a.contentId} lang={lang} />
                     {titleParts(a).secondary && (
                       <p className="place-card-local">{titleParts(a).secondary}</p>
                     )}
@@ -327,7 +328,7 @@ export default function RegionPage() {
                     <div className="place-card-img place-card-img-empty" aria-hidden />
                   )}
                   <div className="place-card-body">
-                    <h3 className="place-card-title">{titleParts(a).primary}</h3>
+                    <h3 className="place-card-title">{titleParts(a).primary}</h3><MarketMapBadge contentId={a.contentId} lang={lang} />
                     <EventLine attraction={a} lang={lang} />
                     {a.address && <p className="place-card-addr">{a.address}</p>}
                   </div>

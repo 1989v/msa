@@ -18,6 +18,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   attractionPath,
+  marketIndexMeta,
   PLACE_EVENT_TYPES,
   PLACE_STAY_TYPES,
   placeItemListJsonLd,
@@ -239,6 +240,7 @@ async function main() {
   await renderPortalPages(shell, concepts, { techDrills, techDrillPreloads });
   await renderTechGlossaries(shell, concepts);
   const hubPages = await renderPlaceHubs(shell, places, regions, { guidesListed: guidePages.index != null });
+  for (const { path, html } of placeMarketPages(shell)) await emit(path, html);
   const regionPages = await renderPlaceDetails(shell, places, regions, { regionTops, landingPages: landing.pages });
   const depth = placeLinkDepth([...hubPages, ...regionPages], places);
   console.log(`[seo] place 티어 A 중 깊이 3 안 ${LANGS.map((lang) => `${lang} ${depth[lang].within}/${depth[lang].total}`).join(' · ')}`);
@@ -922,7 +924,7 @@ async function writeRobotsAndSitemaps(
   await emit(`seo/${GAME_HOST}/sitemap.xml`, renderGameSitemap(games));
   await emit(`seo/${PORTAL_HOST}/sitemap.xml`, sitemapXml(portalEntries));
   await writePlaceSitemaps(
-    [...placeHubEntries, ...regionEntries, ...placeLandingSitemapEntries(landingPages), ...placeGuideSitemapEntries(guidePages)],
+    [...placeHubEntries, ...placeMarketSitemapEntries(), ...regionEntries, ...placeLandingSitemapEntries(landingPages), ...placeGuideSitemapEntries(guidePages)],
     placeDetailEntries,
   );
 
@@ -1406,6 +1408,7 @@ export function placeHubPages(shell, places, regions, { guidesListed = false } =
       body: shellBody(
         `<h1>${escapeHtml(meta.heading)}</h1><p class="place-subtitle">${escapeHtml(placeHubIntro(lang))}</p>` +
           (regionLinks ? `<ul>${regionLinks}</ul>` : '') +
+          `<p><a href="${placePath(lang, '/markets')}">${escapeHtml(lang === 'en' ? marketIndexMeta(lang).heading : '시장 가게 찾기')}</a></p>` +
           (links ? `<ul>${links}</ul>` : '') +
           // 편집 페이지는 국문만이고 published 가 있을 때만 목록이 있다 — 없는 목록(404)으로 링크하지 않는다
           (guidesListed && lang === 'ko'
@@ -2617,6 +2620,8 @@ export function placeLlmsTxt(places, landingPages = [], guidePages = { pages: []
     '## 시작점',
     `- [한국어 허브](${PLACE_ORIGIN}/)`,
     `- [English hub](${PLACE_ORIGIN}/en)`,
+    `- [시장 가게·품목 찾기](${PLACE_ORIGIN}/markets)`,
+    `- [Find market shops & goods](${PLACE_ORIGIN}/en/markets)`,
     `- [전체 URL 목록 (sitemap index)](${PLACE_ORIGIN}/sitemap.xml)`,
     '',
     '## 데이터',
@@ -2628,6 +2633,7 @@ export function placeLlmsTxt(places, landingPages = [], guidePages = { pages: []
     '## 공개 API',
     `- 검색: ${API_ORIGIN}/api/search/attractions?lang=ko&keyword={검색어}`,
     `- 상세: ${API_ORIGIN}/api/search/attractions/{id}`,
+    `- 시장·가게 검색: ${API_ORIGIN}/api/v1/place/markets/search?q={검색어}&lang=ko&page=0&size=20`,
     '',
     ...(landings.length > 0
       ? ['## 속성별 관광지', ...landings.map((p) => `- [${p.heading}](${p.url})`), '']
@@ -2667,4 +2673,24 @@ function portalLlmsTxt() {
     `- [전체 URL 목록](${PORTAL_ORIGIN}/sitemap.xml)`,
     '',
   ].join('\n');
+}
+
+/** Host-keyed market discovery shells; query states share these canonical URLs. */
+export function placeMarketPages(shell) {
+  return LANGS.map((lang) => {
+    const meta = marketIndexMeta(lang);
+    return {
+      path: `prerender/_hosts/${PLACE_HOST}${placePath(lang, '/markets')}.html`,
+      html: compose(shell, {
+        lang, ...meta, canonical: placeUrl(lang, '/markets'), siteName: placeBrand(lang),
+        image: ogCardUrl(PLACE_ORIGIN, 'place'), imageAlt: meta.heading,
+        alternates: placeHreflangAlternates('/markets'),
+        body: shellBody(`<nav><a href="${placePath(lang)}">${escapeHtml(placeBrand(lang))}</a></nav><h1>${escapeHtml(meta.heading)}</h1><p>${escapeHtml(meta.description)}</p>`),
+      }),
+    };
+  });
+}
+
+export function placeMarketSitemapEntries() {
+  return LANGS.map((lang) => ({ loc: placeUrl(lang, '/markets'), priority: '0.8', alternates: placeHreflangAlternates('/markets') }));
 }

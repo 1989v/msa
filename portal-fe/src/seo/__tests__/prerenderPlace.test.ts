@@ -14,6 +14,9 @@ import {
   isTierA,
   placeDetailPages,
   placeHubPages,
+  placeMarketPages,
+  placeMarketSitemapEntries,
+  placeLlmsTxt,
   placeLinkDepth,
   placeDetailSitemapEntries,
   placeSitemapFiles,
@@ -752,5 +755,34 @@ describe('fetchRegionTops — 시군구 대표 조회', () => {
       regionTops: (r: unknown) => fetchRegionTops(r, async () => ({ attractions: [{ id: 'y' }] }), { retryDelays: [0, 0] }),
     });
     expect(data.regionTops.get('ko/11680')).toEqual([{ id: 'y' }]);
+  });
+});
+
+describe('market discovery SEO', () => {
+  it('renders bilingual host-keyed shells with clean canonical and language alternates', () => {
+    const pages = placeMarketPages(SHELL);
+    expect(pages.map((page: { path: string }) => page.path)).toEqual([
+      'prerender/_hosts/place.1989v.com/markets.html',
+      'prerender/_hosts/place.1989v.com/en/markets.html',
+    ]);
+    expect(pages[0].html).toContain('시장 가게·품목 찾기');
+    expect(pages[1].html).toContain('Find market shops &amp; goods');
+    for (const [index, page] of pages.entries()) {
+      const html = new DOMParser().parseFromString(page.html, 'text/html');
+      expect(html.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(`https://place.1989v.com/${index ? 'en/' : ''}markets`);
+      expect(html.querySelectorAll('link[hreflang]')).toHaveLength(3);
+    }
+  });
+  it('includes both canonical markets entries in sitemap, llms and hub navigation', () => {
+    expect(placeMarketSitemapEntries().map((entry: { loc: string }) => entry.loc)).toEqual([
+      'https://place.1989v.com/markets', 'https://place.1989v.com/en/markets',
+    ]);
+    const llms = placeLlmsTxt({ ko: [], en: [] });
+    expect(llms).toContain('https://place.1989v.com/markets');
+    expect(llms).toContain('https://place.1989v.com/en/markets');
+    expect(llms).toContain('/api/v1/place/markets/search');
+    const hubs = placeHubPages(SHELL, { ko: [], en: [] }, { ko: [], en: [] });
+    expect(hubs[0].html).toContain('href="/markets"');
+    expect(hubs[1].html).toContain('href="/en/markets"');
   });
 });
