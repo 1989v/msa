@@ -2,6 +2,7 @@
 import copy
 import io
 import json
+from datetime import datetime, timezone
 from unittest.mock import Mock, patch
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs
@@ -163,6 +164,42 @@ def test_batch_of_only_uningested_markets_does_not_stop_the_run():
     assert writes.call_count == 2
 
 
+def test_recently_fetched_markets_are_skipped_so_each_run_continues():
+    now = datetime(2026, 10, 16, tzinfo=timezone.utc)
+    fresh = {**state(1), "osmFetchedAt": "2026-10-10T00:00:00"}
+    stale = {**state(2), "osmFetchedAt": "2026-09-01T00:00:00"}
+    fetch = Mock(return_value=response())
+    with patch.object(osm.place_client,"fetch_market_attractions",return_value=[{"contentId":"1"},{"contentId":"2"},{"contentId":"3"}]), \
+         patch.object(osm.place_client,"market_state",side_effect=[fresh, stale, state(3)]), \
+         patch.object(osm.place_client,"_request") as writes:
+        summary = osm.run(fetch=fetch,sleep=Mock(),now=now)
+    assert fetch.call_count == 2 and writes.call_count == 4
+    assert summary["markets"] == 2 and summary["skippedRecent"] == 1
+    with patch.object(osm.place_client,"fetch_market_attractions",return_value=[{"contentId":"1"}]), \
+         patch.object(osm.place_client,"market_state",return_value=fresh), \
+         patch.object(osm.place_client,"_request") as writes:
+        assert osm.run(fetch=fetch,sleep=Mock(),now=now)["skippedRecent"] == 1
+    writes.assert_not_called()
+
+
+def test_failed_overpass_call_is_retried_once_at_batch_end_before_the_gate(capsys):
+    fetch = Mock(side_effect=[OSError("busy")] + [response()]*20)
+    sleep = Mock()
+    with patch.object(osm.place_client,"fetch_market_attractions",return_value=[{"contentId":str(i)} for i in range(20)]), \
+         patch.object(osm.place_client,"market_state",side_effect=lambda cid:state(int(cid))), \
+         patch.object(osm.place_client,"_request") as writes:
+        summary = osm.run(fetch=fetch,sleep=sleep)
+    assert summary["failedMarkets"] == 0 and summary["markets"] == 20 and writes.call_count == 40
+    assert ((osm.BATCH_RETRY_WAIT_SECONDS,),) in sleep.call_args_list
+    fetch = Mock(side_effect=[OSError("busy")] + [response()]*18 + [OSError("still busy")])  # market 0 fails twice
+    with patch.object(osm.place_client,"fetch_market_attractions",return_value=[{"contentId":str(i)} for i in range(19)]), \
+         patch.object(osm.place_client,"market_state",side_effect=lambda cid:state(int(cid))), \
+         patch.object(osm.place_client,"_request"):
+        with pytest.raises(ValueError,match="failure ratio"):
+            osm.run(fetch=fetch,sleep=Mock())
+    assert '"errors": ["0: OSError"]' in capsys.readouterr().out
+
+
 def test_existing_store_projection_only_uses_in_display_coordinates():
     sample = state(points=POLYGON[:-1])
     sample["stores"] += [{"display":{"membership":{"status":"OUT"},"coordinate":{"latitude":0,"longitude":0}}},
@@ -203,14 +240,15 @@ def test_failed_second_batch_keeps_first_writes_and_never_reads_third():
         return state(int(cid))
     def write(*args):
         events.append(args[:2])
-    fetch = Mock(side_effect=[response()]*count + [OSError("offline")]*count)
+    fetch = Mock(side_effect=[response()]*count + [OSError("offline")]*count*2)  # second batch fails twice
     with patch.object(osm.place_client,"fetch_market_attractions",return_value=[{"contentId":str(i)} for i in range(count*3)]), \
          patch.object(osm.place_client,"market_state",side_effect=read) as reads, \
          patch.object(osm.place_client,"_request",side_effect=write) as writes:
         with pytest.raises(ValueError,match="failure ratio"):
             osm.run(fetch=fetch,sleep=Mock())
     assert writes.call_count == count*2
-    assert reads.call_count == fetch.call_count == count*2
+    assert reads.call_count == count*2
+    assert fetch.call_count == count*3
     assert events[count:count*3] == [event for mid in range(count) for event in
         [("PUT",f"/internal/markets/{mid}/osm"),("POST",f"/internal/markets/{mid}/rejudge")]]
     assert events[count*3] == ("read",count)
@@ -219,20 +257,22 @@ def test_failed_second_batch_keeps_first_writes_and_never_reads_third():
 def test_summary_aggregates_batches_and_paces_across_boundary(capsys):
     count = osm.MARKET_BATCH_SIZE
     sleep = Mock()
-    fetch = Mock(side_effect=[OSError("offline")] + [response()]*(count*2-1))
+    fetch = Mock(side_effect=[OSError("offline")] + [response()]*(count-1) + [OSError("offline")] + [response()]*count)
     with patch.object(osm.place_client,"fetch_market_attractions",return_value=[{"contentId":str(i)} for i in range(count*2)]), \
          patch.object(osm.place_client,"market_state",side_effect=lambda cid:state(int(cid))), \
          patch.object(osm.place_client,"_request") as writes:
         summary = osm.run(fetch=fetch,sleep=sleep)
     assert summary == {"markets":count*2-1,"failedMarkets":1,"calls":count*2,
-                       "failedCalls":1,"errors":["0: OSError"],"batches":2}
+                       "failedCalls":1,"errors":["0: OSError"],"batches":2,"skippedRecent":0}
     assert writes.call_count == (count*2-1)*2
-    assert sleep.call_args_list == [((osm.REQUEST_INTERVAL_SECONDS,),)]*(count*2-1)
+    interval = ((osm.REQUEST_INTERVAL_SECONDS,),)
+    assert sleep.call_args_list == ([interval]*(count-1) + [((osm.BATCH_RETRY_WAIT_SECONDS,),)] +
+                                    [interval]*(count+1))
     lines = capsys.readouterr().out.splitlines()
     assert len(lines) == 3
     assert [json.loads(line.removeprefix("[market-osm] batch ")) for line in lines[:2]] == [
-        {"markets":count-1,"failedMarkets":1,"calls":count,"failedCalls":1},
-        {"markets":count,"failedMarkets":0,"calls":count,"failedCalls":0}]
+        {"markets":count-1,"failedMarkets":1,"calls":count,"failedCalls":1,"skippedRecent":0,"errors":["0: OSError"]},
+        {"markets":count,"failedMarkets":0,"calls":count,"failedCalls":0,"skippedRecent":0,"errors":[]}]
 
 
 @pytest.mark.parametrize("count,failed,allowed", [(20,1,True),(19,1,False),(20,2,False)])

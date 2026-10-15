@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import math
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -15,6 +15,8 @@ from .market_stores import BUILDING_RADIUS_M, STREET_RADIUS_M, check_failures
 OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter"
 REQUEST_INTERVAL_SECONDS = 2
 MARKET_BATCH_SIZE = 50
+BATCH_RETRY_WAIT_SECONDS = 60
+OSM_REFRESH_DAYS = 28
 NEAREST_BOUNDARY_MAX_M = 100
 DERIVED_MARGIN_M = 20
 BUFFER_ARC_STEP_DEGREES = .5  # Chord error below 0.2mm at the 20m buffer radius.
@@ -208,55 +210,97 @@ def in_store_points(state):
     return points
 
 
-def run(fetch=None, sleep=None):
+def fetched_recently(state, now):
+    """Whether place already holds an OSM fetch younger than OSM_REFRESH_DAYS for this market."""
+    fetched = state.get("osmFetchedAt")
+    if not fetched:
+        return False
+    at = datetime.fromisoformat(fetched)
+    at = at if at.tzinfo else at.replace(tzinfo=timezone.utc)
+    return now - at < timedelta(days=OSM_REFRESH_DAYS)
+
+
+def run(fetch=None, sleep=None, now=None):
+    """Read, gate and write fifty markets at a time.
+
+    The public Overpass server can take ~40s a call, so one run may not reach every market
+    before the Job deadline. Markets fetched within OSM_REFRESH_DAYS are skipped, which makes
+    each run continue where the last one stopped. A market whose Overpass call failed is
+    called once more at the end of its batch, before the batch's failure gate.
+    """
     fetch, sleep = fetch or fetch_overpass, sleep or time.sleep
+    now = now or datetime.now(timezone.utc)
     attractions = place_client.fetch_market_attractions()
-    summary = {"markets": 0, "failedMarkets": 0, "calls": 0,
-               "failedCalls": 0, "errors": [], "batches": 0}
-    total_calls = 0
+    summary = {"markets": 0, "failedMarkets": 0, "calls": 0, "failedCalls": 0, "errors": [],
+               "batches": 0, "skippedRecent": 0}
+    total_calls = ingested = 0
+
+    def call(center, radius):
+        nonlocal total_calls
+        if total_calls:
+            sleep(REQUEST_INTERVAL_SECONDS)
+        total_calls += 1
+        payload = fetch(center, radius)
+        if not isinstance(payload, dict) or not isinstance(payload.get("elements"), list) or payload.get("remark"):
+            raise ValueError("Incomplete Overpass response")
+        return payload
+
     for start in range(0, len(attractions), MARKET_BATCH_SIZE):
-        prepared, errors = [], []
-        calls = failed_calls = failed_markets = markets = 0
+        prepared, failures, retries = [], {}, []
+        markets = calls = skipped = 0
         for attraction in attractions[start:start + MARKET_BATCH_SIZE]:
+            content_id = str(attraction["contentId"])
             markets += 1
             try:
-                state = place_client.market_state(str(attraction["contentId"]))
+                state = place_client.market_state(content_id)
                 if state is None:  # Not yet ingested by market-stores.
                     markets -= 1
+                    continue
+                ingested += 1
+                if fetched_recently(state, now):
+                    markets -= 1
+                    skipped += 1
                     continue
                 market = state["market"]
                 center = [float(market["latitude"]), float(market["longitude"])]
                 if not all(math.isfinite(v) for v in center):
                     raise ValueError("Invalid market center")
                 radius = BUILDING_RADIUS_M if market["marketType"] == "BUILDING" else STREET_RADIUS_M
-                if total_calls:
-                    sleep(REQUEST_INTERVAL_SECONDS)
                 calls += 1
-                total_calls += 1
                 try:
-                    payload = fetch(center, radius)
-                    if not isinstance(payload, dict) or not isinstance(payload.get("elements"), list) or payload.get("remark"):
-                        raise ValueError("Incomplete Overpass response")
-                except Exception:
-                    failed_calls += 1
-                    raise
+                    payload = call(center, radius)
+                except Exception as exc:
+                    failures[content_id] = (type(exc).__name__, True)
+                    retries.append((content_id, market["id"], center, radius, state))
+                    continue
                 prepared.append((market["id"], prepare(payload, center, radius, in_store_points(state))))
             except Exception as exc:
-                failed_markets += 1
-                errors.append(f'{attraction["contentId"]}: {type(exc).__name__}')
+                failures[content_id] = (type(exc).__name__, False)
+        if retries:
+            sleep(BATCH_RETRY_WAIT_SECONDS)
+        for content_id, market_id, center, radius, state in retries:
+            try:
+                payload = call(center, radius)
+                prepared.append((market_id, prepare(payload, center, radius, in_store_points(state))))
+                del failures[content_id]
+            except Exception as exc:
+                failures[content_id] = (type(exc).__name__, True)
+        errors = [f"{content_id}: {name}" for content_id, (name, _) in failures.items()]
+        batch = {"markets": len(prepared), "failedMarkets": len(failures), "calls": calls,
+                 "failedCalls": sum(1 for _, overpass in failures.values() if overpass),
+                 "skippedRecent": skipped, "errors": errors}
+        # Printed before the gate so a failing batch still shows which markets failed and why.
+        print(f"[market-osm] batch {json.dumps(batch)}", flush=True)
         if markets:  # A batch of markets not yet ingested by market-stores has nothing to gate.
-            check_failures(markets, failed_markets, calls, failed_calls)
+            check_failures(markets, batch["failedMarkets"], calls, batch["failedCalls"])
         for market_id, command in prepared:
             place_client._request("PUT", f"/internal/markets/{market_id}/osm", command)
             place_client._request("POST", f"/internal/markets/{market_id}/rejudge")
-        batch = {"markets": len(prepared), "failedMarkets": failed_markets, "calls": calls,
-                 "failedCalls": failed_calls}
-        for key, value in batch.items():
-            summary[key] += value
+        for key in ("markets", "failedMarkets", "calls", "failedCalls", "skippedRecent"):
+            summary[key] += batch[key]
         summary["errors"].extend(errors)
         summary["batches"] += 1
-        print(f"[market-osm] batch {json.dumps(batch)}", flush=True)
-    if not summary["markets"] and not summary["failedMarkets"]:
+    if not ingested:
         check_failures(0, 0, 0, 0)
     print(f"[market-osm] {json.dumps(summary)}", flush=True)
     return summary
