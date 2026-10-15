@@ -3,6 +3,7 @@ package com.kgd.search
 import com.kgd.search.application.attraction.config.AttractionAnswerEvidenceProperties
 import com.kgd.search.application.attraction.config.AttractionConditionWordsProperties
 import com.kgd.search.application.attraction.config.AttractionHybridProperties
+import com.kgd.search.application.attraction.config.AttractionLtrProperties
 import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.application.ranking.config.BanditProperties
 import com.kgd.search.application.ranking.config.DiversityProperties
@@ -35,6 +36,7 @@ import org.springframework.scheduling.annotation.EnableScheduling
     QueryVectorProperties::class,
     QueryEncoderProperties::class,
     AttractionHybridProperties::class,
+    AttractionLtrProperties::class,
     AttractionConditionWordsProperties::class,
     AttractionAnswerEvidenceProperties::class,
     AttractionRenderProperties::class,
