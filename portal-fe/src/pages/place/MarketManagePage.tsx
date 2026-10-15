@@ -8,6 +8,7 @@ import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import { useSeo } from '../../seo/useSeo';
 import { referenceStores, stewardError, storeInput, validManual } from './stewardState';
 import './AttractionMarket.css';
+import MarketGeometryRequests from './MarketGeometryRequests';
 
 export default function MarketManagePage() {
   useHeritageSurface();
@@ -35,6 +36,7 @@ function ManageEditor({ detail, refresh }: { detail: MarketEditorDetail; refresh
       {editor && <StewardStoreEditor key={`${editor.row?.source.id ?? 'new'}-${editor.manual}`} detail={detail} row={editor.row} manual={editor.manual} run={run} close={() => setEditor(null)} />}
       <section aria-label="구역 이름 관리"><h2>구역 이름 관리</h2>{detail.zones.map(zone => <ZoneRename key={`${zone.id}-${zone.name}`} zone={zone} save={name => run(() => api.renameManagedZone(detail.market.id, zone, name))} />)}{!detail.zones.length && <p>등록된 구역이 없습니다.</p>}</section>
     </fieldset>
+    <MarketGeometryRequests detail={detail} />
   </main>;
 }
 function ZoneRename({ zone, save }: { zone: api.EditorZone; save: (name: string) => Promise<boolean> }) {

@@ -1,14 +1,15 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import * as api from '../../../api/marketStewardApi';
 import MarketManagePage, { StewardStoreEditor } from '../MarketManagePage';
 import { useSeo } from '../../../seo/useSeo';
-vi.mock('../../../api/marketStewardApi', () => ({ getManagedMarket: vi.fn(), overrideManagedStore: vi.fn(), saveManagedStore: vi.fn(), deleteManagedStore: vi.fn(), renameManagedZone: vi.fn() }));
+vi.mock('../../../api/marketStewardApi', () => ({ getManagedMarket: vi.fn(), overrideManagedStore: vi.fn(), saveManagedStore: vi.fn(), deleteManagedStore: vi.fn(), renameManagedZone: vi.fn(), listGeometryRequests: vi.fn().mockResolvedValue([]), submitGeometryRequest: vi.fn() }));
 vi.mock('../../../auth/auth', () => ({ isLoggedIn: () => true, getUserId: () => '4', buildLoginHref: () => 'https://1989v.com/login' }));
 vi.mock('../../../hooks/useHeritageSurface', () => ({ useHeritageSurface: vi.fn() }));
 vi.mock('../../../seo/useSeo', () => ({ useSeo: vi.fn() }));
+beforeEach(() => { vi.mocked(api.listGeometryRequests).mockResolvedValue([]); });
 afterEach(() => { cleanup(); vi.resetAllMocks(); });
 const row: api.EditorStore = { source: { id: 2, name: '기준 가게', items: null, zoneId: null, membership: { status: 'IN' }, source: 'ONNURI', pinKind: 'EXACT', latitude: 37, longitude: 127, referenceStoreId: null, relativePosition: null, positionNote: null }, display: { name: '기준 가게', items: null, zoneId: null, membership: { status: 'IN' }, coordinate: { latitude: 37, longitude: 127 }, pinKind: 'EXACT' } };
 const detail: api.MarketEditorDetail = { market: { id: 7, name: '중앙시장' }, stores: [row], zones: [] };

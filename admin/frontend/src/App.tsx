@@ -20,6 +20,7 @@ import { ResumePage } from '@/pages/ResumePage';
 import { ResumeProfilePage } from '@/pages/ResumeProfilePage';
 import { DisplayServicesPage } from '@/pages/DisplayServicesPage';
 import { DealOffersPage } from '@/pages/DealOffersPage';
+import { MarketGeometryRequestsPage } from '@/pages/MarketGeometryRequestsPage';
 import { MarketStewardsPage } from '@/pages/MarketStewardsPage';
 import { MarketsPage } from '@/pages/MarketsPage';
 import { DealCategoriesPage } from '@/pages/DealCategoriesPage';
@@ -51,6 +52,7 @@ export default function App() {
         <Route index element={<DashboardPage />} />
         <Route path="system" element={<SystemPage />} />
         <Route path="members" element={<MembersPage />} />
+        <Route path="place/markets/geometry-requests" element={<MarketGeometryRequestsPage />} />
         <Route path="place/stewards" element={<MarketStewardsPage />} />
         <Route path="place/markets" element={<MarketsPage />} />
         <Route path="products" element={<ProductsPage />} />

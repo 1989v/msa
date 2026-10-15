@@ -70,3 +70,9 @@
 .market-manage li button { margin: 0.5rem 0.5rem 0 0; }
 .market-zone-rename { margin-block: 1.5rem; }
 .place-market select:focus-visible { outline: var(--ko-focus-ring); outline-offset: 3px; }
+
+.market-geometry-requests { margin-block: var(--ko-space-6, 24px); }
+.market-geometry-requests label { display: grid; gap: var(--ko-space-2, 8px); margin-block: var(--ko-space-3, 12px); }
+.market-geometry-requests :is(input, select, textarea, button) { min-height: 44px; }
+.market-request-canvas { display: block; width: 100%; height: auto; border: 1px solid var(--ko-border-default); background: var(--ko-surface-1); color: var(--ko-text-muted); cursor: crosshair; }
+.market-request-coordinate { display: flex; gap: var(--ko-space-3, 12px); flex-wrap: wrap; align-items: end; }
