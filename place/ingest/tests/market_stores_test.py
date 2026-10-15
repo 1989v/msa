@@ -369,6 +369,19 @@ def test_good_price_global_name_precedence_and_unique_attachment(tmp_path):
     assert summary['goodPriceMatched'] == {'NAME':0,'ROAD':1}
 
 
+def test_good_price_contested_shop_goes_to_the_row_whose_category_agrees(tmp_path):
+    butcher, kitchen = good_price_store(categoryMajor='소매'), good_price_store(categoryMajor='음식')
+    commands, summary = attach_prices(tmp_path, [[butcher, kitchen]])
+    assert [s['row']['goodPriceMatchedBy'] for s in commands[0]] == [None, 'NAME']
+    assert summary['goodPriceMatched'] == {'NAME':1,'ROAD':0}
+    salon = good_price_row(업종='미용업')
+    commands, _ = attach_prices(tmp_path, [[good_price_store(categoryMajor='음식'),
+                                            good_price_store(categoryMajor='수리·개인')]], [salon])
+    assert [s['row']['goodPriceMatchedBy'] for s in commands[0]] == [None, 'NAME']
+    commands, _ = attach_prices(tmp_path, [[good_price_store(categoryMajor='음식'), good_price_store()]])
+    assert [s['row']['goodPriceMatchedBy'] for s in commands[0]] == ['NAME', None]
+
+
 def test_prepare_unmatched_good_price_fields_are_null(tmp_path):
     index = ms.SanggaIndex(tmp_path/'index.db')
     try:
