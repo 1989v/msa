@@ -1,5 +1,6 @@
 package com.kgd.place.infrastructure.persistence.market.repository
 
+import com.kgd.place.domain.market.model.MarketMembershipStatus
 import com.kgd.place.domain.market.model.MarketStoreField
 import com.kgd.place.domain.market.model.MarketStoreSource
 import com.kgd.place.domain.market.model.MarketDisplayValuePolicy
@@ -53,6 +54,18 @@ class MarketSearchQueryRepository(@Qualifier("placeJpaQueryFactory") private val
     private val menuNames get() = CaseBuilder().`when`(store.goodPriceRaw.isNotNull)
         .then(store.goodPriceMenuNames).otherwise(partner.goodPriceMenuNames)
 
+    /**
+     * Stores whose effective membership can be IN: ingested or judged IN, or a membership edit on the row
+     * or its partner. Read from idx_market_store_candidate alone, so the wide store rows (raw source JSON)
+     * are fetched only for these ids instead of the whole table.
+     */
+    private fun candidates() = QMarketStoreJpaEntity("candidateStore").let { row ->
+        val edited = QMarketStoreOverrideJpaEntity("candidateEdit")
+        val editedIds = JPAExpressions.select(edited.storeId).from(edited).where(edited.field.eq(MarketStoreField.MEMBERSHIP))
+        JPAExpressions.select(row.id).from(row).where(row.membership.eq(MarketMembershipStatus.IN)
+            .or(row.judgedMembership.eq(MarketMembershipStatus.IN)).or(row.id.`in`(editedIds)).or(row.pairedStoreId.`in`(editedIds)))
+    }
+
     private fun base(): JPAQuery<*> {
         val query = factory.from(store).leftJoin(partner).on(partner.id.eq(store.pairedStoreId))
             .join(market).on(market.id.eq(store.marketId))
@@ -63,7 +76,8 @@ class MarketSearchQueryRepository(@Qualifier("placeJpaQueryFactory") private val
                 .leftJoin(second).on(second.storeId.eq(partner.id), second.field.eq(field))
         }
         // A matched pair keeps ONNURI identity. Partner source membership is deliberately not inherited.
-        return query.where(store.source.ne(MarketStoreSource.SANGGA).or(partner.id.isNull), membership.eq("IN"))
+        return query.where(store.id.`in`(candidates()), store.source.ne(MarketStoreSource.SANGGA).or(partner.id.isNull),
+            membership.eq("IN"))
     }
 
     private fun matches(value: StringExpression, query: String) = normalized(value).containsIgnoreCase(query)
