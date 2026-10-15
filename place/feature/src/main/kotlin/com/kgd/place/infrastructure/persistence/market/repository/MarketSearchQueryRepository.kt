@@ -26,10 +26,6 @@ class MarketSearchQueryRepository(@Qualifier("placeJpaQueryFactory") private val
     private fun normalized(value: StringExpression): StringExpression =
         Expressions.stringTemplate("lower(cast(regexp_replace({0}, {1}, {2}) as string))", value, "[[:space:]]+", "")
 
-    // identity_key is MarketStoreIdentity.key, written with every row and indexed per market.
-    private fun sameIdentity(a: QMarketStoreJpaEntity, b: QMarketStoreJpaEntity) =
-        a.marketId.eq(b.marketId).and(a.identityKey.isNotNull).and(a.identityKey.eq(b.identityKey))
-
     private fun base() = factory.from(search).join(market).on(market.id.eq(search.marketId))
 
     private fun matches(value: StringExpression, query: String) = normalized(value).containsIgnoreCase(query)
@@ -43,11 +39,14 @@ class MarketSearchQueryRepository(@Qualifier("placeJpaQueryFactory") private val
     /** Hydrate complete identity groups, including ambiguous tenants and reference-pin partners. */
     fun relatedStores(ids: List<Long>): List<com.kgd.place.domain.market.model.MarketStore> {
         if (ids.isEmpty()) return emptyList()
-        val anchor = QMarketStoreJpaEntity("identityAnchor")
-        val marketIds = factory.select(store.marketId).distinct().from(store).where(store.id.`in`(ids)).fetch()
-        return factory.selectFrom(store).where(store.marketId.`in`(marketIds), store.id.`in`(ids).or(
-            JPAExpressions.selectOne().from(anchor).where(anchor.id.`in`(ids), sameIdentity(anchor, store),
-                anchor.source.ne(MarketStoreSource.MANUAL), store.source.ne(MarketStoreSource.MANUAL)).exists()))
+        // identity_key is MarketStoreIdentity.key. Look each (market, key) up in idx_market_store_identity:
+        // a correlated subquery instead scans every wide row of the result markets.
+        val sameIdentity = factory.select(store.marketId, store.identityKey).distinct().from(store)
+            .where(store.id.`in`(ids), store.identityKey.isNotNull, store.source.ne(MarketStoreSource.MANUAL)).fetch()
+            .map { store.marketId.eq(it[store.marketId]).and(store.identityKey.eq(it[store.identityKey])) }
+            .reduceOrNull { a, b -> a.or(b) }
+        return factory.selectFrom(store).where(store.id.`in`(ids)
+            .or(sameIdentity?.let { store.source.ne(MarketStoreSource.MANUAL).and(it) }))
             .fetch().map { it.toDomain() }
     }
 
