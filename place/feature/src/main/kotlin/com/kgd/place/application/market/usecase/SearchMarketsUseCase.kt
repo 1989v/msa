@@ -1,0 +1,16 @@
+package com.kgd.place.application.market.usecase
+
+import com.kgd.place.domain.market.model.MarketType
+
+interface SearchMarketsUseCase {
+    fun search(query: String, lang: String, page: Int, size: Int): Result
+    fun contentIds(): List<String>
+
+    data class Result(val query: String, val markets: List<MarketSummary>, val stores: StorePage)
+    data class MarketSummary(val contentId: String, val name: String, val region: String?,
+        val marketType: MarketType, val storeCount: Long)
+    data class StorePage(val items: List<StoreSummary>, val total: Long, val page: Int, val size: Int)
+    data class StoreSummary(val storeId: Long, val name: String, val items: String?, val category: String?,
+        val marketContentId: String, val marketName: String, val zoneName: String?,
+        val latitude: Double?, val longitude: Double?)
+}

@@ -3,6 +3,7 @@
 plugins {
     alias(libs.plugins.kotlin.spring)
     alias(libs.plugins.kotlin.jpa)
+    alias(libs.plugins.kotlin.kapt)
     alias(libs.plugins.spring.boot)
 }
 
@@ -11,6 +12,8 @@ dependencies {
     implementation(project(":common"))
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.jpa)
+    implementation(libs.querydsl.jpa) { artifact { classifier = "jakarta" } }
+    kapt(libs.querydsl.apt) { artifact { classifier = "jakarta" } }
     // 지역 계층 조회 캐시 (ADR-0071 §서빙 경로) — content 의 레디스를 game 과 함께 쓴다
     implementation(libs.spring.boot.starter.data.redis)
     implementation(libs.spring.boot.starter.validation)
