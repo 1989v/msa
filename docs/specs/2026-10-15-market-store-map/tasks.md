@@ -65,7 +65,7 @@ PRD 열린 질문에 대한 진행 가정 (사용자가 바꾸면 해당 단위�
 - 테스트: 광명 픽스처로 AC-P4-1 기대값(153·29·104·49·14·9), 도로 규칙 구간, 경계 없는 시장 폴백.
 
 ## WU-10 OSM 적재
-- `place/ingest/src/market_osm.py`: Overpass 조회(시장마다 한 요청), `market_osm_raw` 전체 보존, 경계·골목 선 초안 upsert(MANUAL 행 불변), 없으면 DERIVED 둘레. 실패율 상한. 끝나면 시장별 재판정 호출.
+- `place/ingest/src/market_osm.py`: Overpass 조회(시장마다 한 조회, 일시 오류 최대 2회 재시도), `market_osm_raw` 전체 보존, 경계·골목 선 초안 upsert(MANUAL 행 불변), 없으면 DERIVED 둘레. 관광지 순서의 50개 배치마다 실패율 검사 후 저장·시장별 재판정. 실패 배치부터 즉시 중단하고 앞선 배치 결과는 보존.
 - place 내부 API `/internal/markets/{id}/osm`·`/internal/markets/{id}/rejudge`.
 - CronJob(기존 market-stores 뒤, suspend 유지), `data-sources.md` OSM 행, egress 는 기존 place-ingest :443 정책 안.
 - 테스트: 파싱·DERIVED·MANUAL 보호(AC-P4-2).

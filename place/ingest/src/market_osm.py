@@ -1,10 +1,11 @@
-"""Overpass geometry drafts; all source reads pass preflight before place writes."""
+"""Overpass geometry drafts; each batch passes its failure gate before place writes."""
 from __future__ import annotations
 
 import json
 import math
 import time
 from datetime import datetime, timezone
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
@@ -13,6 +14,7 @@ from .market_stores import BUILDING_RADIUS_M, STREET_RADIUS_M, check_failures
 
 OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter"
 REQUEST_INTERVAL_SECONDS = 2
+MARKET_BATCH_SIZE = 50
 NEAREST_BOUNDARY_MAX_M = 100
 DERIVED_MARGIN_M = 20
 BUFFER_ARC_STEP_DEGREES = .5  # Chord error below 0.2mm at the 20m buffer radius.
@@ -21,7 +23,8 @@ ALLEY_HIGHWAYS = {"footway", "pedestrian", "service", "living_street", "resident
 BACKGROUND_HIGHWAYS = {"primary", "secondary", "tertiary", "trunk"}
 
 
-def fetch_overpass(center, radius):
+def fetch_overpass(center, radius, sleep=None):
+    sleep = sleep or time.sleep
     around = f"around:{radius},{center[0]},{center[1]}"
     highways = "|".join(sorted(ALLEY_HIGHWAYS | BACKGROUND_HIGHWAYS))
     query = (f'[out:json][timeout:90];(way["amenity"="marketplace"]({around});'
@@ -30,8 +33,18 @@ def fetch_overpass(center, radius):
     req = Request(OVERPASS_ENDPOINT, data=urlencode({"data": query}).encode(), method="POST",
                   headers={"User-Agent": USER_AGENT, "Accept": "application/json",
                            "Content-Type": "application/x-www-form-urlencoded"})
-    with urlopen(req, timeout=120) as response:
-        payload = json.load(response)
+    retry_delays = (10, 30)
+    for attempt in range(len(retry_delays) + 1):
+        try:
+            with urlopen(req, timeout=120) as response:
+                payload = json.load(response)
+            break
+        except (HTTPError, URLError, TimeoutError) as exc:
+            if isinstance(exc, HTTPError) and exc.code not in {429, 502, 503, 504}:
+                raise
+            if attempt == len(retry_delays):
+                raise
+            sleep(retry_delays[attempt])
     if not isinstance(payload, dict) or not isinstance(payload.get("elements"), list) or payload.get("remark"):
         raise ValueError("Incomplete Overpass response")
     return payload
@@ -198,39 +211,52 @@ def in_store_points(state):
 def run(fetch=None, sleep=None):
     fetch, sleep = fetch or fetch_overpass, sleep or time.sleep
     attractions = place_client.fetch_market_attractions()
-    prepared, errors = [], []
-    calls = failed_calls = failed_markets = markets = 0
-    for attraction in attractions:
-        markets += 1
-        try:
-            state = place_client.market_state(str(attraction["contentId"]))
-            if state is None:  # Not yet ingested by market-stores.
-                markets -= 1
-                continue
-            market = state["market"]
-            center = [float(market["latitude"]), float(market["longitude"])]
-            if not all(math.isfinite(v) for v in center):
-                raise ValueError("Invalid market center")
-            radius = BUILDING_RADIUS_M if market["marketType"] == "BUILDING" else STREET_RADIUS_M
-            if calls:
-                sleep(REQUEST_INTERVAL_SECONDS)
-            calls += 1
+    summary = {"markets": 0, "failedMarkets": 0, "calls": 0,
+               "failedCalls": 0, "errors": [], "batches": 0}
+    total_calls = 0
+    for start in range(0, len(attractions), MARKET_BATCH_SIZE):
+        prepared, errors = [], []
+        calls = failed_calls = failed_markets = markets = 0
+        for attraction in attractions[start:start + MARKET_BATCH_SIZE]:
+            markets += 1
             try:
-                payload = fetch(center, radius)
-                if not isinstance(payload, dict) or not isinstance(payload.get("elements"), list) or payload.get("remark"):
-                    raise ValueError("Incomplete Overpass response")
-            except Exception:
-                failed_calls += 1
-                raise
-            prepared.append((market["id"], prepare(payload, center, radius, in_store_points(state))))
-        except Exception as exc:
-            failed_markets += 1
-            errors.append(f'{attraction["contentId"]}: {type(exc).__name__}')
-    check_failures(markets, failed_markets, calls, failed_calls)
-    for market_id, command in prepared:
-        place_client._request("PUT", f"/internal/markets/{market_id}/osm", command)
-        place_client._request("POST", f"/internal/markets/{market_id}/rejudge")
-    summary = {"markets": len(prepared), "failedMarkets": failed_markets, "calls": calls,
-               "failedCalls": failed_calls, "errors": errors}
+                state = place_client.market_state(str(attraction["contentId"]))
+                if state is None:  # Not yet ingested by market-stores.
+                    markets -= 1
+                    continue
+                market = state["market"]
+                center = [float(market["latitude"]), float(market["longitude"])]
+                if not all(math.isfinite(v) for v in center):
+                    raise ValueError("Invalid market center")
+                radius = BUILDING_RADIUS_M if market["marketType"] == "BUILDING" else STREET_RADIUS_M
+                if total_calls:
+                    sleep(REQUEST_INTERVAL_SECONDS)
+                calls += 1
+                total_calls += 1
+                try:
+                    payload = fetch(center, radius)
+                    if not isinstance(payload, dict) or not isinstance(payload.get("elements"), list) or payload.get("remark"):
+                        raise ValueError("Incomplete Overpass response")
+                except Exception:
+                    failed_calls += 1
+                    raise
+                prepared.append((market["id"], prepare(payload, center, radius, in_store_points(state))))
+            except Exception as exc:
+                failed_markets += 1
+                errors.append(f'{attraction["contentId"]}: {type(exc).__name__}')
+        if markets:  # A batch of markets not yet ingested by market-stores has nothing to gate.
+            check_failures(markets, failed_markets, calls, failed_calls)
+        for market_id, command in prepared:
+            place_client._request("PUT", f"/internal/markets/{market_id}/osm", command)
+            place_client._request("POST", f"/internal/markets/{market_id}/rejudge")
+        batch = {"markets": len(prepared), "failedMarkets": failed_markets, "calls": calls,
+                 "failedCalls": failed_calls}
+        for key, value in batch.items():
+            summary[key] += value
+        summary["errors"].extend(errors)
+        summary["batches"] += 1
+        print(f"[market-osm] batch {json.dumps(batch)}", flush=True)
+    if not summary["markets"] and not summary["failedMarkets"]:
+        check_failures(0, 0, 0, 0)
     print(f"[market-osm] {json.dumps(summary)}", flush=True)
     return summary

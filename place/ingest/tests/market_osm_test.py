@@ -3,6 +3,7 @@ import copy
 import io
 import json
 from unittest.mock import Mock, patch
+from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs
 
 import pytest
@@ -108,9 +109,58 @@ def test_fetch_one_post_headers_query_and_no_source_field_loss():
 
 @pytest.mark.parametrize("payload", [{}, {"elements": [], "remark": "timeout"}])
 def test_incomplete_overpass_is_failure(payload):
-    with patch.object(osm,"urlopen",return_value=io.BytesIO(json.dumps(payload).encode())):
+    with patch.object(osm,"urlopen",return_value=io.BytesIO(json.dumps(payload).encode())) as transport:
         with pytest.raises(ValueError):
             osm.fetch_overpass(CENTER,300)
+    transport.assert_called_once()
+
+
+def test_overpass_502_succeeds_on_retry():
+    payload = response()
+    sleep = Mock()
+    with patch.object(osm,"urlopen",side_effect=[HTTPError(osm.OVERPASS_ENDPOINT,502,"unavailable",{},None),
+                                                io.BytesIO(json.dumps(payload).encode())]) as transport:
+        assert osm.fetch_overpass(CENTER,300,sleep=sleep) == payload
+    assert transport.call_count == 2
+    sleep.assert_called_once_with(10)
+
+
+@pytest.mark.parametrize("error", [HTTPError(osm.OVERPASS_ENDPOINT,code,"unavailable",{},None) for code in (429,502,503,504)] + [
+                                   URLError("offline"), TimeoutError("timeout")])
+def test_overpass_stops_after_two_retries(error):
+    sleep = Mock()
+    with patch.object(osm,"urlopen",side_effect=error) as transport:
+        with pytest.raises(type(error)):
+            osm.fetch_overpass(CENTER,300,sleep=sleep)
+    assert transport.call_count == 3
+    assert sleep.call_args_list == [((10,),),((30,),)]
+
+
+def test_overpass_400_does_not_retry():
+    sleep = Mock()
+    with patch.object(osm,"urlopen",side_effect=HTTPError(osm.OVERPASS_ENDPOINT,400,"bad query",{},None)) as transport:
+        with pytest.raises(HTTPError):
+            osm.fetch_overpass(CENTER,300,sleep=sleep)
+    transport.assert_called_once()
+    sleep.assert_not_called()
+
+
+def test_empty_attraction_list_preserves_failure_gate():
+    with patch.object(osm.place_client,"fetch_market_attractions",return_value=[]), \
+         patch.object(osm.place_client,"_request") as writes:
+        with pytest.raises(ValueError,match="Market failure ratio 0/0"):
+            osm.run(fetch=Mock(),sleep=Mock())
+    writes.assert_not_called()
+
+
+def test_batch_of_only_uningested_markets_does_not_stop_the_run():
+    count = osm.MARKET_BATCH_SIZE
+    with patch.object(osm.place_client,"fetch_market_attractions",return_value=[{"contentId":str(i)} for i in range(count+1)]), \
+         patch.object(osm.place_client,"market_state",side_effect=lambda cid:state() if int(cid) == count else None), \
+         patch.object(osm.place_client,"_request") as writes:
+        summary = osm.run(fetch=Mock(return_value=response()),sleep=Mock())
+    assert summary["markets"] == 1 and summary["batches"] == 2
+    assert writes.call_count == 2
 
 
 def test_existing_store_projection_only_uses_in_display_coordinates():
@@ -120,7 +170,7 @@ def test_existing_store_projection_only_uses_in_display_coordinates():
     assert osm.in_store_points(sample) == POLYGON[:-1]
 
 
-def test_orchestration_stages_all_reads_then_put_and_bodyless_rejudge():
+def test_orchestration_stages_batch_reads_then_put_and_bodyless_rejudge():
     events = []
     def read(cid):
         events.append("read")
@@ -143,6 +193,46 @@ def test_orchestration_stages_all_reads_then_put_and_bodyless_rejudge():
         assert set(put[2]) == {"fetchedAt","raw","boundary","paths"}
         assert put[2]["boundary"]["source"] == "DERIVED"
         assert post == ("POST",f"/internal/markets/{mid}/rejudge")
+
+
+def test_failed_second_batch_keeps_first_writes_and_never_reads_third():
+    count = osm.MARKET_BATCH_SIZE
+    events = []
+    def read(cid):
+        events.append(("read",int(cid)))
+        return state(int(cid))
+    def write(*args):
+        events.append(args[:2])
+    fetch = Mock(side_effect=[response()]*count + [OSError("offline")]*count)
+    with patch.object(osm.place_client,"fetch_market_attractions",return_value=[{"contentId":str(i)} for i in range(count*3)]), \
+         patch.object(osm.place_client,"market_state",side_effect=read) as reads, \
+         patch.object(osm.place_client,"_request",side_effect=write) as writes:
+        with pytest.raises(ValueError,match="failure ratio"):
+            osm.run(fetch=fetch,sleep=Mock())
+    assert writes.call_count == count*2
+    assert reads.call_count == fetch.call_count == count*2
+    assert events[count:count*3] == [event for mid in range(count) for event in
+        [("PUT",f"/internal/markets/{mid}/osm"),("POST",f"/internal/markets/{mid}/rejudge")]]
+    assert events[count*3] == ("read",count)
+
+
+def test_summary_aggregates_batches_and_paces_across_boundary(capsys):
+    count = osm.MARKET_BATCH_SIZE
+    sleep = Mock()
+    fetch = Mock(side_effect=[OSError("offline")] + [response()]*(count*2-1))
+    with patch.object(osm.place_client,"fetch_market_attractions",return_value=[{"contentId":str(i)} for i in range(count*2)]), \
+         patch.object(osm.place_client,"market_state",side_effect=lambda cid:state(int(cid))), \
+         patch.object(osm.place_client,"_request") as writes:
+        summary = osm.run(fetch=fetch,sleep=sleep)
+    assert summary == {"markets":count*2-1,"failedMarkets":1,"calls":count*2,
+                       "failedCalls":1,"errors":["0: OSError"],"batches":2}
+    assert writes.call_count == (count*2-1)*2
+    assert sleep.call_args_list == [((osm.REQUEST_INTERVAL_SECONDS,),)]*(count*2-1)
+    lines = capsys.readouterr().out.splitlines()
+    assert len(lines) == 3
+    assert [json.loads(line.removeprefix("[market-osm] batch ")) for line in lines[:2]] == [
+        {"markets":count-1,"failedMarkets":1,"calls":count,"failedCalls":1},
+        {"markets":count,"failedMarkets":0,"calls":count,"failedCalls":0}]
 
 
 @pytest.mark.parametrize("count,failed,allowed", [(20,1,True),(19,1,False),(20,2,False)])
