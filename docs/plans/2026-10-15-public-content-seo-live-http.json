@@ -1,0 +1,513 @@
+{
+  "checked_on": "2026-10-15",
+  "seo_commit": "e611387090317728cf6350ecfe6a92f6f77f4893",
+  "ci_followup_commit": "216c2b466875eb3b858d66a77bea5921f0d7c091",
+  "method": "Public HTTP only; no browser or account UI. Initial SEO rollout of search+portal-fe:e611387. Full raw output: /tmp/public-seo-live-20261015/results.json. Final portal follow-up image rollout is recorded in the Markdown report.",
+  "counts": {
+    "game_pages": 184,
+    "place_sample_pages": 63,
+    "place_sitemap_detail_urls": 63541,
+    "place_sitemap_pairs": 3520,
+    "nonreciprocal_count": 0
+  },
+  "game_urls_checked": [
+    "https://game.1989v.com/games/duel-defense",
+    "https://game.1989v.com/games/marine-command",
+    "https://game.1989v.com/games/epoch-of-nations",
+    "https://game.1989v.com/games/gwiyahaeng",
+    "https://game.1989v.com/games/landslide",
+    "https://game.1989v.com/games/arena",
+    "https://game.1989v.com/games/circle-trace",
+    "https://game.1989v.com/games/seven-seconds",
+    "https://game.1989v.com/games/zombie-lane",
+    "https://game.1989v.com/games/zombie-march",
+    "https://game.1989v.com/games/infinity-step",
+    "https://game.1989v.com/games/last-one",
+    "https://game.1989v.com/games/nine-bells",
+    "https://game.1989v.com/games/archer-outbreak",
+    "https://game.1989v.com/games/random-card-defense",
+    "https://game.1989v.com/games/infinity-tower",
+    "https://game.1989v.com/games/random-tower-defense",
+    "https://game.1989v.com/games/bee-guard",
+    "https://game.1989v.com/games/card-flip",
+    "https://game.1989v.com/games/marble-race",
+    "https://game.1989v.com/games/ladder-draw",
+    "https://game.1989v.com/games/pixel-logic",
+    "https://game.1989v.com/games/hoop-order",
+    "https://game.1989v.com/games/sum-trail",
+    "https://game.1989v.com/games/coin-corgi",
+    "https://game.1989v.com/games/aero-vendetta",
+    "https://game.1989v.com/games/curfew-siren",
+    "https://game.1989v.com/games/deadline",
+    "https://game.1989v.com/games/ashen-warband",
+    "https://game.1989v.com/games/nova-strike",
+    "https://game.1989v.com/games/raging-fist-saga",
+    "https://game.1989v.com/games/abyssal-crown",
+    "https://game.1989v.com/games/nether-return",
+    "https://game.1989v.com/games/sketch-sleuth",
+    "https://game.1989v.com/games/drift-continent",
+    "https://game.1989v.com/games/moon-angler",
+    "https://game.1989v.com/games/cliff-climber",
+    "https://game.1989v.com/games/relic-heir",
+    "https://game.1989v.com/games/element-pilgrim",
+    "https://game.1989v.com/games/hand-alchemy",
+    "https://game.1989v.com/games/spud-arena",
+    "https://game.1989v.com/games/midnight-tide",
+    "https://game.1989v.com/games/serpent-legion",
+    "https://game.1989v.com/games/dawn-ward",
+    "https://game.1989v.com/games/beat-dojo",
+    "https://game.1989v.com/games/breeze-links",
+    "https://game.1989v.com/games/alley-pool",
+    "https://game.1989v.com/games/starlight-farm",
+    "https://game.1989v.com/games/hero-dispatch",
+    "https://game.1989v.com/games/cog-foundry",
+    "https://game.1989v.com/games/abyss-drill",
+    "https://game.1989v.com/games/bracket-battle",
+    "https://game.1989v.com/games/acid-rain",
+    "https://game.1989v.com/games/rope-works",
+    "https://game.1989v.com/games/stone-sage",
+    "https://game.1989v.com/games/mine-pioneer",
+    "https://game.1989v.com/games/crate-shift",
+    "https://game.1989v.com/games/block-burst",
+    "https://game.1989v.com/games/number-garden",
+    "https://game.1989v.com/games/royal-grid",
+    "https://game.1989v.com/games/pixel-mine",
+    "https://game.1989v.com/games/quad-weave",
+    "https://game.1989v.com/games/word-warden",
+    "https://game.1989v.com/games/rift-front",
+    "https://game.1989v.com/games/dice-citadel",
+    "https://game.1989v.com/games/storm-corridor",
+    "https://game.1989v.com/games/crimson-ravine",
+    "https://game.1989v.com/games/wall-breaker",
+    "https://game.1989v.com/games/cave-glide",
+    "https://game.1989v.com/games/rune-merge",
+    "https://game.1989v.com/games/golden-forge",
+    "https://game.1989v.com/games/echo-duel",
+    "https://game.1989v.com/games/frost-outpost",
+    "https://game.1989v.com/games/ember-temple",
+    "https://game.1989v.com/games/iron-vanguard",
+    "https://game.1989v.com/games/gear-bastion",
+    "https://game.1989v.com/games/gate-holdout",
+    "https://game.1989v.com/games/outlaw-frontier",
+    "https://game.1989v.com/games/monster-tamer",
+    "https://game.1989v.com/games/depth-delver",
+    "https://game.1989v.com/games/overworld-quest",
+    "https://game.1989v.com/games/snake",
+    "https://game.1989v.com/en/games/duel-defense",
+    "https://game.1989v.com/en/games/marine-command",
+    "https://game.1989v.com/en/games/epoch-of-nations",
+    "https://game.1989v.com/en/games/gwiyahaeng",
+    "https://game.1989v.com/en/games/landslide",
+    "https://game.1989v.com/en/games/arena",
+    "https://game.1989v.com/en/games/circle-trace",
+    "https://game.1989v.com/en/games/seven-seconds",
+    "https://game.1989v.com/en/games/zombie-lane",
+    "https://game.1989v.com/en/games/zombie-march",
+    "https://game.1989v.com/en/games/infinity-step",
+    "https://game.1989v.com/en/games/last-one",
+    "https://game.1989v.com/en/games/nine-bells",
+    "https://game.1989v.com/en/games/archer-outbreak",
+    "https://game.1989v.com/en/games/random-card-defense",
+    "https://game.1989v.com/en/games/infinity-tower",
+    "https://game.1989v.com/en/games/random-tower-defense",
+    "https://game.1989v.com/en/games/bee-guard",
+    "https://game.1989v.com/en/games/card-flip",
+    "https://game.1989v.com/en/games/marble-race",
+    "https://game.1989v.com/en/games/ladder-draw",
+    "https://game.1989v.com/en/games/pixel-logic",
+    "https://game.1989v.com/en/games/hoop-order",
+    "https://game.1989v.com/en/games/sum-trail",
+    "https://game.1989v.com/en/games/coin-corgi",
+    "https://game.1989v.com/en/games/aero-vendetta",
+    "https://game.1989v.com/en/games/curfew-siren",
+    "https://game.1989v.com/en/games/deadline",
+    "https://game.1989v.com/en/games/ashen-warband",
+    "https://game.1989v.com/en/games/nova-strike",
+    "https://game.1989v.com/en/games/raging-fist-saga",
+    "https://game.1989v.com/en/games/abyssal-crown",
+    "https://game.1989v.com/en/games/nether-return",
+    "https://game.1989v.com/en/games/sketch-sleuth",
+    "https://game.1989v.com/en/games/drift-continent",
+    "https://game.1989v.com/en/games/moon-angler",
+    "https://game.1989v.com/en/games/cliff-climber",
+    "https://game.1989v.com/en/games/relic-heir",
+    "https://game.1989v.com/en/games/element-pilgrim",
+    "https://game.1989v.com/en/games/hand-alchemy",
+    "https://game.1989v.com/en/games/spud-arena",
+    "https://game.1989v.com/en/games/midnight-tide",
+    "https://game.1989v.com/en/games/serpent-legion",
+    "https://game.1989v.com/en/games/dawn-ward",
+    "https://game.1989v.com/en/games/beat-dojo",
+    "https://game.1989v.com/en/games/breeze-links",
+    "https://game.1989v.com/en/games/alley-pool",
+    "https://game.1989v.com/en/games/starlight-farm",
+    "https://game.1989v.com/en/games/hero-dispatch",
+    "https://game.1989v.com/en/games/cog-foundry",
+    "https://game.1989v.com/en/games/abyss-drill",
+    "https://game.1989v.com/en/games/bracket-battle",
+    "https://game.1989v.com/en/games/acid-rain",
+    "https://game.1989v.com/en/games/rope-works",
+    "https://game.1989v.com/en/games/stone-sage",
+    "https://game.1989v.com/en/games/mine-pioneer",
+    "https://game.1989v.com/en/games/crate-shift",
+    "https://game.1989v.com/en/games/block-burst",
+    "https://game.1989v.com/en/games/number-garden",
+    "https://game.1989v.com/en/games/royal-grid",
+    "https://game.1989v.com/en/games/pixel-mine",
+    "https://game.1989v.com/en/games/quad-weave",
+    "https://game.1989v.com/en/games/word-warden",
+    "https://game.1989v.com/en/games/rift-front",
+    "https://game.1989v.com/en/games/dice-citadel",
+    "https://game.1989v.com/en/games/storm-corridor",
+    "https://game.1989v.com/en/games/crimson-ravine",
+    "https://game.1989v.com/en/games/wall-breaker",
+    "https://game.1989v.com/en/games/cave-glide",
+    "https://game.1989v.com/en/games/rune-merge",
+    "https://game.1989v.com/en/games/golden-forge",
+    "https://game.1989v.com/en/games/echo-duel",
+    "https://game.1989v.com/en/games/frost-outpost",
+    "https://game.1989v.com/en/games/ember-temple",
+    "https://game.1989v.com/en/games/iron-vanguard",
+    "https://game.1989v.com/en/games/gear-bastion",
+    "https://game.1989v.com/en/games/gate-holdout",
+    "https://game.1989v.com/en/games/outlaw-frontier",
+    "https://game.1989v.com/en/games/monster-tamer",
+    "https://game.1989v.com/en/games/depth-delver",
+    "https://game.1989v.com/en/games/overworld-quest",
+    "https://game.1989v.com/en/games/snake",
+    "https://game.1989v.com/games/genre/defense",
+    "https://game.1989v.com/games/genre/action",
+    "https://game.1989v.com/games/genre/strategy",
+    "https://game.1989v.com/games/genre/rpg",
+    "https://game.1989v.com/games/genre/arcade",
+    "https://game.1989v.com/games/genre/puzzle",
+    "https://game.1989v.com/games/genre/versus",
+    "https://game.1989v.com/games/genre/casual",
+    "https://game.1989v.com/games/genre/decider",
+    "https://game.1989v.com/en/games/genre/defense",
+    "https://game.1989v.com/en/games/genre/action",
+    "https://game.1989v.com/en/games/genre/strategy",
+    "https://game.1989v.com/en/games/genre/rpg",
+    "https://game.1989v.com/en/games/genre/arcade",
+    "https://game.1989v.com/en/games/genre/puzzle",
+    "https://game.1989v.com/en/games/genre/versus",
+    "https://game.1989v.com/en/games/genre/casual",
+    "https://game.1989v.com/en/games/genre/decider",
+    "https://game.1989v.com/",
+    "https://game.1989v.com/en"
+  ],
+  "place_sample_urls_checked": [
+    "https://place.1989v.com/attractions/1",
+    "https://place.1989v.com/attractions/9",
+    "https://place.1989v.com/attractions/17968",
+    "https://place.1989v.com/attractions/19869",
+    "https://place.1989v.com/attractions/7686",
+    "https://place.1989v.com/attractions/810",
+    "https://place.1989v.com/attractions/21709",
+    "https://place.1989v.com/attractions/21608",
+    "https://place.1989v.com/attractions/7986",
+    "https://place.1989v.com/en/attractions/21",
+    "https://place.1989v.com/en/attractions/24",
+    "https://place.1989v.com/en/attractions/18248",
+    "https://place.1989v.com/en/attractions/22340",
+    "https://place.1989v.com/en/attractions/14901",
+    "https://place.1989v.com/en/attractions/15000",
+    "https://place.1989v.com/en/attractions/14496",
+    "https://place.1989v.com/en/attractions/14277",
+    "https://place.1989v.com/en/attractions/15210",
+    "https://place.1989v.com/attractions/16730",
+    "https://place.1989v.com/attractions/4943",
+    "https://place.1989v.com/attractions/19613",
+    "https://place.1989v.com/attractions/19614",
+    "https://place.1989v.com/attractions/64403",
+    "https://place.1989v.com/attractions/48467",
+    "https://place.1989v.com/attractions/31222",
+    "https://place.1989v.com/attractions/27593",
+    "https://place.1989v.com/attractions/63217",
+    "https://place.1989v.com/attractions/19620",
+    "https://place.1989v.com/attractions/19621",
+    "https://place.1989v.com/attractions/58266",
+    "https://place.1989v.com/attractions/58272",
+    "https://place.1989v.com/attractions/67016",
+    "https://place.1989v.com/attractions/63625",
+    "https://place.1989v.com/attractions/50611",
+    "https://place.1989v.com/attractions/27616",
+    "https://place.1989v.com/attractions/63653",
+    "https://place.1989v.com/en/attractions/14888",
+    "https://place.1989v.com/en/attractions/15078",
+    "https://place.1989v.com/en/attractions/59341",
+    "https://place.1989v.com/en/attractions/59456",
+    "https://place.1989v.com/en/attractions/38869",
+    "https://place.1989v.com/en/attractions/41967",
+    "https://place.1989v.com/en/attractions/37180",
+    "https://place.1989v.com/en/attractions/59414",
+    "https://place.1989v.com/en/attractions/45343",
+    "https://place.1989v.com/attractions/61724",
+    "https://place.1989v.com/attractions/61725",
+    "https://place.1989v.com/attractions/68295",
+    "https://place.1989v.com/attractions/68296",
+    "https://place.1989v.com/attractions/61760",
+    "https://place.1989v.com/attractions/61909",
+    "https://place.1989v.com/attractions/62392",
+    "https://place.1989v.com/attractions/61848",
+    "https://place.1989v.com/attractions/61865",
+    "https://place.1989v.com/en/attractions/62621",
+    "https://place.1989v.com/en/attractions/62622",
+    "https://place.1989v.com/en/attractions/68297",
+    "https://place.1989v.com/en/attractions/68298",
+    "https://place.1989v.com/en/attractions/62772",
+    "https://place.1989v.com/en/attractions/62709",
+    "https://place.1989v.com/en/attractions/62643",
+    "https://place.1989v.com/en/attractions/65814",
+    "https://place.1989v.com/en/attractions/62624"
+  ],
+  "representative_pages": [
+    {
+      "url": "https://game.1989v.com/games/marine-command",
+      "status": "200",
+      "title": "궁수 키우기: 거점 원정 — RPG 게임 | 1989v 게임",
+      "h1": [
+        "궁수 키우기: 거점 원정"
+      ],
+      "canonical": [
+        "https://game.1989v.com/games/marine-command"
+      ],
+      "robots": " ",
+      "render": "",
+      "alternates": {
+        "ko": "https://game.1989v.com/games/marine-command",
+        "en": "https://game.1989v.com/en/games/marine-command",
+        "x-default": "https://game.1989v.com/en/games/marine-command"
+      }
+    },
+    {
+      "url": "https://game.1989v.com/games/archer-outbreak",
+      "status": "200",
+      "title": "궁수 키우기: 좀비 개척 — 액션 게임 | 1989v 게임",
+      "h1": [
+        "궁수 키우기: 좀비 개척"
+      ],
+      "canonical": [
+        "https://game.1989v.com/games/archer-outbreak"
+      ],
+      "robots": " ",
+      "render": "",
+      "alternates": {
+        "ko": "https://game.1989v.com/games/archer-outbreak",
+        "en": "https://game.1989v.com/en/games/archer-outbreak",
+        "x-default": "https://game.1989v.com/en/games/archer-outbreak"
+      }
+    },
+    {
+      "url": "https://game.1989v.com/games/marble-race",
+      "status": "200",
+      "title": "핀볼 추첨·내기 게임 — 구슬 레이스 | 1989v 게임",
+      "h1": [
+        "구슬 레이스 — 핀볼 추첨·내기 게임"
+      ],
+      "canonical": [
+        "https://game.1989v.com/games/marble-race"
+      ],
+      "robots": " ",
+      "render": "",
+      "alternates": {
+        "ko": "https://game.1989v.com/games/marble-race",
+        "en": "https://game.1989v.com/en/games/marble-race",
+        "x-default": "https://game.1989v.com/en/games/marble-race"
+      }
+    },
+    {
+      "url": "https://game.1989v.com/en/games/marine-command",
+      "status": "200",
+      "title": "Archer Expedition — RPG Game | 1989v 게임",
+      "h1": [
+        "Archer Expedition"
+      ],
+      "canonical": [
+        "https://game.1989v.com/en/games/marine-command"
+      ],
+      "robots": " ",
+      "render": "",
+      "alternates": {
+        "ko": "https://game.1989v.com/games/marine-command",
+        "en": "https://game.1989v.com/en/games/marine-command",
+        "x-default": "https://game.1989v.com/en/games/marine-command"
+      }
+    },
+    {
+      "url": "https://game.1989v.com/en/games/marble-race",
+      "status": "200",
+      "title": "Pinball Random Picker — Marble Race | 1989v Games",
+      "h1": [
+        "Marble Race — Pinball Random Picker"
+      ],
+      "canonical": [
+        "https://game.1989v.com/en/games/marble-race"
+      ],
+      "robots": " ",
+      "render": "",
+      "alternates": {
+        "ko": "https://game.1989v.com/games/marble-race",
+        "en": "https://game.1989v.com/en/games/marble-race",
+        "x-default": "https://game.1989v.com/en/games/marble-race"
+      }
+    },
+    {
+      "url": "https://place.1989v.com/attractions/1",
+      "status": "200",
+      "title": "경복궁 (서울특별시 종로구) 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | K-관광",
+      "h1": [
+        "경복궁"
+      ],
+      "canonical": [
+        "https://place.1989v.com/attractions/1"
+      ],
+      "robots": " ",
+      "render": "ssr",
+      "alternates": {
+        "ko": "https://place.1989v.com/attractions/1",
+        "en": "https://place.1989v.com/en/attractions/21",
+        "x-default": "https://place.1989v.com/en/attractions/21"
+      }
+    },
+    {
+      "url": "https://place.1989v.com/attractions/21709",
+      "status": "200",
+      "title": "무지개캠핑장 (충청남도 천안시 동남구) 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | K-관광",
+      "h1": [
+        "무지개캠핑장"
+      ],
+      "canonical": [
+        "https://place.1989v.com/attractions/21709"
+      ],
+      "robots": " ",
+      "render": "ssr",
+      "alternates": {}
+    },
+    {
+      "url": "https://place.1989v.com/en/attractions/21",
+      "status": "200",
+      "title": "Visit Gyeongbokgung Palace (Seoul, Jongno-gu) — Map, Photos & Things to Do Nearby | K-Tour",
+      "h1": [
+        "Gyeongbokgung Palace"
+      ],
+      "canonical": [
+        "https://place.1989v.com/en/attractions/21"
+      ],
+      "robots": " ",
+      "render": "ssr",
+      "alternates": {
+        "ko": "https://place.1989v.com/attractions/1",
+        "en": "https://place.1989v.com/en/attractions/21",
+        "x-default": "https://place.1989v.com/en/attractions/21"
+      }
+    }
+  ],
+  "redirects": [
+    {
+      "url": "https://1989v.com/games?utm_source=seo%2Fcheck&x=1&x=2&empty=",
+      "status": 301,
+      "location": "https://game.1989v.com/?utm_source=seo%2Fcheck&x=1&x=2&empty=",
+      "robots": ""
+    },
+    {
+      "url": "https://1989v.com/en?utm_source=seo%2Fcheck&x=1&x=2&empty=",
+      "status": 301,
+      "location": "https://game.1989v.com/en?utm_source=seo%2Fcheck&x=1&x=2&empty=",
+      "robots": ""
+    },
+    {
+      "url": "https://1989v.com/en/?utm_source=seo%2Fcheck&x=1&x=2&empty=",
+      "status": 301,
+      "location": "https://game.1989v.com/en?utm_source=seo%2Fcheck&x=1&x=2&empty=",
+      "robots": ""
+    },
+    {
+      "url": "https://game.1989v.com/games?utm_source=seo%2Fcheck&x=1&x=2&empty=",
+      "status": 301,
+      "location": "https://game.1989v.com/?utm_source=seo%2Fcheck&x=1&x=2&empty=",
+      "robots": ""
+    },
+    {
+      "url": "https://1989v.com/games/marine-command?utm_source=seo%2Fcheck&x=1&x=2&empty=",
+      "status": 301,
+      "location": "https://game.1989v.com/games/marine-command?utm_source=seo%2Fcheck&x=1&x=2&empty=",
+      "robots": ""
+    },
+    {
+      "url": "https://1989v.com/place?utm_source=seo%2Fcheck&x=1&x=2&empty=",
+      "status": 301,
+      "location": "https://place.1989v.com/?utm_source=seo%2Fcheck&x=1&x=2&empty=",
+      "robots": ""
+    },
+    {
+      "url": "https://place.1989v.com/place/attractions/1?utm_source=seo%2Fcheck&x=1&x=2&empty=",
+      "status": 301,
+      "location": "https://place.1989v.com/attractions/1?utm_source=seo%2Fcheck&x=1&x=2&empty=",
+      "robots": ""
+    },
+    {
+      "url": "https://1989v.com/en/place/attractions/21?utm_source=seo%2Fcheck&x=1&x=2&empty=",
+      "status": 301,
+      "location": "https://place.1989v.com/en/attractions/21?utm_source=seo%2Fcheck&x=1&x=2&empty=",
+      "robots": ""
+    },
+    {
+      "url": "https://1989v.com/attractions/1?utm_source=seo%2Fcheck&x=1&x=2&empty=",
+      "status": 301,
+      "location": "https://place.1989v.com/attractions/1?utm_source=seo%2Fcheck&x=1&x=2&empty=",
+      "robots": ""
+    },
+    {
+      "url": "https://1989v.com/en/attractions/21?utm_source=seo%2Fcheck&x=1&x=2&empty=",
+      "status": 301,
+      "location": "https://place.1989v.com/en/attractions/21?utm_source=seo%2Fcheck&x=1&x=2&empty=",
+      "robots": ""
+    },
+    {
+      "url": "https://1989v.com/regions/11?utm_source=seo%2Fcheck&x=1&x=2&empty=",
+      "status": 301,
+      "location": "https://place.1989v.com/regions/11?utm_source=seo%2Fcheck&x=1&x=2&empty=",
+      "robots": ""
+    }
+  ],
+  "privacy": [
+    {
+      "url": "https://game.1989v.com/?r=SEO_CHECK",
+      "status": 200,
+      "location": null,
+      "robots": "noindex, follow"
+    },
+    {
+      "url": "https://game.1989v.com/party",
+      "status": 200,
+      "location": null,
+      "robots": "noindex, follow"
+    },
+    {
+      "url": "https://game.1989v.com/en/party/SEO_CHECK",
+      "status": 200,
+      "location": null,
+      "robots": "noindex, follow"
+    },
+    {
+      "url": "https://game.1989v.com/draw?r=SEO_CHECK",
+      "status": 200,
+      "location": null,
+      "robots": ""
+    },
+    {
+      "url": "https://game.1989v.com/en?r=SEO_CHECK",
+      "status": 200,
+      "location": null,
+      "robots": ""
+    },
+    {
+      "url": "https://game.1989v.com/games/marble-race/index.html",
+      "status": 200,
+      "location": null,
+      "robots": "noindex, follow"
+    }
+  ],
+  "errors": []
+}

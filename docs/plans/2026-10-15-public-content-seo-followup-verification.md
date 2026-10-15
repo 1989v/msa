@@ -113,9 +113,9 @@
 | overworld-quest | `overworld-quest/index.html` |
 | snake | `snake/index.html` · `snake/game.js` |
 
-## 수행하지 않은 것
+## 구현 단계에서 수행하지 않은 것
 
-브라우저·CUA·Playwright/UI 접근, Search Console/서치어드바이저 계정 조회·제출, 외부 게시·전송·배포, 게임 물리 전수검사는 수행하지 않았다. 검색엔진 색인·순위 상승은 검증 결과가 아니다. 부모 세션이 fresh-context 리뷰를 완료했고 통합을 담당한다.
+구현 서브에이전트는 브라우저·CUA·Playwright/UI 접근, Search Console/서치어드바이저 계정 조회·제출, 외부 게시·전송·배포, 게임 물리 전수검사를 수행하지 않았다. 부모 세션의 배포는 아래 별도 기록을 따른다. 검색엔진 색인·순위 상승은 검증 결과가 아니다.
 
 ## CI sparse checkout 후속 (2026-10-15)
 
@@ -130,3 +130,16 @@
 - 이전 CI `38630379376`도 DrillExportSpec.kt:53의 파생JSON 동일성에서 실패했다. 현 소스를 `env -u DRILL_EXPORT ./gradlew :code-dictionary:feature:test --tests '*DrillExportSpec'`로 읽기 전용 재현한 결과2개 중1개 실패: 적용 상태·실제 파일/심볼 검사는 통과하고 `ads.json 가 온톨로지와 다르다`만 남았다 (`/tmp/public-seo-drill-readonly.log`).
 - 현재 JSON5개 코드 참조를 확인한 결과 `ads-txt`의 nginx ads.txt 블록은 내용이 같고 행만158→198로 이동했다. 기존 실패에 더해 이번 nginx 앞부분 삽입도 행 위치를 옮겼다. 부모 승인 후 지정 명령 `DRILL_EXPORT=write ./gradlew :code-dictionary:feature:test --tests '*DrillExportSpec'` → `BUILD SUCCESSFUL in 31s`. 변경은 `portal-fe/src/content/drill/ads.json`의 start158→198/end163→203 두 숫자뿐이다. 다른JSON·온톨로지·생성 규칙·제품 코드는 바꾸지 않았다.
 - 이어 `env -u DRILL_EXPORT ./gradlew :code-dictionary:feature:test --tests '*DrillExportSpec' --rerun` → `BUILD SUCCESSFUL in 29s`, XML2 tests/0 failures/0 errors (`/tmp/public-seo-drill-final.log`). 테스트를 실제 재실행했고 UP-TO-DATE를 검증 근거로 쓰지 않았다. 전체 ontology matrix·전체 FE 빌드/API재수집은 반복하지 않았다.
+
+## frontend CI 시간 예산 보정
+
+- 최신 전체 frontend CI는 job 시작02:28:39Z 뒤02:38:40.954Z에 `Test Files 146 passed | 1 skipped`, `Tests 1540 passed | 6 skipped`, `Duration 573.37s`를 출력하고02:38:41.013Z에 `The operation was canceled`로 끝났다 (`/tmp/public-seo-current-frontend.log`). 이전 baseline도145파일/1534tests 통과·같은6tests skipped, Duration574.94s 직후 취소였다 (`/tmp/public-seo-prior-frontend.log`). 테스트 실행 자체가 약9분34초라 설치·타입체크·후속 golden검사·정리를 포함한 job10분 한도를 소진한다.
+- 승인된 최소 수정은 `.github/workflows/ci.yml`의 frontend-gate `timeout-minutes: 10 → 15` 한 값이다. assertion·test선택·workers·제품 코드는 변경하지 않았다. Ruby YAML 파싱과 HEAD 대비 구조 비교로 이 값만 달라짐을 확인했고 `git diff --check`를 실행했다. 전체 로컬 테스트·빌드·API재수집은 반복하지 않았다. 마지막 CI 실행 완료 확인과 커밋·푸시는 부모가 담당한다.
+
+## 부모 통합·실서비스 검증
+
+- 구현 `e61138709`, CI/생성물 후속 `216c2b466`를 활성 훅과 구조 검사를 통과해 main에 푸시했다. 로컬 공유 복제본의 origin 참조로 비공개 모듈 원격 판정이 막힌 첫 시도는 해당 복제본의 실제 GitHub origin을 갱신해 해결했다. gitlink는 바꾸지 않았고 GitHub 계정은 매 푸시 후 이전 계정으로 복구했다.
+- 이미지 발행: [첫 구현 배포](https://github.com/1989v/msa/actions/runs/38670315365), [후속 프런트엔드 배포](https://github.com/1989v/msa/actions/runs/38671059316). 최종 운영 이미지 search:e611387(세대158/관측158), portal-fe:216c2b4(577/577), 각각 available/updated1. Argo는 `8cf9333f4`에서 `Synced`·`Succeeded successfully synced (all tasks run)`을 보고했다.
+- 첫 SEO 이미지의 search/portal-fe 모두 `successfully rolled out` 확인 후 공개 HTTP를 검사했다. 게임 공개184페이지(한영 상세164+장르18+허브2), 관광지 표본63페이지, 서버301/쿼리 보존11개, private/asset 헤더6개 =264항목 오류0. 제목 고유성·초기 안내·canonical·noindex·SSR·지역 구분을 확인했다. [검증 JSON](2026-10-15-public-content-seo-live-http.json).
+- 공개 관광지 sitemap4개는 동적 행사554 URL을 포함한 상세63,541 URL, 한영3,520쌍, 상호 연결 위반0이다. 로컬 정적 상세62,987 URL과 비교할 때 동적 행사 포함 여부를 구분한다. 매칭 기준이나 색인을 조작해 늘린 것이 아니라 새 빌드에 기존 검증된 데이터를 반영했다.
+- 브라우저·계정 UI는 사용하지 않았다. Search Console/네이버 계정의 실제 색인 상태·검색어 노출·평균순위·sitemap 제출은 수행하지 않았다. 기존 관광지 IndexNow 자동 제출 확인은 감사 문서에 기록했다.
