@@ -55,18 +55,21 @@ class MarketSearchQueryRepository(@Qualifier("placeJpaQueryFactory") private val
         .then(store.goodPriceMenuNames).otherwise(partner.goodPriceMenuNames)
 
     /**
-     * Stores whose effective membership can be IN: ingested or judged IN, or a membership edit on the row
-     * or its partner. Read from idx_market_store_candidate alone, so the wide store rows (raw source JSON)
-     * are fetched only for these ids instead of the whole table.
+     * Ids of stores whose effective membership can be IN: ingested or judged IN, or a membership edit on
+     * the row or its partner. Read from idx_market_store_candidate alone, then handed to the main query as
+     * a key list: as a subquery MySQL flattens it into a per-row lookup and reads every wide store row
+     * (raw source JSON) in the table instead.
      */
-    private fun candidates() = QMarketStoreJpaEntity("candidateStore").let { row ->
+    private fun candidateIds(): List<Long> {
+        val row = QMarketStoreJpaEntity("candidateStore")
         val edited = QMarketStoreOverrideJpaEntity("candidateEdit")
         val editedIds = JPAExpressions.select(edited.storeId).from(edited).where(edited.field.eq(MarketStoreField.MEMBERSHIP))
-        JPAExpressions.select(row.id).from(row).where(row.membership.eq(MarketMembershipStatus.IN)
+        return factory.select(row.id).from(row).where(row.membership.eq(MarketMembershipStatus.IN)
             .or(row.judgedMembership.eq(MarketMembershipStatus.IN)).or(row.id.`in`(editedIds)).or(row.pairedStoreId.`in`(editedIds)))
+            .fetch().filterNotNull()
     }
 
-    private fun base(): JPAQuery<*> {
+    private fun base(candidates: List<Long>): JPAQuery<*> {
         val query = factory.from(store).leftJoin(partner).on(partner.id.eq(store.pairedStoreId))
             .join(market).on(market.id.eq(store.marketId))
         listOf(MarketStoreField.NAME, MarketStoreField.ITEMS, MarketStoreField.MEMBERSHIP).forEach { field ->
@@ -76,12 +79,12 @@ class MarketSearchQueryRepository(@Qualifier("placeJpaQueryFactory") private val
                 .leftJoin(second).on(second.storeId.eq(partner.id), second.field.eq(field))
         }
         // A matched pair keeps ONNURI identity. Partner source membership is deliberately not inherited.
-        return query.where(store.id.`in`(candidates()), store.source.ne(MarketStoreSource.SANGGA).or(partner.id.isNull),
+        return query.where(store.id.`in`(candidates), store.source.ne(MarketStoreSource.SANGGA).or(partner.id.isNull),
             membership.eq("IN"))
     }
 
     private fun matches(value: StringExpression, query: String) = normalized(value).containsIgnoreCase(query)
-    private fun matching(query: String): JPAQuery<*> = base().where(
+    private fun matching(query: String, candidates: List<Long>): JPAQuery<*> = base(candidates).where(
         matches(name, query).or(matches(items, query)).or(matches(menuNames, query))
             .or(categories.map { matches(it, query) }.reduce { a, b -> a.or(b) }))
 
@@ -102,18 +105,23 @@ class MarketSearchQueryRepository(@Qualifier("placeJpaQueryFactory") private val
     fun stores(query: String, pageable: Pageable): Candidates {
         val rank = CaseBuilder().`when`(matches(name, query)).then(0)
             .`when`(matches(items, query)).then(1).`when`(matches(menuNames, query)).then(2).otherwise(3)
-        val rows = matching(query).select(store, partner)
+        val candidates = candidateIds()
+        if (candidates.isEmpty()) return Candidates(emptyList(), 0)
+        val rows = matching(query, candidates).select(store, partner)
             .orderBy(rank.asc(), market.name.asc(), name.asc(), store.id.asc())
             .offset(pageable.offset).limit(pageable.pageSize.toLong()).fetch()
             .map { requireNotNull(it[store]).toDomain() to it[partner]?.toDomain() }
-        val total = matching(query).select(store.count()).fetchOne() ?: 0L
+        val total = matching(query, candidates).select(store.count()).fetchOne() ?: 0L
         return Candidates(rows, total)
     }
 
-    fun counts(query: String = ""): Map<Long, Long> = base()
-        .where(if (query.isEmpty()) null else matches(market.name, query))
-        .select(store.marketId, store.count()).groupBy(store.marketId)
-        .fetch().associate { requireNotNull(it[store.marketId]) to requireNotNull(it[store.count()]) }
+    fun counts(query: String = ""): Map<Long, Long> {
+        val candidates = candidateIds()
+        if (candidates.isEmpty()) return emptyMap()
+        return base(candidates).where(if (query.isEmpty()) null else matches(market.name, query))
+            .select(store.marketId, store.count()).groupBy(store.marketId)
+            .fetch().associate { requireNotNull(it[store.marketId]) to requireNotNull(it[store.count()]) }
+    }
 
     fun marketRows(query: String, counts: Map<Long, Long>, pageable: Pageable): List<com.kgd.place.domain.market.model.Market> {
         val boundary = QMarketBoundaryJpaEntity.marketBoundaryJpaEntity
