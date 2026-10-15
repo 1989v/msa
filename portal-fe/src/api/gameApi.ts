@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { attachRefreshRetry } from '../auth/refresh';
-import { descriptionOf, GENRE_LABELS_EN, GENRE_LABELS_KO } from '../seo/copy.mjs';
+import { descriptionOf, titleOf, GENRE_LABELS_EN, GENRE_LABELS_KO } from '../seo/copy.mjs';
 
 // VITE_API_URL 이 빈 문자열이면 same-origin relative path 사용 (운영 / K8s ingress 경유).
 // game API 는 code-dictionary:app 에 폴드되어 있어 동일 오리진(8089)이다 (ADR-0059).
@@ -69,8 +69,8 @@ export function genreLabel(genre: GameGenre, lang: GameLang): string {
   return (lang === 'en' ? GENRE_LABELS_EN : GENRE_LABELS)[genre] ?? genre;
 }
 
-export function displayTitle(game: { title: string; titleEn: string | null }, lang: GameLang): string {
-  return lang === 'en' && game.titleEn ? game.titleEn : game.title;
+export function displayTitle(game: { title: string; titleEn: string | null; slug?: string }, lang: GameLang): string {
+  return titleOf(game, lang);
 }
 
 export function displayDescription(

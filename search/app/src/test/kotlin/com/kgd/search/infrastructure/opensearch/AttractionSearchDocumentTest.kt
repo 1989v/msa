@@ -13,6 +13,8 @@ import tools.jackson.databind.DeserializationFeature
 import tools.jackson.databind.cfg.DateTimeFeature
 import tools.jackson.module.kotlin.jacksonMapperBuilder
 import tools.jackson.module.kotlin.readValue
+import com.kgd.search.application.attraction.ltr.AttractionLtrReranker
+import com.kgd.search.application.attraction.port.LtrRetrievalFeatures
 import java.time.DayOfWeek
 import java.time.LocalDateTime
 
@@ -28,6 +30,21 @@ class AttractionSearchDocumentTest : BehaviorSpec({
         .build()
 
     val base = """"id":"1","contentId":"126508","lang":"ko","title":"경복궁","location":{"lat":37.5,"lon":126.9}"""
+
+    given("LTR 이 문서에서 읽는 필드") {
+        `when`("색인 문서를 도메인으로 바꿔 피처를 만들면") {
+            // 색인에는 있는데 읽기 모델이 버리는 필드는 그 피처를 늘 0 으로 만든다 — 실내 피처가 그렇게 빠진 채 배포됐었다
+            val doc = mapper.readValue<AttractionSearchDocument>(
+                """{$base,"category":"history","contentTypeId":"12","setting":"indoor","overview":"조선 궁궐"}""",
+            ).toDomain()
+            val names = listOf("cat=history", "type=12", "setting=indoor", "title_len", "overview_len", "title_has_query")
+            val x = AttractionLtrReranker.vectorOf(names, 0, "경복궁", "ko", doc, LtrRetrievalFeatures())
+
+            then("분류 · 유형 · 실내 · 제목 · 개요가 모두 피처에 닿는다") {
+                x.toList() shouldBe listOf(1.0, 1.0, 1.0, 3.0, 5.0, 1.0)
+            }
+        }
+    }
 
     given("색인 문서에 원천 관광 유형이 있을 때") {
         `when`("도메인으로 바꾸면") {

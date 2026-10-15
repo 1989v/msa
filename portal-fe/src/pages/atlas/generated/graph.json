@@ -1,6 +1,6 @@
 {
-"revision": 20,
-"source": "ec9705a63238ad7869bbff16430e04523b30665759ada865b0a5955421d95fbc",
+"revision": 22,
+"source": "cb7f6b5cff8bf7150417ffcca9e1683ebe8d3d1f1f6750961984f63d5582ec65",
 "kinds": ["DOMAIN", "STAGE", "MECHANISM", "TERM", "TECHNOLOGY", "PROBLEM", "METRIC"],
 "edgeKinds": ["CONTAINS", "FLOWS_TO", "USES", "IMPLEMENTS", "AFFECTS", "CAUSES", "MITIGATES", "MEASURED_BY", "ALTERNATIVE_TO"],
 "domains": [
@@ -19,7 +19,7 @@
 ["infrastructure", "인프라 · 배포", "코드를 이미지로 굽고, 선언한 상태대로 클러스터에 올리고, 트래픽을 받아 살아 있게 유지하는 일. 이 레포는 GitHub Actions 가 Jib 으로 이미지를 굽고 Argo CD 가 단일 노드 k3s 에 GitOps 로 올린다", "infra-platform", 61],
 ["observability", "관측성 · 성능", "돌고 있는 시스템이 내놓는 신호(메트릭 · 로그 · 트레이스 · 프로파일)로 무엇이 왜 느리고 왜 실패하는지 밖에서 알아내는 일. 목표(SLO)를 정해 알림을 걸고, 지연의 자릿수와 용량을 숫자로 판단한다", "obs-observability", 26],
 ["testing", "테스트", "코드가 의도대로 동작하는지 실행해서 확인하는 일. 어떻게 쓸지 정하고, 어디까지 볼지 고르고, 의존을 떼어 내고, 데이터를 갖추고, 결과를 흔들리지 않게 하고, 그 검사가 실제로 무는지 증명하는 순서로 읽는다", "test-verification", 37],
-["search", "검색 시스템", "콘텐츠를 이해하고, 색인을 만들고, 검색어에 답하고, 결과를 재고, 그것을 떠받치는 서빙까지 — 콘텐츠 이해 · 색인 · 파이프라인 · 검색어 파이프라인 · 평가 · 로그 · 서빙 · 운영으로 읽는 검색 아키텍처. 색인 내부 구조와 용어는 곁에 둔다", "search-system", 83],
+["search", "검색 시스템", "콘텐츠를 이해하고, 색인을 만들고, 검색어에 답하고, 결과를 재고, 그것을 떠받치는 서빙까지 — 콘텐츠 이해 · 색인 · 파이프라인 · 검색어 파이프라인 · 평가 · 로그 · 서빙 · 운영으로 읽는 검색 아키텍처. 색인 내부 구조와 용어는 곁에 둔다", "search-system", 86],
 ["recommendation", "추천", "검색어 없이 사용자가 좋아할 아이템을 고른다. 수천만 후보를 후보 생성 → 랭킹 → 재정렬 퍼널로 좁히고, 피드백이 다음 학습으로 돌아온다", "recommendation-system", 30],
 ["commerce-catalog", "상품 · 전시 · 재고", "무엇을 얼마에 팔고(상품 · 가격), 어떻게 보여 주고(전시), 몇 개 남았는지(재고), 어떤 혜택을 얹는지(프로모션)를 다루는 커머스의 판매 준비 영역", "commerce-catalog", 53],
 ["commerce-order", "주문 · 결제 · 정산", "고객이 구매 버튼을 누른 순간부터 판매자 통장에 돈이 들어가기까지의 거래 시스템. 주문 · 결제 · 이행 · 정산이 각자 상태를 갖고 이벤트로 이어진다", "commerce-order", 101],

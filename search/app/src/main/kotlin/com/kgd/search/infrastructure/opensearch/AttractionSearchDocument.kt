@@ -46,6 +46,8 @@ data class AttractionSearchDocument(
     val contentTypeId: String? = null,
     /** 반려동물 동반 원문 — 상세 반려동물 칸이 petPolicy UNKNOWN 일 때 그대로 보여 준다. */
     val petAcmpyType: String? = null,
+    /** 주로 즐기는 곳 — indoor · outdoor · mixed (place 파생 값). LTR 의 실내 피처가 읽는다 */
+    val setting: String? = null,
     val imageUrl: String? = null,
     /** 재색인 전 옛 인덱스 문서에는 없다 — null 이면 FE 가 imageUrl 을 쓴다. */
     val thumbnailUrl: String? = null,
@@ -217,6 +219,7 @@ data class AttractionSearchDocument(
         category = category,
         contentTypeId = contentTypeId,
         petAcmpyType = petAcmpyType,
+        setting = setting,
         imageUrl = imageUrl,
         thumbnailUrl = thumbnailUrl,
         tel = tel,

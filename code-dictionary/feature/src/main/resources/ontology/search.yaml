@@ -1509,7 +1509,7 @@ concepts:
     flows_to: [{ to: search-evaluation, label: "노출 · 클릭" }]
     applied:
       status: PARTIAL
-      summary: "쿼리 이해 · 리트리벌 · 하이브리드 RRF 는 적용이다. 랭킹은 규칙 기반 피처 결합뿐이고 Learning to Rank · 리랭킹 모델은 재 보고 보류했다"
+      summary: "쿼리 이해 · 리트리벌 · 하이브리드 RRF 는 적용이다. 랭킹은 규칙 기반 피처 결합 위에 관광지 국문만 Learning to Rank 재정렬이 붙고, 리랭킹 모델은 재 보고 보류했다"
   - id: srch-query-input
     kind: STAGE
     name: "사용자 검색"
@@ -2768,7 +2768,7 @@ concepts:
     flows_to: [{ to: srch-zero-result-handling, label: "0건이면" }]
     applied:
       status: PARTIAL
-      summary: "규칙 기반 피처 결합이 순위를 정한다. Learning to Rank · 리랭킹 모델은 재 보고 보류했고, 상품 검색만 밴딧 재정렬이 붙는다"
+      summary: "규칙 기반 피처 결합이 순위를 정하고, 관광지 국문 검색은 그 첫 장 상위 20 을 Learning to Rank 가 다시 줄 세운다. 리랭킹 모델은 재 보고 보류했고, 상품 검색은 밴딧 재정렬이 붙는다"
   - id: srch-ranking-feature-combination
     kind: MECHANISM
     name: "랭킹 피처 결합"
@@ -2842,9 +2842,17 @@ concepts:
     contains: [query-level-cross-validation, srch-lambdamart, srch-feature-logging]
     uses: [ranking-features, ltr-loss-families]
     flows_to: [{ to: reranking, label: "상위 후보" }]
+    code:
+      - { path: search/app/src/main/kotlin/com/kgd/search/application/attraction/ltr/AttractionLtrReranker.kt, symbol: "fun rerank", note: "하이브리드 첫 장 상위 20 재정렬" }
+      - { path: search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionLtrFeatureAdapter.kt, symbol: "fun requestBody", note: "학습 행과 같은 피처를 _msearch 한 번으로" }
+      - { path: scripts/search-eval/ltr-offline/export.py, symbol: "def ranker", note: "서버 밖 학습 · 트리 내보내기" }
     applied:
-      status: NONE
-      summary: "LightGBM LambdaMART 를 서빙 피처로 오프라인 학습했다(질의 5겹 교차검증). LLM 라벨로는 ko +0.047 · en +0.029 지만 사람 블라인드 비교 승률 57%(21쌍, p=0.66)로 지금 순위와 구별되지 않아 보류했다"
+      status: PARTIAL
+      summary: "관광지 국문 검색에서 하이브리드 첫 장 상위 20 을 LightGBM LambdaMART 트리로 다시 줄 세운다. 학습은 판정 세트로 서버 밖에서 하고 서빙은 search:app 안 트리 평가기다. 사람 블라인드 비교에서 국문은 LTR 18 · 지금 순위 2 로 갈렸고, 영문은 12 · 9 로 갈리지 않아 켜지 않았다"
+      facts:
+        - { label: "적용 범위", value: "관광지 · 국문 · 첫 장 상위 20" }
+        - { label: "5겹 교차검증 nDCG@10 (국문)", value: ".7483 → .7837 (+.036 ±.018)" }
+        - { label: "사람 블라인드 비교", value: "국문 LTR 18 · 지금 순위 2 / 영문 12 · 9" }
   - id: srch-lambdamart
     kind: MECHANISM
     name: "LambdaMART"
@@ -3282,7 +3290,7 @@ concepts:
     description: "지표로 문제를 정의하고 원인을 값으로 확정한 뒤 고친다. 지표가 움직인 이유가 검색이 아니라 측정(판정 · 라벨)일 수 있다"
     applied:
       status: LIVE
-      summary: "nDCG 로 회귀를 잡고 원인을 값으로 확정한다 — BM25 .45 → .38 하락을 판정 없는 새 문서(풀링 편향)로, LTR 이득을 라벨 누수로 가려냈다"
+      summary: "nDCG 로 회귀를 잡고 원인을 값으로 확정한다 — BM25 .45 → .38 하락을 판정 없는 새 문서(풀링 편향)로, LTR 이득을 라벨 누수로 가려낸 뒤 사람 블라인드 비교로 국문 적용을 정했다"
   - id: ndcg
     kind: METRIC
     name: "nDCG"

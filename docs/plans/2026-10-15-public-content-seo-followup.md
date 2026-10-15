@@ -1,0 +1,37 @@
+# 게임·관광지 검색 발견성 후속 개선
+
+승인: 2026-10-15 사용자의 「보완할 부분들 다 진행해」. 기존 공개 콘텐츠 SEO 개선의 연속이며, 순위 상승이나 색인 완료를 보장하는 작업이 아니다.
+
+작업 위치: `/Users/gideok-kwon/.codex/worktrees/d3c3/msa`. 원래 작업 공간과 역사적 untracked QA 파일 여섯 개는 보존한다.
+
+## 승인된 범위
+
+1. 게임 상세 제목에서 반복적인 「무료 온라인 플레이」보다 실제 이름과 게임 종류를 앞세운다. 무료·브라우저 실행 정보는 소개와 허브에 자연스럽게 유지한다. 동명 `marine-command`·`archer-outbreak`는 확인된 실제 특징으로 구분한다. 기존 핀볼 편집 제목과 랜덤레이스 의도는 유지한다.
+2. 카탈로그 전체 82게임의 목표·조작법·첫 플레이 정보를 실제 게임 소스와 대조해 한영으로 보강한다. 검증 근거 경로를 남긴다. 가짜 조작·지원 기기·점수 조건을 생성하지 않는다. 초기 HTML과 실제 화면은 같은 콘텐츠 원본을 쓴다. 메인 선택 가이드의 세 추천은 무작정 82개로 늘리지 않는다.
+3. 관광지 이름에 확인된 시도·시군구를 적절하게 보태 동명 장소를 구분한다. 주소에만 의존해 무리하게 영어 지역을 추정하지 않는다. JS와 Kotlin SSR 메타의 결과 및 구조화 데이터·화면 사실을 일치시킨다.
+4. 실제 지원하는 옛 `/place`·`/place/attractions` 경로와 apex의 게임/관광지 공개 경로를 대표 서비스 주소로 서버 301 처리한다. 게임 호스트의 `/games` 허브도 `/`로 정리한다. 쿼리와 언어를 보존하며 로컬·다른 서비스 호스트, 게임 프레임 자산, 방·초대의 비공개 정책을 해치지 않는다. 미확인 `/tour`를 임의로 추가하지 않는다.
+5. 관광지 한영 연결은 ADR-0062의 기존 보수적 매칭과 운영 승인 상태를 확인한다. 검증된 연결의 SSR·sitemap 누락은 고치되 정확도를 낮추거나 같은 ID를 임의로 연결하지 않는다. 추가 신뢰 근거가 없으면 연결 가능한 범위와 제외 사유를 명시한다. 재색인·규칙 변경이 필요하면 별도 설계 판단을 부모에게 전달한다.
+6. 실제 Search Console/서치어드바이저 권한 여부를 확인하고 미수행 계정 작업은 구분한다. 공통 검색 발견성 문서와 메모리에 제목·중복·근거 있는 설명 원칙을 반영한다.
+
+## 완료 기준
+
+- 82게임 한영 상세의 제목 유일성과 목표·조작법 실존, 공유 콘텐츠 원본 사용을 focused test와 빌드 HTML로 확인한다.
+- 관광지 지역명 중복·빈 지역·영문·메타 이스케이프와 JS/Kotlin parity를 검증한다.
+- 실제 nginx syntax와 HTTP 301/Location/쿼리·언어·호스트 및 비공개 회귀를 확인한다.
+- 변경한 계층의 테스트·타입·빌드를 실행하고 실제 결과를 기록한다. 게임 내부 동작이나 물리는 변경하지 않으며 물리 전수검사를 반복하지 않는다.
+- fresh context 리뷰 후 수정·커밋·푸시·배포 결과를 확인한다. UI 검증은 별도 승인이 없으므로 수행하지 않는다.
+- 서버 배포 확인과 검색엔진 색인·순위는 별도로 보고한다.
+
+## 근거
+
+- 사전 HTTP 점검: `/tmp/service-discovery-audit-20261015/` (184게임 공개 페이지·63관광지 표본·legacy alias 응답). 일회성 검색 결과 부재는 미색인 증거로 쓰지 않는다.
+- [Google 제목 링크](https://developers.google.com/search/docs/appearance/title-link?hl=ko): 설명적이고 간결한 고유 제목, 반복 문구 최소화.
+- [네이버 콘텐츠 마크업](https://searchadvisor.naver.com/guide/markup-content): 고유하고 내용에 맞는 제목·설명.
+- ADR-0062: 운영 한영 매칭은 2026-10-11 승인·활성화, 당시 2,600쌍. 표본에서 hreflang이 없는 이유를 설정 꺼짐으로 단정하지 않는다.
+
+## 진행
+
+- 구현: 82/82 게임 한영 공유 안내·고유 제목·실제 편집일 반영, 관광지 지역 제목 JS/Kotlin parity, 공개 alias 서버301 및 초대 HTML 폴백 noindex 보존을 구현했다. 게임 소스·서브모듈 포인터는 보존했다.
+- 검증: FE 281 tests passed, Kotlin 200 tests/0 failures, 실제 nginx syntax+HTTP 88 checks passed. 전체 lint는 기존25 errors/2 warnings, 변경 TS의 새 lint 문제는 없음을 HEAD 대조로 확인했다. prod API 전체 빌드 exit0, 실제 게임 HTML164장·관광지 sitemap3,520 상호쌍(비상호0)을 확인했다. 마지막 displayTitle 정합성 후 scoped15tests·eslint·tsc-b·별도 Vite 번들을 검증했다. 전체 dist JS와 마지막 별도 번들의 구분은 검증 문서에 명시했다.
+- 부모 통합: 구현·마지막 이름 함수·CI sparse checkout·생성물 변경을 fresh-context 리뷰에서 SHIP 확인 후 커밋·푸시했다. 운영 search:e611387(158/158), portal-fe:216c2b4(577/577)로 배포됐으며 각각1 available/updated, Argo sync Succeeded를 확인했다. 초기 SEO 배포 뒤 공개 HTTP264항목(게임184·관광지63·옛 주소11·비공개/파일6) 오류0, sitemap3,520쌍 상호 연결 위반0. [실서비스 HTTP 근거](2026-10-15-public-content-seo-live-http.json).
+- 기존10분 job 한도로 취소되던 frontend CI를 테스트 기준을 유지한 채15분으로 보정했다. 최종 코드/설정 커밋 `6aa16213d`의 [전체 CI](https://github.com/1989v/msa/actions/runs/38672471829)는 success: frontend146파일/1540tests 통과·6tests skipped, 후속 golden검사·서버 전체 컴파일/구조 검사 모두 통과했다. 최종 portal-fe:216c2b4 rollout 성공 및 한영 게임2개 실제 응답 재확인도 완료했다. [구현 검증과 82종 소스 근거](2026-10-15-public-content-seo-followup-verification.md). 브라우저·검색엔진 계정 조회/제출·검색 순위 검증은 수행하지 않았다.

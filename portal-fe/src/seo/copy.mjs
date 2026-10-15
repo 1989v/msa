@@ -198,6 +198,8 @@ export function genreMeta(lang, genre, games, gameCount = games.length) {
 }
 
 export function titleOf(game, lang) {
+  if (game.slug === 'marine-command') return lang === 'en' ? 'Archer Expedition' : '궁수 키우기: 거점 원정';
+  if (game.slug === 'archer-outbreak') return lang === 'en' ? 'Archer Outbreak' : '궁수 키우기: 좀비 개척';
   return lang === 'en' && game.titleEn ? game.titleEn : game.title;
 }
 
@@ -222,8 +224,8 @@ export function detailMeta(lang, game) {
   return {
     title:
       lang === 'en'
-        ? `${name} — Play Free Online | ${BRAND}`
-        : `${name} — 무료 온라인 플레이 | ${BRAND}`,
+        ? `${name} — ${label} Game | ${BRAND}`
+        : `${name} — ${label} 게임 | ${BRAND}`,
     description: clampDescription(raw.length >= 50 ? raw : `${raw} ${fallback}`.trim()),
     heading: name,
   };
@@ -887,27 +889,28 @@ export function attractionMeta(lang, attraction) {
  * 서버 렌더(search `AttractionPageRenderer.attractionMeta`)가 같은 문자열을 만든다 — 골든 픽스처로 대조한다.
  */
 function attractionMetaCopy(lang, attraction, name, where) {
+  const displayName = attractionRegionalName(lang, attraction, name);
   const type = attraction.contentTypeId;
   const en = lang === 'en';
   if (PLACE_EVENT_TYPES.includes(type)) {
     return en
       ? {
-          title: `${name} — Dates, Venue & Things to Do Nearby | ${PLACE_BRAND_EN}`,
+          title: `${displayName} — Dates, Venue & Things to Do Nearby | ${PLACE_BRAND_EN}`,
           fallback: `${name} is a festival or event${where ? ` at ${where}` : ' in South Korea'}. See the dates, venue, map and things to do nearby.`,
         }
       : {
-          title: `${name} 행사 정보 — 일정 · 장소 · 주변 가볼 만한 곳 | ${PLACE_BRAND_KO}`,
+          title: `${displayName} 행사 정보 — 일정 · 장소 · 주변 가볼 만한 곳 | ${PLACE_BRAND_KO}`,
           fallback: `${name}${where ? ` — ${where}` : ''}에서 열리는 축제·행사입니다. 일정·장소와 지도, 주변 가볼 만한 곳을 함께 확인하세요.`,
         };
   }
   if (PLACE_STAY_TYPES.includes(type)) {
     return en
       ? {
-          title: `${name} — Stay Info, Check-in & Things to Do Nearby | ${PLACE_BRAND_EN}`,
+          title: `${displayName} — Stay Info, Check-in & Things to Do Nearby | ${PLACE_BRAND_EN}`,
           fallback: `${name} is a place to stay${where ? ` at ${where}` : ' in South Korea'}. See check-in times, the map and things to do nearby.`,
         }
       : {
-          title: `${name} 숙박 정보 — 입실·퇴실 · 주변 가볼 만한 곳 | ${PLACE_BRAND_KO}`,
+          title: `${displayName} 숙박 정보 — 입실·퇴실 · 주변 가볼 만한 곳 | ${PLACE_BRAND_KO}`,
           fallback: `${name}${where ? ` — ${where}` : ''}에 있는 숙소입니다. 입실·퇴실 시간과 지도, 주변 가볼 만한 곳을 함께 확인하세요.`,
         };
   }
@@ -916,24 +919,43 @@ function attractionMetaCopy(lang, attraction, name, where) {
     const course = name.trimEnd().endsWith('코스') ? name : `${name} 여행코스`;
     return en
       ? {
-          title: `${name} — Travel Course, Stops & Time Needed | ${PLACE_BRAND_EN}`,
+          title: `${displayName} — Travel Course, Stops & Time Needed | ${PLACE_BRAND_EN}`,
           fallback: `${name} is a travel course in South Korea. See the stops in order, total distance and time needed.`,
         }
       : {
-          title: `${course} — 코스 구성 · 거리 · 소요 시간 | ${PLACE_BRAND_KO}`,
+          title: `${attractionRegionalName(lang, attraction, course)} — 코스 구성 · 거리 · 소요 시간 | ${PLACE_BRAND_KO}`,
           fallback: `${course}입니다. 코스를 이루는 관광지를 순서대로 보고 총 거리와 소요 시간을 확인하세요.`,
         };
   }
   const label = placeCategoryLabel(attraction.category, lang);
   return en
     ? {
-        title: `Visit ${name} — Map, Photos & Things to Do Nearby | ${PLACE_BRAND_EN}`,
+        title: `Visit ${displayName} — Map, Photos & Things to Do Nearby | ${PLACE_BRAND_EN}`,
         fallback: `${name} is a ${label.toLowerCase()} attraction${where ? ` at ${where}` : ' in South Korea'}. See the map, photos, directions and things to do nearby.`,
       }
     : {
-        title: `${name} 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | ${PLACE_BRAND_KO}`,
+        title: `${displayName} 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | ${PLACE_BRAND_KO}`,
         fallback: `${name}${where ? ` — ${where}` : ''}에 있는 ${label} 관광지입니다. 주소·지도·사진과 가는 길, 주변 가볼 만한 곳을 함께 확인하세요.`,
       };
+}
+
+/** Verified region fields only; do not infer translations from a street address.
+ * Keep the source place name (including JSON-LD/H1) intact and qualify the title.
+ * AttractionPageRenderer uses the same algorithm, checked by golden fixtures.
+ */
+function attractionRegionalName(lang, attraction, name) {
+  const normalize = (value) => value.toLowerCase().replace(/\s+/gu, '');
+  const parts = [];
+  let seen = normalize(name);
+  for (const raw of [attraction.sidoName, attraction.region?.sigunguName]) {
+    const region = sourceText(raw).trim();
+    if (!region || (lang === 'en' && /[가-힣]/u.test(region))) continue;
+    const key = normalize(region);
+    if (seen.includes(key)) continue;
+    parts.push(region);
+    seen += key;
+  }
+  return parts.length ? `${name} (${parts.join(lang === 'en' ? ', ' : ' ')})` : name;
 }
 
 /** 원천(TourAPI) 사진 호스트의 http 주소 앞부분 */

@@ -3,6 +3,7 @@ package com.kgd.search.application.attraction.service
 import com.kgd.search.application.attraction.config.AttractionAnswerEvidenceProperties
 import com.kgd.search.application.attraction.config.AttractionConditionWordsProperties
 import com.kgd.search.application.attraction.config.AttractionHybridProperties
+import com.kgd.search.application.attraction.ltr.AttractionLtrReranker
 import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.application.queryvector.usecase.ResolveQueryVectorUseCase
 import com.kgd.search.application.attraction.usecase.CategoryLexiconUseCase
@@ -24,6 +25,7 @@ import com.kgd.search.domain.attraction.model.PetPolicy
 import com.kgd.search.domain.query.model.QueryIntent
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
 import io.micrometer.core.instrument.MeterRegistry
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
@@ -46,6 +48,8 @@ class SearchAttractionService(
     private val clock: Clock = Clock.systemUTC(),
     private val conditionWords: AttractionConditionWordsProperties = AttractionConditionWordsProperties(),
     private val answerEvidence: AttractionAnswerEvidenceProperties = AttractionAnswerEvidenceProperties(),
+    /** 첫 장 상위를 다시 줄 세운다. 꺼져 있거나 없으면 하이브리드 순서 그대로다 */
+    private val ltr: AttractionLtrReranker? = null,
 ) : SearchAttractionUseCase, SuggestAttractionUseCase {
 
     /** 벡터 레그가 실제로 켜진 요청 수. 사전 적중률(`search.qvec.*`)과 나눠 본다 — 여기가 낮으면 사전이 얇다. */
@@ -155,7 +159,14 @@ class SearchAttractionService(
             confine = confine,
             companion = understood?.companion,
         )
-        val found = attractionSearchPort.search(searchQuery, pageable)
+        val ltrVector = ltrVector(original, searchQuery.lang, embedding, pageable)
+        val found = if (ltr != null && ltrVector != null && original != null) {
+            // 첫 장이 재정렬 깊이보다 작아도 깊이만큼 받는다 — 모델은 라이브 상위 20 안에서 줄 세우도록 배웠다
+            val head = attractionSearchPort.search(searchQuery, PageRequest.of(0, maxOf(pageable.pageSize, ltr.depth)))
+            head.copy(page = reranked(head.page, pageable, ltr, original, searchQuery.lang!!, ltrVector))
+        } else {
+            attractionSearchPort.search(searchQuery, pageable)
+        }
         val page = found.page
         val noEvidence = found.noEvidence || (confine && page.totalElements == 0L)
         // 근거 검사(GATE)로 0건이어도 센다 — 분류 필터 안에서 남은 말의 근거가 없는 것이 바로 「분류 안 0건」이고,
@@ -193,6 +204,29 @@ class SearchAttractionService(
             relaxedKeyword = relaxed?.first,
             relaxedTotal = relaxed?.second,
         )
+    }
+
+    /**
+     * 재정렬에 쓸 질의 벡터. 하이브리드로 찾은 첫 장일 때만 있다 — 정렬이 점수를 무시하거나 벡터 레그가 없으면 피처가 학습 때와 달라진다.
+     * 학습 피처는 **입력 그대로의 검색어**를 인코딩했으므로, 벡터 레그에 준 문장(동반 표현을 바꾼 문장)이 아니라 원문으로 다시 얻는다.
+     */
+    private fun ltrVector(original: String?, lang: String?, embedding: List<Float>?, pageable: PageRequest): List<Float>? {
+        if (ltr == null || original == null || embedding == null || pageable.offset != 0L || !ltr.appliesTo(lang)) return null
+        return resolveQueryVector.resolve(original, queryVector.modelRef)
+    }
+
+    /** 앞 [AttractionLtrReranker.depth] 건만 다시 줄 세우고 나머지는 자리를 지킨다. 다음 장은 손대지 않으므로 장 사이에 겹치거나 빠지는 문서가 없다 */
+    private fun reranked(
+        head: Page<AttractionSearchPort.AttractionHit>,
+        pageable: PageRequest,
+        ltr: AttractionLtrReranker,
+        keyword: String,
+        lang: String,
+        vector: List<Float>,
+    ): Page<AttractionSearchPort.AttractionHit> {
+        val content = head.content
+        val top = ltr.rerank(keyword, lang, vector, content.take(ltr.depth))
+        return PageImpl((top + content.drop(ltr.depth)).take(pageable.pageSize), pageable, head.totalElements)
     }
 
     private fun emptyResult(pageable: PageRequest, reason: SearchAttractionUseCase.ZeroReason): SearchAttractionUseCase.Result {

@@ -1,4 +1,5 @@
 import { marbleEditorial } from './gameEditorial.mjs';
+import { catalogGuides } from './gameGuideCatalog.mjs';
 /** Verified game instructions shared by the live introduction and initial HTML.
  * Evidence: docs/specs/2026-10-11-webgame-ranking/implementation.md.
  */
@@ -52,8 +53,14 @@ const GUIDES = {
   },
 };
 
+/** @returns {Array<{ label: string, text: string }> | null} */
 export function gamePlayGuide(slug, lang) {
   if (slug === 'marble-race') return marbleEditorial(lang).guide;
+  if (Object.hasOwn(catalogGuides, slug)) {
+    const en = lang === 'en';
+    const labels = en ? ['Goal', 'Controls', 'First-play tip'] : ['목표', '조작법', '첫 플레이 팁'];
+    return catalogGuides[slug][en ? 'en' : 'ko'].map((text, index) => ({ label: labels[index], text }));
+  }
   const guide = Object.hasOwn(GUIDES, slug) ? GUIDES[slug] : null;
   if (!guide) return null;
   const en = lang === 'en';
@@ -63,6 +70,14 @@ export function gamePlayGuide(slug, lang) {
     { label: en ? 'Controls' : '조작법', text: copy.controls },
     { label: en ? 'First-play tip' : '첫 플레이 팁', text: copy.tip },
   ];
+}
+
+/** Source evidence also covers the four pre-existing editorial guides. */
+export function gameGuideSources(slug) {
+  if (Object.hasOwn(catalogGuides, slug)) return catalogGuides[slug].source.split(';');
+  if (slug === 'marble-race') return ['marble-race/js/setup.js', 'marble-race/js/main.js', 'marble-race/js/courses.js'];
+  if (Object.hasOwn(GUIDES, slug)) return [`${slug}/index.html`];
+  return [];
 }
 
 export function gameSelectionGuide(lang) {

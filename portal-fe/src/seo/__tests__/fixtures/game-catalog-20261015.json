@@ -1,0 +1,494 @@
+[
+  {
+    "slug": "duel-defense",
+    "title": "대전 디펜스",
+    "titleEn": "Duel Defense",
+    "genre": "STRATEGY"
+  },
+  {
+    "slug": "marine-command",
+    "title": "궁수 키우기",
+    "titleEn": "궁수 키우기",
+    "genre": "RPG"
+  },
+  {
+    "slug": "epoch-of-nations",
+    "title": "EPOCH OF NATIONS",
+    "titleEn": "EPOCH OF NATIONS",
+    "genre": "STRATEGY"
+  },
+  {
+    "slug": "gwiyahaeng",
+    "title": "귀야행 척준경",
+    "titleEn": "Gwiyahaeng: Cheok Jun-gyeong",
+    "genre": "ACTION"
+  },
+  {
+    "slug": "landslide",
+    "title": "사태",
+    "titleEn": "Landslide",
+    "genre": "VERSUS"
+  },
+  {
+    "slug": "arena",
+    "title": "AMP ARENA",
+    "titleEn": "AMP ARENA",
+    "genre": "VERSUS"
+  },
+  {
+    "slug": "circle-trace",
+    "title": "원 그리기",
+    "titleEn": "Trace the Circle",
+    "genre": "CASUAL"
+  },
+  {
+    "slug": "seven-seconds",
+    "title": "7초를 맞춰라",
+    "titleEn": "Seven Seconds",
+    "genre": "CASUAL"
+  },
+  {
+    "slug": "zombie-lane",
+    "title": "좀비 레인",
+    "titleEn": "Zombie Lanes",
+    "genre": "ARCADE"
+  },
+  {
+    "slug": "zombie-march",
+    "title": "좀비 행군",
+    "titleEn": "Zombie March",
+    "genre": "STRATEGY"
+  },
+  {
+    "slug": "infinity-step",
+    "title": "인피니티 스탭",
+    "titleEn": "Infinity Step",
+    "genre": "ACTION"
+  },
+  {
+    "slug": "last-one",
+    "title": "마지막 한 사람",
+    "titleEn": "Last One Standing",
+    "genre": "ACTION"
+  },
+  {
+    "slug": "nine-bells",
+    "title": "아홉 종",
+    "titleEn": "Nine Bells",
+    "genre": "ACTION"
+  },
+  {
+    "slug": "archer-outbreak",
+    "title": "궁수 키우기",
+    "titleEn": "Archer Outbreak",
+    "genre": "ACTION"
+  },
+  {
+    "slug": "random-card-defense",
+    "title": "랜덤 카드 디펜스",
+    "titleEn": "Random Card Defense",
+    "genre": "DEFENSE"
+  },
+  {
+    "slug": "infinity-tower",
+    "title": "인피니티 타워",
+    "titleEn": "Infinity Tower",
+    "genre": "DEFENSE"
+  },
+  {
+    "slug": "random-tower-defense",
+    "title": "랜덤 타워 디펜스",
+    "titleEn": "Random Tower Defense",
+    "genre": "DEFENSE"
+  },
+  {
+    "slug": "bee-guard",
+    "title": "그어서 막기",
+    "titleEn": "Draw to Guard",
+    "genre": "PUZZLE"
+  },
+  {
+    "slug": "card-flip",
+    "title": "카드 뒤집기",
+    "titleEn": "Card Flip",
+    "genre": "DECIDER"
+  },
+  {
+    "slug": "marble-race",
+    "title": "구슬 레이스",
+    "titleEn": "Marble Race",
+    "genre": "DECIDER"
+  },
+  {
+    "slug": "ladder-draw",
+    "title": "사다리타기",
+    "titleEn": "Ladder Draw",
+    "genre": "DECIDER"
+  },
+  {
+    "slug": "pixel-logic",
+    "title": "그림 로직",
+    "titleEn": "Pixel Logic",
+    "genre": "PUZZLE"
+  },
+  {
+    "slug": "hoop-order",
+    "title": "고리 맞추기",
+    "titleEn": "Hoop Order",
+    "genre": "PUZZLE"
+  },
+  {
+    "slug": "sum-trail",
+    "title": "합이 딱",
+    "titleEn": "Sum Trail",
+    "genre": "PUZZLE"
+  },
+  {
+    "slug": "coin-corgi",
+    "title": "코인 코기",
+    "titleEn": "Coin Corgi",
+    "genre": "ARCADE"
+  },
+  {
+    "slug": "aero-vendetta",
+    "title": "에어로 벤데타",
+    "titleEn": "Aero Vendetta",
+    "genre": "ARCADE"
+  },
+  {
+    "slug": "curfew-siren",
+    "title": "Night Shift",
+    "titleEn": "Night Shift",
+    "genre": "ACTION"
+  },
+  {
+    "slug": "deadline",
+    "title": "데드라인",
+    "titleEn": "Deadline",
+    "genre": "ACTION"
+  },
+  {
+    "slug": "ashen-warband",
+    "title": "Dungeon Crew",
+    "titleEn": "Dungeon Crew",
+    "genre": "ACTION"
+  },
+  {
+    "slug": "nova-strike",
+    "title": "Nova Strike",
+    "titleEn": "Nova Strike",
+    "genre": "ACTION"
+  },
+  {
+    "slug": "raging-fist-saga",
+    "title": "Raging Fist",
+    "titleEn": "Raging Fist",
+    "genre": "ACTION"
+  },
+  {
+    "slug": "abyssal-crown",
+    "title": "Abyssal Crown",
+    "titleEn": "Abyssal Crown",
+    "genre": "RPG"
+  },
+  {
+    "slug": "nether-return",
+    "title": "Rewind",
+    "titleEn": "Rewind",
+    "genre": "RPG"
+  },
+  {
+    "slug": "sketch-sleuth",
+    "title": "그려봐",
+    "titleEn": "Draw It",
+    "genre": "VERSUS"
+  },
+  {
+    "slug": "drift-continent",
+    "title": "Drift",
+    "titleEn": "Drift",
+    "genre": "RPG"
+  },
+  {
+    "slug": "moon-angler",
+    "title": "Moon Fishing",
+    "titleEn": "Moon Fishing",
+    "genre": "CASUAL"
+  },
+  {
+    "slug": "cliff-climber",
+    "title": "Cliff Climb",
+    "titleEn": "Cliff Climb",
+    "genre": "ARCADE"
+  },
+  {
+    "slug": "relic-heir",
+    "title": "Relic",
+    "titleEn": "Relic",
+    "genre": "CASUAL"
+  },
+  {
+    "slug": "element-pilgrim",
+    "title": "Elemental",
+    "titleEn": "Elemental",
+    "genre": "STRATEGY"
+  },
+  {
+    "slug": "hand-alchemy",
+    "title": "Hand Alchemy",
+    "titleEn": "Hand Alchemy",
+    "genre": "STRATEGY"
+  },
+  {
+    "slug": "spud-arena",
+    "title": "Spud Battle",
+    "titleEn": "Spud Battle",
+    "genre": "ACTION"
+  },
+  {
+    "slug": "midnight-tide",
+    "title": "Midnight",
+    "titleEn": "Midnight",
+    "genre": "ACTION"
+  },
+  {
+    "slug": "serpent-legion",
+    "title": "Serpent",
+    "titleEn": "Serpent",
+    "genre": "ACTION"
+  },
+  {
+    "slug": "dawn-ward",
+    "title": "새벽까지",
+    "titleEn": "Hold Till Dawn",
+    "genre": "ACTION"
+  },
+  {
+    "slug": "beat-dojo",
+    "title": "Beat Dojo",
+    "titleEn": "Beat Dojo",
+    "genre": "ARCADE"
+  },
+  {
+    "slug": "breeze-links",
+    "title": "Breeze Golf",
+    "titleEn": "Breeze Golf",
+    "genre": "ARCADE"
+  },
+  {
+    "slug": "alley-pool",
+    "title": "Alley Pool",
+    "titleEn": "Alley Pool",
+    "genre": "ARCADE"
+  },
+  {
+    "slug": "starlight-farm",
+    "title": "Starlight Farm",
+    "titleEn": "Starlight Farm",
+    "genre": "CASUAL"
+  },
+  {
+    "slug": "hero-dispatch",
+    "title": "Hero Gig",
+    "titleEn": "Hero Gig",
+    "genre": "CASUAL"
+  },
+  {
+    "slug": "cog-foundry",
+    "title": "Cog Factory",
+    "titleEn": "Cog Factory",
+    "genre": "STRATEGY"
+  },
+  {
+    "slug": "abyss-drill",
+    "title": "Deep Drill",
+    "titleEn": "Deep Drill",
+    "genre": "CASUAL"
+  },
+  {
+    "slug": "bracket-battle",
+    "title": "급식 월드컵",
+    "titleEn": "Lunch Cup",
+    "genre": "CASUAL"
+  },
+  {
+    "slug": "acid-rain",
+    "title": "Acid Rain",
+    "titleEn": "Acid Rain",
+    "genre": "ARCADE"
+  },
+  {
+    "slug": "rope-works",
+    "title": "Rope Puzzle",
+    "titleEn": "Rope Puzzle",
+    "genre": "PUZZLE"
+  },
+  {
+    "slug": "stone-sage",
+    "title": "오목 한 판",
+    "titleEn": "Gomoku",
+    "genre": "PUZZLE"
+  },
+  {
+    "slug": "mine-pioneer",
+    "title": "Minefield",
+    "titleEn": "Minefield",
+    "genre": "PUZZLE"
+  },
+  {
+    "slug": "crate-shift",
+    "title": "Crate Shift",
+    "titleEn": "Crate Shift",
+    "genre": "PUZZLE"
+  },
+  {
+    "slug": "block-burst",
+    "title": "Block Burst",
+    "titleEn": "Block Burst",
+    "genre": "PUZZLE"
+  },
+  {
+    "slug": "number-garden",
+    "title": "스도쿠",
+    "titleEn": "Sudoku",
+    "genre": "PUZZLE"
+  },
+  {
+    "slug": "royal-grid",
+    "title": "하루 한 판",
+    "titleEn": "Royal Grid",
+    "genre": "PUZZLE"
+  },
+  {
+    "slug": "pixel-mine",
+    "title": "네모로직",
+    "titleEn": "Nonogram",
+    "genre": "PUZZLE"
+  },
+  {
+    "slug": "quad-weave",
+    "title": "네 줄 잇기",
+    "titleEn": "Quad Link",
+    "genre": "PUZZLE"
+  },
+  {
+    "slug": "word-warden",
+    "title": "낱말 다섯",
+    "titleEn": "Five Letters",
+    "genre": "PUZZLE"
+  },
+  {
+    "slug": "rift-front",
+    "title": "Rift",
+    "titleEn": "Rift",
+    "genre": "STRATEGY"
+  },
+  {
+    "slug": "dice-citadel",
+    "title": "Dice Defense",
+    "titleEn": "Dice Defense",
+    "genre": "DEFENSE"
+  },
+  {
+    "slug": "storm-corridor",
+    "title": "Storm Runner",
+    "titleEn": "Storm Runner",
+    "genre": "ACTION"
+  },
+  {
+    "slug": "crimson-ravine",
+    "title": "Crimson Ravine",
+    "titleEn": "Crimson Ravine",
+    "genre": "STRATEGY"
+  },
+  {
+    "slug": "wall-breaker",
+    "title": "Wall Breaker",
+    "titleEn": "Wall Breaker",
+    "genre": "ARCADE"
+  },
+  {
+    "slug": "cave-glide",
+    "title": "Cave Glide",
+    "titleEn": "Cave Glide",
+    "genre": "ARCADE"
+  },
+  {
+    "slug": "rune-merge",
+    "title": "Rune Merge",
+    "titleEn": "Rune Merge",
+    "genre": "PUZZLE"
+  },
+  {
+    "slug": "golden-forge",
+    "title": "Golden Forge",
+    "titleEn": "Golden Forge",
+    "genre": "CASUAL"
+  },
+  {
+    "slug": "echo-duel",
+    "title": "Echo Duel",
+    "titleEn": "Echo Duel",
+    "genre": "VERSUS"
+  },
+  {
+    "slug": "frost-outpost",
+    "title": "Frost Outpost",
+    "titleEn": "Frost Outpost",
+    "genre": "DEFENSE"
+  },
+  {
+    "slug": "ember-temple",
+    "title": "Ember Temple",
+    "titleEn": "Ember Temple",
+    "genre": "ARCADE"
+  },
+  {
+    "slug": "iron-vanguard",
+    "title": "Iron Vanguard",
+    "titleEn": "Iron Vanguard",
+    "genre": "ACTION"
+  },
+  {
+    "slug": "gear-bastion",
+    "title": "Gear Bastion",
+    "titleEn": "Gear Bastion",
+    "genre": "DEFENSE"
+  },
+  {
+    "slug": "gate-holdout",
+    "title": "Last Gate",
+    "titleEn": "Last Gate",
+    "genre": "DEFENSE"
+  },
+  {
+    "slug": "outlaw-frontier",
+    "title": "Outlaw Frontier",
+    "titleEn": "Outlaw Frontier",
+    "genre": "DEFENSE"
+  },
+  {
+    "slug": "monster-tamer",
+    "title": "Monster Tamer",
+    "titleEn": "Monster Tamer",
+    "genre": "RPG"
+  },
+  {
+    "slug": "depth-delver",
+    "title": "Deep Dungeon",
+    "titleEn": "Deep Dungeon",
+    "genre": "RPG"
+  },
+  {
+    "slug": "overworld-quest",
+    "title": "Overworld",
+    "titleEn": "Overworld",
+    "genre": "RPG"
+  },
+  {
+    "slug": "snake",
+    "title": "Snake",
+    "titleEn": "Snake",
+    "genre": "ARCADE"
+  }
+]
