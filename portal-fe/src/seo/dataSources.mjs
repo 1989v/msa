@@ -114,6 +114,21 @@ export const DATA_SOURCES = [
   },
   { data: '행정구역(법정동)', source: '행정안전부 행정표준코드관리시스템', license: '공공누리 제1유형', note: '' },
   { data: '세계 지명 계층', source: 'GeoNames', license: 'CC BY 4.0', note: '' },
+  { data: '전통시장 기본정보', source: '전국전통시장표준데이터 (data.go.kr 15012894)', license: '공공누리 제1유형(출처표시)', note: '' },
+  {
+    data: '온누리 가맹점',
+    source: '소상공인시장진흥공단 전자상품권 가맹점 상세정보 (data.go.kr 15091259 파일)',
+    license: '공공누리 제1유형(출처표시)',
+    note: '',
+  },
+  {
+    data: '시장 상가 보강',
+    source: '소상공인시장진흥공단 상가(상권)정보 API (data.go.kr 15012005)',
+    license: '공공누리 제1유형(출처표시)',
+    note: '',
+  },
+  { data: '가게 대표 메뉴·가격', source: '행정안전부 착한가격업소 현황 (data.go.kr 3045247 파일)', license: FREE_USE, note: '' },
+  { data: '시장 경계·골목·배경 큰길', source: 'OpenStreetMap (Overpass API)', license: 'ODbL 1.0 (© OpenStreetMap contributors)', note: '' },
   { data: 'POI(상가)', source: '소상공인시장진흥공단 상가(상권)정보', license: '이용허락범위 제한없음', note: '' },
   { data: '상품·영양', source: '식약처 / 한국소비자원 참가격', license: '제한없음 / KOGL 제1유형', note: '' },
   { data: '관광지 영상', source: 'YouTube Data API v3', license: 'Google API 서비스 약관', note: '' },
@@ -144,6 +159,11 @@ export const DATA_SOURCE_NOTICES = [
     text: 'GeoNames 자료는 CC BY 4.0 에 따라 가공해 씁니다.',
     href: 'https://creativecommons.org/licenses/by/4.0/deed.ko',
     label: 'CC BY 4.0 원문',
+  },
+  {
+    text: 'OpenStreetMap 자료는 ODbL 1.0 에 따라 시장 지도 표시에만 쓰고 데이터 자체는 배포하지 않습니다.',
+    href: 'https://www.openstreetmap.org/copyright',
+    label: 'OpenStreetMap 저작권 안내',
   },
   { text: 'KOGL 은 공공누리(Korea Open Government License)의 영문 약칭입니다.' },
 ];
