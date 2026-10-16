@@ -14,7 +14,8 @@ import org.springframework.stereotype.Repository
 
 /** Canonical, effective-IN candidates are filtered/ranked before DB pagination, never in JVM. */
 @Repository
-class MarketSearchQueryRepository(@Qualifier("placeJpaQueryFactory") private val factory: JPAQueryFactory) {
+class MarketSearchQueryRepository(@Qualifier("placeJpaQueryFactory") private val factory: JPAQueryFactory,
+    private val dictionary: com.kgd.place.application.market.service.MarketDishDictionary = com.kgd.place.application.market.service.MarketDishDictionary()) {
     private val search = QMarketStoreSearchJpaEntity.marketStoreSearchJpaEntity
     private val store = QMarketStoreJpaEntity("searchStore")
     private val market = QMarketJpaEntity.marketJpaEntity
@@ -31,10 +32,11 @@ class MarketSearchQueryRepository(@Qualifier("placeJpaQueryFactory") private val
     private fun matches(value: StringExpression, query: String) = normalized(value).containsIgnoreCase(query)
     private fun matching(query: String): JPAQuery<*> = base().where(
         matches(name, query).or(matches(items, query)).or(matches(menuNames, query))
-            .or(categories.map { matches(it, query) }.reduce { a, b -> a.or(b) }))
+            .or(categories.map { matches(it, query) }.reduce { a, b -> a.or(b) })
+            .or(search.categorySub.`in`(dictionary.categories(query))))
 
     data class Candidates(val rows: List<Pair<com.kgd.place.domain.market.model.MarketStore,
-        com.kgd.place.domain.market.model.MarketStore?>>, val total: Long)
+        com.kgd.place.domain.market.model.MarketStore?>>, val total: Long, val matches: Map<Long, Pair<Int, String?>> = emptyMap())
 
     /** Hydrate complete identity groups, including ambiguous tenants and reference-pin partners. */
     fun relatedStores(ids: List<Long>): List<com.kgd.place.domain.market.model.MarketStore> {
@@ -52,8 +54,9 @@ class MarketSearchQueryRepository(@Qualifier("placeJpaQueryFactory") private val
 
     fun stores(query: String, pageable: Pageable): Candidates {
         val rank = CaseBuilder().`when`(matches(name, query)).then(0)
-            .`when`(matches(items, query)).then(1).`when`(matches(menuNames, query)).then(2).otherwise(3)
-        val selected = matching(query).select(search.storeId, search.partnerId)
+            .`when`(matches(items, query)).then(1).`when`(matches(menuNames, query)).then(2)
+            .`when`(categories.map { matches(it, query) }.reduce { a, b -> a.or(b) }).then(3).otherwise(4)
+        val selected = matching(query).select(search.storeId, search.partnerId, rank, search.categorySub)
             .orderBy(rank.asc(), market.name.asc(), name.asc(), search.storeId.asc())
             .offset(pageable.offset).limit(pageable.pageSize.toLong()).fetch()
         val ids = selected.flatMap { listOfNotNull(it[search.storeId], it[search.partnerId]) }.distinct()
@@ -61,7 +64,8 @@ class MarketSearchQueryRepository(@Qualifier("placeJpaQueryFactory") private val
             .fetch().associate { requireNotNull(it.id) to it.toDomain() }
         val rows = selected.map { requireNotNull(hydrated[it[search.storeId]]) to hydrated[it[search.partnerId]] }
         val total = matching(query).select(search.storeId.count()).fetchOne() ?: 0L
-        return Candidates(rows, total)
+        return Candidates(rows, total, selected.associate { requireNotNull(it[search.storeId]) to
+            (requireNotNull(it[rank]) to it[search.categorySub]) })
     }
 
     fun counts(query: String = ""): Map<Long, Long> {

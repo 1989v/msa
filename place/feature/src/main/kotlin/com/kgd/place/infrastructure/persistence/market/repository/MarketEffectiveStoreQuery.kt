@@ -36,8 +36,12 @@ class MarketEffectiveStoreQuery(private val factory: JPAQueryFactory) {
             store.membership.stringValue()) { judged, ingested -> judged.coalesce(ingested) })
     val categories get() = listOf(store.categoryMajor.coalesce(partner.categoryMajor),
         store.categoryMid.coalesce(partner.categoryMid), store.categorySub.coalesce(partner.categorySub))
-    val menuNames get() = CaseBuilder().`when`(store.goodPriceRaw.isNotNull)
+    private val goodPriceMenus get() = CaseBuilder().`when`(store.goodPriceRaw.isNotNull)
         .then(store.goodPriceMenuNames).otherwise(partner.goodPriceMenuNames)
+
+    val menuNames get() = Expressions.stringTemplate(
+        "cast(function('concat_ws', ' · ', nullif({0}, ''), nullif({1}, ''), nullif({2}, '')) as string)",
+        goodPriceMenus, store.tourFirstMenu.coalesce(partner.tourFirstMenu), store.tourTreatMenu.coalesce(partner.tourTreatMenu))
 
     // Include these aliases in locking projections: MySQL FOR SHARE OF otherwise locks only source rows.
     val overrideRows get() = listOf(MarketStoreField.NAME, MarketStoreField.ITEMS, MarketStoreField.MEMBERSHIP)

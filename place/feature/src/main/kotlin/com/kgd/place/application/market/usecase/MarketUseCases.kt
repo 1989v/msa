@@ -12,6 +12,7 @@ interface QueryMarketUseCase {
         val source: MarketStore,
         val display: Display,
         val sources: List<MarketStoreSource> = listOf(source.source),
+        val tourMenu: MarketTourMenuUseCase.Menu? = null,
     ) {
         constructor(source: MarketStore, display: MarketStoreDisplay,
             sources: List<MarketStoreSource> = listOf(source.source)) : this(source, Display.from(display), sources)
@@ -35,7 +36,8 @@ interface QueryMarketUseCase {
         val paths: List<com.kgd.place.domain.market.model.MarketPath> = emptyList(),
         val entrances: List<com.kgd.place.domain.market.model.MarketEntrance> = emptyList(),
         val osmFetchedAt: java.time.LocalDateTime? = null,
-        val nearbyRadiusMetres: Int? = null)
+        val nearbyRadiusMetres: Int? = null,
+        val restaurants: List<MarketTourMenuUseCase.Restaurant> = emptyList())
 }
 
 /** Persistence skeleton. HTTP ingest / editing orchestration and authorization arrive in later WUs. */

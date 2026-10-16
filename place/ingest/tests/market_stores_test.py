@@ -226,7 +226,7 @@ def test_standard_file_mode_retains_csv_path(tmp_path):
         api.assert_not_called()
 
 
-def test_off_run_uses_attraction_and_reports_source_without_standard_download(tmp_path):
+def test_off_run_uses_attraction_and_reports_source_without_standard_download(tmp_path, capsys):
     o = FIXTURE['samples'][0]['onnuri']
     attraction = {'contentId':'1','lang':'ko','status':'ACTIVE','lclsSystm2':'SH06','title':o['시장명'],
                   'latitude':37.4,'longitude':126.8}
@@ -236,8 +236,11 @@ def test_off_run_uses_attraction_and_reports_source_without_standard_download(tm
          patch.object(ms,'load_good_prices',return_value=[good_price_row()]), \
          patch.object(ms,'fetch_standards') as standard_api, patch.object(ms,'StoreApi',return_value=api), \
          patch.object(place_client,'fetch_market_attractions',return_value=[attraction]), \
-         patch.object(place_client,'market_state',return_value=None), patch.object(place_client,'put_market') as write:
+         patch.object(place_client,'market_state',return_value=None), patch.object(place_client,'put_market') as write, \
+         patch.object(place_client,'_request',side_effect=TimeoutError('offline')) as refresh:
         summary = ms.run(None,'onnuri','bulk','key',standard_source='off',good_price_url='good')
+        refresh.assert_called_once_with('POST', '/internal/markets/tour-menus', {}, timeout=300)
+        assert 'WARNING tour menu refresh failed: TimeoutError' in capsys.readouterr().out
         assert summary['standardSource'] == 'off' and summary['markets'] == 1
         assert summary['goodPriceRows'] == 1
         assert summary['goodPriceMatched'] == {'NAME':0,'ROAD':0}

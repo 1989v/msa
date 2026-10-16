@@ -13,7 +13,8 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class MarketService(private val query: MarketQueryPort, private val save: MarketSavePort,
     private val geometry: com.kgd.place.application.market.port.MarketGeometryQueryPort? = null,
-    private val geometryEdits: com.kgd.place.application.market.port.MarketGeometryEditPort? = null) :
+    private val geometryEdits: com.kgd.place.application.market.port.MarketGeometryEditPort? = null,
+    private val tour: com.kgd.place.application.market.port.MarketTourMenuPort? = null) :
     QueryMarketUseCase, SaveMarketUseCase {
 
     @Transactional(transactionManager = "placeTransactionManager", readOnly = true)
@@ -27,11 +28,24 @@ class MarketService(private val query: MarketQueryPort, private val save: Market
         val boundary = geometry?.findBoundary(marketId)
         val projected = MarketPublicProjection.stores(stores, overrides, paths.mapNotNull { it.id }.toSet())
         val nearby = MarketPublicProjection.nearby(projected, market, boundary)
+        val attached = tour?.attached(marketId).orEmpty()
+        val center = MarketPublicProjection.center(market, boundary)
+        val bounds = if (boundary != null) {
+            com.kgd.place.domain.market.model.MarketCoordinate(boundary.polygon.minOf { it.latitude }, boundary.polygon.minOf { it.longitude }) to
+                com.kgd.place.domain.market.model.MarketCoordinate(boundary.polygon.maxOf { it.latitude }, boundary.polygon.maxOf { it.longitude })
+        } else center?.let { MarketTourMenuService.bounds(it, 150.0) }
+        val attachedIds = attached.values.map { it.attraction.id }.toSet()
+        val restaurants = bounds?.let { (sw, ne) -> tour?.restaurants(sw, ne) }.orEmpty().filter { restaurant ->
+            val point = com.kgd.place.domain.market.model.MarketCoordinate(restaurant.latitude, restaurant.longitude)
+            restaurant.attraction.id !in attachedIds && if (boundary != null)
+                com.kgd.place.domain.market.model.MarketGeometry.contains(point, boundary.polygon)
+            else center != null && MarketPublicProjection.distanceMetres(center, point) <= 150
+        }
         return QueryMarketUseCase.MarketResult(
             market, query.findZones(marketId), nearby.stores.filter {
                 includeOutside || it.display.membership.visibleByDefault || it.display.nearby
-            }, boundary, paths, geometryEdits?.findEntrances(marketId).orEmpty(),
-            geometryEdits?.findRawFetchedAt(marketId), nearby.radiusMetres.takeUnless { includeOutside },
+            }.map { it.copy(tourMenu = attached[it.source.id]) }, boundary, paths, geometryEdits?.findEntrances(marketId).orEmpty(),
+            geometryEdits?.findRawFetchedAt(marketId), nearby.radiusMetres.takeUnless { includeOutside }, restaurants,
         )
     }
 

@@ -17,7 +17,9 @@ import com.kgd.place.domain.market.model.MarketZoneSource
 data class MarketResponse(val market: Info, val zones: List<Zone>, val stores: List<Store>,
     val boundary: MarketGeometryUseCase.Boundary? = null, val paths: List<MarketGeometryUseCase.Path> = emptyList(),
     val entrances: List<MarketGeometryUseCase.Entrance> = emptyList(), val attribution: List<String> = emptyList(),
-    val nearbyRadiusMetres: Int? = null) {
+    val nearbyRadiusMetres: Int? = null, val restaurants: List<Restaurant> = emptyList()) {
+    data class Restaurant(val attraction: SearchMarketsUseCase.AttractionRef, val title: String,
+        val firstMenu: String?, val treatMenu: String?, val latitude: Double, val longitude: Double)
     data class Attribution(val name: String, val url: String, val license: String)
 
     data class Info(
@@ -49,6 +51,7 @@ data class MarketResponse(val market: Info, val zones: List<Zone>, val stores: L
         val pathId: Long? = null,
         val goodPrice: GoodPrice? = null,
         val nearby: Boolean = false,
+        val tourMenu: MarketTourMenuUseCase.Menu? = null,
     )
 
     companion object {
@@ -57,7 +60,7 @@ data class MarketResponse(val market: Info, val zones: List<Zone>, val stores: L
                 val source = row.source
                 val display = row.display
                 Store(
-                    nearby = display.nearby, id = source.id, name = display.name, items = display.items, zoneId = display.zoneId,
+                    tourMenu = row.tourMenu, nearby = display.nearby, id = source.id, name = display.name, items = display.items, zoneId = display.zoneId,
                     membership = display.membership.status, latitude = display.coordinate?.latitude,
                     longitude = display.coordinate?.longitude, roadAddress = source.roadAddress,
                     jibunAddress = source.jibunAddress, buildingManagementNo = source.buildingManagementNo,
@@ -73,7 +76,9 @@ data class MarketResponse(val market: Info, val zones: List<Zone>, val stores: L
                 )
             }, boundary = result.boundary?.view(), paths = result.paths.map { it.view() }, entrances = result.entrances.map { it.view().copy(pathId = it.viaPathId?.takeIf { id -> result.paths.any { path -> path.id == id } }) },
             nearbyRadiusMetres = result.nearbyRadiusMetres,
-            attribution = if (result.boundary?.source == com.kgd.place.domain.market.model.MarketGeometrySource.OSM || result.paths.any { it.source == com.kgd.place.domain.market.model.MarketGeometrySource.OSM }) listOf("© OpenStreetMap contributors") else emptyList(),
+            restaurants = result.restaurants.map { Restaurant(it.attraction, it.title, it.firstMenu, it.treatMenu, it.latitude, it.longitude) },
+            attribution = (if (result.boundary?.source == com.kgd.place.domain.market.model.MarketGeometrySource.OSM || result.paths.any { it.source == com.kgd.place.domain.market.model.MarketGeometrySource.OSM }) listOf("© OpenStreetMap contributors") else emptyList()) +
+                if (result.stores.any { it.tourMenu != null } || result.restaurants.isNotEmpty()) listOf("한국관광공사 TourAPI · 공공누리") else emptyList(),
         )
 
         private fun goodPriceSummary(stores: List<QueryMarketUseCase.Store>): GoodPriceSummary? {

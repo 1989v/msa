@@ -114,6 +114,14 @@ class MarketStoreJpaEntity(
     /** Written only by [com.kgd.place.application.market.port.MarketSavePort.savePairs]; entity saves leave it alone. */
     @Column(name = "paired_store_id", nullable = true, insertable = false, updatable = false)
     val pairedStoreId: Long? = null,
+    @Column(name = "tour_content_id", length = 30, insertable = false, updatable = false)
+    val tourContentId: String? = null,
+    @Column(name = "tour_first_menu", columnDefinition = "text", insertable = false, updatable = false)
+    val tourFirstMenu: String? = null,
+    @Column(name = "tour_treat_menu", columnDefinition = "text", insertable = false, updatable = false)
+    val tourTreatMenu: String? = null,
+    @Column(name = "tour_matched_at", insertable = false, updatable = false)
+    val tourMatchedAt: LocalDateTime? = null,
 ) {
     fun toDomain(): MarketStore = MarketStore(
         marketId = marketId,

@@ -518,6 +518,15 @@ def check_failures(markets, failed_markets, calls, failed_calls):
         raise ValueError(f"API failure ratio {failed_calls}/{calls} exceeds {MAX_CALL_FAILURE_RATIO}")
 
 
+def refresh_tour_menus():
+    """Derived menu enrichment must never turn a completed source ingest into a failed job."""
+    try:
+        return place_client._request("POST", "/internal/markets/tour-menus", {}, timeout=300)["data"]
+    except Exception as exc:
+        print(f"[market-stores] WARNING tour menu refresh failed: {type(exc).__name__}", flush=True)
+        return None
+
+
 def run(standard_url, onnuri_url, bulk_url, service_key, standard_source="file", good_price_url=None):
     if not good_price_url:
         raise ValueError("MARKET_GOOD_PRICE_FILE_URL required")
@@ -558,6 +567,7 @@ def run(standard_url, onnuri_url, bulk_url, service_key, standard_source="file",
                     place_client.put_market({**command,"stores":stores[start:start+place_client.BULK_CHUNK]})
                 applied += 1
             summary = {"standardSource":standard_source,"markets":applied,"failedMarkets":failed,"calls":api.calls,"failedCalls":api.failures,"errors":errors, **good_price_summary}
+            refresh_tour_menus()
             print(f"[market-stores] {raw(summary)}",flush=True)
             return summary
         finally:

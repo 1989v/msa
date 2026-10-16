@@ -1,0 +1,154 @@
+dish,category_sub,dish_en
+떡볶이,김밥/만두/분식,tteokbokki
+순대,김밥/만두/분식,sundae
+튀김,김밥/만두/분식,twigim
+어묵,김밥/만두/분식,eomuk
+김밥,김밥/만두/분식,gimbap
+만두,김밥/만두/분식,mandu
+라볶이,김밥/만두/분식,rabokki
+쫄면,김밥/만두/분식,jjolmyeon
+떡꼬치,김밥/만두/분식,tteokkkochi
+주먹밥,김밥/만두/분식,jumeokbap
+유부초밥,김밥/만두/분식,yubuchobap
+유부초밥,일식 회/초밥,yubuchobap
+군만두,김밥/만두/분식,gunmandu
+찐만두,김밥/만두/분식,jjinmandu
+물만두,김밥/만두/분식,mulmandu
+고기만두,김밥/만두/분식,gogimandu
+김치만두,김밥/만두/분식,gimchimandu
+떡만둣국,김밥/만두/분식,tteongmandutguk
+비빔만두,김밥/만두/분식,bibimmandu
+어묵탕,김밥/만두/분식,eomuktang
+잡채,김밥/만두/분식,japchae
+칼국수,국수/칼국수,kalguksu
+국수,국수/칼국수,guksu
+잔치국수,국수/칼국수,janchiguksu
+비빔국수,국수/칼국수,bibimguksu
+콩국수,국수/칼국수,kongguksu
+수제비,국수/칼국수,sujebi
+들깨수제비,국수/칼국수,deulkkaesujebi
+들깨칼국수,국수/칼국수,deulkkaekalguksu
+바지락칼국수,국수/칼국수,bajirakkalguksu
+장칼국수,국수/칼국수,jangkalguksu
+팥칼국수,국수/칼국수,patkalguksu
+닭칼국수,국수/칼국수,dak-kalguksu
+메밀국수,국수/칼국수,memilguksu
+빈대떡,전/부침개,bindaetteok
+전,전/부침개,jeon
+파전,전/부침개,pajeon
+김치전,전/부침개,gimchijeon
+부침개,전/부침개,buchimgae
+해물파전,전/부침개,haemulpajeon
+감자전,전/부침개,gamjajeon
+녹두전,전/부침개,nokdujeon
+동태전,전/부침개,dongtaejeon
+고추전,전/부침개,gochujeon
+동그랑땡,전/부침개,donggeurangttaeng
+육전,전/부침개,yukjeon
+모둠전,전/부침개,modumjeon
+부추전,전/부침개,buchujeon
+족발,족발/보쌈,jokbal
+보쌈,족발/보쌈,bossam
+불족발,족발/보쌈,buljokbal
+냉채족발,족발/보쌈,naengchaejokbal
+미니족발,족발/보쌈,minijokbal
+마늘보쌈,족발/보쌈,maneulbossam
+회,횟집,hoe
+생선회,횟집,saengseonhoe
+모둠회,횟집,modumhoe
+광어회,횟집,gwangeohoe
+우럭회,횟집,ureokhoe
+물회,횟집,mulhoe
+회덮밥,횟집,hoedeopbap
+매운탕,횟집,maeuntang
+초밥,일식 회/초밥,chobap
+연어초밥,일식 회/초밥,yeoneochobap
+모둠초밥,일식 회/초밥,modumchobap
+떡,떡/한과,tteok
+한과,떡/한과,hangwa
+약과,떡/한과,yakgwa
+인절미,떡/한과,injeolmi
+송편,떡/한과,songpyeon
+절편,떡/한과,jeolpyeon
+백설기,떡/한과,baekseolgi
+꿀떡,떡/한과,kkultteok
+가래떡,떡/한과,garaetteok
+찹쌀떡,떡/한과,chapssaltteok
+시루떡,떡/한과,sirutteok
+유과,떡/한과,yugwa
+강정,떡/한과,gangjeong
+냉면,냉면/밀면,naengmyeon
+밀면,냉면/밀면,milmyeon
+물냉면,냉면/밀면,mulnaengmyeon
+비빔냉면,냉면/밀면,bibimnaengmyeon
+회냉면,냉면/밀면,hoenaengmyeon
+치킨,치킨,chikin
+통닭,치킨,tongdak
+닭강정,치킨,dakgangjeong
+양념치킨,치킨,yangnyeomchikin
+후라이드치킨,치킨,huraideuchikin
+마늘치킨,치킨,maneulchikin
+빵,빵/도넛,ppang
+도넛,빵/도넛,doneot
+꽈배기,빵/도넛,kkwabaegi
+단팥빵,빵/도넛,danpatppang
+소보로빵,빵/도넛,soboroppang
+식빵,빵/도넛,sikppang
+찐빵,빵/도넛,jjinppang
+고로케,빵/도넛,goroke
+커피,카페,keopi
+아메리카노,카페,amerikano
+카페라테,카페,kapelate
+에스프레소,카페,eseupeureso
+카푸치노,카페,kapuchino
+국밥,국/탕/찌개류,gukbap
+순대국,국/탕/찌개류,sundaeguk
+순댓국,국/탕/찌개류,sundaetguk
+설렁탕,국/탕/찌개류,seolleongtang
+갈비탕,국/탕/찌개류,galbitang
+해장국,국/탕/찌개류,haejangguk
+감자탕,국/탕/찌개류,gamjatang
+삼계탕,국/탕/찌개류,samgyetang
+김치찌개,국/탕/찌개류,kimchijjigae
+된장찌개,국/탕/찌개류,doenjangjjigae
+부대찌개,국/탕/찌개류,budaejjigae
+추어탕,국/탕/찌개류,chueotang
+백반,백반/한정식,baekban
+한정식,백반/한정식,hanjeongsik
+비빔밥,백반/한정식,bibimbap
+쌈밥,백반/한정식,ssambap
+보리밥,백반/한정식,boribap
+삼겹살,돼지고기 구이/찜,samgyeopsal
+돼지갈비,돼지고기 구이/찜,dwaejigalbi
+제육,돼지고기 구이/찜,jeyuk
+닭갈비,닭/오리고기 구이/찜,dakgalbi
+찜닭,닭/오리고기 구이/찜,jjimdak
+닭볶음탕,닭/오리고기 구이/찜,dakbokkeumtang
+오리고기,닭/오리고기 구이/찜,origogi
+갈비,소고기 구이/찜,galbi
+불고기,소고기 구이/찜,bulgogi
+등심,소고기 구이/찜,deungsim
+곱창,곱창 전골/구이,gopchang
+막창,곱창 전골/구이,makchang
+대창,곱창 전골/구이,daechang
+조개구이,해산물 구이/찜,jogaegui
+꼼장어,해산물 구이/찜,kkomjangeo
+아귀찜,해산물 구이/찜,agwijjim
+해물찜,해산물 구이/찜,haemuljjim
+생선구이,해산물 구이/찜,saengseongui
+짜장면,중국집,jajangmyeon
+짬뽕,중국집,jjamppong
+탕수육,중국집,tangsuyuk
+마라탕,마라탕/훠궈,maratang
+훠궈,마라탕/훠궈,hwoegwo
+피자,피자,pizza
+햄버거,버거,hamburger
+돈가스,일식 카레/돈가스/덮밥,donkkaseu
+카레,일식 카레/돈가스/덮밥,kare
+덮밥,일식 카레/돈가스/덮밥,deopbap
+우동,일식 면 요리,udong
+라멘,일식 면 요리,ramen
+소바,일식 면 요리,soba
+쌀국수,베트남식 전문,ssalguksu
+복어,복 요리 전문,bogeo
+복지리,복 요리 전문,bokjiri

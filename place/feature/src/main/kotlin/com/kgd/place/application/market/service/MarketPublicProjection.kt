@@ -37,7 +37,7 @@ internal object MarketPublicProjection {
             (b.longitude - a.longitude) * cos(meanLatitude) * 111320.0)
     }
 
-    private fun center(market: Market, boundary: MarketBoundary?): MarketCoordinate? {
+    fun center(market: Market, boundary: MarketBoundary?): MarketCoordinate? {
         val points = boundary?.polygon?.distinct()
         if (!points.isNullOrEmpty()) return MarketCoordinate(points.map { it.latitude }.average(),
             points.map { it.longitude }.average())
