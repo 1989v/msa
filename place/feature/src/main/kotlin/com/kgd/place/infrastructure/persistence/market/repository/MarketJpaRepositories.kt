@@ -1,5 +1,6 @@
 package com.kgd.place.infrastructure.persistence.market.repository
 
+import org.springframework.data.jpa.repository.Modifying
 import com.kgd.place.domain.market.model.MarketStoreField
 import com.kgd.place.domain.market.model.MarketStoreSource
 import com.kgd.place.domain.market.model.MarketZoneSource
@@ -30,8 +31,17 @@ interface MarketZoneJpaRepository : JpaRepository<MarketZoneJpaEntity, Long> {
 }
 interface MarketStoreJpaRepository : JpaRepository<MarketStoreJpaEntity, Long> {
     fun findByMarketIdAndSanggaKey(marketId: Long, sanggaKey: String): MarketStoreJpaEntity?
-    fun findAllByMarketIdOrderByIdAsc(marketId: Long): List<MarketStoreJpaEntity>
+    fun findAllByMarketId(marketId: Long): List<MarketStoreJpaEntity>
+    fun findAllByMarketIdAndSourceAndNameAndJibunAddress(
+        marketId: Long, source: MarketStoreSource, name: String, jibunAddress: String,
+    ): List<MarketStoreJpaEntity>
     fun findByMarketIdAndSourceAndSourceKey(marketId: Long, source: MarketStoreSource, sourceKey: String): MarketStoreJpaEntity?
+    @Modifying
+    @Query("update MarketStoreJpaEntity s set s.pairedStoreId = null where s.marketId = :marketId and s.pairedStoreId is not null")
+    fun clearPairs(@Param("marketId") marketId: Long): Int
+    @Modifying
+    @Query("update MarketStoreJpaEntity s set s.pairedStoreId = :partnerId where s.id = :storeId")
+    fun pair(@Param("storeId") storeId: Long, @Param("partnerId") partnerId: Long): Int
 }
 interface MarketStoreOverrideJpaRepository : JpaRepository<MarketStoreOverrideJpaEntity, Long> {
     fun findAllByStoreIdIn(storeIds: List<Long>): List<MarketStoreOverrideJpaEntity>

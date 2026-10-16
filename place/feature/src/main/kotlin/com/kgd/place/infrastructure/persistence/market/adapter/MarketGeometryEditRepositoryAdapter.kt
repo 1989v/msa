@@ -46,6 +46,8 @@ class MarketGeometryEditRepositoryAdapter(
     override fun findRaw(marketId: Long, kind: MarketOsmKind): MarketOsmRaw? = raw.findById(MarketOsmRawId(marketId, kind)).orElse(null)?.let {
         MarketOsmRaw(it.marketId, it.kind, it.payload, it.fetchedAt)
     }
+    override fun findRawFetchedAt(marketId: Long): java.time.LocalDateTime? =
+        jdbc.queryForObject("SELECT MAX(fetched_at) FROM market_osm_raw WHERE market_id = ?", java.time.LocalDateTime::class.java, marketId)
     override fun saveRaw(raw: MarketOsmRaw) {
         flush()
         jdbc.update("""INSERT INTO market_osm_raw (market_id,kind,payload,fetched_at) VALUES (?,?,?,?)

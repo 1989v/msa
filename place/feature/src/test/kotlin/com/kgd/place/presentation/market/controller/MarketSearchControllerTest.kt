@@ -15,10 +15,17 @@ import tools.jackson.module.kotlin.jacksonMapperBuilder
 
 class MarketSearchControllerTest : BehaviorSpec({
     val port = mockk<MarketSearchPort>()
-    val mvc = MockMvcBuilders.standaloneSetup(MarketSearchController(MarketSearchService(port)))
+    val mvc = MockMvcBuilders.standaloneSetup(MarketSearchController(MarketSearchService(port), com.kgd.place.application.market.service.MarketDishDictionary()))
         .setControllerAdvice(GlobalExceptionHandler())
         .setMessageConverters(JacksonJsonHttpMessageConverter(jacksonMapperBuilder().build())).build()
     Given("공개 검색 계약") {
+        Then("dish dictionary is public and cached for one day") {
+            mvc.perform(get("/api/v1/place/markets/dishes")).andExpect(status().isOk)
+                .andExpect(header().string("Cache-Control", "max-age=86400, public"))
+                .andExpect(jsonPath("$.data[0].dish").value("떡볶이"))
+                .andExpect(jsonPath("$.data[0].categorySub").value("김밥/만두/분식"))
+        }
+
         Then("착한가격 메뉴를 공개하고 매칭 방법과 원문 및 원천 키는 제외한다") {
             val shop = SearchMarketsUseCase.StoreSummary(1, "국수집", null, null, "c", "시장", null,
                 null, null, null, SearchMarketsUseCase.GoodPrice("한식",

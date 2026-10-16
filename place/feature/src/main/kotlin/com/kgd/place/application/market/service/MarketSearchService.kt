@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional(transactionManager = "placeTransactionManager", readOnly = true)
 class MarketSearchService(private val search: MarketSearchPort) : SearchMarketsUseCase {
     override fun search(query: String, lang: String, page: Int, size: Int): SearchMarketsUseCase.Result {
-        val normalized = query.replace(Regex("\\s+"), "")
+        val normalized = MarketDishDictionary.normalize(query)
         if (normalized.length > 50) throw BusinessException(ErrorCode.INVALID_INPUT, "q must contain at most 50 characters")
         if (lang != "ko" && lang != "en") throw BusinessException(ErrorCode.INVALID_INPUT, "lang must be ko or en")
         if (page < 0 || size !in 1..50) throw BusinessException(ErrorCode.INVALID_INPUT,

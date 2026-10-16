@@ -14,6 +14,7 @@ class MarketRejudgeService(
     private val query: MarketQueryPort,
     private val geometry: MarketGeometryQueryPort,
     private val save: MarketJudgmentSavePort,
+    private val searchRefresh: MarketSearchRefreshPort,
 ) : RejudgeMarketUseCase {
     @Transactional(transactionManager = "placeTransactionManager")
     override fun rejudge(marketId: Long): Int {
@@ -24,12 +25,13 @@ class MarketRejudgeService(
         val rules = geometry.findRoadRules(marketId)
         val stores = query.findStores(marketId).filter { it.source != MarketStoreSource.MANUAL }
         val overrides = query.findOverrides(stores.map { requireNotNull(it.id) }).groupBy { it.storeId }
+        // Search rows are rebuilt once for the market, not once per changed store.
         return stores.count { store ->
             val judgment = MarketStoreJudge.judge(store, boundary, paths, rules, overrides[store.id].orEmpty())
             val changed = store.judgedMembership != judgment.membership || store.judgedBy != judgment.judgedBy ||
                 store.pathId != judgment.pathId || store.needsReview != judgment.needsReview
             if (changed) save.saveJudgment(marketId, requireNotNull(store.id), judgment)
             changed
-        }
+        }.also { if (it > 0) searchRefresh.refresh(marketId) }
     }
 }

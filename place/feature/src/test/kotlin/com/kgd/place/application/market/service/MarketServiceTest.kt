@@ -47,6 +47,17 @@ class MarketServiceTest : BehaviorSpec({
         every { query.findMarketByContentId("content-1") } returns market
         every { query.findZones(1) } returns emptyList()
     }
+    Given("OSM 수집 시각") {
+        Then("마지막 수집 시각을 상태에 실어 적재 잡이 최근 수집한 시장을 건너뛰게 한다") {
+            val edits = mockk<com.kgd.place.application.market.port.MarketGeometryEditPort>()
+            val fetchedAt = java.time.LocalDateTime.of(2026, 10, 16, 5, 30)
+            every { edits.findEntrances(1) } returns emptyList()
+            every { edits.findRawFetchedAt(1) } returns fetchedAt
+            rows(listOf(store(10)))
+            MarketService(query, save, geometryEdits = edits).find("content-1", true)!!.osmFetchedAt shouldBe fetchedAt
+            service.find("content-1", true)!!.osmFetchedAt shouldBe null
+        }
+    }
     Given("시장 소속 공개 규칙") {
         Then("IN은 핀과 함께, UNKNOWN은 좌표 없이 노출하고 OUT은 토글로 노출한다") {
             rows(listOf(store(10), store(11, MarketMembershipStatus.OUT), store(12, MarketMembershipStatus.UNKNOWN)))
@@ -93,6 +104,92 @@ class MarketServiceTest : BehaviorSpec({
             every { query.findMarketByContentId("missing") } returns null
             service.find("missing") shouldBe null
             verify(exactly = 0) { query.findStores(any()); query.findOverrides(any()); query.findZones(any()) }
+        }
+    }
+    Given("IN이 없는 시장의 주변 가게 표시") {
+        val center = market.copy(latitude = 37.0, longitude = 127.0)
+        fun outside(id: Long, metres: Double) = store(id, MarketMembershipStatus.OUT)
+            .copy(latitude = 37.0 + metres / 111320.0)
+        beforeEach { every { query.findMarketByContentId("content-1") } returns center }
+
+        Then("100m 안에 30곳이면 확장하지 않고 OUT 소속과 원천을 보존한다") {
+            val input = (1L..30L).map { outside(it, 90.0) } + outside(31, 120.0)
+            rows(input)
+            val result = requireNotNull(service.find("content-1"))
+            result.nearbyRadiusMetres shouldBe 100
+            result.stores.map { it.source.id } shouldBe (1L..30L).toList()
+            result.stores.all { it.display.nearby && it.display.membership.status == MarketMembershipStatus.OUT } shouldBe true
+            input.all { it.membership.status == MarketMembershipStatus.OUT } shouldBe true
+            verify(exactly = 0) { save.saveStore(any()) }
+        }
+        Then("50m씩 확장해 처음 30곳이 된 200m에서 멈춘다") {
+            rows((1L..29L).map { outside(it, 90.0) } + outside(30, 180.0) + outside(31, 220.0))
+            val result = requireNotNull(service.find("content-1"))
+            result.nearbyRadiusMetres shouldBe 200
+            result.stores.map { it.source.id } shouldBe (1L..30L).toList()
+        }
+        listOf(150, 250).forEach { radius ->
+            Then("처음 30곳이 된 ${radius}m에서도 다음 단계로 확장하지 않는다") {
+                rows((1L..29L).map { outside(it, 90.0) } + outside(30, radius - 10.0) + outside(31, radius + 10.0))
+                val result = requireNotNull(service.find("content-1"))
+                result.nearbyRadiusMetres shouldBe radius
+                result.stores.map { it.source.id } shouldBe (1L..30L).toList()
+            }
+        }
+        Then("30곳 미만이어도 300m에서 멈추고 UNKNOWN 목록은 유지한다") {
+            rows(listOf(outside(1, 290.0), outside(2, 310.0), store(3, MarketMembershipStatus.UNKNOWN)))
+            val result = requireNotNull(service.find("content-1"))
+            result.nearbyRadiusMetres shouldBe 300
+            result.stores.map { it.source.id } shouldBe listOf(1L, 3L)
+            result.stores.last().display.nearby shouldBe false
+            result.stores.last().display.coordinate shouldBe null
+        }
+        Then("중심이 없으면 주변을 더하지 않는다") {
+            every { query.findMarketByContentId("content-1") } returns market
+            rows(listOf(outside(1, 10.0)))
+            val result = requireNotNull(service.find("content-1"))
+            result.stores shouldBe emptyList()
+            result.nearbyRadiusMetres shouldBe null
+        }
+        Then("실효 IN 편집이 있으면 주변을 더하지 않는다") {
+            rows(listOf(outside(1, 10.0), outside(2, 20.0)), listOf(edit(1, MarketStoreField.MEMBERSHIP, "IN")))
+            val result = requireNotNull(service.find("content-1"))
+            result.stores.map { it.source.id } shouldBe listOf(1L)
+            result.stores.single().display.nearby shouldBe false
+            result.nearbyRadiusMetres shouldBe null
+        }
+        Then("원천 IN을 OUT으로 편집하면 주변 표시를 적용한다") {
+            rows(listOf(store(1), outside(2, 20.0)), listOf(edit(1, MarketStoreField.MEMBERSHIP, "OUT")))
+            val result = requireNotNull(service.find("content-1"))
+            result.stores.all { it.display.nearby && it.display.membership.status == MarketMembershipStatus.OUT } shouldBe true
+            result.nearbyRadiusMetres shouldBe 300
+        }
+        Then("전체 보기에서도 같은 주변 집합만 표시하고 반경은 내보내지 않는다") {
+            rows((1L..29L).map { outside(it, 90.0) } + outside(30, 180.0) + outside(31, 220.0))
+            val normal = requireNotNull(service.find("content-1"))
+            val all = requireNotNull(service.find("content-1", true))
+            all.stores.size shouldBe 31
+            all.stores.filter { it.display.nearby }.map { it.source.id } shouldBe normal.stores.map { it.source.id }
+            all.nearbyRadiusMetres shouldBe null
+        }
+        Then("경계 중심이 시장 좌표보다 우선하며 닫는 꼭짓점에 치우치지 않는다") {
+            val geometry = mockk<com.kgd.place.application.market.port.MarketGeometryQueryPort>()
+            val polygon = listOf(MarketCoordinate(37.009, 126.999), MarketCoordinate(37.009, 127.001),
+                MarketCoordinate(37.011, 127.001), MarketCoordinate(37.011, 126.999), MarketCoordinate(37.009, 126.999))
+            every { geometry.findBoundary(1) } returns com.kgd.place.domain.market.model.MarketBoundary(
+                1, polygon, com.kgd.place.domain.market.model.MarketGeometrySource.MANUAL)
+            every { geometry.findPaths(1) } returns emptyList()
+            rows((1L..30L).map { outside(it, 0.0).copy(latitude = 37.01) } + outside(31, 0.0))
+            val result = requireNotNull(MarketService(query, save, geometry).find("content-1"))
+            result.nearbyRadiusMetres shouldBe 100
+            result.stores.map { it.source.id } shouldBe (1L..30L).toList()
+        }
+        Then("공개 DTO가 주변 배지와 반경을 전달한다") {
+            rows(listOf(outside(1, 10.0)))
+            val response = com.kgd.place.presentation.market.dto.MarketResponse.from(requireNotNull(service.find("content-1")))
+            response.nearbyRadiusMetres shouldBe 300
+            response.stores.single().nearby shouldBe true
+            response.stores.single().membership shouldBe MarketMembershipStatus.OUT
         }
     }
     Given("같은 이름 지번의 온누리와 상가 행") {

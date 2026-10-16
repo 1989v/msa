@@ -1,8 +1,6 @@
 package com.kgd.place.infrastructure.persistence.market.repository
 
-import com.kgd.place.domain.market.model.MarketStoreField
 import com.kgd.place.domain.market.model.MarketStoreSource
-import com.kgd.place.domain.market.model.MarketDisplayValuePolicy
 import com.kgd.place.infrastructure.persistence.market.entity.*
 import com.querydsl.core.types.dsl.CaseBuilder
 import com.querydsl.core.types.dsl.Expressions
@@ -16,107 +14,71 @@ import org.springframework.stereotype.Repository
 
 /** Canonical, effective-IN candidates are filtered/ranked before DB pagination, never in JVM. */
 @Repository
-class MarketSearchQueryRepository(@Qualifier("placeJpaQueryFactory") private val factory: JPAQueryFactory) {
+class MarketSearchQueryRepository(@Qualifier("placeJpaQueryFactory") private val factory: JPAQueryFactory,
+    private val dictionary: com.kgd.place.application.market.service.MarketDishDictionary = com.kgd.place.application.market.service.MarketDishDictionary()) {
+    private val search = QMarketStoreSearchJpaEntity.marketStoreSearchJpaEntity
     private val store = QMarketStoreJpaEntity("searchStore")
-    private val partner = QMarketStoreJpaEntity("searchPartner")
     private val market = QMarketJpaEntity.marketJpaEntity
-    private val own = MarketStoreField.entries.associateWith { QMarketStoreOverrideJpaEntity("own${it.name}") }
-    private val theirs = MarketStoreField.entries.associateWith { QMarketStoreOverrideJpaEntity("partner${it.name}") }
-
-    // MySQL has no NFKC. Compare normalized bytes (HEX), avoiding accent-insensitive collation
-    // over-merging. Kotlin public projection remains authoritative when hydrating selected rows.
+    private val name get() = Expressions.stringTemplate("cast({0} as string)", search.name)
+    private val items get() = search.items
+    private val categories get() = listOf(search.categoryMajor, search.categoryMid, search.categorySub)
+    private val menuNames get() = search.menuNames
+    // Preserve the existing whitespace-normalized literal substring matching.
     private fun normalized(value: StringExpression): StringExpression =
         Expressions.stringTemplate("lower(cast(regexp_replace({0}, {1}, {2}) as string))", value, "[[:space:]]+", "")
-    private fun identity(value: StringExpression): StringExpression =
-        Expressions.stringTemplate("hex({0})", normalized(value))
 
-    private fun sameIdentity(a: QMarketStoreJpaEntity, b: QMarketStoreJpaEntity) =
-        a.marketId.eq(b.marketId).and(identity(a.name).eq(identity(b.name)))
-            .and(identity(a.jibunAddress).eq(identity(b.jibunAddress)))
-            .and(normalized(a.jibunAddress).ne(""))
+    private fun base() = factory.from(search).join(market).on(market.id.eq(search.marketId))
 
-    private fun partnerId() : com.querydsl.jpa.JPQLQuery<Long> {
-        val candidate = QMarketStoreJpaEntity("pairCandidate")
-        val sameSource = QMarketStoreJpaEntity("pairSameSource")
-        val otherSource = QMarketStoreJpaEntity("pairOtherSource")
-        val ownCount = JPAExpressions.select(sameSource.count()).from(sameSource)
-            .where(sameIdentity(store, sameSource), sameSource.source.eq(store.source))
-        val otherCount = JPAExpressions.select(otherSource.count()).from(otherSource)
-            .where(sameIdentity(store, otherSource), otherSource.source.eq(candidate.source))
-        return JPAExpressions.select(candidate.id.min()).from(candidate)
-            .where(sameIdentity(store, candidate), store.source.`in`(MarketStoreSource.ONNURI, MarketStoreSource.SANGGA),
-                candidate.source.`in`(MarketStoreSource.ONNURI, MarketStoreSource.SANGGA),
-                candidate.source.ne(store.source), ownCount.eq(1L), otherCount.eq(1L))
-    }
-
-    private fun connection(value: StringExpression): StringExpression =
-        Expressions.stringTemplate("cast({0} as string)", value)
-
-    private fun effective(field: MarketStoreField, fallback: StringExpression): StringExpression =
-        MarketDisplayValuePolicy.editedValue(fallback, own.getValue(field), theirs.getValue(field)) { edit, source ->
-            // Both branches go through the connection collation: an override column (utf8mb4_unicode_ci)
-            // next to a cast value (utf8mb4_0900_ai_ci) leaves CASE without a collation and MySQL
-            // refuses the comparison that follows ("Illegal mix of collations").
-            CaseBuilder().`when`(edit.id.isNotNull).then(connection(edit.value)).otherwise(connection(source))
-        }
-
-    private val name get() = effective(MarketStoreField.NAME, store.name)
-    private val items get() = effective(MarketStoreField.ITEMS, store.items.coalesce(partner.items))
-    private val membership get() = effective(MarketStoreField.MEMBERSHIP,
-        MarketDisplayValuePolicy.membership<StringExpression>(store.judgedMembership.stringValue(),
-            store.membership.stringValue()) { judged, ingested -> judged.coalesce(ingested) })
-    private val categories get() = listOf(store.categoryMajor.coalesce(partner.categoryMajor),
-        store.categoryMid.coalesce(partner.categoryMid), store.categorySub.coalesce(partner.categorySub))
-    private val menuNames get() = CaseBuilder().`when`(store.goodPriceRaw.isNotNull)
-        .then(store.goodPriceMenuNames).otherwise(partner.goodPriceMenuNames)
-
-    private fun base(): JPAQuery<*> {
-        val query = factory.from(store).leftJoin(partner).on(partner.id.eq(partnerId()))
-            .join(market).on(market.id.eq(store.marketId))
-        listOf(MarketStoreField.NAME, MarketStoreField.ITEMS, MarketStoreField.MEMBERSHIP).forEach { field ->
-            val first = own.getValue(field)
-            val second = theirs.getValue(field)
-            query.leftJoin(first).on(first.storeId.eq(store.id), first.field.eq(field))
-                .leftJoin(second).on(second.storeId.eq(partner.id), second.field.eq(field))
-        }
-        // A matched pair keeps ONNURI identity. Partner source membership is deliberately not inherited.
-        return query.where(store.source.ne(MarketStoreSource.SANGGA).or(partner.id.isNull), membership.eq("IN"))
-    }
-
-    private fun matches(value: StringExpression, query: String) = normalized(value).containsIgnoreCase(query)
+    private fun matches(value: StringExpression, query: String) = normalized(value).containsIgnoreCase(com.kgd.place.application.market.service.MarketDishDictionary.normalize(query))
+    private val english = com.kgd.place.application.market.service.MarketEnglishDictionary.DEFAULT
+    private fun ascii(query: String) = query.all { it.code < 128 }
+    private fun nameMatches(query: String) = matches(name, query).or(
+        if (ascii(query)) matches(search.nameRoman, query) else null)
+    private fun categoryMatches(query: String) = categories.map { matches(it, query).or(
+        if (ascii(query)) it.`in`(english.categoryLabels(query)) else null) }.reduce { a, b -> a.or(b) }
     private fun matching(query: String): JPAQuery<*> = base().where(
-        matches(name, query).or(matches(items, query)).or(matches(menuNames, query))
-            .or(categories.map { matches(it, query) }.reduce { a, b -> a.or(b) }))
+        nameMatches(query).or(matches(items, query)).or(matches(menuNames, query))
+            .or(categoryMatches(query))
+            .or(search.categorySub.`in`(dictionary.categories(query))))
 
     data class Candidates(val rows: List<Pair<com.kgd.place.domain.market.model.MarketStore,
-        com.kgd.place.domain.market.model.MarketStore?>>, val total: Long)
+        com.kgd.place.domain.market.model.MarketStore?>>, val total: Long, val matches: Map<Long, Pair<Int, String?>> = emptyMap())
 
     /** Hydrate complete identity groups, including ambiguous tenants and reference-pin partners. */
     fun relatedStores(ids: List<Long>): List<com.kgd.place.domain.market.model.MarketStore> {
         if (ids.isEmpty()) return emptyList()
-        val anchor = QMarketStoreJpaEntity("identityAnchor")
-        val marketIds = factory.select(store.marketId).distinct().from(store).where(store.id.`in`(ids)).fetch()
-        return factory.selectFrom(store).where(store.marketId.`in`(marketIds), store.id.`in`(ids).or(
-            JPAExpressions.selectOne().from(anchor).where(anchor.id.`in`(ids), sameIdentity(anchor, store),
-                anchor.source.ne(MarketStoreSource.MANUAL), store.source.ne(MarketStoreSource.MANUAL)).exists()))
+        // identity_key is MarketStoreIdentity.key. Look each (market, key) up in idx_market_store_identity:
+        // a correlated subquery instead scans every wide row of the result markets.
+        val sameIdentity = factory.select(store.marketId, store.identityKey).distinct().from(store)
+            .where(store.id.`in`(ids), store.identityKey.isNotNull, store.source.ne(MarketStoreSource.MANUAL)).fetch()
+            .map { store.marketId.eq(it[store.marketId]).and(store.identityKey.eq(it[store.identityKey])) }
+            .reduceOrNull { a, b -> a.or(b) }
+        return factory.selectFrom(store).where(store.id.`in`(ids)
+            .or(sameIdentity?.let { store.source.ne(MarketStoreSource.MANUAL).and(it) }))
             .fetch().map { it.toDomain() }
     }
 
     fun stores(query: String, pageable: Pageable): Candidates {
-        val rank = CaseBuilder().`when`(matches(name, query)).then(0)
-            .`when`(matches(items, query)).then(1).`when`(matches(menuNames, query)).then(2).otherwise(3)
-        val rows = matching(query).select(store, partner)
-            .orderBy(rank.asc(), market.name.asc(), name.asc(), store.id.asc())
+        val rank = CaseBuilder().`when`(nameMatches(query)).then(0)
+            .`when`(matches(items, query)).then(1).`when`(matches(menuNames, query)).then(2)
+            .`when`(categoryMatches(query)).then(3).otherwise(4)
+        val selected = matching(query).select(search.storeId, search.partnerId, rank, search.categorySub)
+            .orderBy(rank.asc(), market.name.asc(), name.asc(), search.storeId.asc())
             .offset(pageable.offset).limit(pageable.pageSize.toLong()).fetch()
-            .map { requireNotNull(it[store]).toDomain() to it[partner]?.toDomain() }
-        val total = matching(query).select(store.count()).fetchOne() ?: 0L
-        return Candidates(rows, total)
+        val ids = selected.flatMap { listOfNotNull(it[search.storeId], it[search.partnerId]) }.distinct()
+        val hydrated = if (ids.isEmpty()) emptyMap() else factory.selectFrom(store).where(store.id.`in`(ids))
+            .fetch().associate { requireNotNull(it.id) to it.toDomain() }
+        val rows = selected.map { requireNotNull(hydrated[it[search.storeId]]) to hydrated[it[search.partnerId]] }
+        val total = matching(query).select(search.storeId.count()).fetchOne() ?: 0L
+        return Candidates(rows, total, selected.associate { requireNotNull(it[search.storeId]) to
+            (requireNotNull(it[rank]) to it[search.categorySub]) })
     }
 
-    fun counts(query: String = ""): Map<Long, Long> = base()
-        .where(if (query.isEmpty()) null else matches(market.name, query))
-        .select(store.marketId, store.count()).groupBy(store.marketId)
-        .fetch().associate { requireNotNull(it[store.marketId]) to requireNotNull(it[store.count()]) }
+    fun counts(query: String = ""): Map<Long, Long> {
+        return base().where(if (query.isEmpty()) null else matches(market.name, query))
+            .select(search.marketId, search.storeId.count()).groupBy(search.marketId)
+            .fetch().associate { requireNotNull(it[search.marketId]) to requireNotNull(it[search.storeId.count()]) }
+    }
 
     fun marketRows(query: String, counts: Map<Long, Long>, pageable: Pageable): List<com.kgd.place.domain.market.model.Market> {
         val boundary = QMarketBoundaryJpaEntity.marketBoundaryJpaEntity

@@ -5,6 +5,8 @@ import com.kgd.place.domain.market.model.*
 interface MarketGeometryEditPort {
     fun findEntrances(marketId: Long): List<MarketEntrance>
     fun findRaw(marketId: Long, kind: MarketOsmKind): MarketOsmRaw?
+    /** Latest OSM fetch of the market over all kinds; null when never fetched. */
+    fun findRawFetchedAt(marketId: Long): java.time.LocalDateTime?
     fun saveRaw(raw: MarketOsmRaw)
     fun boundary(marketId: Long, value: MarketBoundary?)
     fun path(marketId: Long, id: Long?, value: MarketPath?): MarketPath?

@@ -226,7 +226,7 @@ def test_standard_file_mode_retains_csv_path(tmp_path):
         api.assert_not_called()
 
 
-def test_off_run_uses_attraction_and_reports_source_without_standard_download(tmp_path):
+def test_off_run_uses_attraction_and_reports_source_without_standard_download(tmp_path, capsys):
     o = FIXTURE['samples'][0]['onnuri']
     attraction = {'contentId':'1','lang':'ko','status':'ACTIVE','lclsSystm2':'SH06','title':o['시장명'],
                   'latitude':37.4,'longitude':126.8}
@@ -236,8 +236,11 @@ def test_off_run_uses_attraction_and_reports_source_without_standard_download(tm
          patch.object(ms,'load_good_prices',return_value=[good_price_row()]), \
          patch.object(ms,'fetch_standards') as standard_api, patch.object(ms,'StoreApi',return_value=api), \
          patch.object(place_client,'fetch_market_attractions',return_value=[attraction]), \
-         patch.object(place_client,'market_state',return_value=None), patch.object(place_client,'put_market') as write:
+         patch.object(place_client,'market_state',return_value=None), patch.object(place_client,'put_market') as write, \
+         patch.object(place_client,'_request',side_effect=TimeoutError('offline')) as refresh:
         summary = ms.run(None,'onnuri','bulk','key',standard_source='off',good_price_url='good')
+        refresh.assert_called_once_with('POST', '/internal/markets/tour-menus', {}, timeout=300)
+        assert 'WARNING tour menu refresh failed: TimeoutError' in capsys.readouterr().out
         assert summary['standardSource'] == 'off' and summary['markets'] == 1
         assert summary['goodPriceRows'] == 1
         assert summary['goodPriceMatched'] == {'NAME':0,'ROAD':0}
@@ -367,6 +370,19 @@ def test_good_price_global_name_precedence_and_unique_attachment(tmp_path):
         [good_price_store('행복식당 본점')], [good_price_store('행복')]])
     assert [c[0]['row']['goodPriceMatchedBy'] for c in commands] == ['ROAD', None]
     assert summary['goodPriceMatched'] == {'NAME':0,'ROAD':1}
+
+
+def test_good_price_contested_shop_goes_to_the_row_whose_category_agrees(tmp_path):
+    butcher, kitchen = good_price_store(categoryMajor='소매'), good_price_store(categoryMajor='음식')
+    commands, summary = attach_prices(tmp_path, [[butcher, kitchen]])
+    assert [s['row']['goodPriceMatchedBy'] for s in commands[0]] == [None, 'NAME']
+    assert summary['goodPriceMatched'] == {'NAME':1,'ROAD':0}
+    salon = good_price_row(업종='미용업')
+    commands, _ = attach_prices(tmp_path, [[good_price_store(categoryMajor='음식'),
+                                            good_price_store(categoryMajor='수리·개인')]], [salon])
+    assert [s['row']['goodPriceMatchedBy'] for s in commands[0]] == [None, 'NAME']
+    commands, _ = attach_prices(tmp_path, [[good_price_store(categoryMajor='음식'), good_price_store()]])
+    assert [s['row']['goodPriceMatchedBy'] for s in commands[0]] == ['NAME', None]
 
 
 def test_prepare_unmatched_good_price_fields_are_null(tmp_path):

@@ -67,7 +67,7 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 |---|---|---|---|---|
 | 관광지 | 한국관광공사 TourAPI 4.0 | 필요 | 공공누리 (출처표시) | `place/ingest --job=sync` |
 | 관광지 개요 | TourAPI `detailCommon2` | 필요 | 〃 | `place/ingest --job=overview` (매일) |
-| 관광지 이용정보 | TourAPI `detailIntro2` | 필요 | 〃 | `place/ingest --job=intro` (매일) |
+| 관광지 이용정보 | TourAPI `detailIntro2` | 필요 | 〃 | `place/ingest --job=intro` (매일), 시장 가게 메뉴 매칭 |
 | 관광지 분류 코드표 | TourAPI `lclsSystmCode2` | 필요 | 〃 | `place/ingest --job=lcls-codes` (월 1회) |
 | 관광지 반려동물 동반 | TourAPI `detailPetTour2` | 필요 | 〃 | `place/ingest --job=pet-tour` (주 1회) |
 | 관광지 부가 사진 | TourAPI `detailImage2` | 필요 | 〃 | `place/ingest --job=media` (매일) |

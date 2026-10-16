@@ -11,11 +11,12 @@ class MarketRejudgeServiceTest : BehaviorSpec({
     val query = mockk<MarketQueryPort>()
     val geometry = mockk<MarketGeometryQueryPort>()
     val save = mockk<MarketJudgmentSavePort>(relaxed = true)
-    val service = MarketRejudgeService(editor, query, geometry, save)
+    val searchRefresh = mockk<MarketSearchRefreshPort>(relaxed = true)
+    val service = MarketRejudgeService(editor, query, geometry, save, searchRefresh)
     val source = MarketStore(1, "가게", MarketStoreSource.ONNURI, sourceKey = "a", onnuriKey = "a", onnuriRaw = "{\"raw\":1}",
         membership = MarketMembership(MarketMembershipStatus.OUT), latitude = 37.0, longitude = 127.0, id = 10)
     beforeEach {
-        clearMocks(editor, query, geometry, save)
+        clearMocks(editor, query, geometry, save, searchRefresh)
         every { editor.lockMarket(1) } returns Market("1", "시장", MarketType.STREET, id = 1)
         every { geometry.findBoundary(1) } returns null
         every { geometry.findPaths(1) } returns emptyList()
@@ -33,6 +34,7 @@ class MarketRejudgeServiceTest : BehaviorSpec({
             verify(exactly = 0) { save.saveJudgment(1, 11, any()) }
             verify(exactly = 0) { save.saveJudgment(1, 12, any()) }
             verify { query.findOverrides(listOf(10, 11)) }
+            verify(exactly = 1) { searchRefresh.refresh(1) }
             changed.membership.status shouldBe MarketMembershipStatus.OUT
             changed.onnuriRaw shouldBe "{\"raw\":1}"
         }
@@ -46,8 +48,16 @@ class MarketRejudgeServiceTest : BehaviorSpec({
             verify { save.saveJudgment(1, 10, MarketStoreJudgment(MarketMembershipStatus.IN, MarketJudgedBy.INGEST, 3, false)) }
             clearMocks(save)
             every { query.findStores(1) } returns listOf(row.copy(pathId = 3))
+            clearMocks(searchRefresh)
             service.rejudge(1) shouldBe 0
             verify(exactly = 0) { save.saveJudgment(any(), any(), any()) }
+            verify(exactly = 0) { searchRefresh.refresh(any()) }
+        }
+        then("rebuilds search rows once for the market however many stores changed") {
+            every { query.findStores(1) } returns listOf(source, source.copy(id = 11, sourceKey = "b", onnuriKey = "b"))
+            service.rejudge(1) shouldBe 2
+            verify(exactly = 2) { save.saveJudgment(1, any(), any()) }
+            verify(exactly = 1) { searchRefresh.refresh(1) }
         }
         then("uses current membership and coordinate overrides without editing source") {
             every { query.findStores(1) } returns listOf(source)

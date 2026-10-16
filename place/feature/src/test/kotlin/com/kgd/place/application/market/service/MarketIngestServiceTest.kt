@@ -1,5 +1,6 @@
 package com.kgd.place.application.market.service
 
+import com.kgd.place.application.market.port.MarketQueryPort
 import com.kgd.place.application.market.port.MarketSavePort
 import com.kgd.place.application.market.usecase.IngestMarketUseCase
 import com.kgd.place.domain.market.model.*
@@ -13,7 +14,7 @@ import io.mockk.verify
 class MarketIngestServiceTest : BehaviorSpec({
     Given("cluster ingestion with source keys and a building/floor hierarchy") {
         val save = mockk<MarketSavePort>()
-        val service = MarketIngestService(save)
+        val service = MarketIngestService(save.also { every { it.savePairs(any(), any()) } returns Unit }, mockk<MarketQueryPort>(relaxed = true))
         val market = Market("123", "광명시장", MarketType.BUILDING)
         val building = MarketZone(1, MarketZoneKind.BUILDING, "본관", MarketZoneSource.AUTO, sourceKey = "building")
         val floor = MarketZone(1, MarketZoneKind.FLOOR, "2층", MarketZoneSource.AUTO, sourceKey = "floor")
@@ -34,7 +35,7 @@ class MarketIngestServiceTest : BehaviorSpec({
     }
     Given("착한가격 원문 전체 동기화") {
         val save = mockk<MarketSavePort>()
-        val service = MarketIngestService(save)
+        val service = MarketIngestService(save.also { every { it.savePairs(any(), any()) } returns Unit }, mockk<MarketQueryPort>(relaxed = true))
         val market = Market("123", "시장", MarketType.STREET)
         val store = MarketStore(1, "가게", MarketStoreSource.ONNURI, sourceKey = "o", onnuriKey = "o", onnuriRaw = "{}")
         every { save.saveMarket(any()) } returns market.copy(id = 1)
@@ -55,7 +56,7 @@ class MarketIngestServiceTest : BehaviorSpec({
     }
     Given("automatic reingest tries to write a manual row") {
         val save = mockk<MarketSavePort>()
-        val service = MarketIngestService(save)
+        val service = MarketIngestService(save.also { every { it.savePairs(any(), any()) } returns Unit }, mockk<MarketQueryPort>(relaxed = true))
         val market = Market("123", "시장", MarketType.STREET)
         val manual = MarketStore(1, "운영자 가게", MarketStoreSource.MANUAL,
             actorKind = MarketActorKind.ADMIN, createdByMemberId = 7)
@@ -70,7 +71,7 @@ class MarketIngestServiceTest : BehaviorSpec({
     }
     Given("unknown zone references or invalid parent ordering") {
         val save = mockk<MarketSavePort>()
-        val service = MarketIngestService(save)
+        val service = MarketIngestService(save.also { every { it.savePairs(any(), any()) } returns Unit }, mockk<MarketQueryPort>(relaxed = true))
         val market = Market("123", "시장", MarketType.STREET)
         val zone = MarketZone(1, MarketZoneKind.FLOOR, "층", MarketZoneSource.AUTO, sourceKey = "floor")
         Then("fails before any writes") {

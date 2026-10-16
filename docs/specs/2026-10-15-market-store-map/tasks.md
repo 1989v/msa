@@ -65,7 +65,7 @@ PRD 열린 질문에 대한 진행 가정 (사용자가 바꾸면 해당 단위�
 - 테스트: 광명 픽스처로 AC-P4-1 기대값(153·29·104·49·14·9), 도로 규칙 구간, 경계 없는 시장 폴백.
 
 ## WU-10 OSM 적재
-- `place/ingest/src/market_osm.py`: Overpass 조회(시장마다 한 요청), `market_osm_raw` 전체 보존, 경계·골목 선 초안 upsert(MANUAL 행 불변), 없으면 DERIVED 둘레. 실패율 상한. 끝나면 시장별 재판정 호출.
+- `place/ingest/src/market_osm.py`: Overpass 조회(시장마다 한 조회, 일시 오류 최대 2회 재시도), `market_osm_raw` 전체 보존, 경계·골목 선 초안 upsert(MANUAL 행 불변), 없으면 DERIVED 둘레. 관광지 순서의 50개 배치마다 실패율 검사 후 저장·시장별 재판정. 실패 배치부터 즉시 중단하고 앞선 배치 결과는 보존.
 - place 내부 API `/internal/markets/{id}/osm`·`/internal/markets/{id}/rejudge`.
 - CronJob(기존 market-stores 뒤, suspend 유지), `data-sources.md` OSM 행, egress 는 기존 place-ingest :443 정책 안.
 - 테스트: 파싱·DERIVED·MANUAL 보호(AC-P4-2).
@@ -84,3 +84,73 @@ PRD 열린 질문에 대한 진행 가정 (사용자가 바꾸면 해당 단위�
 ## WU-14 상인회 변경 요청
 - API: 상인회 `POST …/manage/geometry-requests`(그림 JSON + 설명), 운영자 목록·승인·반려. 승인 시 WU-11 경로로 반영·이력(AC-P4-6).
 - 화면: portal-fe 관리 화면에 요청 작성(경계·골목 선 그리기 대신 지도 위 메모 핀 + 설명도 허용), admin 에 요청 목록·미리보기·승인.
+
+---
+
+# P7 — 현장에서 길 찾는 지도 (`p7-plan.md`)
+
+진행 가정(2026-10-16 사용자 결정): 7-0 은 **판정을 바꾸지 않고 표시만**(안 (b)). 7-0 과 7-1 을 함께 진행한다. 망원 경계는 미결.
+Codex 보내는 순서: WU-15 ∥ WU-16 → WU-17 ∥ WU-18. 같은 워크트리에서 돌리므로 단위마다 **손대는 파일을 아래로 한정**하고, 커밋은 세션이 경로를 지정해 한다.
+
+## WU-15 전국 덮기 — IN 이 없는 시장은 주변 가게를 기본 표시 (place, Kotlin)
+- 파일: `place/feature/.../application/market/service/MarketService.kt`, `MarketPublicProjection.kt`, `usecase/MarketUseCases.kt`, 공개 응답 DTO(`MarketResponse`), 해당 테스트. **적재·판정·DB 는 손대지 않는다.**
+- 규칙: `find(contentId, includeOutside=false)` 결과에 실효 소속 IN 인 가게가 0 이면, 시장 중심(경계가 있으면 경계 중심, 없으면 `market.latitude/longitude`)에서 반경 R 안의 OUT 가게를 더한다. R 은 100 m 에서 시작해 50 m 씩 넓히고 가게가 30곳 이상이면 멈춘다. 상한 300 m(상한에서도 30 미만이면 그만큼만). 중심이 없으면 아무것도 더하지 않는다.
+- 더한 가게는 `membership` 을 OUT 그대로 두고 `Store.display` 에 `nearby: true`(응답 `nearby`)를 붙인다. `MarketResult` 에 `nearbyRadiusMetres: Int?` 를 넣어 응답에 내보낸다(IN 이 있으면 null).
+- `includeOutside=true` 는 지금처럼 전부(이 경우 `nearby` 는 같은 규칙으로 붙이되 `nearbyRadiusMetres` 는 null).
+- 거리 계산은 적재 잡과 같은 등거리 근사(위도 평균·미터 환산). `MarketPublicProjection` 에 순수 함수로 두고 테스트한다.
+- 테스트(Kotest BehaviorSpec): IN 이 있으면 안 붙음 / 0 이면 100 m 에서 30곳 넘을 때 멈춤 / 300 m 상한 / 중심 없음 / `nearby` 가 OUT 소속 값을 바꾸지 않음. 회귀 주입: 반경 확장 제거 → 빨간불.
+- 검증: `./gradlew --no-daemon :place:feature:test --tests '*Market*'` 결과 줄.
+
+## WU-16 지도 조작 — 확대·이동·충돌 묶음·시트 (portal-fe)
+- 파일: 새 `portal-fe/src/pages/place/MarketCanvas.tsx`(지도 SVG 를 `AttractionMarket.tsx` 에서 분리), `marketView.ts`(묶음 함수 추가만), `AttractionMarket.css`, 테스트 `__tests__/MarketCanvas.test.tsx`·`marketView.test.ts`. `AttractionMarket.tsx` 는 분리된 컴포넌트를 부르는 변경까지만(검색·패널 로직은 WU-17 이 손댄다).
+- viewBox 상태(`{x,y,w,h}`)로 확대·이동: 휠(ctrl 없이도), 두 손가락 핀치, +/− 버튼, 더블탭 2배, 「전체 보기」 버튼. 배율 1~8. 라이브러리 없음.
+- **핀 버튼을 SVG 안으로**: 지금의 HTML 백분율 오버레이 버튼(`place-market-pin-button`)을 없애고 `<g role="button" tabIndex=0>` + `aria-label` 로. 키보드 Enter/Space 동작. 이동·확대 뒤에도 그림과 클릭 영역이 같다(테스트로 좌표 일치 검사).
+- **화면 거리 묶기**: `groupMarketPins` 결과에 `clusterByScreenDistance(points, scale, 24px)` 를 더해 현재 배율에서 24 px 안의 묶음을 하나로 합친다(가게 수 합산, 색은 첫 묶음). 배율이 오르면 풀린다. `marketView.ts` 의 순수 함수로.
+- 묶음 탭 → 바닥 시트(모바일) / 옆 패널(데스크톱 ≥1024px) 에 가게 목록: 건물 → 층 → 호 자연 정렬, 없으면 이름순. 200 넘으면 50행씩 「더 보기」. 시트는 `AttractionMarket` 의 기존 `parcel` 선택 상태를 그대로 쓴다(묶음 = 여러 parcel).
+- 핀 크기·글자는 배율에 반비례(화면에서 항상 같은 크기). 골목 이름·축척 막대도 같이.
+- `prefers-reduced-motion` 존중, DESIGN.md 토큰만.
+- 검증: `npx tsc -b`, `npx vitest run src/pages/place`, CDP 4조합 캡처는 세션이 한다. 회귀 주입: 묶음 함수 제거 → 빨간불.
+
+## WU-17 검색 일치·결과→지도·칩 접기 (portal-fe)
+- 파일: `marketView.ts`(검색 함수), `AttractionMarket.tsx`(검색·패널·칩), `MarketSearchPage.tsx` 는 손대지 않음. 테스트 `marketView.test.ts`·`AttractionMarket.test.tsx`.
+- `matchesMarketStore(store, query)`: 이름·품목·업종 대/중/소·착한가격 메뉴 이름. 정규화는 `/markets` 와 같다(공백 제거·소문자·NFKC). 순위: 이름 0 > 품목 1 > 메뉴 2 > 업종 3. **동의어·상위 분류 확장 없음.** 어디에 맞았는지(`matchedBy`)를 돌려준다.
+- 결과 행: 「이름에 맞음/품목에 맞음/업종에 맞음」 표시, UNKNOWN 은 「위치 미확인」. 행을 버튼으로 — 누르면 `MarketCanvas` 에 `focusStoreId` 를 넘겨 그 핀으로 이동·확대(배율 4)하고 묶음 시트를 열어 해당 행을 강조·스크롤.
+- `nearby` 가게(WU-15)는 배지 「주변 · 소속 미확인」, 응답 `nearbyRadiusMetres` 가 있으면 지도 위에 「시장 주변 {R} m 안 가게를 보입니다」 한 줄.
+- 구역 칩: 가게 수 내림차순, 시장 이름 포함 길 우선, 기본 8개 + 「다른 길 N개」 접기/펼치기. 선택된 칩은 접혀도 보인다.
+- 검증: `npx tsc -b`, `npx vitest run src/pages/place`. fixture 로 「떡볶이」 검색이 품목·메뉴·업종에서 예상 id 를 순위대로 내고, 이름만 맞는 옛 함수와 결과가 다른 것을 검사(회귀 주입: 품목 매칭 제거 → 빨간불).
+
+## WU-18 내 위치 (portal-fe)
+- 파일: 새 `portal-fe/src/pages/place/MarketLocate.tsx`(버튼·상태·문구), `MarketCanvas.tsx` 는 `userPosition` prop 받아 그리는 부분만, 테스트 `MarketLocate.test.tsx`. `PlacePage.tsx` 의 기존 위치 코드를 재사용할 수 있으면 공유 훅으로 뽑되 그 파일의 동작은 바꾸지 않는다.
+- 버튼을 눌러야 `navigator.geolocation.getCurrentPosition`(자동 요청 없음, `enableHighAccuracy`, 10초 시간 초과). 거부·시간 초과·미지원 문구. 「다시 재기」, 측정 시각·정확도(m) 표시.
+- 화면(viewBox) 안이면 점 + 정확도 원, 밖이면 가장자리 화살표 + 「시장 중심까지 {d} m · {8방위}」. 기준점은 경계 중심, 없으면 시장 중심. 이미 경계 안(또는 중심 100 m 안)이면 거리 문구 대신 「시장 안입니다」. 게이트 안내는 하지 않는다.
+- 거리·방위는 실제 좌표(등거리 근사)로, 순수 함수 `marketView.ts` 에 두고 테스트.
+- 검증: `npx tsc -b`, `npx vitest run src/pages/place`. geolocation 모킹으로 거부·성공·시간 초과 세 경로, 화면 안/밖 분기. 회귀 주입: 밖 판정 제거 → 빨간불.
+
+## 완료 조건(공통)
+- 단위마다 컴파일 + 지정 테스트 통과 줄. 커밋은 세션이 단위 경로만 `git add`. 네 단위 뒤 CDP 4조합(망원·광명·남대문·IN 없는 시장 한 곳) 캡처, main 머지·배포는 사용자 확인 뒤.
+
+## 음식 품목 검색·메뉴·영문 (`p7-plan.md` §7, 2026-10-16 승인)
+순서: WU-19(백엔드) → WU-20(백엔드, 같은 파일을 고치므로 19 뒤) → WU-21(FE, 17·18·19·20 뒤).
+
+## WU-19 음식 사전 + 관련 업종 검색 + TourAPI 메뉴 (place, Kotlin)
+- 사전: `place/feature/src/main/resources/market/dishes.csv` (`dish,category_sub,dish_en`) 100개 안팎 — 떡볶이·순대·튀김·어묵·김밥·만두 → 「김밥/만두/분식」, 칼국수·국수·잔치국수 → 「국수/칼국수」, 빈대떡·전·파전 → 「전/부침개」, 족발·보쌈 → 「족발/보쌈」, 회·초밥 → 「횟집」/「일식 회/초밥」, 떡·한과·약과 → 「떡/한과」, 냉면 → 「냉면/밀면」, 치킨·통닭 → 「치킨」, 빵·도넛 → 「빵/도넛」, 커피 → 「카페」 … `category_sub` 값은 운영 `market_store_search.category_sub` 에 실제 있는 이름만(검색 표의 distinct 207종과 대조하는 테스트). `dish_en` 은 문체부·국립국어원 지침식 로마자(tteokbokki, gimbap, mandu, bindaetteok …).
+- 로더 `MarketDishDictionary`(application, 기동 시 한 번 읽음) + 공개 `GET /api/v1/place/markets/dishes` → `[{dish, categorySub, dishEn}]`(캐시 헤더 1일).
+- `/api/v1/place/markets/search`: 질의가 사전의 `dish` 또는 `dish_en`(대소문자 무시)과 일치하면 `category_sub = 해당 업종` 행도 후보에 넣고 **순위 4(이름 0 > 품목 1 > 메뉴 2 > 업종 3 > 관련 업종 4)**. `StoreSummary` 에 `matchedBy: NAME|ITEMS|MENU|CATEGORY|RELATED_CATEGORY` 와 `relatedCategory: String?`(관련 업종일 때 업종 이름). 이름·품목·메뉴·업종 일치는 지금 그대로.
+- TourAPI 메뉴 붙이기: Flyway `V44__add_market_store_tour_menu.sql` — `market_store` 에 파생 열 `tour_content_id`, `tour_first_menu`, `tour_treat_menu`, `tour_matched_at`. 서비스 `MarketTourMenuService.attach(marketId)`: 시장 중심(경계 중심, 없으면 시장 점) 반경 300 m 의 `attractions`(content_type_id='39', lang='ko') 중 **이름 정규화 일치(공백 제거·소문자·NFKC) + 50 m 안**인 가게에 붙인다. 후보가 둘이면 가까운 쪽, 같은 거리면 안 붙임. 원천 열은 건드리지 않는다. 붙인 뒤 그 시장의 검색 표 다시 계산 — `market_store_search.menu_names` 에 착한가격 메뉴 뒤에 TourAPI 대표·취급 메뉴를 이어 붙인다(구분 ` · `).
+- 내부 `POST /internal/markets/tour-menus`(전체 시장 순회, 요약 `{markets, matched}` 반환) + `POST /internal/markets/{id}/tour-menus`. 적재 잡(`place/ingest/src/market_stores.py`)은 마지막에 전체 호출 한 번(실패는 경고, 잡은 성공).
+- 공개 응답 `GET /markets/{contentId}`: 가게에 `tourMenu: {firstMenu, treatMenu, attraction: {id, lang}} | null`. 시장에 `restaurants[]` — 중심 150 m 안(경계가 있으면 경계 안) TourAPI 음식점 중 **가게에 안 붙은 것**: `{attraction:{id,lang}, title, firstMenu, treatMenu, latitude, longitude}`. `attribution` 에 TourAPI 가 하나라도 쓰이면 「한국관광공사 TourAPI · 공공누리」 줄.
+- `docs/architecture/data-sources.md` TourAPI 행에 「시장 가게 메뉴 매칭」 용도 한 줄.
+- 테스트: 사전 ↔ 운영 업종명 대조(픽스처 207종), 관련 업종 순위·`matchedBy`, 매칭(이름 일치·50 m·둘이면 가까운 쪽·같은 거리면 없음), 검색 표 `menu_names` 이어 붙임, 응답 `restaurants` 에 매칭된 것 제외. 회귀 주입: 50 m 조건 제거 → 빨간불.
+- 검증: `./gradlew --no-daemon :place:feature:test --tests '*Market*'`, pytest(`place/ingest` 에서 `python3 -m pytest tests -q`).
+
+## WU-20 영문 (place, Kotlin — WU-19 뒤)
+- 업종 번역표 `place/feature/src/main/resources/market/categories-en.csv` (`category_sub,en`) 207종 전부 + 대·중분류 표. 빠진 값은 기동 시 경고 로그, 응답은 null.
+- 가게 이름 로마자: `KoreanRomanizer`(application 유틸, 국어의 로마자 표기법 — 자모 분해·음운 규칙은 기본 규칙(연음·비음화·유음화·구개음화·경음화 미표기)까지, 테스트 20건: 순희네빈대떡 → Sunhuine Bindaetteok, 광장시장 → Gwangjang Sijang …). 숫자·영문·기호는 그대로.
+- 응답: 가게에 `nameEn`(수동 영문이 있으면 그것, 없으면 로마자), `categoryEn`, `itemsEn`(품목 분류어 번역표 — 온누리 품목 distinct 를 뽑아 번역, 없으면 null), `tourMenu` 에 영문판(82) 같은 contentId 가 있으면 `firstMenuEn`·`treatMenuEn`. 검색 응답 `StoreSummary` 도 같은 열. `restaurants[]` 는 `lang` 이 en 이면 영문판 행 우선.
+- 검색: 영문 질의(ASCII 만)는 `dish_en`·업종 영문·로마자 이름(`market_store_search` 에 `name_roman` 열 추가, V45)에서 찾는다.
+- 테스트: 로마자 20건, 번역표 207종 빠짐 없음, 영문 질의 `tteokbokki` → 관련 업종 분식. 검증 명령은 WU-19 와 같다.
+
+## WU-21 화면 (portal-fe — 17·18·19·20 뒤)
+- 시장 섹션·`/markets`: 결과 행에 `matchedBy` 표시(「관련 업종 · 분식」은 흐리게, 뒤 순위), 가게 행에 메뉴·가격(착한가격 메뉴·가격 + TourAPI 대표·취급 메뉴, 출처 표시), 시장 섹션 검색은 `/markets/dishes` 사전을 한 번 받아 같은 규칙으로 관련 업종을 낸다. 섹션 아래 「관광공사 소개 음식점」 목록(`restaurants[]`, 관광지 상세 링크).
+- 영문 화면: `nameEn · 한글`, `categoryEn`, 메뉴 영문(있을 때), 영문 검색어.
+- 검증: `npx tsc -b`, vitest, CDP 4조합(광장·남대문 국문·영문).

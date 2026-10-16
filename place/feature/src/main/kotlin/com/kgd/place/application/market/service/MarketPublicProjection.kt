@@ -1,37 +1,73 @@
 package com.kgd.place.application.market.service
 
 import com.kgd.place.application.market.usecase.QueryMarketUseCase
+import com.kgd.place.domain.market.model.Market
+import com.kgd.place.domain.market.model.MarketBoundary
+import com.kgd.place.domain.market.model.MarketCoordinate
+import kotlin.math.cos
+import kotlin.math.hypot
 import com.kgd.place.domain.market.model.MarketMembershipStatus
 import com.kgd.place.domain.market.model.MarketStore
 import com.kgd.place.domain.market.model.MarketStoreDisplay
 import com.kgd.place.domain.market.model.MarketStoreOverride
 import com.kgd.place.domain.market.model.MarketStoreSource
 import com.kgd.place.domain.market.model.MarketPinKind
-import java.text.Normalizer
-import java.util.Locale
+import com.kgd.place.domain.market.model.MarketStoreIdentity
 
 /** Response-only reconciliation. No persistence row or upstream payload is changed. */
 internal object MarketPublicProjection {
-    private val whitespace = Regex("\\s+")
-    private fun normalized(value: String): String =
-        Normalizer.normalize(value, Normalizer.Form.NFKC).replace(whitespace, "").lowercase(Locale.ROOT)
+    data class Nearby(val stores: List<QueryMarketUseCase.Store>, val radiusMetres: Int? = null)
 
-    private data class Identity(val marketId: Long, val name: String, val jibun: String)
+    fun nearby(stores: List<QueryMarketUseCase.Store>, market: Market, boundary: MarketBoundary?): Nearby {
+        if (stores.any { it.display.membership.status == MarketMembershipStatus.IN }) return Nearby(stores)
+        val center = center(market, boundary) ?: return Nearby(stores)
+        val distances = stores.map { row ->
+            row.display.coordinate?.takeIf { row.display.membership.status == MarketMembershipStatus.OUT }
+                ?.let { distanceMetres(center, it) }
+        }
+        val radius = (100..300 step 50).firstOrNull { r -> distances.count { it != null && it <= r } >= 30 } ?: 300
+        return Nearby(stores.mapIndexed { index, row ->
+            row.copy(display = row.display.copy(nearby = distances[index]?.let { it <= radius } == true))
+        }, radius)
+    }
 
-    fun stores(rows: List<MarketStore>, overrides: Map<Long, List<MarketStoreOverride>>, pathIds: Set<Long>? = null): List<QueryMarketUseCase.Store> {
-        val candidates = rows.filter { it.source != MarketStoreSource.MANUAL && !it.jibunAddress.isNullOrBlank() }
-            .groupBy { Identity(it.marketId, normalized(it.name), normalized(requireNotNull(it.jibunAddress))) }
-        val partners = mutableMapOf<Long, MarketStore>()
-        val canonicalIds = mutableMapOf<Long, Long>()
+    fun distanceMetres(a: MarketCoordinate, b: MarketCoordinate): Double {
+        val meanLatitude = Math.toRadians((a.latitude + b.latitude) / 2)
+        return hypot((b.latitude - a.latitude) * 111320.0,
+            (b.longitude - a.longitude) * cos(meanLatitude) * 111320.0)
+    }
+
+    fun center(market: Market, boundary: MarketBoundary?): MarketCoordinate? {
+        val points = boundary?.polygon?.distinct()
+        if (!points.isNullOrEmpty()) return MarketCoordinate(points.map { it.latitude }.average(),
+            points.map { it.longitude }.average())
+        val latitude = market.latitude ?: return null
+        val longitude = market.longitude ?: return null
+        return MarketCoordinate(latitude, longitude)
+    }
+
+    /**
+     * ONNURI store id → SANGGA store id for one shop listed by both sources. Ingest stores the result as
+     * `paired_store_id` so search pairs rows by primary key with the same rule as this projection.
+     */
+    fun pairs(rows: List<MarketStore>): Map<Long, Long> {
+        val candidates = rows.mapNotNull { row -> MarketStoreIdentity.key(row)?.let { (row.marketId to it) to row } }
+            .groupBy({ it.first }, { it.second })
+        val pairs = mutableMapOf<Long, Long>()
         candidates.values.forEach { group ->
             // Ambiguous multiple tenants from either source are deliberately left separate.
             val onnuri = group.filter { it.source == MarketStoreSource.ONNURI }.singleOrNull()
             val sangga = group.filter { it.source == MarketStoreSource.SANGGA }.singleOrNull()
-            if (onnuri?.id != null && sangga?.id != null) {
-                partners[requireNotNull(onnuri.id)] = sangga
-                canonicalIds[requireNotNull(sangga.id)] = requireNotNull(onnuri.id)
-            }
+            if (onnuri?.id != null && sangga?.id != null) pairs[requireNotNull(onnuri.id)] = requireNotNull(sangga.id)
         }
+        return pairs
+    }
+
+    fun stores(rows: List<MarketStore>, overrides: Map<Long, List<MarketStoreOverride>>, pathIds: Set<Long>? = null): List<QueryMarketUseCase.Store> {
+        val rowsById = rows.associateBy { it.id }
+        val pairs = pairs(rows)
+        val partners = pairs.mapValues { (_, sanggaId) -> rowsById.getValue(sanggaId) }
+        val canonicalIds = pairs.entries.associate { (onnuriId, sanggaId) -> sanggaId to onnuriId }
         val projected = rows.filter { it.id !in canonicalIds }.map { row ->
             val other = partners[row.id]
             val ownOverrides = overrides[row.id].orEmpty()
@@ -74,7 +110,9 @@ internal object MarketPublicProjection {
                 }
             }
             QueryMarketUseCase.Store(effectiveSource, if (display.membership.status == MarketMembershipStatus.UNKNOWN)
-                display.copy(coordinate = null) else display, sources)
+                display.copy(coordinate = null) else display, sources).copy(
+                categoryEn = MarketEnglishDictionary.DEFAULT.category(base.categorySub ?: base.categoryMid ?: base.categoryMajor),
+                itemsEn = MarketEnglishDictionary.DEFAULT.items(display.items))
         }
         val byId = projected.associateBy { it.source.id }
         return projected.map { row ->

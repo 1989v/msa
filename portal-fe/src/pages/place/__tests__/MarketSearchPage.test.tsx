@@ -96,3 +96,15 @@ it.each(['/markets', '/en/markets'])('shows a good-price badge and only the firs
   expect(screen.getByText('백반')).toBeInTheDocument();
   expect(screen.queryByText(/수제비/)).not.toBeInTheDocument();
 });
+
+it('shows match evidence, related category distinction and English fields from search', async () => {
+  vi.mocked(searchMarkets).mockResolvedValue({ ...result, stores: { ...result.stores, total: 1, items: [
+    { storeId: 1, name: '가게', nameEn: 'Gage', items: '품목', itemsEn: 'Snacks', category: '분식', categoryEn: 'Snack shop',
+      matchedBy: 'RELATED_CATEGORY', relatedCategory: '김밥/만두/분식', marketContentId: '100', marketName: '광명시장', zoneName: null, latitude: null, longitude: null, attraction: null },
+  ] } });
+  mount('/en/markets?q=tteokbokki');
+  expect(await screen.findByText('Gage · 가게')).toBeInTheDocument();
+  expect(screen.getByText('Snacks · Snack shop')).toBeInTheDocument();
+  expect(screen.getByText('Related category · 김밥/만두/분식')).toHaveAttribute('data-related', 'true');
+  expect(screen.queryByText(/Signature menu/)).not.toBeInTheDocument();
+});

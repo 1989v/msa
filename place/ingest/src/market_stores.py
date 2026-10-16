@@ -161,11 +161,24 @@ def good_price_dong(address):
     return ""
 
 
+FOOD_GOOD_PRICE_TYPES = {'한식', '중식', '일식', '양식', '기타요식업'}
+
+
+def good_price_fits(row, original):
+    """Whether the store's own category agrees with the shop type; None when the store has none."""
+    major = row.get('categoryMajor')
+    if not major:
+        return None
+    return (major == '음식') == (original['업종'] in FOOD_GOOD_PRICE_TYPES)
+
+
 def attach_good_prices(paths, originals):
     """Disk-backed passes: same name at the same road address first, then same name, then same road.
 
     Market store sources repeat one shop (a road-address row, a lot-number row, a neighbouring
     market's list); claiming the exact-address rows first keeps the price on the right row.
+    When several rows claim one shop in a pass, a row whose category agrees with the shop type
+    wins (one registration as 정육점 and one as 국·탕 at the same address); otherwise the first.
     """
     names, roads = {}, {}
     for original in originals:
@@ -177,45 +190,65 @@ def attach_good_prices(paths, originals):
             if address_road:
                 roads.setdefault((region, address_road), []).append(original)
     used, counts, ambiguous = set(), Counter(NAME=0, ROAD=0), set()
+    for path in paths:
+        command = json.loads(path.read_text())
+        for store in command['stores']:
+            store['row'].update(goodPriceKey=None, goodPriceRaw=None, goodPriceMatchedBy=None)
+        path.write_text(raw(command))
     for step in ('NAME_AT_ROAD', 'NAME', 'ROAD'):
         method = 'ROAD' if step == 'ROAD' else 'NAME'
-        for path in paths:
-            command = json.loads(path.read_text())
-            for index, store in enumerate(command['stores']):
-                row = store['row']
-                if step == 'NAME_AT_ROAD':
-                    row.update(goodPriceKey=None, goodPriceRaw=None, goodPriceMatchedBy=None)
-                elif row['goodPriceKey']:
-                    continue
-                address = row.get('roadAddress') or row.get('jibunAddress')
-                region, name = good_price_locality(address), good_price_name(row.get('name'))
-                address_road, dong = good_price_road(address), good_price_dong(address)
-                namesakes = names.get((region, name), [])
-                if method == 'NAME':
-                    # 같은 구의 다른 지점이 붙지 않게, 양쪽에 있는 도로명·동은 같아야 한다.
-                    candidates = [r for r in namesakes
-                                  if good_price_road(r['주소']) in ((), address_road) or not address_road]
-                    candidates = [r for r in candidates if not dong or good_price_dong(r['주소']) in ("", dong)]
-                    if step == 'NAME_AT_ROAD':
-                        candidates = [r for r in candidates if address_road and good_price_road(r['주소']) == address_road]
-                else:
-                    if namesakes:  # A namesake that failed the address check must not come back by road.
+        while True:
+            claims = {}
+            for path in paths:
+                for index, store in enumerate(json.loads(path.read_text())['stores']):
+                    row = store['row']
+                    if row['goodPriceKey']:
                         continue
-                    candidates = [r for r in roads.get((region, address_road), [])
-                                  if min(len(name), len(good_price_name(r['업소명']))) >= 2
-                                  and (name in good_price_name(r['업소명']) or good_price_name(r['업소명']) in name)]
-                candidates = [r for r in candidates
-                              if key(*(r[k] for k in ('시도', '시군', '업소명', '주소'))) not in used]
-                if len(candidates) > 1:
-                    ambiguous.add((path.name, index))
-                elif len(candidates) == 1:
-                    original = candidates[0]
-                    source_key = key(*(original[k] for k in ('시도', '시군', '업소명', '주소')))
-                    row.update(goodPriceKey=source_key, goodPriceRaw=raw(original), goodPriceMatchedBy=method)
-                    used.add(source_key)
+                    address = row.get('roadAddress') or row.get('jibunAddress')
+                    region, name = good_price_locality(address), good_price_name(row.get('name'))
+                    address_road, dong = good_price_road(address), good_price_dong(address)
+                    namesakes = names.get((region, name), [])
+                    if method == 'NAME':
+                        # 같은 구의 다른 지점이 붙지 않게, 양쪽에 있는 도로명·동은 같아야 한다.
+                        candidates = [r for r in namesakes
+                                      if good_price_road(r['주소']) in ((), address_road) or not address_road]
+                        candidates = [r for r in candidates if not dong or good_price_dong(r['주소']) in ("", dong)]
+                        if step == 'NAME_AT_ROAD':
+                            candidates = [r for r in candidates if address_road and good_price_road(r['주소']) == address_road]
+                    else:
+                        if namesakes:  # A namesake that failed the address check must not come back by road.
+                            continue
+                        candidates = [r for r in roads.get((region, address_road), [])
+                                      if min(len(name), len(good_price_name(r['업소명']))) >= 2
+                                      and (name in good_price_name(r['업소명']) or good_price_name(r['업소명']) in name)]
+                    candidates = [r for r in candidates
+                                  if key(*(r[k] for k in ('시도', '시군', '업소명', '주소'))) not in used]
+                    if len(candidates) > 1:
+                        ambiguous.add((path.name, index))
+                    elif len(candidates) == 1:
+                        original = candidates[0]
+                        source_key = key(*(original[k] for k in ('시도', '시군', '업소명', '주소')))
+                        claims.setdefault(source_key, (original, []))[1].append(
+                            (path.name, index, good_price_fits(row, original)))
+            if not claims:
+                break
+            winners = {}
+            for source_key, (original, claimants) in claims.items():
+                agreeing = [c for c in claimants if c[2]]
+                path_name, index, _ = (agreeing or claimants)[0]
+                winners.setdefault(path_name, {})[index] = (source_key, original)
+                used.add(source_key)
+            # Rows that lost a shop are looked at again: with it used, another shop may now be theirs alone.
+            for path in paths:
+                if path.name not in winners:
+                    continue
+                command = json.loads(path.read_text())
+                for index, (source_key, original) in winners[path.name].items():
+                    command['stores'][index]['row'].update(
+                        goodPriceKey=source_key, goodPriceRaw=raw(original), goodPriceMatchedBy=method)
                     counts[method] += 1
                     ambiguous.discard((path.name, index))
-            path.write_text(raw(command))
+                path.write_text(raw(command))
     return {'goodPriceRows': len(originals), 'goodPriceMatched': dict(counts), 'goodPriceAmbiguous': len(ambiguous)}
 
 
@@ -485,6 +518,15 @@ def check_failures(markets, failed_markets, calls, failed_calls):
         raise ValueError(f"API failure ratio {failed_calls}/{calls} exceeds {MAX_CALL_FAILURE_RATIO}")
 
 
+def refresh_tour_menus():
+    """Derived menu enrichment must never turn a completed source ingest into a failed job."""
+    try:
+        return place_client._request("POST", "/internal/markets/tour-menus", {}, timeout=300)["data"]
+    except Exception as exc:
+        print(f"[market-stores] WARNING tour menu refresh failed: {type(exc).__name__}", flush=True)
+        return None
+
+
 def run(standard_url, onnuri_url, bulk_url, service_key, standard_source="file", good_price_url=None):
     if not good_price_url:
         raise ValueError("MARKET_GOOD_PRICE_FILE_URL required")
@@ -525,6 +567,7 @@ def run(standard_url, onnuri_url, bulk_url, service_key, standard_source="file",
                     place_client.put_market({**command,"stores":stores[start:start+place_client.BULK_CHUNK]})
                 applied += 1
             summary = {"standardSource":standard_source,"markets":applied,"failedMarkets":failed,"calls":api.calls,"failedCalls":api.failures,"errors":errors, **good_price_summary}
+            refresh_tour_menus()
             print(f"[market-stores] {raw(summary)}",flush=True)
             return summary
         finally:
