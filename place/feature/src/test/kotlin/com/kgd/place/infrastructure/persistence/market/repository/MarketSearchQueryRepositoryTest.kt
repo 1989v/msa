@@ -43,6 +43,11 @@ class MarketSearchQueryRepositoryTest : BehaviorSpec({
             MarketPathJpaEntity::class.java, MarketRoadRuleJpaEntity::class.java)
             .forEach { config.addAnnotatedClass(it) }
         emf = config.buildSessionFactory()
+        // Production keeps attractions on the server default utf8mb4_0900_ai_ci while the market tables
+        // declare utf8mb4_unicode_ci. Recreate that split so every join across the two runs under it.
+        java.sql.DriverManager.getConnection(mysql.jdbcUrl, mysql.username, mysql.password).use { connection ->
+            connection.createStatement().execute("alter table attractions convert to character set utf8mb4 collate utf8mb4_0900_ai_ci")
+        }
         em = emf.createEntityManager()
         val factory = JPAQueryFactory(em)
         repository = MarketSearchQueryRepository(factory)

@@ -6,6 +6,7 @@ import com.kgd.place.application.market.usecase.SearchMarketsUseCase.AttractionR
 import com.kgd.place.domain.market.model.MarketCoordinate
 import com.kgd.place.infrastructure.persistence.attraction.entity.QAttractionJpaEntity
 import com.kgd.place.infrastructure.persistence.market.entity.*
+import com.querydsl.core.types.dsl.Expressions
 import com.querydsl.jpa.impl.JPAQueryFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
@@ -43,10 +44,14 @@ class MarketTourMenuRepositoryAdapter(@Qualifier("placeJpaQueryFactory") private
     }
     override fun attached(marketId: Long): Map<Long, Menu> {
         val english = QAttractionJpaEntity("englishMenu")
+        // attractions.content_id keeps the server default collation (utf8mb4_0900_ai_ci in production)
+        // while the market tables declare utf8mb4_unicode_ci; MySQL refuses to compare two implicit
+        // collations. The cast takes the connection collation, which yields to the attractions column.
+        val tourContentId = Expressions.stringTemplate("cast({0} as string)", store.tourContentId)
         return factory.select(store.id, store.tourFirstMenu,
         store.tourTreatMenu, attraction.id, attraction.lang, english.introRaw).from(store).join(attraction)
-        .on(attraction.contentId.eq(store.tourContentId), attraction.lang.eq("ko"), attraction.source.eq("TOURAPI"))
-        .leftJoin(english).on(english.contentId.eq(store.tourContentId), english.lang.eq("en"),
+        .on(attraction.contentId.eq(tourContentId), attraction.lang.eq("ko"), attraction.source.eq("TOURAPI"))
+        .leftJoin(english).on(english.contentId.eq(tourContentId), english.lang.eq("en"),
             english.contentTypeId.eq("82"), english.source.eq("TOURAPI"))
         .where(store.marketId.eq(marketId)).fetch().associate { row -> requireNotNull(row[store.id]) to
             run {
