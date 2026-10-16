@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { MarketStore, MarketZone } from '../../../api/marketApi';
-import { formatMarketPrice, formatGoodPriceSummary, formatMarketFloor, groupMarketPins, longestMarketSegmentMidpoint, marketSourceBadges, matchesMarketName, projectMarketPins, visibleMarketStores, zoneIds } from '../marketView';
+import { clusterByScreenDistance, formatMarketPrice, formatGoodPriceSummary, formatMarketFloor, groupMarketPins, longestMarketSegmentMidpoint, marketSourceBadges, matchesMarketName, projectMarketPins, visibleMarketStores, zoneIds } from '../marketView';
 
 const store = (overrides: Partial<MarketStore> = {}): MarketStore => ({
   id: 1, name: '유명 순대국', items: null, zoneId: 1, membership: 'IN', latitude: 37.5, longitude: 127,
@@ -146,5 +146,33 @@ describe('good-price formatting', () => {
     expect(formatMarketPrice(5000, 'ko')).toBe('5,000원');
     expect(formatMarketPrice(5000, 'en')).toBe('₩5,000');
     expect(formatMarketPrice(0, 'ko')).toBe('0원');
+  });
+});
+
+
+describe('screen-distance market clusters', () => {
+  const points = () => [
+    { key: 'parcel-a', x: 10, y: 20, color: 'first', stores: [store({ id: 1 }), store({ id: 2 })] },
+    { key: 'parcel-b', x: 30, y: 20, color: 'second', stores: [store({ id: 3 })] },
+    { key: 'parcel-c', x: 110, y: 20, color: 'third', stores: [store({ id: 4 })] },
+  ];
+  it('merges parcels within 24 screen pixels, preserving every store, first color and inputs', () => {
+    const input = points(); const before = JSON.stringify(input);
+    const groups = clusterByScreenDistance(input, 1, 24);
+    expect(groups).toHaveLength(2);
+    expect(groups[0].stores.map((shop) => shop.id)).toEqual([1, 2, 3]);
+    expect(groups[0].parcelKeys).toEqual(['parcel-a', 'parcel-b']);
+    expect(groups[0].color).toBe('first');
+    expect(JSON.stringify(input)).toBe(before);
+  });
+  it('splits a nearby group when zoom raises screen distance beyond 24 pixels', () => {
+    expect(clusterByScreenDistance(points(), 1)).toHaveLength(2);
+    expect(clusterByScreenDistance(points(), 2)).toHaveLength(3);
+  });
+  it('merges connected chains, includes the exact threshold and supports no points', () => {
+    const input = points().map((point, index) => ({ ...point, x: index * 24 }));
+    expect(clusterByScreenDistance(input, 1)).toHaveLength(1);
+    expect(clusterByScreenDistance([], 1)).toEqual([]);
+    expect(clusterByScreenDistance([input[0]], 8)[0].key).toBe('parcel-a');
   });
 });
