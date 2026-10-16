@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fetchMarket, type MarketResponse, type MarketStore } from '../../../api/marketApi';
 import AttractionMarket from '../AttractionMarket';
@@ -64,7 +64,7 @@ describe('optional attraction market section', () => {
       expect(await screen.findByRole('searchbox', { name: '가게 이름 찾기' })).toHaveValue('유명순대국');
       expect(screen.getByRole('region', { name: '시장 구역·가게' })).toHaveAttribute('id', 'market');
       expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
-      expect(screen.getByRole('status')).toHaveTextContent('찾은 가게: 1');
+      expect(screen.getByRole('status', { name: '가게 검색 결과' })).toHaveTextContent('찾은 가게: 1');
     } finally {
       window.history.replaceState(null, '', '/');
       HTMLElement.prototype.scrollIntoView = previous;
@@ -164,9 +164,9 @@ describe('optional attraction market section', () => {
     mount();
     const search = await screen.findByRole('searchbox', { name: '가게 이름 찾기' });
     fireEvent.change(search, { target: { value: ' 유 명 순대 ' } });
-    expect(screen.getByRole('status')).toHaveTextContent('찾은 가게: 1');
+    expect(screen.getByRole('status', { name: '가게 검색 결과' })).toHaveTextContent('찾은 가게: 1');
     fireEvent.change(search, { target: { value: '홍두깨칼국수' } });
-    expect(screen.getByRole('status')).toHaveTextContent('없음: 홍두깨칼국수');
+    expect(screen.getByRole('status', { name: '가게 검색 결과' })).toHaveTextContent('없음: 홍두깨칼국수');
     fireEvent.click(screen.getByRole('checkbox', { name: '시장 밖도 보기' }));
     await waitFor(() => expect(fetchMarket).toHaveBeenCalledWith('100', true, 'ko'));
   });
@@ -194,5 +194,93 @@ describe('optional attraction market section', () => {
     expect(fetchMarket).toHaveBeenCalledWith('100', false, 'en');
     expect(screen.getByText('유명순대국')).toBeInTheDocument();
     expect(screen.getAllByText('Onnuri merchant')).toHaveLength(3);
+  });
+});
+
+
+describe('market section search and road filters', () => {
+  it('ranks matching fields, labels menu/category evidence and marks unknown locations', async () => {
+    vi.mocked(fetchMarket).mockResolvedValue({ ...data, stores: [
+      shop({ id: 4, name: '업종집', categorySub: '떡볶이', membership: 'UNKNOWN' }),
+      shop({ id: 3, name: '메뉴집', goodPrice: { category: '분식', matchedBy: 'NAME', menus: [{ name: '떡볶이', price: 3000 }] } }),
+      shop({ id: 2, name: '품목집', items: '떡볶이' }),
+      shop({ id: 1, name: '떡볶이집' }),
+      shop({ id: 5, name: '분식집', categorySub: '분식' }),
+    ] });
+    const { container } = mount();
+    const search = await screen.findByRole('searchbox', { name: '가게 이름 찾기' });
+    expect(search).toHaveAttribute('placeholder', '가게·품목·메뉴·업종');
+    fireEvent.change(search, { target: { value: '떡볶이' } });
+    const rows = within(screen.getByRole('heading', { name: '가게 목록 (4)' }).parentElement!).getAllByRole('listitem');
+    expect(rows.map((row) => row.querySelector('strong')!.textContent)).toEqual(['떡볶이집', '품목집', '메뉴집', '업종집']);
+    expect(rows.map((row) => row.textContent)).toEqual([
+      expect.stringContaining('이름에 맞음'), expect.stringContaining('품목에 맞음'),
+      expect.stringContaining('메뉴에 맞음'), expect.stringContaining('업종에 맞음'),
+    ]);
+    expect(rows[3]).toHaveTextContent('위치 미확인');
+    expect(within(rows[3]).queryByRole('button')).not.toBeInTheDocument();
+    expect(container.querySelectorAll('.place-market-pin[data-hit]')).toHaveLength(1);
+    expect(screen.getByRole('status', { name: '가게 검색 결과' })).toHaveTextContent('찾은 가게: 4');
+  });
+  it('focuses a result outside the initial boundary, highlights and scrolls its row, repeats and clears on filter change', async () => {
+    const scroll = vi.fn(); const previous = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scroll;
+    vi.mocked(fetchMarket).mockResolvedValue({ ...data,
+      boundary: { source: 'OSM', polygon: [[37.499, 126.999], [37.501, 126.999], [37.501, 127.001]] },
+      stores: [shop({ id: 9, name: '먼 떡볶이', latitude: 37.51 }), shop({ id: 2, name: '가까운 가게', jibunAddress: '별도 필지' })],
+    });
+    try {
+      const { container } = mount();
+      fireEvent.change(await screen.findByRole('searchbox'), { target: { value: '먼 떡볶이' } });
+      const result = screen.getByRole('button', { name: '지도에서 보기: 먼 떡볶이' });
+      fireEvent.click(result);
+      const selected = within(screen.getByRole('region', { name: '선택한 가게' })).getAllByRole('listitem');
+      expect(selected).toHaveLength(1); expect(selected[0]).toHaveAttribute('data-selected', 'true');
+      expect(scroll).toHaveBeenCalledWith({ block: 'nearest' });
+      const box = () => container.querySelector('svg')!.getAttribute('viewBox')!.split(' ').map(Number);
+      expect(box().slice(2)).toEqual([150, 110]);
+      const pin = container.querySelector('.place-market-pin[data-selected]')!;
+      const coordinates = pin.getAttribute('transform')!.match(/translate\(([-\d.]+) ([-\d.]+)\)/u)!;
+      expect(box()[0] + 75).toBeCloseTo(Number(coordinates[1]));
+      expect(box()[1] + 55).toBeCloseTo(Number(coordinates[2]));
+      fireEvent.click(screen.getByRole('button', { name: '전체 보기' }));
+      expect(box()[2]).toBe(600);
+      fireEvent.click(result); expect(box()[2]).toBe(150);
+      fireEvent.change(screen.getByRole('searchbox'), { target: { value: '가까운' } });
+      expect(screen.queryByRole('region', { name: '선택한 가게' })).not.toBeInTheDocument();
+      expect(container.querySelector('.place-market-pin[data-selected]')).toBeNull();
+    } finally { HTMLElement.prototype.scrollIntoView = previous; }
+  });
+  it('keeps nearby OUT stores visible by default and shows their radius and membership disclaimer', async () => {
+    vi.mocked(fetchMarket).mockResolvedValue({ ...data, nearbyRadiusMetres: 150, stores: [
+      shop({ id: 1, name: '주변 상점', membership: 'OUT', nearby: true }),
+      shop({ id: 2, name: '먼 상점', membership: 'OUT' }),
+    ] });
+    mount();
+    expect(await screen.findByText('주변 상점')).toBeInTheDocument();
+    expect(screen.queryByText('먼 상점')).not.toBeInTheDocument();
+    expect(screen.getByText('주변 · 소속 미확인')).toBeInTheDocument();
+    expect(screen.getByText('시장 주변 150 m 안 가게를 보입니다')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: '시장 밖도 보기' })).not.toBeChecked();
+  });
+  it('prioritizes market roads and counts nested zones, collapses to eight and retains the selected extra chip', async () => {
+    const zones = Array.from({ length: 11 }, (_, i) => ({ id: i + 1, parentId: null, kind: 'ROAD' as const, name: i === 10 ? '시장길' : `길${i + 1}`, dong: null, floor: null, children: [] }));
+    const child = { ...zones[0], id: 12, parentId: 1, name: '골목안층', kind: 'FLOOR' as const };
+    vi.mocked(fetchMarket).mockResolvedValue({ ...data,
+      zones: [{ ...zones[0], children: [child] }, ...zones.slice(1)],
+      stores: [shop({ id: 1, zoneId: 12 }), shop({ id: 2, zoneId: 12 }), shop({ id: 3, zoneId: 2 })],
+    });
+    mount();
+    const nav = await screen.findByRole('navigation', { name: '골목·건물·층' });
+    const labels = () => within(nav).getAllByRole('button').map((button) => button.textContent);
+    expect(labels().slice(0, 5)).toEqual(['전체 구역', '시장길 (0)', '골목안층 (2)', '길1 (2)', '길2 (1)']);
+    expect(within(nav).getAllByRole('button')).toHaveLength(10);
+    fireEvent.click(within(nav).getByRole('button', { name: '다른 길 4개' }));
+    expect(within(nav).getAllByRole('button')).toHaveLength(14);
+    fireEvent.click(within(nav).getByRole('button', { name: '길9 (0)' }));
+    fireEvent.click(within(nav).getByRole('button', { name: '길 접기' }));
+    expect(within(nav).getByRole('button', { name: '길9 (0)' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(nav).getByRole('button', { name: '다른 길 3개' })).toHaveAttribute('aria-expanded', 'false');
+    expect(within(nav).queryByRole('button', { name: '길10 (0)' })).not.toBeInTheDocument();
   });
 });

@@ -28,6 +28,7 @@ export interface MarketStore {
   zoneId: number | null;
   pathId?: number | null;
   membership: 'IN' | 'OUT' | 'UNKNOWN';
+  nearby?: boolean;
   latitude: number | null;
   longitude: number | null;
   roadAddress: string | null;
@@ -71,6 +72,7 @@ export interface MarketEntrance {
 }
 
 export interface MarketResponse {
+  nearbyRadiusMetres?: number | null;
   boundary?: MarketBoundary | null;
   paths?: MarketPath[] | null;
   entrances?: MarketEntrance[] | null;

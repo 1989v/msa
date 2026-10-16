@@ -108,3 +108,10 @@
 }
 
 .place-market-path-label { pointer-events: none; }
+
+.place-market-locate { position: absolute; z-index: 2; inset: auto 0.75rem 3.5rem; width: fit-content; max-width: calc(100% - 1.5rem); padding: 0.5rem; background: var(--ko-surface-0); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius); }
+.place-market-locate p { margin: 0.25rem 0 0; font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+.place-market-user { pointer-events: none; }
+.place-market-user-accuracy { fill: color-mix(in srgb, var(--ko-accent-text) 12%, transparent); stroke: var(--ko-accent-text); stroke-width: 1; }
+.place-market-user-dot { fill: var(--ko-accent-text); stroke: var(--ko-surface-0); stroke-width: 3; }
+.place-market-user-edge path { fill: var(--ko-accent-text); stroke: var(--ko-surface-0); stroke-width: 2; }

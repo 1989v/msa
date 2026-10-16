@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { MarketStore, MarketZone } from '../../../api/marketApi';
-import { clusterByScreenDistance, formatMarketPrice, formatGoodPriceSummary, formatMarketFloor, groupMarketPins, longestMarketSegmentMidpoint, marketSourceBadges, matchesMarketName, projectMarketPins, visibleMarketStores, zoneIds } from '../marketView';
+import { clusterByScreenDistance, formatMarketPrice, formatGoodPriceSummary, formatMarketFloor, groupMarketPins, longestMarketSegmentMidpoint, marketSourceBadges, matchesMarketName, matchesMarketStore, projectMarketPins, visibleMarketStores, zoneIds } from '../marketView';
 
 const store = (overrides: Partial<MarketStore> = {}): MarketStore => ({
   id: 1, name: '유명 순대국', items: null, zoneId: 1, membership: 'IN', latitude: 37.5, longitude: 127,
@@ -174,5 +174,81 @@ describe('screen-distance market clusters', () => {
     expect(clusterByScreenDistance(input, 1)).toHaveLength(1);
     expect(clusterByScreenDistance([], 1)).toEqual([]);
     expect(clusterByScreenDistance([input[0]], 8)[0].key).toBe('parcel-a');
+  });
+});
+
+// WU-18: actual-coordinate guidance and viewport geometry.
+describe('market user location', () => {
+  it('uses the boundary centre, ignores a duplicate closing vertex and falls back to response market coordinates', async () => {
+    const { marketLocationGuide } = await import('../marketView');
+    const polygon: [number, number][] = [[37.49, 126.99], [37.51, 126.99], [37.51, 127.01], [37.49, 127.01], [37.49, 126.99]];
+    const at = { latitude: 37.5, longitude: 127 };
+    expect(marketLocationGuide(at, { latitude: 0, longitude: 0 }, polygon)!.distance).toBeCloseTo(0);
+    expect(marketLocationGuide(at, at, [])!.inside).toBe(true);
+    expect(marketLocationGuide(at, {}, [])).toBeNull();
+  });
+  it('treats polygon inclusion OR a centre distance under 100 metres as inside', async () => {
+    const { marketLocationGuide } = await import('../marketView');
+    const polygon: [number, number][] = [[37.49, 126.99], [37.51, 126.99], [37.51, 127.01], [37.49, 127.01]];
+    expect(marketLocationGuide({ latitude: 37.509, longitude: 127 }, {}, polygon)!.inside).toBe(true);
+    expect(marketLocationGuide({ latitude: 37.5, longitude: 127 }, { latitude: 37.5005, longitude: 127 }, [])!.inside).toBe(true);
+    expect(marketLocationGuide({ latitude: 37.5, longitude: 127 }, { latitude: 37.502, longitude: 127 }, [])!.inside).toBe(false);
+  });
+  it('calculates an equirectangular distance in metres and all eight user-to-centre bearings', async () => {
+    const { marketLocationGuide } = await import('../marketView');
+    const metres = Math.PI * 6_371_008.8 / 180;
+    const from = { latitude: 37.5, longitude: 127 };
+    const directions = [[0, 1, '북'], [1, 1, '북동'], [1, 0, '동'], [1, -1, '남동'], [0, -1, '남'], [-1, -1, '남서'], [-1, 0, '서'], [-1, 1, '북서']] as const;
+    for (const [east, north, direction] of directions) {
+      const target = { latitude: from.latitude + north * 200 / metres, longitude: from.longitude + east * 200 / (metres * Math.cos(from.latitude * Math.PI / 180)) };
+      const guide = marketLocationGuide(from, target, [])!;
+      expect(guide.direction).toBe(direction);
+      expect(guide.distance).toBeCloseTo(Math.hypot(east, north) * 200, 1);
+    }
+  });
+  it('includes viewBox edges and clamps arrows to an inset edge along the user bearing', async () => {
+    const { marketPositionInView } = await import('../marketView');
+    const view = { x: 10, y: 20, w: 100, h: 80 };
+    expect(marketPositionInView({ x: 10, y: 20 }, view).visible).toBe(true);
+    const outside = marketPositionInView({ x: 500, y: 60 }, view, 5);
+    expect(outside.visible).toBe(false);
+    expect(outside.x).toBe(105);
+    expect(outside.y).toBe(60);
+    expect(outside.angle).toBe(90);
+  });
+});
+
+
+describe('market store search fields and rank', () => {
+  it('ranks exact field evidence without synonyms or category expansion', () => {
+    const rows = [
+      store({ id: 7, name: '비일치가게', categorySub: '김밥/만두/분식' }),
+      store({ id: 6, name: '소분류집', categorySub: '떡볶이' }),
+      store({ id: 5, name: '중분류집', categoryMid: '떡볶이' }),
+      store({ id: 4, name: '대분류집', categoryMajor: '떡볶이' }),
+      store({ id: 3, name: '메뉴집', goodPrice: { category: '분식', matchedBy: 'NAME', menus: [{ name: '떡 볶 이', price: 3000 }] } }),
+      store({ id: 2, name: '품목집', items: '떡볶이, 튀김' }),
+      store({ id: 1, name: '떡볶이집', items: '떡볶이' }),
+    ];
+    const matches = rows.flatMap((row) => { const match = matchesMarketStore(row, ' 떡 볶이 '); return match ? [{ id: row.id, ...match }] : []; })
+      .sort((a, b) => a.rank - b.rank || a.id! - b.id!);
+    expect(matches).toEqual([
+      { id: 1, matchedBy: 'name', rank: 0 }, { id: 2, matchedBy: 'items', rank: 1 },
+      { id: 3, matchedBy: 'menus', rank: 2 }, { id: 4, matchedBy: 'categories', rank: 3 },
+      { id: 5, matchedBy: 'categories', rank: 3 }, { id: 6, matchedBy: 'categories', rank: 3 },
+    ]);
+    expect(rows.filter((row) => row.name.replace(/\s/gu, '').includes('떡볶이')).map((row) => row.id)).toEqual([1]);
+    expect(matchesMarketStore(rows[0], '분식')).toEqual({ matchedBy: 'categories', rank: 3 });
+    expect(matchesMarketStore(rows[0], '음식')).toBeNull();
+  });
+  it('normalizes NFKC, whitespace and case and keeps blank queries inactive', () => {
+    expect(matchesMarketStore(store({ name: 'Ｃａｆｅ １' }), 'c A f e1')).toEqual({ matchedBy: 'name', rank: 0 });
+    expect(matchesMarketStore(store({ items: 'ＡＢＣ' }), 'abc')).toEqual({ matchedBy: 'items', rank: 1 });
+    expect(matchesMarketStore(store(), '　 ')).toBeNull();
+  });
+  it('keeps nearby OUT stores visible without changing membership', () => {
+    const rows = [store(), store({ id: 2, membership: 'OUT', nearby: true }), store({ id: 3, membership: 'OUT' })];
+    expect(visibleMarketStores(rows, false).map((row) => row.id)).toEqual([1, 2]);
+    expect(rows[1].membership).toBe('OUT');
   });
 });

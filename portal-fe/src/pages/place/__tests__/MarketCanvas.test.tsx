@@ -17,11 +17,11 @@ const data: MarketResponse = {
   boundary: { source: 'OSM', polygon: [[37.499, 126.999], [37.501, 126.999], [37.501, 127.001], [37.499, 127.001]] },
   paths: [{ id: 1, name: '시장길', named: true, source: 'OSM', geometry: [[37.499, 127], [37.501, 127]] }],
 };
-function mount(stores = [store(), store({ id: 2, name: '두번째', longitude: 127.00005 })], width = 600) {
+function mount(stores = [store(), store({ id: 2, name: '두번째', longitude: 127.00005 })], width = 600, focusStoreId?: number) {
   const projection = projectMarketPins(groupMarketPins(stores), data)!;
   function Canvas() {
     const [key, setKey] = useState<string | null>(null);
-    return <MarketCanvas data={data} lang="ko" projection={projection} points={projection.points} hasGeometry query="가게" selectedKey={key} onSelect={setKey} color={() => 'var(--market-zone-1)'} pathColor={() => undefined} />;
+    return <MarketCanvas data={data} lang="ko" projection={projection} points={projection.points} hasGeometry query="가게" focusStoreId={focusStoreId} selectedKey={key} onSelect={setKey} color={() => 'var(--market-zone-1)'} pathColor={() => undefined} />;
   }
   vi.spyOn(SVGElement.prototype, 'getBoundingClientRect').mockReturnValue({ left: 10, top: 20, width, height: width * 440 / 600, right: width + 10, bottom: 20 + width * 440 / 600, x: 10, y: 20, toJSON: () => ({}) });
   const result = render(<Canvas />);
@@ -150,5 +150,34 @@ describe('MarketCanvas navigation and shared SVG coordinates', () => {
     rows = within(sheet).getAllByRole('listitem'); expect(rows).toHaveLength(100);
     expect(rows[0]).toHaveAttribute('data-found', 'true');
     expect(container.querySelectorAll('.place-market-pin')).toHaveLength(1);
+  });
+});
+
+
+describe('MarketCanvas result focus', () => {
+  it('selects the current zoom-four cluster rather than the original merged group', () => {
+    const { container, box } = mount([store({ id: 1, name: '원래묶음' }), store({ id: 2, name: '목표', longitude: 127.00015 })], 600, 2);
+    expect(box().slice(2)).toEqual([150, 110]);
+    expect(container.querySelectorAll('.place-market-pin')).toHaveLength(2);
+    const sheet = screen.getByRole('region', { name: '선택한 가게' });
+    expect(within(sheet).getAllByRole('listitem')).toHaveLength(1);
+    expect(within(sheet).getByText('목표').closest('li')).toHaveAttribute('data-selected', 'true');
+    expect(within(sheet).queryByText('원래묶음')).not.toBeInTheDocument();
+  });
+  it('reveals and scrolls a target after the first fifty rows in a large parcel', () => {
+    const scroll = vi.fn(); const previous = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scroll;
+    try {
+      mount(Array.from({ length: 251 }, (_, index) => store({ id: index + 1, name: `가게 ${index + 1}`, jibunAddress: '한 필지', ho: String(index + 1) })), 600, 231);
+      const sheet = screen.getByRole('region', { name: '선택한 가게' });
+      expect(within(sheet).getAllByRole('listitem')).toHaveLength(250);
+      const target = within(sheet).getByText('가게 231').closest('li')!;
+      expect(target).toHaveAttribute('data-selected', 'true');
+      expect(target).toHaveStyle({ outline: '2px solid var(--ko-accent-text)' });
+      expect(scroll).toHaveBeenCalledWith({ block: 'nearest' });
+      expect(scroll.mock.instances).toContain(target);
+      fireEvent.click(within(sheet).getByRole('button', { name: '더 보기' }));
+      expect(within(sheet).getAllByRole('listitem')).toHaveLength(251);
+    } finally { HTMLElement.prototype.scrollIntoView = previous; }
   });
 });

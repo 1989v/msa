@@ -1,18 +1,30 @@
 import type { GoodPriceMenu, GoodPriceSummary, MarketCoordinate, MarketResponse, MarketStore, MarketZone } from '../../api/marketApi';
 import type { PlaceLang } from '../../api/placeApi';
 
-export const normalizeMarketName = (value: string) => value.replace(/\s+/gu, '').toLocaleLowerCase();
-export const matchesMarketName = (store: MarketStore, query: string) => {
+export const normalizeMarketName = (value: string) => value.normalize('NFKC').replace(/\s+/gu, '').toLowerCase();
+export type MarketStoreMatch = { matchedBy: 'name' | 'items' | 'menus' | 'categories'; rank: number };
+export function matchesMarketStore(store: MarketStore, query: string): MarketStoreMatch | null {
   const needle = normalizeMarketName(query);
-  return needle.length > 0 && normalizeMarketName(store.name).includes(needle);
-};
+  if (!needle) return null;
+  const fields: Array<[MarketStoreMatch['matchedBy'], Array<string | null>]> = [
+    ['name', [store.name]], ['items', [store.items]],
+    ['menus', store.goodPrice?.menus.map((menu) => menu.name) ?? []],
+    ['categories', [store.categoryMajor, store.categoryMid, store.categorySub]],
+  ];
+  for (const [rank, [matchedBy, values]] of fields.entries()) {
+    if (values.some((value) => value != null && normalizeMarketName(value).includes(needle))) return { matchedBy, rank };
+  }
+  return null;
+}
+// Keep map highlighting and the result list on the same search contract.
+export const matchesMarketName = (store: MarketStore, query: string) => matchesMarketStore(store, query) != null;
 
 export function zoneIds(zone: MarketZone): number[] {
   return [...(zone.id == null ? [] : [zone.id]), ...zone.children.flatMap(zoneIds)];
 }
 
 export function visibleMarketStores(stores: MarketStore[], includeOutside: boolean, ids?: number[]) {
-  return stores.filter((store) => (includeOutside || store.membership !== 'OUT')
+  return stores.filter((store) => (includeOutside || store.membership !== 'OUT' || store.nearby === true)
     && (ids == null || (store.zoneId != null && ids.includes(store.zoneId))));
 }
 
@@ -175,4 +187,44 @@ export function clusterByScreenDistance<T extends { key: string; x: number; y: n
   return [...groups.values()].map((group) => ({ ...group,
     key: group.parcelKeys.length === 1 ? group.key : `cluster:${JSON.stringify(group.parcelKeys)}`,
   }));
+}
+
+export type MarketUserPosition = { latitude: number; longitude: number; accuracy: number; timestamp: number };
+/** Optional response fields: older public market responses do not expose a centre. */
+type MarketCentre = { latitude?: number | null; longitude?: number | null };
+
+/** Local equirectangular metres and eight-way bearing, from the visitor towards the market. */
+export function marketLocationGuide(user: Pick<MarketUserPosition, 'latitude' | 'longitude'>, market: MarketCentre, polygon: MarketCoordinate[] = [], lang: PlaceLang = 'ko') {
+  const vertices = polygon.length > 1 && polygon[0][0] === polygon.at(-1)![0] && polygon[0][1] === polygon.at(-1)![1]
+    ? polygon.slice(0, -1) : polygon;
+  const centre = vertices.length >= 3 ? {
+    latitude: (Math.min(...vertices.map(([lat]) => lat)) + Math.max(...vertices.map(([lat]) => lat))) / 2,
+    longitude: (Math.min(...vertices.map(([, lng]) => lng)) + Math.max(...vertices.map(([, lng]) => lng))) / 2,
+  } : market;
+  if (centre.latitude == null || centre.longitude == null || !Number.isFinite(centre.latitude) || !Number.isFinite(centre.longitude)) return null;
+  const metresPerDegree = Math.PI * 6_371_008.8 / 180;
+  const east = (centre.longitude - user.longitude) * metresPerDegree * Math.cos((centre.latitude + user.latitude) / 2 * Math.PI / 180);
+  const north = (centre.latitude - user.latitude) * metresPerDegree;
+  const distance = Math.hypot(east, north);
+  let inPolygon = false;
+  for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
+    const [yi, xi] = vertices[i]; const [yj, xj] = vertices[j];
+    const cross = (user.longitude - xi) * (yj - yi) - (user.latitude - yi) * (xj - xi);
+    if (Math.abs(cross) < 1e-12 && user.longitude >= Math.min(xi, xj) && user.longitude <= Math.max(xi, xj)
+      && user.latitude >= Math.min(yi, yj) && user.latitude <= Math.max(yi, yj)) { inPolygon = true; break; }
+    if ((yi > user.latitude) !== (yj > user.latitude) && user.longitude < (xj - xi) * (user.latitude - yi) / (yj - yi) + xi) inPolygon = !inPolygon;
+  }
+  const index = Math.round(((Math.atan2(east, north) * 180 / Math.PI + 360) % 360) / 45) % 8;
+  const directions = lang === 'en' ? ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] : ['북', '북동', '동', '남동', '남', '남서', '서', '북서'];
+  return { distance, direction: directions[index], inside: inPolygon || distance <= 100 };
+}
+
+/** Clip only the offscreen indicator; the real location and accuracy retain the map projection. */
+export function marketPositionInView(point: { x: number; y: number }, view: { x: number; y: number; w: number; h: number }, inset = 16) {
+  const visible = point.x >= view.x && point.x <= view.x + view.w && point.y >= view.y && point.y <= view.y + view.h;
+  const dx = point.x - (view.x + view.w / 2); const dy = point.y - (view.y + view.h / 2);
+  const ratio = Math.min((Math.max(0, view.w / 2 - inset)) / Math.abs(dx || Number.MIN_VALUE),
+    (Math.max(0, view.h / 2 - inset)) / Math.abs(dy || Number.MIN_VALUE));
+  return { visible, x: visible ? point.x : view.x + view.w / 2 + dx * ratio,
+    y: visible ? point.y : view.y + view.h / 2 + dy * ratio, angle: Math.atan2(dx, -dy) * 180 / Math.PI };
 }

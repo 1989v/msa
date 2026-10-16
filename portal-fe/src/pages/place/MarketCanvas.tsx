@@ -3,6 +3,9 @@ import type { MarketResponse, MarketStore } from '../../api/marketApi';
 import type { PlaceLang } from '../../api/placeApi';
 import { clusterByScreenDistance, formatGoodPriceMenu, formatMarketFloor, marketSourceBadges, matchesMarketName, longestMarketSegmentMidpoint, projectMarketPins } from './marketView';
 
+import MarketLocate from './MarketLocate';
+import { marketPositionInView, type MarketUserPosition } from './marketView';
+
 type Projection = NonNullable<ReturnType<typeof projectMarketPins>>;
 type ViewBox = { x: number; y: number; w: number; h: number };
 const INITIAL: ViewBox = { x: 0, y: 0, w: 600, h: 440 };
@@ -17,16 +20,23 @@ function orderStores(stores: MarketStore[]) {
     || floorNumber(a.floor) - floorNumber(b.floor) || natural(a.ho, b.ho) || natural(a.name, b.name));
 }
 
-export default function MarketCanvas({ data, lang, projection, points, hasGeometry, query, selectedKey, onSelect, color, pathColor }: {
+export default function MarketCanvas({ data, lang, projection, points, hasGeometry, query, selectedKey, onSelect, color, pathColor, userPosition, focusStoreId }: {
   data: MarketResponse; lang: PlaceLang; projection: Projection; points: Projection['points']; hasGeometry: boolean;
   query: string; selectedKey: string | null; onSelect: (key: string | null) => void;
+  userPosition?: MarketUserPosition | null;
+  focusStoreId?: number | null;
   color: (id: number | null) => string; pathColor: (id: number | null | undefined) => string | undefined;
 }) {
   const en = lang === 'en';
+  const marketKey = data.market.id ?? data.market.name;
+  const [measurement, setMeasurement] = useState<{ marketKey: typeof marketKey; position: MarketUserPosition } | null>(null);
+  const visitor = userPosition === undefined ? (measurement?.marketKey === marketKey ? measurement.position : null) : userPosition;
   const [view, setView] = useState(INITIAL);
   const [pixelsPerUnit, setPixelsPerUnit] = useState(1);
   const [page, setPage] = useState({ key: '', count: 50 });
+  const [appliedFocus, setAppliedFocus] = useState<string | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const focusedRowRef = useRef<HTMLLIElement>(null);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const dragged = useRef(false);
   const lastTouch = useRef(0);
@@ -34,6 +44,8 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
   const zoom = 600 / view.w;
   const screenScale = pixelsPerUnit * zoom;
   const paths = data.paths ?? [];
+  const visitorPoint = visitor ? projection.project([visitor.latitude, visitor.longitude]) : null;
+  const visitorView = visitorPoint ? marketPositionInView(visitorPoint, view, 20 / screenScale) : null;
   const clusters = clusterByScreenDistance(points.map((point) => ({ ...point,
     pinColor: pathColor(point.stores[0].pathId) ?? (point.stores.every((store) => store.membership === 'OUT')
       ? 'var(--ko-text-muted)' : color(point.stores[0].zoneId)),
@@ -43,7 +55,27 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
   const selectedKeys: string[] = selectedKey?.startsWith('cluster:') ? JSON.parse(selectedKey.slice(8)) : [];
   const selectedStores = selected?.stores ?? points.filter((point) => selectedKeys.includes(point.key)).flatMap((point) => point.stores);
   const ordered = orderStores(selectedStores);
-  const limit = ordered.length > 200 ? (page.key === selectedKey ? page.count : 50) : ordered.length;
+  const focusedIndex = focusStoreId == null ? -1 : ordered.findIndex((store) => store.id === focusStoreId);
+  const limit = ordered.length > 200 ? Math.max(page.key === selectedKey ? page.count : 50,
+    focusedIndex < 0 ? 0 : Math.ceil((focusedIndex + 1) / 50) * 50) : ordered.length;
+  const focusPoint = focusStoreId == null ? undefined : points.find((point) => point.stores.some((store) => store.id === focusStoreId));
+  // Resolve the group at the requested zoom, rather than the pre-focus screen grouping.
+  const focusKey = focusPoint && clusterByScreenDistance(points, pixelsPerUnit * 4, 24)
+    .find((cluster) => cluster.parcelKeys.includes(focusPoint.key))?.key;
+  const focusX = focusPoint?.x;
+  const focusY = focusPoint?.y;
+  const focusRequest = focusStoreId == null || focusKey == null ? null : JSON.stringify([focusStoreId, focusKey, focusX, focusY]);
+  // Adjust local view state when a new request arrives; subsequent pans remain free.
+  if (appliedFocus !== focusRequest) {
+    setAppliedFocus(focusRequest);
+    if (focusRequest != null && focusX != null && focusY != null) setView({ x: focusX - 75, y: focusY - 55, w: 150, h: 110 });
+  }
+  useEffect(() => {
+    if (focusStoreId != null && focusKey != null) onSelect(focusKey);
+  }, [focusStoreId, focusKey, onSelect]);
+  useEffect(() => {
+    if (focusStoreId != null) focusedRowRef.current?.scrollIntoView?.({ block: 'nearest' });
+  }, [focusStoreId, selectedKey, limit]);
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -94,6 +126,7 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
         <button type="button" aria-label={en ? 'Zoom out' : '축소'} disabled={zoom <= 1} onClick={() => zoomAt(0.5)}>−</button>
         <button type="button" onClick={() => setView(INITIAL)}>{en ? 'Show whole map' : '전체 보기'}</button>
       </div>
+      <MarketLocate key={marketKey} data={data} lang={lang} onPosition={(position) => setMeasurement({ marketKey, position })} />
       <svg ref={svgRef} viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
         onDoubleClick={(event) => { if (event.detail !== 0 && Date.now() - lastTouch.current > 500) zoomAt(2, location(event.clientX, event.clientY)); }}
         onPointerDown={(event) => {
@@ -165,6 +198,15 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
           const label = longestMarketSegmentMidpoint(path.geometry.map(projection.project));
           return label && <text key={path.id} className="place-market-path-label" transform={`translate(${label.x} ${label.y}) scale(${1 / screenScale})`} textAnchor="middle">{path.name}</text>;
         })}
+        {visitor && visitorPoint && visitorView && <g className="place-market-user" role="img" aria-label={en ? 'Your location' : '내 위치'}>
+          {visitorView.visible ? <>
+            <circle className="place-market-user-accuracy" cx={visitorPoint.x} cy={visitorPoint.y} r={visitor.accuracy * projection.scale100m / 100} vectorEffect="non-scaling-stroke" />
+            <circle className="place-market-user-dot" cx={visitorPoint.x} cy={visitorPoint.y} r={7 / screenScale} vectorEffect="non-scaling-stroke" />
+          </> : <g className="place-market-user-edge" transform={`translate(${visitorView.x} ${visitorView.y}) scale(${1 / screenScale}) rotate(${visitorView.angle})`}>
+            <path d="M 0 -12 L 9 9 L 0 5 L -9 9 Z" />
+            <title>{en ? 'Your location is outside the map view' : '내 위치가 지도 화면 밖에 있습니다'}</title>
+          </g>}
+        </g>}
         <g transform={`translate(${view.x} ${view.y}) scale(${1 / screenScale})`} className="place-market-map-decoration">
           <text x="28" y="30" className="place-market-direction">N ↑</text>
         </g>
@@ -177,7 +219,10 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
     {selectedKey != null && <section className="place-market-cluster-sheet" aria-label={en ? 'Selected shops' : '선택한 가게'}>
       <h3>{en ? 'Shops on this parcel' : '같은 필지 가게'} ({ordered.length})</h3>
       <button type="button" onClick={() => onSelect(null)}>{en ? 'Show all shops' : '전체 가게 보기'}</button>
-      <ul className="place-market-shops">{ordered.slice(0, limit).map((store, index) => <li key={store.id ?? index} data-found={matchesMarketName(store, query) || undefined}>
+      <ul className="place-market-shops">{ordered.slice(0, limit).map((store, index) => <li key={store.id ?? index} ref={focusStoreId != null && store.id === focusStoreId ? focusedRowRef : undefined}
+        data-selected={focusStoreId != null && store.id === focusStoreId || undefined}
+        style={focusStoreId != null && store.id === focusStoreId ? { outline: '2px solid var(--ko-accent-text)', outlineOffset: '-2px' } : undefined}
+        data-found={matchesMarketName(store, query) || undefined}>
         <strong>{store.name}</strong>
         <div className="place-market-badges">
           {store.goodPrice && <span>{en ? 'Good price' : '착한가격'}</span>}
