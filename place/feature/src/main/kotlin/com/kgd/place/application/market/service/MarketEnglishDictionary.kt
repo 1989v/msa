@@ -11,13 +11,14 @@ class MarketEnglishDictionary {
     private val items = read("items-en.csv")
     private val dishes = MarketDishDictionary().dishes().associate { it.dish to it.dishEn }
 
-    fun category(value: String?): String? = categories[value]
-    fun items(value: String?): String? = items[value] ?: dishes[value]
+    // Source labels such as "장례식장 " keep a trailing space in production; compare trimmed.
+    fun category(value: String?): String? = categories[value?.trim()]
+    fun items(value: String?): String? = items[value?.trim()] ?: dishes[value?.trim()]
     fun categoryLabels(query: String): Set<String> = categories.filterValues {
         MarketDishDictionary.normalize(it).contains(MarketDishDictionary.normalize(query))
     }.keys
     fun warnMissing(values: Collection<String>) {
-        values.filter { it !in categories }.distinct().sorted().forEach { log.warn { "Missing market English category label: $it" } }
+        values.filter { it.trim() !in categories }.distinct().sorted().forEach { log.warn { "Missing market English category label: $it" } }
     }
     private fun read(file: String): Map<String, String> = requireNotNull(javaClass.getResourceAsStream("/market/$file"))
         .bufferedReader().useLines { lines -> lines.drop(1).filter { it.isNotBlank() }.map { row ->
