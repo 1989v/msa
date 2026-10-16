@@ -128,3 +128,29 @@ Codex 보내는 순서: WU-15 ∥ WU-16 → WU-17 ∥ WU-18. 같은 워크트리
 
 ## 완료 조건(공통)
 - 단위마다 컴파일 + 지정 테스트 통과 줄. 커밋은 세션이 단위 경로만 `git add`. 네 단위 뒤 CDP 4조합(망원·광명·남대문·IN 없는 시장 한 곳) 캡처, main 머지·배포는 사용자 확인 뒤.
+
+## 음식 품목 검색·메뉴·영문 (`p7-plan.md` §7, 2026-10-16 승인)
+순서: WU-19(백엔드) → WU-20(백엔드, 같은 파일을 고치므로 19 뒤) → WU-21(FE, 17·18·19·20 뒤).
+
+## WU-19 음식 사전 + 관련 업종 검색 + TourAPI 메뉴 (place, Kotlin)
+- 사전: `place/feature/src/main/resources/market/dishes.csv` (`dish,category_sub,dish_en`) 100개 안팎 — 떡볶이·순대·튀김·어묵·김밥·만두 → 「김밥/만두/분식」, 칼국수·국수·잔치국수 → 「국수/칼국수」, 빈대떡·전·파전 → 「전/부침개」, 족발·보쌈 → 「족발/보쌈」, 회·초밥 → 「횟집」/「일식 회/초밥」, 떡·한과·약과 → 「떡/한과」, 냉면 → 「냉면/밀면」, 치킨·통닭 → 「치킨」, 빵·도넛 → 「빵/도넛」, 커피 → 「카페」 … `category_sub` 값은 운영 `market_store_search.category_sub` 에 실제 있는 이름만(검색 표의 distinct 207종과 대조하는 테스트). `dish_en` 은 문체부·국립국어원 지침식 로마자(tteokbokki, gimbap, mandu, bindaetteok …).
+- 로더 `MarketDishDictionary`(application, 기동 시 한 번 읽음) + 공개 `GET /api/v1/place/markets/dishes` → `[{dish, categorySub, dishEn}]`(캐시 헤더 1일).
+- `/api/v1/place/markets/search`: 질의가 사전의 `dish` 또는 `dish_en`(대소문자 무시)과 일치하면 `category_sub = 해당 업종` 행도 후보에 넣고 **순위 4(이름 0 > 품목 1 > 메뉴 2 > 업종 3 > 관련 업종 4)**. `StoreSummary` 에 `matchedBy: NAME|ITEMS|MENU|CATEGORY|RELATED_CATEGORY` 와 `relatedCategory: String?`(관련 업종일 때 업종 이름). 이름·품목·메뉴·업종 일치는 지금 그대로.
+- TourAPI 메뉴 붙이기: Flyway `V44__add_market_store_tour_menu.sql` — `market_store` 에 파생 열 `tour_content_id`, `tour_first_menu`, `tour_treat_menu`, `tour_matched_at`. 서비스 `MarketTourMenuService.attach(marketId)`: 시장 중심(경계 중심, 없으면 시장 점) 반경 300 m 의 `attractions`(content_type_id='39', lang='ko') 중 **이름 정규화 일치(공백 제거·소문자·NFKC) + 50 m 안**인 가게에 붙인다. 후보가 둘이면 가까운 쪽, 같은 거리면 안 붙임. 원천 열은 건드리지 않는다. 붙인 뒤 그 시장의 검색 표 다시 계산 — `market_store_search.menu_names` 에 착한가격 메뉴 뒤에 TourAPI 대표·취급 메뉴를 이어 붙인다(구분 ` · `).
+- 내부 `POST /internal/markets/tour-menus`(전체 시장 순회, 요약 `{markets, matched}` 반환) + `POST /internal/markets/{id}/tour-menus`. 적재 잡(`place/ingest/src/market_stores.py`)은 마지막에 전체 호출 한 번(실패는 경고, 잡은 성공).
+- 공개 응답 `GET /markets/{contentId}`: 가게에 `tourMenu: {firstMenu, treatMenu, attraction: {id, lang}} | null`. 시장에 `restaurants[]` — 중심 150 m 안(경계가 있으면 경계 안) TourAPI 음식점 중 **가게에 안 붙은 것**: `{attraction:{id,lang}, title, firstMenu, treatMenu, latitude, longitude}`. `attribution` 에 TourAPI 가 하나라도 쓰이면 「한국관광공사 TourAPI · 공공누리」 줄.
+- `docs/architecture/data-sources.md` TourAPI 행에 「시장 가게 메뉴 매칭」 용도 한 줄.
+- 테스트: 사전 ↔ 운영 업종명 대조(픽스처 207종), 관련 업종 순위·`matchedBy`, 매칭(이름 일치·50 m·둘이면 가까운 쪽·같은 거리면 없음), 검색 표 `menu_names` 이어 붙임, 응답 `restaurants` 에 매칭된 것 제외. 회귀 주입: 50 m 조건 제거 → 빨간불.
+- 검증: `./gradlew --no-daemon :place:feature:test --tests '*Market*'`, pytest(`place/ingest` 에서 `python3 -m pytest tests -q`).
+
+## WU-20 영문 (place, Kotlin — WU-19 뒤)
+- 업종 번역표 `place/feature/src/main/resources/market/categories-en.csv` (`category_sub,en`) 207종 전부 + 대·중분류 표. 빠진 값은 기동 시 경고 로그, 응답은 null.
+- 가게 이름 로마자: `KoreanRomanizer`(application 유틸, 국어의 로마자 표기법 — 자모 분해·음운 규칙은 기본 규칙(연음·비음화·유음화·구개음화·경음화 미표기)까지, 테스트 20건: 순희네빈대떡 → Sunhuine Bindaetteok, 광장시장 → Gwangjang Sijang …). 숫자·영문·기호는 그대로.
+- 응답: 가게에 `nameEn`(수동 영문이 있으면 그것, 없으면 로마자), `categoryEn`, `itemsEn`(품목 분류어 번역표 — 온누리 품목 distinct 를 뽑아 번역, 없으면 null), `tourMenu` 에 영문판(82) 같은 contentId 가 있으면 `firstMenuEn`·`treatMenuEn`. 검색 응답 `StoreSummary` 도 같은 열. `restaurants[]` 는 `lang` 이 en 이면 영문판 행 우선.
+- 검색: 영문 질의(ASCII 만)는 `dish_en`·업종 영문·로마자 이름(`market_store_search` 에 `name_roman` 열 추가, V45)에서 찾는다.
+- 테스트: 로마자 20건, 번역표 207종 빠짐 없음, 영문 질의 `tteokbokki` → 관련 업종 분식. 검증 명령은 WU-19 와 같다.
+
+## WU-21 화면 (portal-fe — 17·18·19·20 뒤)
+- 시장 섹션·`/markets`: 결과 행에 `matchedBy` 표시(「관련 업종 · 분식」은 흐리게, 뒤 순위), 가게 행에 메뉴·가격(착한가격 메뉴·가격 + TourAPI 대표·취급 메뉴, 출처 표시), 시장 섹션 검색은 `/markets/dishes` 사전을 한 번 받아 같은 규칙으로 관련 업종을 낸다. 섹션 아래 「관광공사 소개 음식점」 목록(`restaurants[]`, 관광지 상세 링크).
+- 영문 화면: `nameEn · 한글`, `categoryEn`, 메뉴 영문(있을 때), 영문 검색어.
+- 검증: `npx tsc -b`, vitest, CDP 4조합(광장·남대문 국문·영문).
