@@ -203,7 +203,7 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
             {hit && <circle r="18" className="place-market-hit-ring" />}
             <circle r={hit || active ? 13 : 10} className="place-market-dot" strokeDasharray={pin.stores.some((store) => store.pinKind === 'REFERENCE') ? '3 3' : undefined} />
             <text textAnchor="middle" dy="4">{pin.stores.length}</text>
-            {hit && <text className="place-market-hit-label" textAnchor={pin.x < 150 ? 'start' : pin.x > 450 ? 'end' : 'middle'} y="-25">{pin.stores.filter((store) => matchesMarketName(store, query, dishes)).map((store) => marketDisplayName(store, lang)).join(', ')}</text>}
+            {hit && <text className="place-market-hit-label" textAnchor={pin.x < 150 ? 'start' : pin.x > 450 ? 'end' : 'middle'} y="-25">{hitLabel(pin.stores.filter((store) => matchesMarketName(store, query, dishes)).map((store) => marketDisplayName(store, lang)), en)}</text>}
           </g>;
         })}
         {labels.map(({ path }) => {
@@ -251,4 +251,10 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
       {limit < ordered.length && <button type="button" onClick={() => setPage({ key: selectedKey, count: limit + 50 })}>{en ? 'Show more' : '더 보기'}</button>}
     </section>}
   </div>;
+}
+
+// A cluster can match many shops; the label on the map names two and counts the rest.
+function hitLabel(names: string[], en: boolean) {
+  if (names.length <= 2) return names.join(', ');
+  return `${names.slice(0, 2).join(', ')} ${en ? `and ${names.length - 2} more` : `외 ${names.length - 2}곳`}`;
 }

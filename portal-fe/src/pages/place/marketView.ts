@@ -77,13 +77,24 @@ export function groupMarketPins(stores: MarketStore[]) {
   return [...groups];
 }
 
+const centreOf = (points: MarketCoordinate[]): MarketCoordinate =>
+  [points.reduce((sum, point) => sum + point[0], 0) / points.length, points.reduce((sum, point) => sum + point[1], 0) / points.length];
+const distanceMetres = (a: MarketCoordinate, b: MarketCoordinate) => {
+  const metresPerDegree = Math.PI * 6_371_008.8 / 180;
+  return Math.hypot((b[1] - a[1]) * metresPerDegree * Math.cos((a[0] + b[0]) / 2 * Math.PI / 180), (b[0] - a[0]) * metresPerDegree);
+};
+
 /** Local equirectangular projection in metres; isotropic fit keeps the scale bar honest. */
 export function projectMarketPins(pins: ReturnType<typeof groupMarketPins>, geometry?: Pick<MarketResponse, 'boundary' | 'paths' | 'entrances'>) {
   const boundary = geometry?.boundary?.polygon ?? [];
   const paths = geometry?.paths ?? [];
   const hasGeometry = boundary.length > 0 || paths.some((path) => path.geometry.length > 0);
-  // A boundary fixes the viewport even when the shop/zone filters change.
-  const coordinates: MarketCoordinate[] = boundary.length ? boundary : [
+  // The boundary anchors the viewport, and pins within 300 m of its centre extend it: a narrow OSM
+  // polygon (망원 is 402×129 m) would otherwise drop the shops the nearby rule adds around it, while
+  // a far-off pin must not stretch the map.
+  const coordinates: MarketCoordinate[] = boundary.length ? [...boundary, ...pins
+    .filter((pin) => distanceMetres([pin.latitude, pin.longitude], centreOf(boundary)) <= 300)
+    .map((pin): MarketCoordinate => [pin.latitude, pin.longitude])] : [
     ...pins.map((pin): MarketCoordinate => [pin.latitude, pin.longitude]),
     ...(hasGeometry ? paths.flatMap((path) => path.geometry) : []),
     ...(hasGeometry ? (geometry?.entrances ?? []).map((entry): MarketCoordinate => [entry.lat, entry.lng]) : []),

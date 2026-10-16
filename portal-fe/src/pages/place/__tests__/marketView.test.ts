@@ -21,6 +21,17 @@ describe('market display projection', () => {
     expect(empty.project([37.5, 127]).y).toBeCloseTo(384);
   });
 
+  it('extends a boundary viewport to pins within 300 m of its centre so nearby shops stay on the map', () => {
+    const geometry = { boundary: { polygon: [[37.5, 127], [37.501, 127], [37.501, 127.001], [37.5, 127.001]] as [number, number][], source: 'OSM' as const } };
+    const empty = projectMarketPins([], geometry)!;
+    // 37.5020 is about 170 m north of the boundary centre: inside the margin, outside the polygon.
+    const near = projectMarketPins(groupMarketPins([store({ latitude: 37.502 })]), geometry)!;
+    const point = near.project([37.502, 127.0005]);
+    expect(point.y).toBeGreaterThanOrEqual(0);
+    expect(near.scale100m).toBeLessThan(empty.scale100m);
+    expect(empty.project([37.502, 127.0005]).y).toBeLessThan(0);
+  });
+
   it('fits paths without a boundary and keeps null geometry on the legacy viewport', () => {
     const pins = groupMarketPins([store()]);
     const legacy = projectMarketPins(pins)!;
