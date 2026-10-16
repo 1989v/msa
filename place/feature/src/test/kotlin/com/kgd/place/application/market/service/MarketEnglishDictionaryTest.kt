@@ -21,6 +21,14 @@ class MarketEnglishDictionaryTest : BehaviorSpec({
             labels.filter { dictionary.category(it).isNullOrBlank() } shouldBe emptyList()
             dictionary.category("장례식장 ") shouldBe "Funeral hall"
         }
+        Then("운영 대분류 10종과 온누리 품목 상위 분류어를 번역한다") {
+            val majors = requireNotNull(javaClass.getResourceAsStream("/market/category-majors.txt"))
+                .bufferedReader().readLines().filter { it.isNotBlank() && !it.startsWith("#") }
+            majors.size shouldBe 10
+            majors.filter { dictionary.category(it).isNullOrBlank() } shouldBe emptyList()
+            dictionary.category("과학·기술") shouldBe "Science and technology"
+            listOf("정장(여성)", "옷감직물", "정육점", "카페트,커텐,천막", "신---발").filter { dictionary.items(it).isNullOrBlank() } shouldBe emptyList()
+        }
         Then("fixture 온누리 품목과 음식명을 번역하고 미등록값은 null이다") {
             dictionary.items("농축수산품") shouldBe "Agricultural livestock and seafood products"
             dictionary.items("맞춤복점") shouldBe "Custom tailoring"

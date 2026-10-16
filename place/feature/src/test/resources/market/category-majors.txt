@@ -1,0 +1,11 @@
+# market_store_search.category_major distinct values from production, 2026-10-16 (10)
+과학·기술
+교육
+보건의료
+부동산
+소매
+수리·개인
+숙박
+시설관리·임대
+예술·스포츠
+음식
