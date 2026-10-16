@@ -218,6 +218,89 @@ class MarketSearchQueryRepositoryTest : BehaviorSpec({
             repository.counts() shouldBe mapOf(requireNotNull(a.id) to 1L, requireNotNull(b.id) to 1L)
         }
     }
+    Given("영문 검색과 투영") {
+        Then("로마자 이름과 영문 업종을 SQL에서 검색하며 이름을 업종보다 먼저 정렬한다") {
+            val m = market("english-search")
+            val roman = store(m, "광장상회", items = "농축수산품", category = "수산물 소매업")
+            val named = store(m, "Seafood House")
+            val category = store(m, "바다가게", category = "수산물 소매업")
+            val result = adapter.search("seafood", "en", 0, 20).stores
+            result.total shouldBe 3
+            result.items.first().storeId shouldBe named.id
+            result.items.map { it.matchedBy } shouldBe listOf(SearchMarketsUseCase.MatchedBy.NAME,
+                SearchMarketsUseCase.MatchedBy.CATEGORY, SearchMarketsUseCase.MatchedBy.CATEGORY)
+            val match = adapter.search("gwangjang", "en", 0, 20).stores.items.single()
+            match.storeId shouldBe roman.id
+            match.nameEn shouldBe "Gwangjangsanghoe"
+            match.categoryEn shouldBe "Seafood retail"
+            match.itemsEn shouldBe "Agricultural livestock and seafood products"
+            adapter.search("seafood", "en", 0, 1).stores.total shouldBe 3
+            adapter.search("seafood", "en", 1, 1).stores.items.size shouldBe 1
+        }
+        Then("V45 이후 기존 nonempty 검색표의 null 로마자를 기동 백필로 채운다") {
+            val m = market("roman-backfill")
+            store(m, "광장상회")
+            em.createQuery("update MarketStoreSearchJpaEntity s set s.nameRoman = null").executeUpdate()
+            MarketSearchBackfill(JPAQueryFactory(em), refresh).backfillIfEmpty()
+            adapter.search("gwangjang", "en", 0, 20).stores.total shouldBe 1
+            em.createQuery("select s.nameRoman from MarketStoreSearchJpaEntity s", String::class.java)
+                .singleResult shouldBe "Gwangjangsanghoe"
+        }
+    }
+    Given("영문 검색 투영") {
+        Then("이름 로마자와 영문 업종을 검색하고 기존 행의 null 로마자를 백필한다") {
+            val m = market("english")
+            val row = store(m, "순희네빈대떡", items = "농축수산품", category = "카페")
+            val id = requireNotNull(row.id)
+            fun roman() = em.createQuery("select s.nameRoman from MarketStoreSearchJpaEntity s where s.storeId = :id", String::class.java)
+                .setParameter("id", id).singleResult
+            roman() shouldBe "Sunhuine Bindaetteok"
+            val result = adapter.search("sunhuine bindaetteok", "en", 0, 20).stores.items.single()
+            result.storeId shouldBe id
+            result.nameEn shouldBe "Sunhuine Bindaetteok"
+            result.itemsEn shouldBe "Agricultural livestock and seafood products"
+            result.categoryEn shouldBe "Cafe"
+            result.matchedBy shouldBe SearchMarketsUseCase.MatchedBy.NAME
+            adapter.search("cafe", "en", 0, 20).stores.items.single().matchedBy shouldBe SearchMarketsUseCase.MatchedBy.CATEGORY
+            em.createQuery("update MarketStoreSearchJpaEntity s set s.nameRoman = null").executeUpdate()
+            MarketSearchBackfill(JPAQueryFactory(em), refresh).backfillIfEmpty()
+            em.clear()
+            roman() shouldBe "Sunhuine Bindaetteok"
+            edit(row, MarketStoreField.NAME, "ABC-123 Shop!")
+            adapter.search("abc-123", "en", 0, 20).stores.items.single().nameEn shouldBe "ABC-123 Shop!"
+            adapter.search("sunhuine", "en", 0, 20).stores.total shouldBe 0
+        }
+        Then("TourAPI 영문 82만 같은 contentId의 메뉴와 음식점에 우선 적용한다") {
+            val m = market("tour-en")
+            val shop = store(m, "순희네빈대떡")
+            fun restaurant(content: String, type: String, lang: String, title: String, raw: String) = AttractionJpaEntity(
+                contentId = content, lang = lang, title = title, titleDisplay = title, contentTypeId = type,
+                latitude = 37.0, longitude = 127.0, status = "ACTIVE", introRaw = raw).also { em.persist(it); em.flush() }
+            val ko = restaurant("r1", "39", "ko", "순희네빈대떡", """{"firstmenu":"빈대떡","treatmenu":"육회"}""")
+            val en = restaurant("r1", "82", "en", "Sunhuine", """{"firstmenu":"Mung bean pancake","treatmenu":"Beef tartare"}""")
+            restaurant("r2", "39", "ko", "국문만", """{"firstmenu":"국수"}""")
+            restaurant("r2", "39", "en", "Wrong type", """{"firstmenu":"wrong"}""")
+            restaurant("unrelated", "82", "en", "Other", """{"firstmenu":"wrong"}""")
+            val tour = MarketTourMenuRepositoryAdapter(JPAQueryFactory(em))
+            val sw = MarketCoordinate(36.99,126.99); val ne = MarketCoordinate(37.01,127.01)
+            val korean = tour.restaurants(sw, ne)
+            tour.replace(requireNotNull(m.id), mapOf(requireNotNull(shop.id) to korean.single { it.contentId == "r1" }))
+            val menu = tour.attached(requireNotNull(m.id)).getValue(requireNotNull(shop.id))
+            menu.attraction.id shouldBe ko.id
+            menu.firstMenu shouldBe "빈대떡"
+            menu.firstMenuEn shouldBe "Mung bean pancake"
+            menu.treatMenuEn shouldBe "Beef tartare"
+            val english = tour.restaurants(sw, ne, "en").associateBy { it.contentId }
+            english.getValue("r1").attraction.id shouldBe en.id
+            english.getValue("r1").firstMenu shouldBe "Mung bean pancake"
+            english.getValue("r2").attraction.lang shouldBe "ko"
+            val service = MarketService(writer, writer, tour = tour)
+            // The attached restaurant must remain excluded after switching to its English row id.
+            em.merge(MarketJpaEntity.fromDomain(m.toDomain().copy(latitude = 37.0, longitude = 127.0)))
+            em.flush(); em.clear()
+            service.find("tour-en", false, "en")!!.restaurants.map { it.contentId } shouldBe listOf("r2")
+        }
+    }
     Given("유효 IN 가게 검색") {
         Then("related dish categories rank after literal fields and expose SQL match metadata") {
             val m = market("dish")
@@ -232,23 +315,35 @@ class MarketSearchQueryRepositoryTest : BehaviorSpec({
             val result = adapter.search("떡볶이", "ko", 0, 20).stores.items
             result.map { it.matchedBy } shouldBe SearchMarketsUseCase.MatchedBy.entries
             result.last().relatedCategory shouldBe "김밥/만두/분식"
-            adapter.search("tteokbokki", "en", 0, 20).stores.items.single().storeId shouldBe related.id
+            val english = adapter.search("tteokbokki", "en", 0, 20).stores.items
+            english.map { it.name } shouldBe listOf("떡볶이집", "분식집")
+            english.map { it.matchedBy } shouldBe listOf(SearchMarketsUseCase.MatchedBy.NAME, SearchMarketsUseCase.MatchedBy.RELATED_CATEGORY)
+            english.last().storeId shouldBe related.id
         }
         Then("Tour adapter reads only Korean restaurants and replaces derived columns without touching source") {
             val m = market("tour-attach")
             val shop = store(m, "음식점")
-            fun restaurant(content: String, type: String, lang: String) = AttractionJpaEntity(
-                contentId = content, lang = lang, title = "음식점", titleDisplay = "음식점", contentTypeId = type,
+            fun restaurant(content: String, type: String, lang: String, title: String = "음식점",
+                raw: String = """{"firstmenu":"빈대떡","treatmenu":"육회"}""") = AttractionJpaEntity(
+                contentId = content, lang = lang, title = title, titleDisplay = title, contentTypeId = type,
                 latitude = 37.0, longitude = 127.0, status = "ACTIVE",
-                introRaw = """{"firstmenu":"빈대떡","treatmenu":"육회"}""").also { em.persist(it) }
+                introRaw = raw).also { em.persist(it) }
             restaurant("r1", "39", "ko"); restaurant("r2", "12", "ko"); restaurant("r3", "82", "en")
+            val english = restaurant("r1", "82", "en", "Pancake Restaurant",
+                """{"firstmenu":"Mung bean pancakes","treatmenu":"Beef tartare"}""")
             em.flush()
             val tour = MarketTourMenuRepositoryAdapter(JPAQueryFactory(em))
             val candidates = tour.restaurants(MarketCoordinate(36.99,126.99), MarketCoordinate(37.01,127.01))
             candidates.map { it.contentId } shouldBe listOf("r1")
             candidates.single().firstMenu shouldBe "빈대떡"
             tour.replace(requireNotNull(m.id), mapOf(requireNotNull(shop.id) to candidates.single()))
-            tour.attached(requireNotNull(m.id)).getValue(requireNotNull(shop.id)).treatMenu shouldBe "육회"
+            val menu = tour.attached(requireNotNull(m.id)).getValue(requireNotNull(shop.id))
+            menu.treatMenu shouldBe "육회"
+            menu.firstMenuEn shouldBe "Mung bean pancakes"
+            menu.treatMenuEn shouldBe "Beef tartare"
+            val enRows = tour.restaurants(MarketCoordinate(36.99,126.99), MarketCoordinate(37.01,127.01), "en")
+            enRows.single().attraction shouldBe SearchMarketsUseCase.AttractionRef(requireNotNull(english.id), "en")
+            enRows.single().title shouldBe "Pancake Restaurant"
             em.clear()
             val attached = em.find(MarketStoreJpaEntity::class.java, shop.id)
             attached.name shouldBe "음식점"

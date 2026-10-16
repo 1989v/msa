@@ -16,7 +16,8 @@ interface SearchMarketsUseCase {
     data class StoreSummary(val storeId: Long, val name: String, val items: String?, val category: String?,
         val marketContentId: String, val marketName: String, val zoneName: String?,
         val latitude: Double?, val longitude: Double?, val attraction: AttractionRef?, val goodPrice: GoodPrice? = null,
-        val matchedBy: MatchedBy = MatchedBy.NAME, val relatedCategory: String? = null)
+        val matchedBy: MatchedBy = MatchedBy.NAME, val relatedCategory: String? = null,
+        val nameEn: String? = null, val categoryEn: String? = null, val itemsEn: String? = null)
     enum class MatchedBy { NAME, ITEMS, MENU, CATEGORY, RELATED_CATEGORY }
     data class GoodPrice(val category: String?, val menus: List<GoodPriceMenu>)
 }

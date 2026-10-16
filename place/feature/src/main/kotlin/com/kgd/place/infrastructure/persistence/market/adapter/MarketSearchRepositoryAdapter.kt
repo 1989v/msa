@@ -55,7 +55,8 @@ class MarketSearchRepositoryAdapter(
                 attractions[market.attractionContentId]?.ref(), GoodPriceProjection.from(row.source.goodPriceRaw)?.let {
                     SearchMarketsUseCase.GoodPrice(it.category, it.menus)
                 }, matchedBy = SearchMarketsUseCase.MatchedBy.entries[candidates!!.matches.getValue(requireNotNull(row.source.id)).first],
-                relatedCategory = candidates.matches.getValue(requireNotNull(row.source.id)).takeIf { it.first == 4 }?.second)
+                relatedCategory = candidates.matches.getValue(requireNotNull(row.source.id)).takeIf { it.first == 4 }?.second,
+                nameEn = row.nameEn, categoryEn = row.categoryEn, itemsEn = row.itemsEn)
         }
         val regions = regions(marketRows, attractions)
         return SearchMarketsUseCase.Result(query, marketRows.map { market ->

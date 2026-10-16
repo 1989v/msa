@@ -35,7 +35,8 @@ class MarketSearchRefreshRepositoryAdapter(
                 // Lock all effective inputs to see committed edits after an older ingest RR snapshot.
                 .setLockMode(LockModeType.PESSIMISTIC_READ).fetch().map { row ->
                 val projection = MarketStoreSearchJpaEntity(requireNotNull(row[store.id]), marketId, row[partner.id],
-                    row[name], row[items], row[categories[0]], row[categories[1]], row[categories[2]], row[menuNames])
+                    row[name], row[items], row[categories[0]], row[categories[1]], row[categories[2]], row[menuNames],
+                    row[name]?.let(com.kgd.place.application.market.service.KoreanRomanizer::romanize))
                 em.persist(projection)
                 projection
             }

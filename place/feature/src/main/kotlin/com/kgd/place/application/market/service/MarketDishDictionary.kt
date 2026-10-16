@@ -15,7 +15,7 @@ class MarketDishDictionary : MarketDishUseCase {
         }.toList() }
     override fun dishes() = entries
     fun categories(query: String): Set<String> = entries.filter {
-        normalize(it.dish) == normalize(query) || normalize(it.dishEn) == normalize(query)
+        normalize(it.dish) == normalize(query) || normalize(it.dishEn) == (if (normalize(query) == "kimbap") "gimbap" else normalize(query))
     }.map { it.categorySub }.toSet()
     companion object {
         fun normalize(value: String): String = Normalizer.normalize(value, Normalizer.Form.NFKC)

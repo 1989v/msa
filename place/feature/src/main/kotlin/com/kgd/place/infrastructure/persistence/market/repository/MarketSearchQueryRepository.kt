@@ -29,10 +29,16 @@ class MarketSearchQueryRepository(@Qualifier("placeJpaQueryFactory") private val
 
     private fun base() = factory.from(search).join(market).on(market.id.eq(search.marketId))
 
-    private fun matches(value: StringExpression, query: String) = normalized(value).containsIgnoreCase(query)
+    private fun matches(value: StringExpression, query: String) = normalized(value).containsIgnoreCase(com.kgd.place.application.market.service.MarketDishDictionary.normalize(query))
+    private val english = com.kgd.place.application.market.service.MarketEnglishDictionary.DEFAULT
+    private fun ascii(query: String) = query.all { it.code < 128 }
+    private fun nameMatches(query: String) = matches(name, query).or(
+        if (ascii(query)) matches(search.nameRoman, query) else null)
+    private fun categoryMatches(query: String) = categories.map { matches(it, query).or(
+        if (ascii(query)) it.`in`(english.categoryLabels(query)) else null) }.reduce { a, b -> a.or(b) }
     private fun matching(query: String): JPAQuery<*> = base().where(
-        matches(name, query).or(matches(items, query)).or(matches(menuNames, query))
-            .or(categories.map { matches(it, query) }.reduce { a, b -> a.or(b) })
+        nameMatches(query).or(matches(items, query)).or(matches(menuNames, query))
+            .or(categoryMatches(query))
             .or(search.categorySub.`in`(dictionary.categories(query))))
 
     data class Candidates(val rows: List<Pair<com.kgd.place.domain.market.model.MarketStore,
@@ -53,9 +59,9 @@ class MarketSearchQueryRepository(@Qualifier("placeJpaQueryFactory") private val
     }
 
     fun stores(query: String, pageable: Pageable): Candidates {
-        val rank = CaseBuilder().`when`(matches(name, query)).then(0)
+        val rank = CaseBuilder().`when`(nameMatches(query)).then(0)
             .`when`(matches(items, query)).then(1).`when`(matches(menuNames, query)).then(2)
-            .`when`(categories.map { matches(it, query) }.reduce { a, b -> a.or(b) }).then(3).otherwise(4)
+            .`when`(categoryMatches(query)).then(3).otherwise(4)
         val selected = matching(query).select(search.storeId, search.partnerId, rank, search.categorySub)
             .orderBy(rank.asc(), market.name.asc(), name.asc(), search.storeId.asc())
             .offset(pageable.offset).limit(pageable.pageSize.toLong()).fetch()

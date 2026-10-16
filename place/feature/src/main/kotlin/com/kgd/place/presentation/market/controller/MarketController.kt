@@ -22,8 +22,8 @@ class MarketController(private val query: QueryMarketUseCase) {
         @RequestParam(defaultValue = "false") includeOutside: Boolean,
     ): ResponseEntity<ApiResponse<MarketResponse?>> {
         if (lang != "ko" && lang != "en") throw BusinessException(ErrorCode.INVALID_INPUT, "lang must be ko or en")
-        // The content ID is shared across languages. Store names/items stay in the original language.
-        val result = query.find(contentId, includeOutside)
+        // The content ID is shared across languages; restaurant rows prefer the requested language.
+        val result = query.find(contentId, includeOutside, lang)
         return ResponseEntity.ok()
             .cacheControl(CacheControl.maxAge(Duration.ofSeconds(60)).cachePublic()
                 .sMaxAge(Duration.ofMinutes(10)).staleWhileRevalidate(Duration.ofMinutes(5)))

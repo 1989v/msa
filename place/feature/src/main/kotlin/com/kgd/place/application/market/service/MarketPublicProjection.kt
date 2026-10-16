@@ -110,7 +110,9 @@ internal object MarketPublicProjection {
                 }
             }
             QueryMarketUseCase.Store(effectiveSource, if (display.membership.status == MarketMembershipStatus.UNKNOWN)
-                display.copy(coordinate = null) else display, sources)
+                display.copy(coordinate = null) else display, sources).copy(
+                categoryEn = MarketEnglishDictionary.DEFAULT.category(base.categorySub ?: base.categoryMid ?: base.categoryMajor),
+                itemsEn = MarketEnglishDictionary.DEFAULT.items(display.items))
         }
         val byId = projected.associateBy { it.source.id }
         return projected.map { row ->

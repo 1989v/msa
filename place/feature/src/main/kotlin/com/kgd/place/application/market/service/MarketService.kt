@@ -18,7 +18,10 @@ class MarketService(private val query: MarketQueryPort, private val save: Market
     QueryMarketUseCase, SaveMarketUseCase {
 
     @Transactional(transactionManager = "placeTransactionManager", readOnly = true)
-    override fun find(contentId: String, includeOutside: Boolean): QueryMarketUseCase.MarketResult? {
+    override fun find(contentId: String, includeOutside: Boolean): QueryMarketUseCase.MarketResult? = find(contentId, includeOutside, "ko")
+
+    @Transactional(transactionManager = "placeTransactionManager", readOnly = true)
+    override fun find(contentId: String, includeOutside: Boolean, lang: String): QueryMarketUseCase.MarketResult? {
         require(contentId.isNotBlank())
         val market = query.findMarketByContentId(contentId) ?: return null
         val marketId = requireNotNull(market.id)
@@ -35,9 +38,9 @@ class MarketService(private val query: MarketQueryPort, private val save: Market
                 com.kgd.place.domain.market.model.MarketCoordinate(boundary.polygon.maxOf { it.latitude }, boundary.polygon.maxOf { it.longitude })
         } else center?.let { MarketTourMenuService.bounds(it, 150.0) }
         val attachedIds = attached.values.map { it.attraction.id }.toSet()
-        val restaurants = bounds?.let { (sw, ne) -> tour?.restaurants(sw, ne) }.orEmpty().filter { restaurant ->
+        val restaurants = bounds?.let { (sw, ne) -> if (lang == "ko") tour?.restaurants(sw, ne) else tour?.restaurants(sw, ne, lang) }.orEmpty().filter { restaurant ->
             val point = com.kgd.place.domain.market.model.MarketCoordinate(restaurant.latitude, restaurant.longitude)
-            restaurant.attraction.id !in attachedIds && if (boundary != null)
+            (restaurant.koreanAttractionId ?: restaurant.attraction.id) !in attachedIds && if (boundary != null)
                 com.kgd.place.domain.market.model.MarketGeometry.contains(point, boundary.polygon)
             else center != null && MarketPublicProjection.distanceMetres(center, point) <= 150
         }

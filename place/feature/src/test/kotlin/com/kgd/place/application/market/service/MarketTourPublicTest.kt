@@ -9,6 +9,30 @@ import io.kotest.matchers.shouldBe
 import io.mockk.*
 
 class MarketTourPublicTest : BehaviorSpec({
+    Given("영문 음식점과 메뉴의 상세 응답") {
+        Then("요청 언어를 전달하고 연결된 음식점의 영문 행도 중복 소개하지 않는다") {
+            val query = mockk<MarketQueryPort>()
+            val tour = mockk<MarketTourMenuPort>()
+            val source = MarketStore(1, "가게", MarketStoreSource.MANUAL, id = 1,
+                actorKind = MarketActorKind.ADMIN, createdByMemberId = 1, membership = MarketMembership(MarketMembershipStatus.IN))
+            every { query.findMarketByContentId("c") } returns Market("c", "시장", MarketType.STREET, latitude = 37.0, longitude = 127.0, id = 1)
+            every { query.findStores(1) } returns listOf(source)
+            every { query.findOverrides(any()) } returns emptyList()
+            every { query.findZones(1) } returns emptyList()
+            val menu = MarketTourMenuUseCase.Menu("국수", null, SearchMarketsUseCase.AttractionRef(11, "ko"), "Noodles", null)
+            every { tour.attached(1) } returns mapOf(1L to menu)
+            val attached = MarketTourMenuUseCase.Restaurant(SearchMarketsUseCase.AttractionRef(21, "en"), "Attached", "Noodles", null,
+                37.0, 127.0, koreanAttractionId = 11)
+            val separate = attached.copy(attraction = SearchMarketsUseCase.AttractionRef(22, "en"), title = "Restaurant", koreanAttractionId = 12)
+            every { tour.restaurants(any(), any(), "en") } returns listOf(attached, separate)
+            val result = MarketService(query, mockk(), tour = tour).find("c", false, "en")!!
+            val response = MarketResponse.from(result)
+            response.restaurants.single().attraction.lang shouldBe "en"
+            response.restaurants.single().title shouldBe "Restaurant"
+            response.stores.single().tourMenu?.firstMenuEn shouldBe "Noodles"
+            verify(exactly = 1) { tour.restaurants(any(), any(), "en") }
+        }
+    }
     Given("public restaurant projection") {
         Then("attachments on hidden OUT stores are excluded and Tour attribution is exposed") {
             val query = mockk<MarketQueryPort>()

@@ -52,6 +52,7 @@ data class MarketResponse(val market: Info, val zones: List<Zone>, val stores: L
         val goodPrice: GoodPrice? = null,
         val nearby: Boolean = false,
         val tourMenu: MarketTourMenuUseCase.Menu? = null,
+        val nameEn: String? = null, val categoryEn: String? = null, val itemsEn: String? = null,
     )
 
     companion object {
@@ -60,6 +61,7 @@ data class MarketResponse(val market: Info, val zones: List<Zone>, val stores: L
                 val source = row.source
                 val display = row.display
                 Store(
+                    nameEn = row.nameEn, categoryEn = row.categoryEn, itemsEn = row.itemsEn,
                     tourMenu = row.tourMenu, nearby = display.nearby, id = source.id, name = display.name, items = display.items, zoneId = display.zoneId,
                     membership = display.membership.status, latitude = display.coordinate?.latitude,
                     longitude = display.coordinate?.longitude, roadAddress = source.roadAddress,

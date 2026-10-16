@@ -18,4 +18,5 @@ class MarketStoreSearchJpaEntity(
     @Column(name = "category_mid", length = 100) val categoryMid: String?,
     @Column(name = "category_sub", length = 100) val categorySub: String?,
     @Column(name = "menu_names", columnDefinition = "text") val menuNames: String?,
+    @Column(name = "name_roman", columnDefinition = "text") val nameRoman: String? = null,
 )

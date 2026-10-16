@@ -29,11 +29,33 @@ class MarketTourMenuRepositoryAdapter(@Qualifier("placeJpaQueryFactory") private
                 raw?.get("firstmenu")?.asText()?.takeIf { it.isNotBlank() },
                 raw?.get("treatmenu")?.asText()?.takeIf { it.isNotBlank() }, row.latitude, row.longitude, row.contentId)
         }
-    override fun attached(marketId: Long): Map<Long, Menu> = factory.select(store.id, store.tourFirstMenu,
-        store.tourTreatMenu, attraction.id, attraction.lang).from(store).join(attraction)
+    override fun restaurants(southWest: MarketCoordinate, northEast: MarketCoordinate, lang: String): List<Restaurant> {
+        val korean = restaurants(southWest, northEast)
+        if (lang != "en" || korean.isEmpty()) return korean
+        val english = factory.selectFrom(attraction).where(attraction.contentId.`in`(korean.map { it.contentId }),
+            attraction.lang.eq("en"), attraction.contentTypeId.eq("82"), attraction.source.eq("TOURAPI")).fetch().associateBy { it.contentId }
+        return korean.map { row -> english[row.contentId]?.let { en ->
+            val raw = en.introRaw?.let { runCatching { json.readTree(it) }.getOrNull() }
+            Restaurant(AttractionRef(requireNotNull(en.id), "en"), en.title,
+                raw?.get("firstmenu")?.asText()?.takeIf { it.isNotBlank() },
+                raw?.get("treatmenu")?.asText()?.takeIf { it.isNotBlank() }, en.latitude, en.longitude, en.contentId, row.attraction.id)
+        } ?: row }
+    }
+    override fun attached(marketId: Long): Map<Long, Menu> {
+        val english = QAttractionJpaEntity("englishMenu")
+        return factory.select(store.id, store.tourFirstMenu,
+        store.tourTreatMenu, attraction.id, attraction.lang, english.introRaw).from(store).join(attraction)
         .on(attraction.contentId.eq(store.tourContentId), attraction.lang.eq("ko"), attraction.source.eq("TOURAPI"))
+        .leftJoin(english).on(english.contentId.eq(store.tourContentId), english.lang.eq("en"),
+            english.contentTypeId.eq("82"), english.source.eq("TOURAPI"))
         .where(store.marketId.eq(marketId)).fetch().associate { row -> requireNotNull(row[store.id]) to
-            Menu(row[store.tourFirstMenu], row[store.tourTreatMenu], AttractionRef(requireNotNull(row[attraction.id]), "ko")) }
+            run {
+                val raw = row[english.introRaw]?.let { runCatching { json.readTree(it) }.getOrNull() }
+                Menu(row[store.tourFirstMenu], row[store.tourTreatMenu], AttractionRef(requireNotNull(row[attraction.id]), "ko"),
+                    raw?.get("firstmenu")?.asText()?.takeIf { it.isNotBlank() },
+                    raw?.get("treatmenu")?.asText()?.takeIf { it.isNotBlank() })
+            } }
+    }
     @Transactional(transactionManager = "placeTransactionManager")
     override fun replace(marketId: Long, matches: Map<Long, Restaurant>) {
         factory.update(store).setNull(store.tourContentId).setNull(store.tourFirstMenu).setNull(store.tourTreatMenu)

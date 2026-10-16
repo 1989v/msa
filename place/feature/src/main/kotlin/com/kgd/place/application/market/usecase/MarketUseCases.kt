@@ -8,11 +8,14 @@ import com.kgd.place.domain.market.model.MarketZone
 
 interface QueryMarketUseCase {
     fun find(contentId: String, includeOutside: Boolean = false): MarketResult?
+    fun find(contentId: String, includeOutside: Boolean, lang: String): MarketResult? = find(contentId, includeOutside)
     data class Store(
         val source: MarketStore,
         val display: Display,
         val sources: List<MarketStoreSource> = listOf(source.source),
         val tourMenu: MarketTourMenuUseCase.Menu? = null,
+        val nameEn: String = com.kgd.place.application.market.service.KoreanRomanizer.romanize(display.name),
+        val categoryEn: String? = null, val itemsEn: String? = null,
     ) {
         constructor(source: MarketStore, display: MarketStoreDisplay,
             sources: List<MarketStoreSource> = listOf(source.source)) : this(source, Display.from(display), sources)
