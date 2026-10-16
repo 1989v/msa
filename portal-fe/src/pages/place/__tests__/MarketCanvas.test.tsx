@@ -52,6 +52,20 @@ describe('MarketCanvas navigation and shared SVG coordinates', () => {
     fireEvent.click(screen.getByRole('button', { name: '축소' }));
     expect(container.querySelectorAll('.place-market-pin')).toHaveLength(1);
   });
+  it('zooms the buttons towards the shop-weighted centre of the pins, not the empty view centre', () => {
+    // Both pins sit in the south-west corner of the boundary; the view centre has nothing.
+    const stores = [store({ latitude: 37.4992, longitude: 126.9992 }), store({ id: 2, name: '옆집', latitude: 37.4993, longitude: 126.9993 })];
+    const { box } = mount(stores);
+    const projection = projectMarketPins(groupMarketPins(stores), data)!;
+    const pin = projection.points[0];
+    for (let i = 0; i < 3; i++) fireEvent.click(screen.getByRole('button', { name: '확대' }));
+    const [x, y, w, h] = box();
+    expect(w).toBeCloseTo(75);
+    expect(pin.x).toBeGreaterThanOrEqual(x);
+    expect(pin.x).toBeLessThanOrEqual(x + w);
+    expect(pin.y).toBeGreaterThanOrEqual(y);
+    expect(pin.y).toBeLessThanOrEqual(y + h);
+  });
   it('uses actual rendered pixels for responsive screen-distance merging', () => {
     const stores = [store(), store({ id: 2, name: '다른', longitude: 127.0003 })];
     const first = mount(stores, 600);
@@ -81,12 +95,13 @@ describe('MarketCanvas navigation and shared SVG coordinates', () => {
     fireEvent.pointerDown(svg, { pointerId: 1, button: 0, clientX: 110, clientY: 120 });
     fireEvent.pointerMove(svg, { pointerId: 1, clientX: 170, clientY: 164 });
     fireEvent.pointerUp(svg, { pointerId: 1 });
-    expect(box()).toEqual([120, 88, 300, 220]);
+    // The button zoomed around the only pin (300, 216), so the view sits 2 units above the centre-anchored one.
+    expect(box()).toEqual([120, 86, 300, 220]);
     const worldToScreen = (x: number, y: number) => [(x - box()[0]) * 600 / box()[2], (y - box()[1]) * 440 / box()[3]];
-    expect(worldToScreen(300, 216)).toEqual([360, 256]);
+    expect(worldToScreen(300, 216)).toEqual([360, 260]);
     expect(pin.querySelector('.place-market-pin-hit-area')).toHaveAttribute('r', '22');
     expect(container.querySelector('.place-market-path-label')).toHaveAttribute('transform', 'translate(300 216) scale(0.5)');
-    expect(container.querySelector('.place-market-scale')!.parentElement).toHaveAttribute('transform', 'translate(120 308) scale(0.5)');
+    expect(container.querySelector('.place-market-scale')!.parentElement).toHaveAttribute('transform', 'translate(120 306) scale(0.5)');
   });
   it('pinches with two fingers and double taps exactly twice even when a browser emits dblclick', () => {
     const { svg, box } = mount();

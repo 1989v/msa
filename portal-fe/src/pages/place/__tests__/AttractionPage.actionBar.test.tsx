@@ -382,7 +382,7 @@ describe('market section navigation', () => {
     vi.mocked(fetchMarket).mockResolvedValue({ market: { name: '광명시장', marketType: 'STREET', sourceMarketType: null, storeCountRaw: null, openingCycle: null, facilities: null, attribution: null }, stores: [], zones: [] });
     renderAt('/attractions/100?marketQuery=국밥#market');
     expect(await screen.findByRole('link', { name: '시장 지도' })).toHaveAttribute('href', '#market');
-    expect(await screen.findByRole('searchbox', { name: '가게 이름 찾기' })).toHaveValue('국밥');
+    expect(await screen.findByRole('searchbox', { name: '가게·품목·업종 찾기' })).toHaveValue('국밥');
     expect(fetchMarket).toHaveBeenCalledTimes(1);
     expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
   });

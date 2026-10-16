@@ -105,6 +105,16 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
     const h = 440 / nextZoom;
     return { x: current.x + anchor.x / 600 * (current.w - w), y: current.y + anchor.y / 440 * (current.h - h), w, h };
   }), []);
+  // The buttons have no cursor: zoom around the selected group, else the shop-weighted centre of the
+  // pins. The view centre is often empty ground between clusters and would zoom into nothing.
+  const buttonAnchor = () => {
+    const target = selected ? { x: selected.x, y: selected.y, n: 1 } : points.reduce((sum, point) => ({
+      x: sum.x + point.x * point.stores.length, y: sum.y + point.y * point.stores.length, n: sum.n + point.stores.length,
+    }), { x: 0, y: 0, n: 0 });
+    if (target.n === 0) return { x: 300, y: 220 };
+    return { x: Math.min(600, Math.max(0, (target.x / target.n - view.x) * 600 / view.w)),
+      y: Math.min(440, Math.max(0, (target.y / target.n - view.y) * 440 / view.h)) };
+  };
   // Native non-passive wheel handling prevents the document scrolling during map zoom.
   useEffect(() => {
     const svg = svgRef.current!;
@@ -122,8 +132,8 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
   return <div className="place-market-canvas-layout">
     <div className="place-market-canvas" data-geometry={hasGeometry || undefined} role="group" aria-label={en ? 'Shop location map' : '가게 위치 지도'}>
       <div className="place-market-zoom" aria-label={en ? 'Map controls' : '지도 조작'}>
-        <button type="button" aria-label={en ? 'Zoom in' : '확대'} disabled={zoom >= 8} onClick={() => zoomAt(2)}>+</button>
-        <button type="button" aria-label={en ? 'Zoom out' : '축소'} disabled={zoom <= 1} onClick={() => zoomAt(0.5)}>−</button>
+        <button type="button" aria-label={en ? 'Zoom in' : '확대'} disabled={zoom >= 8} onClick={() => zoomAt(2, buttonAnchor())}>+</button>
+        <button type="button" aria-label={en ? 'Zoom out' : '축소'} disabled={zoom <= 1} onClick={() => zoomAt(0.5, buttonAnchor())}>−</button>
         <button type="button" onClick={() => setView(INITIAL)}>{en ? 'Show whole map' : '전체 보기'}</button>
       </div>
       <MarketLocate key={marketKey} data={data} lang={lang} onPosition={(position) => setMeasurement({ marketKey, position })} />

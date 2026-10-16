@@ -61,7 +61,7 @@ describe('optional attraction market section', () => {
     try {
       vi.mocked(fetchMarket).mockResolvedValue(data);
       mount();
-      expect(await screen.findByRole('searchbox', { name: '가게 이름 찾기' })).toHaveValue('유명순대국');
+      expect(await screen.findByRole('searchbox', { name: '가게·품목·업종 찾기' })).toHaveValue('유명순대국');
       expect(screen.getByRole('region', { name: '시장 구역·가게' })).toHaveAttribute('id', 'market');
       expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
       expect(screen.getByRole('status', { name: '가게 검색 결과' })).toHaveTextContent('찾은 가게: 1');
@@ -162,7 +162,7 @@ describe('optional attraction market section', () => {
   it('finds names, reports missing names, and requests outside shops on toggle', async () => {
     vi.mocked(fetchMarket).mockResolvedValue(data);
     mount();
-    const search = await screen.findByRole('searchbox', { name: '가게 이름 찾기' });
+    const search = await screen.findByRole('searchbox', { name: '가게·품목·업종 찾기' });
     fireEvent.change(search, { target: { value: ' 유 명 순대 ' } });
     expect(screen.getByRole('status', { name: '가게 검색 결과' })).toHaveTextContent('찾은 가게: 1');
     fireEvent.change(search, { target: { value: '홍두깨칼국수' } });
@@ -177,7 +177,7 @@ describe('optional attraction market section', () => {
       shop({ id: 2, name: '다른 가게', jibunAddress: '서울 2', longitude: 127.001 }),
     ] });
     const { container } = mount();
-    const search = await screen.findByRole('searchbox', { name: '가게 이름 찾기' });
+    const search = await screen.findByRole('searchbox', { name: '가게·품목·업종 찾기' });
     expect(screen.getByText('오리로 · 1층')).toBeInTheDocument();
     fireEvent.change(search, { target: { value: '유명' } });
     const pins = container.querySelectorAll('.place-market-pin');
@@ -190,7 +190,7 @@ describe('optional attraction market section', () => {
   it('uses English interface copy and retains original shop names', async () => {
     vi.mocked(fetchMarket).mockResolvedValue(data);
     mount('en');
-    expect(await screen.findByRole('searchbox', { name: 'Find a shop by name' })).toBeInTheDocument();
+    expect(await screen.findByRole('searchbox', { name: 'Find a shop, goods or category' })).toBeInTheDocument();
     expect(fetchMarket).toHaveBeenCalledWith('100', false, 'en');
     expect(screen.getByText('유명순대국')).toBeInTheDocument();
     expect(screen.getAllByText('Onnuri merchant')).toHaveLength(3);
@@ -208,7 +208,7 @@ describe('market section search and road filters', () => {
       shop({ id: 5, name: '분식집', categorySub: '분식' }),
     ] });
     const { container } = mount();
-    const search = await screen.findByRole('searchbox', { name: '가게 이름 찾기' });
+    const search = await screen.findByRole('searchbox', { name: '가게·품목·업종 찾기' });
     expect(search).toHaveAttribute('placeholder', '가게·품목·메뉴·업종');
     fireEvent.change(search, { target: { value: '떡볶이' } });
     const rows = within(screen.getByRole('heading', { name: '가게 목록 (4)' }).parentElement!).getAllByRole('listitem');
