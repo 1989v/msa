@@ -7,7 +7,8 @@ import Footer from '../../components/Footer';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import { marketIndexMeta, placeHreflangAlternates, placePath, placeUrl } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
-import { formatGoodPriceMenu } from './marketView';
+import { formatGoodPriceMenu, marketDisplayName, marketMatchLabel } from './marketView';
+import MarketMenuDetails from './MarketMenuDetails';
 import './PlacePage.css';
 import './MarketSearchPage.css';
 
@@ -58,10 +59,10 @@ export default function MarketSearchPage() {
           <ResultLink to={detailHref(market.attraction, query)}><strong>{market.name}</strong><span>{[market.region, C.types[market.marketType as keyof typeof C.types], `${market.storeCount} ${C.count}`].filter(Boolean).join(' · ')}</span></ResultLink>
         </li>)}</ul></section>}
         {query && shops.length > 0 && <section aria-label={C.stores}><h2>{C.stores} ({data.stores.total})</h2><ul className="market-search-results">{shops.map((shop) => <li key={shop.storeId}>
-          <ResultLink to={detailHref(shop.attraction, query)}><strong>{shop.name}</strong>{shop.goodPrice && <>
+          <ResultLink to={detailHref(shop.attraction, query)}><strong>{marketDisplayName(shop, lang)}</strong>{shop.goodPrice && <>
             <span className="market-search-good-price-badge">{lang === 'en' ? 'Good price' : '착한가격'}</span>
             {shop.goodPrice.menus[0] && <span className="market-search-good-price-menu">{formatGoodPriceMenu(shop.goodPrice.menus[0], lang)}</span>}
-          </>}<span>{[shop.items, shop.category].filter(Boolean).join(' · ')}</span><span>{[shop.marketName, shop.zoneName].filter(Boolean).join(' · ')}</span></ResultLink>
+          </>}<span>{[lang === 'en' ? shop.itemsEn || shop.items : shop.items, lang === 'en' ? shop.categoryEn || shop.category : shop.category].filter(Boolean).join(' · ')}</span><span data-related={shop.matchedBy === 'RELATED_CATEGORY' || undefined}>{marketMatchLabel(shop.matchedBy, shop.relatedCategory, lang)}</span><MarketMenuDetails store={{ ...shop, items: null, itemsEn: null, category: null, categoryEn: null }} lang={lang} /><span>{[shop.marketName, shop.zoneName].filter(Boolean).join(' · ')}</span></ResultLink>
         </li>)}</ul></section>}
         {data.markets.length === 0 && shops.length === 0 && <p role="status">{C.empty}</p>}
         <nav className="market-search-pagination" aria-label={lang === 'en' ? 'Result pages' : '결과 페이지'}>

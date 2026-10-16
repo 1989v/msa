@@ -17,3 +17,5 @@
 
 .market-search-results .market-search-good-price-badge { align-self: flex-start; width: fit-content; padding: .125rem .5rem; border: 1px solid var(--ko-accent-text); color: var(--ko-accent-text); }
 .market-search-good-price-menu { font-variant-numeric: tabular-nums; }
+
+.market-search-results span[data-related] { color: var(--ko-text-secondary); }

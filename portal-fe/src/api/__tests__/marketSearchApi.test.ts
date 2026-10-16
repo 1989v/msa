@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 const { get } = vi.hoisted(() => ({ get: vi.fn() }));
 vi.mock('axios', () => ({ default: { create: () => ({ get }) } }));
-import { fetchMarketContentIds, searchMarkets } from '../marketApi';
+import { fetchMarketContentIds, fetchMarketDishes, searchMarkets } from '../marketApi';
 afterEach(() => get.mockReset());
 describe('public market discovery API', () => {
   it('unwraps responses and sends trimmed bounded query, locale and paging', async () => {
@@ -17,4 +17,12 @@ describe('public market discovery API', () => {
     expect(await fetchMarketContentIds()).toEqual(['100']);
     expect(get).toHaveBeenLastCalledWith('/api/v1/place/markets/content-ids');
   });
+});
+
+
+it('fetches the shared backend food dictionary without embedding a frontend mapping', async () => {
+  const dishes = [{ dish: '떡볶이', categorySub: '김밥/만두/분식', dishEn: 'tteokbokki' }];
+  get.mockResolvedValue({ data: { data: dishes } });
+  expect(await fetchMarketDishes()).toEqual(dishes);
+  expect(get).toHaveBeenCalledWith('/api/v1/place/markets/dishes');
 });

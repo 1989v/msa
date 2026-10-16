@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
-import type { MarketResponse, MarketStore } from '../../api/marketApi';
+import type { MarketDish, MarketResponse, MarketStore } from '../../api/marketApi';
 import type { PlaceLang } from '../../api/placeApi';
 import { clusterByScreenDistance, formatGoodPriceMenu, formatMarketFloor, marketSourceBadges, matchesMarketName, longestMarketSegmentMidpoint, projectMarketPins } from './marketView';
 
+import MarketMenuDetails from './MarketMenuDetails';
+import { marketDisplayName, sectionMatchLabel, matchesMarketStore } from './marketView';
 import MarketLocate from './MarketLocate';
 import { marketPositionInView, type MarketUserPosition } from './marketView';
 
@@ -20,9 +22,10 @@ function orderStores(stores: MarketStore[]) {
     || floorNumber(a.floor) - floorNumber(b.floor) || natural(a.ho, b.ho) || natural(a.name, b.name));
 }
 
-export default function MarketCanvas({ data, lang, projection, points, hasGeometry, query, selectedKey, onSelect, color, pathColor, userPosition, focusStoreId }: {
+export default function MarketCanvas({ data, lang, projection, points, hasGeometry, query, selectedKey, onSelect, color, pathColor, userPosition, focusStoreId, dishes = [] }: {
   data: MarketResponse; lang: PlaceLang; projection: Projection; points: Projection['points']; hasGeometry: boolean;
   query: string; selectedKey: string | null; onSelect: (key: string | null) => void;
+  dishes?: MarketDish[];
   userPosition?: MarketUserPosition | null;
   focusStoreId?: number | null;
   color: (id: number | null) => string; pathColor: (id: number | null | undefined) => string | undefined;
@@ -136,7 +139,6 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
         <button type="button" aria-label={en ? 'Zoom out' : '축소'} disabled={zoom <= 1} onClick={() => zoomAt(0.5, buttonAnchor())}>−</button>
         <button type="button" onClick={() => setView(INITIAL)}>{en ? 'Show whole map' : '전체 보기'}</button>
       </div>
-      <MarketLocate key={marketKey} data={data} lang={lang} onPosition={(position) => setMeasurement({ marketKey, position })} />
       <svg ref={svgRef} viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
         onDoubleClick={(event) => { if (event.detail !== 0 && Date.now() - lastTouch.current > 500) zoomAt(2, location(event.clientX, event.clientY)); }}
         onPointerDown={(event) => {
@@ -186,14 +188,14 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
           </g>;
         })}
         {clusters.map((pin) => {
-          const hit = pin.stores.some((store) => matchesMarketName(store, query));
+          const hit = pin.stores.some((store) => matchesMarketName(store, query, dishes));
           const active = selectedKey === pin.key || pin.parcelKeys.some((key) => selectedKeys.includes(key))
             || pin.parcelKeys.includes(selectedKey ?? '');
           return <g key={pin.key} role="button" tabIndex={0} className="place-market-pin" data-selected={active || undefined}
             data-hit={hit || undefined} data-outside={pin.stores.every((store) => store.membership === 'OUT') || undefined}
             transform={`translate(${pin.x} ${pin.y}) scale(${1 / screenScale})`}
             style={{ '--market-zone-color': pin.pinColor } as CSSProperties}
-            aria-label={`${en ? 'Shops on this parcel' : '같은 필지 가게'}: ${pin.stores.map((store) => store.name).join(', ')}`}
+            aria-label={`${en ? 'Shops on this parcel' : '같은 필지 가게'}: ${pin.stores.map((store) => marketDisplayName(store, lang)).join(', ')}`}
             aria-pressed={active} onClick={() => select(pin.key)} onKeyDown={(event) => {
               if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(pin.key); }
             }}>
@@ -201,7 +203,7 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
             {hit && <circle r="18" className="place-market-hit-ring" />}
             <circle r={hit || active ? 13 : 10} className="place-market-dot" strokeDasharray={pin.stores.some((store) => store.pinKind === 'REFERENCE') ? '3 3' : undefined} />
             <text textAnchor="middle" dy="4">{pin.stores.length}</text>
-            {hit && <text className="place-market-hit-label" textAnchor={pin.x < 150 ? 'start' : pin.x > 450 ? 'end' : 'middle'} y="-25">{pin.stores.filter((store) => matchesMarketName(store, query)).map((store) => store.name).join(', ')}</text>}
+            {hit && <text className="place-market-hit-label" textAnchor={pin.x < 150 ? 'start' : pin.x > 450 ? 'end' : 'middle'} y="-25">{pin.stores.filter((store) => matchesMarketName(store, query, dishes)).map((store) => marketDisplayName(store, lang)).join(', ')}</text>}
           </g>;
         })}
         {labels.map(({ path }) => {
@@ -225,6 +227,7 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
           <text x="28" y="-10">{Number((projection.scaleBarMetres / zoom).toPrecision(3))} m</text>
         </g>
       </svg>
+      <MarketLocate key={marketKey} data={data} lang={lang} onPosition={(position) => setMeasurement({ marketKey, position })} />
     </div>
     {selectedKey != null && <section className="place-market-cluster-sheet" aria-label={en ? 'Selected shops' : '선택한 가게'}>
       <h3>{en ? 'Shops on this parcel' : '같은 필지 가게'} ({ordered.length})</h3>
@@ -232,16 +235,16 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
       <ul className="place-market-shops">{ordered.slice(0, limit).map((store, index) => <li key={store.id ?? index} ref={focusStoreId != null && store.id === focusStoreId ? focusedRowRef : undefined}
         data-selected={focusStoreId != null && store.id === focusStoreId || undefined}
         style={focusStoreId != null && store.id === focusStoreId ? { outline: '2px solid var(--ko-accent-text)', outlineOffset: '-2px' } : undefined}
-        data-found={matchesMarketName(store, query) || undefined}>
-        <strong>{store.name}</strong>
+        data-found={matchesMarketName(store, query, dishes) || undefined}>
+        <strong>{marketDisplayName(store, lang)}</strong>
         <div className="place-market-badges">
           {store.goodPrice && <span>{en ? 'Good price' : '착한가격'}</span>}
-          {matchesMarketName(store, query) && <span>{en ? 'Found shop' : '찾은 가게'}</span>}
+          {matchesMarketName(store, query, dishes) && <span data-related={matchesMarketStore(store, query, dishes)?.matchedBy === 'related' || undefined}>{sectionMatchLabel(matchesMarketStore(store, query, dishes), lang)}</span>}
           {marketSourceBadges(store, lang).map((badge) => <span key={badge}>{badge}</span>)}
           {store.membership === 'OUT' && <span>{en ? 'Outside market' : '시장 밖'}</span>}
         </div>
         {store.goodPrice && store.goodPrice.menus.length > 0 && <p>{store.goodPrice.menus.map((menu) => formatGoodPriceMenu(menu, lang)).join(' · ')}</p>}
-        {store.items && <p>{store.items}</p>}
+        <MarketMenuDetails store={store} lang={lang} />
         <p>{[store.roadAddress || store.jibunAddress, store.buildingName, store.dong, formatMarketFloor(store.floor, lang), store.ho].filter(Boolean).join(' · ')}</p>
         {store.pinKind === 'REFERENCE' && <p>{[store.relativePosition, store.positionNote].filter(Boolean).join(' · ')}</p>}
       </li>)}</ul>

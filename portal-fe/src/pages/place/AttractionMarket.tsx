@@ -1,10 +1,13 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import { useAttractionMarket } from './marketQueries';
+import { useAttractionMarket, useMarketDishes } from './marketQueries';
 import type { MarketResponse, MarketZone } from '../../api/marketApi';
 import type { PlaceLang } from '../../api/placeApi';
 import { formatGoodPriceMenu, formatGoodPriceSummary, formatMarketFloor, groupMarketPins, hasMarketCoordinate, marketSourceBadges, matchesMarketName, matchesMarketStore, normalizeMarketName, projectMarketPins, visibleMarketStores, zoneIds } from './marketView';
 import './AttractionMarket.css';
+import MarketMenuDetails from './MarketMenuDetails';
+import { marketDisplayName, sectionMatchLabel } from './marketView';
+import { placePath } from '../../seo/copy.mjs';
 import MarketCanvas from './MarketCanvas';
 import MarketStewardApplication from './MarketStewardApplication';
 
@@ -28,6 +31,7 @@ function MarketSection({ data, lang, initialQuery, includeOutside, onOutside }: 
   data: MarketResponse; lang: PlaceLang; initialQuery?: string; includeOutside: boolean; onOutside: (value: boolean) => void;
 }) {
   const C = COPY[lang];
+  const { data: dishes = [] } = useMarketDishes();
   const searchId = useId();
   const [zoneId, setZoneId] = useState<number | null>(null);
   const [query, setQuery] = useState(() => (initialQuery ?? new URLSearchParams(window.location.search).get('marketQuery') ?? '').trim().slice(0, 50));
@@ -47,25 +51,22 @@ function MarketSection({ data, lang, initialQuery, includeOutside, onOutside }: 
   const paths = data.paths ?? [];
   const hasGeometry = Boolean(data.boundary?.polygon.length || paths.some((path) => path.geometry.length));
   const searched = normalizeMarketName(query).length > 0;
-  const found = stores.filter((store) => matchesMarketName(store, query));
+  const found = stores.filter((store) => matchesMarketName(store, query, dishes));
   const parcel = pins.find((pin) => pin.key === parcelKey);
   const listed = parcel ? parcel.stores : stores;
   const ordered = [...(searched ? found : listed)].sort((a, b) =>
-    (matchesMarketStore(a, query)?.rank ?? 4) - (matchesMarketStore(b, query)?.rank ?? 4)
+    (matchesMarketStore(a, query, dishes)?.rank ?? 4) - (matchesMarketStore(b, query, dishes)?.rank ?? 4)
     || a.name.localeCompare(b.name, 'ko') || (a.id ?? 0) - (b.id ?? 0));
   const allVisibleStores = visibleMarketStores(data.stores, includeOutside);
   const countZone = (zone: MarketZone) => { const ids = zoneIds(zone); return allVisibleStores.filter((store) => store.zoneId != null && ids.includes(store.zoneId)).length; };
   const marketName = normalizeMarketName(data.market.name);
   const priority = (zone: MarketZone) => zone.kind === 'ROAD' && marketName.length > 0 && normalizeMarketName(zone.name).includes(marketName);
   const sortedZones = [...zones].sort((a, b) => Number(priority(b)) - Number(priority(a)) || countZone(b) - countZone(a) || a.name.localeCompare(b.name, 'ko', { numeric: true }));
-  const collapsedZones = sortedZones.filter((zone, index) => index < 8 || (zone.id != null && zone.id === zoneId));
+  const defaultZones = sortedZones.filter((zone) => zone.kind !== 'ROAD' || countZone(zone) > 0).slice(0, 8);
+  const collapsedZones = sortedZones.filter((zone) => defaultZones.includes(zone) || (zone.id != null && zone.id === zoneId));
   const shownZones = expandedZones ? sortedZones : collapsedZones;
   const hiddenZoneCount = sortedZones.length - collapsedZones.length;
-  const matchedLabel = (store: (typeof stores)[number]) => {
-    const field = matchesMarketStore(store, query)?.matchedBy;
-    return field && (lang === 'en' ? { name: 'Name match', items: 'Item match', menus: 'Menu match', categories: 'Category match' }
-      : { name: '이름에 맞음', items: '품목에 맞음', menus: '메뉴에 맞음', categories: '업종에 맞음' })[field];
-  };
+  const matchedLabel = (store: (typeof stores)[number]) => sectionMatchLabel(matchesMarketStore(store, query, dishes), lang);
   const color = (id: number | null) => {
     const index = id == null ? -1 : zones.findIndex((zone) => zone.id === id);
     return index < 0 ? 'var(--ko-text-muted)' : ZONE_COLORS[index % ZONE_COLORS.length];
@@ -75,8 +76,8 @@ function MarketSection({ data, lang, initialQuery, includeOutside, onOutside }: 
     return index < 0 ? undefined : ZONE_COLORS[index % ZONE_COLORS.length];
   };
   const mapPoints = [...(projection?.points ?? [])].sort((a, b) =>
-    Number(a.stores.some((store) => matchesMarketName(store, query)))
-    - Number(b.stores.some((store) => matchesMarketName(store, query))));
+    Number(a.stores.some((store) => matchesMarketName(store, query, dishes)))
+    - Number(b.stores.some((store) => matchesMarketName(store, query, dishes))));
   const clearSelection = () => { setParcelKey(null); setFocusStoreId(null); };
   const pickZone = (id: number | null) => { setZoneId(id); clearSelection(); };
   const attribution = data.market.attribution;
@@ -105,7 +106,7 @@ function MarketSection({ data, lang, initialQuery, includeOutside, onOutside }: 
       <nav className="place-market-zones" aria-label={C.zones}>
         <button type="button" aria-pressed={zoneId == null} onClick={() => pickZone(null)}>{C.all}</button>
         {shownZones.map((zone, index) => <ZoneFilter key={zone.id ?? `${zone.name}-${index}`} zone={zone} count={countZone(zone)} selected={zoneId} onSelect={pickZone} color={color} lang={lang} />)}
-        {sortedZones.length > 8 && <button type="button" aria-expanded={expandedZones} onClick={() => setExpandedZones((value) => !value)}>
+        {(hiddenZoneCount > 0 || expandedZones) && <button type="button" aria-expanded={expandedZones} onClick={() => setExpandedZones((value) => !value)}>
           {expandedZones ? (lang === 'en' ? 'Show fewer roads' : '길 접기') : (lang === 'en' ? `Other roads ${hiddenZoneCount}` : `다른 길 ${hiddenZoneCount}개`)}
         </button>}
       </nav>
@@ -113,7 +114,7 @@ function MarketSection({ data, lang, initialQuery, includeOutside, onOutside }: 
         <div className="place-market-map">
           {data.nearbyRadiusMetres != null && <p className="place-market-note">{lang === 'en' ? `Showing shops within ${data.nearbyRadiusMetres} m of the market` : `시장 주변 ${data.nearbyRadiusMetres} m 안 가게를 보입니다`}</p>}
           {projection ? <MarketCanvas data={data} lang={lang} projection={projection} points={mapPoints}
-            hasGeometry={hasGeometry} query={query} selectedKey={parcelKey} focusStoreId={focusStoreId} onSelect={setParcelKey}
+            hasGeometry={hasGeometry} query={query} dishes={dishes} selectedKey={parcelKey} focusStoreId={focusStoreId} onSelect={setParcelKey}
             color={color} pathColor={pathColor} /> : <p>{C.noCoordinates}</p>}
           {(data.attribution ?? []).map((credit, index) => <p key={index} className="place-market-source place-market-geometry-attribution">{credit}</p>)}
           <p className="place-market-note">{C.mapNote} {C.reference}</p>
@@ -123,30 +124,37 @@ function MarketSection({ data, lang, initialQuery, includeOutside, onOutside }: 
           {searched && <p role="status" aria-label={lang === 'en' ? 'Shop search results' : '가게 검색 결과'}>{found.length ? `${C.found}: ${found.length}` : `${C.none}: ${query.trim()}`}</p>}
           {ordered.length === 0 && <p>{C.empty}</p>}
           <ul className="place-market-shops">
-            {ordered.map((store, index) => <li key={store.id ?? `${store.name}-${index}`} data-found={matchesMarketName(store, query) || undefined} data-outside={store.membership === 'OUT' || undefined}>
+            {ordered.map((store, index) => <li key={store.id ?? `${store.name}-${index}`} data-found={matchesMarketName(store, query, dishes) || undefined} data-outside={store.membership === 'OUT' || undefined}>
               {searched && hasMarketCoordinate(store) && store.id != null
                 ? <button type="button" aria-label={`${lang === 'en' ? 'Show on map' : '지도에서 보기'}: ${store.name}`} onClick={() => {
                   // A repeated choice is a fresh focus request, even after panning or closing the sheet.
                   flushSync(() => setFocusStoreId(null));
                   setFocusStoreId(store.id); setParcelKey(null);
-                }}><strong>{store.name}</strong></button>
-                : <strong>{store.name}</strong>}
+                }}><strong>{marketDisplayName(store, lang)}</strong></button>
+                : <strong>{marketDisplayName(store, lang)}</strong>}
               <div className="place-market-badges">
                 {store.goodPrice && <span className="place-market-good-price-badge">{lang === 'en' ? 'Good price' : '착한가격'}</span>}
-                {matchedLabel(store) && <span>{matchedLabel(store)}</span>}
+                {matchedLabel(store) && <span data-related={matchesMarketStore(store, query, dishes)?.matchedBy === 'related' || undefined}>{matchedLabel(store)}</span>}
                 {marketSourceBadges(store, lang).map((badge) => <span key={badge}>{badge}</span>)}
                 {store.nearby ? <span>{lang === 'en' ? 'Nearby · Membership unconfirmed' : '주변 · 소속 미확인'}</span> : store.membership === 'OUT' && <span>{C.out}</span>}
                 {store.membership === 'UNKNOWN' && <span>{C.unknown}</span>}
                 {!hasMarketCoordinate(store) && <span>{C.noPin}</span>}
               </div>
               {store.goodPrice && store.goodPrice.menus.length > 0 && <p className="place-market-good-price-menus">{(parcel ? store.goodPrice.menus : store.goodPrice.menus.slice(0, 2)).map((menu) => formatGoodPriceMenu(menu, lang)).join(' · ')}</p>}
-              {store.items && <p>{store.items}</p>}
+              <MarketMenuDetails store={store} lang={lang} />
               <p>{[store.roadAddress || store.jibunAddress, store.buildingName, store.dong, formatMarketFloor(store.floor, lang), store.ho].filter(Boolean).join(' · ')}</p>
               {store.pinKind === 'REFERENCE' && <p>{[store.relativePosition, store.positionNote].filter(Boolean).join(' · ')}</p>}
             </li>)}
           </ul>
         </div>}
       </div>
+      {(data.restaurants ?? []).length > 0 && <section aria-label={lang === 'en' ? 'Restaurants introduced by Korea Tourism Organization' : '관광공사 소개 음식점'}>
+        <h3>{lang === 'en' ? 'Restaurants introduced by Korea Tourism Organization' : '관광공사 소개 음식점'}</h3>
+        <ul className="place-market-shops">{data.restaurants!.map((restaurant) => <li key={`${restaurant.attraction.lang}-${restaurant.attraction.id}`}>
+          <a href={placePath(restaurant.attraction.lang, `/attractions/${restaurant.attraction.id}`)}>{marketDisplayName({ ...restaurant, name: restaurant.title }, lang)}</a>
+          <MarketMenuDetails store={{ items: null, tourMenu: restaurant }} lang={lang} />
+        </li>)}</ul>
+      </section>}
       {data.market.id != null && <MarketStewardApplication marketId={data.market.id} lang={lang} />}
     </section>
   );

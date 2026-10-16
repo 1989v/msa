@@ -15,7 +15,7 @@ vi.mock('../../../api/placeApi', async (importOriginal) => ({
   fetchAdministrativeRegions: vi.fn(),
   suggestPlaces: vi.fn(),
 }));
-vi.mock('../../../api/marketApi', () => ({ fetchMarket: vi.fn(), fetchMarketContentIds: vi.fn() }));
+vi.mock('../../../api/marketApi', () => ({ fetchMarket: vi.fn(), fetchMarketDishes: vi.fn().mockResolvedValue([]), fetchMarketContentIds: vi.fn() }));
 vi.mock('../../../components/ads/AdSlot', () => ({ default: () => null }));
 // wishlistApi 만 대역이다 — FavoriteButton·tracker 는 진짜라 두 별의 동기와 전송 대기열을 대상의 값으로 본다
 vi.mock('../../../api/wishlistApi', () => ({

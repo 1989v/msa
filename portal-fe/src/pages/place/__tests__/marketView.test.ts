@@ -252,3 +252,23 @@ describe('market store search fields and rank', () => {
     expect(rows[1].membership).toBe('OUT');
   });
 });
+
+describe('WU21 dictionary contract', () => {
+  const dishes = [{ dish: '떡볶이', dishEn: 'tteokbokki', categorySub: '김밥/만두/분식' }];
+  const related = store({ name: '가게', items: null, categorySub: '김밥/만두/분식' });
+  it('expands only exact normalized dishes to exact subcategories at rank four', () => {
+    expect(matchesMarketStore(related, '떡 볶 이', dishes)).toEqual({ matchedBy: 'related', rank: 4, relatedCategory: '김밥/만두/분식' });
+    expect(matchesMarketStore(related, 'ＴＴＥＯＫＢＯＫＫＩ', dishes)?.rank).toBe(4);
+    expect(matchesMarketStore(related, 'tteok', dishes)).toBeNull();
+    expect(matchesMarketStore(store({ ...related, categorySub: '분식' }), 'tteokbokki', dishes)).toBeNull();
+    expect(matchesMarketStore(related, 'tteokbokki')).toBeNull();
+    expect(matchesMarketStore(store({ ...related, items: '떡볶이' }), '떡볶이', dishes)?.rank).toBe(1);
+  });
+  it('searches supplied English names, categories, items and TourAPI menus with legacy fallback', () => {
+    expect(matchesMarketStore(store({ nameEn: 'Sunhuine' }), 'sun hui ne')?.rank).toBe(0);
+    expect(matchesMarketStore(store({ itemsEn: 'Seafood' }), 'seafood')?.rank).toBe(1);
+    expect(matchesMarketStore(store({ categoryEn: 'Snacks' }), 'snack')?.rank).toBe(3);
+    expect(matchesMarketStore(store({ tourMenu: { firstMenu: '빈대떡', treatMenu: '육회', firstMenuEn: 'Mung bean pancake', treatMenuEn: 'Beef tartare', attraction: { id: 8, lang: 'en' } } }), 'beef tartare')?.rank).toBe(2);
+    expect(matchesMarketStore(store(), '순대')?.rank).toBe(0);
+  });
+});

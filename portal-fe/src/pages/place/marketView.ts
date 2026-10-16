@@ -1,23 +1,27 @@
-import type { GoodPriceMenu, GoodPriceSummary, MarketCoordinate, MarketResponse, MarketStore, MarketZone } from '../../api/marketApi';
+import type { MarketDish, MarketEnglishFields, MarketMatchedBy, GoodPriceMenu, GoodPriceSummary, MarketCoordinate, MarketResponse, MarketStore, MarketZone } from '../../api/marketApi';
 import type { PlaceLang } from '../../api/placeApi';
 
-export const normalizeMarketName = (value: string) => value.normalize('NFKC').replace(/\s+/gu, '').toLowerCase();
-export type MarketStoreMatch = { matchedBy: 'name' | 'items' | 'menus' | 'categories'; rank: number };
-export function matchesMarketStore(store: MarketStore, query: string): MarketStoreMatch | null {
+export const normalizeMarketName = (value: string) => value.normalize('NFKC').replace(/[\s\p{Z}]+/gu, '').toLowerCase();
+export type MarketStoreMatch = { matchedBy: 'name' | 'items' | 'menus' | 'categories' | 'related'; rank: number; relatedCategory?: string };
+export function matchesMarketStore(store: MarketStore, query: string, dishes: MarketDish[] = []): MarketStoreMatch | null {
   const needle = normalizeMarketName(query);
   if (!needle) return null;
   const fields: Array<[MarketStoreMatch['matchedBy'], Array<string | null>]> = [
-    ['name', [store.name]], ['items', [store.items]],
-    ['menus', store.goodPrice?.menus.map((menu) => menu.name) ?? []],
-    ['categories', [store.categoryMajor, store.categoryMid, store.categorySub]],
+    ['name', [store.name, store.nameEn ?? null]], ['items', [store.items, store.itemsEn ?? null]],
+    ['menus', [...(store.goodPrice?.menus.flatMap((menu) => [menu.name, menu.nameEn ?? null]) ?? []), store.tourMenu?.firstMenu ?? null, store.tourMenu?.treatMenu ?? null, store.tourMenu?.firstMenuEn ?? null, store.tourMenu?.treatMenuEn ?? null]],
+    ['categories', [store.categoryMajor, store.categoryMid, store.categorySub, store.categoryEn ?? null]],
   ];
   for (const [rank, [matchedBy, values]] of fields.entries()) {
     if (values.some((value) => value != null && normalizeMarketName(value).includes(needle))) return { matchedBy, rank };
   }
+  if (store.categorySub && dishes.some((dish) => dish.categorySub === store.categorySub
+    && [dish.dish, dish.dishEn].some((value) => normalizeMarketName(value) === needle))) {
+    return { matchedBy: 'related', rank: 4, relatedCategory: store.categorySub };
+  }
   return null;
 }
 // Keep map highlighting and the result list on the same search contract.
-export const matchesMarketName = (store: MarketStore, query: string) => matchesMarketStore(store, query) != null;
+export const matchesMarketName = (store: MarketStore, query: string, dishes: MarketDish[] = []) => matchesMarketStore(store, query, dishes) != null;
 
 export function zoneIds(zone: MarketZone): number[] {
   return [...(zone.id == null ? [] : [zone.id]), ...zone.children.flatMap(zoneIds)];
@@ -149,7 +153,8 @@ export function formatMarketPrice(price: number, lang: PlaceLang): string {
 }
 
 export function formatGoodPriceMenu(menu: GoodPriceMenu, lang: PlaceLang): string {
-  return menu.price == null ? menu.name : `${menu.name} ${formatMarketPrice(menu.price, lang)}`;
+  const name = lang === 'en' ? menu.nameEn || menu.name : menu.name;
+  return menu.price == null ? name : `${name} ${formatMarketPrice(menu.price, lang)}`;
 }
 
 export function formatGoodPriceSummary(summary: Pick<GoodPriceSummary, 'storeCount' | 'minPrice' | 'maxPrice'>, lang: PlaceLang): string {
@@ -227,4 +232,21 @@ export function marketPositionInView(point: { x: number; y: number }, view: { x:
     (Math.max(0, view.h / 2 - inset)) / Math.abs(dy || Number.MIN_VALUE));
   return { visible, x: visible ? point.x : view.x + view.w / 2 + dx * ratio,
     y: visible ? point.y : view.y + view.h / 2 + dy * ratio, angle: Math.atan2(dx, -dy) * 180 / Math.PI };
+}
+
+export function marketDisplayName(store: MarketEnglishFields & { name: string }, lang: PlaceLang) {
+  return lang === 'en' && store.nameEn ? `${store.nameEn} · ${store.name}` : store.name;
+}
+
+export function marketMatchLabel(field: MarketMatchedBy | undefined, category: string | null | undefined, lang: PlaceLang) {
+  if (!field) return null;
+  if (field === 'RELATED_CATEGORY') return `${lang === 'en' ? 'Related category' : '관련 업종'}${category ? ` · ${category}` : ''}`;
+  return (lang === 'en' ? { NAME: 'Name match', ITEMS: 'Item match', MENU: 'Menu match', CATEGORY: 'Category match' }
+    : { NAME: '이름에 맞음', ITEMS: '품목에 맞음', MENU: '메뉴에 맞음', CATEGORY: '업종에 맞음' })[field];
+}
+
+export function sectionMatchLabel(match: MarketStoreMatch | null, lang: PlaceLang) {
+  if (!match) return null;
+  const fields = { name: 'NAME', items: 'ITEMS', menus: 'MENU', categories: 'CATEGORY', related: 'RELATED_CATEGORY' } as const;
+  return marketMatchLabel(fields[match.matchedBy], match.relatedCategory, lang);
 }

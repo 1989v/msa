@@ -1,11 +1,12 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fetchMarket, type MarketResponse, type MarketStore } from '../../../api/marketApi';
+import { fetchMarket, fetchMarketDishes, type MarketResponse, type MarketStore } from '../../../api/marketApi';
 import AttractionMarket from '../AttractionMarket';
 import gwangmyeong from './fixtures/gwangmyeong-public-market.json';
 
-vi.mock('../../../api/marketApi', () => ({ fetchMarket: vi.fn() }));
+vi.mock('../../../api/marketApi', () => ({ fetchMarket: vi.fn(), fetchMarketDishes: vi.fn() }));
+beforeEach(() => { vi.mocked(fetchMarketDishes).mockResolvedValue([]); });
 afterEach(() => { cleanup(); vi.resetAllMocks(); });
 
 const shop = (overrides: Partial<MarketStore> = {}): MarketStore => ({
@@ -273,14 +274,87 @@ describe('market section search and road filters', () => {
     mount();
     const nav = await screen.findByRole('navigation', { name: '골목·건물·층' });
     const labels = () => within(nav).getAllByRole('button').map((button) => button.textContent);
-    expect(labels().slice(0, 5)).toEqual(['전체 구역', '시장길 (0)', '골목안층 (2)', '길1 (2)', '길2 (1)']);
-    expect(within(nav).getAllByRole('button')).toHaveLength(10);
-    fireEvent.click(within(nav).getByRole('button', { name: '다른 길 4개' }));
+    expect(labels().slice(0, 4)).toEqual(['전체 구역', '골목안층 (2)', '길1 (2)', '길2 (1)']);
+    expect(within(nav).getAllByRole('button')).toHaveLength(5);
+    fireEvent.click(within(nav).getByRole('button', { name: '다른 길 9개' }));
     expect(within(nav).getAllByRole('button')).toHaveLength(14);
     fireEvent.click(within(nav).getByRole('button', { name: '길9 (0)' }));
     fireEvent.click(within(nav).getByRole('button', { name: '길 접기' }));
     expect(within(nav).getByRole('button', { name: '길9 (0)' })).toHaveAttribute('aria-pressed', 'true');
-    expect(within(nav).getByRole('button', { name: '다른 길 3개' })).toHaveAttribute('aria-expanded', 'false');
+    expect(within(nav).getByRole('button', { name: '다른 길 8개' })).toHaveAttribute('aria-expanded', 'false');
     expect(within(nav).queryByRole('button', { name: '길10 (0)' })).not.toBeInTheDocument();
+  });
+});
+
+describe('WU21 shared food search and menu evidence', () => {
+  it('ranks related categories last and carries evidence into the sheet', async () => {
+    vi.mocked(fetchMarketDishes).mockResolvedValue([{ dish: '떡볶이', dishEn: 'tteokbokki', categorySub: '김밥/만두/분식' }]);
+    vi.mocked(fetchMarket).mockResolvedValue({ ...data, stores: [
+      shop({ id: 2, name: '관련 가게', items: null, categorySub: '김밥/만두/분식', jibunAddress: '서울 2' }),
+      shop({ id: 1, name: '떡볶이집', items: null, jibunAddress: '서울 1' }),
+      shop({ id: 3, name: '다른 분식', items: null, categorySub: '분식' }),
+    ] });
+    const { container } = mount();
+    fireEvent.change(await screen.findByRole('searchbox'), { target: { value: '떡 볶 이' } });
+    await screen.findByRole('heading', { name: '가게 목록 (2)' });
+    const rows = container.querySelectorAll('.place-market-panel li');
+    expect([...rows].map((row) => row.querySelector('strong')?.textContent)).toEqual(['떡볶이집', '관련 가게']);
+    expect(within(rows[1] as HTMLElement).getByText('관련 업종 · 김밥/만두/분식')).toHaveAttribute('data-related', 'true');
+    fireEvent.click(screen.getByRole('button', { name: '지도에서 보기: 관련 가게' }));
+    expect(within(screen.getByRole('region', { name: '선택한 가게' })).getByText('관련 업종 · 김밥/만두/분식')).toHaveAttribute('data-related', 'true');
+    expect(container.querySelector('.place-market-locate')?.previousElementSibling?.tagName.toLowerCase()).toBe('svg');
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'tteok' } });
+    expect(screen.getByRole('heading', { name: '가게 목록 (0)' })).toBeInTheDocument();
+  });
+
+  it('shows English fields and sourced menus in list and sheet, plus tourism restaurant links', async () => {
+    vi.mocked(fetchMarket).mockResolvedValue({ ...data,
+      stores: [shop({ nameEn: 'Sunhuine', itemsEn: 'Snacks', categoryEn: 'Korean food', categorySub: '한식',
+        goodPrice: { category: '한식', matchedBy: 'NAME', menus: [{ name: '빈대떡', nameEn: 'Mung bean pancake', price: 5000 }] },
+        tourMenu: { firstMenu: '빈대떡', treatMenu: '육회', firstMenuEn: 'Mung bean pancake', treatMenuEn: 'Beef tartare', attraction: { id: 8, lang: 'en' } } })],
+      restaurants: [{ title: '별도 음식점', nameEn: 'Restaurant', firstMenu: '김밥', treatMenu: null, firstMenuEn: 'Gimbap', attraction: { id: 9, lang: 'en' }, latitude: 37.5, longitude: 127 }],
+    });
+    mount('en');
+    await screen.findByText('Sunhuine · 유명순대국');
+    expect(screen.getByText('Mung bean pancake ₩5,000')).toBeInTheDocument();
+    expect(screen.getByText('Signature menu: Mung bean pancake')).toBeInTheDocument();
+    expect(screen.getByText('Other menus: Beef tartare')).toBeInTheDocument();
+    expect(screen.getByText('Snacks')).toBeInTheDocument();
+    expect(screen.getByText('Korean food')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Restaurant · 별도 음식점' })).toHaveAttribute('href', '/en/attractions/9');
+    fireEvent.click(screen.getByRole('button', { name: /Shops on this parcel:/ }));
+    const sheet = within(screen.getByRole('region', { name: 'Selected shops' }));
+    expect(sheet.getByText('Signature menu: Mung bean pancake')).toBeInTheDocument();
+    expect(sheet.getByText('Other menus: Beef tartare')).toBeInTheDocument();
+    expect(sheet.getByText(/Source: Korea Tourism Organization/)).toBeInTheDocument();
+    expect(sheet.getByText(/Source: Ministry/)).toBeInTheDocument();
+  });
+
+  it('keeps literal matches on dictionary failure and collapses zero-store roads with fewer than eight populated roads', async () => {
+    vi.mocked(fetchMarketDishes).mockRejectedValue(new Error('offline'));
+    vi.mocked(fetchMarket).mockResolvedValue({ ...data, zones: [1, 2].map((id) => ({ id, parentId: null, kind: 'ROAD', name: `길${id}`, dong: null, floor: null, children: [] })), stores: [shop({ zoneId: 1 })] });
+    mount();
+    fireEvent.change(await screen.findByRole('searchbox'), { target: { value: '순대' } });
+    expect(screen.getByRole('heading', { name: '가게 목록 (1)' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '길2 (0)' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '다른 길 1개' }));
+    fireEvent.click(screen.getByRole('button', { name: '길2 (0)' }));
+    fireEvent.click(screen.getByRole('button', { name: '길 접기' }));
+    expect(screen.getByRole('button', { name: '길2 (0)' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('shares the day-long dictionary cache across market mounts', async () => {
+    vi.mocked(fetchMarket).mockResolvedValue(data);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const view = render(<QueryClientProvider client={client}><AttractionMarket contentId="100" lang="ko" /></QueryClientProvider>);
+    await screen.findByRole('searchbox');
+    await waitFor(() => expect(fetchMarketDishes).toHaveBeenCalledTimes(1));
+    view.rerender(<QueryClientProvider client={client}><AttractionMarket contentId="101" lang="en" /></QueryClientProvider>);
+    await waitFor(() => expect(fetchMarket).toHaveBeenCalledWith('101', false, 'en'));
+    expect(fetchMarketDishes).toHaveBeenCalledTimes(1);
+    const cached = client.getQueryCache().find({ queryKey: ['market-dishes'] })!;
+    expect(cached.isStaleByTime(86_400_000)).toBe(false);
+    expect(cached.options.gcTime).toBe(86_400_000);
+    client.clear();
   });
 });
