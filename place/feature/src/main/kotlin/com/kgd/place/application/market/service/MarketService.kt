@@ -24,9 +24,15 @@ class MarketService(private val query: MarketQueryPort, private val save: Market
         val stores = query.findStores(marketId)
         val overrides = query.findOverrides(stores.mapNotNull { it.id }).groupBy { it.storeId }
         val paths = geometry?.findPaths(marketId).orEmpty()
-        return QueryMarketUseCase.MarketResult(market, query.findZones(marketId), MarketPublicProjection.stores(stores, overrides, paths.mapNotNull { it.id }.toSet())
-            .filter { includeOutside || it.display.membership.visibleByDefault }, geometry?.findBoundary(marketId),
-            paths, geometryEdits?.findEntrances(marketId).orEmpty(), geometryEdits?.findRawFetchedAt(marketId))
+        val boundary = geometry?.findBoundary(marketId)
+        val projected = MarketPublicProjection.stores(stores, overrides, paths.mapNotNull { it.id }.toSet())
+        val nearby = MarketPublicProjection.nearby(projected, market, boundary)
+        return QueryMarketUseCase.MarketResult(
+            market, query.findZones(marketId), nearby.stores.filter {
+                includeOutside || it.display.membership.visibleByDefault || it.display.nearby
+            }, boundary, paths, geometryEdits?.findEntrances(marketId).orEmpty(),
+            geometryEdits?.findRawFetchedAt(marketId), nearby.radiusMetres.takeUnless { includeOutside },
+        )
     }
 
     @Transactional(transactionManager = "placeTransactionManager")

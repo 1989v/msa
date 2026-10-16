@@ -1,6 +1,11 @@
 package com.kgd.place.application.market.service
 
 import com.kgd.place.application.market.usecase.QueryMarketUseCase
+import com.kgd.place.domain.market.model.Market
+import com.kgd.place.domain.market.model.MarketBoundary
+import com.kgd.place.domain.market.model.MarketCoordinate
+import kotlin.math.cos
+import kotlin.math.hypot
 import com.kgd.place.domain.market.model.MarketMembershipStatus
 import com.kgd.place.domain.market.model.MarketStore
 import com.kgd.place.domain.market.model.MarketStoreDisplay
@@ -11,6 +16,36 @@ import com.kgd.place.domain.market.model.MarketStoreIdentity
 
 /** Response-only reconciliation. No persistence row or upstream payload is changed. */
 internal object MarketPublicProjection {
+    data class Nearby(val stores: List<QueryMarketUseCase.Store>, val radiusMetres: Int? = null)
+
+    fun nearby(stores: List<QueryMarketUseCase.Store>, market: Market, boundary: MarketBoundary?): Nearby {
+        if (stores.any { it.display.membership.status == MarketMembershipStatus.IN }) return Nearby(stores)
+        val center = center(market, boundary) ?: return Nearby(stores)
+        val distances = stores.map { row ->
+            row.display.coordinate?.takeIf { row.display.membership.status == MarketMembershipStatus.OUT }
+                ?.let { distanceMetres(center, it) }
+        }
+        val radius = (100..300 step 50).firstOrNull { r -> distances.count { it != null && it <= r } >= 30 } ?: 300
+        return Nearby(stores.mapIndexed { index, row ->
+            row.copy(display = row.display.copy(nearby = distances[index]?.let { it <= radius } == true))
+        }, radius)
+    }
+
+    fun distanceMetres(a: MarketCoordinate, b: MarketCoordinate): Double {
+        val meanLatitude = Math.toRadians((a.latitude + b.latitude) / 2)
+        return hypot((b.latitude - a.latitude) * 111320.0,
+            (b.longitude - a.longitude) * cos(meanLatitude) * 111320.0)
+    }
+
+    private fun center(market: Market, boundary: MarketBoundary?): MarketCoordinate? {
+        val points = boundary?.polygon?.distinct()
+        if (!points.isNullOrEmpty()) return MarketCoordinate(points.map { it.latitude }.average(),
+            points.map { it.longitude }.average())
+        val latitude = market.latitude ?: return null
+        val longitude = market.longitude ?: return null
+        return MarketCoordinate(latitude, longitude)
+    }
+
     /**
      * ONNURI store id → SANGGA store id for one shop listed by both sources. Ingest stores the result as
      * `paired_store_id` so search pairs rows by primary key with the same rule as this projection.

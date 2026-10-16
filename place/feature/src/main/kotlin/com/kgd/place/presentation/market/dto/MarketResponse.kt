@@ -16,7 +16,8 @@ import com.kgd.place.domain.market.model.MarketZoneSource
 /** Public fields only: upstream payloads and editorial member IDs never leave this boundary. */
 data class MarketResponse(val market: Info, val zones: List<Zone>, val stores: List<Store>,
     val boundary: MarketGeometryUseCase.Boundary? = null, val paths: List<MarketGeometryUseCase.Path> = emptyList(),
-    val entrances: List<MarketGeometryUseCase.Entrance> = emptyList(), val attribution: List<String> = emptyList()) {
+    val entrances: List<MarketGeometryUseCase.Entrance> = emptyList(), val attribution: List<String> = emptyList(),
+    val nearbyRadiusMetres: Int? = null) {
     data class Attribution(val name: String, val url: String, val license: String)
 
     data class Info(
@@ -47,6 +48,7 @@ data class MarketResponse(val market: Info, val zones: List<Zone>, val stores: L
         val actorKind: MarketActorKind?, val referenceStoreId: Long?, val relativePosition: String?, val positionNote: String?,
         val pathId: Long? = null,
         val goodPrice: GoodPrice? = null,
+        val nearby: Boolean = false,
     )
 
     companion object {
@@ -55,7 +57,7 @@ data class MarketResponse(val market: Info, val zones: List<Zone>, val stores: L
                 val source = row.source
                 val display = row.display
                 Store(
-                    id = source.id, name = display.name, items = display.items, zoneId = display.zoneId,
+                    nearby = display.nearby, id = source.id, name = display.name, items = display.items, zoneId = display.zoneId,
                     membership = display.membership.status, latitude = display.coordinate?.latitude,
                     longitude = display.coordinate?.longitude, roadAddress = source.roadAddress,
                     jibunAddress = source.jibunAddress, buildingManagementNo = source.buildingManagementNo,
@@ -70,6 +72,7 @@ data class MarketResponse(val market: Info, val zones: List<Zone>, val stores: L
                     },
                 )
             }, boundary = result.boundary?.view(), paths = result.paths.map { it.view() }, entrances = result.entrances.map { it.view().copy(pathId = it.viaPathId?.takeIf { id -> result.paths.any { path -> path.id == id } }) },
+            nearbyRadiusMetres = result.nearbyRadiusMetres,
             attribution = if (result.boundary?.source == com.kgd.place.domain.market.model.MarketGeometrySource.OSM || result.paths.any { it.source == com.kgd.place.domain.market.model.MarketGeometrySource.OSM }) listOf("© OpenStreetMap contributors") else emptyList(),
         )
 
