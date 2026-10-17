@@ -42,3 +42,16 @@ main 에 올라간 순서와 운영에서 확인한 것. 시각은 KST.
 
 - 버킷 `msa-market-basemap`(공개 읽기) · 쓰기 PAR 만료 2027-10-17 · 시크릿 `MARKET_BASEMAP_PAR`.
 - Codex 샌드박스는 크롬이 SIGABRT 라 렌더 실측은 세션 로컬에서 했다.
+
+## 10-17 낮 — 바탕 프록시·정합 수정·네이버 기본 배선·전체 렌더
+| 커밋 | 내용 | 확인 |
+|---|---|---|
+| `1521d6449` | WU-25: nginx `/basemaps/` → OCI 버킷 프록시(`proxy_cache` 200m), portal-fe 공인 443 이그레스 NP, 렌더러가 `meta.json`(bounds) 동반 업로드 | 배포 뒤 `curl -D - https://place.1989v.com/basemaps/markets/132180/meta.json` → `200 · content-type: application/json · cache-control: public, max-age=3600`, PNG `200 image/png 333478B`, 없는 시장 `404`. NP `allow-portal-fe-egress-https-public` 생성 확인 |
+| `b660349ef` | FE 바탕 프레임이 **2배 넓었다** — 256px 타일 공식을 썼는데 MapLibre 는 512px 타일(줌 18 1536px = 약 364 m). `meta.bounds` 우선 + 공식 `2 ** (zoom + 1)` | 렌더러 실측 `bounds width 363.2 m, height 272.4 m`. 운영(번들 `index-CyJrhgNs.js`): 남대문 `image w 357.10 h 267.83`(수정 전 714), 망원 `303.93×227.95`, 핀 18·8, 골목 선 0, 출처 줄 표시 |
+| `3b6371e8e` · `95c590832` | WU-26 `MarketNaverMap`(SDK 1회 로드·핀·경계·내 위치) + meta 배선 테스트 | `npx tsc -b` exit 0, `vitest run src/pages/place` 37 files · 615 tests |
+| `f10696523` | WU-27: `MarketMap` 이 공급자를 고른다 — 키 있고 window 있으면 네이버, SDK 실패·키 없음·SSR 은 SVG 지도. 토글 + 선택 기억, 줌·idle 마다 24px 재묶음, 공통 `MarketClusterSheet`(MarketCanvas 에서 분리), 검색 결과 `panTo`+줌 19, 내 위치 마커+정확도 원, 경계선·골목 이름, `language=en`, 네이버일 때 OpenFreeMap 출처 숨김 | Codex 구현 → 직접 재검증 `tsc` exit 0, vitest **38 files · 625 tests**. 폴백 조건 제거 시 SDK 실패 테스트 빨간불(Codex 확인). 키가 비어 있어 운영 화면은 그대로(AttractionMarket 테스트가 토글 부재를 고정) |
+
+- 전체 렌더 run 38997645505(light·dark·index 모두 success): **요청 124 · 완료 123 · 실패 2**(`2765404` light·dark, `API HTTP 500`). 124 = `/markets/content-ids` 가 주는 「가게 행이 있거나 경계가 있는 시장」 — 지도가 그려지는 곳만이라 828 전부를 렌더하지 않는 것이 맞다. `markets/index.json` renderedAt 03:20:20Z.
+- **신거북시장(`2765404`, market 95) 상세 500** — MySQL 8.0.46 `Out of sort memory, consider increasing server sort buffer size`(`sort_buffer_size` 262144). `findForDisplay` 의 넓은 select(TEXT 5열) + `ORDER BY id` 가 filesort 를 타는데, 가게 573행(IN 0, items 최대 49자)인 이 시장만 터지고 남대문 3,929행은 통과. 운영 DB 에 같은 SQL 로 재현: ORDER BY 있음 → 오류, 없음 → 577줄, `sort_buffer_size=1M` → 통과. 한 시간에 60회 발생. 수정: SQL 정렬을 빼고 메모리에서 `sortedBy { it.id }`(전 행을 읽는 조회라 결과 동일). 확인은 배포 뒤 `curl /api/v1/place/markets/2765404` 200 과 바탕 재렌더로.
+- content 메모리(MALLOC_ARENA_MAX=2 뒤): 기동 48분 709Mi · 56분 715Mi · 65분 720Mi, 재시작 0.
+- 측정 함정(재발): 관광지 상세 경로는 `contentId` 가 아니라 관광지 id(남대문 34550·망원 22534). contentId 로 열면 「찾을 수 없는 관광지」가 뜨고 계측기는 SVG 없음으로 죽는다 — P5 기록의 함정 그대로.

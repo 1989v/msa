@@ -25,7 +25,9 @@ class MarketStoreQueryRepository(@Qualifier("placeJpaQueryFactory") private val 
             s.goodPriceRaw, s.goodPriceMatchedBy, s.goodPriceMenuNames, s.identityKey, s.pairedStoreId,
             s.tourContentId, s.tourFirstMenu, s.tourTreatMenu, s.tourMatchedAt, hasOnnuri,
             hasSangga,
-        ).from(s).where(s.marketId.eq(marketId)).orderBy(s.id.asc()).fetch().map { row ->
+        // Sorted here, not in SQL: ORDER BY over this many text columns makes MySQL filesort the
+        // whole row, and with the default 256 KB sort buffer that failed for one market (573 rows).
+        ).from(s).where(s.marketId.eq(marketId)).fetch().map { row ->
             MarketStore(
                 marketId = requireNotNull(row.get(s.marketId)),
                 name = requireNotNull(row.get(s.name)),
@@ -68,6 +70,6 @@ class MarketStoreQueryRepository(@Qualifier("placeJpaQueryFactory") private val 
                 goodPriceMatchedBy = row.get(s.goodPriceMatchedBy),
                 goodPriceMenuNames = row.get(s.goodPriceMenuNames),
             )
-        }
+        }.sortedBy { it.id }
     }
 }
