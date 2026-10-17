@@ -149,3 +149,19 @@ main 에 올라간 순서와 운영에서 확인한 것. 시각은 KST.
 - 수정 전 캡처(`wu30-mobile-initial.png` 1차)에서 잡힌 셋: ① 네이버 핀마다 어두운 네모 — `.market-map-page button { background; border; padding }` 이 HTML 마커(button)에도 적용. 상단 바·구역 칩·목록 버튼으로 선택자를 좁혔다. ② 모바일에서 문서가 60px 스크롤 — 셸이 탭바 몫으로 body 아래를 비우는데(`kh-shell.css` `--kh-shell-bottom`) 페이지가 `100dvh` 를 통째로 잡았다. 같은 값을 뺐다. ③ 「우리 지도로 보기」가 네이버 줌 컨트롤 자리(왼쪽 위)와 겹침 — 오른쪽으로.
 - nginx: apex `1989v.com/attractions/:id/market` 가 place 호스트로 안 넘어갔다(리다이렉트 맵이 id 뒤를 모름). `(/market)?` 를 더하고 `scripts/check-nginx-public-aliases.py` 에 케이스를 넣어 옛 설정에서 실패(200 SPA 셸) → 새 설정 통과(94건)를 확인. 새 경로는 상세 렌더 프록시(`/attractions/{id}$`)에 안 걸리고 SPA 셸로 떨어진다(의도).
 - 계측: 모바일 에뮬레이션에서 휠은 페이지 스크롤이라 시트 전환은 손잡이 탭으로 쟀다. 콘솔의 네이버 SDK `distance` 예외는 합성 클릭에서도 난다 — 우리 프레임 없음, 추적만.
+
+## 10-17 밤 — WU-31 배포 확인 (상세 절 → 요약 카드, 옛 목록 제거)
+`b987e4094` → 운영 `index-BaEzC6oe.js`(23:33). 스크립트 `prod-wu31.mjs`.
+
+| 측정 | 1280×900 | 390×844 |
+|---|---|---|
+| 상세 페이지 DOM 노드(전) → (후) | 18,534 → **1,613** | → 1,301 |
+| `#market` 절 노드 | 150 | 98 |
+| 카드 구성 | facts 1 · 구역 링크 3(남대문시장4길 949 · 남대문시장길 202 · 남대문시장6길 83) · 「지도 전체 보기」 링크 2(투명 레이어 + 글자) · 관광공사 음식점 3 | 〃 |
+| 미리보기 지도 | 1166×656(16:9), 타일 36, 줌 컨트롤 없음, 마커 1 「남대문시장 · 2314」 | 324×182, 타일 10 |
+| 옛 검색 입력 / 패널 / 시트 | 0 / 0 / 0 | 〃 |
+| 액션 줄 「시장 지도」 href | `/attractions/34550/market` | 〃 |
+
+- 리다이렉트: `/attractions/34550?marketQuery=떡볶이` → `/attractions/34550/market?marketQuery=…`(검색창 「떡볶이」), `/attractions/34550#market` → `/attractions/34550/market`.
+- 전용 화면 핀(`.place-market-naver-pin`) 계산 스타일: `background rgba(0,0,0,0) · border 0 · padding 0 · 44px` — 브라우저 기본 button 상자가 사라졌다(`wu31-screen-mobile-screen.png`).
+- 콘솔 예외 0(이번엔 합성 휠·클릭 없이 로드만).
