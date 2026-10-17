@@ -37,13 +37,21 @@ export default function MarketGoogleMap(props: MarketLiveMapProps) {
       if (disposed || errorReported || !host.current) return;
       const centre = buildMarketOverlay({ ...latest.current, zoom: initialZoom }).centre;
       if (!centre) return;
-      map = new sdk.Map(host.current, { center: { lat: centre.latitude, lng: centre.longitude }, zoom: initialZoom, ...(!interactive ? { gestureHandling: 'none', disableDefaultUI: true, keyboardShortcuts: false } : {}), clickableIcons: false, streetViewControl: false, mapTypeControl: false });
-      // 상자 크기가 바뀌면 지도에 알리고 중심을 지킨다(구글은 resize 이벤트로 다시 잰다).
-      if (typeof ResizeObserver !== 'undefined') {
-        observer = new ResizeObserver(() => { const r = host.current?.getBoundingClientRect(); if (!r || r.width <= 0 || r.height <= 0 || !map) return; const c = map.getCenter?.(); sdk.event?.trigger?.(map, 'resize'); if (c) map.setCenter?.(c); });
+      const canObserve = typeof ResizeObserver !== 'undefined';
+      const create = () => {
+        if (map || disposed || !host.current) return;
+        const r = host.current.getBoundingClientRect();
+        // 상자 크기가 0 인 채로 만들지 않는다 — 크기가 잡힌 뒤에 만든다(크기를 지켜볼 수 없는 환경에선 바로 만든다).
+        if ((r.width < 1 || r.height < 1) && canObserve) return;
+        map = new sdk.Map(host.current, { center: { lat: centre.latitude, lng: centre.longitude }, zoom: initialZoom, ...(!interactive ? { gestureHandling: 'none', disableDefaultUI: true, keyboardShortcuts: false } : {}), clickableIcons: false, streetViewControl: false, mapTypeControl: false });
+        setReady({ identity, map, sdk });
+      };
+      // 상자 크기가 바뀌면 지도에 알리고 중심을 지킨다(구글은 resize 이벤트로 다시 잰다). 아직 못 만들었으면 그때 만든다.
+      if (canObserve) {
+        observer = new ResizeObserver(() => { if (!map) { create(); return; } const r = host.current?.getBoundingClientRect(); if (!r || r.width <= 0 || r.height <= 0) return; const c = map.getCenter?.(); sdk.event?.trigger?.(map, 'resize'); if (c) map.setCenter?.(c); });
         observer.observe(host.current);
       }
-      setReady({ identity, map, sdk });
+      create();
     }).catch(fail);
     return () => { disposed = true; unregister(); observer?.disconnect(); map?.unbindAll?.(); };
   }, [identity, lang, initialZoom, interactive]);

@@ -88,13 +88,26 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
       if (disposed || errorReported || !host.current) return;
       const centre = buildMarketOverlay({ ...latest.current, zoom: initialZoom }).centre;
       if (!centre) return;
-      map = new sdk.Map(host.current, { center: new sdk.LatLng(centre.latitude, centre.longitude), zoom: initialZoom, scaleControl: interactive, mapTypeControl: false, zoomControl: interactive, ...(!interactive ? { draggable: false, scrollWheel: false, pinchZoom: false, keyboardShortcuts: false, disableDoubleClickZoom: true } : {}) });
-      // 지도는 만들어질 때의 상자 크기만 기억한다 — 카드·시트·회전으로 상자가 바뀌면 다시 알려 준다.
-      if (typeof ResizeObserver !== 'undefined' && sdk.Size) {
-        observer = new ResizeObserver(() => { const r = host.current?.getBoundingClientRect(); if (r && r.width > 0 && r.height > 0) map?.setSize?.(new sdk.Size(Math.round(r.width), Math.round(r.height))); });
+      const canObserve = typeof ResizeObserver !== 'undefined';
+      const create = () => {
+        if (map || disposed || !host.current) return;
+        const r = host.current.getBoundingClientRect();
+        // 상자 크기가 0 인 채로 만들면 기본 크기로 굳는다 — 크기가 잡힌 뒤에 만들고 그 크기를 넘긴다(크기를 지켜볼 수 없는 환경에선 바로 만든다).
+        const sized = r.width >= 1 && r.height >= 1;
+        if (!sized && canObserve) return;
+        map = new sdk.Map(host.current, { center: new sdk.LatLng(centre.latitude, centre.longitude), zoom: initialZoom, ...(sized && sdk.Size ? { size: new sdk.Size(Math.round(r.width), Math.round(r.height)) } : {}), scaleControl: interactive, mapTypeControl: false, zoomControl: interactive, ...(!interactive ? { draggable: false, scrollWheel: false, pinchZoom: false, keyboardShortcuts: false, disableDoubleClickZoom: true } : {}) });
+        setReady({ identity, map, sdk });
+      };
+      // 카드·시트·회전으로 상자가 바뀌면 지도에 새 크기를 알린다. 아직 못 만들었으면 그때 만든다.
+      if (canObserve) {
+        observer = new ResizeObserver(() => {
+          if (!map) { create(); return; }
+          const r = host.current?.getBoundingClientRect();
+          if (r && r.width > 0 && r.height > 0 && sdk.Size) { map.setSize?.(new sdk.Size(Math.round(r.width), Math.round(r.height))); sdk.Event?.trigger?.(map, 'resize'); }
+        });
         observer.observe(host.current);
       }
-      setReady({ identity, map, sdk });
+      create();
     }).catch(fail);
     return () => { disposed = true; unregister(); observer?.disconnect(); map?.destroy(); };
   }, [identity, keyId, lang, initialZoom, interactive]);

@@ -233,7 +233,11 @@ Codex 보내는 순서: WU-15 ∥ WU-16 → WU-17 ∥ WU-18. 같은 워크트리
 - 검증: nginx `-t`(docker), kustomize build, tsc·해당 vitest, 배포 뒤 `curl -I /basemaps/markets/132180/meta.json` → 404, 시장 지도 정상.
 - **완료(2026-10-17 밤)**: `2d476f12c`(21 files, +26/−789). tsc 0건, vitest 9파일 129건, `grep basemap|openfreemap|openmaptiles` 0건, nginx 계약 검사 94건, `kubectl kustomize oci-arm` 정상(삭제한 NetworkPolicy 0회). 운영(`index-W5oJ9JjS.js`): `/basemaps/markets/132180/meta.json` 은 프록시 대신 **SPA 셸(200 text/html)** 로 떨어진다(nginx 의 location 이 없으니 404 가 아니라 폴백 — 계약의 「404」는 이 뜻으로 읽는다), 상세 카드·리다이렉트·전용 화면 핀 모두 그대로. 남은 수동 작업: 시크릿 `MARKET_BASEMAP_PAR`, 버킷 `msa-market-basemap`.
 
-## WU-28 가게 검색을 검색엔진으로 (search + place — `p7-plan.md` §9.4 계약 초안, 승인됨)
+## WU-28 가게 검색을 검색엔진으로 (search + portal-fe — `p7-plan.md` §9.4, ADR-0111, 승인됨)
+- **28a 완료(2026-10-18 새벽)** `6b885df75`: 색인 `market-stores`(alias) · 배치 `marketStoreApiReindexJob`(CronJob 21:40 UTC, 실패율 5% 상한) · `GET /api/v1/search/market-stores` · 게이트웨이 정확 경로 라우트 · ADR-0111. 검증: domain 3 · app 5 · batch 65(기존 재색인 포함) 실패 0, kustomize 정상. 운영: 수동 재색인 21,387건 / 0·124 시장 실패 / 2m16s, alias 교체, `떡볶이·떡복이·순대 국밥·tteokbokki` 전부 200 적중(`verifications/p7-production.md` 「WU-28a 배포 확인」).
+- **28b 완료** `575804b08`: 전용 화면 검색 → 300ms 디바운스 → API → 실패·빈 응답이면 기존 브라우저 매칭 폴백(훅 `useMarketStoreSearch`). `/markets` 는 첫 안이 시장마다 전체 응답을 다시 받는 구조라 옛 API 에 두었다. tsc 0 · vitest 6파일 70건.
+- **28c 완료** `518efcf27`: 색인에 표시 필드(주소·건물·층·호·착한가격·출처·소속·지역·유형·관광지 id ko/en, 전부 `index:false`) + API 응답 확장 + `/markets` 를 검색 한 번으로(실패 시 옛 API 폴백, 시장 상세 호출 0회 단언) + FE 가 API 의 `matchedBy` 배열을 받도록. 검증: app 8 · batch 70 실패 0, tsc 0, vitest 5파일 68건. 운영 확인은 배포 뒤 「WU-28c 배포 확인」.
+- 판정 세트(§9.4): 음식 10 × 변형 3 × 시장 2, 정답 0 제외 33문항 — Recall@10 **0.33 → 0.76**(오타 0.00→0.63 · 띄어쓰기 1.00→0.92 · 로마자 0.00→0.73). 못 잡는 것(음절 오타 `칼국쑤`·`호덕`, 사전 밖 로마자 `hotteok`)과 띄어쓰기 하락(단일 음절 토큰 과매칭)은 다음 조정 후보(`verifications/p7-production.md` 「판정 세트」).
 - **WU-28a 승인 계약**: [ADR-0111](../../adr/ADR-0111-market-store-search-index.md) — 별도 `market-stores` alias, 단일 한영 문서, nori 사용자 사전 없음, dishes.csv는 place `/api/v1/place/markets/dishes` API 한 벌만 사용.
 - API는 `GET /api/v1/search/market-stores?q&contentId&lang&page&size`. `contentId` 있으면 기본 size 200/시장 필터, 없으면 기본 20/시장 집계. 응답 items는 storeId/contentId/matchedBy/score, markets는 contentId/marketName/count.
 - 배치는 content-ids → 시장 ko/en API 병합, zoneId/pathId 포함, 좌표 없는 가게도 유지. 5% 초과 실패는 별칭 교체 전 실패, 정확히 5% 허용. 매일 21:40 UTC CronJob, 기존 보관 정책.
