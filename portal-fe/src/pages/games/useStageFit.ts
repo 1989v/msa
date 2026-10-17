@@ -3,6 +3,18 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 // 잰 값이 있을 때의 하한 — 너무 크게 잡으면 작은 캔버스 아래에 빈 공간이 남는다.
 const MIN_H = 200;
 const MAX_H = 900;
+// 데스크톱 무대 위아래 몫 — sticky 헤더(--gnb-height 64px) + 스크롤 여백(.game-stage scroll-margin-top) + 아래 여백
+const VIEW_RESERVE = 88;
+
+/**
+ * 데스크톱에서 캔버스 비율로 정하는 높이의 상한 — 창 안에 무대가 다 들어오는 높이.
+ * 세로형 캔버스는 폭에 맞추면 900 상한까지 커져 화면 밖으로 반이 잘렸다(1440×900 창에서
+ * 무대가 470px 에서 시작해 900px 높이).
+ */
+function viewCap() {
+  if (typeof window === 'undefined') return MAX_H;
+  return Math.max(MIN_H, Math.min(MAX_H, window.innerHeight - VIEW_RESERVE));
+}
 
 /** 좁은 터치 화면 — 여기서는 게임에 화면을 통째로 준다(몰입 모드). */
 function isImmersiveViewport() {
@@ -63,7 +75,11 @@ function visibleHeight(): number | null {
   return Math.round(Math.min(window.innerHeight, visual));
 }
 
-export function useStageFit(active: boolean, forceImmersive = false) {
+/**
+ * `portraitGame` 은 카탈로그 orientation — 세로 게임은 잴 결과(창 높이)를 미리 알므로 처음부터 그
+ * 높이로 띄운다. 기본 560 으로 띄웠다가 로드 뒤 늘리면 시작하자마자 무대가 한 번 튄다.
+ */
+export function useStageFit(active: boolean, forceImmersive = false, portraitGame = false) {
   const ref = useRef<HTMLIFrameElement | null>(null);
   const [height, setHeight] = useState<number | null>(null);
   const [responsiveImmersive, setImmersive] = useState(isImmersiveViewport);
@@ -130,7 +146,9 @@ export function useStageFit(active: boolean, forceImmersive = false) {
     });
     if (flowNeed > 0) flowNeed += parseFloat(view?.getComputedStyle(doc.body).paddingBottom || '0') || 0;
 
-    setHeight(Math.min(MAX_H, Math.max(MIN_H, Math.round(Math.max(canvasFit, panelNeed, flowNeed)))));
+    // 창 상한은 캔버스 몫에만 건다 — 패널·흐름 내용은 잘리면 못 읽으므로 원래대로 MAX_H 까지 준다.
+    const fitted = Math.max(Math.min(canvasFit, viewCap()), panelNeed, flowNeed);
+    setHeight(Math.min(MAX_H, Math.max(MIN_H, Math.round(fitted))));
   }, []);
 
   // 회전하면 몰입 여부가 바뀔 수 있다 (태블릿 경계).
@@ -194,5 +212,7 @@ export function useStageFit(active: boolean, forceImmersive = false) {
     };
   }, [active, immersive, measure]);
 
-  return { ref, height: immersive ? null : height, immersive, portrait, stageHeight };
+  // 첫 측정 전에도 세로 게임은 창 높이로 시작한다 — 측정 결과가 같은 값이라 로드 뒤 튀지 않는다
+  const initial = active && portraitGame ? viewCap() : null;
+  return { ref, height: immersive ? null : (height ?? initial), immersive, portrait, stageHeight };
 }

@@ -24,7 +24,8 @@ it('forced desktop immersion uses visible viewport, ignores content height and p
     expect(result.current.stageHeight).toBe(650);
     rerender({ force: false }); expect(result.current.immersive).toBe(false);
     act(() => frame.dispatchEvent(new Event('load')));
-    expect(result.current.height).toBe(900);
+    // 세로 캔버스 비율 높이(1333)는 창 안에 들어오게 자른다 — innerHeight 650 − 헤더·여백 88
+    expect(result.current.height).toBe(562);
     coarse = true; vi.stubGlobal('innerWidth', 390);
     act(() => window.dispatchEvent(new Event('orientationchange')));
     expect(result.current.immersive).toBe(true); expect(result.current.height).toBeNull();

@@ -91,7 +91,7 @@ export default function GameDetailPage() {
   const [playing, setPlaying] = useState(false);
   // 플레이를 끝내고 나온 순간에 랭킹을 다시 읽는다 (GameLeaderboard 의 reloadToken 주석 참조)
   const [boardToken, setBoardToken] = useState(0);
-  const stageFit = useStageFit(playing, slug === 'marble-race');
+  const stageFit = useStageFit(playing, slug === 'marble-race', game?.orientation === 'PORTRAIT');
   const [notFound, setNotFound] = useState(false);
   /* 없는 게임(404)과 잠깐 못 불러온 것을 가른다 — 배포 중 몇 초짜리 공백까지 「찾을 수 없습니다」로
      보이면 사람은 게임이 사라진 줄 안다. 못 불러온 쪽은 다시 시도로 돌린다 */
@@ -116,6 +116,11 @@ export default function GameDetailPage() {
   /* 이어할 저장이 있는가. 같은 질의를 두 번 보내지 않으려고 내 기록에서 꺼내 쓴다 —
      게스트는 서버 저장이 없어 `me` 가 null 이고, 없는데 안내를 띄우면 거짓말이 된다. */
   const continueHint = side.me?.hasSave ?? false;
+
+  // 데스크톱은 무대를 헤더 바로 아래로 올린다 — 제목·공유 줄 아래에서 시작하면 게임 아래쪽이 창 밖에 걸린다.
+  useEffect(() => {
+    if (playing && !stageFit.immersive) stageRef.current?.scrollIntoView?.({ block: 'start' });
+  }, [playing, stageFit.immersive]);
 
   // 몰입 중에는 뒤쪽 문서가 스크롤되면 안 된다 — 조이스틱 드래그가 페이지를 끌고 다닌다.
   useEffect(() => {

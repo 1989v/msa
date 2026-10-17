@@ -494,6 +494,8 @@
   border-radius: 12px;
   margin-bottom: 32px;
   overflow: hidden;
+  /* 플레이 시작 때 scrollIntoView 로 올린다 — sticky 헤더에 가리지 않게 (useStageFit VIEW_RESERVE 와 맞춘다) */
+  scroll-margin-top: calc(var(--gnb-height, 64px) + 12px);
 }
 
 .game-stage-idle {
@@ -2020,7 +2022,8 @@
 .games-guide a { color: var(--ko-text-primary); min-height: 2.75rem; display: inline-flex; align-items: center; }
 
 @media (min-width: 900px) {
-  .game-detail-body.is-playing { display: flex; flex-direction: column; }
+  /* 2단 grid 의 align-items:start 가 남으면 무대가 iframe 기본 폭(300px)으로 줄어든다 */
+  .game-detail-body.is-playing { display: flex; flex-direction: column; align-items: stretch; }
   .game-detail-body.is-playing > .game-stage { order: 0; }
   .game-detail-body.is-playing > .game-detail-mine { order: 1; align-self: stretch; }
   .game-detail-body.is-playing > .game-tabpane { order: 3; }
