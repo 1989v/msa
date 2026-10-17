@@ -207,3 +207,18 @@ _cat/indices: market-stores-20261017-1458  docs.count 21387  store.size 4.1mb
 
 - 엔진이 못 잡은 것: `칼국쑤`·`호덕`·`빈데떡`(nori 가 음절 단위로 쪼개 fuzziness 가 안 닿음), `hotteok`·`kalguksu`(망원)(영문 음식명 사전에 없음). 띄어쓰기에서 조금 내려간 건 `김 밥`·`만 두` 가 「김」「밥」 단일 음절 토큰까지 맞춰 상위 10 에 다른 가게가 섞여서다 — `minimum_should_match` 나 구문 가중치로 다음 조정.
 - 로그: `verify-p7/prod/recall-eval.log`(문항별 전·후·API total).
+
+## 10-18 새벽 — WU-28b·28c 배포 확인 (FE 검색 연결 · 표시 필드 · `/markets` 한 번 호출)
+- 28b(`575804b08`, 번들 `index-vwt9zK9C.js`): 전용 화면에서 한 글자씩 입력해도 `/api/v1/search/market-stores` 호출은 질의당 **1회**(마지막 입력 뒤 457~904ms), 전부 200. 단 목록은 폴백 수치(「떡볶이」 12곳 · 「떡복이」 0곳) — API 의 `matchedBy` 배열을 FE 가 문자열로 검증해 응답을 버렸다(`prod-wu28.mjs`).
+- 28c(`518efcf27`): images run 39043691274 00:17 완료, search·portal-fe·CronJob `518efcf` 00:18, 수동 재색인 `market-store-reindex-manual-0018` 성공(alias → `market-stores-20261017-1519`, 옛 인덱스 1개 제거, 0 errors). API `q=떡볶이&size=2`: total 402 · markets 97 · item 에 `name 강남떡볶이 · address · goodPrice · marketName 계양산전통시장 · attraction {33245, ko}`, 응답 20,972B(시장 집계 97건 포함).
+- 운영 번들 `index-C8dKICFB.js`(`prod-wu28c.mjs` · `prod-wu28.mjs`):
+
+| 화면 | 결과 |
+|---|---|
+| `/markets?q=떡볶이` | API 호출 `/api/v1/search/market-stores` **1회**(시장 상세 호출 0), 행 117(시장 97 + 가게 20), 첫 행 「용인중앙시장 경기도 용인시 · 거리형 · 18 가게」, 링크 `/attractions/34456/market?marketQuery=…` |
+| 전용 화면 「떡볶이」 | 호출 1 · 200 · 「찾은 가게 12곳」, 배지 「음식」(엔진 DISH) |
+| 「떡복이」(오타) | 호출 1 · 200 · **「찾은 가게 17곳」**(폴백이던 0곳에서 엔진 결과로), 첫 행 남대문떡마을 「음식」 |
+| 「순대 국밥」 | 호출 1 · 200 · 17곳, 「메뉴에 맞음」·「음식」 배지 |
+| 「tteokbokki」 | 호출 1 · 200 · 12곳 |
+
+- 정밀도 메모: 「떡볶이」 남대문 상위에 `KARL안경`(안경점)이 「음식」으로 들어온다 — 사전 전개(`dishes`)가 업종을 넓게 잡는 경우. 점수가 생기자 정밀도 문제가 보이기 시작했다(판정 세트의 띄어쓰기 하락과 같은 결) → 다음 조정 후보.
