@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { MarketStore, MarketZone } from '../../../api/marketApi';
-import { clusterByScreenDistance, formatMarketPrice, formatGoodPriceSummary, formatMarketFloor, groupMarketPins, longestMarketSegmentMidpoint, marketSourceBadges, matchesMarketName, matchesMarketStore, projectMarketPins, visibleMarketStores, zoneIds } from '../marketView';
+import { marketBasemapFrame, clusterByScreenDistance, formatMarketPrice, formatGoodPriceSummary, formatMarketFloor, groupMarketPins, longestMarketSegmentMidpoint, marketSourceBadges, matchesMarketName, matchesMarketStore, projectMarketPins, visibleMarketStores, zoneIds } from '../marketView';
 
 const store = (overrides: Partial<MarketStore> = {}): MarketStore => ({
   id: 1, name: '유명 순대국', items: null, zoneId: 1, membership: 'IN', latitude: 37.5, longitude: 127,
@@ -291,5 +291,29 @@ describe('WU21 dictionary contract', () => {
     expect(matchesMarketStore(store({ categoryEn: 'Snacks' }), 'snack')?.rank).toBe(3);
     expect(matchesMarketStore(store({ tourMenu: { firstMenu: '빈대떡', treatMenu: '육회', firstMenuEn: 'Mung bean pancake', treatMenuEn: 'Beef tartare', attraction: { id: 8, lang: 'en' } } }), 'beef tartare')?.rank).toBe(2);
     expect(matchesMarketStore(store(), '순대')?.rank).toBe(0);
+  });
+});
+
+
+describe('market basemap Web Mercator frame', () => {
+  const centre: [number, number] = [37.5592467, 126.9776796];
+  const radius = 6378137;
+  const mercatorY = (lat: number) => radius * Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
+  it('covers approximately 727 by 545 ground metres at Namdaemun zoom 18', () => {
+    const frame = marketBasemapFrame(centre);
+    const cos = Math.cos(centre[0] * Math.PI / 180);
+    expect((frame.east - frame.west) * Math.PI / 180 * radius * cos).toBeCloseTo(727.13, 0);
+    expect((mercatorY(frame.north) - mercatorY(frame.south)) * cos).toBeCloseTo(545.35, 0);
+  });
+  it('recovers the original centre in Mercator coordinates', () => {
+    const frame = marketBasemapFrame(centre);
+    expect((frame.west + frame.east) / 2).toBeCloseTo(centre[1], 10);
+    expect((mercatorY(frame.north) + mercatorY(frame.south)) / 2).toBeCloseTo(mercatorY(centre[0]), 6);
+  });
+  it('honours custom dimensions and zoom without changing the centre', () => {
+    const full = marketBasemapFrame(centre);
+    const half = marketBasemapFrame(centre, 19, 768, 576);
+    expect((half.east - half.west) / (full.east - full.west)).toBeCloseTo(0.25, 8);
+    expect((mercatorY(half.north) - mercatorY(half.south)) / (mercatorY(full.north) - mercatorY(full.south))).toBeCloseTo(0.25, 8);
   });
 });

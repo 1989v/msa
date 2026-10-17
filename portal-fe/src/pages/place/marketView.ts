@@ -259,3 +259,20 @@ export function sectionMatchLabel(match: MarketStoreMatch | null, lang: PlaceLan
   const fields = { name: 'NAME', items: 'ITEMS', menus: 'MENU', categories: 'CATEGORY', related: 'RELATED_CATEGORY' } as const;
   return marketMatchLabel(fields[match.matchedBy], match.relatedCategory, lang);
 }
+
+
+/** Geographic bounds of a raster rendered in Web Mercator, independent of the SVG viewport. */
+export function marketBasemapFrame(centre: MarketCoordinate, zoom = 18, width = 1536, height = 1152) {
+  const radius = 6378137;
+  const radians = Math.PI / 180;
+  const cosine = Math.cos(centre[0] * radians);
+  const pixelMetres = 156543.03392 * cosine / 2 ** zoom;
+  // Resolution is ground metres: inverse projection needs Mercator metres instead.
+  const halfWidth = width * pixelMetres / cosine / 2;
+  const halfHeight = height * pixelMetres / cosine / 2;
+  const x = radius * centre[1] * radians;
+  const y = radius * Math.log(Math.tan(Math.PI / 4 + centre[0] * radians / 2));
+  const latitude = (value: number) => (2 * Math.atan(Math.exp(value / radius)) - Math.PI / 2) / radians;
+  return { north: latitude(y + halfHeight), south: latitude(y - halfHeight),
+    east: (x + halfWidth) / radius / radians, west: (x - halfWidth) / radius / radians };
+}

@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react';
 import type { MarketDish, MarketResponse, MarketStore } from '../../api/marketApi';
 import type { PlaceLang } from '../../api/placeApi';
-import { clusterByScreenDistance, formatGoodPriceMenu, formatMarketFloor, marketSourceBadges, matchesMarketName, longestMarketSegmentMidpoint, projectMarketPins } from './marketView';
+import { marketBasemapFrame, clusterByScreenDistance, formatGoodPriceMenu, formatMarketFloor, marketSourceBadges, matchesMarketName, longestMarketSegmentMidpoint, projectMarketPins } from './marketView';
 
 import MarketMenuDetails from './MarketMenuDetails';
 import { marketDisplayName, sectionMatchLabel, matchesMarketStore } from './marketView';
@@ -22,14 +22,31 @@ function orderStores(stores: MarketStore[]) {
     || floorNumber(a.floor) - floorNumber(b.floor) || natural(a.ho, b.ho) || natural(a.name, b.name));
 }
 
-export default function MarketCanvas({ data, lang, projection, points, hasGeometry, query, selectedKey, onSelect, color, pathColor, userPosition, focusStoreId, dishes = [] }: {
+export default function MarketCanvas({ data, lang, projection, points, hasGeometry, query, selectedKey, onSelect, color, pathColor, userPosition, focusStoreId, dishes = [], basemapAttribution }: {
   data: MarketResponse; lang: PlaceLang; projection: Projection; points: Projection['points']; hasGeometry: boolean;
   query: string; selectedKey: string | null; onSelect: (key: string | null) => void;
+  basemapAttribution?: ReactNode;
   dishes?: MarketDish[];
   userPosition?: MarketUserPosition | null;
   focusStoreId?: number | null;
   color: (id: number | null) => string; pathColor: (id: number | null | undefined) => string | undefined;
 }) {
+  const theme = useBasemapTheme();
+  const polygon = data.boundary?.polygon ?? [];
+  const first = polygon[0]; const last = polygon.at(-1);
+  const vertices = polygon.length > 1 && first[0] === last![0] && first[1] === last![1] ? polygon.slice(0, -1) : polygon;
+  const centre = vertices.length ? [vertices.reduce((sum, [lat]) => sum + lat, 0) / vertices.length,
+    vertices.reduce((sum, [, lng]) => sum + lng, 0) / vertices.length] as [number, number]
+    : data.market.latitude != null && data.market.longitude != null ? [data.market.latitude, data.market.longitude] as [number, number] : null;
+  const frame = centre && centre.every(Number.isFinite) ? marketBasemapFrame(centre) : null;
+  const basemapUrl = frame && data.market.contentId ? `https://objectstorage.ap-chuncheon-1.oraclecloud.com/n/axyooxbyk5yv/b/msa-market-basemap/o/markets/${data.market.contentId}/z18-${theme}.png` : null;
+  const [basemap, setBasemap] = useState({ url: basemapUrl, loaded: false });
+  // Reset during render so a revisited URL cannot reuse an earlier successful request.
+  if (basemap.url !== basemapUrl) setBasemap({ url: basemapUrl, loaded: false });
+  const basemapLoaded = basemap.url === basemapUrl && basemap.loaded;
+  const imageRef = useRef<SVGImageElement>(null);
+  const northWest = frame ? projection.project([frame.north, frame.west]) : null;
+  const southEast = frame ? projection.project([frame.south, frame.east]) : null;
   const en = lang === 'en';
   const marketKey = data.market.id ?? data.market.name;
   const [measurement, setMeasurement] = useState<{ marketKey: typeof marketKey; position: MarketUserPosition } | null>(null);
@@ -179,8 +196,13 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
           }
         }}
         onPointerCancel={(event) => { pointers.current.delete(event.pointerId); dragged.current = true; }}>
+        {basemapUrl && northWest && southEast && <image key={basemapUrl} ref={imageRef} href={basemapUrl}
+          x={northWest.x} y={northWest.y} width={southEast.x - northWest.x} height={southEast.y - northWest.y}
+          preserveAspectRatio="none" visibility={basemapLoaded ? 'visible' : 'hidden'}
+          onLoad={(event) => { if (event.currentTarget === imageRef.current) setBasemap({ url: basemapUrl, loaded: true }); }}
+          onError={(event) => { if (event.currentTarget === imageRef.current) setBasemap({ url: basemapUrl, loaded: false }); }} />}
         {data.boundary && <polygon className="place-market-boundary" vectorEffect="non-scaling-stroke" points={data.boundary.polygon.map(projection.project).map((point) => `${point.x},${point.y}`).join(' ')} />}
-        {paths.map((path) => <g key={path.id} style={{ '--market-path-color': pathColor(path.id) } as CSSProperties}>
+        {!basemapLoaded && paths.map((path) => <g key={path.id} style={{ '--market-path-color': pathColor(path.id) } as CSSProperties}>
           <polyline className="place-market-path" vectorEffect="non-scaling-stroke" points={path.geometry.map(projection.project).map((point) => `${point.x},${point.y}`).join(' ')} />
         </g>)}
         {hasGeometry && (data.entrances ?? []).map((entrance) => {
@@ -209,7 +231,7 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
           </g>;
         })}
         {/* At the whole-market view the road names would cover the pins: show the three longest and let zoom reveal the rest. */}
-        {(zoom >= 2 ? labels : [...labels].sort((a, b) => b.length - a.length).slice(0, 3)).map(({ path }) => {
+        {!basemapLoaded && (zoom >= 2 ? labels : [...labels].sort((a, b) => b.length - a.length).slice(0, 3)).map(({ path }) => {
           const label = longestMarketSegmentMidpoint(path.geometry.map(projection.project));
           return label && <text key={path.id} className="place-market-path-label" transform={`translate(${label.x} ${label.y}) scale(${1 / screenScale})`} textAnchor="middle">{path.name}</text>;
         })}
@@ -231,6 +253,7 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
         </g>
       </svg>
       <MarketLocate key={marketKey} data={data} lang={lang} onPosition={(position) => setMeasurement({ marketKey, position })} />
+      {basemapLoaded && basemapAttribution}
     </div>
     {selectedKey != null && <section className="place-market-cluster-sheet" aria-label={en ? 'Selected shops' : '선택한 가게'}>
       <h3>{en ? 'Shops on this parcel' : '같은 필지 가게'} ({ordered.length})</h3>
@@ -260,4 +283,24 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
 function hitLabel(names: string[], en: boolean) {
   if (names.length <= 2) return names.join(', ');
   return `${names.slice(0, 2).join(', ')} ${en ? `and ${names.length - 2} more` : `외 ${names.length - 2}곳`}`;
+}
+
+
+function useBasemapTheme() {
+  const read = () => {
+    const explicit = document.documentElement.getAttribute('data-theme');
+    return explicit === 'light' || explicit === 'dark' ? explicit
+      : window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  };
+  const [theme, setTheme] = useState(read);
+  useEffect(() => {
+    const media = window.matchMedia?.('(prefers-color-scheme: dark)');
+    const update = () => setTheme(read());
+    const observer = new MutationObserver(update);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    media?.addEventListener('change', update);
+    update();
+    return () => { observer.disconnect(); media?.removeEventListener('change', update); };
+  }, []);
+  return theme;
 }

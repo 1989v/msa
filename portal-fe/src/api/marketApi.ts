@@ -91,6 +91,9 @@ export interface MarketResponse {
   entrances?: MarketEntrance[] | null;
   attribution?: string[] | null;
   market: {
+    contentId?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
     id?: number | null;
     name: string;
     marketType: 'STREET' | 'BUILDING' | 'MIXED';

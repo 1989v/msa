@@ -358,3 +358,24 @@ describe('WU21 shared food search and menu evidence', () => {
     client.clear();
   });
 });
+
+
+describe('loaded market basemap source links', () => {
+  it('shows linked attribution under the map only after the current image loads', async () => {
+    vi.mocked(fetchMarket).mockResolvedValue({ ...data, market: { ...data.market, contentId: '1059391', latitude: 37.5, longitude: 127 } });
+    const { container } = mount();
+    await screen.findByRole('group', { name: '가게 위치 지도' });
+    expect(screen.queryByRole('link', { name: 'OpenFreeMap' })).toBeNull();
+    const image = container.querySelector('image')!;
+    fireEvent.load(image);
+    const source = screen.getByRole('link', { name: 'OpenFreeMap' });
+    expect(source).toHaveAttribute('href', 'https://openfreemap.org/');
+    expect(source.parentElement).toHaveClass('place-market-source');
+    expect(source.closest('.place-market-map')).not.toBeNull();
+    expect(source.parentElement).toHaveTextContent('OpenFreeMap · OpenMapTiles · © OpenStreetMap contributors');
+    expect(screen.getByRole('link', { name: 'OpenMapTiles' })).toHaveAttribute('href', 'https://openmaptiles.org/');
+    expect(screen.getByRole('link', { name: '© OpenStreetMap contributors' })).toHaveAttribute('href', 'https://www.openstreetmap.org/copyright');
+    fireEvent.error(image);
+    expect(screen.queryByRole('link', { name: 'OpenFreeMap' })).toBeNull();
+  });
+});
