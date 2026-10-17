@@ -7,7 +7,7 @@ import { useReveal } from '../hooks/useReveal';
 import './PrivacyPage.css';
 
 /** 개정일 — 본문을 고치면 반드시 함께 올린다. 방침은 '언제부터의 약속인지'가 내용의 일부다. */
-const EFFECTIVE_DATE = '2026-10-15';
+const EFFECTIVE_DATE = '2026-10-17';
 const CONTACT_EMAIL = '1989v@naver.com';
 
 /**
@@ -236,6 +236,15 @@ export default function PrivacyPage() {
                     <td>
                       <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">
                         policies.google.com/privacy
+                      </a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>네이버 지도(네이버클라우드)</td>
+                    <td>시장 지도에서 네이버 지도 보기를 켤 때만 로드</td>
+                    <td>
+                      <a href="https://www.ncloud.com/policy/infou" target="_blank" rel="noopener noreferrer">
+                        네이버클라우드 개인정보처리방침
                       </a>
                     </td>
                   </tr>

@@ -1766,6 +1766,13 @@ export const PLACE_LANDINGS_INDEXABLE = false;
 export const ADSENSE_CLIENT = 'ca-pub-4627924728297793';
 
 /**
+ * 네이버 Dynamic Map 공개 키 ID. 서비스 URL 을 등록한 뒤 발급한 값을 넣는다.
+ * 빈 값이면 시장 지도의 네이버 지도 토글을 숨긴다.
+ * SDK 는 시장 화면에서 네이버 지도 보기를 켤 때만 로드한다.
+ */
+export const NAVER_MAP_KEY_ID = '';
+
+/**
  * 광고를 게재하는 호스트.
  *
  * resume 는 제외한다 — 실명·연락처가 들어간 토큰 게이트 문서라(ADR-0064) 광고
