@@ -20,6 +20,7 @@ const shop = (overrides: Partial<MarketStore> = {}): MarketStore => ({
 const data: MarketResponse = {
   market: { name: '시장', marketType: 'STREET', sourceMarketType: null, storeCountRaw: '10', openingCycle: '매일', facilities: '주차장',
     attribution: { name: '전국전통시장표준데이터', url: 'https://www.data.go.kr/data/15012894/standard.do', license: '공공누리 제1유형' } },
+  attribution: ['© OpenStreetMap contributors'],
   zones: [], stores: [shop(), shop({ id: 2, name: '한지 가게', latitude: 37.501 }), shop({ id: 3, name: '좌표 없는 가게', latitude: null, jibunAddress: null })],
 };
 
@@ -34,6 +35,7 @@ describe('attraction market summary card', () => {
     for (const value of [lang === 'ko' ? '거리형' : 'Street market', '10', '매일', '주차장']) expect(within(card).getByText(value)).toBeInTheDocument();
     expect(within(card).getByRole('link', { name: '전국전통시장표준데이터' })).toHaveAttribute('href', data.market.attribution!.url);
     expect(card).toHaveTextContent('공공누리 제1유형');
+    expect(card).toHaveTextContent('© OpenStreetMap contributors');
     expect(previewProps).toMatchObject({ contentId: '100', interactive: false, initialZoom: 16, lang });
     const href = `${lang === 'en' ? '/en' : ''}/attractions/7/market`;
     const links = within(card).getAllByRole('link', { name: lang === 'ko' ? '지도 전체 보기' : 'View full map' });

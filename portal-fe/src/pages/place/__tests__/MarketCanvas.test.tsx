@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
-import type { MarketBasemapMeta, MarketResponse, MarketStore } from '../../../api/marketApi';
-import { groupMarketPins, marketBasemapFrame, projectMarketPins } from '../marketView';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import type { MarketResponse, MarketStore } from '../../../api/marketApi';
+import { groupMarketPins, projectMarketPins } from '../marketView';
 import MarketCanvas from '../MarketCanvas';
 
 const store = (overrides: Partial<MarketStore> = {}): MarketStore => ({
@@ -40,6 +40,13 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe('MarketCanvas navigation and shared SVG coordinates', () => {
+  it('draws the boundary, alley lines and names directly in the SVG', () => {
+    const { container } = mount();
+    expect(container.querySelector('image')).toBeNull();
+    expect(container.querySelector('.place-market-boundary')).toBeInTheDocument();
+    expect(container.querySelector('.place-market-path')).toBeInTheDocument();
+    expect(container.querySelector('.place-market-path-label')).toHaveTextContent('시장길');
+  });
   it('merges nearby parcels at 24 screen pixels and splits them at zoom 8', () => {
     const { container } = mount();
     expect(container.querySelectorAll('.place-market-pin')).toHaveLength(1);
@@ -173,108 +180,4 @@ describe('MarketCanvas result focus', () => {
     expect(container.querySelector('.place-market-pin[data-selected]')).toHaveAttribute('aria-label', expect.stringContaining('목표'));
   });
 
-});
-
-
-describe('market raster basemap', () => {
-  const mapped: MarketResponse = { ...data, market: { ...data.market, contentId: '1059391', latitude: 37.562, longitude: 126.981 },
-    boundary: { source: 'OSM', polygon: [[37.55, 126.97], [37.57, 126.97], [37.56, 127], [37.55, 126.97]] },
-    entrances: [{ id: 1, pathId: null, lat: 37.56, lng: 126.98, label: '입구', source: 'OSM' }], stores: [store()] };
-  const url = (theme: string, id = '1059391') => `/basemaps/markets/${id}/${theme}.png`;
-  const meta: MarketBasemapMeta = { contentId: '1059391', centre: { latitude: 37.561, longitude: 126.984 }, zoom: 17, width: 1024, height: 768, bounds: marketBasemapFrame([37.561, 126.984], 17, 1024, 768), renderedAt: '2026-10-17T00:00:00Z', styleVersion: 'v1', themes: ['light', 'dark'] };
-  function canvas(value = mapped, basemapMeta: MarketBasemapMeta | null = meta) {
-    const projection = projectMarketPins(groupMarketPins(value.stores), value)!;
-    return <MarketCanvas basemapMeta={basemapMeta} data={value} lang="ko" projection={projection} points={projection.points} hasGeometry query="가게" selectedKey={null} onSelect={vi.fn()} color={() => 'var(--market-zone-1)'} pathColor={() => undefined}
-      userPosition={{ latitude: 37.56, longitude: 126.98, accuracy: 10, timestamp: 1 }} basemapAttribution={<p>Basemap credit</p>} />;
-  }
-  afterEach(() => { cleanup(); document.documentElement.removeAttribute('data-theme'); });
-  it('projects raster corners from the metadata bounds independently of response and boundary centres', () => {
-    document.documentElement.dataset.theme = 'light';
-    const { container } = render(canvas());
-    const projection = projectMarketPins(groupMarketPins(mapped.stores), mapped)!;
-    const frame = marketBasemapFrame([meta.centre.latitude, meta.centre.longitude], meta.zoom, meta.width, meta.height);
-    const nw = projection.project([frame.north, frame.west]);
-    const se = projection.project([frame.south, frame.east]);
-    const svg = container.querySelector('svg')!; const image = svg.querySelector('image')!;
-    expect(svg.firstElementChild).toBe(image);
-    expect(image).toHaveAttribute('href', url('light'));
-    for (const [attr, value] of Object.entries({ x: nw.x, y: nw.y, width: se.x - nw.x, height: se.y - nw.y })) expect(Number(image.getAttribute(attr))).toBeCloseTo(value, 7);
-    expect(image).toHaveAttribute('preserveAspectRatio', 'none');
-  });
-  it('keeps the SVG without metadata or an available theme and ignores missing response centres', async () => {
-    document.documentElement.dataset.theme = 'light';
-    const { container, rerender } = render(canvas(mapped, null));
-    expect(container.querySelector('image')).toBeNull();
-    expect(container.querySelector('.place-market-path')).not.toBeNull();
-    rerender(canvas(mapped, { ...meta, themes: ['dark'] }));
-    expect(container.querySelector('image')).toBeNull();
-    await act(async () => { document.documentElement.dataset.theme = 'dark'; });
-    expect(container.querySelector('image')).toHaveAttribute('href', url('dark'));
-    rerender(canvas({ ...mapped, boundary: null, market: { ...mapped.market, contentId: null, latitude: null, longitude: null } }));
-    expect(container.querySelector('image')).toHaveAttribute('href', url('dark'));
-    rerender(canvas(mapped, null));
-    expect(container.querySelector('image')).toBeNull();
-    expect(screen.queryByText('Basemap credit')).toBeNull();
-  });
-  it('shows fallback until load, preserves overlays, then restores lines and credit on error', () => {
-    const { container } = render(canvas()); const image = container.querySelector('image')!;
-    expect(image).toHaveAttribute('visibility', 'hidden');
-    expect(container.querySelector('.place-market-path')).not.toBeNull();
-    expect(container.querySelector('.place-market-path-label')).not.toBeNull();
-    expect(screen.queryByText('Basemap credit')).toBeNull();
-    fireEvent.load(image);
-    expect(image).toHaveAttribute('visibility', 'visible');
-    expect(container.querySelector('.place-market-path')).toBeNull();
-    expect(container.querySelector('.place-market-path-label')).toBeNull();
-    for (const selector of ['.place-market-boundary', '.place-market-entrance', '.place-market-pin', '.place-market-user', '.place-market-hit-label', '.place-market-direction', '.place-market-scale']) expect(container.querySelector(selector)).not.toBeNull();
-    expect(screen.getByText('Basemap credit').parentElement).toHaveClass('place-market-canvas');
-    fireEvent.error(image);
-    expect(image).toHaveAttribute('visibility', 'hidden');
-    expect(container.querySelector('.place-market-path')).not.toBeNull();
-    expect(screen.queryByText('Basemap credit')).toBeNull();
-  });
-  it('switches theme and market URLs with immediate fallback and ignores stale load/error events', async () => {
-    document.documentElement.dataset.theme = 'light';
-    const { container, rerender } = render(canvas()); const old = container.querySelector('image')!;
-    fireEvent.load(old);
-    await act(async () => { document.documentElement.dataset.theme = 'dark'; });
-    const dark = container.querySelector('image')!;
-    expect(dark).toHaveAttribute('href', url('dark')); expect(dark).toHaveAttribute('visibility', 'hidden');
-    expect(screen.queryByText('Basemap credit')).toBeNull();
-    fireEvent.load(old); expect(dark).toHaveAttribute('visibility', 'hidden');
-    fireEvent.load(dark); fireEvent.error(old); expect(dark).toHaveAttribute('visibility', 'visible');
-    rerender(canvas({ ...mapped, market: { ...mapped.market, contentId: 'another' } }, { ...meta, contentId: 'another' }));
-    const another = container.querySelector('image')!;
-    expect(another).toHaveAttribute('href', url('dark', 'another')); expect(another).toHaveAttribute('visibility', 'hidden');
-    expect(screen.queryByText('Basemap credit')).toBeNull();
-    fireEvent.load(dark); expect(another).toHaveAttribute('visibility', 'hidden');
-    await act(async () => { document.documentElement.dataset.theme = 'light'; });
-    expect(container.querySelector('image')).toHaveAttribute('visibility', 'hidden');
-  });
-  it('uses media changes only without an explicit html theme and does not mutate html', async () => {
-    let listener: () => void = () => {}; const media = { matches: false, addEventListener: vi.fn((_type, fn) => { listener = fn; }), removeEventListener: vi.fn() };
-    vi.stubGlobal('matchMedia', vi.fn(() => media));
-    const { container } = render(canvas());
-    expect(container.querySelector('image')).toHaveAttribute('href', url('light'));
-    act(() => { media.matches = true; listener(); });
-    expect(container.querySelector('image')).toHaveAttribute('href', url('dark'));
-    expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
-    await act(async () => { document.documentElement.dataset.theme = 'light'; });
-    act(() => { listener(); }); expect(container.querySelector('image')).toHaveAttribute('href', url('light'));
-    await act(async () => { document.documentElement.removeAttribute('data-theme'); });
-    expect(container.querySelector('image')).toHaveAttribute('href', url('dark'));
-  });
-  it('keeps image geometry fixed while zoom and pan change only the shared viewBox', () => {
-    const { container } = render(canvas()); const svg = container.querySelector('svg')!; const image = svg.querySelector('image')!;
-    fireEvent.load(image);
-    const geometry = () => ['x', 'y', 'width', 'height'].map((attr) => image.getAttribute(attr));
-    const before = geometry(); const initialView = svg.getAttribute('viewBox');
-    fireEvent.click(screen.getByRole('button', { name: '확대' }));
-    expect(svg.getAttribute('viewBox')).not.toBe(initialView); expect(geometry()).toEqual(before);
-    const zoomed = svg.getAttribute('viewBox');
-    fireEvent.pointerDown(svg, { pointerId: 1, button: 0, clientX: 100, clientY: 100 });
-    fireEvent.pointerMove(svg, { pointerId: 1, clientX: 160, clientY: 140 });
-    fireEvent.pointerUp(svg, { pointerId: 1 });
-    expect(svg.getAttribute('viewBox')).not.toBe(zoomed); expect(geometry()).toEqual(before);
-  });
 });

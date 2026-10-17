@@ -48,9 +48,6 @@ function view(market = data, lang: 'ko' | 'en' = 'ko', onViewportChange = vi.fn(
     const [selectedKey, onSelect] = useState<string | null>(null); const [focusStoreId, focus] = useState<number | null>(null);
     return <><button onClick={() => focus(1)}>Focus shop</button><button onClick={() => focus(null)}>Clear focus</button>
       <output data-testid="selection">{selectedKey}</output><MarketMap onViewportChange={onViewportChange} contentId="123" data={market} lang={lang} projection={projection} points={[...projection.points]} hasGeometry query="떡볶이"
-        basemapAttribution={<a href="https://openfreemap.org/">OpenFreeMap</a>}
-        basemapMeta={{ contentId: '123', centre: { latitude: 37.5, longitude: 127 }, zoom: 18, width: 1536, height: 1152,
-          bounds: { north: 37.501, south: 37.499, east: 127.001, west: 126.999 }, renderedAt: '2026-10-17', styleVersion: '1', themes: ['light', 'dark'] }}
         selectedKey={selectedKey} onSelect={onSelect} focusStoreId={focusStoreId} color={() => 'var(--market-zone-1)'} pathColor={() => undefined} /></>;
   };
 }
@@ -79,7 +76,6 @@ describe('market map provider', () => {
     expect(pin.firstElementChild?.getAttribute('style')).toContain('border-width: 3px');
     expect(pin.firstElementChild?.getAttribute('style')).toContain('border-color: var(--ko-accent-text)');
     expect(maps.Polygon).toHaveBeenCalledOnce();
-    expect(screen.queryByRole('link', { name: 'OpenFreeMap' })).not.toBeInTheDocument();
     fireEvent.click(pin);
     expect(screen.getByTestId('selection').textContent).not.toBe('');
     maps.scale(1000000); act(() => maps.listeners.get('zoom_changed')!());
@@ -110,12 +106,9 @@ describe('market map provider', () => {
     const View = view(); const first = render(<View />); expect(scripts()).toHaveLength(1); install();
     await act(async () => fireEvent.load(scripts()[0])); fireEvent.click(screen.getByText('우리 지도로 보기'));
     expect(first.container.querySelector('svg')).toBeInTheDocument();
-    fireEvent.load(first.container.querySelector('image')!);
-    expect(screen.getByRole('link', { name: 'OpenFreeMap' })).toBeInTheDocument();
     expect(window.localStorage.getItem('market-map-provider')).toBe('canvas'); first.unmount();
     const second = render(<View />); expect(second.container.querySelector('svg')).toBeInTheDocument(); fireEvent.click(screen.getByText('네이버 지도로 보기'));
     await waitFor(() => expect(maps.Map).toHaveBeenCalledTimes(2)); expect(scripts()).toHaveLength(1);
-    expect(screen.queryByRole('link', { name: 'OpenFreeMap' })).not.toBeInTheDocument();
   });
   it('falls back automatically after SDK failure and retries with a fresh script', async () => {
     const View = view(); const { container } = render(<View />); await act(async () => fireEvent.error(scripts()[0]));

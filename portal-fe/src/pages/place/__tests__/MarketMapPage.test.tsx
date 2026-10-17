@@ -4,13 +4,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { fetchAttraction, type AttractionDetail } from '../../../api/placeApi';
-import { fetchMarket, fetchMarketBasemapMeta, fetchMarketDishes, type MarketResponse, type MarketStore } from '../../../api/marketApi';
+import { fetchMarket, fetchMarketDishes, type MarketResponse, type MarketStore } from '../../../api/marketApi';
 import MarketMapPage from '../MarketMapPage';
 import type MarketMap from '../MarketMap';
 import { groupMarketPins } from '../marketView';
 import { marketListStores } from '../MarketList';
 vi.mock('../../../api/placeApi', async original => ({ ...await original<typeof import('../../../api/placeApi')>(), fetchAttraction: vi.fn() }));
-vi.mock('../../../api/marketApi', async original => ({ ...await original<typeof import('../../../api/marketApi')>(), fetchMarket: vi.fn(), fetchMarketDishes: vi.fn(), fetchMarketBasemapMeta: vi.fn() }));
+vi.mock('../../../api/marketApi', async original => ({ ...await original<typeof import('../../../api/marketApi')>(), fetchMarket: vi.fn(), fetchMarketDishes: vi.fn() }));
 const bounds = { north: 37.51, south: 37.49, west: 126.99, east: 127.01 };
 let mapProps: ComponentProps<typeof MarketMap>;
 vi.mock('../MarketMap', () => ({ default: (props: ComponentProps<typeof MarketMap>) => {
@@ -38,7 +38,7 @@ function mount(entry = '/attractions/7/market', entries = [entry]) {
 }
 beforeEach(() => {
   vi.mocked(fetchAttraction).mockResolvedValue({ id: '7', contentId: '100', title: '관광지', lang: 'ko', alternateId: '8' } as AttractionDetail);
-  vi.mocked(fetchMarket).mockResolvedValue(data); vi.mocked(fetchMarketDishes).mockResolvedValue([]); vi.mocked(fetchMarketBasemapMeta).mockResolvedValue(null);
+  vi.mocked(fetchMarket).mockResolvedValue(data); vi.mocked(fetchMarketDishes).mockResolvedValue([]);
 });
 afterEach(() => { cleanup(); vi.resetAllMocks(); });
 describe('dedicated market map page', () => {

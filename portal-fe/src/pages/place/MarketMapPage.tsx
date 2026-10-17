@@ -6,7 +6,7 @@ import { fetchAttraction, type PlaceLang } from '../../api/placeApi';
 import { attractionPath, marketMapMeta } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
-import { useAttractionMarket, useMarketBasemapMeta, useMarketDishes } from './marketQueries';
+import { useAttractionMarket, useMarketDishes } from './marketQueries';
 import { groupMarketPins, marketZones, projectMarketPins, visibleMarketStores, zoneIds } from './marketView';
 import MarketMap from './MarketMap';
 import MarketList from './MarketList';
@@ -42,7 +42,6 @@ function MarketMapScreen() {
   const attraction = useQuery({ queryKey: ['attraction', id], queryFn: () => fetchAttraction(id), enabled: !!id, retry: false });
   const market = useAttractionMarket(attraction.data?.contentId ?? '', lang, includeOutside);
   const { data: dishes = [] } = useMarketDishes();
-  const { data: basemapMeta } = useMarketBasemapMeta(attraction.data?.contentId ?? '');
   useSeo({ ...marketMapMeta(lang, attraction.data ?? { id }, market.data), lang });
   if (attraction.isError || (attraction.data && (market.isError || (market.isSuccess && !market.data)))) return <Navigate to={attractionPath(lang, id)} replace />;
   if (!attraction.data || !market.data) return <main aria-busy="true">{en ? 'Loading…' : '불러오는 중…'}</main>;
@@ -72,7 +71,7 @@ function MarketMapScreen() {
     </nav>
     <div className="market-map-workspace">
       <div className="market-map-stage">
-        {projection ? <MarketMap contentId={attraction.data.contentId} data={data} lang={lang} basemapMeta={basemapMeta} projection={projection} points={projection.points} hasGeometry={!!data.boundary?.polygon.length || !!data.paths?.some(path => path.geometry.length)} query={query} dishes={dishes} selectedZoneId={zoneId} onZoneSelect={pickZone} selectedKey={selectedKey} focusStoreId={focusStoreId} color={color} pathColor={pathColor} onViewportChange={setViewport} onSelect={key => { setSelectedKey(key); if (key != null) setSnap('half'); }} /> : <p>{en ? 'No shop coordinates available.' : '좌표가 있는 가게가 없습니다.'}</p>}
+        {projection ? <MarketMap contentId={attraction.data.contentId} data={data} lang={lang} projection={projection} points={projection.points} hasGeometry={!!data.boundary?.polygon.length || !!data.paths?.some(path => path.geometry.length)} query={query} dishes={dishes} selectedZoneId={zoneId} onZoneSelect={pickZone} selectedKey={selectedKey} focusStoreId={focusStoreId} color={color} pathColor={pathColor} onViewportChange={setViewport} onSelect={key => { setSelectedKey(key); if (key != null) setSnap('half'); }} /> : <p>{en ? 'No shop coordinates available.' : '좌표가 있는 가게가 없습니다.'}</p>}
       </div>
       <aside className="market-map-list" aria-label={en ? 'Shop list' : '가게 목록'}>
         <button type="button" className="market-map-handle" aria-label={en ? 'Resize shop list' : '가게 목록 크기 조절'} aria-valuetext={snap} onPointerDown={event => { pointerStart.current = event.clientY; dragged.current = false; event.currentTarget.setPointerCapture?.(event.pointerId); }} onPointerUp={event => {

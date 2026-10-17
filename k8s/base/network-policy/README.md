@@ -48,7 +48,6 @@ mTLS 강제는 ADR-0037 OQ-015 default 에서 Phase 4 로 결정 (Phase 3 GA 까
 | `09-allow-app-to-clickhouse.yaml` | analytics → clickhouse:8123 |
 | `10-allow-monitoring-scrape.yaml` | monitoring ns Prometheus → 백엔드 named port http |
 | `11-allow-egress-https-public.yaml` | auth/quant/gifticon → 외부 :443 |
-| `23-allow-portal-fe-egress-https-public.yaml` | portal-fe nginx → 시장 바탕 OCI Object Storage 공인 :443 (사설/link-local 제외, DNS는 01 정책) |
 | `kustomization.yaml` | 위 12개 묶음 |
 
 ## Selector 매칭 검증 결과

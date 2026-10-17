@@ -43,6 +43,7 @@ function MarketSection({ contentId, attractionId, data, lang }: { contentId: str
           {formatGoodPriceSummary(goodPrice, lang)}{' · '}<a href={goodPrice.attribution.url} target="_blank" rel="noreferrer">{goodPrice.attribution.name}</a>
         </p>}
         {attribution && <p className="place-market-source"><a href={attribution.url} target="_blank" rel="noreferrer">{attribution.name}</a>{' · '}{attribution.license}</p>}
+        {(data.attribution ?? []).map(credit => <p className="place-market-source" key={credit}>{credit}</p>)}
         <nav className="place-market-zones" aria-label={C.zones}>
           {sortedZones.slice(0, 3).map((zone, index) => <Link key={zone.id ?? index} to={href}>{[zone.name, zone.dong, formatMarketFloor(zone.floor, lang)].filter((value, i, values) => value && values.indexOf(value) === i).join(' · ')} ({countZone(zone)})</Link>)}
         </nav>

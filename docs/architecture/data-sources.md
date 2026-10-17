@@ -95,7 +95,6 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | 시장 상가 보강 | 소상공인시장진흥공단 상가(상권)정보 API (data.go.kr 15012005) | 필요 | **공공누리 제1유형(출처표시)** | 〃 (`storeListInRadius` / `storeListInPolygon`) |
 | 가게 대표 메뉴·가격 | 행정안전부 착한가격업소 현황 (data.go.kr 3045247 파일) | **불필요** | 이용허락범위 제한 없음 | `place/ingest --job=market-stores` (파일 다운로드, 분기 갱신). 화면 출처: **행정안전부 착한가격업소** |
 | 시장 경계·골목·배경 큰길 | OpenStreetMap (Overpass API) | 불필요 | **ODbL 1.0** (© OpenStreetMap contributors) | `place/ingest --job=market-osm` (매주 월 KST 05:20). 지도 표시만, 데이터 자체 공개 배포 금지. [ADR-0110](../adr/ADR-0110-market-alley-geometry-osm.md) |
-| 시장 바탕 이미지 | OpenFreeMap (OpenMapTiles 스타일·OpenStreetMap 데이터) | 불필요 | **ODbL 1.0**(OSM), **BSD 3-Clause / CC BY 4.0**(OpenMapTiles 스타일); 화면에 OpenFreeMap · OpenMapTiles · © OpenStreetMap contributors 표시 | `scripts/market-basemaps/render.mjs` → OCI PNG, 주 1회 GitHub Actions (`market-basemaps.yml`). [운영·렌더 계약](../../scripts/market-basemaps/README.md) |
 | POI(상가) | 소상공인시장진흥공단 상가(상권)정보 | 필요 | 이용허락범위 제한없음 | `tools/seed/place/normalize_pois.py` |
 | 상품·영양 | 식약처 / 한국소비자원 참가격 | 필요 | 제한없음 / KOGL 제1유형 | `tools/seed/products/normalize.py` |
 | 관광지 영상 | YouTube Data API v3 | 필요 | Google API 서비스 약관 | `place/ingest --job=links` (매시) |
