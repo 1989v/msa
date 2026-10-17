@@ -166,6 +166,7 @@ main 에 올라간 순서와 운영에서 확인한 것. 시각은 KST.
 - 전용 화면 핀(`.place-market-naver-pin`) 계산 스타일: `background rgba(0,0,0,0) · border 0 · padding 0 · 44px` — 브라우저 기본 button 상자가 사라졌다(`wu31-screen-mobile-screen.png`).
 - 콘솔 예외 0(이번엔 합성 휠·클릭 없이 로드만).
 - 캡처(`wu31-detail-desktop-card.png`)에서 미리보기 지도가 16:9 상자(1166×656) 가운데 약 512×470 만 그리고 있었다 — 네이버 지도는 만들어질 때의 상자 크기를 기억하고, 호스트는 어댑터 기본 비율(600/440)·최소 높이를 갖고 있었다. 두 어댑터에 ResizeObserver 로 `setSize`(네이버)/`resize` 이벤트(구글)를 넣고 미리보기 호스트의 비율·최소 높이를 풀었다(`bb1943a46`). 확인은 `prod-preview.mjs`(타일이 상자를 덮는지): 운영 `index-BqEvTk6h.js`(23:51)에서 데스크톱 `box [1166,656] = host [1166,656]`, 타일 36장이 1792×1280 을 덮어 `coversBox: true`; 모바일 `box [324,182] = host`, 타일 10장 768×768, `coversBox: true`(`preview-desktop.png` · `preview-mobile.png`). 이번엔 파드 교체 뒤 운영 HTML 의 번들 해시가 바뀌기까지 약 4분이 걸렸다 — 엔드포인트 전파 지연의 상한을 다시 올려 잡는다.
+  **그러나 캡처는 여전히 가운데 512×470 만 그려져 있었다**(15초 대기 뒤에도 좌상단 120px 픽셀 표준편차 0, 평균 249 = 빈 바탕). 네이버 내부 컨테이너는 1166×656 이었으니 `setSize` 는 먹었지만 타일 레이어가 만들 때 크기에 묶여 있었다. 두 어댑터를 「상자 크기가 0 이면 만들지 않고, 첫 비-0 크기에서 그 크기(`size` 옵션)로 만든다, 이후 변경은 `setSize` + `resize` 이벤트」로 바꿨다(`d63aee011`, 다른 세션의 `df3ac4b4c` 빌드에 실려 배포, 번들 `index-COGnv78P.js`). 결과: 좌상단 표준편차 데스크톱 22 · 모바일 33(지도가 모서리까지 그려짐), `coversBox: true`. 교훈: DOM 크기와 그려진 픽셀은 다른 증거다 — 숫자가 초록이어도 크롭 캡처를 봐야 한다.
 
 ## 10-17 밤 — WU-32 배포 확인 (바탕 PNG 파이프라인 제거)
 `2d476f12c` → 운영 `index-W5oJ9JjS.js`(23:39). 배포 전 검사: tsc 0건 · vitest 9파일 129건 · `grep -rni "basemap|openfreemap|openmaptiles"` 0건 · nginx 계약 검사 94건 통과 · `kubectl kustomize k8s/overlays/oci-arm` 정상(378,637B, 삭제한 NetworkPolicy 이름 0회).
