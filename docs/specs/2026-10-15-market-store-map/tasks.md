@@ -206,4 +206,29 @@ Codex 보내는 순서: WU-15 ∥ WU-16 → WU-17 ∥ WU-18. 같은 워크트리
 - 구글 어댑터(`MarketGoogleMap`, 새 파일): 같은 모델을 `google.maps.Polygon`·`Polyline`·`Marker`(SVG 아이콘, Map ID 불필요) 로. 네이버가 실패한 세션에서만 로드.
 - 검증: 순수 함수 단위 테스트(줌 단계 전환 · 구역 색 · hull · 화면 안 필터 · 라벨 중복 제거), 어댑터는 `naver.maps`·`google.maps` 모킹으로 오버레이 수·채움 스타일·폴백 전환, tsc · 해당 vitest 파일만. 배포 뒤 CDP: 남대문 132180 · 석곡 132055 · 무주 132297 을 국문/영문 × 데스크톱/모바일에서 z16/17/19 캡처(폴리곤 채움 보임 · 골목 강조선 · 마커 단계 · 핀 탭 → 시트 · 검색 → 이동).
 - 범위 밖(별도 승인): 전용 화면(WU-30) · 목록 통합(WU-31) · 정적 PNG 파이프라인 처분(결정 ③) · 입구 적재와 입구→가게 경로.
-- **완료(2026-10-17 밤)**: Codex 구현 `69ce8751e` + 수정 `775a08b35`(우리 SVG 지도 CSS 가 네이버 오버레이 svg 에 새어 검은 상자 · 화면 안 150곳 초과 시 줌 19 에서도 묶음 유지). tsc 0건, vitest 6파일 76건. 운영 확인은 `verifications/p7-production.md` 「10-17 밤 — WU-29 배포 확인」.
+- **완료(2026-10-17 밤)**: Codex 구현 `69ce8751e` + 수정 `775a08b35`(우리 SVG 지도 CSS 가 네이버 오버레이 svg 에 새어 검은 상자 · 화면 안 150곳 초과 시 줌 19 에서도 묶음 유지). tsc 0건, vitest 6파일 76건. 운영 확인은 `verifications/p7-production.md` 「10-17 밤 — WU-29 배포 확인」. 구글 폴백은 운영에서 SDK 차단·인증 실패 콜백 두 경로 모두 구글 지도(마커 82)로 넘어가는 것을 실측.
+
+## 개편 2차 (2026-10-17 밤 사용자 승인 「다 진행 해」 — WU-30 → 31 → 32 → 28 순, Codex 한 번에 하나)
+## WU-30 시장 지도 전용 화면 + 목록 하나 (portal-fe)
+- 라우트 `/attractions/:id/market`, `/en/attractions/:id/market`(+ `/place/` 접두 별칭은 두지 않는다). `App.tsx` 의 `placeRoute` 로 place 호스트에서만. 새 페이지 `pages/place/MarketMapPage.tsx`(lazy chunk). 관광지 응답(`fetchAttraction`)으로 이름·언어 대체 id 를, 시장 응답(`fetchMarket`)으로 지도·가게를 받는다. 시장 응답이 없으면 상세 페이지로 `Navigate replace`.
+- 화면: **지도가 뷰포트 전체**(헤더 아래부터, `100dvh` 기준, safe-area). 상단 바 한 줄 — 뒤로(상세로, `attractionPath`), 시장 이름, 가게 검색 입력(기존 `?marketQuery=` 를 읽고 쓴다), 「시장 밖도 보기」 토글. 그 아래 구역 칩 가로 스크롤(기존 정렬 규칙: 「전체 구역」 + 상위 8 + 「다른 길 N개」). 지도는 `MarketMap`(네이버 → 구글 → SVG 그대로) + `MarketLocate` 를 지도 위 떠 있는 버튼으로.
+- **모바일(<1024)**: 하단 시트 한 장이 목록이다. 3단 스냅 — peek 30% · half 55% · full 85%(지도를 끝까지 덮지 않는다). 드래그·손잡이 탭으로 전환, 핀 탭 시 half 로. `MarketClusterSheet` 는 쓰지 않는다(시트가 곧 목록). **데스크톱(≥1024)**: 좌측 패널 400px 고정 + 지도 나머지. 둘 다 같은 목록 컴포넌트.
+- **목록 하나 `MarketList.tsx`**: 행 = 「지도 영역 안 ∩ 검색어 ∩ 구역」. 라이브 지도 어댑터에 `onViewportChange({ bounds, zoom })` 콜백을 더해(네이버·구글 둘 다, `idle` 때) 지도가 움직이면 목록이 따라온다. 머리말 「현 지도에서 N곳」. 50행씩 「더 보기」. 핀 탭 → 그 필지 가게들이 맨 위로 오고 강조(목록이 바뀌는 것이 아니라 정렬·강조). 검색 일치는 일치 순위 → 이름순, 좌표 없는 가게는 끝에 「지도 위치 없음」. 행 모양은 한 가지(이름 · 배지 · 주소 · 메뉴 접기 `MarketMenuDetails`) — 기존 `place-market-shops` 행 규칙과 같되 한 컴포넌트. 행 클릭(좌표 있음) → `focusStoreId` 로 지도 이동(기존 동작).
+- 링크 갱신: `AttractionActionBar` 의 「시장 지도」 점프와 상세 액션 줄 버튼은 새 라우트로 이동(상세의 `#market` 절은 WU-31 까지 남는다). `MarketSearchPage.detailHref` 도 새 라우트 + `?marketQuery=`. 착한가격·출처 줄은 시트/패널 머리에.
+- SEO: `copy.mjs` 에 `marketMapPath(lang, id)`·`marketMapMeta(lang, attraction, market)`(제목 「{시장} 가게 지도 | …」, 설명에 가게 수·구역 수), `useSeo` 로 canonical·hreflang(영문 대체 id 있을 때만). `prerender-seo.mjs` `placeDetailSitemapEntries` 옆에 **시장 지도 항목**: `fetchMarketContentIds()`(가게 좌표 있는 시장)에 해당하는 관광지만, 상세 항목과 같은 lastmod·대체 짝 규칙, priority 0.6. HTML 프리렌더는 상세와 같이 하지 않는다.
+- 디자인: `DESIGN.md` 토큰만, `docs/design/k-heritage.html` 을 먼저 읽는다(브랜드 면). 시트는 `--kh-radius-asym`·표면 토큰, 손잡이 44px 터치 영역. 다크 테마 둘 다.
+- 검증: tsc(`tsconfig.app.json`) + 해당 vitest 파일만 — 새 `MarketMapPage.test.tsx`(라우트 렌더 · 시장 응답 없으면 상세로 · 검색어 왕복 · 구역 칩 → 목록 필터 · `onViewportChange` → 「현 지도에서 N곳」 · 핀 선택 → 정렬·강조 · 좌표 없는 가게 끝 · 50행 더 보기 · 시트 스냅 상태 전환), `MarketNaverMap`·`MarketGoogleMap` 테스트에 `onViewportChange` 호출, `AttractionActionBar`·`MarketSearchPage` 링크 테스트 갱신, `prerender-seo` 의 sitemap 항목 테스트(있는 패턴대로). 배포 뒤 CDP: 남대문 390/1024/1280 에서 지도 높이·시트 3단·목록 행 수·데스크톱 패널 400px·검색 → 이동, DOM 노드 수(상세 17k 대비).
+- 범위 밖: 상세 페이지의 절 교체·옛 패널/시트 삭제(WU-31), PNG(WU-32), 검색엔진(WU-28).
+
+## WU-31 상세 절 → 요약 카드, 옛 목록 제거 (portal-fe — WU-30 뒤)
+- 상세 페이지 `#market` 절을 요약 카드로: 시장 이름 · 유형/점포수 facts · 착한가격 요약 · 구역 칩 3개 · **상호작용 없는 네이버 지도 16:9**(`MarketNaverMap` 에 `interactive={false}` — draggable/scrollWheel/pinchZoom/keyboard 끔, 줌 16, 폴리곤 + 시장 마커만, 클릭 → 전용 화면) · 「지도 전체 보기」 버튼. 관광공사 소개 음식점·스튜어드 신청은 카드 아래 그대로.
+- 제거: `AttractionMarket.tsx` 의 패널·검색 패널·`MarketClusterSheet`·관련 CSS, `AttractionMarket.test.tsx` 의 해당 테스트(전용 화면 테스트가 대신한다). 상세 DOM 에서 목록 16.8k 노드가 빠지는 것을 CDP 로 확인.
+- `#market` 해시·`?marketQuery=` 는 전용 화면으로 리다이렉트(검색어 유지).
+
+## WU-32 OSM 바탕 PNG 파이프라인 제거 (전 레이어 — WU-31 뒤)
+- 삭제: `.github/workflows/market-basemaps.yml`, `scripts/market-basemaps/`, nginx `/basemaps/` 프록시 블록과 `proxy_cache_path basemaps`, `k8s/base/network-policy/23-allow-portal-fe-egress-https-public.yaml`(다른 사용처 없음 확인 뒤), FE `fetchMarketBasemapMeta`·`useMarketBasemapMeta`·`MarketCanvas` 의 `<image>` 분기·OpenFreeMap 출처 줄·관련 테스트, `data-sources.md` 의 바탕 항목, 시크릿 `MARKET_BASEMAP_PAR`(사용자), 버킷 `msa-market-basemap`(사용자 콘솔). OSM 지오메트리(`market_boundary`·`market_path`·`market_osm_raw`·수집 잡·`attribution`)는 **남긴다**.
+- SVG 지도(`MarketCanvas`) 자체는 이번에 남긴다(두 엔진 실패 폴백). 제거 여부는 WU-32 뒤 별도.
+- 검증: nginx `-t`(docker), kustomize build, tsc·해당 vitest, 배포 뒤 `curl -I /basemaps/markets/132180/meta.json` → 404, 시장 지도 정상.
+
+## WU-28 가게 검색을 검색엔진으로 (search + place — `p7-plan.md` §9.4 계약 초안, 승인됨)
+- §9.4 그대로: OpenSearch 전용 색인(market_store 12.6k 문서 추정치 재확인) + 배치 + `GET /api/v1/place/markets/{contentId}/search?q=` + 브라우저 매칭 폴백. 착수 전 §9.4 를 tasks 계약으로 옮기고 Codex 에 보낸다.
