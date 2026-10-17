@@ -53,8 +53,11 @@ class GameQueryService(
          *
          * 노출 순서대로 앞 행이 먼저 가져가게 하면 '지금 인기'가 신작을 집어가
          * '새로 나온 게임'에 남은 옛 게임이 실린다(행 제목이 거짓말을 하게 된다).
-         * MANUAL(운영자 지정)이 가장 먼저 갖고, TRENDING 은 다음 인기 게임으로
-         * 뒤를 채울 수 있는 유일한 행이라 가장 나중에 고른다.
+         * MANUAL(운영자 지정)이 가장 먼저 갖고, TRENDING 은 가장 나중에 고른다.
+         *
+         * TRENDING 은 중복 제거에서 빠진다 — 다른 행에 실린 게임도 그대로 싣는다. 걷어내면
+         * MANUAL·NEW 가 커질수록 인기 상위가 비어 행이 몇 개만 남고, '지금 인기'가 실제 인기
+         * 순위가 아니게 된다. 맨 나중이라 다른 행에서 게임을 가져가지도 않는다.
          */
         private val DEDUPE_PRIORITY = mapOf(
             CollectionType.MANUAL to 0,
@@ -130,7 +133,7 @@ class GameQueryService(
             val pinned = pickedGames(collection.gameIds)
             val games = when (collection.type) {
                 CollectionType.MANUAL -> pinned
-                CollectionType.TRENDING -> fillAfter(pinned, seen, pageOf(sort = GameSort.TRENDING))
+                CollectionType.TRENDING -> fillAfter(pinned, emptySet(), pageOf(sort = GameSort.TRENDING))
                 CollectionType.NEW -> fillAfter(pinned, seen, pageOf(sort = GameSort.NEW))
                 CollectionType.TAG_BASED ->
                     fillAfter(pinned, seen, pageOf(sort = GameSort.TRENDING, tag = collection.tagSlug))

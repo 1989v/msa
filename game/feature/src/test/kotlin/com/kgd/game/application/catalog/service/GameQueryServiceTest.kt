@@ -225,7 +225,7 @@ class GameQueryServiceTest : BehaviorSpec({
         )
 
         `when`("같은 게임이 신작·인기 산출에 모두 오르면") {
-            then("NEW 행이 갖고 TRENDING 은 다음 인기 게임으로 채운다 — 노출 순서는 display_order 그대로") {
+            then("TRENDING 은 중복 제거 없이 인기 순서 그대로 싣는다 — 노출 순서는 display_order 그대로") {
                 val gameRepository = mockk<GameRepositoryPort>()
                 val statsRepository = mockk<GameStatsRepositoryPort>()
                 val collectionRepository = mockk<GameCollectionRepositoryPort>()
@@ -245,7 +245,7 @@ class GameQueryServiceTest : BehaviorSpec({
                 val collections = service.execute()
 
                 collections.map { it.slug } shouldBe listOf("trending", "new-games")
-                collections[0].games.map { it.slug } shouldBe listOf("backfill")
+                collections[0].games.map { it.slug } shouldBe listOf("fresh", "backfill")
                 collections[1].games.map { it.slug } shouldBe listOf("fresh")
             }
         }
