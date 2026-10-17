@@ -30,3 +30,15 @@ main 에 올라간 순서와 운영에서 확인한 것. 시각은 KST.
 ## 남은 것
 - content 메모리 여유: 힙 비율(`MaxRAMPercentage=60`)을 낮출지는 별도 제안.
 - 7-2 이후(블록·도식·순서 입력), 바탕 지도(OpenFreeMap) 도입 여부는 사용자 결정 대기.
+
+## 10-17 오전 — OOM 수정과 바탕 지도 ③ 첫 반영
+| 커밋 | 내용 | 운영 확인 |
+|---|---|---|
+| `20e722d6b` | 공개 상세·메뉴 붙이기가 원천 JSON 두 열을 안 읽는 투영(`findStoresForDisplay`) | `./gradlew --no-daemon :place:feature:test --rerun --tests '*Market*'` → BUILD SUCCESSFUL, tests 209 failures 0 |
+| `646c15184` | content 전용 `MALLOC_ARENA_MAX=2` | 새 파드 env 확인. 바닥 메모리: 기동 2.5분 590Mi, 12분 673Mi (수정 전 4분 878Mi) |
+| `626de7d6e` | WU-23 렌더 잡(`scripts/market-basemaps/render.mjs`, 워크플로) | 로컬 실행 3곳 1536×1152 성공. CI run 38995080575 success(light·dark·index), 버킷 11객체(5시장×2 + index.json) |
+| `a0a16f1c4` | WU-24 FE 바탕 `<image>` | 운영(번들 `index-ZLg9SAyy.js`): 남대문 light/dark·망원·광장 모두 `image.href=markets/{id}/z18-*.png`, 골목 선 0/0, 출처 줄 true, 핀 18·8·19 |
+| `2e7eb67a7` | CI 러너에 Noto Sans CJK 설치 | 첫 CI 렌더(서문·광명)의 한글 도로명이 □□□ — 재실행 run 38995722148 |
+
+- 버킷 `msa-market-basemap`(공개 읽기) · 쓰기 PAR 만료 2027-10-17 · 시크릿 `MARKET_BASEMAP_PAR`.
+- Codex 샌드박스는 크롬이 SIGABRT 라 렌더 실측은 세션 로컬에서 했다.
