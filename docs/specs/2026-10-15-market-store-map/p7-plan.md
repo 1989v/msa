@@ -217,3 +217,16 @@ ADR 은 만들지 않는다(새 서비스·저장소가 아니다). §8 바탕 �
 
 ### 10.4 결정 요청
 ① 개편안 A~D 승인 여부(특히 전용 화면). ② 엔진 순서: 지금 MapLibre 기본 → 키 오면 네이버 기본(제안) / 네이버만 기다림. ③ 정적 PNG 파이프라인: 포스터로 유지 / 폐기(제안). 앞서 열린 것: §9 검색엔진 A/B, `markets/index.json` 누적, 파생 경계 순환 참조.
+
+### 10.5 구글맵 검토 (2026-10-17 밤 — 사용자 질문 「구글맵에 하는 건?」)
+사실 (측정은 `verifications/p7-production.md` 10-17 밤 절):
+- **구글맵 JS API 는 이미 운영에 배선돼 있다.** 로더 `pages/place/googleMaps.ts`, 키 `VITE_GOOGLE_MAPS_KEY`(CI 시크릿, 2026-08-19), 운영 청크 `useMediaQuery-B88sbR73.js` 에 키 리터럴. 지역 목록 지도(`PlacePage`, 넓은 화면은 즉시)와 관광지 상세 「근처 탐색」(`NearbyExplore`, 좌표 있으면)이 Google Maps 3.66.9d 를 띄우고, 스크립트·타일 200 에 「development purposes」 워터마크가 없다. 결제 계정·키·리퍼러 제한(`data-sources.md §7`)이 **이미 있으므로 네이버의 「결제수단 등록」 벽이 구글에는 없다.**
+- 비용: Dynamic Maps 는 Essentials SKU — 월 10,000 로드 무료, 초과 $7/1,000(공식 가격표). 시장 지도 로드는 기존 두 지도와 같은 키로 합산되므로 Cloud 콘솔에 일일 쿼터 캡(예: 300/일 ≈ 9,000/월)을 걸어 둔다. 10,000 을 넘으면 비용이 로드 수에 비례한다 — OpenFreeMap 은 0.
+- 바탕 데이터(z17 같은 축척 비교): 남대문은 상가 건물 이름(악세사리상가·그릇도매상가·유성상가·중앙상가)·식당·지하철 출구까지 있고, 천안역전·덕계·설악눈메골(가평)·석곡(곡성)·무주 모두 건물 외곽선·도로명·POI 가 있다. 지금 PNG 바탕(OpenFreeMap positron)은 도로·도로명(한/영)은 있지만 POI 가 없고 지방(석곡·무주)은 건물이 거의 없다. 한국 데이터 공급은 「©TMap Mobility」. 2026-02-27 정부가 1:5000 국가기본도 국외 반출을 조건부 허가해 정밀도가 더 오를 수 있다(집행 시점 미확인).
+- 영문: `hl=en` 에서 라벨이 영문(Namdaemun Market · Hoehyeon · Sejong-daero)이고 로더가 이미 `language=document.documentElement.lang` 를 넘긴다 — `/en` 에 그대로 맞는다. 네이버는 영문 라벨이 약하다.
+- 도구: 폴리곤 채움 `google.maps.Polygon`(fillOpacity), 마커 `AdvancedMarkerElement`(Map ID 필요, 로드 과금 동일) 또는 기존 `Marker`, 묶음은 `@googlemaps/markerclusterer`. `clickableIcons: false` 로 구글 POI 클릭을 끈다(우리 가게 마커와 겹침).
+
+제안 개정 — §10.2 A 의 엔진 순서를 바꾼다:
+- **지금: 구글 기본.** 키·결제·리퍼러 제한이 있고, 상세 페이지 「근처 탐색」과 같은 엔진이라 로더·언어 처리·모양이 이어진다. **MapLibre + OpenFreeMap 은 폴백**(키 실패·쿼터 초과·로드 실패, 무료·무한). 네이버는 키가 오면 국문 페이지 기본으로 올릴지 그때 결정한다(장점 국내 친숙·상호 최신, 단점 영문 라벨·결제수단 등록).
+- WU-29 범위: 「MapLibre 엔진 + 공통 오버레이」 → 「구글 엔진(기존 로더 재사용) + 공통 오버레이 + MapLibre 폴백」. 크기는 같다(1~1.5일). 쿼터 캡 설정은 사용자 몫(Cloud 콘솔).
+- 결정 ② 는 이렇게 바뀐다: 「구글 기본 → MapLibre 폴백 → 네이버는 키 오면 재검토」.

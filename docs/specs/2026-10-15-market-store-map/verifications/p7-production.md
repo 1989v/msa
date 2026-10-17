@@ -92,3 +92,12 @@ main 에 올라간 순서와 운영에서 확인한 것. 시각은 KST.
 - 터치 드래그(390px): 지도 중앙에서 120px 느린 드래그 → pointerdown 1 · pointermove 12 · pointerup 1 · pointercancel 0, viewBox `0 0 600 440` → `201.1 120.7 600 440`, scrollY 2036 불변. 대조군(안내문 위 같은 드래그) → scrollY 2036 → 2176. `touch-action: none` 이 운영에서 듣는다.
 - HTML 가로 넘침 0(scrollWidth 초과로 잡힌 것은 전부 SVG `<text>`).
 - 계측 함정: 첫 실행에서 모바일 `scrollBy(0,500)` 뒤 scrollY 가 5,566(최대)으로 튀었는데, 직전에 2,163px 섹션을 `captureBeyondViewport` 로 찍은 뒤였다. 해시 있음 / 없음 / 「시장 지도」 버튼 진입 셋 다 `scrollBy(100)` → +100 으로 재현 안 됨 — 긴 클립 캡처가 스크롤 위치를 바꾼 것이지 사이트 문제가 아니다.
+
+## 10-17 밤 — 구글맵 운영 확인과 바탕 데이터 비교
+사용자 질문 「구글맵에 하는 건?」. 판정은 `p7-plan.md §10.5`.
+
+- 운영 번들(`find-gmaps-chunk.mjs`, 엔트리부터 98 청크 순회): 구글맵 로더는 `useMediaQuery-B88sbR73.js`(19,562B) 에 있고 `AIza…` 키 리터럴 1개 + `VITE_GOOGLE_MAPS_KEY not set` 분기. 엔트리 `index-Y5LaXt-F.js` 에는 없다(지도 코드는 lazy 청크). 네이버 `ncpKeyId` 리터럴은 없음(운영은 SVG 폴백 — 기존 판정과 같다).
+- 실제 로드(`prod-gmaps.mjs`, 1280×900, 캐시 끔): `/` 지역 목록 → `google.maps` 3.66.9d, `.gm-style` 830×642, `maps/api/js` 200 · 타일 16건 200, 「development purposes」 워터마크 없음, 캡처 `gmaps-region-list.png`(하단 「지도 데이터 ©2026 TMap Mobility」). `/attractions/34550` → 근처 탐색 지도 768×510(top 3,187), `maps/api/js` 200 · 타일 12건 200, 워터마크 없음. `gmaps-attraction-detail.png` 는 뷰포트 밖 clip 을 `captureBeyondViewport` 없이 찍어 검정 — 계측 함정, 수치는 유효.
+- 바탕 비교(`gtiles.mjs`): 구글 래스터 타일(`mt1.google.com/vt`, scale 2 — **평가용 1회 조회, 운영 경로 아님**) 2×2 를 이어 중심 768px 을 자르고, 운영 PNG `/basemaps/markets/{id}/light.png`(2x, 줌 17) 중심 768px 과 같은 축척으로 붙였다 → `compare-{namdaemun|seokgok|muju}-z17-ko.png`(좌 구글 · 우 OpenFreeMap), 영문 `compare-namdaemun-z17-en.png`, 남대문·천안 z18 `gmap-*-z18-ko-crop.png`. 바탕 PNG 가 없는 세 곳(설악눈메골 2990069 · 천안역전 2762950 · 덕계 1012430 — 지도 124곳 밖, 가게 180·637·414)은 구글만 `gmap-*-z17-ko-crop.png`.
+- 결과: 구글은 여섯 곳 모두 건물 외곽선·도로명·POI(식당·마트·정류장) 가 있고 남대문은 상가 건물 이름까지. OpenFreeMap positron 은 도로·도로명(한/영 병기)은 있으나 POI 가 없고 석곡·무주는 건물이 거의 없다. 50% 축소 비교 이미지에서 OpenFreeMap 쪽이 빈 면처럼 보이는 것은 옅은 색 때문이고 원본 768px(`ofm-namdaemun-z17-crop.png`)에는 건물·길이 있다.
+- 가격(공식 pricing 페이지 2026-10-17): Dynamic Maps Essentials 월 10,000 무료 → $7/1,000(~100k). Static Maps 10,000 무료 → $2/1,000.
