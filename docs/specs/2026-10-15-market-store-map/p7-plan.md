@@ -147,3 +147,29 @@ IN 이 없는 시장에서 지도가 비는 것은 조작·도식을 아무리 �
 - ③(우리가 렌더한 OSM 바탕)은 **폴백**으로 남긴다 — 키가 없거나 SDK 로드 실패, 프리렌더·검색엔진·영문 페이지에서 네이버 라벨이 부족할 때. 전체 828곳 렌더와 프록시·meta(WU-25)는 그대로 진행.
 - 구글은 가게·시장 딥링크만.
 - 전제: NCP Maps Application 의 Client ID(ncpKeyId, 서비스 URL `https://place.1989v.com`)는 사용자가 발급한다. 키는 `portal-fe/src/seo/copy.mjs` 의 `NAVER_MAP_KEY_ID` 한 곳(빈 값 = 네이버 없음 = 지금 지도).
+
+## 9. 가게 검색을 검색엔진으로 (제안, 2026-10-17 — 결정 대기)
+
+### 9.1 지금
+- 시장 섹션의 「가게·품목·업종 찾기」는 **브라우저 안 부분 문자열 매칭**이다(`matchesMarketStore`: 이름 > 품목 > 메뉴 > 업종 > 음식 사전의 관련 업종). `/markets` 와 `/api/v1/place/markets/search` 는 MySQL 파생 표 `market_store_search`(12,606행 — 지도에 보이는 가게만) 에 공백 정규화 `LIKE` 다.
+- 그래서 안 되는 것: 오타(「떡복이」), 띄어쓰기 변형(「순대 국밥」↔「순대국밥」), 조사·어미, 동의어(「튀김」↔「덴뿌라」), 로마자 변형(`tteokbokki`↔`ddeokbokki`), 관련도 순 정렬(이름 일치가 품목 일치보다 앞서는 정도만 있고 점수는 없다).
+
+### 9.2 선택지
+| | A. OpenSearch 전용 색인 `market-stores` | B. MySQL FULLTEXT(ngram) on `market_store_search` |
+|---|---|---|
+| 되는 것 | nori 형태소 + 동의어(음식 사전을 색인 시 전개) + `fuzziness`(로마자) + 필드 가중치 점수 + 시장별 집계 | 토큰 단위 일치 + 관련도 점수(BM25 유사). 오타·동의어는 안 됨 |
+| 바뀌는 곳 | search:batch 태스클릿 1개(place API `/markets/{id}` 풀스캔 → alias swap, `attraction-reindex` 와 같은 틀) · search:app 조회 API 1개 · FE 두 곳(섹션·`/markets`)이 그 API 를 부르고 실패 시 지금 매칭으로 폴백 | place 마이그레이션 1개(FULLTEXT 인덱스) + 저장소 질의 교체. FE 변경 없음 |
+| 크기 | 12.6k 문서 ≈ 10~20MB(attractions 67k 문서 354MB 와 견주면 작다). 노드 1,105Mi 에 여유 있음 | 0 |
+| 신선도 | 하루 1회 배치(+ 상인회 편집은 다음 배치). 섹션 지도 자체는 place 가 그리므로 지도는 즉시, 검색만 하루 뒤 | 즉시 |
+| 비용 | 구조 변경 → **ADR(0111) 필요**, 구현 2~3일(Codex 3묶음) | 반나절 |
+
+### 9.3 제안
+A 로 간다. 사용자가 짚은 것이 「검색엔진 기반이 아님」이고, 그 핵심(오타·동의어·점수)은 B 가 못 준다. 다만 **섹션 검색은 결과를 지도 강조로 쓰므로 응답은 store id 목록 + 일치 필드**만 받고 렌더는 지금 그대로 — 검색 서비스가 죽어도(게이트웨이 200 빈 바디 함정) 브라우저 매칭으로 폴백한다. 통합 색인(ADR-0090)에 섞지 않는 이유: 가게 12.6k 가 관광지·글·게임 몇 천을 수로 눌러 apex 검색을 가게로 덮는다.
+
+### 9.4 WU-28 계약 초안 (승인 뒤 tasks.md 로)
+- 색인 문서: `contentId, marketName, storeId, name, nameRoman, nameEn, items, itemsEn, categorySub/Mid/Major(+en), menus(관광공사 대표·취급 + 착한가격 메뉴), dishes(음식 사전으로 items·업종에서 전개한 음식명 + 영문), membership, nearby, location(geo_point), zone, path`. 범위 = `market_store_search` 와 같다.
+- 분석기: 한글 `nori`(사용자 사전에 음식명), 영문 `english`, 로마자는 `fuzziness: AUTO`. 동의어는 `dishes.csv` 한 벌에서 색인 시 전개(별도 동의어 파일을 만들지 않는다 — 사전이 둘이 되면 갈린다).
+- API: `GET /api/v1/search/market-stores?q&contentId&lang&page` → `{ items:[{storeId, matchedBy, score}], total, markets:[{contentId, count}] }`. `contentId` 가 있으면 섹션용(해당 시장만), 없으면 `/markets` 용(시장 집계 포함).
+- 배치: `market-store-reindex` CronJob, `attraction-reindex` 10분 뒤. place API `/markets/content-ids` → `/markets/{id}?lang=ko`+`en`. 실패율 5% 상한, alias swap.
+- FE: 섹션은 입력 300ms 디바운스 → API → 돌아온 storeId 로 핀 강조·시트 배지(`matchedBy`), 실패·빈 응답이면 지금 `matchesMarketStore`. `/markets` 는 API 결과를 그대로.
+- 검증: 판정 세트 30문항(떡볶이/떡복이/tteokbokki/순대 국밥/덴뿌라/칼국수 …) 전후 Recall@10, 운영 CDP 남대문·광장.
