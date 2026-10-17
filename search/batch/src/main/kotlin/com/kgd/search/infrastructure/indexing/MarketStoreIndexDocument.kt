@@ -12,4 +12,9 @@ data class MarketStoreIndexDocument(
     val menus: List<String> = emptyList(), val dishes: List<String> = emptyList(), val dishesEn: List<String> = emptyList(),
     val membership: String = "UNKNOWN", val nearby: Boolean = false,
     val location: GeoPoint? = null, val zoneId: Long? = null, val pathId: Long? = null,
+    val roadAddress: String? = null, val jibunAddress: String? = null,
+    val buildingName: String? = null, val dong: String? = null, val floor: String? = null, val ho: String? = null,
+    val goodPrice: Boolean = false, val goodPriceMenus: List<String> = emptyList(), val sources: List<String> = emptyList(),
+    val marketNameEn: String? = null, val region: String? = null, val marketType: String? = null,
+    val attractionIdKo: Long? = null, val attractionIdEn: Long? = null,
 )

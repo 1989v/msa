@@ -172,3 +172,25 @@ main 에 올라간 순서와 운영에서 확인한 것. 시각은 KST.
 - `curl -sI https://place.1989v.com/basemaps/markets/132180/meta.json` → `HTTP/2 200 · content-type: text/html` — `/basemaps/` location 이 사라져 SPA 셸 폴백으로 떨어진다(이전엔 OCI 버킷 프록시의 JSON).
 - 같은 배포에서 `prod-wu31.mjs` 재실행: 상세 카드 1,614 노드 · 미리보기 마커 1 · 리다이렉트 둘 · 전용 화면 핀 투명 — 바탕 코드가 빠져도 화면은 그대로.
 - 남은 수동 작업(사용자): GitHub 시크릿 `MARKET_BASEMAP_PAR`, OCI 버킷 `msa-market-basemap` 삭제. 코드 참조 0건이라 지우지 않아도 동작엔 영향 없다.
+
+## 10-18 새벽 — WU-28a 배포 확인 (가게 검색 전용 색인 `market-stores`)
+`6b885df75`(ADR-0111) → images run 39042286427 23:54 완료 → search·gateway 파드와 CronJob 이미지 `6b885df` 23:58. 재색인 잡을 수동으로 한 번(`kubectl create job --from=cronjob/market-store-reindex market-store-reindex-manual-2358`, `deploy-watch-wu28a.sh`).
+
+```
+MarketStoreApiReindexTasklet : Market stores: 21387 documents; 0/124 markets failed; missing nameRoman=21387 categoryEn=8904
+IndexAliasManager            : Alias 'market-stores' 교체 검사 통과 — 새 21387 건 / 라이브 0 건
+IndexAliasManager            : Alias 'market-stores' → 'market-stores-20261017-1458' (removed 0 old)
+Step: [marketStoreReindexStep] executed in 2m16s258ms · job succeeded=1
+_cat/indices: market-stores-20261017-1458  docs.count 21387  store.size 4.1mb
+```
+
+| 질의 (`GET /api/v1/search/market-stores`, 게이트웨이 경유) | 결과 |
+|---|---|
+| `q=떡볶이&contentId=132180` | 200, items 첫 건 `matchedBy ["DISH"]` score 5.52 |
+| `q=떡복이`(오타) | 200, 첫 건 `["DISH","CATEGORY","NAME","ITEMS"]` score 19.17 — fuzziness 가 잡는다 |
+| `q=순대 국밥`(띄어쓰기) | 200, 첫 건 `["DISH","NAME"]` 32.38, 둘째 `["MENU","DISH"]` |
+| `q=tteokbokki`(로마자) | 200, `["DISH"]` — 영문 음식명 전개(`dishesEn`)로 적중 |
+| `q=떡볶이`(전체, 시장 집계) | 200, total 402, 첫 건 score 74.39, `markets[]` 집계 포함 |
+
+- 색인 문서 수 21,387 은 `market_store_search` 12,606 보다 많다 — 공개 시장 응답의 가게 전부(좌표 없는 가게 포함, 영문 병합)를 넣었기 때문. 주의: API 의 `matchedBy` 는 **배열**인데 WU-28b 의 FE 검증 함수는 문자열을 기대한다 → FE 가 응답을 버리고 폴백한다. WU-28c 와 함께 FE 쪽을 배열로 맞춘다(아래 절).
+- 원천에 없는 것: `nameRoman`(place 응답에 없음 — 21,387 전부 비어 있음, 로마자 질의는 `dishesEn`·`nameEn` 으로만), `categoryEn` 8,904건 비어 있음.

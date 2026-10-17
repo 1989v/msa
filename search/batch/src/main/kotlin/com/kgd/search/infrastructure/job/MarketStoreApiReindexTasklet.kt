@@ -24,12 +24,14 @@ class MarketStoreApiReindexTasklet(
         val ids = client.contentIds()
         check(ids.isNotEmpty()) { "No market content IDs; keeping live alias" }
         val dishes = client.dishes()
+        val metadataKo = client.marketMetadata("ko")
+        val metadataEn = client.marketMetadata("en")
         var failed = 0L
         var indexed = 0L
         var missingRoman = 0L
         var missingCategoryEn = 0L
         ids.forEach { id ->
-            val documents = runCatching { converter.convert(client.market(id, "ko"), client.market(id, "en"), dishes) }
+            val documents = runCatching { converter.convert(client.market(id, "ko"), client.market(id, "en"), dishes, metadataKo[id], metadataEn[id]) }
                 .getOrElse { e ->
                     failed++
                     log.error(e) { "Market fetch/conversion failed: $id" }

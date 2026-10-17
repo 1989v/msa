@@ -148,10 +148,16 @@ export async function fetchMarketDishes(): Promise<MarketDish[]> {
 }
 
 export type MatchedBy = 'NAME' | 'ITEMS' | 'MENU' | 'CATEGORY' | 'DISH' | 'ROMAN';
+export interface MarketStoreSearchDisplay {
+  name?: string | null; nameEn?: string | null; categorySub?: string | null; categorySubEn?: string | null;
+  address?: string | null; buildingName?: string | null; dong?: string | null; floor?: string | null; ho?: string | null;
+  goodPrice?: boolean | null; goodPriceMenus?: string[] | null; sources?: string[] | null;
+  membership?: string | null; nearby?: boolean | null; marketName?: string | null; attraction?: MarketAttractionRef | null;
+}
 export interface MarketStoreSearchResult {
-  items: Array<{ storeId: number; contentId: string; matchedBy: MatchedBy; score: number }>;
+  items: Array<MarketStoreSearchDisplay & { storeId: number; contentId: string; matchedBy: MatchedBy; score: number }>;
   total: number;
-  markets: Array<{ contentId: string; marketName: string; count: number }>;
+  markets: Array<{ contentId: string; marketName: string; count: number; marketNameEn?: string | null; region?: string | null; marketType?: string | null; attraction?: MarketAttractionRef | null }>;
 }
 export async function searchMarketStores(q: string, options: { contentId?: string; lang: PlaceLang; page?: number; size?: number }): Promise<MarketStoreSearchResult | null> {
   try {
@@ -160,9 +166,17 @@ export async function searchMarketStores(q: string, options: { contentId?: strin
     });
     const data = response.data?.data;
     const fields: MatchedBy[] = ['NAME', 'ITEMS', 'MENU', 'CATEGORY', 'DISH', 'ROMAN'];
+    const optionalText = (value: unknown) => value == null || typeof value === 'string';
+    const optionalBoolean = (value: unknown) => value == null || typeof value === 'boolean';
+    const optionalStrings = (value: unknown) => value == null || (Array.isArray(value) && value.every(v => typeof v === 'string'));
+    const attractionValid = (value: unknown) => value == null || (typeof value === 'object' && 'id' in value && Number.isSafeInteger(value.id) && Number(value.id) > 0 && 'lang' in value && (value.lang === 'ko' || value.lang === 'en'));
+    // Search returns all matching named clauses; the existing section badge displays the first.
+    if (data && Array.isArray(data.items)) data.items = data.items.map(item => item && ({ ...item, matchedBy: Array.isArray(item.matchedBy) ? item.matchedBy[0] : item.matchedBy }));
     if (response.data?.success === false || response.data?.error != null || !data || !Array.isArray(data.items) || !Number.isFinite(data.total) || !Array.isArray(data.markets)
-      || !data.items.every(item => item && Number.isFinite(item.storeId) && typeof item.contentId === 'string' && fields.includes(item.matchedBy) && Number.isFinite(item.score))
-      || !data.markets.every(market => market && typeof market.contentId === 'string' && typeof market.marketName === 'string' && Number.isFinite(market.count))) return null;
+      || !data.items.every(item => item && Number.isFinite(item.storeId) && typeof item.contentId === 'string' && fields.includes(item.matchedBy) && Number.isFinite(item.score)
+        && [item.name, item.nameEn, item.categorySub, item.categorySubEn, item.address, item.buildingName, item.dong, item.floor, item.ho, item.membership, item.marketName].every(optionalText)
+        && optionalBoolean(item.goodPrice) && optionalBoolean(item.nearby) && optionalStrings(item.goodPriceMenus) && optionalStrings(item.sources) && attractionValid(item.attraction))
+      || !data.markets.every(market => market && typeof market.contentId === 'string' && typeof market.marketName === 'string' && Number.isFinite(market.count) && [market.marketNameEn, market.region, market.marketType].every(optionalText) && attractionValid(market.attraction))) return null;
     return data;
   } catch { return null; }
 }

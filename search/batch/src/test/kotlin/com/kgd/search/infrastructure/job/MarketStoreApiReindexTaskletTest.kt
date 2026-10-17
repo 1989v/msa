@@ -30,6 +30,7 @@ class MarketStoreApiReindexTaskletTest : BehaviorSpec({
                 val chunk = mockk<ChunkContext>()
                 every { chunk.stepContext.stepExecution.jobExecution } returns execution
                 every { client.contentIds() } returns (1..attempted).map { it.toString() }
+                every { client.marketMetadata(any()) } returns emptyMap()
                 every { client.dishes() } returns mapper.readTree("[]")
                 every { client.market(any(), any()) } answers {
                     val id = firstArg<String>()

@@ -5,7 +5,7 @@ import tools.jackson.databind.JsonNode
 
 @Component
 class MarketStoreDocumentConverter {
-    fun convert(ko: JsonNode, en: JsonNode, dictionary: JsonNode): List<MarketStoreIndexDocument> {
+    fun convert(ko: JsonNode, en: JsonNode, dictionary: JsonNode, metadataKo: JsonNode? = null, metadataEn: JsonNode? = null): List<MarketStoreIndexDocument> {
         val english = en.path("stores").associateBy { it.path("id").asLong() }
         return ko.path("stores").toList().map { store ->
             val id = requireNotNull(store.get("id")?.takeUnless { it.isNull }) { "Store ID missing" }.asLong()
@@ -42,9 +42,19 @@ class MarketStoreDocumentConverter {
                 membership = store.path("membership").asText("UNKNOWN"), nearby = store.path("nearby").asBoolean(false),
                 location = if (lat != null && lon != null && lat.isFinite() && lon.isFinite() && lat in -90.0..90.0 && lon in -180.0..180.0) GeoPoint(lat, lon) else null,
                 zoneId = store.get("zoneId")?.takeUnless { it.isNull }?.asLong(),
+                roadAddress = store.text("roadAddress"), jibunAddress = store.text("jibunAddress"),
+                buildingName = store.text("buildingName"), dong = store.text("dong"), floor = store.text("floor"), ho = store.text("ho"),
+                goodPrice = store.get("goodPrice")?.let { !it.isNull } ?: false,
+                goodPriceMenus = store.path("goodPrice").path("menus").mapNotNull { it.text("name") },
+                sources = store.path("sources").toList().map { it.asText() },
+                marketNameEn = en.path("market").text("nameEn"),
+                region = metadataKo?.text("region"), marketType = ko.path("market").text("marketType"),
+                attractionIdKo = metadataKo.attractionId("ko"), attractionIdEn = metadataEn.attractionId("en"),
                 pathId = store.get("pathId")?.takeUnless { it.isNull }?.asLong(),
             )
         }
     }
+    private fun JsonNode?.attractionId(lang: String): Long? = this?.path("attraction")
+        ?.takeIf { it.path("lang").asText() == lang }?.get("id")?.takeUnless { it.isNull }?.asLong()
     private fun JsonNode.text(field: String): String? = get(field)?.takeUnless { it.isNull }?.asText()?.takeIf { it.isNotBlank() }
 }

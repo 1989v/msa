@@ -41,3 +41,15 @@ describe('market-store engine API', () => {
     expect(get).toHaveBeenLastCalledWith('/api/v1/search/market-stores', { params: { q: '국밥', contentId: '100', lang: 'en', page: 0, size: 200 } });
   });
 });
+
+it('accepts nullable metadata and server matched-clause arrays', async () => {
+  const data = { items: [{ storeId: 2, contentId: '100', matchedBy: ['NAME', 'DISH'], score: 4, name: '가게', nameEn: null,
+    address: '시장길', goodPrice: true, goodPriceMenus: ['국수'], sources: ['ONNURI'], attraction: { id: 7, lang: 'ko' } }],
+    total: 1, markets: [{ contentId: '100', marketName: '시장', count: 1, region: null, marketNameEn: null, marketType: 'STREET', attraction: null }] };
+  get.mockResolvedValue({ data: { data } });
+  expect((await searchMarketStores('가게', { lang: 'ko' }))?.items[0]).toMatchObject({ name: '가게', matchedBy: 'NAME', goodPriceMenus: ['국수'] });
+});
+it.each([{ goodPrice: 'yes' }, { goodPriceMenus: [5000] }, { attraction: { id: 7, lang: 'ja' } }, { address: 7 }, { sources: 'ONNURI' }])('rejects invalid new display fields %j', async bad => {
+  get.mockResolvedValue({ data: { data: { items: [{ storeId: 2, contentId: '100', matchedBy: 'NAME', score: 4, ...bad }], total: 1, markets: [] } } });
+  expect(await searchMarketStores('가게', { lang: 'ko' })).toBeNull();
+});

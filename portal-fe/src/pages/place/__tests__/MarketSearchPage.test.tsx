@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, useLocation } from 'react-router-dom';
-import { searchMarkets, type MarketSearchResult } from '../../../api/marketApi';
+import { searchMarkets, searchMarketStores, fetchMarket, type MarketSearchResult } from '../../../api/marketApi';
 import MarketSearchPage from '../MarketSearchPage';
 
-vi.mock('../../../api/marketApi', () => ({ searchMarkets: vi.fn() }));
+vi.mock('../../../api/marketApi', () => ({ searchMarkets: vi.fn(), searchMarketStores: vi.fn(), fetchMarket: vi.fn() }));
 vi.mock('../../../components/Footer', () => ({ default: () => null }));
 vi.mock('../../../hooks/useHeritageSurface', () => ({ useHeritageSurface: vi.fn() }));
 afterEach(() => { cleanup(); vi.resetAllMocks(); });
@@ -48,7 +48,7 @@ describe('market shop discovery', () => {
     await screen.findByRole('link', { name: /광명시장/ });
     fireEvent.change(screen.getByRole('searchbox'), { target: { value: '  순대  ' } });
     fireEvent.click(screen.getByRole('button', { name: '찾기' }));
-    expect(searchMarkets).toHaveBeenLastCalledWith('순대', 'ko', 0);
+    await waitFor(() => expect(searchMarkets).toHaveBeenLastCalledWith('순대', 'ko', 0));
     expect(screen.getByTestId('address')).toHaveTextContent('/markets');
     expect(screen.getByRole('searchbox')).toHaveAttribute('maxlength', '50');
   });
@@ -75,10 +75,10 @@ describe('market shop discovery', () => {
     vi.mocked(searchMarkets).mockResolvedValue({ ...result, stores: { ...result.stores, total: 21 } });
     mount('/markets?q=국밥');
     fireEvent.click(await screen.findByRole('button', { name: '다음' }));
-    expect(searchMarkets).toHaveBeenLastCalledWith('국밥', 'ko', 1);
+    await waitFor(() => expect(searchMarkets).toHaveBeenLastCalledWith('국밥', 'ko', 1));
     fireEvent.change(screen.getByRole('searchbox'), { target: { value: '순대' } });
     fireEvent.click(screen.getByRole('button', { name: '찾기' }));
-    expect(searchMarkets).toHaveBeenLastCalledWith('순대', 'ko', 0);
+    await waitFor(() => expect(searchMarkets).toHaveBeenLastCalledWith('순대', 'ko', 0));
   });
 });
 
@@ -107,4 +107,30 @@ it('shows match evidence, related category distinction and English fields from s
   expect(screen.getByText('Snacks · Snack shop')).toBeInTheDocument();
   expect(screen.getByText('Related category · 김밥/만두/분식')).toHaveAttribute('data-related', 'true');
   expect(screen.queryByText(/Signature menu/)).not.toBeInTheDocument();
+});
+
+it('uses one engine request for market and shop rows without fetching market details', async () => {
+  vi.mocked(searchMarketStores).mockResolvedValue({ items: [{ storeId: 4, contentId: '100', matchedBy: 'NAME', score: 4,
+    name: '국수집', nameEn: 'Noodle shop', address: '서울 중구 시장길 1', marketName: '광명시장', goodPrice: true, goodPriceMenus: ['칼국수', '수제비'],
+    attraction: { id: 8, lang: 'en' } }], total: 1, markets: [{ contentId: '100', marketName: '광명시장', region: '경기 광명', marketType: 'STREET', count: 12, attraction: { id: 7, lang: 'ko' } }] });
+  mount('/en/markets?q=noodle');
+  expect(await screen.findByText('Noodle shop · 국수집')).toBeInTheDocument();
+  expect(screen.getByText('광명시장 · 서울 중구 시장길 1')).toBeInTheDocument();
+  expect(screen.getByText('칼국수')).toBeInTheDocument();
+  expect(screen.queryByText('수제비')).not.toBeInTheDocument();
+  expect(screen.getByText(/12 shops/)).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: /Noodle shop/ })).toHaveAttribute('href', '/en/attractions/8/market?marketQuery=noodle');
+  expect(searchMarketStores).toHaveBeenCalledOnce();
+  expect(searchMarketStores).toHaveBeenCalledWith('noodle', { lang: 'en', page: 0, size: 20 });
+  expect(searchMarkets).not.toHaveBeenCalled();
+  expect(fetchMarket).not.toHaveBeenCalled();
+});
+it.each([null, { items: [], total: 0, markets: [] }])('falls back for unavailable or empty engine results %j', async engine => {
+  vi.mocked(searchMarketStores).mockResolvedValue(engine);
+  vi.mocked(searchMarkets).mockResolvedValue(result);
+  mount('/markets?q=국수');
+  expect(await screen.findByText('광명시장')).toBeInTheDocument();
+  expect(searchMarketStores).toHaveBeenCalledOnce();
+  expect(searchMarkets).toHaveBeenCalledWith('국수', 'ko', 0);
+  expect(fetchMarket).not.toHaveBeenCalled();
 });

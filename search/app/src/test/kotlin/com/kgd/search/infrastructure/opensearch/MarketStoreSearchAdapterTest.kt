@@ -43,4 +43,34 @@ class MarketStoreSearchAdapterTest : BehaviorSpec({
             request.query()!!.bool().filter().isEmpty() shouldBe true
         }
     }
+    given("display rows and filtered sources") {
+        then("map all item metadata, prefer road address, and fall back to Korean attractions") {
+            val doc = MarketStoreSearchDocument(storeId = 2, contentId = "100", name = "국수", nameEn = "Noodles",
+                categorySub = "한식", categorySubEn = "Korean", roadAddress = "도로", jibunAddress = "지번",
+                buildingName = "상가", dong = "A", floor = "2", ho = "201", goodPrice = true,
+                goodPriceMenus = listOf("국수"), sources = listOf("ONNURI"), marketName = "시장", attractionIdKo = 7, attractionIdEn = 8)
+            val item = adapter.item(doc, listOf("NAME_name", "NAME_nameEn"), 4.0, "en")
+            item.name shouldBe "국수"
+            item.nameEn shouldBe "Noodles"
+            item.address shouldBe "도로"
+            item.categorySubEn shouldBe "Korean"
+            item.goodPriceMenus shouldBe listOf("국수")
+            item.sources shouldBe listOf("ONNURI")
+            item.attraction shouldBe SearchMarketStoreUseCase.Attraction(8, "en")
+            item.matchedBy shouldBe listOf("NAME")
+            val fallback = adapter.item(doc.copy(roadAddress = " ", attractionIdEn = null), emptyList(), 0.0, "en")
+            fallback.address shouldBe "지번"
+            fallback.attraction shouldBe SearchMarketStoreUseCase.Attraction(7, "ko")
+            adapter.item(doc.copy(attractionIdKo = null, attractionIdEn = null), emptyList(), 0.0, "en").attraction shouldBe null
+        }
+        then("fetch only required item fields and bounded per-market metadata") {
+            val request = adapter.request(SearchMarketStoreUseCase.Query("국수"))
+            request.source()!!.filter().includes() shouldBe MarketStoreSearchAdapter.ITEM_FIELDS
+            request.source()!!.filter().includes().contains("menus") shouldBe false
+            val metadata = request.aggregations().getValue("markets").aggregations().getValue("metadata").topHits()
+            metadata.size() shouldBe 1
+            metadata.source()!!.filter().includes() shouldBe MarketStoreSearchAdapter.MARKET_FIELDS
+        }
+    }
+
 })

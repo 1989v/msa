@@ -105,6 +105,62 @@
       },
       "location": {
         "type": "geo_point"
+      },
+      "roadAddress": {
+        "type": "keyword",
+        "index": false
+      },
+      "jibunAddress": {
+        "type": "keyword",
+        "index": false
+      },
+      "buildingName": {
+        "type": "keyword",
+        "index": false
+      },
+      "dong": {
+        "type": "keyword",
+        "index": false
+      },
+      "floor": {
+        "type": "keyword",
+        "index": false
+      },
+      "ho": {
+        "type": "keyword",
+        "index": false
+      },
+      "goodPriceMenus": {
+        "type": "keyword",
+        "index": false
+      },
+      "sources": {
+        "type": "keyword",
+        "index": false
+      },
+      "marketNameEn": {
+        "type": "keyword",
+        "index": false
+      },
+      "region": {
+        "type": "keyword",
+        "index": false
+      },
+      "marketType": {
+        "type": "keyword",
+        "index": false
+      },
+      "goodPrice": {
+        "type": "boolean",
+        "index": false
+      },
+      "attractionIdKo": {
+        "type": "long",
+        "index": false
+      },
+      "attractionIdEn": {
+        "type": "long",
+        "index": false
       }
     }
   }

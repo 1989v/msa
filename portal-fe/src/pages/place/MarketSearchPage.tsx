@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { searchMarkets, type MarketAttractionRef } from '../../api/marketApi';
+import { searchMarkets, searchMarketStores, type MarketSearchResult, type MarketAttractionRef } from '../../api/marketApi';
 import type { PlaceLang } from '../../api/placeApi';
 import Footer from '../../components/Footer';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
@@ -9,6 +9,7 @@ import { marketMapPath, marketIndexMeta, placeHreflangAlternates, placePath, pla
 import { useSeo } from '../../seo/useSeo';
 import { formatGoodPriceMenu, marketDisplayName, marketMatchLabel } from './marketView';
 import MarketMenuDetails from './MarketMenuDetails';
+import { marketStoreSearchEnabled, marketStoreSearchStatus } from './useMarketStoreSearch';
 import './PlacePage.css';
 import './MarketSearchPage.css';
 
@@ -39,7 +40,23 @@ export default function MarketSearchPage() {
   const [page, setPage] = useState(0);
   const { data, isLoading, isError } = useQuery({
     queryKey: ['market-search', query, lang, page],
-    queryFn: () => searchMarkets(query, lang, page),
+    queryFn: async (): Promise<MarketSearchResult> => {
+      const engine = marketStoreSearchEnabled(query) ? await searchMarketStores(query, { lang, page, size: 20 }) : null;
+      if (marketStoreSearchStatus(query, engine) === 'fallback' || !engine) return searchMarkets(query, lang, page);
+      return {
+        query,
+        markets: engine.markets.map(market => ({ contentId: market.contentId,
+          name: lang === 'en' ? market.marketNameEn || market.marketName : market.marketName,
+          region: market.region ?? null, marketType: market.marketType ?? '', storeCount: market.count, attraction: market.attraction ?? null })),
+        stores: { total: engine.total, page, size: 20, items: engine.items.map(shop => ({
+          storeId: shop.storeId, name: shop.name ?? '', nameEn: shop.nameEn, items: null,
+          category: shop.categorySub ?? null, categoryEn: shop.categorySubEn,
+          marketContentId: shop.contentId, marketName: shop.marketName ?? '', zoneName: shop.address ?? null,
+          latitude: null, longitude: null, attraction: shop.attraction ?? null, matchedBy: shop.matchedBy,
+          goodPrice: shop.goodPrice ? { category: shop.categorySub ?? '', menus: (shop.goodPriceMenus ?? []).map(name => ({ name, price: null })) } : null,
+        })) },
+      };
+    },
     staleTime: 60_000, retry: false,
   });
   useSeo({ ...meta, canonical: placeUrl(lang, '/markets'), lang, alternates: placeHreflangAlternates('/markets') });
