@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { MarketStore, MarketZone } from '../../../api/marketApi';
-import { clusterByScreenDistance, formatMarketPrice, formatGoodPriceSummary, formatMarketFloor, groupMarketPins, longestMarketSegmentMidpoint, marketSourceBadges, matchesMarketName, matchesMarketStore, projectMarketPins, visibleMarketStores, zoneIds } from '../marketView';
+import type { MarketStore } from '../../../api/marketApi';
+import { clusterByScreenDistance, formatMarketPrice, formatGoodPriceSummary, formatMarketFloor, groupMarketPins, longestMarketSegmentMidpoint, marketSourceBadges, matchesMarketName, matchesMarketStore, projectMarketPins, visibleMarketStores } from '../marketView';
 
 const store = (overrides: Partial<MarketStore> = {}): MarketStore => ({
   id: 1, name: '유명 순대국', items: null, zoneId: 1, membership: 'IN', latitude: 37.5, longitude: 127,
@@ -82,13 +82,12 @@ describe('market display projection', () => {
     expect(marketSourceBadges(store({ sources: ['MANUAL'], actorKind: 'STEWARD' }), 'en')).toEqual(['Merchant association']);
   });
 
-  it('hides OUT by default, keeps UNKNOWN in the list, and includes child floors when filtering a building', () => {
-    const floor: MarketZone = { id: 2, parentId: 1, kind: 'FLOOR', name: '1층', dong: null, floor: '1', children: [] };
-    const building: MarketZone = { ...floor, id: 1, parentId: null, kind: 'BUILDING', name: '본관', children: [floor] };
-    const rows = [store(), store({ id: 2, zoneId: 2, membership: 'UNKNOWN' }), store({ id: 3, membership: 'OUT' }), store({ id: 4, zoneId: null })];
-    expect(visibleMarketStores(rows, false).map((row) => row.id)).toEqual([1, 2, 4]);
-    expect(visibleMarketStores(rows, true, zoneIds(building)).map((row) => row.id)).toEqual([1, 2, 3]);
-    expect(visibleMarketStores(rows, false, zoneIds(floor)).map((row) => row.id)).toEqual([2]);
+  it('intersects type with membership while keeping UNKNOWN visible', () => {
+    const rows = [store({ categoryMajor: '음식', categoryMid: '한식' }), store({ id: 2, membership: 'UNKNOWN', categoryMajor: '음식', categoryMid: '한식' }), store({ id: 3, membership: 'OUT', categoryMajor: '소매', categoryMid: '식료품 소매' }), store({ id: 4, categoryMajor: '소매', categoryMid: '식료품 소매' })];
+    expect(visibleMarketStores(rows, false).map(row => row.id)).toEqual([1, 2, 4]);
+    expect(visibleMarketStores(rows, true, 'grocery').map(row => row.id)).toEqual([3, 4]);
+    expect(visibleMarketStores(rows, false, 'food').map(row => row.id)).toEqual([1, 2]);
+    expect(visibleMarketStores(rows, false, null)).toEqual(visibleMarketStores(rows, false));
   });
 
   it.each([

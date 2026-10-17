@@ -21,12 +21,12 @@ vi.mock('../MarketMap', () => ({ default: (props: ComponentProps<typeof MarketMa
 const shop = (id: number, name: string, extra: Partial<MarketStore> = {}): MarketStore => ({
   id, name, items: null, zoneId: 1, membership: 'IN', latitude: 37.5, longitude: 127,
   roadAddress: null, jibunAddress: `필지${id}`, buildingName: null, dong: null, floor: null, ho: null,
-  categoryMajor: null, categoryMid: null, categorySub: null, sources: ['ONNURI'], pinKind: 'EXACT', manual: false, actorKind: null, relativePosition: null, positionNote: null, ...extra,
+  categoryMajor: '음식', categoryMid: '한식', categorySub: null, sources: ['ONNURI'], pinKind: 'EXACT', manual: false, actorKind: null, relativePosition: null, positionNote: null, ...extra,
 });
 const data: MarketResponse = {
   market: { name: '시장', marketType: 'STREET', sourceMarketType: null, storeCountRaw: '4', openingCycle: null, facilities: null, attribution: null },
   zones: [1, 2].map(id => ({ id, parentId: null, kind: 'BUILDING', name: `구역${id}`, dong: null, floor: null, children: [] })),
-  stores: [shop(1, '가게'), shop(2, '하늘가게', { latitude: 37.5001 }), shop(3, '먼가게', { zoneId: 2, latitude: 38 }), shop(4, '가나다 위치없음', { latitude: null })],
+  stores: [shop(1, '가게'), shop(2, '하늘가게', { latitude: 37.5001 }), shop(3, '먼가게', { zoneId: 2, categoryMajor: '소매', categoryMid: '섬유·의복·신발 소매', latitude: 38 }), shop(4, '가나다 위치없음', { latitude: null })],
 };
 function Address() { const location = useLocation(); const navigate = useNavigate(); return <><output data-testid="address">{location.pathname}{location.search}</output><button onClick={() => navigate(-1)}>이전 주소</button></>; }
 function mount(entry = '/attractions/7/market', entries = [entry]) {
@@ -80,16 +80,16 @@ describe('dedicated market map page', () => {
     fireEvent.change(input, { target: { value: '' } }); expect(screen.getByTestId('address')).toHaveTextContent('/attractions/7/market?keep=1');
     fireEvent.click(screen.getByRole('button', { name: '이전 주소' })); await screen.findByText('Before');
   });
-  it('intersects viewport and zones but searches outside the viewport, with matching heading and rows', async () => {
+  it('intersects viewport and shop types but searches outside the viewport, with matching heading and rows', async () => {
     mount();
     await screen.findByRole('heading', { name: '현 지도에서 2곳 · 지도 위치 없음 1곳' });
     const list = screen.getByRole('complementary');
     expect(within(list).queryByText('먼가게')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: '구역2 (1)' }));
+    fireEvent.click(screen.getByRole('button', { name: '의류·신발 (1)' }));
     expect(screen.getByRole('heading', { name: '현 지도에서 0곳' })).toBeInTheDocument();
     fireEvent.change(screen.getByRole('searchbox'), { target: { value: '먼가게' } });
     expect(screen.getByRole('heading', { name: '찾은 가게 1곳' })).toBeInTheDocument(); expect(within(list).getByText('먼가게')).toBeInTheDocument();
-    fireEvent.change(screen.getByRole('searchbox'), { target: { value: '' } }); fireEvent.click(screen.getByRole('button', { name: '전체 구역' }));
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: '' } }); fireEvent.click(screen.getByRole('button', { name: '전체' }));
     fireEvent.click(screen.getByRole('button', { name: '지도 이동' })); expect(screen.getByRole('heading', { name: '현 지도에서 0곳 · 지도 위치 없음 1곳' })).toBeInTheDocument();
     expect(within(list).getByText('지도 위치 없음')).toBeInTheDocument();
   });
@@ -122,11 +122,11 @@ describe('dedicated market map page', () => {
     fireEvent.click(screen.getByRole('button', { name: '핀 선택' })); expect(page).toHaveAttribute('data-snap', 'half');
     fireEvent.click(handle); expect(page).toHaveAttribute('data-snap', 'full'); fireEvent.focus(screen.getByRole('searchbox')); expect(page).toHaveAttribute('data-snap', 'half');
   });
-  it('includes outside shops only on request and shares top-eight ordering with other-road expansion', async () => {
-    const zones = Array.from({ length: 11 }, (_, index) => ({ ...data.zones[0], id: index + 1, name: `구역${index + 1}` }));
-    vi.mocked(fetchMarket).mockResolvedValue({ ...data, zones }); mount(); await screen.findByRole('heading', { name: '시장' });
-    expect(screen.getByRole('button', { name: '다른 길 3개' })).toBeInTheDocument(); expect(screen.queryByRole('button', { name: '구역11 (0)' })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: '다른 길 3개' })); expect(screen.getByRole('button', { name: '구역11 (0)' })).toBeInTheDocument();
+  it('shows only nonempty shop types and requests outside shops only on toggle', async () => {
+    mount(); await screen.findByRole('heading', { name: '시장' });
+    const nav = screen.getByRole('navigation', { name: '가게 유형' });
+    expect(within(nav).getAllByRole('button').map(button => button.textContent)).toEqual(['전체', '음식점 (3)', '의류·신발 (1)']);
+    expect(screen.queryByRole('button', { name: /다른 길/ })).toBeNull();
     fireEvent.click(screen.getByRole('checkbox', { name: '시장 밖도 보기' })); await waitFor(() => expect(fetchMarket).toHaveBeenLastCalledWith('100', true, 'ko'));
   });
 });
@@ -154,4 +154,18 @@ it.each(['null', 'empty', 'error'])('keeps browser dish fallback for %s engine r
   await screen.findByText('관련 업종 · 분식');
   await waitFor(() => expect(searchMarketStores).toHaveBeenCalledTimes(1));
   expect(screen.getByText('분식집')).toBeInTheDocument(); expect(mapProps.searchStoreIds).toBeUndefined();
+});
+
+it('enters via type URL, preserves other params and clears focus and selection on type changes', async () => {
+  mount('/attractions/7/market?type=food&keep=1');
+  await screen.findByRole('heading', { name: '현 지도에서 2곳 · 지도 위치 없음 1곳' });
+  expect(screen.getByRole('button', { name: '음식점 (3)' })).toHaveAttribute('aria-pressed', 'true');
+  expect(mapProps.points.flatMap(point => point.stores.map(store => store.id))).toEqual([1, 2]);
+  fireEvent.click(screen.getByRole('button', { name: '핀 선택' })); fireEvent.click(screen.getByRole('button', { name: '지도에서 보기: 가게' })); expect(mapProps.focusStoreId).toBe(1);
+  fireEvent.click(screen.getByRole('button', { name: '의류·신발 (1)' }));
+  expect(mapProps.selectedKey).toBeNull(); expect(mapProps.focusStoreId).toBeNull(); expect(screen.getByTestId('address')).toHaveTextContent('type=fashion&keep=1'); expect(screen.getByText('표시할 가게가 없습니다')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: '전체' })); expect(screen.getByTestId('address')).toHaveTextContent('/attractions/7/market?keep=1');
+});
+it('treats an invalid URL type as All', async () => {
+  mount('/attractions/7/market?type=invalid'); await screen.findByRole('heading', { name: '현 지도에서 2곳 · 지도 위치 없음 1곳' }); expect(screen.getByRole('button', { name: '전체' })).toHaveAttribute('aria-pressed', 'true');
 });

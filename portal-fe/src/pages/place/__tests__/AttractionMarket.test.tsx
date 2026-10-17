@@ -14,7 +14,7 @@ afterEach(() => { cleanup(); vi.resetAllMocks(); });
 const shop = (overrides: Partial<MarketStore> = {}): MarketStore => ({
   id: 1, name: '유명순대국', items: '순대', zoneId: null, membership: 'IN', latitude: 37.5, longitude: 127,
   roadAddress: null, jibunAddress: '서울 1', buildingName: null, dong: null, floor: null, ho: null,
-  categoryMajor: null, categoryMid: null, categorySub: null, sources: ['ONNURI'], pinKind: 'EXACT',
+  categoryMajor: '음식', categoryMid: '한식', categorySub: null, sources: ['ONNURI'], pinKind: 'EXACT',
   manual: false, actorKind: null, relativePosition: null, positionNote: null, ...overrides,
 });
 const data: MarketResponse = {
@@ -43,12 +43,13 @@ describe('attraction market summary card', () => {
     expect(card.closest('section')).toHaveAttribute('id', 'market'); expect(card.closest('section')).toHaveAttribute('data-place-section', 'market');
     expect(screen.queryByRole('searchbox')).toBeNull(); expect(screen.queryByRole('checkbox')).toBeNull(); expect(within(card).queryByRole('list')).toBeNull();
   });
-  it('uses shared zone priority and counts for exactly three plain map links', async () => {
-    const zones = [1, 2, 3, 4].map(id => ({ id, parentId: null, kind: 'ROAD', name: id === 4 ? '시장길' : `길${id}`, dong: null, floor: null, children: [] } as MarketResponse['zones'][number]));
-    vi.mocked(fetchMarket).mockResolvedValue({ ...data, zones, stores: [shop({ zoneId: 1 }), shop({ id: 2, zoneId: 1 }), shop({ id: 3, zoneId: 2 })] });
-    mount(); const nav = await screen.findByRole('navigation', { name: '골목·건물·층' });
-    const links = within(nav).getAllByRole('link'); expect(links.map(link => link.textContent)).toEqual(['시장길 (0)', '길1 (2)', '길2 (1)']);
-    links.forEach(link => expect(link).toHaveAttribute('href', '/attractions/7/market'));
+  it.each(['ko', 'en'] as const)('links the top three IN-only shop types in %s', async lang => {
+    vi.mocked(fetchMarket).mockResolvedValue({ ...data, stores: [shop(), shop({ id: 2 }), shop({ id: 3, categoryMajor: '소매', categoryMid: '식료품 소매' }), shop({ id: 4, categoryMajor: '소매', categoryMid: '섬유·의복·신발 소매' }), shop({ id: 5, categoryMajor: null }), ...[6, 7, 8].map(id => shop({ id, membership: 'OUT', nearby: true, categoryMajor: '음식', categoryMid: '비알코올' }))] });
+    mount(lang); const nav = await screen.findByRole('navigation', { name: lang === 'ko' ? '가게 유형' : 'Shop types' });
+    const links = within(nav).getAllByRole('link');
+    expect(links.map(link => link.textContent)).toEqual(lang === 'ko' ? ['음식점 (2)', '식료품 (1)', '의류·신발 (1)'] : ['Restaurants (2)', 'Groceries (1)', 'Clothing & shoes (1)']);
+    expect(links.map(link => link.getAttribute('href'))).toEqual(['food', 'grocery', 'fashion'].map(key => `${lang === 'en' ? '/en' : ''}/attractions/7/market?type=${key}`));
+    expect(nav).toHaveClass('place-market-types');
   });
   it('keeps good-price summary, tourism restaurants and steward below the card', async () => {
     vi.mocked(fetchMarket).mockResolvedValue({ ...data, market: { ...data.market, id: 3, goodPrice: { storeCount: 1, minPrice: 5000, maxPrice: 6000, attribution: { name: '행정안전부 착한가격업소', url: 'https://example.com/price', license: '공개' } } }, restaurants: [{ title: '별도 음식점', firstMenu: '김밥', treatMenu: null, attraction: { id: 9, lang: 'ko' }, latitude: 37.5, longitude: 127 }] });

@@ -68,7 +68,7 @@ describe('MarketLocate', () => {
 
 describe('MarketCanvas user location viewport', () => {
   const projection = projectMarketPins([], data)!;
-  const canvas = (userPosition: { latitude: number; longitude: number; accuracy: number; timestamp: number }) => <MarketCanvas data={data} lang="ko" projection={projection} points={[]} hasGeometry query="" selectedKey={null} onSelect={vi.fn()} color={() => ''} pathColor={() => undefined} userPosition={userPosition} />;
+  const canvas = (userPosition: { latitude: number; longitude: number; accuracy: number; timestamp: number }) => <MarketCanvas data={data} lang="ko" projection={projection} points={[]} hasGeometry query="" selectedKey={null} onSelect={vi.fn()} color={() => ''} userPosition={userPosition} />;
   it('connects a button measurement to the map and clears it when the market changes without requesting again', () => {
     const request = mockLocation();
     const props = { lang: 'ko' as const, projection, points: [], hasGeometry: true, query: '', selectedKey: null, onSelect: vi.fn(), color: () => '', pathColor: () => undefined };

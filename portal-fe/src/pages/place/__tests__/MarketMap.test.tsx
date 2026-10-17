@@ -11,7 +11,7 @@ vi.mock('../../../seo/copy.mjs', async (original) => ({ ...await original<typeof
 const shop = (overrides: Partial<MarketStore> = {}): MarketStore => ({
   id: 1, name: '가게', items: '떡볶이', zoneId: 1, membership: 'IN', latitude: 37.5, longitude: 127,
   roadAddress: null, jibunAddress: null, buildingName: null, dong: null, floor: null, ho: null,
-  categoryMajor: null, categoryMid: null, categorySub: null, sources: ['ONNURI'], pinKind: 'EXACT',
+  categoryMajor: '음식', categoryMid: '한식', categorySub: null, sources: ['ONNURI'], pinKind: 'EXACT',
   manual: false, actorKind: null, relativePosition: null, positionNote: null, ...overrides,
 });
 const data: MarketResponse = {
@@ -48,7 +48,7 @@ function view(market = data, lang: 'ko' | 'en' = 'ko', onViewportChange = vi.fn(
     const [selectedKey, onSelect] = useState<string | null>(null); const [focusStoreId, focus] = useState<number | null>(null);
     return <><button onClick={() => focus(1)}>Focus shop</button><button onClick={() => focus(null)}>Clear focus</button>
       <output data-testid="selection">{selectedKey}</output><MarketMap onViewportChange={onViewportChange} contentId="123" data={market} lang={lang} projection={projection} points={[...projection.points]} hasGeometry query="떡볶이" searchStoreIds={searchStoreIds}
-        selectedKey={selectedKey} onSelect={onSelect} focusStoreId={focusStoreId} color={() => 'var(--market-zone-1)'} pathColor={() => undefined} /></>;
+        selectedKey={selectedKey} onSelect={onSelect} focusStoreId={focusStoreId} color={() => 'var(--market-type-1)'} /></>;
   };
 }
 beforeEach(() => { maps = sdk(); window.localStorage.clear(); google.load.mockReset().mockRejectedValue(new Error('offline')); });
@@ -72,7 +72,7 @@ describe('market map provider', () => {
     await waitFor(() => expect(container.querySelector('.place-market-naver-pin')).not.toBeNull());
     const pin = container.querySelector('.place-market-naver-pin')!;
     expect(pin).toHaveTextContent('2');
-    expect(pin.firstElementChild?.getAttribute('style')).toContain('background: var(--market-zone-1)');
+    expect(pin.firstElementChild?.getAttribute('style')).toContain('background: var(--market-type-1)');
     expect(pin.firstElementChild?.getAttribute('style')).toContain('border-width: 3px');
     expect(pin.firstElementChild?.getAttribute('style')).toContain('border-color: var(--ko-accent-text)');
     expect(maps.Polygon).toHaveBeenCalledOnce();

@@ -1,4 +1,5 @@
-import type { MatchedBy, MarketDish, MarketEnglishFields, MarketMatchedBy, GoodPriceMenu, GoodPriceSummary, MarketCoordinate, MarketResponse, MarketStore, MarketZone } from '../../api/marketApi';
+import type { MatchedBy, MarketDish, MarketEnglishFields, MarketMatchedBy, GoodPriceMenu, GoodPriceSummary, MarketCoordinate, MarketResponse, MarketStore } from '../../api/marketApi';
+import { marketStoreType, type MarketStoreTypeKey } from './marketStoreType';
 import type { PlaceLang } from '../../api/placeApi';
 
 export const normalizeMarketName = (value: string) => value.normalize('NFKC').replace(/[\s\p{Z}]+/gu, '').toLowerCase();
@@ -23,13 +24,9 @@ export function matchesMarketStore(store: MarketStore, query: string, dishes: Ma
 // Keep map highlighting and the result list on the same search contract.
 export const matchesMarketName = (store: MarketStore, query: string, dishes: MarketDish[] = []) => matchesMarketStore(store, query, dishes) != null;
 
-export function zoneIds(zone: MarketZone): number[] {
-  return [...(zone.id == null ? [] : [zone.id]), ...zone.children.flatMap(zoneIds)];
-}
-
-export function visibleMarketStores(stores: MarketStore[], includeOutside: boolean, ids?: number[]) {
+export function visibleMarketStores(stores: MarketStore[], includeOutside: boolean, type?: MarketStoreTypeKey | null) {
   return stores.filter((store) => (includeOutside || store.membership !== 'OUT' || store.nearby === true)
-    && (ids == null || (store.zoneId != null && ids.includes(store.zoneId))));
+    && (type == null || marketStoreType(store) === type));
 }
 
 export function marketSourceBadges(store: MarketStore, lang: PlaceLang): string[] {
@@ -259,19 +256,4 @@ export function sectionMatchLabel(match: MarketStoreMatch | MatchedBy | null, la
   if (typeof match === 'string') return marketMatchLabel(match, null, lang);
   const fields = { name: 'NAME', items: 'ITEMS', menus: 'MENU', categories: 'CATEGORY', related: 'RELATED_CATEGORY' } as const;
   return marketMatchLabel(fields[match.matchedBy], match.relatedCategory, lang);
-}
-
-
-/** Shared chip ordering for the detail section and the dedicated map. */
-export function marketZones(data: MarketResponse, includeOutside: boolean, selectedId: number | null) {
-  const flatten = (zones: MarketZone[]): MarketZone[] => zones.flatMap(zone => [zone, ...flatten(zone.children)]);
-  const zones = flatten(data.zones);
-  const stores = visibleMarketStores(data.stores, includeOutside);
-  const countZone = (zone: MarketZone) => { const ids = zoneIds(zone); return stores.filter(store => store.zoneId != null && ids.includes(store.zoneId)).length; };
-  const name = normalizeMarketName(data.market.name);
-  const priority = (zone: MarketZone) => zone.kind === 'ROAD' && name.length > 0 && normalizeMarketName(zone.name).includes(name);
-  const sortedZones = [...zones].sort((a,b) => Number(priority(b)) - Number(priority(a)) || countZone(b) - countZone(a) || a.name.localeCompare(b.name, 'ko', { numeric: true }));
-  const defaultZones = sortedZones.filter(zone => zone.kind !== 'ROAD' || countZone(zone) > 0).slice(0, 8);
-  const collapsedZones = sortedZones.filter(zone => defaultZones.includes(zone) || (zone.id != null && zone.id === selectedId));
-  return { zones, sortedZones, collapsedZones, countZone, hiddenZoneCount: sortedZones.length - collapsedZones.length };
 }

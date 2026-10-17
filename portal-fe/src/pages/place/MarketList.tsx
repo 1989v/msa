@@ -2,13 +2,13 @@ import { useState } from 'react';
 import type { MarketDish, MarketResponse } from '../../api/marketApi';
 import type { PlaceLang } from '../../api/placeApi';
 import type { MarketViewport } from './MarketNaverMap';
-import { formatGoodPriceMenu, formatGoodPriceSummary, formatMarketFloor, groupMarketPins, hasMarketCoordinate, marketDisplayName, marketSourceBadges, marketZones, matchesMarketStore, normalizeMarketName, sectionMatchLabel, visibleMarketStores, zoneIds } from './marketView';
+import { formatGoodPriceMenu, formatGoodPriceSummary, formatMarketFloor, groupMarketPins, hasMarketCoordinate, marketDisplayName, marketSourceBadges, matchesMarketStore, normalizeMarketName, sectionMatchLabel, visibleMarketStores } from './marketView';
 import type { MarketStoreSearch } from './useMarketStoreSearch';
+import type { MarketStoreTypeKey } from './marketStoreType';
 import MarketMenuDetails from './MarketMenuDetails';
 
-export function marketListStores(market: MarketResponse, query: string, zoneId: number | null, viewport: MarketViewport | null, selectedKey: string | null, includeOutside: boolean, dishes: MarketDish[] = [], search?: MarketStoreSearch) {
-  const zone = marketZones(market, includeOutside, zoneId).zones.find(zone => zone.id === zoneId);
-  const stores = visibleMarketStores(market.stores, includeOutside, zone ? zoneIds(zone) : undefined);
+export function marketListStores(market: MarketResponse, query: string, storeType: MarketStoreTypeKey | null, viewport: MarketViewport | null, selectedKey: string | null, includeOutside: boolean, dishes: MarketDish[] = [], search?: MarketStoreSearch) {
+  const stores = visibleMarketStores(market.stores, includeOutside, storeType);
   const searching = normalizeMarketName(query).length > 0;
   const keys: string[] = selectedKey?.startsWith('cluster:') ? JSON.parse(selectedKey.slice(8)) : selectedKey ? [selectedKey] : [];
   const selected = new Set(groupMarketPins(stores).filter(pin => keys.includes(pin.key)).flatMap(pin => pin.stores));
@@ -20,13 +20,13 @@ export function marketListStores(market: MarketResponse, query: string, zoneId: 
 }
 
 /** The same list instance serves the mobile sheet and desktop panel. */
-export default function MarketList({ market, query, zoneId, viewport, selectedKey, focusStore, includeOutside, lang, onFocusStore, dishes = [], search }: {
-  focusStore?: number | null; market: MarketResponse; query: string; zoneId: number | null; viewport: MarketViewport | null; selectedKey: string | null; includeOutside: boolean; lang: PlaceLang; dishes?: MarketDish[]; search?: MarketStoreSearch; onFocusStore: (id: number) => void;
+export default function MarketList({ market, query, storeType, viewport, selectedKey, focusStore, includeOutside, lang, onFocusStore, dishes = [], search }: {
+  focusStore?: number | null; market: MarketResponse; query: string; storeType: MarketStoreTypeKey | null; viewport: MarketViewport | null; selectedKey: string | null; includeOutside: boolean; lang: PlaceLang; dishes?: MarketDish[]; search?: MarketStoreSearch; onFocusStore: (id: number) => void;
 }) {
   const en = lang === 'en';
-  const { rows, selected, searching } = marketListStores(market, query, zoneId, viewport, selectedKey, includeOutside, dishes, search);
+  const { rows, selected, searching } = marketListStores(market, query, storeType, viewport, selectedKey, includeOutside, dishes, search);
   const match = (store: MarketResponse['stores'][number]) => search?.status === 'engine' ? search.matchedBy.get(store.id!) ?? null : matchesMarketStore(store, query, dishes);
-  const resetKey = JSON.stringify([market.market.contentId, query, zoneId, viewport, includeOutside, selectedKey]);
+  const resetKey = JSON.stringify([market.market.contentId, query, storeType, viewport, includeOutside, selectedKey]);
   const [page, setPage] = useState({ key: resetKey, limit: 50 });
   const limit = page.key === resetKey ? page.limit : 50;
   // 좌표 없는 가게는 목록 끝에 남기되 「현 지도에서」 수에는 넣지 않는다 — 지도에 없는 것을 지도 안이라 세지 않는다.
@@ -43,7 +43,7 @@ export default function MarketList({ market, query, zoneId, viewport, selectedKe
       {(market.attribution ?? []).map(credit => <p className="place-market-source" key={credit}>{credit}</p>)}
     </header>
     <div className="market-list-body">
-      {rows.length === 0 && <p>{en ? 'No shops to display in this area.' : '이 구역에 표시할 가게가 없습니다.'}</p>}
+      {rows.length === 0 && <p>{en ? 'No shops to display' : '표시할 가게가 없습니다'}</p>}
       <ul className="place-market-shops market-list-rows">
         {rows.slice(0, limit).map((store, index) => <li key={store.id ?? `${store.name}-${index}`} data-selected={selected.has(store) || store.id === focusStore || undefined} data-found={searching || undefined} data-outside={store.membership === 'OUT' || undefined}>
           {hasMarketCoordinate(store) && store.id != null ? <button type="button" aria-pressed={store.id === focusStore} aria-label={`${en ? 'Show on map' : '지도에서 보기'}: ${store.name}`} onClick={() => onFocusStore(store.id!)}><strong>{marketDisplayName(store, lang)}</strong></button> : <strong>{marketDisplayName(store, lang)}</strong>}

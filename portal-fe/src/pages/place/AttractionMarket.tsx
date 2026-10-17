@@ -3,16 +3,17 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAttractionMarket } from './marketQueries';
 import type { MarketResponse } from '../../api/marketApi';
 import type { PlaceLang } from '../../api/placeApi';
-import { formatGoodPriceSummary, formatMarketFloor, marketDisplayName, marketZones } from './marketView';
+import { formatGoodPriceSummary, marketDisplayName } from './marketView';
 import { marketMapPath, NAVER_MAP_KEY_ID, placePath } from '../../seo/copy.mjs';
+import { marketStoreTypeCounts } from './marketStoreType';
 import MarketNaverMap from './MarketNaverMap';
 import MarketMenuDetails from './MarketMenuDetails';
 import MarketStewardApplication from './MarketStewardApplication';
 import './AttractionMarket.css';
 
 const COPY = {
-  ko: { title: '시장 구역·가게', type: '시장 유형', count: '점포수', cycle: '개설주기', facilities: '편의시설', zones: '골목·건물·층', fullMap: '지도 전체 보기', types: { STREET: '거리형', BUILDING: '건물형', MIXED: '혼합형' } },
-  en: { title: 'Market areas & shops', type: 'Market type', count: 'Shop count', cycle: 'Opening schedule', facilities: 'Facilities', zones: 'Alleys, buildings & floors', fullMap: 'View full map', types: { STREET: 'Street market', BUILDING: 'Building market', MIXED: 'Mixed market' } },
+  ko: { title: '시장 구역·가게', type: '시장 유형', count: '점포수', cycle: '개설주기', facilities: '편의시설', zones: '가게 유형', fullMap: '지도 전체 보기', types: { STREET: '거리형', BUILDING: '건물형', MIXED: '혼합형' } },
+  en: { title: 'Market areas & shops', type: 'Market type', count: 'Shop count', cycle: 'Opening schedule', facilities: 'Facilities', zones: 'Shop types', fullMap: 'View full map', types: { STREET: 'Street market', BUILDING: 'Building market', MIXED: 'Mixed market' } },
 } as const;
 
 /** A failed or absent market response only removes this optional section. */
@@ -28,7 +29,7 @@ function MarketSection({ contentId, attractionId, data, lang }: { contentId: str
   const navigate = useNavigate();
   // 미리보기 지도가 못 뜨면(키·SDK·인증) 카드는 지도 없이 링크만 남긴다 — 오류 문구를 카드에 두지 않는다.
   const [previewFailed, setPreviewFailed] = useState(false);
-  const { sortedZones, countZone } = marketZones(data, false, null);
+  const types = marketStoreTypeCounts(data.stores.filter(store => store.membership === 'IN'));
   const { attribution, goodPrice } = data.market;
   const facts = [[C.type, C.types[data.market.marketType]], [C.count, data.market.storeCountRaw], [C.cycle, data.market.openingCycle], [C.facilities, data.market.facilities]];
   return (
@@ -44,8 +45,8 @@ function MarketSection({ contentId, attractionId, data, lang }: { contentId: str
         </p>}
         {attribution && <p className="place-market-source"><a href={attribution.url} target="_blank" rel="noreferrer">{attribution.name}</a>{' · '}{attribution.license}</p>}
         {(data.attribution ?? []).map(credit => <p className="place-market-source" key={credit}>{credit}</p>)}
-        <nav className="place-market-zones" aria-label={C.zones}>
-          {sortedZones.slice(0, 3).map((zone, index) => <Link key={zone.id ?? index} to={href}>{[zone.name, zone.dong, formatMarketFloor(zone.floor, lang)].filter((value, i, values) => value && values.indexOf(value) === i).join(' · ')} ({countZone(zone)})</Link>)}
+        <nav className="place-market-types" aria-label={C.zones}>
+          {types.slice(0, 3).map(type => <Link key={type.key} to={`${href}?type=${type.key}`}>{type[lang]} ({type.count})</Link>)}
         </nav>
         {NAVER_MAP_KEY_ID && !previewFailed && <div className="place-market-preview">
           <MarketNaverMap contentId={contentId} data={data} lang={lang} keyId={NAVER_MAP_KEY_ID} interactive={false} initialZoom={16} onActivate={() => navigate(href)} onError={() => setPreviewFailed(true)} />

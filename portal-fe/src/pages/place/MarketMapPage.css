@@ -6,18 +6,18 @@
 }
 .market-map-page *, .market-map-page *::before, .market-map-page *::after { box-sizing: border-box; }
 /* 상단 바·구역 칩·목록의 버튼만 — 네이버 지도 안의 핀(button.place-market-naver-pin)에 상자가 씌워지면 안 된다. */
-.market-map-top :is(button, input), .market-map-zones button, .market-map-list button { font: inherit; color: inherit; }
-.market-map-top button, .market-map-zones button, .market-map-list button, .market-map-top > a { min-height: 44px; }
-.market-map-top button, .market-map-zones button, .market-map-list button { background: var(--ko-surface-1); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius-asym); padding: var(--ko-space-2); }
+.market-map-top :is(button, input), .market-map-types button, .market-map-list button { font: inherit; color: inherit; }
+.market-map-top button, .market-map-types button, .market-map-list button, .market-map-top > a { min-height: 44px; }
+.market-map-top button, .market-map-types button, .market-map-list button { background: var(--ko-surface-1); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius-asym); padding: var(--ko-space-2); }
 .market-map-page :is(button, input, a):focus-visible { outline: var(--ko-focus-ring); outline-offset: 2px; }
 .market-map-top { display: flex; align-items: center; gap: var(--ko-space-2); padding: var(--ko-space-2) max(var(--ko-space-3), env(safe-area-inset-right)) var(--ko-space-2) max(var(--ko-space-3), env(safe-area-inset-left)); border-bottom: 1px solid var(--ko-border-default); }
 .market-map-top > a { display: grid; place-items: center; min-width: 44px; color: var(--ko-accent-text); }
 .market-map-top h1 { font-size: var(--ko-text-base); margin: 0; flex: 0 1 12rem; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; min-width: 0; }
 .market-map-top > input { flex: 1; width: 0; min-width: 0; min-height: 44px; background: var(--ko-surface-1); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius-asym); padding-inline: var(--ko-space-2); }
 .market-map-top label { font-size: var(--ko-text-xs); flex-shrink: 0; white-space: nowrap; display: inline-flex; align-items: center; gap: var(--ko-space-1); }
-.market-map-zones { display: flex; flex: 0 0 auto; gap: var(--ko-space-2); overflow-x: auto; padding: var(--ko-space-2) var(--ko-space-3); }
-.market-map-zones button { flex-shrink: 0; }
-.market-map-zones button[aria-pressed='true'] { color: var(--ko-accent-text); border-color: var(--ko-accent-primary); background: var(--ko-accent-primary-bg); }
+.market-map-types { display: flex; flex: 0 0 auto; gap: var(--ko-space-2); overflow-x: auto; padding: var(--ko-space-2) var(--ko-space-3); }
+.market-map-types button { flex-shrink: 0; }
+.market-map-types button[aria-pressed='true'] { color: var(--ko-accent-text); border-color: var(--ko-accent-primary); background: var(--ko-accent-primary-bg); }
 .market-map-workspace { flex: 1; min-height: 0; position: relative; }
 .market-map-stage { position: absolute; inset: 0; min-width: 0; overflow: hidden; }
 /* Only the SDK host and our SVG canvas are sized here; SDK overlay SVGs are untouched. */
@@ -59,3 +59,6 @@
   .market-map-page[data-snap='half'] .market-map-stage { bottom: 55%; }
   .market-map-page[data-snap='full'] .market-map-stage { bottom: 85%; }
 }
+
+.market-map-types button { display: inline-flex; align-items: center; gap: var(--ko-space-2); }
+.market-map-type-dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; flex-shrink: 0; }

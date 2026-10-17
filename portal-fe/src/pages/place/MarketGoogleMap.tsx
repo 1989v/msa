@@ -78,15 +78,15 @@ export default function MarketGoogleMap(props: MarketLiveMapProps) {
         const object = create(); const listener = click ? sdk.event.addListener(object, 'click', click) : undefined;
         overlays.set(key, { signature, object, listener });
       };
-      for (const shape of [model.marketPolygon, ...model.zonePolygons].filter((shape) => shape != null)) sync(shape.key, shape, () => new sdk.Polygon({ map, paths: shape.coordinates.map(([lat, lng]) => ({ lat, lng })), fillColor: token(shape.color), fillOpacity: shape.fillOpacity, strokeColor: token(shape.color), strokeWeight: shape.strokeWeight, strokeOpacity: shape.strokeOpacity }), !interactive ? () => latest.current.onActivate?.() : shape.zoneId != null ? () => latest.current.onZoneSelect?.(shape.zoneId) : undefined);
-      for (const line of model.alleys) sync(line.key, line, () => new sdk.Polyline({ map, path: line.coordinates.map(([lat, lng]) => ({ lat, lng })), strokeColor: token(line.color), strokeWeight: line.strokeWeight, strokeOpacity: line.strokeOpacity }), !interactive ? () => latest.current.onActivate?.() : line.zoneId != null ? () => latest.current.onZoneSelect?.(line.zoneId) : undefined);
+      for (const shape of [model.marketPolygon].filter((shape) => shape != null)) sync(shape.key, shape, () => new sdk.Polygon({ map, paths: shape.coordinates.map(([lat, lng]) => ({ lat, lng })), fillColor: token(shape.color), fillOpacity: shape.fillOpacity, strokeColor: token(shape.color), strokeWeight: shape.strokeWeight, strokeOpacity: shape.strokeOpacity }), !interactive ? () => latest.current.onActivate?.() : undefined);
+      for (const line of model.alleys) sync(line.key, line, () => new sdk.Polyline({ map, path: line.coordinates.map(([lat, lng]) => ({ lat, lng })), strokeColor: token(line.color), strokeWeight: line.strokeWeight, strokeOpacity: line.strokeOpacity }), !interactive ? () => latest.current.onActivate?.() : undefined);
       for (const marker of model.markers) sync(marker.key, marker, () => new sdk.Marker({ map, position: coord(marker), title: marker.title,
         icon: { path: marker.iconPath, scale: 1, labelOrigin: new sdk.Point(marker.labelOffset.x, marker.labelOffset.y), fillColor: token(marker.color), fillOpacity: 1, strokeColor: token(marker.strokeColor), strokeWeight: marker.strokeWeight },
-        label: { text: marker.text, color: token(marker.textColor), fontWeight: '700' },
+        label: { text: marker.text, color: token(marker.textColor), fontWeight: '700', fontSize: token(marker.fontSize) },
       }), !interactive ? () => latest.current.onActivate?.() : marker.selectionKey ? () => latest.current.onSelect?.(marker.selectionKey!) : undefined);
       for (const label of model.labels) sync(label.key, label, () => new sdk.Marker({ map, position: coord(label), title: label.text,
         icon: { path: sdk.SymbolPath.CIRCLE, scale: 0 }, label: { text: label.text, color: token(label.color) },
-      }), !interactive ? () => latest.current.onActivate?.() : label.zoneId != null ? () => latest.current.onZoneSelect?.(label.zoneId) : undefined);
+      }), !interactive ? () => latest.current.onActivate?.() : undefined);
       if (model.userPosition) {
         const user = model.userPosition;
         sync('user-accuracy', user, () => new sdk.Circle({ map, center: coord(user), radius: user.accuracy, strokeColor: token(user.color), fillColor: token(user.color), fillOpacity: user.fillOpacity, strokeWeight: user.strokeWeight }));

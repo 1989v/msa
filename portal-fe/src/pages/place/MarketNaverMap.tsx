@@ -10,7 +10,7 @@ export type MarketLiveMapProps = {
   selection?: OverlaySelection; storeIds?: (number | null)[];
   userPosition?: { latitude: number; longitude: number; accuracy: number } | null;
   onViewportChange?: (viewport: MarketViewport) => void;
-  onSelect?: (key: string) => void; onZoneSelect?: (id: number | null) => void; onError?: () => void;
+  onSelect?: (key: string) => void; onError?: () => void;
 };
 export type MarketNaverMapProps = MarketLiveMapProps & { keyId: string };
 const currentSdk = () => typeof window === 'undefined' ? undefined : (window as Window & { naver?: { maps?: any } }).naver?.maps;
@@ -66,7 +66,7 @@ function pinIcon(marker: OverlayMarker): HTMLElement {
   Object.assign(icon.style, { display: 'grid', placeItems: 'center', boxSizing: 'border-box',
     width: `${marker.size}px`, height: `${marker.size}px`, borderRadius: '50%', borderStyle: 'solid',
     borderWidth: `${marker.strokeWeight}px`, borderColor: marker.strokeColor, background: marker.color,
-    color: marker.textColor, fontSize: 'var(--ko-text-base)', fontWeight: '700' });
+    color: marker.textColor, fontSize: marker.fontSize, fontWeight: '700' });
   button.appendChild(icon);
   if (marker.label) { const label = document.createElement('span'); label.textContent = marker.text; label.className = 'place-market-naver-label'; label.style.color = marker.textColor; Object.assign(label.style, { position: 'absolute', left: '50%', top: '50%', transform: `translate(calc(-50% + ${marker.labelOffset.x}px), calc(-50% + ${marker.labelOffset.y}px))` }); button.appendChild(label); }
   return button;
@@ -134,8 +134,8 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
         const object = create(); const listener = click ? sdk.Event.addListener(object, 'click', click) : undefined;
         overlays.set(key, { signature, object, listener });
       };
-      for (const shape of [model.marketPolygon, ...model.zonePolygons].filter((shape) => shape != null)) sync(shape.key, shape, () => new sdk.Polygon({ map, paths: shape.coordinates.map(([lat, lng]) => new sdk.LatLng(lat, lng)), fillColor: token(shape.color), fillOpacity: shape.fillOpacity, strokeColor: token(shape.color), strokeWeight: shape.strokeWeight, strokeOpacity: shape.strokeOpacity }), !interactive ? () => latest.current.onActivate?.() : shape.zoneId != null ? () => latest.current.onZoneSelect?.(shape.zoneId) : undefined);
-      for (const line of model.alleys) sync(line.key, line, () => new sdk.Polyline({ map, path: line.coordinates.map(([lat, lng]) => new sdk.LatLng(lat, lng)), strokeColor: token(line.color), strokeWeight: line.strokeWeight, strokeOpacity: line.strokeOpacity }), !interactive ? () => latest.current.onActivate?.() : line.zoneId != null ? () => latest.current.onZoneSelect?.(line.zoneId) : undefined);
+      for (const shape of [model.marketPolygon].filter((shape) => shape != null)) sync(shape.key, shape, () => new sdk.Polygon({ map, paths: shape.coordinates.map(([lat, lng]) => new sdk.LatLng(lat, lng)), fillColor: token(shape.color), fillOpacity: shape.fillOpacity, strokeColor: token(shape.color), strokeWeight: shape.strokeWeight, strokeOpacity: shape.strokeOpacity }), !interactive ? () => latest.current.onActivate?.() : undefined);
+      for (const line of model.alleys) sync(line.key, line, () => new sdk.Polyline({ map, path: line.coordinates.map(([lat, lng]) => new sdk.LatLng(lat, lng)), strokeColor: token(line.color), strokeWeight: line.strokeWeight, strokeOpacity: line.strokeOpacity }), !interactive ? () => latest.current.onActivate?.() : undefined);
       for (const marker of model.markers) sync(marker.key, marker, () => {
         const content = pinIcon(marker); content.onclick = () => { if (!interactive) latest.current.onActivate?.(); else if (marker.selectionKey) latest.current.onSelect?.(marker.selectionKey); };
         return new sdk.Marker({ map, position: coord(marker), title: marker.title, icon: { content, anchor: { x: 0, y: 0 } } });
@@ -143,11 +143,11 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
       for (const label of model.labels) sync(label.key, label, () => {
         const content = document.createElement('span'); content.textContent = label.text; content.className = 'place-market-naver-label'; content.style.color = label.color;
         return new sdk.Marker({ map, position: coord(label), title: label.text, icon: { content, anchor: { x: 0, y: 0 } } });
-      }, !interactive ? () => latest.current.onActivate?.() : label.zoneId != null ? () => latest.current.onZoneSelect?.(label.zoneId) : undefined);
+      }, !interactive ? () => latest.current.onActivate?.() : undefined);
       if (model.userPosition) {
         const user = model.userPosition;
         sync('user-accuracy', user, () => new sdk.Circle({ map, center: coord(user), radius: user.accuracy, strokeColor: token(user.color), fillColor: token(user.color), fillOpacity: user.fillOpacity, strokeWeight: user.strokeWeight }));
-        sync('user', user, () => new sdk.Marker({ map, position: coord(user), title: user.text, icon: { content: pinIcon({ ...user, key: 'user', text: '', title: user.text, storeIds: [], textColor: user.strokeColor, labelOffset: { x: 0, y: 0 }, highlighted: false, searchMatch: false, label: false }), anchor: { x: 0, y: 0 } } }));
+        sync('user', user, () => new sdk.Marker({ map, position: coord(user), title: user.text, icon: { content: pinIcon({ ...user, key: 'user', text: '', title: user.text, storeIds: [], textColor: user.strokeColor, fontSize: 'var(--ko-text-xs)', labelOffset: { x: 0, y: 0 }, highlighted: false, searchMatch: false, label: false }), anchor: { x: 0, y: 0 } } }));
       }
       for (const [key, entry] of overlays) if (!wanted.has(key)) { remove(entry); overlays.delete(key); }
       if (!interactive || !model.focus) appliedFocus.current = null;

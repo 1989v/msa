@@ -4,7 +4,7 @@ import type { MarketResponse, MarketStore } from '../../../api/marketApi';
 import MarketGoogleMap from '../MarketGoogleMap';
 const loader = vi.hoisted(() => vi.fn());
 vi.mock('../googleMaps', () => ({ loadGoogleMaps: loader }));
-const stores = [[37.5, 127], [37.50001, 127.00001], [37.5001, 127]].map(([latitude, longitude], id) => ({ id, name: `Shop ${id}`, latitude, longitude, membership: 'IN', zoneId: 1, sources: [] } as unknown as MarketStore));
+const stores = [[37.5, 127], [37.50001, 127.00001], [37.5001, 127]].map(([latitude, longitude], id) => ({ id, name: `Shop ${id}`, latitude, longitude, membership: 'IN', categoryMajor: '음식', categoryMid: '한식', zoneId: 1, sources: [] } as unknown as MarketStore));
 const data: MarketResponse = { market: { name: 'Market' } as MarketResponse['market'], stores, zones: [{ id: 1, name: 'Lane', children: [] } as unknown as MarketResponse['zones'][number]], paths: [{ id: 1, name: 'Lane', named: true, source: 'OSM', geometry: [[37.5, 127], [37.501, 127]] }] };
 function sdk() {
   let zoom = 17; const listeners = new Map<string, () => void>(); const setMap = vi.fn(); const panTo = vi.fn(); const setZoom = vi.fn((z: number) => { zoom = z; });
@@ -20,14 +20,14 @@ beforeEach(() => { maps = sdk(); loader.mockReset().mockResolvedValue(maps); });
 afterEach(cleanup);
 describe('MarketGoogleMap', () => {
   it('disables gestures, UI and keyboard for a preview and activates markers and polygons without selection or viewport reports', async () => {
-    const onActivate = vi.fn(); const onSelect = vi.fn(); const onZoneSelect = vi.fn(); const onViewportChange = vi.fn();
-    render(<MarketGoogleMap contentId="1" lang="ko" data={data} interactive={false} initialZoom={16} onActivate={onActivate} onSelect={onSelect} onZoneSelect={onZoneSelect} onViewportChange={onViewportChange} />);
+    const onActivate = vi.fn(); const onSelect = vi.fn(); const onViewportChange = vi.fn();
+    render(<MarketGoogleMap contentId="1" lang="ko" data={data} interactive={false} initialZoom={16} onActivate={onActivate} onSelect={onSelect} onViewportChange={onViewportChange} />);
     await waitFor(() => expect(maps.Marker).toHaveBeenCalledOnce());
     expect(maps.Map).toHaveBeenCalledWith(expect.any(HTMLElement), expect.objectContaining({ zoom: 16, gestureHandling: 'none', disableDefaultUI: true, keyboardShortcuts: false }));
     expect(maps.Marker).toHaveBeenCalledWith(expect.objectContaining({ title: 'Market' }));
     const clicks = maps.event.addListener.mock.calls.filter(([, event]) => event === 'click');
     act(() => { clicks[0][2](); clicks.at(-1)![2](); maps.listeners.get('idle')!(); });
-    expect(onActivate).toHaveBeenCalledTimes(2); expect(onSelect).not.toHaveBeenCalled(); expect(onZoneSelect).not.toHaveBeenCalled(); expect(onViewportChange).not.toHaveBeenCalled();
+    expect(onActivate).toHaveBeenCalledTimes(2); expect(onSelect).not.toHaveBeenCalled(); expect(onViewportChange).not.toHaveBeenCalled();
   });
   it('reports first viewport and idle bounds with the rendered zoom', async () => {
     const onViewportChange = vi.fn();
@@ -39,7 +39,7 @@ describe('MarketGoogleMap', () => {
   });
   it('draws the same polygons and alley highlights with legacy SVG markers and no Map ID', async () => {
     render(<MarketGoogleMap contentId="1" lang="en" data={data} />);
-    await waitFor(() => expect(maps.Marker).toHaveBeenCalledOnce()); expect(maps.Polygon).toHaveBeenCalledTimes(2); expect(maps.Polyline).toHaveBeenCalledOnce();
+    await waitFor(() => expect(maps.Marker).toHaveBeenCalledOnce()); expect(maps.Polygon).toHaveBeenCalledTimes(1); expect(maps.Polyline).toHaveBeenCalledOnce();
     expect(maps.Polygon).toHaveBeenCalledWith(expect.objectContaining({ fillOpacity: .12, strokeWeight: 1.5 }));
     expect(maps.Map).toHaveBeenCalledWith(expect.any(HTMLElement), expect.objectContaining({ clickableIcons: false, streetViewControl: false, mapTypeControl: false }));
     expect(maps.Marker).toHaveBeenCalledWith(expect.objectContaining({ label: expect.objectContaining({ text: '3' }), icon: expect.objectContaining({ path: expect.stringContaining("M ") }) }));
@@ -48,13 +48,13 @@ describe('MarketGoogleMap', () => {
     render(<MarketGoogleMap contentId="1" lang="ko" data={data} />); await waitFor(() => expect(maps.Marker).toHaveBeenCalledOnce());
     act(() => maps.listeners.get('idle')!()); expect(maps.Marker).toHaveBeenCalledOnce();
     maps.zoom(16); act(() => maps.listeners.get('zoom_changed')!()); expect(maps.Marker).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Market' }));
-    maps.zoom(19); act(() => maps.listeners.get('zoom_changed')!()); expect(maps.Marker).toHaveBeenCalledTimes(6); expect(maps.Polygon).toHaveBeenCalledTimes(2);
+    maps.zoom(19); act(() => maps.listeners.get('zoom_changed')!()); expect(maps.Marker).toHaveBeenCalledTimes(6); expect(maps.Polygon).toHaveBeenCalledTimes(1);
   });
   it('shares focus, selection and location callbacks and tears down overlays', async () => {
-    const onSelect = vi.fn(); const onZoneSelect = vi.fn(); const { unmount } = render(<MarketGoogleMap contentId="1" lang="en" data={data} selection={{ storeId: 1 }} onSelect={onSelect} onZoneSelect={onZoneSelect} userPosition={{ latitude: 37.5, longitude: 127, accuracy: 12 }} />);
+    const onSelect = vi.fn(); const { unmount } = render(<MarketGoogleMap contentId="1" lang="en" data={data} selection={{ storeId: 1 }} onSelect={onSelect} userPosition={{ latitude: 37.5, longitude: 127, accuracy: 12 }} />);
     await waitFor(() => expect(maps.Circle).toHaveBeenCalledOnce()); expect(maps.map.setZoom).toHaveBeenCalledWith(19); expect(onSelect).toHaveBeenCalled();
     expect(maps.Marker).toHaveBeenCalledWith(expect.objectContaining({ title: 'Your location' }));
-    const click = maps.event.addListener.mock.calls.find(([, event]) => event === 'click')![2]; act(() => click()); expect(onZoneSelect).toHaveBeenCalledWith(1);
+    const click = maps.event.addListener.mock.calls.find(([, event]) => event === 'click')![2]; act(() => click()); expect(onSelect).toHaveBeenCalled();
     unmount(); expect(maps.setMap).toHaveBeenCalledWith(null); expect(maps.map.unbindAll).toHaveBeenCalledOnce();
   });
   it('reports SDK failure and never creates a map after disposal', async () => {

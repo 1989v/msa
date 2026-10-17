@@ -2,7 +2,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MarketResponse, MarketStore } from '../../../api/marketApi';
 import MarketNaverMap from '../MarketNaverMap';
-const store = (id: number, latitude: number, longitude: number) => ({ id, name: `<Shop ${id}>`, latitude, longitude, membership: 'IN', zoneId: 1, sources: [], pinKind: 'EXACT' } as unknown as MarketStore);
+const store = (id: number, latitude: number, longitude: number) => ({ id, name: `<Shop ${id}>`, latitude, longitude, membership: 'IN', categoryMajor: '음식', categoryMid: '한식', zoneId: 1, sources: [], pinKind: 'EXACT' } as unknown as MarketStore);
 const data: MarketResponse = { market: { name: 'Market' } as MarketResponse['market'], zones: [{ id: 1, name: 'Lane', children: [] } as unknown as MarketResponse['zones'][number]], stores: [store(1, 37.5, 127), store(2, 37.50001, 127.00001), store(3, 37.5001, 127)], paths: [{ id: 1, name: 'Lane', named: true, source: 'OSM', geometry: [[37.5, 127], [37.501, 127]] }] };
 const props = { contentId: '132180', lang: 'ko' as const, keyId: 'test-key', data };
 function sdk() {
@@ -25,8 +25,8 @@ beforeEach(() => { maps = sdk(); });
 afterEach(() => { cleanup(); scripts().forEach((s) => s.remove()); Reflect.deleteProperty(window, 'naver'); });
 describe('MarketNaverMap', () => {
   it('disables gestures and controls for a zoom-16 preview, activates pins and polygons without selection or viewport reports', async () => {
-    install(); const onActivate = vi.fn(); const onSelect = vi.fn(); const onZoneSelect = vi.fn(); const onViewportChange = vi.fn();
-    const { container } = render(<MarketNaverMap {...props} interactive={false} initialZoom={16} onActivate={onActivate} onSelect={onSelect} onZoneSelect={onZoneSelect} onViewportChange={onViewportChange} />);
+    install(); const onActivate = vi.fn(); const onSelect = vi.fn(); const onViewportChange = vi.fn();
+    const { container } = render(<MarketNaverMap {...props} interactive={false} initialZoom={16} onActivate={onActivate} onSelect={onSelect} onViewportChange={onViewportChange} />);
     await waitFor(() => expect(maps.Marker).toHaveBeenCalledOnce());
     expect(maps.Map).toHaveBeenCalledWith(expect.any(HTMLElement), expect.objectContaining({ zoom: 16, draggable: false, scrollWheel: false, pinchZoom: false, keyboardShortcuts: false, disableDoubleClickZoom: true, zoomControl: false, scaleControl: false }));
     expect(maps.Marker.mock.calls[0][0].title).toBe('Market');
@@ -34,7 +34,7 @@ describe('MarketNaverMap', () => {
     fireEvent.click(maps.Marker.mock.calls[0][0].icon.content);
     const click = maps.Event.addListener.mock.calls.find(([, event]) => event === 'click')![2]; act(() => click());
     act(() => maps.listeners.get('idle')!());
-    expect(onActivate).toHaveBeenCalledTimes(2); expect(onSelect).not.toHaveBeenCalled(); expect(onZoneSelect).not.toHaveBeenCalled(); expect(onViewportChange).not.toHaveBeenCalled();
+    expect(onActivate).toHaveBeenCalledTimes(2); expect(onSelect).not.toHaveBeenCalled(); expect(onViewportChange).not.toHaveBeenCalled();
   });
   it('reports first viewport and idle bounds with the rendered zoom', async () => {
     const onViewportChange = vi.fn(); install();
@@ -55,7 +55,7 @@ describe('MarketNaverMap', () => {
     await waitFor(() => expect(maps.Marker).toHaveBeenCalledOnce());
     const icon = maps.Marker.mock.calls[0][0].icon.content;
     expect(icon.textContent).toBe('3'); expect(icon.getAttribute('aria-label')).toContain('<Shop 1>'); expect(icon.querySelector('shop')).toBeNull();
-    expect(maps.Polygon).toHaveBeenCalledTimes(2); expect(maps.Polygon).toHaveBeenCalledWith(expect.objectContaining({ fillOpacity: .12, strokeWeight: 1.5 })); expect(maps.Polyline).toHaveBeenCalledOnce();
+    expect(maps.Polygon).toHaveBeenCalledTimes(1); expect(maps.Polygon).toHaveBeenCalledWith(expect.objectContaining({ fillOpacity: .12, strokeWeight: 1.5 })); expect(maps.Polyline).toHaveBeenCalledOnce();
     unmount(); expect(maps.destroy).toHaveBeenCalledOnce(); expect(maps.objects.every((o) => o.setMap.mock.calls.some(([map]) => map === null))).toBe(true);
   });
   it('loads nothing with an empty key', () => {
@@ -63,11 +63,11 @@ describe('MarketNaverMap', () => {
   });
   it('increments only changed overlays on stage and viewport events, preserving polygons', async () => {
     install(); render(<MarketNaverMap {...props} />); await waitFor(() => expect(maps.Marker).toHaveBeenCalledOnce());
-    act(() => maps.listeners.get('idle')!()); expect(maps.Marker).toHaveBeenCalledOnce(); expect(maps.Polygon).toHaveBeenCalledTimes(2);
+    act(() => maps.listeners.get('idle')!()); expect(maps.Marker).toHaveBeenCalledOnce(); expect(maps.Polygon).toHaveBeenCalledTimes(1);
     maps.zoom(16); act(() => maps.listeners.get('zoom_changed')!()); expect(maps.Marker).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Market' }));
     maps.zoom(19); act(() => maps.listeners.get('zoom_changed')!()); expect(maps.Marker.mock.calls.slice(-4).filter(([o]) => o.title?.startsWith('<Shop'))).toHaveLength(3);
     const count = maps.Marker.mock.calls.length; maps.north(37.50002); act(() => maps.listeners.get('bounds_changed')!());
-    expect(maps.Marker).toHaveBeenCalledTimes(count); expect(maps.Polygon).toHaveBeenCalledTimes(2);
+    expect(maps.Marker).toHaveBeenCalledTimes(count); expect(maps.Polygon).toHaveBeenCalledTimes(1);
   });
   it('does not create a map after unmount during loading', async () => {
     const { unmount } = render(<MarketNaverMap {...props} />); const script = scripts()[0]; unmount(); install(); await act(async () => fireEvent.load(script)); expect(maps.Map).not.toHaveBeenCalled();
@@ -84,10 +84,10 @@ describe('MarketNaverMap', () => {
     expect(typeof (window as unknown as { navermap_authFailure: unknown }).navermap_authFailure).toBe('function');
     await act(async () => fireEvent.error(scripts()[0])); expect(screen.getByRole('alert')).toHaveTextContent('Unable to load Naver Map.'); expect(onError).toHaveBeenCalledOnce();
   });
-  it('reports authentication failure after SDK load and wires polygon and alley clicks to zone selection', async () => {
-    install(); const onError = vi.fn(); const onZoneSelect = vi.fn(); render(<MarketNaverMap {...props} onError={onError} onZoneSelect={onZoneSelect} />);
-    await waitFor(() => expect(maps.Polygon).toHaveBeenCalledTimes(2));
-    const click = maps.Event.addListener.mock.calls.find(([, event]) => event === 'click')![2]; act(() => click()); expect(onZoneSelect).toHaveBeenCalledWith(1);
+  it('reports authentication failure and leaves boundary and alley overlays noninteractive', async () => {
+    install(); const onError = vi.fn(); render(<MarketNaverMap {...props} onError={onError} />);
+    await waitFor(() => expect(maps.Polygon).toHaveBeenCalledTimes(1));
+    expect(maps.Event.addListener.mock.calls.filter(([, event]) => event === 'click')).toHaveLength(0);
     act(() => (window as unknown as { navermap_authFailure: () => void }).navermap_authFailure()); expect(onError).toHaveBeenCalledOnce();
   });
 });

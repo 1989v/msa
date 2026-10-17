@@ -3,15 +3,15 @@
   --market-celadon: color-mix(in srgb, var(--kh-celadon) 60%, var(--ko-text-primary));
   --market-yeonji: color-mix(in srgb, var(--kh-yeonji) 60%, var(--ko-text-primary));
   --market-ocher: color-mix(in srgb, var(--kh-ocher) 60%, var(--ko-text-primary));
-  --market-zone-1: var(--market-pine);
-  --market-zone-2: var(--market-celadon);
-  --market-zone-3: var(--market-yeonji);
-  --market-zone-4: var(--market-ocher);
-  --market-zone-5: color-mix(in srgb, var(--market-pine), var(--market-celadon));
-  --market-zone-6: color-mix(in srgb, var(--market-pine), var(--market-ocher));
-  --market-zone-7: color-mix(in srgb, var(--market-yeonji), var(--market-celadon));
-  --market-zone-8: color-mix(in srgb, var(--market-yeonji), var(--market-ocher));
-  --market-zone-9: color-mix(in srgb, var(--market-celadon), var(--market-ocher));
+  --market-type-1: var(--market-pine);
+  --market-type-2: var(--market-celadon);
+  --market-type-3: var(--market-yeonji);
+  --market-type-4: var(--market-ocher);
+  --market-type-5: color-mix(in srgb, var(--market-pine), var(--market-celadon));
+  --market-type-6: color-mix(in srgb, var(--market-pine), var(--market-ocher));
+  --market-type-7: color-mix(in srgb, var(--market-yeonji), var(--market-celadon));
+  --market-type-8: color-mix(in srgb, var(--market-yeonji), var(--market-ocher));
+  --market-type-9: color-mix(in srgb, var(--market-celadon), var(--market-ocher));
 }
 .place-market { margin-block: 3rem; color: var(--ko-text-primary); }
 .place-market-name { margin-block: 0.75rem; font-size: 1.25rem; font-weight: 600; }
@@ -25,7 +25,7 @@
 .place-market button[aria-pressed='true'] { border-color: var(--ko-accent-text); background: var(--ko-accent-primary-bg); }
 .place-market button:disabled { opacity: 0.55; cursor: default; }
 .place-market :is(button, input, a):focus-visible { outline: var(--ko-focus-ring); outline-offset: 3px; }
-.place-market-zones { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.5rem; margin-bottom: 1rem; }
+.place-market-types { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.5rem; margin-bottom: 1rem; }
 .place-market-canvas { position: relative; }
 .place-market-canvas[data-geometry] { overflow: hidden; }
 /* 우리 SVG 지도에만 — 네이버 지도가 오버레이마다 만드는 svg 에 배경·테두리가 붙으면 검은 상자가 된다. */
@@ -33,11 +33,11 @@
 .place-market-canvas svg > text { fill: var(--ko-text-primary); font-size: 16px; }
 .place-market-scale { fill: none; stroke: var(--ko-text-primary); stroke-width: 2; }
 .place-market-boundary { fill: color-mix(in srgb, var(--market-pine) 8%, transparent); stroke: var(--market-pine); stroke-width: 2; stroke-dasharray: 6 3; }
-.place-market-path { fill: none; stroke: var(--market-path-color); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.place-market-path { fill: none; stroke: var(--ko-text-muted); stroke-opacity: .65; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
 .place-market-path-label, .place-market-entrance text { fill: var(--ko-text-primary); stroke: var(--ko-surface-1); stroke-width: 4; paint-order: stroke; stroke-linejoin: round; font-size: 14px; }
 .place-market-entrance path { fill: var(--ko-surface-0); stroke: var(--ko-text-primary); stroke-width: 2; }
 .place-market-geometry-attribution { overflow-wrap: anywhere; }
-.place-market-dot { fill: var(--market-zone-color); stroke: var(--ko-surface-0); stroke-width: 3; }
+.place-market-dot { fill: var(--market-type-color); stroke: var(--ko-surface-0); stroke-width: 3; }
 .place-market-pin text { fill: var(--ko-surface-0); font-size: 12px; pointer-events: none; font-weight: 700; }
 .place-market-pin[data-hit] .place-market-dot, .place-market-pin[data-selected] .place-market-dot { stroke: var(--ko-text-primary); stroke-width: 4; }
 .place-market-hit-ring { fill: none; stroke: var(--ko-accent-text); stroke-width: 5; }
@@ -129,8 +129,8 @@
 }
 
 .place-market-summary { padding: var(--ko-space-4); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius-asym); background: var(--ko-surface-1); }
-.place-market-zones a { display: inline-flex; align-items: center; min-height: 2.75rem; padding: var(--ko-space-2) var(--ko-space-3); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius); color: var(--ko-accent-text); }
-.place-market-zones a:hover { background: var(--ko-surface-2); }
+.place-market-types a { display: inline-flex; align-items: center; min-height: 2.75rem; padding: var(--ko-space-2) var(--ko-space-3); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius); color: var(--ko-accent-text); }
+.place-market-types a:hover { background: var(--ko-surface-2); }
 .place-market-preview { position: relative; aspect-ratio: 16 / 9; background: var(--ko-surface-0); }
 .place-market-preview > [role="group"] { position: relative; z-index: 0; height: 100%; }
 /* 어댑터 호스트의 기본 비율(600/440)·최소 높이를 풀어 16:9 상자를 꽉 채운다 — 아니면 지도가 상자 일부만 그린다. */
@@ -138,3 +138,5 @@
 /* Leave the SDK's bottom logo/copyright strip visible and clickable. */
 .place-market-preview-link { position: absolute; inset: 0 0 2.75rem; z-index: 1; }
 .place-market-full-map { display: inline-flex; align-items: center; min-height: 2.75rem; margin-top: var(--ko-space-3); color: var(--ko-accent-text); text-decoration: underline; }
+
+.place-market-path-label { fill: var(--ko-text-muted); }

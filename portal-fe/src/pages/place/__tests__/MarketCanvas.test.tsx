@@ -3,12 +3,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { MarketResponse, MarketStore } from '../../../api/marketApi';
 import { groupMarketPins, projectMarketPins } from '../marketView';
+import { marketStoreType, marketStoreTypeColor } from '../marketStoreType';
 import MarketCanvas from '../MarketCanvas';
 
 const store = (overrides: Partial<MarketStore> = {}): MarketStore => ({
   id: 1, name: '가게', items: null, zoneId: null, membership: 'IN', latitude: 37.5, longitude: 127,
   roadAddress: null, jibunAddress: null, buildingName: null, dong: null, floor: null, ho: null,
-  categoryMajor: null, categoryMid: null, categorySub: null, sources: ['ONNURI'], pinKind: 'EXACT',
+  categoryMajor: '음식', categoryMid: '한식', categorySub: null, sources: ['ONNURI'], pinKind: 'EXACT',
   manual: false, actorKind: null, relativePosition: null, positionNote: null, ...overrides,
 });
 const data: MarketResponse = {
@@ -21,7 +22,7 @@ function mount(stores = [store(), store({ id: 2, name: '두번째', longitude: 1
   const projection = projectMarketPins(groupMarketPins(stores), data)!;
   function Canvas() {
     const [key, setKey] = useState<string | null>(null);
-    return <><button onClick={() => setKey(null)}>Clear selection</button><MarketCanvas data={data} lang="ko" projection={projection} points={projection.points} hasGeometry query="가게" focusStoreId={focusStoreId} selectedKey={key} onSelect={setKey} color={() => 'var(--market-zone-1)'} pathColor={() => undefined} /></>;
+    return <><button onClick={() => setKey(null)}>Clear selection</button><MarketCanvas data={data} lang="ko" projection={projection} points={projection.points} hasGeometry query="가게" focusStoreId={focusStoreId} selectedKey={key} onSelect={setKey} color={store => marketStoreTypeColor(marketStoreType(store))} /></>;
   }
   vi.spyOn(SVGElement.prototype, 'getBoundingClientRect').mockReturnValue({ left: 10, top: 20, width, height: width * 440 / 600, right: width + 10, bottom: 20 + width * 440 / 600, x: 10, y: 20, toJSON: () => ({}) });
   const result = render(<Canvas />);
@@ -180,4 +181,14 @@ describe('MarketCanvas result focus', () => {
     expect(container.querySelector('.place-market-pin[data-selected]')).toHaveAttribute('aria-label', expect.stringContaining('목표'));
   });
 
+});
+
+it('uses majority-type store colors and keeps all outside pins muted even when nearby', () => {
+  const rows = [store({ categoryMajor: '음식', categoryMid: '주점' }), store({ id: 2, categoryMajor: '음식', categoryMid: '한식' }), store({ id: 3, categoryMajor: '음식', categoryMid: '한식' })];
+  const first = mount(rows);
+  expect(first.container.querySelector('.place-market-pin')?.getAttribute('style')).toContain('--market-type-color: var(--market-type-1)');
+  first.unmount();
+  const outside = mount(rows.map(row => ({ ...row, membership: 'OUT', nearby: true })));
+  expect(outside.container.querySelector('.place-market-pin')).toHaveAttribute('data-outside', 'true');
+  expect(outside.container.querySelector('.place-market-pin')?.getAttribute('style')).toContain('--market-type-color: var(--ko-text-muted)');
 });

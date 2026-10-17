@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
-import type { MarketDish, MarketResponse } from '../../api/marketApi';
+import type { MarketDish, MarketResponse, MarketStore } from '../../api/marketApi';
 import type { PlaceLang } from '../../api/placeApi';
 import { clusterByScreenDistance, matchesMarketName, longestMarketSegmentMidpoint, projectMarketPins } from './marketView';
 
 import { marketDisplayName } from './marketView';
+import { majorityMarketStoreType, marketStoreType } from './marketStoreType';
 import MarketLocate from './MarketLocate';
 import { marketPositionInView, type MarketUserPosition } from './marketView';
 
@@ -11,14 +12,14 @@ type Projection = NonNullable<ReturnType<typeof projectMarketPins>>;
 type ViewBox = { x: number; y: number; w: number; h: number };
 const INITIAL: ViewBox = { x: 0, y: 0, w: 600, h: 440 };
 
-export default function MarketCanvas({ data, lang, projection, points, hasGeometry, query, selectedKey, onSelect, color, pathColor, userPosition, focusStoreId, dishes = [], searchStoreIds, onPosition }: {
+export default function MarketCanvas({ data, lang, projection, points, hasGeometry, query, selectedKey, onSelect, color, userPosition, focusStoreId, dishes = [], searchStoreIds, onPosition }: {
   data: MarketResponse; lang: PlaceLang; projection: Projection; points: Projection['points']; hasGeometry: boolean;
   query: string; selectedKey: string | null; onSelect: (key: string | null) => void;
   dishes?: MarketDish[]; searchStoreIds?: number[];
   userPosition?: MarketUserPosition | null;
   onPosition?: (position: MarketUserPosition) => void;
   focusStoreId?: number | null;
-  color: (id: number | null) => string; pathColor: (id: number | null | undefined) => string | undefined;
+  color: (store: MarketStore) => string;
 }) {
   const matches = (store: MarketResponse['stores'][number]) => searchStoreIds ? store.id != null && searchStoreIds.includes(store.id) : matchesMarketName(store, query, dishes);
   const en = lang === 'en';
@@ -39,12 +40,10 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
   const paths = data.paths ?? [];
   const visitorPoint = visitor ? projection.project([visitor.latitude, visitor.longitude]) : null;
   const visitorView = visitorPoint ? marketPositionInView(visitorPoint, view, 20 / screenScale) : null;
-  const clusters = clusterByScreenDistance(points.map((point) => ({ ...point,
-    // Shops the nearby rule added are the market's content on that page: colour them like members.
-    // Only shops shown by the "outside the market" toggle stay muted.
-    pinColor: pathColor(point.stores[0].pathId) ?? (point.stores.every((store) => store.membership === 'OUT' && !store.nearby)
-      ? 'var(--ko-text-muted)' : color(point.stores[0].zoneId)),
-  })), screenScale, 24);
+  const clusters = clusterByScreenDistance(points, screenScale, 24).map(point => ({ ...point,
+    pinColor: point.stores.every(store => store.membership === 'OUT') ? 'var(--ko-text-muted)'
+      : color(point.stores.find(store => marketStoreType(store) === majorityMarketStoreType(point.stores))!),
+  }));
   // Keep selection stable when a zoom splits the selected screen group.
   const selected = clusters.find((cluster) => cluster.key === selectedKey || cluster.parcelKeys.includes(selectedKey ?? ''));
   const selectedKeys: string[] = selectedKey?.startsWith('cluster:') ? JSON.parse(selectedKey.slice(8)) : [];
@@ -164,7 +163,7 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
         }}
         onPointerCancel={(event) => { pointers.current.delete(event.pointerId); dragged.current = true; }}>
         {data.boundary && <polygon className="place-market-boundary" vectorEffect="non-scaling-stroke" points={data.boundary.polygon.map(projection.project).map((point) => `${point.x},${point.y}`).join(' ')} />}
-        {paths.map((path) => <g key={path.id} style={{ '--market-path-color': pathColor(path.id) } as CSSProperties}>
+        {paths.map((path) => <g key={path.id} style={{ '--market-path-color': 'var(--ko-text-muted)' } as CSSProperties}>
           <polyline className="place-market-path" vectorEffect="non-scaling-stroke" points={path.geometry.map(projection.project).map((point) => `${point.x},${point.y}`).join(' ')} />
         </g>)}
         {hasGeometry && (data.entrances ?? []).map((entrance) => {
@@ -178,9 +177,9 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
           const active = selectedKey === pin.key || pin.parcelKeys.some((key) => selectedKeys.includes(key))
             || pin.parcelKeys.includes(selectedKey ?? '');
           return <g key={pin.key} role="button" tabIndex={0} className="place-market-pin" data-selected={active || undefined}
-            data-hit={hit || undefined} data-outside={pin.stores.every((store) => store.membership === 'OUT' && !store.nearby) || undefined}
+            data-hit={hit || undefined} data-outside={pin.stores.every((store) => store.membership === 'OUT') || undefined}
             transform={`translate(${pin.x} ${pin.y}) scale(${1 / screenScale})`}
-            style={{ '--market-zone-color': pin.pinColor } as CSSProperties}
+            style={{ '--market-type-color': pin.pinColor } as CSSProperties}
             aria-label={`${en ? 'Shops on this parcel' : '같은 필지 가게'}: ${pin.stores.map((store) => marketDisplayName(store, lang)).join(', ')}`}
             aria-pressed={active} onClick={() => select(pin.key)} onKeyDown={(event) => {
               if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(pin.key); }
