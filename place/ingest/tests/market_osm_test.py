@@ -160,7 +160,7 @@ def test_batch_of_only_uningested_markets_does_not_stop_the_run():
          patch.object(osm.place_client,"market_state",side_effect=lambda cid:state() if int(cid) == count else None), \
          patch.object(osm.place_client,"_request") as writes:
         summary = osm.run(fetch=Mock(return_value=response()),sleep=Mock())
-    assert summary["markets"] == 1 and summary["batches"] == 2
+    assert summary["markets"] == 1 and summary["batches"] == 1  # uningested markets are never batched
     assert writes.call_count == 2
 
 
@@ -169,17 +169,35 @@ def test_fetched_at_is_a_local_date_time_without_offset():
     assert datetime.fromisoformat(fetched).tzinfo is None and "+" not in fetched
 
 
+def test_plan_orders_never_fetched_largest_first_then_oldest_and_skips_recent():
+    now = datetime(2026, 10, 16)
+    states = {"fresh": {**state(1), "osmFetchedAt": "2026-10-10T00:00:00"},
+              "stale": {**state(2), "osmFetchedAt": "2026-09-01T00:00:00"},
+              "small": state(3, points=POLYGON[:2]), "large": state(4, points=POLYGON[:4]),
+              "oldest": {**state(5), "osmFetchedAt": "2026-08-01T00:00:00"}, "uningested": None}
+    reads = Mock(side_effect=lambda cid: states[cid] if cid in states else (_ for _ in ()).throw(OSError("offline")))
+    attractions = [{"contentId": cid} for cid in ("fresh", "stale", "small", "broken", "large", "oldest", "uningested")]
+    with patch.object(osm.place_client,"market_state",reads):
+        queue, planned = osm.plan(attractions, now)
+    assert queue == ["large", "small", "oldest", "stale", "broken"]
+    assert planned == {"ingested": 5, "due": 5, "neverFetched": 2, "skippedRecent": 1, "unreadable": 1}
+    assert reads.call_count == len(attractions)
+
+
 def test_recently_fetched_markets_are_skipped_so_each_run_continues():
     now = datetime(2026, 10, 16)
     fresh = {**state(1), "osmFetchedAt": "2026-10-10T00:00:00"}
     stale = {**state(2), "osmFetchedAt": "2026-09-01T00:00:00"}
     fetch = Mock(return_value=response())
     with patch.object(osm.place_client,"fetch_market_attractions",return_value=[{"contentId":"1"},{"contentId":"2"},{"contentId":"3"}]), \
-         patch.object(osm.place_client,"market_state",side_effect=[fresh, stale, state(3)]), \
+         patch.object(osm.place_client,"market_state",side_effect=lambda cid: {"1": fresh, "2": stale, "3": state(3)}[cid]), \
          patch.object(osm.place_client,"_request") as writes:
         summary = osm.run(fetch=fetch,sleep=Mock(),now=now)
     assert fetch.call_count == 2 and writes.call_count == 4
     assert summary["markets"] == 2 and summary["skippedRecent"] == 1
+    # Never fetched (3) is written before the stale one (2).
+    assert [call.args[1] for call in writes.call_args_list] == [
+        "/internal/markets/3/osm", "/internal/markets/3/rejudge", "/internal/markets/2/osm", "/internal/markets/2/rejudge"]
     with patch.object(osm.place_client,"fetch_market_attractions",return_value=[{"contentId":"1"}]), \
          patch.object(osm.place_client,"market_state",return_value=fresh), \
          patch.object(osm.place_client,"_request") as writes:
@@ -215,8 +233,9 @@ def test_existing_store_projection_only_uses_in_display_coordinates():
 def test_orchestration_stages_batch_reads_then_put_and_bodyless_rejudge():
     events = []
     def read(cid):
-        events.append("read")
-        return state(int(cid),"BUILDING" if cid == "2" else "STREET",POLYGON[:-1])
+        events.append(("read",cid))
+        # Market 2 holds more shops, so the plan puts it first.
+        return state(int(cid),"BUILDING" if cid == "2" else "STREET",POLYGON[:-1] if cid == "2" else POLYGON[:3])
     def fetch(center,radius):
         events.append(("fetch",radius))
         return response()
@@ -226,11 +245,11 @@ def test_orchestration_stages_batch_reads_then_put_and_bodyless_rejudge():
     with patch.object(osm.place_client,"fetch_market_attractions",return_value=[{"contentId":"1"},{"contentId":"2"}]), \
          patch.object(osm.place_client,"market_state",side_effect=read), patch.object(osm.place_client,"_request",side_effect=write):
         summary = osm.run(fetch=fetch,sleep=sleep)
-    assert events[:4] == ["read",("fetch",300),"read",("fetch",150)]
+    assert events[:6] == [("read","1"),("read","2"),("read","2"),("fetch",150),("read","1"),("fetch",300)]
     assert summary["markets"] == 2 and summary["calls"] == 2
     sleep.assert_called_once_with(osm.REQUEST_INTERVAL_SECONDS)
-    for i,mid in enumerate((1,2)):
-        put, post = events[4+i*2:6+i*2]
+    for i,mid in enumerate((2,1)):
+        put, post = events[6+i*2:8+i*2]
         assert put[:2] == ("PUT",f"/internal/markets/{mid}/osm")
         assert set(put[2]) == {"fetchedAt","raw","boundary","paths"}
         assert put[2]["boundary"]["source"] == "DERIVED"
@@ -252,11 +271,11 @@ def test_failed_second_batch_keeps_first_writes_and_never_reads_third():
         with pytest.raises(ValueError,match="failure ratio"):
             osm.run(fetch=fetch,sleep=Mock())
     assert writes.call_count == count*2
-    assert reads.call_count == count*2
+    assert reads.call_count == count*3 + count*2  # one planning read per market, then one per batched market
     assert fetch.call_count == count*3
-    assert events[count:count*3] == [event for mid in range(count) for event in
+    assert events[count*4:count*6] == [event for mid in range(count) for event in
         [("PUT",f"/internal/markets/{mid}/osm"),("POST",f"/internal/markets/{mid}/rejudge")]]
-    assert events[count*3] == ("read",count)
+    assert events[count*6] == ("read",count) and events[-1] == ("read",count*2-1)
 
 
 def test_summary_aggregates_batches_and_paces_across_boundary(capsys):
@@ -274,10 +293,12 @@ def test_summary_aggregates_batches_and_paces_across_boundary(capsys):
     assert sleep.call_args_list == ([interval]*(count-1) + [((osm.BATCH_RETRY_WAIT_SECONDS,),)] +
                                     [interval]*(count+1))
     lines = capsys.readouterr().out.splitlines()
-    assert len(lines) == 3
-    assert [json.loads(line.removeprefix("[market-osm] batch ")) for line in lines[:2]] == [
-        {"markets":count-1,"failedMarkets":1,"calls":count,"failedCalls":1,"skippedRecent":0,"errors":["0: OSError"]},
-        {"markets":count,"failedMarkets":0,"calls":count,"failedCalls":0,"skippedRecent":0,"errors":[]}]
+    assert len(lines) == 4
+    assert json.loads(lines[0].removeprefix("[market-osm] plan ")) == {
+        "ingested":count*2,"due":count*2,"neverFetched":count*2,"skippedRecent":0,"unreadable":0}
+    assert [json.loads(line.removeprefix("[market-osm] batch ")) for line in lines[1:3]] == [
+        {"markets":count-1,"failedMarkets":1,"calls":count,"failedCalls":1,"errors":["0: OSError"]},
+        {"markets":count,"failedMarkets":0,"calls":count,"failedCalls":0,"errors":[]}]
 
 
 @pytest.mark.parametrize("count,failed,allowed", [(20,1,True),(19,1,False),(20,2,False)])
@@ -297,7 +318,7 @@ def test_failure_threshold_zero_writes_before_gate(count,failed,allowed):
 
 def test_internal_read_failure_also_prevents_writes():
     with patch.object(osm.place_client,"fetch_market_attractions",return_value=[{"contentId":"1"},{"contentId":"2"}]), \
-         patch.object(osm.place_client,"market_state",side_effect=[state(),OSError("offline")]), \
+         patch.object(osm.place_client,"market_state",side_effect=lambda cid: state() if cid == "1" else (_ for _ in ()).throw(OSError("offline"))), \
          patch.object(osm.place_client,"_request") as writes:
         with pytest.raises(ValueError,match="Market failure ratio"):
             osm.run(fetch=Mock(return_value=response()),sleep=Mock())
@@ -306,8 +327,12 @@ def test_internal_read_failure_also_prevents_writes():
 
 def test_uningested_attractions_do_not_dilute_market_failure_ratio():
     states = [None]*30 + [state(), OSError("offline")]
+    def read(cid):
+        if isinstance(states[int(cid)], Exception):
+            raise states[int(cid)]
+        return states[int(cid)]
     with patch.object(osm.place_client,"fetch_market_attractions",return_value=[{"contentId":str(i)} for i in range(len(states))]), \
-         patch.object(osm.place_client,"market_state",side_effect=states), patch.object(osm.place_client,"_request") as writes:
+         patch.object(osm.place_client,"market_state",side_effect=read), patch.object(osm.place_client,"_request") as writes:
         with pytest.raises(ValueError,match="Market failure ratio 1/2"):
             osm.run(fetch=Mock(return_value=response()),sleep=Mock())
         writes.assert_not_called()

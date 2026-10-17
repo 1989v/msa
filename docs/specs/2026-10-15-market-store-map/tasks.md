@@ -243,3 +243,34 @@ Codex 보내는 순서: WU-15 ∥ WU-16 → WU-17 ∥ WU-18. 같은 워크트리
 - 배치는 content-ids → 시장 ko/en API 병합, zoneId/pathId 포함, 좌표 없는 가게도 유지. 5% 초과 실패는 별칭 교체 전 실패, 정확히 5% 허용. 매일 21:40 UTC CronJob, 기존 보관 정책.
 - WU-28a: search API/색인/배치 + 게이트웨이 정확 경로 + CronJob + 검증/ADR. place/FE/관광지·통합 색인/빌드·lock 변경 없음. nameRoman 원천 부재와 categoryEn 단일 레벨 제한을 기록.
 - 후속: FE 300ms 디바운스·storeId 강조·실패/빈 응답 시 기존 브라우저 매칭 폴백, 운영 30문항 Recall@10 및 지도 확인.
+
+## 가게 유형 필터 + 남대문 경계 (2026-10-18 새벽 사용자 요청 — 「길 필터는 의미 없다, 가게 유형 필터가 더 유용하다, 남대문 폴리곤도 제대로」)
+## WU-33a 남대문 경계 — 운영 데이터 (수집 코드 그대로 수동 1회, 완료)
+- 원인: OSM 에 남대문시장 경계(`way/78503350`, `amenity=marketplace`, 382×247m)가 **있는데 수집 잡이 거기까지 간 적이 없다**. `market_osm_raw` 247곳은 10-15·10-16 수동 실행 두 번이 market_id 1→249 순서로 4시간 마감(`DeadlineExceeded`)까지 간 것이고, 좌표 있는 시장 581곳(남대문 738 포함)은 미수집. 그래서 FE 가 IN 가게 볼록 껍질을 그렸다(숭례문까지 늘어난 삼각형).
+- 조치(10-18 01:02, 로컬에서 `ssh msa-oci` 터널로 `content:8097` 내부 API): `market_osm.fetch_overpass → prepare → PUT /internal/markets/738/osm → POST …/rejudge` — Job 과 같은 두 호출. 경계 OSM 17꼭짓점, 골목 21(이름 17: 남대문시장길·2가길·2길·4길·6길·8길 + 한양도성 3코스 한 토막). 재판정 3,929곳 전부 BOUNDARY 기준 → **IN 1,781 · OUT 1,097 · 좌표 없음 1,047**(전: IN 1,271 · OUT 1,611). 드라이런에서 현재 IN 1,267곳 중 1,237곳이 새 경계 안(30곳 OUT), OUT 544곳이 IN 으로.
+- 함정: `fetchedAt` 은 실행한 쪽 `datetime.now()` 라 로컬(KST)로 적혔다 — 28일 창에서 9시간은 무시된다.
+
+## WU-33b 수집 순서 — 미수집·큰 시장 먼저 (place/ingest, 직접 구현)
+- `run()` 이 대상 시장의 상태를 먼저 한 바퀴 읽어 `(contentId, osmFetchedAt, 가게 수)` 만 남기고, **한 번도 수집 안 한 시장 먼저(가게 수 많은 순) → 수집한 지 오래된 순**으로 50곳씩 배치한다. 28일 안에 수집한 것은 그대로 건너뛴다. 배치 처리에서 상태는 다시 읽는다(전체 상태를 메모리에 들고 있지 않는다 — 남대문 한 곳이 3MB).
+- 이유: 마감 4시간에 ~120곳이라, id 순서 + 28일 갱신이면 앞 ~480곳만 돌고 뒤는 영원히 못 닿는다(두 번 돌고 1~249).
+- 테스트: 순서(미수집·큰 시장 먼저, 오래된 순, 최근 것 건너뜀) 추가, 오케스트레이션 테스트의 read 수 조정. 배포 뒤 수동 Job 1회로 다음 ~120곳을 큰 시장부터 수집하고 이후는 주간 잡.
+
+## WU-33c 구역(길) 필터 → 가게 유형 필터 + 핀 크기 (portal-fe, Codex)
+- 제거: 전용 화면의 구역 칩·「다른 길 N개」, 요약 카드의 구역 링크 3개, 오버레이의 구역 hull 폴리곤(`zonePolygons`)과 구역별 색, `marketZones`·구역 필터 경로(`visibleMarketStores` 의 zone ids 인자). 관리 화면(MarketManagePage)의 구역 이름 관리·구역 배정·API 타입 `MarketZone` 은 그대로.
+- 추가 `pages/place/marketStoreType.ts`: `(categoryMajor, categoryMid)` → 유형 9종 **고정 표**(아래), 값은 trim 뒤 비교(원천에 `비알코올 `·`장례식장 `·`법무관련 ` 처럼 뒤 공백이 있다). 표 밖 값은 `etc`. `marketStoreType(store)`, `marketStoreTypeCounts(stores)`.
+- 칩: 「전체」 + 가게 수 > 0 인 유형(많은 순, `etc` 는 항상 마지막), 칩 앞에 유형 색점. 선택은 URL `?type=<key>`(카드 링크가 그대로 들어온다). 목록·지도·검색 교집합은 구역 때와 같은 자리에서 유형으로.
+- 핀: 색 = 유형 색(묶음은 다수 유형, 전부 OUT 이면 muted). 크기 = 가게 수 3단계 **1~9 → 20px · 10~99 → 26px · 100+ → 32px**, 글자 `--ko-text-xs`/`sm`. 개별 핀(12px + 이름)과 탭 영역 2.75rem 은 그대로. 골목선·골목 이름은 중립색 `--ko-text-muted` 한 가지.
+- 카드: 「골목·건물·층」 → 「가게 유형」(en `Shop types`), 상위 3유형 링크 `…/market?type=<key>` 텍스트 `유형 (N)`.
+- SVG 폴백 `MarketCanvas`: `color` 는 (가게) → 색, `pathColor` 제거(골목 중립색).
+- 유형 표 (키 / 국문 / 영문 / 토큰 / 대분류: 중분류):
+  - `food` 음식점 / Restaurants / `--market-zone-1` / 음식: 한식·중식·일식·서양식·동남아시아·기타 외국·구내식당·뷔페·(빈 값)
+  - `snack` 분식·간식 / Snacks / `--market-zone-2` / 음식: 기타 간이
+  - `cafe` 카페·주점 / Cafés & bars / `--market-zone-3` / 음식: 비알코올·주점
+  - `grocery` 식료품 / Groceries / `--market-zone-4` / 소매: 식료품 소매·음료 소매·담배 소매
+  - `fashion` 의류·신발 / Clothing & shoes / `--market-zone-5` / 소매: 섬유·의복·신발 소매
+  - `goods` 잡화·귀금속·안경 / Accessories & jewelry / `--market-zone-6` / 소매: 시계·귀금속 소매·안경·정밀기기 소매·장식품 소매·오락용품 소매·기타 상품 소매·중고 상품 소매·애완동물·용품 소매·식물 소매
+  - `living` 생활용품·가전 / Household & electronics / `--market-zone-7` / 소매: 종합 소매·기타 생활용품 소매·가구 소매·철물·건설자재 소매·가전·통신 소매·자동차 부품 소매·모터사이클 소매·연료 소매·(빈 값)
+  - `health` 건강·미용 / Health & beauty / `--market-zone-8` / 소매: 의약·화장품 소매 + 보건의료 전부 + 수리·개인: 이용·미용·욕탕·신체관리
+  - `etc` 기타·서비스 / Services & other / `--market-zone-9` / 나머지 전부(수리·개인 나머지, 시설관리·임대, 부동산, 교육, 과학·기술, 예술·스포츠, 숙박, 대분류 빈 값)
+- 근거 분포(운영 `market_store`, 좌표 있는 행): 남대문 의류 1,077 · 빈 값 463 · 한식 157 · 안경 136 · 종합 소매 124 · 카페 84 · 생활용품 76 · 식료품 68 · 분식 60 · 의약·화장품 54 · 시계·귀금속 44 · 장식품 44. 전국 중분류 75종·대분류 10종.
+- 검증: `npx tsc --noEmit -p tsconfig.app.json` 0건, 바뀐 테스트 파일만 vitest(MarketMapPage·AttractionMarket·marketOverlay·marketView·MarketCanvas·MarketMap). 배포 뒤 남대문 모바일 캡처(칩·핀 색·크기, `?type=fashion` 진입, 카드 링크).

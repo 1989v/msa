@@ -223,3 +223,12 @@ _cat/indices: market-stores-20261017-1458  docs.count 21387  store.size 4.1mb
 | 「tteokbokki」 | 호출 1 · 200 · 12곳 |
 
 - 정밀도 메모: 「떡볶이」 남대문 상위에 `KARL안경`(안경점)이 「음식」으로 들어온다 — 사전 전개(`dishes`)가 업종을 넓게 잡는 경우. 점수가 생기자 정밀도 문제가 보이기 시작했다(판정 세트의 띄어쓰기 하락과 같은 결) → 다음 조정 후보.
+
+## 10-18 새벽 — WU-33a 남대문 경계 (OSM `way/78503350`, 수동 1회) + 수집 미도달 원인
+
+- **원인**: `market_osm_raw` 가 247곳뿐이고 좌표 있는 시장 581곳(남대문 738 포함)은 한 번도 수집되지 않았다. 잡 이력: `market-osm-manual-1016`(10-15 15:18Z)·`market-osm-manual-1016d`(10-15 22:28Z) 둘 다 `DeadlineExceeded`(4시간), 수집일별 market_id 범위 10-15 = 1~117(116곳) · 10-16 = 118~249(131곳) — **id 순서로 ~120곳/4시간**. 주간 잡은 아직 한 번도 돌지 않았고(`lastScheduleTime` 없음, 첫 예정 10-19 20:20Z), 돌아도 id 순서 + 28일 갱신이면 앞 ~480곳만 돌고 뒤는 못 닿는다.
+- **OSM 확인**(Overpass, UA 없으면 406): `way 78503350 남대문시장 amenity=marketplace tourism=attraction wikidata=Q494687`, 17꼭짓점, lat 37.557634~37.5610666 · lng 126.9760425~126.9788417(≈382×247m). 1.5km 안 다른 marketplace 는 만리시장(`way 314516468`)뿐.
+- **적합도**(쓰기 전 로컬 계산, `market_store` 좌표 2,882행): 현재 IN 1,271 중 1,241 이 폴리곤 안(30 밖), 현재 OUT 1,611 중 544 가 안 → 새 IN 1,785.
+- **실행**: `ssh msa-oci` 로 `svc/content:8097` 포트포워드 → 로컬에서 `place/ingest/src/market_osm.py` 의 `fetch_overpass → prepare` 뒤 Job 과 같은 `PUT /internal/markets/738/osm` + `POST …/rejudge`(스크립트는 스크래치패드 `ov/namdaemun_osm.py`, 드라이런 먼저). 응답: 경계 `{"source":"OSM","osmId":"way/78503350"}` 17꼭짓점, 골목 21(이름 17: 남대문시장길·2가길·2길·4길·6길·8길 + `서울한양도성 3코스 남산구간` 한 토막이 경계와 교차해 들어옴), `changedStores: 3929`, 재판정 뒤 **IN 1,781 · OUT 1,097 · UNKNOWN(좌표 없음) 1,047**, `osmFetchedAt 2026-10-18T01:02:33`(로컬 KST 시각 — 28일 창에서 무시된다).
+- **운영 확인**: `GET /api/v1/place/markets/132180?lang=ko` → `boundary.source=OSM` 17꼭짓점 · `paths` 21(named 17) · stores 2,828(IN 1,781 · UNKNOWN 1,047; OUT 은 기본 응답에서 빠짐). 전용 화면 모바일(390×844, `index-COGnv78P.js`, 배포 없이 데이터만): 핀 51, 목록 머리말 「현 지도에서 1781곳 · 지도 위치 없음 1047곳」, 출처에 `© OpenStreetMap contributors` 추가, 폴리곤이 세종대로·남대문로·퇴계로 블록을 따라간다(캡처 `verify-p7/prod/namdaemun-boundary-mobile.png`). 구역 칩은 아직 길 이름(WU-33c 가 바꾼다).
+- **WU-33b 테스트**: `plan()` 순서(미수집 큰 시장 → 작은 시장 → 오래된 순 → 최근 것 제외 → 읽기 실패는 끝) + 오케스트레이션 read 수·쓰기 순서. 옛 코드에 새 테스트를 대면 **6 failed / 27 passed**, 바꾼 뒤 **33 passed**(`python3 -m pytest tests/market_osm_test.py`).

@@ -219,20 +219,53 @@ def fetched_recently(state, now):
     return now - datetime.fromisoformat(fetched) < timedelta(days=OSM_REFRESH_DAYS)
 
 
+def plan(attractions, now):
+    """Read each market once to order the run; the state is read again when the market is processed.
+
+    Never-fetched markets go first, the largest first, then the oldest fetch. A run that cannot
+    reach every market before the Job deadline (about 120 markets in four hours) therefore still
+    covers the markets people visit, and no market waits behind ones refreshed recently — in
+    attraction order the first ~480 markets kept rotating and the rest were never reached.
+    Markets fetched within OSM_REFRESH_DAYS are left out. A market whose read failed stays at
+    the end so its batch reads it again and counts the failure there.
+    """
+    never, stale, unreadable = [], [], []
+    ingested = skipped = 0
+    for index, attraction in enumerate(attractions):
+        content_id = str(attraction["contentId"])
+        try:
+            state = place_client.market_state(content_id)
+            if state is None:  # Not yet ingested by market-stores.
+                continue
+            ingested += 1
+            if fetched_recently(state, now):
+                skipped += 1
+            elif state.get("osmFetchedAt"):
+                stale.append((state["osmFetchedAt"], index, content_id))
+            else:
+                never.append((-len(state.get("stores", [])), index, content_id))
+        except Exception:
+            unreadable.append(content_id)
+    queue = [cid for *_, cid in sorted(never)] + [cid for *_, cid in sorted(stale)] + unreadable
+    return queue, {"ingested": ingested, "due": len(queue), "neverFetched": len(never),
+                   "skippedRecent": skipped, "unreadable": len(unreadable)}
+
+
 def run(fetch=None, sleep=None, now=None):
-    """Read, gate and write fifty markets at a time.
+    """Read, gate and write fifty markets at a time, in the order plan() gives.
 
     The public Overpass server can take ~40s a call, so one run may not reach every market
     before the Job deadline. Markets fetched within OSM_REFRESH_DAYS are skipped, which makes
-    each run continue where the last one stopped. A market whose Overpass call failed is
-    called once more at the end of its batch, before the batch's failure gate.
+    each run continue with what the last one did not reach. A market whose Overpass call failed
+    is called once more at the end of its batch, before the batch's failure gate.
     """
     fetch, sleep = fetch or fetch_overpass, sleep or time.sleep
     now = now or datetime.now()
-    attractions = place_client.fetch_market_attractions()
+    queue, planned = plan(place_client.fetch_market_attractions(), now)
+    print(f"[market-osm] plan {json.dumps(planned)}", flush=True)
     summary = {"markets": 0, "failedMarkets": 0, "calls": 0, "failedCalls": 0, "errors": [],
-               "batches": 0, "skippedRecent": 0}
-    total_calls = ingested = 0
+               "batches": 0, "skippedRecent": planned["skippedRecent"]}
+    total_calls = 0
 
     def call(center, radius):
         nonlocal total_calls
@@ -244,21 +277,15 @@ def run(fetch=None, sleep=None, now=None):
             raise ValueError("Incomplete Overpass response")
         return payload
 
-    for start in range(0, len(attractions), MARKET_BATCH_SIZE):
+    for start in range(0, len(queue), MARKET_BATCH_SIZE):
         prepared, failures, retries = [], {}, []
-        markets = calls = skipped = 0
-        for attraction in attractions[start:start + MARKET_BATCH_SIZE]:
-            content_id = str(attraction["contentId"])
+        markets = calls = 0
+        for content_id in queue[start:start + MARKET_BATCH_SIZE]:
             markets += 1
             try:
                 state = place_client.market_state(content_id)
-                if state is None:  # Not yet ingested by market-stores.
+                if state is None:  # Gone since the plan was made.
                     markets -= 1
-                    continue
-                ingested += 1
-                if fetched_recently(state, now):
-                    markets -= 1
-                    skipped += 1
                     continue
                 market = state["market"]
                 center = [float(market["latitude"]), float(market["longitude"])]
@@ -286,20 +313,19 @@ def run(fetch=None, sleep=None, now=None):
                 failures[content_id] = (type(exc).__name__, True)
         errors = [f"{content_id}: {name}" for content_id, (name, _) in failures.items()]
         batch = {"markets": len(prepared), "failedMarkets": len(failures), "calls": calls,
-                 "failedCalls": sum(1 for _, overpass in failures.values() if overpass),
-                 "skippedRecent": skipped, "errors": errors}
+                 "failedCalls": sum(1 for _, overpass in failures.values() if overpass), "errors": errors}
         # Printed before the gate so a failing batch still shows which markets failed and why.
         print(f"[market-osm] batch {json.dumps(batch)}", flush=True)
-        if markets:  # A batch of markets not yet ingested by market-stores has nothing to gate.
+        if markets:  # A batch whose markets all disappeared since the plan has nothing to gate.
             check_failures(markets, batch["failedMarkets"], calls, batch["failedCalls"])
         for market_id, command in prepared:
             place_client._request("PUT", f"/internal/markets/{market_id}/osm", command)
             place_client._request("POST", f"/internal/markets/{market_id}/rejudge")
-        for key in ("markets", "failedMarkets", "calls", "failedCalls", "skippedRecent"):
+        for key in ("markets", "failedMarkets", "calls", "failedCalls"):
             summary[key] += batch[key]
         summary["errors"].extend(errors)
         summary["batches"] += 1
-    if not ingested:
+    if not planned["ingested"]:
         check_failures(0, 0, 0, 0)
     print(f"[market-osm] {json.dumps(summary)}", flush=True)
     return summary
