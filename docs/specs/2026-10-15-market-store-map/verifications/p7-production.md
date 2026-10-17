@@ -101,3 +101,16 @@ main 에 올라간 순서와 운영에서 확인한 것. 시각은 KST.
 - 바탕 비교(`gtiles.mjs`): 구글 래스터 타일(`mt1.google.com/vt`, scale 2 — **평가용 1회 조회, 운영 경로 아님**) 2×2 를 이어 중심 768px 을 자르고, 운영 PNG `/basemaps/markets/{id}/light.png`(2x, 줌 17) 중심 768px 과 같은 축척으로 붙였다 → `compare-{namdaemun|seokgok|muju}-z17-ko.png`(좌 구글 · 우 OpenFreeMap), 영문 `compare-namdaemun-z17-en.png`, 남대문·천안 z18 `gmap-*-z18-ko-crop.png`. 바탕 PNG 가 없는 세 곳(설악눈메골 2990069 · 천안역전 2762950 · 덕계 1012430 — 지도 124곳 밖, 가게 180·637·414)은 구글만 `gmap-*-z17-ko-crop.png`.
 - 결과: 구글은 여섯 곳 모두 건물 외곽선·도로명·POI(식당·마트·정류장) 가 있고 남대문은 상가 건물 이름까지. OpenFreeMap positron 은 도로·도로명(한/영 병기)은 있으나 POI 가 없고 석곡·무주는 건물이 거의 없다. 50% 축소 비교 이미지에서 OpenFreeMap 쪽이 빈 면처럼 보이는 것은 옅은 색 때문이고 원본 768px(`ofm-namdaemun-z17-crop.png`)에는 건물·길이 있다.
 - 가격(공식 pricing 페이지 2026-10-17): Dynamic Maps Essentials 월 10,000 무료 → $7/1,000(~100k). Static Maps 10,000 무료 → $2/1,000.
+
+## 10-17 밤 — 네이버 키 반영 배포 확인
+커밋 `1b82427dc`(`NAVER_MAP_KEY_ID`), images run 39032691068 21:29 → 21:35 완료, portal-fe 교체 21:35:42, 번들 `index-BZaEm6V7.js`. 스크립트 `prod-naver2.mjs`(수치) · `prod-naver3.mjs`(뷰포트 캡처), 캐시 끔, `window.navermap_authFailure`·`alert` 를 가로채 인증 실패를 잡는다.
+
+| 페이지 | SDK `maps.js?ncpKeyId=52axkewhxc&language=` | `/v3/auth` | 타일 200 | 인증 실패 콜백 | 네이버 핀 / 골목 라벨 | 토글 | 출처 줄 |
+|---|---|---|---|---|---|---|---|
+| 남대문 34550, 1280×900 | 200, `ko` | 200 | 32 | 없음 | 41 / 0 | 「우리 지도로 보기」 | TourAPI · 공공누리 |
+| 남대문 34550, 390×844 DPR 2 | 200, `ko` | 200 | 21 | 없음 | 41 / 0 | 〃 | 〃 |
+| 망원 22534, 1280×900 | 200, `ko` | 200 | 28 | 없음 | 22 / 7 | 〃 | **© OpenStreetMap contributors** · TourAPI |
+
+- 뷰포트 캡처 `naver3-viewport-light.png` · `naver3-viewport-dark.png`: 네이버 바탕(숭례문·회현역·건물 이름) 위에 구역 색 묶음 핀, 줌 컨트롤, NAVER 로고·©NAVER Corp·50 m 축척. 지도 영역 평균색 라이트/다크 모두 밝은 지도(다크 테마에서 mean 227 · std 51).
+- 영문: 가게 좌표가 있는 시장 관광지에 `lang='en'` 행이 없어(쿼리 0건) 영문 시장 상세 자체가 없다. `language=` 는 페이지 언어를 따르므로 영문 행이 생기면 `en` 으로 나간다(`MarketNaverMap.tsx:42·65`).
+- 계측 함정 둘: ① `Page.captureScreenshot` 의 `clip` 은 **페이지 좌표**라 뷰포트 rect 를 그대로 주면 스크롤만큼 위를 찍는다 — 1차 캡처가 전부 단색(19,19,19 = 히어로 배경)이었던 이유. `prod-structure.mjs` 처럼 `scrollY` 를 더해야 한다. ② 네이버 핀은 `.place-market-naver-pin`(SVG 는 `.place-market-pin`) — 1차 probe 의 `pins: 0` 은 선택자 문제.
