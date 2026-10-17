@@ -65,10 +65,10 @@ def main():
             for host in ['1989v.com', 'place.1989v.com']:
                 for prefix, canonical in [('', ''), ('/en', '/en')]:
                     redirect(host, prefix + '/place' + query, 'https://place.1989v.com' + (canonical or '/') + query)
-                    for tail in ['/attractions/123', '/regions/11', '/regions/11110']:
+                    for tail in ['/attractions/123', '/attractions/123/market', '/regions/11', '/regions/11110']:
                         redirect(host, prefix + '/place' + tail + query, 'https://place.1989v.com' + canonical + tail + query)
             for prefix in ['', '/en']:
-                for tail in ['/attractions/123', '/regions/11', '/regions/11110/parking']:
+                for tail in ['/attractions/123', '/attractions/123/market', '/regions/11', '/regions/11110/parking']:
                     redirect('1989v.com', prefix + tail + query, 'https://place.1989v.com' + prefix + tail + query)
                 for tail in ['/games/test', '/games/genre/puzzle', '/draw']:
                     redirect('1989v.com', prefix + tail + query, 'https://game.1989v.com' + prefix + tail + query)

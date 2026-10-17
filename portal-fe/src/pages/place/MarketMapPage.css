@@ -1,18 +1,20 @@
 .market-map-page {
-  height: 100dvh; min-height: 0; box-sizing: border-box; display: flex; flex-direction: column;
+  /* 모바일 탭바가 있으면 셸이 body 아래를 그만큼 비운다(kh-shell.css) — 같은 값을 빼야 문서가 스크롤되지 않는다. */
+  height: calc(100dvh - var(--kh-shell-bottom, 0px)); min-height: 0; box-sizing: border-box; display: flex; flex-direction: column;
   overflow: hidden; color: var(--ko-text-primary); background: var(--ko-surface-0);
   padding-top: env(safe-area-inset-top);
 }
 .market-map-page *, .market-map-page *::before, .market-map-page *::after { box-sizing: border-box; }
-.market-map-page button, .market-map-page input { font: inherit; color: inherit; }
-.market-map-page button, .market-map-top > a { min-height: 44px; }
-.market-map-page button { background: var(--ko-surface-1); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius-asym); padding: var(--ko-space-2); }
+/* 상단 바·구역 칩·목록의 버튼만 — 네이버 지도 안의 핀(button.place-market-naver-pin)에 상자가 씌워지면 안 된다. */
+.market-map-top :is(button, input), .market-map-zones button, .market-map-list button { font: inherit; color: inherit; }
+.market-map-top button, .market-map-zones button, .market-map-list button, .market-map-top > a { min-height: 44px; }
+.market-map-top button, .market-map-zones button, .market-map-list button { background: var(--ko-surface-1); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius-asym); padding: var(--ko-space-2); }
 .market-map-page :is(button, input, a):focus-visible { outline: var(--ko-focus-ring); outline-offset: 2px; }
 .market-map-top { display: flex; align-items: center; gap: var(--ko-space-2); padding: var(--ko-space-2) max(var(--ko-space-3), env(safe-area-inset-right)) var(--ko-space-2) max(var(--ko-space-3), env(safe-area-inset-left)); border-bottom: 1px solid var(--ko-border-default); }
 .market-map-top > a { display: grid; place-items: center; min-width: 44px; color: var(--ko-accent-text); }
 .market-map-top h1 { font-size: var(--ko-text-base); margin: 0; flex: 0 1 12rem; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; min-width: 0; }
 .market-map-top > input { flex: 1; width: 0; min-width: 0; min-height: 44px; background: var(--ko-surface-1); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius-asym); padding-inline: var(--ko-space-2); }
-.market-map-top label { font-size: var(--ko-text-xs); max-width: 6rem; flex-shrink: 0; }
+.market-map-top label { font-size: var(--ko-text-xs); flex-shrink: 0; white-space: nowrap; display: inline-flex; align-items: center; gap: var(--ko-space-1); }
 .market-map-zones { display: flex; flex: 0 0 auto; gap: var(--ko-space-2); overflow-x: auto; padding: var(--ko-space-2) var(--ko-space-3); }
 .market-map-zones button { flex-shrink: 0; }
 .market-map-zones button[aria-pressed='true'] { color: var(--ko-accent-text); border-color: var(--ko-accent-primary); background: var(--ko-accent-primary-bg); }
@@ -26,7 +28,8 @@
 .market-map-stage > .place-market-canvas-layout > div > [role='group'] > div:first-child { aspect-ratio: auto !important; min-height: 0 !important; }
 .market-map-stage .place-market-zoom { position: absolute; top: 4rem; left: var(--ko-space-2); z-index: 2; }
 .market-map-stage .place-market-canvas > svg { height: 100%; width: 100%; border: 0; border-radius: 0; }
-.market-map-stage .place-market-provider { position: absolute; top: var(--ko-space-2); left: var(--ko-space-2); z-index: 2; }
+/* 왼쪽 위는 네이버 줌 컨트롤 자리 — 우리 버튼은 오른쪽에 세로로 쌓는다. */
+.market-map-stage .place-market-provider { position: absolute; top: var(--ko-space-2); right: var(--ko-space-3); left: auto; z-index: 2; }
 .market-map-stage .place-market-locate { position: absolute; top: 4rem; right: var(--ko-space-3); width: auto; max-width: min(18rem, 70%); margin: 0; z-index: 2; padding: 0; }
 .market-map-stage .place-market-locate [role='status']:empty { display: none; }
 .market-map-stage .place-market-locate p { padding-inline: var(--ko-space-2); }
