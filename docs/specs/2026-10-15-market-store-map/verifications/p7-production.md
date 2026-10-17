@@ -165,3 +165,10 @@ main 에 올라간 순서와 운영에서 확인한 것. 시각은 KST.
 - 리다이렉트: `/attractions/34550?marketQuery=떡볶이` → `/attractions/34550/market?marketQuery=…`(검색창 「떡볶이」), `/attractions/34550#market` → `/attractions/34550/market`.
 - 전용 화면 핀(`.place-market-naver-pin`) 계산 스타일: `background rgba(0,0,0,0) · border 0 · padding 0 · 44px` — 브라우저 기본 button 상자가 사라졌다(`wu31-screen-mobile-screen.png`).
 - 콘솔 예외 0(이번엔 합성 휠·클릭 없이 로드만).
+- 캡처(`wu31-detail-desktop-card.png`)에서 미리보기 지도가 16:9 상자(1166×656) 가운데 약 512×470 만 그리고 있었다 — 네이버 지도는 만들어질 때의 상자 크기를 기억하고, 호스트는 어댑터 기본 비율(600/440)·최소 높이를 갖고 있었다. 두 어댑터에 ResizeObserver 로 `setSize`(네이버)/`resize` 이벤트(구글)를 넣고 미리보기 호스트의 비율·최소 높이를 풀었다(`bb1943a46`). 확인은 `prod-preview.mjs`(타일이 상자를 덮는지) — 아래 절.
+
+## 10-17 밤 — WU-32 배포 확인 (바탕 PNG 파이프라인 제거)
+`2d476f12c` → 운영 `index-W5oJ9JjS.js`(23:39). 배포 전 검사: tsc 0건 · vitest 9파일 129건 · `grep -rni "basemap|openfreemap|openmaptiles"` 0건 · nginx 계약 검사 94건 통과 · `kubectl kustomize k8s/overlays/oci-arm` 정상(378,637B, 삭제한 NetworkPolicy 이름 0회).
+- `curl -sI https://place.1989v.com/basemaps/markets/132180/meta.json` → `HTTP/2 200 · content-type: text/html` — `/basemaps/` location 이 사라져 SPA 셸 폴백으로 떨어진다(이전엔 OCI 버킷 프록시의 JSON).
+- 같은 배포에서 `prod-wu31.mjs` 재실행: 상세 카드 1,614 노드 · 미리보기 마커 1 · 리다이렉트 둘 · 전용 화면 핀 투명 — 바탕 코드가 빠져도 화면은 그대로.
+- 남은 수동 작업(사용자): GitHub 시크릿 `MARKET_BASEMAP_PAR`, OCI 버킷 `msa-market-basemap` 삭제. 코드 참조 0건이라 지우지 않아도 동작엔 영향 없다.
