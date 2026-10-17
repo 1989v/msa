@@ -35,8 +35,9 @@
 .place-market-map { min-width: 0; }
 .place-market-canvas { position: relative; }
 .place-market-canvas[data-geometry] { overflow: hidden; }
-.place-market-map svg { width: 100%; display: block; background: var(--ko-surface-1); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius-asym); }
-.place-market-map svg > text { fill: var(--ko-text-primary); font-size: 16px; }
+/* 우리 SVG 지도에만 — 네이버 지도가 오버레이마다 만드는 svg 에 배경·테두리가 붙으면 검은 상자가 된다. */
+.place-market-canvas svg { width: 100%; display: block; background: var(--ko-surface-1); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius-asym); }
+.place-market-canvas svg > text { fill: var(--ko-text-primary); font-size: 16px; }
 .place-market-scale { fill: none; stroke: var(--ko-text-primary); stroke-width: 2; }
 .place-market-boundary { fill: color-mix(in srgb, var(--market-pine) 8%, transparent); stroke: var(--market-pine); stroke-width: 2; stroke-dasharray: 6 3; }
 .place-market-path { fill: none; stroke: var(--market-path-color); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }

@@ -37,4 +37,12 @@ describe('market overlay model', () => {
     expect(model.markers.map((marker) => marker.labelOffset.y)).toEqual([20, 44, 68]);
     expect(model.userPosition).toMatchObject({ latitude: 37.5, longitude: 127, accuracy: 12 });
   });
+  it('keeps clusters at 19 while more than 150 shops are on screen', () => {
+    const stores = Array.from({ length: 160 }, (_, i) => shop(i + 1, 37.5 + (i % 16) * 0.00005, 127 + Math.floor(i / 16) * 0.00005));
+    const dense = buildMarketOverlay({ data: { ...overlayData, stores }, zoom: 19, bounds });
+    expect(dense.markers.every((marker) => !marker.label)).toBe(true);
+    expect(dense.markers.reduce((count, marker) => count + marker.storeIds.length, 0)).toBe(160);
+    const sparse = buildMarketOverlay({ data: { ...overlayData, stores: stores.slice(0, 150) }, zoom: 19, bounds });
+    expect(sparse.markers).toHaveLength(150); expect(sparse.markers.every((marker) => marker.label)).toBe(true);
+  });
 });

@@ -40,6 +40,8 @@ function screen([lat, lng]: MarketCoordinate, zoom: number) {
   const scale = 256 * 2 ** zoom;
   return { x: (lng + 180) / 360 * scale, y: (.5 - Math.log((1 + sin) / (1 - sin)) / (4 * Math.PI)) * scale };
 }
+/** 화면 안 가게가 이보다 많으면 줌 19 이상이어도 묶음을 유지한다 — 남대문은 줌 19 한 화면에 790곳이 들어온다. */
+const INDIVIDUAL_LIMIT = 150;
 const inside = (store: Position, bounds?: MarketBounds) => !bounds || (store.latitude >= bounds.south && store.latitude <= bounds.north && (bounds.west <= bounds.east ? store.longitude >= bounds.west && store.longitude <= bounds.east : store.longitude >= bounds.west || store.longitude <= bounds.east));
 
 /** SDK/DOM-free drawing policy. Membership comes from the response only: the derived hull
@@ -84,11 +86,13 @@ export function buildMarketOverlay({ data, zoom, bounds, selection = {}, lang = 
     const color = members.every((s) => s.membership === 'OUT') ? muted : first.pathId != null ? pathColor(first.pathId) : zoneColor(first.zoneId);
     return { key, latitude, longitude, selectionKey, storeIds: members.map((s) => s.id), text, title: members.map((s) => marketDisplayName(s, lang)).join(', '), color, strokeColor: highlighted ? 'var(--ko-accent-text)' : 'var(--ko-surface-0)', strokeWeight: highlighted ? 3 : 2, size: label ? 12 : 32, iconPath: circlePath(label ? 12 : 32), labelOffset: { x: 0, y: 0 }, highlighted, searchMatch: members.some((s) => selection.searchStoreIds?.includes(s.id!)), textColor: label ? highlighted ? 'var(--ko-accent-text)' : color : 'var(--ko-surface-0)', label };
   };
+  const visibleStores = stores.filter((s) => inside(s, bounds));
   if (zoom <= 16 && centre) model.markers.push({ key: 'market-name', ...centre, storeIds: [], text: `${data.market.name} · ${data.stores.length}`, title: data.market.name, color: muted, strokeColor: 'var(--ko-surface-0)', strokeWeight: 2, size: 32, iconPath: circlePath(32), labelOffset: { x: 0, y: 20 }, textColor: muted, highlighted: false, searchMatch: false, label: true });
-  else if (zoom < 19) {
-    const visible = groupMarketPins(stores.filter((s) => inside(s, bounds))).map((p) => ({ ...p, ...screen([p.latitude, p.longitude], zoom) }));
+  else if (zoom >= 19 && visibleStores.length <= INDIVIDUAL_LIMIT) model.markers = visibleStores.map((s, index) => marker(`store:${s.id ?? index}`, s.latitude, s.longitude, [s], parcelFor(s).key, marketDisplayName(s, lang), true));
+  else {
+    const visible = groupMarketPins(visibleStores).map((p) => ({ ...p, ...screen([p.latitude, p.longitude], zoom) }));
     model.markers = clusterByScreenDistance(visible, 1, 24).map((p) => marker(`pin:${p.key}`, p.latitude, p.longitude, p.stores, p.key, String(p.stores.length), false));
-  } else model.markers = stores.filter((s) => inside(s, bounds)).map((s, index) => marker(`store:${s.id ?? index}`, s.latitude, s.longitude, [s], parcelFor(s).key, marketDisplayName(s, lang), true));
+  }
   const focused = stores.find((s) => selection.storeId != null && s.id === selection.storeId);
   if (focused) model.focus = { latitude: focused.latitude, longitude: focused.longitude, selectionKey: parcelFor(focused).key, zoom: 19 };
   if (userPosition) model.userPosition = { ...userPosition, text: lang === 'en' ? 'Your location' : '내 위치', color: 'var(--ko-accent-primary)', fillOpacity: .15, strokeWeight: 1, size: 12, iconPath: circlePath(12), strokeColor: 'var(--ko-surface-0)' };
