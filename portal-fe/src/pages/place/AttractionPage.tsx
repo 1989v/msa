@@ -392,8 +392,8 @@ export default function AttractionPage() {
     ? [
         ...(summary ? (['summary'] as const) : []),
         ...(accessView(attraction.access, lang) ? (['access'] as const) : []),
-        ...(infoTabsProps && infoTabsShown(infoTabsProps).length > 0 ? (['info'] as const) : []),
         ...(marketData && !marketError ? (['market'] as const) : []),
+        ...(infoTabsProps && infoTabsShown(infoTabsProps).length > 0 ? (['info'] as const) : []),
         ...(attraction.latitude != null && attraction.longitude != null ? (['nearby'] as const) : []),
       ]
     : [];
