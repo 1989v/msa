@@ -130,3 +130,22 @@ main 에 올라간 순서와 운영에서 확인한 것. 시각은 KST.
 - 콘솔 예외 1건 `TypeError: Cannot read properties of undefined (reading 'x')` 는 스택이 전부 `maps.js`(네이버 SDK `distance`) 안이고, 합성 휠 이벤트 중에만 나며 페이지 로드 12초 동안(`prod-err.mjs`)에는 없다. 우리 코드 프레임 없음 — 추적만.
 - 구글 폴백 실측(`prod-fallback.mjs`, 배포 없이 운영에서): ① `Network.setBlockedURLs` 로 네이버 SDK 를 막자 → `naverHost:false, googleHost:true, gmStyle:true`, `maps.googleapis.com/maps/api/js` 200, 구글 마커 82, 경고문 없음, 토글 「우리 지도로 보기」. ② 네이버 정상 로드 뒤 `window.navermap_authFailure()` 호출 → 네이버 호스트 사라지고 구글 지도(마커 82)로 교체, 콘솔 예외 0. 캡처 `fallback-google-blocked.png` · `fallback-google-auth.png`.
 - 계측 함정: 디플로이먼트가 `1/1 updated` 가 된 26초 뒤에 재도 옛 파드 응답이 왔다(엔드포인트 전파 지연). 첫 측정이 `index-Ct06Mw3O.js` 대신 `index-BZaEm6V7.js` 였고 수치(z16 에서 묶음 6개)로 알아챘다. 이후 감시는 운영 HTML 의 엔트리 번들이 이전 값과 달라질 때까지 기다린다. 다만 **엔트리 해시는 lazy 청크만 바뀌어도 같이 바뀐다**는 전제에 기대므로, 확실한 건 새로 넣은 심볼(`gm_authFailure`)이 파드 자산에 있는지였다(`kubectl exec … grep -rl gm_authFailure`).
+
+## 10-17 밤 — WU-30 배포 확인 (전용 화면 `/attractions/:id/market`)
+`31c641888`(Codex) → 운영 `index-_BGLUziT.js` 측정 → 수정 `dfd2afee1` → 운영 `index-4OJ6MOpM.js` 재측정. 스크립트 `prod-wu30.mjs`(시트 손잡이 탭으로 peek→half→full, 핀 탭, 검색 입력, 더 보기), 감시 `deploy-watch-wu30.sh`(새 번들 확인 뒤 측정).
+
+| 상태 (남대문 34550) | 390×844 수정 전 → 후 | 1024×768 | 1280×900 |
+|---|---|---|---|
+| 문서 스크롤 높이 / 뷰포트 | **904 / 844 → 844 / 844** | 768 / 768 | 900 / 900 |
+| 지도(stage) peek · half · full | 506 · 325 · 108 → 464 · 298 · 99 px | 좌 400 패널, 지도 624×647 | 좌 400 패널, 지도 880×779 |
+| 시트 높이 peek · half · full | 217 · 398 · 615 → 199 · 365 · 564 px | 패널 647 | 패널 779 |
+| 목록 | 「현 지도에서 1267곳 · 지도 위치 없음 1047곳」, 50행 + 더 보기 | 〃 | 〃 |
+| 핀 탭 | snap half, 첫 두 행 「선택한 필지」(0심이 · 88체육사, 남대문시장4길 21) | 〃 | 〃 |
+| 검색 「떡볶이」 | URL `?marketQuery=%EB%96%A1%EB%B3%B6%EC%9D%B4`, 「찾은 가게 12곳」 12행 | 〃 | 〃 |
+| DOM 노드 | 720 → 검색 뒤 432 (상세 페이지 18,534 대비) | 736 | 746 |
+| 제목 · canonical | 「남대문시장 가게 지도 \| K-관광」 · `/attractions/34550/market` | 〃 | 〃 |
+
+- 망원 22534 모바일: 「현 지도에서 152곳 · 지도 위치 없음 93곳」, 핀 22, 구역 칩 8, 검색 「떡볶이」 7행.
+- 수정 전 캡처(`wu30-mobile-initial.png` 1차)에서 잡힌 셋: ① 네이버 핀마다 어두운 네모 — `.market-map-page button { background; border; padding }` 이 HTML 마커(button)에도 적용. 상단 바·구역 칩·목록 버튼으로 선택자를 좁혔다. ② 모바일에서 문서가 60px 스크롤 — 셸이 탭바 몫으로 body 아래를 비우는데(`kh-shell.css` `--kh-shell-bottom`) 페이지가 `100dvh` 를 통째로 잡았다. 같은 값을 뺐다. ③ 「우리 지도로 보기」가 네이버 줌 컨트롤 자리(왼쪽 위)와 겹침 — 오른쪽으로.
+- nginx: apex `1989v.com/attractions/:id/market` 가 place 호스트로 안 넘어갔다(리다이렉트 맵이 id 뒤를 모름). `(/market)?` 를 더하고 `scripts/check-nginx-public-aliases.py` 에 케이스를 넣어 옛 설정에서 실패(200 SPA 셸) → 새 설정 통과(94건)를 확인. 새 경로는 상세 렌더 프록시(`/attractions/{id}$`)에 안 걸리고 SPA 셸로 떨어진다(의도).
+- 계측: 모바일 에뮬레이션에서 휠은 페이지 스크롤이라 시트 전환은 손잡이 탭으로 쟀다. 콘솔의 네이버 SDK `distance` 예외는 합성 클릭에서도 난다 — 우리 프레임 없음, 추적만.

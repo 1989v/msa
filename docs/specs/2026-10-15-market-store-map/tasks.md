@@ -219,6 +219,7 @@ Codex 보내는 순서: WU-15 ∥ WU-16 → WU-17 ∥ WU-18. 같은 워크트리
 - 디자인: `DESIGN.md` 토큰만, `docs/design/k-heritage.html` 을 먼저 읽는다(브랜드 면). 시트는 `--kh-radius-asym`·표면 토큰, 손잡이 44px 터치 영역. 다크 테마 둘 다.
 - 검증: tsc(`tsconfig.app.json`) + 해당 vitest 파일만 — 새 `MarketMapPage.test.tsx`(라우트 렌더 · 시장 응답 없으면 상세로 · 검색어 왕복 · 구역 칩 → 목록 필터 · `onViewportChange` → 「현 지도에서 N곳」 · 핀 선택 → 정렬·강조 · 좌표 없는 가게 끝 · 50행 더 보기 · 시트 스냅 상태 전환), `MarketNaverMap`·`MarketGoogleMap` 테스트에 `onViewportChange` 호출, `AttractionActionBar`·`MarketSearchPage` 링크 테스트 갱신, `prerender-seo` 의 sitemap 항목 테스트(있는 패턴대로). 배포 뒤 CDP: 남대문 390/1024/1280 에서 지도 높이·시트 3단·목록 행 수·데스크톱 패널 400px·검색 → 이동, DOM 노드 수(상세 17k 대비).
 - 범위 밖: 상세 페이지의 절 교체·옛 패널/시트 삭제(WU-31), PNG(WU-32), 검색엔진(WU-28).
+- **완료(2026-10-17 밤)**: Codex 구현 `31c641888` + 수정 `dfd2afee1`(전용 화면 범용 button 규칙이 네이버 핀에 상자를 씌움 → 상단 바·칩·목록으로 한정 / 모바일 탭바 몫 `--kh-shell-bottom` 을 화면 높이에서 빼 문서 스크롤 0 / 토글을 줌 컨트롤 반대편으로 / apex `…/market` 리다이렉트 + nginx 계약 검사 94건). tsc 0건, vitest 10파일 193건. 운영(`index-4OJ6MOpM.js`): 모바일 시트 199/365/564px(full 에서도 지도 99px), 데스크톱·태블릿 좌측 400px, 목록 50행 + 더 보기, 핀 탭 → half + 「선택한 필지」 먼저, `?marketQuery=` 왕복, DOM 720~800 노드. 기록은 `verifications/p7-production.md` 「WU-30 배포 확인」.
 
 ## WU-31 상세 절 → 요약 카드, 옛 목록 제거 (portal-fe — WU-30 뒤)
 - 상세 페이지 `#market` 절을 요약 카드로: 시장 이름 · 유형/점포수 facts · 착한가격 요약 · 구역 칩 3개 · **상호작용 없는 네이버 지도 16:9**(`MarketNaverMap` 에 `interactive={false}` — draggable/scrollWheel/pinchZoom/keyboard 끔, 줌 16, 폴리곤 + 시장 마커만, 클릭 → 전용 화면) · 「지도 전체 보기」 버튼. 관광공사 소개 음식점·스튜어드 신청은 카드 아래 그대로.
