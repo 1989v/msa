@@ -3,26 +3,29 @@ import type { MarketDish, MarketResponse } from '../../api/marketApi';
 import type { PlaceLang } from '../../api/placeApi';
 import type { MarketViewport } from './MarketNaverMap';
 import { formatGoodPriceMenu, formatGoodPriceSummary, formatMarketFloor, groupMarketPins, hasMarketCoordinate, marketDisplayName, marketSourceBadges, marketZones, matchesMarketStore, normalizeMarketName, sectionMatchLabel, visibleMarketStores, zoneIds } from './marketView';
+import type { MarketStoreSearch } from './useMarketStoreSearch';
 import MarketMenuDetails from './MarketMenuDetails';
 
-export function marketListStores(market: MarketResponse, query: string, zoneId: number | null, viewport: MarketViewport | null, selectedKey: string | null, includeOutside: boolean, dishes: MarketDish[] = []) {
+export function marketListStores(market: MarketResponse, query: string, zoneId: number | null, viewport: MarketViewport | null, selectedKey: string | null, includeOutside: boolean, dishes: MarketDish[] = [], search?: MarketStoreSearch) {
   const zone = marketZones(market, includeOutside, zoneId).zones.find(zone => zone.id === zoneId);
   const stores = visibleMarketStores(market.stores, includeOutside, zone ? zoneIds(zone) : undefined);
   const searching = normalizeMarketName(query).length > 0;
   const keys: string[] = selectedKey?.startsWith('cluster:') ? JSON.parse(selectedKey.slice(8)) : selectedKey ? [selectedKey] : [];
   const selected = new Set(groupMarketPins(stores).filter(pin => keys.includes(pin.key)).flatMap(pin => pin.stores));
   const bounds = viewport?.bounds;
-  const rows = stores.filter(store => searching ? matchesMarketStore(store, query, dishes) != null : !bounds || !hasMarketCoordinate(store) || (store.latitude >= bounds.south && store.latitude <= bounds.north && store.longitude >= bounds.west && store.longitude <= bounds.east));
-  rows.sort((a, b) => Number(hasMarketCoordinate(b)) - Number(hasMarketCoordinate(a)) || Number(selected.has(b)) - Number(selected.has(a)) || (matchesMarketStore(a, query, dishes)?.rank ?? 5) - (matchesMarketStore(b, query, dishes)?.rank ?? 5) || a.name.localeCompare(b.name, 'ko') || (a.id ?? 0) - (b.id ?? 0));
+  const engine = search?.status === 'engine';
+  const rows = stores.filter(store => searching ? engine ? store.id != null && search.storeIds.includes(store.id) : matchesMarketStore(store, query, dishes) != null : !bounds || !hasMarketCoordinate(store) || (store.latitude >= bounds.south && store.latitude <= bounds.north && store.longitude >= bounds.west && store.longitude <= bounds.east));
+  rows.sort((a, b) => engine ? search.storeIds.indexOf(a.id!) - search.storeIds.indexOf(b.id!) : Number(hasMarketCoordinate(b)) - Number(hasMarketCoordinate(a)) || Number(selected.has(b)) - Number(selected.has(a)) || (matchesMarketStore(a, query, dishes)?.rank ?? 5) - (matchesMarketStore(b, query, dishes)?.rank ?? 5) || a.name.localeCompare(b.name, 'ko') || (a.id ?? 0) - (b.id ?? 0));
   return { rows, selected, searching };
 }
 
 /** The same list instance serves the mobile sheet and desktop panel. */
-export default function MarketList({ market, query, zoneId, viewport, selectedKey, focusStore, includeOutside, lang, onFocusStore, dishes = [] }: {
-  focusStore?: number | null; market: MarketResponse; query: string; zoneId: number | null; viewport: MarketViewport | null; selectedKey: string | null; includeOutside: boolean; lang: PlaceLang; dishes?: MarketDish[]; onFocusStore: (id: number) => void;
+export default function MarketList({ market, query, zoneId, viewport, selectedKey, focusStore, includeOutside, lang, onFocusStore, dishes = [], search }: {
+  focusStore?: number | null; market: MarketResponse; query: string; zoneId: number | null; viewport: MarketViewport | null; selectedKey: string | null; includeOutside: boolean; lang: PlaceLang; dishes?: MarketDish[]; search?: MarketStoreSearch; onFocusStore: (id: number) => void;
 }) {
   const en = lang === 'en';
-  const { rows, selected, searching } = marketListStores(market, query, zoneId, viewport, selectedKey, includeOutside, dishes);
+  const { rows, selected, searching } = marketListStores(market, query, zoneId, viewport, selectedKey, includeOutside, dishes, search);
+  const match = (store: MarketResponse['stores'][number]) => search?.status === 'engine' ? search.matchedBy.get(store.id!) ?? null : matchesMarketStore(store, query, dishes);
   const resetKey = JSON.stringify([market.market.contentId, query, zoneId, viewport, includeOutside, selectedKey]);
   const [page, setPage] = useState({ key: resetKey, limit: 50 });
   const limit = page.key === resetKey ? page.limit : 50;
@@ -47,7 +50,7 @@ export default function MarketList({ market, query, zoneId, viewport, selectedKe
           <div className="place-market-badges">
             {selected.has(store) && <span>{en ? 'Selected parcel' : '선택한 필지'}</span>}
             {store.goodPrice && <span className="place-market-good-price-badge">{en ? 'Good price' : '착한가격'}</span>}
-            {sectionMatchLabel(matchesMarketStore(store, query, dishes), lang) && <span data-related={matchesMarketStore(store, query, dishes)?.matchedBy === 'related' || undefined}>{sectionMatchLabel(matchesMarketStore(store, query, dishes), lang)}</span>}
+            {sectionMatchLabel(match(store), lang) && <span data-related={search?.status !== 'engine' && matchesMarketStore(store, query, dishes)?.matchedBy === 'related' || undefined}>{sectionMatchLabel(match(store), lang)}</span>}
             {marketSourceBadges(store, lang).map(badge => <span key={badge}>{badge}</span>)}
             {store.nearby ? <span>{en ? 'Nearby · Membership unconfirmed' : '주변 · 소속 미확인'}</span> : store.membership === 'OUT' && <span>{en ? 'Outside market' : '시장 밖'}</span>}
             {store.membership === 'UNKNOWN' && <span>{en ? 'Location unconfirmed' : '위치 미확인'}</span>}

@@ -42,12 +42,12 @@ function sdk() {
 }
 let maps: ReturnType<typeof sdk>;
 const install = () => Object.defineProperty(window, 'naver', { configurable: true, value: { maps } });
-function view(market = data, lang: 'ko' | 'en' = 'ko', onViewportChange = vi.fn()) {
+function view(market = data, lang: 'ko' | 'en' = 'ko', onViewportChange = vi.fn(), searchStoreIds?: number[]) {
   const projection = projectMarketPins(groupMarketPins(market.stores), market)!;
   return function View() {
     const [selectedKey, onSelect] = useState<string | null>(null); const [focusStoreId, focus] = useState<number | null>(null);
     return <><button onClick={() => focus(1)}>Focus shop</button><button onClick={() => focus(null)}>Clear focus</button>
-      <output data-testid="selection">{selectedKey}</output><MarketMap onViewportChange={onViewportChange} contentId="123" data={market} lang={lang} projection={projection} points={[...projection.points]} hasGeometry query="떡볶이"
+      <output data-testid="selection">{selectedKey}</output><MarketMap onViewportChange={onViewportChange} contentId="123" data={market} lang={lang} projection={projection} points={[...projection.points]} hasGeometry query="떡볶이" searchStoreIds={searchStoreIds}
         selectedKey={selectedKey} onSelect={onSelect} focusStoreId={focusStoreId} color={() => 'var(--market-zone-1)'} pathColor={() => undefined} /></>;
   };
 }
@@ -168,4 +168,20 @@ describe('market map provider', () => {
     const English = view(data, 'en'); render(<English />); expect(scripts()).toHaveLength(1); expect(scripts()[0].src).toContain('language=en');
     await act(async () => fireEvent.load(scripts()[0])); expect(screen.getByRole('group', { name: 'Naver shop location map' })).toBeInTheDocument();
   });
+});
+
+it.each(['naver', 'canvas'])('uses engine IDs without browser-match unions in %s mode', async provider => {
+  if (provider === 'canvas') window.localStorage.setItem('market-map-provider', 'canvas');
+  install();
+  const market = { ...data, stores: [shop(), shop({ id: 2, name: '엔진 결과', items: null, longitude: 127.005 })] };
+  const View = view(market, 'ko', vi.fn(), [2]); const { container } = render(<View />);
+  if (provider === 'naver') {
+    await waitFor(() => expect(container.querySelector('.place-market-naver-pin')).not.toBeNull());
+    const pins = Array.from(container.querySelectorAll('.place-market-naver-pin'));
+    expect(pins.find(pin => pin.getAttribute('aria-label')?.includes('엔진 결과'))?.firstElementChild?.getAttribute('style')).toContain('border-color: var(--ko-accent-text)');
+    expect(pins.find(pin => pin.getAttribute('aria-label')?.includes('가게'))?.firstElementChild?.getAttribute('style')).not.toContain('border-color: var(--ko-accent-text)');
+  } else {
+    expect(container.querySelectorAll('.place-market-hit-label')).toHaveLength(1);
+    expect(container.querySelector('.place-market-hit-label')).toHaveTextContent('엔진 결과');
+  }
 });

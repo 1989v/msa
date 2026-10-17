@@ -30,7 +30,7 @@ export interface MarketTourMenu {
   attraction: MarketAttractionRef;
 }
 export interface MarketRestaurant extends MarketTourMenu { title: string; nameEn?: string | null; latitude: number; longitude: number }
-export type MarketMatchedBy = 'NAME' | 'ITEMS' | 'MENU' | 'CATEGORY' | 'RELATED_CATEGORY';
+export type MarketMatchedBy = MatchedBy | 'RELATED_CATEGORY';
 
 export interface MarketStore extends MarketEnglishFields {
   tourMenu?: MarketTourMenu | null;
@@ -145,4 +145,24 @@ export async function fetchMarketContentIds(): Promise<string[]> {
 export async function fetchMarketDishes(): Promise<MarketDish[]> {
   const response = await api.get<ApiResponse<MarketDish[]>>('/api/v1/place/markets/dishes');
   return response.data.data;
+}
+
+export type MatchedBy = 'NAME' | 'ITEMS' | 'MENU' | 'CATEGORY' | 'DISH' | 'ROMAN';
+export interface MarketStoreSearchResult {
+  items: Array<{ storeId: number; contentId: string; matchedBy: MatchedBy; score: number }>;
+  total: number;
+  markets: Array<{ contentId: string; marketName: string; count: number }>;
+}
+export async function searchMarketStores(q: string, options: { contentId?: string; lang: PlaceLang; page?: number; size?: number }): Promise<MarketStoreSearchResult | null> {
+  try {
+    const response = await api.get<ApiResponse<MarketStoreSearchResult>>('/api/v1/search/market-stores', {
+      params: { q: q.trim().slice(0, 200), ...options },
+    });
+    const data = response.data?.data;
+    const fields: MatchedBy[] = ['NAME', 'ITEMS', 'MENU', 'CATEGORY', 'DISH', 'ROMAN'];
+    if (response.data?.success === false || response.data?.error != null || !data || !Array.isArray(data.items) || !Number.isFinite(data.total) || !Array.isArray(data.markets)
+      || !data.items.every(item => item && Number.isFinite(item.storeId) && typeof item.contentId === 'string' && fields.includes(item.matchedBy) && Number.isFinite(item.score))
+      || !data.markets.every(market => market && typeof market.contentId === 'string' && typeof market.marketName === 'string' && Number.isFinite(market.count))) return null;
+    return data;
+  } catch { return null; }
 }

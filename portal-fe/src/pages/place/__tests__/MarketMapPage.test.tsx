@@ -4,13 +4,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { fetchAttraction, type AttractionDetail } from '../../../api/placeApi';
-import { fetchMarket, fetchMarketDishes, type MarketResponse, type MarketStore } from '../../../api/marketApi';
+import { fetchMarket, fetchMarketDishes, searchMarketStores, type MarketResponse, type MarketStore } from '../../../api/marketApi';
 import MarketMapPage from '../MarketMapPage';
 import type MarketMap from '../MarketMap';
 import { groupMarketPins } from '../marketView';
 import { marketListStores } from '../MarketList';
 vi.mock('../../../api/placeApi', async original => ({ ...await original<typeof import('../../../api/placeApi')>(), fetchAttraction: vi.fn() }));
-vi.mock('../../../api/marketApi', async original => ({ ...await original<typeof import('../../../api/marketApi')>(), fetchMarket: vi.fn(), fetchMarketDishes: vi.fn() }));
+vi.mock('../../../api/marketApi', async original => ({ ...await original<typeof import('../../../api/marketApi')>(), fetchMarket: vi.fn(), fetchMarketDishes: vi.fn(), searchMarketStores: vi.fn() }));
 const bounds = { north: 37.51, south: 37.49, west: 126.99, east: 127.01 };
 let mapProps: ComponentProps<typeof MarketMap>;
 vi.mock('../MarketMap', () => ({ default: (props: ComponentProps<typeof MarketMap>) => {
@@ -37,6 +37,7 @@ function mount(entry = '/attractions/7/market', entries = [entry]) {
   </Routes></MemoryRouter></QueryClientProvider>);
 }
 beforeEach(() => {
+  vi.mocked(searchMarketStores).mockResolvedValue(null);
   vi.mocked(fetchAttraction).mockResolvedValue({ id: '7', contentId: '100', title: '관광지', lang: 'ko', alternateId: '8' } as AttractionDetail);
   vi.mocked(fetchMarket).mockResolvedValue(data); vi.mocked(fetchMarketDishes).mockResolvedValue([]);
 });
@@ -135,4 +136,22 @@ it('uses match rank before Korean names while keeping a selected multi-shop parc
   const key = groupMarketPins(stores).find(pin => pin.stores.some(store => store.id === 2))!.key;
   const { rows, selected } = marketListStores(market, '국밥', null, { bounds, zoom: 17 }, key, false);
   expect(rows.map(store => store.id)).toEqual([2, 3, 1, 4]); expect(selected.size).toBe(3);
+});
+
+it('uses only engine IDs in score order, matching map highlights and evidence labels', async () => {
+  vi.mocked(searchMarketStores).mockResolvedValue({ items: [{ storeId: 4, contentId: '100', matchedBy: 'ROMAN', score: 8 }, { storeId: 2, contentId: '100', matchedBy: 'DISH', score: 4 }], total: 2, markets: [] });
+  mount('/attractions/7/market?marketQuery=국밥');
+  await screen.findByText('음식');
+  expect(Array.from(document.querySelectorAll('.market-list-rows li strong')).map(node => node.textContent)).toEqual(['가나다 위치없음', '하늘가게']);
+  expect(screen.getByText('로마자')).toBeInTheDocument(); expect(mapProps.searchStoreIds).toEqual([4, 2]);
+});
+it.each(['null', 'empty', 'error'])('keeps browser dish fallback for %s engine responses', async kind => {
+  if (kind === 'error') vi.mocked(searchMarketStores).mockRejectedValue(new Error('offline'));
+  else vi.mocked(searchMarketStores).mockResolvedValue(kind === 'null' ? null : { items: [], total: 0, markets: [] });
+  vi.mocked(fetchMarketDishes).mockResolvedValue([{ dish: '떡볶이', categorySub: '분식', dishEn: 'tteokbokki' }]);
+  vi.mocked(fetchMarket).mockResolvedValue({ ...data, stores: [shop(1, '분식집', { categorySub: '분식' })] });
+  mount('/attractions/7/market?marketQuery=떡볶이');
+  await screen.findByText('관련 업종 · 분식');
+  await waitFor(() => expect(searchMarketStores).toHaveBeenCalledTimes(1));
+  expect(screen.getByText('분식집')).toBeInTheDocument(); expect(mapProps.searchStoreIds).toBeUndefined();
 });

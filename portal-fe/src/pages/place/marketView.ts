@@ -1,4 +1,4 @@
-import type { MarketDish, MarketEnglishFields, MarketMatchedBy, GoodPriceMenu, GoodPriceSummary, MarketCoordinate, MarketResponse, MarketStore, MarketZone } from '../../api/marketApi';
+import type { MatchedBy, MarketDish, MarketEnglishFields, MarketMatchedBy, GoodPriceMenu, GoodPriceSummary, MarketCoordinate, MarketResponse, MarketStore, MarketZone } from '../../api/marketApi';
 import type { PlaceLang } from '../../api/placeApi';
 
 export const normalizeMarketName = (value: string) => value.normalize('NFKC').replace(/[\s\p{Z}]+/gu, '').toLowerCase();
@@ -250,12 +250,13 @@ export function marketDisplayName(store: MarketEnglishFields & { name: string },
 export function marketMatchLabel(field: MarketMatchedBy | undefined, category: string | null | undefined, lang: PlaceLang) {
   if (!field) return null;
   if (field === 'RELATED_CATEGORY') return `${lang === 'en' ? 'Related category' : '관련 업종'}${category ? ` · ${category}` : ''}`;
-  return (lang === 'en' ? { NAME: 'Name match', ITEMS: 'Item match', MENU: 'Menu match', CATEGORY: 'Category match' }
-    : { NAME: '이름에 맞음', ITEMS: '품목에 맞음', MENU: '메뉴에 맞음', CATEGORY: '업종에 맞음' })[field];
+  return (lang === 'en' ? { NAME: 'Name match', ITEMS: 'Item match', MENU: 'Menu match', CATEGORY: 'Category match', DISH: 'Food match', ROMAN: 'Romanized match' }
+    : { NAME: '이름에 맞음', ITEMS: '품목에 맞음', MENU: '메뉴에 맞음', CATEGORY: '업종에 맞음', DISH: '음식', ROMAN: '로마자' })[field];
 }
 
-export function sectionMatchLabel(match: MarketStoreMatch | null, lang: PlaceLang) {
+export function sectionMatchLabel(match: MarketStoreMatch | MatchedBy | null, lang: PlaceLang) {
   if (!match) return null;
+  if (typeof match === 'string') return marketMatchLabel(match, null, lang);
   const fields = { name: 'NAME', items: 'ITEMS', menus: 'MENU', categories: 'CATEGORY', related: 'RELATED_CATEGORY' } as const;
   return marketMatchLabel(fields[match.matchedBy], match.relatedCategory, lang);
 }

@@ -8,6 +8,7 @@ import { useSeo } from '../../seo/useSeo';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import { useAttractionMarket, useMarketDishes } from './marketQueries';
 import { groupMarketPins, marketZones, projectMarketPins, visibleMarketStores, zoneIds } from './marketView';
+import { useMarketStoreSearch } from './useMarketStoreSearch';
 import MarketMap from './MarketMap';
 import MarketList from './MarketList';
 import type { MarketViewport } from './MarketNaverMap';
@@ -42,6 +43,7 @@ function MarketMapScreen() {
   const attraction = useQuery({ queryKey: ['attraction', id], queryFn: () => fetchAttraction(id), enabled: !!id, retry: false });
   const market = useAttractionMarket(attraction.data?.contentId ?? '', lang, includeOutside);
   const { data: dishes = [] } = useMarketDishes();
+  const storeSearch = useMarketStoreSearch(query, attraction.data?.contentId ?? '', lang);
   useSeo({ ...marketMapMeta(lang, attraction.data ?? { id }, market.data), lang });
   if (attraction.isError || (attraction.data && (market.isError || (market.isSuccess && !market.data)))) return <Navigate to={attractionPath(lang, id)} replace />;
   if (!attraction.data || !market.data) return <main aria-busy="true">{en ? 'Loading…' : '불러오는 중…'}</main>;
@@ -71,14 +73,14 @@ function MarketMapScreen() {
     </nav>
     <div className="market-map-workspace">
       <div className="market-map-stage">
-        {projection ? <MarketMap contentId={attraction.data.contentId} data={data} lang={lang} projection={projection} points={projection.points} hasGeometry={!!data.boundary?.polygon.length || !!data.paths?.some(path => path.geometry.length)} query={query} dishes={dishes} selectedZoneId={zoneId} onZoneSelect={pickZone} selectedKey={selectedKey} focusStoreId={focusStoreId} color={color} pathColor={pathColor} onViewportChange={setViewport} onSelect={key => { setSelectedKey(key); if (key != null) setSnap('half'); }} /> : <p>{en ? 'No shop coordinates available.' : '좌표가 있는 가게가 없습니다.'}</p>}
+        {projection ? <MarketMap contentId={attraction.data.contentId} data={data} lang={lang} projection={projection} points={projection.points} hasGeometry={!!data.boundary?.polygon.length || !!data.paths?.some(path => path.geometry.length)} query={query} searchStoreIds={storeSearch.status === 'engine' ? storeSearch.storeIds : undefined} dishes={dishes} selectedZoneId={zoneId} onZoneSelect={pickZone} selectedKey={selectedKey} focusStoreId={focusStoreId} color={color} pathColor={pathColor} onViewportChange={setViewport} onSelect={key => { setSelectedKey(key); if (key != null) setSnap('half'); }} /> : <p>{en ? 'No shop coordinates available.' : '좌표가 있는 가게가 없습니다.'}</p>}
       </div>
       <aside className="market-map-list" aria-label={en ? 'Shop list' : '가게 목록'}>
         <button type="button" className="market-map-handle" aria-label={en ? 'Resize shop list' : '가게 목록 크기 조절'} aria-valuetext={snap} onPointerDown={event => { pointerStart.current = event.clientY; dragged.current = false; event.currentTarget.setPointerCapture?.(event.pointerId); }} onPointerUp={event => {
           const delta = (pointerStart.current ?? event.clientY) - event.clientY; pointerStart.current = null;
           if (Math.abs(delta) >= 60) { dragged.current = true; setSnap(SNAPS[Math.max(0, Math.min(2, SNAPS.indexOf(snap) + (delta > 0 ? 1 : -1)))]); }
         }} onPointerCancel={() => { pointerStart.current = null; }} onClick={() => { if (dragged.current) { dragged.current = false; return; } setSnap(SNAPS[(SNAPS.indexOf(snap) + 1) % 3]); }}><span aria-hidden="true">━</span></button>
-        <MarketList market={data} query={query} zoneId={zoneId} viewport={viewport} selectedKey={selectedKey} focusStore={focusStoreId} includeOutside={includeOutside} lang={lang} dishes={dishes} onFocusStore={id => { flushSync(() => setFocusStoreId(null)); setFocusStoreId(id); }} />
+        <MarketList search={storeSearch} market={data} query={query} zoneId={zoneId} viewport={viewport} selectedKey={selectedKey} focusStore={focusStoreId} includeOutside={includeOutside} lang={lang} dishes={dishes} onFocusStore={id => { flushSync(() => setFocusStoreId(null)); setFocusStoreId(id); }} />
       </aside>
     </div>
   </main>;

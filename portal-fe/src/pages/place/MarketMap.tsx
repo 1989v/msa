@@ -25,8 +25,8 @@ export default function MarketMap(props: ComponentProps<typeof MarketCanvas> & {
   const naver = Boolean(NAVER_MAP_KEY_ID) && failed !== 'naver';
   const storeIds = useMemo(() => points.flatMap((p) => p.stores.map((s) => s.id)), [points]);
   const selection = useMemo(() => ({ zoneId: selectedZoneId, storeId: focusStoreId, selectedKey,
-    searchStoreIds: data.stores.filter((s) => matchesMarketStore(s, query, dishes)).flatMap((s) => s.id == null ? [] : [s.id]),
-  }), [data.stores, query, dishes, selectedZoneId, focusStoreId, selectedKey]);
+    searchStoreIds: props.searchStoreIds ?? data.stores.filter((s) => matchesMarketStore(s, query, dishes)).flatMap((s) => s.id == null ? [] : [s.id]),
+  }), [props.searchStoreIds, data.stores, query, dishes, selectedZoneId, focusStoreId, selectedKey]);
   // 중심만 필요하지만 모델 전체(묶음 포함)를 계산하므로 응답이 바뀔 때만 다시 센다.
   const centre = useMemo(() => buildMarketOverlay({ data, zoom: 17 }).centre, [data]);
   useEffect(() => { if (!live || !centre) props.onViewportChange?.(null); }, [live, centre, props.onViewportChange]);

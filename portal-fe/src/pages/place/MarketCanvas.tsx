@@ -11,15 +11,16 @@ type Projection = NonNullable<ReturnType<typeof projectMarketPins>>;
 type ViewBox = { x: number; y: number; w: number; h: number };
 const INITIAL: ViewBox = { x: 0, y: 0, w: 600, h: 440 };
 
-export default function MarketCanvas({ data, lang, projection, points, hasGeometry, query, selectedKey, onSelect, color, pathColor, userPosition, focusStoreId, dishes = [], onPosition }: {
+export default function MarketCanvas({ data, lang, projection, points, hasGeometry, query, selectedKey, onSelect, color, pathColor, userPosition, focusStoreId, dishes = [], searchStoreIds, onPosition }: {
   data: MarketResponse; lang: PlaceLang; projection: Projection; points: Projection['points']; hasGeometry: boolean;
   query: string; selectedKey: string | null; onSelect: (key: string | null) => void;
-  dishes?: MarketDish[];
+  dishes?: MarketDish[]; searchStoreIds?: number[];
   userPosition?: MarketUserPosition | null;
   onPosition?: (position: MarketUserPosition) => void;
   focusStoreId?: number | null;
   color: (id: number | null) => string; pathColor: (id: number | null | undefined) => string | undefined;
 }) {
+  const matches = (store: MarketResponse['stores'][number]) => searchStoreIds ? store.id != null && searchStoreIds.includes(store.id) : matchesMarketName(store, query, dishes);
   const en = lang === 'en';
   const marketKey = data.market.id ?? data.market.name;
   const [measurement, setMeasurement] = useState<{ marketKey: typeof marketKey; position: MarketUserPosition } | null>(null);
@@ -173,7 +174,7 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
           </g>;
         })}
         {clusters.map((pin) => {
-          const hit = pin.stores.some((store) => matchesMarketName(store, query, dishes));
+          const hit = pin.stores.some((store) => matches(store));
           const active = selectedKey === pin.key || pin.parcelKeys.some((key) => selectedKeys.includes(key))
             || pin.parcelKeys.includes(selectedKey ?? '');
           return <g key={pin.key} role="button" tabIndex={0} className="place-market-pin" data-selected={active || undefined}
@@ -188,7 +189,7 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
             {hit && <circle r="18" className="place-market-hit-ring" />}
             <circle r={hit || active ? 13 : 10} className="place-market-dot" strokeDasharray={pin.stores.some((store) => store.pinKind === 'REFERENCE') ? '3 3' : undefined} />
             <text textAnchor="middle" dy="4">{pin.stores.length}</text>
-            {hit && <text className="place-market-hit-label" textAnchor={pin.x < 150 ? 'start' : pin.x > 450 ? 'end' : 'middle'} y="-25">{hitLabel(pin.stores.filter((store) => matchesMarketName(store, query, dishes)).map((store) => marketDisplayName(store, lang)), en)}</text>}
+            {hit && <text className="place-market-hit-label" textAnchor={pin.x < 150 ? 'start' : pin.x > 450 ? 'end' : 'middle'} y="-25">{hitLabel(pin.stores.filter((store) => matches(store)).map((store) => marketDisplayName(store, lang)), en)}</text>}
           </g>;
         })}
         {/* At the whole-market view the road names would cover the pins: show the three longest and let zoom reveal the rest. */}

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 const { get } = vi.hoisted(() => ({ get: vi.fn() }));
 vi.mock('axios', () => ({ default: { create: () => ({ get }) } }));
-import { fetchMarketContentIds, fetchMarketDishes, searchMarkets } from '../marketApi';
+import { fetchMarketContentIds, fetchMarketDishes, searchMarkets, searchMarketStores } from '../marketApi';
 afterEach(() => get.mockReset());
 describe('public market discovery API', () => {
   it('unwraps responses and sends trimmed bounded query, locale and paging', async () => {
@@ -25,4 +25,19 @@ it('fetches the shared backend food dictionary without embedding a frontend mapp
   get.mockResolvedValue({ data: { data: dishes } });
   expect(await fetchMarketDishes()).toEqual(dishes);
   expect(get).toHaveBeenCalledWith('/api/v1/place/markets/dishes');
+});
+
+describe('market-store engine API', () => {
+  it.each(['', '<html>gateway</html>', {}, { data: null }, { data: { items: [{}], total: 1, markets: [] } }, { success: false, data: { items: [], total: 0, markets: [] } }, { error: { code: 'ERROR', message: 'offline' }, data: { items: [], total: 0, markets: [] } }])('falls back for invalid envelopes %j', async body => {
+    get.mockResolvedValue({ data: body });
+    expect(await searchMarketStores('국밥', { lang: 'ko' })).toBeNull();
+  });
+  it('returns null on errors and unwraps valid results', async () => {
+    get.mockRejectedValueOnce(new Error('offline'));
+    expect(await searchMarketStores('국밥', { lang: 'ko' })).toBeNull();
+    const data = { items: [{ storeId: 2, contentId: '100', matchedBy: 'DISH', score: 4 }], total: 1, markets: [{ contentId: '100', marketName: '시장', count: 1 }] };
+    get.mockResolvedValue({ data: { data } });
+    expect(await searchMarketStores(' 국밥 ', { contentId: '100', lang: 'en', page: 0, size: 200 })).toEqual(data);
+    expect(get).toHaveBeenLastCalledWith('/api/v1/search/market-stores', { params: { q: '국밥', contentId: '100', lang: 'en', page: 0, size: 200 } });
+  });
 });
