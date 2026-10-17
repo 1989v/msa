@@ -396,7 +396,7 @@ images:
     newTag: 28e707d
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: 2d476f1
+    newTag: bb1943a
   - name: commerce/quant-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant-fe
     newTag: cb23a78
