@@ -9,7 +9,7 @@ cd ../..
 node scripts/market-basemaps/render.mjs --only 132180,132183 --theme light --out ./out
 ```
 
-`--only`는 쉼표·공백 구분 contentId, 생략하면 공개 `/api/v1/place/markets/content-ids` 전체다. `--theme light|dark|both` 기본 both. 상세는 `/{contentId}?lang=ko`의 `success/data` envelope를 읽는다. **로컬 기본 실행은 파일만 쓴다. PAR 환경변수가 있어도 `--upload` 없이는 업로드하지 않는다.** 생성물은 `out/markets/{contentId}/z18-{light|dark}.png`, `index-{theme}.json`, 집계 `index.json`이다. 출력 디렉터리는 실행마다 비어 있는 별도 경로를 권장한다.
+`--only`는 쉼표·공백 구분 contentId, 생략하면 공개 `/api/v1/place/markets/content-ids` 전체다. `--theme light|dark|both` 기본 both. 상세는 `/{contentId}?lang=ko`의 `success/data` envelope를 읽는다. **로컬 기본 실행은 파일만 쓴다. PAR 환경변수가 있어도 `--upload` 없이는 업로드하지 않는다.** 생성물은 `out/markets/{contentId}/{light|dark}.png`·`meta.json`, `index-{theme}.json`, 집계 `index.json`이다. 줌은 시장마다 고른다 — 시장 안 가게(IN)와 경계를 합친 범위에 15% 여유를 두고 1536×1152 프레임에 들어가는 가장 가까운 줌(18 → 17 → 16, 남대문은 17). 중심은 그 범위의 가운데이고, 가게도 경계도 없으면 시장 점에 줌 18이다. FE 는 `meta.json` 의 `bounds` 로 이미지를 놓으므로 줌이 달라도 FE 변경이 없다. 출력 디렉터리는 실행마다 비어 있는 별도 경로를 권장한다.
 
 계약: **1536 × 1152 px, deviceScaleFactor 1, Web Mercator, zoom 18, bearing/pitch 0**. 중심은 `boundary.polygon`의 `[lat,lng]` 꼭짓점 산술평균(끝의 중복 닫힘 점 제외), 경계가 없으면 `market.latitude/longitude`다. 잘못된 경계·결측 좌표를 0으로 바꾸지 않는다. 컨트롤·로고·출처·핀·경계 등 오버레이는 이미지에 없다. FE가 출처를 표시한다. map idle + style/전체 tile 로딩 후 두 animation frame을 기다려 캡처한다. 타일·glyph·style 오류 및 시간 초과는 시장별 최대 **3회** 시도한다. API 25초, 렌더 90초, CDP 15초, Chrome 시작 20초, PUT 120초로 제한한다.
 

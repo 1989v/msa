@@ -168,8 +168,8 @@ Codex 보내는 순서: WU-15 ∥ WU-16 → WU-17 ∥ WU-18. 같은 워크트리
 
 ## WU-23 시장 바탕 이미지 렌더·저장 (CI 잡)
 - 저장소: OCI 오브젝트 스토리지 버킷 `msa-market-basemap`(ap-chuncheon-1, 루트 구획, **공개 읽기 ObjectRead**, 2026-10-17 생성). 쓰기는 PAR(쓰기 전용, **만료 2027-10-17**) — GitHub Actions 시크릿 `MARKET_BASEMAP_PAR`. 만료되면 업로드가 404 로 죽으니 그 전에 콘솔에서 재발급해 시크릿을 바꾼다.
-- 객체 이름 `markets/{contentId}/z18-{light|dark}.png`, 공개 URL `https://objectstorage.ap-chuncheon-1.oraclecloud.com/n/axyooxbyk5yv/b/msa-market-basemap/o/markets/{contentId}/z18-light.png`. 마지막에 `markets/index.json`.
-- 이미지: **1536×1152 px, Web Mercator 줌 18, 중심 = 경계 꼭짓점 평균(닫는 꼭짓점 제거), 경계 없으면 market 점**. light = OpenFreeMap positron, dark = fiord. 컨트롤·로고 숨김, 출처는 굽지 않고 FE 가 표기. 라벨은 OSM `name`(한글 + 라틴 병기) — 영문 전용 한 벌은 후속.
+- 객체 이름 `markets/{contentId}/{light|dark}.png`(2026-10-17 개정: 줌이 시장마다 달라 이름에서 z18 을 뺐다. 옛 `z18-*.png` 는 버킷에 남아 있을 뿐 FE 가 읽지 않는다), 공개 URL `https://objectstorage.ap-chuncheon-1.oraclecloud.com/n/axyooxbyk5yv/b/msa-market-basemap/o/markets/{contentId}/z18-light.png`. 마지막에 `markets/index.json`.
+- 이미지: **1536×1152 px, Web Mercator 줌은 시장 범위(IN 가게 ∪ 경계, 15% 여유)가 들어가는 가장 가까운 줌(18→17→16), 중심 = 그 범위의 가운데, 가게도 경계도 없으면 market 점에 줌 18**(2026-10-17 개정 — 줌 18 고정 364×272 m 프레임이 남대문 IN 범위 342×322 m 보다 작았다). light = OpenFreeMap positron, dark = fiord. 컨트롤·로고 숨김, 출처는 굽지 않고 FE 가 표기. 라벨은 OSM `name`(한글 + 라틴 병기) — 영문 전용 한 벌은 후속.
 - 실행: `.github/workflows/market-basemaps.yml` 매주 일 20:00 UTC + dispatch(일부 contentId·테마), matrix light/dark, 러너 ubuntu-24.04 의 Chrome + MapLibre GL JS + CDP(`scripts/market-basemaps/render.mjs`, 의존성 ws 하나). 실패율 5% 넘으면 잡 실패(올린 건 유지).
 - 검증: 남대문·광장·망원·서문 PNG 크기 1536×1152, FE 모서리 계산과 같은 규칙(WU-24 테스트).
 
@@ -183,7 +183,7 @@ Codex 보내는 순서: WU-15 ∥ WU-16 → WU-17 ∥ WU-18. 같은 워크트리
 - CI: 시장마다 `markets/{contentId}/meta.json` { contentId, centre:{latitude,longitude}, zoom:18, width:1536, height:1152, bounds:{north,south,east,west}, renderedAt, styleVersion, themes:["light","dark"] } 를 PNG 와 함께 올린다(테마 잡마다 같은 값으로 덮어써도 됨). `Content-Type: application/json`, `Cache-Control: public, max-age=3600`. PNG 는 `Cache-Control: public, max-age=86400`.
 - portal-fe nginx: `location /basemaps/` → 버킷 `…/b/msa-market-basemap/o/` 로 proxy_pass(resolver 는 기존 패턴), `proxy_cache`(zone basemaps 200m, valid 200 1d · 404 5m), 응답에 `Cache-Control` 유지, 그 밖의 헤더 최소화. 같은 출처가 되어 CORS 불필요하고 클라우드플레어가 캐시한다.
 - NetworkPolicy: portal-fe 파드가 외부 443 으로 나갈 수 있게 — `k8s/base/network-policy/11-allow-egress-https-public.yaml` 의 패턴(공인 IP 만, 사설 대역 except)으로 portal-fe 만 허용. 대상 호스트를 IP 로 고정하지 않는다(오브젝트 스토리지 IP 는 바뀐다).
-- FE: `/basemaps/markets/{contentId}/meta.json` 을 먼저 받아(react-query, staleTime 1시간) 그 centre·zoom·width·height 로 모서리를 계산하고 `/basemaps/markets/{contentId}/z18-{theme}.png` 를 깐다. meta 가 404 면 바탕 없음(지금 SVG). 응답의 중심은 더 이상 쓰지 않는다.
+- FE: `/basemaps/markets/{contentId}/meta.json` 을 먼저 받아(react-query, staleTime 1시간) 그 centre·zoom·width·height 로 모서리를 계산하고 `/basemaps/markets/{contentId}/{theme}.png` 를 깐다. meta 가 404 면 바탕 없음(지금 SVG). 응답의 중심은 더 이상 쓰지 않는다.
 - 검증: nginx 설정은 `nginx -t`(docker 로 가능하면), kustomize build, FE tsc·vitest(meta 기준 배치·404 폴백·테마 교체), 배포 뒤 `curl -I https://place.1989v.com/basemaps/markets/132180/meta.json`(200, cache 헤더)과 운영 CDP.
 
 ## WU-26 네이버 지도 토글 레이어 (portal-fe, 키는 사용자가 발급)

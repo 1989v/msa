@@ -10,27 +10,44 @@ import { pathToFileURL } from 'node:url';
 import WebSocket from 'ws';
 
 export const WIDTH = 1536, HEIGHT = 1152;
-export const STYLE_VERSION = 'openfreemap-positron-fiord-maplibre-4.7.1-z18-v1';
-export const ZOOM = 18;
+export const STYLE_VERSION = 'openfreemap-positron-fiord-maplibre-4.7.1-zfit-v2';
+export const ZOOMS = [18, 17, 16];
+export const EXTENT_MARGIN = 0.15;
 const API = 'https://place.1989v.com/api/v1/place/markets';
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const execute = promisify(execFile);
 
-export function centerOf(detail) {
+const validPoint = point => Array.isArray(point) && point.length === 2 &&
+  point.every(value => typeof value === 'number' && Number.isFinite(value)) &&
+  Math.abs(point[0]) <= 85.0511287798066 && Math.abs(point[1]) <= 180;
+
+/** Metres the frame spans at a zoom, at the given latitude (MapLibre 512px world tile). */
+export function frameMetres(zoom, latitude) {
+  const metresPerPixel = 156543.03392 * Math.cos(latitude * Math.PI / 180) / 2 ** (zoom + 1);
+  return { width: WIDTH * metresPerPixel, height: HEIGHT * metresPerPixel };
+}
+
+/**
+ * The frame covers the market's own extent — shops inside the market plus the boundary — with a margin,
+ * at the closest zoom that still fits. Namdaemun's shops span 342 × 322 m, more than the 364 × 272 m a
+ * zoom 18 frame covers, so that market renders at 17.
+ */
+export function frameOf(detail) {
   const polygon = detail.boundary?.polygon;
-  const valid = point => Array.isArray(point) && point.length === 2 &&
-    point.every(value => typeof value === 'number' && Number.isFinite(value)) &&
-    Math.abs(point[0]) <= 85.0511287798066 && Math.abs(point[1]) <= 180;
-  if (polygon != null) {
-    if (!Array.isArray(polygon) || polygon.length < 3 || !polygon.every(valid)) throw new Error('Invalid boundary polygon');
-    const vertices = [...polygon];
-    if (vertices[0][0] === vertices.at(-1)[0] && vertices[0][1] === vertices.at(-1)[1]) vertices.pop();
-    if (vertices.length < 3) throw new Error('Boundary needs three vertices');
-    return [0, 1].map(axis => vertices.reduce((sum, vertex) => sum + vertex[axis], 0) / vertices.length);
+  if (polygon != null && (!Array.isArray(polygon) || polygon.length < 3 || !polygon.every(validPoint))) throw new Error('Invalid boundary polygon');
+  const shops = (detail.stores ?? []).filter(store => store.membership === 'IN').map(store => [store.latitude, store.longitude]).filter(validPoint);
+  const points = [...(polygon ?? []), ...shops];
+  if (points.length === 0) {
+    const point = [detail.market?.latitude, detail.market?.longitude];
+    if (!validPoint(point)) throw new Error('Invalid market latitude/longitude');
+    return { center: point, zoom: ZOOMS[0] };
   }
-  const point = [detail.market?.latitude, detail.market?.longitude];
-  if (!valid(point)) throw new Error('Invalid market latitude/longitude');
-  return point;
+  const latitudes = points.map(([latitude]) => latitude), longitudes = points.map(([, longitude]) => longitude);
+  const center = [(Math.min(...latitudes) + Math.max(...latitudes)) / 2, (Math.min(...longitudes) + Math.max(...longitudes)) / 2];
+  const height = (Math.max(...latitudes) - Math.min(...latitudes)) * 111320 * (1 + EXTENT_MARGIN);
+  const width = (Math.max(...longitudes) - Math.min(...longitudes)) * 111320 * Math.cos(center[0] * Math.PI / 180) * (1 + EXTENT_MARGIN);
+  const zoom = ZOOMS.find(candidate => { const frame = frameMetres(candidate, center[0]); return width <= frame.width && height <= frame.height; }) ?? ZOOMS.at(-1);
+  return { center, zoom };
 }
 
 export async function retry(operation) {
@@ -44,12 +61,12 @@ export function manifest(theme, requested, succeeded, failed) {
   return { renderedAt: new Date().toISOString(), styleVersion: STYLE_VERSION, theme,
     requestedContentIds: requested, contentIds: succeeded, failed };
 }
-export function metadata(contentId, [latitude, longitude], renderedAt = new Date().toISOString()) {
+export function metadata(contentId, [latitude, longitude], zoom, renderedAt = new Date().toISOString()) {
   // MapLibre's zoom uses a 512px world tile, at deviceScaleFactor 1.
-  const world = 512 * 2 ** ZOOM;
+  const world = 512 * 2 ** zoom;
   const y = (1 - Math.asinh(Math.tan(latitude * Math.PI / 180)) / Math.PI) / 2;
   const latitudeAt = value => Math.atan(Math.sinh(Math.PI * (1 - 2 * value))) * 180 / Math.PI;
-  return { contentId: String(contentId), centre: { latitude, longitude }, zoom: ZOOM,
+  return { contentId: String(contentId), centre: { latitude, longitude }, zoom,
     width: WIDTH, height: HEIGHT,
     bounds: { north: latitudeAt(y - HEIGHT / 2 / world), south: latitudeAt(y + HEIGHT / 2 / world),
       east: longitude + WIDTH / 2 / world * 360, west: longitude - WIDTH / 2 / world * 360 },
@@ -109,14 +126,14 @@ async function findChrome() {
   throw new Error('Chrome not found. Install Google Chrome or set CHROME_BIN to its executable.');
 }
 
-function html(center, theme) {
+function html(center, zoom, theme) {
   const style = `https://tiles.openfreemap.org/styles/${theme === 'light' ? 'positron' : 'fiord'}`;
   return `<!doctype html><meta charset="utf-8"><style>html,body,#map{margin:0;width:100%;height:100%;overflow:hidden}.maplibregl-control-container{display:none!important}</style><link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"><div id="map"></div>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script><script>
 window.statusResult={ready:false,error:null};
 window.onerror=()=>{window.statusResult.error='Page script failed'};
 try {
- const map=new maplibregl.Map({container:'map',style:${JSON.stringify(style)},center:${JSON.stringify([center[1], center[0]])},zoom:${ZOOM},bearing:0,pitch:0,interactive:false,attributionControl:false,fadeDuration:0,preserveDrawingBuffer:true});
+ const map=new maplibregl.Map({container:'map',style:${JSON.stringify(style)},center:${JSON.stringify([center[1], center[0]])},zoom:${zoom},bearing:0,pitch:0,interactive:false,attributionControl:false,fadeDuration:0,preserveDrawingBuffer:true});
  map.on('error',()=>{window.statusResult.error='Map style, glyph or tile failed'});
  map.on('idle',()=>{if(map.isStyleLoaded()&&map.areTilesLoaded())requestAnimationFrame(()=>requestAnimationFrame(()=>{window.statusResult.ready=true}));});
 } catch(e){window.statusResult.error='Map initialization failed'}
@@ -255,18 +272,18 @@ export async function main(args = process.argv.slice(2)) {
       for (const id of requested) {
         try {
           await retry(async () => {
-            const center = centerOf(await fetchJson(`${API}/${id}?lang=ko`));
-            pageHtml = html(center, theme);
+            const { center, zoom } = frameOf(await fetchJson(`${API}/${id}?lang=ko`));
+            pageHtml = html(center, zoom, theme);
             const directory = path.join(options.out, 'markets', id);
             await mkdir(directory, { recursive: true });
-            const file = path.join(directory, `z18-${theme}.png`);
+            const file = path.join(directory, `${theme}.png`);
             try {
               browser ||= await createBrowser(chromePath);
               await screenshot(browser, `http://127.0.0.1:${server.address().port}/?market=${id}&theme=${theme}&t=${Date.now()}`, file);
             } catch (error) { if (browser) await browser.cleanup(); browser = null; throw error; }
             const metaFile = path.join(directory, 'meta.json');
-            await writeFile(metaFile, JSON.stringify(metadata(id, center), null, 2));
-            if (base) await upload(base, `markets/${id}/z18-${theme}.png`, file, 'image/png');
+            await writeFile(metaFile, JSON.stringify(metadata(id, center, zoom), null, 2));
+            if (base) await upload(base, `markets/${id}/${theme}.png`, file, 'image/png');
             if (base) await upload(base, `markets/${id}/meta.json`, metaFile, 'application/json');
           });
           succeeded.push(id); console.log(`${theme} ${id}: OK`);
