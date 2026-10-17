@@ -177,3 +177,17 @@ Codex 보내는 순서: WU-15 ∥ WU-16 → WU-17 ∥ WU-18. 같은 워크트리
 - `MarketCanvas` 가 규약 URL 의 이미지를 SVG 맨 아래 `<image>` 로 깔고(FE 가 같은 규칙으로 네 모서리 위경도를 계산해 기존 투영으로 배치), 로드 전·실패 시에는 지금 그대로. 메타 API 는 두지 않는다(YAGNI). 확대·이동은 이미지와 오버레이가 같은 viewBox 변환을 탄다. 우리 골목 선은 바탕이 있으면 그리지 않고 **특화 골목 이름 띠·게이트·핀·내 위치**만 올린다.
 - 프리렌더·검색엔진용 정적 그림도 같은 이미지. 다크 테마는 이미지에 어두운 필터 대신 다크 스타일 한 벌을 더 렌더할지 WU-23 에서 결정.
 - 검증: CDP 4조합(남대문·광장·망원), 핀이 바탕의 건물 위에 놓이는지 알려진 가게로 확인.
+
+## WU-25 바탕 이미지 프록시 + meta.json 기준 배치 (2026-10-17 승인, 「동시에」)
+- 문제: 브라우저가 OCI 버킷을 직접 부르면 OCI 요청 한도(월 5만 무료)를 페이지뷰가 바로 넘기고, FE 가 「지금 응답의 중심」으로 모서리를 계산해 경계가 바뀌면 다음 렌더까지 핀과 바탕이 어긋난다. OCI 버킷은 CORS 를 못 켜 meta.json 을 직접 못 읽는다.
+- CI: 시장마다 `markets/{contentId}/meta.json` { contentId, centre:{latitude,longitude}, zoom:18, width:1536, height:1152, bounds:{north,south,east,west}, renderedAt, styleVersion, themes:["light","dark"] } 를 PNG 와 함께 올린다(테마 잡마다 같은 값으로 덮어써도 됨). `Content-Type: application/json`, `Cache-Control: public, max-age=3600`. PNG 는 `Cache-Control: public, max-age=86400`.
+- portal-fe nginx: `location /basemaps/` → 버킷 `…/b/msa-market-basemap/o/` 로 proxy_pass(resolver 는 기존 패턴), `proxy_cache`(zone basemaps 200m, valid 200 1d · 404 5m), 응답에 `Cache-Control` 유지, 그 밖의 헤더 최소화. 같은 출처가 되어 CORS 불필요하고 클라우드플레어가 캐시한다.
+- NetworkPolicy: portal-fe 파드가 외부 443 으로 나갈 수 있게 — `k8s/base/network-policy/11-allow-egress-https-public.yaml` 의 패턴(공인 IP 만, 사설 대역 except)으로 portal-fe 만 허용. 대상 호스트를 IP 로 고정하지 않는다(오브젝트 스토리지 IP 는 바뀐다).
+- FE: `/basemaps/markets/{contentId}/meta.json` 을 먼저 받아(react-query, staleTime 1시간) 그 centre·zoom·width·height 로 모서리를 계산하고 `/basemaps/markets/{contentId}/z18-{theme}.png` 를 깐다. meta 가 404 면 바탕 없음(지금 SVG). 응답의 중심은 더 이상 쓰지 않는다.
+- 검증: nginx 설정은 `nginx -t`(docker 로 가능하면), kustomize build, FE tsc·vitest(meta 기준 배치·404 폴백·테마 교체), 배포 뒤 `curl -I https://place.1989v.com/basemaps/markets/132180/meta.json`(200, cache 헤더)과 운영 CDP.
+
+## WU-26 네이버 지도 토글 레이어 (portal-fe, 키는 사용자가 발급)
+- 시장 섹션에 「네이버 지도로 보기」 토글. 켜면 같은 자리에 네이버 Dynamic Map(JS v3, `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=<id>&language=<ko|en>`)을 띄우고 우리 핀(묶음·수·색)·내 위치·경계선을 `naver.maps` 오버레이로 올린다. 끄면 우리 지도로 돌아온다.
+- 키는 `portal-fe/src/seo/copy.mjs` 의 `NAVER_MAP_KEY_ID`(빈 값 = 토글 숨김, ADSENSE_CLIENT 와 같은 패턴). SDK 는 토글을 켤 때만 로드(기본 페이지엔 외부 스크립트 0).
+- 약관: 로고·출처 유지, 이미지 캐시·캡처 금지, 서비스 URL 등록. `/privacy` 제3자 스크립트 목록에 네이버 지도 한 줄.
+- 검증: tsc·vitest(키 없으면 토글 없음, 켜면 SDK 스크립트 한 번만 삽입, 핀 수 일치), 키가 들어오면 CDP 로 남대문 비교 캡처.
