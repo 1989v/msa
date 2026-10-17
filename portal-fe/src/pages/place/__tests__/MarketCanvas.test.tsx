@@ -125,8 +125,8 @@ describe('MarketCanvas navigation and shared SVG coordinates', () => {
     const pin = screen.getByRole('button', { name: /같은 필지 가게:/ });
     pin.setPointerCapture = vi.fn();
     fireEvent.pointerDown(pin, { pointerId: 1, pointerType: 'touch', button: 0, clientX: 200, clientY: 200 });
-    fireEvent.pointerMove(pin, { pointerId: 1, pointerType: 'touch', clientX: 205, clientY: 204 });
-    fireEvent.pointerUp(pin, { pointerId: 1, pointerType: 'touch', clientX: 205, clientY: 204 });
+    fireEvent.pointerMove(pin, { pointerId: 1, pointerType: 'touch', clientX: 206, clientY: 206 });
+    fireEvent.pointerUp(pin, { pointerId: 1, pointerType: 'touch', clientX: 206, clientY: 206 });
     fireEvent.click(pin);
     expect(screen.getByRole('region', { name: '선택한 가게' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '전체 가게 보기' }));

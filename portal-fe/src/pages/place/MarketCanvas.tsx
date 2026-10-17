@@ -157,7 +157,8 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
           pointers.current.set(event.pointerId, next);
           const after = [...pointers.current.values()];
           // A finger never lands still: measure from where it pressed, in screen pixels, before calling it a drag.
-          if (Math.hypot(event.clientX - pressed.current.x, event.clientY - pressed.current.y) > (event.pointerType === 'touch' ? 8 : 4)) dragged.current = true;
+          // 10 px for touch — a 6 px wobble on both axes is already 8.5 px and still has to count as a tap.
+          if (Math.hypot(event.clientX - pressed.current.x, event.clientY - pressed.current.y) > (event.pointerType === 'touch' ? 10 : 4)) dragged.current = true;
           if (before.length === 2) {
             const distance = (pair: typeof before) => Math.hypot(pair[0].x - pair[1].x, pair[0].y - pair[1].y);
             const oldDistance = distance(before);
