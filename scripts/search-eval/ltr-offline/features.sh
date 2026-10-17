@@ -7,6 +7,12 @@ $K port-forward pod/$SPOD 18095:8099 >/tmp/pl2.log 2>&1 & P2=$!
 sleep 6
 python3 - <<'PY'
 import json, urllib.request
+# 서버는 질의 벡터를 QueryNormalizer(NFKC → 공백 축약 → 소문자 → 끝 부호 제거 → 100자)를 거친 문자열로 얻는다.
+# 원문으로 인코딩하면 대소문자가 섞인 질의(DDP · KSPO DOME)의 knn·B 피처가 서버와 달라진다.
+import re, unicodedata
+def norm(raw):
+    s=re.sub(r"\s+"," ",unicodedata.normalize("NFKC",raw)).strip().lower(); s=re.sub(r"[?!.,~\s]+$","",s)
+    return s[:100].strip() if len(s)>100 else s
 OS="http://127.0.0.1:19211"; ENC="http://127.0.0.1:18095"
 MODEL="microsoft/harrier-oss-v1-270m@31de22b#d640"
 def post(u,b):
@@ -25,7 +31,7 @@ for q in pool:
     f["bm_address"]=scores(t,cand,{"multi_match":{"query":t,"fields":["address","address.en"]}})
     f["bm_all"]=scores(t,cand,{"multi_match":{"query":t,"fields":["title^3","title.en^3","titleLocal^3","overview","overview.en","address","address.en"]}})
     f["phrase_title"]=scores(t,cand,{"multi_match":{"query":t,"type":"phrase","fields":["title","title.en","titleLocal"]}})
-    v=post(ENC+"/encode",{"query":t})["vector"]
+    v=post(ENC+"/encode",{"query":norm(t)})["vector"]
     kn=post(OS+"/attractions/_search",{"size":100,"_source":False,"query":{"knn":{"embedding":{"vector":v,"k":100,"filter":{"bool":{"filter":[{"term":{"lang":lang}},{"term":{"embeddingModel":MODEL}}]}}}}}})
     knn={x["_id"]:x["_score"] for x in kn["hits"]["hits"]}
     src=post(OS+"/attractions/_mget?_source_includes=title,category,overview,setting,contentTypeId",{"ids":cand})["docs"]
