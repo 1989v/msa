@@ -81,7 +81,7 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
   const redraw = useRef<(reportViewport?: boolean) => void>(() => {}); const appliedFocus = useRef<string | null>(null);
   useEffect(() => {
     if (!keyId || !host.current) return;
-    let disposed = false; let map: any; let errorReported = false;
+    let disposed = false; let map: any; let errorReported = false; let observer: ResizeObserver | undefined;
     const fail = () => { if (!disposed && !errorReported) { errorReported = true; setFailed(identity); latest.current.onError?.(); } };
     const unregister = registerAuthFailure(fail);
     loadSdk(keyId, lang).then((sdk) => {
@@ -89,9 +89,14 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
       const centre = buildMarketOverlay({ ...latest.current, zoom: initialZoom }).centre;
       if (!centre) return;
       map = new sdk.Map(host.current, { center: new sdk.LatLng(centre.latitude, centre.longitude), zoom: initialZoom, scaleControl: interactive, mapTypeControl: false, zoomControl: interactive, ...(!interactive ? { draggable: false, scrollWheel: false, pinchZoom: false, keyboardShortcuts: false, disableDoubleClickZoom: true } : {}) });
+      // 지도는 만들어질 때의 상자 크기만 기억한다 — 카드·시트·회전으로 상자가 바뀌면 다시 알려 준다.
+      if (typeof ResizeObserver !== 'undefined' && sdk.Size) {
+        observer = new ResizeObserver(() => { const r = host.current?.getBoundingClientRect(); if (r && r.width > 0 && r.height > 0) map?.setSize?.(new sdk.Size(Math.round(r.width), Math.round(r.height))); });
+        observer.observe(host.current);
+      }
       setReady({ identity, map, sdk });
     }).catch(fail);
-    return () => { disposed = true; unregister(); map?.destroy(); };
+    return () => { disposed = true; unregister(); observer?.disconnect(); map?.destroy(); };
   }, [identity, keyId, lang, initialZoom, interactive]);
 
   useEffect(() => {

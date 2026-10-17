@@ -132,7 +132,9 @@
 .place-market-zones a { display: inline-flex; align-items: center; min-height: 2.75rem; padding: var(--ko-space-2) var(--ko-space-3); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius); color: var(--ko-accent-text); }
 .place-market-zones a:hover { background: var(--ko-surface-2); }
 .place-market-preview { position: relative; aspect-ratio: 16 / 9; background: var(--ko-surface-0); }
-.place-market-preview > [role="group"] { position: relative; z-index: 0; }
+.place-market-preview > [role="group"] { position: relative; z-index: 0; height: 100%; }
+/* 어댑터 호스트의 기본 비율(600/440)·최소 높이를 풀어 16:9 상자를 꽉 채운다 — 아니면 지도가 상자 일부만 그린다. */
+.place-market-preview > [role="group"] > div:first-child { height: 100%; aspect-ratio: auto !important; min-height: 0 !important; }
 /* Leave the SDK's bottom logo/copyright strip visible and clickable. */
 .place-market-preview-link { position: absolute; inset: 0 0 2.75rem; z-index: 1; }
 .place-market-full-map { display: inline-flex; align-items: center; min-height: 2.75rem; margin-top: var(--ko-space-3); color: var(--ko-accent-text); text-decoration: underline; }

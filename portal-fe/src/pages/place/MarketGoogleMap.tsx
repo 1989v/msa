@@ -30,7 +30,7 @@ export default function MarketGoogleMap(props: MarketLiveMapProps) {
   const redraw = useRef<(reportViewport?: boolean) => void>(() => {}); const appliedFocus = useRef<string | null>(null);
   useEffect(() => {
     if (!host.current) return;
-    let disposed = false; let map: any; let errorReported = false;
+    let disposed = false; let map: any; let errorReported = false; let observer: ResizeObserver | undefined;
     const fail = () => { if (!disposed && !errorReported) { errorReported = true; setFailed(identity); latest.current.onError?.(); } };
     const unregister = registerAuthFailure(fail);
     loadGoogleMaps().then((sdk) => {
@@ -38,9 +38,14 @@ export default function MarketGoogleMap(props: MarketLiveMapProps) {
       const centre = buildMarketOverlay({ ...latest.current, zoom: initialZoom }).centre;
       if (!centre) return;
       map = new sdk.Map(host.current, { center: { lat: centre.latitude, lng: centre.longitude }, zoom: initialZoom, ...(!interactive ? { gestureHandling: 'none', disableDefaultUI: true, keyboardShortcuts: false } : {}), clickableIcons: false, streetViewControl: false, mapTypeControl: false });
+      // 상자 크기가 바뀌면 지도에 알리고 중심을 지킨다(구글은 resize 이벤트로 다시 잰다).
+      if (typeof ResizeObserver !== 'undefined') {
+        observer = new ResizeObserver(() => { const r = host.current?.getBoundingClientRect(); if (!r || r.width <= 0 || r.height <= 0 || !map) return; const c = map.getCenter?.(); sdk.event?.trigger?.(map, 'resize'); if (c) map.setCenter?.(c); });
+        observer.observe(host.current);
+      }
       setReady({ identity, map, sdk });
     }).catch(fail);
-    return () => { disposed = true; unregister(); map?.unbindAll?.(); };
+    return () => { disposed = true; unregister(); observer?.disconnect(); map?.unbindAll?.(); };
   }, [identity, lang, initialZoom, interactive]);
 
   useEffect(() => {
