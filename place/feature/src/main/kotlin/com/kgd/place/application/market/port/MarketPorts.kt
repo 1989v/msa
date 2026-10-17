@@ -11,6 +11,8 @@ interface MarketQueryPort {
     fun findMarketByContentId(contentId: String): Market?
     fun findZones(marketId: Long): List<MarketZone>
     fun findStores(marketId: Long): List<MarketStore>
+    /** Display-only rows: source payloads are presence markers and must never be saved. */
+    fun findStoresForDisplay(marketId: Long): List<MarketStore>
     fun findOverrides(storeIds: List<Long>): List<MarketStoreOverride>
     fun findSteward(marketId: Long, memberId: Long): MarketSteward?
 }

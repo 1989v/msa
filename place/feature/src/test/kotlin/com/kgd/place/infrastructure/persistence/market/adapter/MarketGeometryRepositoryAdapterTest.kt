@@ -54,7 +54,7 @@ class MarketGeometryRepositoryAdapterTest : BehaviorSpec({
             every { markets.findByAttractionContentId("1") } returns MarketJpaEntity.fromDomain(original)
             every { markets.lockById(1) } returns MarketJpaEntity.fromDomain(original)
             every { markets.save(any()) } answers { firstArg() }
-            val repository = MarketRepositoryAdapter(markets, mockk(), mockk(), mockk(), mockk(), mockk(), mockk(), searchRefresh = mockk(relaxed = true))
+            val repository = MarketRepositoryAdapter(markets, mockk(), mockk(), mockk(), mockk(), mockk(), mockk(), searchRefresh = mockk(relaxed = true), displayStores = mockk())
             val saved = repository.saveMarket(original.copy(name = "새 원천명", centerOverrideLat = null,
                 centerOverrideLng = null, radiusOverrideM = null))
             saved.name shouldBe "새 원천명"

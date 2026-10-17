@@ -31,6 +31,7 @@ class MarketSearchQueryRepositoryTest : BehaviorSpec({
     lateinit var writer: MarketRepositoryAdapter
     lateinit var geometryWriter: MarketGeometryRepositoryAdapter
     lateinit var adapter: MarketSearchRepositoryAdapter
+    val statements = mutableListOf<String>()
     beforeSpec {
         mysql.start()
         val config = Configuration().setProperty("hibernate.connection.url", mysql.jdbcUrl)
@@ -42,6 +43,7 @@ class MarketSearchQueryRepositoryTest : BehaviorSpec({
             MarketChangeLogJpaEntity::class.java, MarketStewardJpaEntity::class.java,
             MarketPathJpaEntity::class.java, MarketRoadRuleJpaEntity::class.java)
             .forEach { config.addAnnotatedClass(it) }
+        config.setStatementInspector { sql -> statements.add(sql); sql }
         emf = config.buildSessionFactory()
         // Production keeps attractions on the server default utf8mb4_0900_ai_ci while the market tables
         // declare utf8mb4_unicode_ci. Recreate that split so every join across the two runs under it.
@@ -58,7 +60,7 @@ class MarketSearchQueryRepositoryTest : BehaviorSpec({
         writer = MarketRepositoryAdapter(repos.getRepository(MarketJpaRepository::class.java),
             repos.getRepository(MarketZoneJpaRepository::class.java), repos.getRepository(MarketStoreJpaRepository::class.java),
             repos.getRepository(MarketStoreOverrideJpaRepository::class.java), repos.getRepository(MarketChangeLogJpaRepository::class.java),
-            repos.getRepository(MarketStewardJpaRepository::class.java), MarketRowRestorer(dataSource), searchRefresh = refresh)
+            repos.getRepository(MarketStewardJpaRepository::class.java), MarketRowRestorer(dataSource), searchRefresh = refresh, displayStores = MarketStoreQueryRepository(factory))
         geometryWriter = MarketGeometryRepositoryAdapter(repos.getRepository(MarketBoundaryJpaRepository::class.java),
             repos.getRepository(MarketPathJpaRepository::class.java), repos.getRepository(MarketRoadRuleJpaRepository::class.java))
         geometryWriter.javaClass.getDeclaredField("entityManager").also { it.isAccessible = true }.set(geometryWriter, em)
@@ -104,6 +106,54 @@ class MarketSearchQueryRepositoryTest : BehaviorSpec({
         em.persist(MarketStoreOverrideJpaEntity.fromDomain(MarketStoreOverride(requireNotNull(store.id), field,
             value, "수정", 1, MarketActorKind.ADMIN))); em.flush()
         refresh.refresh(store.marketId)
+    }
+    Given("display-only store projection") {
+        Then("selects source presence without raw payloads and retains every domain field and public badge") {
+            val m = market("display-projection")
+            val marketId = requireNotNull(m.id)
+            val raw = """{"payload":"${"large-source-".repeat(1000)}"}"""
+            val base = MarketStore(marketId, "원천가게", MarketStoreSource.ONNURI, sourceKey = "o",
+                zoneId = 9, items = "떡", categoryMajor = "음식", categoryMid = "한식", categorySub = "떡집",
+                latitude = 37.0, longitude = 127.0, roadAddress = "도로 1", jibunAddress = "지번 1",
+                buildingManagementNo = "building-no", buildingName = "건물", dong = "가", floor = "2", ho = "201",
+                roadName = "시장로", onnuriKey = "o", sanggaKey = "s", onnuriRaw = raw, sanggaRaw = raw,
+                membership = MarketMembership(MarketMembershipStatus.IN), positionNote = "입구 옆",
+                actorKind = MarketActorKind.ADMIN, createdByMemberId = 7,
+                createdAt = LocalDateTime.of(2026, 10, 16, 12, 0), judgedMembership = MarketMembershipStatus.IN,
+                judgedBy = MarketJudgedBy.INGEST, pathId = 5, needsReview = true, goodPriceKey = "g",
+                goodPriceRaw = """{"업종":"한식","메뉴1":"국수","가격1":"7000"}""",
+                goodPriceMatchedBy = "NAME", goodPriceMenuNames = "국수")
+            val fixtures = listOf(base,
+                base.copy(name = "상가", source = MarketStoreSource.SANGGA, sourceKey = "s2",
+                    onnuriKey = null, onnuriRaw = null, sanggaKey = "s2"),
+                base.copy(name = "수동", source = MarketStoreSource.MANUAL, sourceKey = null,
+                    onnuriKey = null, sanggaKey = null, onnuriRaw = null, sanggaRaw = null,
+                    pinKind = MarketPinKind.REFERENCE, referenceStoreId = 1, relativePosition = "옆"),
+                // Presence comes from raw, including when an enrichment has no source key.
+                base.copy(name = "보강", sourceKey = "o3", onnuriKey = "o3", sanggaKey = null),
+                base.copy(name = "키만", sourceKey = "o4", onnuriKey = "o4", sanggaRaw = null))
+            fixtures.forEach { em.persist(MarketStoreJpaEntity.fromDomain(it)) }
+            em.flush(); em.clear()
+            val full = writer.findStores(marketId)
+            statements.clear()
+            val narrow = writer.findStoresForDisplay(marketId)
+            val select = statements.single { it.startsWith("select", ignoreCase = true) }
+            val selectList = select.substringBefore(" from ").lowercase()
+            // Reject even a read-and-discard implementation: raw columns may only appear in IS NOT NULL.
+            listOf("onnuri_raw", "sangga_raw").forEach { column ->
+                Regex("\\b$column\\b(?!\\s+is\\s+not\\s+null)").containsMatchIn(selectList) shouldBe false
+                selectList.contains("$column is not null") shouldBe true
+            }
+            narrow shouldBe full.map { it.copy(
+                onnuriRaw = MarketStore.RAW_OMITTED.takeIf { _ -> it.onnuriRaw != null },
+                sanggaRaw = MarketStore.RAW_OMITTED.takeIf { _ -> it.sanggaRaw != null }) }
+            fun response(rows: List<MarketStore>) = com.kgd.place.presentation.market.dto.MarketResponse.from(
+                QueryMarketUseCase.MarketResult(m.toDomain(), emptyList(), MarketPublicProjection.stores(rows, emptyMap())))
+            response(narrow) shouldBe response(full)
+            MarketPublicProjection.stores(narrow, emptyMap()).map { it.sources } shouldBe
+                MarketPublicProjection.stores(full, emptyMap()).map { it.sources }
+            writer.findStoresForDisplay(marketId + 1000) shouldBe emptyList()
+        }
     }
     Given("쓰기와 같은 트랜잭션의 검색 투영") {
         Then("적재는 pairing 이후 한 번 갱신하고 재적재의 품목과 메뉴도 즉시 바뀐다") {

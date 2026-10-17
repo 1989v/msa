@@ -81,4 +81,12 @@ data class MarketStore(
             items = if (incoming.onnuriRaw == null && onnuriRaw != null) items else incoming.items,
         )
     }
+
+    companion object {
+        /**
+         * Display-only marker for an existing source payload omitted from the read projection.
+         * A MarketStore containing this marker must never be saved: it is not the source document.
+         */
+        const val RAW_OMITTED = "{}"
+    }
 }

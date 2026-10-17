@@ -16,7 +16,7 @@ class MarketTourPublicTest : BehaviorSpec({
             val source = MarketStore(1, "가게", MarketStoreSource.MANUAL, id = 1,
                 actorKind = MarketActorKind.ADMIN, createdByMemberId = 1, membership = MarketMembership(MarketMembershipStatus.IN))
             every { query.findMarketByContentId("c") } returns Market("c", "시장", MarketType.STREET, latitude = 37.0, longitude = 127.0, id = 1)
-            every { query.findStores(1) } returns listOf(source)
+            every { query.findStoresForDisplay(1) } returns listOf(source)
             every { query.findOverrides(any()) } returns emptyList()
             every { query.findZones(1) } returns emptyList()
             val menu = MarketTourMenuUseCase.Menu("국수", null, SearchMarketsUseCase.AttractionRef(11, "ko"), "Noodles", null)
@@ -45,7 +45,7 @@ class MarketTourPublicTest : BehaviorSpec({
             val first = MarketTourMenuUseCase.Restaurant(SearchMarketsUseCase.AttractionRef(11, "ko"), "붙은 곳", "국수", null, 37.0, 127.0)
             val second = first.copy(attraction = SearchMarketsUseCase.AttractionRef(12, "ko"), title = "소개 음식점")
             every { query.findMarketByContentId("c") } returns market
-            every { query.findStores(1) } returns listOf(inStore, outStore)
+            every { query.findStoresForDisplay(1) } returns listOf(inStore, outStore)
             every { query.findOverrides(any()) } returns emptyList()
             every { query.findZones(1) } returns emptyList()
             every { tour.attached(1) } returns mapOf(2L to MarketTourMenuUseCase.Menu("국수", null, first.attraction))
@@ -68,7 +68,7 @@ class MarketTourPublicTest : BehaviorSpec({
             val restaurant = MarketTourMenuUseCase.Restaurant(SearchMarketsUseCase.AttractionRef(12,"ko"),
                 "경계 안", null, null, 37.005, 127.0)
             every { query.findMarketByContentId("c") } returns market
-            every { query.findStores(1) } returns emptyList()
+            every { query.findStoresForDisplay(1) } returns emptyList()
             every { query.findOverrides(any()) } returns emptyList()
             every { query.findZones(1) } returns emptyList()
             every { geometry.findPaths(1) } returns emptyList()

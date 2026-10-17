@@ -24,6 +24,7 @@ import com.kgd.place.infrastructure.persistence.market.entity.MarketZoneJpaEntit
 import com.kgd.place.infrastructure.persistence.market.repository.MarketChangeLogJpaRepository
 import com.kgd.place.infrastructure.persistence.market.repository.MarketJpaRepository
 import com.kgd.place.infrastructure.persistence.market.repository.MarketStewardJpaRepository
+import com.kgd.place.infrastructure.persistence.market.repository.MarketStoreQueryRepository
 import com.kgd.place.infrastructure.persistence.market.repository.MarketStoreJpaRepository
 import com.kgd.place.infrastructure.persistence.market.repository.MarketStoreOverrideJpaRepository
 import com.kgd.place.infrastructure.persistence.market.repository.MarketZoneJpaRepository
@@ -41,6 +42,7 @@ class MarketRepositoryAdapter(
     private val stewards: MarketStewardJpaRepository,
     private val restorer: MarketRowRestorer,
     private val searchRefresh: MarketSearchRefreshPort,
+    private val displayStores: MarketStoreQueryRepository,
 ) : MarketQueryPort, MarketSavePort, MarketEditorPort {
     private val json = JsonMapper.builder().build()
 
@@ -58,6 +60,8 @@ class MarketRepositoryAdapter(
     // sort memory on large markets; one market's stores fit comfortably in memory.
     override fun findStores(marketId: Long): List<MarketStore> =
         stores.findAllByMarketId(marketId).map { it.toDomain() }.sortedBy { it.id }
+    override fun findStoresForDisplay(marketId: Long): List<MarketStore> =
+        displayStores.findForDisplay(marketId)
     override fun findOverrides(storeIds: List<Long>): List<MarketStoreOverride> =
         if (storeIds.isEmpty()) emptyList() else overrides.findAllByStoreIdIn(storeIds).map { it.toDomain() }
     override fun findSteward(marketId: Long, memberId: Long): MarketSteward? =

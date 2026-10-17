@@ -64,7 +64,7 @@ class MarketIngestProtectionTest : BehaviorSpec({
                 onnuriKey = "o", onnuriRaw = "{}", zoneId = 10, latitude = 37.0, longitude = 127.0, id = 11,
                 goodPriceKey = "good", goodPriceRaw = """{"메뉴1":"국수","가격1":"5000"}""",
                 goodPriceMatchedBy = "NAME", goodPriceMenuNames = "국수"))
-            val adapter = MarketRepositoryAdapter(markets, zones, stores, overrides, changes, stewards, mockk(), searchRefresh = io.mockk.mockk(relaxed = true))
+            val adapter = MarketRepositoryAdapter(markets, zones, stores, overrides, changes, stewards, mockk(), searchRefresh = io.mockk.mockk(relaxed = true), displayStores = mockk())
             val edit = MarketEditorService(adapter, adapter, adapter); val actor = MarketEditorActor(MarketActorKind.ADMIN, 7)
             val polygon = "POLYGON((127 37,128 37,128 38,127 37))"
             edit.zone(actor, 1, 10, EditMarketUseCase.ZoneRequest("먹거리 골목", MarketZoneKind.ROAD, polygonWkt = polygon, sortOrder = 5))

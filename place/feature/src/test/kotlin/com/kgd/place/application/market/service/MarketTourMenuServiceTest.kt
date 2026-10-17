@@ -30,6 +30,26 @@ class MarketTourMenuServiceTest : BehaviorSpec({
         }
     }
     Given("attach orchestration") {
+        Then("matches display rows without reading full source payloads") {
+            val query = mockk<MarketQueryPort>()
+            val editor = mockk<MarketEditorPort>()
+            val geometry = mockk<MarketGeometryQueryPort>()
+            val tour = mockk<MarketTourMenuPort>(relaxed = true)
+            val refresh = mockk<MarketSearchRefreshPort>(relaxed = true)
+            val candidate = restaurant(9, 0.0)
+            every { editor.findMarket(1) } returns Market("c", "시장", MarketType.STREET, id = 1,
+                latitude = 37.0, longitude = 127.0)
+            every { geometry.findBoundary(1) } returns null
+            every { tour.restaurants(any(), any()) } returns listOf(candidate)
+            every { query.findStoresForDisplay(1) } returns listOf(MarketStore(1, "순희네 빈대떡",
+                MarketStoreSource.ONNURI, sourceKey = "o", onnuriKey = "o", onnuriRaw = MarketStore.RAW_OMITTED,
+                id = 7, latitude = 37.0, longitude = 127.0, membership = MarketMembership(MarketMembershipStatus.IN)))
+            every { query.findOverrides(listOf(7)) } returns emptyList()
+            MarketTourMenuService(query, geometry, editor, tour, refresh, mockk(relaxed = true)).attach(1) shouldBe
+                MarketTourMenuUseCase.Summary(1, 1)
+            verify(exactly = 1) { query.findStoresForDisplay(1); tour.replace(1, mapOf(7L to candidate)); refresh.refresh(1) }
+            verify(exactly = 0) { query.findStores(any()) }
+        }
         Then("replaces stale derivations and refreshes search even when center is missing") {
             val query = mockk<MarketQueryPort>()
             val editor = mockk<MarketEditorPort>()
@@ -37,13 +57,13 @@ class MarketTourMenuServiceTest : BehaviorSpec({
             val tour = mockk<MarketTourMenuPort>(relaxed = true)
             val refresh = mockk<MarketSearchRefreshPort>(relaxed = true)
             every { editor.findMarket(1) } returns Market("c", "시장", MarketType.STREET, id = 1)
-            every { query.findStores(1) } returns emptyList()
+            every { query.findStoresForDisplay(1) } returns emptyList()
             every { query.findOverrides(emptyList()) } returns emptyList()
             every { geometry.findBoundary(1) } returns null
             every { tour.attached(1) } returns mapOf(7L to MarketTourMenuUseCase.Menu("옛 메뉴", null, SearchMarketsUseCase.AttractionRef(9, "ko")))
             MarketTourMenuService(query, geometry, editor, tour, refresh, mockk(relaxed = true)).attach(1) shouldBe MarketTourMenuUseCase.Summary(1, 0)
             verifyOrder { tour.replace(1, emptyMap()); refresh.refresh(1) }
-            verify(exactly = 0) { query.findStores(any()) }
+            verify(exactly = 0) { query.findStoresForDisplay(any()) }
         }
         Then("skips the wide shop rows and the search refresh when no restaurant is near and nothing is attached") {
             val query = mockk<MarketQueryPort>()
@@ -56,7 +76,7 @@ class MarketTourMenuServiceTest : BehaviorSpec({
             every { tour.restaurants(any(), any()) } returns emptyList()
             every { tour.attached(1) } returns emptyMap()
             MarketTourMenuService(query, geometry, editor, tour, refresh, mockk(relaxed = true)).attach(1) shouldBe MarketTourMenuUseCase.Summary(1, 0)
-            verify(exactly = 0) { query.findStores(any()); tour.replace(any(), any()); refresh.refresh(any()) }
+            verify(exactly = 0) { query.findStoresForDisplay(any()); tour.replace(any(), any()); refresh.refresh(any()) }
         }
     }
 })

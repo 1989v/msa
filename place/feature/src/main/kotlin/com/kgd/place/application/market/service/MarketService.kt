@@ -25,7 +25,7 @@ class MarketService(private val query: MarketQueryPort, private val save: Market
         require(contentId.isNotBlank())
         val market = query.findMarketByContentId(contentId) ?: return null
         val marketId = requireNotNull(market.id)
-        val stores = query.findStores(marketId)
+        val stores = query.findStoresForDisplay(marketId)
         val overrides = query.findOverrides(stores.mapNotNull { it.id }).groupBy { it.storeId }
         val paths = geometry?.findPaths(marketId).orEmpty()
         val boundary = geometry?.findBoundary(marketId)

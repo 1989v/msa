@@ -39,13 +39,33 @@ class MarketServiceTest : BehaviorSpec({
     fun edit(id: Long, field: MarketStoreField, value: String?) =
         MarketStoreOverride(id, field, value, "현장 확인", 7, MarketActorKind.ADMIN)
     fun rows(stores: List<MarketStore>, edits: List<MarketStoreOverride> = emptyList()) {
-        every { query.findStores(1) } returns stores
+        every { query.findStoresForDisplay(1) } returns stores.map { it.copy(
+            onnuriRaw = MarketStore.RAW_OMITTED.takeIf { _ -> it.onnuriRaw != null },
+            sanggaRaw = MarketStore.RAW_OMITTED.takeIf { _ -> it.sanggaRaw != null }) }
         every { query.findOverrides(stores.mapNotNull { it.id }) } returns edits
     }
     beforeEach {
         clearMocks(query, save)
         every { query.findMarketByContentId("content-1") } returns market
         every { query.findZones(1) } returns emptyList()
+    }
+    afterEach { verify(exactly = 0) { query.findStores(any()) } }
+    Given("display read response parity") {
+        Then("full and omitted source rows produce the identical public response including merged badges and good-price menus") {
+            val input = listOf(
+                store(10, source = MarketStoreSource.ONNURI, name = "떡집").copy(onnuriRaw = """{"private":"onnuri"}"""),
+                store(11, source = MarketStoreSource.SANGGA, name = "떡집").copy(sanggaRaw = """{"private":"sangga"}""",
+                    goodPriceRaw = """{"업종":"한식","메뉴1":"국수","가격1":"7000"}""", goodPriceMatchedBy = "NAME"),
+                store(12).copy(pinKind = MarketPinKind.REFERENCE, referenceStoreId = 11, relativePosition = "옆"),
+                store(13, MarketMembershipStatus.UNKNOWN), store(14, MarketMembershipStatus.OUT))
+            val edits = listOf(edit(11, MarketStoreField.ITEMS, "찹쌀떡"), edit(12, MarketStoreField.NAME, "참고 핀"))
+            rows(input, edits)
+            val actual = com.kgd.place.presentation.market.dto.MarketResponse.from(requireNotNull(service.find("content-1", true)))
+            every { query.findStoresForDisplay(1) } returns input
+            val expected = com.kgd.place.presentation.market.dto.MarketResponse.from(requireNotNull(service.find("content-1", true)))
+            actual shouldBe expected
+            verify(exactly = 2) { query.findStoresForDisplay(1) }
+        }
     }
     Given("OSM 수집 시각") {
         Then("마지막 수집 시각을 상태에 실어 적재 잡이 최근 수집한 시장을 건너뛰게 한다") {
@@ -95,7 +115,7 @@ class MarketServiceTest : BehaviorSpec({
             rows((1L..2000L).map { store(it) })
             service.find("content-1")!!.stores.size shouldBe 2000
             verify(exactly = 1) { query.findMarketByContentId("content-1") }
-            verify(exactly = 1) { query.findStores(1) }
+            verify(exactly = 1) { query.findStoresForDisplay(1) }
             verify(exactly = 1) { query.findOverrides((1L..2000L).toList()) }
             verify(exactly = 1) { query.findZones(1) }
             verify(exactly = 0) { save.saveStore(any()) }
@@ -103,7 +123,7 @@ class MarketServiceTest : BehaviorSpec({
         Then("없는 시장은 추가 조회 없이 null이다") {
             every { query.findMarketByContentId("missing") } returns null
             service.find("missing") shouldBe null
-            verify(exactly = 0) { query.findStores(any()); query.findOverrides(any()); query.findZones(any()) }
+            verify(exactly = 0) { query.findStoresForDisplay(any()); query.findOverrides(any()); query.findZones(any()) }
         }
     }
     Given("IN이 없는 시장의 주변 가게 표시") {

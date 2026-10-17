@@ -64,7 +64,7 @@ class MarketTourMenuService(private val query: MarketQueryPort, private val geom
             refresh.refresh(marketId)
             return MarketTourMenuUseCase.Summary(1, 0)
         }
-        val stores = query.findStores(marketId)
+        val stores = query.findStoresForDisplay(marketId)
         val edits = query.findOverrides(stores.mapNotNull { it.id }).groupBy { it.storeId }
         val projected = MarketPublicProjection.stores(stores, edits)
         val matches = projected.mapNotNull { store ->
