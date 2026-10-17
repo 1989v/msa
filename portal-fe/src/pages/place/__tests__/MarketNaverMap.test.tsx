@@ -12,7 +12,7 @@ function sdk() {
   const destroy = vi.fn(); const panTo = vi.fn(); const setZoom = vi.fn((z: number) => { zoom = z; });
   const map = { destroy, panTo, setZoom, getZoom: () => zoom, getBounds: () => ({ getNE: () => ({ lat: () => north, lng: () => 128 }), getSW: () => ({ lat: () => 37, lng: () => 126 }) }) };
   return { objects, destroy, panTo, setZoom, listeners, zoom: (z: number) => { zoom = z; }, north: (n: number) => { north = n; },
-    Map: vi.fn(function () { return map; }), LatLng: vi.fn(function (latitude: number, longitude: number) { return { latitude, longitude }; }),
+    Map: vi.fn(function (_host: HTMLElement, options: { zoom: number }) { zoom = options.zoom; return map; }), LatLng: vi.fn(function (latitude: number, longitude: number) { return { latitude, longitude }; }),
     Marker: vi.fn(function (_options: { icon: { content: HTMLElement }; title?: string }) { return overlay(); }),
     Polygon: vi.fn(function (_options: unknown) { return overlay(); }), Polyline: vi.fn(function (_options: unknown) { return overlay(); }), Circle: vi.fn(function (_options: unknown) { return overlay(); }),
     Event: { addListener: vi.fn((target: unknown, event: string, callback: () => void) => { if (target === map) listeners.set(event, callback); return { target, event, callback }; }), removeListener: vi.fn() },
@@ -24,6 +24,18 @@ const scripts = () => document.querySelectorAll<HTMLScriptElement>('script[src^=
 beforeEach(() => { maps = sdk(); });
 afterEach(() => { cleanup(); scripts().forEach((s) => s.remove()); Reflect.deleteProperty(window, 'naver'); });
 describe('MarketNaverMap', () => {
+  it('disables gestures and controls for a zoom-16 preview, activates pins and polygons without selection or viewport reports', async () => {
+    install(); const onActivate = vi.fn(); const onSelect = vi.fn(); const onZoneSelect = vi.fn(); const onViewportChange = vi.fn();
+    const { container } = render(<MarketNaverMap {...props} interactive={false} initialZoom={16} onActivate={onActivate} onSelect={onSelect} onZoneSelect={onZoneSelect} onViewportChange={onViewportChange} />);
+    await waitFor(() => expect(maps.Marker).toHaveBeenCalledOnce());
+    expect(maps.Map).toHaveBeenCalledWith(expect.any(HTMLElement), expect.objectContaining({ zoom: 16, draggable: false, scrollWheel: false, pinchZoom: false, keyboardShortcuts: false, disableDoubleClickZoom: true, zoomControl: false, scaleControl: false }));
+    expect(maps.Marker.mock.calls[0][0].title).toBe('Market');
+    expect(container.querySelector('[style]')).toHaveStyle({ aspectRatio: '16 / 9' });
+    fireEvent.click(maps.Marker.mock.calls[0][0].icon.content);
+    const click = maps.Event.addListener.mock.calls.find(([, event]) => event === 'click')![2]; act(() => click());
+    act(() => maps.listeners.get('idle')!());
+    expect(onActivate).toHaveBeenCalledTimes(2); expect(onSelect).not.toHaveBeenCalled(); expect(onZoneSelect).not.toHaveBeenCalled(); expect(onViewportChange).not.toHaveBeenCalled();
+  });
   it('reports first viewport and idle bounds with the rendered zoom', async () => {
     const onViewportChange = vi.fn(); install();
     render(<MarketNaverMap {...props} onViewportChange={onViewportChange} />);

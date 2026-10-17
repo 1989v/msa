@@ -49,13 +49,27 @@ describe('dedicated market map page', () => {
     expect(screen.getByRole('link', { name: en ? 'Back to attraction' : '관광지 상세로' })).toHaveAttribute('href', `${en ? '/en' : ''}/attractions/7`);
     expect(document.querySelectorAll('.market-map-list')).toHaveLength(1);
     expect(document.querySelector('.place-market-cluster-sheet')).toBeNull();
-    expect(mapProps.unifiedList).toBe(true);
   });
   it.each(['absent', 'failed'])('replaces unavailable market route with detail: %s', async kind => {
     if (kind === 'absent') vi.mocked(fetchMarket).mockResolvedValue(null); else vi.mocked(fetchMarket).mockRejectedValue(new Error('offline'));
     mount('/attractions/7/market', ['/before', '/attractions/7/market']);
     await screen.findByText('관광지 상세');
     fireEvent.click(screen.getByRole('button', { name: '이전 주소' })); await screen.findByText('Before');
+  });
+  it('keeps good-price menus, attribution, and TourAPI menu details in the dedicated list', async () => {
+    vi.mocked(fetchMarket).mockResolvedValue({ ...data,
+      market: { ...data.market, goodPrice: { storeCount: 1, minPrice: 5000, maxPrice: 6000, attribution: { name: '착한가격 원천', url: 'https://example.com/price', license: '공개' } }, attribution: { name: '시장 원천', url: 'https://example.com/market', license: '공공누리' } },
+      stores: [shop(2, '하늘가게', { goodPrice: { category: '한식', matchedBy: 'NAME', menus: [{ name: '칼국수', price: 5000 }, { name: '수제비', price: null }, { name: '비빔밥', price: 6000 }] }, tourMenu: { firstMenu: '빈대떡', treatMenu: '육회', attraction: { id: 9, lang: 'ko' } } })],
+    });
+    mount(); const list = await screen.findByRole('complementary');
+    await within(list).findByText('착한가격');
+    expect(list).toHaveTextContent('착한가격업소 1곳 · 5,000~6,000원');
+    expect(within(list).getByRole('link', { name: '착한가격 원천' })).toHaveAttribute('href', 'https://example.com/price');
+    expect(within(list).getByRole('link', { name: '시장 원천' })).toHaveAttribute('href', 'https://example.com/market');
+    expect(list).toHaveTextContent('출처: 한국관광공사 TourAPI'); expect(list).toHaveTextContent('대표 메뉴: 빈대떡'); expect(list).toHaveTextContent('취급 메뉴: 육회');
+    expect(list).toHaveTextContent('칼국수 5,000원 · 수제비'); expect(within(list).queryByText(/비빔밥/)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: '핀 선택' }));
+    expect(list).toHaveTextContent('칼국수 5,000원 · 수제비 · 비빔밥 6,000원');
   });
   it('roundtrips marketQuery with replace, removes empty values, and preserves other query state', async () => {
     mount('/attractions/7/market?marketQuery=가게&keep=1', ['/before', '/attractions/7/market?marketQuery=가게&keep=1']);

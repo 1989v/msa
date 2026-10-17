@@ -9,7 +9,7 @@ const data: MarketResponse = { market: { name: 'Market' } as MarketResponse['mar
 function sdk() {
   let zoom = 17; const listeners = new Map<string, () => void>(); const setMap = vi.fn(); const panTo = vi.fn(); const setZoom = vi.fn((z: number) => { zoom = z; });
   const map = { getZoom: () => zoom, panTo, setZoom, unbindAll: vi.fn(), getBounds: () => ({ getNorthEast: () => ({ lat: () => 38, lng: () => 128 }), getSouthWest: () => ({ lat: () => 37, lng: () => 126 }) }) };
-  return { map, zoom: (z: number) => { zoom = z; }, listeners, setMap, Map: vi.fn(function (_element: HTMLElement, _options: unknown) { return map; }),
+  return { map, zoom: (z: number) => { zoom = z; }, listeners, setMap, Map: vi.fn(function (_element: HTMLElement, options: { zoom: number }) { zoom = options.zoom; return map; }),
     Polygon: vi.fn(function (_options: unknown) { return { setMap }; }), Polyline: vi.fn(function (_options: unknown) { return { setMap }; }),
     Circle: vi.fn(function (_options: unknown) { return { setMap }; }), Marker: vi.fn(function (_options: unknown) { return { setMap }; }), Point: vi.fn(function (x: number, y: number) { return { x, y }; }), SymbolPath: { CIRCLE: 0 },
     event: { addListener: vi.fn((target: unknown, name: string, fn: () => void) => { if (target === map) listeners.set(name, fn); return { remove: vi.fn() }; }), removeListener: vi.fn() },
@@ -19,6 +19,16 @@ let maps: ReturnType<typeof sdk>;
 beforeEach(() => { maps = sdk(); loader.mockReset().mockResolvedValue(maps); });
 afterEach(cleanup);
 describe('MarketGoogleMap', () => {
+  it('disables gestures, UI and keyboard for a preview and activates markers and polygons without selection or viewport reports', async () => {
+    const onActivate = vi.fn(); const onSelect = vi.fn(); const onZoneSelect = vi.fn(); const onViewportChange = vi.fn();
+    render(<MarketGoogleMap contentId="1" lang="ko" data={data} interactive={false} initialZoom={16} onActivate={onActivate} onSelect={onSelect} onZoneSelect={onZoneSelect} onViewportChange={onViewportChange} />);
+    await waitFor(() => expect(maps.Marker).toHaveBeenCalledOnce());
+    expect(maps.Map).toHaveBeenCalledWith(expect.any(HTMLElement), expect.objectContaining({ zoom: 16, gestureHandling: 'none', disableDefaultUI: true, keyboardShortcuts: false }));
+    expect(maps.Marker).toHaveBeenCalledWith(expect.objectContaining({ title: 'Market' }));
+    const clicks = maps.event.addListener.mock.calls.filter(([, event]) => event === 'click');
+    act(() => { clicks[0][2](); clicks.at(-1)![2](); maps.listeners.get('idle')!(); });
+    expect(onActivate).toHaveBeenCalledTimes(2); expect(onSelect).not.toHaveBeenCalled(); expect(onZoneSelect).not.toHaveBeenCalled(); expect(onViewportChange).not.toHaveBeenCalled();
+  });
   it('reports first viewport and idle bounds with the rendered zoom', async () => {
     const onViewportChange = vi.fn();
     render(<MarketGoogleMap contentId="1" lang="ko" data={data} onViewportChange={onViewportChange} />);

@@ -4,13 +4,12 @@ import MarketCanvas from './MarketCanvas';
 import MarketNaverMap, { type MarketViewport } from './MarketNaverMap';
 import MarketGoogleMap from './MarketGoogleMap';
 import MarketLocate from './MarketLocate';
-import MarketClusterSheet from './MarketClusterSheet';
 import { buildMarketOverlay } from './marketOverlay';
 import { matchesMarketStore, type MarketUserPosition } from './marketView';
 
 const PREFERENCE = 'market-map-provider';
 
-/** Selection keys and detail sheet are shared across live engines and the SVG view. */
+/** Selection keys are shared across live engines, the SVG view and the dedicated list. */
 export default function MarketMap(props: ComponentProps<typeof MarketCanvas> & {
   onViewportChange?: (viewport: MarketViewport | null) => void;
   contentId: string; selectedZoneId?: number | null; onZoneSelect?: (id: number | null) => void;
@@ -31,8 +30,6 @@ export default function MarketMap(props: ComponentProps<typeof MarketCanvas> & {
   // 중심만 필요하지만 모델 전체(묶음 포함)를 계산하므로 응답이 바뀔 때만 다시 센다.
   const centre = useMemo(() => buildMarketOverlay({ data, zoom: 17 }).centre, [data]);
   useEffect(() => { if (!live || !centre) props.onViewportChange?.(null); }, [live, centre, props.onViewportChange]);
-  const keys: string[] = selectedKey?.startsWith('cluster:') ? JSON.parse(selectedKey.slice(8)) : selectedKey ? [selectedKey] : [];
-  const selectedStores = points.filter((point) => keys.includes(point.key)).flatMap((point) => point.stores);
   const toggle = () => {
     const next = live ? 'canvas' : 'naver';
     setProvider(next); setFailed(null);
@@ -49,8 +46,7 @@ export default function MarketMap(props: ComponentProps<typeof MarketCanvas> & {
           : <MarketGoogleMap {...liveProps} onError={() => setFailed('google')} />}
         <MarketLocate data={data} lang={lang} onPosition={setPosition} />
       </div>
-      {!props.unifiedList && selectedKey != null && <MarketClusterSheet stores={selectedStores} selectedKey={selectedKey} focusStoreId={focusStoreId}
-        onSelect={onSelect} lang={lang} query={query} dishes={dishes} />}
+
     </div> : <MarketCanvas {...props} userPosition={position} onPosition={setPosition} />}
   </>;
 }

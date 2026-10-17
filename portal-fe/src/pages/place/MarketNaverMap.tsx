@@ -6,6 +6,7 @@ import { buildMarketOverlay, type MarketBounds, type OverlayMarker, type Overlay
 export type MarketViewport = { bounds: MarketBounds; zoom: number };
 export type MarketLiveMapProps = {
   contentId: string; lang: 'ko' | 'en'; data: MarketResponse;
+  interactive?: boolean; initialZoom?: number; onActivate?: () => void;
   selection?: OverlaySelection; storeIds?: (number | null)[];
   userPosition?: { latitude: number; longitude: number; accuracy: number } | null;
   onViewportChange?: (viewport: MarketViewport) => void;
@@ -72,9 +73,9 @@ function pinIcon(marker: OverlayMarker): HTMLElement {
 }
 
 export default function MarketNaverMap(props: MarketNaverMapProps) {
-  const { contentId, lang, keyId } = props;
+  const { contentId, lang, keyId, interactive = true, initialZoom = 17 } = props;
   const host = useRef<HTMLDivElement>(null); const latest = useRef(props); latest.current = props;
-  const identity = JSON.stringify([contentId, keyId, lang]);
+  const identity = JSON.stringify([contentId, keyId, lang, interactive, initialZoom]);
   const [ready, setReady] = useState<{ identity: string; map: any; sdk: any } | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   const redraw = useRef<(reportViewport?: boolean) => void>(() => {}); const appliedFocus = useRef<string | null>(null);
@@ -85,13 +86,13 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
     const unregister = registerAuthFailure(fail);
     loadSdk(keyId, lang).then((sdk) => {
       if (disposed || errorReported || !host.current) return;
-      const centre = buildMarketOverlay({ ...latest.current, zoom: 17 }).centre;
+      const centre = buildMarketOverlay({ ...latest.current, zoom: initialZoom }).centre;
       if (!centre) return;
-      map = new sdk.Map(host.current, { center: new sdk.LatLng(centre.latitude, centre.longitude), zoom: 17, scaleControl: true, mapTypeControl: false, zoomControl: true });
+      map = new sdk.Map(host.current, { center: new sdk.LatLng(centre.latitude, centre.longitude), zoom: initialZoom, scaleControl: interactive, mapTypeControl: false, zoomControl: interactive, ...(!interactive ? { draggable: false, scrollWheel: false, pinchZoom: false, keyboardShortcuts: false, disableDoubleClickZoom: true } : {}) });
       setReady({ identity, map, sdk });
     }).catch(fail);
     return () => { disposed = true; unregister(); map?.destroy(); };
-  }, [identity, keyId, lang]);
+  }, [identity, keyId, lang, initialZoom, interactive]);
 
   useEffect(() => {
     if (!keyId || ready?.identity !== identity) return;
@@ -104,9 +105,9 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
       const bounds = map.getBounds?.(); const ne = bounds?.getNE(); const sw = bounds?.getSW();
       const frame: MarketBounds | undefined = ne && sw ? { north: ne.lat(), east: ne.lng(), south: sw.lat(), west: sw.lng() } : undefined;
       const input = latest.current;
-      const zoom = Math.round(map.getZoom?.() ?? 17);
+      const zoom = Math.round(map.getZoom?.() ?? initialZoom);
       const model = buildMarketOverlay({ ...input, zoom, bounds: frame });
-      if (reportViewport && frame) input.onViewportChange?.({ bounds: frame, zoom });
+      if (interactive && reportViewport && frame) input.onViewportChange?.({ bounds: frame, zoom });
       const wanted = new Set<string>();
       const sync = (key: string, value: unknown, create: () => any, click?: () => void) => {
         wanted.add(key); const signature = JSON.stringify(value); const old = overlays.get(key);
@@ -115,23 +116,23 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
         const object = create(); const listener = click ? sdk.Event.addListener(object, 'click', click) : undefined;
         overlays.set(key, { signature, object, listener });
       };
-      for (const shape of [model.marketPolygon, ...model.zonePolygons].filter((shape) => shape != null)) sync(shape.key, shape, () => new sdk.Polygon({ map, paths: shape.coordinates.map(([lat, lng]) => new sdk.LatLng(lat, lng)), fillColor: token(shape.color), fillOpacity: shape.fillOpacity, strokeColor: token(shape.color), strokeWeight: shape.strokeWeight, strokeOpacity: shape.strokeOpacity }), shape.zoneId != null ? () => latest.current.onZoneSelect?.(shape.zoneId) : undefined);
-      for (const line of model.alleys) sync(line.key, line, () => new sdk.Polyline({ map, path: line.coordinates.map(([lat, lng]) => new sdk.LatLng(lat, lng)), strokeColor: token(line.color), strokeWeight: line.strokeWeight, strokeOpacity: line.strokeOpacity }), line.zoneId != null ? () => latest.current.onZoneSelect?.(line.zoneId) : undefined);
+      for (const shape of [model.marketPolygon, ...model.zonePolygons].filter((shape) => shape != null)) sync(shape.key, shape, () => new sdk.Polygon({ map, paths: shape.coordinates.map(([lat, lng]) => new sdk.LatLng(lat, lng)), fillColor: token(shape.color), fillOpacity: shape.fillOpacity, strokeColor: token(shape.color), strokeWeight: shape.strokeWeight, strokeOpacity: shape.strokeOpacity }), !interactive ? () => latest.current.onActivate?.() : shape.zoneId != null ? () => latest.current.onZoneSelect?.(shape.zoneId) : undefined);
+      for (const line of model.alleys) sync(line.key, line, () => new sdk.Polyline({ map, path: line.coordinates.map(([lat, lng]) => new sdk.LatLng(lat, lng)), strokeColor: token(line.color), strokeWeight: line.strokeWeight, strokeOpacity: line.strokeOpacity }), !interactive ? () => latest.current.onActivate?.() : line.zoneId != null ? () => latest.current.onZoneSelect?.(line.zoneId) : undefined);
       for (const marker of model.markers) sync(marker.key, marker, () => {
-        const content = pinIcon(marker); content.onclick = () => { if (marker.selectionKey) latest.current.onSelect?.(marker.selectionKey); };
+        const content = pinIcon(marker); content.onclick = () => { if (!interactive) latest.current.onActivate?.(); else if (marker.selectionKey) latest.current.onSelect?.(marker.selectionKey); };
         return new sdk.Marker({ map, position: coord(marker), title: marker.title, icon: { content, anchor: { x: 0, y: 0 } } });
       });
       for (const label of model.labels) sync(label.key, label, () => {
         const content = document.createElement('span'); content.textContent = label.text; content.className = 'place-market-naver-label'; content.style.color = label.color;
         return new sdk.Marker({ map, position: coord(label), title: label.text, icon: { content, anchor: { x: 0, y: 0 } } });
-      }, label.zoneId != null ? () => latest.current.onZoneSelect?.(label.zoneId) : undefined);
+      }, !interactive ? () => latest.current.onActivate?.() : label.zoneId != null ? () => latest.current.onZoneSelect?.(label.zoneId) : undefined);
       if (model.userPosition) {
         const user = model.userPosition;
         sync('user-accuracy', user, () => new sdk.Circle({ map, center: coord(user), radius: user.accuracy, strokeColor: token(user.color), fillColor: token(user.color), fillOpacity: user.fillOpacity, strokeWeight: user.strokeWeight }));
         sync('user', user, () => new sdk.Marker({ map, position: coord(user), title: user.text, icon: { content: pinIcon({ ...user, key: 'user', text: '', title: user.text, storeIds: [], textColor: user.strokeColor, labelOffset: { x: 0, y: 0 }, highlighted: false, searchMatch: false, label: false }), anchor: { x: 0, y: 0 } } }));
       }
       for (const [key, entry] of overlays) if (!wanted.has(key)) { remove(entry); overlays.delete(key); }
-      if (!model.focus) appliedFocus.current = null;
+      if (!interactive || !model.focus) appliedFocus.current = null;
       else {
         const request = JSON.stringify([identity, model.focus]);
         if (appliedFocus.current !== request) { appliedFocus.current = request; map.panTo(coord(model.focus)); map.setZoom(model.focus.zoom); latest.current.onSelect?.(model.focus.selectionKey); }
@@ -140,11 +141,11 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
     redraw.current(true);
     const listeners = ['zoom_changed', 'idle', 'bounds_changed'].map((event) => sdk.Event.addListener(map, event, () => redraw.current(event === 'idle')));
     return () => { redraw.current = () => {}; listeners.forEach((listener) => sdk.Event.removeListener(listener)); overlays.forEach(remove); };
-  }, [ready, identity, keyId]);
+  }, [ready, identity, keyId, initialZoom, interactive]);
   useEffect(() => { redraw.current(); }, [props.data, props.selection, props.storeIds, props.userPosition]);
   if (!keyId) return null;
   return <div role="group" aria-label={lang === 'en' ? 'Naver shop location map' : '네이버 가게 위치 지도'}>
-    <div ref={host} style={{ width: '100%', aspectRatio: '600 / 440', minHeight: '20rem' }} />
+    <div ref={host} style={{ width: '100%', aspectRatio: interactive ? '600 / 440' : '16 / 9', minHeight: interactive ? '20rem' : undefined }} />
     {failed === identity && <p role="alert">{lang === 'en' ? 'Unable to load Naver Map.' : '네이버 지도를 불러오지 못했습니다.'}</p>}
   </div>;
 }

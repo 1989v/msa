@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Attraction } from '../../../api/placeApi';
 
@@ -92,12 +92,15 @@ const enriched: Attraction = {
   ],
 };
 
-function renderAt(path: string) {
+function renderAt(path: string, entries = [path]) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={[path]}>
+      <MemoryRouter initialEntries={entries} initialIndex={entries.length - 1}>
         <Routes>
+          <Route path="/before" element={<p>Before market entry</p>} />
+          <Route path="/attractions/:id/market" element={<MarketAddress />} />
+          <Route path="/en/attractions/:id/market" element={<MarketAddress />} />
           <Route path="/attractions/:id" element={<AttractionPage />} />
           <Route path="/en/attractions/:id" element={<AttractionPage />} />
         </Routes>
@@ -1713,4 +1716,14 @@ describe('AttractionPage 이 사이트 근거 줄 · 방문 추이 링크', () =
     await screen.findByRole('heading', { level: 1 });
     expect(screen.queryByRole('link', { name: /방문 추이 보기/ })).toBeNull();
   });
+});
+
+function MarketAddress() { const location = useLocation(); const navigate = useNavigate(); return <><output data-testid="market-address">{location.pathname}{location.search}{location.hash}</output><button onClick={() => navigate(-1)}>Back from market</button></>; }
+it.each(['/attractions/100?marketQuery=국밥&keep=1', '/attractions/100?keep=1#market', '/en/attractions/100?marketQuery=국밥#market'])('replaces legacy market entry while preserving search: %s', async path => {
+  vi.mocked(fetchAttraction).mockResolvedValue({ ...enriched, lang: path.startsWith('/en') ? 'en' : 'ko' });
+  renderAt(path, ['/before', path]);
+  const [pathname, suffix = ''] = path.split('?');
+  expect(await screen.findByTestId('market-address')).toHaveTextContent(`${pathname}/market?${suffix.split('#')[0]}`);
+  fireEvent.click(screen.getByRole('button', { name: 'Back from market' }));
+  expect(await screen.findByText('Before market entry')).toBeInTheDocument();
 });

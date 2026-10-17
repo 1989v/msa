@@ -3,7 +3,6 @@ import type { MarketBasemapMeta, MarketDish, MarketResponse } from '../../api/ma
 import type { PlaceLang } from '../../api/placeApi';
 import { marketBasemapFrame, clusterByScreenDistance, matchesMarketName, longestMarketSegmentMidpoint, projectMarketPins } from './marketView';
 
-import MarketClusterSheet from './MarketClusterSheet';
 import { marketDisplayName } from './marketView';
 import MarketLocate from './MarketLocate';
 import { marketPositionInView, type MarketUserPosition } from './marketView';
@@ -12,10 +11,9 @@ type Projection = NonNullable<ReturnType<typeof projectMarketPins>>;
 type ViewBox = { x: number; y: number; w: number; h: number };
 const INITIAL: ViewBox = { x: 0, y: 0, w: 600, h: 440 };
 
-export default function MarketCanvas({ data, lang, projection, points, hasGeometry, query, selectedKey, onSelect, color, pathColor, userPosition, focusStoreId, dishes = [], basemapAttribution, basemapMeta, onPosition, unifiedList = false }: {
+export default function MarketCanvas({ data, lang, projection, points, hasGeometry, query, selectedKey, onSelect, color, pathColor, userPosition, focusStoreId, dishes = [], basemapAttribution, basemapMeta, onPosition }: {
   data: MarketResponse; lang: PlaceLang; projection: Projection; points: Projection['points']; hasGeometry: boolean;
   query: string; selectedKey: string | null; onSelect: (key: string | null) => void;
-  unifiedList?: boolean;
   basemapAttribution?: ReactNode;
   basemapMeta?: MarketBasemapMeta | null;
   dishes?: MarketDish[];
@@ -64,7 +62,6 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
   // Keep selection stable when a zoom splits the selected screen group.
   const selected = clusters.find((cluster) => cluster.key === selectedKey || cluster.parcelKeys.includes(selectedKey ?? ''));
   const selectedKeys: string[] = selectedKey?.startsWith('cluster:') ? JSON.parse(selectedKey.slice(8)) : [];
-  const selectedStores = selected?.stores ?? points.filter((point) => selectedKeys.includes(point.key)).flatMap((point) => point.stores);
   const focusPoint = focusStoreId == null ? undefined : points.find((point) => point.stores.some((store) => store.id === focusStoreId));
   // Resolve the group at the requested zoom, rather than the pre-focus screen grouping.
   const focusKey = focusPoint && clusterByScreenDistance(points, pixelsPerUnit * 4, 24)
@@ -239,8 +236,7 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
       <MarketLocate key={marketKey} data={data} lang={lang} onPosition={(position) => { setMeasurement({ marketKey, position }); onPosition?.(position); }} />
       {basemapLoaded && basemapAttribution}
     </div>
-    {!unifiedList && selectedKey != null && <MarketClusterSheet stores={selectedStores} selectedKey={selectedKey} focusStoreId={focusStoreId}
-      onSelect={onSelect} lang={lang} query={query} dishes={dishes} />}
+
   </div>;
 }
 

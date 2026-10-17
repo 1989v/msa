@@ -42,12 +42,12 @@ function sdk() {
 }
 let maps: ReturnType<typeof sdk>;
 const install = () => Object.defineProperty(window, 'naver', { configurable: true, value: { maps } });
-function view(market = data, lang: 'ko' | 'en' = 'ko', unifiedList = false, onViewportChange = vi.fn()) {
+function view(market = data, lang: 'ko' | 'en' = 'ko', onViewportChange = vi.fn()) {
   const projection = projectMarketPins(groupMarketPins(market.stores), market)!;
   return function View() {
     const [selectedKey, onSelect] = useState<string | null>(null); const [focusStoreId, focus] = useState<number | null>(null);
     return <><button onClick={() => focus(1)}>Focus shop</button><button onClick={() => focus(null)}>Clear focus</button>
-      <MarketMap unifiedList={unifiedList} onViewportChange={onViewportChange} contentId="123" data={market} lang={lang} projection={projection} points={[...projection.points]} hasGeometry query="떡볶이"
+      <output data-testid="selection">{selectedKey}</output><MarketMap onViewportChange={onViewportChange} contentId="123" data={market} lang={lang} projection={projection} points={[...projection.points]} hasGeometry query="떡볶이"
         basemapAttribution={<a href="https://openfreemap.org/">OpenFreeMap</a>}
         basemapMeta={{ contentId: '123', centre: { latitude: 37.5, longitude: 127 }, zoom: 18, width: 1536, height: 1152,
           bounds: { north: 37.501, south: 37.499, east: 127.001, west: 126.999 }, renderedAt: '2026-10-17', styleVersion: '1', themes: ['light', 'dark'] }}
@@ -57,9 +57,9 @@ function view(market = data, lang: 'ko' | 'en' = 'ko', unifiedList = false, onVi
 beforeEach(() => { maps = sdk(); window.localStorage.clear(); google.load.mockReset().mockRejectedValue(new Error('offline')); });
 afterEach(() => { vi.unstubAllGlobals(); cleanup(); scripts().forEach((script) => script.remove()); Reflect.deleteProperty(window, 'naver'); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 describe('market map provider', () => {
-  it.each(['naver', 'canvas'])('uses external selection without old sheet in unified %s mode', async provider => {
+  it.each(['naver', 'canvas'])('reports viewport and selection in %s mode', async provider => {
     if (provider === 'canvas') window.localStorage.setItem('market-map-provider', 'canvas');
-    install(); const onViewportChange = vi.fn(); const View = view(data, 'ko', true, onViewportChange); const { container } = render(<View />);
+    install(); const onViewportChange = vi.fn(); const View = view(data, 'ko', onViewportChange); const { container } = render(<View />);
     if (provider === 'naver') {
       await waitFor(() => expect(container.querySelector('.place-market-naver-pin')).not.toBeNull());
       expect(onViewportChange).toHaveBeenCalledWith({ bounds: { north: 38, east: 128, south: 37, west: 126 }, zoom: 17 });
@@ -68,10 +68,9 @@ describe('market map provider', () => {
       expect(onViewportChange).toHaveBeenCalledWith(null);
       fireEvent.click(container.querySelector('.place-market-pin')!);
     }
-    expect(screen.queryByRole('region', { name: '선택한 가게' })).not.toBeInTheDocument();
-    expect(container.querySelector('.place-market-cluster-sheet')).toBeNull();
+    expect(screen.getByTestId('selection').textContent).not.toBe('');
   });
-  it('defaults to Naver, clusters counts and colours, opens the shared sheet and reclusters on zoom and idle', async () => {
+  it('defaults to Naver, clusters counts and colours, reclusters on zoom and idle', async () => {
     install(); const View = view(); const { container } = render(<View />);
     await waitFor(() => expect(container.querySelector('.place-market-naver-pin')).not.toBeNull());
     const pin = container.querySelector('.place-market-naver-pin')!;
@@ -82,21 +81,20 @@ describe('market map provider', () => {
     expect(maps.Polygon).toHaveBeenCalledOnce();
     expect(screen.queryByRole('link', { name: 'OpenFreeMap' })).not.toBeInTheDocument();
     fireEvent.click(pin);
-    expect(screen.getByRole('region', { name: '선택한 가게' })).toHaveTextContent('같은 필지 가게 (2)');
+    expect(screen.getByTestId('selection').textContent).not.toBe('');
     maps.scale(1000000); act(() => maps.listeners.get('zoom_changed')!());
     expect(container.querySelectorAll('.place-market-naver-pin')).toHaveLength(2);
     maps.scale(100000); act(() => maps.listeners.get('idle')!());
     expect(container.querySelectorAll('.place-market-naver-pin')).toHaveLength(1);
-    expect(screen.getByRole('region', { name: '선택한 가게' })).toHaveTextContent('같은 필지 가게 (2)');
+    expect(screen.getByTestId('selection').textContent).not.toBe('');
   });
-  it('focuses at zoom 19 once, lets the sheet close, and handles a repeated focus request', async () => {
+  it('focuses at zoom 19 once, handles a repeated focus request', async () => {
     install(); const View = view(); render(<View />);
     await waitFor(() => expect(maps.Map).toHaveBeenCalledOnce());
     fireEvent.click(screen.getByText('Focus shop'));
     expect(maps.panTo).toHaveBeenCalledWith({ latitude: 37.5, longitude: 127 }); expect(maps.setZoom).toHaveBeenCalledWith(19);
-    expect(screen.getByRole('region', { name: '선택한 가게' })).toHaveTextContent('가게');
-    fireEvent.click(screen.getByText('전체 가게 보기'));
-    expect(screen.queryByRole('region', { name: '선택한 가게' })).not.toBeInTheDocument(); expect(maps.panTo).toHaveBeenCalledOnce();
+    expect(screen.getByTestId('selection').textContent).not.toBe('');
+    expect(maps.panTo).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByText('Clear focus')); fireEvent.click(screen.getByText('Focus shop')); expect(maps.panTo).toHaveBeenCalledTimes(2);
   });
   it('measures only on click and draws the marker and accuracy Circle with existing locate copy', async () => {
@@ -124,7 +122,7 @@ describe('market map provider', () => {
     await waitFor(() => expect(container.querySelector('svg')).toBeInTheDocument()); expect(screen.queryByRole('group', { name: '네이버 가게 위치 지도' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByText('네이버 지도로 보기')); expect(scripts()).toHaveLength(1); install(); await act(async () => fireEvent.load(scripts()[0])); expect(maps.Map).toHaveBeenCalledOnce();
   });
-  it('loads Google only after Naver authentication fails, keeping the same sheet and manual toggle', async () => {
+  it('loads Google only after Naver authentication fails, keeping focus and manual toggle', async () => {
     const googleMaps = {
       Map: vi.fn(function () { return { getZoom: () => 17, panTo: vi.fn(), setZoom: vi.fn(), unbindAll: vi.fn() }; }),
       Polygon: vi.fn(function () { return { setMap: vi.fn() }; }),
@@ -138,8 +136,8 @@ describe('market map provider', () => {
     expect(google.load).toHaveBeenCalledOnce(); expect(screen.getByRole('group', { name: '가게 위치 지도' })).toBeInTheDocument();
     expect(container.querySelector('svg')).not.toBeInTheDocument();
     fireEvent.click(screen.getByText('Focus shop'));
-    // The fallback retains the same selection input and detail sheet.
-    expect(screen.getByRole('region', { name: '선택한 가게' })).toHaveTextContent('가게');
+    // The fallback retains the same focus input.
+    expect(screen.getByTestId('selection').textContent).not.toBe('');
     fireEvent.click(screen.getByText('우리 지도로 보기')); expect(container.querySelector('svg')).toBeInTheDocument();
   });
   it('uses SVG after Naver load failure followed by Google authentication failure', async () => {

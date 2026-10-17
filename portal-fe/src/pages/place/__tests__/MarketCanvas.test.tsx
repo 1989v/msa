@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { MarketBasemapMeta, MarketResponse, MarketStore } from '../../../api/marketApi';
 import { groupMarketPins, marketBasemapFrame, projectMarketPins } from '../marketView';
 import MarketCanvas from '../MarketCanvas';
@@ -21,7 +21,7 @@ function mount(stores = [store(), store({ id: 2, name: '두번째', longitude: 1
   const projection = projectMarketPins(groupMarketPins(stores), data)!;
   function Canvas() {
     const [key, setKey] = useState<string | null>(null);
-    return <MarketCanvas data={data} lang="ko" projection={projection} points={projection.points} hasGeometry query="가게" focusStoreId={focusStoreId} selectedKey={key} onSelect={setKey} color={() => 'var(--market-zone-1)'} pathColor={() => undefined} />;
+    return <><button onClick={() => setKey(null)}>Clear selection</button><MarketCanvas data={data} lang="ko" projection={projection} points={projection.points} hasGeometry query="가게" focusStoreId={focusStoreId} selectedKey={key} onSelect={setKey} color={() => 'var(--market-zone-1)'} pathColor={() => undefined} /></>;
   }
   vi.spyOn(SVGElement.prototype, 'getBoundingClientRect').mockReturnValue({ left: 10, top: 20, width, height: width * 440 / 600, right: width + 10, bottom: 20 + width * 440 / 600, x: 10, y: 20, toJSON: () => ({}) });
   const result = render(<Canvas />);
@@ -128,16 +128,16 @@ describe('MarketCanvas navigation and shared SVG coordinates', () => {
     fireEvent.pointerMove(pin, { pointerId: 1, pointerType: 'touch', clientX: 206, clientY: 206 });
     fireEvent.pointerUp(pin, { pointerId: 1, pointerType: 'touch', clientX: 206, clientY: 206 });
     fireEvent.click(pin);
-    expect(screen.getByRole('region', { name: '선택한 가게' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '전체 가게 보기' }));
+    expect(pin).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Clear selection' }));
     fireEvent.pointerDown(pin, { pointerId: 2, pointerType: 'touch', button: 0, clientX: 200, clientY: 200 });
     fireEvent.pointerMove(pin, { pointerId: 2, pointerType: 'touch', clientX: 214, clientY: 200 });
     fireEvent.pointerUp(pin, { pointerId: 2, pointerType: 'touch', clientX: 214, clientY: 200 });
     fireEvent.click(pin);
-    expect(screen.queryByRole('region', { name: '선택한 가게' })).not.toBeInTheDocument();
+    expect(pin).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('keeps native pin click targets and opens the shared selection with Enter and Space', () => {
+  it('keeps native pin click targets and updates selection with Enter and Space', () => {
     const { svg } = mount();
     const capture = vi.fn(); svg.setPointerCapture = capture;
     const pin = screen.getByRole('button', { name: /같은 필지 가게:/ });
@@ -147,43 +147,20 @@ describe('MarketCanvas navigation and shared SVG coordinates', () => {
     expect(capturePin).toHaveBeenCalledWith(1);
     fireEvent.pointerUp(pin, { pointerId: 1 });
     fireEvent.keyDown(pin, { key: 'Enter' });
-    expect(screen.getByRole('region', { name: '선택한 가게' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '전체 가게 보기' }));
+    expect(pin).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Clear selection' }));
     fireEvent.keyDown(pin, { key: ' ' });
-    expect(within(screen.getByRole('region', { name: '선택한 가게' })).getAllByRole('listitem')).toHaveLength(2);
+    expect(document.querySelectorAll('.place-market-pin[data-selected]')).not.toHaveLength(0);
   });
-  it('preserves the selected multi-parcel list and highlights its child pins after zoom splits it', () => {
+  it('preserves multi-parcel selection and highlights its child pins after zoom splits it', () => {
     const { container } = mount();
     fireEvent.click(screen.getByRole('button', { name: /같은 필지 가게:/ }));
     for (let i = 0; i < 3; i++) fireEvent.click(screen.getByRole('button', { name: '확대' }));
     expect(container.querySelectorAll('.place-market-pin[data-selected]')).toHaveLength(2);
-    expect(within(screen.getByRole('region', { name: '선택한 가게' })).getAllByRole('listitem')).toHaveLength(2);
+    expect(document.querySelectorAll('.place-market-pin[data-selected]')).not.toHaveLength(0);
   });
-  it('sorts building numbers naturally before floor and unit, and uses names without location details', () => {
-    mount([
-      store({ id: 1, name: '열번째', buildingName: '상가10', floor: '1', ho: '1' }),
-      store({ id: 2, name: '이층', buildingName: '상가2', floor: '2', ho: '1' }),
-      store({ id: 3, name: '일층10호', buildingName: '상가2', floor: '1', ho: '10' }),
-      store({ id: 4, name: '일층2호', buildingName: '상가2', floor: '1', ho: '2' }),
-      store({ id: 5, name: '가게10' }), store({ id: 6, name: '가게2' }),
-    ]);
-    fireEvent.click(screen.getByRole('button', { name: /같은 필지 가게:/ }));
-    expect(within(screen.getByRole('region', { name: '선택한 가게' })).getAllByRole('listitem').map((row) => row.querySelector('strong')!.textContent))
-      .toEqual(['가게2', '가게10', '일층2호', '일층10호', '이층', '열번째']);
-  });
-  it('naturally sorts building, floor and unit, falls back to name, and shows 50 more rows above 200', () => {
-    const stores = Array.from({ length: 201 }, (_, i) => store({ id: i, name: `가게 ${201 - i}`, jibunAddress: '한 필지',
-      buildingName: '상가', floor: i === 0 ? 'B1' : '1', ho: String(201 - i) }));
-    const { container } = mount(stores);
-    fireEvent.click(screen.getByRole('button', { name: /같은 필지 가게:/ }));
-    const sheet = screen.getByRole('region', { name: '선택한 가게' });
-    let rows = within(sheet).getAllByRole('listitem'); expect(rows).toHaveLength(50);
-    expect(rows[0]).toHaveTextContent('가게 201'); expect(rows[1]).toHaveTextContent('가게 1'); expect(rows[2]).toHaveTextContent('가게 2');
-    fireEvent.click(within(sheet).getByRole('button', { name: '더 보기' }));
-    rows = within(sheet).getAllByRole('listitem'); expect(rows).toHaveLength(100);
-    expect(rows[0]).toHaveAttribute('data-found', 'true');
-    expect(container.querySelectorAll('.place-market-pin')).toHaveLength(1);
-  });
+
+
 });
 
 
@@ -192,27 +169,10 @@ describe('MarketCanvas result focus', () => {
     const { container, box } = mount([store({ id: 1, name: '원래묶음' }), store({ id: 2, name: '목표', longitude: 127.00015 })], 600, 2);
     expect(box().slice(2)).toEqual([150, 110]);
     expect(container.querySelectorAll('.place-market-pin')).toHaveLength(2);
-    const sheet = screen.getByRole('region', { name: '선택한 가게' });
-    expect(within(sheet).getAllByRole('listitem')).toHaveLength(1);
-    expect(within(sheet).getByText('목표').closest('li')).toHaveAttribute('data-selected', 'true');
-    expect(within(sheet).queryByText('원래묶음')).not.toBeInTheDocument();
+    expect(container.querySelectorAll('.place-market-pin[data-selected]')).toHaveLength(1);
+    expect(container.querySelector('.place-market-pin[data-selected]')).toHaveAttribute('aria-label', expect.stringContaining('목표'));
   });
-  it('reveals and scrolls a target after the first fifty rows in a large parcel', () => {
-    const scroll = vi.fn(); const previous = HTMLElement.prototype.scrollIntoView;
-    HTMLElement.prototype.scrollIntoView = scroll;
-    try {
-      mount(Array.from({ length: 251 }, (_, index) => store({ id: index + 1, name: `가게 ${index + 1}`, jibunAddress: '한 필지', ho: String(index + 1) })), 600, 231);
-      const sheet = screen.getByRole('region', { name: '선택한 가게' });
-      expect(within(sheet).getAllByRole('listitem')).toHaveLength(250);
-      const target = within(sheet).getByText('가게 231').closest('li')!;
-      expect(target).toHaveAttribute('data-selected', 'true');
-      expect(target).toHaveStyle({ outline: '2px solid var(--ko-accent-text)' });
-      expect(scroll).toHaveBeenCalledWith({ block: 'nearest' });
-      expect(scroll.mock.instances).toContain(target);
-      fireEvent.click(within(sheet).getByRole('button', { name: '더 보기' }));
-      expect(within(sheet).getAllByRole('listitem')).toHaveLength(251);
-    } finally { HTMLElement.prototype.scrollIntoView = previous; }
-  });
+
 });
 
 

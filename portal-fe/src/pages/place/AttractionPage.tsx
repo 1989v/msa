@@ -412,6 +412,10 @@ export default function AttractionPage() {
     return <Navigate replace to={`${attractionPath(docLang, attraction.id)}${search}${hash}`} />;
   }
 
+  if (attraction && (new URLSearchParams(search).has('marketQuery') || hash === '#market')) {
+    return <Navigate replace to={`${marketMapPath(docLang, attraction.id)}${search}`} />;
+  }
+
   return (
     <div className="place-page" style={{ '--place-header-h': `${headerH}px` } as CSSProperties}>
       <header className="place-header" ref={headerRef}>
@@ -780,8 +784,8 @@ export default function AttractionPage() {
                 sticky 라 스크롤해 내려온 뒤 누르는 쓰임이다 */}
             {jumpOn && <AttractionJumpNav targets={jumpTargets} lang={lang} attractionId={attraction.id} viewId={viewId} />}
 
-            {/* 시장이면 지도가 본문이다 — 방문 정보보다 먼저, 첫 화면의 「시장 지도」 버튼이 여기로 온다 */}
-            <AttractionMarket key={attraction.contentId} contentId={attraction.contentId} lang={lang} initialQuery={new URLSearchParams(search).get('marketQuery') ?? undefined} />
+            {/* 시장 요약은 방문 정보보다 먼저 — 카드와 첫 화면의 「시장 지도」는 전용 지도 화면으로 연결한다 */}
+            <AttractionMarket key={attraction.contentId} contentId={attraction.contentId} lang={lang} attractionId={attraction.id} />
 
             {/* 방문 정보(주소·속성·지역 안 위치) · 접근성 — 지도 위에 탭으로, 내용은 칩. 서버 렌더는 절을 그대로 쌓는다(색인용) */}
             {infoTabsProps && <AttractionInfoTabs {...infoTabsProps} lang={lang} sectionId={secId('info')} />}
