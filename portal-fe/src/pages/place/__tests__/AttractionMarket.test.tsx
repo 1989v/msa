@@ -5,9 +5,9 @@ import { fetchMarket, fetchMarketDishes, type MarketResponse, type MarketStore }
 import AttractionMarket from '../AttractionMarket';
 import gwangmyeong from './fixtures/gwangmyeong-public-market.json';
 
-vi.mock('../../../api/marketApi', () => ({ fetchMarket: vi.fn(), fetchMarketDishes: vi.fn() }));
-beforeEach(() => { vi.mocked(fetchMarketDishes).mockResolvedValue([]); });
-afterEach(() => { cleanup(); vi.resetAllMocks(); });
+vi.mock('../../../api/marketApi', async (importOriginal) => ({ ...await importOriginal<typeof import('../../../api/marketApi')>(), fetchMarket: vi.fn(), fetchMarketDishes: vi.fn() }));
+beforeEach(() => { vi.mocked(fetchMarketDishes).mockResolvedValue([]); vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404 })); });
+afterEach(() => { cleanup(); vi.resetAllMocks(); vi.unstubAllGlobals(); });
 
 const shop = (overrides: Partial<MarketStore> = {}): MarketStore => ({
   id: 1, name: '유명순대국', items: '순대', zoneId: null, membership: 'IN', latitude: 37.5, longitude: 127,
@@ -26,6 +26,19 @@ function mount(lang: 'ko' | 'en' = 'ko') {
 }
 
 describe('optional attraction market section', () => {
+  it('keeps SVG paths and shops when the real metadata request returns 404', async () => {
+    vi.mocked(fetchMarket).mockResolvedValue({ ...data, market: { ...data.market, contentId: '100' },
+      paths: [{ id: 1, name: '시장길', named: true, source: 'OSM', geometry: [[37.5, 127], [37.501, 127]] }] });
+    const { container, client } = mount();
+    await screen.findByText('유명순대국');
+    await waitFor(() => expect(client.getQueryData(['market-basemap-meta', '100'])).toBeNull());
+    expect(fetch).toHaveBeenCalledWith('/basemaps/markets/100/meta.json');
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(container.querySelector('image')).toBeNull();
+    expect(container.querySelector('.place-market-path')).not.toBeNull();
+    expect(screen.queryByRole('link', { name: 'OpenFreeMap' })).not.toBeInTheDocument();
+  });
+
   it.each(['ko', 'en'] as const)('shows good-price menus, expands all menus in the selected parcel, and attributes the summary in %s', async (lang) => {
     const goodPrice = { category: '한식', matchedBy: 'NAME' as const, menus: [
       { name: '칼국수', price: 5000 }, { name: '수제비', price: null }, { name: '비빔밥', price: 6000 },
@@ -363,10 +376,15 @@ describe('WU21 shared food search and menu evidence', () => {
 describe('loaded market basemap source links', () => {
   it('shows linked attribution under the map only after the current image loads', async () => {
     vi.mocked(fetchMarket).mockResolvedValue({ ...data, market: { ...data.market, contentId: '1059391', latitude: 37.5, longitude: 127 } });
-    const { container } = mount();
+    vi.mocked(fetch).mockResolvedValue({ ok: true, json: async () => ({ contentId: '100', centre: { latitude: 37.5, longitude: 127 }, zoom: 18, width: 1536, height: 1152, bounds: {}, renderedAt: '2026-10-17', styleVersion: 'v1', themes: ['light', 'dark'] }) } as Response);
+    const { container, client } = mount();
     await screen.findByRole('group', { name: '가게 위치 지도' });
     expect(screen.queryByRole('link', { name: 'OpenFreeMap' })).toBeNull();
+    await waitFor(() => expect(container.querySelector('image')).not.toBeNull());
     const image = container.querySelector('image')!;
+    expect(image.getAttribute('href')).toMatch(/^\/basemaps\/markets\/100\/z18-/);
+    const cached = client.getQueryCache().find({ queryKey: ['market-basemap-meta', '100'] })!;
+    expect(cached.options).toMatchObject({ staleTime: 3_600_000, retry: false });
     fireEvent.load(image);
     const source = screen.getByRole('link', { name: 'OpenFreeMap' });
     expect(source).toHaveAttribute('href', 'https://openfreemap.org/');
