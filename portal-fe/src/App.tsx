@@ -45,6 +45,7 @@ const BlogEditorPage = lazy(() => import('./pages/blog/BlogEditorPage'));
 // ADR-0081 — 랭킹 리더보드 (rank.<domain>). 경로 화면이 구글맵 로더를 포함해 lazy 로 분리한다.
 const RankPage = lazy(() => import('./pages/rank/RankPage'));
 const RankBoardPage = lazy(() => import('./pages/rank/RankBoardPage'));
+const MarketMapPage = lazy(() => import('./pages/place/MarketMapPage'));
 const MarketSearchPage = lazy(() => import('./pages/place/MarketSearchPage'));
 const MarketManagePage = lazy(() => import('./pages/place/MarketManagePage'));
 const AttractionPage = lazy(() => import('./pages/place/AttractionPage'));
@@ -332,6 +333,8 @@ function App() {
           <Route path="/en/markets" element={placeRoute(<MarketSearchPage />)} />
           <Route path="/markets/:marketId/manage" element={placeRoute(<MarketManagePage />)} />
           <Route path="/en/markets/:marketId/manage" element={placeRoute(<MarketManagePage />)} />
+          <Route path="/attractions/:id/market" element={placeRoute(<MarketMapPage />)} />
+          <Route path="/en/attractions/:id/market" element={placeRoute(<MarketMapPage />)} />
           <Route path="/attractions/:id" element={placeRoute(<AttractionPage />)} />
           <Route path="/en/attractions/:id" element={placeRoute(<AttractionPage />)} />
           <Route path="/place/attractions/:id" element={placeRoute(<AttractionPage />)} />

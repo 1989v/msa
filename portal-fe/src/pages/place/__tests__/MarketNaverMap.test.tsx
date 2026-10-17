@@ -24,6 +24,14 @@ const scripts = () => document.querySelectorAll<HTMLScriptElement>('script[src^=
 beforeEach(() => { maps = sdk(); });
 afterEach(() => { cleanup(); scripts().forEach((s) => s.remove()); Reflect.deleteProperty(window, 'naver'); });
 describe('MarketNaverMap', () => {
+  it('reports first viewport and idle bounds with the rendered zoom', async () => {
+    const onViewportChange = vi.fn(); install();
+    render(<MarketNaverMap {...props} onViewportChange={onViewportChange} />);
+    await waitFor(() => expect(onViewportChange).toHaveBeenCalledWith({ bounds: { north: 38, east: 128, south: 37, west: 126 }, zoom: 17 }));
+    maps.zoom(19); act(() => maps.listeners.get('idle')!());
+    expect(onViewportChange).toHaveBeenLastCalledWith({ bounds: { north: 38, east: 128, south: 37, west: 126 }, zoom: 19 });
+    expect(onViewportChange).toHaveBeenCalledTimes(2);
+  });
   it('inserts one SDK for concurrent mounts and reuses it after remount', async () => {
     const first = render(<MarketNaverMap {...props} />); const second = render(<MarketNaverMap {...props} />);
     expect(scripts()).toHaveLength(1); expect(scripts()[0].src).toContain('ncpKeyId=test-key&language=ko'); install();

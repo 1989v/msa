@@ -5,7 +5,7 @@ import { searchMarkets, type MarketAttractionRef } from '../../api/marketApi';
 import type { PlaceLang } from '../../api/placeApi';
 import Footer from '../../components/Footer';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
-import { marketIndexMeta, placeHreflangAlternates, placePath, placeUrl } from '../../seo/copy.mjs';
+import { marketMapPath, marketIndexMeta, placeHreflangAlternates, placePath, placeUrl } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import { formatGoodPriceMenu, marketDisplayName, marketMatchLabel } from './marketView';
 import MarketMenuDetails from './MarketMenuDetails';
@@ -19,7 +19,7 @@ const COPY = {
 
 function detailHref(attraction: MarketAttractionRef | null, query: string): string | null {
   if (!attraction) return null;
-  return `${placePath(attraction.lang, `/attractions/${attraction.id}`)}${query ? `?marketQuery=${encodeURIComponent(query)}` : ''}#market`;
+  return `${marketMapPath(attraction.lang, attraction.id)}${query ? `?marketQuery=${encodeURIComponent(query)}` : ''}`;
 }
 
 /** A market without a TourAPI attraction row has no detail page; show the result without a dead link. */

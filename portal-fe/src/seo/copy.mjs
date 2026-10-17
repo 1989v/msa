@@ -1887,3 +1887,23 @@ export function marketIndexMeta(lang) {
     ? { title: `Korean market shops & goods | ${PLACE_BRAND_EN}`, heading: 'Find market shops & goods', description: 'Find shops and goods in Korean traditional markets, then explore each market’s alleys and shop map.' }
     : { title: `전통시장 가게·품목 찾기 | ${PLACE_BRAND_KO}`, heading: '시장 가게·품목 찾기', description: '전통시장의 가게와 품목을 검색하고 시장별 골목과 가게 지도로 찾아보세요.' };
 }
+
+/** Dedicated market map URLs keep search state out of their canonical address. */
+export function marketMapPath(lang, id) {
+  return `${attractionPath(lang, id)}/market`;
+}
+
+export function marketMapMeta(lang, attraction, market) {
+  const id = attraction?.id ?? '';
+  const en = lang === 'en';
+  const name = (en ? attraction?.title : null) || market?.market?.name || attraction?.title || '';
+  const stores = market?.stores?.length ?? 0;
+  const countZones = (zones) => zones.reduce((total, zone) => total + 1 + countZones(zone.children ?? []), 0);
+  const zones = countZones(market?.zones ?? []);
+  return {
+    title: name ? (en ? `${name} market map | ${PLACE_BRAND_EN}` : `${name} 가게 지도 | ${PLACE_BRAND_KO}`) : '',
+    description: en ? `Explore ${stores} shops and ${zones} areas in ${name}. Find shops, goods and menus on the market map.` : `${name} 가게 ${stores}곳, 구역 ${zones}개를 지도에서 확인하고 가게·품목·메뉴를 찾아보세요.`,
+    canonical: `${PLACE_ORIGIN}${marketMapPath(lang, id)}`,
+    alternates: attraction?.alternateId ? attractionHreflangAlternates(attraction.lang, id, attraction.alternateId).map(link => ({ ...link, href: `${link.href}/market` })) : [],
+  };
+}

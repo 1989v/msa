@@ -1,4 +1,4 @@
-.place-market {
+.place-market, .market-map-page {
   --market-pine: color-mix(in srgb, var(--kh-pine) 60%, var(--ko-text-primary));
   --market-celadon: color-mix(in srgb, var(--kh-celadon) 60%, var(--ko-text-primary));
   --market-yeonji: color-mix(in srgb, var(--kh-yeonji) 60%, var(--ko-text-primary));
@@ -12,7 +12,8 @@
   --market-zone-7: color-mix(in srgb, var(--market-yeonji), var(--market-celadon));
   --market-zone-8: color-mix(in srgb, var(--market-yeonji), var(--market-ocher));
   --market-zone-9: color-mix(in srgb, var(--market-celadon), var(--market-ocher));
- margin-block: 3rem; color: var(--ko-text-primary); }
+}
+.place-market { margin-block: 3rem; color: var(--ko-text-primary); }
 .place-market-name { margin-block: 0.75rem; font-size: 1.25rem; font-weight: 600; }
 .place-market-facts { display: flex; flex-wrap: wrap; gap: 1rem 2rem; margin-block: 1rem; }
 .place-market-facts dt, .place-market-note, .place-market-source { color: var(--ko-text-secondary); font-size: 0.875rem; }

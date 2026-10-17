@@ -3,10 +3,12 @@ import { useEffect, useRef, useState } from 'react';
 import type { MarketResponse } from '../../api/marketApi';
 import { buildMarketOverlay, type MarketBounds, type OverlayMarker, type OverlaySelection } from './marketOverlay';
 
+export type MarketViewport = { bounds: MarketBounds; zoom: number };
 export type MarketLiveMapProps = {
   contentId: string; lang: 'ko' | 'en'; data: MarketResponse;
   selection?: OverlaySelection; storeIds?: (number | null)[];
   userPosition?: { latitude: number; longitude: number; accuracy: number } | null;
+  onViewportChange?: (viewport: MarketViewport) => void;
   onSelect?: (key: string) => void; onZoneSelect?: (id: number | null) => void; onError?: () => void;
 };
 export type MarketNaverMapProps = MarketLiveMapProps & { keyId: string };
@@ -75,7 +77,7 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
   const identity = JSON.stringify([contentId, keyId, lang]);
   const [ready, setReady] = useState<{ identity: string; map: any; sdk: any } | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
-  const redraw = useRef<() => void>(() => {}); const appliedFocus = useRef<string | null>(null);
+  const redraw = useRef<(reportViewport?: boolean) => void>(() => {}); const appliedFocus = useRef<string | null>(null);
   useEffect(() => {
     if (!keyId || !host.current) return;
     let disposed = false; let map: any; let errorReported = false;
@@ -98,11 +100,13 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
     const token = (color: string) => { const name = /^var\((--[\w-]+)\)$/.exec(color)?.[1]; return name ? getComputedStyle(host.current!).getPropertyValue(name).trim() : color; };
     const coord = (p: { latitude: number; longitude: number }) => new sdk.LatLng(p.latitude, p.longitude);
     const remove = (entry: { object: any; listener?: any }) => { if (entry.listener != null) sdk.Event.removeListener(entry.listener); entry.object.setMap(null); };
-    redraw.current = () => {
+    redraw.current = (reportViewport = false) => {
       const bounds = map.getBounds?.(); const ne = bounds?.getNE(); const sw = bounds?.getSW();
       const frame: MarketBounds | undefined = ne && sw ? { north: ne.lat(), east: ne.lng(), south: sw.lat(), west: sw.lng() } : undefined;
       const input = latest.current;
-      const model = buildMarketOverlay({ ...input, zoom: Math.round(map.getZoom?.() ?? 17), bounds: frame });
+      const zoom = Math.round(map.getZoom?.() ?? 17);
+      const model = buildMarketOverlay({ ...input, zoom, bounds: frame });
+      if (reportViewport && frame) input.onViewportChange?.({ bounds: frame, zoom });
       const wanted = new Set<string>();
       const sync = (key: string, value: unknown, create: () => any, click?: () => void) => {
         wanted.add(key); const signature = JSON.stringify(value); const old = overlays.get(key);
@@ -133,8 +137,8 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
         if (appliedFocus.current !== request) { appliedFocus.current = request; map.panTo(coord(model.focus)); map.setZoom(model.focus.zoom); latest.current.onSelect?.(model.focus.selectionKey); }
       }
     };
-    redraw.current();
-    const listeners = ['zoom_changed', 'idle', 'bounds_changed'].map((event) => sdk.Event.addListener(map, event, () => redraw.current()));
+    redraw.current(true);
+    const listeners = ['zoom_changed', 'idle', 'bounds_changed'].map((event) => sdk.Event.addListener(map, event, () => redraw.current(event === 'idle')));
     return () => { redraw.current = () => {}; listeners.forEach((listener) => sdk.Event.removeListener(listener)); overlays.forEach(remove); };
   }, [ready, identity, keyId]);
   useEffect(() => { redraw.current(); }, [props.data, props.selection, props.storeIds, props.userPosition]);

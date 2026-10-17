@@ -15,6 +15,7 @@ import {
   attractionHreflangAlternates,
   attractionMeta,
   attractionPath,
+  marketMapPath,
   attractionBreadcrumbJsonLd,
   attractionPhone,
   attractionUrl,
@@ -536,7 +537,7 @@ export default function AttractionPage() {
                   {marketData && !marketError && (
                     <a
                       className="place-btn"
-                      href="#market"
+                      href={marketMapPath(lang, attraction.id)}
                       onClick={() =>
                         track(
                           'CLICK',

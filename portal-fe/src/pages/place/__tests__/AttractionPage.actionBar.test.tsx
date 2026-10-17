@@ -384,7 +384,7 @@ describe('market section navigation', () => {
     // 첫 화면 액션 줄의 버튼과 절 이동 줄의 링크, 둘 다 같은 절로 간다
     const marketLinks = await screen.findAllByRole('link', { name: '시장 지도' });
     expect(marketLinks).toHaveLength(2);
-    marketLinks.forEach((link) => expect(link).toHaveAttribute('href', '#market'));
+    marketLinks.forEach((link) => expect(link).toHaveAttribute('href', '/attractions/100/market'));
     expect(await screen.findByRole('searchbox', { name: '가게·품목·업종 찾기' })).toHaveValue('국밥');
     expect(fetchMarket).toHaveBeenCalledTimes(1);
     expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({ block: 'start' });

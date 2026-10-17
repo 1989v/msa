@@ -19,6 +19,14 @@ let maps: ReturnType<typeof sdk>;
 beforeEach(() => { maps = sdk(); loader.mockReset().mockResolvedValue(maps); });
 afterEach(cleanup);
 describe('MarketGoogleMap', () => {
+  it('reports first viewport and idle bounds with the rendered zoom', async () => {
+    const onViewportChange = vi.fn();
+    render(<MarketGoogleMap contentId="1" lang="ko" data={data} onViewportChange={onViewportChange} />);
+    await waitFor(() => expect(onViewportChange).toHaveBeenCalledWith({ bounds: { north: 38, east: 128, south: 37, west: 126 }, zoom: 17 }));
+    maps.zoom(19); act(() => maps.listeners.get('idle')!());
+    expect(onViewportChange).toHaveBeenLastCalledWith({ bounds: { north: 38, east: 128, south: 37, west: 126 }, zoom: 19 });
+    expect(onViewportChange).toHaveBeenCalledTimes(2);
+  });
   it('draws the same polygons and alley highlights with legacy SVG markers and no Map ID', async () => {
     render(<MarketGoogleMap contentId="1" lang="en" data={data} />);
     await waitFor(() => expect(maps.Marker).toHaveBeenCalledOnce()); expect(maps.Polygon).toHaveBeenCalledTimes(2); expect(maps.Polyline).toHaveBeenCalledOnce();

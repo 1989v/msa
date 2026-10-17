@@ -920,7 +920,8 @@ async function writeRobotsAndSitemaps(
         : {}),
     })),
   );
-  const placeDetailEntries = placeDetailSitemapEntries(places);
+  const marketContentIds = await fetchMarketSitemapContentIds();
+  const placeDetailEntries = [...placeDetailSitemapEntries(places), ...marketMapSitemapEntries(places, marketContentIds)];
 
   await emit(`seo/${GAME_HOST}/sitemap.xml`, renderGameSitemap(games));
   await emit(`seo/${PORTAL_HOST}/sitemap.xml`, sitemapXml(portalEntries));
@@ -1034,6 +1035,22 @@ export function placeDetailSitemapEntries(places) {
         : {}),
     }));
   });
+}
+
+/** A failed optional market index never invents map URLs. */
+export async function fetchMarketSitemapContentIds(get = getJson) {
+  try { return await get('/api/v1/place/markets/content-ids'); }
+  catch (error) { console.warn(`[seo] 시장 지도 content-ids 조회 실패: ${error.message}`); return []; }
+}
+
+/** Market maps use the detail sitemap eligibility, grouping and lastmod contract. */
+export function marketMapSitemapEntries(places, marketContentIds) {
+  const ids = new Set(marketContentIds.map(String));
+  const eligible = Object.fromEntries(LANGS.map(lang => [lang, (places[lang] ?? []).filter(a => ids.has(String(a.contentId)))]));
+  return placeDetailSitemapEntries(eligible).map(entry => ({
+    ...entry, loc: `${entry.loc}/market`, priority: '0.6',
+    ...(entry.alternates ? { alternates: entry.alternates.map(link => ({ ...link, href: `${link.href}/market` })) } : {}),
+  }));
 }
 
 /**
@@ -1254,6 +1271,7 @@ export function indexDoc(a, sidoCode) {
   if (!overview) return { id: a.id, hasOverview: false };
   return {
     id: a.id,
+    contentId: a.contentId,
     hasOverview: true,
     sidoCode,
     title: a.title,

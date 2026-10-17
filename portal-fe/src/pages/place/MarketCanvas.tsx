@@ -12,9 +12,10 @@ type Projection = NonNullable<ReturnType<typeof projectMarketPins>>;
 type ViewBox = { x: number; y: number; w: number; h: number };
 const INITIAL: ViewBox = { x: 0, y: 0, w: 600, h: 440 };
 
-export default function MarketCanvas({ data, lang, projection, points, hasGeometry, query, selectedKey, onSelect, color, pathColor, userPosition, focusStoreId, dishes = [], basemapAttribution, basemapMeta, onPosition }: {
+export default function MarketCanvas({ data, lang, projection, points, hasGeometry, query, selectedKey, onSelect, color, pathColor, userPosition, focusStoreId, dishes = [], basemapAttribution, basemapMeta, onPosition, unifiedList = false }: {
   data: MarketResponse; lang: PlaceLang; projection: Projection; points: Projection['points']; hasGeometry: boolean;
   query: string; selectedKey: string | null; onSelect: (key: string | null) => void;
+  unifiedList?: boolean;
   basemapAttribution?: ReactNode;
   basemapMeta?: MarketBasemapMeta | null;
   dishes?: MarketDish[];
@@ -238,7 +239,7 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
       <MarketLocate key={marketKey} data={data} lang={lang} onPosition={(position) => { setMeasurement({ marketKey, position }); onPosition?.(position); }} />
       {basemapLoaded && basemapAttribution}
     </div>
-    {selectedKey != null && <MarketClusterSheet stores={selectedStores} selectedKey={selectedKey} focusStoreId={focusStoreId}
+    {!unifiedList && selectedKey != null && <MarketClusterSheet stores={selectedStores} selectedKey={selectedKey} focusStoreId={focusStoreId}
       onSelect={onSelect} lang={lang} query={query} dishes={dishes} />}
   </div>;
 }

@@ -28,6 +28,7 @@ function sdk() {
     Map: vi.fn(function (element: HTMLElement) { host = element; return {
       destroy: vi.fn(), setCenter: vi.fn(), panTo, setZoom,
       getZoom: () => zoom,
+      getBounds: () => ({ getNE: () => ({ lat: () => 38, lng: () => 128 }), getSW: () => ({ lat: () => 37, lng: () => 126 }) }),
     }; }),
     LatLng: vi.fn(function (latitude: number, longitude: number) { return { latitude, longitude }; }),
     Marker: vi.fn(function (options: { icon: { content: HTMLElement }; title: string }) {
@@ -41,12 +42,12 @@ function sdk() {
 }
 let maps: ReturnType<typeof sdk>;
 const install = () => Object.defineProperty(window, 'naver', { configurable: true, value: { maps } });
-function view(market = data, lang: 'ko' | 'en' = 'ko') {
+function view(market = data, lang: 'ko' | 'en' = 'ko', unifiedList = false, onViewportChange = vi.fn()) {
   const projection = projectMarketPins(groupMarketPins(market.stores), market)!;
   return function View() {
     const [selectedKey, onSelect] = useState<string | null>(null); const [focusStoreId, focus] = useState<number | null>(null);
     return <><button onClick={() => focus(1)}>Focus shop</button><button onClick={() => focus(null)}>Clear focus</button>
-      <MarketMap contentId="123" data={market} lang={lang} projection={projection} points={[...projection.points]} hasGeometry query="떡볶이"
+      <MarketMap unifiedList={unifiedList} onViewportChange={onViewportChange} contentId="123" data={market} lang={lang} projection={projection} points={[...projection.points]} hasGeometry query="떡볶이"
         basemapAttribution={<a href="https://openfreemap.org/">OpenFreeMap</a>}
         basemapMeta={{ contentId: '123', centre: { latitude: 37.5, longitude: 127 }, zoom: 18, width: 1536, height: 1152,
           bounds: { north: 37.501, south: 37.499, east: 127.001, west: 126.999 }, renderedAt: '2026-10-17', styleVersion: '1', themes: ['light', 'dark'] }}
@@ -56,6 +57,20 @@ function view(market = data, lang: 'ko' | 'en' = 'ko') {
 beforeEach(() => { maps = sdk(); window.localStorage.clear(); google.load.mockReset().mockRejectedValue(new Error('offline')); });
 afterEach(() => { vi.unstubAllGlobals(); cleanup(); scripts().forEach((script) => script.remove()); Reflect.deleteProperty(window, 'naver'); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 describe('market map provider', () => {
+  it.each(['naver', 'canvas'])('uses external selection without old sheet in unified %s mode', async provider => {
+    if (provider === 'canvas') window.localStorage.setItem('market-map-provider', 'canvas');
+    install(); const onViewportChange = vi.fn(); const View = view(data, 'ko', true, onViewportChange); const { container } = render(<View />);
+    if (provider === 'naver') {
+      await waitFor(() => expect(container.querySelector('.place-market-naver-pin')).not.toBeNull());
+      expect(onViewportChange).toHaveBeenCalledWith({ bounds: { north: 38, east: 128, south: 37, west: 126 }, zoom: 17 });
+      fireEvent.click(container.querySelector('.place-market-naver-pin')!);
+    } else {
+      expect(onViewportChange).toHaveBeenCalledWith(null);
+      fireEvent.click(container.querySelector('.place-market-pin')!);
+    }
+    expect(screen.queryByRole('region', { name: '선택한 가게' })).not.toBeInTheDocument();
+    expect(container.querySelector('.place-market-cluster-sheet')).toBeNull();
+  });
   it('defaults to Naver, clusters counts and colours, opens the shared sheet and reclusters on zoom and idle', async () => {
     install(); const View = view(); const { container } = render(<View />);
     await waitFor(() => expect(container.querySelector('.place-market-naver-pin')).not.toBeNull());

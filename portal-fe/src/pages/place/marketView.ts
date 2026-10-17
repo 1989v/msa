@@ -278,3 +278,17 @@ export function marketBasemapFrame(centre: MarketCoordinate, zoom = 18, width = 
   return { north: latitude(y + halfHeight), south: latitude(y - halfHeight),
     east: (x + halfWidth) / radius / radians, west: (x - halfWidth) / radius / radians };
 }
+
+/** Shared chip ordering for the detail section and the dedicated map. */
+export function marketZones(data: MarketResponse, includeOutside: boolean, selectedId: number | null) {
+  const flatten = (zones: MarketZone[]): MarketZone[] => zones.flatMap(zone => [zone, ...flatten(zone.children)]);
+  const zones = flatten(data.zones);
+  const stores = visibleMarketStores(data.stores, includeOutside);
+  const countZone = (zone: MarketZone) => { const ids = zoneIds(zone); return stores.filter(store => store.zoneId != null && ids.includes(store.zoneId)).length; };
+  const name = normalizeMarketName(data.market.name);
+  const priority = (zone: MarketZone) => zone.kind === 'ROAD' && name.length > 0 && normalizeMarketName(zone.name).includes(name);
+  const sortedZones = [...zones].sort((a,b) => Number(priority(b)) - Number(priority(a)) || countZone(b) - countZone(a) || a.name.localeCompare(b.name, 'ko', { numeric: true }));
+  const defaultZones = sortedZones.filter(zone => zone.kind !== 'ROAD' || countZone(zone) > 0).slice(0, 8);
+  const collapsedZones = sortedZones.filter(zone => defaultZones.includes(zone) || (zone.id != null && zone.id === selectedId));
+  return { zones, sortedZones, collapsedZones, countZone, hiddenZoneCount: sortedZones.length - collapsedZones.length };
+}

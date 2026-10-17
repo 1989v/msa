@@ -21,7 +21,7 @@ describe('market shop discovery', () => {
   it('lists markets and counts for an empty query with links to their market sections', async () => {
     vi.mocked(searchMarkets).mockResolvedValue(result);
     mount();
-    expect(await screen.findByRole('link', { name: /광명시장/ })).toHaveAttribute('href', '/attractions/7#market');
+    expect(await screen.findByRole('link', { name: /광명시장/ })).toHaveAttribute('href', '/attractions/7/market');
     expect(screen.getByText(/153 가게/)).toBeInTheDocument();
     expect(searchMarkets).toHaveBeenCalledWith('', 'ko', 0);
     expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute('href', 'https://place.1989v.com/markets');
@@ -32,9 +32,9 @@ describe('market shop discovery', () => {
     vi.mocked(searchMarkets).mockResolvedValue({ ...result, stores: { ...result.stores, total: 1, items: [{ storeId: 1, name: '유명순대국', items: '순대', category: '음식점', marketContentId: '100', marketName: '광명시장', zoneName: '시장 골목', latitude: null, longitude: null, attraction: { id: entry.startsWith('/en') ? 8 : 7, lang: entry.startsWith('/en') ? 'en' : 'ko' } }] } });
     mount(`${entry}?q=${encodeURIComponent(q)}`);
     const prefix = entry.startsWith('/en') ? '/en' : '';
-    expect(await screen.findByRole('link', { name: /유명순대국/ })).toHaveAttribute('href', `${prefix}/attractions/${prefix ? 8 : 7}?marketQuery=${encodeURIComponent(q)}#market`);
+    expect(await screen.findByRole('link', { name: /유명순대국/ })).toHaveAttribute('href', `${prefix}/attractions/${prefix ? 8 : 7}/market?marketQuery=${encodeURIComponent(q)}`);
     // A market with only a Korean page links there from the English search too.
-    expect(screen.getByRole('link', { name: /광명시장 경기/ })).toHaveAttribute('href', `/attractions/7?marketQuery=${encodeURIComponent(q)}#market`);
+    expect(screen.getByRole('link', { name: /광명시장 경기/ })).toHaveAttribute('href', `/attractions/7/market?marketQuery=${encodeURIComponent(q)}`);
     expect(screen.getByText('순대 · 음식점')).toBeInTheDocument();
     expect(screen.getByText('광명시장 · 시장 골목')).toBeInTheDocument();
     expect(screen.getByRole('searchbox')).toHaveValue(q);

@@ -3,7 +3,7 @@ import { flushSync } from 'react-dom';
 import { useAttractionMarket, useMarketDishes, useMarketBasemapMeta } from './marketQueries';
 import type { MarketResponse, MarketZone } from '../../api/marketApi';
 import type { PlaceLang } from '../../api/placeApi';
-import { formatGoodPriceMenu, formatGoodPriceSummary, formatMarketFloor, groupMarketPins, hasMarketCoordinate, marketSourceBadges, matchesMarketName, matchesMarketStore, normalizeMarketName, projectMarketPins, visibleMarketStores, zoneIds } from './marketView';
+import { formatGoodPriceMenu, formatGoodPriceSummary, formatMarketFloor, groupMarketPins, hasMarketCoordinate, marketSourceBadges, matchesMarketName, matchesMarketStore, normalizeMarketName, projectMarketPins, visibleMarketStores, zoneIds, marketZones } from './marketView';
 import './AttractionMarket.css';
 import MarketMenuDetails from './MarketMenuDetails';
 import { marketDisplayName, sectionMatchLabel } from './marketView';
@@ -17,7 +17,6 @@ const COPY = {
 } as const;
 
 const ZONE_COLORS = Array.from({ length: 9 }, (_, index) => `var(--market-zone-${index + 1})`);
-const flattenZones = (zones: MarketZone[]): MarketZone[] => zones.flatMap((zone) => [zone, ...flattenZones(zone.children)]);
 
 /** A failed or absent market response only removes this optional section. */
 export default function AttractionMarket({ contentId, lang, initialQuery }: { contentId: string; lang: PlaceLang; initialQuery?: string }) {
@@ -44,7 +43,7 @@ function MarketSection({ contentId, data, lang, initialQuery, includeOutside, on
   const [parcelKey, setParcelKey] = useState<string | null>(null);
   const [focusStoreId, setFocusStoreId] = useState<number | null>(null);
   const [expandedZones, setExpandedZones] = useState(false);
-  const zones = flattenZones(data.zones);
+  const { zones, sortedZones, collapsedZones, countZone, hiddenZoneCount } = marketZones(data, includeOutside, zoneId);
   const selectedZone = zones.find((zone) => zone.id === zoneId);
   const stores = visibleMarketStores(data.stores, includeOutside, selectedZone ? zoneIds(selectedZone) : undefined);
   const pins = groupMarketPins(stores);
@@ -58,15 +57,7 @@ function MarketSection({ contentId, data, lang, initialQuery, includeOutside, on
   const ordered = [...(searched ? found : listed)].sort((a, b) =>
     (matchesMarketStore(a, query, dishes)?.rank ?? 4) - (matchesMarketStore(b, query, dishes)?.rank ?? 4)
     || a.name.localeCompare(b.name, 'ko') || (a.id ?? 0) - (b.id ?? 0));
-  const allVisibleStores = visibleMarketStores(data.stores, includeOutside);
-  const countZone = (zone: MarketZone) => { const ids = zoneIds(zone); return allVisibleStores.filter((store) => store.zoneId != null && ids.includes(store.zoneId)).length; };
-  const marketName = normalizeMarketName(data.market.name);
-  const priority = (zone: MarketZone) => zone.kind === 'ROAD' && marketName.length > 0 && normalizeMarketName(zone.name).includes(marketName);
-  const sortedZones = [...zones].sort((a, b) => Number(priority(b)) - Number(priority(a)) || countZone(b) - countZone(a) || a.name.localeCompare(b.name, 'ko', { numeric: true }));
-  const defaultZones = sortedZones.filter((zone) => zone.kind !== 'ROAD' || countZone(zone) > 0).slice(0, 8);
-  const collapsedZones = sortedZones.filter((zone) => defaultZones.includes(zone) || (zone.id != null && zone.id === zoneId));
   const shownZones = expandedZones ? sortedZones : collapsedZones;
-  const hiddenZoneCount = sortedZones.length - collapsedZones.length;
   const matchedLabel = (store: (typeof stores)[number]) => sectionMatchLabel(matchesMarketStore(store, query, dishes), lang);
   const color = (id: number | null) => {
     const index = id == null ? -1 : zones.findIndex((zone) => zone.id === id);

@@ -1,3 +1,4 @@
+import { marketMapPath } from '../../seo/copy.mjs';
 import type { MouseEvent } from 'react';
 import type { AttractionDetail, PlaceLang } from '../../api/placeApi';
 import { track } from '../../analytics/tracker';
@@ -137,7 +138,7 @@ export function AttractionJumpNav({
   return (
     <nav className="place-jump" aria-label={UI[lang].jump}>
       {targets.map((t) => (
-        <a key={t} href={`#${jumpSectionId(t)}`} onClick={(e) => go(e, t)}>
+        <a key={t} href={t === 'market' ? marketMapPath(lang, attractionId) : `#${jumpSectionId(t)}`} onClick={t === 'market' ? undefined : (e) => go(e, t)}>
           {JUMP_LABEL[lang][t]}
         </a>
       ))}

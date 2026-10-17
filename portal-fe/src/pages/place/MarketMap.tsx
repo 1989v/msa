@@ -1,7 +1,7 @@
-import { useMemo, useState, type ComponentProps } from 'react';
+import { useEffect, useMemo, useState, type ComponentProps } from 'react';
 import { NAVER_MAP_KEY_ID } from '../../seo/copy.mjs';
 import MarketCanvas from './MarketCanvas';
-import MarketNaverMap from './MarketNaverMap';
+import MarketNaverMap, { type MarketViewport } from './MarketNaverMap';
 import MarketGoogleMap from './MarketGoogleMap';
 import MarketLocate from './MarketLocate';
 import MarketClusterSheet from './MarketClusterSheet';
@@ -12,6 +12,7 @@ const PREFERENCE = 'market-map-provider';
 
 /** Selection keys and detail sheet are shared across live engines and the SVG view. */
 export default function MarketMap(props: ComponentProps<typeof MarketCanvas> & {
+  onViewportChange?: (viewport: MarketViewport | null) => void;
   contentId: string; selectedZoneId?: number | null; onZoneSelect?: (id: number | null) => void;
 }) {
   const { contentId, data, lang, points, query, dishes, selectedKey, focusStoreId, onSelect, selectedZoneId, onZoneSelect } = props;
@@ -29,6 +30,7 @@ export default function MarketMap(props: ComponentProps<typeof MarketCanvas> & {
   }), [data.stores, query, dishes, selectedZoneId, focusStoreId, selectedKey]);
   // 중심만 필요하지만 모델 전체(묶음 포함)를 계산하므로 응답이 바뀔 때만 다시 센다.
   const centre = useMemo(() => buildMarketOverlay({ data, zoom: 17 }).centre, [data]);
+  useEffect(() => { if (!live || !centre) props.onViewportChange?.(null); }, [live, centre, props.onViewportChange]);
   const keys: string[] = selectedKey?.startsWith('cluster:') ? JSON.parse(selectedKey.slice(8)) : selectedKey ? [selectedKey] : [];
   const selectedStores = points.filter((point) => keys.includes(point.key)).flatMap((point) => point.stores);
   const toggle = () => {
@@ -36,7 +38,7 @@ export default function MarketMap(props: ComponentProps<typeof MarketCanvas> & {
     setProvider(next); setFailed(null);
     try { window.localStorage.setItem(PREFERENCE, next); } catch { /* Storage is optional. */ }
   };
-  const liveProps = { contentId, data, lang, selection, storeIds, userPosition: position, onSelect, onZoneSelect };
+  const liveProps = { contentId, data, lang, selection, storeIds, userPosition: position, onSelect, onZoneSelect, onViewportChange: props.onViewportChange };
   return <>
     {typeof window !== 'undefined' && <button type="button" className="place-market-provider" onClick={toggle}>{live
       ? (lang === 'en' ? 'Use our map' : '우리 지도로 보기')
@@ -47,7 +49,7 @@ export default function MarketMap(props: ComponentProps<typeof MarketCanvas> & {
           : <MarketGoogleMap {...liveProps} onError={() => setFailed('google')} />}
         <MarketLocate data={data} lang={lang} onPosition={setPosition} />
       </div>
-      {selectedKey != null && <MarketClusterSheet stores={selectedStores} selectedKey={selectedKey} focusStoreId={focusStoreId}
+      {!props.unifiedList && selectedKey != null && <MarketClusterSheet stores={selectedStores} selectedKey={selectedKey} focusStoreId={focusStoreId}
         onSelect={onSelect} lang={lang} query={query} dishes={dishes} />}
     </div> : <MarketCanvas {...props} userPosition={position} onPosition={setPosition} />}
   </>;
