@@ -180,11 +180,21 @@ describe('screen-distance market clusters', () => {
     expect(clusterByScreenDistance(points(), 1)).toHaveLength(2);
     expect(clusterByScreenDistance(points(), 2)).toHaveLength(3);
   });
-  it('merges connected chains, includes the exact threshold and supports no points', () => {
+  it('groups around leaders instead of chaining: a parcel beyond every leader starts its own group', () => {
     const input = points().map((point, index) => ({ ...point, x: index * 24 }));
-    expect(clusterByScreenDistance(input, 1)).toHaveLength(1);
+    // parcel-a leads (two shops); parcel-b sits exactly on its radius, parcel-c is 48 away from it.
+    const groups = clusterByScreenDistance(input, 1);
+    expect(groups.map((group) => group.parcelKeys)).toEqual([['parcel-a', 'parcel-b'], ['parcel-c']]);
     expect(clusterByScreenDistance([], 1)).toEqual([]);
     expect(clusterByScreenDistance([input[0]], 8)[0].key).toBe('parcel-a');
+  });
+  it('keeps a crowd of touching parcels in radius-sized groups rather than one bubble', () => {
+    // 망원 at zoom 1: 152 shops whose pins all sit within 24 px of a neighbour collapsed into one group.
+    const crowd = Array.from({ length: 150 }, (_, index) => ({ key: `p${index}`, x: index * 5, y: 0, stores: [store({ id: index })] }));
+    const groups = clusterByScreenDistance(crowd, 1, 24);
+    expect(groups.length).toBeGreaterThan(10);
+    expect(groups.every((group) => group.stores.length <= 10)).toBe(true);
+    expect(groups.flatMap((group) => group.stores).length).toBe(150);
   });
 });
 

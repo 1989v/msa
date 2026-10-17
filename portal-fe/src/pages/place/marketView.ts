@@ -180,27 +180,25 @@ export function formatGoodPriceSummary(summary: Pick<GoodPriceSummary, 'storeCou
   return `${label} · ${price}`;
 }
 
-/** Connected screen-distance groups. Inputs and store arrays are never mutated. */
+/**
+ * Screen-distance groups around leaders. The largest parcel in a crowd becomes a group and takes
+ * every parcel within the radius of it; a parcel farther from every leader starts its own group.
+ * Groups therefore stay about one radius wide. Chaining parcels transitively instead folded a
+ * whole market of touching parcels (망원 at zoom 1: 152 shops) into a single bubble.
+ * Inputs and store arrays are never mutated.
+ */
 export function clusterByScreenDistance<T extends { key: string; x: number; y: number; stores: MarketStore[] }>(
   points: T[], scale: number, radius = 24,
 ): (T & { parcelKeys: string[] })[] {
-  const parents = points.map((_, index) => index);
-  const root = (index: number): number => parents[index] === index ? index : (parents[index] = root(parents[index]));
-  for (let a = 0; a < points.length; a++) {
-    for (let b = a + 1; b < points.length; b++) {
-      if (Math.hypot(points[a].x - points[b].x, points[a].y - points[b].y) * scale <= radius) {
-        parents[root(b)] = root(a);
-      }
-    }
+  const groups: (T & { parcelKeys: string[] })[] = [];
+  const ordered = points.map((point, index) => ({ point, index }))
+    .sort((a, b) => b.point.stores.length - a.point.stores.length || a.index - b.index);
+  for (const { point } of ordered) {
+    const leader = groups.find((group) => Math.hypot(group.x - point.x, group.y - point.y) * scale <= radius);
+    if (leader) { leader.stores.push(...point.stores); leader.parcelKeys.push(point.key); }
+    else groups.push({ ...point, stores: [...point.stores], parcelKeys: [point.key] });
   }
-  const groups = new Map<number, T & { parcelKeys: string[] }>();
-  points.forEach((point, index) => {
-    const id = root(index);
-    const group = groups.get(id);
-    if (group) { group.stores.push(...point.stores); group.parcelKeys.push(point.key); }
-    else groups.set(id, { ...point, stores: [...point.stores], parcelKeys: [point.key] });
-  });
-  return [...groups.values()].map((group) => ({ ...group,
+  return groups.map((group) => ({ ...group,
     key: group.parcelKeys.length === 1 ? group.key : `cluster:${JSON.stringify(group.parcelKeys)}`,
   }));
 }
