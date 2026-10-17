@@ -144,6 +144,7 @@ IN 이 없는 시장에서 지도가 비는 것은 조작·도식을 아무리 �
 
 ### 8.1 개정 (2026-10-17 오후): 기본 바탕은 네이버, ③은 폴백
 - 사용자 결정: 시장 지도의 **기본 바탕을 네이버 Dynamic Map(JS v3)** 으로 한다. 근거: 5 m 축척에서 상가 안 호수·통로까지 그리는 유일한 바탕이고, 무료 한도(월 1,000만 로드)가 넉넉하며, 구글은 국내 상가 내부가 없고 월 1만 로드 뒤 과금이다.
+  **정정(2026-10-17 밤)**: 「월 1,000만 로드 무료」는 2023~2025.6 의 옛 요금이다. NCP 공지대로 2025-07-01부터 지도 API 무료 이용량이 없어졌고(2025-05-22 이후 구 지도 API 신규 신청 차단, 새 Maps 서비스 `ncpKeyId` 로), 요금 데이터(`product-bill-list`, 상품 「Naver OpenAPI」)의 Web Dynamic Map 현행 행은 **건당 0.1원 · 무료 0건**이다. 「100만 건 무료」라는 숫자는 공식 자료 어디에도 없다. §10.5 비용 표 참고.
 - ③(우리가 렌더한 OSM 바탕)은 **폴백**으로 남긴다 — 키가 없거나 SDK 로드 실패, 프리렌더·검색엔진·영문 페이지에서 네이버 라벨이 부족할 때. 전체 828곳 렌더와 프록시·meta(WU-25)는 그대로 진행.
 - 구글은 가게·시장 딥링크만.
 - 전제: NCP Maps Application 의 Client ID(ncpKeyId, 서비스 URL `https://place.1989v.com`)는 사용자가 발급한다. 키는 `portal-fe/src/seo/copy.mjs` 의 `NAVER_MAP_KEY_ID` 한 곳(빈 값 = 네이버 없음 = 지금 지도).
@@ -223,7 +224,9 @@ ADR 은 만들지 않는다(새 서비스·저장소가 아니다). §8 바탕 �
 - **구글맵 JS API 는 이미 운영에 배선돼 있다.** 로더 `pages/place/googleMaps.ts`, 키 `VITE_GOOGLE_MAPS_KEY`(CI 시크릿, 2026-08-19), 운영 청크 `useMediaQuery-B88sbR73.js` 에 키 리터럴. 지역 목록 지도(`PlacePage`, 넓은 화면은 즉시)와 관광지 상세 「근처 탐색」(`NearbyExplore`, 좌표 있으면)이 Google Maps 3.66.9d 를 띄우고, 스크립트·타일 200 에 「development purposes」 워터마크가 없다. 결제 계정·키·리퍼러 제한(`data-sources.md §7`)이 **이미 있으므로 네이버의 「결제수단 등록」 벽이 구글에는 없다.**
 - 비용: Dynamic Maps 는 Essentials SKU — 월 10,000 로드 무료, 초과 $7/1,000(공식 가격표). 시장 지도 로드는 기존 두 지도와 같은 키로 합산되므로 Cloud 콘솔에 일일 쿼터 캡(예: 300/일 ≈ 9,000/월)을 걸어 둔다. 10,000 을 넘으면 비용이 로드 수에 비례한다 — OpenFreeMap 은 0.
 - 바탕 데이터(z17 같은 축척 비교): 남대문은 상가 건물 이름(악세사리상가·그릇도매상가·유성상가·중앙상가)·식당·지하철 출구까지 있고, 천안역전·덕계·설악눈메골(가평)·석곡(곡성)·무주 모두 건물 외곽선·도로명·POI 가 있다. 지금 PNG 바탕(OpenFreeMap positron)은 도로·도로명(한/영)은 있지만 POI 가 없고 지방(석곡·무주)은 건물이 거의 없다. 한국 데이터 공급은 「©TMap Mobility」. 2026-02-27 정부가 1:5000 국가기본도 국외 반출을 조건부 허가해 정밀도가 더 오를 수 있다(집행 시점 미확인).
-- 영문: `hl=en` 에서 라벨이 영문(Namdaemun Market · Hoehyeon · Sejong-daero)이고 로더가 이미 `language=document.documentElement.lang` 를 넘긴다 — `/en` 에 그대로 맞는다. 네이버는 영문 라벨이 약하다.
+- 영문: `hl=en` 에서 라벨이 영문(Namdaemun Market · Hoehyeon · Sejong-daero)이고 로더가 이미 `language=document.documentElement.lang` 를 넘긴다 — `/en` 에 그대로 맞는다. 네이버 JS v3 도 스크립트 URL `language=ko|en|ja|zh` 로 라벨 언어를 바꾼다(앞 문장의 「네이버는 영문 라벨이 약하다」는 틀렸다 — 공식 튜토리얼 「언어 설정하기」).
+- 세 엔진의 오버레이 동등성(사용자 질문 「네이버에도 골목·마커·폴리곤 동일하게?」): 네이버 JS v3 는 `Polygon`(fillColor·fillOpacity) · `Polyline` · `Marker`(HTML 아이콘) · `Data` 레이어(`addGeoJson` · `setStyle` · 피처 click) · `OverlayView` · 마커 클러스터 예제를 제공한다. 구글(`Polygon` · `Data` · `AdvancedMarkerElement`)·MapLibre(GeoJSON 소스 + fill/line/symbol 레이어)와 같은 모델이라 **오버레이 하나를 세 엔진 어댑터로 그린다**는 §10.2 원칙이 성립한다. 지금 `MarketNaverMap` 은 경계를 `Polyline` 로만 그리므로 `Polygon` 채움으로 바꾼다.
+- 비용 비교(2026-10-17 확인): 구글 Dynamic Maps 월 10,000 로드 무료 → $7/1,000. 네이버 Web Dynamic Map **무료 0 · 건당 0.1원**(2025-07-01 이후, 결제수단 등록 필수, 새 Maps 서비스 `ncpKeyId`). OpenFreeMap 0. 월 1,000 로드(지금 규모)면 구글 $0 · 네이버 100원 · OFM 0, 월 100만 로드면 구글 약 $6,930 · 네이버 100,000원 · OFM 0 — 한도를 넘어선 뒤 단가는 네이버가 구글의 약 1/100 이다.
 - 도구: 폴리곤 채움 `google.maps.Polygon`(fillOpacity), 마커 `AdvancedMarkerElement`(Map ID 필요, 로드 과금 동일) 또는 기존 `Marker`, 묶음은 `@googlemaps/markerclusterer`. `clickableIcons: false` 로 구글 POI 클릭을 끈다(우리 가게 마커와 겹침).
 - 시장 안 골목(사용자 질문 「구글 맵에도 골목길을 그려가면서 서비스 가능해?」): 가능하다. `market_path`(OSM 골목선 9,654개 · 220곳, `geometry` JSON)를 `map.data.addGeoJson` 또는 `Polyline` 로 올리고 이름은 `AdvancedMarkerElement` 라벨(선 중점, z ≥ 18)로 — 지금 SVG 의 선·라벨·구역 선택을 그대로 옮기는 것이다. 구글 바탕이 이미 그 골목을 그리는 곳(남대문 2가길·4길 등)은 이중선이 되므로 우리 선은 바탕 도로보다 가는 **강조선**(구역 색 · 반투명)으로 쓰고 바탕 라벨은 끄지 않는다(Map ID 스타일은 전역이라 `road.local` 을 끄면 시장 밖도 꺼진다). 구글 도보 길찾기는 한국에서 제공되지 않으므로 입구→가게 안내는 우리 골목 그래프 위 최단 경로를 `Polyline` 로 그리는 것이 유일한 길인데, **`market_entrance` 는 지금 0행**이고 남대문은 `market_path` 도 0개라(구글 바탕이 골목·이름을 다 가진 곳) 그 두 적재가 선행이다. 약관상 우리 데이터 오버레이는 허용, 로고·출처를 가리지 않는다.
 
