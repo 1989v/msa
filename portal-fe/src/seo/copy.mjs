@@ -1766,11 +1766,12 @@ export const PLACE_LANDINGS_INDEXABLE = false;
 export const ADSENSE_CLIENT = 'ca-pub-4627924728297793';
 
 /**
- * 네이버 Dynamic Map 공개 키 ID. 서비스 URL 을 등록한 뒤 발급한 값을 넣는다.
+ * 네이버 Dynamic Map 공개 키 ID(NCP Maps Application 의 Client ID). 리퍼러 제한
+ * `https://place.1989v.com` 이 걸린 공개값이라 번들에 그대로 들어간다.
  * 빈 값이면 시장 지도의 네이버 지도 토글을 숨긴다.
  * SDK 는 시장 화면에서 네이버 지도 보기를 켤 때만 로드한다.
  */
-export const NAVER_MAP_KEY_ID = '';
+export const NAVER_MAP_KEY_ID = '52axkewhxc';
 
 /**
  * 광고를 게재하는 호스트.

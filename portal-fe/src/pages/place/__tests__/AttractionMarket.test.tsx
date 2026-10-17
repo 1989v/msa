@@ -6,8 +6,9 @@ import AttractionMarket from '../AttractionMarket';
 import gwangmyeong from './fixtures/gwangmyeong-public-market.json';
 
 vi.mock('../../../api/marketApi', async (importOriginal) => ({ ...await importOriginal<typeof import('../../../api/marketApi')>(), fetchMarket: vi.fn(), fetchMarketDishes: vi.fn() }));
-beforeEach(() => { vi.mocked(fetchMarketDishes).mockResolvedValue([]); vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404 })); });
-afterEach(() => { cleanup(); vi.resetAllMocks(); vi.unstubAllGlobals(); });
+// 이 파일은 SVG 가게 지도의 동작을 본다. 운영 기본은 네이버 지도라 저장된 선택으로 SVG 쪽을 고정한다.
+beforeEach(() => { window.localStorage.setItem('market-map-provider', 'canvas'); vi.mocked(fetchMarketDishes).mockResolvedValue([]); vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404 })); });
+afterEach(() => { cleanup(); vi.resetAllMocks(); vi.unstubAllGlobals(); window.localStorage.removeItem('market-map-provider'); });
 
 const shop = (overrides: Partial<MarketStore> = {}): MarketStore => ({
   id: 1, name: '유명순대국', items: '순대', zoneId: null, membership: 'IN', latitude: 37.5, longitude: 127,
@@ -36,7 +37,8 @@ describe('optional attraction market section', () => {
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(container.querySelector('image')).toBeNull();
     expect(screen.queryByRole('button', { name: '우리 지도로 보기' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '네이버 지도로 보기' })).not.toBeInTheDocument();
+    // 네이버 키가 설정돼 있으므로 SVG 지도 위에는 네이버로 넘어가는 토글이 있다.
+    expect(screen.getByRole('button', { name: '네이버 지도로 보기' })).toBeInTheDocument();
     expect(container.querySelector('.place-market-path')).not.toBeNull();
     expect(screen.queryByRole('link', { name: 'OpenFreeMap' })).not.toBeInTheDocument();
   });

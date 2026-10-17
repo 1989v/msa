@@ -101,6 +101,7 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | 관광지 영상 | YouTube Data API v3 | 필요 | Google API 서비스 약관 | `place/ingest --job=links` (매시) |
 | 관광지 후기 | 네이버 검색 API(블로그) | 필요 | 네이버 오픈API 이용약관 | 〃 |
 | 지도 | Google Maps JavaScript API | 필요 | Google Maps Platform 약관 | 브라우저 직접 호출 |
+| 시장 지도 바탕 | 네이버 Maps — Web Dynamic Map (JS v3) | 필요 (`NAVER_MAP_KEY_ID`, 공개·리퍼러 제한) | NCP Maps 이용약관 (타일 저장·재배포 금지) | 브라우저 직접 호출 (§7.1) |
 | 구글 place_id | Google Places API (New) Text Search | 필요 | Google Maps Platform 약관 (**place_id 만 무기한 저장 허용**) | `place/ingest --job=google-places` |
 | **주유소·유가** | 한국석유공사 오피넷 (직접) | `OPINET_API_KEY` | **이용허락범위 제한 없음** | `ranking/ingest --job=gas-stations` (매일) |
 
@@ -523,6 +524,21 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | 키 | `GOOGLE_PLACES_API_KEY`. 클러스터는 Secret `place-ingest-secrets/google-places-api-key` (optional) — **없으면 잡이 조용히 건너뛴다** (좌표/주소 링크 폴백으로 화면은 정상) |
 | 저장 | **place_id 문자열만** (위 저장 정책의 캐싱 예외 조항). 검색 0건은 null 로 남겨 재시도한다 — 무과금 호출이고 구글 색인은 자라므로 negative cache 를 두지 않았다 |
 | 경로 | `place/ingest --job=google-places` → `GET/POST /internal/attractions/google-place-ids/**` (클러스터 내부 전용, ADR-0070 §3 과 같은 패턴) |
+
+---
+
+### 7.1 시장 지도 바탕 — 네이버 Maps (Web Dynamic Map, 2026-10-17)
+
+| | |
+|---|---|
+| 사용 | 전통시장 가게 지도의 바탕(`pages/place/MarketNaverMap.tsx`). 경계 폴리곤·골목선·가게 마커·내 위치는 우리 데이터를 그 위에 올린다 |
+| 상품 | NCP **Maps**(2025-03-20 출시, 콘솔 Application Services > Maps). 옛 「AI NAVER API ▶ 지도 API」가 아니다 — 그쪽은 2025-07-01부터 무료 이용량이 없다 |
+| 키 | `portal-fe/src/seo/copy.mjs` 의 `NAVER_MAP_KEY_ID` = Application 의 Client ID(`ncpKeyId`). 번들에 박히는 공개값. Client Secret 은 쓰지 않는다 |
+| 보호 | Application 의 Web 서비스 URL `https://place.1989v.com` 하나(리퍼러 검사). 로컬은 별도 Application. 콘솔의 월 이용 한도·초과 알림 |
+| 요금 | Dynamic Map 월 6,000,000건 무료(대표 계정 1개) → 0.1원/건, VAT 별도 — 상품 페이지 `#pricing`, 공지 1965 |
+| 언어 | 스크립트 URL `language=ko|en|ja|zh` — 영문 페이지는 `en` |
+| 약관 | 지도 이미지 저장·재배포 금지, 로고·출처 가림 금지. 우리 데이터 오버레이는 허용 |
+| 방침 | `/privacy` 제3자 표에 「네이버 지도(네이버클라우드)」 행이 있다 |
 
 ---
 
