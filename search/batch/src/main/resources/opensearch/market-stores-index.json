@@ -1,0 +1,111 @@
+{
+  "settings": {
+    "index": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0
+    },
+    "analysis": {
+      "tokenizer": {
+        "market_nori": {
+          "type": "nori_tokenizer",
+          "decompound_mode": "mixed"
+        }
+      },
+      "analyzer": {
+        "market_ko": {
+          "type": "custom",
+          "tokenizer": "market_nori",
+          "filter": [
+            "lowercase",
+            "nori_readingform"
+          ]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "contentId": {
+        "type": "keyword"
+      },
+      "membership": {
+        "type": "keyword"
+      },
+      "marketName": {
+        "type": "keyword"
+      },
+      "storeId": {
+        "type": "long"
+      },
+      "zoneId": {
+        "type": "long"
+      },
+      "pathId": {
+        "type": "long"
+      },
+      "name": {
+        "type": "text",
+        "analyzer": "market_ko"
+      },
+      "items": {
+        "type": "text",
+        "analyzer": "market_ko"
+      },
+      "categoryMajor": {
+        "type": "text",
+        "analyzer": "market_ko"
+      },
+      "categoryMid": {
+        "type": "text",
+        "analyzer": "market_ko"
+      },
+      "categorySub": {
+        "type": "text",
+        "analyzer": "market_ko"
+      },
+      "menus": {
+        "type": "text",
+        "analyzer": "market_ko"
+      },
+      "dishes": {
+        "type": "text",
+        "analyzer": "market_ko"
+      },
+      "nameEn": {
+        "type": "text",
+        "analyzer": "english"
+      },
+      "itemsEn": {
+        "type": "text",
+        "analyzer": "english"
+      },
+      "categoryMajorEn": {
+        "type": "text",
+        "analyzer": "english"
+      },
+      "categoryMidEn": {
+        "type": "text",
+        "analyzer": "english"
+      },
+      "categorySubEn": {
+        "type": "text",
+        "analyzer": "english"
+      },
+      "dishesEn": {
+        "type": "text",
+        "analyzer": "english"
+      },
+      "nameRoman": {
+        "type": "text",
+        "analyzer": "standard"
+      },
+      "nearby": {
+        "type": "boolean"
+      },
+      "location": {
+        "type": "geo_point"
+      }
+    }
+  }
+}

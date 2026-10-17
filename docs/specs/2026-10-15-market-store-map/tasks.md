@@ -231,6 +231,11 @@ Codex 보내는 순서: WU-15 ∥ WU-16 → WU-17 ∥ WU-18. 같은 워크트리
 - 삭제: `.github/workflows/market-basemaps.yml`, `scripts/market-basemaps/`, nginx `/basemaps/` 프록시 블록과 `proxy_cache_path basemaps`, `k8s/base/network-policy/23-allow-portal-fe-egress-https-public.yaml`(다른 사용처 없음 확인 뒤), FE `fetchMarketBasemapMeta`·`useMarketBasemapMeta`·`MarketCanvas` 의 `<image>` 분기·OpenFreeMap 출처 줄·관련 테스트, `data-sources.md` 의 바탕 항목, 시크릿 `MARKET_BASEMAP_PAR`(사용자), 버킷 `msa-market-basemap`(사용자 콘솔). OSM 지오메트리(`market_boundary`·`market_path`·`market_osm_raw`·수집 잡·`attribution`)는 **남긴다**.
 - SVG 지도(`MarketCanvas`) 자체는 이번에 남긴다(두 엔진 실패 폴백). 제거 여부는 WU-32 뒤 별도.
 - 검증: nginx `-t`(docker), kustomize build, tsc·해당 vitest, 배포 뒤 `curl -I /basemaps/markets/132180/meta.json` → 404, 시장 지도 정상.
+- **완료(2026-10-17 밤)**: `2d476f12c`(21 files, +26/−789). tsc 0건, vitest 9파일 129건, `grep basemap|openfreemap|openmaptiles` 0건, nginx 계약 검사 94건, `kubectl kustomize oci-arm` 정상(삭제한 NetworkPolicy 0회). 운영(`index-W5oJ9JjS.js`): `/basemaps/markets/132180/meta.json` 은 프록시 대신 **SPA 셸(200 text/html)** 로 떨어진다(nginx 의 location 이 없으니 404 가 아니라 폴백 — 계약의 「404」는 이 뜻으로 읽는다), 상세 카드·리다이렉트·전용 화면 핀 모두 그대로. 남은 수동 작업: 시크릿 `MARKET_BASEMAP_PAR`, 버킷 `msa-market-basemap`.
 
 ## WU-28 가게 검색을 검색엔진으로 (search + place — `p7-plan.md` §9.4 계약 초안, 승인됨)
-- §9.4 그대로: OpenSearch 전용 색인(market_store 12.6k 문서 추정치 재확인) + 배치 + `GET /api/v1/place/markets/{contentId}/search?q=` + 브라우저 매칭 폴백. 착수 전 §9.4 를 tasks 계약으로 옮기고 Codex 에 보낸다.
+- **WU-28a 승인 계약**: [ADR-0111](../../adr/ADR-0111-market-store-search-index.md) — 별도 `market-stores` alias, 단일 한영 문서, nori 사용자 사전 없음, dishes.csv는 place `/api/v1/place/markets/dishes` API 한 벌만 사용.
+- API는 `GET /api/v1/search/market-stores?q&contentId&lang&page&size`. `contentId` 있으면 기본 size 200/시장 필터, 없으면 기본 20/시장 집계. 응답 items는 storeId/contentId/matchedBy/score, markets는 contentId/marketName/count.
+- 배치는 content-ids → 시장 ko/en API 병합, zoneId/pathId 포함, 좌표 없는 가게도 유지. 5% 초과 실패는 별칭 교체 전 실패, 정확히 5% 허용. 매일 21:40 UTC CronJob, 기존 보관 정책.
+- WU-28a: search API/색인/배치 + 게이트웨이 정확 경로 + CronJob + 검증/ADR. place/FE/관광지·통합 색인/빌드·lock 변경 없음. nameRoman 원천 부재와 categoryEn 단일 레벨 제한을 기록.
+- 후속: FE 300ms 디바운스·storeId 강조·실패/빈 응답 시 기존 브라우저 매칭 폴백, 운영 30문항 Recall@10 및 지도 확인.

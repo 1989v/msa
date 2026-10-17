@@ -65,3 +65,6 @@ Scheduler ──►       │  ProductDbReindexJobConfig      │
 ./gradlew :search:batch:build
 ./gradlew :search:domain:test
 ```
+
+## Market store search (ADR-0111)
+Dedicated `market-stores` bilingual index and `/api/v1/search/market-stores` API use place public projections and its dishes API. Daily 21:40 UTC `market-store-reindex` keeps the existing alias on failures above 5%. See [ADR-0111](../../docs/adr/ADR-0111-market-store-search-index.md) for field, source-gap and rollback contracts.

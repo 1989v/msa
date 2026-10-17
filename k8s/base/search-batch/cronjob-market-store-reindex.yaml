@@ -1,0 +1,54 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: market-store-reindex
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: search-batch
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: reindex
+spec:
+  # ADR-0111 — dedicated bilingual market-store index, 10 minutes after attractions.
+  suspend: false
+  # UTC 21:40 = KST 06:40
+  schedule: "40 21 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      # 새로 뜬 파드는 첫 몇 초간 DNS egress 가 막힌다 — k3s 가 netpol 에 파드 IP 를
+      # 등록하기 전이라 CoreDNS 로 못 나가고 `UnknownHostException: opensearch` 로 죽는다.
+      # 노드가 포화(대량 롤아웃)면 이 창이 1분 넘게 벌어져 2회로는 못 넘긴다.
+      # 재색인은 멱등(alias swap)이라 재시도에 부작용이 없다.
+      backoffLimit: 4
+      # 시간이 지나면 Job 을 끊는다. backoffLimit 은 실패 횟수를 세는데 ImagePullBackOff 는
+      # 실패로 안 잡혀 Job 이 Running 인 채로 남고, Forbid 가 그 뒤 실행을 전부 막는다.
+      # 관측 소요 125~157초.
+      activeDeadlineSeconds: 1800
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: search-batch
+            # part-of 누락 시 default-deny 에서 egress 미허용 → opensearch/place 접근 불가
+            app.kubernetes.io/part-of: commerce-platform
+            app.kubernetes.io/component: reindex
+        spec:
+          restartPolicy: OnFailure
+          enableServiceLinks: false
+          containers:
+            - name: reindex
+              image: commerce/search-batch:latest
+              imagePullPolicy: IfNotPresent
+              args:
+                # 기본값(enabled=false)이면 웹서버만 뜨고 잡이 실행되지 않는다
+                - "--spring.batch.job.enabled=true"
+                - "--spring.batch.job.name=marketStoreApiReindexJob"
+              env:
+                - name: OPENSEARCH_URIS
+                  value: "http://opensearch:9200"
+                - name: PLACE_SERVICE_URL
+                  value: "http://content:8097"
+              resources:
+                requests: { cpu: 100m, memory: 512Mi }
+                limits:   { memory: 1Gi }

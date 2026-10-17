@@ -140,6 +140,21 @@
       "sources": [
         "search/app/src/main/kotlin/com/kgd/search/*"
       ]
+    },
+    {
+      "doc": "docs/adr/ADR-0111-market-store-search-index.md",
+      "sources": [
+        "search/app/src/main/kotlin/com/kgd/search/**/MarketStore*.kt",
+        "search/app/src/main/kotlin/com/kgd/search/application/marketstore/**/*.kt",
+        "search/batch/src/main/kotlin/com/kgd/search/**/MarketStore*.kt",
+        "search/domain/src/main/kotlin/com/kgd/search/domain/marketstore/**/*.kt",
+        "search/batch/src/main/resources/opensearch/market-stores-index.json",
+        "k8s/base/search-batch/cronjob-market-store-reindex.yaml",
+        "gateway/src/main/resources/application.yml",
+        "search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/OsBulkDocumentProcessor.kt",
+        "search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/IndexAliasManager.kt",
+        "search/batch/src/main/kotlin/com/kgd/search/infrastructure/job/ReindexJobExecutionListener.kt"
+      ]
     }
   ],
   "_pattern_rules_note": "1회 정의로 N개 소스 → 서비스 CLAUDE.md 매핑. fnmatch 기반. {service} 는 doc 경로에서만 치환.",

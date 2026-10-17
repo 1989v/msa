@@ -48,6 +48,11 @@ spring:
             # /api/v1/search 와 /api/v1/services 도 동일 백엔드 (portal-fe 의 axios 호출 호환).
             # /api/v1/portfolio/** 는 GatewayRouteConfig.kt 로 이동 — 로그인 시 X-User-Id 주입이
             # 필요해졌다(스니펫 게이트). 여기 무인증 라우트로 남겨두면 어느 쪽이 이길지 보장되지 않는다.
+            - id: market-store-search-service
+              order: -1
+              uri: http://search:8083
+              predicates:
+                - Path=/api/v1/search/market-stores
             - id: code-dictionary-service
               uri: http://atlas:8089
               predicates:

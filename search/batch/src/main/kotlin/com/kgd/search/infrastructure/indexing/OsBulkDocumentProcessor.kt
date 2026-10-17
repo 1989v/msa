@@ -46,16 +46,18 @@ class OsBulkDocumentProcessor(
         val operation = BulkOperation.of { op ->
             op.index { idx -> idx.index(indexName).id(id).document(document) }
         }
-        val toSend = synchronized(primaryBuffer) {
+        synchronized(primaryBuffer) {
             primaryBuffer.add(operation)
-            if (primaryBuffer.size >= PRIMARY_MAX_OPERATIONS) drain(primaryBuffer) else emptyList()
+            if (primaryBuffer.size >= PRIMARY_MAX_OPERATIONS) sendPrimary(drain(primaryBuffer))
         }
-        sendPrimary(toSend)
     }
 
-    /** 잔여 작업 동기 전송 — 배치의 alias swap 직전 등 호출자가 완료를 보장해야 할 때 사용. */
+    /**
+     * Drain and send share the same monitor as threshold/periodic sends. A final flush must join
+     * an already drained, in-flight request before the caller checks errors and swaps the alias.
+     */
     fun flush() {
-        sendPrimary(synchronized(primaryBuffer) { drain(primaryBuffer) })
+        synchronized(primaryBuffer) { sendPrimary(drain(primaryBuffer)) }
     }
 
     @Scheduled(fixedDelay = PRIMARY_FLUSH_INTERVAL_MS)
