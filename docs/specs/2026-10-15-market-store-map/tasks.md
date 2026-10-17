@@ -167,13 +167,13 @@ Codex 보내는 순서: WU-15 ∥ WU-16 → WU-17 ∥ WU-18. 같은 워크트리
 네이버·카카오·구글 지도 이미지는 저장·재배포가 약관으로 금지라 제외. OSM 데이터(ODbL) + OpenFreeMap 스타일을 **우리가 렌더해 저장**한다. 네이버·카카오·구글은 딥링크.
 
 ## WU-23 시장 바탕 이미지 렌더·저장 (CI 잡)
-- GitHub Actions 주 1회(수동 dispatch 포함): 헤드리스 크롬 + MapLibre GL JS + OpenFreeMap positron 계열 스타일(우리 토큰 색으로 바꾼 스타일 JSON 을 레포에 둠)으로 시장마다 **경계(없으면 가게 범위 + 100 m) 를 덮는 줌 18 이미지**(가로세로 ≤ 2048 px, 필요하면 2×2 분할) 를 그린다. 라벨 언어 ko / en 두 벌.
-- 저장: OCI Object Storage 버킷(공개 읽기, 백업 PAR 와 별개) `markets/{marketId}/z18-{ko|en}.png` + `meta.json`(이미지의 위경도 범위·줌·렌더 시각·스타일 버전). 828곳 × 2 × ~400KB ≈ 700MB.
-- 출처: OpenFreeMap · OpenMapTiles · © OpenStreetMap contributors 를 이미지 모서리와 화면에.
-- 공개 API: `GET /markets/{contentId}` 응답에 `basemap: {url, bounds, zoom, lang, renderedAt} | null`(메타는 place DB `market_basemap` 테이블, CI 잡이 내부 API 로 등록).
-- 검증: 남대문·광장·망원·서문 이미지 생성, 좌표 → 픽셀 변환 오차 ≤ 2 px(알려진 점으로 검사), 영문 라벨.
+- 저장소: OCI 오브젝트 스토리지 버킷 `msa-market-basemap`(ap-chuncheon-1, 루트 구획, **공개 읽기 ObjectRead**, 2026-10-17 생성). 쓰기는 PAR(쓰기 전용, **만료 2027-10-17**) — GitHub Actions 시크릿 `MARKET_BASEMAP_PAR`. 만료되면 업로드가 404 로 죽으니 그 전에 콘솔에서 재발급해 시크릿을 바꾼다.
+- 객체 이름 `markets/{contentId}/z18-{light|dark}.png`, 공개 URL `https://objectstorage.ap-chuncheon-1.oraclecloud.com/n/axyooxbyk5yv/b/msa-market-basemap/o/markets/{contentId}/z18-light.png`. 마지막에 `markets/index.json`.
+- 이미지: **1536×1152 px, Web Mercator 줌 18, 중심 = 경계 꼭짓점 평균(닫는 꼭짓점 제거), 경계 없으면 market 점**. light = OpenFreeMap positron, dark = fiord. 컨트롤·로고 숨김, 출처는 굽지 않고 FE 가 표기. 라벨은 OSM `name`(한글 + 라틴 병기) — 영문 전용 한 벌은 후속.
+- 실행: `.github/workflows/market-basemaps.yml` 매주 일 20:00 UTC + dispatch(일부 contentId·테마), matrix light/dark, 러너 ubuntu-24.04 의 Chrome + MapLibre GL JS + CDP(`scripts/market-basemaps/render.mjs`, 의존성 ws 하나). 실패율 5% 넘으면 잡 실패(올린 건 유지).
+- 검증: 남대문·광장·망원·서문 PNG 크기 1536×1152, FE 모서리 계산과 같은 규칙(WU-24 테스트).
 
 ## WU-24 시장 섹션 바탕 적용 (portal-fe)
-- `MarketCanvas` 가 `basemap` 이 있으면 SVG 뒤에 `<image>` 로 깔고(Web Mercator 로 핀 좌표와 같은 변환), 없으면 지금 그대로. 확대·이동은 이미지와 오버레이가 같은 viewBox 변환을 탄다. 우리 골목 선은 바탕이 있으면 그리지 않고 **특화 골목 이름 띠·게이트·핀·내 위치**만 올린다.
+- `MarketCanvas` 가 규약 URL 의 이미지를 SVG 맨 아래 `<image>` 로 깔고(FE 가 같은 규칙으로 네 모서리 위경도를 계산해 기존 투영으로 배치), 로드 전·실패 시에는 지금 그대로. 메타 API 는 두지 않는다(YAGNI). 확대·이동은 이미지와 오버레이가 같은 viewBox 변환을 탄다. 우리 골목 선은 바탕이 있으면 그리지 않고 **특화 골목 이름 띠·게이트·핀·내 위치**만 올린다.
 - 프리렌더·검색엔진용 정적 그림도 같은 이미지. 다크 테마는 이미지에 어두운 필터 대신 다크 스타일 한 벌을 더 렌더할지 WU-23 에서 결정.
 - 검증: CDP 4조합(남대문·광장·망원), 핀이 바탕의 건물 위에 놓이는지 알려진 가게로 확인.
