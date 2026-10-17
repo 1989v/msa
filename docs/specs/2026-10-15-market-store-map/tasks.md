@@ -154,3 +154,26 @@ Codex 보내는 순서: WU-15 ∥ WU-16 → WU-17 ∥ WU-18. 같은 워크트리
 - 시장 섹션·`/markets`: 결과 행에 `matchedBy` 표시(「관련 업종 · 분식」은 흐리게, 뒤 순위), 가게 행에 메뉴·가격(착한가격 메뉴·가격 + TourAPI 대표·취급 메뉴, 출처 표시), 시장 섹션 검색은 `/markets/dishes` 사전을 한 번 받아 같은 규칙으로 관련 업종을 낸다. 섹션 아래 「관광공사 소개 음식점」 목록(`restaurants[]`, 관광지 상세 링크).
 - 영문 화면: `nameEn · 한글`, `categoryEn`, 메뉴 영문(있을 때), 영문 검색어.
 - 검증: `npx tsc -b`, vitest, CDP 4조합(광장·남대문 국문·영문).
+
+## 운영 안정화 (2026-10-17 승인)
+## WU-22 공개 조회용 좁은 가게 읽기 (place)
+- `MarketQueryPort.findStoresForDisplay(marketId)`: 원천 JSON 두 열(onnuri_raw·sangga_raw)을 읽지 않는 Querydsl 투영 + 존재 여부 불리언. 도메인 require 를 위해 `MarketStore.RAW_OMITTED` 자리표시. 공개 상세(`MarketService.find`)와 메뉴 붙이기(`MarketTourMenuService.attach`)만 사용, 쓰기 경로는 `findStores` 유지.
+- 근거: 남대문 3,929행·원천 JSON 16.7MB 가 요청마다 올라와 content(1Gi) OOM 3회. 검증: `*Market*` 테스트 + 회귀 주입(raw 다시 읽기).
+## (k8s) `MALLOC_ARENA_MAX=2` — `k8s/overlays/oci-arm/patches/java-tool-options.yaml`, 모든 JVM 파드. 배포 뒤 content 바닥 메모리(재시작 4분 뒤 878Mi)와 하루 OOM 0 을 확인.
+
+---
+
+# 바탕 지도 (사용자 결정 2026-10-17: ③ 우리가 소유하는 바탕을 미리 렌더)
+네이버·카카오·구글 지도 이미지는 저장·재배포가 약관으로 금지라 제외. OSM 데이터(ODbL) + OpenFreeMap 스타일을 **우리가 렌더해 저장**한다. 네이버·카카오·구글은 딥링크.
+
+## WU-23 시장 바탕 이미지 렌더·저장 (CI 잡)
+- GitHub Actions 주 1회(수동 dispatch 포함): 헤드리스 크롬 + MapLibre GL JS + OpenFreeMap positron 계열 스타일(우리 토큰 색으로 바꾼 스타일 JSON 을 레포에 둠)으로 시장마다 **경계(없으면 가게 범위 + 100 m) 를 덮는 줌 18 이미지**(가로세로 ≤ 2048 px, 필요하면 2×2 분할) 를 그린다. 라벨 언어 ko / en 두 벌.
+- 저장: OCI Object Storage 버킷(공개 읽기, 백업 PAR 와 별개) `markets/{marketId}/z18-{ko|en}.png` + `meta.json`(이미지의 위경도 범위·줌·렌더 시각·스타일 버전). 828곳 × 2 × ~400KB ≈ 700MB.
+- 출처: OpenFreeMap · OpenMapTiles · © OpenStreetMap contributors 를 이미지 모서리와 화면에.
+- 공개 API: `GET /markets/{contentId}` 응답에 `basemap: {url, bounds, zoom, lang, renderedAt} | null`(메타는 place DB `market_basemap` 테이블, CI 잡이 내부 API 로 등록).
+- 검증: 남대문·광장·망원·서문 이미지 생성, 좌표 → 픽셀 변환 오차 ≤ 2 px(알려진 점으로 검사), 영문 라벨.
+
+## WU-24 시장 섹션 바탕 적용 (portal-fe)
+- `MarketCanvas` 가 `basemap` 이 있으면 SVG 뒤에 `<image>` 로 깔고(Web Mercator 로 핀 좌표와 같은 변환), 없으면 지금 그대로. 확대·이동은 이미지와 오버레이가 같은 viewBox 변환을 탄다. 우리 골목 선은 바탕이 있으면 그리지 않고 **특화 골목 이름 띠·게이트·핀·내 위치**만 올린다.
+- 프리렌더·검색엔진용 정적 그림도 같은 이미지. 다크 테마는 이미지에 어두운 필터 대신 다크 스타일 한 벌을 더 렌더할지 WU-23 에서 결정.
+- 검증: CDP 4조합(남대문·광장·망원), 핀이 바탕의 건물 위에 놓이는지 알려진 가게로 확인.
