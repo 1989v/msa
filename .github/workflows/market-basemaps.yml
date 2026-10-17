@@ -41,6 +41,9 @@ jobs:
       - name: 의존성 설치
         working-directory: scripts/market-basemaps
         run: npm install --no-package-lock --ignore-scripts
+      # 러너에는 CJK 글꼴이 없어 한글 도로명이 □□□ 로 그려졌다(2026-10-17 첫 실행). 렌더 전에 넣는다.
+      - name: 한글 글꼴 설치
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends fonts-noto-cjk && fc-list | grep -c -i 'Noto Sans CJK'
       - name: 선택한 테마 렌더·PNG 업로드
         env:
           CONTENT_IDS: ${{ inputs.contentIds }}
