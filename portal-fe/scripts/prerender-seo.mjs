@@ -677,15 +677,21 @@ function genreNav(lang, games) {
   return `<nav aria-label="${lang === 'en' ? 'Genres' : '장르'}">${links}</nav>`;
 }
 
+/** 화면(GamesPage)과 같은 구조 — 첫 문단만 보이고 나머지는 details 안. 글은 전부 초기 HTML 에 있다. */
 function renderGameHubGuide(lang) {
   const guide = gameHubGuide(lang);
   const selection = gameSelectionGuide(lang);
-  return `<section aria-labelledby="games-guide-heading"><h2 id="games-guide-heading">${escapeHtml(guide.heading)}</h2>` +
-    guide.paragraphs.map((text) => `<p>${escapeHtml(text)}</p>`).join('') +
-    `<h3>${escapeHtml(selection.heading)}</h3>` +
+  const discovery = gameDiscoveryLinks(lang);
+  return `<section class="games-guide games-about" aria-labelledby="games-guide-heading"><h2 id="games-guide-heading">${escapeHtml(guide.heading)}</h2>` +
+    `<p>${escapeHtml(guide.paragraphs[0])}</p>` +
+    `<details class="games-about-more"><summary>${escapeHtml(guide.more)}</summary>` +
+    guide.paragraphs.slice(1).map((text) => `<p>${escapeHtml(text)}</p>`).join('') +
+    `<h3>${escapeHtml(selection.heading)}</h3><p>${escapeHtml(selection.note)}</p>` +
     selection.groups.map((group) => `<div><h4>${escapeHtml(group.heading)}</h4><ul>` +
       group.picks.map((pick) => `<li><a href="${escapeHtml(pick.href)}">${escapeHtml(pick.title)}</a><p>${escapeHtml(pick.reason)}</p></li>`).join('') + '</ul></div>').join('') +
-    `<nav>${guide.genres.map(({ href, label }) => `<a href="${escapeHtml(href)}">${escapeHtml(label)}</a>`).join('')}</nav></section>`;
+    `<nav>${guide.genres.map(({ href, label }) => `<a href="${escapeHtml(href)}">${escapeHtml(label)}</a>`).join('')}</nav>` +
+    `<h3>${escapeHtml(discovery.heading)}</h3><ul>` +
+    discovery.links.map((link) => `<li><a href="${escapeHtml(link.href)}">${escapeHtml(link.label)}</a></li>`).join('') + '</ul></details></section>';
 }
 
 function renderGameDiscoveryLinks(lang) {
@@ -728,7 +734,6 @@ export function renderHub(shell, lang, games) {
       `<h1>${escapeHtml(meta.heading)}</h1><p class="games-subtitle">${escapeHtml(gameHubIntro(lang))}</p>` +
         genreNav(lang, games) +
         gameLinkList(lang, games) +
-        renderGameDiscoveryLinks(lang) +
         renderGameHubGuide(lang),
     ),
   });

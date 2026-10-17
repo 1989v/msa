@@ -27,6 +27,7 @@ import {
   hreflangAlternates,
   hubMeta,
   gameHubIntro,
+  gameDiscoveryLinks,
   gameHubGuide,
   itemListJsonLd,
 } from '../../seo/copy.mjs';
@@ -187,6 +188,7 @@ export default function GamesPage() {
   const meta = genre ? genreMeta(lang, genre, [], catalogCount ?? null) : hubMeta(lang, catalogCount);
   const guide = gameHubGuide(lang);
   const selection = gameSelectionGuide(lang);
+  const discovery = gameDiscoveryLinks(lang);
   const canonical = gameUrl(lang, seoSub);
   useSeo({
     // 같은 주소의 초기 메타는 유지하고, SPA 전환에서는 건수 없는 새 주소 메타를 쓴다.
@@ -387,27 +389,37 @@ export default function GamesPage() {
           )}
       </section>
 
-      <GameDiscoveryLinks lang={lang} />
+      {genre && <GameDiscoveryLinks lang={lang} />}
 
+      {/* 목록 끝 소개 — 첫 문단만 보이고 나머지는 접는다. 접힌 글도 DOM·초기 HTML 에 그대로 있어
+          색인되고, 누르면 펼쳐지므로 숨김 텍스트가 아니다 (프리렌더 renderGameHubGuide 와 같은 구조) */}
       {!genre && (
-        <section className="games-guide" aria-labelledby="games-guide-heading">
+        <section className="games-guide games-about" aria-labelledby="games-guide-heading">
           <h2 id="games-guide-heading">{guide.heading}</h2>
-          {guide.paragraphs.map((text) => <p key={text}>{text}</p>)}
-          <h3>{selection.heading}</h3>
-          {selection.groups.map((group) => <div key={group.heading}>
-          <h4>{group.heading}</h4>
-          <ul className="games-guide-picks">
-            {group.picks.map((pick) => (
-              <li key={pick.slug}>
-                <Link to={pick.href}>{pick.title}</Link>
-                <p>{pick.reason}</p>
-              </li>
-            ))}
-          </ul>
-          </div>)}
-          <nav aria-label={L.genreLabel}>
-            {guide.genres.map((item) => <Link key={item.href} to={item.href}>{item.label}</Link>)}
-          </nav>
+          <p>{guide.paragraphs[0]}</p>
+          <details className="games-about-more">
+            <summary>{guide.more}</summary>
+            {guide.paragraphs.slice(1).map((text) => <p key={text}>{text}</p>)}
+            <h3>{selection.heading}</h3>
+            <p>{selection.note}</p>
+            {selection.groups.map((group) => <div key={group.heading}>
+              <h4>{group.heading}</h4>
+              <ul className="games-guide-picks">
+                {group.picks.map((pick) => (
+                  <li key={pick.slug}>
+                    <Link to={pick.href}>{pick.title}</Link>
+                    <p>{pick.reason}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>)}
+            <nav aria-label={L.genreLabel}>
+              {guide.genres.map((item) => <Link key={item.href} to={item.href}>{item.label}</Link>)}
+            </nav>
+            {/* 장르·골라보기와 주소가 겹치지만 검색어 문구(핀볼 추첨 등)가 달라 남긴다 — 겹치는 쪽보다 뒤에 둔다 */}
+            <h3>{discovery.heading}</h3>
+            <ul>{discovery.links.map((link) => <li key={link.href}><Link to={link.href}>{link.label}</Link></li>)}</ul>
+          </details>
         </section>
       )}
 

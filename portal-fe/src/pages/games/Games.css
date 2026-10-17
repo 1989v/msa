@@ -2034,6 +2034,26 @@
 .games-guide-picks { list-style: none; padding: 0; display: grid; gap: 1rem; }
 .games-guide-picks li { min-width: 0; }
 .games-guide-picks p { margin: 0; }
+
+/* 목록 끝 소개 — 본문이 아니라 바닥글에 가까운 보조 글이다. 작고 차분하게 두되 읽을 수 있는 대비는
+   지킨다(--ko-text-secondary). 색·크기·높이로 안 보이게 만들면 검색엔진의 숨김 텍스트 판정을 받는다 */
+.games-about { font-size: 0.875rem; line-height: 1.65; }
+.games-about h2 { font-size: 1rem; margin: 0 0 0.5rem; }
+.games-about h3 { font-size: 0.9375rem; margin: 1.25rem 0 0.25rem; }
+.games-about h4 { color: var(--ko-text-primary); font-size: 0.875rem; font-weight: 600; margin: 1rem 0 0.25rem; }
+.games-about ul { padding-left: 1.1rem; margin: 0.25rem 0; }
+.games-about .games-guide-picks { padding-left: 0; gap: 0.5rem; }
+.games-about a { min-height: 2.75rem; }
+.games-about-more summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  cursor: pointer;
+  color: var(--ko-text-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.games-about-more summary:focus-visible { outline: 2px solid var(--ko-accent-primary); outline-offset: 2px; }
 .game-play-guide { display: grid; gap: 1rem; margin-block: 1.5rem; font-size: 1rem; line-height: 1.7; }
 .game-play-guide dt { color: var(--ko-text-primary); font-weight: 600; }
 .game-play-guide dd { color: var(--ko-text-secondary); margin: 0; max-width: 65ch; }

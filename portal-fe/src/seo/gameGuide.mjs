@@ -115,6 +115,8 @@ export function gameSelectionGuide(lang) {
     }));
   return {
     heading: en ? 'Choose by how you like to play' : '플레이 방식으로 골라보기',
+    // 순위나 추천이 아니라 안내를 써 둔 게임이라는 것을 밝힌다
+    note: en ? 'Games with written goals, controls and first-play tips, grouped by play style.' : '목표·조작법·첫 플레이 팁을 정리해 둔 게임을 플레이 방식별로 모았습니다.',
     groups,
     picks: groups.flatMap((group) => group.picks),
   };

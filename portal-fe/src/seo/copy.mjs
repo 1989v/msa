@@ -146,7 +146,9 @@ export function gameHubGuide(lang) {
       '게임을 열어 소개와 플레이 인원, 모바일 지원 여부를 확인한 뒤 플레이 버튼을 누르세요. 앱 설치 없이 브라우저에서 실행되며, 조작법과 지원 기기는 게임마다 다릅니다.',
       '계정 없이 플레이를 시작할 수 있습니다. 로그인하면 개인 플레이 기록을 남길 수 있습니다. 게임을 평가하는 기능도 제공합니다. 진행 저장과 온라인 멀티플레이는 해당 기능을 지원하는 게임에서 이용할 수 있습니다.',
     ],
-    genres: ['PUZZLE', 'ACTION', 'DEFENSE', 'RPG', 'STRATEGY'].map((genre) => ({
+    // 접힌 안내를 여는 문구 — 무엇이 들어 있는지 이름으로 말한다
+    more: en ? 'How to choose · guides by play style' : '게임 고르는 법 · 플레이 방식별 안내',
+    genres: Object.keys(GENRE_LABELS_KO).map((genre) => ({
       label: genreLabelOf(genre, lang),
       href: gamePath(lang, `/games/genre/${genreSlug(genre)}`),
     })),
