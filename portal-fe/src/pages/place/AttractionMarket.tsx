@@ -115,7 +115,7 @@ function MarketSection({ contentId, data, lang, initialQuery, includeOutside, on
         <div className="place-market-map">
           {data.nearbyRadiusMetres != null && <p className="place-market-note">{lang === 'en' ? `Showing shops within ${data.nearbyRadiusMetres} m of the market` : `시장 주변 ${data.nearbyRadiusMetres} m 안 가게를 보입니다`}</p>}
           {projection ? <MarketMap contentId={contentId} basemapMeta={basemapMeta} data={data} lang={lang} projection={projection} points={mapPoints}
-            hasGeometry={hasGeometry} query={query} dishes={dishes} selectedKey={parcelKey} focusStoreId={focusStoreId} onSelect={setParcelKey}
+            hasGeometry={hasGeometry} query={query} dishes={dishes} selectedZoneId={zoneId} onZoneSelect={pickZone} selectedKey={parcelKey} focusStoreId={focusStoreId} onSelect={setParcelKey}
             color={color} pathColor={pathColor} basemapAttribution={<p className="place-market-source place-market-basemap-attribution">
               <a href="https://openfreemap.org/" target="_blank" rel="noreferrer">OpenFreeMap</a>{' · '}
               <a href="https://openmaptiles.org/" target="_blank" rel="noreferrer">OpenMapTiles</a>{' · '}

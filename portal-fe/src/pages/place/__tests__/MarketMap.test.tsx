@@ -5,32 +5,35 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MarketResponse, MarketStore } from '../../../api/marketApi';
 import { groupMarketPins, projectMarketPins } from '../marketView';
 import MarketMap from '../MarketMap';
+const google = vi.hoisted(() => ({ load: vi.fn() }));
+vi.mock('../googleMaps', () => ({ loadGoogleMaps: google.load }));
 vi.mock('../../../seo/copy.mjs', async (original) => ({ ...await original<typeof import('../../../seo/copy.mjs')>(), NAVER_MAP_KEY_ID: 'test-key' }));
 const shop = (overrides: Partial<MarketStore> = {}): MarketStore => ({
-  id: 1, name: '가게', items: '떡볶이', zoneId: null, membership: 'IN', latitude: 37.5, longitude: 127,
+  id: 1, name: '가게', items: '떡볶이', zoneId: 1, membership: 'IN', latitude: 37.5, longitude: 127,
   roadAddress: null, jibunAddress: null, buildingName: null, dong: null, floor: null, ho: null,
   categoryMajor: null, categoryMid: null, categorySub: null, sources: ['ONNURI'], pinKind: 'EXACT',
   manual: false, actorKind: null, relativePosition: null, positionNote: null, ...overrides,
 });
 const data: MarketResponse = {
   market: { name: '시장', marketType: 'STREET', sourceMarketType: null, storeCountRaw: null, openingCycle: null, facilities: null, attribution: null },
-  zones: [], stores: [shop(), shop({ id: 2, name: '옆집', longitude: 127.0001 })],
+  zones: [{ id: 1, parentId: null, kind: 'ROAD', name: '시장길', dong: null, floor: null, children: [] }], stores: [shop(), shop({ id: 2, name: '옆집', longitude: 127.0001 })],
   boundary: { source: 'OSM', polygon: [[37.499, 126.999], [37.501, 126.999], [37.501, 127.001]] },
 };
 const scripts = () => document.querySelectorAll<HTMLScriptElement>('script[src^="https://oapi.map.naver.com/openapi/v3/maps.js"]');
 function sdk() {
-  let host: HTMLElement; let scale = 100000;
+  let host: HTMLElement; let zoom = 17;
   const listeners = new Map<string, () => void>(); const panTo = vi.fn(); const setZoom = vi.fn();
   return {
-    panTo, setZoom, listeners, scale: (next: number) => { scale = next; },
+    panTo, setZoom, listeners, scale: (next: number) => { zoom = next === 100000 ? 17 : 19; },
     Map: vi.fn(function (element: HTMLElement) { host = element; return {
       destroy: vi.fn(), setCenter: vi.fn(), panTo, setZoom,
-      getProjection: () => ({ fromCoordToOffset: (point: { latitude: number; longitude: number }) => ({ x: point.longitude * scale, y: point.latitude * scale }) }),
+      getZoom: () => zoom,
     }; }),
     LatLng: vi.fn(function (latitude: number, longitude: number) { return { latitude, longitude }; }),
     Marker: vi.fn(function (options: { icon: { content: HTMLElement }; title: string }) {
       host.appendChild(options.icon.content); return { setMap: () => options.icon.content.remove() };
     }),
+    Polygon: vi.fn(function (_options: unknown) { return { setMap: vi.fn() }; }),
     Polyline: vi.fn(function (_options: unknown) { return { setMap: vi.fn() }; }),
     Circle: vi.fn(function (_options: unknown) { return { setMap: vi.fn() }; }),
     Event: { addListener: vi.fn((_map: unknown, name: string, listener: () => void) => { listeners.set(name, listener); return name; }), removeListener: vi.fn() },
@@ -50,7 +53,7 @@ function view(market = data, lang: 'ko' | 'en' = 'ko') {
         selectedKey={selectedKey} onSelect={onSelect} focusStoreId={focusStoreId} color={() => 'var(--market-zone-1)'} pathColor={() => undefined} /></>;
   };
 }
-beforeEach(() => { maps = sdk(); window.localStorage.clear(); });
+beforeEach(() => { maps = sdk(); window.localStorage.clear(); google.load.mockReset().mockRejectedValue(new Error('offline')); });
 afterEach(() => { vi.unstubAllGlobals(); cleanup(); scripts().forEach((script) => script.remove()); Reflect.deleteProperty(window, 'naver'); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 describe('market map provider', () => {
   it('defaults to Naver, clusters counts and colours, opens the shared sheet and reclusters on zoom and idle', async () => {
@@ -61,7 +64,7 @@ describe('market map provider', () => {
     expect(pin.firstElementChild?.getAttribute('style')).toContain('background: var(--market-zone-1)');
     expect(pin.firstElementChild?.getAttribute('style')).toContain('border-width: 3px');
     expect(pin.firstElementChild?.getAttribute('style')).toContain('border-color: var(--ko-accent-text)');
-    expect(maps.Polyline).toHaveBeenCalledOnce();
+    expect(maps.Polygon).toHaveBeenCalledOnce();
     expect(screen.queryByRole('link', { name: 'OpenFreeMap' })).not.toBeInTheDocument();
     fireEvent.click(pin);
     expect(screen.getByRole('region', { name: '선택한 가게' })).toHaveTextContent('같은 필지 가게 (2)');
@@ -103,11 +106,40 @@ describe('market map provider', () => {
   });
   it('falls back automatically after SDK failure and retries with a fresh script', async () => {
     const View = view(); const { container } = render(<View />); await act(async () => fireEvent.error(scripts()[0]));
-    expect(container.querySelector('svg')).toBeInTheDocument(); expect(screen.queryByRole('group', { name: '네이버 가게 위치 지도' })).not.toBeInTheDocument();
+    await waitFor(() => expect(container.querySelector('svg')).toBeInTheDocument()); expect(screen.queryByRole('group', { name: '네이버 가게 위치 지도' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByText('네이버 지도로 보기')); expect(scripts()).toHaveLength(1); install(); await act(async () => fireEvent.load(scripts()[0])); expect(maps.Map).toHaveBeenCalledOnce();
   });
+  it('loads Google only after Naver authentication fails, keeping the same sheet and manual toggle', async () => {
+    const googleMaps = {
+      Map: vi.fn(function () { return { getZoom: () => 17, panTo: vi.fn(), setZoom: vi.fn(), unbindAll: vi.fn() }; }),
+      Polygon: vi.fn(function () { return { setMap: vi.fn() }; }),
+      Marker: vi.fn(function () { return { setMap: vi.fn() }; }),
+      Point: vi.fn(function (x: number, y: number) { return { x, y }; }), SymbolPath: { CIRCLE: 0 }, event: { addListener: vi.fn(), removeListener: vi.fn() },
+    };
+    google.load.mockResolvedValue(googleMaps); install(); const View = view(); const { container } = render(<View />);
+    await waitFor(() => expect(maps.Map).toHaveBeenCalledOnce()); expect(google.load).not.toHaveBeenCalled();
+    act(() => (window as unknown as { navermap_authFailure: () => void }).navermap_authFailure());
+    await waitFor(() => expect(googleMaps.Map).toHaveBeenCalledOnce());
+    expect(google.load).toHaveBeenCalledOnce(); expect(screen.getByRole('group', { name: '가게 위치 지도' })).toBeInTheDocument();
+    expect(container.querySelector('svg')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('Focus shop'));
+    // The fallback retains the same selection input and detail sheet.
+    expect(screen.getByRole('region', { name: '선택한 가게' })).toHaveTextContent('가게');
+    fireEvent.click(screen.getByText('우리 지도로 보기')); expect(container.querySelector('svg')).toBeInTheDocument();
+  });
+  it('uses SVG after Naver load failure followed by Google authentication failure', async () => {
+    const googleMaps = {
+      Map: vi.fn(function () { return { getZoom: () => 17, unbindAll: vi.fn() }; }),
+      Polygon: vi.fn(function () { return { setMap: vi.fn() }; }), Marker: vi.fn(function () { return { setMap: vi.fn() }; }),
+      Point: vi.fn(function (x: number, y: number) { return { x, y }; }), SymbolPath: { CIRCLE: 0 }, event: { addListener: vi.fn(), removeListener: vi.fn() },
+    };
+    google.load.mockResolvedValue(googleMaps); const View = view(); const { container } = render(<View />);
+    await act(async () => fireEvent.error(scripts()[0])); await waitFor(() => expect(googleMaps.Map).toHaveBeenCalledOnce());
+    act(() => (window as unknown as { gm_authFailure: () => void }).gm_authFailure());
+    expect(container.querySelector('.place-market-canvas svg')).toBeInTheDocument(); expect(googleMaps.Map.mock.results[0].value.unbindAll).toHaveBeenCalledOnce();
+  });
   it('falls back when the loaded SDK is missing and allows a fresh retry', async () => {
-    const View = view(); const { container } = render(<View />); await act(async () => fireEvent.load(scripts()[0])); expect(container.querySelector('svg')).toBeInTheDocument();
+    const View = view(); const { container } = render(<View />); await act(async () => fireEvent.load(scripts()[0])); await waitFor(() => expect(container.querySelector('svg')).toBeInTheDocument());
     fireEvent.click(screen.getByText('네이버 지도로 보기')); expect(scripts()).toHaveLength(1);
     install(); await act(async () => fireEvent.load(scripts()[0])); expect(maps.Map).toHaveBeenCalledOnce();
   });
@@ -122,7 +154,8 @@ describe('market map provider', () => {
   });
   it('supports paths-only projections with zero coordinate shops', async () => {
     install(); const View = view({ ...data, stores: [], boundary: null, paths: [{ id: 1, name: '시장길', named: true, source: 'OSM', geometry: [[37.5, 127], [37.501, 127.001]] }] });
-    render(<View />); await waitFor(() => expect(maps.Map).toHaveBeenCalledOnce()); expect(maps.Marker).toHaveBeenCalledWith(expect.objectContaining({ title: '시장길' }));
+    render(<View />); await waitFor(() => expect(maps.Map).toHaveBeenCalledOnce()); expect(maps.Polyline).toHaveBeenCalledOnce();
+    act(() => maps.scale(1000000)); act(() => maps.listeners.get('zoom_changed')!()); expect(maps.Marker).toHaveBeenCalledWith(expect.objectContaining({ title: '시장길' }));
   });
   it('requests English SDK labels after a Korean SDK was loaded', async () => {
     const Korean = view(); const first = render(<Korean />); install(); await act(async () => fireEvent.load(scripts()[0])); first.unmount();

@@ -1,41 +1,21 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from 'react';
-import type { MarketStore } from '../../api/marketApi';
-import { clusterByScreenDistance } from './marketView';
+import type { MarketResponse } from '../../api/marketApi';
+import { buildMarketOverlay, type MarketBounds, type OverlayMarker, type OverlaySelection } from './marketOverlay';
 
-type Coordinate = { latitude: number; longitude: number };
-export type MarketNaverMapProps = {
-  contentId: string;
-  lang: 'ko' | 'en';
-  centre: Coordinate;
-  boundary?: [number, number][];
-  pins: (Coordinate & { key: string; count: number; color: string; label: string; stores?: MarketStore[]; matched?: boolean })[];
-  labels?: (Coordinate & { text: string })[];
-  focusStoreId?: number | null;
-  onSelect?: (key: string) => void;
-  onError?: () => void;
-  userPosition?: Coordinate & { accuracy: number };
-  keyId: string;
+export type MarketLiveMapProps = {
+  contentId: string; lang: 'ko' | 'en'; data: MarketResponse;
+  selection?: OverlaySelection; storeIds?: (number | null)[];
+  userPosition?: { latitude: number; longitude: number; accuracy: number } | null;
+  onSelect?: (key: string) => void; onZoneSelect?: (id: number | null) => void; onError?: () => void;
 };
-
-type MapInstance = {
-  destroy(): void; setCenter(position: unknown): void; panTo(position: unknown): void; setZoom(zoom: number): void;
-  getProjection(): { fromCoordToOffset(position: unknown): { x: number; y: number } };
-};
-type Overlay = { setMap(map: MapInstance | null): void };
-type MapsSdk = {
-  Map: new (element: HTMLElement, options: { center: unknown; zoom: number; scaleControl: boolean; mapTypeControl: boolean; zoomControl: boolean }) => MapInstance;
-  LatLng: new (latitude: number, longitude: number) => unknown;
-  Marker: new (options: { map: MapInstance; position: unknown; title: string; icon: { content: HTMLElement; anchor: { x: number; y: number } } }) => Overlay;
-  Event: { addListener(target: MapInstance, event: string, callback: () => void): unknown; removeListener(listener: unknown): void };
-  Circle: new (options: { map: MapInstance; center: unknown; radius: number; strokeColor: string; fillColor: string; fillOpacity: number; strokeWeight: number }) => Overlay;
-  Polyline: new (options: { map: MapInstance; path: unknown[]; strokeColor: string; strokeWeight: number }) => Overlay;
-};
-const currentSdk = () => typeof window === 'undefined' ? undefined : (window as Window & { naver?: { maps?: MapsSdk } }).naver?.maps;
-const sdkLanguages = new WeakMap<MapsSdk, 'ko' | 'en'>();
-const sdkLoads = new WeakMap<HTMLScriptElement, Promise<MapsSdk>>();
+export type MarketNaverMapProps = MarketLiveMapProps & { keyId: string };
+const currentSdk = () => typeof window === 'undefined' ? undefined : (window as Window & { naver?: { maps?: any } }).naver?.maps;
+const sdkLanguages = new WeakMap<any, 'ko' | 'en'>();
+const sdkLoads = new WeakMap<HTMLScriptElement, Promise<any>>();
 
 /** Keep the SDK for subsequent toggles; each mounted view owns its map only. */
-function loadSdk(keyId: string, lang: 'ko' | 'en'): Promise<MapsSdk> {
+function loadSdk(keyId: string, lang: 'ko' | 'en'): Promise<any> {
   const maps = currentSdk();
   if (maps && (!sdkLanguages.has(maps) || sdkLanguages.get(maps) === lang)) return Promise.resolve(maps);
   let script = document.querySelector<HTMLScriptElement>('script[src^="https://oapi.map.naver.com/openapi/v3/maps.js"]');
@@ -44,7 +24,7 @@ function loadSdk(keyId: string, lang: 'ko' | 'en'): Promise<MapsSdk> {
   const append = !script;
   script ??= document.createElement('script');
   const element = script;
-  const loaded = new Promise<MapsSdk>((resolve, reject) => {
+  const loaded = new Promise<any>((resolve, reject) => {
     const finish = () => {
       element.removeEventListener('load', onLoad);
       element.removeEventListener('error', onError);
@@ -68,123 +48,99 @@ function loadSdk(keyId: string, lang: 'ko' | 'en'): Promise<MapsSdk> {
   return loaded;
 }
 
-function pinIcon(color: string, label: string, count?: number, matched = false): HTMLElement {
-  const icon = document.createElement('span');
-  icon.setAttribute('aria-label', label);
-  icon.textContent = count == null ? '' : String(count);
-  Object.assign(icon.style, {
-    display: 'grid', placeItems: 'center', boxSizing: 'border-box',
-    width: count == null ? '0.75rem' : '2rem', height: count == null ? '0.75rem' : '2rem',
-    borderRadius: '50%', borderStyle: 'solid', borderWidth: matched ? '3px' : '2px',
-    borderColor: matched ? 'var(--ko-accent-text)' : 'var(--ko-surface-0)',
-    background: color.startsWith('--') ? `var(${color})` : color,
-    color: 'var(--ko-surface-0)', fontSize: 'var(--ko-text-base)', fontWeight: '700',
-    fontVariantNumeric: 'tabular-nums', transform: 'translate(-50%, -50%)',
-  });
-  return icon;
+const authFailures = new Set<() => void>();
+function registerAuthFailure(callback: () => void) {
+  authFailures.add(callback);
+  (window as any).navermap_authFailure = () => { authFailures.forEach((fail) => fail()); };
+  return () => { authFailures.delete(callback); };
 }
 
-export default function MarketNaverMap({ contentId, lang, centre, boundary, pins, userPosition, keyId, labels = [], focusStoreId, onSelect, onError }: MarketNaverMapProps) {
-  const host = useRef<HTMLDivElement>(null);
+/** HTML uses textContent, including store names supplied by merchants. */
+function pinIcon(marker: OverlayMarker): HTMLElement {
+  const button = document.createElement('button'); button.type = 'button';
+  button.className = 'place-market-naver-pin'; button.setAttribute('aria-label', marker.title);
+  const icon = document.createElement('span'); icon.textContent = marker.label ? '' : marker.text;
+  Object.assign(icon.style, { display: 'grid', placeItems: 'center', boxSizing: 'border-box',
+    width: `${marker.size}px`, height: `${marker.size}px`, borderRadius: '50%', borderStyle: 'solid',
+    borderWidth: `${marker.strokeWeight}px`, borderColor: marker.strokeColor, background: marker.color,
+    color: marker.textColor, fontSize: 'var(--ko-text-base)', fontWeight: '700' });
+  button.appendChild(icon);
+  if (marker.label) { const label = document.createElement('span'); label.textContent = marker.text; label.className = 'place-market-naver-label'; label.style.color = marker.textColor; Object.assign(label.style, { position: 'absolute', left: '50%', top: '50%', transform: `translate(calc(-50% + ${marker.labelOffset.x}px), calc(-50% + ${marker.labelOffset.y}px))` }); button.appendChild(label); }
+  return button;
+}
+
+export default function MarketNaverMap(props: MarketNaverMapProps) {
+  const { contentId, lang, keyId } = props;
+  const host = useRef<HTMLDivElement>(null); const latest = useRef(props); latest.current = props;
   const identity = JSON.stringify([contentId, keyId, lang]);
-  const [ready, setReady] = useState<{ identity: string; map: MapInstance; sdk: MapsSdk } | null>(null);
+  const [ready, setReady] = useState<{ identity: string; map: any; sdk: any } | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
-  const appliedFocus = useRef<string | null>(null);
-  const errorRef = useRef(onError);
-  errorRef.current = onError;
-  const latitude = centre.latitude;
-  const longitude = centre.longitude;
-  // Initial centre is followed by the synchronization effect, including changes while loading.
-  const initialCentre = useRef(centre);
+  const redraw = useRef<() => void>(() => {}); const appliedFocus = useRef<string | null>(null);
   useEffect(() => {
     if (!keyId || !host.current) return;
-    let disposed = false;
-    let map: MapInstance | undefined;
+    let disposed = false; let map: any; let errorReported = false;
+    const fail = () => { if (!disposed && !errorReported) { errorReported = true; setFailed(identity); latest.current.onError?.(); } };
+    const unregister = registerAuthFailure(fail);
     loadSdk(keyId, lang).then((sdk) => {
-      if (disposed || !host.current) return;
-      map = new sdk.Map(host.current, { center: new sdk.LatLng(initialCentre.current.latitude, initialCentre.current.longitude), zoom: 17, scaleControl: true, mapTypeControl: false, zoomControl: true });
+      if (disposed || errorReported || !host.current) return;
+      const centre = buildMarketOverlay({ ...latest.current, zoom: 17 }).centre;
+      if (!centre) return;
+      map = new sdk.Map(host.current, { center: new sdk.LatLng(centre.latitude, centre.longitude), zoom: 17, scaleControl: true, mapTypeControl: false, zoomControl: true });
       setReady({ identity, map, sdk });
-    }).catch(() => { if (!disposed) { setFailed(identity); errorRef.current?.(); } });
-    return () => { disposed = true; map?.destroy(); };
+    }).catch(fail);
+    return () => { disposed = true; unregister(); map?.destroy(); };
   }, [identity, keyId, lang]);
 
   useEffect(() => {
     if (!keyId || ready?.identity !== identity) return;
-    ready.map.setCenter(new ready.sdk.LatLng(latitude, longitude));
-  }, [ready, identity, keyId, latitude, longitude]);
-
-  useEffect(() => {
-    if (focusStoreId == null) { appliedFocus.current = null; return; }
-    if (!keyId || ready?.identity !== identity) return;
-    const pin = pins.find((pin) => pin.stores?.some((store) => store.id === focusStoreId));
-    if (!pin) return;
-    const request = JSON.stringify([identity, focusStoreId, pin.latitude, pin.longitude]);
-    if (appliedFocus.current === request) return;
-    appliedFocus.current = request;
-    ready.map.panTo(new ready.sdk.LatLng(pin.latitude, pin.longitude));
-    ready.map.setZoom(19);
-    onSelect?.(pin.key);
-  }, [ready, identity, keyId, focusStoreId, pins, onSelect]);
-
-  useEffect(() => {
-    if (!keyId || ready?.identity !== identity) return;
     const { sdk, map } = ready;
-    let markers: Overlay[] = [];
-    const drawPins = () => {
-      markers.forEach((marker) => marker.setMap(null));
-      const projection = map.getProjection();
-      const projected = pins.map((pin) => ({ ...pin,
-        ...projection.fromCoordToOffset(new sdk.LatLng(pin.latitude, pin.longitude)), stores: pin.stores ?? [],
-      }));
-      const clusters = clusterByScreenDistance(projected, 1, 24);
-      markers = clusters.map((pin) => {
-        const members = pins.filter((member) => pin.parcelKeys.includes(member.key));
-        const label = members.map((member) => member.label).join(', ');
-        const icon = pinIcon(pin.color, label, members.reduce((sum, member) => sum + member.count, 0), members.some((member) => member.matched));
-        const button = document.createElement('button');
-        button.type = 'button'; button.setAttribute('aria-label', label);
-        button.className = 'place-market-naver-pin';
-        icon.style.transform = 'none';
-        button.appendChild(icon);
-        button.onclick = () => onSelect?.(pin.key);
-        return new sdk.Marker({ map, position: new sdk.LatLng(pin.latitude, pin.longitude), title: label,
-          icon: { content: button, anchor: { x: 0, y: 0 } } });
+    const overlays = new Map<string, { signature: string; object: any; listener?: any }>();
+    const token = (color: string) => { const name = /^var\((--[\w-]+)\)$/.exec(color)?.[1]; return name ? getComputedStyle(host.current!).getPropertyValue(name).trim() : color; };
+    const coord = (p: { latitude: number; longitude: number }) => new sdk.LatLng(p.latitude, p.longitude);
+    const remove = (entry: { object: any; listener?: any }) => { if (entry.listener != null) sdk.Event.removeListener(entry.listener); entry.object.setMap(null); };
+    redraw.current = () => {
+      const bounds = map.getBounds?.(); const ne = bounds?.getNE(); const sw = bounds?.getSW();
+      const frame: MarketBounds | undefined = ne && sw ? { north: ne.lat(), east: ne.lng(), south: sw.lat(), west: sw.lng() } : undefined;
+      const input = latest.current;
+      const model = buildMarketOverlay({ ...input, zoom: Math.round(map.getZoom?.() ?? 17), bounds: frame });
+      const wanted = new Set<string>();
+      const sync = (key: string, value: unknown, create: () => any, click?: () => void) => {
+        wanted.add(key); const signature = JSON.stringify(value); const old = overlays.get(key);
+        if (old?.signature === signature) return;
+        if (old) remove(old);
+        const object = create(); const listener = click ? sdk.Event.addListener(object, 'click', click) : undefined;
+        overlays.set(key, { signature, object, listener });
+      };
+      for (const shape of [model.marketPolygon, ...model.zonePolygons].filter((shape) => shape != null)) sync(shape.key, shape, () => new sdk.Polygon({ map, paths: shape.coordinates.map(([lat, lng]) => new sdk.LatLng(lat, lng)), fillColor: token(shape.color), fillOpacity: shape.fillOpacity, strokeColor: token(shape.color), strokeWeight: shape.strokeWeight, strokeOpacity: shape.strokeOpacity }), shape.zoneId != null ? () => latest.current.onZoneSelect?.(shape.zoneId) : undefined);
+      for (const line of model.alleys) sync(line.key, line, () => new sdk.Polyline({ map, path: line.coordinates.map(([lat, lng]) => new sdk.LatLng(lat, lng)), strokeColor: token(line.color), strokeWeight: line.strokeWeight, strokeOpacity: line.strokeOpacity }), line.zoneId != null ? () => latest.current.onZoneSelect?.(line.zoneId) : undefined);
+      for (const marker of model.markers) sync(marker.key, marker, () => {
+        const content = pinIcon(marker); content.onclick = () => { if (marker.selectionKey) latest.current.onSelect?.(marker.selectionKey); };
+        return new sdk.Marker({ map, position: coord(marker), title: marker.title, icon: { content, anchor: { x: 0, y: 0 } } });
       });
+      for (const label of model.labels) sync(label.key, label, () => {
+        const content = document.createElement('span'); content.textContent = label.text; content.className = 'place-market-naver-label'; content.style.color = label.color;
+        return new sdk.Marker({ map, position: coord(label), title: label.text, icon: { content, anchor: { x: 0, y: 0 } } });
+      }, label.zoneId != null ? () => latest.current.onZoneSelect?.(label.zoneId) : undefined);
+      if (model.userPosition) {
+        const user = model.userPosition;
+        sync('user-accuracy', user, () => new sdk.Circle({ map, center: coord(user), radius: user.accuracy, strokeColor: token(user.color), fillColor: token(user.color), fillOpacity: user.fillOpacity, strokeWeight: user.strokeWeight }));
+        sync('user', user, () => new sdk.Marker({ map, position: coord(user), title: user.text, icon: { content: pinIcon({ ...user, key: 'user', text: '', title: user.text, storeIds: [], textColor: user.strokeColor, labelOffset: { x: 0, y: 0 }, highlighted: false, searchMatch: false, label: false }), anchor: { x: 0, y: 0 } } }));
+      }
+      for (const [key, entry] of overlays) if (!wanted.has(key)) { remove(entry); overlays.delete(key); }
+      if (!model.focus) appliedFocus.current = null;
+      else {
+        const request = JSON.stringify([identity, model.focus]);
+        if (appliedFocus.current !== request) { appliedFocus.current = request; map.panTo(coord(model.focus)); map.setZoom(model.focus.zoom); latest.current.onSelect?.(model.focus.selectionKey); }
+      }
     };
-    drawPins();
-    const listeners = ['zoom_changed', 'idle'].map((event) => sdk.Event.addListener(map, event, drawPins));
-    return () => { listeners.forEach((listener) => sdk.Event.removeListener(listener)); markers.forEach((marker) => marker.setMap(null)); };
-  }, [ready, identity, keyId, pins, onSelect]);
-
-  useEffect(() => {
-    if (!keyId || ready?.identity !== identity) return;
-    const { sdk, map } = ready;
-    const token = (name: string) => getComputedStyle(host.current!).getPropertyValue(name).trim();
-    const overlays: Overlay[] = [];
-    if (boundary && boundary.length > 1) overlays.push(new sdk.Polyline({
-      map, path: [...boundary, boundary[0]].map(([lat, lng]) => new sdk.LatLng(lat, lng)),
-      strokeColor: token('--ko-text-muted'), strokeWeight: 2,
-    }));
-    for (const label of labels) {
-      const content = document.createElement('span');
-      content.className = 'place-market-naver-label'; content.textContent = label.text;
-      overlays.push(new sdk.Marker({ map, position: new sdk.LatLng(label.latitude, label.longitude), title: label.text,
-        icon: { content, anchor: { x: 0, y: 0 } } }));
-    }
-    if (userPosition) {
-      const label = lang === 'en' ? 'Your location' : '내 위치';
-      const position = new sdk.LatLng(userPosition.latitude, userPosition.longitude);
-      overlays.push(new sdk.Circle({ map, center: position, radius: userPosition.accuracy,
-        strokeColor: token('--ko-accent-primary'), fillColor: token('--ko-accent-primary'), fillOpacity: 0.15, strokeWeight: 1 }));
-      overlays.push(new sdk.Marker({ map, position, title: label,
-        icon: { content: pinIcon('var(--ko-accent-primary)', label), anchor: { x: 0, y: 0 } } }));
-    }
-    return () => { overlays.forEach((overlay) => overlay.setMap(null)); };
-  }, [ready, identity, keyId, boundary, userPosition, lang, labels]);
-
+    redraw.current();
+    const listeners = ['zoom_changed', 'idle', 'bounds_changed'].map((event) => sdk.Event.addListener(map, event, () => redraw.current()));
+    return () => { redraw.current = () => {}; listeners.forEach((listener) => sdk.Event.removeListener(listener)); overlays.forEach(remove); };
+  }, [ready, identity, keyId]);
+  useEffect(() => { redraw.current(); }, [props.data, props.selection, props.storeIds, props.userPosition]);
   if (!keyId) return null;
   return <div role="group" aria-label={lang === 'en' ? 'Naver shop location map' : '네이버 가게 위치 지도'}>
     <div ref={host} style={{ width: '100%', aspectRatio: '600 / 440', minHeight: '20rem' }} />
-    {failed === identity && <p role="alert">{lang === 'en' ? 'Unable to load Naver Map. Turn off Naver Map to use the shop map.' : '네이버 지도를 불러오지 못했습니다. 네이버 지도 보기를 끄고 가게 지도를 이용하세요.'}</p>}
+    {failed === identity && <p role="alert">{lang === 'en' ? 'Unable to load Naver Map.' : '네이버 지도를 불러오지 못했습니다.'}</p>}
   </div>;
 }

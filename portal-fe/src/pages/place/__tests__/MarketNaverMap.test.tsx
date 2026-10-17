@@ -1,120 +1,73 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { MarketResponse, MarketStore } from '../../../api/marketApi';
 import MarketNaverMap from '../MarketNaverMap';
-
-const props = {
-  contentId: '132180', lang: 'ko' as const, keyId: 'test-key',
-  centre: { latitude: 37.56, longitude: 126.98 },
-  pins: [
-    { key: 'one', latitude: 37.56, longitude: 126.98, count: 3, color: 'var(--ko-accent-primary)', label: '<가게>' },
-    { key: 'two', latitude: 37.561, longitude: 126.981, count: 1, color: '--ko-accent-secondary', label: '두 번째 가게' },
-  ],
-};
+const store = (id: number, latitude: number, longitude: number) => ({ id, name: `<Shop ${id}>`, latitude, longitude, membership: 'IN', zoneId: 1, sources: [], pinKind: 'EXACT' } as unknown as MarketStore);
+const data: MarketResponse = { market: { name: 'Market' } as MarketResponse['market'], zones: [{ id: 1, name: 'Lane', children: [] } as unknown as MarketResponse['zones'][number]], stores: [store(1, 37.5, 127), store(2, 37.50001, 127.00001), store(3, 37.5001, 127)], paths: [{ id: 1, name: 'Lane', named: true, source: 'OSM', geometry: [[37.5, 127], [37.501, 127]] }] };
+const props = { contentId: '132180', lang: 'ko' as const, keyId: 'test-key', data };
 function sdk() {
-  const destroy = vi.fn(); const setCenter = vi.fn(); const setMap = vi.fn();
-  const panTo = vi.fn(); const setZoom = vi.fn();
-  const listeners = new Map<string, () => void>();
-  const getProjection = () => ({ fromCoordToOffset: (point: { latitude: number; longitude: number }) => ({ x: point.longitude * 100000, y: point.latitude * 100000 }) });
-  return {
-    destroy, setCenter, setMap, panTo, setZoom, listeners,
-    Event: { addListener: vi.fn((_target: unknown, event: string, callback: () => void) => { listeners.set(event, callback); return event; }), removeListener: vi.fn() },
-    Circle: vi.fn(function (...args: [unknown]) { void args; return { setMap }; }),
-    Map: vi.fn(function (...args: [HTMLElement, unknown]) { void args; return { destroy, setCenter, panTo, setZoom, getProjection }; }),
-    LatLng: vi.fn(function (latitude: number, longitude: number) { return { latitude, longitude }; }),
-    Marker: vi.fn(function (...args: [{ icon: { content: HTMLElement }; title?: string }]) { void args; return { setMap }; }),
-    Polyline: vi.fn(function (...args: [unknown]) { void args; return { setMap }; }),
+  let zoom = 17; let north = 38; const listeners = new Map<string, () => void>();
+  const objects: { setMap: ReturnType<typeof vi.fn> }[] = [];
+  const overlay = () => { const object = { setMap: vi.fn() }; objects.push(object); return object; };
+  const destroy = vi.fn(); const panTo = vi.fn(); const setZoom = vi.fn((z: number) => { zoom = z; });
+  const map = { destroy, panTo, setZoom, getZoom: () => zoom, getBounds: () => ({ getNE: () => ({ lat: () => north, lng: () => 128 }), getSW: () => ({ lat: () => 37, lng: () => 126 }) }) };
+  return { objects, destroy, panTo, setZoom, listeners, zoom: (z: number) => { zoom = z; }, north: (n: number) => { north = n; },
+    Map: vi.fn(function () { return map; }), LatLng: vi.fn(function (latitude: number, longitude: number) { return { latitude, longitude }; }),
+    Marker: vi.fn(function (_options: { icon: { content: HTMLElement }; title?: string }) { return overlay(); }),
+    Polygon: vi.fn(function (_options: unknown) { return overlay(); }), Polyline: vi.fn(function (_options: unknown) { return overlay(); }), Circle: vi.fn(function (_options: unknown) { return overlay(); }),
+    Event: { addListener: vi.fn((target: unknown, event: string, callback: () => void) => { if (target === map) listeners.set(event, callback); return { target, event, callback }; }), removeListener: vi.fn() },
   };
 }
 let maps: ReturnType<typeof sdk>;
 const install = () => Object.defineProperty(window, 'naver', { configurable: true, value: { maps } });
 const scripts = () => document.querySelectorAll<HTMLScriptElement>('script[src^="https://oapi.map.naver.com/openapi/v3/maps.js"]');
 beforeEach(() => { maps = sdk(); });
-afterEach(() => {
-  cleanup(); scripts().forEach((script) => script.remove()); Reflect.deleteProperty(window, 'naver');
-});
-
+afterEach(() => { cleanup(); scripts().forEach((s) => s.remove()); Reflect.deleteProperty(window, 'naver'); });
 describe('MarketNaverMap', () => {
-  it('inserts the SDK once across concurrent mounts and reuses it on remount', async () => {
-    const first = render(<MarketNaverMap {...props} />);
-    const second = render(<MarketNaverMap {...props} />);
-    expect(scripts()).toHaveLength(1);
-    expect(scripts()[0].src).toBe('https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=test-key&language=ko');
-    install();
-    await act(async () => { fireEvent.load(scripts()[0]); });
-    expect(maps.Map).toHaveBeenCalledTimes(2);
-    first.unmount(); second.unmount();
-    render(<MarketNaverMap {...props} />);
-    await waitFor(() => expect(maps.Map).toHaveBeenCalledTimes(3));
-    expect(scripts()).toHaveLength(1);
+  it('inserts one SDK for concurrent mounts and reuses it after remount', async () => {
+    const first = render(<MarketNaverMap {...props} />); const second = render(<MarketNaverMap {...props} />);
+    expect(scripts()).toHaveLength(1); expect(scripts()[0].src).toContain('ncpKeyId=test-key&language=ko'); install();
+    await act(async () => fireEvent.load(scripts()[0])); expect(maps.Map).toHaveBeenCalledTimes(2);
+    first.unmount(); second.unmount(); render(<MarketNaverMap {...props} />); await waitFor(() => expect(maps.Map).toHaveBeenCalledTimes(3));
   });
-
-  it('reuses the SDK, draws one safe HTML icon per pin, and destroys the map', async () => {
-    install();
-    const { unmount } = render(<MarketNaverMap {...props} />);
-    await waitFor(() => expect(maps.Marker).toHaveBeenCalledTimes(props.pins.length));
-    expect(scripts()).toHaveLength(0);
-    expect(maps.Map).toHaveBeenCalledWith(expect.any(HTMLElement), { center: props.centre, zoom: 17, scaleControl: true, mapTypeControl: false, zoomControl: true });
-    const options = maps.Marker.mock.calls[0][0];
-    expect(options.icon.content.textContent).toBe('3');
-    expect(options.icon.content.firstElementChild!.getAttribute('style')).toContain('var(--ko-accent-primary)');
-    expect(maps.Marker.mock.calls[1][0].icon.content.firstElementChild!.getAttribute('style')).toContain('var(--ko-accent-secondary)');
-    expect(options.title).toBe('<가게>');
-    expect(options.icon.content.querySelector('가게')).toBeNull();
-    unmount();
-    expect(maps.destroy).toHaveBeenCalledOnce();
-    expect(maps.setMap).toHaveBeenCalledWith(null);
+  it('uses safe HTML, polygons with fill, alley lines, and removes all objects on unmount', async () => {
+    install(); const { unmount } = render(<MarketNaverMap {...props} />);
+    await waitFor(() => expect(maps.Marker).toHaveBeenCalledOnce());
+    const icon = maps.Marker.mock.calls[0][0].icon.content;
+    expect(icon.textContent).toBe('3'); expect(icon.getAttribute('aria-label')).toContain('<Shop 1>'); expect(icon.querySelector('shop')).toBeNull();
+    expect(maps.Polygon).toHaveBeenCalledTimes(2); expect(maps.Polygon).toHaveBeenCalledWith(expect.objectContaining({ fillOpacity: .12, strokeWeight: 1.5 })); expect(maps.Polyline).toHaveBeenCalledOnce();
+    unmount(); expect(maps.destroy).toHaveBeenCalledOnce(); expect(maps.objects.every((o) => o.setMap.mock.calls.some(([map]) => map === null))).toBe(true);
   });
-
-  it('renders and loads nothing for an empty key', () => {
-    const { container } = render(<MarketNaverMap {...props} keyId="" />);
-    expect(container).toBeEmptyDOMElement();
-    expect(scripts()).toHaveLength(0);
-    expect(maps.Map).not.toHaveBeenCalled();
+  it('loads nothing with an empty key', () => {
+    const { container } = render(<MarketNaverMap {...props} keyId="" />); expect(container).toBeEmptyDOMElement(); expect(scripts()).toHaveLength(0);
   });
-
-  it('synchronizes centre, boundary, pins and user position without replacing the map', async () => {
-    install();
-    const { rerender } = render(<MarketNaverMap {...props} />);
-    await waitFor(() => expect(maps.Marker).toHaveBeenCalledTimes(2));
-    maps.Marker.mockClear(); maps.setMap.mockClear();
-    const centre = { latitude: 37.57, longitude: 127 };
-    rerender(<MarketNaverMap {...props} centre={centre} pins={props.pins.slice(0, 1)}
-      boundary={[[37.56, 126.98], [37.57, 127]]} userPosition={{ ...centre, accuracy: 15 }} />);
-    await waitFor(() => expect(maps.Polyline).toHaveBeenCalledOnce());
-    expect(maps.Map).toHaveBeenCalledOnce();
-    expect(maps.setCenter).toHaveBeenLastCalledWith(centre);
-    expect(maps.setMap).toHaveBeenCalledTimes(2);
-    expect(maps.Marker).toHaveBeenCalledTimes(2);
+  it('increments only changed overlays on stage and viewport events, preserving polygons', async () => {
+    install(); render(<MarketNaverMap {...props} />); await waitFor(() => expect(maps.Marker).toHaveBeenCalledOnce());
+    act(() => maps.listeners.get('idle')!()); expect(maps.Marker).toHaveBeenCalledOnce(); expect(maps.Polygon).toHaveBeenCalledTimes(2);
+    maps.zoom(16); act(() => maps.listeners.get('zoom_changed')!()); expect(maps.Marker).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Market' }));
+    maps.zoom(19); act(() => maps.listeners.get('zoom_changed')!()); expect(maps.Marker.mock.calls.slice(-4).filter(([o]) => o.title?.startsWith('<Shop'))).toHaveLength(3);
+    const count = maps.Marker.mock.calls.length; maps.north(37.50002); act(() => maps.listeners.get('bounds_changed')!());
+    expect(maps.Marker).toHaveBeenCalledTimes(count); expect(maps.Polygon).toHaveBeenCalledTimes(2);
   });
-
-  it('does not create a map after unmount during SDK loading', async () => {
-    const { unmount } = render(<MarketNaverMap {...props} />);
-    const script = scripts()[0];
-    unmount(); install();
-    await act(async () => { fireEvent.load(script); });
-    expect(maps.Map).not.toHaveBeenCalled();
+  it('does not create a map after unmount during loading', async () => {
+    const { unmount } = render(<MarketNaverMap {...props} />); const script = scripts()[0]; unmount(); install(); await act(async () => fireEvent.load(script)); expect(maps.Map).not.toHaveBeenCalled();
   });
-
-  it('uses the latest props after SDK loading and tears down when the key is cleared', async () => {
+  it('uses latest props after loading and cleans up when key clears', async () => {
     const { rerender, container } = render(<MarketNaverMap {...props} />);
-    const centre = { latitude: 37.6, longitude: 127.1 };
-    rerender(<MarketNaverMap {...props} centre={centre} pins={props.pins.slice(0, 1)} />);
-    install();
-    await act(async () => { fireEvent.load(scripts()[0]); });
-    expect(maps.setCenter).toHaveBeenLastCalledWith(centre);
-    expect(maps.Marker).toHaveBeenCalledOnce();
-    rerender(<MarketNaverMap {...props} keyId="" />);
-    expect(container).toBeEmptyDOMElement();
-    expect(maps.destroy).toHaveBeenCalledOnce();
-    expect(maps.setMap).toHaveBeenCalledWith(null);
+    rerender(<MarketNaverMap {...props} userPosition={{ latitude: 37.5, longitude: 127, accuracy: 15 }} selection={{ storeId: 1 }} />);
+    install(); await act(async () => fireEvent.load(scripts()[0]));
+    expect(maps.Circle).toHaveBeenCalledWith(expect.objectContaining({ radius: 15 })); expect(maps.panTo).toHaveBeenCalledWith({ latitude: 37.5, longitude: 127 }); expect(maps.setZoom).toHaveBeenCalledWith(19);
+    rerender(<MarketNaverMap {...props} keyId="" />); expect(container).toBeEmptyDOMElement(); expect(maps.destroy).toHaveBeenCalledOnce();
   });
-
-  it('shows a localized SDK load failure', async () => {
-    const onError = vi.fn();
-    render(<MarketNaverMap {...props} lang="en" onError={onError} />);
-    await act(async () => { fireEvent.error(scripts()[0]); });
-    expect(screen.getByRole('alert')).toHaveTextContent('Unable to load Naver Map.');
-    expect(maps.Map).not.toHaveBeenCalled();
-    expect(onError).toHaveBeenCalledOnce();
+  it('reports localized load failure and suppresses native auth alerts before SDK execution', async () => {
+    const onError = vi.fn(); render(<MarketNaverMap {...props} lang="en" onError={onError} />);
+    expect(typeof (window as unknown as { navermap_authFailure: unknown }).navermap_authFailure).toBe('function');
+    await act(async () => fireEvent.error(scripts()[0])); expect(screen.getByRole('alert')).toHaveTextContent('Unable to load Naver Map.'); expect(onError).toHaveBeenCalledOnce();
+  });
+  it('reports authentication failure after SDK load and wires polygon and alley clicks to zone selection', async () => {
+    install(); const onError = vi.fn(); const onZoneSelect = vi.fn(); render(<MarketNaverMap {...props} onError={onError} onZoneSelect={onZoneSelect} />);
+    await waitFor(() => expect(maps.Polygon).toHaveBeenCalledTimes(2));
+    const click = maps.Event.addListener.mock.calls.find(([, event]) => event === 'click')![2]; act(() => click()); expect(onZoneSelect).toHaveBeenCalledWith(1);
+    act(() => (window as unknown as { navermap_authFailure: () => void }).navermap_authFailure()); expect(onError).toHaveBeenCalledOnce();
   });
 });
