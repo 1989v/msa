@@ -11,6 +11,7 @@ import WebSocket from 'ws';
 
 export const WIDTH = 1536, HEIGHT = 1152;
 export const STYLE_VERSION = 'openfreemap-positron-fiord-maplibre-4.7.1-z18-v1';
+export const ZOOM = 18;
 const API = 'https://place.1989v.com/api/v1/place/markets';
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const execute = promisify(execFile);
@@ -42,6 +43,17 @@ export async function retry(operation) {
 export function manifest(theme, requested, succeeded, failed) {
   return { renderedAt: new Date().toISOString(), styleVersion: STYLE_VERSION, theme,
     requestedContentIds: requested, contentIds: succeeded, failed };
+}
+export function metadata(contentId, [latitude, longitude], renderedAt = new Date().toISOString()) {
+  // MapLibre's zoom uses a 512px world tile, at deviceScaleFactor 1.
+  const world = 512 * 2 ** ZOOM;
+  const y = (1 - Math.asinh(Math.tan(latitude * Math.PI / 180)) / Math.PI) / 2;
+  const latitudeAt = value => Math.atan(Math.sinh(Math.PI * (1 - 2 * value))) * 180 / Math.PI;
+  return { contentId: String(contentId), centre: { latitude, longitude }, zoom: ZOOM,
+    width: WIDTH, height: HEIGHT,
+    bounds: { north: latitudeAt(y - HEIGHT / 2 / world), south: latitudeAt(y + HEIGHT / 2 / world),
+      east: longitude + WIDTH / 2 / world * 360, west: longitude - WIDTH / 2 / world * 360 },
+    renderedAt, styleVersion: STYLE_VERSION, themes: ['light', 'dark'] };
 }
 export function exceedsThreshold(index) { return index.failed.length / index.requestedContentIds.length > 0.05; }
 
@@ -82,7 +94,8 @@ async function upload(base, key, file, contentType) {
   // curl 의 stderr/실행 인수를 오류에 담지 않는다: PAR 는 비밀이다.
   try {
     await execute('curl', ['-fsS', '--connect-timeout', '20', '--max-time', '120', '-X', 'PUT', '-H',
-      `Content-Type: ${contentType}`, '--data-binary', `@${file}`, `${base}${key}`], { timeout: 125000 });
+      `Content-Type: ${contentType}`, '-H', `Cache-Control: public, max-age=${contentType === 'image/png' ? 86400 : 3600}`,
+      '--data-binary', `@${file}`, `${base}${key}`], { timeout: 125000 });
   } catch { throw new Error(`Object upload failed: ${key}`); }
 }
 
@@ -103,7 +116,7 @@ function html(center, theme) {
 window.statusResult={ready:false,error:null};
 window.onerror=()=>{window.statusResult.error='Page script failed'};
 try {
- const map=new maplibregl.Map({container:'map',style:${JSON.stringify(style)},center:${JSON.stringify([center[1], center[0]])},zoom:18,bearing:0,pitch:0,interactive:false,attributionControl:false,fadeDuration:0,preserveDrawingBuffer:true});
+ const map=new maplibregl.Map({container:'map',style:${JSON.stringify(style)},center:${JSON.stringify([center[1], center[0]])},zoom:${ZOOM},bearing:0,pitch:0,interactive:false,attributionControl:false,fadeDuration:0,preserveDrawingBuffer:true});
  map.on('error',()=>{window.statusResult.error='Map style, glyph or tile failed'});
  map.on('idle',()=>{if(map.isStyleLoaded()&&map.areTilesLoaded())requestAnimationFrame(()=>requestAnimationFrame(()=>{window.statusResult.ready=true}));});
 } catch(e){window.statusResult.error='Map initialization failed'}
@@ -251,7 +264,10 @@ export async function main(args = process.argv.slice(2)) {
               browser ||= await createBrowser(chromePath);
               await screenshot(browser, `http://127.0.0.1:${server.address().port}/?market=${id}&theme=${theme}&t=${Date.now()}`, file);
             } catch (error) { if (browser) await browser.cleanup(); browser = null; throw error; }
+            const metaFile = path.join(directory, 'meta.json');
+            await writeFile(metaFile, JSON.stringify(metadata(id, center), null, 2));
             if (base) await upload(base, `markets/${id}/z18-${theme}.png`, file, 'image/png');
+            if (base) await upload(base, `markets/${id}/meta.json`, metaFile, 'application/json');
           });
           succeeded.push(id); console.log(`${theme} ${id}: OK`);
         } catch (error) { failed.push({ contentId: id, error: error.message }); console.error(`${theme} ${id}: ${error.message}`); }
