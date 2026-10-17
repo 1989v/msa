@@ -241,7 +241,7 @@ export default function PrivacyPage() {
                   </tr>
                   <tr>
                     <td>네이버 지도(네이버클라우드)</td>
-                    <td>시장 지도에서 네이버 지도 보기를 켤 때만 로드</td>
+                    <td>시장 지도의 기본 바탕으로 로드하며, 우리 지도로 전환할 수 있음</td>
                     <td>
                       <a href="https://www.ncloud.com/policy/infou" target="_blank" rel="noopener noreferrer">
                         네이버클라우드 개인정보처리방침

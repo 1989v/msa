@@ -35,6 +35,8 @@ describe('optional attraction market section', () => {
     expect(fetch).toHaveBeenCalledWith('/basemaps/markets/100/meta.json');
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(container.querySelector('image')).toBeNull();
+    expect(screen.queryByRole('button', { name: '우리 지도로 보기' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '네이버 지도로 보기' })).not.toBeInTheDocument();
     expect(container.querySelector('.place-market-path')).not.toBeNull();
     expect(screen.queryByRole('link', { name: 'OpenFreeMap' })).not.toBeInTheDocument();
   });

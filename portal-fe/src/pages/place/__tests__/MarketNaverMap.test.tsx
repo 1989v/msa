@@ -12,9 +12,14 @@ const props = {
 };
 function sdk() {
   const destroy = vi.fn(); const setCenter = vi.fn(); const setMap = vi.fn();
+  const panTo = vi.fn(); const setZoom = vi.fn();
+  const listeners = new Map<string, () => void>();
+  const getProjection = () => ({ fromCoordToOffset: (point: { latitude: number; longitude: number }) => ({ x: point.longitude * 100000, y: point.latitude * 100000 }) });
   return {
-    destroy, setCenter, setMap,
-    Map: vi.fn(function (...args: [HTMLElement, unknown]) { void args; return { destroy, setCenter }; }),
+    destroy, setCenter, setMap, panTo, setZoom, listeners,
+    Event: { addListener: vi.fn((_target: unknown, event: string, callback: () => void) => { listeners.set(event, callback); return event; }), removeListener: vi.fn() },
+    Circle: vi.fn(function (...args: [unknown]) { void args; return { setMap }; }),
+    Map: vi.fn(function (...args: [HTMLElement, unknown]) { void args; return { destroy, setCenter, panTo, setZoom, getProjection }; }),
     LatLng: vi.fn(function (latitude: number, longitude: number) { return { latitude, longitude }; }),
     Marker: vi.fn(function (...args: [{ icon: { content: HTMLElement }; title?: string }]) { void args; return { setMap }; }),
     Polyline: vi.fn(function (...args: [unknown]) { void args; return { setMap }; }),
@@ -48,11 +53,11 @@ describe('MarketNaverMap', () => {
     const { unmount } = render(<MarketNaverMap {...props} />);
     await waitFor(() => expect(maps.Marker).toHaveBeenCalledTimes(props.pins.length));
     expect(scripts()).toHaveLength(0);
-    expect(maps.Map).toHaveBeenCalledWith(expect.any(HTMLElement), { center: props.centre, zoom: 17 });
+    expect(maps.Map).toHaveBeenCalledWith(expect.any(HTMLElement), { center: props.centre, zoom: 17, scaleControl: true, mapTypeControl: false, zoomControl: true });
     const options = maps.Marker.mock.calls[0][0];
     expect(options.icon.content.textContent).toBe('3');
-    expect(options.icon.content.style.background).toBe('var(--ko-accent-primary)');
-    expect(maps.Marker.mock.calls[1][0].icon.content.style.background).toBe('var(--ko-accent-secondary)');
+    expect(options.icon.content.firstElementChild!.getAttribute('style')).toContain('var(--ko-accent-primary)');
+    expect(maps.Marker.mock.calls[1][0].icon.content.firstElementChild!.getAttribute('style')).toContain('var(--ko-accent-secondary)');
     expect(options.title).toBe('<가게>');
     expect(options.icon.content.querySelector('가게')).toBeNull();
     unmount();
@@ -105,9 +110,11 @@ describe('MarketNaverMap', () => {
   });
 
   it('shows a localized SDK load failure', async () => {
-    render(<MarketNaverMap {...props} lang="en" />);
+    const onError = vi.fn();
+    render(<MarketNaverMap {...props} lang="en" onError={onError} />);
     await act(async () => { fireEvent.error(scripts()[0]); });
     expect(screen.getByRole('alert')).toHaveTextContent('Unable to load Naver Map.');
     expect(maps.Map).not.toHaveBeenCalled();
+    expect(onError).toHaveBeenCalledOnce();
   });
 });

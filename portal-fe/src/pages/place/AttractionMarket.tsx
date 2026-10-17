@@ -8,7 +8,7 @@ import './AttractionMarket.css';
 import MarketMenuDetails from './MarketMenuDetails';
 import { marketDisplayName, sectionMatchLabel } from './marketView';
 import { placePath } from '../../seo/copy.mjs';
-import MarketCanvas from './MarketCanvas';
+import MarketMap from './MarketMap';
 import MarketStewardApplication from './MarketStewardApplication';
 
 const COPY = {
@@ -35,9 +35,9 @@ function MarketSection({ contentId, data, lang, initialQuery, includeOutside, on
   const { data: basemapMeta } = useMarketBasemapMeta(contentId);
   const searchId = useId();
   const [zoneId, setZoneId] = useState<number | null>(null);
-  const [query, setQuery] = useState(() => (initialQuery ?? new URLSearchParams(window.location.search).get('marketQuery') ?? '').trim().slice(0, 50));
+  const [query, setQuery] = useState(() => (initialQuery ?? new URLSearchParams(typeof window === 'undefined' ? '' : window.location.search).get('marketQuery') ?? '').trim().slice(0, 50));
   const sectionRef = useRef<HTMLElement>(null);
-  const [scrollToMarket] = useState(() => Boolean(query || window.location.hash === '#market'));
+  const [scrollToMarket] = useState(() => Boolean(query || (typeof window !== 'undefined' && window.location.hash === '#market')));
   useEffect(() => {
     if (scrollToMarket || window.location.hash === '#market') sectionRef.current?.scrollIntoView?.({ block: 'start' });
   }, [scrollToMarket]);
@@ -114,7 +114,7 @@ function MarketSection({ contentId, data, lang, initialQuery, includeOutside, on
       <div className="place-market-layout">
         <div className="place-market-map">
           {data.nearbyRadiusMetres != null && <p className="place-market-note">{lang === 'en' ? `Showing shops within ${data.nearbyRadiusMetres} m of the market` : `시장 주변 ${data.nearbyRadiusMetres} m 안 가게를 보입니다`}</p>}
-          {projection ? <MarketCanvas basemapMeta={basemapMeta} data={data} lang={lang} projection={projection} points={mapPoints}
+          {projection ? <MarketMap contentId={contentId} basemapMeta={basemapMeta} data={data} lang={lang} projection={projection} points={mapPoints}
             hasGeometry={hasGeometry} query={query} dishes={dishes} selectedKey={parcelKey} focusStoreId={focusStoreId} onSelect={setParcelKey}
             color={color} pathColor={pathColor} basemapAttribution={<p className="place-market-source place-market-basemap-attribution">
               <a href="https://openfreemap.org/" target="_blank" rel="noreferrer">OpenFreeMap</a>{' · '}

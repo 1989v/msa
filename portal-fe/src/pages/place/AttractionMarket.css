@@ -117,3 +117,30 @@
 .place-market-user-edge path { fill: var(--ko-accent-text); stroke: var(--ko-surface-0); stroke-width: 2; }
 
 .place-market-badges span[data-related] { color: var(--ko-text-secondary); background: var(--ko-surface-1); }
+
+.place-market-provider { margin-block-end: var(--ko-space-2, 8px); }
+/* The pin is a round icon; the section's general button surface must not paint a square behind it. */
+.place-market .place-market-naver-pin,
+.place-market .place-market-naver-pin:hover,
+.place-market .place-market-naver-pin:active {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+}
+.place-market-naver-pin:focus-visible { outline: 2px solid var(--ko-accent-text); }
+.place-market-naver-pin:hover > span { outline: 2px solid var(--ko-accent-text); }
+.place-market-naver-label {
+  display: block;
+  padding: var(--ko-space-1) var(--ko-space-2);
+  background: var(--ko-surface-0);
+  color: var(--ko-text-primary);
+  font-size: var(--ko-text-sm);
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+}

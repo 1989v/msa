@@ -1,34 +1,25 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react';
-import type { MarketBasemapMeta, MarketDish, MarketResponse, MarketStore } from '../../api/marketApi';
+import type { MarketBasemapMeta, MarketDish, MarketResponse } from '../../api/marketApi';
 import type { PlaceLang } from '../../api/placeApi';
-import { marketBasemapFrame, clusterByScreenDistance, formatGoodPriceMenu, formatMarketFloor, marketSourceBadges, matchesMarketName, longestMarketSegmentMidpoint, projectMarketPins } from './marketView';
+import { marketBasemapFrame, clusterByScreenDistance, matchesMarketName, longestMarketSegmentMidpoint, projectMarketPins } from './marketView';
 
-import MarketMenuDetails from './MarketMenuDetails';
-import { marketDisplayName, sectionMatchLabel, matchesMarketStore } from './marketView';
+import MarketClusterSheet from './MarketClusterSheet';
+import { marketDisplayName } from './marketView';
 import MarketLocate from './MarketLocate';
 import { marketPositionInView, type MarketUserPosition } from './marketView';
 
 type Projection = NonNullable<ReturnType<typeof projectMarketPins>>;
 type ViewBox = { x: number; y: number; w: number; h: number };
 const INITIAL: ViewBox = { x: 0, y: 0, w: 600, h: 440 };
-const floorNumber = (value: MarketStore['floor']) => {
-  const raw = String(value ?? '');
-  const number = Number(raw.match(/\d+/u)?.[0] ?? 0);
-  return /^(?:B|지하|-)/iu.test(raw) ? -number : number;
-};
-const natural = (a: string | null, b: string | null) => (a ?? '').localeCompare(b ?? '', 'ko', { numeric: true });
-function orderStores(stores: MarketStore[]) {
-  return [...stores].sort((a, b) => natural(a.buildingName, b.buildingName) || natural(a.dong, b.dong)
-    || floorNumber(a.floor) - floorNumber(b.floor) || natural(a.ho, b.ho) || natural(a.name, b.name));
-}
 
-export default function MarketCanvas({ data, lang, projection, points, hasGeometry, query, selectedKey, onSelect, color, pathColor, userPosition, focusStoreId, dishes = [], basemapAttribution, basemapMeta }: {
+export default function MarketCanvas({ data, lang, projection, points, hasGeometry, query, selectedKey, onSelect, color, pathColor, userPosition, focusStoreId, dishes = [], basemapAttribution, basemapMeta, onPosition }: {
   data: MarketResponse; lang: PlaceLang; projection: Projection; points: Projection['points']; hasGeometry: boolean;
   query: string; selectedKey: string | null; onSelect: (key: string | null) => void;
   basemapAttribution?: ReactNode;
   basemapMeta?: MarketBasemapMeta | null;
   dishes?: MarketDish[];
   userPosition?: MarketUserPosition | null;
+  onPosition?: (position: MarketUserPosition) => void;
   focusStoreId?: number | null;
   color: (id: number | null) => string; pathColor: (id: number | null | undefined) => string | undefined;
 }) {
@@ -51,10 +42,8 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
   const visitor = userPosition === undefined ? (measurement?.marketKey === marketKey ? measurement.position : null) : userPosition;
   const [view, setView] = useState(INITIAL);
   const [pixelsPerUnit, setPixelsPerUnit] = useState(1);
-  const [page, setPage] = useState({ key: '', count: 50 });
   const [appliedFocus, setAppliedFocus] = useState<string | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  const focusedRowRef = useRef<HTMLLIElement>(null);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const dragged = useRef(false);
   const lastTouch = useRef(0);
@@ -74,10 +63,6 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
   const selected = clusters.find((cluster) => cluster.key === selectedKey || cluster.parcelKeys.includes(selectedKey ?? ''));
   const selectedKeys: string[] = selectedKey?.startsWith('cluster:') ? JSON.parse(selectedKey.slice(8)) : [];
   const selectedStores = selected?.stores ?? points.filter((point) => selectedKeys.includes(point.key)).flatMap((point) => point.stores);
-  const ordered = orderStores(selectedStores);
-  const focusedIndex = focusStoreId == null ? -1 : ordered.findIndex((store) => store.id === focusStoreId);
-  const limit = ordered.length > 200 ? Math.max(page.key === selectedKey ? page.count : 50,
-    focusedIndex < 0 ? 0 : Math.ceil((focusedIndex + 1) / 50) * 50) : ordered.length;
   const focusPoint = focusStoreId == null ? undefined : points.find((point) => point.stores.some((store) => store.id === focusStoreId));
   // Resolve the group at the requested zoom, rather than the pre-focus screen grouping.
   const focusKey = focusPoint && clusterByScreenDistance(points, pixelsPerUnit * 4, 24)
@@ -93,9 +78,6 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
   useEffect(() => {
     if (focusStoreId != null && focusKey != null) onSelect(focusKey);
   }, [focusStoreId, focusKey, onSelect]);
-  useEffect(() => {
-    if (focusStoreId != null) focusedRowRef.current?.scrollIntoView?.({ block: 'nearest' });
-  }, [focusStoreId, selectedKey, limit]);
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -250,30 +232,11 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
           <text x="28" y="-10">{Number((projection.scaleBarMetres / zoom).toPrecision(3))} m</text>
         </g>
       </svg>
-      <MarketLocate key={marketKey} data={data} lang={lang} onPosition={(position) => setMeasurement({ marketKey, position })} />
+      <MarketLocate key={marketKey} data={data} lang={lang} onPosition={(position) => { setMeasurement({ marketKey, position }); onPosition?.(position); }} />
       {basemapLoaded && basemapAttribution}
     </div>
-    {selectedKey != null && <section className="place-market-cluster-sheet" aria-label={en ? 'Selected shops' : '선택한 가게'}>
-      <h3>{en ? 'Shops on this parcel' : '같은 필지 가게'} ({ordered.length})</h3>
-      <button type="button" onClick={() => onSelect(null)}>{en ? 'Show all shops' : '전체 가게 보기'}</button>
-      <ul className="place-market-shops">{ordered.slice(0, limit).map((store, index) => <li key={store.id ?? index} ref={focusStoreId != null && store.id === focusStoreId ? focusedRowRef : undefined}
-        data-selected={focusStoreId != null && store.id === focusStoreId || undefined}
-        style={focusStoreId != null && store.id === focusStoreId ? { outline: '2px solid var(--ko-accent-text)', outlineOffset: '-2px' } : undefined}
-        data-found={matchesMarketName(store, query, dishes) || undefined}>
-        <strong>{marketDisplayName(store, lang)}</strong>
-        <div className="place-market-badges">
-          {store.goodPrice && <span>{en ? 'Good price' : '착한가격'}</span>}
-          {matchesMarketName(store, query, dishes) && <span data-related={matchesMarketStore(store, query, dishes)?.matchedBy === 'related' || undefined}>{sectionMatchLabel(matchesMarketStore(store, query, dishes), lang)}</span>}
-          {marketSourceBadges(store, lang).map((badge) => <span key={badge}>{badge}</span>)}
-          {store.membership === 'OUT' && <span>{en ? 'Outside market' : '시장 밖'}</span>}
-        </div>
-        {store.goodPrice && store.goodPrice.menus.length > 0 && <p>{store.goodPrice.menus.map((menu) => formatGoodPriceMenu(menu, lang)).join(' · ')}</p>}
-        <MarketMenuDetails store={store} lang={lang} />
-        <p>{[store.roadAddress || store.jibunAddress, store.buildingName, store.dong, formatMarketFloor(store.floor, lang), store.ho].filter(Boolean).join(' · ')}</p>
-        {store.pinKind === 'REFERENCE' && <p>{[store.relativePosition, store.positionNote].filter(Boolean).join(' · ')}</p>}
-      </li>)}</ul>
-      {limit < ordered.length && <button type="button" onClick={() => setPage({ key: selectedKey, count: limit + 50 })}>{en ? 'Show more' : '더 보기'}</button>}
-    </section>}
+    {selectedKey != null && <MarketClusterSheet stores={selectedStores} selectedKey={selectedKey} focusStoreId={focusStoreId}
+      onSelect={onSelect} lang={lang} query={query} dishes={dishes} />}
   </div>;
 }
 
@@ -286,6 +249,7 @@ function hitLabel(names: string[], en: boolean) {
 
 function useBasemapTheme() {
   const read = () => {
+    if (typeof window === 'undefined') return 'light';
     const explicit = document.documentElement.getAttribute('data-theme');
     return explicit === 'light' || explicit === 'dark' ? explicit
       : window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
