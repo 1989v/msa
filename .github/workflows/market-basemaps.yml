@@ -1,0 +1,107 @@
+name: market-basemaps
+
+on:
+  schedule:
+    - cron: '0 20 * * 0' # 월요일 KST 05:00
+  workflow_dispatch:
+    inputs:
+      contentIds:
+        description: '시장 contentId (공백 구분, 비우면 전체)'
+        required: false
+        default: ''
+        type: string
+      theme:
+        description: '렌더할 테마'
+        required: true
+        default: both
+        type: choice
+        options: [light, dark, both]
+
+# 다른 실행이 기존 PNG/index 갱신을 추월하지 않도록 직렬화한다.
+concurrency:
+  group: market-basemaps
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        theme: [light, dark]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: 의존성 설치
+        working-directory: scripts/market-basemaps
+        run: npm install --no-package-lock --ignore-scripts
+      - name: 선택한 테마 렌더·PNG 업로드
+        env:
+          CONTENT_IDS: ${{ inputs.contentIds }}
+          SELECTED_THEME: ${{ inputs.theme || 'both' }}
+          RENDER_THEME: ${{ matrix.theme }}
+          MARKET_BASEMAP_PAR: ${{ secrets.MARKET_BASEMAP_PAR }}
+        run: |
+          set -euo pipefail
+          if [[ "$SELECTED_THEME" != both && "$SELECTED_THEME" != "$RENDER_THEME" ]]; then
+            exit 0
+          fi
+          args=(--theme "$RENDER_THEME" --out ./out --upload)
+          if [[ -n "$CONTENT_IDS" ]]; then args+=(--only "$CONTENT_IDS"); fi
+          node scripts/market-basemaps/render.mjs "${args[@]}"
+      # 실패율 초과여도 성공 PNG 는 유지하고 실패 목록을 집계 잡에 전달한다.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: market-basemaps-${{ matrix.theme }}
+          path: out/index-${{ matrix.theme }}.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+  index:
+    needs: render
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: 의존성 설치
+        working-directory: scripts/market-basemaps
+        run: npm install --no-package-lock --ignore-scripts
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: market-basemaps-*
+          path: out
+      - name: 테마 결과 합치기·단일 index 업로드
+        env:
+          SELECTED_THEME: ${{ inputs.theme || 'both' }}
+          MARKET_BASEMAP_PAR: ${{ secrets.MARKET_BASEMAP_PAR }}
+        run: node scripts/market-basemaps/render.mjs --merge-index --theme "$SELECTED_THEME" --out ./out --upload
+      - name: 실행 요약
+        if: always()
+        run: |
+          node --input-type=module <<'JS'
+          import { readFileSync, appendFileSync } from 'node:fs';
+          try {
+            const index = JSON.parse(readFileSync('out/index.json', 'utf8'));
+            appendFileSync(process.env.GITHUB_STEP_SUMMARY, `시장 바탕: ${index.theme}\n\n요청 ${index.requestedContentIds.length}, 모든 테마 성공 ${index.contentIds.length}, 테마별 실패 ${index.failed.length}\n\n\`\`\`json\n${JSON.stringify(index.failed, null, 2)}\n\`\`\`\n`);
+          } catch {
+            appendFileSync(process.env.GITHUB_STEP_SUMMARY, '시장 바탕 index 생성 실패: per-theme artifact와 render 잡 로그를 확인하세요.\n');
+          }
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: market-basemaps-index
+          path: out/index.json
+          if-no-files-found: ignore
+          retention-days: 14

@@ -1,0 +1,7 @@
+{
+  "name": "market-basemaps",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "dependencies": { "ws": "8.22.0" }
+}
