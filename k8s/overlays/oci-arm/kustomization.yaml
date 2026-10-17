@@ -396,7 +396,7 @@ images:
     newTag: 28e707d
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: 575804b
+    newTag: 518efcf
   - name: commerce/quant-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant-fe
     newTag: cb23a78
@@ -414,10 +414,10 @@ images:
     newTag: 6a1889c
   - name: commerce/search
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search
-    newTag: 6b885df
+    newTag: 518efcf
   - name: commerce/search-batch
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-batch
-    newTag: 6b885df
+    newTag: 518efcf
   - name: commerce/search-consumer
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-consumer
     newTag: c9c1a8b
