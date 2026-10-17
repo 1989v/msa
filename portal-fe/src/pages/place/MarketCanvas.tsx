@@ -50,7 +50,9 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
   const visitorPoint = visitor ? projection.project([visitor.latitude, visitor.longitude]) : null;
   const visitorView = visitorPoint ? marketPositionInView(visitorPoint, view, 20 / screenScale) : null;
   const clusters = clusterByScreenDistance(points.map((point) => ({ ...point,
-    pinColor: pathColor(point.stores[0].pathId) ?? (point.stores.every((store) => store.membership === 'OUT')
+    // Shops the nearby rule added are the market's content on that page: colour them like members.
+    // Only shops shown by the "outside the market" toggle stay muted.
+    pinColor: pathColor(point.stores[0].pathId) ?? (point.stores.every((store) => store.membership === 'OUT' && !store.nearby)
       ? 'var(--ko-text-muted)' : color(point.stores[0].zoneId)),
   })), screenScale, 24);
   // Keep selection stable when a zoom splits the selected screen group.
@@ -192,7 +194,7 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
           const active = selectedKey === pin.key || pin.parcelKeys.some((key) => selectedKeys.includes(key))
             || pin.parcelKeys.includes(selectedKey ?? '');
           return <g key={pin.key} role="button" tabIndex={0} className="place-market-pin" data-selected={active || undefined}
-            data-hit={hit || undefined} data-outside={pin.stores.every((store) => store.membership === 'OUT') || undefined}
+            data-hit={hit || undefined} data-outside={pin.stores.every((store) => store.membership === 'OUT' && !store.nearby) || undefined}
             transform={`translate(${pin.x} ${pin.y}) scale(${1 / screenScale})`}
             style={{ '--market-zone-color': pin.pinColor } as CSSProperties}
             aria-label={`${en ? 'Shops on this parcel' : '같은 필지 가게'}: ${pin.stores.map((store) => marketDisplayName(store, lang)).join(', ')}`}
@@ -206,7 +208,8 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
             {hit && <text className="place-market-hit-label" textAnchor={pin.x < 150 ? 'start' : pin.x > 450 ? 'end' : 'middle'} y="-25">{hitLabel(pin.stores.filter((store) => matchesMarketName(store, query, dishes)).map((store) => marketDisplayName(store, lang)), en)}</text>}
           </g>;
         })}
-        {labels.map(({ path }) => {
+        {/* At the whole-market view the road names would cover the pins: show the three longest and let zoom reveal the rest. */}
+        {(zoom >= 2 ? labels : [...labels].sort((a, b) => b.length - a.length).slice(0, 3)).map(({ path }) => {
           const label = longestMarketSegmentMidpoint(path.geometry.map(projection.project));
           return label && <text key={path.id} className="place-market-path-label" transform={`translate(${label.x} ${label.y}) scale(${1 / screenScale})`} textAnchor="middle">{path.name}</text>;
         })}
