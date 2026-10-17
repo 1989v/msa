@@ -1,0 +1,19 @@
+# content 만 glibc malloc 아레나를 2개로 묶는다.
+#
+# content(1Gi limit, MaxRAMPercentage=60 → heap 614Mi)는 2026-10-16~17 에 세 번 OOMKilled 됐다.
+# 재시작 4분 뒤 RSS 가 878Mi 라 힙 밖(메타스페이스·스레드·네이티브 버퍼·glibc 아레나)이 260Mi 를 넘고,
+# 시장 상세 같은 큰 할당 한 번에 한도를 넘는다. 아레나는 free 한 메모리를 OS 에 잘 돌려주지 않는다 —
+# opensearch 에서 같은 값으로 효과를 봤다(k8s/infra/local/opensearch/statefulset.yaml).
+# 다른 JVM 파드는 한 번에 전부 재시작시키지 않으려고 여기서 건드리지 않는다. 필요하면 하나씩 넓힌다.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: content
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          env:
+            - name: MALLOC_ARENA_MAX
+              value: "2"

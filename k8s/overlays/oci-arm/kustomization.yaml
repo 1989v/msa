@@ -137,6 +137,9 @@ patches:
     target:
       kind: Deployment
       labelSelector: "app.kubernetes.io/part-of=commerce-platform"
+  # content 는 힙 밖 메모리까지 1Gi 에 닿아 OOM 이 났다 — glibc 아레나 상한 (패치 파일에 경위)
+  - path: patches/content-malloc-arena.yaml
+    target: {kind: Deployment, name: content}
   # ─── 운영은 Hibernate 가 스키마를 만지지 않는다 (k3s-lite 의 update 를 덮어쓴다) ──
   - path: patches/ddl-auto-none.yaml
     target:
