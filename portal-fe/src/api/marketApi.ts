@@ -146,3 +146,26 @@ export async function fetchMarketDishes(): Promise<MarketDish[]> {
   const response = await api.get<ApiResponse<MarketDish[]>>('/api/v1/place/markets/dishes');
   return response.data.data;
 }
+
+export interface MarketBasemapMeta {
+  contentId: string;
+  centre: { latitude: number; longitude: number };
+  zoom: number;
+  width: number;
+  height: number;
+  bounds: { north: number; south: number; east: number; west: number };
+  renderedAt: string;
+  styleVersion: string;
+  themes: string[];
+}
+
+/** Basemaps are served by the portal's same-origin proxy, independently of the API host. */
+export async function fetchMarketBasemapMeta(contentId: string): Promise<MarketBasemapMeta | null> {
+  try {
+    const response = await fetch(`/basemaps/markets/${encodeURIComponent(contentId)}/meta.json`);
+    if (!response.ok) return null;
+    return await response.json() as MarketBasemapMeta;
+  } catch {
+    return null;
+  }
+}

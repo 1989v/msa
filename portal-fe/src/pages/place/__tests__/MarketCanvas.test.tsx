@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import type { MarketResponse, MarketStore } from '../../../api/marketApi';
+import type { MarketBasemapMeta, MarketResponse, MarketStore } from '../../../api/marketApi';
 import { groupMarketPins, marketBasemapFrame, projectMarketPins } from '../marketView';
 import MarketCanvas from '../MarketCanvas';
 
@@ -199,21 +199,22 @@ describe('MarketCanvas result focus', () => {
 
 
 describe('market raster basemap', () => {
-  const mapped: MarketResponse = { ...data, market: { ...data.market, contentId: '1059391', latitude: 37.56, longitude: 126.98 },
+  const mapped: MarketResponse = { ...data, market: { ...data.market, contentId: '1059391', latitude: 37.562, longitude: 126.981 },
     boundary: { source: 'OSM', polygon: [[37.55, 126.97], [37.57, 126.97], [37.56, 127], [37.55, 126.97]] },
     entrances: [{ id: 1, pathId: null, lat: 37.56, lng: 126.98, label: '입구', source: 'OSM' }], stores: [store()] };
-  const url = (theme: string, id = '1059391') => `https://objectstorage.ap-chuncheon-1.oraclecloud.com/n/axyooxbyk5yv/b/msa-market-basemap/o/markets/${id}/z18-${theme}.png`;
-  function canvas(value = mapped) {
+  const url = (theme: string, id = '1059391') => `/basemaps/markets/${id}/z18-${theme}.png`;
+  const meta: MarketBasemapMeta = { contentId: '1059391', centre: { latitude: 37.561, longitude: 126.984 }, zoom: 17, width: 1024, height: 768, bounds: marketBasemapFrame([37.561, 126.984], 17, 1024, 768), renderedAt: '2026-10-17T00:00:00Z', styleVersion: 'v1', themes: ['light', 'dark'] };
+  function canvas(value = mapped, basemapMeta: MarketBasemapMeta | null = meta) {
     const projection = projectMarketPins(groupMarketPins(value.stores), value)!;
-    return <MarketCanvas data={value} lang="ko" projection={projection} points={projection.points} hasGeometry query="가게" selectedKey={null} onSelect={vi.fn()} color={() => 'var(--market-zone-1)'} pathColor={() => undefined}
+    return <MarketCanvas basemapMeta={basemapMeta} data={value} lang="ko" projection={projection} points={projection.points} hasGeometry query="가게" selectedKey={null} onSelect={vi.fn()} color={() => 'var(--market-zone-1)'} pathColor={() => undefined}
       userPosition={{ latitude: 37.56, longitude: 126.98, accuracy: 10, timestamp: 1 }} basemapAttribution={<p>Basemap credit</p>} />;
   }
   afterEach(() => { cleanup(); document.documentElement.removeAttribute('data-theme'); });
-  it('projects corners from the mean of unclosed boundary vertices into the bottom image layer', () => {
+  it('projects raster corners from the metadata bounds independently of response and boundary centres', () => {
     document.documentElement.dataset.theme = 'light';
     const { container } = render(canvas());
     const projection = projectMarketPins(groupMarketPins(mapped.stores), mapped)!;
-    const frame = marketBasemapFrame([37.56, 126.98]);
+    const frame = marketBasemapFrame([meta.centre.latitude, meta.centre.longitude], meta.zoom, meta.width, meta.height);
     const nw = projection.project([frame.north, frame.west]);
     const se = projection.project([frame.south, frame.east]);
     const svg = container.querySelector('svg')!; const image = svg.querySelector('image')!;
@@ -222,14 +223,20 @@ describe('market raster basemap', () => {
     for (const [attr, value] of Object.entries({ x: nw.x, y: nw.y, width: se.x - nw.x, height: se.y - nw.y })) expect(Number(image.getAttribute(attr))).toBeCloseTo(value, 7);
     expect(image).toHaveAttribute('preserveAspectRatio', 'none');
   });
-  it('falls back to the market coordinates without a boundary and skips missing centres', () => {
-    const fallback = { ...mapped, boundary: null };
-    const { container, rerender } = render(canvas(fallback));
-    const projection = projectMarketPins(groupMarketPins(fallback.stores), fallback)!;
-    const frame = marketBasemapFrame([37.56, 126.98]);
-    expect(Number(container.querySelector('image')!.getAttribute('x'))).toBeCloseTo(projection.project([frame.north, frame.west]).x);
-    rerender(canvas({ ...fallback, market: { ...fallback.market, latitude: null } }));
+  it('keeps the SVG without metadata or an available theme and ignores missing response centres', async () => {
+    document.documentElement.dataset.theme = 'light';
+    const { container, rerender } = render(canvas(mapped, null));
     expect(container.querySelector('image')).toBeNull();
+    expect(container.querySelector('.place-market-path')).not.toBeNull();
+    rerender(canvas(mapped, { ...meta, themes: ['dark'] }));
+    expect(container.querySelector('image')).toBeNull();
+    await act(async () => { document.documentElement.dataset.theme = 'dark'; });
+    expect(container.querySelector('image')).toHaveAttribute('href', url('dark'));
+    rerender(canvas({ ...mapped, boundary: null, market: { ...mapped.market, contentId: null, latitude: null, longitude: null } }));
+    expect(container.querySelector('image')).toHaveAttribute('href', url('dark'));
+    rerender(canvas(mapped, null));
+    expect(container.querySelector('image')).toBeNull();
+    expect(screen.queryByText('Basemap credit')).toBeNull();
   });
   it('shows fallback until load, preserves overlays, then restores lines and credit on error', () => {
     const { container } = render(canvas()); const image = container.querySelector('image')!;
@@ -258,7 +265,7 @@ describe('market raster basemap', () => {
     expect(screen.queryByText('Basemap credit')).toBeNull();
     fireEvent.load(old); expect(dark).toHaveAttribute('visibility', 'hidden');
     fireEvent.load(dark); fireEvent.error(old); expect(dark).toHaveAttribute('visibility', 'visible');
-    rerender(canvas({ ...mapped, market: { ...mapped.market, contentId: 'another' } }));
+    rerender(canvas({ ...mapped, market: { ...mapped.market, contentId: 'another' } }, { ...meta, contentId: 'another' }));
     const another = container.querySelector('image')!;
     expect(another).toHaveAttribute('href', url('dark', 'another')); expect(another).toHaveAttribute('visibility', 'hidden');
     expect(screen.queryByText('Basemap credit')).toBeNull();

@@ -299,11 +299,11 @@ describe('market basemap Web Mercator frame', () => {
   const centre: [number, number] = [37.5592467, 126.9776796];
   const radius = 6378137;
   const mercatorY = (lat: number) => radius * Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
-  it('covers approximately 727 by 545 ground metres at Namdaemun zoom 18', () => {
+  it('covers approximately 364 by 273 ground metres at Namdaemun zoom 18 (MapLibre 512 px tiles)', () => {
     const frame = marketBasemapFrame(centre);
     const cos = Math.cos(centre[0] * Math.PI / 180);
-    expect((frame.east - frame.west) * Math.PI / 180 * radius * cos).toBeCloseTo(727.13, 0);
-    expect((mercatorY(frame.north) - mercatorY(frame.south)) * cos).toBeCloseTo(545.35, 0);
+    expect((frame.east - frame.west) * Math.PI / 180 * radius * cos).toBeCloseTo(363.57, 0);
+    expect((mercatorY(frame.north) - mercatorY(frame.south)) * cos).toBeCloseTo(272.67, 0);
   });
   it('recovers the original centre in Mercator coordinates', () => {
     const frame = marketBasemapFrame(centre);

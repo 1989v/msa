@@ -266,7 +266,9 @@ export function marketBasemapFrame(centre: MarketCoordinate, zoom = 18, width = 
   const radius = 6378137;
   const radians = Math.PI / 180;
   const cosine = Math.cos(centre[0] * radians);
-  const pixelMetres = 156543.03392 * cosine / 2 ** zoom;
+  // MapLibre (the renderer) uses 512 px tiles, so its zoom z has the ground resolution of a
+  // 256 px map at z + 1: 0.237 m/px at zoom 18 near Seoul, a 1536 px image spanning about 364 m.
+  const pixelMetres = 156543.03392 * cosine / 2 ** (zoom + 1);
   // Resolution is ground metres: inverse projection needs Mercator metres instead.
   const halfWidth = width * pixelMetres / cosine / 2;
   const halfHeight = height * pixelMetres / cosine / 2;

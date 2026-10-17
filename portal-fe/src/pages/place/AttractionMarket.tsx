@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import { useAttractionMarket, useMarketDishes } from './marketQueries';
+import { useAttractionMarket, useMarketDishes, useMarketBasemapMeta } from './marketQueries';
 import type { MarketResponse, MarketZone } from '../../api/marketApi';
 import type { PlaceLang } from '../../api/placeApi';
 import { formatGoodPriceMenu, formatGoodPriceSummary, formatMarketFloor, groupMarketPins, hasMarketCoordinate, marketSourceBadges, matchesMarketName, matchesMarketStore, normalizeMarketName, projectMarketPins, visibleMarketStores, zoneIds } from './marketView';
@@ -24,14 +24,15 @@ export default function AttractionMarket({ contentId, lang, initialQuery }: { co
   const [includeOutside, setIncludeOutside] = useState(false);
   const { data, isError } = useAttractionMarket(contentId, lang, includeOutside);
   if (!data || isError) return null;
-  return <MarketSection key={contentId} data={data} lang={lang} initialQuery={initialQuery} includeOutside={includeOutside} onOutside={setIncludeOutside} />;
+  return <MarketSection key={contentId} contentId={contentId} data={data} lang={lang} initialQuery={initialQuery} includeOutside={includeOutside} onOutside={setIncludeOutside} />;
 }
 
-function MarketSection({ data, lang, initialQuery, includeOutside, onOutside }: {
-  data: MarketResponse; lang: PlaceLang; initialQuery?: string; includeOutside: boolean; onOutside: (value: boolean) => void;
+function MarketSection({ contentId, data, lang, initialQuery, includeOutside, onOutside }: {
+  contentId: string; data: MarketResponse; lang: PlaceLang; initialQuery?: string; includeOutside: boolean; onOutside: (value: boolean) => void;
 }) {
   const C = COPY[lang];
   const { data: dishes = [] } = useMarketDishes();
+  const { data: basemapMeta } = useMarketBasemapMeta(contentId);
   const searchId = useId();
   const [zoneId, setZoneId] = useState<number | null>(null);
   const [query, setQuery] = useState(() => (initialQuery ?? new URLSearchParams(window.location.search).get('marketQuery') ?? '').trim().slice(0, 50));
@@ -113,7 +114,7 @@ function MarketSection({ data, lang, initialQuery, includeOutside, onOutside }: 
       <div className="place-market-layout">
         <div className="place-market-map">
           {data.nearbyRadiusMetres != null && <p className="place-market-note">{lang === 'en' ? `Showing shops within ${data.nearbyRadiusMetres} m of the market` : `시장 주변 ${data.nearbyRadiusMetres} m 안 가게를 보입니다`}</p>}
-          {projection ? <MarketCanvas data={data} lang={lang} projection={projection} points={mapPoints}
+          {projection ? <MarketCanvas basemapMeta={basemapMeta} data={data} lang={lang} projection={projection} points={mapPoints}
             hasGeometry={hasGeometry} query={query} dishes={dishes} selectedKey={parcelKey} focusStoreId={focusStoreId} onSelect={setParcelKey}
             color={color} pathColor={pathColor} basemapAttribution={<p className="place-market-source place-market-basemap-attribution">
               <a href="https://openfreemap.org/" target="_blank" rel="noreferrer">OpenFreeMap</a>{' · '}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react';
-import type { MarketDish, MarketResponse, MarketStore } from '../../api/marketApi';
+import type { MarketBasemapMeta, MarketDish, MarketResponse, MarketStore } from '../../api/marketApi';
 import type { PlaceLang } from '../../api/placeApi';
 import { marketBasemapFrame, clusterByScreenDistance, formatGoodPriceMenu, formatMarketFloor, marketSourceBadges, matchesMarketName, longestMarketSegmentMidpoint, projectMarketPins } from './marketView';
 
@@ -22,24 +22,22 @@ function orderStores(stores: MarketStore[]) {
     || floorNumber(a.floor) - floorNumber(b.floor) || natural(a.ho, b.ho) || natural(a.name, b.name));
 }
 
-export default function MarketCanvas({ data, lang, projection, points, hasGeometry, query, selectedKey, onSelect, color, pathColor, userPosition, focusStoreId, dishes = [], basemapAttribution }: {
+export default function MarketCanvas({ data, lang, projection, points, hasGeometry, query, selectedKey, onSelect, color, pathColor, userPosition, focusStoreId, dishes = [], basemapAttribution, basemapMeta }: {
   data: MarketResponse; lang: PlaceLang; projection: Projection; points: Projection['points']; hasGeometry: boolean;
   query: string; selectedKey: string | null; onSelect: (key: string | null) => void;
   basemapAttribution?: ReactNode;
+  basemapMeta?: MarketBasemapMeta | null;
   dishes?: MarketDish[];
   userPosition?: MarketUserPosition | null;
   focusStoreId?: number | null;
   color: (id: number | null) => string; pathColor: (id: number | null | undefined) => string | undefined;
 }) {
   const theme = useBasemapTheme();
-  const polygon = data.boundary?.polygon ?? [];
-  const first = polygon[0]; const last = polygon.at(-1);
-  const vertices = polygon.length > 1 && first[0] === last![0] && first[1] === last![1] ? polygon.slice(0, -1) : polygon;
-  const centre = vertices.length ? [vertices.reduce((sum, [lat]) => sum + lat, 0) / vertices.length,
-    vertices.reduce((sum, [, lng]) => sum + lng, 0) / vertices.length] as [number, number]
-    : data.market.latitude != null && data.market.longitude != null ? [data.market.latitude, data.market.longitude] as [number, number] : null;
-  const frame = centre && centre.every(Number.isFinite) ? marketBasemapFrame(centre) : null;
-  const basemapUrl = frame && data.market.contentId ? `https://objectstorage.ap-chuncheon-1.oraclecloud.com/n/axyooxbyk5yv/b/msa-market-basemap/o/markets/${data.market.contentId}/z18-${theme}.png` : null;
+  // The renderer writes the bounds MapLibre actually drew; recomputing them here would have to match
+  // its tile convention (512 px tiles: zoom 18 spans half of what 256 px maps call zoom 18).
+  const frame = basemapMeta && basemapMeta.themes.includes(theme)
+    ? basemapMeta.bounds ?? marketBasemapFrame([basemapMeta.centre.latitude, basemapMeta.centre.longitude], basemapMeta.zoom, basemapMeta.width, basemapMeta.height) : null;
+  const basemapUrl = frame && basemapMeta?.contentId ? `/basemaps/markets/${encodeURIComponent(basemapMeta.contentId)}/z18-${theme}.png` : null;
   const [basemap, setBasemap] = useState({ url: basemapUrl, loaded: false });
   // Reset during render so a revisited URL cannot reuse an earlier successful request.
   if (basemap.url !== basemapUrl) setBasemap({ url: basemapUrl, loaded: false });
