@@ -89,8 +89,8 @@ import { newViewId } from '../../analytics/identity';
 import { installFlushOnLeave, track } from '../../analytics/tracker';
 
 const UI = {
-  ko: { summary: '방문 요약', region: '지역 안 위치', explore: (p: string) => `${p} 둘러보기`, similar: '다른 지역의 비슷한 곳', related: '여기 온 사람들이 함께 간 곳', back: '← 관광지 탐색', info: '이용 안내', photos: '사진', more: '본문 전체 보기', parkingFee: '주차요금', map: '구글 지도에서 보기', directions: '길찾기', notFound: '관광지를 찾을 수 없습니다.', failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', loading: '불러오는 중…' },
-  en: { summary: 'Visit summary', region: 'In the area', explore: (p: string) => `Explore ${p}`, similar: 'Similar places in other regions', related: 'Where visitors also went', back: '← Explore Korea', info: 'Visitor info', photos: 'Photos', more: 'Read the full description', parkingFee: 'Parking fee', map: 'Open in Google Maps', directions: 'Directions', notFound: 'Attraction not found.', failed: 'Could not load this page. Please try again in a moment.', loading: 'Loading…' },
+  ko: { marketMap: '시장 지도', summary: '방문 요약', region: '지역 안 위치', explore: (p: string) => `${p} 둘러보기`, similar: '다른 지역의 비슷한 곳', related: '여기 온 사람들이 함께 간 곳', back: '← 관광지 탐색', info: '이용 안내', photos: '사진', more: '본문 전체 보기', parkingFee: '주차요금', map: '구글 지도에서 보기', directions: '길찾기', notFound: '관광지를 찾을 수 없습니다.', failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', loading: '불러오는 중…' },
+  en: { marketMap: 'Market map', summary: 'Visit summary', region: 'In the area', explore: (p: string) => `Explore ${p}`, similar: 'Similar places in other regions', related: 'Where visitors also went', back: '← Explore Korea', info: 'Visitor info', photos: 'Photos', more: 'Read the full description', parkingFee: 'Parking fee', map: 'Open in Google Maps', directions: 'Directions', notFound: 'Attraction not found.', failed: 'Could not load this page. Please try again in a moment.', loading: 'Loading…' },
 } as const;
 
 /** 주변 검색 반경 — 명소 목록과 편의시설 캐로셀이 같은 값을 쓴다. */
@@ -533,6 +533,28 @@ export default function AttractionPage() {
                   >
                     {L.directions}
                   </a>
+                  {marketData && !marketError && (
+                    <a
+                      className="place-btn"
+                      href="#market"
+                      onClick={() =>
+                        track(
+                          'CLICK',
+                          {
+                            entityType: 'ATTRACTION',
+                            entityId: attraction.id,
+                            screenType: 'ATTRACTION_DETAIL',
+                            screenRef: id,
+                            sectionId: 'SECTION_JUMP',
+                            payload: { target: 'market', source: 'actions' },
+                          },
+                          viewId,
+                        )
+                      }
+                    >
+                      {L.marketMap}
+                    </a>
+                  )}
                   {phone &&
                     (phone.href ? (
                       <a
@@ -757,9 +779,11 @@ export default function AttractionPage() {
                 sticky 라 스크롤해 내려온 뒤 누르는 쓰임이다 */}
             {jumpOn && <AttractionJumpNav targets={jumpTargets} lang={lang} attractionId={attraction.id} viewId={viewId} />}
 
+            {/* 시장이면 지도가 본문이다 — 방문 정보보다 먼저, 첫 화면의 「시장 지도」 버튼이 여기로 온다 */}
+            <AttractionMarket key={attraction.contentId} contentId={attraction.contentId} lang={lang} initialQuery={new URLSearchParams(search).get('marketQuery') ?? undefined} />
+
             {/* 방문 정보(주소·속성·지역 안 위치) · 접근성 — 지도 위에 탭으로, 내용은 칩. 서버 렌더는 절을 그대로 쌓는다(색인용) */}
             {infoTabsProps && <AttractionInfoTabs {...infoTabsProps} lang={lang} sectionId={secId('info')} />}
-            <AttractionMarket key={attraction.contentId} contentId={attraction.contentId} lang={lang} initialQuery={new URLSearchParams(search).get('marketQuery') ?? undefined} />
             {/* 주변 탐색 — 같은 분류 가까운 곳 · 주변 명소 · 숙소 · 행사 · 편의시설을 지도 한 장과 목록 하나로.
                 지도를 못 그리면(키 없음 · 좌표 이상 · 로더 실패) 목록만 남고 아래 링크가 위치를 대신한다. */}
             <NearbyExplore

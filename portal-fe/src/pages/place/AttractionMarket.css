@@ -98,7 +98,8 @@
 .place-market-map-decoration { pointer-events: none; }
 .place-market-map-decoration text { fill: var(--ko-text-primary); font-size: 16px; }
 .place-market-zoom { display: flex; flex-wrap: wrap; gap: var(--ko-space-2, 8px); margin-block-end: var(--ko-space-2, 8px); }
-.place-market-cluster-sheet { position: fixed; inset: auto 0 0; z-index: 40; max-height: 55dvh; overflow-y: auto; padding: var(--ko-space-4, 16px); padding-block-end: calc(var(--ko-space-4, 16px) + env(safe-area-inset-bottom)); border: 1px solid var(--ko-border-default); background: var(--ko-surface-0); color: var(--ko-text-primary); }
+/* 시트 층(300): 하단 액션 바(200) 위에 뜬다 — 40 이었을 때 바가 시트 아래쪽 줄을 가렸다 */
+.place-market-cluster-sheet { position: fixed; inset: auto 0 0; z-index: 300; max-height: 55dvh; overflow-y: auto; padding: var(--ko-space-4, 16px); padding-block-end: calc(var(--ko-space-4, 16px) + env(safe-area-inset-bottom)); border: 1px solid var(--ko-border-default); background: var(--ko-surface-0); color: var(--ko-text-primary); }
 .place-market-cluster-sheet h3 { margin-block: 0 var(--ko-space-3, 12px); }
 .place-market-cluster-sheet .place-market-shops { max-height: none; }
 @media (min-width: 1024px) {

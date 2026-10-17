@@ -119,6 +119,24 @@ describe('MarketCanvas navigation and shared SVG coordinates', () => {
     fireEvent.doubleClick(svg, { detail: 2, clientX: 310, clientY: 240 });
     expect(box()[2]).toBe(300);
   });
+  it('still selects a pin when the finger moves a few pixels during the tap', () => {
+    const { svg } = mount();
+    svg.setPointerCapture = vi.fn();
+    const pin = screen.getByRole('button', { name: /같은 필지 가게:/ });
+    pin.setPointerCapture = vi.fn();
+    fireEvent.pointerDown(pin, { pointerId: 1, pointerType: 'touch', button: 0, clientX: 200, clientY: 200 });
+    fireEvent.pointerMove(pin, { pointerId: 1, pointerType: 'touch', clientX: 205, clientY: 204 });
+    fireEvent.pointerUp(pin, { pointerId: 1, pointerType: 'touch', clientX: 205, clientY: 204 });
+    fireEvent.click(pin);
+    expect(screen.getByRole('region', { name: '선택한 가게' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '전체 가게 보기' }));
+    fireEvent.pointerDown(pin, { pointerId: 2, pointerType: 'touch', button: 0, clientX: 200, clientY: 200 });
+    fireEvent.pointerMove(pin, { pointerId: 2, pointerType: 'touch', clientX: 214, clientY: 200 });
+    fireEvent.pointerUp(pin, { pointerId: 2, pointerType: 'touch', clientX: 214, clientY: 200 });
+    fireEvent.click(pin);
+    expect(screen.queryByRole('region', { name: '선택한 가게' })).not.toBeInTheDocument();
+  });
+
   it('keeps native pin click targets and opens the shared selection with Enter and Space', () => {
     const { svg } = mount();
     const capture = vi.fn(); svg.setPointerCapture = capture;
@@ -202,7 +220,7 @@ describe('market raster basemap', () => {
   const mapped: MarketResponse = { ...data, market: { ...data.market, contentId: '1059391', latitude: 37.562, longitude: 126.981 },
     boundary: { source: 'OSM', polygon: [[37.55, 126.97], [37.57, 126.97], [37.56, 127], [37.55, 126.97]] },
     entrances: [{ id: 1, pathId: null, lat: 37.56, lng: 126.98, label: '입구', source: 'OSM' }], stores: [store()] };
-  const url = (theme: string, id = '1059391') => `/basemaps/markets/${id}/z18-${theme}.png`;
+  const url = (theme: string, id = '1059391') => `/basemaps/markets/${id}/${theme}.png`;
   const meta: MarketBasemapMeta = { contentId: '1059391', centre: { latitude: 37.561, longitude: 126.984 }, zoom: 17, width: 1024, height: 768, bounds: marketBasemapFrame([37.561, 126.984], 17, 1024, 768), renderedAt: '2026-10-17T00:00:00Z', styleVersion: 'v1', themes: ['light', 'dark'] };
   function canvas(value = mapped, basemapMeta: MarketBasemapMeta | null = meta) {
     const projection = projectMarketPins(groupMarketPins(value.stores), value)!;

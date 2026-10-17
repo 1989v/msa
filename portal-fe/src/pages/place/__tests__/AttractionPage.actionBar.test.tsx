@@ -381,7 +381,10 @@ describe('market section navigation', () => {
   it('only adds the market map jump after data loads and shares one request with the section', async () => {
     vi.mocked(fetchMarket).mockResolvedValue({ market: { name: '광명시장', marketType: 'STREET', sourceMarketType: null, storeCountRaw: null, openingCycle: null, facilities: null, attribution: null }, stores: [], zones: [] });
     renderAt('/attractions/100?marketQuery=국밥#market');
-    expect(await screen.findByRole('link', { name: '시장 지도' })).toHaveAttribute('href', '#market');
+    // 첫 화면 액션 줄의 버튼과 절 이동 줄의 링크, 둘 다 같은 절로 간다
+    const marketLinks = await screen.findAllByRole('link', { name: '시장 지도' });
+    expect(marketLinks).toHaveLength(2);
+    marketLinks.forEach((link) => expect(link).toHaveAttribute('href', '#market'));
     expect(await screen.findByRole('searchbox', { name: '가게·품목·업종 찾기' })).toHaveValue('국밥');
     expect(fetchMarket).toHaveBeenCalledTimes(1);
     expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({ block: 'start' });

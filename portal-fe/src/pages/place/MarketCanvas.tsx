@@ -28,7 +28,7 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
   // its tile convention (512 px tiles: zoom 18 spans half of what 256 px maps call zoom 18).
   const frame = basemapMeta && basemapMeta.themes.includes(theme)
     ? basemapMeta.bounds ?? marketBasemapFrame([basemapMeta.centre.latitude, basemapMeta.centre.longitude], basemapMeta.zoom, basemapMeta.width, basemapMeta.height) : null;
-  const basemapUrl = frame && basemapMeta?.contentId ? `/basemaps/markets/${encodeURIComponent(basemapMeta.contentId)}/z18-${theme}.png` : null;
+  const basemapUrl = frame && basemapMeta?.contentId ? `/basemaps/markets/${encodeURIComponent(basemapMeta.contentId)}/${theme}.png` : null;
   const [basemap, setBasemap] = useState({ url: basemapUrl, loaded: false });
   // Reset during render so a revisited URL cannot reuse an earlier successful request.
   if (basemap.url !== basemapUrl) setBasemap({ url: basemapUrl, loaded: false });
@@ -46,6 +46,7 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
   const svgRef = useRef<SVGSVGElement>(null);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const dragged = useRef(false);
+  const pressed = useRef({ x: 0, y: 0 });
   const lastTouch = useRef(0);
   const tap = useRef({ time: 0, x: 0, y: 0 });
   const zoom = 600 / view.w;
@@ -142,7 +143,7 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
         onDoubleClick={(event) => { if (event.detail !== 0 && Date.now() - lastTouch.current > 500) zoomAt(2, location(event.clientX, event.clientY)); }}
         onPointerDown={(event) => {
           if (event.button !== 0) return;
-          if (pointers.current.size === 0) dragged.current = false;
+          if (pointers.current.size === 0) { dragged.current = false; pressed.current = { x: event.clientX, y: event.clientY }; }
           pointers.current.set(event.pointerId, location(event.clientX, event.clientY));
           // Capture on the interactive group itself so native clicks still reach the pin.
           const captureTarget = (event.target as Element).closest('[role="button"]') ?? event.currentTarget;
@@ -155,7 +156,8 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
           const before = [...pointers.current.values()];
           pointers.current.set(event.pointerId, next);
           const after = [...pointers.current.values()];
-          if (Math.hypot(next.x - previous.x, next.y - previous.y) > 2) dragged.current = true;
+          // A finger never lands still: measure from where it pressed, in screen pixels, before calling it a drag.
+          if (Math.hypot(event.clientX - pressed.current.x, event.clientY - pressed.current.y) > (event.pointerType === 'touch' ? 8 : 4)) dragged.current = true;
           if (before.length === 2) {
             const distance = (pair: typeof before) => Math.hypot(pair[0].x - pair[1].x, pair[0].y - pair[1].y);
             const oldDistance = distance(before);

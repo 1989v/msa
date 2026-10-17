@@ -384,7 +384,7 @@ describe('loaded market basemap source links', () => {
     expect(screen.queryByRole('link', { name: 'OpenFreeMap' })).toBeNull();
     await waitFor(() => expect(container.querySelector('image')).not.toBeNull());
     const image = container.querySelector('image')!;
-    expect(image.getAttribute('href')).toMatch(/^\/basemaps\/markets\/100\/z18-/);
+    expect(image.getAttribute('href')).toMatch(/^\/basemaps\/markets\/100\/(light|dark)\.png$/);
     const cached = client.getQueryCache().find({ queryKey: ['market-basemap-meta', '100'] })!;
     expect(cached.options).toMatchObject({ staleTime: 3_600_000, retry: false });
     fireEvent.load(image);
