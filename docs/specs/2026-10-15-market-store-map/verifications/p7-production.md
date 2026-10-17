@@ -232,3 +232,14 @@ _cat/indices: market-stores-20261017-1458  docs.count 21387  store.size 4.1mb
 - **실행**: `ssh msa-oci` 로 `svc/content:8097` 포트포워드 → 로컬에서 `place/ingest/src/market_osm.py` 의 `fetch_overpass → prepare` 뒤 Job 과 같은 `PUT /internal/markets/738/osm` + `POST …/rejudge`(스크립트는 스크래치패드 `ov/namdaemun_osm.py`, 드라이런 먼저). 응답: 경계 `{"source":"OSM","osmId":"way/78503350"}` 17꼭짓점, 골목 21(이름 17: 남대문시장길·2가길·2길·4길·6길·8길 + `서울한양도성 3코스 남산구간` 한 토막이 경계와 교차해 들어옴), `changedStores: 3929`, 재판정 뒤 **IN 1,781 · OUT 1,097 · UNKNOWN(좌표 없음) 1,047**, `osmFetchedAt 2026-10-18T01:02:33`(로컬 KST 시각 — 28일 창에서 무시된다).
 - **운영 확인**: `GET /api/v1/place/markets/132180?lang=ko` → `boundary.source=OSM` 17꼭짓점 · `paths` 21(named 17) · stores 2,828(IN 1,781 · UNKNOWN 1,047; OUT 은 기본 응답에서 빠짐). 전용 화면 모바일(390×844, `index-COGnv78P.js`, 배포 없이 데이터만): 핀 51, 목록 머리말 「현 지도에서 1781곳 · 지도 위치 없음 1047곳」, 출처에 `© OpenStreetMap contributors` 추가, 폴리곤이 세종대로·남대문로·퇴계로 블록을 따라간다(캡처 `verify-p7/prod/namdaemun-boundary-mobile.png`). 구역 칩은 아직 길 이름(WU-33c 가 바꾼다).
 - **WU-33b 테스트**: `plan()` 순서(미수집 큰 시장 → 작은 시장 → 오래된 순 → 최근 것 제외 → 읽기 실패는 끝) + 오케스트레이션 read 수·쓰기 순서. 옛 코드에 새 테스트를 대면 **6 failed / 27 passed**, 바꾼 뒤 **33 passed**(`python3 -m pytest tests/market_osm_test.py`).
+
+## 10-18 새벽 — WU-33b 수집 순서 배포 · WU-33c 가게 유형 필터 배포 확인
+
+- **WU-33b** `4ba40e105` → images run 39048440876 성공, CronJob 이미지 `place-ingest:4ba40e1`, 수동 Job `market-osm-manual-1018`(01:15:34Z 시작). 계획 줄 `[market-osm] plan {"ingested": 828, "due": 580, "neverFetched": 580, "skippedRecent": 248, "unreadable": 0}` — 미수집 580 = 좌표 있는 시장 581 − 수동 적용한 남대문. 첫 배치 50곳이 Overpass 를 도는 중(한 곳 ≈2분).
+- **WU-33c** `ccafb5333` → images run 39048857742 성공(01:25:50), 운영 번들 `index-COGnv78P.js → index-DQM-VKPV.js`(01:27:38). 모바일 390×844 라이트, 캡처 `verify-p7/prod/wu33-{screen,fashion,card}-light.png`:
+  - 전용 화면: 구역 칩 0, 유형 칩 「전체」+9 — 의류·신발 606 · 생활용품·가전 380 · 잡화·귀금속·안경 219 · 음식점 82 · 식료품 58 · 건강·미용 57 · 카페·주점 40 · 분식·간식 29 · 기타·서비스 1,357. 칩마다 유형 토큰 색점. 줌 17 핀 51 = **20px 16 · 26px 31 · 32px 4**(전 32px 고정), 색 분포 유형5 17 · 유형1 14 · 유형6 6 · 유형9 5 · 유형7 3 · 유형2 2 · 유형8 2 · 유형3 1 · 유형4 1. 머리말 「현 지도에서 1781곳 · 지도 위치 없음 1047곳」.
+  - 「의류·신발」 탭: URL `?type=fashion`, 핀 32(20px 21 · 26px 10 · 32px 1) 전부 유형 5 색, 머리말 「현 지도에서 606곳」.
+  - `?type=grocery` 직접 진입: 「식료품 (58)」 눌림, 핀 17(20px 16 · 26px 1) 전부 유형 4 색, 머리말 「현 지도에서 58곳」.
+  - 상세 요약 카드: nav 「가게 유형」 링크 3 — `의류·신발 (606)` → `/attractions/34550/market?type=fashion`, `생활용품·가전 (379)` → `?type=living`, `잡화·귀금속·안경 (217)` → `?type=goods`(카드는 IN 만 세고 전용 화면 칩은 주변 가게도 세어 1~2 차이). 옛 구역 nav 0.
+  - 첫 캡처는 롤아웃 직후라 데이터가 안 실려 칩 0·핀 0 이 나왔고 1분 뒤 재실행에서 위 값 — 번들이 바뀐 뒤에도 첫 요청은 비어 올 수 있다.
+- **남은 관찰**: 「기타·서비스 1,357」 이 남대문에서 가장 큰 칩이다 — 좌표 없는 1,047곳이 대부분 업종 빈 값이어서다. 칩 수를 좌표 있는 가게로 좁힐지는 목록 머리말(「지도 위치 없음 N곳」)과 같이 정해야 한다. 골목 라벨에 「서울한양도성 3코스 남산구간」이 들어온다(경계와 교차하는 OSM footway).
