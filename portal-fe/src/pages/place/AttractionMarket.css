@@ -149,3 +149,6 @@
 .place-market-full-map { display: inline-flex; align-items: center; min-height: 2.75rem; margin-top: var(--ko-space-3); color: var(--ko-accent-text); text-decoration: underline; }
 
 .place-market-path-label { fill: var(--ko-text-muted); }
+/* 장소 검색 패널 안 시장 미리보기 — 패널 버튼들과 같은 세로 흐름. */
+.place-market-panel { display: flex; flex-direction: column; gap: var(--ko-space-2); margin-block: var(--ko-space-3); }
+.place-market-panel .place-market-preview { border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius); overflow: hidden; }

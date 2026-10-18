@@ -25,11 +25,6 @@
   gap: 0.25rem;
 }
 
-/* 시장 검색 입구 — 머리띠가 세로 flex 라 그대로 두면 한 줄을 다 차지한다. 글자 폭만 쓴다. */
-.place-market-entry {
-  align-self: flex-start;
-}
-
 /* 상세 브레드크럼 — 허브(되돌아가기) › 시도 › 시군구 */
 .place-crumbs {
   display: flex;

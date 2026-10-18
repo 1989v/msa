@@ -1,4 +1,5 @@
 import MarketMapBadge from './MarketMapBadge';
+import MarketPanelPreview from './MarketPanelPreview';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -79,7 +80,6 @@ import {
   placeHreflangAlternates,
   placeHubMeta,
   placeHubIntro,
-  placePath,
   placeUrl,
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
@@ -1549,7 +1549,6 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
         ) : (
           <p className="place-subtitle">{placeHubIntro(lang)}</p>
         )}
-        <a className="place-btn place-market-entry" href={placePath(lang, '/markets')}>{lang === 'en' ? 'Find market shops & goods' : '시장 가게 찾기'}</a>
       </header>
 
       <div className="place-toolbar" ref={toolbarRef}>
@@ -2118,6 +2117,8 @@ function AttractionDetailBody({
       {attraction.tel && <p className="place-detail-tel">{attraction.tel}</p>}
       {/* 단건 조회는 원문이라 여기서 한 번 정리한다. 목록 카드는 서버가 정리한 요약이라 다시 정리하지 않는다 */}
       {overview && <p className="place-detail-overview">{overview}</p>}
+      {/* 시장이면 지도 미리보기와 「시장 지도 보기」 — 장소 검색에서 시장을 찾아 바로 본다 */}
+      <MarketPanelPreview contentId={attraction.contentId} attractionId={attraction.id} lang={lang} />
       <a className="place-btn" href={attractionPath(lang, attraction.id)}>
         {lang === 'en' ? 'Open detail page' : '상세 페이지 열기'}
       </a>
